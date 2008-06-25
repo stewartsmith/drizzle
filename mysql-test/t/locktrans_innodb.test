@@ -1,0 +1,20 @@
+# t/locktrans_innodb.test
+#
+# Transactional LOCK TABLE tests
+
+# Transactional lock tests require multiple sessions.
+--source include/not_embedded.inc
+
+--source include/have_innodb.inc
+let $engine_type= InnoDB;
+
+# Storage engine supports transactions.
+let $transactional= 1;
+
+# Storage engine supports the NOWAIT option.
+let $nowait_support= 1;
+
+# Define a storage engine that does not support transactional locking.
+let $other_non_trans_engine_type= MyISAM;
+
+--source include/locktrans.inc

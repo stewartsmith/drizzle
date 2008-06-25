@@ -1,0 +1,18 @@
+##############################################################################
+#
+#  List the test cases that are to be disabled temporarely.
+#
+#  Separate the test case name and the comment with ':'.
+#
+#      <testcasename>  : Comment test
+#
+#  Don't use any TAB characters for whitespace.
+#
+##############################################################################
+
+falcon_storedproc_06 : bug#33464 DROP FUNCTION let server hang
+innodb_storedproc_06 : bug#33464 DROP FUNCTION let server hang
+myisam_storedproc_06 : bug#33464 DROP FUNCTION let server hang
+memory_storedproc_06 : bug#33464 DROP FUNCTION let server hang
+ndb_storedproc_06 :    bug#33464 DROP FUNCTION let server hang
+

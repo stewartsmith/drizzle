@@ -1,0 +1,8 @@
+SELECT * FROM information_schema.engines
+WHERE ENGINE = 'Falcon';
+ENGINE	Falcon
+SUPPORT	YES
+COMMENT	Falcon storage engine
+TRANSACTIONS	YES
+XA	NO
+SAVEPOINTS	YES

@@ -1,0 +1,11 @@
+#! /bin/sh
+
+path=`dirname $0`
+. "$path/SETUP.sh"
+
+extra_flags="$sparc_cflags $debug_cflags"
+extra_configs="$debug_configs "
+
+extra_configs="$extra_configs"
+
+. "$path/FINISH.sh"

@@ -1,0 +1,25 @@
+#### suite/funcs_1/t/falcon_views.test
+# created: 2007-11-02 by hhunger
+
+# Falcon tables should be used
+#
+# 1. Check if Falcon is available
+--source include/have_falcon.inc
+# 2. Set $engine_type
+let $engine_type= falcon;
+
+# Create some objects needed in many testcases
+USE test;
+--source suite/funcs_1/include/falcon_tb2.inc
+--disable_warnings
+DROP DATABASE IF EXISTS test1;
+--enable_warnings
+CREATE DATABASE test1;
+USE test1;
+--source suite/funcs_1/include/falcon_tb2.inc
+USE test;
+
+--source suite/funcs_1/views/views_master.inc
+DROP DATABASE test1;
+DROP TABLE test.tb2;
+

@@ -1,0 +1,16 @@
+drop table if exists t1;
+SET GLOBAL log_bin_trust_function_creators = 1;
+create table t1 (col1 integer primary key, col2 integer) engine=innodb;
+insert t1 values (1,100);
+start transaction;
+select col2 from t1 where col1=1 for update;
+col2
+100
+update t1 set col2=0 where col1=1;
+select * from t1;
+col1	col2
+1	100
+rollback;
+rollback;
+drop table t1;
+SET GLOBAL log_bin_trust_function_creators = 0;

@@ -1,0 +1,51 @@
+--source include/not_embedded.inc
+
+connect (con1,localhost,root,,);
+connect (con2,localhost,root,,);
+connection con1;
+dirty_close con1;
+connection con2;
+
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+
+create table t1 (n int);
+insert into t1 values (1),(2),(3);
+select * from t1;
+drop table t1;
+disconnect con2;
+
+# End of 4.1 tests
+
+#
+# Bug#10374 GET_LOCK does not let connection to close on the server side if it's aborted
+#
+
+connection default;
+SELECT GET_LOCK("dangling", 0);
+connect(con1, localhost, root,,);
+connection con1;
+--send SELECT GET_LOCK('dangling', 3600);
+connection default;
+let $wait_condition=
+  SELECT COUNT(*) = 1 FROM INFORMATION_SCHEMA.PROCESSLIST WHERE STATE = "User lock"
+  AND INFO = "SELECT GET_LOCK('dangling', 3600)";
+--source include/wait_condition.inc
+dirty_close con1;
+let $wait_condition=
+  SELECT COUNT(*) = 0 FROM INFORMATION_SCHEMA.PROCESSLIST WHERE STATE = "User lock"
+  AND INFO = "SELECT GET_LOCK('dangling', 3600)";
+--source include/wait_condition.inc
+connect(con1, localhost, root,,);
+--send SELECT GET_LOCK('dangling', 3600);
+connection default;
+let $wait_condition=
+  SELECT COUNT(*) = 1 FROM INFORMATION_SCHEMA.PROCESSLIST WHERE STATE = "User lock"
+  AND INFO = "SELECT GET_LOCK('dangling', 3600)";
+--source include/wait_condition.inc
+SELECT RELEASE_LOCK('dangling');
+connection con1;
+--reap
+connection default;
+disconnect con1;

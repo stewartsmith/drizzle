@@ -1,0 +1,30 @@
+# t/rpl_locktrans_myisam.test
+#
+# Transactional LOCK TABLE tests
+
+# Transactional lock tests require multiple sessions.
+--source include/not_embedded.inc
+
+# This is a replication test.
+--source include/master-slave.inc
+
+## --source include/have_myisam.inc
+let $engine_type= MyISAM;
+
+# Storage engine does not support transactions.
+let $transactional= 0;
+
+# Storage engine does not support the NOWAIT option.
+let $nowait_support= 0;
+
+# Define a storage engine that does not support transactional locking.
+let $other_non_trans_engine_type= MyISAM;
+
+--source include/locktrans.inc
+
+sync_slave_with_master;
+connection slave;
+--replace_result $MASTER_MYPORT MASTER_PORT
+--replace_column 1 # 7 # 8 # 9 # 22 # 23 # 33 #
+--query_vertical show slave status;
+

@@ -1,0 +1,4 @@
+--innodb_lock_wait_timeout=1
+--log=locktrans_master.log
+--log-output=FILE
+

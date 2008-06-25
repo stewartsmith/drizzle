@@ -1,0 +1,20 @@
+#### suite/funcs_1/t/falcon_cursors.test
+# created: 2007-11-02 by hhunger
+
+# Falcon tables should be used
+#
+# 1. Check if Falcon is available
+--source include/have_falcon.inc
+# 2. Set $engine_type
+let $engine_type= falcon;
+
+let $message= NOT YET IMPLEMENTED: cursor tests;
+--source include/show_msg80.inc
+exit;
+
+# Create some objects needed in many testcases
+USE test;
+--source suite/funcs_1/include/falcon_tb1.inc
+
+--source suite/funcs_1/cursors/cursors_master.test
+

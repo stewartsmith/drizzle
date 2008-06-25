@@ -1,0 +1,66 @@
+stop slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+reset master;
+reset slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+start slave;
+**** On Master ****
+DROP DATABASE IF EXISTS tpcb;
+CREATE DATABASE tpcb;
+USE tpcb;
+SET BINLOG_FORMAT = 'ROW';
+CREATE TABLE account (
+id int,
+bid int,
+balance decimal(10,2),
+filler blob,
+PRIMARY KEY(id)
+) ENGINE=Falcon;
+SHOW CREATE TABLE account;
+Table	Create Table
+account	CREATE TABLE `account` (
+  `id` int(11) NOT NULL DEFAULT '0',
+  `bid` int(11) DEFAULT NULL,
+  `balance` decimal(10,2) DEFAULT NULL,
+  `filler` blob,
+  PRIMARY KEY (`id`)
+) ENGINE=Falcon DEFAULT CHARSET=latin1
+INSERT INTO account VALUES (1, 2, 1.2, "FRESH ACCOUNT");
+INSERT INTO account VALUES (2, 5, 1.2, "FRESH ACCOUNT");
+INSERT INTO account VALUES (3, 2, 1.2, "FRESH ACCOUNT");
+INSERT INTO account VALUES (4, 2, 1.2, "FRESH ACCOUNT");
+SELECT * FROM account;
+id	bid	balance	filler
+1	2	1.20	FRESH ACCOUNT
+2	5	1.20	FRESH ACCOUNT
+3	2	1.20	FRESH ACCOUNT
+4	2	1.20	FRESH ACCOUNT
+**** On Slave **** 
+USE tpcb;
+SELECT * FROM account;
+id	bid	balance	filler
+1	2	1.20	FRESH ACCOUNT
+2	5	1.20	FRESH ACCOUNT
+3	2	1.20	FRESH ACCOUNT
+4	2	1.20	FRESH ACCOUNT
+**** On Master **** 
+UPDATE account SET balance = 3.5 WHERE id = 3;
+UPDATE account SET filler = 'Updated' WHERE id = 2;
+UPDATE account SET balance = 9.2, bid = 21, 
+filler = 'Updated' WHERE id = 4;
+SELECT * FROM account;
+id	bid	balance	filler
+1	2	1.20	FRESH ACCOUNT
+2	5	1.20	Updated
+3	2	3.50	FRESH ACCOUNT
+4	21	9.20	Updated
+**** On Slave **** 
+SELECT * FROM account;
+id	bid	balance	filler
+1	2	1.20	FRESH ACCOUNT
+2	5	1.20	Updated
+3	2	3.50	FRESH ACCOUNT
+4	21	9.20	Updated
+**** On Master **** 
+DROP DATABASE tpcb;
+**** On Slave **** 

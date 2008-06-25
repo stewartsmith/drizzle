@@ -1,0 +1,17 @@
+###################################################
+#                                                 #
+#  Functions within VIEWs based on Falcon tables  #
+#                                                 #
+###################################################
+# created: 2007-11-02 by hhunger
+
+#
+# NOTE: PLEASE SEE THE DETAILED DESCRIPTION IN
+#       suite/funcs_1/views/func_view.inc
+#       BEFORE ADDING NEW TEST CASES HERE !!!
+
+let $type= 'falcon' ;
+--source include/have_falcon.inc
+
+--source suite/funcs_1/views/func_view.inc
+

@@ -1,0 +1,191 @@
+SELECT * FROM information_schema.columns
+WHERE table_schema = 'information_schema'
+AND table_name LIKE 'falcon_%'
+ORDER BY table_schema, table_name, column_name;
+TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
+NULL	information_schema	FALCON_DATABASE_IO	BUFFERS	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_DATABASE_IO	FAKES	7	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_DATABASE_IO	LOGICAL_READS	6	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_DATABASE_IO	PAGE_SIZE	2	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_DATABASE_IO	PHYSICAL_READS	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_DATABASE_IO	TABLESPACE	1		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_DATABASE_IO	WRITES	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	FILE	1		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	LINE	2	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	OBJECTS_DELETED	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	OBJECTS_IN_USE	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	SPACE_DELETED	6	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	SPACE_IN_USE	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	BIG_HUNKS	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	FREE_SEGMENTS	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	FREE_SPACE	2	0	NO	bigint	NULL	NULL	19	0	NULL	NULL	bigint(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	SMALL_HUNKS	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	TOTAL_SPACE	1	0	NO	bigint	NULL	NULL	19	0	NULL	NULL	bigint(4)			select		Default	Default
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	UNIQUE_SIZES	6	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	BLOCKS	3	0	NO	bigint	NULL	NULL	19	0	NULL	NULL	bigint(8)			select		Default	Default
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	BUFFERS	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	DATABASE	1		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	TRANSACTIONS	2	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	WINDOWS	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYNCOBJECTS	CALLER	1		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_SYNCOBJECTS	EXCLUSIVE	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYNCOBJECTS	QUEUE_LENGTH	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYNCOBJECTS	SHARED	2	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYNCOBJECTS	WAITS	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	FILE	1		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	LINE	2	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	OBJECTS_DELETED	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	OBJECTS_IN_USE	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	SPACE_DELETED	6	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	SPACE_IN_USE	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	BIG_HUNKS	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	FREE_SEGMENTS	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	FREE_SPACE	2	0	NO	bigint	NULL	NULL	19	0	NULL	NULL	bigint(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	SMALL_HUNKS	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	TOTAL_SPACE	1	0	NO	bigint	NULL	NULL	19	0	NULL	NULL	bigint(4)			select		Default	Default
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	UNIQUE_SIZES	6	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TABLES	INTERNAL_NAME	5		NO	varchar	127	508	NULL	NULL	utf8	utf8_general_ci	varchar(127)			select		Default	Default
+NULL	information_schema	FALCON_TABLES	PARTITION	3		NO	varchar	127	508	NULL	NULL	utf8	utf8_general_ci	varchar(127)			select		Default	Default
+NULL	information_schema	FALCON_TABLES	SCHEMA_NAME	1		NO	varchar	127	508	NULL	NULL	utf8	utf8_general_ci	varchar(127)			select		Default	Default
+NULL	information_schema	FALCON_TABLES	TABLESPACE	4		NO	varchar	127	508	NULL	NULL	utf8	utf8_general_ci	varchar(127)			select		Default	Default
+NULL	information_schema	FALCON_TABLES	TABLE_NAME	2		NO	varchar	127	508	NULL	NULL	utf8	utf8_general_ci	varchar(127)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	DATABASE	1		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	DEP	7	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	ID	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	OLDEST	8	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	PENDING	6	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	RECORDS	9	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	STATE	4		NO	varchar	10	40	NULL	NULL	utf8	utf8_general_ci	varchar(10)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	STATEMENT	11		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	THREAD_ID	2	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	UPDATES	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTIONS	WAITING_FOR	10	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	ACTIVE	4	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	COMMITTED	2	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	DATABASE	1		NO	varchar	120	480	NULL	NULL	utf8	utf8_general_ci	varchar(120)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	PENDING_COMMIT	5	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	PENDING_COMPLETION	6	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	ROLLED_BACK	3	0	NO	int	NULL	NULL	10	0	NULL	NULL	int(4)			select		Default	Default
+NULL	information_schema	FALCON_VERSION	Date	2		NO	varchar	32	128	NULL	NULL	utf8	utf8_general_ci	varchar(32)			select		Default	Default
+NULL	information_schema	FALCON_VERSION	Version	1		NO	varchar	32	128	NULL	NULL	utf8	utf8_general_ci	varchar(32)			select		Default	Default
+##########################################################################
+# Show the quotient of CHARACTER_OCTET_LENGTH and CHARACTER_MAXIMUM_LENGTH
+##########################################################################
+SELECT DISTINCT
+CHARACTER_OCTET_LENGTH / CHARACTER_MAXIMUM_LENGTH AS COL_CML,
+DATA_TYPE,
+CHARACTER_SET_NAME,
+COLLATION_NAME
+FROM information_schema.columns
+WHERE table_schema = 'information_schema'
+AND table_name LIKE 'falcon_%'
+AND CHARACTER_OCTET_LENGTH / CHARACTER_MAXIMUM_LENGTH = 1
+ORDER BY CHARACTER_SET_NAME, COLLATION_NAME, COL_CML;
+COL_CML	DATA_TYPE	CHARACTER_SET_NAME	COLLATION_NAME
+SELECT DISTINCT
+CHARACTER_OCTET_LENGTH / CHARACTER_MAXIMUM_LENGTH AS COL_CML,
+DATA_TYPE,
+CHARACTER_SET_NAME,
+COLLATION_NAME
+FROM information_schema.columns
+WHERE table_schema = 'information_schema'
+AND table_name LIKE 'falcon_%'
+AND CHARACTER_OCTET_LENGTH / CHARACTER_MAXIMUM_LENGTH <> 1
+ORDER BY CHARACTER_SET_NAME, COLLATION_NAME, COL_CML;
+COL_CML	DATA_TYPE	CHARACTER_SET_NAME	COLLATION_NAME
+4.0000	varchar	utf8	utf8_general_ci
+SELECT DISTINCT
+CHARACTER_OCTET_LENGTH / CHARACTER_MAXIMUM_LENGTH AS COL_CML,
+DATA_TYPE,
+CHARACTER_SET_NAME,
+COLLATION_NAME
+FROM information_schema.columns
+WHERE table_schema = 'information_schema'
+AND table_name LIKE 'falcon_%'
+AND CHARACTER_OCTET_LENGTH / CHARACTER_MAXIMUM_LENGTH IS NULL
+ORDER BY CHARACTER_SET_NAME, COLLATION_NAME, COL_CML;
+COL_CML	DATA_TYPE	CHARACTER_SET_NAME	COLLATION_NAME
+NULL	bigint	NULL	NULL
+NULL	int	NULL	NULL
+--> CHAR(0) is allowed (see manual), and here both CHARACHTER_* values
+--> are 0, which is intended behavior, and the result of 0 / 0 IS NULL
+SELECT CHARACTER_OCTET_LENGTH / CHARACTER_MAXIMUM_LENGTH AS COL_CML,
+TABLE_SCHEMA,
+TABLE_NAME,
+COLUMN_NAME,
+DATA_TYPE,
+CHARACTER_MAXIMUM_LENGTH,
+CHARACTER_OCTET_LENGTH,
+CHARACTER_SET_NAME,
+COLLATION_NAME,
+COLUMN_TYPE
+FROM information_schema.columns
+WHERE table_schema = 'information_schema'
+AND table_name LIKE 'falcon_%'
+ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION;
+COL_CML	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE
+4.0000	information_schema	FALCON_DATABASE_IO	TABLESPACE	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+NULL	information_schema	FALCON_DATABASE_IO	PAGE_SIZE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_DATABASE_IO	BUFFERS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_DATABASE_IO	PHYSICAL_READS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_DATABASE_IO	WRITES	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_DATABASE_IO	LOGICAL_READS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_DATABASE_IO	FAKES	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_RECORD_CACHE_DETAIL	FILE	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	LINE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	OBJECTS_IN_USE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	SPACE_IN_USE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	OBJECTS_DELETED	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_DETAIL	SPACE_DELETED	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	TOTAL_SPACE	bigint	NULL	NULL	NULL	NULL	bigint(4)
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	FREE_SPACE	bigint	NULL	NULL	NULL	NULL	bigint(4)
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	FREE_SEGMENTS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	BIG_HUNKS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	SMALL_HUNKS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_RECORD_CACHE_SUMMARY	UNIQUE_SIZES	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_SERIAL_LOG_INFO	DATABASE	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	TRANSACTIONS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	BLOCKS	bigint	NULL	NULL	NULL	NULL	bigint(8)
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	WINDOWS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SERIAL_LOG_INFO	BUFFERS	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_SYNCOBJECTS	CALLER	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+NULL	information_schema	FALCON_SYNCOBJECTS	SHARED	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYNCOBJECTS	EXCLUSIVE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYNCOBJECTS	WAITS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYNCOBJECTS	QUEUE_LENGTH	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	FILE	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	LINE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	OBJECTS_IN_USE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	SPACE_IN_USE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	OBJECTS_DELETED	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_DETAIL	SPACE_DELETED	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	TOTAL_SPACE	bigint	NULL	NULL	NULL	NULL	bigint(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	FREE_SPACE	bigint	NULL	NULL	NULL	NULL	bigint(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	FREE_SEGMENTS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	BIG_HUNKS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	SMALL_HUNKS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_SYSTEM_MEMORY_SUMMARY	UNIQUE_SIZES	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_TABLES	SCHEMA_NAME	varchar	127	508	utf8	utf8_general_ci	varchar(127)
+4.0000	information_schema	FALCON_TABLES	TABLE_NAME	varchar	127	508	utf8	utf8_general_ci	varchar(127)
+4.0000	information_schema	FALCON_TABLES	PARTITION	varchar	127	508	utf8	utf8_general_ci	varchar(127)
+4.0000	information_schema	FALCON_TABLES	TABLESPACE	varchar	127	508	utf8	utf8_general_ci	varchar(127)
+4.0000	information_schema	FALCON_TABLES	INTERNAL_NAME	varchar	127	508	utf8	utf8_general_ci	varchar(127)
+4.0000	information_schema	FALCON_TRANSACTIONS	DATABASE	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+NULL	information_schema	FALCON_TRANSACTIONS	THREAD_ID	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTIONS	ID	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_TRANSACTIONS	STATE	varchar	10	40	utf8	utf8_general_ci	varchar(10)
+NULL	information_schema	FALCON_TRANSACTIONS	UPDATES	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTIONS	PENDING	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTIONS	DEP	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTIONS	OLDEST	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTIONS	RECORDS	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTIONS	WAITING_FOR	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_TRANSACTIONS	STATEMENT	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+4.0000	information_schema	FALCON_TRANSACTION_SUMMARY	DATABASE	varchar	120	480	utf8	utf8_general_ci	varchar(120)
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	COMMITTED	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	ROLLED_BACK	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	ACTIVE	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	PENDING_COMMIT	int	NULL	NULL	NULL	NULL	int(4)
+NULL	information_schema	FALCON_TRANSACTION_SUMMARY	PENDING_COMPLETION	int	NULL	NULL	NULL	NULL	int(4)
+4.0000	information_schema	FALCON_VERSION	Version	varchar	32	128	utf8	utf8_general_ci	varchar(32)
+4.0000	information_schema	FALCON_VERSION	Date	varchar	32	128	utf8	utf8_general_ci	varchar(32)

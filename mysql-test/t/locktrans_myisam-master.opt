@@ -1,0 +1,4 @@
+--table_lock_wait_timeout=1
+--log=locktrans.log
+--log-output=FILE
+

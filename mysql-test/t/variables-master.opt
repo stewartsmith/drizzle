@@ -1,0 +1,11 @@
+--loose-skip-plugin_falcon
+--loose-skip-plugin-falcon_database_io
+--loose-skip-plugin-falcon_record_cache_detail
+--loose-skip-plugin-falcon_record_cache_summary
+--loose-skip-plugin-falcon_serial_log_info
+--loose-skip-plugin-falcon_syncobjects
+--loose-skip-plugin-falcon_system_memory_detail
+--loose-skip-plugin-falcon_system_memory_summary
+--loose-skip-plugin-falcon_tables
+--loose-skip-plugin-falcon_transaction_summary
+--loose-skip-plugin-falcon_transactions

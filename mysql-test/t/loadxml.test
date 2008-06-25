@@ -1,0 +1,50 @@
+#
+# Tests for "LOAD XML" - a contributed patch from Erik Wetterberg.
+#
+
+# Running the $MYSQL_DUMP tool against an embedded server does not work.
+--source include/not_embedded.inc
+
+--disable_warnings
+drop table if exists t1;
+--enable_warnings
+
+create table t1 (a int, b varchar(64));
+
+
+--echo -- Load a static XML file
+load xml infile '../std_data_ln/loadxml.dat' into table t1
+rows identified by '<row>';
+select * from t1 order by a;
+delete from t1;
+
+
+--echo -- Load a static XML file with 'IGNORE num ROWS'
+load xml infile '../std_data_ln/loadxml.dat' into table t1
+rows identified by '<row>' ignore 4 rows;
+select * from t1 order by a;
+
+
+--echo -- Check 'mysqldump --xml' + 'LOAD XML' round trip
+--exec $MYSQL_DUMP --xml test t1 > "$MYSQLTEST_VARDIR/loadxml-dump.xml" 2>&1
+delete from t1;
+--replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
+--eval load xml infile '$MYSQLTEST_VARDIR/loadxml-dump.xml' into table t1 rows identified by '<row>';
+select * from t1 order by a;
+
+--echo --Check that default row tag is '<row>
+delete from t1;
+--replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
+--eval load xml infile '$MYSQLTEST_VARDIR/loadxml-dump.xml' into table t1;
+select * from t1 order by a;
+
+--echo -- Check that 'xml' is not a keyword
+select 1 as xml;
+
+
+#
+# Clean up
+#
+--system rm $MYSQLTEST_VARDIR/loadxml-dump.xml
+drop table t1;
+

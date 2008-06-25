@@ -1,0 +1,64 @@
+* So why?
+
+I've been wondering for a long time now about all of the changes post 4.1.
+I believe there is a large market of users who never wanted them, and never
+cared for them. I also wanted to question the foundations of what we built.
+Do uses want wrong data? How often is the query cache really valuable? If
+everyone just has a root user with all privs, why carry the baggage of the
+ACL code. Etc.
+
+* What is the GOAL?
+
+A micro-kernel that we then extend to add what we need (all additions come
+through interfaces that can be compiled/loaded in as needed). 
+
+* So the differences?
+
+No modes, views, triggers, stored procedures, query cache, bad data inserts,
+ACL. Less engines, less code. Assume the primary engine is transactional. 
+
+* Why now?
+
+Why not now :)
+
+* "This is awesome, but I need you to add back..."
+
+Forget it. Nothing is going back in at this time. As for the future? Maybe,
+but at the moment this suits my needs better. If you want more features, go
+use MySQL.
+
+* What platforms?
+
+I compile on OSX, Linux (Fedora), and Solaris Express. Windows is not
+supported and will stay that way unless it gets a working posix layer +
+autoconf system (aka becomes a platform that is reasonable to support).
+
+* What about XA?
+
+It may return as a bit in the protocol. Lets see if anyone notices that it is
+gone first :)
+
+* What is the future?
+
+Less code, more modularity, and more active involvement. A few things that
+still need to be done:
+- Switch to stdint
+- Walk through all of the replication code
+- Re-implement information schema
+- Modular logging system
+
+* "This is not a SQL compliant relational..."
+
+Very true, and we do not aim to be that. 
+
+* What is left to be cut out?
+
+Bit type... we need a longer list.
+
+* Why drizzle?
+
+I am from Seattle. Drizzle is our normal form of "rain" but its not "rain".
+It is drizzle.
+
+  -Brian
+    Seattle, USA

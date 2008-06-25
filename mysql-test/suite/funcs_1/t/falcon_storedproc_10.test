@@ -1,0 +1,10 @@
+#### suite/funcs_1/t/falcon_storedproc_10.test
+# created: 2007-11-02 by hhunger
+#
+# 1. Check if Falcon is available
+--source include/have_falcon.inc
+
+# 2. Set $engine_type
+let $engine_type= falcon;
+
+--source suite/funcs_1/storedproc/storedproc_10.inc

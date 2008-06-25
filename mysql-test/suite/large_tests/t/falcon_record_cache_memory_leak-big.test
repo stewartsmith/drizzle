@@ -1,0 +1,53 @@
+--source include/have_falcon.inc
+--source include/big_test.inc
+#
+# Record cache memory leak test inspired by Kevin.
+#
+# Note: Original test is with loop count of
+#   250000. For the big-test version we use loop count of 500k.
+
+# ----------------------------------------------------- #
+# --- Initialisation                                --- #
+# ----------------------------------------------------- #
+let $engine = 'Falcon';
+eval SET @@storage_engine = $engine;
+
+--disable_warnings
+DROP TABLE IF EXISTS t1;
+--enable_warnings
+
+CREATE TABLE t1 (c1 varchar(100));
+INSERT INTO t1 VALUES (repeat('A', 100));
+INSERT INTO t1 VALUES (repeat('B', 100));
+INSERT INTO t1 VALUES (repeat('C', 100));
+COMMIT;
+
+# ----------------------------------------------------- #
+# --- Test                                          --- #
+# ----------------------------------------------------- #
+BEGIN;
+# During this series of updates, there should be no increase in memory
+# since each previous record version should be freed once it is replaced.
+
+--disable_query_log
+let $i= 500000;
+while ($i)
+{
+    UPDATE t1 SET c1 = lower(c1);
+    UPDATE t1 SET c1 = upper(c1);
+
+    dec $i;
+}
+--enable_query_log
+
+COMMIT;
+
+# ----------------------------------------------------- #
+# --- Check                                         --- #
+# ----------------------------------------------------- #
+SELECT count(*) FROM t1;
+
+# ----------------------------------------------------- #
+# --- Final cleanup                                 --- #
+# ----------------------------------------------------- #
+DROP TABLE t1;

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Script I use to look at aio performance --Brian
+
+MYSQLSLAP="/home/mysql/trees/mysql-5.2-arch/client/mysqlslap --protocol=tcp"
+CONCURRENCY="1,25,50,75,100,125,150,175,200,225,250,275,300"
+ENGINE="archive"
+
+
+cp /dev/null /tmp/$ENGINE-scan-scale.csv
+cp /dev/null /tmp/$ENGINE-key-scale.csv
+
+$MYSQLSLAP --concurrency=$CONCURRENCY --iterations=10 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --csv=/tmp/$ENGINE-key-scale.csv --engine=$ENGINE --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=key --auto-generate-sql-execute-number=1000 --burnin
+
+# read()
+
+$MYSQLSLAP --concurrency=$CONCURRENCY --iterations=10 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --csv=/tmp/$ENGINE-scan-scale.csv --engine=$ENGINE --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=read --auto-generate-sql-execute-number=1000 --pre-query="SET GLOBAL archive_aio=OFF;" --burnin
+
+$MYSQLSLAP --concurrency=$CONCURRENCY --iterations=10 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --csv=/tmp/$ENGINE-key-scale.csv --engine=$ENGINE --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=key --auto-generate-sql-execute-number=1000 --pre-query="SET GLOBAL archive_aio=OFF;"
+
+# aio_read()
+
+$MYSQLSLAP --concurrency=$CONCURRENCY --iterations=10 --number-int-cols=2
+--number-char-cols=3 --auto-generate-sql --csv=/tmp/$ENGINE-key-scale.csv --engine=$ENGINE --auto-generate-sql-add-autoincrement --auto-generate-sql-load-type=key --auto-generate-sql-execute-number=1000
+
+$MYSQLSLAP --concurrency=$CONCURRENCY --iterations=10 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql --csv=/tmp/$ENGINE-scan-scale.csv --engine=$ENGINE --auto- generate-sql-add-autoincrement --auto-generate-sql-load-type=read --auto-generate-sql-execute-number=1000

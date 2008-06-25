@@ -1,0 +1,21 @@
+# t/locktrans_myisam.test
+#
+# Transactional LOCK TABLE tests
+
+# Transactional lock tests require multiple sessions.
+--source include/not_embedded.inc
+
+## --source include/have_myisam.inc
+let $engine_type= MyISAM;
+
+# Storage engine does not support transactions.
+let $transactional= 0;
+
+# Storage engine does not support the NOWAIT option.
+let $nowait_support= 0;
+
+# Define a storage engine that does not support transactional locking.
+let $other_non_trans_engine_type= MyISAM;
+
+--source include/locktrans.inc
+

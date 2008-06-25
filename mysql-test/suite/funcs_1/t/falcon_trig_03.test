@@ -1,0 +1,17 @@
+#### suite/funcs_1/t/falcon_triggers.test
+# created: 2007-11-02 by hhunger
+
+# Falcon tables should be used
+#
+# 1. Check if Falcon is available
+--source include/have_falcon.inc
+# 2. Set $engine_type
+let $engine_type= falcon;
+
+# Create some objects needed in many testcases
+USE test;
+--source suite/funcs_1/include/falcon_tb3.inc
+
+--source suite/funcs_1/triggers/triggers_03.inc
+DROP TABLE test.tb3;
+

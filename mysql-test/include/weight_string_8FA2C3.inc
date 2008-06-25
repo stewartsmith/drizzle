@@ -1,0 +1,11 @@
+select collation(cast(0x8FA2C3 as char));
+select hex(weight_string(cast(0x6141 as char)));
+select hex(weight_string(cast(0x8FA2C3 as char)));
+select hex(weight_string(cast(0x8FA2C3 as char) as char(1)));
+select hex(weight_string(cast(0x8FA2C38FA2C3 as char) as char(1)));
+select hex(weight_string(cast(0x8FA2C3 as char) as char(3)));
+select hex(weight_string(cast(0x8FA2C38FA2C3 as char) as char(3)));
+select hex(weight_string(cast(0x408FA2C3 as char) as char(3)));
+select hex(weight_string(cast(0x408FA2C38FA2C3 as char) as char(3)));
+select hex(weight_string(cast(0x408FA2C38FA2C38FA2C3 as char) as char(3)));
+select hex(weight_string(cast(0x40408FA2C38FA2C38FA2C3 as char) as char(3)));

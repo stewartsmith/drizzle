@@ -1,0 +1,17 @@
+##############################################################################
+#
+#  List the test cases that are to be disabled temporarily.
+#
+#  Separate the test case name and the comment with ':'.
+#
+#    <testcasename> : BUG#<xxxx> <date disabled> <disabler> <comment>
+#
+#  Do not use any TAB characters for whitespace.
+#
+##############################################################################
+binlog_multi_engine  : Bug#29829 2007-07-16 ingo reports to error log
+binlog_row_ctype_cp932 : Bug #33376 2007-12-19 mats Write set for table not set correctly when inserting an empty set
+binlog_multi_engine      : Bug#32663 binlog_multi_engine.test fails randomly
+binlog_base64_flag : BUG#33247 2007-12-14 Sven: mysqlbinlog does not clean up after itself on termination. When compiled in debug mode, this test generates lots of warnings for memory leaks.
+binlog_killed : Bug#28786 binlog_killed.test fails: 'reset master' does not reset binlogging
+binlog_killed_simulate : Bug#35543, Bug#34283, Bug#33238, Bug#35546 tmp file name construction problems

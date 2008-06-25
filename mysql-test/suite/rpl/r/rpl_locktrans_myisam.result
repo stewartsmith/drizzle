@@ -1,0 +1,442 @@
+stop slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+reset master;
+reset slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+start slave;
+DROP DATABASE  IF EXISTS mysqltest;
+DROP TABLE     IF EXISTS t1, t2, t3, t4, v1;
+DROP VIEW      IF EXISTS t1, t2, t3, t4, v1;
+DROP PROCEDURE IF EXISTS lock_t1_excl;
+DROP PROCEDURE IF EXISTS count_t2;
+DROP PROCEDURE IF EXISTS update_t2;
+DROP TRIGGER   IF EXISTS t1_ai;
+#
+# WL3561 - transactional LOCK TABLE - Syntax tests
+# ================================================
+CREATE TABLE t1 (c1 INT ) ENGINE=MyISAM;
+CREATE TABLE t2 (c2 INT ) ENGINE=MyISAM;
+CREATE TABLE t3 (c3 INT ) ENGINE=MyISAM;
+#
+# Valid syntax for non-transactional locks.
+LOCK TABLE t1 READ, t2 WRITE;
+UNLOCK TABLES;
+LOCK TABLE t1 READ LOCAL, t2 LOW_PRIORITY WRITE;
+UNLOCK TABLES;
+#
+# Valid syntax for transactional locks.
+LOCK TABLE t1 IN SHARE MODE, t2 IN EXCLUSIVE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't1'
+Warning	1613	Converted to non-transactional lock on 't2'
+UNLOCK TABLES;
+#
+# Valid syntax for aliases with and without 'AS'.
+LOCK TABLE t1 AS a1 READ, t2 a2 WRITE;
+UNLOCK TABLES;
+LOCK TABLE t1 AS a1 IN SHARE MODE, t2 a2 IN EXCLUSIVE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 'a1'
+Warning	1613	Converted to non-transactional lock on 'a2'
+UNLOCK TABLES;
+#
+# Transactional locks taken on a view.
+CREATE VIEW v1 AS SELECT * FROM t1, t2 WHERE t1.c1 = t2.c2;
+LOCK TABLE v1 IN SHARE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't1'
+Warning	1613	Converted to non-transactional lock on 't2'
+LOCK TABLE v1 IN EXCLUSIVE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 'v1'
+DROP VIEW v1;
+#
+# Locking INFORMATION_SCHEMA fails on missing privileges.
+LOCK TABLE information_schema.tables IN SHARE MODE;
+ERROR 42000: Access denied for user 'root'@'localhost' to database 'information_schema'
+LOCK TABLE information_schema.tables IN EXCLUSIVE MODE;
+ERROR 42000: Access denied for user 'root'@'localhost' to database 'information_schema'
+LOCK TABLE information_schema.tables READ;
+ERROR 42000: Access denied for user 'root'@'localhost' to database 'information_schema'
+LOCK TABLE information_schema.tables WRITE;
+ERROR 42000: Access denied for user 'root'@'localhost' to database 'information_schema'
+#
+# The new keywords EXCLUSIVE and NOWAIT are not reserved words.
+CREATE TABLE t4 (exclusive INT, nowait INT) ENGINE=MyISAM;
+LOCK TABLE t4 WRITE;
+DROP TABLE t4;
+#
+# Syntax errors for misspelled modes or left out symbols.
+##-------------------------------------------------------
+LOCK TABLE t1 IN SHARED MODE;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SHARED MODE' at line 1
+LOCK TABLE t1 SHARE MODE;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MODE' at line 1
+LOCK TABLE t1 IN SHARE;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
+LOCK TABLE t1 IN MODE;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MODE' at line 1
+LOCK TABLE t1 READ NOWAIT, t2 WRITE NOWAIT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOWAIT, t2 WRITE NOWAIT' at line 1
+LOCK TABLE t1 READ NOWAIT, t2 IN EXCLUSIVE MODE NOWAIT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOWAIT, t2 IN EXCLUSIVE MODE NOWAIT' at line 1
+LOCK TABLE t1 IN SHARE MODE NOWAIT, t2 WRITE NOWAIT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOWAIT' at line 1
+LOCK TABLE t1 IN SHARED MODE NOWAIT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SHARED MODE NOWAIT' at line 1
+LOCK TABLE t1 SHARE MODE NOWAIT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MODE NOWAIT' at line 1
+LOCK TABLE t1 IN SHARE NOWAIT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'NOWAIT' at line 1
+LOCK TABLE t1 IN MODE NOWAIT;
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MODE NOWAIT' at line 1
+##----------------------
+## End of syntax errors.
+#
+#
+# WL3561 - transactional LOCK TABLE - Lock method conversion
+# ==========================================================
+#
+# Implicit lock method conversion due to mix in statement.
+LOCK TABLE t1 READ, t2 IN EXCLUSIVE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't2'
+UNLOCK TABLES;
+# Lock t1 share (converted to read), t2 write.
+LOCK TABLE t1 IN SHARE MODE, t2 WRITE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't1'
+# Show t1 is read locked, t2 write locked.
+INSERT INTO t1 SELECT * FROM t2;
+ERROR HY000: Table 't1' was locked with a READ lock and can't be updated
+INSERT INTO t2 SELECT * FROM t1;
+#
+# Implicit lock method conversion due to existing non-transact. locks.
+# Implicitly unlock existing non-transactional locks and take new ones.
+# Lock t1 exclusive (converted to write), t2 share (converted to read).
+LOCK TABLE t1 IN EXCLUSIVE MODE, t2 IN SHARE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't1'
+Warning	1613	Converted to non-transactional lock on 't2'
+# Show t1 is write locked, t2 read locked.
+INSERT INTO t1 SELECT * FROM t2;
+INSERT INTO t2 SELECT * FROM t1;
+ERROR HY000: Table 't2' was locked with a READ lock and can't be updated
+UNLOCK TABLES;
+#
+# Reject lock method conversion in strict mode.
+# Set strict mode.
+SET @wl3561_save_sql_mode= @@SQL_MODE;
+SET @@SQL_MODE= 'STRICT_ALL_TABLES';
+# Try mixed mode locks.
+LOCK TABLE t1 READ, t2 IN EXCLUSIVE MODE;
+ERROR HY000: Cannot convert to non-transactional lock in strict mode on 't2'
+LOCK TABLE t1 IN SHARE MODE, t2 WRITE;
+ERROR HY000: Cannot convert to non-transactional lock in strict mode on 't1'
+# Lock non-transactional.
+LOCK TABLE t1 READ, t2 WRITE;
+# Try transactional locks on top of the existing non-transactional locks.
+LOCK TABLE t1 IN SHARE MODE, t2 IN EXCLUSIVE MODE;
+ERROR HY000: Cannot convert to non-transactional lock in strict mode on 't1'
+## Error is reported on first table only. Show both errors:
+SHOW WARNINGS;
+Level	Code	Message
+Error	1614	Cannot convert to non-transactional lock in strict mode on 't1'
+Error	1614	Cannot convert to non-transactional lock in strict mode on 't2'
+UNLOCK TABLES;
+SET @@SQL_MODE= @wl3561_save_sql_mode;
+#
+# Reject lock method conversion in an active transaction.
+# Start transaction.
+START TRANSACTION;
+# Try mixed mode locks.
+LOCK TABLE t1 READ, t2 IN EXCLUSIVE MODE;
+ERROR HY000: Cannot convert to non-transactional lock in an active transaction on 't2'
+LOCK TABLE t1 IN SHARE MODE, t2 WRITE;
+ERROR HY000: Cannot convert to non-transactional lock in an active transaction on 't1'
+COMMIT;
+#
+# Implicit lock method conversion for non-transactional storage engine.
+# Create a non-transactional table.
+CREATE TABLE t4 (c4 INT) ENGINE= MyISAM;
+# Request a transactional lock, which is converted to non-transactional.
+LOCK TABLE t4 IN SHARE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't4'
+# Try a conflict with the existing non-transactional lock.
+INSERT INTO t4 VALUES(444);
+ERROR HY000: Table 't4' was locked with a READ lock and can't be updated
+UNLOCK TABLES;
+# Set strict mode.
+SET @@SQL_MODE= 'STRICT_ALL_TABLES';
+# Try a transactional lock, which would need a conversion.
+LOCK TABLE t4 IN SHARE MODE;
+ERROR HY000: Cannot convert to non-transactional lock in strict mode on 't4'
+SET @@SQL_MODE= @wl3561_save_sql_mode;
+#
+# View with transactional and non-transactional storage engine.
+CREATE VIEW v1 AS SELECT * FROM t3, t4 WHERE t3.c3 = t4.c4;
+# Request a share lock on the view, which is converted to read locks.
+LOCK TABLE v1 IN SHARE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't3'
+Warning	1613	Converted to non-transactional lock on 't4'
+# Show that read locks on the base tables prohibit writing ...
+INSERT INTO t3 SELECT * FROM t4;
+ERROR HY000: Table 't3' was locked with a READ lock and can't be updated
+INSERT INTO t4 SELECT * FROM t3;
+ERROR HY000: Table 't4' was locked with a READ lock and can't be updated
+# ... but allow reading.
+SELECT COUNT(*) FROM t3, t4 WHERE t3.c3 = t4.c4;
+COUNT(*)
+0
+SELECT COUNT(*) FROM v1;
+COUNT(*)
+0
+## Report conversion on view due to existing non-transactional locks.
+LOCK TABLE v1 IN EXCLUSIVE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 'v1'
+INSERT INTO t3 VALUES(333);
+INSERT INTO t4 VALUES(444);
+INSERT INTO t1 VALUES(111);
+ERROR HY000: Table 't1' was not locked with LOCK TABLES
+UNLOCK TABLES;
+## Now report conversion on base table again.
+LOCK TABLE v1 IN EXCLUSIVE MODE;
+Warnings:
+Warning	1613	Converted to non-transactional lock on 't3'
+Warning	1613	Converted to non-transactional lock on 't4'
+INSERT INTO t3 VALUES(333);
+INSERT INTO t4 VALUES(444);
+INSERT INTO t1 VALUES(111);
+ERROR HY000: Table 't1' was not locked with LOCK TABLES
+UNLOCK TABLES;
+DROP VIEW v1;
+TRUNCATE t4;
+#
+# Insufficient privileges do not unlock tables nor end transactions.
+# Prepare database, tables and an user with insufficient privileges.
+# Make a new connection with this user.
+CREATE DATABASE mysqltest;
+CREATE TABLE mysqltest.t5 (c5 INT) ENGINE=MyISAM;
+CREATE TABLE mysqltest.t6 (c6 INT) ENGINE=MyISAM;
+CREATE USER mysqltest_1@localhost;
+GRANT SELECT, INSERT ON mysqltest.* TO mysqltest_1@localhost;
+# connection conn1.
+# Show sufficient privileges to lock tables in the test database.
+LOCK TABLE t1 READ, t2 WRITE;
+# Show insufficient privileges in the mysqltest database.
+LOCK TABLE mysqltest.t5 READ, mysqltest.t6 WRITE;
+ERROR 42000: Access denied for user 'mysqltest_1'@'localhost' to database 'mysqltest'
+# Show that the locks in 'test' still exist.
+INSERT INTO t1 SELECT * FROM t2;
+ERROR HY000: Table 't1' was locked with a READ lock and can't be updated
+INSERT INTO t2 SELECT * FROM t1;
+# Unlock tables.
+UNLOCK TABLES;
+# Start transaction.
+START TRANSACTION;
+# Insert a value.
+INSERT INTO t1 VALUES(111);
+# Try a lock that fails on privileges.
+LOCK TABLE mysqltest.t5 READ;
+ERROR 42000: Access denied for user 'mysqltest_1'@'localhost' to database 'mysqltest'
+# Rollback transaction.
+ROLLBACK;
+Warnings:
+Warning	1196	Some non-transactional changed tables couldn't be rolled back
+# Show that the inserted value has gone.
+SELECT * FROM t1;
+c1
+111
+# Drop the connection with the unprivileged user.
+# connection default.
+#
+# Sufficient privileges do unlock tables and end transactions.
+# Grant sufficient privileges to the user.
+# Make a new connection with this user.
+GRANT SELECT, INSERT, LOCK TABLES ON mysqltest.* TO mysqltest_1@localhost;
+# connection conn1.
+# Lock tables in the test database.
+LOCK TABLE t1 READ, t2 WRITE;
+# Lock tables in the mysqltest database.
+LOCK TABLE mysqltest.t5 READ, mysqltest.t6 WRITE;
+# Show that the locks in 'test' have been replaced ...
+INSERT INTO t1 SELECT * FROM t2;
+ERROR HY000: Table 't1' was not locked with LOCK TABLES
+INSERT INTO t2 SELECT * FROM t1;
+ERROR HY000: Table 't2' was not locked with LOCK TABLES
+# ... by the locks in 'mysqltest'.
+INSERT INTO mysqltest.t5 SELECT * FROM mysqltest.t6;
+ERROR HY000: Table 't5' was locked with a READ lock and can't be updated
+INSERT INTO mysqltest.t6 SELECT * FROM mysqltest.t5;
+# Unlock tables.
+UNLOCK TABLES;
+# Start transaction.
+START TRANSACTION;
+# Insert a value.
+INSERT INTO t1 VALUES(111);
+# Take a new lock.
+LOCK TABLE mysqltest.t5 READ;
+# Rollback transaction.
+ROLLBACK;
+UNLOCK TABLES;
+# Show that the inserted value had been committed.
+SELECT * FROM t1;
+c1
+111
+111
+TRUNCATE t1;
+# connection default.
+UNLOCK TABLES;
+DROP USER mysqltest_1@localhost;
+DROP DATABASE mysqltest;
+DROP TABLE t1, t2, t3, t4;
+#
+# WL3594 - transactional LOCK TABLE Testing - Functional tests
+# ============================================================
+# Prepare tables and connections.
+# Set AUTOCOMMIT= 0 in each connection.
+SET AUTOCOMMIT= 0;
+CREATE TABLE t1 (c1 INT) ENGINE=MyISAM;
+CREATE TABLE t2 (c2 INT) ENGINE=MyISAM;
+# connection conn1.
+SET AUTOCOMMIT= 0;
+# connection conn2.
+SET AUTOCOMMIT= 0;
+# connection default.
+#
+# Normal WRITE locks go before readers (autocommit).
+# Set AUTOCOMMIT= 1.
+SET AUTOCOMMIT= 1;
+# Insert a value.
+INSERT INTO t1 VALUES(111);
+# Take a non-transactional lock.
+LOCK TABLE t1 READ;
+# connection conn1.
+# Set AUTOCOMMIT= 1.
+SET AUTOCOMMIT= 1;
+# Take a non-transactional WRITE lock,
+# which waits in background until first read lock is released.
+LOCK TABLE t1 WRITE;
+# connection default.
+# Wait for the helper thread to sit on its lock.
+# connection conn2.
+# Set AUTOCOMMIT= 1.
+SET AUTOCOMMIT= 1;
+# Take a non-transactional READ lock,
+# which waits in background until the WRITE lock is released.
+LOCK TABLE t1 READ;
+# connection default.
+# Wait for the helper threads to sit on their locks.
+# Unlock this connections non-transactional lock.
+UNLOCK TABLES;
+# connection conn1.
+# Now the WRITE lock is taken.
+# Insert a value.
+INSERT INTO t1 VALUES(1111);
+# Unlock table.
+UNLOCK TABLES;
+# connection conn2.
+# Now the READ lock is taken.
+# Select from the table.
+SELECT * FROM t1;
+c1
+111
+1111
+# Unlock table.
+UNLOCK TABLES;
+# connection default.
+TRUNCATE t1;
+#
+# LOW_PRIORITY WRITE locks wait for readers (autocommit).
+# Insert a value.
+INSERT INTO t1 VALUES(111);
+# Take a non-transactional lock.
+LOCK TABLE t1 READ;
+# connection conn1.
+# Take a non-transactional LOW_PRIORITY WRITE lock,
+# which waits in background until all read locks are released.
+LOCK TABLE t1 LOW_PRIORITY WRITE;
+# connection default.
+# Wait for the helper thread to sit on its lock.
+# connection conn2.
+# Take a non-transactional READ lock,
+# which goes before the LOW_PRIORITY WRITE lock.
+LOCK TABLE t1 READ;
+# The READ lock could be taken immediately.
+# Select from the table.
+SELECT * FROM t1;
+c1
+111
+# Unlock table.
+UNLOCK TABLES;
+SET AUTOCOMMIT= 0;
+# connection default.
+# Unlock this connections non-transactional lock.
+UNLOCK TABLES;
+# connection conn1.
+# Now the LOW_PRIORITY WRITE lock is taken.
+# Insert a value.
+INSERT INTO t1 VALUES(1111);
+# Unlock table.
+UNLOCK TABLES;
+SET AUTOCOMMIT= 0;
+# connection default.
+TRUNCATE t1;
+SET AUTOCOMMIT= 0;
+COMMIT;
+#
+# LOCK TABLE is prohibited in stored procedure.
+CREATE PROCEDURE lock_t1_excl()
+LOCK TABLE t1 IN EXCLUSIVE MODE;
+ERROR 0A000: LOCK is not allowed in stored procedures
+#
+# LOCK TABLE is prohibited in trigger.
+CREATE TRIGGER t1_ai AFTER INSERT ON t1 FOR EACH ROW
+LOCK TABLE t2 IN EXCLUSIVE MODE;
+ERROR 0A000: LOCK is not allowed in stored procedures
+## Cleanup.
+SET AUTOCOMMIT= 1;
+UNLOCK TABLES;
+DROP TABLE t1, t2;
+show slave status;;
+Slave_IO_State	#
+Master_Host	127.0.0.1
+Master_User	root
+Master_Port	MASTER_PORT
+Connect_Retry	1
+Master_Log_File	master-bin.000001
+Read_Master_Log_Pos	#
+Relay_Log_File	#
+Relay_Log_Pos	#
+Relay_Master_Log_File	master-bin.000001
+Slave_IO_Running	Yes
+Slave_SQL_Running	Yes
+Replicate_Do_DB	
+Replicate_Ignore_DB	
+Replicate_Do_Table	
+Replicate_Ignore_Table	
+Replicate_Wild_Do_Table	
+Replicate_Wild_Ignore_Table	
+Last_Errno	0
+Last_Error	
+Skip_Counter	0
+Exec_Master_Log_Pos	#
+Relay_Log_Space	#
+Until_Condition	None
+Until_Log_File	
+Until_Log_Pos	0
+Master_SSL_Allowed	No
+Master_SSL_CA_File	
+Master_SSL_CA_Path	
+Master_SSL_Cert	
+Master_SSL_Cipher	
+Master_SSL_Key	
+Seconds_Behind_Master	#
+Master_SSL_Verify_Server_Cert	No
+Last_IO_Errno	0
+Last_IO_Error	
+Last_SQL_Errno	0
+Last_SQL_Error	

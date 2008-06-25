@@ -1,0 +1,54 @@
+stop slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+reset master;
+reset slave;
+drop table if exists t1,t2,t3,t4,t5,t6,t7,t8,t9;
+start slave;
+drop database if exists d1;
+create database d1;
+use d1;
+create table t (s1 int) engine=innodb;
+set @@autocommit=0;
+start transaction;
+insert into t values (1);
+grant select on t to x@y;
+rollback;
+show grants for x@y;
+Grants for x@y
+GRANT USAGE ON *.* TO 'x'@'y'
+GRANT SELECT ON `d1`.`t` TO 'x'@'y'
+show binlog events from <binlog_start>;
+Log_name	Pos	Event_type	Server_id	End_log_pos	Info
+master-bin.000001	#	Query	#	#	drop database if exists d1
+master-bin.000001	#	Query	#	#	create database d1
+master-bin.000001	#	Query	#	#	use `d1`; create table t (s1 int) engine=innodb
+master-bin.000001	#	Query	#	#	use `d1`; BEGIN
+master-bin.000001	#	Query	#	#	use `d1`; insert into t values (1)
+master-bin.000001	#	Xid	#	#	COMMIT /* XID */
+master-bin.000001	#	Query	#	#	use `d1`; grant select on t to x@y
+start transaction;
+insert into t values (2);
+revoke select on t from x@y;
+commit;
+select * from t;
+s1
+1
+2
+show grants for x@y;
+Grants for x@y
+GRANT USAGE ON *.* TO 'x'@'y'
+show binlog events from <binlog_start>;
+Log_name	Pos	Event_type	Server_id	End_log_pos	Info
+master-bin.000001	#	Query	#	#	drop database if exists d1
+master-bin.000001	#	Query	#	#	create database d1
+master-bin.000001	#	Query	#	#	use `d1`; create table t (s1 int) engine=innodb
+master-bin.000001	#	Query	#	#	use `d1`; BEGIN
+master-bin.000001	#	Query	#	#	use `d1`; insert into t values (1)
+master-bin.000001	#	Xid	#	#	COMMIT /* XID */
+master-bin.000001	#	Query	#	#	use `d1`; grant select on t to x@y
+master-bin.000001	#	Query	#	#	use `d1`; BEGIN
+master-bin.000001	#	Query	#	#	use `d1`; insert into t values (2)
+master-bin.000001	#	Xid	#	#	COMMIT /* XID */
+master-bin.000001	#	Query	#	#	use `d1`; revoke select on t from x@y
+drop user x@y;
+drop database d1;
