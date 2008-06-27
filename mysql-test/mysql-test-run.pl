@@ -1513,9 +1513,7 @@ sub executable_setup () {
 		           "$glob_basedir/extra/my_print_defaults");
 
   # Look for perror
-  $exe_perror= mtr_exe_exists(vs_config_dirs('extra', 'perror'),
-			                  "$glob_basedir/extra/perror",
-			                  "$path_client_bindir/perror");
+  $exe_perror= "perror";
 
   # Look for the client binaries
   $exe_mysqlcheck=     mtr_exe_exists("$path_client_bindir/mysqlcheck");
