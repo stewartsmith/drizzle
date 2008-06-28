@@ -478,7 +478,13 @@ int start_slave_thread(pthread_handler h_func, pthread_mutex_t *start_lock,
   start_id= *slave_run_id;
   DBUG_PRINT("info",("Creating new slave thread"));
   if (high_priority)
-    my_pthread_attr_setprio(&connection_attrib,CONNECT_PRIOR);
+  {
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+    tmp_sched_param.sched_priority= CONNECT_PRIOR;
+    (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
+  }
   if (pthread_create(&th, &connection_attrib, h_func, (void*)mi))
   {
     if (start_lock)

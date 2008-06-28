@@ -150,20 +150,6 @@ extern int my_pthread_cond_timedwait(pthread_cond_t *cond,
 #define pthread_cond_timedwait(A,B,C) my_pthread_cond_timedwait((A),(B),(C))
 #endif
 
-#ifndef HAVE_LOCALTIME_R
-struct tm *localtime_r(const time_t *clock, struct tm *res);
-#endif
-
-#ifndef HAVE_GMTIME_R
-struct tm *gmtime_r(const time_t *clock, struct tm *res);
-#endif
-
-#ifdef HAVE_PTHREAD_CONDATTR_CREATE
-/* DCE threads on HPUX 10.20 */
-#define pthread_condattr_init pthread_condattr_create
-#define pthread_condattr_destroy pthread_condattr_delete
-#endif
-
 /* FSU THREADS */
 #if !defined(HAVE_PTHREAD_KEY_DELETE) && !defined(pthread_key_delete)
 #define pthread_key_delete(A) pthread_dummy(0)
@@ -470,8 +456,6 @@ extern my_bool my_thread_init(void);
 extern void my_thread_end(void);
 extern const char *my_thread_name(void);
 extern my_thread_id my_thread_dbug_id(void);
-extern int pthread_no_free(void *);
-extern int pthread_dummy(int);
 
 /* All thread specific variables are in the following struct */
 

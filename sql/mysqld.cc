@@ -1710,10 +1710,16 @@ static void start_signal_handler(void)
   DBUG_ENTER("start_signal_handler");
 
   (void) pthread_attr_init(&thr_attr);
-  pthread_attr_setscope(&thr_attr,PTHREAD_SCOPE_SYSTEM);
-  (void) pthread_attr_setdetachstate(&thr_attr,PTHREAD_CREATE_DETACHED);
+  pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
+  (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
   if (!(opt_specialflag & SPECIAL_NO_PRIOR))
-    my_pthread_attr_setprio(&thr_attr,INTERRUPT_PRIOR);
+  {
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+    tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
+    (void)pthread_attr_setschedparam(&thr_attr, &tmp_sched_param);
+  }
 #if defined(__ia64__) || defined(__ia64)
   /*
     Peculiar things with ia64 platforms - it seems we only have half the
@@ -1829,7 +1835,13 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 #ifdef USE_ONE_SIGNAL_HAND
 	pthread_t tmp;
 	if (!(opt_specialflag & SPECIAL_NO_PRIOR))
-	  my_pthread_attr_setprio(&connection_attrib,INTERRUPT_PRIOR);
+        {
+          struct sched_param tmp_sched_param;
+
+          memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+          tmp_sched_param.sched_priority= INTERRUPT_PRIOR;
+          (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
+        }
 	if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
 			   (void*) &sig))
 	  sql_print_error("Can't create thread to kill server");
@@ -2501,7 +2513,13 @@ static int init_thread_environment()
 				     PTHREAD_CREATE_DETACHED);
   pthread_attr_setscope(&connection_attrib, PTHREAD_SCOPE_SYSTEM);
   if (!(opt_specialflag & SPECIAL_NO_PRIOR))
-    my_pthread_attr_setprio(&connection_attrib,WAIT_PRIOR);
+  {
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+    tmp_sched_param.sched_priority= WAIT_PRIOR;
+    (void)pthread_attr_setschedparam(&connection_attrib, &tmp_sched_param);
+  }
 
   if (pthread_key_create(&THR_THD,NULL) ||
       pthread_key_create(&THR_MALLOC,NULL))
@@ -2918,8 +2936,6 @@ int main(int argc, char **argv)
   }
 #endif
 
-  (void) thr_setconcurrency(concurrency);	// 10 by default
-
   select_thread=pthread_self();
   select_thread_in_use=1;
 
@@ -3272,8 +3288,6 @@ pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused)))
   int ip_flags=0, flags;
   st_vio *vio_tmp;
   DBUG_ENTER("handle_connections_sockets");
-
-  (void) my_pthread_getprio(pthread_self());		// For debugging
 
   FD_ZERO(&clientFDs);
   if (ip_sock != INVALID_SOCKET)
