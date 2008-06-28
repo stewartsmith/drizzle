@@ -1,6 +1,4 @@
 # Can't run test of external client with embedded server
---source include/not_embedded.inc
---source include/not_windows.inc
 
 --exec $MYSQL_SLAP --silent --concurrency=5 --iterations=20 --number-int-cols=2 --number-char-cols=3 --auto-generate-sql
 

@@ -150,13 +150,6 @@ extern int my_pthread_cond_timedwait(pthread_cond_t *cond,
 #define pthread_cond_timedwait(A,B,C) my_pthread_cond_timedwait((A),(B),(C))
 #endif
 
-#if !defined( HAVE_NONPOSIX_PTHREAD_GETSPECIFIC)
-#define my_pthread_getspecific(A,B) ((A) pthread_getspecific(B))
-#else
-#define my_pthread_getspecific(A,B) ((A) my_pthread_getspecific_imp(B))
-void *my_pthread_getspecific_imp(pthread_key_t key);
-#endif
-
 #ifndef HAVE_LOCALTIME_R
 struct tm *localtime_r(const time_t *clock, struct tm *res);
 #endif

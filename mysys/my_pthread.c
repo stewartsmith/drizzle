@@ -66,21 +66,6 @@ void my_pthread_attr_setprio(pthread_attr_t *attr, int priority)
 }
 #endif
 
-
-/* To allow use of pthread_getspecific with two arguments */
-
-#ifdef HAVE_NONPOSIX_PTHREAD_GETSPECIFIC
-#undef pthread_getspecific
-
-void *my_pthread_getspecific_imp(pthread_key_t key)
-{
-  void *value;
-  if (pthread_getspecific(key,(void *) &value))
-    return 0;
-  return value;
-}
-#endif
-
 /*
   Some functions for RTS threads, AIX, Siemens Unix and UnixWare 7
   (and DEC OSF/1 3.2 too)

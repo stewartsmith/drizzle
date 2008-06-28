@@ -684,7 +684,7 @@ typedef struct st_sql_list {
 extern pthread_key(THD*, THR_THD);
 inline THD *_current_thd(void)
 {
-  return my_pthread_getspecific_ptr(THD*,THR_THD);
+  return (THD *)pthread_getspecific(THR_THD);
 }
 #define current_thd _current_thd()
 

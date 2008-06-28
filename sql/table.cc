@@ -510,7 +510,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
   /* No handling of text based files yet */
   if (table_type == 1)
   {
-    root_ptr= my_pthread_getspecific_ptr(MEM_ROOT**, THR_MALLOC);
+    root_ptr= (MEM_ROOT **)pthread_getspecific(THR_MALLOC);
     old_root= *root_ptr;
     *root_ptr= &share->mem_root;
     error= open_binary_frm(thd, share, head, file);
