@@ -23,21 +23,7 @@
 #include <m_string.h>
 #include <thr_alarm.h>
 
-#define SCHED_POLICY SCHED_OTHER
-
 uint thd_lib_detected= 0;
-
-#ifndef my_pthread_setprio
-void my_pthread_setprio(pthread_t thread_id,int prior)
-{
-#ifdef HAVE_PTHREAD_SETSCHEDPARAM
-  struct sched_param tmp_sched_param;
-  bzero((char*) &tmp_sched_param,sizeof(tmp_sched_param));
-  tmp_sched_param.sched_priority=prior;
-  VOID(pthread_setschedparam(thread_id,SCHED_POLICY,&tmp_sched_param));
-#endif
-}
-#endif
 
 #ifndef my_pthread_getprio
 int my_pthread_getprio(pthread_t thread_id)

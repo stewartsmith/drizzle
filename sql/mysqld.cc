@@ -2894,35 +2894,26 @@ int main(int argc, char **argv)
 
   init_signals();
   if (!(opt_specialflag & SPECIAL_NO_PRIOR))
-    my_pthread_setprio(pthread_self(),CONNECT_PRIOR);
-#if defined(__ia64__) || defined(__ia64)
-  /*
-    Peculiar things with ia64 platforms - it seems we only have half the
-    stack size in reality, so we have to double it here
-  */
-  pthread_attr_setstacksize(&connection_attrib,my_thread_stack_size*2);
-#else
+  {
+    struct sched_param tmp_sched_param;
+
+    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+    tmp_sched_param.sched_priority= my_thread_stack_size*2;
+    (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
+  }
   pthread_attr_setstacksize(&connection_attrib,my_thread_stack_size);
-#endif
 #ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
   {
     /* Retrieve used stack size;  Needed for checking stack overflows */
     size_t stack_size= 0;
     pthread_attr_getstacksize(&connection_attrib, &stack_size);
-#if defined(__ia64__) || defined(__ia64)
-    stack_size/= 2;
-#endif
     /* We must check if stack_size = 0 as Solaris 2.9 can return 0 here */
     if (stack_size && stack_size < my_thread_stack_size)
     {
       if (global_system_variables.log_warnings)
 	sql_print_warning("Asked for %lu thread stack, but got %ld",
 			  my_thread_stack_size, (long) stack_size);
-#if defined(__ia64__) || defined(__ia64)
-      my_thread_stack_size= stack_size*2;
-#else
       my_thread_stack_size= stack_size;
-#endif
     }
   }
 #endif
@@ -4900,9 +4891,6 @@ static void mysql_init_variables(void)
   have_compress= SHOW_OPTION_YES;
 #else
   have_compress= SHOW_OPTION_NO;
-#endif
-#if !defined(my_pthread_setprio) && !defined(HAVE_PTHREAD_SETSCHEDPARAM)
-  opt_specialflag |= SPECIAL_NO_PRIOR;
 #endif
 
   const char *tmpenv;

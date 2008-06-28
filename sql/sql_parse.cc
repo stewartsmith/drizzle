@@ -878,7 +878,13 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     DBUG_PRINT("query",("%-.4096s",thd->query));
 
     if (!(specialflag & SPECIAL_NO_PRIOR))
-      my_pthread_setprio(pthread_self(),QUERY_PRIOR);
+    {
+      struct sched_param tmp_sched_param;
+
+      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+      tmp_sched_param.sched_priority= QUERY_PRIOR;
+      (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
+    }
 
     mysql_parse(thd, thd->query, thd->query_length, &end_of_stmt);
 
@@ -918,7 +924,13 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     }
 
     if (!(specialflag & SPECIAL_NO_PRIOR))
-      my_pthread_setprio(pthread_self(),WAIT_PRIOR);
+    {
+      struct sched_param tmp_sched_param;
+
+      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
+      tmp_sched_param.sched_priority= WAIT_PRIOR;
+      (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
+    }
     DBUG_PRINT("info",("query ready"));
     break;
   }

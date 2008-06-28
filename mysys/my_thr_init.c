@@ -255,7 +255,7 @@ my_bool my_thread_init(void)
           (ulong) pthread_self());
 #endif  
 
-  if (my_pthread_getspecific(struct st_my_thread_var *,THR_KEY_mysys))
+  if (pthread_getspecific(THR_KEY_mysys))
   {
 #ifdef EXTRA_DEBUG_THREADS
     fprintf(stderr,"my_thread_init() called more than once in thread 0x%lx\n",
@@ -303,7 +303,7 @@ end:
 void my_thread_end(void)
 {
   struct st_my_thread_var *tmp;
-  tmp= my_pthread_getspecific(struct st_my_thread_var*,THR_KEY_mysys);
+  tmp= (struct st_my_thread_var *)pthread_getspecific(THR_KEY_mysys);
 
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_end(): tmp: 0x%lx  pthread_self: 0x%lx  thread_id: %ld\n",
@@ -351,8 +351,7 @@ void my_thread_end(void)
 
 struct st_my_thread_var *_my_thread_var(void)
 {
-  struct st_my_thread_var *tmp=
-    my_pthread_getspecific(struct st_my_thread_var*,THR_KEY_mysys);
+  struct st_my_thread_var *tmp= (struct st_my_thread_var*)pthread_getspecific(THR_KEY_mysys);
 #if defined(USE_TLS)
   /* This can only happen in a .DLL */
   if (!tmp)
