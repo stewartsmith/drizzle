@@ -22,6 +22,8 @@
 #include <m_string.h>
 #include <signal.h>
 
+uint thd_lib_detected= 0;
+
 #ifdef THREAD
 #ifdef USE_TLS
 pthread_key(struct st_my_thread_var*, THR_KEY_mysys);

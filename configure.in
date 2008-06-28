@@ -763,51 +763,6 @@ then
   )
 fi
 
-#--------------------------------------------------------------------
-# Check for TCP wrapper support
-#--------------------------------------------------------------------
-
-if test "$TARGET_LINUX" = "true"; then
-  AC_ARG_WITH(pstack,
-    [  --with-pstack           Use the pstack backtrace library],
-    [ USE_PSTACK=$withval ],
-    [ USE_PSTACK=no ])
-  pstack_libs=
-  pstack_dir=
-  if test "$USE_PSTACK" = yes -a "$TARGET_LINUX" = "true" -a "$BASE_MACHINE_TYPE" = "i386"
-  then
-    have_libiberty= have_libbfd=
-    my_save_LIBS="$LIBS"
-dnl I have no idea if this is a good test - can not find docs for libiberty  
-    AC_CHECK_LIB([iberty], [fdmatch],
-      [have_libiberty=yes
-       AC_CHECK_LIB([bfd], [bfd_openr], [have_libbfd=yes], , [-liberty])])
-    LIBS="$my_save_LIBS"
-
-    if test x"$have_libiberty" = xyes -a x"$have_libbfd" = xyes
-    then
-      pstack_dir="pstack"
-      pstack_libs="../pstack/libpstack.a -lbfd -liberty"
-      # We must link staticly when using pstack
-      with_mysqld_ldflags="-all-static"
-      AC_SUBST([pstack_dir])
-      AC_SUBST([pstack_libs])
-      AC_DEFINE([USE_PSTACK], [1], [the pstack backtrace library])
-dnl This check isn't needed, but might be nice to give some feedback....
-dnl    AC_CHECK_HEADER(libiberty.h,
-dnl      have_libiberty_h=yes,
-dnl      have_libiberty_h=no)
-    else
-      USE_PSTACK="no"
-    fi
-  else
-    USE_PSTACK="no"
-  fi
-fi
-AC_MSG_CHECKING([if we should use pstack])
-AC_MSG_RESULT([$USE_PSTACK])
-
-# Check for gtty if termio.h doesn't exists
 if test "$ac_cv_header_termio_h" = "no" -a "$ac_cv_header_termios_h" = "no"
 then
   AC_CHECK_FUNC(gtty, , AC_CHECK_LIB(compat, gtty))
@@ -1830,7 +1785,7 @@ then
   AC_DEFINE([THREAD], [1],
             [Define if you want to have threaded code. This may be undef on client code])
   # Avoid _PROGRAMS names
-  THREAD_LOBJECTS="thr_alarm.o thr_lock.o thr_mutex.o thr_rwlock.o my_pthread.o my_thr_init.o mf_keycache.o"
+  THREAD_LOBJECTS="thr_alarm.o thr_lock.o thr_mutex.o thr_rwlock.o my_thr_init.o mf_keycache.o"
   AC_SUBST(THREAD_LOBJECTS)
   server_scripts="mysqld_safe mysql_install_db"
   sql_server_dirs="strings mysys dbug extra regex"
@@ -1882,11 +1837,6 @@ case $SYSTEM_TYPE in
     ;;
 esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
-
-# Output results
-if test -d "$srcdir/pstack" ; then
-  AC_CONFIG_FILES(pstack/Makefile pstack/aout/Makefile)
-fi
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  unittest/Makefile unittest/mytap/Makefile unittest/mytap/t/Makefile dnl

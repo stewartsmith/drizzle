@@ -22,14 +22,12 @@ EXTRA_DIST =
 
 SUBDIRS =		. include \
 			sql-common scripts \
-			@pstack_dir@ \
 			@sql_union_dirs@ unittest storage plugin \
 			@sql_server@ tests \
 			mysql-test support-files
 
 DIST_SUBDIRS =		. include \
 			sql-common scripts \
-			pstack \
 			strings mysys dbug extra regex libmysql libmysql_r client unittest storage plugin \
 			vio sql tests \
 			mysql-test support-files \

@@ -45,7 +45,7 @@ SUPPORTING_LIBS =	$(top_builddir)/vio/libvio.a \
 mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
 mysqld_LDADD =		@MYSQLD_EXTRA_LDFLAGS@ \
-			@pstack_libs@ $(libevent_libs) \
+			$(libevent_libs) \
 			@mysql_plugin_libs@ \
 			$(LDADD)  $(CXXLDFLAGS) @LIBDL@ \
 			@MYSQLD_EXTRA_LIBS@
