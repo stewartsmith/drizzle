@@ -2159,7 +2159,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     to hold the suppressed trailing zeros.
   */
 
-  int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1,
+  int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1= 0,
     j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
     spec_case, try_quick;
   Long L;

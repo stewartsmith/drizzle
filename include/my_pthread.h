@@ -29,17 +29,9 @@ extern "C" {
 #define EXTERNC
 #endif /* __cplusplus */ 
 
-#ifdef HAVE_rts_threads
-#define sigwait org_sigwait
-#include <signal.h>
-#undef sigwait
-#endif
 #include <pthread.h>
 #ifndef _REENTRANT
 #define _REENTRANT
-#endif
-#ifdef HAVE_THR_SETCONCURRENCY
-#include <thread.h>			/* Probably solaris */
 #endif
 #ifdef HAVE_SCHED_H
 #include <sched.h>
@@ -47,8 +39,6 @@ extern "C" {
 #ifdef HAVE_SYNCH_H
 #include <synch.h>
 #endif
-
-extern int my_pthread_getprio(pthread_t thread_id);
 
 #define pthread_key(T,V) pthread_key_t V
 #define my_pthread_getspecific_ptr(T,V) my_pthread_getspecific(T,(V))
@@ -69,10 +59,6 @@ extern int my_pthread_create_detached;
 #define USE_ALARM_THREAD
 #endif /* defined(PTHREAD_SCOPE_GLOBAL) && !defined(PTHREAD_SCOPE_SYSTEM) */
 
-#if defined(_BSDI_VERSION) && _BSDI_VERSION < 199910
-int sigwait(sigset_t *set, int *sig);
-#endif
-
 #ifndef HAVE_NONPOSIX_SIGWAIT
 #define my_sigwait(A,B) sigwait((A),(B))
 #else
@@ -80,11 +66,9 @@ int my_sigwait(const sigset_t *set,int *sig);
 #endif
 
 #ifdef HAVE_NONPOSIX_PTHREAD_MUTEX_INIT
-#ifndef SAFE_MUTEX
 #define pthread_mutex_init(a,b) my_pthread_mutex_init((a),(b))
 extern int my_pthread_mutex_init(pthread_mutex_t *mp,
 				 const pthread_mutexattr_t *attr);
-#endif /* SAFE_MUTEX */
 #define pthread_cond_init(a,b) my_pthread_cond_init((a),(b))
 extern int my_pthread_cond_init(pthread_cond_t *mp,
 				const pthread_condattr_t *attr);
@@ -143,7 +127,7 @@ extern void my_pthread_attr_setprio(pthread_attr_t *attr, int priority);
 #define pthread_attr_setscope(A,B)
 #endif
 
-#if defined(HAVE_BROKEN_PTHREAD_COND_TIMEDWAIT) && !defined(SAFE_MUTEX)
+#if defined(HAVE_BROKEN_PTHREAD_COND_TIMEDWAIT)
 extern int my_pthread_cond_timedwait(pthread_cond_t *cond,
 				     pthread_mutex_t *mutex,
 				     struct timespec *abstime);
@@ -266,26 +250,7 @@ typedef struct st_safe_mutex_t
   const char *file;
   uint line,count;
   pthread_t thread;
-#ifdef SAFE_MUTEX_DETECT_DESTROY
-  struct st_safe_mutex_info_t *info;	/* to track destroying of mutexes */
-#endif
 } safe_mutex_t;
-
-#ifdef SAFE_MUTEX_DETECT_DESTROY
-/*
-  Used to track the destroying of mutexes. This needs to be a seperate
-  structure because the safe_mutex_t structure could be freed before
-  the mutexes are destroyed.
-*/
-
-typedef struct st_safe_mutex_info_t
-{
-  struct st_safe_mutex_info_t *next;
-  struct st_safe_mutex_info_t *prev;
-  const char *init_file;
-  uint32 init_line;
-} safe_mutex_info_t;
-#endif /* SAFE_MUTEX_DETECT_DESTROY */
 
 int safe_mutex_init(safe_mutex_t *mp, const pthread_mutexattr_t *attr,
                     const char *file, uint line);
@@ -300,37 +265,10 @@ void safe_mutex_global_init(void);
 void safe_mutex_end(FILE *file);
 
 	/* Wrappers if safe mutex is actually used */
-#ifdef SAFE_MUTEX
-#undef pthread_mutex_init
-#undef pthread_mutex_lock
-#undef pthread_mutex_unlock
-#undef pthread_mutex_destroy
-#undef pthread_mutex_wait
-#undef pthread_mutex_timedwait
-#undef pthread_mutex_t
-#undef pthread_cond_wait
-#undef pthread_cond_timedwait
-#undef pthread_mutex_trylock
-#define pthread_mutex_init(A,B) safe_mutex_init((A),(B),__FILE__,__LINE__)
-#define pthread_mutex_lock(A) safe_mutex_lock((A), FALSE, __FILE__, __LINE__)
-#define pthread_mutex_unlock(A) safe_mutex_unlock((A),__FILE__,__LINE__)
-#define pthread_mutex_destroy(A) safe_mutex_destroy((A),__FILE__,__LINE__)
-#define pthread_cond_wait(A,B) safe_cond_wait((A),(B),__FILE__,__LINE__)
-#define pthread_cond_timedwait(A,B,C) safe_cond_timedwait((A),(B),(C),__FILE__,__LINE__)
-#define pthread_mutex_trylock(A) safe_mutex_lock((A), TRUE, __FILE__, __LINE__)
-#define pthread_mutex_t safe_mutex_t
-#define safe_mutex_assert_owner(mp) \
-          DBUG_ASSERT((mp)->count > 0 && \
-                      pthread_equal(pthread_self(), (mp)->thread))
-#define safe_mutex_assert_not_owner(mp) \
-          DBUG_ASSERT(! (mp)->count || \
-                      ! pthread_equal(pthread_self(), (mp)->thread))
-#else
 #define safe_mutex_assert_owner(mp)
 #define safe_mutex_assert_not_owner(mp)
-#endif /* SAFE_MUTEX */
 
-#if defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX)
+#if defined(MY_PTHREAD_FASTMUTEX)
 typedef struct st_my_pthread_fastmutex_t
 {
   pthread_mutex_t mutex;
@@ -360,7 +298,7 @@ int my_pthread_fastmutex_lock(my_pthread_fastmutex_t *mp);
 #define pthread_cond_timedwait(A,B,C) pthread_cond_timedwait((A),&(B)->mutex,(C))
 #define pthread_mutex_trylock(A) pthread_mutex_trylock(&(A)->mutex)
 #define pthread_mutex_t my_pthread_fastmutex_t
-#endif /* defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX) */
+#endif /* defined(MY_PTHREAD_FASTMUTEX) */
 
 	/* READ-WRITE thread locking */
 
@@ -544,25 +482,13 @@ extern uint thd_lib_detected;
 /*
   statistics_xxx functions are for non critical statistic,
   maintained in global variables.
-  When compiling with SAFE_STATISTICS:
-  - race conditions can not occur.
-  - some locking occurs, which may cause performance degradation.
-
-  When compiling without SAFE_STATISTICS:
   - race conditions can occur, making the result slightly inaccurate.
   - the lock given is not honored.
 */
-#ifdef SAFE_STATISTICS
-#define statistic_increment(V,L) thread_safe_increment((V),(L))
-#define statistic_decrement(V,L) thread_safe_decrement((V),(L))
-#define statistic_add(V,C,L)     thread_safe_add((V),(C),(L))
-#define statistic_sub(V,C,L)     thread_safe_sub((V),(C),(L))
-#else
 #define statistic_decrement(V,L) (V)--
 #define statistic_increment(V,L) (V)++
 #define statistic_add(V,C,L)     (V)+=(C)
 #define statistic_sub(V,C,L)     (V)-=(C)
-#endif /* SAFE_STATISTICS */
 
 /*
   No locking needed, the counter is owned by the thread
