@@ -215,8 +215,6 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_WARNS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ERRORS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_ENGINE_STATUS]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_ENGINE_MUTEX]= CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_ENGINE_LOGS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_PROCESSLIST]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE_DB]=  CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CREATE]=  CF_STATUS_COMMAND;
@@ -1658,11 +1656,6 @@ mysql_execute_command(THD *thd)
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
       res = ha_show_status(thd, lex->create_info.db_type, HA_ENGINE_STATUS);
-      break;
-    }
-  case SQLCOM_SHOW_ENGINE_MUTEX:
-    {
-      res = ha_show_status(thd, lex->create_info.db_type, HA_ENGINE_MUTEX);
       break;
     }
   case SQLCOM_CREATE_TABLE:

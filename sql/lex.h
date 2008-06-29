@@ -319,7 +319,6 @@ static SYMBOL symbols[] = {
   { "MODIFIES",		SYM(MODIFIES_SYM)},
   { "MODIFY",		SYM(MODIFY_SYM)},
   { "MONTH",		SYM(MONTH_SYM)},
-  { "MUTEX",  SYM(MUTEX_SYM)},
   { "NAME",             SYM(NAME_SYM)},
   { "NAMES",		SYM(NAMES_SYM)},
   { "NATIONAL",		SYM(NATIONAL_SYM)},

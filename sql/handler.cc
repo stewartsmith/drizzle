@@ -4660,18 +4660,6 @@ static bool stat_print(THD *thd, const char *type, uint type_len,
   return FALSE;
 }
 
-
-static my_bool showstat_handlerton(THD *thd, plugin_ref plugin,
-                                   void *arg)
-{
-  enum ha_stat_type stat= *(enum ha_stat_type *) arg;
-  handlerton *hton= plugin_data(plugin, handlerton *);
-  if (hton->state == SHOW_OPTION_YES && hton->show_status &&
-      hton->show_status(hton, thd, stat_print, stat))
-    return TRUE;
-  return FALSE;
-}
-
 bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
 {
   List<Item> field_list;
@@ -4686,23 +4674,8 @@ bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return TRUE;
 
-  if (db_type == NULL)
-  {
-    result= plugin_foreach(thd, showstat_handlerton,
-                           MYSQL_STORAGE_ENGINE_PLUGIN, &stat);
-  }
-  else
-  {
-    if (db_type->state != SHOW_OPTION_YES)
-    {
-      const LEX_STRING *name=&hton2plugin[db_type->slot]->name;
-      result= stat_print(thd, name->str, name->length,
-                         "", 0, "DISABLED", 8) ? 1 : 0;
-    }
-    else
-      result= db_type->show_status &&
-              db_type->show_status(db_type, thd, stat_print, stat) ? 1 : 0;
-  }
+  result= db_type->show_status &&
+    db_type->show_status(db_type, thd, stat_print, stat) ? 1 : 0;
 
   if (!result)
     my_eof(thd);
