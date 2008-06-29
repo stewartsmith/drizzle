@@ -2162,7 +2162,7 @@ void sys_var_log_state::set_default(THD *thd, enum_var_type type)
 static int  sys_check_log_path(THD *thd,  set_var *var)
 {
   char path[FN_REFLEN], buff[FN_REFLEN];
-  MY_STAT f_stat;
+  struct stat f_stat;
   String str(buff, sizeof(buff), system_charset_info), *res;
   const char *log_file_str;
   size_t path_length;
@@ -2171,7 +2171,7 @@ static int  sys_check_log_path(THD *thd,  set_var *var)
     goto err;
 
   log_file_str= res->c_ptr();
-  bzero(&f_stat, sizeof(MY_STAT));
+  bzero(&f_stat, sizeof(struct stat));
 
   path_length= unpack_filename(path, log_file_str);
 
@@ -2182,7 +2182,7 @@ static int  sys_check_log_path(THD *thd,  set_var *var)
     goto err;
   }
 
-  if (my_stat(path, &f_stat, MYF(0)))
+  if (!stat(path, &f_stat))
   {
     /*
       A file system object exists. Check if argument is a file and we have

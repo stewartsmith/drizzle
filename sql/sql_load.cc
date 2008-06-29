@@ -307,8 +307,8 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
         DBUG_RETURN(TRUE);
       }
 
-      MY_STAT stat_info;
-      if (!my_stat(name,&stat_info,MYF(MY_WME)))
+      struct stat stat_info;
+      if (stat(name,&stat_info))
 	DBUG_RETURN(TRUE);
 
       // if we are not in slave thread, the file must be:

@@ -607,7 +607,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
   char	 tmp_query[FN_REFLEN+16];
   long result= 1;
   int error= 0;
-  MY_STAT stat_info;
+  struct stat stat_info;
   uint create_options= create_info ? create_info->options : 0;
   uint path_len;
   DBUG_ENTER("mysql_create_db");
@@ -643,7 +643,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
   path_len= build_table_filename(path, sizeof(path), db, "", "", 0);
   path[path_len-1]= 0;                    // Remove last '/' from path
 
-  if (my_stat(path,&stat_info,MYF(0)))
+  if (!stat(path,&stat_info))
   {
     if (!(create_options & HA_LEX_CREATE_IF_NOT_EXISTS))
     {
@@ -660,9 +660,9 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
   }
   else
   {
-    if (my_errno != ENOENT)
+    if (errno != ENOENT)
     {
-      my_error(EE_STAT, MYF(0), path, my_errno);
+      my_error(EE_STAT, MYF(0), path, errno);
       goto exit;
     }
     if (my_mkdir(path,0777,MYF(0)) < 0)

@@ -260,7 +260,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
 	end= strend(buff);
 	if (end != buff && end[-1] == FN_LIBCHAR)
 	  end[-1]= 0;				// Remove end FN_LIBCHAR
-        if (!my_stat(buff, file->mystat, MYF(0)))
+        if (stat(buff, file->mystat))
                continue;
        }
 #endif
@@ -2832,13 +2832,13 @@ int fill_schema_schemata(THD *thd, TABLE_LIST *tables, COND *cond)
   {
     char path[FN_REFLEN+16];
     uint path_len;
-    MY_STAT stat_info;
+    struct stat stat_info;
     if (!lookup_field_vals.db_value.str[0])
       DBUG_RETURN(0);
     path_len= build_table_filename(path, sizeof(path),
                                    lookup_field_vals.db_value.str, "", "", 0);
     path[path_len-1]= 0;
-    if (!my_stat(path,&stat_info,MYF(0)))
+    if (stat(path,&stat_info))
       DBUG_RETURN(0);
   }
 

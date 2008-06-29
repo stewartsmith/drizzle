@@ -81,16 +81,8 @@ TODO:
 #include <signal.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#ifndef __WIN__
 #include <sys/wait.h>
-#endif
 #include <ctype.h>
-
-#ifdef __WIN__
-#define srandom  srand
-#define random   rand
-#define snprintf _snprintf
-#endif
 
 #ifdef HAVE_SMEM 
 static char *shared_memory_base_name=0;
@@ -316,18 +308,6 @@ static long int timedif(struct timeval a, struct timeval b)
     s *= 1000;
     return s + us;
 }
-
-#ifdef __WIN__
-static int gettimeofday(struct timeval *tp, void *tzp)
-{
-  unsigned int ticks;
-  ticks= GetTickCount();
-  tp->tv_usec= ticks*1000;
-  tp->tv_sec= ticks/1000;
-
-  return 0;
-}
-#endif
 
 int main(int argc, char **argv)
 {
@@ -671,10 +651,6 @@ static struct my_option my_long_options[] =
   {"password", 'p',
     "Password to use when connecting to server. If password is not given it's "
       "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __WIN__
-  {"pipe", 'W', "Use named pipes to connect to server.", 0, 0, 0, GET_NO_ARG,
-    NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"port", 'P', "Port number to use for connection.", (uchar**) &opt_mysql_port,
     (uchar**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, MYSQL_PORT, 0, 0, 0, 0,
     0},
@@ -769,11 +745,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 {
   DBUG_ENTER("get_one_option");
   switch(optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case 'v':
     verbose++;
     break;
@@ -1267,7 +1238,7 @@ get_options(int *argc,char ***argv)
 {
   int ho_error;
   char *tmp_string;
-  MY_STAT sbuf;  /* Stat information for the data file */
+  struct stat sbuf;
   option_string *sql_type;
   unsigned int sql_type_count= 0;
 
@@ -1521,7 +1492,7 @@ get_options(int *argc,char ***argv)
   }
   else
   {
-    if (create_string && my_stat(create_string, &sbuf, MYF(0)))
+    if (create_string && !stat(create_string, &sbuf))
     {
       File data_file;
       if (!MY_S_ISREG(sbuf.st_mode))
@@ -1558,7 +1529,7 @@ get_options(int *argc,char ***argv)
                                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
     }
 
-    if (user_supplied_query && my_stat(user_supplied_query, &sbuf, MYF(0)))
+    if (user_supplied_query && !stat(user_supplied_query, &sbuf))
     {
       File data_file;
       if (!MY_S_ISREG(sbuf.st_mode))
@@ -1589,7 +1560,8 @@ get_options(int *argc,char ***argv)
     }
   }
 
-  if (user_supplied_pre_statements && my_stat(user_supplied_pre_statements, &sbuf, MYF(0)))
+  if (user_supplied_pre_statements
+      && !stat(user_supplied_pre_statements, &sbuf))
   {
     File data_file;
     if (!MY_S_ISREG(sbuf.st_mode))
@@ -1620,7 +1592,8 @@ get_options(int *argc,char ***argv)
                           delimiter[0]);
   }
 
-  if (user_supplied_post_statements && my_stat(user_supplied_post_statements, &sbuf, MYF(0)))
+  if (user_supplied_post_statements
+      && !stat(user_supplied_post_statements, &sbuf))
   {
     File data_file;
     if (!MY_S_ISREG(sbuf.st_mode))

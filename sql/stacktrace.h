@@ -55,14 +55,7 @@ void safe_print_str(const char* name, const char* val, int max_len);
 #endif /* HAVE_STACKTRACE */
 
 
-#if !defined(__NETWARE__)
-#define HAVE_WRITE_CORE
-#endif
-
-#ifdef HAVE_WRITE_CORE
 void write_core(int sig);
-#endif
-
 
 #ifdef	__cplusplus
 }

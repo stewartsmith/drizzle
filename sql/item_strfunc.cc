@@ -2483,14 +2483,14 @@ void Item_func_binary::print(String *str, enum_query_type query_type)
 }
 
 
-#include <my_dir.h>				// For my_stat
+#include <my_dir.h>
 
 String *Item_load_file::val_str(String *str)
 {
   DBUG_ASSERT(fixed == 1);
   String *file_name;
   File file;
-  MY_STAT stat_info;
+  struct stat stat_info;
   char path[FN_REFLEN];
   DBUG_ENTER("load_file");
 
@@ -2505,7 +2505,7 @@ String *Item_load_file::val_str(String *str)
       strncmp(opt_secure_file_priv, path, strlen(opt_secure_file_priv)))
     goto err;
 
-  if (!my_stat(path, &stat_info, MYF(0)))
+  if (stat(path, &stat_info))
     goto err;
 
   if (!(stat_info.st_mode & S_IROTH))

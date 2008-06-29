@@ -269,7 +269,7 @@ static int create_sys_files(struct languages *lang_head,
   struct languages *tmp_lang;
   struct errors *tmp_error;
 
-  MY_STAT stat_info;
+  struct stat stat_info;
   DBUG_ENTER("create_sys_files");
 
   /*
@@ -288,7 +288,7 @@ static int create_sys_files(struct languages *lang_head,
 
     outfile_end= strxmov(outfile, DATADIRECTORY, 
                          tmp_lang->lang_long_name, NullS);
-    if (!my_stat(outfile, &stat_info,MYF(0)))
+    if (stat(outfile, &stat_info))
     {
       if (my_mkdir(outfile, 0777,MYF(0)) < 0)
       {
