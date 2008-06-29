@@ -324,7 +324,7 @@ uint lower_case_table_names;
 uint tc_heuristic_recover= 0;
 uint volatile thread_count, thread_running;
 ulonglong thd_startup_options;
-ulong back_log, connect_timeout, concurrency, server_id;
+ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
 ulong query_buff_size, slow_launch_time, slave_open_temp_tables;
@@ -4463,10 +4463,6 @@ The minimum value for this variable is 4096.",
    "How many threads we should keep in a cache for reuse.",
    (uchar**) &thread_cache_size, (uchar**) &thread_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 16384, 0, 1, 0},
-  {"thread_concurrency", OPT_THREAD_CONCURRENCY,
-   "Permits the application to give the threads system a hint for the desired number of threads that should be run at the same time.",
-   (uchar**) &concurrency, (uchar**) &concurrency, 0, GET_ULONG, REQUIRED_ARG,
-   DEFAULT_CONCURRENCY, 1, 512, 0, 1, 0},
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
    "How many threads we should create to handle query requests in case of 'thread_handling=pool-of-threads'",
    (uchar**) &thread_pool_size, (uchar**) &thread_pool_size, 0, GET_ULONG,

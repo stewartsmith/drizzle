@@ -197,7 +197,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
   int flag;
   ulong halfbuff,hashnr,first_index;
   uchar *ptr_to_rec,*ptr_to_rec2;
-  HASH_INFO *empty,*gpos,*gpos2,*pos;
+  HASH_INFO *empty, *gpos, *gpos2= NULL, *pos;
   DBUG_ENTER("hp_write_key");
 
   flag=0;

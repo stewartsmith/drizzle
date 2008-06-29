@@ -701,7 +701,7 @@ const char *set_thd_proc_info(THD *thd, const char *info,
 /*
   External variables
 */
-extern ulong server_id, concurrency;
+extern ulong server_id;
 
 
 typedef my_bool (*qc_engine_callback)(THD *thd, char *table_key,
