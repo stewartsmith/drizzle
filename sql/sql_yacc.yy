@@ -579,7 +579,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  FRAC_SECOND_SYM
 %token  FROM
 %token  FULL                          /* SQL-2003-R */
-%token  FUNCTION_SYM                  /* SQL-2003-R */
 %token  GE
 %token  GET_FORMAT                    /* MYSQL-FUNC */
 %token  GLOBAL_SYM                    /* SQL-2003-R */
@@ -880,13 +879,11 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TRUNCATE_SYM
 %token  TYPES_SYM
 %token  TYPE_SYM                      /* SQL-2003-N */
-%token  UDF_RETURNS_SYM
 %token  ULONGLONG_NUM
 %token  UNCOMMITTED_SYM               /* SQL-2003-N */
 %token  UNDEFINED_SYM
 %token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
-%token  UNDO_BUFFER_SIZE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
 %token  UNICODE_SYM
 %token  UNINSTALL_SYM
@@ -5205,16 +5202,6 @@ drop:
             lex->drop_if_exists=$3;
             lex->name= $4;
           }
-        | DROP FUNCTION_SYM if_exists ident
-          {
-            THD *thd= YYTHD;
-            LEX *lex= thd->lex;
-            lex->sql_command = SQLCOM_DROP_FUNCTION;
-            lex->drop_if_exists= $3;
-            lex->udf.name = $4;
-          }
-        ;
-
 table_list:
           table_name
         | table_list ',' table_name
@@ -6841,11 +6828,8 @@ keyword_sp:
         | TIME_SYM                 {}
         | TYPES_SYM                {}
         | TYPE_SYM                 {}
-        | UDF_RETURNS_SYM          {}
-        | FUNCTION_SYM             {}
         | UNCOMMITTED_SYM          {}
         | UNDEFINED_SYM            {}
-        | UNDO_BUFFER_SIZE_SYM     {}
         | UNDOFILE_SYM             {}
         | UNKNOWN_SYM              {}
         | UNTIL_SYM                {}
