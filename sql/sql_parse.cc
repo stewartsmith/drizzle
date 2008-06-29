@@ -139,7 +139,6 @@ bool begin_trans(THD *thd)
   return error;
 }
 
-#ifdef HAVE_REPLICATION
 /**
   Returns true if all tables should be ignored.
 */
@@ -148,7 +147,6 @@ inline bool all_tables_not_ok(THD *thd, TABLE_LIST *tables)
   return rpl_filter->is_on() && tables &&
          !rpl_filter->tables_ok(thd->db, tables);
 }
-#endif
 
 
 static bool some_non_temp_table_to_be_updated(THD *thd, TABLE_LIST *tables)
@@ -211,7 +209,6 @@ void init_update_queries(void)
   sql_command_flags[SQLCOM_SHOW_VARIABLES]=   CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_CHARSETS]=    CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_COLLATIONS]=  CF_STATUS_COMMAND;
-  sql_command_flags[SQLCOM_SHOW_NEW_MASTER]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOGS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_SLAVE_HOSTS]= CF_STATUS_COMMAND;
   sql_command_flags[SQLCOM_SHOW_BINLOG_EVENTS]= CF_STATUS_COMMAND;
@@ -1455,7 +1452,6 @@ mysql_execute_command(THD *thd)
   if (all_tables || !lex->is_single_level_stmt())
     mysql_reset_errors(thd, 0);
 
-#ifdef HAVE_REPLICATION
   if (unlikely(thd->slave_thread))
   {
     /*
@@ -1501,7 +1497,6 @@ mysql_execute_command(THD *thd)
   }
   else
   {
-#endif /* HAVE_REPLICATION */
     /*
       When option readonly is set deny operations which change non-temporary
       tables. Except for the replication thread and the 'super' users.
@@ -1511,9 +1506,7 @@ mysql_execute_command(THD *thd)
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
       DBUG_RETURN(-1);
     }
-#ifdef HAVE_REPLICATION
   } /* endif unlikely slave */
-#endif
   status_var_increment(thd->status_var.com_stat[lex->sql_command]);
 
   DBUG_ASSERT(thd->transaction.stmt.modified_non_trans_table == FALSE);
@@ -1610,19 +1603,6 @@ mysql_execute_command(THD *thd)
 			      (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR));
     break;
   }
-  case SQLCOM_SHOW_NEW_MASTER:
-  {
-    /* This query don't work now. See comment in repl_failsafe.cc */
-#ifndef WORKING_NEW_MASTER
-    my_error(ER_NOT_SUPPORTED_YET, MYF(0), "SHOW NEW MASTER");
-    goto error;
-#else
-    res = show_new_master(thd);
-    break;
-#endif
-  }
-
-#ifdef HAVE_REPLICATION
   case SQLCOM_SHOW_SLAVE_HOSTS:
   {
     res = show_slave_hosts(thd);
@@ -1633,7 +1613,6 @@ mysql_execute_command(THD *thd)
     res = mysql_show_binlog_events(thd);
     break;
   }
-#endif
 
   case SQLCOM_ASSIGN_TO_KEYCACHE:
   {
@@ -1647,7 +1626,6 @@ mysql_execute_command(THD *thd)
     res = mysql_preload_keys(thd, first_table);
     break;
   }
-#ifdef HAVE_REPLICATION
   case SQLCOM_CHANGE_MASTER:
   {
     pthread_mutex_lock(&LOCK_active_mi);
@@ -1677,7 +1655,6 @@ mysql_execute_command(THD *thd)
     break;
   }
 
-#endif /* HAVE_REPLICATION */
   case SQLCOM_SHOW_ENGINE_STATUS:
     {
       res = ha_show_status(thd, lex->create_info.db_type, HA_ENGINE_STATUS);

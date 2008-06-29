@@ -53,13 +53,6 @@
 #define MAX_MEM_TABLE_SIZE ~(ulonglong) 0
 #endif
 
-/* stack traces are only supported on linux intel */
-#if defined(__linux__)  && defined(__i386__) && defined(USE_PSTACK)
-#define	HAVE_STACK_TRACE_ON_SEGV
-#include "../pstack/pstack.h"
-char pstack_file_name[80];
-#endif /* __linux__ */
-
 /* We have HAVE_purify below as this speeds up the shutdown of MySQL */
 
 #if defined(HAVE_DEC_3_2_THREADS) || defined(SIGNALS_DONT_BREAK_READ) || defined(HAVE_purify) && defined(__linux__)
@@ -343,22 +336,6 @@ ulong specialflag=0;
 ulong binlog_cache_use= 0, binlog_cache_disk_use= 0;
 ulong max_connections, max_connect_errors;
 uint  max_user_connections= 0;
-/**
-  Limit of the total number of prepared statements in the server.
-  Is necessary to protect the server against out-of-memory attacks.
-*/
-ulong max_prepared_stmt_count;
-/**
-  Current total number of prepared statements in the server. This number
-  is exact, and therefore may not be equal to the difference between
-  `com_stmt_prepare' and `com_stmt_close' (global status variables), as
-  the latter ones account for all registered attempts to prepare
-  a statement (including unsuccessful ones).  Prepared statements are
-  currently connection-local: if the same SQL query text is prepared in
-  two different connections, this counts as two distinct prepared
-  statements.
-*/
-ulong prepared_stmt_count=0;
 ulong thread_id=1L,current_pid;
 ulong slow_launch_threads = 0, sync_binlog_period;
 ulong expire_logs_days = 0;
@@ -469,7 +446,7 @@ pthread_key(THD*, THR_THD);
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
 		LOCK_mapped_file, LOCK_status, LOCK_global_read_lock,
 		LOCK_error_log, LOCK_uuid_generator,
-		LOCK_crypt, LOCK_bytes_sent, LOCK_bytes_received,
+		LOCK_crypt,
 	        LOCK_global_system_variables,
 		LOCK_user_conn, LOCK_slave_list, LOCK_active_mi,
                 LOCK_connection_count;
@@ -991,14 +968,10 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_error_log);
   (void) pthread_mutex_destroy(&LOCK_manager);
   (void) pthread_mutex_destroy(&LOCK_crypt);
-  (void) pthread_mutex_destroy(&LOCK_bytes_sent);
-  (void) pthread_mutex_destroy(&LOCK_bytes_received);
   (void) pthread_mutex_destroy(&LOCK_user_conn);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
-#ifdef HAVE_REPLICATION
   (void) pthread_mutex_destroy(&LOCK_rpl_status);
   (void) pthread_cond_destroy(&COND_rpl_status);
-#endif
   (void) pthread_mutex_destroy(&LOCK_active_mi);
   (void) rwlock_destroy(&LOCK_sys_init_connect);
   (void) rwlock_destroy(&LOCK_sys_init_slave);
@@ -2097,14 +2070,12 @@ SHOW_VAR com_status_vars[]= {
   {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
   {"show_keys",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_KEYS]), SHOW_LONG_STATUS},
   {"show_master_status",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_MASTER_STAT]), SHOW_LONG_STATUS},
-  {"show_new_master",      (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_NEW_MASTER]), SHOW_LONG_STATUS},
   {"show_open_tables",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_OPEN_TABLES]), SHOW_LONG_STATUS},
   {"show_plugins",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_PLUGINS]), SHOW_LONG_STATUS},
   {"show_processlist",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_PROCESSLIST]), SHOW_LONG_STATUS},
   {"show_slave_hosts",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_SLAVE_HOSTS]), SHOW_LONG_STATUS},
   {"show_slave_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_SLAVE_STAT]), SHOW_LONG_STATUS},
   {"show_status",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_STATUS]), SHOW_LONG_STATUS},
-  {"show_storage_engines", (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_STORAGE_ENGINES]), SHOW_LONG_STATUS},
   {"show_table_status",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_TABLE_STATUS]), SHOW_LONG_STATUS},
   {"show_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_TABLES]), SHOW_LONG_STATUS},
   {"show_variables",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_VARIABLES]), SHOW_LONG_STATUS},
@@ -2474,8 +2445,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_manager,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_crypt,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_bytes_sent,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_bytes_received,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_user_conn, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
@@ -2491,10 +2460,8 @@ static int init_thread_environment()
   (void) pthread_cond_init(&COND_thread_cache,NULL);
   (void) pthread_cond_init(&COND_flush_thread_cache,NULL);
   (void) pthread_cond_init(&COND_manager,NULL);
-#ifdef HAVE_REPLICATION
   (void) pthread_mutex_init(&LOCK_rpl_status, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_rpl_status, NULL);
-#endif
 
   /* Parameter for threads created for connections */
   (void) pthread_attr_init(&connection_attrib);
@@ -2533,9 +2500,7 @@ static int init_server_components()
   randominit(&sql_rand,(ulong) server_start_time,(ulong) server_start_time/2);
   setup_fpu();
   init_thr_lock();
-#ifdef HAVE_REPLICATION
   init_slave_list();
-#endif
 
   /* Setup logs */
 
@@ -2649,7 +2614,6 @@ with --log-bin instead.");
   DBUG_ASSERT((uint)global_system_variables.binlog_format <=
               array_elements(binlog_format_names)-1);
 
-#ifdef HAVE_REPLICATION
   if (opt_log_slave_updates && replicate_same_server_id)
   {
     sql_print_error("\
@@ -2658,7 +2622,6 @@ using --replicate-same-server-id in conjunction with \
 server.");
     unireg_abort(1);
   }
-#endif
 
   if (opt_bin_log)
   {
@@ -2818,14 +2781,12 @@ server.");
                                         WRITE_CACHE, 0, max_binlog_size, 0))
     unireg_abort(1);
 
-#ifdef HAVE_REPLICATION
   if (opt_bin_log && expire_logs_days)
   {
     time_t purge_time= server_start_time - expire_logs_days*24*60*60;
     if (purge_time >= 0)
       mysql_bin_log.purge_logs_before_date(purge_time);
   }
-#endif
 
   if (opt_myisam_log)
     (void) mi_log(1);
@@ -3547,12 +3508,10 @@ struct my_option my_long_options[] =
   {"help", '?', "Display this help and exit.", 
    (uchar**) &opt_help, (uchar**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
-#ifdef HAVE_REPLICATION
   {"abort-slave-event-count", OPT_ABORT_SLAVE_EVENT_COUNT,
    "Option used by mysql-test for debugging and testing of replication.",
    (uchar**) &abort_slave_event_count,  (uchar**) &abort_slave_event_count,
    0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif /* HAVE_REPLICATION */
   {"allow-suspicious-udfs", OPT_ALLOW_SUSPICIOUS_UDFS,
    "Allows use of UDFs consisting of only one symbol xxx() "
    "without corresponding xxx_init() or xxx_deinit(). That also means "
@@ -3972,7 +3931,6 @@ Can't be set to 1 if --log-slave-updates is used.",
   {"skip-thread-priority", OPT_SKIP_PRIOR,
    "Don't give threads different priorities.", 0, 0, 0, GET_NO_ARG, NO_ARG,
    DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
-#ifdef HAVE_REPLICATION
   {"slave-load-tmpdir", OPT_SLAVE_LOAD_TMPDIR,
    "The location where the slave should put its temporary files when \
 replicating a LOAD DATA INFILE command.",
@@ -3984,17 +3942,14 @@ replicating a LOAD DATA INFILE command.",
   {"slave-exec-mode", OPT_SLAVE_EXEC_MODE,
    "Modes for how replication events should be executed.  Legal values are STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will not stop for operations that are idempotent. In STRICT mode, replication will stop on any unexpected difference between the master and the slave.",
    (uchar**) &slave_exec_mode_str, (uchar**) &slave_exec_mode_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"slow-query-log", OPT_SLOW_LOG,
    "Enable|disable slow query log", (uchar**) &opt_slow_log,
    (uchar**) &opt_slow_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_REPLICATION
   {"sporadic-binlog-dump-fail", OPT_SPORADIC_BINLOG_DUMP_FAIL,
    "Option used by mysql-test for debugging and testing of replication.",
    (uchar**) &opt_sporadic_binlog_dump_fail,
    (uchar**) &opt_sporadic_binlog_dump_fail, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
-#endif /* HAVE_REPLICATION */
   {"sql-bin-update-same", OPT_SQL_BIN_UPDATE_SAME,
    "The update log is deprecated since version 5.0, is replaced by the binary \
 log and this option does nothing anymore.",
@@ -4200,10 +4155,6 @@ The minimum value for this variable is 4096.",
     (uchar**) &global_system_variables.max_length_for_sort_data,
     (uchar**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
     REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
-  {"max_prepared_stmt_count", OPT_MAX_PREPARED_STMT_COUNT,
-   "Maximum number of prepared statements in the server.",
-   (uchar**) &max_prepared_stmt_count, (uchar**) &max_prepared_stmt_count,
-   0, GET_ULONG, REQUIRED_ARG, 16382, 0, 1*1024*1024, 0, 1, 0},
   {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
    "If non-zero: relay log will be rotated automatically when the size exceeds this value; if zero (the default): when the size exceeds max_binlog_size. 0 excepted, the minimum value for this variable is 4096.",
    (uchar**) &max_relay_log_size, (uchar**) &max_relay_log_size, 0, GET_ULONG,
@@ -4362,7 +4313,6 @@ The minimum value for this variable is 4096.",
    (uchar**) &global_system_variables.read_buff_size,
    (uchar**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
    128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT_MAX32, MALLOC_OVERHEAD, IO_SIZE, 0},
-#ifdef HAVE_REPLICATION
   {"relay_log_purge", OPT_RELAY_LOG_PURGE,
    "0 = do not purge relay logs. 1 = purge them as soon as they are no more needed.",
    (uchar**) &relay_log_purge,
@@ -4392,7 +4342,6 @@ The minimum value for this variable is 4096.",
    "Allow slave to batch requests.",
    (uchar**) &slave_allow_batching, (uchar**) &slave_allow_batching,
    0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
-#endif /* HAVE_REPLICATION */
   {"slow_launch_time", OPT_SLOW_LAUNCH_TIME,
    "If creating the thread takes longer than this value (in seconds), the Slow_launch_threads counter will be incremented.",
    (uchar**) &slow_launch_time, (uchar**) &slow_launch_time, 0, GET_ULONG,
@@ -4497,7 +4446,6 @@ static int show_flushstatustime(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-#ifdef HAVE_REPLICATION
 static int show_slave_running(THD *thd, SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_MY_BOOL;
@@ -4562,8 +4510,6 @@ static int show_heartbeat_period(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-
-#endif /* HAVE_REPLICATION */
 
 static int show_open_tables(THD *thd, SHOW_VAR *var, char *buff)
 {
@@ -4637,12 +4583,10 @@ SHOW_VAR status_vars[]= {
   {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
   {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
   {"Slave_open_temp_tables",   (char*) &slave_open_temp_tables, SHOW_LONG},
-#ifdef HAVE_REPLICATION
   {"Slave_retried_transactions",(char*) &show_slave_retried_trans, SHOW_FUNC},
   {"Slave_heartbeat_period",   (char*) &show_heartbeat_period, SHOW_FUNC},
   {"Slave_received_heartbeats",(char*) &show_slave_received_heartbeats, SHOW_FUNC},
   {"Slave_running",            (char*) &show_slave_running,     SHOW_FUNC},
-#endif
   {"Slow_launch_threads",      (char*) &slow_launch_threads,    SHOW_LONG},
   {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
   {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
@@ -4760,7 +4704,6 @@ static void mysql_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
-  prepared_stmt_count= 0;
   errmesg= 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
   bzero((uchar*) &mysql_tmpdir_list, sizeof(mysql_tmpdir_list));
@@ -4956,7 +4899,6 @@ mysqld_get_one_option(int optid,
   case (int) OPT_ERROR_LOG_FILE:
     opt_error_log= 1;
     break;
-#ifdef HAVE_REPLICATION
   case (int)OPT_REPLICATE_IGNORE_DB:
   {
     rpl_filter->add_ignore_db(argument);
@@ -5054,7 +4996,6 @@ mysqld_get_one_option(int optid,
     }
     break;
   }
-#endif /* HAVE_REPLICATION */
   case (int) OPT_SLOW_QUERY_LOG:
     opt_slow_log= 1;
     break;
@@ -5491,13 +5432,11 @@ static void fix_paths(void)
 
   if (init_tmpdir(&mysql_tmpdir_list, opt_mysql_tmpdir))
     exit(1);
-#ifdef HAVE_REPLICATION
   if (!slave_load_tmpdir)
   {
     if (!(slave_load_tmpdir = (char*) my_strdup(mysql_tmpdir, MYF(MY_FAE))))
       exit(1);
   }
-#endif /* HAVE_REPLICATION */
   /*
     Convert the secure-file-priv option to system format, allowing
     a quick strcmp to check if read or write is in an allowed dir
