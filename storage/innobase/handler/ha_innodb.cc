@@ -7699,8 +7699,7 @@ innobase_xa_prepare(
 	int error = 0;
 	trx_t* trx = check_trx_exists(thd);
 
-	if (thd_sql_command(thd) != SQLCOM_XA_PREPARE &&
-	    (all || !thd_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
+	if (all || !thd_test_options(thd, OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN))
 	{
 
 		/* For ibbackup to work the order of transactions in binlog

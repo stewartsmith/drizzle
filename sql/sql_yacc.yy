@@ -579,7 +579,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  FRAC_SECOND_SYM
 %token  FROM
 %token  FULL                          /* SQL-2003-R */
-%token  FUNCTION_SYM                  /* SQL-2003-R */
 %token  GE
 %token  GET_FORMAT                    /* MYSQL-FUNC */
 %token  GLOBAL_SYM                    /* SQL-2003-R */
@@ -692,7 +691,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MODIFY_SYM
 %token  MOD_SYM                       /* SQL-2003-N */
 %token  MONTH_SYM                     /* SQL-2003-R */
-%token  MUTEX_SYM
 %token  NAMES_SYM                     /* SQL-2003-N */
 %token  NAME_SYM                      /* SQL-2003-N */
 %token  NATIONAL_SYM                  /* SQL-2003-R */
@@ -881,13 +879,11 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TRUNCATE_SYM
 %token  TYPES_SYM
 %token  TYPE_SYM                      /* SQL-2003-N */
-%token  UDF_RETURNS_SYM
 %token  ULONGLONG_NUM
 %token  UNCOMMITTED_SYM               /* SQL-2003-N */
 %token  UNDEFINED_SYM
 %token  UNDERSCORE_CHARSET
 %token  UNDOFILE_SYM
-%token  UNDO_BUFFER_SIZE_SYM
 %token  UNDO_SYM                      /* FUTURE-USE */
 %token  UNICODE_SYM
 %token  UNINSTALL_SYM
@@ -5206,16 +5202,6 @@ drop:
             lex->drop_if_exists=$3;
             lex->name= $4;
           }
-        | DROP FUNCTION_SYM if_exists ident
-          {
-            THD *thd= YYTHD;
-            LEX *lex= thd->lex;
-            lex->sql_command = SQLCOM_DROP_FUNCTION;
-            lex->drop_if_exists= $3;
-            lex->udf.name = $4;
-          }
-        ;
-
 table_list:
           table_name
         | table_list ',' table_name
@@ -5637,10 +5623,11 @@ show_param:
             if (prepare_schema_table(YYTHD, lex, 0, SCH_OPEN_TABLES))
               MYSQL_YYABORT;
           }
-        | ENGINE_SYM known_storage_engines show_engine_param
-          { Lex->create_info.db_type= $2; }
-        | ENGINE_SYM ALL show_engine_param
-          { Lex->create_info.db_type= NULL; }
+        | ENGINE_SYM known_storage_engines STATUS_SYM /* This should either go... well it should go */
+          { 
+            Lex->create_info.db_type= $2; 
+            Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
+          }
         | opt_full COLUMNS from_or_in table_ident opt_db wild_and_where
           {
             LEX *lex= Lex;
@@ -5734,15 +5721,6 @@ show_param:
           {
             Lex->sql_command = SQLCOM_SHOW_SLAVE_STAT;
           }
-
-show_engine_param:
-          STATUS_SYM
-          { Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS; }
-        | MUTEX_SYM
-          { Lex->sql_command= SQLCOM_SHOW_ENGINE_MUTEX; }
-        | LOGS_SYM
-          { Lex->sql_command= SQLCOM_SHOW_ENGINE_LOGS; }
-        ;
 
 master_or_binary:
           MASTER_SYM
@@ -6758,7 +6736,6 @@ keyword_sp:
         | MODIFY_SYM               {}
         | MODE_SYM                 {}
         | MONTH_SYM                {}
-        | MUTEX_SYM                {}
         | NAME_SYM                 {}
         | NAMES_SYM                {}
         | NATIONAL_SYM             {}
@@ -6851,11 +6828,8 @@ keyword_sp:
         | TIME_SYM                 {}
         | TYPES_SYM                {}
         | TYPE_SYM                 {}
-        | UDF_RETURNS_SYM          {}
-        | FUNCTION_SYM             {}
         | UNCOMMITTED_SYM          {}
         | UNDEFINED_SYM            {}
-        | UNDO_BUFFER_SIZE_SYM     {}
         | UNDOFILE_SYM             {}
         | UNKNOWN_SYM              {}
         | UNTIL_SYM                {}
