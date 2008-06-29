@@ -146,8 +146,8 @@ public:
 
 class sys_var_long_ptr_global: public sys_var_global
 {
-public:
   ulong *value;
+public:
   sys_var_long_ptr_global(sys_var_chain *chain, const char *name_arg,
                           ulong *value_ptr_arg,
                           pthread_mutex_t *guard_arg,
@@ -178,8 +178,8 @@ public:
 
 class sys_var_ulonglong_ptr :public sys_var
 {
-public:
   ulonglong *value;
+public:
   sys_var_ulonglong_ptr(sys_var_chain *chain, const char *name_arg, ulonglong *value_ptr_arg)
     :sys_var(name_arg),value(value_ptr_arg)
   { chain_sys_var(chain); }
@@ -264,12 +264,16 @@ public:
 
 class sys_var_const_str :public sys_var
 {
-public:
   char *value;					// Pointer to const value
+public:
   sys_var_const_str(sys_var_chain *chain, const char *name_arg,
                     const char *value_arg)
     :sys_var(name_arg), value((char*) value_arg)
   { chain_sys_var(chain); }
+  inline void set (char *new_value)
+  {
+    value= new_value;
+  }
   bool check(THD *thd, set_var *var)
   {
     return 1;
@@ -294,8 +298,8 @@ public:
 
 class sys_var_const_str_ptr :public sys_var
 {
-public:
   char **value;					// Pointer to const value
+public:
   sys_var_const_str_ptr(sys_var_chain *chain, const char *name_arg, char **value_arg)
     :sys_var(name_arg),value(value_arg)
   { chain_sys_var(chain); }
