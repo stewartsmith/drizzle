@@ -30,8 +30,8 @@ DIST_SUBDIRS =		. include \
 			sql-common scripts \
 			strings mysys dbug extra regex libmysql libmysql_r client unittest storage plugin \
 			vio sql tests \
-			mysql-test support-files \
-			BUILD
+			mysql-test support-files
+
 DISTCLEANFILES = ac_available_languages_fragment
 
 # Create permission databases

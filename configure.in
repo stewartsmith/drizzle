@@ -1842,7 +1842,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  unittest/Makefile unittest/mytap/Makefile unittest/mytap/t/Makefile dnl
  unittest/mysys/Makefile unittest/examples/Makefile dnl
  strings/Makefile regex/Makefile storage/Makefile dnl
- BUILD/Makefile vio/Makefile dnl
+ vio/Makefile dnl
  libmysql/Makefile libmysql_r/Makefile client/Makefile dnl
  sql/Makefile sql/share/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
