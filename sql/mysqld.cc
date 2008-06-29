@@ -417,7 +417,7 @@ const char *opt_date_time_formats[3];
 uint mysql_data_home_len;
 char mysql_data_home_buff[2], *mysql_data_home=mysql_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
-char *mysqld_unix_port, *opt_mysql_tmpdir;
+char *opt_mysql_tmpdir;
 const char **errmesg;			/**< Error messages */
 const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
@@ -479,10 +479,7 @@ rw_lock_t	LOCK_system_variables_hash;
 pthread_cond_t COND_refresh, COND_thread_count, COND_global_read_lock;
 pthread_t signal_thread;
 pthread_attr_t connection_attrib;
-pthread_mutex_t  LOCK_server_started;
 pthread_cond_t  COND_server_started;
-
-int mysqld_server_started= 0;
 
 /* replication parameters, if master_host is not NULL, we are a slave */
 uint report_port= MYSQL_PORT;
@@ -508,7 +505,7 @@ static int defaults_argc;
 static char **defaults_argv;
 static char *opt_bin_logname;
 
-static my_socket unix_sock,ip_sock;
+static my_socket ip_sock;
 struct rand_struct sql_rand; ///< used by sql_class.cc:THD::THD()
 
 struct passwd *user_info;
@@ -541,7 +538,7 @@ static void set_server_version(void);
 static int init_thread_environment();
 static char *get_relative_path(const char *path);
 static void fix_paths(void);
-pthread_handler_t handle_connections_sockets(void *arg);
+void handle_connections_sockets();
 pthread_handler_t kill_server_thread(void *arg);
 static void bootstrap(FILE *file);
 static bool read_init_file(char *file_name);
@@ -1046,12 +1043,6 @@ static void set_ports()
 #endif
     if ((env = getenv("MYSQL_TCP_PORT")))
       mysqld_port= (uint) atoi(env);		/* purecov: inspected */
-  }
-  if (!mysqld_unix_port)
-  {
-    mysqld_unix_port= (char*) MYSQL_UNIX_ADDR;
-    if ((env = getenv("MYSQL_UNIX_PORT")))
-      mysqld_unix_port= env;			/* purecov: inspected */
   }
 }
 
@@ -2504,8 +2495,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_rpl_status, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_rpl_status, NULL);
 #endif
-  (void) pthread_mutex_init(&LOCK_server_started, MY_MUTEX_INIT_FAST);
-  (void) pthread_cond_init(&COND_server_started,NULL);
 
   /* Parameter for threads created for connections */
   (void) pthread_attr_init(&connection_attrib);
@@ -3032,19 +3021,10 @@ int main(int argc, char **argv)
   create_maintenance_thread();
 
   sql_print_information(ER(ER_STARTUP),my_progname,server_version,
-                        ((unix_sock == INVALID_SOCKET) ? (char*) ""
-                                                       : mysqld_unix_port),
-                         mysqld_port,
-                         MYSQL_COMPILATION_COMMENT);
+                        "", mysqld_port, MYSQL_COMPILATION_COMMENT);
 
 
-  /* Signal threads waiting for server to be started */
-  pthread_mutex_lock(&LOCK_server_started);
-  mysqld_server_started= 1;
-  pthread_cond_signal(&COND_server_started);
-  pthread_mutex_unlock(&LOCK_server_started);
-
-  handle_connections_sockets(0);
+  handle_connections_sockets();
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
   
@@ -3277,17 +3257,16 @@ inline void kill_broken_server()
 
 	/* Handle new connections and spawn new process to handle them */
 
-pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused)))
+void handle_connections_sockets()
 {
   my_socket sock,new_sock;
   uint error_count=0;
-  uint max_used_connection= (uint) (max(ip_sock,unix_sock)+1);
+  uint max_used_connection= (uint)ip_sock+1;
   fd_set readFDs,clientFDs;
   THD *thd;
   struct sockaddr_storage cAddr;
   int ip_flags=0, flags;
   st_vio *vio_tmp;
-  DBUG_ENTER("handle_connections_sockets");
 
   FD_ZERO(&clientFDs);
   if (ip_sock != INVALID_SOCKET)
@@ -3389,10 +3368,7 @@ pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused)))
       VOID(closesocket(new_sock));
       continue;
     }
-    if (!(vio_tmp=vio_new(new_sock,
-			  sock == unix_sock ? VIO_TYPE_SOCKET :
-			  VIO_TYPE_TCPIP,
-			  sock == unix_sock ? VIO_LOCALHOST: 0)) ||
+    if (!(vio_tmp=vio_new(new_sock, VIO_TYPE_TCPIP, sock == 0)) ||
 	my_net_init(&thd->net,vio_tmp))
     {
       /*
@@ -3410,13 +3386,9 @@ pthread_handler_t handle_connections_sockets(void *arg __attribute__((unused)))
       delete thd;
       continue;
     }
-    if (sock == unix_sock)
-      thd->security_ctx->host=(char*) my_localhost;
 
     create_new_thread(thd);
   }
-
-  DBUG_RETURN(0);
 }
 
 
@@ -4016,9 +3988,6 @@ replicating a LOAD DATA INFILE command.",
   {"slow-query-log", OPT_SLOW_LOG,
    "Enable|disable slow query log", (uchar**) &opt_slow_log,
    (uchar**) &opt_slow_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"socket", OPT_SOCKET, "Socket file to use for connection.",
-   (uchar**) &mysqld_unix_port, (uchar**) &mysqld_unix_port, 0, GET_STR,
-   REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef HAVE_REPLICATION
   {"sporadic-binlog-dump-fail", OPT_SPORADIC_BINLOG_DUMP_FAIL,
    "Option used by mysql-test for debugging and testing of replication.",
@@ -4793,7 +4762,7 @@ static void mysql_init_variables(void)
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
   prepared_stmt_count= 0;
   errmesg= 0;
-  mysqld_unix_port= opt_mysql_tmpdir= my_bind_addr_str= NullS;
+  opt_mysql_tmpdir= my_bind_addr_str= NullS;
   bzero((uchar*) &mysql_tmpdir_list, sizeof(mysql_tmpdir_list));
   bzero((char *) &global_status_var, sizeof(global_status_var));
   opt_large_pages= 0;
@@ -4814,7 +4783,7 @@ static void mysql_init_variables(void)
   slave_exec_mode_options= (uint)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
   opt_specialflag= SPECIAL_ENGLISH;
-  unix_sock= ip_sock= INVALID_SOCKET;
+  ip_sock= INVALID_SOCKET;
   mysql_home_ptr= mysql_home;
   pidfile_name_ptr= pidfile_name;
   log_error_file_ptr= log_error_file;

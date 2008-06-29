@@ -1306,7 +1306,7 @@ bool MYSQL_LOG::open(const char *log_name, enum_log_type log_type_arg,
     int len=my_snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
 			"started with:\nTCP Port: %d, Named Pipe: %s\n",
                         my_progname, server_version, MYSQL_COMPILATION_COMMENT,
-                        mysqld_port, mysqld_unix_port
+                        mysqld_port, ""
                        );
     end= strnmov(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);

@@ -1778,7 +1778,7 @@ extern my_bool opt_log_slow_admin_statements, opt_log_slow_slave_statements;
 extern my_bool opt_noacl;
 extern my_bool opt_old_style_user_limits;
 extern uint opt_crash_binlog_innodb;
-extern char *shared_memory_base_name, *mysqld_unix_port;
+extern char *shared_memory_base_name;
 extern my_bool opt_enable_shared_memory;
 extern char *default_tz_name;
 #endif /* MYSQL_SERVER */
@@ -1807,7 +1807,6 @@ extern pthread_mutex_t LOCK_mysql_create_db,LOCK_Acl,LOCK_open, LOCK_lock_db,
        LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
 extern pthread_mutex_t LOCK_server_started;
 extern pthread_cond_t COND_server_started;
-extern int mysqld_server_started;
 extern rw_lock_t LOCK_sys_init_connect, LOCK_sys_init_slave;
 extern rw_lock_t LOCK_system_variables_hash;
 extern pthread_cond_t COND_refresh, COND_thread_count, COND_manager;
