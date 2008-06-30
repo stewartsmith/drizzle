@@ -25,9 +25,10 @@ typedef struct my_aio_result {
 } my_aio_result;
 #endif
 
-#ifndef THREAD
-extern int my_errno;		/* Last error in mysys */
-#else
+#include <errno.h>
+#define my_errno (errno)
+
+#ifdef THREAD
 #include <my_pthread.h>
 #endif
 
