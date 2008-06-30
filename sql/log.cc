@@ -4246,7 +4246,8 @@ int TC_LOG_MMAP::open(const char *opt_name)
 
   memcpy(data, tc_log_magic, sizeof(tc_log_magic));
   data[sizeof(tc_log_magic)]= (uchar)total_ha_2pc;
-  my_msync(fd, data, tc_log_page_size, MS_SYNC);
+  msync(data, tc_log_page_size, MS_SYNC);
+  my_sync(fd, MYF(0));
   inited=5;
 
   pthread_mutex_init(&LOCK_sync,    MY_MUTEX_INIT_FAST);
@@ -4451,7 +4452,9 @@ int TC_LOG_MMAP::sync()
     sit down and relax - this can take a while...
     note - no locks are held at this point
   */
-  err= my_msync(fd, syncing->start, 1, MS_SYNC);
+  err= msync(syncing->start, 1, MS_SYNC);
+  if(err==0)
+    err= my_sync(fd, MYF(0));
 
   /* page is synced. let's move it to the pool */
   pthread_mutex_lock(&LOCK_pool);
