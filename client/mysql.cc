@@ -104,7 +104,7 @@ extern "C" {
 #define cmp_database(cs,A,B) strcmp((A),(B))
 #endif
 
-#if !defined( __WIN__) && !defined(__NETWARE__) && !defined(THREAD)
+#if !defined(THREAD)
 #define USE_POPEN
 #endif
 
@@ -1297,18 +1297,7 @@ sig_handler handle_sigint(int sig)
   return;
 
 err:
-#ifdef _WIN32
-  /*
-   When SIGINT is raised on Windows, the OS creates a new thread to handle the
-   interrupt. Once that thread completes, the main thread continues running 
-   only to find that it's resources have already been free'd when the sigint 
-   handler called mysql_end(). 
-  */
-  mysql_thread_end();
-  return;
-#else
   mysql_end(sig);
-#endif  
 }
 
 
@@ -1438,10 +1427,6 @@ static struct my_option my_long_options[] =
   {"password", 'p',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __WIN__
-  {"pipe", 'W', "Use named pipes to connect to server.", 0, 0, 0, GET_NO_ARG,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
 #if MYSQL_PORT_DEFAULT == 0
@@ -1815,10 +1800,6 @@ static int read_and_execute(bool interactive)
   char linebuffer[254];
   String buffer;
 #endif
-#if defined(__WIN__)
-  String tmpbuf;
-  String buffer;
-#endif
 
   char	*line;
   char	in_string=0;
@@ -1859,44 +1840,9 @@ static int read_and_execute(bool interactive)
       if (opt_outfile && glob_buffer.is_empty())
 	fflush(OUTFILE);
 
-#if defined( __WIN__) || defined(__NETWARE__)
-      tee_fputs(prompt, stdout);
-#if defined(__NETWARE__)
-      line=fgets(linebuffer, sizeof(linebuffer)-1, stdin);
-      /* Remove the '\n' */
-      if (line)
-      {
-        char *p = strrchr(line, '\n');
-        if (p != NULL)
-          *p = '\0';
-      }
-#else defined(__WIN__)
-      if (!tmpbuf.is_alloced())
-        tmpbuf.alloc(65535);
-      tmpbuf.length(0);
-      buffer.length(0);
-      size_t clen;
-      do
-      {
-	line= my_cgets((char*)tmpbuf.ptr(), tmpbuf.alloced_length()-1, &clen);
-        buffer.append(line, clen);
-        /* 
-           if we got buffer fully filled than there is a chance that
-           something else is still in console input buffer
-        */
-      } while (tmpbuf.alloced_length() <= clen);
-      /* 
-        An empty line is returned from my_cgets when there's error reading :
-        Ctrl-c for example
-      */
-      if (line)
-        line= buffer.c_ptr();
-#endif /* __NETWARE__ */
-#else
       if (opt_outfile)
 	fputs(prompt, OUTFILE);
       line= readline(prompt);
-#endif /* defined( __WIN__) || defined(__NETWARE__) */
 
       /*
         When Ctrl+d or Ctrl+z is pressed, the line may be NULL on some OS
@@ -1943,13 +1889,6 @@ static int read_and_execute(bool interactive)
 	status.exit_status=0;
     }
   }
-
-#if defined( __WIN__) || defined(__NETWARE__)
-  buffer.free();
-#endif
-#if defined( __WIN__)
-  tmpbuf.free();
-#endif
 
   return status.exit_status;
 }
@@ -4572,24 +4511,16 @@ void tee_putc(int c, FILE *file)
     putc(c, OUTFILE);
 }
 
-#if defined( __WIN__) || defined(__NETWARE__)
-#include <time.h>
-#else
 #include <sys/times.h>
 #ifdef _SC_CLK_TCK				// For mit-pthreads
 #undef CLOCKS_PER_SEC
 #define CLOCKS_PER_SEC (sysconf(_SC_CLK_TCK))
 #endif
-#endif
 
 static ulong start_timer(void)
 {
-#if defined( __WIN__) || defined(__NETWARE__)
- return clock();
-#else
   struct tms tms_tmp;
   return times(&tms_tmp);
-#endif
 }
 
 

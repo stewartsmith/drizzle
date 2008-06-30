@@ -81,16 +81,8 @@ TODO:
 #include <signal.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#ifndef __WIN__
 #include <sys/wait.h>
-#endif
 #include <ctype.h>
-
-#ifdef __WIN__
-#define srandom  srand
-#define random   rand
-#define snprintf _snprintf
-#endif
 
 #ifdef HAVE_SMEM 
 static char *shared_memory_base_name=0;
@@ -316,18 +308,6 @@ static long int timedif(struct timeval a, struct timeval b)
     s *= 1000;
     return s + us;
 }
-
-#ifdef __WIN__
-static int gettimeofday(struct timeval *tp, void *tzp)
-{
-  unsigned int ticks;
-  ticks= GetTickCount();
-  tp->tv_usec= ticks*1000;
-  tp->tv_sec= ticks/1000;
-
-  return 0;
-}
-#endif
 
 int main(int argc, char **argv)
 {
@@ -671,10 +651,6 @@ static struct my_option my_long_options[] =
   {"password", 'p',
     "Password to use when connecting to server. If password is not given it's "
       "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __WIN__
-  {"pipe", 'W', "Use named pipes to connect to server.", 0, 0, 0, GET_NO_ARG,
-    NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"port", 'P', "Port number to use for connection.", (uchar**) &opt_mysql_port,
     (uchar**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, MYSQL_PORT, 0, 0, 0, 0,
     0},

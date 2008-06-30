@@ -1822,22 +1822,6 @@ static Exit_status dump_local_log_entries(PRINT_EVENT_INFO *print_event_info,
   }
   else
   {
-    /* read from stdin */
-    /*
-      Windows opens stdin in text mode by default. Certain characters
-      such as CTRL-Z are interpeted as events and the read() method
-      will stop. CTRL-Z is the EOF marker in Windows. to get past this
-      you have to open stdin in binary mode. Setmode() is used to set
-      stdin in binary mode. Errors on setting this mode result in 
-      halting the function and printing an error message to stderr.
-    */
-#if defined (__WIN__) || (_WIN64)
-    if (_setmode(fileno(stdin), O_BINARY) == -1)
-    {
-      error("Could not set binary mode on stdin.");
-      return ERROR_STOP;
-    }
-#endif 
     if (init_io_cache(file, fileno(stdin), 0, READ_CACHE, (my_off_t) 0,
 		      0, MYF(MY_WME | MY_NABP | MY_DONT_CHECK_FILESIZE)))
     {

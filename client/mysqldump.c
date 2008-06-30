@@ -404,10 +404,6 @@ static struct my_option my_long_options[] =
   {"password", 'p',
    "Password to use when connecting to server. If password is not given it's solicited on the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __WIN__
-  {"pipe", 'W', "Use named pipes to connect to server.", 0, 0, 0, GET_NO_ARG,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"port", 'P', "Port number to use for connection.", (uchar**) &opt_mysql_port,
    (uchar**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
    0},
@@ -735,11 +731,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (!(md_result_file= my_fopen(argument, O_WRONLY | FILE_BINARY,
                                     MYF(MY_WME))))
       exit(1);
-    break;
-  case 'W':
-#ifdef __WIN__
-    opt_protocol= MYSQL_PROTOCOL_PIPE;
-#endif
     break;
   case 'N':
     opt_set_charset= 0;

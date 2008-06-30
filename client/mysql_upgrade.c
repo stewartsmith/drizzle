@@ -23,11 +23,7 @@
 #endif
 
 #ifndef WEXITSTATUS
-# ifdef __WIN__
-#  define WEXITSTATUS(stat_val) (stat_val)
-# else
 #  define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
-# endif
 #endif
 
 static char mysql_path[FN_REFLEN];
@@ -91,10 +87,6 @@ static struct my_option my_long_options[]=
    "Password to use when connecting to server. If password is not given"
    " it's solicited on the tty.", (uchar**) &opt_password,(uchar**) &opt_password,
    0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __WIN__
-  {"pipe", 'W', "Use named pipes to connect to server.", 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
 #if MYSQL_PORT_DEFAULT == 0
@@ -298,7 +290,7 @@ static int run_tool(char *tool_path, DYNAMIC_STRING *ds_res, ...)
   DBUG_ENTER("run_tool");
   DBUG_PRINT("enter", ("tool_path: %s", tool_path));
 
-  if (init_dynamic_string(&ds_cmdline, IF_WIN("\"", ""), FN_REFLEN, FN_REFLEN))
+  if (init_dynamic_string(&ds_cmdline, "", FN_REFLEN, FN_REFLEN))
     die("Out of memory");
 
   dynstr_append_os_quoted(&ds_cmdline, tool_path, NullS);
@@ -317,10 +309,6 @@ static int run_tool(char *tool_path, DYNAMIC_STRING *ds_res, ...)
   }
 
   va_end(args);
-
-#ifdef __WIN__
-  dynstr_append(&ds_cmdline, "\"");
-#endif
 
   DBUG_PRINT("info", ("Running: %s", ds_cmdline.str));
   ret= run_command(ds_cmdline.str, ds_res);
@@ -341,13 +329,11 @@ static my_bool get_full_path_to_executable(char* path)
 {
   my_bool ret;
   DBUG_ENTER("get_full_path_to_executable");
-#ifdef __WIN__
-  ret= (GetModuleFileName(NULL, path, FN_REFLEN) == 0);
-#else
+
   /* my_readlink returns 0 if a symlink was read */
   ret= (my_readlink(path, "/proc/self/exe", MYF(0)) != 0);
   /* Might also want to try with /proc/$$/exe if the above fails */
-#endif
+
   DBUG_PRINT("exit", ("path: %s", path));
   DBUG_RETURN(ret);
 }
@@ -436,7 +422,7 @@ static void find_tool(char *tool_path, const char *tool_name)
                &ds_tmp, /* Get output from command, discard*/
                "--help",
                "2>&1",
-               IF_WIN("> NUL", "> /dev/null"),
+               "> /dev/null",
                NULL))
     die("Can't execute '%s'", tool_path);
 
@@ -778,10 +764,10 @@ int main(int argc, char **argv)
   dynstr_append(&ds_args, " ");
 
   /* Find mysql */
-  find_tool(mysql_path, IF_WIN("mysql.exe", "mysql"));
+  find_tool(mysql_path, "mysql");
 
   /* Find mysqlcheck */
-  find_tool(mysqlcheck_path, IF_WIN("mysqlcheck.exe", "mysqlcheck"));
+  find_tool(mysqlcheck_path, "mysqlcheck");
 
   /*
     Read the mysql_upgrade_info file to check if mysql_upgrade

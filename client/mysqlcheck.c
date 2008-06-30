@@ -137,10 +137,6 @@ static struct my_option my_long_options[] =
   {"password", 'p',
    "Password to use when connecting to server. If password is not given it's solicited on the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __WIN__
-  {"pipe", 'W', "Use named pipes to connect to server.", 0, 0, 0, GET_NO_ARG,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
 #if MYSQL_PORT_DEFAULT == 0
@@ -307,11 +303,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'g':
     what_to_do= DO_CHECK;
     opt_upgrade= 1;
-    break;
-  case 'W':
-#ifdef __WIN__
-    opt_protocol = MYSQL_PROTOCOL_PIPE;
-#endif
     break;
   case '#':
     DBUG_PUSH(argument ? argument : "d:t:o");
