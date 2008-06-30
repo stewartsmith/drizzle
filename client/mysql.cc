@@ -3803,8 +3803,8 @@ com_edit(String *buffer,char *line __attribute__((unused)))
   strxmov(buff,editor," ",filename,NullS);
   (void) system(buff);
 
-  MY_STAT stat_arg;
-  if (!my_stat(filename,&stat_arg,MYF(MY_WME)))
+  struct stat stat_arg;
+  if (stat(filename,&stat_arg))
     goto err;
   if ((fd = my_open(filename,O_RDONLY, MYF(MY_WME))) < 0)
     goto err;

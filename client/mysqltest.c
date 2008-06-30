@@ -6767,7 +6767,7 @@ int main(int argc, char **argv)
   my_bool q_send_flag= 0, abort_flag= 0;
   uint command_executed= 0, last_command_executed= 0;
   char save_file[FN_REFLEN];
-  MY_STAT res_info;
+  struct stat res_info;
   MY_INIT(argv[0]);
 
   save_file[0]= 0;
@@ -7242,7 +7242,7 @@ int main(int argc, char **argv)
   }
 
   if (!command_executed &&
-      result_file_name && my_stat(result_file_name, &res_info, 0))
+      result_file_name && !stat(result_file_name, &res_info))
   {
     /*
       my_stat() successful on result file. Check if we have not run a

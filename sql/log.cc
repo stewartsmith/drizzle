@@ -2458,7 +2458,7 @@ int MYSQL_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threads
     LOG_INFO_EOF		to_log not found
     LOG_INFO_EMFILE             too many files opened
     LOG_INFO_FATAL              if any other than ENOENT error from
-                                my_stat() or my_delete()
+                                stat() or my_delete()
 */
 
 int MYSQL_BIN_LOG::purge_logs(const char *to_log, 
@@ -2488,10 +2488,10 @@ int MYSQL_BIN_LOG::purge_logs(const char *to_log,
   while ((strcmp(to_log,log_info.log_file_name) || (exit_loop=included)) &&
          !log_in_use(log_info.log_file_name))
   {
-    MY_STAT s;
-    if (!my_stat(log_info.log_file_name, &s, MYF(0)))
+    struct stat s;
+    if (stat(log_info.log_file_name, &s))
     {
-      if (my_errno == ENOENT) 
+      if (errno == ENOENT) 
       {
         /*
           It's not fatal if we can't stat a log file that does not exist;
@@ -2500,7 +2500,7 @@ int MYSQL_BIN_LOG::purge_logs(const char *to_log,
         push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
-        sql_print_information("Failed to execute my_stat on file '%s'",
+        sql_print_information("Failed to execute stat on file '%s'",
 			      log_info.log_file_name);
         my_errno= 0;
       }
@@ -2597,14 +2597,14 @@ err:
   @retval
     LOG_INFO_PURGE_NO_ROTATE	Binary file that can't be rotated
     LOG_INFO_FATAL              if any other than ENOENT error from
-                                my_stat() or my_delete()
+                                stat() or my_delete()
 */
 
 int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
 {
   int error;
   LOG_INFO log_info;
-  MY_STAT stat_area;
+  struct stat stat_area;
 
   DBUG_ENTER("purge_logs_before_date");
 
@@ -2621,9 +2621,9 @@ int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
   while (strcmp(log_file_name, log_info.log_file_name) &&
 	 !log_in_use(log_info.log_file_name))
   {
-    if (!my_stat(log_info.log_file_name, &stat_area, MYF(0)))
+    if (stat(log_info.log_file_name, &stat_area))
     {
-      if (my_errno == ENOENT) 
+      if (errno == ENOENT) 
       {
         /*
           It's not fatal if we can't stat a log file that does not exist.
@@ -2631,7 +2631,7 @@ int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
         push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
-	sql_print_information("Failed to execute my_stat on file '%s'",
+	sql_print_information("Failed to execute stat on file '%s'",
 			      log_info.log_file_name);
         my_errno= 0;
       }

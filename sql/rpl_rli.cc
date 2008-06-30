@@ -17,7 +17,7 @@
 
 #include "rpl_mi.h"
 #include "rpl_rli.h"
-#include <my_dir.h>    // For MY_STAT
+#include <my_dir.h>
 #include "sql_repl.h"  // For check_binlog_magic
 #include "rpl_utility.h"
 
@@ -300,9 +300,9 @@ err:
 
 static inline int add_relay_log(Relay_log_info* rli,LOG_INFO* linfo)
 {
-  MY_STAT s;
+  struct stat s;
   DBUG_ENTER("add_relay_log");
-  if (!my_stat(linfo->log_file_name,&s,MYF(0)))
+  if (stat(linfo->log_file_name,&s))
   {
     sql_print_error("log %s listed in the index, but failed to stat",
                     linfo->log_file_name);

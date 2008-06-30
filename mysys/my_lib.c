@@ -138,13 +138,13 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
     
     if (MyFlags & MY_WANT_STAT)
     {
-      if (!(finfo.mystat= (MY_STAT*)alloc_root(names_storage, 
-                                               sizeof(MY_STAT))))
+      if (!(finfo.mystat= (struct stat*)alloc_root(names_storage, 
+                                               sizeof(struct stat))))
         goto error;
       
-      bzero(finfo.mystat, sizeof(MY_STAT));
+      bzero(finfo.mystat, sizeof(struct stat));
       VOID(strmov(tmp_file,dp->d_name));
-      VOID(my_stat(tmp_path, finfo.mystat, MyFlags));
+      VOID(stat(tmp_path, finfo.mystat));
       if (!(finfo.mystat->st_mode & MY_S_IREAD))
         continue;
     }
@@ -208,44 +208,3 @@ char * directory_file_name (char * dst, const char *src)
   return dst;
 } /* directory_file_name */
 
-
-/****************************************************************************
-** File status
-** Note that MY_STAT is assumed to be same as struct stat
-****************************************************************************/ 
-
-int my_fstat(int Filedes, MY_STAT *stat_area,
-             myf MyFlags __attribute__((unused)))
-{
-  DBUG_ENTER("my_fstat");
-  DBUG_PRINT("my",("fd: %d  MyFlags: %d", Filedes, MyFlags));
-  DBUG_RETURN(fstat(Filedes, (struct stat *) stat_area));
-}
-
-
-MY_STAT *my_stat(const char *path, MY_STAT *stat_area, myf my_flags)
-{
-  int m_used;
-  DBUG_ENTER("my_stat");
-  DBUG_PRINT("my", ("path: '%s'  stat_area: 0x%lx  MyFlags: %d", path,
-                    (long) stat_area, my_flags));
-
-  if ((m_used= (stat_area == NULL)))
-    if (!(stat_area = (MY_STAT *) my_malloc(sizeof(MY_STAT), my_flags)))
-      goto error;
-  if (! stat((char *) path, (struct stat *) stat_area) )
-    DBUG_RETURN(stat_area);
-
-  DBUG_PRINT("error",("Got errno: %d from stat", errno));
-  my_errno= errno;
-  if (m_used)					/* Free if new area */
-    my_free((uchar*) stat_area,MYF(0));
-
-error:
-  if (my_flags & (MY_FAE+MY_WME))
-  {
-    my_error(EE_STAT, MYF(ME_BELL+ME_WAITTANG),path,my_errno);
-    DBUG_RETURN((MY_STAT *) NULL);
-  }
-  DBUG_RETURN((MY_STAT *) NULL);
-} /* my_stat */

@@ -50,7 +50,7 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
   File	 file;
   size_t read_len;
   uchar *read_data;
-  MY_STAT state;  
+  struct stat state;  
   DBUG_ENTER("readfrm");
   DBUG_PRINT("enter",("name: '%s'",name));
   
@@ -65,7 +65,7 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
   
   // Get length of file
   error= 2;
-  if (my_fstat(file, &state, MYF(0)))
+  if (fstat(file, &state))
     goto err;
   read_len= state.st_size;  
 

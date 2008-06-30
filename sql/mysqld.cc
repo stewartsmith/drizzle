@@ -5555,7 +5555,7 @@ static int test_if_case_insensitive(const char *dir_name)
   int result= 0;
   File file;
   char buff[FN_REFLEN], buff2[FN_REFLEN];
-  MY_STAT stat_info;
+  struct stat stat_info;
   DBUG_ENTER("test_if_case_insensitive");
 
   fn_format(buff, glob_hostname, dir_name, ".lower-test",
@@ -5569,7 +5569,7 @@ static int test_if_case_insensitive(const char *dir_name)
     DBUG_RETURN(-1);
   }
   my_close(file, MYF(0));
-  if (my_stat(buff2, &stat_info, MYF(0)))
+  if (!stat(buff2, &stat_info))
     result= 1;					// Can access file
   (void) my_delete(buff, MYF(MY_WME));
   DBUG_PRINT("exit", ("result: %d", result));

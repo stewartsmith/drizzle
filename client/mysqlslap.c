@@ -1267,7 +1267,7 @@ get_options(int *argc,char ***argv)
 {
   int ho_error;
   char *tmp_string;
-  MY_STAT sbuf;  /* Stat information for the data file */
+  struct stat sbuf;
   option_string *sql_type;
   unsigned int sql_type_count= 0;
 
@@ -1521,7 +1521,7 @@ get_options(int *argc,char ***argv)
   }
   else
   {
-    if (create_string && my_stat(create_string, &sbuf, MYF(0)))
+    if (create_string && !stat(create_string, &sbuf))
     {
       File data_file;
       if (!MY_S_ISREG(sbuf.st_mode))
@@ -1558,7 +1558,7 @@ get_options(int *argc,char ***argv)
                                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
     }
 
-    if (user_supplied_query && my_stat(user_supplied_query, &sbuf, MYF(0)))
+    if (user_supplied_query && !stat(user_supplied_query, &sbuf))
     {
       File data_file;
       if (!MY_S_ISREG(sbuf.st_mode))
@@ -1589,7 +1589,8 @@ get_options(int *argc,char ***argv)
     }
   }
 
-  if (user_supplied_pre_statements && my_stat(user_supplied_pre_statements, &sbuf, MYF(0)))
+  if (user_supplied_pre_statements
+      && !stat(user_supplied_pre_statements, &sbuf))
   {
     File data_file;
     if (!MY_S_ISREG(sbuf.st_mode))
@@ -1620,7 +1621,8 @@ get_options(int *argc,char ***argv)
                           delimiter[0]);
   }
 
-  if (user_supplied_post_statements && my_stat(user_supplied_post_statements, &sbuf, MYF(0)))
+  if (user_supplied_post_statements
+      && !stat(user_supplied_post_statements, &sbuf))
   {
     File data_file;
     if (!MY_S_ISREG(sbuf.st_mode))
