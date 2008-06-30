@@ -33,17 +33,17 @@ pkgdata_DATA =		mi_test_all mi_test_all.res
 pkglib_LIBRARIES =	libmyisam.a
 bin_PROGRAMS =		myisamchk myisamlog myisampack myisam_ftdump
 myisamchk_DEPENDENCIES=	$(LIBRARIES)
-myisamchk_LDADD=		@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+myisamchk_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
 myisamlog_DEPENDENCIES=	$(LIBRARIES)
-myisamlog_LDADD=		@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+myisamlog_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
 myisampack_DEPENDENCIES=$(LIBRARIES)
-myisampack_LDADD=		@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+myisampack_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
@@ -52,34 +52,34 @@ noinst_HEADERS =	myisamdef.h rt_index.h rt_key.h rt_mbr.h sp_defs.h \
 			fulltext.h ftdefs.h ft_test1.h ft_eval.h \
 			ha_myisam.h mi_extrafunc.h
 mi_test1_DEPENDENCIES=	$(LIBRARIES)
-mi_test1_LDADD=		@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+mi_test1_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
 mi_test2_DEPENDENCIES=	$(LIBRARIES)
-mi_test2_LDADD=		@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+mi_test2_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
 mi_test3_DEPENDENCIES=	$(LIBRARIES)
-mi_test3_LDADD=		@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+mi_test3_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
 #ft_test1_DEPENDENCIES=	$(LIBRARIES)
 #ft_eval_DEPENDENCIES=	$(LIBRARIES)
 myisam_ftdump_DEPENDENCIES=	$(LIBRARIES)
-myisam_ftdump_LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+myisam_ftdump_LDADD =			libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
 rt_test_DEPENDENCIES=	$(LIBRARIES)
-rt_test_LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+rt_test_LDADD =			libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz
 sp_test_DEPENDENCIES=	$(LIBRARIES)
-sp_test_LDADD =			@CLIENT_EXTRA_LDFLAGS@ libmyisam.a \
+sp_test_LDADD =			libmyisam.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a -lz

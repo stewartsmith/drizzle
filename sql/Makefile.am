@@ -112,7 +112,7 @@ endif
 nodist_mysqld_SOURCES =	mini_client_errors.c pack.c client.c my_time.c
 
 gen_lex_hash_SOURCES =	gen_lex_hash.cc
-gen_lex_hash_LDFLAGS =  @NOINST_LDFLAGS@
+gen_lex_hash_LDFLAGS =  
 
 mysql_tzinfo_to_sql_SOURCES = tztime.cc
 mysql_tzinfo_to_sql_CXXFLAGS= -DTZINFO2SQL
