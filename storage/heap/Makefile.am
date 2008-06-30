@@ -29,12 +29,12 @@ DEFS =                  @DEFS@
 pkglib_LIBRARIES =	libheap.a
 noinst_PROGRAMS	=	hp_test1 hp_test2
 noinst_LIBRARIES =	libheap.a
-hp_test1_LDFLAGS = @NOINST_LDFLAGS@
+hp_test1_LDFLAGS = 
 hp_test1_LDADD =	libheap.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \
 			$(top_builddir)/strings/libmystrings.a
-hp_test2_LDFLAGS = @NOINST_LDFLAGS@
+hp_test2_LDFLAGS = 
 hp_test2_LDADD =	libheap.a \
 			$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/dbug/libdbug.a \

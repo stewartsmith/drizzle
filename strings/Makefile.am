@@ -60,13 +60,13 @@ conf_to_src_SOURCES = conf_to_src.c xml.c ctype.c bcmp.c
 conf_to_src_LDADD=
 #force static linking of conf_to_src - essential when linking against
 #custom installation of libc
-conf_to_src_LDFLAGS= @NOINST_LDFLAGS@
+conf_to_src_LDFLAGS=
 
 # This is because the dependency tracking misses @FOO@ vars in sources.
 #strtoull.o:		@CHARSET_OBJS@
 
 
-FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) @NOINST_LDFLAGS@
+FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
 
 str_test: str_test.c $(pkglib_LIBRARIES)
 	$(LINK) $(FLAGS) -DMAIN $(INCLUDES) $(srcdir)/str_test.c $(LDADD) $(pkglib_LIBRARIES)

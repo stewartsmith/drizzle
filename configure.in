@@ -220,40 +220,6 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 # Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y -p MYSQL'])
 
-#check the return type of sprintf
-AC_MSG_CHECKING("return type of sprintf")
-AC_TRY_RUN([
-  int main()
-    {
-      char* s = "hello";
-      char buf[6];
-      if((int)sprintf(buf, s) == strlen(s))
-	return 0;
-      
-      return -1;
-     }
-   ],
-   [AC_DEFINE(SPRINTF_RETURNS_INT, [1], [POSIX sprintf])
-   AC_MSG_RESULT("int")],
-   [AC_TRY_RUN([
- int main()
-   {
-     char* s = "hello";
-     char buf[6];
-     if((char*)sprintf(buf,s) == buf + strlen(s))
-       return 0;
-     return -1;
-   }           ],
-               [AC_DEFINE(SPRINTF_RETURNS_PTR, [1], [Broken sprintf])
-                AC_MSG_RESULT("ptr")],
-               [AC_DEFINE(SPRINTF_RETURNS_GARBAGE, [1], [Broken sprintf])
-                AC_MSG_RESULT("garbage")]
-   )],
-   # Cross compile, assume POSIX
-   [AC_DEFINE(SPRINTF_RETURNS_INT, [1], [POSIX sprintf])
-    AC_MSG_RESULT("int (we assume)")]
-)
-
 AC_PATH_PROG(uname_prog, uname, no)
 
 # We should go through this and put all the explictly system dependent
@@ -473,59 +439,6 @@ NOINST_LDFLAGS="-static"
 static_nss=""
 STATIC_NSS_FLAGS=""
 OTHER_LIBC_LIB=""
-AC_ARG_WITH(other-libc,
- [  --with-other-libc=DIR   Link against libc and other standard libraries 
-                          installed in the specified non-standard location 
-                          overriding default. Originally added to be able to
-                          link against glibc 2.2 without making the user 
-                          upgrade the standard libc installation.],
- [
-   other_libc_include="$withval/include"
-   other_libc_lib="$withval/lib"
-   with_other_libc="yes"
-   enable_shared="no"
-   all_is_static="yes"
-   CFLAGS="$CFLAGS -I$other_libc_include"
-   # There seems to be a feature in gcc that treats system and libc headers
-   # silently when they violatate ANSI C++ standard, but it is strict otherwise
-   # since gcc cannot now recognize that our headers are libc, we work around
-   # by telling it to be permissive. Note that this option only works with
-   # new versions of gcc (2.95.x and above)
-   CXXFLAGS="$CXXFLAGS -fpermissive -I$other_libc_include"
-   if test -f "$other_libc_lib/libnss_files.a"
-   then
-     # libc has been compiled with --enable-static-nss
-     # we need special flags, but we will have to add those later
-     STATIC_NSS_FLAGS="-lc -lnss_files -lnss_dns -lresolv"
-     STATIC_NSS_FLAGS="$STATIC_NSS_FLAGS $STATIC_NSS_FLAGS"
-     OTHER_LIBC_LIB="-static -L$other_libc_lib"
-     static_nss=1
-   else
-     # this is a dirty hack. We if we detect static nss glibc in the special
-     # location, we do not re-direct the linker to get libraries from there
-     # during check. The reason is that if we did, we would have to find a
-     # way to append the special static nss flags to LIBS every time we do
-     # any check - this is definitely feasible, but not worthwhile the risk
-     # of breaking other things. So for our purposes it would be sufficient
-     # to assume that whoever is using static NSS knows what he is doing and
-     # has sensible libraries in the regular location
-     LDFLAGS="$LDFLAGS -static -L$other_libc_lib "
-   fi
-   
-   # When linking against custom libc installed separately, we want to force
-   # all binary builds to be static, including the build done by configure
-   # itself to test for system features.
-   with_mysqld_ldflags="-all-static"
-   with_client_ldflags="-all-static"
-   NOINST_LDFLAGS="-all-static"
- ],
- [
-  other_libc_include=
-  other_libc_lib=
-  with_other_libc="no"
- ]
-)
-AC_SUBST(NOINST_LDFLAGS)
 
 #
 # Check if we are using Linux and a glibc compiled with static nss
@@ -549,22 +462,6 @@ AC_ARG_WITH(server-suffix,
     [ MYSQL_SERVER_SUFFIX= ]
     )
 AC_SUBST(MYSQL_SERVER_SUFFIX)
-
-# Set flags if we want to force to use pthreads
-AC_ARG_WITH(pthread,
-    [  --with-pthread          Force use of pthread library.],
-    [ with_pthread=$withval ],
-    [ with_pthread=no ]
-    )
-
-# Force use of thread libs LIBS
-AC_ARG_WITH(named-thread-libs,
-    [  --with-named-thread-libs=ARG
-                          Use specified thread libraries instead of 
-                          those automatically found by configure.],
-    [ with_named_thread=$withval ],
-    [ with_named_thread=no ]
-    )
 
 # Force use of a curses libs
 AC_ARG_WITH(named-curses-libs,
@@ -675,22 +572,6 @@ else
   AC_MSG_RESULT([no])
 fi
 
-# If we should allow init-file, skip-grant-table and bootstrap options
-AC_MSG_CHECKING(If we should should enable init-file, skip-grant-table options and bootstrap)
-AC_ARG_ENABLE(grant-options,
-    [  --disable-grant-options Disables the use of --init-file, --skip-grant-tables and --bootstrap options],
-    [ mysql_grant_options_enabled=$enableval ],
-    [ mysql_grant_options_enabled=yes ]
-    )
-if test "$mysql_grant_options_enabled" = "yes"
-then
-  AC_MSG_RESULT([yes])
-else
-  AC_DEFINE([DISABLE_GRANT_OPTIONS], [1],
-            [Disables the use of --init-file, --skip-grant-tables and --bootstrap options])
-  AC_MSG_RESULT([no])
-fi
-
 MYSQL_SYS_LARGEFILE
 
 # Types that must be checked AFTER large file support is checked
@@ -719,6 +600,12 @@ AC_CHECK_HEADERS([xfs/xfs.h])
 #--------------------------------------------------------------------
 
 AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+
+#--------------------------------------------------------------------
+# Check for libpthread
+#--------------------------------------------------------------------
+
+AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
 
 #--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
@@ -779,254 +666,20 @@ AC_CHECK_TYPES([fp_except], [], [], [
 #include <ieeefp.h>
 ])
 
-#
-# Some system specific hacks
-#
-
-MAX_C_OPTIMIZE="-O3"
-MAX_CXX_OPTIMIZE="-O3"
-
-case $SYSTEM_TYPE in
-  *solaris*)
-    CFLAGS="$CFLAGS -DHAVE_RWLOCK_T"
-    CXXFLAGS="$CXXFLAGS -DHAVE_RWLOCK_T"
-    ;;
-  *darwin*)
-    if test "$ac_cv_prog_gcc" = "yes"
-    then
-      FLAGS="-D_P1003_1B_VISIBLE -DSIGNAL_WITH_VIO_CLOSE -DSIGNALS_DONT_BREAK_READ -DIGNORE_SIGHUP_SIGQUIT  -DDONT_DECLARE_CXA_PURE_VIRTUAL"
-      CFLAGS="$CFLAGS $FLAGS"
-      CXXFLAGS="$CXXFLAGS $FLAGS"
-      MAX_C_OPTIMIZE="-O"
-    fi
-    ;;
-  *freebsd*|*dragonfly*)
-    AC_MSG_WARN([Adding fix for interrupted reads])
-    OSVERSION=`sysctl -a | grep osreldate | awk '{ print $2 }'`
-    if test "$OSVERSION" -gt "480100" && \
-       test "$OSVERSION" -lt "500000" || \
-       test "$OSVERSION" -gt "500109"
-    then
-       CXXFLAGS="$CXXFLAGS -DMYSQLD_NET_RETRY_COUNT=1000000"
-    else
-       CFLAGS="$CFLAGS -DHAVE_BROKEN_REALPATH"
-       CXXFLAGS="$CXXFLAGS -DMYSQLD_NET_RETRY_COUNT=1000000 -DHAVE_BROKEN_REALPATH"
-    fi
-    ;;
-  *netbsd*)
-    AC_MSG_WARN([Adding flag -Dunix])
-    CFLAGS="$CFLAGS -Dunix"
-    CXXFLAGS="$CXXFLAGS -Dunix"
-    OVERRIDE_MT_LD_ADD="\$(top_srcdir)/mit-pthreads/obj/libpthread.a"
-    ;;
-esac
-
-
-#---START: Used in for client configure
-# Check if we threads are in libc or if we should use
-# -lpthread, -lpthreads or mit-pthreads
-# We have to check libc last because else it fails on Solaris 2.6
-
-with_posix_threads="no"
-# Search thread lib on Linux
-if test "$with_named_thread" = "no"
-then
-    AC_MSG_CHECKING("Linux threads")
-    if test "$TARGET_LINUX" = "true"
-    then
-        AC_MSG_RESULT("starting")
-        # use getconf to check glibc contents
-        AC_MSG_CHECKING("getconf GNU_LIBPTHREAD_VERSION")
-        case `getconf GNU_LIBPTHREAD_VERSION | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ` in
-        NPTL* )
-                AC_MSG_RESULT("NPTL")
-                AC_DEFINE([HAVE_NPTL], [1], [NPTL threads implementation])
-                with_named_thread="-lpthread"
-                ;;
-        LINUXTHREADS* )
-                AC_MSG_RESULT("Linuxthreads")
-                AC_DEFINE([HAVE_LINUXTHREADS], [1], 
-                      [Whether we are using Xavier Leroy's LinuxThreads])
-                with_named_thread="-lpthread"
-                ;;
-        * )
-                AC_MSG_RESULT("unknown")
-                ;;
-        esac
-        if test "$with_named_thread" = "no"
-        then
-          # old method, check headers
-          # Look for LinuxThreads.
-          AC_MSG_CHECKING("LinuxThreads in header file comment")
-          res=`grep Linuxthreads /usr/include/pthread.h 2>/dev/null | wc -l`
-          if test "$res" -gt 0
-          then
-            AC_MSG_RESULT("Found")
-            AC_DEFINE([HAVE_LINUXTHREADS], [1],
-                  [Whether we are using Xavier Leroy's LinuxThreads])
-            # Linux 2.0 sanity check
-            AC_TRY_COMPILE([#include <sched.h>], [int a = sched_get_priority_min(1);], ,
-                  AC_MSG_ERROR([Syntax error in sched.h. Change _P to __P in the /usr/include/sched.h file. See the Installation chapter in the Reference Manual]))
-            # RedHat 5.0 does not work with dynamic linking of this. -static also
-            # gives a speed increase in linux so it does not hurt on other systems.
-            with_named_thread="-lpthread"
-          else
-            AC_MSG_RESULT("Not found")
-            # If this is a linux machine we should barf
-            AC_MSG_ERROR([This is a Linux system without a working getconf, 
-and Linuxthreads was not found. Please install it (or a new glibc) and try again.  
-See the Installation chapter in the Reference Manual for more information.])
-          fi
-        else
-            AC_MSG_RESULT("no need to check headers")
-        fi
-        
-        AC_MSG_CHECKING("for pthread_create in -lpthread")
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS -lpthread"
-        AC_TRY_LINK( [#include <pthread.h>],
-              [ (void) pthread_create((pthread_t*) 0,(pthread_attr_t*) 0, 0, 0); ],
-              AC_MSG_RESULT("yes"),
-              [ AC_MSG_RESULT("no")
-                AC_MSG_ERROR([
-This is a Linux system claiming to support threads, either Linuxthreads or NPTL, but linking a test program failed.  
-Please install one of these (or a new glibc) and try again.  
-See the Installation chapter in the Reference Manual for more information.]) ]
-              )
-        LIBS="$ac_save_LIBS"
-    else
-        AC_MSG_RESULT("no")
-    fi  # "$TARGET_LINUX" 
-fi  # "$with_named_thread" = "no" -a "$with_mit_threads" = "no"
-
-# Use library named -lpthread
-if test "$with_named_thread" = "no" -a "$with_pthread" = "yes"
-then
-    with_named_thread="-lpthread"
-fi
-
-#---END:
-
-# Hack for Solaris >= 2.5
-# We want both the new and the old interface
- 
-if test "$with_named_thread" = "no"
-then
-  AC_MSG_CHECKING("Solaris threads")
-  if test -f /usr/lib/libpthread.so -a -f /usr/lib/libthread.so
-  then
-    with_named_thread="-lpthread -lthread"
-    AC_MSG_RESULT("yes")
-  else
-    AC_MSG_RESULT("no")
-  fi
-fi
-
-# Should we use named pthread library ?
-AC_MSG_CHECKING("named thread libs:")
-if test "$with_named_thread" != "no"
-then
-  LIBS="$with_named_thread $LIBS $with_named_thread"
-  CLIENT_THREAD_LIBS="$with_named_thread"
-  with_posix_threads="yes"
-  AC_MSG_RESULT("$with_named_thread")
-else
-  AC_MSG_RESULT("no")
-  # pthread_create is in standard libraries (As in BSDI 3.0)
-  AC_MSG_CHECKING("for pthread_create in -libc");
-  AC_TRY_LINK(
-  [#include <pthread.h>],
-  [ (void) pthread_create((pthread_t*) 0,(pthread_attr_t*) 0, 0, 0); ],
-  with_posix_threads=yes, with_posix_threads=no)
-  AC_MSG_RESULT("$with_posix_threads")
-  if test "$with_posix_threads" = "no"
-  then
-    AC_MSG_CHECKING("for pthread_create in -lpthread")
-    ac_save_LIBS="$LIBS"
-    LIBS="$LIBS -lpthread"
-    CLIENT_THREAD_LIBS="-lpthread"
-    AC_TRY_LINK(
-    [#include <pthread.h>],
-    [ (void) pthread_create((pthread_t*) 0,(pthread_attr_t*) 0, 0, 0); ],
-    with_posix_threads=yes, with_posix_threads=no)
-    AC_MSG_RESULT("$with_posix_threads")
-    if test "$with_posix_threads" = "no"
-    then
-      LIBS=" $ac_save_LIBS -lpthreads"
-      CLIENT_THREAD_LIBS="-lpthreads"
-      AC_MSG_CHECKING("for pthread_create in -lpthreads")
-      AC_TRY_LINK(
-      [#include <pthread.h>],
-      [ pthread_create((pthread_t*) 0,(pthread_attr_t*) 0, 0, 0); ],
-      with_posix_threads=yes, with_posix_threads=no)
-      AC_MSG_RESULT("$with_posix_threads")
-      if test "$with_posix_threads" = "no"
-      then
-        # This is for FreeBSD
-        LIBS="$ac_save_LIBS -pthread"
-        CLIENT_THREAD_LIBS="-pthread"
-        AC_MSG_CHECKING("for pthread_create in -pthread")
-        AC_TRY_LINK(
-        [#include <pthread.h>],
-        [ pthread_create((pthread_t*) 0,(pthread_attr_t*) 0, 0, 0); ],
-        with_posix_threads=yes, with_posix_threads=no)
-        AC_MSG_RESULT("$with_posix_threads")
-      fi
-    fi
-  fi
-fi
-
-#---START: Used in for client configure
-# Must be checked after, because strtok_r may be in -lpthread
-# On AIX strtok_r is in libc_r
 
 my_save_LIBS="$LIBS"
-AC_CHECK_LIB(pthread,strtok_r)
+LIBS=""
+AC_CHECK_LIB(dl,dlopen)
+LIBDL=$LIBS
 LIBS="$my_save_LIBS"
-if test "$ac_cv_lib_pthread_strtok_r" = "no"
-then
-  AC_CHECK_LIB(c_r,strtok_r)
-  case "$with_osf32_threads---$target_os" in
-    # Don't keep -lc_r in LIBS; -pthread handles it magically
-    yes---* | *---freebsd* | *---hpux*) LIBS="$my_save_LIBS" ;;
+AC_SUBST(LIBDL)
 
-  esac
-  AC_CHECK_FUNCS(strtok_r pthread_init)
-else
-  AC_CHECK_FUNCS(strtok_r)
-fi
-#---END:
+my_save_LIBS="$LIBS"
+LIBS="$LIBS $LIBDL"
+AC_CHECK_FUNCS(dlopen dlerror)
+LIBS="$my_save_LIBS"
 
-# dlopen, dlerror
-case "$with_mysqld_ldflags " in
-
-  *"-all-static "*)
-    # No need to check for dlopen when mysqld is linked with
-    # -all-static as it won't be able to load any functions.
-    # NOTE! It would be better if it was possible to test if dlopen
-    # can be used, but a good way to test it couldn't be found
-
-    ;;
-
-  *)
-    # Check for dlopen, needed for user definable functions
-    # This must be checked after threads on AIX
-    # We only need this for mysqld, not for the clients.
-
-    my_save_LIBS="$LIBS"
-    LIBS=""
-    AC_CHECK_LIB(dl,dlopen)
-    LIBDL=$LIBS
-    LIBS="$my_save_LIBS"
-    AC_SUBST(LIBDL)
-
-    my_save_LIBS="$LIBS"
-    LIBS="$LIBS $LIBDL"
-    AC_CHECK_FUNCS(dlopen dlerror)
-    LIBS="$my_save_LIBS"
-
-    ;;
-esac
+AC_CHECK_FUNCS(strtok_r)
 
 
 # System characteristics
@@ -1126,88 +779,6 @@ then
 	      [Define to 1 if you want to use fast mutexes])
   fi
 fi
-
-AC_ARG_WITH([atomic-ops],
-	    AC_HELP_STRING([--with-atomic-ops=rwlocks|smp|up],
-	    [Implement atomic operations using pthread rwlocks or atomic CPU
-             instructions for multi-processor (default) or uniprocessor
-             configuration]), , [with_atomic_ops=smp])
-case "$with_atomic_ops" in
-  "up") AC_DEFINE([MY_ATOMIC_MODE_DUMMY], [1],
-                  [Assume single-CPU mode, no concurrency]) ;;
-  "rwlocks") AC_DEFINE([MY_ATOMIC_MODE_RWLOCKS], [1],
-                  [Use pthread rwlocks for atomic ops]) ;;
-  "smp") ;;
-   *) AC_MSG_ERROR(["$with_atomic_ops" is not a valid value for --with-atomic-ops]) ;;
-esac
-
-AC_CACHE_CHECK([whether the compiler provides atomic builtins],
-               [mysql_cv_gcc_atomic_builtins], [AC_TRY_RUN([
-  int main()
-  {
-    int foo= -10; int bar= 10;
-    if (!__sync_fetch_and_add(&foo, bar) || foo)
-      return -1;
-    bar= __sync_lock_test_and_set(&foo, bar);
-    if (bar || foo != 10)
-      return -1;
-    bar= __sync_val_compare_and_swap(&bar, foo, 15);
-    if (bar)
-      return -1;
-    return 0;
-  }
-], [mysql_cv_gcc_atomic_builtins=yes],
-   [mysql_cv_gcc_atomic_builtins=no],
-   [mysql_cv_gcc_atomic_builtins=no])])
-
-if test "x$mysql_cv_gcc_atomic_builtins" = xyes; then
-  AC_DEFINE(HAVE_GCC_ATOMIC_BUILTINS, 1,
-            [Define to 1 if compiler provides atomic builtins.])
-fi
-
-# Force static compilation to avoid linking problems/get more speed
-AC_ARG_WITH(mysqld-ldflags,
-    [  --with-mysqld-ldflags   Extra linking arguments for mysqld],
-    [MYSQLD_EXTRA_LDFLAGS=$withval],
-    [MYSQLD_EXTRA_LDFLAGS=])
-AC_SUBST(MYSQLD_EXTRA_LDFLAGS)
-
-AC_ARG_WITH(client-ldflags,
-    [  --with-client-ldflags   Extra linking arguments for clients],
-    [CLIENT_EXTRA_LDFLAGS=$withval],
-    [CLIENT_EXTRA_LDFLAGS=])
-AC_SUBST(CLIENT_EXTRA_LDFLAGS)
-
-AC_ARG_WITH(mysqld-libs,
-    [  --with-mysqld-libs   Extra libraries to link with for mysqld],
-    [MYSQLD_EXTRA_LIBS=$withval],
-    [MYSQLD_EXTRA_LIBS=])
-AC_SUBST(MYSQLD_EXTRA_LIBS)
-
-AC_ARG_WITH(lib-ccflags,
-    [  --with-lib-ccflags      Extra CC options for libraries],
-    [LIB_EXTRA_CCFLAGS=$withval],
-    [LIB_EXTRA_CCFLAGS=])
-AC_SUBST(LIB_EXTRA_CCFLAGS)
-
-# Avoid stupid bug on some OS 
-AC_ARG_WITH(low-memory,
-    [  --with-low-memory       Try to use less memory to compile to avoid 
-                          memory limitations.],
-    [with_lowmem=$withval],
-    [with_lowmem=no])
-if test "$with_lowmem" = "yes"
-then
-  if test "$ac_cv_prog_gcc" = "yes" 
-  then 
-    LM_CFLAGS="-fno-inline"
-  else
-    LM_CFLAGS="-O0"
-  fi
-else
-  LM_CFLAGS=""
-fi
-AC_SUBST(LM_CFLAGS)
 
 AC_ARG_WITH(comment,
     [  --with-comment          Comment about compilation environment.],

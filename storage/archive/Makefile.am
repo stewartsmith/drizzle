@@ -57,7 +57,7 @@ archive_performance_LDADD =	$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/strings/libmystrings.a \
 			$(LDADD) \
 			-lz
-archive_performance_LDFLAGS = @NOINST_LDFLAGS@
+archive_performance_LDFLAGS =
 
 archive_test_SOURCES =	archive_test.c azio.c
 archive_test_CFLAGS =	$(AM_CFLAGS) 
@@ -66,7 +66,7 @@ archive_test_LDADD =	$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/strings/libmystrings.a \
 			$(LDADD) \
 			-lz
-archive_test_LDFLAGS = @NOINST_LDFLAGS@
+archive_test_LDFLAGS =
 
 archive_reader_SOURCES = archive_reader.c azio.c
 archive_reader_CFLAGS =	$(AM_CFLAGS) 
@@ -75,7 +75,7 @@ archive_reader_LDADD =	$(top_builddir)/mysys/libmysys.a \
 			$(top_builddir)/strings/libmystrings.a \
 			$(LDADD) \
 			-lz
-archive_reader_LDFLAGS = @NOINST_LDFLAGS@
+archive_reader_LDFLAGS =
 
 concurrency_test_SOURCES = concurrency_test.c azio.c
 concurrency_test_CFLAGS =	$(AM_CFLAGS) 
@@ -85,7 +85,7 @@ concurrency_test_LDADD =	$(top_builddir)/mysys/libmysys.a \
 			$(LIBMYSQLCLIENT_LA) \
 			$(LDADD) \
 			-lz
-concurrency_test_LDFLAGS = @NOINST_LDFLAGS@
+concurrency_test_LDFLAGS =
 
 valgrind-test: archive_test archive_performance
 	libtool --mode=execute valgrind --leak-check=yes --show-reachable=yes  ./concurrency_test

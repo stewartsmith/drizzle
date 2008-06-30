@@ -44,11 +44,9 @@ SUPPORTING_LIBS =	$(top_builddir)/vio/libvio.a \
 			$(top_builddir)/strings/libmystrings.a
 mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
-mysqld_LDADD =		@MYSQLD_EXTRA_LDFLAGS@ \
-			$(libevent_libs) \
+mysqld_LDADD =		$(libevent_libs) \
 			@mysql_plugin_libs@ \
-			$(LDADD)  $(CXXLDFLAGS) @LIBDL@ \
-			@MYSQLD_EXTRA_LIBS@
+			$(LDADD)  $(CXXLDFLAGS) @LIBDL@
 
 noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
 			item_strfunc.h item_timefunc.h \

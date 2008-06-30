@@ -36,8 +36,7 @@ noinst_PROGRAMS =	insert_test select_test thread_test bug25714
 INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			$(openssl_includes)
 LIBS =			@CLIENT_LIBS@
-LDADD =			@CLIENT_EXTRA_LDFLAGS@ \
-                        $(LIBMYSQLCLIENT_LA) -lz
+LDADD =			$(LIBMYSQLCLIENT_LA) -lz
 
 mysql_client_test_LDADD= $(LDADD) $(CXXLDFLAGS)
 mysql_client_test_SOURCES= mysql_client_test.c\

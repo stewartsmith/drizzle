@@ -23,7 +23,7 @@ INCLUDES =			-I$(top_builddir)/include \
 
 LIBS =				@CLIENT_LIBS@ -lz
 
-LDADD=				@CLIENT_EXTRA_LDFLAGS@ $(CLIENT_THREAD_LIBS) \
+LDADD=				$(CLIENT_THREAD_LIBS) \
 				$(top_builddir)/libmysql/libmysqlclient.la -lz \
                                 $(top_builddir)/mysys/libmysys.a
 
@@ -69,7 +69,6 @@ mysqldump_SOURCES=              mysqldump.c \
 mysqlimport_SOURCES=		mysqlimport.c
 
 mysqlimport_LDADD =		$(CXXLDFLAGS) $(CLIENT_THREAD_LIBS) \
-				@CLIENT_EXTRA_LDFLAGS@ \
 				$(LIBMYSQLCLIENT_LA) \
 				$(top_builddir)/mysys/libmysys.a
 
@@ -78,7 +77,6 @@ mysqlshow_SOURCES=		mysqlshow.c
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 mysqlslap_LDADD =		$(CXXLDFLAGS) $(CLIENT_THREAD_LIBS) \
-				@CLIENT_EXTRA_LDFLAGS@ \
 				$(LIBMYSQLCLIENT_LA) \
 				$(top_builddir)/mysys/libmysys.a
 

@@ -70,7 +70,7 @@ DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \
 libmysys_a_DEPENDENCIES= @THREAD_LOBJECTS@
 
 # I hope this always does the right thing. Otherwise this is only test programs
-FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) @NOINST_LDFLAGS@
+FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
 
 #
 # The CP .. RM stuff is to avoid problems with some compilers (like alpha ccc)

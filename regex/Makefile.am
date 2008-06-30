@@ -22,7 +22,7 @@ noinst_HEADERS =	cclass.h cname.h regex2.h utils.h engine.c my_regex.h
 libregex_a_SOURCES =	regerror.c regcomp.c regexec.c regfree.c reginit.c
 noinst_PROGRAMS =	re
 re_SOURCES =		split.c debug.c main.c
-re_LDFLAGS= @NOINST_LDFLAGS@
+re_LDFLAGS= 
 EXTRA_DIST =		tests CHANGES COPYRIGHT WHATSNEW regexp.c \
 			debug.ih engine.ih main.ih regcomp.ih regerror.ih \
 			regex.3 regex.7 CMakeLists.txt
