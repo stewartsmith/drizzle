@@ -714,6 +714,11 @@ AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h \
  execinfo.h)
 
 AC_CHECK_HEADERS([xfs/xfs.h])
+#--------------------------------------------------------------------
+# Check for libevent
+#--------------------------------------------------------------------
+
+AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
 
 #--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
