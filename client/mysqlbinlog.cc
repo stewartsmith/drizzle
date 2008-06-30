@@ -924,10 +924,6 @@ static struct my_option my_long_options[] =
 {
   {"help", '?', "Display this help and exit.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"base64-output", OPT_BASE64_OUTPUT_MODE,
    "Determine when the output statements should be base64-encoded BINLOG "
    "statements: 'never' disables it and works only for binlogs without "
@@ -1154,7 +1150,6 @@ static void cleanup()
 static void print_version()
 {
   printf("%s Ver 3.3 for %s at %s\n", my_progname, SYSTEM_TYPE, MACHINE_TYPE);
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 
@@ -1204,11 +1199,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 {
   bool tty_password=0;
   switch (optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
 #ifndef DBUG_OFF
   case '#':
     DBUG_PUSH(argument ? argument : default_dbug_option);
@@ -1822,22 +1812,6 @@ static Exit_status dump_local_log_entries(PRINT_EVENT_INFO *print_event_info,
   }
   else
   {
-    /* read from stdin */
-    /*
-      Windows opens stdin in text mode by default. Certain characters
-      such as CTRL-Z are interpeted as events and the read() method
-      will stop. CTRL-Z is the EOF marker in Windows. to get past this
-      you have to open stdin in binary mode. Setmode() is used to set
-      stdin in binary mode. Errors on setting this mode result in 
-      halting the function and printing an error message to stderr.
-    */
-#if defined (__WIN__) || (_WIN64)
-    if (_setmode(fileno(stdin), O_BINARY) == -1)
-    {
-      error("Could not set binary mode on stdin.");
-      return ERROR_STOP;
-    }
-#endif 
     if (init_io_cache(file, fileno(stdin), 0, READ_CACHE, (my_off_t) 0,
 		      0, MYF(MY_WME | MY_NABP | MY_DONT_CHECK_FILESIZE)))
     {

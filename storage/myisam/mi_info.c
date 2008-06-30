@@ -33,7 +33,7 @@ my_off_t mi_position(MI_INFO *info)
 
 int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
 {
-  MY_STAT state;
+  struct stat state;
   MYISAM_SHARE *share=info->s;
   DBUG_ENTER("mi_status");
 
@@ -85,7 +85,7 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
     x->data_file_name   = share->data_file_name;
     x->index_file_name  = share->index_file_name;
   }
-  if ((flag & HA_STATUS_TIME) && !my_fstat(info->dfile,&state,MYF(0)))
+  if ((flag & HA_STATUS_TIME) && !fstat(info->dfile,&state))
     x->update_time=state.st_mtime;
   else
     x->update_time=0;

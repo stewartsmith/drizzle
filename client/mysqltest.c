@@ -45,15 +45,8 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-#ifdef __WIN__
-#include <direct.h>
-#endif
 
 
-/* Use cygwin for --exec and --system before 5.0 */
-#if MYSQL_VERSION_ID < 50000
-#define USE_CYGWIN
-#endif
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -434,12 +427,6 @@ void do_eval(DYNAMIC_STRING *query_eval, const char *query,
              const char *query_end, my_bool pass_through_escape_chars);
 void str_to_file(const char *fname, char *str, int size);
 void str_to_file2(const char *fname, char *str, int size, my_bool append);
-
-#ifdef __WIN__
-void free_tmp_sh_file();
-void free_win_path_patterns();
-#endif
-
 
 /* For replace_column */
 static char *replace_column[MAX_COLUMNS];
@@ -938,10 +925,6 @@ void free_used_memory()
   my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(default_argv);
   free_re();
-#ifdef __WIN__
-  free_tmp_sh_file();
-  free_win_path_patterns();
-#endif
 
   /* Only call mysql_server_end if mysql_server_init has been called */
   if (server_initialized)
@@ -1275,7 +1258,7 @@ static int run_tool(const char *tool_path, DYNAMIC_STRING *ds_res, ...)
   DBUG_ENTER("run_tool");
   DBUG_PRINT("enter", ("tool_path: %s", tool_path));
 
-  if (init_dynamic_string(&ds_cmdline, IF_WIN("\"", ""), FN_REFLEN, FN_REFLEN))
+  if (init_dynamic_string(&ds_cmdline, "", FN_REFLEN, FN_REFLEN))
     die("Out of memory");
 
   dynstr_append_os_quoted(&ds_cmdline, tool_path, NullS);
@@ -1294,10 +1277,6 @@ static int run_tool(const char *tool_path, DYNAMIC_STRING *ds_res, ...)
   }
 
   va_end(args);
-
-#ifdef __WIN__
-  dynstr_append(&ds_cmdline, "\"");
-#endif
 
   DBUG_PRINT("info", ("Running: %s", ds_cmdline.str));
   ret= run_command(ds_cmdline.str, ds_res);
@@ -1362,9 +1341,6 @@ void show_diff(DYNAMIC_STRING* ds,
 "Instead the whole content of the two files was shown for you to diff manually. ;)\n\n"
 "To get a better report you should install 'diff' on your system, which you\n"
 "for example can get from http://www.gnu.org/software/diffutils/diffutils.html\n"
-#ifdef __WIN__
-"or http://gnuwin32.sourceforge.net/packages/diffutils.htm\n"
-#endif
 "\n");
 
       dynstr_append(&ds_tmp, " --- ");
@@ -2262,66 +2238,16 @@ void do_source(struct st_command *command)
 }
 
 
-#if defined __WIN__
-
-#ifdef USE_CYGWIN
-/* Variables used for temporary sh files used for emulating Unix on Windows */
-char tmp_sh_name[64], tmp_sh_cmd[70];
-#endif
-
-void init_tmp_sh_file()
-{
-#ifdef USE_CYGWIN
-  /* Format a name for the tmp sh file that is unique for this process */
-  my_snprintf(tmp_sh_name, sizeof(tmp_sh_name), "tmp_%d.sh", getpid());
-  /* Format the command to execute in order to run the script */
-  my_snprintf(tmp_sh_cmd, sizeof(tmp_sh_cmd), "sh %s", tmp_sh_name);
-#endif
-}
-
-
-void free_tmp_sh_file()
-{
-#ifdef USE_CYGWIN
-  my_delete(tmp_sh_name, MYF(0));
-#endif
-}
-#endif
-
-
 FILE* my_popen(DYNAMIC_STRING *ds_cmd, const char *mode)
 {
-#if defined __WIN__ && defined USE_CYGWIN
-  /* Dump the command into a sh script file and execute with popen */
-  str_to_file(tmp_sh_name, ds_cmd->str, ds_cmd->length);
-  return popen(tmp_sh_cmd, mode);
-#else
   return popen(ds_cmd->str, mode);
-#endif
 }
 
 
 static void init_builtin_echo(void)
 {
-#ifdef __WIN__
-  size_t echo_length;
-
-  /* Look for "echo.exe" in same dir as mysqltest was started from */
-  dirname_part(builtin_echo, my_progname, &echo_length);
-  fn_format(builtin_echo, ".\\echo.exe",
-            builtin_echo, "", MYF(MY_REPLACE_DIR));
-
-  /* Make sure echo.exe exists */
-  if (access(builtin_echo, F_OK) != 0)
-    builtin_echo[0]= 0;
-  return;
-
-#else
-
   builtin_echo[0]= 0;
   return;
-
-#endif
 }
 
 
@@ -2408,17 +2334,6 @@ void do_exec(struct st_command *command)
     /* Replace echo with our "builtin" echo */
     replace(&ds_cmd, "echo", 4, builtin_echo, strlen(builtin_echo));
   }
-
-#ifdef __WIN__
-#ifndef USE_CYGWIN
-  /* Replace /dev/null with NUL */
-  while(replace(&ds_cmd, "/dev/null", 9, "NUL", 3) == 0)
-    ;
-  /* Replace "closed stdout" with non existing output fd */
-  while(replace(&ds_cmd, ">&-", 3, ">&4", 3) == 0)
-    ;
-#endif
-#endif
 
   DBUG_PRINT("info", ("Executing '%s' as '%s'",
                       command->first_argument, ds_cmd.str));
@@ -2553,13 +2468,7 @@ int do_modify_var(struct st_command *command,
 
 int my_system(DYNAMIC_STRING* ds_cmd)
 {
-#if defined __WIN__ && defined USE_CYGWIN
-  /* Dump the command into a sh script file and execute with system */
-  str_to_file(tmp_sh_name, ds_cmd->str, ds_cmd->length);
-  return system(tmp_sh_cmd);
-#else
   return system(ds_cmd->str);
-#endif
 }
 
 
@@ -2588,15 +2497,6 @@ void do_system(struct st_command *command)
 
   /* Eval the system command, thus replacing all environment variables */
   do_eval(&ds_cmd, command->first_argument, command->end, !is_windows);
-
-#ifdef __WIN__
-#ifndef USE_CYGWIN
-   /* Replace /dev/null with NUL */
-   while(replace(&ds_cmd, "/dev/null", 9, "NUL", 3) == 0)
-     ;
-#endif
-#endif
-
 
   DBUG_PRINT("info", ("running system command '%s' as '%s'",
                       command->first_argument, ds_cmd.str));
@@ -5404,125 +5304,6 @@ void check_regerr(my_regex_t* r, int err)
   }
 }
 
-
-#ifdef __WIN__
-
-DYNAMIC_ARRAY patterns;
-
-/*
-  init_win_path_patterns
-
-  DESCRIPTION
-  Setup string patterns that will be used to detect filenames that
-  needs to be converted from Win to Unix format
-
-*/
-
-void init_win_path_patterns()
-{
-  /* List of string patterns to match in order to find paths */
-  const char* paths[] = { "$MYSQL_TEST_DIR",
-                          "$MYSQL_TMP_DIR",
-                          "$MYSQLTEST_VARDIR",
-                          "./test/" };
-  int num_paths= sizeof(paths)/sizeof(char*);
-  int i;
-  char* p;
-
-  DBUG_ENTER("init_win_path_patterns");
-
-  my_init_dynamic_array(&patterns, sizeof(const char*), 16, 16);
-
-  /* Loop through all paths in the array */
-  for (i= 0; i < num_paths; i++)
-  {
-    VAR* v;
-    if (*(paths[i]) == '$')
-    {
-      v= var_get(paths[i], 0, 0, 0);
-      p= my_strdup(v->str_val, MYF(MY_FAE));
-    }
-    else
-      p= my_strdup(paths[i], MYF(MY_FAE));
-
-    /* Don't insert zero length strings in patterns array */
-    if (strlen(p) == 0)
-    {
-      my_free(p, MYF(0));
-      continue;
-    }
-
-    if (insert_dynamic(&patterns, (uchar*) &p))
-      die(NullS);
-
-    DBUG_PRINT("info", ("p: %s", p));
-    while (*p)
-    {
-      if (*p == '/')
-        *p='\\';
-      p++;
-    }
-  }
-  DBUG_VOID_RETURN;
-}
-
-void free_win_path_patterns()
-{
-  uint i= 0;
-  for (i=0 ; i < patterns.elements ; i++)
-  {
-    const char** pattern= dynamic_element(&patterns, i, const char**);
-    my_free((char*) *pattern, MYF(0));
-  }
-  delete_dynamic(&patterns);
-}
-
-/*
-  fix_win_paths
-
-  DESCRIPTION
-  Search the string 'val' for the patterns that are known to be
-  strings that contain filenames. Convert all \ to / in the
-  filenames that are found.
-
-  Ex:
-  val = 'Error "c:\mysql\mysql-test\var\test\t1.frm" didn't exist'
-  => $MYSQL_TEST_DIR is found by strstr
-  => all \ from c:\mysql\m... until next space is converted into /
-*/
-
-void fix_win_paths(const char *val, int len)
-{
-  uint i;
-  char *p;
-
-  DBUG_ENTER("fix_win_paths");
-  for (i= 0; i < patterns.elements; i++)
-  {
-    const char** pattern= dynamic_element(&patterns, i, const char**);
-    DBUG_PRINT("info", ("pattern: %s", *pattern));
-
-    /* Search for the path in string */
-    while ((p= strstr(val, *pattern)))
-    {
-      DBUG_PRINT("info", ("Found %s in val p: %s", *pattern, p));
-
-      while (*p && !my_isspace(charset_info, *p))
-      {
-        if (*p == '\\')
-          *p= '/';
-        p++;
-      }
-      DBUG_PRINT("info", ("Converted \\ to /, p: %s", p));
-    }
-  }
-  DBUG_PRINT("exit", (" val: %s, len: %d", val, len));
-  DBUG_VOID_RETURN;
-}
-#endif
-
-
-
 /*
   Append the result for one field to the dynamic string ds
 */
@@ -5540,23 +5321,6 @@ void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
     val= "NULL";
     len= 4;
   }
-#ifdef __WIN__
-  else if ((field->type == MYSQL_TYPE_DOUBLE ||
-            field->type == MYSQL_TYPE_FLOAT ) &&
-           field->decimals >= 31)
-  {
-    /* Convert 1.2e+018 to 1.2e+18 and 1.2e-018 to 1.2e-18 */
-    char *start= strchr(val, 'e');
-    if (start && strlen(start) >= 5 &&
-        (start[1] == '-' || start[1] == '+') && start[2] == '0')
-    {
-      start+=2; /* Now points at first '0' */
-      /* Move all chars after the first '0' one step left */
-      memmove(start, start + 1, strlen(start));
-      len--;
-    }
-  }
-#endif
 
   if (!display_result_vertically)
   {
@@ -6767,7 +6531,7 @@ int main(int argc, char **argv)
   my_bool q_send_flag= 0, abort_flag= 0;
   uint command_executed= 0, last_command_executed= 0;
   char save_file[FN_REFLEN];
-  MY_STAT res_info;
+  struct stat res_info;
   MY_INIT(argv[0]);
 
   save_file[0]= 0;
@@ -6816,13 +6580,6 @@ int main(int argc, char **argv)
   memset(&var_reg, 0, sizeof(var_reg));
 
   init_builtin_echo();
-#ifdef __WIN__
-#ifndef USE_CYGWIN
-  is_windows= 1;
-#endif
-  init_tmp_sh_file();
-  init_win_path_patterns();
-#endif
 
   init_dynamic_string(&ds_res, "", 65536, 65536);
   init_dynamic_string(&ds_progress, "", 0, 2048);
@@ -7242,7 +6999,7 @@ int main(int argc, char **argv)
   }
 
   if (!command_executed &&
-      result_file_name && my_stat(result_file_name, &res_info, 0))
+      result_file_name && !stat(result_file_name, &res_info))
   {
     /*
       my_stat() successful on result file. Check if we have not run a
@@ -8608,10 +8365,6 @@ void free_pointer_array(POINTER_ARRAY *pa)
 void replace_dynstr_append_mem(DYNAMIC_STRING *ds,
                                const char *val, int len)
 {
-#ifdef __WIN__
-  fix_win_paths(val, len);
-#endif
-
   if (glob_replace_regex)
   {
     /* Regex replace */

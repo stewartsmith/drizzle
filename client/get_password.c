@@ -32,73 +32,28 @@
 #include <pwd.h>
 #endif /* HAVE_PWD_H */
 #else /* ! HAVE_GETPASS */
-#ifndef __WIN__
-#include <sys/ioctl.h>
-#ifdef HAVE_TERMIOS_H				/* For tty-password */
-#include	<termios.h>
-#define TERMIO	struct termios
-#else
-#ifdef HAVE_TERMIO_H				/* For tty-password */
-#include	<termio.h>
-#define TERMIO	struct termio
-#else
-#include	<sgtty.h>
-#define TERMIO	struct sgttyb
-#endif
-#endif
-#ifdef alpha_linux_port
-#include <asm/ioctls.h>				/* QQ; Fix this in configure */
-#include <asm/termiobits.h>
-#endif
-#else
-#include <conio.h>
-#endif /* __WIN__ */
+ #include <sys/ioctl.h>
+ #ifdef HAVE_TERMIOS_H				/* For tty-password */
+  #include	<termios.h>
+  #define TERMIO	struct termios
+ #else
+  #ifdef HAVE_TERMIO_H				/* For tty-password */
+   #include	<termio.h>
+   #define TERMIO	struct termio
+  #else
+   #include	<sgtty.h>
+   #define TERMIO	struct sgttyb
+  #endif
+ #endif
+ #ifdef alpha_linux_port
+  #include <asm/ioctls.h>				/* QQ; Fix this in configure */
+  #include <asm/termiobits.h>
+ #endif
 #endif /* HAVE_GETPASS */
 
 #ifdef HAVE_GETPASSPHRASE			/* For Solaris */
 #define getpass(A) getpassphrase(A)
 #endif
-
-#ifdef __WIN__
-/* were just going to fake it here and get input from
-   the keyboard */
-
-char *get_tty_password(const char *opt_message)
-{
-  char to[80];
-  char *pos=to,*end=to+sizeof(to)-1;
-  int i=0;
-  DBUG_ENTER("get_tty_password");
-  _cputs(opt_message ? opt_message : "Enter password: ");
-  for (;;)
-  {
-    char tmp;
-    tmp=_getch();
-    if (tmp == '\b' || (int) tmp == 127)
-    {
-      if (pos != to)
-      {
-	_cputs("\b \b");
-	pos--;
-	continue;
-      }
-    }
-    if (tmp == '\n' || tmp == '\r' || tmp == 3)
-      break;
-    if (iscntrl(tmp) || pos == end)
-      continue;
-    _cputs("*");
-    *(pos++) = tmp;
-  }
-  while (pos != to && isspace(pos[-1]) == ' ')
-    pos--;					/* Allow dummy space at end */
-  *pos=0;
-  _cputs("\n");
-  DBUG_RETURN(my_strdup(to,MYF(MY_FAE)));
-}
-
-#else
-
 
 #ifndef HAVE_GETPASS
 /*
@@ -208,4 +163,3 @@ char *get_tty_password(const char *opt_message)
   DBUG_RETURN(my_strdup(buff,MYF(MY_FAE)));
 }
 
-#endif /*__WIN__*/

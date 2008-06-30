@@ -3322,7 +3322,7 @@ static int prepare_for_repair(THD *thd, TABLE_LIST *table_list,
   TABLE_SHARE *share;
   char from[FN_REFLEN],tmp[FN_REFLEN+32];
   const char **ext;
-  MY_STAT stat_info;
+  struct stat stat_info;
   DBUG_ENTER("prepare_for_repair");
 
   if (!(check_opt->sql_flags & TT_USEFRM))
@@ -3384,7 +3384,7 @@ static int prepare_for_repair(THD *thd, TABLE_LIST *table_list,
 
   // Name of data file
   strxmov(from, table->s->normalized_path.str, ext[1], NullS);
-  if (!my_stat(from, &stat_info, MYF(0)))
+  if (stat(from, &stat_info))
     goto end;				// Can't use USE_FRM flag
 
   my_snprintf(tmp, sizeof(tmp), "%s-%lx_%lx",

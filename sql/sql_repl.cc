@@ -1080,7 +1080,7 @@ int stop_slave(THD* thd, Master_info* mi, bool net_report )
 
 int reset_slave(THD *thd, Master_info* mi)
 {
-  MY_STAT stat_area;
+  struct stat stat_area;
   char fname[FN_REFLEN];
   int thread_mask= 0, error= 0;
   uint sql_errno=0;
@@ -1117,14 +1117,14 @@ int reset_slave(THD *thd, Master_info* mi)
   end_master_info(mi);
   // and delete these two files
   fn_format(fname, master_info_file, mysql_data_home, "", 4+32);
-  if (my_stat(fname, &stat_area, MYF(0)) && my_delete(fname, MYF(MY_WME)))
+  if (!stat(fname, &stat_area) && my_delete(fname, MYF(MY_WME)))
   {
     error=1;
     goto err;
   }
   // delete relay_log_info_file
   fn_format(fname, relay_log_info_file, mysql_data_home, "", 4+32);
-  if (my_stat(fname, &stat_area, MYF(0)) && my_delete(fname, MYF(MY_WME)))
+  if (!stat(fname, &stat_area) && my_delete(fname, MYF(MY_WME)))
   {
     error=1;
     goto err;

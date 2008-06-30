@@ -55,18 +55,18 @@ int my_copy(const char *from, const char *to, myf MyFlags)
   int create_flag;
   File from_file,to_file;
   uchar buff[IO_SIZE];
-  MY_STAT stat_buff,new_stat_buff;
+  struct stat stat_buff,new_stat_buff;
   DBUG_ENTER("my_copy");
   DBUG_PRINT("my",("from %s to %s MyFlags %d", from, to, MyFlags));
 
   from_file=to_file= -1;
   DBUG_ASSERT(!(MyFlags & (MY_FNABP | MY_NABP))); /* for my_read/my_write */
   if (MyFlags & MY_HOLD_ORIGINAL_MODES)		/* Copy stat if possible */
-    new_file_stat= test(my_stat((char*) to, &new_stat_buff, MYF(0)));
+    new_file_stat= test(!stat((char*) to, &new_stat_buff));
 
   if ((from_file=my_open(from,O_RDONLY | O_SHARE,MyFlags)) >= 0)
   {
-    if (!my_stat(from, &stat_buff, MyFlags))
+    if (stat(from, &stat_buff))
     {
       my_errno=errno;
       goto err;
