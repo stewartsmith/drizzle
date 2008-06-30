@@ -1962,7 +1962,7 @@ static void test_ps_null_param()
 
   /* Always clear all members of bind parameter */
   memset((char*) &in_bind, 0, sizeof(in_bind));
-  memset((char*) &out_bind, sizeof(out_bind));
+  memset((char*) &out_bind, 0, sizeof(out_bind));
 
   in_bind.buffer_type= MYSQL_TYPE_LONG;
   in_bind.is_null= &in_is_null;
@@ -5002,7 +5002,7 @@ static void test_stmt_close()
     We need to clear bind structure because mysql_stmt_bind_param checks all
     its members.
   */
-  memset((char*) my_bind, sizeof(my_bind));
+  memset((char*) my_bind, 0, sizeof(my_bind));
 
   my_bind[0].buffer= (void *)&count;
   my_bind[0].buffer_type= MYSQL_TYPE_LONG;
