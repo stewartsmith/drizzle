@@ -44,7 +44,7 @@ $(top_builddir)/include/sql_state.h: $(top_builddir)/include/mysqld_error.h
 
 bin_PROGRAMS =		my_print_defaults \
 			mysql_waitpid innochecksum
-noinst_PROGRAMS =	charset2html
+noinst_PROGRAMS =	
 EXTRA_PROGRAMS =	comp_err
 EXTRA_DIST =		CMakeLists.txt
 

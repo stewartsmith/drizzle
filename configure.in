@@ -1476,123 +1476,6 @@ then
 fi]
 )
 
-# Check definition of gethostbyaddr_r (glibc2 defines this with 8 arguments)
-ac_save_CXXFLAGS="$CXXFLAGS"
-AC_CACHE_CHECK([style of gethost* routines], mysql_cv_gethost_style,
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-
-# Test whether madvise() is declared in C++ code -- it is not on some
-# systems, such as Solaris
-AC_CHECK_DECLS(madvise, [], [], [#if HAVE_SYS_MMAN_H
-#include <sys/types.h>
-#include <sys/mman.h>
-#endif])
-
-# Do not treat warnings as errors if we are linking against other libc
-# this is to work around gcc not being permissive on non-system includes
-# with respect to ANSI C++
-# We also remove the -fbranch-probabilities option as this will give warnings
-# about not profiled code, which confuses configure
-# We also must remove -W and -Wcheck which on icc produces warnings that
-# we don't want to catch with -Werror
-
-if test "$ac_cv_prog_gxx" = "yes" -a "$with_other_libc" = "no"
-then
-  CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-ansi//; s/-pedantic//; s/-Wcheck//'`
-fi
-
-AC_TRY_COMPILE(
-[#undef inline
-#if !defined(_REENTRANT)
-#define _REENTRANT
-#endif
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>],
-[int skr;
- struct hostent *foo = gethostbyaddr_r((const char *) 0,
-  0, 0, (struct hostent *) 0, (char *) NULL,  0, &skr); return (foo == 0);],
-mysql_cv_gethost_style=solaris, mysql_cv_gethost_style=other))
-AC_LANG_RESTORE
-CXXFLAGS="$ac_save_CXXFLAGS"
-if test "$mysql_cv_gethost_style" = "solaris"
-then
-  AC_DEFINE([HAVE_SOLARIS_STYLE_GETHOST], [1],
-            [Solaris define gethostbyaddr_r with 7 arguments. glibc2 defines this with 8 arguments])
-fi
-
-#---START: Used in for client configure
-
-# Check definition of gethostbyname_r (glibc2.0.100 is different from Solaris)
-ac_save_CXXFLAGS="$CXXFLAGS"
-AC_CACHE_CHECK([style of gethostbyname_r routines], mysql_cv_gethostbyname_style,
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-if test "$ac_cv_prog_gxx" = "yes" -a "$with_other_libc" = "no"
-then
-  CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-ansi//; s/-pedantic//; s/-Wcheck//'`
-fi
-AC_TRY_COMPILE(
-[#undef inline
-#if !defined(_REENTRANT)
-#define _REENTRANT
-#endif
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>],
-[int skr;
-
- skr = gethostbyname_r((const char *) 0,
-  (struct hostent*) 0, (char*) 0, 0, (struct hostent **) 0, &skr);],
-mysql_cv_gethostbyname_style=glibc2, mysql_cv_gethostbyname_style=other))
-AC_LANG_RESTORE
-CXXFLAGS="$ac_save_CXXFLAGS"
-if test "$mysql_cv_gethostbyname_style" = "glibc2"
-then
-  AC_DEFINE([HAVE_GETHOSTBYNAME_R_GLIBC2_STYLE], [1],
-            [Solaris define gethostbyname_r with 5 arguments. glibc2 defines this with 6 arguments])
-fi
-
-# Check 3rd argument of getthostbyname_r
-ac_save_CXXFLAGS="$CXXFLAGS"
-AC_CACHE_CHECK([3 argument to gethostbyname_r routines], mysql_cv_gethostbyname_arg,
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
-if test "$ac_cv_prog_gxx" = "yes" -a "$with_other_libc" = "no"
-then
-  CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-ansi//; s/-pedantic//; s/-Wcheck//'`
-fi
-AC_TRY_COMPILE(
-[#undef inline
-#if !defined(_REENTRANT)
-#define _REENTRANT
-#endif
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>],
-[int skr;
-
- skr = gethostbyname_r((const char *) 0, (struct hostent*) 0, (struct hostent_data*) 0);],
-mysql_cv_gethostbyname_arg=hostent_data, mysql_cv_gethostbyname_arg=char))
-AC_LANG_RESTORE
-CXXFLAGS="$ac_save_CXXFLAGS"
-if test "$mysql_cv_gethostbyname_arg" = "hostent_data"
-then
-  AC_DEFINE([HAVE_GETHOSTBYNAME_R_RETURN_INT], [1],
-            [In OSF 4.0f the 3'd argument to gethostbyname_r is hostent_data *])
-fi
-
-
 # Check definition of pthread_getspecific
 AC_CACHE_CHECK("args to pthread_getspecific", mysql_cv_getspecific_args,
 AC_TRY_COMPILE(
@@ -1848,7 +1731,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
  dbug/Makefile scripts/Makefile include/Makefile dnl
  tests/Makefile support-files/Makefile dnl
- support-files/MacOSX/Makefile support-files/RHEL4-SElinux/Makefile dnl
  mysql-test/Makefile dnl
  include/mysql_version.h plugin/Makefile)
 

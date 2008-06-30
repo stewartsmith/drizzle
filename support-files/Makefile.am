@@ -35,7 +35,7 @@ EXTRA_DIST =		mysql.spec.sh \
 			ndb-config-2-node.ini.sh \
 			compiler_warnings.supp
 
-SUBDIRS =		MacOSX RHEL4-SElinux
+SUBDIRS =
 
 # Default same as 'pkgdatadir', but we can override it
 pkgsuppdir =		$(datadir)/@PACKAGE@
