@@ -881,8 +881,6 @@ int my_munmap(void *, size_t);
 int my_getpagesize(void);
 #endif
 
-int my_msync(int, void *, size_t, int);
-
 /* character sets */
 extern uint get_charset_number(const char *cs_name, uint cs_flags);
 extern uint get_collation_number(const char *name);

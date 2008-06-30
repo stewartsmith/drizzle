@@ -13,10 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#if defined(__NETWARE__)
-#include "../mysys/my_lock.c"
-#else
-
 #undef MAP_TO_USE_RAID			/* Avoid RAID mappings */
 #include <my_global.h>
 #include <my_sys.h>
@@ -75,4 +71,4 @@ int my_lock(File fd,int locktype,my_off_t start,my_off_t length,myf MyFlags)
   DBUG_PRINT("error",("errno: %d",errno));
   DBUG_RETURN(-1);
 }
-#endif
+

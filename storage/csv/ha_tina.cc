@@ -136,7 +136,7 @@ static TINA_SHARE *get_share(const char *table_name, TABLE *table)
 {
   TINA_SHARE *share;
   char meta_file_name[FN_REFLEN];
-  MY_STAT file_stat;                /* Stat information for the data file */
+  struct stat file_stat;
   char *tmp_name;
   uint length;
 
@@ -175,7 +175,7 @@ static TINA_SHARE *get_share(const char *table_name, TABLE *table)
     fn_format(meta_file_name, table_name, "", CSM_EXT,
               MY_REPLACE_EXT|MY_UNPACK_FILENAME);
 
-    if (my_stat(share->data_file_name, &file_stat, MYF(MY_WME)) == NULL)
+    if (stat(share->data_file_name, &file_stat))
       goto error;
     share->saved_data_file_length= file_stat.st_size;
 

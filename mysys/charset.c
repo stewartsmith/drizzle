@@ -355,9 +355,9 @@ static my_bool my_read_charset_file(const char *filename, myf myflags)
   uchar *buf;
   int  fd;
   uint len, tmp_len;
-  MY_STAT stat_info;
+  struct stat stat_info;
   
-  if (!my_stat(filename, &stat_info, MYF(myflags)) ||
+  if (stat(filename, &stat_info) ||
        ((len= (uint)stat_info.st_size) > MY_MAX_ALLOWED_BUF) ||
        !(buf= (uchar*) my_malloc(len,myflags)))
     return TRUE;

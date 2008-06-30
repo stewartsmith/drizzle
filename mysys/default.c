@@ -610,8 +610,8 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   }
   fn_format(name,name,"","",4);
   {
-    MY_STAT stat_info;
-    if (!my_stat(name,&stat_info,MYF(0)))
+    struct stat stat_info;
+    if (stat(name,&stat_info))
       return 1;
     /*
       Ignore world-writable regular files.

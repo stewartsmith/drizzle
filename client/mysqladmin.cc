@@ -127,10 +127,6 @@ static TYPELIB command_typelib=
 
 static struct my_option my_long_options[] =
 {
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"count", 'c',
    "Number of iterations to make. This works with -i (--sleep) only.",
    (uchar**) &nr_iterations, (uchar**) &nr_iterations, 0, GET_UINT,
@@ -167,10 +163,6 @@ static struct my_option my_long_options[] =
   {"password", 'p',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __WIN__
-  {"pipe", 'W', "Use named pipes to connect to server.", 0, 0, 0, GET_NO_ARG,
-   NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
 #if MYSQL_PORT_DEFAULT == 0
@@ -242,11 +234,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   int error = 0;
 
   switch(optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case 'c':
     opt_count_iterations= 1;
     break;
@@ -266,11 +253,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     break;
   case 's':
     option_silent++;
-    break;
-  case 'W':
-#ifdef __WIN__
-    opt_protocol = MYSQL_PROTOCOL_PIPE;
-#endif
     break;
   case '#':
     DBUG_PUSH(argument ? argument : "d:t:o,/tmp/mysqladmin.trace");
@@ -854,12 +836,6 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
         char *pw= argv[1];
         bool old= (find_type(argv[0], &command_typelib, 2) ==
                    ADMIN_OLD_PASSWORD);
-#ifdef __WIN__
-        uint pw_len= strlen(pw);
-        if (pw_len > 1 && pw[0] == '\'' && pw[pw_len-1] == '\'')
-          printf("Warning: single quotes were not trimmed from the password by"
-                 " your command\nline client, as you might have expected.\n");
-#endif
         /*
            If we don't already know to use an old-style password, see what
            the server is using
@@ -1012,7 +988,6 @@ static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s on %s\n",my_progname,ADMIN_VERSION,
 	 MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 

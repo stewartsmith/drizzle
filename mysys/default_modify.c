@@ -61,7 +61,7 @@ int modify_defaults_file(const char *file_location, const char *option,
                          const char *section_name, int remove_option)
 {
   FILE *cnf_file;
-  MY_STAT file_stat;
+  struct stat file_stat;
   char linebuff[BUFF_SIZE], *src_ptr, *dst_ptr, *file_buffer;
   size_t opt_len= 0, optval_len= 0, sect_len;
   uint nr_newlines= 0, buffer_size;
@@ -74,8 +74,7 @@ int modify_defaults_file(const char *file_location, const char *option,
   if (!(cnf_file= my_fopen(file_location, O_RDWR | O_BINARY, MYF(0))))
     DBUG_RETURN(2);
 
-  /* my_fstat doesn't use the flag parameter */
-  if (my_fstat(fileno(cnf_file), &file_stat, MYF(0)))
+  if (fstat(fileno(cnf_file), &file_stat))
     goto malloc_err;
 
   if (option && option_value)

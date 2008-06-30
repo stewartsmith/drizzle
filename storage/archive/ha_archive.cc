@@ -231,11 +231,11 @@ int archive_discover(handlerton *hton, THD* thd, const char *db,
   azio_stream frm_stream;
   char az_file[FN_REFLEN];
   char *frm_ptr;
-  MY_STAT file_stat; 
+  struct stat file_stat; 
 
   fn_format(az_file, name, db, ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
 
-  if (!(my_stat(az_file, &file_stat, MYF(0))))
+  if (stat(az_file, &file_stat))
     goto err;
 
   if (!(azopen(&frm_stream, az_file, O_RDONLY|O_BINARY, AZ_METHOD_BLOCK)))
@@ -583,7 +583,7 @@ int ha_archive::create(const char *name, TABLE *table_arg,
   int error;
   azio_stream create_stream;            /* Archive file we are working with */
   File frm_file;                   /* File handler for readers */
-  MY_STAT file_stat;  // Stat information for the data file
+  struct stat file_stat;
   uchar *frm_ptr;
 
   DBUG_ENTER("ha_archive::create");
@@ -633,7 +633,7 @@ int ha_archive::create(const char *name, TABLE *table_arg,
     There is a chance that the file was "discovered". In this case
     just use whatever file is there.
   */
-  if (!(my_stat(name_buff, &file_stat, MYF(0))))
+  if (!stat(name_buff, &file_stat))
   {
     my_errno= 0;
     if (!(azopen(&create_stream, name_buff, O_CREAT|O_RDWR|O_BINARY,
@@ -653,7 +653,7 @@ int ha_archive::create(const char *name, TABLE *table_arg,
     */
     if ((frm_file= my_open(name_buff, O_RDONLY, MYF(0))) > 0)
     {
-      if (!my_fstat(frm_file, &file_stat, MYF(MY_WME)))
+      if (fstat(frm_file, &file_stat))
       {
         frm_ptr= (uchar *)my_malloc(sizeof(uchar) * file_stat.st_size, MYF(0));
         if (frm_ptr)
@@ -1383,9 +1383,9 @@ int ha_archive::info(uint flag)
   /* Costs quite a bit more to get all information */
   if (flag & HA_STATUS_TIME)
   {
-    MY_STAT file_stat;  // Stat information for the data file
+    struct stat file_stat;  // Stat information for the data file
 
-    VOID(my_stat(share->data_file_name, &file_stat, MYF(MY_WME)));
+    VOID(stat(share->data_file_name, &file_stat));
 
     stats.mean_rec_length= table->s->reclength + buffer.alloced_length();
     stats.data_file_length= file_stat.st_size;
