@@ -21,7 +21,7 @@
 # This file is public domain and comes with NO WARRANTY of any kind
 
 target = libmysqlclient_r.la
-target_defs = -DDONT_USE_RAID -DMYSQL_CLIENT @LIB_EXTRA_CCFLAGS@
+target_defs = -DMYSQL_CLIENT @LIB_EXTRA_CCFLAGS@
 LIBS = @LIBS@ -lz
 
 INCLUDES =	-I$(top_builddir)/include -I$(top_srcdir)/include
