@@ -745,11 +745,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 {
   DBUG_ENTER("get_one_option");
   switch(optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case 'v':
     verbose++;
     break;

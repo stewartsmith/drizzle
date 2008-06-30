@@ -735,9 +735,6 @@ static const char *load_default_groups[]=
 int main(int argc, char **argv)
 {
   MY_INIT(argv[0]);
-#ifdef __NETWARE__
-  setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-#endif
 
   if (init_dynamic_string(&ds_args, "", 512, 256))
     die("Out of memory");

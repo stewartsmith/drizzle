@@ -127,10 +127,6 @@ static TYPELIB command_typelib=
 
 static struct my_option my_long_options[] =
 {
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"count", 'c',
    "Number of iterations to make. This works with -i (--sleep) only.",
    (uchar**) &nr_iterations, (uchar**) &nr_iterations, 0, GET_UINT,
@@ -238,11 +234,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   int error = 0;
 
   switch(optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case 'c':
     opt_count_iterations= 1;
     break;
@@ -997,7 +988,6 @@ static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s on %s\n",my_progname,ADMIN_VERSION,
 	 MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 

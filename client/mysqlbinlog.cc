@@ -924,10 +924,6 @@ static struct my_option my_long_options[] =
 {
   {"help", '?', "Display this help and exit.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"base64-output", OPT_BASE64_OUTPUT_MODE,
    "Determine when the output statements should be base64-encoded BINLOG "
    "statements: 'never' disables it and works only for binlogs without "
@@ -1154,7 +1150,6 @@ static void cleanup()
 static void print_version()
 {
   printf("%s Ver 3.3 for %s at %s\n", my_progname, SYSTEM_TYPE, MACHINE_TYPE);
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 
@@ -1204,11 +1199,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 {
   bool tty_password=0;
   switch (optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
 #ifndef DBUG_OFF
   case '#':
     DBUG_PUSH(argument ? argument : default_dbug_option);

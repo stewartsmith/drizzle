@@ -1317,10 +1317,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, 0, 0},
   {"help", 'I', "Synonym for -?", 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
    0, 0, 0, 0, 0},
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"auto-rehash", OPT_AUTO_REHASH,
    "Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash.",
    (uchar**) &opt_rehash, (uchar**) &opt_rehash, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0,
@@ -1519,11 +1515,6 @@ static struct my_option my_long_options[] =
 
 static void usage(int version)
 {
-  /* Divert all help information on NetWare to logger screen. */
-#ifdef __NETWARE__
-#define printf	consoleprintf
-#endif
-
 #if defined(USE_LIBEDIT_INTERFACE)
   const char* readline= "";
 #else
@@ -1549,10 +1540,6 @@ and you are welcome to modify and redistribute it under the GPL license\n");
   my_print_help(my_long_options);
   print_defaults("my", load_default_groups);
   my_print_variables(my_long_options);
-  NETWARE_SET_SCREEN_MODE(1);
-#ifdef __NETWARE__
-#undef printf
-#endif
 }
 
 
@@ -1561,11 +1548,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
   switch(optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case OPT_CHARSETS_DIR:
     strmake(mysql_charsets_dir, argument, sizeof(mysql_charsets_dir) - 1);
     charsets_dir = mysql_charsets_dir;
@@ -1796,11 +1778,6 @@ static int get_options(int argc, char **argv)
 
 static int read_and_execute(bool interactive)
 {
-#if defined(__NETWARE__)
-  char linebuffer[254];
-  String buffer;
-#endif
-
   char	*line;
   char	in_string=0;
   ulong line_number=0;
@@ -3767,7 +3744,6 @@ com_quit(String *buffer __attribute__((unused)),
 	 char *line __attribute__((unused)))
 {
   /* let the screen auto close on a normal shutdown */
-  NETWARE_SET_SCREEN_MODE(SCR_AUTOCLOSE_ON_EXIT);
   status.exit_status=0;
   return 1;
 }
@@ -4469,7 +4445,6 @@ void tee_fprintf(FILE *file, const char *fmt, ...)
 {
   va_list args;
 
-  NETWARE_YIELD;
   va_start(args, fmt);
   (void) vfprintf(file, fmt, args);
   va_end(args);
@@ -4485,7 +4460,6 @@ void tee_fprintf(FILE *file, const char *fmt, ...)
 
 void tee_fputs(const char *s, FILE *file)
 {
-  NETWARE_YIELD;
   fputs(s, file);
   if (opt_outfile)
     fputs(s, OUTFILE);
@@ -4494,7 +4468,6 @@ void tee_fputs(const char *s, FILE *file)
 
 void tee_puts(const char *s, FILE *file)
 {
-  NETWARE_YIELD;
   fputs(s, file);
   fputc('\n', file);
   if (opt_outfile)
