@@ -30,7 +30,6 @@
 
 #include <my_global.h>
 #include <mysql_version.h>
-#include <mysql_embed.h>
 #include <my_sys.h>
 #include <my_time.h>
 #include <m_string.h>

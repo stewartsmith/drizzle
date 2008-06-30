@@ -19,7 +19,6 @@
  */
 #include <my_global.h>
 #include <mysql.h>
-#include <mysql_embed.h>
 #include <mysql_com.h>
 #include <mysqld_error.h>
 #include <my_sys.h>
