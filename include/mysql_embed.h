@@ -24,6 +24,4 @@
 #undef HAVE_SMEM				/* No shared memory */
 #undef HAVE_NDBCLUSTER_DB /* No NDB cluster */
 
-#define DONT_USE_RAID
-
 #endif /* EMBEDDED_LIBRARY */
