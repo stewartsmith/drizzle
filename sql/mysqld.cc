@@ -188,17 +188,6 @@ static TYPELIB tc_heuristic_recover_typelib=
   tc_heuristic_recover_names, NULL
 };
 
-static const char *thread_handling_names[]=
-{ "one-thread-per-connection", "no-threads",
-  "pool-of-threads",
-  NullS};
-
-TYPELIB thread_handling_typelib=
-{
-  array_elements(thread_handling_names) - 1, "",
-  thread_handling_names, NULL
-};
-
 const char *first_keyword= "first", *binary_keyword= "BINARY";
 const char *my_localhost= "localhost";
 #if SIZEOF_OFF_T > 4 && defined(BIG_TABLES)
@@ -2021,16 +2010,12 @@ SHOW_VAR com_status_vars[]= {
   {"create_db",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CREATE_DB]), SHOW_LONG_STATUS},
   {"create_index",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CREATE_INDEX]), SHOW_LONG_STATUS},
   {"create_table",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CREATE_TABLE]), SHOW_LONG_STATUS},
-  {"create_udf",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_CREATE_FUNCTION]), SHOW_LONG_STATUS},
-  {"dealloc_sql",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DEALLOCATE_PREPARE]), SHOW_LONG_STATUS},
   {"delete",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DELETE]), SHOW_LONG_STATUS},
   {"delete_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DELETE_MULTI]), SHOW_LONG_STATUS},
   {"drop_db",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_DB]), SHOW_LONG_STATUS},
-  {"drop_function",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_FUNCTION]), SHOW_LONG_STATUS},
   {"drop_index",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_INDEX]), SHOW_LONG_STATUS},
   {"drop_table",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_DROP_TABLE]), SHOW_LONG_STATUS},
   {"empty_query",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_EMPTY_QUERY]), SHOW_LONG_STATUS},
-  {"execute_sql",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_EXECUTE]), SHOW_LONG_STATUS},
   {"flush",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_FLUSH]), SHOW_LONG_STATUS},
   {"insert",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_INSERT]), SHOW_LONG_STATUS},
   {"insert_select",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_INSERT_SELECT]), SHOW_LONG_STATUS},
@@ -2039,7 +2024,6 @@ SHOW_VAR com_status_vars[]= {
   {"lock_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOCK_TABLES]), SHOW_LONG_STATUS},
   {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
   {"preload_keys",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PRELOAD_KEYS]), SHOW_LONG_STATUS},
-  {"prepare_sql",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PREPARE]), SHOW_LONG_STATUS},
   {"purge",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PURGE]), SHOW_LONG_STATUS},
   {"purge_before_date",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PURGE_BEFORE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
@@ -2053,18 +2037,13 @@ SHOW_VAR com_status_vars[]= {
   {"savepoint",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SAVEPOINT]), SHOW_LONG_STATUS},
   {"select",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SELECT]), SHOW_LONG_STATUS},
   {"set_option",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SET_OPTION]), SHOW_LONG_STATUS},
-  {"show_archive",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ARCHIVE]), SHOW_LONG_STATUS},
-  {"show_authors",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_AUTHORS]), SHOW_LONG_STATUS},
   {"show_binlog_events",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_BINLOG_EVENTS]), SHOW_LONG_STATUS},
   {"show_binlogs",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_BINLOGS]), SHOW_LONG_STATUS},
   {"show_charsets",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CHARSETS]), SHOW_LONG_STATUS},
   {"show_collations",      (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_COLLATIONS]), SHOW_LONG_STATUS},
-  {"show_contributors",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CONTRIBUTORS]), SHOW_LONG_STATUS},
   {"show_create_db",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE_DB]), SHOW_LONG_STATUS},
   {"show_create_table",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_CREATE]), SHOW_LONG_STATUS},
   {"show_databases",       (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_DATABASES]), SHOW_LONG_STATUS},
-  {"show_engine_logs",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ENGINE_LOGS]), SHOW_LONG_STATUS},
-  {"show_engine_mutex",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ENGINE_MUTEX]), SHOW_LONG_STATUS},
   {"show_engine_status",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ENGINE_STATUS]), SHOW_LONG_STATUS},
   {"show_errors",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_ERRORS]), SHOW_LONG_STATUS},
   {"show_fields",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_FIELDS]), SHOW_LONG_STATUS},
@@ -2083,21 +2062,10 @@ SHOW_VAR com_status_vars[]= {
   {"slave_start",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SLAVE_START]), SHOW_LONG_STATUS},
   {"slave_stop",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SLAVE_STOP]), SHOW_LONG_STATUS},
   {"stmt_close",           (char*) offsetof(STATUS_VAR, com_stmt_close), SHOW_LONG_STATUS},
-  {"stmt_execute",         (char*) offsetof(STATUS_VAR, com_stmt_execute), SHOW_LONG_STATUS},
-  {"stmt_fetch",           (char*) offsetof(STATUS_VAR, com_stmt_fetch), SHOW_LONG_STATUS},
-  {"stmt_prepare",         (char*) offsetof(STATUS_VAR, com_stmt_prepare), SHOW_LONG_STATUS},
-  {"stmt_reset",           (char*) offsetof(STATUS_VAR, com_stmt_reset), SHOW_LONG_STATUS},
-  {"stmt_send_long_data",  (char*) offsetof(STATUS_VAR, com_stmt_send_long_data), SHOW_LONG_STATUS},
   {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
   {"update_multi",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE_MULTI]), SHOW_LONG_STATUS},
-  {"xa_commit",            (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_XA_COMMIT]),SHOW_LONG_STATUS},
-  {"xa_end",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_XA_END]),SHOW_LONG_STATUS},
-  {"xa_prepare",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_XA_PREPARE]),SHOW_LONG_STATUS},
-  {"xa_recover",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_XA_RECOVER]),SHOW_LONG_STATUS},
-  {"xa_rollback",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_XA_ROLLBACK]),SHOW_LONG_STATUS},
-  {"xa_start",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_XA_START]),SHOW_LONG_STATUS},
   {NullS, NullS, SHOW_LONG}
 };
 
@@ -3064,82 +3032,6 @@ static bool read_init_file(char *file_name)
 }
 
 
-/*
-   Simple scheduler that use the main thread to handle the request
-
-   NOTES
-     This is only used for debugging, when starting mysqld with
-     --thread-handling=no-threads or --one-thread
-
-     When we enter this function, LOCK_thread_count is hold!
-*/
-   
-void handle_connection_in_main_thread(THD *thd)
-{
-  safe_mutex_assert_owner(&LOCK_thread_count);
-  thread_cache_size=0;			// Safety
-  threads.append(thd);
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-  handle_one_connection((void*) thd);
-}
-
-
-/*
-  Scheduler that uses one thread per connection
-*/
-
-void create_thread_to_handle_connection(THD *thd)
-{
-  if (cached_thread_count > wake_thread)
-  {
-    /* Get thread from cache */
-    thread_cache.append(thd);
-    wake_thread++;
-    pthread_cond_signal(&COND_thread_cache);
-  }
-  else
-  {
-    char error_message_buff[MYSQL_ERRMSG_SIZE];
-    /* Create new thread to handle connection */
-    int error;
-    thread_created++;
-    threads.append(thd);
-    DBUG_PRINT("info",(("creating thread %lu"), thd->thread_id));
-    thd->connect_utime= thd->start_utime= my_micro_time();
-    if ((error=pthread_create(&thd->real_id,&connection_attrib,
-                              handle_one_connection,
-                              (void*) thd)))
-    {
-      /* purify: begin inspected */
-      DBUG_PRINT("error",
-                 ("Can't create thread to handle request (error %d)",
-                  error));
-      thread_count--;
-      thd->killed= THD::KILL_CONNECTION;			// Safety
-      (void) pthread_mutex_unlock(&LOCK_thread_count);
-
-      pthread_mutex_lock(&LOCK_connection_count);
-      --connection_count;
-      pthread_mutex_unlock(&LOCK_connection_count);
-
-      statistic_increment(aborted_connects,&LOCK_status);
-      /* Can't use my_error() since store_globals has not been called. */
-      my_snprintf(error_message_buff, sizeof(error_message_buff),
-                  ER(ER_CANT_CREATE_THREAD), error);
-      net_send_error(thd, ER_CANT_CREATE_THREAD, error_message_buff);
-      (void) pthread_mutex_lock(&LOCK_thread_count);
-      close_connection(thd,0,0);
-      delete thd;
-      (void) pthread_mutex_unlock(&LOCK_thread_count);
-      return;
-      /* purecov: end */
-    }
-  }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-  DBUG_PRINT("info",("Thread created"));
-}
-
-
 /**
   Create new thread to handle incoming connection.
 
@@ -3367,7 +3259,7 @@ enum options_mysqld
   OPT_BIN_LOG_INDEX,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_SKIP_PRIOR,              OPT_BIG_TABLES,
-  OPT_STANDALONE,              OPT_ONE_THREAD,
+  OPT_STANDALONE,
   OPT_CONSOLE,                 OPT_LOW_PRIORITY_UPDATES,
   OPT_SHORT_LOG_FORMAT,
   OPT_FLUSH,                   OPT_SAFE,
@@ -3412,7 +3304,6 @@ enum options_mysqld
   OPT_BACK_LOG, OPT_BINLOG_CACHE_SIZE,
   OPT_CONNECT_TIMEOUT,
   OPT_FLUSH_TIME, OPT_FT_MIN_WORD_LEN, OPT_FT_BOOLEAN_SYNTAX,
-  OPT_FT_MAX_WORD_LEN, OPT_FT_QUERY_EXPANSION_LIMIT, OPT_FT_STOPWORD_FILE,
   OPT_INTERACTIVE_TIMEOUT, OPT_JOIN_BUFF_SIZE,
   OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,
@@ -3826,12 +3717,6 @@ thread is in the master's binlogs.",
    (uchar**) &global_system_variables.old_passwords,
    (uchar**) &max_system_variables.old_passwords, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-  {"one-thread", OPT_ONE_THREAD,
-   "(deprecated): Only use one thread (for debugging under Linux). Use thread-handling=no-threads instead",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"pool-of-threads", OPT_POOL_OF_THREADS,
-   "Use pool of threads during testing. NOTE: Use thread-handling=pool-of-threads instead",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"old-style-user-limits", OPT_OLD_STYLE_USER_LIMITS,
    "Enable old-style user limits (before 5.0.3 user resources were counted per each user+host vs. per account)",
    (uchar**) &opt_old_style_user_limits, (uchar**) &opt_old_style_user_limits,
@@ -4410,10 +4295,6 @@ The minimum value for this variable is 4096.",
    (uchar**) &global_system_variables.trans_prealloc_size,
    (uchar**) &max_system_variables.trans_prealloc_size, 0, GET_ULONG,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
-  {"thread_handling", OPT_THREAD_HANDLING,
-   "Define threads usage for handling queries:  "
-   "one-thread-per-connection or no-threads", 0, 0,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"wait_timeout", OPT_WAIT_TIMEOUT,
    "The number of seconds the server waits for activity on a connection before closing it.",
    (uchar**) &global_system_variables.net_wait_timeout,
@@ -5168,20 +5049,6 @@ mysqld_get_one_option(int optid,
     global_system_variables.myisam_stats_method= method_conv;
     break;
   }
-  case OPT_ONE_THREAD:
-    global_system_variables.thread_handling=
-      SCHEDULER_ONE_THREAD_PER_CONNECTION;
-    break;
-  case OPT_POOL_OF_THREADS:
-    global_system_variables.thread_handling=
-      SCHEDULER_POOL_OF_THREADS;
-    break;
-  case OPT_THREAD_HANDLING:
-  {
-    global_system_variables.thread_handling=
-      find_type_or_exit(argument, &thread_handling_typelib, opt->name)-1;
-    break;
-  }
   case OPT_LOWER_CASE_TABLE_NAMES:
     lower_case_table_names= argument ? atoi(argument) : 1;
     lower_case_table_names_used= 1;
@@ -5320,13 +5187,7 @@ static void get_options(int *argc,char **argv)
 				  &global_system_variables.datetime_format))
     exit(1);
 
-  if (global_system_variables.thread_handling <=
-      SCHEDULER_ONE_THREAD_PER_CONNECTION)
-    one_thread_per_connection_scheduler(&thread_scheduler);
-  else if (global_system_variables.thread_handling == SCHEDULER_NO_THREADS)
-    one_thread_scheduler(&thread_scheduler);
-  else
-    pool_of_threads_scheduler(&thread_scheduler);  /* purecov: tested */
+  pool_of_threads_scheduler(&thread_scheduler);  /* purecov: tested */
 }
 
 
