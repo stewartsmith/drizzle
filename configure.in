@@ -575,14 +575,6 @@ AC_ARG_WITH(named-curses-libs,
     [ with_named_curses=no ]
     )
 
-# Make thread safe client
-AC_ARG_ENABLE(thread-safe-client,
-    [  --disable-thread-safe-client   
-                          Compile the client without threads.],
-    [ THREAD_SAFE_CLIENT=$enableval ],
-    [ THREAD_SAFE_CLIENT=yes ]
-    )
-
 # compile with strings functions in assembler
 AC_ARG_ENABLE(assembler,
     [  --enable-assembler      Use assembler versions of some string 
@@ -1763,13 +1755,6 @@ dnl This probably should be cleaned up more - for now the threaded
 dnl client is just using plain-old libs.
 sql_client_dirs="strings regex mysys libmysql"
 
-AM_CONDITIONAL(THREAD_SAFE_CLIENT, test "$THREAD_SAFE_CLIENT" != "no")
-
-if test "$THREAD_SAFE_CLIENT" != "no"
-then
-  sql_client_dirs="$sql_client_dirs libmysql_r"
-  AC_DEFINE([THREAD_SAFE_CLIENT], [1], [Should the client be thread safe])
-fi
 sql_client_dirs="$sql_client_dirs client"
 
 CLIENT_LIBS="$NON_THREADED_LIBS $openssl_libs $ZLIB_LIBS $STATIC_NSS_FLAGS"
@@ -1780,7 +1765,7 @@ AC_SUBST(NON_THREADED_LIBS)
 AC_SUBST(STATIC_NSS_FLAGS)
 AC_SUBST(sql_client_dirs)
 
-if test "$with_server" = "yes" -o "$THREAD_SAFE_CLIENT" != "no"
+if test "$with_server" = "yes"
 then
   AC_DEFINE([THREAD], [1],
             [Define if you want to have threaded code. This may be undef on client code])
@@ -1843,7 +1828,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  unittest/mysys/Makefile unittest/examples/Makefile dnl
  strings/Makefile regex/Makefile storage/Makefile dnl
  vio/Makefile dnl
- libmysql/Makefile libmysql_r/Makefile client/Makefile dnl
+ libmysql/Makefile client/Makefile dnl
  sql/Makefile sql/share/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
  dbug/Makefile scripts/Makefile include/Makefile dnl

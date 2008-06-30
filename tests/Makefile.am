@@ -18,11 +18,7 @@
 ## Process this file with automake to create Makefile.in
 
 
-if THREAD_SAFE_CLIENT
-LIBMYSQLCLIENT_LA =		$(top_builddir)/libmysql_r/libmysqlclient_r.la
-else
 LIBMYSQLCLIENT_LA =		$(top_builddir)/libmysql/libmysqlclient.la
-endif
 
 EXTRA_DIST =		auto_increment.res auto_increment.tst \
 			function.res function.tst lock_test.pl lock_test.res \
@@ -41,7 +37,7 @@ INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			$(openssl_includes)
 LIBS =			@CLIENT_LIBS@
 LDADD =			@CLIENT_EXTRA_LDFLAGS@ \
-                        $(LIBMYSQLCLIENT_LA)
+                        $(LIBMYSQLCLIENT_LA) -lz
 
 mysql_client_test_LDADD= $(LDADD) $(CXXLDFLAGS)
 mysql_client_test_SOURCES= mysql_client_test.c\
