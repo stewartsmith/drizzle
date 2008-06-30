@@ -412,7 +412,6 @@ extern my_thread_id my_thread_dbug_id(void);
 
 struct st_my_thread_var
 {
-  int thr_errno;
   pthread_cond_t suspend;
   pthread_mutex_t mutex;
   pthread_mutex_t * volatile current_mutex;
@@ -433,7 +432,6 @@ struct st_my_thread_var
 extern struct st_my_thread_var *_my_thread_var(void) __attribute__ ((const));
 extern uint my_thread_end_wait_time;
 #define my_thread_var (_my_thread_var())
-#define my_errno my_thread_var->thr_errno
 /*
   Keep track of shutdown,signal, and main threads so that my_end() will not
   report errors with them

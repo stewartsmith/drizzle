@@ -1,6 +1,3 @@
-# Embedded server doesn't support external clients
---source include/not_embedded.inc
-
 #
 # This is the test for mysql_fix_privilege_tables
 # It checks that a system tables from mysql 5.0.30

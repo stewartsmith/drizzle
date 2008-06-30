@@ -15,11 +15,7 @@
 
 #called from the top level Makefile
 
-if THREAD_SAFE_CLIENT
-LIBMYSQLCLIENT_LA =		$(top_builddir)/libmysql_r/libmysqlclient_r.la
-else
 LIBMYSQLCLIENT_LA =		$(top_builddir)/libmysql/libmysqlclient.la
-endif
 
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)

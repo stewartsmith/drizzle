@@ -1,4 +1,3 @@
--- source include/not_embedded.inc
 --source include/have_csv.inc
 
 --disable_ps_protocol

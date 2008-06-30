@@ -2,9 +2,6 @@
 #
 # Transactional LOCK TABLE tests
 
-# Transactional lock tests require multiple sessions.
---source include/not_embedded.inc
-
 --source include/have_innodb.inc
 let $engine_type= InnoDB;
 
