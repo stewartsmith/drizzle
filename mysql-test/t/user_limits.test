@@ -3,7 +3,6 @@
 #
 
 # Requires privileges to be enabled
--- source include/not_embedded.inc
 
 # Prepare play-ground 
 --disable_warnings

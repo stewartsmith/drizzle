@@ -2,8 +2,6 @@
 # Test of update statement that uses many tables.
 #
 
-# Requires grants, so won't work with embedded server test
-source include/not_embedded.inc;
 source include/have_log_bin.inc;
 
 --disable_warnings

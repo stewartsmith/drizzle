@@ -2,8 +2,6 @@
 # test is like the main.variables test, but for variables not
 # available in embedded mode.
 
-source include/not_embedded.inc;
-
 --echo ---- Init ----
 # Backup global variables so they can be restored at end of test.
 set @my_slave_net_timeout         =@@global.slave_net_timeout;

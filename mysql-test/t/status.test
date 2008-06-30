@@ -1,9 +1,6 @@
 # This test requires that --log-output includes 'table', and the general
 # log is on
 
-# embedded server causes different stat
--- source include/not_embedded.inc
-
 # PS causes different statistics
 --disable_ps_protocol
 
