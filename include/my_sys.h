@@ -821,9 +821,6 @@ extern my_bool my_compress(uchar *, size_t *, size_t *);
 extern my_bool my_uncompress(uchar *, size_t , size_t *);
 extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
                                 size_t *complen);
-extern int packfrm(uchar *, size_t, uchar **, size_t *);
-extern int unpackfrm(uchar **, size_t *, const uchar *);
-
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
 extern void my_sleep(ulong m_seconds);
