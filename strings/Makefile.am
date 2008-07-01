@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # This file is public domain and comes with NO WARRANTY of any kind
-INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include
 pkglib_LTLIBRARIES =	libmystrings.la
 libmystrings_la_LDFLAGS = -static
 libmystrings_la_SOURCES = 

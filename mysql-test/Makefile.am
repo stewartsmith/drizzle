@@ -29,7 +29,7 @@ PRESCRIPTS =		mysql-test-run.pl mysql-stress-test.pl
 test_SCRIPTS = 		$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS)
 
-INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include -I..
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include -I..
 
 
 dist-hook:

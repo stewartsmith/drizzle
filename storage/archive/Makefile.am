@@ -15,14 +15,12 @@
 
 #called from the top level Makefile
 
-LIBMYSQLCLIENT_LA =		$(top_builddir)/libmysql/libmysqlclient.la
-
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-INCLUDES =              -I$(top_srcdir)/include -I$(top_builddir)/include \
+AM_CPPFLAGS =              -I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/regex \
 			-I$(top_srcdir)/sql \
                         -I$(srcdir)
@@ -82,7 +80,7 @@ concurrency_test_CFLAGS =	$(AM_CFLAGS)
 concurrency_test_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
 			$(top_builddir)/dbug/libdbuglt.la \
 			$(top_builddir)/strings/libmystringslt.la \
-			$(LIBMYSQLCLIENT_LA) \
+			$(top_builddir)/libmysql/libmysqlclient.la \
 			$(LDADD) \
 			-lz
 concurrency_test_LDFLAGS =

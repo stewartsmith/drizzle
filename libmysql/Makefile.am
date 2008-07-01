@@ -44,7 +44,7 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DUNDEF_THREADS_HACK
 
 LIBS =		@CLIENT_LIBS@ 
-INCLUDES =	-I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys -I$(top_builddir)/sql-common
+AM_CPPFLAGS =	-I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys -I$(top_builddir)/sql-common
 
 EXTRA_DIST = libmysql.def
 

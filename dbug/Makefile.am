@@ -15,7 +15,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
-INCLUDES =              -I$(top_builddir)/include -I$(top_srcdir)/include
+AM_CPPFLAGS =              -I$(top_builddir)/include -I$(top_srcdir)/include
 LDADD =                 libdbuglt.la $(top_builddir)/mysys/libmysyslt.la \
 			$(top_builddir)/strings/libmystringslt.la ${ZLIB_LIBS}
 pkglib_LTLIBRARIES =	libdbug.la
