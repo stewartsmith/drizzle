@@ -15,25 +15,23 @@
 
 # This file is public domain and comes with NO WARRANTY of any kind
 
-LIBMYSQLCLIENT_LA =		$(top_builddir)/libmysql/libmysqlclient.la
-
 INCLUDES =			-I$(top_builddir)/include \
 				-I$(top_srcdir)/include \
-				-I$(top_srcdir)/regex
+				-I$(top_srcdir)/regex \
+				-I$(top_srcdir)/sql \
+				-I$(top_srcdir)/strings
 
 LIBS =				@CLIENT_LIBS@ -lz
 
 LDADD=				$(CLIENT_THREAD_LIBS) \
-				$(top_builddir)/libmysql/libmysqlclient.la -lz \
-                                $(top_builddir)/mysys/libmysyslt.la
+				$(top_builddir)/sql-common/libsqlcommon.la \
+				$(top_builddir)/libmysql/libmysqlclient.la -lz
 
 
 noinst_HEADERS =		sql_string.h completion_hash.h my_readline.h \
 				client_priv.h
 
 EXTRA_DIST =			get_password.c CMakeLists.txt echo.c
-
-BUILT_SOURCES =			link_sources
 
 CLEANFILES =			$(BUILT_SOURCES)
 
@@ -60,25 +58,17 @@ mysqlbinlog_SOURCES =		mysqlbinlog.cc \
 				$(top_srcdir)/mysys/my_bit.c \
 				$(top_srcdir)/mysys/my_bitmap.c \
 				$(top_srcdir)/mysys/base64.c
-mysqlbinlog_LDADD =		$(LDADD) $(CXXLDFLAGS)
+mysqlbinlog_LDADD =		$(LDADD) $(CXXLDFLAGS) 
 
 mysqldump_SOURCES=              mysqldump.c \
-				my_user.c \
 	                        $(top_srcdir)/mysys/mf_getdate.c
 
 mysqlimport_SOURCES=		mysqlimport.c
-
-mysqlimport_LDADD =		$(CXXLDFLAGS) $(CLIENT_THREAD_LIBS) \
-				$(LIBMYSQLCLIENT_LA) \
-				$(top_builddir)/mysys/libmysyslt.la
 
 mysqlshow_SOURCES=		mysqlshow.c
 
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
-mysqlslap_LDADD =		$(CXXLDFLAGS) $(CLIENT_THREAD_LIBS) \
-				$(LIBMYSQLCLIENT_LA) \
-				$(top_builddir)/mysys/libmysyslt.la
 
 mysqltest_SOURCES=		mysqltest.c \
 				$(top_srcdir)/mysys/my_getsystime.c \
@@ -93,22 +83,3 @@ mysql_upgrade_SOURCES=          mysql_upgrade.c \
 DEFS =			-DUNDEF_THREADS_HACK \
 			-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
 			-DDATADIR="\"$(localstatedir)\""
-
-sql_src=log_event.h mysql_priv.h rpl_constants.h \
-	log_event.cc my_decimal.h my_decimal.cc \
-	log_event_old.h log_event_old.cc \
-	rpl_record_old.h rpl_record_old.cc
-strings_src=decimal.c dtoa.c
-
-link_sources:
-	for f in $(sql_src) ; do \
-	  rm -f $$f; \
-	  @LN_CP_F@ $(top_srcdir)/sql/$$f $$f; \
-	done; \
-	for f in $(strings_src) ; do \
-	  rm -f $(srcdir)/$$f; \
-	  @LN_CP_F@ $(top_srcdir)/strings/$$f $$f; \
-	done; \
-	rm -f $(srcdir)/my_user.c; \
-	@LN_CP_F@ $(top_srcdir)/sql-common/my_user.c my_user.c;
-	echo timestamp > link_sources;
