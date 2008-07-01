@@ -2205,11 +2205,10 @@ restart:
                 The call is thread safe because only the current
                 thread might change the block->hash_link value
               */
-              error= my_pwrite(block->hash_link->file,
-                               block->buffer+block->offset,
-                               block->length - block->offset,
-                               block->hash_link->diskpos+ block->offset,
-                               MYF(MY_NABP | MY_WAIT_IF_FULL));
+              error= (pwrite(block->hash_link->file,
+                             block->buffer+block->offset,
+                             block->length - block->offset,
+                             block->hash_link->diskpos+ block->offset) == 0);
               keycache_pthread_mutex_lock(&keycache->cache_lock);
 
               /* Block status must not have changed. */
@@ -2432,8 +2431,7 @@ static void read_block(KEY_CACHE *keycache,
       Here other threads may step in and register as secondary readers.
       They will register in block->wqueue[COND_FOR_REQUESTED].
     */
-    got_length= my_pread(block->hash_link->file, block->buffer,
-                         read_length, block->hash_link->diskpos, MYF(0));
+    got_length= pread(block->hash_link->file, block->buffer, read_length, block->hash_link->diskpos);
     keycache_pthread_mutex_lock(&keycache->cache_lock);
     /*
       The block can now have been marked for free (in case of
@@ -2594,8 +2592,7 @@ uchar *key_cache_read(KEY_CACHE *keycache,
         */
         keycache->global_cache_read++;
         keycache_pthread_mutex_unlock(&keycache->cache_lock);
-        error= (my_pread(file, (uchar*) buff, read_length,
-                         filepos + offset, MYF(MY_NABP)) != 0);
+        error= (pread(file, (uchar*) buff, read_length, filepos + offset) == 0);
         keycache_pthread_mutex_lock(&keycache->cache_lock);
         goto next_block;
       }
@@ -2690,7 +2687,7 @@ no_key_cache:
 
   if (locked_and_incremented)
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  if (my_pread(file, (uchar*) buff, length, filepos, MYF(MY_NABP)))
+  if (pread(file, (uchar*) buff, length, filepos))
     error= 1;
   if (locked_and_incremented)
     keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -2989,7 +2986,7 @@ int key_cache_write(KEY_CACHE *keycache,
     /* Force writing from buff into disk. */
     keycache->global_cache_w_requests++;
     keycache->global_cache_write++;
-    if (my_pwrite(file, buff, length, filepos, MYF(MY_NABP | MY_WAIT_IF_FULL)))
+    if (pwrite(file, buff, length, filepos) == 0)
       DBUG_RETURN(1);
     /* purecov: end */
   }
@@ -3064,8 +3061,7 @@ int key_cache_write(KEY_CACHE *keycache,
           /* Used in the server. */
           keycache->global_cache_write++;
           keycache_pthread_mutex_unlock(&keycache->cache_lock);
-          if (my_pwrite(file, (uchar*) buff, read_length, filepos + offset,
-                        MYF(MY_NABP | MY_WAIT_IF_FULL)))
+          if (pwrite(file, (uchar*) buff, read_length, filepos + offset) == 0)
             error=1;
           keycache_pthread_mutex_lock(&keycache->cache_lock);
         }
@@ -3232,8 +3228,7 @@ no_key_cache:
     keycache->global_cache_write++;
     if (locked_and_incremented)
       keycache_pthread_mutex_unlock(&keycache->cache_lock);
-    if (my_pwrite(file, (uchar*) buff, length, filepos,
-		  MYF(MY_NABP | MY_WAIT_IF_FULL)))
+    if (pwrite(file, (uchar*) buff, length, filepos) == 0)
       error=1;
     if (locked_and_incremented)
       keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -3459,11 +3454,10 @@ static int flush_cached_blocks(KEY_CACHE *keycache,
                   (BLOCK_READ | BLOCK_IN_FLUSH | BLOCK_CHANGED | BLOCK_IN_USE));
       block->status|= BLOCK_IN_FLUSHWRITE;
       keycache_pthread_mutex_unlock(&keycache->cache_lock);
-      error= my_pwrite(file,
-                       block->buffer+block->offset,
-                       block->length - block->offset,
-                       block->hash_link->diskpos+ block->offset,
-                       MYF(MY_NABP | MY_WAIT_IF_FULL));
+      error= (pwrite(file,
+                     block->buffer+block->offset,
+                     block->length - block->offset,
+                     block->hash_link->diskpos+ block->offset) == 0);
       keycache_pthread_mutex_lock(&keycache->cache_lock);
       keycache->global_cache_write++;
       if (error)

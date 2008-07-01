@@ -749,8 +749,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     DBUG_PRINT("info", ("extra segment size is %u bytes", n_length));
     if (!(next_chunk= buff= (uchar*) my_malloc(n_length, MYF(MY_WME))))
       goto err;
-    if (my_pread(file, buff, n_length, record_offset + share->reclength,
-                 MYF(MY_NABP)))
+    if (pread(file, buff, n_length, record_offset + share->reclength) == 0)
     {
       goto err;
     }
@@ -903,8 +902,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
                                      rec_buff_length)))
     goto err;                                   /* purecov: inspected */
   share->default_values= record;
-  if (my_pread(file, record, (size_t) share->reclength,
-               record_offset, MYF(MY_NABP)))
+  if (pread(file, record, (size_t) share->reclength, record_offset) == 0)
     goto err;                                   /* purecov: inspected */
 
   VOID(my_seek(file,pos+288,MY_SEEK_SET,MYF(0)));

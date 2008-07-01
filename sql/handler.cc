@@ -2710,7 +2710,7 @@ static bool update_frm_version(TABLE *table)
 {
   char path[FN_REFLEN];
   File file;
-  int result= 1;
+  bool result= true;
   DBUG_ENTER("update_frm_version");
 
   /*
@@ -2734,8 +2734,11 @@ static bool update_frm_version(TABLE *table)
 
     int4store(version, MYSQL_VERSION_ID);
 
-    if ((result= my_pwrite(file,(uchar*) version,4,51L,MYF_RW)))
+    if (pwrite(file, (uchar*)version, 4, 51L) == 0)
+    {
+      result= false;
       goto err;
+    }
 
     for (entry=(TABLE*) hash_first(&open_cache,(uchar*) key,key_length, &state);
          entry;

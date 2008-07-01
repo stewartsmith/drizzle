@@ -240,9 +240,8 @@ bool mysql_create_frm(THD *thd, const char *file_name,
 
   int2store(fileinfo+59,db_file->extra_rec_buf_length());
 
-  if (my_pwrite(file, fileinfo, 64, 0L, MYF_RW) ||
-      my_pwrite(file, keybuff, key_info_length,
-		(ulong) uint2korr(fileinfo+6),MYF_RW))
+  if (pwrite(file, fileinfo, 64, 0L) == 0 ||
+      pwrite(file, keybuff, key_info_length, (ulong) uint2korr(fileinfo+6)) == 0)
     goto err;
   VOID(my_seek(file,
 	       (ulong) uint2korr(fileinfo+6)+ (ulong) key_buff_length,
