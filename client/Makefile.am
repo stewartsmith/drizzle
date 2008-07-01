@@ -31,7 +31,7 @@ LDADD=				$(CLIENT_THREAD_LIBS) \
 noinst_HEADERS =		sql_string.h completion_hash.h my_readline.h \
 				client_priv.h
 
-EXTRA_DIST =			get_password.c CMakeLists.txt echo.c
+EXTRA_DIST =			get_password.c 
 
 CLEANFILES =			$(BUILT_SOURCES)
 

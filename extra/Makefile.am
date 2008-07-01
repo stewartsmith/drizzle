@@ -48,4 +48,3 @@ bin_PROGRAMS =		my_print_defaults \
 			mysql_waitpid innochecksum
 noinst_PROGRAMS =	
 EXTRA_PROGRAMS =	comp_err
-EXTRA_DIST =		CMakeLists.txt

@@ -40,4 +40,4 @@ noinst_LIBRARIES =	@plugin_csv_static_target@
 libcsv_a_CXXFLAGS =	$(AM_CFLAGS)
 libcsv_a_SOURCES =	transparent_file.cc ha_tina.cc
 
-EXTRA_DIST =		CMakeLists.txt plug.in
+EXTRA_DIST =		plug.in

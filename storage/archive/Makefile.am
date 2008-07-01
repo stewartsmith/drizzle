@@ -90,4 +90,4 @@ valgrind-test: archive_test archive_performance
 	libtool --mode=execute valgrind --leak-check=yes --show-reachable=yes  ./archive_test
 	libtool --mode=execute valgrind --leak-check=yes --show-reachable=yes  ./archive_performance
 
-EXTRA_DIST =		CMakeLists.txt plug.in
+EXTRA_DIST =		plug.in
