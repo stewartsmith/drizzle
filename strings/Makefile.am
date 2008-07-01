@@ -19,15 +19,13 @@ pkglib_LTLIBRARIES =	libmystrings.la
 libmystrings_la_LDFLAGS = -static
 libmystrings_la_SOURCES = 
 
-# These are the symbols we don't use in mysqlclient. Do we still need them?
-libmystringsextra_la_SOURCES = bfill.c  r_strinstr.c strtol.c  strtoul.c
 # Force C++ linking - dummy.cxx doesn't have to exist with EXTRA in the name
 nodist_EXTRA_libmystrings_la_SOURCES = dummy.cxx
 # This can't be listed here as $(top_builddir)/strings/libmystingslt.la
 # or it breaks make's dependency track for -j builds
 libmystrings_la_LIBADD = libmystringslt.la
 
-noinst_LTLIBRARIES =	libmystringslt.la libmystringsextra.la
+noinst_LTLIBRARIES =	libmystringslt.la
 
 # Exact one of ASSEMBLER_X
 if ASSEMBLER_x86
