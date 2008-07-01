@@ -3851,14 +3851,7 @@ void MYSQL_BIN_LOG::close(uint exiting)
       my_off_t offset= BIN_LOG_HEADER_SIZE + FLAGS_OFFSET;
       my_off_t org_position= my_tell(log_file.file, MYF(0));
       uchar flags= 0;            // clearing LOG_EVENT_BINLOG_IN_USE_F
-      my_pwrite(log_file.file, &flags, 1, offset, MYF(0));
-      /*
-        Restore position so that anything we have in the IO_cache is written
-        to the correct position.
-        We need the seek here, as my_pwrite() is not guaranteed to keep the
-        original position on system that doesn't support pwrite().
-      */
-      my_seek(log_file.file, org_position, MY_SEEK_SET, MYF(0));
+      pwrite(log_file.file, &flags, 1, offset);
     }
 
     /* this will cleanup IO_CACHE, sync and close the file */

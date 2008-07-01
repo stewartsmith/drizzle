@@ -1081,8 +1081,7 @@ uint read_to_buffer(IO_CACHE *fromfile, BUFFPEK *buffpek,
 
   if ((count=(uint) min((ha_rows) buffpek->max_keys,buffpek->count)))
   {
-    if (my_pread(fromfile->file,(uchar*) buffpek->base,
-		 (length= rec_length*count),buffpek->file_pos,MYF_RW))
+    if (pread(fromfile->file,(uchar*) buffpek->base, (length= rec_length*count),buffpek->file_pos) == 0)
       return((uint) -1);			/* purecov: inspected */
     buffpek->key=buffpek->base;
     buffpek->file_pos+= length;			/* New filepos */
