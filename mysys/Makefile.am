@@ -21,10 +21,18 @@ INCLUDES =		-I$(top_builddir)/include \
 
 pkglib_LTLIBRARIES =	libmysys.la
 libmysys_la_LDFLAGS =   -static
+libmysys_la_SOURCES = 
+# This can't be listed here as $(top_builddir)/mysys/libmysyslt.la
+# # or it breaks make's dependency track for -j builds
+libmysys_la_LIBADD = libmysyslt.la
+# Force C++ linking - dummy.cxx doesn't have to exist with EXTRA in the name
 nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
 
+# Trick to get things compiled like they are shared, but linked directly in.
+noinst_LTLIBRARIES = libmysyslt.la
+
 noinst_HEADERS =	mysys_priv.h my_static.h my_handler_errors.h
-libmysys_la_SOURCES =   my_init.c my_getwd.c mf_getdate.c \
+libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_path.c mf_loadpath.c my_file.c \
 			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
 			my_pread.c my_write.c my_getpagesize.c \
@@ -54,8 +62,9 @@ libmysys_la_SOURCES =   my_init.c my_getwd.c mf_getdate.c \
 			sha1.c \
 			my_handler.c my_largepage.c \
 			my_memmem.c \
-			my_access.c base64.c
-libmysys_a_LIBADD =	@THREAD_LOBJECTS@
+			my_access.c base64.c \
+			thr_alarm.c thr_lock.c my_thr_init.c \
+                        thr_mutex.c thr_rwlock.c 
 DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
 			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
@@ -64,7 +73,4 @@ DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \
 			-DDEFAULT_GROUP_SUFFIX_ENV=MYSQL_GROUP_SUFFIX \
 			-DDEFAULT_SYSCONFDIR="\"$(sysconfdir)\"" \
                         @DEFS@
-
-libmysys_a_DEPENDENCIES= @THREAD_LOBJECTS@
-
 

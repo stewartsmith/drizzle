@@ -44,7 +44,7 @@ else
 ASRCS		=
 # These file MUST all be on the same line!! Otherwise automake
 # generats a very broken makefile
-SRCS		= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strinstr.c strmake.c strnmov.c strmov.c longlong2str.c bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c bcmp.c strtoll.c strtoull.c llstr.c strnlen.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c my_strtoll10.c str_alloc.c dtoa.c
+CSRCS		= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strinstr.c strmake.c strnmov.c strmov.c longlong2str.c bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c bcmp.c strtoll.c strtoull.c llstr.c strnlen.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c my_strtoll10.c str_alloc.c dtoa.c
 endif
 endif
 
@@ -68,7 +68,7 @@ EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
 		t_ctype.h my_strchr.c
 
 conf_to_src_SOURCES = conf_to_src.c 
-conf_to_src_LDADD= libmystringslt.la
+conf_to_src_LDADD = libmystringslt.la
 #force static linking of conf_to_src - essential when linking against
 #custom installation of libc
 conf_to_src_LDFLAGS=

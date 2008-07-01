@@ -27,9 +27,9 @@ MYSQLBASEdir=			$(prefix)
 pkglib_LTLIBRARIES = libmysqlclient.la
 libmysqlclient_la_SOURCES = libmysql.c password.c get_password.c errmsg.c
 libmysqlclient_la_LIBADD = ${sql_cmn_objects} ${vio_objects} ${sqlobjects} \
-			   ${top_builddir}/mysys/libmysys.la \
+			   ${top_builddir}/mysys/libmysyslt.la \
 			   ${top_builddir}/strings/libmystringslt.la \
-			   ${top_builddir}/dbug/libdbug.la
+			   ${top_builddir}/dbug/libdbuglt.la
 libmysqlclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
