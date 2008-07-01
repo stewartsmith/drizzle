@@ -72,14 +72,6 @@ clean-local:
 	       $(mysysheaders) $(vioheaders) \
                net.c
 
-noinst_PROGRAMS = conf_to_src
-conf_to_src_SOURCES = conf_to_src.c
-conf_to_src_LDADD=
-#force static linking of conf_to_src - essential when linking against
-#custom installation of libc
-conf_to_src_LDFLAGS=
-
-
 link_sources:
 	  set -x; \
 	  ds=`echo $(dbugobjects) | sed "s;\.lo;.c;g"`; \

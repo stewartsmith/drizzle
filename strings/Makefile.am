@@ -49,7 +49,6 @@ endif
 endif
 
 libmystringslt_la_SOURCES = $(ASRCS) $(CSRCS)
-noinst_PROGRAMS = conf_to_src
 CLEANFILES = str_test uctypedump test_decimal
 # Default charset definitions
 EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
@@ -67,11 +66,6 @@ EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
 		strnmov-sparc.s strstr-sparc.s strxmov-sparc.s \
 		t_ctype.h my_strchr.c
 
-conf_to_src_SOURCES = conf_to_src.c 
-conf_to_src_LDADD = libmystringslt.la
-#force static linking of conf_to_src - essential when linking against
-#custom installation of libc
-conf_to_src_LDFLAGS=
 
 FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
 
