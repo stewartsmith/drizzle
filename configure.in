@@ -1232,7 +1232,7 @@ then
   server_scripts="mysqld_safe mysql_install_db"
   sql_server_dirs="strings mysys dbug extra regex"
 
-  sql_server="vio sql"
+  sql_server="sql"
 fi
 
 # IMPORTANT - do not modify LIBS past this line - this hack is the only way

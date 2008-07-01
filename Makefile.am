@@ -21,16 +21,16 @@ AUTOMAKE_OPTIONS =	foreign
 EXTRA_DIST =		
 
 SUBDIRS =		. include \
-			sql-common scripts \
+			sql-common scripts vio \
 			@sql_union_dirs@ unittest storage plugin \
 			@sql_server@ tests \
 			mysql-test support-files
 
 DIST_SUBDIRS =		. include \
-			sql-common scripts \
+			sql-common scripts vio \
 			strings mysys dbug mysys/tests extra regex \
 			libmysql client unittest storage plugin \
-			vio sql tests \
+			sql tests \
 			mysql-test support-files
 
 DISTCLEANFILES = ac_available_languages_fragment
