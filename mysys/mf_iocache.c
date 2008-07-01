@@ -1644,11 +1644,10 @@ int my_block_write(register IO_CACHE *info, const uchar *Buffer, size_t Count,
   {
     /* Of no overlap, write everything without buffering */
     if (pos + Count <= info->pos_in_file)
-      return my_pwrite(info->file, Buffer, Count, pos,
-		       info->myflags | MY_NABP);
+      return (pwrite(info->file, Buffer, Count, pos) == 0);
     /* Write the part of the block that is before buffer */
     length= (uint) (info->pos_in_file - pos);
-    if (my_pwrite(info->file, Buffer, length, pos, info->myflags | MY_NABP))
+    if (pwrite(info->file, Buffer, length, pos) == 0)
       info->error= error= -1;
     Buffer+=length;
     pos+=  length;
