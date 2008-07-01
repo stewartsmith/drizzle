@@ -14,5 +14,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ## Process this file with automake to create Makefile.in
+INCLUDES = -I$(top_builddir)/include -I$(top_srcdir)/include
 noinst_LTLIBRARIES = libsqlcommon.la
 libsqlcommon_la_SOURCES = pack.c my_time.c my_user.c errmsg.c password.c
