@@ -631,15 +631,8 @@ static sys_var_log_output sys_var_log_output_state(&vars, "log_output", &log_out
 static SHOW_VAR fixed_vars[]= {
   {"back_log",                (char*) &back_log,                    SHOW_LONG},
   {"character_sets_dir",      mysql_charsets_dir,                   SHOW_CHAR},
-  {"ft_max_word_len",         (char*) &ft_max_word_len,             SHOW_LONG},
-  {"ft_min_word_len",         (char*) &ft_min_word_len,             SHOW_LONG},
-  {"ft_query_expansion_limit",(char*) &ft_query_expansion_limit,    SHOW_LONG},
-  {"ft_stopword_file",        (char*) &ft_stopword_file,            SHOW_CHAR_PTR},
   {"init_file",               (char*) &opt_init_file,               SHOW_CHAR_PTR},
   {"language",                language,                             SHOW_CHAR},
-  {"large_files_support",     (char*) &opt_large_files,             SHOW_BOOL},
-  {"large_page_size",         (char*) &opt_large_page_size,         SHOW_INT},
-  {"large_pages",             (char*) &opt_large_pages,             SHOW_MY_BOOL},
 #ifdef HAVE_MLOCKALL
   {"locked_in_memory",	      (char*) &locked_in_memory,	    SHOW_MY_BOOL},
 #endif
@@ -656,9 +649,6 @@ static SHOW_VAR fixed_vars[]= {
   {"skip_external_locking",   (char*) &my_disable_locking,          SHOW_MY_BOOL},
   {"skip_networking",         (char*) &opt_disable_networking,      SHOW_BOOL},
   {"skip_show_database",      (char*) &opt_skip_show_db,            SHOW_BOOL},
-#ifdef HAVE_THR_SETCONCURRENCY
-  {"thread_concurrency",      (char*) &concurrency,                 SHOW_LONG},
-#endif
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_LONG},
 };
 

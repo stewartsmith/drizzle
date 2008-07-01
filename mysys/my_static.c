@@ -56,12 +56,6 @@ const char *soundex_map=	  "01230120022455012623010202";
 USED_MEM* my_once_root_block=0;			/* pointer to first block */
 uint	  my_once_extra=ONCE_ALLOC_INIT;	/* Memory to alloc / block */
 
-	/* from my_largepage.c */
-#ifdef HAVE_LARGE_PAGES
-my_bool my_use_large_pages= 0;
-uint    my_large_page_size= 0;
-#endif
-
 	/* from safe_malloc */
 uint sf_malloc_prehunc=0,		/* If you have problem with core- */
      sf_malloc_endhunc=0,		/* dump when malloc-message.... */

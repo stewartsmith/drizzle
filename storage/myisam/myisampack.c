@@ -2974,7 +2974,7 @@ static int save_state(MI_INFO *isam_file,PACK_MRG_INFO *mrg,my_off_t new_length,
   share->changed=1;			/* Force write of header */
   share->state.open_count=0;
   share->global_changed=0;
-  VOID(my_chsize(share->kfile, share->base.keystart, 0, MYF(0)));
+  (void)ftruncate(share->kfile, share->base.keystart);
   if (share->base.keys)
     isamchk_neaded=1;
   DBUG_RETURN(mi_state_info_write(share->kfile,&share->state,1+2));

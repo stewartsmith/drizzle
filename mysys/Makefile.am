@@ -52,7 +52,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			tree.c trie.c list.c hash.c array.c string.c typelib.c \
 			my_copy.c my_append.c my_lib.c \
 			my_delete.c my_rename.c my_redel.c \
-			my_chsize.c my_clock.c \
+			my_clock.c \
 			my_quick.c my_lockmem.c my_static.c \
 			my_sync.c my_getopt.c my_mkdir.c \
 			default_modify.c default.c \
@@ -60,7 +60,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			my_sleep.c \
 			charset.c charset-def.c my_bitmap.c my_bit.c md5.c \
 			sha1.c \
-			my_handler.c my_largepage.c \
+			my_handler.c \
 			my_memmem.c \
 			my_access.c base64.c \
 			thr_alarm.c thr_lock.c my_thr_init.c \

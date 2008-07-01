@@ -15,4 +15,4 @@
 
 ## Process this file with automake to create Makefile.in
 noinst_LTLIBRARIES = libsqlcommon.la
-libsqlcommon_la_SOURCES = pack.c my_time.c my_user.c errmsg.c
+libsqlcommon_la_SOURCES = pack.c my_time.c my_user.c errmsg.c password.c

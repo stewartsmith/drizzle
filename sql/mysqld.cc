@@ -196,8 +196,6 @@ const char *my_localhost= "localhost";
 #define GET_HA_ROWS GET_ULONG
 #endif
 
-bool opt_large_files= sizeof(my_off_t) > 4;
-
 /*
   Used with --help for detailed option
 */
@@ -278,8 +276,6 @@ char* opt_secure_file_priv= 0;
 my_bool opt_log_slow_admin_statements= 0;
 my_bool opt_log_slow_slave_statements= 0;
 my_bool lower_case_file_system= 0;
-my_bool opt_large_pages= 0;
-uint    opt_large_page_size= 0;
 my_bool opt_old_style_user_limits= 0, trust_function_creators= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
@@ -2170,15 +2166,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   DBUG_PRINT("info",("%s  Ver %s for %s on %s\n",my_progname,
 		     server_version, SYSTEM_TYPE,MACHINE_TYPE));
 
-#ifdef HAVE_LARGE_PAGES
-  /* Initialize large page size */
-  if (opt_large_pages && (opt_large_page_size= my_get_large_page_size()))
-  {
-      my_use_large_pages= 1;
-      my_large_page_size= opt_large_page_size;
-  }
-#endif /* HAVE_LARGE_PAGES */
-
   /* connections and databases needs lots of files */
   {
     uint files, wanted_files, max_open_files;
@@ -3552,12 +3539,6 @@ struct my_option my_long_options[] =
   {"general-log", OPT_GENERAL_LOG,
    "Enable|disable general log", (uchar**) &opt_log,
    (uchar**) &opt_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_LARGE_PAGES
-  {"large-pages", OPT_ENABLE_LARGE_PAGES, "Enable support for large pages. \
-Disable with --skip-large-pages.",
-   (uchar**) &opt_large_pages, (uchar**) &opt_large_pages, 0, GET_BOOL, NO_ARG, 0, 0, 0,
-   0, 0, 0},
-#endif
   {"init-connect", OPT_INIT_CONNECT, "Command(s) that are executed for each new connection",
    (uchar**) &opt_init_connect, (uchar**) &opt_init_connect, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -4589,7 +4570,6 @@ static void mysql_init_variables(void)
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
   bzero((uchar*) &mysql_tmpdir_list, sizeof(mysql_tmpdir_list));
   bzero((char *) &global_status_var, sizeof(global_status_var));
-  opt_large_pages= 0;
   key_map_full.set_all();
 
   /* Character sets */

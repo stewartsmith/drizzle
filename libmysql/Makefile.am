@@ -25,7 +25,7 @@ MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
 pkglib_LTLIBRARIES = libmysqlclient.la
-libmysqlclient_la_SOURCES = libmysql.c password.c get_password.c \
+libmysqlclient_la_SOURCES = libmysql.c get_password.c \
                             client.c net_serv.c
 libmysqlclient_la_LIBADD = ${sql_cmn_objects} ${sqlobjects} \
 			   ${top_builddir}/mysys/libmysyslt.la \

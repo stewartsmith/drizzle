@@ -57,8 +57,7 @@ int mi_delete_all_rows(MI_INFO *info)
   if (share->file_map)
     _mi_unmap_file(info);
 #endif
-  if (my_chsize(info->dfile, 0, 0, MYF(MY_WME)) ||
-      my_chsize(share->kfile, share->base.keystart, 0, MYF(MY_WME))  )
+  if (ftruncate(info->dfile, 0) || ftruncate(share->kfile, share->base.keystart))
     goto err;
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
 #ifdef HAVE_MMAP

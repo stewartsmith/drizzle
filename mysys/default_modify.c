@@ -209,8 +209,7 @@ int modify_defaults_file(const char *file_location, const char *option,
   if (opt_applied)
   {
     /* Don't write the file if there are no changes to be made */
-    if (my_chsize(fileno(cnf_file), (my_off_t) (dst_ptr - file_buffer), 0,
-                  MYF(MY_WME)) ||
+    if (ftruncate(fileno(cnf_file), (my_off_t) (dst_ptr - file_buffer)) ||
         my_fseek(cnf_file, 0, MY_SEEK_SET, MYF(0)) ||
         my_fwrite(cnf_file, (uchar*) file_buffer, (size_t) (dst_ptr - file_buffer),
                   MYF(MY_NABP)))

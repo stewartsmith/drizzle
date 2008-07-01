@@ -2044,8 +2044,7 @@ static bool copy_up_file_and_fill(IO_CACHE *index_file, my_off_t offset)
       goto err;
   }
   /* The following will either truncate the file or fill the end with \n' */
-  if (my_chsize(file, offset - init_offset, '\n', MYF(MY_WME)) ||
-      my_sync(file, MYF(MY_WME)))
+  if (ftruncate(file, offset - init_offset) || my_sync(file, MYF(MY_WME)))
     goto err;
 
   /* Reset data in old index cache */
@@ -4190,7 +4189,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
       goto err;
     inited=1;
     file_length= opt_tc_log_size;
-    if (my_chsize(fd, file_length, 0, MYF(MY_WME)))
+    if (ftruncate(fd, file_length))
       goto err;
   }
   else

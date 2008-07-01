@@ -154,16 +154,6 @@ extern char *my_strndup(const char *from, size_t length,
 #define TRASH(A,B) /* nothing */
 #endif
 
-#ifdef HAVE_LARGE_PAGES
-extern uint my_get_large_page_size(void);
-extern uchar * my_large_malloc(size_t size, myf my_flags);
-extern void my_large_free(uchar * ptr, myf my_flags);
-#else
-#define my_get_large_page_size() (0)
-#define my_large_malloc(A,B) my_malloc_lock((A),(B))
-#define my_large_free(A,B) my_free_lock((A),(B))
-#endif /* HAVE_LARGE_PAGES */
-
 #ifdef HAVE_ALLOCA
 #if defined(__GNUC__) && !defined(HAVE_ALLOCA_H) && ! defined(alloca)
 #define alloca __builtin_alloca
@@ -191,11 +181,6 @@ extern void (*fatal_error_handler_hook)(uint my_err, const char *str,
                                         myf MyFlags);
 extern uint my_file_limit;
 extern ulong my_thread_stack_size;
-
-#ifdef HAVE_LARGE_PAGES
-extern my_bool my_use_large_pages;
-extern uint    my_large_page_size;
-#endif
 
 /* charsets */
 extern CHARSET_INFO *default_charset_info;
@@ -606,7 +591,6 @@ extern void init_glob_errs(void);
 extern FILE *my_fopen(const char *FileName,int Flags,myf MyFlags);
 extern FILE *my_fdopen(File Filedes,const char *name, int Flags,myf MyFlags);
 extern int my_fclose(FILE *fd,myf MyFlags);
-extern int my_chsize(File fd,my_off_t newlength, int filler, myf MyFlags);
 extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
 extern int my_sync_dir_by_file(const char *file_name, myf my_flags);
@@ -821,9 +805,6 @@ extern my_bool my_compress(uchar *, size_t *, size_t *);
 extern my_bool my_uncompress(uchar *, size_t , size_t *);
 extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
                                 size_t *complen);
-extern int packfrm(uchar *, size_t, uchar **, size_t *);
-extern int unpackfrm(uchar **, size_t *, const uchar *);
-
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
 extern void my_sleep(ulong m_seconds);
