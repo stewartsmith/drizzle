@@ -20,7 +20,7 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-INCLUDES =              -I$(top_srcdir)/include -I$(top_builddir)/include \
+AM_CPPFLAGS =		-I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/regex \
 			-I$(top_srcdir)/sql \
                         -I$(srcdir)
@@ -48,5 +48,3 @@ libblackhole_a_SOURCES=	ha_blackhole.cc
 
 
 EXTRA_DIST =		CMakeLists.txt plug.in
-# Don't update the files from bitkeeper
-%::SCCS/s.%

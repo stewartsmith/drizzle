@@ -14,71 +14,68 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # This file is public domain and comes with NO WARRANTY of any kind
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include
+pkglib_LTLIBRARIES =	libmystrings.la
+libmystrings_la_LDFLAGS = -static
+libmystrings_la_SOURCES = 
 
-INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include
-pkglib_LIBRARIES =	libmystrings.a
+# Force C++ linking - dummy.cxx doesn't have to exist with EXTRA in the name
+nodist_EXTRA_libmystrings_la_SOURCES = dummy.cxx
+# This can't be listed here as $(top_builddir)/strings/libmystingslt.la
+# or it breaks make's dependency track for -j builds
+libmystrings_la_LIBADD = libmystringslt.la
+
+noinst_LTLIBRARIES =	libmystringslt.la
 
 # Exact one of ASSEMBLER_X
 if ASSEMBLER_x86
 ASRCS		= strings-x86.s longlong2str-x86.s my_strtoll10-x86.s
-CSRCS		= bfill.c bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c r_strinstr.c bcmp.c strtol.c strtoul.c strtoll.c strtoull.c llstr.c strnlen.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c str_alloc.c longlong2str_asm.c my_strchr.c dtoa.c
+CSRCS		= longlong2str_asm.c 
 else
 if ASSEMBLER_sparc32
 # These file MUST all be on the same line!! Otherwise automake
 # generats a very broken makefile
 ASRCS		= bmove_upp-sparc.s strappend-sparc.s strend-sparc.s strinstr-sparc.s strmake-sparc.s strmov-sparc.s strnmov-sparc.s strstr-sparc.s
-CSRCS		= strcont.c strfill.c strcend.c is_prefix.c longlong2str.c bfill.c bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c r_strinstr.c bcmp.c strtol.c strtoul.c strtoll.c strtoull.c llstr.c strnlen.c strxmov.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c my_strtoll10.c str_alloc.c my_strchr.c dtoa.c
+CSRCS 	= strcont.c strfill.c strcend.c is_prefix.c longlong2str.c strxmov.c my_strtoll10.c 
 else
 #no assembler
 ASRCS		=
 # These file MUST all be on the same line!! Otherwise automake
 # generats a very broken makefile
-CSRCS		= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strinstr.c strmake.c strnmov.c strmov.c longlong2str.c bfill.c bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c r_strinstr.c bcmp.c strtol.c strtoul.c strtoll.c strtoull.c llstr.c strnlen.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c my_strtoll10.c str_alloc.c my_strchr.c dtoa.c
+CSRCS 	= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strinstr.c strmake.c strnmov.c strmov.c longlong2str.c my_strtoll10.c
 endif
 endif
 
-libmystrings_a_SOURCES = $(ASRCS) $(CSRCS)
-noinst_PROGRAMS = conf_to_src
-CLEANFILES = str_test uctypedump test_decimal
+# C files common to all three cases are included directly below, so that
+# ASRCS and CSRCS can be smaller
+libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove.c bmove512.c \
+				bchange.c strxnmov.c int2str.c str2int.c \
+				bcmp.c strtoll.c strtoull.c llstr.c strnlen.c \
+				ctype.c ctype-simple.c ctype-mb.c \
+				ctype-big5.c ctype-cp932.c ctype-czech.c \
+				ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c \
+				ctype-gbk.c ctype-sjis.c ctype-tis620.c \
+				ctype-ujis.c ctype-utf8.c ctype-ucs2.c \
+				ctype-uca.c ctype-win1250ch.c ctype-bin.c \
+				ctype-latin1.c my_vsnprintf.c xml.c \
+				decimal.c ctype-extra.c str_alloc.c \
+				dtoa.c my_strchr.c
+
 # Default charset definitions
-EXTRA_DIST =		ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-win1250ch.c \
-			ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-utf8.c \
-			ctype-ucs2.c ctype-uca.c ctype-tis620.c ctype-ujis.c \
-			xml.c decimal.c strto.c strings-x86.s \
-			longlong2str.c longlong2str-x86.s longlong2str_asm.c \
-			my_strtoll10.c my_strtoll10-x86.s \
-			strxmov.c bmove_upp.c strappend.c strcont.c strend.c \
-			strfill.c strcend.c is_prefix.c strstr.c strinstr.c \
-			strmake.c strnmov.c strmov.c strnlen.c \
-			bmove_upp-sparc.s strappend-sparc.s strend-sparc.s \
-			strinstr-sparc.s strmake-sparc.s strmov-sparc.s \
-			strnmov-sparc.s strstr-sparc.s strxmov-sparc.s \
-			t_ctype.h my_strchr.c CMakeLists.txt
-
-libmystrings_a_LIBADD=
-conf_to_src_SOURCES = conf_to_src.c xml.c ctype.c bcmp.c
-conf_to_src_LDADD=
-#force static linking of conf_to_src - essential when linking against
-#custom installation of libc
-conf_to_src_LDFLAGS=
-
-# This is because the dependency tracking misses @FOO@ vars in sources.
-#strtoull.o:		@CHARSET_OBJS@
-
+EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
+	       	ctype-euc_kr.c ctype-win1250ch.c \
+		ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-utf8.c \
+		ctype-ucs2.c ctype-uca.c ctype-tis620.c ctype-ujis.c \
+		xml.c decimal.c strto.c strings-x86.s \
+		longlong2str.c longlong2str-x86.s longlong2str_asm.c \
+		my_strtoll10.c my_strtoll10-x86.s \
+		strxmov.c bmove_upp.c strappend.c strcont.c strend.c \
+		strfill.c strcend.c is_prefix.c strstr.c strinstr.c \
+		strmake.c strnmov.c strmov.c strnlen.c \
+		bmove_upp-sparc.s strappend-sparc.s strend-sparc.s \
+		strinstr-sparc.s strmake-sparc.s strmov-sparc.s \
+		strnmov-sparc.s strstr-sparc.s strxmov-sparc.s \
+		t_ctype.h my_strchr.c
 
 FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
-
-str_test: str_test.c $(pkglib_LIBRARIES)
-	$(LINK) $(FLAGS) -DMAIN $(INCLUDES) $(srcdir)/str_test.c $(LDADD) $(pkglib_LIBRARIES)
-
-uctypedump: uctypedump.c
-	$(LINK) $(INCLUDES) $(srcdir)/uctypedump.c
-
-test_decimal$(EXEEXT): decimal.c $(pkglib_LIBRARIES)
-	$(CP) $(srcdir)/decimal.c ./test_decimal.c
-	$(LINK) $(FLAGS) -DMAIN  ./test_decimal.c $(LDADD) $(pkglib_LIBRARIES)
-	$(RM) -f ./test_decimal.c
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%
 

@@ -15,14 +15,12 @@
 
 #called from the top level Makefile
 
-LIBMYSQLCLIENT_LA =		$(top_builddir)/libmysql/libmysqlclient.la
-
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-INCLUDES =              -I$(top_srcdir)/include -I$(top_builddir)/include \
+AM_CPPFLAGS =              -I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/regex \
 			-I$(top_srcdir)/sql \
                         -I$(srcdir)
@@ -52,37 +50,37 @@ libarchive_a_SOURCES =	ha_archive.cc azio.c
 
 archive_performance_SOURCES =	archive_performance.c azio.c
 archive_performance_CFLAGS =	$(AM_CFLAGS) 
-archive_performance_LDADD =	$(top_builddir)/mysys/libmysys.a \
-			$(top_builddir)/dbug/libdbug.a \
-			$(top_builddir)/strings/libmystrings.a \
+archive_performance_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/dbug/libdbuglt.la \
+			$(top_builddir)/strings/libmystringslt.la \
 			$(LDADD) \
 			-lz
 archive_performance_LDFLAGS =
 
 archive_test_SOURCES =	archive_test.c azio.c
 archive_test_CFLAGS =	$(AM_CFLAGS) 
-archive_test_LDADD =	$(top_builddir)/mysys/libmysys.a \
-			$(top_builddir)/dbug/libdbug.a \
-			$(top_builddir)/strings/libmystrings.a \
+archive_test_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/dbug/libdbuglt.la \
+			$(top_builddir)/strings/libmystringslt.la \
 			$(LDADD) \
 			-lz
 archive_test_LDFLAGS =
 
 archive_reader_SOURCES = archive_reader.c azio.c
 archive_reader_CFLAGS =	$(AM_CFLAGS) 
-archive_reader_LDADD =	$(top_builddir)/mysys/libmysys.a \
-			$(top_builddir)/dbug/libdbug.a \
-			$(top_builddir)/strings/libmystrings.a \
+archive_reader_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/dbug/libdbuglt.la \
+			$(top_builddir)/strings/libmystringslt.la \
 			$(LDADD) \
 			-lz
 archive_reader_LDFLAGS =
 
 concurrency_test_SOURCES = concurrency_test.c azio.c
 concurrency_test_CFLAGS =	$(AM_CFLAGS) 
-concurrency_test_LDADD =	$(top_builddir)/mysys/libmysys.a \
-			$(top_builddir)/dbug/libdbug.a \
-			$(top_builddir)/strings/libmystrings.a \
-			$(LIBMYSQLCLIENT_LA) \
+concurrency_test_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/dbug/libdbuglt.la \
+			$(top_builddir)/strings/libmystringslt.la \
+			$(top_builddir)/libmysql/libmysqlclient.la \
 			$(LDADD) \
 			-lz
 concurrency_test_LDFLAGS =
@@ -93,5 +91,3 @@ valgrind-test: archive_test archive_performance
 	libtool --mode=execute valgrind --leak-check=yes --show-reachable=yes  ./archive_performance
 
 EXTRA_DIST =		CMakeLists.txt plug.in
-# Don't update the files from bitkeeper
-%::SCCS/s.%

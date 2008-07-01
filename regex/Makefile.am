@@ -15,9 +15,9 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
-INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include
 noinst_LIBRARIES =	libregex.a
-LDADD=			libregex.a $(top_builddir)/strings/libmystrings.a
+LDADD=			libregex.a $(top_builddir)/strings/libmystrings.la
 noinst_HEADERS =	cclass.h cname.h regex2.h utils.h engine.c my_regex.h
 libregex_a_SOURCES =	regerror.c regcomp.c regexec.c regfree.c reginit.c
 noinst_PROGRAMS =	re
@@ -31,6 +31,3 @@ test: re tests
 	./re < tests
 	./re -el < tests
 	./re -er < tests
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

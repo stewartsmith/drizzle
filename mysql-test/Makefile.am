@@ -29,7 +29,7 @@ PRESCRIPTS =		mysql-test-run.pl mysql-stress-test.pl
 test_SCRIPTS = 		$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS)
 
-INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include -I..
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include -I..
 
 
 dist-hook:
@@ -69,7 +69,6 @@ dist-hook:
 	$(INSTALL_DATA) $(srcdir)/std_data/parts/part_* $(distdir)/std_data/parts
 	$(INSTALL_DATA) $(srcdir)/lib/*.pl $(distdir)/lib
 	$(INSTALL_DATA) $(srcdir)/lib/My/*.pm $(distdir)/lib/My
-	-rm -rf `find $(distdir)/suite -type d -name SCCS` $(distdir)/suite/row_lock
 
 install-data-local:
 	$(mkinstalldirs) \
@@ -157,6 +156,3 @@ SUFFIXES = .sh
 	  $< > $@-t
 	@CHMOD@ +x $@-t
 	@MV@ $@-t $@
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

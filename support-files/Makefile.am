@@ -32,7 +32,6 @@ EXTRA_DIST =		mysql.spec.sh \
 			binary-configure.sh \
 			magic mysql.m4 \
 			MySQL-shared-compat.spec.sh \
-			ndb-config-2-node.ini.sh \
 			compiler_warnings.supp
 
 SUBDIRS =
@@ -49,8 +48,7 @@ pkgsupp_DATA =		my-small.cnf \
                         config.small.ini \
 			my-innodb-heavy-4G.cnf \
 			mysql-log-rotate \
-			binary-configure \
-			ndb-config-2-node.ini
+			binary-configure
 
 pkgsupp_SCRIPTS =	mysql.server \
 			mysqld_multi.server
@@ -75,8 +73,7 @@ CLEANFILES =		my-small.cnf \
 			mysql.server \
 			mysqld_multi.server \
 			binary-configure \
-			MySQL-shared-compat.spec \
-			ndb-config-2-node.ini
+			MySQL-shared-compat.spec
 
 mysql-@VERSION@.spec:	mysql.spec
 			rm -f $@
@@ -126,5 +123,3 @@ SUFFIXES = .sh
 	$< > $@-t
 	@MV@ $@-t $@
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

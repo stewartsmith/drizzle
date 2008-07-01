@@ -20,7 +20,7 @@ MYSQLSHAREdir =		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include \
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			-I$(srcdir) $(openssl_includes) \
 			$(libevent_includes)
 SUBDIRS =		share
@@ -36,15 +36,16 @@ DTRACEFILES =           handler.o \
 			sql_select.o \
 			sql_update.o
 
-noinst_LTLIBRARIES=
+noinst_LTLIBRARIES = 
 
-SUPPORTING_LIBS =	$(top_builddir)/vio/libvio.a \
-			$(top_builddir)/mysys/libmysys.a \
-			$(top_builddir)/dbug/libdbug.a \
-			$(top_builddir)/strings/libmystrings.a
+SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
+			$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/dbug/libdbuglt.la \
+			$(top_builddir)/strings/libmystringslt.la 
 mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
-mysqld_LDADD =		$(libevent_libs) \
+mysqld_LDADD =		$(top_builddir)/sql-common/libsqlcommon.la \
+			$(libevent_libs) \
 			@mysql_plugin_libs@ \
 			$(LDADD)  $(CXXLDFLAGS) @LIBDL@
 
@@ -64,7 +65,7 @@ noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
 			sql_repl.h slave.h rpl_filter.h \
 			log_event.h rpl_record.h \
 			stacktrace.h sql_sort.h set_var.h \
-			client_settings.h tzfile.h \
+			tzfile.h \
 			tztime.h my_decimal.h\
 			sql_array.h scheduler.h \
 			sql_plugin.h \
@@ -76,10 +77,10 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			thr_malloc.cc item_create.cc item_subselect.cc \
 			item_row.cc \
 			field.cc strfunc.cc key.cc sql_class.cc sql_list.cc \
-			net_serv.cc protocol.cc sql_state.c \
+			protocol.cc sql_state.c \
 			lock.cc my_lock.c \
 			sql_string.cc sql_manager.cc sql_map.cc \
-			mysqld.cc password.c hash_filo.cc \
+			mysqld.cc hash_filo.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \
 			set_var.cc sql_yacc.yy \
 			sql_base.cc table.cc sql_select.cc sql_insert.cc \
@@ -103,13 +104,13 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_olap.cc \
 			tztime.cc my_decimal.cc\
 			sql_plugin.cc sql_binlog.cc \
-			sql_builtin.cc
+			sql_builtin.cc 
+
+nodist_mysqld_SOURCES = client.c net_serv.c
 
 if HAVE_DTRACE
   mysqld_SOURCES += probes.d
 endif
-
-nodist_mysqld_SOURCES =	mini_client_errors.c pack.c client.c my_time.c
 
 gen_lex_hash_SOURCES =	gen_lex_hash.cc
 gen_lex_hash_LDFLAGS =  
@@ -129,30 +130,25 @@ BUILT_SOURCES =		$(BUILT_MAINT_SRC) lex_hash.h link_sources
 EXTRA_DIST =		$(BUILT_MAINT_SRC) \
 			message.mc \
 			probes.d
-CLEANFILES =        	lex_hash.h sql_yacc.output link_sources
+CLEANFILES =        	lex_hash.h sql_yacc.output link_sources $(nodist_mysqld_SOURCES)
 DISTCLEANFILES =        $(EXTRA_PROGRAMS)
 MAINTAINERCLEANFILES =  $(BUILT_MAINT_SRC)
 AM_YFLAGS =		-d --verbose
 
 # These are listed in 'nodist_mysqld_SOURCES'
 link_sources:
-	rm -f mini_client_errors.c
-	@LN_CP_F@ $(top_srcdir)/libmysql/errmsg.c mini_client_errors.c
-	rm -f pack.c
-	@LN_CP_F@ $(top_srcdir)/sql-common/pack.c pack.c
 	rm -f client.c
-	@LN_CP_F@ $(top_srcdir)/sql-common/client.c client.c
-	rm -f my_time.c
-	@LN_CP_F@ $(top_srcdir)/sql-common/my_time.c my_time.c
+	@LN_CP_F@ $(top_srcdir)/libmysql/client.c client.c
+	rm -f net_serv.c
+	@LN_CP_F@ $(top_srcdir)/libmysql/net_serv.c net_serv.c
 	echo timestamp > link_sources
+
 
 # This generates lex_hash.h
 # NOTE Built sources should depend on their sources not the tool
 # this avoid the rebuild of the built files in a source dist
-lex_hash.h:	gen_lex_hash.cc lex.h
-		$(MAKE) $(AM_MAKEFLAGS) gen_lex_hash$(EXEEXT)
-		./gen_lex_hash$(EXEEXT) > $@-t
-		$(MV) $@-t $@
+lex_hash.h: $(builddir)/gen_lex_hash$(EXEEXT) $(srcdir)/lex.h
+		$(builddir)/gen_lex_hash$(EXEEXT) > $@
 
 probes.h: probes.d
 	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d
@@ -164,6 +160,3 @@ SUFFIXES : .d
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

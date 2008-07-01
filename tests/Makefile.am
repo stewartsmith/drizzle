@@ -33,7 +33,7 @@ EXTRA_DIST =		auto_increment.res auto_increment.tst \
 bin_PROGRAMS =		mysql_client_test
 noinst_PROGRAMS =	insert_test select_test thread_test bug25714
 
-INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include \
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			$(openssl_includes)
 LIBS =			@CLIENT_LIBS@
 LDADD =			$(LIBMYSQLCLIENT_LA) -lz
@@ -56,5 +56,3 @@ DEFS =			-DUNDEF_THREADS_HACK
 thread_test.o:		thread_test.c
 			$(COMPILE) -c $(INCLUDES) $<
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

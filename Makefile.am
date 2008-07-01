@@ -21,15 +21,17 @@ AUTOMAKE_OPTIONS =	foreign
 EXTRA_DIST =		
 
 SUBDIRS =		. include \
-			sql-common scripts \
+			sql-common scripts vio \
 			@sql_union_dirs@ unittest storage plugin \
 			@sql_server@ tests \
 			mysql-test support-files
 
 DIST_SUBDIRS =		. include \
-			sql-common scripts \
-			strings mysys dbug extra regex libmysql client unittest storage plugin \
-			vio sql tests \
+			sql-common scripts vio \
+			strings mysys dbug mysys/tests strings/tests \
+			extra regex \
+			libmysql client unittest storage plugin \
+			sql tests \
 			mysql-test support-files
 
 DISTCLEANFILES = ac_available_languages_fragment
@@ -40,19 +42,6 @@ init-db:		all
 
 bin-dist:		all
 	$(top_builddir)/scripts/make_binary_distribution @MAKE_BINARY_DISTRIBUTION_OPTIONS@
-
-# Remove BK's "SCCS" subdirectories from source distribution
-# Create initial database files for Windows installations.
-dist-hook:
-	rm -rf `find $(distdir) -type d -name SCCS -print`
-	mkdir -p $(distdir)/win
-	scripts/mysql_install_db --no-defaults --cross-bootstrap \
-		--builddir=$(top_builddir) \
-		--datadir=$(distdir)/win/data \
-		--srcdir=$(top_srcdir)
-
-tags:
-	support-files/build-tags
 
 .PHONY:	init-db bin-dist \
   test    test-force    test-full    test-force-full    test-force-mem \
@@ -180,6 +169,3 @@ test-full-qa:
 	$(MAKE) force=--force test-pr \
 	    test-binlog-statement test-ext test-fast-view \
 	        test-fast-cursor test-unit
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

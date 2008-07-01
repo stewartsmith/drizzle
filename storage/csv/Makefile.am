@@ -19,7 +19,7 @@ MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
-INCLUDES =              -I$(top_builddir)/include \
+AM_CPPFLAGS =              -I$(top_builddir)/include \
 			-I$(top_srcdir)/include \
 			-I$(top_srcdir)/regex \
 			-I$(top_srcdir)/sql \
@@ -41,5 +41,3 @@ libcsv_a_CXXFLAGS =	$(AM_CFLAGS)
 libcsv_a_SOURCES =	transparent_file.cc ha_tina.cc
 
 EXTRA_DIST =		CMakeLists.txt plug.in
-# Don't update the files from bitkeeper
-%::SCCS/s.%
