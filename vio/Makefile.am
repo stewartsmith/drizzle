@@ -15,7 +15,6 @@
 
 INCLUDES =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			$(openssl_includes)
-LDADD =			@CLIENT_EXTRA_LDFLAGS@ $(openssl_libs) $(yassl_libs)
 pkglib_LIBRARIES =	libvio.a
 
 noinst_HEADERS =	vio_priv.h
