@@ -41,7 +41,6 @@ noinst_LTLIBRARIES =
 SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(top_builddir)/dbug/libdbuglt.la \
-			$(top_builddir)/strings/libmystringsextra.la \
 			$(top_builddir)/strings/libmystringslt.la 
 mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
