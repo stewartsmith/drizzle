@@ -43,9 +43,6 @@ init-db:		all
 bin-dist:		all
 	$(top_builddir)/scripts/make_binary_distribution @MAKE_BINARY_DISTRIBUTION_OPTIONS@
 
-tags:
-	support-files/build-tags
-
 .PHONY:	init-db bin-dist \
   test    test-force    test-full    test-force-full    test-force-mem \
   test-pl test-force-pl test-full-pl test-force-full-pl test-force-pl-mem \
