@@ -1752,10 +1752,9 @@ extern my_bool locked_in_memory;
 extern bool opt_using_transactions;
 #endif /* MYSQL_SERVER */
 #if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-extern bool mysqld_embedded;
 #endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
 #ifdef MYSQL_SERVER
-extern bool using_update_log, opt_large_files, server_id_supplied;
+extern bool using_update_log, server_id_supplied;
 extern bool opt_update_log, opt_bin_log, opt_error_log;
 extern my_bool opt_log, opt_slow_log;
 extern ulong log_output_options;
@@ -1781,10 +1780,6 @@ extern char *shared_memory_base_name;
 extern my_bool opt_enable_shared_memory;
 extern char *default_tz_name;
 #endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-extern my_bool opt_large_pages;
-extern uint opt_large_page_size;
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
 #ifdef MYSQL_SERVER
 extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;

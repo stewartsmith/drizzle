@@ -629,22 +629,6 @@ AC_CHECK_LIB(rt, aio_read)
 AC_CHECK_FUNC(sched_yield, , AC_CHECK_LIB(posix4, sched_yield,
 [AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"]))
 
-# For large pages support
-if test "$TARGET_LINUX" = "true"
-then
-  # For SHM_HUGETLB on Linux
-  AC_CHECK_DECLS(SHM_HUGETLB, 
-      AC_DEFINE([HAVE_LARGE_PAGES], [1], 
-                [Define if you have large pages support])
-      AC_DEFINE([HUGETLB_USE_PROC_MEMINFO], [1],
-                [Define if /proc/meminfo shows the huge page size (Linux only)])
-      , ,
-      [
-#include <sys/shm.h>
-      ]
-  )
-fi
-
 if test "$ac_cv_header_termio_h" = "no" -a "$ac_cv_header_termios_h" = "no"
 then
   AC_CHECK_FUNC(gtty, , AC_CHECK_LIB(compat, gtty))

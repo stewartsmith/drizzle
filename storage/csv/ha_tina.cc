@@ -1473,7 +1473,7 @@ int ha_tina::delete_all_rows()
       DBUG_RETURN(-1);
 
   /* Truncate the file to zero size */
-  rc= my_chsize(share->tina_write_filedes, 0, 0, MYF(MY_WME));
+  rc= ftruncate(share->tina_write_filedes, 0);
 
   stats.records=0;
   /* Update shared info */

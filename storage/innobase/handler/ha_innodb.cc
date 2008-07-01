@@ -1483,15 +1483,9 @@ innobase_init(
 	os_innodb_umask = (ulint)my_umask;
 
 	/* First calculate the default path for innodb_data_home_dir etc.,
-	in case the user has not given any value.
+          in case the user has not given any value. */
 
-	Note that when using the embedded server, the datadirectory is not
-	necessarily the current directory of this program. */
-
-	if (mysqld_embedded) {
-		default_path = mysql_real_data_home;
-		fil_path_to_mysql_datadir = mysql_real_data_home;
-	} else {
+        {
 		/* It's better to use current lib, to keep paths short */
 		current_dir[0] = FN_CURLIB;
 		current_dir[1] = FN_LIBCHAR;
@@ -1637,7 +1631,7 @@ innobase_init(
 	srv_use_adaptive_hash_indexes =
 		(ibool) innobase_use_adaptive_hash_indexes;
 
-	srv_print_verbose_log = mysqld_embedded ? 0 : 1;
+	srv_print_verbose_log = 1;
 
 	/* Store the default charset-collation number of this MySQL
 	installation */

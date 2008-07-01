@@ -430,9 +430,7 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
 	     ((size_t) blocks * keycache->key_cache_block_size) > use_mem)
         blocks--;
       /* Allocate memory for cache page buffers */
-      if ((keycache->block_mem=
-	   my_large_malloc((size_t) blocks * keycache->key_cache_block_size,
-			  MYF(0))))
+      if ((keycache->block_mem= malloc((size_t) blocks * keycache->key_cache_block_size)))
       {
         /*
 	  Allocate memory for blocks, hash_links and hash entries;
@@ -441,7 +439,7 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
         if ((keycache->block_root= (BLOCK_LINK*) my_malloc(length,
                                                            MYF(0))))
           break;
-        my_large_free(keycache->block_mem, MYF(0));
+        free(keycache->block_mem);
         keycache->block_mem= 0;
       }
       if (blocks < 8)
@@ -516,7 +514,7 @@ err:
   keycache->blocks=  0;
   if (keycache->block_mem)
   {
-    my_large_free((uchar*) keycache->block_mem, MYF(0));
+    free(keycache->block_mem);
     keycache->block_mem= NULL;
   }
   if (keycache->block_root)
@@ -742,7 +740,7 @@ void end_key_cache(KEY_CACHE *keycache, my_bool cleanup)
   {
     if (keycache->block_mem)
     {
-      my_large_free((uchar*) keycache->block_mem, MYF(0));
+      free(keycache->block_mem);
       keycache->block_mem= NULL;
       my_free((uchar*) keycache->block_root, MYF(0));
       keycache->block_root= NULL;

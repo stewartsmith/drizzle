@@ -811,13 +811,13 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 
 	/* Enlarge files */
   DBUG_PRINT("info", ("enlarge to keystart: %lu", (ulong) share.base.keystart));
-  if (my_chsize(file,(ulong) share.base.keystart,0,MYF(0)))
+  if (ftruncate(file, (off_t) share.base.keystart))
     goto err;
 
   if (! (flags & HA_DONT_TOUCH_DATA))
   {
 #ifdef USE_RELOC
-    if (my_chsize(dfile,share.base.min_pack_length*ci->reloc_rows,0,MYF(0)))
+    if (ftruncate(dfile,share.base.min_pack_length*ci->reloc_rows,))
       goto err;
 #endif
     errpos=2;
