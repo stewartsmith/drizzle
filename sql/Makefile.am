@@ -81,7 +81,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			protocol.cc sql_state.c \
 			lock.cc my_lock.c \
 			sql_string.cc sql_manager.cc sql_map.cc \
-			mysqld.cc password.c hash_filo.cc \
+			mysqld.cc hash_filo.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \
 			set_var.cc sql_yacc.yy \
 			sql_base.cc table.cc sql_select.cc sql_insert.cc \
