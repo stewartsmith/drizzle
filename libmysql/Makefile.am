@@ -20,30 +20,72 @@
 #
 # This file is public domain and comes with NO WARRANTY of any kind
 
-target =	libmysqlclient.la
-target_defs =	-DUNDEF_THREADS_HACK
+MYSQLDATAdir =			$(localstatedir)
+MYSQLSHAREdir =			$(pkgdatadir)
+MYSQLBASEdir=			$(prefix)
+
+pkglib_LTLIBRARIES = libmysqlclient.la
+libmysqlclient_la_SOURCES = libmysql.c password.c get_password.c errmsg.c
+libmysqlclient_la_LIBADD = ${sql_cmn_objects} ${vio_objects} ${sqlobjects} \
+			   ${top_builddir}/mysys/libmysys.la \
+			   ${top_builddir}/strings/libmystringslt.la \
+			   ${top_builddir}/dbug/libdbug.la
+libmysqlclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
+
+DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
+			-DDATADIR="\"$(MYSQLDATAdir)\"" \
+			-DDEFAULT_HOME_ENV=MYSQL_HOME \
+			-DDEFAULT_GROUP_SUFFIX_ENV=MYSQL_GROUP_SUFFIX \
+			-DDEFAULT_SYSCONFDIR="\"$(sysconfdir)\"" \
+			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
+			-DUNDEF_THREADS_HACK
+
 LIBS =		@CLIENT_LIBS@ 
 INCLUDES =	-I$(top_builddir)/include -I$(top_srcdir)/include -lz
 
-include $(srcdir)/Makefile.shared
-
-libmysqlclient_la_SOURCES = $(target_sources)
-libmysqlclient_la_LIBADD = $(target_libadd)
-libmysqlclient_la_LDFLAGS = $(target_ldflags)
-EXTRA_DIST = Makefile.shared libmysql.def dll.c CMakeLists.txt
+EXTRA_DIST = libmysql.def
 noinst_HEADERS = client_settings.h
+
+
+mysysheaders =		mysys_priv.h my_static.h
+vioheaders =		vio_priv.h
+sqlobjects =		net.lo
+sql_cmn_objects =	pack.lo client.lo my_time.lo
+target_ldflags =
+vio_objects= vio.lo viosocket.lo
+
+
+BUILT_SOURCES		= link_sources
+
+CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
+			$(target) $(BUILT_SOURCES)
+
+# The automatic dependencies miss this
+#bmove_upp.lo:		$(LTCHARSET_OBJS)
+
+clean-local:
+	rm -f `echo $(dbugobjects) | sed "s;\.lo;.c;g"` \
+	      `echo $(mysysobjects) | sed "s;\.lo;.c;g"` \
+	      `echo $(vio_objects) | sed "s;\.lo;.c;g"` \
+	      `echo $(sql_cmn_objects) | sed "s;\.lo;.c;g"` \
+	       $(CHARSET_SRCS) $(CHARSET_OBJS) \
+	       $(mysysheaders) $(vioheaders) \
+               net.c
+
+noinst_PROGRAMS = conf_to_src
+conf_to_src_SOURCES = conf_to_src.c
+conf_to_src_LDADD=
+#force static linking of conf_to_src - essential when linking against
+#custom installation of libc
+conf_to_src_LDFLAGS=
+
 
 link_sources:
 	  set -x; \
-	  ss=`echo $(mystringsobjects) | sed "s;\.lo;.c;g"`; \
 	  ds=`echo $(dbugobjects) | sed "s;\.lo;.c;g"`; \
 	  ms=`echo $(mysysobjects) | sed "s;\.lo;.c;g"`; \
 	  vs=`echo $(vio_objects) | sed "s;\.lo;.c;g"`; \
 	  scs=`echo $(sql_cmn_objects) | sed "s;\.lo;.c;g"`; \
-	  for f in $$ss; do \
-	    rm -f $$f; \
-	    @LN_CP_F@ $(top_srcdir)/strings/$$f $$f; \
-	  done; \
 	  for f in $$vs $(vioheaders); do \
 	    rm -f $$f; \
 	    @LN_CP_F@ $(top_srcdir)/vio/$$f $$f; \
@@ -51,10 +93,6 @@ link_sources:
 	  for f in $$scs; do \
 	    rm -f $$f; \
 	    @LN_CP_F@ $(top_srcdir)/sql-common/$$f $$f; \
-	  done; \
-	  for f in $(mystringsextra); do \
-	    rm -f $$f; \
-	    @LN_CP_F@ $(top_srcdir)/strings/$$f $$f; \
 	  done; \
 	  for f in $$ds; do \
 	    rm -f $$f; \
@@ -81,9 +119,9 @@ nh =		my_global.h config-win32.h dbug.h errmsg.h \
 		my_alarm.h my_config.h my_dir.h my_list.h my_net.h my_sys.h \
 		mysql.h mysql_com.h mysql_version.h mysqld_error.h \
 		mysys_err.h my_pthread.h thr_alarm.h violite.h hash.h \
-                sql_common.h ../libmysql/client_settings.h 
+                sql_common.h client_settings.h 
 # Get a list of the needed objects  
-lobjs = $(mysysobjects1) $(dbugobjects) $(mystringsobjects) $(sqlobjects)
+lobjs = $(mysysobjects1) $(dbugobjects) $(sqlobjects)
 
 do-lib-dist:
 	dir=libmysql-$(MYSQL_NO_DASH_VERSION); \

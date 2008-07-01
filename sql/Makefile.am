@@ -39,9 +39,10 @@ DTRACEFILES =           handler.o \
 noinst_LTLIBRARIES=
 
 SUPPORTING_LIBS =	$(top_builddir)/vio/libvio.a \
-			$(top_builddir)/mysys/libmysys.a \
-			$(top_builddir)/dbug/libdbug.a \
-			$(top_builddir)/strings/libmystrings.a
+			$(top_builddir)/mysys/libmysys.la \
+			$(top_builddir)/dbug/libdbuglt.la \
+			$(top_builddir)/strings/libmystringsextra.la \
+			$(top_builddir)/strings/libmystringslt.la
 mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
 mysqld_LDADD =		$(libevent_libs) \
