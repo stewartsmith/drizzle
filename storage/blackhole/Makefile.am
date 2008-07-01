@@ -47,4 +47,4 @@ libblackhole_a_CFLAGS =	$(AM_CFLAGS)
 libblackhole_a_SOURCES=	ha_blackhole.cc
 
 
-EXTRA_DIST =		CMakeLists.txt plug.in
+EXTRA_DIST =		plug.in

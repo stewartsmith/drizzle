@@ -23,5 +23,3 @@ noinst_LTLIBRARIES =    libviolt.la
 noinst_HEADERS =	vio_priv.h
 
 libviolt_la_SOURCES =	vio.c viosocket.c
-
-EXTRA_DIST=		CMakeLists.txt

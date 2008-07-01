@@ -22,5 +22,4 @@ LDADD              = -lmytap
 
 noinst_PROGRAMS    = simple-t skip-t todo-t skip_all-t no_plan-t core-t
 
-EXTRA_DIST         = CMakeLists.txt 
 

@@ -66,8 +66,7 @@ EXTRA_DIST =		$(EXTRA_SCRIPTS) \
 			mysqlbug \
 			make_win_bin_dist \
 			mysql_fix_privilege_tables_sql.c \
-			mysql_system_tables_fix.sql \
-			CMakeLists.txt
+			mysql_system_tables_fix.sql
 
 dist_pkgdata_DATA =	fill_help_tables.sql \
 			mysql_fix_privilege_tables.sql \
@@ -76,6 +75,7 @@ dist_pkgdata_DATA =	fill_help_tables.sql \
 			mysql_test_data_timezone.sql
 
 CLEANFILES =		@server_scripts@ \
+			comp_sql \
 			make_binary_distribution \
 			make_sharedlib_distribution \
 			msql2mysql \
@@ -107,10 +107,11 @@ mysqlbug: ${top_builddir}/config.status mysqlbug.sh
 # Build mysql_fix_privilege_tables.sql from the files that contain
 # the system tables for this version of MySQL plus any commands
 # needed to upgrade the system tables from an older version
-mysql_fix_privilege_tables.sql: $(srcdir)/mysql_system_tables.sql \
-				$(srcdir)/mysql_system_tables_fix.sql
+mysql_fix_privilege_tables.sql: $(top_srcdir)/scripts/mysql_system_tables.sql \
+				$(top_srcdir)/scripts/mysql_system_tables_fix.sql
 	@echo "Building $@";
 	@cat $(srcdir)/mysql_system_tables.sql $(srcdir)/mysql_system_tables_fix.sql > $@
+
 
 #
 # Build mysql_fix_privilege_tables_sql.c from
@@ -121,7 +122,7 @@ mysql_fix_privilege_tables.sql: $(srcdir)/mysql_system_tables.sql \
 mysql_fix_privilege_tables_sql.c: $(builddir)/comp_sql$(EXEEXT) mysql_fix_privilege_tables.sql
 	$(builddir)/comp_sql$(EXEEXT) \
 	  mysql_fix_privilege_tables \
-	    $(builddir)/mysql_fix_privilege_tables.sql $@
+	    $(top_srcdir)/scripts/mysql_fix_privilege_tables.sql $@
 
 
 SUFFIXES = .sh

@@ -20,6 +20,5 @@ noinst_HEADERS     = tap.h
 
 libmytap_a_SOURCES = tap.c
 
-EXTRA_DIST         = CMakeLists.txt 
 
 SUBDIRS            = . t

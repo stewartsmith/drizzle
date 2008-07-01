@@ -15,9 +15,9 @@
 
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
-MYSQLBASEdir=           $(prefix)
-MYSQLLIBdir=            $(pkglibdir)
-AM_CPPFLAGS =              -I$(top_srcdir)/include -I$(top_builddir)/include \
+MYSQLBASEdir =          $(prefix)
+MYSQLLIBdir =           $(pkglibdir)
+AM_CPPFLAGS =           -I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/regex \
 			-I$(top_srcdir)/sql \
                         -I$(srcdir)
@@ -27,7 +27,7 @@ LDADD =
 
 DEFS =                  @DEFS@
 
-EXTRA_DIST =		mi_test_all.sh mi_test_all.res ft_stem.c CMakeLists.txt plug.in
+EXTRA_DIST =		mi_test_all.sh mi_test_all.res ft_stem.c plug.in
 pkgdata_DATA =		mi_test_all mi_test_all.res
 
 pkglib_LIBRARIES =	libmyisam.a
