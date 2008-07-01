@@ -19,37 +19,50 @@ pkglib_LTLIBRARIES =	libmystrings.la
 libmystrings_la_LDFLAGS = -static
 libmystrings_la_SOURCES = 
 
-# These are the symbols we don't use in mysqlclient
-libmystringsextra_la_SOURCES = bfill.c  r_strinstr.c strtol.c  strtoul.c my_strchr.c
+# These are the symbols we don't use in mysqlclient. Do we still need them?
+libmystringsextra_la_SOURCES = bfill.c  r_strinstr.c strtol.c  strtoul.c
 # Force C++ linking - dummy.cxx doesn't have to exist with EXTRA in the name
 nodist_EXTRA_libmystrings_la_SOURCES = dummy.cxx
 # This can't be listed here as $(top_builddir)/strings/libmystingslt.la
 # or it breaks make's dependency track for -j builds
-libmystrings_la_LIBADD = libmystringslt.la libmystringsextra.la
+libmystrings_la_LIBADD = libmystringslt.la
 
 noinst_LTLIBRARIES =	libmystringslt.la libmystringsextra.la
 
 # Exact one of ASSEMBLER_X
 if ASSEMBLER_x86
 ASRCS		= strings-x86.s longlong2str-x86.s my_strtoll10-x86.s
-CSRCS		= bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c bcmp.c strtoll.c strtoull.c llstr.c strnlen.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c str_alloc.c longlong2str_asm.c dtoa.c
+CSRCS		= longlong2str_asm.c 
 else
 if ASSEMBLER_sparc32
 # These file MUST all be on the same line!! Otherwise automake
 # generats a very broken makefile
 ASRCS		= bmove_upp-sparc.s strappend-sparc.s strend-sparc.s strinstr-sparc.s strmake-sparc.s strmov-sparc.s strnmov-sparc.s strstr-sparc.s
-CSRCS		= strcont.c strfill.c strcend.c is_prefix.c longlong2str.c bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c bcmp.c strtoll.c strtoull.c llstr.c strnlen.c strxmov.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c my_strtoll10.c str_alloc.c dtoa.c
+CSRCS 	= strcont.c strfill.c strcend.c is_prefix.c longlong2str.c strxmov.c my_strtoll10.c 
 else
 #no assembler
 ASRCS		=
 # These file MUST all be on the same line!! Otherwise automake
 # generats a very broken makefile
-CSRCS		= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strinstr.c strmake.c strnmov.c strmov.c longlong2str.c bmove.c bmove512.c bchange.c strxnmov.c int2str.c str2int.c bcmp.c strtoll.c strtoull.c llstr.c strnlen.c ctype.c ctype-simple.c ctype-mb.c ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c ctype-gbk.c ctype-sjis.c ctype-tis620.c ctype-ujis.c ctype-utf8.c ctype-ucs2.c ctype-uca.c ctype-win1250ch.c ctype-bin.c ctype-latin1.c my_vsnprintf.c xml.c decimal.c ctype-extra.c my_strtoll10.c str_alloc.c dtoa.c
+CSRCS 	= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strinstr.c strmake.c strnmov.c strmov.c longlong2str.c my_strtoll10.c
 endif
 endif
 
-libmystringslt_la_SOURCES = $(ASRCS) $(CSRCS)
-CLEANFILES = str_test uctypedump test_decimal
+# C files common to all three cases are included directly below, so that
+# ASRCS and CSRCS can be smaller
+libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove.c bmove512.c \
+				bchange.c strxnmov.c int2str.c str2int.c \
+				bcmp.c strtoll.c strtoull.c llstr.c strnlen.c \
+				ctype.c ctype-simple.c ctype-mb.c \
+				ctype-big5.c ctype-cp932.c ctype-czech.c \
+				ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c \
+				ctype-gbk.c ctype-sjis.c ctype-tis620.c \
+				ctype-ujis.c ctype-utf8.c ctype-ucs2.c \
+				ctype-uca.c ctype-win1250ch.c ctype-bin.c \
+				ctype-latin1.c my_vsnprintf.c xml.c \
+				decimal.c ctype-extra.c str_alloc.c \
+				dtoa.c my_strchr.c
+
 # Default charset definitions
 EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
 	       	ctype-euc_kr.c ctype-win1250ch.c \
@@ -66,16 +79,5 @@ EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
 		strnmov-sparc.s strstr-sparc.s strxmov-sparc.s \
 		t_ctype.h my_strchr.c
 
-
 FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
 
-str_test$(EXEEXT): str_test.c $(noinst_LTLIBRARIES)
-	$(LINK) $(FLAGS) -DMAIN $(INCLUDES) $(srcdir)/str_test.c $(LDADD) $(noinst_LTLIBRARIES)
-
-uctypedump$(EXEEXT): uctypedump.c
-	$(LINK) $(INCLUDES) $(srcdir)/uctypedump.c
-
-test_decimal$(EXEEXT): decimal.c $(noinst_LTLIBRARIES)
-	$(CP) $(srcdir)/decimal.c ./test_decimal.c
-	$(LINK) $(FLAGS) -DMAIN  ./test_decimal.c $(LDADD) $(noinst_LTLIBRARIES)
-	$(RM) -f ./test_decimal.c
