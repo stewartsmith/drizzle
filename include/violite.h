@@ -74,48 +74,6 @@ my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen);
 my_bool	vio_poll_read(Vio *vio,uint timeout);
 my_bool vio_peek_read(Vio *vio, uint *bytes);
 
-#ifdef HAVE_OPENSSL
-#include <openssl/opensslv.h>
-#if OPENSSL_VERSION_NUMBER < 0x0090700f
-#define DES_cblock des_cblock
-#define DES_key_schedule des_key_schedule
-#define DES_set_key_unchecked(k,ks) des_set_key_unchecked((k),*(ks))
-#define DES_ede3_cbc_encrypt(i,o,l,k1,k2,k3,iv,e) des_ede3_cbc_encrypt((i),(o),(l),*(k1),*(k2),*(k3),(iv),(e))
-#endif
-
-#define HEADER_DES_LOCL_H dummy_something
-#define YASSL_MYSQL_COMPATIBLE
-#ifndef YASSL_PREFIX
-#define YASSL_PREFIX
-#endif
-/* Set yaSSL to use same type as MySQL do for socket handles */
-typedef my_socket YASSL_SOCKET_T;
-#define YASSL_SOCKET_T_DEFINED
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-
-#ifndef EMBEDDED_LIBRARY
-
-struct st_VioSSLFd
-{
-  SSL_CTX *ssl_context;
-};
-
-int sslaccept(struct st_VioSSLFd*, Vio *, long timeout);
-int sslconnect(struct st_VioSSLFd*, Vio *, long timeout);
-
-struct st_VioSSLFd
-*new_VioSSLConnectorFd(const char *key_file, const char *cert_file,
-		       const char *ca_file,  const char *ca_path,
-		       const char *cipher);
-struct st_VioSSLFd
-*new_VioSSLAcceptorFd(const char *key_file, const char *cert_file,
-		      const char *ca_file,const char *ca_path,
-		      const char *cipher);
-void free_vio_ssl_acceptor_fd(struct st_VioSSLFd *fd);
-#endif /* ! EMBEDDED_LIBRARY */
-#endif /* HAVE_OPENSSL */
-
 #ifdef HAVE_SMEM
 size_t vio_read_shared_memory(Vio *vio, uchar * buf, size_t size);
 size_t vio_write_shared_memory(Vio *vio, const uchar * buf, size_t size);
@@ -188,9 +146,6 @@ struct st_vio
   my_bool (*was_interrupted)(Vio*);
   int     (*vioclose)(Vio*);
   void	  (*timeout)(Vio*, unsigned int which, unsigned int timeout);
-#ifdef HAVE_OPENSSL
-  void	  *ssl_arg;
-#endif
 #ifdef HAVE_SMEM
   HANDLE  handle_file_map;
   char    *handle_map;

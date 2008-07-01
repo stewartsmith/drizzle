@@ -26,57 +26,7 @@
 
 int main(int argc, char **argv)
 {
-#ifdef HAVE_OPENSSL
-  int	count, num;
-  MYSQL mysql,*sock;
-  MYSQL_RES *res;
-  char	qbuf[160];
-
-  if (argc != 3)
-  {
-    fprintf(stderr,"usage : ssl_test <dbname> <num>\n\n");
-    exit(1);
-  }
-
-  mysql_init(&mysql);
-#ifdef HAVE_OPENSSL
-  mysql_ssl_set(&mysql,"../SSL/MySQL-client-key.pem",
-    "../SSL/MySQL-client-cert.pem",
-    "../SSL/MySQL-ca-cert.pem", 0, 0);
-#endif
-  if (!(sock = mysql_real_connect(&mysql,"127.0.0.1",0,0,argv[1],MYSQL_PORT,NULL,0)))
-  {
-    fprintf(stderr,"Couldn't connect to engine!\n%s\n\n",mysql_error(&mysql));
-    perror("");
-    exit(1);
-  }
-  mysql.reconnect= 1;
-  count = 0;
-  num = atoi(argv[2]);
-  while (count < num)
-  {
-    sprintf(qbuf,SELECT_QUERY,count);
-    if(mysql_query(sock,qbuf))
-    {
-      fprintf(stderr,"Query failed (%s)\n",mysql_error(sock));
-      exit(1);
-    }
-    if (!(res=mysql_store_result(sock)))
-    {
-      fprintf(stderr,"Couldn't get result from query failed (%s)\n",
-	      mysql_error(sock));
-      exit(1);
-    }
-#ifdef TEST
-    printf("number of fields: %d\n",mysql_num_fields(res));
-#endif
-    mysql_free_result(res);
-    count++;
-  }
-  mysql_close(sock);
-#else /* HAVE_OPENSSL */
   printf("ssl_test: SSL not configured.\n");
-#endif /* HAVE_OPENSSL */
   exit(0);
   return 0;					/* Keep some compilers happy */
 }
