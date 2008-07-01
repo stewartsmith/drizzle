@@ -56,5 +56,3 @@ DEFS =			-DUNDEF_THREADS_HACK
 thread_test.o:		thread_test.c
 			$(COMPILE) -c $(INCLUDES) $<
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

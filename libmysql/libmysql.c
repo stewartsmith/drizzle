@@ -478,16 +478,6 @@ struct passwd *getpwuid(uid_t);
 char* getlogin(void);
 #endif
 
-#if defined(__NETWARE__)
-/* Default to value of USER on NetWare, if unset use "UNKNOWN_USER" */
-void read_user_name(char *name)
-{
-  char *str=getenv("USER");
-  strmake(name, str ? str : "UNKNOWN_USER", USERNAME_LENGTH);
-}
-
-#elif !defined(MSDOS) && ! defined(VMS) && !defined(__WIN__)
-
 void read_user_name(char *name)
 {
   DBUG_ENTER("read_user_name");
@@ -515,16 +505,6 @@ void read_user_name(char *name)
   }
   DBUG_VOID_RETURN;
 }
-
-#else /* If MSDOS || VMS */
-
-void read_user_name(char *name)
-{
-  char *str=getenv("USER");		/* ODBC will send user variable */
-  strmake(name,str ? str : "ODBC", USERNAME_LENGTH);
-}
-
-#endif
 
 my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
 {

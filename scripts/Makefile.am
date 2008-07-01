@@ -107,10 +107,10 @@ mysqlbug: ${top_builddir}/config.status mysqlbug.sh
 # Build mysql_fix_privilege_tables.sql from the files that contain
 # the system tables for this version of MySQL plus any commands
 # needed to upgrade the system tables from an older version
-mysql_fix_privilege_tables.sql: mysql_system_tables.sql \
-				mysql_system_tables_fix.sql
+mysql_fix_privilege_tables.sql: $(srcdir)/mysql_system_tables.sql \
+				$(srcdir)/mysql_system_tables_fix.sql
 	@echo "Building $@";
-	@cat mysql_system_tables.sql mysql_system_tables_fix.sql > $@
+	@cat $(srcdir)/mysql_system_tables.sql $(srcdir)/mysql_system_tables_fix.sql > $@
 
 #
 # Build mysql_fix_privilege_tables_sql.c from
@@ -118,12 +118,10 @@ mysql_fix_privilege_tables.sql: mysql_system_tables.sql \
 # The "sleep" ensures the generated file has a younger timestamp than its source
 # (which may have been generated in this very same "make" run).
 #
-mysql_fix_privilege_tables_sql.c: comp_sql.c mysql_fix_privilege_tables.sql
-	$(MAKE) $(AM_MAKEFLAGS) comp_sql$(EXEEXT)
-	sleep 2
-	$(top_builddir)/scripts/comp_sql$(EXEEXT) \
+mysql_fix_privilege_tables_sql.c: $(builddir)/comp_sql$(EXEEXT) mysql_fix_privilege_tables.sql
+	$(builddir)/comp_sql$(EXEEXT) \
 	  mysql_fix_privilege_tables \
-	    $(top_srcdir)/scripts/mysql_fix_privilege_tables.sql $@
+	    $(builddir)/mysql_fix_privilege_tables.sql $@
 
 
 SUFFIXES = .sh
@@ -192,6 +190,3 @@ SUFFIXES = .sh
 	@CHMOD@ +x $@-t
 	@MV@ $@-t $@
 
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

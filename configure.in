@@ -1216,7 +1216,7 @@ then
   server_scripts="mysqld_safe mysql_install_db"
   sql_server_dirs="strings mysys dbug extra regex"
 
-  sql_server="vio sql"
+  sql_server="sql"
 fi
 
 # IMPORTANT - do not modify LIBS past this line - this hack is the only way
@@ -1264,7 +1264,7 @@ case $SYSTEM_TYPE in
 esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
-AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
+AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  unittest/Makefile unittest/mytap/Makefile unittest/mytap/t/Makefile dnl
  unittest/mysys/Makefile unittest/examples/Makefile dnl
  strings/Makefile regex/Makefile storage/Makefile dnl

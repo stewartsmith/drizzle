@@ -14,7 +14,5 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ## Process this file with automake to create Makefile.in
-EXTRA_DIST = client.c pack.c my_time.c my_user.c
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%
+noinst_LTLIBRARIES = libsqlcommon.la
+libsqlcommon_la_SOURCES = pack.c my_time.c my_user.c errmsg.c

@@ -72,5 +72,3 @@ abi_check: $(HEADERS_ABI) mysql_version.h mysql_h.ic
 	fi; \
 	touch abi_check;
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

@@ -25,7 +25,7 @@ LIBS =				@CLIENT_LIBS@ -lz
 
 LDADD=				$(CLIENT_THREAD_LIBS) \
 				$(top_builddir)/libmysql/libmysqlclient.la -lz \
-                                $(top_builddir)/mysys/libmysys.a
+                                $(top_builddir)/mysys/libmysyslt.la
 
 
 noinst_HEADERS =		sql_string.h completion_hash.h my_readline.h \
@@ -70,7 +70,7 @@ mysqlimport_SOURCES=		mysqlimport.c
 
 mysqlimport_LDADD =		$(CXXLDFLAGS) $(CLIENT_THREAD_LIBS) \
 				$(LIBMYSQLCLIENT_LA) \
-				$(top_builddir)/mysys/libmysys.a
+				$(top_builddir)/mysys/libmysyslt.la
 
 mysqlshow_SOURCES=		mysqlshow.c
 
@@ -78,7 +78,7 @@ mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 mysqlslap_LDADD =		$(CXXLDFLAGS) $(CLIENT_THREAD_LIBS) \
 				$(LIBMYSQLCLIENT_LA) \
-				$(top_builddir)/mysys/libmysys.a
+				$(top_builddir)/mysys/libmysyslt.la
 
 mysqltest_SOURCES=		mysqltest.c \
 				$(top_srcdir)/mysys/my_getsystime.c \
@@ -112,6 +112,3 @@ link_sources:
 	rm -f $(srcdir)/my_user.c; \
 	@LN_CP_F@ $(top_srcdir)/sql-common/my_user.c my_user.c;
 	echo timestamp > link_sources;
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%
