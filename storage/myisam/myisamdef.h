@@ -794,6 +794,11 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages, ulong);
 
 extern void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
                                    void *func_arg);
+/* Just for myisam legacy */
+extern size_t my_pwrite(File Filedes,const uchar *Buffer,size_t Count,
+		      my_off_t offset,myf MyFlags);
+extern size_t my_pread(File Filedes,uchar *Buffer,size_t Count,my_off_t offset,
+		     myf MyFlags);
 #ifdef __cplusplus
 }
 #endif

@@ -35,7 +35,7 @@ noinst_HEADERS =	mysys_priv.h my_static.h my_handler_errors.h
 libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_path.c mf_loadpath.c my_file.c \
 			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
-			my_pread.c my_write.c my_getpagesize.c \
+			my_write.c my_getpagesize.c \
 			mf_keycache.c mf_keycaches.c \
 			mf_iocache.c mf_iocache2.c mf_cache.c mf_tempfile.c \
 			mf_tempdir.c my_lock.c mf_brkhant.c my_alarm.c \

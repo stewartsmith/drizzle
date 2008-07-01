@@ -13,12 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys_priv.h"
+#include "myisamdef.h"
 #include "mysys_err.h"
 #include <errno.h>
-#ifdef HAVE_PREAD
 #include <unistd.h>
-#endif
 
 /*
   Read a chunk of bytes from a file from a given position
@@ -53,16 +51,8 @@ size_t my_pread(File Filedes, uchar *Buffer, size_t Count, my_off_t offset,
   for (;;)
   {
     errno=0;					/* Linux doesn't reset this */
-#ifndef HAVE_PREAD
-    pthread_mutex_lock(&my_file_info[Filedes].mutex);
-    readbytes= (uint) -1;
-    error= (lseek(Filedes, offset, MY_SEEK_SET) == (my_off_t) -1 ||
-	    (readbytes= read(Filedes, Buffer, Count)) != Count);
-    pthread_mutex_unlock(&my_file_info[Filedes].mutex);
-#else
     if ((error= ((readbytes= pread(Filedes, Buffer, Count, offset)) != Count)))
       my_errno= errno ? errno : -1;
-#endif
     if (error || readbytes != Count)
     {
       DBUG_PRINT("warning",("Read only %d bytes off %u from %d, errno: %d",
@@ -129,20 +119,9 @@ size_t my_pwrite(int Filedes, const uchar *Buffer, size_t Count,
 
   for (;;)
   {
-#ifndef HAVE_PREAD
-    int error;
-    writenbytes= (size_t) -1;
-    pthread_mutex_lock(&my_file_info[Filedes].mutex);
-    error= (lseek(Filedes, offset, MY_SEEK_SET) != (my_off_t) -1 &&
-            (writenbytes = write(Filedes, Buffer, Count)) == Count);
-    pthread_mutex_unlock(&my_file_info[Filedes].mutex);
-    if (error)
-      break;
-#else
     if ((writenbytes= pwrite(Filedes, Buffer, Count,offset)) == Count)
       break;
     my_errno= errno;
-#endif
     if (writenbytes != (size_t) -1)
     {					/* Safegueard */
       written+=writenbytes;
