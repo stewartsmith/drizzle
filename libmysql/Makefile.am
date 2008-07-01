@@ -47,6 +47,7 @@ LIBS =		@CLIENT_LIBS@
 AM_CPPFLAGS =	-I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys -I$(top_builddir)/sql-common
 
 EXTRA_DIST = libmysql.def
+noinst_HEADERS = client_settings.h
 
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 			$(target) $(BUILT_SOURCES)

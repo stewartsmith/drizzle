@@ -65,7 +65,7 @@ noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
 			sql_repl.h slave.h rpl_filter.h \
 			log_event.h rpl_record.h \
 			stacktrace.h sql_sort.h set_var.h \
-			tzfile.h \
+			tzfile.h client_settings.h \
 			tztime.h my_decimal.h\
 			sql_array.h scheduler.h \
 			sql_plugin.h \
