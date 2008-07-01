@@ -65,6 +65,3 @@ nh =		my_global.h config-win32.h dbug.h errmsg.h \
 		mysys_err.h my_pthread.h thr_alarm.h violite.h hash.h \
                 sql_common.h 
 
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

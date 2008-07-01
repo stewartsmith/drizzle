@@ -26,6 +26,3 @@ noinst_HEADERS =	vio_priv.h
 libviolt_la_SOURCES =	vio.c viosocket.c
 
 EXTRA_DIST=		CMakeLists.txt
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

@@ -21,5 +21,3 @@ AUTOMAKE_OPTIONS =	foreign
 EXTRA_DIST =		
 SUBDIRS = @mysql_se_dirs@
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

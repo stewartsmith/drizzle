@@ -123,5 +123,3 @@ SUFFIXES = .sh
 	$< > $@-t
 	@MV@ $@-t $@
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

@@ -49,6 +49,3 @@ bin_PROGRAMS =		my_print_defaults \
 noinst_PROGRAMS =	
 EXTRA_PROGRAMS =	comp_err
 EXTRA_DIST =		CMakeLists.txt
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

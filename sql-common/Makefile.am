@@ -16,7 +16,3 @@
 ## Process this file with automake to create Makefile.in
 noinst_LTLIBRARIES = libsqlcommon.la
 libsqlcommon_la_SOURCES = pack.c my_time.c my_user.c errmsg.c
-
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%

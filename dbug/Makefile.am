@@ -69,5 +69,3 @@ output5.r:      factorial
 		@RM@ -f $@
 		@SED@ -e 's!\\!\\\\!g' $< > $@
 
-# Don't update the files from bitkeeper
-%::SCCS/s.%

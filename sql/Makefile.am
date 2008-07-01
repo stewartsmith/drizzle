@@ -161,6 +161,3 @@ SUFFIXES : .d
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%
