@@ -28,7 +28,8 @@ SUBDIRS =		. include \
 
 DIST_SUBDIRS =		. include \
 			sql-common scripts vio \
-			strings mysys dbug mysys/tests extra regex \
+			strings mysys dbug mysys/tests strings/tests \
+			extra regex \
 			libmysql client unittest storage plugin \
 			sql tests \
 			mysql-test support-files
