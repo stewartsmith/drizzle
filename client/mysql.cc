@@ -104,10 +104,6 @@ extern "C" {
 #define cmp_database(cs,A,B) strcmp((A),(B))
 #endif
 
-#if !defined(THREAD)
-#define USE_POPEN
-#endif
-
 #include "completion_hash.h"
 
 #define PROMPT_CHAR '\\'

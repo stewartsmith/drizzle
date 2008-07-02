@@ -68,9 +68,7 @@ my_bool	net_flush(NET *net);
 #include "mysqld_error.h"
 #include "errmsg.h"
 #include <violite.h>
-#if defined(THREAD) && !defined(__WIN__)
 #include <my_pthread.h>				/* because of signal()	*/
-#endif /* defined(THREAD) && !defined(__WIN__) */
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -243,7 +241,7 @@ static int wait_for_data(my_socket fd, uint timeout)
   {
     tv.tv_sec = (long) timeout;
     tv.tv_usec = 0;
-#if defined(HPUX10) && defined(THREAD)
+#if defined(HPUX10)
     if ((res = select(fd+1, NULL, (int*) &sfds, NULL, &tv)) > 0)
       break;
 #else

@@ -90,7 +90,6 @@ int mi_close(register MI_INFO *info)
       my_free((uchar*) share->decode_trees,MYF(0));
       my_free((uchar*) share->decode_tables,MYF(0));
     }
-#ifdef THREAD
     thr_lock_delete(&share->lock);
     VOID(pthread_mutex_destroy(&share->intern_lock));
     {
@@ -101,7 +100,6 @@ int mi_close(register MI_INFO *info)
 	VOID(rwlock_destroy(&share->key_root_lock[i]));
       }
     }
-#endif
     my_free((uchar*) info->s,MYF(0));
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);

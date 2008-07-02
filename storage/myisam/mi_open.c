@@ -300,9 +300,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 			 &share->state.key_root,keys*sizeof(my_off_t),
 			 &share->state.key_del,
 			 (share->state.header.max_block_size_index*sizeof(my_off_t)),
-#ifdef THREAD
 			 &share->key_root_lock,sizeof(rw_lock_t)*keys,
-#endif
 			 &share->mmap_lock,sizeof(rw_lock_t),
 			 NullS))
       goto err;
@@ -509,7 +507,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     my_afree(disk_cache);
     mi_setup_functions(share);
     share->is_log_table= FALSE;
-#ifdef THREAD
     thr_lock_init(&share->lock);
     VOID(pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST));
     for (i=0; i<keys; i++)
@@ -537,7 +534,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	share->lock.check_status=mi_check_status;
       }
     }
-#endif
     /*
       Memory mapping can only be requested after initializing intern_lock.
     */
@@ -634,9 +630,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   bzero(info.rec_buff, mi_get_rec_buff_len(&info, info.rec_buff));
 
   *m_info=info;
-#ifdef THREAD
   thr_lock_data_init(&share->lock,&m_info->lock,(void*) m_info);
-#endif
   m_info->open_list.data=(void*) m_info;
   myisam_open_list=list_add(myisam_open_list,&m_info->open_list);
 

@@ -60,7 +60,6 @@ int mi_write(MI_INFO *info, uchar *record)
   }
   if (_mi_readinfo(info,F_WRLCK,1))
     DBUG_RETURN(my_errno);
-  dont_break();				/* Dont allow SIGHUP or SIGINT */
 #if !defined(NO_LOCKING) && defined(USE_RECORD_LOCK)
   if (!info->locked && my_lock(info->dfile,F_WRLCK,0L,F_TO_EOF,
 			       MYF(MY_SEEK_NOT_DONE) | info->lock_wait))
@@ -174,7 +173,6 @@ int mi_write(MI_INFO *info, uchar *record)
   if (share->is_log_table)
     mi_update_status((void*) info);
 
-  allow_break();				/* Allow SIGHUP & SIGINT */
   DBUG_RETURN(0);
 
 err:
@@ -233,7 +231,6 @@ err2:
   save_errno=my_errno;
   myisam_log_record(MI_LOG_WRITE,info,record,filepos,my_errno);
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
-  allow_break();			/* Allow SIGHUP & SIGINT */
   DBUG_RETURN(my_errno=save_errno);
 } /* mi_write */
 

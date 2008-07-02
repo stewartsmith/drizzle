@@ -254,9 +254,8 @@ fi
 # Set up paths to SQL scripts required for bootstrap
 fill_help_tables="$pkgdatadir/fill_help_tables.sql"
 create_system_tables="$pkgdatadir/mysql_system_tables.sql"
-fill_system_tables="$pkgdatadir/mysql_system_tables_data.sql"
 
-for f in $fill_help_tables $create_system_tables $fill_system_tables
+for f in $fill_help_tables $create_system_tables 
 do
   if test ! -f "$f"
   then
@@ -343,7 +342,7 @@ mysqld_install_cmd_line="$mysqld_bootstrap $defaults $mysqld_opt --bootstrap \
 
 # Create the system and help tables by passing them to "mysqld --bootstrap"
 s_echo "Installing MySQL system tables..."
-if { echo "use mysql;"; cat $create_system_tables $fill_system_tables; } | eval "$filter_cmd_line" | $mysqld_install_cmd_line > /dev/null
+if { echo "use mysql;"; cat $create_system_tables } | eval "$filter_cmd_line" | $mysqld_install_cmd_line > /dev/null
 then
   s_echo "OK"
 else

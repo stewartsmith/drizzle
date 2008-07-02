@@ -23,8 +23,7 @@ AM_CPPFLAGS =			-I$(top_builddir)/include \
 
 LIBS =				@CLIENT_LIBS@ -lz
 
-LDADD=				$(CLIENT_THREAD_LIBS) \
-				$(top_builddir)/sql-common/libsqlcommon.la \
+LDADD=				$(top_builddir)/sql-common/libsqlcommon.la \
 				$(top_builddir)/libmysql/libmysqlclient.la -lz
 
 
@@ -43,8 +42,7 @@ bin_PROGRAMS =			mysql \
 				mysqlimport \
 				mysqlshow \
 				mysqlslap \
-				mysqltest \
-				mysql_upgrade
+				mysqltest 
 
 mysql_SOURCES =			mysql.cc readline.cc sql_string.cc \
 				completion_hash.cc
@@ -75,9 +73,6 @@ mysqltest_SOURCES=		mysqltest.c \
 				$(top_srcdir)/mysys/my_copy.c \
                                 $(top_srcdir)/mysys/my_mkdir.c
 mysqltest_LDADD =		$(top_builddir)/regex/libregex.a $(LDADD)
-
-mysql_upgrade_SOURCES=          mysql_upgrade.c \
-                                $(top_srcdir)/mysys/my_getpagesize.c
 
 # Fix for mit-threads
 DEFS =			-DUNDEF_THREADS_HACK \

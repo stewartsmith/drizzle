@@ -1,5 +1,5 @@
 
-dnl By default, many hosts won't let programs access large files;
+dnl By default, many hosts wont let programs access large files;
 dnl one must use special compiler options to get large-file access to work.
 dnl For more details about this brain damage please see:
 dnl http://www.sas.com/standards/large.file/x_open.20Mar96.html
@@ -80,8 +80,9 @@ changequote([, ])dnl
 
 AC_DEFUN([MYSQL_SYS_LARGEFILE],
   [AC_REQUIRE([AC_CANONICAL_HOST])
-  AC_ARG_ENABLE(largefile,
-     [  --disable-largefile     Omit support for large files])
+      AC_ARG_ENABLE([largefile],
+	  [AS_HELP_STRING([--disable-largefile],
+		  [Omit support for large files])])
    if test "$enable_largefile" != no; then
      AC_CHECK_TOOL(GETCONF, getconf)
      AC_SYS_LARGEFILE_FLAGS(CFLAGS)

@@ -198,11 +198,11 @@ else
 
 my $flags;
 $flags->{libs} =
-  [@ldflags,@lib_opts,'@ZLIB_DEPS@','@NON_THREADED_LIBS@','@openssl_libs@','@STATIC_NSS_FLAGS@'];
+  [@ldflags,@lib_opts,'@openssl_libs@','@STATIC_NSS_FLAGS@'];
 $flags->{libs_r} =
-  [@ldflags,@lib_r_opts,'@ZLIB_DEPS@','@LIBS@','@openssl_libs@'];
+  [@ldflags,@lib_r_opts,'@LIBS@','@openssl_libs@'];
 $flags->{embedded_libs} =
-  [@ldflags,@lib_e_opts,'@ZLIB_DEPS@','@LIBS@','@WRAPLIBS@','@innodb_system_libs@','@openssl_libs@'];
+  [@ldflags,@lib_e_opts,'@LIBS@','@WRAPLIBS@','@innodb_system_libs@','@openssl_libs@'];
 
 $flags->{include} = ["-I$pkgincludedir"];
 $flags->{cflags}  = [@{$flags->{include}},split(" ",'@CFLAGS@')];

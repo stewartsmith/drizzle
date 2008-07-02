@@ -85,18 +85,14 @@ void create_last_word_mask(MY_BITMAP *map)
 
 static inline void bitmap_lock(MY_BITMAP *map __attribute__((unused)))
 {
-#ifdef THREAD
   if (map->mutex)
     pthread_mutex_lock(map->mutex);
-#endif
 }
 
 static inline void bitmap_unlock(MY_BITMAP *map __attribute__((unused)))
 {
-#ifdef THREAD
   if (map->mutex)
     pthread_mutex_unlock(map->mutex);
-#endif
 }
 
 
@@ -108,30 +104,24 @@ my_bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint n_bits,
   {
     uint size_in_bytes= bitmap_buffer_size(n_bits);
     uint extra= 0;
-#ifdef THREAD
     if (thread_safe)
     {
       size_in_bytes= ALIGN_SIZE(size_in_bytes);
       extra= sizeof(pthread_mutex_t);
     }
     map->mutex= 0;
-#endif
     if (!(buf= (my_bitmap_map*) my_malloc(size_in_bytes+extra, MYF(MY_WME))))
       DBUG_RETURN(1);
-#ifdef THREAD
     if (thread_safe)
     {
       map->mutex= (pthread_mutex_t *) ((char*) buf + size_in_bytes);
       pthread_mutex_init(map->mutex, MY_MUTEX_INIT_FAST);
     }
-#endif
   }
-#ifdef THREAD
   else
   {
     DBUG_ASSERT(thread_safe == 0);
   }
-#endif
 
   map->bitmap= buf;
   map->n_bits= n_bits;
@@ -146,10 +136,8 @@ void bitmap_free(MY_BITMAP *map)
   DBUG_ENTER("bitmap_free");
   if (map->bitmap)
   {
-#ifdef THREAD
     if (map->mutex)
       pthread_mutex_destroy(map->mutex);
-#endif
     my_free((char*) map->bitmap, MYF(0));
     map->bitmap=0;
   }

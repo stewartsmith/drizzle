@@ -15,21 +15,11 @@
 
 ## Process this file with automake to create Makefile.in
 
-BUILT_SOURCES = mysql_fix_privilege_tables.sql \
-		mysql_fix_privilege_tables_sql.c
 
-EXTRA_PROGRAMS = 	comp_sql
-
-bin_SCRIPTS =		@server_scripts@ \
-			msql2mysql \
+bin_SCRIPTS =		mysqld_safe \
+			mysql_install_db \
 			mysql_config \
-			mysql_fix_privilege_tables \
 			mysql_fix_extensions \
-			mysql_setpermission \
-			mysql_secure_installation \
-			mysql_zap \
-			mysqlaccess \
-			mysqlbug \
 			mysql_convert_table_format \
 			mysql_find_rows \
 			mysqlhotcopy \
@@ -41,19 +31,10 @@ noinst_SCRIPTS =	make_binary_distribution \
 
 EXTRA_SCRIPTS =		make_binary_distribution.sh \
 			make_sharedlib_distribution.sh \
-			msql2mysql.sh \
 			mysql_config.sh \
 			mysql_config.pl.in \
-			mysql_fix_privilege_tables.sh \
 			mysql_fix_extensions.sh \
 			mysql_install_db.sh \
-			mysql_install_db.pl.in \
-			mysql_setpermission.sh \
-			mysql_secure_installation.sh \
-			mysql_secure_installation.pl.in \
-			mysql_zap.sh \
-			mysqlaccess.sh \
-			mysqlbug.sh \
 			mysql_convert_table_format.sh \
 			mysql_find_rows.sh \
 			mysqlhotcopy.sh \
@@ -62,30 +43,18 @@ EXTRA_SCRIPTS =		make_binary_distribution.sh \
 			mysqld_safe.sh
 
 EXTRA_DIST =		$(EXTRA_SCRIPTS) \
-			mysqlaccess.conf \
-			mysqlbug \
-			make_win_bin_dist \
-			mysql_fix_privilege_tables_sql.c \
 			mysql_system_tables_fix.sql
 
 dist_pkgdata_DATA =	fill_help_tables.sql \
-			mysql_fix_privilege_tables.sql \
 			mysql_system_tables.sql \
-			mysql_system_tables_data.sql \
 			mysql_test_data_timezone.sql
 
-CLEANFILES =		@server_scripts@ \
-			comp_sql \
+CLEANFILES =		mysqld_safe \
+			mysql_install_db \
 			make_binary_distribution \
 			make_sharedlib_distribution \
-			msql2mysql \
 			mysql_config \
-			mysql_fix_privilege_tables \
 			mysql_fix_extensions \
-			mysql_setpermission \
-			mysql_secure_installation \
-			mysql_zap \
-			mysqlaccess \
 			mysql_convert_table_format \
 			mysql_find_rows \
 			mysqlhotcopy \
@@ -96,33 +65,6 @@ pkgplugindir =		$(pkglibdir)/plugin
 
 # Default same as 'pkgdatadir', but we can override it
 pkgsuppdir =		$(datadir)/@PACKAGE@
-
-# mysqlbug should be distributed built so that people can report build
-# failures with it.
-DISTCLEANFILES =        $(BUILT_SOURCES) mysqlbug
-
-# We want the right version and configure comand line in mysqlbug
-mysqlbug: ${top_builddir}/config.status mysqlbug.sh
-
-# Build mysql_fix_privilege_tables.sql from the files that contain
-# the system tables for this version of MySQL plus any commands
-# needed to upgrade the system tables from an older version
-mysql_fix_privilege_tables.sql: $(top_srcdir)/scripts/mysql_system_tables.sql \
-				$(top_srcdir)/scripts/mysql_system_tables_fix.sql
-	@echo "Building $@";
-	@cat $(srcdir)/mysql_system_tables.sql $(srcdir)/mysql_system_tables_fix.sql > $@
-
-
-#
-# Build mysql_fix_privilege_tables_sql.c from
-# mysql_fix_privileges_tables.sql using comp_sql
-# The "sleep" ensures the generated file has a younger timestamp than its source
-# (which may have been generated in this very same "make" run).
-#
-mysql_fix_privilege_tables_sql.c: $(builddir)/comp_sql$(EXEEXT) mysql_fix_privilege_tables.sql
-	$(builddir)/comp_sql$(EXEEXT) \
-	  mysql_fix_privilege_tables \
-	    $(top_srcdir)/scripts/mysql_fix_privilege_tables.sql $@
 
 
 SUFFIXES = .sh
@@ -162,7 +104,6 @@ SUFFIXES = .sh
 	  -e 's!@''CXXFLAGS''@!@CXXFLAGS@!'\
 	  -e 's!@''LDFLAGS''@!@LDFLAGS@!'\
 	  -e 's!@''CLIENT_LIBS''@!@CLIENT_LIBS@!' \
-	  -e 's!@''ZLIB_LIBS''@!@ZLIB_LIBS@!' \
 	  -e 's!@''LIBS''@!@LIBS@!' \
 	  -e 's!@''WRAPLIBS''@!@WRAPLIBS@!' \
 	  -e 's!@''innodb_system_libs''@!@innodb_system_libs@!' \
@@ -184,8 +125,6 @@ SUFFIXES = .sh
 	  -e "s!@""CONF_COMMAND""@!@CONF_COMMAND@!" \
 	  -e 's!@''MYSQLD_USER''@!@MYSQLD_USER@!' \
 	  -e 's!@''STATIC_NSS_FLAGS''@!@STATIC_NSS_FLAGS@!' \
-	  -e 's!@''NON_THREADED_LIBS''@!@NON_THREADED_LIBS@!' \
-	  -e 's!@''ZLIB_DEPS''@!@ZLIB_DEPS@!' \
 	  -e "s!@MAKE@!$(MAKE)!" \
 	$< > $@-t
 	@CHMOD@ +x $@-t

@@ -56,7 +56,7 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
       Make sure we are using a valid file descriptor!
   */
   DBUG_ASSERT(fd != -1);
-#if defined(THREAD) && !defined(HAVE_PREAD)
+#if !defined(HAVE_PREAD)
   if (MyFlags & MY_THREADSAFE)
   {
     pthread_mutex_lock(&my_file_info[fd].mutex);

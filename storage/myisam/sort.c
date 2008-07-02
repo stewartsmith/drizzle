@@ -304,7 +304,6 @@ static ha_rows  find_all_keys(MI_SORT_PARAM *info, uint keys,
 } /* find_all_keys */
 
 
-#ifdef THREAD
 /* Search after all keys and place them in a temp. file */
 
 pthread_handler_t thr_find_all_keys(void *arg)
@@ -635,7 +634,6 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
   my_free((uchar*) mergebuf,MYF(MY_ALLOW_ZERO_PTR));
   DBUG_RETURN(got_error);
 }
-#endif /* THREAD */
 
         /* Write all keys in memory to file for later merge */
 

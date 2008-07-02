@@ -3574,18 +3574,6 @@ struct my_option my_long_options[] =
    "File that holds the names for last binary log files.",
    (uchar**) &opt_binlog_index_name, (uchar**) &opt_binlog_index_name, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef TO_BE_REMOVED_IN_5_1_OR_6_0
-  /*
-    In 5.0.6 we introduced the below option, then in 5.0.16 we renamed it to
-    log-bin-trust-function-creators but kept also the old name for
-    compatibility; the behaviour was also changed to apply only to functions
-    (and triggers). In a future release this old name could be removed.
-  */
-  {"log-bin-trust-routine-creators", OPT_LOG_BIN_TRUST_FUNCTION_CREATORS,
-   "(deprecated) Use log-bin-trust-function-creators.",
-   (uchar**) &trust_function_creators, (uchar**) &trust_function_creators, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   /*
     This option starts with "log-bin" to emphasize that it is specific of
     binary logging.

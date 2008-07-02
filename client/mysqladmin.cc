@@ -17,9 +17,7 @@
 
 #include "client_priv.h"
 #include <signal.h>
-#ifdef THREAD
 #include <my_pthread.h>				/* because of signal()	*/
-#endif
 #include <sys/stat.h>
 #include <mysql.h>
 

@@ -1,12 +1,13 @@
 dnl -*- ksh -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.52)dnl		Minimum Autoconf version required.
+AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
 
-AC_INIT(sql/mysqld.cc)
+AC_INIT
+AC_CONFIG_SRCDIR([sql/mysqld.cc])
 AC_CONFIG_AUX_DIR(config)
-AM_CONFIG_HEADER([include/config.h:config.h.in])
-AC_CANONICAL_SYSTEM
+AC_CONFIG_HEADERS([include/config.h:config.h.in])
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(mysql, 7.0.0, no-define)
 
 PROTOCOL_VERSION=10
@@ -32,9 +33,6 @@ MYSQL_NUMERIC_VERSION=`echo $MYSQL_NO_DASH_VERSION | sed -e "s|[[a-z]][[a-z0-9]]
 MYSQL_BASE_VERSION=`echo $MYSQL_NUMERIC_VERSION | sed -e "s|\.[[^.]]*$||"`
 MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
     awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
-
-# Add previous major version for debian package upgrade path
-MYSQL_PREVIOUS_BASE_VERSION=5.1
 
 # The port should be constant for a LONG time
 MYSQL_TCP_PORT_DEFAULT=3306
@@ -78,12 +76,14 @@ AC_SUBST(AVAILABLE_LANGUAGES)
 # Canonicalize the configuration name.
 
 # Check whether --with-system-type or --without-system-type was given.
-AC_ARG_WITH(system-type,
-    [  --with-system-type      Set the system type, like "sun-solaris10"],
+AC_ARG_WITH([system-type],
+    [AS_HELP_STRING([--with-system-type],
+       [Set the system type, like "sun-solaris10"])],
     [SYSTEM_TYPE="$withval"],
     [SYSTEM_TYPE="$host_vendor-$host_os"])
-AC_ARG_WITH(machine-type,
-    [  --with-machine-type     Set the machine type, like "powerpc"],
+AC_ARG_WITH([machine-type],
+    [AS_HELP_STRING([--with-machine-type],
+       [Set the machine type, like "powerpc"])],
     [MACHINE_TYPE="$withval"],
     [MACHINE_TYPE="$host_cpu"])
 AC_SUBST(SYSTEM_TYPE)
@@ -179,7 +179,7 @@ fi
 AC_SUBST(CC_VERSION)
 MYSQL_CHECK_CXX_VERSION
 
-if test "$ac_cv_prog_gcc" = "yes"
+if test "$ac_cv_c_compiler_gnu" = "yes"
 then
   AS="$CC -c"
   AC_SUBST(AS)
@@ -270,7 +270,8 @@ then
   # We should use -Wno-invalid-offsetof flag to disable some warnings from gcc
   # regarding offset() usage in C++ which are done in a safe manner in the
   # server
-  CXXFLAGS="$CXXFLAGS -fno-implicit-templates -fno-exceptions -fno-rtti"
+  CXXFLAGS="$CXXFLAGS -Wall -fno-implicit-templates -fno-exceptions -fno-rtti"
+  CFLAGS="$CFLAGS -Wall"
   AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
     [1], [Defined by configure. Use explicit template instantiation.])
 fi
@@ -448,26 +449,27 @@ then
   fi
 fi
 
-AC_ARG_WITH(server-suffix,
-    [  --with-server-suffix    Append value to the version string.],
+AC_ARG_WITH([server-suffix],
+    [AS_HELP_STRING([--with-server-suffix],
+      [Append value to the version string.])],
     [ MYSQL_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
     [ MYSQL_SERVER_SUFFIX= ]
     )
 AC_SUBST(MYSQL_SERVER_SUFFIX)
 
 # Force use of a curses libs
-AC_ARG_WITH(named-curses-libs,
-    [  --with-named-curses-libs=ARG
-                          Use specified curses libraries instead of 
-                          those automatically found by configure.],
+AC_ARG_WITH([named-curses-libs],
+    [AS_HELP_STRING([--with-named-curses-libs=ARG],
+            [Use specified curses libraries instead of those
+		automatically found by configure.])],
     [ with_named_curses=$withval ],
     [ with_named_curses=no ]
     )
 
 # compile with strings functions in assembler
-AC_ARG_ENABLE(assembler,
-    [  --enable-assembler      Use assembler versions of some string 
-                          functions if available.],
+AC_ARG_ENABLE([assembler],
+    [AS_HELP_STRING([--enable-assembler],
+	    [Use assembler versions of some string functions if available.])],
     [ ENABLE_ASSEMBLER=$enableval ],
     [ ENABLE_ASSEMBLER=no ]
     )
@@ -488,8 +490,9 @@ fi
 
 # Add query profiler
 AC_MSG_CHECKING(if SHOW PROFILE should be enabled.)
-AC_ARG_ENABLE(profiling,
-    AS_HELP_STRING([--enable-profiling], [Build a version with query profiling code (req. community-features)]),
+AC_ARG_ENABLE([profiling],
+    [AS_HELP_STRING([--enable-profiling], 
+	    [Build a version with query profiling code])],
     [ ENABLED_PROFILING=$enableval ],
     [ ENABLED_PROFILING=no ])
 
@@ -502,9 +505,9 @@ else
   AC_MSG_RESULT([no])
 fi
 
-AC_ARG_WITH(tcp-port,
-    [  --with-tcp-port=port-number
-                          Which port to use for MySQL services (default 3306)],
+AC_ARG_WITH([tcp-port],
+    [AS_HELP_STRING([--with-tcp-port=port-number],
+            [Which port to use for MySQL services @<:@default=3306@:>@])],
     [ MYSQL_TCP_PORT=$withval ],
     [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -540,9 +543,10 @@ AC_SUBST(MYSQL_TCP_PORT)
 AC_SUBST(MYSQL_TCP_PORT_DEFAULT)
 
 # Use this to set the place used for unix socket used to local communication.
-AC_ARG_WITH(mysqld-user,
-    [  --with-mysqld-user=username   
-                          What user the mysqld daemon shall be run as.],
+AC_ARG_WITH([mysqld-user],
+    [AS_HELP_STRING([--with-mysqld-user=username],
+            [What user the mysqld daemon shall be run as.
+		@<:@default=mysql@:>@])],
     [ MYSQLD_USER=$withval ],
     [ MYSQLD_USER=mysql ]
     )
@@ -628,11 +632,6 @@ then
   AC_CHECK_FUNC(gtty, , AC_CHECK_LIB(compat, gtty))
 fi
 
-# We make a special variable for non-threaded version of LIBS to avoid
-# including thread libs into non-threaded version of MySQL client library.
-# Later in this script LIBS will be augmented with a threads library.
-NON_THREADED_LIBS="$LIBS"
-
 AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
                 uchar, uint, ulong],[],[], [
 #include <sys/types.h>
@@ -667,7 +666,7 @@ esac
 
 # Build optimized or debug version ?
 # First check for gcc and g++
-if test "$ac_cv_prog_gcc" = "yes"
+if test "$ac_cv_c_compiler_gnu" = "yes"
 then
   DEBUG_CFLAGS="-g"
   DEBUG_OPTIMIZE_CC="-O"
@@ -701,9 +700,10 @@ then
   DEBUG_OPTIMIZE_CXX=""
 fi
 
-AC_ARG_WITH(debug,
-    [  --with-debug            Add debug code
-  --with-debug=full       Add debug code (adds memory checker, very slow)],
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],
+            [Add debug code (yes|no|full) @<:@default=no@:>@ 
+	    Full adds memory checked, very slow.])],
     [with_debug=$withval],
     [with_debug=no])
 if test "$with_debug" = "yes"
@@ -720,14 +720,15 @@ then
   CXXFLAGS="$DEBUG_CXXFLAGS $CXXFLAGS"
 else
   # Optimized version. No debug
-  AC_DEFINE([DBUG_OFF], [1], [Don't use libdbug])
+  AC_DEFINE([DBUG_OFF], [1], [Dont use libdbug])
   CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
   CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
 fi
 
 # If we should allow error injection tests
-AC_ARG_WITH(error-inject,
-    AC_HELP_STRING([--with-error-inject],[Enable error injection in MySQL Server]),
+AC_ARG_WITH([error-inject],
+    [AS_HELP_STRING([--with-error-inject],
+	    [Enable error injection in MySQL Server @<:@default=off@:>@])],
     [ with_error_inject=$withval ],
     [ with_error_inject=no ])
 
@@ -741,9 +742,10 @@ then
 fi
 
 AC_ARG_WITH([fast-mutexes],
-	    AC_HELP_STRING([--with-fast-mutexes], 
-	    [Compile with fast mutexes (default is disabled)]),
-	    [with_fast_mutexes=$withval], [with_fast_mutexes=no])
+    [AS_HELP_STRING([--with-fast-mutexes],
+	    [Compile with fast mutexes  @<:@default=off@:>@])],
+    [with_fast_mutexes=$withval],
+    [with_fast_mutexes=no])
 
 if test "$with_fast_mutexes" != "no"
 then
@@ -756,8 +758,9 @@ then
   fi
 fi
 
-AC_ARG_WITH(comment,
-    [  --with-comment          Comment about compilation environment.],
+AC_ARG_WITH([comment],
+    [AS_HELP_STRING([--with-comment],
+            [Comment about compilation environment. @<:@default=off@:>@])],
     [with_comment=$withval],
     [with_comment=no])
 if test "$with_comment" != "no"
@@ -769,7 +772,7 @@ fi
 AC_SUBST(COMPILATION_COMMENT)
 
 AC_MSG_CHECKING("need of special linking flags")
-if test "$TARGET_LINUX" = "true" -a "$ac_cv_prog_gcc" = "yes" -a "$all_is_static" != "yes"
+if test "$TARGET_LINUX" = "true" -a "$ac_cv_c_compiler_gnu" = "yes" -a "$all_is_static" != "yes"
 then
   LDFLAGS="$LDFLAGS -rdynamic"
   AC_MSG_RESULT("-rdynamic")
@@ -792,7 +795,6 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_OFF_T
-AC_STRUCT_ST_RDEV
 AC_HEADER_TIME
 AC_STRUCT_TM
 MYSQL_NEEDS_MYSYS_NEW
@@ -845,11 +847,11 @@ MYSQL_CHECK_TIME_T
 AC_MSG_CHECKING(the need for @%:@pragma interface/implementation)
 # instead of trying to match SYSTEM_TYPE and CC_VERSION (that doesn't
 # follow any standard), we'll use well-defined preprocessor macros:
-AC_TRY_CPP([
+AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #if !defined(__CYGWIN__) && !defined(__INTEL_COMPILER) && defined(__GNUC__) && (__GNUC__ < 3)
 #error USE_PRAGMA_IMPLEMENTATION
 #endif
-],AC_MSG_RESULT(no) ,AC_MSG_RESULT(yes) ; CXXFLAGS="$CXXFLAGS -DUSE_PRAGMA_IMPLEMENTATION")
+]])],[AC_MSG_RESULT(no) ],[AC_MSG_RESULT(yes) ; CXXFLAGS="$CXXFLAGS -DUSE_PRAGMA_IMPLEMENTATION"])
 
 # This always gives a warning. Ignore it unless you are cross compiling
 AC_C_BIGENDIAN
@@ -914,7 +916,7 @@ paths.h semaphore.h)
 # Already-done: strcasecmp
 AC_CHECK_FUNCS(lstat putenv select setenv setlocale strcoll tcgetattr)
 
-AC_STAT_MACROS_BROKEN
+AC_HEADER_STAT
 MYSQL_SIGNAL_CHECK
 MYSQL_CHECK_GETPW_FUNCS
 MYSQL_HAVE_TIOCGWINSZ
@@ -994,21 +996,32 @@ AC_CHECK_FUNCS(alarm bcmp bfill bmove bsearch bzero \
   strtol strtoll strtoul strtoull tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
 
-# Check that isinf() is available in math.h and can be used in both C and C++ 
+# Check that isinf() is available in math.h and can be used in both C and C++
 # code
-AC_MSG_CHECKING(for isinf in <math.h>)
-AC_TRY_LINK([#include <math.h>], [float f = 0.0; int r = isinf(f); return r],
-  AC_MSG_RESULT(yes)
-  AC_MSG_CHECKING(whether isinf() can be used in C++ code)
-  AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
-  AC_TRY_LINK([#include <math.h>], [float f = 0.0; int r = isinf(f); return r],
+AC_MSG_CHECKING(for isinf in math.h)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[
+    float f = 0.0; 
+    int r = isinf(f); 
+    return r;
+  ]])],[
     AC_MSG_RESULT(yes)
-    AC_DEFINE(HAVE_ISINF, [1], [isinf() macro or function]),
-    AC_MSG_RESULT(no))
-  AC_LANG_RESTORE,
-  AC_MSG_RESULT(no))
- 
+    AC_MSG_CHECKING(whether isinf() can be used in C++ code)
+    AC_LANG_PUSH([C++])
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[
+      float f = 0.0;
+      int r = isinf(f);
+      return r;
+    ]])],[
+      AC_MSG_RESULT(yes)
+      AC_DEFINE(HAVE_ISINF, [1], [isinf() macro or function])
+    ],[
+      AC_MSG_RESULT(no)
+    ])
+    AC_LANG_POP([])
+  ],[
+  AC_MSG_RESULT(no)])
+
+
 CFLAGS="$ORG_CFLAGS"
 
 # Sanity check: We chould not have any fseeko symbol unless
@@ -1022,15 +1035,12 @@ fi]
 
 # Check definition of pthread_getspecific
 AC_CACHE_CHECK("args to pthread_getspecific", mysql_cv_getspecific_args,
-AC_TRY_COMPILE(
-[#if !defined(_REENTRANT)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
 #define _REENTRANT
 #endif
 #define _POSIX_PTHREAD_SEMANTICS 
-#include <pthread.h> ],
-[ void *pthread_getspecific(pthread_key_t key);
-pthread_getspecific((pthread_key_t) NULL); ],
-mysql_cv_getspecific_args=POSIX, mysql_cv_getspecific_args=other))
+#include <pthread.h> ]], [[ void *pthread_getspecific(pthread_key_t key);
+pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX],[mysql_cv_getspecific_args=other]))
   if test "$mysql_cv_getspecific_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_GETSPECIFIC], [1],
@@ -1039,15 +1049,12 @@ mysql_cv_getspecific_args=POSIX, mysql_cv_getspecific_args=other))
 
   # Check definition of pthread_mutex_init
   AC_CACHE_CHECK("args to pthread_mutex_init", mysql_cv_mutex_init_args,
-  AC_TRY_COMPILE(
-[#define _REENTRANT
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
-#include <pthread.h> ],
-[ 
+#include <pthread.h> ]], [[ 
   pthread_mutexattr_t attr;
   pthread_mutex_t mp;
-  pthread_mutex_init(&mp,&attr); ],
-mysql_cv_mutex_init_args=POSIX, mysql_cv_mutex_init_args=other))
+  pthread_mutex_init(&mp,&attr); ]])],[mysql_cv_mutex_init_args=POSIX],[mysql_cv_mutex_init_args=other]))
   if test "$mysql_cv_mutex_init_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_MUTEX_INIT], [1],
@@ -1058,14 +1065,11 @@ mysql_cv_mutex_init_args=POSIX, mysql_cv_mutex_init_args=other))
 #---START: Used in for client configure
 # Check definition of readdir_r
 AC_CACHE_CHECK("args to readdir_r", mysql_cv_readdir_r,
-AC_TRY_LINK(
-[#define _REENTRANT
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <dirent.h>],
-[ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
-readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ],
-mysql_cv_readdir_r=POSIX, mysql_cv_readdir_r=other))
+#include <dirent.h>]], [[ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
+readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],[mysql_cv_readdir_r=POSIX],[mysql_cv_readdir_r=other]))
 if test "$mysql_cv_readdir_r" = "POSIX"
 then
   AC_DEFINE([HAVE_READDIR_R], [1], [POSIX readdir_r])
@@ -1073,17 +1077,14 @@ fi
 
 # Check definition of posix sigwait()
 AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_TRY_LINK(
-[#define _REENTRANT
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>],
-[#ifndef _AIX
+#include <signal.h>]], [[#ifndef _AIX
 sigset_t set;
 int sig;
 sigwait(&set,&sig);
-#endif],
-mysql_cv_sigwait=POSIX, mysql_cv_sigwait=other))
+#endif]])],[mysql_cv_sigwait=POSIX],[mysql_cv_sigwait=other]))
 if test "$mysql_cv_sigwait" = "POSIX"
 then
   AC_DEFINE([HAVE_SIGWAIT], [1], [POSIX sigwait])
@@ -1094,15 +1095,12 @@ then
 unset mysql_cv_sigwait
 # Check definition of posix sigwait()
 AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_TRY_LINK(
-[#define _REENTRANT
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>],
-[sigset_t set;
+#include <signal.h>]], [[sigset_t set;
 int sig;
-sigwait(&set);],
-mysql_cv_sigwait=NONPOSIX, mysql_cv_sigwait=other))
+sigwait(&set);]])],[mysql_cv_sigwait=NONPOSIX],[mysql_cv_sigwait=other]))
 if test "$mysql_cv_sigwait" = "NONPOSIX"
 then
   AC_DEFINE([HAVE_NONPOSIX_SIGWAIT], [1], [sigwait with one argument])
@@ -1112,13 +1110,10 @@ fi
 
 # Check if pthread_attr_setscope() exists
 AC_CACHE_CHECK("for pthread_attr_setscope", mysql_cv_pthread_attr_setscope,
-AC_TRY_LINK(
-[#define _REENTRANT
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
-#include <pthread.h>],
-[pthread_attr_t thr_attr;
-pthread_attr_setscope(&thr_attr,0);],
-mysql_cv_pthread_attr_setscope=yes, mysql_cv_pthread_attr_setscope=no))
+#include <pthread.h>]], [[pthread_attr_t thr_attr;
+pthread_attr_setscope(&thr_attr,0);]])],[mysql_cv_pthread_attr_setscope=yes],[mysql_cv_pthread_attr_setscope=no]))
 if test "$mysql_cv_pthread_attr_setscope" = "yes"
 then
   AC_DEFINE([HAVE_PTHREAD_ATTR_SETSCOPE], [1], [pthread_attr_setscope])
@@ -1126,30 +1121,26 @@ fi
 
 # Check for bad includes
 AC_MSG_CHECKING("can netinet files be included")
-AC_TRY_COMPILE(
-[#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/tcp.h>],
-[ printf("1\n"); ],
-netinet_inc=yes, netinet_inc=no)
+#include <netinet/tcp.h>]], [[ printf("1\n"); ]])],[netinet_inc=yes],[netinet_inc=no])
 if test "$netinet_inc" = "no"
 then
   AC_DEFINE([HAVE_BROKEN_NETINET_INCLUDES], [1], [Can netinet be included])
 fi
 AC_MSG_RESULT("$netinet_inc")
 
-AC_LANG_SAVE
-AC_LANG_CPLUSPLUS
+AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS(cxxabi.h)
 AC_CACHE_CHECK([checking for abi::__cxa_demangle], mysql_cv_cxa_demangle,
-[AC_TRY_LINK([#include <cxxabi.h>], [
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <cxxabi.h>]], [[
   char *foo= 0; int bar= 0;
   foo= abi::__cxa_demangle(foo, foo, 0, &bar);
-], [mysql_cv_cxa_demangle=yes], [mysql_cv_cxa_demangle=no])])
-AC_LANG_RESTORE
+]])],[mysql_cv_cxa_demangle=yes],[mysql_cv_cxa_demangle=no])])
+AC_LANG_POP([])
 
 if test "x$mysql_cv_cxa_demangle" = xyes; then
   AC_DEFINE(HAVE_ABI_CXA_DEMANGLE, 1,
@@ -1172,46 +1163,8 @@ MYSQL_CHECK_VIO
 
 MYSQL_CONFIGURE_PLUGINS([none])
 
-# Only build client code?
-AC_ARG_WITH(server,
-    [  --without-server        Only build the client.],
-    [with_server=$withval],
-    [with_server=yes]
-)
-
-#MYSQL_CHECK_CPU
-
-# If we have threads generate some library functions and test programs
-sql_server_dirs=
-sql_server=
-server_scripts=
-
-dnl This probably should be cleaned up more - for now the threaded
-dnl client is just using plain-old libs.
-sql_client_dirs="strings regex mysys libmysql"
-
-sql_client_dirs="$sql_client_dirs client"
-
-CLIENT_LIBS="$NON_THREADED_LIBS $openssl_libs $ZLIB_LIBS $STATIC_NSS_FLAGS"
-
 AC_SUBST(CLIENT_LIBS)
-AC_SUBST(CLIENT_THREAD_LIBS)
-AC_SUBST(NON_THREADED_LIBS)
 AC_SUBST(STATIC_NSS_FLAGS)
-AC_SUBST(sql_client_dirs)
-
-if test "$with_server" = "yes"
-then
-  AC_DEFINE([THREAD], [1],
-            [Define if you want to have threaded code. This may be undef on client code])
-  # Avoid _PROGRAMS names
-  THREAD_LOBJECTS="thr_alarm.o thr_lock.o thr_mutex.o thr_rwlock.o my_thr_init.o mf_keycache.o"
-  AC_SUBST(THREAD_LOBJECTS)
-  server_scripts="mysqld_safe mysql_install_db"
-  sql_server_dirs="strings mysys dbug extra regex"
-
-  sql_server="sql"
-fi
 
 # IMPORTANT - do not modify LIBS past this line - this hack is the only way
 # I know to add the static NSS magic if we have static NSS libraries with
@@ -1220,28 +1173,9 @@ fi
 LDFLAGS="$LDFLAGS $OTHER_LIBC_LIB"
 LIBS="$LIBS $STATIC_NSS_FLAGS"
 
-AC_SUBST(sql_server_dirs)
-AC_SUBST(sql_server)
-AC_SUBST(server_scripts)
-
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
-
-
-# Now that sql_client_dirs and sql_server_dirs are stable, determine the union.
-# Start with the (longer) server list, add each client item not yet present.
-sql_union_dirs=" $sql_server_dirs "
-for DIR in $sql_client_dirs
-do
-  if echo " $sql_union_dirs " | grep " $DIR " >/dev/null
-  then
-    :  # already present, skip
-  else
-    sql_union_dirs="$sql_union_dirs $DIR "
-  fi
-done
-AC_SUBST(sql_union_dirs)
 
 # Some usefull subst
 AC_SUBST(CC)
@@ -1265,7 +1199,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  sql/Makefile sql/share/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
  dbug/Makefile scripts/Makefile include/Makefile dnl
- tests/Makefile support-files/Makefile dnl
+ support-files/Makefile dnl
  mysql-test/Makefile dnl
  include/mysql_version.h plugin/Makefile)
 

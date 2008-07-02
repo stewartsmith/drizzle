@@ -22,7 +22,7 @@ HEADERS_ABI =		mysql.h mysql_com.h mysql_time.h \
 			mysql/plugin_audit.h mysql/plugin_ftparser.h
 pkginclude_HEADERS =	$(HEADERS_ABI) my_dbug.h m_string.h my_sys.h \
 			my_xml.h \
-		  	my_pthread.h my_no_pthread.h \
+		  	my_pthread.h \
 			decimal.h errmsg.h my_global.h my_net.h \
 			my_getopt.h my_dir.h \
 			sql_common.h keycache.h \
