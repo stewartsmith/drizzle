@@ -375,22 +375,6 @@ struct sql_ex_info
 #define BINLOG_MAGIC        "\xfe\x62\x69\x6e"
 
 /*
-  The 2 flags below were useless :
-  - the first one was never set
-  - the second one was set in all Rotate events on the master, but not used for
-  anything useful.
-  So they are now removed and their place may later be reused for other
-  flags. Then one must remember that Rotate events in 4.x have
-  LOG_EVENT_FORCED_ROTATE_F set, so one should not rely on the value of the
-  replacing flag when reading a Rotate event.
-  I keep the defines here just to remember what they were.
-*/
-#ifdef TO_BE_REMOVED
-#define LOG_EVENT_TIME_F            0x1
-#define LOG_EVENT_FORCED_ROTATE_F   0x2
-#endif
-
-/*
    This flag only makes sense for Format_description_log_event. It is set
    when the event is written, and *reset* when a binlog file is
    closed (yes, it's the only case when MySQL modifies already written

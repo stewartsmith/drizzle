@@ -1021,46 +1021,26 @@ static int myisamchk(MI_CHECK *param, char * filename)
       }
       if (!error && param->testflag & T_SORT_RECORDS)
       {
+	uint key;
 	/*
-	  The data file is nowadays reopened in the repair code so we should
-	  soon remove the following reopen-code
+	  We can't update the index in mi_sort_records if we have a
+	  prefix compressed or fulltext index
 	*/
-#ifndef TO_BE_REMOVED
-	if (param->out_flag & O_NEW_DATA)
-	{			/* Change temp file to org file */
-	  VOID(my_close(info->dfile,MYF(MY_WME))); /* Close new file */
-	  error|=change_to_newfile(filename,MI_NAME_DEXT,DATA_TMP_EXT,
-				   raid_chunks,
-				   MYF(0));
-	  if (mi_open_datafile(info,info->s, -1))
-	    error=1;
-	  param->out_flag&= ~O_NEW_DATA; /* We are using new datafile */
-	  param->read_cache.file=info->dfile;
-	}
-#endif
-	if (! error)
-	{
-	  uint key;
-	  /*
-	    We can't update the index in mi_sort_records if we have a
-	    prefix compressed or fulltext index
-	  */
-	  my_bool update_index=1;
-	  for (key=0 ; key < share->base.keys; key++)
-	    if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY|HA_FULLTEXT))
-	      update_index=0;
+	my_bool update_index=1;
+	for (key=0 ; key < share->base.keys; key++)
+	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY|HA_FULLTEXT))
+	    update_index=0;
 
-	  error=mi_sort_records(param,info,filename,param->opt_sort_key,
-                             /* what is the following parameter for ? */
-				(my_bool) !(param->testflag & T_REP),
-				update_index);
-	  datafile=info->dfile;	/* This is now locked */
-	  if (!error && !update_index)
-	  {
-	    if (param->verbose)
-	      puts("Table had a compressed index;  We must now recreate the index");
-	    error=mi_repair_by_sort(param,info,filename,1);
-	  }
+	error=mi_sort_records(param,info,filename,param->opt_sort_key,
+                           /* what is the following parameter for ? */
+	   		      (my_bool) !(param->testflag & T_REP),
+			      update_index);
+	datafile=info->dfile;	/* This is now locked */
+	if (!error && !update_index)
+	{
+	  if (param->verbose)
+	    puts("Table had a compressed index;  We must now recreate the index");
+	  error=mi_repair_by_sort(param,info,filename,1);
 	}
       }
       if (!error && param->testflag & T_SORT_INDEX)
