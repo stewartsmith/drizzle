@@ -1600,11 +1600,13 @@ static MYSQL_METHODS client_methods=
   cli_use_result,                              /* use_result */
   cli_fetch_lengths,                           /* fetch_lengths */
   cli_flush_use_result,                         /* flush_use_result */
-  NULL,                            /* list_fields */
-  NULL,                        /* unbuffered_fetch */
-  NULL,                         /* read_statistics */
+#ifndef MYSQL_SERVER
+  cli_list_fields,                            /* list_fields */
+  cli_unbuffered_fetch,                        /* unbuffered_fetch */
+  cli_read_statistics,                         /* read_statistics */
   cli_read_query_result,                       /* next_result */
-  NULL,                 /* read_change_user_result */
+  cli_read_change_user_result,                 /* read_change_user_result */
+#endif
 };
 
 C_MODE_START
@@ -2418,50 +2420,11 @@ static void mysql_close_free(MYSQL *mysql)
   my_free(mysql->user,MYF(MY_ALLOW_ZERO_PTR));
   my_free(mysql->passwd,MYF(MY_ALLOW_ZERO_PTR));
   my_free(mysql->db,MYF(MY_ALLOW_ZERO_PTR));
-#if defined(EMBEDDED_LIBRARY) || MYSQL_VERSION_ID >= 50100
   my_free(mysql->info_buffer,MYF(MY_ALLOW_ZERO_PTR));
   mysql->info_buffer= 0;
-#endif
+
   /* Clear pointers for better safety */
   mysql->host_info= mysql->user= mysql->passwd= mysql->db= 0;
-}
-
-
-/*
-  Clear connection pointer of every statement: this is necessary
-  to give error on attempt to use a prepared statement of closed
-  connection.
-
-  SYNOPSYS
-    mysql_detach_stmt_list()
-      stmt_list  pointer to mysql->stmts
-      func_name  name of calling function
-
-  NOTE
-    There is similar code in mysql_reconnect(), so changes here
-    should also be reflected there.
-*/
-
-void mysql_detach_stmt_list(LIST **stmt_list __attribute__((unused)),
-                            const char *func_name __attribute__((unused)))
-{
-#ifdef MYSQL_CLIENT
-  /* Reset connection handle in all prepared statements. */
-  LIST *element= *stmt_list;
-  char buff[MYSQL_ERRMSG_SIZE];
-  DBUG_ENTER("mysql_detach_stmt_list");
-
-  my_snprintf(buff, sizeof(buff)-1, ER(CR_STMT_CLOSED), func_name);
-  for (; element; element= element->next)
-  {
-    MYSQL_STMT *stmt= (MYSQL_STMT *) element->data;
-    set_stmt_error(stmt, CR_STMT_CLOSED, unknown_sqlstate, buff);
-    stmt->mysql= 0;
-    /* No need to call list_delete for statement here */
-  }
-  *stmt_list= 0;
-  DBUG_VOID_RETURN;
-#endif /* MYSQL_CLIENT */
 }
 
 
@@ -2481,7 +2444,6 @@ void STDCALL mysql_close(MYSQL *mysql)
     }
     mysql_close_free_options(mysql);
     mysql_close_free(mysql);
-    mysql_detach_stmt_list(&mysql->stmts, "mysql_close");
     if (mysql->free_me)
       my_free((uchar*) mysql,MYF(0));
   }
