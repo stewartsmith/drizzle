@@ -9,6 +9,7 @@ AC_CANONICAL_SYSTEM
 # remember to also update version.c in ndb
 # When changing major version number please also check switch statement
 # in mysqlbinlog::check_master_version().
+AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE(mysql, 7.0.0)
 AM_CONFIG_HEADER([include/config.h:config.h.in])
 
@@ -121,8 +122,6 @@ AC_SUBST(SAVE_CXXFLAGS)
 AC_SUBST(SAVE_LDFLAGS)
 AC_SUBST(SAVE_CXXLDFLAGS)
 AC_SUBST(CXXLDFLAGS)
-
-#AC_ARG_PROGRAM			# Automaticly invoked by AM_INIT_AUTOMAKE
 
 AM_SANITY_CHECK
 # This is needed is SUBDIRS is set
