@@ -147,8 +147,8 @@ link_sources:
 # This generates lex_hash.h
 # NOTE Built sources should depend on their sources not the tool
 # this avoid the rebuild of the built files in a source dist
-lex_hash.h: $(builddir)/gen_lex_hash$(EXEEXT) $(srcdir)/lex.h
-		$(builddir)/gen_lex_hash$(EXEEXT) > $@
+lex_hash.h: gen_lex_hash$(EXEEXT) $(srcdir)/lex.h
+		$(top_builddir)/sql/gen_lex_hash$(EXEEXT) > $@
 
 probes.h: probes.d
 	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d
