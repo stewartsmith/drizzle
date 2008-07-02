@@ -1553,9 +1553,6 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const uchar *record)
   MI_BLOCK_INFO block_info;
   DBUG_ENTER("_mi_cmp_dynamic_record");
 
-	/* We are going to do changes; dont let anybody disturb */
-  dont_break();				/* Dont allow SIGHUP or SIGINT */
-
   if (info->opt_flag & WRITE_CACHE_USED)
   {
     info->update&= ~(HA_STATE_WRITE_AT_END | HA_STATE_EXTEND_BLOCK);
