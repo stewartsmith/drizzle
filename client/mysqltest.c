@@ -195,15 +195,6 @@ struct st_connection
   /* Used when creating views and sp, to avoid implicit commit */
   MYSQL* util_mysql;
   char *name;
-  MYSQL_STMT* stmt;
-
-#ifdef EMBEDDED_LIBRARY
-  const char *cur_query;
-  int cur_query_len;
-  pthread_mutex_t mutex;
-  pthread_cond_t cond;
-  int query_done;
-#endif /*EMBEDDED_LIBRARY*/
 };
 struct st_connection connections[128];
 struct st_connection* cur_con= NULL, *next_con, *connections_end;
@@ -840,27 +831,10 @@ void close_connections()
   DBUG_ENTER("close_connections");
   for (--next_con; next_con >= connections; --next_con)
   {
-    if (next_con->stmt)
-      mysql_stmt_close(next_con->stmt);
-    next_con->stmt= 0;
     mysql_close(&next_con->mysql);
     if (next_con->util_mysql)
       mysql_close(next_con->util_mysql);
     my_free(next_con->name, MYF(MY_ALLOW_ZERO_PTR));
-  }
-  DBUG_VOID_RETURN;
-}
-
-
-void close_statements()
-{
-  struct st_connection *con;
-  DBUG_ENTER("close_statements");
-  for (con= connections; con < next_con; con++)
-  {
-    if (con->stmt)
-      mysql_stmt_close(con->stmt);
-    con->stmt= 0;
   }
   DBUG_VOID_RETURN;
 }
@@ -3046,12 +3020,6 @@ void do_change_user(struct st_command *command)
                      sizeof(change_user_args)/sizeof(struct command_arg),
                      ',');
 
-  if (cur_con->stmt)
-  {
-    mysql_stmt_close(cur_con->stmt);
-    cur_con->stmt= NULL;
-  }
-
   if (!ds_user.length)
     dynstr_set(&ds_user, mysql->user);
 
@@ -3929,7 +3897,6 @@ void do_close_connection(struct st_command *command)
     die("connection '%s' not found in connection pool", name);
 
   DBUG_PRINT("info", ("Closing connection %s", con->name));
-#ifndef EMBEDDED_LIBRARY
   if (command->type == Q_DIRTY_CLOSE)
   {
     if (con->mysql.net.vio)
@@ -3938,17 +3905,6 @@ void do_close_connection(struct st_command *command)
       con->mysql.net.vio = 0;
     }
   }
-#else
-  /*
-    As query could be still executed in a separate theread
-    we need to check if the query's thread was finished and probably wait
-    (embedded-server specific)
-  */
-  wait_query_thread_end(con);
-#endif /*EMBEDDED_LIBRARY*/
-  if (con->stmt)
-    mysql_stmt_close(con->stmt);
-  con->stmt= 0;
 
   mysql_close(&con->mysql);
 
@@ -5334,70 +5290,6 @@ void append_result(DYNAMIC_STRING *ds, MYSQL_RES *res)
 
 
 /*
-  Append all results from ps execution to the dynamic string separated
-  with '\t'. Values may be converted with 'replace_column'
-*/
-
-void append_stmt_result(DYNAMIC_STRING *ds, MYSQL_STMT *stmt,
-                        MYSQL_FIELD *fields, uint num_fields)
-{
-  MYSQL_BIND *my_bind;
-  my_bool *is_null;
-  ulong *length;
-  uint i;
-
-  /* Allocate array with bind structs, lengths and NULL flags */
-  my_bind= (MYSQL_BIND*) my_malloc(num_fields * sizeof(MYSQL_BIND),
-				MYF(MY_WME | MY_FAE | MY_ZEROFILL));
-  length= (ulong*) my_malloc(num_fields * sizeof(ulong),
-			     MYF(MY_WME | MY_FAE));
-  is_null= (my_bool*) my_malloc(num_fields * sizeof(my_bool),
-				MYF(MY_WME | MY_FAE));
-
-  /* Allocate data for the result of each field */
-  for (i= 0; i < num_fields; i++)
-  {
-    uint max_length= fields[i].max_length + 1;
-    my_bind[i].buffer_type= MYSQL_TYPE_STRING;
-    my_bind[i].buffer= (char *)my_malloc(max_length, MYF(MY_WME | MY_FAE));
-    my_bind[i].buffer_length= max_length;
-    my_bind[i].is_null= &is_null[i];
-    my_bind[i].length= &length[i];
-
-    DBUG_PRINT("bind", ("col[%d]: buffer_type: %d, buffer_length: %lu",
-			i, my_bind[i].buffer_type, my_bind[i].buffer_length));
-  }
-
-  if (mysql_stmt_bind_result(stmt, my_bind))
-    die("mysql_stmt_bind_result failed: %d: %s",
-	mysql_stmt_errno(stmt), mysql_stmt_error(stmt));
-
-  while (mysql_stmt_fetch(stmt) == 0)
-  {
-    for (i= 0; i < num_fields; i++)
-      append_field(ds, i, &fields[i], (const char *) my_bind[i].buffer,
-                   *my_bind[i].length, *my_bind[i].is_null);
-    if (!display_result_vertically)
-      dynstr_append_mem(ds, "\n", 1);
-  }
-
-  if (mysql_stmt_fetch(stmt) != MYSQL_NO_DATA)
-    die("fetch didn't end with MYSQL_NO_DATA from statement: %d %s",
-	mysql_stmt_errno(stmt), mysql_stmt_error(stmt));
-
-  for (i= 0; i < num_fields; i++)
-  {
-    /* Free data for output */
-    my_free(my_bind[i].buffer, MYF(MY_WME | MY_FAE));
-  }
-  /* Free array with bind structs, lengths and NULL flags */
-  my_free(my_bind    , MYF(MY_WME | MY_FAE));
-  my_free(length  , MYF(MY_WME | MY_FAE));
-  my_free(is_null , MYF(MY_WME | MY_FAE));
-}
-
-
-/*
   Append metadata for fields to output
 */
 
@@ -5803,216 +5695,6 @@ void handle_no_error(struct st_command *command)
     die("query '%s' succeeded - should have failed with sqlstate %s...",
         command->query, command->expected_errors.err[0].code.sqlstate);
   }
-
-  DBUG_VOID_RETURN;
-}
-
-
-/*
-  Run query using prepared statement C API
-
-  SYNPOSIS
-  run_query_stmt
-  mysql - mysql handle
-  command - currrent command pointer
-  query - query string to execute
-  query_len - length query string to execute
-  ds - output buffer where to store result form query
-
-  RETURN VALUE
-  error - function will not return
-*/
-
-void run_query_stmt(MYSQL *mysql, struct st_command *command,
-                    char *query, int query_len, DYNAMIC_STRING *ds,
-                    DYNAMIC_STRING *ds_warnings)
-{
-  MYSQL_RES *res= NULL;     /* Note that here 'res' is meta data result set */
-  MYSQL_STMT *stmt;
-  DYNAMIC_STRING ds_prepare_warnings;
-  DYNAMIC_STRING ds_execute_warnings;
-  DBUG_ENTER("run_query_stmt");
-  DBUG_PRINT("query", ("'%-.60s'", query));
-
-  /*
-    Init a new stmt if it's not already one created for this connection
-  */
-  if(!(stmt= cur_con->stmt))
-  {
-    if (!(stmt= mysql_stmt_init(mysql)))
-      die("unable to init stmt structure");
-    cur_con->stmt= stmt;
-  }
-
-  /* Init dynamic strings for warnings */
-  if (!disable_warnings)
-  {
-    init_dynamic_string(&ds_prepare_warnings, NULL, 0, 256);
-    init_dynamic_string(&ds_execute_warnings, NULL, 0, 256);
-  }
-
-  /*
-    Prepare the query
-  */
-  if (mysql_stmt_prepare(stmt, query, query_len))
-  {
-    handle_error(command,  mysql_stmt_errno(stmt),
-                 mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), ds);
-    goto end;
-  }
-
-  /*
-    Get the warnings from mysql_stmt_prepare and keep them in a
-    separate string
-  */
-  if (!disable_warnings)
-    append_warnings(&ds_prepare_warnings, mysql);
-
-  /*
-    No need to call mysql_stmt_bind_param() because we have no
-    parameter markers.
-  */
-
-#if MYSQL_VERSION_ID >= 50000
-  if (cursor_protocol_enabled)
-  {
-    /*
-      Use cursor when retrieving result
-    */
-    ulong type= CURSOR_TYPE_READ_ONLY;
-    if (mysql_stmt_attr_set(stmt, STMT_ATTR_CURSOR_TYPE, (void*) &type))
-      die("mysql_stmt_attr_set(STMT_ATTR_CURSOR_TYPE) failed': %d %s",
-          mysql_stmt_errno(stmt), mysql_stmt_error(stmt));
-  }
-#endif
-
-  /*
-    Execute the query
-  */
-  if (mysql_stmt_execute(stmt))
-  {
-    handle_error(command, mysql_stmt_errno(stmt),
-                 mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), ds);
-    goto end;
-  }
-
-  /*
-    When running in cursor_protocol get the warnings from execute here
-    and keep them in a separate string for later.
-  */
-  if (cursor_protocol_enabled && !disable_warnings)
-    append_warnings(&ds_execute_warnings, mysql);
-
-  /*
-    We instruct that we want to update the "max_length" field in
-    mysql_stmt_store_result(), this is our only way to know how much
-    buffer to allocate for result data
-  */
-  {
-    my_bool one= 1;
-    if (mysql_stmt_attr_set(stmt, STMT_ATTR_UPDATE_MAX_LENGTH, (void*) &one))
-      die("mysql_stmt_attr_set(STMT_ATTR_UPDATE_MAX_LENGTH) failed': %d %s",
-          mysql_stmt_errno(stmt), mysql_stmt_error(stmt));
-  }
-
-  /*
-    If we got here the statement succeeded and was expected to do so,
-    get data. Note that this can still give errors found during execution!
-    Store the result of the query if if will return any fields
-  */
-  if (mysql_stmt_field_count(stmt) && mysql_stmt_store_result(stmt))
-  {
-    handle_error(command, mysql_stmt_errno(stmt),
-                 mysql_stmt_error(stmt), mysql_stmt_sqlstate(stmt), ds);
-    goto end;
-  }
-
-  /* If we got here the statement was both executed and read successfully */
-  handle_no_error(command);
-  if (!disable_result_log)
-  {
-    /*
-      Not all statements creates a result set. If there is one we can
-      now create another normal result set that contains the meta
-      data. This set can be handled almost like any other non prepared
-      statement result set.
-    */
-    if ((res= mysql_stmt_result_metadata(stmt)) != NULL)
-    {
-      /* Take the column count from meta info */
-      MYSQL_FIELD *fields= mysql_fetch_fields(res);
-      uint num_fields= mysql_num_fields(res);
-
-      if (display_metadata)
-        append_metadata(ds, fields, num_fields);
-
-      if (!display_result_vertically)
-        append_table_headings(ds, fields, num_fields);
-
-      append_stmt_result(ds, stmt, fields, num_fields);
-
-      mysql_free_result(res);     /* Free normal result set with meta data */
-
-      /* Clear prepare warnings */
-      dynstr_set(&ds_prepare_warnings, NULL);
-    }
-    else
-    {
-      /*
-	This is a query without resultset
-      */
-    }
-
-    if (!disable_warnings)
-    {
-      /* Get the warnings from execute */
-
-      /* Append warnings to ds - if there are any */
-      if (append_warnings(&ds_execute_warnings, mysql) ||
-          ds_execute_warnings.length ||
-          ds_prepare_warnings.length ||
-          ds_warnings->length)
-      {
-        dynstr_append_mem(ds, "Warnings:\n", 10);
-	if (ds_warnings->length)
-	  dynstr_append_mem(ds, ds_warnings->str,
-			    ds_warnings->length);
-	if (ds_prepare_warnings.length)
-	  dynstr_append_mem(ds, ds_prepare_warnings.str,
-			    ds_prepare_warnings.length);
-	if (ds_execute_warnings.length)
-	  dynstr_append_mem(ds, ds_execute_warnings.str,
-			    ds_execute_warnings.length);
-      }
-    }
-
-    if (!disable_info)
-      append_info(ds, mysql_affected_rows(mysql), mysql_info(mysql));
-
-  }
-
-end:
-  if (!disable_warnings)
-  {
-    dynstr_free(&ds_prepare_warnings);
-    dynstr_free(&ds_execute_warnings);
-  }
-
-
-  /* Close the statement if - no reconnect, need new prepare */
-  if (mysql->reconnect)
-  {
-    mysql_stmt_close(stmt);
-    cur_con->stmt= NULL;
-  }
-
-  /*
-    We save the return code (mysql_stmt_errno(stmt)) from the last call sent
-    to the server into the mysqltest builtin variable $mysql_errno. This
-    variable then can be used from the test case itself.
-  */
-
-  var_set_errno(mysql_stmt_errno(stmt));
 
   DBUG_VOID_RETURN;
 }
@@ -6615,8 +6297,6 @@ int main(int argc, char **argv)
         break;
       case Q_ENABLE_RECONNECT:
         set_reconnect(&cur_con->mysql, 1);
-        /* Close any open statements - no reconnect, need new prepare */
-        close_statements();
         break;
       case Q_DISABLE_PARSING:
         if (parsing_disabled == 0)

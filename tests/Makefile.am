@@ -29,7 +29,7 @@ EXTRA_DIST =		auto_increment.res auto_increment.tst \
 			pmail.pl mail_to_db.pl table_types.pl \
 			myisam-big-rows.tst
 
-bin_PROGRAMS =		mysql_client_test
+bin_PROGRAMS =		
 noinst_PROGRAMS =	insert_test select_test thread_test bug25714
 
 AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
@@ -37,9 +37,6 @@ AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 LIBS =			@CLIENT_LIBS@
 LDADD =			$(LIBMYSQLCLIENT_LA) -lz
 
-mysql_client_test_LDADD= $(LDADD) $(CXXLDFLAGS)
-mysql_client_test_SOURCES= mysql_client_test.c\
-			$(top_srcdir)/mysys/my_memmem.c
 
 insert_test_SOURCES=       insert_test.c
 select_test_SOURCES=       select_test.c
