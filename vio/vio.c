@@ -81,25 +81,6 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
   }
   else
 #endif   
-#ifdef HAVE_OPENSSL 
-  if (type == VIO_TYPE_SSL)
-  {
-    vio->viodelete	=vio_ssl_delete;
-    vio->vioerrno	=vio_errno;
-    vio->read		=vio_ssl_read;
-    vio->write		=vio_ssl_write;
-    vio->fastsend	=vio_fastsend;
-    vio->viokeepalive	=vio_keepalive;
-    vio->should_retry	=vio_should_retry;
-    vio->was_interrupted=vio_was_interrupted;
-    vio->vioclose	=vio_ssl_close;
-    vio->peer_addr	=vio_peer_addr;
-    vio->vioblocking	=vio_ssl_blocking;
-    vio->is_blocking	=vio_is_blocking;
-    vio->timeout	=vio_timeout;
-  }
-  else					/* default is VIO_TYPE_TCPIP */
-#endif /* HAVE_OPENSSL */
   {
     vio->viodelete	=vio_delete;
     vio->vioerrno	=vio_errno;
@@ -236,7 +217,4 @@ void vio_delete(Vio* vio)
 */
 void vio_end(void)
 {
-#ifdef HAVE_YASSL
-  yaSSL_CleanUp();
-#endif
 }
