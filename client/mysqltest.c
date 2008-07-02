@@ -153,7 +153,6 @@ static ulonglong timer_now(void);
 
 static ulonglong progress_start= 0;
 
-static int match_re(my_regex_t *, char *);
 static void free_re(void);
 
 DYNAMIC_ARRAY q_lines;
@@ -6174,46 +6173,6 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
 /*
   Functions to detect different SQL statements
 */
-
-char *re_eprint(int err)
-{
-  static char epbuf[100];
-  size_t len= my_regerror(REG_ITOA|err, (my_regex_t *)NULL,
-			  epbuf, sizeof(epbuf));
-  assert(len <= sizeof(epbuf));
-  return(epbuf);
-}
-
-void init_re_comp(my_regex_t *re, const char* str)
-{
-  int err= my_regcomp(re, str, (REG_EXTENDED | REG_ICASE | REG_NOSUB),
-                      &my_charset_latin1);
-  if (err)
-  {
-    char erbuf[100];
-    int len= my_regerror(err, re, erbuf, sizeof(erbuf));
-    die("error %s, %d/%d `%s'\n",
-	re_eprint(err), len, (int)sizeof(erbuf), erbuf);
-  }
-}
-
-int match_re(my_regex_t *re, char *str)
-{
-  int err= my_regexec(re, str, (size_t)0, NULL, 0);
-
-  if (err == 0)
-    return 1;
-  else if (err == REG_NOMATCH)
-    return 0;
-
-  {
-    char erbuf[100];
-    int len= my_regerror(err, re, erbuf, sizeof(erbuf));
-    die("error %s, %d/%d `%s'\n",
-	re_eprint(err), len, (int)sizeof(erbuf), erbuf);
-  }
-  return 0;
-}
 
 void free_re(void)
 {
