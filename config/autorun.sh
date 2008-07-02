@@ -9,7 +9,7 @@ LIBTOOLIZE_FLAGS=" --automake --copy --force"
 # ACLOCAL=${ACLOCAL:-aclocal}
 # AUTOHEADER=${AUTOHEADER:-autoheader}
 # AUTOMAKE=${AUTOMAKE:-automake}
-AUTOMAKE_FLAGS="--add-missing --copy --force"
+AUTOMAKE_FLAGS="--add-missing --copy --force -W all"
 # AUTOCONF=${AUTOCONF:-autoconf}
 
 ARGV0=$0
@@ -37,28 +37,27 @@ if test x$LIBTOOLIZE = x; then
   fi
 fi
 
-## suse has aclocal and aclocal-1.9
 if test x$ACLOCAL = x; then
-  if test \! "x`which aclocal-1.9 2> /dev/null | grep -v '^no'`" = x; then
-    ACLOCAL=aclocal-1.9
-  elif test \! "x`which aclocal19 2> /dev/null | grep -v '^no'`" = x; then
-    ACLOCAL=aclocal19
+  if test \! "x`which aclocal-1.10 2> /dev/null | grep -v '^no'`" = x; then
+    ACLOCAL=aclocal-1.10
+  elif test \! "x`which aclocal110 2> /dev/null | grep -v '^no'`" = x; then
+    ACLOCAL=aclocal110
   elif test \! "x`which aclocal 2> /dev/null | grep -v '^no'`" = x; then
     ACLOCAL=aclocal
   else 
-    echo "automake 1.9.x (aclocal) wasn't found, exiting"; exit 0
+    echo "automake 1.10.x (aclocal) wasn't found, exiting"; exit 0
   fi
 fi
 
 if test x$AUTOMAKE = x; then
-  if test \! "x`which automake-1.9 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOMAKE=automake-1.9
-  elif test \! "x`which automake19 2> /dev/null | grep -v '^no'`" = x; then
-    AUTOMAKE=automake19
+  if test \! "x`which automake-1.10 2> /dev/null | grep -v '^no'`" = x; then
+    AUTOMAKE=automake-1.10
+  elif test \! "x`which automake110 2> /dev/null | grep -v '^no'`" = x; then
+    AUTOMAKE=automake110
   elif test \! "x`which automake 2> /dev/null | grep -v '^no'`" = x; then
     AUTOMAKE=automake
   else 
-    echo "automake 1.9.x wasn't found, exiting"; exit 0
+    echo "automake 1.10.x wasn't found, exiting"; exit 0
   fi
 fi
 
