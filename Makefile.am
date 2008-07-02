@@ -31,7 +31,7 @@ DIST_SUBDIRS =		. include \
 			strings mysys dbug mysys/tests strings/tests \
 			extra regex \
 			libmysql client unittest storage plugin \
-			sql tests \
+			sql \
 			mysql-test support-files
 
 DISTCLEANFILES = ac_available_languages_fragment

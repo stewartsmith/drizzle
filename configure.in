@@ -1267,7 +1267,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  sql/Makefile sql/share/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
  dbug/Makefile scripts/Makefile include/Makefile dnl
- tests/Makefile support-files/Makefile dnl
+ support-files/Makefile dnl
  mysql-test/Makefile dnl
  include/mysql_version.h plugin/Makefile)
 

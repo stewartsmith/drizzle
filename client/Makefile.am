@@ -43,7 +43,7 @@ bin_PROGRAMS =			mysql \
 				mysqlimport \
 				mysqlshow \
 				mysqlslap \
-				mysqltest \
+				mysqltest 
 
 mysql_SOURCES =			mysql.cc readline.cc sql_string.cc \
 				completion_hash.cc
