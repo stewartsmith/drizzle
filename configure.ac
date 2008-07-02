@@ -449,26 +449,27 @@ then
   fi
 fi
 
-AC_ARG_WITH(server-suffix,
-    [  --with-server-suffix    Append value to the version string.],
+AC_ARG_WITH([server-suffix],
+    [AS_HELP_STRING([--with-server-suffix],
+      [Append value to the version string.])],
     [ MYSQL_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
     [ MYSQL_SERVER_SUFFIX= ]
     )
 AC_SUBST(MYSQL_SERVER_SUFFIX)
 
 # Force use of a curses libs
-AC_ARG_WITH(named-curses-libs,
-    [  --with-named-curses-libs=ARG
-                          Use specified curses libraries instead of 
-                          those automatically found by configure.],
+AC_ARG_WITH([named-curses-libs],
+    [AS_HELP_STRING([--with-named-curses-libs=ARG],
+            [Use specified curses libraries instead of those
+		automatically found by configure.])],
     [ with_named_curses=$withval ],
     [ with_named_curses=no ]
     )
 
 # compile with strings functions in assembler
-AC_ARG_ENABLE(assembler,
-    [  --enable-assembler      Use assembler versions of some string 
-                          functions if available.],
+AC_ARG_ENABLE([assembler],
+    [AS_HELP_STRING([--enable-assembler],
+	    [Use assembler versions of some string functions if available.])],
     [ ENABLE_ASSEMBLER=$enableval ],
     [ ENABLE_ASSEMBLER=no ]
     )
@@ -489,8 +490,9 @@ fi
 
 # Add query profiler
 AC_MSG_CHECKING(if SHOW PROFILE should be enabled.)
-AC_ARG_ENABLE(profiling,
-    AS_HELP_STRING([--enable-profiling], [Build a version with query profiling code (req. community-features)]),
+AC_ARG_ENABLE([profiling],
+    [AS_HELP_STRING([--enable-profiling], 
+	    [Build a version with query profiling code])],
     [ ENABLED_PROFILING=$enableval ],
     [ ENABLED_PROFILING=no ])
 
@@ -503,9 +505,9 @@ else
   AC_MSG_RESULT([no])
 fi
 
-AC_ARG_WITH(tcp-port,
-    [  --with-tcp-port=port-number
-                          Which port to use for MySQL services (default 3306)],
+AC_ARG_WITH([tcp-port],
+    [AS_HELP_STRING([--with-tcp-port=port-number],
+            [Which port to use for MySQL services @<:@default=3306@:>@])],
     [ MYSQL_TCP_PORT=$withval ],
     [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -541,9 +543,10 @@ AC_SUBST(MYSQL_TCP_PORT)
 AC_SUBST(MYSQL_TCP_PORT_DEFAULT)
 
 # Use this to set the place used for unix socket used to local communication.
-AC_ARG_WITH(mysqld-user,
-    [  --with-mysqld-user=username   
-                          What user the mysqld daemon shall be run as.],
+AC_ARG_WITH([mysqld-user],
+    [AS_HELP_STRING([--with-mysqld-user=username],
+            [What user the mysqld daemon shall be run as.
+		@<:@default=mysql@:>@])],
     [ MYSQLD_USER=$withval ],
     [ MYSQLD_USER=mysql ]
     )
@@ -697,9 +700,10 @@ then
   DEBUG_OPTIMIZE_CXX=""
 fi
 
-AC_ARG_WITH(debug,
-    [  --with-debug            Add debug code
-  --with-debug=full       Add debug code (adds memory checker, very slow)],
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],
+            [Add debug code (yes|no|full) @<:@default=no@:>@ 
+	    Full adds memory checked, very slow.])],
     [with_debug=$withval],
     [with_debug=no])
 if test "$with_debug" = "yes"
@@ -716,14 +720,15 @@ then
   CXXFLAGS="$DEBUG_CXXFLAGS $CXXFLAGS"
 else
   # Optimized version. No debug
-  AC_DEFINE([DBUG_OFF], [1], [Don't use libdbug])
+  AC_DEFINE([DBUG_OFF], [1], [Dont use libdbug])
   CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
   CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
 fi
 
 # If we should allow error injection tests
-AC_ARG_WITH(error-inject,
-    AS_HELP_STRING([--with-error-inject],[Enable error injection in MySQL Server]),
+AC_ARG_WITH([error-inject],
+    [AS_HELP_STRING([--with-error-inject],
+	    [Enable error injection in MySQL Server @<:@default=off@:>@])],
     [ with_error_inject=$withval ],
     [ with_error_inject=no ])
 
@@ -737,8 +742,10 @@ then
 fi
 
 AC_ARG_WITH([fast-mutexes],
-	    AS_HELP_STRING([--with-fast-mutexes],[Compile with fast mutexes (default is disabled)]),
-	    [with_fast_mutexes=$withval], [with_fast_mutexes=no])
+    [AS_HELP_STRING([--with-fast-mutexes],
+	    [Compile with fast mutexes  @<:@default=off@:>@])],
+    [with_fast_mutexes=$withval],
+    [with_fast_mutexes=no])
 
 if test "$with_fast_mutexes" != "no"
 then
@@ -751,8 +758,9 @@ then
   fi
 fi
 
-AC_ARG_WITH(comment,
-    [  --with-comment          Comment about compilation environment.],
+AC_ARG_WITH([comment],
+    [AS_HELP_STRING([--with-comment],
+            [Comment about compilation environment. @<:@default=off@:>@])],
     [with_comment=$withval],
     [with_comment=no])
 if test "$with_comment" != "no"
