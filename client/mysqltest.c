@@ -74,9 +74,6 @@ static my_bool opt_compress= 0, silent= 0, verbose= 0;
 static my_bool debug_info_flag= 0, debug_check_flag= 0;
 static my_bool tty_password= 0;
 static my_bool opt_mark_progress= 0;
-static my_bool ps_protocol= 0, ps_protocol_enabled= 0;
-static my_bool sp_protocol= 0, sp_protocol_enabled= 0;
-static my_bool view_protocol= 0, view_protocol_enabled= 0;
 static my_bool cursor_protocol= 0, cursor_protocol_enabled= 0;
 static my_bool parsing_disabled= 0;
 static my_bool display_result_vertically= FALSE,
@@ -156,13 +153,6 @@ static ulonglong timer_now(void);
 
 static ulonglong progress_start= 0;
 
-/* Precompiled re's */
-static my_regex_t ps_re;     /* the query can be run using PS protocol */
-static my_regex_t sp_re;     /* the query can be run as a SP */
-static my_regex_t view_re;   /* the query can be run as a view*/
-
-static void init_re(void);
-static int match_re(my_regex_t *, char *);
 static void free_re(void);
 
 DYNAMIC_ARRAY q_lines;
@@ -320,8 +310,6 @@ const char *command_names[]=
   "start_timer",
   "end_timer",
   "character_set",
-  "disable_ps_protocol",
-  "enable_ps_protocol",
   "disable_reconnect",
   "enable_reconnect",
   "if",
@@ -4939,9 +4927,6 @@ static struct my_option my_long_options[] =
   {"compress", 'C', "Use the compressed server/client protocol.",
    (uchar**) &opt_compress, (uchar**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"cursor-protocol", OPT_CURSOR_PROTOCOL, "Use cursors for prepared statements.",
-   (uchar**) &cursor_protocol, (uchar**) &cursor_protocol, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"database", 'D', "Database to use.", (uchar**) &opt_db, (uchar**) &opt_db, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef DBUG_OFF
@@ -4981,12 +4966,6 @@ static struct my_option my_long_options[] =
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (uchar**) &opt_port,
    (uchar**) &opt_port, 0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_MYSQL_PROTOCOL,
-    "The protocol of connection (tcp,socket,pipe,memory).",
-    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"ps-protocol", OPT_PS_PROTOCOL, "Use prepared statements protocol for communication",
-   (uchar**) &ps_protocol, (uchar**) &ps_protocol, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"quiet", 's', "Suppress all normal output.", (uchar**) &silent,
    (uchar**) &silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"record", 'r', "Record output of test_file into result file.",
@@ -5003,12 +4982,6 @@ static struct my_option my_long_options[] =
   {"sleep", 'T', "Sleep always this many seconds on sleep commands.",
    (uchar**) &opt_sleep, (uchar**) &opt_sleep, 0, GET_INT, REQUIRED_ARG, -1, -1, 0,
    0, 0, 0},
-  {"socket", 'S', "Socket file to use for connection.",
-   (uchar**) &unix_sock, (uchar**) &unix_sock, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
-   0, 0, 0},
-  {"sp-protocol", OPT_SP_PROTOCOL, "Use stored procedures for select",
-   (uchar**) &sp_protocol, (uchar**) &sp_protocol, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"tail-lines", OPT_TAIL_LINES,
    "Number of lines of the resul to include in a failure report",
    (uchar**) &opt_tail_lines, (uchar**) &opt_tail_lines, 0,
@@ -5025,9 +4998,6 @@ static struct my_option my_long_options[] =
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"view-protocol", OPT_VIEW_PROTOCOL, "Use views for select",
-   (uchar**) &view_protocol, (uchar**) &view_protocol, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -6106,7 +6076,6 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
   DYNAMIC_STRING eval_query;
   char *query;
   int query_len;
-  my_bool view_created= 0, sp_created= 0;
   my_bool complete_query= ((flags & QUERY_SEND_FLAG) &&
                            (flags & QUERY_REAP_FLAG));
   DBUG_ENTER("run_query");
@@ -6156,93 +6125,6 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
     dynstr_append_mem(ds, "\n", 1);
   }
 
-  if (view_protocol_enabled &&
-      complete_query &&
-      match_re(&view_re, query))
-  {
-    /*
-      Create the query as a view.
-      Use replace since view can exist from a failed mysqltest run
-    */
-    DYNAMIC_STRING query_str;
-    init_dynamic_string(&query_str,
-			"CREATE OR REPLACE VIEW mysqltest_tmp_v AS ",
-			query_len+64, 256);
-    dynstr_append_mem(&query_str, query, query_len);
-    if (util_query(mysql, query_str.str))
-    {
-      /*
-	Failed to create the view, this is not fatal
-	just run the query the normal way
-      */
-      DBUG_PRINT("view_create_error",
-		 ("Failed to create view '%s': %d: %s", query_str.str,
-		  mysql_errno(mysql), mysql_error(mysql)));
-
-      /* Log error to create view */
-      verbose_msg("Failed to create view '%s' %d: %s", query_str.str,
-		  mysql_errno(mysql), mysql_error(mysql));
-    }
-    else
-    {
-      /*
-	Yes, it was possible to create this query as a view
-      */
-      view_created= 1;
-      query= (char*)"SELECT * FROM mysqltest_tmp_v";
-      query_len = strlen(query);
-
-      /*
-        Collect warnings from create of the view that should otherwise
-        have been produced when the SELECT was executed
-      */
-      append_warnings(&ds_warnings, cur_con->util_mysql);
-    }
-
-    dynstr_free(&query_str);
-
-  }
-
-  if (sp_protocol_enabled &&
-      complete_query &&
-      match_re(&sp_re, query))
-  {
-    /*
-      Create the query as a stored procedure
-      Drop first since sp can exist from a failed mysqltest run
-    */
-    DYNAMIC_STRING query_str;
-    init_dynamic_string(&query_str,
-			"DROP PROCEDURE IF EXISTS mysqltest_tmp_sp;",
-			query_len+64, 256);
-    util_query(mysql, query_str.str);
-    dynstr_set(&query_str, "CREATE PROCEDURE mysqltest_tmp_sp()\n");
-    dynstr_append_mem(&query_str, query, query_len);
-    if (util_query(mysql, query_str.str))
-    {
-      /*
-	Failed to create the stored procedure for this query,
-	this is not fatal just run the query the normal way
-      */
-      DBUG_PRINT("sp_create_error",
-		 ("Failed to create sp '%s': %d: %s", query_str.str,
-		  mysql_errno(mysql), mysql_error(mysql)));
-
-      /* Log error to create sp */
-      verbose_msg("Failed to create sp '%s' %d: %s", query_str.str,
-		  mysql_errno(mysql), mysql_error(mysql));
-
-    }
-    else
-    {
-      sp_created= 1;
-
-      query= (char*)"CALL mysqltest_tmp_sp()";
-      query_len = strlen(query);
-    }
-    dynstr_free(&query_str);
-  }
-
   if (display_result_sorted)
   {
     /*
@@ -6256,21 +6138,11 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
   }
 
   /*
-    Find out how to run this query
-
     Always run with normal C API if it's not a complete
     SEND + REAP
-
-    If it is a '?' in the query it may be a SQL level prepared
-    statement already and we can't do it twice
   */
-  if (ps_protocol_enabled &&
-      complete_query &&
-      match_re(&ps_re, query))
-    run_query_stmt(mysql, command, query, query_len, ds, &ds_warnings);
-  else
-    run_query_normal(cn, command, flags, query, query_len,
-		     ds, &ds_warnings);
+  run_query_normal(cn, command, flags, query, query_len,
+                   ds, &ds_warnings);
 
   if (display_result_sorted)
   {
@@ -6278,19 +6150,6 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
     dynstr_append_sorted(save_ds, &ds_sorted);
     ds= save_ds;
     dynstr_free(&ds_sorted);
-  }
-
-  if (sp_created)
-  {
-    if (util_query(mysql, "DROP PROCEDURE mysqltest_tmp_sp "))
-      die("Failed to drop sp: %d: %s", mysql_errno(mysql), mysql_error(mysql));
-  }
-
-  if (view_created)
-  {
-    if (util_query(mysql, "DROP VIEW mysqltest_tmp_v "))
-      die("Failed to drop view: %d: %s",
-	  mysql_errno(mysql), mysql_error(mysql));
   }
 
   if (command->require_file[0])
@@ -6315,90 +6174,8 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
   Functions to detect different SQL statements
 */
 
-char *re_eprint(int err)
-{
-  static char epbuf[100];
-  size_t len= my_regerror(REG_ITOA|err, (my_regex_t *)NULL,
-			  epbuf, sizeof(epbuf));
-  assert(len <= sizeof(epbuf));
-  return(epbuf);
-}
-
-void init_re_comp(my_regex_t *re, const char* str)
-{
-  int err= my_regcomp(re, str, (REG_EXTENDED | REG_ICASE | REG_NOSUB),
-                      &my_charset_latin1);
-  if (err)
-  {
-    char erbuf[100];
-    int len= my_regerror(err, re, erbuf, sizeof(erbuf));
-    die("error %s, %d/%d `%s'\n",
-	re_eprint(err), len, (int)sizeof(erbuf), erbuf);
-  }
-}
-
-void init_re(void)
-{
-  /*
-    Filter for queries that can be run using the
-    MySQL Prepared Statements C API
-  */
-  const char *ps_re_str =
-    "^("
-    "[[:space:]]*REPLACE[[:space:]]|"
-    "[[:space:]]*INSERT[[:space:]]|"
-    "[[:space:]]*UPDATE[[:space:]]|"
-    "[[:space:]]*DELETE[[:space:]]|"
-    "[[:space:]]*SELECT[[:space:]]|"
-    "[[:space:]]*CREATE[[:space:]]+TABLE[[:space:]]|"
-    "[[:space:]]*DO[[:space:]]|"
-    "[[:space:]]*SET[[:space:]]+OPTION[[:space:]]|"
-    "[[:space:]]*DELETE[[:space:]]+MULTI[[:space:]]|"
-    "[[:space:]]*UPDATE[[:space:]]+MULTI[[:space:]]|"
-    "[[:space:]]*INSERT[[:space:]]+SELECT[[:space:]])";
-
-  /*
-    Filter for queries that can be run using the
-    Stored procedures
-  */
-  const char *sp_re_str =ps_re_str;
-
-  /*
-    Filter for queries that can be run as views
-  */
-  const char *view_re_str =
-    "^("
-    "[[:space:]]*SELECT[[:space:]])";
-
-  init_re_comp(&ps_re, ps_re_str);
-  init_re_comp(&sp_re, sp_re_str);
-  init_re_comp(&view_re, view_re_str);
-}
-
-
-int match_re(my_regex_t *re, char *str)
-{
-  int err= my_regexec(re, str, (size_t)0, NULL, 0);
-
-  if (err == 0)
-    return 1;
-  else if (err == REG_NOMATCH)
-    return 0;
-
-  {
-    char erbuf[100];
-    int len= my_regerror(err, re, erbuf, sizeof(erbuf));
-    die("error %s, %d/%d `%s'\n",
-	re_eprint(err), len, (int)sizeof(erbuf), erbuf);
-  }
-  return 0;
-}
-
 void free_re(void)
 {
-  my_regfree(&ps_re);
-  my_regfree(&sp_re);
-  my_regfree(&view_re);
   my_regex_end();
 }
 
@@ -6586,11 +6363,6 @@ int main(int argc, char **argv)
   init_dynamic_string(&ds_warning_messages, "", 0, 2048);
   parse_args(argc, argv);
 
-  var_set_int("$PS_PROTOCOL", ps_protocol);
-  var_set_int("$SP_PROTOCOL", sp_protocol);
-  var_set_int("$VIEW_PROTOCOL", view_protocol);
-  var_set_int("$CURSOR_PROTOCOL", cursor_protocol);
-
   DBUG_PRINT("info",("result_file: '%s'",
                      result_file_name ? result_file_name : ""));
   if (mysql_server_init(embedded_server_arg_count,
@@ -6604,15 +6376,6 @@ int main(int argc, char **argv)
     cur_file->file_name= my_strdup("<stdin>", MYF(MY_WME));
     cur_file->lineno= 1;
   }
-  init_re();
-  ps_protocol_enabled= ps_protocol;
-  sp_protocol_enabled= sp_protocol;
-  view_protocol_enabled= view_protocol;
-  cursor_protocol_enabled= cursor_protocol;
-  /* Cursor protcol implies ps protocol */
-  if (cursor_protocol_enabled)
-    ps_protocol_enabled= 1;
-
   cur_con= connections;
   if (!( mysql_init(&cur_con->mysql)))
     die("Failed in mysql_init()");
@@ -6626,21 +6389,6 @@ int main(int argc, char **argv)
   if (opt_charsets_dir)
     mysql_options(&cur_con->mysql, MYSQL_SET_CHARSET_DIR,
                   opt_charsets_dir);
-
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-
-  if (opt_use_ssl)
-  {
-    mysql_ssl_set(&cur_con->mysql, opt_ssl_key, opt_ssl_cert, opt_ssl_ca,
-		  opt_ssl_capath, opt_ssl_cipher);
-#if MYSQL_VERSION_ID >= 50000
-    /* Turn on ssl_verify_server_cert only if host is "localhost" */
-    opt_ssl_verify_server_cert= opt_host && !strcmp(opt_host, "localhost");
-    mysql_options(&cur_con->mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
-                  &opt_ssl_verify_server_cert);
-#endif
-  }
-#endif
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
     die("Out of memory");
@@ -6862,14 +6610,6 @@ int main(int argc, char **argv)
       case Q_CHARACTER_SET:
 	do_set_charset(command);
 	break;
-      case Q_DISABLE_PS_PROTOCOL:
-        ps_protocol_enabled= 0;
-        /* Close any open statements */
-        close_statements();
-        break;
-      case Q_ENABLE_PS_PROTOCOL:
-        ps_protocol_enabled= ps_protocol;
-        break;
       case Q_DISABLE_RECONNECT:
         set_reconnect(&cur_con->mysql, 0);
         break;
