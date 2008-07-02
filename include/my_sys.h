@@ -28,9 +28,7 @@ typedef struct my_aio_result {
 #include <errno.h>
 #define my_errno (errno)
 
-#ifdef THREAD
 #include <my_pthread.h>
-#endif
 
 #include <m_ctype.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
@@ -274,7 +272,7 @@ struct st_my_file_info
 {
   char *		name;
   enum file_type	type;
-#if defined(THREAD) && !defined(HAVE_PREAD)
+#if !defined(HAVE_PREAD)
   pthread_mutex_t	mutex;
 #endif
 };
@@ -294,9 +292,7 @@ typedef struct st_my_tmpdir
   DYNAMIC_ARRAY full_list;
   char **list;
   uint cur, max;
-#ifdef THREAD
   pthread_mutex_t mutex;
-#endif
 } MY_TMPDIR;
 
 typedef struct st_dynamic_string
@@ -308,7 +304,6 @@ typedef struct st_dynamic_string
 struct st_io_cache;
 typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
 
-#ifdef THREAD
 typedef struct st_io_cache_share
 {
   pthread_mutex_t       mutex;           /* To sync on reads into buffer. */
@@ -328,7 +323,6 @@ typedef struct st_io_cache_share
   my_bool alloced;
 #endif
 } IO_CACHE_SHARE;
-#endif
 
 typedef struct st_io_cache		/* Used when cacheing files */
 {
@@ -369,7 +363,6 @@ typedef struct st_io_cache		/* Used when cacheing files */
     WRITE_CACHE, and &read_pos and &read_end respectively otherwise
   */
   uchar  **current_pos, **current_end;
-#ifdef THREAD
   /*
     The lock is for append buffer used in SEQ_READ_APPEND cache
     need mutex copying from append buffer to read buffer.
@@ -383,7 +376,6 @@ typedef struct st_io_cache		/* Used when cacheing files */
     READ_CACHE mode is supported.
   */
   IO_CACHE_SHARE *share;
-#endif
   /*
     A caller will use my_b_read() macro to read from the cache
     if the data is already in cache, it will be simply copied with
@@ -604,13 +596,8 @@ extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
 extern char * my_filename(File fd);
 
-#ifndef THREAD
-extern void dont_break(void);
-extern void allow_break(void);
-#else
 #define dont_break()
 #define allow_break()
-#endif
 
 #ifdef EXTRA_DEBUG
 void my_print_open_files(void);
@@ -689,12 +676,10 @@ extern my_bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
 			       pbool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
 extern int _my_b_read(IO_CACHE *info,uchar *Buffer,size_t Count);
-#ifdef THREAD
 extern int _my_b_read_r(IO_CACHE *info,uchar *Buffer,size_t Count);
 extern void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
                                 IO_CACHE *write_cache, uint num_threads);
 extern void remove_io_thread(IO_CACHE *info);
-#endif
 extern int _my_b_seq_read(IO_CACHE *info,uchar *Buffer,size_t Count);
 extern int _my_b_net_read(IO_CACHE *info,uchar *Buffer,size_t Count);
 extern int _my_b_get(IO_CACHE *info);

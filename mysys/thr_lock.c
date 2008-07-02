@@ -76,7 +76,6 @@ multiple read locks.
 
 #include "mysys_priv.h"
 
-#ifdef THREAD
 #include "thr_lock.h"
 #include <m_string.h>
 #include <errno.h>
@@ -1502,15 +1501,11 @@ void thr_print_locks(void)
   pthread_mutex_unlock(&THR_LOCK_lock);
 }
 
-#endif /* THREAD */
-
 /*****************************************************************************
 ** Test of thread locks
 ****************************************************************************/
 
 #ifdef MAIN
-
-#ifdef THREAD
 
 struct st_test {
   uint lock_nr;
@@ -1741,13 +1736,4 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
   return 0;
 }
 
-#else /* THREAD */
-
-int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
-{
-  printf("thr_lock disabled because we are not using threads\n");
-  exit(1);
-}
-
-#endif /* THREAD */
 #endif /* MAIN */

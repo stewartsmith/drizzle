@@ -39,13 +39,11 @@ static int delete_dynamic_record(MI_INFO *info,my_off_t filepos,
 static int _mi_cmp_buffer(File file, const uchar *buff, my_off_t filepos,
 			  uint length);
 
-#ifdef THREAD
 /* Play it safe; We have a small stack when using threads */
 #undef my_alloca
 #undef my_afree
 #define my_alloca(A) my_malloc((A),MYF(0))
 #define my_afree(A) my_free((A),MYF(0))
-#endif
 
 	/* Interface function from MI_INFO */
 

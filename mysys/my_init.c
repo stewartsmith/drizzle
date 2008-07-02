@@ -57,20 +57,18 @@ my_bool my_init(void)
   my_umask= 0660;                       /* Default umask for new files */
   my_umask_dir= 0700;                   /* Default umask for new directories */
   init_glob_errs();
-#if defined(THREAD) && defined(SAFE_MUTEX)
+#if defined(SAFE_MUTEX)
   safe_mutex_global_init();		/* Must be called early */
 #endif
-#if defined(THREAD) && defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX)
+#if defined(MY_PTHREAD_FASTMUTEX) && !defined(SAFE_MUTEX)
   fastmutex_global_init();              /* Must be called early */
 #endif
-#ifdef THREAD
 #if defined(HAVE_PTHREAD_INIT)
   pthread_init();			/* Must be called before DBUG_ENTER */
 #endif
   if (my_thread_global_init())
     return 1;
   sigfillset(&my_signals);		/* signals blocked by mf_brkhant */
-#endif /* THREAD */
   {
     DBUG_ENTER("my_init");
     DBUG_PROCESS((char*) (my_progname ? my_progname : "unknown"));
@@ -164,7 +162,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
   {
     DBUG_END();                /* Must be done before my_thread_end */
   }
-#ifdef THREAD
   my_thread_end();
   my_thread_global_end();
 #if defined(SAFE_MUTEX)
@@ -175,7 +172,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
   safe_mutex_end((infoflag & (MY_GIVE_INFO | MY_CHECK_ERROR)) ? stderr :
                  (FILE *) 0);
 #endif /* defined(SAFE_MUTEX) */
-#endif /* THREAD */
 
   my_init_done=0;
 } /* my_end */

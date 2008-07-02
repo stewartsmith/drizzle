@@ -661,11 +661,6 @@ static int rnd(int max_value)
 
 static sig_handler endprog(int sig_number __attribute__((unused)))
 {
-#ifndef THREAD
-  if (my_dont_interrupt)
-    my_remember_signal(sig_number,endprog);
-  else
-#endif
   {
     hp_panic(HA_PANIC_CLOSE);
     my_end(1);

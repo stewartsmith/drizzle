@@ -28,10 +28,6 @@
 #include <m_ctype.h>
 #include "sql_sort.h"
 
-#ifndef THREAD
-#define SKIP_DBUG_IN_FILESORT
-#endif
-
 /// How to write record_ref.
 #define WRITE_REF(file,from) \
 if (my_b_write((file),(uchar*) (from),param->ref_length)) \

@@ -197,13 +197,6 @@
 #include <sys/types.h>
 #endif
 
-/* The client defines this to avoid all thread code */
-#if defined(UNDEF_THREADS_HACK)
-#undef THREAD
-#undef HAVE_LINUXTHREADS
-#undef HAVE_NPTL
-#endif
-
 #ifdef HAVE_THREADS_WITHOUT_SOCKETS
 /* MIT pthreads does not work with unix sockets */
 #undef HAVE_SYS_UN_H
@@ -246,7 +239,6 @@
 #endif
 #endif
 
-#if defined(THREAD)
 #ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS /* We want posix threads */
 #endif
@@ -260,7 +252,6 @@
 #include <pthread.h>		/* AIX must have this included first */
 
 #define _REENTRANT	1	/* Threads requires reentrant code */
-#endif /* THREAD */
 
 /* Go around some bugs in different OS and compilers */
 
@@ -1179,17 +1170,6 @@ do { doubleget_union _tmp; \
 #else
 #define my_sprintf(buff,args) ((ulong) sprintf args, (ulong) strlen(buff))
 #endif
-#endif
-
-#ifndef THREAD
-#define thread_safe_increment(V,L) (V)++
-#define thread_safe_decrement(V,L) (V)--
-#define thread_safe_add(V,C,L)     (V)+=(C)
-#define thread_safe_sub(V,C,L)     (V)-=(C)
-#define statistic_increment(V,L)   (V)++
-#define statistic_decrement(V,L)   (V)--
-#define statistic_add(V,C,L)       (V)+=(C)
-#define statistic_sub(V,C,L)       (V)-=(C)
 #endif
 
 #if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)

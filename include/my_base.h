@@ -30,9 +30,6 @@
 #define EOVERFLOW 84
 #endif
 
-#if !defined(USE_MY_FUNC) && !defined(THREAD)
-#include <my_nosys.h>			/* For faster code, after test */
-#endif	/* USE_MY_FUNC */
 #endif	/* stdin */
 #include <my_list.h>
 

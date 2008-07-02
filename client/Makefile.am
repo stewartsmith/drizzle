@@ -23,8 +23,7 @@ AM_CPPFLAGS =			-I$(top_builddir)/include \
 
 LIBS =				@CLIENT_LIBS@ -lz
 
-LDADD=				$(CLIENT_THREAD_LIBS) \
-				$(top_builddir)/sql-common/libsqlcommon.la \
+LDADD=				$(top_builddir)/sql-common/libsqlcommon.la \
 				$(top_builddir)/libmysql/libmysqlclient.la -lz
 
 

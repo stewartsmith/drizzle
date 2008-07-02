@@ -629,11 +629,6 @@ then
   AC_CHECK_FUNC(gtty, , AC_CHECK_LIB(compat, gtty))
 fi
 
-# We make a special variable for non-threaded version of LIBS to avoid
-# including thread libs into non-threaded version of MySQL client library.
-# Later in this script LIBS will be augmented with a threads library.
-NON_THREADED_LIBS="$LIBS"
-
 AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
                 uchar, uint, ulong],[],[], [
 #include <sys/types.h>
@@ -1161,11 +1156,7 @@ MYSQL_CHECK_VIO
 MYSQL_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(CLIENT_LIBS)
-AC_SUBST(CLIENT_THREAD_LIBS)
 AC_SUBST(STATIC_NSS_FLAGS)
-
-AC_DEFINE([THREAD], [1],
-          [Define if you want to have threaded code. This may be undef on client code])
 
 # IMPORTANT - do not modify LIBS past this line - this hack is the only way
 # I know to add the static NSS magic if we have static NSS libraries with

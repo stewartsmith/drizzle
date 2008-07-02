@@ -24,7 +24,6 @@
 
 uint thd_lib_detected= 0;
 
-#ifdef THREAD
 #ifdef USE_TLS
 pthread_key(struct st_my_thread_var*, THR_KEY_mysys);
 #else
@@ -412,5 +411,3 @@ static uint get_thread_lib(void)
 #endif
   return THD_LIB_OTHER;
 }
-
-#endif /* THREAD */

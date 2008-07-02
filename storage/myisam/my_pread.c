@@ -57,14 +57,12 @@ size_t my_pread(File Filedes, uchar *Buffer, size_t Count, my_off_t offset,
     {
       DBUG_PRINT("warning",("Read only %d bytes off %u from %d, errno: %d",
                             (int) readbytes, (uint) Count,Filedes,my_errno));
-#ifdef THREAD
       if ((readbytes == 0 || readbytes == (size_t) -1) && errno == EINTR)
       {
         DBUG_PRINT("debug", ("my_pread() was interrupted and returned %d",
                              (int) readbytes));
         continue;                              /* Interrupted */
       }
-#endif
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
       {
 	if (readbytes == (size_t) -1)
@@ -131,10 +129,8 @@ size_t my_pwrite(int Filedes, const uchar *Buffer, size_t Count,
     }
     DBUG_PRINT("error",("Write only %u bytes", (uint) writenbytes));
 #ifndef NO_BACKGROUND
-#ifdef THREAD
     if (my_thread_var->abort)
       MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
-#endif
     if ((my_errno == ENOSPC || my_errno == EDQUOT) &&
         (MyFlags & MY_WAIT_IF_FULL))
     {
