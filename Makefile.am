@@ -22,7 +22,7 @@ EXTRA_DIST =
 
 SUBDIRS =		. include \
 			sql-common scripts vio \
-			@sql_union_dirs@ unittest storage plugin \
+			@sql_union_dirs@ storage plugin \
 			@sql_server@ tests \
 			mysql-test support-files
 
@@ -30,7 +30,7 @@ DIST_SUBDIRS =		. include \
 			sql-common scripts vio \
 			strings mysys dbug mysys/tests strings/tests \
 			extra regex \
-			libmysql client unittest storage plugin \
+			libmysql client storage plugin \
 			sql tests \
 			mysql-test support-files
 
@@ -46,7 +46,7 @@ bin-dist:		all
 .PHONY:	init-db bin-dist \
   test    test-force    test-full    test-force-full    test-force-mem \
   test-pl test-force-pl test-full-pl test-force-full-pl test-force-pl-mem \
-  test-unit test-ps test-nr test-pr test-ns test-binlog-statement \
+  test-ps test-nr test-pr test-ns test-binlog-statement \
   test-ext-funcs test-ext-rpl test-ext-jp \
   test-ext-stress test-ext test-embedded \
   test-fast test-fast-cursor test-fast-view test-fast-prepare \
@@ -59,9 +59,6 @@ bin-dist:		all
 # environment variable MTR_BUILD_THREAD. The script "mysql-test-run"
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
-
-test-unit:
-	cd unittest && $(MAKE) test
 
 test-ps:
 	cd mysql-test ; \
@@ -83,7 +80,7 @@ test-binlog-statement:
 	cd mysql-test ; \
 	    @PERL@ ./mysql-test-run.pl $(force) --mysqld=--binlog-format=statement
 
-test:	test-unit test-ns test-pr
+test:	test-ns test-pr
 
 test-full:	test test-nr test-ps
 
@@ -168,4 +165,4 @@ test-fast-prepare:
 test-full-qa:
 	$(MAKE) force=--force test-pr \
 	    test-binlog-statement test-ext test-fast-view \
-	        test-fast-cursor test-unit
+	        test-fast-cursor 
