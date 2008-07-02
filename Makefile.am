@@ -23,7 +23,7 @@ EXTRA_DIST =
 SUBDIRS =		. include \
 			sql-common scripts vio \
 			@sql_union_dirs@ unittest storage plugin \
-			@sql_server@ tests \
+			@sql_server@ \
 			mysql-test support-files
 
 DIST_SUBDIRS =		. include \

@@ -44,7 +44,6 @@ bin_PROGRAMS =			mysql \
 				mysqlshow \
 				mysqlslap \
 				mysqltest \
-				mysql_upgrade
 
 mysql_SOURCES =			mysql.cc readline.cc sql_string.cc \
 				completion_hash.cc
@@ -75,9 +74,6 @@ mysqltest_SOURCES=		mysqltest.c \
 				$(top_srcdir)/mysys/my_copy.c \
                                 $(top_srcdir)/mysys/my_mkdir.c
 mysqltest_LDADD =		$(top_builddir)/regex/libregex.a $(LDADD)
-
-mysql_upgrade_SOURCES=          mysql_upgrade.c \
-                                $(top_srcdir)/mysys/my_getpagesize.c
 
 # Fix for mit-threads
 DEFS =			-DUNDEF_THREADS_HACK \
