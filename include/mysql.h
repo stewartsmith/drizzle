@@ -48,7 +48,7 @@ typedef int my_socket;
 #include "mysql_com.h"
 #include "mysql_time.h"
 
-#include "my_list.h" /* for LISTs used in 'MYSQL' and 'MYSQL_STMT' */
+#include "my_list.h" /* for LISTs used in 'MYSQL' */
 
 extern unsigned int mysql_port;
 extern char *mysql_unix_port;
@@ -434,87 +434,6 @@ my_bool		STDCALL mysql_embedded(void);
 my_bool         STDCALL mysql_read_query_result(MYSQL *mysql);
 
 
-/*
-  The following definitions are added for the enhanced 
-  client-server protocol
-*/
-
-/* statement state */
-enum enum_mysql_stmt_state
-{
-  MYSQL_STMT_INIT_DONE= 1, MYSQL_STMT_PREPARE_DONE, MYSQL_STMT_EXECUTE_DONE,
-  MYSQL_STMT_FETCH_DONE
-};
-
-
-/* statement handler */
-typedef struct st_mysql_stmt
-{
-  MEM_ROOT       mem_root;             /* root allocations */
-  LIST           list;                 /* list to keep track of all stmts */
-  MYSQL          *mysql;               /* connection handle */
-  MYSQL_FIELD    *fields;              /* result set metadata */
-  MYSQL_DATA     result;               /* cached result set */
-  MYSQL_ROWS     *data_cursor;         /* current row in cached result */
-  /*
-    mysql_stmt_fetch() calls this function to fetch one row (it's different
-    for buffered, unbuffered and cursor fetch).
-  */
-  int            (*read_row_func)(struct st_mysql_stmt *stmt, 
-                                  unsigned char **row);
-  /* copy of mysql->affected_rows after statement execution */
-  my_ulonglong   affected_rows;
-  my_ulonglong   insert_id;            /* copy of mysql->insert_id */
-  unsigned long	 stmt_id;	       /* Id for prepared statement */
-  unsigned long  flags;                /* i.e. type of cursor to open */
-  unsigned long  prefetch_rows;        /* number of rows per one COM_FETCH */
-  /*
-    Copied from mysql->server_status after execute/fetch to know
-    server-side cursor status for this statement.
-  */
-  unsigned int   server_status;
-  unsigned int	 last_errno;	       /* error code */
-  unsigned int   param_count;          /* input parameter count */
-  unsigned int   field_count;          /* number of columns in result set */
-  enum enum_mysql_stmt_state state;    /* statement state */
-  char		 last_error[MYSQL_ERRMSG_SIZE]; /* error message */
-  char		 sqlstate[SQLSTATE_LENGTH+1];
-  /* Types of input parameters should be sent to server */
-  my_bool        send_types_to_server;
-  my_bool        bind_param_done;      /* input buffers were supplied */
-  unsigned char  bind_result_done;     /* output buffers were supplied */
-  /* mysql_stmt_close() had to cancel this result */
-  my_bool       unbuffered_fetch_cancelled;  
-  /*
-    Is set to true if we need to calculate field->max_length for 
-    metadata fields when doing mysql_stmt_store_result.
-  */
-  my_bool       update_max_length;     
-  void *extension;
-} MYSQL_STMT;
-
-enum enum_stmt_attr_type
-{
-  /*
-    When doing mysql_stmt_store_result calculate max_length attribute
-    of statement metadata. This is to be consistent with the old API, 
-    where this was done automatically.
-    In the new API we do that only by request because it slows down
-    mysql_stmt_store_result sufficiently.
-  */
-  STMT_ATTR_UPDATE_MAX_LENGTH,
-  /*
-    unsigned long with combination of cursor flags (read only, for update,
-    etc)
-  */
-  STMT_ATTR_CURSOR_TYPE,
-  /*
-    Amount of rows to retrieve from server per one fetch if using cursors.
-    Accepts unsigned long attribute in the range 1 - ulong_max
-  */
-  STMT_ATTR_PREFETCH_ROWS
-};
-
 
 typedef struct st_mysql_methods
 {
@@ -525,8 +444,7 @@ typedef struct st_mysql_methods
 			      unsigned long header_length,
 			      const unsigned char *arg,
 			      unsigned long arg_length,
-			      my_bool skip_check,
-                              MYSQL_STMT *stmt);
+			      my_bool skip_check);
   MYSQL_DATA *(*read_rows)(MYSQL *mysql,MYSQL_FIELD *mysql_fields,
 			   unsigned int fields);
   MYSQL_RES * (*use_result)(MYSQL *mysql);
@@ -540,40 +458,6 @@ typedef struct st_mysql_methods
   int (*read_change_user_result)(MYSQL *mysql, char *buff, const char *passwd);
 } MYSQL_METHODS;
 
-
-MYSQL_STMT * STDCALL mysql_stmt_init(MYSQL *mysql);
-int STDCALL mysql_stmt_prepare(MYSQL_STMT *stmt, const char *query,
-                               unsigned long length);
-int STDCALL mysql_stmt_execute(MYSQL_STMT *stmt);
-int STDCALL mysql_stmt_fetch(MYSQL_STMT *stmt);
-int STDCALL mysql_stmt_store_result(MYSQL_STMT *stmt);
-unsigned long STDCALL mysql_stmt_param_count(MYSQL_STMT * stmt);
-my_bool STDCALL mysql_stmt_attr_set(MYSQL_STMT *stmt,
-                                    enum enum_stmt_attr_type attr_type,
-                                    const void *attr);
-my_bool STDCALL mysql_stmt_attr_get(MYSQL_STMT *stmt,
-                                    enum enum_stmt_attr_type attr_type,
-                                    void *attr);
-my_bool STDCALL mysql_stmt_close(MYSQL_STMT * stmt);
-my_bool STDCALL mysql_stmt_reset(MYSQL_STMT * stmt);
-my_bool STDCALL mysql_stmt_free_result(MYSQL_STMT *stmt);
-my_bool STDCALL mysql_stmt_send_long_data(MYSQL_STMT *stmt, 
-                                          unsigned int param_number,
-                                          const char *data, 
-                                          unsigned long length);
-MYSQL_RES *STDCALL mysql_stmt_result_metadata(MYSQL_STMT *stmt);
-MYSQL_RES *STDCALL mysql_stmt_param_metadata(MYSQL_STMT *stmt);
-unsigned int STDCALL mysql_stmt_errno(MYSQL_STMT * stmt);
-const char *STDCALL mysql_stmt_error(MYSQL_STMT * stmt);
-const char *STDCALL mysql_stmt_sqlstate(MYSQL_STMT * stmt);
-MYSQL_ROW_OFFSET STDCALL mysql_stmt_row_seek(MYSQL_STMT *stmt, 
-                                             MYSQL_ROW_OFFSET offset);
-MYSQL_ROW_OFFSET STDCALL mysql_stmt_row_tell(MYSQL_STMT *stmt);
-void STDCALL mysql_stmt_data_seek(MYSQL_STMT *stmt, my_ulonglong offset);
-my_ulonglong STDCALL mysql_stmt_num_rows(MYSQL_STMT *stmt);
-my_ulonglong STDCALL mysql_stmt_affected_rows(MYSQL_STMT *stmt);
-my_ulonglong STDCALL mysql_stmt_insert_id(MYSQL_STMT *stmt);
-unsigned int STDCALL mysql_stmt_field_count(MYSQL_STMT *stmt);
 
 my_bool STDCALL mysql_commit(MYSQL * mysql);
 my_bool STDCALL mysql_rollback(MYSQL * mysql);
@@ -604,10 +488,7 @@ int		STDCALL mysql_drop_db(MYSQL *mysql, const char *DB);
 
 #define simple_command(mysql, command, arg, length, skip_check) \
   (*(mysql)->methods->advanced_command)(mysql, command, 0,  \
-                                        0, arg, length, skip_check, NULL)
-#define stmt_command(mysql, command, arg, length, stmt) \
-  (*(mysql)->methods->advanced_command)(mysql, command, 0,  \
-                                        0, arg, length, 1, stmt)
+                                        0, arg, length, skip_check)
 
 #ifdef	__cplusplus
 }

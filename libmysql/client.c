@@ -744,13 +744,12 @@ void free_rows(MYSQL_DATA *cur)
 my_bool
 cli_advanced_command(MYSQL *mysql, enum enum_server_command command,
 		     const uchar *header, ulong header_length,
-		     const uchar *arg, ulong arg_length, my_bool skip_check,
-                     MYSQL_STMT *stmt)
+		     const uchar *arg, ulong arg_length, my_bool skip_check)
 {
   NET *net= &mysql->net;
   my_bool result= 1;
   init_sigpipe_variables
-  my_bool stmt_skip= stmt ? stmt->state != MYSQL_STMT_INIT_DONE : FALSE;
+  my_bool stmt_skip= FALSE;
   DBUG_ENTER("cli_advanced_command");
 
   /* Don't give sigpipe errors if the client doesn't want them */
@@ -2319,31 +2318,6 @@ my_bool mysql_reconnect(MYSQL *mysql)
   DBUG_PRINT("info", ("reconnect succeded"));
   tmp_mysql.reconnect= 1;
   tmp_mysql.free_me= mysql->free_me;
-
-  /*
-    For each stmt in mysql->stmts, move it to tmp_mysql if it is
-    in state MYSQL_STMT_INIT_DONE, otherwise close it.
-  */
-  {
-    LIST *element= mysql->stmts;
-    for (; element; element= element->next)
-    {
-      MYSQL_STMT *stmt= (MYSQL_STMT *) element->data;
-      if (stmt->state != MYSQL_STMT_INIT_DONE)
-      {
-        stmt->mysql= 0;
-        stmt->last_errno= CR_SERVER_LOST;
-        strmov(stmt->last_error, ER(CR_SERVER_LOST));
-        strmov(stmt->sqlstate, unknown_sqlstate);
-      }
-      else
-      {
-        tmp_mysql.stmts= list_add(tmp_mysql.stmts, &stmt->list);
-      }
-      /* No need to call list_delete for statement here */
-    }
-    mysql->stmts= NULL;
-  }
 
   /* Don't free options as these are now used in tmp_mysql */
   bzero((char*) &mysql->options,sizeof(mysql->options));
