@@ -200,14 +200,6 @@ AC_SUBST(LIBTOOL)dnl
 
 AC_SUBST(NM)dnl
 
-# NM= "$NM -X64"
-#archive_expsym_cmds= `echo "$archive_expsym_cmds" | sed -e '/"$(CC)"//'`
-#archive_expsym_cmds= "$CC -q64 $archive_expsym_cmds"
-#  CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-ansi//; s/-pedantic//; s/-Wcheck//'`
-
-#AC_LIBTOOL_DLOPEN AC_LIBTOOL_WIN32_DLL AC_DISABLE_FAST_INSTALL AC_DISABLE_SHARED AC_DISABLE_STATIC
-
-# AC_PROG_INSTALL
 AC_PROG_INSTALL
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
@@ -260,6 +252,7 @@ AC_SUBST(ASFLAGS)
 AC_SUBST(LD)
 AC_SUBST(INSTALL_SCRIPT)
 
+
 export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 
 if test "$GCC" = "yes"
@@ -270,8 +263,8 @@ then
   # We should use -Wno-invalid-offsetof flag to disable some warnings from gcc
   # regarding offset() usage in C++ which are done in a safe manner in the
   # server
-  CXXFLAGS="$CXXFLAGS -Wall -fno-implicit-templates -fno-exceptions -fno-rtti"
-  CFLAGS="$CFLAGS -Wall"
+  CXXFLAGS="$CXXFLAGS ${GCC_WARNINGS} -fno-implicit-templates -fno-exceptions -fno-rtti"
+  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
   AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
     [1], [Defined by configure. Use explicit template instantiation.])
 fi
@@ -582,7 +575,7 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h \
  limits.h memory.h pwd.h select.h \
- stdlib.h stddef.h sys/fpu.h \
+ stdlib.h stddef.h stdint.h sys/fpu.h \
  strings.h string.h synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h \
  sys/timeb.h sys/types.h sys/un.h sys/vadvise.h sys/wait.h term.h \
  unistd.h utime.h sys/utime.h termio.h termios.h sched.h crypt.h alloca.h \
@@ -1176,6 +1169,38 @@ LIBS="$LIBS $STATIC_NSS_FLAGS"
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
+
+AC_ARG_ENABLE([pedantic-warnings],
+    [AS_HELP_STRING([--disable-pedantic-warnings],
+       [Toggle pedanticness @<:@default=on@:>@])],
+    [ac_warn_pedantic="$enableval"],
+    [ac_warn_pedantic="yes"])
+
+AC_ARG_ENABLE([fail],
+    [AS_HELP_STRING([--enable-fail],
+       [Turn warnings into failures @<:@default=off@:>@])],
+    [ac_warn_fail="$enableval"],
+    [ac_warn_fail="no"])
+
+if test "$GCC" = "yes"
+then
+  
+  GCC_WARNINGS="-W -Wall"
+
+
+  if test "$ac_warn_pedantic" = "yes"
+  then
+    GCC_WARNINGS="${GCC_WARNINGS}  -ansi -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wunreachable-code" 
+  fi
+
+  if test "$ac_warn_fail" = "yes"
+  then
+    GCC_WARNINGS="${GCC_WARNINGS} -Werror"
+  fi
+
+    CXXFLAGS="$CXXFLAGS ${GCC_WARNINGS}"
+    CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+fi
 
 # Some usefull subst
 AC_SUBST(CC)
