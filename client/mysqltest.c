@@ -74,7 +74,6 @@ static my_bool opt_compress= 0, silent= 0, verbose= 0;
 static my_bool debug_info_flag= 0, debug_check_flag= 0;
 static my_bool tty_password= 0;
 static my_bool opt_mark_progress= 0;
-static my_bool cursor_protocol= 0, cursor_protocol_enabled= 0;
 static my_bool parsing_disabled= 0;
 static my_bool display_result_vertically= FALSE,
   display_metadata= FALSE, display_result_sorted= FALSE;
@@ -5749,7 +5748,6 @@ int util_query(MYSQL* org_mysql, const char* query){
 
 void run_query(struct st_connection *cn, struct st_command *command, int flags)
 {
-  MYSQL *mysql= &cn->mysql;
   DYNAMIC_STRING *ds;
   DYNAMIC_STRING *save_ds= NULL;
   DYNAMIC_STRING ds_result;
@@ -5758,8 +5756,6 @@ void run_query(struct st_connection *cn, struct st_command *command, int flags)
   DYNAMIC_STRING eval_query;
   char *query;
   int query_len;
-  my_bool complete_query= ((flags & QUERY_SEND_FLAG) &&
-                           (flags & QUERY_REAP_FLAG));
   DBUG_ENTER("run_query");
 
   init_dynamic_string(&ds_warnings, NULL, 0, 256);

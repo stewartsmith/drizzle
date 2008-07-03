@@ -1145,25 +1145,6 @@ public:
 #ifndef DBUG_OFF
   void dbug_print()
   {
-    fprintf(DBUG_FILE, "<field ");
-    if (field)
-    {
-      fprintf(DBUG_FILE, "'%s.%s': ", field->table->alias, field->field_name);
-      field->dbug_print();
-    }
-    else
-      fprintf(DBUG_FILE, "NULL");
-
-    fprintf(DBUG_FILE, ", result_field: ");
-    if (result_field)
-    {
-      fprintf(DBUG_FILE, "'%s.%s': ",
-              result_field->table->alias, result_field->field_name);
-      result_field->dbug_print();
-    }
-    else
-      fprintf(DBUG_FILE, "NULL");
-    fprintf(DBUG_FILE, ">\n");
   }
 #endif
 

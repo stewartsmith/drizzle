@@ -31,7 +31,8 @@ EXTRA_DIST =		mi_test_all.sh mi_test_all.res ft_stem.c plug.in
 pkgdata_DATA =		mi_test_all mi_test_all.res
 
 pkglib_LIBRARIES =	libmyisam.a
-bin_PROGRAMS =		myisamchk myisamlog myisampack myisam_ftdump
+#bin_PROGRAMS =		myisamchk myisamlog myisampack myisam_ftdump
+bin_PROGRAMS =
 myisamchk_DEPENDENCIES=	$(LIBRARIES)
 myisamchk_LDADD=	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
