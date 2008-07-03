@@ -346,7 +346,6 @@ void key_unpack(String *to,TABLE *table,uint idx)
   Field *field;
   String tmp;
   my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->read_set);
-  DBUG_ENTER("key_unpack");
 
   to->length(0);
   for (key_part=table->key_info[idx].key_part,key_part_end=key_part+
@@ -517,7 +516,6 @@ int key_rec_cmp(void *key, uchar *first_rec, uchar *second_rec)
   uchar *rec0= key_part->field->ptr - key_part->offset;
   my_ptrdiff_t first_diff= first_rec - rec0, sec_diff= second_rec - rec0;
   int result= 0;
-  DBUG_ENTER("key_rec_cmp");
 
   do
   {
