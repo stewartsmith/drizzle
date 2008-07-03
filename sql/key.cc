@@ -393,7 +393,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
       to->append(STRING_WITH_LEN("???"));
   }
   dbug_tmp_restore_column_map(table->read_set, old_map);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -539,12 +539,12 @@ int key_rec_cmp(void *key, uchar *first_rec, uchar *second_rec)
           ; /* Fall through, no NULL fields */
         else
         {
-          DBUG_RETURN(+1);
+          return(1);
         }
       }
       else if (!sec_is_null)
       {
-        DBUG_RETURN(-1);
+        return(-1);
       }
       else
         goto next_loop; /* Both were NULL */
@@ -561,5 +561,5 @@ int key_rec_cmp(void *key, uchar *first_rec, uchar *second_rec)
 next_loop:
     key_part++;
   } while (!result && ++i < key_parts);
-  DBUG_RETURN(result);
+  return(result);
 }
