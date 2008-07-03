@@ -380,19 +380,6 @@ protected:
 };
 
 
-class Create_func_convert_tz : public Create_func_arg3
-{
-public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2, Item *arg3);
-
-  static Create_func_convert_tz s_singleton;
-
-protected:
-  Create_func_convert_tz() {}
-  virtual ~Create_func_convert_tz() {}
-};
-
-
 class Create_func_cos : public Create_func_arg1
 {
 public:
@@ -1951,15 +1938,6 @@ Create_func_conv::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
 }
 
 
-Create_func_convert_tz Create_func_convert_tz::s_singleton;
-
-Item*
-Create_func_convert_tz::create(THD *thd, Item *arg1, Item *arg2, Item *arg3)
-{
-  return new (thd->mem_root) Item_func_convert_tz(arg1, arg2, arg3);
-}
-
-
 Create_func_cos Create_func_cos::s_singleton;
 
 Item*
@@ -3178,7 +3156,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("CONCAT_WS") }, BUILDER(Create_func_concat_ws)},
   { { C_STRING_WITH_LEN("CONNECTION_ID") }, BUILDER(Create_func_connection_id)},
   { { C_STRING_WITH_LEN("CONV") }, BUILDER(Create_func_conv)},
-  { { C_STRING_WITH_LEN("CONVERT_TZ") }, BUILDER(Create_func_convert_tz)},
   { { C_STRING_WITH_LEN("COS") }, BUILDER(Create_func_cos)},
   { { C_STRING_WITH_LEN("COT") }, BUILDER(Create_func_cot)},
   { { C_STRING_WITH_LEN("CRC32") }, BUILDER(Create_func_crc32)},
