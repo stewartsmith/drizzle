@@ -112,6 +112,7 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
         null_bits= (1U << 8) - 1;
       }
     }
+  }
 
   /*
     Write the last (partial) byte, if there is one
@@ -249,11 +250,6 @@ unpack_row(Relay_log_info const *rli,
 
       null_mask <<= 1;
     }
-#ifndef DBUG_OFF
-    else
-    {
-    }
-#endif
     i++;
   }
 
