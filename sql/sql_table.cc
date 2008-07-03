@@ -320,8 +320,7 @@ static bool read_ddl_log_file_entry(uint entry_no)
   uchar *file_entry_buf= (uchar*)global_ddl_log.file_entry_buf;
   uint io_size= global_ddl_log.io_size;
 
-  if (my_pread(file_id, file_entry_buf, io_size, io_size * entry_no,
-               MYF(MY_WME)) != io_size)
+  if (pread(file_id, file_entry_buf, io_size, io_size * entry_no) != io_size)
     error= TRUE;
   return(error);
 }
@@ -343,8 +342,8 @@ static bool write_ddl_log_file_entry(uint entry_no)
   File file_id= global_ddl_log.file_id;
   char *file_entry_buf= (char*)global_ddl_log.file_entry_buf;
 
-  if (my_pwrite(file_id, (uchar*)file_entry_buf,
-                IO_SIZE, IO_SIZE * entry_no, MYF(MY_WME)) != IO_SIZE)
+  if (pwrite(file_id, (uchar*)file_entry_buf,
+                IO_SIZE, IO_SIZE * entry_no) != IO_SIZE)
     error= TRUE;
   return(error);
 }
