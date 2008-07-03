@@ -503,10 +503,6 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   my_bool net_blocking = vio_is_blocking(net->vio);
   DBUG_ENTER("net_real_write");
 
-#if defined(MYSQL_SERVER) && defined(USE_QUERY_CACHE)
-  query_cache_insert((char*) packet, len, net->pkt_nr);
-#endif
-
   if (net->error == 2)
     DBUG_RETURN(-1);				/* socket can't be used */
 

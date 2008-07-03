@@ -16,4 +16,4 @@
 ## Process this file with automake to create Makefile.in
 AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include
 noinst_LTLIBRARIES = libsqlcommon.la
-libsqlcommon_la_SOURCES = pack.c my_time.c my_user.c errmsg.c password.c
+libsqlcommon_la_SOURCES = pack.c my_time.c errmsg.c password.c

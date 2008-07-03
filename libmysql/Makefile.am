@@ -44,7 +44,7 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DUNDEF_THREADS_HACK
 
 LIBS =		@CLIENT_LIBS@ 
-AM_CPPFLAGS =	-I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys -I$(top_builddir)/sql-common
+AM_CPPFLAGS =	-I$(top_builddir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys -I$(top_builddir)/sql-common
 
 EXTRA_DIST = libmysql.def
 noinst_HEADERS = client_settings.h
@@ -59,10 +59,9 @@ CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 # a minimal MySQL client library
 #
 # A list of needed headers collected from the deps information 000213
-nh =		my_global.h config-win32.h dbug.h errmsg.h \
+nh =		my_global.h dbug.h errmsg.h \
 		m_ctype.h m_string.h \
 		my_alarm.h my_config.h my_dir.h my_list.h my_net.h my_sys.h \
 		mysql.h mysql_com.h mysql_version.h mysqld_error.h \
 		mysys_err.h my_pthread.h thr_alarm.h violite.h hash.h \
                 sql_common.h 
-
