@@ -547,9 +547,6 @@ impossible position";
          The packet has offsets equal to the normal offsets in a binlog
          event +1 (the first character is \0).
        */
-       DBUG_PRINT("info",
-                  ("Looked for a Format_description_log_event, found event type %d",
-                   (*packet)[EVENT_TYPE_OFFSET+1]));
        if ((*packet)[EVENT_TYPE_OFFSET+1] == FORMAT_DESCRIPTION_EVENT)
        {
          binlog_can_be_corrupted= test((*packet)[FLAGS_OFFSET+1] &
@@ -638,8 +635,6 @@ impossible position";
 	goto err;
       }
 
-      DBUG_PRINT("info", ("log event code %d",
-			  (*packet)[LOG_EVENT_OFFSET+1] ));
       if ((*packet)[LOG_EVENT_OFFSET+1] == LOAD_EVENT)
       {
 	if (send_file(thd))
@@ -1782,9 +1777,6 @@ static void fix_slave_net_timeout(THD *thd, enum_var_type type)
   DBUG_ENTER("fix_slave_net_timeout");
 #ifdef HAVE_REPLICATION
   pthread_mutex_lock(&LOCK_active_mi);
-  DBUG_PRINT("info",("slave_net_timeout=%lu mi->heartbeat_period=%.3f",
-                     slave_net_timeout,
-                     (active_mi? active_mi->heartbeat_period : 0.0)));
   if (active_mi && slave_net_timeout < active_mi->heartbeat_period)
     push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,

@@ -447,8 +447,6 @@ int mysql_create_function(THD *thd,udf_func *udf)
     strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", udf->dl, NullS);
     if (!(dl = dlopen(dlpath, RTLD_NOW)))
     {
-      DBUG_PRINT("error",("dlopen of %s failed, error: %d (%s)",
-                          udf->dl, errno, dlerror()));
       my_error(ER_CANT_OPEN_LIBRARY, MYF(0),
                udf->dl, errno, dlerror());
       goto err;

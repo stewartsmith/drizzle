@@ -885,10 +885,9 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
   uint i;
   int shift= 0;
 
-  DBUG_ENTER("TIME_to_gmt_sec");
 
   if (!validate_timestamp_range(t))
-    DBUG_RETURN(0);
+    return(0);
 
 
   /* We need this for correct leap seconds handling */
@@ -933,7 +932,7 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
       This means that source time can't be represented as my_time_t due to
       limited my_time_t range.
     */
-    DBUG_RETURN(0);
+    return(0);
   }
 
   /* binary search for our range */
@@ -949,7 +948,7 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
     if (local_t > (my_time_t) (TIMESTAMP_MAX_VALUE - shift * SECS_PER_DAY +
                                sp->revtis[i].rt_offset - saved_seconds))
     {
-      DBUG_RETURN(0);                           /* my_time_t overflow */
+      return(0);                           /* my_time_t overflow */
     }
     local_t+= shift * SECS_PER_DAY;
   }
@@ -972,7 +971,7 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
   if (local_t < TIMESTAMP_MIN_VALUE)
     local_t= 0;
 
-  DBUG_RETURN(local_t);
+  return(local_t);
 }
 
 
@@ -1563,13 +1562,12 @@ my_tz_init(THD *org_thd, const char *default_tzname, my_bool bootstrap)
   my_bool return_val= 1;
   char db[]= "mysql";
   int res;
-  DBUG_ENTER("my_tz_init");
 
   /*
     To be able to run this from boot, we allocate a temporary THD
   */
   if (!(thd= new THD))
-    DBUG_RETURN(1);
+    return(1);
   thd->thread_stack= (char*) &thd;
   thd->store_globals();
   lex_start(thd);
@@ -1687,10 +1685,6 @@ my_tz_init(THD *org_thd, const char *default_tzname, my_bool bootstrap)
 
     tz_leapcnt++;
 
-    DBUG_PRINT("info",
-               ("time_zone_leap_second table: tz_leapcnt: %u  tt_time: %lu  offset: %ld",
-                tz_leapcnt, (ulong) tz_lsis[tz_leapcnt-1].ls_trans,
-                tz_lsis[tz_leapcnt-1].ls_corr));
 
     res= table->file->index_next(table->record[0]);
   }
@@ -1751,7 +1745,7 @@ end:
     my_pthread_setspecific_ptr(THR_THD,  0);
     my_pthread_setspecific_ptr(THR_MALLOC,  0);
   }
-  DBUG_RETURN(return_val);
+  return(return_val);
 }
 
 
@@ -1819,7 +1813,6 @@ tz_load_from_open_tables(const String *tz_name, TABLE_LIST *tz_tables)
 #ifdef ABBR_ARE_USED
   char chars[max(TZ_MAX_CHARS + 1, (2 * (MY_TZNAME_MAX + 1)))];
 #endif
-  DBUG_ENTER("tz_load_from_open_tables");
 
   /* Prepare tz_info for loading also let us make copy of time zone name */
   if (!(alloc_buff= (char*) alloc_root(&tz_storage, sizeof(TIME_ZONE_INFO) +
@@ -1939,14 +1932,6 @@ tz_load_from_open_tables(const String *tz_name, TABLE_LIST *tz_tables)
     chars[tz_info->charcnt]= 0;
     tz_info->charcnt++;
 
-    DBUG_PRINT("info",
-      ("time_zone_transition_type table: tz_id=%u tt_id=%u tt_gmtoff=%ld "
-       "abbr='%s' tt_isdst=%u", tzid, ttid, ttis[ttid].tt_gmtoff,
-       chars + ttis[ttid].tt_abbrind, ttis[ttid].tt_isdst));
-#else
-    DBUG_PRINT("info",
-      ("time_zone_transition_type table: tz_id=%u tt_id=%u tt_gmtoff=%ld "
-       "tt_isdst=%u", tzid, ttid, ttis[ttid].tt_gmtoff, ttis[ttid].tt_isdst));
 #endif
 
     /* ttid is increasing because we are reading using index */
@@ -2003,9 +1988,6 @@ tz_load_from_open_tables(const String *tz_name, TABLE_LIST *tz_tables)
     types[tz_info->timecnt]= ttid;
     tz_info->timecnt++;
 
-    DBUG_PRINT("info",
-      ("time_zone_transition table: tz_id: %u  tt_time: %lu  tt_id: %u",
-       tzid, (ulong) ttime, ttid));
 
     res= table->file->index_next_same(table->record[0],
                                       table->field[0]->ptr, 4);
@@ -2093,7 +2075,7 @@ end:
   if (table)
     (void)table->file->ha_index_end();
 
-  DBUG_RETURN(return_val);
+  return(return_val);
 }
 
 
@@ -2221,12 +2203,9 @@ my_tz_find(THD *thd, const String *name)
   Tz_names_entry *tmp_tzname;
   Time_zone *result_tz= 0;
   long offset;
-  DBUG_ENTER("my_tz_find");
-  DBUG_PRINT("enter", ("time zone name='%s'",
-                       name ? ((String *)name)->c_ptr_safe() : "NULL"));
 
   if (!name)
-    DBUG_RETURN(0);
+    return(0);
 
   VOID(pthread_mutex_lock(&tz_LOCK));
 
@@ -2237,7 +2216,6 @@ my_tz_find(THD *thd, const String *name)
                                                      (const uchar *)&offset,
                                                      sizeof(long))))
     {
-      DBUG_PRINT("info", ("Creating new Time_zone_offset object"));
 
       if (!(result_tz= new (&tz_storage) Time_zone_offset(offset)) ||
           my_hash_insert(&offset_tzs, (const uchar *) result_tz))
@@ -2272,7 +2250,7 @@ my_tz_find(THD *thd, const String *name)
 
   VOID(pthread_mutex_unlock(&tz_LOCK));
 
-  DBUG_RETURN(result_tz);
+  return(result_tz);
 }
 
 
