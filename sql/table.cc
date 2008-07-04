@@ -134,8 +134,8 @@ char *fn_rext(char *name)
 
 TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
 {
-  DBUG_ASSERT(db != NULL);
-  DBUG_ASSERT(name != NULL);
+  assert(db != NULL);
+  assert(name != NULL);
 
   if ((db->length == INFORMATION_SCHEMA_NAME.length) &&
       (my_strcasecmp(system_charset_info,
@@ -306,7 +306,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
 void free_table_share(TABLE_SHARE *share)
 {
   MEM_ROOT mem_root;
-  DBUG_ASSERT(share->ref_count == 0);
+  assert(share->ref_count == 0);
 
   /*
     If someone is waiting for this to be deleted, inform it about this.
@@ -454,7 +454,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
       The following is a safety test and should never fail
       as the old file name should never be longer than the new one.
     */
-    DBUG_ASSERT(length <= share->normalized_path.length);
+    assert(length <= share->normalized_path.length);
     /*
       If the old and the new names have the same length,
       then table name does not have tricky characters,
@@ -580,7 +580,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     share->frm_version= FRM_VER_TRUE_VARCHAR;
 
   legacy_db_type= (enum legacy_db_type) (uint) *(head+3);
-  DBUG_ASSERT(share->db_plugin == NULL);
+  assert(share->db_plugin == NULL);
   /*
     if the storage engine is dynamic, no point in resolving it by its
     dynamically allocated legacy_db_type. We will resolve it later by name.
@@ -718,7 +718,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
                                          keyinfo->comment.length);
       strpos+= 2 + keyinfo->comment.length;
     } 
-    DBUG_ASSERT(test(keyinfo->flags & HA_USES_COMMENT) == 
+    assert(test(keyinfo->flags & HA_USES_COMMENT) == 
                (keyinfo->comment.length > 0));
   }
 
@@ -824,7 +824,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       }
       next_chunk+= 2 + share->comment.length;
     }
-    DBUG_ASSERT (next_chunk <= buff_end);
+    assert(next_chunk <= buff_end);
     if (share->mysql_version >= MYSQL_VERSION_TABLESPACE_IN_FRM_CGE)
     {
       /*
@@ -1468,7 +1468,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   Field **field_ptr;
 
   /* Parsing of partitioning information from .frm needs thd->lex set up. */
-  DBUG_ASSERT(thd->lex->is_lex_started);
+  assert(thd->lex->is_lex_started);
 
   error= 1;
   bzero((char*) outparam, sizeof(*outparam));
@@ -1495,7 +1495,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   }
   else
   {
-    DBUG_ASSERT(!db_stat);
+    assert(!db_stat);
   }
 
   error= 4;
@@ -2185,7 +2185,7 @@ File create_frm(THD *thd, const char *name, const char *db,
     int2store(fileinfo+6,IO_SIZE);		/* Next block starts here */
     for (i= 0; i < keys; i++)
     {
-      DBUG_ASSERT(test(key_info[i].flags & HA_USES_COMMENT) == 
+      assert(test(key_info[i].flags & HA_USES_COMMENT) == 
                  (key_info[i].comment.length > 0));
       if (key_info[i].flags & HA_USES_COMMENT)
         key_comment_total_bytes += 2 + key_info[i].comment.length;
@@ -2362,7 +2362,7 @@ uint calculate_key_len(TABLE *table, uint key, const uchar *buf,
                        key_part_map keypart_map)
 {
   /* works only with key prefixes */
-  DBUG_ASSERT(((keypart_map + 1) & keypart_map) == 0);
+  assert(((keypart_map + 1) & keypart_map) == 0);
 
   KEY *key_info= table->s->key_info+key;
   KEY_PART_INFO *key_part= key_info->key_part;
@@ -2462,7 +2462,7 @@ bool check_column_name(const char *name)
       This assert is to catch use of this byte if we decide to
       use non-utf8 as system_character_set.
     */
-    DBUG_ASSERT(*name != NAMES_SEP_CHAR);
+    assert(*name != NAMES_SEP_CHAR);
     name++;
     name_length++;
   }
@@ -2660,7 +2660,7 @@ void st_table::reset_item_list(List<Item> *item_list) const
   for (Field **ptr= field; *ptr; ptr++)
   {
     Item_field *item_field= (Item_field*) it++;
-    DBUG_ASSERT(item_field != 0);
+    assert(item_field != 0);
     item_field->reset_field(*ptr);
   }
 }
@@ -2828,7 +2828,7 @@ TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
 
   if (is_leaf_for_name_resolution())
     return this;
-  DBUG_ASSERT(nested_join);
+  assert(nested_join);
 
   for (cur_nested_join= nested_join;
        cur_nested_join;
@@ -2885,7 +2885,7 @@ TABLE_LIST *TABLE_LIST::last_leaf_for_name_resolution()
 
   if (is_leaf_for_name_resolution())
     return this;
-  DBUG_ASSERT(nested_join);
+  assert(nested_join);
 
   for (cur_nested_join= nested_join;
        cur_nested_join;
@@ -2915,7 +2915,7 @@ TABLE_LIST *TABLE_LIST::last_leaf_for_name_resolution()
 Natural_join_column::Natural_join_column(Field_translator *field_param,
                                          TABLE_LIST *tab)
 {
-  DBUG_ASSERT(tab->field_translation);
+  assert(tab->field_translation);
   view_field= field_param;
   table_field= NULL;
   table_ref= tab;
@@ -2926,7 +2926,7 @@ Natural_join_column::Natural_join_column(Field_translator *field_param,
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TABLE_LIST *tab)
 {
-  DBUG_ASSERT(tab->table == field_param->table);
+  assert(tab->table == field_param->table);
   table_field= field_param;
   view_field= NULL;
   table_ref= tab;
@@ -2938,7 +2938,7 @@ const char *Natural_join_column::name()
 {
   if (view_field)
   {
-    DBUG_ASSERT(table_field == NULL);
+    assert(table_field == NULL);
     return view_field->name;
   }
 
@@ -2950,7 +2950,7 @@ Item *Natural_join_column::create_item(THD *thd)
 {
   if (view_field)
   {
-    DBUG_ASSERT(table_field == NULL);
+    assert(table_field == NULL);
     return create_view_field(thd, table_ref, &view_field->item,
                              view_field->name);
   }
@@ -2962,7 +2962,7 @@ Field *Natural_join_column::field()
 {
   if (view_field)
   {
-    DBUG_ASSERT(table_field == NULL);
+    assert(table_field == NULL);
     return NULL;
   }
   return table_field;
@@ -2971,7 +2971,7 @@ Field *Natural_join_column::field()
 
 const char *Natural_join_column::table_name()
 {
-  DBUG_ASSERT(table_ref);
+  assert(table_ref);
   return table_ref->alias;
 }
 
@@ -2983,7 +2983,7 @@ const char *Natural_join_column::db_name()
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */
-  DBUG_ASSERT(!strcmp(table_ref->db,
+  assert(!strcmp(table_ref->db,
                       table_ref->table->s->db.str) ||
               (table_ref->schema_table &&
                table_ref->table->s->db.str[0] == 0));
@@ -2993,7 +2993,7 @@ const char *Natural_join_column::db_name()
 
 void Field_iterator_view::set(TABLE_LIST *table)
 {
-  DBUG_ASSERT(table->field_translation);
+  assert(table->field_translation);
   view= table;
   ptr= table->field_translation;
   array_end= table->field_translation_end;
@@ -3044,7 +3044,7 @@ Item *create_view_field(THD *thd, TABLE_LIST *view, Item **field_ref,
       ('mysql_schema_table' function). So we can return directly the
       field. This case happens only for 'show & where' commands.
     */
-    DBUG_ASSERT(field && field->fixed);
+    assert(field && field->fixed);
     return(field);
   }
 
@@ -3054,7 +3054,7 @@ Item *create_view_field(THD *thd, TABLE_LIST *view, Item **field_ref,
 
 void Field_iterator_natural_join::set(TABLE_LIST *table_ref)
 {
-  DBUG_ASSERT(table_ref->join_columns);
+  assert(table_ref->join_columns);
   column_ref_it.init(*(table_ref->join_columns));
   cur_column_ref= column_ref_it++;
 }
@@ -3063,7 +3063,7 @@ void Field_iterator_natural_join::set(TABLE_LIST *table_ref)
 void Field_iterator_natural_join::next()
 {
   cur_column_ref= column_ref_it++;
-  DBUG_ASSERT(!cur_column_ref || ! cur_column_ref->table_field ||
+  assert(!cur_column_ref || ! cur_column_ref->table_field ||
               cur_column_ref->table_ref->table ==
               cur_column_ref->table_field->table);
 }
@@ -3081,7 +3081,7 @@ void Field_iterator_table_ref::set_field_iterator()
   if (table_ref->is_join_columns_complete)
   {
     /* Necesary, but insufficient conditions. */
-    DBUG_ASSERT(table_ref->is_natural_join ||
+    assert(table_ref->is_natural_join ||
                 table_ref->nested_join ||
                 table_ref->join_columns &&
                 /* This is a merge view. */
@@ -3098,7 +3098,7 @@ void Field_iterator_table_ref::set_field_iterator()
   /* This is a base table or stored view. */
   else
   {
-    DBUG_ASSERT(table_ref->table);
+    assert(table_ref->table);
     field_it= &table_field_it;
   }
   field_it->set(table_ref);
@@ -3108,10 +3108,10 @@ void Field_iterator_table_ref::set_field_iterator()
 
 void Field_iterator_table_ref::set(TABLE_LIST *table)
 {
-  DBUG_ASSERT(table);
+  assert(table);
   first_leaf= table->first_leaf_for_name_resolution();
   last_leaf=  table->last_leaf_for_name_resolution();
-  DBUG_ASSERT(first_leaf && last_leaf);
+  assert(first_leaf && last_leaf);
   table_ref= first_leaf;
   set_field_iterator();
 }
@@ -3128,7 +3128,7 @@ void Field_iterator_table_ref::next()
   if (field_it->end_of_fields() && table_ref != last_leaf)
   {
     table_ref= table_ref->next_name_resolution_table;
-    DBUG_ASSERT(table_ref);
+    assert(table_ref);
     set_field_iterator();
   }
 }
@@ -3139,7 +3139,7 @@ const char *Field_iterator_table_ref::table_name()
   if (table_ref->is_natural_join)
     return natural_join_it.column_ref()->table_name();
 
-  DBUG_ASSERT(!strcmp(table_ref->table_name,
+  assert(!strcmp(table_ref->table_name,
                       table_ref->table->s->table_name.str));
   return table_ref->table_name;
 }
@@ -3155,7 +3155,7 @@ const char *Field_iterator_table_ref::db_name()
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */
-  DBUG_ASSERT(!strcmp(table_ref->db, table_ref->table->s->db.str) ||
+  assert(!strcmp(table_ref->db, table_ref->table->s->db.str) ||
               (table_ref->schema_table &&
                table_ref->table->s->db.str[0] == 0));
 
@@ -3231,12 +3231,12 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
       already created via one of the two constructor calls above. In this case
       we just return the already created column reference.
     */
-    DBUG_ASSERT(table_ref->is_join_columns_complete);
+    assert(table_ref->is_join_columns_complete);
     is_created= FALSE;
     nj_col= natural_join_it.column_ref();
-    DBUG_ASSERT(nj_col);
+    assert(nj_col);
   }
-  DBUG_ASSERT(!nj_col->table_field ||
+  assert(!nj_col->table_field ||
               nj_col->table_ref->table == nj_col->table_field->table);
 
   /*
@@ -3247,7 +3247,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
   if (is_created)
   {
     /* Make sure not all columns were materialized. */
-    DBUG_ASSERT(!add_table_ref->is_join_columns_complete);
+    assert(!add_table_ref->is_join_columns_complete);
     if (!add_table_ref->join_columns)
     {
       /* Create a list of natural join columns on demand. */
@@ -3293,14 +3293,14 @@ Field_iterator_table_ref::get_natural_column_ref()
 {
   Natural_join_column *nj_col;
 
-  DBUG_ASSERT(field_it == &natural_join_it);
+  assert(field_it == &natural_join_it);
   /*
     The field belongs to a NATURAL join, therefore the column reference was
     already created via one of the two constructor calls above. In this case
     we just return the already created column reference.
   */
   nj_col= natural_join_it.column_ref();
-  DBUG_ASSERT(nj_col &&
+  assert(nj_col &&
               (!nj_col->table_field ||
                nj_col->table_ref->table == nj_col->table_field->table));
   return nj_col;
@@ -3416,7 +3416,7 @@ void st_table::mark_columns_used_by_index_no_reset(uint index,
 
 void st_table::mark_auto_increment_column()
 {
-  DBUG_ASSERT(found_next_number_field);
+  assert(found_next_number_field);
   /*
     We must set bit in read set as update_auto_increment() is using the
     store() to check overflow of auto_increment values

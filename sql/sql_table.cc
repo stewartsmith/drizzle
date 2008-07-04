@@ -433,7 +433,7 @@ static uint read_ddl_log_header()
   if (successful_open)
   {
     global_ddl_log.io_size= uint4korr(&file_entry_buf[DDL_LOG_IO_SIZE_POS]);
-    DBUG_ASSERT(global_ddl_log.io_size <=
+    assert(global_ddl_log.io_size <=
                 sizeof(global_ddl_log.file_entry_buf));
   }
   else
@@ -610,7 +610,7 @@ static int execute_ddl_log_action(THD *thd, DDL_LOG_ENTRY *ddl_log_entry)
         if (ddl_log_entry->action_type == DDL_LOG_DELETE_ACTION)
           break;
       }
-      DBUG_ASSERT(ddl_log_entry->action_type == DDL_LOG_REPLACE_ACTION);
+      assert(ddl_log_entry->action_type == DDL_LOG_REPLACE_ACTION);
       /*
         Fall through and perform the rename action of the replace
         action. We have already indicated the success of the delete
@@ -640,7 +640,7 @@ static int execute_ddl_log_action(THD *thd, DDL_LOG_ENTRY *ddl_log_entry)
       break;
     }
     default:
-      DBUG_ASSERT(0);
+      assert(0);
       break;
   }
   delete file;
@@ -734,19 +734,19 @@ bool write_ddl_log_entry(DDL_LOG_ENTRY *ddl_log_entry,
   global_ddl_log.file_entry_buf[DDL_LOG_PHASE_POS]= 0;
   int4store(&global_ddl_log.file_entry_buf[DDL_LOG_NEXT_ENTRY_POS],
             ddl_log_entry->next_entry);
-  DBUG_ASSERT(strlen(ddl_log_entry->name) < FN_LEN);
+  assert(strlen(ddl_log_entry->name) < FN_LEN);
   strmake(&global_ddl_log.file_entry_buf[DDL_LOG_NAME_POS],
           ddl_log_entry->name, FN_LEN - 1);
   if (ddl_log_entry->action_type == DDL_LOG_RENAME_ACTION ||
       ddl_log_entry->action_type == DDL_LOG_REPLACE_ACTION)
   {
-    DBUG_ASSERT(strlen(ddl_log_entry->from_name) < FN_LEN);
+    assert(strlen(ddl_log_entry->from_name) < FN_LEN);
     strmake(&global_ddl_log.file_entry_buf[DDL_LOG_NAME_POS + FN_LEN],
           ddl_log_entry->from_name, FN_LEN - 1);
   }
   else
     global_ddl_log.file_entry_buf[DDL_LOG_NAME_POS + FN_LEN]= 0;
-  DBUG_ASSERT(strlen(ddl_log_entry->handler_name) < FN_LEN);
+  assert(strlen(ddl_log_entry->handler_name) < FN_LEN);
   strmake(&global_ddl_log.file_entry_buf[DDL_LOG_NAME_POS + (2*FN_LEN)],
           ddl_log_entry->handler_name, FN_LEN - 1);
   if (get_free_ddl_log_entry(active_entry, &write_header))
@@ -894,12 +894,12 @@ bool deactivate_ddl_log_entry(uint entry_no)
         file_entry_buf[DDL_LOG_ENTRY_TYPE_POS]= DDL_IGNORE_LOG_ENTRY_CODE;
       else if (file_entry_buf[DDL_LOG_ACTION_TYPE_POS] == DDL_LOG_REPLACE_ACTION)
       {
-        DBUG_ASSERT(file_entry_buf[DDL_LOG_PHASE_POS] == 0);
+        assert(file_entry_buf[DDL_LOG_PHASE_POS] == 0);
         file_entry_buf[DDL_LOG_PHASE_POS]= 1;
       }
       else
       {
-        DBUG_ASSERT(0);
+        assert(0);
       }
       if (write_ddl_log_file_entry(entry_no))
       {
@@ -1000,7 +1000,7 @@ bool execute_ddl_log_entry(THD *thd, uint first_entry)
                       read_entry);
       break;
     }
-    DBUG_ASSERT(ddl_log_entry.entry_type == DDL_LOG_ENTRY_CODE ||
+    assert(ddl_log_entry.entry_type == DDL_LOG_ENTRY_CODE ||
                 ddl_log_entry.entry_type == DDL_IGNORE_LOG_ENTRY_CODE);
 
     if (execute_ddl_log_action(thd, &ddl_log_entry))
@@ -1328,7 +1328,7 @@ int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
       tmp_table_deleted= 1;
       continue;
     case -1:
-      DBUG_ASSERT(thd->in_sub_stmt);
+      assert(thd->in_sub_stmt);
       error= 1;
       goto err_with_placeholders;
     default:
@@ -1697,7 +1697,7 @@ int prepare_create_field(Create_field *sql_field,
     This code came from mysql_prepare_create_table.
     Indent preserved to make patching easier
   */
-  DBUG_ASSERT(sql_field->charset);
+  assert(sql_field->charset);
 
   switch (sql_field->sql_type) {
   case MYSQL_TYPE_BLOB:
@@ -1962,7 +1962,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         int comma_length= cs->cset->wc_mb(cs, ',', (uchar*) comma_buf,
                                           (uchar*) comma_buf + 
                                           sizeof(comma_buf));
-        DBUG_ASSERT(comma_length > 0);
+        assert(comma_length > 0);
         for (uint i= 0; (tmp= int_it++); i++)
         {
           uint lengthsp;
@@ -2034,7 +2034,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       else  /* MYSQL_TYPE_ENUM */
       {
         uint32 field_length;
-        DBUG_ASSERT(sql_field->sql_type == MYSQL_TYPE_ENUM);
+        assert(sql_field->sql_type == MYSQL_TYPE_ENUM);
         if (sql_field->def != NULL)
         {
           String str, *def= sql_field->def->val_str(&str);
@@ -2145,7 +2145,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   it.rewind();
   while ((sql_field=it++))
   {
-    DBUG_ASSERT(sql_field->charset != 0);
+    assert(sql_field->charset != 0);
 
     if (prepare_create_field(sql_field, &blob_columns, 
 			     &timestamps, &timestamps_with_niladic,
@@ -2714,7 +2714,7 @@ void sp_prepare_create_field(THD *thd, Create_field *sql_field)
                           FIELDFLAG_TREAT_BIT_AS_CHAR;
   }
   sql_field->create_length_to_internal_length();
-  DBUG_ASSERT(sql_field->def == 0);
+  assert(sql_field->def == 0);
   /* Can't go wrong as sql_field->def is not defined */
   (void) prepare_blob_field(thd, sql_field);
 }
@@ -3545,7 +3545,6 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       thd->exit_cond(old_message);
-      DBUG_EXECUTE_IF("wait_in_mysql_admin_table", wait_for_kill_signal(thd););
       if (thd->killed)
 	goto err;
       open_for_modify= 0;
@@ -3708,7 +3707,7 @@ send_result_message:
       }
       if (result_code) // either mysql_recreate_table or analyze failed
       {
-        DBUG_ASSERT(thd->is_error());
+        assert(thd->is_error());
         if (thd->is_error())
         {
           const char *err_msg= thd->main_da.message();
@@ -3888,8 +3887,8 @@ bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* tables,
 int reassign_keycache_tables(THD *thd, KEY_CACHE *src_cache,
 			     KEY_CACHE *dst_cache)
 {
-  DBUG_ASSERT(src_cache != dst_cache);
-  DBUG_ASSERT(src_cache->in_init);
+  assert(src_cache != dst_cache);
+  assert(src_cache->in_init);
   src_cache->param_buff_size= 0;		// Free key cache
   ha_resize_key_cache(src_cache);
   ha_change_key_cache(src_cache, dst_cache);
@@ -4016,7 +4015,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
 
   strxmov(src_path, src_table->table->s->path.str, reg_ext, NullS);
 
-  DBUG_EXECUTE_IF("sleep_create_like_before_check_if_exists", my_sleep(6000000););
 
   /* 
     Check that destination tables does not exist. Note that its name
@@ -4041,7 +4039,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
       goto table_exists;
   }
 
-  DBUG_EXECUTE_IF("sleep_create_like_before_copy", my_sleep(6000000););
 
   /*
     Create a new table by copying from source table
@@ -4080,7 +4077,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
     creation, instead create the table directly (for both normal
     and temporary tables).
   */
-  DBUG_EXECUTE_IF("sleep_create_like_before_ha_create", my_sleep(6000000););
 
   dst_path[dst_path_length - reg_ext_length]= '\0';  // Remove .frm
   if (thd->variables.keep_files_on_create)
@@ -4105,7 +4101,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
     goto err;	    /* purecov: inspected */
   }
 
-  DBUG_EXECUTE_IF("sleep_create_like_before_binlogging", my_sleep(6000000););
 
   /*
     We have to write the query before we unlock the tables.
@@ -4154,7 +4149,7 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
         int result= store_create_info(thd, table, &query,
                                                create_info);
 
-        DBUG_ASSERT(result == 0); // store_create_info() always return 0
+        assert(result == 0); // store_create_info() always return 0
         write_bin_log(thd, TRUE, query.ptr(), query.length());
       }
       else                                      // Case 1
@@ -5005,7 +5000,7 @@ int mysql_fast_or_online_alter_table(THD *thd,
       state of the TABLE object which we used for obtaining of handler
       object to make it suitable for reopening.
     */
-    DBUG_ASSERT(t_table == table);
+    assert(t_table == table);
     table->open_placeholder= 1;
     VOID(pthread_mutex_lock(&LOCK_open));
     close_handle_and_leave_table_as_lock(table);
@@ -5648,7 +5643,6 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       VOID(pthread_mutex_lock(&LOCK_open));
       wait_while_table_is_used(thd, table, HA_EXTRA_FORCE_REOPEN);
       VOID(pthread_mutex_unlock(&LOCK_open));
-      DBUG_EXECUTE_IF("sleep_alter_enable_indexes", my_sleep(6000000););
       error= table->file->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
@@ -5660,7 +5654,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
     default:
-      DBUG_ASSERT(FALSE);
+      assert(FALSE);
       error= 0;
       break;
     }
@@ -6082,13 +6076,11 @@ end_online:
 
   thd_proc_info(thd, "end");
 
-  DBUG_EXECUTE_IF("sleep_alter_before_main_binlog", my_sleep(6000000););
-
   ha_binlog_log_query(thd, create_info->db_type, LOGCOM_ALTER_TABLE,
                       thd->query, thd->query_length,
                       db, table_name);
 
-  DBUG_ASSERT(!(mysql_bin_log.is_open() &&
+  assert(!(mysql_bin_log.is_open() &&
                 thd->current_stmt_binlog_row_based &&
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
   write_bin_log(thd, TRUE, thd->query, thd->query_length);
@@ -6171,7 +6163,7 @@ err:
         break;
       default:
         /* Shouldn't get here. */
-        DBUG_ASSERT(0);
+        assert(0);
     }
     bool save_abort_on_warning= thd->abort_on_warning;
     thd->abort_on_warning= TRUE;
