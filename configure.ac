@@ -573,6 +573,7 @@ AC_TYPE_SIZE_T
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
+AC_HEADER_STDBOOL
 AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h \
  limits.h memory.h pwd.h select.h \
  stdlib.h stddef.h stdint.h sys/fpu.h \
@@ -1182,23 +1183,27 @@ AC_ARG_ENABLE([fail],
     [ac_warn_fail="$enableval"],
     [ac_warn_fail="no"])
 
+
 if test "$GCC" = "yes"
 then
-  
+
   GCC_WARNINGS="-W -Wall"
+  GXX_WARNINGS="${GCC_WARNINGS}"
 
 
   if test "$ac_warn_pedantic" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS}  -ansi -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wunreachable-code" 
+    GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wunreachable-code"
+    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wunreachable-code"
   fi
 
   if test "$ac_warn_fail" = "yes"
   then
     GCC_WARNINGS="${GCC_WARNINGS} -Werror"
+    GXX_WARNINGS="${GXX_WARNINGS} -Werror"
   fi
 
-    CXXFLAGS="$CXXFLAGS ${GCC_WARNINGS}"
+    CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
     CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 

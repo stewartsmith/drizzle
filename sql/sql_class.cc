@@ -257,7 +257,7 @@ void **thd_ha_data(const THD *thd, const struct handlerton *hton)
 }
 
 extern "C"
-long long thd_test_options(const THD *thd, long long test_options)
+int64_t thd_test_options(const THD *thd, int64_t test_options)
 {
   return thd->options & test_options;
 }

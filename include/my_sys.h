@@ -792,11 +792,11 @@ void my_free_open_file_info(void);
 
 extern time_t my_time(myf flags);
 extern ulonglong my_getsystime(void);
-extern ulonglong my_micro_time();
+extern ulonglong my_micro_time(void);
 extern ulonglong my_micro_time_and_time(time_t *time_arg);
 time_t my_time_possible_from_micro(ulonglong microtime);
 extern my_bool my_gethwaddr(uchar *to);
-extern int my_getncpus();
+extern int my_getncpus(void);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
