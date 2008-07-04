@@ -56,9 +56,9 @@ public:
   void intersect_extended(ulonglong map2buff)
   {
     intersect(map2buff);
-    if (map.n_bits > sizeof(ulonglong) * 8)
-      bitmap_set_above(&map, sizeof(ulonglong),
-                       test(map2buff & (LL(1) << (sizeof(ulonglong) * 8 - 1))));
+    if (map.n_bits > sizeof(uint64_t) * 8)
+      bitmap_set_above(&map, sizeof(uint64_t),
+                       test(map2buff & (LL(1) << (sizeof(uint64_t) * 8 - 1))));
   }
   void subtract(Bitmap& map2) { bitmap_subtract(&map, &map2.map); }
   void merge(Bitmap& map2) { bitmap_union(&map, &map2.map); }

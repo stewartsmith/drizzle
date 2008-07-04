@@ -1597,12 +1597,6 @@ mysql_execute_command(THD *thd)
     res= mysql_assign_to_keycache(thd, first_table, &lex->ident);
     break;
   }
-  case SQLCOM_PRELOAD_KEYS:
-  {
-    DBUG_ASSERT(first_table == all_tables && first_table != 0);
-    res = mysql_preload_keys(thd, first_table);
-    break;
-  }
   case SQLCOM_CHANGE_MASTER:
   {
     pthread_mutex_lock(&LOCK_active_mi);
