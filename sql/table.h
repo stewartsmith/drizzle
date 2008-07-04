@@ -52,7 +52,7 @@ enum tmp_table_type
 enum frm_type_enum
 {
   FRMTYPE_ERROR= 0,
-  FRMTYPE_TABLE,
+  FRMTYPE_TABLE
 };
 
 frm_type_enum mysql_frm_type(THD *thd, char *path, enum legacy_db_type *dbt);
@@ -162,7 +162,7 @@ enum enum_table_category
     to I_S tables in the table cache, which should use
     this table type.
   */
-  TABLE_CATEGORY_INFORMATION=4,
+  TABLE_CATEGORY_INFORMATION=4
 };
 typedef enum enum_table_category TABLE_CATEGORY;
 
@@ -633,7 +633,7 @@ enum enum_schema_tables
   SCH_TABLES,
   SCH_TABLE_CONSTRAINTS,
   SCH_TABLE_NAMES,
-  SCH_VARIABLES,
+  SCH_VARIABLES
 };
 
 

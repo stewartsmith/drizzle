@@ -994,7 +994,7 @@ int ha_archive::rnd_init(bool scan)
   if (scan)
   {
     DBUG_PRINT("info", ("archive will retrieve %llu rows", 
-                        (unsigned long long) scan_rows));
+                        (uint64_t) scan_rows));
 
     if (read_data_header(&archive))
       DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
@@ -1216,8 +1216,8 @@ int ha_archive::optimize(THD* thd, HA_CHECK_OPT* check_opt)
     */
     if (!rc)
     {
-      unsigned long long x;
-      unsigned long long rows_restored;
+      uint64_t x;
+      uint64_t rows_restored;
       share->rows_recorded= 0;
       stats.auto_increment_value= 1;
       share->archive_write.auto_increment= 0;
@@ -1253,10 +1253,10 @@ int ha_archive::optimize(THD* thd, HA_CHECK_OPT* check_opt)
     }
 
     DBUG_PRINT("info", ("recovered %llu archive rows", 
-                        (unsigned long long)share->rows_recorded));
+                        (uint64_t)share->rows_recorded));
 
     DBUG_PRINT("ha_archive", ("recovered %llu archive rows", 
-                        (unsigned long long)share->rows_recorded));
+                        (uint64_t)share->rows_recorded));
 
     if (rc && rc != HA_ERR_END_OF_FILE)
     {
@@ -1464,7 +1464,7 @@ int ha_archive::check(THD* thd, HA_CHECK_OPT* check_opt)
 {
   int rc= 0;
   const char *old_proc_info;
-  unsigned long long x;
+  uint64_t x;
   DBUG_ENTER("ha_archive::check");
 
   old_proc_info= thd_proc_info(thd, "Checking table");

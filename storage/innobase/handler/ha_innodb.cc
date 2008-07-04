@@ -108,7 +108,7 @@ static long innobase_mirrored_log_groups, innobase_log_files_in_group,
 	innobase_lock_wait_timeout, innobase_force_recovery,
 	innobase_open_files, innobase_autoinc_lock_mode;
 
-static long long innobase_buffer_pool_size, innobase_log_file_size;
+static int64_t innobase_buffer_pool_size, innobase_log_file_size;
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
