@@ -26,7 +26,7 @@ AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 SUBDIRS =		share
 libexec_PROGRAMS =	mysqld
 EXTRA_PROGRAMS =	gen_lex_hash
-bin_PROGRAMS =		mysql_tzinfo_to_sql
+bin_PROGRAMS =		
 DTRACE =                @DTRACE@
 DTRACEFLAGS =           @DTRACEFLAGS@
 DTRACEFILES =           handler.o \
@@ -114,9 +114,6 @@ endif
 
 gen_lex_hash_SOURCES =	gen_lex_hash.cc
 gen_lex_hash_LDFLAGS =  
-
-mysql_tzinfo_to_sql_SOURCES = tztime.cc
-mysql_tzinfo_to_sql_CXXFLAGS= -DTZINFO2SQL
 
 DEFS =			-DMYSQL_SERVER \
 			-DDEFAULT_MYSQL_HOME="\"$(MYSQLBASEdir)\"" \

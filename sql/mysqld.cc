@@ -854,7 +854,6 @@ void clean_up(bool print_message)
 
   if (use_slave_mask)
     bitmap_free(&slave_error_mask);
-  my_tz_free();
   my_database_names_free();
   table_cache_free();
   table_def_free();
