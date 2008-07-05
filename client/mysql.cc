@@ -3033,7 +3033,6 @@ com_ego(String *buffer,char *line)
 static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
-    case MYSQL_TYPE_BIT:         return "BIT";
     case MYSQL_TYPE_BLOB:        return "BLOB";
     case MYSQL_TYPE_DATE:        return "DATE";
     case MYSQL_TYPE_DATETIME:    return "DATETIME";

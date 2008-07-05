@@ -2561,7 +2561,6 @@ innobase_mysql_cmp(
 
 	switch (mysql_tp) {
 
-	case MYSQL_TYPE_BIT:
 	case MYSQL_TYPE_STRING:
 	case MYSQL_TYPE_VAR_STRING:
 	case MYSQL_TYPE_TINY_BLOB:
