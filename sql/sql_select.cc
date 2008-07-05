@@ -3318,7 +3318,7 @@ bool find_eq_ref_candidate(TABLE *table, table_map sj_inner_tables)
       key= keyuse->key;
       KEY *keyinfo= table->key_info + key;
       key_part_map bound_parts= 0;
-      if ((keyinfo->flags & (HA_NOSAME | HA_END_SPACE_KEY)) == HA_NOSAME)
+      if ((keyinfo->flags & HA_NOSAME) == HA_NOSAME)
       {
         do  /* For all equalities on all key parts */
         {
@@ -3794,7 +3794,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
               !table->fulltext_searched && 
               !table->pos_in_table_list->embedding)
 	  {
-            if ((table->key_info[key].flags & (HA_NOSAME | HA_END_SPACE_KEY))
+            if ((table->key_info[key].flags & (HA_NOSAME))
                  == HA_NOSAME)
             {
 	      if (const_ref == eq_part)
@@ -6694,9 +6694,8 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
   *ref_key=0;				// end_marker
   if (j->type == JT_CONST)
     j->table->const_table= 1;
-  else if (((keyinfo->flags & (HA_NOSAME | HA_NULL_PART_KEY |
-			       HA_END_SPACE_KEY)) != HA_NOSAME) ||
-	   keyparts != keyinfo->key_parts || null_ref_key)
+  else if (((keyinfo->flags & (HA_NOSAME | HA_NULL_PART_KEY)) != HA_NOSAME) ||
+           keyparts != keyinfo->key_parts || null_ref_key)
   {
     /* Must read with repeat */
     j->type= null_ref_key ? JT_REF_OR_NULL : JT_REF;
