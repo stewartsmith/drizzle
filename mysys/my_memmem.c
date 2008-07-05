@@ -15,6 +15,7 @@
 
 #include <my_global.h>
 #include <m_string.h>
+#include <my_sys.h>
 
 /*
   my_memmem, port of a GNU extension.
