@@ -422,25 +422,6 @@ then
   AC_MSG_ERROR([MySQL requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
 fi
 
-static_nss=""
-STATIC_NSS_FLAGS=""
-OTHER_LIBC_LIB=""
-
-#
-# Check if we are using Linux and a glibc compiled with static nss
-# (this is true on the MySQL build machines to avoid NSS problems)
-#
-
-if test "$TARGET_LINUX" = "true" -a "$static_nss" = ""
-then
-  tmp=`nm /usr/lib*/libc.a  | grep _nss_files_getaliasent_r`
-  if test -n "$tmp"
-  then
-     STATIC_NSS_FLAGS="-lc -lnss_files -lnss_dns -lresolv"
-     STATIC_NSS_FLAGS="$STATIC_NSS_FLAGS $STATIC_NSS_FLAGS"
-     static_nss=1
-  fi
-fi
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -1160,14 +1141,6 @@ MYSQL_CHECK_VIO
 MYSQL_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(CLIENT_LIBS)
-AC_SUBST(STATIC_NSS_FLAGS)
-
-# IMPORTANT - do not modify LIBS past this line - this hack is the only way
-# I know to add the static NSS magic if we have static NSS libraries with
-# glibc - Sasha
-
-LDFLAGS="$LDFLAGS $OTHER_LIBC_LIB"
-LIBS="$LIBS $STATIC_NSS_FLAGS"
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
