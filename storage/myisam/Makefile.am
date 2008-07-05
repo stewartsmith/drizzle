@@ -13,6 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+if BUILD_DBUG
+  d_dbug = $(top_builddir)/dbug/libdbuglt.la
+endif
+
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir =          $(prefix)
@@ -36,17 +40,17 @@ bin_PROGRAMS =
 myisamchk_DEPENDENCIES=	$(LIBRARIES)
 myisamchk_LDADD=	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 myisamlog_DEPENDENCIES=	$(LIBRARIES)
 myisamlog_LDADD=	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 myisampack_DEPENDENCIES=$(LIBRARIES)
 myisampack_LDADD=	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3 rt_test sp_test #ft_test1 ft_eval
 noinst_HEADERS =	myisamdef.h rt_index.h rt_key.h rt_mbr.h sp_defs.h \
@@ -55,34 +59,34 @@ noinst_HEADERS =	myisamdef.h rt_index.h rt_key.h rt_mbr.h sp_defs.h \
 mi_test1_DEPENDENCIES=	$(LIBRARIES)
 mi_test1_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 mi_test2_DEPENDENCIES=	$(LIBRARIES)
 mi_test2_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 mi_test3_DEPENDENCIES=	$(LIBRARIES)
 mi_test3_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 #ft_test1_DEPENDENCIES=	$(LIBRARIES)
 #ft_eval_DEPENDENCIES=	$(LIBRARIES)
 myisam_ftdump_DEPENDENCIES=	$(LIBRARIES)
 myisam_ftdump_LDADD =	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 rt_test_DEPENDENCIES=	$(LIBRARIES)
 rt_test_LDADD =		libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 sp_test_DEPENDENCIES=	$(LIBRARIES)
 sp_test_LDADD =		libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \

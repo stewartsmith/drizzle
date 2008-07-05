@@ -20,6 +20,10 @@
 #
 # This file is public domain and comes with NO WARRANTY of any kind
 
+if BUILD_DBUG
+  d_dbug = $(top_builddir)/dbug/libdbuglt.la
+endif
+
 MYSQLDATAdir =			$(localstatedir)
 MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
@@ -30,7 +34,7 @@ libmysqlclient_la_SOURCES = libmysql.c get_password.c \
 libmysqlclient_la_LIBADD = ${sql_cmn_objects} ${sqlobjects} \
 			   ${top_builddir}/mysys/libmysyslt.la \
 			   ${top_builddir}/strings/libmystringslt.la \
-			   ${top_builddir}/dbug/libdbuglt.la \
+			   $(d_dbug) \
 			   ${top_builddir}/sql-common/libsqlcommon.la \
 			   ${top_builddir}/vio/libviolt.la 
 libmysqlclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
