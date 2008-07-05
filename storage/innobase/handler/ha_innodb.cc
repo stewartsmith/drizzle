@@ -2671,7 +2671,6 @@ get_innobase_type_from_mysql_type(
 		} else {
 			return(DATA_VARMYSQL);
 		}
-	case MYSQL_TYPE_BIT:
 	case MYSQL_TYPE_STRING: if (field->binary()) {
 
 			return(DATA_FIXBINARY);
