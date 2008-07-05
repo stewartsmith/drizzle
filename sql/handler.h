@@ -813,7 +813,7 @@ typedef struct {
   uint64_t index_file_length;
   uint64_t delete_length;
   ha_rows records;
-  ulong mean_rec_length;
+  uint32_t mean_rec_length;
   time_t create_time;
   time_t check_time;
   time_t update_time;
@@ -838,10 +838,10 @@ typedef struct st_ha_create_information
   const char *alias;
   uint64_t max_rows,min_rows;
   uint64_t auto_increment_value;
-  ulong table_options;
-  ulong avg_row_length;
-  ulong used_fields;
-  ulong key_block_size;
+  uint32_t table_options;
+  uint32_t avg_row_length;
+  uint32_t used_fields;
+  uint32_t key_block_size;
   SQL_LIST merge_list;
   handlerton *db_type;
   enum row_type row_type;
@@ -873,7 +873,7 @@ typedef struct st_ha_alter_information
 typedef struct st_key_create_information
 {
   enum ha_key_alg algorithm;
-  ulong block_size;
+  uint32_t block_size;
   LEX_STRING parser_name;
   LEX_STRING comment;
 } KEY_CREATE_INFO;
@@ -930,7 +930,7 @@ private:
 };
 
 typedef struct st_savepoint SAVEPOINT;
-extern ulong savepoint_alloc_size;
+extern uint32_t savepoint_alloc_size;
 extern KEY_CREATE_INFO default_key_create_info;
 
 /* Forward declaration for condition pushdown to storage engine */
@@ -939,7 +939,7 @@ typedef class Item COND;
 typedef struct st_ha_check_opt
 {
   st_ha_check_opt() {}                        /* Remove gcc warning */
-  ulong sort_buffer_size;
+  uint32_t sort_buffer_size;
   uint flags;       /* isam layer flags (e.g. for myisamchk) */
   uint sql_flags;   /* sql layer flags - for something myisamchk cannot do */
   KEY_CACHE *key_cache;	/* new key cache when changing key cache */
@@ -1122,7 +1122,7 @@ public:
   */
   ha_rows records;
   ha_rows deleted;			/* Deleted records */
-  ulong mean_rec_length;		/* physical reclength */
+  uint32_t mean_rec_length;		/* physical reclength */
   time_t create_time;			/* When table was created */
   time_t check_time;
   time_t update_time;
@@ -1595,7 +1595,7 @@ public:
   { DBUG_ASSERT(0); return 0; }
   virtual int extra(enum ha_extra_function operation)
   { return 0; }
-  virtual int extra_opt(enum ha_extra_function operation, ulong cache_size)
+  virtual int extra_opt(enum ha_extra_function operation, uint32_t cache_size)
   { return extra(operation); }
 
   /**
@@ -1626,7 +1626,7 @@ public:
                                   uint64_t *nb_reserved_values);
   void set_next_insert_id(uint64_t id)
   {
-    DBUG_PRINT("info",("auto_increment: next value %lu", (ulong)id));
+    DBUG_PRINT("info",("auto_increment: next value %lu", (uint32_t)id));
     next_insert_id= id;
   }
   void restore_auto_increment(uint64_t prev_insert_id)
@@ -1703,7 +1703,7 @@ public:
     return 0;
   }
 
-  virtual ulong index_flags(uint idx, uint part, bool all_parts) const =0;
+  virtual uint32_t index_flags(uint idx, uint part, bool all_parts) const =0;
 
   virtual int add_index(TABLE *table_arg, KEY *key_info, uint num_of_keys)
   { return (HA_ERR_WRONG_COMMAND); }
@@ -2236,7 +2236,7 @@ extern const char *tx_isolation_names[];
 extern const char *binlog_format_names[];
 extern TYPELIB tx_isolation_typelib;
 extern TYPELIB myisam_stats_method_typelib;
-extern ulong total_ha, total_ha_2pc;
+extern uint32_t total_ha, total_ha_2pc;
 
        /* Wrapper functions */
 #define ha_commit(thd) (ha_commit_trans((thd), TRUE))

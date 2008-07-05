@@ -42,11 +42,11 @@ static handlerton *installed_htons[128];
 KEY_CREATE_INFO default_key_create_info= { HA_KEY_ALG_UNDEF, 0, {NullS,0}, {NullS,0} };
 
 /* number of entries in handlertons[] */
-ulong total_ha= 0;
+uint32_t total_ha= 0;
 /* number of storage engines (from handlertons[]) that support 2pc */
-ulong total_ha_2pc= 0;
+uint32_t total_ha_2pc= 0;
 /* size of savepoint storage area (see ha_init) */
-ulong savepoint_alloc_size= 0;
+uint32_t savepoint_alloc_size= 0;
 
 static const LEX_STRING sys_table_aliases[]=
 {
@@ -467,7 +467,7 @@ int ha_init()
     binary log (which is considered a transaction-capable storage engine in
     counting total_ha)
   */
-  opt_using_transactions= total_ha>(ulong)opt_bin_log;
+  opt_using_transactions= total_ha>(uint32_t)opt_bin_log;
   savepoint_alloc_size+= sizeof(SAVEPOINT);
   DBUG_RETURN(error);
 }
@@ -1426,9 +1426,9 @@ int ha_recover(HASH *commit_list)
   /* commit_list and tc_heuristic_recover cannot be set both */
   DBUG_ASSERT(info.commit_list==0 || tc_heuristic_recover==0);
   /* if either is set, total_ha_2pc must be set too */
-  DBUG_ASSERT(info.dry_run || total_ha_2pc>(ulong)opt_bin_log);
+  DBUG_ASSERT(info.dry_run || total_ha_2pc>(uint32_t)opt_bin_log);
 
-  if (total_ha_2pc <= (ulong)opt_bin_log)
+  if (total_ha_2pc <= (uint32_t)opt_bin_log)
     DBUG_RETURN(0);
 
   if (info.commit_list)
@@ -1442,7 +1442,7 @@ int ha_recover(HASH *commit_list)
     rollback all pending transactions, without risking inconsistent data
   */
 
-  DBUG_ASSERT(total_ha_2pc == (ulong) opt_bin_log+1); // only InnoDB and binlog
+  DBUG_ASSERT(total_ha_2pc == (uint32_t) opt_bin_log+1); // only InnoDB and binlog
   tc_heuristic_recover= TC_HEURISTIC_RECOVER_ROLLBACK; // forcing ROLLBACK
   info.dry_run=false;
 #endif
@@ -2077,7 +2077,7 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
     */
     DBUG_PRINT("info",("auto_increment: nr: %lu cannot honour "
                        "auto_increment_offset: %lu",
-                       (ulong) nr, variables->auto_increment_offset));
+                       (uint32_t) nr, variables->auto_increment_offset));
     return nr;
   }
   if (variables->auto_increment_increment == 1)
@@ -2272,7 +2272,7 @@ int handler::update_auto_increment()
     }
   }
 
-  DBUG_PRINT("info",("auto_increment: %lu", (ulong) nr));
+  DBUG_PRINT("info",("auto_increment: %lu", (uint32_t) nr));
 
   if (unlikely(table->next_number_field->store((longlong) nr, true)))
   {
@@ -3364,7 +3364,7 @@ int ha_init_key_cache(const char *name, KEY_CACHE *key_cache)
   if (!key_cache->key_cache_inited)
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
-    ulong tmp_buff_size= (ulong) key_cache->param_buff_size;
+    uint32_t tmp_buff_size= (uint32_t) key_cache->param_buff_size;
     uint tmp_block_size= (uint) key_cache->param_block_size;
     uint division_limit= key_cache->param_division_limit;
     uint age_threshold=  key_cache->param_age_threshold;
@@ -4271,7 +4271,7 @@ static void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost
 bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
                                          uint *buffer_size, COST_VECT *cost)
 {
-  ulong max_buff_entries, elem_size;
+  uint32_t max_buff_entries, elem_size;
   ha_rows rows_in_full_step, rows_in_last_step;
   uint n_full_steps;
   double index_read_cost;

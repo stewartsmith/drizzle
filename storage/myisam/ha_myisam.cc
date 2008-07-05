@@ -1656,7 +1656,7 @@ int ha_myisam::reset(void)
 
 /* To be used with WRITE_CACHE and EXTRA_CACHE */
 
-int ha_myisam::extra_opt(enum ha_extra_function operation, ulong cache_size)
+int ha_myisam::extra_opt(enum ha_extra_function operation, uint32_t cache_size)
 {
   if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_WRITE_CACHE)
     return 0;

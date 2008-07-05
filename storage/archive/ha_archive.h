@@ -94,7 +94,7 @@ public:
             HA_HAS_RECORDS |
             HA_FILE_BASED | HA_CAN_INSERT_DELAYED | HA_CAN_GEOMETRY);
   }
-  ulong index_flags(uint idx, uint part, bool all_parts) const
+  uint32_t index_flags(uint idx, uint part, bool all_parts) const
   {
     return HA_ONLY_WHOLE_INDEX;
   }
