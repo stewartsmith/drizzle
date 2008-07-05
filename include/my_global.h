@@ -848,11 +848,7 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #endif
 
 #ifndef ULL
-#ifdef HAVE_LONG_LONG
-#define ULL(A) A ## ULL
-#else
 #define ULL(A) A ## UL
-#endif
 #endif
 
 /*

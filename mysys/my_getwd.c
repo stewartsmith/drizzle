@@ -18,6 +18,7 @@
 #include "mysys_priv.h"
 #include <m_string.h>
 #include "mysys_err.h"
+#include "my_static.h"
 #ifdef HAVE_GETWD
 #include <sys/param.h>
 #endif

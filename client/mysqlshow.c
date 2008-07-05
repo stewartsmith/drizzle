@@ -146,7 +146,6 @@ int main(int argc, char **argv)
 #endif
   my_end(my_end_arg);
   exit(error ? 1 : 0);
-  return 0;				/* No compiler warnings */
 }
 
 static struct my_option my_long_options[] =

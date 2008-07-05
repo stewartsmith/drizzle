@@ -37,6 +37,8 @@
 #ifndef MYSQL_CLIENT
 #include "rpl_record.h"
 #include "rpl_reporting.h"
+#else
+#include "my_decimal.h"
 #endif
 
 /**
@@ -931,7 +933,8 @@ public:
     return (void*) my_malloc((uint)size, MYF(MY_WME|MY_FAE));
   }
 
-  static void operator delete(void *ptr, size_t size)
+  static void operator delete(void *ptr,
+                              size_t size __attribute__((__unused__)))
   {
     my_free((uchar*) ptr, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
   }
@@ -3096,15 +3099,6 @@ char *str_to_hex(char *to, const char *from, uint len);
     <td>2 bytes</td>
     <td>2 byte unsigned integer representing the maximum length of
     the string.</td>
-  </tr>
-
-  <tr>
-    <td>MYSQL_TYPE_BIT</td><td>16</td>
-    <td>2 bytes</td>
-    <td>A 1 byte unsigned int representing the length in bits of the
-    bitfield (0 to 64), followed by a 1 byte unsigned int
-    representing the number of bytes occupied by the bitfield.  The
-    number of bytes is either int((length+7)/8) or int(length/8).</td>
   </tr>
 
   <tr>

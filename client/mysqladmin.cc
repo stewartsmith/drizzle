@@ -403,7 +403,6 @@ int main(int argc,char *argv[])
   free_defaults(save_argv);
   my_end(my_end_arg);
   exit(error ? 1 : 0);
-  return 0;
 }
 
 

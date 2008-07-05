@@ -174,7 +174,7 @@ from information_schema.columns
 where table_name='t1';
 drop table t1;
 create table t1(f1 tinyint, f2 SMALLINT, f3 mediumint, f4 int,
-                f5 BIGINT, f6 BIT, f7 bit(64));
+                f5 BIGINT, f6 TINYINT, f7 SMALLINT);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
 from information_schema.columns
 where table_name='t1';

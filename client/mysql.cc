@@ -1298,7 +1298,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-sig_handler window_resize(int sig)
+sig_handler window_resize(int sig __attribute__((__unused__)))
 {
   struct winsize window_size;
 
@@ -3573,7 +3573,7 @@ print_tab_data(MYSQL_RES *result)
 }
 
 static int
-com_tee(String *buffer, char *line __attribute__((unused)))
+com_tee(String *buffer __attribute__((__unused__)), char *line )
 {
   char file_name[FN_REFLEN], *end, *param;
 
@@ -3849,7 +3849,7 @@ com_connect(String *buffer, char *line)
 }
 
 
-static int com_source(String *buffer, char *line)
+static int com_source(String *buffer __attribute__((__unused__)), char *line)
 {
   char source_name[FN_REFLEN], *end, *param;
   LINE_BUFFER *line_buff;
@@ -4719,7 +4719,7 @@ static void init_username()
   }
 }
 
-static int com_prompt(String *buffer, char *line)
+static int com_prompt(String *buffer __attribute__((__unused__)), char *line)
 {
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;

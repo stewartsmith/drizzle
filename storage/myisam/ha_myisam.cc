@@ -207,20 +207,12 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
         keydef[i].seg[j].null_bit= 0;
         keydef[i].seg[j].null_pos= 0;
       }
-      if (field->type() == MYSQL_TYPE_BLOB ||
-          field->type() == MYSQL_TYPE_GEOMETRY)
+      if (field->type() == MYSQL_TYPE_BLOB)
       {
         keydef[i].seg[j].flag|= HA_BLOB_PART;
         /* save number of bytes used to pack length */
         keydef[i].seg[j].bit_start= (uint) (field->pack_length() -
                                             share->blob_ptr_size);
-      }
-      else if (field->type() == MYSQL_TYPE_BIT)
-      {
-        keydef[i].seg[j].bit_length= ((Field_bit *) field)->bit_len;
-        keydef[i].seg[j].bit_start= ((Field_bit *) field)->bit_ofs;
-        keydef[i].seg[j].bit_pos= (uint) (((Field_bit *) field)->bit_ptr -
-                                          (uchar*) table_arg->record[0]);
       }
     }
     keyseg+= pos->key_parts;

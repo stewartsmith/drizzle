@@ -487,7 +487,7 @@ static int dump_all_tables_in_db(char *db);
 static int init_dumping_tables(char *);
 static int init_dumping(char *, int init_func(char*));
 static int dump_databases(char **);
-static int dump_all_databases();
+static int dump_all_databases(void);
 static char *quote_name(const char *name, char *buff, my_bool force);
 char check_if_ignore_table(const char *table_name, char *table_type);
 static char *primary_key_fields(const char *table_name);
@@ -526,7 +526,7 @@ static void verbose_msg(const char *fmt, ...)
     file        - checked file
 */
 
-void check_io(FILE *file)
+static void check_io(FILE *file)
 {
   if (ferror(file))
     die(EX_EOF, "Got errno %d on write", errno);
@@ -674,8 +674,8 @@ static void free_table_ent(char *key)
 }
 
 
-uchar* get_table_key(const char *entry, size_t *length,
-                     my_bool not_used __attribute__((unused)))
+static uchar* get_table_key(const char *entry, size_t *length,
+                            my_bool not_used __attribute__((unused)))
 {
   *length= strlen(entry);
   return (uchar*) entry;
@@ -1086,7 +1086,7 @@ static FILE* open_sql_file_for_table(const char* table)
 }
 
 
-static void free_resources()
+static void free_resources(void)
 {
   if (md_result_file && md_result_file != stdout)
     my_fclose(md_result_file, MYF(0));
@@ -2731,7 +2731,7 @@ static int init_dumping(char *database, int init_func(char*))
 
 /* Return 1 if we should copy the table */
 
-my_bool include_table(const uchar *hash_key, size_t len)
+static my_bool include_table(const uchar *hash_key, size_t len)
 {
   return !hash_search(&ignore_table, hash_key, len);
 }
@@ -3496,7 +3496,7 @@ int main(int argc, char **argv)
   exit_code= get_options(&argc, &argv);
   if (exit_code)
   {
-    free_resources(0);
+    free_resources();
     exit(exit_code);
   }
 
@@ -3504,14 +3504,14 @@ int main(int argc, char **argv)
   {
     if(!(stderror_file= freopen(log_error_file, "a+", stderr)))
     {
-      free_resources(0);
+      free_resources();
       exit(EX_MYSQLERR);
     }
   }
 
   if (connect_to_db(current_host, current_user, opt_password))
   {
-    free_resources(0);
+    free_resources();
     exit(EX_MYSQLERR);
   }
   if (!path)

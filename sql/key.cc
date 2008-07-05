@@ -194,20 +194,6 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
 	to_record[key_part->null_offset]&= ~key_part->null_bit;
       key_length--;
     }
-    if (key_part->type == HA_KEYTYPE_BIT)
-    {
-      Field_bit *field= (Field_bit *) (key_part->field);
-      if (field->bit_len)
-      {
-        uchar bits= *(from_key + key_part->length -
-                      field->pack_length_in_rec() - 1);
-        set_rec_bits(bits, to_record + key_part->null_offset +
-                     (key_part->null_bit == 128),
-                     field->bit_ofs, field->bit_len);
-        /* we have now used the byte with 'uneven' bits */
-        used_uneven_bits= 1;
-      }
-    }
     if (key_part->key_part_flag & HA_BLOB_PART)
     {
       /*

@@ -212,7 +212,7 @@ f1	longblob	4294967295	4294967295
 f2	longtext	4294967295	4294967295
 drop table t1;
 create table t1(f1 tinyint, f2 SMALLINT, f3 mediumint, f4 int,
-f5 BIGINT, f6 BIT, f7 bit(64));
+f5 BIGINT, f6 TINYINT, f7 SMALLINT);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
 from information_schema.columns
 where table_name='t1';
@@ -222,8 +222,8 @@ f2	5	0
 f3	7	0
 f4	10	0
 f5	19	0
-f6	1	NULL
-f7	64	NULL
+f6	3	0
+f7	5	0
 drop table t1;
 create table t1 (a int not null, b int);
 use information_schema;

@@ -3120,10 +3120,6 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
   case MYSQL_TYPE_INT24:
     field_length= field->max_display_length() - 1;
     break;
-  case MYSQL_TYPE_BIT:
-    field_length= field->max_display_length();
-    decimals= -1;                             // return NULL
-    break;
   case MYSQL_TYPE_FLOAT:  
   case MYSQL_TYPE_DOUBLE:
     field_length= field->field_length;

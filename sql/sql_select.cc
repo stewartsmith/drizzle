@@ -681,28 +681,6 @@ JOIN::prepare(Item ***rref_pointer_array,
       fix_inner_refs(thd, all_fields, select_lex, ref_pointer_array))
     DBUG_RETURN(-1);
 
-  if (group_list)
-  {
-    /*
-      Because HEAP tables can't index BIT fields we need to use an
-      additional hidden field for grouping because later it will be
-      converted to a LONG field. Original field will remain of the
-      BIT type and will be returned to a client.
-    */
-    for (ORDER *ord= group_list; ord; ord= ord->next)
-    {
-      if ((*ord->item)->type() == Item::FIELD_ITEM &&
-          (*ord->item)->field_type() == MYSQL_TYPE_BIT)
-      {
-        Item_field *field= new Item_field(thd, *(Item_field**)ord->item);
-        int el= all_fields.elements;
-        ref_pointer_array[el]= field;
-        all_fields.push_front(field);
-        ord->item= ref_pointer_array + el;
-      }
-    }
-  }
-
   /*
     Check if there are references to un-aggregated columns when computing 
     aggregate functions with implicit grouping (there is no GROUP BY).
@@ -11040,15 +11018,6 @@ Field *create_tmp_field(THD *thd, TABLE *table,Item *item, Item::Type type,
       if (result && modify_item)
         field->result_field= result;
     } 
-    else if (table_cant_handle_bit_fields && field->field->type() ==
-             MYSQL_TYPE_BIT)
-    {
-      *from_field= field->field;
-      result= create_tmp_field_from_item(thd, item, table, copy_func,
-                                        modify_item, convert_blob_length);
-      if (result && modify_item)
-        field->result_field= result;
-    }
     else
       result= create_tmp_field_from_field(thd, (*from_field= field->field),
                                           orig_item ? orig_item->name :
@@ -11370,8 +11339,6 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 	    *blob_field++= fieldnr;
 	    blob_count++;
 	  }
-          if (new_field->type() == MYSQL_TYPE_BIT)
-            total_uneven_bit_length+= new_field->field_length & 7;
 	  *(reg_field++)= new_field;
           if (new_field->real_type() == MYSQL_TYPE_STRING ||
               new_field->real_type() == MYSQL_TYPE_VARCHAR)
@@ -11437,8 +11404,6 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       reclength+=new_field->pack_length();
       if (!(new_field->flags & NOT_NULL_FLAG))
 	null_count++;
-      if (new_field->type() == MYSQL_TYPE_BIT)
-        total_uneven_bit_length+= new_field->field_length & 7;
       if (new_field->flags & BLOB_FLAG)
       {
         *blob_field++= fieldnr;
@@ -11583,13 +11548,6 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     }
     else
       field->move_field(pos,(uchar*) 0,0);
-    if (field->type() == MYSQL_TYPE_BIT)
-    {
-      /* We have to reserve place for extra bits among null bits */
-      ((Field_bit*) field)->set_bit_ptr(null_flags + null_count / 8,
-                                        null_count & 7);
-      null_count+= (field->field_length & 7);
-    }
     field->reset();
 
     /*
@@ -16619,30 +16577,12 @@ create_distinct_group(THD *thd, Item **ref_pointer_array,
       if (!ord)
 	return 0;
 
-      if (item->type() == Item::FIELD_ITEM &&
-          item->field_type() == MYSQL_TYPE_BIT)
-      {
-        /*
-          Because HEAP tables can't index BIT fields we need to use an
-          additional hidden field for grouping because later it will be
-          converted to a LONG field. Original field will remain of the
-          BIT type and will be returned to a client.
-        */
-        Item_field *new_item= new Item_field(thd, (Item_field*)item);
-        int el= all_fields.elements;
-        orig_ref_pointer_array[el]= new_item;
-        all_fields.push_front(new_item);
-        ord->item= orig_ref_pointer_array + el;
-      }
-      else
-      {
-        /*
-          We have here only field_list (not all_field_list), so we can use
-          simple indexing of ref_pointer_array (order in the array and in the
-          list are same)
-        */
-        ord->item= ref_pointer_array;
-      }
+      /*
+        We have here only field_list (not all_field_list), so we can use
+        simple indexing of ref_pointer_array (order in the array and in the
+        list are same)
+      */
+      ord->item= ref_pointer_array;
       ord->asc=1;
       *prev=ord;
       prev= &ord->next;
@@ -16782,11 +16722,6 @@ calc_group_buffer(JOIN *join,ORDER *group)
 	key_length+=MAX_BLOB_WIDTH;		// Can't be used as a key
       else if (type == MYSQL_TYPE_VARCHAR || type == MYSQL_TYPE_VAR_STRING)
         key_length+= field->field_length + HA_KEY_BLOB_LENGTH;
-      else if (type == MYSQL_TYPE_BIT)
-      {
-        /* Bit is usually stored as a longlong key for group fields */
-        key_length+= 8;                         // Big enough
-      }
       else
 	key_length+= field->pack_length();
     }

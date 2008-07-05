@@ -4187,10 +4187,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
     field= new Field_year((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name);
     break;
-  case MYSQL_TYPE_BIT:
-    field= new Field_bit_as_char(NULL, max_length, null_ptr, 0,
-                                 Field::NONE, name);
-    break;
   default:
     /* This case should never be chosen */
     DBUG_ASSERT(0);
@@ -4733,7 +4729,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   case MYSQL_TYPE_STRING:
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_VARCHAR:
-  case MYSQL_TYPE_BIT:
   case MYSQL_TYPE_NEWDECIMAL:
   {
     String *res;
@@ -6460,7 +6455,6 @@ uint32 Item_type_holder::display_length(Item *item)
   case MYSQL_TYPE_YEAR:
   case MYSQL_TYPE_NEWDATE:
   case MYSQL_TYPE_VARCHAR:
-  case MYSQL_TYPE_BIT:
   case MYSQL_TYPE_NEWDECIMAL:
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_SET:

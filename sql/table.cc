@@ -1154,14 +1154,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     reg_field->flags|= ((uint)column_format << COLUMN_FORMAT_FLAGS);
     reg_field->field_index= i;
     reg_field->comment=comment;
-    if (field_type == MYSQL_TYPE_BIT && !f_bit_as_char(pack_flag))
-    {
-      if ((null_bit_pos+= field_length & 7) > 7)
-      {
-        null_pos++;
-        null_bit_pos-= 8;
-      }
-    }
     if (!(reg_field->flags & NOT_NULL_FLAG))
     {
       if (!(null_bit_pos= (null_bit_pos + 1) & 7))
@@ -1258,9 +1250,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
           if (!(field->flags & BINARY_FLAG))
             keyinfo->flags|= HA_END_SPACE_KEY;
         }
-        if (field->type() == MYSQL_TYPE_BIT)
-          key_part->key_part_flag|= HA_BIT_PART;
-
         if (i == 0 && key != primary_key)
           field->flags |= (((keyinfo->flags & HA_NOSAME) &&
                            (keyinfo->key_parts == 1)) ?

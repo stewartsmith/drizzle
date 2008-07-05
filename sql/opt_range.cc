@@ -9961,10 +9961,7 @@ print_key(KEY_PART *key_part, const uchar *key, uint used_length)
       store_length--;
     }
     field->set_key_image(key, key_part->length);
-    if (field->type() == MYSQL_TYPE_BIT)
-      (void) field->val_int_as_str(&tmp, 1);
-    else
-      field->val_str(&tmp);
+    field->val_str(&tmp);
     fwrite(tmp.ptr(),sizeof(char),tmp.length(),DBUG_FILE);
     if (key+store_length < key_end)
       fputc('/',DBUG_FILE);

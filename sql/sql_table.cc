@@ -1809,12 +1809,6 @@ int prepare_create_field(Create_field *sql_field,
   case MYSQL_TYPE_NULL:
     sql_field->pack_flag=f_settype((uint) sql_field->sql_type);
     break;
-  case MYSQL_TYPE_BIT:
-    /* 
-      We have sql_field->pack_flag already set here, see
-      mysql_prepare_create_table().
-    */
-    break;
   case MYSQL_TYPE_NEWDECIMAL:
     sql_field->pack_flag=(FIELDFLAG_NUMBER |
                           (sql_field->flags & UNSIGNED_FLAG ? 0 :
@@ -2101,15 +2095,6 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         sql_field->length= field_length;
       }
       set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
-    }
-
-    if (sql_field->sql_type == MYSQL_TYPE_BIT)
-    { 
-      sql_field->pack_flag= FIELDFLAG_NUMBER;
-      if (file->ha_table_flags() & HA_CAN_BIT_FIELD)
-        total_uneven_bit_length+= sql_field->length & 7;
-      else
-        sql_field->pack_flag|= FIELDFLAG_TREAT_BIT_AS_CHAR;
     }
 
     sql_field->create_length_to_internal_length();
@@ -2750,11 +2735,6 @@ void sp_prepare_create_field(THD *thd, Create_field *sql_field)
     set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
   }
 
-  if (sql_field->sql_type == MYSQL_TYPE_BIT)
-  {
-    sql_field->pack_flag= FIELDFLAG_NUMBER |
-                          FIELDFLAG_TREAT_BIT_AS_CHAR;
-  }
   sql_field->create_length_to_internal_length();
   DBUG_ASSERT(sql_field->def == 0);
   /* Can't go wrong as sql_field->def is not defined */

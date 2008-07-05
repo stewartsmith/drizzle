@@ -96,21 +96,6 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
   case MYSQL_TYPE_DATETIME:
     length= 8;
     break;
-  case MYSQL_TYPE_BIT:
-  {
-    /*
-      Decode the size of the bit field from the master.
-        from_len is the length in bytes from the master
-        from_bit_len is the number of extra bits stored in the master record
-      If from_bit_len is not 0, add 1 to the length to account for accurate
-      number of bytes needed.
-    */
-    uint from_len= (m_field_metadata[col] >> 8U) & 0x00ff;
-    uint from_bit_len= m_field_metadata[col] & 0x00ff;
-    DBUG_ASSERT(from_bit_len <= 7);
-    length= from_len + ((from_bit_len > 0) ? 1 : 0);
-    break;
-  }
   case MYSQL_TYPE_VARCHAR:
   {
     length= m_field_metadata[col] > 255 ? 2 : 1; // c&p of Field_varstring::data_length()

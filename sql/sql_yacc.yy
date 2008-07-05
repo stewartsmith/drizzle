@@ -1861,12 +1861,7 @@ type:
         | BIT_SYM
           {
             Lex->length= (char*) "1";
-            $$=MYSQL_TYPE_BIT;
-          }
-        | BIT_SYM '(' NUM ')'
-          {
-            Lex->length= $3.str;
-            $$=MYSQL_TYPE_BIT;
+            $$=FIELD_TYPE_TINY;
           }
         | BOOL_SYM
           {
