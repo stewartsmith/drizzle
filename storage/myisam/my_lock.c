@@ -13,15 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys_priv.h"
-#include "mysys_err.h"
+#include <my_global.h>
+#include <my_sys.h>
+#include <mysys_err.h>
+
 #include <errno.h>
 #undef MY_HOW_OFTEN_TO_ALARM
 #define MY_HOW_OFTEN_TO_ALARM ((int) my_time_to_wait_for_lock)
 #ifdef NO_ALARM_LOOP
 #undef NO_ALARM_LOOP
 #endif
-#include <my_alarm.h>
 
 
 /*
