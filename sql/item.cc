@@ -6464,8 +6464,6 @@ uint32 Item_type_holder::display_length(Item *item)
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_STRING:
-  case MYSQL_TYPE_GEOMETRY:
-    return item->max_length;
   case MYSQL_TYPE_TINY:
     return 4;
   case MYSQL_TYPE_SHORT:

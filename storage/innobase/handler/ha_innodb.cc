@@ -2701,7 +2701,6 @@ get_innobase_type_from_mysql_type(
 		return(DATA_DOUBLE);
 	case MYSQL_TYPE_DECIMAL:
 		return(DATA_DECIMAL);
-	case MYSQL_TYPE_GEOMETRY:
 	case MYSQL_TYPE_TINY_BLOB:
 	case MYSQL_TYPE_MEDIUM_BLOB:
 	case MYSQL_TYPE_BLOB:

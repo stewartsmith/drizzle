@@ -3169,13 +3169,6 @@ char *str_to_hex(char *to, const char *from, uint len);
     the representation of size of the string: 3 or 4.</td>
   </tr>
 
-  <tr>
-    <td>MYSQL_TYPE_GEOMETRY</td><td>255</td>
-    <td>1 byte</td>
-    <td>The pack length, i.e., the number of bytes needed to represent
-    the length of the geometry: 1, 2, 3, or 4.</td>
-  </tr>
-
   </table>
 */
 class Table_map_log_event : public Log_event

@@ -107,7 +107,6 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
   case MYSQL_TYPE_MEDIUM_BLOB:
   case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
-  case MYSQL_TYPE_GEOMETRY:
   {
     /*
       Compute the length of the data. We cannot use get_length() here
