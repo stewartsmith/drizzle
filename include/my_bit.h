@@ -3,7 +3,6 @@
 */
 
 C_MODE_START
-#ifdef HAVE_INLINE
 
 extern const char _my_bits_nbits[256];
 extern const uchar _my_bits_reverse_table[256];
@@ -98,12 +97,4 @@ static inline uint32 my_reverse_bits(uint32 key)
      _my_bits_reverse_table[(key>>24)      ];
 }
 
-#else  /* HAVE_INLINE */
-extern uint my_bit_log2(ulong value);
-extern uint32 my_round_up_to_next_power(uint32 v);
-uint32 my_clear_highest_bit(uint32 v);
-uint32 my_reverse_bits(uint32 key);
-extern uint my_count_bits(ulonglong v);
-extern uint my_count_bits_ushort(ushort v);
-#endif /* HAVE_INLINE */
 C_MODE_END
