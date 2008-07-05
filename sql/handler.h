@@ -1649,8 +1649,6 @@ public:
   int check_old_types();
   virtual int assign_to_keycache(THD* thd, HA_CHECK_OPT* check_opt)
   { return HA_ADMIN_NOT_IMPLEMENTED; }
-  virtual int preload_keys(THD* thd, HA_CHECK_OPT* check_opt)
-  { return HA_ADMIN_NOT_IMPLEMENTED; }
   /* end of the list of admin commands */
 
   virtual int indexes_are_disabled(void) {return 0;}

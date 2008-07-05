@@ -495,7 +495,7 @@ static my_bool dropdb_handlerton(THD *unused1, plugin_ref plugin,
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->drop_database)
     hton->drop_database(hton, (char *)path);
-  return FALSE;
+  return false;
 }
 
 
@@ -516,7 +516,7 @@ static my_bool closecon_handlerton(THD *thd, plugin_ref plugin,
   if (hton->state == SHOW_OPTION_YES && hton->close_connection &&
       thd_get_ha_data(thd, hton))
     hton->close_connection(hton, thd);
-  return FALSE;
+  return false;
 }
 
 
@@ -911,9 +911,9 @@ int ha_prepare(THD *thd)
   As a side effect, propagates the read-only/read-write flags
   of the statement transaction to its enclosing normal transaction.
 
-  @retval TRUE   we must run a two-phase commit. Returned
+  @retval true   we must run a two-phase commit. Returned
                  if we have at least two engines with read-write changes.
-  @retval FALSE  Don't need two-phase commit. Even if we have two
+  @retval false  Don't need two-phase commit. Even if we have two
                  transactional engines, we can run two independent
                  commits if changes in one of the engines are read-only.
 */
@@ -943,7 +943,7 @@ ha_check_and_coalesce_trx_read_only(THD *thd, Ha_trx_info *ha_list,
         that ha_info_all is registered in thd->transaction.all.
         Since otherwise we only clutter the normal transaction flags.
       */
-      if (ha_info_all->is_started()) /* FALSE if autocommit. */
+      if (ha_info_all->is_started()) /* false if autocommit. */
         ha_info_all->coalesce_trx_with(ha_info);
     }
     else if (rw_ha_count > 1)
@@ -1179,7 +1179,7 @@ int ha_rollback_trans(THD *thd, bool all)
     }
   }
   if (all)
-    thd->transaction_rollback_request= FALSE;
+    thd->transaction_rollback_request= false;
 
   /*
     If a non-transactional table was updated, warn; don't warn if this is a
@@ -1246,7 +1246,7 @@ static my_bool xacommit_handlerton(THD *unused1, plugin_ref plugin,
     hton->commit_by_xid(hton, ((struct xahton_st *)arg)->xid);
     ((struct xahton_st *)arg)->result= 0;
   }
-  return FALSE;
+  return false;
 }
 
 static my_bool xarollback_handlerton(THD *unused1, plugin_ref plugin,
@@ -1258,7 +1258,7 @@ static my_bool xarollback_handlerton(THD *unused1, plugin_ref plugin,
     hton->rollback_by_xid(hton, ((struct xahton_st *)arg)->xid);
     ((struct xahton_st *)arg)->result= 0;
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -1289,7 +1289,7 @@ static char* xid_to_str(char *buf, XID *xid)
   {
     uchar c=(uchar)xid->data[i];
     /* is_next_dig is set if next character is a number */
-    bool is_next_dig= FALSE;
+    bool is_next_dig= false;
     if (i < XIDDATASIZE)
     {
       char ch= xid->data[i+1];
@@ -1411,7 +1411,7 @@ static my_bool xarecover_handlerton(THD *unused, plugin_ref plugin,
         break;
     }
   }
-  return FALSE;
+  return false;
 }
 
 int ha_recover(HASH *commit_list)
@@ -1444,7 +1444,7 @@ int ha_recover(HASH *commit_list)
 
   DBUG_ASSERT(total_ha_2pc == (ulong) opt_bin_log+1); // only InnoDB and binlog
   tc_heuristic_recover= TC_HEURISTIC_RECOVER_ROLLBACK; // forcing ROLLBACK
-  info.dry_run=FALSE;
+  info.dry_run=false;
 #endif
 
 
@@ -1513,9 +1513,9 @@ bool mysql_xa_recover(THD *thd)
     if (xs->xa_state==XA_PREPARED)
     {
       protocol->prepare_for_resend();
-      protocol->store_longlong((longlong)xs->xid.formatID, FALSE);
-      protocol->store_longlong((longlong)xs->xid.gtrid_length, FALSE);
-      protocol->store_longlong((longlong)xs->xid.bqual_length, FALSE);
+      protocol->store_longlong((longlong)xs->xid.formatID, false);
+      protocol->store_longlong((longlong)xs->xid.gtrid_length, false);
+      protocol->store_longlong((longlong)xs->xid.bqual_length, false);
       protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length,
                       &my_charset_bin);
       if (protocol->write())
@@ -1557,7 +1557,7 @@ static my_bool release_temporary_latches(THD *thd, plugin_ref plugin,
   if (hton->state == SHOW_OPTION_YES && hton->release_temporary_latches)
     hton->release_temporary_latches(hton, thd);
 
-  return FALSE;
+  return false;
 }
 
 
@@ -1694,7 +1694,7 @@ static my_bool snapshot_handlerton(THD *thd, plugin_ref plugin,
     hton->start_consistent_snapshot(hton, thd);
     *((bool *)arg)= false;
   }
-  return FALSE;
+  return false;
 }
 
 int ha_start_consistent_snapshot(THD *thd)
@@ -1721,8 +1721,8 @@ static my_bool flush_handlerton(THD *thd, plugin_ref plugin,
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->flush_logs && 
       hton->flush_logs(hton))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 
@@ -1732,15 +1732,15 @@ bool ha_flush_logs(handlerton *db_type)
   {
     if (plugin_foreach(NULL, flush_handlerton,
                           MYSQL_STORAGE_ENGINE_PLUGIN, 0))
-      return TRUE;
+      return true;
   }
   else
   {
     if (db_type->state != SHOW_OPTION_YES ||
         (db_type->flush_logs && db_type->flush_logs(db_type)))
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 static const char *check_lowercase_names(handler *file, const char *path,
@@ -1788,7 +1788,7 @@ handle_error(uint sql_errno,
 {
   /* Grab the error message */
   strmake(buff, message, sizeof(buff)-1);
-  return TRUE;
+  return true;
 }
 
 
@@ -1973,7 +1973,7 @@ int handler::rnd_pos_by_record(uchar *record)
   position(record);
   if (inited && (error= ha_index_end()))
     DBUG_RETURN(error);
-  if ((error= ha_rnd_init(FALSE)))
+  if ((error= ha_rnd_init(false)))
     DBUG_RETURN(error);
 
   DBUG_RETURN(rnd_pos(record, ref));
@@ -2166,7 +2166,7 @@ prev_insert_id(uint64_t nr, struct system_variables *variables)
 int handler::update_auto_increment()
 {
   uint64_t nr, nb_reserved_values;
-  bool append= FALSE;
+  bool append= false;
   THD *thd= table->in_use;
   struct system_variables *variables= &thd->variables;
   DBUG_ENTER("handler::update_auto_increment");
@@ -2258,7 +2258,7 @@ int handler::update_auto_increment()
     if (table->s->next_number_keypart == 0)
     {
       /* We must defer the appending until "nr" has been possibly truncated */
-      append= TRUE;
+      append= true;
     }
     else
     {
@@ -2274,7 +2274,7 @@ int handler::update_auto_increment()
 
   DBUG_PRINT("info",("auto_increment: %lu", (ulong) nr));
 
-  if (unlikely(table->next_number_field->store((longlong) nr, TRUE)))
+  if (unlikely(table->next_number_field->store((longlong) nr, true)))
   {
     /*
       first test if the query was aborted due to strict mode constraints
@@ -2291,7 +2291,7 @@ int handler::update_auto_increment()
       interval will cause a duplicate key).
     */
     nr= prev_insert_id(table->next_number_field->val_int(), variables);
-    if (unlikely(table->next_number_field->store((longlong) nr, TRUE)))
+    if (unlikely(table->next_number_field->store((longlong) nr, true)))
       nr= table->next_number_field->val_int();
   }
   if (append)
@@ -2631,7 +2631,7 @@ void handler::print_error(int error, myf errflag)
     {
       /* The error was "unknown" to this function.
 	 Ask handler if it has got a message for this error */
-      bool temporary= FALSE;
+      bool temporary= false;
       String str;
       temporary= get_error_message(error, &str);
       if (!str.is_empty())
@@ -2663,7 +2663,7 @@ void handler::print_error(int error, myf errflag)
 */
 bool handler::get_error_message(int error, String* buf)
 {
-  return FALSE;
+  return false;
 }
 
 
@@ -3464,9 +3464,9 @@ static my_bool discover_handlerton(THD *thd, plugin_ref plugin,
       (!(hton->discover(hton, thd, vargs->db, vargs->name, 
                         vargs->frmblob, 
                         vargs->frmlen))))
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 int ha_discover(THD *thd, const char *db, const char *name,
@@ -3533,9 +3533,9 @@ static my_bool table_exists_in_engine_handlerton(THD *thd, plugin_ref plugin,
 
   vargs->err = err;
   if (vargs->err == HA_ERR_TABLE_EXIST)
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 int ha_table_exists_in_engine(THD* thd, const char* db, const char* name)
@@ -3775,7 +3775,7 @@ handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
   mrr_iter= seq_funcs->init(seq_init_param, n_ranges, mode);
   mrr_funcs= *seq_funcs;
   mrr_is_output_sorted= test(mode & HA_MRR_SORTED);
-  mrr_have_range= FALSE;
+  mrr_have_range= false;
   DBUG_RETURN(0);
 }
 
@@ -3801,7 +3801,7 @@ int handler::multi_range_read_next(char **range_info)
 
   if (!mrr_have_range)
   {
-    mrr_have_range= TRUE;
+    mrr_have_range= true;
     goto start;
   }
 
@@ -3884,7 +3884,7 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   DBUG_ASSERT(h2 == NULL);
   if (mode & HA_MRR_USE_DEFAULT_IMPL || mode & HA_MRR_SORTED)
   {
-    use_default_impl= TRUE;
+    use_default_impl= true;
     DBUG_RETURN(h->handler::multi_range_read_init(seq_funcs, seq_init_param,
                                                   n_ranges, mode, buf));
   }
@@ -3922,11 +3922,11 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   table->prepare_for_position();
   new_h2->extra(HA_EXTRA_KEYREAD);
 
-  if (h2->ha_index_init(keyno, FALSE) || 
+  if (h2->ha_index_init(keyno, false) || 
       h2->handler::multi_range_read_init(seq_funcs, seq_init_param, n_ranges,
                                          mode, buf))
     goto error;
-  use_default_impl= FALSE;
+  use_default_impl= false;
   
   if (pushed_cond)
     h2->idx_cond_push(keyno, pushed_cond);
@@ -3940,7 +3940,7 @@ int DsMrr_impl::dsmrr_init(handler *h, KEY *key,
   if (dsmrr_eof) 
     buf->end_of_used_area= rowids_buf_last;
 
-  if (h->ha_rnd_init(FALSE))
+  if (h->ha_rnd_init(false))
     goto error;
   
   DBUG_RETURN(0);
@@ -3963,7 +3963,7 @@ void DsMrr_impl::dsmrr_close()
     delete h2;
     h2= NULL;
   }
-  use_default_impl= TRUE;
+  use_default_impl= true;
   DBUG_VOID_RETURN;
 }
 
@@ -4161,8 +4161,8 @@ ha_rows DsMrr_impl::dsmrr_info_const(uint keyno, RANGE_SEQ_IF *seq,
     Allow use of DS-MRR in cases where the index has partially-covered
     components but they are not used for scanning.
 
-  @retval TRUE   Yes
-  @retval FALSE  No
+  @retval true   Yes
+  @retval false  No
 */
 
 bool DsMrr_impl::key_uses_partial_cols(uint keyno)
@@ -4172,9 +4172,9 @@ bool DsMrr_impl::key_uses_partial_cols(uint keyno)
   for (; kp != kp_end; kp++)
   {
     if (!kp->field->part_of_key.is_set(keyno))
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -4197,8 +4197,8 @@ bool DsMrr_impl::key_uses_partial_cols(uint keyno)
                 OUT  If DS-MRR is choosen, cost of DS-MRR scan
                      else the value is not modified
 
-  @retval TRUE   Default MRR implementation should be used
-  @retval FALSE  DS-MRR implementation should be used
+  @retval true   Default MRR implementation should be used
+  @retval false  DS-MRR implementation should be used
 */
 
 bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
@@ -4215,13 +4215,13 @@ bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
   {
     /* Use the default implementation */
     *flags |= HA_MRR_USE_DEFAULT_IMPL;
-    return TRUE;
+    return true;
   }
   
   uint add_len= table->key_info[keyno].key_length + h->ref_length; 
   *bufsz -= add_len;
   if (get_disk_sweep_mrr_cost(keyno, rows, *flags, bufsz, &dsmrr_cost))
-    return TRUE;
+    return true;
   *bufsz += add_len;
   
   bool force_dsmrr;
@@ -4240,12 +4240,12 @@ bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
     *flags &= ~HA_MRR_USE_DEFAULT_IMPL;  /* Use the DS-MRR implementation */
     *flags &= ~HA_MRR_SORTED;          /* We will return unordered output */
     *cost= dsmrr_cost;
-    res= FALSE;
+    res= false;
   }
   else
   {
     /* Use the default MRR implementation */
-    res= TRUE;
+    res= true;
   }
   return res;
 }
@@ -4263,8 +4263,8 @@ static void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost
   @param buffer_size INOUT  Buffer size
   @param cost        OUT    The cost
 
-  @retval FALSE  OK
-  @retval TRUE   Error, DS-MRR cannot be used (the buffer is too small
+  @retval false  OK
+  @retval true   Error, DS-MRR cannot be used (the buffer is too small
                  for even 1 rowid)
 */
 
@@ -4280,7 +4280,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
   max_buff_entries = *buffer_size / elem_size;
 
   if (!max_buff_entries)
-    return TRUE; /* Buffer has not enough space for even 1 rowid */
+    return true; /* Buffer has not enough space for even 1 rowid */
 
   /* Number of iterations we'll make with full buffer */
   n_full_steps= (uint)floor(rows2double(rows) / max_buff_entries);
@@ -4319,7 +4319,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
   /* Total cost of all index accesses */
   index_read_cost= h->index_only_read_time(keynr, (double)rows);
   cost->add_io(index_read_cost, 1 /* Random seeks */);
-  return FALSE;
+  return false;
 }
 
 
@@ -4343,7 +4343,7 @@ void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost)
 {
   if (nrows)
   {
-    get_sweep_read_cost(table, nrows, FALSE, cost);
+    get_sweep_read_cost(table, nrows, false, cost);
     /* Add cost of qsort call: n * log2(n) * cost(rowid_comparison) */
     double cmp_op= rows2double(nrows) * (1.0 / TIME_FOR_COMPARE_ROWID);
     if (cmp_op < 3)
@@ -4393,8 +4393,8 @@ void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost)
 
   @param table             Table to be accessed
   @param nrows             Number of rows to retrieve
-  @param interrupted       TRUE <=> Assume that the disk sweep will be
-                           interrupted by other disk IO. FALSE - otherwise.
+  @param interrupted       true <=> Assume that the disk sweep will be
+                           interrupted by other disk IO. false - otherwise.
   @param cost         OUT  The cost.
 */
 
@@ -4617,7 +4617,7 @@ static my_bool exts_handlerton(THD *unused, plugin_ref plugin,
     }
     delete file;
   }
-  return FALSE;
+  return false;
 }
 
 TYPELIB *ha_known_exts(void)
@@ -4659,8 +4659,8 @@ static bool stat_print(THD *thd, const char *type, uint type_len,
   protocol->store(file, file_len, system_charset_info);
   protocol->store(status, status_len, system_charset_info);
   if (protocol->write())
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
@@ -4675,7 +4675,7 @@ bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
 
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return TRUE;
+    return true;
 
   result= db_type->show_status &&
     db_type->show_status(db_type, thd, stat_print, stat) ? 1 : 0;

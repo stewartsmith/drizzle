@@ -40,7 +40,7 @@ Item_subselect::Item_subselect():
   Item_result_field(), value_assigned(0), thd(0), substitution(0),
   engine(0), old_engine(0), used_tables_cache(0), have_to_be_excluded(0),
   const_item_cache(1), engine_changed(0), changed(0),
-  is_correlated(FALSE)
+  is_correlated(false)
 {
   with_subselect= 1;
   reset();
@@ -141,7 +141,7 @@ void Item_in_subselect::cleanup()
     delete left_expr_cache;
     left_expr_cache= NULL;
   }
-  first_execution= TRUE;
+  first_execution= true;
   Item_subselect::cleanup();
   DBUG_VOID_RETURN;
 }
@@ -169,7 +169,7 @@ bool Item_subselect::fix_fields(THD *thd_param, Item **ref)
   engine->set_thd((thd= thd_param));
 
   if (check_stack_overrun(thd, STACK_MIN_SIZE, (uchar*)&res))
-    return TRUE;
+    return true;
 
   res= engine->prepare();
 
@@ -209,7 +209,7 @@ bool Item_subselect::fix_fields(THD *thd_param, Item **ref)
     if (engine->cols() > max_columns)
     {
       my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
-      return TRUE;
+      return true;
     }
     fix_length_and_dec();
   }
@@ -318,8 +318,8 @@ bool Item_in_subselect::exec()
   {
     /* Always compute IN for the first row as the cache is not valid for it. */
     if (!first_execution)
-      DBUG_RETURN(FALSE);
-    first_execution= FALSE;
+      DBUG_RETURN(false);
+    first_execution= false;
   }
 
   /*
@@ -414,7 +414,7 @@ Item_maxmin_subselect::Item_maxmin_subselect(THD *thd_param,
                                              Item_subselect *parent,
 					     st_select_lex *select_lex,
 					     bool max_arg)
-  :Item_singlerow_subselect(), was_values(TRUE)
+  :Item_singlerow_subselect(), was_values(true)
 {
   DBUG_ENTER("Item_maxmin_subselect::Item_maxmin_subselect");
   max= max_arg;
@@ -445,14 +445,14 @@ void Item_maxmin_subselect::cleanup()
   Item_singlerow_subselect::cleanup();
 
   /*
-    By default it is TRUE to avoid TRUE reporting by
+    By default it is true to avoid true reporting by
     Item_func_not_all/Item_func_nop_all if this item was never called.
 
-    Engine exec() set it to FALSE by reset_value_registration() call.
-    select_max_min_finder_subselect::send_data() set it back to TRUE if some
+    Engine exec() set it to false by reset_value_registration() call.
+    select_max_min_finder_subselect::send_data() set it back to true if some
     value will be found.
   */
-  was_values= TRUE;
+  was_values= true;
   DBUG_VOID_RETURN;
 }
 
@@ -714,7 +714,7 @@ bool Item_in_subselect::test_limit(st_select_lex_unit *unit_arg)
 
 Item_in_subselect::Item_in_subselect(Item * left_exp,
 				     st_select_lex *select_lex):
-  Item_exists_subselect(), left_expr_cache(0), first_execution(TRUE),
+  Item_exists_subselect(), left_expr_cache(0), first_execution(true),
   optimizer(0), pushed_cond_guards(NULL), exec_method(NOT_TRANSFORMED),
   upper_item(0)
 {
@@ -894,7 +894,7 @@ bool Item_in_subselect::val_bool()
     reset();
     /* 
       Must mark the IN predicate as NULL so as to make sure an enclosing NOT
-      predicate will return FALSE. See the comments in 
+      predicate will return false. See the comments in 
       subselect_uniquesubquery_engine::copy_ref_key for further details.
     */
     null_value= 1;
@@ -1093,7 +1093,7 @@ Item_in_subselect::single_value_transformer(JOIN *join,
   {
     if (!(pushed_cond_guards= (bool*)join->thd->alloc(sizeof(bool))))
       DBUG_RETURN(RES_ERROR);
-    pushed_cond_guards[0]= TRUE;
+    pushed_cond_guards[0]= true;
   }
 
   /*
@@ -1120,12 +1120,12 @@ Item_in_subselect::single_value_transformer(JOIN *join,
                                trigcond(oe $cmp$ ref_or_null_helper<ie>)
                                    
     the addition is wrapped into trigger only when we want to distinguish
-    between NULL and FALSE results.
+    between NULL and false results.
 
   - Otherwise (no aggregates/GROUP BY/HAVING) convert it to one of the
     following:
 
-    = If we don't need to distinguish between NULL and FALSE subquery:
+    = If we don't need to distinguish between NULL and false subquery:
         
       SELECT 1 FROM ... WHERE (oe $cmp$ ie) AND subq_where
 
@@ -1235,7 +1235,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, Comp_creat
       }
       /* 
         If we may encounter NULL IN (SELECT ...) and care whether subquery
-        result is NULL or FALSE, wrap condition in a trig_cond.
+        result is NULL or false, wrap condition in a trig_cond.
       */
       if (!abort_on_null && left_expr->maybe_null)
       {
@@ -1366,7 +1366,7 @@ Item_in_subselect::row_value_transformer(JOIN *join)
                                                         left_expr->cols())))
         DBUG_RETURN(RES_ERROR);
       for (uint i= 0; i < cols_num; i++)
-        pushed_cond_guards[i]= TRUE;
+        pushed_cond_guards[i]= true;
     }
   }
 
@@ -1759,14 +1759,14 @@ bool Item_in_subselect::fix_fields(THD *thd_arg, Item **ref)
     execution.
 
   @returns
-    @retval TRUE  memory allocation error occurred
-    @retval FALSE an execution method was chosen successfully
+    @retval true  memory allocation error occurred
+    @retval false an execution method was chosen successfully
 */
 
 bool Item_in_subselect::setup_engine()
 {
   subselect_hash_sj_engine *new_engine= NULL;
-  bool res= FALSE;
+  bool res= false;
 
   DBUG_ENTER("Item_in_subselect::setup_engine");
 
@@ -1833,20 +1833,20 @@ bool Item_in_subselect::setup_engine()
   but it takes a different kind of collection of items, and the
   list we push to is dynamically allocated.
 
-  @retval TRUE  if a memory allocation error occurred or the cache is
+  @retval true  if a memory allocation error occurred or the cache is
                 not applicable to the current query
-  @retval FALSE if success
+  @retval false if success
 */
 
 bool Item_in_subselect::init_left_expr_cache()
 {
   JOIN *outer_join;
   Next_select_func end_select;
-  bool use_result_field= FALSE;
+  bool use_result_field= false;
 
   outer_join= unit->outer_select()->join;
   if (!outer_join || !outer_join->tables)
-    return TRUE;
+    return true;
   /*
     If we use end_[send | write]_group to handle complete rows of the outer
     query, make the cache of the left IN operand use Item_field::result_field
@@ -1858,10 +1858,10 @@ bool Item_in_subselect::init_left_expr_cache()
   */
   end_select= outer_join->join_tab[outer_join->tables-1].next_select;
   if (end_select == end_send_group || end_select == end_write_group)
-    use_result_field= TRUE;
+    use_result_field= true;
 
   if (!(left_expr_cache= new List<Cached_item>))
-    return TRUE;
+    return true;
 
   for (uint i= 0; i < left_expr->cols(); i++)
   {
@@ -1869,9 +1869,9 @@ bool Item_in_subselect::init_left_expr_cache()
                                                  left_expr->element_index(i),
                                                  use_result_field);
     if (!cur_item_cache || left_expr_cache->push_front(cur_item_cache))
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -1884,8 +1884,8 @@ bool Item_in_subselect::init_left_expr_cache()
     make_cond_for_table() in such a way that it is unchanged when we use
     the IN=>EXISTS transformation to compute IN.
 
-  @retval TRUE  if the predicate is expensive
-  @retval FALSE otherwise
+  @retval true  if the predicate is expensive
+  @retval false otherwise
 */
 
 bool Item_in_subselect::is_expensive_processor(uchar *arg)
@@ -1975,8 +1975,8 @@ bool subselect_union_engine::is_executed() const
     return value is undefined if last execution ended in an error.
 
   RETURN
-    TRUE  - Last subselect execution has produced no rows
-    FALSE - Otherwise
+    true  - Last subselect execution has produced no rows
+    false - Otherwise
 */
 
 bool subselect_union_engine::no_rows()
@@ -2067,7 +2067,7 @@ int subselect_union_engine::prepare()
 int subselect_uniquesubquery_engine::prepare()
 {
   /* Should never be called. */
-  DBUG_ASSERT(FALSE);
+  DBUG_ASSERT(false);
   return 1;
 }
 
@@ -2083,8 +2083,8 @@ int subselect_uniquesubquery_engine::prepare()
     return value is undefined if last execution ended in an error.
 
   RETURN
-    TRUE  - Last subselect execution has produced no rows
-    FALSE - Otherwise
+    true  - Last subselect execution has produced no rows
+    false - Otherwise
 */
 
 bool subselect_single_select_engine::no_rows()
@@ -2168,7 +2168,7 @@ int subselect_single_select_engine::exec()
     unit->set_limit(unit->global_parameters);
     if (join->flatten_subqueries())
     {
-      thd->is_fatal_error= TRUE;
+      thd->is_fatal_error= true;
       DBUG_RETURN(1);
     }
     if (join->optimize())
@@ -2289,12 +2289,12 @@ int subselect_union_engine::exec()
     Scan the table using sequential access until we find at least one row
     satisfying select condition.
     
-    The caller must set this->empty_result_set=FALSE before calling this
-    function. This function will set it to TRUE if it finds a matching row.
+    The caller must set this->empty_result_set=false before calling this
+    function. This function will set it to true if it finds a matching row.
 
   RETURN
-    FALSE - OK
-    TRUE  - Error
+    false - OK
+    true  - Error
 */
 
 int subselect_uniquesubquery_engine::scan_table()
@@ -2324,7 +2324,7 @@ int subselect_uniquesubquery_engine::scan_table()
 
     if (!cond || cond->val_int())
     {
-      empty_result_set= FALSE;
+      empty_result_set= false;
       break;
     }
   }
@@ -2344,35 +2344,35 @@ int subselect_uniquesubquery_engine::scan_table()
     Copy ref key and check for null parts in it.
     Depending on the nullability and conversion problems this function
     recognizes and processes the following states :
-      1. Partial match on top level. This means IN has a value of FALSE
+      1. Partial match on top level. This means IN has a value of false
          regardless of the data in the subquery table.
          Detected by finding a NULL in the left IN operand of a top level
          expression.
-         We may actually skip reading the subquery, so return TRUE to skip
+         We may actually skip reading the subquery, so return true to skip
          the table scan in subselect_uniquesubquery_engine::exec and make
-         the value of the IN predicate a NULL (that is equal to FALSE on
+         the value of the IN predicate a NULL (that is equal to false on
          top level).
       2. No exact match when IN is nested inside another predicate.
          Detected by finding a NULL in the left IN operand when IN is not
          a top level predicate.
          We cannot have an exact match. But we must proceed further with a
          table scan to find out if it's a partial match (and IN has a value
-         of NULL) or no match (and IN has a value of FALSE).
-         So we return FALSE to continue with the scan and see if there are
+         of NULL) or no match (and IN has a value of false).
+         So we return false to continue with the scan and see if there are
          any record that would constitute a partial match (as we cannot
          determine that from the index).
       3. Error converting the left IN operand to the column type of the
          right IN operand. This counts as no match (and IN has the value of
-         FALSE). We mark the subquery table cursor as having no more rows
+         false). We mark the subquery table cursor as having no more rows
          (to ensure that the processing that follows will not find a match)
-         and return FALSE, so IN is not treated as returning NULL.
+         and return false, so IN is not treated as returning NULL.
 
 
   RETURN
-    FALSE - The value of the IN predicate is not known. Proceed to find the
+    false - The value of the IN predicate is not known. Proceed to find the
             value of the IN predicate using the determined values of
             null_keypart and table->status.
-    TRUE  - IN predicate has a value of NULL. Stop the processing right there
+    true  - IN predicate has a value of NULL. Stop the processing right there
             and return NULL to the outer predicates.
 */
 
@@ -2413,8 +2413,8 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
     /*
       Check if the error is equal to STORE_KEY_FATAL. This is not expressed 
       using the store_key::store_key_result enum because ref.key_err is a 
-      boolean and we want to detect both TRUE and STORE_KEY_FATAL from the 
-      space of the union of the values of [TRUE, FALSE] and 
+      boolean and we want to detect both true and STORE_KEY_FATAL from the 
+      space of the union of the values of [true, false] and 
       store_key::store_key_result.  
       TODO: fix the variable an return types.
     */
@@ -2445,11 +2445,11 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
     This is a special case, we don't need to search for NULL in the table,
     instead, the result value is 
       - NULL  if select produces empty row set
-      - FALSE otherwise.
+      - false otherwise.
 
-    In some cases (IN subselect is a top level item, i.e. abort_on_null==TRUE)
-    the caller doesn't distinguish between NULL and FALSE result and we just
-    return FALSE. 
+    In some cases (IN subselect is a top level item, i.e. abort_on_null==true)
+    the caller doesn't distinguish between NULL and false result and we just
+    return false. 
     Otherwise we make a full table scan to see if there is at least one 
     matching row.
     
@@ -2458,8 +2458,8 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
   NOTE
     
   RETURN
-    FALSE - ok
-    TRUE  - an error occured while scanning
+    false - ok
+    true  - an error occured while scanning
 */
 
 int subselect_uniquesubquery_engine::exec()
@@ -2467,7 +2467,7 @@ int subselect_uniquesubquery_engine::exec()
   DBUG_ENTER("subselect_uniquesubquery_engine::exec");
   int error;
   TABLE *table= tab->table;
-  empty_result_set= TRUE;
+  empty_result_set= true;
   table->status= 0;
  
   /* TODO: change to use of 'full_scan' here? */
@@ -2503,7 +2503,7 @@ int subselect_uniquesubquery_engine::exec()
     if (!table->status && (!cond || cond->val_int()))
     {
       ((Item_in_subselect *) item)->value= 1;
-      empty_result_set= FALSE;
+      empty_result_set= false;
     }
     else
       ((Item_in_subselect *) item)->value= 0;
@@ -2528,12 +2528,12 @@ int subselect_uniquesubquery_engine::exec()
     The value of the predicate is calculated as follows: 
     1. If oe IS NULL, this is a special case, do a full table scan on
        table tbl and search for row that satisfies subq_where. If such 
-       row is found, return NULL, otherwise return FALSE.
+       row is found, return NULL, otherwise return false.
     2. Make an index lookup via key=oe, search for a row that satisfies
-       subq_where. If found, return TRUE.
-    3. If check_null==TRUE, make another lookup via key=NULL, search for a 
+       subq_where. If found, return true.
+    3. If check_null==true, make another lookup via key=NULL, search for a 
        row that satisfies subq_where. If found, return NULL, otherwise
-       return FALSE.
+       return false.
 
   TODO
     The step #1 can be optimized further when the index has several key
@@ -2553,7 +2553,7 @@ int subselect_uniquesubquery_engine::exec()
 
     If this query produces a row, the result is NULL (as we're evaluating 
     "(const1, NULL) IN { (const1, X), ... }", which has a value of UNKNOWN,
-    i.e. NULL).  If the query produces no rows, the result is FALSE.
+    i.e. NULL).  If the query produces no rows, the result is false.
 
     We currently evaluate (1) by doing a full table scan. (2) can be
     evaluated by doing a "ref" scan on "keypart1=const1", which can be much
@@ -2573,7 +2573,7 @@ int subselect_indexsubquery_engine::exec()
   TABLE *table= tab->table;
 
   ((Item_in_subselect *) item)->value= 0;
-  empty_result_set= TRUE;
+  empty_result_set= true;
   null_keypart= 0;
   table->status= 0;
 
@@ -2620,7 +2620,7 @@ int subselect_indexsubquery_engine::exec()
       {
         if ((!cond || cond->val_int()) && (!having || having->val_int()))
         {
-          empty_result_set= FALSE;
+          empty_result_set= false;
           if (null_finding)
             ((Item_in_subselect *) item)->was_null= 1;
           else
@@ -2817,9 +2817,9 @@ void subselect_indexsubquery_engine::print(String *str,
   @param res		new select_result object
 
   @retval
-    FALSE OK
+    false OK
   @retval
-    TRUE  error
+    true  error
 */
 
 bool subselect_single_select_engine::change_result(Item_subselect *si,
@@ -2838,9 +2838,9 @@ bool subselect_single_select_engine::change_result(Item_subselect *si,
   @param res		new select_result object
 
   @retval
-    FALSE OK
+    false OK
   @retval
-    TRUE  error
+    true  error
 */
 
 bool subselect_union_engine::change_result(Item_subselect *si,
@@ -2860,16 +2860,16 @@ bool subselect_union_engine::change_result(Item_subselect *si,
   @param res		new select_result object
 
   @retval
-    FALSE OK
+    false OK
   @retval
-    TRUE  error
+    true  error
 */
 
 bool subselect_uniquesubquery_engine::change_result(Item_subselect *si,
                                                     select_result_interceptor *res)
 {
   DBUG_ASSERT(0);
-  return TRUE;
+  return true;
 }
 
 
@@ -2877,9 +2877,9 @@ bool subselect_uniquesubquery_engine::change_result(Item_subselect *si,
   Report about presence of tables in subquery.
 
   @retval
-    TRUE  there are not tables used in subquery
+    true  there are not tables used in subquery
   @retval
-    FALSE there are some tables in subquery
+    false there are some tables in subquery
 */
 bool subselect_single_select_engine::no_tables()
 {
@@ -2894,8 +2894,8 @@ bool subselect_single_select_engine::no_tables()
     subselect_single_select_engine::may_be_null()
 
   RETURN
-    FALSE  can guarantee that the subquery never return NULL
-    TRUE   otherwise
+    false  can guarantee that the subquery never return NULL
+    true   otherwise
 */
 bool subselect_single_select_engine::may_be_null()
 {
@@ -2907,18 +2907,18 @@ bool subselect_single_select_engine::may_be_null()
   Report about presence of tables in subquery.
 
   @retval
-    TRUE  there are not tables used in subquery
+    true  there are not tables used in subquery
   @retval
-    FALSE there are some tables in subquery
+    false there are some tables in subquery
 */
 bool subselect_union_engine::no_tables()
 {
   for (SELECT_LEX *sl= unit->first_select(); sl; sl= sl->next_select())
   {
     if (sl->table_list.elements)
-      return FALSE;
+      return false;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -2926,9 +2926,9 @@ bool subselect_union_engine::no_tables()
   Report about presence of tables in subquery.
 
   @retval
-    TRUE  there are not tables used in subquery
+    true  there are not tables used in subquery
   @retval
-    FALSE there are some tables in subquery
+    false there are some tables in subquery
 */
 
 bool subselect_uniquesubquery_engine::no_tables()
@@ -2959,8 +2959,8 @@ bool subselect_uniquesubquery_engine::no_tables()
     Currently Item_subselect::init() already chooses and creates at parse
     time an engine with a corresponding JOIN to execute the subquery.
 
-  @retval TRUE  if error
-  @retval FALSE otherwise
+  @retval true  if error
+  @retval false otherwise
 */
 
 bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
@@ -2983,12 +2983,12 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     managed (created/filled/etc) internally by the interceptor.
   */
   if (!(tmp_result_sink= new select_union))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   if (tmp_result_sink->create_result_table(
-                         thd, tmp_columns, TRUE,
+                         thd, tmp_columns, true,
                          thd->options | TMP_TABLE_ALL_COLUMNS,
-                         "materialized subselect", TRUE))
-    DBUG_RETURN(TRUE);
+                         "materialized subselect", true))
+    DBUG_RETURN(true);
 
   tmp_table= tmp_result_sink->table;
   tmp_key= tmp_table->key_info;
@@ -3011,7 +3011,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
     free_tmp_table(thd, tmp_table);
     delete result;
     result= NULL;
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   result= tmp_result_sink;
 
@@ -3032,7 +3032,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
       subselect_uniquesubquery_engine, so these objects are incomplete.
   */ 
   if (!(tab= (JOIN_TAB*) thd->alloc(sizeof(JOIN_TAB))))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   tab->table= tmp_table;
   tab->ref.key= 0; /* The only temp table index. */
   tab->ref.key_length= tmp_key->key_length;
@@ -3043,7 +3043,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
                                   (tmp_key_parts + 1)))) ||
       !(tab->ref.items=
         (Item**) thd->alloc(sizeof(Item*) * tmp_key_parts)))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
 
   KEY_PART_INFO *cur_key_part= tmp_key->key_part;
   store_key **ref_key= tab->ref.key_copy;
@@ -3069,7 +3069,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   tab->ref.key_err= 1;
   tab->ref.key_parts= tmp_key_parts;
 
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -3077,8 +3077,8 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   Initialize members of the engine that need to be re-initilized at each
   execution.
 
-  @retval TRUE  if a memory allocation error occurred
-  @retval FALSE if success
+  @retval true  if a memory allocation error occurred
+  @retval false if success
 */
 
 bool subselect_hash_sj_engine::init_runtime()
@@ -3091,7 +3091,7 @@ bool subselect_hash_sj_engine::init_runtime()
   /* Let our engine reuse this query plan for materialization. */
   materialize_join= materialize_engine->join;
   materialize_join->change_result(result);
-  return FALSE;
+  return false;
 }
 
 
@@ -3112,7 +3112,7 @@ subselect_hash_sj_engine::~subselect_hash_sj_engine()
 
 void subselect_hash_sj_engine::cleanup()
 {
-  is_materialized= FALSE;
+  is_materialized= false;
   result->cleanup(); /* Resets the temp table as well. */
   materialize_engine->cleanup();
   subselect_uniquesubquery_engine::cleanup();
@@ -3126,8 +3126,8 @@ void subselect_hash_sj_engine::cleanup()
   If needed materialize the subquery into a temporary table, then
   copmpute the predicate via a lookup into this table.
 
-  @retval TRUE  if error
-  @retval FALSE otherwise
+  @retval true  if error
+  @retval false otherwise
 */
 
 int subselect_hash_sj_engine::exec()
@@ -3160,20 +3160,20 @@ int subselect_hash_sj_engine::exec()
         immediately after materialization (yet it's done together with
         unlocking).
      */
-    is_materialized= TRUE;
+    is_materialized= true;
     /*
       If the subquery returned no rows, the temporary table is empty, so we know
-      directly that the result of IN is FALSE. We first update the table
+      directly that the result of IN is false. We first update the table
       statistics, then we test if the temporary table for the query result is
       empty.
     */
     tab->table->file->info(HA_STATUS_VARIABLE);
     if (!tab->table->file->stats.records)
     {
-      empty_result_set= TRUE;
-      item_in->value= FALSE;
-      /* TODO: check we need this: item_in->null_value= FALSE; */
-      DBUG_RETURN(FALSE);
+      empty_result_set= true;
+      item_in->value= false;
+      /* TODO: check we need this: item_in->null_value= false; */
+      DBUG_RETURN(false);
     }
     /* Set tmp_param only if its usable, i.e. tmp_param->copy_field != NULL. */
     tmp_param= &(item_in->unit->outer_select()->join->tmp_table_param);
