@@ -23,8 +23,9 @@
 #endif
 #include <my_alarm.h>
 
-/* 
-  Lock a part of a file 
+
+/*
+  Lock a part of a file
 
   RETURN VALUE
     0   Success
@@ -33,12 +34,11 @@
 */
 
 int my_lock(File fd, int locktype, my_off_t start, my_off_t length,
-	    myf MyFlags)
+            myf MyFlags)
 {
-#ifdef HAVE_FCNTL
   int value;
-  ALARM_VARIABLES;
-#endif
+  long alarm_pos=0,alarm_end_pos=MY_HOW_OFTEN_TO_WRITE-1;
+
   DBUG_ENTER("my_lock");
   DBUG_PRINT("my",("Fd: %d  Op: %d  start: %ld  Length: %ld  MyFlags: %d",
 		   fd,locktype,(long) start,(long) length,MyFlags));
@@ -59,13 +59,11 @@ int my_lock(File fd, int locktype, my_off_t start, my_off_t length,
       if (fcntl(fd,F_SETLK,&lock) != -1)	/* Check if we can lock */
 	DBUG_RETURN(0);			/* Ok, file locked */
       DBUG_PRINT("info",("Was locked, trying with alarm"));
-      ALARM_INIT;
-      while ((value=fcntl(fd,F_SETLKW,&lock)) && ! ALARM_TEST &&
+      while ((value=fcntl(fd,F_SETLKW,&lock)) && !  (alarm_pos++ >= alarm_end_pos) &&
 	     errno == EINTR)
       {			/* Setup again so we don`t miss it */
-	ALARM_REINIT;
+        alarm_end_pos+=MY_HOW_OFTEN_TO_WRITE;
       }
-      ALARM_END;
       if (value != -1)
 	DBUG_RETURN(0);
       if (errno == EINTR)

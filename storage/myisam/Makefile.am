@@ -91,7 +91,7 @@ libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_statrec.c mi_packrec.c mi_dynrec.c \
 			mi_update.c mi_write.c mi_unique.c \
 			mi_delete.c \
-			my_pread.c \
+			my_pread.c my_lock.c \
 			mi_rprev.c mi_rfirst.c mi_rlast.c mi_rsame.c \
 			mi_rsamepos.c mi_panic.c mi_close.c mi_create.c\
 			mi_range.c mi_dbug.c mi_checksum.c mi_log.c \
