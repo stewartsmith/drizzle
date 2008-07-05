@@ -485,10 +485,6 @@ char *octet2hex(char *to, const char *str, unsigned int len);
 char *get_tty_password(const char *opt_message);
 const char *mysql_errno_to_sqlstate(unsigned int mysql_errno);
 
-/* Some other useful functions */
-
-my_bool my_thread_init(void);
-void my_thread_end(void);
 
 #ifdef _global_h
 ulong STDCALL net_field_length(uchar **packet);

@@ -17,7 +17,7 @@
 /* thus to get the current time we should use the system function
    with the highest possible resolution */
 
-/* 
+/*
    TODO: in functions my_micro_time() and my_micro_time_and_time() there
    exists some common code that should be merged into a function.
 */

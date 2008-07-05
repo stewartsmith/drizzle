@@ -398,8 +398,8 @@ void eval_expr(VAR* v, const char *p, const char** p_end);
 my_bool match_delimiter(int c, const char *delim, uint length);
 void dump_result_to_reject_file(char *buf, int size);
 void dump_result_to_log_file(char *buf, int size);
-void dump_warning_messages();
-void dump_progress();
+void dump_warning_messages(void);
+void dump_progress(void);
 
 void do_eval(DYNAMIC_STRING *query_eval, const char *query,
              const char *query_end, my_bool pass_through_escape_chars);
@@ -410,18 +410,21 @@ void str_to_file2(const char *fname, char *str, int size, my_bool append);
 static char *replace_column[MAX_COLUMNS];
 static uint max_replace_column= 0;
 void do_get_replace_column(struct st_command*);
-void free_replace_column();
+void free_replace_column(void);
 
 /* For replace */
 void do_get_replace(struct st_command *command);
-void free_replace();
+void free_replace(void);
 
 /* For replace_regex */
 void do_get_replace_regex(struct st_command *command);
-void free_replace_regex();
+void free_replace_regex(void);
 
 
-void free_all_replace(){
+void free_all_replace(void);
+
+
+void free_all_replace(void){
   free_replace();
   free_replace_regex();
   free_replace_column();
@@ -711,10 +714,10 @@ struct command_arg {
 };
 
 
-void check_command_args(struct st_command *command,
-                        const char *arguments,
-                        const struct command_arg *args,
-                        int num_args, const char delimiter_arg)
+static void check_command_args(struct st_command *command,
+                               const char *arguments,
+                               const struct command_arg *args,
+                               int num_args, const char delimiter_arg)
 {
   int i;
   const char *ptr= arguments;
@@ -787,7 +790,7 @@ void check_command_args(struct st_command *command,
 }
 
 
-void handle_command_error(struct st_command *command, uint error)
+static void handle_command_error(struct st_command *command, uint error)
 {
   DBUG_ENTER("handle_command_error");
   DBUG_PRINT("enter", ("error: %d", error));
@@ -825,7 +828,7 @@ void handle_command_error(struct st_command *command, uint error)
 }
 
 
-void close_connections()
+static void close_connections(void)
 {
   DBUG_ENTER("close_connections");
   for (--next_con; next_con >= connections; --next_con)
@@ -839,7 +842,7 @@ void close_connections()
 }
 
 
-void close_files()
+static void close_files(void)
 {
   DBUG_ENTER("close_files");
   for (; cur_file >= file_stack; cur_file--)
@@ -856,7 +859,7 @@ void close_files()
 }
 
 
-void free_used_memory()
+static void free_used_memory(void)
 {
   uint i;
   DBUG_ENTER("free_used_memory");
@@ -1025,19 +1028,6 @@ void abort_not_supported_test(const char *fmt, ...)
 }
 
 
-void abort_not_in_this_version()
-{
-  die("Not available in this version of mysqltest");
-}
-
-
-void deprecated(struct st_command *command)
-{
-  die("'%.*s'has been deprecated",
-      command->first_word_len, command->query);
-}
-
-
 void verbose_msg(const char *fmt, ...)
 {
   va_list args;
@@ -1123,7 +1113,7 @@ void log_msg(const char *fmt, ...)
 
 */
 
-void cat_file(DYNAMIC_STRING* ds, const char* filename)
+static void cat_file(DYNAMIC_STRING* ds, const char* filename)
 {
   int fd;
   uint len;
@@ -1260,8 +1250,8 @@ static int run_tool(const char *tool_path, DYNAMIC_STRING *ds_res, ...)
 
 */
 
-void show_diff(DYNAMIC_STRING* ds,
-               const char* filename1, const char* filename2)
+static void show_diff(DYNAMIC_STRING* ds,
+                      const char* filename1, const char* filename2)
 {
 
   DYNAMIC_STRING ds_tmp;
@@ -1352,7 +1342,7 @@ enum compare_files_result_enum {
 
 */
 
-int compare_files2(File fd, const char* filename2)
+static int compare_files2(File fd, const char* filename2)
 {
   int error= RESULT_OK;
   File fd2;
@@ -1413,7 +1403,7 @@ int compare_files2(File fd, const char* filename2)
 
 */
 
-int compare_files(const char* filename1, const char* filename2)
+static int compare_files(const char* filename1, const char* filename2)
 {
   File fd;
   int error;
@@ -1441,7 +1431,7 @@ int compare_files(const char* filename1, const char* filename2)
   See 'compare_files2'
 */
 
-int dyn_string_cmp(DYNAMIC_STRING* ds, const char *fname)
+static int dyn_string_cmp(DYNAMIC_STRING* ds, const char *fname)
 {
   int error;
   File fd;
@@ -1488,7 +1478,7 @@ int dyn_string_cmp(DYNAMIC_STRING* ds, const char *fname)
 
 */
 
-void check_result(DYNAMIC_STRING* ds)
+static void check_result(DYNAMIC_STRING* ds)
 {
   const char* mess= "Result content mismatch\n";
 
@@ -1558,7 +1548,7 @@ void check_result(DYNAMIC_STRING* ds)
 
 */
 
-void check_require(DYNAMIC_STRING* ds, const char *fname)
+static void check_require(DYNAMIC_STRING* ds, const char *fname)
 {
   DBUG_ENTER("check_require");
 
@@ -1741,7 +1731,7 @@ err:
 }
 
 
-VAR *var_obtain(const char *name, int len)
+static VAR *var_obtain(const char *name, int len)
 {
   VAR* v;
   if ((v = (VAR*)hash_search(&var_hash, (const uchar *) name, len)))
@@ -1758,8 +1748,8 @@ VAR *var_obtain(const char *name, int len)
   environment variable will be updated
 */
 
-void var_set(const char *var_name, const char *var_name_end,
-             const char *var_val, const char *var_val_end)
+static void var_set(const char *var_name, const char *var_name_end,
+                    const char *var_val, const char *var_val_end)
 {
   int digit, env_var= 0;
   VAR *v;
@@ -1805,13 +1795,13 @@ void var_set(const char *var_name, const char *var_name_end,
 }
 
 
-void var_set_string(const char* name, const char* value)
+static void var_set_string(const char* name, const char* value)
 {
   var_set(name, name + strlen(name), value, value + strlen(value));
 }
 
 
-void var_set_int(const char* name, int value)
+static void var_set_int(const char* name, int value)
 {
   char buf[21];
   my_snprintf(buf, sizeof(buf), "%d", value);
@@ -1824,7 +1814,7 @@ void var_set_int(const char* name, int value)
   statement in the mysqltest builtin variable $mysql_errno
 */
 
-void var_set_errno(int sql_errno)
+static void var_set_errno(int sql_errno)
 {
   var_set_int("$mysql_errno", sql_errno);
 }
@@ -1835,7 +1825,7 @@ void var_set_errno(int sql_errno)
   of the currently connected server
 */
 
-void var_set_mysql_get_server_version(MYSQL* mysql)
+static void var_set_mysql_get_server_version(MYSQL* mysql)
 {
   var_set_int("$mysql_get_server_version", mysql_get_server_version(mysql));
 }
@@ -1864,7 +1854,7 @@ void var_set_mysql_get_server_version(MYSQL* mysql)
 
 */
 
-void var_query_set(VAR *var, const char *query, const char** query_end)
+static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
   char *end = (char*)((query_end && *query_end) ?
 		      *query_end : query + strlen(query));
@@ -1946,7 +1936,7 @@ void var_query_set(VAR *var, const char *query, const char** query_end)
 
 */
 
-void var_set_query_get_value(struct st_command *command, VAR *var)
+static void var_set_query_get_value(struct st_command *command, VAR *var)
 {
   long row_no;
   int col_no= -1;
@@ -1957,9 +1947,9 @@ void var_set_query_get_value(struct st_command *command, VAR *var)
   static DYNAMIC_STRING ds_col;
   static DYNAMIC_STRING ds_row;
   const struct command_arg query_get_value_args[] = {
-    "query", ARG_STRING, TRUE, &ds_query, "Query to run",
-    "column name", ARG_STRING, TRUE, &ds_col, "Name of column",
-    "row number", ARG_STRING, TRUE, &ds_row, "Number for row"
+    {"query", ARG_STRING, TRUE, &ds_query, "Query to run"},
+    {"column name", ARG_STRING, TRUE, &ds_col, "Name of column"},
+    {"row number", ARG_STRING, TRUE, &ds_row, "Number for row"}
   };
 
   DBUG_ENTER("var_set_query_get_value");
@@ -2047,7 +2037,7 @@ void var_set_query_get_value(struct st_command *command, VAR *var)
 }
 
 
-void var_copy(VAR *dest, VAR *src)
+static void var_copy(VAR *dest, VAR *src)
 {
   dest->int_val= src->int_val;
   dest->int_dirty= src->int_dirty;
@@ -2130,7 +2120,7 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
 }
 
 
-int open_file(const char *name)
+static int open_file(const char *name)
 {
   char buff[FN_REFLEN];
   DBUG_ENTER("open_file");
@@ -2170,7 +2160,7 @@ int open_file(const char *name)
 
 */
 
-void do_source(struct st_command *command)
+static void do_source(struct st_command *command)
 {
   static DYNAMIC_STRING ds_filename;
   const struct command_arg source_args[] = {
@@ -2199,7 +2189,7 @@ void do_source(struct st_command *command)
 }
 
 
-FILE* my_popen(DYNAMIC_STRING *ds_cmd, const char *mode)
+static FILE* my_popen(DYNAMIC_STRING *ds_cmd, const char *mode)
 {
   return popen(ds_cmd->str, mode);
 }
@@ -2268,7 +2258,7 @@ static int replace(DYNAMIC_STRING *ds_str,
   mysqltest commmand(s) like "remove_file" for that
 */
 
-void do_exec(struct st_command *command)
+static void do_exec(struct st_command *command)
 {
   int error;
   char buf[512];
@@ -2388,8 +2378,8 @@ enum enum_operator
 
 */
 
-int do_modify_var(struct st_command *command,
-                  enum enum_operator operator)
+static int do_modify_var(struct st_command *command,
+                         enum enum_operator operator)
 {
   const char *p= command->first_argument;
   VAR* v;
@@ -2427,7 +2417,7 @@ int do_modify_var(struct st_command *command,
 
 */
 
-int my_system(DYNAMIC_STRING* ds_cmd)
+static int my_system(DYNAMIC_STRING* ds_cmd)
 {
   return system(ds_cmd->str);
 }
@@ -2446,7 +2436,7 @@ int my_system(DYNAMIC_STRING* ds_cmd)
 
 */
 
-void do_system(struct st_command *command)
+static void do_system(struct st_command *command)
 {
   DYNAMIC_STRING ds_cmd;
   DBUG_ENTER("do_system");
@@ -2488,7 +2478,7 @@ void do_system(struct st_command *command)
   Remove the file <file_name>
 */
 
-void do_remove_file(struct st_command *command)
+static void do_remove_file(struct st_command *command)
 {
   int error;
   static DYNAMIC_STRING ds_filename;
@@ -2521,7 +2511,7 @@ void do_remove_file(struct st_command *command)
   NOTE! Will fail if <to_file> exists
 */
 
-void do_copy_file(struct st_command *command)
+static void do_copy_file(struct st_command *command)
 {
   int error;
   static DYNAMIC_STRING ds_from_file;
@@ -2558,7 +2548,7 @@ void do_copy_file(struct st_command *command)
 
 */
 
-void do_chmod_file(struct st_command *command)
+static void do_chmod_file(struct st_command *command)
 {
   long mode= 0;
   static DYNAMIC_STRING ds_mode;
@@ -2597,7 +2587,7 @@ void do_chmod_file(struct st_command *command)
   Check if file <file_name> exists
 */
 
-void do_file_exist(struct st_command *command)
+static void do_file_exist(struct st_command *command)
 {
   int error;
   static DYNAMIC_STRING ds_filename;
@@ -2629,12 +2619,12 @@ void do_file_exist(struct st_command *command)
   Create the directory <dir_name>
 */
 
-void do_mkdir(struct st_command *command)
+static void do_mkdir(struct st_command *command)
 {
   int error;
   static DYNAMIC_STRING ds_dirname;
   const struct command_arg mkdir_args[] = {
-    "dirname", ARG_STRING, TRUE, &ds_dirname, "Directory to create"
+    {"dirname", ARG_STRING, TRUE, &ds_dirname, "Directory to create"}
   };
   DBUG_ENTER("do_mkdir");
 
@@ -2659,12 +2649,12 @@ void do_mkdir(struct st_command *command)
   Remove the empty directory <dir_name>
 */
 
-void do_rmdir(struct st_command *command)
+static void do_rmdir(struct st_command *command)
 {
   int error;
   static DYNAMIC_STRING ds_dirname;
   const struct command_arg rmdir_args[] = {
-    "dirname", ARG_STRING, TRUE, &ds_dirname, "Directory to remove"
+    {"dirname", ARG_STRING, TRUE, &ds_dirname, "Directory to remove"}
   };
   DBUG_ENTER("do_rmdir");
 
@@ -2690,7 +2680,7 @@ void do_rmdir(struct st_command *command)
   happen for any tests in the test suite.
 */
 
-int my_getc(FILE *file)
+static int my_getc(FILE *file)
 {
   if (line_buffer_pos == line_buffer)
     return fgetc(file);
@@ -2698,14 +2688,14 @@ int my_getc(FILE *file)
 }
 
 
-void my_ungetc(int c)
+static void my_ungetc(int c)
 {
   *line_buffer_pos++= (char) c;
 }
 
 
-void read_until_delimiter(DYNAMIC_STRING *ds,
-                          DYNAMIC_STRING *ds_delimiter)
+static void read_until_delimiter(DYNAMIC_STRING *ds,
+                                 DYNAMIC_STRING *ds_delimiter)
 {
   char c;
   DBUG_ENTER("read_until_delimiter");
@@ -2753,7 +2743,7 @@ void read_until_delimiter(DYNAMIC_STRING *ds,
 }
 
 
-void do_write_file_command(struct st_command *command, my_bool append)
+static void do_write_file_command(struct st_command *command, my_bool append)
 {
   static DYNAMIC_STRING ds_content;
   static DYNAMIC_STRING ds_filename;
@@ -2818,7 +2808,7 @@ void do_write_file_command(struct st_command *command, my_bool append)
 
 */
 
-void do_write_file(struct st_command *command)
+static void do_write_file(struct st_command *command)
 {
   do_write_file_command(command, FALSE);
 }
@@ -2849,7 +2839,7 @@ void do_write_file(struct st_command *command)
 
 */
 
-void do_append_file(struct st_command *command)
+static void do_append_file(struct st_command *command)
 {
   do_write_file_command(command, TRUE);
 }
@@ -2867,7 +2857,7 @@ void do_append_file(struct st_command *command)
 
 */
 
-void do_cat_file(struct st_command *command)
+static void do_cat_file(struct st_command *command)
 {
   static DYNAMIC_STRING ds_filename;
   const struct command_arg cat_file_args[] = {
@@ -2902,7 +2892,7 @@ void do_cat_file(struct st_command *command)
 
 */
 
-void do_diff_files(struct st_command *command)
+static void do_diff_files(struct st_command *command)
 {
   int error= 0;
   static DYNAMIC_STRING ds_filename;
@@ -2934,7 +2924,7 @@ void do_diff_files(struct st_command *command)
 }
 
 
-struct st_connection * find_connection_by_name(const char *name)
+static struct st_connection * find_connection_by_name(const char *name)
 {
   struct st_connection *con;
   for (con= connections; con < next_con; con++)
@@ -2958,7 +2948,7 @@ struct st_connection * find_connection_by_name(const char *name)
 
 */
 
-void do_send_quit(struct st_command *command)
+static void do_send_quit(struct st_command *command)
 {
   char *p= command->first_argument, *name;
   struct st_connection *con;
@@ -3001,7 +2991,7 @@ void do_send_quit(struct st_command *command)
 
 */
 
-void do_change_user(struct st_command *command)
+static void do_change_user(struct st_command *command)
 {
   MYSQL *mysql = &cur_con->mysql;
   /* static keyword to make the NetWare compiler happy. */
@@ -3061,7 +3051,7 @@ void do_change_user(struct st_command *command)
   Default <delimiter> is EOF
 */
 
-void do_perl(struct st_command *command)
+static void do_perl(struct st_command *command)
 {
   int error;
   File fd;
@@ -3153,7 +3143,7 @@ void do_perl(struct st_command *command)
   Print "Some text" plus $<var_name> to result file
 */
 
-int do_echo(struct st_command *command)
+static int do_echo(struct st_command *command)
 {
   DYNAMIC_STRING ds_echo;
   DBUG_ENTER("do_echo");
@@ -3168,7 +3158,8 @@ int do_echo(struct st_command *command)
 }
 
 
-void do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
+static void
+do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
 {
   static int SLAVE_POLL_INTERVAL= 300000;
   MYSQL* mysql = &cur_con->mysql;
@@ -3197,7 +3188,7 @@ void do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
 }
 
 
-void do_sync_with_master2(long offset)
+static void do_sync_with_master2(long offset)
 {
   MYSQL_RES *res;
   MYSQL_ROW row;
@@ -3245,7 +3236,7 @@ wait_for_position:
 }
 
 
-void do_sync_with_master(struct st_command *command)
+static void do_sync_with_master(struct st_command *command)
 {
   long offset= 0;
   char *p= command->first_argument;
@@ -3268,7 +3259,7 @@ void do_sync_with_master(struct st_command *command)
   when ndb binlog is on, this call will wait until last updated epoch
   (locally in the mysqld) has been received into the binlog
 */
-int do_save_master_pos()
+static int do_save_master_pos(void)
 {
   MYSQL_RES *res;
   MYSQL_ROW row;
@@ -3448,7 +3439,7 @@ int do_save_master_pos()
   Program will die if error detected
 */
 
-void do_let(struct st_command *command)
+static void do_let(struct st_command *command)
 {
   char *p= command->first_argument;
   char *var_name, *var_name_end;
@@ -3509,7 +3500,7 @@ void do_let(struct st_command *command)
   used for cpu-independent delays.
 */
 
-int do_sleep(struct st_command *command, my_bool real_sleep)
+static int do_sleep(struct st_command *command, my_bool real_sleep)
 {
   int error= 0;
   char *p= command->first_argument;
@@ -3542,7 +3533,7 @@ int do_sleep(struct st_command *command, my_bool real_sleep)
 }
 
 
-void do_get_file_name(struct st_command *command,
+static void do_get_file_name(struct st_command *command,
                       char* dest, uint dest_max_len)
 {
   char *p= command->first_argument, *name;
@@ -3558,7 +3549,7 @@ void do_get_file_name(struct st_command *command,
 }
 
 
-void do_set_charset(struct st_command *command)
+static void do_set_charset(struct st_command *command)
 {
   char *charset_name= command->first_argument;
   char *p;
@@ -3592,7 +3583,7 @@ static st_error global_error_names[] =
   { 0, 0 }
 };
 
-uint get_errcode_from_name(char *error_name, char *error_end)
+static uint get_errcode_from_name(char *error_name, char *error_end)
 {
   /* SQL error as string */
   st_error *e= global_error_names;
@@ -3629,7 +3620,7 @@ uint get_errcode_from_name(char *error_name __attribute__((unused)),
 
 
 
-void do_get_errcodes(struct st_command *command)
+static void do_get_errcodes(struct st_command *command)
 {
   struct st_match_err *to= saved_expected_errors.err;
   char *p= command->first_argument;
@@ -3754,8 +3745,8 @@ void do_get_errcodes(struct st_command *command)
   If string is a '$variable', return the value of the variable.
 */
 
-char *get_string(char **to_ptr, char **from_ptr,
-                 struct st_command *command)
+static char *get_string(char **to_ptr, char **from_ptr,
+                        struct st_command *command)
 {
   char c, sep;
   char *to= *to_ptr, *from= *from_ptr, *start=to;
@@ -3827,7 +3818,7 @@ char *get_string(char **to_ptr, char **from_ptr,
 }
 
 
-void set_reconnect(MYSQL* mysql, int val)
+static void set_reconnect(MYSQL* mysql, int val)
 {
   my_bool reconnect= val;
   DBUG_ENTER("set_reconnect");
@@ -3841,7 +3832,7 @@ void set_reconnect(MYSQL* mysql, int val)
 }
 
 
-int select_connection_name(const char *name)
+static int select_connection_name(const char *name)
 {
   DBUG_ENTER("select_connection_name");
   DBUG_PRINT("enter",("name: '%s'", name));
@@ -3856,7 +3847,7 @@ int select_connection_name(const char *name)
 }
 
 
-int select_connection(struct st_command *command)
+static int select_connection(struct st_command *command)
 {
   char *name;
   char *p= command->first_argument;
@@ -3874,7 +3865,7 @@ int select_connection(struct st_command *command)
 }
 
 
-void do_close_connection(struct st_command *command)
+static void do_close_connection(struct st_command *command)
 {
   char *p= command->first_argument, *name;
   struct st_connection *con;
@@ -3949,7 +3940,7 @@ void do_close_connection(struct st_command *command)
 
 */
 
-void safe_connect(MYSQL* mysql, const char *name, const char *host,
+static void safe_connect(MYSQL* mysql, const char *name, const char *host,
                   const char *user, const char *pass, const char *db,
                   int port)
 {
@@ -4015,7 +4006,7 @@ void safe_connect(MYSQL* mysql, const char *name, const char *host,
 
 */
 
-int connect_n_handle_errors(struct st_command *command,
+static int connect_n_handle_errors(struct st_command *command,
                             MYSQL* con, const char* host,
                             const char* user, const char* pass,
                             const char* db, int port, const char* sock)
@@ -4089,7 +4080,7 @@ int connect_n_handle_errors(struct st_command *command,
 
 */
 
-void do_connect(struct st_command *command)
+static void do_connect(struct st_command *command)
 {
   int con_port= opt_port;
   char *con_options;
@@ -4242,7 +4233,7 @@ void do_connect(struct st_command *command)
 }
 
 
-int do_done(struct st_command *command)
+static int do_done(struct st_command *command)
 {
   /* Check if empty block stack */
   if (cur_block == block_stack)
@@ -4295,7 +4286,7 @@ int do_done(struct st_command *command)
 
 */
 
-void do_block(enum block_cmd cmd, struct st_command* command)
+static void do_block(enum block_cmd cmd, struct st_command* command)
 {
   char *p= command->first_argument;
   const char *expr_start, *expr_end;
@@ -4362,7 +4353,7 @@ void do_block(enum block_cmd cmd, struct st_command* command)
 }
 
 
-void do_delimiter(struct st_command* command)
+static void do_delimiter(struct st_command* command)
 {
   char* p= command->first_argument;
   DBUG_ENTER("do_delimiter");
@@ -4407,7 +4398,7 @@ my_bool match_delimiter(int c, const char *delim, uint length)
 }
 
 
-my_bool end_of_query(int c)
+static my_bool end_of_query(int c)
 {
   return match_delimiter(c, delimiter, delimiter_length);
 }
@@ -4437,7 +4428,7 @@ my_bool end_of_query(int c)
 
 */
 
-int read_line(char *buf, int size)
+static int read_line(char *buf, int size)
 {
   char c, last_quote= 0;
   char *p= buf, *buf_end= buf + size - 1;
@@ -4637,7 +4628,7 @@ int read_line(char *buf, int size)
 
 */
 
-void convert_to_format_v1(char* query)
+static void convert_to_format_v1(char* query)
 {
   int last_c_was_quote= 0;
   char *p= query, *to= query;
@@ -4684,7 +4675,7 @@ void convert_to_format_v1(char* query)
   suspicious things and generate warnings.
 */
 
-void scan_command_for_warnings(struct st_command *command)
+static void scan_command_for_warnings(struct st_command *command)
 {
   const char *ptr= command->query;
   DBUG_ENTER("scan_command_for_warnings");
@@ -4733,7 +4724,7 @@ void scan_command_for_warnings(struct st_command *command)
   switching between different delimiters
 */
 
-void check_eol_junk_line(const char *line)
+static void check_eol_junk_line(const char *line)
 {
   const char *p= line;
   DBUG_ENTER("check_eol_junk_line");
@@ -4753,7 +4744,7 @@ void check_eol_junk_line(const char *line)
   DBUG_VOID_RETURN;
 }
 
-void check_eol_junk(const char *eol)
+static void check_eol_junk(const char *eol)
 {
   const char *p= eol;
   DBUG_ENTER("check_eol_junk");
@@ -4805,7 +4796,7 @@ void check_eol_junk(const char *eol)
 #define MAX_QUERY (256*1024*2) /* 256K -- a test in sp-big is >128K */
 static char read_command_buf[MAX_QUERY];
 
-int read_command(struct st_command** command_ptr)
+static int read_command(struct st_command** command_ptr)
 {
   char *p= read_command_buf;
   struct st_command* command;
@@ -4959,13 +4950,13 @@ static struct my_option my_long_options[] =
 
 #include <help_start.h>
 
-void print_version(void)
+static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,MTEST_VERSION,
 	 MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
 }
 
-void usage()
+static void usage(void)
 {
   print_version();
   printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
@@ -4985,7 +4976,7 @@ void usage()
   embedded_server_args[]
 */
 
-void read_embedded_server_arguments(const char *name)
+static void read_embedded_server_arguments(const char *name)
 {
   char argument[1024],buff[FN_REFLEN], *str=0;
   FILE *file;
@@ -5111,7 +5102,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 }
 
 
-int parse_args(int argc, char **argv)
+static int parse_args(int argc, char **argv)
 {
   load_defaults("my",load_default_groups,&argc,&argv);
   default_argv= argv;
@@ -5218,7 +5209,7 @@ void dump_warning_messages(void)
               ds_warning_messages.str, ds_warning_messages.length);
 }
 
-void check_regerr(my_regex_t* r, int err)
+static void check_regerr(my_regex_t* r, int err)
 {
   char err_buf[1024];
 
@@ -5233,8 +5224,8 @@ void check_regerr(my_regex_t* r, int err)
   Append the result for one field to the dynamic string ds
 */
 
-void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
-                  const char* val, ulonglong len, my_bool is_null)
+static void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
+                         const char* val, ulonglong len, my_bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
   {
@@ -5268,7 +5259,7 @@ void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
   Values may be converted with 'replace_column'
 */
 
-void append_result(DYNAMIC_STRING *ds, MYSQL_RES *res)
+static void append_result(DYNAMIC_STRING *ds, MYSQL_RES *res)
 {
   MYSQL_ROW row;
   uint num_fields= mysql_num_fields(res);
@@ -5292,9 +5283,9 @@ void append_result(DYNAMIC_STRING *ds, MYSQL_RES *res)
   Append metadata for fields to output
 */
 
-void append_metadata(DYNAMIC_STRING *ds,
-                     MYSQL_FIELD *field,
-                     uint num_fields)
+static void append_metadata(DYNAMIC_STRING *ds,
+                            MYSQL_FIELD *field,
+                            uint num_fields)
 {
   MYSQL_FIELD *field_end;
   dynstr_append(ds,"Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
@@ -5344,8 +5335,8 @@ void append_metadata(DYNAMIC_STRING *ds,
   Append affected row count and other info to output
 */
 
-void append_info(DYNAMIC_STRING *ds, ulonglong affected_rows,
-                 const char *info)
+static void append_info(DYNAMIC_STRING *ds, ulonglong affected_rows,
+                        const char *info)
 {
   char buf[40], buff2[21];
   sprintf(buf,"affected rows: %s\n", llstr(affected_rows, buff2));
@@ -5363,9 +5354,9 @@ void append_info(DYNAMIC_STRING *ds, ulonglong affected_rows,
   Display the table headings with the names tab separated
 */
 
-void append_table_headings(DYNAMIC_STRING *ds,
-                           MYSQL_FIELD *field,
-                           uint num_fields)
+static void append_table_headings(DYNAMIC_STRING *ds,
+                                  MYSQL_FIELD *field,
+                                  uint num_fields)
 {
   uint col_idx;
   for (col_idx= 0; col_idx < num_fields; col_idx++)
@@ -5384,7 +5375,7 @@ void append_table_headings(DYNAMIC_STRING *ds,
   Number of warnings appended to ds
 */
 
-int append_warnings(DYNAMIC_STRING *ds, MYSQL* mysql)
+static int append_warnings(DYNAMIC_STRING *ds, MYSQL* mysql)
 {
   uint count;
   MYSQL_RES *warn_res;
@@ -5429,9 +5420,10 @@ int append_warnings(DYNAMIC_STRING *ds, MYSQL* mysql)
     ds		output buffer where to store result form query
 */
 
-void run_query_normal(struct st_connection *cn, struct st_command *command,
-                      int flags, char *query, int query_len,
-                      DYNAMIC_STRING *ds, DYNAMIC_STRING *ds_warnings)
+static void run_query_normal(struct st_connection *cn,
+                             struct st_command *command,
+                             int flags, char *query, int query_len,
+                             DYNAMIC_STRING *ds, DYNAMIC_STRING *ds_warnings)
 {
   MYSQL_RES *res= 0;
   MYSQL *mysql= &cn->mysql;
@@ -5699,40 +5691,6 @@ void handle_no_error(struct st_command *command)
 }
 
 
-
-/*
-  Create a util connection if one does not already exists
-  and use that to run the query
-  This is done to avoid implict commit when creating/dropping objects such
-  as view, sp etc.
-*/
-
-int util_query(MYSQL* org_mysql, const char* query){
-
-  MYSQL* mysql;
-  DBUG_ENTER("util_query");
-
-  if(!(mysql= cur_con->util_mysql))
-  {
-    int opt_protocol= MYSQL_PROTOCOL_TCP;
-    DBUG_PRINT("info", ("Creating util_mysql"));
-    if (!(mysql= mysql_init(mysql)))
-      die("Failed in mysql_init()");
-    mysql_options(mysql, MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-
-    /* enable local infile, in non-binary builds often disabled by default */
-    mysql_options(mysql, MYSQL_OPT_LOCAL_INFILE, 0);
-    safe_connect(mysql, "util", org_mysql->host, org_mysql->user,
-                 org_mysql->passwd, org_mysql->db, org_mysql->port);
-
-    cur_con->util_mysql= mysql;
-  }
-
-  return mysql_query(mysql, query);
-}
-
-
-
 /*
   Run query
 
@@ -5746,7 +5704,9 @@ int util_query(MYSQL* org_mysql, const char* query){
   is on the result will be read - for regular query, both bits must be on
 */
 
-void run_query(struct st_connection *cn, struct st_command *command, int flags)
+static void run_query(struct st_connection *cn, 
+                      struct st_command *command,
+                      int flags)
 {
   DYNAMIC_STRING *ds;
   DYNAMIC_STRING *save_ds= NULL;
@@ -5859,7 +5819,7 @@ void free_re(void)
 
 /****************************************************************************/
 
-void get_command_type(struct st_command* command)
+static void get_command_type(struct st_command* command)
 {
   char save;
   uint type;
@@ -5947,8 +5907,8 @@ void get_command_type(struct st_command* command)
 
 */
 
-void mark_progress(struct st_command* command __attribute__((unused)),
-                   int line)
+static void mark_progress(struct st_command* command __attribute__((unused)),
+                          int line)
 {
   char buf[32], *end;
   ulonglong timer= timer_now();
@@ -6764,7 +6724,7 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern, char *replace,
   Returns: st_replace_regex struct with pairs of substitutions
 */
 
-struct st_replace_regex* init_replace_regex(char* expr)
+static struct st_replace_regex* init_replace_regex(char* expr)
 {
   struct st_replace_regex* res;
   char* buf,*expr_end;
@@ -6864,7 +6824,7 @@ err:
   in one pass
 */
 
-int multi_reg_replace(struct st_replace_regex* r,char* val)
+static int multi_reg_replace(struct st_replace_regex* r,char* val)
 {
   uint i;
   char* in_buf, *out_buf;
@@ -7195,7 +7155,7 @@ uint end_of_word(char * pos);
 static uint found_sets=0;
 
 
-uint replace_len(char * str)
+static uint replace_len(char * str)
 {
   uint len=0;
   while (*str)

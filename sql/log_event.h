@@ -37,6 +37,8 @@
 #ifndef MYSQL_CLIENT
 #include "rpl_record.h"
 #include "rpl_reporting.h"
+#else
+#include "my_decimal.h"
 #endif
 
 /**
@@ -931,7 +933,8 @@ public:
     return (void*) my_malloc((uint)size, MYF(MY_WME|MY_FAE));
   }
 
-  static void operator delete(void *ptr, size_t size)
+  static void operator delete(void *ptr,
+                              size_t size __attribute__((__unused__)))
   {
     my_free((uchar*) ptr, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
   }
