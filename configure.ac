@@ -574,15 +574,15 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h \
- limits.h memory.h pwd.h select.h \
- stdlib.h stddef.h stdint.h sys/fpu.h \
- strings.h string.h synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h \
- sys/timeb.h sys/types.h sys/un.h sys/vadvise.h sys/wait.h term.h \
- unistd.h utime.h sys/utime.h termio.h termios.h sched.h crypt.h alloca.h \
- sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h linux/config.h \
- sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h \
- execinfo.h)
+AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h)
+AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
+AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
+AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
+AC_CHECK_HEADERS(sys/timeb.h ys/un.h sys/vadvise.h sys/wait.h term.h)
+AC_CHECK_HEADERS(termio.h termios.h sched.h crypt.h alloca.h)
+AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
+AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
+AC_CHECK_HEADERS(execinfo.h)
 
 AC_CHECK_HEADERS([xfs/xfs.h])
 #--------------------------------------------------------------------
