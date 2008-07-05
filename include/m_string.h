@@ -256,13 +256,11 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error);
 #define HAVE_STRTOLL
 #endif
 #else
-#ifdef HAVE_LONG_LONG
 extern char *longlong2str(longlong val,char *dst,int radix);
 extern char *longlong10_to_str(longlong val,char *dst,int radix);
 #if (!defined(HAVE_STRTOULL) || defined(NO_STRTOLL_PROTO))
 extern longlong strtoll(const char *str, char **ptr, int base);
 extern ulonglong strtoull(const char *str, char **ptr, int base);
-#endif
 #endif
 #endif
 

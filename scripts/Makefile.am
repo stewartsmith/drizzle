@@ -124,7 +124,6 @@ SUFFIXES = .sh
 	  -e 's!@''TARGET_LINUX''@!@TARGET_LINUX@!' \
 	  -e "s!@""CONF_COMMAND""@!@CONF_COMMAND@!" \
 	  -e 's!@''MYSQLD_USER''@!@MYSQLD_USER@!' \
-	  -e 's!@''STATIC_NSS_FLAGS''@!@STATIC_NSS_FLAGS@!' \
 	  -e "s!@MAKE@!$(MAKE)!" \
 	$< > $@-t
 	@CHMOD@ +x $@-t

@@ -978,7 +978,6 @@ public:
 };
 
 
-#ifdef HAVE_LONG_LONG
 class Field_longlong :public Field_num {
 public:
   Field_longlong(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
@@ -1057,8 +1056,6 @@ public:
     return from + sizeof(val);
   }
 };
-#endif
-
 
 class Field_float :public Field_real {
 public:
@@ -1369,9 +1366,7 @@ public:
     :Field_str((uchar*) 0,19, maybe_null_arg ? (uchar*) "": 0,0,
 	       NONE, field_name_arg, cs) {}
   enum_field_types type() const { return MYSQL_TYPE_DATETIME;}
-#ifdef HAVE_LONG_LONG
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
-#endif
   enum Item_result cmp_type () const { return INT_RESULT; }
   uint decimals() const { return DATETIME_DEC; }
   int  store(const char *to,uint length,CHARSET_INFO *charset);

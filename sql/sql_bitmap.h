@@ -58,7 +58,7 @@ public:
     intersect(map2buff);
     if (map.n_bits > sizeof(uint64_t) * 8)
       bitmap_set_above(&map, sizeof(uint64_t),
-                       test(map2buff & (LL(1) << (sizeof(uint64_t) * 8 - 1))));
+                       test(map2buff & (1 << (sizeof(uint64_t) * 8 - 1))));
   }
   void subtract(Bitmap& map2) { bitmap_subtract(&map, &map2.map); }
   void merge(Bitmap& map2) { bitmap_union(&map, &map2.map); }
@@ -210,7 +210,7 @@ public:
       if (!bmp)
         return BITMAP_END;
     }
-    bmp &= ~(1LL << bit);
+    bmp &= ~(1 << bit);
     return no + bit;
   }
   enum { BITMAP_END= 64 };

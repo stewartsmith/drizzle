@@ -75,11 +75,9 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
   case MYSQL_TYPE_LONG:
     length= 4;
     break;
-#ifdef HAVE_LONG_LONG
   case MYSQL_TYPE_LONGLONG:
     length= 8;
     break;
-#endif
   case MYSQL_TYPE_NULL:
     length= 0;
     break;
