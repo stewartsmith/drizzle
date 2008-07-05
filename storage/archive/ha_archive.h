@@ -84,7 +84,8 @@ public:
   {
   }
   const char *table_type() const { return "ARCHIVE"; }
-  const char *index_type(uint inx) { return "NONE"; }
+  const char *index_type(uint inx __attribute__((__unused__)))
+  { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
   {
@@ -94,7 +95,9 @@ public:
             HA_HAS_RECORDS |
             HA_FILE_BASED | HA_CAN_INSERT_DELAYED | HA_CAN_GEOMETRY);
   }
-  ulong index_flags(uint idx, uint part, bool all_parts) const
+  ulong index_flags(uint idx __attribute__((__unused__)),
+                    uint part __attribute__((__unused__)),
+                    bool all_parts __attribute__((__unused__))) const
   {
     return HA_ONLY_WHOLE_INDEX;
   }

@@ -37,12 +37,18 @@ public:
   { return alloc_root(mem_root, size); }
   static void *operator new(size_t size, MEM_ROOT *mem_root) throw ()
   { return alloc_root(mem_root, size); }
-  static void operator delete(void *ptr, size_t size) { TRASH(ptr, size); }
-  static void operator delete(void *ptr, MEM_ROOT *mem_root)
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              size_t size __attribute__((__unused__)))
+  { TRASH(ptr, size); }
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              MEM_ROOT *mem_root __attribute__((__unused__)))
   { /* never called */ }
-  static void operator delete[](void *ptr, MEM_ROOT *mem_root)
+  static void operator delete[](void *ptr __attribute__((__unused__)),
+                                MEM_ROOT *mem_root __attribute__((__unused__)))
   { /* never called */ }
-  static void operator delete[](void *ptr, size_t size) { TRASH(ptr, size); }
+  static void operator delete[](void *ptr __attribute__((__unused__)),
+                                size_t size __attribute__((__unused__)))
+  { TRASH(ptr, size); }
 #ifdef HAVE_purify
   bool dummy;
   inline Sql_alloc() :dummy(0) {}
@@ -120,7 +126,7 @@ public:
     list_copy_and_replace_each_value after creating a copy.
   */
   base_list(const base_list &rhs, MEM_ROOT *mem_root);
-  inline base_list(bool error) { }
+  inline base_list(bool error __attribute__((__unused__))) { }
   inline bool push_back(void *info)
   {
     if (((*last)=new list_node(info, &end_of_list)))
@@ -454,7 +460,8 @@ struct ilink
   {
     return (void*)my_malloc((uint)size, MYF(MY_WME | MY_FAE | ME_FATALERROR));
   }
-  static void operator delete(void* ptr_arg, size_t size)
+  static void operator delete(void* ptr_arg,
+                              size_t size __attribute__((__unused__)))
   {
      my_free((uchar*)ptr_arg, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
   }
