@@ -29,15 +29,6 @@
 
 #include "strings.h"
 
-#if	VaxAsm
-
-char *memset(char *dst,int chr, int len)
-{
-  asm("movc5 $0,*4(ap),8(ap),12(ap),*4(ap)");
-  return dst;
-}
-
-#else  ~VaxAsm
 
 char *memset(char *dst, register pchar chr, register int len)
 {
@@ -47,4 +38,3 @@ char *memset(char *dst, register pchar chr, register int len)
   return dst;
 }
 
-#endif	VaxAsm

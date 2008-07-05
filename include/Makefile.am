@@ -31,7 +31,7 @@ noinst_HEADERS =	my_bit.h \
 			heap.h my_bitmap.h my_uctype.h \
 			myisam.h myisampack.h myisammrg.h ft_global.h\
 			mysys_err.h my_base.h help_start.h help_end.h \
-			my_nosys.h my_alarm.h queues.h sha1.h sha2.h \
+			my_nosys.h queues.h sha1.h sha2.h \
 			my_tree.h my_trie.h hash.h thr_alarm.h \
 			thr_lock.h t_ctype.h violite.h my_md5.h base64.h \
 			mysql_version.h.in my_handler.h my_time.h

@@ -3,6 +3,7 @@
 #include <my_global.h>
 #include <m_ctype.h>
 #include <m_string.h>
+#include "my_regex.h"
 #include "cclass.h"
 
 static my_bool regex_inited=0;

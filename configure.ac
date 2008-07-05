@@ -700,12 +700,14 @@ AC_ARG_WITH([debug],
 	    Full adds memory checked, very slow.])],
     [with_debug=$withval],
     [with_debug=no])
+AM_CONDITIONAL(BUILD_DBUG, test "$with_debug" != "no")
 if test "$with_debug" = "yes"
 then
   # Medium debug.
   AC_DEFINE([DBUG_ON], [1], [Use libdbug])
   CFLAGS="$DEBUG_CFLAGS $DEBUG_OPTIMIZE_CC $CFLAGS"
   CXXFLAGS="$DEBUG_CXXFLAGS $DEBUG_OPTIMIZE_CXX $CXXFLAGS"
+  
 elif test "$with_debug" = "full"
 then
   # Full debug. Very slow in some cases
@@ -971,7 +973,7 @@ MYSQL_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS(alarm bcmp bfill bmove bsearch bzero \
+AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
   chsize cuserid fchmod fcntl \
   fconvert fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \

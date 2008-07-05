@@ -20,7 +20,6 @@
 
 #include "mysys_priv.h"
 #include "my_static.h"
-#include "my_alarm.h"
 
 my_bool timed_mutexes= 0;
 

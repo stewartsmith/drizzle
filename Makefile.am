@@ -20,9 +20,13 @@ AUTOMAKE_OPTIONS =	foreign
 # These are built from source in the Docs directory
 EXTRA_DIST =		
 
+if BUILD_DBUG
+  d_dbug = dbug
+endif
+
 SUBDIRS =		. include \
 			sql-common scripts vio \
-			strings mysys dbug \
+			strings mysys $(d_dbug) \
                         extra regex \
                         libmysql client storage plugin \
                         sql \

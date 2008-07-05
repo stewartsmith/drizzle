@@ -6205,7 +6205,7 @@ walk_up_n_right:
 
     if (!(cur->min_key_flag & ~NULL_RANGE) && !cur->max_key_flag &&
         (uint)key_tree->part+1 == seq->param->table->key_info[seq->real_keyno].key_parts &&
-        (seq->param->table->key_info[seq->real_keyno].flags & (HA_NOSAME | HA_END_SPACE_KEY)) ==
+        (seq->param->table->key_info[seq->real_keyno].flags & (HA_NOSAME)) ==
         HA_NOSAME &&
         range->start_key.length == range->end_key.length &&
         !memcmp(seq->param->min_key,seq->param->max_key,range->start_key.length))
@@ -6555,7 +6555,7 @@ get_quick_keys(PARAM *param,QUICK_RANGE_SELECT *quick,KEY_PART *key,
     {
       KEY *table_key=quick->head->key_info+quick->index;
       flag=EQ_RANGE;
-      if ((table_key->flags & (HA_NOSAME | HA_END_SPACE_KEY)) == HA_NOSAME &&
+      if ((table_key->flags & (HA_NOSAME)) == HA_NOSAME &&
 	  key->part == table_key->key_parts-1)
       {
 	if (!(table_key->flags & HA_NULL_PART_KEY) ||
@@ -6605,7 +6605,7 @@ bool QUICK_RANGE_SELECT::unique_key_range()
     if ((tmp->flag & (EQ_RANGE | NULL_RANGE)) == EQ_RANGE)
     {
       KEY *key=head->key_info+index;
-      return ((key->flags & (HA_NOSAME | HA_END_SPACE_KEY)) == HA_NOSAME &&
+      return ((key->flags & (HA_NOSAME)) == HA_NOSAME &&
 	      key->key_length == tmp->min_length);
     }
   }
@@ -6740,7 +6740,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, TABLE *table,
   range->min_keypart_map= range->max_keypart_map=
     make_prev_keypart_map(ref->key_parts);
   range->flag= ((ref->key_length == key_info->key_length &&
-		 (key_info->flags & HA_END_SPACE_KEY) == 0) ? EQ_RANGE : 0);
+		 key_info->flags == 0) ? EQ_RANGE : 0);
 
   if (!(quick->key_parts=key_part=(KEY_PART *)
 	alloc_root(&quick->alloc,sizeof(KEY_PART)*ref->key_parts)))
