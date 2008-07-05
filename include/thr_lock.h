@@ -26,6 +26,7 @@ extern "C" {
 
 struct st_thr_lock;
 extern ulong locks_immediate,locks_waited ;
+extern pthread_mutex_t THR_LOCK_lock;
 
 enum thr_lock_type { TL_IGNORE=-1,
 		     TL_UNLOCK,			/* UNLOCK ANY LOCK */
