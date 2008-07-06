@@ -2398,15 +2398,7 @@ static void dump_table(char *table, char *db)
                   dynstr_append_checked(&extended_row, "NULL");
                 else
                 {
-                  if (field->type == MYSQL_TYPE_DECIMAL)
-                  {
-                    /* add " signs around */
-                    dynstr_append_checked(&extended_row, "'");
-                    dynstr_append_checked(&extended_row, ptr);
-                    dynstr_append_checked(&extended_row, "'");
-                  }
-                  else
-                    dynstr_append_checked(&extended_row, ptr);
+                  dynstr_append_checked(&extended_row, ptr);
                 }
               }
             }
@@ -2467,13 +2459,6 @@ static void dump_table(char *table, char *db)
               else if (my_isalpha(charset_info, *ptr) ||
                        (*ptr == '-' && my_isalpha(charset_info, ptr[1])))
                 fputs("NULL", md_result_file);
-              else if (field->type == MYSQL_TYPE_DECIMAL)
-              {
-                /* add " signs around */
-                fputc('\'', md_result_file);
-                fputs(ptr, md_result_file);
-                fputc('\'', md_result_file);
-              }
               else
                 fputs(ptr, md_result_file);
             }

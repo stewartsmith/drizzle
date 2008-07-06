@@ -666,44 +666,6 @@ public:
 };
 
 
-class Field_decimal :public Field_real {
-public:
-  Field_decimal(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
-		uchar null_bit_arg,
-		enum utype unireg_check_arg, const char *field_name_arg,
-		uint8 dec_arg,bool zero_arg,bool unsigned_arg)
-    :Field_real(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-                unireg_check_arg, field_name_arg,
-                dec_arg, zero_arg, unsigned_arg)
-    {}
-  enum_field_types type() const { return MYSQL_TYPE_DECIMAL;}
-  enum ha_base_keytype key_type() const
-  { return zerofill ? HA_KEYTYPE_BINARY : HA_KEYTYPE_NUM; }
-  int reset(void);
-  int store(const char *to,uint length,CHARSET_INFO *charset);
-  int store(double nr);
-  int store(longlong nr, bool unsigned_val);
-  double val_real(void);
-  longlong val_int(void);
-  String *val_str(String*,String *);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  void overflow(bool negative);
-  bool zero_pack() const { return 0; }
-  void sql_type(String &str) const;
-  virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data, bool low_byte_first)
-  {
-    return Field::unpack(to, from, param_data, low_byte_first);
-  }
-  virtual uchar *pack(uchar* to, const uchar *from,
-                      uint max_length, bool low_byte_first)
-  {
-    return Field::pack(to, from, max_length, low_byte_first);
-  }
-};
-
-
 /* New decimal/numeric field which use fixed point arithmetic */
 class Field_new_decimal :public Field_num {
 private:

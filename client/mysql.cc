@@ -3022,8 +3022,7 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_BLOB:        return "BLOB";
     case MYSQL_TYPE_DATE:        return "DATE";
     case MYSQL_TYPE_DATETIME:    return "DATETIME";
-    case MYSQL_TYPE_NEWDECIMAL:  return "NEWDECIMAL";
-    case MYSQL_TYPE_DECIMAL:     return "DECIMAL";
+    case MYSQL_TYPE_NEWDECIMAL:  return "DECIMAL";
     case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
     case MYSQL_TYPE_ENUM:        return "ENUM";
     case MYSQL_TYPE_FLOAT:       return "FLOAT";

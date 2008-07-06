@@ -3110,9 +3110,6 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
   case MYSQL_TYPE_NEWDECIMAL:
     field_length= ((Field_new_decimal*) field)->precision;
     break;
-  case MYSQL_TYPE_DECIMAL:
-    field_length= field->field_length - (decimals  ? 2 : 1);
-    break;
   case MYSQL_TYPE_TINY:
   case MYSQL_TYPE_SHORT:
   case MYSQL_TYPE_LONG:
@@ -3927,12 +3924,6 @@ ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx)
   Create information_schema table using schema_table data.
 
   @note
-    For MYSQL_TYPE_DECIMAL fields only, the field_length member has encoded
-    into it two numbers, based on modulus of base-10 numbers.  In the ones
-    position is the number of decimals.  Tens position is unused.  In the
-    hundreds and thousands position is a two-digit decimal number representing
-    length.  Encode this value with  (decimals*100)+length  , where
-    0<decimals<10 and 0<=length<100 .
 
   @param
     thd	       	          thread handler
@@ -3987,7 +3978,6 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
                            fields_info->field_length)) == NULL)
         DBUG_RETURN(NULL);
       break;
-    case MYSQL_TYPE_DECIMAL:
     case MYSQL_TYPE_NEWDECIMAL:
       if (!(item= new Item_decimal((longlong) fields_info->value, false)))
       {

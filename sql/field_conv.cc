@@ -712,8 +712,7 @@ Copy_field::get_copy_func(Field *to,Field *from)
 	     to_length != from_length ||
              !compatible_db_low_byte_first)
     {
-      if (to->real_type() == MYSQL_TYPE_DECIMAL ||
-	  to->result_type() == STRING_RESULT)
+      if (to->result_type() == STRING_RESULT)
 	return do_field_string;
       if (to->result_type() == INT_RESULT)
 	return do_field_int;
@@ -723,8 +722,6 @@ Copy_field::get_copy_func(Field *to,Field *from)
     {
       if (!to->eq_def(from) || !compatible_db_low_byte_first)
       {
-	if (to->real_type() == MYSQL_TYPE_DECIMAL)
-	  return do_field_string;
 	if (to->result_type() == INT_RESULT)
 	  return do_field_int;
 	else
@@ -796,8 +793,7 @@ int field_conv(Field *to,Field *from)
   else if ((from->result_type() == STRING_RESULT &&
             (to->result_type() == STRING_RESULT ||
              (from->real_type() != MYSQL_TYPE_ENUM &&
-              from->real_type() != MYSQL_TYPE_SET))) ||
-           to->type() == MYSQL_TYPE_DECIMAL)
+              from->real_type() != MYSQL_TYPE_SET))))
   {
     char buff[MAX_FIELD_WIDTH];
     String result(buff,sizeof(buff),from->charset());
