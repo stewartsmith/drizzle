@@ -399,16 +399,12 @@ typedef struct st_mi_sort_param
 #define mi_print_error(SHARE, ERRNO)                     \
         mi_report_error((ERRNO), (SHARE)->index_file_name)
 
-#if defined(_cplusplus)
-extern "C" {
-#endif
+C_MODE_START
 void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
                         const char *message __attribute__((unused)),
                         const char *sfile __attribute__((unused)),
                         uint sline __attribute__((unused)));
-#if defined(_cplusplus)
-}
-#endif
+C_MODE_END
 /* Functions to store length of space packed keys, VARCHAR or BLOB keys */
 
 #define store_key_length(key,length) \
