@@ -138,7 +138,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
 */
 
 bool
-Item_func::fix_fields(THD *thd, Item **ref)
+Item_func::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 0);
   Item **arg,**arg_end;
@@ -195,7 +195,8 @@ Item_func::fix_fields(THD *thd, Item **ref)
 }
 
 
-void Item_func::fix_after_pullout(st_select_lex *new_parent, Item **ref)
+void Item_func::fix_after_pullout(st_select_lex *new_parent,
+                                  Item **ref __attribute__((__unused__)))
 {
   Item **arg,**arg_end;
 
@@ -4372,7 +4373,8 @@ enum Item_result Item_func_get_user_var::result_type() const
 }
 
 
-void Item_func_get_user_var::print(String *str, enum_query_type query_type)
+void Item_func_get_user_var::print(String *str,
+                                   enum_query_type query_type __attribute__((__unused__)))
 {
   str->append(STRING_WITH_LEN("(@"));
   str->append(name.str,name.length);
@@ -4380,7 +4382,8 @@ void Item_func_get_user_var::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_func_get_user_var::eq(const Item *item, bool binary_cmp) const
+bool Item_func_get_user_var::eq(const Item *item,
+                                bool binary_cmp __attribute__((__unused__))) const
 {
   /* Assume we don't have rtti */
   if (this == item)
@@ -4442,21 +4445,22 @@ longlong Item_user_var_as_out_param::val_int()
 }
 
 
-String* Item_user_var_as_out_param::val_str(String *str)
+String* Item_user_var_as_out_param::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(0);
   return 0;
 }
 
 
-my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer)
+my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer __attribute__((__unused__)))
 {
   DBUG_ASSERT(0);
   return 0;
 }
 
 
-void Item_user_var_as_out_param::print(String *str, enum_query_type query_type)
+void Item_user_var_as_out_param::print(String *str,
+                                       enum_query_type query_type __attribute__((__unused__)))
 {
   str->append('@');
   str->append(name.str,name.length);

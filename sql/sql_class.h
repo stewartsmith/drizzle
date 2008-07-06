@@ -469,8 +469,6 @@ void mark_transaction_to_rollback(THD *thd, bool all);
 
 #ifdef MYSQL_SERVER
 
-void free_tmp_table(THD *thd, TABLE *entry);
-
 
 /* The following macro is to make init of Query_arena simpler */
 #ifndef DBUG_OFF

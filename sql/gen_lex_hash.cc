@@ -250,15 +250,22 @@ void generate_find_structs()
 char *hash_map= 0;
 int size_hash_map= 0;
 
+/* Ok. I honestly don't know why this has no problem and
+ * array_elements macro doesn't. But it works.
+ */
+static inline uint32_t array_elements_func(SYMBOL * symbols) {
+  return sizeof(symbols)/sizeof(symbols[0]);
+}
+
 void add_struct_to_map(hash_lex_struct *st)
 {
   st->ithis= size_hash_map/4;
   size_hash_map+= 4;
   hash_map= (char*)realloc((char*)hash_map,size_hash_map);
   hash_map[size_hash_map-4]= (char) (st->first_char == -1 ? 0 :
-				     st->first_char);
+                                     st->first_char);
   hash_map[size_hash_map-3]= (char) (st->first_char == -1 ||
-				     st->first_char == 0 ? 0 : st->last_char);
+                                     st->first_char == 0 ? 0 : st->last_char);
   if (st->first_char == -1)
   {
     hash_map[size_hash_map-2]= ((unsigned int)(int16)st->iresult)&255;
@@ -266,8 +273,8 @@ void add_struct_to_map(hash_lex_struct *st)
   }
   else if (st->first_char == 0)
   {
-    hash_map[size_hash_map-2]= ((unsigned int)(int16)array_elements(symbols))&255;
-    hash_map[size_hash_map-1]= ((unsigned int)(int16)array_elements(symbols))>>8;
+    hash_map[size_hash_map-2]= (char)(array_elements_func(symbols))&255;
+    hash_map[size_hash_map-1]= (char)(array_elements(symbols))>>8;
   }
 }
 

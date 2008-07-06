@@ -3313,7 +3313,8 @@ void item_create_cleanup()
 }
 
 Create_func *
-find_native_function_builder(THD *thd, LEX_STRING name)
+find_native_function_builder(THD *thd __attribute__((__unused__)),
+                             LEX_STRING name)
 {
   Native_func_registry *func;
   Create_func *builder= NULL;
