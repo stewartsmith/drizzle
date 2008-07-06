@@ -16,7 +16,6 @@
 /* Create a MyISAM table */
 
 #include "ftdefs.h"
-#include "sp_defs.h"
 #include <my_bit.h>
 
 #if defined(MSDOS) || defined(__WIN__)
@@ -716,32 +715,13 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   DBUG_PRINT("info", ("write key and keyseg definitions"));
   for (i=0 ; i < share.base.keys - uniques; i++)
   {
-    uint sp_segs=(keydefs[i].flag & HA_SPATIAL) ? 2*SPDIMS : 0;
+    uint sp_segs= 0;
 
     if (mi_keydef_write(file, &keydefs[i]))
       goto err;
     for (j=0 ; j < keydefs[i].keysegs-sp_segs ; j++)
       if (mi_keyseg_write(file, &keydefs[i].seg[j]))
        goto err;
-#ifdef HAVE_SPATIAL
-    for (j=0 ; j < sp_segs ; j++)
-    {
-      HA_KEYSEG sseg;
-      sseg.type=SPTYPE;
-      sseg.language= 7;                         /* Binary */
-      sseg.null_bit=0;
-      sseg.bit_start=0;
-      sseg.bit_end=0;
-      sseg.bit_length= 0;
-      sseg.bit_pos= 0;
-      sseg.length=SPLEN;
-      sseg.null_pos=0;
-      sseg.start=j*SPLEN;
-      sseg.flag= HA_SWAP_KEY;
-      if (mi_keyseg_write(file, &sseg))
-        goto err;
-    }
-#endif
   }
   /* Create extra keys for unique definitions */
   offset=reclength-uniques*MI_UNIQUE_HASH_LENGTH;

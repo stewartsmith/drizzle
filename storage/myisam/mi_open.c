@@ -16,7 +16,6 @@
 /* open a isam-database */
 
 #include "fulltext.h"
-#include "sp_defs.h"
 #include "rt_index.h"
 #include <m_ctype.h>
 
