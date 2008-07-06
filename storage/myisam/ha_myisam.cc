@@ -1833,22 +1833,6 @@ ha_rows ha_myisam::records_in_range(uint inx, key_range *min_key,
 }
 
 
-int ha_myisam::ft_read(uchar *buf)
-{
-  int error;
-
-  if (!ft_handler)
-    return -1;
-
-  thread_safe_increment(table->in_use->status_var.ha_read_next_count,
-			&LOCK_status); // why ?
-
-  error=ft_handler->please->read_next(ft_handler,(char*) buf);
-
-  table->status=error ? STATUS_NOT_FOUND: 0;
-  return error;
-}
-
 uint ha_myisam::checksum() const
 {
   return (uint)file->state->checksum;

@@ -256,14 +256,6 @@ int _mi_ck_write_btree(register MI_INFO *info, uint keynr, uchar *key,
 
   error=_mi_ck_real_write_btree(info, keyinfo, key, key_length,
                                 root, comp_flag);
-  if (info->ft1_to_ft2)
-  {
-    if (!error)
-      error= _mi_ft_convert_to_ft2(info, keynr, key);
-    delete_dynamic(info->ft1_to_ft2);
-    my_free((uchar*)info->ft1_to_ft2, MYF(0));
-    info->ft1_to_ft2=0;
-  }
   DBUG_RETURN(error);
 } /* _mi_ck_write_btree */
 

@@ -31,11 +31,10 @@ LDADD =
 
 DEFS =                  @DEFS@
 
-EXTRA_DIST =		mi_test_all.sh mi_test_all.res ft_stem.c plug.in
-#pkgdata_DATA =		mi_test_all mi_test_all.res
+EXTRA_DIST =		mi_test_all.sh mi_test_all.res plug.in
+pkgdata_DATA =		mi_test_all mi_test_all.res
 
 noinst_LIBRARIES =	libmyisam.a
-
 #bin_PROGRAMS =		myisamchk myisamlog myisampack myisam_ftdump
 bin_PROGRAMS =
 myisamchk_DEPENDENCIES=	$(LIBRARIES)
@@ -53,9 +52,8 @@ myisampack_LDADD=	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-#noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3 #ft_test1 ft_eval
-noinst_HEADERS =	myisamdef.h  \
-			fulltext.h ftdefs.h ft_test1.h ft_eval.h \
+#noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3
+noinst_HEADERS =	myisamdef.h \
 			ha_myisam.h mi_extrafunc.h
 mi_test1_DEPENDENCIES=	$(LIBRARIES)
 mi_test1_LDADD=		libmyisam.a \
@@ -72,8 +70,6 @@ mi_test3_LDADD=		libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-#ft_test1_DEPENDENCIES=	$(LIBRARIES)
-#ft_eval_DEPENDENCIES=	$(LIBRARIES)
 myisam_ftdump_DEPENDENCIES=	$(LIBRARIES)
 myisam_ftdump_LDADD =	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
@@ -94,8 +90,7 @@ libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_changed.c mi_static.c mi_delete_all.c \
 			mi_delete_table.c mi_rename.c  mi_check.c \
 			mi_keycache.c mi_preload.c \
-			ft_parser.c ft_stopwords.c ft_static.c \
-			ft_update.c ft_boolean_search.c ft_nlq_search.c sort.c \
+			sort.c \
 			ha_myisam.cc
 CLEANFILES =		test?.MY? FT?.MY? isam.log mi_test_all
 
