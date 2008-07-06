@@ -680,4 +680,3 @@ static void usage(void)
   my_print_variables(my_long_options);
 }
 
-#include "mi_extrafunc.h"
