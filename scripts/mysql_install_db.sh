@@ -342,7 +342,7 @@ mysqld_install_cmd_line="$mysqld_bootstrap $defaults $mysqld_opt --bootstrap \
 
 # Create the system and help tables by passing them to "mysqld --bootstrap"
 s_echo "Installing MySQL system tables..."
-if { echo "use mysql;"; cat $create_system_tables } | eval "$filter_cmd_line" | $mysqld_install_cmd_line > /dev/null
+if { echo "use mysql;"; cat $create_system_tables; } | eval "$filter_cmd_line" | $mysqld_install_cmd_line > /dev/null
 then
   s_echo "OK"
 else
