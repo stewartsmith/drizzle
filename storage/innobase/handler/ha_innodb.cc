@@ -2635,7 +2635,6 @@ get_innobase_type_from_mysql_type(
 	DBUG_ASSERT((ulint)MYSQL_TYPE_VAR_STRING < 256);
 	DBUG_ASSERT((ulint)MYSQL_TYPE_DOUBLE < 256);
 	DBUG_ASSERT((ulint)MYSQL_TYPE_FLOAT < 256);
-	DBUG_ASSERT((ulint)MYSQL_TYPE_DECIMAL < 256);
 
 	if (field->flags & UNSIGNED_FLAG) {
 
@@ -2699,8 +2698,6 @@ get_innobase_type_from_mysql_type(
 		return(DATA_FLOAT);
 	case MYSQL_TYPE_DOUBLE:
 		return(DATA_DOUBLE);
-	case MYSQL_TYPE_DECIMAL:
-		return(DATA_DECIMAL);
 	case MYSQL_TYPE_TINY_BLOB:
 	case MYSQL_TYPE_MEDIUM_BLOB:
 	case MYSQL_TYPE_BLOB:

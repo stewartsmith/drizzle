@@ -4130,7 +4130,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
   Field *field;
 
   switch (field_type()) {
-  case MYSQL_TYPE_DECIMAL:
   case MYSQL_TYPE_NEWDECIMAL:
     field= new Field_new_decimal((uchar*) 0, max_length, null_ptr, 0,
                                  Field::NONE, name, decimals, 0,
@@ -4713,7 +4712,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   switch ((f_type=field_type())) {
   default:
   case MYSQL_TYPE_NULL:
-  case MYSQL_TYPE_DECIMAL:
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_SET:
   case MYSQL_TYPE_TINY_BLOB:
@@ -6440,7 +6438,6 @@ uint32 Item_type_holder::display_length(Item *item)
 
   switch (item->field_type())
   {
-  case MYSQL_TYPE_DECIMAL:
   case MYSQL_TYPE_TIMESTAMP:
   case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_TIME:

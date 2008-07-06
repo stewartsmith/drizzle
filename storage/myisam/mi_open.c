@@ -374,7 +374,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	pos->flag=0;
 	pos++;
       }
-      share->ftparsers= 0;
     }
 
     disk_pos_assert(disk_pos + share->base.fields *MI_COLUMNDEF_SIZE, end_pos);
@@ -527,7 +526,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   info.lock_type=F_UNLCK;
   info.quick_mode=0;
   info.bulk_insert=0;
-  info.ft1_to_ft2=0;
   info.errkey= -1;
   info.page_changed=1;
   pthread_mutex_lock(&share->intern_lock);
@@ -1020,8 +1018,6 @@ uchar *mi_keydef_read(uchar *ptr, MI_KEYDEF *keydef)
    keydef->block_size_index= keydef->block_length/MI_MIN_KEY_BLOCK_LENGTH-1;
    keydef->underflow_block_length=keydef->block_length/3;
    keydef->version	= 0;			/* Not saved */
-   keydef->parser       = NULL;
-   keydef->ftparser_nr  = 0;
    return ptr;
 }
 
