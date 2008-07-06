@@ -36,7 +36,7 @@ class st_alter_tablespace;
 #ifdef MYSQL_YACC
 #define LEX_YYSTYPE void *
 #else
-#if MYSQL_LEX
+#if defined(MYSQL_LEX)
 #include "lex_symbol.h"
 #include "sql_yacc.h"
 #define LEX_YYSTYPE YYSTYPE *

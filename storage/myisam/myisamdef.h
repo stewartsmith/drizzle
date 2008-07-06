@@ -15,8 +15,12 @@
 
 /* This file is included by all internal myisam files */
 
+#if !defined(MYISAMDEF_H)
+#define MYISAMDEF_H
+
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
+#include "fulltext.h"
 #include <my_tree.h>
 #include <my_pthread.h>
 #include <thr_lock.h>
@@ -788,3 +792,4 @@ void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 }
 #endif
 
+#endif

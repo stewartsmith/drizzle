@@ -73,11 +73,7 @@ static int walk_and_match(FT_WORD *word, uint32 count, ALL_IN_ONE *aio)
   MI_KEYDEF    *keyinfo=info->s->keyinfo+aio->keynr;
   my_off_t     key_root=info->s->state.key_root[aio->keynr];
   uint         extra=HA_FT_WLEN+info->s->base.rec_reflength;
-#if HA_FT_WTYPE == HA_KEYTYPE_FLOAT
   float tmp_weight;
-#else
-#error
-#endif
 
   DBUG_ENTER("walk_and_match");
 
@@ -122,11 +118,7 @@ static int walk_and_match(FT_WORD *word, uint32 count, ALL_IN_ONE *aio)
       r=_mi_search_first(info, keyinfo, key_root);
       goto do_skip;
     }
-#if HA_FT_WTYPE == HA_KEYTYPE_FLOAT
     tmp_weight=*(float*)&subkeys;
-#else
-#error
-#endif
   /* The following should be safe, even if we compare doubles */
     if (tmp_weight==0)
       DBUG_RETURN(doc_cnt); /* stopword, doc_cnt should be 0 */

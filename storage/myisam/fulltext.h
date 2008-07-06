@@ -15,6 +15,8 @@
 
 /* Written by Sergei A. Golubchik, who has a shared copyright to this code */
 
+#if !defined(FULLTEXT_H)
+#define FULLTEXT_H
 /* some definitions for full-text indices */
 
 #include "myisamdef.h"
@@ -35,3 +37,4 @@ int  _mi_ft_del(MI_INFO *, uint, uchar *, const uchar *, my_off_t);
 
 uint _mi_ft_convert_to_ft2(MI_INFO *, uint, uchar *);
 
+#endif

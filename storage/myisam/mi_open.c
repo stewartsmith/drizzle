@@ -252,25 +252,12 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     set_if_smaller(max_data_file_length, INT_MAX32);
     set_if_smaller(max_key_file_length, INT_MAX32);
 #endif
-#if USE_RAID && SYSTEM_SIZEOF_OFF_T == 4
-    set_if_smaller(max_key_file_length, INT_MAX32);
-    if (!share->base.raid_type)
-    {
-      set_if_smaller(max_data_file_length, INT_MAX32);
-    }
-    else
-    {
-      set_if_smaller(max_data_file_length,
-		     (ulonglong) share->base.raid_chunks << 31);
-    }
-#elif !defined(USE_RAID)
     if (share->base.raid_type)
     {
       DBUG_PRINT("error",("Table uses RAID but we don't have RAID support"));
       my_errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
-#endif
     share->base.max_data_file_length=(my_off_t) max_data_file_length;
     share->base.max_key_file_length=(my_off_t) max_key_file_length;
 
@@ -1149,18 +1136,6 @@ exist a dup()-like call that would give us two different file descriptors.
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
                      File file_to_dup __attribute__((unused)))
 {
-#ifdef USE_RAID
-  if (share->base.raid_type)
-  {
-    info->dfile=my_raid_open(share->data_file_name,
-			     share->mode | O_SHARE,
-			     share->base.raid_type,
-			     share->base.raid_chunks,
-			     share->base.raid_chunksize,
-			     MYF(MY_WME | MY_RAID));
-  }
-  else
-#endif
     info->dfile=my_open(share->data_file_name, share->mode | O_SHARE,
 			MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;

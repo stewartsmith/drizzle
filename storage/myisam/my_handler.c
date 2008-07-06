@@ -21,6 +21,7 @@
 #include <my_handler.h>
 #include <my_sys.h>
 
+#include "myisamdef.h"
 #include "my_handler_errors.h"
 
 int ha_compare_text(CHARSET_INFO *charset_info, uchar *a, uint a_length,

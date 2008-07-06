@@ -777,22 +777,6 @@ typedef long long intptr;
 
 #define MY_ERRPTR ((void*)(intptr)1)
 
-#ifdef USE_RAID
-/*
-  The following is done with a if to not get problems with pre-processors
-  with late define evaluation
-*/
-#if SIZEOF_OFF_T == 4
-#define SYSTEM_SIZEOF_OFF_T 4
-#else
-#define SYSTEM_SIZEOF_OFF_T 8
-#endif
-#undef  SIZEOF_OFF_T
-#define SIZEOF_OFF_T	    8
-#else
-#define SYSTEM_SIZEOF_OFF_T SIZEOF_OFF_T
-#endif /* USE_RAID */
-
 #if SIZEOF_OFF_T > 4
 typedef ulonglong my_off_t;
 #else
