@@ -4166,10 +4166,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
     field= new Field_null((uchar*) 0, max_length, Field::NONE,
 			  name, &my_charset_bin);
     break;
-  case MYSQL_TYPE_INT24:
-    field= new Field_medium((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
-			    name, 0, unsigned_flag);
-    break;
   case MYSQL_TYPE_NEWDATE:
   case MYSQL_TYPE_DATE:
     field= new Field_newdate(maybe_null, name, &my_charset_bin);
@@ -4753,7 +4749,6 @@ bool Item::send(Protocol *protocol, String *buffer)
       result= protocol->store_short(nr);
     break;
   }
-  case MYSQL_TYPE_INT24:
   case MYSQL_TYPE_LONG:
   {
     longlong nr;
@@ -6478,8 +6473,6 @@ uint32 Item_type_holder::display_length(Item *item)
     return 0;
   case MYSQL_TYPE_LONGLONG:
     return 20;
-  case MYSQL_TYPE_INT24:
-    return 8;
   default:
     DBUG_ASSERT(0); // we should never go there
     return 0;
