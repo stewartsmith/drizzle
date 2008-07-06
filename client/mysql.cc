@@ -543,7 +543,6 @@ static COMMANDS commands[] = {
   { "MAX_USER_CONNECTIONS", 0, 0, 0, ""},
   { "MEDIUM", 0, 0, 0, ""},
   { "MEDIUMBLOB", 0, 0, 0, ""},
-  { "MEDIUMINT", 0, 0, 0, ""},
   { "MEDIUMTEXT", 0, 0, 0, ""},
   { "MERGE", 0, 0, 0, ""},
   { "MICROSECOND", 0, 0, 0, ""},
@@ -3028,7 +3027,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
     case MYSQL_TYPE_ENUM:        return "ENUM";
     case MYSQL_TYPE_FLOAT:       return "FLOAT";
-    case MYSQL_TYPE_INT24:       return "INT24";
     case MYSQL_TYPE_LONG:        return "LONG";
     case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
     case MYSQL_TYPE_LONG_BLOB:   return "LONG_BLOB";

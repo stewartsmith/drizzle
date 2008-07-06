@@ -955,8 +955,7 @@ void Item_sum_distinct::fix_length_and_dec()
     calculations. The range of int64 is enough to hold sum 2^32 distinct
     integers each <= 2^32.
   */
-  if (table_field_type == MYSQL_TYPE_INT24 ||
-      (table_field_type >= MYSQL_TYPE_TINY && table_field_type <= MYSQL_TYPE_LONG))
+  if (table_field_type >= MYSQL_TYPE_TINY && table_field_type <= MYSQL_TYPE_LONG)
   {
     val.traits= Hybrid_type_traits_fast_decimal::instance();
     break;

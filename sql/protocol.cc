@@ -859,7 +859,6 @@ bool Protocol_text::store_long(longlong from)
 {
 #ifndef DBUG_OFF
   DBUG_ASSERT(field_types == 0 ||
-              field_types[field_pos] == MYSQL_TYPE_INT24 ||
               field_types[field_pos] == MYSQL_TYPE_LONG);
   field_pos++;
 #endif

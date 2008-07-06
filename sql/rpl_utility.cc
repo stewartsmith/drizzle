@@ -69,9 +69,6 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
   case MYSQL_TYPE_SHORT:
     length= 2;
     break;
-  case MYSQL_TYPE_INT24:
-    length= 3;
-    break;
   case MYSQL_TYPE_LONG:
     length= 4;
     break;

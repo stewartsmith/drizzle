@@ -3058,12 +3058,6 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_INT24</td><td>9</td>
-    <td>0</td>
-    <td>No column metadata.</td>
-  </tr>
-
-  <tr>
     <td>MYSQL_TYPE_DATE</td><td>10</td>
     <td>0</td>
     <td>No column metadata.</td>
