@@ -448,8 +448,6 @@ static COMMANDS commands[] = {
   { "FULL", 0, 0, 0, ""},
   { "FULLTEXT", 0, 0, 0, ""},
   { "FUNCTION", 0, 0, 0, ""},
-  { "GEOMETRY", 0, 0, 0, ""},
-  { "GEOMETRYCOLLECTION", 0, 0, 0, ""},
   { "GET_FORMAT", 0, 0, 0, ""},
   { "GLOBAL", 0, 0, 0, ""},
   { "GRANT", 0, 0, 0, ""},
@@ -545,7 +543,6 @@ static COMMANDS commands[] = {
   { "MAX_USER_CONNECTIONS", 0, 0, 0, ""},
   { "MEDIUM", 0, 0, 0, ""},
   { "MEDIUMBLOB", 0, 0, 0, ""},
-  { "MEDIUMINT", 0, 0, 0, ""},
   { "MEDIUMTEXT", 0, 0, 0, ""},
   { "MERGE", 0, 0, 0, ""},
   { "MICROSECOND", 0, 0, 0, ""},
@@ -850,16 +847,6 @@ static COMMANDS commands[] = {
   { "FROM_DAYS", 0, 0, 0, ""},
   { "FROM_UNIXTIME", 0, 0, 0, ""},
   { "GET_LOCK", 0, 0, 0, ""},
-  { "GEOMETRYN", 0, 0, 0, ""},
-  { "GEOMETRYTYPE", 0, 0, 0, ""},
-  { "GEOMCOLLFROMTEXT", 0, 0, 0, ""},
-  { "GEOMCOLLFROMWKB", 0, 0, 0, ""},
-  { "GEOMETRYCOLLECTIONFROMTEXT", 0, 0, 0, ""},
-  { "GEOMETRYCOLLECTIONFROMWKB", 0, 0, 0, ""},
-  { "GEOMETRYFROMTEXT", 0, 0, 0, ""},
-  { "GEOMETRYFROMWKB", 0, 0, 0, ""},
-  { "GEOMFROMTEXT", 0, 0, 0, ""},
-  { "GEOMFROMWKB", 0, 0, 0, ""},
   { "GLENGTH", 0, 0, 0, ""},
   { "GREATEST", 0, 0, 0, ""},
   { "GROUP_CONCAT", 0, 0, 0, ""},
@@ -926,7 +913,6 @@ static COMMANDS commands[] = {
   { "NAME_CONST", 0, 0, 0, ""},
   { "NOW", 0, 0, 0, ""},
   { "NULLIF", 0, 0, 0, ""},
-  { "NUMGEOMETRIES", 0, 0, 0, ""},
   { "NUMINTERIORRINGS", 0, 0, 0, ""},
   { "NUMPOINTS", 0, 0, 0, ""},
   { "OCTET_LENGTH", 0, 0, 0, ""},
@@ -3033,7 +3019,6 @@ com_ego(String *buffer,char *line)
 static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
-    case MYSQL_TYPE_BIT:         return "BIT";
     case MYSQL_TYPE_BLOB:        return "BLOB";
     case MYSQL_TYPE_DATE:        return "DATE";
     case MYSQL_TYPE_DATETIME:    return "DATETIME";
@@ -3042,8 +3027,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
     case MYSQL_TYPE_ENUM:        return "ENUM";
     case MYSQL_TYPE_FLOAT:       return "FLOAT";
-    case MYSQL_TYPE_GEOMETRY:    return "GEOMETRY";
-    case MYSQL_TYPE_INT24:       return "INT24";
     case MYSQL_TYPE_LONG:        return "LONG";
     case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
     case MYSQL_TYPE_LONG_BLOB:   return "LONG_BLOB";

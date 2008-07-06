@@ -2190,24 +2190,12 @@ String *Item_func_conv::val_str(String *str)
   null_value= 0;
   unsigned_flag= !(from_base < 0);
 
-  if (args[0]->field_type() == MYSQL_TYPE_BIT) 
-  {
-    /* 
-     Special case: The string representation of BIT doesn't resemble the
-     decimal representation, so we shouldn't change it to string and then to
-     decimal. 
-    */
-    dec= args[0]->val_int();
-  }
+  if (from_base < 0)
+    dec= my_strntoll(res->charset(), res->ptr(), res->length(),
+                     -from_base, &endptr, &err);
   else
-  {
-    if (from_base < 0)
-      dec= my_strntoll(res->charset(), res->ptr(), res->length(),
-                       -from_base, &endptr, &err);
-    else
-      dec= (longlong) my_strntoull(res->charset(), res->ptr(), res->length(),
-                                   from_base, &endptr, &err);
-  }
+    dec= (longlong) my_strntoull(res->charset(), res->ptr(), res->length(),
+                                 from_base, &endptr, &err);
 
   ptr= longlong2str(dec, ans, to_base);
   if (str->copy(ans, (uint32) (ptr-ans), default_charset()))

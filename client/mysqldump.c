@@ -2339,8 +2339,7 @@ static void dump_table(char *table, char *db)
            we'll dump in hex only BLOB columns.
         */
         is_blob= (opt_hex_blob && field->charsetnr == 63 &&
-                  (field->type == MYSQL_TYPE_BIT ||
-                   field->type == MYSQL_TYPE_STRING ||
+                  (field->type == MYSQL_TYPE_STRING ||
                    field->type == MYSQL_TYPE_VAR_STRING ||
                    field->type == MYSQL_TYPE_VARCHAR ||
                    field->type == MYSQL_TYPE_BLOB ||

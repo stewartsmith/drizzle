@@ -169,7 +169,7 @@ drop table if exists t1,t2,t3,t4,t5,t6,t7,t8;
 
 #searchconthardwarefr3 forumconthardwarefr7
 CREATE TABLE `t1` (
-  `topic` mediumint(8) unsigned NOT NULL default '0',
+  `topic` bigint(8) unsigned NOT NULL default '0',
   `date` date NOT NULL default '0000-00-00',
   `pseudo` varchar(35) character set latin1 NOT NULL default '',
   PRIMARY KEY  (`pseudo`,`date`,`topic`),
@@ -189,7 +189,7 @@ drop table t1;
 
 #forumconthardwarefr7 searchconthardwarefr7
 CREATE TABLE `t1` (
-  `numeropost` mediumint(8) unsigned NOT NULL auto_increment,
+  `numeropost` bigint(8) unsigned NOT NULL auto_increment,
   `maxnumrep` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   UNIQUE KEY `maxnumrep` (`maxnumrep`)
@@ -199,7 +199,7 @@ INSERT INTO t1 (numeropost,maxnumrep) VALUES (40143,1),(43506,2);
 
 CREATE TABLE `t2` (
       `mot` varchar(30) NOT NULL default '',
-      `topic` mediumint(8) unsigned NOT NULL default '0',
+      `topic` bigint(8) unsigned NOT NULL default '0',
       `date` date NOT NULL default '0000-00-00',
       `pseudo` varchar(35) NOT NULL default '',
        PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`)
@@ -232,7 +232,7 @@ drop table t1,t2;
 
 #forumconthardwarefr7
 CREATE TABLE `t1` (
-  `numeropost` mediumint(8) unsigned NOT NULL auto_increment,
+  `numeropost` bigint(8) unsigned NOT NULL auto_increment,
   `maxnumrep` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   UNIQUE KEY `maxnumrep` (`maxnumrep`)
@@ -259,7 +259,7 @@ drop table t1;
 
 # threadhardwarefr7
 CREATE TABLE `t1` (
-  `numeropost` mediumint(8) unsigned NOT NULL default '0',
+  `numeropost` bigint(8) unsigned NOT NULL default '0',
   `numreponse` int(10) unsigned NOT NULL auto_increment,
   `pseudo` varchar(35) NOT NULL default '',
   PRIMARY KEY  (`numeropost`,`numreponse`),
@@ -516,7 +516,7 @@ drop table t1;
 
 CREATE TABLE `t1` (
   `mot` varchar(30) character set latin1 NOT NULL default '',
-  `topic` mediumint(8) unsigned NOT NULL default '0',
+  `topic` bigint(8) unsigned NOT NULL default '0',
   `date` date NOT NULL default '0000-00-00',
   `pseudo` varchar(35) character set latin1 NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
@@ -526,7 +526,7 @@ CREATE TABLE `t1` (
 
 CREATE TABLE `t2` (
   `mot` varchar(30) character set latin1 NOT NULL default '',
-  `topic` mediumint(8) unsigned NOT NULL default '0',
+  `topic` bigint(8) unsigned NOT NULL default '0',
   `date` date NOT NULL default '0000-00-00',
   `pseudo` varchar(35) character set latin1 NOT NULL default '',
   PRIMARY KEY  (`mot`,`pseudo`,`date`,`topic`),
@@ -535,7 +535,7 @@ CREATE TABLE `t2` (
 ) ENGINE=MyISAM CHARSET=latin1 ROW_FORMAT=DYNAMIC;
 
 CREATE TABLE `t3` (
-  `numeropost` mediumint(8) unsigned NOT NULL auto_increment,
+  `numeropost` bigint(8) unsigned NOT NULL auto_increment,
   `maxnumrep` int(10) unsigned NOT NULL default '0',
   PRIMARY KEY  (`numeropost`),
   UNIQUE KEY `maxnumrep` (`maxnumrep`)
@@ -629,7 +629,7 @@ drop table t1, t2;
 # constants in IN
 #
 CREATE TABLE `t1` (
-  `id` mediumint(8) unsigned NOT NULL auto_increment,
+  `id` bigint(8) unsigned NOT NULL auto_increment,
   `pseudo` varchar(35) character set latin1 NOT NULL default '',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `pseudo` (`pseudo`)
@@ -721,7 +721,7 @@ drop table t1, t2;
 #
 
 CREATE TABLE `t1` (
-  `id` mediumint(8) unsigned NOT NULL auto_increment,
+  `id` bigint(8) unsigned NOT NULL auto_increment,
   `pseudo` varchar(35) NOT NULL default '',
   `email` varchar(60) NOT NULL default '',
   PRIMARY KEY  (`id`),
@@ -896,11 +896,11 @@ drop table t2, t3;
 # correct used_tables()
 #
 
-CREATE TABLE `t1` ( `id` mediumint(9) NOT NULL auto_increment, `taskid` bigint(20) NOT NULL default '0', `dbid` int(11) NOT NULL default '0', `create_date` datetime NOT NULL default '0000-00-00 00:00:00', `last_update` datetime NOT NULL default '0000-00-00 00:00:00', PRIMARY KEY  (`id`)) ENGINE=MyISAM CHARSET=latin1 AUTO_INCREMENT=3 ;
+CREATE TABLE `t1` ( `id` bigint(9) NOT NULL auto_increment, `taskid` bigint(20) NOT NULL default '0', `dbid` int(11) NOT NULL default '0', `create_date` datetime NOT NULL default '0000-00-00 00:00:00', `last_update` datetime NOT NULL default '0000-00-00 00:00:00', PRIMARY KEY  (`id`)) ENGINE=MyISAM CHARSET=latin1 AUTO_INCREMENT=3 ;
 INSERT INTO `t1` (`id`, `taskid`, `dbid`, `create_date`,`last_update`) VALUES (1, 1, 15, '2003-09-29 10:31:36', '2003-09-29 10:31:36'), (2, 1, 21, now(), now());
 CREATE TABLE `t2` (`db_id` int(11) NOT NULL auto_increment,`name` varchar(200) NOT NULL default '',`primary_uid` smallint(6) NOT NULL default '0',`secondary_uid` smallint(6) NOT NULL default '0',PRIMARY KEY  (`db_id`),UNIQUE KEY `name_2` (`name`)) ENGINE=MyISAM CHARSET=latin1 AUTO_INCREMENT=2147483647;
 INSERT INTO `t2` (`db_id`, `name`, `primary_uid`, `secondary_uid`) VALUES (18, 'Not Set 1', 0, 0),(19, 'Valid', 1, 2),(20, 'Valid 2', 1, 2),(21, 'Should Not Return', 1, 2),(26, 'Not Set 2', 0, 0),(-1, 'ALL DB\'S', 0, 0);
-CREATE TABLE `t3` (`taskgenid` mediumint(9) NOT NULL auto_increment,`dbid` int(11) NOT NULL default '0',`taskid` int(11) NOT NULL default '0',`mon` tinyint(4) NOT NULL default '1',`tues` tinyint(4) NOT NULL default '1',`wed` tinyint(4) NOT NULL default '1',`thur` tinyint(4) NOT NULL default '1',`fri` tinyint(4) NOT NULL default '1',`sat` tinyint(4) NOT NULL default '0',`sun` tinyint(4) NOT NULL default '0',`how_often` smallint(6) NOT NULL default '1',`userid` smallint(6) NOT NULL default '0',`active` tinyint(4) NOT NULL default '1',PRIMARY KEY  (`taskgenid`)) ENGINE=MyISAM CHARSET=latin1 AUTO_INCREMENT=2 ;
+CREATE TABLE `t3` (`taskgenid` bigint(9) NOT NULL auto_increment,`dbid` int(11) NOT NULL default '0',`taskid` int(11) NOT NULL default '0',`mon` tinyint(4) NOT NULL default '1',`tues` tinyint(4) NOT NULL default '1',`wed` tinyint(4) NOT NULL default '1',`thur` tinyint(4) NOT NULL default '1',`fri` tinyint(4) NOT NULL default '1',`sat` tinyint(4) NOT NULL default '0',`sun` tinyint(4) NOT NULL default '0',`how_often` smallint(6) NOT NULL default '1',`userid` smallint(6) NOT NULL default '0',`active` tinyint(4) NOT NULL default '1',PRIMARY KEY  (`taskgenid`)) ENGINE=MyISAM CHARSET=latin1 AUTO_INCREMENT=2 ;
 INSERT INTO `t3` (`taskgenid`, `dbid`, `taskid`, `mon`, `tues`,`wed`, `thur`, `fri`, `sat`, `sun`, `how_often`, `userid`, `active`) VALUES (1,-1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1);
 CREATE TABLE `t4` (`task_id` smallint(6) NOT NULL default '0',`description` varchar(200) NOT NULL default '') ENGINE=MyISAM CHARSET=latin1;
 INSERT INTO `t4` (`task_id`, `description`) VALUES (1, 'Daily Check List'),(2, 'Weekly Status');
@@ -976,8 +976,8 @@ CREATE TABLE `t1` (
   `id_cns` tinyint(3) unsigned NOT NULL default '0',
   `tipo` enum('','UNO','DUE') NOT NULL default '',
   `anno_dep` smallint(4) unsigned zerofill NOT NULL default '0000',
-  `particolare` mediumint(8) unsigned NOT NULL default '0',
-  `generale` mediumint(8) unsigned NOT NULL default '0',
+  `particolare` bigint(8) unsigned NOT NULL default '0',
+  `generale` bigint(8) unsigned NOT NULL default '0',
   `bis` tinyint(3) unsigned NOT NULL default '0',
   PRIMARY KEY  (`id`),
   UNIQUE KEY `idx_cns_gen_anno` (`anno_dep`,`id_cns`,`generale`,`particolare`),

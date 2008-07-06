@@ -674,7 +674,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MAX_USER_CONNECTIONS_SYM
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
 %token  MEDIUMBLOB
-%token  MEDIUMINT
 %token  MEDIUMTEXT
 %token  MEDIUM_SYM
 %token  MEMORY_SYM
@@ -1861,12 +1860,7 @@ type:
         | BIT_SYM
           {
             Lex->length= (char*) "1";
-            $$=MYSQL_TYPE_BIT;
-          }
-        | BIT_SYM '(' NUM ')'
-          {
-            Lex->length= $3.str;
-            $$=MYSQL_TYPE_BIT;
+            $$=FIELD_TYPE_TINY;
           }
         | BOOL_SYM
           {
@@ -2028,7 +2022,6 @@ int_type:
           INT_SYM   { $$=MYSQL_TYPE_LONG; }
         | TINYINT   { $$=MYSQL_TYPE_TINY; }
         | SMALLINT  { $$=MYSQL_TYPE_SHORT; }
-        | MEDIUMINT { $$=MYSQL_TYPE_INT24; }
         | BIGINT    { $$=MYSQL_TYPE_LONGLONG; }
         ;
 

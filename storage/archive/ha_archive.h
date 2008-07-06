@@ -95,9 +95,9 @@ public:
             HA_HAS_RECORDS |
             HA_FILE_BASED | HA_CAN_INSERT_DELAYED | HA_CAN_GEOMETRY);
   }
-  ulong index_flags(uint idx __attribute__((__unused__)),
-                    uint part __attribute__((__unused__)),
-                    bool all_parts __attribute__((__unused__))) const
+  uint32_t index_flags(uint idx __attribute__((__unused__)),
+                       uint part __attribute__((__unused__)),
+                       bool all_parts __attribute__((__unused__))) const
   {
     return HA_ONLY_WHOLE_INDEX;
   }

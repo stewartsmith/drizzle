@@ -3117,12 +3117,7 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
   case MYSQL_TYPE_SHORT:
   case MYSQL_TYPE_LONG:
   case MYSQL_TYPE_LONGLONG:
-  case MYSQL_TYPE_INT24:
     field_length= field->max_display_length() - 1;
-    break;
-  case MYSQL_TYPE_BIT:
-    field_length= field->max_display_length();
-    decimals= -1;                             // return NULL
     break;
   case MYSQL_TYPE_FLOAT:  
   case MYSQL_TYPE_DOUBLE:
@@ -3967,7 +3962,6 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
     case MYSQL_TYPE_LONG:
     case MYSQL_TYPE_SHORT:
     case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
       if (!(item= new Item_return_int(fields_info->field_name,
                                       fields_info->field_length,
                                       fields_info->field_type,

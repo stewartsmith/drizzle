@@ -55,7 +55,7 @@ class ha_myisam: public handler
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint idx, bool sorted);
   int index_end();
-  ulong index_flags(uint inx, uint part, bool all_parts) const
+  uint32_t index_flags(uint inx, uint part, bool all_parts) const
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
             0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
@@ -104,7 +104,7 @@ class ha_myisam: public handler
   void position(const uchar *record);
   int info(uint);
   int extra(enum ha_extra_function operation);
-  int extra_opt(enum ha_extra_function operation, ulong cache_size);
+  int extra_opt(enum ha_extra_function operation, uint32_t cache_size);
   int reset(void);
   int external_lock(THD *thd, int lock_type);
   int delete_all_rows(void);
