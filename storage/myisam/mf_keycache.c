@@ -101,10 +101,10 @@
   I/O finished.
 */
 
-#include "mysys_priv.h"
+#include "my_global.h"
 #include "mysys_err.h"
+#include <my_sys.h>
 #include <keycache.h>
-#include "my_static.h"
 #include <m_string.h>
 #include <my_bit.h>
 #include <errno.h>

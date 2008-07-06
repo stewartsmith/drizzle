@@ -30,21 +30,9 @@
 #include <my_global.h>
 #include "m_string.h"
 
-#if	VaxAsm
-
-char *strend(s)
-const char *s;
-{
-  asm("locc $0,$65535,*4(ap)");
-  asm("movl r1,r0");
-}
-
-#else	/* ~VaxAsm */
 
 char *strend(register const char *s)
 {
   while (*s++);
   return (char*) (s-1);
 }
-
-#endif	/* VaxAsm */

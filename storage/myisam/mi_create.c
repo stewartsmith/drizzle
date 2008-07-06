@@ -15,8 +15,11 @@
 
 /* Create a MyISAM table */
 
-#include "ftdefs.h"
-#include "sp_defs.h"
+#include "myisamdef.h"
+#include <m_ctype.h>
+#include <my_tree.h>
+#include <queues.h>
+#include <mysql/plugin.h>
 #include <my_bit.h>
 
 #if defined(MSDOS) || defined(__WIN__)
@@ -245,79 +248,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     share.state.key_root[i]= HA_OFFSET_ERROR;
     min_key_length_skip=length=real_length_diff=0;
     key_length=pointer;
-    if (keydef->flag & HA_SPATIAL)
-    {
-#ifdef HAVE_SPATIAL
-      /* BAR TODO to support 3D and more dimensions in the future */
-      uint sp_segs=SPDIMS*2;
-      keydef->flag=HA_SPATIAL;
-
-      if (flags & HA_DONT_TOUCH_DATA)
-      {
-        /*
-           called by myisamchk - i.e. table structure was taken from
-           MYI file and SPATIAL key *does have* additional sp_segs keysegs.
-           keydef->seg here points right at the GEOMETRY segment,
-           so we only need to decrease keydef->keysegs.
-           (see recreate_table() in mi_check.c)
-        */
-        keydef->keysegs-=sp_segs-1;
-      }
-
-      for (j=0, keyseg=keydef->seg ; (int) j < keydef->keysegs ;
-	   j++, keyseg++)
-      {
-        if (keyseg->type != HA_KEYTYPE_BINARY &&
-	    keyseg->type != HA_KEYTYPE_VARBINARY1 &&
-            keyseg->type != HA_KEYTYPE_VARBINARY2)
-        {
-          my_errno=HA_WRONG_CREATE_OPTION;
-          goto err;
-        }
-      }
-      keydef->keysegs+=sp_segs;
-      key_length+=SPLEN*sp_segs;
-      length++;                              /* At least one length byte */
-      min_key_length_skip+=SPLEN*2*SPDIMS;
-#else
-      my_errno= HA_ERR_UNSUPPORTED;
-      goto err;
-#endif /*HAVE_SPATIAL*/
-    }
-    else if (keydef->flag & HA_FULLTEXT)
-    {
-      keydef->flag=HA_FULLTEXT | HA_PACK_KEY | HA_VAR_LENGTH_KEY;
-      options|=HA_OPTION_PACK_KEYS;             /* Using packed keys */
-
-      for (j=0, keyseg=keydef->seg ; (int) j < keydef->keysegs ;
-	   j++, keyseg++)
-      {
-        if (keyseg->type != HA_KEYTYPE_TEXT &&
-	    keyseg->type != HA_KEYTYPE_VARTEXT1 &&
-            keyseg->type != HA_KEYTYPE_VARTEXT2)
-        {
-          my_errno=HA_WRONG_CREATE_OPTION;
-          goto err;
-        }
-        if (!(keyseg->flag & HA_BLOB_PART) &&
-	    (keyseg->type == HA_KEYTYPE_VARTEXT1 ||
-             keyseg->type == HA_KEYTYPE_VARTEXT2))
-        {
-          /* Make a flag that this is a VARCHAR */
-          keyseg->flag|= HA_VAR_LENGTH_PART;
-          /* Store in bit_start number of bytes used to pack the length */
-          keyseg->bit_start= ((keyseg->type == HA_KEYTYPE_VARTEXT1)?
-                              1 : 2);
-        }
-      }
-
-      fulltext_keys++;
-      key_length+= HA_FT_MAXBYTELEN+HA_FT_WLEN;
-      length++;                              /* At least one length byte */
-      min_key_length_skip+=HA_FT_MAXBYTELEN;
-      real_length_diff=HA_FT_MAXBYTELEN-FT_MAX_WORD_LEN_FOR_SORT;
-    }
-    else
     {
       /* Test if prefix compression */
       if (keydef->flag & HA_PACK_KEY)
@@ -716,32 +646,13 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   DBUG_PRINT("info", ("write key and keyseg definitions"));
   for (i=0 ; i < share.base.keys - uniques; i++)
   {
-    uint sp_segs=(keydefs[i].flag & HA_SPATIAL) ? 2*SPDIMS : 0;
+    uint sp_segs= 0;
 
     if (mi_keydef_write(file, &keydefs[i]))
       goto err;
     for (j=0 ; j < keydefs[i].keysegs-sp_segs ; j++)
       if (mi_keyseg_write(file, &keydefs[i].seg[j]))
        goto err;
-#ifdef HAVE_SPATIAL
-    for (j=0 ; j < sp_segs ; j++)
-    {
-      HA_KEYSEG sseg;
-      sseg.type=SPTYPE;
-      sseg.language= 7;                         /* Binary */
-      sseg.null_bit=0;
-      sseg.bit_start=0;
-      sseg.bit_end=0;
-      sseg.bit_length= 0;
-      sseg.bit_pos= 0;
-      sseg.length=SPLEN;
-      sseg.null_pos=0;
-      sseg.start=j*SPLEN;
-      sseg.flag= HA_SWAP_KEY;
-      if (mi_keyseg_write(file, &sseg))
-        goto err;
-    }
-#endif
   }
   /* Create extra keys for unique definitions */
   offset=reclength-uniques*MI_UNIQUE_HASH_LENGTH;

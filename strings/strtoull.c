@@ -27,7 +27,7 @@
 #include <my_global.h>
 #include <m_string.h>
 
-#if !defined(HAVE_STRTOULL) && defined(HAVE_LONG_LONG)
+#if !defined(HAVE_STRTOULL)
 #define USE_UNSIGNED
 #define USE_LONGLONG
 #include "strto.c"

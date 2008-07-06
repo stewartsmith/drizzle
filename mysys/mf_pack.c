@@ -15,6 +15,7 @@
 
 #include "mysys_priv.h"
 #include <m_string.h>
+#include "my_static.h"
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif

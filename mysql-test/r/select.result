@@ -2091,7 +2091,7 @@ t2	0	fld1	1	fld1	A	1199	NULL	NULL		BTREE
 t2	1	fld3	1	fld3	A	NULL	NULL	NULL		BTREE		
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
-id mediumint(8) unsigned NOT NULL auto_increment,
+id bigint(8) unsigned NOT NULL auto_increment,
 pseudo varchar(35) NOT NULL default '',
 PRIMARY KEY  (id),
 UNIQUE KEY pseudo (pseudo)

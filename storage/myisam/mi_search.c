@@ -15,7 +15,7 @@
 
 /* key handling functions */
 
-#include "fulltext.h"
+#include "myisamdef.h"
 #include "m_ctype.h"
 
 static my_bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
@@ -1467,12 +1467,6 @@ _mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
   key_length=_mi_keylength(keyinfo,key)+nod_flag;
 
   sort_order=0;
-  if ((keyinfo->flag & HA_FULLTEXT) &&
-      ((keyseg->type == HA_KEYTYPE_TEXT) ||
-       (keyseg->type == HA_KEYTYPE_VARTEXT1) ||
-       (keyseg->type == HA_KEYTYPE_VARTEXT2)) &&
-      !use_strnxfrm(keyseg->charset))
-    sort_order=keyseg->charset->sort_order;
 
   /* diff flag contains how many bytes is needed to pack key */
   if (keyseg->length >= 127)

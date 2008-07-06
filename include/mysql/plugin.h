@@ -24,6 +24,8 @@ class Item;
 #define MYSQL_THD void*
 #endif
 
+#include <stdint.h>
+
 #ifndef _m_string_h
 /* This definition must match the one given in m_string.h */
 struct st_mysql_lex_string
@@ -299,12 +301,12 @@ DECLARE_MYSQL_SYSVAR_SIMPLE(name, unsigned long) = { \
   #name, comment, check, update, &varname, def, min, max, blk }
 
 #define MYSQL_SYSVAR_LONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, long long) = { \
+DECLARE_MYSQL_SYSVAR_SIMPLE(name, int64_t) = { \
   PLUGIN_VAR_LONGLONG | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
 #define MYSQL_SYSVAR_ULONGLONG(name, varname, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_SYSVAR_SIMPLE(name, unsigned long long) = { \
+DECLARE_MYSQL_SYSVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, min, max, blk }
 
@@ -314,7 +316,7 @@ DECLARE_MYSQL_SYSVAR_TYPELIB(name, unsigned long) = { \
   #name, comment, check, update, &varname, def, typelib }
 
 #define MYSQL_SYSVAR_SET(name, varname, opt, comment, check, update, def, typelib) \
-DECLARE_MYSQL_SYSVAR_TYPELIB(name, unsigned long long) = { \
+DECLARE_MYSQL_SYSVAR_TYPELIB(name, uint64_t) = { \
   PLUGIN_VAR_SET | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def, typelib }
 
@@ -349,12 +351,12 @@ DECLARE_MYSQL_THDVAR_SIMPLE(name, unsigned long) = { \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
 #define MYSQL_THDVAR_LONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, long long) = { \
+DECLARE_MYSQL_THDVAR_SIMPLE(name, int64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
 #define MYSQL_THDVAR_ULONGLONG(name, opt, comment, check, update, def, min, max, blk) \
-DECLARE_MYSQL_THDVAR_SIMPLE(name, unsigned long long) = { \
+DECLARE_MYSQL_THDVAR_SIMPLE(name, uint64_t) = { \
   PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL | PLUGIN_VAR_UNSIGNED | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, min, max, blk, NULL }
 
@@ -364,7 +366,7 @@ DECLARE_MYSQL_THDVAR_TYPELIB(name, unsigned long) = { \
   #name, comment, check, update, -1, def, NULL, typelib }
 
 #define MYSQL_THDVAR_SET(name, opt, comment, check, update, def, typelib) \
-DECLARE_MYSQL_THDVAR_TYPELIB(name, unsigned long long) = { \
+DECLARE_MYSQL_THDVAR_TYPELIB(name, uint64_t) = { \
   PLUGIN_VAR_SET | PLUGIN_VAR_THDLOCAL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, -1, def, NULL, typelib }
 
@@ -479,7 +481,7 @@ struct st_mysql_value
   int (*value_type)(struct st_mysql_value *);
   const char *(*val_str)(struct st_mysql_value *, char *buffer, int *length);
   int (*val_real)(struct st_mysql_value *, double *realbuf);
-  int (*val_int)(struct st_mysql_value *, long long *intbuf);
+  int (*val_int)(struct st_mysql_value *, int64_t *intbuf);
 };
 
 
@@ -493,7 +495,7 @@ extern "C" {
 
 int thd_in_lock_tables(const MYSQL_THD thd);
 int thd_tablespace_op(const MYSQL_THD thd);
-long long thd_test_options(const MYSQL_THD thd, long long test_options);
+int64_t thd_test_options(const MYSQL_THD thd, int64_t test_options);
 int thd_sql_command(const MYSQL_THD thd);
 const char *thd_proc_info(MYSQL_THD thd, const char *info);
 void **thd_ha_data(const MYSQL_THD thd, const struct handlerton *hton);

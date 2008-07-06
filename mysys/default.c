@@ -87,7 +87,7 @@ static int search_default_file_with_ext(Process_option_func func,
   @return void
 */
 
-static void (*init_default_directories)();
+static void (*init_default_directories)(void);
 
 
 static char *remove_end_comment(char *ptr);
@@ -965,17 +965,16 @@ void print_defaults(const char *conf_file, const char **groups)
     6. "~/"
 */
 
-static void init_default_directories_unix()
+static void init_default_directories_unix(void)
 {
   bzero((char *) default_directories, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
   ADD_DIRECTORY("/etc/mysql/");
-#ifdef DEFAULT_SYSCONFDIR
-  if (DEFAULT_SYSCONFDIR != "")
+#if defined(DEFAULT_SYSCONFDIR)
     ADD_DIRECTORY(DEFAULT_SYSCONFDIR);
 #endif
   ADD_COMMON_DIRECTORIES();
   ADD_DIRECTORY("~/");
 }
 
-static void (*init_default_directories)()= init_default_directories_unix;
+static void (*init_default_directories)(void)= init_default_directories_unix;

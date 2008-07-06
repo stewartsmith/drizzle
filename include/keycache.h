@@ -17,7 +17,22 @@
 
 #ifndef _keycache_h
 #define _keycache_h
+
+#include <my_global.h>
+
 C_MODE_START
+
+enum flush_type
+{
+  FLUSH_KEEP,           /* flush block and keep it in the cache */
+  FLUSH_RELEASE,        /* flush block and remove it from the cache */
+  FLUSH_IGNORE_CHANGED, /* remove block from the cache */
+  /*
+ *     As my_disable_flush_pagecache_blocks is always 0, the following option
+ *         is strictly equivalent to FLUSH_KEEP
+ *           */
+  FLUSH_FORCE_WRITE
+};
 
 /* declare structures that is used by st_key_cache */
 

@@ -173,7 +173,6 @@ extern int errno;			/* declare errno */
 extern char errbuff[NRERRBUFFS][ERRMSGSIZE];
 extern char *home_dir;			/* Home directory for user */
 extern const char *my_progname;		/* program-name (printed in errors) */
-extern char curr_dir[];		/* Current directory for user */
 extern void (*error_handler_hook)(uint my_err, const char *str,myf MyFlags);
 extern void (*fatal_error_handler_hook)(uint my_err, const char *str,
                                         myf MyFlags);
@@ -235,18 +234,6 @@ enum cache_type
   TYPE_NOT_SET= 0, READ_CACHE, WRITE_CACHE,
   SEQ_READ_APPEND		/* sequential read or append */,
   READ_FIFO, READ_NET,WRITE_NET};
-
-enum flush_type
-{
-  FLUSH_KEEP,           /* flush block and keep it in the cache */
-  FLUSH_RELEASE,        /* flush block and remove it from the cache */
-  FLUSH_IGNORE_CHANGED, /* remove block from the cache */
-  /*
-    As my_disable_flush_pagecache_blocks is always 0, the following option
-    is strictly equivalent to FLUSH_KEEP
-  */
-  FLUSH_FORCE_WRITE
-};
 
 typedef struct st_record_cache	/* Used when cacheing records */
 {
@@ -786,17 +773,16 @@ extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
 extern void my_sleep(ulong m_seconds);
-extern ulong crc32(ulong crc, const uchar *buf, uint len);
 extern uint my_set_max_open_files(uint files);
 void my_free_open_file_info(void);
 
 extern time_t my_time(myf flags);
 extern ulonglong my_getsystime(void);
-extern ulonglong my_micro_time();
+extern ulonglong my_micro_time(void);
 extern ulonglong my_micro_time_and_time(time_t *time_arg);
 time_t my_time_possible_from_micro(ulonglong microtime);
 extern my_bool my_gethwaddr(uchar *to);
-extern int my_getncpus();
+extern int my_getncpus(void);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>

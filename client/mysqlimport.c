@@ -505,7 +505,7 @@ static char *field_escape(char *to,const char *from,uint length)
 int exitcode= 0;
 
 #ifdef HAVE_LIBPTHREAD
-pthread_handler_t worker_thread(void *arg)
+static pthread_handler_t worker_thread(void *arg)
 {
   int error;
   char *raw_table_name= (char *)arg;

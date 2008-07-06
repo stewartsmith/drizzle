@@ -83,20 +83,22 @@ static void unlock_locked_tables(THD *thd)
 bool end_active_trans(THD *thd)
 {
   int error=0;
+  DBUG_ENTER("end_active_trans");
   if (unlikely(thd->in_sub_stmt))
   {
     my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
+    DBUG_RETURN(1);
   }
   if (thd->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
              xa_state_names[thd->transaction.xid_state.xa_state]);
-    return(1);
+    DBUG_RETURN(1);
   }
   if (thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN |
 		      OPTION_TABLE_LOCK))
   {
+    DBUG_PRINT("info",("options: 0x%llx", thd->options));
     /* Safety if one did "drop table" on locked tables */
     if (!thd->locked_tables)
       thd->options&= ~OPTION_TABLE_LOCK;
@@ -105,8 +107,8 @@ bool end_active_trans(THD *thd)
       error=1;
   }
   thd->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-  thd->transaction.all.modified_non_trans_table= FALSE;
-  return(error);
+  thd->transaction.all.modified_non_trans_table= false;
+  DBUG_RETURN(error);
 }
 
 
@@ -290,6 +292,7 @@ pthread_handler_t handle_bootstrap(void *arg)
     thd->fatal_error();
     goto end;
   }
+  DBUG_ENTER("handle_bootstrap");
 
   pthread_detach_this_thread();
   thd->thread_stack= (char*) &thd;
@@ -349,6 +352,7 @@ pthread_handler_t handle_bootstrap(void *arg)
     thd->query= (char*) thd->memdup_w_gap(buff, length+1, 
                                           thd->db_length+1);
     thd->query[length] = '\0';
+    DBUG_PRINT("query",("%-.4096s",thd->query));
 
     /*
       We don't need to obtain LOCK_thread_count here because in bootstrap
@@ -380,7 +384,7 @@ end:
   (void) pthread_cond_broadcast(&COND_thread_count);
   my_thread_end();
   pthread_exit(0);
-  return(0);
+  DBUG_RETURN(0);
 }
 
 /* This works because items are allocated with sql_alloc() */
@@ -388,21 +392,23 @@ end:
 void free_items(Item *item)
 {
   Item *next;
+  DBUG_ENTER("free_items");
   for (; item ; item=next)
   {
     next=item->next;
     item->delete_self();
   }
-  return;
+  DBUG_VOID_RETURN;
 }
 
 /* This works because items are allocated with sql_alloc() */
 
 void cleanup_items(Item *item)
 {
+  DBUG_ENTER("cleanup_items");
   for (; item ; item=item->next)
     item->cleanup();
-  return;
+  DBUG_VOID_RETURN;
 }
 
 /**
@@ -419,17 +425,18 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
 {
   bool do_release= 0;
   int res= 0;
+  DBUG_ENTER("end_trans");
 
   if (unlikely(thd->in_sub_stmt))
   {
     my_error(ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG, MYF(0));
-    return(1);
+    DBUG_RETURN(1);
   }
   if (thd->transaction.xid_state.xa_state != XA_NOTR)
   {
     my_error(ER_XAER_RMFAIL, MYF(0),
              xa_state_names[thd->transaction.xid_state.xa_state]);
-    return(1);
+    DBUG_RETURN(1);
   }
   switch (completion) {
   case COMMIT:
@@ -441,7 +448,7 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
     thd->server_status&= ~SERVER_STATUS_IN_TRANS;
     res= ha_commit(thd);
     thd->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-    thd->transaction.all.modified_non_trans_table= FALSE;
+    thd->transaction.all.modified_non_trans_table= false;
     break;
   case COMMIT_RELEASE:
     do_release= 1; /* fall through */
@@ -459,7 +466,7 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
     if (ha_rollback(thd))
       res= -1;
     thd->options&= ~(OPTION_BEGIN | OPTION_KEEP_LOG);
-    thd->transaction.all.modified_non_trans_table= FALSE;
+    thd->transaction.all.modified_non_trans_table= false;
     if (!res && (completion == ROLLBACK_AND_CHAIN))
       res= begin_trans(thd);
     break;
@@ -467,7 +474,7 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
   default:
     res= -1;
     my_error(ER_UNKNOWN_COM_ERROR, MYF(0));
-    return(-1);
+    DBUG_RETURN(-1);
   }
 
   if (res < 0)
@@ -475,7 +482,7 @@ int end_trans(THD *thd, enum enum_mysql_completiontype completion)
   else if ((res == 0) && do_release)
     thd->killed= THD::KILL_CONNECTION;
 
-  return(res);
+  DBUG_RETURN(res);
 }
 
 
@@ -498,6 +505,7 @@ bool do_command(THD *thd)
   ulong packet_length;
   NET *net= &thd->net;
   enum enum_server_command command;
+  DBUG_ENTER("do_command");
 
   /*
     indicator of uninitialized lex => normal flow of errors handling
@@ -525,6 +533,9 @@ bool do_command(THD *thd)
   packet_length= my_net_read(net);
   if (packet_length == packet_error)
   {
+    DBUG_PRINT("info",("Got error %d reading command from socket %s",
+		       net->error,
+		       vio_description(net->vio)));
 
     /* Check if we can continue without closing the connection */
 
@@ -534,12 +545,12 @@ bool do_command(THD *thd)
 
     if (net->error != 3)
     {
-      return_value= TRUE;                       // We have to close it.
+      return_value= true;                       // We have to close it.
       goto out;
     }
 
     net->error= 0;
-    return_value= FALSE;
+    return_value= false;
     goto out;
   }
 
@@ -566,6 +577,9 @@ bool do_command(THD *thd)
   if (command >= COM_END)
     command= COM_END;                           // Wrong command
 
+  DBUG_PRINT("info",("Command on %s = %d (%s)",
+                     vio_description(net->vio), command,
+                     command_name[command].str));
 
   /* Restore read timeout value */
   my_net_set_read_timeout(net, thd->variables.net_read_timeout);
@@ -574,7 +588,7 @@ bool do_command(THD *thd)
   return_value= dispatch_command(command, thd, packet+1, (uint) (packet_length-1));
 
 out:
-  return(return_value);
+  DBUG_RETURN(return_value);
 }
 
 /**
@@ -588,25 +602,26 @@ out:
   @see mysql_execute_command
 
   @returns Status code
-    @retval TRUE The statement should be denied.
-    @retval FALSE The statement isn't updating any relevant tables.
+    @retval true The statement should be denied.
+    @retval false The statement isn't updating any relevant tables.
 */
 
 static my_bool deny_updates_if_read_only_option(THD *thd,
                                                 TABLE_LIST *all_tables)
 {
+  DBUG_ENTER("deny_updates_if_read_only_option");
 
   if (!opt_readonly)
-    return(FALSE);
+    DBUG_RETURN(false);
 
   LEX *lex= thd->lex;
 
   if (!(sql_command_flags[lex->sql_command] & CF_CHANGES_DATA))
-    return(FALSE);
+    DBUG_RETURN(false);
 
   /* Multi update is an exception and is dealt with later. */
   if (lex->sql_command == SQLCOM_UPDATE_MULTI)
-    return(FALSE);
+    DBUG_RETURN(false);
 
   const my_bool create_temp_tables= 
     (lex->sql_command == SQLCOM_CREATE_TABLE) &&
@@ -630,12 +645,12 @@ static my_bool deny_updates_if_read_only_option(THD *thd,
       /*
         An attempt was made to modify one or more non-temporary tables.
       */
-      return(TRUE);
+      DBUG_RETURN(true);
   }
 
 
   /* Assuming that only temporary tables are modified. */
-  return(FALSE);
+  DBUG_RETURN(false);
 }
 
 /**
@@ -664,13 +679,15 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 {
   NET *net= &thd->net;
   bool error= 0;
+  DBUG_ENTER("dispatch_command");
+  DBUG_PRINT("info",("packet: '%*.s'; command: %d", packet_length, packet, command));
 
   thd->command=command;
   /*
     Commands which always take a long time are logged into
     the slow log only if opt_log_slow_admin_statements is set.
   */
-  thd->enable_slow_log= TRUE;
+  thd->enable_slow_log= true;
   thd->lex->sql_command= SQLCOM_END; /* to avoid confusing VIEW detectors */
   thd->set_time();
   VOID(pthread_mutex_lock(&LOCK_thread_count));
@@ -706,7 +723,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     status_var_increment(thd->status_var.com_stat[SQLCOM_CHANGE_DB]);
     thd->convert_string(&tmp, system_charset_info,
                         packet, packet_length, thd->charset());
-    if (!mysql_change_db(thd, &tmp, FALSE))
+    if (!mysql_change_db(thd, &tmp, false))
     {
       general_log_write(thd, command, thd->db, thd->db_length);
       my_ok(thd);
@@ -802,7 +819,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     /* Clear variables that are allocated */
     thd->user_connect= 0;
     thd->security_ctx->priv_user= thd->security_ctx->user;
-    res= check_user(thd, COM_CHANGE_USER, passwd, passwd_len, db, FALSE);
+    res= check_user(thd, COM_CHANGE_USER, passwd, passwd_len, db, false);
 
     if (res)
     {
@@ -844,6 +861,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     const char* end_of_stmt= NULL;
 
     general_log_write(thd, command, thd->query, thd->query_length);
+    DBUG_PRINT("query",("%-.4096s",thd->query));
 
     if (!(specialflag & SPECIAL_NO_PRIOR))
     {
@@ -899,6 +917,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       tmp_sched_param.sched_priority= WAIT_PRIOR;
       (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
     }
+    DBUG_PRINT("info",("query ready"));
     break;
   }
   case COM_FIELD_LIST:				// This isn't actually needed
@@ -962,7 +981,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     general_log_print(thd, command, NullS);
     net->error=0;				// Don't give 'abort' message
     thd->main_da.disable_status();              // Don't send anything back
-    error=TRUE;					// End server
+    error=true;					// End server
     break;
   case COM_BINLOG_DUMP:
     {
@@ -985,7 +1004,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       mysql_binlog_send(thd, thd->strdup(packet + 10), (my_off_t) pos, flags);
       unregister_slave(thd,1,1);
       /*  fake COM_QUIT -- if we get here, the thread needs to terminate */
-      error = TRUE;
+      error = true;
       break;
     }
   case COM_SHUTDOWN:
@@ -1006,11 +1025,12 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       my_error(ER_NOT_SUPPORTED_YET, MYF(0), "this shutdown level");
       break;
     }
+    DBUG_PRINT("quit",("Got shutdown command for level %u", level));
     general_log_print(thd, command, NullS);
     my_eof(thd);
     close_thread_tables(thd);			// Free before kill
     kill_mysql();
-    error=TRUE;
+    error=true;
     break;
   }
   case COM_STATISTICS:
@@ -1101,9 +1121,9 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   }
 
   /* If commit fails, we should be able to reset the OK status. */
-  thd->main_da.can_overwrite_status= TRUE;
+  thd->main_da.can_overwrite_status= true;
   ha_autocommit_or_rollback(thd, thd->is_error());
-  thd->main_da.can_overwrite_status= FALSE;
+  thd->main_da.can_overwrite_status= false;
 
   thd->transaction.stmt.reset();
 
@@ -1138,12 +1158,13 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   VOID(pthread_mutex_unlock(&LOCK_thread_count));
   thd->packet.shrink(thd->variables.net_buffer_length);	// Reclaim some memory
   free_root(thd->mem_root,MYF(MY_KEEP_PREALLOC));
-  return(error);
+  DBUG_RETURN(error);
 }
 
 
 void log_slow_statement(THD *thd)
 {
+  DBUG_ENTER("log_slow_statement");
 
   /*
     The following should never be true with our current code base,
@@ -1151,7 +1172,7 @@ void log_slow_statement(THD *thd)
     statement in a trigger or stored function
   */
   if (unlikely(thd->in_sub_stmt))
-    return;                           // Don't set time for sub stmt
+    DBUG_VOID_RETURN;                           // Don't set time for sub stmt
 
   /*
     Do not log administrative statements unless the appropriate option is
@@ -1175,7 +1196,7 @@ void log_slow_statement(THD *thd)
       slow_log_print(thd, thd->query, thd->query_length, end_utime_of_query);
     }
   }
-  return;
+  DBUG_VOID_RETURN;
 }
 
 
@@ -1209,6 +1230,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
                          enum enum_schema_tables schema_table_idx)
 {
   SELECT_LEX *schema_select_lex= NULL;
+  DBUG_ENTER("prepare_schema_table");
 
   switch (schema_table_idx) {
   case SCH_SCHEMATA:
@@ -1221,7 +1243,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
       if (lex->select_lex.db == NULL &&
           lex->copy_db_to(&lex->select_lex.db, &dummy))
       {
-        return(1);
+        DBUG_RETURN(1);
       }
       schema_select_lex= new SELECT_LEX();
       db.str= schema_select_lex->db= lex->select_lex.db;
@@ -1231,7 +1253,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
       if (check_db_name(&db))
       {
         my_error(ER_WRONG_DB_NAME, MYF(0), db.str);
-        return(1);
+        DBUG_RETURN(1);
       }
       break;
     }
@@ -1245,7 +1267,7 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
     schema_select_lex->parent_lex= lex;
     schema_select_lex->init_query();
     if (!schema_select_lex->add_table_to_list(thd, table_ident, 0, 0, TL_READ))
-      return(1);
+      DBUG_RETURN(1);
     lex->query_tables_last= query_tables_last;
     break;
   }
@@ -1265,13 +1287,13 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
   assert(select_lex);
   if (make_schema_select(thd, select_lex, schema_table_idx))
   {
-    return(1);
+    DBUG_RETURN(1);
   }
   TABLE_LIST *table_list= (TABLE_LIST*) select_lex->table_list.first;
   assert(table_list);
   table_list->schema_select_lex= schema_select_lex;
   table_list->schema_table_reformed= 1;
-  return(0);
+  DBUG_RETURN(0);
 }
 
 
@@ -1284,9 +1306,9 @@ int prepare_schema_table(THD *thd, LEX *lex, Table_ident *table_ident,
   - query_length
 
   @retval
-    FALSE ok
+    false ok
   @retval
-    TRUE  error;  In this case thd->fatal_error is set
+    true  error;  In this case thd->fatal_error is set
 */
 
 bool alloc_query(THD *thd, const char *packet, uint packet_length)
@@ -1309,7 +1331,7 @@ bool alloc_query(THD *thd, const char *packet, uint packet_length)
   if (!(thd->query= (char*) thd->memdup_w_gap((uchar*) (packet),
 					      packet_length,
 					      thd->db_length+ 1)))
-    return TRUE;
+    return true;
   thd->query[packet_length]=0;
   thd->query_length= packet_length;
 
@@ -1317,7 +1339,7 @@ bool alloc_query(THD *thd, const char *packet, uint packet_length)
   thd->packet.shrink(thd->variables.net_buffer_length);
   thd->convert_buffer.shrink(thd->variables.net_buffer_length);
 
-  return FALSE;
+  return false;
 }
 
 static void reset_one_shot_variables(THD *thd) 
@@ -1363,16 +1385,16 @@ static void reset_one_shot_variables(THD *thd)
     - SUSPEND and FOR MIGRATE are not supported yet. TODO
 
   @retval
-    FALSE       OK
+    false       OK
   @retval
-    TRUE        Error
+    true        Error
 */
 
 int
 mysql_execute_command(THD *thd)
 {
-  int res= FALSE;
-  bool need_start_waiting= FALSE; // have protection against global read lock
+  int res= false;
+  bool need_start_waiting= false; // have protection against global read lock
   int  up_result= 0;
   LEX  *lex= thd->lex;
   /* first SELECT_LEX (have special meaning for many of non-SELECTcommands) */
@@ -1384,6 +1406,7 @@ mysql_execute_command(THD *thd)
   /* most outer SELECT_LEX_UNIT of query */
   SELECT_LEX_UNIT *unit= &lex->unit;
   /* Saved variable value */
+  DBUG_ENTER("mysql_execute_command");
 
   /*
     In many cases first table of main SELECT_LEX have special meaning =>
@@ -1458,7 +1481,7 @@ mysql_execute_command(THD *thd)
         */
         reset_one_shot_variables(thd);
       }
-      return(0);
+      DBUG_RETURN(0);
     }
   }
   else
@@ -1470,12 +1493,12 @@ mysql_execute_command(THD *thd)
     if (deny_updates_if_read_only_option(thd, all_tables))
     {
       my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
-      return(-1);
+      DBUG_RETURN(-1);
     }
   } /* endif unlikely slave */
   status_var_increment(thd->status_var.com_stat[lex->sql_command]);
 
-  DBUG_ASSERT(thd->transaction.stmt.modified_non_trans_table == FALSE);
+  DBUG_ASSERT(thd->transaction.stmt.modified_non_trans_table == false);
   
   switch (lex->sql_command) {
   case SQLCOM_SHOW_STATUS:
@@ -1572,12 +1595,6 @@ mysql_execute_command(THD *thd)
   {
     DBUG_ASSERT(first_table == all_tables && first_table != 0);
     res= mysql_assign_to_keycache(thd, first_table, &lex->ident);
-    break;
-  }
-  case SQLCOM_PRELOAD_KEYS:
-  {
-    DBUG_ASSERT(first_table == all_tables && first_table != 0);
-    res = mysql_preload_keys(thd, first_table);
     break;
   }
   case SQLCOM_CHANGE_MASTER:
@@ -1721,7 +1738,7 @@ mysql_execute_command(THD *thd)
       if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
       {
         lex->link_first_table_back(create_table, link_to_local);
-        create_table->create= TRUE;
+        create_table->create= true;
       }
 
       if (!(res= open_and_lock_tables(thd, lex->query_tables)))
@@ -1987,7 +2004,7 @@ end_with_restore_list:
       /*
         Presumably, REPAIR and binlog writing doesn't require synchronization
       */
-      write_bin_log(thd, TRUE, thd->query, thd->query_length);
+      write_bin_log(thd, true, thd->query, thd->query_length);
     }
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
@@ -2013,7 +2030,7 @@ end_with_restore_list:
       /*
         Presumably, ANALYZE and binlog writing doesn't require synchronization
       */
-      write_bin_log(thd, TRUE, thd->query, thd->query_length);
+      write_bin_log(thd, true, thd->query, thd->query_length);
     }
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
@@ -2033,7 +2050,7 @@ end_with_restore_list:
       /*
         Presumably, OPTIMIZE and binlog writing doesn't require synchronization
       */
-      write_bin_log(thd, TRUE, thd->query, thd->query_length);
+      write_bin_log(thd, true, thd->query, thd->query_length);
     }
     select_lex->table_list.first= (uchar*) first_table;
     lex->query_tables=all_tables;
@@ -2131,6 +2148,7 @@ end_with_restore_list:
       */
 
       Incident incident= INCIDENT_NONE;
+      DBUG_PRINT("debug", ("Just before generate_incident()"));
       DBUG_EXECUTE_IF("incident_database_resync_on_replace",
                       incident= INCIDENT_LOST_EVENTS;);
       if (incident)
@@ -2139,6 +2157,7 @@ end_with_restore_list:
         mysql_bin_log.write(&ev);
         mysql_bin_log.rotate_and_purge(RP_FORCE_ROTATE);
       }
+      DBUG_PRINT("debug", ("Just after generate_incident()"));
     }
 #endif
   case SQLCOM_INSERT:
@@ -2260,7 +2279,7 @@ end_with_restore_list:
     res = mysql_delete(thd, all_tables, select_lex->where,
                        &select_lex->order_list,
                        unit->select_limit_cnt, select_lex->options,
-                       FALSE);
+                       false);
     break;
   }
   case SQLCOM_DELETE_MULTI:
@@ -2280,7 +2299,7 @@ end_with_restore_list:
     if ((res= multi_delete_precheck(thd, all_tables)))
       break;
 
-    /* condition will be TRUE on SP re-excuting */
+    /* condition will be true on SP re-excuting */
     if (select_lex->item_list.elements != 0)
       select_lex->item_list.empty();
     if (add_item_to_list(thd, new Item_null()))
@@ -2313,7 +2332,7 @@ end_with_restore_list:
       delete del_result;
     }
     else
-      res= TRUE;                                // Error
+      res= true;                                // Error
     break;
   }
   case SQLCOM_DROP_TABLE:
@@ -2357,7 +2376,7 @@ end_with_restore_list:
   {
     LEX_STRING db_str= { (char *) select_lex->db, strlen(select_lex->db) };
 
-    if (!mysql_change_db(thd, &db_str, FALSE))
+    if (!mysql_change_db(thd, &db_str, false))
       my_ok(thd);
 
     break;
@@ -2443,6 +2462,10 @@ end_with_restore_list:
       - only transactional locks are requested (lex->lock_transactional) and
       - no non-transactional locks exist (!thd->locked_tables).
     */
+    DBUG_PRINT("lock_info", ("lex->lock_transactional: %d  "
+                             "thd->locked_tables: 0x%lx",
+                             lex->lock_transactional,
+                             (long) thd->locked_tables));
     if (lex->lock_transactional && !thd->locked_tables)
     {
       int rc;
@@ -2484,7 +2507,9 @@ end_with_restore_list:
     {
       thd->locked_tables=thd->lock;
       thd->lock=0;
-      (void) set_handler_table_locks(thd, all_tables, FALSE);
+      (void) set_handler_table_locks(thd, all_tables, false);
+      DBUG_PRINT("lock_info", ("thd->locked_tables: 0x%lx",
+                               (long) thd->locked_tables));
       my_ok(thd);
     }
     else
@@ -2682,7 +2707,7 @@ end_with_restore_list:
       */
       if (!lex->no_write_to_binlog && write_to_binlog)
       {
-        write_bin_log(thd, FALSE, thd->query, thd->query_length);
+        write_bin_log(thd, false, thd->query, thd->query_length);
       }
       my_ok(thd);
     } 
@@ -2748,7 +2773,7 @@ end_with_restore_list:
     if (sv)
     {
       if (ha_release_savepoint(thd, sv))
-        res= TRUE; // cannot happen
+        res= true; // cannot happen
       else
         my_ok(thd);
       thd->transaction.savepoints=sv->prev;
@@ -2770,7 +2795,7 @@ end_with_restore_list:
     if (sv)
     {
       if (ha_rollback_to_savepoint(thd, sv))
-        res= TRUE; // cannot happen
+        res= true; // cannot happen
       else
       {
         if (((thd->options & OPTION_KEEP_LOG) || 
@@ -2822,7 +2847,7 @@ end_with_restore_list:
         be free'd when transaction ends anyway
       */
       if (ha_savepoint(thd, newsv))
-        res= TRUE;
+        res= true;
       else
       {
         newsv->prev=thd->transaction.savepoints;
@@ -2868,7 +2893,7 @@ end_with_restore_list:
   goto finish;
 
 error:
-  res= TRUE;
+  res= true;
 
 finish:
   if (need_start_waiting)
@@ -2879,7 +2904,7 @@ finish:
     */
     start_waiting_global_read_lock(thd);
   }
-  return(res || thd->is_error());
+  DBUG_RETURN(res || thd->is_error());
 }
 
 
@@ -3024,6 +3049,7 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
 
 void mysql_reset_thd_for_next_command(THD *thd)
 {
+  DBUG_ENTER("mysql_reset_thd_for_next_command");
   DBUG_ASSERT(! thd->in_sub_stmt);
   thd->free_list= 0;
   thd->select_number= 1;
@@ -3047,10 +3073,10 @@ void mysql_reset_thd_for_next_command(THD *thd)
   if (!(thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)))
   {
     thd->options&= ~OPTION_KEEP_LOG;
-    thd->transaction.all.modified_non_trans_table= FALSE;
+    thd->transaction.all.modified_non_trans_table= false;
   }
   DBUG_ASSERT(thd->security_ctx== &thd->main_security_ctx);
-  thd->thread_specific_used= FALSE;
+  thd->thread_specific_used= false;
 
   if (opt_bin_log)
   {
@@ -3069,7 +3095,7 @@ void mysql_reset_thd_for_next_command(THD *thd)
   */
   thd->reset_current_stmt_binlog_row_based();
 
-  return;
+  DBUG_VOID_RETURN;
 }
 
 
@@ -3092,9 +3118,10 @@ mysql_new_select(LEX *lex, bool move_down)
 {
   SELECT_LEX *select_lex;
   THD *thd= lex->thd;
+  DBUG_ENTER("mysql_new_select");
 
   if (!(select_lex= new (thd->mem_root) SELECT_LEX()))
-    return(1);
+    DBUG_RETURN(1);
   select_lex->select_number= ++thd->select_number;
   select_lex->parent_lex= lex; /* Used in init_query. */
   select_lex->init_query();
@@ -3103,16 +3130,16 @@ mysql_new_select(LEX *lex, bool move_down)
   if (lex->nest_level > (int) MAX_SELECT_NESTING)
   {
     my_error(ER_TOO_HIGH_LEVEL_OF_NESTING_FOR_SELECT,MYF(0),MAX_SELECT_NESTING);
-    return(1);
+    DBUG_RETURN(1);
   }
   select_lex->nest_level= lex->nest_level;
   if (move_down)
   {
     SELECT_LEX_UNIT *unit;
-    lex->subqueries= TRUE;
+    lex->subqueries= true;
     /* first select_lex of subselect or derived table */
     if (!(unit= new (thd->mem_root) SELECT_LEX_UNIT()))
-      return(1);
+      DBUG_RETURN(1);
 
     unit->init_query();
     unit->init_select();
@@ -3133,12 +3160,12 @@ mysql_new_select(LEX *lex, bool move_down)
     if (lex->current_select->order_list.first && !lex->current_select->braces)
     {
       my_error(ER_WRONG_USAGE, MYF(0), "UNION", "ORDER BY");
-      return(1);
+      DBUG_RETURN(1);
     }
     select_lex->include_neighbour(lex->current_select);
     SELECT_LEX_UNIT *unit= select_lex->master_unit();                              
     if (!unit->fake_select_lex && unit->add_fake_select_lex(lex->thd))
-      return(1);
+      DBUG_RETURN(1);
     select_lex->context.outer_context= 
                 unit->first_select()->context.outer_context;
   }
@@ -3150,8 +3177,8 @@ mysql_new_select(LEX *lex, bool move_down)
     in subquery is SELECT query and we allow resolution of names in SELECT
     list
   */
-  select_lex->context.resolve_in_select_list= TRUE;
-  return(0);
+  select_lex->context.resolve_in_select_list= true;
+  DBUG_RETURN(0);
 }
 
 /**
@@ -3171,6 +3198,7 @@ void create_select_for_variable(const char *var_name)
   LEX_STRING tmp, null_lex_string;
   Item *var;
   char buff[MAX_SYS_VAR_LENGTH*2+4+8], *end;
+  DBUG_ENTER("create_select_for_variable");
 
   thd= current_thd;
   lex= thd->lex;
@@ -3189,7 +3217,7 @@ void create_select_for_variable(const char *var_name)
     var->set_name(buff, end-buff, system_charset_info);
     add_item_to_list(thd, var);
   }
-  return;
+  DBUG_VOID_RETURN;
 }
 
 
@@ -3224,6 +3252,7 @@ void mysql_init_multi_delete(LEX *lex)
 void mysql_parse(THD *thd, const char *inBuf, uint length,
                  const char ** found_semicolon)
 {
+  DBUG_ENTER("mysql_parse");
 
   DBUG_EXECUTE_IF("parser_debug", turn_parser_debug_on(););
 
@@ -3278,8 +3307,11 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
       }
     }
     else
+    {
       DBUG_ASSERT(thd->is_error());
-
+      DBUG_PRINT("info",("Command aborted. Fatal_error: %d",
+			 thd->is_fatal_error));
+    }
     lex->unit.cleanup();
     thd_proc_info(thd, "freeing items");
     thd->end_statement();
@@ -3287,7 +3319,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
     DBUG_ASSERT(thd->change_list.is_empty());
   }
 
-  return;
+  DBUG_VOID_RETURN;
 }
 
 
@@ -3306,6 +3338,7 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
 {
   LEX *lex= thd->lex;
   bool error= 0;
+  DBUG_ENTER("mysql_test_parse_for_slave");
 
   Lex_input_stream lip(thd, inBuf, length);
   lex_start(thd);
@@ -3316,7 +3349,7 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
     error= 1;                  /* Ignore question */
   thd->end_statement();
   thd->cleanup_after_query();
-  return(error);
+  DBUG_RETURN(error);
 }
 #endif
 
@@ -3341,9 +3374,10 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 {
   register Create_field *new_field;
   LEX  *lex= thd->lex;
+  DBUG_ENTER("add_field_to_list");
 
   if (check_identifier_name(field_name, ER_TOO_LONG_IDENT))
-    return(1);				/* purecov: inspected */
+    DBUG_RETURN(1);				/* purecov: inspected */
 
   if (type_modifier & PRI_KEY_FLAG)
   {
@@ -3380,7 +3414,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
          type == MYSQL_TYPE_TIMESTAMP))
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-      return(1);
+      DBUG_RETURN(1);
     }
     else if (default_value->type() == Item::NULL_ITEM)
     {
@@ -3389,20 +3423,20 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 	  NOT_NULL_FLAG)
       {
 	my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-	return(1);
+	DBUG_RETURN(1);
       }
     }
     else if (type_modifier & AUTO_INCREMENT_FLAG)
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
-      return(1);
+      DBUG_RETURN(1);
     }
   }
 
   if (on_update_value && type != MYSQL_TYPE_TIMESTAMP)
   {
     my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
-    return(1);
+    DBUG_RETURN(1);
   }
 
   if (!(new_field= new Create_field()) ||
@@ -3410,11 +3444,11 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
                       default_value, on_update_value, comment, change,
                       interval_list, cs, 0,
                       storage_type, column_format))
-    return(1);
+    DBUG_RETURN(1);
 
   lex->alter_info.create_list.push_back(new_field);
   lex->last_field=new_field;
-  return(0);
+  DBUG_RETURN(0);
 }
 
 
@@ -3449,8 +3483,9 @@ add_proc_to_list(THD* thd, Item *item)
 bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
 {
   ORDER *order;
+  DBUG_ENTER("add_to_list");
   if (!(order = (ORDER *) thd->alloc(sizeof(ORDER))))
-    return(1);
+    DBUG_RETURN(1);
   order->item_ptr= item;
   order->item= &order->item_ptr;
   order->asc = asc;
@@ -3458,7 +3493,7 @@ bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
   order->used=0;
   order->counter_used= 0;
   list.link_in_list((uchar*) order,(uchar**) &order->next);
-  return(0);
+  DBUG_RETURN(0);
 }
 
 
@@ -3493,22 +3528,23 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
   TABLE_LIST *previous_table_ref; /* The table preceding the current one. */
   char *alias_str;
   LEX *lex= thd->lex;
+  DBUG_ENTER("add_table_to_list");
 
   if (!table)
-    return(0);				// End of memory
+    DBUG_RETURN(0);				// End of memory
   alias_str= alias ? alias->str : table->table.str;
   if (!test(table_options & TL_OPTION_ALIAS) && 
       check_table_name(table->table.str, table->table.length))
   {
     my_error(ER_WRONG_TABLE_NAME, MYF(0), table->table.str);
-    return(0);
+    DBUG_RETURN(0);
   }
 
-  if (table->is_derived_table() == FALSE && table->db.str &&
+  if (table->is_derived_table() == false && table->db.str &&
       check_db_name(&table->db))
   {
     my_error(ER_WRONG_DB_NAME, MYF(0), table->db.str);
-    return(0);
+    DBUG_RETURN(0);
   }
 
   if (!alias)					/* Alias is case sensitive */
@@ -3517,26 +3553,26 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
     {
       my_message(ER_DERIVED_MUST_HAVE_ALIAS,
                  ER(ER_DERIVED_MUST_HAVE_ALIAS), MYF(0));
-      return(0);
+      DBUG_RETURN(0);
     }
     if (!(alias_str= (char*) thd->memdup(alias_str,table->table.length+1)))
-      return(0);
+      DBUG_RETURN(0);
   }
   if (!(ptr = (TABLE_LIST *) thd->calloc(sizeof(TABLE_LIST))))
-    return(0);				/* purecov: inspected */
+    DBUG_RETURN(0);				/* purecov: inspected */
   if (table->db.str)
   {
-    ptr->is_fqtn= TRUE;
+    ptr->is_fqtn= true;
     ptr->db= table->db.str;
     ptr->db_length= table->db.length;
   }
   else if (lex->copy_db_to(&ptr->db, &ptr->db_length))
-    return(0);
+    DBUG_RETURN(0);
   else
-    ptr->is_fqtn= FALSE;
+    ptr->is_fqtn= false;
 
   ptr->alias= alias_str;
-  ptr->is_alias= alias ? TRUE : FALSE;
+  ptr->is_alias= alias ? true : false;
   if (lower_case_table_names && table->table.length)
     table->table.length= my_casedn_str(files_charset_info, table->table.str);
   ptr->table_name=table->table.str;
@@ -3563,7 +3599,7 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
     {
       my_error(ER_UNKNOWN_TABLE, MYF(0),
                ptr->table_name, INFORMATION_SCHEMA_NAME.str);
-      return(0);
+      DBUG_RETURN(0);
     }
     ptr->schema_table_name= ptr->table_name;
     ptr->schema_table= schema_table;
@@ -3584,7 +3620,7 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
 	  !strcmp(ptr->db, tables->db))
       {
 	my_error(ER_NONUNIQ_TABLE, MYF(0), alias_str); /* purecov: tested */
-	return(0);				/* purecov: tested */
+	DBUG_RETURN(0);				/* purecov: tested */
       }
     }
   }
@@ -3619,7 +3655,7 @@ TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
   ptr->next_name_resolution_table= NULL;
   /* Link table in global list (all used tables) */
   lex->add_to_query_tables(ptr);
-  return(ptr);
+  DBUG_RETURN(ptr);
 }
 
 
@@ -3646,10 +3682,11 @@ bool st_select_lex::init_nested_join(THD *thd)
 {
   TABLE_LIST *ptr;
   NESTED_JOIN *nested_join;
+  DBUG_ENTER("init_nested_join");
 
   if (!(ptr= (TABLE_LIST*) thd->calloc(ALIGN_SIZE(sizeof(TABLE_LIST))+
                                        sizeof(NESTED_JOIN))))
-    return(1);
+    DBUG_RETURN(1);
   nested_join= ptr->nested_join=
     ((NESTED_JOIN*) ((uchar*) ptr + ALIGN_SIZE(sizeof(TABLE_LIST))));
 
@@ -3660,7 +3697,7 @@ bool st_select_lex::init_nested_join(THD *thd)
   embedding= ptr;
   join_list= &nested_join->join_list;
   join_list->empty();
-  return(0);
+  DBUG_RETURN(0);
 }
 
 
@@ -3682,6 +3719,7 @@ TABLE_LIST *st_select_lex::end_nested_join(THD *thd)
 {
   TABLE_LIST *ptr;
   NESTED_JOIN *nested_join;
+  DBUG_ENTER("end_nested_join");
 
   DBUG_ASSERT(embedding);
   ptr= embedding;
@@ -3702,7 +3740,7 @@ TABLE_LIST *st_select_lex::end_nested_join(THD *thd)
     join_list->pop();
     ptr= 0;                                     // return value
   }
-  return(ptr);
+  DBUG_RETURN(ptr);
 }
 
 
@@ -3724,10 +3762,11 @@ TABLE_LIST *st_select_lex::nest_last_join(THD *thd)
   TABLE_LIST *ptr;
   NESTED_JOIN *nested_join;
   List<TABLE_LIST> *embedded_list;
+  DBUG_ENTER("nest_last_join");
 
   if (!(ptr= (TABLE_LIST*) thd->calloc(ALIGN_SIZE(sizeof(TABLE_LIST))+
                                        sizeof(NESTED_JOIN))))
-    return(0);
+    DBUG_RETURN(0);
   nested_join= ptr->nested_join=
     ((NESTED_JOIN*) ((uchar*) ptr + ALIGN_SIZE(sizeof(TABLE_LIST))));
 
@@ -3745,7 +3784,7 @@ TABLE_LIST *st_select_lex::nest_last_join(THD *thd)
     embedded_list->push_back(table);
     if (table->natural_join)
     {
-      ptr->is_natural_join= TRUE;
+      ptr->is_natural_join= true;
       /*
         If this is a JOIN ... USING, move the list of joined fields to the
         table reference that describes the join.
@@ -3756,7 +3795,7 @@ TABLE_LIST *st_select_lex::nest_last_join(THD *thd)
   }
   join_list->push_front(ptr);
   nested_join->used_tables= nested_join->not_null_tables= (table_map) 0;
-  return(ptr);
+  DBUG_RETURN(ptr);
 }
 
 
@@ -3776,10 +3815,11 @@ TABLE_LIST *st_select_lex::nest_last_join(THD *thd)
 
 void st_select_lex::add_joined_table(TABLE_LIST *table)
 {
+  DBUG_ENTER("add_joined_table");
   join_list->push_front(table);
   table->join_list= join_list;
   table->embedding= embedding;
-  return;
+  DBUG_VOID_RETURN;
 }
 
 
@@ -3818,12 +3858,13 @@ TABLE_LIST *st_select_lex::convert_right_join()
 {
   TABLE_LIST *tab2= join_list->pop();
   TABLE_LIST *tab1= join_list->pop();
+  DBUG_ENTER("convert_right_join");
 
   join_list->push_front(tab2);
   join_list->push_front(tab1);
   tab1->outer_join|= JOIN_TYPE_RIGHT;
 
-  return(tab1);
+  DBUG_RETURN(tab1);
 }
 
 /**
@@ -3840,6 +3881,9 @@ TABLE_LIST *st_select_lex::convert_right_join()
 void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
 {
   bool for_update= lock_type >= TL_READ_NO_INSERT;
+  DBUG_ENTER("set_lock_for_tables");
+  DBUG_PRINT("enter", ("lock_type: %d  for_update: %d", lock_type,
+		       for_update));
 
   for (TABLE_LIST *tables= (TABLE_LIST*) table_list.first;
        tables;
@@ -3848,7 +3892,7 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
     tables->lock_type= lock_type;
     tables->updating=  for_update;
   }
-  return;
+  DBUG_VOID_RETURN;
 }
 
 
@@ -3881,10 +3925,11 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
 bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
 {
   SELECT_LEX *first_sl= first_select();
+  DBUG_ENTER("add_fake_select_lex");
   DBUG_ASSERT(!fake_select_lex);
 
   if (!(fake_select_lex= new (thd_arg->mem_root) SELECT_LEX()))
-      return(1);
+      DBUG_RETURN(1);
   fake_select_lex->include_standalone(this, 
                                       (SELECT_LEX_NODE**)&fake_select_lex);
   fake_select_lex->select_number= INT_MAX;
@@ -3895,7 +3940,7 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
 
   fake_select_lex->context.outer_context=first_sl->context.outer_context;
   /* allow item list resolving in fake select for ORDER BY */
-  fake_select_lex->context.resolve_in_select_list= TRUE;
+  fake_select_lex->context.resolve_in_select_list= true;
   fake_select_lex->context.select_lex= fake_select_lex;
 
   if (!is_union())
@@ -3911,7 +3956,7 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
     thd_arg->lex->current_select= fake_select_lex;
   }
   thd_arg->lex->pop_context();
-  return(0);
+  DBUG_RETURN(0);
 }
 
 
@@ -3929,9 +3974,9 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
   @param right_op  rigth operand of the JOIN
 
   @retval
-    FALSE  if all is OK
+    false  if all is OK
   @retval
-    TRUE   if a memory allocation error occured
+    true   if a memory allocation error occured
 */
 
 bool
@@ -3940,7 +3985,7 @@ push_new_name_resolution_context(THD *thd,
 {
   Name_resolution_context *on_context;
   if (!(on_context= new (thd->mem_root) Name_resolution_context))
-    return TRUE;
+    return true;
   on_context->init();
   on_context->first_name_resolution_table=
     left_op->first_leaf_for_name_resolution();
@@ -3959,9 +4004,9 @@ push_new_name_resolution_context(THD *thd,
   @param expr  the condition to be added to the ON clause
 
   @retval
-    FALSE  if there was some error
+    false  if there was some error
   @retval
-    TRUE   if all is OK
+    true   if all is OK
 */
 
 void add_join_on(TABLE_LIST *b, Item *expr)
@@ -4118,8 +4163,8 @@ bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables,
       tmp_write_to_binlog= 0;
       if (lock_global_read_lock(thd))
 	return 1;                               // Killed
-      result= close_cached_tables(thd, tables, FALSE, (options & REFRESH_FAST) ?
-                                  FALSE : TRUE, TRUE);
+      result= close_cached_tables(thd, tables, false, (options & REFRESH_FAST) ?
+                                  false : true, true);
       if (make_global_read_lock_block_commit(thd)) // Killed
       {
         /* Don't leave things in a half-locked state */
@@ -4128,8 +4173,8 @@ bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables,
       }
     }
     else
-      result= close_cached_tables(thd, tables, FALSE, (options & REFRESH_FAST) ?
-                                  FALSE : TRUE, FALSE);
+      result= close_cached_tables(thd, tables, false, (options & REFRESH_FAST) ?
+                                  false : true, false);
     my_dbopt_cleanup();
   }
   if (thd && (options & REFRESH_STATUS))
@@ -4173,6 +4218,8 @@ uint kill_one_thread(THD *thd, ulong id, bool only_kill_query)
 {
   THD *tmp;
   uint error=ER_NO_SUCH_THREAD;
+  DBUG_ENTER("kill_one_thread");
+  DBUG_PRINT("enter", ("id=%lu only_kill=%d", id, only_kill_query));
   VOID(pthread_mutex_lock(&LOCK_thread_count)); // For unlink from list
   I_List_iterator<THD> it(threads);
   while ((tmp=it++))
@@ -4192,7 +4239,8 @@ uint kill_one_thread(THD *thd, ulong id, bool only_kill_query)
     error=0;
     pthread_mutex_unlock(&tmp->LOCK_delete);
   }
-  return(error);
+  DBUG_PRINT("exit", ("%d", error));
+  DBUG_RETURN(error);
 }
 
 
@@ -4343,9 +4391,9 @@ Item * all_any_subquery_creator(Item *left_expr,
   @param tables	Global/local table list (have to be the same)
 
   @retval
-    FALSE OK
+    false OK
   @retval
-    TRUE  Error
+    true  Error
 */
 
 bool multi_update_precheck(THD *thd, TABLE_LIST *tables)
@@ -4353,11 +4401,12 @@ bool multi_update_precheck(THD *thd, TABLE_LIST *tables)
   const char *msg= 0;
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
+  DBUG_ENTER("multi_update_precheck");
 
   if (select_lex->item_list.elements != lex->value_list.elements)
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(TRUE);
+    DBUG_RETURN(true);
   }
 
   if (select_lex->order_list.elements)
@@ -4367,9 +4416,9 @@ bool multi_update_precheck(THD *thd, TABLE_LIST *tables)
   if (msg)
   {
     my_error(ER_WRONG_USAGE, MYF(0), "UPDATE", msg);
-    return(TRUE);
+    DBUG_RETURN(true);
   }
-  return(FALSE);
+  DBUG_RETURN(false);
 }
 
 /**
@@ -4379,15 +4428,16 @@ bool multi_update_precheck(THD *thd, TABLE_LIST *tables)
   @param tables		Global/local table list
 
   @retval
-    FALSE OK
+    false OK
   @retval
-    TRUE  error
+    true  error
 */
 
 bool multi_delete_precheck(THD *thd, TABLE_LIST *tables)
 {
   SELECT_LEX *select_lex= &thd->lex->select_lex;
   TABLE_LIST **save_query_tables_own_last= thd->lex->query_tables_own_last;
+  DBUG_ENTER("multi_delete_precheck");
 
   thd->lex->query_tables_own_last= 0;
   thd->lex->query_tables_own_last= save_query_tables_own_last;
@@ -4396,9 +4446,9 @@ bool multi_delete_precheck(THD *thd, TABLE_LIST *tables)
   {
     my_message(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE,
                ER(ER_UPDATE_WITHOUT_KEY_IN_SAFE_MODE), MYF(0));
-    return(TRUE);
+    DBUG_RETURN(true);
   }
-  return(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -4423,6 +4473,7 @@ static TABLE_LIST *multi_delete_table_match(LEX *lex, TABLE_LIST *tbl,
                                             TABLE_LIST *tables)
 {
   TABLE_LIST *match= NULL;
+  DBUG_ENTER("multi_delete_table_match");
 
   for (TABLE_LIST *elem= tables; elem; elem= elem->next_local)
   {
@@ -4445,7 +4496,7 @@ static TABLE_LIST *multi_delete_table_match(LEX *lex, TABLE_LIST *tbl,
     if (match)
     {
       my_error(ER_NONUNIQ_TABLE, MYF(0), elem->alias);
-      return(NULL);
+      DBUG_RETURN(NULL);
     }
 
     match= elem;
@@ -4454,7 +4505,7 @@ static TABLE_LIST *multi_delete_table_match(LEX *lex, TABLE_LIST *tbl,
   if (!match)
     my_error(ER_UNKNOWN_TABLE, MYF(0), tbl->table_name, "MULTI DELETE");
 
-  return(match);
+  DBUG_RETURN(match);
 }
 
 
@@ -4465,15 +4516,16 @@ static TABLE_LIST *multi_delete_table_match(LEX *lex, TABLE_LIST *tbl,
   @param lex   pointer to LEX representing multi-delete
 
   @retval
-    FALSE   success
+    false   success
   @retval
-    TRUE    error
+    true    error
 */
 
 bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
 {
   TABLE_LIST *tables= (TABLE_LIST*)lex->select_lex.table_list.first;
   TABLE_LIST *target_tbl;
+  DBUG_ENTER("multi_delete_set_locks_and_link_aux_tables");
 
   lex->table_count= 0;
 
@@ -4484,7 +4536,7 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
     /* All tables in aux_tables must be found in FROM PART */
     TABLE_LIST *walk= multi_delete_table_match(lex, target_tbl, tables);
     if (!walk)
-      return(TRUE);
+      DBUG_RETURN(true);
     if (!walk->derived)
     {
       target_tbl->table_name= walk->table_name;
@@ -4494,7 +4546,7 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
     walk->lock_type= target_tbl->lock_type;
     target_tbl->correspondent_table= walk;	// Remember corresponding table
   }
-  return(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -4505,19 +4557,20 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
   @param tables	Global table list
 
   @retval
-    FALSE OK
+    false OK
   @retval
-    TRUE  Error
+    true  Error
 */
 
 bool update_precheck(THD *thd, TABLE_LIST *tables)
 {
+  DBUG_ENTER("update_precheck");
   if (thd->lex->select_lex.item_list.elements != thd->lex->value_list.elements)
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(TRUE);
+    DBUG_RETURN(true);
   }
-  return(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -4528,14 +4581,15 @@ bool update_precheck(THD *thd, TABLE_LIST *tables)
   @param tables	Global table list
 
   @retval
-    FALSE  OK
+    false  OK
   @retval
-    TRUE   error
+    true   error
 */
 
 bool insert_precheck(THD *thd, TABLE_LIST *tables)
 {
   LEX *lex= thd->lex;
+  DBUG_ENTER("insert_precheck");
 
   /*
     Check that we have modify privileges for the first table and
@@ -4544,9 +4598,9 @@ bool insert_precheck(THD *thd, TABLE_LIST *tables)
   if (lex->update_list.elements != lex->value_list.elements)
   {
     my_message(ER_WRONG_VALUE_COUNT, ER(ER_WRONG_VALUE_COUNT), MYF(0));
-    return(TRUE);
+    DBUG_RETURN(true);
   }
-  return(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -4558,9 +4612,9 @@ bool insert_precheck(THD *thd, TABLE_LIST *tables)
   @param create_table	        Table which will be created
 
   @retval
-    FALSE   OK
+    false   OK
   @retval
-    TRUE   Error
+    true   Error
 */
 
 bool create_table_precheck(THD *thd, TABLE_LIST *tables,
@@ -4568,12 +4622,13 @@ bool create_table_precheck(THD *thd, TABLE_LIST *tables,
 {
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
-  bool error= TRUE;                                 // Error message is given
+  bool error= true;                                 // Error message is given
+  DBUG_ENTER("create_table_precheck");
 
   if (create_table && (strcmp(create_table->db, "information_schema") == 0))
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
-    return(TRUE);
+    DBUG_RETURN(true);
   }
 
   if (select_lex->item_list.elements)
@@ -4596,15 +4651,15 @@ bool create_table_precheck(THD *thd, TABLE_LIST *tables,
           find_table_in_global_list(tables, create_table->db,
                                     create_table->table_name))
       {
-	error= FALSE;
+	error= false;
         goto err;
       }
     }
 #endif
   }
-  error= FALSE;
+  error= false;
 
-  return(error);
+  DBUG_RETURN(error);
 }
 
 
@@ -4650,9 +4705,9 @@ Item *negate_expression(THD *thd, Item *expr)
   @param max_length  max length
 
   @retval
-    FALSE   the passed string is not longer than max_length
+    false   the passed string is not longer than max_length
   @retval
-    TRUE    the passed string is longer than max_length
+    true    the passed string is longer than max_length
 
   NOTE
     The function is not used in existing code but can be useful later?
@@ -4662,11 +4717,11 @@ bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
                               uint max_byte_length)
 {
   if (str->length <= max_byte_length)
-    return FALSE;
+    return false;
 
   my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->str, err_msg, max_byte_length);
 
-  return TRUE;
+  return true;
 }
 
 
@@ -4681,8 +4736,8 @@ bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
       cs               string charset
 
   RETURN
-    FALSE   the passed string is not longer than max_char_length
-    TRUE    the passed string is longer than max_char_length
+    false   the passed string is not longer than max_char_length
+    true    the passed string is longer than max_char_length
 */
 
 
@@ -4695,11 +4750,11 @@ bool check_string_char_length(LEX_STRING *str, const char *err_msg,
                                       max_char_length, &well_formed_error);
 
   if (!well_formed_error &&  str->length == res)
-    return FALSE;
+    return false;
 
   if (!no_error)
     my_error(ER_WRONG_STRING_LENGTH, MYF(0), str->str, err_msg, max_char_length);
-  return TRUE;
+  return true;
 }
 
 
@@ -4723,11 +4778,11 @@ bool check_identifier_name(LEX_STRING *str, uint max_char_length,
   if (well_formed_error)
   {
     my_error(ER_INVALID_CHARACTER_STRING, MYF(0), "identifier", str->str);
-    return TRUE;
+    return true;
   }
   
   if (str->length == res)
-    return FALSE;
+    return false;
 
   switch (err_code)
   {
@@ -4743,7 +4798,7 @@ bool check_identifier_name(LEX_STRING *str, uint max_char_length,
     DBUG_ASSERT(0);
     break;
   }
-  return TRUE;
+  return true;
 }
 
 
@@ -4764,9 +4819,10 @@ bool test_if_data_home_dir(const char *dir)
 {
   char path[FN_REFLEN], conv_path[FN_REFLEN];
   uint dir_len, home_dir_len= strlen(mysql_unpacked_real_data_home);
+  DBUG_ENTER("test_if_data_home_dir");
 
   if (!dir)
-    return(0);
+    DBUG_RETURN(0);
 
   (void) fn_format(path, dir, "", "",
                    (MY_RETURN_REAL_PATH|MY_RESOLVE_SYMLINKS));
@@ -4780,12 +4836,12 @@ bool test_if_data_home_dir(const char *dir)
                         (const uchar*) conv_path, home_dir_len,
                         (const uchar*) mysql_unpacked_real_data_home,
                         home_dir_len))
-        return(1);
+        DBUG_RETURN(1);
     }
     else if (!memcmp(conv_path, mysql_unpacked_real_data_home, home_dir_len))
-      return(1);
+      DBUG_RETURN(1);
   }
-  return(0);
+  DBUG_RETURN(0);
 }
 
 
@@ -4801,8 +4857,8 @@ extern int MYSQLparse(void *thd); // from sql_yacc.cc
   @param creation_ctx Object creation context.
 
   @return Error status.
-    @retval FALSE on success.
-    @retval TRUE on parsing error.
+    @retval false on success.
+    @retval true on parsing error.
 */
 
 bool parse_sql(THD *thd,

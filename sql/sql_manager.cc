@@ -39,7 +39,7 @@ static struct handler_cb * volatile cb_list;
 
 bool mysql_manager_submit(void (*action)())
 {
-  bool result= FALSE;
+  bool result= false;
   struct handler_cb * volatile *cb;
   pthread_mutex_lock(&LOCK_manager);
   cb= &cb_list;
@@ -49,7 +49,7 @@ bool mysql_manager_submit(void (*action)())
   {
     *cb= (struct handler_cb *)my_malloc(sizeof(struct handler_cb), MYF(MY_WME));
     if (!*cb)
-      result= TRUE;
+      result= true;
     else
     {
       (*cb)->next= NULL;
@@ -65,7 +65,7 @@ pthread_handler_t handle_manager(void *arg __attribute__((unused)))
   int error = 0;
   ulong status;
   struct timespec abstime;
-  bool reset_flush_time = TRUE;
+  bool reset_flush_time = true;
   struct handler_cb *cb= NULL;
   my_thread_init();
   DBUG_ENTER("handle_manager");
@@ -85,7 +85,7 @@ pthread_handler_t handle_manager(void *arg __attribute__((unused)))
       if (reset_flush_time)
       {
 	set_timespec(abstime, flush_time);
-        reset_flush_time = FALSE;
+        reset_flush_time= false;
       }
       while (!manager_status && (!error || error == EINTR) && !abort_loop)
         error= pthread_cond_timedwait(&COND_manager, &LOCK_manager, &abstime);
@@ -111,7 +111,7 @@ pthread_handler_t handle_manager(void *arg __attribute__((unused)))
     {
       flush_tables();
       error = 0;
-      reset_flush_time = TRUE;
+      reset_flush_time = true;
     }
 
     while (cb)

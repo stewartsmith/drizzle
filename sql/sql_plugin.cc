@@ -245,7 +245,7 @@ static const char *item_val_str(struct st_mysql_value *value,
 }
 
 
-static int item_val_int(struct st_mysql_value *value, long long *buf)
+static int item_val_int(struct st_mysql_value *value, int64_t *buf)
 {
   Item *item= ((st_item_value_holder*)value)->item;
   *buf= item->val_int();
@@ -1527,7 +1527,7 @@ static int check_func_bool(THD *thd, struct st_mysql_sys_var *var,
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *strvalue= "NULL", *str;
   int result, length;
-  long long tmp;
+  int64_t tmp;
 
   if (value->value_type(value) == MYSQL_VALUE_TYPE_STRING)
   {
@@ -1564,7 +1564,7 @@ static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
   my_bool fixed;
-  long long tmp;
+  int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
@@ -1584,7 +1584,7 @@ static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
   my_bool fixed;
-  long long tmp;
+  int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
@@ -1604,7 +1604,7 @@ static int check_func_longlong(THD *thd, struct st_mysql_sys_var *var,
                                void *save, st_mysql_value *value)
 {
   my_bool fixed;
-  long long tmp;
+  int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
@@ -1640,7 +1640,7 @@ static int check_func_enum(THD *thd, struct st_mysql_sys_var *var,
   char buff[STRING_BUFFER_USUAL_SIZE];
   const char *strvalue= "NULL", *str;
   TYPELIB *typelib;
-  long long tmp;
+  int64_t tmp;
   long result;
   int length;
 
@@ -1712,7 +1712,7 @@ static int check_func_set(THD *thd, struct st_mysql_sys_var *var,
   }
   else
   {
-    if (value->val_int(value, (long long *)&result))
+    if (value->val_int(value, (int64_t *)&result))
       goto err;
     if (unlikely((result >= (ULL(1) << typelib->count)) &&
                  (typelib->count < sizeof(long)*8)))

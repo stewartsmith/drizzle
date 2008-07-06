@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdint.h>
 
 /* all of these ripped from InnoDB code from MySQL 4.0.22 */
 #define UT_HASH_RANDOM_MASK     1463735687
@@ -50,11 +51,11 @@
 /* command line argument to do page checks (that's it) */
 /* another argument to specify page ranges... seek to right spot and go from there */
 
-typedef unsigned long int ulint;
+typedef uint32_t ulint;
 typedef unsigned char uchar;
 
 /* innodb function in name; modified slightly to not have the ASM version (lots of #ifs that didn't apply) */
-ulint mach_read_from_4(uchar *b)
+static ulint mach_read_from_4(uchar *b)
 {
   return( ((ulint)(b[0]) << 24)
           + ((ulint)(b[1]) << 16)
@@ -63,7 +64,7 @@ ulint mach_read_from_4(uchar *b)
           );
 }
 
-ulint
+static ulint
 ut_fold_ulint_pair(
 /*===============*/
             /* out: folded value */
@@ -74,7 +75,7 @@ ut_fold_ulint_pair(
                         ^ UT_HASH_RANDOM_MASK) + n2);
 }
 
-ulint
+static ulint
 ut_fold_binary(
 /*===========*/
             /* out: folded value */
@@ -94,7 +95,7 @@ ut_fold_binary(
     return(fold);
 }
 
-ulint
+static ulint
 buf_calc_page_new_checksum(
 /*=======================*/
                /* out: checksum */
@@ -119,7 +120,7 @@ buf_calc_page_new_checksum(
     return(checksum);
 }
 
-ulint
+static ulint
 buf_calc_page_old_checksum(
 /*=======================*/
                /* out: checksum */
@@ -219,13 +220,13 @@ int main(int argc, char **argv)
   pages= size / UNIV_PAGE_SIZE;
   if (just_count)
   {
-    printf("%lu\n", pages);
+    printf("%u\n", pages);
     return 0;
   }
   else if (verbose)
   {
-    printf("file %s= %llu bytes (%lu pages)...\n", argv[1], size, pages);
-    printf("checking pages in range %lu to %lu\n", start_page, use_end_page ? end_page : (pages - 1));
+    printf("file %s= %llu bytes (%u pages)...\n", argv[1], size, pages);
+    printf("checking pages in range %u to %u\n", start_page, use_end_page ? end_page : (pages - 1));
   }
 
   /* open the file for reading */
@@ -275,10 +276,10 @@ int main(int argc, char **argv)
     logseq= mach_read_from_4(p + FIL_PAGE_LSN + 4);
     logseqfield= mach_read_from_4(p + UNIV_PAGE_SIZE - FIL_PAGE_END_LSN_OLD_CHKSUM + 4);
     if (debug)
-      printf("page %lu: log sequence number: first = %lu; second = %lu\n", ct, logseq, logseqfield);
+      printf("page %u: log sequence number: first = %u; second = %u\n", ct, logseq, logseqfield);
     if (logseq != logseqfield)
     {
-      fprintf(stderr, "page %lu invalid (fails log sequence number check)\n", ct);
+      fprintf(stderr, "page %u invalid (fails log sequence number check)\n", ct);
       return 1;
     }
 
@@ -286,10 +287,10 @@ int main(int argc, char **argv)
     oldcsum= buf_calc_page_old_checksum(p);
     oldcsumfield= mach_read_from_4(p + UNIV_PAGE_SIZE - FIL_PAGE_END_LSN_OLD_CHKSUM);
     if (debug)
-      printf("page %lu: old style: calculated = %lu; recorded = %lu\n", ct, oldcsum, oldcsumfield);
+      printf("page %u: old style: calculated = %u; recorded = %u\n", ct, oldcsum, oldcsumfield);
     if (oldcsumfield != mach_read_from_4(p + FIL_PAGE_LSN) && oldcsumfield != oldcsum)
     {
-      fprintf(stderr, "page %lu invalid (fails old style checksum)\n", ct);
+      fprintf(stderr, "page %u invalid (fails old style checksum)\n", ct);
       return 1;
     }
 
@@ -297,10 +298,10 @@ int main(int argc, char **argv)
     csum= buf_calc_page_new_checksum(p);
     csumfield= mach_read_from_4(p + FIL_PAGE_SPACE_OR_CHKSUM);
     if (debug)
-      printf("page %lu: new style: calculated = %lu; recorded = %lu\n", ct, csum, csumfield);
+      printf("page %u: new style: calculated = %u; recorded = %u\n", ct, csum, csumfield);
     if (csumfield != 0 && csum != csumfield)
     {
-      fprintf(stderr, "page %lu invalid (fails new style checksum)\n", ct);
+      fprintf(stderr, "page %u invalid (fails new style checksum)\n", ct);
       return 1;
     }
 
@@ -318,7 +319,7 @@ int main(int argc, char **argv)
         if (!lastt) lastt= now;
         if (now - lastt >= 1)
         {
-          printf("page %lu okay: %.3f%% done\n", (ct - 1), (float) ct / pages * 100);
+          printf("page %u okay: %.3f%% done\n", (ct - 1), (float) ct / pages * 100);
           lastt= now;
         }
       }

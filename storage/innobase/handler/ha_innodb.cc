@@ -108,7 +108,7 @@ static long innobase_mirrored_log_groups, innobase_log_files_in_group,
 	innobase_lock_wait_timeout, innobase_force_recovery,
 	innobase_open_files, innobase_autoinc_lock_mode;
 
-static long long innobase_buffer_pool_size, innobase_log_file_size;
+static int64_t innobase_buffer_pool_size, innobase_log_file_size;
 
 /* The default values for the following char* start-up parameters
 are determined in innobase_init below: */
@@ -2561,7 +2561,6 @@ innobase_mysql_cmp(
 
 	switch (mysql_tp) {
 
-	case MYSQL_TYPE_BIT:
 	case MYSQL_TYPE_STRING:
 	case MYSQL_TYPE_VAR_STRING:
 	case MYSQL_TYPE_TINY_BLOB:
@@ -2672,7 +2671,6 @@ get_innobase_type_from_mysql_type(
 		} else {
 			return(DATA_VARMYSQL);
 		}
-	case MYSQL_TYPE_BIT:
 	case MYSQL_TYPE_STRING: if (field->binary()) {
 
 			return(DATA_FIXBINARY);
@@ -2689,7 +2687,6 @@ get_innobase_type_from_mysql_type(
 	case MYSQL_TYPE_LONGLONG:
 	case MYSQL_TYPE_TINY:
 	case MYSQL_TYPE_SHORT:
-	case MYSQL_TYPE_INT24:
 	case MYSQL_TYPE_DATE:
 	case MYSQL_TYPE_DATETIME:
 	case MYSQL_TYPE_YEAR:
@@ -2703,7 +2700,6 @@ get_innobase_type_from_mysql_type(
 		return(DATA_DOUBLE);
 	case MYSQL_TYPE_DECIMAL:
 		return(DATA_DECIMAL);
-	case MYSQL_TYPE_GEOMETRY:
 	case MYSQL_TYPE_TINY_BLOB:
 	case MYSQL_TYPE_MEDIUM_BLOB:
 	case MYSQL_TYPE_BLOB:
