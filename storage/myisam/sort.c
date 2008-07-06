@@ -18,7 +18,7 @@
   them in sorted order through SORT_INFO functions.
 */
 
-#include "fulltext.h"
+#include "myisamdef.h"
 #if defined(MSDOS) || defined(__WIN__)
 #include <fcntl.h>
 #else
@@ -157,8 +157,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
       }
       while ((maxbuffer= (int) (records/(keys-1)+1)) != skr);
 
-    if ((sort_keys=(uchar **)my_malloc(keys*(sort_length+sizeof(char*))+
-				       HA_FT_MAXBYTELEN, MYF(0))))
+    if ((sort_keys=(uchar **)my_malloc(keys*(sort_length+sizeof(char*)), MYF(0))))
     {
       if (my_init_dynamic_array(&buffpek, sizeof(BUFFPEK), maxbuffer,
 			     maxbuffer/2))
@@ -373,9 +372,7 @@ pthread_handler_t thr_find_all_keys(void *arg)
         while ((maxbuffer= (int) (idx/(keys-1)+1)) != skr);
       }
       if ((sort_keys= (uchar**)
-           my_malloc(keys*(sort_length+sizeof(char*))+
-                     ((sort_param->keyinfo->flag & HA_FULLTEXT) ?
-                      HA_FT_MAXBYTELEN : 0), MYF(0))))
+           my_malloc(keys*(sort_length+sizeof(char*)), MYF(0))))
       {
         if (my_init_dynamic_array(&sort_param->buffpek, sizeof(BUFFPEK),
                                   maxbuffer, maxbuffer/2))
@@ -621,7 +618,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
 	     !my_b_read(&sinfo->tempfile_for_exceptions,(uchar*)&key_length,
 			sizeof(key_length)))
       {
-        uchar ft_buf[HA_FT_MAXBYTELEN + HA_FT_WLEN + 10];
+        uchar ft_buf[10];
         if (key_length > sizeof(ft_buf) ||
             my_b_read(&sinfo->tempfile_for_exceptions, (uchar*)ft_buf,
                       (uint)key_length) ||

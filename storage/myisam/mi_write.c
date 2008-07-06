@@ -15,7 +15,7 @@
 
 /* Write a row to a MyISAM table */
 
-#include "fulltext.h"
+#include "myisamdef.h"
 
 #define MAX_POINTER_LENGTH 8
 

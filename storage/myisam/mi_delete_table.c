@@ -17,7 +17,7 @@
   deletes a table
 */
 
-#include "fulltext.h"
+#include "myisamdef.h"
 
 int mi_delete_table(const char *name)
 {

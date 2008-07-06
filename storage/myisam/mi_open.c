@@ -15,7 +15,7 @@
 
 /* open a isam-database */
 
-#include "fulltext.h"
+#include "myisamdef.h"
 #include <m_ctype.h>
 
 #if defined(MSDOS) || defined(__WIN__)
@@ -231,7 +231,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
       goto err;
     }
 
-    key_parts+=fulltext_keys*FT_SEGS;
     if (share->base.max_key_length > MI_MAX_KEY_BUFF || keys > MI_MAX_KEY ||
 	key_parts > MI_MAX_KEY * MI_MAX_KEY_SEG)
     {
@@ -1034,7 +1033,7 @@ uchar *mi_keydef_read(uchar *ptr, MI_KEYDEF *keydef)
    keydef->block_size_index= keydef->block_length/MI_MIN_KEY_BLOCK_LENGTH-1;
    keydef->underflow_block_length=keydef->block_length/3;
    keydef->version	= 0;			/* Not saved */
-   keydef->parser       = &ft_default_parser;
+   keydef->parser       = NULL;
    keydef->ftparser_nr  = 0;
    return ptr;
 }
