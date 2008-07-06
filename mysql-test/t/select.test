@@ -1771,7 +1771,7 @@ drop table t4, t3, t2, t1;
 #
 
 CREATE TABLE t1 (
-  id mediumint(8) unsigned NOT NULL auto_increment,
+  id bigint(8) unsigned NOT NULL auto_increment,
   pseudo varchar(35) NOT NULL default '',
   PRIMARY KEY  (id),
   UNIQUE KEY pseudo (pseudo)
@@ -2309,7 +2309,7 @@ SELECT i='1e+01',i=1e+01, i in (1e+01,1e+01), i in ('1e+01','1e+01') FROM t1;
 DROP TABLE t1;
 
 #
-# Bug #32103: optimizer crash when join on int and mediumint with variable in 
+# Bug #32103: optimizer crash when join on int and bigint with variable in 
 #             where clause
 #
 
