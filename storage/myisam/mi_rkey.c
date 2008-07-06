@@ -81,16 +81,6 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
     use_key_length=USE_WHOLE_KEY;
 
   switch (info->s->keyinfo[inx].key_alg) {
-#ifdef HAVE_RTREE_KEYS
-  case HA_KEY_ALG_RTREE:
-    if (rtree_find_first(info,inx,key_buff,use_key_length,nextflag) < 0)
-    {
-      mi_print_error(info->s, HA_ERR_CRASHED);
-      my_errno=HA_ERR_CRASHED;
-      goto err;
-    }
-    break;
-#endif
   case HA_KEY_ALG_BTREE:
   default:
     myisam_search_flag= myisam_read_vec[search_flag];

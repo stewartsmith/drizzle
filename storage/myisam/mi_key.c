@@ -56,18 +56,6 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
   my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
   DBUG_ENTER("_mi_make_key");
 
-  if (info->s->keyinfo[keynr].flag & HA_SPATIAL)
-  {
-    /*
-      TODO: nulls processing
-    */
-#ifdef HAVE_SPATIAL
-    DBUG_RETURN(sp_make_key(info,keynr,key,record,filepos));
-#else
-    DBUG_ASSERT(0); /* mi_open should check that this never happens*/
-#endif
-  }
-
   start=key;
   for (keyseg=info->s->keyinfo[keynr].seg ; keyseg->type ;keyseg++)
   {

@@ -355,53 +355,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	  else if (pos->type == HA_KEYTYPE_BINARY)
 	    pos->charset= &my_charset_bin;
 	}
-	if (share->keyinfo[i].flag & HA_SPATIAL)
-	{
-#ifdef HAVE_SPATIAL
-	  uint sp_segs=SPDIMS*2;
-	  share->keyinfo[i].seg=pos-sp_segs;
-	  share->keyinfo[i].keysegs--;
-#else
-	  my_errno=HA_ERR_UNSUPPORTED;
-	  goto err;
-#endif
-	}
-        else if (share->keyinfo[i].flag & HA_FULLTEXT)
-	{
-          if (!fulltext_keys)
-          { /* 4.0 compatibility code, to be removed in 5.0 */
-            share->keyinfo[i].seg=pos-FT_SEGS;
-            share->keyinfo[i].keysegs-=FT_SEGS;
-          }
-          else
-          {
-            uint k;
-            share->keyinfo[i].seg=pos;
-            for (k=0; k < FT_SEGS; k++)
-            {
-              *pos= ft_keysegs[k];
-              pos[0].language= pos[-1].language;
-              if (!(pos[0].charset= pos[-1].charset))
-              {
-                my_errno=HA_ERR_CRASHED;
-                goto err;
-              }
-              pos++;
-            }
-          }
-          if (!share->ft2_keyinfo.seg)
-          {
-            memcpy(& share->ft2_keyinfo, & share->keyinfo[i], sizeof(MI_KEYDEF));
-            share->ft2_keyinfo.keysegs=1;
-            share->ft2_keyinfo.flag=0;
-            share->ft2_keyinfo.keylength=
-            share->ft2_keyinfo.minlength=
-            share->ft2_keyinfo.maxlength=HA_FT_WLEN+share->base.rec_reflength;
-            share->ft2_keyinfo.seg=pos-1;
-            share->ft2_keyinfo.end=pos;
-            setup_key_functions(& share->ft2_keyinfo);
-          }
-	}
         setup_key_functions(share->keyinfo+i);
 	share->keyinfo[i].end=pos;
 	pos->type=HA_KEYTYPE_END;			/* End */
@@ -783,16 +736,6 @@ void mi_setup_functions(register MYISAM_SHARE *share)
 
 static void setup_key_functions(register MI_KEYDEF *keyinfo)
 {
-  if (keyinfo->key_alg == HA_KEY_ALG_RTREE)
-  {
-#ifdef HAVE_RTREE_KEYS
-    keyinfo->ck_insert = rtree_insert;
-    keyinfo->ck_delete = rtree_delete;
-#else
-    DBUG_ASSERT(0); /* mi_open should check it never happens */
-#endif
-  }
-  else
   {
     keyinfo->ck_insert = _mi_ck_write;
     keyinfo->ck_delete = _mi_ck_delete;
