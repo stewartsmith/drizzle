@@ -19,7 +19,6 @@
  */
 
 #include "myisamdef.h"
-#include "rt_index.h"
 
 static ha_rows _mi_record_pos(MI_INFO *, const uchar *, key_part_map,
                               enum ha_rkey_function);

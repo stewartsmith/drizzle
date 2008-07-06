@@ -50,7 +50,6 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#include "rt_index.h"
 
 #ifndef USE_RAID
 #define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)

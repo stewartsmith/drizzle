@@ -15,8 +15,6 @@
 
 #include "myisamdef.h"
 
-#include "rt_index.h"
-
 	/*
 	   Read next row with the same key as previous read
 	   One may have done a write, update or delete of the previous row.

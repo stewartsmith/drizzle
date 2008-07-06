@@ -16,7 +16,6 @@
 /* Update an old row in a MyISAM table */
 
 #include "fulltext.h"
-#include "rt_index.h"
 
 int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
 {
