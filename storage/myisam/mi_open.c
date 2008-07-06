@@ -325,8 +325,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	disk_pos=mi_keydef_read(disk_pos, &share->keyinfo[i]);
         disk_pos_assert(disk_pos + share->keyinfo[i].keysegs * HA_KEYSEG_SIZE,
  			end_pos);
-        if (share->keyinfo[i].key_alg == HA_KEY_ALG_RTREE)
-          have_rtree=1;
 	set_if_smaller(share->blocksize,share->keyinfo[i].block_length);
 	share->keyinfo[i].seg=pos;
 	for (j=0 ; j < share->keyinfo[i].keysegs; j++,pos++)
@@ -474,8 +472,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	((share->options & (HA_OPTION_READ_ONLY_DATA | HA_OPTION_TMP_TABLE |
 			   HA_OPTION_COMPRESS_RECORD |
 			   HA_OPTION_TEMP_COMPRESS_RECORD)) ||
-	 (open_flags & HA_OPEN_TMP_TABLE) ||
-	 have_rtree) ? 0 : 1;
+	 (open_flags & HA_OPEN_TMP_TABLE) || have_rtree) ? 0 : 1;
       if (share->concurrent_insert)
       {
 	share->lock.get_status=mi_get_status;

@@ -153,10 +153,8 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
   pos= table_arg->key_info;
   for (i= 0; i < share->keys; i++, pos++)
   {
-    keydef[i].flag= ((uint16) pos->flags & (HA_NOSAME | HA_FULLTEXT | HA_SPATIAL));
-    keydef[i].key_alg= pos->algorithm == HA_KEY_ALG_UNDEF ?
-      (pos->flags & HA_SPATIAL ? HA_KEY_ALG_RTREE : HA_KEY_ALG_BTREE) :
-      pos->algorithm;
+    keydef[i].flag= ((uint16) pos->flags & (HA_NOSAME | HA_FULLTEXT ));
+    keydef[i].key_alg= pos->algorithm == HA_KEY_ALG_UNDEF ?  (HA_KEY_ALG_BTREE) : pos->algorithm;
     keydef[i].block_length= pos->block_size;
     keydef[i].seg= keyseg;
     keydef[i].keysegs= pos->key_parts;
@@ -568,13 +566,7 @@ const char **ha_myisam::bas_ext() const
 
 const char *ha_myisam::index_type(uint key_number)
 {
-  return ((table->key_info[key_number].flags & HA_FULLTEXT) ? 
-	  "FULLTEXT" :
-	  (table->key_info[key_number].flags & HA_SPATIAL) ?
-	  "SPATIAL" :
-	  (table->key_info[key_number].algorithm == HA_KEY_ALG_RTREE) ?
-	  "RTREE" :
-	  "BTREE");
+  return "BTREE";
 }
 
 /* Name is here without an extension */
