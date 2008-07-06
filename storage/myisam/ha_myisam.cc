@@ -489,6 +489,7 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...)
   va_end(args);
 }
 
+}
 
 /**
   Report list of threads (and queries) accessing a table, thread_id of a
@@ -528,7 +529,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
   pthread_mutex_unlock(&file->s->intern_lock);
 }
 
-}
 
 
 ha_myisam::ha_myisam(handlerton *hton, TABLE_SHARE *table_arg)
