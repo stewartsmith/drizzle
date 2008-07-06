@@ -190,7 +190,6 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   ulong state_diff_length;
   uint	rec_reflength;			/* rec_reflength in use now */
   uint  unique_name_length;
-  uint32 ftparsers;                     /* Number of distinct ftparsers + 1 */
   File	kfile;				/* Shared keyfile */
   File	data_file;			/* Shared data file */
   int	mode;				/* mode of file on open */
@@ -236,9 +235,6 @@ struct st_myisam_info {
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
   TREE	        *bulk_insert;
-  DYNAMIC_ARRAY *ft1_to_ft2;            /* used only in ft1->ft2 conversion */
-  MEM_ROOT      ft_memroot;             /* used by the parser               */
-  MYSQL_FTPARSER_PARAM *ftparser_param; /* share info between init/deinit   */
   LIST in_use;                          /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
   uchar *buff,				/* Temp area for key                */
@@ -624,8 +620,6 @@ extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, my_bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                uchar *to, uchar *from, ulong reclength);
 extern ulonglong mi_safe_mul(ulonglong a,ulonglong b);
-extern int _mi_ft_update(MI_INFO *info, uint keynr, uchar *keybuf,
-			 const uchar *oldrec, const uchar *newrec, my_off_t pos);
 
 struct st_sort_info;
 
@@ -766,7 +760,6 @@ void mi_check_print_error _VARARGS((MI_CHECK *param, const char *fmt,...));
 void mi_check_print_warning _VARARGS((MI_CHECK *param, const char *fmt,...));
 void mi_check_print_info _VARARGS((MI_CHECK *param, const char *fmt,...));
 int flush_pending_blocks(MI_SORT_PARAM *param);
-int sort_ft_buf_flush(MI_SORT_PARAM *sort_param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
 pthread_handler_t thr_find_all_keys(void *arg);
 int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file);
