@@ -1818,7 +1818,7 @@ trx_weight_cmp(
 /********************************************************************
 Prepares a transaction. */
 
-void
+static void
 trx_prepare_off_kernel(
 /*===================*/
 	trx_t*	trx)	/* in: transaction */
