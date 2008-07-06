@@ -53,7 +53,7 @@ myisampack_LDADD=	libmyisam.a \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3 #ft_test1 ft_eval
-noinst_HEADERS =	myisamdef.h my_handler_errors.h \
+noinst_HEADERS =	myisamdef.h  \
 			fulltext.h ftdefs.h ft_test1.h ft_eval.h \
 			ha_myisam.h mi_extrafunc.h
 mi_test1_DEPENDENCIES=	$(LIBRARIES)
@@ -84,7 +84,7 @@ libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rrnd.c mi_scan.c mi_cache.c \
 			mi_statrec.c mi_packrec.c mi_dynrec.c \
 			mi_update.c mi_write.c mi_unique.c \
-			mi_delete.c my_handler.c \
+			mi_delete.c \
 			my_pread.c my_lock.c \
 			mf_keycache.c mf_keycaches.c \
 			mi_rprev.c mi_rfirst.c mi_rlast.c mi_rsame.c \

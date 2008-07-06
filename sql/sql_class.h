@@ -2068,7 +2068,8 @@ protected:
 public:
   select_result();
   virtual ~select_result() {};
-  virtual int prepare(List<Item> &list, SELECT_LEX_UNIT *u)
+  virtual int prepare(List<Item> &list __attribute__((__unused__)),
+                      SELECT_LEX_UNIT *u)
   {
     unit= u;
     return 0;
@@ -2083,7 +2084,8 @@ public:
   { return fields.elements; }
   virtual bool send_fields(List<Item> &list, uint flags)=0;
   virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (JOIN *join=0) { return 0; }
+  virtual bool initialize_tables (JOIN  __attribute__((__unused__)) *join=0)
+  { return 0; }
   virtual void send_error(uint errcode,const char *err);
   virtual bool send_eof()=0;
   /**
@@ -2115,8 +2117,10 @@ class select_result_interceptor: public select_result
 {
 public:
   select_result_interceptor() {}              /* Remove gcc warning */
-  uint field_count(List<Item> &fields) const { return 0; }
-  bool send_fields(List<Item> &fields, uint flag) { return FALSE; }
+  uint field_count(List<Item> &fields __attribute__((__unused__))) const
+  { return 0; }
+  bool send_fields(List<Item> &fields __attribute__((__unused__)),
+                   uint flag __attribute__((__unused__))) { return FALSE; }
 };
 
 
@@ -2653,6 +2657,5 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
-void mark_transaction_to_rollback(THD *thd, bool all);
 
 #endif /* MYSQL_SERVER */
