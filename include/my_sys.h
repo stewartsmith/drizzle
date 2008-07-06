@@ -235,18 +235,6 @@ enum cache_type
   SEQ_READ_APPEND		/* sequential read or append */,
   READ_FIFO, READ_NET,WRITE_NET};
 
-enum flush_type
-{
-  FLUSH_KEEP,           /* flush block and keep it in the cache */
-  FLUSH_RELEASE,        /* flush block and remove it from the cache */
-  FLUSH_IGNORE_CHANGED, /* remove block from the cache */
-  /*
-    As my_disable_flush_pagecache_blocks is always 0, the following option
-    is strictly equivalent to FLUSH_KEEP
-  */
-  FLUSH_FORCE_WRITE
-};
-
 typedef struct st_record_cache	/* Used when cacheing records */
 {
   File file;

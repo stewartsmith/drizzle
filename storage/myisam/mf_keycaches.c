@@ -21,7 +21,9 @@
   the cache.
 */
 
-#include "mysys_priv.h"
+#include "my_global.h"
+#include "mysys_err.h"
+#include <my_sys.h>
 #include <keycache.h>
 #include <hash.h>
 #include <m_string.h>
