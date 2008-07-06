@@ -27,7 +27,6 @@
 #include "ha_myisam.h"
 #include <stdarg.h>
 #include "myisamdef.h"
-#include "rt_index.h"
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 

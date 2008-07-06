@@ -52,8 +52,8 @@ myisampack_LDADD=	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3 rt_test #ft_test1 ft_eval
-noinst_HEADERS =	myisamdef.h rt_index.h rt_key.h rt_mbr.h \
+noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3 #ft_test1 ft_eval
+noinst_HEADERS =	myisamdef.h \
 			fulltext.h ftdefs.h ft_test1.h ft_eval.h \
 			ha_myisam.h mi_extrafunc.h
 mi_test1_DEPENDENCIES=	$(LIBRARIES)
@@ -78,11 +78,6 @@ myisam_ftdump_LDADD =	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-rt_test_DEPENDENCIES=	$(LIBRARIES)
-rt_test_LDADD =		libmyisam.a \
-			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
-			$(top_builddir)/strings/libmystringslt.la -lz
 libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \
 			mi_search.c mi_page.c mi_key.c mi_locking.c \
@@ -99,9 +94,8 @@ libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_keycache.c mi_preload.c \
 			ft_parser.c ft_stopwords.c ft_static.c \
 			ft_update.c ft_boolean_search.c ft_nlq_search.c sort.c \
-			ha_myisam.cc \
-			rt_index.c rt_key.c rt_mbr.c rt_split.c
-CLEANFILES =		test?.MY? FT?.MY? isam.log mi_test_all rt_test.MY?
+			ha_myisam.cc
+CLEANFILES =		test?.MY? FT?.MY? isam.log mi_test_all
 
 # Move to automake rules ?
 prolint:;	plparse -b -u -hF1 "-width(0,0)" "-format=%f:%l:\s%t:%n\s%m" \
