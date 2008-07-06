@@ -15,7 +15,11 @@
 
 /* Create a MyISAM table */
 
-#include "ftdefs.h"
+#include "myisamdef.h"
+#include <m_ctype.h>
+#include <my_tree.h>
+#include <queues.h>
+#include <mysql/plugin.h>
 #include <my_bit.h>
 
 #if defined(MSDOS) || defined(__WIN__)

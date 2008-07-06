@@ -20,7 +20,11 @@
   isamdatabase.
 */
 
-#include "ftdefs.h"
+#include "myisamdef.h"
+#include <m_ctype.h>
+#include <my_tree.h>
+#include <queues.h>
+#include <mysql/plugin.h>
 
 	/* lock table by F_UNLCK, F_RDLCK or F_WRLCK */
 
@@ -55,7 +59,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   {
     switch (lock_type) {
     case F_UNLCK:
-      ftparser_call_deinitializer(info);
       if (info->lock_type == F_RDLCK)
 	count= --share->r_locks;
       else

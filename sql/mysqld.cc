@@ -2764,8 +2764,6 @@ server.");
 #endif
     locked_in_memory=0;
 
-  ft_init_stopwords();
-
   init_update_queries();
   DBUG_RETURN(0);
 }
