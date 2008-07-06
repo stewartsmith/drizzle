@@ -32,9 +32,10 @@ LDADD =
 DEFS =                  @DEFS@
 
 EXTRA_DIST =		mi_test_all.sh mi_test_all.res ft_stem.c plug.in
-pkgdata_DATA =		mi_test_all mi_test_all.res
+#pkgdata_DATA =		mi_test_all mi_test_all.res
 
-pkglib_LIBRARIES =	libmyisam.a
+noinst_LIBRARIES =	libmyisam.a
+
 #bin_PROGRAMS =		myisamchk myisamlog myisampack myisam_ftdump
 bin_PROGRAMS =
 myisamchk_DEPENDENCIES=	$(LIBRARIES)
@@ -52,7 +53,7 @@ myisampack_LDADD=	libmyisam.a \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3 #ft_test1 ft_eval
+#noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3 #ft_test1 ft_eval
 noinst_HEADERS =	myisamdef.h  \
 			fulltext.h ftdefs.h ft_test1.h ft_eval.h \
 			ha_myisam.h mi_extrafunc.h
