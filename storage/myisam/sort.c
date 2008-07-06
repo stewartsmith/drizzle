@@ -70,7 +70,6 @@ static int  merge_buffers(MI_SORT_PARAM *info,uint keys,
                                 BUFFPEK *Fb, BUFFPEK *Tb);
 static int  merge_index(MI_SORT_PARAM *,uint,uchar **,BUFFPEK *, int,
                               IO_CACHE *);
-static int flush_ft_buf(MI_SORT_PARAM *info);
 
 static int  write_keys_varlen(MI_SORT_PARAM *info,uchar **sort_keys,
                                     uint count, BUFFPEK *buffpek,
@@ -214,7 +213,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
       goto err;					/* purecov: inspected */
   }
 
-  if (flush_ft_buf(info) || flush_pending_blocks(info))
+  if (flush_pending_blocks(info))
     goto err;
 
   if (my_b_inited(&tempfile_for_exceptions))
@@ -513,8 +512,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
           printf("Key %d  - Dumping %u keys\n",sinfo->key+1, sinfo->keys);
           fflush(stdout);
         }
-        if (write_index(sinfo, sinfo->sort_keys, sinfo->keys) ||
-            flush_ft_buf(sinfo) || flush_pending_blocks(sinfo))
+        if (write_index(sinfo, sinfo->sort_keys, sinfo->keys) || flush_pending_blocks(sinfo))
           got_error=1;
       }
       if (!got_error && param->testflag & T_STATISTICS)
@@ -593,7 +591,6 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
       if (merge_index(sinfo, keys, (uchar **)mergebuf,
                       dynamic_element(&sinfo->buffpek,0,BUFFPEK *),
                       maxbuffer,&sinfo->tempfile) ||
-          flush_ft_buf(sinfo) ||
 	  flush_pending_blocks(sinfo))
       {
         got_error=1;
@@ -1031,17 +1028,4 @@ merge_index(MI_SORT_PARAM *info, uint keys, uchar **sort_keys,
     DBUG_RETURN(1); /* purecov: inspected */
   DBUG_RETURN(0);
 } /* merge_index */
-
-static int
-flush_ft_buf(MI_SORT_PARAM *info)
-{
-  int err=0;
-  if (info->sort_info->ft_buf)
-  {
-    err=sort_ft_buf_flush(info);
-    my_free((uchar*)info->sort_info->ft_buf, MYF(0));
-    info->sort_info->ft_buf=0;
-  }
-  return err;
-}
 
