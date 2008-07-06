@@ -34,7 +34,7 @@
 */
 
 #ifdef HAVE_MYSQL_CONFIG_H
-#include "../../include/config.h"
+#include "../../include/my_config.h"
 #endif
 
 #ifndef __AZIO_H__
