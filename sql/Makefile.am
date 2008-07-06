@@ -47,7 +47,6 @@ SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
-mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
 mysqld_LDADD =		$(top_builddir)/sql-common/libsqlcommon.la \
 			libhandler.la \

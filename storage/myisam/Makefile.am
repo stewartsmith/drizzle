@@ -37,19 +37,16 @@ pkgdata_DATA =		mi_test_all mi_test_all.res
 noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
 bin_PROGRAMS =		myisamchk myisamlog myisampack
-myisamchk_DEPENDENCIES=	$(LIBRARIES)
 myisamchk_LDADD=	libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-myisamlog_DEPENDENCIES=	$(LIBRARIES)
 myisamlog_LDADD=	libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-myisampack_DEPENDENCIES=$(LIBRARIES)
 myisampack_LDADD=	libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
@@ -58,19 +55,16 @@ myisampack_LDADD=	libmyisamutil.la \
 noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3
 noinst_HEADERS =	myisamdef.h \
 			ha_myisam.h
-mi_test1_DEPENDENCIES=	$(LIBRARIES)
 mi_test1_LDADD=		libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-mi_test2_DEPENDENCIES=	$(LIBRARIES)
 mi_test2_LDADD=		libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-mi_test3_DEPENDENCIES=	$(LIBRARIES)
 mi_test3_LDADD=		libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
