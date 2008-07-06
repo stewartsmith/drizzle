@@ -67,10 +67,11 @@ static pthread_handler_t run_task(void *p)
     if (s->container.ready == AZ_THREAD_DEAD)
       break;
 
-    s->container.read_size= pread(fd, (uchar *)buffer, AZ_BUFSIZE_READ, offset);
+    s->container.read_size= pread((int)fd, (void *)buffer,
+                                  (size_t)AZ_BUFSIZE_READ, (off_t)offset);
 
     pthread_mutex_lock(&s->container.thresh_mutex);
-    s->container.ready= AZ_THREAD_FINISHED; 
+    s->container.ready= AZ_THREAD_FINISHED;
     pthread_mutex_unlock(&s->container.thresh_mutex);
   }
 
@@ -709,7 +710,7 @@ static unsigned int azio_enable_aio(azio_stream *s)
   return 0;
 }
 
-void azio_disable_aio(azio_stream *s)
+static void azio_disable_aio(azio_stream *s)
 {
   azio_kill(s);
 
@@ -1067,7 +1068,8 @@ static void get_block(azio_stream *s)
 #ifdef AZIO_AIO
 use_pread:
 #endif
-    s->stream.avail_in = (uInt)pread(s->file, (uchar *)s->inbuf, AZ_BUFSIZE_READ, s->pos);
+    s->stream.avail_in = (uInt)pread(s->file, (uchar *)s->inbuf,
+                                     AZ_BUFSIZE_READ, s->pos);
     s->pos+= s->stream.avail_in;
   }
 }

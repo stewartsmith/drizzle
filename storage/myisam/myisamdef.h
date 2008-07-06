@@ -747,7 +747,6 @@ void mi_update_status(void* param);
 void mi_restore_status(void* param);
 void mi_copy_status(void* to,void *from);
 my_bool mi_check_status(void* param);
-void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 
 extern MI_INFO *test_if_reopen(char *filename);
 my_bool check_table_is_closed(const char *name, const char *where);

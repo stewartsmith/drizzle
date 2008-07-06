@@ -52,6 +52,7 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
 /* Start of MySQL Specific Information */
 
 /* Some personal debugging functions */
