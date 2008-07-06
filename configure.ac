@@ -422,25 +422,6 @@ then
   AC_MSG_ERROR([MySQL requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
 fi
 
-static_nss=""
-STATIC_NSS_FLAGS=""
-OTHER_LIBC_LIB=""
-
-#
-# Check if we are using Linux and a glibc compiled with static nss
-# (this is true on the MySQL build machines to avoid NSS problems)
-#
-
-if test "$TARGET_LINUX" = "true" -a "$static_nss" = ""
-then
-  tmp=`nm /usr/lib*/libc.a  | grep _nss_files_getaliasent_r`
-  if test -n "$tmp"
-  then
-     STATIC_NSS_FLAGS="-lc -lnss_files -lnss_dns -lresolv"
-     STATIC_NSS_FLAGS="$STATIC_NSS_FLAGS $STATIC_NSS_FLAGS"
-     static_nss=1
-  fi
-fi
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -574,15 +555,15 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h \
- limits.h memory.h pwd.h select.h \
- stdlib.h stddef.h stdint.h sys/fpu.h \
- strings.h string.h synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h \
- sys/timeb.h sys/types.h sys/un.h sys/vadvise.h sys/wait.h term.h \
- unistd.h utime.h sys/utime.h termio.h termios.h sched.h crypt.h alloca.h \
- sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h linux/config.h \
- sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h \
- execinfo.h)
+AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h)
+AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
+AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
+AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
+AC_CHECK_HEADERS(sys/timeb.h ys/un.h sys/vadvise.h sys/wait.h term.h)
+AC_CHECK_HEADERS(termio.h termios.h sched.h crypt.h alloca.h)
+AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
+AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
+AC_CHECK_HEADERS(execinfo.h)
 
 AC_CHECK_HEADERS([xfs/xfs.h])
 #--------------------------------------------------------------------
@@ -1160,14 +1141,6 @@ MYSQL_CHECK_VIO
 MYSQL_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(CLIENT_LIBS)
-AC_SUBST(STATIC_NSS_FLAGS)
-
-# IMPORTANT - do not modify LIBS past this line - this hack is the only way
-# I know to add the static NSS magic if we have static NSS libraries with
-# glibc - Sasha
-
-LDFLAGS="$LDFLAGS $OTHER_LIBC_LIB"
-LIBS="$LIBS $STATIC_NSS_FLAGS"
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)

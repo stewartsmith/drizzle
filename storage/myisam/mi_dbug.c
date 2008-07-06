@@ -113,7 +113,6 @@ void _mi_print_key(FILE *stream, register HA_KEYSEG *keyseg,
       VOID(fprintf(stream,"%g",d_1));
       key=end;
       break;
-#ifdef HAVE_LONG_LONG
     case HA_KEYTYPE_LONGLONG:
     {
       char buff[21];
@@ -140,7 +139,6 @@ void _mi_print_key(FILE *stream, register HA_KEYSEG *keyseg,
       break;
     }
 
-#endif
     case HA_KEYTYPE_VARTEXT1:                   /* VARCHAR and TEXT */
     case HA_KEYTYPE_VARTEXT2:                   /* VARCHAR and TEXT */
     case HA_KEYTYPE_VARBINARY1:                 /* VARBINARY and BLOB */

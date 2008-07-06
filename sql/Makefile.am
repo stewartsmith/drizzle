@@ -83,7 +83,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			item_row.cc \
 			field.cc strfunc.cc key.cc sql_class.cc sql_list.cc \
 			protocol.cc sql_state.c \
-			lock.cc my_lock.c \
+			lock.cc \
 			sql_string.cc sql_manager.cc sql_map.cc \
 			mysqld.cc hash_filo.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \

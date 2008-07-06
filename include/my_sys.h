@@ -235,18 +235,6 @@ enum cache_type
   SEQ_READ_APPEND		/* sequential read or append */,
   READ_FIFO, READ_NET,WRITE_NET};
 
-enum flush_type
-{
-  FLUSH_KEEP,           /* flush block and keep it in the cache */
-  FLUSH_RELEASE,        /* flush block and remove it from the cache */
-  FLUSH_IGNORE_CHANGED, /* remove block from the cache */
-  /*
-    As my_disable_flush_pagecache_blocks is always 0, the following option
-    is strictly equivalent to FLUSH_KEEP
-  */
-  FLUSH_FORCE_WRITE
-};
-
 typedef struct st_record_cache	/* Used when cacheing records */
 {
   File file;
@@ -785,7 +773,6 @@ extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
 extern void my_sleep(ulong m_seconds);
-extern ulong crc32(ulong crc, const uchar *buf, uint len);
 extern uint my_set_max_open_files(uint files);
 void my_free_open_file_info(void);
 

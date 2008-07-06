@@ -317,6 +317,8 @@
 #endif
 
 #if defined(HAVE_STDINT_H)
+/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #endif
 #if defined(HAVE_STDBOOL_H)
@@ -391,7 +393,7 @@ typedef unsigned short ushort;
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
 #define test_all_bits(a,b) (((a) & (b)) == (b))
 #define set_bits(type, bit_count) (sizeof(type)*8 <= (bit_count) ? ~(type) 0 : ((((type) 1) << (bit_count)) - (type) 1))
-#define array_elements(A) ((uint) (sizeof(A)/sizeof(A[0])))
+#define array_elements(A) ((uint32_t) (sizeof(A)/sizeof(A[0])))
 #ifndef HAVE_RINT
 #define rint(A) floor((A)+(((A) < 0)? -0.5 : 0.5))
 #endif
@@ -590,39 +592,23 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #define strtok_r(A,B,C) strtok((A),(B))
 #endif
 
-/* This is from the old m-machine.h file */
 
-#if SIZEOF_LONG_LONG > 4
-#define HAVE_LONG_LONG 1
-#endif
-
-/*
-  Some pre-ANSI-C99 systems like AIX 5.1 and Linux/GCC 2.95 define
-  ULONGLONG_MAX, LONGLONG_MIN, LONGLONG_MAX; we use them if they're defined.
-  Also on Windows we define these constants by hand in config-win.h.
-*/
-
-#if defined(HAVE_LONG_LONG) && !defined(LONGLONG_MIN)
 #if defined(INT64_MAX)
 #define LONGLONG_MAX INT64_MAX
-#else
-#define LONGLONG_MAX ((int64_t) 0x7FFFFFFFFFFFFFFFLL)
 #endif
+
 #if defined(INT64_MIN)
 #define LONGLONG_MIN INT64_MIN
-#else
-#define LONGLONG_MIN ((int64_t) 0x8000000000000000LL)
 #endif
-#endif /* defined(HAVE_LONG_LONG) && !defined(LONGLONG_MIN) */
 
-#if defined(HAVE_LONG_LONG) && !defined(ULONGLONG_MAX)
+#if !defined(ULONGLONG_MAX)
 /* First check for ANSI C99 definition: */
 #if defined(UINT64_MAX)
 #define ULONGLONG_MAX  UINT64_MAX
 #else
 #define ULONGLONG_MAX ((uint64_t)(~0ULL))
 #endif
-#endif /* defined (HAVE_LONG_LONG) && !defined(ULONGLONG_MAX)*/
+#endif /* !defined(ULONGLONG_MAX)*/
 
 #define INT_MIN32       (~0x7FFFFFFFL)
 #define INT_MAX32       0x7FFFFFFFL
@@ -840,11 +826,7 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #define MYF(v)		(myf) (v)
 
 #ifndef LL
-#ifdef HAVE_LONG_LONG
-#define LL(A) A ## LL
-#else
 #define LL(A) A ## L
-#endif
 #endif
 
 #ifndef ULL
