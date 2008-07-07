@@ -6718,7 +6718,7 @@ innodb_export_status()
 
 	return 0;
 }
-*/
+/**/
 
 /****************************************************************************
 Implements the SHOW INNODB STATUS command. Sends the output of the InnoDB
@@ -7925,7 +7925,7 @@ static SHOW_VAR innodb_status_variables_export[]= {
   {NullS, NullS, SHOW_LONG}
 };
 
-/*/
+/**/
 
 
 static struct st_mysql_storage_engine innobase_storage_engine=

@@ -1753,7 +1753,7 @@ longlong Item_func_shift_left::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(longlong)*8 ? (longlong) res : LL(0));
+  return (shift < sizeof(longlong)*8 ? (longlong) res : 0LL);
 }
 
 longlong Item_func_shift_right::val_int()
@@ -1768,7 +1768,7 @@ longlong Item_func_shift_right::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(longlong)*8 ? (longlong) res : LL(0));
+  return (shift < sizeof(longlong)*8 ? (longlong) res : 0LL);
 }
 
 
@@ -2682,7 +2682,7 @@ void Item_func_find_in_set::fix_length_and_dec()
 			      find->length(), 0);
 	enum_bit=0;
 	if (enum_value)
-	  enum_bit=LL(1) << (enum_value-1);
+	  enum_bit=1LL << (enum_value-1);
       }
     }
   }
@@ -2753,7 +2753,7 @@ longlong Item_func_find_in_set::val_int()
                wc == (my_wc_t) separator)
         return (longlong) ++position;
       else
-        return LL(0);
+        return 0LL;
     }
   }
   return 0;
@@ -3711,7 +3711,7 @@ double user_var_entry::val_real(my_bool *null_value)
 longlong user_var_entry::val_int(my_bool *null_value) const
 {
   if ((*null_value= (value == 0)))
-    return LL(0);
+    return 0LL;
 
   switch (type) {
   case REAL_RESULT:
@@ -3733,7 +3733,7 @@ longlong user_var_entry::val_int(my_bool *null_value) const
     DBUG_ASSERT(1);				// Impossible
     break;
   }
-  return LL(0);					// Impossible
+  return 0LL;					// Impossible
 }
 
 
@@ -4167,7 +4167,7 @@ longlong Item_func_get_user_var::val_int()
 {
   DBUG_ASSERT(fixed == 1);
   if (!var_entry)
-    return LL(0);				// No such variable
+    return 0LL;				// No such variable
   return (var_entry->val_int(&null_value));
 }
 

@@ -162,20 +162,20 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 #define HA_CAN_BIT_FIELD       (1 << 28) /* supports bit fields */
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
-#define HA_NO_COPY_ON_ALTER    (LL(1) << 31)
-#define HA_HAS_RECORDS	       (LL(1) << 32) /* records() gives exact count*/
+#define HA_NO_COPY_ON_ALTER    (1LL << 31)
+#define HA_HAS_RECORDS	       (1LL << 32) /* records() gives exact count*/
 /* Has it's own method of binlog logging */
-#define HA_HAS_OWN_BINLOGGING  (LL(1) << 33)
-#define HA_MRR_CANT_SORT       (LL(1) << 34)
+#define HA_HAS_OWN_BINLOGGING  (1LL << 33)
+#define HA_MRR_CANT_SORT       (1LL << 34)
 
 /*
   Engine is capable of row-format and statement-format logging,
   respectively
 */
-#define HA_BINLOG_ROW_CAPABLE  (LL(1) << 35)
-#define HA_BINLOG_STMT_CAPABLE (LL(1) << 36)
+#define HA_BINLOG_ROW_CAPABLE  (1LL << 35)
+#define HA_BINLOG_STMT_CAPABLE (1LL << 36)
 
-#define HA_ONLINE_ALTER        (LL(1) << 37)
+#define HA_ONLINE_ALTER        (1LL << 37)
 
 /*
   Set of all binlog flags. Currently only contain the capabilities

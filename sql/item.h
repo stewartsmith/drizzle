@@ -2129,7 +2129,7 @@ public:
   longlong val_int()
   {
     int err;
-    return null_value ? LL(0) : my_strntoll(str_value.charset(),str_value.ptr(),
+    return null_value ? 0LL : my_strntoll(str_value.charset(),str_value.ptr(),
                                             str_value.length(),10, (char**) 0,
                                             &err); 
   }

@@ -37,7 +37,7 @@
 
 char test_string[BUFFER_LEN];
 
-#define ROWS_TO_TEST LL(2000000)
+#define ROWS_TO_TEST 2000000LL
 
 /* prototypes */
 long int timedif(struct timeval a, struct timeval b);

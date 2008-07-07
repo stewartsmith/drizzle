@@ -184,7 +184,7 @@ my_ulonglong find_typeset(char *x, TYPELIB *lib, int *err)
     while (*x && *x != field_separator) x++;
     if ((find= find_type(i, lib, 2 | 8) - 1) < 0)
       DBUG_RETURN(0);
-    result|= (ULL(1) << find);
+    result|= (1ULL << find);
   }
   *err= 0;
   DBUG_RETURN(result);

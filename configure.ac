@@ -1171,7 +1171,7 @@ then
   if test "$ac_warn_pedantic" = "yes"
   then
     GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls  "
-    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls "
+    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wno-long-long "
   fi
 
   if test "$ac_warn_unreachable" = "yes"
