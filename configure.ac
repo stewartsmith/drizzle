@@ -924,15 +924,6 @@ AC_CHECK_DECLS(tgoto,,,[
 #endif
 ])
 
-LIBEDIT_LOBJECTS=""
-AC_CHECK_FUNC(strunvis, ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS unvis.o"])
-AC_CHECK_FUNC(strvis,   ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS vis.o"])
-AC_CHECK_FUNC(strlcpy,  ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS strlcpy.o"])
-AC_CHECK_FUNC(strlcat,  ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS strlcat.o"])
-AC_CHECK_FUNC(fgetln,   ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS fgetln.o"])
-AC_SUBST(LIBEDIT_LOBJECTS)
-enable_readline="yes"
-
 # End of readline/libedit stuff
 #########################################################################
 
