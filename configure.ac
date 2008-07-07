@@ -780,13 +780,7 @@ MYSQL_NEEDS_MYSYS_NEW
 AC_CHECK_SIZEOF(char, 1)
 if test "$ac_cv_sizeof_char" -eq 0
 then
-  AC_MSG_ERROR([No size for char type.
-A likely cause for this could be that there isn't any
-static libraries installed. You can verify this by checking if you have libm.a
-in /lib, /usr/lib or some other standard place.  If this is the problem,
-install the static libraries and try again.  If this isn't the problem,
-examine config.log for possible errors.  If you want to report this, use
-'scripts/mysqlbug' and include at least the last 20 rows from config.log!])
+  AC_MSG_ERROR([No size for char type.])
 fi
 AC_CHECK_SIZEOF(char*, 4)
 AC_CHECK_SIZEOF(short, 2)
@@ -1211,10 +1205,12 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  libmysql/Makefile client/Makefile dnl
  sql/Makefile sql/share/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
- dbug/Makefile scripts/Makefile include/Makefile dnl
+ dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
  mysql-test/Makefile dnl
- include/mysql_version.h plugin/Makefile)
+ include/mysql_version.h plugin/Makefile dnl
+ sql/mysqld_safe support-files/libmysqlclient.pc dnl
+ support-files/mysql.server support-files/mysql-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 

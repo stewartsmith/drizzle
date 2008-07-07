@@ -25,7 +25,7 @@ if BUILD_DBUG
 endif
 
 SUBDIRS =		. include \
-			sql-common scripts vio \
+			sql-common vio \
 			strings mysys $(d_dbug) \
                         extra regex \
                         libmysql client storage plugin \

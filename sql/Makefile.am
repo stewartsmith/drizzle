@@ -32,6 +32,8 @@ SUBDIRS =		share
 libexec_PROGRAMS =	mysqld
 EXTRA_PROGRAMS =	gen_lex_hash
 bin_PROGRAMS =		
+bin_SCRIPTS = 		mysqldumpslow mysqld_safe 
+
 DTRACE =                @DTRACE@
 DTRACEFLAGS =           @DTRACEFLAGS@
 DTRACEFILES =           handler.o \
