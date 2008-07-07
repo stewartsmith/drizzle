@@ -21,7 +21,6 @@
 /* class for the the myisam handler */
 
 #include <myisam.h>
-#include <ft_global.h>
 
 #define HA_RECOVER_NONE		0	/* No automatic recover */
 #define HA_RECOVER_DEFAULT	1	/* Automatic recover active */
@@ -55,7 +54,8 @@ class ha_myisam: public handler
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint idx, bool sorted);
   int index_end();
-  ulong index_flags(uint inx, uint part, bool all_parts) const
+  uint32_t index_flags(uint inx, uint part __attribute__((__unused__)),
+                       bool all_parts __attribute__((__unused__))) const
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
             0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |
@@ -83,20 +83,6 @@ class ha_myisam: public handler
   int index_first(uchar * buf);
   int index_last(uchar * buf);
   int index_next_same(uchar *buf, const uchar *key, uint keylen);
-  int ft_init()
-  {
-    if (!ft_handler)
-      return 1;
-    ft_handler->please->reinit_search(ft_handler);
-    return 0;
-  }
-  FT_INFO *ft_init_ext(uint flags, uint inx,String *key)
-  {
-    return ft_init_search(flags,file,inx,
-                          (uchar *)key->ptr(), key->length(), key->charset(),
-                          table->record[0]);
-  }
-  int ft_read(uchar *buf);
   int rnd_init(bool scan);
   int rnd_next(uchar *buf);
   int rnd_pos(uchar * buf, uchar *pos);
@@ -104,7 +90,7 @@ class ha_myisam: public handler
   void position(const uchar *record);
   int info(uint);
   int extra(enum ha_extra_function operation);
-  int extra_opt(enum ha_extra_function operation, ulong cache_size);
+  int extra_opt(enum ha_extra_function operation, uint32_t cache_size);
   int reset(void);
   int external_lock(THD *thd, int lock_type);
   int delete_all_rows(void);
@@ -132,7 +118,6 @@ class ha_myisam: public handler
   bool auto_repair() const { return myisam_recover_options != 0; }
   int optimize(THD* thd, HA_CHECK_OPT* check_opt);
   int assign_to_keycache(THD* thd, HA_CHECK_OPT* check_opt);
-  int preload_keys(THD* thd, HA_CHECK_OPT* check_opt);
   bool check_if_incompatible_data(HA_CREATE_INFO *info, uint table_changes);
 #ifdef HAVE_QUERY_CACHE
   my_bool register_query_cache_table(THD *thd, char *table_key,

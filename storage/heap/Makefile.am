@@ -13,6 +13,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+if BUILD_DBUG
+  d_dbug = $(top_builddir)/dbug/libdbuglt.la
+endif
+
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
@@ -32,12 +36,12 @@ noinst_LIBRARIES =	libheap.a
 hp_test1_LDFLAGS = 
 hp_test1_LDADD =	libheap.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la
 hp_test2_LDFLAGS = 
 hp_test2_LDADD =	libheap.a \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la
 noinst_HEADERS =	heapdef.h ha_heap.h
 libheap_a_SOURCES =	hp_open.c hp_extra.c hp_close.c hp_panic.c hp_info.c \

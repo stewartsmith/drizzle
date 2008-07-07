@@ -15,11 +15,15 @@
 
 # Process this file with automake to create Makefile.in
 
+if BUILD_DBUG
+  d_dbug = dbug
+endif
+
 SUBDIRS =		. include \
-			sql-common scripts vio \
-			strings mysys dbug \
+			sql-common vio \
+			strings mysys $(d_dbug) \
                         extra regex \
-                        libmysql client unittest storage plugin \
+                        libmysql client storage plugin \
                         sql \
 			mysql-test support-files man
 
@@ -37,7 +41,7 @@ bin-dist:		all
 .PHONY:	init-db bin-dist \
   test    test-force    test-full    test-force-full    test-force-mem \
   test-pl test-force-pl test-full-pl test-force-full-pl test-force-pl-mem \
-  test-unit test-ps test-nr test-pr test-ns test-binlog-statement \
+  test-ps test-nr test-pr test-ns test-binlog-statement \
   test-ext-funcs test-ext-rpl test-ext-jp \
   test-ext-stress test-ext test-embedded \
   test-fast test-fast-cursor test-fast-view test-fast-prepare \
@@ -50,9 +54,6 @@ bin-dist:		all
 # environment variable MTR_BUILD_THREAD. The script "mysql-test-run"
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
-
-test-unit:
-	cd unittest && $(MAKE) test
 
 test-ps:
 	cd mysql-test ; \
@@ -74,7 +75,9 @@ test-binlog-statement:
 	cd mysql-test ; \
 	    @PERL@ ./mysql-test-run.pl $(force) --mysqld=--binlog-format=statement
 
-test:	test-unit test-ns test-pr
+test: test-drizzle
+
+test-old:	test-ns test-pr
 
 test-full:	test test-nr test-ps
 
@@ -159,4 +162,22 @@ test-fast-prepare:
 test-full-qa:
 	$(MAKE) force=--force test-pr \
 	    test-binlog-statement test-ext test-fast-view \
-	        test-fast-cursor test-unit
+	        test-fast-cursor 
+
+test-drizzle:
+	cd mysql-test ; \
+	 @PERL@ ./mysql-test-run.pl --fast --reorder --force \
+		join_crash \
+		join_nested \
+		join_outer_innodb \
+		delete \
+		join_outer \
+		join \
+		subselect \
+		insert \
+		select \
+		update \
+		information_schema \
+		mysqlslap \
+		lock \
+		lock_tables_lost_commit

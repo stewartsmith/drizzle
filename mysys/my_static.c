@@ -20,7 +20,6 @@
 
 #include "mysys_priv.h"
 #include "my_static.h"
-#include "my_alarm.h"
 
 my_bool timed_mutexes= 0;
 
@@ -40,9 +39,7 @@ struct st_my_file_info *my_file_info= my_file_info_default;
 int my_dont_interrupt=0;
 volatile int		_my_signals=0;
 struct st_remember _my_sig_remember[MAX_SIGNALS]={{0,0}};
-#ifdef THREAD
 sigset_t my_signals;			/* signals blocked by mf_brkhant */
-#endif
 
 	/* from mf_reccache.c */
 ulong my_default_record_cache_size=RECORD_CACHE_SIZE;

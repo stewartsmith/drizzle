@@ -24,14 +24,11 @@
 #include <sys/resource.h>
 #endif
 
-#ifdef THREAD
 #include <my_pthread.h>
+#include <thr_lock.h>
 extern pthread_mutex_t THR_LOCK_malloc, THR_LOCK_open, THR_LOCK_keycache;
-extern pthread_mutex_t THR_LOCK_lock, THR_LOCK_isam, THR_LOCK_net;
+extern pthread_mutex_t THR_LOCK_isam, THR_LOCK_net;
 extern pthread_mutex_t THR_LOCK_charset, THR_LOCK_time;
-#else
-#include <my_no_pthread.h>
-#endif
 
 /*
   EDQUOT is used only in 3 C files only in mysys/. If it does not exist on

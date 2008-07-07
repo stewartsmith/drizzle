@@ -17,6 +17,18 @@
 #include <string.h>
 #include <assert.h>
 
+/* TODO: For some reason these aren't showing up cleanly in the 
+ *  * includes... why? 
+ *   */
+#if !defined(pread)
+extern ssize_t pread (int __fd, void *__buf, size_t __nbytes,
+                      off_t __offset);
+#endif
+#if !defined(pwrite)
+extern ssize_t pwrite (int __fd, __const void *__buf, size_t __n,
+                       off_t __offset);
+#endif
+
 static int const az_magic[3] = {0xfe, 0x03, 0x01}; /* az magic header */
 
 /* gzip flag uchar */
@@ -67,10 +79,11 @@ static pthread_handler_t run_task(void *p)
     if (s->container.ready == AZ_THREAD_DEAD)
       break;
 
-    s->container.read_size= pread(fd, (uchar *)buffer, AZ_BUFSIZE_READ, offset);
+    s->container.read_size= pread((int)fd, (void *)buffer,
+                                  (size_t)AZ_BUFSIZE_READ, (off_t)offset);
 
     pthread_mutex_lock(&s->container.thresh_mutex);
-    s->container.ready= AZ_THREAD_FINISHED; 
+    s->container.ready= AZ_THREAD_FINISHED;
     pthread_mutex_unlock(&s->container.thresh_mutex);
   }
 
@@ -709,7 +722,7 @@ static unsigned int azio_enable_aio(azio_stream *s)
   return 0;
 }
 
-void azio_disable_aio(azio_stream *s)
+static void azio_disable_aio(azio_stream *s)
 {
   azio_kill(s);
 
@@ -1067,7 +1080,8 @@ static void get_block(azio_stream *s)
 #ifdef AZIO_AIO
 use_pread:
 #endif
-    s->stream.avail_in = (uInt)pread(s->file, (uchar *)s->inbuf, AZ_BUFSIZE_READ, s->pos);
+    s->stream.avail_in = (uInt)pread(s->file, (uchar *)s->inbuf,
+                                     AZ_BUFSIZE_READ, s->pos);
     s->pos+= s->stream.avail_in;
   }
 }

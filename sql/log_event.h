@@ -37,6 +37,8 @@
 #ifndef MYSQL_CLIENT
 #include "rpl_record.h"
 #include "rpl_reporting.h"
+#else
+#include "my_decimal.h"
 #endif
 
 /**
@@ -375,22 +377,6 @@ struct sql_ex_info
 #define BINLOG_MAGIC        "\xfe\x62\x69\x6e"
 
 /*
-  The 2 flags below were useless :
-  - the first one was never set
-  - the second one was set in all Rotate events on the master, but not used for
-  anything useful.
-  So they are now removed and their place may later be reused for other
-  flags. Then one must remember that Rotate events in 4.x have
-  LOG_EVENT_FORCED_ROTATE_F set, so one should not rely on the value of the
-  replacing flag when reading a Rotate event.
-  I keep the defines here just to remember what they were.
-*/
-#ifdef TO_BE_REMOVED
-#define LOG_EVENT_TIME_F            0x1
-#define LOG_EVENT_FORCED_ROTATE_F   0x2
-#endif
-
-/*
    This flag only makes sense for Format_description_log_event. It is set
    when the event is written, and *reset* when a binlog file is
    closed (yes, it's the only case when MySQL modifies already written
@@ -472,7 +458,7 @@ struct sql_ex_info
 
 /* Shouldn't be defined before */
 #define EXPECTED_OPTIONS \
-  ((ULL(1) << 14) | (ULL(1) << 26) | (ULL(1) << 27) | (ULL(1) << 19))
+  ((1ULL << 14) | (1ULL << 26) | (1ULL << 27) | (1ULL << 19))
 
 #if OPTIONS_WRITTEN_TO_BIN_LOG != EXPECTED_OPTIONS
 #error OPTIONS_WRITTEN_TO_BIN_LOG must NOT change their values!
@@ -947,7 +933,8 @@ public:
     return (void*) my_malloc((uint)size, MYF(MY_WME|MY_FAE));
   }
 
-  static void operator delete(void *ptr, size_t size)
+  static void operator delete(void *ptr,
+                              size_t size __attribute__((__unused__)))
   {
     my_free((uchar*) ptr, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
   }
@@ -964,7 +951,7 @@ public:
             write_data_header(file) ||
             write_data_body(file));
   }
-  virtual bool write_data_header(IO_CACHE* file)
+  virtual bool write_data_header(IO_CACHE* file __attribute__((__unused__)))
   { return 0; }
   virtual bool write_data_body(IO_CACHE* file __attribute__((unused)))
   { return 0; }
@@ -1093,7 +1080,7 @@ protected:
     @retval 0     Event applied successfully
     @retval errno Error code if event application failed
   */
-  virtual int do_apply_event(Relay_log_info const *rli)
+  virtual int do_apply_event(Relay_log_info const *rli __attribute__((__unused__)))
   {
     return 0;                /* Default implementation does nothing */
   }
@@ -1596,7 +1583,8 @@ public:
   Log_event_type get_type_code() { return QUERY_EVENT; }
 #ifndef MYSQL_CLIENT
   bool write(IO_CACHE* file);
-  virtual bool write_post_header_for_derived(IO_CACHE* file) { return FALSE; }
+  virtual bool write_post_header_for_derived(IO_CACHE* file __attribute__((__unused__)))
+  { return FALSE; }
 #endif
   bool is_valid() const { return query != 0; }
 
@@ -2385,7 +2373,8 @@ public:
   uint charset_number;
   bool is_null;
 #ifndef MYSQL_CLIENT
-  User_var_log_event(THD* thd_arg, char *name_arg, uint name_len_arg,
+  User_var_log_event(THD* thd_arg __attribute__((__unused__)),
+                     char *name_arg, uint name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
 		     uint charset_number_arg)
     :Log_event(), name(name_arg), name_len(name_len_arg), val(val_arg),
@@ -2443,7 +2432,7 @@ public:
 private:
 #if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_update_pos(Relay_log_info *rli);
-  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli)
+  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli __attribute__((__unused__)))
   {
     /*
       Events from ourself should be skipped, but they should not
@@ -3013,12 +3002,6 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_DECIMAL</td><td>0</td>
-    <td>0</td>
-    <td>No column metadata.</td>
-  </tr>
-
-  <tr>
     <td>MYSQL_TYPE_TINY</td><td>1</td>
     <td>0</td>
     <td>No column metadata.</td>
@@ -3071,12 +3054,6 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_INT24</td><td>9</td>
-    <td>0</td>
-    <td>No column metadata.</td>
-  </tr>
-
-  <tr>
     <td>MYSQL_TYPE_DATE</td><td>10</td>
     <td>0</td>
     <td>No column metadata.</td>
@@ -3112,15 +3089,6 @@ char *str_to_hex(char *to, const char *from, uint len);
     <td>2 bytes</td>
     <td>2 byte unsigned integer representing the maximum length of
     the string.</td>
-  </tr>
-
-  <tr>
-    <td>MYSQL_TYPE_BIT</td><td>16</td>
-    <td>2 bytes</td>
-    <td>A 1 byte unsigned int representing the length in bits of the
-    bitfield (0 to 64), followed by a 1 byte unsigned int
-    representing the number of bytes occupied by the bitfield.  The
-    number of bytes is either int((length+7)/8) or int(length/8).</td>
   </tr>
 
   <tr>
@@ -3189,13 +3157,6 @@ char *str_to_hex(char *to, const char *from, uint len);
     <td>The first byte is always MYSQL_TYPE_VAR_STRING (i.e., 253).
     The second byte is the field size, i.e., the number of bytes in
     the representation of size of the string: 3 or 4.</td>
-  </tr>
-
-  <tr>
-    <td>MYSQL_TYPE_GEOMETRY</td><td>255</td>
-    <td>1 byte</td>
-    <td>The pack length, i.e., the number of bytes needed to represent
-    the length of the geometry: 1, 2, 3, or 4.</td>
   </tr>
 
   </table>

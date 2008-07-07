@@ -17,7 +17,7 @@
 /* thus to get the current time we should use the system function
    with the highest possible resolution */
 
-/* 
+/*
    TODO: in functions my_micro_time() and my_micro_time_and_time() there
    exists some common code that should be merged into a function.
 */
@@ -128,7 +128,7 @@ ulonglong my_micro_time()
     Value in microseconds from some undefined point in time
 */
 
-#define DELTA_FOR_SECONDS LL(500000000)  /* Half a second */
+#define DELTA_FOR_SECONDS 500000000LL  /* Half a second */
 
 ulonglong my_micro_time_and_time(time_t *time_arg)
 {

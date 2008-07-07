@@ -279,23 +279,19 @@ enum enum_field_types { MYSQL_TYPE_DECIMAL, MYSQL_TYPE_TINY,
 			MYSQL_TYPE_DATE,   MYSQL_TYPE_TIME,
 			MYSQL_TYPE_DATETIME, MYSQL_TYPE_YEAR,
 			MYSQL_TYPE_NEWDATE, MYSQL_TYPE_VARCHAR,
-			MYSQL_TYPE_BIT,
-                        MYSQL_TYPE_NEWDECIMAL=246,
-			MYSQL_TYPE_ENUM=247,
-			MYSQL_TYPE_SET=248,
-			MYSQL_TYPE_TINY_BLOB=249,
-			MYSQL_TYPE_MEDIUM_BLOB=250,
-			MYSQL_TYPE_LONG_BLOB=251,
-			MYSQL_TYPE_BLOB=252,
-			MYSQL_TYPE_VAR_STRING=253,
-			MYSQL_TYPE_STRING=254,
-			MYSQL_TYPE_GEOMETRY=255
-
+                        MYSQL_TYPE_NEWDECIMAL=247,
+			MYSQL_TYPE_ENUM=248,
+			MYSQL_TYPE_SET=249,
+			MYSQL_TYPE_TINY_BLOB=250,
+			MYSQL_TYPE_MEDIUM_BLOB=251,
+			MYSQL_TYPE_LONG_BLOB=252,
+			MYSQL_TYPE_BLOB=253,
+			MYSQL_TYPE_VAR_STRING=254,
+			MYSQL_TYPE_STRING=255
 };
 
 /* For backward compatibility */
 #define CLIENT_MULTI_QUERIES    CLIENT_MULTI_STATEMENTS    
-#define FIELD_TYPE_DECIMAL     MYSQL_TYPE_DECIMAL
 #define FIELD_TYPE_NEWDECIMAL  MYSQL_TYPE_NEWDECIMAL
 #define FIELD_TYPE_TINY        MYSQL_TYPE_TINY
 #define FIELD_TYPE_SHORT       MYSQL_TYPE_SHORT
@@ -305,7 +301,6 @@ enum enum_field_types { MYSQL_TYPE_DECIMAL, MYSQL_TYPE_TINY,
 #define FIELD_TYPE_NULL        MYSQL_TYPE_NULL
 #define FIELD_TYPE_TIMESTAMP   MYSQL_TYPE_TIMESTAMP
 #define FIELD_TYPE_LONGLONG    MYSQL_TYPE_LONGLONG
-#define FIELD_TYPE_INT24       MYSQL_TYPE_INT24
 #define FIELD_TYPE_DATE        MYSQL_TYPE_DATE
 #define FIELD_TYPE_TIME        MYSQL_TYPE_TIME
 #define FIELD_TYPE_DATETIME    MYSQL_TYPE_DATETIME
@@ -321,8 +316,6 @@ enum enum_field_types { MYSQL_TYPE_DECIMAL, MYSQL_TYPE_TINY,
 #define FIELD_TYPE_STRING      MYSQL_TYPE_STRING
 #define FIELD_TYPE_CHAR        MYSQL_TYPE_TINY
 #define FIELD_TYPE_INTERVAL    MYSQL_TYPE_ENUM
-#define FIELD_TYPE_GEOMETRY    MYSQL_TYPE_GEOMETRY
-#define FIELD_TYPE_BIT         MYSQL_TYPE_BIT
 
 
 /* Shutdown/kill enums and constants */ 
@@ -351,9 +344,7 @@ enum mysql_enum_shutdown_level {
   /* don't flush InnoDB buffers, flush other storage engines' buffers*/
   SHUTDOWN_WAIT_CRITICAL_BUFFERS= (MYSQL_SHUTDOWN_KILLABLE_UPDATE << 1) + 1,
   /* Now the 2 levels of the KILL command */
-#if MYSQL_VERSION_ID >= 50000
   KILL_QUERY= 254,
-#endif
   KILL_CONNECTION= 255
 };
 
@@ -485,10 +476,6 @@ char *octet2hex(char *to, const char *str, unsigned int len);
 char *get_tty_password(const char *opt_message);
 const char *mysql_errno_to_sqlstate(unsigned int mysql_errno);
 
-/* Some other useful functions */
-
-my_bool my_thread_init(void);
-void my_thread_end(void);
 
 #ifdef _global_h
 ulong STDCALL net_field_length(uchar **packet);

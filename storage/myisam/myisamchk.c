@@ -15,12 +15,14 @@
 
 /* Describe, check and repair of MyISAM tables */
 
-#include "fulltext.h"
+#include <my_global.h>
 
 #include <m_ctype.h>
 #include <stdarg.h>
 #include <my_getopt.h>
 #include <my_bit.h>
+#include <myisam.h>
+#include <m_string.h>
 #ifdef HAVE_SYS_VADVICE_H
 #include <sys/vadvise.h>
 #endif
@@ -29,10 +31,10 @@
 #endif
 SET_STACK_SIZE(9000)			/* Minimum stack size for program */
 
-#ifndef USE_RAID
 #define my_raid_create(A,B,C,D,E,F,G) my_create(A,B,C,G)
 #define my_raid_delete(A,B,C) my_delete(A,B)
-#endif
+
+#include "myisamdef.h"
 
 static uint decode_bits;
 static char **default_argv;
@@ -42,7 +44,6 @@ static CHARSET_INFO *set_collation;
 static long opt_myisam_block_size;
 static long opt_key_cache_block_size;
 static const char *my_progname_short;
-static int stopwords_inited= 0;
 static MY_TMPDIR myisamchk_tmpdir;
 
 static const char *type_names[]=
@@ -133,7 +134,6 @@ int main(int argc, char **argv)
   }
   free_defaults(default_argv);
   free_tmpdir(&myisamchk_tmpdir);
-  ft_free_stopwords();
   my_end(check_param.testflag & T_INFO ? MY_CHECK_ERROR | MY_GIVE_INFO : MY_CHECK_ERROR);
   exit(error);
 #ifndef _lint
@@ -319,16 +319,6 @@ static struct my_option my_long_options[] =
     BUFFERS_WHEN_SORTING, 4L, 100L, 0L, 1L, 0},
   { "decode_bits", OPT_DECODE_BITS, "", (uchar**) &decode_bits,
     (uchar**) &decode_bits, 0, GET_UINT, REQUIRED_ARG, 9L, 4L, 17L, 0L, 1L, 0},
-  { "ft_min_word_len", OPT_FT_MIN_WORD_LEN, "", (uchar**) &ft_min_word_len,
-    (uchar**) &ft_min_word_len, 0, GET_ULONG, REQUIRED_ARG, 4, 1, HA_FT_MAXCHARLEN,
-    0, 1, 0},
-  { "ft_max_word_len", OPT_FT_MAX_WORD_LEN, "", (uchar**) &ft_max_word_len,
-    (uchar**) &ft_max_word_len, 0, GET_ULONG, REQUIRED_ARG, HA_FT_MAXCHARLEN, 10,
-    HA_FT_MAXCHARLEN, 0, 1, 0},
-  { "ft_stopword_file", OPT_FT_STOPWORD_FILE,
-    "Use stopwords from this file instead of built-in list.",
-    (uchar**) &ft_stopword_file, (uchar**) &ft_stopword_file, 0, GET_STR,
-    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"stats_method", OPT_STATS_METHOD,
    "Specifies how index statistics collection code should treat NULLs. "
    "Possible values of name are \"nulls_unequal\" (default behavior for 4.1/5.0), "
@@ -953,8 +943,6 @@ static int myisamchk(MI_CHECK *param, char * filename)
   }
   else
   {
-    if (!stopwords_inited++)
-      ft_init_stopwords();
 
     if (!(param->testflag & T_READONLY))
       lock_type = F_WRLCK;			/* table is changed */
@@ -1021,46 +1009,26 @@ static int myisamchk(MI_CHECK *param, char * filename)
       }
       if (!error && param->testflag & T_SORT_RECORDS)
       {
+	uint key;
 	/*
-	  The data file is nowadays reopened in the repair code so we should
-	  soon remove the following reopen-code
+	  We can't update the index in mi_sort_records if we have a
+	  prefix compressed or fulltext index
 	*/
-#ifndef TO_BE_REMOVED
-	if (param->out_flag & O_NEW_DATA)
-	{			/* Change temp file to org file */
-	  VOID(my_close(info->dfile,MYF(MY_WME))); /* Close new file */
-	  error|=change_to_newfile(filename,MI_NAME_DEXT,DATA_TMP_EXT,
-				   raid_chunks,
-				   MYF(0));
-	  if (mi_open_datafile(info,info->s, -1))
-	    error=1;
-	  param->out_flag&= ~O_NEW_DATA; /* We are using new datafile */
-	  param->read_cache.file=info->dfile;
-	}
-#endif
-	if (! error)
-	{
-	  uint key;
-	  /*
-	    We can't update the index in mi_sort_records if we have a
-	    prefix compressed or fulltext index
-	  */
-	  my_bool update_index=1;
-	  for (key=0 ; key < share->base.keys; key++)
-	    if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY|HA_FULLTEXT))
-	      update_index=0;
+	my_bool update_index=1;
+	for (key=0 ; key < share->base.keys; key++)
+	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY|HA_FULLTEXT))
+	    update_index=0;
 
-	  error=mi_sort_records(param,info,filename,param->opt_sort_key,
-                             /* what is the following parameter for ? */
-				(my_bool) !(param->testflag & T_REP),
-				update_index);
-	  datafile=info->dfile;	/* This is now locked */
-	  if (!error && !update_index)
-	  {
-	    if (param->verbose)
-	      puts("Table had a compressed index;  We must now recreate the index");
-	    error=mi_repair_by_sort(param,info,filename,1);
-	  }
+	error=mi_sort_records(param,info,filename,param->opt_sort_key,
+                           /* what is the following parameter for ? */
+	   		      (my_bool) !(param->testflag & T_REP),
+			      update_index);
+	datafile=info->dfile;	/* This is now locked */
+	if (!error && !update_index)
+	{
+	  if (param->verbose)
+	    puts("Table had a compressed index;  We must now recreate the index");
+	  error=mi_repair_by_sort(param,info,filename,1);
 	}
       }
       if (!error && param->testflag & T_SORT_INDEX)
@@ -1812,4 +1780,3 @@ void mi_check_print_error(MI_CHECK *param, const char *fmt,...)
   DBUG_VOID_RETURN;
 }
 
-#include "mi_extrafunc.h"

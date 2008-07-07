@@ -184,7 +184,7 @@ static const char *load_default_groups[] = { "mysqlcheck", "client", 0 };
 static void print_version(void);
 static void usage(void);
 static int get_options(int *argc, char ***argv);
-static int process_all_databases();
+static int process_all_databases(void);
 static int process_databases(char **db_names);
 static int process_selected_tables(char *db, char **table_names, int tables);
 static int process_all_tables_in_db(char *database);
@@ -195,7 +195,7 @@ static int dbConnect(char *host, char *user,char *passwd);
 static void dbDisconnect(char *host);
 static void DBerror(MYSQL *mysql, const char *when);
 static void safe_exit(int error);
-static void print_result();
+static void print_result(void);
 static uint fixed_name_length(const char *name);
 static char *fix_table_name(char *dest, char *src);
 int what_to_do = 0;
@@ -740,11 +740,6 @@ static int dbConnect(char *host, char *user, char *passwd)
   mysql_init(&mysql_connection);
   if (opt_compress)
     mysql_options(&mysql_connection, MYSQL_OPT_COMPRESS, NullS);
-#ifdef HAVE_OPENSSL
-  if (opt_use_ssl)
-    mysql_ssl_set(&mysql_connection, opt_ssl_key, opt_ssl_cert, opt_ssl_ca,
-		  opt_ssl_capath, opt_ssl_cipher);
-#endif
   if (opt_protocol)
     mysql_options(&mysql_connection,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
 #ifdef HAVE_SMEM

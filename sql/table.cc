@@ -36,8 +36,6 @@ static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 			      uint types, char **names);
 static uint find_field(Field **fields, uchar *record, uint start, uint length);
 
-inline bool is_system_table_name(const char *name, uint length);
-
 /**************************************************************************
   Object_creation_ctx implementation.
 **************************************************************************/
@@ -144,17 +142,6 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
                     db->str) == 0))
   {
     return TABLE_CATEGORY_INFORMATION;
-  }
-
-  if ((db->length == MYSQL_SCHEMA_NAME.length) &&
-      (my_strcasecmp(system_charset_info,
-                    MYSQL_SCHEMA_NAME.str,
-                    db->str) == 0))
-  {
-    if (is_system_table_name(name->str, name->length))
-    {
-      return TABLE_CATEGORY_SYSTEM;
-    }
   }
 
   return TABLE_CATEGORY_USER;
@@ -344,55 +331,6 @@ void free_table_share(TABLE_SHARE *share)
   DBUG_VOID_RETURN;
 }
 
-
-/**
-  Return TRUE if a table name matches one of the system table names.
-  Currently these are:
-
-  help_category, help_keyword, help_relation, help_topic,
-  proc, event
-  time_zone, time_zone_leap_second, time_zone_name, time_zone_transition,
-  time_zone_transition_type
-
-  This function trades accuracy for speed, so may return false
-  positives. Presumably mysql.* database is for internal purposes only
-  and should not contain user tables.
-*/
-
-inline bool is_system_table_name(const char *name, uint length)
-{
-  CHARSET_INFO *ci= system_charset_info;
-
-  return (
-          /* mysql.proc table */
-          (
-           length == 4 &&
-           my_tolower(ci, name[0]) == 'p' && 
-           my_tolower(ci, name[1]) == 'r' &&
-           my_tolower(ci, name[2]) == 'o' &&
-           my_tolower(ci, name[3]) == 'c'
-          ) ||
-
-          /* one of mysql.help* tables */
-          (
-           length > 4 &&
-           my_tolower(ci, name[0]) == 'h' &&
-           my_tolower(ci, name[1]) == 'e' &&
-           my_tolower(ci, name[2]) == 'l' &&
-           my_tolower(ci, name[3]) == 'p'
-          ) ||
-
-          /* one of mysql.time_zone* tables */
-          (
-           my_tolower(ci, name[0]) == 't' &&
-           my_tolower(ci, name[1]) == 'i' &&
-           my_tolower(ci, name[2]) == 'm' &&
-           my_tolower(ci, name[3]) == 'e'
-          )
-          );
-}
-
-
 /*
   Read table definition from a binary / text based .frm file
   
@@ -517,6 +455,8 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
     *root_ptr= old_root;
     error_given= 1;
   }
+  else
+    assert(1);
 
   share->table_category= get_table_category(& share->db, & share->table_name);
 
@@ -591,7 +531,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if (share->frm_version == FRM_VER_TRUE_VARCHAR -1 && head[33] == 5)
     share->frm_version= FRM_VER_TRUE_VARCHAR;
 
-  legacy_db_type= (enum legacy_db_type) (uint) *(head+3);
+  legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
   DBUG_ASSERT(share->db_plugin == NULL);
   /*
     if the storage engine is dynamic, no point in resolving it by its
@@ -678,14 +618,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       keyinfo->algorithm=  (enum ha_key_alg) strpos[5];
       keyinfo->block_size= uint2korr(strpos+6);
       strpos+=8;
-    }
-    else
-    {
-      keyinfo->flags=	 ((uint) strpos[0]) ^ HA_NOSAME;
-      keyinfo->key_length= (uint) uint2korr(strpos+1);
-      keyinfo->key_parts=  (uint) strpos[3];
-      keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-      strpos+=4;
     }
 
     keyinfo->key_part=	 key_part;
@@ -1154,14 +1086,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     reg_field->flags|= ((uint)column_format << COLUMN_FORMAT_FLAGS);
     reg_field->field_index= i;
     reg_field->comment=comment;
-    if (field_type == MYSQL_TYPE_BIT && !f_bit_as_char(pack_flag))
-    {
-      if ((null_bit_pos+= field_length & 7) > 7)
-      {
-        null_pos++;
-        null_bit_pos-= 8;
-      }
-    }
     if (!(reg_field->flags & NOT_NULL_FLAG))
     {
       if (!(null_bit_pos= (null_bit_pos + 1) & 7))
@@ -1251,16 +1175,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
           keyinfo->extra_length+=HA_KEY_BLOB_LENGTH;
           key_part->store_length+=HA_KEY_BLOB_LENGTH;
           keyinfo->key_length+= HA_KEY_BLOB_LENGTH;
-          /*
-            Mark that there may be many matching values for one key
-            combination ('a', 'a ', 'a  '...)
-          */
-          if (!(field->flags & BINARY_FLAG))
-            keyinfo->flags|= HA_END_SPACE_KEY;
         }
-        if (field->type() == MYSQL_TYPE_BIT)
-          key_part->key_part_flag|= HA_BIT_PART;
-
         if (i == 0 && key != primary_key)
           field->flags |= (((keyinfo->flags & HA_NOSAME) &&
                            (keyinfo->key_parts == 1)) ?
@@ -1978,7 +1893,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     char tmp[10];
     if (!csname || csname[0] =='?')
     {
-      my_snprintf(tmp, sizeof(tmp), "#%d", errarg);
+      snprintf(tmp, sizeof(tmp), "#%d", errarg);
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,

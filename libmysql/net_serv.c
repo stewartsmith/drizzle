@@ -58,12 +58,10 @@ void sql_print_error(const char *format,...);
 */
 extern uint test_flags;
 extern ulong bytes_sent, bytes_received, net_big_packet_count;
-#ifndef MYSQL_INSTANCE_MANAGER
 #define update_statistics(A) A
-#endif /* MYSQL_INSTANCE_MANGER */
-#endif /* defined(MYSQL_SERVER) && !defined(MYSQL_INSTANCE_MANAGER) */
+#endif /* defined(MYSQL_SERVER) */
 
-#if !defined(MYSQL_SERVER) || defined(MYSQL_INSTANCE_MANAGER)
+#if !defined(MYSQL_SERVER)
 #define update_statistics(A)
 #define thd_increment_bytes_sent(N)
 #endif
@@ -504,10 +502,6 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   uint retry_count=0;
   my_bool net_blocking = vio_is_blocking(net->vio);
   DBUG_ENTER("net_real_write");
-
-#if defined(MYSQL_SERVER) && defined(USE_QUERY_CACHE)
-  query_cache_insert((char*) packet, len, net->pkt_nr);
-#endif
 
   if (net->error == 2)
     DBUG_RETURN(-1);				/* socket can't be used */

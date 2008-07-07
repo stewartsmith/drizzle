@@ -95,15 +95,19 @@ public:
       (binlog_status == SESSION_VARIABLE_IN_BINLOG);
   }
   virtual bool update(THD *thd, set_var *var)=0;
-  virtual void set_default(THD *thd_arg, enum_var_type type) {}
+  virtual void set_default(THD *thd_arg __attribute__((__unused__)),
+                           enum_var_type type __attribute__((__unused__)))
+  {}
   virtual SHOW_TYPE show_type() { return SHOW_UNDEF; }
-  virtual uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  virtual uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                           enum_var_type type __attribute__((__unused__)),
+                           LEX_STRING *base __attribute__((__unused__)))
   { return 0; }
   virtual bool check_type(enum_var_type type)
   { return type != OPT_GLOBAL; }		/* Error if not GLOBAL */
   virtual bool check_update_type(Item_result type)
   { return type != INT_RESULT; }		/* Assume INT */
-  virtual bool check_default(enum_var_type type)
+  virtual bool check_default(enum_var_type type __attribute__((__unused__)))
   { return option_limits == 0; }
   Item *item(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual bool is_struct() { return 0; }
@@ -159,7 +163,9 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONG; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   { return (uchar*) value; }
 };
 
@@ -190,7 +196,9 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_LONGLONG; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   { return (uchar*) value; }
 };
 
@@ -209,9 +217,12 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   { return (uchar*) value; }
-  bool check_update_type(Item_result type) { return 0; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
 };
 
 
@@ -252,13 +263,16 @@ public:
     (*set_default_func)(thd, type);
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   { return (uchar*) value; }
   bool check_update_type(Item_result type)
   {
     return type != STRING_RESULT;		/* Only accept strings */
   }
-  bool check_default(enum_var_type type) { return 0; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 0; }
 };
 
 
@@ -274,24 +288,29 @@ public:
   {
     value= new_value;
   }
-  bool check(THD *thd, set_var *var)
+  bool check(THD *thd __attribute__((__unused__)),
+             set_var *var __attribute__((__unused__)))
   {
     return 1;
   }
-  bool update(THD *thd, set_var *var)
+  bool update(THD *thd __attribute__((__unused__)),
+              set_var *var __attribute__((__unused__)))
   {
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   {
     return (uchar*) value;
   }
-  bool check_update_type(Item_result type)
+  bool check_update_type(Item_result type __attribute__((__unused__)))
   {
     return 1;
   }
-  bool check_default(enum_var_type type) { return 1; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 1; }
   bool is_readonly() const { return 1; }
 };
 
@@ -303,25 +322,30 @@ public:
   sys_var_const_str_ptr(sys_var_chain *chain, const char *name_arg, char **value_arg)
     :sys_var(name_arg),value(value_arg)
   { chain_sys_var(chain); }
-  bool check(THD *thd, set_var *var)
+  bool check(THD *thd __attribute__((__unused__)),
+             set_var *var __attribute__((__unused__)))
   {
     return 1;
   }
-  bool update(THD *thd, set_var *var)
+  bool update(THD *thd __attribute__((__unused__)),
+              set_var *var __attribute__((__unused__)))
   {
     return 1;
   }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   {
     return (uchar*) *value;
   }
-  bool check_update_type(Item_result type)
+  bool check_update_type(Item_result type __attribute__((__unused__)))
   {
     return 1;
   }
-  bool check_default(enum_var_type type) { return 1; }
-  bool is_readonly() const { return 1; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 1; }
+  bool is_readonly(void) const { return 1; }
 };
 
 
@@ -341,7 +365,8 @@ public:
   bool update(THD *thd, set_var *var);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type) { return 0; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
 };
 
 
@@ -354,10 +379,15 @@ public:
       TYPELIB *typelib, sys_after_update_func func)
     :sys_var(name_arg,func), offset(offset_arg), enum_names(typelib)
   { chain_sys_var(chain); }
-  bool check(THD *thd, set_var *var) { return 1; }
-  bool update(THD *thd, set_var *var) { return 1; }
+  bool check(THD *thd __attribute__((__unused__)),
+             set_var *var __attribute__((__unused__)))
+  { return 1; }
+  bool update(THD *thd __attribute__((__unused__)),
+              set_var *var __attribute__((__unused__)))
+  { return 1; }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool check_update_type(Item_result type) { return 1; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 1; }
   bool is_readonly() const { return 1; }
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
@@ -371,7 +401,8 @@ public:
               Binlog_status_enum binlog_status= NOT_IN_BINLOG)
     :sys_var(name_arg, func, binlog_status)
   {}
-  bool check_type(enum_var_type type) { return 0; }
+  bool check_type(enum_var_type type __attribute__((__unused__)))
+  { return 0; }
   bool check_default(enum_var_type type)
   {
     return type == OPT_GLOBAL && !option_limits;
@@ -470,7 +501,8 @@ public:
   {
     return check_enum(thd, var, &bool_typelib);
   }
-  bool check_update_type(Item_result type) { return 0; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
 };
 
 
@@ -499,7 +531,8 @@ public:
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type) { return 0; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
 };
 
 
@@ -558,7 +591,8 @@ public:
   { chain_sys_var(chain); }
   bool check(THD *thd, set_var *var);
   bool update(THD *thd, set_var *var);
-  bool check_update_type(Item_result type) { return 0; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
   bool check_type(enum_var_type type) { return type == OPT_GLOBAL; }
   SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
@@ -573,7 +607,9 @@ public:
   bool check_update_type(Item_result type) { return type != STRING_RESULT; }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool update(THD *thd, set_var *var);
-  void set_default(THD *thd, enum_var_type type) { DBUG_POP(); }
+  void set_default(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)))
+  { DBUG_POP(); }
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *b);
 };
 
@@ -591,8 +627,9 @@ public:
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   bool check_type(enum_var_type type)    { return type == OPT_GLOBAL; }
-  bool check_default(enum_var_type type) { return 0; }
-  SHOW_TYPE show_type() { return SHOW_LONG; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 0; }
+  SHOW_TYPE show_type(void) { return SHOW_LONG; }
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
@@ -662,7 +699,7 @@ public:
   {
     return ((type != STRING_RESULT) && (type != INT_RESULT));
   }
-  bool check_default(enum_var_type type) { return 0; }
+  bool check_default(enum_var_type type __attribute__((__unused__))) { return 0; }
   virtual void set_default(THD *thd, enum_var_type type)= 0;
 };
 
@@ -686,7 +723,8 @@ public:
   {
     return ((type != STRING_RESULT) && (type != INT_RESULT));
   }
-  bool check_default(enum_var_type type) { return 0; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 0; }
   bool update(THD *thd, set_var *var);
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual void set_default(THD *thd, enum_var_type type)= 0;
@@ -767,7 +805,8 @@ public:
     :sys_var(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
-  bool check_default(enum_var_type type) { return 1; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 1; }
   bool is_struct() { return 1; }
 };
 
@@ -811,7 +850,8 @@ public:
   {
     return type != STRING_RESULT;		/* Only accept strings */
   }
-  bool check_default(enum_var_type type) { return 0; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 0; }
   bool check(THD *thd, set_var *var);
   bool update(THD *thd, set_var *var);
   void update2(THD *thd, enum_var_type type, DATE_TIME_FORMAT *new_value);
@@ -846,13 +886,15 @@ public:
   {
     return check_set(thd, var, enum_names);
   }
-  virtual void set_default(THD *thd, enum_var_type type)
-  {  
+  virtual void set_default(THD *thd __attribute__((__unused__)),
+                           enum_var_type type __attribute__((__unused__)))
+  {
     *value= 0;
   }
   bool update(THD *thd, set_var *var);
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type) { return 0; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
 };
 
@@ -886,7 +928,8 @@ public:
   }
   bool update(THD *thd, set_var *var);
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
-  bool check_update_type(Item_result type) { return 0; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_CHAR; }
 };
@@ -906,16 +949,21 @@ public:
     :sys_var(name_arg), var_type(type), 
        show_type_value(show_type_arg), value_ptr_func(value_ptr_func_arg)
   { chain_sys_var(chain); }
-  bool update(THD *thd, set_var *var) { return 1; }
-  bool check_default(enum_var_type type) { return 1; }
+  bool update(THD *thd __attribute__((__unused__)),
+              set_var *var __attribute__((__unused__)))
+  { return 1; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 1; }
   bool check_type(enum_var_type type) { return type != var_type; }
-  bool check_update_type(Item_result type) { return 1; }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 1; }
+  uchar *value_ptr(THD *thd, enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   {
     return (*value_ptr_func)(thd);
   }
-  SHOW_TYPE show_type() { return show_type_value; }
-  bool is_readonly() const { return 1; }
+  SHOW_TYPE show_type(void) { return show_type_value; }
+  bool is_readonly(void) const { return 1; }
 };
 
 
@@ -927,14 +975,19 @@ public:
   sys_var_have_option(sys_var_chain *chain, const char *variable_name):
     sys_var(variable_name)
   { chain_sys_var(chain); }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base)
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
   {
     return (uchar*) show_comp_option_name[get_option()];
   }
-  bool update(THD *thd, set_var *var) { return 1; }
-  bool check_default(enum_var_type type) { return 1; }
+  bool update(THD *thd __attribute__((__unused__)),
+              set_var *var __attribute__((__unused__))) { return 1; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 1; }
   bool check_type(enum_var_type type) { return type != OPT_GLOBAL; }
-  bool check_update_type(Item_result type) { return 1; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 1; }
   SHOW_TYPE show_type() { return SHOW_CHAR; }
   bool is_readonly() const { return 1; }
 };
@@ -989,7 +1042,8 @@ public:
   {
     return type != STRING_RESULT;		/* Only accept strings */
   }
-  bool check_default(enum_var_type type) { return 0; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 0; }
   bool update(THD *thd, set_var *var);
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual void set_default(THD *thd, enum_var_type type);
@@ -1022,7 +1076,8 @@ public:
                        ulonglong SV::*offset_arg):
     sys_var_thd(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
-  bool check(THD *thd, set_var *var) {return 0;}
+  bool check(THD *thd __attribute__((__unused__)),
+             set_var *var __attribute__((__unused__))) {return 0;}
   bool update(THD *thd, set_var *var);
   void set_default(THD *thd, enum_var_type type);
   SHOW_TYPE show_type() { return SHOW_DOUBLE; }
@@ -1079,7 +1134,8 @@ public:
   {
     return ((type != STRING_RESULT) && (type != INT_RESULT));
   }
-  bool check_default(enum_var_type type) { return 0; }
+  bool check_default(enum_var_type type __attribute__((__unused__)))
+  { return 0; }
   bool update(THD *thd, set_var *var);
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual void set_default(THD *thd, enum_var_type type);

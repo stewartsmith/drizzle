@@ -33,9 +33,7 @@ typedef struct st_bitmap
      thread_safe flag in bitmap_init was set.  Otherwise, we optimize by not
      acquiring the mutex
    */
-#ifdef THREAD
   pthread_mutex_t *mutex;
-#endif
 } MY_BITMAP;
 
 #ifdef	__cplusplus
@@ -52,6 +50,7 @@ extern my_bool bitmap_is_overlapping(const MY_BITMAP *map1,
                                      const MY_BITMAP *map2);
 extern my_bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit);
 extern my_bool bitmap_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
+extern my_bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
 extern my_bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit);
 extern uint bitmap_set_next(MY_BITMAP *map);
 extern uint bitmap_get_first(const MY_BITMAP *map);
@@ -169,11 +168,11 @@ static inline my_bool bitmap_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2)
 */
 
 #define bit_is_set(I,B)   (sizeof(I) * CHAR_BIT > (B) ?                 \
-                           (((I) & (ULL(1) << (B))) == 0 ? 0 : 1) : -1)
+                           (((I) & (1ULL << (B))) == 0 ? 0 : 1) : -1)
 #define bit_do_set(I,B)   (sizeof(I) * CHAR_BIT > (B) ?         \
-                           ((I) |= (ULL(1) << (B)), 1) : -1)
+                           ((I) |= (1ULL << (B)), 1) : -1)
 #define bit_do_clear(I,B) (sizeof(I) * CHAR_BIT > (B) ?         \
-                           ((I) &= ~(ULL(1) << (B)), 0) : -1)
+                           ((I) &= ~(1ULL << (B)), 0) : -1)
 
 #ifdef	__cplusplus
 }

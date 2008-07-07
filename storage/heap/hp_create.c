@@ -85,8 +85,6 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
           keyinfo->seg[j].type= HA_KEYTYPE_VARTEXT1;
           /* fall_through */
         case HA_KEYTYPE_VARTEXT1:
-          if (!my_binary_compare(keyinfo->seg[j].charset))
-            keyinfo->flag|= HA_END_SPACE_KEY;
           keyinfo->flag|= HA_VAR_LENGTH_KEY;
           length+= 2;
           /* Save number of bytes used to store length */
@@ -96,8 +94,6 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
           /* Case-insensitiveness is handled in coll->hash_sort */
           /* fall_through */
         case HA_KEYTYPE_VARTEXT2:
-          if (!my_binary_compare(keyinfo->seg[j].charset))
-            keyinfo->flag|= HA_END_SPACE_KEY;
           keyinfo->flag|= HA_VAR_LENGTH_KEY;
           length+= 2;
           /* Save number of bytes used to store length */
@@ -111,8 +107,6 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
 	default:
 	  break;
 	}
-        if (keyinfo->seg[j].flag & HA_END_SPACE_ARE_EQUAL)
-          keyinfo->flag|= HA_END_SPACE_KEY;
       }
       keyinfo->length= length;
       length+= keyinfo->rb_tree.size_of_element + 
@@ -192,10 +186,8 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
       my_free((uchar*) share,MYF(0));
       goto err;
     }
-#ifdef THREAD
     thr_lock_init(&share->lock);
     VOID(pthread_mutex_init(&share->intern_lock,MY_MUTEX_INIT_FAST));
-#endif
     if (!create_info->internal_table)
     {
       share->open_list.data= (void*) share;
@@ -296,10 +288,8 @@ void hp_free(HP_SHARE *share)
   if (share->open_list.data)                    /* If not internal table */
     heap_share_list= list_delete(heap_share_list, &share->open_list);
   hp_clear(share);			/* Remove blocks from memory */
-#ifdef THREAD
   thr_lock_delete(&share->lock);
   VOID(pthread_mutex_destroy(&share->intern_lock));
-#endif
   my_free((uchar*) share->name, MYF(0));
   my_free((uchar*) share, MYF(0));
   return;

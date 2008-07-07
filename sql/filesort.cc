@@ -22,15 +22,8 @@
 */
 
 #include "mysql_priv.h"
-#ifdef HAVE_STDDEF_H
-#include <stddef.h>			/* for macro offsetof */
-#endif
 #include <m_ctype.h>
 #include "sql_sort.h"
-
-#ifndef THREAD
-#define SKIP_DBUG_IN_FILESORT
-#endif
 
 /// How to write record_ref.
 #define WRITE_REF(file,from) \

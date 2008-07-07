@@ -17,9 +17,7 @@
 
 #include <my_base.h>			/* This includes global */
 C_MODE_START
-#ifdef THREAD
 #include <my_pthread.h>
-#endif
 #include "heap.h"			/* Structs & some defines */
 #include "my_tree.h"
 
@@ -102,10 +100,5 @@ extern void hp_clear(HP_SHARE *info);
 extern void hp_clear_keys(HP_SHARE *info);
 extern uint hp_rb_pack_key(HP_KEYDEF *keydef, uchar *key, const uchar *old,
                            key_part_map keypart_map);
-#ifdef THREAD
 extern pthread_mutex_t THR_LOCK_heap;
-#else
-#define pthread_mutex_lock(A)
-#define pthread_mutex_unlock(A)
-#endif
 C_MODE_END

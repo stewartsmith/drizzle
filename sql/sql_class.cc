@@ -257,7 +257,7 @@ void **thd_ha_data(const THD *thd, const struct handlerton *hton)
 }
 
 extern "C"
-long long thd_test_options(const THD *thd, long long test_options)
+int64_t thd_test_options(const THD *thd, int64_t test_options)
 {
   return thd->options & test_options;
 }
@@ -303,9 +303,9 @@ char *thd_security_context(THD *thd, char *buffer, unsigned int length,
   char header[64];
   int len;
 
-  len= my_snprintf(header, sizeof(header),
-                   "MySQL thread id %lu, query id %lu",
-                   thd->thread_id, (ulong) thd->query_id);
+  len= snprintf(header, sizeof(header),
+                "MySQL thread id %lu, query id %lu",
+                thd->thread_id, (ulong) thd->query_id);
   str.length(0);
   str.append(header, len);
 
@@ -3001,8 +3001,8 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
     if (!(binlog_flags & BINLOG_FLAG_UNSAFE_STMT_PRINTED))
     {
       char warn_buf[MYSQL_ERRMSG_SIZE];
-      my_snprintf(warn_buf, MYSQL_ERRMSG_SIZE, "%s Statement: %s",
-                  ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
+      snprintf(warn_buf, MYSQL_ERRMSG_SIZE, "%s Statement: %s",
+               ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
       sql_print_warning(warn_buf);
       binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;
     }

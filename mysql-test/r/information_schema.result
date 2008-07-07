@@ -52,9 +52,6 @@ t5	MyISAM	10	Fixed	1	7	7	#	2048	0	11	#	#	NULL	latin1_swedish_ci	NULL
 show full columns from t3 like "a%";
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 a	int(11)	NULL	YES	MUL	NULL			
-show full columns from mysql.db like "Insert%";
-Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-Insert_priv	enum('N','Y')	utf8_general_ci	NO		NULL			
 select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
@@ -140,7 +137,6 @@ NULL
 select table_type from information_schema.tables
 where table_schema="mysql" and table_name="user";
 table_type
-BASE TABLE
 show open tables where `table` like "user";
 Database	Table	In_use	Name_locked
 show status where variable_name like "%database%";
@@ -198,7 +194,6 @@ SELECT table_schema, count(*) FROM information_schema.TABLES
 WHERE table_name NOT LIKE 'ndb_%' AND table_name NOT LIKE 'falcon%' GROUP BY TABLE_SCHEMA;
 table_schema	count(*)
 information_schema	16
-mysql	19
 show create database information_schema;
 Database	Create Database
 information_schema	CREATE DATABASE "information_schema" /*!40100 DEFAULT CHARACTER SET utf8 */
@@ -211,19 +206,19 @@ column_name	data_type	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
 f1	longblob	4294967295	4294967295
 f2	longtext	4294967295	4294967295
 drop table t1;
-create table t1(f1 tinyint, f2 SMALLINT, f3 mediumint, f4 int,
-f5 BIGINT, f6 BIT, f7 bit(64));
+create table t1(f1 tinyint, f2 SMALLINT, f3 BIGINT, f4 int,
+f5 BIGINT, f6 TINYINT, f7 SMALLINT);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
 from information_schema.columns
 where table_name='t1';
 column_name	NUMERIC_PRECISION	NUMERIC_SCALE
 f1	3	0
 f2	5	0
-f3	7	0
+f3	19	0
 f4	10	0
 f5	19	0
-f6	1	NULL
-f7	64	NULL
+f6	3	0
+f7	5	0
 drop table t1;
 create table t1 (a int not null, b int);
 use information_schema;
@@ -380,12 +375,12 @@ TABLES	TABLE_SCHEMA
 TABLE_CONSTRAINTS	CONSTRAINT_SCHEMA
 SELECT MAX(table_name) FROM information_schema.tables;
 MAX(table_name)
-user
+TABLE_CONSTRAINTS
 SELECT table_name from information_schema.tables
 WHERE table_name=(SELECT MAX(table_name)
 FROM information_schema.tables);
 table_name
-user
+TABLE_CONSTRAINTS
 create table t1 (f1 int(11));
 create table t2 (f1 int(11), f2 int(11));
 select table_name from information_schema.tables
@@ -478,7 +473,6 @@ information_schema
 SELECT TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_SCHEMA='mysql' and TABLE_NAME= 'db';
 TABLE_COLLATION
-utf8_bin
 select * from information_schema.columns where table_schema = NULL;
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
 select * from `information_schema`.`COLUMNS` where `TABLE_NAME` = NULL;

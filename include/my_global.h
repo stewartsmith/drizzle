@@ -50,7 +50,7 @@
 #define C_MODE_END
 #endif
 
-#include <my_config.h>
+#include <config.h>
 #if defined(__cplusplus) && defined(inline)
 #undef inline				/* fix configure problem */
 #endif
@@ -157,13 +157,9 @@
   now let's figure out if inline functions are supported
   autoconf defines 'inline' to be empty, if not
 */
-#define inline_test_1(X)        X ## 1
-#define inline_test_2(X)        inline_test_1(X)
-#if inline_test_2(inline) != 1
+#if defined(inline)
 #define HAVE_INLINE
 #endif
-#undef inline_test_2
-#undef inline_test_1
 /* helper macro for "instantiating" inline functions */
 #define STATIC_INLINE static inline
 
@@ -195,13 +191,6 @@
 */
 #if defined(HAVE_SYS_TYPES_H) && ( defined(sun) || defined(__sun) )
 #include <sys/types.h>
-#endif
-
-/* The client defines this to avoid all thread code */
-#if defined(UNDEF_THREADS_HACK)
-#undef THREAD
-#undef HAVE_LINUXTHREADS
-#undef HAVE_NPTL
 #endif
 
 #ifdef HAVE_THREADS_WITHOUT_SOCKETS
@@ -246,7 +235,6 @@
 #endif
 #endif
 
-#if defined(THREAD)
 #ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS /* We want posix threads */
 #endif
@@ -260,7 +248,6 @@
 #include <pthread.h>		/* AIX must have this included first */
 
 #define _REENTRANT	1	/* Threads requires reentrant code */
-#endif /* THREAD */
 
 /* Go around some bugs in different OS and compilers */
 
@@ -288,9 +275,6 @@
 #include <math.h>
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
-#ifdef HAVE_FLOAT_H
-#include <float.h>
 #endif
 
 #ifdef HAVE_SYS_TYPES_H
@@ -329,6 +313,16 @@
 #include <crypt.h>
 #endif
 
+#if defined(HAVE_STDINT_H)
+/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
+#define __STDC_LIMIT_MACROS
+#include <stdint.h>
+#endif
+#if defined(HAVE_STDBOOL_H)
+#include <stdbool.h>
+#endif
+
+
 /*
   A lot of our programs uses asserts, so better to always include it
   This also fixes a problem when people uses DBUG_ASSERT without including
@@ -349,7 +343,7 @@
 #endif
 
 /* Declare madvise where it is not declared for C++, like Solaris */
-#if HAVE_MADVISE && !HAVE_DECL_MADVISE && defined(__cplusplus)
+#if HAVE_MADVISE && !defined(HAVE_DECL_MADVISE) && defined(__cplusplus)
 extern "C" int madvise(void *addr, size_t len, int behav);
 #endif
 
@@ -396,7 +390,7 @@ typedef unsigned short ushort;
 #define set_if_smaller(a,b) do { if ((a) > (b)) (a)=(b); } while(0)
 #define test_all_bits(a,b) (((a) & (b)) == (b))
 #define set_bits(type, bit_count) (sizeof(type)*8 <= (bit_count) ? ~(type) 0 : ((((type) 1) << (bit_count)) - (type) 1))
-#define array_elements(A) ((uint) (sizeof(A)/sizeof(A[0])))
+#define array_elements(A) ((uint32_t) (sizeof(A)/sizeof(A[0])))
 #ifndef HAVE_RINT
 #define rint(A) floor((A)+(((A) < 0)? -0.5 : 0.5))
 #endif
@@ -460,7 +454,7 @@ typedef int	my_socket;	/* File descriptor for sockets */
 /* Type for fuctions that handles signals */
 #define sig_handler RETSIGTYPE
 C_MODE_START
-typedef void	(*sig_return)();/* Returns type from signal */
+typedef void	(*sig_return)(void);/* Returns type from signal */
 C_MODE_END
 #if defined(__GNUC__) && !defined(_lint)
 typedef char	pchar;		/* Mixed prototypes can take char */
@@ -493,17 +487,17 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 #ifndef O_SHARE			/* Probably not windows */
 #define O_SHARE		0	/* Flag to my_open for shared files */
+#endif /* O_SHARE */
+
 #ifndef O_BINARY
 #define O_BINARY	0	/* Flag to my_open for binary files */
 #endif
+
 #ifndef FILE_BINARY
 #define FILE_BINARY	O_BINARY /* Flag to my_fopen for binary streams */
 #endif
-#ifdef HAVE_FCNTL
-#define HAVE_FCNTL_LOCK
+
 #define F_TO_EOF	0L	/* Param to lockf() to lock rest of file */
-#endif
-#endif /* O_SHARE */
 
 #ifndef O_TEMPORARY
 #define O_TEMPORARY	0
@@ -595,31 +589,23 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #define strtok_r(A,B,C) strtok((A),(B))
 #endif
 
-/* This is from the old m-machine.h file */
 
-#if SIZEOF_LONG_LONG > 4
-#define HAVE_LONG_LONG 1
+#if defined(INT64_MAX)
+#define LONGLONG_MAX INT64_MAX
 #endif
 
-/*
-  Some pre-ANSI-C99 systems like AIX 5.1 and Linux/GCC 2.95 define
-  ULONGLONG_MAX, LONGLONG_MIN, LONGLONG_MAX; we use them if they're defined.
-  Also on Windows we define these constants by hand in config-win.h.
-*/
-
-#if defined(HAVE_LONG_LONG) && !defined(LONGLONG_MIN)
-#define LONGLONG_MIN	((long long) 0x8000000000000000LL)
-#define LONGLONG_MAX	((long long) 0x7FFFFFFFFFFFFFFFLL)
+#if defined(INT64_MIN)
+#define LONGLONG_MIN INT64_MIN
 #endif
 
-#if defined(HAVE_LONG_LONG) && !defined(ULONGLONG_MAX)
+#if !defined(ULONGLONG_MAX)
 /* First check for ANSI C99 definition: */
-#ifdef ULLONG_MAX
-#define ULONGLONG_MAX  ULLONG_MAX
+#if defined(UINT64_MAX)
+#define ULONGLONG_MAX  UINT64_MAX
 #else
-#define ULONGLONG_MAX ((unsigned long long)(~0ULL))
+#define ULONGLONG_MAX ((uint64_t)(~0ULL))
 #endif
-#endif /* defined (HAVE_LONG_LONG) && !defined(ULONGLONG_MAX)*/
+#endif /* !defined(ULONGLONG_MAX)*/
 
 #define INT_MIN32       (~0x7FFFFFFFL)
 #define INT_MAX32       0x7FFFFFFFL
@@ -634,14 +620,23 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #define INT_MAX8        0x7F
 #define UINT_MAX8       0xFF
 
+#ifdef HAVE_FLOAT_H
+#include <float.h>
+#else
+#if !defined(FLT_MIN)
+#define FLT_MIN         ((float)1.40129846432481707e-45)
+#endif
+#if !defined(FLT_MAX)
+#define FLT_MAX         ((float)3.40282346638528860e+38)
+#endif
+#endif
+
 /* From limits.h instead */
 #ifndef DBL_MIN
 #define DBL_MIN		4.94065645841246544e-324
-#define FLT_MIN		((float)1.40129846432481707e-45)
 #endif
 #ifndef DBL_MAX
 #define DBL_MAX		1.79769313486231470e+308
-#define FLT_MAX		((float)3.40282346638528860e+38)
 #endif
 #ifndef SIZE_T_MAX
 #define SIZE_T_MAX ~((size_t) 0)
@@ -682,9 +677,9 @@ typedef SOCKET_SIZE_TYPE size_socket;
   adressable obj.
 */
 #if SIZEOF_CHARP == 4
-typedef long		my_ptrdiff_t;
+typedef int32_t		my_ptrdiff_t;
 #else
-typedef long long	my_ptrdiff_t;
+typedef int64_t 	my_ptrdiff_t;
 #endif
 
 #define MY_ALIGN(A,L)	(((A) + (L) - 1) & ~((L) - 1))
@@ -755,7 +750,7 @@ typedef unsigned long uint32;
 #endif
 
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
-typedef unsigned long	ulong;		  /* Short for unsigned long */
+typedef uint32_t	ulong;		  /* Short for unsigned long */
 #endif
 #ifndef longlong_defined
 /* 
@@ -763,26 +758,18 @@ typedef unsigned long	ulong;		  /* Short for unsigned long */
   [unsigned] long long unconditionally in many places, 
   for example in constants with [U]LL suffix.
 */
-#if defined(HAVE_LONG_LONG) && SIZEOF_LONG_LONG == 8
-typedef unsigned long long int ulonglong; /* ulong or unsigned long long */
-typedef long long int	longlong;
-#else
-typedef unsigned long	ulonglong;	  /* ulong or unsigned long long */
-typedef long		longlong;
-#endif
-#endif
-#ifndef HAVE_INT64
-typedef longlong int64;
-#endif
-#ifndef HAVE_UINT64
-typedef ulonglong uint64;
+typedef uint64_t ulonglong; /* ulong or unsigned long long */
+typedef int64_t	longlong;
 #endif
 
-#if defined(NO_CLIENT_LONG_LONG)
-typedef unsigned long my_ulonglong;
-#else
-typedef unsigned long long my_ulonglong;
+#ifndef HAVE_INT64
+typedef int64_t int64;
 #endif
+#ifndef HAVE_UINT64
+typedef uint64_t uint64;
+#endif
+
+typedef uint64_t my_ulonglong;
 
 #if SIZEOF_CHARP == SIZEOF_INT
 typedef int intptr;
@@ -795,22 +782,6 @@ typedef long long intptr;
 #endif
 
 #define MY_ERRPTR ((void*)(intptr)1)
-
-#ifdef USE_RAID
-/*
-  The following is done with a if to not get problems with pre-processors
-  with late define evaluation
-*/
-#if SIZEOF_OFF_T == 4
-#define SYSTEM_SIZEOF_OFF_T 4
-#else
-#define SYSTEM_SIZEOF_OFF_T 8
-#endif
-#undef  SIZEOF_OFF_T
-#define SIZEOF_OFF_T	    8
-#else
-#define SYSTEM_SIZEOF_OFF_T SIZEOF_OFF_T
-#endif /* USE_RAID */
 
 #if SIZEOF_OFF_T > 4
 typedef ulonglong my_off_t;
@@ -843,22 +814,6 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #define INT16(v)	(int16) (v)
 #define INT32(v)	(int32) (v)
 #define MYF(v)		(myf) (v)
-
-#ifndef LL
-#ifdef HAVE_LONG_LONG
-#define LL(A) A ## LL
-#else
-#define LL(A) A ## L
-#endif
-#endif
-
-#ifndef ULL
-#ifdef HAVE_LONG_LONG
-#define ULL(A) A ## ULL
-#else
-#define ULL(A) A ## UL
-#endif
-#endif
 
 /*
   Sometimes we want to make sure that the variable is not put into
@@ -1179,17 +1134,6 @@ do { doubleget_union _tmp; \
 #else
 #define my_sprintf(buff,args) ((ulong) sprintf args, (ulong) strlen(buff))
 #endif
-#endif
-
-#ifndef THREAD
-#define thread_safe_increment(V,L) (V)++
-#define thread_safe_decrement(V,L) (V)--
-#define thread_safe_add(V,C,L)     (V)+=(C)
-#define thread_safe_sub(V,C,L)     (V)-=(C)
-#define statistic_increment(V,L)   (V)++
-#define statistic_decrement(V,L)   (V)--
-#define statistic_add(V,C,L)       (V)+=(C)
-#define statistic_sub(V,C,L)       (V)-=(C)
 #endif
 
 #if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)

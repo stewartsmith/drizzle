@@ -1,8 +1,9 @@
 dnl ---------------------------------------------------------------------------
 dnl Macro: DTRACE_TEST
 dnl ---------------------------------------------------------------------------
-AC_ARG_ENABLE(dtrace,
-    [  --enable-dtrace      Build with support for the DTRACE.],
+AC_ARG_ENABLE([dtrace],
+    [AS_HELP_STRING([--enable-dtrace],
+            [Build with support for the DTRACE. @<:@default=off@:>@])],
     [ 
       AC_DEFINE([HAVE_DTRACE], [1], [Enables DTRACE Support])
       AC_CHECK_PROGS(DTRACE, dtrace)

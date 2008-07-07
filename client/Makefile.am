@@ -23,8 +23,7 @@ AM_CPPFLAGS =			-I$(top_builddir)/include \
 
 LIBS =				@CLIENT_LIBS@ -lz
 
-LDADD=				$(CLIENT_THREAD_LIBS) \
-				$(top_builddir)/sql-common/libsqlcommon.la \
+LDADD=				$(top_builddir)/sql-common/libsqlcommon.la \
 				$(top_builddir)/libmysql/libmysqlclient.la -lz
 
 
@@ -56,7 +55,7 @@ mysqlbinlog_SOURCES =		mysqlbinlog.cc \
 				$(top_srcdir)/mysys/my_new.cc \
 				$(top_srcdir)/mysys/my_bit.c \
 				$(top_srcdir)/mysys/my_bitmap.c \
-				$(top_srcdir)/mysys/base64.c
+				$(top_srcdir)/mysys/base64.c 
 mysqlbinlog_LDADD =		$(LDADD) $(CXXLDFLAGS) 
 
 mysqldump_SOURCES=              mysqldump.c \

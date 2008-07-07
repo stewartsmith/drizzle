@@ -21,7 +21,7 @@
 
 #define MAX_REC_LENGTH 1024
 
-static void usage();
+static void usage(void);
 
 static int rec_pointer_size=0, flags[50];
 static int key_field=FIELD_SKIP_PRESPACE,extra_field=FIELD_SKIP_ENDSPACE;
@@ -673,11 +673,10 @@ static void get_options(int argc, char *argv[])
 } /* get options */
 
 
-static void usage()
+static void usage(void)
 {
   printf("Usage: %s [options]\n\n", my_progname);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 }
 
-#include "mi_extrafunc.h"

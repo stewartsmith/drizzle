@@ -30,11 +30,7 @@
 
 #ifndef bmove512
 
-#ifdef HAVE_LONG_LONG
 #define LONG ulonglong
-#else
-#define LONG ulonglong
-#endif
 
 void bmove512(uchar *to, const uchar *from, register size_t length)
 {
@@ -43,7 +39,7 @@ void bmove512(uchar *to, const uchar *from, register size_t length)
   f= (LONG*) from;
   t= (LONG*) to;
 
-#if defined(m88k) || defined(sparc) || defined(HAVE_LONG_LONG)
+#if defined(m88k) || defined(sparc) 
   do {
     t[0]=f[0];	    t[1]=f[1];	    t[2]=f[2];	    t[3]=f[3];
     t[4]=f[4];	    t[5]=f[5];	    t[6]=f[6];	    t[7]=f[7];
@@ -61,27 +57,7 @@ void bmove512(uchar *to, const uchar *from, register size_t length)
     t[52]=f[52];    t[53]=f[53];    t[54]=f[54];    t[55]=f[55];
     t[56]=f[56];    t[57]=f[57];    t[58]=f[58];    t[59]=f[59];
     t[60]=f[60];    t[61]=f[61];    t[62]=f[62];    t[63]=f[63];
-#ifdef HAVE_LONG_LONG
     t+=64; f+=64;
-#else
-    t[64]=f[64];    t[65]=f[65];    t[66]=f[66];    t[67]=f[67];
-    t[68]=f[68];    t[69]=f[69];    t[70]=f[70];    t[71]=f[71];
-    t[72]=f[72];    t[73]=f[73];    t[74]=f[74];    t[75]=f[75];
-    t[76]=f[76];    t[77]=f[77];    t[78]=f[78];    t[79]=f[79];
-    t[80]=f[80];    t[81]=f[81];    t[82]=f[82];    t[83]=f[83];
-    t[84]=f[84];    t[85]=f[85];    t[86]=f[86];    t[87]=f[87];
-    t[88]=f[88];    t[89]=f[89];    t[90]=f[90];    t[91]=f[91];
-    t[92]=f[92];    t[93]=f[93];    t[94]=f[94];    t[95]=f[95];
-    t[96]=f[96];    t[97]=f[97];    t[98]=f[98];    t[99]=f[99];
-    t[100]=f[100];  t[101]=f[101];  t[102]=f[102];  t[103]=f[103];
-    t[104]=f[104];  t[105]=f[105];  t[106]=f[106];  t[107]=f[107];
-    t[108]=f[108];  t[109]=f[109];  t[110]=f[110];  t[111]=f[111];
-    t[112]=f[112];  t[113]=f[113];  t[114]=f[114];  t[115]=f[115];
-    t[116]=f[116];  t[117]=f[117];  t[118]=f[118];  t[119]=f[119];
-    t[120]=f[120];  t[121]=f[121];  t[122]=f[122];  t[123]=f[123];
-    t[124]=f[124];  t[125]=f[125];  t[126]=f[126];  t[127]=f[127];
-    t+=128; f+=128;
-#endif
   } while (f < end);
 #else
   do {

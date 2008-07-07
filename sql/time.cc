@@ -795,19 +795,19 @@ bool date_add_interval(MYSQL_TIME *ltime, interval_type int_type, INTERVAL inter
     sec=((ltime->day-1)*3600*24L+ltime->hour*3600+ltime->minute*60+
 	 ltime->second +
 	 sign* (longlong) (interval.day*3600*24L +
-                           interval.hour*LL(3600)+interval.minute*LL(60)+
+                           interval.hour*3600LL+interval.minute*60LL+
                            interval.second))+ extra_sec;
     if (microseconds < 0)
     {
-      microseconds+= LL(1000000);
+      microseconds+= 1000000LL;
       sec--;
     }
-    days= sec/(3600*LL(24));
-    sec-= days*3600*LL(24);
+    days= sec/(3600*24LL);
+    sec-= days*3600*24LL;
     if (sec < 0)
     {
       days--;
-      sec+= 3600*LL(24);
+      sec+= 3600*24LL;
     }
     ltime->second_part= (uint) microseconds;
     ltime->second= (uint) (sec % 60);
@@ -925,13 +925,13 @@ calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign, longlong *s
 			       (uint) l_time2->day);
   }
 
-  microseconds= ((longlong)days*LL(86400) +
+  microseconds= ((longlong)days*86400LL +
                  (longlong)(l_time1->hour*3600L +
                             l_time1->minute*60L +
                             l_time1->second) -
                  l_sign*(longlong)(l_time2->hour*3600L +
                                    l_time2->minute*60L +
-                                   l_time2->second)) * LL(1000000) +
+                                   l_time2->second)) * 1000000LL +
                 (longlong)l_time1->second_part -
                 l_sign*(longlong)l_time2->second_part;
 

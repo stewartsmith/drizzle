@@ -27,7 +27,6 @@
 #include "ha_myisam.h"
 #include <stdarg.h>
 #include "myisamdef.h"
-#include "rt_index.h"
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 
@@ -66,7 +65,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   char msgbuf[MI_MAX_MSG_BUF];
   char name[NAME_LEN*2+2];
 
-  msg_length= my_vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
+  msg_length= vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
   msgbuf[sizeof(msgbuf) - 1] = 0; // healthy paranoia
 
   DBUG_PRINT(msg_type,("message: %s",msgbuf));
@@ -154,10 +153,8 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
   pos= table_arg->key_info;
   for (i= 0; i < share->keys; i++, pos++)
   {
-    keydef[i].flag= ((uint16) pos->flags & (HA_NOSAME | HA_FULLTEXT | HA_SPATIAL));
-    keydef[i].key_alg= pos->algorithm == HA_KEY_ALG_UNDEF ?
-      (pos->flags & HA_SPATIAL ? HA_KEY_ALG_RTREE : HA_KEY_ALG_BTREE) :
-      pos->algorithm;
+    keydef[i].flag= ((uint16) pos->flags & (HA_NOSAME | HA_FULLTEXT ));
+    keydef[i].key_alg= pos->algorithm == HA_KEY_ALG_UNDEF ?  (HA_KEY_ALG_BTREE) : pos->algorithm;
     keydef[i].block_length= pos->block_size;
     keydef[i].seg= keyseg;
     keydef[i].keysegs= pos->key_parts;
@@ -207,20 +204,12 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
         keydef[i].seg[j].null_bit= 0;
         keydef[i].seg[j].null_pos= 0;
       }
-      if (field->type() == MYSQL_TYPE_BLOB ||
-          field->type() == MYSQL_TYPE_GEOMETRY)
+      if (field->type() == MYSQL_TYPE_BLOB)
       {
         keydef[i].seg[j].flag|= HA_BLOB_PART;
         /* save number of bytes used to pack length */
         keydef[i].seg[j].bit_start= (uint) (field->pack_length() -
                                             share->blob_ptr_size);
-      }
-      else if (field->type() == MYSQL_TYPE_BIT)
-      {
-        keydef[i].seg[j].bit_length= ((Field_bit *) field)->bit_len;
-        keydef[i].seg[j].bit_start= ((Field_bit *) field)->bit_ofs;
-        keydef[i].seg[j].bit_pos= (uint) (((Field_bit *) field)->bit_ptr -
-                                          (uchar*) table_arg->record[0]);
       }
     }
     keyseg+= pos->key_parts;
@@ -500,7 +489,6 @@ void mi_check_print_warning(MI_CHECK *param, const char *fmt,...)
   va_end(args);
 }
 
-
 /**
   Report list of threads (and queries) accessing a table, thread_id of a
   thread that detected corruption, ource file name and line number where
@@ -541,7 +529,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 
 }
 
-
 ha_myisam::ha_myisam(handlerton *hton, TABLE_SHARE *table_arg)
   :handler(hton, table_arg), file(0),
   int_table_flags(HA_NULL_IN_KEY | HA_CAN_FULLTEXT | HA_CAN_SQL_HANDLER |
@@ -575,15 +562,9 @@ const char **ha_myisam::bas_ext() const
 }
 
 
-const char *ha_myisam::index_type(uint key_number)
+const char *ha_myisam::index_type(uint key_number __attribute__((__unused__)))
 {
-  return ((table->key_info[key_number].flags & HA_FULLTEXT) ? 
-	  "FULLTEXT" :
-	  (table->key_info[key_number].flags & HA_SPATIAL) ?
-	  "SPATIAL" :
-	  (table->key_info[key_number].algorithm == HA_KEY_ALG_RTREE) ?
-	  "RTREE" :
-	  "BTREE");
+  return "BTREE";
 }
 
 /* Name is here without an extension */
@@ -794,7 +775,8 @@ int ha_myisam::check(THD* thd, HA_CHECK_OPT* check_opt)
   two threads may do an analyze at the same time!
 */
 
-int ha_myisam::analyze(THD *thd, HA_CHECK_OPT* check_opt)
+int ha_myisam::analyze(THD *thd,
+                       HA_CHECK_OPT* check_opt __attribute__((__unused__)))
 {
   int error=0;
   MI_CHECK param;
@@ -961,7 +943,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
       {
         char buf[40];
         /* TODO: respect myisam_repair_threads variable */
-        my_snprintf(buf, 40, "Repair with %d threads", my_count_bits(key_map));
+        snprintf(buf, 40, "Repair with %d threads", my_count_bits(key_map));
         thd_proc_info(thd, buf);
         error = mi_repair_parallel(&param, file, fixed_name,
             param.testflag & T_QUICK);
@@ -1077,7 +1059,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
   if ((error= mi_assign_to_key_cache(file, map, new_key_cache)))
   { 
     char buf[STRING_BUFFER_USUAL_SIZE];
-    my_snprintf(buf, sizeof(buf),
+    snprintf(buf, sizeof(buf),
 		"Failed to flush to index file (errno: %d)", error);
     errmsg= buf;
     error= HA_ADMIN_CORRUPT;
@@ -1096,70 +1078,6 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
     mi_check_print_error(&param, errmsg);
   }
   DBUG_RETURN(error);
-}
-
-
-/*
-  Preload pages of the index file for a table into the key cache.
-*/
-
-int ha_myisam::preload_keys(THD* thd, HA_CHECK_OPT *check_opt)
-{
-  int error;
-  const char *errmsg;
-  uint64_t map;
-  TABLE_LIST *table_list= table->pos_in_table_list;
-  my_bool ignore_leaves= table_list->ignore_leaves;
-  char buf[ERRMSGSIZE+20];
-
-  DBUG_ENTER("ha_myisam::preload_keys");
-
-  table->keys_in_use_for_query.clear_all();
-
-  if (table_list->process_index_hints(table))
-    DBUG_RETURN(HA_ADMIN_FAILED);
-
-  map= ~(uint64_t) 0;
-  /* Check validity of the index references */
-  if (!table->keys_in_use_for_query.is_clear_all())
-    /* use all keys if there's no list specified by the user through hints */
-    map= table->keys_in_use_for_query.to_ulonglong();
-
-  mi_extra(file, HA_EXTRA_PRELOAD_BUFFER_SIZE,
-           (void *) &thd->variables.preload_buff_size);
-
-  if ((error= mi_preload(file, map, ignore_leaves)))
-  {
-    switch (error) {
-    case HA_ERR_NON_UNIQUE_BLOCK_SIZE:
-      errmsg= "Indexes use different block sizes";
-      break;
-    case HA_ERR_OUT_OF_MEM:
-      errmsg= "Failed to allocate buffer";
-      break;
-    default:
-      my_snprintf(buf, ERRMSGSIZE,
-                  "Failed to read from index file (errno: %d)", my_errno);
-      errmsg= buf;
-    }
-    error= HA_ADMIN_FAILED;
-    goto err;
-  }
-
-  DBUG_RETURN(HA_ADMIN_OK);
-
- err:
-  {
-    MI_CHECK param;
-    myisamchk_init(&param);
-    param.thd= thd;
-    param.op_name=    "preload_keys";
-    param.db_name=    table->s->db.str;
-    param.table_name= table->s->table_name.str;
-    param.testflag=   0;
-    mi_check_print_error(&param, errmsg);
-    DBUG_RETURN(error);
-  }
 }
 
 
@@ -1468,7 +1386,7 @@ my_bool index_cond_func_myisam(void *arg)
 C_MODE_END
 
 
-int ha_myisam::index_init(uint idx, bool sorted)
+int ha_myisam::index_init(uint idx, bool sorted __attribute__((__unused__)))
 { 
   active_index=idx;
   //in_range_read= FALSE;
@@ -1628,7 +1546,7 @@ int ha_myisam::rnd_pos(uchar *buf, uchar *pos)
 }
 
 
-void ha_myisam::position(const uchar *record)
+void ha_myisam::position(const uchar *record __attribute__((__unused__)))
 {
   my_off_t row_position= mi_position(file);
   my_store_ptr(ref, ref_length, row_position);
@@ -1720,7 +1638,7 @@ int ha_myisam::reset(void)
 
 /* To be used with WRITE_CACHE and EXTRA_CACHE */
 
-int ha_myisam::extra_opt(enum ha_extra_function operation, ulong cache_size)
+int ha_myisam::extra_opt(enum ha_extra_function operation, uint32_t cache_size)
 {
   if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_WRITE_CACHE)
     return 0;
@@ -1746,7 +1664,7 @@ int ha_myisam::external_lock(THD *thd, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-THR_LOCK_DATA **ha_myisam::store_lock(THD *thd,
+THR_LOCK_DATA **ha_myisam::store_lock(THD *thd __attribute__((__unused__)),
 				      THR_LOCK_DATA **to,
 				      enum thr_lock_type lock_type)
 {
@@ -1832,8 +1750,9 @@ int ha_myisam::rename_table(const char * from, const char * to)
 }
 
 
-void ha_myisam::get_auto_increment(uint64_t offset, uint64_t increment,
-                                   uint64_t nb_desired_values,
+void ha_myisam::get_auto_increment(uint64_t offset __attribute__((__unused__)),
+                                   uint64_t increment __attribute__((__unused__)),
+                                   uint64_t nb_desired_values __attribute__((__unused__)),
                                    uint64_t *first_value,
                                    uint64_t *nb_reserved_values)
 {
@@ -1912,22 +1831,6 @@ ha_rows ha_myisam::records_in_range(uint inx, key_range *min_key,
 }
 
 
-int ha_myisam::ft_read(uchar *buf)
-{
-  int error;
-
-  if (!ft_handler)
-    return -1;
-
-  thread_safe_increment(table->in_use->status_var.ha_read_next_count,
-			&LOCK_status); // why ?
-
-  error=ft_handler->please->read_next(ft_handler,(char*) buf);
-
-  table->status=error ? STATUS_NOT_FOUND: 0;
-  return error;
-}
-
 uint ha_myisam::checksum() const
 {
   return (uint)file->state->checksum;
@@ -1954,8 +1857,7 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *info,
   return COMPATIBLE_DATA_YES;
 }
 
-extern int mi_panic(enum ha_panic_function flag);
-int myisam_panic(handlerton *hton, ha_panic_function flag)
+int myisam_panic(handlerton *hton __attribute__((__unused__)), ha_panic_function flag)
 {
   return mi_panic(flag);
 }

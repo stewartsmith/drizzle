@@ -216,7 +216,7 @@ typedef __int64			ib_longlong;
 typedef longlong		ib_longlong;
 #endif
 
-typedef unsigned long long int	ullint;
+typedef uint64_t 	ullint;
 
 #ifndef __WIN__
 #if SIZEOF_LONG != SIZEOF_VOIDP

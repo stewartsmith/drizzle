@@ -481,7 +481,8 @@ bool Item_sum::walk (Item_processor processor, bool walk_subquery,
 }
 
 
-Field *Item_sum::create_tmp_field(bool group, TABLE *table,
+Field *Item_sum::create_tmp_field(bool group __attribute__((__unused__)),
+                                  TABLE *table,
                                   uint convert_blob_length)
 {
   Field *field;
@@ -869,7 +870,8 @@ static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
 }
 
 
-static int item_sum_distinct_walk(void *element, element_count num_of_dups,
+static int item_sum_distinct_walk(void *element,
+                                  element_count num_of_dups __attribute__((__unused__)),
                                   void *item)
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
@@ -955,8 +957,7 @@ void Item_sum_distinct::fix_length_and_dec()
     calculations. The range of int64 is enough to hold sum 2^32 distinct
     integers each <= 2^32.
   */
-  if (table_field_type == MYSQL_TYPE_INT24 ||
-      (table_field_type >= MYSQL_TYPE_TINY && table_field_type <= MYSQL_TYPE_LONG))
+  if (table_field_type >= MYSQL_TYPE_TINY && table_field_type <= MYSQL_TYPE_LONG)
   {
     val.traits= Hybrid_type_traits_fast_decimal::instance();
     break;
@@ -1227,7 +1228,7 @@ Item *Item_sum_avg::copy_or_same(THD* thd)
 
 
 Field *Item_sum_avg::create_tmp_field(bool group, TABLE *table,
-                                      uint convert_blob_len)
+                                      uint convert_blob_len __attribute__((__unused__)))
 {
   Field *field;
   if (group)
@@ -1439,7 +1440,7 @@ Item *Item_sum_variance::copy_or_same(THD* thd)
   pass around.
 */
 Field *Item_sum_variance::create_tmp_field(bool group, TABLE *table,
-                                           uint convert_blob_len)
+                                           uint convert_blob_len __attribute__((__unused__)))
 {
   Field *field;
   if (group)
@@ -2480,7 +2481,9 @@ int composite_key_cmp(void* arg, uchar* key1, uchar* key2)
 
 C_MODE_START
 
-static int count_distinct_walk(void *elem, element_count count, void *arg)
+static int count_distinct_walk(void *elem __attribute__((__unused__)),
+                               element_count count __attribute__((__unused__)),
+                               void *arg)
 {
   (*((ulonglong*)arg))++;
   return 0;
@@ -2571,22 +2574,6 @@ bool Item_sum_count_distinct::setup(THD *thd)
   count_field_types(select_lex, tmp_table_param, list, 0);
   tmp_table_param->force_copy_fields= force_copy_fields;
   DBUG_ASSERT(table == 0);
-  /*
-    Make create_tmp_table() convert BIT columns to BIGINT.
-    This is needed because BIT fields store parts of their data in table's
-    null bits, and we don't have methods to compare two table records, which
-    is needed by Unique which is used when HEAP table is used.
-  */
-  {
-    List_iterator_fast<Item> li(list);
-    Item *item;
-    while ((item= li++))
-    {
-      if (item->type() == Item::FIELD_ITEM &&
-          ((Item_field*)item)->field->type() == FIELD_TYPE_BIT)
-        item->marker=4;
-    }
-  }
 
   if (!(table= create_tmp_table(thd, tmp_table_param, list, (ORDER*) 0, 1,
 				0,
@@ -2726,7 +2713,7 @@ longlong Item_sum_count_distinct::val_int()
   int error;
   DBUG_ASSERT(fixed == 1);
   if (!table)					// Empty query
-    return LL(0);
+    return 0LL;
   if (tree)
   {
     if (is_evaluated)
@@ -3428,22 +3415,6 @@ bool Item_func_group_concat::setup(THD *thd)
     */
     set_if_smaller(tmp_table_param->convert_blob_length, 
                    Field_varstring::MAX_SIZE);
-
-    /*
-      Force the create_tmp_table() to convert BIT columns to INT
-      as we cannot compare two table records containg BIT fields
-      stored in the the tree used for distinct/order by.
-      Moreover we don't even save in the tree record null bits 
-      where BIT fields store parts of their data.
-    */
-    List_iterator_fast<Item> li(all_fields);
-    Item *item;
-    while ((item= li++))
-    {
-      if (item->type() == Item::FIELD_ITEM && 
-          ((Item_field*) item)->field->type() == FIELD_TYPE_BIT)
-        item->marker= 4;
-    }
   }
 
   /*
@@ -3504,7 +3475,7 @@ void Item_func_group_concat::make_unique()
 }
 
 
-String* Item_func_group_concat::val_str(String* str)
+String* Item_func_group_concat::val_str(String* str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   if (null_value)

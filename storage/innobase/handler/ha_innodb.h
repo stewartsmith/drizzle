@@ -90,10 +90,13 @@ class ha_innobase: public handler
 	enum row_type get_row_type() const;
 
 	const char* table_type() const { return("InnoDB");}
-	const char *index_type(uint key_number) { return "BTREE"; }
+        const char *index_type(uint key_number __attribute__((__unused__)))
+        { return "BTREE"; }
 	const char** bas_ext() const;
 	Table_flags table_flags() const;
-	ulong index_flags(uint idx, uint part, bool all_parts) const
+	uint32_t index_flags(uint idx __attribute__((__unused__)),
+                             uint part __attribute__((__unused__)),
+                             bool all_parts __attribute__((__unused__))) const
 	{
 	  return (HA_READ_NEXT |
 		  HA_READ_PREV |

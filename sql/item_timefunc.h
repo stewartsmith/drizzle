@@ -355,7 +355,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }
@@ -381,7 +382,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }
@@ -411,7 +413,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_time(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_time_in_field(field);
   }
@@ -783,7 +786,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }
@@ -811,7 +815,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_time(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_time_in_field(field);
   }
@@ -846,7 +851,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }

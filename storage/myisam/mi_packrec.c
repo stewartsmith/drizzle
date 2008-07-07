@@ -15,7 +15,7 @@
 
 	/* Functions to compressed records */
 
-#include "fulltext.h"
+#include "myisamdef.h"
 
 #define IS_CHAR ((uint) 32768)		/* Bit if char (not offset) in tree */
 
@@ -271,8 +271,7 @@ my_bool _mi_read_pack_info(MI_INFO *info, pbool fix_keys)
       keyinfo->keylength+= (uint16) diff_length;
       keyinfo->minlength+= (uint16) diff_length;
       keyinfo->maxlength+= (uint16) diff_length;
-      keyinfo->seg[keyinfo->flag & HA_FULLTEXT ?
-                   FT_SEGS : keyinfo->keysegs].length= (uint16) rec_reflength;
+      keyinfo->seg[keyinfo->keysegs].length= (uint16) rec_reflength;
     }
     if (share->ft2_keyinfo.seg)
     {

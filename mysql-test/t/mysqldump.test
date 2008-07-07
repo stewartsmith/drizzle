@@ -64,22 +64,22 @@ create table ```a` (i int);
 --exec $MYSQL_DUMP --compact test
 drop table ```a`;
 
---echo #
---echo # Bug #2705 'mysqldump --tab extra output'
---echo #
-
-create table t1(a int);
-insert into t1 values (1),(2),(3);
---exec $MYSQL_DUMP --skip-comments --tab=$MYSQLTEST_VARDIR/tmp/ test
---cat_file $MYSQLTEST_VARDIR/tmp/t1.sql
---cat_file $MYSQLTEST_VARDIR/tmp/t1.txt
---remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
---remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
---exec $MYSQL_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
---remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
---remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
-drop table t1;
-
+#--echo #
+#--echo # Bug #2705 'mysqldump --tab extra output'
+#--echo #
+#
+#create table t1(a int);
+#insert into t1 values (1),(2),(3);
+#--exec $MYSQL_DUMP --skip-comments --tab=$MYSQLTEST_VARDIR/tmp/ test
+#--cat_file $MYSQLTEST_VARDIR/tmp/t1.sql
+#--cat_file $MYSQLTEST_VARDIR/tmp/t1.txt
+#--remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
+#--remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
+#--exec $MYSQL_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
+#--remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
+#--remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
+#drop table t1;
+#
 --echo #
 --echo # Bug #6101: create database problem
 --echo #

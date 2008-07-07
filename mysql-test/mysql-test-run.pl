@@ -140,7 +140,6 @@ our $opt_verbose= 0;  # Verbose output, enable with --verbose
 our $exe_master_mysqld;
 our $exe_mysql;
 our $exe_mysqladmin;
-our $exe_mysql_upgrade;
 our $exe_mysqlbinlog;
 our $exe_mysql_client_test;
 our $exe_bug25714;
@@ -151,7 +150,6 @@ our $exe_mysqlslap;
 our $exe_mysqlimport;
 our $exe_mysqlshow;
 our $exe_mysql_fix_system_tables;
-our $file_mysql_fix_privilege_tables;
 our $exe_mysqltest;
 our $exe_ndbd;
 our $exe_ndb_mgmd;
@@ -1527,42 +1525,11 @@ sub executable_setup () {
   if (!$opt_extern)
   {
   # Look for SQL scripts directory
-    if ( mtr_file_exists("$path_share/mysql_system_tables.sql") ne "")
-    {
-      # The SQL scripts are in path_share
-      $path_sql_dir= $path_share;
-    }
-    else
-    {
-  $path_sql_dir= mtr_path_exists("$glob_basedir/share",
-				 "$glob_basedir/scripts");
-    }
-
     if ( $mysql_version_id >= 50100 )
     {
       $exe_mysqlslap=    mtr_exe_exists("$path_client_bindir/mysqlslap");
     }
-    if ( $mysql_version_id >= 50000 and !$glob_use_embedded_server )
-    {
-      $exe_mysql_upgrade= mtr_exe_exists("$path_client_bindir/mysql_upgrade")
-    }
-    else
-    {
-      $exe_mysql_upgrade= "";
-    }
 
-    if ( ! $glob_win32 )
-    {
-      # Look for mysql_fix_system_table script
-      $exe_mysql_fix_system_tables=
-        mtr_script_exists("$glob_basedir/scripts/mysql_fix_privilege_tables",
-  			"$path_client_bindir/mysql_fix_privilege_tables");
-    }
-
-    # Look for mysql_fix_privilege_tables.sql script
-    $file_mysql_fix_privilege_tables=
-      mtr_file_exists("$glob_basedir/scripts/mysql_fix_privilege_tables.sql",
-  		    "$glob_basedir/share/mysql_fix_privilege_tables.sql");
 
     if ( ! $opt_skip_ndbcluster and executable_setup_ndb())
     {
@@ -1683,31 +1650,6 @@ sub mysql_client_test_arguments()
   return join(" ", $exe, @$args);
 }
 
-sub mysql_upgrade_arguments()
-{
-  my $exe= $exe_mysql_upgrade;
-
-  my $args;
-  mtr_init_args(\$args);
-#  if ( $opt_valgrind_mysql_ugrade )
-#  {
-#    valgrind_arguments($args, \$exe);
-#  }
-
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--user=root");
-  mtr_add_arg($args, "--port=$master->[0]->{'port'}");
-  mtr_add_arg($args, "--datadir=$master->[0]->{'path_myddir'}");
-  mtr_add_arg($args, "--basedir=$glob_basedir");
-
-  if ( $opt_debug )
-  {
-    mtr_add_arg($args,
-      "--debug=d:t:A,$path_vardir_trace/log/mysql_upgrade.trace");
-  }
-
-  return join(" ", $exe, @$args);
-}
 
 # Note that some env is setup in spawn/run, in "mtr_process.pl"
 
@@ -1966,18 +1908,12 @@ sub environment_setup () {
   # ----------------------------------------------------
   $ENV{'MYSQL_CLIENT_TEST'}=  mysql_client_test_arguments();
 
-  # ----------------------------------------------------
-  # Setup env so childs can execute mysql_upgrade
-  # ----------------------------------------------------
-  if ( !$opt_extern && $mysql_version_id >= 50000 )
-  {
-    $ENV{'MYSQL_UPGRADE'}= mysql_upgrade_arguments();
-  }
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysql_fix_system_tables
   # ----------------------------------------------------
-  if ( !$opt_extern && ! $glob_win32 )
+  #if ( !$opt_extern && ! $glob_win32 )
+  if ( 0 )
   {
     my $cmdline_mysql_fix_system_tables=
       "$exe_mysql_fix_system_tables --no-defaults --host=localhost " .
@@ -1987,7 +1923,6 @@ sub environment_setup () {
     $ENV{'MYSQL_FIX_SYSTEM_TABLES'}=  $cmdline_mysql_fix_system_tables;
 
   }
-    $ENV{'MYSQL_FIX_PRIVILEGE_TABLES'}=  $file_mysql_fix_privilege_tables;
 
   # ----------------------------------------------------
   # Setup env so childs can execute my_print_defaults
@@ -2023,18 +1958,18 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env so childs can execute myisampack and myisamchk
   # ----------------------------------------------------
-  $ENV{'MYISAMCHK'}= mtr_native_path(mtr_exe_exists(
-                       vs_config_dirs('storage/myisam', 'myisamchk'),
-                       vs_config_dirs('myisam', 'myisamchk'),
-                       "$path_client_bindir/myisamchk",
-                       "$glob_basedir/storage/myisam/myisamchk",
-                       "$glob_basedir/myisam/myisamchk"));
-  $ENV{'MYISAMPACK'}= mtr_native_path(mtr_exe_exists(
-                        vs_config_dirs('storage/myisam', 'myisampack'),
-                        vs_config_dirs('myisam', 'myisampack'),
-                        "$path_client_bindir/myisampack",
-                        "$glob_basedir/storage/myisam/myisampack",
-                        "$glob_basedir/myisam/myisampack"));
+#  $ENV{'MYISAMCHK'}= mtr_native_path(mtr_exe_exists(
+#                       vs_config_dirs('storage/myisam', 'myisamchk'),
+#                       vs_config_dirs('myisam', 'myisamchk'),
+#                       "$path_client_bindir/myisamchk",
+#                       "$glob_basedir/storage/myisam/myisamchk",
+#                       "$glob_basedir/myisam/myisamchk"));
+#  $ENV{'MYISAMPACK'}= mtr_native_path(mtr_exe_exists(
+#                        vs_config_dirs('storage/myisam', 'myisampack'),
+#                        vs_config_dirs('myisam', 'myisampack'),
+#                        "$path_client_bindir/myisampack",
+#                        "$glob_basedir/storage/myisam/myisampack",
+#                        "$glob_basedir/myisam/myisampack"));
 
   # ----------------------------------------------------
   # We are nice and report a bit about our settings
@@ -2985,50 +2920,6 @@ sub install_db ($$) {
   # export MYSQLD_BOOTSTRAP_CMD variable containing <path>/mysqld <args>
   # ----------------------------------------------------------------------
   $ENV{'MYSQLD_BOOTSTRAP_CMD'}= "$exe_mysqld_bootstrap " . join(" ", @$args);
-
-  # ----------------------------------------------------------------------
-  # Create the bootstrap.sql file
-  # ----------------------------------------------------------------------
-  my $bootstrap_sql_file= "$opt_vardir/tmp/bootstrap.sql";
-
-  # Use the mysql database for system tables
-  mtr_tofile($bootstrap_sql_file, "use mysql");
-
-  # Add the offical mysql system tables
-  # for a production system
-  mtr_appendfile_to_file("$path_sql_dir/mysql_system_tables.sql",
-			 $bootstrap_sql_file);
-
-  # Add the mysql system tables initial data
-  # for a production system
-  mtr_appendfile_to_file("$path_sql_dir/mysql_system_tables_data.sql",
-			 $bootstrap_sql_file);
-
-  # Add test data for timezone - this is just a subset, on a real
-  # system these tables will be populated either by mysql_tzinfo_to_sql
-  # or by downloading the timezone table package from our website
-  mtr_appendfile_to_file("$path_sql_dir/mysql_test_data_timezone.sql",
-			 $bootstrap_sql_file);
-
-  # Remove anonymous users
-  mtr_tofile($bootstrap_sql_file,
-	     "DELETE FROM mysql.user where user= '';");
-
-  # Log bootstrap command
-  my $path_bootstrap_log= "$opt_vardir/log/bootstrap.log";
-  mtr_tofile($path_bootstrap_log,
-	     "$exe_mysqld_bootstrap " . join(" ", @$args) . "\n");
-
-
-  if ( mtr_run($exe_mysqld_bootstrap, $args, $bootstrap_sql_file,
-               $path_bootstrap_log, $path_bootstrap_log,
-	       "", { append_log_file => 1 }) != 0 )
-
-  {
-    mtr_error("Error executing mysqld --bootstrap\n" .
-              "Could not install system database from $bootstrap_sql_file\n" .
-	      "see $path_bootstrap_log for errors");
-  }
 }
 
 

@@ -68,9 +68,7 @@ my_bool	net_flush(NET *net);
 #include "mysqld_error.h"
 #include "errmsg.h"
 #include <violite.h>
-#if defined(THREAD) && !defined(__WIN__)
 #include <my_pthread.h>				/* because of signal()	*/
-#endif /* defined(THREAD) && !defined(__WIN__) */
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -243,7 +241,7 @@ static int wait_for_data(my_socket fd, uint timeout)
   {
     tv.tv_sec = (long) timeout;
     tv.tv_usec = 0;
-#if defined(HPUX10) && defined(THREAD)
+#if defined(HPUX10)
     if ((res = select(fd+1, NULL, (int*) &sfds, NULL, &tv)) > 0)
       break;
 #else
@@ -346,7 +344,7 @@ static void set_mysql_extended_error(MYSQL *mysql, int errcode,
   net= &mysql->net;
   net->last_errno= errcode;
   va_start(args, format);
-  my_vsnprintf(net->last_error, sizeof(net->last_error)-1,
+  vsnprintf(net->last_error, sizeof(net->last_error)-1,
                format, args);
   va_end(args);
   strmov(net->sqlstate, sqlstate);
@@ -744,13 +742,12 @@ void free_rows(MYSQL_DATA *cur)
 my_bool
 cli_advanced_command(MYSQL *mysql, enum enum_server_command command,
 		     const uchar *header, ulong header_length,
-		     const uchar *arg, ulong arg_length, my_bool skip_check,
-                     MYSQL_STMT *stmt)
+		     const uchar *arg, ulong arg_length, my_bool skip_check)
 {
   NET *net= &mysql->net;
   my_bool result= 1;
   init_sigpipe_variables
-  my_bool stmt_skip= stmt ? stmt->state != MYSQL_STMT_INIT_DONE : FALSE;
+  my_bool stmt_skip= FALSE;
   DBUG_ENTER("cli_advanced_command");
 
   /* Don't give sigpipe errors if the client doesn't want them */
@@ -1103,35 +1100,12 @@ void mysql_read_default_options(struct st_mysql_options *options,
 	case 12:			/* return-found-rows */
 	  options->client_flag|=CLIENT_FOUND_ROWS;
 	  break;
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-	case 13:			/* ssl_key */
-	  my_free(options->ssl_key, MYF(MY_ALLOW_ZERO_PTR));
-          options->ssl_key = my_strdup(opt_arg, MYF(MY_WME));
-          break;
-	case 14:			/* ssl_cert */
-	  my_free(options->ssl_cert, MYF(MY_ALLOW_ZERO_PTR));
-          options->ssl_cert = my_strdup(opt_arg, MYF(MY_WME));
-          break;
-	case 15:			/* ssl_ca */
-	  my_free(options->ssl_ca, MYF(MY_ALLOW_ZERO_PTR));
-          options->ssl_ca = my_strdup(opt_arg, MYF(MY_WME));
-          break;
-	case 16:			/* ssl_capath */
-	  my_free(options->ssl_capath, MYF(MY_ALLOW_ZERO_PTR));
-          options->ssl_capath = my_strdup(opt_arg, MYF(MY_WME));
-          break;
-        case 23:			/* ssl_cipher */
-          my_free(options->ssl_cipher, MYF(MY_ALLOW_ZERO_PTR));
-          options->ssl_cipher= my_strdup(opt_arg, MYF(MY_WME));
-          break;
-#else
 	case 13:				/* Ignore SSL options */
 	case 14:
 	case 15:
 	case 16:
         case 23:
 	  break;
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
 	case 17:			/* charset-lib */
 	  my_free(options->charset_dir,MYF(MY_ALLOW_ZERO_PTR));
           options->charset_dir = my_strdup(opt_arg, MYF(MY_WME));
@@ -1564,13 +1538,6 @@ mysql_ssl_set(MYSQL *mysql __attribute__((unused)) ,
 	      const char *cipher __attribute__((unused)))
 {
   DBUG_ENTER("mysql_ssl_set");
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-  mysql->options.ssl_key=    strdup_if_not_null(key);
-  mysql->options.ssl_cert=   strdup_if_not_null(cert);
-  mysql->options.ssl_ca=     strdup_if_not_null(ca);
-  mysql->options.ssl_capath= strdup_if_not_null(capath);
-  mysql->options.ssl_cipher= strdup_if_not_null(cipher);
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
   DBUG_RETURN(0);
 }
 
@@ -1579,34 +1546,6 @@ mysql_ssl_set(MYSQL *mysql __attribute__((unused)) ,
   Free strings in the SSL structure and clear 'use_ssl' flag.
   NB! Errors are not reported until you do mysql_real_connect.
 */
-
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-
-static void
-mysql_ssl_free(MYSQL *mysql __attribute__((unused)))
-{
-  struct st_VioSSLFd *ssl_fd= (struct st_VioSSLFd*) mysql->connector_fd;
-  DBUG_ENTER("mysql_ssl_free");
-
-  my_free(mysql->options.ssl_key, MYF(MY_ALLOW_ZERO_PTR));
-  my_free(mysql->options.ssl_cert, MYF(MY_ALLOW_ZERO_PTR));
-  my_free(mysql->options.ssl_ca, MYF(MY_ALLOW_ZERO_PTR));
-  my_free(mysql->options.ssl_capath, MYF(MY_ALLOW_ZERO_PTR));
-  my_free(mysql->options.ssl_cipher, MYF(MY_ALLOW_ZERO_PTR));
-  if (ssl_fd)
-    SSL_CTX_free(ssl_fd->ssl_context);
-  my_free(mysql->connector_fd,MYF(MY_ALLOW_ZERO_PTR));
-  mysql->options.ssl_key = 0;
-  mysql->options.ssl_cert = 0;
-  mysql->options.ssl_ca = 0;
-  mysql->options.ssl_capath = 0;
-  mysql->options.ssl_cipher= 0;
-  mysql->options.use_ssl = FALSE;
-  mysql->connector_fd = 0;
-  DBUG_VOID_RETURN;
-}
-
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
 
 /*
   Return the SSL cipher (if any) used for current
@@ -1622,10 +1561,6 @@ const char * STDCALL
 mysql_get_ssl_cipher(MYSQL *mysql __attribute__((unused)))
 {
   DBUG_ENTER("mysql_get_ssl_cipher");
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-  if (mysql->net.vio && mysql->net.vio->ssl_arg)
-    DBUG_RETURN(SSL_get_cipher_name((SSL*)mysql->net.vio->ssl_arg));
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
   DBUG_RETURN(NULL);
 }
 
@@ -1645,66 +1580,6 @@ mysql_get_ssl_cipher(MYSQL *mysql __attribute__((unused)))
 
  */
 
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-
-static int ssl_verify_server_cert(Vio *vio, const char* server_hostname)
-{
-  SSL *ssl;
-  X509 *server_cert;
-  char *cp1, *cp2;
-  char buf[256];
-  DBUG_ENTER("ssl_verify_server_cert");
-  DBUG_PRINT("enter", ("server_hostname: %s", server_hostname));
-
-  if (!(ssl= (SSL*)vio->ssl_arg))
-  {
-    DBUG_PRINT("error", ("No SSL pointer found"));
-    DBUG_RETURN(1);
-  }
-
-  if (!server_hostname)
-  {
-    DBUG_PRINT("error", ("No server hostname supplied"));
-    DBUG_RETURN(1);
-  }
-
-  if (!(server_cert= SSL_get_peer_certificate(ssl)))
-  {
-    DBUG_PRINT("error", ("Could not get server certificate"));
-    DBUG_RETURN(1);
-  }
-
-  /*
-    We already know that the certificate exchanged was valid; the SSL library
-    handled that. Now we need to verify that the contents of the certificate
-    are what we expect.
-  */
-
-  X509_NAME_oneline(X509_get_subject_name(server_cert), buf, sizeof(buf));
-  X509_free (server_cert);
-
-  DBUG_PRINT("info", ("hostname in cert: %s", buf));
-  cp1= strstr(buf, "/CN=");
-  if (cp1)
-  {
-    cp1+= 4; /* Skip the "/CN=" that we found */
-    /* Search for next / which might be the delimiter for email */
-    cp2= strchr(cp1, '/');
-    if (cp2)
-      *cp2= '\0';
-    DBUG_PRINT("info", ("Server hostname in cert: %s", cp1));
-    if (!strcmp(cp1, server_hostname))
-    {
-      /* Success */
-      DBUG_RETURN(0);
-    }
-  }
-  DBUG_PRINT("error", ("SSL certificate validation failure"));
-  DBUG_RETURN(1);
-}
-
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
-
 
 /*
   Note that the mysql argument must be initialized with mysql_init()
@@ -1721,18 +1596,13 @@ static MYSQL_METHODS client_methods=
   cli_read_rows,                               /* read_rows */
   cli_use_result,                              /* use_result */
   cli_fetch_lengths,                           /* fetch_lengths */
-  cli_flush_use_result                         /* flush_use_result */
+  cli_flush_use_result,                         /* flush_use_result */
 #ifndef MYSQL_SERVER
-  ,cli_list_fields,                            /* list_fields */
-  cli_read_prepare_result,                     /* read_prepare_result */
-  cli_stmt_execute,                            /* stmt_execute */
-  cli_read_binary_rows,                        /* read_binary_rows */
+  cli_list_fields,                            /* list_fields */
   cli_unbuffered_fetch,                        /* unbuffered_fetch */
-  NULL,                                        /* free_embedded_thd */
   cli_read_statistics,                         /* read_statistics */
   cli_read_query_result,                       /* next_result */
   cli_read_change_user_result,                 /* read_change_user_result */
-  cli_read_binary_rows                         /* read_rows_from_cursor */
 #endif
 };
 
@@ -1911,8 +1781,8 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
       mysql->options.protocol=MYSQL_PROTOCOL_MEMORY;
       unix_socket = 0;
       host=mysql->options.shared_memory_base_name;
-      my_snprintf(host_info=buff, sizeof(buff)-1,
-                  ER(CR_SHARED_MEMORY_CONNECTION), host);
+      snprintf(host_info=buff, sizeof(buff)-1,
+               ER(CR_SHARED_MEMORY_CONNECTION), host);
     }
   }
 #endif /* HAVE_SMEM */
@@ -1992,8 +1862,8 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     else
     {
       net->vio=vio_new_win32pipe(hPipe);
-      my_snprintf(host_info=buff, sizeof(buff)-1,
-                  ER(CR_NAMEDPIPE_CONNECTION), unix_socket);
+      snprintf(host_info=buff, sizeof(buff)-1,
+               ER(CR_NAMEDPIPE_CONNECTION), unix_socket);
     }
   }
 #endif
@@ -2013,7 +1883,7 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     if (!host)
       host= LOCAL_HOST;
 
-    my_snprintf(host_info=buff, sizeof(buff)-1, ER(CR_TCP_CONNECTION), host);
+    snprintf(host_info=buff, sizeof(buff)-1, ER(CR_TCP_CONNECTION), host);
     DBUG_PRINT("info",("Server name: '%s'.  TCP sock: %d", host, port));
 #ifdef MYSQL_SERVER
     thr_alarm_init(&alarmed);
@@ -2032,7 +1902,7 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     hints.ai_family= AF_UNSPEC;
 
     DBUG_PRINT("info",("IPV6 getaddrinfo %s", host));
-    my_snprintf(port_buf, NI_MAXSERV, "%d", port);
+    snprintf(port_buf, NI_MAXSERV, "%d", port);
     gai_errno= getaddrinfo(host, port_buf, &hints, &res_lst);
 
     if (gai_errno != 0) 
@@ -2222,14 +2092,6 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
   if (client_flag & CLIENT_MULTI_STATEMENTS)
     client_flag|= CLIENT_MULTI_RESULTS;
 
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-  if (mysql->options.ssl_key || mysql->options.ssl_cert ||
-      mysql->options.ssl_ca || mysql->options.ssl_capath ||
-      mysql->options.ssl_cipher)
-    mysql->options.use_ssl= 1;
-  if (mysql->options.use_ssl)
-    client_flag|=CLIENT_SSL;
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY*/
   if (db)
     client_flag|=CLIENT_CONNECT_WITH_DB;
 
@@ -2255,59 +2117,6 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     end= buff+5;
   }
   mysql->client_flag=client_flag;
-
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-  if (client_flag & CLIENT_SSL)
-  {
-    /* Do the SSL layering. */
-    struct st_mysql_options *options= &mysql->options;
-    struct st_VioSSLFd *ssl_fd;
-
-    /*
-      Send client_flag, max_packet_size - unencrypted otherwise
-      the server does not know we want to do SSL
-    */
-    if (my_net_write(net, (uchar*) buff, (uint) (end-buff)) || net_flush(net))
-    {
-      set_mysql_extended_error(mysql, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "sending connection information to server",
-                               errno);
-      goto error;
-    }
-
-    /* Create the VioSSLConnectorFd - init SSL and load certs */
-    if (!(ssl_fd= new_VioSSLConnectorFd(options->ssl_key,
-                                        options->ssl_cert,
-                                        options->ssl_ca,
-                                        options->ssl_capath,
-                                        options->ssl_cipher)))
-    {
-      set_mysql_error(mysql, CR_SSL_CONNECTION_ERROR, unknown_sqlstate);
-      goto error;
-    }
-    mysql->connector_fd= (void*)ssl_fd;
-
-    /* Connect to the server */
-    DBUG_PRINT("info", ("IO layer change in progress..."));
-    if (sslconnect(ssl_fd, mysql->net.vio,
-                   (long) (mysql->options.connect_timeout)))
-    {
-      set_mysql_error(mysql, CR_SSL_CONNECTION_ERROR, unknown_sqlstate);
-      goto error;
-    }
-    DBUG_PRINT("info", ("IO layer change done!"));
-
-    /* Verify server cert */
-    if ((client_flag & CLIENT_SSL_VERIFY_SERVER_CERT) &&
-        ssl_verify_server_cert(mysql->net.vio, mysql->host))
-    {
-      set_mysql_error(mysql, CR_SSL_CONNECTION_ERROR, unknown_sqlstate);
-      goto error;
-    }
-
-  }
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
 
   DBUG_PRINT("info",("Server version = '%s'  capabilites: %lu  status: %u  client_flag: %lu",
 		     mysql->server_version,mysql->server_capabilities,
@@ -2508,31 +2317,6 @@ my_bool mysql_reconnect(MYSQL *mysql)
   tmp_mysql.reconnect= 1;
   tmp_mysql.free_me= mysql->free_me;
 
-  /*
-    For each stmt in mysql->stmts, move it to tmp_mysql if it is
-    in state MYSQL_STMT_INIT_DONE, otherwise close it.
-  */
-  {
-    LIST *element= mysql->stmts;
-    for (; element; element= element->next)
-    {
-      MYSQL_STMT *stmt= (MYSQL_STMT *) element->data;
-      if (stmt->state != MYSQL_STMT_INIT_DONE)
-      {
-        stmt->mysql= 0;
-        stmt->last_errno= CR_SERVER_LOST;
-        strmov(stmt->last_error, ER(CR_SERVER_LOST));
-        strmov(stmt->sqlstate, unknown_sqlstate);
-      }
-      else
-      {
-        tmp_mysql.stmts= list_add(tmp_mysql.stmts, &stmt->list);
-      }
-      /* No need to call list_delete for statement here */
-    }
-    mysql->stmts= NULL;
-  }
-
   /* Don't free options as these are now used in tmp_mysql */
   bzero((char*) &mysql->options,sizeof(mysql->options));
   mysql->free_me=0;
@@ -2593,9 +2377,6 @@ static void mysql_close_free_options(MYSQL *mysql)
     delete_dynamic(init_commands);
     my_free((char*)init_commands,MYF(MY_WME));
   }
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-  mysql_ssl_free(mysql);
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
 #ifdef HAVE_SMEM
   if (mysql->options.shared_memory_base_name != def_shared_memory_base_name)
     my_free(mysql->options.shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
@@ -2611,50 +2392,11 @@ static void mysql_close_free(MYSQL *mysql)
   my_free(mysql->user,MYF(MY_ALLOW_ZERO_PTR));
   my_free(mysql->passwd,MYF(MY_ALLOW_ZERO_PTR));
   my_free(mysql->db,MYF(MY_ALLOW_ZERO_PTR));
-#if defined(EMBEDDED_LIBRARY) || MYSQL_VERSION_ID >= 50100
   my_free(mysql->info_buffer,MYF(MY_ALLOW_ZERO_PTR));
   mysql->info_buffer= 0;
-#endif
+
   /* Clear pointers for better safety */
   mysql->host_info= mysql->user= mysql->passwd= mysql->db= 0;
-}
-
-
-/*
-  Clear connection pointer of every statement: this is necessary
-  to give error on attempt to use a prepared statement of closed
-  connection.
-
-  SYNOPSYS
-    mysql_detach_stmt_list()
-      stmt_list  pointer to mysql->stmts
-      func_name  name of calling function
-
-  NOTE
-    There is similar code in mysql_reconnect(), so changes here
-    should also be reflected there.
-*/
-
-void mysql_detach_stmt_list(LIST **stmt_list __attribute__((unused)),
-                            const char *func_name __attribute__((unused)))
-{
-#ifdef MYSQL_CLIENT
-  /* Reset connection handle in all prepared statements. */
-  LIST *element= *stmt_list;
-  char buff[MYSQL_ERRMSG_SIZE];
-  DBUG_ENTER("mysql_detach_stmt_list");
-
-  my_snprintf(buff, sizeof(buff)-1, ER(CR_STMT_CLOSED), func_name);
-  for (; element; element= element->next)
-  {
-    MYSQL_STMT *stmt= (MYSQL_STMT *) element->data;
-    set_stmt_error(stmt, CR_STMT_CLOSED, unknown_sqlstate, buff);
-    stmt->mysql= 0;
-    /* No need to call list_delete for statement here */
-  }
-  *stmt_list= 0;
-  DBUG_VOID_RETURN;
-#endif /* MYSQL_CLIENT */
 }
 
 
@@ -2674,11 +2416,6 @@ void STDCALL mysql_close(MYSQL *mysql)
     }
     mysql_close_free_options(mysql);
     mysql_close_free(mysql);
-    mysql_detach_stmt_list(&mysql->stmts, "mysql_close");
-#ifndef MYSQL_SERVER
-    if (mysql->thd)
-      (*mysql->methods->free_embedded_thd)(mysql);
-#endif
     if (mysql->free_me)
       my_free((uchar*) mysql,MYF(0));
   }

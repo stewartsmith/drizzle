@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#if _DTRACE_VERSION
+#if defined(_DTRACE_VERSION)
 
 #define	MYSQL_DELETE_END() \
 	__dtrace_mysql___delete_end()

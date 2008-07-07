@@ -30,9 +30,6 @@ my_error_reporter my_getopt_error_reporter= &default_reporter;
 static int findopt(char *optpat, uint length,
 		   const struct my_option **opt_res,
 		   char **ffname);
-my_bool getopt_compare_strings(const char *s,
-			       const char *t,
-			       uint length);
 static longlong getopt_ll(char *arg, const struct my_option *optp, int *err);
 static ulonglong getopt_ull(char *arg, const struct my_option *optp,
 			    int *err);

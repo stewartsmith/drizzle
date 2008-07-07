@@ -218,8 +218,8 @@ int my_pthread_mutex_trylock(pthread_mutex_t *mutex);
 #define set_timespec_nsec(ABSTIME,NSEC) \
 { \
   ulonglong now= my_getsystime() + (NSEC/100); \
-  (ABSTIME).ts_sec=  (now / ULL(10000000)); \
-  (ABSTIME).ts_nsec= (now % ULL(10000000) * 100 + ((NSEC) % 100)); \
+  (ABSTIME).ts_sec=  (now / 10000000ULL); \
+  (ABSTIME).ts_nsec= (now % 10000000ULL * 100 + ((NSEC) % 100)); \
 }
 #endif /* !set_timespec_nsec */
 #else
@@ -236,8 +236,8 @@ int my_pthread_mutex_trylock(pthread_mutex_t *mutex);
 #define set_timespec_nsec(ABSTIME,NSEC) \
 {\
   ulonglong now= my_getsystime() + (NSEC/100); \
-  (ABSTIME).tv_sec=  (time_t) (now / ULL(10000000));                  \
-  (ABSTIME).tv_nsec= (long) (now % ULL(10000000) * 100 + ((NSEC) % 100)); \
+  (ABSTIME).tv_sec=  (time_t) (now / 10000000ULL);                  \
+  (ABSTIME).tv_nsec= (long) (now % 10000000ULL * 100 + ((NSEC) % 100)); \
 }
 #endif /* !set_timespec_nsec */
 #endif /* HAVE_TIMESPEC_TS_SEC */
@@ -453,15 +453,6 @@ extern uint thd_lib_detected;
   to use my_atomic operations instead.
 */
 
-/*
-  Warning:
-  When compiling without threads, this file is not included.
-  See the *other* declarations of thread_safe_xxx in include/my_global.h
-
-  Second warning:
-  See include/config-win.h, for yet another implementation.
-*/
-#ifdef THREAD
 #ifndef thread_safe_increment
 #define thread_safe_increment(V,L) \
         (pthread_mutex_lock((L)), (V)++, pthread_mutex_unlock((L)))
@@ -474,7 +465,6 @@ extern uint thd_lib_detected;
         (pthread_mutex_lock((L)), (V)+=(C), pthread_mutex_unlock((L)))
 #define thread_safe_sub(V,C,L) \
         (pthread_mutex_lock((L)), (V)-=(C), pthread_mutex_unlock((L)))
-#endif
 #endif
 
 /*

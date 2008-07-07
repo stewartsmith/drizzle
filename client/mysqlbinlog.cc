@@ -1673,7 +1673,7 @@ static Exit_status check_header(IO_CACHE* file,
     {
       if (file->error)
       {
-        error("Could not read entry at offset %llu: "
+        error("Could not read entry at offset %lu: "
               "Error in log format or read error.", (ulonglong)tmp_pos);
         return ERROR_STOP;
       }
@@ -1727,7 +1727,7 @@ static Exit_status check_header(IO_CACHE* file,
           /* EOF can't be hit here normally, so it's a real error */
         {
           error("Could not read a Format_description_log_event event at "
-                "offset %llu; this could be a log format error or read error.",
+                "offset %lu; this could be a log format error or read error.",
                 (ulonglong)tmp_pos);
           return ERROR_STOP;
         }
@@ -1759,7 +1759,7 @@ static Exit_status check_header(IO_CACHE* file,
         if (!(ev= Log_event::read_log_event(file, glob_description_event)))
         {
           /* EOF can't be hit here normally, so it's a real error */
-          error("Could not read a Rotate_log_event event at offset %llu;"
+          error("Could not read a Rotate_log_event event at offset %lu;"
                 " this could be a log format error or read error.",
                 (ulonglong)tmp_pos);
           return ERROR_STOP;
@@ -1994,8 +1994,6 @@ int main(int argc, char** argv)
   my_end(my_end_arg | MY_DONT_FREE_DBUG);
 
   exit(retval == ERROR_STOP ? 1 : 0);
-  /* Keep compilers happy. */
-  DBUG_RETURN(retval == ERROR_STOP ? 1 : 0);
 }
 
 /*
@@ -2003,8 +2001,5 @@ int main(int argc, char** argv)
   the server
 */
 
-#include "my_decimal.h"
-#include "decimal.c"
-#include "my_decimal.cc"
 #include "log_event.cc"
 

@@ -13,6 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+if BUILD_DBUG
+  d_dbug = $(top_builddir)/dbug/libdbuglt.la
+endif
+
+
 #called from the top level Makefile
 
 MYSQLDATAdir =		$(localstatedir)
@@ -26,7 +31,9 @@ AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 SUBDIRS =		share
 libexec_PROGRAMS =	mysqld
 EXTRA_PROGRAMS =	gen_lex_hash
-bin_PROGRAMS =		mysql_tzinfo_to_sql
+bin_PROGRAMS =		
+bin_SCRIPTS = 		mysqldumpslow mysqld_safe 
+
 DTRACE =                @DTRACE@
 DTRACEFLAGS =           @DTRACEFLAGS@
 DTRACEFILES =           handler.o \
@@ -36,15 +43,15 @@ DTRACEFILES =           handler.o \
 			sql_select.o \
 			sql_update.o
 
-noinst_LTLIBRARIES = 
+noinst_LTLIBRARIES = 	libhandler.la
 
 SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
-mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
 mysqld_LDADD =		$(top_builddir)/sql-common/libsqlcommon.la \
+			libhandler.la \
 			$(libevent_libs) \
 			@mysql_plugin_libs@ \
 			$(LDADD)  $(CXXLDFLAGS) @LIBDL@
@@ -78,7 +85,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			item_row.cc \
 			field.cc strfunc.cc key.cc sql_class.cc sql_list.cc \
 			protocol.cc sql_state.c \
-			lock.cc my_lock.c \
+			lock.cc \
 			sql_string.cc sql_manager.cc sql_map.cc \
 			mysqld.cc hash_filo.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \
@@ -91,7 +98,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			unireg.cc \
 			log_event.cc rpl_record.cc \
 			discover.cc time.cc opt_range.cc opt_sum.cc \
-		   	records.cc filesort.cc handler.cc \
+		   	records.cc filesort.cc \
 			sql_db.cc sql_table.cc sql_rename.cc sql_crypt.cc \
 			sql_load.cc mf_iocache.cc field_conv.cc sql_show.cc \
 			sql_udf.cc \
@@ -106,6 +113,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_plugin.cc sql_binlog.cc \
 			sql_builtin.cc 
 
+libhandler_la_SOURCES = handler.cc
 nodist_mysqld_SOURCES = client.c net_serv.c
 
 if HAVE_DTRACE
@@ -114,9 +122,6 @@ endif
 
 gen_lex_hash_SOURCES =	gen_lex_hash.cc
 gen_lex_hash_LDFLAGS =  
-
-mysql_tzinfo_to_sql_SOURCES = tztime.cc
-mysql_tzinfo_to_sql_CXXFLAGS= -DTZINFO2SQL
 
 DEFS =			-DMYSQL_SERVER \
 			-DDEFAULT_MYSQL_HOME="\"$(MYSQLBASEdir)\"" \

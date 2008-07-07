@@ -17,7 +17,7 @@
 #define FORCE_DBUG_OFF
 #include <my_global.h>
 
-#if defined(THREAD) && !defined(DONT_USE_THR_ALARM)
+#if !defined(DONT_USE_THR_ALARM)
 #include <errno.h>
 #include <my_pthread.h>
 #include <signal.h>
@@ -603,7 +603,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
 ***************************************************************************/
 
 #ifdef MAIN
-#if defined(THREAD) && !defined(DONT_USE_THR_ALARM)
+#if !defined(DONT_USE_THR_ALARM)
 
 static pthread_cond_t COND_thread_count;
 static pthread_mutex_t LOCK_thread_count;
@@ -872,17 +872,13 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
   return 0;
 }
 
-#else /* THREAD */
+#else /* DONT_USE_THR_ALARM */
 
 int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
 {
-#ifndef THREAD
-  printf("thr_alarm disabled because we are not using threads\n");
-#else
   printf("thr_alarm disabled with DONT_USE_THR_ALARM\n");
-#endif
   exit(1);
 }
 
-#endif /* THREAD */
+#endif /* DONT_USE_THR_ALARM */
 #endif /* MAIN */

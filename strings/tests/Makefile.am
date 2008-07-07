@@ -13,7 +13,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
+if BUILD_DBUG
+  d_dbug = $(top_builddir)/dbug/libdbug.la
+endif
 
 MYSQLDATAdir =		$(localstatedir)
 MYSQLSHAREdir =		$(pkgdatadir)
@@ -23,7 +25,7 @@ AM_CPPFLAGS =		-I$(top_builddir)/include \
                         -I$(top_srcdir)/strings
 LDADD =			$(top_builddir)/strings/libmysyslt.la \
 			$(top_builddir)/strings/libmystrings.la \
-			$(top_builddir)/dbug/libdbug.la
+			$(d_dbug)
 
 DEFS =			-DMAIN \
 			-DDEFAULT_BASEDIR=\"$(prefix)\" \

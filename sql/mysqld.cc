@@ -270,7 +270,7 @@ handlerton *heap_hton;
 handlerton *myisam_hton;
 
 my_bool opt_readonly, use_temp_pool, relay_log_purge;
-my_bool opt_sync_frm, opt_allow_suspicious_udfs;
+my_bool opt_sync_frm;
 my_bool opt_secure_auth= 0;
 char* opt_secure_file_priv= 0;
 my_bool opt_log_slow_admin_statements= 0;
@@ -854,7 +854,6 @@ void clean_up(bool print_message)
 
   if (use_slave_mask)
     bitmap_free(&slave_error_mask);
-  my_tz_free();
   my_database_names_free();
   table_cache_free();
   table_def_free();
@@ -1152,7 +1151,7 @@ static void network_init(void)
     hints.ai_socktype= SOCK_STREAM;
     hints.ai_family= AF_UNSPEC;
 
-    my_snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
+    snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
     error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
     if (error != 0)
     {
@@ -2019,7 +2018,6 @@ SHOW_VAR com_status_vars[]= {
   {"load",                 (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOAD]), SHOW_LONG_STATUS},
   {"lock_tables",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_LOCK_TABLES]), SHOW_LONG_STATUS},
   {"optimize",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_OPTIMIZE]), SHOW_LONG_STATUS},
-  {"preload_keys",         (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PRELOAD_KEYS]), SHOW_LONG_STATUS},
   {"purge",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PURGE]), SHOW_LONG_STATUS},
   {"purge_before_date",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_PURGE_BEFORE]), SHOW_LONG_STATUS},
   {"release_savepoint",    (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_RELEASE_SAVEPOINT]), SHOW_LONG_STATUS},
@@ -2057,7 +2055,6 @@ SHOW_VAR com_status_vars[]= {
   {"show_warnings",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SHOW_WARNS]), SHOW_LONG_STATUS},
   {"slave_start",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SLAVE_START]), SHOW_LONG_STATUS},
   {"slave_stop",           (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_SLAVE_STOP]), SHOW_LONG_STATUS},
-  {"stmt_close",           (char*) offsetof(STATUS_VAR, com_stmt_close), SHOW_LONG_STATUS},
   {"truncate",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_TRUNCATE]), SHOW_LONG_STATUS},
   {"unlock_tables",        (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UNLOCK_TABLES]), SHOW_LONG_STATUS},
   {"update",               (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_UPDATE]), SHOW_LONG_STATUS},
@@ -2767,8 +2764,6 @@ server.");
 #endif
     locked_in_memory=0;
 
-  ft_init_stopwords();
-
   init_update_queries();
   DBUG_RETURN(0);
 }
@@ -3112,9 +3107,7 @@ void handle_connections_sockets()
   if (ip_sock != INVALID_SOCKET)
   {
     FD_SET(ip_sock,&clientFDs);
-#ifdef HAVE_FCNTL
     ip_flags = fcntl(ip_sock, F_GETFL, 0);
-#endif
   }
   DBUG_PRINT("general",("Waiting for connections."));
   MAYBE_BROKEN_SYSCALL;
@@ -3325,7 +3318,7 @@ enum options_mysqld
   OPT_WAIT_TIMEOUT,
   OPT_ERROR_LOG_FILE,
   OPT_DEFAULT_WEEK_FORMAT,
-  OPT_RANGE_ALLOC_BLOCK_SIZE, OPT_ALLOW_SUSPICIOUS_UDFS,
+  OPT_RANGE_ALLOC_BLOCK_SIZE,
   OPT_QUERY_ALLOC_BLOCK_SIZE, OPT_QUERY_PREALLOC_SIZE,
   OPT_TRANS_ALLOC_BLOCK_SIZE, OPT_TRANS_PREALLOC_SIZE,
   OPT_SYNC_FRM, OPT_SYNC_BINLOG,
@@ -3390,13 +3383,6 @@ struct my_option my_long_options[] =
    "Option used by mysql-test for debugging and testing of replication.",
    (uchar**) &abort_slave_event_count,  (uchar**) &abort_slave_event_count,
    0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"allow-suspicious-udfs", OPT_ALLOW_SUSPICIOUS_UDFS,
-   "Allows use of UDFs consisting of only one symbol xxx() "
-   "without corresponding xxx_init() or xxx_deinit(). That also means "
-   "that one can load any function from any library, for example exit() "
-   "from libc.so",
-   (uchar**) &opt_allow_suspicious_udfs, (uchar**) &opt_allow_suspicious_udfs,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"ansi", 'a', "Use ANSI SQL syntax instead of MySQL syntax. This mode will also set transaction isolation level 'serializable'.", 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
@@ -3574,18 +3560,6 @@ struct my_option my_long_options[] =
    "File that holds the names for last binary log files.",
    (uchar**) &opt_binlog_index_name, (uchar**) &opt_binlog_index_name, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef TO_BE_REMOVED_IN_5_1_OR_6_0
-  /*
-    In 5.0.6 we introduced the below option, then in 5.0.16 we renamed it to
-    log-bin-trust-function-creators but kept also the old name for
-    compatibility; the behaviour was also changed to apply only to functions
-    (and triggers). In a future release this old name could be removed.
-  */
-  {"log-bin-trust-routine-creators", OPT_LOG_BIN_TRUST_FUNCTION_CREATORS,
-   "(deprecated) Use log-bin-trust-function-creators.",
-   (uchar**) &trust_function_creators, (uchar**) &trust_function_creators, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   /*
     This option starts with "log-bin" to emphasize that it is specific of
     binary logging.

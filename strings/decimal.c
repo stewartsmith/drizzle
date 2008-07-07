@@ -511,7 +511,7 @@ static void digits_bounds(decimal_t *from, int *start_result, int *end_result)
     'shift' have to be from 1 to DIG_PER_DEC1-1 (inclusive)
 */
 
-void do_mini_left_shift(decimal_t *dec, int shift, int beg, int last)
+static void do_mini_left_shift(decimal_t *dec, int shift, int beg, int last)
 {
   dec1 *from= dec->buf + ROUND_UP(beg + 1) - 1;
   dec1 *end= dec->buf + ROUND_UP(last) - 1;
@@ -541,7 +541,7 @@ void do_mini_left_shift(decimal_t *dec, int shift, int beg, int last)
     'shift' have to be from 1 to DIG_PER_DEC1-1 (inclusive)
 */
 
-void do_mini_right_shift(decimal_t *dec, int shift, int beg, int last)
+static void do_mini_right_shift(decimal_t *dec, int shift, int beg, int last)
 {
   dec1 *from= dec->buf + ROUND_UP(last) - 1;
   dec1 *end= dec->buf + ROUND_UP(beg + 1) - 1;
@@ -574,7 +574,7 @@ void do_mini_right_shift(decimal_t *dec, int shift, int beg, int last)
     E_DEC_TRUNCATED   number was rounded to fit into buffer
 */
 
-int decimal_shift(decimal_t *dec, int shift)
+static int decimal_shift(decimal_t *dec, int shift)
 {
   /* index of first non zero digit (all indexes from 0) */
   int beg;
@@ -1031,7 +1031,7 @@ int decimal2ulonglong(decimal_t *from, ulonglong *to)
 
   if (from->sign)
   {
-      *to=ULL(0);
+      *to= 0ULL;
       return E_DEC_OVERFLOW;
   }
 
@@ -2810,9 +2810,9 @@ int main()
   test_f2d(1234500009876.5, 0);
 
   printf("==== ulonglong2decimal ====\n");
-  test_ull2d(ULL(12345), "12345", 0);
-  test_ull2d(ULL(0), "0", 0);
-  test_ull2d(ULL(18446744073709551615), "18446744073709551615", 0);
+  test_ull2d(12345ULL, "12345", 0);
+  test_ull2d(0ULL, "0", 0);
+  test_ull2d(18446744073709551615ULL, "18446744073709551615", 0);
 
   printf("==== decimal2ulonglong ====\n");
   test_d2ull("12345", "12345", 0);
@@ -2824,10 +2824,10 @@ int main()
   test_d2ull("9999999999999999999999999.000", "9999999999999999", 2);
 
   printf("==== longlong2decimal ====\n");
-  test_ll2d(LL(-12345), "-12345", 0);
-  test_ll2d(LL(-1), "-1", 0);
-  test_ll2d(LL(-9223372036854775807), "-9223372036854775807", 0);
-  test_ll2d(ULL(9223372036854775808), "-9223372036854775808", 0);
+  test_ll2d(12345LL, "-12345", 0);
+  test_ll2d(1LL, "-1", 0);
+  test_ll2d(9223372036854775807LL, "-9223372036854775807", 0);
+  test_ll2d(9223372036854775808ULL, "-9223372036854775808", 0);
 
   printf("==== decimal2longlong ====\n");
   test_d2ll("18446744073709551615", "18446744073", 2);

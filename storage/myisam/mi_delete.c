@@ -15,8 +15,7 @@
 
 /* Remove a row from a MyISAM table */
 
-#include "fulltext.h"
-#include "rt_index.h"
+#include "myisamdef.h"
 
 static int d_search(MI_INFO *info,MI_KEYDEF *keyinfo,uint comp_flag,
                     uchar *key,uint key_length,my_off_t page,uchar *anc_buff);
@@ -76,12 +75,6 @@ int mi_delete(MI_INFO *info,const uchar *record)
     if (mi_is_key_active(info->s->state.key_map, i))
     {
       info->s->keyinfo[i].version++;
-      if (info->s->keyinfo[i].flag & HA_FULLTEXT )
-      {
-        if (_mi_ft_del(info,i, old_key,record,info->lastpos))
-          goto err;
-      }
-      else
       {
         if (info->s->keyinfo[i].ck_delete(info,i,old_key,
                 _mi_make_key(info,i,old_key,record,info->lastpos)))
@@ -102,7 +95,6 @@ int mi_delete(MI_INFO *info,const uchar *record)
   mi_sizestore(lastpos,info->lastpos);
   myisam_log_command(MI_LOG_DELETE,info,(uchar*) lastpos,sizeof(lastpos),0);
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
-  allow_break();			/* Allow SIGHUP & SIGINT */
   if (info->invalidator != 0)
   {
     DBUG_PRINT("info", ("invalidator... '%s' (delete)", info->filename));
@@ -122,7 +114,6 @@ err:
   }
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
   info->update|=HA_STATE_WRITTEN;	/* Buffer changed */
-  allow_break();			/* Allow SIGHUP & SIGINT */
   my_errno=save_errno;
   if (save_errno == HA_ERR_KEY_NOT_FOUND)
   {
@@ -170,10 +161,7 @@ static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
     error= -1;
     goto err;
   }
-  if ((error=d_search(info,keyinfo,
-                      (keyinfo->flag & HA_FULLTEXT ? SEARCH_FIND | SEARCH_UPDATE
-                                                   : SEARCH_SAME),
-                       key,key_length,old_root,root_buff)) >0)
+  if ((error=d_search(info,keyinfo, (SEARCH_SAME), key,key_length,old_root,root_buff)) > 0)
   {
     if (error == 2)
     {
@@ -235,71 +223,6 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   }
   nod_flag=mi_test_if_nod(anc_buff);
 
-  if (!flag && keyinfo->flag & HA_FULLTEXT)
-  {
-    uint off;
-    int  subkeys;
-
-    get_key_full_length_rdonly(off, lastkey);
-    subkeys=ft_sintXkorr(lastkey+off);
-    DBUG_ASSERT(info->ft1_to_ft2==0 || subkeys >=0);
-    comp_flag=SEARCH_SAME;
-    if (subkeys >= 0)
-    {
-      /* normal word, one-level tree structure */
-      if (info->ft1_to_ft2)
-      {
-        /* we're in ft1->ft2 conversion mode. Saving key data */
-        insert_dynamic(info->ft1_to_ft2, (lastkey+off));
-      }
-      else
-      {
-        /* we need exact match only if not in ft1->ft2 conversion mode */
-        flag=(*keyinfo->bin_search)(info,keyinfo,anc_buff,key,USE_WHOLE_KEY,
-                                    comp_flag, &keypos, lastkey, &last_key);
-      }
-      /* fall through to normal delete */
-    }
-    else
-    {
-      /* popular word. two-level tree. going down */
-      uint tmp_key_length;
-      my_off_t root;
-      uchar *kpos=keypos;
-
-      if (!(tmp_key_length=(*keyinfo->get_key)(keyinfo,nod_flag,&kpos,lastkey)))
-      {
-        mi_print_error(info->s, HA_ERR_CRASHED);
-        my_errno= HA_ERR_CRASHED;
-        DBUG_RETURN(-1);
-      }
-      root=_mi_dpos(info,nod_flag,kpos);
-      if (subkeys == -1)
-      {
-        /* the last entry in sub-tree */
-        if (_mi_dispose(info, keyinfo, root,DFLT_INIT_HITS))
-          DBUG_RETURN(-1);
-        /* fall through to normal delete */
-      }
-      else
-      {
-        keyinfo=&info->s->ft2_keyinfo;
-        kpos-=keyinfo->keylength+nod_flag; /* we'll modify key entry 'in vivo' */
-        get_key_full_length_rdonly(off, key);
-        key+=off;
-        ret_value=_mi_ck_real_delete(info, &info->s->ft2_keyinfo,
-            key, HA_FT_WLEN, &root);
-        _mi_dpointer(info, kpos+HA_FT_WLEN, root);
-        subkeys++;
-        ft_intXstore(kpos, subkeys);
-        if (!ret_value)
-          ret_value=_mi_write_keypage(info,keyinfo,page,
-                                      DFLT_INIT_HITS,anc_buff);
-        DBUG_PRINT("exit",("Return: %d",ret_value));
-        DBUG_RETURN(ret_value);
-      }
-    }
-  }
   leaf_buff= 0;
   if (nod_flag)
   {

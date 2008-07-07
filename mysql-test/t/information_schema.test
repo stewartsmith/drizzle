@@ -40,7 +40,6 @@ show tables like 't%';
 --replace_column 8 # 12 # 13 #
 show table status;
 show full columns from t3 like "a%";
-show full columns from mysql.db like "Insert%";
 select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";
 show columns from mysqltest.t1 where field like "%a%";
@@ -173,8 +172,8 @@ select column_name,data_type,CHARACTER_OCTET_LENGTH,
 from information_schema.columns
 where table_name='t1';
 drop table t1;
-create table t1(f1 tinyint, f2 SMALLINT, f3 mediumint, f4 int,
-                f5 BIGINT, f6 BIT, f7 bit(64));
+create table t1(f1 tinyint, f2 SMALLINT, f3 BIGINT, f4 int,
+                f5 BIGINT, f6 TINYINT, f7 SMALLINT);
 select column_name, NUMERIC_PRECISION, NUMERIC_SCALE
 from information_schema.columns
 where table_name='t1';

@@ -104,10 +104,6 @@ extern "C" {
 #define cmp_database(cs,A,B) strcmp((A),(B))
 #endif
 
-#if !defined(THREAD)
-#define USE_POPEN
-#endif
-
 #include "completion_hash.h"
 
 #define PROMPT_CHAR '\\'
@@ -452,8 +448,6 @@ static COMMANDS commands[] = {
   { "FULL", 0, 0, 0, ""},
   { "FULLTEXT", 0, 0, 0, ""},
   { "FUNCTION", 0, 0, 0, ""},
-  { "GEOMETRY", 0, 0, 0, ""},
-  { "GEOMETRYCOLLECTION", 0, 0, 0, ""},
   { "GET_FORMAT", 0, 0, 0, ""},
   { "GLOBAL", 0, 0, 0, ""},
   { "GRANT", 0, 0, 0, ""},
@@ -549,7 +543,6 @@ static COMMANDS commands[] = {
   { "MAX_USER_CONNECTIONS", 0, 0, 0, ""},
   { "MEDIUM", 0, 0, 0, ""},
   { "MEDIUMBLOB", 0, 0, 0, ""},
-  { "MEDIUMINT", 0, 0, 0, ""},
   { "MEDIUMTEXT", 0, 0, 0, ""},
   { "MERGE", 0, 0, 0, ""},
   { "MICROSECOND", 0, 0, 0, ""},
@@ -854,16 +847,6 @@ static COMMANDS commands[] = {
   { "FROM_DAYS", 0, 0, 0, ""},
   { "FROM_UNIXTIME", 0, 0, 0, ""},
   { "GET_LOCK", 0, 0, 0, ""},
-  { "GEOMETRYN", 0, 0, 0, ""},
-  { "GEOMETRYTYPE", 0, 0, 0, ""},
-  { "GEOMCOLLFROMTEXT", 0, 0, 0, ""},
-  { "GEOMCOLLFROMWKB", 0, 0, 0, ""},
-  { "GEOMETRYCOLLECTIONFROMTEXT", 0, 0, 0, ""},
-  { "GEOMETRYCOLLECTIONFROMWKB", 0, 0, 0, ""},
-  { "GEOMETRYFROMTEXT", 0, 0, 0, ""},
-  { "GEOMETRYFROMWKB", 0, 0, 0, ""},
-  { "GEOMFROMTEXT", 0, 0, 0, ""},
-  { "GEOMFROMWKB", 0, 0, 0, ""},
   { "GLENGTH", 0, 0, 0, ""},
   { "GREATEST", 0, 0, 0, ""},
   { "GROUP_CONCAT", 0, 0, 0, ""},
@@ -930,7 +913,6 @@ static COMMANDS commands[] = {
   { "NAME_CONST", 0, 0, 0, ""},
   { "NOW", 0, 0, 0, ""},
   { "NULLIF", 0, 0, 0, ""},
-  { "NUMGEOMETRIES", 0, 0, 0, ""},
   { "NUMINTERIORRINGS", 0, 0, 0, ""},
   { "NUMPOINTS", 0, 0, 0, ""},
   { "OCTET_LENGTH", 0, 0, 0, ""},
@@ -1302,7 +1284,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-sig_handler window_resize(int sig)
+sig_handler window_resize(int sig __attribute__((__unused__)))
 {
   struct winsize window_size;
 
@@ -3037,17 +3019,13 @@ com_ego(String *buffer,char *line)
 static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
-    case MYSQL_TYPE_BIT:         return "BIT";
     case MYSQL_TYPE_BLOB:        return "BLOB";
     case MYSQL_TYPE_DATE:        return "DATE";
     case MYSQL_TYPE_DATETIME:    return "DATETIME";
-    case MYSQL_TYPE_NEWDECIMAL:  return "NEWDECIMAL";
-    case MYSQL_TYPE_DECIMAL:     return "DECIMAL";
+    case MYSQL_TYPE_NEWDECIMAL:  return "DECIMAL";
     case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
     case MYSQL_TYPE_ENUM:        return "ENUM";
     case MYSQL_TYPE_FLOAT:       return "FLOAT";
-    case MYSQL_TYPE_GEOMETRY:    return "GEOMETRY";
-    case MYSQL_TYPE_INT24:       return "INT24";
     case MYSQL_TYPE_LONG:        return "LONG";
     case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
     case MYSQL_TYPE_LONG_BLOB:   return "LONG_BLOB";
@@ -3577,7 +3555,7 @@ print_tab_data(MYSQL_RES *result)
 }
 
 static int
-com_tee(String *buffer, char *line __attribute__((unused)))
+com_tee(String *buffer __attribute__((__unused__)), char *line )
 {
   char file_name[FN_REFLEN], *end, *param;
 
@@ -3853,7 +3831,7 @@ com_connect(String *buffer, char *line)
 }
 
 
-static int com_source(String *buffer, char *line)
+static int com_source(String *buffer __attribute__((__unused__)), char *line)
 {
   char source_name[FN_REFLEN], *end, *param;
   LINE_BUFFER *line_buff;
@@ -4111,13 +4089,6 @@ sql_real_connect(char *host,char *database,char *user,char *password,
     mysql_options(&mysql, MYSQL_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
     mysql_options(&mysql,MYSQL_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-  if (opt_use_ssl)
-    mysql_ssl_set(&mysql, opt_ssl_key, opt_ssl_cert, opt_ssl_ca,
-		  opt_ssl_capath, opt_ssl_cipher);
-  mysql_options(&mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
-                (char*)&opt_ssl_verify_server_cert);
-#endif
   if (opt_protocol)
     mysql_options(&mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
 #ifdef HAVE_SMEM
@@ -4225,12 +4196,6 @@ com_status(String *buffer __attribute__((unused)),
       }
       mysql_free_result(result);
     } 
-#if defined(HAVE_OPENSSL) && !defined(EMBEDDED_LIBRARY)
-    if ((status_str= mysql_get_ssl_cipher(&mysql)))
-      tee_fprintf(stdout, "SSL:\t\t\tCipher in use is %s\n",
-		  status_str);
-    else
-#endif /* HAVE_OPENSSL && !EMBEDDED_LIBRARY */
       tee_puts("SSL:\t\t\tNot in use", stdout);
   }
   else
@@ -4736,7 +4701,7 @@ static void init_username()
   }
 }
 
-static int com_prompt(String *buffer, char *line)
+static int com_prompt(String *buffer __attribute__((__unused__)), char *line)
 {
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;

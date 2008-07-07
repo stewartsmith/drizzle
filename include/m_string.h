@@ -30,9 +30,6 @@
 #include <string.h>
 #endif
 
-/* need by my_vsnprintf */
-#include <stdarg.h> 
-
 #ifdef _AIX
 #undef HAVE_BCMP
 #endif
@@ -83,9 +80,6 @@ extern void (*my_str_free)(void *);
 
 #if defined(HAVE_STPCPY)
 #define strmov(A,B) stpcpy((A),(B))
-#ifndef stpcpy
-extern char *stpcpy(char *, const char *);	/* For AIX with gcc 2.95.3 */
-#endif
 #endif
 
 /* Declared in int2str() */
@@ -259,7 +253,6 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error);
 #define HAVE_STRTOLL
 #endif
 #else
-#ifdef HAVE_LONG_LONG
 extern char *longlong2str(longlong val,char *dst,int radix);
 extern char *longlong10_to_str(longlong val,char *dst,int radix);
 #if (!defined(HAVE_STRTOULL) || defined(NO_STRTOLL_PROTO))
@@ -267,14 +260,7 @@ extern longlong strtoll(const char *str, char **ptr, int base);
 extern ulonglong strtoull(const char *str, char **ptr, int base);
 #endif
 #endif
-#endif
 
-/* my_vsnprintf.c */
-
-extern size_t my_vsnprintf(char *str, size_t n,
-                           const char *format, va_list ap);
-extern size_t my_snprintf(char *to, size_t n, const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 3, 4);
 
 #if defined(__cplusplus)
 }

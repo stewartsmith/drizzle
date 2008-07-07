@@ -40,7 +40,7 @@
 #include <my_global.h>
 #include "m_string.h"
 
-#if defined(HAVE_LONG_LONG) && !defined(longlong2str) && !defined(HAVE_LONGLONG2STR)
+#if !defined(longlong2str) && !defined(HAVE_LONGLONG2STR)
 
 /*
   This assumes that longlong multiplication is faster than longlong division.

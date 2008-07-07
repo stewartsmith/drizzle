@@ -108,13 +108,13 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 
 extern int ha_compare_text(CHARSET_INFO *, uchar *, uint, uchar *, uint ,
 			   my_bool, my_bool);
-extern int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
-		      register uchar *b, uint key_length, uint nextflag,
-		      uint *diff_pos);
 
 extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, uchar *a);
 extern void my_handler_error_register(void);
 extern void my_handler_error_unregister(void);
+extern int ha_key_cmp(HA_KEYSEG *keyseg, uchar *a,uchar *b,
+                      uint key_length,uint nextflag,uint *diff_length);
+
 /*
   Inside an in-memory data record, memory pointers to pieces of the
   record (like BLOBs) are stored in their native byte order and in

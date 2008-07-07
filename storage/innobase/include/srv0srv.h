@@ -84,10 +84,7 @@ extern ulong	srv_flush_log_at_trx_commit;
 
 extern byte	srv_latin1_ordering[256];/* The sort order table of the latin1
 					character set */
-extern ulint	srv_pool_size;
 extern ulint	srv_awe_window_size;
-extern ulint	srv_mem_pool_size;
-extern ulint	srv_lock_table_size;
 
 extern ulint	srv_n_file_io_threads;
 
@@ -214,9 +211,6 @@ extern ulint srv_dblwr_writes;
 /* here we store the number of pages that have been flushed to the
 doublewrite buffer */
 extern ulint srv_dblwr_pages_written;
-
-/* in this variable we store the number of write requests issued */
-extern ulint srv_buf_pool_write_requests;
 
 /* here we store the number of times when we had to wait for a free page
 in the buffer pool. It happens when the buffer pool is full and we need

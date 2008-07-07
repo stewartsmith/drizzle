@@ -33,10 +33,6 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#ifdef HAVE_MYSQL_CONFIG_H
-#include "../../include/config.h"
-#endif
-
 #ifndef __AZIO_H__
 #define __AZIO_H__
 
@@ -52,6 +48,7 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
 /* Start of MySQL Specific Information */
 
 /* Some personal debugging functions */
@@ -63,8 +60,8 @@ extern "C" {
 /*
   ulonglong + ulonglong + ulonglong + ulonglong + uchar
 */
-#define AZMETA_BUFFER_SIZE sizeof(unsigned long long) \
-  + sizeof(unsigned long long) + sizeof(unsigned long long) + sizeof(unsigned long long) \
+#define AZMETA_BUFFER_SIZE sizeof(uint64_t) \
+  + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) \
   + sizeof(unsigned int) + sizeof(unsigned int) \
   + sizeof(unsigned int) + sizeof(unsigned int) \
   + sizeof(unsigned char)
@@ -225,7 +222,7 @@ typedef enum {
 typedef enum {
   AZ_METHOD_BLOCK,
   AZ_METHOD_AIO,
-  AZ_METHOD_MAX,
+  AZ_METHOD_MAX
 } az_method;
 
 typedef struct azio_container_st azio_container_st;
@@ -264,10 +261,10 @@ typedef struct azio_stream {
   unsigned char version;   /* Version */
   unsigned char minor_version;   /* Version */
   unsigned int block_size;   /* Block Size */
-  unsigned long long check_point;   /* Last position we checked */
-  unsigned long long forced_flushes;   /* Forced Flushes */
-  unsigned long long rows;   /* rows */
-  unsigned long long auto_increment;   /* auto increment field */
+  uint64_t check_point;   /* Last position we checked */
+  uint64_t forced_flushes;   /* Forced Flushes */
+  uint64_t rows;   /* rows */
+  uint64_t auto_increment;   /* auto increment field */
   unsigned int longest_row;   /* Longest row */
   unsigned int shortest_row;   /* Shortest row */
   unsigned char dirty;   /* State of file */

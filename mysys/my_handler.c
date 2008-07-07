@@ -21,6 +21,7 @@
 #include <my_handler.h>
 #include <my_sys.h>
 
+#include "mysys_priv.h"
 #include "my_handler_errors.h"
 
 int ha_compare_text(CHARSET_INFO *charset_info, uchar *a, uint a_length,
@@ -423,7 +424,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
         swap_variables(uchar*, a, b);
       break;
     }
-#ifdef HAVE_LONG_LONG
     case HA_KEYTYPE_LONGLONG:
     {
       longlong ll_a,ll_b;
@@ -446,7 +446,6 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
       b+= 8;
       break;
     }
-#endif
     case HA_KEYTYPE_END:                        /* Ready */
       goto end;                                 /* diff_pos is incremented */
     }
@@ -549,10 +548,8 @@ HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, uchar *a)
     case HA_KEYTYPE_ULONG_INT:
     case HA_KEYTYPE_INT24:
     case HA_KEYTYPE_UINT24:
-#ifdef HAVE_LONG_LONG
     case HA_KEYTYPE_LONGLONG:
     case HA_KEYTYPE_ULONGLONG:
-#endif
     case HA_KEYTYPE_FLOAT:
     case HA_KEYTYPE_DOUBLE:
       a= end;

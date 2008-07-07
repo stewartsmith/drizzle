@@ -90,7 +90,6 @@ int mi_close(register MI_INFO *info)
       my_free((uchar*) share->decode_trees,MYF(0));
       my_free((uchar*) share->decode_tables,MYF(0));
     }
-#ifdef THREAD
     thr_lock_delete(&share->lock);
     VOID(pthread_mutex_destroy(&share->intern_lock));
     {
@@ -101,15 +100,10 @@ int mi_close(register MI_INFO *info)
 	VOID(rwlock_destroy(&share->key_root_lock[i]));
       }
     }
-#endif
     my_free((uchar*) info->s,MYF(0));
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  if (info->ftparser_param)
-  {
-    my_free((uchar*)info->ftparser_param, MYF(0));
-    info->ftparser_param= 0;
-  }
+
   if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
     error = my_errno;
 

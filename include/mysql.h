@@ -48,7 +48,7 @@ typedef int my_socket;
 #include "mysql_com.h"
 #include "mysql_time.h"
 
-#include "my_list.h" /* for LISTs used in 'MYSQL' and 'MYSQL_STMT' */
+#include "my_list.h" /* for LISTs used in 'MYSQL' */
 
 extern unsigned int mysql_port;
 extern char *mysql_unix_port;
@@ -59,9 +59,9 @@ extern char *mysql_unix_port;
 #define IS_PRI_KEY(n)	((n) & PRI_KEY_FLAG)
 #define IS_NOT_NULL(n)	((n) & NOT_NULL_FLAG)
 #define IS_BLOB(n)	((n) & BLOB_FLAG)
-#define IS_NUM(t)	((t) <= MYSQL_TYPE_INT24 || (t) == MYSQL_TYPE_YEAR || (t) == MYSQL_TYPE_NEWDECIMAL)
+#define IS_NUM(t)	((t) <= MYSQL_TYPE_LONGLONG || (t) == MYSQL_TYPE_YEAR || (t) == MYSQL_TYPE_NEWDECIMAL)
 #define IS_NUM_FIELD(f)	 ((f)->flags & NUM_FLAG)
-#define INTERNAL_NUM_FIELD(f) (((f)->type <= MYSQL_TYPE_INT24 && ((f)->type != MYSQL_TYPE_TIMESTAMP || (f)->length == 14 || (f)->length == 8)) || (f)->type == MYSQL_TYPE_YEAR)
+#define INTERNAL_NUM_FIELD(f) (((f)->type <= MYSQL_TYPE_LONGLONG && ((f)->type != MYSQL_TYPE_TIMESTAMP || (f)->length == 14 || (f)->length == 8)) || (f)->type == MYSQL_TYPE_YEAR)
 #define IS_LONGDATA(t) ((t) >= MYSQL_TYPE_TINY_BLOB && (t) <= MYSQL_TYPE_STRING)
 
 
@@ -434,180 +434,6 @@ my_bool		STDCALL mysql_embedded(void);
 my_bool         STDCALL mysql_read_query_result(MYSQL *mysql);
 
 
-/*
-  The following definitions are added for the enhanced 
-  client-server protocol
-*/
-
-/* statement state */
-enum enum_mysql_stmt_state
-{
-  MYSQL_STMT_INIT_DONE= 1, MYSQL_STMT_PREPARE_DONE, MYSQL_STMT_EXECUTE_DONE,
-  MYSQL_STMT_FETCH_DONE
-};
-
-
-/*
-  This structure is used to define bind information, and
-  internally by the client library.
-  Public members with their descriptions are listed below
-  (conventionally `On input' refers to the binds given to
-  mysql_stmt_bind_param, `On output' refers to the binds given
-  to mysql_stmt_bind_result):
-
-  buffer_type    - One of the MYSQL_* types, used to describe
-                   the host language type of buffer.
-                   On output: if column type is different from
-                   buffer_type, column value is automatically converted
-                   to buffer_type before it is stored in the buffer.
-  buffer         - On input: points to the buffer with input data.
-                   On output: points to the buffer capable to store
-                   output data.
-                   The type of memory pointed by buffer must correspond
-                   to buffer_type. See the correspondence table in
-                   the comment to mysql_stmt_bind_param.
-
-  The two above members are mandatory for any kind of bind.
-
-  buffer_length  - the length of the buffer. You don't have to set
-                   it for any fixed length buffer: float, double,
-                   int, etc. It must be set however for variable-length
-                   types, such as BLOBs or STRINGs.
-
-  length         - On input: in case when lengths of input values
-                   are different for each execute, you can set this to
-                   point at a variable containining value length. This
-                   way the value length can be different in each execute.
-                   If length is not NULL, buffer_length is not used.
-                   Note, length can even point at buffer_length if
-                   you keep bind structures around while fetching:
-                   this way you can change buffer_length before
-                   each execution, everything will work ok.
-                   On output: if length is set, mysql_stmt_fetch will
-                   write column length into it.
-
-  is_null        - On input: points to a boolean variable that should
-                   be set to TRUE for NULL values.
-                   This member is useful only if your data may be
-                   NULL in some but not all cases.
-                   If your data is never NULL, is_null should be set to 0.
-                   If your data is always NULL, set buffer_type
-                   to MYSQL_TYPE_NULL, and is_null will not be used.
-
-  is_unsigned    - On input: used to signify that values provided for one
-                   of numeric types are unsigned.
-                   On output describes signedness of the output buffer.
-                   If, taking into account is_unsigned flag, column data
-                   is out of range of the output buffer, data for this column
-                   is regarded truncated. Note that this has no correspondence
-                   to the sign of result set column, if you need to find it out
-                   use mysql_stmt_result_metadata.
-  error          - where to write a truncation error if it is present.
-                   possible error value is:
-                   0  no truncation
-                   1  value is out of range or buffer is too small
-
-  Please note that MYSQL_BIND also has internals members.
-*/
-
-typedef struct st_mysql_bind
-{
-  unsigned long	*length;          /* output length pointer */
-  my_bool       *is_null;	  /* Pointer to null indicator */
-  void		*buffer;	  /* buffer to get/put data */
-  /* set this if you want to track data truncations happened during fetch */
-  my_bool       *error;
-  unsigned char *row_ptr;         /* for the current data position */
-  void (*store_param_func)(NET *net, struct st_mysql_bind *param);
-  void (*fetch_result)(struct st_mysql_bind *, MYSQL_FIELD *,
-                       unsigned char **row);
-  void (*skip_result)(struct st_mysql_bind *, MYSQL_FIELD *,
-		      unsigned char **row);
-  /* output buffer length, must be set when fetching str/binary */
-  unsigned long buffer_length;
-  unsigned long offset;           /* offset position for char/binary fetch */
-  unsigned long	length_value;     /* Used if length is 0 */
-  unsigned int	param_number;	  /* For null count and error messages */
-  unsigned int  pack_length;	  /* Internal length for packed data */
-  enum enum_field_types buffer_type;	/* buffer type */
-  my_bool       error_value;      /* used if error is 0 */
-  my_bool       is_unsigned;      /* set if integer type is unsigned */
-  my_bool	long_data_used;	  /* If used with mysql_send_long_data */
-  my_bool	is_null_value;    /* Used if is_null is 0 */
-  void *extension;
-} MYSQL_BIND;
-
-
-/* statement handler */
-typedef struct st_mysql_stmt
-{
-  MEM_ROOT       mem_root;             /* root allocations */
-  LIST           list;                 /* list to keep track of all stmts */
-  MYSQL          *mysql;               /* connection handle */
-  MYSQL_BIND     *params;              /* input parameters */
-  MYSQL_BIND     *bind;                /* output parameters */
-  MYSQL_FIELD    *fields;              /* result set metadata */
-  MYSQL_DATA     result;               /* cached result set */
-  MYSQL_ROWS     *data_cursor;         /* current row in cached result */
-  /*
-    mysql_stmt_fetch() calls this function to fetch one row (it's different
-    for buffered, unbuffered and cursor fetch).
-  */
-  int            (*read_row_func)(struct st_mysql_stmt *stmt, 
-                                  unsigned char **row);
-  /* copy of mysql->affected_rows after statement execution */
-  my_ulonglong   affected_rows;
-  my_ulonglong   insert_id;            /* copy of mysql->insert_id */
-  unsigned long	 stmt_id;	       /* Id for prepared statement */
-  unsigned long  flags;                /* i.e. type of cursor to open */
-  unsigned long  prefetch_rows;        /* number of rows per one COM_FETCH */
-  /*
-    Copied from mysql->server_status after execute/fetch to know
-    server-side cursor status for this statement.
-  */
-  unsigned int   server_status;
-  unsigned int	 last_errno;	       /* error code */
-  unsigned int   param_count;          /* input parameter count */
-  unsigned int   field_count;          /* number of columns in result set */
-  enum enum_mysql_stmt_state state;    /* statement state */
-  char		 last_error[MYSQL_ERRMSG_SIZE]; /* error message */
-  char		 sqlstate[SQLSTATE_LENGTH+1];
-  /* Types of input parameters should be sent to server */
-  my_bool        send_types_to_server;
-  my_bool        bind_param_done;      /* input buffers were supplied */
-  unsigned char  bind_result_done;     /* output buffers were supplied */
-  /* mysql_stmt_close() had to cancel this result */
-  my_bool       unbuffered_fetch_cancelled;  
-  /*
-    Is set to true if we need to calculate field->max_length for 
-    metadata fields when doing mysql_stmt_store_result.
-  */
-  my_bool       update_max_length;     
-  void *extension;
-} MYSQL_STMT;
-
-enum enum_stmt_attr_type
-{
-  /*
-    When doing mysql_stmt_store_result calculate max_length attribute
-    of statement metadata. This is to be consistent with the old API, 
-    where this was done automatically.
-    In the new API we do that only by request because it slows down
-    mysql_stmt_store_result sufficiently.
-  */
-  STMT_ATTR_UPDATE_MAX_LENGTH,
-  /*
-    unsigned long with combination of cursor flags (read only, for update,
-    etc)
-  */
-  STMT_ATTR_CURSOR_TYPE,
-  /*
-    Amount of rows to retrieve from server per one fetch if using cursors.
-    Accepts unsigned long attribute in the range 1 - ulong_max
-  */
-  STMT_ATTR_PREFETCH_ROWS
-};
-
 
 typedef struct st_mysql_methods
 {
@@ -618,67 +444,20 @@ typedef struct st_mysql_methods
 			      unsigned long header_length,
 			      const unsigned char *arg,
 			      unsigned long arg_length,
-			      my_bool skip_check,
-                              MYSQL_STMT *stmt);
+			      my_bool skip_check);
   MYSQL_DATA *(*read_rows)(MYSQL *mysql,MYSQL_FIELD *mysql_fields,
 			   unsigned int fields);
   MYSQL_RES * (*use_result)(MYSQL *mysql);
   void (*fetch_lengths)(unsigned long *to, 
 			MYSQL_ROW column, unsigned int field_count);
   void (*flush_use_result)(MYSQL *mysql);
-#if !defined(MYSQL_SERVER)
   MYSQL_FIELD * (*list_fields)(MYSQL *mysql);
-  my_bool (*read_prepare_result)(MYSQL *mysql, MYSQL_STMT *stmt);
-  int (*stmt_execute)(MYSQL_STMT *stmt);
-  int (*read_binary_rows)(MYSQL_STMT *stmt);
   int (*unbuffered_fetch)(MYSQL *mysql, char **row);
-  void (*free_embedded_thd)(MYSQL *mysql);
   const char *(*read_statistics)(MYSQL *mysql);
   my_bool (*next_result)(MYSQL *mysql);
   int (*read_change_user_result)(MYSQL *mysql, char *buff, const char *passwd);
-  int (*read_rows_from_cursor)(MYSQL_STMT *stmt);
-#endif
 } MYSQL_METHODS;
 
-
-MYSQL_STMT * STDCALL mysql_stmt_init(MYSQL *mysql);
-int STDCALL mysql_stmt_prepare(MYSQL_STMT *stmt, const char *query,
-                               unsigned long length);
-int STDCALL mysql_stmt_execute(MYSQL_STMT *stmt);
-int STDCALL mysql_stmt_fetch(MYSQL_STMT *stmt);
-int STDCALL mysql_stmt_fetch_column(MYSQL_STMT *stmt, MYSQL_BIND *bind_arg, 
-                                    unsigned int column,
-                                    unsigned long offset);
-int STDCALL mysql_stmt_store_result(MYSQL_STMT *stmt);
-unsigned long STDCALL mysql_stmt_param_count(MYSQL_STMT * stmt);
-my_bool STDCALL mysql_stmt_attr_set(MYSQL_STMT *stmt,
-                                    enum enum_stmt_attr_type attr_type,
-                                    const void *attr);
-my_bool STDCALL mysql_stmt_attr_get(MYSQL_STMT *stmt,
-                                    enum enum_stmt_attr_type attr_type,
-                                    void *attr);
-my_bool STDCALL mysql_stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bnd);
-my_bool STDCALL mysql_stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bnd);
-my_bool STDCALL mysql_stmt_close(MYSQL_STMT * stmt);
-my_bool STDCALL mysql_stmt_reset(MYSQL_STMT * stmt);
-my_bool STDCALL mysql_stmt_free_result(MYSQL_STMT *stmt);
-my_bool STDCALL mysql_stmt_send_long_data(MYSQL_STMT *stmt, 
-                                          unsigned int param_number,
-                                          const char *data, 
-                                          unsigned long length);
-MYSQL_RES *STDCALL mysql_stmt_result_metadata(MYSQL_STMT *stmt);
-MYSQL_RES *STDCALL mysql_stmt_param_metadata(MYSQL_STMT *stmt);
-unsigned int STDCALL mysql_stmt_errno(MYSQL_STMT * stmt);
-const char *STDCALL mysql_stmt_error(MYSQL_STMT * stmt);
-const char *STDCALL mysql_stmt_sqlstate(MYSQL_STMT * stmt);
-MYSQL_ROW_OFFSET STDCALL mysql_stmt_row_seek(MYSQL_STMT *stmt, 
-                                             MYSQL_ROW_OFFSET offset);
-MYSQL_ROW_OFFSET STDCALL mysql_stmt_row_tell(MYSQL_STMT *stmt);
-void STDCALL mysql_stmt_data_seek(MYSQL_STMT *stmt, my_ulonglong offset);
-my_ulonglong STDCALL mysql_stmt_num_rows(MYSQL_STMT *stmt);
-my_ulonglong STDCALL mysql_stmt_affected_rows(MYSQL_STMT *stmt);
-my_ulonglong STDCALL mysql_stmt_insert_id(MYSQL_STMT *stmt);
-unsigned int STDCALL mysql_stmt_field_count(MYSQL_STMT *stmt);
 
 my_bool STDCALL mysql_commit(MYSQL * mysql);
 my_bool STDCALL mysql_rollback(MYSQL * mysql);
@@ -709,10 +488,7 @@ int		STDCALL mysql_drop_db(MYSQL *mysql, const char *DB);
 
 #define simple_command(mysql, command, arg, length, skip_check) \
   (*(mysql)->methods->advanced_command)(mysql, command, 0,  \
-                                        0, arg, length, skip_check, NULL)
-#define stmt_command(mysql, command, arg, length, stmt) \
-  (*(mysql)->methods->advanced_command)(mysql, command, 0,  \
-                                        0, arg, length, 1, stmt)
+                                        0, arg, length, skip_check)
 
 #ifdef	__cplusplus
 }

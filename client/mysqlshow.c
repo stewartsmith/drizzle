@@ -105,13 +105,6 @@ int main(int argc, char **argv)
   mysql_init(&mysql);
   if (opt_compress)
     mysql_options(&mysql,MYSQL_OPT_COMPRESS,NullS);
-#ifdef HAVE_OPENSSL
-  if (opt_use_ssl)
-    mysql_ssl_set(&mysql, opt_ssl_key, opt_ssl_cert, opt_ssl_ca,
-		  opt_ssl_capath, opt_ssl_cipher);
-  mysql_options(&mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
-                (char*)&opt_ssl_verify_server_cert);
-#endif
   if (opt_protocol)
     mysql_options(&mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
 #ifdef HAVE_SMEM
@@ -153,7 +146,6 @@ int main(int argc, char **argv)
 #endif
   my_end(my_end_arg);
   exit(error ? 1 : 0);
-  return 0;				/* No compiler warnings */
 }
 
 static struct my_option my_long_options[] =
@@ -473,12 +465,12 @@ list_tables(MYSQL *mysql,const char *db,const char *table)
       table name
     */
     mysql_real_escape_string(mysql, rows, table, (unsigned long)strlen(table));
-    my_snprintf(query, sizeof(query), "show%s tables like '%s'",
-                opt_table_type ? " full" : "", rows);
+    snprintf(query, sizeof(query), "show%s tables like '%s'",
+             opt_table_type ? " full" : "", rows);
   }
   else
-    my_snprintf(query, sizeof(query), "show%s tables",
-                opt_table_type ? " full" : "");
+    snprintf(query, sizeof(query), "show%s tables",
+             opt_table_type ? " full" : "");
   if (mysql_query(mysql, query) || !(result= mysql_store_result(mysql)))
   {
     fprintf(stderr,"%s: Cannot list tables in %s: %s\n",my_progname,db,

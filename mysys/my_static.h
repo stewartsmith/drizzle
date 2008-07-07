@@ -68,7 +68,5 @@ extern struct st_my_file_info my_file_info_default[MY_NFILE];
 
 extern ulonglong query_performance_frequency, query_performance_offset;
 
-#if defined(THREAD)
 extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
-#endif
 C_MODE_END

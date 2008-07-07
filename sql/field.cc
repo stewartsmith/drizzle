@@ -29,9 +29,6 @@
 #include "sql_select.h"
 #include <m_ctype.h>
 #include <errno.h>
-#ifdef HAVE_FCONVERT
-#include <floatingpoint.h>
-#endif
 
 // Maximum allowed exponent value for converting string to decimal
 #define MAX_EXPONENT 1024
@@ -52,7 +49,7 @@ const char field_separator=',';
 #define LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE 128
 #define DECIMAL_TO_STRING_CONVERSION_BUFFER_SIZE 128
 #define BLOB_PACK_LENGTH_TO_MAX_LENGH(arg) \
-((ulong) ((LL(1) << min(arg, 4) * 8) - LL(1)))
+((ulong) ((1LL << min(arg, 4) * 8) - 1LL))
 
 #define ASSERT_COLUMN_MARKED_FOR_READ DBUG_ASSERT(!table || (!table->read_set || bitmap_is_set(table->read_set, field_index)))
 #define ASSERT_COLUMN_MARKED_FOR_WRITE DBUG_ASSERT(!table || (!table->write_set || bitmap_is_set(table->write_set, field_index)))
@@ -64,7 +61,7 @@ const char field_separator=',';
   following #defines describe that gap and how to canculate number of fields
   and index of field in thia array.
 */
-#define FIELDTYPE_TEAR_FROM (MYSQL_TYPE_BIT + 1)
+#define FIELDTYPE_TEAR_FROM (MYSQL_TYPE_VARCHAR + 1)
 #define FIELDTYPE_TEAR_TO   (MYSQL_TYPE_NEWDECIMAL - 1)
 #define FIELDTYPE_NUM (FIELDTYPE_TEAR_FROM + (255 - FIELDTYPE_TEAR_TO))
 inline int field_type2index (enum_field_types field_type)
@@ -95,8 +92,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -105,8 +100,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING       
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_TINY -> */
   {
@@ -126,8 +121,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_TINY,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -136,8 +129,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING       
+    MYSQL_TYPE_STRING     
   },
   /* MYSQL_TYPE_SHORT -> */
   {
@@ -157,8 +150,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_SHORT,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -167,8 +158,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_LONG -> */
   {
@@ -188,8 +179,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_LONG,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -198,8 +187,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_FLOAT -> */
   {
@@ -219,8 +208,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_FLOAT,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -229,8 +216,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_DOUBLE -> */
   {
@@ -250,8 +237,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -260,8 +245,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_NULL -> */
   {
@@ -281,8 +266,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_YEAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_BIT,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_ENUM,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -291,8 +274,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_GEOMETRY
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_TIMESTAMP -> */
   {
@@ -312,8 +295,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -322,8 +303,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_LONGLONG -> */
   {
@@ -343,8 +324,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -353,8 +332,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_INT24 -> */
   {
@@ -374,8 +353,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_INT24,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL    MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -384,8 +361,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_DATE -> */
   {
@@ -405,8 +382,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -415,8 +390,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_TIME -> */
   {
@@ -436,8 +411,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -446,8 +419,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_DATETIME -> */
   {
@@ -467,8 +440,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -477,8 +448,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_YEAR -> */
   {
@@ -498,8 +469,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_YEAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -508,8 +477,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_NEWDATE -> */
   {
@@ -529,8 +498,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -539,8 +506,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_VARCHAR -> */
   {
@@ -560,8 +527,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -570,39 +535,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR
-  },
-  /* MYSQL_TYPE_BIT -> */
-  {
-  //MYSQL_TYPE_DECIMAL      MYSQL_TYPE_TINY
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
-    MYSQL_TYPE_BIT,         MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_BIT,
-  //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_TINY_BLOB,
-  //MYSQL_TYPE_MEDIUM_BLOB  MYSQL_TYPE_LONG_BLOB
-    MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
-  //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
-    MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_VARCHAR
   },
   /* MYSQL_TYPE_NEWDECIMAL -> */
   {
@@ -622,8 +556,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_NEWDECIMAL,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -632,8 +564,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_ENUM -> */
   {
@@ -653,8 +585,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -663,8 +593,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_SET -> */
   {
@@ -684,8 +614,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -694,8 +622,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   },
   /* MYSQL_TYPE_TINY_BLOB -> */
   {
@@ -715,8 +643,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_TINY_BLOB,   MYSQL_TYPE_TINY_BLOB,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_TINY_BLOB,   MYSQL_TYPE_TINY_BLOB,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_TINY_BLOB,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_TINY_BLOB,   MYSQL_TYPE_TINY_BLOB,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -725,8 +651,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_TINY_BLOB,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_TINY_BLOB,   MYSQL_TYPE_TINY_BLOB
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_TINY_BLOB
   },
   /* MYSQL_TYPE_MEDIUM_BLOB -> */
   {
@@ -746,8 +672,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_MEDIUM_BLOB,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_MEDIUM_BLOB,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_MEDIUM_BLOB,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_MEDIUM_BLOB,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -756,8 +680,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_MEDIUM_BLOB,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_MEDIUM_BLOB
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_MEDIUM_BLOB
   },
   /* MYSQL_TYPE_LONG_BLOB -> */
   {
@@ -777,8 +701,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_LONG_BLOB,   MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_LONG_BLOB,   MYSQL_TYPE_LONG_BLOB,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_LONG_BLOB,   MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -787,8 +709,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_LONG_BLOB,   MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_LONG_BLOB,   MYSQL_TYPE_LONG_BLOB,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_LONG_BLOB,   MYSQL_TYPE_LONG_BLOB
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_LONG_BLOB
   },
   /* MYSQL_TYPE_BLOB -> */
   {
@@ -808,8 +730,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_BLOB,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -818,8 +738,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_BLOB
   },
   /* MYSQL_TYPE_VAR_STRING -> */
   {
@@ -839,8 +759,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -849,8 +767,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_VARCHAR
   },
   /* MYSQL_TYPE_STRING -> */
   {
@@ -870,8 +788,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
     MYSQL_TYPE_STRING,      MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_STRING,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
     MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -880,39 +796,8 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING
-  },
-  /* MYSQL_TYPE_GEOMETRY -> */
-  {
-  //MYSQL_TYPE_DECIMAL      MYSQL_TYPE_TINY
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
-    MYSQL_TYPE_GEOMETRY,    MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BIT          <16>-<245>
-    MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_TINY_BLOB,
-  //MYSQL_TYPE_MEDIUM_BLOB  MYSQL_TYPE_LONG_BLOB
-    MYSQL_TYPE_MEDIUM_BLOB, MYSQL_TYPE_LONG_BLOB,
-  //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
-    MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_GEOMETRY
+  //MYSQL_TYPE_STRING
+    MYSQL_TYPE_STRING
   }
 };
 
@@ -954,8 +839,6 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
   STRING_RESULT,            INT_RESULT,
   //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
   STRING_RESULT,            STRING_RESULT,
-  //MYSQL_TYPE_BIT          <16>-<245>
-  STRING_RESULT,
   //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
   DECIMAL_RESULT,           STRING_RESULT,
   //MYSQL_TYPE_SET          MYSQL_TYPE_TINY_BLOB
@@ -964,8 +847,8 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
   STRING_RESULT,            STRING_RESULT,
   //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
   STRING_RESULT,            STRING_RESULT,
-  //MYSQL_TYPE_STRING       MYSQL_TYPE_GEOMETRY
-  STRING_RESULT,            STRING_RESULT
+  //MYSQL_TYPE_STRING
+  STRING_RESULT
 };
 
 
@@ -1825,614 +1708,6 @@ Field *Field::clone(MEM_ROOT *root, struct st_table *new_table)
 void Field_null::sql_type(String &res) const
 {
   res.set_ascii(STRING_WITH_LEN("null"));
-}
-
-
-/****************************************************************************
-  Functions for the Field_decimal class
-  This is an number stored as a pre-space (or pre-zero) string
-****************************************************************************/
-
-int
-Field_decimal::reset(void)
-{
-  Field_decimal::store(STRING_WITH_LEN("0"),&my_charset_bin);
-  return 0;
-}
-
-void Field_decimal::overflow(bool negative)
-{
-  uint len=field_length;
-  uchar *to=ptr, filler= '9';
-
-  set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-  if (negative)
-  {
-    if (!unsigned_flag)
-    {
-      /* Put - sign as a first digit so we'll have -999..999 or 999..999 */
-      *to++ = '-';
-      len--;
-    }
-    else
-    {
-      filler= '0';				// Fill up with 0
-      if (!zerofill)
-      {
-	/*
-	  Handle unsigned integer without zerofill, in which case
-	  the number should be of format '   0' or '   0.000'
-	*/
-	uint whole_part=field_length- (dec ? dec+2 : 1);
-	// Fill with spaces up to the first digit
-	bfill(to, whole_part, ' ');
-	to+=  whole_part;
-	len-= whole_part;
-	// The main code will also handle the 0 before the decimal point
-      }
-    }
-  }
-  bfill(to, len, filler);
-  if (dec)
-    ptr[field_length-dec-1]='.';
-  return;
-}
-
-
-int Field_decimal::store(const char *from_arg, uint len, CHARSET_INFO *cs)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  String tmp(buff,sizeof(buff), &my_charset_bin);
-  const uchar *from= (uchar*) from_arg;
-
-  /* Convert character set if the old one is multi uchar */
-  if (cs->mbmaxlen > 1)
-  { 
-    uint dummy_errors;
-    tmp.copy((char*) from, len, cs, &my_charset_bin, &dummy_errors);
-    from= (uchar*) tmp.ptr();
-    len=  tmp.length();
-  }
-
-  const uchar *end= from+len;
-  /* The pointer where the field value starts (i.e., "where to write") */
-  uchar *to= ptr;
-  uint tmp_dec, tmp_uint;
-  /*
-    The sign of the number : will be 0 (means positive but sign not
-    specified), '+' or '-'
-  */
-  uchar sign_char=0;
-  /* The pointers where prezeros start and stop */
-  const uchar *pre_zeros_from, *pre_zeros_end;
-  /* The pointers where digits at the left of '.' start and stop */
-  const uchar *int_digits_from, *int_digits_end;
-  /* The pointers where digits at the right of '.' start and stop */
-  const uchar *frac_digits_from, *frac_digits_end;
-  /* The sign of the exponent : will be 0 (means no exponent), '+' or '-' */
-  char expo_sign_char=0;
-  uint exponent=0;                                // value of the exponent
-  /*
-    Pointers used when digits move from the left of the '.' to the
-    right of the '.' (explained below)
-  */
-  const uchar *int_digits_tail_from= NULL;
-  /* Number of 0 that need to be added at the left of the '.' (1E3: 3 zeros) */
-  uint int_digits_added_zeros= 0;
-  /*
-    Pointer used when digits move from the right of the '.' to the left
-    of the '.'
-  */
-  const uchar *frac_digits_head_end= NULL;
-  /* Number of 0 that need to be added at the right of the '.' (for 1E-3) */
-  uint frac_digits_added_zeros= 0;
-  uchar *pos, *tmp_left_pos, *tmp_right_pos;
-  /* Pointers that are used as limits (begin and end of the field buffer) */
-  uchar *left_wall, *right_wall;
-  uchar tmp_char;
-  /*
-    To remember if table->in_use->cuted_fields has already been incremented,
-    to do that only once
-  */
-  bool is_cuted_fields_incr=0;
-
-  /*
-    There are three steps in this function :
-    - parse the input string
-    - modify the position of digits around the decimal dot '.' 
-      according to the exponent value (if specified)
-    - write the formatted number
-  */
-
-  if ((tmp_dec=dec))
-    tmp_dec++;
-
-  /* skip pre-space */
-  while (from != end && my_isspace(&my_charset_bin,*from))
-    from++;
-  if (from == end)
-  {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
-    is_cuted_fields_incr=1;
-  }
-  else if (*from == '+' || *from == '-')	// Found some sign ?
-  {
-    sign_char= *from++;
-    /*
-      We allow "+" for unsigned decimal unless defined different
-      Both options allowed as one may wish not to have "+" for unsigned numbers
-      because of data processing issues
-    */ 
-    if (unsigned_flag)  
-    { 
-      if (sign_char=='-')
-      {
-        Field_decimal::overflow(1);
-        return 1;
-      }
-      /* 
-	 Defining this will not store "+" for unsigned decimal type even if
-	 it is passed in numeric string. This will make some tests to fail
-      */	 
-#ifdef DONT_ALLOW_UNSIGNED_PLUS      
-      else 
-        sign_char=0;
-#endif 	
-    }
-  }
-
-  pre_zeros_from= from;
-  for (; from!=end && *from == '0'; from++) ;	// Read prezeros
-  pre_zeros_end=int_digits_from=from;      
-  /* Read non zero digits at the left of '.'*/
-  for (; from != end && my_isdigit(&my_charset_bin, *from) ; from++) ;
-  int_digits_end=from;
-  if (from!=end && *from == '.')		// Some '.' ?
-    from++;
-  frac_digits_from= from;
-  /* Read digits at the right of '.' */
-  for (;from!=end && my_isdigit(&my_charset_bin, *from); from++) ;
-  frac_digits_end=from;
-  // Some exponentiation symbol ?
-  if (from != end && (*from == 'e' || *from == 'E'))
-  {   
-    from++;
-    if (from != end && (*from == '+' || *from == '-'))  // Some exponent sign ?
-      expo_sign_char= *from++;
-    else
-      expo_sign_char= '+';
-    /*
-      Read digits of the exponent and compute its value.  We must care about
-      'exponent' overflow, because as unsigned arithmetic is "modulo", big 
-      exponents will become small (e.g. 1e4294967296 will become 1e0, and the 
-      field will finally contain 1 instead of its max possible value).
-    */
-    for (;from!=end && my_isdigit(&my_charset_bin, *from); from++)
-    {
-      exponent=10*exponent+(*from-'0');
-      if (exponent>MAX_EXPONENT)
-        break;
-    }
-  }
-  
-  /*
-    We only have to generate warnings if count_cuted_fields is set.
-    This is to avoid extra checks of the number when they are not needed.
-    Even if this flag is not set, it's OK to increment warnings, if
-    it makes the code easer to read.
-  */
-
-  if (table->in_use->count_cuted_fields)
-  {
-    // Skip end spaces
-    for (;from != end && my_isspace(&my_charset_bin, *from); from++) ;
-    if (from != end)                     // If still something left, warn
-    {
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
-      is_cuted_fields_incr=1;
-    }
-  }
-  
-  /*
-    Now "move" digits around the decimal dot according to the exponent value,
-    and add necessary zeros.
-    Examples :
-    - 1E+3 : needs 3 more zeros at the left of '.' (int_digits_added_zeros=3)
-    - 1E-3 : '1' moves at the right of '.', and 2 more zeros are needed
-    between '.' and '1'
-    - 1234.5E-3 : '234' moves at the right of '.'
-    These moves are implemented with pointers which point at the begin
-    and end of each moved segment. Examples :
-    - 1234.5E-3 : before the code below is executed, the int_digits part is
-    from '1' to '4' and the frac_digits part from '5' to '5'. After the code
-    below, the int_digits part is from '1' to '1', the frac_digits_head
-    part is from '2' to '4', and the frac_digits part from '5' to '5'.
-    - 1234.5E3 : before the code below is executed, the int_digits part is
-    from '1' to '4' and the frac_digits part from '5' to '5'. After the code
-    below, the int_digits part is from '1' to '4', the int_digits_tail
-    part is from '5' to '5', the frac_digits part is empty, and
-    int_digits_added_zeros=2 (to make 1234500).
-  */
-  
-  /* 
-     Below tmp_uint cannot overflow with small enough MAX_EXPONENT setting,
-     as int_digits_added_zeros<=exponent<4G and 
-     (int_digits_end-int_digits_from)<=max_allowed_packet<=2G and
-     (frac_digits_from-int_digits_tail_from)<=max_allowed_packet<=2G
-  */
-
-  if (!expo_sign_char)
-    tmp_uint=tmp_dec+(uint)(int_digits_end-int_digits_from);
-  else if (expo_sign_char == '-') 
-  {
-    tmp_uint=min(exponent,(uint)(int_digits_end-int_digits_from));
-    frac_digits_added_zeros=exponent-tmp_uint;
-    int_digits_end -= tmp_uint;
-    frac_digits_head_end=int_digits_end+tmp_uint;
-    tmp_uint=tmp_dec+(uint)(int_digits_end-int_digits_from);     
-  }
-  else // (expo_sign_char=='+') 
-  {
-    tmp_uint=min(exponent,(uint)(frac_digits_end-frac_digits_from));
-    int_digits_added_zeros=exponent-tmp_uint;
-    int_digits_tail_from=frac_digits_from;
-    frac_digits_from=frac_digits_from+tmp_uint;
-    /*
-      We "eat" the heading zeros of the 
-      int_digits.int_digits_tail.int_digits_added_zeros concatenation
-      (for example 0.003e3 must become 3 and not 0003)
-    */
-    if (int_digits_from == int_digits_end) 
-    {
-      /*
-	There was nothing in the int_digits part, so continue
-	eating int_digits_tail zeros
-      */
-      for (; int_digits_tail_from != frac_digits_from &&
-	     *int_digits_tail_from == '0'; int_digits_tail_from++) ;
-      if (int_digits_tail_from == frac_digits_from) 
-      {
-	// there were only zeros in int_digits_tail too
-	int_digits_added_zeros=0;
-      }
-    }
-    tmp_uint= (uint) (tmp_dec+(int_digits_end-int_digits_from)+
-               (uint)(frac_digits_from-int_digits_tail_from)+
-               int_digits_added_zeros);
-  }
-  
-  /*
-    Now write the formated number
-    
-    First the digits of the int_% parts.
-    Do we have enough room to write these digits ?
-    If the sign is defined and '-', we need one position for it
-  */
-
-  if (field_length < tmp_uint + (int) (sign_char == '-')) 
-  {
-    // too big number, change to max or min number
-    Field_decimal::overflow(sign_char == '-');
-    return 1;
-  }
- 
-  /*
-    Tmp_left_pos is the position where the leftmost digit of
-    the int_% parts will be written
-  */
-  tmp_left_pos=pos=to+(uint)(field_length-tmp_uint);
-  
-  // Write all digits of the int_% parts
-  while (int_digits_from != int_digits_end)
-    *pos++ = *int_digits_from++ ;
-
-  if (expo_sign_char == '+')
-  {    
-    while (int_digits_tail_from != frac_digits_from)
-      *pos++= *int_digits_tail_from++;
-    while (int_digits_added_zeros-- >0)
-      *pos++= '0';  
-  }
-  /*
-    Note the position where the rightmost digit of the int_% parts has been
-    written (this is to later check if the int_% parts contained nothing,
-    meaning an extra 0 is needed).
-  */
-  tmp_right_pos=pos;
-
-  /*
-    Step back to the position of the leftmost digit of the int_% parts,
-    to write sign and fill with zeros or blanks or prezeros.
-  */
-  pos=tmp_left_pos-1;
-  if (zerofill)
-  {
-    left_wall=to-1;
-    while (pos > left_wall)			// Fill with zeros
-      *pos--='0';
-  }
-  else
-  {
-    left_wall=to+(sign_char != 0)-1;
-    if (!expo_sign_char)	// If exponent was specified, ignore prezeros
-    {
-      for (;pos > left_wall && pre_zeros_from !=pre_zeros_end;
-	   pre_zeros_from++)
-	*pos--= '0';
-    }
-    if (pos == tmp_right_pos-1)
-      *pos--= '0';		// no 0 has ever been written, so write one
-    left_wall= to-1;
-    if (sign_char && pos != left_wall)
-    {
-      /* Write sign if possible (it is if sign is '-') */
-      *pos--= sign_char;
-    }
-    while (pos != left_wall)
-      *pos--=' ';  //fill with blanks
-  }
-  
-  /*
-    Write digits of the frac_% parts ;
-    Depending on table->in_use->count_cutted_fields, we may also want
-    to know if some non-zero tail of these parts will
-    be truncated (for example, 0.002->0.00 will generate a warning,
-    while 0.000->0.00 will not)
-    (and 0E1000000000 will not, while 1E-1000000000 will)
-  */
-      
-  pos=to+(uint)(field_length-tmp_dec);	// Calculate post to '.'
-  right_wall=to+field_length;
-  if (pos != right_wall) 
-    *pos++='.';
-
-  if (expo_sign_char == '-')
-  {
-    while (frac_digits_added_zeros-- > 0)
-    {
-      if (pos == right_wall) 
-      {
-        if (table->in_use->count_cuted_fields && !is_cuted_fields_incr) 
-          break; // Go on below to see if we lose non zero digits
-        return 0;
-      }
-      *pos++='0';
-    }
-    while (int_digits_end != frac_digits_head_end)
-    {
-      tmp_char= *int_digits_end++;
-      if (pos == right_wall)
-      {
-        if (tmp_char != '0')			// Losing a non zero digit ?
-        {
-          if (!is_cuted_fields_incr)
-            set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
-                        WARN_DATA_TRUNCATED, 1);
-          return 0;
-        }
-        continue;
-      }
-      *pos++= tmp_char;
-    }
-  }
-
-  for (;frac_digits_from!=frac_digits_end;) 
-  {
-    tmp_char= *frac_digits_from++;
-    if (pos == right_wall)
-    {
-      if (tmp_char != '0')			// Losing a non zero digit ?
-      {
-        if (!is_cuted_fields_incr)
-        {
-          /*
-            This is a note, not a warning, as we don't want to abort
-            when we cut decimals in strict mode
-          */
-	  set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, WARN_DATA_TRUNCATED, 1);
-        }
-        return 0;
-      }
-      continue;
-    }
-    *pos++= tmp_char;
-  }
-      
-  while (pos != right_wall)
-   *pos++='0';			// Fill with zeros at right of '.'
-  return 0;
-}
-
-
-int Field_decimal::store(double nr)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (unsigned_flag && nr < 0)
-  {
-    overflow(1);
-    return 1;
-  }
-  
-  if (!isfinite(nr)) // Handle infinity as special case
-  {
-    overflow(nr < 0.0);
-    return 1;
-  }
-
-  register uint i;
-  size_t length;
-  uchar fyllchar,*to;
-  char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
-
-  fyllchar = zerofill ? (char) '0' : (char) ' ';
-  length= my_fcvt(nr, dec, buff, NULL);
-
-  if (length > field_length)
-  {
-    overflow(nr < 0.0);
-    return 1;
-  }
-  else
-  {
-    to=ptr;
-    for (i=field_length-length ; i-- > 0 ;)
-      *to++ = fyllchar;
-    memcpy(to,buff,length);
-    return 0;
-  }
-}
-
-
-int Field_decimal::store(longlong nr, bool unsigned_val)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  char buff[22];
-  uint length, int_part;
-  char fyllchar;
-  uchar *to;
-
-  if (nr < 0 && unsigned_flag && !unsigned_val)
-  {
-    overflow(1);
-    return 1;
-  }
-  length= (uint) (longlong10_to_str(nr,buff,unsigned_val ? 10 : -10) - buff);
-  int_part= field_length- (dec  ? dec+1 : 0);
-
-  if (length > int_part)
-  {
-    overflow(!unsigned_val && nr < 0L);		/* purecov: inspected */
-    return 1;
-  }
-
-  fyllchar = zerofill ? (char) '0' : (char) ' ';
-  to= ptr;
-  for (uint i=int_part-length ; i-- > 0 ;)
-    *to++ = fyllchar;
-  memcpy(to,buff,length);
-  if (dec)
-  {
-    to[length]='.';
-    bfill(to+length+1,dec,'0');
-  }
-  return 0;
-}
-
-
-double Field_decimal::val_real(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int not_used;
-  char *end_not_used;
-  return my_strntod(&my_charset_bin, (char*) ptr, field_length, &end_not_used,
-                    &not_used);
-}
-
-longlong Field_decimal::val_int(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int not_used;
-  if (unsigned_flag)
-    return my_strntoull(&my_charset_bin, (char*) ptr, field_length, 10, NULL,
-			&not_used);
-  return my_strntoll(&my_charset_bin, (char*) ptr, field_length, 10, NULL,
-                     &not_used);
-}
-
-
-String *Field_decimal::val_str(String *val_buffer __attribute__((unused)),
-			       String *val_ptr)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  uchar *str;
-  size_t tmp_length;
-
-  for (str=ptr ; *str == ' ' ; str++) ;
-  val_ptr->set_charset(&my_charset_bin);
-  tmp_length= (size_t) (str-ptr);
-  if (field_length < tmp_length)		// Error in data
-    val_ptr->length(0);
-  else
-    val_ptr->set_ascii((const char*) str, field_length-tmp_length);
-  return val_ptr;
-}
-
-/**
-  Should be able to handle at least the following fixed decimal formats:
-  5.00 , -1.0,  05,  -05, +5 with optional pre/end space
-*/
-
-int Field_decimal::cmp(const uchar *a_ptr,const uchar *b_ptr)
-{
-  const uchar *end;
-  int swap=0;
-  /* First remove prefixes '0', ' ', and '-' */
-  for (end=a_ptr+field_length;
-       a_ptr != end &&
-	 (*a_ptr == *b_ptr ||
-	  ((my_isspace(&my_charset_bin,*a_ptr)  || *a_ptr == '+' || 
-            *a_ptr == '0') &&
-	   (my_isspace(&my_charset_bin,*b_ptr) || *b_ptr == '+' || 
-            *b_ptr == '0')));
-       a_ptr++,b_ptr++)
-  {
-    if (*a_ptr == '-')				// If both numbers are negative
-      swap= -1 ^ 1;				// Swap result      
-  }
-  if (a_ptr == end)
-    return 0;
-  if (*a_ptr == '-')
-    return -1;
-  if (*b_ptr == '-')
-    return 1;
-
-  while (a_ptr != end)
-  {
-    if (*a_ptr++ != *b_ptr++)
-      return swap ^ (a_ptr[-1] < b_ptr[-1] ? -1 : 1); // compare digits
-  }
-  return 0;
-}
-
-
-void Field_decimal::sort_string(uchar *to,uint length)
-{
-  uchar *str,*end;
-  for (str=ptr,end=ptr+length;
-       str != end &&
-	 ((my_isspace(&my_charset_bin,*str) || *str == '+' ||
-	   *str == '0')) ;
-       str++)
-    *to++=' ';
-  if (str == end)
-    return;					/* purecov: inspected */
-
-  if (*str == '-')
-  {
-    *to++=1;					// Smaller than any number
-    str++;
-    while (str != end)
-      if (my_isdigit(&my_charset_bin,*str))
-	*to++= (char) ('9' - *str++);
-      else
-	*to++= *str++;
-  }
-  else memcpy(to,str,(uint) (end-str));
-}
-
-
-void Field_decimal::sql_type(String &res) const
-{
-  CHARSET_INFO *cs=res.charset();
-  uint tmp=field_length;
-  if (!unsigned_flag)
-    tmp--;
-  if (dec)
-    tmp--;
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
-			  "decimal(%d,%d)",tmp,dec));
-  add_zerofill_and_unsigned(res);
 }
 
 
@@ -3546,7 +2821,7 @@ int Field_long::store(double nr)
     }
     else if (nr > (double) UINT_MAX32)
     {
-      res= UINT_MAX32;
+      res= INT_MAX32;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -3596,7 +2871,7 @@ int Field_long::store(longlong nr, bool unsigned_val)
       res=0;
       error= 1;
     }
-    else if ((uint64_t) nr >= (LL(1) << 32))
+    else if ((uint64_t) nr >= (1LL << 32))
     {
       res=(int32) (uint32) ~0L;
       error= 1;
@@ -4731,7 +4006,7 @@ int Field_timestamp::store(longlong nr, bool unsigned_val)
   longlong tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
                                                  MODE_NO_ZERO_DATE) |
                                    MODE_NO_ZERO_IN_DATE, &error);
-  if (tmp == LL(-1))
+  if (tmp == -1LL)
   {
     error= 2;
   }
@@ -4787,7 +4062,7 @@ longlong Field_timestamp::val_int(void)
   
   thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
   
-  return time_tmp.year * LL(10000000000) + time_tmp.month * LL(100000000) +
+  return time_tmp.year * 10000000000LL + time_tmp.month * 100000000LL +
          time_tmp.day * 1000000L + time_tmp.hour * 10000L +
          time_tmp.minute * 100 + time_tmp.second;
 }
@@ -5391,7 +4666,7 @@ int Field_date::store(double nr)
     nr=floor(nr/1000000.0);			// Timestamp to date
   if (nr < 0.0 || nr > 99991231.0)
   {
-    tmp= LL(0);
+    tmp= 0LL;
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
                          nr, MYSQL_TIMESTAMP_DATE);
@@ -5418,7 +4693,7 @@ int Field_date::store(longlong nr, bool unsigned_val)
                                            MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
-  if (nr == LL(-1))
+  if (nr == -1LL)
   {
     nr= 0;
     error= 2;
@@ -5645,7 +4920,7 @@ int Field_newdate::store(longlong nr, bool unsigned_val)
                           (thd->variables.sql_mode &
                            (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
                             MODE_INVALID_DATES))),
-                         &error) == LL(-1))
+                         &error) == -1LL)
   {
     tmp= 0L;
     error= 2;
@@ -5882,7 +5157,7 @@ int Field_datetime::store(longlong nr, bool unsigned_val)
                                            MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
-  if (nr == LL(-1))
+  if (nr == -1LL)
   {
     nr= 0;
     error= 2;
@@ -5918,7 +5193,7 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
   if (time_type == MYSQL_TIMESTAMP_DATE ||
       time_type == MYSQL_TIMESTAMP_DATETIME)
   {
-    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*LL(1000000)+
+    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*1000000LL+
 	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
@@ -5999,8 +5274,8 @@ String *Field_datetime::val_str(String *val_buffer,
     Avoid problem with slow longlong arithmetic and sprintf
   */
 
-  part1=(long) (tmp/LL(1000000));
-  part2=(long) (tmp - (uint64_t) part1*LL(1000000));
+  part1=(long) (tmp/1000000LL);
+  part2=(long) (tmp - (uint64_t) part1*1000000LL);
 
   pos=(char*) val_buffer->ptr() + MAX_DATETIME_WIDTH;
   *pos--=0;
@@ -6030,8 +5305,8 @@ bool Field_datetime::get_date(MYSQL_TIME *ltime, uint fuzzydate)
 {
   longlong tmp=Field_datetime::val_int();
   uint32 part1,part2;
-  part1=(uint32) (tmp/LL(1000000));
-  part2=(uint32) (tmp - (uint64_t) part1*LL(1000000));
+  part1=(uint32) (tmp/1000000LL);
+  part2=(uint32) (tmp - (uint64_t) part1*1000000LL);
 
   ltime->time_type=	MYSQL_TIMESTAMP_DATETIME;
   ltime->neg=		0;
@@ -8434,568 +7709,6 @@ uint Field_num::is_equal(Create_field *new_field)
 }
 
 
-/*
-  Bit field.
-
-  We store the first 0 - 6 uneven bits among the null bits 
-  at the start of the record. The rest bytes are stored in 
-  the record itself.
-
-  For example:
-
-  CREATE TABLE t1 (a int, b bit(17), c bit(21) not null, d bit(8));
-  We would store data  as follows in the record:
-
-  Byte        Bit
-  1           7 - reserve for delete
-              6 - null bit for 'a'
-              5 - null bit for 'b'
-              4 - first (high) bit of 'b'
-              3 - first (high) bit of 'c'
-              2 - second bit of 'c'
-              1 - third bit of 'c'
-              0 - forth bit of 'c'
-  2           7 - firth bit of 'c'
-              6 - null bit for 'd'
-  3 - 6       four bytes for 'a'
-  7 - 8       two bytes for 'b'
-  9 - 10      two bytes for 'c'
-  11          one byte for 'd'
-*/
-
-Field_bit::Field_bit(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
-                     uchar null_bit_arg, uchar *bit_ptr_arg, uchar bit_ofs_arg,
-                     enum utype unireg_check_arg, const char *field_name_arg)
-  : Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-          unireg_check_arg, field_name_arg),
-    bit_ptr(bit_ptr_arg), bit_ofs(bit_ofs_arg), bit_len(len_arg & 7),
-    bytes_in_rec(len_arg / 8)
-{
-  flags|= UNSIGNED_FLAG;
-  /*
-    Ensure that Field::eq() can distinguish between two different bit fields.
-    (two bit fields that are not null, may have same ptr and null_ptr)
-  */
-  if (!null_ptr_arg)
-    null_bit= bit_ofs_arg;
-}
-
-
-void Field_bit::hash(ulong *nr, ulong *nr2)
-{
-  if (is_null())
-  {
-    *nr^= (*nr << 1) | 1;
-  }
-  else
-  {
-    CHARSET_INFO *cs= &my_charset_bin;
-    longlong value= Field_bit::val_int();
-    uchar tmp[8];
-    mi_int8store(tmp,value);
-    cs->coll->hash_sort(cs, tmp, 8, nr, nr2);
-  }
-}
-
-
-size_t
-Field_bit::do_last_null_byte() const
-{
-  /*
-    Code elsewhere is assuming that bytes are 8 bits, so I'm using
-    that value instead of the correct one: CHAR_BIT.
-
-    REFACTOR SUGGESTION (Matz): Change to use the correct number of
-    bits. On systems with CHAR_BIT > 8 (not very common), the storage
-    will lose the extra bits.
-  */
-  DBUG_PRINT("test", ("bit_ofs: %d, bit_len: %d  bit_ptr: 0x%lx",
-                      bit_ofs, bit_len, (long) bit_ptr));
-  uchar *result;
-  if (bit_len == 0)
-    result= null_ptr;
-  else if (bit_ofs + bit_len > 8)
-    result= bit_ptr + 1;
-  else
-    result= bit_ptr;
-
-  if (result)
-    return (size_t) (result - table->record[0]) + 1;
-  return LAST_NULL_BYTE_UNDEF;
-}
-
-
-Field *Field_bit::new_key_field(MEM_ROOT *root,
-                                struct st_table *new_table,
-                                uchar *new_ptr, uchar *new_null_ptr,
-                                uint new_null_bit)
-{
-  Field_bit *res;
-  if ((res= (Field_bit*) Field::new_key_field(root, new_table,
-                                              new_ptr, new_null_ptr,
-                                              new_null_bit)))
-  {
-    /* Move bits normally stored in null_pointer to new_ptr */
-    res->bit_ptr= new_ptr;
-    res->bit_ofs= 0;
-    if (bit_len)
-      res->ptr++;                               // Store rest of data here
-  }
-  return res;
-}
-
-
-uint Field_bit::is_equal(Create_field *new_field) 
-{
-  return (new_field->sql_type == real_type() &&
-          new_field->length == max_display_length());
-}
-
-                       
-int Field_bit::store(const char *from, uint length, CHARSET_INFO *cs)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  int delta;
-
-  for (; length && !*from; from++, length--) {};          // skip left 0's
-  delta= bytes_in_rec - length;
-
-  if (delta < -1 ||
-      (delta == -1 && (uchar) *from > ((1 << bit_len) - 1)) ||
-      (!bit_len && delta < 0))
-  {
-    set_rec_bits((1 << bit_len) - 1, bit_ptr, bit_ofs, bit_len);
-    memset(ptr, 0xff, bytes_in_rec);
-    if (table->in_use->really_abort_on_warning())
-      set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
-    else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    return 1;
-  }
-  /* delta is >= -1 here */
-  if (delta > 0)
-  {
-    if (bit_len)
-      clr_rec_bits(bit_ptr, bit_ofs, bit_len);
-    bzero(ptr, delta);
-    memcpy(ptr + delta, from, length);
-  }
-  else if (delta == 0)
-  {
-    if (bit_len)
-      clr_rec_bits(bit_ptr, bit_ofs, bit_len);
-    memcpy(ptr, from, length);
-  }
-  else
-  {
-    if (bit_len)
-    {
-      set_rec_bits((uchar) *from, bit_ptr, bit_ofs, bit_len);
-      from++;
-    }
-    memcpy(ptr, from, bytes_in_rec);
-  }
-  return 0;
-}
-
-
-int Field_bit::store(double nr)
-{
-  return Field_bit::store((longlong) nr, FALSE);
-}
-
-
-int Field_bit::store(longlong nr, bool unsigned_val)
-{
-  char buf[8];
-
-  mi_int8store(buf, nr);
-  return store(buf, 8, NULL);
-}
-
-
-int Field_bit::store_decimal(const my_decimal *val)
-{
-  int err= 0;
-  longlong i= convert_decimal2longlong(val, 1, &err);
-  return test(err | store(i, TRUE));
-}
-
-
-double Field_bit::val_real(void)
-{
-  return (double) Field_bit::val_int();
-}
-
-
-longlong Field_bit::val_int(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  uint64_t bits= 0;
-  if (bit_len)
-  {
-    bits= get_rec_bits(bit_ptr, bit_ofs, bit_len);
-    bits<<= (bytes_in_rec * 8);
-  }
-
-  switch (bytes_in_rec) {
-  case 0: return bits;
-  case 1: return bits | (uint64_t) ptr[0];
-  case 2: return bits | mi_uint2korr(ptr);
-  case 3: return bits | mi_uint3korr(ptr);
-  case 4: return bits | mi_uint4korr(ptr);
-  case 5: return bits | mi_uint5korr(ptr);
-  case 6: return bits | mi_uint6korr(ptr);
-  case 7: return bits | mi_uint7korr(ptr);
-  default: return mi_uint8korr(ptr + bytes_in_rec - sizeof(longlong));
-  }
-}  
-
-
-String *Field_bit::val_str(String *val_buffer,
-                           String *val_ptr __attribute__((unused)))
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  char buff[sizeof(longlong)];
-  uint length= min(pack_length(), sizeof(longlong));
-  uint64_t bits= val_int();
-  mi_int8store(buff,bits);
-
-  val_buffer->alloc(length);
-  memcpy_fixed((char*) val_buffer->ptr(), buff+8-length, length);
-  val_buffer->length(length);
-  val_buffer->set_charset(&my_charset_bin);
-  return val_buffer;
-}
-
-
-my_decimal *Field_bit::val_decimal(my_decimal *deciaml_value)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int2my_decimal(E_DEC_FATAL_ERROR, val_int(), 1, deciaml_value);
-  return deciaml_value;
-}
-
-
-/*
-  Compare two bit fields using pointers within the record.
-  SYNOPSIS
-    cmp_max()
-    a                 Pointer to field->ptr in first record
-    b                 Pointer to field->ptr in second record
-    max_len           Maximum length used in index
-  DESCRIPTION
-    This method is used from key_rec_cmp used by merge sorts used
-    by partitioned index read and later other similar places.
-    The a and b pointer must be pointers to the field in a record
-    (not the table->record[0] necessarily)
-*/
-int Field_bit::cmp_max(const uchar *a, const uchar *b, uint max_len)
-{
-  my_ptrdiff_t a_diff= a - ptr;
-  my_ptrdiff_t b_diff= b - ptr;
-  if (bit_len)
-  {
-    int flag;
-    uchar bits_a= get_rec_bits(bit_ptr+a_diff, bit_ofs, bit_len);
-    uchar bits_b= get_rec_bits(bit_ptr+b_diff, bit_ofs, bit_len);
-    if ((flag= (int) (bits_a - bits_b)))
-      return flag;
-  }
-  return memcmp(a, b, field_length);
-}
-
-
-int Field_bit::key_cmp(const uchar *str, uint length)
-{
-  if (bit_len)
-  {
-    int flag;
-    uchar bits= get_rec_bits(bit_ptr, bit_ofs, bit_len);
-    if ((flag= (int) (bits - *str)))
-      return flag;
-    str++;
-    length--;
-  }
-  return memcmp(ptr, str, length);
-}
-
-
-int Field_bit::cmp_offset(uint row_offset)
-{
-  if (bit_len)
-  {
-    int flag;
-    uchar bits_a= get_rec_bits(bit_ptr, bit_ofs, bit_len);
-    uchar bits_b= get_rec_bits(bit_ptr + row_offset, bit_ofs, bit_len);
-    if ((flag= (int) (bits_a - bits_b)))
-      return flag;
-  }
-  return memcmp(ptr, ptr + row_offset, bytes_in_rec);
-}
-
-
-uint Field_bit::get_key_image(uchar *buff, uint length, imagetype type_arg)
-{
-  if (bit_len)
-  {
-    uchar bits= get_rec_bits(bit_ptr, bit_ofs, bit_len);
-    *buff++= bits;
-    length--;
-  }
-  uint data_length = min(length, bytes_in_rec);
-  memcpy(buff, ptr, data_length);
-  return data_length + 1;
-}
-
-
-/**
-   Save the field metadata for bit fields.
-
-   Saves the bit length in the first byte and bytes in record in the
-   second byte of the field metadata array at index of *metadata_ptr and
-   *(metadata_ptr + 1).
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_bit::do_save_field_metadata(uchar *metadata_ptr)
-{
-  *metadata_ptr= bit_len;
-  *(metadata_ptr + 1)= bytes_in_rec;
-  return 2;
-}
-
-
-/**
-   Returns the number of bytes field uses in row-based replication 
-   row packed size.
-
-   This method is used in row-based replication to determine the number
-   of bytes that the field consumes in the row record format. This is
-   used to skip fields in the master that do not exist on the slave.
-
-   @param   field_metadata   Encoded size in field metadata
-
-   @returns The size of the field based on the field metadata.
-*/
-uint Field_bit::pack_length_from_metadata(uint field_metadata)
-{
-  uint const from_len= (field_metadata >> 8U) & 0x00ff;
-  uint const from_bit_len= field_metadata & 0x00ff;
-  uint const source_size= from_len + ((from_bit_len > 0) ? 1 : 0);
-  return (source_size);
-}
-
-
-/**
-   Check to see if field size is compatible with destination.
-
-   This method is used in row-based replication to verify that the slave's
-   field size is less than or equal to the master's field size. The 
-   encoded field metadata (from the master or source) is decoded and compared
-   to the size of this field (the slave or destination). 
-
-   @param   field_metadata   Encoded size in field metadata
-
-   @retval 0 if this field's size is < the source field's size
-   @retval 1 if this field's size is >= the source field's size
-*/
-int Field_bit::compatible_field_size(uint field_metadata)
-{
-  int compatible= 0;
-  uint const source_size= pack_length_from_metadata(field_metadata);
-  uint const destination_size= row_pack_length();
-  uint const from_bit_len= field_metadata & 0x00ff;
-  uint const from_len= (field_metadata >> 8U) & 0x00ff;
-  if ((bit_len == 0) || (from_bit_len == 0))
-    compatible= (source_size <= destination_size);
-  else if (from_bit_len > bit_len)
-    compatible= (from_len < bytes_in_rec);
-  else
-    compatible= ((from_bit_len <= bit_len) && (from_len <= bytes_in_rec));
-  return (compatible);
-}
-
-
-
-void Field_bit::sql_type(String &res) const
-{
-  CHARSET_INFO *cs= res.charset();
-  ulong length= cs->cset->snprintf(cs, (char*) res.ptr(), res.alloced_length(),
-                                   "bit(%d)", (int) field_length);
-  res.length((uint) length);
-}
-
-
-uchar *
-Field_bit::pack(uchar *to, const uchar *from, uint max_length,
-                bool low_byte_first __attribute__((unused)))
-{
-  DBUG_ASSERT(max_length > 0);
-  uint length;
-  if (bit_len > 0)
-  {
-    /*
-      We have the following:
-
-      ptr        Points into a field in record R1
-      from       Points to a field in a record R2
-      bit_ptr    Points to the byte (in the null bytes) that holds the
-                 odd bits of R1
-      from_bitp  Points to the byte that holds the odd bits of R2
-
-      We have the following:
-
-          ptr - bit_ptr = from - from_bitp
-
-      We want to isolate 'from_bitp', so this gives:
-
-          ptr - bit_ptr - from = - from_bitp
-          - ptr + bit_ptr + from = from_bitp
-          bit_ptr + from - ptr = from_bitp
-     */
-    uchar bits= get_rec_bits(bit_ptr + (from - ptr), bit_ofs, bit_len);
-    *to++= bits;
-  }
-  length= min(bytes_in_rec, max_length - (bit_len > 0));
-  memcpy(to, from, length);
-  return to + length;
-}
-
-
-/**
-   Unpack a bit field from row data.
-
-   This method is used to unpack a bit field from a master whose size
-   of the field is less than that of the slave.
-
-   @param   to         Destination of the data
-   @param   from       Source of the data
-   @param   param_data Bit length (upper) and length (lower) values
-
-   @return  New pointer into memory based on from + length of the data
-*/
-const uchar *
-Field_bit::unpack(uchar *to, const uchar *from, uint param_data,
-                  bool low_byte_first __attribute__((unused)))
-{
-  uint const from_len= (param_data >> 8U) & 0x00ff;
-  uint const from_bit_len= param_data & 0x00ff;
-  /*
-    If the parameter data is zero (i.e., undefined), or if the master
-    and slave have the same sizes, then use the old unpack() method.
-  */
-  if (param_data == 0 || ((from_bit_len == bit_len) && (from_len == bytes_in_rec)))
-  {
-    if (bit_len > 0)
-    {
-      /*
-        set_rec_bits is a macro, don't put the post-increment in the
-        argument since that might cause strange side-effects.
-
-        For the choice of the second argument, see the explanation for
-        Field_bit::pack().
-      */
-      set_rec_bits(*from, bit_ptr + (to - ptr), bit_ofs, bit_len);
-      from++;
-    }
-    memcpy(to, from, bytes_in_rec);
-    return from + bytes_in_rec;
-  }
-
-  /*
-    We are converting a smaller bit field to a larger one here.
-    To do that, we first need to construct a raw value for the original
-    bit value stored in the from buffer. Then that needs to be converted
-    to the larger field then sent to store() for writing to the field.
-    Lastly the odd bits need to be masked out if the bytes_in_rec > 0.
-    Otherwise stray bits can cause spurious values.
-  */
-  uint new_len= (field_length + 7) / 8;
-  char *value= (char *)my_alloca(new_len);
-  bzero(value, new_len);
-  uint len= from_len + ((from_bit_len > 0) ? 1 : 0);
-  memcpy(value + (new_len - len), from, len);
-  /*
-    Mask out the unused bits in the partial byte. 
-    TODO: Add code to the master to always mask these bits and remove
-          the following.
-  */
-  if ((from_bit_len > 0) && (from_len > 0))
-    value[new_len - len]= value[new_len - len] & ((1U << from_bit_len) - 1);
-  bitmap_set_bit(table->write_set,field_index);
-  store(value, new_len, system_charset_info);
-  my_afree(value);
-  return from + len;
-}
-
-
-void Field_bit::set_default()
-{
-  if (bit_len > 0)
-  {
-    my_ptrdiff_t const offset= table->s->default_values - table->record[0];
-    uchar bits= get_rec_bits(bit_ptr + offset, bit_ofs, bit_len);
-    set_rec_bits(bits, bit_ptr, bit_ofs, bit_len);
-  }
-  Field::set_default();
-}
-
-/*
-  Bit field support for non-MyISAM tables.
-*/
-
-Field_bit_as_char::Field_bit_as_char(uchar *ptr_arg, uint32 len_arg,
-                                     uchar *null_ptr_arg, uchar null_bit_arg,
-                                     enum utype unireg_check_arg,
-                                     const char *field_name_arg)
-  :Field_bit(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, 0, 0,
-             unireg_check_arg, field_name_arg)
-{
-  flags|= UNSIGNED_FLAG;
-  bit_len= 0;
-  bytes_in_rec= (len_arg + 7) / 8;
-}
-
-
-int Field_bit_as_char::store(const char *from, uint length, CHARSET_INFO *cs)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  int delta;
-  uchar bits= (uchar) (field_length & 7);
-
-  for (; length && !*from; from++, length--) {};          // skip left 0's
-  delta= bytes_in_rec - length;
-
-  if (delta < 0 ||
-      (delta == 0 && bits && (uint) (uchar) *from >= (uint) (1 << bits)))
-  {
-    memset(ptr, 0xff, bytes_in_rec);
-    if (bits)
-      *ptr&= ((1 << bits) - 1); /* set first uchar */
-    if (table->in_use->really_abort_on_warning())
-      set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
-    else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-    return 1;
-  }
-  bzero(ptr, delta);
-  memcpy(ptr + delta, from, length);
-  return 0;
-}
-
-
-void Field_bit_as_char::sql_type(String &res) const
-{
-  CHARSET_INFO *cs= res.charset();
-  ulong length= cs->cset->snprintf(cs, (char*) res.ptr(), res.alloced_length(),
-                                   "bit(%d)", (int) field_length);
-  res.length((uint) length);
-}
-
-
 /*****************************************************************************
   Handling of field and Create_field
 *****************************************************************************/
@@ -9023,18 +7736,6 @@ void Create_field::create_length_to_internal_length(void)
     /* Pack_length already calculated in sql_parse.cc */
     length*= charset->mbmaxlen;
     key_length= pack_length;
-    break;
-  case MYSQL_TYPE_BIT:
-    if (f_bit_as_char(pack_flag))
-    {
-      key_length= pack_length= ((length + 7) & ~7) / 8;
-    }
-    else
-    {
-      pack_length= length / 8;
-      /* We need one extra byte to store the bits we save among the null bits */
-      key_length= pack_length + test(length & 7);
-    }
     break;
   case MYSQL_TYPE_NEWDECIMAL:
     key_length= pack_length=
@@ -9385,22 +8086,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   case MYSQL_TYPE_VAR_STRING:
     DBUG_ASSERT(0);  /* Impossible. */
     break;
-  case MYSQL_TYPE_BIT:
-    {
-      if (!fld_length)
-        length= 1;
-      if (length > MAX_BIT_FIELD_LENGTH)
-      {
-        my_error(ER_TOO_BIG_DISPLAYWIDTH, MYF(0), fld_name,
-                 MAX_BIT_FIELD_LENGTH);
-        DBUG_RETURN(TRUE);
-      }
-      pack_length= (length + 7) / 8;
-      break;
-    }
-  case MYSQL_TYPE_GEOMETRY:
-  case MYSQL_TYPE_DECIMAL:
-    DBUG_ASSERT(0); /* Was obsolete */
   }
   /* Remember the value of length */
   char_length= length;
@@ -9456,7 +8141,6 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   switch (type) {
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_STRING:
-  case MYSQL_TYPE_DECIMAL:     return (length);
   case MYSQL_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
   case MYSQL_TYPE_YEAR:
   case MYSQL_TYPE_TINY	: return 1;
@@ -9480,7 +8164,6 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_NEWDECIMAL:
     abort(); return 0;                          // This shouldn't happen
-  case MYSQL_TYPE_BIT: return length / 8;
   default:
     return 0;
   }
@@ -9509,19 +8192,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
 		  TYPELIB *interval,
 		  const char *field_name)
 {
-  uchar *bit_ptr= NULL;
-  uchar bit_offset= 0;
-  if (field_type == MYSQL_TYPE_BIT && !f_bit_as_char(pack_flag))
-  {
-    bit_ptr= null_pos;
-    bit_offset= null_bit;
-    if (f_maybe_null(pack_flag))         // if null field
-    {
-       bit_ptr+= (null_bit == 7);        // shift bit_ptr and bit_offset
-       bit_offset= (bit_offset + 1) & 7;
-    }
-  }
-
   if (!f_maybe_null(pack_flag))
   {
     null_pos=0;
@@ -9547,7 +8217,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
     if (!f_is_packed(pack_flag))
     {
       if (field_type == MYSQL_TYPE_STRING ||
-          field_type == MYSQL_TYPE_DECIMAL ||   // 3.23 or 4.0 string
           field_type == MYSQL_TYPE_VAR_STRING)
         return new Field_string(ptr,field_length,null_pos,null_bit,
                                 unireg_check, field_name,
@@ -9584,12 +8253,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
   }
 
   switch (field_type) {
-  case MYSQL_TYPE_DECIMAL:
-    return new Field_decimal(ptr,field_length,null_pos,null_bit,
-			     unireg_check, field_name,
-			     f_decimals(pack_flag),
-			     f_is_zerofill(pack_flag) != 0,
-			     f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_NEWDECIMAL:
     return new Field_new_decimal(ptr,field_length,null_pos,null_bit,
                                  unireg_check, field_name,
@@ -9655,13 +8318,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
   case MYSQL_TYPE_NULL:
     return new Field_null(ptr, field_length, unireg_check, field_name,
                           field_charset);
-  case MYSQL_TYPE_BIT:
-    return f_bit_as_char(pack_flag) ?
-           new Field_bit_as_char(ptr, field_length, null_pos, null_bit,
-                                 unireg_check, field_name) :
-           new Field_bit(ptr, field_length, null_pos, null_bit, bit_ptr,
-                         bit_offset, unireg_check, field_name);
-
   default:					// Impossible (Wrong version)
     break;
   }

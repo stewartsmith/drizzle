@@ -17,7 +17,6 @@
 
 #include "myisamdef.h"
 #include "m_ctype.h"
-#include "sp_defs.h"
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif
@@ -56,18 +55,6 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
   register HA_KEYSEG *keyseg;
   my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
   DBUG_ENTER("_mi_make_key");
-
-  if (info->s->keyinfo[keynr].flag & HA_SPATIAL)
-  {
-    /*
-      TODO: nulls processing
-    */
-#ifdef HAVE_SPATIAL
-    DBUG_RETURN(sp_make_key(info,keynr,key,record,filepos));
-#else
-    DBUG_ASSERT(0); /* mi_open should check that this never happens*/
-#endif
-  }
 
   start=key;
   for (keyseg=info->s->keyinfo[keynr].seg ; keyseg->type ;keyseg++)
@@ -222,10 +209,6 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
   HA_KEYSEG *keyseg;
   my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
   DBUG_ENTER("_mi_pack_key");
-
-  /* "one part" rtree key is 2*SPDIMS part key in MyISAM */
-  if (info->s->keyinfo[keynr].key_alg == HA_KEY_ALG_RTREE)
-    keypart_map= (((key_part_map)1) << (2*SPDIMS)) - 1;
 
   /* only key prefixes are supported */
   DBUG_ASSERT(((keypart_map+1) & keypart_map) == 0);

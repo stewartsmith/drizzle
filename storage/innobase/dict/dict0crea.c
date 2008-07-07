@@ -1228,7 +1228,7 @@ dict_create_or_check_foreign_constraint_tables(void)
 /********************************************************************
 Evaluate the given foreign key SQL statement. */
 
-ulint
+static ulint
 dict_foreign_eval_sql(
 /*==================*/
 				/* out: error code or DB_SUCCESS */

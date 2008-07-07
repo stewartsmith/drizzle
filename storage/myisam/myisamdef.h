@@ -15,15 +15,14 @@
 
 /* This file is included by all internal myisam files */
 
+#if !defined(MYISAMDEF_H)
+#define MYISAMDEF_H
+
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
 #include <my_tree.h>
-#ifdef THREAD
 #include <my_pthread.h>
 #include <thr_lock.h>
-#else
-#include <my_no_pthread.h>
-#endif
 
 #if defined(my_write) && !defined(MAP_TO_USE_RAID)
 #undef my_write				/* undef map from my_nosys; We need test-if-disk full */
@@ -194,7 +193,6 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   ulong state_diff_length;
   uint	rec_reflength;			/* rec_reflength in use now */
   uint  unique_name_length;
-  uint32 ftparsers;                     /* Number of distinct ftparsers + 1 */
   File	kfile;				/* Shared keyfile */
   File	data_file;			/* Shared data file */
   int	mode;				/* mode of file on open */
@@ -211,11 +209,9 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
     not_flushed,
     temporary,delay_key_write,
     concurrent_insert;
-#ifdef THREAD
   THR_LOCK lock;
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
   rw_lock_t *key_root_lock;
-#endif
   my_off_t mmaped_length;
   uint     nonmmaped_inserts;           /* counter of writing in non-mmaped
                                            area */
@@ -242,9 +238,6 @@ struct st_myisam_info {
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
   TREE	        *bulk_insert;
-  DYNAMIC_ARRAY *ft1_to_ft2;            /* used only in ft1->ft2 conversion */
-  MEM_ROOT      ft_memroot;             /* used by the parser               */
-  MYSQL_FTPARSER_PARAM *ftparser_param; /* share info between init/deinit   */
   LIST in_use;                          /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
   uchar *buff,				/* Temp area for key                */
@@ -304,9 +297,7 @@ struct st_myisam_info {
 #ifdef __WIN__
   my_bool owned_by_merge;                       /* This MyISAM table is part of a merge union */
 #endif
-#ifdef THREAD
   THR_LOCK_DATA lock;
-#endif
   uchar  *rtree_recursion_state;	/* For RTREE */
   int     rtree_recursion_depth;
 };
@@ -408,6 +399,12 @@ typedef struct st_mi_sort_param
 #define mi_print_error(SHARE, ERRNO)                     \
         mi_report_error((ERRNO), (SHARE)->index_file_name)
 
+C_MODE_START
+void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
+                        const char *message __attribute__((unused)),
+                        const char *sfile __attribute__((unused)),
+                        uint sline __attribute__((unused)));
+C_MODE_END
 /* Functions to store length of space packed keys, VARCHAR or BLOB keys */
 
 #define store_key_length(key,length) \
@@ -468,14 +465,7 @@ typedef struct st_mi_sort_param
 #define MI_UNIQUE_HASH_TYPE	HA_KEYTYPE_ULONG_INT
 #define mi_unique_store(A,B)    mi_int4store((A),(B))
 
-#ifdef THREAD
 extern pthread_mutex_t THR_LOCK_myisam;
-#endif
-#if !defined(THREAD) || defined(DONT_USE_RW_LOCKS)
-#define rw_wrlock(A) {}
-#define rw_rdlock(A) {}
-#define rw_unlock(A) {}
-#endif
 
 	/* Some extern variables */
 
@@ -579,8 +569,6 @@ extern void _mi_kpointer(MI_INFO *info,uchar *buff,my_off_t pos);
 extern my_off_t _mi_dpos(MI_INFO *info, uint nod_flag,uchar *after_key);
 extern my_off_t _mi_rec_pos(MYISAM_SHARE *info, uchar *ptr);
 extern void _mi_dpointer(MI_INFO *info, uchar *buff,my_off_t pos);
-extern int ha_key_cmp(HA_KEYSEG *keyseg, uchar *a,uchar *b,
-		       uint key_length,uint nextflag,uint *diff_length);
 extern uint _mi_get_static_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
 			       uchar *key);
 extern uint _mi_get_pack_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
@@ -639,8 +627,6 @@ extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, my_bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                uchar *to, uchar *from, ulong reclength);
 extern ulonglong mi_safe_mul(ulonglong a,ulonglong b);
-extern int _mi_ft_update(MI_INFO *info, uint keynr, uchar *keybuf,
-			 const uchar *oldrec, const uchar *newrec, my_off_t pos);
 
 struct st_sort_info;
 
@@ -762,7 +748,6 @@ void mi_update_status(void* param);
 void mi_restore_status(void* param);
 void mi_copy_status(void* to,void *from);
 my_bool mi_check_status(void* param);
-void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 
 extern MI_INFO *test_if_reopen(char *filename);
 my_bool check_table_is_closed(const char *name, const char *where);
@@ -773,8 +758,6 @@ my_bool mi_dynmap_file(MI_INFO *info, my_off_t size);
 void mi_remap_file(MI_INFO *info, my_off_t size);
 
 int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record);
-void _mi_report_crashed(MI_INFO *file, const char *message,
-                        const char *sfile, uint sline);
 
     /* Functions needed by mi_check */
 volatile int *killed_ptr(MI_CHECK *param);
@@ -782,11 +765,8 @@ void mi_check_print_error _VARARGS((MI_CHECK *param, const char *fmt,...));
 void mi_check_print_warning _VARARGS((MI_CHECK *param, const char *fmt,...));
 void mi_check_print_info _VARARGS((MI_CHECK *param, const char *fmt,...));
 int flush_pending_blocks(MI_SORT_PARAM *param);
-int sort_ft_buf_flush(MI_SORT_PARAM *sort_param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
-#ifdef THREAD
 pthread_handler_t thr_find_all_keys(void *arg);
-#endif
 int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);
@@ -799,7 +779,11 @@ extern size_t my_pwrite(File Filedes,const uchar *Buffer,size_t Count,
 		      my_off_t offset,myf MyFlags);
 extern size_t my_pread(File Filedes,uchar *Buffer,size_t Count,my_off_t offset,
 		     myf MyFlags);
+
+/* Needed for handler */
+void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 #ifdef __cplusplus
 }
 #endif
 
+#endif

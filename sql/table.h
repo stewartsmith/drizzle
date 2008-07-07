@@ -52,7 +52,7 @@ enum tmp_table_type
 enum frm_type_enum
 {
   FRMTYPE_ERROR= 0,
-  FRMTYPE_TABLE,
+  FRMTYPE_TABLE
 };
 
 frm_type_enum mysql_frm_type(THD *thd, char *path, enum legacy_db_type *dbt);
@@ -162,7 +162,7 @@ enum enum_table_category
     to I_S tables in the table cache, which should use
     this table type.
   */
-  TABLE_CATEGORY_INFORMATION=4,
+  TABLE_CATEGORY_INFORMATION=4
 };
 typedef enum enum_table_category TABLE_CATEGORY;
 
@@ -633,7 +633,7 @@ enum enum_schema_tables
   SCH_TABLES,
   SCH_TABLE_CONSTRAINTS,
   SCH_TABLE_NAMES,
-  SCH_VARIABLES,
+  SCH_VARIABLES
 };
 
 
@@ -1196,22 +1196,16 @@ static inline void tmp_restore_column_map(MY_BITMAP *bitmap,
 
 /* The following is only needed for debugging */
 
-static inline my_bitmap_map *dbug_tmp_use_all_columns(TABLE *table,
-                                                      MY_BITMAP *bitmap)
+static inline my_bitmap_map *dbug_tmp_use_all_columns(TABLE *table __attribute__((__unused__)),
+                                                      MY_BITMAP *bitmap __attribute__((__unused__)))
 {
-#ifndef DBUG_OFF
-  return tmp_use_all_columns(table, bitmap);
-#else
   return 0;
-#endif
 }
 
-static inline void dbug_tmp_restore_column_map(MY_BITMAP *bitmap,
-                                               my_bitmap_map *old)
+static inline void dbug_tmp_restore_column_map(MY_BITMAP *bitmap __attribute__((__unused__)),
+                                               my_bitmap_map *old __attribute__((__unused__)))
 {
-#ifndef DBUG_OFF
-  tmp_restore_column_map(bitmap, old);
-#endif
+  return;
 }
 
 size_t max_row_length(TABLE *table, const uchar *data);

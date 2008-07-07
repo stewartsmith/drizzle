@@ -17,15 +17,13 @@ regoff_t startoff = 0;
 regoff_t endoff = 0;
 
 
-extern int split();
-extern void regprint();
+extern int split(char *string, char *fields[], int nfields, char *sep);
+extern void regprint(my_regex_t *r, FILE *d);
 
 /*
  - main - do the simple case, hand off to regress() for regression
  */
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(int argc, char **argv)
 {
 	my_regex_t re;
 #	define	NS	10
@@ -36,8 +34,6 @@ char *argv[];
 	int c;
 	int errflg = 0;
 	register int i;
-	extern int optind;
-	extern char *optarg;
 
 	progname = argv[0];
 
