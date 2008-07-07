@@ -74,8 +74,6 @@ select(STDOUT);
 $| = 1; # Automatically flush STDOUT
 
 our $glob_win32_perl=  ($^O eq "MSWin32"); # ActiveState Win32 Perl
-our $glob_cygwin_perl= ($^O eq "cygwin");  # Cygwin Perl
-our $glob_win32=       ($glob_win32_perl or $glob_cygwin_perl);
 our $glob_netware=     ($^O eq "NetWare"); # NetWare
 
 require "lib/mtr_cases.pl";
@@ -360,8 +358,6 @@ sub main () {
 
   command_line_setup();
 
-  check_ndbcluster_support(\%mysqld_variables);
-  check_ssl_support(\%mysqld_variables);
   check_debug_support(\%mysqld_variables);
 
   executable_setup();
@@ -692,12 +688,6 @@ sub command_line_setup () {
 
   # Find the absolute path to the test directory
   $glob_mysql_test_dir=  cwd();
-  if ( $glob_cygwin_perl )
-  {
-    # Windows programs like 'mysqld' needs Windows paths
-    $glob_mysql_test_dir= `cygpath -m "$glob_mysql_test_dir"`;
-    chomp($glob_mysql_test_dir);
-  }
   $default_vardir= "$glob_mysql_test_dir/var";
 
   # In most cases, the base directory we find everything relative to,
@@ -725,37 +715,6 @@ sub command_line_setup () {
     $source_dist ? $glob_mysql_test_dir : $glob_basedir;
 
   $glob_timers= mtr_init_timers();
-
-  # --------------------------------------------------------------------------
-  # Embedded server flag
-  # --------------------------------------------------------------------------
-  if ( $opt_embedded_server )
-  {
-    $glob_use_embedded_server= 1;
-    # Add the location for libmysqld.dll to the path.
-    if ( $glob_win32 )
-    {
-      my $lib_mysqld=
-        mtr_path_exists(vs_config_dirs('libmysqld',''));
-	  $lib_mysqld= $glob_cygwin_perl ? ":".`cygpath "$lib_mysqld"` 
-                                     : ";".$lib_mysqld;
-      chomp($lib_mysqld);
-      $ENV{'PATH'}="$ENV{'PATH'}".$lib_mysqld;
-    }
-
-    push(@glob_test_mode, "embedded");
-    $opt_skip_rpl= 1;              # We never run replication with embedded
-    $opt_skip_ndbcluster= 1;       # Turn off use of NDB cluster
-    $opt_skip_ssl= 1;              # Turn off use of SSL
-
-    # Turn off use of bin log
-    push(@opt_extra_mysqld_opt, "--skip-log-bin");
-
-    if ( $opt_extern )
-    {
-      mtr_error("Can't use --extern with --embedded-server");
-    }
-  }
 
   #
   # Find the mysqld executable to be able to find the mysqld version
@@ -913,7 +872,6 @@ sub command_line_setup () {
     # Version 4.1 and --vardir was specified
     # Only supported as a symlink from var/
     # by setting up $opt_mem that symlink will be created
-    if ( ! $glob_win32 )
     {
       # Only platforms that have native symlinks can use the vardir trick
       $opt_mem= $opt_vardir;
@@ -928,8 +886,7 @@ sub command_line_setup () {
   $path_vardir_trace=~ s/^\w://;
 
   # We make the path absolute, as the server will do a chdir() before usage
-  unless ( $opt_vardir =~ m,^/, or
-           ($glob_win32 and $opt_vardir =~ m,^[a-z]:/,i) )
+  unless ( $opt_vardir =~ m,^/,)
   {
     # Make absolute path, relative test dir
     $opt_vardir= "$glob_mysql_test_dir/$opt_vardir";
@@ -1053,14 +1010,12 @@ sub command_line_setup () {
   {
     $opt_testcase_timeout= $default_testcase_timeout;
     $opt_testcase_timeout*= 10 if $opt_valgrind;
-    $opt_testcase_timeout*= 10 if ($opt_debug and $glob_win32);
   }
 
   if ( ! $opt_suite_timeout )
   {
     $opt_suite_timeout= $default_suite_timeout;
     $opt_suite_timeout*= 6 if $opt_valgrind;
-    $opt_suite_timeout*= 6 if ($opt_debug and $glob_win32);
   }
 
   if ( ! $opt_user )
@@ -1912,7 +1867,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env so childs can execute mysql_fix_system_tables
   # ----------------------------------------------------
-  #if ( !$opt_extern && ! $glob_win32 )
+  #if ( !$opt_extern)
   if ( 0 )
   {
     my $cmdline_mysql_fix_system_tables=
@@ -1982,14 +1937,6 @@ sub environment_setup () {
     print "Using SLAVE_MYPORT          = $ENV{SLAVE_MYPORT}\n";
     print "Using SLAVE_MYPORT1         = $ENV{SLAVE_MYPORT1}\n";
     print "Using SLAVE_MYPORT2         = $ENV{SLAVE_MYPORT2}\n";
-    if ( ! $opt_skip_ndbcluster )
-    {
-      print "Using NDBCLUSTER_PORT       = $ENV{NDBCLUSTER_PORT}\n";
-      if ( ! $opt_skip_ndbcluster_slave )
-      {
-	print "Using NDBCLUSTER_PORT_SLAVE = $ENV{NDBCLUSTER_PORT_SLAVE}\n";
-      }
-    }
   }
 
   # Create an environment variable to make it possible
@@ -2194,22 +2141,7 @@ sub setup_vardir() {
   }
 
   # Make a link std_data_ln in var/ that points to std_data
-  if ( ! $glob_win32 )
-  {
-    symlink("$glob_mysql_test_dir/std_data", "$opt_vardir/std_data_ln");
-  }
-  else
-  {
-    # on windows, copy all files from std_data into var/std_data_ln
-    mkpath("$opt_vardir/std_data_ln");
-    opendir(DIR, "$glob_mysql_test_dir/std_data")
-      or mtr_error("Can't find the std_data directory: $!");
-    for(readdir(DIR)) {
-      next if -d "$glob_mysql_test_dir/std_data/$_";
-      copy("$glob_mysql_test_dir/std_data/$_", "$opt_vardir/std_data_ln/$_");
-    }
-    closedir(DIR);
-  }
+  symlink("$glob_mysql_test_dir/std_data", "$opt_vardir/std_data_ln");
 
   # Remove old log files
   foreach my $name (glob("r/*.progress r/*.log r/*.warnings"))
@@ -2327,305 +2259,6 @@ sub vs_config_dirs ($$) {
           "$glob_basedir/$path_part/relwithdebinfo/$exe",
           "$glob_basedir/$path_part/debug/$exe");
 }
-
-##############################################################################
-#
-#  Start the ndb cluster
-#
-##############################################################################
-
-sub check_ndbcluster_support ($) {
-  my $mysqld_variables= shift;
-
-  if ($opt_skip_ndbcluster || $opt_extern)
-  {
-    if (!$opt_extern)
-    {
-      mtr_report("Skipping ndbcluster");
-    }
-    $opt_skip_ndbcluster_slave= 1;
-    return;
-  }
-
-  if ( ! $mysqld_variables->{'ndb-connectstring'} )
-  {
-    mtr_report("Skipping ndbcluster, mysqld not compiled with ndbcluster");
-    $opt_skip_ndbcluster= 1;
-    $opt_skip_ndbcluster_slave= 1;
-    return;
-  }
-  $glob_ndbcluster_supported= 1;
-  mtr_report("Using ndbcluster when necessary, mysqld supports it");
-
-  if ( $mysql_version_id < 50100 )
-  {
-    # Slave cluster is not supported until 5.1
-    $opt_skip_ndbcluster_slave= 1;
-
-  }
-
-  return;
-}
-
-
-sub ndbcluster_start_install ($) {
-  my $cluster= shift;
-
-  mtr_report("Installing $cluster->{'name'} Cluster");
-
-  mkdir($cluster->{'data_dir'});
-
-  # Create a config file from template
-  my $ndb_no_ord=512;
-  my $ndb_no_attr=2048;
-  my $ndb_con_op=105000;
-  my $ndb_dmem="80M";
-  my $ndb_imem="24M";
-  my $ndb_pbmem="32M";
-  my $nodes= $cluster->{'nodes'};
-  my $ndb_host= "localhost";
-  my $ndb_diskless= 0;
-
-  if (!$opt_bench)
-  {
-    # Use a smaller configuration
-    if (  $mysql_version_id < 50100 )
-    {
-      # 4.1 and 5.0 is using a "larger" --small configuration
-      $ndb_no_ord=128;
-      $ndb_con_op=10000;
-      $ndb_dmem="40M";
-      $ndb_imem="12M";
-    }
-    else
-    {
-      $ndb_no_ord=32;
-      $ndb_con_op=10000;
-      $ndb_dmem="20M";
-      $ndb_imem="1M";
-      $ndb_pbmem="4M";
-    }
-  }
-
-  my $config_file_template=     "ndb/ndb_config_${nodes}_node.ini";
-  my $config_file= "$cluster->{'data_dir'}/config.ini";
-
-  open(IN, $config_file_template)
-    or mtr_error("Can't open $config_file_template: $!");
-  open(OUT, ">", $config_file)
-    or mtr_error("Can't write to $config_file: $!");
-  while (<IN>)
-  {
-    chomp;
-
-    s/CHOOSE_MaxNoOfAttributes/$ndb_no_attr/;
-    s/CHOOSE_MaxNoOfOrderedIndexes/$ndb_no_ord/;
-    s/CHOOSE_MaxNoOfConcurrentOperations/$ndb_con_op/;
-    s/CHOOSE_DataMemory/$ndb_dmem/;
-    s/CHOOSE_IndexMemory/$ndb_imem/;
-    s/CHOOSE_Diskless/$ndb_diskless/;
-    s/CHOOSE_HOSTNAME_.*/$ndb_host/;
-    s/CHOOSE_FILESYSTEM/$cluster->{'data_dir'}/;
-    s/CHOOSE_PORT_MGM/$cluster->{'port'}/;
-    if ( $mysql_version_id < 50000 )
-    {
-      my $base_port= $cluster->{'port'} + 1;
-      s/CHOOSE_PORT_TRANSPORTER/$base_port/;
-    }
-    s/CHOOSE_DiskPageBufferMemory/$ndb_pbmem/;
-
-    print OUT "$_ \n";
-  }
-  close OUT;
-  close IN;
-
-
-  # Start cluster with "--initial"
-
-  ndbcluster_start($cluster, "--initial");
-
-  return 0;
-}
-
-
-sub ndbcluster_wait_started($$){
-  my $cluster= shift;
-  my $ndb_waiter_extra_opt= shift;
-  my $path_waiter_log= "$cluster->{'data_dir'}/ndb_waiter.log";
-  my $args;
-
-  mtr_init_args(\$args);
-
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--core");
-  mtr_add_arg($args, "--ndb-connectstring=%s", $cluster->{'connect_string'});
-  mtr_add_arg($args, "--timeout=60");
-
-  if ($ndb_waiter_extra_opt)
-  {
-    mtr_add_arg($args, "$ndb_waiter_extra_opt");
-  }
-
-  # Start the ndb_waiter which will connect to the ndb_mgmd
-  # and poll it for state of the ndbd's, will return when
-  # all nodes in the cluster is started
-  my $res= mtr_run($exe_ndb_waiter, $args,
-		   "", $path_waiter_log, $path_waiter_log, "");
-  mtr_verbose("ndbcluster_wait_started, returns: $res") if $res;
-  return $res;
-}
-
-
-
-sub mysqld_wait_started($){
-  my $mysqld= shift;
-
-  if (sleep_until_file_created($mysqld->{'path_pid'},
-			       $mysqld->{'start_timeout'},
-			       $mysqld->{'pid'}) == 0)
-  {
-    # Failed to wait for pid file
-    return 1;
-  }
-
-  # Get the "real pid" of the process, it will be used for killing
-  # the process in ActiveState's perl on windows
-  $mysqld->{'real_pid'}= mtr_get_pid_from_file($mysqld->{'path_pid'});
-
-  return 0;
-}
-
-
-sub ndb_mgmd_wait_started($) {
-  my ($cluster)= @_;
-
-  my $retries= 100;
-  while (ndbcluster_wait_started($cluster, "--no-contact") and
-	 $retries)
-  {
-    # Millisceond sleep emulated with select
-    select(undef, undef, undef, (0.1));
-
-    $retries--;
-  }
-
-  return $retries == 0;
-
-}
-
-sub ndb_mgmd_start ($) {
-  my $cluster= shift;
-
-  my $args;                             # Arg vector
-  my $pid= -1;
-
-  mtr_init_args(\$args);
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--core");
-  mtr_add_arg($args, "--nodaemon");
-  mtr_add_arg($args, "--config-file=%s", "$cluster->{'data_dir'}/config.ini");
-
-
-  my $path_ndb_mgmd_log= "$cluster->{'data_dir'}/\l$cluster->{'name'}_ndb_mgmd.log";
-  $pid= mtr_spawn($exe_ndb_mgmd, $args, "",
-		  $path_ndb_mgmd_log,
-		  $path_ndb_mgmd_log,
-		  "",
-		  { append_log_file => 1 });
-
-  # FIXME Should not be needed
-  # Unfortunately the cluster nodes will fail to start
-  # if ndb_mgmd has not started properly
-  if (ndb_mgmd_wait_started($cluster))
-  {
-    mtr_error("Failed to wait for start of ndb_mgmd");
-  }
-
-  # Remember pid of ndb_mgmd
-  $cluster->{'pid'}= $pid;
-
-  mtr_verbose("ndb_mgmd_start, pid: $pid");
-
-  return $pid;
-}
-
-
-sub ndbd_start ($$$) {
-  my $cluster= shift;
-  my $idx= shift;
-  my $extra_args= shift;
-
-  my $args;                             # Arg vector
-  my $pid= -1;
-
-  mtr_init_args(\$args);
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--core");
-  mtr_add_arg($args, "--ndb-connectstring=%s", "$cluster->{'connect_string'}");
-  if ( $mysql_version_id >= 50000)
-  {
-    mtr_add_arg($args, "--character-sets-dir=%s", "$path_charsetsdir");
-  }
-  mtr_add_arg($args, "--nodaemon");
-  mtr_add_arg($args, "$extra_args");
-
-  my $nodeid= $cluster->{'ndbds'}->[$idx]->{'nodeid'};
-  my $path_ndbd_log= "$cluster->{'data_dir'}/ndb_${nodeid}.log";
-  $pid= mtr_spawn($exe_ndbd, $args, "",
-		  $path_ndbd_log,
-		  $path_ndbd_log,
-		  "",
-		  { append_log_file => 1 });
-
-  # Add pid to list of pids for this cluster
-  $cluster->{'ndbds'}->[$idx]->{'pid'}= $pid;
-
-  # Rememeber options used when starting
-  $cluster->{'ndbds'}->[$idx]->{'start_extra_args'}= $extra_args;
-  $cluster->{'ndbds'}->[$idx]->{'idx'}= $idx;
-
-  mtr_verbose("ndbd_start, pid: $pid");
-
-  return $pid;
-}
-
-
-sub ndbcluster_start ($$) {
-  my $cluster= shift;
-  my $extra_args= shift;
-
-  mtr_verbose("ndbcluster_start '$cluster->{'name'}'");
-
-  if ( $cluster->{'use_running'} )
-  {
-    return 0;
-  }
-
-  if ( $cluster->{'pid'} )
-  {
-    mtr_error("Cluster '$cluster->{'name'}' already started");
-  }
-
-  ndb_mgmd_start($cluster);
-
-  for ( my $idx= 0; $idx < $cluster->{'nodes'}; $idx++ )
-  {
-    ndbd_start($cluster, $idx, $extra_args);
-  }
-
-  return 0;
-}
-
-
-sub rm_ndbcluster_tables ($) {
-  my $dir=       shift;
-  foreach my $bin ( glob("$dir/mysql/ndb_apply_status*"),
-                    glob("$dir/mysql/ndb_schema*"))
-  {
-    unlink($bin);
-  }
-}
-
 
 ##############################################################################
 #
@@ -3470,8 +3103,7 @@ sub mysqld_arguments ($$$$) {
   # When mysqld is run by a root user(euid is 0), it will fail
   # to start unless we specify what user to run as, see BUG#30630
   my $euid= $>;
-  if (!$glob_win32 and $euid == 0 and
-      grep(/^--user/, @$extra_opt, @opt_extra_mysqld_opt) == 0) {
+  if (grep(/^--user/, @$extra_opt, @opt_extra_mysqld_opt) == 0) {
     mtr_add_arg($args, "%s--user=root", $prefix);
   }
 
@@ -3846,11 +3478,6 @@ sub stop_all_servers () {
 
   # Make sure that process has shutdown else try to kill them
   mtr_check_stop_servers(\@kill_pids);
-
-  foreach my $mysqld (@{$master}, @{$slave})
-  {
-    rm_ndbcluster_tables($mysqld->{'path_myddir'});
-  }
 }
 
 
@@ -4119,15 +3746,6 @@ sub run_testcase_stop_servers($$$) {
 
   # Make sure that process has shutdown else try to kill them
   mtr_check_stop_servers(\@kill_pids);
-
-  foreach my $mysqld (@{$master}, @{$slave})
-  {
-    if ( ! $mysqld->{'pid'} )
-    {
-      # Remove ndbcluster tables if server is stopped
-      rm_ndbcluster_tables($mysqld->{'path_myddir'});
-    }
-  }
 }
 
 
@@ -4741,6 +4359,25 @@ sub valgrind_arguments {
     unshift(@$args, "--mode=execute", $$exe);
     $$exe= $exe_libtool;
   }
+}
+
+
+sub mysqld_wait_started($){
+  my $mysqld= shift;
+
+  if (sleep_until_file_created($mysqld->{'path_pid'},
+            $mysqld->{'start_timeout'},
+            $mysqld->{'pid'}) == 0)
+  {
+    # Failed to wait for pid file
+    return 1;
+  }
+
+  # Get the "real pid" of the process, it will be used for killing
+  # the process in ActiveState's perl on windows
+  $mysqld->{'real_pid'}= mtr_get_pid_from_file($mysqld->{'path_pid'});
+
+  return 0;
 }
 
 
