@@ -825,14 +825,6 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #define INT32(v)	(int32) (v)
 #define MYF(v)		(myf) (v)
 
-#ifndef LL
-#define LL(A) A ## L
-#endif
-
-#ifndef ULL
-#define ULL(A) A ## UL
-#endif
-
 /*
   Sometimes we want to make sure that the variable is not put into
   a register in debugging mode so we can see its value in the core

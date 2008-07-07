@@ -2709,7 +2709,7 @@ longlong Item_sum_count_distinct::val_int()
   int error;
   DBUG_ASSERT(fixed == 1);
   if (!table)					// Empty query
-    return LL(0);
+    return 0LL;
   if (tree)
   {
     if (is_evaluated)

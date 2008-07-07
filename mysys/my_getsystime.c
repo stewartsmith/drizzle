@@ -128,7 +128,7 @@ ulonglong my_micro_time()
     Value in microseconds from some undefined point in time
 */
 
-#define DELTA_FOR_SECONDS LL(500000000)  /* Half a second */
+#define DELTA_FOR_SECONDS 500000000LL  /* Half a second */
 
 ulonglong my_micro_time_and_time(time_t *time_arg)
 {
