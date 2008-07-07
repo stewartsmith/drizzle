@@ -162,10 +162,6 @@ our $opt_skip_combination;
 our @opt_extra_mysqld_opt;
 
 our $opt_compress;
-our $opt_ps_protocol;
-our $opt_sp_protocol;
-our $opt_cursor_protocol;
-our $opt_view_protocol;
 
 our $opt_debug;
 our $opt_do_test;
@@ -294,7 +290,6 @@ sub mysqld_wait_started($);
 sub run_benchmarks ($);
 sub initialize_servers ();
 sub mysql_install_db ();
-sub install_db ($$);
 sub copy_install_db ($$);
 sub run_testcase ($);
 sub run_testcase_stop_servers ($$$);
@@ -470,10 +465,6 @@ sub command_line_setup () {
   Getopt::Long::Configure("pass_through");
   GetOptions(
              # Control what engine/variation to run
-             'ps-protocol'              => \$opt_ps_protocol,
-             'sp-protocol'              => \$opt_sp_protocol,
-             'view-protocol'            => \$opt_view_protocol,
-             'cursor-protocol'          => \$opt_cursor_protocol,
              'compress'                 => \$opt_compress,
              'bench'                    => \$opt_bench,
              'small-bench'              => \$opt_small_bench,
@@ -830,14 +821,6 @@ sub command_line_setup () {
   if ( $opt_record )
   {
     $opt_skip_combination = 1;
-  }
-
-  # --------------------------------------------------------------------------
-  # ps protcol flag
-  # --------------------------------------------------------------------------
-  if ( $opt_ps_protocol )
-  {
-    push(@glob_test_mode, "ps-protocol");
   }
 
   # --------------------------------------------------------------------------
@@ -1617,14 +1600,6 @@ sub environment_setup () {
   $ENV{'MY_PERROR'}= mtr_native_path($exe_perror);
 
   # ----------------------------------------------------
-  # Add the path where mysqld will find udf_example.so
-  # ----------------------------------------------------
-  $ENV{'UDF_EXAMPLE_LIB'}=
-    ($lib_udf_example ? basename($lib_udf_example) : "");
-  $ENV{'UDF_EXAMPLE_LIB_OPT'}=
-    ($lib_udf_example ? "--plugin_dir=" . dirname($lib_udf_example) : "");
-
-  # ----------------------------------------------------
   # Add the path where mysqld will find ha_example.so
   # ----------------------------------------------------
   $ENV{'EXAMPLE_PLUGIN'}=
@@ -2098,8 +2073,6 @@ sub initialize_servers () {
 
 sub mysql_install_db () {
 
-  install_db('master', $master->[0]->{'path_myddir'});
-
   if ($max_master_num > 1)
   {
     copy_install_db('master', $master->[1]->{'path_myddir'});
@@ -2124,48 +2097,6 @@ sub copy_install_db ($$) {
   # Just copy the installed db from first master
   mtr_copy_dir($master->[0]->{'path_myddir'}, $data_dir);
 
-}
-
-
-sub install_db ($$) {
-  my $type=      shift;
-  my $data_dir=  shift;
-
-  mtr_report("Installing \u$type Database");
-
-
-  my $args;
-  mtr_init_args(\$args);
-  mtr_add_arg($args, "--no-defaults");
-  mtr_add_arg($args, "--bootstrap");
-  mtr_add_arg($args, "--basedir=%s", $path_my_basedir);
-  mtr_add_arg($args, "--datadir=%s", $data_dir);
-  mtr_add_arg($args, "--loose-skip-innodb");
-  mtr_add_arg($args, "--tmpdir=.");
-  mtr_add_arg($args, "--core-file");
-
-  if ( $opt_debug )
-  {
-    mtr_add_arg($args, "--debug=d:t:i:A,%s/log/bootstrap_%s.trace",
-		$path_vardir_trace, $type);
-  }
-
-  {
-    mtr_add_arg($args, "--language=%s", $path_language);
-    mtr_add_arg($args, "--character-sets-dir=%s", $path_charsetsdir);
-  }
-
-  # If DISABLE_GRANT_OPTIONS is defined when the server is compiled (e.g.,
-  # configure --disable-grant-options), mysqld will not recognize the
-  # --bootstrap or --skip-grant-tables options.  The user can set
-  # MYSQLD_BOOTSTRAP to the full path to a mysqld which does accept
-  # --bootstrap, to accommodate this.
-  my $exe_mysqld_bootstrap = $ENV{'MYSQLD_BOOTSTRAP'} || $exe_mysqld;
-
-  # ----------------------------------------------------------------------
-  # export MYSQLD_BOOTSTRAP_CMD variable containing <path>/mysqld <args>
-  # ----------------------------------------------------------------------
-  $ENV{'MYSQLD_BOOTSTRAP_CMD'}= "$exe_mysqld_bootstrap " . join(" ", @$args);
 }
 
 
@@ -2226,15 +2157,6 @@ sub do_before_run_mysqltest($)
 
   if (!$opt_extern)
   {
-    if ( $mysql_version_id < 50000 ) {
-      # Set environment variable NDB_STATUS_OK to 1
-      # if script decided to run mysqltest cluster _is_ installed ok
-      $ENV{'NDB_STATUS_OK'} = "1";
-    } elsif ( $mysql_version_id < 50100 ) {
-      # Set environment variable NDB_STATUS_OK to YES
-      # if script decided to run mysqltest cluster _is_ installed ok
-      $ENV{'NDB_STATUS_OK'} = "YES";
-    }
     if (defined $tinfo->{binlog_format} and  $mysql_version_id > 50100 )
     {
       # Dynamically switch binlog format of
@@ -3327,26 +3249,6 @@ sub run_mysqltest ($) {
     mtr_add_arg($args, "--database=test");
     mtr_add_arg($args, "--user=%s", $opt_user);
     mtr_add_arg($args, "--password=");
-  }
-
-  if ( $opt_ps_protocol )
-  {
-    mtr_add_arg($args, "--ps-protocol");
-  }
-
-  if ( $opt_sp_protocol )
-  {
-    mtr_add_arg($args, "--sp-protocol");
-  }
-
-  if ( $opt_view_protocol )
-  {
-    mtr_add_arg($args, "--view-protocol");
-  }
-
-  if ( $opt_cursor_protocol )
-  {
-    mtr_add_arg($args, "--cursor-protocol");
   }
 
   if ( $opt_strace_client )
