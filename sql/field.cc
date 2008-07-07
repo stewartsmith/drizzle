@@ -29,9 +29,6 @@
 #include "sql_select.h"
 #include <m_ctype.h>
 #include <errno.h>
-#ifdef HAVE_FCONVERT
-#include <floatingpoint.h>
-#endif
 
 // Maximum allowed exponent value for converting string to decimal
 #define MAX_EXPONENT 1024

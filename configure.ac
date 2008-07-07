@@ -555,7 +555,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h)
+AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
 AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
 AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
@@ -876,7 +876,6 @@ AC_CHECK_HEADER(vis.h,
 
 AC_CHECK_FUNCS(strlcat strlcpy)
 AC_CHECK_FUNCS(issetugid)
-AC_CHECK_FUNCS(fgetln)
 AC_CHECK_FUNCS(getline flockfile)
 
 # from old readline settting:
@@ -947,7 +946,7 @@ AC_FUNC_VPRINTF
 
 AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
   cuserid fchmod fcntl \
-  fconvert fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
+  fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
