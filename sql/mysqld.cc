@@ -502,8 +502,6 @@ static char *get_relative_path(const char *path);
 static void fix_paths(void);
 void handle_connections_sockets();
 pthread_handler_t kill_server_thread(void *arg);
-static void bootstrap(FILE *file);
-static bool read_init_file(char *file_name);
 pthread_handler_t handle_slave(void *arg);
 static ulong find_bit_type(const char *x, TYPELIB *bit_lib);
 static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
@@ -2917,18 +2915,6 @@ int main(int argc, char **argv)
     unireg_abort(1);
   }
 
-  if (opt_bootstrap)
-  {
-    select_thread_in_use= 0;                    // Allow 'kill' to work
-    bootstrap(stdin);
-    unireg_abort(bootstrap_error ? 1 : 0);
-  }
-  if (opt_init_file)
-  {
-    if (read_init_file(opt_init_file))
-      unireg_abort(1);
-  }
-
   create_maintenance_thread();
 
   sql_print_information(ER(ER_STARTUP),my_progname,server_version,
@@ -2961,56 +2947,6 @@ int main(int argc, char **argv)
 
   clean_up(1);
   mysqld_exit(0);
-}
-
-
-/**
-  Execute all commands from a file. Used by the mysql_install_db script to
-  create MySQL privilege tables without having to start a full MySQL server.
-*/
-
-static void bootstrap(FILE *file)
-{
-  DBUG_ENTER("bootstrap");
-
-  THD *thd= new THD;
-  thd->bootstrap=1;
-  my_net_init(&thd->net,(st_vio*) 0);
-  thd->max_client_packet_length= thd->net.max_packet;
-  thd->thread_id= thd->variables.pseudo_thread_id= thread_id++;
-  thread_count++;
-
-  bootstrap_file=file;
-  if (pthread_create(&thd->real_id,&connection_attrib,handle_bootstrap,
-		     (void*) thd))
-  {
-    sql_print_warning("Can't create thread to handle bootstrap");
-    bootstrap_error=-1;
-    DBUG_VOID_RETURN;
-  }
-  /* Wait for thread to die */
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  while (thread_count)
-  {
-    (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-    DBUG_PRINT("quit",("One thread died (count=%u)",thread_count));
-  }
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-
-  DBUG_VOID_RETURN;
-}
-
-
-static bool read_init_file(char *file_name)
-{
-  FILE *file;
-  DBUG_ENTER("read_init_file");
-  DBUG_PRINT("enter",("name: %s",file_name));
-  if (!(file=my_fopen(file_name,O_RDONLY,MYF(MY_WME))))
-    return(1);
-  bootstrap(file);
-  (void) my_fclose(file,MYF(MY_WME));
-  return 0;
 }
 
 
