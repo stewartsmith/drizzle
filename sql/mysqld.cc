@@ -3107,9 +3107,7 @@ void handle_connections_sockets()
   if (ip_sock != INVALID_SOCKET)
   {
     FD_SET(ip_sock,&clientFDs);
-#ifdef HAVE_FCNTL
     ip_flags = fcntl(ip_sock, F_GETFL, 0);
-#endif
   }
   DBUG_PRINT("general",("Waiting for connections."));
   MAYBE_BROKEN_SYSCALL;

@@ -944,8 +944,14 @@ MYSQL_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
+AC_CHECK_FUNCS(fcntl)
+if test "x$ac_cv_func_fcntl" != "xyes"
+then
+  AC_MSG_ERROR("Drizzle requires fcntl.")
+fi
+
 AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
-  cuserid fchmod fcntl \
+  cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \

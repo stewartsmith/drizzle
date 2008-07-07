@@ -273,8 +273,8 @@ void add_struct_to_map(hash_lex_struct *st)
   }
   else if (st->first_char == 0)
   {
-    hash_map[size_hash_map-2]= (char)(array_elements_func(symbols))&255;
-    hash_map[size_hash_map-1]= (char)(array_elements(symbols))>>8;
+    hash_map[size_hash_map-2]= ((unsigned int)(int16)array_elements_func(symbols))&255;
+    hash_map[size_hash_map-1]= ((unsigned int)(int16)array_elements(symbols))>>8;
   }
 }
 
