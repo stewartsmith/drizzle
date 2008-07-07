@@ -344,7 +344,7 @@ static void set_mysql_extended_error(MYSQL *mysql, int errcode,
   net= &mysql->net;
   net->last_errno= errcode;
   va_start(args, format);
-  my_vsnprintf(net->last_error, sizeof(net->last_error)-1,
+  vsnprintf(net->last_error, sizeof(net->last_error)-1,
                format, args);
   va_end(args);
   strmov(net->sqlstate, sqlstate);
@@ -1781,8 +1781,8 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
       mysql->options.protocol=MYSQL_PROTOCOL_MEMORY;
       unix_socket = 0;
       host=mysql->options.shared_memory_base_name;
-      my_snprintf(host_info=buff, sizeof(buff)-1,
-                  ER(CR_SHARED_MEMORY_CONNECTION), host);
+      snprintf(host_info=buff, sizeof(buff)-1,
+               ER(CR_SHARED_MEMORY_CONNECTION), host);
     }
   }
 #endif /* HAVE_SMEM */
@@ -1862,8 +1862,8 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     else
     {
       net->vio=vio_new_win32pipe(hPipe);
-      my_snprintf(host_info=buff, sizeof(buff)-1,
-                  ER(CR_NAMEDPIPE_CONNECTION), unix_socket);
+      snprintf(host_info=buff, sizeof(buff)-1,
+               ER(CR_NAMEDPIPE_CONNECTION), unix_socket);
     }
   }
 #endif
@@ -1883,7 +1883,7 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     if (!host)
       host= LOCAL_HOST;
 
-    my_snprintf(host_info=buff, sizeof(buff)-1, ER(CR_TCP_CONNECTION), host);
+    snprintf(host_info=buff, sizeof(buff)-1, ER(CR_TCP_CONNECTION), host);
     DBUG_PRINT("info",("Server name: '%s'.  TCP sock: %d", host, port));
 #ifdef MYSQL_SERVER
     thr_alarm_init(&alarmed);
@@ -1902,7 +1902,7 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     hints.ai_family= AF_UNSPEC;
 
     DBUG_PRINT("info",("IPV6 getaddrinfo %s", host));
-    my_snprintf(port_buf, NI_MAXSERV, "%d", port);
+    snprintf(port_buf, NI_MAXSERV, "%d", port);
     gai_errno= getaddrinfo(host, port_buf, &hints, &res_lst);
 
     if (gai_errno != 0) 

@@ -5707,8 +5707,8 @@ ha_innobase::info(
 			prebuilt->trx->op_info = "returning various info to MySQL";
 		}
 
-		my_snprintf(path, sizeof(path), "%s/%s%s",
-				mysql_data_home, ib_table->name, reg_ext);
+		snprintf(path, sizeof(path), "%s/%s%s",
+		         mysql_data_home, ib_table->name, reg_ext);
 
 		unpack_filename(path,path);
 
@@ -6479,11 +6479,11 @@ ha_innobase::external_lock(
 		    binlog_format == BINLOG_FORMAT_STMT)
 		{
 			char buf[256];
-			my_snprintf(buf, sizeof(buf),
-				    "Transaction level '%s' in"
-				    " InnoDB is not safe for binlog mode '%s'",
-				    tx_isolation_names[tx_isolation],
-				    binlog_format_names[binlog_format]);
+			snprintf(buf, sizeof(buf),
+				 "Transaction level '%s' in"
+				 " InnoDB is not safe for binlog mode '%s'",
+				 tx_isolation_names[tx_isolation],
+				 binlog_format_names[binlog_format]);
 			my_error(ER_BINLOG_LOGGING_IMPOSSIBLE, MYF(0), buf);
 			DBUG_RETURN(HA_ERR_LOGGING_IMPOSSIBLE);
 		}
@@ -6840,10 +6840,10 @@ innodb_mutex_show_status(
 #ifdef UNIV_DEBUG
 		if (mutex->mutex_type != 1) {
 			if (mutex->count_using > 0) {
-				buf1len= my_snprintf(buf1, sizeof(buf1),
+				buf1len= snprintf(buf1, sizeof(buf1),
 					"%s:%s",
 					mutex->cmutex_name, mutex->cfile_name);
-				buf2len= my_snprintf(buf2, sizeof(buf2),
+				buf2len= snprintf(buf2, sizeof(buf2),
 					"count=%lu, spin_waits=%lu,"
 					" spin_rounds=%lu, "
 					"os_waits=%lu, os_yields=%lu,"
@@ -6873,10 +6873,10 @@ innodb_mutex_show_status(
 			rw_lock_wait_time += mutex->lspent_time;
 		}
 #else /* UNIV_DEBUG */
-		buf1len= my_snprintf(buf1, sizeof(buf1), "%s:%lu",
-				     mutex->cfile_name, (ulong) mutex->cline);
-		buf2len= my_snprintf(buf2, sizeof(buf2), "os_waits=%lu",
-				     mutex->count_os_wait);
+		buf1len= snprintf(buf1, sizeof(buf1), "%s:%lu",
+				  mutex->cfile_name, (ulong) mutex->cline);
+		buf2len= snprintf(buf2, sizeof(buf2), "os_waits=%lu",
+				  mutex->count_os_wait);
 
 		if (stat_print(thd, innobase_hton_name,
 			       hton_name_len, buf1, buf1len,
@@ -6892,7 +6892,7 @@ innodb_mutex_show_status(
 	mutex_exit_noninline(&mutex_list_mutex);
 
 #ifdef UNIV_DEBUG
-	buf2len= my_snprintf(buf2, sizeof(buf2),
+	buf2len= snprintf(buf2, sizeof(buf2),
 		"count=%lu, spin_waits=%lu, spin_rounds=%lu, "
 		"os_waits=%lu, os_yields=%lu, os_wait_times=%lu",
 		rw_lock_count, rw_lock_count_spin_loop,

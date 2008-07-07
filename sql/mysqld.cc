@@ -1151,7 +1151,7 @@ static void network_init(void)
     hints.ai_socktype= SOCK_STREAM;
     hints.ai_family= AF_UNSPEC;
 
-    my_snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
+    snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
     error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
     if (error != 0)
     {

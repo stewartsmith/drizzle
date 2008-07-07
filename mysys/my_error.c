@@ -83,11 +83,11 @@ void my_error(int nr, myf MyFlags, ...)
   /* get the error message string. Default, if NULL or empty string (""). */
   if (! (format= (meh_p && (nr >= meh_p->meh_first)) ?
          meh_p->meh_errmsgs[nr - meh_p->meh_first] : NULL) || ! *format)
-    (void) my_snprintf (ebuff, sizeof(ebuff), "Unknown error %d", nr);
+    (void) snprintf (ebuff, sizeof(ebuff), "Unknown error %d", nr);
   else
   {
     va_start(args,MyFlags);
-    (void) my_vsnprintf (ebuff, sizeof(ebuff), format, args);
+    (void) vsnprintf (ebuff, sizeof(ebuff), format, args);
     va_end(args);
   }
   (*error_handler_hook)(nr, ebuff, MyFlags);
@@ -115,7 +115,7 @@ void my_printf_error(uint error, const char *format, myf MyFlags, ...)
 		    error, MyFlags, errno, format));
 
   va_start(args,MyFlags);
-  (void) my_vsnprintf (ebuff, sizeof(ebuff), format, args);
+  (void) vsnprintf (ebuff, sizeof(ebuff), format, args);
   va_end(args);
   (*error_handler_hook)(error, ebuff, MyFlags);
   DBUG_VOID_RETURN;

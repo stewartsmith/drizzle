@@ -555,7 +555,7 @@ bool LOGGER::general_log_print(THD *thd, enum enum_server_command command,
 
   /* prepare message */
   if (format)
-    message_buff_len= my_vsnprintf(message_buff, sizeof(message_buff),
+    message_buff_len= vsnprintf(message_buff, sizeof(message_buff),
                                    format, args);
   else
     message_buff[0]= '\0';
@@ -1303,11 +1303,11 @@ bool MYSQL_LOG::open(const char *log_name, enum_log_type log_type_arg,
   if (log_type == LOG_NORMAL)
   {
     char *end;
-    int len=my_snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
-			"started with:\nTCP Port: %d, Named Pipe: %s\n",
-                        my_progname, server_version, MYSQL_COMPILATION_COMMENT,
-                        mysqld_port, ""
-                       );
+    int len=snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
+		     "started with:\nTCP Port: %d, Named Pipe: %s\n",
+                     my_progname, server_version, MYSQL_COMPILATION_COMMENT,
+                     mysqld_port, ""
+                     );
     end= strnmov(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);
     if (my_b_write(&log_file, (uchar*) buff, (uint) (end-buff)) ||
@@ -1514,11 +1514,11 @@ bool MYSQL_QUERY_LOG::write(time_t event_time, const char *user_host,
 
         localtime_r(&event_time, &start);
 
-        time_buff_len= my_snprintf(local_time_buff, MAX_TIME_SIZE,
-                                   "%02d%02d%02d %2d:%02d:%02d",
-                                   start.tm_year % 100, start.tm_mon + 1,
-                                   start.tm_mday, start.tm_hour,
-                                   start.tm_min, start.tm_sec);
+        time_buff_len= snprintf(local_time_buff, MAX_TIME_SIZE,
+                                "%02d%02d%02d %2d:%02d:%02d",
+                                start.tm_year % 100, start.tm_mon + 1,
+                                start.tm_mday, start.tm_hour,
+                                start.tm_min, start.tm_sec);
 
         if (my_b_write(&log_file, (uchar*) local_time_buff, time_buff_len))
           goto err;
@@ -1528,7 +1528,7 @@ bool MYSQL_QUERY_LOG::write(time_t event_time, const char *user_host,
           goto err;
 
       /* command_type, thread_id */
-      length= my_snprintf(buff, 32, "%5ld ", (long) thread_id);
+      length= snprintf(buff, 32, "%5ld ", (long) thread_id);
 
     if (my_b_write(&log_file, (uchar*) buff, length))
       goto err;
@@ -1624,11 +1624,11 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
         struct tm start;
         localtime_r(&current_time, &start);
 
-        buff_len= my_snprintf(buff, sizeof buff,
-                              "# Time: %02d%02d%02d %2d:%02d:%02d\n",
-                              start.tm_year % 100, start.tm_mon + 1,
-                              start.tm_mday, start.tm_hour,
-                              start.tm_min, start.tm_sec);
+        buff_len= snprintf(buff, sizeof buff,
+                           "# Time: %02d%02d%02d %2d:%02d:%02d\n",
+                           start.tm_year % 100, start.tm_mon + 1,
+                           start.tm_mday, start.tm_hour,
+                           start.tm_min, start.tm_sec);
 
         /* Note that my_b_write() assumes it knows the length for this */
         if (my_b_write(&log_file, (uchar*) buff, buff_len))
@@ -4063,7 +4063,7 @@ int vprint_msg_to_log(enum loglevel level, const char *format, va_list args)
   int error_code= errno;
   DBUG_ENTER("vprint_msg_to_log");
 
-  length= my_vsnprintf(buff, sizeof(buff), format, args);
+  length= vsnprintf(buff, sizeof(buff), format, args);
 
   print_buffer_to_file(level, error_code, buff, length);
 

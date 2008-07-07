@@ -633,8 +633,7 @@ static struct message *find_message(struct errors *err, const char *lang,
 
     NOTE:
       Does not support format specifiers with positional args
-      like "%2$s" but that is not yet supported by my_vsnprintf
-      either.
+      like "%2$s" 
 */
 
 static ha_checksum checksum_format_specifier(const char* msg)

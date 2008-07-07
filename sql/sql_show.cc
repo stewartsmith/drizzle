@@ -81,7 +81,7 @@ int wild_case_compare(CHARSET_INFO *cs, const char *str,const char *wildstr)
 
 static int make_version_string(char *buf, int buf_length, uint version)
 {
-  return my_snprintf(buf, buf_length, "%d.%d", version>>8,version&0xff);
+  return snprintf(buf, buf_length, "%d.%d", version>>8,version&0xff);
 }
 
 static my_bool show_plugins(THD *thd, plugin_ref plugin,

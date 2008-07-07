@@ -17949,8 +17949,8 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       for (; sl && len + lastop + 5 < NAME_LEN; sl= sl->next_select())
       {
         len+= lastop;
-        lastop= my_snprintf(table_name_buffer + len, NAME_LEN - len,
-                            "%u,", sl->select_number);
+        lastop= snprintf(table_name_buffer + len, NAME_LEN - len,
+                         "%u,", sl->select_number);
       }
       if (sl || len + lastop >= NAME_LEN)
       {
@@ -18035,9 +18035,9 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       if (table->derived_select_number)
       {
 	/* Derived table name generation */
-	int len= my_snprintf(table_name_buffer, sizeof(table_name_buffer)-1,
-			     "<derived%u>",
-			     table->derived_select_number);
+	int len= snprintf(table_name_buffer, sizeof(table_name_buffer)-1,
+		          "<derived%u>",
+                          table->derived_select_number);
 	item_list.push_back(new Item_string(table_name_buffer, len, cs));
       }
       else
@@ -18321,9 +18321,9 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           {
             char namebuf[NAME_LEN];
             /* Derived table name generation */
-            int len= my_snprintf(namebuf, sizeof(namebuf)-1,
-                                 "<derived%u>",
-                                 prev_table->derived_select_number);
+            int len= snprintf(namebuf, sizeof(namebuf)-1,
+                              "<derived%u>",
+                              prev_table->derived_select_number);
             extra.append(namebuf, len);
           }
           else

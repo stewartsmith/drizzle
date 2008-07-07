@@ -2030,7 +2030,7 @@ void st_select_lex::print_order(String *str,
     if (order->counter_used)
     {
       char buffer[20];
-      uint length= my_snprintf(buffer, 20, "%d", order->counter);
+      uint length= snprintf(buffer, 20, "%d", order->counter);
       str->append(buffer, length);
     }
     else

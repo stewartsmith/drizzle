@@ -36,7 +36,7 @@ Slave_reporting_capability::report(loglevel level, int err_code,
     return;          // don't crash production builds, just do nothing
   }
 
-  my_vsnprintf(pbuff, pbuffsize, msg, args);
+  vsnprintf(pbuff, pbuffsize, msg, args);
 
   va_end(args);
 
