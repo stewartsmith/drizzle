@@ -6706,11 +6706,11 @@ ha_innobase::transactional_table_lock(
 
 /****************************************************************************
 Here we export InnoDB status variables to MySQL.  */
-/* TODO: FIX the case below:
+/* TODO: FIX the case below: */
 static
 int
 innodb_export_status()
-*==================*
+/*==================*/
 {
 	if (innodb_inited) {
 		srv_export_innodb_status();
@@ -7909,7 +7909,7 @@ bool ha_innobase::check_if_incompatible_data(
 	return COMPATIBLE_DATA_YES;
 }
 
-/* TODO: Fix the cast below!!!
+/* TODO: Fix the cast below!!! */
 
 static char * show_innodb_vars(THD *thd __attribute__((__unused__)),
                             SHOW_VAR *var, char *buff __attribute__((__unused__)))
@@ -7925,7 +7925,8 @@ static SHOW_VAR innodb_status_variables_export[]= {
   {NullS, NullS, SHOW_LONG}
 };
 
-*/
+/*/
+
 
 static struct st_mysql_storage_engine innobase_storage_engine=
 { MYSQL_HANDLERTON_INTERFACE_VERSION };
