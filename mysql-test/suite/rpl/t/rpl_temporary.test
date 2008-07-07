@@ -202,7 +202,7 @@ create temporary table `äöüÄÖÜ` (a int);
 insert into `äöüÄÖÜ` values (1);
 insert into t1 select * from `äöüÄÖÜ`
 EOF
---exec $MYSQL --character-sets-dir=../sql/share/charsets/ --default-character-set=latin1 test < $MYSQLTEST_VARDIR/tmp/bug14157.sql
+--exec $MYSQL --character-sets-dir=../server/share/charsets/ --default-character-set=latin1 test < $MYSQLTEST_VARDIR/tmp/bug14157.sql
 
 sync_slave_with_master;
 #connection slave;

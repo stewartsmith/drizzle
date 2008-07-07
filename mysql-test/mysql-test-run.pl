@@ -771,7 +771,7 @@ sub command_line_setup () {
 
   # Look for language files and charsetsdir, use same share
   $path_share=      mtr_path_exists("$glob_basedir/share/mysql",
-                                    "$glob_basedir/sql/share",
+                                    "$glob_basedir/server/share",
                                     "$glob_basedir/share");
 
   $path_language=      mtr_path_exists("$path_share/english");
@@ -782,7 +782,7 @@ sub command_line_setup () {
   {
     $exe_mysqld=       mtr_exe_exists (vs_config_dirs('sql', 'mysqld'),
                                        vs_config_dirs('sql', 'mysqld-debug'),
-				       "$glob_basedir/sql/mysqld",
+				       "$glob_basedir/server/mysqld",
 				       "$path_client_bindir/mysqld-max-nt",
 				       "$path_client_bindir/mysqld-max",
 				       "$path_client_bindir/mysqld-nt",
@@ -1558,7 +1558,7 @@ sub executable_setup () {
     # Look for the udf_example library
     $lib_udf_example=
       mtr_file_exists(vs_config_dirs('sql', 'udf_example.dll'),
-                      "$glob_basedir/sql/.libs/udf_example.so",);
+                      "$glob_basedir/server/.libs/udf_example.so",);
 
     # Look for the ha_example library
     $lib_example_plugin=

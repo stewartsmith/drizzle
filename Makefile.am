@@ -29,7 +29,7 @@ SUBDIRS =		. include \
 			strings mysys $(d_dbug) \
                         extra regex \
                         libmysql client storage plugin \
-                        sql \
+                        server \
 			mysql-test support-files
 
 DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
