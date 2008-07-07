@@ -82,12 +82,7 @@ static char *init_syms(udf_func *tmp, char *nm)
     let's ensure that at least one auxiliary symbol is defined
   */
   if (!tmp->func_init && !tmp->func_deinit && tmp->type != UDFTYPE_AGGREGATE)
-  {
-    if (!opt_allow_suspicious_udfs)
-      return nm;
-    if (current_thd->variables.log_warnings)
-      sql_print_warning(ER(ER_CANT_FIND_DL_ENTRY), nm);
-  }
+    return nm;
   return 0;
 }
 
