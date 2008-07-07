@@ -15,24 +15,15 @@
 
 # Process this file with automake to create Makefile.in
 
-AUTOMAKE_OPTIONS =	foreign
-
-# These are built from source in the Docs directory
-EXTRA_DIST =		
-
 SUBDIRS =		. include \
 			sql-common scripts vio \
-			@sql_union_dirs@ unittest storage plugin \
-			@sql_server@ \
-			mysql-test support-files
+			strings mysys dbug \
+                        extra regex \
+                        libmysql client unittest storage plugin \
+                        sql \
+			mysql-test support-files man
 
-DIST_SUBDIRS =		. include \
-			sql-common scripts vio \
-			strings mysys dbug mysys/tests strings/tests \
-			extra regex \
-			libmysql client unittest storage plugin \
-			sql \
-			mysql-test support-files
+DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
 
 DISTCLEANFILES = ac_available_languages_fragment
 

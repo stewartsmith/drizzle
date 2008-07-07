@@ -42,3 +42,4 @@ unittest/mysys/Makefile.in
 unittest/mytap/Makefile.in
 unittest/mytap/t/Makefile.in
 vio/Makefile.in
+./ChangeLog

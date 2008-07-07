@@ -16,7 +16,8 @@
 ## Process this file with automake to create Makefile.in
 
 
-bin_SCRIPTS =		@server_scripts@ \
+bin_SCRIPTS =		mysqld_safe \
+			mysql_install_db \
 			mysql_config \
 			mysql_fix_extensions \
 			mysql_convert_table_format \
@@ -48,7 +49,8 @@ dist_pkgdata_DATA =	fill_help_tables.sql \
 			mysql_system_tables.sql \
 			mysql_test_data_timezone.sql
 
-CLEANFILES =		@server_scripts@ \
+CLEANFILES =		mysqld_safe \
+			mysql_install_db \
 			make_binary_distribution \
 			make_sharedlib_distribution \
 			mysql_config \
@@ -102,7 +104,6 @@ SUFFIXES = .sh
 	  -e 's!@''CXXFLAGS''@!@CXXFLAGS@!'\
 	  -e 's!@''LDFLAGS''@!@LDFLAGS@!'\
 	  -e 's!@''CLIENT_LIBS''@!@CLIENT_LIBS@!' \
-	  -e 's!@''ZLIB_LIBS''@!@ZLIB_LIBS@!' \
 	  -e 's!@''LIBS''@!@LIBS@!' \
 	  -e 's!@''WRAPLIBS''@!@WRAPLIBS@!' \
 	  -e 's!@''innodb_system_libs''@!@innodb_system_libs@!' \
@@ -124,8 +125,6 @@ SUFFIXES = .sh
 	  -e "s!@""CONF_COMMAND""@!@CONF_COMMAND@!" \
 	  -e 's!@''MYSQLD_USER''@!@MYSQLD_USER@!' \
 	  -e 's!@''STATIC_NSS_FLAGS''@!@STATIC_NSS_FLAGS@!' \
-	  -e 's!@''NON_THREADED_LIBS''@!@NON_THREADED_LIBS@!' \
-	  -e 's!@''ZLIB_DEPS''@!@ZLIB_DEPS@!' \
 	  -e "s!@MAKE@!$(MAKE)!" \
 	$< > $@-t
 	@CHMOD@ +x $@-t

@@ -17,7 +17,7 @@
 
 AM_CPPFLAGS =              -I$(top_builddir)/include -I$(top_srcdir)/include
 LDADD =                 libdbuglt.la $(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/strings/libmystringslt.la ${ZLIB_LIBS}
+			$(top_builddir)/strings/libmystringslt.la 
 pkglib_LTLIBRARIES =	libdbug.la
 libdbug_la_LDFLAGS =   -static
 libdbug_la_SOURCES = 	
