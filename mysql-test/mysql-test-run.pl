@@ -73,9 +73,6 @@ use warnings;
 select(STDOUT);
 $| = 1; # Automatically flush STDOUT
 
-our $glob_win32_perl=  ($^O eq "MSWin32"); # ActiveState Win32 Perl
-our $glob_netware=     ($^O eq "NetWare"); # NetWare
-
 require "lib/mtr_cases.pl";
 require "lib/mtr_process.pl";
 require "lib/mtr_timer.pl";
@@ -102,7 +99,6 @@ our $glob_mysql_test_dir=         undef;
 our $glob_mysql_bench_dir=        undef;
 our $glob_scriptname=             undef;
 our $glob_timers=                 undef;
-our $glob_use_embedded_server=    0;
 our @glob_test_mode;
 
 our $glob_basedir;
@@ -174,7 +170,6 @@ our $opt_view_protocol;
 our $opt_debug;
 our $opt_do_test;
 our @opt_cases;                  # The test cases names in argv
-our $opt_embedded_server;
 
 our $opt_extern= 0;
 our $opt_socket;
@@ -475,7 +470,6 @@ sub command_line_setup () {
   Getopt::Long::Configure("pass_through");
   GetOptions(
              # Control what engine/variation to run
-             'embedded-server'          => \$opt_embedded_server,
              'ps-protocol'              => \$opt_ps_protocol,
              'sp-protocol'              => \$opt_sp_protocol,
              'view-protocol'            => \$opt_view_protocol,
@@ -1256,12 +1250,12 @@ sub collect_mysqld_features_from_running_server ()
 
 sub executable_setup () {
 
-  #
-  # Check if libtool is available in this distribution/clone
-  # we need it when valgrinding or debugging non installed binary
-  # Otherwise valgrind will valgrind the libtool wrapper or bash
-  # and gdb will not find the real executable to debug
-  #
+#
+# Check if libtool is available in this distribution/clone
+# we need it when valgrinding or debugging non installed binary
+# Otherwise valgrind will valgrind the libtool wrapper or bash
+# and gdb will not find the real executable to debug
+#
   if ( -x "../libtool")
   {
     $exe_libtool= "../libtool";
@@ -1271,69 +1265,54 @@ sub executable_setup () {
     }
   }
 
-  # Look for my_print_defaults
+# Look for my_print_defaults
   $exe_my_print_defaults=
     mtr_exe_exists(vs_config_dirs('extra', 'my_print_defaults'),
-		           "$path_client_bindir/my_print_defaults",
-		           "$glob_basedir/extra/my_print_defaults");
+        "$path_client_bindir/my_print_defaults",
+        "$glob_basedir/extra/my_print_defaults");
 
-  # Look for perror
+# Look for perror
   $exe_perror= "perror";
 
-  # Look for the client binaries
-  $exe_mysqlcheck=     mtr_exe_exists("$path_client_bindir/mysqlcheck");
-  $exe_mysqldump=      mtr_exe_exists("$path_client_bindir/mysqldump");
-  $exe_mysqlimport=    mtr_exe_exists("$path_client_bindir/mysqlimport");
-  $exe_mysqlshow=      mtr_exe_exists("$path_client_bindir/mysqlshow");
-  $exe_mysqlbinlog=    mtr_exe_exists("$path_client_bindir/mysqlbinlog");
-  $exe_mysqladmin=     mtr_exe_exists("$path_client_bindir/mysqladmin");
+# Look for the client binaries
+  $exe_mysqlcheck= mtr_exe_exists("$path_client_bindir/mysqlcheck");
+  $exe_mysqldump= mtr_exe_exists("$path_client_bindir/mysqldump");
+  $exe_mysqlimport= mtr_exe_exists("$path_client_bindir/mysqlimport");
+  $exe_mysqlshow= mtr_exe_exists("$path_client_bindir/mysqlshow");
+  $exe_mysqlbinlog= mtr_exe_exists("$path_client_bindir/mysqlbinlog");
+  $exe_mysqladmin= mtr_exe_exists("$path_client_bindir/mysqladmin");
   $exe_mysql=          mtr_exe_exists("$path_client_bindir/mysql");
 
   if (!$opt_extern)
   {
-  # Look for SQL scripts directory
+# Look for SQL scripts directory
     if ( $mysql_version_id >= 50100 )
     {
-      $exe_mysqlslap=    mtr_exe_exists("$path_client_bindir/mysqlslap");
+      $exe_mysqlslap= mtr_exe_exists("$path_client_bindir/mysqlslap");
     }
   }
 
-  # Look for mysqltest executable
-  if ( $glob_use_embedded_server )
-  {
-    $exe_mysqltest=
-      mtr_exe_exists(vs_config_dirs('libmysqld/examples','mysqltest_embedded'),
-                     "$glob_basedir/libmysqld/examples/mysqltest_embedded",
-                     "$path_client_bindir/mysqltest_embedded");
-  }
-  else
+# Look for mysqltest executable
   {
     $exe_mysqltest= mtr_exe_exists("$path_client_bindir/mysqltest");
   }
 
-  # Look for mysql_client_test executable which may _not_ exist in
-  # some versions, test using it should be skipped
-  if ( $glob_use_embedded_server )
-  {
-    $exe_mysql_client_test=
-      mtr_exe_maybe_exists(
-        vs_config_dirs('libmysqld/examples', 'mysql_client_test_embedded'),
-        "$glob_basedir/libmysqld/examples/mysql_client_test_embedded");
-  }
-  else
+# Look for mysql_client_test executable which may _not_ exist in
+# some versions, test using it should be skipped
   {
     $exe_mysql_client_test=
       mtr_exe_maybe_exists(vs_config_dirs('tests', 'mysql_client_test'),
-                           "$glob_basedir/tests/mysql_client_test",
-                           "$glob_basedir/bin/mysql_client_test");
+          "$glob_basedir/tests/mysql_client_test",
+          "$glob_basedir/bin/mysql_client_test");
   }
 
-  # Look for bug25714 executable which may _not_ exist in
-  # some versions, test using it should be skipped
+# Look for bug25714 executable which may _not_ exist in
+# some versions, test using it should be skipped
   $exe_bug25714=
-      mtr_exe_maybe_exists(vs_config_dirs('tests', 'bug25714'),
-                           "$glob_basedir/tests/bug25714");
+    mtr_exe_maybe_exists(vs_config_dirs('tests', 'bug25714'),
+        "$glob_basedir/tests/bug25714");
 }
+
 
 
 sub generate_cmdline_mysqldump ($) {
@@ -1377,16 +1356,6 @@ sub mysql_client_test_arguments()
   {
     mtr_add_arg($args,
       "--debug=d:t:A,$path_vardir_trace/log/mysql_client_test.trace");
-  }
-
-  if ( $glob_use_embedded_server )
-  {
-    mtr_add_arg($args,
-      " -A --language=$path_language");
-    mtr_add_arg($args,
-      " -A --datadir=$slave->[0]->{'path_myddir'}");
-    mtr_add_arg($args,
-      " -A --character-sets-dir=$path_charsetsdir");
   }
 
   return join(" ", $exe, @$args);
@@ -1726,17 +1695,6 @@ sub handle_int_signal () {
 ##############################################################################
 
 sub kill_running_servers () {
-
-  if ( $opt_fast or $glob_use_embedded_server )
-  {
-    # FIXME is embedded server really using PID files?!
-    unlink($master->[0]->{'path_pid'});
-    unlink($master->[1]->{'path_pid'});
-    unlink($slave->[0]->{'path_pid'});
-    unlink($slave->[1]->{'path_pid'});
-    unlink($slave->[2]->{'path_pid'});
-  }
-  else
   {
     # Ensure that no old mysqld test servers are running
     # This is different from terminating processes we have
@@ -1993,7 +1951,6 @@ sub run_benchmarks ($) {
 
   my $args;
 
-  if ( ! $glob_use_embedded_server )
   {
     mysqld_start($master->[0],[],[]);
     if ( ! $master->[0]->{'pid'} )
@@ -2033,7 +1990,6 @@ sub run_benchmarks ($) {
 
   chdir($glob_mysql_test_dir);          # Go back
 
-  if ( ! $glob_use_embedded_server )
   {
     stop_masters();
   }
@@ -2072,8 +2028,7 @@ sub run_tests () {
   mtr_print_line();
 
   if ( ! $glob_debugger and
-       ! $opt_extern and
-       ! $glob_use_embedded_server )
+       ! $opt_extern )
   {
     stop_all_servers();
   }
@@ -2195,7 +2150,6 @@ sub install_db ($$) {
 		$path_vardir_trace, $type);
   }
 
-  if ( ! $glob_netware )
   {
     mtr_add_arg($args, "--language=%s", $path_language);
     mtr_add_arg($args, "--character-sets-dir=%s", $path_charsetsdir);
@@ -2420,11 +2374,6 @@ sub run_testcase ($) {
       return 1;
     }
   }
-  elsif ($glob_use_embedded_server)
-  {
-    run_master_init_script($tinfo);
-  }
-
   # ----------------------------------------------------------------------
   # If --start-and-exit or --start-dirty given, stop here to let user manually
   # run tests
@@ -2569,8 +2518,7 @@ sub report_failure_and_restart ($) {
   mtr_report("Aborting: $tinfo->{'name'} failed in $test_mode mode. ");
   mtr_report("To continue, re-run with '--force'.");
   if ( ! $glob_debugger and
-       ! $opt_extern and
-       ! $glob_use_embedded_server )
+       ! $opt_extern )
   {
     stop_all_servers();
   }
@@ -2678,10 +2626,6 @@ sub mysqld_arguments ($$$$) {
   }
 
   my $prefix= "";               # If mysqltest server arg
-  if ( $glob_use_embedded_server )
-  {
-    $prefix= "--server-arg=";
-  }
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
@@ -2884,9 +2828,6 @@ sub mysqld_start ($$$) {
   my $type= $mysqld->{'type'};
   my $idx= $mysqld->{'idx'};
 
-  mtr_error("Internal error: mysqld should never be started for embedded")
-    if $glob_use_embedded_server;
-
   if ( $type eq 'master' )
   {
     $exe= $exe_master_mysqld;
@@ -3016,12 +2957,7 @@ sub run_testcase_need_master_restart($)
   # We try to find out if we are to restart the master(s)
   my $do_restart= 0;          # Assumes we don't have to
 
-  if ( $glob_use_embedded_server )
-  {
-    mtr_verbose("Never start or restart for embedded server");
-    return $do_restart;
-  }
-  elsif ( $tinfo->{'master_sh'} )
+  if ( $tinfo->{'master_sh'} )
   {
     $do_restart= 1;           # Always restart if script to run
     mtr_verbose("Restart master: Always restart if script to run");
@@ -3085,12 +3021,7 @@ sub run_testcase_need_slave_restart($)
   # We try to find out if we are to restart the slaves
   my $do_slave_restart= 0;     # Assumes we don't have to
 
-  if ( $glob_use_embedded_server )
-  {
-    mtr_verbose("Never start or restart for embedded server");
-    return $do_slave_restart;
-  }
-  elsif ( $max_slave_num == 0)
+  if ( $max_slave_num == 0)
   {
     mtr_verbose("Skip slave restart: No testcase use slaves");
   }
@@ -3346,7 +3277,6 @@ sub run_check_testcase ($$) {
 sub run_report_features () {
   my $args;
 
-  if ( ! $glob_use_embedded_server )
   {
     mysqld_start($master->[0],[],[]);
     if ( ! $master->[0]->{'pid'} )
@@ -3369,7 +3299,6 @@ sub run_report_features () {
   $tinfo->{'comment'} = 'report server features';
   run_mysqltest($tinfo);
 
-  if ( ! $glob_use_embedded_server )
   {
     stop_all_servers();
   }
@@ -3447,15 +3376,6 @@ sub run_mysqltest ($) {
   {
     mtr_add_arg($args, "--debug=d:t:A,%s/log/mysqltest.trace",
 		$path_vardir_trace);
-  }
-
-  # ----------------------------------------------------------------------
-  # If embedded server, we create server args to give mysqltest to pass on
-  # ----------------------------------------------------------------------
-
-  if ( $glob_use_embedded_server )
-  {
-    mysqld_arguments($args,$master->[0],$tinfo->{'master_opt'},[]);
   }
 
   # ----------------------------------------------------------------------
@@ -3684,17 +3604,6 @@ sub debugger_arguments {
     $$exe= $debugger;
 
   }
-  elsif ( $debugger =~ /windbg/ )
-  {
-    # windbg exe arg1 .. argn
-
-    # Add name of the exe before args
-    unshift(@$$args, "$$exe");
-
-    # Set exe to debuggername
-    $$exe= $debugger;
-
-  }
   elsif ( $debugger eq "dbx" )
   {
     # xterm -e dbx -r exe arg1 .. argn
@@ -3792,7 +3701,6 @@ $0 [ OPTIONS ] [ TESTCASE ]
 
 Options to control what engine/variation to run
 
-  embedded-server       Use the embedded server, i.e. no mysqld daemons
   ps-protocol           Use the binary protocol between client and server
   cursor-protocol       Use the cursor protocol between client and server
                         (implies --ps-protocol)
@@ -3801,7 +3709,6 @@ Options to control what engine/variation to run
   compress              Use the compressed protocol between client and server
   bench                 Run the benchmark suite
   small-bench           Run the benchmarks with --small-tests --small-tables
-  ndb|with-ndbcluster   Use cluster as default table type
   vs-config             Visual Studio configuration used to create executables
                         (default: MTR_VS_CONFIG environment variable)
 
@@ -3823,10 +3730,6 @@ Options to control directories to use
 Options to control what test suites or cases to run
 
   force                 Continue to run the suite after failure
-  with-ndbcluster-only  Run only tests that include "ndb" in the filename
-  skip-ndb[cluster]     Skip all tests that need cluster
-  skip-ndb[cluster]-slave Skip all tests that need a slave cluster
-  ndb-extra             Run extra tests from ndb directory
   do-test=PREFIX or REGEX
                         Run test cases which name are prefixed with PREFIX
                         or fulfills REGEX
@@ -3848,8 +3751,6 @@ Options that specify ports
 
   master_port=PORT      Specify the port number used by the first master
   slave_port=PORT       Specify the port number used by the first slave
-  ndbcluster-port=PORT  Specify the port number used by cluster
-  ndbcluster-port-slave=PORT  Specify the port number used by slave cluster
   mtr-build-thread=#    Specify unique collection of ports. Can also be set by
                         setting the environment variable MTR_BUILD_THREAD.
 
@@ -3866,10 +3767,7 @@ Options that pass on options
 Options to run test on running server
 
   extern                Use running server for tests
-  ndb-connectstring=STR Use running cluster, and connect using STR
-  ndb-connectstring-slave=STR Use running slave cluster, and connect using STR
   user=USER             User for connection to extern server
-  socket=PATH           Socket for connection to extern server
 
 Options for debugging the product
 
