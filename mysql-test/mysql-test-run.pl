@@ -1525,17 +1525,6 @@ sub executable_setup () {
   if (!$opt_extern)
   {
   # Look for SQL scripts directory
-    if ( mtr_file_exists("$path_share/mysql_system_tables.sql") ne "")
-    {
-      # The SQL scripts are in path_share
-      $path_sql_dir= $path_share;
-    }
-    else
-    {
-  $path_sql_dir= mtr_path_exists("$glob_basedir/share",
-				 "$glob_basedir/scripts");
-    }
-
     if ( $mysql_version_id >= 50100 )
     {
       $exe_mysqlslap=    mtr_exe_exists("$path_client_bindir/mysqlslap");
@@ -2931,46 +2920,6 @@ sub install_db ($$) {
   # export MYSQLD_BOOTSTRAP_CMD variable containing <path>/mysqld <args>
   # ----------------------------------------------------------------------
   $ENV{'MYSQLD_BOOTSTRAP_CMD'}= "$exe_mysqld_bootstrap " . join(" ", @$args);
-
-  # ----------------------------------------------------------------------
-  # Create the bootstrap.sql file
-  # ----------------------------------------------------------------------
-  my $bootstrap_sql_file= "$opt_vardir/tmp/bootstrap.sql";
-
-  # Use the mysql database for system tables
-  mtr_tofile($bootstrap_sql_file, "use mysql");
-
-  # Add the offical mysql system tables
-  # for a production system
-  mtr_appendfile_to_file("$path_sql_dir/mysql_system_tables.sql",
-			 $bootstrap_sql_file);
-
-
-  # Add test data for timezone - this is just a subset, on a real
-  # system these tables will be populated either by mysql_tzinfo_to_sql
-  # or by downloading the timezone table package from our website
-  mtr_appendfile_to_file("$path_sql_dir/mysql_test_data_timezone.sql",
-			 $bootstrap_sql_file);
-
-  # Remove anonymous users
-  mtr_tofile($bootstrap_sql_file,
-	     "DELETE FROM mysql.user where user= '';");
-
-  # Log bootstrap command
-  my $path_bootstrap_log= "$opt_vardir/log/bootstrap.log";
-  mtr_tofile($path_bootstrap_log,
-	     "$exe_mysqld_bootstrap " . join(" ", @$args) . "\n");
-
-
-  if ( mtr_run($exe_mysqld_bootstrap, $args, $bootstrap_sql_file,
-               $path_bootstrap_log, $path_bootstrap_log,
-	       "", { append_log_file => 1 }) != 0 )
-
-  {
-    mtr_error("Error executing mysqld --bootstrap\n" .
-              "Could not install system database from $bootstrap_sql_file\n" .
-	      "see $path_bootstrap_log for errors");
-  }
 }
 
 

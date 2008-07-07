@@ -42,12 +42,10 @@ EXTRA_SCRIPTS =		make_binary_distribution.sh \
 			mysqld_multi.sh \
 			mysqld_safe.sh
 
-EXTRA_DIST =		$(EXTRA_SCRIPTS) \
-			mysql_system_tables_fix.sql
+EXTRA_DIST =		$(EXTRA_SCRIPTS)
+			
 
-dist_pkgdata_DATA =	fill_help_tables.sql \
-			mysql_system_tables.sql \
-			mysql_test_data_timezone.sql
+dist_pkgdata_DATA =	
 
 CLEANFILES =		mysqld_safe \
 			mysql_install_db \
