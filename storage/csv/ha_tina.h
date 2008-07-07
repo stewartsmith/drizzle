@@ -107,7 +107,7 @@ public:
     return (HA_NO_TRANSACTIONS | HA_REC_NOT_IN_SEQ | HA_NO_AUTO_INCREMENT |
             HA_BINLOG_ROW_CAPABLE | HA_BINLOG_STMT_CAPABLE);
   }
-  ulong index_flags(uint idx, uint part, bool all_parts) const
+  uint32_t index_flags(uint idx, uint part, bool all_parts) const
   {
     /*
       We will never have indexes so this will never be called(AKA we return

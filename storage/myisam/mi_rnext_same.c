@@ -14,7 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "myisamdef.h"
-#include "rt_index.h"
 
 	/*
 	   Read next row with the same key as previous read, but abort if
@@ -42,18 +41,6 @@ int mi_rnext_same(MI_INFO *info, uchar *buf)
 
   switch (keyinfo->key_alg)
   {
-#ifdef HAVE_RTREE_KEYS
-    case HA_KEY_ALG_RTREE:
-      if ((error=rtree_find_next(info,inx,
-				 myisam_read_vec[info->last_key_func])))
-      {
-	error=1;
-	my_errno=HA_ERR_END_OF_FILE;
-	info->lastpos= HA_OFFSET_ERROR;
-	break;
-      }
-      break;
-#endif
     case HA_KEY_ALG_BTREE:
     default:
       if (!(info->update & HA_STATE_RNEXT_SAME))

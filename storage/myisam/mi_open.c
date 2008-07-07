@@ -15,9 +15,7 @@
 
 /* open a isam-database */
 
-#include "fulltext.h"
-#include "sp_defs.h"
-#include "rt_index.h"
+#include "myisamdef.h"
 #include <m_ctype.h>
 
 #if defined(MSDOS) || defined(__WIN__)
@@ -233,7 +231,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
       goto err;
     }
 
-    key_parts+=fulltext_keys*FT_SEGS;
     if (share->base.max_key_length > MI_MAX_KEY_BUFF || keys > MI_MAX_KEY ||
 	key_parts > MI_MAX_KEY * MI_MAX_KEY_SEG)
     {
@@ -255,25 +252,12 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     set_if_smaller(max_data_file_length, INT_MAX32);
     set_if_smaller(max_key_file_length, INT_MAX32);
 #endif
-#if USE_RAID && SYSTEM_SIZEOF_OFF_T == 4
-    set_if_smaller(max_key_file_length, INT_MAX32);
-    if (!share->base.raid_type)
-    {
-      set_if_smaller(max_data_file_length, INT_MAX32);
-    }
-    else
-    {
-      set_if_smaller(max_data_file_length,
-		     (ulonglong) share->base.raid_chunks << 31);
-    }
-#elif !defined(USE_RAID)
     if (share->base.raid_type)
     {
       DBUG_PRINT("error",("Table uses RAID but we don't have RAID support"));
       my_errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
-#endif
     share->base.max_data_file_length=(my_off_t) max_data_file_length;
     share->base.max_key_file_length=(my_off_t) max_key_file_length;
 
@@ -327,8 +311,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	disk_pos=mi_keydef_read(disk_pos, &share->keyinfo[i]);
         disk_pos_assert(disk_pos + share->keyinfo[i].keysegs * HA_KEYSEG_SIZE,
  			end_pos);
-        if (share->keyinfo[i].key_alg == HA_KEY_ALG_RTREE)
-          have_rtree=1;
 	set_if_smaller(share->blocksize,share->keyinfo[i].block_length);
 	share->keyinfo[i].seg=pos;
 	for (j=0 ; j < share->keyinfo[i].keysegs; j++,pos++)
@@ -355,53 +337,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	  }
 	  else if (pos->type == HA_KEYTYPE_BINARY)
 	    pos->charset= &my_charset_bin;
-	}
-	if (share->keyinfo[i].flag & HA_SPATIAL)
-	{
-#ifdef HAVE_SPATIAL
-	  uint sp_segs=SPDIMS*2;
-	  share->keyinfo[i].seg=pos-sp_segs;
-	  share->keyinfo[i].keysegs--;
-#else
-	  my_errno=HA_ERR_UNSUPPORTED;
-	  goto err;
-#endif
-	}
-        else if (share->keyinfo[i].flag & HA_FULLTEXT)
-	{
-          if (!fulltext_keys)
-          { /* 4.0 compatibility code, to be removed in 5.0 */
-            share->keyinfo[i].seg=pos-FT_SEGS;
-            share->keyinfo[i].keysegs-=FT_SEGS;
-          }
-          else
-          {
-            uint k;
-            share->keyinfo[i].seg=pos;
-            for (k=0; k < FT_SEGS; k++)
-            {
-              *pos= ft_keysegs[k];
-              pos[0].language= pos[-1].language;
-              if (!(pos[0].charset= pos[-1].charset))
-              {
-                my_errno=HA_ERR_CRASHED;
-                goto err;
-              }
-              pos++;
-            }
-          }
-          if (!share->ft2_keyinfo.seg)
-          {
-            memcpy(& share->ft2_keyinfo, & share->keyinfo[i], sizeof(MI_KEYDEF));
-            share->ft2_keyinfo.keysegs=1;
-            share->ft2_keyinfo.flag=0;
-            share->ft2_keyinfo.keylength=
-            share->ft2_keyinfo.minlength=
-            share->ft2_keyinfo.maxlength=HA_FT_WLEN+share->base.rec_reflength;
-            share->ft2_keyinfo.seg=pos-1;
-            share->ft2_keyinfo.end=pos;
-            setup_key_functions(& share->ft2_keyinfo);
-          }
 	}
         setup_key_functions(share->keyinfo+i);
 	share->keyinfo[i].end=pos;
@@ -439,7 +374,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	pos->flag=0;
 	pos++;
       }
-      share->ftparsers= 0;
     }
 
     disk_pos_assert(disk_pos + share->base.fields *MI_COLUMNDEF_SIZE, end_pos);
@@ -523,8 +457,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	((share->options & (HA_OPTION_READ_ONLY_DATA | HA_OPTION_TMP_TABLE |
 			   HA_OPTION_COMPRESS_RECORD |
 			   HA_OPTION_TEMP_COMPRESS_RECORD)) ||
-	 (open_flags & HA_OPEN_TMP_TABLE) ||
-	 have_rtree) ? 0 : 1;
+	 (open_flags & HA_OPEN_TMP_TABLE) || have_rtree) ? 0 : 1;
       if (share->concurrent_insert)
       {
 	share->lock.get_status=mi_get_status;
@@ -593,7 +526,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   info.lock_type=F_UNLCK;
   info.quick_mode=0;
   info.bulk_insert=0;
-  info.ft1_to_ft2=0;
   info.errkey= -1;
   info.page_changed=1;
   pthread_mutex_lock(&share->intern_lock);
@@ -784,16 +716,6 @@ void mi_setup_functions(register MYISAM_SHARE *share)
 
 static void setup_key_functions(register MI_KEYDEF *keyinfo)
 {
-  if (keyinfo->key_alg == HA_KEY_ALG_RTREE)
-  {
-#ifdef HAVE_RTREE_KEYS
-    keyinfo->ck_insert = rtree_insert;
-    keyinfo->ck_delete = rtree_delete;
-#else
-    DBUG_ASSERT(0); /* mi_open should check it never happens */
-#endif
-  }
-  else
   {
     keyinfo->ck_insert = _mi_ck_write;
     keyinfo->ck_delete = _mi_ck_delete;
@@ -1096,8 +1018,6 @@ uchar *mi_keydef_read(uchar *ptr, MI_KEYDEF *keydef)
    keydef->block_size_index= keydef->block_length/MI_MIN_KEY_BLOCK_LENGTH-1;
    keydef->underflow_block_length=keydef->block_length/3;
    keydef->version	= 0;			/* Not saved */
-   keydef->parser       = &ft_default_parser;
-   keydef->ftparser_nr  = 0;
    return ptr;
 }
 
@@ -1212,18 +1132,6 @@ exist a dup()-like call that would give us two different file descriptors.
 int mi_open_datafile(MI_INFO *info, MYISAM_SHARE *share,
                      File file_to_dup __attribute__((unused)))
 {
-#ifdef USE_RAID
-  if (share->base.raid_type)
-  {
-    info->dfile=my_raid_open(share->data_file_name,
-			     share->mode | O_SHARE,
-			     share->base.raid_type,
-			     share->base.raid_chunks,
-			     share->base.raid_chunksize,
-			     MYF(MY_WME | MY_RAID));
-  }
-  else
-#endif
     info->dfile=my_open(share->data_file_name, share->mode | O_SHARE,
 			MYF(MY_WME));
   return info->dfile >= 0 ? 0 : 1;

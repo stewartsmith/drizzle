@@ -39,20 +39,20 @@ bool check_reserved_words(LEX_STRING *name)
   if (!my_strcasecmp(system_charset_info, name->str, "GLOBAL") ||
       !my_strcasecmp(system_charset_info, name->str, "LOCAL") ||
       !my_strcasecmp(system_charset_info, name->str, "SESSION"))
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 
 /**
   @return
-    TRUE if item is a constant
+    true if item is a constant
 */
 
 bool
 eval_const_cond(COND *cond)
 {
-  return ((Item_func*) cond)->val_int() ? TRUE : FALSE;
+  return ((Item_func*) cond)->val_int() ? true : false;
 }
 
 
@@ -133,8 +133,8 @@ Item_func::Item_func(THD *thd, Item_func *item)
    item.
 
   RETURN VALUES
-  FALSE	ok
-  TRUE	Got error.  Stored with my_error().
+  false	ok
+  true	Got error.  Stored with my_error().
 */
 
 bool
@@ -149,7 +149,7 @@ Item_func::fix_fields(THD *thd, Item **ref)
   const_item_cache=1;
 
   if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
-    return TRUE;				// Fatal error if flag is set!
+    return true;				// Fatal error if flag is set!
   if (arg_count)
   {						// Print purify happy
     for (arg=args, arg_end=args+arg_count; arg != arg_end ; arg++)
@@ -160,7 +160,7 @@ Item_func::fix_fields(THD *thd, Item **ref)
 	We shouldn't call fix_fields() twice, so check 'fixed' field first
       */
       if ((!(*arg)->fixed && (*arg)->fix_fields(thd, arg)))
-	return TRUE;				/* purecov: inspected */
+	return true;				/* purecov: inspected */
       item= *arg;
 
       if (allowed_arg_cols)
@@ -188,10 +188,10 @@ Item_func::fix_fields(THD *thd, Item **ref)
   }
   fix_length_and_dec();
   if (thd->is_error()) // An error inside fix_length_and_dec occured
-    return TRUE;
+    return true;
   fixed= 1;
   thd->thd_marker= save_thd_marker;
-  return FALSE;
+  return false;
 }
 
 
@@ -307,7 +307,7 @@ Item *Item_func::transform(Item_transformer transformer, uchar *argument)
   callback functions.
 
     First the function applies the analyzer to the root node of
-    the Item_func object. Then if the analizer succeeeds (returns TRUE)
+    the Item_func object. Then if the analizer succeeeds (returns true)
     the function recursively applies the compile method to each argument
     of the Item_func node.
     If the call of the method for an argument item returns a new item
@@ -358,7 +358,7 @@ void Item_func::split_sum_func(THD *thd, Item **ref_pointer_array,
 {
   Item **arg, **arg_end;
   for (arg= args, arg_end= args+arg_count; arg != arg_end ; arg++)
-    (*arg)->split_sum_func2(thd, ref_pointer_array, fields, arg, TRUE);
+    (*arg)->split_sum_func2(thd, ref_pointer_array, fields, arg, true);
 }
 
 
@@ -649,10 +649,10 @@ void Item_func_connection_id::fix_length_and_dec()
 bool Item_func_connection_id::fix_fields(THD *thd, Item **ref)
 {
   if (Item_int_func::fix_fields(thd, ref))
-    return TRUE;
-  thd->thread_specific_used= TRUE;
+    return true;
+  thd->thread_specific_used= true;
   value= thd->variables.pseudo_thread_id;
-  return FALSE;
+  return false;
 }
 
 
@@ -753,7 +753,7 @@ String *Item_func_numhybrid::val_str(String *str)
     my_decimal decimal_value, *val;
     if (!(val= decimal_op(&decimal_value)))
       return 0;                                 // null is set
-    my_decimal_round(E_DEC_FATAL_ERROR, val, decimals, FALSE, val);
+    my_decimal_round(E_DEC_FATAL_ERROR, val, decimals, false, val);
     my_decimal2string(E_DEC_FATAL_ERROR, val, 0, 0, 0, str);
     break;
   }
@@ -1041,7 +1041,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
 
   if ((null_value= args[0]->null_value))
     return NULL;
-  my_decimal_round(E_DEC_FATAL_ERROR, tmp, decimals, FALSE, dec);
+  my_decimal_round(E_DEC_FATAL_ERROR, tmp, decimals, false, dec);
   sign= dec->sign();
   if (unsigned_flag)
   {
@@ -2130,7 +2130,7 @@ void Item_func_rand::seed_random(Item *arg)
 bool Item_func_rand::fix_fields(THD *thd,Item **ref)
 {
   if (Item_real_func::fix_fields(thd, ref))
-    return TRUE;
+    return true;
   used_tables_cache|= RAND_TABLE_BIT;
   if (arg_count)
   {					// Only use argument once in query
@@ -2144,7 +2144,7 @@ bool Item_func_rand::fix_fields(THD *thd,Item **ref)
     */
     if (!rand && !(rand= (struct rand_struct*)
                    thd->stmt_arena->alloc(sizeof(*rand))))
-      return TRUE;
+      return true;
 
     if (args[0]->const_item())
       seed_random (args[0]);
@@ -2164,7 +2164,7 @@ bool Item_func_rand::fix_fields(THD *thd,Item **ref)
     }
     rand= &thd->rand;
   }
-  return FALSE;
+  return false;
 }
 
 void Item_func_rand::update_used_tables()
@@ -2204,7 +2204,7 @@ double Item_func_units::val_real()
 void Item_func_min_max::fix_length_and_dec()
 {
   int max_int_part=0;
-  bool datetime_found= FALSE;
+  bool datetime_found= false;
   decimals=0;
   max_length=0;
   maybe_null=0;
@@ -2220,7 +2220,7 @@ void Item_func_min_max::fix_length_and_dec()
     cmp_type=item_cmp_type(cmp_type,args[i]->result_type());
     if (args[i]->result_type() != ROW_RESULT && args[i]->is_datetime())
     {
-      datetime_found= TRUE;
+      datetime_found= true;
       if (!datetime_item || args[i]->field_type() == MYSQL_TYPE_DATETIME)
         datetime_item= args[i];
     }
@@ -2231,7 +2231,7 @@ void Item_func_min_max::fix_length_and_dec()
     if (datetime_found)
     {
       thd= current_thd;
-      compare_as_dates= TRUE;
+      compare_as_dates= true;
     }
   }
   else if ((cmp_type == DECIMAL_RESULT) || (cmp_type == INT_RESULT))
@@ -2788,7 +2788,7 @@ void udf_handler::cleanup()
         (*deinit)(&initid);
       }
       free_udf(u_d);
-      initialized= FALSE;
+      initialized= false;
     }
     if (buffers)				// Because of bug in ecc
       delete [] buffers;
@@ -2805,14 +2805,14 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
   DBUG_ENTER("Item_udf_func::fix_fields");
 
   if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
-    DBUG_RETURN(TRUE);				// Fatal error flag is set!
+    DBUG_RETURN(true);				// Fatal error flag is set!
 
   udf_func *tmp_udf=find_udf(u_d->name.str,(uint) u_d->name.length,1);
 
   if (!tmp_udf)
   {
     my_error(ER_CANT_FIND_UDF, MYF(0), u_d->name.str, errno);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   u_d=tmp_udf;
   args=arguments;
@@ -2829,7 +2829,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 
     {
       free_udf(u_d);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     uint i;
     Item **arg,**arg_end;
@@ -2843,7 +2843,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
       // we can't assign 'item' before, because fix_fields() can change arg
       Item *item= *arg;
       if (item->check_cols(1))
-	DBUG_RETURN(TRUE);
+	DBUG_RETURN(true);
       /*
 	TODO: We should think about this. It is not always
 	right way just to set an UDF result to return my_charset_bin
@@ -2876,7 +2876,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 						       sizeof(long))))
     {
       free_udf(u_d);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
   }
   func->fix_length_and_dec();
@@ -2945,7 +2945,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
       my_error(ER_CANT_INITIALIZE_UDF, MYF(0),
                u_d->name.str, init_msg_buff);
       free_udf(u_d);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     func->max_length=min(initid.max_length,MAX_BLOB_WIDTH);
     func->maybe_null=initid.maybe_null;
@@ -2963,9 +2963,9 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
   {
     my_error(ER_CANT_INITIALIZE_UDF, MYF(0),
              u_d->name.str, ER(ER_UNKNOWN_ERROR));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -3191,7 +3191,7 @@ String *Item_func_udf_decimal::val_str(String *str)
     return 0;
   if (str->length() < DECIMAL_MAX_STR_LENGTH)
     str->length(DECIMAL_MAX_STR_LENGTH);
-  my_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, FALSE, &dec_buf);
+  my_decimal_round(E_DEC_FATAL_ERROR, dec, decimals, false, &dec_buf);
   my_decimal2string(E_DEC_FATAL_ERROR, &dec_buf, 0, 0, '0', str);
   return str;
 }
@@ -3378,7 +3378,7 @@ longlong Item_func_last_insert_id::val_int()
       LAST_INSERT_ID(X) take precedence over an generated auto_increment
       value for this row.
     */
-    thd->arg_of_last_insert_id_function= TRUE;
+    thd->arg_of_last_insert_id_function= true;
     thd->first_successful_insert_id_in_prev_stmt= value;
     return value;
   }
@@ -3514,7 +3514,7 @@ bool Item_func_set_user_var::fix_fields(THD *thd, Item **ref)
   /* fix_fields will call Item_func_set_user_var::fix_length_and_dec */
   if (Item_func::fix_fields(thd, ref) ||
       !(entry= get_variable(&thd->user_vars, name, 1)))
-    return TRUE;
+    return true;
   /* 
      Remember the last query which updated it, this way a query can later know
      if this variable is a constant item in the query (it is if update_query_id
@@ -3541,7 +3541,7 @@ bool Item_func_set_user_var::fix_fields(THD *thd, Item **ref)
     entry->collation.set(args[0]->collation.collation, DERIVATION_IMPLICIT);
   collation.set(entry->collation.collation, DERIVATION_IMPLICIT);
   cached_result_type= args[0]->result_type();
-  return FALSE;
+  return false;
 }
 
 
@@ -3805,7 +3805,7 @@ my_decimal *user_var_entry::val_decimal(my_bool *null_value, my_decimal *val)
     will be caught by thd->is_error() check in sql_set_variables().
 
   @retval
-    FALSE OK.
+    false OK.
 */
 
 bool
@@ -3813,7 +3813,7 @@ Item_func_set_user_var::check(bool use_result_field)
 {
   DBUG_ENTER("Item_func_set_user_var::check");
   if (use_result_field && !result_field)
-    use_result_field= FALSE;
+    use_result_field= false;
 
   switch (cached_result_type) {
   case REAL_RESULT:
@@ -3849,7 +3849,7 @@ Item_func_set_user_var::check(bool use_result_field)
     DBUG_ASSERT(0);
     break;
   }
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -3958,7 +3958,7 @@ my_decimal *Item_func_set_user_var::val_decimal(my_decimal *val)
 double Item_func_set_user_var::val_result()
 {
   DBUG_ASSERT(fixed == 1);
-  check(TRUE);
+  check(true);
   update();					// Store expression
   return entry->val_real(&null_value);
 }
@@ -3966,7 +3966,7 @@ double Item_func_set_user_var::val_result()
 longlong Item_func_set_user_var::val_int_result()
 {
   DBUG_ASSERT(fixed == 1);
-  check(TRUE);
+  check(true);
   update();					// Store expression
   return entry->val_int(&null_value);
 }
@@ -3974,7 +3974,7 @@ longlong Item_func_set_user_var::val_int_result()
 String *Item_func_set_user_var::str_result(String *str)
 {
   DBUG_ASSERT(fixed == 1);
-  check(TRUE);
+  check(true);
   update();					// Store expression
   return entry->val_str(&null_value, str, decimals);
 }
@@ -3983,7 +3983,7 @@ String *Item_func_set_user_var::str_result(String *str)
 my_decimal *Item_func_set_user_var::val_decimal_result(my_decimal *val)
 {
   DBUG_ASSERT(fixed == 1);
-  check(TRUE);
+  check(true);
   update();					// Store expression
   return entry->val_decimal(&null_value, val);
 }
@@ -4068,8 +4068,8 @@ void Item_func_set_user_var::make_field(Send_field *tmp_field)
     in the Item_func_set_user_var::send() function.
 
   RETURN VALUES
-    FALSE       Ok
-    TRUE        Error
+    false       Ok
+    true        Error
 */
 
 int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
@@ -4098,7 +4098,7 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
       return set_field_to_null_with_conversions(field, no_conversions);
     }
 
-    /* NOTE: If null_value == FALSE, "result" must be not NULL.  */
+    /* NOTE: If null_value == false, "result" must be not NULL.  */
 
     field->set_notnull();
     error=field->store(result->ptr(),result->length(),cs);
@@ -4400,7 +4400,7 @@ bool Item_user_var_as_out_param::fix_fields(THD *thd, Item **ref)
   DBUG_ASSERT(fixed == 0);
   if (Item::fix_fields(thd, ref) ||
       !(entry= get_variable(&thd->user_vars, name, 1)))
-    return TRUE;
+    return true;
   entry->type= STRING_RESULT;
   /*
     Let us set the same collation which is used for loading
@@ -4409,13 +4409,13 @@ bool Item_user_var_as_out_param::fix_fields(THD *thd, Item **ref)
   */
   entry->collation.set(thd->variables.collation_database);
   entry->update_query_id= thd->query_id;
-  return FALSE;
+  return false;
 }
 
 
 void Item_user_var_as_out_param::set_null_value(CHARSET_INFO* cs)
 {
-  ::update_hash(entry, TRUE, 0, 0, STRING_RESULT, cs,
+  ::update_hash(entry, true, 0, 0, STRING_RESULT, cs,
                 DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 
@@ -4423,7 +4423,7 @@ void Item_user_var_as_out_param::set_null_value(CHARSET_INFO* cs)
 void Item_user_var_as_out_param::set_value(const char *str, uint length,
                                            CHARSET_INFO* cs)
 {
-  ::update_hash(entry, FALSE, (void*)str, length, STRING_RESULT, cs,
+  ::update_hash(entry, false, (void*)str, length, STRING_RESULT, cs,
                 DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
 }
 
@@ -4569,7 +4569,7 @@ Item *get_system_var(THD *thd, enum_var_type var_type, LEX_STRING name,
 /**
   Check a user level lock.
 
-  Sets null_value=TRUE on error.
+  Sets null_value=true on error.
 
   @retval
     1		Available

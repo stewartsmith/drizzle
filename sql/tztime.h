@@ -18,8 +18,6 @@
 #pragma interface			/* gcc class interface */
 #endif
 
-#if !defined(TESTTIME) && !defined(TZINFO2SQL)
-
 /**
   This class represents abstract time zone and provides 
   basic interface for MYSQL_TIME <-> my_time_t conversion.
@@ -61,18 +59,6 @@ extern Time_zone * my_tz_UTC;
 extern Time_zone * my_tz_SYSTEM;
 extern Time_zone * my_tz_OFFSET0;
 extern Time_zone * my_tz_find(THD *thd, const String *name);
-extern my_bool     my_tz_init(THD *org_thd, const char *default_tzname, my_bool bootstrap);
+extern bool     my_tz_init(THD *org_thd, const char *default_tzname, my_bool bootstrap);
 extern void        my_tz_free();
 extern my_time_t   sec_since_epoch_TIME(MYSQL_TIME *t);
-
-/**
-  Number of elements in table list produced by my_tz_get_table_list()
-  (this table list contains tables which are needed for dynamical loading
-  of time zone descriptions). Actually it is imlementation detail that
-  should not be used anywhere outside of tztime.h and tztime.cc.
-*/
-
-static const int MY_TZ_TABLES_COUNT= 4;
-
-
-#endif /* !defined(TESTTIME) && !defined(TZINFO2SQL) */

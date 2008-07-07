@@ -63,8 +63,8 @@ struct mysql_event_general
   const char *general_query;
   unsigned int general_query_length;
   struct charset_info_st *general_charset;
-  unsigned long long general_time;
-  unsigned long long general_rows;
+  uint64_t general_time;
+  uint64_t general_rows;
 };
 
 

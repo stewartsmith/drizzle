@@ -13,10 +13,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+if BUILD_DBUG
+  d_dbug = $(top_builddir)/dbug/libdbuglt.la
+endif
+
 AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			-I$(top_srcdir)/sql
 LDADD =			$(top_builddir)/mysys/libmysyslt.la \
- 			$(top_builddir)/dbug/libdbuglt.la \
+ 			$(d_dbug) \
                         $(top_builddir)/strings/libmystringslt.la \
 			-lz
 

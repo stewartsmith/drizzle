@@ -15,8 +15,7 @@
 
 /* Update an old row in a MyISAM table */
 
-#include "fulltext.h"
-#include "rt_index.h"
+#include "myisamdef.h"
 
 int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
 {
@@ -85,25 +84,6 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
   {
     if (mi_is_key_active(share->state.key_map, i))
     {
-      if (share->keyinfo[i].flag & HA_FULLTEXT )
-      {
-	if (_mi_ft_cmp(info,i,oldrec, newrec))
-	{
-	  if ((int) i == info->lastinx)
-	  {
-	  /*
-	    We are changeing the index we are reading on.  Mark that
-	    the index data has changed and we need to do a full search
-	    when doing read-next
-	  */
-	    key_changed|=HA_STATE_WRITTEN;
-	  }
-	  changed|=((ulonglong) 1 << i);
-	  if (_mi_ft_update(info,i, old_key,oldrec,newrec,pos))
-	    goto err;
-	}
-      }
-      else
       {
 	uint new_length=_mi_make_key(info,i,new_key,newrec,pos);
 	uint old_length=_mi_make_key(info,i,old_key,oldrec,pos);
@@ -201,13 +181,6 @@ err:
     {
       if (((ulonglong) 1 << i) & changed)
       {
-	if (share->keyinfo[i].flag & HA_FULLTEXT)
-	{
-	  if ((flag++ && _mi_ft_del(info,i, new_key,newrec,pos)) ||
-	      _mi_ft_add(info,i, old_key,oldrec,pos))
-	    break;
-	}
-	else
 	{
 	  uint new_length=_mi_make_key(info,i,new_key,newrec,pos);
 	  uint old_length= _mi_make_key(info,i,old_key,oldrec,pos);

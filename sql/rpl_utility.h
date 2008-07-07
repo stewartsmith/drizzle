@@ -112,13 +112,6 @@ public:
           m_field_metadata[i]= x;
           break;
         }
-        case MYSQL_TYPE_BIT:
-        {
-          uint16 x= field_metadata[index++]; 
-          x = x + (field_metadata[index++] << 8U);
-          m_field_metadata[i]= x;
-          break;
-        }
         case MYSQL_TYPE_VARCHAR:
         {
           /*

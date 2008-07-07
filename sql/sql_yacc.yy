@@ -674,7 +674,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MAX_USER_CONNECTIONS_SYM
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
 %token  MEDIUMBLOB
-%token  MEDIUMINT
 %token  MEDIUMTEXT
 %token  MEDIUM_SYM
 %token  MEMORY_SYM
@@ -974,7 +973,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         if_exists opt_local opt_table_options table_options
         table_option opt_if_not_exists opt_no_write_to_binlog
         opt_temporary all_or_any opt_distinct
-        opt_ignore_leaves union_option
+        union_option
         start_transaction_opts opt_chain opt_release
         union_opt select_derived_init option_type2
         opt_transactional_lock_timeout
@@ -1088,12 +1087,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %type <NONE>
         query verb_clause create change select drop insert replace insert2
         insert_values update delete truncate rename
-        show describe load alter optimize keycache preload flush
+        show describe load alter optimize keycache flush
         reset purge begin commit rollback savepoint release
         slave master_def master_defs master_file_def slave_until_opts
         repair analyze check start checksum
         field_list field_list_item field_spec kill column_def key_def
-        keycache_list assign_to_keycache preload_list preload_keys
+        keycache_list assign_to_keycache
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
         opt_precision opt_ignore opt_column opt_restrict
@@ -1193,7 +1192,6 @@ statement:
         | lock
         | optimize
         | keycache
-        | preload
         | purge
         | release
         | rename
@@ -1862,12 +1860,7 @@ type:
         | BIT_SYM
           {
             Lex->length= (char*) "1";
-            $$=MYSQL_TYPE_BIT;
-          }
-        | BIT_SYM '(' NUM ')'
-          {
-            Lex->length= $3.str;
-            $$=MYSQL_TYPE_BIT;
+            $$=FIELD_TYPE_TINY;
           }
         | BOOL_SYM
           {
@@ -2029,7 +2022,6 @@ int_type:
           INT_SYM   { $$=MYSQL_TYPE_LONG; }
         | TINYINT   { $$=MYSQL_TYPE_TINY; }
         | SMALLINT  { $$=MYSQL_TYPE_SHORT; }
-        | MEDIUMINT { $$=MYSQL_TYPE_INT24; }
         | BIGINT    { $$=MYSQL_TYPE_LONGLONG; }
         ;
 
@@ -3088,30 +3080,6 @@ key_cache_name:
         | DEFAULT  { $$ = default_key_cache_base; }
         ;
 
-preload:
-          LOAD INDEX_SYM INTO CACHE_SYM
-          {
-            LEX *lex=Lex;
-            lex->sql_command=SQLCOM_PRELOAD_KEYS;
-          }
-          preload_list
-          {}
-        ;
-
-preload_list:
-          preload_keys
-        | preload_list ',' preload_keys
-        ;
-
-preload_keys:
-          table_ident cache_keys_spec opt_ignore_leaves
-          {
-            if (!Select->add_table_to_list(YYTHD, $1, NULL, $3, TL_READ,
-                                           Select->pop_index_hints()))
-              MYSQL_YYABORT;
-          }
-        ;
-
 cache_keys_spec:
           {
             Lex->select_lex.alloc_index_hints(YYTHD);
@@ -3126,12 +3094,6 @@ cache_keys_spec:
 cache_key_list_or_empty:
           /* empty */ { }
         | key_or_index '(' opt_key_usage_list ')'
-        ;
-
-opt_ignore_leaves:
-          /* empty */
-          { $$= 0; }
-        | IGNORE_SYM LEAVES { $$= TL_OPTION_IGNORE_LEAVES; }
         ;
 
 /*

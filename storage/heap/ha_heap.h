@@ -55,7 +55,7 @@ public:
             HA_REC_NOT_IN_SEQ | HA_CAN_INSERT_DELAYED | HA_NO_TRANSACTIONS |
             HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT);
   }
-  ulong index_flags(uint inx, uint part, bool all_parts) const
+  uint32_t index_flags(uint inx, uint part, bool all_parts) const
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
             HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :

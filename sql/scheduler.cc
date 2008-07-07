@@ -81,7 +81,7 @@ void libevent_kill_thd_callback(int Fd, short Operation, void *ctx);
 
 /*
   Create a pipe and set to non-blocking.
-  Returns TRUE if there is an error.
+  Returns true if there is an error.
 */
 
 static bool init_pipe(int pipe_fds[])
@@ -101,7 +101,7 @@ static bool init_pipe(int pipe_fds[])
 */
 
 thd_scheduler::thd_scheduler()
-  : logged_in(FALSE), io_event(NULL), thread_attached(FALSE)
+  : logged_in(false), io_event(NULL), thread_attached(false)
 {  
 #ifndef DBUG_OFF
   dbug_explain_buf[0]= 0;
@@ -123,7 +123,7 @@ bool thd_scheduler::init(THD *parent_thd)
   if (!io_event)
   {
     sql_print_error("Memory allocation error in thd_scheduler::init\n");
-    return TRUE;
+    return true;
   }
   
   event_set(io_event, parent_thd->net.vio->sd, EV_READ, 
@@ -131,7 +131,7 @@ bool thd_scheduler::init(THD *parent_thd)
     
   list.data= parent_thd;
   
-  return FALSE;
+  return false;
 }
 
 
@@ -146,15 +146,15 @@ bool thd_scheduler::thread_attach()
   if (libevent_should_close_connection(thd) ||
       setup_connection_thread_globals(thd))
   {
-    return TRUE;
+    return true;
   }
   my_errno= 0;
   thd->mysys_var->abort= 0;
-  thread_attached= TRUE;
+  thread_attached= true;
 #ifndef DBUG_OFF
   swap_dbug_explain();
 #endif
-  return FALSE;
+  return false;
 }
 
 
@@ -168,7 +168,7 @@ void thd_scheduler::thread_detach()
   {
     THD* thd = (THD*)list.data;
     thd->mysys_var= NULL;
-    thread_attached= FALSE;
+    thread_attached= false;
 #ifndef DBUG_OFF
     swap_dbug_explain();
 #endif
@@ -217,7 +217,7 @@ static bool libevent_init(void)
   
   created_threads= 0;
   killed_threads= 0;
-  kill_pool_threads= FALSE;
+  kill_pool_threads= false;
   
   pthread_mutex_init(&LOCK_event_loop, NULL);
   pthread_mutex_init(&LOCK_thd_add, NULL);
@@ -263,7 +263,7 @@ static bool libevent_init(void)
                       error);
       pthread_mutex_unlock(&LOCK_thread_count);
       libevent_end();                      // Cleanup
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
   }
 
@@ -273,7 +273,7 @@ static bool libevent_init(void)
   pthread_mutex_unlock(&LOCK_thread_count);
   
   DBUG_PRINT("info", ("%u threads created", (uint) thread_pool_size));
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -552,7 +552,7 @@ pthread_handler_t libevent_thread_proc(void *arg)
       else
       {
         /* login successful */
-        thd->scheduler.logged_in= TRUE;
+        thd->scheduler.logged_in= true;
         prepare_new_connection_state(thd);
         if (!libevent_needs_immediate_processing(thd))
           continue; /* New connection is now waiting for data in libevent*/
@@ -583,7 +583,7 @@ thread_exit:
 
 
 /*
-  Returns TRUE if the connection needs immediate processing and FALSE if 
+  Returns true if the connection needs immediate processing and false if 
   instead it's queued for libevent processing or closed,
 */
 
@@ -592,20 +592,20 @@ static bool libevent_needs_immediate_processing(THD *thd)
   if (libevent_should_close_connection(thd))
   {
     libevent_connection_close(thd);
-    return FALSE;
+    return false;
   }
   /*
-    If more data in the socket buffer, return TRUE to process another command.
+    If more data in the socket buffer, return true to process another command.
 
     Note: we cannot add for event processing because the whole request might
     already be buffered and we wouldn't receive an event.
   */
   if (thd->net.vio == 0 || thd->net.vio->read_pos < thd->net.vio->read_end)
-    return TRUE;
+    return true;
   
   thd->scheduler.thread_detach();
   libevent_thd_add(thd);
-  return FALSE;
+  return false;
 }
 
 
@@ -643,7 +643,7 @@ static void libevent_end()
   
   (void) pthread_mutex_lock(&LOCK_thread_count);
   
-  kill_pool_threads= TRUE;
+  kill_pool_threads= true;
   while (killed_threads != created_threads)
   {
     /* wake up the event loop */

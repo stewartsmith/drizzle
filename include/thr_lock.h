@@ -26,6 +26,7 @@ extern "C" {
 
 struct st_thr_lock;
 extern ulong locks_immediate,locks_waited ;
+extern pthread_mutex_t THR_LOCK_lock;
 
 enum thr_lock_type { TL_IGNORE=-1,
 		     TL_UNLOCK,			/* UNLOCK ANY LOCK */
@@ -132,7 +133,6 @@ typedef struct st_thr_lock {
 
 
 extern LIST *thr_lock_thread_list;
-extern pthread_mutex_t THR_LOCK_lock;
 
 my_bool init_thr_lock(void);		/* Must be called once/thread */
 #define thr_lock_owner_init(owner, info_arg) (owner)->info= (info_arg)

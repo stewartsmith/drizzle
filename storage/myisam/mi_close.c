@@ -103,11 +103,7 @@ int mi_close(register MI_INFO *info)
     my_free((uchar*) info->s,MYF(0));
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  if (info->ftparser_param)
-  {
-    my_free((uchar*)info->ftparser_param, MYF(0));
-    info->ftparser_param= 0;
-  }
+
   if (info->dfile >= 0 && my_close(info->dfile,MYF(0)))
     error = my_errno;
 

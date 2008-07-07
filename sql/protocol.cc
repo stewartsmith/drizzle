@@ -803,11 +803,8 @@ bool Protocol_text::store(const char *from, size_t length,
 {
 #ifndef DBUG_OFF
   DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_DECIMAL ||
-              field_types[field_pos] == MYSQL_TYPE_BIT ||
               field_types[field_pos] == MYSQL_TYPE_NEWDECIMAL ||
-	      (field_types[field_pos] >= MYSQL_TYPE_ENUM &&
-	       field_types[field_pos] <= MYSQL_TYPE_GEOMETRY));
+	      (field_types[field_pos] >= MYSQL_TYPE_ENUM && field_types[field_pos] <= MYSQL_TYPE_STRING));
   field_pos++;
 #endif
   return store_string_aux(from, length, fromcs, tocs);
@@ -820,12 +817,9 @@ bool Protocol_text::store(const char *from, size_t length,
   CHARSET_INFO *tocs= this->thd->variables.character_set_results;
 #ifndef DBUG_OFF
   DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_DECIMAL ||
-              field_types[field_pos] == MYSQL_TYPE_BIT ||
               field_types[field_pos] == MYSQL_TYPE_NEWDECIMAL ||
               field_types[field_pos] == MYSQL_TYPE_NEWDATE ||
-	      (field_types[field_pos] >= MYSQL_TYPE_ENUM &&
-	       field_types[field_pos] <= MYSQL_TYPE_GEOMETRY));
+	      (field_types[field_pos] >= MYSQL_TYPE_ENUM && field_types[field_pos] <= MYSQL_TYPE_STRING));
   field_pos++;
 #endif
   return store_string_aux(from, length, fromcs, tocs);
@@ -863,7 +857,6 @@ bool Protocol_text::store_long(longlong from)
 {
 #ifndef DBUG_OFF
   DBUG_ASSERT(field_types == 0 ||
-              field_types[field_pos] == MYSQL_TYPE_INT24 ||
               field_types[field_pos] == MYSQL_TYPE_LONG);
   field_pos++;
 #endif

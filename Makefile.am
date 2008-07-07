@@ -20,9 +20,13 @@ AUTOMAKE_OPTIONS =	foreign
 # These are built from source in the Docs directory
 EXTRA_DIST =		
 
+if BUILD_DBUG
+  d_dbug = dbug
+endif
+
 SUBDIRS =		. include \
 			sql-common scripts vio \
-			strings mysys dbug \
+			strings mysys $(d_dbug) \
                         extra regex \
                         libmysql client storage plugin \
                         sql \
@@ -76,7 +80,9 @@ test-binlog-statement:
 	cd mysql-test ; \
 	    @PERL@ ./mysql-test-run.pl $(force) --mysqld=--binlog-format=statement
 
-test:	test-ns test-pr
+test: test-drizzle
+
+test-old:	test-ns test-pr
 
 test-full:	test test-nr test-ps
 
@@ -162,3 +168,21 @@ test-full-qa:
 	$(MAKE) force=--force test-pr \
 	    test-binlog-statement test-ext test-fast-view \
 	        test-fast-cursor 
+
+test-drizzle:
+	cd mysql-test ; \
+	 @PERL@ ./mysql-test-run.pl --fast --reorder --force \
+		join_crash \
+		join_nested \
+		join_outer_innodb \
+		delete \
+		join_outer \
+		join \
+		subselect \
+		insert \
+		select \
+		update \
+		information_schema \
+		mysqlslap \
+		lock \
+		lock_tables_lost_commit

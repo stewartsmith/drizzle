@@ -200,14 +200,6 @@ AC_SUBST(LIBTOOL)dnl
 
 AC_SUBST(NM)dnl
 
-# NM= "$NM -X64"
-#archive_expsym_cmds= `echo "$archive_expsym_cmds" | sed -e '/"$(CC)"//'`
-#archive_expsym_cmds= "$CC -q64 $archive_expsym_cmds"
-#  CXXFLAGS=`echo "$CXXFLAGS -Werror" | sed -e 's/-fbranch-probabilities//; s/-Wall//; s/-ansi//; s/-pedantic//; s/-Wcheck//'`
-
-#AC_LIBTOOL_DLOPEN AC_LIBTOOL_WIN32_DLL AC_DISABLE_FAST_INSTALL AC_DISABLE_SHARED AC_DISABLE_STATIC
-
-# AC_PROG_INSTALL
 AC_PROG_INSTALL
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
@@ -260,6 +252,7 @@ AC_SUBST(ASFLAGS)
 AC_SUBST(LD)
 AC_SUBST(INSTALL_SCRIPT)
 
+
 export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 
 if test "$GCC" = "yes"
@@ -270,8 +263,8 @@ then
   # We should use -Wno-invalid-offsetof flag to disable some warnings from gcc
   # regarding offset() usage in C++ which are done in a safe manner in the
   # server
-  CXXFLAGS="$CXXFLAGS -Wall -fno-implicit-templates -fno-exceptions -fno-rtti"
-  CFLAGS="$CFLAGS -Wall"
+  CXXFLAGS="$CXXFLAGS ${GCC_WARNINGS} -fno-implicit-templates -fno-exceptions -fno-rtti"
+  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
   AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
     [1], [Defined by configure. Use explicit template instantiation.])
 fi
@@ -429,25 +422,6 @@ then
   AC_MSG_ERROR([MySQL requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
 fi
 
-static_nss=""
-STATIC_NSS_FLAGS=""
-OTHER_LIBC_LIB=""
-
-#
-# Check if we are using Linux and a glibc compiled with static nss
-# (this is true on the MySQL build machines to avoid NSS problems)
-#
-
-if test "$TARGET_LINUX" = "true" -a "$static_nss" = ""
-then
-  tmp=`nm /usr/lib*/libc.a  | grep _nss_files_getaliasent_r`
-  if test -n "$tmp"
-  then
-     STATIC_NSS_FLAGS="-lc -lnss_files -lnss_dns -lresolv"
-     STATIC_NSS_FLAGS="$STATIC_NSS_FLAGS $STATIC_NSS_FLAGS"
-     static_nss=1
-  fi
-fi
 
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
@@ -580,15 +554,16 @@ AC_TYPE_SIZE_T
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h \
- limits.h memory.h pwd.h select.h \
- stdlib.h stddef.h sys/fpu.h \
- strings.h string.h synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h \
- sys/timeb.h sys/types.h sys/un.h sys/vadvise.h sys/wait.h term.h \
- unistd.h utime.h sys/utime.h termio.h termios.h sched.h crypt.h alloca.h \
- sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h linux/config.h \
- sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h \
- execinfo.h)
+AC_HEADER_STDBOOL
+AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h)
+AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
+AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
+AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
+AC_CHECK_HEADERS(sys/timeb.h ys/un.h sys/vadvise.h sys/wait.h term.h)
+AC_CHECK_HEADERS(termio.h termios.h sched.h crypt.h alloca.h)
+AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
+AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
+AC_CHECK_HEADERS(execinfo.h)
 
 AC_CHECK_HEADERS([xfs/xfs.h])
 #--------------------------------------------------------------------
@@ -706,12 +681,14 @@ AC_ARG_WITH([debug],
 	    Full adds memory checked, very slow.])],
     [with_debug=$withval],
     [with_debug=no])
+AM_CONDITIONAL(BUILD_DBUG, test "$with_debug" != "no")
 if test "$with_debug" = "yes"
 then
   # Medium debug.
   AC_DEFINE([DBUG_ON], [1], [Use libdbug])
   CFLAGS="$DEBUG_CFLAGS $DEBUG_OPTIMIZE_CC $CFLAGS"
   CXXFLAGS="$DEBUG_CXXFLAGS $DEBUG_OPTIMIZE_CXX $CXXFLAGS"
+  
 elif test "$with_debug" = "full"
 then
   # Full debug. Very slow in some cases
@@ -977,7 +954,7 @@ MYSQL_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
-AC_CHECK_FUNCS(alarm bcmp bfill bmove bsearch bzero \
+AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
   chsize cuserid fchmod fcntl \
   fconvert fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
@@ -1164,18 +1141,58 @@ MYSQL_CHECK_VIO
 MYSQL_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(CLIENT_LIBS)
-AC_SUBST(STATIC_NSS_FLAGS)
-
-# IMPORTANT - do not modify LIBS past this line - this hack is the only way
-# I know to add the static NSS magic if we have static NSS libraries with
-# glibc - Sasha
-
-LDFLAGS="$LDFLAGS $OTHER_LIBC_LIB"
-LIBS="$LIBS $STATIC_NSS_FLAGS"
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
+
+AC_ARG_ENABLE([pedantic-warnings],
+    [AS_HELP_STRING([--disable-pedantic-warnings],
+       [Toggle pedanticness @<:@default=on@:>@])],
+    [ac_warn_pedantic="$enableval"],
+    [ac_warn_pedantic="yes"])
+
+AC_ARG_ENABLE([fail],
+    [AS_HELP_STRING([--enable-fail],
+       [Turn warnings into failures @<:@default=off@:>@])],
+    [ac_warn_fail="$enableval"],
+    [ac_warn_fail="no"])
+
+AC_ARG_ENABLE([unreachable],
+    [AS_HELP_STRING([--enable-unreachable],
+       [Enable warnings about unreachable code @<:@default=off@:>@])],
+    [ac_warn_unreachable="$enableval"],
+    [ac_warn_unreachable="no"])
+
+
+if test "$GCC" = "yes"
+then
+
+  GCC_WARNINGS="-W -Wall"
+  GXX_WARNINGS="${GCC_WARNINGS}"
+
+
+  if test "$ac_warn_pedantic" = "yes"
+  then
+    GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls  "
+    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls "
+  fi
+
+  if test "$ac_warn_unreachable" = "yes"
+  then
+    GCC_WARNINGS="${GCC_WARNINGS} -Wunreachable-code"
+    GXX_WARNINGS="${GXX_WARNINGS} -Wunreachable-code"
+  fi
+
+  if test "$ac_warn_fail" = "yes"
+  then
+    GCC_WARNINGS="${GCC_WARNINGS} -Werror"
+    GXX_WARNINGS="${GXX_WARNINGS} -Werror"
+  fi
+
+    CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
+    CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+fi
 
 # Some usefull subst
 AC_SUBST(CC)

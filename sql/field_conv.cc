@@ -642,9 +642,6 @@ Copy_field::get_copy_func(Field *to,Field *from)
   }
   else
   {
-    if (to->real_type() == MYSQL_TYPE_BIT ||
-        from->real_type() == MYSQL_TYPE_BIT)
-      return do_field_int;
     if (to->result_type() == DECIMAL_RESULT)
       return do_field_decimal;
     // Check if identical fields
@@ -715,8 +712,7 @@ Copy_field::get_copy_func(Field *to,Field *from)
 	     to_length != from_length ||
              !compatible_db_low_byte_first)
     {
-      if (to->real_type() == MYSQL_TYPE_DECIMAL ||
-	  to->result_type() == STRING_RESULT)
+      if (to->result_type() == STRING_RESULT)
 	return do_field_string;
       if (to->result_type() == INT_RESULT)
 	return do_field_int;
@@ -726,8 +722,6 @@ Copy_field::get_copy_func(Field *to,Field *from)
     {
       if (!to->eq_def(from) || !compatible_db_low_byte_first)
       {
-	if (to->real_type() == MYSQL_TYPE_DECIMAL)
-	  return do_field_string;
 	if (to->result_type() == INT_RESULT)
 	  return do_field_int;
 	else
@@ -759,7 +753,7 @@ int field_conv(Field *to,Field *from)
     if (to->pack_length() == from->pack_length() && 
         !(to->flags & UNSIGNED_FLAG && !(from->flags & UNSIGNED_FLAG)) && 
         to->real_type() != MYSQL_TYPE_ENUM && 
-        to->real_type() != MYSQL_TYPE_SET && to->real_type() != MYSQL_TYPE_BIT &&
+        to->real_type() != MYSQL_TYPE_SET &&
         (to->real_type() != MYSQL_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
@@ -799,8 +793,7 @@ int field_conv(Field *to,Field *from)
   else if ((from->result_type() == STRING_RESULT &&
             (to->result_type() == STRING_RESULT ||
              (from->real_type() != MYSQL_TYPE_ENUM &&
-              from->real_type() != MYSQL_TYPE_SET))) ||
-           to->type() == MYSQL_TYPE_DECIMAL)
+              from->real_type() != MYSQL_TYPE_SET))))
   {
     char buff[MAX_FIELD_WIDTH];
     String result(buff,sizeof(buff),from->charset());

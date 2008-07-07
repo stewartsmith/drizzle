@@ -13,6 +13,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+if BUILD_DBUG
+  d_dbug = $(top_builddir)/dbug/libdbuglt.la
+endif
+
+
 #called from the top level Makefile
 
 MYSQLDATAdir =		$(localstatedir)
@@ -26,7 +31,7 @@ AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 SUBDIRS =		share
 libexec_PROGRAMS =	mysqld
 EXTRA_PROGRAMS =	gen_lex_hash
-bin_PROGRAMS =		mysql_tzinfo_to_sql
+bin_PROGRAMS =		
 DTRACE =                @DTRACE@
 DTRACEFLAGS =           @DTRACEFLAGS@
 DTRACEFILES =           handler.o \
@@ -40,7 +45,7 @@ noinst_LTLIBRARIES =
 
 SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/dbug/libdbuglt.la \
+			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
 mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
@@ -78,7 +83,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			item_row.cc \
 			field.cc strfunc.cc key.cc sql_class.cc sql_list.cc \
 			protocol.cc sql_state.c \
-			lock.cc my_lock.c \
+			lock.cc \
 			sql_string.cc sql_manager.cc sql_map.cc \
 			mysqld.cc hash_filo.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \
@@ -114,9 +119,6 @@ endif
 
 gen_lex_hash_SOURCES =	gen_lex_hash.cc
 gen_lex_hash_LDFLAGS =  
-
-mysql_tzinfo_to_sql_SOURCES = tztime.cc
-mysql_tzinfo_to_sql_CXXFLAGS= -DTZINFO2SQL
 
 DEFS =			-DMYSQL_SERVER \
 			-DDEFAULT_MYSQL_HOME="\"$(MYSQLBASEdir)\"" \

@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 
+int split(char *string, char *fields[], int nfields, char *sep);
+
 /*
  - split - divide a string into fields, like awk split()
  = int split(char *string, char *fields[], int nfields, char *sep);
  */
-int				/* number of fields, including overflow */
-split(string, fields, nfields, sep)
-char *string;
-char *fields[];			/* list is not NULL-terminated */
-int nfields;			/* number of entries available in fields[] */
-char *sep;			/* "" white, "c" single char, "ab" [ab]+ */
+int			/* number of fields, including overflow */
+split(char *string,
+      char *fields[],	/* list is not NULL-terminated */
+      int nfields,	/* number of entries available in fields[] */
+      char *sep)	/* "" white, "c" single char, "ab" [ab]+ */
 {
 	register char *p = string;
 	register char c;			/* latest character */

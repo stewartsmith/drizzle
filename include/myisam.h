@@ -488,7 +488,6 @@ int movepoint(MI_INFO *info,uchar *record,my_off_t oldpos,
 int write_data_suffix(SORT_INFO *sort_info, my_bool fix_datafile);
 int test_if_almost_full(MI_INFO *info);
 int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename);
-void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 my_bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, ulonglong key_map,
 			    my_bool force);
 

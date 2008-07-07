@@ -971,9 +971,6 @@ static bool make_empty_rec(THD *thd, File file,enum legacy_db_type table_type,
       null_count++;
     }
 
-    if (field->sql_type == MYSQL_TYPE_BIT && !f_bit_as_char(field->pack_flag))
-      null_count+= field->length & 7;
-
     type= (Field::utype) MTYP_TYPENR(field->unireg_check);
 
     if (field->def)

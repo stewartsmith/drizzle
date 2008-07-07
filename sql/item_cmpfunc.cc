@@ -304,7 +304,7 @@ longlong Item_func_not_all::val_int()
   bool value= args[0]->val_bool();
 
   /*
-    return TRUE if there was records in underlying select in max/min
+    return true if there was records in underlying select in max/min
     optimization (ALL subquery)
   */
   if (empty_underlying_subquery())
@@ -335,8 +335,8 @@ void Item_func_not_all::print(String *str, enum_query_type query_type)
   Item_func_not_all.
 
   @return
-    (return TRUE if underlying subquery do not return rows) but if subquery
-    returns some rows it return same value as argument (TRUE/FALSE).
+    (return true if underlying subquery do not return rows) but if subquery
+    returns some rows it return same value as argument (true/false).
 */
 
 longlong Item_func_nop_all::val_int()
@@ -345,7 +345,7 @@ longlong Item_func_nop_all::val_int()
   longlong value= args[0]->val_int();
 
   /*
-    return FALSE if there was records in underlying select in max/min
+    return false if there was records in underlying select in max/min
     optimization (SAME/ANY subquery)
   */
   if (empty_underlying_subquery())
@@ -425,7 +425,7 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
     /* Restore the original field value. */
     if (field_item->depended_from)
     {
-      result= field->store(orig_field_val, TRUE);
+      result= field->store(orig_field_val, true);
       /* orig_field_val must be a valid value that can be restored back. */
       DBUG_ASSERT(!result);
     }
@@ -581,8 +581,8 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
         which would be transformed to:
         WHERE col= 'j'
       */
-      (*a)->walk(&Item::set_no_const_sub, FALSE, (uchar*) 0);
-      (*b)->walk(&Item::set_no_const_sub, FALSE, (uchar*) 0);
+      (*a)->walk(&Item::set_no_const_sub, false, (uchar*) 0);
+      (*b)->walk(&Item::set_no_const_sub, false, (uchar*) 0);
     }
     break;
   }
@@ -668,12 +668,12 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
       Do not return yet, we may still want to throw a "trailing garbage"
       warning.
     */
-    *error_arg= FALSE;
+    *error_arg= false;
     value= TIME_to_ulonglong_datetime(&l_time);
   }
   else
   {
-    *error_arg= TRUE;
+    *error_arg= true;
     error= 1;                                   /* force warning */
   }
 
@@ -748,7 +748,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
   if (cmp_type != CMP_DATE_DFLT)
   {
     /*
-      Do not cache GET_USER_VAR() function as its const_item() may return TRUE
+      Do not cache GET_USER_VAR() function as its const_item() may return true
       for the current thread but it still may change during the execution.
     */
     if (cmp_type != CMP_DATE_WITH_DATE && str_arg->const_item() &&
@@ -785,7 +785,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
     item_arg   [in/out] item to retrieve TIME value from
     cache_arg  [in/out] pointer to place to store the cache item to
     warn_item  [in]     unused
-    is_null    [out]    TRUE <=> the item_arg is null
+    is_null    [out]    true <=> the item_arg is null
 
   DESCRIPTION
     Retrieves the correct TIME value from given item for comparison by the
@@ -820,7 +820,7 @@ get_time_value(THD *thd, Item ***item_arg, Item **cache_arg,
     value= !*is_null ? TIME_to_ulonglong_datetime(&ltime) : 0;
   }
   /*
-    Do not cache GET_USER_VAR() function as its const_item() may return TRUE
+    Do not cache GET_USER_VAR() function as its const_item() may return true
     for the current thread but it still may change during the execution.
   */
   if (item->const_item() && cache_arg && (item->type() != Item::FUNC_ITEM ||
@@ -907,7 +907,7 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
   b_type= (*b)->field_type();
   a_cache= 0;
   b_cache= 0;
-  is_nulls_eq= FALSE;
+  is_nulls_eq= false;
   func= &Arg_comparator::compare_datetime;
   get_value_func= &get_datetime_value;
 }
@@ -922,7 +922,7 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
     item_arg   [in/out] item to retrieve DATETIME value from
     cache_arg  [in/out] pointer to place to store the caching item to
     warn_item  [in]     item for issuing the conversion warning
-    is_null    [out]    TRUE <=> the item_arg is null
+    is_null    [out]    true <=> the item_arg is null
 
   DESCRIPTION
     Retrieves the correct DATETIME value from given item for comparison by the
@@ -993,7 +993,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     */
   }
   /*
-    Do not cache GET_USER_VAR() function as its const_item() may return TRUE
+    Do not cache GET_USER_VAR() function as its const_item() may return true
     for the current thread but it still may change during the execution.
   */
   if (item->const_item() && cache_arg && (item->type() != Item::FUNC_ITEM ||
@@ -1021,10 +1021,10 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     with help of the get_datetime_value() function.
 
   RETURN
-    If is_nulls_eq is TRUE:
+    If is_nulls_eq is true:
        1    if items are equal or both are null
        0    otherwise
-    If is_nulls_eq is FALSE:
+    If is_nulls_eq is false:
       -1   a < b or one of items is null
        0   a == b
        1   a > b
@@ -1032,7 +1032,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
 
 int Arg_comparator::compare_datetime()
 {
-  bool is_null= FALSE;
+  bool is_null= false;
   ulonglong a_value, b_value;
 
   /* Get DATE/DATETIME/TIME value of the 'a' item. */
@@ -1439,19 +1439,19 @@ bool Item_func_truth::val_bool()
   if (args[0]->null_value)
   {
     /*
-      NULL val IS {TRUE, FALSE} --> FALSE
-      NULL val IS NOT {TRUE, FALSE} --> TRUE
+      NULL val IS {true, false} --> false
+      NULL val IS NOT {true, false} --> true
     */
     return (! affirmative);
   }
 
   if (affirmative)
   {
-    /* {TRUE, FALSE} val IS {TRUE, FALSE} value */
+    /* {true, false} val IS {true, false} value */
     return (val == value);
   }
 
-  /* {TRUE, FALSE} val IS NOT {TRUE, FALSE} value */
+  /* {true, false} val IS NOT {true, false} value */
   return (val != value);
 }
 
@@ -1500,17 +1500,17 @@ bool Item_in_optimizer::fix_fields(THD *thd, Item **ref)
 {
   DBUG_ASSERT(fixed == 0);
   if (fix_left(thd, ref))
-    return TRUE;
+    return true;
   if (args[0]->maybe_null)
     maybe_null=1;
 
   if (!args[1]->fixed && args[1]->fix_fields(thd, args+1))
-    return TRUE;
+    return true;
   Item_in_subselect * sub= (Item_in_subselect *)args[1];
   if (args[0]->cols() != sub->engine->cols())
   {
     my_error(ER_OPERAND_COLUMNS, MYF(0), args[0]->cols());
-    return TRUE;
+    return true;
   }
   if (args[1]->maybe_null)
     maybe_null=1;
@@ -1519,7 +1519,7 @@ bool Item_in_optimizer::fix_fields(THD *thd, Item **ref)
   not_null_tables_cache|= args[1]->not_null_tables();
   const_item_cache&= args[1]->const_item();
   fixed= 1;
-  return FALSE;
+  return false;
 }
 
 
@@ -1535,7 +1535,7 @@ longlong Item_in_optimizer::val_int()
     {
       /*
         We're evaluating "NULL IN (SELECT ...)". The result can be NULL or
-        FALSE, and we can return one instead of another. Just return NULL.
+        false, and we can return one instead of another. Just return NULL.
       */
       null_value= 1;
     }
@@ -1551,7 +1551,7 @@ longlong Item_in_optimizer::val_int()
       {
         /*
           We're evaluating "NULL IN (SELECT ...)". The result is:
-             FALSE if SELECT produces an empty set, or
+             false if SELECT produces an empty set, or
              NULL  otherwise.
           We disable the predicates we've pushed down into subselect, run the
           subselect and see if it has produced any rows.
@@ -1559,10 +1559,10 @@ longlong Item_in_optimizer::val_int()
         Item_in_subselect *item_subs=(Item_in_subselect*)args[1]; 
         if (cache->cols() == 1)
         {
-          item_subs->set_cond_guard_var(0, FALSE);
+          item_subs->set_cond_guard_var(0, false);
           (void) args[1]->val_bool_result();
           result_for_null_param= null_value= !item_subs->engine->no_rows();
-          item_subs->set_cond_guard_var(0, TRUE);
+          item_subs->set_cond_guard_var(0, true);
         }
         else
         {
@@ -1575,7 +1575,7 @@ longlong Item_in_optimizer::val_int()
           for (i= 0; i < ncols; i++)
           {
             if (cache->element_index(i)->null_value)
-              item_subs->set_cond_guard_var(i, FALSE);
+              item_subs->set_cond_guard_var(i, false);
           }
           
           (void) args[1]->val_bool_result();
@@ -1583,7 +1583,7 @@ longlong Item_in_optimizer::val_int()
           
           /* Turn all predicates back on */
           for (i= 0; i < ncols; i++)
-            item_subs->set_cond_guard_var(i, TRUE);
+            item_subs->set_cond_guard_var(i, true);
         }
       }
     }
@@ -1790,7 +1790,7 @@ void Item_func_interval::fix_length_and_dec()
                             INT_RESULT));
   if (rows > 8)
   {
-    bool not_null_consts= TRUE;
+    bool not_null_consts= true;
 
     for (uint i= 1; not_null_consts && i < rows; i++)
     {
@@ -1990,9 +1990,9 @@ void Item_func_between::fix_length_and_dec()
 {
   max_length= 1;
   int i;
-  bool datetime_found= FALSE;
+  bool datetime_found= false;
   int time_items_found= 0;
-  compare_as_dates= TRUE;
+  compare_as_dates= true;
   THD *thd= current_thd;
 
   /*
@@ -2018,7 +2018,7 @@ void Item_func_between::fix_length_and_dec()
     {
       if (args[i]->is_datetime())
       {
-        datetime_found= TRUE;
+        datetime_found= true;
         continue;
       }
       if (args[i]->field_type() == MYSQL_TYPE_TIME &&
@@ -2027,7 +2027,7 @@ void Item_func_between::fix_length_and_dec()
     }
   }
   if (!datetime_found)
-    compare_as_dates= FALSE;
+    compare_as_dates= false;
 
   if (compare_as_dates)
   {
@@ -2698,7 +2698,7 @@ bool Item_func_case::fix_fields(THD *thd, Item **ref)
     is not optimized away
   */
   if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
-    return TRUE;				// Fatal error flag is set!
+    return true;				// Fatal error flag is set!
   return res;
 }
 
@@ -2783,7 +2783,7 @@ void Item_func_case::fix_length_and_dec()
   
   max_length=0;
   decimals=0;
-  unsigned_flag= TRUE;
+  unsigned_flag= true;
   if (cached_result_type == STRING_RESULT)
   {
     for (uint i= 0; i < ncases; i+= 2)
@@ -3544,9 +3544,9 @@ void Item_func_in::fix_length_and_dec()
   Item **arg, **arg_end;
   bool const_itm= 1;
   THD *thd= current_thd;
-  bool datetime_found= FALSE;
-  /* TRUE <=> arguments values will be compared as DATETIMEs. */
-  bool compare_as_datetime= FALSE;
+  bool datetime_found= false;
+  /* true <=> arguments values will be compared as DATETIMEs. */
+  bool compare_as_datetime= false;
   Item *date_arg= 0;
   uint found_types= 0;
   uint type_cnt= 0, i;
@@ -3577,7 +3577,7 @@ void Item_func_in::fix_length_and_dec()
     if (cmp_type == STRING_RESULT && 
         agg_arg_charsets(cmp_collation, args, arg_count, MY_COLL_CMP_CONV, 1))
       return;
-    arg_types_compatible= TRUE;
+    arg_types_compatible= true;
   }
   if (type_cnt == 1)
   {
@@ -3609,7 +3609,7 @@ void Item_func_in::fix_length_and_dec()
 
       for (col= 0; col < cols; col++)
       {
-        bool skip_column= FALSE;
+        bool skip_column= false;
         /*
           Check that all items to be compared has the STRING result type and at
           least one of them is a DATE/DATETIME item.
@@ -3620,12 +3620,12 @@ void Item_func_in::fix_length_and_dec()
                       arg[0]->element_index(col));
           if (itm->result_type() != STRING_RESULT)
           {
-            skip_column= TRUE;
+            skip_column= true;
             break;
           }
           else if (itm->is_datetime())
           {
-            datetime_found= TRUE;
+            datetime_found= true;
             /*
               Internally all DATE/DATETIME values are converted to the DATETIME
               type. So try to find a DATETIME item to issue correct warnings.
@@ -3655,16 +3655,16 @@ void Item_func_in::fix_length_and_dec()
             *cmp= new cmp_item_datetime(date_arg);
             /* Reset variables for the next column. */
             date_arg= 0;
-            datetime_found= FALSE;
+            datetime_found= false;
           }
           else
-            compare_as_datetime= TRUE;
+            compare_as_datetime= true;
         }
       }
     }
   }
   /*
-    Row item with NULLs inside can return NULL or FALSE =>
+    Row item with NULLs inside can return NULL or false =>
     they can't be processed as static
   */
   if (type_cnt == 1 && const_itm && !nulls_in_row())
@@ -3687,11 +3687,11 @@ void Item_func_in::fix_length_and_dec()
         Item_field *field_item= (Item_field*) (args[0]->real_item());
         if (field_item->field->can_be_compared_as_longlong())
         {
-          bool all_converted= TRUE;
+          bool all_converted= true;
           for (arg=args+1, arg_end=args+arg_count; arg != arg_end ; arg++)
           {
             if (!convert_constant_item (thd, field_item, &arg[0]))
-              all_converted= FALSE;
+              all_converted= false;
           }
           if (all_converted)
             cmp_type= INT_RESULT;
@@ -3915,7 +3915,7 @@ Item_cond::fix_fields(THD *thd, Item **ref)
   and_tables_cache= ~(table_map) 0;
 
   if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
-    return TRUE;				// Fatal error flag is set!
+    return true;				// Fatal error flag is set!
   /*
     The following optimization reduces the depth of an AND-OR tree.
     E.g. a WHERE clause like
@@ -3949,7 +3949,7 @@ Item_cond::fix_fields(THD *thd, Item **ref)
     if ((!item->fixed &&
 	 item->fix_fields(thd, li.ref())) ||
 	(item= *li.ref())->check_cols(1))
-      return TRUE; /* purecov: inspected */
+      return true; /* purecov: inspected */
     used_tables_cache|=     item->used_tables();
     if (item->const_item())
       and_tables_cache= (table_map) 0;
@@ -3958,7 +3958,7 @@ Item_cond::fix_fields(THD *thd, Item **ref)
       tmp_table_map= item->not_null_tables();
       not_null_tables_cache|= tmp_table_map;
       and_tables_cache&= tmp_table_map;
-      const_item_cache= FALSE;
+      const_item_cache= false;
     }  
     with_sum_func=	    with_sum_func || item->with_sum_func;
     with_subselect|=        item->with_subselect;
@@ -3969,7 +3969,7 @@ Item_cond::fix_fields(THD *thd, Item **ref)
   thd->thd_marker= orig_thd_marker;
   fix_length_and_dec();
   fixed= 1;
-  return FALSE;
+  return false;
 }
 
 
@@ -3999,7 +3999,7 @@ void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **ref)
       tmp_table_map= item->not_null_tables();
       not_null_tables_cache|= tmp_table_map;
       and_tables_cache&= tmp_table_map;
-      const_item_cache= FALSE;
+      const_item_cache= false;
     }  
   }
 }
@@ -4062,7 +4062,7 @@ Item *Item_cond::transform(Item_transformer transformer, uchar *arg)
   callback functions.
   
     First the function applies the analyzer to the root node of
-    the Item_func object. Then if the analyzer succeeeds (returns TRUE)
+    the Item_func object. Then if the analyzer succeeeds (returns true)
     the function recursively applies the compile method to member
     item of the condition list.
     If the call of the method for a member item returns a new item
@@ -4150,7 +4150,7 @@ void Item_cond::split_sum_func(THD *thd, Item **ref_pointer_array,
   List_iterator<Item> li(list);
   Item *item;
   while ((item= li++))
-    item->split_sum_func2(thd, ref_pointer_array, fields, li.ref(), TRUE);
+    item->split_sum_func2(thd, ref_pointer_array, fields, li.ref(), true);
 }
 
 
@@ -4243,7 +4243,7 @@ longlong Item_cond_and::val_int()
     if (!item->val_bool())
     {
       if (abort_on_null || !(null_value= item->null_value))
-	return 0;				// return FALSE
+	return 0;				// return false
     }
   }
   return null_value ? 0 : 1;
@@ -4433,12 +4433,12 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
   DBUG_ASSERT(fixed == 0);
   if (Item_bool_func2::fix_fields(thd, ref) ||
       escape_item->fix_fields(thd, &escape_item))
-    return TRUE;
+    return true;
 
   if (!escape_item->const_during_execution())
   {
     my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
-    return TRUE;
+    return true;
   }
   
   if (escape_item->const_item())
@@ -4453,7 +4453,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
                escape_str->numchars() > 1)))
       {
         my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
-        return TRUE;
+        return true;
       }
 
       if (use_mb(cmp.cmp_collation.collation))
@@ -4501,7 +4501,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
     {
       String* res2 = args[1]->val_str(&tmp_value2);
       if (!res2)
-        return FALSE;				// Null argument
+        return false;				// Null argument
       
       const size_t len   = res2->length();
       const char*  first = res2->ptr();
@@ -4535,12 +4535,12 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
       }
     }
   }
-  return FALSE;
+  return false;
 }
 
 void Item_func_like::cleanup()
 {
-  canDoTurboBM= FALSE;
+  canDoTurboBM= false;
   Item_bool_func2::cleanup();
 }
 
@@ -4881,7 +4881,7 @@ Item *Item_func_nop_all::neg_transformer(THD *thd)
   /* "NOT (e $cmp$ ANY (SELECT ...)) -> e $rev_cmp$" ALL (SELECT ...) */
   Item_func_not_all *new_item= new Item_func_not_all(args[0]);
   Item_allany_subselect *allany= (Item_allany_subselect*)args[0];
-  allany->func= allany->func_creator(FALSE);
+  allany->func= allany->func_creator(false);
   allany->all= !allany->all;
   allany->upper_item= new_item;
   return new_item;
@@ -4893,7 +4893,7 @@ Item *Item_func_not_all::neg_transformer(THD *thd)
   Item_func_nop_all *new_item= new Item_func_nop_all(args[0]);
   Item_allany_subselect *allany= (Item_allany_subselect*)args[0];
   allany->all= !allany->all;
-  allany->func= allany->func_creator(TRUE);
+  allany->func= allany->func_creator(true);
   allany->upper_item= new_item;
   return new_item;
 }
@@ -5081,7 +5081,7 @@ void Item_equal::sort(Item_field_cmpfunc cmp, void *arg)
     Item_field **ref1= it.ref();
     Item_field *item2;
 
-    swap= FALSE;
+    swap= false;
     while ((item2= it++))
     {
       Item_field **ref2= it.ref();
@@ -5090,7 +5090,7 @@ void Item_equal::sort(Item_field_cmpfunc cmp, void *arg)
         Item_field *item= *ref1;
         *ref1= *ref2;
         *ref2= item;
-        swap= TRUE;
+        swap= true;
       }
       else
       {

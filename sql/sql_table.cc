@@ -321,20 +321,20 @@ pthread_mutex_t LOCK_gdl;
     read_ddl_log_file_entry()
     entry_no                     Entry number to read
   RETURN VALUES
-    TRUE                         Error
-    FALSE                        Success
+    true                         Error
+    false                        Success
 */
 
 static bool read_ddl_log_file_entry(uint entry_no)
 {
-  bool error= FALSE;
+  bool error= false;
   File file_id= global_ddl_log.file_id;
   uchar *file_entry_buf= (uchar*)global_ddl_log.file_entry_buf;
-  uint io_size= global_ddl_log.io_size;
+  ssize_t io_size= (ssize_t)global_ddl_log.io_size;
   DBUG_ENTER("read_ddl_log_file_entry");
 
   if (pread(file_id, file_entry_buf, io_size, io_size * entry_no) != io_size)
-    error= TRUE;
+    error= true;
   DBUG_RETURN(error);
 }
 
@@ -345,20 +345,20 @@ static bool read_ddl_log_file_entry(uint entry_no)
     write_ddl_log_file_entry()
     entry_no                     Entry number to read
   RETURN VALUES
-    TRUE                         Error
-    FALSE                        Success
+    true                         Error
+    false                        Success
 */
 
 static bool write_ddl_log_file_entry(uint entry_no)
 {
-  bool error= FALSE;
+  bool error= false;
   File file_id= global_ddl_log.file_id;
   char *file_entry_buf= (char*)global_ddl_log.file_entry_buf;
   DBUG_ENTER("write_ddl_log_file_entry");
 
   if (pwrite(file_id, (uchar*)file_entry_buf,
              IO_SIZE, IO_SIZE * entry_no) != IO_SIZE)
-    error= TRUE;
+    error= true;
   DBUG_RETURN(error);
 }
 
@@ -368,14 +368,14 @@ static bool write_ddl_log_file_entry(uint entry_no)
   SYNOPSIS
     write_ddl_log_header()
   RETURN VALUES
-    TRUE                      Error
-    FALSE                     Success
+    true                      Error
+    false                     Success
 */
 
 static bool write_ddl_log_header()
 {
   uint16 const_var;
-  bool error= FALSE;
+  bool error= false;
   DBUG_ENTER("write_ddl_log_header");
 
   int4store(&global_ddl_log.file_entry_buf[DDL_LOG_NUM_ENTRY_POS],
@@ -389,7 +389,7 @@ static bool write_ddl_log_header()
   if (write_ddl_log_file_entry(0UL))
   {
     sql_print_error("Error writing ddl log header");
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   VOID(sync_ddl_log());
   DBUG_RETURN(error);
@@ -429,7 +429,7 @@ static uint read_ddl_log_header()
   char *file_entry_buf= (char*)global_ddl_log.file_entry_buf;
   char file_name[FN_REFLEN];
   uint entry_no;
-  bool successful_open= FALSE;
+  bool successful_open= false;
   DBUG_ENTER("read_ddl_log_header");
 
   create_ddl_log_file_name(file_name);
@@ -442,7 +442,7 @@ static uint read_ddl_log_header()
       sql_print_error("Failed to read ddl log file in recovery");
     }
     else
-      successful_open= TRUE;
+      successful_open= true;
   }
   entry_no= uint4korr(&file_entry_buf[DDL_LOG_NUM_ENTRY_POS]);
   global_ddl_log.name_len= uint4korr(&file_entry_buf[DDL_LOG_NAME_LEN_POS]);
@@ -472,8 +472,8 @@ static uint read_ddl_log_header()
     read_entry               Number of entry to read
     out:entry_info           Information from entry
   RETURN VALUES
-    TRUE                     Error
-    FALSE                    Success
+    true                     Error
+    false                    Success
   DESCRIPTION
     Read a specified entry in the ddl log
 */
@@ -487,7 +487,7 @@ bool read_ddl_log_entry(uint read_entry, DDL_LOG_ENTRY *ddl_log_entry)
 
   if (read_ddl_log_file_entry(read_entry))
   {
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   ddl_log_entry->entry_pos= read_entry;
   single_char= file_entry_buf[DDL_LOG_ENTRY_TYPE_POS];
@@ -501,7 +501,7 @@ bool read_ddl_log_entry(uint read_entry, DDL_LOG_ENTRY *ddl_log_entry)
   ddl_log_entry->from_name= &file_entry_buf[inx];
   inx+= global_ddl_log.name_len;
   ddl_log_entry->handler_name= &file_entry_buf[inx];
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -515,8 +515,8 @@ bool read_ddl_log_entry(uint read_entry, DDL_LOG_ENTRY *ddl_log_entry)
     number of entries to zero.
 
   RETURN VALUES
-    TRUE                     Error
-    FALSE                    Success
+    true                     Error
+    false                    Success
 */
 
 static bool init_ddl_log()
@@ -536,18 +536,18 @@ static bool init_ddl_log()
   {
     /* Couldn't create ddl log file, this is serious error */
     sql_print_error("Failed to open ddl log file");
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
-  global_ddl_log.inited= TRUE;
+  global_ddl_log.inited= true;
   if (write_ddl_log_header())
   {
     VOID(my_close(global_ddl_log.file_id, MYF(MY_WME)));
-    global_ddl_log.inited= FALSE;
-    DBUG_RETURN(TRUE);
+    global_ddl_log.inited= false;
+    DBUG_RETURN(true);
   }
 
 end:
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -557,17 +557,17 @@ end:
     execute_ddl_log_action()
     ddl_log_entry              Information in action entry to execute
   RETURN VALUES
-    TRUE                       Error
-    FALSE                      Success
+    true                       Error
+    false                      Success
 */
 
 static int execute_ddl_log_action(THD *thd, DDL_LOG_ENTRY *ddl_log_entry)
 {
-  bool frm_action= FALSE;
+  bool frm_action= false;
   LEX_STRING handler_name;
   handler *file= NULL;
   MEM_ROOT mem_root;
-  int error= TRUE;
+  int error= true;
   char to_path[FN_REFLEN];
   char from_path[FN_REFLEN];
   handlerton *hton;
@@ -575,13 +575,13 @@ static int execute_ddl_log_action(THD *thd, DDL_LOG_ENTRY *ddl_log_entry)
 
   if (ddl_log_entry->entry_type == DDL_IGNORE_LOG_ENTRY_CODE)
   {
-    DBUG_RETURN(FALSE);
+    DBUG_RETURN(false);
   }
   handler_name.str= (char*)ddl_log_entry->handler_name;
   handler_name.length= strlen(ddl_log_entry->handler_name);
   init_sql_alloc(&mem_root, TABLE_ALLOC_BLOCK_SIZE, 0); 
   if (!strcmp(ddl_log_entry->handler_name, reg_ext))
-    frm_action= TRUE;
+    frm_action= true;
   else
   {
     plugin_ref plugin= ha_resolve_by_name(thd, &handler_name);
@@ -625,7 +625,7 @@ static int execute_ddl_log_action(THD *thd, DDL_LOG_ENTRY *ddl_log_entry)
         if ((deactivate_ddl_log_entry(ddl_log_entry->entry_pos)))
           break;
         VOID(sync_ddl_log());
-        error= FALSE;
+        error= false;
         if (ddl_log_entry->action_type == DDL_LOG_DELETE_ACTION)
           break;
       }
@@ -638,7 +638,7 @@ static int execute_ddl_log_action(THD *thd, DDL_LOG_ENTRY *ddl_log_entry)
     }
     case DDL_LOG_RENAME_ACTION:
     {
-      error= TRUE;
+      error= true;
       if (frm_action)
       {
         strxmov(to_path, ddl_log_entry->name, reg_ext, NullS);
@@ -655,7 +655,7 @@ static int execute_ddl_log_action(THD *thd, DDL_LOG_ENTRY *ddl_log_entry)
       if ((deactivate_ddl_log_entry(ddl_log_entry->entry_pos)))
         break;
       VOID(sync_ddl_log());
-      error= FALSE;
+      error= false;
       break;
     }
     default:
@@ -675,8 +675,8 @@ error:
     get_free_ddl_log_entry()
     out:active_entry                A ddl log memory entry returned
   RETURN VALUES
-    TRUE                       Error
-    FALSE                      Success
+    true                       Error
+    false                      Success
 */
 
 static bool get_free_ddl_log_entry(DDL_LOG_MEMORY_ENTRY **active_entry,
@@ -692,17 +692,17 @@ static bool get_free_ddl_log_entry(DDL_LOG_MEMORY_ENTRY **active_entry,
                               sizeof(DDL_LOG_MEMORY_ENTRY), MYF(MY_WME))))
     {
       sql_print_error("Failed to allocate memory for ddl log free list");
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     global_ddl_log.num_entries++;
     used_entry->entry_pos= global_ddl_log.num_entries;
-    *write_header= TRUE;
+    *write_header= true;
   }
   else
   {
     used_entry= global_ddl_log.first_free;
     global_ddl_log.first_free= used_entry->next_log_entry;
-    *write_header= FALSE;
+    *write_header= false;
   }
   /*
     Move from free list to used list
@@ -714,7 +714,7 @@ static bool get_free_ddl_log_entry(DDL_LOG_MEMORY_ENTRY **active_entry,
     first_used->prev_log_entry= used_entry;
 
   *active_entry= used_entry;
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -730,8 +730,8 @@ static bool get_free_ddl_log_entry(DDL_LOG_MEMORY_ENTRY **active_entry,
     out:entry_written     Entry information written into   
 
   RETURN VALUES
-    TRUE                      Error
-    FALSE                     Success
+    true                      Error
+    false                     Success
 
   DESCRIPTION
     A careful write of the ddl log is performed to ensure that we can
@@ -746,7 +746,7 @@ bool write_ddl_log_entry(DDL_LOG_ENTRY *ddl_log_entry,
 
   if (init_ddl_log())
   {
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   global_ddl_log.file_entry_buf[DDL_LOG_ENTRY_TYPE_POS]=
                                     (char)DDL_LOG_ENTRY_CODE;
@@ -772,12 +772,12 @@ bool write_ddl_log_entry(DDL_LOG_ENTRY *ddl_log_entry,
           ddl_log_entry->handler_name, FN_LEN - 1);
   if (get_free_ddl_log_entry(active_entry, &write_header))
   {
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
-  error= FALSE;
+  error= false;
   if (write_ddl_log_file_entry((*active_entry)->entry_pos))
   {
-    error= TRUE;
+    error= true;
     sql_print_error("Failed to write entry_no = %u",
                     (*active_entry)->entry_pos);
   }
@@ -785,7 +785,7 @@ bool write_ddl_log_entry(DDL_LOG_ENTRY *ddl_log_entry,
   {
     VOID(sync_ddl_log());
     if (write_ddl_log_header())
-      error= TRUE;
+      error= true;
   }
   if (error)
     release_ddl_log_memory_entry(*active_entry);
@@ -808,8 +808,8 @@ bool write_ddl_log_entry(DDL_LOG_ENTRY *ddl_log_entry,
                                    returned. In this case the entry written
                                    is returned in this parameter
   RETURN VALUES
-    TRUE                           Error
-    FALSE                          Success
+    true                           Error
+    false                          Success
 
   DESCRIPTION
     This is the last write in the ddl log. The previous log entries have
@@ -824,13 +824,13 @@ bool write_execute_ddl_log_entry(uint first_entry,
                                  bool complete,
                                  DDL_LOG_MEMORY_ENTRY **active_entry)
 {
-  bool write_header= FALSE;
+  bool write_header= false;
   char *file_entry_buf= (char*)global_ddl_log.file_entry_buf;
   DBUG_ENTER("write_execute_ddl_log_entry");
 
   if (init_ddl_log())
   {
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   if (!complete)
   {
@@ -855,14 +855,14 @@ bool write_execute_ddl_log_entry(uint first_entry,
   {
     if (get_free_ddl_log_entry(active_entry, &write_header))
     {
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
   }
   if (write_ddl_log_file_entry((*active_entry)->entry_pos))
   {
     sql_print_error("Error writing execute entry in ddl log");
     release_ddl_log_memory_entry(*active_entry);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   VOID(sync_ddl_log());
   if (write_header)
@@ -870,10 +870,10 @@ bool write_execute_ddl_log_entry(uint first_entry,
     if (write_ddl_log_header())
     {
       release_ddl_log_memory_entry(*active_entry);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
   }
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -883,8 +883,8 @@ bool write_execute_ddl_log_entry(uint first_entry,
     deactivate_ddl_log_entry()
     entry_no                      Entry position of record to change
   RETURN VALUES
-    TRUE                         Error
-    FALSE                        Success
+    true                         Error
+    false                        Success
   DESCRIPTION
     During replace operations where we start with an existing table called
     t1 and a replacement table called t1#temp or something else and where
@@ -928,16 +928,16 @@ bool deactivate_ddl_log_entry(uint entry_no)
       {
         sql_print_error("Error in deactivating log entry. Position = %u",
                         entry_no);
-        DBUG_RETURN(TRUE);
+        DBUG_RETURN(true);
       }
     }
   }
   else
   {
     sql_print_error("Failed in reading entry before deactivating it");
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -946,25 +946,25 @@ bool deactivate_ddl_log_entry(uint entry_no)
   SYNOPSIS
     sync_ddl_log()
   RETURN VALUES
-    TRUE                      Error
-    FALSE                     Success
+    true                      Error
+    false                     Success
 */
 
 bool sync_ddl_log()
 {
-  bool error= FALSE;
+  bool error= false;
   DBUG_ENTER("sync_ddl_log");
 
   if ((!global_ddl_log.recovery_phase) &&
       init_ddl_log())
   {
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   if (my_sync(global_ddl_log.file_id, MYF(0)))
   {
     /* Write to error log */
     sql_print_error("Failed to sync ddl log");
-    error= TRUE;
+    error= true;
   }
   DBUG_RETURN(error);
 }
@@ -1006,8 +1006,8 @@ void release_ddl_log_memory_entry(DDL_LOG_MEMORY_ENTRY *log_entry)
     execute_ddl_log_entry()
     first_entry                Reference to first action in entry
   RETURN VALUES
-    TRUE                       Error
-    FALSE                      Success
+    true                       Error
+    false                      Success
 */
 
 bool execute_ddl_log_entry(THD *thd, uint first_entry)
@@ -1039,7 +1039,7 @@ bool execute_ddl_log_entry(THD *thd, uint first_entry)
     read_entry= ddl_log_entry.next_entry;
   } while (read_entry);
   pthread_mutex_unlock(&LOCK_gdl);
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -1083,8 +1083,8 @@ void execute_ddl_log_recovery()
     Initialise global_ddl_log struct
   */
   bzero(global_ddl_log.file_entry_buf, sizeof(global_ddl_log.file_entry_buf));
-  global_ddl_log.inited= FALSE;
-  global_ddl_log.recovery_phase= TRUE;
+  global_ddl_log.inited= false;
+  global_ddl_log.recovery_phase= true;
   global_ddl_log.io_size= IO_SIZE;
   global_ddl_log.file_id= (File) -1;
 
@@ -1117,7 +1117,7 @@ void execute_ddl_log_recovery()
   close_ddl_log();
   create_ddl_log_file_name(file_name);
   VOID(my_delete(file_name, MYF(0)));
-  global_ddl_log.recovery_phase= FALSE;
+  global_ddl_log.recovery_phase= false;
   delete thd;
   /* Remember that we don't have a THD */
   my_pthread_setspecific_ptr(THR_THD,  0);
@@ -1198,7 +1198,7 @@ void write_bin_log(THD *thd, bool clear_error,
     if (clear_error)
       thd->clear_error();
     thd->binlog_query(THD::STMT_QUERY_TYPE,
-                      query, query_length, FALSE, FALSE);
+                      query, query_length, false, false);
   }
 }
 
@@ -1222,21 +1222,21 @@ void write_bin_log(THD *thd, bool clear_error,
     not if under LOCK TABLES.
 
   RETURN
-    FALSE OK.  In this case ok packet is sent to user
-    TRUE  Error
+    false OK.  In this case ok packet is sent to user
+    true  Error
 
 */
 
 bool mysql_rm_table(THD *thd,TABLE_LIST *tables, my_bool if_exists,
                     my_bool drop_temporary)
 {
-  bool error, need_start_waiting= FALSE;
+  bool error, need_start_waiting= false;
   DBUG_ENTER("mysql_rm_table");
 
   if (tables && tables->schema_table)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   /* mark for close and remove all cached entries */
@@ -1245,7 +1245,7 @@ bool mysql_rm_table(THD *thd,TABLE_LIST *tables, my_bool if_exists,
   {
     if (!thd->locked_tables &&
         !(need_start_waiting= !wait_if_global_read_lock(thd, 0, 1)))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
   }
 
   /*
@@ -1259,9 +1259,9 @@ bool mysql_rm_table(THD *thd,TABLE_LIST *tables, my_bool if_exists,
     start_waiting_global_read_lock(thd);
 
   if (error)
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   my_ok(thd);
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 /*
@@ -1317,7 +1317,7 @@ int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
       built_query.append("DROP TABLE ");
   }
 
-  mysql_ha_rm_tables(thd, tables, FALSE);
+  mysql_ha_rm_tables(thd, tables, false);
 
   pthread_mutex_lock(&LOCK_open);
 
@@ -1601,10 +1601,10 @@ static int sort_keys(KEY *a, KEY *b)
   {
     if (!(b_flags & HA_NOSAME))
       return -1;
-    if ((a_flags ^ b_flags) & (HA_NULL_PART_KEY | HA_END_SPACE_KEY))
+    if ((a_flags ^ b_flags) & (HA_NULL_PART_KEY))
     {
       /* Sort NOT NULL keys before other keys */
-      return (a_flags & (HA_NULL_PART_KEY | HA_END_SPACE_KEY)) ? 1 : -1;
+      return (a_flags & (HA_NULL_PART_KEY)) ? 1 : -1;
     }
     if (a->name == primary_key_name)
       return -1;
@@ -1809,12 +1809,6 @@ int prepare_create_field(Create_field *sql_field,
   case MYSQL_TYPE_NULL:
     sql_field->pack_flag=f_settype((uint) sql_field->sql_type);
     break;
-  case MYSQL_TYPE_BIT:
-    /* 
-      We have sql_field->pack_flag already set here, see
-      mysql_prepare_create_table().
-    */
-    break;
   case MYSQL_TYPE_NEWDECIMAL:
     sql_field->pack_flag=(FIELDFLAG_NUMBER |
                           (sql_field->flags & UNSIGNED_FLAG ? 0 :
@@ -1879,8 +1873,8 @@ int prepare_create_field(Create_field *sql_field,
     sets create_info->varchar if the table has a varchar
 
   RETURN VALUES
-    FALSE    OK
-    TRUE     error
+    false    OK
+    true     error
 */
 
 static int
@@ -1940,7 +1934,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       strmake(strmake(tmp, save_cs->csname, sizeof(tmp)-4),
               STRING_WITH_LEN("_bin"));
       my_error(ER_UNKNOWN_COLLATION, MYF(0), tmp);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
 
     /*
@@ -1970,7 +1964,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       {
         /* Could not convert */
         my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-        DBUG_RETURN(TRUE);
+        DBUG_RETURN(true);
       }
     }
 
@@ -2027,7 +2021,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                                 comma_buf, comma_length, NULL, 0))
             {
               my_error(ER_ILLEGAL_VALUE_FOR_TYPE, MYF(0), "set", tmp->ptr());
-              DBUG_RETURN(TRUE);
+              DBUG_RETURN(true);
             }
           }
         }
@@ -2048,7 +2042,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
             if ((sql_field->flags & NOT_NULL_FLAG) != 0)
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              DBUG_RETURN(TRUE);
+              DBUG_RETURN(true);
             }
 
             /* else, NULL is an allowed value */
@@ -2064,7 +2058,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
           if (not_found)
           {
             my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-            DBUG_RETURN(TRUE);
+            DBUG_RETURN(true);
           }
         }
         calculate_interval_lengths(cs, interval, &dummy, &field_length);
@@ -2082,7 +2076,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
             if ((sql_field->flags & NOT_NULL_FLAG) != 0)
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              DBUG_RETURN(TRUE);
+              DBUG_RETURN(true);
             }
 
             /* else, the defaults yield the correct length for NULLs. */
@@ -2093,7 +2087,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
             if (find_type2(interval, def->ptr(), def->length(), cs) == 0) /* not found */
             {
               my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              DBUG_RETURN(TRUE);
+              DBUG_RETURN(true);
             }
           }
         }
@@ -2103,18 +2097,9 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
     }
 
-    if (sql_field->sql_type == MYSQL_TYPE_BIT)
-    { 
-      sql_field->pack_flag= FIELDFLAG_NUMBER;
-      if (file->ha_table_flags() & HA_CAN_BIT_FIELD)
-        total_uneven_bit_length+= sql_field->length & 7;
-      else
-        sql_field->pack_flag|= FIELDFLAG_TREAT_BIT_AS_CHAR;
-    }
-
     sql_field->create_length_to_internal_length();
     if (prepare_blob_field(thd, sql_field))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
 
     if (!(sql_field->flags & NOT_NULL_FLAG))
       null_fields++;
@@ -2122,7 +2107,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (check_column_name(sql_field->field_name))
     {
       my_error(ER_WRONG_COLUMN_NAME, MYF(0), sql_field->field_name);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
 
     /* Check if we have used the same field name before */
@@ -2139,7 +2124,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	if (field_no < select_field_pos || dup_no >= select_field_pos)
 	{
 	  my_error(ER_DUP_FIELDNAME, MYF(0), sql_field->field_name);
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
 	}
 	else
 	{
@@ -2189,9 +2174,9 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (prepare_create_field(sql_field, &blob_columns, 
 			     &timestamps, &timestamps_with_niladic,
 			     file->ha_table_flags()))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     if (sql_field->sql_type == MYSQL_TYPE_VARCHAR)
-      create_info->varchar= TRUE;
+      create_info->varchar= true;
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
       auto_increment++;
@@ -2201,26 +2186,26 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
   {
     my_message(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS,
                ER(ER_TOO_MUCH_AUTO_TIMESTAMP_COLS), MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   if (auto_increment > 1)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   if (auto_increment &&
       (file->ha_table_flags() & HA_NO_AUTO_INCREMENT))
   {
     my_message(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT,
                ER(ER_TABLE_CANT_HANDLE_AUTO_INCREMENT), MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   if (blob_columns && (file->ha_table_flags() & HA_NO_BLOBS))
   {
     my_message(ER_TABLE_CANT_HANDLE_BLOB, ER(ER_TABLE_CANT_HANDLE_BLOB),
                MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   /* Create keys */
@@ -2252,7 +2237,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                  (fk_key->name.str ? fk_key->name.str :
                                      "foreign key without name"),
                  ER(ER_KEY_REF_DO_NOT_MATCH_TABLE_REF));
-	DBUG_RETURN(TRUE);
+	DBUG_RETURN(true);
       }
       continue;
     }
@@ -2261,10 +2246,10 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key->columns.elements > tmp)
     {
       my_error(ER_TOO_MANY_KEY_PARTS,MYF(0),tmp);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     if (check_identifier_name(&key->name, ER_TOO_LONG_IDENT))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     key_iterator2.rewind ();
     if (key->type != Key::FOREIGN_KEY)
     {
@@ -2303,20 +2288,20 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	!my_strcasecmp(system_charset_info,key->name.str, primary_key_name))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key->name.str);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
   }
   tmp=file->max_keys();
   if (*key_count > tmp)
   {
     my_error(ER_TOO_MANY_KEYS,MYF(0),tmp);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   (*key_info_buffer)= key_info= (KEY*) sql_calloc(sizeof(KEY) * (*key_count));
   key_part_info=(KEY_PART_INFO*) sql_calloc(sizeof(KEY_PART_INFO)*key_parts);
   if (!*key_info_buffer || ! key_part_info)
-    DBUG_RETURN(TRUE);				// Out of memory
+    DBUG_RETURN(true);				// Out of memory
 
   key_iterator.rewind();
   key_number=0;
@@ -2403,7 +2388,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       if (!sql_field)
       {
 	my_error(ER_KEY_COLUMN_DOES_NOT_EXITS, MYF(0), column->field_name.str);
-	DBUG_RETURN(TRUE);
+	DBUG_RETURN(true);
       }
       while ((dup_column= cols2++) != column)
       {
@@ -2413,7 +2398,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	  my_printf_error(ER_DUP_FIELDNAME,
 			  ER(ER_DUP_FIELDNAME),MYF(0),
 			  column->field_name.str);
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
 	}
       }
       cols2.rewind();
@@ -2425,12 +2410,12 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	  if (!(file->ha_table_flags() & HA_CAN_INDEX_BLOBS))
 	  {
 	    my_error(ER_BLOB_USED_AS_KEY, MYF(0), column->field_name.str);
-	    DBUG_RETURN(TRUE);
+	    DBUG_RETURN(true);
 	  }
 	  if (!column->length)
 	  {
 	    my_error(ER_BLOB_KEY_WITHOUT_LENGTH, MYF(0), column->field_name.str);
-	    DBUG_RETURN(TRUE);
+	    DBUG_RETURN(true);
 	  }
 	}
 	if (!(sql_field->flags & NOT_NULL_FLAG))
@@ -2448,7 +2433,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
             if (!(file->ha_table_flags() & HA_NULL_IN_KEY))
             {
               my_error(ER_NULL_COLUMN_IN_INDEX, MYF(0), column->field_name.str);
-              DBUG_RETURN(TRUE);
+              DBUG_RETURN(true);
             }
           }
 	}
@@ -2486,7 +2471,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	    else
 	    {
 	      my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	      DBUG_RETURN(TRUE);
+	      DBUG_RETURN(true);
 	    }
 	  }
 	}
@@ -2498,7 +2483,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 		    column->length != length)))
 	{
 	  my_message(ER_WRONG_SUB_KEY, ER(ER_WRONG_SUB_KEY), MYF(0));
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
 	}
 	else if (!(file->ha_table_flags() & HA_NO_PREFIX_CHAR_KEYS))
 	  length=column->length;
@@ -2506,7 +2491,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       else if (length == 0)
       {
 	my_error(ER_WRONG_KEY_COLUMN, MYF(0), column->field_name.str);
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
       }
       if (length > file->max_key_part_length())
       {
@@ -2525,7 +2510,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	else
 	{
 	  my_error(ER_TOO_LONG_KEY,MYF(0),length);
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
 	}
       }
       key_part_info->length=(uint16) length;
@@ -2558,7 +2543,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	  {
 	    my_message(ER_MULTIPLE_PRI_KEY, ER(ER_MULTIPLE_PRI_KEY),
                        MYF(0));
-	    DBUG_RETURN(TRUE);
+	    DBUG_RETURN(true);
 	  }
 	  key_name=primary_key_name;
 	  primary_key=1;
@@ -2569,7 +2554,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	if (check_if_keyname_exists(key_name, *key_info_buffer, key_info))
 	{
 	  my_error(ER_DUP_KEYNAME, MYF(0), key_name);
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
 	}
 	key_info->name=(char*) key_name;
       }
@@ -2577,7 +2562,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (!key_info->name || check_column_name(key_info->name))
     {
       my_error(ER_WRONG_NAME_FOR_INDEX, MYF(0), key_info->name);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     if (!(key_info->flags & HA_NULL_PART_KEY))
       unique_key=1;
@@ -2585,7 +2570,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key_length > max_key_length)
     {
       my_error(ER_TOO_LONG_KEY,MYF(0),max_key_length);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     key_info++;
   }
@@ -2593,12 +2578,12 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       (file->ha_table_flags() & HA_REQUIRE_PRIMARY_KEY))
   {
     my_message(ER_REQUIRES_PRIMARY_KEY, ER(ER_REQUIRES_PRIMARY_KEY), MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   if (auto_increment > 0)
   {
     my_message(ER_WRONG_AUTO_KEY, ER(ER_WRONG_AUTO_KEY), MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   /* Sort keys in optimized order */
   my_qsort((uchar*) *key_info_buffer, *key_count, sizeof(KEY),
@@ -2632,11 +2617,11 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       */
 
       my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
   }
 
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -2750,11 +2735,6 @@ void sp_prepare_create_field(THD *thd, Create_field *sql_field)
     set_if_smaller(sql_field->length, MAX_FIELD_WIDTH-1);
   }
 
-  if (sql_field->sql_type == MYSQL_TYPE_BIT)
-  {
-    sql_field->pack_flag= FIELDFLAG_NUMBER |
-                          FIELDFLAG_TREAT_BIT_AS_CHAR;
-  }
   sql_field->create_length_to_internal_length();
   DBUG_ASSERT(sql_field->def == 0);
   /* Can't go wrong as sql_field->def is not defined */
@@ -2791,8 +2771,8 @@ void sp_prepare_create_field(THD *thd, Create_field *sql_field)
     and must be zero for standard create of table.
 
   RETURN VALUES
-    FALSE OK
-    TRUE  error
+    false OK
+    true  error
 */
 
 bool mysql_create_table_no_lock(THD *thd,
@@ -2808,7 +2788,7 @@ bool mysql_create_table_no_lock(THD *thd,
   uint		db_options, key_count;
   KEY		*key_info_buffer;
   handler	*file;
-  bool		error= TRUE;
+  bool		error= true;
   DBUG_ENTER("mysql_create_table_no_lock");
   DBUG_PRINT("enter", ("db: '%s'  table: '%s'  tmp: %d",
                        db, table_name, internal_tmp_table));
@@ -2819,10 +2799,10 @@ bool mysql_create_table_no_lock(THD *thd,
   {
     my_message(ER_TABLE_MUST_HAVE_COLUMNS, ER(ER_TABLE_MUST_HAVE_COLUMNS),
                MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   if (check_engine(thd, table_name, create_info))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   db_options= create_info->table_options;
   if (create_info->row_type == ROW_TYPE_DYNAMIC)
     db_options|=HA_OPTION_PACK_RECORD;
@@ -2831,7 +2811,7 @@ bool mysql_create_table_no_lock(THD *thd,
                               create_info->db_type)))
   {
     my_error(ER_OUTOFMEMORY, MYF(0), sizeof(handler));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   set_table_default_charset(thd, create_info, (char*) db);
@@ -2856,7 +2836,7 @@ bool mysql_create_table_no_lock(THD *thd,
     if (strchr(alias, FN_DEVCHAR))
     {
       my_error(ER_WRONG_TABLE_NAME, MYF(0), alias);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
 #endif
     path_length= build_table_filename(path, sizeof(path), db, alias, reg_ext,
@@ -2982,7 +2962,7 @@ bool mysql_create_table_no_lock(THD *thd,
       (void) rm_temporary_table(create_info->db_type, path, false);
       goto unlock_and_end;
     }
-    thd->thread_specific_used= TRUE;
+    thd->thread_specific_used= true;
   }
 
   /*
@@ -2996,8 +2976,8 @@ bool mysql_create_table_no_lock(THD *thd,
       (!thd->current_stmt_binlog_row_based ||
        (thd->current_stmt_binlog_row_based &&
         !(create_info->options & HA_LEX_CREATE_TMP_TABLE))))
-    write_bin_log(thd, TRUE, thd->query, thd->query_length);
-  error= FALSE;
+    write_bin_log(thd, true, thd->query, thd->query_length);
+  error= false;
 unlock_and_end:
   VOID(pthread_mutex_unlock(&LOCK_open));
 
@@ -3007,7 +2987,7 @@ err:
   DBUG_RETURN(error);
 
 warn:
-  error= FALSE;
+  error= false;
   push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
                       ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                       alias);
@@ -3042,7 +3022,7 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
   if (thd->killed)
   {
     pthread_mutex_unlock(&LOCK_lock_db);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   creating_table++;
   pthread_mutex_unlock(&LOCK_lock_db);
@@ -3051,7 +3031,7 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
   {
     if (lock_table_name_if_not_cached(thd, db, table_name, &name_lock))
     {
-      result= TRUE;
+      result= true;
       goto unlock;
     }
     if (!name_lock)
@@ -3062,12 +3042,12 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
                             ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                             table_name);
         create_info->table_existed= 1;
-        result= FALSE;
+        result= false;
       }
       else
       {
         my_error(ER_TABLE_EXISTS_ERROR,MYF(0),table_name);
-        result= TRUE;
+        result= true;
       }
       goto unlock;
     }
@@ -3082,7 +3062,7 @@ unlock:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open);
-    unlink_open_table(thd, name_lock, FALSE);
+    unlink_open_table(thd, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
   pthread_mutex_lock(&LOCK_lock_db);
@@ -3154,8 +3134,8 @@ make_unique_key_name(const char *field_name,KEY *start,KEY *end)
                                 but only the table in the storage engine.
 
   RETURN
-    FALSE   OK
-    TRUE    Error
+    false   OK
+    true    Error
 */
 
 bool
@@ -3251,7 +3231,7 @@ void wait_while_table_is_used(THD *thd, TABLE *table,
 
   VOID(table->file->extra(function));
   /* Mark all tables that are in use as 'old' */
-  mysql_lock_abort(thd, table, TRUE);	/* end threads waiting on lock */
+  mysql_lock_abort(thd, table, true);	/* end threads waiting on lock */
 
   /* Wait until all there are no other threads that has this table open */
   remove_table_from_cache(thd, table->s->db.str,
@@ -3289,7 +3269,7 @@ void close_cached_table(THD *thd, TABLE *table)
     thd->lock=0;			// Start locked threads
   }
   /* Close all copies of 'table'.  This also frees all LOCK TABLES lock */
-  unlink_open_table(thd, table, TRUE);
+  unlink_open_table(thd, table, true);
 
   /* When lock on LOCK_open is freed other threads can continue */
   broadcast_refresh();
@@ -3434,7 +3414,7 @@ static int prepare_for_repair(THD *thd, TABLE_LIST *table_list,
     to finish the repair in the handler later on.
   */
   pthread_mutex_lock(&LOCK_open);
-  if (reopen_name_locked_table(thd, table_list, TRUE))
+  if (reopen_name_locked_table(thd, table_list, true))
   {
     unlock_table_name(thd, table_list);
     pthread_mutex_unlock(&LOCK_open);
@@ -3458,8 +3438,8 @@ end:
 
 /*
   RETURN VALUES
-    FALSE Message sent to net (admin operation went ok)
-    TRUE  Message should be sent by caller 
+    false Message sent to net (admin operation went ok)
+    true  Message should be sent by caller 
           (admin operation or network communication failed)
 */
 static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
@@ -3498,9 +3478,9 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
   item->maybe_null = 1;
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
 
-  mysql_ha_rm_tables(thd, tables, FALSE);
+  mysql_ha_rm_tables(thd, tables, false);
 
   for (table= tables; table; table= table->next_local)
   {
@@ -3595,7 +3575,7 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
       ha_autocommit_or_rollback(thd, 0);
       end_trans(thd, COMMIT);
       close_thread_tables(thd);
-      lex->reset_query_tables_list(FALSE);
+      lex->reset_query_tables_list(false);
       table->table=0;				// For query cache
       if (protocol->write())
 	goto err;
@@ -3610,7 +3590,7 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
       pthread_mutex_lock(&LOCK_open);
       const char *old_message=thd->enter_cond(&COND_refresh, &LOCK_open,
 					      "Waiting to get writelock");
-      mysql_lock_abort(thd,table->table, TRUE);
+      mysql_lock_abort(thd,table->table, true);
       remove_table_from_cache(thd, table->table->s->db.str,
                               table->table->s->table_name.str,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
@@ -3730,7 +3710,7 @@ send_result_message:
       protocol->store(STRING_WITH_LEN("status"), system_charset_info);
       protocol->store(STRING_WITH_LEN("Operation need committed state"),
                       system_charset_info);
-      open_for_modify= FALSE;
+      open_for_modify= false;
       break;
 
     case HA_ADMIN_ALREADY_DONE:
@@ -3870,7 +3850,7 @@ send_result_message:
   }
 
   my_eof(thd);
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 
 err:
   ha_autocommit_or_rollback(thd, 1);
@@ -3878,7 +3858,7 @@ err:
   close_thread_tables(thd);			// Shouldn't be needed
   if (table)
     table->table=0;
-  DBUG_RETURN(TRUE);
+  DBUG_RETURN(true);
 }
 
 
@@ -3912,8 +3892,8 @@ bool mysql_optimize_table(THD* thd, TABLE_LIST* tables, HA_CHECK_OPT* check_opt)
     tables	Table list (one table only)
 
   RETURN VALUES
-   FALSE ok
-   TRUE  error
+   false ok
+   true  error
 */
 
 bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* tables,
@@ -3929,7 +3909,7 @@ bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* tables,
   {
     pthread_mutex_unlock(&LOCK_global_system_variables);
     my_error(ER_UNKNOWN_KEY_CACHE, MYF(0), key_cache_name->str);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   pthread_mutex_unlock(&LOCK_global_system_variables);
   check_opt.key_cache= key_cache;
@@ -3975,33 +3955,6 @@ int reassign_keycache_tables(THD *thd, KEY_CACHE *src_cache,
   ha_resize_key_cache(src_cache);
   ha_change_key_cache(src_cache, dst_cache);
   DBUG_RETURN(0);
-}
-
-
-/*
-  Preload specified indexes for a table into key cache
-
-  SYNOPSIS
-    mysql_preload_keys()
-    thd		Thread object
-    tables	Table list (one table only)
-
-  RETURN VALUES
-    FALSE ok
-    TRUE  error
-*/
-
-bool mysql_preload_keys(THD* thd, TABLE_LIST* tables)
-{
-  DBUG_ENTER("mysql_preload_keys");
-  /*
-    We cannot allow concurrent inserts. The storage engine reads
-    directly from the index file, bypassing the cache. It could read
-    outdated information if parallel inserts into cache blocks happen.
-  */
-   DBUG_RETURN(mysql_admin_table(thd, tables, 0,
-				"preload_keys", TL_READ_NO_INSERT, 0, 0, 0, 0,
-				&handler::preload_keys));
 }
 
 
@@ -4065,8 +4018,8 @@ bool mysql_create_like_schema_frm(THD* thd, TABLE_LIST* schema_table,
     create_info Create info
 
   RETURN VALUES
-    FALSE OK
-    TRUE  error
+    false OK
+    true  error
 */
 
 bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
@@ -4078,7 +4031,7 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
   char *db= table->db;
   char *table_name= table->table_name;
   int  err;
-  bool res= TRUE;
+  bool res= true;
   uint not_used;
   DBUG_ENTER("mysql_create_like_table");
 
@@ -4096,7 +4049,7 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
     operations which matter.
   */
   if (open_tables(thd, &src_table, &not_used, 0))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
 
   strxmov(src_path, src_table->table->s->path.str, reg_ext, NullS);
 
@@ -4228,7 +4181,7 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
         */
         table->table= name_lock;
         VOID(pthread_mutex_lock(&LOCK_open));
-        if (reopen_name_locked_table(thd, table, FALSE))
+        if (reopen_name_locked_table(thd, table, false))
         {
           VOID(pthread_mutex_unlock(&LOCK_open));
           goto err;
@@ -4239,19 +4192,19 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
                                                create_info);
 
         DBUG_ASSERT(result == 0); // store_create_info() always return 0
-        write_bin_log(thd, TRUE, query.ptr(), query.length());
+        write_bin_log(thd, true, query.ptr(), query.length());
       }
       else                                      // Case 1
-        write_bin_log(thd, TRUE, thd->query, thd->query_length);
+        write_bin_log(thd, true, thd->query, thd->query_length);
     }
     /*
       Case 3 and 4 does nothing under RBR
     */
   }
   else
-    write_bin_log(thd, TRUE, thd->query, thd->query_length);
+    write_bin_log(thd, true, thd->query, thd->query_length);
 
-  res= FALSE;
+  res= false;
   goto err;
 
 table_exists:
@@ -4262,7 +4215,7 @@ table_exists:
 		ER(ER_TABLE_EXISTS_ERROR), table_name);
     push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
 		 ER_TABLE_EXISTS_ERROR,warn_buff);
-    res= FALSE;
+    res= false;
   }
   else
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), table_name);
@@ -4271,7 +4224,7 @@ err:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open);
-    unlink_open_table(thd, name_lock, FALSE);
+    unlink_open_table(thd, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
   DBUG_RETURN(res);
@@ -4325,10 +4278,10 @@ mysql_discard_or_import_tablespace(THD *thd,
    We set this flag so that ha_innobase::open and ::external_lock() do
    not complain when we lock the table
  */
-  thd->tablespace_op= TRUE;
+  thd->tablespace_op= true;
   if (!(table=open_ltable(thd, table_list, TL_WRITE, 0)))
   {
-    thd->tablespace_op=FALSE;
+    thd->tablespace_op=false;
     DBUG_RETURN(-1);
   }
 
@@ -4345,11 +4298,11 @@ mysql_discard_or_import_tablespace(THD *thd,
     error=1;
   if (error)
     goto err;
-  write_bin_log(thd, FALSE, thd->query, thd->query_length);
+  write_bin_log(thd, false, thd->query, thd->query_length);
 
 err:
   ha_autocommit_or_rollback(thd, error);
-  thd->tablespace_op=FALSE;
+  thd->tablespace_op=false;
   
   if (error == 0)
   {
@@ -4424,8 +4377,8 @@ void setup_ha_alter_flags(Alter_info *alter_info, HA_ALTER_FLAGS *alter_flags)
    table->key_info or key_info_buffer respectively for the indexes
    that need to be dropped and/or (re-)created.
 
-   @retval TRUE  error
-   @retval FALSE success
+   @retval true  error
+   @retval false success
 */
 
 static
@@ -4480,14 +4433,14 @@ compare_tables(THD *thd,
                                    &ha_alter_info->key_info_buffer,
                                    &ha_alter_info->key_count,
                                    /* select_field_count */ 0))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     /* Allocate result buffers. */
     if (! (ha_alter_info->index_drop_buffer=
            (uint*) thd->alloc(sizeof(uint) * table->s->keys)) ||
         ! (ha_alter_info->index_add_buffer=
            (uint*) thd->alloc(sizeof(uint) *
                               tmp_alter_info.key_list.elements)))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
   }
   /*
     First we setup ha_alter_flags based on what was detected
@@ -4793,7 +4746,7 @@ compare_tables(THD *thd,
   }
 #endif
 
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -4808,8 +4761,8 @@ compare_tables(THD *thd,
       keys_onoff             ENABLE | DISABLE | LEAVE_AS_IS
 
   RETURN VALUES
-    FALSE  OK
-    TRUE   Error
+    false  OK
+    true   Error
 */
 
 static
@@ -5170,9 +5123,9 @@ int mysql_fast_or_online_alter_table(THD *thd,
     Sets create_info->varchar if the table has a VARCHAR column.
     Prepares alter_info->create_list and alter_info->key_list with
     columns and keys of the new table.
-  @retval TRUE   error, out of memory or a semantical error in ALTER
+  @retval true   error, out of memory or a semantical error in ALTER
                  TABLE instructions
-  @retval FALSE  success
+  @retval false  success
 */
 
 static bool
@@ -5195,11 +5148,11 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
                            & ~(HA_OPTION_PACK_RECORD));
   uint used_fields= create_info->used_fields;
   KEY *key_info=table->key_info;
-  bool rc= TRUE;
+  bool rc= true;
 
   DBUG_ENTER("mysql_prepare_alter_table");
 
-  create_info->varchar= FALSE;
+  create_info->varchar= false;
   /* Let new create options override the old ones */
   if (!(used_fields & HA_CREATE_USED_MIN_ROWS))
     create_info->min_rows= table->s->min_rows;
@@ -5230,7 +5183,7 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
   for (f_ptr=table->field ; (field= *f_ptr) ; f_ptr++)
     {
     if (field->type() == MYSQL_TYPE_STRING)
-      create_info->varchar= TRUE;
+      create_info->varchar= true;
     /* Check if field should be dropped */
     Alter_drop *drop;
     drop_it.rewind();
@@ -5324,7 +5277,7 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
          thd->variables.sql_mode & MODE_NO_ZERO_DATE)
     {
         alter_info->datetime_field= def;
-        alter_info->error_if_not_empty= TRUE;
+        alter_info->error_if_not_empty= true;
     }
     if (!def->after)
       new_create_list.push_back(def);
@@ -5530,7 +5483,7 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
   if (table->s->tmp_table)
     create_info->options|=HA_LEX_CREATE_TMP_TABLE;
 
-  rc= FALSE;
+  rc= false;
   alter_info->create_list.swap(new_create_list);
   alter_info->key_list.swap(new_key_list);
 err:
@@ -5576,8 +5529,8 @@ err:
     tables.
 
   RETURN VALUES
-    FALSE  OK
-    TRUE   Error
+    false  OK
+    true   Error
 */
 
 bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
@@ -5600,7 +5553,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   if (table_list && table_list->schema_table)
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   /*
@@ -5616,7 +5569,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     new_db= db;
   build_table_filename(path, sizeof(path), db, table_name, "", 0);
 
-  mysql_ha_rm_tables(thd, table_list, FALSE);
+  mysql_ha_rm_tables(thd, table_list, false);
 
   /* DISCARD/IMPORT TABLESPACE is always alone in an ALTER TABLE */
   if (alter_info->tablespace_op != NO_TABLESPACE_OP)
@@ -5642,7 +5595,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   frm_type= mysql_frm_type(thd, new_name_buff, &table_type);
 
   if (!(table= open_n_lock_single_table(thd, table_list, TL_WRITE_ALLOW_READ)))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   table->use_all_columns();
 
   /*
@@ -5656,7 +5609,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       (table->s->tmp_table == NO_TMP_TABLE))
   {
     my_error(ER_LOCK_OR_ACTIVE_TRANSACTION, MYF(0));
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   /* Check that we are not trying to rename to an existing table */
@@ -5690,17 +5643,17 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
 	if (find_temporary_table(thd,new_db,new_name_buff))
 	{
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_name_buff);
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
 	}
       }
       else
       {
         if (lock_table_name_if_not_cached(thd, new_db, new_name, &name_lock))
-          DBUG_RETURN(TRUE);
+          DBUG_RETURN(true);
         if (!name_lock)
         {
 	  my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
-	  DBUG_RETURN(TRUE);
+	  DBUG_RETURN(true);
         }
 
         build_table_filename(new_name_buff, sizeof(new_name_buff),
@@ -5783,7 +5736,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       /* COND_refresh will be signaled in close_thread_tables() */
       break;
     default:
-      DBUG_ASSERT(FALSE);
+      DBUG_ASSERT(false);
       error= 0;
       break;
     }
@@ -5850,7 +5803,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
 
     if (!error)
     {
-      write_bin_log(thd, TRUE, thd->query, thd->query_length);
+      write_bin_log(thd, true, thd->query, thd->query_length);
       my_ok(thd);
   }
     else if (error > 0)
@@ -5859,7 +5812,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       error= -1;
     }
     if (name_lock)
-      unlink_open_table(thd, name_lock, FALSE);
+      unlink_open_table(thd, name_lock, false);
     VOID(pthread_mutex_unlock(&LOCK_open));
     table_list->table= NULL;                    // For query cache
     DBUG_RETURN(error);
@@ -5904,7 +5857,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     HA_ALTER_INFO ha_alter_info;
     HA_ALTER_FLAGS ha_alter_flags;
     uint table_changes= IS_EQUAL_YES;
-    bool need_copy_table= TRUE;
+    bool need_copy_table= true;
     /* Check how much the tables differ. */
     if (compare_tables(thd, table, alter_info,
                        create_info, order_num,
@@ -5912,7 +5865,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
                        &ha_alter_info,
                        &table_changes))
     {
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
 
     /*
@@ -5967,7 +5920,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
           call check_if_supported_alter has provision for this
           already now.
         */
-        need_copy_table= FALSE;
+        need_copy_table= false;
         break;
       case HA_ALTER_NOT_SUPPORTED:
         if (alter_info->build_method == HA_BUILD_ONLINE)
@@ -5976,7 +5929,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
           close_temporary_table(thd, altered_table, 1, 1);
           goto err;
         }
-        need_copy_table= TRUE;
+        need_copy_table= true;
         break;
       case HA_ALTER_ERROR:
       default:
@@ -5996,7 +5949,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     }
     /* TODO need to check if changes can be handled as fast ALTER TABLE */
     if (!altered_table)
-      need_copy_table= TRUE;
+      need_copy_table= true;
 
     if (!need_copy_table)
     {
@@ -6123,7 +6076,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       goto err1;
     /* We don't replicate alter table statement on temporary tables */
     if (!thd->current_stmt_binlog_row_based)
-      write_bin_log(thd, TRUE, thd->query, thd->query_length);
+      write_bin_log(thd, true, thd->query, thd->query_length);
     goto end_temporary;
   }
 
@@ -6232,7 +6185,7 @@ end_online:
   DBUG_ASSERT(!(mysql_bin_log.is_open() &&
                 thd->current_stmt_binlog_row_based &&
                 (create_info->options & HA_LEX_CREATE_TMP_TABLE)));
-  write_bin_log(thd, TRUE, thd->query, thd->query_length);
+  write_bin_log(thd, true, thd->query, thd->query_length);
 
   if (ha_check_storage_engine_flag(old_db_type, HTON_FLUSH_AFTER_RENAME))
   {
@@ -6244,7 +6197,7 @@ end_online:
     char path[FN_REFLEN];
     TABLE *t_table;
     build_table_filename(path, sizeof(path), new_db, table_name, "", 0);
-    t_table= open_temporary_table(thd, path, new_db, tmp_name, FALSE, OTM_OPEN);
+    t_table= open_temporary_table(thd, path, new_db, tmp_name, false, OTM_OPEN);
     if (t_table)
     {
       intern_close_table(t_table);
@@ -6266,8 +6219,8 @@ end_online:
       LOCK TABLES we can rely on close_thread_tables() doing this job.
     */
     pthread_mutex_lock(&LOCK_open);
-    unlink_open_table(thd, table, FALSE);
-    unlink_open_table(thd, name_lock, FALSE);
+    unlink_open_table(thd, table, false);
+    unlink_open_table(thd, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
 
@@ -6277,7 +6230,7 @@ end_temporary:
 	      (ulong) thd->cuted_fields);
   my_ok(thd, copied + deleted, 0L, tmp_name);
   thd->some_tables_deleted=0;
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 
 err1:
   if (new_table)
@@ -6315,7 +6268,7 @@ err:
         DBUG_ASSERT(0);
     }
     bool save_abort_on_warning= thd->abort_on_warning;
-    thd->abort_on_warning= TRUE;
+    thd->abort_on_warning= true;
     make_truncated_value_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
                                  f_val, strlength(f_val), t_type,
                                  alter_info->datetime_field->field_name);
@@ -6324,10 +6277,10 @@ err:
   if (name_lock)
   {
     pthread_mutex_lock(&LOCK_open);
-    unlink_open_table(thd, name_lock, FALSE);
+    unlink_open_table(thd, name_lock, false);
     pthread_mutex_unlock(&LOCK_open);
   }
-  DBUG_RETURN(TRUE);
+  DBUG_RETURN(true);
 
 err_with_placeholders:
   /*
@@ -6335,11 +6288,11 @@ err_with_placeholders:
     being altered. To be safe under LOCK TABLES we should remove placeholders
     from list of open tables list and table cache.
   */
-  unlink_open_table(thd, table, FALSE);
+  unlink_open_table(thd, table, false);
   if (name_lock)
-    unlink_open_table(thd, name_lock, FALSE);
+    unlink_open_table(thd, name_lock, false);
   VOID(pthread_mutex_unlock(&LOCK_open));
-  DBUG_RETURN(TRUE);
+  DBUG_RETURN(true);
 }
 /* mysql_alter_table */
 
@@ -6375,7 +6328,7 @@ copy_data_between_tables(TABLE *from,TABLE *to,
     
     This needs to be done before external_lock
   */
-  error= ha_enable_transaction(thd, FALSE);
+  error= ha_enable_transaction(thd, false);
   if (error)
     DBUG_RETURN(-1);
   
@@ -6406,7 +6359,7 @@ copy_data_between_tables(TABLE *from,TABLE *to,
     {
       if (*ptr == to->next_number_field)
       {
-        auto_increment_field_copied= TRUE;
+        auto_increment_field_copied= true;
         /*
           If we are going to copy contents of one auto_increment column to
           another auto_increment column it is sensible to preserve zeroes.
@@ -6481,7 +6434,7 @@ copy_data_between_tables(TABLE *from,TABLE *to,
     if (to->next_number_field)
     {
       if (auto_increment_field_copied)
-        to->auto_increment_field_not_null= TRUE;
+        to->auto_increment_field_not_null= true;
       else
         to->next_number_field->reset();
     }
@@ -6492,7 +6445,7 @@ copy_data_between_tables(TABLE *from,TABLE *to,
     }
     prev_insert_id= to->file->next_insert_id;
     error=to->file->ha_write_row(to->record[0]);
-    to->auto_increment_field_not_null= FALSE;
+    to->auto_increment_field_not_null= false;
     if (error)
     {
       if (!ignore ||
@@ -6533,7 +6486,7 @@ copy_data_between_tables(TABLE *from,TABLE *to,
   }
   to->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
 
-  if (ha_enable_transaction(thd, TRUE))
+  if (ha_enable_transaction(thd, true))
   {
     error= 1;
     goto err;
@@ -6612,7 +6565,7 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
   item->maybe_null= 1;
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
 
   /* Open one table after the other to keep lock time as short as possible. */
   for (table= tables; table; table= table->next_local)
@@ -6704,13 +6657,13 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
   }
 
   my_eof(thd);
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 
  err:
   close_thread_tables(thd);			// Shouldn't be needed
   if (table)
     table->table=0;
-  DBUG_RETURN(TRUE);
+  DBUG_RETURN(true);
 }
 
 static bool check_engine(THD *thd, const char *table_name,
@@ -6721,7 +6674,7 @@ static bool check_engine(THD *thd, const char *table_name,
   bool no_substitution= 1;
   if (!(*new_engine= ha_checktype(thd, ha_legacy_type(req_engine),
                                   no_substitution, 1)))
-    return TRUE;
+    return true;
 
   if (req_engine && req_engine != *new_engine)
   {
@@ -6739,9 +6692,9 @@ static bool check_engine(THD *thd, const char *table_name,
       my_error(ER_ILLEGAL_HA_CREATE_OPTION, MYF(0),
                ha_resolve_storage_engine_name(*new_engine), "TEMPORARY");
       *new_engine= 0;
-      return TRUE;
+      return true;
     }
     *new_engine= myisam_hton;
   }
-  return FALSE;
+  return false;
 }

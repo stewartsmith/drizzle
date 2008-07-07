@@ -81,9 +81,11 @@ public:
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
-  static void operator delete(void *ptr_arg,size_t size)
+  static void operator delete(void *ptr_arg __attribute__((__unused__)),
+                              size_t size __attribute__((__unused__)))
   { TRASH(ptr_arg, size); }
-  static void operator delete(void *ptr_arg, MEM_ROOT *mem_root)
+  static void operator delete(void *ptr_arg __attribute__((__unused__)),
+                              MEM_ROOT *mem_root __attribute__((__unused__)))
   { /* never called */ }
   ~String() { free(); }
 
