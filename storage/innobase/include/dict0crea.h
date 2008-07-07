@@ -15,6 +15,7 @@ Created 1/8/1996 Heikki Tuuri
 #include "que0types.h"
 #include "row0types.h"
 #include "mtr0mtr.h"
+#include "pars0pars.h"
 
 /*************************************************************************
 Creates a table create graph. */
@@ -109,7 +110,6 @@ dict_create_add_foreigns_to_dictionary(
 				was generated here */
 	dict_table_t*	table,	/* in: table */
 	trx_t*		trx);	/* in: transaction */
-
 
 /* Table create node structure */
 

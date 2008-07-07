@@ -1471,7 +1471,7 @@ longlong Item_date::val_int()
 }
 
 
-bool Item_func_from_days::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_func_from_days::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((__unused__)))
 {
   longlong value=args[0]->val_int();
   if ((null_value=args[0]->null_value))
@@ -1545,7 +1545,7 @@ bool Item_func_curdate::get_date(MYSQL_TIME *res,
 }
 
 
-String *Item_func_curtime::val_str(String *str)
+String *Item_func_curtime::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   str_value.set(buff, buff_length, &my_charset_bin);
@@ -1594,7 +1594,7 @@ void Item_func_curtime_utc::store_now_in_TIME(MYSQL_TIME *now_time)
 }
 
 
-String *Item_func_now::val_str(String *str)
+String *Item_func_now::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   str_value.set(buff,buff_length, &my_charset_bin);
@@ -1651,7 +1651,7 @@ bool Item_func_now::get_date(MYSQL_TIME *res,
 }
 
 
-int Item_func_now::save_in_field(Field *to, bool no_conversions)
+int Item_func_now::save_in_field(Field *to, bool no_conversions __attribute__((__unused__)))
 {
   to->set_notnull();
   return to->store_time(&ltime, MYSQL_TIMESTAMP_DATETIME);
@@ -1670,7 +1670,7 @@ void Item_func_sysdate_local::store_now_in_TIME(MYSQL_TIME *now_time)
 }
 
 
-String *Item_func_sysdate_local::val_str(String *str)
+String *Item_func_sysdate_local::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   store_now_in_TIME(&ltime);
@@ -1713,7 +1713,7 @@ bool Item_func_sysdate_local::get_date(MYSQL_TIME *res,
 }
 
 
-int Item_func_sysdate_local::save_in_field(Field *to, bool no_conversions)
+int Item_func_sysdate_local::save_in_field(Field *to, bool no_conversions __attribute__((__unused__)))
 {
   store_now_in_TIME(&ltime);
   to->set_notnull();
@@ -2043,7 +2043,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 /* Here arg[1] is a Item_interval object */
 
-bool Item_date_add_interval::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_date_add_interval::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((__unused__)))
 {
   INTERVAL interval;
 
@@ -2353,9 +2353,9 @@ String *Item_char_typecast::val_str(String *str)
     if (res->length() > (length= (uint32) res->charpos(cast_length)))
     {                                           // Safe even if const arg
       char char_type[40];
-      my_snprintf(char_type, sizeof(char_type), "%s(%lu)",
-                  cast_cs == &my_charset_bin ? "BINARY" : "CHAR",
-                  (ulong) length);
+      snprintf(char_type, sizeof(char_type), "%s(%lu)",
+               cast_cs == &my_charset_bin ? "BINARY" : "CHAR",
+               (ulong) length);
 
       if (!res->alloced_length())
       {                                         // Don't change const str
@@ -2494,7 +2494,7 @@ String *Item_time_typecast::val_str(String *str)
 }
 
 
-bool Item_date_typecast::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_date_typecast::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((__unused__)))
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;

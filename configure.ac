@@ -555,7 +555,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h)
+AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
 AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
 AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
@@ -876,7 +876,6 @@ AC_CHECK_HEADER(vis.h,
 
 AC_CHECK_FUNCS(strlcat strlcpy)
 AC_CHECK_FUNCS(issetugid)
-AC_CHECK_FUNCS(fgetln)
 AC_CHECK_FUNCS(getline flockfile)
 
 # from old readline settting:
@@ -924,15 +923,6 @@ AC_CHECK_DECLS(tgoto,,,[
 #endif
 ])
 
-LIBEDIT_LOBJECTS=""
-AC_CHECK_FUNC(strunvis, ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS unvis.o"])
-AC_CHECK_FUNC(strvis,   ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS vis.o"])
-AC_CHECK_FUNC(strlcpy,  ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS strlcpy.o"])
-AC_CHECK_FUNC(strlcat,  ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS strlcat.o"])
-AC_CHECK_FUNC(fgetln,   ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS fgetln.o"])
-AC_SUBST(LIBEDIT_LOBJECTS)
-enable_readline="yes"
-
 # End of readline/libedit stuff
 #########################################################################
 
@@ -954,9 +944,15 @@ MYSQL_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
+AC_CHECK_FUNCS(fcntl)
+if test "x$ac_cv_func_fcntl" != "xyes"
+then
+  AC_MSG_ERROR("Drizzle requires fcntl.")
+fi
+
 AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
-  chsize cuserid fchmod fcntl \
-  fconvert fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
+  cuserid fchmod \
+  fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
@@ -1175,7 +1171,7 @@ then
   if test "$ac_warn_pedantic" = "yes"
   then
     GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls  "
-    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls "
+    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wno-long-long "
   fi
 
   if test "$ac_warn_unreachable" = "yes"

@@ -167,7 +167,7 @@ void push_warning_printf(THD *thd, MYSQL_ERROR::enum_warning_level level,
   DBUG_PRINT("enter",("warning: %u", code));
   
   va_start(args,format);
-  my_vsnprintf(warning, sizeof(warning), format, args);
+  vsnprintf(warning, sizeof(warning), format, args);
   va_end(args);
   push_warning(thd, level, code, warning);
   DBUG_VOID_RETURN;

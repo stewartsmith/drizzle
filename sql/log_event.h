@@ -951,7 +951,7 @@ public:
             write_data_header(file) ||
             write_data_body(file));
   }
-  virtual bool write_data_header(IO_CACHE* file)
+  virtual bool write_data_header(IO_CACHE* file __attribute__((__unused__)))
   { return 0; }
   virtual bool write_data_body(IO_CACHE* file __attribute__((unused)))
   { return 0; }
@@ -1080,7 +1080,7 @@ protected:
     @retval 0     Event applied successfully
     @retval errno Error code if event application failed
   */
-  virtual int do_apply_event(Relay_log_info const *rli)
+  virtual int do_apply_event(Relay_log_info const *rli __attribute__((__unused__)))
   {
     return 0;                /* Default implementation does nothing */
   }
@@ -1583,7 +1583,8 @@ public:
   Log_event_type get_type_code() { return QUERY_EVENT; }
 #ifndef MYSQL_CLIENT
   bool write(IO_CACHE* file);
-  virtual bool write_post_header_for_derived(IO_CACHE* file) { return FALSE; }
+  virtual bool write_post_header_for_derived(IO_CACHE* file __attribute__((__unused__)))
+  { return FALSE; }
 #endif
   bool is_valid() const { return query != 0; }
 
@@ -2372,7 +2373,8 @@ public:
   uint charset_number;
   bool is_null;
 #ifndef MYSQL_CLIENT
-  User_var_log_event(THD* thd_arg, char *name_arg, uint name_len_arg,
+  User_var_log_event(THD* thd_arg __attribute__((__unused__)),
+                     char *name_arg, uint name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
 		     uint charset_number_arg)
     :Log_event(), name(name_arg), name_len(name_len_arg), val(val_arg),
@@ -2430,7 +2432,7 @@ public:
 private:
 #if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_update_pos(Relay_log_info *rli);
-  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli)
+  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli __attribute__((__unused__)))
   {
     /*
       Events from ourself should be skipped, but they should not

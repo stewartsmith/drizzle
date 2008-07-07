@@ -1005,7 +1005,7 @@ my_vsnprintf_mb2(char *dst, size_t n, const char* fmt, va_list ap)
 
 static size_t
 my_snprintf_mb2(CHARSET_INFO *cs __attribute__((unused)),
-                char* to, size_t n, const char* fmt, ...)
+             char* to, size_t n, const char* fmt, ...)
 {
   va_list args;
   va_start(args,fmt);

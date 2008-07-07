@@ -1893,7 +1893,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     char tmp[10];
     if (!csname || csname[0] =='?')
     {
-      my_snprintf(tmp, sizeof(tmp), "#%d", errarg);
+      snprintf(tmp, sizeof(tmp), "#%d", errarg);
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,

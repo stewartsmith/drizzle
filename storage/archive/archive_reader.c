@@ -18,7 +18,7 @@ static void print_version(void);
 static void usage(void);
 static const char *opt_tmpdir;
 static const char *new_auto_increment;
-unsigned long long new_auto_increment_value;
+uint64_t new_auto_increment_value;
 static const char *load_default_groups[]= { "archive_reader", 0 };
 static char **default_argv;
 int opt_check, opt_force, opt_quiet, opt_backup= 0, opt_extract_frm;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   if (reader_handle.version > 2)
   {
     printf("\tMinor version %u\n", reader_handle.minor_version);
-    printf("\tStart position %lu\n", (unsigned long long)reader_handle.start);
+    printf("\tStart position %lu\n", (uint64_t)reader_handle.start);
     printf("\tBlock size %u\n", reader_handle.block_size);
     printf("\tRows %lu\n", reader_handle.rows);
     printf("\tAutoincrement %lu\n", reader_handle.auto_increment);
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
   {
     int error;
     unsigned int read;
-    unsigned long long row_count= 0;
+    uint64_t row_count= 0;
 
     while ((read= azread_row(&reader_handle, &error)))
     {
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
   {
     int error;
     unsigned int read;
-    unsigned long long row_count= 0;
+    uint64_t row_count= 0;
     char *buffer;
 
     azio_stream writer_handle;

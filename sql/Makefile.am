@@ -41,15 +41,15 @@ DTRACEFILES =           handler.o \
 			sql_select.o \
 			sql_update.o
 
-noinst_LTLIBRARIES = 
+noinst_LTLIBRARIES = 	libhandler.la
 
 SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
-mysqld_DEPENDENCIES=	@mysql_plugin_libs@ $(SUPPORTING_LIBS)
 LDADD = $(SUPPORTING_LIBS) -lz -levent
 mysqld_LDADD =		$(top_builddir)/sql-common/libsqlcommon.la \
+			libhandler.la \
 			$(libevent_libs) \
 			@mysql_plugin_libs@ \
 			$(LDADD)  $(CXXLDFLAGS) @LIBDL@
@@ -96,7 +96,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			unireg.cc \
 			log_event.cc rpl_record.cc \
 			discover.cc time.cc opt_range.cc opt_sum.cc \
-		   	records.cc filesort.cc handler.cc \
+		   	records.cc filesort.cc \
 			sql_db.cc sql_table.cc sql_rename.cc sql_crypt.cc \
 			sql_load.cc mf_iocache.cc field_conv.cc sql_show.cc \
 			sql_udf.cc \
@@ -111,6 +111,7 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_plugin.cc sql_binlog.cc \
 			sql_builtin.cc 
 
+libhandler_la_SOURCES = handler.cc
 nodist_mysqld_SOURCES = client.c net_serv.c
 
 if HAVE_DTRACE

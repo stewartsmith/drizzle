@@ -857,7 +857,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     if (alloc_query(thd, packet, packet_length))
       break;					// fatal error is set
     char *packet_end= thd->query + thd->query_length;
-    /* 'b' stands for 'buffer' parameter', special for 'my_snprintf' */
     const char* end_of_stmt= NULL;
 
     general_log_write(thd, command, thd->query, thd->query_length);
@@ -1050,18 +1049,18 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     else
       queries_per_second1000= thd->query_id * 1000LL / uptime;
 
-    length= my_snprintf((char*) buff, buff_len - 1,
-                        "Uptime: %lu  Threads: %d  Questions: %lu  "
-                        "Slow queries: %lu  Opens: %lu  Flush tables: %lu  "
-                        "Open tables: %u  Queries per second avg: %u.%u",
-                        uptime,
-                        (int) thread_count, (ulong) thd->query_id,
-                        current_global_status_var.long_query_count,
-                        current_global_status_var.opened_tables,
-                        refresh_version,
-                        cached_open_tables(),
-                        (uint) (queries_per_second1000 / 1000),
-                        (uint) (queries_per_second1000 % 1000));
+    length= snprintf((char*) buff, buff_len - 1,
+                     "Uptime: %lu  Threads: %d  Questions: %lu  "
+                     "Slow queries: %lu  Opens: %lu  Flush tables: %lu  "
+                     "Open tables: %u  Queries per second avg: %u.%u",
+                     uptime,
+                     (int) thread_count, (ulong) thd->query_id,
+                     current_global_status_var.long_query_count,
+                     current_global_status_var.opened_tables,
+                     refresh_version,
+                     cached_open_tables(),
+                     (uint) (queries_per_second1000 / 1000),
+                     (uint) (queries_per_second1000 % 1000));
     /* Store the buffer in permanent memory */
     my_ok(thd, 0, 0, buff);
     VOID(my_net_write(net, (uchar*) buff, length));

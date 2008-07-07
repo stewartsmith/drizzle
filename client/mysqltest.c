@@ -1064,18 +1064,18 @@ void warning_msg(const char *fmt, ...)
     dynstr_append(&ds_warning_messages, "Warning detected ");
     if (cur_file && cur_file != file_stack)
     {
-      len= my_snprintf(buff, sizeof(buff), "in included file %s ",
+      len= snprintf(buff, sizeof(buff), "in included file %s ",
                        cur_file->file_name);
       dynstr_append_mem(&ds_warning_messages,
                         buff, len);
     }
-    len= my_snprintf(buff, sizeof(buff), "at line %d: ",
+    len= snprintf(buff, sizeof(buff), "at line %d: ",
                      start_lineno);
     dynstr_append_mem(&ds_warning_messages,
                       buff, len);
   }
 
-  len= my_vsnprintf(buff, sizeof(buff), fmt, args);
+  len= vsnprintf(buff, sizeof(buff), fmt, args);
   dynstr_append_mem(&ds_warning_messages, buff, len);
 
   dynstr_append(&ds_warning_messages, "\n");
@@ -1093,7 +1093,7 @@ void log_msg(const char *fmt, ...)
   DBUG_ENTER("log_msg");
 
   va_start(args, fmt);
-  len= my_vsnprintf(buff, sizeof(buff)-1, fmt, args);
+  len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
   va_end(args);
 
   dynstr_append_mem(&ds_res, buff, len);
@@ -1783,7 +1783,7 @@ static void var_set(const char *var_name, const char *var_name_end,
       v->int_dirty= 0;
       v->str_val_len= strlen(v->str_val);
     }
-    my_snprintf(buf, sizeof(buf), "%.*s=%.*s",
+    snprintf(buf, sizeof(buf), "%.*s=%.*s",
                 v->name_len, v->name,
                 v->str_val_len, v->str_val);
     if (!(v->env_s= my_strdup(buf, MYF(MY_WME))))
@@ -1804,7 +1804,7 @@ static void var_set_string(const char* name, const char* value)
 static void var_set_int(const char* name, int value)
 {
   char buf[21];
-  my_snprintf(buf, sizeof(buf), "%d", value);
+  snprintf(buf, sizeof(buf), "%d", value);
   var_set_string(name, buf);
 }
 
@@ -3090,7 +3090,7 @@ static void do_perl(struct st_command *command)
   str_to_file(temp_file_path, ds_script.str, ds_script.length);
 
   /* Format the "perl <filename>" command */
-  my_snprintf(buf, sizeof(buf), "perl %s", temp_file_path);
+  snprintf(buf, sizeof(buf), "perl %s", temp_file_path);
 
   if (!(res_file= popen(buf, "r")) && command->abort_on_error)
     die("popen(\"%s\", \"r\") failed", buf);

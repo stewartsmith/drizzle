@@ -50,7 +50,7 @@
 #define C_MODE_END
 #endif
 
-#include <my_config.h>
+#include <config.h>
 #if defined(__cplusplus) && defined(inline)
 #undef inline				/* fix configure problem */
 #endif
@@ -276,9 +276,6 @@
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
-#ifdef HAVE_FLOAT_H
-#include <float.h>
-#endif
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -490,17 +487,17 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 #ifndef O_SHARE			/* Probably not windows */
 #define O_SHARE		0	/* Flag to my_open for shared files */
+#endif /* O_SHARE */
+
 #ifndef O_BINARY
 #define O_BINARY	0	/* Flag to my_open for binary files */
 #endif
+
 #ifndef FILE_BINARY
 #define FILE_BINARY	O_BINARY /* Flag to my_fopen for binary streams */
 #endif
-#ifdef HAVE_FCNTL
-#define HAVE_FCNTL_LOCK
+
 #define F_TO_EOF	0L	/* Param to lockf() to lock rest of file */
-#endif
-#endif /* O_SHARE */
 
 #ifndef O_TEMPORARY
 #define O_TEMPORARY	0
@@ -623,14 +620,23 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #define INT_MAX8        0x7F
 #define UINT_MAX8       0xFF
 
+#ifdef HAVE_FLOAT_H
+#include <float.h>
+#else
+#if !defined(FLT_MIN)
+#define FLT_MIN         ((float)1.40129846432481707e-45)
+#endif
+#if !defined(FLT_MAX)
+#define FLT_MAX         ((float)3.40282346638528860e+38)
+#endif
+#endif
+
 /* From limits.h instead */
 #ifndef DBL_MIN
 #define DBL_MIN		4.94065645841246544e-324
-#define FLT_MIN		((float)1.40129846432481707e-45)
 #endif
 #ifndef DBL_MAX
 #define DBL_MAX		1.79769313486231470e+308
-#define FLT_MAX		((float)3.40282346638528860e+38)
 #endif
 #ifndef SIZE_T_MAX
 #define SIZE_T_MAX ~((size_t) 0)
@@ -776,22 +782,6 @@ typedef long long intptr;
 #endif
 
 #define MY_ERRPTR ((void*)(intptr)1)
-
-#ifdef USE_RAID
-/*
-  The following is done with a if to not get problems with pre-processors
-  with late define evaluation
-*/
-#if SIZEOF_OFF_T == 4
-#define SYSTEM_SIZEOF_OFF_T 4
-#else
-#define SYSTEM_SIZEOF_OFF_T 8
-#endif
-#undef  SIZEOF_OFF_T
-#define SIZEOF_OFF_T	    8
-#else
-#define SYSTEM_SIZEOF_OFF_T SIZEOF_OFF_T
-#endif /* USE_RAID */
 
 #if SIZEOF_OFF_T > 4
 typedef ulonglong my_off_t;

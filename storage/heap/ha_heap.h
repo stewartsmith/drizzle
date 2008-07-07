@@ -55,7 +55,8 @@ public:
             HA_REC_NOT_IN_SEQ | HA_CAN_INSERT_DELAYED | HA_NO_TRANSACTIONS |
             HA_HAS_RECORDS | HA_STATS_RECORDS_IS_EXACT);
   }
-  uint32_t index_flags(uint inx, uint part, bool all_parts) const
+  uint32_t index_flags(uint inx, uint part __attribute__((__unused__)),
+                       bool all_parts __attribute__((__unused__))) const
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
             HA_READ_NEXT | HA_READ_PREV | HA_READ_ORDER | HA_READ_RANGE :
@@ -66,7 +67,9 @@ public:
   uint max_supported_key_part_length() const { return MAX_KEY_LENGTH; }
   double scan_time()
   { return (double) (stats.records+stats.deleted) / 20.0+10; }
-  double read_time(uint index, uint ranges, ha_rows rows)
+  double read_time(uint index __attribute__((__unused__)),
+                   uint ranges __attribute__((__unused__)),
+                   ha_rows rows)
   { return (double) rows /  20.0+1; }
 
   int open(const char *name, int mode, uint test_if_locked);

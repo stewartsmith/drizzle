@@ -152,7 +152,7 @@ Item_subselect::~Item_subselect()
 }
 
 Item_subselect::trans_res
-Item_subselect::select_transformer(JOIN *join)
+Item_subselect::select_transformer(JOIN *join __attribute__((__unused__)))
 {
   DBUG_ENTER("Item_subselect::select_transformer");
   DBUG_RETURN(RES_OK);
@@ -1888,7 +1888,7 @@ bool Item_in_subselect::init_left_expr_cache()
   @retval false otherwise
 */
 
-bool Item_in_subselect::is_expensive_processor(uchar *arg)
+bool Item_in_subselect::is_expensive_processor(uchar *arg __attribute__((__unused__)))
 {
   return exec_method == MATERIALIZATION;
 }
@@ -2145,7 +2145,7 @@ void subselect_union_engine::fix_length_and_dec(Item_cache **row)
   }
 }
 
-void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **row)
+void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **row __attribute__((__unused__)))
 {
   //this never should be called
   DBUG_ASSERT(0);
@@ -2865,8 +2865,8 @@ bool subselect_union_engine::change_result(Item_subselect *si,
     true  error
 */
 
-bool subselect_uniquesubquery_engine::change_result(Item_subselect *si,
-                                                    select_result_interceptor *res)
+bool subselect_uniquesubquery_engine::change_result(Item_subselect *si __attribute__((__unused__)),
+                                                    select_result_interceptor *res __attribute__((__unused__)))
 {
   DBUG_ASSERT(0);
   return true;

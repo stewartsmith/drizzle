@@ -1151,7 +1151,7 @@ static void network_init(void)
     hints.ai_socktype= SOCK_STREAM;
     hints.ai_family= AF_UNSPEC;
 
-    my_snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
+    snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
     error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
     if (error != 0)
     {
@@ -3107,9 +3107,7 @@ void handle_connections_sockets()
   if (ip_sock != INVALID_SOCKET)
   {
     FD_SET(ip_sock,&clientFDs);
-#ifdef HAVE_FCNTL
     ip_flags = fcntl(ip_sock, F_GETFL, 0);
-#endif
   }
   DBUG_PRINT("general",("Waiting for connections."));
   MAYBE_BROKEN_SYSCALL;

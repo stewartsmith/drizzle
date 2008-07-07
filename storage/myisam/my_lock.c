@@ -17,13 +17,6 @@
 #include <my_sys.h>
 #include <mysys_err.h>
 
-#include <errno.h>
-#undef MY_HOW_OFTEN_TO_ALARM
-#define MY_HOW_OFTEN_TO_ALARM ((int) my_time_to_wait_for_lock)
-#ifdef NO_ALARM_LOOP
-#undef NO_ALARM_LOOP
-#endif
-
 
 /*
   Lock a part of a file
@@ -46,7 +39,6 @@ int my_lock(File fd, int locktype, my_off_t start, my_off_t length,
   if (my_disable_locking)
     DBUG_RETURN(0);
 
-#if defined(HAVE_FCNTL)
   {
     struct flock lock;
 
@@ -73,22 +65,6 @@ int my_lock(File fd, int locktype, my_off_t start, my_off_t length,
     else if (fcntl(fd,F_SETLKW,&lock) != -1) /* Wait until a lock */
       DBUG_RETURN(0);
   }
-#else
-  if (MyFlags & MY_SEEK_NOT_DONE)
-  {
-    if (my_seek(fd,start,MY_SEEK_SET,MYF(MyFlags & ~MY_SEEK_NOT_DONE))
-        == MY_FILEPOS_ERROR)
-    {
-      /*
-        If an error has occured in my_seek then we will already
-        have an error code in my_errno; Just return error code.
-      */
-      DBUG_RETURN(-1);
-    }
-  }
-  if (lockf(fd,locktype,length) != -1)
-    DBUG_RETURN(0);
-#endif /* HAVE_FCNTL */
 
 	/* We got an error. We don't want EACCES errors */
   my_errno=(errno == EACCES) ? EAGAIN : errno ? errno : -1;

@@ -29,9 +29,6 @@
 #include "sql_select.h"
 #include <m_ctype.h>
 #include <errno.h>
-#ifdef HAVE_FCONVERT
-#include <floatingpoint.h>
-#endif
 
 // Maximum allowed exponent value for converting string to decimal
 #define MAX_EXPONENT 1024
@@ -2824,7 +2821,7 @@ int Field_long::store(double nr)
     }
     else if (nr > (double) UINT_MAX32)
     {
-      res= UINT_MAX32;
+      res= INT_MAX32;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }

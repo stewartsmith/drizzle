@@ -58,7 +58,8 @@ const char **ha_blackhole::bas_ext() const
   return ha_blackhole_exts;
 }
 
-int ha_blackhole::open(const char *name, int mode, uint test_if_locked)
+int ha_blackhole::open(const char *name, int mode __attribute__((__unused__)),
+                       uint test_if_locked __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::open");
 
@@ -76,8 +77,9 @@ int ha_blackhole::close(void)
   DBUG_RETURN(0);
 }
 
-int ha_blackhole::create(const char *name, TABLE *table_arg,
-                         HA_CREATE_INFO *create_info)
+int ha_blackhole::create(const char *name __attribute__((__unused__)),
+                         TABLE *table_arg __attribute__((__unused__)),
+                         HA_CREATE_INFO *create_info __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::create");
   DBUG_RETURN(0);
@@ -94,27 +96,28 @@ const char *ha_blackhole::index_type(uint key_number)
                HA_KEY_ALG_RTREE) ? "RTREE" : "BTREE");
 }
 
-int ha_blackhole::write_row(uchar * buf)
+int ha_blackhole::write_row(uchar * buf __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::write_row");
   DBUG_RETURN(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int ha_blackhole::rnd_init(bool scan)
+int ha_blackhole::rnd_init(bool scan __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::rnd_init");
   DBUG_RETURN(0);
 }
 
 
-int ha_blackhole::rnd_next(uchar *buf)
+int ha_blackhole::rnd_next(uchar *buf __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::rnd_next");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::rnd_pos(uchar * buf, uchar *pos)
+int ha_blackhole::rnd_pos(uchar * buf __attribute__((__unused__)),
+                          uchar *pos __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::rnd_pos");
   DBUG_ASSERT(0);
@@ -122,7 +125,7 @@ int ha_blackhole::rnd_pos(uchar * buf, uchar *pos)
 }
 
 
-void ha_blackhole::position(const uchar *record)
+void ha_blackhole::position(const uchar *record __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::position");
   DBUG_ASSERT(0);
@@ -140,7 +143,8 @@ int ha_blackhole::info(uint flag)
   DBUG_RETURN(0);
 }
 
-int ha_blackhole::external_lock(THD *thd, int lock_type)
+int ha_blackhole::external_lock(THD *thd __attribute__((__unused__)),
+                                int lock_type __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::external_lock");
   DBUG_RETURN(0);
@@ -184,54 +188,58 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
 }
 
 
-int ha_blackhole::index_read_map(uchar * buf, const uchar * key,
-                                 key_part_map keypart_map,
-                             enum ha_rkey_function find_flag)
+int ha_blackhole::index_read_map(uchar * buf __attribute__((__unused__)),
+                                 const uchar * key __attribute__((__unused__)),
+                                 key_part_map keypart_map  __attribute__((__unused__)),
+                                 enum ha_rkey_function find_flag __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::index_read");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_idx_map(uchar * buf, uint idx, const uchar * key,
-                                 key_part_map keypart_map,
-                                 enum ha_rkey_function find_flag)
+int ha_blackhole::index_read_idx_map(uchar * buf __attribute__((__unused__)),
+                                     uint idx __attribute__((__unused__)),
+                                     const uchar * key __attribute__((__unused__)),
+                                     key_part_map keypart_map __attribute__((__unused__)),
+                                     enum ha_rkey_function find_flag __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::index_read_idx");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_last_map(uchar * buf, const uchar * key,
-                                      key_part_map keypart_map)
+int ha_blackhole::index_read_last_map(uchar * buf __attribute__((__unused__)),
+                                      const uchar * key __attribute__((__unused__)),
+                                      key_part_map keypart_map __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::index_read_last");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_next(uchar * buf)
+int ha_blackhole::index_next(uchar * buf __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::index_next");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_prev(uchar * buf)
+int ha_blackhole::index_prev(uchar * buf __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::index_prev");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_first(uchar * buf)
+int ha_blackhole::index_first(uchar * buf __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::index_first");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_last(uchar * buf)
+int ha_blackhole::index_last(uchar * buf __attribute__((__unused__)))
 {
   DBUG_ENTER("ha_blackhole::index_last");
   DBUG_RETURN(HA_ERR_END_OF_FILE);
@@ -311,7 +319,7 @@ static int blackhole_init(void *p)
   return 0;
 }
 
-static int blackhole_fini(void *p)
+static int blackhole_fini(void *p __attribute__((__unused__)))
 {
   hash_free(&blackhole_open_tables);
   pthread_mutex_destroy(&blackhole_mutex);
