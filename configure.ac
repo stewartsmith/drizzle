@@ -631,14 +631,6 @@ LIBS="$my_save_LIBS"
 
 AC_CHECK_FUNCS(strtok_r)
 
-
-# System characteristics
-case $SYSTEM_TYPE in
-  *)
-AC_SYS_RESTARTABLE_SYSCALLS
-    ;;
-esac
-
 # Build optimized or debug version ?
 # First check for gcc and g++
 if test "$ac_cv_c_compiler_gnu" = "yes"
