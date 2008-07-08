@@ -1926,7 +1926,7 @@ type:
         | YEAR_SYM opt_len field_options
           { $$=MYSQL_TYPE_YEAR; }
         | DATE_SYM
-          { $$=MYSQL_TYPE_DATE; }
+          { $$=MYSQL_TYPE_NEWDATE; }
         | TIME_SYM
           { $$=MYSQL_TYPE_TIME; }
         | TIMESTAMP
