@@ -529,7 +529,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DIRECTORY_SYM
 %token  DISABLE_SYM
 %token  DISCARD
-%token  DISK_SYM
 %token  DISTINCT                      /* SQL-2003-R */
 %token  DIV_SYM
 %token  DOUBLE_SYM                    /* SQL-2003-R */
@@ -676,7 +675,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MEDIUMBLOB
 %token  MEDIUMTEXT
 %token  MEDIUM_SYM
-%token  MEMORY_SYM
 %token  MERGE_SYM                     /* SQL-2003-R */
 %token  MICROSECOND_SYM               /* MYSQL-FUNC */
 %token  MIGRATE_SYM
@@ -1837,7 +1835,6 @@ field_spec:
             lex->default_value= lex->on_update_value= 0;
             lex->comment=null_lex_str;
             lex->charset=NULL;
-            lex->storage_type= HA_SM_DEFAULT;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
           }
           type opt_attribute
@@ -1845,7 +1842,7 @@ field_spec:
             LEX *lex=Lex;
             if (add_field_to_list(lex->thd, &$1, (enum enum_field_types) $3,
                                   lex->length,lex->dec,lex->type,
-                                  lex->storage_type, lex->column_format,
+                                  lex->column_format,
                                   lex->default_value, lex->on_update_value, 
                                   &lex->comment,
                                   lex->change,&lex->interval_list,lex->charset))
@@ -2092,21 +2089,6 @@ opt_attribute_list:
 
 attribute:
           NULL_SYM { Lex->type&= ~ NOT_NULL_FLAG; }
-        | STORAGE_SYM DEFAULT
-          {
-            Lex->storage_type= HA_SM_DEFAULT;
-            Lex->alter_info.flags|= ALTER_COLUMN_STORAGE;
-          }
-        | STORAGE_SYM DISK_SYM
-          {
-            Lex->storage_type= HA_SM_DISK;
-            Lex->alter_info.flags|= ALTER_COLUMN_STORAGE;
-          }
-        | STORAGE_SYM MEMORY_SYM
-          {
-            Lex->storage_type= HA_SM_MEMORY;
-            Lex->alter_info.flags|= ALTER_COLUMN_STORAGE;
-          }
         | COLUMN_FORMAT_SYM column_format_types
           {
             Lex->column_format= $2;
@@ -2658,7 +2640,6 @@ alter_list_item:
             lex->comment=null_lex_str;
             lex->charset= NULL;
             lex->alter_info.flags|= ALTER_CHANGE_COLUMN;
-            lex->storage_type= HA_SM_DEFAULT;
             lex->column_format= COLUMN_FORMAT_TYPE_DEFAULT;
           }
           type opt_attribute
@@ -2667,7 +2648,7 @@ alter_list_item:
             if (add_field_to_list(lex->thd,&$3,
                                   (enum enum_field_types) $5,
                                   lex->length,lex->dec,lex->type,
-                                  lex->storage_type, lex->column_format,
+                                  lex->column_format,
                                   lex->default_value, lex->on_update_value,
                                   &lex->comment,
                                   $3.str, &lex->interval_list, lex->charset))
@@ -6624,7 +6605,6 @@ keyword_sp:
         | DIRECTORY_SYM            {}
         | DISABLE_SYM              {}
         | DISCARD                  {}
-        | DISK_SYM                 {}
         | DUMPFILE                 {}
         | DUPLICATE_SYM            {}
         | DYNAMIC_SYM              {}
@@ -6689,7 +6669,6 @@ keyword_sp:
         | MAX_USER_CONNECTIONS_SYM {}
         | MAX_VALUE_SYM            {}
         | MEDIUM_SYM               {}
-        | MEMORY_SYM               {}
         | MERGE_SYM                {}
         | MICROSECOND_SYM          {}
         | MIGRATE_SYM              {}

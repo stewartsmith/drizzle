@@ -760,16 +760,6 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
         ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
       enum column_format_type column_format= (enum column_format_type)
         ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
-      if (storage_type)
-      {
-        packet->append(STRING_WITH_LEN(" /*!"));
-        packet->append(STRING_WITH_LEN(MYSQL_VERSION_TABLESPACE_IN_FRM_STR));
-        packet->append(STRING_WITH_LEN(" STORAGE"));
-        if (storage_type == HA_SM_DISK)
-          packet->append(STRING_WITH_LEN(" DISK */"));
-        else
-          packet->append(STRING_WITH_LEN(" MEMORY */"));
-      }
       if (column_format)
       {
         packet->append(STRING_WITH_LEN(" /*!"));
@@ -876,35 +866,6 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
       Get possible table space definitions and append them
       to the CREATE TABLE statement
     */
-
-    switch (table->s->default_storage_media) {
-    case(HA_SM_DEFAULT):
-      if ((for_str= (char *)file->get_tablespace_name()))
-      {
-        packet->append(STRING_WITH_LEN(" /*!50100 TABLESPACE "));
-        append_identifier(thd, packet, for_str, strlen(for_str));
-        packet->append(STRING_WITH_LEN(" */"));
-      }
-      break;
-    case(HA_SM_DISK):
-      packet->append(STRING_WITH_LEN(" /*!50100"));
-      if ((for_str= (char *)file->get_tablespace_name()))
-      {
-        packet->append(STRING_WITH_LEN(" TABLESPACE "));
-        append_identifier(thd, packet, for_str, strlen(for_str));
-      }
-      packet->append(STRING_WITH_LEN(" STORAGE DISK */"));
-      break;
-    case(HA_SM_MEMORY):
-      packet->append(STRING_WITH_LEN(" /*!50100"));
-      if ((for_str= (char *)file->get_tablespace_name()))
-      {
-        packet->append(STRING_WITH_LEN(" TABLESPACE "));
-        append_identifier(thd, packet, for_str, strlen(for_str));
-      }
-      packet->append(STRING_WITH_LEN(" STORAGE MEMORY */"));
-      break;
-    };
 
     /*
       IF   check_create_info
@@ -3245,8 +3206,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
         ((field->flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
       enum column_format_type column_format= (enum column_format_type)
         ((field->flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
-      pos=(uchar*)(storage_type == HA_SM_DEFAULT ? "Default" :
-                   storage_type == HA_SM_DISK ? "Disk" : "Memory");
+      pos=(uchar*)"Default";
       table->field[19]->store((const char*) pos,
                               strlen((const char*) pos), cs);
       pos=(uchar*)(column_format == COLUMN_FORMAT_TYPE_DEFAULT ? "Default" :

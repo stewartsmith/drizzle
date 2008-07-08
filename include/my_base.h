@@ -106,9 +106,7 @@ enum ha_build_method {
         /* Storage media types */ 
 
 enum ha_storage_media {
-  HA_SM_DEFAULT=        0,		/* Not specified (engine default) */
-  HA_SM_DISK=           1,		/* DISK storage */
-  HA_SM_MEMORY=         2		/* MAIN MEMORY storage */
+  HA_SM_DEFAULT=        0		/* Not specified (engine default) */
 };
 
 	/* The following is parameter to ha_extra() */
