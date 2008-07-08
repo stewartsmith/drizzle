@@ -756,8 +756,6 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
         Add field flags about FIELD FORMAT (FIXED or DYNAMIC)
         and about STORAGE (DISK or MEMORY).
       */
-      enum ha_storage_media storage_type= (enum ha_storage_media)
-        ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
       enum column_format_type column_format= (enum column_format_type)
         ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
       if (column_format)
@@ -3202,8 +3200,6 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
 
     table->field[18]->store(field->comment.str, field->comment.length, cs);
     {
-      enum ha_storage_media storage_type= (enum ha_storage_media)
-        ((field->flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
       enum column_format_type column_format= (enum column_format_type)
         ((field->flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
       pos=(uchar*)"Default";

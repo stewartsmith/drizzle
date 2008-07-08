@@ -891,15 +891,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     */
     share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
   }
-#ifndef WE_WANT_TO_SUPPORT_VERY_OLD_FRM_FILES
-  else
-  {
-    share->null_bytes= (share->null_fields+7)/8;
-    null_flags= null_pos= (uchar*) (record + 1 +share->reclength -
-                                    share->null_bytes);
-    null_bit_pos= 0;
-  }
-#endif
 
   use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
   if (use_hash)
@@ -912,7 +903,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     uint pack_flag, interval_nr, unireg_type, recpos, field_length;
     enum_field_types field_type;
-    enum ha_storage_media storage_type= HA_SM_DEFAULT;
     enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
     CHARSET_INFO *charset=NULL;
     LEX_STRING comment;
@@ -920,7 +910,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     if (field_extra_info)
     {
       char tmp= field_extra_info[i];
-      storage_type= (enum ha_storage_media)(tmp & STORAGE_TYPE_MASK);
       column_format= (enum column_format_type)
                     ((tmp >> COLUMN_FORMAT_SHIFT) & COLUMN_FORMAT_MASK);
     }
@@ -1043,7 +1032,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       goto err;			/* purecov: inspected */
     }
 
-    reg_field->flags|= ((uint)storage_type << FIELD_STORAGE_FLAGS);
     reg_field->flags|= ((uint)column_format << COLUMN_FORMAT_FLAGS);
     reg_field->field_index= i;
     reg_field->comment=comment;

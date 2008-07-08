@@ -1799,12 +1799,6 @@ public:
     { return new (mem_root) Create_field(*this); }
   void create_length_to_internal_length(void);
 
-  inline  enum ha_storage_media field_storage_type() const
-  {
-    return (enum ha_storage_media)
-      ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
-  }
-
   inline enum column_format_type column_format() const
   {
     return (enum column_format_type)
