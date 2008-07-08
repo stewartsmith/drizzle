@@ -46,15 +46,15 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
   uint usable_index= MAX_KEY;
   SELECT_LEX   *select_lex= &thd->lex->select_lex;
   THD::killed_state killed_status= THD::NOT_KILLED;
-  DBUG_ENTER("mysql_delete");
+  
 
   if (open_and_lock_tables(thd, table_list))
-    DBUG_RETURN(TRUE);
+    return(TRUE);
   /* TODO look at this error */
   if (!(table= table_list->table))
   {
     my_error(ER_VIEW_DELETE_MERGE_VIEW, MYF(0), "", "");
-    DBUG_RETURN(TRUE);
+    return(TRUE);
   }
   thd_proc_info(thd, "init");
   table->map=1;
@@ -98,7 +98,7 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
   if (thd->is_error())
   {
     /* Error evaluating val_int(). */
-    DBUG_RETURN(TRUE);
+    return(TRUE);
   }
 
   /*
@@ -128,7 +128,6 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
     /* Update the table->file->stats.records number */
     table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
     ha_rows const maybe_deleted= table->file->stats.records;
-    DBUG_PRINT("debug", ("Trying to use delete_all_rows()"));
     if (!(error=table->file->ha_delete_all_rows()))
     {
       error= -1;				// ok
@@ -171,7 +170,7 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
       mysql_truncate always gives a NULL conds argument, hence we never
       get here.
     */
-    DBUG_RETURN(0);				// Nothing to delete
+    return(0);				// Nothing to delete
   }
 
   /* If running in safe sql mode, don't allow updates without keys */
@@ -339,7 +338,7 @@ cleanup:
     if (thd->transaction.stmt.modified_non_trans_table)
       thd->transaction.all.modified_non_trans_table= TRUE;
   }
-  DBUG_ASSERT(transactional_table || !deleted || thd->transaction.stmt.modified_non_trans_table);
+  assert(transactional_table || !deleted || thd->transaction.stmt.modified_non_trans_table);
   free_underlaid_joins(thd, select_lex);
 
   MYSQL_DELETE_END();
@@ -347,13 +346,12 @@ cleanup:
   {
     thd->row_count_func= deleted;
     my_ok(thd, (ha_rows) thd->row_count_func);
-    DBUG_PRINT("info",("%ld records deleted",(long) deleted));
   }
-  DBUG_RETURN(error >= 0 || thd->is_error());
+  return(error >= 0 || thd->is_error());
 
 err:
   MYSQL_DELETE_END();
-  DBUG_RETURN(TRUE);
+  return(TRUE);
 }
 
 
@@ -374,7 +372,7 @@ int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
 {
   Item *fake_conds= 0;
   SELECT_LEX *select_lex= &thd->lex->select_lex;
-  DBUG_ENTER("mysql_prepare_delete");
+  
   List<Item> all_fields;
 
   /*
@@ -396,22 +394,22 @@ int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
                                     table_list, 
                                     &select_lex->leaf_tables, false) ||
       setup_conds(thd, table_list, select_lex->leaf_tables, conds))
-    DBUG_RETURN(TRUE);
+    return(TRUE);
   {
     TABLE_LIST *duplicate;
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 0)))
     {
       update_non_unique_table_error(table_list, "DELETE", duplicate);
-      DBUG_RETURN(TRUE);
+      return(TRUE);
     }
   }
 
   if (select_lex->inner_refs_list.elements &&
     fix_inner_refs(thd, all_fields, select_lex, select_lex->ref_pointer_array))
-    DBUG_RETURN(-1);
+    return(-1);
 
   select_lex->fix_prepare_information(thd, conds, &fake_conds);
-  DBUG_RETURN(FALSE);
+  return(FALSE);
 }
 
 
@@ -444,7 +442,7 @@ int mysql_multi_delete_prepare(THD *thd)
   LEX *lex= thd->lex;
   TABLE_LIST *aux_tables= (TABLE_LIST *)lex->auxiliary_table_list.first;
   TABLE_LIST *target_tbl;
-  DBUG_ENTER("mysql_multi_delete_prepare");
+  
 
   /*
     setup_tables() need for VIEWs. JOIN::prepare() will not do it second
@@ -456,7 +454,7 @@ int mysql_multi_delete_prepare(THD *thd)
                                     &thd->lex->select_lex.top_join_list,
                                     lex->query_tables,
                                     &lex->select_lex.leaf_tables, false))
-    DBUG_RETURN(TRUE);
+    return(TRUE);
 
 
   /*
@@ -471,11 +469,11 @@ int mysql_multi_delete_prepare(THD *thd)
   {
     if (!(target_tbl->table= target_tbl->correspondent_table->table))
     {
-      DBUG_ASSERT(target_tbl->correspondent_table->merge_underlying_list &&
+      assert(target_tbl->correspondent_table->merge_underlying_list &&
                   target_tbl->correspondent_table->merge_underlying_list->
                   next_local);
       my_error(ER_VIEW_DELETE_MERGE_VIEW, MYF(0), "", "");
-      DBUG_RETURN(TRUE);
+      return(TRUE);
     }
 
     /*
@@ -489,11 +487,11 @@ int mysql_multi_delete_prepare(THD *thd)
       {
         update_non_unique_table_error(target_tbl->correspondent_table,
                                       "DELETE", duplicate);
-        DBUG_RETURN(TRUE);
+        return(TRUE);
       }
     }
   }
-  DBUG_RETURN(FALSE);
+  return(FALSE);
 }
 
 
@@ -509,11 +507,11 @@ multi_delete::multi_delete(TABLE_LIST *dt, uint num_of_tables_arg)
 int
 multi_delete::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
-  DBUG_ENTER("multi_delete::prepare");
+  
   unit= u;
   do_delete= 1;
   thd_proc_info(thd, "deleting from main table");
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -522,10 +520,10 @@ multi_delete::initialize_tables(JOIN *join)
 {
   TABLE_LIST *walk;
   Unique **tempfiles_ptr;
-  DBUG_ENTER("initialize_tables");
+  
 
   if ((thd->options & OPTION_SAFE_UPDATES) && error_if_full_join(join))
-    DBUG_RETURN(1);
+    return(1);
 
   table_map tables_to_delete_from=0;
   for (walk= delete_tables; walk; walk= walk->next_local)
@@ -580,7 +578,7 @@ multi_delete::initialize_tables(JOIN *join)
 				  table->file->ref_length,
 				  MEM_STRIP_BUF_SIZE);
   }
-  DBUG_RETURN(thd->is_fatal_error != 0);
+  return(thd->is_fatal_error != 0);
 }
 
 
@@ -606,7 +604,7 @@ bool multi_delete::send_data(List<Item> &values)
 {
   int secure_counter= delete_while_scanning ? -1 : 0;
   TABLE_LIST *del_table;
-  DBUG_ENTER("multi_delete::send_data");
+  
 
   for (del_table= delete_tables;
        del_table;
@@ -624,7 +622,7 @@ bool multi_delete::send_data(List<Item> &values)
     if (secure_counter < 0)
     {
       /* We are scanning the current table */
-      DBUG_ASSERT(del_table == table_being_deleted);
+      assert(del_table == table_being_deleted);
       table->status|= STATUS_DELETED;
       if (!(error=table->file->ha_delete_row(table->record[0])))
       {
@@ -635,7 +633,7 @@ bool multi_delete::send_data(List<Item> &values)
       else
       {
         table->file->print_error(error,MYF(0));
-        DBUG_RETURN(1);
+        return(1);
       }
     }
     else
@@ -644,33 +642,33 @@ bool multi_delete::send_data(List<Item> &values)
       if (error)
       {
 	error= 1;                               // Fatal error
-	DBUG_RETURN(1);
+	return(1);
       }
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
 void multi_delete::send_error(uint errcode,const char *err)
 {
-  DBUG_ENTER("multi_delete::send_error");
+  
 
   /* First send error what ever it is ... */
   my_message(errcode, err, MYF(0));
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 void multi_delete::abort()
 {
-  DBUG_ENTER("multi_delete::abort");
+  
 
   /* the error was handled or nothing deleted and no side effects return */
   if (error_handled ||
       (!thd->transaction.stmt.modified_non_trans_table && !deleted))
-    DBUG_VOID_RETURN;
+    return;
 
   /*
     If rows from the first table only has been deleted and it is
@@ -688,8 +686,8 @@ void multi_delete::abort()
     */
     error= 1;
     send_eof();
-    DBUG_ASSERT(error_handled);
-    DBUG_VOID_RETURN;
+    assert(error_handled);
+    return;
   }
   
   if (thd->transaction.stmt.modified_non_trans_table)
@@ -705,7 +703,7 @@ void multi_delete::abort()
     }
     thd->transaction.all.modified_non_trans_table= true;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -721,12 +719,12 @@ int multi_delete::do_deletes()
 {
   int local_error= 0, counter= 0, tmp_error;
   bool will_batch;
-  DBUG_ENTER("do_deletes");
-  DBUG_ASSERT(do_delete);
+  
+  assert(do_delete);
 
   do_delete= 0;                                 // Mark called
   if (!found)
-    DBUG_RETURN(0);
+    return(0);
 
   table_being_deleted= (delete_while_scanning ? delete_tables->next_local :
                         delete_tables);
@@ -775,7 +773,7 @@ int multi_delete::do_deletes()
     if (local_error == -1)				// End of file
       local_error = 0;
   }
-  DBUG_RETURN(local_error);
+  return(local_error);
 }
 
 
@@ -852,7 +850,7 @@ bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
   TABLE *table;
   bool error;
   uint path_length;
-  DBUG_ENTER("mysql_truncate");
+  
 
   bzero((char*) &create_info,sizeof(create_info));
   /* If it is a temporary table, close and regenerate it */
@@ -896,7 +894,7 @@ bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
     {
       my_error(ER_NO_SUCH_TABLE, MYF(0),
                table_list->db, table_list->table_name);
-      DBUG_RETURN(TRUE);
+      return(TRUE);
     }
 
     if (!ha_check_storage_engine_flag(ha_resolve_by_legacy_type(thd, table_type),
@@ -904,7 +902,7 @@ bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
       goto trunc_by_del;
 
     if (lock_and_wait_for_table_name(thd, table_list))
-      DBUG_RETURN(TRUE);
+      return(TRUE);
   }
 
   // Remove the .frm extension AIX 5.2 64-bit compiler bug (BUG#16155): this
@@ -938,7 +936,7 @@ end:
     unlock_table_name(thd, table_list);
     VOID(pthread_mutex_unlock(&LOCK_open));
   }
-  DBUG_RETURN(error);
+  return(error);
 
 trunc_by_del:
   /* Probably InnoDB table */
@@ -960,5 +958,5 @@ trunc_by_del:
   ha_commit(thd);
   thd->options= save_options;
   thd->current_stmt_binlog_row_based= save_binlog_row_based;
-  DBUG_RETURN(error);
+  return(error);
 }

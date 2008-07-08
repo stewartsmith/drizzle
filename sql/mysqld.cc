@@ -528,7 +528,6 @@ static void close_connections(void)
 #ifdef EXTRA_DEBUG
   int count=0;
 #endif
-  DBUG_ENTER("close_connections");
 
   /* Clear thread cache */
   kill_cached_threads++;
@@ -538,22 +537,17 @@ static void close_connections(void)
   (void) pthread_mutex_lock(&LOCK_manager);
   if (manager_thread_in_use)
   {
-    DBUG_PRINT("quit", ("killing manager thread: 0x%lx",
-                        (ulong)manager_thread));
    (void) pthread_cond_signal(&COND_manager);
   }
   (void) pthread_mutex_unlock(&LOCK_manager);
 
   /* kill connection thread */
-  DBUG_PRINT("quit", ("waiting for select thread: 0x%lx",
-                      (ulong) select_thread));
   (void) pthread_mutex_lock(&LOCK_thread_count);
 
   while (select_thread_in_use)
   {
     struct timespec abstime;
     int error;
-    DBUG_PRINT("info",("Waiting for select thread"));
 
 #ifndef DONT_USE_THR_ALARM
     if (pthread_kill(select_thread, thr_client_alarm))
@@ -577,7 +571,6 @@ static void close_connections(void)
 
 
   /* Abort listening to new connections */
-  DBUG_PRINT("quit",("Closing sockets"));
   if (!opt_disable_networking )
   {
     if (ip_sock != INVALID_SOCKET)
@@ -601,8 +594,6 @@ static void close_connections(void)
   I_List_iterator<THD> it(threads);
   while ((tmp=it++))
   {
-    DBUG_PRINT("quit",("Informing thread %ld that it's time to die",
-		       tmp->thread_id));
     /* We skip slave threads & scheduler on this first loop through. */
     if (tmp->slave_thread)
       continue;
@@ -637,11 +628,9 @@ static void close_connections(void)
 
   for (;;)
   {
-    DBUG_PRINT("quit",("Locking LOCK_thread_count"));
     (void) pthread_mutex_lock(&LOCK_thread_count); // For unlink from list
     if (!(tmp=threads.get()))
     {
-      DBUG_PRINT("quit",("Unlocking LOCK_thread_count"));
       (void) pthread_mutex_unlock(&LOCK_thread_count);
       break;
     }
@@ -654,44 +643,37 @@ static void close_connections(void)
                            tmp->main_security_ctx.user : ""));
       close_connection(tmp,0,0);
     }
-    DBUG_PRINT("quit",("Unlocking LOCK_thread_count"));
     (void) pthread_mutex_unlock(&LOCK_thread_count);
   }
   /* All threads has now been aborted */
-  DBUG_PRINT("quit",("Waiting for threads to die (count=%u)",thread_count));
   (void) pthread_mutex_lock(&LOCK_thread_count);
   while (thread_count)
   {
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-    DBUG_PRINT("quit",("One thread died (count=%u)",thread_count));
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
-  DBUG_PRINT("quit",("close_connections thread"));
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
 static void close_server_sock()
 {
 #ifdef HAVE_CLOSE_SERVER_SOCK
-  DBUG_ENTER("close_server_sock");
   my_socket tmp_sock;
   tmp_sock=ip_sock;
   if (tmp_sock != INVALID_SOCKET)
   {
     ip_sock=INVALID_SOCKET;
-    DBUG_PRINT("info",("calling shutdown on TCP/IP socket"));
     VOID(shutdown(tmp_sock, SHUT_RDWR));
   }
-  DBUG_VOID_RETURN;
+  return;;
 #endif
 }
 
 
 void kill_mysql(void)
 {
-  DBUG_ENTER("kill_mysql");
 
 #if defined(SIGNALS_DONT_BREAK_READ)
   abort_loop=1;					// Break connection loops
@@ -699,14 +681,10 @@ void kill_mysql(void)
 #endif
 
 #if defined(HAVE_PTHREAD_KILL)
-  if (pthread_kill(signal_thread, MYSQL_KILL_SIGNAL))
-  {
-    DBUG_PRINT("error",("Got error %d from pthread_kill",errno)); /* purecov: inspected */
-  }
+  pthread_kill(signal_thread, MYSQL_KILL_SIGNAL);
 #elif !defined(SIGNALS_DONT_BREAK_READ)
   kill(current_pid, MYSQL_KILL_SIGNAL);
 #endif
-  DBUG_PRINT("quit",("After pthread_kill"));
   shutdown_in_progress=1;			// Safety if kill didn't work
 #ifdef SIGNALS_DONT_BREAK_READ
   if (!kill_in_progress)
@@ -718,7 +696,7 @@ void kill_mysql(void)
       sql_print_error("Can't create thread to kill server");
   }
 #endif
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 /**
@@ -733,9 +711,8 @@ void kill_mysql(void)
 */
 
 static void *kill_server(void *sig_ptr)
-#define RETURN_FROM_KILL_SERVER DBUG_RETURN(0)
+#define RETURN_FROM_KILL_SERVER return(0)
 {
-  DBUG_ENTER("kill_server");
   int sig=(int) (long) sig_ptr;			// This is passed a int
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
@@ -815,14 +792,12 @@ void unireg_end(void)
 
 extern "C" void unireg_abort(int exit_code)
 {
-  DBUG_ENTER("unireg_abort");
 
   if (exit_code)
     sql_print_error("Aborting\n");
   else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code || !opt_bootstrap)); /* purecov: inspected */
-  DBUG_PRINT("quit",("done with cleanup in unireg_abort"));
   mysqld_exit(exit_code);
 }
 
@@ -838,7 +813,6 @@ static void mysqld_exit(int exit_code)
 
 void clean_up(bool print_message)
 {
-  DBUG_PRINT("exit",("clean_up"));
   if (cleanup_done++)
     return; /* purecov: inspected */
 
@@ -903,11 +877,9 @@ void clean_up(bool print_message)
   finish_client_errs();
   my_free((uchar*) my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST),
           MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
-  DBUG_PRINT("quit", ("Error messages freed"));
   /* Tell main we are ready */
   logger.cleanup_end();
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  DBUG_PRINT("quit", ("got thread count lock"));
   ready_to_exit=1;
   /* do the broadcast inside the lock to ensure that my_end() is not called */
   (void) pthread_cond_broadcast(&COND_thread_count);
@@ -917,7 +889,6 @@ void clean_up(bool print_message)
     The following lines may never be executed as the main thread may have
     killed us
   */
-  DBUG_PRINT("quit", ("done with cleanup"));
 } /* clean_up */
 
 
@@ -1070,7 +1041,7 @@ err:
 static void set_user(const char *user, struct passwd *user_info_arg)
 {
   /* purecov: begin tested */
-  DBUG_ASSERT(user_info_arg != 0);
+  assert(user_info_arg != 0);
 #ifdef HAVE_INITGROUPS
   /*
     We can get a SIGSEGV when calling initgroups() on some systems when NSS
@@ -1098,7 +1069,7 @@ static void set_user(const char *user, struct passwd *user_info_arg)
 
 static void set_effective_user(struct passwd *user_info_arg)
 {
-  DBUG_ASSERT(user_info_arg != 0);
+  assert(user_info_arg != 0);
   if (setregid((gid_t)-1, user_info_arg->pw_gid) == -1)
   {
     sql_perror("setregid");
@@ -1132,7 +1103,6 @@ static void network_init(void)
   uint  this_wait;
   uint  retry;
   char port_buf[NI_MAXSERV];
-  DBUG_ENTER("network_init");
 
   if (thread_scheduler.init())
     unireg_abort(1);			/* purecov: inspected */
@@ -1144,7 +1114,6 @@ static void network_init(void)
     struct addrinfo *ai;
     struct addrinfo hints;
     int error;
-    DBUG_PRINT("general",("IP Socket is %d",mysqld_port));
 
     bzero(&hints, sizeof (hints));
     hints.ai_flags= AI_PASSIVE;
@@ -1155,7 +1124,6 @@ static void network_init(void)
     error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
     if (error != 0)
     {
-      DBUG_PRINT("error",("Got error: %d from getaddrinfo()", error));
       sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
       unireg_abort(1);				/* purecov: tested */
     }
@@ -1166,7 +1134,6 @@ static void network_init(void)
 
     if (ip_sock == INVALID_SOCKET)
     {
-      DBUG_PRINT("error",("Got error: %d from socket()",socket_errno));
       sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
       unireg_abort(1);				/* purecov: tested */
     }
@@ -1212,7 +1179,6 @@ static void network_init(void)
     freeaddrinfo(ai);
     if (ret < 0)
     {
-      DBUG_PRINT("error",("Got error: %d from bind",socket_errno));
       sql_perror("Can't start server: Bind on TCP/IP port");
       sql_print_error("Do you already have another mysqld server running on port: %d ?",mysqld_port);
       unireg_abort(1);
@@ -1226,8 +1192,7 @@ static void network_init(void)
     }
   }
 
-  DBUG_PRINT("info",("server started"));
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 /**
@@ -1243,11 +1208,6 @@ static void network_init(void)
 void close_connection(THD *thd, uint errcode, bool lock)
 {
   st_vio *vio;
-  DBUG_ENTER("close_connection");
-  DBUG_PRINT("enter",("fd: %s  error: '%s'",
-		      thd->net.vio ? vio_description(thd->net.vio) :
-		      "(not connected)",
-		      errcode ? ER(errcode) : ""));
   if (lock)
     (void) pthread_mutex_lock(&LOCK_thread_count);
   thd->killed= THD::KILL_CONNECTION;
@@ -1259,7 +1219,7 @@ void close_connection(THD *thd, uint errcode, bool lock)
   }
   if (lock)
     (void) pthread_mutex_unlock(&LOCK_thread_count);
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
@@ -1268,13 +1228,12 @@ void close_connection(THD *thd, uint errcode, bool lock)
 extern "C" sig_handler end_thread_signal(int sig __attribute__((unused)))
 {
   THD *thd=current_thd;
-  DBUG_ENTER("end_thread_signal");
   if (thd && ! thd->bootstrap)
   {
     statistic_increment(killed_threads, &LOCK_status);
     thread_scheduler.end_thread(thd,0);		/* purecov: inspected */
   }
-  DBUG_VOID_RETURN;				/* purecov: deadcode */
+  return;;				/* purecov: deadcode */
 }
 
 
@@ -1291,8 +1250,6 @@ extern "C" sig_handler end_thread_signal(int sig __attribute__((unused)))
 
 void unlink_thd(THD *thd)
 {
-  DBUG_ENTER("unlink_thd");
-  DBUG_PRINT("enter", ("thd: 0x%lx", (long) thd));
   thd->cleanup();
 
   pthread_mutex_lock(&LOCK_connection_count);
@@ -1302,7 +1259,7 @@ void unlink_thd(THD *thd)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   thread_count--;
   delete thd;
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
@@ -1329,7 +1286,6 @@ static bool cache_thread()
       ! abort_loop && !kill_cached_threads)
   {
     /* Don't kill the thread, just put it in cache for reuse */
-    DBUG_PRINT("info", ("Adding thread to cache"));
     cached_thread_count++;
     while (!abort_loop && ! wake_thread && ! kill_cached_threads)
       (void) pthread_cond_wait(&COND_thread_cache, &LOCK_thread_count);
@@ -1379,21 +1335,19 @@ static bool cache_thread()
 
 bool one_thread_per_connection_end(THD *thd, bool put_in_cache)
 {
-  DBUG_ENTER("one_thread_per_connection_end");
   unlink_thd(thd);
   if (put_in_cache)
     put_in_cache= cache_thread();
   pthread_mutex_unlock(&LOCK_thread_count);
   if (put_in_cache)
-    DBUG_RETURN(0);                             // Thread is reused
+    return(0);                             // Thread is reused
 
   /* It's safe to broadcast outside a lock (COND... is not deleted here) */
-  DBUG_PRINT("signal", ("Broadcasting COND_thread_count"));
   my_thread_end();
   (void) pthread_cond_broadcast(&COND_thread_count);
 
   pthread_exit(0);
-  DBUG_RETURN(0);                               // Impossible
+  return(0);                               // Impossible
 }
 
 
@@ -1421,10 +1375,9 @@ void flush_thread_cache()
 extern "C" sig_handler abort_thread(int sig __attribute__((unused)))
 {
   THD *thd=current_thd;
-  DBUG_ENTER("abort_thread");
   if (thd)
     thd->killed= THD::KILL_CONNECTION;
-  DBUG_VOID_RETURN;
+  return;;
 }
 #endif
 
@@ -1584,7 +1537,6 @@ static void init_signals(void)
 {
   sigset_t set;
   struct sigaction sa;
-  DBUG_ENTER("init_signals");
 
   my_sigset(THR_SERVER_ALARM,print_signal_warning); // Should never be called!
 
@@ -1647,7 +1599,7 @@ static void init_signals(void)
     sigaddset(&set,SIGINT);
   sigprocmask(SIG_SETMASK,&set,NULL);
   pthread_sigmask(SIG_SETMASK,&set,NULL);
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
@@ -1655,7 +1607,6 @@ static void start_signal_handler(void)
 {
   int error;
   pthread_attr_t thr_attr;
-  DBUG_ENTER("start_signal_handler");
 
   (void) pthread_attr_init(&thr_attr);
   pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
@@ -1688,7 +1639,7 @@ static void start_signal_handler(void)
   pthread_mutex_unlock(&LOCK_thread_count);
 
   (void) pthread_attr_destroy(&thr_attr);
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
@@ -1699,7 +1650,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
   sigset_t set;
   int sig;
   my_thread_init();				// Init new thread
-  DBUG_ENTER("signal_hand");
   signal_thread_in_use= 1;
 
   /*
@@ -1761,7 +1711,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
       while ((error=my_sigwait(&set,&sig)) == EINTR) ;
     if (cleanup_done)
     {
-      DBUG_PRINT("quit",("signal_handler: calling my_thread_end()"));
       my_thread_end();
       signal_thread_in_use= 0;
       pthread_exit(0);				// Safety
@@ -1776,7 +1725,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
       /* switch to the old log message processing */
       logger.set_handlers(LOG_FILE, opt_slow_log ? LOG_FILE:LOG_NONE,
                           opt_log ? LOG_FILE:LOG_NONE);
-      DBUG_PRINT("info",("Got signal: %d  abort_loop: %d",sig,abort_loop));
       if (!abort_loop)
       {
 	abort_loop=1;				// mark abort for threads
@@ -1854,12 +1802,9 @@ extern "C" void my_message_sql(uint error, const char *str, myf MyFlags);
 void my_message_sql(uint error, const char *str, myf MyFlags)
 {
   THD *thd;
-  DBUG_ENTER("my_message_sql");
-  DBUG_PRINT("error", ("error: %u  message: '%s'", error, str));
   /*
     Put here following assertion when situation with EE_* error codes
     will be fixed
-    DBUG_ASSERT(error != 0);
   */
   if ((thd= current_thd))
   {
@@ -1881,7 +1826,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
     */
     if (thd->handle_error(error, str,
                           MYSQL_ERROR::WARN_LEVEL_ERROR))
-      DBUG_VOID_RETURN;
+      return;;
 
     thd->is_slave_error=  1; // needed to catch query errors during replication
 
@@ -1890,14 +1835,9 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       (not query command (COM_QUERY))
     */
     if (thd->lex->current_select &&
-	thd->lex->current_select->no_error && !thd->is_fatal_error)
+        thd->lex->current_select->no_error && !thd->is_fatal_error)
     {
-      DBUG_PRINT("error",
-                 ("Error converted to warning: current_select: no_error %d  "
-                  "fatal_error: %d",
-                  (thd->lex->current_select ?
-                   thd->lex->current_select->no_error : 0),
-                  (int) thd->is_fatal_error));
+      /* DBUG_WAS_HERE */
     }
     else
     {
@@ -1924,7 +1864,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
   }
   if (!thd || MyFlags & ME_NOREFRESH)
     sql_print_error("%s: %s",my_progname,str); /* purecov: inspected */
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
@@ -2160,8 +2100,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   get_options(&defaults_argc, defaults_argv);
   set_server_version();
 
-  DBUG_PRINT("info",("%s  Ver %s for %s on %s\n",my_progname,
-		     server_version, SYSTEM_TYPE,MACHINE_TYPE));
 
   /* connections and databases needs lots of files */
   {
@@ -2202,9 +2140,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
         table_cache_size= (ulong) min(max((files-10-max_connections)/2,
                                           TABLE_OPEN_CACHE_MIN),
                                       table_cache_size);
-	DBUG_PRINT("warning",
-		   ("Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld",
-		    files, max_connections, table_cache_size));
 	if (global_system_variables.log_warnings)
 	  sql_print_warning("Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld",
 			files, max_connections, table_cache_size);
@@ -2339,7 +2274,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     insensitive names.  If this is not done the users MyISAM tables will
     get corrupted if accesses with names of different case.
   */
-  DBUG_PRINT("info", ("lower_case_table_names: %d", lower_case_table_names));
   lower_case_file_system= test_if_case_insensitive(mysql_real_data_home);
   if (!lower_case_table_names && lower_case_file_system == 1)
   {
@@ -2441,7 +2375,6 @@ static int init_thread_environment()
 
 static int init_server_components()
 {
-  DBUG_ENTER("init_server_components");
   /*
     We need to call each of these following functions to ensure that
     all things are initialized so that unireg_abort() doesn't fail
@@ -2559,11 +2492,11 @@ with --log-bin instead.");
       global_system_variables.binlog_format= BINLOG_FORMAT_MIXED;
     else
     { 
-      DBUG_ASSERT(global_system_variables.binlog_format != BINLOG_FORMAT_UNSPEC);
-  }
+      assert(global_system_variables.binlog_format != BINLOG_FORMAT_UNSPEC);
+    }
 
   /* Check that we have not let the format to unspecified at this point */
-  DBUG_ASSERT((uint)global_system_variables.binlog_format <=
+  assert((uint)global_system_variables.binlog_format <=
               array_elements(binlog_format_names)-1);
 
   if (opt_log_slave_updates && replicate_same_server_id)
@@ -2617,7 +2550,7 @@ server.");
 
   /* Allow storage engine to give real error messages */
   if (ha_init_errors())
-    DBUG_RETURN(1);
+    return(1);
 
   if (plugin_init(&defaults_argc, defaults_argv,
                   (opt_noacl ? PLUGIN_INIT_SKIP_PLUGIN_TABLE : 0) |
@@ -2700,7 +2633,7 @@ server.");
                         default_storage_engine_str);
         unireg_abort(1);
       }
-      DBUG_ASSERT(global_system_variables.table_plugin);
+      assert(global_system_variables.table_plugin);
     }
     else
     {
@@ -2765,7 +2698,7 @@ server.");
     locked_in_memory=0;
 
   init_update_queries();
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -2939,13 +2872,11 @@ int main(int argc, char **argv)
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
   
-  DBUG_PRINT("quit",("Exiting main thread"));
 
 #ifdef EXTRA_DEBUG2
   sql_print_error("Before Lock_thread_count");
 #endif
   (void) pthread_mutex_lock(&LOCK_thread_count);
-  DBUG_PRINT("quit", ("Got thread_count mutex"));
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
@@ -2971,7 +2902,7 @@ int main(int argc, char **argv)
 
 static void bootstrap(FILE *file)
 {
-  DBUG_ENTER("bootstrap");
+  
 
   THD *thd= new THD;
   thd->bootstrap=1;
@@ -2986,26 +2917,25 @@ static void bootstrap(FILE *file)
   {
     sql_print_warning("Can't create thread to handle bootstrap");
     bootstrap_error=-1;
-    DBUG_VOID_RETURN;
+    return;;
   }
   /* Wait for thread to die */
   (void) pthread_mutex_lock(&LOCK_thread_count);
   while (thread_count)
   {
     (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
-    DBUG_PRINT("quit",("One thread died (count=%u)",thread_count));
+    /* DBUG_WAS_HERE */
   }
   (void) pthread_mutex_unlock(&LOCK_thread_count);
 
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
 static bool read_init_file(char *file_name)
 {
   FILE *file;
-  DBUG_ENTER("read_init_file");
-  DBUG_PRINT("enter",("name: %s",file_name));
+  
   if (!(file=my_fopen(file_name,O_RDONLY,MYF(MY_WME))))
     return(1);
   bootstrap(file);
@@ -3029,7 +2959,6 @@ static bool read_init_file(char *file_name)
 
 static void create_new_thread(THD *thd)
 {
-  DBUG_ENTER("create_new_thread");
 
   /*
     Don't allow too many connections. We roughly check here that we allow
@@ -3042,10 +2971,9 @@ static void create_new_thread(THD *thd)
   {
     pthread_mutex_unlock(&LOCK_connection_count);
 
-    DBUG_PRINT("error",("Too many connections"));
     close_connection(thd, ER_CON_COUNT_ERROR, 1);
     delete thd;
-    DBUG_VOID_RETURN;
+    return;;
   }
 
   ++connection_count;
@@ -3070,7 +2998,7 @@ static void create_new_thread(THD *thd)
 
   thread_scheduler.add_connection(thd);
 
-  DBUG_VOID_RETURN;
+  return;;
 }
 
 
@@ -3111,7 +3039,6 @@ void handle_connections_sockets()
     ip_flags = fcntl(ip_sock, F_GETFL, 0);
 #endif
   }
-  DBUG_PRINT("general",("Waiting for connections."));
   MAYBE_BROKEN_SYSCALL;
   while (!abort_loop)
   {
@@ -5312,8 +5239,6 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
   const char *end,*i,*j;
   const char **array, *pos;
   ulong found,found_int,bit;
-  DBUG_ENTER("find_bit_type");
-  DBUG_PRINT("enter",("x: '%s'",x));
 
   found=0;
   found_end= 0;
@@ -5351,13 +5276,12 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
 skip: ;
     }
     if (found_count != 1)
-      DBUG_RETURN(~(ulong) 0);				// No unique value
+      return(~(ulong) 0);				// No unique value
     found|=found_int;
     pos=end+1;
   }
 
-  DBUG_PRINT("exit",("bit-field: %ld",(ulong) found));
-  DBUG_RETURN(found);
+  return(found);
 } /* find_bit_type */
 
 
@@ -5380,7 +5304,6 @@ static int test_if_case_insensitive(const char *dir_name)
   File file;
   char buff[FN_REFLEN], buff2[FN_REFLEN];
   struct stat stat_info;
-  DBUG_ENTER("test_if_case_insensitive");
 
   fn_format(buff, glob_hostname, dir_name, ".lower-test",
 	    MY_UNPACK_FILENAME | MY_REPLACE_EXT | MY_REPLACE_DIR);
@@ -5390,14 +5313,13 @@ static int test_if_case_insensitive(const char *dir_name)
   if ((file= my_create(buff, 0666, O_RDWR, MYF(0))) < 0)
   {
     sql_print_warning("Can't create test file %s", buff);
-    DBUG_RETURN(-1);
+    return(-1);
   }
   my_close(file, MYF(0));
   if (!stat(buff2, &stat_info))
     result= 1;					// Can access file
   (void) my_delete(buff, MYF(MY_WME));
-  DBUG_PRINT("exit", ("result: %d", result));
-  DBUG_RETURN(result);
+  return(result);
 }
 
 
