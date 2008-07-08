@@ -1249,7 +1249,7 @@ longlong Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
 longlong Item_func_unix_timestamp::val_int()
 {
   MYSQL_TIME ltime;
-  my_bool not_used;
+  bool not_used;
   
   DBUG_ASSERT(fixed == 1);
   if (arg_count == 0)

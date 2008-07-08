@@ -703,7 +703,7 @@ void init_time(void)
   time_t seconds;
   struct tm *l_time,tm_tmp;
   MYSQL_TIME my_time;
-  my_bool not_used;
+  bool not_used;
 
   seconds= (time_t) time((time_t*) 0);
   localtime_r(&seconds,&tm_tmp);
@@ -797,7 +797,7 @@ long calc_daynr(uint year,uint month,uint day)
 */
 my_time_t
 my_system_gmt_sec(const MYSQL_TIME *t_src, long *my_timezone,
-                  my_bool *in_dst_time_gap)
+                  bool *in_dst_time_gap)
 {
   uint loop;
   time_t tmp= 0;
@@ -960,7 +960,7 @@ my_system_gmt_sec(const MYSQL_TIME *t_src, long *my_timezone,
     else if (diff == -3600)
       tmp-=t->minute*60 + t->second;		/* Move to previous hour */
 
-    *in_dst_time_gap= 1;
+    *in_dst_time_gap= true;
   }
   *my_timezone= current_timezone;
 

@@ -3940,7 +3940,7 @@ int Field_timestamp::store(const char *from,uint len,CHARSET_INFO *cs)
   my_time_t tmp= 0;
   int error;
   bool have_smth_to_conv;
-  my_bool in_dst_time_gap;
+  bool in_dst_time_gap;
   THD *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
@@ -3999,7 +3999,7 @@ int Field_timestamp::store(longlong nr, bool unsigned_val)
   MYSQL_TIME l_time;
   my_time_t timestamp= 0;
   int error;
-  my_bool in_dst_time_gap;
+  bool in_dst_time_gap;
   THD *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */

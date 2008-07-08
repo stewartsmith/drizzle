@@ -1938,7 +1938,7 @@ ulong convert_period_to_month(ulong period);
 ulong convert_month_to_period(ulong month);
 void get_date_from_daynr(long daynr,uint *year, uint *month,
 			 uint *day);
-my_time_t TIME_to_timestamp(THD *thd, const MYSQL_TIME *t, my_bool *not_exist);
+my_time_t TIME_to_timestamp(THD *thd, const MYSQL_TIME *t, bool *not_exist);
 bool str_to_time_with_warn(const char *str,uint length,MYSQL_TIME *l_time);
 timestamp_type str_to_datetime_with_warn(const char *str, uint length,
                                          MYSQL_TIME *l_time, uint flags);
