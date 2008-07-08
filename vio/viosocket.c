@@ -31,22 +31,12 @@ int vio_errno(Vio *vio __attribute__((unused)))
 size_t vio_read(Vio * vio, uchar* buf, size_t size)
 {
   size_t r;
-  DBUG_ENTER("vio_read");
-  DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %u", vio->sd, (long) buf,
-                       (uint) size));
 
   /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
-  DBUG_ASSERT(vio->read_end == vio->read_pos);
+  assert(vio->read_end == vio->read_pos);
   errno=0;					/* For linux */
   r = read(vio->sd, buf, size);
-#ifndef DBUG_OFF
-  if (r == (size_t) -1)
-  {
-    DBUG_PRINT("vio_error", ("Got error %d during read",errno));
-  }
-#endif /* DBUG_OFF */
-  DBUG_PRINT("exit", ("%ld", (long) r));
-  DBUG_RETURN(r);
+  return r;
 }
 
 
@@ -59,9 +49,6 @@ size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
 {
   size_t rc;
 #define VIO_UNBUFFERED_READ_MIN_SIZE 2048
-  DBUG_ENTER("vio_read_buff");
-  DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %u", vio->sd, (long) buf,
-                       (uint) size));
 
   if (vio->read_pos < vio->read_end)
   {
@@ -90,7 +77,8 @@ size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
   }
   else
     rc= vio_read(vio, buf, size);
-  DBUG_RETURN(rc);
+
+  return rc;
 #undef VIO_UNBUFFERED_READ_MIN_SIZE
 }
 
@@ -98,29 +86,18 @@ size_t vio_read_buff(Vio *vio, uchar* buf, size_t size)
 size_t vio_write(Vio * vio, const uchar* buf, size_t size)
 {
   size_t r;
-  DBUG_ENTER("vio_write");
-  DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %u", vio->sd, (long) buf,
-                       (uint) size));
+
   r = write(vio->sd, buf, size);
-#ifndef DBUG_OFF
-  if (r == (size_t) -1)
-  {
-    DBUG_PRINT("vio_error", ("Got error on write: %d",socket_errno));
-  }
-#endif /* DBUG_OFF */
-  DBUG_PRINT("exit", ("%u", (uint) r));
-  DBUG_RETURN(r);
+
+  return r;
 }
 
 int vio_blocking(Vio * vio __attribute__((unused)), my_bool set_blocking_mode,
 		 my_bool *old_mode)
 {
   int r=0;
-  DBUG_ENTER("vio_blocking");
 
   *old_mode= test(!(vio->fcntl_mode & O_NONBLOCK));
-  DBUG_PRINT("enter", ("set_blocking_mode: %d  old_mode: %d",
-		       (int) set_blocking_mode, (int) *old_mode));
 
 #if !defined(NO_FCNTL_NONBLOCK)
   if (vio->sd >= 0)
@@ -135,7 +112,6 @@ int vio_blocking(Vio * vio __attribute__((unused)), my_bool set_blocking_mode,
       r= fcntl(vio->sd, F_SETFL, vio->fcntl_mode);
       if (r == -1)
       {
-        DBUG_PRINT("info", ("fcntl failed, errno %d", errno));
         vio->fcntl_mode= old_fcntl;
       }
     }
@@ -143,25 +119,22 @@ int vio_blocking(Vio * vio __attribute__((unused)), my_bool set_blocking_mode,
 #else
   r= set_blocking_mode ? 0 : 1;
 #endif /* !defined(NO_FCNTL_NONBLOCK) */
-  DBUG_PRINT("exit", ("%d", r));
-  DBUG_RETURN(r);
+  return r;
 }
 
 my_bool
 vio_is_blocking(Vio * vio)
 {
   my_bool r;
-  DBUG_ENTER("vio_is_blocking");
   r = !(vio->fcntl_mode & O_NONBLOCK);
-  DBUG_PRINT("exit", ("%d", (int) r));
-  DBUG_RETURN(r);
+
+  return r;
 }
 
 
 int vio_fastsend(Vio * vio __attribute__((unused)))
 {
   int r=0;
-  DBUG_ENTER("vio_fastsend");
 
 #if defined(IPTOS_THROUGHPUT)
   {
@@ -180,28 +153,26 @@ int vio_fastsend(Vio * vio __attribute__((unused)))
   }
   if (r)
   {
-    DBUG_PRINT("warning", ("Couldn't set socket option for fast send"));
     r= -1;
   }
-  DBUG_PRINT("exit", ("%d", r));
-  DBUG_RETURN(r);
+
+  return r;
 }
 
 int vio_keepalive(Vio* vio, my_bool set_keep_alive)
 {
-  int r=0;
-  uint opt = 0;
-  DBUG_ENTER("vio_keepalive");
-  DBUG_PRINT("enter", ("sd: %d  set_keep_alive: %d", vio->sd, (int)
-		       set_keep_alive));
+  int r= 0;
+  uint opt= 0;
+
   if (vio->type != VIO_TYPE_NAMEDPIPE)
   {
     if (set_keep_alive)
-      opt = 1;
-    r = setsockopt(vio->sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt,
-		   sizeof(opt));
+      opt= 1;
+    r= setsockopt(vio->sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt,
+                  sizeof(opt));
   }
-  DBUG_RETURN(r);
+
+  return r;
 }
 
 
@@ -226,23 +197,18 @@ vio_was_interrupted(Vio *vio __attribute__((unused)))
 int vio_close(Vio * vio)
 {
   int r=0;
-  DBUG_ENTER("vio_close");
  if (vio->type != VIO_CLOSED)
   {
-    DBUG_ASSERT(vio->sd >= 0);
+    assert(vio->sd >= 0);
     if (shutdown(vio->sd, SHUT_RDWR))
       r= -1;
     if (closesocket(vio->sd))
       r= -1;
   }
-  if (r)
-  {
-    DBUG_PRINT("vio_error", ("close() failed, error: %d",socket_errno));
-    /* FIXME: error handling (not critical for MySQL) */
-  }
   vio->type= VIO_CLOSED;
   vio->sd=   -1;
-  DBUG_RETURN(r);
+
+  return r;
 }
 
 
@@ -263,9 +229,6 @@ my_socket vio_fd(Vio* vio)
 
 my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen)
 {
-  DBUG_ENTER("vio_peer_addr");
-  DBUG_PRINT("enter", ("sd: %d", vio->sd));
-
   if (vio->localhost)
   {
     strmov(buf, "127.0.0.1");
@@ -279,8 +242,7 @@ my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen)
     if (getpeername(vio->sd, (struct sockaddr *) (&vio->remote),
                     &addrLen) != 0)
     {
-      DBUG_PRINT("exit", ("getpeername gave error: %d", socket_errno));
-      DBUG_RETURN(1);
+      return true;
     }
     vio->addrLen= (int)addrLen;
 
@@ -289,9 +251,7 @@ my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen)
                             buf, buflen,
                             port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
     {
-      DBUG_PRINT("exit", ("getnameinfo gave error: %s", 
-                          gai_strerror(error)));
-      DBUG_RETURN(1);
+      return true;
     }
 
     *port= (uint16)strtol(port_buf, (char **)NULL, 10);
@@ -306,8 +266,8 @@ my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen)
     if (!memcmp(buf, "::ffff:127.0.0.1", sizeof("::ffff:127.0.0.1")))
       strmov(buf, "127.0.0.1");
   }
-  DBUG_PRINT("exit", ("addr: %s", buf));
-  DBUG_RETURN(0);
+
+  return false;
 }
 
 
@@ -318,15 +278,15 @@ my_bool vio_poll_read(Vio *vio,uint timeout)
 #if defined(HAVE_POLL)
   struct pollfd fds;
   int res;
-  DBUG_ENTER("vio_poll");
+
   fds.fd=vio->sd;
   fds.events=POLLIN;
   fds.revents=0;
   if ((res=poll(&fds,1,(int) timeout*1000)) <= 0)
   {
-    DBUG_RETURN(res < 0 ? 0 : 1);		/* Don't return 1 on errors */
+    return res < 0 ? false : true;		/* Don't return 1 on errors */
   }
-  DBUG_RETURN(fds.revents & (POLLIN | POLLERR | POLLHUP) ? 0 : 1);
+  return (fds.revents & (POLLIN | POLLERR | POLLHUP) ? false : true);
 #else
   return 0;
 #endif
@@ -355,7 +315,6 @@ void vio_timeout(Vio *vio, uint which, uint timeout)
 {
 #if defined(SO_SNDTIMEO) && defined(SO_RCVTIMEO)
   int r;
-  DBUG_ENTER("vio_timeout");
 
   {
   /* POSIX specifies time as struct timeval. */
@@ -368,13 +327,6 @@ void vio_timeout(Vio *vio, uint which, uint timeout)
                 sizeof(wait_timeout));
 
   }
-
-#ifndef DBUG_OFF
-  if (r != 0)
-    DBUG_PRINT("error", ("setsockopt failed: %d, errno: %d", r, socket_errno));
-#endif
-
-  DBUG_VOID_RETURN;
 #else
 /*
   Platforms not suporting setting of socket timeout should either use
