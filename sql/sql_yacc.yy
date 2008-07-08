@@ -849,7 +849,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SWITCHES_SYM
 %token  SYSDATE
 %token  TABLES
-%token  TABLESPACE
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
 %token  TABLE_CHECKSUM_SYM
@@ -2580,8 +2579,6 @@ ident_or_empty:
 
 alter_commands:
           /* empty */
-        | DISCARD TABLESPACE { Lex->alter_info.tablespace_op= DISCARD_TABLESPACE; }
-        | IMPORT TABLESPACE { Lex->alter_info.tablespace_op= IMPORT_TABLESPACE; }
         | alter_list
         ;
 
@@ -6754,7 +6751,6 @@ keyword_sp:
         | SWITCHES_SYM             {}
         | TABLES                   {}
         | TABLE_CHECKSUM_SYM       {}
-        | TABLESPACE               {}
         | TEMPORARY                {}
         | TEMPTABLE_SYM            {}
         | TEXT_SYM                 {}
