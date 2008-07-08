@@ -1231,7 +1231,6 @@ public:
 /* updated in sql_acl.cc */
 
 extern sys_var_thd_bool sys_old_alter_table;
-extern sys_var_thd_bool sys_old_passwords;
 extern LEX_STRING default_key_cache_base;
 
 /* For sql_yacc */

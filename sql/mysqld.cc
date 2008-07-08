@@ -3329,7 +3329,6 @@ enum options_mysqld
   OPT_SYNC_REPLICATION_TIMEOUT,
   OPT_ENABLE_SHARED_MEMORY,
   OPT_SHARED_MEMORY_BASE_NAME,
-  OPT_OLD_PASSWORDS,
   OPT_OLD_ALTER_TABLE,
   OPT_EXPIRE_LOGS_DAYS,
   OPT_GROUP_CONCAT_MAX_LEN,
@@ -3676,10 +3675,6 @@ thread is in the master's binlogs.",
    "Use old, non-optimized alter table.",
    (uchar**) &global_system_variables.old_alter_table,
    (uchar**) &max_system_variables.old_alter_table, 0, GET_BOOL, NO_ARG,
-   0, 0, 0, 0, 0, 0},
-  {"old-passwords", OPT_OLD_PASSWORDS, "Use old password encryption method (needed for 4.0 and older clients).",
-   (uchar**) &global_system_variables.old_passwords,
-   (uchar**) &max_system_variables.old_passwords, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
   {"old-style-user-limits", OPT_OLD_STYLE_USER_LIMITS,
    "Enable old-style user limits (before 5.0.3 user resources were counted per each user+host vs. per account)",
@@ -4623,7 +4618,6 @@ static void mysql_init_variables(void)
   max_system_variables.select_limit=    (ulonglong) HA_POS_ERROR;
   global_system_variables.max_join_size= (ulonglong) HA_POS_ERROR;
   max_system_variables.max_join_size=   (ulonglong) HA_POS_ERROR;
-  global_system_variables.old_passwords= 0;
   global_system_variables.old_alter_table= 0;
   global_system_variables.binlog_format= BINLOG_FORMAT_UNSPEC;
   /*

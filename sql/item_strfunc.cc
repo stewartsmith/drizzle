@@ -1324,30 +1324,6 @@ char *Item_func_password::alloc(THD *thd, const char *password)
   return buff;
 }
 
-/* Item_func_old_password */
-
-String *Item_func_old_password::val_str(String *str)
-{
-  DBUG_ASSERT(fixed == 1);
-  String *res= args[0]->val_str(str);
-  if ((null_value=args[0]->null_value))
-    return 0;
-  if (res->length() == 0)
-    return &my_empty_string;
-  make_scrambled_password_323(tmp_value, res->c_ptr());
-  str->set(tmp_value, SCRAMBLED_PASSWORD_CHAR_LENGTH_323, res->charset());
-  return str;
-}
-
-char *Item_func_old_password::alloc(THD *thd, const char *password)
-{
-  char *buff= (char *) thd->alloc(SCRAMBLED_PASSWORD_CHAR_LENGTH_323+1);
-  if (buff)
-    make_scrambled_password_323(buff, password);
-  return buff;
-}
-
-
 #define bin_to_ascii(c) ((c)>=38?((c)-38+'a'):(c)>=12?((c)-12+'A'):(c)+'.')
 
 String *Item_func_encrypt::val_str(String *str)
