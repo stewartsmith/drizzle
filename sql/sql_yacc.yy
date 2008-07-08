@@ -2547,7 +2547,6 @@ alter:
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
             lex->alter_info.reset();
             lex->no_write_to_binlog= 0;
-            lex->create_info.default_storage_media= HA_SM_DEFAULT;
             lex->alter_info.build_method= $2;
           }
           alter_commands
@@ -5654,7 +5653,6 @@ show_param:
             lex->sql_command = SQLCOM_SHOW_CREATE;
             if (!lex->select_lex.add_table_to_list(YYTHD, $3, NULL,0))
               MYSQL_YYABORT;
-            lex->create_info.default_storage_media= HA_SM_DEFAULT;
           }
         | MASTER_SYM STATUS_SYM
           {

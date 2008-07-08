@@ -103,12 +103,6 @@ enum ha_build_method {
   HA_BUILD_OFFLINE 
 };
 
-        /* Storage media types */ 
-
-enum ha_storage_media {
-  HA_SM_DEFAULT=        0		/* Not specified (engine default) */
-};
-
 	/* The following is parameter to ha_extra() */
 
 enum ha_extra_function {
@@ -192,13 +186,7 @@ enum ha_extra_function {
   */
   HA_EXTRA_INSERT_WITH_UPDATE,
   /* Inform handler that we will do a rename */
-  HA_EXTRA_PREPARE_FOR_RENAME,
-  /*
-    Orders MERGE handler to attach or detach its child tables. Used at
-    begin and end of a statement.
-  */
-  HA_EXTRA_ATTACH_CHILDREN,
-  HA_EXTRA_DETACH_CHILDREN
+  HA_EXTRA_PREPARE_FOR_RENAME
 };
 
 /* Compatible option, to be deleted in 6.0 */

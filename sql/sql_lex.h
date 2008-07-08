@@ -1509,7 +1509,6 @@ typedef struct st_lex : public Query_tables_list
 
   uint profile_query_id;
   uint profile_options;
-  enum ha_storage_media storage_type;
   enum column_format_type column_format;
   uint which_columns;
   enum Foreign_key::fk_match_opt fk_match_option;

@@ -283,7 +283,6 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     /* prepare header */
     {
       uint flags= 0;
-      flags|= create_info->default_storage_media; //3 bits
 
       bzero(buff, format_section_header_size);
       /* length of section 2 bytes*/

@@ -489,12 +489,6 @@ public:
     return field_length / charset()->mbmaxlen;
   }
 
-  inline  enum ha_storage_media field_storage_type() const
-  {
-    return (enum ha_storage_media)
-      ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
-  }
-
   inline enum column_format_type column_format() const
   {
     return (enum column_format_type)
@@ -1815,7 +1809,6 @@ public:
             Item *on_update_value, LEX_STRING *comment, char *change,
             List<String> *interval_list, CHARSET_INFO *cs,
             uint uint_geom_type,
-            enum ha_storage_media storage_type,
             enum column_format_type column_format);
 };
 

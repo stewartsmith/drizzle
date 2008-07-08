@@ -765,8 +765,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         uint format_section_len= uint2korr(next_chunk+0);
         uint flags=              uint4korr(next_chunk+2);
 
-        share->default_storage_media= (enum ha_storage_media) (flags & 0x7);
-
         const char *tablespace= (const char*)next_chunk + format_section_header_size;
         uint tablespace_len= strlen(tablespace);
         if (tablespace_len != 0) 
@@ -2162,7 +2160,6 @@ void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
   create_info->table_options= share->db_create_options;
   create_info->avg_row_length= share->avg_row_length;
   create_info->row_type= share->row_type;
-  create_info->default_storage_media= share->default_storage_media;
   create_info->tablespace= share->tablespace;
   create_info->default_table_charset= share->table_charset;
   create_info->table_charset= 0;

@@ -4725,21 +4725,6 @@ int create_temporary_table(THD *thd,
   else
     create_info->data_file_name=create_info->index_file_name=0;
 
-  if (new_db_type == old_db_type)
-  {
-    /*
-       Table has not changed storage engine.
-       If STORAGE and TABLESPACE have not been changed than copy them
-       from the original table
-    */
-    if (!create_info->tablespace &&
-        table->s->tablespace &&
-        create_info->default_storage_media == HA_SM_DEFAULT)
-      create_info->tablespace= table->s->tablespace;
-    if (create_info->default_storage_media == HA_SM_DEFAULT)
-      create_info->default_storage_media= table->s->default_storage_media;
-   }
-
   /*
     Create a table with a temporary name.
     With create_info->frm_only == 1 this creates a .frm file only.
