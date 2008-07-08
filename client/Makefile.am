@@ -35,7 +35,6 @@ bin_PROGRAMS =			mysql \
 				mysqlcheck \
 				mysqldump \
 				mysqlimport \
-				mysqlshow \
 				mysqltest \
 				mysqlslap 
 
@@ -57,8 +56,6 @@ mysqldump_SOURCES=              mysqldump.c \
 	                        $(top_srcdir)/mysys/mf_getdate.c
 
 mysqlimport_SOURCES=		mysqlimport.c
-
-mysqlshow_SOURCES=		mysqlshow.c
 
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
