@@ -108,11 +108,11 @@ void udf_init()
   READ_RECORD read_record_info;
   TABLE *table;
   int error;
-  DBUG_ENTER("ufd_init");
+  
   char db[]= "mysql"; /* A subject to casednstr, can't be constant */
 
   if (initialized)
-    DBUG_VOID_RETURN;
+    return;
 
   my_rwlock_init(&THR_LOCK_udf,NULL);
   
@@ -125,23 +125,22 @@ void udf_init()
     hash_free(&udf_hash);
     free_root(&mem,MYF(0));
     delete new_thd;
-    DBUG_VOID_RETURN;
+    return;
   }
 
   initialized = 1;
-
   close_thread_tables(new_thd);
   delete new_thd;
   /* Remember that we don't have a THD */
   my_pthread_setspecific_ptr(THR_THD,  0);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 void udf_free()
 {
   /* close all shared libraries */
-  DBUG_ENTER("udf_free");
+  
   for (uint idx=0 ; idx < udf_hash.records ; idx++)
   {
     udf_func *udf=(udf_func*) hash_element(&udf_hash,idx);
@@ -164,13 +163,13 @@ void udf_free()
     initialized= 0;
     rwlock_destroy(&THR_LOCK_udf);
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 static void del_udf(udf_func *udf)
 {
-  DBUG_ENTER("del_udf");
+  
   if (!--udf->usage_count)
   {
     hash_delete(&udf_hash,(uchar*) udf);
@@ -189,16 +188,16 @@ static void del_udf(udf_func *udf)
     udf->name.length=1;
     hash_update(&udf_hash,(uchar*) udf,(uchar*) name,name_length);
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 void free_udf(udf_func *udf)
 {
-  DBUG_ENTER("free_udf");
+  
   
   if (!initialized)
-    DBUG_VOID_RETURN;
+    return;
 
   rw_wrlock(&THR_LOCK_udf);
   if (!--udf->usage_count)
@@ -213,7 +212,7 @@ void free_udf(udf_func *udf)
       dlclose(udf->dlhandle);
   }
   rw_unlock(&THR_LOCK_udf);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -222,10 +221,10 @@ void free_udf(udf_func *udf)
 udf_func *find_udf(const char *name,uint length,bool mark_used)
 {
   udf_func *udf=0;
-  DBUG_ENTER("find_udf");
+  
 
   if (!initialized)
-    DBUG_RETURN(NULL);
+    return(NULL);
 
   /* TODO: This should be changed to reader locks someday! */
   if (mark_used)
@@ -242,13 +241,13 @@ udf_func *find_udf(const char *name,uint length,bool mark_used)
       udf->usage_count++;
   }
   rw_unlock(&THR_LOCK_udf);
-  DBUG_RETURN(udf);
+  return(udf);
 }
 
 
 static void *find_udf_dl(const char *dl)
 {
-  DBUG_ENTER("find_udf_dl");
+  
 
   /*
     Because only the function name is hashed, we have to search trough
@@ -258,9 +257,9 @@ static void *find_udf_dl(const char *dl)
   {
     udf_func *udf=(udf_func*) hash_element(&udf_hash,idx);
     if (!strcmp(dl, udf->dl) && udf->dlhandle != NULL)
-      DBUG_RETURN(udf->dlhandle);
+      return(udf->dlhandle);
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -303,7 +302,7 @@ int mysql_create_function(THD *thd,udf_func *udf)
   TABLE *table;
   TABLE_LIST tables;
   udf_func *u_d;
-  DBUG_ENTER("mysql_create_function");
+  
 
   if (!initialized)
   {
@@ -313,7 +312,7 @@ int mysql_create_function(THD *thd,udf_func *udf)
                "UDFs are unavailable with the --skip-grant-tables option");
     else
       my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-    DBUG_RETURN(1);
+    return(1);
   }
 
   /*
@@ -329,10 +328,10 @@ int mysql_create_function(THD *thd,udf_func *udf)
                        udf->dl + strlen(udf->dl), '/'), 0))
   {
     my_message(ER_UDF_NO_PATHS, ER(ER_UDF_NO_PATHS), MYF(0));
-    DBUG_RETURN(1);
+    return(1);
   }
   if (check_identifier_name(&udf->name, ER_TOO_LONG_IDENT))
-    DBUG_RETURN(1);
+    return(1);
 
   /* 
     Turn off row binlogging of this statement and use statement-based 
@@ -353,8 +352,6 @@ int mysql_create_function(THD *thd,udf_func *udf)
     strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", udf->dl, NullS);
     if (!(dl = dlopen(dlpath, RTLD_NOW)))
     {
-      DBUG_PRINT("error",("dlopen of %s failed, error: %d (%s)",
-                          udf->dl, errno, dlerror()));
       my_error(ER_CANT_OPEN_LIBRARY, MYF(0),
                udf->dl, errno, dlerror());
       goto err;
@@ -409,13 +406,13 @@ int mysql_create_function(THD *thd,udf_func *udf)
   /* Binlog the create function. */
   write_bin_log(thd, TRUE, thd->query, thd->query_length);
 
-  DBUG_RETURN(0);
+  return(0);
 
  err:
   if (new_dl)
     dlclose(dl);
   rw_unlock(&THR_LOCK_udf);
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -426,7 +423,7 @@ int mysql_drop_function(THD *thd,const LEX_STRING *udf_name)
   udf_func *udf;
   char *exact_name_str;
   uint exact_name_len;
-  DBUG_ENTER("mysql_drop_function");
+  
 
   if (!initialized)
   {
@@ -434,7 +431,7 @@ int mysql_drop_function(THD *thd,const LEX_STRING *udf_name)
       my_error(ER_FUNCTION_NOT_DEFINED, MYF(0), udf_name->str);
     else
       my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-    DBUG_RETURN(1);
+    return(1);
   }
 
   /* 
@@ -484,10 +481,10 @@ int mysql_drop_function(THD *thd,const LEX_STRING *udf_name)
   /* Binlog the drop function. */
   write_bin_log(thd, TRUE, thd->query, thd->query_length);
 
-  DBUG_RETURN(0);
+  return(0);
  err:
   rw_unlock(&THR_LOCK_udf);
-  DBUG_RETURN(1);
+  return(1);
 }
 
 #endif /* HAVE_DLOPEN */

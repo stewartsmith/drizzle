@@ -253,7 +253,7 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
       !table->file->pushed_cond)
     table->file->cond_push(select->cond);
 
-  DBUG_VOID_RETURN;
+  return;
 } /* init_read_record */
 
 
@@ -504,7 +504,7 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
       !(info->cache=(uchar*) my_malloc_lock(rec_cache_size+info->cache_records*
 					   info->struct_length+1,
 					   MYF(0))))
-    DBUG_RETURN(1);
+    return(1);
 #ifdef HAVE_purify
   // Avoid warnings in qsort
   bzero(info->cache,rec_cache_size+info->cache_records* info->struct_length+1);
@@ -512,7 +512,7 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
   DBUG_PRINT("info",("Allocated buffert for %d records",info->cache_records));
   info->read_positions=info->cache+rec_cache_size;
   info->cache_pos=info->cache_end=info->cache;
-  DBUG_RETURN(0);
+  return(0);
 } /* init_rr_cache */
 
 

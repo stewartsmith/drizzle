@@ -247,7 +247,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   Name_resolution_context_state ctx_state;
   thr_lock_type lock_type;
   Item *unused_conds= 0;
-  DBUG_ENTER("mysql_insert");
+  
 
   /*
     Upgrade lock type if the requested lock is incompatible with
@@ -267,12 +267,12 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   {
     my_error(ER_DELAYED_INSERT_TABLE_LOCKED, MYF(0),
              table_list->table_name);
-    DBUG_RETURN(TRUE);
+    return(TRUE);
   }
 
   {
     if (open_and_lock_tables(thd, table_list))
-      DBUG_RETURN(TRUE);
+      return(TRUE);
   }
   lock_type= table_list->lock_type;
 
@@ -297,9 +297,9 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
     resolution context below is not necessary at all since the list of local
     tables for INSERT always consists of one table.
   */
-  DBUG_ASSERT(!table_list->next_local);
-  DBUG_ASSERT(!context->table_list->next_local);
-  DBUG_ASSERT(!context->first_name_resolution_table->next_name_resolution_table);
+  assert(!table_list->next_local);
+  assert(!context->table_list->next_local);
+  assert(!context->first_name_resolution_table->next_name_resolution_table);
 
   /* Save the state of the current name resolution context. */
   ctx_state.save_state(context, table_list);
@@ -486,7 +486,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
 	routines did not result in any error due to the KILLED.  In
 	such case the flag is ignored for constructing binlog event.
 	*/
-	DBUG_ASSERT(thd->killed != THD::KILL_BAD_DATA || error > 0);
+	assert(thd->killed != THD::KILL_BAD_DATA || error > 0);
 	if (thd->binlog_query(THD::ROW_QUERY_TYPE,
 			      thd->query, thd->query_length,
 			      transactional_table, FALSE,
@@ -499,7 +499,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
       if (thd->transaction.stmt.modified_non_trans_table)
 	thd->transaction.all.modified_non_trans_table= TRUE;
     }
-    DBUG_ASSERT(transactional_table || !changed || 
+    assert(transactional_table || !changed || 
                 thd->transaction.stmt.modified_non_trans_table);
 
   }
@@ -552,7 +552,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   }
   thd->abort_on_warning= 0;
   MYSQL_INSERT_END();
-  DBUG_RETURN(FALSE);
+  return(FALSE);
 
 abort:
   if (table != NULL)
@@ -561,7 +561,7 @@ abort:
     free_underlaid_joins(thd, &thd->lex->select_lex);
   thd->abort_on_warning= 0;
   MYSQL_INSERT_END();
-  DBUG_RETURN(TRUE);
+  return(TRUE);
 }
 
 
@@ -585,7 +585,7 @@ static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
                                              List<Item> &fields,
                                              bool select_insert)
 {
-  DBUG_ENTER("mysql_prepare_insert_check_table");
+  
 
   /*
      first table in list is the one we'll INSERT into, requires INSERT_ACL.
@@ -599,9 +599,9 @@ static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
                                     table_list,
                                     &thd->lex->select_lex.leaf_tables,
                                     select_insert))
-    DBUG_RETURN(TRUE);
+    return(TRUE);
 
-  DBUG_RETURN(FALSE);
+  return(FALSE);
 }
 
 
@@ -649,12 +649,9 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
   bool insert_into_view= (0 != 0);
   bool res= 0;
   table_map map= 0;
-  DBUG_ENTER("mysql_prepare_insert");
-  DBUG_PRINT("enter", ("table_list 0x%lx, table 0x%lx, view %d",
-		       (ulong)table_list, (ulong)table,
-		       (int)insert_into_view));
+  
   /* INSERT should have a SELECT or VALUES clause */
-  DBUG_ASSERT (!select_insert || !values);
+  assert (!select_insert || !values);
 
   /*
     For subqueries in VALUES() we should not see the table in which we are
@@ -680,18 +677,18 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
   {
     /* it should be allocated before Item::fix_fields() */
     if (table_list->set_insert_values(thd->mem_root))
-      DBUG_RETURN(TRUE);
+      return(TRUE);
   }
 
   if (mysql_prepare_insert_check_table(thd, table_list, fields, select_insert))
-    DBUG_RETURN(TRUE);
+    return(TRUE);
 
 
   /* Prepare the fields in the statement. */
   if (values)
   {
     /* if we have INSERT ... VALUES () we cannot have a GROUP BY clause */
-    DBUG_ASSERT (!select_lex->group_list.elements);
+    assert (!select_lex->group_list.elements);
 
     /* Save the state of the current name resolution context. */
     ctx_state.save_state(context, table_list);
@@ -733,7 +730,7 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
   }
 
   if (res)
-    DBUG_RETURN(res);
+    return(res);
 
   if (!table)
     table= table_list->table;
@@ -745,14 +742,14 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 1)))
     {
       update_non_unique_table_error(table_list, "INSERT", duplicate);
-      DBUG_RETURN(TRUE);
+      return(TRUE);
     }
     select_lex->fix_prepare_information(thd, &fake_conds, &fake_conds);
     select_lex->first_execution= 0;
   }
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
     table->prepare_for_position();
-  DBUG_RETURN(FALSE);
+  return(FALSE);
 }
 
 
@@ -801,7 +798,7 @@ int write_record(THD *thd, TABLE *table,COPY_INFO *info)
   MY_BITMAP *save_read_set, *save_write_set;
   ulonglong prev_insert_id= table->file->next_insert_id;
   ulonglong insert_id_for_cur_row= 0;
-  DBUG_ENTER("write_record");
+  
 
   info->records++;
   save_read_set=  table->read_set;
@@ -891,10 +888,10 @@ int write_record(THD *thd, TABLE *table,COPY_INFO *info)
           that matches, is updated. If update causes a conflict again,
           an error is returned
         */
-	DBUG_ASSERT(table->insert_values != NULL);
+	assert(table->insert_values != NULL);
         store_record(table,insert_values);
         restore_record(table,record[1]);
-        DBUG_ASSERT(info->update_fields->elements ==
+        assert(info->update_fields->elements ==
                     info->update_values->elements);
         if (fill_record(thd, *info->update_fields,
                                                  *info->update_values,
@@ -1018,7 +1015,7 @@ gok_or_after_err:
     my_safe_afree(key,table->s->max_unique_length,MAX_KEY_LENGTH);
   if (!table->file->has_transactions())
     thd->transaction.stmt.modified_non_trans_table= TRUE;
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   info->last_errno= error;
@@ -1032,7 +1029,7 @@ before_err:
   if (key)
     my_safe_afree(key, table->s->max_unique_length, MAX_KEY_LENGTH);
   table->column_bitmaps_set(save_read_set, save_write_set);
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -1092,7 +1089,7 @@ bool mysql_insert_select_prepare(THD *thd)
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
   TABLE_LIST *first_select_leaf_table;
-  DBUG_ENTER("mysql_insert_select_prepare");
+  
 
   /*
     Statement-based replication of INSERT ... SELECT ... LIMIT is not safe
@@ -1117,13 +1114,13 @@ bool mysql_insert_select_prepare(THD *thd)
                            lex->update_list, lex->value_list,
                            lex->duplicates,
                            &select_lex->where, TRUE, FALSE, FALSE))
-    DBUG_RETURN(TRUE);
+    return(TRUE);
 
   /*
     exclude first table from leaf tables list, because it belong to
     INSERT
   */
-  DBUG_ASSERT(select_lex->leaf_tables != 0);
+  assert(select_lex->leaf_tables != 0);
   lex->leaf_tables_insert= select_lex->leaf_tables;
   /* skip all leaf tables belonged to view where we are insert */
   for (first_select_leaf_table= select_lex->leaf_tables->next_leaf;
@@ -1134,7 +1131,7 @@ bool mysql_insert_select_prepare(THD *thd)
        first_select_leaf_table= first_select_leaf_table->next_leaf)
   {}
   select_lex->leaf_tables= first_select_leaf_table;
-  DBUG_RETURN(FALSE);
+  return(FALSE);
 }
 
 
@@ -1163,7 +1160,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   int res;
   table_map map= 0;
   SELECT_LEX *lex_current_select_save= lex->current_select;
-  DBUG_ENTER("select_insert::prepare");
+  
 
   unit= u;
 
@@ -1207,7 +1204,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       we can refer to other tables in the ON DUPLICATE KEY part.
       We use next_name_resolution_table descructively, so check it first (views?)
     */
-    DBUG_ASSERT (!table_list->next_name_resolution_table);
+    assert (!table_list->next_name_resolution_table);
     if (lex->select_lex.group_list.elements == 0 &&
         !lex->select_lex.with_sum_func)
       /*
@@ -1244,7 +1241,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 
   lex->current_select= lex_current_select_save;
   if (res)
-    DBUG_RETURN(1);
+    return(1);
   /*
     if it is INSERT into join view then check_insert_fields already found
     real table for insert
@@ -1282,7 +1279,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       (info.handle_duplicates == DUP_UPDATE) &&
       (table->next_number_field != NULL) &&
       rpl_master_has_bug(&active_mi->rli, 24432))
-    DBUG_RETURN(1);
+    return(1);
 #endif
 
   thd->cuted_fields=0;
@@ -1296,7 +1293,7 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   table->mark_columns_needed_for_insert();
 
 
-  DBUG_RETURN(res);
+  return(res);
 }
 
 
@@ -1318,22 +1315,22 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 
 int select_insert::prepare2(void)
 {
-  DBUG_ENTER("select_insert::prepare2");
+  
   if (thd->lex->current_select->options & OPTION_BUFFER_RESULT)
     table->file->ha_start_bulk_insert((ha_rows) 0);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
 void select_insert::cleanup()
 {
   /* select_insert/select_create are never re-used in prepared statement */
-  DBUG_ASSERT(0);
+  assert(0);
 }
 
 select_insert::~select_insert()
 {
-  DBUG_ENTER("~select_insert");
+  
   if (table)
   {
     table->next_number_field=0;
@@ -1342,26 +1339,26 @@ select_insert::~select_insert()
   }
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;
   thd->abort_on_warning= 0;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 bool select_insert::send_data(List<Item> &values)
 {
-  DBUG_ENTER("select_insert::send_data");
+  
   bool error=0;
 
   if (unit->offset_limit_cnt)
   {						// using limit offset,count
     unit->offset_limit_cnt--;
-    DBUG_RETURN(0);
+    return(0);
   }
 
   thd->count_cuted_fields= CHECK_FIELD_WARN;	// Calculate cuted fields
   store_values(values);
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;
   if (thd->is_error())
-    DBUG_RETURN(1);
+    return(1);
 
   error= write_record(thd, table, &info);
     
@@ -1395,7 +1392,7 @@ bool select_insert::send_data(List<Item> &values)
       table->next_number_field->reset();
     }
   }
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -1409,11 +1406,11 @@ void select_insert::store_values(List<Item> &values)
 
 void select_insert::send_error(uint errcode,const char *err)
 {
-  DBUG_ENTER("select_insert::send_error");
+  
 
   my_message(errcode, err, MYF(0));
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1424,10 +1421,7 @@ bool select_insert::send_eof()
   ulonglong id;
   bool changed;
   THD::killed_state killed_status= thd->killed;
-  DBUG_ENTER("select_insert::send_eof");
-  DBUG_PRINT("enter", ("trans_table=%d, table_type='%s'",
-                       trans_table, table->file->table_type()));
-
+  
   error= table->file->ha_end_bulk_insert();
   table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY);
   table->file->extra(HA_EXTRA_WRITE_CANNOT_REPLACE);
@@ -1441,7 +1435,7 @@ bool select_insert::send_eof()
     if (thd->transaction.stmt.modified_non_trans_table)
       thd->transaction.all.modified_non_trans_table= TRUE;
   }
-  DBUG_ASSERT(trans_table || !changed || 
+  assert(trans_table || !changed || 
               thd->transaction.stmt.modified_non_trans_table);
 
   /*
@@ -1463,7 +1457,7 @@ bool select_insert::send_eof()
   if (error)
   {
     table->file->print_error(error,MYF(0));
-    DBUG_RETURN(1);
+    return(1);
   }
   char buff[160];
   if (info.ignore)
@@ -1482,12 +1476,12 @@ bool select_insert::send_eof()
      thd->first_successful_insert_id_in_prev_stmt :
      (info.copied ? autoinc_value_of_last_inserted_row : 0));
   ::my_ok(thd, (ulong) thd->row_count_func, id, buff);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 void select_insert::abort() {
 
-  DBUG_ENTER("select_insert::abort");
+  
   /*
     If the creation of the table failed (due to a syntax error, for
     example), no table will have been opened and therefore 'table'
@@ -1524,12 +1518,12 @@ void select_insert::abort() {
         if (!thd->current_stmt_binlog_row_based && !can_rollback_data())
           thd->transaction.all.modified_non_trans_table= TRUE;
     }
-    DBUG_ASSERT(transactional_table || !changed ||
+    assert(transactional_table || !changed ||
 		thd->transaction.stmt.modified_non_trans_table);
     table->file->ha_release_auto_increment();
   }
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1595,9 +1589,6 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   Item *item;
   Field *tmp_field;
   bool not_used;
-  DBUG_ENTER("create_table_from_items");
-
-  DBUG_EXECUTE_IF("sleep_create_select_before_check_if_exists", my_sleep(6000000););
 
   if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE) &&
       create_table->table->db_stat)
@@ -1609,11 +1600,11 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                           create_table->table_name);
-      DBUG_RETURN(create_table->table);
+      return(create_table->table);
     }
 
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
-    DBUG_RETURN(0);
+    return(0);
   }
 
   tmp_table.alias= 0;
@@ -1645,13 +1636,11 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
 	!(cr_field=new Create_field(field,(item->type() == Item::FIELD_ITEM ?
 					   ((Item_field *)item)->field :
 					   (Field*) 0))))
-      DBUG_RETURN(0);
+      return(0);
     if (item->maybe_null)
       cr_field->flags &= ~NOT_NULL_FLAG;
     alter_info->create_list.push_back(cr_field);
   }
-
-  DBUG_EXECUTE_IF("sleep_create_select_before_create", my_sleep(6000000););
 
   /*
     Create and lock table.
@@ -1685,10 +1674,8 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
           cluster. We don't have much options but throw an error.
         */
         my_error(ER_TABLE_EXISTS_ERROR, MYF(0), create_table->table_name);
-        DBUG_RETURN(0);
+        return(0);
       }
-
-      DBUG_EXECUTE_IF("sleep_create_select_before_open", my_sleep(6000000););
 
       if (!(create_info->options & HA_LEX_CREATE_TMP_TABLE))
       {
@@ -1720,10 +1707,8 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     }
     reenable_binlog(thd);
     if (!table)                                   // open failed
-      DBUG_RETURN(0);
+      return(0);
   }
-
-  DBUG_EXECUTE_IF("sleep_create_select_before_lock", my_sleep(6000000););
 
   table->reginfo.lock_type=TL_WRITE;
   hooks->prelock(&table, 1);                    // Call prelock hooks
@@ -1739,9 +1724,9 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
 
     if (!create_info->table_existed)
       drop_open_table(thd, table, create_table->db, create_table->table_name);
-    DBUG_RETURN(0);
+    return(0);
   }
-  DBUG_RETURN(table);
+  return(table);
 }
 
 
@@ -1749,7 +1734,7 @@ int
 select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
   MYSQL_LOCK *extra_lock= NULL;
-  DBUG_ENTER("select_create::prepare");
+  
 
   TABLEOP_HOOKS *hook_ptr= NULL;
   /*
@@ -1819,11 +1804,11 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   if (!(table= create_table_from_items(thd, create_info, create_table,
                                        alter_info, &values,
                                        &extra_lock, hook_ptr)))
-    DBUG_RETURN(-1);				// abort() deletes table
+    return(-1);				// abort() deletes table
 
   if (extra_lock)
   {
-    DBUG_ASSERT(m_plock == NULL);
+    assert(m_plock == NULL);
 
     if (create_info->options & HA_LEX_CREATE_TMP_TABLE)
       m_plock= &m_lock;
@@ -1836,7 +1821,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   if (table->s->fields < values.elements)
   {
     my_error(ER_WRONG_VALUE_COUNT_ON_ROW, MYF(0), 1);
-    DBUG_RETURN(-1);
+    return(-1);
   }
 
  /* First field to copy */
@@ -1861,10 +1846,10 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
   table->file->ha_start_bulk_insert((ha_rows) 0);
   thd->abort_on_warning= !info.ignore;
   if (check_that_all_fields_are_given_values(thd, table, table_list))
-    DBUG_RETURN(1);
+    return(1);
   table->mark_columns_needed_for_insert();
   table->file->extra(HA_EXTRA_WRITE_CACHE);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 void
@@ -1887,8 +1872,8 @@ select_create::binlog_show_create_table(TABLE **tables, uint count)
     schema that will do a close_thread_tables(), destroying the
     statement transaction cache.
   */
-  DBUG_ASSERT(thd->current_stmt_binlog_row_based);
-  DBUG_ASSERT(tables && *tables && count > 0);
+  assert(thd->current_stmt_binlog_row_based);
+  assert(tables && *tables && count > 0);
 
   char buf[2048];
   String query(buf, sizeof(buf), system_charset_info);
@@ -1900,7 +1885,7 @@ select_create::binlog_show_create_table(TABLE **tables, uint count)
   query.length(0);      // Have to zero it since constructor doesn't
 
   result= store_create_info(thd, &tmp_table_list, &query, create_info);
-  DBUG_ASSERT(result == 0); /* store_create_info() always return 0 */
+  assert(result == 0); /* store_create_info() always return 0 */
 
   thd->binlog_query(THD::STMT_QUERY_TYPE,
                     query.ptr(), query.length(),
@@ -1916,18 +1901,7 @@ void select_create::store_values(List<Item> &values)
 
 void select_create::send_error(uint errcode,const char *err)
 {
-  DBUG_ENTER("select_create::send_error");
-
-  DBUG_PRINT("info",
-             ("Current statement %s row-based",
-              thd->current_stmt_binlog_row_based ? "is" : "is NOT"));
-  DBUG_PRINT("info",
-             ("Current table (at 0x%lu) %s a temporary (or non-existant) table",
-              (ulong) table,
-              table && !table->s->tmp_table ? "is NOT" : "is"));
-  DBUG_PRINT("info",
-             ("Table %s prior to executing this statement",
-              get_create_info()->table_existed ? "existed" : "did not exist"));
+  
 
   /*
     This will execute any rollbacks that are necessary before writing
@@ -1944,7 +1918,7 @@ void select_create::send_error(uint errcode,const char *err)
   select_insert::send_error(errcode, err);
   reenable_binlog(thd);
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1981,7 +1955,7 @@ bool select_create::send_eof()
 
 void select_create::abort()
 {
-  DBUG_ENTER("select_create::abort");
+  
 
   /*
     In select_insert::abort() we roll back the statement, including
@@ -2019,7 +1993,7 @@ void select_create::abort()
       drop_open_table(thd, table, create_table->db, create_table->table_name);
     table=0;                                    // Safety
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 

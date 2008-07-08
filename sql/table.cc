@@ -43,12 +43,11 @@ static uint find_field(Field **fields, uchar *record, uint start, uint length);
 Object_creation_ctx *Object_creation_ctx::set_n_backup(THD *thd)
 {
   Object_creation_ctx *backup_ctx;
-  DBUG_ENTER("Object_creation_ctx::set_n_backup");
 
   backup_ctx= create_backup_ctx(thd);
   change_env(thd);
 
-  DBUG_RETURN(backup_ctx);
+  return(backup_ctx);
 }
 
 void Object_creation_ctx::restore_env(THD *thd, Object_creation_ctx *backup_ctx)
@@ -133,8 +132,8 @@ char *fn_rext(char *name)
 
 TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
 {
-  DBUG_ASSERT(db != NULL);
-  DBUG_ASSERT(name != NULL);
+  assert(db != NULL);
+  assert(name != NULL);
 
   if ((db->length == INFORMATION_SCHEMA_NAME.length) &&
       (my_strcasecmp(system_charset_info,
@@ -170,9 +169,6 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
   char *key_buff, *path_buff;
   char path[FN_REFLEN];
   uint path_length;
-  DBUG_ENTER("alloc_table_share");
-  DBUG_PRINT("enter", ("table: '%s'.'%s'",
-                       table_list->db, table_list->table_name));
 
   path_length= build_table_filename(path, sizeof(path) - 1,
                                     table_list->db,
@@ -219,7 +215,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
     pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&share->cond, NULL);
   }
-  DBUG_RETURN(share);
+  return(share);
 }
 
 
@@ -250,8 +246,6 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
                           uint key_length, const char *table_name,
                           const char *path)
 {
-  DBUG_ENTER("init_tmp_table_share");
-  DBUG_PRINT("enter", ("table: '%s'.'%s'", key, table_name));
 
   bzero((char*) share, sizeof(*share));
   init_sql_alloc(&share->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
@@ -281,7 +275,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
   */
   share->table_map_id= (ulong) thd->query_id;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -299,9 +293,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
 void free_table_share(TABLE_SHARE *share)
 {
   MEM_ROOT mem_root;
-  DBUG_ENTER("free_table_share");
-  DBUG_PRINT("enter", ("table: %s.%s", share->db.str, share->table_name.str));
-  DBUG_ASSERT(share->ref_count == 0);
+  assert(share->ref_count == 0);
 
   /*
     If someone is waiting for this to be deleted, inform it about this.
@@ -328,7 +320,7 @@ void free_table_share(TABLE_SHARE *share)
   /* We must copy mem_root from share because share is allocated through it */
   memcpy((char*) &mem_root, (char*) &share->mem_root, sizeof(mem_root));
   free_root(&mem_root, MYF(0));                 // Free's share
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /*
@@ -364,9 +356,6 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
   uchar head[64], *disk_buff;
   char	path[FN_REFLEN];
   MEM_ROOT **root_ptr, *old_root;
-  DBUG_ENTER("open_table_def");
-  DBUG_PRINT("enter", ("table: '%s'.'%s'  path: '%s'", share->db.str,
-                       share->table_name.str, share->normalized_path.str));
 
   error= 1;
   error_given= 0;
@@ -403,7 +392,7 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
       The following is a safety test and should never fail
       as the old file name should never be longer than the new one.
     */
-    DBUG_ASSERT(length <= share->normalized_path.length);
+    assert(length <= share->normalized_path.length);
     /*
       If the old and the new names have the same length,
       then table name does not have tricky characters,
@@ -473,7 +462,7 @@ err_not_open:
     open_table_error(share, error, (share->open_errno= my_errno), 0);
   }
 
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -507,7 +496,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   my_bitmap_map *bitmaps;
   uchar *buff= 0;
   uchar *field_extra_info= 0;
-  DBUG_ENTER("open_binary_frm");
 
   new_field_pack_flag= head[27];
   new_frm_ver= (head[2] - FRM_VER);
@@ -532,7 +520,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     share->frm_version= FRM_VER_TRUE_VARCHAR;
 
   legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
-  DBUG_ASSERT(share->db_plugin == NULL);
+  assert(share->db_plugin == NULL);
   /*
     if the storage engine is dynamic, no point in resolving it by its
     dynamically allocated legacy_db_type. We will resolve it later by name.
@@ -662,7 +650,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
                                          keyinfo->comment.length);
       strpos+= 2 + keyinfo->comment.length;
     } 
-    DBUG_ASSERT(test(keyinfo->flags & HA_USES_COMMENT) == 
+    assert(test(keyinfo->flags & HA_USES_COMMENT) == 
                (keyinfo->comment.length > 0));
   }
 
@@ -678,7 +666,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     /* Read extra data segment */
     uchar *next_chunk, *buff_end;
-    DBUG_PRINT("info", ("extra segment size is %u bytes", n_length));
     if (!(next_chunk= buff= (uchar*) my_malloc(n_length, MYF(MY_WME))))
       goto err;
     if (pread(file, buff, n_length, record_offset + share->reclength) == 0)
@@ -721,9 +708,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         */
         plugin_unlock(NULL, share->db_plugin);
         share->db_plugin= my_plugin_lock(NULL, &tmp_plugin);
-        DBUG_PRINT("info", ("setting dbtype to '%.*s' (%d)",
-                            str_db_type_length, next_chunk + 2,
-                            ha_legacy_type(share->db_type())));
       }
       else if (!tmp_plugin)
       {
@@ -746,8 +730,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       //reading long table comment
       if (next_chunk + 2 > buff_end)
       {
-          DBUG_PRINT("error",
-                     ("long table comment is not defined in .frm"));
           my_free(buff, MYF(0));
           goto err;
       }
@@ -760,7 +742,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       }
       next_chunk+= 2 + share->comment.length;
     }
-    DBUG_ASSERT (next_chunk <= buff_end);
+    assert(next_chunk <= buff_end);
     if (share->mysql_version >= MYSQL_VERSION_TABLESPACE_IN_FRM_CGE)
     {
       /*
@@ -774,14 +756,11 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       {
         if (share->mysql_version >= MYSQL_VERSION_TABLESPACE_IN_FRM)
         {
-          DBUG_PRINT("error", ("Found no field extra info"));
           goto err;
         }
-        DBUG_PRINT("info", ("Found no field extra info"));
       }
       else
       {
-        DBUG_PRINT("info", ("Found field extra info"));
         const uint format_section_header_size= 8;
         uint format_section_len= uint2korr(next_chunk+0);
         uint flags=              uint4korr(next_chunk+2);
@@ -803,10 +782,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         next_chunk+= format_section_len;
       }
     }
-    DBUG_ASSERT (next_chunk <= buff_end);
+    assert (next_chunk <= buff_end);
     if (next_chunk > buff_end)
     {
-      DBUG_PRINT("error", ("Buffer overflow in field extra info"));
       goto err;
     }
   }
@@ -840,7 +818,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
                                      share->comment.length);
   }
 
-  DBUG_PRINT("info",("i_count: %d  i_parts: %d  index: %d  n_length: %d  int_length: %d  com_length: %d", interval_count,interval_parts, share->keys,n_length,int_length, com_length));
 
   if (!(field_ptr = (Field **)
 	alloc_root(&share->mem_root,
@@ -946,8 +923,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       storage_type= (enum ha_storage_media)(tmp & STORAGE_TYPE_MASK);
       column_format= (enum column_format_type)
                     ((tmp >> COLUMN_FORMAT_SHIFT) & COLUMN_FORMAT_MASK);
-      DBUG_PRINT("info", ("Field extra: storage %u format %u",
-                          storage_type, column_format));
     }
     if (new_frm_ver >= 3)
     {
@@ -1337,7 +1312,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
 #endif
   if (buff)
     my_free(buff, MYF(0));
-  DBUG_RETURN (0);
+  return (0);
 
  err:
   if (buff)
@@ -1351,7 +1326,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   hash_free(&share->name_hash);
 
   open_table_error(share, error, share->open_errno, errarg);
-  DBUG_RETURN(error);
+  return(error);
 } /* open_binary_frm */
 
 
@@ -1392,16 +1367,9 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   bool error_reported= FALSE;
   uchar *record, *bitmaps;
   Field **field_ptr;
-  DBUG_ENTER("open_table_from_share");
-  DBUG_PRINT("enter",("name: '%s.%s'  form: 0x%lx, open mode:%s",
-                      share->db.str,
-                      share->table_name.str,
-                      (long) outparam,
-                      (open_mode == OTM_OPEN)?"open":
-                      ((open_mode == OTM_CREATE)?"create":"alter")));
 
   /* Parsing of partitioning information from .frm needs thd->lex set up. */
-  DBUG_ASSERT(thd->lex->is_lex_started);
+  assert(thd->lex->is_lex_started);
 
   error= 1;
   bzero((char*) outparam, sizeof(*outparam));
@@ -1428,7 +1396,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   }
   else
   {
-    DBUG_ASSERT(!db_stat);
+    assert(!db_stat);
   }
 
   error= 4;
@@ -1597,8 +1565,6 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
             Too many files opened, use same error message as if the .frm
             file can't open
            */
-          DBUG_PRINT("error", ("open file: %s failed, too many files opened (errno: %d)", 
-		  share->normalized_path.str, ha_err));
 	  error= 1;
 	  my_errno= EMFILE;
           break;
@@ -1622,7 +1588,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
                                HA_HAS_OWN_BINLOGGING);
   thd->status_var.opened_tables++;
 
-  DBUG_RETURN (0);
+  return (0);
 
  err:
   if (!error_reported && !(prgflag & DONT_GIVE_ERROR))
@@ -1632,7 +1598,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   outparam->db_stat=0;
   free_root(&outparam->mem_root, MYF(0));       // Safe to call on bzero'd root
   my_free((char*) outparam->alias, MYF(MY_ALLOW_ZERO_PTR));
-  DBUG_RETURN (error);
+  return (error);
 }
 
 
@@ -1648,8 +1614,6 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
 int closefrm(register TABLE *table, bool free_share)
 {
   int error=0;
-  DBUG_ENTER("closefrm");
-  DBUG_PRINT("enter", ("table: 0x%lx", (long) table));
 
   if (table->db_stat)
     error=table->file->close();
@@ -1671,7 +1635,7 @@ int closefrm(register TABLE *table, bool free_share)
       free_table_share(table->s);
   }
   free_root(&table->mem_root, MYF(0));
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -1695,7 +1659,6 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
   uint a_length,names,length;
   uchar *pos,*buf;
   ulong ret_value=0;
-  DBUG_ENTER("get_form_pos");
 
   names=uint2korr(head+8);
   a_length=(names+2)*sizeof(char *);		/* Room for two extra */
@@ -1715,7 +1678,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
 		MYF(MY_NABP)))
     {						/* purecov: inspected */
       x_free((uchar*) buf);			/* purecov: inspected */
-      DBUG_RETURN(0L);				/* purecov: inspected */
+      return(0L);				/* purecov: inspected */
     }
     pos= buf+a_length+length;
     ret_value=uint4korr(pos);
@@ -1733,7 +1696,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
     str=(char *) (buf+a_length);
     fix_type_pointers((const char ***) &buf,save_names,1,&str);
   }
-  DBUG_RETURN(ret_value);
+  return(ret_value);
 }
 
 
@@ -1746,7 +1709,6 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
 
 int read_string(File file, uchar**to, size_t length)
 {
-  DBUG_ENTER("read_string");
 
   x_free(*to);
   if (!(*to= (uchar*) my_malloc(length+1,MYF(MY_WME))) ||
@@ -1754,10 +1716,10 @@ int read_string(File file, uchar**to, size_t length)
   {
     x_free(*to);                              /* purecov: inspected */
     *to= 0;                                   /* purecov: inspected */
-    DBUG_RETURN(1);                           /* purecov: inspected */
+    return(1);                           /* purecov: inspected */
   }
   *((char*) *to+length)= '\0';
-  DBUG_RETURN (0);
+  return (0);
 } /* read_string */
 
 
@@ -1770,7 +1732,6 @@ ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
   ulong endpos,newpos;
   uchar buff[IO_SIZE];
   uchar *pos;
-  DBUG_ENTER("make_new_entry");
 
   length=(uint) strlen(newname)+1;
   n_length=uint2korr(fileinfo+4);
@@ -1789,17 +1750,17 @@ ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
     {
       VOID(my_seek(file,(ulong) (endpos-bufflength),MY_SEEK_SET,MYF(0)));
       if (my_read(file, buff, bufflength, MYF(MY_NABP+MY_WME)))
-	DBUG_RETURN(0L);
+	return(0L);
       VOID(my_seek(file,(ulong) (endpos-bufflength+IO_SIZE),MY_SEEK_SET,
 		   MYF(0)));
       if ((my_write(file, buff,bufflength,MYF(MY_NABP+MY_WME))))
-	DBUG_RETURN(0);
+	return(0);
       endpos-=bufflength; bufflength=IO_SIZE;
     }
     bzero(buff,IO_SIZE);			/* Null new block */
     VOID(my_seek(file,(ulong) maxlength,MY_SEEK_SET,MYF(0)));
     if (my_write(file,buff,bufflength,MYF(MY_NABP+MY_WME)))
-	DBUG_RETURN(0L);
+	return(0L);
     maxlength+=IO_SIZE;				/* Fix old ref */
     int2store(fileinfo+6,maxlength);
     for (i=names, pos= (uchar*) *formnames->type_names+n_length-1; i-- ;
@@ -1822,12 +1783,12 @@ ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
       (names && my_write(file,(uchar*) (*formnames->type_names+n_length-1),
 			 names*4, MYF(MY_NABP+MY_WME))) ||
       my_write(file, fileinfo+10, 4,MYF(MY_NABP+MY_WME)))
-    DBUG_RETURN(0L); /* purecov: inspected */
+    return(0L); /* purecov: inspected */
 
   int2store(fileinfo+8,names+1);
   int2store(fileinfo+4,n_length+length);
   (void)ftruncate(file, newpos);/* Append file with '\0' */
-  DBUG_RETURN(newpos);
+  return(newpos);
 } /* make_new_entry */
 
 
@@ -1838,7 +1799,6 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
   int err_no;
   char buff[FN_REFLEN];
   myf errortype= ME_ERROR+ME_WAITTANG;
-  DBUG_ENTER("open_table_error");
 
   switch (error) {
   case 7:
@@ -1902,7 +1862,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     my_error(ER_NOT_FORM_FILE, errortype, buff, 0);
     break;
   }
-  DBUG_VOID_RETURN;
+  return;
 } /* open_table_error */
 
 
@@ -2126,7 +2086,7 @@ File create_frm(THD *thd, const char *name, const char *db,
     int2store(fileinfo+6,IO_SIZE);		/* Next block starts here */
     for (i= 0; i < keys; i++)
     {
-      DBUG_ASSERT(test(key_info[i].flags & HA_USES_COMMENT) == 
+      assert(test(key_info[i].flags & HA_USES_COMMENT) == 
                  (key_info[i].comment.length > 0));
       if (key_info[i].flags & HA_USES_COMMENT)
         key_comment_total_bytes += 2 + key_info[i].comment.length;
@@ -2208,7 +2168,6 @@ File create_frm(THD *thd, const char *name, const char *db,
 void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
 {
   TABLE_SHARE *share= table->s;
-  DBUG_ENTER("update_create_info_from_table");
 
   create_info->max_rows= share->max_rows;
   create_info->min_rows= share->min_rows;
@@ -2221,7 +2180,7 @@ void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
   create_info->table_charset= 0;
   create_info->comment= share->comment;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 int
@@ -2304,7 +2263,7 @@ uint calculate_key_len(TABLE *table, uint key, const uchar *buf,
                        key_part_map keypart_map)
 {
   /* works only with key prefixes */
-  DBUG_ASSERT(((keypart_map + 1) & keypart_map) == 0);
+  assert(((keypart_map + 1) & keypart_map) == 0);
 
   KEY *key_info= table->s->key_info+key;
   KEY_PART_INFO *key_part= key_info->key_part;
@@ -2404,7 +2363,7 @@ bool check_column_name(const char *name)
       This assert is to catch use of this byte if we decide to
       use non-utf8 as system_character_set.
     */
-    DBUG_ASSERT(*name != NAMES_SEP_CHAR);
+    assert(*name != NAMES_SEP_CHAR);
     name++;
     name_length++;
   }
@@ -2437,14 +2396,10 @@ table_check_intact(TABLE *table, const uint table_f_count,
   uint i;
   my_bool error= FALSE;
   my_bool fields_diff_count;
-  DBUG_ENTER("table_check_intact");
-  DBUG_PRINT("info",("table: %s  expected_count: %d",
-                     table->alias, table_f_count));
 
   fields_diff_count= (table->s->fields != table_f_count);
   if (fields_diff_count)
   {
-    DBUG_PRINT("info", ("Column count has changed, checking the definition"));
 
     /* previous MySQL version */
     if (MYSQL_VERSION_ID > table->s->mysql_version)
@@ -2452,13 +2407,13 @@ table_check_intact(TABLE *table, const uint table_f_count,
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
                       table->alias, table_f_count, table->s->fields,
                       table->s->mysql_version, MYSQL_VERSION_ID);
-      DBUG_RETURN(TRUE);
+      return(TRUE);
     }
     else if (MYSQL_VERSION_ID == table->s->mysql_version)
     {
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), table->alias,
                       table_f_count, table->s->fields);
-      DBUG_RETURN(TRUE);
+      return(TRUE);
     }
     /*
       Something has definitely changed, but we're running an older
@@ -2549,7 +2504,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
       error= TRUE;
     }
   }
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -2606,7 +2561,7 @@ void st_table::reset_item_list(List<Item> *item_list) const
   for (Field **ptr= field; *ptr; ptr++)
   {
     Item_field *item_field= (Item_field*) it++;
-    DBUG_ASSERT(item_field != 0);
+    assert(item_field != 0);
     item_field->reset_field(*ptr);
   }
 }
@@ -2634,20 +2589,18 @@ void st_table::reset_item_list(List<Item> *item_list) const
 static Item *
 merge_on_conds(THD *thd, TABLE_LIST *table, bool is_cascaded)
 {
-  DBUG_ENTER("merge_on_conds");
 
   Item *cond= NULL;
-  DBUG_PRINT("info", ("alias: %s", table->alias));
   if (table->on_expr)
     cond= table->on_expr->copy_andor_structure(thd);
   if (!table->nested_join)
-    DBUG_RETURN(cond);
+    return(cond);
   List_iterator<TABLE_LIST> li(table->nested_join->join_list);
   while (TABLE_LIST *tbl= li++)
   {
     cond= and_conds(cond, merge_on_conds(thd, tbl, is_cascaded));
   }
-  DBUG_RETURN(cond);
+  return(cond);
 }
 
 
@@ -2776,7 +2729,7 @@ TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
 
   if (is_leaf_for_name_resolution())
     return this;
-  DBUG_ASSERT(nested_join);
+  assert(nested_join);
 
   for (cur_nested_join= nested_join;
        cur_nested_join;
@@ -2833,7 +2786,7 @@ TABLE_LIST *TABLE_LIST::last_leaf_for_name_resolution()
 
   if (is_leaf_for_name_resolution())
     return this;
-  DBUG_ASSERT(nested_join);
+  assert(nested_join);
 
   for (cur_nested_join= nested_join;
        cur_nested_join;
@@ -2863,7 +2816,7 @@ TABLE_LIST *TABLE_LIST::last_leaf_for_name_resolution()
 Natural_join_column::Natural_join_column(Field_translator *field_param,
                                          TABLE_LIST *tab)
 {
-  DBUG_ASSERT(tab->field_translation);
+  assert(tab->field_translation);
   view_field= field_param;
   table_field= NULL;
   table_ref= tab;
@@ -2874,7 +2827,7 @@ Natural_join_column::Natural_join_column(Field_translator *field_param,
 Natural_join_column::Natural_join_column(Field *field_param,
                                          TABLE_LIST *tab)
 {
-  DBUG_ASSERT(tab->table == field_param->table);
+  assert(tab->table == field_param->table);
   table_field= field_param;
   view_field= NULL;
   table_ref= tab;
@@ -2886,7 +2839,7 @@ const char *Natural_join_column::name()
 {
   if (view_field)
   {
-    DBUG_ASSERT(table_field == NULL);
+    assert(table_field == NULL);
     return view_field->name;
   }
 
@@ -2898,7 +2851,7 @@ Item *Natural_join_column::create_item(THD *thd)
 {
   if (view_field)
   {
-    DBUG_ASSERT(table_field == NULL);
+    assert(table_field == NULL);
     return create_view_field(thd, table_ref, &view_field->item,
                              view_field->name);
   }
@@ -2910,7 +2863,7 @@ Field *Natural_join_column::field()
 {
   if (view_field)
   {
-    DBUG_ASSERT(table_field == NULL);
+    assert(table_field == NULL);
     return NULL;
   }
   return table_field;
@@ -2919,7 +2872,7 @@ Field *Natural_join_column::field()
 
 const char *Natural_join_column::table_name()
 {
-  DBUG_ASSERT(table_ref);
+  assert(table_ref);
   return table_ref->alias;
 }
 
@@ -2931,7 +2884,7 @@ const char *Natural_join_column::db_name()
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */
-  DBUG_ASSERT(!strcmp(table_ref->db,
+  assert(!strcmp(table_ref->db,
                       table_ref->table->s->db.str) ||
               (table_ref->schema_table &&
                table_ref->table->s->db.str[0] == 0));
@@ -2941,7 +2894,7 @@ const char *Natural_join_column::db_name()
 
 void Field_iterator_view::set(TABLE_LIST *table)
 {
-  DBUG_ASSERT(table->field_translation);
+  assert(table->field_translation);
   view= table;
   ptr= table->field_translation;
   array_end= table->field_translation_end;
@@ -2983,7 +2936,6 @@ Item *Field_iterator_view::create_item(THD *thd)
 Item *create_view_field(THD *thd, TABLE_LIST *view, Item **field_ref,
                         const char *name)
 {
-  DBUG_ENTER("create_view_field");
   if (view->schema_table_reformed)
   {
     Item *field= *field_ref;
@@ -2993,17 +2945,17 @@ Item *create_view_field(THD *thd, TABLE_LIST *view, Item **field_ref,
       ('mysql_schema_table' function). So we can return directly the
       field. This case happens only for 'show & where' commands.
     */
-    DBUG_ASSERT(field && field->fixed);
-    DBUG_RETURN(field);
+    assert(field && field->fixed);
+    return(field);
   }
 
-  DBUG_RETURN(NULL);
+  return(NULL);
 }
 
 
 void Field_iterator_natural_join::set(TABLE_LIST *table_ref)
 {
-  DBUG_ASSERT(table_ref->join_columns);
+  assert(table_ref->join_columns);
   column_ref_it.init(*(table_ref->join_columns));
   cur_column_ref= column_ref_it++;
 }
@@ -3012,7 +2964,7 @@ void Field_iterator_natural_join::set(TABLE_LIST *table_ref)
 void Field_iterator_natural_join::next()
 {
   cur_column_ref= column_ref_it++;
-  DBUG_ASSERT(!cur_column_ref || ! cur_column_ref->table_field ||
+  assert(!cur_column_ref || ! cur_column_ref->table_field ||
               cur_column_ref->table_ref->table ==
               cur_column_ref->table_field->table);
 }
@@ -3020,7 +2972,6 @@ void Field_iterator_natural_join::next()
 
 void Field_iterator_table_ref::set_field_iterator()
 {
-  DBUG_ENTER("Field_iterator_table_ref::set_field_iterator");
   /*
     If the table reference we are iterating over is a natural join, or it is
     an operand of a natural join, and TABLE_LIST::join_columns contains all
@@ -3031,7 +2982,7 @@ void Field_iterator_table_ref::set_field_iterator()
   if (table_ref->is_join_columns_complete)
   {
     /* Necesary, but insufficient conditions. */
-    DBUG_ASSERT(table_ref->is_natural_join ||
+    assert(table_ref->is_natural_join ||
                 table_ref->nested_join ||
                 table_ref->join_columns &&
                 /* This is a merge view. */
@@ -3044,28 +2995,24 @@ void Field_iterator_table_ref::set_field_iterator()
                   table_ref->join_columns->elements ==
                   table_ref->table->s->fields)));
     field_it= &natural_join_it;
-    DBUG_PRINT("info",("field_it for '%s' is Field_iterator_natural_join",
-                       table_ref->alias));
   }
   /* This is a base table or stored view. */
   else
   {
-    DBUG_ASSERT(table_ref->table);
+    assert(table_ref->table);
     field_it= &table_field_it;
-    DBUG_PRINT("info", ("field_it for '%s' is Field_iterator_table",
-                        table_ref->alias));
   }
   field_it->set(table_ref);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 void Field_iterator_table_ref::set(TABLE_LIST *table)
 {
-  DBUG_ASSERT(table);
+  assert(table);
   first_leaf= table->first_leaf_for_name_resolution();
   last_leaf=  table->last_leaf_for_name_resolution();
-  DBUG_ASSERT(first_leaf && last_leaf);
+  assert(first_leaf && last_leaf);
   table_ref= first_leaf;
   set_field_iterator();
 }
@@ -3082,7 +3029,7 @@ void Field_iterator_table_ref::next()
   if (field_it->end_of_fields() && table_ref != last_leaf)
   {
     table_ref= table_ref->next_name_resolution_table;
-    DBUG_ASSERT(table_ref);
+    assert(table_ref);
     set_field_iterator();
   }
 }
@@ -3093,7 +3040,7 @@ const char *Field_iterator_table_ref::table_name()
   if (table_ref->is_natural_join)
     return natural_join_it.column_ref()->table_name();
 
-  DBUG_ASSERT(!strcmp(table_ref->table_name,
+  assert(!strcmp(table_ref->table_name,
                       table_ref->table->s->table_name.str));
   return table_ref->table_name;
 }
@@ -3109,7 +3056,7 @@ const char *Field_iterator_table_ref::db_name()
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */
-  DBUG_ASSERT(!strcmp(table_ref->db, table_ref->table->s->db.str) ||
+  assert(!strcmp(table_ref->db, table_ref->table->s->db.str) ||
               (table_ref->schema_table &&
                table_ref->table->s->db.str[0] == 0));
 
@@ -3185,12 +3132,12 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
       already created via one of the two constructor calls above. In this case
       we just return the already created column reference.
     */
-    DBUG_ASSERT(table_ref->is_join_columns_complete);
+    assert(table_ref->is_join_columns_complete);
     is_created= FALSE;
     nj_col= natural_join_it.column_ref();
-    DBUG_ASSERT(nj_col);
+    assert(nj_col);
   }
-  DBUG_ASSERT(!nj_col->table_field ||
+  assert(!nj_col->table_field ||
               nj_col->table_ref->table == nj_col->table_field->table);
 
   /*
@@ -3201,7 +3148,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
   if (is_created)
   {
     /* Make sure not all columns were materialized. */
-    DBUG_ASSERT(!add_table_ref->is_join_columns_complete);
+    assert(!add_table_ref->is_join_columns_complete);
     if (!add_table_ref->join_columns)
     {
       /* Create a list of natural join columns on demand. */
@@ -3247,14 +3194,14 @@ Field_iterator_table_ref::get_natural_column_ref()
 {
   Natural_join_column *nj_col;
 
-  DBUG_ASSERT(field_it == &natural_join_it);
+  assert(field_it == &natural_join_it);
   /*
     The field belongs to a NATURAL join, therefore the column reference was
     already created via one of the two constructor calls above. In this case
     we just return the already created column reference.
   */
   nj_col= natural_join_it.column_ref();
-  DBUG_ASSERT(nj_col &&
+  assert(nj_col &&
               (!nj_col->table_field ||
                nj_col->table_ref->table == nj_col->table_field->table));
   return nj_col;
@@ -3289,7 +3236,6 @@ void st_table::clear_column_bitmaps()
 
 void st_table::prepare_for_position()
 {
-  DBUG_ENTER("st_table::prepare_for_position");
 
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
       s->primary_key < MAX_KEY)
@@ -3298,7 +3244,7 @@ void st_table::prepare_for_position()
     /* signal change */
     file->column_bitmaps_signal();
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -3315,13 +3261,12 @@ void st_table::prepare_for_position()
 void st_table::mark_columns_used_by_index(uint index)
 {
   MY_BITMAP *bitmap= &tmp_set;
-  DBUG_ENTER("st_table::mark_columns_used_by_index");
 
   (void) file->extra(HA_EXTRA_KEYREAD);
   bitmap_clear_all(bitmap);
   mark_columns_used_by_index_no_reset(index, bitmap);
   column_bitmaps_set(bitmap, bitmap);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -3338,13 +3283,12 @@ void st_table::mark_columns_used_by_index(uint index)
 
 void st_table::restore_column_maps_after_mark_index()
 {
-  DBUG_ENTER("st_table::restore_column_maps_after_mark_index");
 
   key_read= 0;
   (void) file->extra(HA_EXTRA_NO_KEYREAD);
   default_column_bitmaps();
   file->column_bitmaps_signal();
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -3373,7 +3317,7 @@ void st_table::mark_columns_used_by_index_no_reset(uint index,
 
 void st_table::mark_auto_increment_column()
 {
-  DBUG_ASSERT(found_next_number_field);
+  assert(found_next_number_field);
   /*
     We must set bit in read set as update_auto_increment() is using the
     store() to check overflow of auto_increment values
@@ -3456,7 +3400,6 @@ void st_table::mark_columns_needed_for_delete()
 
 void st_table::mark_columns_needed_for_update()
 {
-  DBUG_ENTER("mark_columns_needed_for_update");
   if (file->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
   {
     /* Mark all used key columns for read */
@@ -3486,7 +3429,7 @@ void st_table::mark_columns_needed_for_update()
       file->column_bitmaps_signal();
     }
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -3755,17 +3698,16 @@ frm_type_enum mysql_frm_type(THD *thd, char *path, enum legacy_db_type *dbt)
   File file;
   uchar header[10];     /* This should be optimized */
   int error;
-  DBUG_ENTER("mysql_frm_type");
 
   *dbt= DB_TYPE_UNKNOWN;
 
   if ((file= my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
-    DBUG_RETURN(FRMTYPE_ERROR);
+    return(FRMTYPE_ERROR);
   error= my_read(file, (uchar*) header, sizeof(header), MYF(MY_NABP));
   my_close(file, MYF(MY_WME));
 
   if (error)
-    DBUG_RETURN(FRMTYPE_ERROR);
+    return(FRMTYPE_ERROR);
 
   /*  
     This is just a check for DB_TYPE. We'll return default unknown type
@@ -3775,10 +3717,10 @@ frm_type_enum mysql_frm_type(THD *thd, char *path, enum legacy_db_type *dbt)
   if (header[0] != (uchar) 254 || header[1] != 1 ||
       (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
        (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    DBUG_RETURN(FRMTYPE_TABLE);
+    return(FRMTYPE_TABLE);
 
   *dbt= (enum legacy_db_type) (uint) *(header + 3);
-  DBUG_RETURN(FRMTYPE_TABLE);                   // Is probably a .frm table
+  return(FRMTYPE_TABLE);                   // Is probably a .frm table
 }
 
 
