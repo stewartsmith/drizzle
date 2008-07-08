@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([sql/mysqld.cc])
+AC_CONFIG_SRCDIR([sql/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
@@ -1217,7 +1217,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  support-files/Makefile dnl
  mysql-test/Makefile mysql-test/install_test_db dnl
  include/mysql_version.h plugin/Makefile dnl
- sql/mysqld_safe support-files/libmysqlclient.pc dnl
+ sql/drizzled_safe support-files/libmysqlclient.pc dnl
  support-files/mysql.server support-files/mysql-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
