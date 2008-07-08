@@ -1372,11 +1372,7 @@ public:
 
   enum_field_types type() const
   {
-    return ((can_alter_field_type && orig_table &&
-             orig_table->s->db_create_options & HA_OPTION_PACK_RECORD &&
-	     field_length >= 4) &&
-            orig_table->s->frm_version < FRM_VER_TRUE_VARCHAR ?
-	    MYSQL_TYPE_VAR_STRING : MYSQL_TYPE_STRING);
+    return  MYSQL_TYPE_STRING;
   }
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_BINARY : HA_KEYTYPE_TEXT; }

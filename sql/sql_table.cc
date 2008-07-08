@@ -1714,23 +1714,6 @@ int prepare_create_field(Create_field *sql_field,
     (*blob_columns)++;
     break;
   case MYSQL_TYPE_VARCHAR:
-#ifndef QQ_ALL_HANDLERS_SUPPORT_VARCHAR
-    if (table_flags & HA_NO_VARCHAR)
-    {
-      /* convert VARCHAR to CHAR because handler is not yet up to date */
-      sql_field->sql_type=    MYSQL_TYPE_VAR_STRING;
-      sql_field->pack_length= calc_pack_length(sql_field->sql_type,
-                                               (uint) sql_field->length);
-      if ((sql_field->length / sql_field->charset->mbmaxlen) >
-          MAX_FIELD_CHARLENGTH)
-      {
-        my_printf_error(ER_TOO_BIG_FIELDLENGTH, ER(ER_TOO_BIG_FIELDLENGTH),
-                        MYF(0), sql_field->field_name, MAX_FIELD_CHARLENGTH);
-        return(1);
-      }
-    }
-#endif
-    /* fall through */
   case MYSQL_TYPE_STRING:
     sql_field->pack_flag=0;
     if (sql_field->charset->state & MY_CS_BINSORT)

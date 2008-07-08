@@ -144,7 +144,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
   uses a primary key. Without primary key, we can't call position().
 */ 
 #define HA_PRIMARY_KEY_REQUIRED_FOR_POSITION (1 << 16) 
-#define HA_CAN_RTREEKEYS       (1 << 17)
+#define HA_CAN_RTREEKEYS       (1 << 17) /* Historical, no longer supported */
 #define HA_NOT_DELETE_WITH_CACHE (1 << 18)
 /*
   The following is we need to a primary key to delete (and update) a row.
@@ -152,20 +152,20 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 */
 #define HA_PRIMARY_KEY_REQUIRED_FOR_DELETE (1 << 19)
 #define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
-#define HA_CAN_FULLTEXT        (1 << 21)
-#define HA_CAN_SQL_HANDLER     (1 << 22)
+#define HA_CAN_FULLTEXT        (1 << 21) /* Historical, no longer supported */
+#define HA_CAN_SQL_HANDLER     (1 << 22) /* Historical, no longer supported */
 #define HA_NO_AUTO_INCREMENT   (1 << 23)
 #define HA_HAS_CHECKSUM        (1 << 24)
 /* Table data are stored in separate files (for lower_case_table_names) */
 #define HA_FILE_BASED	       (1 << 26)
-#define HA_NO_VARCHAR	       (1 << 27)
-#define HA_CAN_BIT_FIELD       (1 << 28) /* supports bit fields */
+#define HA_NO_VARCHAR	       (1 << 27) /* Historical, no longer supported */
+#define HA_CAN_BIT_FIELD       (1 << 28) /* Historical, no longer supported */
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
 #define HA_NO_COPY_ON_ALTER    (1LL << 31)
 #define HA_HAS_RECORDS	       (1LL << 32) /* records() gives exact count*/
 /* Has it's own method of binlog logging */
-#define HA_HAS_OWN_BINLOGGING  (1LL << 33)
+#define HA_HAS_OWN_BINLOGGING  (1LL << 33) /* Historical, no longer supported */
 #define HA_MRR_CANT_SORT       (1LL << 34)
 
 /*
@@ -343,7 +343,7 @@ enum enum_binlog_command {
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
-#define HA_CREATE_USED_RAID             (1L << 1) //RAID is no longer availble
+#define HA_CREATE_USED_RAID             (1L << 1) /* Historical, no longer supported */
 #define HA_CREATE_USED_UNION            (1L << 2)
 #define HA_CREATE_USED_INSERT_METHOD    (1L << 3)
 #define HA_CREATE_USED_MIN_ROWS         (1L << 4)
