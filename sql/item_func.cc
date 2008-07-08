@@ -2281,7 +2281,7 @@ uint Item_func_min_max::cmp_datetimes(ulonglong *value)
   if (value)
   {
     *value= min_max;
-    if (datetime_item->field_type() == MYSQL_TYPE_DATE)
+    if (datetime_item->field_type() == MYSQL_TYPE_NEWDATE)
       *value/= 1000000L;
   }
   return min_max_idx;

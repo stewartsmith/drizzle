@@ -1802,8 +1802,7 @@ int prepare_create_field(Create_field *sql_field,
        DBUG_RETURN(1);
     }
     break;
-  case MYSQL_TYPE_DATE:			// Rest of string types
-  case MYSQL_TYPE_NEWDATE:
+  case MYSQL_TYPE_NEWDATE:  // Rest of string types
   case MYSQL_TYPE_TIME:
   case MYSQL_TYPE_DATETIME:
   case MYSQL_TYPE_NULL:
@@ -5269,8 +5268,7 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
       If the '0000-00-00' value isn't allowed then raise the error_if_not_empty
       flag to allow ALTER TABLE only if the table to be altered is empty.
       */
-    if ((def->sql_type == MYSQL_TYPE_DATE ||
-         def->sql_type == MYSQL_TYPE_NEWDATE ||
+    if ((def->sql_type == MYSQL_TYPE_NEWDATE ||
          def->sql_type == MYSQL_TYPE_DATETIME) &&
          !alter_info->datetime_field &&
          !(~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
@@ -6254,7 +6252,6 @@ err:
     enum enum_mysql_timestamp_type t_type= MYSQL_TIMESTAMP_DATE;
     switch (alter_info->datetime_field->sql_type)
     {
-      case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
         f_val= "0000-00-00";
         t_type= MYSQL_TIMESTAMP_DATE;

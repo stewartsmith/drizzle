@@ -3962,7 +3962,7 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
       }
       item->unsigned_flag= (fields_info->field_flags & MY_I_S_UNSIGNED);
       break;
-    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_NEWDATE:
     case MYSQL_TYPE_TIME:
     case MYSQL_TYPE_TIMESTAMP:
     case MYSQL_TYPE_DATETIME:

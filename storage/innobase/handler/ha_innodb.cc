@@ -2687,7 +2687,6 @@ get_innobase_type_from_mysql_type(
 	case MYSQL_TYPE_LONGLONG:
 	case MYSQL_TYPE_TINY:
 	case MYSQL_TYPE_SHORT:
-	case MYSQL_TYPE_DATE:
 	case MYSQL_TYPE_DATETIME:
 	case MYSQL_TYPE_YEAR:
 	case MYSQL_TYPE_NEWDATE:

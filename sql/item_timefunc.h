@@ -334,7 +334,7 @@ public:
   Item_date() :Item_func() {}
   Item_date(Item *a) :Item_func(a) {}
   enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DATE; }
+  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
   String *val_str(String *str);
   longlong val_int();
   double val_real() { return val_real_from_decimal(); }
@@ -767,7 +767,7 @@ public:
   bool get_date(MYSQL_TIME *ltime, uint fuzzy_date);
   bool get_time(MYSQL_TIME *ltime);
   const char *cast_type() const { return "date"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DATE; }
+  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
   Field *tmp_table_field(TABLE *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -864,7 +864,7 @@ public:
   Item_func_makedate(Item *a,Item *b) :Item_date_func(a,b) {}
   String *val_str(String *str);
   const char *func_name() const { return "makedate"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DATE; }
+  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
   void fix_length_and_dec()
   { 
     decimals=0;
