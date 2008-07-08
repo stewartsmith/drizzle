@@ -696,7 +696,7 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, TABLE *table,
     fields creations separately.
   */
   switch (args[0]->field_type()) {
-  case MYSQL_TYPE_DATE:
+  case MYSQL_TYPE_NEWDATE:
     field= new Field_newdate(maybe_null, name, collation.collation);
     break;
   case MYSQL_TYPE_TIME:

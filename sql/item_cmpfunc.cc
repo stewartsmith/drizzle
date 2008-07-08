@@ -759,7 +759,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
       ulonglong value;
       bool error;
       String tmp, *str_val= 0;
-      timestamp_type t_type= (date_arg->field_type() == MYSQL_TYPE_DATE ?
+      timestamp_type t_type= (date_arg->field_type() == MYSQL_TYPE_NEWDATE ?
                               MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME);
 
       str_val= str_arg->val_str(&tmp);
@@ -963,7 +963,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
       compare it with 100000000L - any DATE value should be less than it.
       Don't shift cached DATETIME values up for the second time.
     */
-    if (f_type == MYSQL_TYPE_DATE ||
+    if (f_type == MYSQL_TYPE_NEWDATE ||
         (f_type != MYSQL_TYPE_DATETIME && value < 100000000L))
       value*= 1000000L;
   }
@@ -985,7 +985,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     bool error;
     enum_field_types f_type= warn_item->field_type();
     timestamp_type t_type= f_type ==
-      MYSQL_TYPE_DATE ? MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME;
+      MYSQL_TYPE_NEWDATE ? MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME;
     value= get_date_from_str(thd, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current

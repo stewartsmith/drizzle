@@ -19,11 +19,7 @@
 */
 
 #include "myisamdef.h"
-#if defined(MSDOS) || defined(__WIN__)
-#include <fcntl.h>
-#else
 #include <stddef.h>
-#endif
 #include <queues.h>
 
 /* static variables */

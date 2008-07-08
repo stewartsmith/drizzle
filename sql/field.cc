@@ -3940,7 +3940,7 @@ int Field_timestamp::store(const char *from,uint len,CHARSET_INFO *cs)
   my_time_t tmp= 0;
   int error;
   bool have_smth_to_conv;
-  my_bool in_dst_time_gap;
+  bool in_dst_time_gap;
   THD *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
@@ -3999,7 +3999,7 @@ int Field_timestamp::store(longlong nr, bool unsigned_val)
   MYSQL_TIME l_time;
   my_time_t timestamp= 0;
   int error;
-  my_bool in_dst_time_gap;
+  bool in_dst_time_gap;
   THD *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
@@ -4612,224 +4612,6 @@ void Field_year::sql_type(String &res) const
   CHARSET_INFO *cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*)res.ptr(),res.alloced_length(),
 			  "year(%d)",(int) field_length));
-}
-
-
-/****************************************************************************
-** date type
-** In string context: YYYY-MM-DD
-** In number context: YYYYMMDD
-** Stored as a 4 byte unsigned int
-****************************************************************************/
-
-int Field_date::store(const char *from, uint len,CHARSET_INFO *cs)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  MYSQL_TIME l_time;
-  uint32 tmp;
-  int error;
-  THD *thd= table ? table->in_use : current_thd;
-
-  if (str_to_datetime(from, len, &l_time, TIME_FUZZY_DATE |
-                      (thd->variables.sql_mode &
-                       (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                        MODE_INVALID_DATES)),
-                      &error) <= MYSQL_TIMESTAMP_ERROR)
-  {
-    tmp= 0;
-    error= 2;
-  }
-  else
-    tmp=(uint32) l_time.year*10000L + (uint32) (l_time.month*100+l_time.day);
-
-  if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
-                         from, len, MYSQL_TIMESTAMP_DATE, 1);
-
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-  {
-    int4store(ptr,tmp);
-  }
-  else
-#endif
-    longstore(ptr,tmp);
-  return error;
-}
-
-
-int Field_date::store(double nr)
-{
-  longlong tmp;
-  int error= 0;
-  if (nr >= 19000000000000.0 && nr <= 99991231235959.0)
-    nr=floor(nr/1000000.0);			// Timestamp to date
-  if (nr < 0.0 || nr > 99991231.0)
-  {
-    tmp= 0LL;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_OUT_OF_RANGE,
-                         nr, MYSQL_TIMESTAMP_DATE);
-    error= 1;
-  }
-  else
-    tmp= (longlong) rint(nr);
-
-  return Field_date::store(tmp, TRUE);
-}
-
-
-int Field_date::store(longlong nr, bool unsigned_val)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  MYSQL_TIME not_used;
-  int error;
-  longlong initial_nr= nr;
-  THD *thd= table ? table->in_use : current_thd;
-
-  nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
-                                         (thd->variables.sql_mode &
-                                          (MODE_NO_ZERO_IN_DATE |
-                                           MODE_NO_ZERO_DATE |
-                                           MODE_INVALID_DATES))), &error);
-
-  if (nr == -1LL)
-  {
-    nr= 0;
-    error= 2;
-  }
-
-  if (nr >= 19000000000000.0 && nr <= 99991231235959.0)
-    nr= (longlong) floor(nr/1000000.0);         // Timestamp to date
-
-  if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         error == 2 ? ER_WARN_DATA_OUT_OF_RANGE :
-                         WARN_DATA_TRUNCATED, initial_nr,
-                         MYSQL_TIMESTAMP_DATETIME, 1);
-
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-  {
-    int4store(ptr, nr);
-  }
-  else
-#endif
-    longstore(ptr, nr);
-  return error;
-}
-
-
-bool Field_date::send_binary(Protocol *protocol)
-{
-  longlong tmp= Field_date::val_int();
-  MYSQL_TIME tm;
-  tm.year= (uint32) tmp/10000L % 10000;
-  tm.month= (uint32) tmp/100 % 100;
-  tm.day= (uint32) tmp % 100;
-  return protocol->store_date(&tm);
-}
-
-
-double Field_date::val_real(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int32 j;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    j=sint4korr(ptr);
-  else
-#endif
-    longget(j,ptr);
-  return (double) (uint32) j;
-}
-
-
-longlong Field_date::val_int(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int32 j;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    j=sint4korr(ptr);
-  else
-#endif
-    longget(j,ptr);
-  return (longlong) (uint32) j;
-}
-
-
-String *Field_date::val_str(String *val_buffer,
-			    String *val_ptr __attribute__((unused)))
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  MYSQL_TIME ltime;
-  val_buffer->alloc(field_length);
-  int32 tmp;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    tmp=sint4korr(ptr);
-  else
-#endif
-    longget(tmp,ptr);
-  ltime.neg= 0;
-  ltime.year= (int) ((uint32) tmp/10000L % 10000);
-  ltime.month= (int) ((uint32) tmp/100 % 100);
-  ltime.day= (int) ((uint32) tmp % 100);
-  make_date((DATE_TIME_FORMAT *) 0, &ltime, val_buffer);
-  return val_buffer;
-}
-
-
-bool Field_date::get_time(MYSQL_TIME *ltime)
-{
-  bzero((char *)ltime, sizeof(MYSQL_TIME));
-  return 0;
-}
-
-
-int Field_date::cmp(const uchar *a_ptr, const uchar *b_ptr)
-{
-  int32 a,b;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-  {
-    a=sint4korr(a_ptr);
-    b=sint4korr(b_ptr);
-  }
-  else
-#endif
-  {
-    longget(a,a_ptr);
-    longget(b,b_ptr);
-  }
-  return ((uint32) a < (uint32) b) ? -1 : ((uint32) a > (uint32) b) ? 1 : 0;
-}
-
-
-void Field_date::sort_string(uchar *to,uint length __attribute__((unused)))
-{
-#ifdef WORDS_BIGENDIAN
-  if (!table || !table->s->db_low_byte_first)
-  {
-    to[0] = ptr[0];
-    to[1] = ptr[1];
-    to[2] = ptr[2];
-    to[3] = ptr[3];
-  }
-  else
-#endif
-  {
-    to[0] = ptr[3];
-    to[1] = ptr[2];
-    to[2] = ptr[1];
-    to[3] = ptr[0];
-  }
-}
-
-void Field_date::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("date"));
 }
 
 
@@ -8146,10 +7928,10 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   case MYSQL_TYPE_TINY	: return 1;
   case MYSQL_TYPE_SHORT : return 2;
   case MYSQL_TYPE_INT24:
+  case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_NEWDATE:
   case MYSQL_TYPE_TIME:   return 3;
   case MYSQL_TYPE_TIMESTAMP:
-  case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_LONG	: return 4;
   case MYSQL_TYPE_FLOAT : return sizeof(float);
   case MYSQL_TYPE_DOUBLE: return sizeof(double);
@@ -8304,8 +8086,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
     return new Field_year(ptr,field_length,null_pos,null_bit,
 			  unireg_check, field_name);
   case MYSQL_TYPE_DATE:
-    return new Field_date(ptr,null_pos,null_bit,
-			  unireg_check, field_name, field_charset);
   case MYSQL_TYPE_NEWDATE:
     return new Field_newdate(ptr,null_pos,null_bit,
 			     unireg_check, field_name, field_charset);

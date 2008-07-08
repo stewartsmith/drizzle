@@ -67,7 +67,7 @@ noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
 			opt_range.h protocol.h rpl_tblmap.h rpl_utility.h \
 			rpl_reporting.h \
 			log.h sql_show.h rpl_rli.h rpl_mi.h \
-			sql_select.h structs.h table.h sql_udf.h hash_filo.h \
+			sql_select.h structs.h table.h sql_udf.h \
 			lex.h lex_symbol.h sql_crypt.h  \
 			sql_repl.h slave.h rpl_filter.h \
 			log_event.h rpl_record.h \
@@ -87,7 +87,7 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			protocol.cc sql_state.c \
 			lock.cc \
 			sql_string.cc sql_manager.cc sql_map.cc \
-			mysqld.cc hash_filo.cc \
+			mysqld.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \
 			set_var.cc sql_yacc.yy \
 			sql_base.cc table.cc sql_select.cc sql_insert.cc \

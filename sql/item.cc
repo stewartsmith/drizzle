@@ -4006,7 +4006,7 @@ bool Item::is_datetime()
 {
   switch (field_type())
   {
-    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_NEWDATE:
     case MYSQL_TYPE_DATETIME:
     case MYSQL_TYPE_TIMESTAMP:
       return true;
@@ -4180,7 +4180,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
 			  name, &my_charset_bin);
     break;
   case MYSQL_TYPE_NEWDATE:
-  case MYSQL_TYPE_DATE:
     field= new Field_newdate(maybe_null, name, &my_charset_bin);
     break;
   case MYSQL_TYPE_TIME:
@@ -4803,14 +4802,13 @@ bool Item::send(Protocol *protocol, String *buffer)
     break;
   }
   case MYSQL_TYPE_DATETIME:
-  case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_TIMESTAMP:
   {
     MYSQL_TIME tm;
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
     {
-      if (f_type == MYSQL_TYPE_DATE)
+      if (f_type == MYSQL_TYPE_NEWDATE)
 	return protocol->store_date(&tm);
       else
 	result= protocol->store(&tm);
@@ -6471,7 +6469,6 @@ uint32 Item_type_holder::display_length(Item *item)
   switch (item->field_type())
   {
   case MYSQL_TYPE_TIMESTAMP:
-  case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_TIME:
   case MYSQL_TYPE_DATETIME:
   case MYSQL_TYPE_YEAR:

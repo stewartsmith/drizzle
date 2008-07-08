@@ -65,7 +65,6 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
   my_ptrdiff_t const rec_offset= record - table->record[0];
   my_ptrdiff_t const def_offset= table->s->default_values - table->record[0];
 
-  DBUG_ENTER("pack_row");
 
   /*
     We write the null bits and the packed records using one pass
@@ -75,20 +74,13 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
   unsigned int null_bits= (1U << 8) - 1;
   // Mask to mask out the correct but among the null bits
   unsigned int null_mask= 1U;
-  DBUG_PRINT("debug", ("null ptr: 0x%lx; row start: %p; null bytes: %d",
-                       (ulong) null_ptr, row_data, null_byte_count));
-  DBUG_PRINT_BITSET("debug", "cols: %s", cols);
   for ( ; (field= *p_field) ; p_field++)
   {
-    DBUG_PRINT("debug", ("field: %s; null mask: 0x%x",
-                         field->field_name, null_mask));
     if (bitmap_is_set(cols, p_field - table->field))
     {
       my_ptrdiff_t offset;
       if (field->is_null(rec_offset))
       {
-        DBUG_PRINT("debug", ("Is NULL; null_mask: 0x%x; null_bits: 0x%x",
-                             null_mask, null_bits));
         offset= def_offset;
         null_bits |= null_mask;
       }
@@ -109,11 +101,6 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
 #endif
         pack_ptr= field->pack(pack_ptr, field->ptr + offset,
                               field->max_data_length(), TRUE);
-        DBUG_PRINT("debug", ("Packed into row; pack_ptr: 0x%lx;"
-                             " pack_ptr':0x%lx; bytes: %d",
-                             (ulong) old_pack_ptr,
-                             (ulong) pack_ptr,
-                             (int) (pack_ptr - old_pack_ptr)));
       }
 
       null_mask <<= 1;
@@ -125,12 +112,6 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
         null_bits= (1U << 8) - 1;
       }
     }
-#ifndef DBUG_OFF
-    else
-    {
-      DBUG_PRINT("debug", ("Skipped"));
-    }
-#endif
   }
 
   /*
@@ -148,7 +129,7 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
   */
   DBUG_ASSERT(null_ptr == row_data + null_byte_count);
   DBUG_DUMP("row_data", row_data, pack_ptr - row_data);
-  DBUG_RETURN(static_cast<size_t>(pack_ptr - row_data));
+  return(static_cast<size_t>(pack_ptr - row_data));
 }
 #endif
 
@@ -193,7 +174,6 @@ unpack_row(Relay_log_info const *rli,
            uchar const *const row_data, MY_BITMAP const *cols,
            uchar const **const row_end, ulong *const master_reclength)
 {
-  DBUG_ENTER("unpack_row");
   DBUG_ASSERT(row_data);
   size_t const master_null_byte_count= (bitmap_bits_set(cols) + 7) / 8;
   int error= 0;
@@ -224,11 +204,6 @@ unpack_row(Relay_log_info const *rli,
   {
     Field *const f= *field_ptr;
 
-    DBUG_PRINT("debug", ("%sfield: %s; null mask: 0x%x; null bits: 0x%lx;"
-                         " row start: %p; null bytes: %ld",
-                         bitmap_is_set(cols, field_ptr -  begin_ptr) ? "+" : "-",
-                         f->field_name, null_mask, (ulong) null_bits,
-                         pack_ptr, (ulong) master_null_byte_count));
 
     /*
       No need to bother about columns that does not exist: they have
@@ -250,9 +225,6 @@ unpack_row(Relay_log_info const *rli,
 
       if ((null_bits & null_mask) && f->maybe_null())
       {
-        DBUG_PRINT("debug", ("Was NULL; null mask: 0x%x; null bits: 0x%x",
-                             null_mask, null_bits));
-
         f->set_null();
       }
       else
@@ -274,20 +246,10 @@ unpack_row(Relay_log_info const *rli,
         uchar const *const old_pack_ptr= pack_ptr;
 #endif
         pack_ptr= f->unpack(f->ptr, pack_ptr, metadata, TRUE);
-	DBUG_PRINT("debug", ("Unpacked; metadata: 0x%x;"
-                             " pack_ptr: 0x%lx; pack_ptr': 0x%lx; bytes: %d",
-                             metadata, (ulong) old_pack_ptr, (ulong) pack_ptr,
-                             (int) (pack_ptr - old_pack_ptr)));
       }
 
       null_mask <<= 1;
     }
-#ifndef DBUG_OFF
-    else
-    {
-      DBUG_PRINT("debug", ("Non-existent: skipped"));
-    }
-#endif
     i++;
   }
 
@@ -334,7 +296,7 @@ unpack_row(Relay_log_info const *rli,
       *master_reclength = table->s->reclength;
   }
   
-  DBUG_RETURN(error);
+  return(error);
 }
 
 /**
@@ -368,7 +330,6 @@ unpack_row(Relay_log_info const *rli,
 int prepare_record(TABLE *const table, 
                    const MY_BITMAP *cols, uint width, const bool check)
 {
-  DBUG_ENTER("prepare_record");
 
   int error= 0;
   empty_record(table);
@@ -380,7 +341,6 @@ int prepare_record(TABLE *const table,
     have no sensible default.
   */
 
-  DBUG_PRINT_BITSET("debug", "cols: %s", cols);
   for (Field **field_ptr= table->field ; *field_ptr ; ++field_ptr)
   {
     if ((uint) (field_ptr - table->field) >= cols->n_bits ||
@@ -396,13 +356,12 @@ int prepare_record(TABLE *const table,
       }
       else
       {
-        DBUG_PRINT("debug", ("Set default; field: %s", f->field_name));
         f->set_default();
       }
     }
   }
 
-  DBUG_RETURN(error);
+  return(error);
 }
 
 #endif // HAVE_REPLICATION

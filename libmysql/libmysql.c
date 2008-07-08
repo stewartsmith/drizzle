@@ -34,7 +34,7 @@
 #ifdef	 HAVE_PWD_H
 #include <pwd.h>
 #endif
-#if !defined(MSDOS) && !defined(__WIN__)
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -45,7 +45,7 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#endif /* !defined(MSDOS) && !defined(__WIN__) */
+
 #ifdef HAVE_POLL
 #include <sys/poll.h>
 #endif
@@ -66,19 +66,8 @@
 ulong 		net_buffer_length=8192;
 ulong		max_allowed_packet= 1024L*1024L*1024L;
 
-
-#ifdef EMBEDDED_LIBRARY
-#undef net_flush
-my_bool	net_flush(NET *net);
-#endif
-
-#if defined(MSDOS) || defined(__WIN__)
-/* socket_errno is defined in my_global.h for all platforms */
-#define perror(A)
-#else
 #include <errno.h>
 #define SOCKET_ERROR -1
-#endif /* __WIN__ */
 
 /*
   If allowed through some configuration, then this needs to
@@ -126,7 +115,6 @@ int STDCALL mysql_server_init(int argc __attribute__((unused)),
     if (!mysql_port)
     {
       mysql_port = MYSQL_PORT;
-#ifndef MSDOS
       {
 	struct servent *serv_ptr;
 	char	*env;
@@ -148,7 +136,6 @@ int STDCALL mysql_server_init(int argc __attribute__((unused)),
         if ((env = getenv("MYSQL_TCP_PORT")))
           mysql_port =(uint) atoi(env);
       }
-#endif
     }
     if (!mysql_unix_port)
     {

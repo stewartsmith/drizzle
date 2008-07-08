@@ -10560,7 +10560,7 @@ remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
         thd->substitute_null_with_insert_id= false;
       }
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
-      else if (((field->type() == MYSQL_TYPE_DATE) ||
+      else if (((field->type() == MYSQL_TYPE_NEWDATE) ||
 		(field->type() == MYSQL_TYPE_DATETIME)) &&
 		(field->flags & NOT_NULL_FLAG) &&
 	       !field->table->maybe_null)
@@ -10832,7 +10832,7 @@ static Field *create_tmp_field_from_item(THD *thd, Item *item, TABLE *table,
       To preserve type they needed to be handled separately.
     */
     if ((type= item->field_type()) == MYSQL_TYPE_DATETIME ||
-        type == MYSQL_TYPE_TIME || type == MYSQL_TYPE_DATE ||
+        type == MYSQL_TYPE_TIME || type == MYSQL_TYPE_NEWDATE ||
         type == MYSQL_TYPE_TIMESTAMP)
       new_field= item->tmp_table_field_from_field_type(table, 1);
     /* 
@@ -16747,7 +16747,7 @@ calc_group_buffer(JOIN *join,ORDER *group)
           by 8 as maximum pack length of such fields.
         */
         if (type == MYSQL_TYPE_TIME ||
-            type == MYSQL_TYPE_DATE ||
+            type == MYSQL_TYPE_NEWDATE ||
             type == MYSQL_TYPE_DATETIME ||
             type == MYSQL_TYPE_TIMESTAMP)
         {

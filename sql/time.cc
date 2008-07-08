@@ -255,7 +255,7 @@ str_to_datetime_with_warn(const char *str, uint length, MYSQL_TIME *l_time,
      0 - t contains datetime value which is out of TIMESTAMP range.
      
 */
-my_time_t TIME_to_timestamp(THD *thd, const MYSQL_TIME *t, my_bool *in_dst_time_gap)
+my_time_t TIME_to_timestamp(THD *thd, const MYSQL_TIME *t, bool *in_dst_time_gap)
 {
   my_time_t timestamp;
 

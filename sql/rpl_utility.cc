@@ -80,7 +80,6 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
   case MYSQL_TYPE_NEWDATE:
     length= 3;
     break;
-  case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_TIME:
     length= 3;
     break;
