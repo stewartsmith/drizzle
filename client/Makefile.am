@@ -41,8 +41,8 @@ bin_PROGRAMS =			mysql \
 				mysqldump \
 				mysqlimport \
 				mysqlshow \
-				mysqlslap \
-				mysqltest 
+				mysqltest \
+				mysqlslap 
 
 mysql_SOURCES =			mysql.cc readline.cc sql_string.cc \
 				completion_hash.cc
@@ -68,11 +68,12 @@ mysqlshow_SOURCES=		mysqlshow.c
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 
-mysqltest_SOURCES=		mysqltest.c \
+mysqltest_SOURCES=		mysqltest.cc \
 				$(top_srcdir)/mysys/my_getsystime.c \
 				$(top_srcdir)/mysys/my_copy.c \
                                 $(top_srcdir)/mysys/my_mkdir.c
-mysqltest_LDADD =		$(top_builddir)/regex/libregex.a $(LDADD)
+mysqltest_LDADD =		${LDADD} @PCRE_LIBS@
+mysqltest_CFLAGS = 		${AM_CPPFLAGS} @PCRE_CFLAGS@
 
 # Fix for mit-threads
 DEFS =			-DUNDEF_THREADS_HACK \

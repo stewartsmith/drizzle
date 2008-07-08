@@ -32,6 +32,8 @@ SUBDIRS =		share
 libexec_PROGRAMS =	drizzled
 EXTRA_PROGRAMS =	gen_lex_hash
 bin_PROGRAMS =		
+bin_SCRIPTS = 		drizzledumpslow drizzled_safe 
+
 DTRACE =                @DTRACE@
 DTRACEFLAGS =           @DTRACEFLAGS@
 DTRACEFILES =           handler.o \
@@ -48,7 +50,7 @@ SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
 LDADD = $(SUPPORTING_LIBS) -lz -levent
-drizzled_LDADD =		$(top_builddir)/sql-common/libsqlcommon.la \
+drizzled_LDADD =	$(top_builddir)/sql-common/libsqlcommon.la \
 			libhandler.la \
 			$(libevent_libs) \
 			@mysql_plugin_libs@ \
@@ -85,7 +87,7 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			protocol.cc sql_state.c \
 			lock.cc \
 			sql_string.cc sql_manager.cc sql_map.cc \
-			mysqld.cc \
+			drizzled.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \
 			set_var.cc sql_yacc.yy \
 			sql_base.cc table.cc sql_select.cc sql_insert.cc \
@@ -133,12 +135,12 @@ BUILT_SOURCES =		$(BUILT_MAINT_SRC) lex_hash.h link_sources
 EXTRA_DIST =		$(BUILT_MAINT_SRC) \
 			message.mc \
 			probes.d
-CLEANFILES =        	lex_hash.h sql_yacc.output link_sources $(nodist_mysqld_SOURCES)
+CLEANFILES =        	lex_hash.h sql_yacc.output link_sources $(nodist_drizzled_SOURCES)
 DISTCLEANFILES =        $(EXTRA_PROGRAMS)
 MAINTAINERCLEANFILES =  $(BUILT_MAINT_SRC)
 AM_YFLAGS =		-d --verbose
 
-# These are listed in 'nodist_mysqld_SOURCES'
+# These are listed in 'nodist_drizzled_SOURCES'
 link_sources:
 	rm -f client.c
 	@LN_CP_F@ $(top_srcdir)/libmysql/client.c client.c

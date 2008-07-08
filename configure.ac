@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([sql/mysqld.cc])
+AC_CONFIG_SRCDIR([sql/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
@@ -579,6 +579,22 @@ AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
 
 #--------------------------------------------------------------------
+# Check for libpcre
+#--------------------------------------------------------------------
+
+AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [
+  ac_cv_have_libpcre=yes
+  AC_DEFINE([HAVE_PCRE], [1], [Perl Compatible Regex Lib for mysqltest])
+  ],[
+  ac_cv_have_libpcre=no
+  AC_MSG_WARN([PCRE not found - mysqltest will not be built])
+  ])
+AM_CONDITIONAL(BUILD_MYSQLTEST, test "x$ac_cv_have_libpcre" = "xyes")
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
+#--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
 # and defines HAVE_LIBM etc
 #--------------------------------------------------------------------
@@ -630,14 +646,6 @@ AC_CHECK_FUNCS(dlopen dlerror)
 LIBS="$my_save_LIBS"
 
 AC_CHECK_FUNCS(strtok_r)
-
-
-# System characteristics
-case $SYSTEM_TYPE in
-  *)
-AC_SYS_RESTARTABLE_SYSCALLS
-    ;;
-esac
 
 # Build optimized or debug version ?
 # First check for gcc and g++
@@ -780,13 +788,7 @@ MYSQL_NEEDS_MYSYS_NEW
 AC_CHECK_SIZEOF(char, 1)
 if test "$ac_cv_sizeof_char" -eq 0
 then
-  AC_MSG_ERROR([No size for char type.
-A likely cause for this could be that there isn't any
-static libraries installed. You can verify this by checking if you have libm.a
-in /lib, /usr/lib or some other standard place.  If this is the problem,
-install the static libraries and try again.  If this isn't the problem,
-examine config.log for possible errors.  If you want to report this, use
-'scripts/mysqlbug' and include at least the last 20 rows from config.log!])
+  AC_MSG_ERROR([No size for char type.])
 fi
 AC_CHECK_SIZEOF(char*, 4)
 AC_CHECK_SIZEOF(short, 2)
@@ -1206,15 +1208,17 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
- strings/Makefile strings/tests/Makefile regex/Makefile storage/Makefile dnl
+ strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libmysql/Makefile client/Makefile dnl
  sql/Makefile sql/share/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
- dbug/Makefile scripts/Makefile include/Makefile dnl
+ dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
- mysql-test/Makefile dnl
- include/mysql_version.h plugin/Makefile)
+ mysql-test/Makefile mysql-test/install_test_db dnl
+ include/mysql_version.h plugin/Makefile dnl
+ sql/drizzled_safe support-files/libmysqlclient.pc dnl
+ support-files/mysql.server support-files/mysql-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
