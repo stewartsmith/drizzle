@@ -242,7 +242,7 @@ static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 
 /* Global variables */
 
-bool opt_update_log, opt_bin_log;
+bool opt_bin_log;
 my_bool opt_log, opt_slow_log;
 ulong log_output_options;
 my_bool opt_log_queries_not_using_indexes= 0;
@@ -460,7 +460,7 @@ static my_bool opt_do_pstack;
 static my_bool opt_bootstrap, opt_myisam_log;
 static int cleanup_done;
 static ulong opt_specialflag, opt_myisam_block_size;
-static char *opt_update_logname, *opt_binlog_index_name;
+static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *mysql_home_ptr, *pidfile_name_ptr;
 static int defaults_argc;
@@ -2482,74 +2482,15 @@ static int init_server_components()
     unireg_abort(1);
   }
 
-  /* need to configure logging before initializing storage engines */
-  if (opt_update_log)
-  {
-    /*
-      Update log is removed since 5.0. But we still accept the option.
-      The idea is if the user already uses the binlog and the update log,
-      we completely ignore any option/variable related to the update log, like
-      if the update log did not exist. But if the user uses only the update
-      log, then we translate everything into binlog for him (with warnings).
-      Implementation of the above :
-      - If mysqld is started with --log-update and --log-bin,
-      ignore --log-update (print a warning), push a warning when SQL_LOG_UPDATE
-      is used, and turn off --sql-bin-update-same.
-      This will completely ignore SQL_LOG_UPDATE
-      - If mysqld is started with --log-update only,
-      change it to --log-bin (with the filename passed to log-update,
-      plus '-bin') (print a warning), push a warning when SQL_LOG_UPDATE is
-      used, and turn on --sql-bin-update-same.
-      This will translate SQL_LOG_UPDATE to SQL_LOG_BIN.
-
-      Note that we tell the user that --sql-bin-update-same is deprecated and
-      does nothing, and we don't take into account if he used this option or
-      not; but internally we give this variable a value to have the behaviour
-      we want (i.e. have SQL_LOG_UPDATE influence SQL_LOG_BIN or not).
-      As sql-bin-update-same, log-update and log-bin cannot be changed by the
-      user after starting the server (they are not variables), the user will
-      not later interfere with the settings we do here.
-    */
-    if (opt_bin_log)
-    {
-      opt_sql_bin_update= 0;
-      sql_print_error("The update log is no longer supported by MySQL in \
-version 5.0 and above. It is replaced by the binary log.");
-    }
-    else
-    {
-      opt_sql_bin_update= 1;
-      opt_bin_log= 1;
-      if (opt_update_logname)
-      {
-        /* as opt_bin_log==0, no need to free opt_bin_logname */
-        if (!(opt_bin_logname= my_strdup(opt_update_logname, MYF(MY_WME))))
-          exit(EXIT_OUT_OF_MEMORY);
-        sql_print_error("The update log is no longer supported by MySQL in \
-version 5.0 and above. It is replaced by the binary log. Now starting MySQL \
-with --log-bin='%s' instead.",opt_bin_logname);
-      }
-      else
-        sql_print_error("The update log is no longer supported by MySQL in \
-version 5.0 and above. It is replaced by the binary log. Now starting MySQL \
-with --log-bin instead.");
-    }
-  }
-  if (opt_log_slave_updates && !opt_bin_log)
-  {
-    sql_print_error("You need to use --log-bin to make "
-                    "--log-slave-updates work.");
-    unireg_abort(1);
-  }
   if (!opt_bin_log)
     if (opt_binlog_format_id != BINLOG_FORMAT_UNSPEC)
-  {
-    sql_print_error("You need to use --log-bin to make "
-                    "--binlog-format work.");
-    unireg_abort(1);
-  }
+    {
+      sql_print_error("You need to use --log-bin to make "
+                      "--binlog-format work.");
+      unireg_abort(1);
+    }
     else
-  {
+    {
       global_system_variables.binlog_format= BINLOG_FORMAT_MIXED;
     }
   else
@@ -3562,11 +3503,6 @@ struct my_option my_long_options[] =
    REQUIRED_ARG, TC_LOG_MIN_SIZE, TC_LOG_MIN_SIZE, ULONG_MAX, 0,
    TC_LOG_PAGE_SIZE, 0},
 #endif
-  {"log-update", OPT_UPDATE_LOG,
-   "The update log is deprecated since version 5.0, is replaced by the binary \
-log and this option justs turns on --log-bin instead.",
-   (uchar**) &opt_update_logname, (uchar**) &opt_update_logname, 0, GET_STR,
-   OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-warnings", 'W', "Log some not critical warnings to the log file.",
    (uchar**) &global_system_variables.log_warnings,
    (uchar**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
@@ -4448,11 +4384,10 @@ static void mysql_init_variables(void)
   opt_skip_slave_start= opt_reckless_slave = 0;
   mysql_home[0]= pidfile_name[0]= log_error_file[0]= 0;
   opt_log= opt_slow_log= 0;
-  opt_update_log= 0;
   log_output_options= find_bit_type(log_output_str, &log_output_typelib);
   opt_bin_log= 0;
   opt_disable_networking= opt_skip_show_db=0;
-  opt_logname= opt_update_logname= opt_binlog_index_name= opt_slow_logname= 0;
+  opt_logname= opt_binlog_index_name= opt_slow_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_auth= 0;
   opt_secure_file_priv= 0;
@@ -4660,9 +4595,6 @@ mysqld_get_one_option(int optid,
     break;
   case (int) OPT_ISAM_LOG:
     opt_myisam_log=1;
-    break;
-  case (int) OPT_UPDATE_LOG:
-    opt_update_log=1;
     break;
   case (int) OPT_BIN_LOG:
     opt_bin_log= test(argument != disabled_my_option);
@@ -5096,7 +5028,7 @@ static void set_server_version(void)
   if (!strstr(MYSQL_SERVER_SUFFIX_STR, "-debug"))
     end= strmov(end, "-debug");
 #endif
-  if (opt_log || opt_update_log || opt_slow_log || opt_bin_log)
+  if (opt_log || opt_slow_log || opt_bin_log)
     strmov(end, "-log");                        // This may slow down system
 }
 
