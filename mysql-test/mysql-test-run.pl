@@ -657,18 +657,12 @@ sub command_line_setup () {
 
   if (!$opt_extern)
   {
-    $exe_mysqld=       mtr_exe_exists (vs_config_dirs('sql', 'mysqld'),
-                                       vs_config_dirs('sql', 'mysqld-debug'),
-				       "$glob_basedir/sql/mysqld",
-				       "$path_client_bindir/mysqld-max-nt",
-				       "$path_client_bindir/mysqld-max",
-				       "$path_client_bindir/mysqld-nt",
-				       "$path_client_bindir/mysqld",
-				       "$path_client_bindir/mysqld-debug",
-				       "$path_client_bindir/mysqld-max",
-				       "$glob_basedir/libexec/mysqld",
-				       "$glob_basedir/bin/mysqld",
-				       "$glob_basedir/sbin/mysqld");
+    $exe_mysqld=       mtr_exe_exists (vs_config_dirs('sql', 'drizzled'),
+				       "$glob_basedir/sql/drizzled",
+				       "$path_client_bindir/drizzled",
+				       "$glob_basedir/libexec/drizzled",
+				       "$glob_basedir/bin/drizzled",
+				       "$glob_basedir/sbin/drizzled");
 
     # Use the mysqld found above to find out what features are available
     collect_mysqld_features();

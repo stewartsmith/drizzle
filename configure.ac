@@ -8,7 +8,7 @@ AC_CONFIG_SRCDIR([sql/mysqld.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(mysql, 7.0.0, no-define)
+AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -419,7 +419,7 @@ AC_CHECK_NOEXECSTACK
 
 if test "$am_cv_prog_cc_stdc" = "no"
 then
-  AC_MSG_ERROR([MySQL requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
+  AC_MSG_ERROR([Drizzle requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
 fi
 
 
@@ -481,7 +481,7 @@ fi
 
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
-            [Which port to use for MySQL services @<:@default=3306@:>@])],
+            [Which port to use for Drizzle services @<:@default=3306@:>@])],
     [ MYSQL_TCP_PORT=$withval ],
     [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -705,7 +705,7 @@ fi
 # If we should allow error injection tests
 AC_ARG_WITH([error-inject],
     [AS_HELP_STRING([--with-error-inject],
-	    [Enable error injection in MySQL Server @<:@default=off@:>@])],
+	    [Enable error injection in Drizzle Server @<:@default=off@:>@])],
     [ with_error_inject=$withval ],
     [ with_error_inject=no ])
 
@@ -714,7 +714,7 @@ then
   if test "$with_error_inject" = "yes"
   then
     AC_DEFINE([ERROR_INJECT_SUPPORT], [1],
-              [Enable error injection in MySQL Server])
+              [Enable error injection in Drizzle Server])
   fi
 fi
 
@@ -803,13 +803,13 @@ fi
 AC_CHECK_SIZEOF(long long, 8)
 if test "$ac_cv_sizeof_long_long" -eq 0
 then
-  AC_MSG_ERROR("MySQL needs a long long type.")
+  AC_MSG_ERROR("Drizzle needs a long long type.")
 fi
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
 if test "$ac_cv_sizeof_off_t" -eq 0
 then
-  AC_MSG_ERROR("MySQL needs a off_t type.")
+  AC_MSG_ERROR("Drizzle needs a off_t type.")
 fi
 
 dnl
