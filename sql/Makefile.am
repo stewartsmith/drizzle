@@ -29,7 +29,7 @@ AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			-I$(srcdir) $(openssl_includes) \
 			$(libevent_includes)
 SUBDIRS =		share
-libexec_PROGRAMS =	mysqld
+libexec_PROGRAMS =	drizzled
 EXTRA_PROGRAMS =	gen_lex_hash
 bin_PROGRAMS =		
 bin_SCRIPTS = 		mysqldumpslow mysqld_safe 
@@ -50,7 +50,7 @@ SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
 LDADD = $(SUPPORTING_LIBS) -lz -levent
-mysqld_LDADD =		$(top_builddir)/sql-common/libsqlcommon.la \
+drizzled_LDADD =		$(top_builddir)/sql-common/libsqlcommon.la \
 			libhandler.la \
 			$(libevent_libs) \
 			@mysql_plugin_libs@ \
@@ -78,7 +78,7 @@ noinst_HEADERS =	item.h item_func.h item_sum.h item_cmpfunc.h \
 			sql_plugin.h \
 			probes.h
 
-mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
+drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			item.cc item_sum.cc item_buff.cc item_func.cc \
 			item_cmpfunc.cc item_strfunc.cc item_timefunc.cc \
 			thr_malloc.cc item_create.cc item_subselect.cc \
@@ -114,10 +114,10 @@ mysqld_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_builtin.cc 
 
 libhandler_la_SOURCES = handler.cc
-nodist_mysqld_SOURCES = client.c net_serv.c
+nodist_drizzled_SOURCES = client.c net_serv.c
 
 if HAVE_DTRACE
-  mysqld_SOURCES += probes.d
+  drizzled_SOURCES += probes.d
 endif
 
 gen_lex_hash_SOURCES =	gen_lex_hash.cc

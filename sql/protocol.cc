@@ -321,11 +321,6 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
 
   if (net->vio == 0)
   {
-    if (thd->bootstrap)
-    {
-      /* In bootstrap it's ok to print on stderr */
-      fprintf(stderr,"ERROR: %d  %s\n",sql_errno,err);
-    }
     DBUG_VOID_RETURN;
   }
 
