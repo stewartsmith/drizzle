@@ -1171,6 +1171,10 @@ do { doubleget_union _tmp; \
 /* Length of decimal number represented by INT64. */
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
 
+#ifdef _cplusplus
+#include <string>
+#endif
+
 /* Define some useful general macros (should be done after all headers). */
 #if !defined(max)
 #define max(a, b)	((a) > (b) ? (a) : (b))

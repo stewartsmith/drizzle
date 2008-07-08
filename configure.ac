@@ -579,6 +579,22 @@ AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
 
 #--------------------------------------------------------------------
+# Check for libpcre
+#--------------------------------------------------------------------
+
+AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [
+  ac_cv_have_libpcre=yes
+  AC_DEFINE([HAVE_PCRE], [1], [Perl Compatible Regex Lib for mysqltest])
+  ],[
+  ac_cv_have_libpcre=no
+  AC_MSG_WARN([PCRE not found - mysqltest will not be built])
+  ])
+AM_CONDITIONAL(BUILD_MYSQLTEST, test "x$ac_cv_have_libpcre" = "xyes")
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
+#--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
 # and defines HAVE_LIBM etc
 #--------------------------------------------------------------------
@@ -1192,7 +1208,7 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
- strings/Makefile strings/tests/Makefile regex/Makefile storage/Makefile dnl
+ strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libmysql/Makefile client/Makefile dnl
  sql/Makefile sql/share/Makefile dnl

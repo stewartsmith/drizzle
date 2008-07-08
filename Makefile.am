@@ -22,7 +22,7 @@ endif
 SUBDIRS =		. include \
 			sql-common vio \
 			strings mysys $(d_dbug) \
-                        extra regex \
+                        extra \
                         libmysql client storage plugin \
                         sql \
 			mysql-test support-files
