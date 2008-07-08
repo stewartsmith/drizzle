@@ -589,7 +589,6 @@ PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [
   AC_CHECK_LIB(pcrecpp, [DoMatch], AC_MSG_ERROR([PCRE not found]))
   AC_MSG_WARN([PCRE not found - mysqltest will not be built])
   ])
-AM_CONDITIONAL(BUILD_MYSQLTEST, test "x$ac_cv_have_libpcre" = "xyes")
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
