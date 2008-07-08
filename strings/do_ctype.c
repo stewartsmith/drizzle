@@ -140,27 +140,12 @@ void init_case_convert()
     to_upper[i]= sort_order[i]= to_lower[i]= (char) i;
 #endif
 
-#ifdef MSDOS
-  higher_pos= (uchar *) "\217\216\231\232\220"; /* Extra chars to konv. */
-  lower_pos=  (uchar *) "\206\204\224\201\202";
-#else
-#if defined(HPUX10) && ASCII_BITS_USED == 8
-  higher_pos= (uchar *) "\xd0\xd8\xda\xdb\xdc\xd3";
-  lower_pos=  (uchar *) "\xd4\xcc\xce\xdf\xc9\xd7";
-#else
 #ifdef USE_INTERNAL_CTYPE
   higher_pos=lower_pos= (uchar* ) "";		/* System converts chars */
 #else
-#if defined(DEC_MULTINATIONAL_CHAR) || defined(HP_MULTINATIONAL_CHAR)
-  higher_pos= (uchar *) "\305\304\326\311\334";
-  lower_pos=  (uchar *) "\345\344\366\351\374";
-#else
   higher_pos= (uchar *) "[]\\@^";
   lower_pos=  (uchar *) "{}|`~";
-#endif
 #endif /* USE_INTERNAL_CTYPE */
-#endif /* HPUX10 */
-#endif /* MSDOS */
 
   while (*higher_pos)
   {
@@ -171,13 +156,6 @@ void init_case_convert()
 	/* sets upp sortorder; higer_pos character (upper and lower) is */
 	/* changed to lower_pos character */
 
-#ifdef MSDOS
-  higher_pos= (uchar *) "\217\216\231\232\220";
-  lower_pos=  (uchar *) "\216\217\231YE";
-#else
-#if defined(HPUX10) && ASCII_BITS_USED == 8
-  higher_pos= lower_pos= (uchar *) "";		/* Tecknen i r{tt ordning */
-#else
 #ifdef USE_ISO_8859_1				/* As in USG5 ICL-386 */
   higher_pos= (uchar *) "\305\304\326\334\311";
   lower_pos=  (uchar *) "\304\305\326YE";
@@ -185,8 +163,6 @@ void init_case_convert()
   higher_pos= (uchar *) "][\\~`";		/* R{tt ordning p} tecknen */
   lower_pos= (uchar *)	"[\\]YE";		/* Ordning enligt ascii */
 #endif /* USE_ISO_8859_1 */
-#endif /* HPUX10 */
-#endif /* MSDOS */
 
   while (*higher_pos)
   {
