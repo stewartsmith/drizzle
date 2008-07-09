@@ -58,7 +58,7 @@ bool init_errmessage(void)
   {
     if (!(errmsgs= (const char**) my_malloc((ER_ERROR_LAST-ER_ERROR_FIRST+1)*
                                             sizeof(char*), MYF(0))))
-      return(tru);
+      return(true);
     for (ptr= errmsgs; ptr < errmsgs + ER_ERROR_LAST - ER_ERROR_FIRST; ptr++)
 	  *ptr= "";
   }
