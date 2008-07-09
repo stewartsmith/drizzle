@@ -143,9 +143,9 @@ AM_YFLAGS =		-d --verbose
 # These are listed in 'nodist_drizzled_SOURCES'
 link_sources:
 	rm -f client.c
-	@LN_CP_F@ $(top_srcdir)/libmysql/client.c client.c
+	@LN_CP_F@ $(top_srcdir)/libdrizzle/client.c client.c
 	rm -f net_serv.c
-	@LN_CP_F@ $(top_srcdir)/libmysql/net_serv.c net_serv.c
+	@LN_CP_F@ $(top_srcdir)/libdrizzle/net_serv.c net_serv.c
 	echo timestamp > link_sources
 
 

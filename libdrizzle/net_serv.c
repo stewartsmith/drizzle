@@ -18,8 +18,8 @@
   embedded library
  */
 #include <my_global.h>
-#include <mysql.h>
-#include <mysql_com.h>
+#include <drizzle.h>
+#include <drizzle_com.h>
 #include <mysqld_error.h>
 #include <my_sys.h>
 #include <m_string.h>

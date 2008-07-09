@@ -23,9 +23,9 @@ SUBDIRS =		. include \
 			sql-common vio \
 			strings mysys $(d_dbug) \
                         extra \
-                        libmysql client storage plugin \
+                        libdrizzle client storage plugin \
                         server \
-			mysql-test support-files
+			test support-files
 
 DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
 
@@ -51,29 +51,29 @@ bin-dist:		all
 #
 # If you are running in a shared environment, users can avoid clashing
 # port numbers by setting individual small numbers 1-100 to the
-# environment variable MTR_BUILD_THREAD. The script "mysql-test-run"
+# environment variable MTR_BUILD_THREAD. The script "drizzle-test-run"
 # will then calculate the various port numbers it needs from this,
 # making sure each user use different ports.
 
 test-ps:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl $(force) --ps-protocol --mysqld=--binlog-format=mixed
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl $(force) --ps-protocol --mysqld=--binlog-format=mixed
 
 test-nr:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl $(force) --mysqld=--binlog-format=row
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl $(force) --mysqld=--binlog-format=row
 
 test-pr:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl $(force) $(mem) --ps-protocol --mysqld=--binlog-format=row
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl $(force) $(mem) --ps-protocol --mysqld=--binlog-format=row
 
 test-ns:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl $(force) $(mem) --mysqld=--binlog-format=mixed
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl $(force) $(mem) --mysqld=--binlog-format=mixed
 
 test-binlog-statement:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl $(force) --mysqld=--binlog-format=statement
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl $(force) --mysqld=--binlog-format=statement
 
 test: test-drizzle
 
@@ -92,30 +92,30 @@ test-force-mem:
 	$(MAKE) force=--force mem=--mem test
 
 test-bt:
-	-cd mysql-test ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./mysql-test-run.pl --force --comment=funcs1_ps --ps-protocol --suite=funcs_1
-	-cd mysql-test ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./mysql-test-run.pl --force --comment=funcs2 --suite=funcs_2
-	-cd mysql-test ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./mysql-test-run.pl --force --comment=rpl --suite=rpl
-	-if [ -d mysql-test/suite/nist ] ; then \
-	  cd mysql-test ; MTR_BUILD_THREAD=auto \
-	      @PERL@ ./mysql-test-run.pl --comment=NIST+normal --force --suite=nist ; \
+	-cd test ; MTR_BUILD_THREAD=auto \
+	    @PERL@ ./drizzle-test-run.pl --force --comment=funcs1_ps --ps-protocol --suite=funcs_1
+	-cd test ; MTR_BUILD_THREAD=auto \
+	    @PERL@ ./drizzle-test-run.pl --force --comment=funcs2 --suite=funcs_2
+	-cd test ; MTR_BUILD_THREAD=auto \
+	    @PERL@ ./drizzle-test-run.pl --force --comment=rpl --suite=rpl
+	-if [ -d test/suite/nist ] ; then \
+	  cd test ; MTR_BUILD_THREAD=auto \
+	      @PERL@ ./drizzle-test-run.pl --comment=NIST+normal --force --suite=nist ; \
 	fi
-	-if [ -d mysql-test/suite/nist ] ; then \
-	  cd mysql-test ; MTR_BUILD_THREAD=auto \
-	      @PERL@ ./mysql-test-run.pl --comment=NIST+ps --force --suite=nist --ps-protocol ; \
+	-if [ -d test/suite/nist ] ; then \
+	  cd test ; MTR_BUILD_THREAD=auto \
+	      @PERL@ ./drizzle-test-run.pl --comment=NIST+ps --force --suite=nist --ps-protocol ; \
 	fi
-	-cd mysql-test ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./mysql-test-run.pl --force --comment=stress --suite=stress
+	-cd test ; MTR_BUILD_THREAD=auto \
+	    @PERL@ ./drizzle-test-run.pl --force --comment=stress --suite=stress
 
 # Re-enable the "jp" suite when bug#28563 is fixed
-#	-cd mysql-test ; MTR_BUILD_THREAD=auto \
-#	    @PERL@ ./mysql-test-run.pl --force --comment=jp --suite=jp
+#	-cd test ; MTR_BUILD_THREAD=auto \
+#	    @PERL@ ./drizzle-test-run.pl --force --comment=jp --suite=jp
 
 test-bt-debug:
-	-cd mysql-test ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./mysql-test-run.pl --comment=debug  --force --timer \
+	-cd test ; MTR_BUILD_THREAD=auto \
+	    @PERL@ ./drizzle-test-run.pl --comment=debug  --force --timer \
 	        --skip-rpl --report-features
 
 # Keep these for a while
@@ -126,29 +126,29 @@ test-force-pl-mem:  test-force-mem
 test-force-full-pl: test-force-full
 
 test-ext-funcs:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl --force --suite=funcs_1 ; \
-	    @PERL@ ./mysql-test-run.pl --force --suite=funcs_2
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl --force --suite=funcs_1 ; \
+	    @PERL@ ./drizzle-test-run.pl --force --suite=funcs_2
 
 test-ext-rpl:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl --force --suite=rpl
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl --force --suite=rpl
 
 test-ext-jp:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl --force --suite=jp
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl --force --suite=jp
 
 test-ext-stress:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl --force --big-test --suite=stress
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl --force --big-test --suite=stress
 
 test-ext:	test-ext-funcs test-ext-rpl test-ext-jp test-ext-stress
 
 test-fast:
-	cd mysql-test ; \
-	    @PERL@ ./mysql-test-run.pl $(subset) --force --skip-innodb --skip-im --skip-rpl ; \
-	    @PERL@ ./mysql-test-run.pl $(subset) --force --suite=funcs_1 --do-test=myisam ; \
-	    @PERL@ ./mysql-test-run.pl $(subset) --force --suite=stress --do-test=ddl_myisam 
+	cd test ; \
+	    @PERL@ ./drizzle-test-run.pl $(subset) --force --skip-innodb --skip-im --skip-rpl ; \
+	    @PERL@ ./drizzle-test-run.pl $(subset) --force --suite=funcs_1 --do-test=myisam ; \
+	    @PERL@ ./drizzle-test-run.pl $(subset) --force --suite=stress --do-test=ddl_myisam 
 
 test-fast-view:
 	$(MAKE) subset=--view-protocol test-fast
@@ -165,8 +165,8 @@ test-full-qa:
 	        test-fast-cursor 
 
 test-drizzle:
-	cd mysql-test ; \
-	 @PERL@ ./mysql-test-run.pl --fast --reorder --force \
+	cd test ; \
+	@PERL@ ./drizzle-test-run.pl --fast --reorder --force \
 		join_crash \
 		join_nested \
 		join_outer_innodb \

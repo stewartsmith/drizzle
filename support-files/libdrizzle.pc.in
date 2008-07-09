@@ -3,9 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libmysqlclient
+Name: libdrizzle
 Description: Drizzle Client C library.
 Version: @VERSION@
-Libs: -L${libdir} -lmysqlclient
+Libs: -L${libdir} -ldrizzle
 Cflags: -I${includedir}
 

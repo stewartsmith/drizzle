@@ -290,24 +290,6 @@ static void write_eof_packet(THD *thd, NET *net,
     VOID(my_net_write(net, eof_buff, 1));
 }
 
-/**
-  Please client to send scrambled_password in old format.
-     
-  @param thd thread handle
-
-  @retval
-    0  ok
-  @retval
-   !0  error
-*/
-
-bool send_old_password_request(THD *thd)
-{
-  NET *net= &thd->net;
-  return my_net_write(net, eof_buff, 1) || net_flush(net);
-}
-
-
 void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
 {
   NET *net= &thd->net;

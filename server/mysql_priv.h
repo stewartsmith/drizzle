@@ -29,7 +29,7 @@
 #ifndef MYSQL_CLIENT
 
 #include <my_global.h>
-#include <mysql_version.h>
+#include <drizzle_version.h>
 #include <my_sys.h>
 #include <my_time.h>
 #include <m_string.h>
@@ -90,7 +90,7 @@ extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
 extern const char *primary_key_name;
 
-#include "mysql_com.h"
+#include "drizzle_com.h"
 #include <violite.h>
 #include "unireg.h"
 

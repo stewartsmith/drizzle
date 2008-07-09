@@ -17,19 +17,13 @@
 
 #define DONT_MAP_VIO
 #include <my_global.h>
-#include <mysql_com.h>
+#include <drizzle_com.h>
 #include <my_sys.h>
 #include <m_string.h>
 #include <violite.h>
 
-/* Windows lacks a netdb.h */
-#ifdef __WIN__
-#include <Ws2tcpip.h>
-#else
 #include <sys/socket.h>
 #include <netdb.h>
-#endif
-
 
 void	vio_ignore_timeout(Vio *vio, uint which, uint timeout);
 void	vio_timeout(Vio *vio,uint which, uint timeout);
