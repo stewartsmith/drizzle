@@ -46,12 +46,12 @@ DTRACEFILES =           handler.o \
 noinst_LTLIBRARIES = 	libhandler.la
 
 SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
+			$(top_builddir)/libdrizzle/libsqlcommon.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
 LDADD = $(SUPPORTING_LIBS) -lz -levent
-drizzled_LDADD =	$(top_builddir)/sql-common/libsqlcommon.la \
-			libhandler.la \
+drizzled_LDADD =	libhandler.la \
 			$(libevent_libs) \
 			@mysql_plugin_libs@ \
 			$(LDADD)  $(CXXLDFLAGS) @LIBDL@

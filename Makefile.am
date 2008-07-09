@@ -20,7 +20,7 @@ if BUILD_DBUG
 endif
 
 SUBDIRS =		. include \
-			sql-common vio \
+			vio \
 			strings mysys $(d_dbug) \
                         extra \
                         libdrizzle client storage plugin \
