@@ -3113,27 +3113,6 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_TINY_BLOB</td><td>249</td>
-    <td>&ndash;</td>
-    <td><i>This enumeration value is only used internally and cannot
-    exist in a binlog.</i></td>
-  </tr>
-
-  <tr>
-    <td><i>MYSQL_TYPE_MEDIUM_BLOB</i></td><td><i>250</i></td>
-    <td>&ndash;</td>
-    <td><i>This enumeration value is only used internally and cannot
-    exist in a binlog.</i></td>
-  </tr>
-
-  <tr>
-    <td><i>MYSQL_TYPE_LONG_BLOB</i></td><td><i>251</i></td>
-    <td>&ndash;</td>
-    <td><i>This enumeration value is only used internally and cannot
-    exist in a binlog.</i></td>
-  </tr>
-
-  <tr>
     <td>MYSQL_TYPE_BLOB</td><td>252</td>
     <td>1 byte</td>
     <td>The pack length, i.e., the number of bytes needed to represent

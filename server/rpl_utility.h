@@ -89,10 +89,7 @@ public:
       for (unsigned int i= 0; i < m_size; i++)
       {
         switch (m_type[i]) {
-        case MYSQL_TYPE_TINY_BLOB:
         case MYSQL_TYPE_BLOB:
-        case MYSQL_TYPE_MEDIUM_BLOB:
-        case MYSQL_TYPE_LONG_BLOB:
         case MYSQL_TYPE_DOUBLE:
         case MYSQL_TYPE_FLOAT:
         {

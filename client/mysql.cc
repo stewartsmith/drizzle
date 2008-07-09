@@ -516,7 +516,6 @@ static COMMANDS commands[] = {
   { "LOCKS", 0, 0, 0, ""},
   { "LOGS", 0, 0, 0, ""},
   { "LONG", 0, 0, 0, ""},
-  { "LONGBLOB", 0, 0, 0, ""},
   { "LONGTEXT", 0, 0, 0, ""},
   { "LOOP", 0, 0, 0, ""},
   { "LOW_PRIORITY", 0, 0, 0, ""},
@@ -542,7 +541,6 @@ static COMMANDS commands[] = {
   { "MAX_UPDATES_PER_HOUR", 0, 0, 0, ""},
   { "MAX_USER_CONNECTIONS", 0, 0, 0, ""},
   { "MEDIUM", 0, 0, 0, ""},
-  { "MEDIUMBLOB", 0, 0, 0, ""},
   { "MEDIUMTEXT", 0, 0, 0, ""},
   { "MERGE", 0, 0, 0, ""},
   { "MICROSECOND", 0, 0, 0, ""},
@@ -718,7 +716,6 @@ static COMMANDS commands[] = {
   { "TIMESTAMP", 0, 0, 0, ""},
   { "TIMESTAMPADD", 0, 0, 0, ""},
   { "TIMESTAMPDIFF", 0, 0, 0, ""},
-  { "TINYBLOB", 0, 0, 0, ""},
   { "TINYINT", 0, 0, 0, ""},
   { "TINYTEXT", 0, 0, 0, ""},
   { "TO", 0, 0, 0, ""},
@@ -3021,8 +3018,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_FLOAT:       return "FLOAT";
     case MYSQL_TYPE_LONG:        return "LONG";
     case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
-    case MYSQL_TYPE_LONG_BLOB:   return "LONG_BLOB";
-    case MYSQL_TYPE_MEDIUM_BLOB: return "MEDIUM_BLOB";
     case MYSQL_TYPE_NULL:        return "NULL";
     case MYSQL_TYPE_SET:         return "SET";
     case MYSQL_TYPE_SHORT:       return "SHORT";
@@ -3030,7 +3025,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_TIME:        return "TIME";
     case MYSQL_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case MYSQL_TYPE_TINY:        return "TINY";
-    case MYSQL_TYPE_TINY_BLOB:   return "TINY_BLOB";
     case MYSQL_TYPE_VAR_STRING:  return "VAR_STRING";
     case MYSQL_TYPE_YEAR:        return "YEAR";
     default:                     return "?-unknown-?";

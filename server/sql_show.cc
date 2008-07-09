@@ -3917,9 +3917,6 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
       item->set_name(fields_info->field_name,
                      strlen(fields_info->field_name), cs);
       break;
-    case MYSQL_TYPE_TINY_BLOB:
-    case MYSQL_TYPE_MEDIUM_BLOB:
-    case MYSQL_TYPE_LONG_BLOB:
     case MYSQL_TYPE_BLOB:
       if (!(item= new Item_blob(fields_info->field_name,
                                 fields_info->field_length)))

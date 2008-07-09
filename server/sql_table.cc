@@ -1701,9 +1701,6 @@ int prepare_create_field(Create_field *sql_field,
 
   switch (sql_field->sql_type) {
   case MYSQL_TYPE_BLOB:
-  case MYSQL_TYPE_MEDIUM_BLOB:
-  case MYSQL_TYPE_TINY_BLOB:
-  case MYSQL_TYPE_LONG_BLOB:
     sql_field->pack_flag=FIELDFLAG_BLOB |
       pack_length_to_packflag(sql_field->pack_length -
                               portable_sizeof_char_ptr);
