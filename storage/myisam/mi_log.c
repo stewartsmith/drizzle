@@ -19,15 +19,6 @@
 */
 
 #include "myisamdef.h"
-#if defined(MSDOS) || defined(__WIN__)
-#include <fcntl.h>
-#ifndef __WIN__
-#include <process.h>
-#endif
-#endif
-#ifdef VMS
-#include <processes.h>
-#endif
 
 #undef GETPID					/* For HPUX */
 #define GETPID() (log_type == 1 ? (long) myisam_pid : (long) my_thread_dbug_id())

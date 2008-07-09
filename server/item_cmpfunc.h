@@ -363,7 +363,8 @@ public:
   }
   Item *neg_transformer(THD *thd);
   virtual Item *negated_item();
-  bool subst_argument_checker(uchar **arg) { return TRUE; }
+  bool subst_argument_checker(uchar **arg __attribute__((__unused__)))
+  { return TRUE; }
 };
 
 class Item_func_not :public Item_bool_func
@@ -483,7 +484,7 @@ public:
   enum Functype rev_functype() const { return EQUAL_FUNC; }
   cond_result eq_cmp_result() const { return COND_TRUE; }
   const char *func_name() const { return "<=>"; }
-  Item *neg_transformer(THD *thd) { return 0; }
+  Item *neg_transformer(THD *thd __attribute__((__unused__))) { return 0; }
 };
 
 
@@ -574,13 +575,14 @@ public:
 public:
   inline void negate() { negated= !negated; }
   inline void top_level_item() { pred_level= 1; }
-  Item *neg_transformer(THD *thd)
+  Item *neg_transformer(THD *thd __attribute__((__unused__)))
   {
     negated= !negated;
     return this;
   }
   bool eq(const Item *item, bool binary_cmp) const;
-  bool subst_argument_checker(uchar **arg) { return TRUE; }
+  bool subst_argument_checker(uchar **arg __attribute__((__unused__)))
+  { return TRUE; }
 };
 
 
@@ -781,7 +783,8 @@ public:
         item  Constant item to store value into. The item must be of the same
               type that create_item() returns.
   */
-  virtual void value_to_item(uint pos, Item *item) { }
+  virtual void value_to_item(uint pos __attribute__((__unused__)),
+                             Item *item __attribute__((__unused__))) { }
   
   /* Compare values number pos1 and pos2 for equality */
   bool compare_elems(uint pos1, uint pos2)
@@ -932,7 +935,8 @@ public:
   virtual int compare(cmp_item *item)= 0;
   static cmp_item* get_comparator(Item_result type, CHARSET_INFO *cs);
   virtual cmp_item *make_same()= 0;
-  virtual void store_value_by_template(cmp_item *tmpl, Item *item)
+  virtual void store_value_by_template(cmp_item *tmpl  __attribute__((__unused__)),
+                                       Item *item)
   {
     store_value(item);
   }
@@ -1081,7 +1085,7 @@ public:
   {
     value_res= item->val_str(&value);
   }
-  int cmp(Item *item)
+  int cmp(Item *item __attribute__((__unused__)))
   {
     // Should never be called
     DBUG_ASSERT(0);
@@ -1434,7 +1438,8 @@ public:
   void traverse_cond(Cond_traverser, void *arg, traverse_order order);
   void neg_arguments(THD *thd);
   enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
-  bool subst_argument_checker(uchar **arg) { return TRUE; }
+  bool subst_argument_checker(uchar **arg __attribute__((__unused__)))
+  { return TRUE; }
   Item *compile(Item_analyzer analyzer, uchar **arg_p,
                 Item_transformer transformer, uchar *arg_t);
 };

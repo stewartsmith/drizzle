@@ -465,12 +465,12 @@ list_tables(MYSQL *mysql,const char *db,const char *table)
       table name
     */
     mysql_real_escape_string(mysql, rows, table, (unsigned long)strlen(table));
-    my_snprintf(query, sizeof(query), "show%s tables like '%s'",
-                opt_table_type ? " full" : "", rows);
+    snprintf(query, sizeof(query), "show%s tables like '%s'",
+             opt_table_type ? " full" : "", rows);
   }
   else
-    my_snprintf(query, sizeof(query), "show%s tables",
-                opt_table_type ? " full" : "");
+    snprintf(query, sizeof(query), "show%s tables",
+             opt_table_type ? " full" : "");
   if (mysql_query(mysql, query) || !(result= mysql_store_result(mysql)))
   {
     fprintf(stderr,"%s: Cannot list tables in %s: %s\n",my_progname,db,

@@ -334,7 +334,7 @@ public:
   Item_date() :Item_func() {}
   Item_date(Item *a) :Item_func(a) {}
   enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DATE; }
+  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
   String *val_str(String *str);
   longlong val_int();
   double val_real() { return val_real_from_decimal(); }
@@ -355,7 +355,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }
@@ -381,7 +382,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }
@@ -411,7 +413,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_time(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_time_in_field(field);
   }
@@ -764,7 +767,7 @@ public:
   bool get_date(MYSQL_TIME *ltime, uint fuzzy_date);
   bool get_time(MYSQL_TIME *ltime);
   const char *cast_type() const { return "date"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DATE; }
+  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
   Field *tmp_table_field(TABLE *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -783,7 +786,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }
@@ -811,7 +815,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_time(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_time_in_field(field);
   }
@@ -846,7 +851,8 @@ public:
     DBUG_ASSERT(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
-  int save_in_field(Field *field, bool no_conversions)
+  int save_in_field(Field *field,
+                    bool no_conversions __attribute__((__unused__)))
   {
     return save_date_in_field(field);
   }
@@ -858,7 +864,7 @@ public:
   Item_func_makedate(Item *a,Item *b) :Item_date_func(a,b) {}
   String *val_str(String *str);
   const char *func_name() const { return "makedate"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DATE; }
+  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
   void fix_length_and_dec()
   { 
     decimals=0;

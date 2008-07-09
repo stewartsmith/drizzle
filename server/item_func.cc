@@ -138,7 +138,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
 */
 
 bool
-Item_func::fix_fields(THD *thd, Item **ref)
+Item_func::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 0);
   Item **arg,**arg_end;
@@ -195,7 +195,8 @@ Item_func::fix_fields(THD *thd, Item **ref)
 }
 
 
-void Item_func::fix_after_pullout(st_select_lex *new_parent, Item **ref)
+void Item_func::fix_after_pullout(st_select_lex *new_parent,
+                                  Item **ref __attribute__((__unused__)))
 {
   Item **arg,**arg_end;
 
@@ -1752,7 +1753,7 @@ longlong Item_func_shift_left::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(longlong)*8 ? (longlong) res : LL(0));
+  return (shift < sizeof(longlong)*8 ? (longlong) res : 0LL);
 }
 
 longlong Item_func_shift_right::val_int()
@@ -1767,7 +1768,7 @@ longlong Item_func_shift_right::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(longlong)*8 ? (longlong) res : LL(0));
+  return (shift < sizeof(longlong)*8 ? (longlong) res : 0LL);
 }
 
 
@@ -2280,7 +2281,7 @@ uint Item_func_min_max::cmp_datetimes(ulonglong *value)
   if (value)
   {
     *value= min_max;
-    if (datetime_item->field_type() == MYSQL_TYPE_DATE)
+    if (datetime_item->field_type() == MYSQL_TYPE_NEWDATE)
       *value/= 1000000L;
   }
   return min_max_idx;
@@ -2681,7 +2682,7 @@ void Item_func_find_in_set::fix_length_and_dec()
 			      find->length(), 0);
 	enum_bit=0;
 	if (enum_value)
-	  enum_bit=LL(1) << (enum_value-1);
+	  enum_bit=1LL << (enum_value-1);
       }
     }
   }
@@ -2752,7 +2753,7 @@ longlong Item_func_find_in_set::val_int()
                wc == (my_wc_t) separator)
         return (longlong) ++position;
       else
-        return LL(0);
+        return 0LL;
     }
   }
   return 0;
@@ -3710,7 +3711,7 @@ double user_var_entry::val_real(my_bool *null_value)
 longlong user_var_entry::val_int(my_bool *null_value) const
 {
   if ((*null_value= (value == 0)))
-    return LL(0);
+    return 0LL;
 
   switch (type) {
   case REAL_RESULT:
@@ -3732,7 +3733,7 @@ longlong user_var_entry::val_int(my_bool *null_value) const
     DBUG_ASSERT(1);				// Impossible
     break;
   }
-  return LL(0);					// Impossible
+  return 0LL;					// Impossible
 }
 
 
@@ -4166,7 +4167,7 @@ longlong Item_func_get_user_var::val_int()
 {
   DBUG_ASSERT(fixed == 1);
   if (!var_entry)
-    return LL(0);				// No such variable
+    return 0LL;				// No such variable
   return (var_entry->val_int(&null_value));
 }
 
@@ -4372,7 +4373,8 @@ enum Item_result Item_func_get_user_var::result_type() const
 }
 
 
-void Item_func_get_user_var::print(String *str, enum_query_type query_type)
+void Item_func_get_user_var::print(String *str,
+                                   enum_query_type query_type __attribute__((__unused__)))
 {
   str->append(STRING_WITH_LEN("(@"));
   str->append(name.str,name.length);
@@ -4380,7 +4382,8 @@ void Item_func_get_user_var::print(String *str, enum_query_type query_type)
 }
 
 
-bool Item_func_get_user_var::eq(const Item *item, bool binary_cmp) const
+bool Item_func_get_user_var::eq(const Item *item,
+                                bool binary_cmp __attribute__((__unused__))) const
 {
   /* Assume we don't have rtti */
   if (this == item)
@@ -4442,21 +4445,22 @@ longlong Item_user_var_as_out_param::val_int()
 }
 
 
-String* Item_user_var_as_out_param::val_str(String *str)
+String* Item_user_var_as_out_param::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(0);
   return 0;
 }
 
 
-my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer)
+my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer __attribute__((__unused__)))
 {
   DBUG_ASSERT(0);
   return 0;
 }
 
 
-void Item_user_var_as_out_param::print(String *str, enum_query_type query_type)
+void Item_user_var_as_out_param::print(String *str,
+                                       enum_query_type query_type __attribute__((__unused__)))
 {
   str->append('@');
   str->append(name.str,name.length);

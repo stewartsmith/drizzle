@@ -662,7 +662,7 @@ Copy_field::get_copy_func(Field *to,Field *from)
       */
       if (to->real_type() != from->real_type() ||
           !compatible_db_low_byte_first ||
-          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == MYSQL_TYPE_DATE) || to->type() == MYSQL_TYPE_DATETIME))
+          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == MYSQL_TYPE_NEWDATE) || to->type() == MYSQL_TYPE_DATETIME))
       {
 	if (from->real_type() == MYSQL_TYPE_ENUM ||
 	    from->real_type() == MYSQL_TYPE_SET)
@@ -757,7 +757,7 @@ int field_conv(Field *to,Field *from)
         (to->real_type() != MYSQL_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
-        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != MYSQL_TYPE_DATE && to->type() != MYSQL_TYPE_DATETIME)) && 
+        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != MYSQL_TYPE_NEWDATE && to->type() != MYSQL_TYPE_DATETIME)) && 
         (from->real_type() != MYSQL_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
     {						// Identical fields
 #ifdef HAVE_purify

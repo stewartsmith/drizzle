@@ -458,7 +458,7 @@ struct sql_ex_info
 
 /* Shouldn't be defined before */
 #define EXPECTED_OPTIONS \
-  ((ULL(1) << 14) | (ULL(1) << 26) | (ULL(1) << 27) | (ULL(1) << 19))
+  ((1ULL << 14) | (1ULL << 26) | (1ULL << 27) | (1ULL << 19))
 
 #if OPTIONS_WRITTEN_TO_BIN_LOG != EXPECTED_OPTIONS
 #error OPTIONS_WRITTEN_TO_BIN_LOG must NOT change their values!
@@ -951,7 +951,7 @@ public:
             write_data_header(file) ||
             write_data_body(file));
   }
-  virtual bool write_data_header(IO_CACHE* file)
+  virtual bool write_data_header(IO_CACHE* file __attribute__((__unused__)))
   { return 0; }
   virtual bool write_data_body(IO_CACHE* file __attribute__((unused)))
   { return 0; }
@@ -1080,7 +1080,7 @@ protected:
     @retval 0     Event applied successfully
     @retval errno Error code if event application failed
   */
-  virtual int do_apply_event(Relay_log_info const *rli)
+  virtual int do_apply_event(Relay_log_info const *rli __attribute__((__unused__)))
   {
     return 0;                /* Default implementation does nothing */
   }
@@ -1583,7 +1583,8 @@ public:
   Log_event_type get_type_code() { return QUERY_EVENT; }
 #ifndef MYSQL_CLIENT
   bool write(IO_CACHE* file);
-  virtual bool write_post_header_for_derived(IO_CACHE* file) { return FALSE; }
+  virtual bool write_post_header_for_derived(IO_CACHE* file __attribute__((__unused__)))
+  { return FALSE; }
 #endif
   bool is_valid() const { return query != 0; }
 
@@ -2372,7 +2373,8 @@ public:
   uint charset_number;
   bool is_null;
 #ifndef MYSQL_CLIENT
-  User_var_log_event(THD* thd_arg, char *name_arg, uint name_len_arg,
+  User_var_log_event(THD* thd_arg __attribute__((__unused__)),
+                     char *name_arg, uint name_len_arg,
                      char *val_arg, ulong val_len_arg, Item_result type_arg,
 		     uint charset_number_arg)
     :Log_event(), name(name_arg), name_len(name_len_arg), val(val_arg),
@@ -2430,7 +2432,7 @@ public:
 private:
 #if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
   virtual int do_update_pos(Relay_log_info *rli);
-  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli)
+  virtual enum_skip_reason do_shall_skip(Relay_log_info *rli __attribute__((__unused__)))
   {
     /*
       Events from ourself should be skipped, but they should not
@@ -3136,17 +3138,6 @@ char *str_to_hex(char *to, const char *from, uint len);
     <td>1 byte</td>
     <td>The pack length, i.e., the number of bytes needed to represent
     the length of the blob: 1, 2, 3, or 4.</td>
-  </tr>
-
-  <tr>
-    <td>MYSQL_TYPE_VAR_STRING</td><td>253</td>
-    <td>2 bytes</td>
-    <td>This is used to store both strings and enumeration values.
-    The first byte is a enumeration value storing the <i>real
-    type</i>, which may be either MYSQL_TYPE_VAR_STRING or
-    MYSQL_TYPE_ENUM.  The second byte is a 1 byte unsigned integer
-    representing the field size, i.e., the number of bytes needed to
-    store the length of the string.</td>
   </tr>
 
   <tr>

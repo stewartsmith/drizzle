@@ -294,7 +294,7 @@ size_t my_snprintf_8bit(CHARSET_INFO *cs  __attribute__((unused)),
   va_list args;
   int result;
   va_start(args,fmt);
-  result= my_vsnprintf(to, n, fmt, args);
+  result= vsnprintf(to, n, fmt, args);
   va_end(args);
   return result;
 }

@@ -270,147 +270,6 @@ void execute_init_command(THD *thd, sys_var_str *init_command_var,
   thd->net.vio= save_vio;
 }
 
-
-/**
-  Execute commands from bootstrap_file.
-
-  Used when creating the initial grant tables.
-*/
-
-pthread_handler_t handle_bootstrap(void *arg)
-{
-  THD *thd=(THD*) arg;
-  FILE *file=bootstrap_file;
-  char *buff;
-  const char* found_semicolon= NULL;
-
-  /* The following must be called before DBUG_ENTER */
-  thd->thread_stack= (char*) &thd;
-  if (my_thread_init() || thd->store_globals())
-  {
-    close_connection(thd, ER_OUT_OF_RESOURCES, 1);
-    thd->fatal_error();
-    goto end;
-  }
-  DBUG_ENTER("handle_bootstrap");
-
-  pthread_detach_this_thread();
-  thd->thread_stack= (char*) &thd;
-
-  if (thd->variables.max_join_size == HA_POS_ERROR)
-    thd->options |= OPTION_BIG_SELECTS;
-
-  thd_proc_info(thd, 0);
-  thd->version=refresh_version;
-  thd->security_ctx->priv_user=
-    thd->security_ctx->user= (char*) my_strdup("boot", MYF(MY_WME));
-  thd->security_ctx->priv_host[0]=0;
-  /*
-    Make the "client" handle multiple results. This is necessary
-    to enable stored procedures with SELECTs and Dynamic SQL
-    in init-file.
-  */
-  thd->client_capabilities|= CLIENT_MULTI_RESULTS;
-
-  buff= (char*) thd->net.buff;
-  thd->init_for_queries();
-  while (fgets(buff, thd->net.max_packet, file))
-  {
-    /* strlen() can't be deleted because fgets() doesn't return length */
-    ulong length= (ulong) strlen(buff);
-    while (buff[length-1] != '\n' && !feof(file))
-    {
-      /*
-        We got only a part of the current string. Will try to increase
-        net buffer then read the rest of the current string.
-      */
-      /* purecov: begin tested */
-      if (net_realloc(&(thd->net), 2 * thd->net.max_packet))
-      {
-        net_end_statement(thd);
-        bootstrap_error= 1;
-        break;
-      }
-      buff= (char*) thd->net.buff;
-      fgets(buff + length, thd->net.max_packet - length, file);
-      length+= (ulong) strlen(buff + length);
-      /* purecov: end */
-    }
-    if (bootstrap_error)
-      break;                                    /* purecov: inspected */
-
-    while (length && (my_isspace(thd->charset(), buff[length-1]) ||
-                      buff[length-1] == ';'))
-      length--;
-    buff[length]=0;
-
-    /* Skip lines starting with delimiter */
-    if (strncmp(buff, STRING_WITH_LEN("delimiter")) == 0)
-      continue;
-
-    thd->query_length=length;
-    thd->query= (char*) thd->memdup_w_gap(buff, length+1, 
-                                          thd->db_length+1);
-    thd->query[length] = '\0';
-    DBUG_PRINT("query",("%-.4096s",thd->query));
-
-    /*
-      We don't need to obtain LOCK_thread_count here because in bootstrap
-      mode we have only one thread.
-    */
-    thd->query_id=next_query_id();
-    thd->set_time();
-    mysql_parse(thd, thd->query, length, & found_semicolon);
-    close_thread_tables(thd);			// Free tables
-
-    bootstrap_error= thd->is_error();
-    net_end_statement(thd);
-
-    if (bootstrap_error)
-      break;
-
-    free_root(thd->mem_root,MYF(MY_KEEP_PREALLOC));
-    free_root(&thd->transaction.mem_root,MYF(MY_KEEP_PREALLOC));
-  }
-
-end:
-  net_end(&thd->net);
-  thd->cleanup();
-  delete thd;
-
-  (void) pthread_mutex_lock(&LOCK_thread_count);
-  thread_count--;
-  (void) pthread_mutex_unlock(&LOCK_thread_count);
-  (void) pthread_cond_broadcast(&COND_thread_count);
-  my_thread_end();
-  pthread_exit(0);
-  DBUG_RETURN(0);
-}
-
-/* This works because items are allocated with sql_alloc() */
-
-void free_items(Item *item)
-{
-  Item *next;
-  DBUG_ENTER("free_items");
-  for (; item ; item=next)
-  {
-    next=item->next;
-    item->delete_self();
-  }
-  DBUG_VOID_RETURN;
-}
-
-/* This works because items are allocated with sql_alloc() */
-
-void cleanup_items(Item *item)
-{
-  DBUG_ENTER("cleanup_items");
-  for (; item ; item=item->next)
-    item->cleanup();
-  DBUG_VOID_RETURN;
-}
-
 /**
   Ends the current transaction and (maybe) begin the next.
 
@@ -857,7 +716,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     if (alloc_query(thd, packet, packet_length))
       break;					// fatal error is set
     char *packet_end= thd->query + thd->query_length;
-    /* 'b' stands for 'buffer' parameter', special for 'my_snprintf' */
     const char* end_of_stmt= NULL;
 
     general_log_write(thd, command, thd->query, thd->query_length);
@@ -1048,20 +906,20 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     if (!(uptime= (ulong) (thd->start_time - server_start_time)))
       queries_per_second1000= 0;
     else
-      queries_per_second1000= thd->query_id * LL(1000) / uptime;
+      queries_per_second1000= thd->query_id * 1000LL / uptime;
 
-    length= my_snprintf((char*) buff, buff_len - 1,
-                        "Uptime: %lu  Threads: %d  Questions: %lu  "
-                        "Slow queries: %lu  Opens: %lu  Flush tables: %lu  "
-                        "Open tables: %u  Queries per second avg: %u.%u",
-                        uptime,
-                        (int) thread_count, (ulong) thd->query_id,
-                        current_global_status_var.long_query_count,
-                        current_global_status_var.opened_tables,
-                        refresh_version,
-                        cached_open_tables(),
-                        (uint) (queries_per_second1000 / 1000),
-                        (uint) (queries_per_second1000 % 1000));
+    length= snprintf((char*) buff, buff_len - 1,
+                     "Uptime: %lu  Threads: %d  Questions: %lu  "
+                     "Slow queries: %lu  Opens: %lu  Flush tables: %lu  "
+                     "Open tables: %u  Queries per second avg: %u.%u",
+                     uptime,
+                     (int) thread_count, (ulong) thd->query_id,
+                     current_global_status_var.long_query_count,
+                     current_global_status_var.opened_tables,
+                     refresh_version,
+                     cached_open_tables(),
+                     (uint) (queries_per_second1000 / 1000),
+                     (uint) (queries_per_second1000 % 1000));
     /* Store the buffer in permanent memory */
     my_ok(thd, 0, 0, buff);
     VOID(my_net_write(net, (uchar*) buff, length));
@@ -3365,7 +3223,6 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
 bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 		       char *length, char *decimals,
 		       uint type_modifier,
-                       enum ha_storage_media storage_type,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
@@ -3442,8 +3299,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
   if (!(new_field= new Create_field()) ||
       new_field->init(thd, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
-                      interval_list, cs, 0,
-                      storage_type, column_format))
+                      interval_list, cs, 0, column_format))
     DBUG_RETURN(1);
 
   lex->alter_info.create_list.push_back(new_field);

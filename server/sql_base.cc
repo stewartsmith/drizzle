@@ -6667,9 +6667,9 @@ my_bool mysql_rm_tmp_tables(void)
       {
         char *ext= fn_ext(file->name);
         uint ext_len= strlen(ext);
-        uint filePath_len= my_snprintf(filePath, sizeof(filePath),
-                                       "%s%c%s", tmpdir, FN_LIBCHAR,
-                                       file->name);
+        uint filePath_len= snprintf(filePath, sizeof(filePath),
+                                    "%s%c%s", tmpdir, FN_LIBCHAR,
+                                    file->name);
         if (!bcmp((uchar*) reg_ext, (uchar*) ext, ext_len))
         {
           handler *handler_file= 0;

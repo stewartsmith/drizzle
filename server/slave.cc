@@ -1167,8 +1167,8 @@ int register_slave_on_master(MYSQL* mysql, Master_info *mi,
     else if (!check_io_slave_killed(mi->io_thd, mi, NULL))
     {
       char buf[256];
-      my_snprintf(buf, sizeof(buf), "%s (Errno: %d)", mysql_error(mysql), 
-                  mysql_errno(mysql));
+      snprintf(buf, sizeof(buf), "%s (Errno: %d)", mysql_error(mysql), 
+               mysql_errno(mysql));
       mi->report(ERROR_LEVEL, ER_SLAVE_MASTER_COM_FAILURE,
                  ER(ER_SLAVE_MASTER_COM_FAILURE), "COM_REGISTER_SLAVE", buf);
     }
@@ -2036,8 +2036,8 @@ static int try_to_reconnect(THD *thd, MYSQL *mysql, Master_info *mi,
   if (!suppress_warnings) 
   {
     char buf[256], llbuff[22];
-    my_snprintf(buf, sizeof(buf), messages[SLAVE_RECON_MSG_FAILED], 
-                IO_RPL_LOG_NAME, llstr(mi->master_log_pos, llbuff));
+    snprintf(buf, sizeof(buf), messages[SLAVE_RECON_MSG_FAILED], 
+             IO_RPL_LOG_NAME, llstr(mi->master_log_pos, llbuff));
     /* 
       Raise a warining during registering on master/requesting dump.
       Log a message reading event.

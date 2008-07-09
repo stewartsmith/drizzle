@@ -33,8 +33,8 @@
 
 char test_string[BUFFER_LEN];
 
-unsigned long long row_lengths[]= {LL(536870912), LL(2147483648), LL(4294967296), LL(8589934592)};
-unsigned long long row_numbers[]= {LL(524288), LL(2097152), LL(4194304), LL(8388608)};
+unsigned long long row_lengths[]= {536870912LL, 2147483648LL, 4294967296LL, 8589934592LL};
+unsigned long long row_numbers[]= {524288LL, 2097152LL, 4194304LL, 8388608LL};
 
 /* prototypes */
 int size_test(unsigned long long length, unsigned long long rows_to_test_for, az_method method);

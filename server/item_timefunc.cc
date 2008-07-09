@@ -872,7 +872,7 @@ static bool get_interval_info(const char *str,uint length,CHARSET_INFO *cs,
     longlong value;
     const char *start= str;
     for (value=0; str != end && my_isdigit(cs,*str) ; str++)
-      value= value*LL(10) + (longlong) (*str - '0');
+      value= value * 10LL + (longlong) (*str - '0');
     if (transform_msec && i == count - 1) // microseconds always last
     {
       long msec_length= 6 - (str - start);
@@ -953,7 +953,7 @@ enum_monotonicity_info Item_func_to_days::get_monotonicity_info() const
 {
   if (args[0]->type() == Item::FIELD_ITEM)
   {
-    if (args[0]->field_type() == MYSQL_TYPE_DATE)
+    if (args[0]->field_type() == MYSQL_TYPE_NEWDATE)
       return MONOTONIC_STRICT_INCREASING;
     if (args[0]->field_type() == MYSQL_TYPE_DATETIME)
       return MONOTONIC_INCREASING;
@@ -974,7 +974,7 @@ longlong Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
   }
   res=(longlong) calc_daynr(ltime.year,ltime.month,ltime.day);
   
-  if (args[0]->field_type() == MYSQL_TYPE_DATE)
+  if (args[0]->field_type() == MYSQL_TYPE_NEWDATE)
   {
     // TO_DAYS() is strictly monotonic for dates, leave incl_endp intact
     return res;
@@ -1209,7 +1209,7 @@ longlong Item_func_year::val_int()
 enum_monotonicity_info Item_func_year::get_monotonicity_info() const
 {
   if (args[0]->type() == Item::FIELD_ITEM &&
-      (args[0]->field_type() == MYSQL_TYPE_DATE ||
+      (args[0]->field_type() == MYSQL_TYPE_NEWDATE ||
        args[0]->field_type() == MYSQL_TYPE_DATETIME))
     return MONOTONIC_INCREASING;
   return NON_MONOTONIC;
@@ -1249,7 +1249,7 @@ longlong Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
 longlong Item_func_unix_timestamp::val_int()
 {
   MYSQL_TIME ltime;
-  my_bool not_used;
+  bool not_used;
   
   DBUG_ASSERT(fixed == 1);
   if (arg_count == 0)
@@ -1471,7 +1471,7 @@ longlong Item_date::val_int()
 }
 
 
-bool Item_func_from_days::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_func_from_days::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((__unused__)))
 {
   longlong value=args[0]->val_int();
   if ((null_value=args[0]->null_value))
@@ -1545,7 +1545,7 @@ bool Item_func_curdate::get_date(MYSQL_TIME *res,
 }
 
 
-String *Item_func_curtime::val_str(String *str)
+String *Item_func_curtime::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   str_value.set(buff, buff_length, &my_charset_bin);
@@ -1594,7 +1594,7 @@ void Item_func_curtime_utc::store_now_in_TIME(MYSQL_TIME *now_time)
 }
 
 
-String *Item_func_now::val_str(String *str)
+String *Item_func_now::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   str_value.set(buff,buff_length, &my_charset_bin);
@@ -1651,7 +1651,7 @@ bool Item_func_now::get_date(MYSQL_TIME *res,
 }
 
 
-int Item_func_now::save_in_field(Field *to, bool no_conversions)
+int Item_func_now::save_in_field(Field *to, bool no_conversions __attribute__((__unused__)))
 {
   to->set_notnull();
   return to->store_time(&ltime, MYSQL_TIMESTAMP_DATETIME);
@@ -1670,7 +1670,7 @@ void Item_func_sysdate_local::store_now_in_TIME(MYSQL_TIME *now_time)
 }
 
 
-String *Item_func_sysdate_local::val_str(String *str)
+String *Item_func_sysdate_local::val_str(String *str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   store_now_in_TIME(&ltime);
@@ -1713,7 +1713,7 @@ bool Item_func_sysdate_local::get_date(MYSQL_TIME *res,
 }
 
 
-int Item_func_sysdate_local::save_in_field(Field *to, bool no_conversions)
+int Item_func_sysdate_local::save_in_field(Field *to, bool no_conversions __attribute__((__unused__)))
 {
   store_now_in_TIME(&ltime);
   to->set_notnull();
@@ -2020,7 +2020,7 @@ void Item_date_add_interval::fix_length_and_dec()
     follows:
 
     - If first arg is a MYSQL_TYPE_DATETIME result is MYSQL_TYPE_DATETIME
-    - If first arg is a MYSQL_TYPE_DATE and the interval type uses hours,
+    - If first arg is a MYSQL_TYPE_NEWDATE and the interval type uses hours,
       minutes or seconds then type is MYSQL_TYPE_DATETIME.
     - Otherwise the result is MYSQL_TYPE_STRING
       (This is because you can't know if the string contains a DATE, MYSQL_TIME or
@@ -2031,7 +2031,7 @@ void Item_date_add_interval::fix_length_and_dec()
   if (arg0_field_type == MYSQL_TYPE_DATETIME ||
       arg0_field_type == MYSQL_TYPE_TIMESTAMP)
     cached_field_type= MYSQL_TYPE_DATETIME;
-  else if (arg0_field_type == MYSQL_TYPE_DATE)
+  else if (arg0_field_type == MYSQL_TYPE_NEWDATE)
   {
     if (int_type <= INTERVAL_DAY || int_type == INTERVAL_YEAR_MONTH)
       cached_field_type= arg0_field_type;
@@ -2043,7 +2043,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 /* Here arg[1] is a Item_interval object */
 
-bool Item_date_add_interval::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_date_add_interval::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((__unused__)))
 {
   INTERVAL interval;
 
@@ -2353,9 +2353,9 @@ String *Item_char_typecast::val_str(String *str)
     if (res->length() > (length= (uint32) res->charpos(cast_length)))
     {                                           // Safe even if const arg
       char char_type[40];
-      my_snprintf(char_type, sizeof(char_type), "%s(%lu)",
-                  cast_cs == &my_charset_bin ? "BINARY" : "CHAR",
-                  (ulong) length);
+      snprintf(char_type, sizeof(char_type), "%s(%lu)",
+               cast_cs == &my_charset_bin ? "BINARY" : "CHAR",
+               (ulong) length);
 
       if (!res->alloced_length())
       {                                         // Don't change const str
@@ -2494,7 +2494,7 @@ String *Item_time_typecast::val_str(String *str)
 }
 
 
-bool Item_date_typecast::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_date_typecast::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((__unused__)))
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
@@ -2637,7 +2637,7 @@ void Item_func_add_time::fix_length_and_dec()
 
   cached_field_type= MYSQL_TYPE_STRING;
   arg0_field_type= args[0]->field_type();
-  if (arg0_field_type == MYSQL_TYPE_DATE ||
+  if (arg0_field_type == MYSQL_TYPE_NEWDATE ||
       arg0_field_type == MYSQL_TYPE_DATETIME ||
       arg0_field_type == MYSQL_TYPE_TIMESTAMP)
     cached_field_type= MYSQL_TYPE_DATETIME;
@@ -3178,7 +3178,7 @@ void Item_func_str_to_date::fix_length_and_dec()
       switch (cached_format_type) {
       case DATE_ONLY:
         cached_timestamp_type= MYSQL_TIMESTAMP_DATE;
-        cached_field_type= MYSQL_TYPE_DATE; 
+        cached_field_type= MYSQL_TYPE_NEWDATE; 
         max_length= MAX_DATE_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       case TIME_ONLY:

@@ -759,7 +759,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
       ulonglong value;
       bool error;
       String tmp, *str_val= 0;
-      timestamp_type t_type= (date_arg->field_type() == MYSQL_TYPE_DATE ?
+      timestamp_type t_type= (date_arg->field_type() == MYSQL_TYPE_NEWDATE ?
                               MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME);
 
       str_val= str_arg->val_str(&tmp);
@@ -802,8 +802,10 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
 */
 
 ulonglong
-get_time_value(THD *thd, Item ***item_arg, Item **cache_arg,
-               Item *warn_item, bool *is_null)
+get_time_value(THD *thd __attribute__((__unused__)),
+               Item ***item_arg, Item **cache_arg,
+               Item *warn_item __attribute__((__unused__)),
+               bool *is_null)
 {
   ulonglong value;
   Item *item= **item_arg;
@@ -961,7 +963,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
       compare it with 100000000L - any DATE value should be less than it.
       Don't shift cached DATETIME values up for the second time.
     */
-    if (f_type == MYSQL_TYPE_DATE ||
+    if (f_type == MYSQL_TYPE_NEWDATE ||
         (f_type != MYSQL_TYPE_DATETIME && value < 100000000L))
       value*= 1000000L;
   }
@@ -983,7 +985,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     bool error;
     enum_field_types f_type= warn_item->field_type();
     timestamp_type t_type= f_type ==
-      MYSQL_TYPE_DATE ? MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME;
+      MYSQL_TYPE_NEWDATE ? MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME;
     value= get_date_from_str(thd, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current
@@ -1462,7 +1464,7 @@ longlong Item_func_truth::val_int()
 }
 
 
-bool Item_in_optimizer::fix_left(THD *thd, Item **ref)
+bool Item_in_optimizer::fix_left(THD *thd, Item **ref __attribute__((__unused__)))
 {
   if ((!args[0]->fixed && args[0]->fix_fields(thd, args)) ||
       (!cache && !(cache= Item_cache::get_cache(args[0]))))
@@ -2572,7 +2574,7 @@ Item_func_nullif::is_null()
            failed
 */
 
-Item *Item_func_case::find_item(String *str)
+Item *Item_func_case::find_item(String *str __attribute__((__unused__)))
 {
   uint value_added_map= 0;
 
@@ -3023,7 +3025,7 @@ static inline int cmp_ulongs (ulonglong a_val, ulonglong b_val)
     0           left argument is equal to the right argument.
     1           left argument is greater than the right argument.
 */
-int cmp_longlong(void *cmp_arg, 
+int cmp_longlong(void *cmp_arg __attribute__((__unused__)),
                  in_longlong::packed_longlong *a,
                  in_longlong::packed_longlong *b)
 {
@@ -3048,18 +3050,18 @@ int cmp_longlong(void *cmp_arg,
     return cmp_longs (a->val, b->val);
 }
 
-static int cmp_double(void *cmp_arg, double *a,double *b)
+static int cmp_double(void *cmp_arg __attribute__((__unused__)), double *a,double *b)
 {
   return *a < *b ? -1 : *a == *b ? 0 : 1;
 }
 
-static int cmp_row(void *cmp_arg, cmp_item_row *a, cmp_item_row *b)
+static int cmp_row(void *cmp_arg __attribute__((__unused__)), cmp_item_row *a, cmp_item_row *b)
 {
   return a->compare(b);
 }
 
 
-static int cmp_decimal(void *cmp_arg, my_decimal *a, my_decimal *b)
+static int cmp_decimal(void *cmp_arg __attribute__((__unused__)), my_decimal *a, my_decimal *b)
 {
   /*
     We need call of fixing buffer pointer, because fast sort just copy
@@ -3136,7 +3138,7 @@ uchar *in_string::get_value(Item *item)
   return (uchar*) item->val_str(&tmp);
 }
 
-in_row::in_row(uint elements, Item * item)
+in_row::in_row(uint elements, Item * item __attribute__((__unused__)))
 {
   base= (char*) new cmp_item_row[count= elements];
   size= sizeof(cmp_item_row);
@@ -3896,7 +3898,7 @@ void Item_cond::copy_andor_arguments(THD *thd, Item_cond *item)
 
 
 bool
-Item_cond::fix_fields(THD *thd, Item **ref)
+Item_cond::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 0);
   List_iterator<Item> li(list);
@@ -3973,7 +3975,7 @@ Item_cond::fix_fields(THD *thd, Item **ref)
 }
 
 
-void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **ref)
+void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **ref __attribute__((__unused__)))
 {
   List_iterator<Item> li(list);
   Item *item;
@@ -4825,13 +4827,13 @@ longlong Item_cond_xor::val_int()
     NULL if we cannot apply NOT transformation (see Item::neg_transformer()).
 */
 
-Item *Item_func_not::neg_transformer(THD *thd)	/* NOT(x)  ->  x */
+Item *Item_func_not::neg_transformer(THD *thd __attribute__((__unused__)))	/* NOT(x)  ->  x */
 {
   return args[0];
 }
 
 
-Item *Item_bool_rowready_func2::neg_transformer(THD *thd)
+Item *Item_bool_rowready_func2::neg_transformer(THD *thd __attribute__((__unused__)))
 {
   Item *item= negated_item();
   return item;
@@ -4841,7 +4843,7 @@ Item *Item_bool_rowready_func2::neg_transformer(THD *thd)
 /**
   a IS NULL  ->  a IS NOT NULL.
 */
-Item *Item_func_isnull::neg_transformer(THD *thd)
+Item *Item_func_isnull::neg_transformer(THD *thd __attribute__((__unused__)))
 {
   Item *item= new Item_func_isnotnull(args[0]);
   return item;
@@ -4851,7 +4853,7 @@ Item *Item_func_isnull::neg_transformer(THD *thd)
 /**
   a IS NOT NULL  ->  a IS NULL.
 */
-Item *Item_func_isnotnull::neg_transformer(THD *thd)
+Item *Item_func_isnotnull::neg_transformer(THD *thd __attribute__((__unused__)))
 {
   Item *item= new Item_func_isnull(args[0]);
   return item;
@@ -4876,7 +4878,7 @@ Item *Item_cond_or::neg_transformer(THD *thd)	/* NOT(a OR b OR ...)  -> */
 }
 
 
-Item *Item_func_nop_all::neg_transformer(THD *thd)
+Item *Item_func_nop_all::neg_transformer(THD *thd __attribute__((__unused__)))
 {
   /* "NOT (e $cmp$ ANY (SELECT ...)) -> e $rev_cmp$" ALL (SELECT ...) */
   Item_func_not_all *new_item= new Item_func_not_all(args[0]);
@@ -4887,7 +4889,7 @@ Item *Item_func_nop_all::neg_transformer(THD *thd)
   return new_item;
 }
 
-Item *Item_func_not_all::neg_transformer(THD *thd)
+Item *Item_func_not_all::neg_transformer(THD *thd __attribute__((__unused__)))
 {
   /* "NOT (e $cmp$ ALL (SELECT ...)) -> e $rev_cmp$" ANY (SELECT ...) */
   Item_func_nop_all *new_item= new Item_func_nop_all(args[0]);
@@ -5127,7 +5129,7 @@ void Item_equal::update_const()
   }
 }
 
-bool Item_equal::fix_fields(THD *thd, Item **ref)
+bool Item_equal::fix_fields(THD *thd __attribute__((__unused__)), Item **ref __attribute__((__unused__)))
 {
   List_iterator_fast<Item_field> li(fields);
   Item *item;

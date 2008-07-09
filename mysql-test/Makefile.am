@@ -21,15 +21,19 @@ SUBDIRS =
 
 benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
-EXTRA_SCRIPTS = 	install_test_db.sh \
-			valgrind.supp $(PRESCRIPTS)
+EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
 EXTRA_DIST = 		$(EXTRA_SCRIPTS) suite
 GENSCRIPTS =		install_test_db mtr mysql-test-run
 PRESCRIPTS =		mysql-test-run.pl mysql-stress-test.pl
 test_SCRIPTS = 		$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS)
+noinst_PROGRAMS = 	resolve_stack_dump
 
-AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include -I..
+AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
+			-I${top_srcdir}/sql
+LDADD=			$(top_builddir)/mysys/libmysyslt.la \
+                        $(top_builddir)/strings/libmystringslt.la 
+
 
 
 dist-hook:
@@ -132,27 +136,3 @@ mysql-test-run:
 	$(RM) -f mysql-test-run
 	$(LN_S) mysql-test-run.pl mysql-test-run
 
-SUFFIXES = .sh
-
-.sh:
-	@RM@ -f $@ $@-t
-	@SED@ \
-	  -e 's!@''testdir''@!$(testdir)!g' \
-	  -e 's!@''bindir''@!$(bindir)!g' \
-	  -e 's!@''scriptdir''@!$(bindir)!g' \
-	  -e 's!@''prefix''@!$(prefix)!g' \
-	  -e 's!@''datadir''@!$(datadir)!g' \
-	  -e 's!@''localstatedir''@!$(localstatedir)!g' \
-	  -e 's!@''libexecdir''@!$(libexecdir)!g' \
-	  -e 's!@''PERL''@!@PERL@!' \
-	  -e 's!@''VERSION''@!@VERSION@!' \
-	  -e 's!@''MYSQL_TCP_PORT''@!@MYSQL_TCP_PORT@!' \
-	  -e 's!@''MYSQL_TCP_PORT_DEFAULT''@!@MYSQL_TCP_PORT_DEFAULT@!' \
-	  -e 's!@''MYSQL_BASE_VERSION''@!@MYSQL_BASE_VERSION@!' \
-	  -e 's!@''MYSQL_TCP_PORT''@!@MYSQL_TCP_PORT@!' \
-	  -e 's!@''MYSQL_NO_DASH_VERSION''@!@MYSQL_NO_DASH_VERSION@!' \
-	  -e 's!@''MYSQL_SERVER_SUFFIX''@!@MYSQL_SERVER_SUFFIX@!' \
-	  -e 's!@''USE_NDBCLUSTER''@!@TEST_NDBCLUSTER@!g' \
-	  $< > $@-t
-	@CHMOD@ +x $@-t
-	@MV@ $@-t $@

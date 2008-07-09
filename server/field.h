@@ -489,12 +489,6 @@ public:
     return field_length / charset()->mbmaxlen;
   }
 
-  inline  enum ha_storage_media field_storage_type() const
-  {
-    return (enum ha_storage_media)
-      ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
-  }
-
   inline enum column_format_type column_format() const
   {
     return (enum column_format_type)
@@ -1243,39 +1237,6 @@ public:
 };
 
 
-class Field_date :public Field_str {
-public:
-  Field_date(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     CHARSET_INFO *cs)
-    :Field_str(ptr_arg, 10, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg, cs)
-    {}
-  Field_date(bool maybe_null_arg, const char *field_name_arg,
-             CHARSET_INFO *cs)
-    :Field_str((uchar*) 0,10, maybe_null_arg ? (uchar*) "": 0,0,
-	       NONE, field_name_arg, cs) {}
-  enum_field_types type() const { return MYSQL_TYPE_DATE;}
-  enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
-  enum Item_result cmp_type () const { return INT_RESULT; }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
-  int store(double nr);
-  int store(longlong nr, bool unsigned_val);
-  int reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
-  double val_real(void);
-  longlong val_int(void);
-  String *val_str(String*,String *);
-  bool get_time(MYSQL_TIME *ltime);
-  bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 4; }
-  void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return TRUE; }
-  bool zero_pack() const { return 1; }
-};
-
-
 class Field_newdate :public Field_str {
 public:
   Field_newdate(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
@@ -1288,7 +1249,7 @@ public:
                 CHARSET_INFO *cs)
     :Field_str((uchar*) 0,10, maybe_null_arg ? (uchar*) "": 0,0,
                NONE, field_name_arg, cs) {}
-  enum_field_types type() const { return MYSQL_TYPE_DATE;}
+  enum_field_types type() const { return MYSQL_TYPE_NEWDATE;}
   enum_field_types real_type() const { return MYSQL_TYPE_NEWDATE; }
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_UINT24; }
   enum Item_result cmp_type () const { return INT_RESULT; }
@@ -1405,11 +1366,7 @@ public:
 
   enum_field_types type() const
   {
-    return ((can_alter_field_type && orig_table &&
-             orig_table->s->db_create_options & HA_OPTION_PACK_RECORD &&
-	     field_length >= 4) &&
-            orig_table->s->frm_version < FRM_VER_TRUE_VARCHAR ?
-	    MYSQL_TYPE_VAR_STRING : MYSQL_TYPE_STRING);
+    return  MYSQL_TYPE_STRING;
   }
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_BINARY : HA_KEYTYPE_TEXT; }
@@ -1836,12 +1793,6 @@ public:
     { return new (mem_root) Create_field(*this); }
   void create_length_to_internal_length(void);
 
-  inline  enum ha_storage_media field_storage_type() const
-  {
-    return (enum ha_storage_media)
-      ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
-  }
-
   inline enum column_format_type column_format() const
   {
     return (enum column_format_type)
@@ -1858,7 +1809,6 @@ public:
             Item *on_update_value, LEX_STRING *comment, char *change,
             List<String> *interval_list, CHARSET_INFO *cs,
             uint uint_geom_type,
-            enum ha_storage_media storage_type,
             enum column_format_type column_format);
 };
 

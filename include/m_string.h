@@ -30,9 +30,6 @@
 #include <string.h>
 #endif
 
-/* need by my_vsnprintf */
-#include <stdarg.h> 
-
 #ifdef _AIX
 #undef HAVE_BCMP
 #endif
@@ -264,12 +261,6 @@ extern ulonglong strtoull(const char *str, char **ptr, int base);
 #endif
 #endif
 
-/* my_vsnprintf.c */
-
-extern size_t my_vsnprintf(char *str, size_t n,
-                           const char *format, va_list ap);
-extern size_t my_snprintf(char *to, size_t n, const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 3, 4);
 
 #if defined(__cplusplus)
 }

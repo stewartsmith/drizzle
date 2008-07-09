@@ -5,4 +5,4 @@
 
 nm --numeric-sort ../server/mysqld > var/tmp/mysqld.sym
 echo "Please type or paste the numeric stack trace,Ctrl-C to quit:"
-../extra/resolve_stack_dump -s var/tmp/mysqld.sym
+resolve_stack_dump -s var/tmp/mysqld.sym

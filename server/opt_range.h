@@ -212,7 +212,7 @@ public:
       0     Ok
       other Error
   */
-  virtual int init_ror_merged_scan(bool reuse_handler)
+  virtual int init_ror_merged_scan(bool reuse_handler __attribute__((__unused__)))
   { DBUG_ASSERT(0); return 1; }
 
   /*
@@ -234,7 +234,7 @@ public:
     This function is implemented only by quick selects that merge other quick
     selects output and/or can produce output suitable for merging.
   */
-  virtual void add_info_string(String *str) {};
+  virtual void add_info_string(String *str __attribute__((__unused__))) {};
   /*
     Return 1 if any index used by this quick select
     uses field which is marked in passed bitmap.

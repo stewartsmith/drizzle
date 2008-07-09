@@ -22,13 +22,6 @@
 #include <mysql/plugin.h>
 #include <my_bit.h>
 
-#if defined(MSDOS) || defined(__WIN__)
-#ifdef __WIN__
-#include <fcntl.h>
-#else
-#include <process.h>			/* Prototype for getpid */
-#endif
-#endif
 #include <m_ctype.h>
 
 /*
@@ -755,19 +748,19 @@ uint mi_get_pointer_length(ulonglong file_length, uint def)
   if (file_length)				/* If not default */
   {
 #ifdef NOT_YET_READY_FOR_8_BYTE_POINTERS
-    if (file_length >= ULL(1) << 56)
+    if (file_length >= 1ULL << 56)
       def=8;
     else
 #endif
-    if (file_length >= ULL(1) << 48)
+    if (file_length >= 1ULL << 48)
       def=7;
-    else if (file_length >= ULL(1) << 40)
+    else if (file_length >= 1ULL << 40)
       def=6;
-    else if (file_length >= ULL(1) << 32)
+    else if (file_length >= 1ULL << 32)
       def=5;
-    else if (file_length >= ULL(1) << 24)
+    else if (file_length >= 1ULL << 24)
       def=4;
-    else if (file_length >= ULL(1) << 16)
+    else if (file_length >= 1ULL << 16)
       def=3;
     else
       def=2;

@@ -15,6 +15,9 @@
 
 /* This file is included by all internal myisam files */
 
+#if !defined(MYISAMDEF_H)
+#define MYISAMDEF_H
+
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
 #include <my_tree.h>
@@ -396,6 +399,12 @@ typedef struct st_mi_sort_param
 #define mi_print_error(SHARE, ERRNO)                     \
         mi_report_error((ERRNO), (SHARE)->index_file_name)
 
+C_MODE_START
+void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
+                        const char *message __attribute__((unused)),
+                        const char *sfile __attribute__((unused)),
+                        uint sline __attribute__((unused)));
+C_MODE_END
 /* Functions to store length of space packed keys, VARCHAR or BLOB keys */
 
 #define store_key_length(key,length) \
@@ -560,8 +569,6 @@ extern void _mi_kpointer(MI_INFO *info,uchar *buff,my_off_t pos);
 extern my_off_t _mi_dpos(MI_INFO *info, uint nod_flag,uchar *after_key);
 extern my_off_t _mi_rec_pos(MYISAM_SHARE *info, uchar *ptr);
 extern void _mi_dpointer(MI_INFO *info, uchar *buff,my_off_t pos);
-extern int ha_key_cmp(HA_KEYSEG *keyseg, uchar *a,uchar *b,
-		       uint key_length,uint nextflag,uint *diff_length);
 extern uint _mi_get_static_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
 			       uchar *key);
 extern uint _mi_get_pack_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
@@ -751,8 +758,6 @@ my_bool mi_dynmap_file(MI_INFO *info, my_off_t size);
 void mi_remap_file(MI_INFO *info, my_off_t size);
 
 int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record);
-void _mi_report_crashed(MI_INFO *file, const char *message,
-                        const char *sfile, uint sline);
 
     /* Functions needed by mi_check */
 volatile int *killed_ptr(MI_CHECK *param);
@@ -781,3 +786,4 @@ void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 }
 #endif
 
+#endif

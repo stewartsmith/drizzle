@@ -4,11 +4,11 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([server/mysqld.cc])
+AC_CONFIG_SRCDIR([server/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(mysql, 7.0.0, no-define)
+AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -419,7 +419,7 @@ AC_CHECK_NOEXECSTACK
 
 if test "$am_cv_prog_cc_stdc" = "no"
 then
-  AC_MSG_ERROR([MySQL requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
+  AC_MSG_ERROR([Drizzle requires an ANSI C compiler (and a C++ compiler). Try gcc. See the Installation chapter in the Reference Manual.])
 fi
 
 
@@ -481,7 +481,7 @@ fi
 
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
-            [Which port to use for MySQL services @<:@default=3306@:>@])],
+            [Which port to use for Drizzle services @<:@default=3306@:>@])],
     [ MYSQL_TCP_PORT=$withval ],
     [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -555,7 +555,7 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_STDBOOL
-AC_CHECK_HEADERS(fcntl.h float.h floatingpoint.h fpu_control.h ieeefp.h)
+AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
 AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
 AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
@@ -577,6 +577,20 @@ AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
 #--------------------------------------------------------------------
 
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
+
+#--------------------------------------------------------------------
+# Check for libpcre
+#--------------------------------------------------------------------
+
+AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [
+  AC_DEFINE([HAVE_PCRE], [1], [Perl Compatible Regex Lib for mysqltest])
+  ],[
+  AC_CHECK_LIB(pcrecpp, [DoMatch], AC_MSG_ERROR([PCRE not found]))
+  AC_MSG_WARN([PCRE not found - mysqltest will not be built])
+  ])
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
 
 #--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
@@ -630,14 +644,6 @@ AC_CHECK_FUNCS(dlopen dlerror)
 LIBS="$my_save_LIBS"
 
 AC_CHECK_FUNCS(strtok_r)
-
-
-# System characteristics
-case $SYSTEM_TYPE in
-  *)
-AC_SYS_RESTARTABLE_SYSCALLS
-    ;;
-esac
 
 # Build optimized or debug version ?
 # First check for gcc and g++
@@ -705,7 +711,7 @@ fi
 # If we should allow error injection tests
 AC_ARG_WITH([error-inject],
     [AS_HELP_STRING([--with-error-inject],
-	    [Enable error injection in MySQL Server @<:@default=off@:>@])],
+	    [Enable error injection in Drizzle Server @<:@default=off@:>@])],
     [ with_error_inject=$withval ],
     [ with_error_inject=no ])
 
@@ -714,7 +720,7 @@ then
   if test "$with_error_inject" = "yes"
   then
     AC_DEFINE([ERROR_INJECT_SUPPORT], [1],
-              [Enable error injection in MySQL Server])
+              [Enable error injection in Drizzle Server])
   fi
 fi
 
@@ -780,13 +786,7 @@ MYSQL_NEEDS_MYSYS_NEW
 AC_CHECK_SIZEOF(char, 1)
 if test "$ac_cv_sizeof_char" -eq 0
 then
-  AC_MSG_ERROR([No size for char type.
-A likely cause for this could be that there isn't any
-static libraries installed. You can verify this by checking if you have libm.a
-in /lib, /usr/lib or some other standard place.  If this is the problem,
-install the static libraries and try again.  If this isn't the problem,
-examine config.log for possible errors.  If you want to report this, use
-'scripts/mysqlbug' and include at least the last 20 rows from config.log!])
+  AC_MSG_ERROR([No size for char type.])
 fi
 AC_CHECK_SIZEOF(char*, 4)
 AC_CHECK_SIZEOF(short, 2)
@@ -803,13 +803,13 @@ fi
 AC_CHECK_SIZEOF(long long, 8)
 if test "$ac_cv_sizeof_long_long" -eq 0
 then
-  AC_MSG_ERROR("MySQL needs a long long type.")
+  AC_MSG_ERROR("Drizzle needs a long long type.")
 fi
 # off_t is not a builtin type
 AC_CHECK_SIZEOF(off_t, 4)
 if test "$ac_cv_sizeof_off_t" -eq 0
 then
-  AC_MSG_ERROR("MySQL needs a off_t type.")
+  AC_MSG_ERROR("Drizzle needs a off_t type.")
 fi
 
 dnl
@@ -876,7 +876,6 @@ AC_CHECK_HEADER(vis.h,
 
 AC_CHECK_FUNCS(strlcat strlcpy)
 AC_CHECK_FUNCS(issetugid)
-AC_CHECK_FUNCS(fgetln)
 AC_CHECK_FUNCS(getline flockfile)
 
 # from old readline settting:
@@ -924,15 +923,6 @@ AC_CHECK_DECLS(tgoto,,,[
 #endif
 ])
 
-LIBEDIT_LOBJECTS=""
-AC_CHECK_FUNC(strunvis, ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS unvis.o"])
-AC_CHECK_FUNC(strvis,   ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS vis.o"])
-AC_CHECK_FUNC(strlcpy,  ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS strlcpy.o"])
-AC_CHECK_FUNC(strlcat,  ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS strlcat.o"])
-AC_CHECK_FUNC(fgetln,   ,[LIBEDIT_LOBJECTS="$LIBEDIT_LOBJECTS fgetln.o"])
-AC_SUBST(LIBEDIT_LOBJECTS)
-enable_readline="yes"
-
 # End of readline/libedit stuff
 #########################################################################
 
@@ -954,9 +944,15 @@ MYSQL_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
+AC_CHECK_FUNCS(fcntl)
+if test "x$ac_cv_func_fcntl" != "xyes"
+then
+  AC_MSG_ERROR("Drizzle requires fcntl.")
+fi
+
 AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
-  chsize cuserid fchmod fcntl \
-  fconvert fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
+  cuserid fchmod \
+  fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
@@ -1175,7 +1171,7 @@ then
   if test "$ac_warn_pedantic" = "yes"
   then
     GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls  "
-    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls "
+    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wno-long-long "
   fi
 
   if test "$ac_warn_unreachable" = "yes"
@@ -1210,15 +1206,17 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
- strings/Makefile strings/tests/Makefile regex/Makefile storage/Makefile dnl
+ strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libmysql/Makefile client/Makefile dnl
  server/Makefile server/share/Makefile dnl
  server/sql_builtin.cc sql-common/Makefile dnl
- dbug/Makefile scripts/Makefile include/Makefile dnl
+ dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
- mysql-test/Makefile dnl
- include/mysql_version.h plugin/Makefile)
+ mysql-test/Makefile mysql-test/install_test_db dnl
+ include/mysql_version.h plugin/Makefile dnl
+ sql/drizzled_safe support-files/libmysqlclient.pc dnl
+ support-files/mysql.server support-files/mysql-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 

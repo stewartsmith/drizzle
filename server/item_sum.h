@@ -363,8 +363,8 @@ public:
   */
   void no_rows_in_result() { clear(); }
 
-  virtual bool setup(THD *thd) {return 0;}
-  virtual void make_unique() {}
+  virtual bool setup(THD *thd __attribute__((__unused__))) {return 0;}
+  virtual void make_unique(void) {}
   Item *get_tmp_table_item(THD *thd);
   virtual Field *create_tmp_field(bool group, TABLE *table,
                                   uint convert_blob_length);
@@ -680,7 +680,7 @@ public:
   String *val_str(String *str);
   void reset_field();
   void update_field();
-  Item *result_item(Field *field)
+  Item *result_item(Field *field __attribute__((__unused__)))
   { return new Item_avg_field(hybrid_type, this); }
   void no_rows_in_result() {}
   const char *func_name() const { return "avg("; }
@@ -771,7 +771,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   void reset_field();
   void update_field();
-  Item *result_item(Field *field)
+  Item *result_item(Field *field __attribute__((__unused__)))
   { return new Item_variance_field(this); }
   void no_rows_in_result() {}
   const char *func_name() const
@@ -813,7 +813,7 @@ class Item_sum_std :public Item_sum_variance
     {}
   enum Sumfunctype sum_func () const { return STD_FUNC; }
   double val_real();
-  Item *result_item(Field *field)
+  Item *result_item(Field *field __attribute__((__unused__)))
     { return new Item_std_field(this); }
   const char *func_name() const { return "std("; }
   Item *copy_or_same(THD* thd);
@@ -919,7 +919,7 @@ public:
 class Item_sum_or :public Item_sum_bit
 {
 public:
-  Item_sum_or(Item *item_par) :Item_sum_bit(item_par,LL(0)) {}
+  Item_sum_or(Item *item_par) :Item_sum_bit(item_par,0LL) {}
   Item_sum_or(THD *thd, Item_sum_or *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_or("; }
@@ -940,7 +940,7 @@ class Item_sum_and :public Item_sum_bit
 class Item_sum_xor :public Item_sum_bit
 {
   public:
-  Item_sum_xor(Item *item_par) :Item_sum_bit(item_par,LL(0)) {}
+  Item_sum_xor(Item *item_par) :Item_sum_bit(item_par,0LL) {}
   Item_sum_xor(THD *thd, Item_sum_xor *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_xor("; }
