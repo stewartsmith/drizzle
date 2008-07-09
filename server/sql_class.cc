@@ -597,7 +597,7 @@ THD::THD()
   protocol= &protocol_text;			// Default protocol
   protocol_text.init(this);
 
-  tablespace_op=FALSE;
+  tablespace_op= false;
   tmp= sql_rnd_with_mutex();
   randominit(&rand, tmp + (ulong) &rand, tmp + (ulong) ::global_query_id);
   substitute_null_with_insert_id = FALSE;

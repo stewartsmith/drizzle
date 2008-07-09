@@ -23,7 +23,6 @@
 class Table_ident;
 class sql_exchange;
 class LEX_COLUMN;
-class st_alter_tablespace;
 
 #ifdef MYSQL_SERVER
 /*
@@ -83,7 +82,6 @@ enum enum_sql_command {
   SQLCOM_SHOW_BINLOG_EVENTS,
   SQLCOM_SHOW_WARNS, SQLCOM_EMPTY_QUERY, SQLCOM_SHOW_ERRORS,
   SQLCOM_CHECKSUM,
-  SQLCOM_ALTER_TABLESPACE,
   SQLCOM_BINLOG_BASE64_EVENT,
   SQLCOM_SHOW_PLUGINS,
   SQLCOM_ALTER_DB_UPGRADE,
@@ -1565,12 +1563,6 @@ typedef struct st_lex : public Query_tables_list
     (see Item_field::fix_fields()). 
   */
   bool use_only_table_context;
-
-  /*
-    Reference to a struct that contains information in various commands
-    to add/create/drop/change table spaces.
-  */
-  st_alter_tablespace *alter_tablespace_info;
   
   bool escape_used;
   bool is_lex_started; /* If lex_start() did run. For debugging. */

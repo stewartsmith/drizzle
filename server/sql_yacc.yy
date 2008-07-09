@@ -849,6 +849,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SWITCHES_SYM
 %token  SYSDATE
 %token  TABLES
+%token  TABLESPACE
 %token  TABLE_REF_PRIORITY
 %token  TABLE_SYM                     /* SQL-2003-R */
 %token  TABLE_CHECKSUM_SYM
@@ -1398,11 +1399,6 @@ create:
           }
         ;
 
-
-/*
-  End tablespace part
-*/
-
 create2:
           '(' create2a {}
         | opt_create_table_options
@@ -1551,11 +1547,6 @@ create_table_option:
           {
             Lex->create_info.avg_row_length=$3;
             Lex->create_info.used_fields|= HA_CREATE_USED_AVG_ROW_LENGTH;
-          }
-        | PASSWORD opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.password=$3.str;
-            Lex->create_info.used_fields|= HA_CREATE_USED_PASSWORD;
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
@@ -2579,6 +2570,8 @@ ident_or_empty:
 
 alter_commands:
           /* empty */
+        | DISCARD TABLESPACE { Lex->alter_info.tablespace_op= DISCARD_TABLESPACE; }
+        | IMPORT TABLESPACE { Lex->alter_info.tablespace_op= IMPORT_TABLESPACE; }
         | alter_list
         ;
 
@@ -6751,6 +6744,7 @@ keyword_sp:
         | SWITCHES_SYM             {}
         | TABLES                   {}
         | TABLE_CHECKSUM_SYM       {}
+        | TABLESPACE               {}
         | TEMPORARY                {}
         | TEMPTABLE_SYM            {}
         | TEXT_SYM                 {}

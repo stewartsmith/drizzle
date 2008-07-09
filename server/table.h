@@ -240,7 +240,6 @@ typedef struct st_table_share
     return db_plugin ? plugin_data(db_plugin, handlerton*) : NULL;
   }
   enum row_type row_type;		/* How rows are stored */
-  char *tablespace;
   enum tmp_table_type tmp_table;
   enum ha_choice transactional;
   enum ha_choice page_checksum;

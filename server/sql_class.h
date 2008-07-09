@@ -1552,7 +1552,7 @@ public:
   bool	     no_warnings_for_error; /* no warnings on call to my_error() */
   /* set during loop of derived table processing */
   bool       derived_tables_processing;
-  my_bool    tablespace_op;	/* This is TRUE in DISCARD/IMPORT TABLESPACE */
+  bool    tablespace_op;	/* This is TRUE in DISCARD/IMPORT TABLESPACE */
 
   /*
     If we do a purge of binary logs, log index info of the threads
