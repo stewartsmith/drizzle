@@ -18,7 +18,7 @@ if BUILD_DBUG
 endif
 
 AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
-			-I$(top_srcdir)/sql
+			-I$(top_srcdir)/server
 LDADD =			$(top_builddir)/mysys/libmysyslt.la \
  			$(d_dbug) \
                         $(top_builddir)/strings/libmystringslt.la \
@@ -36,15 +36,15 @@ DIST_SUBDIRS =
 # NOTE Built files should depend on their sources to avoid
 # the built files being rebuilt in source dist
 $(top_builddir)/include/mysqld_error.h: comp_err.c \
-			$(top_srcdir)/sql/share/errmsg.txt
+			$(top_srcdir)/server/share/errmsg.txt
 	$(MAKE) $(AM_MAKEFLAGS) comp_err$(EXEEXT)
 	$(top_builddir)/extra/comp_err$(EXEEXT) \
-	--charset=$(top_srcdir)/sql/share/charsets \
-	--out-dir=$(top_builddir)/sql/share/ \
+	--charset=$(top_srcdir)/server/share/charsets \
+	--out-dir=$(top_builddir)/server/share/ \
 	--header_file=$(top_builddir)/include/mysqld_error.h \
 	--name_file=$(top_builddir)/include/mysqld_ername.h \
 	--state_file=$(top_builddir)/include/sql_state.h \
-	--in_file=$(top_srcdir)/sql/share/errmsg.txt
+	--in_file=$(top_srcdir)/server/share/errmsg.txt
 $(top_builddir)/include/mysqld_ername.h: $(top_builddir)/include/mysqld_error.h
 $(top_builddir)/include/sql_state.h: $(top_builddir)/include/mysqld_error.h
 

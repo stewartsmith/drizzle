@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([sql/drizzled.cc])
+AC_CONFIG_SRCDIR([server/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
@@ -49,7 +49,7 @@ sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 
-# Remember to add a directory sql/share/LANGUAGE
+# Remember to add a directory server/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
 czech danish dutch english estonian french german greek hungarian \
 italian japanese korean norwegian norwegian-ny polish portuguese \
@@ -1209,13 +1209,13 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
- sql/Makefile sql/share/Makefile dnl
- sql/sql_builtin.cc sql-common/Makefile dnl
+ server/Makefile server/share/Makefile dnl
+ server/sql_builtin.cc sql-common/Makefile dnl
  dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
  test/Makefile test/install_test_db dnl
  include/drizzle_version.h plugin/Makefile dnl
- sql/drizzled_safe support-files/libdrizzle.pc dnl
+ server/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)

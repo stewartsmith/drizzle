@@ -709,7 +709,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  NVARCHAR_SYM
 %token  OFFLINE_SYM
 %token  OFFSET_SYM
-%token  OLD_PASSWORD
 %token  ON                            /* SQL-2003-R */
 %token  ONE_SHOT_SYM
 %token  ONE_SYM
@@ -3784,7 +3783,7 @@ function_call_conflict:
           {
             THD *thd= YYTHD;
             Item* i1;
-            i1= new (thd->mem_root) Item_func_password($3);
+	    i1= new (thd->mem_root) Item_func_password($3);
             $$= i1;
           }
         | QUARTER_SYM '(' expr ')'
@@ -6647,7 +6646,6 @@ keyword_sp:
         | NVARCHAR_SYM             {}
         | OFFLINE_SYM              {}
         | OFFSET_SYM               {}
-        | OLD_PASSWORD             {}
         | ONE_SHOT_SYM             {}
         | ONE_SYM                  {}
         | ONLINE_SYM               {}
