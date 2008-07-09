@@ -7898,7 +7898,7 @@ bool ha_innobase::check_if_incompatible_data(
 
 /* TODO: Fix the cast below!!! */
 
-static char * show_innodb_vars(THD *thd __attribute__((__unused__)),
+static int show_innodb_vars(THD *thd __attribute__((__unused__)),
                             SHOW_VAR *var, char *buff __attribute__((__unused__)))
 {
   innodb_export_status();
@@ -7907,8 +7907,11 @@ static char * show_innodb_vars(THD *thd __attribute__((__unused__)),
   return 0;
 }
 
+static st_show_var_func_container
+show_innodb_vars_cont = { &show_innodb_vars };
+
 static SHOW_VAR innodb_status_variables_export[]= {
-  {"Innodb",                  (char *) &show_innodb_vars, SHOW_FUNC},
+  {"Innodb",                  (char *) &show_innodb_vars_cont, SHOW_FUNC},
   {NullS, NullS, SHOW_LONG}
 };
 
@@ -8163,7 +8166,7 @@ mysql_declare_plugin(innobase)
   innobase_init, /* Plugin Init */
   NULL, /* Plugin Deinit */
   0x0100 /* 1.0 */,
-  innodb_status_variables,/* status variables             */
+  innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }
