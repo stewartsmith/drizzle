@@ -96,35 +96,9 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
     length+= length == 1 ? (uint32) *master_data : uint2korr(master_data);
     break;
   }
-  case MYSQL_TYPE_TINY_BLOB:
-  case MYSQL_TYPE_MEDIUM_BLOB:
-  case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   {
-    /*
-      Compute the length of the data. We cannot use get_length() here
-      since it is dependent on the specific table (and also checks the
-      packlength using the internal 'table' pointer) and replication
-      is using a fixed format for storing data in the binlog.
-    */
-    switch (m_field_metadata[col]) {
-    case 1:
-      length= *master_data;
-      break;
-    case 2:
-      length= uint2korr(master_data);
-      break;
-    case 3:
-      length= uint3korr(master_data);
-      break;
-    case 4:
-      length= uint4korr(master_data);
-      break;
-    default:
-      DBUG_ASSERT(0);		// Should not come here
-      break;
-    }
-
+    length= uint4korr(master_data);
     length+= m_field_metadata[col];
     break;
   }

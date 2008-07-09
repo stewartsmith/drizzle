@@ -3972,10 +3972,8 @@ void Item::make_field(Send_field *tmp_field)
 enum_field_types Item::string_field_type() const
 {
   enum_field_types f_type= MYSQL_TYPE_VAR_STRING;
-  if (max_length >= 16777216)
-    f_type= MYSQL_TYPE_LONG_BLOB;
-  else if (max_length >= 65536)
-    f_type= MYSQL_TYPE_MEDIUM_BLOB;
+  if (max_length >= 65536)
+    f_type= MYSQL_TYPE_BLOB;
   return f_type;
 }
 
@@ -4211,9 +4209,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_VARCHAR:
     return make_string_field(table);
-  case MYSQL_TYPE_TINY_BLOB:
-  case MYSQL_TYPE_MEDIUM_BLOB:
-  case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
     if (this->type() == Item::TYPE_HOLDER)
       field= new Field_blob(max_length, maybe_null, name, collation.collation,
@@ -4738,9 +4733,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   case MYSQL_TYPE_NULL:
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_SET:
-  case MYSQL_TYPE_TINY_BLOB:
-  case MYSQL_TYPE_MEDIUM_BLOB:
-  case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_STRING:
   case MYSQL_TYPE_VAR_STRING:
@@ -6476,9 +6468,6 @@ uint32 Item_type_holder::display_length(Item *item)
   case MYSQL_TYPE_NEWDECIMAL:
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_SET:
-  case MYSQL_TYPE_TINY_BLOB:
-  case MYSQL_TYPE_MEDIUM_BLOB:
-  case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_STRING:

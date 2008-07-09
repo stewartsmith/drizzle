@@ -7964,10 +7964,7 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   case MYSQL_TYPE_DATETIME:
   case MYSQL_TYPE_LONGLONG: return 8;	/* Don't crash if no longlong */
   case MYSQL_TYPE_NULL	: return 0;
-  case MYSQL_TYPE_TINY_BLOB:	return 1+portable_sizeof_char_ptr;
-  case MYSQL_TYPE_BLOB:		return 2+portable_sizeof_char_ptr;
-  case MYSQL_TYPE_MEDIUM_BLOB:	return 3+portable_sizeof_char_ptr;
-  case MYSQL_TYPE_LONG_BLOB:	return 4+portable_sizeof_char_ptr;
+  case MYSQL_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
   case MYSQL_TYPE_SET:
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_NEWDECIMAL:
@@ -8154,12 +8151,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
 
   switch (sql_type) {
   case MYSQL_TYPE_BLOB:
-    switch (pack_length - portable_sizeof_char_ptr) {
-    case  1: sql_type= MYSQL_TYPE_TINY_BLOB; break;
-    case  2: sql_type= MYSQL_TYPE_BLOB; break;
-    case  3: sql_type= MYSQL_TYPE_MEDIUM_BLOB; break;
-    default: sql_type= MYSQL_TYPE_LONG_BLOB; break;
-    }
+    sql_type= MYSQL_TYPE_BLOB;
     length/= charset->mbmaxlen;
     key_length/= charset->mbmaxlen;
     break;
