@@ -1216,7 +1216,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  server/Makefile server/share/Makefile dnl
- server/sql_builtin.cc sql-common/Makefile dnl
+ server/sql_builtin.cc dnl
  dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
