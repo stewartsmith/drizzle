@@ -646,8 +646,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  LOCK_SYM
 %token  LOGFILE_SYM
 %token  LOGS_SYM
-%token  LONGBLOB
-%token  LONGTEXT
 %token  LONG_NUM
 %token  LONG_SYM
 %token  LOOP_SYM
@@ -673,7 +671,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MAX_USER_CONNECTIONS_SYM
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
 %token  MEDIUMBLOB
-%token  MEDIUMTEXT
 %token  MEDIUM_SYM
 %token  MERGE_SYM                     /* SQL-2003-R */
 %token  MICROSECOND_SYM               /* MYSQL-FUNC */
@@ -864,9 +861,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  TIMESTAMP_ADD
 %token  TIMESTAMP_DIFF
 %token  TIME_SYM                      /* SQL-2003-R */
-%token  TINYBLOB
 %token  TINYINT
-%token  TINYTEXT
 %token  TO_SYM                        /* SQL-2003-R */
 %token  TRAILING                      /* SQL-2003-R */
 %token  TRANSACTION_SYM
@@ -1924,25 +1919,10 @@ type:
           }
         | DATETIME
           { $$=MYSQL_TYPE_DATETIME; }
-        | TINYBLOB
-          {
-            Lex->charset=&my_charset_bin;
-            $$=MYSQL_TYPE_TINY_BLOB;
-          }
         | BLOB_SYM opt_len
           {
             Lex->charset=&my_charset_bin;
             $$=MYSQL_TYPE_BLOB;
-          }
-        | MEDIUMBLOB
-          {
-            Lex->charset=&my_charset_bin;
-            $$=MYSQL_TYPE_MEDIUM_BLOB;
-          }
-        | LONGBLOB
-          {
-            Lex->charset=&my_charset_bin;
-            $$=MYSQL_TYPE_LONG_BLOB;
           }
         | LONG_SYM VARBINARY
           {
@@ -1951,14 +1931,8 @@ type:
           }
         | LONG_SYM varchar opt_binary
           { $$=MYSQL_TYPE_MEDIUM_BLOB; }
-        | TINYTEXT opt_binary
-          { $$=MYSQL_TYPE_TINY_BLOB; }
         | TEXT_SYM opt_len opt_binary
           { $$=MYSQL_TYPE_BLOB; }
-        | MEDIUMTEXT opt_binary
-          { $$=MYSQL_TYPE_MEDIUM_BLOB; }
-        | LONGTEXT opt_binary
-          { $$=MYSQL_TYPE_LONG_BLOB; }
         | DECIMAL_SYM float_options field_options
           { $$=MYSQL_TYPE_NEWDECIMAL;}
         | NUMERIC_SYM float_options field_options

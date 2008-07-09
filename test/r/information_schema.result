@@ -203,8 +203,8 @@ CHARACTER_MAXIMUM_LENGTH
 from information_schema.columns
 where table_name='t1';
 column_name	data_type	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
-f1	longblob	4294967295	4294967295
-f2	longtext	4294967295	4294967295
+f1	blob	65535	65535
+f2	text	65535	65535
 drop table t1;
 create table t1(f1 tinyint, f2 SMALLINT, f3 BIGINT, f4 int,
 f5 BIGINT, f6 TINYINT, f7 SMALLINT);
