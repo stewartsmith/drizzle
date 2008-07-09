@@ -31,9 +31,11 @@
  */
 
 static bool init_dummy(void) {return 0;}
-static void post_kill_dummy(THD *thd) {}  
+static void post_kill_dummy(THD *thd __attribute__((__unused__))) {}
 static void end_dummy(void) {}
-static bool end_thread_dummy(THD *thd, bool cache_thread) { return 0; }
+static bool end_thread_dummy(THD *thd __attribute__((__unused__)),
+                             bool cache_thread __attribute__((__unused__)))
+{ return 0; }
 
 /*
   Initialize default scheduler with dummy functions so that setup functions
@@ -483,7 +485,7 @@ static bool libevent_should_close_connection(THD* thd)
   These procs only return/terminate on shutdown (kill_pool_threads == true).
 */
 
-pthread_handler_t libevent_thread_proc(void *arg)
+pthread_handler_t libevent_thread_proc(void *arg __attribute__((__unused__)))
 {
   if (init_new_connection_handler_thread())
   {

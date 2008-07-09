@@ -80,8 +80,9 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
 
 int
 check_user(THD *thd, enum enum_server_command command,
-	       const char *passwd, uint passwd_len, const char *db,
-	       bool check_count)
+           const char *passwd __attribute__((__unused__)),
+           uint passwd_len, const char *db,
+           bool check_count)
 {
   DBUG_ENTER("check_user");
   LEX_STRING db_str= { (char *) db, db ? strlen(db) : 0 };

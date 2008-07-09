@@ -1784,7 +1784,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
   return(0);					/* purecov: deadcode */
 }
 
-static void check_data_home(const char *path)
+static void check_data_home(const char *path __attribute__((__unused__)))
 {}
 
 #endif	/* __WIN__*/
@@ -4053,12 +4053,17 @@ The minimum value for this variable is 4096.",
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(THD *thd, SHOW_VAR *var, char *buff)
+static int show_net_compression(THD *thd __attribute__((__unused__)),
+                                SHOW_VAR *var,
+                                char *buff __attribute__((__unused__)))
 {
   var->type= SHOW_MY_BOOL;
   var->value= (char *)&thd->net.compress;
   return 0;
 }
+
+static st_show_var_func_container
+show_net_compression_cont= { &show_net_compression };
 
 static int show_starttime(THD *thd, SHOW_VAR *var, char *buff)
 {
@@ -4068,6 +4073,9 @@ static int show_starttime(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
+static st_show_var_func_container
+show_starttime_cont= { &show_starttime };
+
 static int show_flushstatustime(THD *thd, SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -4076,7 +4084,11 @@ static int show_flushstatustime(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_slave_running(THD *thd, SHOW_VAR *var, char *buff)
+static st_show_var_func_container
+show_flushstatustime_cont= { &show_flushstatustime };
+
+static int show_slave_running(THD *thd __attribute__((__unused__)),
+                              SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_MY_BOOL;
   pthread_mutex_lock(&LOCK_active_mi);
@@ -4087,7 +4099,11 @@ static int show_slave_running(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_slave_retried_trans(THD *thd, SHOW_VAR *var, char *buff)
+static st_show_var_func_container
+show_slave_running_cont= { &show_slave_running };
+
+static int show_slave_retried_trans(THD *thd __attribute__((__unused__)),
+                                    SHOW_VAR *var, char *buff)
 {
   /*
     TODO: with multimaster, have one such counter per line in
@@ -4108,7 +4124,11 @@ static int show_slave_retried_trans(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_slave_received_heartbeats(THD *thd, SHOW_VAR *var, char *buff)
+static st_show_var_func_container
+show_slave_retried_trans_cont= { &show_slave_retried_trans };
+
+static int show_slave_received_heartbeats(THD *thd __attribute__((__unused__)),
+                                          SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
   if (active_mi)
@@ -4125,7 +4145,11 @@ static int show_slave_received_heartbeats(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_heartbeat_period(THD *thd, SHOW_VAR *var, char *buff)
+static st_show_var_func_container
+show_slave_received_heartbeats_cont= { &show_slave_received_heartbeats };
+
+static int show_heartbeat_period(THD *thd __attribute__((__unused__)),
+                                 SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
   if (active_mi)
@@ -4140,8 +4164,11 @@ static int show_heartbeat_period(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
+static st_show_var_func_container
+show_heartbeat_period_cont= { &show_heartbeat_period};
 
-static int show_open_tables(THD *thd, SHOW_VAR *var, char *buff)
+static int show_open_tables(THD *thd __attribute__((__unused__)),
+                            SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
@@ -4149,13 +4176,19 @@ static int show_open_tables(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-static int show_table_definitions(THD *thd, SHOW_VAR *var, char *buff)
+static int show_table_definitions(THD *thd __attribute__((__unused__)),
+                                  SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
   var->value= buff;
   *((long *)buff)= (long)cached_table_definitions();
   return 0;
 }
+
+static st_show_var_func_container
+show_open_tables_cont= { &show_open_tables };
+static st_show_var_func_container
+show_table_definitions_cont= { &show_table_definitions };
 
 /*
   Variables shown by SHOW STATUS in alphabetical order
@@ -4169,7 +4202,7 @@ SHOW_VAR status_vars[]= {
   {"Bytes_received",           (char*) offsetof(STATUS_VAR, bytes_received), SHOW_LONGLONG_STATUS},
   {"Bytes_sent",               (char*) offsetof(STATUS_VAR, bytes_sent), SHOW_LONGLONG_STATUS},
   {"Com",                      (char*) com_status_vars, SHOW_ARRAY},
-  {"Compression",              (char*) &show_net_compression, SHOW_FUNC},
+  {"Compression",              (char*) &show_net_compression_cont, SHOW_FUNC},
   {"Connections",              (char*) &thread_id,              SHOW_LONG_NOFLUSH},
   {"Created_tmp_disk_tables",  (char*) offsetof(STATUS_VAR, created_tmp_disk_tables), SHOW_LONG_STATUS},
   {"Created_tmp_files",	       (char*) &my_tmp_file_created,	SHOW_LONG},
@@ -4201,8 +4234,8 @@ SHOW_VAR status_vars[]= {
   {"Max_used_connections",     (char*) &max_used_connections,  SHOW_LONG},
   {"Open_files",               (char*) &my_file_opened,         SHOW_LONG_NOFLUSH},
   {"Open_streams",             (char*) &my_stream_opened,       SHOW_LONG_NOFLUSH},
-  {"Open_table_definitions",   (char*) &show_table_definitions, SHOW_FUNC},
-  {"Open_tables",              (char*) &show_open_tables,       SHOW_FUNC},
+  {"Open_table_definitions",   (char*) &show_table_definitions_cont, SHOW_FUNC},
+  {"Open_tables",              (char*) &show_open_tables_cont,       SHOW_FUNC},
   {"Opened_files",             (char*) &my_file_total_opened, SHOW_LONG_NOFLUSH},
   {"Opened_tables",            (char*) offsetof(STATUS_VAR, opened_tables), SHOW_LONG_STATUS},
   {"Opened_table_definitions", (char*) offsetof(STATUS_VAR, opened_shares), SHOW_LONG_STATUS},
@@ -4213,10 +4246,10 @@ SHOW_VAR status_vars[]= {
   {"Select_range_check",       (char*) offsetof(STATUS_VAR, select_range_check_count), SHOW_LONG_STATUS},
   {"Select_scan",	       (char*) offsetof(STATUS_VAR, select_scan_count), SHOW_LONG_STATUS},
   {"Slave_open_temp_tables",   (char*) &slave_open_temp_tables, SHOW_LONG},
-  {"Slave_retried_transactions",(char*) &show_slave_retried_trans, SHOW_FUNC},
-  {"Slave_heartbeat_period",   (char*) &show_heartbeat_period, SHOW_FUNC},
-  {"Slave_received_heartbeats",(char*) &show_slave_received_heartbeats, SHOW_FUNC},
-  {"Slave_running",            (char*) &show_slave_running,     SHOW_FUNC},
+  {"Slave_retried_transactions",(char*) &show_slave_retried_trans_cont, SHOW_FUNC},
+  {"Slave_heartbeat_period",   (char*) &show_heartbeat_period_cont, SHOW_FUNC},
+  {"Slave_received_heartbeats",(char*) &show_slave_received_heartbeats_cont, SHOW_FUNC},
+  {"Slave_running",            (char*) &show_slave_running_cont,     SHOW_FUNC},
   {"Slow_launch_threads",      (char*) &slow_launch_threads,    SHOW_LONG},
   {"Slow_queries",             (char*) offsetof(STATUS_VAR, long_query_count), SHOW_LONG_STATUS},
   {"Sort_merge_passes",	       (char*) offsetof(STATUS_VAR, filesort_merge_passes), SHOW_LONG_STATUS},
@@ -4234,8 +4267,8 @@ SHOW_VAR status_vars[]= {
   {"Threads_connected",        (char*) &connection_count,       SHOW_INT},
   {"Threads_created",	       (char*) &thread_created,		SHOW_LONG_NOFLUSH},
   {"Threads_running",          (char*) &thread_running,         SHOW_INT},
-  {"Uptime",                   (char*) &show_starttime,         SHOW_FUNC},
-  {"Uptime_since_flush_status",(char*) &show_flushstatustime,   SHOW_FUNC},
+  {"Uptime",                   (char*) &show_starttime_cont,         SHOW_FUNC},
+  {"Uptime_since_flush_status",(char*) &show_flushstatustime_cont,   SHOW_FUNC},
   {NullS, NullS, SHOW_LONG}
 };
 

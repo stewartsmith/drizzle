@@ -1766,13 +1766,14 @@ public:
 class sys_var_sync_binlog_period :public sys_var_long_ptr
 {
 public:
-  sys_var_sync_binlog_period(sys_var_chain *chain, const char *name_arg, 
+  sys_var_sync_binlog_period(sys_var_chain *chain, const char *name_arg,
                              ulong *value_ptr)
     :sys_var_long_ptr(chain, name_arg,value_ptr) {}
   bool update(THD *thd, set_var *var);
 };
 
-static void fix_slave_net_timeout(THD *thd, enum_var_type type)
+static void fix_slave_net_timeout(THD *thd,
+                                  enum_var_type type __attribute__((__unused__)))
 {
   DBUG_ENTER("fix_slave_net_timeout");
 #ifdef HAVE_REPLICATION
@@ -1804,17 +1805,8 @@ static sys_var_slave_skip_counter sys_slave_skip_counter(&vars, "sql_slave_skip_
 static int show_slave_skip_errors(THD *thd, SHOW_VAR *var, char *buff);
 
 
-static SHOW_VAR fixed_vars[]= {
-  {"log_slave_updates",       (char*) &opt_log_slave_updates,       SHOW_MY_BOOL},
-  {"relay_log" , (char*) &opt_relay_logname, SHOW_CHAR_PTR},
-  {"relay_log_index", (char*) &opt_relaylog_index_name, SHOW_CHAR_PTR},
-  {"relay_log_info_file", (char*) &relay_log_info_file, SHOW_CHAR_PTR},
-  {"relay_log_space_limit",   (char*) &relay_log_space_limit,       SHOW_LONGLONG},
-  {"slave_load_tmpdir",       (char*) &slave_load_tmpdir,           SHOW_CHAR_PTR},
-  {"slave_skip_errors",       (char*) &show_slave_skip_errors,      SHOW_FUNC},
-};
-
-static int show_slave_skip_errors(THD *thd, SHOW_VAR *var, char *buff)
+static int show_slave_skip_errors(THD *thd __attribute__((__unused__)),
+                                  SHOW_VAR *var, char *buff)
 {
   var->type=SHOW_CHAR;
   var->value= buff;
@@ -1851,7 +1843,22 @@ static int show_slave_skip_errors(THD *thd, SHOW_VAR *var, char *buff)
   return 0;
 }
 
-bool sys_var_slave_skip_counter::check(THD *thd, set_var *var)
+static st_show_var_func_container
+show_slave_skip_errors_cont = { &show_slave_skip_errors };
+
+
+static SHOW_VAR fixed_vars[]= {
+  {"log_slave_updates",       (char*) &opt_log_slave_updates,       SHOW_MY_BOOL},
+  {"relay_log" , (char*) &opt_relay_logname, SHOW_CHAR_PTR},
+  {"relay_log_index", (char*) &opt_relaylog_index_name, SHOW_CHAR_PTR},
+  {"relay_log_info_file", (char*) &relay_log_info_file, SHOW_CHAR_PTR},
+  {"relay_log_space_limit",   (char*) &relay_log_space_limit,       SHOW_LONGLONG},
+  {"slave_load_tmpdir",       (char*) &slave_load_tmpdir,           SHOW_CHAR_PTR},
+  {"slave_skip_errors",       (char*) &show_slave_skip_errors_cont,      SHOW_FUNC},
+};
+
+bool sys_var_slave_skip_counter::check(THD *thd __attribute__((__unused__)),
+                                       set_var *var)
 {
   int result= 0;
   pthread_mutex_lock(&LOCK_active_mi);
@@ -1868,7 +1875,8 @@ bool sys_var_slave_skip_counter::check(THD *thd, set_var *var)
 }
 
 
-bool sys_var_slave_skip_counter::update(THD *thd, set_var *var)
+bool sys_var_slave_skip_counter::update(THD *thd __attribute__((__unused__)),
+                                        set_var *var)
 {
   pthread_mutex_lock(&LOCK_active_mi);
   pthread_mutex_lock(&active_mi->rli.run_lock);
@@ -1889,7 +1897,8 @@ bool sys_var_slave_skip_counter::update(THD *thd, set_var *var)
 }
 
 
-bool sys_var_sync_binlog_period::update(THD *thd, set_var *var)
+bool sys_var_sync_binlog_period::update(THD *thd __attribute__((__unused__)),
+                                        set_var *var)
 {
   sync_binlog_period= (ulong) var->save_result.ulonglong_value;
   return 0;

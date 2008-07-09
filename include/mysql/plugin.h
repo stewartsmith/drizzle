@@ -126,6 +126,9 @@ struct st_mysql_show_var {
 #define SHOW_VAR_FUNC_BUFF_SIZE 1024
 typedef int (*mysql_show_var_func)(MYSQL_THD, struct st_mysql_show_var*, char *);
 
+struct st_show_var_func_container {
+  mysql_show_var_func func;
+};
 /*
   declarations for server variables and command line options
 */

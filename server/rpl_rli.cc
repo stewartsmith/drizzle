@@ -33,7 +33,7 @@ Relay_log_info::Relay_log_info()
   :Slave_reporting_capability("SQL"),
    no_storage(FALSE), replicate_same_server_id(::replicate_same_server_id),
    info_fd(-1), cur_log_fd(-1), save_temporary_tables(0),
-#if HAVE_purify
+#if defined(HAVE_purify) && HAVE_purify
    is_fake(FALSE),
 #endif
    cur_log_old_open_count(0), group_relay_log_pos(0), event_relay_log_pos(0),

@@ -23,7 +23,9 @@
 #include "mysql_priv.h"
 #include "sql_select.h"
 
-bool mysql_union(THD *thd, LEX *lex, select_result *result,
+bool mysql_union(THD *thd,
+                 LEX *lex __attribute__((__unused__)),
+                 select_result *result,
                  SELECT_LEX_UNIT *unit, ulong setup_tables_done_option)
 {
   DBUG_ENTER("mysql_union");
@@ -41,7 +43,8 @@ bool mysql_union(THD *thd, LEX *lex, select_result *result,
 ** store records in temporary table for UNION
 ***************************************************************************/
 
-int select_union::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
+int select_union::prepare(List<Item> &list __attribute__((__unused__)),
+                          SELECT_LEX_UNIT *u)
 {
   unit= u;
   return 0;
