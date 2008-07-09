@@ -24,7 +24,7 @@ SUBDIRS =		. include \
 			strings mysys $(d_dbug) \
                         extra \
                         libdrizzle client storage plugin \
-                        sql \
+                        server \
 			tests support-files
 
 DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests

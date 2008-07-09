@@ -117,11 +117,6 @@ our $opt_vardir;                 # A path but set directly on cmd line
 our $path_vardir_trace;          # unix formatted opt_vardir for trace files
 our $opt_tmpdir;                 # A path but set directly on cmd line
 
-# Visual Studio produces executables in different sub-directories based on the
-# configuration used to build them.  To make life easier, an environment
-# variable or command-line option may be specified to control which set of
-# executables will be used by the test suite.
-our $opt_vs_config = $ENV{'MTR_VS_CONFIG'};
 
 our $default_vardir;
 
@@ -468,7 +463,6 @@ sub command_line_setup () {
              'compress'                 => \$opt_compress,
              'bench'                    => \$opt_bench,
              'small-bench'              => \$opt_small_bench,
-             'vs-config'            => \$opt_vs_config,
 
              # Control what test suites or cases to run
              'force'                    => \$opt_force,
@@ -599,7 +593,7 @@ sub command_line_setup () {
               "as follows:\n./$glob_scriptname");
   }
 
-  if ( -d "../sql" )
+  if ( -d "../server" )
   {
     $source_dist=  1;
   }
@@ -640,15 +634,12 @@ sub command_line_setup () {
   #
 
   # Look for the client binaries directory
-  $path_client_bindir= mtr_path_exists("$glob_basedir/client_release",
-				       "$glob_basedir/client_debug",
-				       vs_config_dirs('client', ''),
-				       "$glob_basedir/client",
+  $path_client_bindir= mtr_path_exists("$glob_basedir/client",
 				       "$glob_basedir/bin");
 
   # Look for language files and charsetsdir, use same share
   $path_share=      mtr_path_exists("$glob_basedir/share/mysql",
-                                    "$glob_basedir/sql/share",
+                                    "$glob_basedir/server/share",
                                     "$glob_basedir/share");
 
   $path_language=      mtr_path_exists("$path_share/english");
@@ -657,8 +648,7 @@ sub command_line_setup () {
 
   if (!$opt_extern)
   {
-    $exe_mysqld=       mtr_exe_exists (vs_config_dirs('sql', 'drizzled'),
-				       "$glob_basedir/sql/drizzled",
+    $exe_mysqld=       mtr_exe_exists ("$glob_basedir/server/drizzled",
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
@@ -1244,7 +1234,7 @@ sub executable_setup () {
 
 # Look for my_print_defaults
   $exe_my_print_defaults=
-    mtr_exe_exists(vs_config_dirs('extra', 'my_print_defaults'),
+    mtr_exe_exists(
         "$path_client_bindir/my_print_defaults",
         "$glob_basedir/extra/my_print_defaults");
 
@@ -1278,7 +1268,7 @@ sub executable_setup () {
 # some versions, test using it should be skipped
   {
     $exe_mysql_client_test=
-      mtr_exe_maybe_exists(vs_config_dirs('tests', 'mysql_client_test'),
+      mtr_exe_maybe_exists(
           "$glob_basedir/tests/mysql_client_test",
           "$glob_basedir/bin/mysql_client_test");
   }
@@ -1286,7 +1276,7 @@ sub executable_setup () {
 # Look for bug25714 executable which may _not_ exist in
 # some versions, test using it should be skipped
   $exe_bug25714=
-    mtr_exe_maybe_exists(vs_config_dirs('tests', 'bug25714'),
+    mtr_exe_maybe_exists(
         "$glob_basedir/tests/bug25714");
 }
 
@@ -1605,14 +1595,10 @@ sub environment_setup () {
   # Setup env so childs can execute myisampack and myisamchk
   # ----------------------------------------------------
 #  $ENV{'MYISAMCHK'}= mtr_native_path(mtr_exe_exists(
-#                       vs_config_dirs('storage/myisam', 'myisamchk'),
-#                       vs_config_dirs('myisam', 'myisamchk'),
 #                       "$path_client_bindir/myisamchk",
 #                       "$glob_basedir/storage/myisam/myisamchk",
 #                       "$glob_basedir/myisam/myisamchk"));
 #  $ENV{'MYISAMPACK'}= mtr_native_path(mtr_exe_exists(
-#                        vs_config_dirs('storage/myisam', 'myisampack'),
-#                        vs_config_dirs('myisam', 'myisampack'),
 #                        "$path_client_bindir/myisampack",
 #                        "$glob_basedir/storage/myisam/myisampack",
 #                        "$glob_basedir/myisam/myisampack"));
@@ -1883,31 +1869,6 @@ sub check_debug_support ($) {
   $debug_compiled_binaries= 1;
 }
 
-##############################################################################
-#
-# Helper function to handle configuration-based subdirectories which Visual
-# Studio uses for storing binaries.  If opt_vs_config is set, this returns
-# a path based on that setting; if not, it returns paths for the default
-# /release/ and /debug/ subdirectories.
-#
-# $exe can be undefined, if the directory itself will be used
-#
-###############################################################################
-
-sub vs_config_dirs ($$) {
-  my ($path_part, $exe) = @_;
-
-  $exe = "" if not defined $exe;
-
-  if ($opt_vs_config)
-  {
-    return ("$glob_basedir/$path_part/$opt_vs_config/$exe");
-  }
-
-  return ("$glob_basedir/$path_part/release/$exe",
-          "$glob_basedir/$path_part/relwithdebinfo/$exe",
-          "$glob_basedir/$path_part/debug/$exe");
-}
 
 ##############################################################################
 #
@@ -3605,8 +3566,6 @@ Options to control what engine/variation to run
   compress              Use the compressed protocol between client and server
   bench                 Run the benchmark suite
   small-bench           Run the benchmarks with --small-tests --small-tables
-  vs-config             Visual Studio configuration used to create executables
-                        (default: MTR_VS_CONFIG environment variable)
 
 Options to control directories to use
   benchdir=DIR          The directory where the benchmark suite is stored

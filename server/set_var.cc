@@ -320,7 +320,6 @@ static sys_var_bool_ptr_readonly sys_old_mode(&vars, "old",
 /* these two cannot be static */
 sys_var_thd_bool                sys_old_alter_table(&vars, "old_alter_table",
                                             &SV::old_alter_table);
-sys_var_thd_bool                sys_old_passwords(&vars, "old_passwords", &SV::old_passwords);
 static sys_var_thd_ulong        sys_optimizer_prune_level(&vars, "optimizer_prune_level",
                                                   &SV::optimizer_prune_level);
 static sys_var_thd_ulong        sys_optimizer_search_depth(&vars, "optimizer_search_depth",

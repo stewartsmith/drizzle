@@ -4440,7 +4440,6 @@ static void mysql_init_variables(void)
   max_system_variables.select_limit=    (ulonglong) HA_POS_ERROR;
   global_system_variables.max_join_size= (ulonglong) HA_POS_ERROR;
   max_system_variables.max_join_size=   (ulonglong) HA_POS_ERROR;
-  global_system_variables.old_passwords= 0;
   global_system_variables.old_alter_table= 0;
   global_system_variables.binlog_format= BINLOG_FORMAT_UNSPEC;
   /*

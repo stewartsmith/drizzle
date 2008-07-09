@@ -258,7 +258,6 @@ public:
   static char *alloc(THD *thd, const char *password);
 };
 
-
 class Item_func_des_encrypt :public Item_str_func
 {
   String tmp_value;
