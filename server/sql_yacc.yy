@@ -673,7 +673,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  MAX_UPDATES_PER_HOUR
 %token  MAX_USER_CONNECTIONS_SYM
 %token  MAX_VALUE_SYM                 /* SQL-2003-N */
-%token  MEDIUMBLOB
 %token  MEDIUM_SYM
 %token  MERGE_SYM                     /* SQL-2003-R */
 %token  MICROSECOND_SYM               /* MYSQL-FUNC */
@@ -1926,13 +1925,6 @@ type:
             Lex->charset=&my_charset_bin;
             $$=MYSQL_TYPE_BLOB;
           }
-        | LONG_SYM VARBINARY
-          {
-            Lex->charset=&my_charset_bin;
-            $$=MYSQL_TYPE_MEDIUM_BLOB;
-          }
-        | LONG_SYM varchar opt_binary
-          { $$=MYSQL_TYPE_MEDIUM_BLOB; }
         | TEXT_SYM opt_len opt_binary
           { $$=MYSQL_TYPE_BLOB; }
         | DECIMAL_SYM float_options field_options
@@ -1949,8 +1941,6 @@ type:
           { Lex->interval_list.empty();}
           '(' string_list ')' opt_binary
           { $$=MYSQL_TYPE_SET; }
-        | LONG_SYM opt_binary
-          { $$=MYSQL_TYPE_MEDIUM_BLOB; }
         | SERIAL_SYM
           {
             $$=MYSQL_TYPE_LONGLONG;

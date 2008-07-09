@@ -2564,10 +2564,7 @@ innobase_mysql_cmp(
 
 	case MYSQL_TYPE_STRING:
 	case MYSQL_TYPE_VAR_STRING:
-	case MYSQL_TYPE_TINY_BLOB:
-	case MYSQL_TYPE_MEDIUM_BLOB:
 	case MYSQL_TYPE_BLOB:
-	case MYSQL_TYPE_LONG_BLOB:
 	case MYSQL_TYPE_VARCHAR:
 		/* Use the charset number to pick the right charset struct for
 		the comparison. Since the MySQL function get_charset may be
@@ -2697,10 +2694,7 @@ get_innobase_type_from_mysql_type(
 		return(DATA_FLOAT);
 	case MYSQL_TYPE_DOUBLE:
 		return(DATA_DOUBLE);
-	case MYSQL_TYPE_TINY_BLOB:
-	case MYSQL_TYPE_MEDIUM_BLOB:
 	case MYSQL_TYPE_BLOB:
-	case MYSQL_TYPE_LONG_BLOB:
 		return(DATA_BLOB);
 	default:
 		assert(0);
@@ -2869,10 +2863,7 @@ ha_innobase::store_key_val_for_row(
 
 			buff += key_len;
 
-		} else if (mysql_type == MYSQL_TYPE_TINY_BLOB
-			|| mysql_type == MYSQL_TYPE_MEDIUM_BLOB
-			|| mysql_type == MYSQL_TYPE_BLOB
-			|| mysql_type == MYSQL_TYPE_LONG_BLOB) {
+		} else if (mysql_type == MYSQL_TYPE_BLOB) {
 
 			CHARSET_INFO*	cs;
 			ulint		key_len;
@@ -7525,10 +7516,7 @@ ha_innobase::cmp_ref(
 		field = key_part->field;
 		mysql_type = field->type();
 
-		if (mysql_type == MYSQL_TYPE_TINY_BLOB
-			|| mysql_type == MYSQL_TYPE_MEDIUM_BLOB
-			|| mysql_type == MYSQL_TYPE_BLOB
-			|| mysql_type == MYSQL_TYPE_LONG_BLOB) {
+		if (mysql_type == MYSQL_TYPE_BLOB) {
 
 			/* In the MySQL key value format, a column prefix of
 			a BLOB is preceded by a 2-byte length field */

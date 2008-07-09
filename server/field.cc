@@ -7928,14 +7928,9 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
 enum_field_types get_blob_type_from_length(ulong length)
 {
   enum_field_types type;
-  if (length < 256)
-    type= MYSQL_TYPE_TINY_BLOB;
-  else if (length < 65536)
-    type= MYSQL_TYPE_BLOB;
-  else if (length < 256L*256L*256L)
-    type= MYSQL_TYPE_MEDIUM_BLOB;
-  else
-    type= MYSQL_TYPE_LONG_BLOB;
+
+  type= MYSQL_TYPE_BLOB;
+
   return type;
 }
 
