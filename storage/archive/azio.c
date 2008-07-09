@@ -17,6 +17,18 @@
 #include <string.h>
 #include <assert.h>
 
+/* TODO: For some reason these aren't showing up cleanly in the 
+ *  * includes... why? 
+ *   */
+#if !defined(pread)
+extern ssize_t pread (int __fd, void *__buf, size_t __nbytes,
+                      off_t __offset);
+#endif
+#if !defined(pwrite)
+extern ssize_t pwrite (int __fd, __const void *__buf, size_t __n,
+                       off_t __offset);
+#endif
+
 static int const az_magic[3] = {0xfe, 0x03, 0x01}; /* az magic header */
 
 /* gzip flag uchar */

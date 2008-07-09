@@ -225,7 +225,7 @@ uint build_tmptable_filename(THD* thd, char *buff, size_t bufflen)
 {
 
   char *p= strnmov(buff, mysql_tmpdir, bufflen);
-  my_snprintf(p, bufflen - (p - buff), "/%s%lx_%lx_%x%s",
+  snprintf(p, bufflen - (p - buff), "/%s%lx_%lx_%x%s",
 	      tmp_file_prefix, current_pid,
               thd->thread_id, thd->tmp_table++, reg_ext);
 
@@ -1714,23 +1714,6 @@ int prepare_create_field(Create_field *sql_field,
     (*blob_columns)++;
     break;
   case MYSQL_TYPE_VARCHAR:
-#ifndef QQ_ALL_HANDLERS_SUPPORT_VARCHAR
-    if (table_flags & HA_NO_VARCHAR)
-    {
-      /* convert VARCHAR to CHAR because handler is not yet up to date */
-      sql_field->sql_type=    MYSQL_TYPE_VAR_STRING;
-      sql_field->pack_length= calc_pack_length(sql_field->sql_type,
-                                               (uint) sql_field->length);
-      if ((sql_field->length / sql_field->charset->mbmaxlen) >
-          MAX_FIELD_CHARLENGTH)
-      {
-        my_printf_error(ER_TOO_BIG_FIELDLENGTH, ER(ER_TOO_BIG_FIELDLENGTH),
-                        MYF(0), sql_field->field_name, MAX_FIELD_CHARLENGTH);
-        return(1);
-      }
-    }
-#endif
-    /* fall through */
   case MYSQL_TYPE_STRING:
     sql_field->pack_flag=0;
     if (sql_field->charset->state & MY_CS_BINSORT)
@@ -1764,8 +1747,7 @@ int prepare_create_field(Create_field *sql_field,
        return(1);
     }
     break;
-  case MYSQL_TYPE_DATE:			// Rest of string types
-  case MYSQL_TYPE_NEWDATE:
+  case MYSQL_TYPE_NEWDATE:  // Rest of string types
   case MYSQL_TYPE_TIME:
   case MYSQL_TYPE_DATETIME:
   case MYSQL_TYPE_NULL:
@@ -2420,8 +2402,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	    {
 	      /* not a critical problem */
 	      char warn_buff[MYSQL_ERRMSG_SIZE];
-	      my_snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
-			  length);
+	      snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
+                       length);
 	      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
 			   ER_TOO_LONG_KEY, warn_buff);
               /* Align key length to multibyte char boundary */
@@ -2459,8 +2441,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	{
 	  /* not a critical problem */
 	  char warn_buff[MYSQL_ERRMSG_SIZE];
-	  my_snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
-		      length);
+	  snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
+                   length);
 	  push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
 		       ER_TOO_LONG_KEY, warn_buff);
           /* Align key length to multibyte char boundary */
@@ -3306,8 +3288,8 @@ static int prepare_for_repair(THD *thd, TABLE_LIST *table_list,
   if (stat(from, &stat_info))
     goto end;				// Can't use USE_FRM flag
 
-  my_snprintf(tmp, sizeof(tmp), "%s-%lx_%lx",
-	      from, current_pid, thd->thread_id);
+  snprintf(tmp, sizeof(tmp), "%s-%lx_%lx",
+           from, current_pid, thd->thread_id);
 
   /* If we could open the table, close it */
   if (table_list->table)
@@ -3499,8 +3481,8 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
       protocol->store(table_name, system_charset_info);
       protocol->store(operator_name, system_charset_info);
       protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-      length= my_snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
-                          table_name);
+      length= snprintf(buff, sizeof(buff), ER(ER_OPEN_AS_READONLY),
+                       table_name);
       protocol->store(buff, length, system_charset_info);
       ha_autocommit_or_rollback(thd, 0);
       end_trans(thd, COMMIT);
@@ -3602,8 +3584,8 @@ send_result_message:
     case HA_ADMIN_NOT_IMPLEMENTED:
       {
 	char buf[ERRMSGSIZE+20];
-	uint length=my_snprintf(buf, ERRMSGSIZE,
-				ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
+	uint length=snprintf(buf, ERRMSGSIZE,
+                             ER(ER_CHECK_NOT_IMPLEMENTED), operator_name);
 	protocol->store(STRING_WITH_LEN("note"), system_charset_info);
 	protocol->store(buf, length, system_charset_info);
       }
@@ -3612,8 +3594,8 @@ send_result_message:
     case HA_ADMIN_NOT_BASE_TABLE:
       {
         char buf[ERRMSGSIZE+20];
-        uint length= my_snprintf(buf, ERRMSGSIZE,
-                                 ER(ER_BAD_TABLE_ERROR), table_name);
+        uint length= snprintf(buf, ERRMSGSIZE,
+                              ER(ER_BAD_TABLE_ERROR), table_name);
         protocol->store(STRING_WITH_LEN("note"), system_charset_info);
         protocol->store(buf, length, system_charset_info);
       }
@@ -3730,7 +3712,7 @@ send_result_message:
       uint length;
 
       protocol->store(STRING_WITH_LEN("error"), system_charset_info);
-      length=my_snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
+      length=snprintf(buf, ERRMSGSIZE, ER(ER_TABLE_NEEDS_UPGRADE), table->table_name);
       protocol->store(buf, length, system_charset_info);
       fatal_error=1;
       break;
@@ -3739,9 +3721,9 @@ send_result_message:
     default:				// Probably HA_ADMIN_INTERNAL_ERROR
       {
         char buf[ERRMSGSIZE+20];
-        uint length=my_snprintf(buf, ERRMSGSIZE,
-                                "Unknown - internal error %d during operation",
-                                result_code);
+        uint length=snprintf(buf, ERRMSGSIZE,
+                             "Unknown - internal error %d during operation",
+                             result_code);
         protocol->store(STRING_WITH_LEN("error"), system_charset_info);
         protocol->store(buf, length, system_charset_info);
         fatal_error=1;
@@ -4124,8 +4106,8 @@ table_exists:
   if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
   {
     char warn_buff[MYSQL_ERRMSG_SIZE];
-    my_snprintf(warn_buff, sizeof(warn_buff),
-		ER(ER_TABLE_EXISTS_ERROR), table_name);
+    snprintf(warn_buff, sizeof(warn_buff),
+             ER(ER_TABLE_EXISTS_ERROR), table_name);
     push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
 		 ER_TABLE_EXISTS_ERROR,warn_buff);
     res= false;
@@ -4743,21 +4725,6 @@ int create_temporary_table(THD *thd,
   else
     create_info->data_file_name=create_info->index_file_name=0;
 
-  if (new_db_type == old_db_type)
-  {
-    /*
-       Table has not changed storage engine.
-       If STORAGE and TABLESPACE have not been changed than copy them
-       from the original table
-    */
-    if (!create_info->tablespace &&
-        table->s->tablespace &&
-        create_info->default_storage_media == HA_SM_DEFAULT)
-      create_info->tablespace= table->s->tablespace;
-    if (create_info->default_storage_media == HA_SM_DEFAULT)
-      create_info->default_storage_media= table->s->default_storage_media;
-   }
-
   /*
     Create a table with a temporary name.
     With create_info->frm_only == 1 this creates a .frm file only.
@@ -4804,8 +4771,8 @@ TABLE *create_altered_table(THD *thd,
   char tmp_name[80];
   char path[FN_REFLEN];
 
-  my_snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%lx",
-              tmp_file_prefix, current_pid, thd->thread_id);
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%lx",
+           tmp_file_prefix, current_pid, thd->thread_id);
   /* Safety fix for InnoDB */
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
@@ -5149,8 +5116,7 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
       If the '0000-00-00' value isn't allowed then raise the error_if_not_empty
       flag to allow ALTER TABLE only if the table to be altered is empty.
       */
-    if ((def->sql_type == MYSQL_TYPE_DATE ||
-         def->sql_type == MYSQL_TYPE_NEWDATE ||
+    if ((def->sql_type == MYSQL_TYPE_NEWDATE ||
          def->sql_type == MYSQL_TYPE_DATETIME) &&
          !alter_info->datetime_field &&
          !(~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
@@ -5454,7 +5420,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   if (alter_info->tablespace_op != NO_TABLESPACE_OP)
     /* Conditionally writes to binlog. */
     return(mysql_discard_or_import_tablespace(thd,table_list,
-						   alter_info->tablespace_op));
+                                              alter_info->tablespace_op));
   strxnmov(new_name_buff, sizeof (new_name_buff) - 1, mysql_data_home, "/", db, 
            "/", table_name, reg_ext, NullS);
   (void) unpack_filename(new_name_buff, new_name_buff);
@@ -5843,8 +5809,8 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       close_temporary_table(thd, altered_table, 1, 1);
   }
 
-  my_snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%lx", tmp_file_prefix,
-              current_pid, thd->thread_id);
+  snprintf(tmp_name, sizeof(tmp_name), "%s-%lx_%lx", tmp_file_prefix,
+           current_pid, thd->thread_id);
   /* Safety fix for innodb */
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, tmp_name);
@@ -5970,8 +5936,8 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   */
 
   thd_proc_info(thd, "rename result table");
-  my_snprintf(old_name, sizeof(old_name), "%s2-%lx-%lx", tmp_file_prefix,
-	      current_pid, thd->thread_id);
+  snprintf(old_name, sizeof(old_name), "%s2-%lx-%lx", tmp_file_prefix,
+           current_pid, thd->thread_id);
   if (lower_case_table_names)
     my_casedn_str(files_charset_info, old_name);
 
@@ -6079,9 +6045,9 @@ end_online:
   }
 
 end_temporary:
-  my_snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
-	      (ulong) (copied + deleted), (ulong) deleted,
-	      (ulong) thd->cuted_fields);
+  snprintf(tmp_name, sizeof(tmp_name), ER(ER_INSERT_INFO),
+           (ulong) (copied + deleted), (ulong) deleted,
+           (ulong) thd->cuted_fields);
   my_ok(thd, copied + deleted, 0L, tmp_name);
   thd->some_tables_deleted=0;
   return(false);
@@ -6108,7 +6074,6 @@ err:
     enum enum_mysql_timestamp_type t_type= MYSQL_TIMESTAMP_DATE;
     switch (alter_info->datetime_field->sql_type)
     {
-      case MYSQL_TYPE_DATE:
       case MYSQL_TYPE_NEWDATE:
         f_val= "0000-00-00";
         t_type= MYSQL_TIMESTAMP_DATE;
@@ -6234,9 +6199,9 @@ copy_data_between_tables(TABLE *from,TABLE *to,
     if (to->s->primary_key != MAX_KEY && to->file->primary_key_is_clustered())
     {
       char warn_buff[MYSQL_ERRMSG_SIZE];
-      my_snprintf(warn_buff, sizeof(warn_buff), 
-                  "ORDER BY ignored as there is a user-defined clustered index"
-                  " in the table '%-.192s'", from->s->table_name.str);
+      snprintf(warn_buff, sizeof(warn_buff), 
+               "ORDER BY ignored as there is a user-defined clustered index"
+               " in the table '%-.192s'", from->s->table_name.str);
       push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                    warn_buff);
     }

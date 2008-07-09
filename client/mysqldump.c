@@ -948,7 +948,7 @@ static void DB_error(MYSQL *mysql_arg, const char *when)
   SYNOPSIS
     die()
     error_num   - process return value
-    fmt_reason  - a format string for use by my_vsnprintf.
+    fmt_reason  - a format string for use by vsnprintf.
     ...         - variable arguments for above fmt_reason string
   
   DESCRIPTION
@@ -960,7 +960,7 @@ static void die(int error_num, const char* fmt_reason, ...)
   char buffer[1000];
   va_list args;
   va_start(args,fmt_reason);
-  my_vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
+  vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
   fprintf(stderr, "%s: %s\n", my_progname, buffer);
@@ -977,7 +977,7 @@ static void die(int error_num, const char* fmt_reason, ...)
   SYNOPSIS
     maybe_die()
     error_num   - process return value
-    fmt_reason  - a format string for use by my_vsnprintf.
+    fmt_reason  - a format string for use by vsnprintf.
     ...         - variable arguments for above fmt_reason string
   
   DESCRIPTION
@@ -994,7 +994,7 @@ static void maybe_die(int error_num, const char* fmt_reason, ...)
   char buffer[1000];
   va_list args;
   va_start(args,fmt_reason);
-  my_vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
+  vsnprintf(buffer, sizeof(buffer), fmt_reason, args);
   va_end(args);
 
   fprintf(stderr, "%s: %s\n", my_progname, buffer);
@@ -1056,10 +1056,10 @@ static int switch_character_set_results(MYSQL *mysql, const char *cs_name)
   if (!server_supports_switching_charsets)
     return FALSE;
 
-  query_length= my_snprintf(query_buffer,
-                            sizeof (query_buffer),
-                            "SET SESSION character_set_results = '%s'",
-                            (const char *) cs_name);
+  query_length= snprintf(query_buffer,
+                         sizeof (query_buffer),
+                         "SET SESSION character_set_results = '%s'",
+                         (const char *) cs_name);
 
   return mysql_real_query(mysql, query_buffer, query_length);
 }
@@ -1157,7 +1157,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
   */
   if (opt_tz_utc)
   {
-    my_snprintf(buff, sizeof(buff), "/*!40103 SET TIME_ZONE='+00:00' */");
+    snprintf(buff, sizeof(buff), "/*!40103 SET TIME_ZONE='+00:00' */");
     if (mysql_query_with_error_report(mysql, 0, buff))
       DBUG_RETURN(1);
   }
@@ -1548,9 +1548,9 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
   verbose_msg("-- Retrieving table structure for table %s...\n", table);
 
-  len= my_snprintf(query_buff, sizeof(query_buff),
-                   "SET OPTION SQL_QUOTE_SHOW_CREATE=%d",
-                   (opt_quoted || opt_keywords));
+  len= snprintf(query_buff, sizeof(query_buff),
+                "SET OPTION SQL_QUOTE_SHOW_CREATE=%d",
+                (opt_quoted || opt_keywords));
 
   result_table=     quote_name(table, table_buff, 1);
   opt_quoted_table= quote_name(table, table_buff2, 0);
@@ -1570,7 +1570,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       char buff[20+FN_REFLEN];
       MYSQL_FIELD *field;
 
-      my_snprintf(buff, sizeof(buff), "show create table %s", result_table);
+      snprintf(buff, sizeof(buff), "show create table %s", result_table);
 
       if (switch_character_set_results(mysql, "binary") ||
           mysql_query_with_error_report(mysql, &result, buff) ||
@@ -1629,8 +1629,8 @@ static uint get_table_structure(char *table, char *db, char *table_type,
           This will not be necessary once we can determine dependencies
           between views and can simply dump them in the appropriate order.
         */
-        my_snprintf(query_buff, sizeof(query_buff),
-                    "SHOW FIELDS FROM %s", result_table);
+        snprintf(query_buff, sizeof(query_buff),
+                 "SHOW FIELDS FROM %s", result_table);
         if (switch_character_set_results(mysql, "binary") ||
             mysql_query_with_error_report(mysql, &result, query_buff) ||
             switch_character_set_results(mysql, default_charset))
@@ -1716,8 +1716,8 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       check_io(sql_file);
       mysql_free_result(result);
     }
-    my_snprintf(query_buff, sizeof(query_buff), "show fields from %s",
-                result_table);
+    snprintf(query_buff, sizeof(query_buff), "show fields from %s",
+             result_table);
     if (mysql_query_with_error_report(mysql, &result, query_buff))
     {
       if (path)
@@ -1773,8 +1773,8 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     verbose_msg("%s: Warning: Can't set SQL_QUOTE_SHOW_CREATE option (%s)\n",
                 my_progname, mysql_error(mysql));
 
-    my_snprintf(query_buff, sizeof(query_buff), "show fields from %s",
-                result_table);
+    snprintf(query_buff, sizeof(query_buff), "show fields from %s",
+             result_table);
     if (mysql_query_with_error_report(mysql, &result, query_buff))
       DBUG_RETURN(0);
 
@@ -1871,7 +1871,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       /* Make an sql-file, if path was given iow. option -T was given */
       char buff[20+FN_REFLEN];
       uint keynr,primary_key;
-      my_snprintf(buff, sizeof(buff), "show keys from %s", result_table);
+      snprintf(buff, sizeof(buff), "show keys from %s", result_table);
       if (mysql_query_with_error_report(mysql, &result, buff))
       {
         if (mysql_errno(mysql) == ER_WRONG_OBJECT)
@@ -1951,8 +1951,8 @@ static uint get_table_structure(char *table, char *db, char *table_type,
         char show_name_buff[NAME_LEN*2+2+24];
 
         /* Check memory for quote_for_like() */
-        my_snprintf(buff, sizeof(buff), "show table status like %s",
-                    quote_for_like(table, show_name_buff));
+        snprintf(buff, sizeof(buff), "show table status like %s",
+                 quote_for_like(table, show_name_buff));
 
         if (mysql_query_with_error_report(mysql, &result, buff))
         {
@@ -2340,7 +2340,6 @@ static void dump_table(char *table, char *db)
         */
         is_blob= (opt_hex_blob && field->charsetnr == 63 &&
                   (field->type == MYSQL_TYPE_STRING ||
-                   field->type == MYSQL_TYPE_VAR_STRING ||
                    field->type == MYSQL_TYPE_VARCHAR ||
                    field->type == MYSQL_TYPE_BLOB ||
                    field->type == MYSQL_TYPE_LONG_BLOB ||
@@ -2398,15 +2397,7 @@ static void dump_table(char *table, char *db)
                   dynstr_append_checked(&extended_row, "NULL");
                 else
                 {
-                  if (field->type == MYSQL_TYPE_DECIMAL)
-                  {
-                    /* add " signs around */
-                    dynstr_append_checked(&extended_row, "'");
-                    dynstr_append_checked(&extended_row, ptr);
-                    dynstr_append_checked(&extended_row, "'");
-                  }
-                  else
-                    dynstr_append_checked(&extended_row, ptr);
+                  dynstr_append_checked(&extended_row, ptr);
                 }
               }
             }
@@ -2467,13 +2458,6 @@ static void dump_table(char *table, char *db)
               else if (my_isalpha(charset_info, *ptr) ||
                        (*ptr == '-' && my_isalpha(charset_info, ptr[1])))
                 fputs("NULL", md_result_file);
-              else if (field->type == MYSQL_TYPE_DECIMAL)
-              {
-                /* add " signs around */
-                fputc('\'', md_result_file);
-                fputs(ptr, md_result_file);
-                fputc('\'', md_result_file);
-              }
               else
                 fputs(ptr, md_result_file);
             }
@@ -2536,13 +2520,13 @@ static void dump_table(char *table, char *db)
     check_io(md_result_file);
     if (mysql_errno(mysql))
     {
-      my_snprintf(buf, sizeof(buf),
-                  "%s: Error %d: %s when dumping table %s at row: %ld\n",
-                  my_progname,
-                  mysql_errno(mysql),
-                  mysql_error(mysql),
-                  result_table,
-                  rownr);
+      snprintf(buf, sizeof(buf),
+               "%s: Error %d: %s when dumping table %s at row: %ld\n",
+               my_progname,
+               mysql_errno(mysql),
+               mysql_error(mysql),
+               result_table,
+               rownr);
       fputs(buf,stderr);
       error= EX_CONSCHECK;
       goto err;
@@ -2656,9 +2640,9 @@ int init_dumping_tables(char *qdatabase)
     MYSQL_ROW row;
     MYSQL_RES *dbinfo;
 
-    my_snprintf(qbuf, sizeof(qbuf),
-                "SHOW CREATE DATABASE IF NOT EXISTS %s",
-                qdatabase);
+    snprintf(qbuf, sizeof(qbuf),
+             "SHOW CREATE DATABASE IF NOT EXISTS %s",
+             qdatabase);
 
     if (mysql_query(mysql, qbuf) || !(dbinfo = mysql_store_result(mysql)))
     {
@@ -2826,8 +2810,8 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 
   /* Check memory for quote_for_like() */
   DBUG_ASSERT(2*sizeof(old_table_name) < sizeof(show_name_buff));
-  my_snprintf(query, sizeof(query), "SHOW TABLES LIKE %s",
-              quote_for_like(old_table_name, show_name_buff));
+  snprintf(query, sizeof(query), "SHOW TABLES LIKE %s",
+           quote_for_like(old_table_name, show_name_buff));
 
   if (mysql_query_with_error_report(mysql, 0, query))
     return NullS;
@@ -3303,8 +3287,8 @@ char check_if_ignore_table(const char *table_name, char *table_type)
 
   /* Check memory for quote_for_like() */
   DBUG_ASSERT(2*sizeof(table_name) < sizeof(show_name_buff));
-  my_snprintf(buff, sizeof(buff), "show table status like %s",
-              quote_for_like(table_name, show_name_buff));
+  snprintf(buff, sizeof(buff), "show table status like %s",
+           quote_for_like(table_name, show_name_buff));
   if (mysql_query_with_error_report(mysql, &res, buff))
   {
     if (mysql_errno(mysql) != ER_PARSE_ERROR)
@@ -3385,8 +3369,8 @@ static char *primary_key_fields(const char *table_name)
   char buff[NAME_LEN * 2 + 3];
   char *quoted_field;
 
-  my_snprintf(show_keys_buff, sizeof(show_keys_buff),
-              "SHOW KEYS FROM %s", table_name);
+  snprintf(show_keys_buff, sizeof(show_keys_buff),
+           "SHOW KEYS FROM %s", table_name);
   if (mysql_query(mysql, show_keys_buff) ||
       !(res= mysql_store_result(mysql)))
   {

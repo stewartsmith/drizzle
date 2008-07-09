@@ -506,15 +506,6 @@ select * from (t3 join (t4 natural join t5) on (b < z))
 -- error 1052
 select * from (t1 natural join t2) natural join (t3 join (t4 natural join t5) on (b < z));
 
-#
-# Bug #17523 natural join and information_schema
-#
-# We mask out the Privileges column because it differs with embedded server
---replace_column 32 #
-query_vertical 
-select * from information_schema.statistics join information_schema.columns
-              using(table_name,column_name) where table_name='user';
-
 drop table t1;
 drop table t2;
 drop table t3;

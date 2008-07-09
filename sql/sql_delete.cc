@@ -948,7 +948,7 @@ trunc_by_del:
   bool save_binlog_row_based= thd->current_stmt_binlog_row_based;
   thd->clear_current_stmt_binlog_row_based();
   error= mysql_delete(thd, table_list, (COND*) 0, (SQL_LIST*) 0,
-                      HA_POS_ERROR, LL(0), TRUE);
+                      HA_POS_ERROR, 0LL, TRUE);
   ha_enable_transaction(thd, TRUE);
   /*
     Safety, in case the engine ignored ha_enable_transaction(FALSE)

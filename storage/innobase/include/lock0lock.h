@@ -691,10 +691,6 @@ struct lock_sys_struct{
 	hash_table_t*	rec_hash;	/* hash table of the record locks */
 };
 
-/* The lock system */
-extern lock_sys_t*	lock_sys;
-
-
 #ifndef UNIV_NONINL
 #include "lock0lock.ic"
 #endif

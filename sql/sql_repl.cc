@@ -415,7 +415,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   struct event_coordinates coord_buf;
   struct timespec *heartbeat_ts= NULL;
   struct event_coordinates *coord= NULL;
-  if (heartbeat_period != LL(0))
+  if (heartbeat_period != 0LL)
   {
     heartbeat_ts= &heartbeat_buf;
     set_timespec_nsec(*heartbeat_ts, 0);
@@ -732,11 +732,11 @@ impossible position";
           {
             if (coord)
             {
-              DBUG_ASSERT(heartbeat_ts && heartbeat_period != LL(0));
+              DBUG_ASSERT(heartbeat_ts && heartbeat_period != 0LL);
               set_timespec_nsec(*heartbeat_ts, heartbeat_period);
             }
             ret= mysql_bin_log.wait_for_update_bin_log(thd, heartbeat_ts);
-            DBUG_ASSERT(ret == 0 || heartbeat_period != LL(0) && coord != NULL);
+            DBUG_ASSERT(ret == 0 || heartbeat_period != 0LL && coord != NULL);
             if (ret == ETIMEDOUT || ret == ETIME)
             {
 #ifndef DBUG_OFF
@@ -1249,7 +1249,7 @@ bool change_master(THD* thd, Master_info* mi)
   else
     mi->heartbeat_period= (float) min(SLAVE_MAX_HEARTBEAT_PERIOD,
                                       (slave_net_timeout/2.0));
-  mi->received_heartbeats= LL(0); // counter lives until master is CHANGEd
+  mi->received_heartbeats= 0LL; // counter lives until master is CHANGEd
   if (lex_mi->ssl != LEX_MASTER_INFO::LEX_MI_UNCHANGED)
     mi->ssl= (lex_mi->ssl == LEX_MASTER_INFO::LEX_MI_ENABLE);
 

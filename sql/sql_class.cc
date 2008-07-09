@@ -303,9 +303,9 @@ char *thd_security_context(THD *thd, char *buffer, unsigned int length,
   char header[64];
   int len;
 
-  len= my_snprintf(header, sizeof(header),
-                   "MySQL thread id %lu, query id %lu",
-                   thd->thread_id, (ulong) thd->query_id);
+  len= snprintf(header, sizeof(header),
+                "MySQL thread id %lu, query id %lu",
+                thd->thread_id, (ulong) thd->query_id);
   str.length(0);
   str.append(header, len);
 
@@ -597,7 +597,7 @@ THD::THD()
   protocol= &protocol_text;			// Default protocol
   protocol_text.init(this);
 
-  tablespace_op=FALSE;
+  tablespace_op= false;
   tmp= sql_rnd_with_mutex();
   randominit(&rand, tmp + (ulong) &rand, tmp + (ulong) ::global_query_id);
   substitute_null_with_insert_id = FALSE;
@@ -3001,8 +3001,8 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
     if (!(binlog_flags & BINLOG_FLAG_UNSAFE_STMT_PRINTED))
     {
       char warn_buf[MYSQL_ERRMSG_SIZE];
-      my_snprintf(warn_buf, MYSQL_ERRMSG_SIZE, "%s Statement: %s",
-                  ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
+      snprintf(warn_buf, MYSQL_ERRMSG_SIZE, "%s Statement: %s",
+               ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
       sql_print_warning(warn_buf);
       binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;
     }

@@ -84,7 +84,7 @@ int wild_case_compare(CHARSET_INFO *cs, const char *str,const char *wildstr)
 
 static int make_version_string(char *buf, int buf_length, uint version)
 {
-  return my_snprintf(buf, buf_length, "%d.%d", version>>8,version&0xff);
+  return snprintf(buf, buf_length, "%d.%d", version>>8,version&0xff);
 }
 
 static my_bool show_plugins(THD *thd, plugin_ref plugin,
@@ -756,20 +756,8 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
         Add field flags about FIELD FORMAT (FIXED or DYNAMIC)
         and about STORAGE (DISK or MEMORY).
       */
-      enum ha_storage_media storage_type= (enum ha_storage_media)
-        ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
       enum column_format_type column_format= (enum column_format_type)
         ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
-      if (storage_type)
-      {
-        packet->append(STRING_WITH_LEN(" /*!"));
-        packet->append(STRING_WITH_LEN(MYSQL_VERSION_TABLESPACE_IN_FRM_STR));
-        packet->append(STRING_WITH_LEN(" STORAGE"));
-        if (storage_type == HA_SM_DISK)
-          packet->append(STRING_WITH_LEN(" DISK */"));
-        else
-          packet->append(STRING_WITH_LEN(" MEMORY */"));
-      }
       if (column_format)
       {
         packet->append(STRING_WITH_LEN(" /*!"));
@@ -876,35 +864,6 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
       Get possible table space definitions and append them
       to the CREATE TABLE statement
     */
-
-    switch (table->s->default_storage_media) {
-    case(HA_SM_DEFAULT):
-      if ((for_str= (char *)file->get_tablespace_name()))
-      {
-        packet->append(STRING_WITH_LEN(" /*!50100 TABLESPACE "));
-        append_identifier(thd, packet, for_str, strlen(for_str));
-        packet->append(STRING_WITH_LEN(" */"));
-      }
-      break;
-    case(HA_SM_DISK):
-      packet->append(STRING_WITH_LEN(" /*!50100"));
-      if ((for_str= (char *)file->get_tablespace_name()))
-      {
-        packet->append(STRING_WITH_LEN(" TABLESPACE "));
-        append_identifier(thd, packet, for_str, strlen(for_str));
-      }
-      packet->append(STRING_WITH_LEN(" STORAGE DISK */"));
-      break;
-    case(HA_SM_MEMORY):
-      packet->append(STRING_WITH_LEN(" /*!50100"));
-      if ((for_str= (char *)file->get_tablespace_name()))
-      {
-        packet->append(STRING_WITH_LEN(" TABLESPACE "));
-        append_identifier(thd, packet, for_str, strlen(for_str));
-      }
-      packet->append(STRING_WITH_LEN(" STORAGE MEMORY */"));
-      break;
-    };
 
     /*
       IF   check_create_info
@@ -3084,9 +3043,6 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
   case MYSQL_TYPE_NEWDECIMAL:
     field_length= ((Field_new_decimal*) field)->precision;
     break;
-  case MYSQL_TYPE_DECIMAL:
-    field_length= field->field_length - (decimals  ? 2 : 1);
-    break;
   case MYSQL_TYPE_TINY:
   case MYSQL_TYPE_SHORT:
   case MYSQL_TYPE_LONG:
@@ -3244,12 +3200,9 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
 
     table->field[18]->store(field->comment.str, field->comment.length, cs);
     {
-      enum ha_storage_media storage_type= (enum ha_storage_media)
-        ((field->flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
       enum column_format_type column_format= (enum column_format_type)
         ((field->flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
-      pos=(uchar*)(storage_type == HA_SM_DEFAULT ? "Default" :
-                   storage_type == HA_SM_DISK ? "Disk" : "Memory");
+      pos=(uchar*)"Default";
       table->field[19]->store((const char*) pos,
                               strlen((const char*) pos), cs);
       pos=(uchar*)(column_format == COLUMN_FORMAT_TYPE_DEFAULT ? "Default" :
@@ -3891,12 +3844,6 @@ ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx)
   Create information_schema table using schema_table data.
 
   @note
-    For MYSQL_TYPE_DECIMAL fields only, the field_length member has encoded
-    into it two numbers, based on modulus of base-10 numbers.  In the ones
-    position is the number of decimals.  Tens position is unused.  In the
-    hundreds and thousands position is a two-digit decimal number representing
-    length.  Encode this value with  (decimals*100)+length  , where
-    0<decimals<10 and 0<=length<100 .
 
   @param
     thd	       	          thread handler
@@ -3934,7 +3881,7 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
       }
       item->unsigned_flag= (fields_info->field_flags & MY_I_S_UNSIGNED);
       break;
-    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_NEWDATE:
     case MYSQL_TYPE_TIME:
     case MYSQL_TYPE_TIMESTAMP:
     case MYSQL_TYPE_DATETIME:
@@ -3950,7 +3897,6 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
                            fields_info->field_length)) == NULL)
         return(NULL);
       break;
-    case MYSQL_TYPE_DECIMAL:
     case MYSQL_TYPE_NEWDECIMAL:
       if (!(item= new Item_decimal((longlong) fields_info->value, false)))
       {

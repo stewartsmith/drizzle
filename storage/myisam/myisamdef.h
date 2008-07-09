@@ -15,6 +15,9 @@
 
 /* This file is included by all internal myisam files */
 
+#if !defined(MYISAMDEF_H)
+#define MYISAMDEF_H
+
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
 #include <my_tree.h>
@@ -190,7 +193,6 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   ulong state_diff_length;
   uint	rec_reflength;			/* rec_reflength in use now */
   uint  unique_name_length;
-  uint32 ftparsers;                     /* Number of distinct ftparsers + 1 */
   File	kfile;				/* Shared keyfile */
   File	data_file;			/* Shared data file */
   int	mode;				/* mode of file on open */
@@ -236,9 +238,6 @@ struct st_myisam_info {
   MI_BIT_BUFF  bit_buff;
   /* accumulate indexfile changes between write's */
   TREE	        *bulk_insert;
-  DYNAMIC_ARRAY *ft1_to_ft2;            /* used only in ft1->ft2 conversion */
-  MEM_ROOT      ft_memroot;             /* used by the parser               */
-  MYSQL_FTPARSER_PARAM *ftparser_param; /* share info between init/deinit   */
   LIST in_use;                          /* Thread using this table          */
   char *filename;			/* parameter to open filename       */
   uchar *buff,				/* Temp area for key                */
@@ -400,6 +399,12 @@ typedef struct st_mi_sort_param
 #define mi_print_error(SHARE, ERRNO)                     \
         mi_report_error((ERRNO), (SHARE)->index_file_name)
 
+C_MODE_START
+void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
+                        const char *message __attribute__((unused)),
+                        const char *sfile __attribute__((unused)),
+                        uint sline __attribute__((unused)));
+C_MODE_END
 /* Functions to store length of space packed keys, VARCHAR or BLOB keys */
 
 #define store_key_length(key,length) \
@@ -564,8 +569,6 @@ extern void _mi_kpointer(MI_INFO *info,uchar *buff,my_off_t pos);
 extern my_off_t _mi_dpos(MI_INFO *info, uint nod_flag,uchar *after_key);
 extern my_off_t _mi_rec_pos(MYISAM_SHARE *info, uchar *ptr);
 extern void _mi_dpointer(MI_INFO *info, uchar *buff,my_off_t pos);
-extern int ha_key_cmp(HA_KEYSEG *keyseg, uchar *a,uchar *b,
-		       uint key_length,uint nextflag,uint *diff_length);
 extern uint _mi_get_static_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
 			       uchar *key);
 extern uint _mi_get_pack_key(MI_KEYDEF *keyinfo,uint nod_flag,uchar * *page,
@@ -624,8 +627,6 @@ extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, my_bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                uchar *to, uchar *from, ulong reclength);
 extern ulonglong mi_safe_mul(ulonglong a,ulonglong b);
-extern int _mi_ft_update(MI_INFO *info, uint keynr, uchar *keybuf,
-			 const uchar *oldrec, const uchar *newrec, my_off_t pos);
 
 struct st_sort_info;
 
@@ -757,8 +758,6 @@ my_bool mi_dynmap_file(MI_INFO *info, my_off_t size);
 void mi_remap_file(MI_INFO *info, my_off_t size);
 
 int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record);
-void _mi_report_crashed(MI_INFO *file, const char *message,
-                        const char *sfile, uint sline);
 
     /* Functions needed by mi_check */
 volatile int *killed_ptr(MI_CHECK *param);
@@ -766,7 +765,6 @@ void mi_check_print_error _VARARGS((MI_CHECK *param, const char *fmt,...));
 void mi_check_print_warning _VARARGS((MI_CHECK *param, const char *fmt,...));
 void mi_check_print_info _VARARGS((MI_CHECK *param, const char *fmt,...));
 int flush_pending_blocks(MI_SORT_PARAM *param);
-int sort_ft_buf_flush(MI_SORT_PARAM *sort_param);
 int thr_write_keys(MI_SORT_PARAM *sort_param);
 pthread_handler_t thr_find_all_keys(void *arg);
 int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file);
@@ -788,3 +786,4 @@ void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
 }
 #endif
 
+#endif

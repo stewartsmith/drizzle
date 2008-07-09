@@ -237,7 +237,7 @@ int _mi_ck_write(MI_INFO *info, uint keynr, uchar *key, uint key_length)
 int _mi_ck_write_btree(register MI_INFO *info, uint keynr, uchar *key,
 		       uint key_length)
 {
-  int error;
+  uint error;
   uint comp_flag;
   MI_KEYDEF *keyinfo=info->s->keyinfo+keynr;
   my_off_t  *root=&info->s->state.key_root[keynr];

@@ -24,6 +24,8 @@ run() {
 ## jump out if one of the programs returns 'false'
 set -e
 
+bzr log --gnu > ChangeLog || touch ChangeLog
+
 ## We do not currently support glibtoolize
 if test x$LIBTOOLIZE = x; then
 #  if test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then

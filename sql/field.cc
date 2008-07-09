@@ -29,9 +29,6 @@
 #include "sql_select.h"
 #include <m_ctype.h>
 #include <errno.h>
-#ifdef HAVE_FCONVERT
-#include <floatingpoint.h>
-#endif
 
 // Maximum allowed exponent value for converting string to decimal
 #define MAX_EXPONENT 1024
@@ -52,7 +49,7 @@ const char field_separator=',';
 #define LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE 128
 #define DECIMAL_TO_STRING_CONVERSION_BUFFER_SIZE 128
 #define BLOB_PACK_LENGTH_TO_MAX_LENGH(arg) \
-((ulong) ((LL(1) << min(arg, 4) * 8) - LL(1)))
+((ulong) ((1LL << min(arg, 4) * 8) - 1LL))
 
 #define ASSERT_COLUMN_MARKED_FOR_READ DBUG_ASSERT(!table || (!table->read_set || bitmap_is_set(table->read_set, field_index)))
 #define ASSERT_COLUMN_MARKED_FOR_WRITE DBUG_ASSERT(!table || (!table->write_set || bitmap_is_set(table->write_set, field_index)))
@@ -1715,614 +1712,6 @@ void Field_null::sql_type(String &res) const
 
 
 /****************************************************************************
-  Functions for the Field_decimal class
-  This is an number stored as a pre-space (or pre-zero) string
-****************************************************************************/
-
-int
-Field_decimal::reset(void)
-{
-  Field_decimal::store(STRING_WITH_LEN("0"),&my_charset_bin);
-  return 0;
-}
-
-void Field_decimal::overflow(bool negative)
-{
-  uint len=field_length;
-  uchar *to=ptr, filler= '9';
-
-  set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
-  if (negative)
-  {
-    if (!unsigned_flag)
-    {
-      /* Put - sign as a first digit so we'll have -999..999 or 999..999 */
-      *to++ = '-';
-      len--;
-    }
-    else
-    {
-      filler= '0';				// Fill up with 0
-      if (!zerofill)
-      {
-	/*
-	  Handle unsigned integer without zerofill, in which case
-	  the number should be of format '   0' or '   0.000'
-	*/
-	uint whole_part=field_length- (dec ? dec+2 : 1);
-	// Fill with spaces up to the first digit
-	bfill(to, whole_part, ' ');
-	to+=  whole_part;
-	len-= whole_part;
-	// The main code will also handle the 0 before the decimal point
-      }
-    }
-  }
-  bfill(to, len, filler);
-  if (dec)
-    ptr[field_length-dec-1]='.';
-  return;
-}
-
-
-int Field_decimal::store(const char *from_arg, uint len, CHARSET_INFO *cs)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  char buff[STRING_BUFFER_USUAL_SIZE];
-  String tmp(buff,sizeof(buff), &my_charset_bin);
-  const uchar *from= (uchar*) from_arg;
-
-  /* Convert character set if the old one is multi uchar */
-  if (cs->mbmaxlen > 1)
-  { 
-    uint dummy_errors;
-    tmp.copy((char*) from, len, cs, &my_charset_bin, &dummy_errors);
-    from= (uchar*) tmp.ptr();
-    len=  tmp.length();
-  }
-
-  const uchar *end= from+len;
-  /* The pointer where the field value starts (i.e., "where to write") */
-  uchar *to= ptr;
-  uint tmp_dec, tmp_uint;
-  /*
-    The sign of the number : will be 0 (means positive but sign not
-    specified), '+' or '-'
-  */
-  uchar sign_char=0;
-  /* The pointers where prezeros start and stop */
-  const uchar *pre_zeros_from, *pre_zeros_end;
-  /* The pointers where digits at the left of '.' start and stop */
-  const uchar *int_digits_from, *int_digits_end;
-  /* The pointers where digits at the right of '.' start and stop */
-  const uchar *frac_digits_from, *frac_digits_end;
-  /* The sign of the exponent : will be 0 (means no exponent), '+' or '-' */
-  char expo_sign_char=0;
-  uint exponent=0;                                // value of the exponent
-  /*
-    Pointers used when digits move from the left of the '.' to the
-    right of the '.' (explained below)
-  */
-  const uchar *int_digits_tail_from= NULL;
-  /* Number of 0 that need to be added at the left of the '.' (1E3: 3 zeros) */
-  uint int_digits_added_zeros= 0;
-  /*
-    Pointer used when digits move from the right of the '.' to the left
-    of the '.'
-  */
-  const uchar *frac_digits_head_end= NULL;
-  /* Number of 0 that need to be added at the right of the '.' (for 1E-3) */
-  uint frac_digits_added_zeros= 0;
-  uchar *pos, *tmp_left_pos, *tmp_right_pos;
-  /* Pointers that are used as limits (begin and end of the field buffer) */
-  uchar *left_wall, *right_wall;
-  uchar tmp_char;
-  /*
-    To remember if table->in_use->cuted_fields has already been incremented,
-    to do that only once
-  */
-  bool is_cuted_fields_incr=0;
-
-  /*
-    There are three steps in this function :
-    - parse the input string
-    - modify the position of digits around the decimal dot '.' 
-      according to the exponent value (if specified)
-    - write the formatted number
-  */
-
-  if ((tmp_dec=dec))
-    tmp_dec++;
-
-  /* skip pre-space */
-  while (from != end && my_isspace(&my_charset_bin,*from))
-    from++;
-  if (from == end)
-  {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
-    is_cuted_fields_incr=1;
-  }
-  else if (*from == '+' || *from == '-')	// Found some sign ?
-  {
-    sign_char= *from++;
-    /*
-      We allow "+" for unsigned decimal unless defined different
-      Both options allowed as one may wish not to have "+" for unsigned numbers
-      because of data processing issues
-    */ 
-    if (unsigned_flag)  
-    { 
-      if (sign_char=='-')
-      {
-        Field_decimal::overflow(1);
-        return 1;
-      }
-      /* 
-	 Defining this will not store "+" for unsigned decimal type even if
-	 it is passed in numeric string. This will make some tests to fail
-      */	 
-#ifdef DONT_ALLOW_UNSIGNED_PLUS      
-      else 
-        sign_char=0;
-#endif 	
-    }
-  }
-
-  pre_zeros_from= from;
-  for (; from!=end && *from == '0'; from++) ;	// Read prezeros
-  pre_zeros_end=int_digits_from=from;      
-  /* Read non zero digits at the left of '.'*/
-  for (; from != end && my_isdigit(&my_charset_bin, *from) ; from++) ;
-  int_digits_end=from;
-  if (from!=end && *from == '.')		// Some '.' ?
-    from++;
-  frac_digits_from= from;
-  /* Read digits at the right of '.' */
-  for (;from!=end && my_isdigit(&my_charset_bin, *from); from++) ;
-  frac_digits_end=from;
-  // Some exponentiation symbol ?
-  if (from != end && (*from == 'e' || *from == 'E'))
-  {   
-    from++;
-    if (from != end && (*from == '+' || *from == '-'))  // Some exponent sign ?
-      expo_sign_char= *from++;
-    else
-      expo_sign_char= '+';
-    /*
-      Read digits of the exponent and compute its value.  We must care about
-      'exponent' overflow, because as unsigned arithmetic is "modulo", big 
-      exponents will become small (e.g. 1e4294967296 will become 1e0, and the 
-      field will finally contain 1 instead of its max possible value).
-    */
-    for (;from!=end && my_isdigit(&my_charset_bin, *from); from++)
-    {
-      exponent=10*exponent+(*from-'0');
-      if (exponent>MAX_EXPONENT)
-        break;
-    }
-  }
-  
-  /*
-    We only have to generate warnings if count_cuted_fields is set.
-    This is to avoid extra checks of the number when they are not needed.
-    Even if this flag is not set, it's OK to increment warnings, if
-    it makes the code easer to read.
-  */
-
-  if (table->in_use->count_cuted_fields)
-  {
-    // Skip end spaces
-    for (;from != end && my_isspace(&my_charset_bin, *from); from++) ;
-    if (from != end)                     // If still something left, warn
-    {
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
-      is_cuted_fields_incr=1;
-    }
-  }
-  
-  /*
-    Now "move" digits around the decimal dot according to the exponent value,
-    and add necessary zeros.
-    Examples :
-    - 1E+3 : needs 3 more zeros at the left of '.' (int_digits_added_zeros=3)
-    - 1E-3 : '1' moves at the right of '.', and 2 more zeros are needed
-    between '.' and '1'
-    - 1234.5E-3 : '234' moves at the right of '.'
-    These moves are implemented with pointers which point at the begin
-    and end of each moved segment. Examples :
-    - 1234.5E-3 : before the code below is executed, the int_digits part is
-    from '1' to '4' and the frac_digits part from '5' to '5'. After the code
-    below, the int_digits part is from '1' to '1', the frac_digits_head
-    part is from '2' to '4', and the frac_digits part from '5' to '5'.
-    - 1234.5E3 : before the code below is executed, the int_digits part is
-    from '1' to '4' and the frac_digits part from '5' to '5'. After the code
-    below, the int_digits part is from '1' to '4', the int_digits_tail
-    part is from '5' to '5', the frac_digits part is empty, and
-    int_digits_added_zeros=2 (to make 1234500).
-  */
-  
-  /* 
-     Below tmp_uint cannot overflow with small enough MAX_EXPONENT setting,
-     as int_digits_added_zeros<=exponent<4G and 
-     (int_digits_end-int_digits_from)<=max_allowed_packet<=2G and
-     (frac_digits_from-int_digits_tail_from)<=max_allowed_packet<=2G
-  */
-
-  if (!expo_sign_char)
-    tmp_uint=tmp_dec+(uint)(int_digits_end-int_digits_from);
-  else if (expo_sign_char == '-') 
-  {
-    tmp_uint=min(exponent,(uint)(int_digits_end-int_digits_from));
-    frac_digits_added_zeros=exponent-tmp_uint;
-    int_digits_end -= tmp_uint;
-    frac_digits_head_end=int_digits_end+tmp_uint;
-    tmp_uint=tmp_dec+(uint)(int_digits_end-int_digits_from);     
-  }
-  else // (expo_sign_char=='+') 
-  {
-    tmp_uint=min(exponent,(uint)(frac_digits_end-frac_digits_from));
-    int_digits_added_zeros=exponent-tmp_uint;
-    int_digits_tail_from=frac_digits_from;
-    frac_digits_from=frac_digits_from+tmp_uint;
-    /*
-      We "eat" the heading zeros of the 
-      int_digits.int_digits_tail.int_digits_added_zeros concatenation
-      (for example 0.003e3 must become 3 and not 0003)
-    */
-    if (int_digits_from == int_digits_end) 
-    {
-      /*
-	There was nothing in the int_digits part, so continue
-	eating int_digits_tail zeros
-      */
-      for (; int_digits_tail_from != frac_digits_from &&
-	     *int_digits_tail_from == '0'; int_digits_tail_from++) ;
-      if (int_digits_tail_from == frac_digits_from) 
-      {
-	// there were only zeros in int_digits_tail too
-	int_digits_added_zeros=0;
-      }
-    }
-    tmp_uint= (uint) (tmp_dec+(int_digits_end-int_digits_from)+
-               (uint)(frac_digits_from-int_digits_tail_from)+
-               int_digits_added_zeros);
-  }
-  
-  /*
-    Now write the formated number
-    
-    First the digits of the int_% parts.
-    Do we have enough room to write these digits ?
-    If the sign is defined and '-', we need one position for it
-  */
-
-  if (field_length < tmp_uint + (int) (sign_char == '-')) 
-  {
-    // too big number, change to max or min number
-    Field_decimal::overflow(sign_char == '-');
-    return 1;
-  }
- 
-  /*
-    Tmp_left_pos is the position where the leftmost digit of
-    the int_% parts will be written
-  */
-  tmp_left_pos=pos=to+(uint)(field_length-tmp_uint);
-  
-  // Write all digits of the int_% parts
-  while (int_digits_from != int_digits_end)
-    *pos++ = *int_digits_from++ ;
-
-  if (expo_sign_char == '+')
-  {    
-    while (int_digits_tail_from != frac_digits_from)
-      *pos++= *int_digits_tail_from++;
-    while (int_digits_added_zeros-- >0)
-      *pos++= '0';  
-  }
-  /*
-    Note the position where the rightmost digit of the int_% parts has been
-    written (this is to later check if the int_% parts contained nothing,
-    meaning an extra 0 is needed).
-  */
-  tmp_right_pos=pos;
-
-  /*
-    Step back to the position of the leftmost digit of the int_% parts,
-    to write sign and fill with zeros or blanks or prezeros.
-  */
-  pos=tmp_left_pos-1;
-  if (zerofill)
-  {
-    left_wall=to-1;
-    while (pos > left_wall)			// Fill with zeros
-      *pos--='0';
-  }
-  else
-  {
-    left_wall=to+(sign_char != 0)-1;
-    if (!expo_sign_char)	// If exponent was specified, ignore prezeros
-    {
-      for (;pos > left_wall && pre_zeros_from !=pre_zeros_end;
-	   pre_zeros_from++)
-	*pos--= '0';
-    }
-    if (pos == tmp_right_pos-1)
-      *pos--= '0';		// no 0 has ever been written, so write one
-    left_wall= to-1;
-    if (sign_char && pos != left_wall)
-    {
-      /* Write sign if possible (it is if sign is '-') */
-      *pos--= sign_char;
-    }
-    while (pos != left_wall)
-      *pos--=' ';  //fill with blanks
-  }
-  
-  /*
-    Write digits of the frac_% parts ;
-    Depending on table->in_use->count_cutted_fields, we may also want
-    to know if some non-zero tail of these parts will
-    be truncated (for example, 0.002->0.00 will generate a warning,
-    while 0.000->0.00 will not)
-    (and 0E1000000000 will not, while 1E-1000000000 will)
-  */
-      
-  pos=to+(uint)(field_length-tmp_dec);	// Calculate post to '.'
-  right_wall=to+field_length;
-  if (pos != right_wall) 
-    *pos++='.';
-
-  if (expo_sign_char == '-')
-  {
-    while (frac_digits_added_zeros-- > 0)
-    {
-      if (pos == right_wall) 
-      {
-        if (table->in_use->count_cuted_fields && !is_cuted_fields_incr) 
-          break; // Go on below to see if we lose non zero digits
-        return 0;
-      }
-      *pos++='0';
-    }
-    while (int_digits_end != frac_digits_head_end)
-    {
-      tmp_char= *int_digits_end++;
-      if (pos == right_wall)
-      {
-        if (tmp_char != '0')			// Losing a non zero digit ?
-        {
-          if (!is_cuted_fields_incr)
-            set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
-                        WARN_DATA_TRUNCATED, 1);
-          return 0;
-        }
-        continue;
-      }
-      *pos++= tmp_char;
-    }
-  }
-
-  for (;frac_digits_from!=frac_digits_end;) 
-  {
-    tmp_char= *frac_digits_from++;
-    if (pos == right_wall)
-    {
-      if (tmp_char != '0')			// Losing a non zero digit ?
-      {
-        if (!is_cuted_fields_incr)
-        {
-          /*
-            This is a note, not a warning, as we don't want to abort
-            when we cut decimals in strict mode
-          */
-	  set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, WARN_DATA_TRUNCATED, 1);
-        }
-        return 0;
-      }
-      continue;
-    }
-    *pos++= tmp_char;
-  }
-      
-  while (pos != right_wall)
-   *pos++='0';			// Fill with zeros at right of '.'
-  return 0;
-}
-
-
-int Field_decimal::store(double nr)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  if (unsigned_flag && nr < 0)
-  {
-    overflow(1);
-    return 1;
-  }
-  
-  if (!isfinite(nr)) // Handle infinity as special case
-  {
-    overflow(nr < 0.0);
-    return 1;
-  }
-
-  register uint i;
-  size_t length;
-  uchar fyllchar,*to;
-  char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
-
-  fyllchar = zerofill ? (char) '0' : (char) ' ';
-  length= my_fcvt(nr, dec, buff, NULL);
-
-  if (length > field_length)
-  {
-    overflow(nr < 0.0);
-    return 1;
-  }
-  else
-  {
-    to=ptr;
-    for (i=field_length-length ; i-- > 0 ;)
-      *to++ = fyllchar;
-    memcpy(to,buff,length);
-    return 0;
-  }
-}
-
-
-int Field_decimal::store(longlong nr, bool unsigned_val)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  char buff[22];
-  uint length, int_part;
-  char fyllchar;
-  uchar *to;
-
-  if (nr < 0 && unsigned_flag && !unsigned_val)
-  {
-    overflow(1);
-    return 1;
-  }
-  length= (uint) (longlong10_to_str(nr,buff,unsigned_val ? 10 : -10) - buff);
-  int_part= field_length- (dec  ? dec+1 : 0);
-
-  if (length > int_part)
-  {
-    overflow(!unsigned_val && nr < 0L);		/* purecov: inspected */
-    return 1;
-  }
-
-  fyllchar = zerofill ? (char) '0' : (char) ' ';
-  to= ptr;
-  for (uint i=int_part-length ; i-- > 0 ;)
-    *to++ = fyllchar;
-  memcpy(to,buff,length);
-  if (dec)
-  {
-    to[length]='.';
-    bfill(to+length+1,dec,'0');
-  }
-  return 0;
-}
-
-
-double Field_decimal::val_real(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int not_used;
-  char *end_not_used;
-  return my_strntod(&my_charset_bin, (char*) ptr, field_length, &end_not_used,
-                    &not_used);
-}
-
-longlong Field_decimal::val_int(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int not_used;
-  if (unsigned_flag)
-    return my_strntoull(&my_charset_bin, (char*) ptr, field_length, 10, NULL,
-			&not_used);
-  return my_strntoll(&my_charset_bin, (char*) ptr, field_length, 10, NULL,
-                     &not_used);
-}
-
-
-String *Field_decimal::val_str(String *val_buffer __attribute__((unused)),
-			       String *val_ptr)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  uchar *str;
-  size_t tmp_length;
-
-  for (str=ptr ; *str == ' ' ; str++) ;
-  val_ptr->set_charset(&my_charset_bin);
-  tmp_length= (size_t) (str-ptr);
-  if (field_length < tmp_length)		// Error in data
-    val_ptr->length(0);
-  else
-    val_ptr->set_ascii((const char*) str, field_length-tmp_length);
-  return val_ptr;
-}
-
-/**
-  Should be able to handle at least the following fixed decimal formats:
-  5.00 , -1.0,  05,  -05, +5 with optional pre/end space
-*/
-
-int Field_decimal::cmp(const uchar *a_ptr,const uchar *b_ptr)
-{
-  const uchar *end;
-  int swap=0;
-  /* First remove prefixes '0', ' ', and '-' */
-  for (end=a_ptr+field_length;
-       a_ptr != end &&
-	 (*a_ptr == *b_ptr ||
-	  ((my_isspace(&my_charset_bin,*a_ptr)  || *a_ptr == '+' || 
-            *a_ptr == '0') &&
-	   (my_isspace(&my_charset_bin,*b_ptr) || *b_ptr == '+' || 
-            *b_ptr == '0')));
-       a_ptr++,b_ptr++)
-  {
-    if (*a_ptr == '-')				// If both numbers are negative
-      swap= -1 ^ 1;				// Swap result      
-  }
-  if (a_ptr == end)
-    return 0;
-  if (*a_ptr == '-')
-    return -1;
-  if (*b_ptr == '-')
-    return 1;
-
-  while (a_ptr != end)
-  {
-    if (*a_ptr++ != *b_ptr++)
-      return swap ^ (a_ptr[-1] < b_ptr[-1] ? -1 : 1); // compare digits
-  }
-  return 0;
-}
-
-
-void Field_decimal::sort_string(uchar *to,uint length)
-{
-  uchar *str,*end;
-  for (str=ptr,end=ptr+length;
-       str != end &&
-	 ((my_isspace(&my_charset_bin,*str) || *str == '+' ||
-	   *str == '0')) ;
-       str++)
-    *to++=' ';
-  if (str == end)
-    return;					/* purecov: inspected */
-
-  if (*str == '-')
-  {
-    *to++=1;					// Smaller than any number
-    str++;
-    while (str != end)
-      if (my_isdigit(&my_charset_bin,*str))
-	*to++= (char) ('9' - *str++);
-      else
-	*to++= *str++;
-  }
-  else memcpy(to,str,(uint) (end-str));
-}
-
-
-void Field_decimal::sql_type(String &res) const
-{
-  CHARSET_INFO *cs=res.charset();
-  uint tmp=field_length;
-  if (!unsigned_flag)
-    tmp--;
-  if (dec)
-    tmp--;
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
-			  "decimal(%d,%d)",tmp,dec));
-  add_zerofill_and_unsigned(res);
-}
-
-
-/****************************************************************************
 ** Field_new_decimal
 ****************************************************************************/
 
@@ -3432,7 +2821,7 @@ int Field_long::store(double nr)
     }
     else if (nr > (double) UINT_MAX32)
     {
-      res= UINT_MAX32;
+      res= INT_MAX32;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -3482,7 +2871,7 @@ int Field_long::store(longlong nr, bool unsigned_val)
       res=0;
       error= 1;
     }
-    else if ((uint64_t) nr >= (LL(1) << 32))
+    else if ((uint64_t) nr >= (1LL << 32))
     {
       res=(int32) (uint32) ~0L;
       error= 1;
@@ -4551,7 +3940,7 @@ int Field_timestamp::store(const char *from,uint len,CHARSET_INFO *cs)
   my_time_t tmp= 0;
   int error;
   bool have_smth_to_conv;
-  my_bool in_dst_time_gap;
+  bool in_dst_time_gap;
   THD *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
@@ -4610,14 +3999,14 @@ int Field_timestamp::store(longlong nr, bool unsigned_val)
   MYSQL_TIME l_time;
   my_time_t timestamp= 0;
   int error;
-  my_bool in_dst_time_gap;
+  bool in_dst_time_gap;
   THD *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   longlong tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
                                                  MODE_NO_ZERO_DATE) |
                                    MODE_NO_ZERO_IN_DATE, &error);
-  if (tmp == LL(-1))
+  if (tmp == -1LL)
   {
     error= 2;
   }
@@ -4673,7 +4062,7 @@ longlong Field_timestamp::val_int(void)
   
   thd->variables.time_zone->gmt_sec_to_TIME(&time_tmp, (my_time_t)temp);
   
-  return time_tmp.year * LL(10000000000) + time_tmp.month * LL(100000000) +
+  return time_tmp.year * 10000000000LL + time_tmp.month * 100000000LL +
          time_tmp.day * 1000000L + time_tmp.hour * 10000L +
          time_tmp.minute * 100 + time_tmp.second;
 }
@@ -5227,224 +4616,6 @@ void Field_year::sql_type(String &res) const
 
 
 /****************************************************************************
-** date type
-** In string context: YYYY-MM-DD
-** In number context: YYYYMMDD
-** Stored as a 4 byte unsigned int
-****************************************************************************/
-
-int Field_date::store(const char *from, uint len,CHARSET_INFO *cs)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  MYSQL_TIME l_time;
-  uint32 tmp;
-  int error;
-  THD *thd= table ? table->in_use : current_thd;
-
-  if (str_to_datetime(from, len, &l_time, TIME_FUZZY_DATE |
-                      (thd->variables.sql_mode &
-                       (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                        MODE_INVALID_DATES)),
-                      &error) <= MYSQL_TIMESTAMP_ERROR)
-  {
-    tmp= 0;
-    error= 2;
-  }
-  else
-    tmp=(uint32) l_time.year*10000L + (uint32) (l_time.month*100+l_time.day);
-
-  if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
-                         from, len, MYSQL_TIMESTAMP_DATE, 1);
-
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-  {
-    int4store(ptr,tmp);
-  }
-  else
-#endif
-    longstore(ptr,tmp);
-  return error;
-}
-
-
-int Field_date::store(double nr)
-{
-  longlong tmp;
-  int error= 0;
-  if (nr >= 19000000000000.0 && nr <= 99991231235959.0)
-    nr=floor(nr/1000000.0);			// Timestamp to date
-  if (nr < 0.0 || nr > 99991231.0)
-  {
-    tmp= LL(0);
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_OUT_OF_RANGE,
-                         nr, MYSQL_TIMESTAMP_DATE);
-    error= 1;
-  }
-  else
-    tmp= (longlong) rint(nr);
-
-  return Field_date::store(tmp, TRUE);
-}
-
-
-int Field_date::store(longlong nr, bool unsigned_val)
-{
-  ASSERT_COLUMN_MARKED_FOR_WRITE;
-  MYSQL_TIME not_used;
-  int error;
-  longlong initial_nr= nr;
-  THD *thd= table ? table->in_use : current_thd;
-
-  nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
-                                         (thd->variables.sql_mode &
-                                          (MODE_NO_ZERO_IN_DATE |
-                                           MODE_NO_ZERO_DATE |
-                                           MODE_INVALID_DATES))), &error);
-
-  if (nr == LL(-1))
-  {
-    nr= 0;
-    error= 2;
-  }
-
-  if (nr >= 19000000000000.0 && nr <= 99991231235959.0)
-    nr= (longlong) floor(nr/1000000.0);         // Timestamp to date
-
-  if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         error == 2 ? ER_WARN_DATA_OUT_OF_RANGE :
-                         WARN_DATA_TRUNCATED, initial_nr,
-                         MYSQL_TIMESTAMP_DATETIME, 1);
-
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-  {
-    int4store(ptr, nr);
-  }
-  else
-#endif
-    longstore(ptr, nr);
-  return error;
-}
-
-
-bool Field_date::send_binary(Protocol *protocol)
-{
-  longlong tmp= Field_date::val_int();
-  MYSQL_TIME tm;
-  tm.year= (uint32) tmp/10000L % 10000;
-  tm.month= (uint32) tmp/100 % 100;
-  tm.day= (uint32) tmp % 100;
-  return protocol->store_date(&tm);
-}
-
-
-double Field_date::val_real(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int32 j;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    j=sint4korr(ptr);
-  else
-#endif
-    longget(j,ptr);
-  return (double) (uint32) j;
-}
-
-
-longlong Field_date::val_int(void)
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  int32 j;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    j=sint4korr(ptr);
-  else
-#endif
-    longget(j,ptr);
-  return (longlong) (uint32) j;
-}
-
-
-String *Field_date::val_str(String *val_buffer,
-			    String *val_ptr __attribute__((unused)))
-{
-  ASSERT_COLUMN_MARKED_FOR_READ;
-  MYSQL_TIME ltime;
-  val_buffer->alloc(field_length);
-  int32 tmp;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-    tmp=sint4korr(ptr);
-  else
-#endif
-    longget(tmp,ptr);
-  ltime.neg= 0;
-  ltime.year= (int) ((uint32) tmp/10000L % 10000);
-  ltime.month= (int) ((uint32) tmp/100 % 100);
-  ltime.day= (int) ((uint32) tmp % 100);
-  make_date((DATE_TIME_FORMAT *) 0, &ltime, val_buffer);
-  return val_buffer;
-}
-
-
-bool Field_date::get_time(MYSQL_TIME *ltime)
-{
-  bzero((char *)ltime, sizeof(MYSQL_TIME));
-  return 0;
-}
-
-
-int Field_date::cmp(const uchar *a_ptr, const uchar *b_ptr)
-{
-  int32 a,b;
-#ifdef WORDS_BIGENDIAN
-  if (table && table->s->db_low_byte_first)
-  {
-    a=sint4korr(a_ptr);
-    b=sint4korr(b_ptr);
-  }
-  else
-#endif
-  {
-    longget(a,a_ptr);
-    longget(b,b_ptr);
-  }
-  return ((uint32) a < (uint32) b) ? -1 : ((uint32) a > (uint32) b) ? 1 : 0;
-}
-
-
-void Field_date::sort_string(uchar *to,uint length __attribute__((unused)))
-{
-#ifdef WORDS_BIGENDIAN
-  if (!table || !table->s->db_low_byte_first)
-  {
-    to[0] = ptr[0];
-    to[1] = ptr[1];
-    to[2] = ptr[2];
-    to[3] = ptr[3];
-  }
-  else
-#endif
-  {
-    to[0] = ptr[3];
-    to[1] = ptr[2];
-    to[2] = ptr[1];
-    to[3] = ptr[0];
-  }
-}
-
-void Field_date::sql_type(String &res) const
-{
-  res.set_ascii(STRING_WITH_LEN("date"));
-}
-
-
-/****************************************************************************
 ** The new date type
 ** This is identical to the old date type, but stored on 3 bytes instead of 4
 ** In number context: YYYYMMDD
@@ -5531,7 +4702,7 @@ int Field_newdate::store(longlong nr, bool unsigned_val)
                           (thd->variables.sql_mode &
                            (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
                             MODE_INVALID_DATES))),
-                         &error) == LL(-1))
+                         &error) == -1LL)
   {
     tmp= 0L;
     error= 2;
@@ -5768,7 +4939,7 @@ int Field_datetime::store(longlong nr, bool unsigned_val)
                                            MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
-  if (nr == LL(-1))
+  if (nr == -1LL)
   {
     nr= 0;
     error= 2;
@@ -5804,7 +4975,7 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
   if (time_type == MYSQL_TIMESTAMP_DATE ||
       time_type == MYSQL_TIMESTAMP_DATETIME)
   {
-    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*LL(1000000)+
+    tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*1000000LL+
 	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
@@ -5885,8 +5056,8 @@ String *Field_datetime::val_str(String *val_buffer,
     Avoid problem with slow longlong arithmetic and sprintf
   */
 
-  part1=(long) (tmp/LL(1000000));
-  part2=(long) (tmp - (uint64_t) part1*LL(1000000));
+  part1=(long) (tmp/1000000LL);
+  part2=(long) (tmp - (uint64_t) part1*1000000LL);
 
   pos=(char*) val_buffer->ptr() + MAX_DATETIME_WIDTH;
   *pos--=0;
@@ -5916,8 +5087,8 @@ bool Field_datetime::get_date(MYSQL_TIME *ltime, uint fuzzydate)
 {
   longlong tmp=Field_datetime::val_int();
   uint32 part1,part2;
-  part1=(uint32) (tmp/LL(1000000));
-  part2=(uint32) (tmp - (uint64_t) part1*LL(1000000));
+  part1=(uint32) (tmp/1000000LL);
+  part2=(uint32) (tmp - (uint64_t) part1*1000000LL);
 
   ltime->time_type=	MYSQL_TIMESTAMP_DATETIME;
   ltime->neg=		0;
@@ -8411,7 +7582,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
                         CHARSET_INFO *fld_charset, uint fld_geom_type,
-                        enum ha_storage_media storage_type,
                         enum column_format_type column_format)
 {
   uint sign_len, allowed_type_modifier= 0;
@@ -8423,7 +7593,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   field_name= fld_name;
   def= fld_default_value;
   flags= fld_type_modifier;
-  flags|= (((uint)storage_type & STORAGE_TYPE_MASK) << FIELD_STORAGE_FLAGS);
   flags|= (((uint)column_format & COLUMN_FORMAT_MASK) << COLUMN_FORMAT_FLAGS);
   unireg_check= (fld_type_modifier & AUTO_INCREMENT_FLAG ?
                  Field::NEXT_NUMBER : Field::NONE);
@@ -8697,8 +7866,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   case MYSQL_TYPE_VAR_STRING:
     DBUG_ASSERT(0);  /* Impossible. */
     break;
-  case MYSQL_TYPE_DECIMAL:
-    DBUG_ASSERT(0); /* Was obsolete */
   }
   /* Remember the value of length */
   char_length= length;
@@ -8754,16 +7921,15 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   switch (type) {
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_STRING:
-  case MYSQL_TYPE_DECIMAL:     return (length);
   case MYSQL_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
   case MYSQL_TYPE_YEAR:
   case MYSQL_TYPE_TINY	: return 1;
   case MYSQL_TYPE_SHORT : return 2;
   case MYSQL_TYPE_INT24:
+  case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_NEWDATE:
   case MYSQL_TYPE_TIME:   return 3;
   case MYSQL_TYPE_TIMESTAMP:
-  case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_LONG	: return 4;
   case MYSQL_TYPE_FLOAT : return sizeof(float);
   case MYSQL_TYPE_DOUBLE: return sizeof(double);
@@ -8831,7 +7997,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
     if (!f_is_packed(pack_flag))
     {
       if (field_type == MYSQL_TYPE_STRING ||
-          field_type == MYSQL_TYPE_DECIMAL ||   // 3.23 or 4.0 string
           field_type == MYSQL_TYPE_VAR_STRING)
         return new Field_string(ptr,field_length,null_pos,null_bit,
                                 unireg_check, field_name,
@@ -8868,12 +8033,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
   }
 
   switch (field_type) {
-  case MYSQL_TYPE_DECIMAL:
-    return new Field_decimal(ptr,field_length,null_pos,null_bit,
-			     unireg_check, field_name,
-			     f_decimals(pack_flag),
-			     f_is_zerofill(pack_flag) != 0,
-			     f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_NEWDECIMAL:
     return new Field_new_decimal(ptr,field_length,null_pos,null_bit,
                                  unireg_check, field_name,
@@ -8925,8 +8084,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
     return new Field_year(ptr,field_length,null_pos,null_bit,
 			  unireg_check, field_name);
   case MYSQL_TYPE_DATE:
-    return new Field_date(ptr,null_pos,null_bit,
-			  unireg_check, field_name, field_charset);
   case MYSQL_TYPE_NEWDATE:
     return new Field_newdate(ptr,null_pos,null_bit,
 			     unireg_check, field_name, field_charset);

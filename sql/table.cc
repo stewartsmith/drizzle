@@ -36,8 +36,6 @@ static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 			      uint types, char **names);
 static uint find_field(Field **fields, uchar *record, uint start, uint length);
 
-inline bool is_system_table_name(const char *name, uint length);
-
 /**************************************************************************
   Object_creation_ctx implementation.
 **************************************************************************/
@@ -145,17 +143,6 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
     return TABLE_CATEGORY_INFORMATION;
   }
 
-  if ((db->length == MYSQL_SCHEMA_NAME.length) &&
-      (my_strcasecmp(system_charset_info,
-                    MYSQL_SCHEMA_NAME.str,
-                    db->str) == 0))
-  {
-    if (is_system_table_name(name->str, name->length))
-    {
-      return TABLE_CATEGORY_SYSTEM;
-    }
-  }
-
   return TABLE_CATEGORY_USER;
 }
 
@@ -204,8 +191,6 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
     share->normalized_path.length= path_length;
 
     share->version=       refresh_version;
-
-    share->tablespace=    NULL;
 
     /*
       This constant is used to mark that no table map version has been
@@ -274,7 +259,6 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
   share->frm_version= 		 FRM_VER_TRUE_VARCHAR;
-  share->tablespace=             NULL;
   /*
     Temporary tables are not replicated, but we set up these fields
     anyway to be able to catch errors.
@@ -335,55 +319,6 @@ void free_table_share(TABLE_SHARE *share)
   free_root(&mem_root, MYF(0));                 // Free's share
   return;
 }
-
-
-/**
-  Return TRUE if a table name matches one of the system table names.
-  Currently these are:
-
-  help_category, help_keyword, help_relation, help_topic,
-  proc, event
-  time_zone, time_zone_leap_second, time_zone_name, time_zone_transition,
-  time_zone_transition_type
-
-  This function trades accuracy for speed, so may return false
-  positives. Presumably mysql.* database is for internal purposes only
-  and should not contain user tables.
-*/
-
-inline bool is_system_table_name(const char *name, uint length)
-{
-  CHARSET_INFO *ci= system_charset_info;
-
-  return (
-          /* mysql.proc table */
-          (
-           length == 4 &&
-           my_tolower(ci, name[0]) == 'p' && 
-           my_tolower(ci, name[1]) == 'r' &&
-           my_tolower(ci, name[2]) == 'o' &&
-           my_tolower(ci, name[3]) == 'c'
-          ) ||
-
-          /* one of mysql.help* tables */
-          (
-           length > 4 &&
-           my_tolower(ci, name[0]) == 'h' &&
-           my_tolower(ci, name[1]) == 'e' &&
-           my_tolower(ci, name[2]) == 'l' &&
-           my_tolower(ci, name[3]) == 'p'
-          ) ||
-
-          /* one of mysql.time_zone* tables */
-          (
-           my_tolower(ci, name[0]) == 't' &&
-           my_tolower(ci, name[1]) == 'i' &&
-           my_tolower(ci, name[2]) == 'm' &&
-           my_tolower(ci, name[3]) == 'e'
-          )
-          );
-}
-
 
 /*
   Read table definition from a binary / text based .frm file
@@ -506,6 +441,8 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
     *root_ptr= old_root;
     error_given= 1;
   }
+  else
+    assert(1);
 
   share->table_category= get_table_category(& share->db, & share->table_name);
 
@@ -579,7 +516,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if (share->frm_version == FRM_VER_TRUE_VARCHAR -1 && head[33] == 5)
     share->frm_version= FRM_VER_TRUE_VARCHAR;
 
-  legacy_db_type= (enum legacy_db_type) (uint) *(head+3);
+  legacy_db_type= DB_TYPE_FIRST_DYNAMIC;
   assert(share->db_plugin == NULL);
   /*
     if the storage engine is dynamic, no point in resolving it by its
@@ -666,14 +603,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       keyinfo->algorithm=  (enum ha_key_alg) strpos[5];
       keyinfo->block_size= uint2korr(strpos+6);
       strpos+=8;
-    }
-    else
-    {
-      keyinfo->flags=	 ((uint) strpos[0]) ^ HA_NOSAME;
-      keyinfo->key_length= (uint) uint2korr(strpos+1);
-      keyinfo->key_parts=  (uint) strpos[3];
-      keyinfo->algorithm= HA_KEY_ALG_UNDEF;
-      strpos+=4;
     }
 
     keyinfo->key_part=	 key_part;
@@ -788,20 +717,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       }
       next_chunk+= str_db_type_length + 2;
     }
-#if MYSQL_VERSION_ID < 50200
-    if (share->mysql_version >= 50106 && share->mysql_version <= 50109)
-    {
-      /*
-         Partition state array was here in version 5.1.6 to 5.1.9, this code
-         makes it possible to load a 5.1.6 table in later versions. Can most
-         likely be removed at some point in time. Will only be used for
-         upgrades within 5.1 series of versions. Upgrade to 5.2 can only be
-         done from newer 5.1 versions.
-      */
-      next_chunk+= 4;
-    }
-    else
-#endif
     if (share->mysql_version >= 50110)
     {
       /* New auto_partitioned indicator introduced in 5.1.11 */
@@ -845,22 +760,8 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       {
         const uint format_section_header_size= 8;
         uint format_section_len= uint2korr(next_chunk+0);
-        uint flags=              uint4korr(next_chunk+2);
 
-        share->default_storage_media= (enum ha_storage_media) (flags & 0x7);
-
-        const char *tablespace= (const char*)next_chunk + format_section_header_size;
-        uint tablespace_len= strlen(tablespace);
-        if (tablespace_len != 0) 
-        {
-          share->tablespace= (char *) alloc_root(&share->mem_root,
-                                                 tablespace_len+1);
-          strxmov(share->tablespace, tablespace, NullS);
-        }
-        else
-          share->tablespace= NULL;
-
-        field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
+        field_extra_info= next_chunk + format_section_header_size + 1;
         next_chunk+= format_section_len;
       }
     }
@@ -973,15 +874,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     */
     share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
   }
-#ifndef WE_WANT_TO_SUPPORT_VERY_OLD_FRM_FILES
-  else
-  {
-    share->null_bytes= (share->null_fields+7)/8;
-    null_flags= null_pos= (uchar*) (record + 1 +share->reclength -
-                                    share->null_bytes);
-    null_bit_pos= 0;
-  }
-#endif
 
   use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
   if (use_hash)
@@ -994,7 +886,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     uint pack_flag, interval_nr, unireg_type, recpos, field_length;
     enum_field_types field_type;
-    enum ha_storage_media storage_type= HA_SM_DEFAULT;
     enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
     CHARSET_INFO *charset=NULL;
     LEX_STRING comment;
@@ -1002,7 +893,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     if (field_extra_info)
     {
       char tmp= field_extra_info[i];
-      storage_type= (enum ha_storage_media)(tmp & STORAGE_TYPE_MASK);
       column_format= (enum column_format_type)
                     ((tmp >> COLUMN_FORMAT_SHIFT) & COLUMN_FORMAT_MASK);
     }
@@ -1125,7 +1015,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       goto err;			/* purecov: inspected */
     }
 
-    reg_field->flags|= ((uint)storage_type << FIELD_STORAGE_FLAGS);
     reg_field->flags|= ((uint)column_format << COLUMN_FORMAT_FLAGS);
     reg_field->field_index= i;
     reg_field->comment=comment;
@@ -1921,7 +1810,7 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
     char tmp[10];
     if (!csname || csname[0] =='?')
     {
-      my_snprintf(tmp, sizeof(tmp), "#%d", errarg);
+      snprintf(tmp, sizeof(tmp), "#%d", errarg);
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,
@@ -2256,8 +2145,6 @@ void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
   create_info->table_options= share->db_create_options;
   create_info->avg_row_length= share->avg_row_length;
   create_info->row_type= share->row_type;
-  create_info->default_storage_media= share->default_storage_media;
-  create_info->tablespace= share->tablespace;
   create_info->default_table_charset= share->table_charset;
   create_info->table_charset= 0;
   create_info->comment= share->comment;

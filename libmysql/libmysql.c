@@ -34,7 +34,7 @@
 #ifdef	 HAVE_PWD_H
 #include <pwd.h>
 #endif
-#if !defined(MSDOS) && !defined(__WIN__)
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -45,7 +45,7 @@
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
-#endif /* !defined(MSDOS) && !defined(__WIN__) */
+
 #ifdef HAVE_POLL
 #include <sys/poll.h>
 #endif
@@ -66,19 +66,8 @@
 ulong 		net_buffer_length=8192;
 ulong		max_allowed_packet= 1024L*1024L*1024L;
 
-
-#ifdef EMBEDDED_LIBRARY
-#undef net_flush
-my_bool	net_flush(NET *net);
-#endif
-
-#if defined(MSDOS) || defined(__WIN__)
-/* socket_errno is defined in my_global.h for all platforms */
-#define perror(A)
-#else
 #include <errno.h>
 #define SOCKET_ERROR -1
-#endif /* __WIN__ */
 
 /*
   If allowed through some configuration, then this needs to
@@ -126,7 +115,6 @@ int STDCALL mysql_server_init(int argc __attribute__((unused)),
     if (!mysql_port)
     {
       mysql_port = MYSQL_PORT;
-#ifndef MSDOS
       {
 	struct servent *serv_ptr;
 	char	*env;
@@ -148,7 +136,6 @@ int STDCALL mysql_server_init(int argc __attribute__((unused)),
         if ((env = getenv("MYSQL_TCP_PORT")))
           mysql_port =(uint) atoi(env);
       }
-#endif
     }
     if (!mysql_unix_port)
     {
@@ -610,8 +597,8 @@ static int default_local_infile_init(void **ptr, const char *filename,
   if ((data->fd = my_open(tmp_name, O_RDONLY, MYF(0))) < 0)
   {
     data->error_num= my_errno;
-    my_snprintf(data->error_msg, sizeof(data->error_msg)-1,
-                EE(EE_FILENOTFOUND), tmp_name, data->error_num);
+    snprintf(data->error_msg, sizeof(data->error_msg)-1,
+             EE(EE_FILENOTFOUND), tmp_name, data->error_num);
     return 1;
   }
   return 0; /* ok */
@@ -641,9 +628,9 @@ static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
   if ((count= (int) my_read(data->fd, (uchar *) buf, buf_len, MYF(0))) < 0)
   {
     data->error_num= EE_READ; /* the errmsg for not entire file read */
-    my_snprintf(data->error_msg, sizeof(data->error_msg)-1,
-		EE(EE_READ),
-		data->filename, my_errno);
+    snprintf(data->error_msg, sizeof(data->error_msg)-1,
+             EE(EE_READ),
+             data->filename, my_errno);
   }
   return count;
 }

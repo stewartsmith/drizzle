@@ -481,7 +481,8 @@ bool Item_sum::walk (Item_processor processor, bool walk_subquery,
 }
 
 
-Field *Item_sum::create_tmp_field(bool group, TABLE *table,
+Field *Item_sum::create_tmp_field(bool group __attribute__((__unused__)),
+                                  TABLE *table,
                                   uint convert_blob_length)
 {
   Field *field;
@@ -695,7 +696,7 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, TABLE *table,
     fields creations separately.
   */
   switch (args[0]->field_type()) {
-  case MYSQL_TYPE_DATE:
+  case MYSQL_TYPE_NEWDATE:
     field= new Field_newdate(maybe_null, name, collation.collation);
     break;
   case MYSQL_TYPE_TIME:
@@ -869,7 +870,8 @@ static int simple_raw_key_cmp(void* arg, const void* key1, const void* key2)
 }
 
 
-static int item_sum_distinct_walk(void *element, element_count num_of_dups,
+static int item_sum_distinct_walk(void *element,
+                                  element_count num_of_dups __attribute__((__unused__)),
                                   void *item)
 {
   return ((Item_sum_distinct*) (item))->unique_walk_function(element);
@@ -1226,7 +1228,7 @@ Item *Item_sum_avg::copy_or_same(THD* thd)
 
 
 Field *Item_sum_avg::create_tmp_field(bool group, TABLE *table,
-                                      uint convert_blob_len)
+                                      uint convert_blob_len __attribute__((__unused__)))
 {
   Field *field;
   if (group)
@@ -1438,7 +1440,7 @@ Item *Item_sum_variance::copy_or_same(THD* thd)
   pass around.
 */
 Field *Item_sum_variance::create_tmp_field(bool group, TABLE *table,
-                                           uint convert_blob_len)
+                                           uint convert_blob_len __attribute__((__unused__)))
 {
   Field *field;
   if (group)
@@ -2479,7 +2481,9 @@ int composite_key_cmp(void* arg, uchar* key1, uchar* key2)
 
 C_MODE_START
 
-static int count_distinct_walk(void *elem, element_count count, void *arg)
+static int count_distinct_walk(void *elem __attribute__((__unused__)),
+                               element_count count __attribute__((__unused__)),
+                               void *arg)
 {
   (*((ulonglong*)arg))++;
   return 0;
@@ -2596,7 +2600,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
       Field *f= *field;
       enum enum_field_types f_type= f->type();
       tree_key_length+= f->pack_length();
-      if ((f_type == MYSQL_TYPE_VARCHAR) || (!f->binary() && (f_type == MYSQL_TYPE_STRING || f_type == MYSQL_TYPE_VAR_STRING)))
+      if ((f_type == MYSQL_TYPE_VARCHAR) || (!f->binary() && (f_type == MYSQL_TYPE_STRING)))
       {
         all_binary= FALSE;
         break;
@@ -2709,7 +2713,7 @@ longlong Item_sum_count_distinct::val_int()
   int error;
   DBUG_ASSERT(fixed == 1);
   if (!table)					// Empty query
-    return LL(0);
+    return 0LL;
   if (tree)
   {
     if (is_evaluated)
@@ -3471,7 +3475,7 @@ void Item_func_group_concat::make_unique()
 }
 
 
-String* Item_func_group_concat::val_str(String* str)
+String* Item_func_group_concat::val_str(String* str __attribute__((__unused__)))
 {
   DBUG_ASSERT(fixed == 1);
   if (null_value)

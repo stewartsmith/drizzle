@@ -2043,13 +2043,6 @@ int change_to_newfile(const char * filename, const char * old_ext,
 		      myf MyFlags)
 {
   char old_filename[FN_REFLEN],new_filename[FN_REFLEN];
-#ifdef USE_RAID
-  if (raid_chunks)
-    return my_raid_redel(fn_format(old_filename,filename,"",old_ext,2+4),
-			 fn_format(new_filename,filename,"",new_ext,2+4),
-			 raid_chunks,
-			 MYF(MY_WME | MY_LINK_WARNING | MyFlags));
-#endif
   /* Get real path to filename */
   (void) fn_format(old_filename,filename,"",old_ext,2+4+32);
   return my_redel(old_filename,

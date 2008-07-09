@@ -56,16 +56,3 @@ noinst_HEADERS = client_settings.h
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 			$(target) $(BUILT_SOURCES)
 
-
-# This part requires GNUmake
-#
-# This makes a distribution file with only the files needed to compile
-# a minimal MySQL client library
-#
-# A list of needed headers collected from the deps information 000213
-nh =		my_global.h dbug.h errmsg.h \
-		m_ctype.h m_string.h \
-		my_alarm.h my_config.h my_dir.h my_list.h my_net.h my_sys.h \
-		mysql.h mysql_com.h mysql_version.h mysqld_error.h \
-		mysys_err.h my_pthread.h thr_alarm.h violite.h hash.h \
-                sql_common.h 

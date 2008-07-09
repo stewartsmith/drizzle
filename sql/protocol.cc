@@ -321,11 +321,6 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
 
   if (net->vio == 0)
   {
-    if (thd->bootstrap)
-    {
-      /* In bootstrap it's ok to print on stderr */
-      fprintf(stderr,"ERROR: %d  %s\n",sql_errno,err);
-    }
     DBUG_VOID_RETURN;
   }
 
@@ -574,10 +569,6 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
     Send_field field;
     item->make_field(&field);
 
-    /* Keep things compatible for old clients */
-    if (field.type == MYSQL_TYPE_VARCHAR)
-      field.type= MYSQL_TYPE_VAR_STRING;
-
     prot.prepare_for_resend();
 
     if (thd->client_capabilities & CLIENT_PROTOCOL_41)
@@ -803,7 +794,6 @@ bool Protocol_text::store(const char *from, size_t length,
 {
 #ifndef DBUG_OFF
   DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_DECIMAL ||
               field_types[field_pos] == MYSQL_TYPE_NEWDECIMAL ||
 	      (field_types[field_pos] >= MYSQL_TYPE_ENUM && field_types[field_pos] <= MYSQL_TYPE_STRING));
   field_pos++;
@@ -818,7 +808,6 @@ bool Protocol_text::store(const char *from, size_t length,
   CHARSET_INFO *tocs= this->thd->variables.character_set_results;
 #ifndef DBUG_OFF
   DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_DECIMAL ||
               field_types[field_pos] == MYSQL_TYPE_NEWDECIMAL ||
               field_types[field_pos] == MYSQL_TYPE_NEWDATE ||
 	      (field_types[field_pos] >= MYSQL_TYPE_ENUM && field_types[field_pos] <= MYSQL_TYPE_STRING));

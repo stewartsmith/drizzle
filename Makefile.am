@@ -15,19 +15,14 @@
 
 # Process this file with automake to create Makefile.in
 
-AUTOMAKE_OPTIONS =	foreign
-
-# These are built from source in the Docs directory
-EXTRA_DIST =		
-
 if BUILD_DBUG
   d_dbug = dbug
 endif
 
 SUBDIRS =		. include \
-			sql-common scripts vio \
+			sql-common vio \
 			strings mysys $(d_dbug) \
-                        extra regex \
+                        extra \
                         libmysql client storage plugin \
                         sql \
 			mysql-test support-files

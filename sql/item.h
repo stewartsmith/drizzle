@@ -2129,7 +2129,7 @@ public:
   longlong val_int()
   {
     int err;
-    return null_value ? LL(0) : my_strntoll(str_value.charset(),str_value.ptr(),
+    return null_value ? 0LL : my_strntoll(str_value.charset(),str_value.ptr(),
                                             str_value.length(),10, (char**) 0,
                                             &err); 
   }
@@ -2540,6 +2540,5 @@ void mark_select_range_as_dependent(THD *thd,
 
 extern Cached_item *new_Cached_item(THD *thd, Item *item,
                                     bool use_result_field);
-extern Item_result item_cmp_type(Item_result a,Item_result b);
 extern void resolve_const_item(THD *thd, Item **ref, Item *cmp_item);
 extern bool field_is_equal_to_item(Field *field,Item *item);

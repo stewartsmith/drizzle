@@ -22,13 +22,6 @@
 #include <mysql/plugin.h>
 #include <my_bit.h>
 
-#if defined(MSDOS) || defined(__WIN__)
-#ifdef __WIN__
-#include <fcntl.h>
-#else
-#include <process.h>			/* Prototype for getpid */
-#endif
-#endif
 #include <m_ctype.h>
 
 /*
@@ -482,11 +475,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   share.base.pack_bits=packed;
   share.base.fields=fields;
   share.base.pack_fields=packed;
-#ifdef USE_RAID
-  share.base.raid_type=ci->raid_type;
-  share.base.raid_chunks=ci->raid_chunks;
-  share.base.raid_chunksize=ci->raid_chunksize;
-#endif
 
   /* max_data_file_length and max_key_file_length are recalculated on open */
   if (options & HA_OPTION_TMP_TABLE)
@@ -573,20 +561,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 
   if (!(flags & HA_DONT_TOUCH_DATA))
   {
-#ifdef USE_RAID
-    if (share.base.raid_type)
-    {
-      (void) fn_format(filename, name, "", MI_NAME_DEXT,
-                       MY_UNPACK_FILENAME | MY_APPEND_EXT);
-      if ((dfile=my_raid_create(filename, 0, create_mode,
-				share.base.raid_type,
-				share.base.raid_chunks,
-				share.base.raid_chunksize,
-				MYF(MY_WME | MY_RAID))) < 0)
-	goto err;
-    }
-    else
-#endif
     {
       if (ci->data_file_name)
       {
@@ -774,19 +748,19 @@ uint mi_get_pointer_length(ulonglong file_length, uint def)
   if (file_length)				/* If not default */
   {
 #ifdef NOT_YET_READY_FOR_8_BYTE_POINTERS
-    if (file_length >= ULL(1) << 56)
+    if (file_length >= 1ULL << 56)
       def=8;
     else
 #endif
-    if (file_length >= ULL(1) << 48)
+    if (file_length >= 1ULL << 48)
       def=7;
-    else if (file_length >= ULL(1) << 40)
+    else if (file_length >= 1ULL << 40)
       def=6;
-    else if (file_length >= ULL(1) << 32)
+    else if (file_length >= 1ULL << 32)
       def=5;
-    else if (file_length >= ULL(1) << 24)
+    else if (file_length >= 1ULL << 24)
       def=4;
-    else if (file_length >= ULL(1) << 16)
+    else if (file_length >= 1ULL << 16)
       def=3;
     else
       def=2;

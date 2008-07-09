@@ -1,3 +1,0 @@
--- fill_help_tables.sql - this file is a placeholder to satisfy build dependencies -
--- it will be replaced with the appropriate content by the Boostrap script that
--- creates the official source distribution.

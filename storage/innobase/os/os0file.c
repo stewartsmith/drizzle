@@ -1114,7 +1114,7 @@ os_file_create_simple_no_error_handling(
 /********************************************************************
 Tries to disable OS caching on an opened file descriptor. */
 
-void
+static void
 os_file_set_nocache(
 /*================*/
 	int		fd,		/* in: file descriptor to alter */

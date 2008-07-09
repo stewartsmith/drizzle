@@ -82,12 +82,7 @@ static char *init_syms(udf_func *tmp, char *nm)
     let's ensure that at least one auxiliary symbol is defined
   */
   if (!tmp->func_init && !tmp->func_deinit && tmp->type != UDFTYPE_AGGREGATE)
-  {
-    if (!opt_allow_suspicious_udfs)
-      return nm;
-    if (current_thd->variables.log_warnings)
-      sql_print_warning(ER(ER_CANT_FIND_DL_ENTRY), nm);
-  }
+    return nm;
   return 0;
 }
 
@@ -132,96 +127,8 @@ void udf_init()
     delete new_thd;
     return;
   }
+
   initialized = 1;
-  new_thd->thread_stack= (char*) &new_thd;
-  new_thd->store_globals();
-  lex_start(new_thd);
-  new_thd->set_db(db, sizeof(db)-1);
-
-  bzero((uchar*) &tables,sizeof(tables));
-  tables.alias= tables.table_name= (char*) "func";
-  tables.lock_type = TL_READ;
-  tables.db= db;
-
-  if (simple_open_n_lock_tables(new_thd, &tables))
-  {
-    sql_print_error("Can't open the mysql.func table. Please "
-                    "run mysql_upgrade to create it.");
-    goto end;
-  }
-
-  table= tables.table;
-  init_read_record(&read_record_info, new_thd, table, NULL,1,0);
-  table->use_all_columns();
-  while (!(error= read_record_info.read_record(&read_record_info)))
-  {
-    LEX_STRING name;
-    name.str=get_field(&mem, table->field[0]);
-    name.length = strlen(name.str);
-    char *dl_name= get_field(&mem, table->field[2]);
-    bool new_dl=0;
-    Item_udftype udftype=UDFTYPE_FUNCTION;
-    if (table->s->fields >= 4)			// New func table
-      udftype=(Item_udftype) table->field[3]->val_int();
-
-    /*
-      Ensure that the .dll doesn't have a path
-      This is done to ensure that only approved dll from the system
-      directories are used (to make this even remotely secure).
-
-      On windows we must check both FN_LIBCHAR and '/'.
-    */
-    if (my_strchr(files_charset_info, dl_name,
-                  dl_name + strlen(dl_name), FN_LIBCHAR) ||
-        IF_WIN(my_strchr(files_charset_info, dl_name,
-                         dl_name + strlen(dl_name), '/'), 0) ||
-        check_identifier_name(&name))
-    {
-      sql_print_error("Invalid row in mysql.func table for function '%.64s'",
-                      name.str);
-      continue;
-    }
-
-    if (!(tmp= add_udf(&name,(Item_result) table->field[1]->val_int(),
-                       dl_name, udftype)))
-    {
-      sql_print_error("Can't alloc memory for udf function: '%.64s'", name.str);
-      continue;
-    }
-
-    void *dl = find_udf_dl(tmp->dl);
-    if (dl == NULL)
-    {
-      char dlpath[FN_REFLEN];
-      strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", tmp->dl,
-               NullS);
-      if (!(dl= dlopen(dlpath, RTLD_NOW)))
-      {
-	/* Print warning to log */
-        sql_print_error(ER(ER_CANT_OPEN_LIBRARY), tmp->dl, errno, dlerror());
-	/* Keep the udf in the hash so that we can remove it later */
-	continue;
-      }
-      new_dl=1;
-    }
-    tmp->dlhandle = dl;
-    {
-      char buf[NAME_LEN+16], *missing;
-      if ((missing= init_syms(tmp, buf)))
-      {
-        sql_print_error(ER(ER_CANT_FIND_DL_ENTRY), missing);
-        del_udf(tmp);
-        if (new_dl)
-          dlclose(dl);
-      }
-    }
-  }
-  if (error > 0)
-    sql_print_error("Got unknown error: %d", my_errno);
-  end_read_record(&read_record_info);
-  new_thd->version--;				// Force close to free memory
-
-end:
   close_thread_tables(new_thd);
   delete new_thd;
   /* Remember that we don't have a THD */

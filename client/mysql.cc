@@ -3020,10 +3020,9 @@ static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
     case MYSQL_TYPE_BLOB:        return "BLOB";
-    case MYSQL_TYPE_DATE:        return "DATE";
+    case MYSQL_TYPE_NEWDATE:        return "DATE";
     case MYSQL_TYPE_DATETIME:    return "DATETIME";
-    case MYSQL_TYPE_NEWDECIMAL:  return "NEWDECIMAL";
-    case MYSQL_TYPE_DECIMAL:     return "DECIMAL";
+    case MYSQL_TYPE_NEWDECIMAL:  return "DECIMAL";
     case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
     case MYSQL_TYPE_ENUM:        return "ENUM";
     case MYSQL_TYPE_FLOAT:       return "FLOAT";
@@ -3031,7 +3030,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
     case MYSQL_TYPE_LONG_BLOB:   return "LONG_BLOB";
     case MYSQL_TYPE_MEDIUM_BLOB: return "MEDIUM_BLOB";
-    case MYSQL_TYPE_NEWDATE:     return "NEWDATE";
     case MYSQL_TYPE_NULL:        return "NULL";
     case MYSQL_TYPE_SET:         return "SET";
     case MYSQL_TYPE_SHORT:       return "SHORT";

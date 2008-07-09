@@ -1724,8 +1724,8 @@ int check_transactional_lock(THD *thd, TABLE_LIST *table_list)
     }
 
     /* Warn about the conversion. */
-    my_snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_AUTO_CONVERT_LOCK),
-                tlist->alias ? tlist->alias : tlist->table_name);
+    snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_AUTO_CONVERT_LOCK),
+             tlist->alias ? tlist->alias : tlist->table_name);
     push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                  ER_WARN_AUTO_CONVERT_LOCK, warn_buff);
   }

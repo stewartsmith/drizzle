@@ -23,7 +23,6 @@
 class Table_ident;
 class sql_exchange;
 class LEX_COLUMN;
-class st_alter_tablespace;
 
 #ifdef MYSQL_SERVER
 /*
@@ -36,7 +35,7 @@ class st_alter_tablespace;
 #ifdef MYSQL_YACC
 #define LEX_YYSTYPE void *
 #else
-#if MYSQL_LEX
+#if defined(MYSQL_LEX)
 #include "lex_symbol.h"
 #include "sql_yacc.h"
 #define LEX_YYSTYPE YYSTYPE *
@@ -83,7 +82,6 @@ enum enum_sql_command {
   SQLCOM_SHOW_BINLOG_EVENTS,
   SQLCOM_SHOW_WARNS, SQLCOM_EMPTY_QUERY, SQLCOM_SHOW_ERRORS,
   SQLCOM_CHECKSUM,
-  SQLCOM_ALTER_TABLESPACE,
   SQLCOM_BINLOG_BASE64_EVENT,
   SQLCOM_SHOW_PLUGINS,
   SQLCOM_ALTER_DB_UPGRADE,
@@ -366,8 +364,12 @@ public:
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
-  static void operator delete(void *ptr,size_t size) { TRASH(ptr, size); }
-  static void operator delete(void *ptr, MEM_ROOT *mem_root) {}
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              size_t size __attribute__((__unused__)))
+  { TRASH(ptr, size); }
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              MEM_ROOT *mem_root __attribute__((__unused__)))
+  {}
   st_select_lex_node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~st_select_lex_node() {}
   inline st_select_lex_node* get_master() { return master; }
@@ -390,12 +392,13 @@ public:
   virtual List<Item>* get_item_list();
   virtual ulong get_table_join_options();
   virtual TABLE_LIST *add_table_to_list(THD *thd, Table_ident *table,
-					LEX_STRING *alias,
-					ulong table_options,
-					thr_lock_type flags= TL_UNLOCK,
-					List<Index_hint> *hints= 0,
+                                        LEX_STRING *alias,
+                                        ulong table_options,
+                                        thr_lock_type flags= TL_UNLOCK,
+                                        List<Index_hint> *hints= 0,
                                         LEX_STRING *option= 0);
-  virtual void set_lock_for_tables(thr_lock_type lock_type) {}
+  virtual void set_lock_for_tables(thr_lock_type lock_type __attribute__((__unused__)))
+  {}
 
   friend class st_select_lex_unit;
   friend bool mysql_new_select(struct st_lex *lex, bool move_down);
@@ -1504,7 +1507,6 @@ typedef struct st_lex : public Query_tables_list
 
   uint profile_query_id;
   uint profile_options;
-  enum ha_storage_media storage_type;
   enum column_format_type column_format;
   uint which_columns;
   enum Foreign_key::fk_match_opt fk_match_option;
@@ -1561,12 +1563,6 @@ typedef struct st_lex : public Query_tables_list
     (see Item_field::fix_fields()). 
   */
   bool use_only_table_context;
-
-  /*
-    Reference to a struct that contains information in various commands
-    to add/create/drop/change table spaces.
-  */
-  st_alter_tablespace *alter_tablespace_info;
   
   bool escape_used;
   bool is_lex_started; /* If lex_start() did run. For debugging. */
@@ -1677,9 +1673,11 @@ struct st_lex_local: public st_lex
   {
     return (void*) alloc_root(mem_root, (uint) size);
   }
-  static void operator delete(void *ptr,size_t size)
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              size_t size __attribute__((__unused__)))
   { TRASH(ptr, size); }
-  static void operator delete(void *ptr, MEM_ROOT *mem_root)
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              MEM_ROOT *mem_root __attribute__((__unused__)))
   { /* Never called */ }
 };
 
