@@ -31,11 +31,7 @@ MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
 pkglib_LTLIBRARIES = libdrizzle.la
-noinst_LTLIBRARIES = libsqlcommon.la
-libsqlcommon_la_SOURCES = pack.c my_time.c errmsg.c password.c
-
-libdrizzle_la_SOURCES = libdrizzle.c get_password.c \
-                            client.c net_serv.c
+libdrizzle_la_SOURCES = libdrizzle.c client.c net_serv.c get_password.c
 libdrizzle_la_LIBADD = ${sql_cmn_objects} ${sqlobjects} \
 			   ${top_builddir}/mysys/libmysyslt.la \
 			   ${top_builddir}/strings/libmystringslt.la \
@@ -43,6 +39,9 @@ libdrizzle_la_LIBADD = ${sql_cmn_objects} ${sqlobjects} \
 			   libsqlcommon.la \
 			   ${top_builddir}/vio/libviolt.la 
 libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
+
+noinst_LTLIBRARIES = libsqlcommon.la
+libsqlcommon_la_SOURCES = pack.c my_time.c errmsg.c password.c
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
@@ -52,7 +51,6 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
 			-DUNDEF_THREADS_HACK
 
-LIBS =		@CLIENT_LIBS@ 
 noinst_HEADERS = client_settings.h
 
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \

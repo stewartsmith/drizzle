@@ -1599,6 +1599,8 @@ static MYSQL_METHODS client_methods=
   cli_read_statistics,                         /* read_statistics */
   cli_read_query_result,                       /* next_result */
   cli_read_change_user_result,                 /* read_change_user_result */
+#else
+  0,0,0,0,0
 #endif
 };
 

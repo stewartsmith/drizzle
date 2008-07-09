@@ -1142,8 +1142,6 @@ MYSQL_CHECK_VIO
 
 MYSQL_CONFIGURE_PLUGINS([none])
 
-AC_SUBST(CLIENT_LIBS)
-
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)

@@ -198,14 +198,14 @@ void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
     /* Assume that the stack starts at the previous even 65K */
     stack_bottom= (uchar*) (((ulong) &fp + tmp) &
 			  ~(ulong) 0xFFFF);
-    fprintf(stderr, "Cannot determine thread, fp=%p, backtrace may not be correct.\n", fp);
+    fprintf(stderr, "Cannot determine thread, fp=%p, backtrace may not be correct.\n", (void *)fp);
   }
   if (fp > (uchar**) stack_bottom ||
       fp < (uchar**) stack_bottom - thread_stack)
   {
     fprintf(stderr, "Bogus stack limit or frame pointer,\
  fp=%p, stack_bottom=%p, thread_stack=%ld, aborting backtrace.\n",
-	    fp, stack_bottom, thread_stack);
+	    (void *)fp, (void *)stack_bottom, thread_stack);
     return;
   }
 
@@ -259,7 +259,7 @@ void  print_stacktrace(uchar* stack_bottom, ulong thread_stack)
     if (new_fp <= fp )
     {
       fprintf(stderr, "New value of fp=%p failed sanity check,\
- terminating stack trace!\n", new_fp);
+ terminating stack trace!\n", (void *)new_fp);
       goto end;
     }
     fp = new_fp;
