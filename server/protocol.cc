@@ -592,10 +592,7 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
           definition of the column. In other words, the maximum number
           of characters here is limited by the column definition.
         */
-        max_char_len= (field.type >= (int) MYSQL_TYPE_TINY_BLOB &&
-                      field.type <= (int) MYSQL_TYPE_BLOB) ?
-                      field.length / item->collation.collation->mbminlen :
-                      field.length / item->collation.collation->mbmaxlen;
+        max_char_len= field.length / item->collation.collation->mbmaxlen;
         int4store(pos+2, max_char_len * thd_charset->mbmaxlen);
       }
       pos[6]= field.type;
