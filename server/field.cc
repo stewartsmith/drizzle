@@ -7526,10 +7526,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
     allowed_type_modifier= AUTO_INCREMENT_FLAG;
     break;
   case MYSQL_TYPE_INT24:
-    if (!fld_length)
-      length= MAX_MEDIUMINT_WIDTH+sign_len;
-    allowed_type_modifier= AUTO_INCREMENT_FLAG;
-    break;
   case MYSQL_TYPE_LONG:
     if (!fld_length)
       length= MAX_INT_WIDTH+sign_len;
@@ -7806,11 +7802,11 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   case MYSQL_TYPE_YEAR:
   case MYSQL_TYPE_TINY	: return 1;
   case MYSQL_TYPE_SHORT : return 2;
-  case MYSQL_TYPE_INT24:
   case MYSQL_TYPE_DATE:
   case MYSQL_TYPE_NEWDATE:
   case MYSQL_TYPE_TIME:   return 3;
   case MYSQL_TYPE_TIMESTAMP:
+  case MYSQL_TYPE_INT24:
   case MYSQL_TYPE_LONG	: return 4;
   case MYSQL_TYPE_FLOAT : return sizeof(float);
   case MYSQL_TYPE_DOUBLE: return sizeof(double);
@@ -7833,7 +7829,7 @@ uint pack_length_to_packflag(uint type)
   switch (type) {
     case 1: return f_settype((uint) MYSQL_TYPE_TINY);
     case 2: return f_settype((uint) MYSQL_TYPE_SHORT);
-    case 3: return f_settype((uint) MYSQL_TYPE_INT24);
+    case 3: assert(1);
     case 4: return f_settype((uint) MYSQL_TYPE_LONG);
     case 8: return f_settype((uint) MYSQL_TYPE_LONGLONG);
   }
@@ -7940,10 +7936,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
 			   f_is_zerofill(pack_flag) != 0,
 			   f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_INT24:
-    return new Field_medium(ptr,field_length,null_pos,null_bit,
-			    unireg_check, field_name,
-			    f_is_zerofill(pack_flag) != 0,
-			    f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_LONG:
     return new Field_long(ptr,field_length,null_pos,null_bit,
 			   unireg_check, field_name,
