@@ -495,7 +495,6 @@ public:
       ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
   }
 
-#ifndef DBUG_OFF
   /* Print field value into debug trace, in NULL-aware way. */
   void dbug_print()
   {
@@ -511,7 +510,6 @@ public:
       fprintf(DBUG_FILE, "'%s'", pstr->c_ptr_safe());
     }
   }
-#endif
 
   /* Hash value */
   virtual void hash(ulong *nr, ulong *nr2);

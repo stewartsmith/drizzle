@@ -1522,7 +1522,7 @@ Item*
 Create_udf_func::create(THD *thd, LEX_STRING name, List<Item> *item_list)
 {
   udf_func *udf= find_udf(name.str, name.length);
-  DBUG_ASSERT(udf);
+  assert(udf);
   return create(thd, udf, item_list);
 }
 
@@ -1538,7 +1538,7 @@ Create_udf_func::create(THD *thd, udf_func *udf, List<Item> *item_list)
 
   thd->lex->set_stmt_unsafe();
 
-  DBUG_ASSERT(   (udf->type == UDFTYPE_FUNCTION)
+  assert(   (udf->type == UDFTYPE_FUNCTION)
               || (udf->type == UDFTYPE_AGGREGATE));
 
   switch(udf->returns) {
@@ -3269,8 +3269,6 @@ int item_create_init()
 {
   Native_func_registry *func;
 
-  DBUG_ENTER("item_create_init");
-
   if (hash_init(& native_functions_hash,
                 system_charset_info,
                 array_elements(func_array),
@@ -3279,24 +3277,15 @@ int item_create_init()
                 (hash_get_key) get_native_fct_hash_key,
                 NULL,                          /* Nothing to free */
                 MYF(0)))
-    DBUG_RETURN(1);
+    return(1);
 
   for (func= func_array; func->builder != NULL; func++)
   {
     if (my_hash_insert(& native_functions_hash, (uchar*) func))
-      DBUG_RETURN(1);
+      return(1);
   }
 
-#ifndef DBUG_OFF
-  for (uint i=0 ; i < native_functions_hash.records ; i++)
-  {
-    func= (Native_func_registry*) hash_element(& native_functions_hash, i);
-    DBUG_PRINT("info", ("native function: %s  length: %u",
-                        func->name.str, (uint) func->name.length));
-  }
-#endif
-
-  DBUG_RETURN(0);
+  return(0);
 }
 
 /*
@@ -3307,9 +3296,8 @@ int item_create_init()
 
 void item_create_cleanup()
 {
-  DBUG_ENTER("item_create_cleanup");
   hash_free(& native_functions_hash);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 Create_func *
@@ -3402,7 +3390,7 @@ create_func_cast(THD *thd, Item *a, Cast_target cast_type,
   }
   default:
   {
-    DBUG_ASSERT(0);
+    assert(0);
     res= 0;
     break;
   }

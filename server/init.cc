@@ -26,8 +26,6 @@
 
 void unireg_init(ulong options)
 {
-  DBUG_ENTER("unireg_init");
-
   MYSYS_PROGRAM_DONT_USE_CURSES();
   abort_loop=0;
 
@@ -41,5 +39,5 @@ void unireg_init(ulong options)
   VOID(strmov(reg_ext,".frm"));
   reg_ext_length= 4;
   specialflag=SPECIAL_SAME_DB_NAME | options;  /* Set options from argv */
-  DBUG_VOID_RETURN;
+  return;
 }

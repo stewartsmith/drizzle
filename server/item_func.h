@@ -207,7 +207,7 @@ public:
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *decimal_value);
   longlong val_int()
-    { DBUG_ASSERT(fixed == 1); return (longlong) rint(val_real()); }
+    { assert(fixed == 1); return (longlong) rint(val_real()); }
   enum Item_result result_type () const { return REAL_RESULT; }
   void fix_length_and_dec()
   { decimals= NOT_FIXED_DEC; max_length= float_length(decimals); }
@@ -286,7 +286,7 @@ public:
   void fix_num_length_and_dec();
   void find_num_type();
   String *str_op(String *str __attribute__((__unused__)))
-  { DBUG_ASSERT(0); return 0; }
+  { assert(0); return 0; }
 };
 
 
@@ -304,7 +304,7 @@ class Item_num_op :public Item_func_numhybrid
 
   void find_num_type();
   String *str_op(String *str __attribute__((__unused__)))
-  { DBUG_ASSERT(0); return 0; }
+  { assert(0); return 0; }
 };
 
 
@@ -334,7 +334,7 @@ public:
   const char *func_name() const { return "connection_id"; }
   void fix_length_and_dec();
   bool fix_fields(THD *thd, Item **ref);
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return value; }
+  longlong val_int() { assert(fixed == 1); return value; }
 };
 
 
@@ -432,7 +432,7 @@ class Item_func_div :public Item_num_op
 public:
   uint prec_increment;
   Item_func_div(Item *a,Item *b) :Item_num_op(a,b) {}
-  longlong int_op() { DBUG_ASSERT(0); return 0; }
+  longlong int_op() { assert(0); return 0; }
   double real_op();
   my_decimal *decimal_op(my_decimal *);
   const char *func_name() const { return "/"; }
@@ -731,7 +731,7 @@ protected:
   enum_field_types cached_field_type;
 public:
   Item_func_min_max(List<Item> &list,int cmp_sign_arg) :Item_func(list),
-    cmp_type(INT_RESULT), cmp_sign(cmp_sign_arg), compare_as_dates(FALSE),
+    cmp_type(INT_RESULT), cmp_sign(cmp_sign_arg), compare_as_dates(false),
     datetime_item(0) {}
   double val_real();
   longlong val_int();
@@ -805,7 +805,7 @@ class Item_func_bit_length :public Item_func_length
 public:
   Item_func_bit_length(Item *a) :Item_func_length(a) {}
   longlong val_int()
-    { DBUG_ASSERT(fixed == 1); return Item_func_length::val_int()*8; }
+    { assert(fixed == 1); return Item_func_length::val_int()*8; }
   const char *func_name() const { return "bit_length"; }
 };
 
@@ -994,7 +994,7 @@ class Item_udf_func :public Item_func
 protected:
   udf_handler udf;
   bool is_expensive_processor(uchar *arg __attribute__((__unused__)))
-  { return TRUE; }
+  { return true; }
 
 public:
   Item_udf_func(udf_func *udf_arg)
@@ -1005,7 +1005,7 @@ public:
   enum Functype functype() const   { return UDF_FUNC; }
   bool fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
   {
-    DBUG_ASSERT(fixed == 0);
+    assert(fixed == 0);
     bool res= udf.fix_fields(thd, this, arg_count, args);
     used_tables_cache= udf.used_tables_cache;
     const_item_cache= udf.const_item_cache;
@@ -1079,7 +1079,7 @@ class Item_func_udf_float :public Item_udf_func
     :Item_udf_func(udf_arg, list) {}
   longlong val_int()
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return (longlong) rint(Item_func_udf_float::val_real());
   }
   my_decimal *val_decimal(my_decimal *dec_buf)
@@ -1173,7 +1173,7 @@ class Item_func_udf_float :public Item_real_func
     :Item_real_func() {}
   Item_func_udf_float(udf_func *udf_arg, List<Item> &list)
     :Item_real_func(list) {}
-  double val_real() { DBUG_ASSERT(fixed == 1); return 0.0; }
+  double val_real() { assert(fixed == 1); return 0.0; }
 };
 
 
@@ -1184,7 +1184,7 @@ public:
     :Item_int_func() {}
   Item_func_udf_int(udf_func *udf_arg, List<Item> &list)
     :Item_int_func(list) {}
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return 0; }
+  longlong val_int() { assert(fixed == 1); return 0; }
 };
 
 
@@ -1195,7 +1195,7 @@ public:
     :Item_int_func() {}
   Item_func_udf_decimal(udf_func *udf_arg, List<Item> &list)
     :Item_int_func(list) {}
-  my_decimal *val_decimal(my_decimal *) { DBUG_ASSERT(fixed == 1); return 0; }
+  my_decimal *val_decimal(my_decimal *) { assert(fixed == 1); return 0; }
 };
 
 
@@ -1207,9 +1207,9 @@ public:
   Item_func_udf_str(udf_func *udf_arg, List<Item> &list)
     :Item_func(list) {}
   String *val_str(String *)
-    { DBUG_ASSERT(fixed == 1); null_value=1; return 0; }
-  double val_real() { DBUG_ASSERT(fixed == 1); null_value= 1; return 0.0; }
-  longlong val_int() { DBUG_ASSERT(fixed == 1); null_value=1; return 0; }
+    { assert(fixed == 1); null_value=1; return 0; }
+  double val_real() { assert(fixed == 1); null_value= 1; return 0.0; }
+  longlong val_int() { assert(fixed == 1); null_value=1; return 0; }
   enum Item_result result_type () const { return STRING_RESULT; }
   void fix_length_and_dec() { maybe_null=1; max_length=0; }
 };
@@ -1362,10 +1362,10 @@ public:
     Stubs for pure virtual methods. Should never be called: this
     item is always substituted with a constant in fix_fields().
   */
-  double val_real()         { DBUG_ASSERT(0); return 0.0; }
-  longlong val_int()        { DBUG_ASSERT(0); return 0; }
-  String* val_str(String*)  { DBUG_ASSERT(0); return 0; }
-  void fix_length_and_dec() { DBUG_ASSERT(0); }
+  double val_real()         { assert(0); return 0.0; }
+  longlong val_int()        { assert(0); return 0; }
+  String* val_str(String*)  { assert(0); return 0; }
+  void fix_length_and_dec() { assert(0); }
   /* TODO: fix to support views */
   const char *func_name() const { return "get_system_var"; }
   /**
