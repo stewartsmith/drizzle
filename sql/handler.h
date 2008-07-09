@@ -144,7 +144,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
   uses a primary key. Without primary key, we can't call position().
 */ 
 #define HA_PRIMARY_KEY_REQUIRED_FOR_POSITION (1 << 16) 
-#define HA_CAN_RTREEKEYS       (1 << 17)
+#define HA_CAN_RTREEKEYS       (1 << 17) /* Historical, no longer supported */
 #define HA_NOT_DELETE_WITH_CACHE (1 << 18)
 /*
   The following is we need to a primary key to delete (and update) a row.
@@ -152,20 +152,20 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 */
 #define HA_PRIMARY_KEY_REQUIRED_FOR_DELETE (1 << 19)
 #define HA_NO_PREFIX_CHAR_KEYS (1 << 20)
-#define HA_CAN_FULLTEXT        (1 << 21)
-#define HA_CAN_SQL_HANDLER     (1 << 22)
+#define HA_CAN_FULLTEXT        (1 << 21) /* Historical, no longer supported */
+#define HA_CAN_SQL_HANDLER     (1 << 22) /* Historical, no longer supported */
 #define HA_NO_AUTO_INCREMENT   (1 << 23)
 #define HA_HAS_CHECKSUM        (1 << 24)
 /* Table data are stored in separate files (for lower_case_table_names) */
 #define HA_FILE_BASED	       (1 << 26)
-#define HA_NO_VARCHAR	       (1 << 27)
-#define HA_CAN_BIT_FIELD       (1 << 28) /* supports bit fields */
+#define HA_NO_VARCHAR	       (1 << 27) /* Historical, no longer supported */
+#define HA_CAN_BIT_FIELD       (1 << 28) /* Historical, no longer supported */
 #define HA_NEED_READ_RANGE_BUFFER (1 << 29) /* for read_multi_range */
 #define HA_ANY_INDEX_MAY_BE_UNIQUE (1 << 30)
 #define HA_NO_COPY_ON_ALTER    (1LL << 31)
 #define HA_HAS_RECORDS	       (1LL << 32) /* records() gives exact count*/
 /* Has it's own method of binlog logging */
-#define HA_HAS_OWN_BINLOGGING  (1LL << 33)
+#define HA_HAS_OWN_BINLOGGING  (1LL << 33) /* Historical, no longer supported */
 #define HA_MRR_CANT_SORT       (1LL << 34)
 
 /*
@@ -343,7 +343,7 @@ enum enum_binlog_command {
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
-#define HA_CREATE_USED_RAID             (1L << 1) //RAID is no longer availble
+#define HA_CREATE_USED_RAID             (1L << 1) /* Historical, no longer supported */
 #define HA_CREATE_USED_UNION            (1L << 2)
 #define HA_CREATE_USED_INSERT_METHOD    (1L << 3)
 #define HA_CREATE_USED_MIN_ROWS         (1L << 4)
@@ -457,82 +457,7 @@ typedef struct xid_t XID;
 #define MIN_XID_LIST_SIZE  128
 #define MAX_XID_LIST_SIZE  (1024*128)
 
-/*
-  These structures are used to pass information from a set of SQL commands
-  on add/drop/change tablespace definitions to the proper hton.
-*/
-#define UNDEF_NODEGROUP 65535
-enum ts_command_type
-{
-  TS_CMD_NOT_DEFINED = -1,
-  CREATE_TABLESPACE = 0,
-  ALTER_TABLESPACE = 1,
-  CREATE_LOGFILE_GROUP = 2,
-  ALTER_LOGFILE_GROUP = 3,
-  DROP_TABLESPACE = 4,
-  DROP_LOGFILE_GROUP = 5,
-  CHANGE_FILE_TABLESPACE = 6,
-  ALTER_ACCESS_MODE_TABLESPACE = 7
-};
-
-enum ts_alter_tablespace_type
-{
-  TS_ALTER_TABLESPACE_TYPE_NOT_DEFINED = -1,
-  ALTER_TABLESPACE_ADD_FILE = 1,
-  ALTER_TABLESPACE_DROP_FILE = 2
-};
-
-enum tablespace_access_mode
-{
-  TS_NOT_DEFINED= -1,
-  TS_READ_ONLY = 0,
-  TS_READ_WRITE = 1,
-  TS_NOT_ACCESSIBLE = 2
-};
-
 struct handlerton;
-class st_alter_tablespace : public Sql_alloc
-{
-  public:
-  const char *tablespace_name;
-  const char *logfile_group_name;
-  enum ts_command_type ts_cmd_type;
-  enum ts_alter_tablespace_type ts_alter_tablespace_type;
-  const char *data_file_name;
-  const char *undo_file_name;
-  const char *redo_file_name;
-  uint64_t extent_size;
-  uint64_t undo_buffer_size;
-  uint64_t redo_buffer_size;
-  uint64_t initial_size;
-  uint64_t autoextend_size;
-  uint64_t max_size;
-  uint nodegroup_id;
-  handlerton *storage_engine;
-  bool wait_until_completed;
-  const char *ts_comment;
-  enum tablespace_access_mode ts_access_mode;
-  st_alter_tablespace()
-  {
-    tablespace_name= NULL;
-    logfile_group_name= "DEFAULT_LG"; //Default log file group
-    ts_cmd_type= TS_CMD_NOT_DEFINED;
-    data_file_name= NULL;
-    undo_file_name= NULL;
-    redo_file_name= NULL;
-    extent_size= 1024*1024;        //Default 1 MByte
-    undo_buffer_size= 8*1024*1024; //Default 8 MByte
-    redo_buffer_size= 8*1024*1024; //Default 8 MByte
-    initial_size= 128*1024*1024;   //Default 128 MByte
-    autoextend_size= 0;            //No autoextension as default
-    max_size= 0;                   //Max size == initial size => no extension
-    storage_engine= NULL;
-    nodegroup_id= UNDEF_NODEGROUP;
-    wait_until_completed= TRUE;
-    ts_comment= NULL;
-    ts_access_mode= TS_NOT_DEFINED;
-  }
-};
 
 /* The handler for a table type.  Will be included in the TABLE structure */
 
@@ -632,7 +557,6 @@ struct handlerton
    int (*start_consistent_snapshot)(handlerton *hton, THD *thd);
    bool (*flush_logs)(handlerton *hton);
    bool (*show_status)(handlerton *hton, THD *thd, stat_print_fn *print, enum ha_stat_type stat);
-   int (*alter_tablespace)(handlerton *hton, THD *thd, st_alter_tablespace *ts_info);
    int (*fill_files_table)(handlerton *hton, THD *thd,
                            TABLE_LIST *tables,
                            class Item *cond);
@@ -832,7 +756,6 @@ typedef struct st_ha_create_information
 {
   CHARSET_INFO *table_charset, *default_table_charset;
   LEX_STRING connect_string;
-  const char *password, *tablespace;
   LEX_STRING comment;
   const char *data_file_name, *index_file_name;
   const char *alias;
@@ -854,7 +777,6 @@ typedef struct st_ha_create_information
   bool table_existed;			/* 1 in create if table existed */
   bool frm_only;                        /* 1 if no ha_create_table() */
   bool varchar;                         /* 1 if table has a VARCHAR */
-  enum ha_storage_media default_storage_media;  /* DEFAULT, DISK or MEMORY */
   enum ha_choice page_checksum;         /* If we have page_checksums */
 } HA_CREATE_INFO;
 
@@ -1687,8 +1609,6 @@ public:
   { return FALSE; }
   virtual char* get_foreign_key_create_info(void)
   { return(NULL);}  /* gets foreign key create string from InnoDB */
-  /* gets tablespace name from handler */
-  const char* get_tablespace_name(void);
   /** used in ALTER TABLE; 1 if changing storage engine is allowed */
   virtual bool can_switch_engines(void) { return 1; }
   /** used in REPLACE; is > 0 if table is referred by a FOREIGN KEY */

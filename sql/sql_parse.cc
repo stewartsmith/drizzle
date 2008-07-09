@@ -3223,7 +3223,6 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
 bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 		       char *length, char *decimals,
 		       uint type_modifier,
-                       enum ha_storage_media storage_type,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
@@ -3300,8 +3299,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
   if (!(new_field= new Create_field()) ||
       new_field->init(thd, field_name->str, type, length, decimals, type_modifier,
                       default_value, on_update_value, comment, change,
-                      interval_list, cs, 0,
-                      storage_type, column_format))
+                      interval_list, cs, 0, column_format))
     DBUG_RETURN(1);
 
   lex->alter_info.create_list.push_back(new_field);

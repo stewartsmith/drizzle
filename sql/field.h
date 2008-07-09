@@ -489,12 +489,6 @@ public:
     return field_length / charset()->mbmaxlen;
   }
 
-  inline  enum ha_storage_media field_storage_type() const
-  {
-    return (enum ha_storage_media)
-      ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
-  }
-
   inline enum column_format_type column_format() const
   {
     return (enum column_format_type)
@@ -1372,11 +1366,7 @@ public:
 
   enum_field_types type() const
   {
-    return ((can_alter_field_type && orig_table &&
-             orig_table->s->db_create_options & HA_OPTION_PACK_RECORD &&
-	     field_length >= 4) &&
-            orig_table->s->frm_version < FRM_VER_TRUE_VARCHAR ?
-	    MYSQL_TYPE_VAR_STRING : MYSQL_TYPE_STRING);
+    return  MYSQL_TYPE_STRING;
   }
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_BINARY : HA_KEYTYPE_TEXT; }
@@ -1803,12 +1793,6 @@ public:
     { return new (mem_root) Create_field(*this); }
   void create_length_to_internal_length(void);
 
-  inline  enum ha_storage_media field_storage_type() const
-  {
-    return (enum ha_storage_media)
-      ((flags >> FIELD_STORAGE_FLAGS) & STORAGE_TYPE_MASK);
-  }
-
   inline enum column_format_type column_format() const
   {
     return (enum column_format_type)
@@ -1825,7 +1809,6 @@ public:
             Item *on_update_value, LEX_STRING *comment, char *change,
             List<String> *interval_list, CHARSET_INFO *cs,
             uint uint_geom_type,
-            enum ha_storage_media storage_type,
             enum column_format_type column_format);
 };
 

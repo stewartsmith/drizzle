@@ -1033,7 +1033,6 @@ TABLE *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
 bool mysql_xa_recover(THD *thd);
 
 bool check_simple_select();
-int mysql_alter_tablespace(THD* thd, st_alter_tablespace *ts_info);
 
 SORT_FIELD * make_unireg_sortorder(ORDER *order, uint *length,
                                   SORT_FIELD *sortorder);
@@ -1283,7 +1282,6 @@ void set_item_name(Item *item,char *pos,uint length);
 bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types type,
 		       char *length, char *decimal,
 		       uint type_modifier,
-                       enum ha_storage_media storage_type,
                        enum column_format_type column_format,
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,

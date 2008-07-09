@@ -161,7 +161,6 @@ static SYMBOL symbols[] = {
   { "DIRECTORY",	SYM(DIRECTORY_SYM)},
   { "DISABLE",		SYM(DISABLE_SYM)},
   { "DISCARD",		SYM(DISCARD)},
-  { "DISK",		SYM(DISK_SYM)},
   { "DISTINCT",		SYM(DISTINCT)},
   { "DISTINCTROW",	SYM(DISTINCT)},	/* Access likes this */
   { "DIV",		SYM(DIV_SYM)},
@@ -302,7 +301,6 @@ static SYMBOL symbols[] = {
   { "MEDIUM",		SYM(MEDIUM_SYM)},
   { "MEDIUMBLOB",	SYM(MEDIUMBLOB)},
   { "MEDIUMTEXT",	SYM(MEDIUMTEXT)},
-  { "MEMORY",		SYM(MEMORY_SYM)},
   { "MERGE",		SYM(MERGE_SYM)},
   { "MICROSECOND",	SYM(MICROSECOND_SYM)},
   { "MIGRATE",          SYM(MIGRATE_SYM)},

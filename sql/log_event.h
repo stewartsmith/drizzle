@@ -3141,17 +3141,6 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_VAR_STRING</td><td>253</td>
-    <td>2 bytes</td>
-    <td>This is used to store both strings and enumeration values.
-    The first byte is a enumeration value storing the <i>real
-    type</i>, which may be either MYSQL_TYPE_VAR_STRING or
-    MYSQL_TYPE_ENUM.  The second byte is a 1 byte unsigned integer
-    representing the field size, i.e., the number of bytes needed to
-    store the length of the string.</td>
-  </tr>
-
-  <tr>
     <td>MYSQL_TYPE_STRING</td><td>254</td>
     <td>2 bytes</td>
     <td>The first byte is always MYSQL_TYPE_VAR_STRING (i.e., 253).

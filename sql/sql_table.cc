@@ -1714,23 +1714,6 @@ int prepare_create_field(Create_field *sql_field,
     (*blob_columns)++;
     break;
   case MYSQL_TYPE_VARCHAR:
-#ifndef QQ_ALL_HANDLERS_SUPPORT_VARCHAR
-    if (table_flags & HA_NO_VARCHAR)
-    {
-      /* convert VARCHAR to CHAR because handler is not yet up to date */
-      sql_field->sql_type=    MYSQL_TYPE_VAR_STRING;
-      sql_field->pack_length= calc_pack_length(sql_field->sql_type,
-                                               (uint) sql_field->length);
-      if ((sql_field->length / sql_field->charset->mbmaxlen) >
-          MAX_FIELD_CHARLENGTH)
-      {
-        my_printf_error(ER_TOO_BIG_FIELDLENGTH, ER(ER_TOO_BIG_FIELDLENGTH),
-                        MYF(0), sql_field->field_name, MAX_FIELD_CHARLENGTH);
-        return(1);
-      }
-    }
-#endif
-    /* fall through */
   case MYSQL_TYPE_STRING:
     sql_field->pack_flag=0;
     if (sql_field->charset->state & MY_CS_BINSORT)
@@ -4742,21 +4725,6 @@ int create_temporary_table(THD *thd,
   else
     create_info->data_file_name=create_info->index_file_name=0;
 
-  if (new_db_type == old_db_type)
-  {
-    /*
-       Table has not changed storage engine.
-       If STORAGE and TABLESPACE have not been changed than copy them
-       from the original table
-    */
-    if (!create_info->tablespace &&
-        table->s->tablespace &&
-        create_info->default_storage_media == HA_SM_DEFAULT)
-      create_info->tablespace= table->s->tablespace;
-    if (create_info->default_storage_media == HA_SM_DEFAULT)
-      create_info->default_storage_media= table->s->default_storage_media;
-   }
-
   /*
     Create a table with a temporary name.
     With create_info->frm_only == 1 this creates a .frm file only.
@@ -5452,7 +5420,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   if (alter_info->tablespace_op != NO_TABLESPACE_OP)
     /* Conditionally writes to binlog. */
     return(mysql_discard_or_import_tablespace(thd,table_list,
-						   alter_info->tablespace_op));
+                                              alter_info->tablespace_op));
   strxnmov(new_name_buff, sizeof (new_name_buff) - 1, mysql_data_home, "/", db, 
            "/", table_name, reg_ext, NullS);
   (void) unpack_filename(new_name_buff, new_name_buff);

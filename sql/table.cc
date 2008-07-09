@@ -192,8 +192,6 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
 
     share->version=       refresh_version;
 
-    share->tablespace=    NULL;
-
     /*
       This constant is used to mark that no table map version has been
       assigned.  No arithmetic is done on the value: it will be
@@ -261,7 +259,6 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
   share->frm_version= 		 FRM_VER_TRUE_VARCHAR;
-  share->tablespace=             NULL;
   /*
     Temporary tables are not replicated, but we set up these fields
     anyway to be able to catch errors.
@@ -763,22 +760,8 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       {
         const uint format_section_header_size= 8;
         uint format_section_len= uint2korr(next_chunk+0);
-        uint flags=              uint4korr(next_chunk+2);
 
-        share->default_storage_media= (enum ha_storage_media) (flags & 0x7);
-
-        const char *tablespace= (const char*)next_chunk + format_section_header_size;
-        uint tablespace_len= strlen(tablespace);
-        if (tablespace_len != 0) 
-        {
-          share->tablespace= (char *) alloc_root(&share->mem_root,
-                                                 tablespace_len+1);
-          strxmov(share->tablespace, tablespace, NullS);
-        }
-        else
-          share->tablespace= NULL;
-
-        field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
+        field_extra_info= next_chunk + format_section_header_size + 1;
         next_chunk+= format_section_len;
       }
     }
@@ -891,15 +874,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     */
     share->null_bytes= (share->null_fields + null_bit_pos + 7) / 8;
   }
-#ifndef WE_WANT_TO_SUPPORT_VERY_OLD_FRM_FILES
-  else
-  {
-    share->null_bytes= (share->null_fields+7)/8;
-    null_flags= null_pos= (uchar*) (record + 1 +share->reclength -
-                                    share->null_bytes);
-    null_bit_pos= 0;
-  }
-#endif
 
   use_hash= share->fields >= MAX_FIELDS_BEFORE_HASH;
   if (use_hash)
@@ -912,7 +886,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     uint pack_flag, interval_nr, unireg_type, recpos, field_length;
     enum_field_types field_type;
-    enum ha_storage_media storage_type= HA_SM_DEFAULT;
     enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
     CHARSET_INFO *charset=NULL;
     LEX_STRING comment;
@@ -920,7 +893,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     if (field_extra_info)
     {
       char tmp= field_extra_info[i];
-      storage_type= (enum ha_storage_media)(tmp & STORAGE_TYPE_MASK);
       column_format= (enum column_format_type)
                     ((tmp >> COLUMN_FORMAT_SHIFT) & COLUMN_FORMAT_MASK);
     }
@@ -1043,7 +1015,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       goto err;			/* purecov: inspected */
     }
 
-    reg_field->flags|= ((uint)storage_type << FIELD_STORAGE_FLAGS);
     reg_field->flags|= ((uint)column_format << COLUMN_FORMAT_FLAGS);
     reg_field->field_index= i;
     reg_field->comment=comment;
@@ -2174,8 +2145,6 @@ void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
   create_info->table_options= share->db_create_options;
   create_info->avg_row_length= share->avg_row_length;
   create_info->row_type= share->row_type;
-  create_info->default_storage_media= share->default_storage_media;
-  create_info->tablespace= share->tablespace;
   create_info->default_table_charset= share->table_charset;
   create_info->table_charset= 0;
   create_info->comment= share->comment;

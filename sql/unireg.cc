@@ -114,7 +114,6 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   char buff[128];
   const uint format_section_header_size= 8;
   uint format_section_len;
-  uint tablespace_len= 0;
   Pack_header_error_handler pack_header_error_handler;
   int error;
 
@@ -173,12 +172,8 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   create_info->extra_size+= 6;
 
   /* Add space for storage type and field format array of fields */
-  if (create_info->tablespace)
-    tablespace_len= strlen(create_info->tablespace);
   format_section_len=
-    format_section_header_size +
-    tablespace_len + 1 +
-    create_fields.elements;
+    format_section_header_size + 1 + create_fields.elements;
   create_info->extra_size+= format_section_len;
 
   tmp_len= system_charset_info->cset->charpos(system_charset_info,
@@ -283,7 +278,6 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     /* prepare header */
     {
       uint flags= 0;
-      flags|= create_info->default_storage_media; //3 bits
 
       bzero(buff, format_section_header_size);
       /* length of section 2 bytes*/
@@ -295,10 +289,6 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     /* write header */
     if (my_write(file, (const uchar*)buff, format_section_header_size, MYF_RW))
       goto err;
-    /* write tablespace name */
-    if (tablespace_len > 0)
-      if (my_write(file, (const uchar*)create_info->tablespace, tablespace_len, MYF_RW))
-        goto err;
     buff[0]= 0;
     if (my_write(file, (const uchar*)buff, 1, MYF_RW))
       goto err;
@@ -306,12 +296,11 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     {
       List_iterator<Create_field> it(create_fields);
       Create_field *field;
-      uchar storage_type, column_format, write_byte;
+      uchar column_format, write_byte;
       while ((field=it++))
       {
-        storage_type= (uchar)field->field_storage_type();
         column_format= (uchar)field->column_format();
-        write_byte= storage_type + (column_format << COLUMN_FORMAT_SHIFT);
+        write_byte= (column_format << COLUMN_FORMAT_SHIFT);
         if (my_write(file, &write_byte, 1, MYF_RW))
           goto err;
       }
