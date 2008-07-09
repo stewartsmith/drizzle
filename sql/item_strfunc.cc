@@ -61,7 +61,7 @@ bool Item_str_func::fix_fields(THD *thd, Item **ref)
 
 my_decimal *Item_str_func::val_decimal(my_decimal *decimal_value)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char buff[64];
   String *res, tmp(buff,sizeof(buff), &my_charset_bin);
   res= val_str(&tmp);
@@ -75,7 +75,7 @@ my_decimal *Item_str_func::val_decimal(my_decimal *decimal_value)
 
 double Item_str_func::val_real()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int err_not_used;
   char *end_not_used, buff[64];
   String *res, tmp(buff,sizeof(buff), &my_charset_bin);
@@ -87,7 +87,7 @@ double Item_str_func::val_real()
 
 longlong Item_str_func::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int err;
   char buff[22];
   String *res, tmp(buff,sizeof(buff), &my_charset_bin);
@@ -101,7 +101,7 @@ longlong Item_str_func::val_int()
 
 String *Item_func_md5::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String * sptr= args[0]->val_str(str);
   str->set_charset(&my_charset_bin);
   if (sptr)
@@ -153,7 +153,7 @@ void Item_func_md5::fix_length_and_dec()
 
 String *Item_func_concat::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res,*res2,*use_as_buff;
   uint i;
   bool is_const= 0;
@@ -311,7 +311,7 @@ void Item_func_concat::fix_length_and_dec()
 
 String *Item_func_concat_ws::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char tmp_str_buff[10];
   String tmp_sep_str(tmp_str_buff, sizeof(tmp_str_buff),default_charset_info),
          *sep_str, *res, *res2,*use_as_buff;
@@ -474,7 +474,7 @@ void Item_func_concat_ws::fix_length_and_dec()
 
 String *Item_func_reverse::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res = args[0]->val_str(str);
   char *ptr, *end, *tmp;
 
@@ -537,7 +537,7 @@ void Item_func_reverse::fix_length_and_dec()
 
 String *Item_func_replace::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res,*res2,*res3;
   int offset;
   uint from_length,to_length;
@@ -673,7 +673,7 @@ void Item_func_replace::fix_length_and_dec()
 
 String *Item_func_insert::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res,*res2;
   longlong start, length;  /* must be longlong to avoid truncation */
 
@@ -740,7 +740,7 @@ void Item_func_insert::fix_length_and_dec()
 
 String *Item_str_conv::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res;
   if (!(res=args[0]->val_str(str)))
   {
@@ -754,7 +754,7 @@ String *Item_str_conv::val_str(String *str)
     res= copy_if_not_alloced(str,res,res->length());
     len= converter(collation.collation, (char*) res->ptr(), res->length(),
                                         (char*) res->ptr(), res->length());
-    DBUG_ASSERT(len <= res->length());
+    assert(len <= res->length());
     res->length(len);
   }
   else
@@ -790,7 +790,7 @@ void Item_func_ucase::fix_length_and_dec()
 
 String *Item_func_left::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(str);
 
   /* must be longlong to avoid truncation */
@@ -836,7 +836,7 @@ void Item_func_left::fix_length_and_dec()
 
 String *Item_func_right::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(str);
   /* must be longlong to avoid truncation */
   longlong length= args[1]->val_int();
@@ -869,7 +869,7 @@ void Item_func_right::fix_length_and_dec()
 
 String *Item_func_substr::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res  = args[0]->val_str(str);
   /* must be longlong to avoid truncation */
   longlong start= args[1]->val_int();
@@ -950,7 +950,7 @@ void Item_func_substr_index::fix_length_and_dec()
 
 String *Item_func_substr_index::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(str);
   String *delimiter= args[1]->val_str(&tmp_value);
   int32 count= (int32) args[2]->val_int();
@@ -1080,7 +1080,7 @@ String *Item_func_substr_index::val_str(String *str)
 
 String *Item_func_ltrim::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH], *ptr, *end;
   String tmp(buff,sizeof(buff),system_charset_info);
   String *res, *remove_str;
@@ -1126,7 +1126,7 @@ String *Item_func_ltrim::val_str(String *str)
 
 String *Item_func_rtrim::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH], *ptr, *end;
   String tmp(buff, sizeof(buff), system_charset_info);
   String *res, *remove_str;
@@ -1206,7 +1206,7 @@ String *Item_func_rtrim::val_str(String *str)
 
 String *Item_func_trim::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH], *ptr, *end;
   const char *r_ptr;
   String tmp(buff, sizeof(buff), system_charset_info);
@@ -1305,7 +1305,7 @@ void Item_func_trim::print(String *str, enum_query_type query_type)
 
 String *Item_func_password::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(str); 
   if ((null_value=args[0]->null_value))
     return 0;
@@ -1328,7 +1328,7 @@ char *Item_func_password::alloc(THD *thd, const char *password)
 
 String *Item_func_old_password::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(str);
   if ((null_value=args[0]->null_value))
     return 0;
@@ -1352,7 +1352,7 @@ char *Item_func_old_password::alloc(THD *thd, const char *password)
 
 String *Item_func_encrypt::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res  =args[0]->val_str(str);
 
 #ifdef HAVE_CRYPT
@@ -1408,7 +1408,7 @@ String *Item_func_encode::val_str(String *str)
   char pw_buff[80];
   String tmp_pw_value(pw_buff, sizeof(pw_buff), system_charset_info);
   String *password;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
 
   if (!(res=args[0]->val_str(str)))
   {
@@ -1437,7 +1437,7 @@ String *Item_func_decode::val_str(String *str)
   char pw_buff[80];
   String tmp_pw_value(pw_buff, sizeof(pw_buff), system_charset_info);
   String *password;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
 
   if (!(res=args[0]->val_str(str)))
   {
@@ -1482,7 +1482,7 @@ Item *Item_func_sysconst::safe_charset_converter(CHARSET_INFO *tocs)
 
 String *Item_func_database::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   THD *thd= current_thd;
   if (thd->db == NULL)
   {
@@ -1501,7 +1501,7 @@ String *Item_func_database::val_str(String *str)
 */
 bool Item_func_user::init(const char *user, const char *host)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
 
   // For system threads (e.g. replication SQL thread) user may be empty
   if (user)
@@ -1512,7 +1512,7 @@ bool Item_func_user::init(const char *user, const char *host)
     if (str_value.alloc(res_length))
     {
       null_value=1;
-      return TRUE;
+      return true;
     }
 
     res_length=cs->cset->snprintf(cs, (char*)str_value.ptr(), res_length,
@@ -1520,7 +1520,7 @@ bool Item_func_user::init(const char *user, const char *host)
     str_value.length(res_length);
     str_value.mark_as_const();
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -1535,7 +1535,7 @@ bool Item_func_user::fix_fields(THD *thd, Item **ref)
 bool Item_func_current_user::fix_fields(THD *thd, Item **ref)
 {
   if (Item_func_sysconst::fix_fields(thd, ref))
-    return TRUE;
+    return true;
 
   Security_context *ctx=
                          thd->security_ctx;
@@ -1580,7 +1580,7 @@ String *Item_func_format::val_str(String *str)
   /* Number of characters used to represent the decimals, including '.' */
   uint32 dec_length;
   int diff;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
 
   dec= (int) args[1]->val_int();
   if (args[1]->null_value)
@@ -1611,7 +1611,7 @@ String *Item_func_format::val_str(String *str)
     double nr= args[0]->val_real();
     if ((null_value=args[0]->null_value))
       return 0; /* purecov: inspected */
-    nr= my_double_round(nr, (longlong) dec, FALSE, FALSE);
+    nr= my_double_round(nr, (longlong) dec, false, false);
     /* Here default_charset() is right as this is not an automatic conversion */
     str->set_real(nr, dec, default_charset());
     if (isnan(nr))
@@ -1675,7 +1675,7 @@ void Item_func_elt::fix_length_and_dec()
 
 double Item_func_elt::val_real()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint tmp;
   null_value=1;
   if ((tmp=(uint) args[0]->val_int()) == 0 || tmp >= arg_count)
@@ -1688,7 +1688,7 @@ double Item_func_elt::val_real()
 
 longlong Item_func_elt::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint tmp;
   null_value=1;
   if ((tmp=(uint) args[0]->val_int()) == 0 || tmp >= arg_count)
@@ -1702,7 +1702,7 @@ longlong Item_func_elt::val_int()
 
 String *Item_func_elt::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint tmp;
   null_value=1;
   if ((tmp=(uint) args[0]->val_int()) == 0 || tmp >= arg_count)
@@ -1719,7 +1719,7 @@ String *Item_func_elt::val_str(String *str)
 void Item_func_make_set::split_sum_func(THD *thd, Item **ref_pointer_array,
 					List<Item> &fields)
 {
-  item->split_sum_func2(thd, ref_pointer_array, fields, &item, TRUE);
+  item->split_sum_func2(thd, ref_pointer_array, fields, &item, true);
   Item_str_func::split_sum_func(thd, ref_pointer_array, fields);
 }
 
@@ -1752,7 +1752,7 @@ void Item_func_make_set::update_used_tables()
 
 String *Item_func_make_set::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   ulonglong bits;
   bool first_found=0;
   Item **ptr=args;
@@ -1836,7 +1836,7 @@ void Item_func_make_set::print(String *str, enum_query_type query_type)
 
 String *Item_func_char::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   str->length(0);
   str->set_charset(collation.collation);
   for (uint i=0 ; i < arg_count ; i++)
@@ -1919,7 +1919,7 @@ void Item_func_repeat::fix_length_and_dec()
 
 String *Item_func_repeat::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint length,tot_length;
   char *to;
   /* must be longlong to avoid truncation */
@@ -2005,7 +2005,7 @@ void Item_func_rpad::fix_length_and_dec()
 
 String *Item_func_rpad::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint32 res_byte_length,res_char_length,pad_char_length,pad_byte_length;
   char *to;
   const char *ptr_pad;
@@ -2108,7 +2108,7 @@ void Item_func_lpad::fix_length_and_dec()
 
 String *Item_func_lpad::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint32 res_char_length,pad_char_length;
   /* must be longlong to avoid truncation */
   longlong count= args[1]->val_int();
@@ -2172,7 +2172,7 @@ err:
 
 String *Item_func_conv::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(str);
   char *endptr,ans[65],*ptr;
   longlong dec;
@@ -2206,7 +2206,7 @@ String *Item_func_conv::val_str(String *str)
 
 String *Item_func_conv_charset::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   if (use_cached_value)
     return null_value ? 0 : &str_value;
   String *arg= args[0]->val_str(str);
@@ -2238,7 +2238,7 @@ void Item_func_conv_charset::print(String *str, enum_query_type query_type)
 
 String *Item_func_set_collation::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   str=args[0]->val_str(str);
   if ((null_value=args[0]->null_value))
     return 0;
@@ -2303,7 +2303,7 @@ void Item_func_set_collation::print(String *str, enum_query_type query_type)
   str->append('(');
   args[0]->print(str, query_type);
   str->append(STRING_WITH_LEN(" collate "));
-  DBUG_ASSERT(args[1]->basic_const_item() &&
+  assert(args[1]->basic_const_item() &&
               args[1]->type() == Item::STRING_ITEM);
   args[1]->str_value.print(str);
   str->append(')');
@@ -2311,7 +2311,7 @@ void Item_func_set_collation::print(String *str, enum_query_type query_type)
 
 String *Item_func_charset::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint dummy_errors;
 
   CHARSET_INFO *cs= args[0]->collation.collation; 
@@ -2323,7 +2323,7 @@ String *Item_func_charset::val_str(String *str)
 
 String *Item_func_collation::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint dummy_errors;
   CHARSET_INFO *cs= args[0]->collation.collation; 
 
@@ -2350,7 +2350,7 @@ String *Item_func_weight_string::val_str(String *str)
   String *res;
   CHARSET_INFO *cs= args[0]->collation.collation;
   uint tmp_length, frm_length;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
 
   if (args[0]->result_type() != STRING_RESULT ||
       !(res= args[0]->val_str(str)))
@@ -2380,7 +2380,7 @@ nl:
 String *Item_func_hex::val_str(String *str)
 {
   String *res;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   if (args[0]->result_type() != STRING_RESULT)
   {
     ulonglong dec;
@@ -2429,7 +2429,7 @@ String *Item_func_unhex::val_str(String *str)
   char *to;
   String *res;
   uint length;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
 
   res= args[0]->val_str(str);
   if (!res || tmp_value.alloc(length= (1+res->length())/2))
@@ -2475,12 +2475,11 @@ void Item_func_binary::print(String *str, enum_query_type query_type)
 
 String *Item_load_file::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *file_name;
   File file;
   struct stat stat_info;
   char path[FN_REFLEN];
-  DBUG_ENTER("load_file");
 
   if (!(file_name= args[0]->val_str(str)))
     goto err;
@@ -2521,17 +2520,17 @@ String *Item_load_file::val_str(String *str)
   tmp_value.length(stat_info.st_size);
   my_close(file, MYF(0));
   null_value = 0;
-  DBUG_RETURN(&tmp_value);
+  return(&tmp_value);
 
 err:
   null_value = 1;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
 String* Item_func_export_set::val_str(String* str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   ulonglong the_set = (ulonglong) args[0]->val_int();
   String yes_buf, *yes;
   yes = args[1]->val_str(&yes_buf);
@@ -2581,7 +2580,7 @@ String* Item_func_export_set::val_str(String* str)
     }
     break;
   default:
-    DBUG_ASSERT(0); // cannot happen
+    assert(0); // cannot happen
   }
   null_value=0;
 
@@ -2632,7 +2631,7 @@ void Item_func_export_set::fix_length_and_dec()
 
 String *Item_func_quote::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   /*
     Bit mask that has 1 for set for the position of the following characters:
     0, \, ' and ^Z
@@ -2709,7 +2708,7 @@ null:
 
 longlong Item_func_uncompressed_length::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(&value);
   if (!res)
   {
@@ -2731,7 +2730,7 @@ longlong Item_func_uncompressed_length::val_int()
 
 longlong Item_func_crc32::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res=args[0]->val_str(&value);
   if (!res)
   {
@@ -2752,7 +2751,7 @@ String *Item_func_compress::val_str(String *str)
   String *res;
   Byte *body;
   char *tmp, *last_char;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
 
   if (!(res= args[0]->val_str(str)))
   {
@@ -2811,7 +2810,7 @@ String *Item_func_compress::val_str(String *str)
 
 String *Item_func_uncompress::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res= args[0]->val_str(str);
   ulong new_size;
   int err;
@@ -2903,7 +2902,7 @@ static void set_clock_seq_str()
 
 String *Item_func_uuid::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char *s;
   THD *thd= current_thd;
 
@@ -2954,7 +2953,7 @@ String *Item_func_uuid::val_str(String *str)
       tv-=nanoseq;
       nanoseq=0;
     }
-    DBUG_ASSERT(tv > uuid_time);
+    assert(tv > uuid_time);
   }
   uuid_time=tv;
   pthread_mutex_unlock(&LOCK_uuid_generator);
