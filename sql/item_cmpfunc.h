@@ -1088,7 +1088,7 @@ public:
   int cmp(Item *item __attribute__((__unused__)))
   {
     // Should never be called
-    DBUG_ASSERT(0);
+    assert(0);
     return 1;
   }
   int compare(cmp_item *ci)
@@ -1216,7 +1216,6 @@ public:
   void cleanup()
   {
     uint i;
-    DBUG_ENTER("Item_func_in::cleanup");
     Item_int_func::cleanup();
     delete array;
     array= 0;
@@ -1225,7 +1224,7 @@ public:
       delete cmp_items[i];
       cmp_items[i]= 0;
     }
-    DBUG_VOID_RETURN;
+    return;
   }
   optimize_type select_optimize() const
     { return OPTIMIZE_KEY; }
