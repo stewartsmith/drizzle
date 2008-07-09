@@ -21,15 +21,11 @@ AM_CPPFLAGS =			-I$(top_builddir)/include \
 				-I$(top_srcdir)/server \
 				-I$(top_srcdir)/strings
 
-LIBS =				@CLIENT_LIBS@ -lz
-
 LDADD=				$(top_builddir)/libdrizzle/libdrizzle.la -lz
 
 
 noinst_HEADERS =		sql_string.h completion_hash.h my_readline.h \
 				client_priv.h
-
-EXTRA_DIST =			get_password.c 
 
 CLEANFILES =			$(BUILT_SOURCES)
 
