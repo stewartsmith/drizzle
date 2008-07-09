@@ -1143,10 +1143,10 @@ int main(int argc,char *argv[])
   window_resize(0);
 #endif
 
-  put_info("Welcome to the MySQL monitor.  Commands end with ; or \\g.",
+  put_info("Welcome to the Drizzle client..  Commands end with ; or \\g.",
 	   INFO_INFO);
   sprintf((char*) glob_buffer.ptr(),
-	  "Your MySQL connection id is %lu\nServer version: %s\n",
+	  "Your Drizzle connection id is %lu\nServer version: %s\n",
 	  mysql_thread_id(&mysql), server_version_string(&mysql));
   put_info((char*) glob_buffer.ptr(),INFO_INFO);
 
@@ -2404,7 +2404,7 @@ static void build_completion_hash(bool rehash, bool write_info)
     cmd++;
   }
 
-  /* hash MySQL functions (to be implemented) */
+  /* hash Drizzle functions (to be implemented) */
 
   /* hash all database names */
   if (mysql_query(&mysql,"show databases") == 0)
@@ -2709,14 +2709,7 @@ com_help(String *buffer __attribute__((unused)),
 	  return com_server_help(buffer,line,help_arg);
   }
 
-  put_info("\nFor information about MySQL products and services, visit:\n"
-           "   http://www.mysql.com/\n"
-           "For developer information, including the MySQL Reference Manual, "
-           "visit:\n"
-           "   http://dev.mysql.com/\n"
-           "To buy MySQL Network Support, training, or other products, visit:\n"
-           "   https://shop.mysql.com/\n", INFO_INFO);
-  put_info("List of all MySQL commands:", INFO_INFO);
+  put_info("List of all Drizzle commands:", INFO_INFO);
   if (!named_cmds)
     put_info("Note that all text commands must be first on line and end with ';'",INFO_INFO);
   for (i = 0; commands[i].name; i++)

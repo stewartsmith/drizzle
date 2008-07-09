@@ -28,16 +28,16 @@ MYSQLDATAdir =			$(localstatedir)
 MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
-pkglib_LTLIBRARIES = libmysqlclient.la
-libmysqlclient_la_SOURCES = libmysql.c get_password.c \
+pkglib_LTLIBRARIES = libdrizzle.la
+libdrizzle_la_SOURCES = libdrizzle.c get_password.c \
                             client.c net_serv.c
-libmysqlclient_la_LIBADD = ${sql_cmn_objects} ${sqlobjects} \
+libdrizzle_la_LIBADD = ${sql_cmn_objects} ${sqlobjects} \
 			   ${top_builddir}/mysys/libmysyslt.la \
 			   ${top_builddir}/strings/libmystringslt.la \
 			   $(d_dbug) \
 			   ${top_builddir}/sql-common/libsqlcommon.la \
 			   ${top_builddir}/vio/libviolt.la 
-libmysqlclient_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
+libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
@@ -50,7 +50,6 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 LIBS =		@CLIENT_LIBS@ 
 AM_CPPFLAGS =	-I$(top_builddir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys -I$(top_builddir)/sql-common
 
-EXTRA_DIST = libmysql.def
 noinst_HEADERS = client_settings.h
 
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \

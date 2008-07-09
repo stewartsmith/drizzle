@@ -4,7 +4,7 @@
 #
 ##############################################################################
 #
-#  mysql-test-run.pl
+#  drizzle-test-run.pl
 #
 #  Tool used for executing a suite of .test file
 #
@@ -49,7 +49,7 @@
 # A nice way to trace the execution of this script while debugging
 # is to use the Devel::Trace package found at
 # "http://www.plover.com/~mjd/perl/Trace/" and run this script like
-# "perl -d:Trace mysql-test-run.pl"
+# "perl -d:Trace drizzle-test-run.pl"
 #
 
 
@@ -591,10 +591,10 @@ sub command_line_setup () {
   }
 
   # We require that we are in the "mysql-test" directory
-  # to run mysql-test-run
+  # to run drizzle-test-run
   if (! -f $glob_scriptname)
   {
-    mtr_error("Can't find the location for the mysql-test-run script\n" .
+    mtr_error("Can't find the location for the drizzle-test-run script\n" .
               "Go to to the mysql-test directory and execute the script " .
               "as follows:\n./$glob_scriptname");
   }
@@ -1304,7 +1304,7 @@ sub generate_cmdline_mysqldump ($) {
 ##############################################################################
 #
 #  Set environment to be used by childs of this process for
-#  things that are constant duting the whole lifetime of mysql-test-run.pl
+#  things that are constant duting the whole lifetime of drizzle-test-run.pl
 #
 ##############################################################################
 
@@ -2061,7 +2061,7 @@ sub initialize_servers () {
   }
   check_running_as_root();
 
-  mtr_log_init("$opt_vardir/log/mysql-test-run.log");
+  mtr_log_init("$opt_vardir/log/drizzle-test-run.log");
 
 }
 

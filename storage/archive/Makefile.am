@@ -85,7 +85,7 @@ concurrency_test_CFLAGS =	$(AM_CFLAGS)
 concurrency_test_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la \
-			$(top_builddir)/libmysql/libmysqlclient.la \
+			$(top_builddir)/libdrizzle/libdrizzle.la \
 			$(LDADD) \
 			-lz
 concurrency_test_LDFLAGS =

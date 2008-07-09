@@ -18,7 +18,7 @@
 #include <my_global.h>
 #include <my_sys.h>
 #include <m_string.h>
-#include <mysql.h>
+#include <drizzle.h>
 #include <errmsg.h>
 #include <my_getopt.h>
 

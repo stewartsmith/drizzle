@@ -23,8 +23,8 @@
 #include <mysys_err.h>
 #include <m_string.h>
 #include <m_ctype.h>
-#include "mysql.h"
-#include "mysql_version.h"
+#include "drizzle.h"
+#include "drizzle_version.h"
 #include "mysqld_error.h"
 #include "errmsg.h"
 #include <violite.h>
