@@ -1913,8 +1913,12 @@ public:
   /* Table read plans are allocated on MEM_ROOT and are never deleted */
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
-  static void operator delete(void *ptr,size_t size) { TRASH(ptr, size); }
-  static void operator delete(void *ptr, MEM_ROOT *mem_root) { /* Never called */ }
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              size_t size __attribute__((__unused__)))
+    { TRASH(ptr, size); }
+  static void operator delete(void *ptr __attribute__((__unused__)),
+                              MEM_ROOT *mem_root __attribute__((__unused__)))
+    { /* Never called */ }
   virtual ~TABLE_READ_PLAN() {}               /* Remove gcc warning */
 
 };
@@ -1944,7 +1948,8 @@ public:
   {}
   virtual ~TRP_RANGE() {}                     /* Remove gcc warning */
 
-  QUICK_SELECT_I *make_quick(PARAM *param, bool retrieve_full_rows,
+  QUICK_SELECT_I *make_quick(PARAM *param,
+                             bool retrieve_full_rows __attribute__((__unused__)),
                              MEM_ROOT *parent_alloc)
   {
     DBUG_ENTER("TRP_RANGE::make_quick");
@@ -3691,8 +3696,8 @@ static TRP_RANGE *get_key_scans_params(PARAM *param, SEL_TREE *tree,
 
 
 QUICK_SELECT_I *TRP_INDEX_MERGE::make_quick(PARAM *param,
-                                            bool retrieve_full_rows,
-                                            MEM_ROOT *parent_alloc)
+                                            bool retrieve_full_rows __attribute__((__unused__)),
+                                            MEM_ROOT *parent_alloc __attribute__((__unused__)))
 {
   QUICK_INDEX_MERGE_SELECT *quick_imerge;
   QUICK_RANGE_SELECT *quick;
@@ -3769,8 +3774,8 @@ QUICK_SELECT_I *TRP_ROR_INTERSECT::make_quick(PARAM *param,
 
 
 QUICK_SELECT_I *TRP_ROR_UNION::make_quick(PARAM *param,
-                                          bool retrieve_full_rows,
-                                          MEM_ROOT *parent_alloc)
+                                          bool retrieve_full_rows __attribute__((__unused__)),
+                                          MEM_ROOT *parent_alloc __attribute__((__unused__)))
 {
   QUICK_ROR_UNION_SELECT *quick_roru;
   TABLE_READ_PLAN **scan;
@@ -4358,7 +4363,8 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
 static SEL_TREE *
 get_mm_parts(RANGE_OPT_PARAM *param, COND *cond_func, Field *field,
 	     Item_func::Functype type,
-	     Item *value, Item_result cmp_type)
+	     Item *value,
+             Item_result cmp_type __attribute__((__unused__)))
 {
   DBUG_ENTER("get_mm_parts");
   if (field->table != param->table)
@@ -6024,7 +6030,9 @@ typedef struct st_sel_arg_range_seq
     Value of init_param
 */
 
-range_seq_t sel_arg_range_seq_init(void *init_param, uint n_ranges, uint flags)
+range_seq_t sel_arg_range_seq_init(void *init_param,
+                                   uint n_ranges __attribute__((__unused__)),
+                                   uint flags __attribute__((__unused__)))
 {
   SEL_ARG_RANGE_SEQ *seq= (SEL_ARG_RANGE_SEQ*)init_param;
   seq->at_start= true;
@@ -7149,12 +7157,14 @@ int QUICK_RANGE_SELECT::reset()
     Opaque value to be passed to quick_range_seq_next
 */
 
-range_seq_t quick_range_seq_init(void *init_param, uint n_ranges, uint flags)
+range_seq_t quick_range_seq_init(void *init_param,
+                                 uint n_ranges __attribute__((__unused__)),
+                                 uint flags __attribute__((__unused__)))
 {
   QUICK_RANGE_SELECT *quick= (QUICK_RANGE_SELECT*)init_param;
   quick->qr_traversal_ctx.first=  (QUICK_RANGE**)quick->ranges.buffer;
   quick->qr_traversal_ctx.cur=    (QUICK_RANGE**)quick->ranges.buffer;
-  quick->qr_traversal_ctx.last=   quick->qr_traversal_ctx.cur + 
+  quick->qr_traversal_ctx.last=   quick->qr_traversal_ctx.cur +
                                   quick->ranges.elements;
   return &quick->qr_traversal_ctx;
 }
@@ -7257,7 +7267,8 @@ uint16 &mrr_persistent_flag_storage(range_seq_t seq, uint idx)
     Reference to range-associated data
 */
 
-char* &mrr_get_ptr_by_idx(range_seq_t seq, uint idx)
+char* &mrr_get_ptr_by_idx(range_seq_t seq __attribute__((__unused__)),
+                          uint idx __attribute__((__unused__)))
 {
   static char *dummy;
   return dummy;
@@ -7441,8 +7452,8 @@ bool QUICK_RANGE_SELECT::row_in_ranges()
  */
 
 QUICK_SELECT_DESC::QUICK_SELECT_DESC(QUICK_RANGE_SELECT *q,
-                                     uint used_key_parts_arg,
-                                     bool *create_err)
+                                     uint used_key_parts_arg __attribute__((__unused__)),
+                                     bool *create_err __attribute__((__unused__)))
  :QUICK_RANGE_SELECT(*q), rev_it(rev_ranges)
 {
   QUICK_RANGE *r;
@@ -8513,10 +8524,12 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
 */
 
 static bool
-get_constant_key_infix(KEY *index_info, SEL_ARG *index_range_tree,
+get_constant_key_infix(KEY *index_info __attribute__((__unused__)),
+                       SEL_ARG *index_range_tree,
                        KEY_PART_INFO *first_non_group_part,
                        KEY_PART_INFO *min_max_arg_part,
-                       KEY_PART_INFO *last_part, THD *thd,
+                       KEY_PART_INFO *last_part,
+                       THD *thd __attribute__((__unused__)),
                        uchar *key_infix, uint *key_infix_len,
                        KEY_PART_INFO **first_non_infix_part)
 {
@@ -8710,7 +8723,8 @@ SEL_ARG * get_index_range_tree(uint index, SEL_TREE* range_tree, PARAM *param,
 
 void cost_group_min_max(TABLE* table, KEY *index_info, uint used_key_parts,
                         uint group_key_parts, SEL_TREE *range_tree,
-                        SEL_ARG *index_tree, ha_rows quick_prefix_records,
+                        SEL_ARG *index_tree __attribute__((__unused__)),
+                        ha_rows quick_prefix_records,
                         bool have_min, bool have_max,
                         double *read_cost, ha_rows *records)
 {
@@ -8811,7 +8825,8 @@ void cost_group_min_max(TABLE* table, KEY *index_info, uint used_key_parts,
 */
 
 QUICK_SELECT_I *
-TRP_GROUP_MIN_MAX::make_quick(PARAM *param, bool retrieve_full_rows,
+TRP_GROUP_MIN_MAX::make_quick(PARAM *param,
+                              bool retrieve_full_rows __attribute__((__unused__)),
                               MEM_ROOT *parent_alloc)
 {
   QUICK_GROUP_MIN_MAX_SELECT *quick;

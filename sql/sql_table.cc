@@ -1689,7 +1689,7 @@ void calculate_interval_lengths(CHARSET_INFO *cs, TYPELIB *interval,
 int prepare_create_field(Create_field *sql_field, 
                          uint *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
-                         longlong table_flags)
+                         longlong table_flags __attribute__((__unused__)))
 {
   unsigned int dup_val_count;
 
@@ -2611,7 +2611,8 @@ static void set_table_default_charset(THD *thd,
         In this case the error is given
 */
 
-static bool prepare_blob_field(THD *thd, Create_field *sql_field)
+static bool prepare_blob_field(THD *thd __attribute__((__unused__)),
+                               Create_field *sql_field)
 {
 
   if (sql_field->length > MAX_FIELD_VARCHARLENGTH &&
@@ -3847,8 +3848,9 @@ bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* tables,
     0	  ok
 */
 
-int reassign_keycache_tables(THD *thd, KEY_CACHE *src_cache,
-			     KEY_CACHE *dst_cache)
+int reassign_keycache_tables(THD *thd __attribute__((__unused__)),
+                             KEY_CACHE *src_cache,
+                             KEY_CACHE *dst_cache)
 {
   assert(src_cache != dst_cache);
   assert(src_cache->in_init);
@@ -4931,7 +4933,8 @@ int mysql_fast_or_online_alter_table(THD *thd,
 
  err:
   if (error)
-  return(error);
+    return(error);
+  return 0;
 }
 
 

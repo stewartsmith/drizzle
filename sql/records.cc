@@ -52,7 +52,9 @@ static int rr_index(READ_RECORD *info);
   @param idx          index to scan
 */
 
-void init_read_record_idx(READ_RECORD *info, THD *thd, TABLE *table,
+void init_read_record_idx(READ_RECORD *info,
+                          THD *thd __attribute__((__unused__)),
+                          TABLE *table,
                           bool print_error, uint idx)
 {
   empty_record(table);

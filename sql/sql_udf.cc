@@ -103,19 +103,13 @@ extern "C" uchar* get_hash_key(const uchar *buff, size_t *length,
 
 void udf_init()
 {
-  udf_func *tmp;
   TABLE_LIST tables;
-  READ_RECORD read_record_info;
-  TABLE *table;
-  int error;
-  
-  char db[]= "mysql"; /* A subject to casednstr, can't be constant */
 
   if (initialized)
     return;
 
   my_rwlock_init(&THR_LOCK_udf,NULL);
-  
+
   init_sql_alloc(&mem, UDF_ALLOC_BLOCK_SIZE, 0);
   THD *new_thd = new THD;
   if (!new_thd ||

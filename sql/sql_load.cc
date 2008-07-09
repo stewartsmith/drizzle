@@ -844,7 +844,8 @@ static int
 read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
-               String &row_tag, ulong skip_lines,
+               String &row_tag __attribute__((__unused__)),
+               ulong skip_lines,
                bool ignore_check_option_errors)
 {
   List_iterator_fast<Item> it(fields_vars);
@@ -852,9 +853,9 @@ read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
   TABLE *table= table_list->table;
   bool no_trans_update_stmt;
   CHARSET_INFO *cs= read_info.read_charset;
-  
+
   no_trans_update_stmt= !table->file->has_transactions();
-  
+
   for ( ; ; it.rewind())
   {
     if (thd->killed)

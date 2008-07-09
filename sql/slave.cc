@@ -521,8 +521,10 @@ int start_slave_thread(pthread_handler h_func, pthread_mutex_t *start_lock,
 */
 
 int start_slave_threads(bool need_slave_mutex, bool wait_for_start,
-                        Master_info* mi, const char* master_info_fname,
-                        const char* slave_info_fname, int thread_mask)
+                        Master_info* mi,
+                        const char* master_info_fname __attribute__((__unused__)),
+                        const char* slave_info_fname __attribute__((__unused__)),
+                        int thread_mask)
 {
   pthread_mutex_t *lock_io=0,*lock_sql=0,*lock_cond_io=0,*lock_cond_sql=0;
   pthread_cond_t* cond_io=0,*cond_sql=0;
@@ -1085,7 +1087,8 @@ Waiting for the slave SQL thread to free enough relay log space");
     ignored events' end position for the use of the slave SQL thread, by
     calling this function. Only that thread can call it (see assertion).
  */
-static void write_ignored_events_info_to_relay_log(THD *thd, Master_info *mi)
+static void write_ignored_events_info_to_relay_log(THD *thd __attribute__((__unused__)),
+                                                   Master_info *mi)
 {
   Relay_log_info *rli= &mi->rli;
   pthread_mutex_t *log_lock= rli->relay_log.get_log_lock();
@@ -1553,7 +1556,9 @@ static int request_dump(MYSQL* mysql, Master_info* mi,
     number              Length of packet
 */
 
-static ulong read_event(MYSQL* mysql, Master_info *mi, bool* suppress_warnings)
+static ulong read_event(MYSQL* mysql,
+                        Master_info *mi __attribute__((__unused__)),
+                        bool* suppress_warnings)
 {
   ulong len;
   DBUG_ENTER("read_event");
@@ -1601,7 +1606,8 @@ static ulong read_event(MYSQL* mysql, Master_info *mi, bool* suppress_warnings)
 }
 
 
-int check_expected_error(THD* thd, Relay_log_info const *rli,
+int check_expected_error(THD* thd __attribute__((__unused__)),
+                         Relay_log_info const *rli __attribute__((__unused__)),
                          int expected_error)
 {
   DBUG_ENTER("check_expected_error");
