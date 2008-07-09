@@ -27,8 +27,6 @@
 #ifndef _mysql_h
 #define _mysql_h
 
-#include <my_global.h>
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
