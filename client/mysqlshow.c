@@ -20,7 +20,6 @@
 #include "client_priv.h"
 #include <my_sys.h>
 #include <m_string.h>
-#include <mysql.h>
 #include <mysqld_error.h>
 #include <signal.h>
 #include <stdarg.h>

@@ -21,7 +21,7 @@
 #ifndef _my_time_h_
 #define _my_time_h_
 #include "my_global.h"
-#include "mysql_time.h"
+#include "drizzle_time.h"
 
 C_MODE_START
 

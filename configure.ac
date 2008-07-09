@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([sql/drizzled.cc])
+AC_CONFIG_SRCDIR([server/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
@@ -49,7 +49,7 @@ sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 
-# Remember to add a directory sql/share/LANGUAGE
+# Remember to add a directory server/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
 czech danish dutch english estonian french german greek hungarian \
 italian japanese korean norwegian norwegian-ny polish portuguese \
@@ -273,8 +273,8 @@ MYSQL_PROG_AR
 
 # libmysqlclient versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libmysql/libmysql.ver"
-  AC_CONFIG_FILES(libmysql/libmysql.ver)
+  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libdrizzle/libdrizzle.ver"
+  AC_CONFIG_FILES(libdrizzle/libdrizzle.ver)
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
@@ -583,12 +583,18 @@ AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthrea
 #--------------------------------------------------------------------
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [
-  AC_DEFINE([HAVE_PCRE], [1], [Perl Compatible Regex Lib for mysqltest])
-  ],[
-  AC_CHECK_LIB(pcrecpp, [DoMatch], AC_MSG_ERROR([PCRE not found]))
-  AC_MSG_WARN([PCRE not found - mysqltest will not be built])
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
+  AC_CHECK_LIB(pcrecpp, [DoMatch], [found_pcre="no"])
+  AC_CHECK_HEADERS(pcrecpp.h)
+  if test "x$ac_cv_header_prcecpp_h" = "xno" 
+  then
+    found_pcre="no"
+  fi
   ])
+if test "x$found_pcre" != "xyes"
+then
+    AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
+fi
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
@@ -1136,8 +1142,6 @@ MYSQL_CHECK_VIO
 
 MYSQL_CONFIGURE_PLUGINS([none])
 
-AC_SUBST(CLIENT_LIBS)
-
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
@@ -1208,15 +1212,15 @@ AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
- libmysql/Makefile client/Makefile dnl
- sql/Makefile sql/share/Makefile dnl
- sql/sql_builtin.cc sql-common/Makefile dnl
+ libdrizzle/Makefile client/Makefile dnl
+ server/Makefile server/share/Makefile dnl
+ server/sql_builtin.cc dnl
  dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
- mysql-test/Makefile mysql-test/install_test_db dnl
- include/mysql_version.h plugin/Makefile dnl
- sql/drizzled_safe support-files/libmysqlclient.pc dnl
- support-files/mysql.server support-files/mysql-log-rotate)
+ tests/Makefile tests/install_test_db dnl
+ include/drizzle_version.h plugin/Makefile dnl
+ server/drizzled_safe support-files/libdrizzle.pc dnl
+ support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 

@@ -19,7 +19,7 @@
 
 #include "client_priv.h"
 #include <m_ctype.h>
-#include <mysql_version.h>
+#include <drizzle_version.h>
 #include <mysqld_error.h>
 
 /* Exit codes */

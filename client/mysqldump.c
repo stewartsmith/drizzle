@@ -46,8 +46,7 @@
 #include <stdarg.h>
 
 #include "client_priv.h"
-#include "mysql.h"
-#include "mysql_version.h"
+#include "drizzle_version.h"
 #include "mysqld_error.h"
 
 /* Exit codes */
@@ -2341,10 +2340,7 @@ static void dump_table(char *table, char *db)
         is_blob= (opt_hex_blob && field->charsetnr == 63 &&
                   (field->type == MYSQL_TYPE_STRING ||
                    field->type == MYSQL_TYPE_VARCHAR ||
-                   field->type == MYSQL_TYPE_BLOB ||
-                   field->type == MYSQL_TYPE_LONG_BLOB ||
-                   field->type == MYSQL_TYPE_MEDIUM_BLOB ||
-                   field->type == MYSQL_TYPE_TINY_BLOB)) ? 1 : 0;
+                   field->type == MYSQL_TYPE_BLOB)) ? 1 : 0;
         if (extended_insert && !opt_xml)
         {
           if (i == 0)

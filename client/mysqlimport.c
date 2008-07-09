@@ -27,7 +27,7 @@
 #define IMPORT_VERSION "3.7"
 
 #include "client_priv.h"
-#include "mysql_version.h"
+#include "drizzle_version.h"
 #ifdef HAVE_LIBPTHREAD
 #include <my_pthread.h>
 #endif

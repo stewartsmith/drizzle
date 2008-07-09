@@ -6,7 +6,7 @@
 #include <m_ctype.h>
 #include <m_string.h>
 #include <my_getopt.h>
-#include <mysql_version.h>
+#include <drizzle_version.h>
 
 #define BUFFER_LEN 1024
 #define ARCHIVE_ROW_HEADER_SIZE 4

@@ -16,15 +16,15 @@
 # MA 02111-1307, USA
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libmysqlclient.pc
+pkgconfig_DATA = libdrizzle.pc
 
 # Default same as 'pkgdatadir', but we can override it
 pkgsuppdir =		$(datadir)/@PACKAGE@
 
-pkgsupp_DATA =		mysql-log-rotate
+pkgsupp_DATA =		drizzle-log-rotate
 
-pkgsupp_SCRIPTS =	mysql.server 
+pkgsupp_SCRIPTS =	drizzle.server 
 
 aclocaldir =		$(datadir)/aclocal
-aclocal_DATA =		mysql.m4
+aclocal_DATA =		drizzle.m4
 

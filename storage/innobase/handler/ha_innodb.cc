@@ -2564,10 +2564,7 @@ innobase_mysql_cmp(
 
 	case MYSQL_TYPE_STRING:
 	case MYSQL_TYPE_VAR_STRING:
-	case MYSQL_TYPE_TINY_BLOB:
-	case MYSQL_TYPE_MEDIUM_BLOB:
 	case MYSQL_TYPE_BLOB:
-	case MYSQL_TYPE_LONG_BLOB:
 	case MYSQL_TYPE_VARCHAR:
 		/* Use the charset number to pick the right charset struct for
 		the comparison. Since the MySQL function get_charset may be
@@ -2697,10 +2694,7 @@ get_innobase_type_from_mysql_type(
 		return(DATA_FLOAT);
 	case MYSQL_TYPE_DOUBLE:
 		return(DATA_DOUBLE);
-	case MYSQL_TYPE_TINY_BLOB:
-	case MYSQL_TYPE_MEDIUM_BLOB:
 	case MYSQL_TYPE_BLOB:
-	case MYSQL_TYPE_LONG_BLOB:
 		return(DATA_BLOB);
 	default:
 		assert(0);
@@ -2869,10 +2863,7 @@ ha_innobase::store_key_val_for_row(
 
 			buff += key_len;
 
-		} else if (mysql_type == MYSQL_TYPE_TINY_BLOB
-			|| mysql_type == MYSQL_TYPE_MEDIUM_BLOB
-			|| mysql_type == MYSQL_TYPE_BLOB
-			|| mysql_type == MYSQL_TYPE_LONG_BLOB) {
+		} else if (mysql_type == MYSQL_TYPE_BLOB) {
 
 			CHARSET_INFO*	cs;
 			ulint		key_len;
@@ -7525,10 +7516,7 @@ ha_innobase::cmp_ref(
 		field = key_part->field;
 		mysql_type = field->type();
 
-		if (mysql_type == MYSQL_TYPE_TINY_BLOB
-			|| mysql_type == MYSQL_TYPE_MEDIUM_BLOB
-			|| mysql_type == MYSQL_TYPE_BLOB
-			|| mysql_type == MYSQL_TYPE_LONG_BLOB) {
+		if (mysql_type == MYSQL_TYPE_BLOB) {
 
 			/* In the MySQL key value format, a column prefix of
 			a BLOB is preceded by a 2-byte length field */
@@ -7910,7 +7898,7 @@ bool ha_innobase::check_if_incompatible_data(
 
 /* TODO: Fix the cast below!!! */
 
-static char * show_innodb_vars(THD *thd __attribute__((__unused__)),
+static int show_innodb_vars(THD *thd __attribute__((__unused__)),
                             SHOW_VAR *var, char *buff __attribute__((__unused__)))
 {
   innodb_export_status();
@@ -7919,8 +7907,11 @@ static char * show_innodb_vars(THD *thd __attribute__((__unused__)),
   return 0;
 }
 
+static st_show_var_func_container
+show_innodb_vars_cont = { &show_innodb_vars };
+
 static SHOW_VAR innodb_status_variables_export[]= {
-  {"Innodb",                  (char *) &show_innodb_vars, SHOW_FUNC},
+  {"Innodb",                  (char *) &show_innodb_vars_cont, SHOW_FUNC},
   {NullS, NullS, SHOW_LONG}
 };
 
@@ -8175,7 +8166,7 @@ mysql_declare_plugin(innobase)
   innobase_init, /* Plugin Init */
   NULL, /* Plugin Deinit */
   0x0100 /* 1.0 */,
-  innodb_status_variables,/* status variables             */
+  innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */
 }

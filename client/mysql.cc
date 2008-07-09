@@ -516,7 +516,6 @@ static COMMANDS commands[] = {
   { "LOCKS", 0, 0, 0, ""},
   { "LOGS", 0, 0, 0, ""},
   { "LONG", 0, 0, 0, ""},
-  { "LONGBLOB", 0, 0, 0, ""},
   { "LONGTEXT", 0, 0, 0, ""},
   { "LOOP", 0, 0, 0, ""},
   { "LOW_PRIORITY", 0, 0, 0, ""},
@@ -542,7 +541,6 @@ static COMMANDS commands[] = {
   { "MAX_UPDATES_PER_HOUR", 0, 0, 0, ""},
   { "MAX_USER_CONNECTIONS", 0, 0, 0, ""},
   { "MEDIUM", 0, 0, 0, ""},
-  { "MEDIUMBLOB", 0, 0, 0, ""},
   { "MEDIUMTEXT", 0, 0, 0, ""},
   { "MERGE", 0, 0, 0, ""},
   { "MICROSECOND", 0, 0, 0, ""},
@@ -718,7 +716,6 @@ static COMMANDS commands[] = {
   { "TIMESTAMP", 0, 0, 0, ""},
   { "TIMESTAMPADD", 0, 0, 0, ""},
   { "TIMESTAMPDIFF", 0, 0, 0, ""},
-  { "TINYBLOB", 0, 0, 0, ""},
   { "TINYINT", 0, 0, 0, ""},
   { "TINYTEXT", 0, 0, 0, ""},
   { "TO", 0, 0, 0, ""},
@@ -1143,10 +1140,10 @@ int main(int argc,char *argv[])
   window_resize(0);
 #endif
 
-  put_info("Welcome to the MySQL monitor.  Commands end with ; or \\g.",
+  put_info("Welcome to the Drizzle client..  Commands end with ; or \\g.",
 	   INFO_INFO);
   sprintf((char*) glob_buffer.ptr(),
-	  "Your MySQL connection id is %lu\nServer version: %s\n",
+	  "Your Drizzle connection id is %lu\nServer version: %s\n",
 	  mysql_thread_id(&mysql), server_version_string(&mysql));
   put_info((char*) glob_buffer.ptr(),INFO_INFO);
 
@@ -2404,7 +2401,7 @@ static void build_completion_hash(bool rehash, bool write_info)
     cmd++;
   }
 
-  /* hash MySQL functions (to be implemented) */
+  /* hash Drizzle functions (to be implemented) */
 
   /* hash all database names */
   if (mysql_query(&mysql,"show databases") == 0)
@@ -2709,14 +2706,7 @@ com_help(String *buffer __attribute__((unused)),
 	  return com_server_help(buffer,line,help_arg);
   }
 
-  put_info("\nFor information about MySQL products and services, visit:\n"
-           "   http://www.mysql.com/\n"
-           "For developer information, including the MySQL Reference Manual, "
-           "visit:\n"
-           "   http://dev.mysql.com/\n"
-           "To buy MySQL Network Support, training, or other products, visit:\n"
-           "   https://shop.mysql.com/\n", INFO_INFO);
-  put_info("List of all MySQL commands:", INFO_INFO);
+  put_info("List of all Drizzle commands:", INFO_INFO);
   if (!named_cmds)
     put_info("Note that all text commands must be first on line and end with ';'",INFO_INFO);
   for (i = 0; commands[i].name; i++)
@@ -3028,8 +3018,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_FLOAT:       return "FLOAT";
     case MYSQL_TYPE_LONG:        return "LONG";
     case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
-    case MYSQL_TYPE_LONG_BLOB:   return "LONG_BLOB";
-    case MYSQL_TYPE_MEDIUM_BLOB: return "MEDIUM_BLOB";
     case MYSQL_TYPE_NULL:        return "NULL";
     case MYSQL_TYPE_SET:         return "SET";
     case MYSQL_TYPE_SHORT:       return "SHORT";
@@ -3037,7 +3025,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case MYSQL_TYPE_TIME:        return "TIME";
     case MYSQL_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case MYSQL_TYPE_TINY:        return "TINY";
-    case MYSQL_TYPE_TINY_BLOB:   return "TINY_BLOB";
     case MYSQL_TYPE_VAR_STRING:  return "VAR_STRING";
     case MYSQL_TYPE_YEAR:        return "YEAR";
     default:                     return "?-unknown-?";
