@@ -61,7 +61,7 @@ static struct my_option my_long_options[] =
 };
 
 
-static void verify_sort();
+static void verify_sort(void);
 
 
 #include <help_start.h>
@@ -73,7 +73,7 @@ static void print_version(void)
 }
 
 
-static void usage()
+static void usage(void)
 {
   print_version();
   printf("MySQL AB, by Sasha Pachev\n");
@@ -158,7 +158,7 @@ static int parse_args(int argc, char **argv)
 }
 
 
-static void open_files()
+static void open_files(void)
 {
   fp_out = stdout;
   fp_dump = stdin;
@@ -222,7 +222,7 @@ static int init_sym_entry(SYM_ENTRY* se, char* buf)
   return 0;
 }
 
-static void init_sym_table()
+static void init_sym_table(void)
 {
   char buf[512];
   if (my_init_dynamic_array(&sym_table, sizeof(SYM_ENTRY), INIT_SYM_TABLE,
@@ -241,7 +241,7 @@ static void init_sym_table()
   verify_sort();
 }
 
-static void clean_up()
+static void clean_up(void)
 {
   delete_dynamic(&sym_table);
 }
@@ -284,7 +284,7 @@ static SYM_ENTRY* resolve_addr(uchar* addr, SYM_ENTRY* se)
 }
 
 
-static void do_resolve()
+static void do_resolve(void)
 {
   char buf[1024], *p;
   while (fgets(buf, sizeof(buf), fp_dump))
