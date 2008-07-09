@@ -834,48 +834,6 @@ public:
   }
 };
 
-class Field_medium :public Field_num {
-public:
-  Field_medium(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
-	      uchar null_bit_arg,
-	      enum utype unireg_check_arg, const char *field_name_arg,
-	      bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg,
-	       0, zero_arg,unsigned_arg)
-    {}
-  enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types type() const { return MYSQL_TYPE_INT24;}
-  enum ha_base_keytype key_type() const
-    { return unsigned_flag ? HA_KEYTYPE_UINT24 : HA_KEYTYPE_INT24; }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
-  int store(double nr);
-  int store(longlong nr, bool unsigned_val);
-  int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
-  double val_real(void);
-  longlong val_int(void);
-  String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 3; }
-  void sql_type(String &str) const;
-  uint32 max_display_length() { return 8; }
-
-  virtual uchar *pack(uchar* to, const uchar *from,
-                      uint max_length, bool low_byte_first)
-  {
-    return Field::pack(to, from, max_length, low_byte_first);
-  }
-
-  virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data, bool low_byte_first)
-  {
-    return Field::unpack(to, from, param_data, low_byte_first);
-  }
-};
-
-
 class Field_long :public Field_num {
 public:
   Field_long(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
