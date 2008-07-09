@@ -624,11 +624,7 @@ write_keys(SORTPARAM *param, register uchar **sort_keys, uint count,
 
   sort_length= param->sort_length;
   rec_length= param->rec_length;
-#ifdef MC68000
-  quicksort(sort_keys,count,sort_length);
-#else
   my_string_ptr_sort((uchar*) sort_keys, (uint) count, sort_length);
-#endif
   if (!my_b_inited(tempfile) &&
       open_cached_file(tempfile, mysql_tmpdir, TEMP_PREFIX, DISK_BUFFER_SIZE,
                        MYF(MY_WME)))
