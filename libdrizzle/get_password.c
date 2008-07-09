@@ -23,7 +23,7 @@
 */
 #include <my_global.h>
 #include <my_sys.h>
-#include "mysql.h"
+#include "drizzle.h"
 #include <m_string.h>
 #include <m_ctype.h>
 

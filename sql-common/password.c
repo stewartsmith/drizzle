@@ -62,7 +62,7 @@
 #include <my_sys.h>
 #include <m_string.h>
 #include <sha1.h>
-#include "mysql.h"
+#include "drizzle.h"
 
 /************ MySQL 3.23-4.0 authentication routines: untouched ***********/
 

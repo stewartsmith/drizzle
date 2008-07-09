@@ -35,7 +35,7 @@
 #include <pcrecpp.h>
 
 #include "client_priv.h"
-#include <mysql_version.h>
+#include <drizzle_version.h>
 #include <mysqld_error.h>
 #include <m_ctype.h>
 #include <my_dir.h>

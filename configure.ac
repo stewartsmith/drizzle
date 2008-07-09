@@ -273,8 +273,8 @@ MYSQL_PROG_AR
 
 # libmysqlclient versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libmysql/libmysql.ver"
-  AC_CONFIG_FILES(libmysql/libmysql.ver)
+  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libdrizzle/libdrizzle.ver"
+  AC_CONFIG_FILES(libdrizzle/libdrizzle.ver)
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
@@ -1208,15 +1208,15 @@ AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
- libmysql/Makefile client/Makefile dnl
+ libdrizzle/Makefile client/Makefile dnl
  sql/Makefile sql/share/Makefile dnl
  sql/sql_builtin.cc sql-common/Makefile dnl
  dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
- mysql-test/Makefile mysql-test/install_test_db dnl
- include/mysql_version.h plugin/Makefile dnl
- sql/drizzled_safe support-files/libmysqlclient.pc dnl
- support-files/mysql.server support-files/mysql-log-rotate)
+ test/Makefile test/install_test_db dnl
+ include/drizzle_version.h plugin/Makefile dnl
+ sql/drizzled_safe support-files/libdrizzle.pc dnl
+ support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 

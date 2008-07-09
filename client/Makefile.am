@@ -24,7 +24,7 @@ AM_CPPFLAGS =			-I$(top_builddir)/include \
 LIBS =				@CLIENT_LIBS@ -lz
 
 LDADD=				$(top_builddir)/sql-common/libsqlcommon.la \
-				$(top_builddir)/libmysql/libmysqlclient.la -lz
+				$(top_builddir)/libdrizzle/libdrizzle.la -lz
 
 
 noinst_HEADERS =		sql_string.h completion_hash.h my_readline.h \

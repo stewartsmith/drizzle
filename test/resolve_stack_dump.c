@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* Resolve numeric stack dump produced by mysqld 3.23.30 and later
+/* Resolve numeric stack dump produced by drizzled 3.23.30 and later
    versions into symbolic names. By Sasha Pachev <sasha@mysql.com>
  */
 
@@ -21,7 +21,7 @@
 #include <m_ctype.h>
 #include <my_sys.h>
 #include <m_string.h>
-#include <mysql_version.h>
+#include <drizzle_version.h>
 #include <errno.h>
 #include <my_getopt.h>
 
@@ -61,7 +61,7 @@ static struct my_option my_long_options[] =
 };
 
 
-static void verify_sort();
+static void verify_sort(void);
 
 
 #include <help_start.h>
@@ -73,7 +73,7 @@ static void print_version(void)
 }
 
 
-static void usage()
+static void usage(void)
 {
   print_version();
   printf("MySQL AB, by Sasha Pachev\n");
@@ -84,8 +84,8 @@ static void usage()
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
   printf("\n\
-The symbols-file should include the output from:  'nm --numeric-sort mysqld'.\n\
-The numeric-dump-file should contain a numeric stack trace from mysqld.\n\
+The symbols-file should include the output from:  'nm --numeric-sort drizzled'.\n\
+The numeric-dump-file should contain a numeric stack trace from drizzled.\n\
 If the numeric-dump-file is not given, the stack trace is read from stdin.\n");
 }
 
@@ -158,7 +158,7 @@ static int parse_args(int argc, char **argv)
 }
 
 
-static void open_files()
+static void open_files(void)
 {
   fp_out = stdout;
   fp_dump = stdin;
@@ -168,7 +168,7 @@ static void open_files()
   /* if name not given, assume stdin*/
 
   if (!sym_fname)
-    die("Please run nm --numeric-sort on mysqld binary that produced stack \
+    die("Please run nm --numeric-sort on drizzled binary that produced stack \
 trace dump and specify the path to it with -s or --symbols-file");
   if (!(fp_sym = my_fopen(sym_fname, O_RDONLY, MYF(MY_WME))))
     die("Could not open %s", sym_fname);
@@ -222,7 +222,7 @@ static int init_sym_entry(SYM_ENTRY* se, char* buf)
   return 0;
 }
 
-static void init_sym_table()
+static void init_sym_table(void)
 {
   char buf[512];
   if (my_init_dynamic_array(&sym_table, sizeof(SYM_ENTRY), INIT_SYM_TABLE,
@@ -241,7 +241,7 @@ static void init_sym_table()
   verify_sort();
 }
 
-static void clean_up()
+static void clean_up(void)
 {
   delete_dynamic(&sym_table);
 }
@@ -284,7 +284,7 @@ static SYM_ENTRY* resolve_addr(uchar* addr, SYM_ENTRY* se)
 }
 
 
-static void do_resolve()
+static void do_resolve(void)
 {
   char buf[1024], *p;
   while (fgets(buf, sizeof(buf), fp_dump))

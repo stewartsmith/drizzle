@@ -19,7 +19,6 @@
 #include <signal.h>
 #include <my_pthread.h>				/* because of signal()	*/
 #include <sys/stat.h>
-#include <mysql.h>
 
 #ifdef LATER_HAVE_NDBCLUSTER_DB
 #include "../ndb/src/mgmclient/ndb_mgmclient.h"
