@@ -3806,16 +3806,11 @@ function_call_conflict:
           { $$= new (YYTHD->mem_root) Item_func_microsecond($3); }
         | MOD_SYM '(' expr ',' expr ')'
           { $$ = new (YYTHD->mem_root) Item_func_mod( $3, $5); }
-        | OLD_PASSWORD '(' expr ')'
-          { $$=  new (YYTHD->mem_root) Item_func_old_password($3); }
         | PASSWORD '(' expr ')'
           {
             THD *thd= YYTHD;
             Item* i1;
-            if (thd->variables.old_passwords)
-              i1= new (thd->mem_root) Item_func_old_password($3);
-            else
-              i1= new (thd->mem_root) Item_func_password($3);
+            i1= new (thd->mem_root) Item_func_password($3);
             $$= i1;
           }
         | QUARTER_SYM '(' expr ')'

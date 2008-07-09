@@ -332,7 +332,6 @@ static SYMBOL symbols[] = {
   { "NVARCHAR",		SYM(NVARCHAR_SYM)},
   { "OFFLINE",		SYM(OFFLINE_SYM)},
   { "OFFSET",		SYM(OFFSET_SYM)},
-  { "OLD_PASSWORD",	SYM(OLD_PASSWORD)},
   { "ON",		SYM(ON)},
   { "ONE",              SYM(ONE_SYM)},
   { "ONLINE",		SYM(ONLINE_SYM)},
