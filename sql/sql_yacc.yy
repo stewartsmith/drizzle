@@ -1547,11 +1547,6 @@ create_table_option:
             Lex->create_info.avg_row_length=$3;
             Lex->create_info.used_fields|= HA_CREATE_USED_AVG_ROW_LENGTH;
           }
-        | PASSWORD opt_equal TEXT_STRING_sys
-          {
-            Lex->create_info.password=$3.str;
-            Lex->create_info.used_fields|= HA_CREATE_USED_PASSWORD;
-          }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
             Lex->create_info.comment=$3;
