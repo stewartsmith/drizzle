@@ -37,12 +37,8 @@ size_t vio_read(Vio * vio, uchar* buf, size_t size)
 
   /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
   DBUG_ASSERT(vio->read_end == vio->read_pos);
-#ifdef __WIN__
-  r = recv(vio->sd, buf, size,0);
-#else
   errno=0;					/* For linux */
   r = read(vio->sd, buf, size);
-#endif /* __WIN__ */
 #ifndef DBUG_OFF
   if (r == (size_t) -1)
   {
@@ -105,11 +101,7 @@ size_t vio_write(Vio * vio, const uchar* buf, size_t size)
   DBUG_ENTER("vio_write");
   DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %u", vio->sd, (long) buf,
                        (uint) size));
-#ifdef __WIN__
-  r = send(vio->sd, buf, size,0);
-#else
   r = write(vio->sd, buf, size);
-#endif /* __WIN__ */
 #ifndef DBUG_OFF
   if (r == (size_t) -1)
   {
@@ -130,7 +122,6 @@ int vio_blocking(Vio * vio __attribute__((unused)), my_bool set_blocking_mode,
   DBUG_PRINT("enter", ("set_blocking_mode: %d  old_mode: %d",
 		       (int) set_blocking_mode, (int) *old_mode));
 
-#if !defined(__WIN__)
 #if !defined(NO_FCNTL_NONBLOCK)
   if (vio->sd >= 0)
   {
@@ -152,27 +143,6 @@ int vio_blocking(Vio * vio __attribute__((unused)), my_bool set_blocking_mode,
 #else
   r= set_blocking_mode ? 0 : 1;
 #endif /* !defined(NO_FCNTL_NONBLOCK) */
-#else /* !defined(__WIN__) */
-  if (vio->type != VIO_TYPE_NAMEDPIPE && vio->type != VIO_TYPE_SHARED_MEMORY)
-  { 
-    ulong arg;
-    int old_fcntl=vio->fcntl_mode;
-    if (set_blocking_mode)
-    {
-      arg = 0;
-      vio->fcntl_mode &= ~O_NONBLOCK; /* clear bit */
-    }
-    else
-    {
-      arg = 1;
-      vio->fcntl_mode |= O_NONBLOCK; /* set bit */
-    }
-    if (old_fcntl != vio->fcntl_mode)
-      r = ioctlsocket(vio->sd,FIONBIO,(void*) &arg);
-  }
-  else
-    r=  test(!(vio->fcntl_mode & O_NONBLOCK)) != set_blocking_mode;
-#endif /* !defined(__WIN__) */
   DBUG_PRINT("exit", ("%d", r));
   DBUG_RETURN(r);
 }
@@ -201,11 +171,7 @@ int vio_fastsend(Vio * vio __attribute__((unused)))
 #endif                                    /* IPTOS_THROUGHPUT */
   if (!r)
   {
-#ifdef __WIN__
-    BOOL nodelay= 1;
-#else
     int nodelay = 1;
-#endif
 
     r= setsockopt(vio->sd, IPPROTO_TCP, TCP_NODELAY,
                   IF_WIN(const char*, void*) &nodelay,
@@ -261,17 +227,6 @@ int vio_close(Vio * vio)
 {
   int r=0;
   DBUG_ENTER("vio_close");
-#ifdef __WIN__
-  if (vio->type == VIO_TYPE_NAMEDPIPE)
-  {
-#if defined(__NT__) && defined(MYSQL_SERVER)
-    CancelIo(vio->hPipe);
-    DisconnectNamedPipe(vio->hPipe);
-#endif
-    r=CloseHandle(vio->hPipe);
-  }
-  else
-#endif /* __WIN__ */
  if (vio->type != VIO_CLOSED)
   {
     DBUG_ASSERT(vio->sd >= 0);
@@ -360,26 +315,7 @@ my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen)
 
 my_bool vio_poll_read(Vio *vio,uint timeout)
 {
-#ifdef __WIN__
-  int res;
-  my_socket fd= vio->sd;
-  fd_set readfds, errorfds;
-  struct timeval tm;
-  DBUG_ENTER("vio_poll");
-  tm.tv_sec= timeout;
-  tm.tv_usec= 0;
-  FD_ZERO(&readfds);
-  FD_ZERO(&errorfds);
-  FD_SET(fd, &readfds);
-  FD_SET(fd, &errorfds);
-  /* The first argument is ignored on Windows, so a conversion to int is OK */
-  if ((res= select((int) fd, &readfds, NULL, &errorfds, &tm) <= 0))
-  {
-    DBUG_RETURN(res < 0 ? 0 : 1);
-  }
-  res= FD_ISSET(fd, &readfds) || FD_ISSET(fd, &errorfds);
-  DBUG_RETURN(!res);
-#elif defined(HAVE_POLL)
+#if defined(HAVE_POLL)
   struct pollfd fds;
   int res;
   DBUG_ENTER("vio_poll");
@@ -399,13 +335,7 @@ my_bool vio_poll_read(Vio *vio,uint timeout)
 
 my_bool vio_peek_read(Vio *vio, uint *bytes)
 {
-#ifdef __WIN__
-  int len;
-  if (ioctlsocket(vio->sd, FIONREAD, &len))
-    return TRUE;
-  *bytes= len;
-  return FALSE;
-#elif FIONREAD_IN_SYS_IOCTL
+#if FIONREAD_IN_SYS_IOCTL
   int len;
   if (ioctl(vio->sd, FIONREAD, &len) < 0)
     return TRUE;
@@ -428,15 +358,10 @@ void vio_timeout(Vio *vio, uint which, uint timeout)
   DBUG_ENTER("vio_timeout");
 
   {
-#ifdef __WIN__
-  /* Windows expects time in milliseconds as int */
-  int wait_timeout= (int) timeout * 1000;
-#else
   /* POSIX specifies time as struct timeval. */
   struct timeval wait_timeout;
   wait_timeout.tv_sec= timeout;
   wait_timeout.tv_usec= 0;
-#endif
 
   r= setsockopt(vio->sd, SOL_SOCKET, which ? SO_SNDTIMEO : SO_RCVTIMEO,
                 IF_WIN(const char*, const void*)&wait_timeout,
@@ -457,226 +382,3 @@ void vio_timeout(Vio *vio, uint which, uint timeout)
 */
 #endif
 }
-
-
-#ifdef __WIN__
-size_t vio_read_pipe(Vio * vio, uchar* buf, size_t size)
-{
-  DWORD length;
-  DBUG_ENTER("vio_read_pipe");
-  DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %u", vio->sd, (long) buf,
-                       (uint) size));
-
-  if (!ReadFile(vio->hPipe, buf, size, &length, NULL))
-    DBUG_RETURN(-1);
-
-  DBUG_PRINT("exit", ("%d", length));
-  DBUG_RETURN((size_t) length);
-}
-
-
-size_t vio_write_pipe(Vio * vio, const uchar* buf, size_t size)
-{
-  DWORD length;
-  DBUG_ENTER("vio_write_pipe");
-  DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %u", vio->sd, (long) buf,
-                       (uint) size));
-
-  if (!WriteFile(vio->hPipe, (char*) buf, size, &length, NULL))
-    DBUG_RETURN(-1);
-
-  DBUG_PRINT("exit", ("%d", length));
-  DBUG_RETURN((size_t) length);
-}
-
-int vio_close_pipe(Vio * vio)
-{
-  int r;
-  DBUG_ENTER("vio_close_pipe");
-#if defined(__NT__) && defined(MYSQL_SERVER)
-  CancelIo(vio->hPipe);
-  DisconnectNamedPipe(vio->hPipe);
-#endif
-  r=CloseHandle(vio->hPipe);
-  if (r)
-  {
-    DBUG_PRINT("vio_error", ("close() failed, error: %d",GetLastError()));
-    /* FIXME: error handling (not critical for MySQL) */
-  }
-  vio->type= VIO_CLOSED;
-  vio->sd=   -1;
-  DBUG_RETURN(r);
-}
-
-
-void vio_ignore_timeout(Vio *vio __attribute__((unused)),
-			uint which __attribute__((unused)),
-			uint timeout __attribute__((unused)))
-{
-}
-
-
-#ifdef HAVE_SMEM
-
-size_t vio_read_shared_memory(Vio * vio, uchar* buf, size_t size)
-{
-  size_t length;
-  size_t remain_local;
-  char *current_postion;
-  DBUG_ENTER("vio_read_shared_memory");
-  DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %d", vio->sd, (long) buf,
-                       size));
-
-  remain_local = size;
-  current_postion=buf;
-  do
-  {
-    if (vio->shared_memory_remain == 0)
-    {
-      HANDLE events[2];
-      events[0]= vio->event_server_wrote;
-      events[1]= vio->event_conn_closed;
-      /*
-        WaitForMultipleObjects can return next values:
-         WAIT_OBJECT_0+0 - event from vio->event_server_wrote
-         WAIT_OBJECT_0+1 - event from vio->event_conn_closed. We can't read
-		           anything
-         WAIT_ABANDONED_0 and WAIT_TIMEOUT - fail.  We can't read anything
-      */
-      if (WaitForMultipleObjects(2, (HANDLE*)&events,FALSE,
-                                 vio->net->read_timeout*1000) != WAIT_OBJECT_0)
-      {
-        DBUG_RETURN(-1);
-      };
-
-      vio->shared_memory_pos = vio->handle_map;
-      vio->shared_memory_remain = uint4korr((ulong*)vio->shared_memory_pos);
-      vio->shared_memory_pos+=4;
-    }
-
-    length = size;
-
-    if (vio->shared_memory_remain < length)
-       length = vio->shared_memory_remain;
-    if (length > remain_local)
-       length = remain_local;
-
-    memcpy(current_postion,vio->shared_memory_pos,length);
-
-    vio->shared_memory_remain-=length;
-    vio->shared_memory_pos+=length;
-    current_postion+=length;
-    remain_local-=length;
-
-    if (!vio->shared_memory_remain)
-    {
-      if (!SetEvent(vio->event_client_read))
-        DBUG_RETURN(-1);
-    }
-  } while (remain_local);
-  length = size;
-
-  DBUG_PRINT("exit", ("%lu", (ulong) length));
-  DBUG_RETURN(length);
-}
-
-
-size_t vio_write_shared_memory(Vio * vio, const uchar* buf, size_t size)
-{
-  size_t length, remain, sz;
-  HANDLE pos;
-  const uchar *current_postion;
-  DBUG_ENTER("vio_write_shared_memory");
-  DBUG_PRINT("enter", ("sd: %d  buf: 0x%lx  size: %d", vio->sd, (long) buf,
-                       size));
-
-  remain = size;
-  current_postion = buf;
-  while (remain != 0)
-  {
-    if (WaitForSingleObject(vio->event_server_read,
-                            vio->net->write_timeout*1000) !=
-        WAIT_OBJECT_0)
-    {
-      DBUG_RETURN((size_t) -1);
-    }
-
-    sz= (remain > shared_memory_buffer_length ? shared_memory_buffer_length :
-         remain);
-
-    int4store(vio->handle_map,sz);
-    pos = vio->handle_map + 4;
-    memcpy(pos,current_postion,sz);
-    remain-=sz;
-    current_postion+=sz;
-    if (!SetEvent(vio->event_client_wrote))
-      DBUG_RETURN((size_t) -1);
-  }
-  length = size;
-
-  DBUG_PRINT("exit", ("%lu", (ulong) length));
-  DBUG_RETURN(length);
-}
-
-
-/**
- Close shared memory and DBUG_PRINT any errors that happen on closing.
- @return Zero if all closing functions succeed, and nonzero otherwise.
-*/
-int vio_close_shared_memory(Vio * vio)
-{
-  int error_count= 0;
-  DBUG_ENTER("vio_close_shared_memory");
-  if (vio->type != VIO_CLOSED)
-  {
-    /*
-      Set event_conn_closed for notification of both client and server that
-      connection is closed
-    */
-    SetEvent(vio->event_conn_closed);
-    /*
-      Close all handlers. UnmapViewOfFile and CloseHandle return non-zero
-      result if they are success.
-    */
-    if (UnmapViewOfFile(vio->handle_map) == 0) 
-    {
-      error_count++;
-      DBUG_PRINT("vio_error", ("UnmapViewOfFile() failed"));
-    }
-    if (CloseHandle(vio->event_server_wrote) == 0)
-    {
-      error_count++;
-      DBUG_PRINT("vio_error", ("CloseHandle(vio->esw) failed"));
-    }
-    if (CloseHandle(vio->event_server_read) == 0)
-    {
-      error_count++;
-      DBUG_PRINT("vio_error", ("CloseHandle(vio->esr) failed"));
-    }
-    if (CloseHandle(vio->event_client_wrote) == 0)
-    {
-      error_count++;
-      DBUG_PRINT("vio_error", ("CloseHandle(vio->ecw) failed"));
-    }
-    if (CloseHandle(vio->event_client_read) == 0)
-    {
-      error_count++;
-      DBUG_PRINT("vio_error", ("CloseHandle(vio->ecr) failed"));
-    }
-    if (CloseHandle(vio->handle_file_map) == 0)
-    {
-      error_count++;
-      DBUG_PRINT("vio_error", ("CloseHandle(vio->hfm) failed"));
-    }
-    if (CloseHandle(vio->event_conn_closed) == 0)
-    {
-      error_count++;
-      DBUG_PRINT("vio_error", ("CloseHandle(vio->ecc) failed"));
-    }
-  }
-  vio->type= VIO_CLOSED;
-  vio->sd=   -1;
-  DBUG_RETURN(error_count);
-}
-#endif /* HAVE_SMEM */
-#endif /* __WIN__ */
