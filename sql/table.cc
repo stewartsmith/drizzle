@@ -2228,7 +2228,8 @@ char *get_field(MEM_ROOT *mem, Field *field)
     given a buffer with a key value, and a map of keyparts
     that are present in this value, returns the length of the value
 */
-uint calculate_key_len(TABLE *table, uint key, const uchar *buf,
+uint calculate_key_len(TABLE *table, uint key,
+                       const uchar *buf __attribute__((__unused__)),
                        key_part_map keypart_map)
 {
   /* works only with key prefixes */
@@ -2902,8 +2903,9 @@ Item *Field_iterator_view::create_item(THD *thd)
   return create_view_field(thd, view, &ptr->item, ptr->name);
 }
 
-Item *create_view_field(THD *thd, TABLE_LIST *view, Item **field_ref,
-                        const char *name)
+Item *create_view_field(THD *thd __attribute__((__unused__)),
+                        TABLE_LIST *view, Item **field_ref,
+                        const char *name __attribute__((__unused__)))
 {
   if (view->schema_table_reformed)
   {
@@ -3658,12 +3660,13 @@ size_t max_row_length(TABLE *table, const uchar *data)
   path        path to file
 
   RETURN
-  FRMTYPE_ERROR       error                
-  FRMTYPE_TABLE       table                
- */    
+  FRMTYPE_ERROR       error
+  FRMTYPE_TABLE       table
+*/
 
-frm_type_enum mysql_frm_type(THD *thd, char *path, enum legacy_db_type *dbt)
-{   
+frm_type_enum mysql_frm_type(THD *thd __attribute__((__unused__)),
+                             char *path, enum legacy_db_type *dbt)
+{
   File file;
   uchar header[10];     /* This should be optimized */
   int error;

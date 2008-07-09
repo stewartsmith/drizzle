@@ -326,9 +326,11 @@ unpack_row(Relay_log_info const *rli,
 
   @retval 0                       Success
   @retval ER_NO_DEFAULT_FOR_FIELD Default value could not be set for a field
- */ 
-int prepare_record(TABLE *const table, 
-                   const MY_BITMAP *cols, uint width, const bool check)
+*/
+int prepare_record(TABLE *const table,
+                   const MY_BITMAP *cols,
+                   uint width __attribute__((__unused__)),
+                   const bool check)
 {
 
   int error= 0;

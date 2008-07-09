@@ -85,7 +85,7 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_DECIMAL,     MYSQL_TYPE_DECIMAL,
+  //MYSQL_TYPE_DECIMAL,     MYSQL_TYPE_DECIMAL,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -454,7 +454,7 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   /* MYSQL_TYPE_YEAR -> */
   {
   //MYSQL_TYPE_DECIMAL      MYSQL_TYPE_TINY
-    MYSQL_TYPE_DECIMAL,     MYSQL_TYPE_TINY,
+    MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_TINY,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_SHORT,       MYSQL_TYPE_LONG,
   //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
@@ -1385,7 +1385,7 @@ Field::unpack(uchar* to, const uchar *from, uint param_data,
 }
 
 
-my_decimal *Field::val_decimal(my_decimal *decimal)
+my_decimal *Field::val_decimal(my_decimal *decimal __attribute__((__unused__)))
 {
   /* This never have to be called */
   DBUG_ASSERT(0);
@@ -1635,7 +1635,8 @@ bool Field::get_time(MYSQL_TIME *ltime)
     Needs to be changed if/when we want to support different time formats.
 */
 
-int Field::store_time(MYSQL_TIME *ltime, timestamp_type type_arg)
+int Field::store_time(MYSQL_TIME *ltime,
+                      timestamp_type type_arg __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   char buff[MAX_DATE_STRING_REP_LENGTH];
@@ -1960,7 +1961,8 @@ int Field_new_decimal::store_decimal(const my_decimal *decimal_value)
 }
 
 
-int Field_new_decimal::store_time(MYSQL_TIME *ltime, timestamp_type t_type)
+int Field_new_decimal::store_time(MYSQL_TIME *ltime,
+                                  timestamp_type t_type __attribute__((__unused__)))
 {
     my_decimal decimal_value;
     return store_value(date2my_decimal(ltime, &decimal_value));
@@ -3862,12 +3864,13 @@ void Field_double::sql_type(String &res) const
   exception is different behavior of old/new timestamps during ALTER TABLE.
  */
 
-Field_timestamp::Field_timestamp(uchar *ptr_arg, uint32 len_arg,
+Field_timestamp::Field_timestamp(uchar *ptr_arg,
+                                 uint32 len_arg __attribute__((__unused__)),
                                  uchar *null_ptr_arg, uchar null_bit_arg,
-				 enum utype unireg_check_arg,
-				 const char *field_name_arg,
-				 TABLE_SHARE *share,
-				 CHARSET_INFO *cs)
+                                 enum utype unireg_check_arg,
+                                 const char *field_name_arg,
+                                 TABLE_SHARE *share,
+                                 CHARSET_INFO *cs)
   :Field_str(ptr_arg, MAX_DATETIME_WIDTH, null_ptr_arg, null_bit_arg,
 	     unireg_check_arg, field_name_arg, cs)
 {
@@ -3933,7 +3936,9 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 }
 
 
-int Field_timestamp::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_timestamp::store(const char *from,
+                           uint len,
+                           CHARSET_INFO *cs __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   MYSQL_TIME l_time;
@@ -3993,7 +3998,8 @@ int Field_timestamp::store(double nr)
 }
 
 
-int Field_timestamp::store(longlong nr, bool unsigned_val)
+int Field_timestamp::store(longlong nr,
+                           bool unsigned_val __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   MYSQL_TIME l_time;
@@ -4240,7 +4246,9 @@ void Field_timestamp::set_time()
 ** Stored as a 3 byte unsigned int
 ****************************************************************************/
 
-int Field_time::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_time::store(const char *from,
+                      uint len,
+                      CHARSET_INFO *cs __attribute__((__unused__)))
 {
   MYSQL_TIME ltime;
   long tmp;
@@ -4282,7 +4290,8 @@ int Field_time::store(const char *from,uint len,CHARSET_INFO *cs)
 }
 
 
-int Field_time::store_time(MYSQL_TIME *ltime, timestamp_type time_type)
+int Field_time::store_time(MYSQL_TIME *ltime,
+                           timestamp_type time_type __attribute__((__unused__)))
 {
   long tmp= ((ltime->month ? 0 : ltime->day * 24L) + ltime->hour) * 10000L +
             (ltime->minute * 100 + ltime->second);
@@ -4549,7 +4558,8 @@ int Field_year::store(double nr)
 }
 
 
-int Field_year::store(longlong nr, bool unsigned_val)
+int Field_year::store(longlong nr,
+                      bool unsigned_val __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   if (nr < 0 || (nr >= 100 && nr <= 1900) || nr > 2155)
@@ -4640,7 +4650,9 @@ void Field_year::sql_type(String &res) const
        store function.
 */
 
-int Field_newdate::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_newdate::store(const char *from,
+                         uint len,
+                         CHARSET_INFO *cs __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   long tmp;
@@ -4690,7 +4702,8 @@ int Field_newdate::store(double nr)
 }
 
 
-int Field_newdate::store(longlong nr, bool unsigned_val)
+int Field_newdate::store(longlong nr,
+                         bool unsigned_val __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   MYSQL_TIME l_time;
@@ -4872,7 +4885,9 @@ void Field_newdate::sql_type(String &res) const
 ** Stored as a 8 byte unsigned int. Should sometimes be change to a 6 byte int.
 ****************************************************************************/
 
-int Field_datetime::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_datetime::store(const char *from,
+                          uint len,
+                          CHARSET_INFO *cs __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   MYSQL_TIME time_tmp;
@@ -4925,7 +4940,8 @@ int Field_datetime::store(double nr)
 }
 
 
-int Field_datetime::store(longlong nr, bool unsigned_val)
+int Field_datetime::store(longlong nr,
+                          bool unsigned_val __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   MYSQL_TIME not_used;
@@ -5727,7 +5743,9 @@ uint Field_string::max_packed_col_length(uint max_length)
 }
 
 
-uint Field_string::get_key_image(uchar *buff, uint length, imagetype type_arg)
+uint Field_string::get_key_image(uchar *buff,
+                                 uint length,
+                                 imagetype type_arg __attribute__((__unused__)))
 {
   uint bytes = my_charpos(field_charset, (char*) ptr,
                           (char*) ptr + field_length,
@@ -6084,7 +6102,8 @@ Field_varstring::pack_key(uchar *to, const uchar *key, uint max_length,
 */
 
 const uchar *
-Field_varstring::unpack_key(uchar *to, const uchar *key, uint max_length,
+Field_varstring::unpack_key(uchar *to __attribute__((__unused__)),
+                            const uchar *key, uint max_length,
                             bool low_byte_first __attribute__((unused)))
 {
   /* get length of the blob key */
@@ -6237,7 +6256,9 @@ uint Field_varstring::max_packed_col_length(uint max_length)
   return (max_length > 255 ? 2 : 1)+max_length;
 }
 
-uint Field_varstring::get_key_image(uchar *buff, uint length, imagetype type)
+uint Field_varstring::get_key_image(uchar *buff,
+                                    uint length,
+                                    imagetype type __attribute__((__unused__)))
 {
   uint f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
   uint local_char_length= length / field_charset->mbmaxlen;
@@ -6373,10 +6394,10 @@ Field_blob::Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 }
 
 
-void Field_blob::store_length(uchar *i_ptr, 
-                              uint i_packlength, 
-                              uint32 i_number, 
-                              bool low_byte_first)
+void Field_blob::store_length(uchar *i_ptr,
+                              uint i_packlength,
+                              uint32 i_number,
+                              bool low_byte_first __attribute__((__unused__)))
 {
   switch (i_packlength) {
   case 1:
@@ -6408,7 +6429,9 @@ void Field_blob::store_length(uchar *i_ptr,
 }
 
 
-uint32 Field_blob::get_length(const uchar *pos, uint packlength_arg, bool low_byte_first)
+uint32 Field_blob::get_length(const uchar *pos,
+                              uint packlength_arg,
+                              bool low_byte_first __attribute__((__unused__)))
 {
   switch (packlength_arg) {
   case 1:
@@ -6669,7 +6692,9 @@ int Field_blob::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
 
 /* The following is used only when comparing a key */
 
-uint Field_blob::get_key_image(uchar *buff,uint length, imagetype type_arg)
+uint Field_blob::get_key_image(uchar *buff,
+                               uint length,
+                               imagetype type_arg __attribute__((__unused__)))
 {
   uint32 blob_length= get_length(ptr);
   uchar *blob;
@@ -6862,7 +6887,7 @@ uchar *Field_blob::pack(uchar *to, const uchar *from,
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *Field_blob::unpack(uchar *to, 
+const uchar *Field_blob::unpack(uchar *to __attribute__((__unused__)),
                                 const uchar *from,
                                 uint param_data,
                                 bool low_byte_first)
@@ -7151,7 +7176,8 @@ int Field_enum::store(double nr)
 }
 
 
-int Field_enum::store(longlong nr, bool unsigned_val)
+int Field_enum::store(longlong nr,
+                      bool unsigned_val __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   int error= 0;
@@ -7360,7 +7386,8 @@ int Field_set::store(const char *from,uint length,CHARSET_INFO *cs)
 }
 
 
-int Field_set::store(longlong nr, bool unsigned_val)
+int Field_set::store(longlong nr,
+                     bool unsigned_val __attribute__((__unused__)))
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   int error= 0;
@@ -7581,14 +7608,15 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
                         uint fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
-                        CHARSET_INFO *fld_charset, uint fld_geom_type,
+                        CHARSET_INFO *fld_charset,
+                        uint fld_geom_type __attribute__((__unused__)),
                         enum column_format_type column_format)
 {
   uint sign_len, allowed_type_modifier= 0;
   ulong max_field_charlength= MAX_FIELD_CHARLENGTH;
 
   DBUG_ENTER("Create_field::init()");
-  
+
   field= 0;
   field_name= fld_name;
   def= fld_default_value;

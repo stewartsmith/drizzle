@@ -173,11 +173,12 @@ static void prepare_record_for_error_message(int error, TABLE *table)
 int mysql_update(THD *thd,
                  TABLE_LIST *table_list,
                  List<Item> &fields,
-		 List<Item> &values,
+                 List<Item> &values,
                  COND *conds,
                  uint order_num, ORDER *order,
-		 ha_rows limit,
-		 enum enum_duplicates handle_duplicates, bool ignore)
+                 ha_rows limit,
+                 enum enum_duplicates handle_duplicates __attribute__((__unused__)),
+                 bool ignore)
 {
   bool		using_limit= limit != HA_POS_ERROR;
   bool		safe_update= test(thd->options & OPTION_SAFE_UPDATES);
@@ -1046,8 +1047,8 @@ multi_update::multi_update(TABLE_LIST *table_list,
   Connect fields with tables and create list of tables that are updated
 */
 
-int multi_update::prepare(List<Item> &not_used_values,
-			  SELECT_LEX_UNIT *lex_unit)
+int multi_update::prepare(List<Item> &not_used_values __attribute__((__unused__)),
+                          SELECT_LEX_UNIT *lex_unit __attribute__((__unused__)))
 {
   TABLE_LIST *table_ref;
   SQL_LIST update;
@@ -1335,12 +1336,12 @@ multi_update::~multi_update()
   if (copy_field)
     delete [] copy_field;
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;		// Restore this setting
-  assert(trans_safe || !updated || 
+  assert(trans_safe || !updated ||
               thd->transaction.all.modified_non_trans_table);
 }
 
 
-bool multi_update::send_data(List<Item> &not_used_values)
+bool multi_update::send_data(List<Item> &not_used_values __attribute__((__unused__)))
 {
   TABLE_LIST *cur_table;
   

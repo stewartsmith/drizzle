@@ -466,7 +466,8 @@ static TABLE_SHARE
      that the table is deleted or the thread is killed.
 */
 
-void release_table_share(TABLE_SHARE *share, enum release_type type)
+void release_table_share(TABLE_SHARE *share,
+                         enum release_type type __attribute__((__unused__)))
 {
   bool to_be_deleted= 0;
   DBUG_ENTER("release_table_share");
@@ -609,7 +610,8 @@ void close_handle_and_leave_table_as_lock(TABLE *table)
     #		Pointer to list of names of open tables.
 */
 
-OPEN_TABLE_LIST *list_open_tables(THD *thd, const char *db, const char *wild)
+OPEN_TABLE_LIST *list_open_tables(THD *thd __attribute__((__unused__)),
+                                  const char *db, const char *wild)
 {
   int result = 0;
   OPEN_TABLE_LIST **start_list, *open_list;
@@ -1239,7 +1241,8 @@ bool close_thread_table(THD *thd, TABLE **table_ptr)
 
 
 /* close_temporary_tables' internal, 4 is due to uint4korr definition */
-static inline uint  tmpkeyval(THD *thd, TABLE *table)
+static inline uint  tmpkeyval(THD *thd __attribute__((__unused__)),
+                              TABLE *table)
 {
   return uint4korr(table->s->table_cache_key.str + table->s->table_cache_key.length - 4);
 }
@@ -1532,8 +1535,8 @@ TABLE_LIST* unique_table(THD *thd, TABLE_LIST *table, TABLE_LIST *table_list,
 */
 
 void update_non_unique_table_error(TABLE_LIST *update,
-                                   const char *operation,
-                                   TABLE_LIST *duplicate)
+                                   const char *operation __attribute__((__unused__)),
+                                   TABLE_LIST *duplicate __attribute__((__unused__)))
 {
   my_error(ER_UPDATE_TABLE_USED, MYF(0), update->alias);
 }
@@ -3297,7 +3300,8 @@ void assign_new_table_id(TABLE_SHARE *share)
 static int open_unireg_entry(THD *thd, TABLE *entry, TABLE_LIST *table_list,
                              const char *alias,
                              char *cache_key, uint cache_key_length,
-                             MEM_ROOT *mem_root, uint flags)
+                             MEM_ROOT *mem_root __attribute__((__unused__)),
+                             uint flags __attribute__((__unused__)))
 {
   int error;
   TABLE_SHARE *share;
@@ -4318,9 +4322,10 @@ static void update_field_dependencies(THD *thd, Field *field, TABLE *table)
 
 static Field *
 find_field_in_view(THD *thd, TABLE_LIST *table_list,
-                   const char *name, uint length,
-                   const char *item_name, Item **ref,
-                   bool register_tree_change)
+                   const char *name, uint length __attribute__((__unused__)),
+                   const char *item_name __attribute__((__unused__)),
+                   Item **ref,
+                   bool register_tree_change __attribute__((__unused__)))
 {
   DBUG_ENTER("find_field_in_view");
   DBUG_PRINT("enter",
@@ -4398,7 +4403,8 @@ find_field_in_view(THD *thd, TABLE_LIST *table_list,
 
 static Field *
 find_field_in_natural_join(THD *thd, TABLE_LIST *table_ref, const char *name,
-                           uint length, Item **ref, bool register_tree_change,
+                           uint length __attribute__((__unused__)),
+                           Item **ref, bool register_tree_change,
                            TABLE_LIST **actual_table)
 {
   List_iterator_fast<Natural_join_column>
@@ -5595,7 +5601,8 @@ err:
 */
 
 static bool
-store_natural_using_join_columns(THD *thd, TABLE_LIST *natural_using_join,
+store_natural_using_join_columns(THD *thd __attribute__((__unused__)),
+                                 TABLE_LIST *natural_using_join,
                                  TABLE_LIST *table_ref_1,
                                  TABLE_LIST *table_ref_2,
                                  List<String> *using_fields,
@@ -5926,9 +5933,11 @@ static bool setup_natural_join_row_types(THD *thd,
 ** Expand all '*' in given fields
 ****************************************************************************/
 
-int setup_wild(THD *thd, TABLE_LIST *tables, List<Item> &fields,
-	       List<Item> *sum_func_list,
-	       uint wild_num)
+int setup_wild(THD *thd,
+               TABLE_LIST *tables __attribute__((__unused__)),
+               List<Item> &fields,
+               List<Item> *sum_func_list,
+               uint wild_num)
 {
   if (!wild_num)
     return(0);
@@ -6265,8 +6274,8 @@ bool get_key_map_from_key_list(key_map *map, TABLE *table,
 
 bool
 insert_fields(THD *thd, Name_resolution_context *context, const char *db_name,
-	      const char *table_name, List_iterator<Item> *it,
-              bool any_privileges)
+              const char *table_name, List_iterator<Item> *it,
+              bool any_privileges __attribute__((__unused__)))
 {
   Field_iterator_table_ref field_iterator;
   bool found;
@@ -6416,7 +6425,8 @@ insert_fields(THD *thd, Name_resolution_context *context, const char *db_name,
     false if all is OK
 */
 
-int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,
+int setup_conds(THD *thd, TABLE_LIST *tables __attribute__((__unused__)),
+                TABLE_LIST *leaves,
                 COND **conds)
 {
   SELECT_LEX *select_lex= thd->lex->current_select;
@@ -6590,7 +6600,8 @@ err:
 */
 
 bool
-fill_record(THD *thd, Field **ptr, List<Item> &values, bool ignore_errors)
+fill_record(THD *thd, Field **ptr, List<Item> &values,
+            bool ignore_errors __attribute__((__unused__)))
 {
   List_iterator_fast<Item> v(values);
   Item *value;

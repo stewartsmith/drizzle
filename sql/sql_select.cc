@@ -169,7 +169,6 @@ static COND *make_cond_for_table(COND *cond,table_map table,
 				 table_map used_table,
                                  bool exclude_expensive_cond);
 static Item* part_of_refkey(TABLE *form,Field *field);
-uint find_shortest_key(TABLE *table, const key_map *usable_keys);
 static bool test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,
 				    ha_rows select_limit, bool no_changes,
                                     const key_map *map);
@@ -4667,7 +4666,8 @@ static void add_key_fields_for_nj(JOIN *join, TABLE_LIST *nested_join_table,
 
 static bool
 update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
-                    uint tables, COND *cond, COND_EQUAL *cond_equal,
+                    uint tables, COND *cond,
+                    COND_EQUAL *cond_equal __attribute__((__unused__)),
                     table_map normal_tables, SELECT_LEX *select_lex,
                     SARGABLE_PARAM **sargables)
 {
@@ -5019,7 +5019,7 @@ best_access_path(JOIN      *join,
                  table_map remaining_tables,
                  uint      idx,
                  double    record_count,
-                 double    read_time)
+                 double    read_time __attribute__((__unused__)))
 {
   KEYUSE *best_key=         0;
   uint best_max_key_part=   0;
@@ -6369,7 +6369,8 @@ find_best(JOIN *join,table_map rest_tables,uint idx,double record_count,
   Find how much space the prevous read not const tables takes in cache.
 */
 
-static void calc_used_field_length(THD *thd, JOIN_TAB *join_tab)
+static void calc_used_field_length(THD *thd __attribute__((__unused__)),
+                                   JOIN_TAB *join_tab)
 {
   uint null_fields,blobs,fields,rec_length;
   Field **f_ptr,*field;
@@ -10797,7 +10798,8 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
     new_created field
 */
 
-static Field *create_tmp_field_from_item(THD *thd, Item *item, TABLE *table,
+static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
+                                         Item *item, TABLE *table,
                                          Item ***copy_func, bool modify_item,
                                          uint convert_blob_length)
 {
@@ -10920,7 +10922,8 @@ static Field *create_tmp_field_from_item(THD *thd, Item *item, TABLE *table,
     new_created field
 */
 
-Field *create_tmp_field_for_schema(THD *thd, Item *item, TABLE *table)
+Field *create_tmp_field_for_schema(THD *thd __attribute__((__unused__)),
+                                   Item *item, TABLE *table)
 {
   if (item->field_type() == MYSQL_TYPE_VARCHAR)
   {
@@ -10973,7 +10976,7 @@ Field *create_tmp_field(THD *thd, TABLE *table,Item *item, Item::Type type,
                         Item ***copy_func, Field **from_field,
                         Field **default_field,
                         bool group, bool modify_item,
-                        bool table_cant_handle_bit_fields,
+                        bool table_cant_handle_bit_fields __attribute__((__unused__)),
                         bool make_copy_field,
                         uint convert_blob_length)
 {
@@ -16531,11 +16534,11 @@ next_field:
 static ORDER *
 create_distinct_group(THD *thd, Item **ref_pointer_array,
                       ORDER *order_list, List<Item> &fields,
-                      List<Item> &all_fields,
-		      bool *all_order_by_fields_used)
+                      List<Item> &all_fields __attribute__((__unused__)),
+                      bool *all_order_by_fields_used)
 {
   List_iterator<Item> li(fields);
-  Item *item, **orig_ref_pointer_array= ref_pointer_array;
+  Item *item;
   ORDER *order,*group,**prev;
 
   *all_order_by_fields_used= 1;
@@ -17436,7 +17439,8 @@ static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab)
   @param select   pointer to st_select_lex which subselects joins we will free
 */
 
-void free_underlaid_joins(THD *thd, SELECT_LEX *select)
+void free_underlaid_joins(THD *thd __attribute__((__unused__)),
+                          SELECT_LEX *select)
 {
   for (SELECT_LEX_UNIT *unit= select->first_inner_unit();
        unit;
@@ -18469,7 +18473,7 @@ static void print_table_array(THD *thd, String *str, TABLE_LIST **table,
 static void print_join(THD *thd,
                        String *str,
                        List<TABLE_LIST> *tables,
-                       enum_query_type query_type)
+                       enum_query_type query_type __attribute__((__unused__)))
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TABLE_LIST> ti(*tables);

@@ -1526,7 +1526,7 @@ static bool show_status_array(THD *thd, const char *wild,
       Repeat as necessary, if new var is again SHOW_FUNC
     */
     for (var=variables; var->type == SHOW_FUNC; var= &tmp)
-      ((mysql_show_var_func)(var->value))(thd, &tmp, buff);
+      ((mysql_show_var_func)((st_show_var_func_container)var->value)->func)(thd, &tmp, buff);
 
     SHOW_TYPE show_type=var->type;
     if (show_type == SHOW_ARRAY)

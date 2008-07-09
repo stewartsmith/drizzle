@@ -34,7 +34,9 @@
 #include "sql_sort.h"
 
 
-int unique_write_to_file(uchar* key, element_count count, Unique *unique)
+int unique_write_to_file(uchar* key,
+                         element_count count __attribute__((__unused__)),
+                         Unique *unique)
 {
   /*
     Use unique->size (size of element stored in the tree) and not
@@ -45,7 +47,9 @@ int unique_write_to_file(uchar* key, element_count count, Unique *unique)
   return my_b_write(&unique->file, key, unique->size) ? 1 : 0;
 }
 
-int unique_write_to_ptrs(uchar* key, element_count count, Unique *unique)
+int unique_write_to_ptrs(uchar* key,
+                         element_count count __attribute__((__unused__)),
+                         Unique *unique)
 {
   memcpy(unique->record_pointers, key, unique->size);
   unique->record_pointers+=unique->size;
@@ -122,7 +126,8 @@ inline double log2_n_fact(double x)
       total_buf_elems* log2(n_buffers) / TIME_FOR_COMPARE_ROWID;
 */
 
-static double get_merge_buffers_cost(uint *buff_elems, uint elem_size,
+static double get_merge_buffers_cost(uint *buff_elems __attribute__((__unused__)),
+                                     uint elem_size,
                                      uint *first, uint *last)
 {
   uint total_buf_elems= 0;

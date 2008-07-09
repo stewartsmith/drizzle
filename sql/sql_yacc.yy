@@ -29,6 +29,9 @@
 #define YYLEX_PARAM yythd
 #define YYTHD ((THD *)yythd)
 
+#define YYENABLE_NLS 0
+#define YYLTYPE_IS_TRIVIAL 0
+
 #define MYSQL_YACC
 #define YYINITDEPTH 100
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */

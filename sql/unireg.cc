@@ -558,17 +558,18 @@ static uint pack_keys(uchar *keybuff, uint key_count, KEY *keyinfo,
 } /* pack_keys */
 
 
-	/* Make formheader */
+/* Make formheader */
 
-static bool pack_header(uchar *forminfo, enum legacy_db_type table_type,
-			List<Create_field> &create_fields,
+static bool pack_header(uchar *forminfo,
+                        enum legacy_db_type table_type __attribute__((__unused__)),
+                        List<Create_field> &create_fields,
                         uint info_length, uint screens, uint table_options,
                         ulong data_offset, handler *file)
 {
   uint length,int_count,int_length,no_empty, int_parts;
   uint time_stamp_pos,null_fields;
   ulong reclength, totlength, n_length, com_length;
-  
+
 
   if (create_fields.elements > MAX_FIELDS)
   {
@@ -878,12 +879,13 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
 }
 
 
-	/* save an empty record on start of formfile */
+/* save an empty record on start of formfile */
 
-static bool make_empty_rec(THD *thd, File file,enum legacy_db_type table_type,
-			   uint table_options,
-			   List<Create_field> &create_fields,
-			   uint reclength,
+static bool make_empty_rec(THD *thd, File file,
+                           enum legacy_db_type table_type __attribute__((__unused__)),
+                           uint table_options,
+                           List<Create_field> &create_fields,
+                           uint reclength,
                            ulong data_offset,
                            handler *handler)
 {
