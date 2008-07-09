@@ -45,7 +45,6 @@ static void init_myfunc_errs(void);
 bool init_errmessage(void)
 {
   const char **errmsgs, **ptr;
-  DBUG_ENTER("init_errmessage");
 
   /*
     Get a pointer to the old error messages pointer array.
@@ -59,7 +58,7 @@ bool init_errmessage(void)
   {
     if (!(errmsgs= (const char**) my_malloc((ER_ERROR_LAST-ER_ERROR_FIRST+1)*
                                             sizeof(char*), MYF(0))))
-      DBUG_RETURN(TRUE);
+      return(tru);
     for (ptr= errmsgs; ptr < errmsgs + ER_ERROR_LAST - ER_ERROR_FIRST; ptr++)
 	  *ptr= "";
   }
@@ -68,12 +67,12 @@ bool init_errmessage(void)
   if (my_error_register(errmsgs, ER_ERROR_FIRST, ER_ERROR_LAST))
   {
     x_free((uchar*) errmsgs);
-    DBUG_RETURN(TRUE);
+    return(true);
   }
 
   errmesg= errmsgs;		        /* Init global variabel */
   init_myfunc_errs();			/* Init myfunc messages */
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 
@@ -97,7 +96,6 @@ static bool read_texts(const char *file_name,const char ***point,
   uchar *buff;
   uchar head[32],*pos;
   const char *errmsg;
-  DBUG_ENTER("read_texts");
 
   funktpos=0;
   if ((file=my_open(fn_format(name,file_name,language,"",4),
@@ -137,7 +135,7 @@ but it should contain at least %d error messages.\n\
 Check that the above file is the right version for this program!",
 		    name,count,error_messages);
     VOID(my_close(file,MYF(MY_WME)));
-    DBUG_RETURN(1);
+    return(1);
   }
 
   x_free((uchar*) *point);		/* Free old language */
@@ -164,7 +162,7 @@ Check that the above file is the right version for this program!",
     point[i]= *point +uint2korr(head+10+i+i);
   }
   VOID(my_close(file,MYF(0)));
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   switch (funktpos) {
@@ -182,7 +180,7 @@ err:
 err1:
   if (file != FERR)
     VOID(my_close(file,MYF(MY_WME)));
-  DBUG_RETURN(1);
+  return(1);
 } /* read_texts */
 
 
