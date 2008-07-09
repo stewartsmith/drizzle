@@ -583,12 +583,18 @@ AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthrea
 #--------------------------------------------------------------------
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [
-  AC_DEFINE([HAVE_PCRE], [1], [Perl Compatible Regex Lib for mysqltest])
-  ],[
-  AC_CHECK_LIB(pcrecpp, [DoMatch], AC_MSG_ERROR([PCRE not found]))
-  AC_MSG_WARN([PCRE not found - mysqltest will not be built])
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
+  AC_CHECK_LIB(pcrecpp, [DoMatch], [found_pcre="no"])
+  AC_CHECK_HEADERS(pcrecpp.h)
+  if test "x$ac_cv_header_prcecpp_h" = "xno" 
+  then
+    found_pcre="no"
+  fi
   ])
+if test "x$found_pcre" != "xyes"
+then
+    AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
+fi
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
