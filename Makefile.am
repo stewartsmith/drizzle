@@ -23,7 +23,7 @@ SUBDIRS =		. include \
 			sql-common vio \
 			strings mysys $(d_dbug) \
                         extra \
-                        libmysql client storage plugin \
+                        libdrizzle client storage plugin \
                         sql \
 			mysql-test support-files
 
