@@ -123,7 +123,7 @@ static inline my_bool validate_timestamp_range(const MYSQL_TIME *t)
 
 my_time_t 
 my_system_gmt_sec(const MYSQL_TIME *t, long *my_timezone,
-                  my_bool *in_dst_time_gap);
+                  bool *in_dst_time_gap);
 
 void set_zero_time(MYSQL_TIME *tm, enum enum_mysql_timestamp_type time_type);
 

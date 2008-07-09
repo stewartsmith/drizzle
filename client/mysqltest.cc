@@ -32,6 +32,7 @@
 */
 
 #define MTEST_VERSION "3.3"
+#include <pcrecpp.h>
 
 #include "client_priv.h"
 #include <mysql_version.h>
@@ -41,7 +42,6 @@
 #include <hash.h>
 #include <stdarg.h>
 #include <violite.h>
-#include "my_regex.h" /* Our own version of regex */
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -152,20 +152,20 @@ static ulonglong timer_now(void);
 
 static ulonglong progress_start= 0;
 
-static void free_re(void);
-
 DYNAMIC_ARRAY q_lines;
 
-struct
-{
+typedef struct {
   int read_lines,current_line;
-} parser;
+} parser_st;
+parser_st parser;
 
-struct
+typedef struct
 {
   char file[FN_REFLEN];
   ulong pos;
-} master_pos;
+} master_pos_st;
+
+master_pos_st master_pos;
 
 /* if set, all results are concated and compared against this file */
 const char *result_file_name= 0;
@@ -888,7 +888,6 @@ static void free_used_memory(void)
   free_all_replace();
   my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(default_argv);
-  free_re();
 
   /* Only call mysql_server_end if mysql_server_init has been called */
   if (server_initialized)
@@ -1064,18 +1063,18 @@ void warning_msg(const char *fmt, ...)
     dynstr_append(&ds_warning_messages, "Warning detected ");
     if (cur_file && cur_file != file_stack)
     {
-      len= my_snprintf(buff, sizeof(buff), "in included file %s ",
+      len= snprintf(buff, sizeof(buff), "in included file %s ",
                        cur_file->file_name);
       dynstr_append_mem(&ds_warning_messages,
                         buff, len);
     }
-    len= my_snprintf(buff, sizeof(buff), "at line %d: ",
+    len= snprintf(buff, sizeof(buff), "at line %d: ",
                      start_lineno);
     dynstr_append_mem(&ds_warning_messages,
                       buff, len);
   }
 
-  len= my_vsnprintf(buff, sizeof(buff), fmt, args);
+  len= vsnprintf(buff, sizeof(buff), fmt, args);
   dynstr_append_mem(&ds_warning_messages, buff, len);
 
   dynstr_append(&ds_warning_messages, "\n");
@@ -1093,7 +1092,7 @@ void log_msg(const char *fmt, ...)
   DBUG_ENTER("log_msg");
 
   va_start(args, fmt);
-  len= my_vsnprintf(buff, sizeof(buff)-1, fmt, args);
+  len= vsnprintf(buff, sizeof(buff)-1, fmt, args);
   va_end(args);
 
   dynstr_append_mem(&ds_res, buff, len);
@@ -1633,7 +1632,7 @@ VAR *var_init(VAR *v, const char *name, int name_len, const char *val,
   tmp_var->name = (name) ? (char*) tmp_var + sizeof(*tmp_var) : 0;
   tmp_var->alloced = (v == 0);
 
-  if (!(tmp_var->str_val = my_malloc(val_alloc_len+1, MYF(MY_WME))))
+  if (!(tmp_var->str_val = (char *)my_malloc(val_alloc_len+1, MYF(MY_WME))))
     die("Out of memory");
 
   memcpy(tmp_var->name, name, name_len);
@@ -1783,7 +1782,7 @@ static void var_set(const char *var_name, const char *var_name_end,
       v->int_dirty= 0;
       v->str_val_len= strlen(v->str_val);
     }
-    my_snprintf(buf, sizeof(buf), "%.*s=%.*s",
+    snprintf(buf, sizeof(buf), "%.*s=%.*s",
                 v->name_len, v->name,
                 v->str_val_len, v->str_val);
     if (!(v->env_s= my_strdup(buf, MYF(MY_WME))))
@@ -1804,7 +1803,7 @@ static void var_set_string(const char* name, const char* value)
 static void var_set_int(const char* name, int value)
 {
   char buf[21];
-  my_snprintf(buf, sizeof(buf), "%d", value);
+  snprintf(buf, sizeof(buf), "%d", value);
   var_set_string(name, buf);
 }
 
@@ -2045,8 +2044,8 @@ static void var_copy(VAR *dest, VAR *src)
   /* Alloc/realloc data for str_val in dest */
   if (dest->alloced_len < src->alloced_len &&
       !(dest->str_val= dest->str_val
-        ? my_realloc(dest->str_val, src->alloced_len, MYF(MY_WME))
-        : my_malloc(src->alloced_len, MYF(MY_WME))))
+        ? (char *)my_realloc(dest->str_val, src->alloced_len, MYF(MY_WME))
+        : (char *)my_malloc(src->alloced_len, MYF(MY_WME))))
     die("Out of memory");
   else
     dest->alloced_len= src->alloced_len;
@@ -2104,9 +2103,9 @@ void eval_expr(VAR *v, const char *p, const char **p_end)
       v->alloced_len = (new_val_len < MIN_VAR_ALLOC - 1) ?
         MIN_VAR_ALLOC : new_val_len + 1;
       if (!(v->str_val =
-            v->str_val ? my_realloc(v->str_val, v->alloced_len+1,
+            v->str_val ? (char *)my_realloc(v->str_val, v->alloced_len+1,
                                     MYF(MY_WME)) :
-            my_malloc(v->alloced_len+1, MYF(MY_WME))))
+            (char *)my_malloc(v->alloced_len+1, MYF(MY_WME))))
         die("Out of memory");
     }
     v->str_val_len = new_val_len;
@@ -2379,7 +2378,7 @@ enum enum_operator
 */
 
 static int do_modify_var(struct st_command *command,
-                         enum enum_operator operator)
+                         enum enum_operator op)
 {
   const char *p= command->first_argument;
   VAR* v;
@@ -2389,7 +2388,7 @@ static int do_modify_var(struct st_command *command,
     die("The argument to %.*s must be a variable (start with $)",
         command->first_word_len, command->query);
   v= var_get(p, &p, 1, 0);
-  switch (operator) {
+  switch (op) {
   case DO_DEC:
     v->int_val--;
     break;
@@ -3090,7 +3089,7 @@ static void do_perl(struct st_command *command)
   str_to_file(temp_file_path, ds_script.str, ds_script.length);
 
   /* Format the "perl <filename>" command */
-  my_snprintf(buf, sizeof(buf), "perl %s", temp_file_path);
+  snprintf(buf, sizeof(buf), "perl %s", temp_file_path);
 
   if (!(res_file= popen(buf, "r")) && command->abort_on_error)
     die("popen(\"%s\", \"r\") failed", buf);
@@ -5209,16 +5208,6 @@ void dump_warning_messages(void)
               ds_warning_messages.str, ds_warning_messages.length);
 }
 
-static void check_regerr(my_regex_t* r, int err)
-{
-  char err_buf[1024];
-
-  if (err)
-  {
-    my_regerror(err,r,err_buf,sizeof(err_buf));
-    die("Regex error: %s\n", err_buf);
-  }
-}
 
 /*
   Append the result for one field to the dynamic string ds
@@ -5807,15 +5796,6 @@ static void run_query(struct st_connection *cn,
   DBUG_VOID_RETURN;
 }
 
-/****************************************************************************/
-/*
-  Functions to detect different SQL statements
-*/
-
-void free_re(void)
-{
-  my_regex_end();
-}
 
 /****************************************************************************/
 
@@ -6461,7 +6441,7 @@ void do_get_replace_column(struct st_command *command)
     die("Missing argument in %s", command->query);
 
   /* Allocate a buffer for results */
-  start= buff= my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
+  start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
   while (*from)
   {
     char *to;
@@ -6544,7 +6524,7 @@ void do_get_replace(struct st_command *command)
   bzero((char*) &from_array,sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
-  start= buff= my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
+  start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
   while (*from)
   {
     char *to= buff;
@@ -6926,174 +6906,28 @@ void free_replace_regex()
   icase - flag, if set to 1 the match is case insensitive
 */
 int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
-                char *replace, char *string, int icase)
+                char *replace, char *in_string, int icase)
 {
-  my_regex_t r;
-  my_regmatch_t *subs;
-  char *replace_end;
-  char *buf= *buf_p;
-  int len;
-  int buf_len, need_buf_len;
-  int cflags= REG_EXTENDED;
-  int err_code;
-  char *res_p,*str_p,*str_end;
-
-  buf_len= *buf_len_p;
-  len= strlen(string);
-  str_end= string + len;
-
-  /* start with a buffer of a reasonable size that hopefully will not
-     need to be reallocated
-  */
-  need_buf_len= len * 2 + 1;
-  res_p= buf;
-
-  SECURE_REG_BUF
+  string string_to_match(in_string);
+  pcrecpp::RE_Options opt;
 
   if (icase)
-    cflags|= REG_ICASE;
+    opt.set_caseless(true);
 
-  if ((err_code= my_regcomp(&r,pattern,cflags,&my_charset_latin1)))
-  {
-    check_regerr(&r,err_code);
+  if (!pcrecpp::RE(pattern, opt).Replace(replace,&string_to_match)){
     return 1;
   }
 
-  subs= (my_regmatch_t*)my_malloc(sizeof(my_regmatch_t) * (r.re_nsub+1),
-                                  MYF(MY_WME+MY_FAE));
-
-  *res_p= 0;
-  str_p= string;
-  replace_end= replace + strlen(replace);
-
-  /* for each pattern match instance perform a replacement */
-  while (!err_code)
+  const char * new_str= string_to_match.c_str();
+  *buf_len_p= strlen(new_str);
+  char * new_buf = (char *)malloc(*buf_len_p+1);
+  if (new_buf == NULL)
   {
-    /* find the match */
-    err_code= my_regexec(&r,str_p, r.re_nsub+1, subs,
-                         (str_p == string) ? REG_NOTBOL : 0);
-
-    /* if regular expression error (eg. bad syntax, or out of memory) */
-    if (err_code && err_code != REG_NOMATCH)
-    {
-      check_regerr(&r,err_code);
-      my_regfree(&r);
-      return 1;
-    }
-
-    /* if match found */
-    if (!err_code)
-    {
-      char* expr_p= replace;
-      int c;
-
-      /*
-        we need at least what we have so far in the buffer + the part
-        before this match
-      */
-      need_buf_len= (res_p - buf) + (int) subs[0].rm_so;
-
-      /* on this pass, calculate the memory for the result buffer */
-      while (expr_p < replace_end)
-      {
-        int back_ref_num= -1;
-        c= *expr_p;
-
-        if (c == '\\' && expr_p + 1 < replace_end)
-        {
-          back_ref_num= (int) (expr_p[1] - '0');
-        }
-
-        /* found a valid back_ref (eg. \1)*/
-        if (back_ref_num >= 0 && back_ref_num <= (int)r.re_nsub)
-        {
-          regoff_t start_off, end_off;
-          if ((start_off=subs[back_ref_num].rm_so) > -1 &&
-              (end_off=subs[back_ref_num].rm_eo) > -1)
-          {
-            need_buf_len += (int) (end_off - start_off);
-          }
-          expr_p += 2;
-        }
-        else
-        {
-          expr_p++;
-          need_buf_len++;
-        }
-      }
-      need_buf_len++;
-      /*
-        now that we know the size of the buffer,
-        make sure it is big enough
-      */
-      SECURE_REG_BUF
-
-        /* copy the pre-match part */
-        if (subs[0].rm_so)
-        {
-          memcpy(res_p, str_p, (size_t) subs[0].rm_so);
-          res_p+= subs[0].rm_so;
-        }
-
-      expr_p= replace;
-
-      /* copy the match and expand back_refs */
-      while (expr_p < replace_end)
-      {
-        int back_ref_num= -1;
-        c= *expr_p;
-
-        if (c == '\\' && expr_p + 1 < replace_end)
-        {
-          back_ref_num= expr_p[1] - '0';
-        }
-
-        if (back_ref_num >= 0 && back_ref_num <= (int)r.re_nsub)
-        {
-          regoff_t start_off, end_off;
-          if ((start_off=subs[back_ref_num].rm_so) > -1 &&
-              (end_off=subs[back_ref_num].rm_eo) > -1)
-          {
-            int block_len= (int) (end_off - start_off);
-            memcpy(res_p,str_p + start_off, block_len);
-            res_p += block_len;
-          }
-          expr_p += 2;
-        }
-        else
-        {
-          *res_p++ = *expr_p++;
-        }
-      }
-
-      /* handle the post-match part */
-      if (subs[0].rm_so == subs[0].rm_eo)
-      {
-        if (str_p + subs[0].rm_so >= str_end)
-          break;
-        str_p += subs[0].rm_eo ;
-        *res_p++ = *str_p++;
-      }
-      else
-      {
-        str_p += subs[0].rm_eo;
-      }
-    }
-    else /* no match this time, just copy the string as is */
-    {
-      int left_in_str= str_end-str_p;
-      need_buf_len= (res_p-buf) + left_in_str;
-      SECURE_REG_BUF
-        memcpy(res_p,str_p,left_in_str);
-      res_p += left_in_str;
-      str_p= str_end;
-    }
+    return 1;
   }
-  my_free(subs, MYF(0));
-  my_regfree(&r);
-  *res_p= 0;
-  *buf_p= buf;
-  *buf_len_p= buf_len;
+  strcpy(new_buf, new_str);
+  buf_p= &new_buf;
+
   return 0;
 }
 

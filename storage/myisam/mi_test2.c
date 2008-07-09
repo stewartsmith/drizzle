@@ -28,7 +28,7 @@
 #define STANDARD_LENGTH 37
 #define MYISAM_KEYS 6
 #define MAX_PARTS 4
-#if !defined(MSDOS) && !defined(labs)
+#if !defined(labs)
 #define labs(a) abs(a)
 #endif
 
@@ -1053,4 +1053,3 @@ static void copy_key(MI_INFO *info,uint inx,uchar *rec,uchar *key_buff)
   return;
 }
 
-#include "mi_extrafunc.h"

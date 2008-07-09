@@ -332,7 +332,6 @@ void key_unpack(String *to,TABLE *table,uint idx)
   Field *field;
   String tmp;
   my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->read_set);
-  DBUG_ENTER("key_unpack");
 
   to->length(0);
   for (key_part=table->key_info[idx].key_part,key_part_end=key_part+
@@ -380,7 +379,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
       to->append(STRING_WITH_LEN("???"));
   }
   dbug_tmp_restore_column_map(table->read_set, old_map);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -503,7 +502,6 @@ int key_rec_cmp(void *key, uchar *first_rec, uchar *second_rec)
   uchar *rec0= key_part->field->ptr - key_part->offset;
   my_ptrdiff_t first_diff= first_rec - rec0, sec_diff= second_rec - rec0;
   int result= 0;
-  DBUG_ENTER("key_rec_cmp");
 
   do
   {
@@ -527,12 +525,12 @@ int key_rec_cmp(void *key, uchar *first_rec, uchar *second_rec)
           ; /* Fall through, no NULL fields */
         else
         {
-          DBUG_RETURN(+1);
+          return(1);
         }
       }
       else if (!sec_is_null)
       {
-        DBUG_RETURN(-1);
+        return(-1);
       }
       else
         goto next_loop; /* Both were NULL */
@@ -549,5 +547,5 @@ int key_rec_cmp(void *key, uchar *first_rec, uchar *second_rec)
 next_loop:
     key_part++;
   } while (!result && ++i < key_parts);
-  DBUG_RETURN(result);
+  return(result);
 }

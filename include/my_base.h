@@ -103,14 +103,6 @@ enum ha_build_method {
   HA_BUILD_OFFLINE 
 };
 
-        /* Storage media types */ 
-
-enum ha_storage_media {
-  HA_SM_DEFAULT=        0,		/* Not specified (engine default) */
-  HA_SM_DISK=           1,		/* DISK storage */
-  HA_SM_MEMORY=         2		/* MAIN MEMORY storage */
-};
-
 	/* The following is parameter to ha_extra() */
 
 enum ha_extra_function {
@@ -194,13 +186,7 @@ enum ha_extra_function {
   */
   HA_EXTRA_INSERT_WITH_UPDATE,
   /* Inform handler that we will do a rename */
-  HA_EXTRA_PREPARE_FOR_RENAME,
-  /*
-    Orders MERGE handler to attach or detach its child tables. Used at
-    begin and end of a statement.
-  */
-  HA_EXTRA_ATTACH_CHILDREN,
-  HA_EXTRA_DETACH_CHILDREN
+  HA_EXTRA_PREPARE_FOR_RENAME
 };
 
 /* Compatible option, to be deleted in 6.0 */
@@ -576,7 +562,7 @@ typedef ulong		ha_rows;
 #define HA_POS_ERROR	(~ (ha_rows) 0)
 #define HA_OFFSET_ERROR	(~ (my_off_t) 0)
 
-#if SYSTEM_SIZEOF_OFF_T == 4
+#if SIZEOF_OFF_T == 4
 #define MAX_FILE_SIZE	INT_MAX32
 #else
 #define MAX_FILE_SIZE	LONGLONG_MAX

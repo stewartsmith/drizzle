@@ -429,10 +429,10 @@ public:
 template <class T> class List_iterator_fast :public base_list_iterator
 {
 protected:
-  inline T *replace(T *a)   { return (T*) 0; }
-  inline T *replace(List<T> &a) { return (T*) 0; }
+  inline T *replace(T *a __attribute__((__unused__)))   { return (T*) 0; }
+  inline T *replace(List<T> &a __attribute__((__unused__))) { return (T*) 0; }
   inline void remove(void)  { }
-  inline void after(T *a)   { }
+  inline void after(T *a __attribute__((__unused__)))   { }
   inline T** ref(void)	    { return (T**) 0; }
 
 public:

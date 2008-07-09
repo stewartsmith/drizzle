@@ -415,7 +415,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   struct event_coordinates coord_buf;
   struct timespec *heartbeat_ts= NULL;
   struct event_coordinates *coord= NULL;
-  if (heartbeat_period != LL(0))
+  if (heartbeat_period != 0LL)
   {
     heartbeat_ts= &heartbeat_buf;
     set_timespec_nsec(*heartbeat_ts, 0);
@@ -547,9 +547,6 @@ impossible position";
          The packet has offsets equal to the normal offsets in a binlog
          event +1 (the first character is \0).
        */
-       DBUG_PRINT("info",
-                  ("Looked for a Format_description_log_event, found event type %d",
-                   (*packet)[EVENT_TYPE_OFFSET+1]));
        if ((*packet)[EVENT_TYPE_OFFSET+1] == FORMAT_DESCRIPTION_EVENT)
        {
          binlog_can_be_corrupted= test((*packet)[FLAGS_OFFSET+1] &
@@ -638,8 +635,6 @@ impossible position";
 	goto err;
       }
 
-      DBUG_PRINT("info", ("log event code %d",
-			  (*packet)[LOG_EVENT_OFFSET+1] ));
       if ((*packet)[LOG_EVENT_OFFSET+1] == LOAD_EVENT)
       {
 	if (send_file(thd))
@@ -737,11 +732,11 @@ impossible position";
           {
             if (coord)
             {
-              DBUG_ASSERT(heartbeat_ts && heartbeat_period != LL(0));
+              DBUG_ASSERT(heartbeat_ts && heartbeat_period != 0LL);
               set_timespec_nsec(*heartbeat_ts, heartbeat_period);
             }
             ret= mysql_bin_log.wait_for_update_bin_log(thd, heartbeat_ts);
-            DBUG_ASSERT(ret == 0 || heartbeat_period != LL(0) && coord != NULL);
+            DBUG_ASSERT(ret == 0 || heartbeat_period != 0LL && coord != NULL);
             if (ret == ETIMEDOUT || ret == ETIME)
             {
 #ifndef DBUG_OFF
@@ -1254,7 +1249,7 @@ bool change_master(THD* thd, Master_info* mi)
   else
     mi->heartbeat_period= (float) min(SLAVE_MAX_HEARTBEAT_PERIOD,
                                       (slave_net_timeout/2.0));
-  mi->received_heartbeats= LL(0); // counter lives until master is CHANGEd
+  mi->received_heartbeats= 0LL; // counter lives until master is CHANGEd
   if (lex_mi->ssl != LEX_MASTER_INFO::LEX_MI_UNCHANGED)
     mi->ssl= (lex_mi->ssl == LEX_MASTER_INFO::LEX_MI_ENABLE);
 
@@ -1782,9 +1777,6 @@ static void fix_slave_net_timeout(THD *thd, enum_var_type type)
   DBUG_ENTER("fix_slave_net_timeout");
 #ifdef HAVE_REPLICATION
   pthread_mutex_lock(&LOCK_active_mi);
-  DBUG_PRINT("info",("slave_net_timeout=%lu mi->heartbeat_period=%.3f",
-                     slave_net_timeout,
-                     (active_mi? active_mi->heartbeat_period : 0.0)));
   if (active_mi && slave_net_timeout < active_mi->heartbeat_period)
     push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,

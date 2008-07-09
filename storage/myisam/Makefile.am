@@ -34,43 +34,43 @@ DEFS =                  @DEFS@
 EXTRA_DIST =		mi_test_all.sh mi_test_all.res plug.in
 pkgdata_DATA =		mi_test_all mi_test_all.res
 
-pkglib_LIBRARIES =	libmyisam.a
-#bin_PROGRAMS =		myisamchk myisamlog myisampack
-bin_PROGRAMS =
-myisamchk_DEPENDENCIES=	$(LIBRARIES)
-myisamchk_LDADD=	libmyisam.a \
+noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
+			libmyisamha.la libmyisamnone.la
+bin_PROGRAMS =		myisamchk myisamlog myisampack
+myisamchk_LDADD=	libmyisamutil.la \
+			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-myisamlog_DEPENDENCIES=	$(LIBRARIES)
-myisamlog_LDADD=	libmyisam.a \
+myisamlog_LDADD=	libmyisamutil.la \
+			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-myisampack_DEPENDENCIES=$(LIBRARIES)
-myisampack_LDADD=	libmyisam.a \
+myisampack_LDADD=	libmyisamutil.la \
+			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3
 noinst_HEADERS =	myisamdef.h \
-			ha_myisam.h mi_extrafunc.h
-mi_test1_DEPENDENCIES=	$(LIBRARIES)
-mi_test1_LDADD=		libmyisam.a \
+			ha_myisam.h
+mi_test1_LDADD=		libmyisamutil.la \
+			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-mi_test2_DEPENDENCIES=	$(LIBRARIES)
-mi_test2_LDADD=		libmyisam.a \
+mi_test2_LDADD=		libmyisamutil.la \
+			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-mi_test3_DEPENDENCIES=	$(LIBRARIES)
-mi_test3_LDADD=		libmyisam.a \
+mi_test3_LDADD=		libmyisamutil.la \
+			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
-libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
+libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \
 			mi_search.c mi_page.c mi_key.c mi_locking.c \
 			mi_rrnd.c mi_scan.c mi_cache.c \
@@ -85,8 +85,12 @@ libmyisam_a_SOURCES =	mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_changed.c mi_static.c mi_delete_all.c \
 			mi_delete_table.c mi_rename.c  mi_check.c \
 			mi_keycache.c mi_preload.c \
-			sort.c \
-			ha_myisam.cc
+			sort.c 
+libmyisamha_la_SOURCES = ha_myisam.cc
+libmyisamnone_la_SOURCES = mi_reportnone.c
+libmyisam_la_SOURCES = 
+libmyisam_la_LIBADD = libmyisamha.la libmyisamutil.la
+
 CLEANFILES =		test?.MY? FT?.MY? isam.log mi_test_all
 
 # Move to automake rules ?

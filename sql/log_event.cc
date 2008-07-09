@@ -139,8 +139,8 @@ static void inline slave_rows_error_report(enum loglevel level, int ha_error,
   for (err= it++, slider= buff; err && slider < buff_end - 1;
        slider += len, err= it++)
   {
-    len= my_snprintf(slider, buff_end - slider,
-                     " %s, Error_code: %d;", err->msg, err->code);
+    len= snprintf(slider, buff_end - slider,
+                  " %s, Error_code: %d;", err->msg, err->code);
   }
   
   rli->report(level, thd->is_error()? thd->main_da.sql_errno() : 0,
@@ -1256,14 +1256,14 @@ void Log_event::print_header(IO_CACHE* file,
       my_b_printf(file, "# Position  Timestamp   Type   Master ID        "
                   "Size      Master Pos    Flags \n");
       int const bytes_written=
-        my_snprintf(emit_buf, sizeof(emit_buf),
-                    "# %8.8lx %02x %02x %02x %02x   %02x   "
-                    "%02x %02x %02x %02x   %02x %02x %02x %02x   "
-                    "%02x %02x %02x %02x   %02x %02x\n",
-                    (unsigned long) hexdump_from,
-                    ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6],
-                    ptr[7], ptr[8], ptr[9], ptr[10], ptr[11], ptr[12], ptr[13],
-                    ptr[14], ptr[15], ptr[16], ptr[17], ptr[18]);
+        snprintf(emit_buf, sizeof(emit_buf),
+                 "# %8.8lx %02x %02x %02x %02x   %02x   "
+                 "%02x %02x %02x %02x   %02x %02x %02x %02x   "
+                 "%02x %02x %02x %02x   %02x %02x\n",
+                 (unsigned long) hexdump_from,
+                 ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6],
+                 ptr[7], ptr[8], ptr[9], ptr[10], ptr[11], ptr[12], ptr[13],
+                 ptr[14], ptr[15], ptr[16], ptr[17], ptr[18]);
       DBUG_ASSERT(bytes_written >= 0);
       DBUG_ASSERT(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
       my_b_write(file, (uchar*) emit_buf, bytes_written);
@@ -1276,7 +1276,7 @@ void Log_event::print_header(IO_CACHE* file,
 	 i < size;
 	 i++, ptr++)
     {
-      my_snprintf(h, 4, "%02x ", *ptr);
+      snprintf(h, 4, "%02x ", *ptr);
       h += 3;
 
       *c++= my_isalnum(&my_charset_bin, *ptr) ? *ptr : '.';
@@ -1291,10 +1291,10 @@ void Log_event::print_header(IO_CACHE* file,
          */
         char emit_buf[256];
         int const bytes_written=
-          my_snprintf(emit_buf, sizeof(emit_buf),
-                      "# %8.8lx %-48.48s |%16s|\n",
-                      (unsigned long) (hexdump_from + (i & 0xfffffff0)),
-                      hex_string, char_string);
+          snprintf(emit_buf, sizeof(emit_buf),
+                   "# %8.8lx %-48.48s |%16s|\n",
+                   (unsigned long) (hexdump_from + (i & 0xfffffff0)),
+                   hex_string, char_string);
         DBUG_ASSERT(bytes_written >= 0);
         DBUG_ASSERT(static_cast<size_t>(bytes_written) < sizeof(emit_buf));
 	my_b_write(file, (uchar*) emit_buf, bytes_written);
@@ -1311,7 +1311,7 @@ void Log_event::print_header(IO_CACHE* file,
     {
       char emit_buf[256];
       int const bytes_written=
-        my_snprintf(emit_buf, sizeof(emit_buf),
+        snprintf(emit_buf, sizeof(emit_buf),
                     "# %8.8lx %-48.48s |%s|\n",
                     (unsigned long) (hexdump_from + (i & 0xfffffff0)),
                     hex_string, char_string);
@@ -3905,11 +3905,11 @@ Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'",
   if (thd->is_fatal_error)
   {
     char buf[256];
-    my_snprintf(buf, sizeof(buf),
-                "Running LOAD DATA INFILE on table '%-.64s'."
-                " Default database: '%-.64s'",
-                (char*)table_name,
-                print_slave_db_safe(remember_db));
+    snprintf(buf, sizeof(buf),
+             "Running LOAD DATA INFILE on table '%-.64s'."
+             " Default database: '%-.64s'",
+             (char*)table_name,
+             print_slave_db_safe(remember_db));
 
     rli->report(ERROR_LEVEL, ER_SLAVE_FATAL_ERROR,
                 ER(ER_SLAVE_FATAL_ERROR), buf);
@@ -6910,8 +6910,8 @@ void Rows_log_event::pack_info(Protocol *protocol)
   char buf[256];
   char const *const flagstr=
     get_flags(STMT_END_F) ? " flags: STMT_END_F" : "";
-  size_t bytes= my_snprintf(buf, sizeof(buf),
-                               "table_id: %lu%s", m_table_id, flagstr);
+  size_t bytes= snprintf(buf, sizeof(buf),
+                         "table_id: %lu%s", m_table_id, flagstr);
   protocol->store(buf, bytes, &my_charset_bin);
 }
 #endif
@@ -7444,9 +7444,9 @@ bool Table_map_log_event::write_data_body(IO_CACHE *file)
 void Table_map_log_event::pack_info(Protocol *protocol)
 {
     char buf[256];
-    size_t bytes= my_snprintf(buf, sizeof(buf),
-                                 "table_id: %lu (%s.%s)",
-                              m_table_id, m_dbnam, m_tblnam);
+    size_t bytes= snprintf(buf, sizeof(buf),
+                           "table_id: %lu (%s.%s)",
+                           m_table_id, m_dbnam, m_tblnam);
     protocol->store(buf, bytes, &my_charset_bin);
 }
 #endif
@@ -8536,11 +8536,11 @@ void Incident_log_event::pack_info(Protocol *protocol)
   char buf[256];
   size_t bytes;
   if (m_message.length > 0)
-    bytes= my_snprintf(buf, sizeof(buf), "#%d (%s)",
-                       m_incident, description());
+    bytes= snprintf(buf, sizeof(buf), "#%d (%s)",
+                    m_incident, description());
   else
-    bytes= my_snprintf(buf, sizeof(buf), "#%d (%s): %s",
-                       m_incident, description(), m_message.str);
+    bytes= snprintf(buf, sizeof(buf), "#%d (%s): %s",
+                    m_incident, description(), m_message.str);
   protocol->store(buf, bytes, &my_charset_bin);
 }
 #endif

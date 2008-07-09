@@ -278,9 +278,6 @@ double Unique::get_use_cost(uint *buffer, uint nkeys, uint key_size,
     result+= n_full_trees * log2_n_fact(max_elements_in_tree + 1.0);
   result /= TIME_FOR_COMPARE_ROWID;
 
-  DBUG_PRINT("info",("unique trees sizes: %u=%u*%lu + %lu", nkeys,
-                     n_full_trees, n_full_trees?max_elements_in_tree:0,
-                     last_tree_elems));
 
   if (!n_full_trees)
     return result;

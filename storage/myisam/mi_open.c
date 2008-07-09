@@ -18,17 +18,6 @@
 #include "myisamdef.h"
 #include <m_ctype.h>
 
-#if defined(MSDOS) || defined(__WIN__)
-#ifdef __WIN__
-#include <fcntl.h>
-#else
-#include <process.h>			/* Prototype for getpid */
-#endif
-#endif
-#ifdef VMS
-#include "static.c"
-#endif
-
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 #define get_next_element(to,pos,size) { memcpy((char*) to,pos,(size_t) size); \
 					pos+=size;}

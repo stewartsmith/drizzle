@@ -1453,7 +1453,7 @@ bool sys_var::check_set(THD *thd, set_var *var, TYPELIB *enum_names)
       For when the enum is made to contain 64 elements, as 1ULL<<64 is
       undefined, we guard with a "count<64" test.
     */
-    if (unlikely((tmp >= ((ULL(1)) << enum_names->count)) &&
+    if (unlikely((tmp >= ((1ULL) << enum_names->count)) &&
                  (enum_names->count < 64)))
     {
       llstr(tmp, buff);

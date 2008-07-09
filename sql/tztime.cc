@@ -482,7 +482,7 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 */
 static my_time_t
 TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
-                my_bool *in_dst_time_gap)
+                bool *in_dst_time_gap)
 {
   my_time_t local_t;
   uint saved_seconds;
@@ -607,7 +607,7 @@ class Time_zone_system : public Time_zone
 public:
   Time_zone_system() {}                       /* Remove gcc warning */
   virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
-                                    my_bool *in_dst_time_gap) const;
+                                    bool *in_dst_time_gap) const;
   virtual void gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
 };
@@ -639,7 +639,7 @@ public:
     Corresponding my_time_t value or 0 in case of error
 */
 my_time_t
-Time_zone_system::TIME_to_gmt_sec(const MYSQL_TIME *t, my_bool *in_dst_time_gap) const
+Time_zone_system::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) const
 {
   long not_used;
   return my_system_gmt_sec(t, &not_used, in_dst_time_gap);
@@ -701,7 +701,7 @@ class Time_zone_utc : public Time_zone
 public:
   Time_zone_utc() {}                          /* Remove gcc warning */
   virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
-                                    my_bool *in_dst_time_gap) const;
+                                    bool *in_dst_time_gap) const;
   virtual void gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
 };
@@ -727,7 +727,7 @@ public:
     0
 */
 my_time_t
-Time_zone_utc::TIME_to_gmt_sec(const MYSQL_TIME *t, my_bool *in_dst_time_gap) const
+Time_zone_utc::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) const
 {
   /* Should be never called */
   DBUG_ASSERT(0);
@@ -790,7 +790,7 @@ class Time_zone_db : public Time_zone
 public:
   Time_zone_db(TIME_ZONE_INFO *tz_info_arg, const String * tz_name_arg);
   virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
-                                    my_bool *in_dst_time_gap) const;
+                                    bool *in_dst_time_gap) const;
   virtual void gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
 private:
@@ -839,7 +839,7 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
     Corresponding my_time_t value or 0 in case of error
 */
 my_time_t
-Time_zone_db::TIME_to_gmt_sec(const MYSQL_TIME *t, my_bool *in_dst_time_gap) const
+Time_zone_db::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) const
 {
   return ::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
 }
@@ -886,7 +886,7 @@ class Time_zone_offset : public Time_zone
 public:
   Time_zone_offset(long tz_offset_arg);
   virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
-                                    my_bool *in_dst_time_gap) const;
+                                    bool *in_dst_time_gap) const;
   virtual void   gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
   /*
@@ -914,8 +914,8 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
 {
   uint hours= abs((int)(offset / SECS_PER_HOUR));
   uint minutes= abs((int)(offset % SECS_PER_HOUR / SECS_PER_MIN));
-  ulong length= my_snprintf(name_buff, sizeof(name_buff), "%s%02d:%02d",
-                            (offset>=0) ? "+" : "-", hours, minutes);
+  ulong length= snprintf(name_buff, sizeof(name_buff), "%s%02d:%02d",
+                         (offset>=0) ? "+" : "-", hours, minutes);
   name.set(name_buff, length, &my_charset_latin1);
 }
 
@@ -938,7 +938,7 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
     Corresponding my_time_t value or 0 in case of error
 */
 my_time_t
-Time_zone_offset::TIME_to_gmt_sec(const MYSQL_TIME *t, my_bool *in_dst_time_gap) const
+Time_zone_offset::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) const
 {
   my_time_t local_t;
   int shift= 0;
@@ -1051,7 +1051,7 @@ public:
     1 - Error
 */
 bool
-my_tz_init(THD *thd, const char *default_tzname, my_bool bootstrap)
+my_tz_init(THD *thd, const char *default_tzname, bool bootstrap)
 {
   if (default_tzname)
   {
@@ -1100,11 +1100,11 @@ void my_tz_free()
     0 - Ok
     1 - String doesn't contain valid time zone offset
 */
-my_bool
+bool
 str_to_offset(const char *str, uint length, long *offset)
 {
   const char *end= str + length;
-  my_bool negative;
+  bool negative;
   ulong number_tmp;
   long offset_tmp;
 

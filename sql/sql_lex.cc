@@ -1851,17 +1851,19 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
   }
 }
 
-bool st_select_lex_node::set_braces(bool value)      { return 1; }
+bool st_select_lex_node::set_braces(bool value __attribute__((__unused__)))
+{ return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint st_select_lex_node::get_in_sum_expr()           { return 0; }
 TABLE_LIST* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TABLE_LIST *st_select_lex_node::add_table_to_list (THD *thd, Table_ident *table,
-						  LEX_STRING *alias,
-						  ulong table_join_options,
-						  thr_lock_type flags,
-						  List<Index_hint> *hints,
-                                                  LEX_STRING *option)
+TABLE_LIST *st_select_lex_node::add_table_to_list (THD *thd __attribute__((__unused__)),
+                                                   Table_ident *table __attribute__((__unused__)),
+						  LEX_STRING *alias __attribute__((__unused__)),
+						  ulong table_join_options __attribute__((__unused__)),
+						  thr_lock_type flags __attribute__((__unused__)),
+						  List<Index_hint> *hints __attribute__((__unused__)),
+                                                  LEX_STRING *option __attribute__((__unused__)))
 {
   return 0;
 }
@@ -1903,7 +1905,8 @@ bool st_select_lex::add_order_to_list(THD *thd, Item *item, bool asc)
 }
 
 
-bool st_select_lex::add_item_to_list(THD *thd, Item *item)
+bool st_select_lex::add_item_to_list(THD *thd __attribute__((__unused__)),
+                                     Item *item)
 {
   DBUG_ENTER("st_select_lex::add_item_to_list");
   DBUG_PRINT("info", ("Item: 0x%lx", (long) item));
@@ -2027,7 +2030,7 @@ void st_select_lex::print_order(String *str,
     if (order->counter_used)
     {
       char buffer[20];
-      uint length= my_snprintf(buffer, 20, "%d", order->counter);
+      uint length= snprintf(buffer, 20, "%d", order->counter);
       str->append(buffer, length);
     }
     else
@@ -2040,7 +2043,7 @@ void st_select_lex::print_order(String *str,
 }
  
 
-void st_select_lex::print_limit(THD *thd,
+void st_select_lex::print_limit(THD *thd __attribute__((__unused__)),
                                 String *str,
                                 enum_query_type query_type)
 {
@@ -2063,7 +2066,7 @@ void st_select_lex::print_limit(THD *thd,
                     ((Item_in_subselect*)item)->exec_method ==
                     Item_in_subselect::MATERIALIZATION) ?
                    TRUE :
-                   (select_limit->val_int() == LL(1)) &&
+                   (select_limit->val_int() == 1LL) &&
                    offset_limit == 0));
       return;
     }
@@ -2092,7 +2095,7 @@ void st_select_lex::print_limit(THD *thd,
   to implement the clean up.
 */
 
-void st_lex::cleanup_lex_after_parse_error(THD *thd)
+void st_lex::cleanup_lex_after_parse_error(THD *thd __attribute__((__unused__)))
 {
 }
 
@@ -2373,7 +2376,7 @@ bool st_lex::need_correct_ident()
     VIEW_CHECK_CASCADED  CHECK OPTION CASCADED
 */
 
-uint8 st_lex::get_effective_with_check(TABLE_LIST *view)
+uint8 st_lex::get_effective_with_check(TABLE_LIST *view __attribute__((__unused__)))
 {
   return 0;
 }
@@ -2428,7 +2431,7 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
     select_limit_val= HA_POS_ERROR;
 #endif
   offset_limit_cnt= (ha_rows)(sl->offset_limit ? sl->offset_limit->val_uint() :
-                                                 ULL(0));
+                                                 0ULL);
   select_limit_cnt= select_limit_val + offset_limit_cnt;
   if (select_limit_cnt < select_limit_val)
     select_limit_cnt= HA_POS_ERROR;		// no limit
@@ -2610,7 +2613,7 @@ void st_lex::cleanup_after_one_table_open()
       backup  Pointer to Query_tables_list instance to be used for backup
 */
 
-void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup)
+void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup __attribute__((__unused__)))
 {
 }
 
@@ -2623,7 +2626,7 @@ void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup)
       backup  Pointer to Query_tables_list instance used for backup
 */
 
-void st_lex::restore_backup_query_tables_list(Query_tables_list *backup)
+void st_lex::restore_backup_query_tables_list(Query_tables_list *backup __attribute__((__unused__)))
 {
 }
 

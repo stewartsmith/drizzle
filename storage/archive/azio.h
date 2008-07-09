@@ -33,10 +33,6 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
-#ifdef HAVE_MYSQL_CONFIG_H
-#include "../../include/config.h"
-#endif
-
 #ifndef __AZIO_H__
 #define __AZIO_H__
 

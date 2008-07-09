@@ -40,7 +40,6 @@ show tables like 't%';
 --replace_column 8 # 12 # 13 #
 show table status;
 show full columns from t3 like "a%";
-show full columns from mysql.db like "Insert%";
 select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";
 show columns from mysqltest.t1 where field like "%a%";
