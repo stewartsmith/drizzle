@@ -2,9 +2,9 @@
   Just a test application for threads.
   */
 #include "azio.h"
-#include <mysql.h>
+#include <drizzle.h>
 #include <my_getopt.h>
-#include <mysql_version.h>
+#include <drizzle_version.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>

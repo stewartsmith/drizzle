@@ -1214,7 +1214,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  dbug/Makefile include/Makefile dnl
  support-files/Makefile dnl
  mysql-test/Makefile mysql-test/install_test_db dnl
- include/mysql_version.h plugin/Makefile dnl
+ include/drizzle_version.h plugin/Makefile dnl
  sql/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 

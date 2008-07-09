@@ -84,7 +84,7 @@ So, we can read full search-structure as 32-bit word
 #define __GNU_LIBRARY__				// Skip warnings in getopt.h
 #endif
 #include <my_getopt.h>
-#include "mysql_version.h"
+#include "drizzle_version.h"
 #include "lex.h"
 
 const char *default_dbug_option="d:t:o,/tmp/gen_lex_hash.trace";

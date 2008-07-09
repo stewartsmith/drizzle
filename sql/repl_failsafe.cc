@@ -32,7 +32,6 @@
 #include "rpl_mi.h"
 #include "rpl_filter.h"
 #include "log_event.h"
-#include <mysql.h>
 
 #define SLAVE_LIST_CHUNK 128
 #define SLAVE_ERRMSG_SIZE (FN_REFLEN+64)

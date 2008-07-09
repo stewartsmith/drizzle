@@ -46,8 +46,7 @@
 #include <stdarg.h>
 
 #include "client_priv.h"
-#include "mysql.h"
-#include "mysql_version.h"
+#include "drizzle_version.h"
 #include "mysqld_error.h"
 
 /* Exit codes */

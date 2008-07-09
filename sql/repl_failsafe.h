@@ -15,7 +15,7 @@
 
 #ifdef HAVE_REPLICATION
 
-#include "mysql.h"
+#include "mysql_priv.h"
 #include "my_sys.h"
 #include "slave.h"
 
