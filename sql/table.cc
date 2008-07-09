@@ -765,18 +765,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         uint format_section_len= uint2korr(next_chunk+0);
         uint flags=              uint4korr(next_chunk+2);
 
-        const char *tablespace= (const char*)next_chunk + format_section_header_size;
-        uint tablespace_len= strlen(tablespace);
-        if (tablespace_len != 0) 
-        {
-          share->tablespace= (char *) alloc_root(&share->mem_root,
-                                                 tablespace_len+1);
-          strxmov(share->tablespace, tablespace, NullS);
-        }
-        else
-          share->tablespace= NULL;
+        share->tablespace= NULL;
 
-        field_extra_info= next_chunk + format_section_header_size + tablespace_len + 1;
+        field_extra_info= next_chunk + format_section_header_size + 1;
         next_chunk+= format_section_len;
       }
     }

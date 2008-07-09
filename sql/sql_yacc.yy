@@ -1398,11 +1398,6 @@ create:
           }
         ;
 
-
-/*
-  End tablespace part
-*/
-
 create2:
           '(' create2a {}
         | opt_create_table_options
