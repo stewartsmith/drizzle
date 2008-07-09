@@ -25,7 +25,7 @@ SUBDIRS =		. include \
                         extra \
                         libdrizzle client storage plugin \
                         sql \
-			test support-files
+			tests support-files
 
 DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
 
@@ -56,23 +56,23 @@ bin-dist:		all
 # making sure each user use different ports.
 
 test-ps:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl $(force) --ps-protocol --mysqld=--binlog-format=mixed
 
 test-nr:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl $(force) --mysqld=--binlog-format=row
 
 test-pr:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl $(force) $(mem) --ps-protocol --mysqld=--binlog-format=row
 
 test-ns:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl $(force) $(mem) --mysqld=--binlog-format=mixed
 
 test-binlog-statement:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl $(force) --mysqld=--binlog-format=statement
 
 test: test-drizzle
@@ -92,29 +92,29 @@ test-force-mem:
 	$(MAKE) force=--force mem=--mem test
 
 test-bt:
-	-cd test ; MTR_BUILD_THREAD=auto \
+	-cd tests ; MTR_BUILD_THREAD=auto \
 	    @PERL@ ./drizzle-test-run.pl --force --comment=funcs1_ps --ps-protocol --suite=funcs_1
-	-cd test ; MTR_BUILD_THREAD=auto \
+	-cd tests ; MTR_BUILD_THREAD=auto \
 	    @PERL@ ./drizzle-test-run.pl --force --comment=funcs2 --suite=funcs_2
-	-cd test ; MTR_BUILD_THREAD=auto \
+	-cd tests ; MTR_BUILD_THREAD=auto \
 	    @PERL@ ./drizzle-test-run.pl --force --comment=rpl --suite=rpl
 	-if [ -d test/suite/nist ] ; then \
-	  cd test ; MTR_BUILD_THREAD=auto \
+	  cd tests ; MTR_BUILD_THREAD=auto \
 	      @PERL@ ./drizzle-test-run.pl --comment=NIST+normal --force --suite=nist ; \
 	fi
 	-if [ -d test/suite/nist ] ; then \
-	  cd test ; MTR_BUILD_THREAD=auto \
+	  cd tests ; MTR_BUILD_THREAD=auto \
 	      @PERL@ ./drizzle-test-run.pl --comment=NIST+ps --force --suite=nist --ps-protocol ; \
 	fi
-	-cd test ; MTR_BUILD_THREAD=auto \
+	-cd tests ; MTR_BUILD_THREAD=auto \
 	    @PERL@ ./drizzle-test-run.pl --force --comment=stress --suite=stress
 
 # Re-enable the "jp" suite when bug#28563 is fixed
-#	-cd test ; MTR_BUILD_THREAD=auto \
+#	-cd tests ; MTR_BUILD_THREAD=auto \
 #	    @PERL@ ./drizzle-test-run.pl --force --comment=jp --suite=jp
 
 test-bt-debug:
-	-cd test ; MTR_BUILD_THREAD=auto \
+	-cd tests ; MTR_BUILD_THREAD=auto \
 	    @PERL@ ./drizzle-test-run.pl --comment=debug  --force --timer \
 	        --skip-rpl --report-features
 
@@ -126,26 +126,26 @@ test-force-pl-mem:  test-force-mem
 test-force-full-pl: test-force-full
 
 test-ext-funcs:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl --force --suite=funcs_1 ; \
 	    @PERL@ ./drizzle-test-run.pl --force --suite=funcs_2
 
 test-ext-rpl:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl --force --suite=rpl
 
 test-ext-jp:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl --force --suite=jp
 
 test-ext-stress:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl --force --big-test --suite=stress
 
 test-ext:	test-ext-funcs test-ext-rpl test-ext-jp test-ext-stress
 
 test-fast:
-	cd test ; \
+	cd tests ; \
 	    @PERL@ ./drizzle-test-run.pl $(subset) --force --skip-innodb --skip-im --skip-rpl ; \
 	    @PERL@ ./drizzle-test-run.pl $(subset) --force --suite=funcs_1 --do-test=myisam ; \
 	    @PERL@ ./drizzle-test-run.pl $(subset) --force --suite=stress --do-test=ddl_myisam 
@@ -165,7 +165,7 @@ test-full-qa:
 	        test-fast-cursor 
 
 test-drizzle:
-	cd test ; \
+	cd tests ; \
 	@PERL@ ./drizzle-test-run.pl --fast --reorder --force \
 		join_crash \
 		join_nested \
