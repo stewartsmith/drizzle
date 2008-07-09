@@ -1897,18 +1897,6 @@ THD *handler::ha_thd(void) const
   return (table && table->in_use) ? table->in_use : current_thd;
 }
 
-
-/**
-   Get tablespace name from handler 
-   Returns the tablespace name associated
-   with the table or NULL if not defined
-*/
-const 
-char* handler::get_tablespace_name()
-{
-  return table->s->tablespace;
-}
-
 /**
   Open database-handler.
 

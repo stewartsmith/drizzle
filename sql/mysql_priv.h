@@ -1033,7 +1033,6 @@ TABLE *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
 bool mysql_xa_recover(THD *thd);
 
 bool check_simple_select();
-int mysql_alter_tablespace(THD* thd, st_alter_tablespace *ts_info);
 
 SORT_FIELD * make_unireg_sortorder(ORDER *order, uint *length,
                                   SORT_FIELD *sortorder);

@@ -192,8 +192,6 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
 
     share->version=       refresh_version;
 
-    share->tablespace=    NULL;
-
     /*
       This constant is used to mark that no table map version has been
       assigned.  No arithmetic is done on the value: it will be
@@ -261,7 +259,6 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
   share->normalized_path.str=    (char*) path;
   share->path.length= share->normalized_path.length= strlen(path);
   share->frm_version= 		 FRM_VER_TRUE_VARCHAR;
-  share->tablespace=             NULL;
   /*
     Temporary tables are not replicated, but we set up these fields
     anyway to be able to catch errors.
@@ -763,9 +760,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       {
         const uint format_section_header_size= 8;
         uint format_section_len= uint2korr(next_chunk+0);
-        uint flags=              uint4korr(next_chunk+2);
-
-        share->tablespace= NULL;
 
         field_extra_info= next_chunk + format_section_header_size + 1;
         next_chunk+= format_section_len;
@@ -2151,7 +2145,6 @@ void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
   create_info->table_options= share->db_create_options;
   create_info->avg_row_length= share->avg_row_length;
   create_info->row_type= share->row_type;
-  create_info->tablespace= share->tablespace;
   create_info->default_table_charset= share->table_charset;
   create_info->table_charset= 0;
   create_info->comment= share->comment;
