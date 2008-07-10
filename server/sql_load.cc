@@ -135,7 +135,7 @@ static bool write_execute_load_query_log_event(THD *thd,
       read_file_from_client - is this LOAD DATA LOCAL ?
 
   RETURN VALUES
-    TRUE - error / FALSE - success
+    true - error / false - success
 */
 
 int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
@@ -167,10 +167,10 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
   {
     my_message(ER_WRONG_FIELD_TERMINATORS,ER(ER_WRONG_FIELD_TERMINATORS),
 	       MYF(0));
-    return(TRUE);
+    return(true);
   }
   if (open_and_lock_tables(thd, table_list))
-    return(TRUE);
+    return(true);
   if (setup_tables_and_check_access(thd, &thd->lex->select_lex.context,
                                     &thd->lex->select_lex.top_join_list,
                                     table_list,
@@ -188,7 +188,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
   if (unique_table(thd, table_list, table_list->next_global, 0))
   {
     my_error(ER_UPDATE_TABLE_USED, MYF(0), table_list->table_name);
-    return(TRUE);
+    return(true);
   }
 
   table= table_list->table;
@@ -207,7 +207,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     */
     if (setup_fields(thd, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
         setup_fields(thd, 0, set_values, MARK_COLUMNS_READ, 0, 0))
-      return(TRUE);
+      return(true);
   }
   else
   {						// Part field list
@@ -215,7 +215,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     if (setup_fields(thd, 0, fields_vars, MARK_COLUMNS_WRITE, 0, 0) ||
         setup_fields(thd, 0, set_fields, MARK_COLUMNS_WRITE, 0, 0) ||
         check_that_all_fields_are_given_values(thd, table, table_list))
-      return(TRUE);
+      return(true);
     /*
       Check whenever TIMESTAMP field with auto-set feature specified
       explicitly.
@@ -233,7 +233,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     }
     /* Fix the expressions in SET clause */
     if (setup_fields(thd, 0, set_values, MARK_COLUMNS_READ, 0, 0))
-      return(TRUE);
+      return(true);
   }
 
   table->mark_columns_needed_for_insert();
@@ -265,12 +265,12 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
   {
     my_message(ER_BLOBS_AND_NO_TERMINATED,ER(ER_BLOBS_AND_NO_TERMINATED),
 	       MYF(0));
-    return(TRUE);
+    return(true);
   }
   if (use_vars && !field_term->length() && !enclosed->length())
   {
     my_error(ER_LOAD_FROM_FIXED_SIZE_ROWS_TO_VAR, MYF(0));
-    return(TRUE);
+    return(true);
   }
 
   /* We can't give an error in the middle when using LOCAL files */
@@ -303,12 +303,12 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
       {
         /* Read only allowed from within dir specified by secure_file_priv */
         my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--secure-file-priv");
-        return(TRUE);
+        return(true);
       }
 
       struct stat stat_info;
       if (stat(name,&stat_info))
-	return(TRUE);
+	return(true);
 
       // if we are not in slave thread, the file must be:
       if (!thd->slave_thread &&
@@ -318,13 +318,13 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
 	     (stat_info.st_mode & S_IFIFO) == S_IFIFO)))
       {
 	my_error(ER_TEXTFILE_NOT_READABLE, MYF(0), name);
-	return(TRUE);
+	return(true);
       }
       if ((stat_info.st_mode & S_IFIFO) == S_IFIFO)
 	is_fifo = 1;
     }
     if ((file=my_open(name,O_RDONLY,MYF(MY_WME))) < 0)
-      return(TRUE);
+      return(true);
   }
 
   COPY_INFO info;
@@ -341,7 +341,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
   {
     if	(file >= 0)
       my_close(file,MYF(0));			// no files in net reading
-    return(TRUE);				// Can't allocate buffers
+    return(true);				// Can't allocate buffers
   }
 
   if (mysql_bin_log.is_open())
@@ -414,11 +414,6 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
      simulated killing in the middle of per-row loop
      must be effective for binlogging
   */
-  DBUG_EXECUTE_IF("simulate_kill_bug27571",
-                  {
-                    error=1;
-                    thd->killed= THD::KILL_QUERY;
-                  };);
   killed_status= (error == 0)? THD::NOT_KILLED : thd->killed;
   if (error)
   {
@@ -475,7 +470,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
 	  (ulong) (info.records - info.copied), (ulong) thd->cuted_fields);
 
   if (thd->transaction.stmt.modified_non_trans_table)
-    thd->transaction.all.modified_non_trans_table= TRUE;
+    thd->transaction.all.modified_non_trans_table= true;
 
   if (mysql_bin_log.is_open())
   {
@@ -508,10 +503,10 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
   /* ok to client sent only after binlog write and engine commit */
   my_ok(thd, info.copied + info.deleted, 0L, name);
 err:
-  DBUG_ASSERT(transactional_table || !(info.copied || info.deleted) ||
+  assert(transactional_table || !(info.copied || info.deleted) ||
               thd->transaction.stmt.modified_non_trans_table);
   table->file->ha_release_auto_increment();
-  table->auto_increment_field_not_null= FALSE;
+  table->auto_increment_field_not_null= false;
   thd->abort_on_warning= 0;
   return(error);
 }
@@ -529,7 +524,7 @@ static bool write_execute_load_query_log_event(THD *thd,
       (char*)thd->lex->fname_end - (char*)thd->query,
       (duplicates == DUP_REPLACE) ? LOAD_DUP_REPLACE :
       (ignore ? LOAD_DUP_IGNORE : LOAD_DUP_ERROR),
-      transactional_table, FALSE, killed_err_arg);
+      transactional_table, false, killed_err_arg);
   e.flags|= LOG_EVENT_UPDATE_TABLE_MAP_VERSION_F;
   return mysql_bin_log.write(&e);
 }
@@ -586,7 +581,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
     {
       Field *field= sql_field->field;                  
       if (field == table->next_number_field)
-        table->auto_increment_field_not_null= TRUE;
+        table->auto_increment_field_not_null= true;
       /*
         No fields specified in fields_vars list can be null in this format.
         Mark field as not null, we should do this for each row because of
@@ -631,7 +626,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
       return(1);
 
     err= write_record(thd, table, &info);
-    table->auto_increment_field_not_null= FALSE;
+    table->auto_increment_field_not_null= false;
     if (err)
       return(1);
    
@@ -743,7 +738,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
         field->set_notnull();
         read_info.row_end[0]=0;			// Safe to change end marker
         if (field == table->next_number_field)
-          table->auto_increment_field_not_null= TRUE;
+          table->auto_increment_field_not_null= true;
         field->store((char*) pos, length, read_info.read_charset);
       }
       else if (item->type() == Item::STRING_ITEM)
@@ -813,7 +808,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
       return(1);
 
     err= write_record(thd, table, &info);
-    table->auto_increment_field_not_null= FALSE;
+    table->auto_increment_field_not_null= false;
     if (err)
       return(1);
     /*
@@ -896,7 +891,7 @@ read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
           field->reset();
           field->set_null();
           if (field == table->next_number_field)
-            table->auto_increment_field_not_null= TRUE;
+            table->auto_increment_field_not_null= true;
           if (!field->maybe_null())
           {
             if (field->type() == FIELD_TYPE_TIMESTAMP)
@@ -917,7 +912,7 @@ read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
         Field *field= ((Item_field *)item)->field;
         field->set_notnull();
         if (field == table->next_number_field)
-          table->auto_increment_field_not_null= TRUE;
+          table->auto_increment_field_not_null= true;
         field->store((char *) tag->value.ptr(), tag->value.length(), cs);
       }
       else
