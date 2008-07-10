@@ -240,44 +240,4 @@ void my_decimal_trim(ulong *precision, uint *scale)
 #define DIG_PER_DEC1 9
 #define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)
 
-/* print decimal */
-void
-print_decimal(const my_decimal *dec)
-{
-  int i, end;
-  char buff[512], *pos;
-  pos= buff;
-  pos+= my_sprintf(buff, (buff, "Decimal: sign: %d  intg: %d  frac: %d  { ",
-                          dec->sign(), dec->intg, dec->frac));
-  end= ROUND_UP(dec->frac)+ROUND_UP(dec->intg)-1;
-  for (i=0; i < end; i++)
-    pos+= my_sprintf(pos, (pos, "%09d, ", dec->buf[i]));
-  pos+= my_sprintf(pos, (pos, "%09d }\n", dec->buf[i]));
-  fputs(buff, DBUG_FILE);
-}
-
-
-/* print decimal with its binary representation */
-void
-print_decimal_buff(const my_decimal *dec, const uchar* ptr, int length)
-{
-  print_decimal(dec);
-  fprintf(DBUG_FILE, "Record: ");
-  for (int i= 0; i < length; i++)
-  {
-    fprintf(DBUG_FILE, "%02X ", (uint)((uchar *)ptr)[i]);
-  }
-  fprintf(DBUG_FILE, "\n");
-}
-
-
-const char *dbug_decimal_as_string(char *buff, const my_decimal *val)
-{
-  int length= DECIMAL_MAX_STR_LENGTH;
-  if (!val)
-    return "NULL";
-  (void)decimal2string((decimal_t*) val, buff, &length, 0,0,0);
-  return buff;
-}
-
 #endif /*MYSQL_CLIENT*/

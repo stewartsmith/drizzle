@@ -116,11 +116,6 @@ public:
   uint precision() const { return intg + frac; }
 };
 
-
-void print_decimal(const my_decimal *dec);
-void print_decimal_buff(const my_decimal *dec, const uchar* ptr, int length);
-const char *dbug_decimal_as_string(char *buff, const my_decimal *val);
-
 #ifndef MYSQL_CLIENT
 int decimal_operation_results(int result);
 #else

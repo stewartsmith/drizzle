@@ -83,7 +83,7 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
     VOID(my_close(file,MYF(MY_WME)));
   
  err_end:		      /* Here when no file */
-  DBUG_RETURN (error);
+  return(error);
 } /* readfrm */
 
 
