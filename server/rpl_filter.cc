@@ -87,7 +87,6 @@ bool
 Rpl_filter::tables_ok(const char* db, TABLE_LIST* tables)
 {
   bool some_tables_updating= 0;
-  DBUG_ENTER("Rpl_filter::tables_ok");
   
   for (; tables; tables= tables->next_global)
   {
@@ -104,19 +103,19 @@ Rpl_filter::tables_ok(const char* db, TABLE_LIST* tables)
     if (do_table_inited) // if there are any do's
     {
       if (hash_search(&do_table, (uchar*) hash_key, len))
-	DBUG_RETURN(1);
+	return(1);
     }
     if (ignore_table_inited) // if there are any ignores
     {
       if (hash_search(&ignore_table, (uchar*) hash_key, len))
-	DBUG_RETURN(0); 
+	return(0); 
     }
     if (wild_do_table_inited && 
 	find_wild(&wild_do_table, hash_key, len))
-      DBUG_RETURN(1);
+      return(1);
     if (wild_ignore_table_inited && 
 	find_wild(&wild_ignore_table, hash_key, len))
-      DBUG_RETURN(0);
+      return(0);
   }
 
   /*
@@ -125,7 +124,7 @@ Rpl_filter::tables_ok(const char* db, TABLE_LIST* tables)
     If no explicit rule found and there was a do list, do not replicate.
     If there was no do list, go ahead
   */
-  DBUG_RETURN(some_tables_updating &&
+  return(some_tables_updating &&
               !do_table_inited && !wild_do_table_inited);
 }
 
@@ -145,17 +144,15 @@ Rpl_filter::tables_ok(const char* db, TABLE_LIST* tables)
 bool
 Rpl_filter::db_ok(const char* db)
 {
-  DBUG_ENTER("Rpl_filter::db_ok");
-
   if (do_db.is_empty() && ignore_db.is_empty())
-    DBUG_RETURN(1); // Ok to replicate if the user puts no constraints
+    return(1); // Ok to replicate if the user puts no constraints
 
   /*
     If the user has specified restrictions on which databases to replicate
     and db was not selected, do not replicate.
   */
   if (!db)
-    DBUG_RETURN(0);
+    return(0);
 
   if (!do_db.is_empty()) // if the do's are not empty
   {
@@ -165,9 +162,9 @@ Rpl_filter::db_ok(const char* db)
     while ((tmp=it++))
     {
       if (!strcmp(tmp->ptr, db))
-	DBUG_RETURN(1); // match
+	return(1); // match
     }
-    DBUG_RETURN(0);
+    return(0);
   }
   else // there are some elements in the don't, otherwise we cannot get here
   {
@@ -177,9 +174,9 @@ Rpl_filter::db_ok(const char* db)
     while ((tmp=it++))
     {
       if (!strcmp(tmp->ptr, db))
-	DBUG_RETURN(0); // match
+	return(0); // match
     }
-    DBUG_RETURN(1);
+    return(1);
   }
 }
 
@@ -217,8 +214,6 @@ Rpl_filter::db_ok(const char* db)
 bool
 Rpl_filter::db_ok_with_wild_table(const char *db)
 {
-  DBUG_ENTER("Rpl_filter::db_ok_with_wild_table");
-
   char hash_key[NAME_LEN+2];
   char *end;
   int len;
@@ -227,21 +222,18 @@ Rpl_filter::db_ok_with_wild_table(const char *db)
   len= end - hash_key ;
   if (wild_do_table_inited && find_wild(&wild_do_table, hash_key, len))
   {
-    DBUG_PRINT("return",("1"));
-    DBUG_RETURN(1);
+    return(1);
   }
   if (wild_ignore_table_inited && find_wild(&wild_ignore_table, hash_key, len))
   {
-    DBUG_PRINT("return",("0"));
-    DBUG_RETURN(0);
+    return(0);
   }  
 
   /*
     If no explicit rule found and there was a do list, do not replicate.
     If there was no do list, go ahead
   */
-  DBUG_PRINT("return",("db=%s,retval=%d", db, !wild_do_table_inited));
-  DBUG_RETURN(!wild_do_table_inited);
+  return(!wild_do_table_inited);
 }
 
 
@@ -255,44 +247,40 @@ Rpl_filter::is_on()
 int 
 Rpl_filter::add_do_table(const char* table_spec) 
 {
-  DBUG_ENTER("Rpl_filter::add_do_table");
   if (!do_table_inited)
     init_table_rule_hash(&do_table, &do_table_inited);
   table_rules_on= 1;
-  DBUG_RETURN(add_table_rule(&do_table, table_spec));
+  return(add_table_rule(&do_table, table_spec));
 }
   
 
 int 
 Rpl_filter::add_ignore_table(const char* table_spec) 
 {
-  DBUG_ENTER("Rpl_filter::add_ignore_table");
   if (!ignore_table_inited)
     init_table_rule_hash(&ignore_table, &ignore_table_inited);
   table_rules_on= 1;
-  DBUG_RETURN(add_table_rule(&ignore_table, table_spec));
+  return(add_table_rule(&ignore_table, table_spec));
 }
 
 
 int 
 Rpl_filter::add_wild_do_table(const char* table_spec)
 {
-  DBUG_ENTER("Rpl_filter::add_wild_do_table");
   if (!wild_do_table_inited)
     init_table_rule_array(&wild_do_table, &wild_do_table_inited);
   table_rules_on= 1;
-  DBUG_RETURN(add_wild_table_rule(&wild_do_table, table_spec));
+  return(add_wild_table_rule(&wild_do_table, table_spec));
 }
   
 
 int 
 Rpl_filter::add_wild_ignore_table(const char* table_spec) 
 {
-  DBUG_ENTER("Rpl_filter::add_wild_ignore_table");
   if (!wild_ignore_table_inited)
     init_table_rule_array(&wild_ignore_table, &wild_ignore_table_inited);
   table_rules_on= 1;
-  DBUG_RETURN(add_wild_table_rule(&wild_ignore_table, table_spec));
+  return(add_wild_table_rule(&wild_ignore_table, table_spec));
 }
 
 
@@ -348,7 +336,6 @@ Rpl_filter::add_wild_table_rule(DYNAMIC_ARRAY* a, const char* table_spec)
 void
 Rpl_filter::add_do_db(const char* table_spec)
 {
-  DBUG_ENTER("Rpl_filter::add_do_db");
   i_string *db = new i_string(table_spec);
   do_db.push_back(db);
 }
@@ -357,7 +344,6 @@ Rpl_filter::add_do_db(const char* table_spec)
 void
 Rpl_filter::add_ignore_db(const char* table_spec)
 {
-  DBUG_ENTER("Rpl_filter::add_ignore_db");
   i_string *db = new i_string(table_spec);
   ignore_db.push_back(db);
 }

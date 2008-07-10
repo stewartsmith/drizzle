@@ -57,7 +57,7 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
         byte.
       */
       length= (uint) *master_data + 1;
-      DBUG_ASSERT(length != 0);
+      assert(length != 0);
     }
     break;
   }
@@ -92,7 +92,7 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
   case MYSQL_TYPE_VARCHAR:
   {
     length= m_field_metadata[col] > 255 ? 2 : 1; // c&p of Field_varstring::data_length()
-    DBUG_ASSERT(uint2korr(master_data) > 0);
+    assert(uint2korr(master_data) > 0);
     length+= length == 1 ? (uint32) *master_data : uint2korr(master_data);
     break;
   }
@@ -129,8 +129,8 @@ table_def::compatible_with(Relay_log_info const *rli_arg, TABLE *table)
   {
     if (table->field[col]->type() != type(col))
     {
-      DBUG_ASSERT(col < size() && col < tsh->fields);
-      DBUG_ASSERT(tsh->db.str && tsh->table_name.str);
+      assert(col < size() && col < tsh->fields);
+      assert(tsh->db.str && tsh->table_name.str);
       error= 1;
       char buf[256];
       snprintf(buf, sizeof(buf), "Column %d type mismatch - "

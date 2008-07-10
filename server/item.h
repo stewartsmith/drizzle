@@ -586,7 +586,7 @@ public:
   */
   virtual longlong val_int_endpoint(bool left_endp __attribute__((__unused__)),
                                     bool *incl_endp __attribute__((__unused__)))
-  { DBUG_ASSERT(0); return 0; }
+  { assert(0); return 0; }
 
 
   /* valXXX methods must return NULL or 0 or 0.0 if null_value is set. */
@@ -1343,7 +1343,7 @@ public:
   { return state != NO_VALUE ? (table_map)0 : PARAM_TABLE_BIT; }
   virtual void print(String *str, enum_query_type query_type);
   bool is_null()
-  { DBUG_ASSERT(state != NO_VALUE); return state == NULL_VALUE; }
+  { assert(state != NO_VALUE); return state == NULL_VALUE; }
   bool basic_const_item() const;
   /*
     This method is used to make a copy of a basic constant item when
@@ -1387,8 +1387,8 @@ public:
   enum Type type() const { return INT_ITEM; }
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return value; }
-  double val_real() { DBUG_ASSERT(fixed == 1); return (double) value; }
+  longlong val_int() { assert(fixed == 1); return value; }
+  double val_real() { assert(fixed == 1); return (double) value; }
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
   int save_in_field(Field *field, bool no_conversions);
@@ -1409,7 +1409,7 @@ public:
   Item_uint(ulonglong i) :Item_int((ulonglong) i, 10) {}
   Item_uint(const char *str_arg, longlong i, uint length);
   double val_real()
-    { DBUG_ASSERT(fixed == 1); return ulonglong2double((ulonglong)value); }
+    { assert(fixed == 1); return ulonglong2double((ulonglong)value); }
   String *val_str(String*);
   Item *clone_item() { return new Item_uint(name, value, max_length); }
   int save_in_field(Field *field, bool no_conversions);
@@ -1483,10 +1483,10 @@ public:
   int save_in_field(Field *field, bool no_conversions);
   enum Type type() const { return REAL_ITEM; }
   enum_field_types field_type() const { return MYSQL_TYPE_DOUBLE; }
-  double val_real() { DBUG_ASSERT(fixed == 1); return value; }
+  double val_real() { assert(fixed == 1); return value; }
   longlong val_int()
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     if (value <= (double) LONGLONG_MIN)
     {
        return LONGLONG_MIN;
@@ -1593,7 +1593,7 @@ public:
   longlong val_int();
   String *val_str(String*)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return (String*) &str_value;
   }
   my_decimal *val_decimal(my_decimal *);
@@ -1740,12 +1740,12 @@ public:
   enum Type type() const { return VARBIN_ITEM; }
   double val_real()
   { 
-    DBUG_ASSERT(fixed == 1); 
+    assert(fixed == 1); 
     return (double) (ulonglong) Item_hex_string::val_int();
   }
   longlong val_int();
   bool basic_const_item() const { return 1; }
-  String *val_str(String*) { DBUG_ASSERT(fixed == 1); return &str_value; }
+  String *val_str(String*) { assert(fixed == 1); return &str_value; }
   my_decimal *val_decimal(my_decimal *);
   int save_in_field(Field *field, bool no_conversions);
   enum Item_result result_type () const { return STRING_RESULT; }
@@ -2359,8 +2359,8 @@ public:
 
   void store(Item *item);
   void store(Item *item, longlong val_arg);
-  double val_real() { DBUG_ASSERT(fixed == 1); return (double) value; }
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return value; }
+  double val_real() { assert(fixed == 1); return (double) value; }
+  longlong val_int() { assert(fixed == 1); return value; }
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return INT_RESULT; }
@@ -2375,7 +2375,7 @@ public:
   Item_cache_real(): Item_cache(), value(0) {}
 
   void store(Item *item);
-  double val_real() { DBUG_ASSERT(fixed == 1); return value; }
+  double val_real() { assert(fixed == 1); return value; }
   longlong val_int();
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
@@ -2416,7 +2416,7 @@ public:
   void store(Item *item);
   double val_real();
   longlong val_int();
-  String* val_str(String *) { DBUG_ASSERT(fixed == 1); return value; }
+  String* val_str(String *) { assert(fixed == 1); return value; }
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return STRING_RESULT; }
   CHARSET_INFO *charset() const { return value->charset(); };
@@ -2480,13 +2480,12 @@ public:
   void keep_array() { save_array= 1; }
   void cleanup()
   {
-    DBUG_ENTER("Item_cache_row::cleanup");
     Item_cache::cleanup();
     if (save_array)
       bzero(values, item_count*sizeof(Item**));
     else
       values= 0;
-    DBUG_VOID_RETURN;
+    return;
   }
 };
 

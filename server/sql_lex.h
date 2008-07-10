@@ -583,7 +583,7 @@ public:
   Item_sum *inner_sum_func_list; /* list of sum func in nested selects */ 
   uint with_wild; /* item list contain '*' */
   bool  braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
-  /* TRUE when having fix field called in processing of this SELECT */
+  /* true when having fix field called in processing of this SELECT */
   bool having_fix_field;
   /* List of references to fields referenced from inner selects */
   List<Item_outer_ref> inner_refs_list;
@@ -599,7 +599,7 @@ public:
     query processing end even if we use temporary table
   */
   bool subquery_in_having;
-  /* TRUE <=> this SELECT is correlated w.r.t. some ancestor select */
+  /* true <=> this SELECT is correlated w.r.t. some ancestor select */
   bool is_correlated;
   /*
     This variable is required to ensure proper work of subqueries and
@@ -821,7 +821,7 @@ public:
     no_parts(0),
     build_method(HA_BUILD_DEFAULT),
     datetime_field(NULL),
-    error_if_not_empty(FALSE)
+    error_if_not_empty(false)
   {}
 
   void reset()
@@ -836,7 +836,7 @@ public:
     no_parts= 0;
     build_method= HA_BUILD_DEFAULT;
     datetime_field= 0;
-    error_if_not_empty= FALSE;
+    error_if_not_empty= false;
   }
   Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root);
 private:
@@ -1248,7 +1248,7 @@ public:
       The assumption is that the lexical analyser is always 1 character ahead,
       which the -1 account for.
     */
-    DBUG_ASSERT(m_ptr > m_tok_start);
+    assert(m_ptr > m_tok_start);
     return (uint) ((m_ptr - m_tok_start) - 1);
   }
 
@@ -1369,7 +1369,7 @@ public:
   bool ignore_space;
 
   /**
-    TRUE if we're parsing a prepared statement: in this mode
+    true if we're parsing a prepared statement: in this mode
     we should allow placeholders and disallow multi-statements.
   */
   bool stmt_prepare_mode;
@@ -1593,8 +1593,8 @@ typedef struct st_lex : public Query_tables_list
       st_lex::which_check_option_applicable()
 
     RETURN
-      TRUE   have to take 'WHITH CHECK OPTION' clause into account
-      FALSE  'WHITH CHECK OPTION' clause do not need
+      true   have to take 'WHITH CHECK OPTION' clause into account
+      false  'WHITH CHECK OPTION' clause do not need
   */
   inline bool which_check_option_applicable()
   {
@@ -1606,9 +1606,9 @@ typedef struct st_lex : public Query_tables_list
     case SQLCOM_REPLACE:
     case SQLCOM_REPLACE_SELECT:
     case SQLCOM_LOAD:
-      return TRUE;
+      return true;
     default:
-      return FALSE;
+      return false;
     }
   }
 
@@ -1643,9 +1643,9 @@ typedef struct st_lex : public Query_tables_list
   /**
     @brief check if the statement is a single-level join
     @return result of the check
-      @retval TRUE  The statement doesn't contain subqueries, unions and 
+      @retval true  The statement doesn't contain subqueries, unions and 
                     stored procedure calls.
-      @retval FALSE There are subqueries, UNIONs or stored procedure calls.
+      @retval false There are subqueries, UNIONs or stored procedure calls.
   */
   bool is_single_level_stmt() 
   { 
@@ -1656,10 +1656,10 @@ typedef struct st_lex : public Query_tables_list
     */ 
     if (&select_lex == all_selects_list && !sroutines.records)
     {
-      DBUG_ASSERT(!all_selects_list->next_select_in_list());
-      return TRUE;
+      assert(!all_selects_list->next_select_in_list());
+      return true;
     }
-    return FALSE;
+    return false;
   }
 } LEX;
 

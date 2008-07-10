@@ -254,18 +254,18 @@ protected:
 public:  
 
   void mark_as_sum_func();
-  Item_sum() :arg_count(0), quick_group(1), forced_const(FALSE)
+  Item_sum() :arg_count(0), quick_group(1), forced_const(false)
   {
     mark_as_sum_func();
   }
   Item_sum(Item *a) :args(tmp_args), arg_count(1), quick_group(1), 
-    forced_const(FALSE)
+    forced_const(false)
   {
     args[0]=a;
     mark_as_sum_func();
   }
   Item_sum( Item *a, Item *b ) :args(tmp_args), arg_count(2), quick_group(1),
-    forced_const(FALSE)
+    forced_const(false)
   {
     args[0]=a; args[1]=b;
     mark_as_sum_func();
@@ -340,13 +340,13 @@ public:
   void cleanup() 
   { 
     Item::cleanup();
-    forced_const= FALSE; 
+    forced_const= false; 
   }
   bool is_null() { return null_value; }
   void make_const () 
   { 
     used_tables_cache= 0; 
-    forced_const= TRUE; 
+    forced_const= true; 
   }
   virtual bool const_item() const { return forced_const; }
   void make_field(Send_field *field);
@@ -388,18 +388,18 @@ protected:
   */
   bool is_evaluated;
 public:
-  Item_sum_num() :Item_sum(),is_evaluated(FALSE) {}
+  Item_sum_num() :Item_sum(),is_evaluated(false) {}
   Item_sum_num(Item *item_par) 
-    :Item_sum(item_par), is_evaluated(FALSE) {}
-  Item_sum_num(Item *a, Item* b) :Item_sum(a,b),is_evaluated(FALSE) {}
+    :Item_sum(item_par), is_evaluated(false) {}
+  Item_sum_num(Item *a, Item* b) :Item_sum(a,b),is_evaluated(false) {}
   Item_sum_num(List<Item> &list) 
-    :Item_sum(list), is_evaluated(FALSE) {}
+    :Item_sum(list), is_evaluated(false) {}
   Item_sum_num(THD *thd, Item_sum_num *item) 
     :Item_sum(thd, item),is_evaluated(item->is_evaluated) {}
   bool fix_fields(THD *, Item **);
   longlong val_int()
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return (longlong) rint(val_real());             /* Real as default */
   }
   String *val_str(String*str);
@@ -414,7 +414,7 @@ public:
   Item_sum_int(Item *item_par) :Item_sum_num(item_par) {}
   Item_sum_int(List<Item> &list) :Item_sum_num(list) {}
   Item_sum_int(THD *thd, Item_sum_int *item) :Item_sum_num(thd, item) {}
-  double val_real() { DBUG_ASSERT(fixed == 1); return (double) val_int(); }
+  double val_real() { assert(fixed == 1); return (double) val_int(); }
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return INT_RESULT; }
@@ -601,7 +601,7 @@ public:
   Item_sum_count_distinct(List<Item> &list)
     :Item_sum_int(list), table(0), field_lengths(0), tmp_table_param(0),
      force_copy_fields(0), tree(0), count(0),
-     original(0), always_null(FALSE)
+     original(0), always_null(false)
   { quick_group= 0; }
   Item_sum_count_distinct(THD *thd, Item_sum_count_distinct *item)
     :Item_sum_int(thd, item), table(item->table),
@@ -839,7 +839,7 @@ protected:
   Item_sum_hybrid(Item *item_par,int sign)
     :Item_sum(item_par), sum(0.0), sum_int(0),
     hybrid_type(INT_RESULT), hybrid_field_type(MYSQL_TYPE_LONGLONG),
-    cmp_sign(sign), was_values(TRUE)
+    cmp_sign(sign), was_values(true)
   { collation.set(&my_charset_bin); }
   Item_sum_hybrid(THD *thd, Item_sum_hybrid *item);
   bool fix_fields(THD *, Item **);
@@ -968,18 +968,18 @@ public:
   { quick_group=0;}
   Item_udf_sum(THD *thd, Item_udf_sum *item)
     :Item_sum(thd, item), udf(item->udf)
-  { udf.not_original= TRUE; }
+  { udf.not_original= true; }
   const char *func_name() const { return udf.name(); }
   bool fix_fields(THD *thd, Item **ref)
   {
-    DBUG_ASSERT(fixed == 0);
+    assert(fixed == 0);
 
     if (init_sum_func_check(thd))
-      return TRUE;
+      return true;
 
     fixed= 1;
     if (udf.fix_fields(thd, this, this->arg_count, this->args))
-      return TRUE;
+      return true;
 
     return check_sum_func(thd, ref);
   }
@@ -1006,7 +1006,7 @@ class Item_sum_udf_float :public Item_udf_sum
     :Item_udf_sum(thd, item) {}
   longlong val_int()
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return (longlong) rint(Item_sum_udf_float::val_real());
   }
   double val_real();
@@ -1028,7 +1028,7 @@ public:
     :Item_udf_sum(thd, item) {}
   longlong val_int();
   double val_real()
-    { DBUG_ASSERT(fixed == 1); return (double) Item_sum_udf_int::val_int(); }
+    { assert(fixed == 1); return (double) Item_sum_udf_int::val_int(); }
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return INT_RESULT; }
@@ -1105,7 +1105,7 @@ class Item_sum_udf_float :public Item_sum_num
   Item_sum_udf_float(THD *thd, Item_sum_udf_float *item)
     :Item_sum_num(thd, item) {}
   enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  double val_real() { DBUG_ASSERT(fixed == 1); return 0.0; }
+  double val_real() { assert(fixed == 1); return 0.0; }
   void clear() {}
   bool add() { return 0; }  
   void update_field() {}
@@ -1121,8 +1121,8 @@ public:
   Item_sum_udf_int(THD *thd, Item_sum_udf_int *item)
     :Item_sum_num(thd, item) {}
   enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return 0; }
-  double val_real() { DBUG_ASSERT(fixed == 1); return 0; }
+  longlong val_int() { assert(fixed == 1); return 0; }
+  double val_real() { assert(fixed == 1); return 0; }
   void clear() {}
   bool add() { return 0; }  
   void update_field() {}
@@ -1139,8 +1139,8 @@ class Item_sum_udf_decimal :public Item_sum_num
   Item_sum_udf_decimal(THD *thd, Item_sum_udf_float *item)
     :Item_sum_num(thd, item) {}
   enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  double val_real() { DBUG_ASSERT(fixed == 1); return 0.0; }
-  my_decimal *val_decimal(my_decimal *) { DBUG_ASSERT(fixed == 1); return 0; }
+  double val_real() { assert(fixed == 1); return 0.0; }
+  my_decimal *val_decimal(my_decimal *) { assert(fixed == 1); return 0; }
   void clear() {}
   bool add() { return 0; }
   void update_field() {}
@@ -1157,9 +1157,9 @@ public:
   Item_sum_udf_str(THD *thd, Item_sum_udf_str *item)
     :Item_sum_num(thd, item) {}
   String *val_str(String *)
-    { DBUG_ASSERT(fixed == 1); null_value=1; return 0; }
-  double val_real() { DBUG_ASSERT(fixed == 1); null_value=1; return 0.0; }
-  longlong val_int() { DBUG_ASSERT(fixed == 1); null_value=1; return 0; }
+    { assert(fixed == 1); null_value=1; return 0; }
+  double val_real() { assert(fixed == 1); null_value=1; return 0.0; }
+  longlong val_int() { assert(fixed == 1); null_value=1; return 0; }
   enum Item_result result_type () const { return STRING_RESULT; }
   void fix_length_and_dec() { maybe_null=1; max_length=0; }
   enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
@@ -1237,8 +1237,8 @@ public:
   }
   void clear();
   bool add();
-  void reset_field() { DBUG_ASSERT(0); }        // not used
-  void update_field() { DBUG_ASSERT(0); }       // not used
+  void reset_field() { assert(0); }        // not used
+  void update_field() { assert(0); }       // not used
   bool fix_fields(THD *,Item **);
   bool setup(THD *thd);
   void make_unique();
@@ -1266,5 +1266,5 @@ public:
   void no_rows_in_result() {}
   virtual void print(String *str, enum_query_type query_type);
   virtual bool change_context_processor(uchar *cntx)
-    { context= (Name_resolution_context *)cntx; return FALSE; }
+    { context= (Name_resolution_context *)cntx; return false; }
 };

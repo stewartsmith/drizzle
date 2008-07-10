@@ -39,14 +39,11 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
                          NULL, 0, NI_NUMERICHOST);
   if (gxi_error)
   {
-    DBUG_PRINT("error",("getnameinfo returned %d", gxi_error));
     return NULL;
   }
-  DBUG_PRINT("info",("resolved: %s", hostname_buff));
 
   if (!(name= my_strdup(hostname_buff, MYF(0))))
   {
-    DBUG_PRINT("error",("out of memory"));
     return NULL;
   }
 
@@ -63,7 +60,7 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
   @param  passwd      scrambled password received from client
   @param  passwd_len  length of scrambled password
   @param  db          database name to connect to, may be NULL
-  @param  check_count TRUE if establishing a new connection. In this case
+  @param  check_count true if establishing a new connection. In this case
                       check that we have not exceeded the global
                       max_connections limist
 
@@ -84,7 +81,6 @@ check_user(THD *thd, enum enum_server_command command,
            uint passwd_len, const char *db,
            bool check_count)
 {
-  DBUG_ENTER("check_user");
   LEX_STRING db_str= { (char *) db, db ? strlen(db) : 0 };
 
   /*
@@ -108,31 +104,19 @@ check_user(THD *thd, enum enum_server_command command,
   {
     my_error(ER_NOT_SUPPORTED_AUTH_MODE, MYF(0));
     general_log_print(thd, COM_CONNECT, ER(ER_NOT_SUPPORTED_AUTH_MODE));
-    DBUG_RETURN(1);
+    return(1);
   }
   if (passwd_len != 0 &&
       passwd_len != SCRAMBLE_LENGTH &&
       passwd_len != SCRAMBLE_LENGTH_323)
   {
     my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
-    DBUG_RETURN(1);
+    return(1);
   }
 
   USER_RESOURCES ur;
   thd->security_ctx->skip_grants();
   memset(&ur, 0, sizeof(USER_RESOURCES));
-
-  DBUG_PRINT("info",
-             ("Capabilities: %lu  packet_length: %ld  Host: '%s'  "
-              "Login user: '%s' Priv_user: '%s'  Using password: %s "
-              "db: '%s'",
-              thd->client_capabilities,
-              thd->max_client_packet_length,
-              thd->main_security_ctx.host_or_ip,
-              thd->main_security_ctx.user,
-              thd->main_security_ctx.priv_user,
-              passwd_len ? "yes": "no",
-              (thd->db ? thd->db : "*none*")));
 
   if (check_count)
   {
@@ -143,7 +127,7 @@ check_user(THD *thd, enum enum_server_command command,
     if (!count_ok)
     {                                         // too many connections
       my_error(ER_CON_COUNT_ERROR, MYF(0));
-      DBUG_RETURN(1);
+      return(1);
     }
   }
 
@@ -171,16 +155,16 @@ check_user(THD *thd, enum enum_server_command command,
   /* Change database if necessary */
   if (db && db[0])
   {
-    if (mysql_change_db(thd, &db_str, FALSE))
+    if (mysql_change_db(thd, &db_str, false))
     {
       /* mysql_change_db() has pushed the error message. */
-      DBUG_RETURN(1);
+      return(1);
     }
   }
   my_ok(thd);
   thd->password= test(passwd_len);          // remember for error messages 
   /* Ready to handle queries */
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -265,8 +249,6 @@ static int check_connection(THD *thd)
   ulong pkt_len= 0;
   char *end;
 
-  DBUG_PRINT("info",
-             ("New connection received on %s", vio_description(net->vio)));
 #ifdef SIGNAL_WITH_VIO_CLOSE
   thd->set_active_vio(net->vio);
 #endif
@@ -286,21 +268,15 @@ static int check_connection(THD *thd)
     thd->main_security_ctx.host= ip_to_hostname(&net->vio->remote, 
                                                 net->vio->addrLen);
     thd->main_security_ctx.host_or_ip= thd->main_security_ctx.host;
-    DBUG_PRINT("info",("Host: %s  ip: %s",
-		       (thd->main_security_ctx.host ?
-                        thd->main_security_ctx.host : "unknown host"),
-		       (thd->main_security_ctx.ip ?
-                        thd->main_security_ctx.ip : "unknown ip")));
   }
   else /* Hostname given means that the connection was on a socket */
   {
-    DBUG_PRINT("info",("Host: %s", thd->main_security_ctx.host));
     thd->main_security_ctx.host_or_ip= thd->main_security_ctx.host;
     thd->main_security_ctx.ip= 0;
     /* Reset sin_addr */
     bzero((char*) &net->vio->remote, sizeof(net->vio->remote));
   }
-  vio_keepalive(net->vio, TRUE);
+  vio_keepalive(net->vio, true);
   
   ulong server_capabilites;
   {
@@ -362,7 +338,6 @@ static int check_connection(THD *thd)
   {
     thd->client_capabilities|= ((ulong) uint2korr(net->read_pos+2)) << 16;
     thd->max_client_packet_length= uint4korr(net->read_pos+4);
-    DBUG_PRINT("info", ("client_character_set: %d", (uint) net->read_pos[8]));
     thd_init_client_charset(thd, (uint) net->read_pos[8]);
     thd->update_charset();
     end= (char*) net->read_pos+32;
@@ -452,7 +427,7 @@ static int check_connection(THD *thd)
     x_free(thd->main_security_ctx.user);
   if (!(thd->main_security_ctx.user= my_strdup(user, MYF(MY_WME))))
     return 1; /* The error is set by my_strdup(). */
-  return check_user(thd, COM_CONNECT, passwd, passwd_len, db, TRUE);
+  return check_user(thd, COM_CONNECT, passwd, passwd_len, db, true);
 }
 
 
@@ -502,9 +477,6 @@ bool login_connection(THD *thd)
 {
   NET *net= &thd->net;
   int error;
-  DBUG_ENTER("login_connection");
-  DBUG_PRINT("info", ("login_connection called by thread %lu",
-                      thd->thread_id));
 
   /* Use "connect_timeout" value during connection phase */
   my_net_set_read_timeout(net, connect_timeout);
@@ -518,12 +490,12 @@ bool login_connection(THD *thd)
   if (error)
   {						// Wrong permissions
     statistic_increment(aborted_connects,&LOCK_status);
-    DBUG_RETURN(1);
+    return(1);
   }
   /* Connect completed, set read/write timeouts back to default */
   my_net_set_read_timeout(net, thd->variables.net_read_timeout);
   my_net_set_write_timeout(net, thd->variables.net_write_timeout);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 

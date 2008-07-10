@@ -127,34 +127,29 @@ static void mysql_ha_close_table(THD *thd, TABLE_LIST *tables,
     name (table->alias) of the specified table.
 
   RETURN
-    FALSE ok
-    TRUE  error
+    false ok
+    true  error
 */
 
 bool mysql_ha_close(THD *thd, TABLE_LIST *tables)
 {
   TABLE_LIST    *hash_tables;
-  DBUG_ENTER("mysql_ha_close");
-  DBUG_PRINT("enter",("'%s'.'%s' as '%s'",
-                      tables->db, tables->table_name, tables->alias));
 
   if ((hash_tables= (TABLE_LIST*) hash_search(&thd->handler_tables_hash,
                                               (uchar*) tables->alias,
                                               strlen(tables->alias) + 1)))
   {
-    mysql_ha_close_table(thd, hash_tables, FALSE);
+    mysql_ha_close_table(thd, hash_tables, false);
     hash_delete(&thd->handler_tables_hash, (uchar*) hash_tables);
   }
   else
   {
     my_error(ER_UNKNOWN_TABLE, MYF(0), tables->alias, "HANDLER");
-    DBUG_PRINT("exit",("ERROR"));
-    DBUG_RETURN(TRUE);
+    return(true);
   }
 
   my_ok(thd);
-  DBUG_PRINT("exit", ("OK"));
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 
@@ -172,7 +167,6 @@ bool mysql_ha_close(THD *thd, TABLE_LIST *tables)
 static TABLE_LIST *mysql_ha_find(THD *thd, TABLE_LIST *tables)
 {
   TABLE_LIST *hash_tables, *head= NULL, *first= tables;
-  DBUG_ENTER("mysql_ha_find");
 
   /* search for all handlers with matching table names */
   for (uint i= 0; i < thd->handler_tables_hash.records; i++)
@@ -193,7 +187,7 @@ static TABLE_LIST *mysql_ha_find(THD *thd, TABLE_LIST *tables)
     }
   }
 
-  DBUG_RETURN(head);
+  return(head);
 }
 
 
@@ -210,9 +204,8 @@ static TABLE_LIST *mysql_ha_find(THD *thd, TABLE_LIST *tables)
 void mysql_ha_rm_tables(THD *thd, TABLE_LIST *tables, bool is_locked)
 {
   TABLE_LIST *hash_tables, *next;
-  DBUG_ENTER("mysql_ha_rm_tables");
 
-  DBUG_ASSERT(tables);
+  assert(tables);
 
   hash_tables= mysql_ha_find(thd, tables);
 
@@ -225,7 +218,7 @@ void mysql_ha_rm_tables(THD *thd, TABLE_LIST *tables, bool is_locked)
     hash_tables= next;
   }
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -241,7 +234,6 @@ void mysql_ha_rm_tables(THD *thd, TABLE_LIST *tables, bool is_locked)
 void mysql_ha_flush(THD *thd)
 {
   TABLE_LIST *hash_tables;
-  DBUG_ENTER("mysql_ha_flush");
 
   safe_mutex_assert_owner(&LOCK_open);
 
@@ -250,13 +242,13 @@ void mysql_ha_flush(THD *thd)
     hash_tables= (TABLE_LIST*) hash_element(&thd->handler_tables_hash, i);
     if (hash_tables->table && hash_tables->table->needs_reopen_or_name_lock())
     {
-      mysql_ha_close_table(thd, hash_tables, TRUE);
+      mysql_ha_close_table(thd, hash_tables, true);
       /* Mark table as closed, ready for re-open. */
       hash_tables->table= NULL;
     }
   }
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -271,16 +263,15 @@ void mysql_ha_flush(THD *thd)
 void mysql_ha_cleanup(THD *thd)
 {
   TABLE_LIST *hash_tables;
-  DBUG_ENTER("mysql_ha_cleanup");
 
   for (uint i= 0; i < thd->handler_tables_hash.records; i++)
   {
     hash_tables= (TABLE_LIST*) hash_element(&thd->handler_tables_hash, i);
     if (hash_tables->table)
-      mysql_ha_close_table(thd, hash_tables, FALSE);
+      mysql_ha_close_table(thd, hash_tables, false);
    }
 
   hash_free(&thd->handler_tables_hash);
 
-  DBUG_VOID_RETURN;
+  return;
 }

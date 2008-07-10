@@ -365,7 +365,7 @@ public:
   }
   String *val_str(String *)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return (null_value ? 0 : &str_value);
   }
   bool fix_fields(THD *thd, Item **ref);
@@ -430,7 +430,7 @@ public:
   String *val_str(String *str);
   bool fix_fields(THD *thd, Item **ref)
   {
-    DBUG_ASSERT(fixed == 0);
+    assert(fixed == 0);
     return ((!item->fixed && item->fix_fields(thd, &item)) ||
 	    item->check_cols(1) ||
 	    Item_func::fix_fields(thd, ref));
@@ -569,7 +569,7 @@ public:
   Item_func_binary(Item *a) :Item_str_func(a) {}
   String *val_str(String *a)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     String *tmp=args[0]->val_str(a);
     null_value=args[0]->null_value;
     if (tmp)
@@ -638,7 +638,7 @@ public:
   Item_func_conv_charset(Item *a, CHARSET_INFO *cs, bool cache_if_const) 
     :Item_str_func(a) 
   {
-    DBUG_ASSERT(args[0]->fixed);
+    assert(args[0]->fixed);
     conv_charset= cs;
     if (cache_if_const && args[0]->const_item())
     {

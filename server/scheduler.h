@@ -60,10 +60,8 @@ public:
   LIST list;
   bool thread_attached;  /* Indicates if THD is attached to the OS thread */
   
-#ifndef DBUG_OFF
   char dbug_explain_buf[256];
   void swap_dbug_explain();
-#endif
 
   thd_scheduler();
   ~thd_scheduler();

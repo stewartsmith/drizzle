@@ -60,7 +60,7 @@ int decimal_operation_results(int result)
     my_error(ER_OUT_OF_RESOURCES, MYF(0));
     break;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
   }
   return result;
 }
@@ -214,7 +214,7 @@ my_decimal *date2my_decimal(MYSQL_TIME *ltime, my_decimal *dec)
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
   if (ltime->time_type > MYSQL_TIMESTAMP_DATE)
     date= ((date*100L + ltime->hour)*100L+ ltime->minute)*100L + ltime->second;
-  if (int2my_decimal(E_DEC_FATAL_ERROR, date, FALSE, dec))
+  if (int2my_decimal(E_DEC_FATAL_ERROR, date, false, dec))
     return dec;
   if (ltime->second_part)
   {
@@ -236,9 +236,7 @@ void my_decimal_trim(ulong *precision, uint *scale)
 }
 
 
-#ifndef DBUG_OFF
 /* routines for debugging print */
-
 #define DIG_PER_DEC1 9
 #define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)
 
@@ -281,8 +279,5 @@ const char *dbug_decimal_as_string(char *buff, const my_decimal *val)
   (void)decimal2string((decimal_t*) val, buff, &length, 0,0,0);
   return buff;
 }
-
-#endif /*DBUG_OFF*/
-
 
 #endif /*MYSQL_CLIENT*/

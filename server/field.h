@@ -127,10 +127,10 @@ public:
   virtual String *val_str(String*,String *)=0;
   String *val_int_as_str(String *val_buffer, my_bool unsigned_flag);
   /*
-   str_needs_quotes() returns TRUE if the value returned by val_str() needs
+   str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
   */
-  virtual bool str_needs_quotes() { return FALSE; }
+  virtual bool str_needs_quotes() { return false; }
   virtual Item_result result_type () const=0;
   virtual Item_result cmp_type () const { return result_type(); }
   virtual Item_result cast_to_int_type () const { return result_type(); }
@@ -163,7 +163,7 @@ public:
   /*
     This method is used to return the size of the data in a row-based
     replication row record. The default implementation of returning 0 is
-    designed to allow fields that do not use metadata to return TRUE (1)
+    designed to allow fields that do not use metadata to return true (1)
     from compatible_field_size() which uses this function in the comparison.
     The default value for field metadata for fields that do not have 
     metadata is 0. Thus, 0 == 0 means the fields are compatible in size.
@@ -283,8 +283,7 @@ public:
    */
   size_t last_null_byte() const {
     size_t bytes= do_last_null_byte();
-    DBUG_PRINT("debug", ("last_null_byte() ==> %ld", (long) bytes));
-    DBUG_ASSERT(bytes <= table->s->null_bytes);
+    assert(bytes <= table->s->null_bytes);
     return bytes;
   }
 
@@ -298,7 +297,7 @@ public:
     use field->val_int() for comparison.  Used to optimize clauses like
     'a_column BETWEEN date_const, date_const'.
   */
-  virtual bool can_be_compared_as_longlong() const { return FALSE; }
+  virtual bool can_be_compared_as_longlong() const { return false; }
   virtual void free() {}
   virtual Field *new_field(MEM_ROOT *root, struct st_table *new_table,
                            bool keep_type);
@@ -392,9 +391,8 @@ public:
   */
   uchar *pack(uchar *to, const uchar *from)
   {
-    DBUG_ENTER("Field::pack");
     uchar *result= this->pack(to, from, UINT_MAX, table->s->db_low_byte_first);
-    DBUG_RETURN(result);
+    return(result);
   }
 
   virtual const uchar *unpack(uchar* to, const uchar *from,
@@ -404,9 +402,8 @@ public:
   */
   const uchar *unpack(uchar* to, const uchar *from)
   {
-    DBUG_ENTER("Field::unpack");
     const uchar *result= unpack(to, from, 0U, table->s->db_low_byte_first);
-    DBUG_RETURN(result);
+    return(result);
   }
 
   virtual uchar *pack_key(uchar* to, const uchar *from,
@@ -448,7 +445,7 @@ public:
   virtual bool get_time(MYSQL_TIME *ltime);
   virtual CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual CHARSET_INFO *sort_charset(void) const { return charset(); }
-  virtual bool has_charset(void) const { return FALSE; }
+  virtual bool has_charset(void) const { return false; }
   virtual void set_charset(CHARSET_INFO *charset_arg __attribute__((__unused__)))
   { }
   virtual enum Derivation derivation(void) const
@@ -609,7 +606,7 @@ public:
   uint32 max_display_length() { return field_length; }
   friend class Create_field;
   my_decimal *val_decimal(my_decimal *);
-  virtual bool str_needs_quotes() { return TRUE; }
+  virtual bool str_needs_quotes() { return true; }
   bool compare_str_field_flags(Create_field *new_field, uint32 flags);
   uint is_equal(Create_field *new_field);
 };
@@ -944,7 +941,7 @@ public:
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 8; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return TRUE; }
+  bool can_be_compared_as_longlong() const { return true; }
   uint32 max_display_length() { return 20; }
   virtual uchar *pack(uchar* to, const uchar *from,
                       uint max_length __attribute__((__unused__)),
@@ -1131,7 +1128,7 @@ public:
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 4; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return TRUE; }
+  bool can_be_compared_as_longlong() const { return true; }
   bool zero_pack() const { return 0; }
   void set_time();
   virtual void set_default()
@@ -1189,7 +1186,7 @@ public:
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return TRUE; }
+  bool can_be_compared_as_longlong() const { return true; }
 };
 
 
@@ -1222,7 +1219,7 @@ public:
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 3; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return TRUE; }
+  bool can_be_compared_as_longlong() const { return true; }
   bool zero_pack() const { return 1; }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);
@@ -1259,7 +1256,7 @@ public:
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 3; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return TRUE; }
+  bool can_be_compared_as_longlong() const { return true; }
   bool zero_pack() const { return 1; }
 };
 
@@ -1297,7 +1294,7 @@ public:
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 8; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return TRUE; }
+  bool can_be_compared_as_longlong() const { return true; }
   bool zero_pack() const { return 1; }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);
@@ -1358,7 +1355,7 @@ public:
   uint size_of() const { return sizeof(*this); }
   enum_field_types real_type() const { return MYSQL_TYPE_STRING; }
   bool has_charset(void) const
-  { return charset() == &my_charset_bin ? FALSE : TRUE; }
+  { return charset() == &my_charset_bin ? false : true; }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
   virtual uint get_key_image(uchar *buff,uint length, imagetype type);
 private:
@@ -1446,7 +1443,7 @@ public:
   uint size_of() const { return sizeof(*this); }
   enum_field_types real_type() const { return MYSQL_TYPE_VARCHAR; }
   bool has_charset(void) const
-  { return charset() == &my_charset_bin ? FALSE : TRUE; }
+  { return charset() == &my_charset_bin ? false : true; }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
   Field *new_key_field(MEM_ROOT *root, struct st_table *new_table,
                        uchar *new_ptr, uchar *new_null_ptr,
@@ -1621,7 +1618,7 @@ public:
   friend int field_conv(Field *to,Field *from);
   uint size_of() const { return sizeof(*this); }
   bool has_charset(void) const
-  { return charset() == &my_charset_bin ? FALSE : TRUE; }
+  { return charset() == &my_charset_bin ? false : true; }
   uint32 max_display_length();
   uint is_equal(Create_field *new_field);
   inline bool in_read_set() { return bitmap_is_set(table->read_set, field_index); }
@@ -1674,7 +1671,7 @@ public:
                       uint part __attribute__((__unused__)))
   { return 0; }
   bool eq_def(Field *field);
-  bool has_charset(void) const { return TRUE; }
+  bool has_charset(void) const { return true; }
   /* enum and set are sorted as integers */
   CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
 private:
@@ -1697,14 +1694,14 @@ public:
       flags=(flags & ~ENUM_FLAG) | SET_FLAG;
     }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
-  int  store(double nr) { return Field_set::store((longlong) nr, FALSE); }
+  int  store(double nr) { return Field_set::store((longlong) nr, false); }
   int  store(longlong nr, bool unsigned_val);
 
   virtual bool zero_pack() const { return 1; }
   String *val_str(String*,String *);
   void sql_type(String &str) const;
   enum_field_types real_type() const { return MYSQL_TYPE_SET; }
-  bool has_charset(void) const { return TRUE; }
+  bool has_charset(void) const { return true; }
 };
 
 

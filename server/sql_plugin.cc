@@ -19,13 +19,8 @@
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
 
-#ifdef DBUG_OFF
-#define plugin_ref_to_int(A) A
-#define plugin_int_to_ref(A) A
-#else
 #define plugin_ref_to_int(A) (A ? A[0] : NULL)
 #define plugin_int_to_ref(A) &(A)
-#endif
 
 extern struct st_mysql_plugin *mysqld_builtins[];
 
@@ -437,7 +432,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
         When the following assert starts failing, we'll have to switch
         to the upper branch of the #ifdef
       */
-      DBUG_ASSERT(min_plugin_interface_version == 0);
+      assert(min_plugin_interface_version == 0);
       sizeof_st_plugin= (int)offsetof(struct st_mysql_plugin, version);
 #endif
     }
@@ -596,13 +591,6 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc CALLER_INFO_PROTO)
   if (pi->state & (PLUGIN_IS_READY | PLUGIN_IS_UNINITIALIZED))
   {
     plugin_ref plugin;
-#ifdef DBUG_OFF
-    /* built-in plugins don't need ref counting */
-    if (!pi->plugin_dl)
-      return(pi);
-
-    plugin= pi;
-#else
     /*
       For debugging, we do an additional malloc which allows the
       memory manager and/or valgrind to track locked references and
@@ -612,7 +600,6 @@ static plugin_ref intern_plugin_lock(LEX *lex, plugin_ref rc CALLER_INFO_PROTO)
       return(NULL);
 
     *plugin= pi;
-#endif
     pi->ref_count++;
 
     if (lex)
@@ -867,12 +854,7 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
 
   pi= plugin_ref_to_int(plugin);
 
-#ifdef DBUG_OFF
-  if (!pi->plugin_dl)
-    return;
-#else
   my_free((uchar*) plugin, MYF(MY_WME));
-#endif
 
   if (lex)
   {
@@ -887,10 +869,10 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
         delete_dynamic_element(&lex->plugins, i);
         break;
       }
-    DBUG_ASSERT(i >= 0);
+    assert(i >= 0);
   }
 
-  DBUG_ASSERT(pi->ref_count);
+  assert(pi->ref_count);
   pi->ref_count--;
 
   if (pi->state == PLUGIN_IS_DELETED && !pi->ref_count)
@@ -914,7 +896,7 @@ void plugin_unlock(THD *thd, plugin_ref plugin)
 void plugin_unlock_list(THD *thd, plugin_ref *list, uint count)
 {
   LEX *lex= thd ? thd->lex : 0;
-  DBUG_ASSERT(list);
+  assert(list);
   while (count--)
     intern_plugin_unlock(lex, *list++);
   reap_plugins();
@@ -1090,16 +1072,16 @@ int plugin_init(int *argc, char **argv, int flags)
       */
       if (is_myisam)
       {
-        DBUG_ASSERT(!global_system_variables.table_plugin);
+        assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
           my_intern_plugin_lock(NULL, plugin_int_to_ref(plugin_ptr));
-        DBUG_ASSERT(plugin_ptr->ref_count == 1);
+        assert(plugin_ptr->ref_count == 1);
       }
     }
   }
 
   /* should now be set to MyISAM storage engine */
-  DBUG_ASSERT(global_system_variables.table_plugin);
+  assert(global_system_variables.table_plugin);
 
   /* Register all dynamic plugins */
   if (!(flags & PLUGIN_INIT_SKIP_DYNAMIC_LOADING))
@@ -1897,7 +1879,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     size= sizeof(char*);
     break;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     return NULL;
   };
 
@@ -1916,7 +1898,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     result->name_len= length - 2;
     result->offset= -1;
 
-    DBUG_ASSERT(size && !(size & (size-1))); /* must be power of 2 */
+    assert(size && !(size & (size-1))); /* must be power of 2 */
 
     offset= global_system_variables.dynamic_variables_size;
     offset= (offset + size - 1) & ~(size - 1);
@@ -1959,7 +1941,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     if (my_hash_insert(&bookmark_hash, (uchar*) result))
     {
       fprintf(stderr, "failed to add placeholder to hash");
-      DBUG_ASSERT(0);
+      assert(0);
     }
   }
   my_afree(varname);
@@ -1975,8 +1957,8 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 */
 static uchar *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
 {
-  DBUG_ASSERT(offset >= 0);
-  DBUG_ASSERT((uint)offset <= global_system_variables.dynamic_variables_head);
+  assert(offset >= 0);
+  assert((uint)offset <= global_system_variables.dynamic_variables_head);
 
   if (!thd)
     return (uchar*) global_system_variables.dynamic_variables_ptr + offset;
@@ -2127,7 +2109,7 @@ static void cleanup_variables(THD *thd, struct system_variables *vars)
   }
   rw_unlock(&LOCK_system_variables_hash);
 
-  DBUG_ASSERT(vars->table_plugin == NULL);
+  assert(vars->table_plugin == NULL);
 
   my_free(vars->dynamic_variables_ptr, MYF(MY_ALLOW_ZERO_PTR));
   vars->dynamic_variables_ptr= NULL;
@@ -2224,7 +2206,7 @@ SHOW_TYPE sys_var_pluginvar::show_type()
   case PLUGIN_VAR_SET:
     return SHOW_CHAR;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     return SHOW_UNDEF;
   }
 }
@@ -2232,7 +2214,7 @@ SHOW_TYPE sys_var_pluginvar::show_type()
 
 uchar* sys_var_pluginvar::real_value_ptr(THD *thd, enum_var_type type)
 {
-  DBUG_ASSERT(thd || (type == OPT_GLOBAL));
+  assert(thd || (type == OPT_GLOBAL));
   if (plugin_var->flags & PLUGIN_VAR_THDLOCAL)
   {
     if (type == OPT_GLOBAL)
@@ -2299,7 +2281,7 @@ uchar* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
 bool sys_var_pluginvar::check(THD *thd, set_var *var)
 {
   st_item_value_holder value;
-  DBUG_ASSERT(is_readonly() || plugin_var->check);
+  assert(is_readonly() || plugin_var->check);
 
   value.value_type= item_value_type;
   value.val_str= item_val_str;
@@ -2317,7 +2299,7 @@ void sys_var_pluginvar::set_default(THD *thd, enum_var_type type)
   const void *src;
   void *tgt;
 
-  DBUG_ASSERT(is_readonly() || plugin_var->update);
+  assert(is_readonly() || plugin_var->update);
 
   if (is_readonly())
     return;
@@ -2354,12 +2336,12 @@ void sys_var_pluginvar::set_default(THD *thd, enum_var_type type)
 	  src= &((thdvar_str_t*) plugin_var)->def_val;
 	  break;
 	default:
-	  DBUG_ASSERT(0);
+	  assert(0);
 	}
   }
 
   /* thd must equal current_thd if PLUGIN_VAR_THDLOCAL flag is set */
-  DBUG_ASSERT(!(plugin_var->flags & PLUGIN_VAR_THDLOCAL) ||
+  assert(!(plugin_var->flags & PLUGIN_VAR_THDLOCAL) ||
               thd == current_thd);
 
   if (!(plugin_var->flags & PLUGIN_VAR_THDLOCAL) || type == OPT_GLOBAL)
@@ -2379,10 +2361,10 @@ bool sys_var_pluginvar::update(THD *thd, set_var *var)
 {
   void *tgt;
 
-  DBUG_ASSERT(is_readonly() || plugin_var->update);
+  assert(is_readonly() || plugin_var->update);
 
   /* thd must equal current_thd if PLUGIN_VAR_THDLOCAL flag is set */
-  DBUG_ASSERT(!(plugin_var->flags & PLUGIN_VAR_THDLOCAL) ||
+  assert(!(plugin_var->flags & PLUGIN_VAR_THDLOCAL) ||
               thd == current_thd);
 
   if (is_readonly())
@@ -2506,7 +2488,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->def_value= (intptr) ((thdvar_str_t*) opt)->def_val;
     break;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
   }
   options->arg_type= REQUIRED_ARG;
   if (opt->flags & PLUGIN_VAR_NOCMDARG)
@@ -2807,7 +2789,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   sys_var *v;
   struct st_bookmark *var;
   uint len, count= EXTRA_OPTIONS;
-  DBUG_ASSERT(tmp->plugin && tmp->name.str);
+  assert(tmp->plugin && tmp->name.str);
 
   for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
@@ -2872,7 +2854,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
 
         v= new (mem_root) sys_var_pluginvar(varname, o);
       }
-      DBUG_ASSERT(v); /* check that an object was actually constructed */
+      assert(v); /* check that an object was actually constructed */
 
       /*
         Add to the chain of variables.

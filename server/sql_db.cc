@@ -95,7 +95,6 @@ static my_bool lock_db_insert(const char *dbname, uint length)
 {
   my_dblock_t *opt;
   my_bool error= 0;
-  DBUG_ENTER("lock_db_insert");
   
   safe_mutex_assert_owner(&LOCK_lock_db);
 
@@ -121,7 +120,7 @@ static my_bool lock_db_insert(const char *dbname, uint length)
   }
 
 end:
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -311,7 +310,6 @@ static my_bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
   my_dbopt_t *opt;
   uint length;
   my_bool error= 0;
-  DBUG_ENTER("put_dbopt");
 
   length= (uint) strlen(dbname);
   
@@ -344,7 +342,7 @@ static my_bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
 
 end:
   rw_unlock(&LOCK_dboptions);  
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -423,7 +421,6 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 {
   File file;
   char buf[256];
-  DBUG_ENTER("load_db_opt");
   bool error=1;
   uint nbytes;
 
@@ -432,7 +429,7 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 
   /* Check if options for this database are already in the hash */
   if (!get_dbopt(path, create))
-    DBUG_RETURN(0);
+    return(0);
 
   /* Otherwise, load options from the .opt file */
   if ((file=my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
@@ -495,7 +492,7 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 err2:
   my_close(file,MYF(0));
 err1:
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -516,7 +513,7 @@ err1:
     the operation, it is useless usually and should be ignored. The problem
     is that there are 1) system databases ("mysql") and 2) virtual
     databases ("information_schema"), which do not contain options file.
-    So, load_db_opt[_by_name]() returns FALSE for these databases, but this
+    So, load_db_opt[_by_name]() returns false for these databases, but this
     is not an error.
 
     load_db_opt[_by_name]() clears db_create_info structure in any case, so
@@ -525,8 +522,8 @@ err1:
     db_create_info right after that.
 
   RETURN VALUES (read NOTE!)
-    FALSE   Success
-    TRUE    Failed to retrieve options
+    false   Success
+    true    Failed to retrieve options
 */
 
 bool load_db_opt_by_name(THD *thd, const char *db_name,
@@ -595,8 +592,8 @@ CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
    (The 'silent' flags turns off 1 and 3.)
 
   RETURN VALUES
-  FALSE ok
-  TRUE  Error
+  false ok
+  true  Error
 
 */
 
@@ -610,13 +607,12 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
   struct stat stat_info;
   uint create_options= create_info ? create_info->options : 0;
   uint path_len;
-  DBUG_ENTER("mysql_create_db");
 
   /* do not create 'information_schema' db */
   if (!my_strcasecmp(system_charset_info, db, INFORMATION_SCHEMA_NAME.str))
   {
     my_error(ER_DB_CREATE_EXISTS, MYF(0), db);
-    DBUG_RETURN(-1);
+    return(-1);
   }
 
   /*
@@ -718,7 +714,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
     if (mysql_bin_log.is_open())
     {
       Query_log_event qinfo(thd, query, query_length, 0, 
-			    /* suppress_use */ TRUE);
+			    /* suppress_use */ true);
 
       /*
 	Write should use the database being created as the "current
@@ -750,7 +746,7 @@ exit:
   VOID(pthread_mutex_unlock(&LOCK_mysql_create_db));
   start_waiting_global_read_lock(thd);
 exit2:
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -761,7 +757,6 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
   char path[FN_REFLEN+16];
   long result=1;
   int error= 0;
-  DBUG_ENTER("mysql_alter_db");
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -806,7 +801,7 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
   if (mysql_bin_log.is_open())
   {
     Query_log_event qinfo(thd, thd->query, thd->query_length, 0,
-			  /* suppress_use */ TRUE);
+			  /* suppress_use */ true);
 
     /*
       Write should use the database being created as the "current
@@ -826,7 +821,7 @@ exit:
   VOID(pthread_mutex_unlock(&LOCK_mysql_create_db));
   start_waiting_global_read_lock(thd);
 exit2:
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -843,7 +838,7 @@ exit2:
     silent		Don't generate errors
 
   RETURN
-    FALSE ok (Database dropped)
+    false ok (Database dropped)
     ERROR Error
 */
 
@@ -855,12 +850,11 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   MY_DIR *dirp;
   uint length;
   TABLE_LIST* dropped_tables= 0;
-  DBUG_ENTER("mysql_rm_db");
 
   if (db && (strcmp(db, "information_schema") == 0))
   {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), "", "", INFORMATION_SCHEMA_NAME.str);
-    DBUG_RETURN(TRUE);
+    return(true);
   }
 
   /*
@@ -942,7 +936,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
     if (mysql_bin_log.is_open())
     {
       Query_log_event qinfo(thd, query, query_length, 0, 
-			    /* suppress_use */ TRUE);
+			    /* suppress_use */ true);
       /*
         Write should use the database being created as the "current
         database" and not the threads current database, which is the
@@ -1010,7 +1004,7 @@ exit:
   VOID(pthread_mutex_unlock(&LOCK_mysql_create_db));
   start_waiting_global_read_lock(thd);
 exit2:
-  DBUG_RETURN(error);
+  return(error);
 }
 
 /*
@@ -1028,8 +1022,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
   char filePath[FN_REFLEN];
   TABLE_LIST *tot_list=0, **tot_list_next;
   List<String> raid_dirs;
-  DBUG_ENTER("mysql_rm_known_files");
-  DBUG_PRINT("enter",("path: %s", org_path));
 
   tot_list_next= &tot_list;
 
@@ -1039,7 +1031,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
   {
     FILEINFO *file=dirp->dir_entry+idx;
     char *extension;
-    DBUG_PRINT("info",("Examining: %s", file->name));
 
     /* skiping . and .. */
     if (file->name[0] == '.' && (!file->name[1] ||
@@ -1062,7 +1053,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       length= unpack_filename(newpath,newpath);
       if ((new_dirp = my_dir(newpath,MYF(MY_DONT_SORT))))
       {
-	DBUG_PRINT("my",("New subdir found: %s", newpath));
 	if ((mysql_rm_known_files(thd, new_dirp, NullS, newpath,1,0)) < 0)
 	  goto err;
 	if (!(copy_of_path= (char*) thd->memdup(newpath, length+1)) ||
@@ -1085,7 +1075,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       (void) unpack_filename(newpath, newpath);
       if ((new_dirp = my_dir(newpath, MYF(MY_DONT_SORT))))
       {
-	DBUG_PRINT("my",("Archive subdir found: %s", newpath));
 	if ((mysql_rm_arc_files(thd, new_dirp, newpath)) < 0)
 	  goto err;
 	continue;
@@ -1160,20 +1149,20 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
   if (found_other_files)
   {
     my_error(ER_DB_DROP_RMDIR, MYF(0), org_path, EEXIST);
-    DBUG_RETURN(-1);
+    return(-1);
   }
   else
   {
     /* Don't give errors if we can't delete 'RAID' directory */
     if (rm_dir_w_symlink(org_path, level == 0))
-      DBUG_RETURN(-1);
+      return(-1);
   }
 
-  DBUG_RETURN(deleted);
+  return(deleted);
 
 err:
   my_dirend(dirp);
-  DBUG_RETURN(-1);
+  return(-1);
 }
 
 
@@ -1193,7 +1182,6 @@ static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error)
 {
   char tmp_path[FN_REFLEN], *pos;
   char *path= tmp_path;
-  DBUG_ENTER("rm_dir_w_symlink");
   unpack_filename(tmp_path, org_path);
 #ifdef HAVE_READLINK
   int error;
@@ -1205,12 +1193,12 @@ static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error)
     *--pos=0;
 
   if ((error= my_readlink(tmp2_path, path, MYF(MY_WME))) < 0)
-    DBUG_RETURN(1);
+    return(1);
   if (!error)
   {
     if (my_delete(path, MYF(send_error ? MY_WME : 0)))
     {
-      DBUG_RETURN(send_error);
+      return(send_error);
     }
     /* Delete directory symbolic link pointed at */
     path= tmp2_path;
@@ -1224,9 +1212,9 @@ static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error)
   if (rmdir(path) < 0 && send_error)
   {
     my_error(ER_DB_DROP_RMDIR, MYF(0), path, errno);
-    DBUG_RETURN(1);
+    return(1);
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -1249,8 +1237,6 @@ static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp,
   long deleted= 0;
   ulong found_other_files= 0;
   char filePath[FN_REFLEN];
-  DBUG_ENTER("mysql_rm_arc_files");
-  DBUG_PRINT("enter", ("path: %s", org_path));
 
   for (uint idx=0 ;
        idx < (uint) dirp->number_off_files && !thd->killed ;
@@ -1258,7 +1244,6 @@ static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp,
   {
     FILEINFO *file=dirp->dir_entry+idx;
     char *extension, *revision;
-    DBUG_PRINT("info",("Examining: %s", file->name));
 
     /* skiping . and .. */
     if (file->name[0] == '.' && (!file->name[1] ||
@@ -1298,12 +1283,12 @@ static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp,
   */
   if (!found_other_files &&
       rm_dir_w_symlink(org_path, 0))
-    DBUG_RETURN(-1);
-  DBUG_RETURN(deleted);
+    return(-1);
+  return(deleted);
 
 err:
   my_dirend(dirp);
-  DBUG_RETURN(-1);
+  return(-1);
 }
 
 
@@ -1397,7 +1382,7 @@ static void backup_current_db_name(THD *thd,
 
 
 /**
-  Return TRUE if db1_name is equal to db2_name, FALSE otherwise.
+  Return true if db1_name is equal to db2_name, false otherwise.
 
   The function allows to compare database names according to the MySQL
   rules. The database names db1 and db2 are equal if:
@@ -1425,7 +1410,7 @@ cmp_db_names(const char *db1_name,
 
   @param thd          thread handle
   @param new_db_name  database name
-  @param force_switch if force_switch is FALSE, then the operation will fail if
+  @param force_switch if force_switch is false, then the operation will fail if
 
                         - new_db_name is NULL or empty;
 
@@ -1436,7 +1421,7 @@ cmp_db_names(const char *db1_name,
 
                         - OR new database does not exist;
 
-                      if force_switch is TRUE, then
+                      if force_switch is true, then
 
                         - if new_db_name is NULL or empty, the current
                           database will be NULL, @@collation_database will
@@ -1478,17 +1463,14 @@ cmp_db_names(const char *db1_name,
   the stack address was long gone.
 
   @return Operation status
-    @retval FALSE Success
-    @retval TRUE  Error
+    @retval false Success
+    @retval true  Error
 */
 
 bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
   CHARSET_INFO *db_default_cl;
-
-  DBUG_ENTER("mysql_change_db");
-  DBUG_PRINT("enter",("name: '%s'", new_db_name->str));
 
   if (new_db_name == NULL ||
       new_db_name->length == 0)
@@ -1507,13 +1489,13 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
       mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
 
-      DBUG_RETURN(FALSE);
+      return(false);
     }
     else
     {
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
 
-      DBUG_RETURN(TRUE);
+      return(true);
     }
   }
 
@@ -1524,7 +1506,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
     mysql_change_db_impl(thd, &INFORMATION_SCHEMA_NAME, system_charset_info);
 
-    DBUG_RETURN(FALSE);
+    return(false);
   }
 
   /*
@@ -1539,7 +1521,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
   new_db_file_name.length= new_db_name->length;
 
   if (new_db_file_name.str == NULL)
-    DBUG_RETURN(TRUE);                             /* the error is set */
+    return(true);                             /* the error is set */
 
   /*
     NOTE: if check_db_name() fails, we should throw an error in any case,
@@ -1558,11 +1540,8 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
     if (force_switch)
       mysql_change_db_impl(thd, NULL, thd->variables.collation_server);
 
-    DBUG_RETURN(TRUE);
+    return(true);
   }
-
-  DBUG_PRINT("info",("Use database: %s", new_db_file_name.str));
-
 
   if (check_db_dir_existence(new_db_file_name.str))
   {
@@ -1582,7 +1561,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
       /* The operation succeed. */
 
-      DBUG_RETURN(FALSE);
+      return(false);
     }
     else
     {
@@ -1593,7 +1572,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
       /* The operation failed. */
 
-      DBUG_RETURN(TRUE);
+      return(true);
     }
   }
 
@@ -1606,7 +1585,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 
   mysql_change_db_impl(thd, &new_db_file_name, db_default_cl);
 
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 
@@ -1639,7 +1618,7 @@ bool mysql_opt_change_db(THD *thd,
   *cur_db_changed= !cmp_db_names(thd->db, new_db_name->str);
 
   if (!*cur_db_changed)
-    return FALSE;
+    return false;
 
   backup_current_db_name(thd, saved_db_name);
 
@@ -1725,7 +1704,6 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
   TABLE_LIST *table_list;
   SELECT_LEX *sl= thd->lex->current_select;
   LEX_STRING new_db;
-  DBUG_ENTER("mysql_upgrade_db");
 
   if ((old_db->length <= MYSQL50_TABLE_NAME_PREFIX_LENGTH) ||
       (strncmp(old_db->str,
@@ -1735,7 +1713,7 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
     my_error(ER_WRONG_USAGE, MYF(0),
              "ALTER DATABASE UPGRADE DATA DIRECTORY NAME",
              "name");
-    DBUG_RETURN(1);
+    return(1);
   }
 
   /* `#mysql50#<name>` converted to encoded `<name>` */
@@ -1744,7 +1722,7 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
 
   if (lock_databases(thd, old_db->str, old_db->length,
                           new_db.str, new_db.length))
-    DBUG_RETURN(1);
+    return(1);
 
   /*
     Let's remember if we should do "USE newdb" afterwards.
@@ -1780,7 +1758,6 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
       FILEINFO *file= dirp->dir_entry + idx;
       char *extension, tname[FN_REFLEN];
       LEX_STRING table_str;
-      DBUG_PRINT("info",("Examining: %s", file->name));
 
       /* skiping non-FRM files */
       if (my_strcasecmp(files_charset_info,
@@ -1841,7 +1818,6 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
     {
       FILEINFO *file= dirp->dir_entry + idx;
       char oldname[FN_REFLEN], newname[FN_REFLEN];
-      DBUG_PRINT("info",("Examining: %s", file->name));
 
       /* skiping . and .. and MY_DB_OPT_FILE */
       if ((file->name[0] == '.' &&
@@ -1870,14 +1846,14 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
   /* Step8: logging */
   if (mysql_bin_log.is_open())
   {
-    Query_log_event qinfo(thd, thd->query, thd->query_length, 0, TRUE);
+    Query_log_event qinfo(thd, thd->query, thd->query_length, 0, true);
     thd->clear_error();
     mysql_bin_log.write(&qinfo);
   }
 
   /* Step9: Let's do "use newdb" if we renamed the current database */
   if (change_to_newdb)
-    error|= mysql_change_db(thd, & new_db, FALSE);
+    error|= mysql_change_db(thd, & new_db, false);
 
 exit:
   pthread_mutex_lock(&LOCK_lock_db);
@@ -1889,7 +1865,7 @@ exit:
   pthread_cond_signal(&COND_refresh);
   pthread_mutex_unlock(&LOCK_lock_db);
 
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -1902,8 +1878,8 @@ exit:
     db_name   database name
 
   RETURN VALUES
-    FALSE   There is directory for the specified database name.
-    TRUE    The directory does not exist.
+    false   There is directory for the specified database name.
+    true    The directory does not exist.
 */
 
 bool check_db_dir_existence(const char *db_name)

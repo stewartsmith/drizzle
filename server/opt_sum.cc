@@ -115,7 +115,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
   int const_result= 1;
   bool recalc_const_item= 0;
   ulonglong count= 1;
-  bool is_exact_count= TRUE, maybe_exact_count= TRUE;
+  bool is_exact_count= TRUE, maybe_exact_count= true;
   table_map removed_tables= 0, outer_tables= 0, used_tables= 0;
   table_map where_tables= 0;
   Item *item;
@@ -166,7 +166,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
       maybe_exact_count&= test(!tl->schema_table &&
                                (tl->table->file->ha_table_flags() &
                                 HA_HAS_RECORDS));
-      is_exact_count= FALSE;
+      is_exact_count= false;
       count= 1;                                 // ensure count != 0
     }
     else
@@ -312,7 +312,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
                   (error == HA_ERR_KEY_NOT_FOUND ||
                    key_cmp_if_same(table, ref.key_buff, ref.key, prefix_len)))
               {
-                DBUG_ASSERT(item_field->field->real_maybe_null());
+                assert(item_field->field->real_maybe_null());
                 error= table->file->index_read_map(table->record[0],
                                                    ref.key_buff,
                                                    make_prev_keypart_map(ref.key_parts),
@@ -864,7 +864,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
             ref->key_buff[ref->key_length]= 1;
             ref->key_length+= part->store_length;
             ref->key_parts++;
-            DBUG_ASSERT(ref->key_parts == jdx+1);
+            assert(ref->key_parts == jdx+1);
             *range_fl&= ~NO_MIN_RANGE;
             *range_fl|= NEAR_MIN; // Open interval
           }
@@ -971,7 +971,7 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond)
   case Item_func::EQUAL_FUNC:
     break;
   default:                                        // Keep compiler happy
-    DBUG_ASSERT(1);                               // Impossible
+    assert(1);                               // Impossible
     break;
   }
   return 0;

@@ -835,7 +835,6 @@ inline bool check_and_unset_keyword(const char *dbug_str)
   if (_db_strict_keyword_ (dbug_str))
   {
     strxmov(total_str, extra_str, dbug_str, NullS);
-    DBUG_SET(total_str);
     return 1;
   }
   return 0;
@@ -869,7 +868,7 @@ check_and_unset_inject_value(int value)
 
   ERROR_INJECT_CRASH will inject a crash of the MySQL Server if code
   is set when macro is called. ERROR_INJECT_CRASH can be used in
-  if-statements, it will always return FALSE unless of course it
+  if-statements, it will always return false unless of course it
   crashes in which case it doesn't return at all.
 
   ERROR_INJECT_ACTION will inject the action specified in the action
@@ -1369,10 +1368,10 @@ inline bool setup_fields_with_no_wrap(THD *thd, Item **ref_pointer_array,
                                       bool allow_sum_func)
 {
   bool res;
-  thd->lex->select_lex.no_wrap_view_item= TRUE;
+  thd->lex->select_lex.no_wrap_view_item= true;
   res= setup_fields(thd, ref_pointer_array, item, mark_used_columns, sum_func_list,
                     allow_sum_func);
-  thd->lex->select_lex.no_wrap_view_item= FALSE;
+  thd->lex->select_lex.no_wrap_view_item= false;
   return res;
 }
 int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,
@@ -1387,12 +1386,12 @@ int open_and_lock_tables_derived(THD *thd, TABLE_LIST *tables, bool derived);
 /* simple open_and_lock_tables without derived handling */
 inline int simple_open_n_lock_tables(THD *thd, TABLE_LIST *tables)
 {
-  return open_and_lock_tables_derived(thd, tables, FALSE);
+  return open_and_lock_tables_derived(thd, tables, false);
 }
 /* open_and_lock_tables with derived handling */
 inline int open_and_lock_tables(THD *thd, TABLE_LIST *tables)
 {
-  return open_and_lock_tables_derived(thd, tables, TRUE);
+  return open_and_lock_tables_derived(thd, tables, true);
 }
 /* simple open_and_lock_tables without derived handling for single table */
 TABLE *open_n_lock_single_table(THD *thd, TABLE_LIST *table_l,
@@ -1541,7 +1540,7 @@ bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
                          bool wait_for_refresh, bool wait_for_placeholders);
 bool close_cached_connection_tables(THD *thd, bool wait_for_refresh,
                                     LEX_STRING *connect_string,
-                                    bool have_lock = FALSE);
+                                    bool have_lock= false);
 void copy_field_from_tmp_record(Field *field,int offset);
 bool fill_record(THD * thd, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(THD *thd, Field **field, List<Item> &values, bool ignore_errors);
@@ -1584,18 +1583,13 @@ bool mysql_manager_submit(void (*action)());
 
 
 /* sql_test.cc */
-#ifndef DBUG_OFF
 void print_where(COND *cond,const char *info, enum_query_type query_type);
 void print_cached_tables(void);
 void TEST_filesort(SORT_FIELD *sortorder,uint s_length);
 void print_plan(JOIN* join,uint idx, double record_count, double read_time,
                 double current_read_time, const char *info);
 void print_keyuse_array(DYNAMIC_ARRAY *keyuse_array);
-#define EXTRA_DEBUG_DUMP_TABLE_LISTS
-#ifdef EXTRA_DEBUG_DUMP_TABLE_LISTS
 void dump_TABLE_LIST_graph(SELECT_LEX *select_lex, TABLE_LIST* tl);
-#endif
-#endif
 void mysql_print_status();
 
 /* key.cc */
@@ -2047,9 +2041,7 @@ void free_list(I_List <i_string_pair> *list);
 void free_list(I_List <i_string> *list);
 
 /* sql_yacc.cc */
-#ifndef DBUG_OFF
 extern void turn_parser_debug_on();
-#endif
 
 /* Some inline functions for more speed */
 

@@ -75,7 +75,7 @@ public:
           Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :name(name_arg), after_update(func), no_support_one_shot(1),
     binlog_status(binlog_status_arg),
-    m_allow_empty_value(TRUE)
+    m_allow_empty_value(true)
   {}
   virtual ~sys_var() {}
   void chain_sys_var(sys_var_chain *chain_arg)
@@ -598,23 +598,6 @@ public:
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
-class sys_var_thd_dbug :public sys_var_thd
-{
-public:
-  sys_var_thd_dbug(sys_var_chain *chain, const char *name_arg)
-    :sys_var_thd(name_arg)
-  { chain_sys_var(chain); }
-  bool check_update_type(Item_result type) { return type != STRING_RESULT; }
-  SHOW_TYPE show_type() { return SHOW_CHAR; }
-  bool update(THD *thd, set_var *var);
-  void set_default(THD *thd __attribute__((__unused__)),
-                   enum_var_type type __attribute__((__unused__)))
-  { DBUG_POP(); }
-  uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *b);
-};
-
-
-
 /* some variables that require special handling */
 
 class sys_var_timestamp :public sys_var
@@ -920,7 +903,7 @@ public:
     :sys_var(name_arg,func), value(value_arg), enum_names(typelib)
   {
     chain_sys_var(chain);
-    set_allow_empty_value(FALSE);
+    set_allow_empty_value(false);
   }
   virtual bool check(THD *thd, set_var *var)
   {

@@ -45,27 +45,24 @@ extern "C" {
   @retval
     0   if record read
 */
-
-
 int _my_b_net_read(register IO_CACHE *info, uchar *Buffer,
 		   size_t Count __attribute__((unused)))
 {
   ulong read_length;
   NET *net= &(current_thd)->net;
-  DBUG_ENTER("_my_b_net_read");
 
   if (!info->end_of_file)
-    DBUG_RETURN(1);	/* because my_b_get (no _) takes 1 byte at a time */
+    return(1);	/* because my_b_get (no _) takes 1 byte at a time */
   read_length=my_net_read(net);
   if (read_length == packet_error)
   {
     info->error= -1;
-    DBUG_RETURN(1);
+    return(1);
   }
   if (read_length == 0)
   {
     info->end_of_file= 0;			/* End of file from client */
-    DBUG_RETURN(1);
+    return(1);
   }
   /* to set up stuff for my_b_get (no _) */
   info->read_end = (info->read_pos = (uchar*) net->read_pos) + read_length;
@@ -81,10 +78,8 @@ int _my_b_net_read(register IO_CACHE *info, uchar *Buffer,
 
   info->read_pos++;
 
-  DBUG_RETURN(0);
+  return(0);
 }
 
 } /* extern "C" */
 #endif /* HAVE_REPLICATION */
-
-
