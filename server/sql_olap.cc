@@ -63,7 +63,7 @@ static int make_new_olap_select(LEX *lex, SELECT_LEX *select_lex, List<Item> new
     
   while ((item=list_it++))
   {
-    bool not_found= TRUE;
+    bool not_found= true;
     if (item->type()==Item::FIELD_ITEM)
     {
       Item_field *iif = (Item_field *)item;
@@ -154,7 +154,7 @@ int handle_olaps(LEX *lex, SELECT_LEX *select_lex)
 
   if (setup_tables(lex->thd, &select_lex->context, &select_lex->top_join_list,
                    (TABLE_LIST *)select_lex->table_list.first
-                   &select_lex->leaf_tables, FALSE) ||
+                   &select_lex->leaf_tables, false) ||
       setup_fields(lex->thd, 0, select_lex->item_list, MARK_COLUMNS_READ,
                    &all_fields,1) ||
       setup_fields(lex->thd, 0, item_list_copy, MARK_COLUMNS_READ,
