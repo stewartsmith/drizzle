@@ -105,9 +105,7 @@ static bool init_pipe(int pipe_fds[])
 thd_scheduler::thd_scheduler()
   : logged_in(false), io_event(NULL), thread_attached(false)
 {  
-#ifndef DBUG_OFF
   dbug_explain_buf[0]= 0;
-#endif
 }
 
 
@@ -143,7 +141,7 @@ bool thd_scheduler::init(THD *parent_thd)
 
 bool thd_scheduler::thread_attach()
 {
-  DBUG_ASSERT(!thread_attached);
+  assert(!thread_attached);
   THD* thd = (THD*)list.data;
   if (libevent_should_close_connection(thd) ||
       setup_connection_thread_globals(thd))
@@ -153,9 +151,7 @@ bool thd_scheduler::thread_attach()
   my_errno= 0;
   thd->mysys_var->abort= 0;
   thread_attached= true;
-#ifndef DBUG_OFF
   swap_dbug_explain();
-#endif
   return false;
 }
 
@@ -171,9 +167,7 @@ void thd_scheduler::thread_detach()
     THD* thd = (THD*)list.data;
     thd->mysys_var= NULL;
     thread_attached= false;
-#ifndef DBUG_OFF
     swap_dbug_explain();
-#endif
   }
 }
 
@@ -184,18 +178,11 @@ void thd_scheduler::thread_detach()
   This is used to preserve the SESSION DEBUG variable, which is mapped to the OS 
   thread during a command, but each command is handled by a different thread.
 */
-
-#ifndef DBUG_OFF
 void thd_scheduler::swap_dbug_explain()
 {
   char buffer[sizeof(dbug_explain_buf)];
-  if (DBUG_EXPLAIN(buffer, sizeof(buffer)))
-    sql_print_error("DBUG_EXPLAIN buffer too small.\n");
-  DBUG_POP();
-  DBUG_PUSH(dbug_explain_buf);
   memcpy(dbug_explain_buf, buffer, sizeof(buffer));
 }
-#endif
 
 /**
   Create all threads for the thread pool
@@ -213,7 +200,6 @@ void thd_scheduler::swap_dbug_explain()
 static bool libevent_init(void)
 {
   uint i;
-  DBUG_ENTER("libevent_init");
 
   event_init();
   
@@ -228,7 +214,7 @@ static bool libevent_init(void)
   if (init_pipe(thd_add_pipe))
   {
     sql_print_error("init_pipe(thd_add_pipe) error in libevent_init\n");
-    DBUG_RETURN(1);
+    return(1);
   }
   /* set up the pipe used to kill thds in the event queue */
   if (init_pipe(thd_kill_pipe))
@@ -236,7 +222,7 @@ static bool libevent_init(void)
     sql_print_error("init_pipe(thd_kill_pipe) error in libevent_init\n");
     close(thd_add_pipe[0]);
     close(thd_add_pipe[1]);
-    DBUG_RETURN(1);
+    return(1);
   }
   event_set(&thd_add_event, thd_add_pipe[0], EV_READ|EV_PERSIST,
             libevent_add_thd_callback, NULL);
@@ -247,7 +233,7 @@ static bool libevent_init(void)
  {
    sql_print_error("thd_add_event event_add error in libevent_init\n");
    libevent_end();
-   DBUG_RETURN(1);
+   return(1);
    
  }
   /* Set up the thread pool */
@@ -265,7 +251,7 @@ static bool libevent_init(void)
                       error);
       pthread_mutex_unlock(&LOCK_thread_count);
       libevent_end();                      // Cleanup
-      DBUG_RETURN(true);
+      return(true);
     }
   }
 
@@ -274,8 +260,7 @@ static bool libevent_init(void)
     pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
   pthread_mutex_unlock(&LOCK_thread_count);
   
-  DBUG_PRINT("info", ("%u threads created", (uint) thread_pool_size));
-  DBUG_RETURN(false);
+  return(false);
 }
 
 
@@ -399,22 +384,18 @@ void libevent_add_thd_callback(int Fd, short, void *)
 
 static void libevent_add_connection(THD *thd)
 {
-  DBUG_ENTER("libevent_add_connection");
-  DBUG_PRINT("enter", ("thd: 0x%lx  thread_id: %lu",
-                       (long) thd, thd->thread_id));
-  
   if (thd->scheduler.init(thd))
   {
     sql_print_error("Scheduler init error in libevent_add_new_connection\n");
     pthread_mutex_unlock(&LOCK_thread_count);
     libevent_connection_close(thd);
-    DBUG_VOID_RETURN;
+    return;
   }
   threads.append(thd);
   libevent_thd_add(thd);
   
   pthread_mutex_unlock(&LOCK_thread_count);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -450,9 +431,6 @@ static void libevent_post_kill_notification(THD *)
 
 static void libevent_connection_close(THD *thd)
 {
-  DBUG_ENTER("libevent_connection_close");
-  DBUG_PRINT("enter", ("thd: 0x%lx", (long) thd));
-
   thd->killed= THD::KILL_CONNECTION;          // Avoid error messages
 
   if (thd->net.vio->sd >= 0)                  // not already closed
@@ -464,7 +442,7 @@ static void libevent_connection_close(THD *thd)
   unlink_thd(thd);   /* locks LOCK_thread_count and deletes thd */
   pthread_mutex_unlock(&LOCK_thread_count);
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -493,7 +471,6 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((__unused__)))
     sql_print_error("libevent_thread_proc: my_thread_init() failed\n");
     exit(1);
   }
-  DBUG_ENTER("libevent_thread_proc");
 
   /*
     Signal libevent_init() when all threads has been created and are ready to
@@ -543,8 +520,6 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((__unused__)))
     /* is the connection logged in yet? */
     if (!thd->scheduler.logged_in)
     {
-      DBUG_PRINT("info", ("init new connection.  sd: %d",
-                          thd->net.vio->sd));
       if (login_connection(thd))
       {
         /* Failed to log in */
@@ -573,14 +548,13 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((__unused__)))
   }
   
 thread_exit:
-  DBUG_PRINT("exit", ("ending thread"));
   (void) pthread_mutex_lock(&LOCK_thread_count);
   killed_threads++;
   pthread_cond_broadcast(&COND_thread_count);
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   my_thread_end();
   pthread_exit(0);
-  DBUG_RETURN(0);                               /* purify: deadcode */
+  return(0);                               /* purify: deadcode */
 }
 
 
@@ -638,11 +612,6 @@ static void libevent_thd_add(THD* thd)
 
 static void libevent_end()
 {
-  DBUG_ENTER("libevent_end");
-  DBUG_PRINT("enter", ("created_threads: %d  killed_threads: %u",
-                       created_threads, killed_threads));
-  
-  
   (void) pthread_mutex_lock(&LOCK_thread_count);
   
   kill_pool_threads= true;
@@ -665,7 +634,7 @@ static void libevent_end()
 
   (void) pthread_mutex_destroy(&LOCK_event_loop);
   (void) pthread_mutex_destroy(&LOCK_thd_add);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
