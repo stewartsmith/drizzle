@@ -278,6 +278,68 @@ if $LD --version 2>/dev/null|grep -q GNU; then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+#--------------------------------------------------------------------
+# Check for libevent
+#--------------------------------------------------------------------
+
+AC_CHECK_HEADERS(event.h)
+if test "x$ac_cv_header_event_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+fi
+AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+
+#--------------------------------------------------------------------
+# Check for libpthread
+#--------------------------------------------------------------------
+
+AC_CHECK_HEADERS(pthread.h)
+if test "x$ac_cv_header_pthread_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find pthread.h.])
+fi
+AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
+
+#--------------------------------------------------------------------
+# Check for libz
+#--------------------------------------------------------------------
+
+AC_CHECK_HEADERS(zlib.h)
+if test "x$ac_cv_header_zlib_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find zlib.h. Try installing zlib development packages])
+fi
+AC_CHECK_LIB(z, crc32, [], [AC_MSG_ERROR(could not find libz)])
+
+
+AC_CHECK_HEADERS([readline/readline.h])
+if test "x$ac_cv_header_readline_readline_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
+fi
+
+#--------------------------------------------------------------------
+# Check for libpcre
+#--------------------------------------------------------------------
+
+AC_LANG_PUSH([C++])
+AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
+  AC_CHECK_LIB(pcrecpp, [DoMatch], [found_pcre="no"])
+  AC_CHECK_HEADERS(pcrecpp.h)
+  if test "x$ac_cv_header_prcecpp_h" = "xno" 
+  then
+    found_pcre="no"
+  fi
+  ])
+if test "x$found_pcre" != "xyes"
+then
+    AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
+fi
+AC_LANG_POP([])
+AC_SUBST(PCRE_LIBS)
+AC_SUBST(PCRE_CFLAGS)
+
 
 # Avoid bug in fcntl on some versions of linux
 AC_MSG_CHECKING([if we should use 'skip-external-locking' as default for $target_os])
@@ -559,44 +621,13 @@ AC_CHECK_HEADERS(fcntl.h float.h fpu_control.h ieeefp.h)
 AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
 AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
-AC_CHECK_HEADERS(sys/timeb.h ys/un.h sys/vadvise.h sys/wait.h term.h)
+AC_CHECK_HEADERS(sys/timeb.h sys/vadvise.h sys/wait.h term.h)
 AC_CHECK_HEADERS(termio.h termios.h sched.h crypt.h alloca.h)
 AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
 AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
 AC_CHECK_HEADERS(execinfo.h)
 
 AC_CHECK_HEADERS([xfs/xfs.h])
-#--------------------------------------------------------------------
-# Check for libevent
-#--------------------------------------------------------------------
-
-AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
-
-#--------------------------------------------------------------------
-# Check for libpthread
-#--------------------------------------------------------------------
-
-AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
-
-#--------------------------------------------------------------------
-# Check for libpcre
-#--------------------------------------------------------------------
-
-AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
-  AC_CHECK_LIB(pcrecpp, [DoMatch], [found_pcre="no"])
-  AC_CHECK_HEADERS(pcrecpp.h)
-  if test "x$ac_cv_header_prcecpp_h" = "xno" 
-  then
-    found_pcre="no"
-  fi
-  ])
-if test "x$found_pcre" != "xyes"
-then
-    AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
-fi
-AC_SUBST(PCRE_LIBS)
-AC_SUBST(PCRE_CFLAGS)
 
 #--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS

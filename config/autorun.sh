@@ -24,7 +24,7 @@ run() {
 ## jump out if one of the programs returns 'false'
 set -e
 
-bzr log --gnu > ChangeLog || touch ChangeLog
+bzr log --short > ChangeLog || touch ChangeLog
 
 ## We do not currently support glibtoolize
 if test x$LIBTOOLIZE = x; then
