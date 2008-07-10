@@ -48,20 +48,6 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
                           HA_CREATE_INFO *create_info,
                           Alter_info *alter_info);
 
-#ifndef DBUG_OFF
-
-/* Wait until we get a 'mysql_kill' signal */
-
-static void wait_for_kill_signal(THD *thd)
-{
-  while (thd->killed == 0)
-    sleep(1);
-  // Reset signal and continue as if nothing happend
-  thd->killed= THD::NOT_KILLED;
-}
-#endif
-
-
 /*
   Translate a file name to a table name (WL #1324).
 
@@ -74,7 +60,6 @@ static void wait_for_kill_signal(THD *thd)
   RETURN
     Table name length.
 */
-
 uint filename_to_tablename(const char *from, char *to, uint to_length)
 {
   uint errors;
@@ -3505,7 +3490,6 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
                               RTFC_WAIT_OTHER_THREAD_FLAG |
                               RTFC_CHECK_KILLED_FLAG);
       thd->exit_cond(old_message);
-      DBUG_EXECUTE_IF("wait_in_mysql_admin_table", wait_for_kill_signal(thd););
       if (thd->killed)
 	goto err;
       open_for_modify= 0;
@@ -5564,7 +5548,6 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
       VOID(pthread_mutex_lock(&LOCK_open));
       wait_while_table_is_used(thd, table, HA_EXTRA_FORCE_REOPEN);
       VOID(pthread_mutex_unlock(&LOCK_open));
-      DBUG_EXECUTE_IF("sleep_alter_enable_indexes", my_sleep(6000000););
       error= table->file->ha_enable_indexes(HA_KEY_SWITCH_NONUNIQ_SAVE);
       /* COND_refresh will be signaled in close_thread_tables() */
       break;

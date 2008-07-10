@@ -2040,9 +2040,6 @@ bool flush_error_log(void);
 void free_list(I_List <i_string_pair> *list);
 void free_list(I_List <i_string> *list);
 
-/* sql_yacc.cc */
-extern void turn_parser_debug_on();
-
 /* Some inline functions for more speed */
 
 inline bool add_item_to_list(THD *thd, Item *item)

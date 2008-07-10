@@ -1958,7 +1958,7 @@ pthread_handler_t handle_slave_io(void *arg)
   uint retry_count;
   bool suppress_warnings;
   uint retry_count_reg= 0, retry_count_dump= 0, retry_count_event= 0;
-  // needs to call my_thread_init(), otherwise we get a coredump in DBUG_ stuff
+
   my_thread_init();
 
   assert(mi->inited);
@@ -2237,7 +2237,6 @@ pthread_handler_t handle_slave_sql(void *arg)
   Relay_log_info* rli = &((Master_info*)arg)->rli;
   const char *errmsg;
 
-  // needs to call my_thread_init(), otherwise we get a coredump in DBUG_ stuff
   my_thread_init();
 
   assert(rli->inited);
