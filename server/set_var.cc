@@ -201,9 +201,6 @@ static sys_var_long_ptr	sys_concurrent_insert(&vars, "concurrent_insert",
 static sys_var_long_ptr	sys_connect_timeout(&vars, "connect_timeout",
 					    &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", mysql_real_data_home);
-#ifndef DBUG_OFF
-static sys_var_thd_dbug        sys_dbug(&vars, "debug");
-#endif
 static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 					    &delay_key_write_options,
 					    &delay_key_write_typelib,
@@ -930,7 +927,6 @@ bool sys_var_set_slave_mode::update(THD *thd, set_var *var)
 
 void fix_slave_exec_mode(enum_var_type type __attribute__((__unused__)))
 {
-  DBUG_ENTER("fix_slave_exec_mode");
   compile_time_assert(sizeof(slave_exec_mode_options) * CHAR_BIT
                       > SLAVE_EXEC_MODE_LAST_BIT - 1);
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
@@ -989,28 +985,22 @@ void fix_binlog_format_after_update(THD *thd,
 static void fix_max_binlog_size(THD *thd __attribute__((__unused__)),
                                 enum_var_type type __attribute__((__unused__)))
 {
-  DBUG_ENTER("fix_max_binlog_size");
-  DBUG_PRINT("info",("max_binlog_size=%lu max_relay_log_size=%lu",
-                     max_binlog_size, max_relay_log_size));
   mysql_bin_log.set_max_size(max_binlog_size);
 #ifdef HAVE_REPLICATION
   if (!max_relay_log_size)
     active_mi->rli.relay_log.set_max_size(max_binlog_size);
 #endif
-  DBUG_VOID_RETURN;
+  return;
 }
 
 static void fix_max_relay_log_size(THD *thd __attribute__((__unused__)),
                                    enum_var_type type __attribute__((__unused__)))
 {
-  DBUG_ENTER("fix_max_relay_log_size");
-  DBUG_PRINT("info",("max_binlog_size=%lu max_relay_log_size=%lu",
-                     max_binlog_size, max_relay_log_size));
 #ifdef HAVE_REPLICATION
   active_mi->rli.relay_log.set_max_size(max_relay_log_size ?
                                         max_relay_log_size: max_binlog_size);
 #endif
-  DBUG_VOID_RETURN;
+  return;
 }
 
 static void fix_max_connections(THD *thd __attribute__((__unused__)),
@@ -1062,16 +1052,16 @@ bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), name, buf);
   }
-  return FALSE;
+  return false;
 }
 
 static ulonglong fix_unsigned(THD *thd, ulonglong num,
                               const struct my_option *option_limits)
 {
-  my_bool fixed= FALSE;
+  my_bool fixed= false;
   ulonglong out= getopt_ull_limit_value(num, option_limits, &fixed);
 
-  throw_bounds_warning(thd, fixed, TRUE, option_limits->name, (longlong) num);
+  throw_bounds_warning(thd, fixed, true, option_limits->name, (longlong) num);
   return out;
 }
 
@@ -1114,7 +1104,7 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
     if (tmp > ULONG_MAX)
     {
       tmp= ULONG_MAX;
-      throw_bounds_warning(thd, TRUE, TRUE, name,
+      throw_bounds_warning(thd, true, true, name,
                            (longlong) var->save_result.ulonglong_value);
     }
 #endif
@@ -1208,7 +1198,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((ulong) tmp > max_system_variables.*offset)
   {
-    throw_bounds_warning(thd, TRUE, TRUE, name, (longlong) tmp);
+    throw_bounds_warning(thd, true, true, name, (longlong) tmp);
     tmp= max_system_variables.*offset;
   }
   
@@ -1218,7 +1208,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
   else if (tmp > ULONG_MAX)
   {
     tmp= ULONG_MAX;
-    throw_bounds_warning(thd, TRUE, TRUE, name, (longlong) var->save_result.ulonglong_value);
+    throw_bounds_warning(thd, true, true, name, (longlong) var->save_result.ulonglong_value);
   }
 #endif
   
@@ -1661,9 +1651,6 @@ void sys_var_thd_date_time_format::update2(THD *thd, enum_var_type type,
 					   DATE_TIME_FORMAT *new_value)
 {
   DATE_TIME_FORMAT *old;
-  DBUG_ENTER("sys_var_date_time_format::update2");
-  DBUG_DUMP("positions", (uchar*) new_value->positions,
-	    sizeof(new_value->positions));
 
   if (type == OPT_GLOBAL)
   {
@@ -1678,7 +1665,7 @@ void sys_var_thd_date_time_format::update2(THD *thd, enum_var_type type,
     (thd->variables.*offset)= new_value;
   }
   my_free((char*) old, MYF(MY_ALLOW_ZERO_PTR));
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -2280,7 +2267,7 @@ bool update_sys_var_str_path(THD *thd __attribute__((__unused__)),
       file_log->open_query_log(sys_var_general_log_path.value);
       break;
     default:
-      DBUG_ASSERT(0);
+      assert(0);
     }
   }
 
@@ -2569,14 +2556,14 @@ bool sys_var_max_user_conn::check(THD *thd, set_var *var)
       May be we should have a separate error message for this?
     */
     my_error(ER_GLOBAL_VARIABLE, MYF(0), name);
-    return TRUE;
+    return true;
   }
 }
 
 bool sys_var_max_user_conn::update(THD *thd __attribute__((__unused__)),
                                    set_var *var)
 {
-  DBUG_ASSERT(var->type == OPT_GLOBAL);
+  assert(var->type == OPT_GLOBAL);
   pthread_mutex_lock(&LOCK_global_system_variables);
   max_user_connections= (uint)var->save_result.ulonglong_value;
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -2587,7 +2574,7 @@ bool sys_var_max_user_conn::update(THD *thd __attribute__((__unused__)),
 void sys_var_max_user_conn::set_default(THD *thd __attribute__((__unused__)),
                                         enum_var_type type __attribute__((__unused__)))
 {
-  DBUG_ASSERT(type == OPT_GLOBAL);
+  assert(type == OPT_GLOBAL);
   pthread_mutex_lock(&LOCK_global_system_variables);
   max_user_connections= (ulong) option_limits->def_value;
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -2756,14 +2743,14 @@ static bool set_option_autocommit(THD *thd, set_var *var)
     {
       /* We changed to auto_commit mode */
       thd->options&= ~(ulonglong) (OPTION_BEGIN | OPTION_KEEP_LOG);
-      thd->transaction.all.modified_non_trans_table= FALSE;
+      thd->transaction.all.modified_non_trans_table= false;
       thd->server_status|= SERVER_STATUS_AUTOCOMMIT;
       if (ha_commit(thd))
 	return 1;
     }
     else
     {
-      thd->transaction.all.modified_non_trans_table= FALSE;
+      thd->transaction.all.modified_non_trans_table= false;
       thd->server_status&= ~SERVER_STATUS_AUTOCOMMIT;
     }
   }
@@ -3025,7 +3012,6 @@ SHOW_VAR* enumerate_sys_vars(THD *thd, bool sorted)
 int set_var_init()
 {
   uint count= 0;
-  DBUG_ENTER("set_var_init");
   
   for (sys_var *var=vars.first; var; var= var->next, count++) {};
 
@@ -3052,11 +3038,11 @@ int set_var_init()
   */
   sys_sql_max_join_size.option_limits= sys_max_join_size.option_limits;
 
-  DBUG_RETURN(0);
+  return(0);
 
 error:
   fprintf(stderr, "failed to initialize system variables");
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -3143,7 +3129,6 @@ int sql_set_variables(THD *thd, List<set_var_base> *var_list)
 {
   int error;
   List_iterator_fast<set_var_base> it(*var_list);
-  DBUG_ENTER("sql_set_variables");
 
   set_var_base *var;
   while ((var=it++))
@@ -3160,7 +3145,7 @@ int sql_set_variables(THD *thd, List<set_var_base> *var_list)
 
 err:
   free_underlaid_joins(thd, &thd->lex->select_lex);
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -3350,7 +3335,7 @@ void sys_var_thd_storage_engine::set_default(THD *thd, enum_var_type type)
     value= &(thd->variables.*offset);
     new_value= my_plugin_lock(NULL, &(global_system_variables.*offset));
   }
-  DBUG_ASSERT(new_value);
+  assert(new_value);
   old_value= *value;
   *value= new_value;
   plugin_unlock(NULL, old_value);
@@ -3447,13 +3432,12 @@ void delete_elements(I_List<NAMED_LIST> *list,
 		     void (*free_element)(const char *name, uchar*))
 {
   NAMED_LIST *element;
-  DBUG_ENTER("delete_elements");
   while ((element= list->get()))
   {
     (*free_element)(element->name, element->data);
     delete element;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -3462,8 +3446,6 @@ void delete_elements(I_List<NAMED_LIST> *list,
 static KEY_CACHE *create_key_cache(const char *name, uint length)
 {
   KEY_CACHE *key_cache;
-  DBUG_ENTER("create_key_cache");
-  DBUG_PRINT("enter",("name: %.*s", length, name));
   
   if ((key_cache= (KEY_CACHE*) my_malloc(sizeof(KEY_CACHE),
 					     MYF(MY_ZEROFILL | MY_WME))))
@@ -3486,7 +3468,7 @@ static KEY_CACHE *create_key_cache(const char *name, uint length)
       key_cache->param_age_threshold=  dflt_key_cache_var.param_age_threshold;
     }
   }
-  DBUG_RETURN(key_cache);
+  return(key_cache);
 }
 
 
@@ -3531,13 +3513,11 @@ bool sys_var_opt_readonly::update(THD *thd, set_var *var)
 {
   bool result;
 
-  DBUG_ENTER("sys_var_opt_readonly::update");
-
   /* Prevent self dead-lock */
   if (thd->locked_tables || thd->active_transaction())
   {
     my_error(ER_LOCK_OR_ACTIVE_TRANSACTION, MYF(0));
-    DBUG_RETURN(true);
+    return(true);
   }
 
   if (thd->global_read_lock)
@@ -3549,7 +3529,7 @@ bool sys_var_opt_readonly::update(THD *thd, set_var *var)
       - SET GLOBAL READ_ONLY = 1
     */
     result= sys_var_bool_ptr::update(thd, var);
-    DBUG_RETURN(result);
+    return(result);
   }
 
   /*
@@ -3564,7 +3544,7 @@ bool sys_var_opt_readonly::update(THD *thd, set_var *var)
   */
 
   if (lock_global_read_lock(thd))
-    DBUG_RETURN(true);
+    return(true);
 
   /*
     This call will be blocked by any connection holding a READ or WRITE lock.
@@ -3575,7 +3555,7 @@ bool sys_var_opt_readonly::update(THD *thd, set_var *var)
     can cause to wait on a read lock, it's required for the client application
     to unlock everything, and acceptable for the server to wait on all locks.
   */
-  if ((result= close_cached_tables(thd, NULL, FALSE, TRUE, TRUE)) == true)
+  if ((result= close_cached_tables(thd, NULL, false, true, true)) == true)
     goto end_with_read_lock;
 
   if ((result= make_global_read_lock_block_commit(thd)) == true)
@@ -3587,38 +3567,7 @@ bool sys_var_opt_readonly::update(THD *thd, set_var *var)
 end_with_read_lock:
   /* Release the lock */
   unlock_global_read_lock(thd);
-  DBUG_RETURN(result);
-}
-
-bool sys_var_thd_dbug::update(THD *thd __attribute__((__unused__)),
-                              set_var *var)
-{
-  if (var->type == OPT_GLOBAL)
-  {
-    DBUG_SET_INITIAL(var ? var->value->str_value.c_ptr() : "");
-  }
-  else
-  {
-    DBUG_SET(var ? var->value->str_value.c_ptr() : "");
-  }
-
-  return 0;
-}
-
-
-uchar *sys_var_thd_dbug::value_ptr(THD *thd, enum_var_type type,
-                                   LEX_STRING *b __attribute__((__unused__)))
-{
-  char buf[256];
-  if (type == OPT_GLOBAL)
-  {
-    DBUG_EXPLAIN_INITIAL(buf, sizeof(buf));
-  }
-  else
-  {
-    DBUG_EXPLAIN(buf, sizeof(buf));
-  }
-  return (uchar*) thd->strdup(buf);
+  return(result);
 }
 
 /****************************************************************************
