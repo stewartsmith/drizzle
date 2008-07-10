@@ -50,13 +50,8 @@
    @param COND   Condition to check
    @param ERRNO  Error number to return in non-debug builds
 */
-#ifdef DBUG_OFF
 #define ASSERT_OR_RETURN_ERROR(COND, ERRNO) \
-  do { if (!(COND)) return ERRNO; } while (0)
-#else
-#define ASSERT_OR_RETURN_ERROR(COND, ERRNO) \
-  DBUG_ASSERT(COND)
-#endif
+  assert(COND)
 
 #define LOG_READ_EOF    -1
 #define LOG_READ_BOGUS  -2
@@ -1584,7 +1579,7 @@ public:
 #ifndef MYSQL_CLIENT
   bool write(IO_CACHE* file);
   virtual bool write_post_header_for_derived(IO_CACHE* file __attribute__((__unused__)))
-  { return FALSE; }
+  { return false; }
 #endif
   bool is_valid() const { return query != 0; }
 
@@ -1934,7 +1929,7 @@ public:
   {
     fname= afname;
     fname_len= alen;
-    local_fname= TRUE;
+    local_fname= true;
   }
   /* fname doesn't point to memory inside Log_event::temp_buf  */
   int  check_fname_outside_temp_buf()
@@ -3411,7 +3406,7 @@ protected:
   int unpack_current_row(const Relay_log_info *const rli,
                          MY_BITMAP const *cols)
   { 
-    DBUG_ASSERT(m_table);
+    assert(m_table);
     ASSERT_OR_RETURN_ERROR(m_curr_row < m_rows_end, HA_ERR_CORRUPT_EVENT);
     int const result= ::unpack_row(rli, m_table, m_width, m_curr_row, cols,
                                    &m_curr_row_end, &m_master_reclength);
@@ -3704,22 +3699,18 @@ class Incident_log_event : public Log_event {
 public:
 #ifndef MYSQL_CLIENT
   Incident_log_event(THD *thd_arg, Incident incident)
-    : Log_event(thd_arg, 0, FALSE), m_incident(incident)
+    : Log_event(thd_arg, 0, false), m_incident(incident)
   {
-    DBUG_ENTER("Incident_log_event::Incident_log_event");
-    DBUG_PRINT("enter", ("m_incident: %d", m_incident));
     m_message.str= NULL;                    /* Just as a precaution */
     m_message.length= 0;
-    DBUG_VOID_RETURN;
+    return;
   }
 
   Incident_log_event(THD *thd_arg, Incident incident, LEX_STRING const msg)
     : Log_event(thd_arg, 0, FALSE), m_incident(incident)
   {
-    DBUG_ENTER("Incident_log_event::Incident_log_event");
-    DBUG_PRINT("enter", ("m_incident: %d", m_incident));
     m_message= msg;
-    DBUG_VOID_RETURN;
+    return;
   }
 #endif
 
@@ -3762,7 +3753,7 @@ static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
 {
   return         
     my_b_copy_to_file(cache, file) ||
-    reinit_io_cache(cache, WRITE_CACHE, 0, FALSE, TRUE);
+    reinit_io_cache(cache, WRITE_CACHE, 0, false, true);
 }
 
 #ifndef MYSQL_CLIENT
