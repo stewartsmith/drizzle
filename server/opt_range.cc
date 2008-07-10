@@ -762,7 +762,6 @@ static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
 static void print_ror_scans_arr(TABLE *table, const char *msg,
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end);
-static void print_quick(QUICK_SELECT_I *quick, const key_map *needed_reg);
 
 static SEL_TREE *tree_and(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2);
 static SEL_TREE *tree_or(RANGE_OPT_PARAM *param,SEL_TREE *tree1,SEL_TREE *tree2);
@@ -2386,8 +2385,6 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     thd->mem_root= param.old_root;
     thd->no_errors=0;
   }
-
-  print_quick(quick, &needed_reg);
 
   /*
     Assume that if the user is using 'limit' we will only need to scan
