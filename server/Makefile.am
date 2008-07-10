@@ -93,7 +93,6 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_base.cc table.cc sql_select.cc sql_insert.cc \
 			sql_error.cc sql_locale.cc \
 			sql_update.cc sql_delete.cc uniques.cc \
-			sql_test.cc \
 			log.cc init.cc derror.cc \
 			unireg.cc \
 			log_event.cc rpl_record.cc \
