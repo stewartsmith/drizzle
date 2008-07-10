@@ -28,14 +28,13 @@ bool mysql_union(THD *thd,
                  select_result *result,
                  SELECT_LEX_UNIT *unit, ulong setup_tables_done_option)
 {
-  DBUG_ENTER("mysql_union");
   bool res;
   if (!(res= unit->prepare(thd, result, SELECT_NO_UNLOCK |
                            setup_tables_done_option)))
     res= unit->exec();
   if (res)
     res|= unit->cleanup();
-  DBUG_RETURN(res);
+  return(res);
 }
 
 
@@ -121,7 +120,7 @@ select_union::create_result_table(THD *thd_arg, List<Item> *column_types,
                                   const char *table_alias,
                                   bool bit_fields_as_long)
 {
-  DBUG_ASSERT(table == 0);
+  assert(table == 0);
   tmp_table_param.init();
   tmp_table_param.field_count= column_types->elements;
   tmp_table_param.bit_fields_as_long= bit_fields_as_long;
@@ -129,10 +128,10 @@ select_union::create_result_table(THD *thd_arg, List<Item> *column_types,
   if (! (table= create_tmp_table(thd_arg, &tmp_table_param, *column_types,
                                  (ORDER*) 0, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
-    return TRUE;
+    return true;
   table->file->extra(HA_EXTRA_WRITE_CACHE);
   table->file->extra(HA_EXTRA_IGNORE_DUP_KEY);
-  return FALSE;
+  return false;
 }
 
 
@@ -198,7 +197,6 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
   select_result *tmp_result;
   bool is_union_select;
   TABLE *empty_table= 0;
-  DBUG_ENTER("st_select_lex_unit::prepare");
 
   describe= test(additional_options & SELECT_DESCRIBE);
 
@@ -220,16 +218,16 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
 	offset_limit_cnt= 0;
 	if (result->prepare(sl->join->fields_list, this))
 	{
-	  DBUG_RETURN(TRUE);
+	  return(true);
 	}
 	sl->join->select_options|= SELECT_DESCRIBE;
 	sl->join->reinit();
       }
     }
-    DBUG_RETURN(FALSE);
+    return(false);
   }
   prepared= 1;
-  saved_error= FALSE;
+  saved_error= false;
   
   thd_arg->lex->current_select= sl= first_sl;
   found_rows_for_union= first_sl->options & OPTION_FOUND_ROWS;
@@ -247,7 +245,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
   else
     tmp_result= sel_result;
 
-  sl->context.resolve_in_select_list= TRUE;
+  sl->context.resolve_in_select_list= true;
 
   for (;sl; sl= sl->next_select())
   {
@@ -303,7 +301,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
         The main reason of this is that we can't create
         field object without table.
       */
-      DBUG_ASSERT(!empty_table);
+      assert(!empty_table);
       empty_table= (TABLE*) thd->calloc(sizeof(TABLE));
       types.empty();
       List_iterator_fast<Item> it(sl->item_list);
@@ -331,7 +329,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
       while ((type= tp++, item_tmp= it++))
       {
         if (((Item_type_holder*)type)->join_types(thd_arg, item_tmp))
-	  DBUG_RETURN(TRUE);
+	  return(true);
       }
     }
   }
@@ -360,7 +358,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
                      TMP_TABLE_ALL_COLUMNS);
 
     if (union_result->create_result_table(thd, &types, test(union_distinct),
-                                          create_options, "", FALSE))
+                                          create_options, "", false))
       goto err;
     bzero((char*) &result_table_list, sizeof(result_table_list));
     result_table_list.db= (char*) "";
@@ -376,7 +374,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     }
     else
     {
-      DBUG_ASSERT(thd->stmt_arena->is_conventional() == false);
+      assert(thd->stmt_arena->is_conventional() == false);
       /*
         We're in execution of a prepared statement or stored procedure:
         reset field items to point at fields from the created temporary table.
@@ -387,11 +385,11 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
 
   thd_arg->lex->current_select= lex_select_save;
 
-  DBUG_RETURN(saved_error || thd_arg->is_fatal_error);
+  return(saved_error || thd_arg->is_fatal_error);
 
 err:
   thd_arg->lex->current_select= lex_select_save;
-  DBUG_RETURN(TRUE);
+  return(true);
 }
 
 
@@ -401,10 +399,9 @@ bool st_select_lex_unit::exec()
   SELECT_LEX *select_cursor=first_select();
   ulonglong add_rows=0;
   ha_rows examined_rows= 0;
-  DBUG_ENTER("st_select_lex_unit::exec");
 
   if (executed && !uncacheable && !describe)
-    DBUG_RETURN(FALSE);
+    return(false);
   executed= 1;
   
   if (uncacheable || !item || !item->assigned() || describe)
@@ -422,7 +419,7 @@ bool st_select_lex_unit::exec()
       /* re-enabling indexes for next subselect iteration */
       if (union_distinct && table->file->ha_enable_indexes(HA_KEY_SWITCH_ALL))
       {
-        DBUG_ASSERT(0);
+        assert(0);
       }
     }
     for (SELECT_LEX *sl= select_cursor; sl; sl= sl->next_select())
@@ -457,7 +454,7 @@ bool st_select_lex_unit::exec()
 
         /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
         if (sl->join->flatten_subqueries())
-          DBUG_RETURN(TRUE);
+          return(true);
 
         /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
 	saved_error= sl->join->optimize();
@@ -469,7 +466,7 @@ bool st_select_lex_unit::exec()
         if (sl == union_distinct)
 	{
 	  if (table->file->ha_disable_indexes(HA_KEY_SWITCH_ALL))
-	    DBUG_RETURN(TRUE);
+	    return(true);
 	  table->no_keyread=1;
 	}
 	saved_error= sl->join->error;
@@ -482,21 +479,21 @@ bool st_select_lex_unit::exec()
 	  if (union_result->flush())
 	  {
 	    thd->lex->current_select= lex_select_save;
-	    DBUG_RETURN(1);
+	    return(1);
 	  }
 	}
       }
       if (saved_error)
       {
 	thd->lex->current_select= lex_select_save;
-	DBUG_RETURN(saved_error);
+	return(saved_error);
       }
       /* Needed for the following test and for records_at_start in next loop */
       int error= table->file->info(HA_STATUS_VARIABLE);
       if(error)
       {
         table->file->print_error(error, MYF(0));
-        DBUG_RETURN(1);
+        return(1);
       }
       if (found_rows_for_union && !sl->braces && 
           select_limit_cnt != HA_POS_ERROR)
@@ -515,7 +512,7 @@ bool st_select_lex_unit::exec()
   optimized= 1;
 
   /* Send result to 'result' */
-  saved_error= TRUE;
+  saved_error= true;
   {
     if (!thd->is_fatal_error)				// Check if EOM
     {
@@ -536,9 +533,9 @@ bool st_select_lex_unit::exec()
 					      fake_select_lex->options, result)))
 	{
 	  fake_select_lex->table_list.empty();
-	  DBUG_RETURN(TRUE);
+	  return(true);
 	}
-        fake_select_lex->join->no_const_tables= TRUE;
+        fake_select_lex->join->no_const_tables= true;
 
 	/*
 	  Fake st_select_lex should have item list for correctref_array
@@ -598,18 +595,17 @@ bool st_select_lex_unit::exec()
     }
   }
   thd->lex->current_select= lex_select_save;
-  DBUG_RETURN(saved_error);
+  return(saved_error);
 }
 
 
 bool st_select_lex_unit::cleanup()
 {
   int error= 0;
-  DBUG_ENTER("st_select_lex_unit::cleanup");
 
   if (cleaned)
   {
-    DBUG_RETURN(FALSE);
+    return(false);
   }
   cleaned= 1;
 
@@ -642,29 +638,13 @@ bool st_select_lex_unit::cleanup()
     }
   }
 
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
 void st_select_lex_unit::reinit_exec_mechanism()
 {
   prepared= optimized= executed= 0;
-#ifndef DBUG_OFF
-  if (is_union())
-  {
-    List_iterator_fast<Item> it(item_list);
-    Item *field;
-    while ((field= it++))
-    {
-      /*
-	we can't cleanup here, because it broke link to temporary table field,
-	but have to drop fixed flag to allow next fix_field of this field
-	during re-executing
-      */
-      field->fixed= 0;
-    }
-  }
-#endif
 }
 
 
@@ -677,19 +657,19 @@ void st_select_lex_unit::reinit_exec_mechanism()
     old_result	old select_result object
 
   RETURN
-    FALSE - OK
-    TRUE  - error
+    false - OK
+    true  - error
 */
 
 bool st_select_lex_unit::change_result(select_result_interceptor *new_result,
                                        select_result_interceptor *old_result)
 {
-  bool res= FALSE;
+  bool res= false;
   for (SELECT_LEX *sl= first_select(); sl; sl= sl->next_select())
   {
     if (sl->join && sl->join->result == old_result)
       if (sl->join->change_result(new_result))
-	return TRUE;
+	return true;
   }
   if (fake_select_lex && fake_select_lex->join)
     res= fake_select_lex->join->change_result(new_result);
@@ -720,7 +700,7 @@ List<Item> *st_select_lex_unit::get_unit_column_types()
 
   if (is_union())
   {
-    DBUG_ASSERT(prepared);
+    assert(prepared);
     /* Types are generated during prepare */
     return &types;
   }
@@ -730,12 +710,11 @@ List<Item> *st_select_lex_unit::get_unit_column_types()
 
 bool st_select_lex::cleanup()
 {
-  bool error= FALSE;
-  DBUG_ENTER("st_select_lex::cleanup()");
+  bool error= false;
 
   if (join)
   {
-    DBUG_ASSERT((st_select_lex*)join->select_lex == this);
+    assert((st_select_lex*)join->select_lex == this);
     error= join->destroy();
     delete join;
     join= 0;
@@ -747,7 +726,7 @@ bool st_select_lex::cleanup()
   }
   non_agg_fields.empty();
   inner_refs_list.empty();
-  DBUG_RETURN(error);
+  return(error);
 }
 
 

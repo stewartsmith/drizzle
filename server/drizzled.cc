@@ -1748,7 +1748,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
       if (!abort_loop)
       {
         bool not_used;
-	mysql_print_status();		// Print some debug info
         reload_cache((THD*) 0,
                      (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
                       REFRESH_GRANT |
