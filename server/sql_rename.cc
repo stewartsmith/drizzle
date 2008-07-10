@@ -33,24 +33,22 @@ bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent)
 {
   bool error= 1;
   TABLE_LIST *ren_table= 0;
-  DBUG_ENTER("mysql_rename_tables");
 
   /*
     Avoid problems with a rename on a table that we have locked or
     if the user is trying to to do this in a transcation context
   */
-
   if (thd->locked_tables || thd->active_transaction())
   {
     my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
                ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-    DBUG_RETURN(1);
+    return(1);
   }
 
-  mysql_ha_rm_tables(thd, table_list, FALSE);
+  mysql_ha_rm_tables(thd, table_list, false);
 
   if (wait_if_global_read_lock(thd,0,1))
-    DBUG_RETURN(1);
+    return(1);
 
   pthread_mutex_lock(&LOCK_open);
   if (lock_table_names_exclusively(thd, table_list))
@@ -93,7 +91,7 @@ bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent)
   /* Lets hope this doesn't fail as the result will be messy */ 
   if (!silent && !error)
   {
-    write_bin_log(thd, TRUE, thd->query, thd->query_length);
+    write_bin_log(thd, true, thd->query, thd->query_length);
     my_ok(thd);
   }
 
@@ -103,7 +101,7 @@ bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent)
 
 err:
   start_waiting_global_read_lock(thd);
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -161,8 +159,6 @@ do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db, char *new_table_name,
   const char *new_alias, *old_alias;
   enum legacy_db_type table_type;
 
-  DBUG_ENTER("do_rename");
-
   if (lower_case_table_names == 2)
   {
     old_alias= ren_table->alias;
@@ -178,7 +174,7 @@ do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db, char *new_table_name,
   if (!access(name,F_OK))
   {
     my_error(ER_TABLE_EXISTS_ERROR, MYF(0), new_alias);
-    DBUG_RETURN(1);			// This can't be skipped
+    return(1);			// This can't be skipped
   }
   build_table_filename(name, sizeof(name),
                        ren_table->db, old_alias, reg_ext, 0);
@@ -187,9 +183,9 @@ do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db, char *new_table_name,
                                ren_table->db, old_alias,
                                new_db, new_alias, 0);
   if (rc && !skip_error)
-    DBUG_RETURN(1);
+    return(1);
 
-  DBUG_RETURN(0);
+  return(0);
 
 }
 /*
@@ -221,14 +217,12 @@ rename_tables(THD *thd, TABLE_LIST *table_list, bool skip_error)
 {
   TABLE_LIST *ren_table, *new_table;
 
-  DBUG_ENTER("rename_tables");
-
   for (ren_table= table_list; ren_table; ren_table= new_table->next_local)
   {
     new_table= ren_table->next_local;
     if (do_rename(thd, ren_table, new_table->db, new_table->table_name,
                   new_table->alias, skip_error))
-      DBUG_RETURN(ren_table);
+      return(ren_table);
   }
-  DBUG_RETURN(0);
+  return(0);
 }
