@@ -318,15 +318,10 @@ public:
   }
   void harvest_bytes_written(ulonglong* counter)
   {
-#ifndef DBUG_OFF
     char buf1[22],buf2[22];
-#endif
-    DBUG_ENTER("harvest_bytes_written");
     (*counter)+=bytes_written;
-    DBUG_PRINT("info",("counter: %s  bytes_written: %s", llstr(*counter,buf1),
-		       llstr(bytes_written,buf2)));
     bytes_written=0;
-    DBUG_VOID_RETURN;
+    return;
   }
   void set_max_size(ulong max_size_arg);
   void signal_update();
@@ -428,7 +423,7 @@ class Log_to_file_event_handler: public Log_event_handler
   MYSQL_QUERY_LOG mysql_slow_log;
   bool is_initialized;
 public:
-  Log_to_file_event_handler(): is_initialized(FALSE)
+  Log_to_file_event_handler(): is_initialized(false)
   {}
   virtual bool init();
   virtual void cleanup();
