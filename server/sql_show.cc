@@ -118,7 +118,7 @@ static my_bool show_plugins(THD *thd, plugin_ref plugin,
     table->field[2]->store(STRING_WITH_LEN("ACTIVE"), cs);
     break;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
   }
 
   table->field[3]->store(plugin_type_names[plug->type].str,
@@ -1078,7 +1078,7 @@ static void store_key_options(THD *thd __attribute__((__unused__)),
     packet->append(buff, (uint) (end - buff));
   }
 
-  DBUG_ASSERT(test(key_info->flags & HA_USES_COMMENT) == 
+  assert(test(key_info->flags & HA_USES_COMMENT) == 
               (key_info->comment.length > 0));
   if (key_info->flags & HA_USES_COMMENT)
   {
@@ -1626,7 +1626,7 @@ static bool show_status_array(THD *thd, const char *wild,
           break;                                        // Return empty string
         case SHOW_SYS:                                  // Cannot happen
         default:
-          DBUG_ASSERT(0);
+          assert(0);
           break;
         }
         restore_record(table, s->default_values);
@@ -2361,7 +2361,7 @@ static int fill_schema_table_names(THD *thd, TABLE *table,
                              system_charset_info);
       break;
     default:
-      DBUG_ASSERT(0);
+      assert(0);
     }
     if (thd->is_error() && thd->main_da.sql_errno() == ER_NO_SUCH_TABLE)
     {
@@ -2705,7 +2705,7 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
                                                &tmp_lex_string);
               close_tables_for_reopen(thd, &show_table_list);
             }
-            DBUG_ASSERT(!lex->query_tables_own_last);
+            assert(!lex->query_tables_own_last);
             if (res)
               goto err;
           }
@@ -3408,7 +3408,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
         else
           table->field[14]->store("", 0, cs);
         table->field[14]->set_notnull();
-        DBUG_ASSERT(test(key_info->flags & HA_USES_COMMENT) == 
+        assert(test(key_info->flags & HA_USES_COMMENT) == 
                    (key_info->comment.length > 0));
         if (key_info->flags & HA_USES_COMMENT)
           table->field[15]->store(key_info->comment.str, 
@@ -3926,7 +3926,7 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
       break;
     default:
       /* Don't let unimplemented types pass through. Could be a grave error. */
-      DBUG_ASSERT(fields_info->field_type == MYSQL_TYPE_STRING);
+      assert(fields_info->field_type == MYSQL_TYPE_STRING);
 
       if (!(item= new Item_empty_string("", fields_info->field_length, cs)))
       {

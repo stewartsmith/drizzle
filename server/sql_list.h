@@ -257,8 +257,6 @@ public:
     {
       if (!node->info)
       {
-        DBUG_PRINT("list_invariants",("%s: error: NULL element in the list", 
-                                      name));
         return false;
       }
       node= node->next;
@@ -266,15 +264,12 @@ public:
     }
     if (last != &(node->next))
     {
-      DBUG_PRINT("list_invariants", ("%s: error: wrong last pointer", name));
       return false;
     }
     if (cnt+1 != elements)
     {
-      DBUG_PRINT("list_invariants", ("%s: error: wrong element count", name));
       return false;
     }
-    DBUG_PRINT("list_invariants", ("%s: list is ok", name));
     return true;
   }
 #endif // LIST_EXTRA_DEBUG

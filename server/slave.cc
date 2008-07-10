@@ -1971,7 +1971,7 @@ pthread_handler_t handle_slave_io(void *arg)
 
   mi->events_till_disconnect = disconnect_slave_event_count;
 
-  thd= new THD; // note that contructor of THD uses DBUG_ !
+  thd= new THD;
   THD_CHECK_SENTRY(thd);
   mi->io_thd = thd;
 
@@ -2245,7 +2245,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   errmsg= 0;
   rli->events_till_abort = abort_slave_event_count;
 
-  thd = new THD; // note that contructor of THD uses DBUG_ !
+  thd = new THD;
   thd->thread_stack = (char*)&thd; // remember where our stack is
   rli->sql_thd= thd;
   

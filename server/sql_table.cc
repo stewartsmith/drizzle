@@ -3931,8 +3931,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
 
   strxmov(src_path, src_table->table->s->path.str, reg_ext, NullS);
 
-  DBUG_EXECUTE_IF("sleep_create_like_before_check_if_exists", my_sleep(6000000););
-
   /* 
     Check that destination tables does not exist. Note that its name
     was already checked when it was added to the table list.
@@ -3955,8 +3953,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
     if (!access(dst_path, F_OK))
       goto table_exists;
   }
-
-  DBUG_EXECUTE_IF("sleep_create_like_before_copy", my_sleep(6000000););
 
   /*
     Create a new table by copying from source table
@@ -3995,8 +3991,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
     creation, instead create the table directly (for both normal
     and temporary tables).
   */
-  DBUG_EXECUTE_IF("sleep_create_like_before_ha_create", my_sleep(6000000););
-
   dst_path[dst_path_length - reg_ext_length]= '\0';  // Remove .frm
   if (thd->variables.keep_files_on_create)
     create_info->options|= HA_CREATE_KEEP_FILES;
@@ -4019,8 +4013,6 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
 			  table_name, 0); /* purecov: inspected */
     goto err;	    /* purecov: inspected */
   }
-
-  DBUG_EXECUTE_IF("sleep_create_like_before_binlogging", my_sleep(6000000););
 
   /*
     We have to write the query before we unlock the tables.
