@@ -204,9 +204,7 @@ public:
   pthread_mutex_t log_space_lock;
   pthread_cond_t log_space_cond;
   THD * sql_thd;
-#ifndef DBUG_OFF
   int events_till_abort;
-#endif  
 
   /* if not set, the value of other members of the structure are undefined */
   bool inited;
