@@ -49,12 +49,10 @@ This file contains the implementation of error and warnings related
   This is used to in group_concat() to register how many warnings we actually
   got after the query has been executed.
 */
-
 void MYSQL_ERROR::set_msg(THD *thd, const char *msg_arg)
 {
   msg= strdup_root(&thd->warn_root, msg_arg);
 }
-
 
 /*
   Reset all warnings for the thread
@@ -72,7 +70,6 @@ void MYSQL_ERROR::set_msg(THD *thd, const char *msg_arg)
 
 void mysql_reset_errors(THD *thd, bool force)
 {
-  DBUG_ENTER("mysql_reset_errors");
   if (thd->query_id != thd->warn_id || force)
   {
     thd->warn_id= thd->query_id;
@@ -83,7 +80,7 @@ void mysql_reset_errors(THD *thd, bool force)
     thd->warn_list.empty();
     thd->row_count= 1; // by default point to row 1
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -105,12 +102,10 @@ MYSQL_ERROR *push_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
                           uint code, const char *msg)
 {
   MYSQL_ERROR *err= 0;
-  DBUG_ENTER("push_warning");
-  DBUG_PRINT("enter", ("code: %d, msg: %s", code, msg));
 
   if (level == MYSQL_ERROR::WARN_LEVEL_NOTE &&
       !(thd->options & OPTION_SQL_NOTES))
-    DBUG_RETURN(0);
+    return(0);
 
   if (thd->query_id != thd->warn_id)
     mysql_reset_errors(thd, 0);
@@ -134,7 +129,7 @@ MYSQL_ERROR *push_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
   }
 
   if (thd->handle_error(code, msg, level))
-    DBUG_RETURN(NULL);
+    return(NULL);
 
   if (thd->warn_list.elements < thd->variables.max_error_count)
   {
@@ -144,7 +139,7 @@ MYSQL_ERROR *push_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
   }
   thd->warn_count[(uint) level]++;
   thd->total_warn_count++;
-  DBUG_RETURN(err);
+  return(err);
 }
 
 /*
@@ -163,14 +158,12 @@ void push_warning_printf(THD *thd, MYSQL_ERROR::enum_warning_level level,
 {
   va_list args;
   char    warning[ERRMSGSIZE+20];
-  DBUG_ENTER("push_warning_printf");
-  DBUG_PRINT("enter",("warning: %u", code));
   
   va_start(args,format);
   vsnprintf(warning, sizeof(warning), format, args);
   va_end(args);
   push_warning(thd, level, code, warning);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -186,8 +179,8 @@ void push_warning_printf(THD *thd, MYSQL_ERROR::enum_warning_level level,
     Takes into account the current LIMIT
 
   RETURN VALUES
-    FALSE ok
-    TRUE  Error sending data to client
+    false ok
+    true  Error sending data to client
 */
 
 const LEX_STRING warning_level_names[]=
@@ -201,7 +194,6 @@ const LEX_STRING warning_level_names[]=
 bool mysqld_show_warnings(THD *thd, ulong levels_to_show)
 {  
   List<Item> field_list;
-  DBUG_ENTER("mysqld_show_warnings");
 
   field_list.push_back(new Item_empty_string("Level", 7));
   field_list.push_back(new Item_return_int("Code",4, MYSQL_TYPE_LONG));
@@ -209,7 +201,7 @@ bool mysqld_show_warnings(THD *thd, ulong levels_to_show)
 
   if (thd->protocol->send_fields(&field_list,
                                  Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    DBUG_RETURN(TRUE);
+    return(true);
 
   MYSQL_ERROR *err;
   SELECT_LEX *sel= &thd->lex->select_lex;
@@ -235,8 +227,8 @@ bool mysqld_show_warnings(THD *thd, ulong levels_to_show)
     protocol->store((uint32) err->code);
     protocol->store(err->msg, strlen(err->msg), system_charset_info);
     if (protocol->write())
-      DBUG_RETURN(TRUE);
+      return(true);
   }
   my_eof(thd);
-  DBUG_RETURN(FALSE);
+  return(false);
 }
