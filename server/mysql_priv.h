@@ -115,40 +115,8 @@ char* query_table_status(THD *thd,const char *db,const char *table_name);
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 #define all_bits_set(A,B) ((A) & (B) != (B))
 
-/*
-  Generates a warning that a feature is deprecated. After a specified version
-  asserts that the feature is removed.
-
-  Using it as
-
-    WARN_DEPRECATED(thd, 6,2, "BAD", "'GOOD'");
-
- Will result in a warning
-
-    "The syntax 'BAD' is deprecated and will be removed in MySQL 6.2. Please
-    use 'GOOD' instead"
-
- Note, that in macro arguments BAD is not quoted, while 'GOOD' is.
- Note, that the version is TWO numbers, separated with a comma
- (two macro arguments, that is)
-*/
-#define WARN_DEPRECATED(Thd,VerHi,VerLo,Old,New)                            \
-  do {                                                                      \
-    compile_time_assert(MYSQL_VERSION_ID < VerHi * 10000 + VerLo * 100);    \
-    if (Thd)                                                                \
-      push_warning_printf((Thd), MYSQL_ERROR::WARN_LEVEL_WARN,              \
-                        ER_WARN_DEPRECATED_SYNTAX,                          \
-                        ER(ER_WARN_DEPRECATED_SYNTAX_WITH_VER),             \
-                        (Old), #VerHi "." #VerLo, (New));                   \
-    else                                                                    \
-      sql_print_warning("The syntax '%s' is deprecated and will be removed " \
-                        "in MySQL %s. Please use %s instead.",              \
-                        (Old), #VerHi "." #VerLo, (New));                   \
-  } while(0)
-
 extern CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern CHARSET_INFO *national_charset_info, *table_alias_charset;
-
 
 enum Derivation
 {
@@ -876,8 +844,6 @@ check_and_unset_inject_value(int value)
 */
 #define SET_ERROR_INJECT_VALUE(x) \
   current_thd->error_inject_value= (x)
-#define ERROR_INJECT_CRASH(code) \
-  DBUG_EVALUATE_IF(code, (abort(), 0), 0)
 #define ERROR_INJECT_ACTION(code, action) \
   (check_and_unset_keyword(code) ? ((action), 0) : 0)
 #define ERROR_INJECT(code) \

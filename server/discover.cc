@@ -51,8 +51,6 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
   size_t read_len;
   uchar *read_data;
   struct stat state;  
-  DBUG_ENTER("readfrm");
-  DBUG_PRINT("enter",("name: '%s'",name));
   
   *frmdata= NULL;      // In case of errors
   *len= 0;
@@ -108,8 +106,6 @@ int writefrm(const char *name, const uchar *frmdata, size_t len)
   File file;
   char	 index_file[FN_REFLEN];
   int error;
-  DBUG_ENTER("writefrm");
-  DBUG_PRINT("enter",("name: '%s' len: %lu ",name, (ulong) len));
 
   error= 0;
   if ((file=my_create(fn_format(index_file,name,"",reg_ext,
@@ -120,7 +116,7 @@ int writefrm(const char *name, const uchar *frmdata, size_t len)
       error= 2;
     VOID(my_close(file,MYF(0)));
   }
-  DBUG_RETURN(error);
+  return(error);
 } /* writefrm */
 
 
