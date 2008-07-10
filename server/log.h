@@ -318,7 +318,6 @@ public:
   }
   void harvest_bytes_written(ulonglong* counter)
   {
-    char buf1[22],buf2[22];
     (*counter)+=bytes_written;
     bytes_written=0;
     return;
