@@ -54,6 +54,3 @@ uninstall-local:
 
 distclean-local:
 	@RM@ -f */errmsg.sys
-
-# Do nothing
-link_sources:
