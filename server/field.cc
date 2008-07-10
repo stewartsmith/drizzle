@@ -7925,7 +7925,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
 }
 
 
-enum_field_types get_blob_type_from_length(ulong length)
+enum_field_types get_blob_type_from_length(ulong length __attribute__((__unused__)))
 {
   enum_field_types type;
 

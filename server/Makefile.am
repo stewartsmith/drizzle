@@ -115,7 +115,6 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_builtin.cc 
 
 libhandler_la_SOURCES = handler.cc
-nodist_drizzled_SOURCES = net_serv.c
 
 if HAVE_DTRACE
   drizzled_SOURCES += probes.d
@@ -140,12 +139,6 @@ CLEANFILES =        	lex_hash.h sql_yacc.output $(nodist_drizzled_SOURCES)
 DISTCLEANFILES =        $(EXTRA_PROGRAMS)
 MAINTAINERCLEANFILES =  $(BUILT_MAINT_SRC)
 AM_YFLAGS =		-d --verbose
-
-# These are listed in 'nodist_drizzled_SOURCES'
-net_serv.c: $(top_srcdir)/libdrizzle/net_serv.c
-	rm -f net_serv.c
-	@LN_CP_F@ $(top_srcdir)/libdrizzle/net_serv.c net_serv.c
-
 
 # This generates lex_hash.h
 # NOTE Built sources should depend on their sources not the tool
