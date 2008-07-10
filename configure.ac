@@ -582,6 +582,7 @@ AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthrea
 # Check for libpcre
 #--------------------------------------------------------------------
 
+AC_LANG_PUSH([C++])
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
 PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
   AC_CHECK_LIB(pcrecpp, [DoMatch], [found_pcre="no"])
@@ -595,6 +596,7 @@ if test "x$found_pcre" != "xyes"
 then
     AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
 fi
+AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
