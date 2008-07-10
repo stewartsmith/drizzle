@@ -49,8 +49,8 @@ typedef struct keyuse_t {
             an Item_func_trig_cond. This means the equality (and validity of 
             this KEYUSE element) can be turned on and off. The on/off state 
             is indicted by the pointed value:
-              *cond_guard == TRUE <=> equality condition is on
-              *cond_guard == FALSE <=> equality condition is off
+              *cond_guard == true <=> equality condition is on
+              *cond_guard == false <=> equality condition is off
 
     NULL  - Otherwise (the source equality can't be turned off)
   */
@@ -96,7 +96,7 @@ typedef struct st_table_ref
   uchar          *null_ref_key;
 
   /*
-    TRUE <=> disable the "cache" as doing lookup with the same key value may
+    true <=> disable the "cache" as doing lookup with the same key value may
     produce different results (because of Index Condition Pushdown)
   */
   bool          disable_cache;
@@ -117,7 +117,7 @@ typedef struct st_cache_field {
   uint length; /* Length of data at *str, in bytes */
   uint blob_length; /* Valid IFF blob_field != 0 */
   Field_blob *blob_field;
-  bool strip; /* TRUE <=> Strip endspaces ?? */
+  bool strip; /* true <=> Strip endspaces ?? */
 
   TABLE *get_rowid; /* _ != NULL <=> */
 } CACHE_FIELD;
@@ -246,7 +246,7 @@ typedef struct st_join_table {
   uint		used_fields,used_fieldlength,used_blobs;
   enum join_type type;
   bool		cached_eq_ref_table,eq_ref_table,not_used_in_distinct;
-  /* TRUE <=> index-based access method must return records in order */
+  /* true <=> index-based access method must return records in order */
   bool		sorted;
   /* 
     If it's not 0 the number stored this field indicates that the index
@@ -427,7 +427,7 @@ public:
   bool	   sort_and_group,first_record,full_join,group, no_field_update;
   bool	   do_send_rows;
   /**
-    TRUE when we want to resume nested loop iterations when
+    true when we want to resume nested loop iterations when
     fetching data from a cursor
   */
   bool     resume_nested_loop;
@@ -473,7 +473,7 @@ public:
   /// select that processed
   SELECT_LEX *select_lex;
   /** 
-    TRUE <=> optimizer must not mark any table as a constant table.
+    true <=> optimizer must not mark any table as a constant table.
     This is needed for subqueries in form "a IN (SELECT .. UNION SELECT ..):
     when we optimize the select that reads the results of the union from a
     temporary table, we must not mark the temp. table as constant because
@@ -488,7 +488,7 @@ public:
   /**
     If we have the GROUP BY statement in the query,
     but the group_list was emptied by optimizer, this
-    flag is TRUE.
+    flag is true.
     It happens when fields in the GROUP BY are from
     constant table
   */
@@ -573,7 +573,7 @@ public:
     sort_and_group= 0;
     first_record= 0;
     do_send_rows= 1;
-    resume_nested_loop= FALSE;
+    resume_nested_loop= false;
     send_records= 0;
     found_records= 0;
     fetch_limit= HA_POS_ERROR;
@@ -616,7 +616,7 @@ public:
     rollup.state= ROLLUP::STATE_NONE;
     sj_tmp_tables= NULL;
 
-    no_const_tables= FALSE;
+    no_const_tables= false;
   }
 
   int prepare(Item ***rref_pointer_array, TABLE_LIST *tables, uint wind_num,
@@ -632,7 +632,7 @@ public:
   bool flatten_subqueries();
   bool setup_subquery_materialization();
   bool make_sum_func_list(List<Item> &all_fields, List<Item> &send_fields,
-			  bool before_group_by, bool recompute= FALSE);
+			  bool before_group_by, bool recompute= false);
 
   inline void set_items_ref_array(Item **ptr)
   {
@@ -721,7 +721,7 @@ extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
 class store_key :public Sql_alloc
 {
 public:
-  bool null_key; /* TRUE <=> the value of the key has a null part */
+  bool null_key; /* true <=> the value of the key has a null part */
   enum store_key_result { STORE_KEY_OK, STORE_KEY_FATAL, STORE_KEY_CONV };
   store_key(THD *thd, Field *field_arg, uchar *ptr, uchar *null, uint length)
     :null_key(0), null_ptr(null), err(0)
