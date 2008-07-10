@@ -29,9 +29,6 @@
 static void vio_init(Vio* vio, enum enum_vio_type type,
                      my_socket sd, HANDLE hPipe, uint flags)
 {
-  DBUG_ENTER("vio_init");
-  DBUG_PRINT("enter", ("type: %d  sd: %d  flags: %d", type, sd, flags));
-
 #ifndef HAVE_VIO_READ_BUFF
   flags&= ~VIO_BUFFERED_READ;
 #endif
@@ -58,7 +55,6 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
     vio->is_blocking	=vio_is_blocking;
     vio->timeout	=vio_timeout;
   }
-  DBUG_VOID_RETURN;
 }
 
 
@@ -77,8 +73,7 @@ void vio_reset(Vio* vio, enum enum_vio_type type,
 Vio *vio_new(my_socket sd, enum enum_vio_type type, uint flags)
 {
   Vio *vio;
-  DBUG_ENTER("vio_new");
-  DBUG_PRINT("enter", ("sd: %d", sd));
+
   if ((vio = (Vio*) my_malloc(sizeof(*vio),MYF(MY_WME))))
   {
     vio_init(vio, type, sd, 0, flags);
@@ -104,7 +99,7 @@ Vio *vio_new(my_socket sd, enum enum_vio_type type, uint flags)
     vio->fcntl_mode &= ~O_NONBLOCK;
 #endif
   }
-  DBUG_RETURN(vio);
+  return vio;
 }
 
 
