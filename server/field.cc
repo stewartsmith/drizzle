@@ -731,8 +731,8 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
     strend      String end
 
   RETURN
-    FALSE - If string does not have important data
-    TRUE  - If string has some important data
+    false - If string does not have important data
+    true  - If string has some important data
 */
 
 static bool
@@ -774,9 +774,9 @@ Item_result Field::result_merge_type(enum_field_types field_type)
   @param type  field type
 
   @retval
-    TRUE  Type can have a prefixed key
+    true  Type can have a prefixed key
   @retval
-    FALSE Type can not have a prefixed key
+    false Type can not have a prefixed key
 */
 
 bool Field::type_can_have_key_part(enum enum_field_types type)
@@ -786,9 +786,9 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_STRING:
-    return TRUE;
+    return true;
   default:
-    return FALSE;
+    return false;
   }
 }
 
@@ -1055,7 +1055,7 @@ Field::Field(uchar *ptr_arg,uint32 length_arg,uchar *null_ptr_arg,
    key_start(0), part_of_key(0), part_of_key_not_clustered(0),
    part_of_sortkey(0), unireg_check(unireg_check_arg),
    field_length(length_arg), null_bit(null_bit_arg), 
-   is_created_from_null_item(FALSE)
+   is_created_from_null_item(false)
 {
   flags=null_ptr ? 0: NOT_NULL_FLAG;
   comment.str= (char*) "";
@@ -1172,7 +1172,7 @@ int Field::store(const char *to, uint length, CHARSET_INFO *cs,
    the data.
 
    @param low_byte_first
-   @c TRUE if integers should be stored little-endian, @c FALSE if
+   @c true if integers should be stored little-endian, @c false if
    native format should be used. Note that for little-endian machines,
    the value of this flag is a moot point since the native format is
    little-endian.
@@ -1319,7 +1319,7 @@ longlong Field::convert_decimal2longlong(const my_decimal *val,
     }
     else if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
                                            ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
-                                           val, TRUE, &i)))
+                                           val, true, &i)))
     {
       i= ~(longlong) 0;
       *err= 1;
@@ -1327,7 +1327,7 @@ longlong Field::convert_decimal2longlong(const my_decimal *val,
   }
   else if (warn_if_overflow(my_decimal2int(E_DEC_ERROR &
                                          ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
-                                         val, FALSE, &i)))
+                                         val, false, &i)))
   {
     i= (val->sign() ? LONGLONG_MIN : LONGLONG_MAX);
     *err= 1;
@@ -1632,14 +1632,13 @@ int Field_new_decimal::reset(void)
 void Field_new_decimal::set_value_on_overflow(my_decimal *decimal_value,
                                               bool sign)
 {
-  DBUG_ENTER("Field_new_decimal::set_value_on_overflow");
   max_my_decimal(decimal_value, precision, decimals());
   if (sign)
   {
     if (unsigned_flag)
       my_decimal_set_zero(decimal_value);
     else
-      decimal_value->sign(TRUE);
+      decimal_value->sign(true);
   }
   DBUG_VOID_RETURN;
 }
@@ -1664,18 +1663,15 @@ bool Field_new_decimal::store_value(const my_decimal *decimal_value)
 {
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   int error= 0;
-  DBUG_ENTER("Field_new_decimal::store_value");
 #ifndef DBUG_OFF
   {
     char dbug_buff[DECIMAL_MAX_STR_LENGTH+1];
-    DBUG_PRINT("enter", ("value: %s", dbug_decimal_as_string(dbug_buff, decimal_value)));
   }
 #endif
 
   /* check that we do not try to write negative value in unsigned field */
   if (unsigned_flag && decimal_value->sign())
   {
-    DBUG_PRINT("info", ("unsigned overflow"));
     set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
     decimal_value= &decimal_zero;
@@ -1683,9 +1679,6 @@ bool Field_new_decimal::store_value(const my_decimal *decimal_value)
 #ifndef DBUG_OFF
   {
     char dbug_buff[DECIMAL_MAX_STR_LENGTH+1];
-    DBUG_PRINT("info", ("saving with precision %d  scale: %d  value %s",
-                        (int)precision, (int)dec,
-                        dbug_decimal_as_string(dbug_buff, decimal_value)));
   }
 #endif
 
@@ -1693,7 +1686,6 @@ bool Field_new_decimal::store_value(const my_decimal *decimal_value)
                                          decimal_value, ptr, precision, dec)))
   {
     my_decimal buff;
-    DBUG_PRINT("info", ("overflow"));
     set_value_on_overflow(&buff, decimal_value->sign());
     my_decimal2binary(E_DEC_FATAL_ERROR, &buff, ptr, precision, dec);
     error= 1;
@@ -1710,7 +1702,6 @@ int Field_new_decimal::store(const char *from, uint length,
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   int err;
   my_decimal decimal_value;
-  DBUG_ENTER("Field_new_decimal::store(char*)");
 
   if ((err= str2my_decimal(E_DEC_FATAL_ERROR &
                            ~(E_DEC_OVERFLOW | E_DEC_BAD_NUM),
@@ -1758,8 +1749,6 @@ int Field_new_decimal::store(const char *from, uint length,
 
 #ifndef DBUG_OFF
   char dbug_buff[DECIMAL_MAX_STR_LENGTH+1];
-  DBUG_PRINT("enter", ("value: %s",
-                       dbug_decimal_as_string(dbug_buff, &decimal_value)));
 #endif
   store_value(&decimal_value);
   DBUG_RETURN(err);
@@ -1777,7 +1766,6 @@ int Field_new_decimal::store(double nr)
   ASSERT_COLUMN_MARKED_FOR_WRITE;
   my_decimal decimal_value;
   int err;
-  DBUG_ENTER("Field_new_decimal::store(double)");
 
   err= double2my_decimal(E_DEC_FATAL_ERROR & ~E_DEC_OVERFLOW, nr,
                          &decimal_value);
@@ -1857,7 +1845,6 @@ longlong Field_new_decimal::val_int(void)
 my_decimal* Field_new_decimal::val_decimal(my_decimal *decimal_value)
 {
   ASSERT_COLUMN_MARKED_FOR_READ;
-  DBUG_ENTER("Field_new_decimal::val_decimal");
   binary2my_decimal(E_DEC_FATAL_ERROR, ptr, decimal_value,
                     precision, dec);
   DBUG_EXECUTE("info", print_decimal_buff(decimal_value, (uchar *) ptr,
@@ -2962,9 +2949,7 @@ uchar *
 Field_real::pack(uchar *to, const uchar *from,
                  uint max_length, bool low_byte_first)
 {
-  DBUG_ENTER("Field_real::pack");
   DBUG_ASSERT(max_length >= pack_length());
-  DBUG_PRINT("debug", ("pack_length(): %u", pack_length()));
 #ifdef WORDS_BIGENDIAN
   if (low_byte_first != table->s->db_low_byte_first)
   {
@@ -2982,8 +2967,6 @@ const uchar *
 Field_real::unpack(uchar *to, const uchar *from,
                    uint param_data, bool low_byte_first)
 {
-  DBUG_ENTER("Field_real::unpack");
-  DBUG_PRINT("debug", ("pack_length(): %u", pack_length()));
 #ifdef WORDS_BIGENDIAN
   if (low_byte_first != table->s->db_low_byte_first)
   {
@@ -3667,7 +3650,7 @@ int Field_timestamp::store(double nr)
     nr= 0;					// Avoid overflow on buff
     error= 1;
   }
-  error|= Field_timestamp::store((longlong) rint(nr), FALSE);
+  error|= Field_timestamp::store((longlong) rint(nr), false);
   return error;
 }
 
@@ -3971,7 +3954,7 @@ int Field_time::store_time(MYSQL_TIME *ltime,
             (ltime->minute * 100 + ltime->second);
   if (ltime->neg)
     tmp= -tmp;
-  return Field_time::store((longlong) tmp, FALSE);
+  return Field_time::store((longlong) tmp, false);
 }
 
 
@@ -4225,10 +4208,10 @@ int Field_year::store(double nr)
 {
   if (nr < 0.0 || nr >= 2155.0)
   {
-    (void) Field_year::store((longlong) -1, FALSE);
+    (void) Field_year::store((longlong) -1, false);
     return 1;
   }
-  return Field_year::store((longlong) nr, FALSE);
+  return Field_year::store((longlong) nr, false);
 }
 
 
@@ -4372,7 +4355,7 @@ int Field_newdate::store(double nr)
                          WARN_DATA_TRUNCATED, nr, MYSQL_TIMESTAMP_DATE);
     return 1;
   }
-  return Field_newdate::store((longlong) rint(nr), FALSE);
+  return Field_newdate::store((longlong) rint(nr), false);
 }
 
 
@@ -4609,7 +4592,7 @@ int Field_datetime::store(double nr)
     nr= 0.0;
     error= 1;
   }
-  error|= Field_datetime::store((longlong) rint(nr), FALSE);
+  error|= Field_datetime::store((longlong) rint(nr), false);
   return error;
 }
 
@@ -4877,8 +4860,8 @@ void Field_datetime::sql_type(String &res) const
       "Cannot convert character string: 'xxx' for column 't' at row 1"
 
   RETURN
-    FALSE - If errors didn't happen
-    TRUE  - If an error happened
+    false - If errors didn't happen
+    true  - If an error happened
 */
 
 static bool
@@ -4893,7 +4876,7 @@ check_string_copy_error(Field_str *field,
   
   if (!(pos= well_formed_error_pos) &&
       !(pos= cannot_convert_error_pos))
-    return FALSE;
+    return false;
 
   end_orig= end;
   set_if_smaller(end, pos + 6);
@@ -4938,7 +4921,7 @@ check_string_copy_error(Field_str *field,
                       ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                       "string", tmp, field->field_name,
                       (ulong) field->table->in_use->row_count);
-  return TRUE;
+  return true;
 }
 
 
@@ -6513,12 +6496,6 @@ void Field_blob::sql_type(String &res) const
 uchar *Field_blob::pack(uchar *to, const uchar *from,
                         uint max_length, bool low_byte_first)
 {
-  DBUG_ENTER("Field_blob::pack");
-  DBUG_PRINT("enter", ("to: 0x%lx; from: 0x%lx;"
-                       " max_length: %u; low_byte_first: %d",
-                       (ulong) to, (ulong) from,
-                       max_length, low_byte_first));
-  DBUG_DUMP("record", from, table->s->reclength);
   uchar *save= ptr;
   ptr= (uchar*) from;
   uint32 length=get_length();			// Length of from string
@@ -6539,7 +6516,6 @@ uchar *Field_blob::pack(uchar *to, const uchar *from,
     memcpy(to+packlength, from,length);
   }
   ptr=save;					// Restore org row pointer
-  DBUG_DUMP("packed", to, packlength + length);
   DBUG_RETURN(to+packlength+length);
 }
 
@@ -6555,8 +6531,8 @@ uchar *Field_blob::pack(uchar *to, const uchar *from,
 
    @param   to         Destination of the data
    @param   from       Source of the data
-   @param   param_data @c TRUE if base types should be stored in little-
-                       endian format, @c FALSE if native format should
+   @param   param_data @c true if base types should be stored in little-
+                       endian format, @c false if native format should
                        be used.
 
    @return  New pointer into memory based on from + length of the data
@@ -6566,10 +6542,6 @@ const uchar *Field_blob::unpack(uchar *to __attribute__((__unused__)),
                                 uint param_data,
                                 bool low_byte_first)
 {
-  DBUG_ENTER("Field_blob::unpack");
-  DBUG_PRINT("enter", ("to: 0x%lx; from: 0x%lx;"
-                       " param_data: %u; low_byte_first: %d",
-                       (ulong) to, (ulong) from, param_data, low_byte_first));
   uint const master_packlength=
     param_data > 0 ? param_data & 0xFF : packlength;
   uint32 const length= get_length(from, master_packlength, low_byte_first);
@@ -6846,7 +6818,7 @@ int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
 
 int Field_enum::store(double nr)
 {
-  return Field_enum::store((longlong) nr, FALSE);
+  return Field_enum::store((longlong) nr, false);
 }
 
 
@@ -7269,9 +7241,9 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
   @param fld_charset           Field charset
 
   @retval
-    FALSE on success
+    false on success
   @retval
-    TRUE  on error
+    true  on error
 */
 
 bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
@@ -7286,8 +7258,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   uint sign_len, allowed_type_modifier= 0;
   ulong max_field_charlength= MAX_FIELD_CHARLENGTH;
 
-  DBUG_ENTER("Create_field::init()");
-
   field= 0;
   field_name= fld_name;
   def= fld_default_value;
@@ -7300,7 +7270,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   {
     my_error(ER_TOO_BIG_SCALE, MYF(0), decimals, fld_name,
              NOT_FIXED_DEC-1);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   sql_type= fld_type;
@@ -7353,12 +7323,12 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
     {
       my_error(ER_TOO_BIG_PRECISION, MYF(0), length, fld_name,
                DECIMAL_MAX_PRECISION);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     if (length < decimals)
     {
       my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     length=
       my_decimal_precision_to_length(length, decimals,
@@ -7391,7 +7361,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       {
         my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0),
                  fld_name); /* purecov: inspected */
-        DBUG_RETURN(TRUE);
+        DBUG_RETURN(true);
       }
       else
       {
@@ -7421,7 +7391,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       if (tmp_length > PRECISION_FOR_DOUBLE)
       {
         my_error(ER_WRONG_FIELD_SPEC, MYF(0), fld_name);
-        DBUG_RETURN(TRUE);
+        DBUG_RETURN(true);
       }
       else if (tmp_length > PRECISION_FOR_FLOAT)
       {
@@ -7442,7 +7412,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
         decimals != NOT_FIXED_DEC)
     {
       my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     break;
   case MYSQL_TYPE_DOUBLE:
@@ -7456,7 +7426,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
         decimals != NOT_FIXED_DEC)
     {
       my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     }
     break;
   case MYSQL_TYPE_TIMESTAMP:
@@ -7575,16 +7545,16 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
                                                 ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
               fld_name, max_field_charlength); /* purecov: inspected */
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
   fld_type_modifier&= AUTO_INCREMENT_FLAG;
   if ((~allowed_type_modifier) & fld_type_modifier)
   {
     my_error(ER_WRONG_FIELD_SPEC, MYF(0), fld_name);
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
-  DBUG_RETURN(FALSE); /* success */
+  DBUG_RETURN(false); /* success */
 }
 
 
