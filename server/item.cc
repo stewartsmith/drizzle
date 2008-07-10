@@ -2276,7 +2276,7 @@ bool Item_param::set_str(const char *str, ulong length)
   max_length= length;
   maybe_null= 0;
   /* max_length and decimals are set after charset conversion */
-  /* sic: str may be not null-terminated, don't add DBUG_PRINT here */
+  /* sic: str may be not null-terminated */
   return(false);
 }
 

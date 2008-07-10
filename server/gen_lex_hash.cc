@@ -91,13 +91,6 @@ const char *default_dbug_option="d:t:o,/tmp/gen_lex_hash.trace";
 
 struct my_option my_long_options[] =
 {
-#ifdef DBUG_OFF
-  {"debug", '#', "This is a non-debug version. Catch this and exit",
-   0,0, 0, GET_DISABLED, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#else
-  {"debug", '#', "Output debug log", (uchar**) &default_dbug_option,
-   (uchar**) &default_dbug_option, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"help", '?', "Display help and exit",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit",
@@ -374,9 +367,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case '?':
     usage(0);
     exit(0);
-  case '#':
-    DBUG_PUSH(argument ? argument : default_dbug_option);
-    break;
   }
   return 0;
 }
@@ -449,7 +439,6 @@ int check_duplicates()
 int main(int argc,char **argv)
 {
   MY_INIT(argv[0]);
-  DBUG_PROCESS(argv[0]);
 
   if (get_options(argc,(char **) argv))
     exit(1);
@@ -500,7 +489,6 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
   register const char *cur_str= s;\n\
 \n\
   if (len == 0) {\n\
-    DBUG_PRINT(\"warning\", (\"get_hash_symbol() received a request for a zero-length symbol, which is probably a mistake.\"));\
     return(NULL);\n\
   }\n"
 );
