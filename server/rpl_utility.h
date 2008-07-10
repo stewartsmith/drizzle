@@ -138,10 +138,8 @@ public:
 
   ~table_def() {
     my_free(m_memory, MYF(0));
-#ifndef DBUG_OFF
     m_type= 0;
     m_size= 0;
-#endif
   }
 
   /**
@@ -163,7 +161,7 @@ public:
    */
   field_type type(ulong index) const
   {
-    DBUG_ASSERT(index < m_size);
+    assert(index < m_size);
     return m_type[index];
   }
 
@@ -182,7 +180,7 @@ public:
   */
   uint16 field_metadata(uint index) const
   {
-    DBUG_ASSERT(index < m_size);
+    assert(index < m_size);
     if (m_field_metadata_size)
       return m_field_metadata[index];
     else
@@ -195,7 +193,7 @@ public:
   */
   my_bool maybe_null(uint index) const
   {
-    DBUG_ASSERT(index < m_size);
+    assert(index < m_size);
     return ((m_null_bits[(index / 8)] & 
             (1 << (index % 8))) == (1 << (index %8)));
   }
@@ -271,26 +269,12 @@ namespace {
     ~auto_afree_ptr() { if (m_ptr) my_afree(m_ptr); }
     void assign(Obj* ptr) {
       /* Only to be called if it hasn't been given a value before. */
-      DBUG_ASSERT(m_ptr == NULL);
+      assert(m_ptr == NULL);
       m_ptr= ptr;
     }
     Obj* get() { return m_ptr; }
   };
 
 }
-
-/*
-  One test in mysqldump.test has 330 columns!
-  So have a sufficient buffer and check its limit anyway.
-*/
-#define DBUG_PRINT_BITSET(N,FRM,BS)                             \
-  do {                                                          \
-    char buf[MAX_FIELDS+1];                                     \
-    uint i;                                                     \
-    for (i = 0 ; i < (BS)->n_bits && i < MAX_FIELDS ; ++i)      \
-      buf[i] = bitmap_is_set((BS), i) ? '1' : '0';              \
-    buf[i] = '\0';                                              \
-    DBUG_PRINT((N), ((FRM), buf));                              \
-  } while (0)
 
 #endif /* RPL_UTILITY_H */
