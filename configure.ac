@@ -579,6 +579,24 @@ AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
 
 #--------------------------------------------------------------------
+# Check for libz
+#--------------------------------------------------------------------
+
+AC_CHECK_HEADERS(zlib.h)
+if test "x$ac_cv_header_zlib_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find zlib.h. Try installing zlib development packages])
+fi
+AC_CHECK_LIB(z, crc32, [], [AC_MSG_ERROR(could not find libz)])
+
+
+AC_CHECK_HEADERS([readline/readline.h])
+if test "x$ac_cv_header_readline_readline_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
+fi
+
+#--------------------------------------------------------------------
 # Check for libpcre
 #--------------------------------------------------------------------
 
@@ -599,6 +617,7 @@ fi
 AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
+
 
 #--------------------------------------------------------------------
 # Check for system libraries. Adds the library to $LIBS
