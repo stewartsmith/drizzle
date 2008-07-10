@@ -854,12 +854,7 @@ static void intern_plugin_unlock(LEX *lex, plugin_ref plugin)
 
   pi= plugin_ref_to_int(plugin);
 
-#ifdef DBUG_OFF
-  if (!pi->plugin_dl)
-    return;
-#else
   my_free((uchar*) plugin, MYF(MY_WME));
-#endif
 
   if (lex)
   {
