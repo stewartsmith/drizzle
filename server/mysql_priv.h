@@ -872,7 +872,7 @@ check_and_unset_inject_value(int value)
   Then one can later test for it by using ERROR_INJECT_CRASH_VALUE,
   ERROR_INJECT_ACTION_VALUE and ERROR_INJECT_VALUE. This have the same
   behaviour as the above described macros except that they use the
-  error inject value instead of a code used by DBUG macros.
+  error inject value instead of a code used by debug macros.
 */
 #define SET_ERROR_INJECT_VALUE(x) \
   current_thd->error_inject_value= (x)
