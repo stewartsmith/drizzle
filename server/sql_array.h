@@ -120,13 +120,13 @@ public:
       if (!(newbuf= (Elem**)alloc_root(mem_root, (n_elements + alloc_increment)*
                                                   sizeof(Elem**))))
       {
-        return FALSE;
+        return false;
       }
       memcpy(newbuf, buffer, n_elements*sizeof(Elem*));
       buffer= newbuf;
     }
     buffer[n_elements++]= el;
-    return FALSE;
+    return false;
   }
 
   int elements()
