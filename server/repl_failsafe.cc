@@ -186,7 +186,6 @@ bool show_slave_hosts(THD* thd)
 {
   List<Item> field_list;
   Protocol *protocol= thd->protocol;
-  DBUG_ENTER("show_slave_hosts");
 
   field_list.push_back(new Item_return_int("Server_id", 10,
 					   MYSQL_TYPE_LONG));
@@ -204,7 +203,7 @@ bool show_slave_hosts(THD* thd)
 
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    DBUG_RETURN(TRUE);
+    return(true);
 
   pthread_mutex_lock(&LOCK_slave_list);
 
@@ -225,12 +224,12 @@ bool show_slave_hosts(THD* thd)
     if (protocol->write())
     {
       pthread_mutex_unlock(&LOCK_slave_list);
-      DBUG_RETURN(TRUE);
+      return(true);
     }
   }
   pthread_mutex_unlock(&LOCK_slave_list);
   my_eof(thd);
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 #endif /* HAVE_REPLICATION */
