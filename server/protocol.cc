@@ -122,27 +122,23 @@ bool Protocol::net_store_data(const uchar *from, size_t length,
 */
 void net_send_error(THD *thd, uint sql_errno, const char *err)
 {
-  DBUG_ENTER("net_send_error");
-
-  DBUG_ASSERT(sql_errno);
-  DBUG_ASSERT(err && err[0]);
-
-  DBUG_PRINT("enter",("sql_errno: %d  err: %s", sql_errno, err));
+  assert(sql_errno);
+  assert(err && err[0]);
 
   /*
     It's one case when we can push an error even though there
     is an OK or EOF already.
   */
-  thd->main_da.can_overwrite_status= TRUE;
+  thd->main_da.can_overwrite_status= true;
 
   /* Abort multi-result sets */
   thd->server_status&= ~SERVER_MORE_RESULTS_EXISTS;
 
   net_send_error_packet(thd, sql_errno, err);
 
-  thd->main_da.can_overwrite_status= FALSE;
+  thd->main_da.can_overwrite_status= false;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /**
@@ -173,12 +169,10 @@ net_send_ok(THD *thd,
 {
   NET *net= &thd->net;
   uchar buff[MYSQL_ERRMSG_SIZE+10],*pos;
-  DBUG_ENTER("my_ok");
 
   if (! net->vio)	// hack for re-parsing queries
   {
-    DBUG_PRINT("info", ("vio present: NO"));
-    DBUG_VOID_RETURN;
+    return;
   }
 
   buff[0]=0;					// No fields
@@ -186,12 +180,6 @@ net_send_ok(THD *thd,
   pos=net_store_length(pos, id);
   if (thd->client_capabilities & CLIENT_PROTOCOL_41)
   {
-    DBUG_PRINT("info",
-	       ("affected_rows: %lu  id: %lu  status: %u  warning_count: %u",
-		(ulong) affected_rows,		
-		(ulong) id,
-		(uint) (server_status & 0xffff),
-		(uint) total_warn_count));
     int2store(pos, server_status);
     pos+=2;
 
@@ -205,17 +193,16 @@ net_send_ok(THD *thd,
     int2store(pos, server_status);
     pos+=2;
   }
-  thd->main_da.can_overwrite_status= TRUE;
+  thd->main_da.can_overwrite_status= true;
 
   if (message && message[0])
     pos= net_store_data(pos, (uchar*) message, strlen(message));
   VOID(my_net_write(net, buff, (size_t) (pos-buff)));
   VOID(net_flush(net));
 
-  thd->main_da.can_overwrite_status= FALSE;
-  DBUG_PRINT("info", ("OK sent, so no more error sending allowed"));
+  thd->main_da.can_overwrite_status= false;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 static uchar eof_buff[1]= { (uchar) 254 };      /* Marker for end of fields */
@@ -243,17 +230,15 @@ void
 net_send_eof(THD *thd, uint server_status, uint total_warn_count)
 {
   NET *net= &thd->net;
-  DBUG_ENTER("net_send_eof");
-  /* Set to TRUE if no active vio, to work well in case of --init-file */
+  /* Set to true if no active vio, to work well in case of --init-file */
   if (net->vio != 0)
   {
-    thd->main_da.can_overwrite_status= TRUE;
+    thd->main_da.can_overwrite_status= true;
     write_eof_packet(thd, net, server_status, total_warn_count);
     VOID(net_flush(net));
-    thd->main_da.can_overwrite_status= FALSE;
-    DBUG_PRINT("info", ("EOF sent, so no more error sending allowed"));
+    thd->main_da.can_overwrite_status= false;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -299,11 +284,9 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
   */
   uchar buff[2+1+SQLSTATE_LENGTH+MYSQL_ERRMSG_SIZE], *pos;
 
-  DBUG_ENTER("send_error_packet");
-
   if (net->vio == 0)
   {
-    DBUG_VOID_RETURN;
+    return;
   }
 
   int2store(buff,sql_errno);
@@ -320,7 +303,7 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
 
   VOID(net_write_command(net,(uchar) 255, (uchar*) "", 0, (uchar*) err,
                          length));
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -399,7 +382,7 @@ static uchar *net_store_length_fast(uchar *packet, uint length)
 
 void net_end_statement(THD *thd)
 {
-  DBUG_ASSERT(! thd->main_da.is_sent);
+  assert(! thd->main_da.is_sent);
 
   /* Can not be true, but do not take chances in production. */
   if (thd->main_da.is_sent)
@@ -429,12 +412,12 @@ void net_end_statement(THD *thd)
     break;
   case Diagnostics_area::DA_EMPTY:
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     net_send_ok(thd, thd->server_status, thd->total_warn_count,
                 0, 0, NULL);
     break;
   }
-  thd->main_da.is_sent= TRUE;
+  thd->main_da.is_sent= true;
 }
 
 
@@ -480,9 +463,6 @@ void Protocol::init(THD *thd_arg)
   thd=thd_arg;
   packet= &thd->packet;
   convert= &thd->convert_buffer;
-#ifndef DBUG_OFF
-  field_types= 0;
-#endif
 }
 
 /**
@@ -530,19 +510,12 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
   Protocol_text prot(thd);
   String *local_packet= prot.storage_packet();
   CHARSET_INFO *thd_charset= thd->variables.character_set_results;
-  DBUG_ENTER("send_fields");
 
   if (flags & SEND_NUM_ROWS)
   {				// Packet with number of elements
     uchar *pos= net_store_length(buff, list->elements);
     (void) my_net_write(&thd->net, buff, (size_t) (pos-buff));
   }
-
-#ifndef DBUG_OFF
-  field_types= (enum_field_types*) thd->alloc(sizeof(field_types) *
-					      list->elements);
-  uint count= 0;
-#endif
 
   while ((item=it++))
   {
@@ -592,10 +565,7 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
           definition of the column. In other words, the maximum number
           of characters here is limited by the column definition.
         */
-        max_char_len= (field.type >= (int) MYSQL_TYPE_TINY_BLOB &&
-                      field.type <= (int) MYSQL_TYPE_BLOB) ?
-                      field.length / item->collation.collation->mbminlen :
-                      field.length / item->collation.collation->mbmaxlen;
+        max_char_len= field.length / item->collation.collation->mbmaxlen;
         int4store(pos+2, max_char_len * thd_charset->mbmaxlen);
       }
       pos[6]= field.type;
@@ -615,21 +585,6 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
 	goto err;
       pos= (char*) local_packet->ptr()+local_packet->length();
 
-#ifdef TO_BE_DELETED_IN_6
-      if (!(thd->client_capabilities & CLIENT_LONG_FLAG))
-      {
-	pos[0]=3;
-	int3store(pos+1,field.length);
-	pos[4]=1;
-	pos[5]=field.type;
-	pos[6]=2;
-	pos[7]= (char) field.flags;
-	pos[8]= (char) field.decimals;
-	pos+= 9;
-      }
-      else
-#endif
-      {
 	pos[0]=3;
 	int3store(pos+1,field.length);
 	pos[4]=1;
@@ -638,16 +593,12 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
 	int2store(pos+7,field.flags);
 	pos[9]= (char) field.decimals;
 	pos+= 10;
-      }
     }
     local_packet->length((uint) (pos - local_packet->ptr()));
     if (flags & SEND_DEFAULTS)
       item->send(&prot, &tmp);			// Send default value
     if (prot.write())
       break;					/* purecov: inspected */
-#ifndef DBUG_OFF
-    field_types[count++]= field.type;
-#endif
   }
 
   if (flags & SEND_EOF)
@@ -659,19 +610,18 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
     */
     write_eof_packet(thd, &thd->net, thd->server_status, thd->total_warn_count);
   }
-  DBUG_RETURN(prepare_for_send(list));
+  return(prepare_for_send(list));
 
 err:
   my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES),
              MYF(0));	/* purecov: inspected */
-  DBUG_RETURN(1);				/* purecov: inspected */
+  return(1);				/* purecov: inspected */
 }
 
 
 bool Protocol::write()
 {
-  DBUG_ENTER("Protocol::write");
-  DBUG_RETURN(my_net_write(&thd->net, (uchar*) packet->ptr(),
+  return(my_net_write(&thd->net, (uchar*) packet->ptr(),
                            packet->length()));
 }
 
@@ -734,16 +684,10 @@ bool Protocol::store(I_List<i_string>* str_list)
 void Protocol_text::prepare_for_resend()
 {
   packet->length(0);
-#ifndef DBUG_OFF
-  field_pos= 0;
-#endif
 }
 
 bool Protocol_text::store_null()
 {
-#ifndef DBUG_OFF
-  field_pos++;
-#endif
   char buff[1];
   buff[0]= (char)251;
   return packet->append(buff, sizeof(buff), PACKET_BUFFER_EXTRA_ALLOC);
@@ -774,12 +718,6 @@ bool Protocol::store_string_aux(const char *from, size_t length,
 bool Protocol_text::store(const char *from, size_t length,
                           CHARSET_INFO *fromcs, CHARSET_INFO *tocs)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-              field_types[field_pos] == MYSQL_TYPE_NEWDECIMAL ||
-	      (field_types[field_pos] >= MYSQL_TYPE_ENUM && field_types[field_pos] <= MYSQL_TYPE_STRING));
-  field_pos++;
-#endif
   return store_string_aux(from, length, fromcs, tocs);
 }
 
@@ -788,23 +726,12 @@ bool Protocol_text::store(const char *from, size_t length,
                           CHARSET_INFO *fromcs)
 {
   CHARSET_INFO *tocs= this->thd->variables.character_set_results;
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-              field_types[field_pos] == MYSQL_TYPE_NEWDECIMAL ||
-              field_types[field_pos] == MYSQL_TYPE_NEWDATE ||
-	      (field_types[field_pos] >= MYSQL_TYPE_ENUM && field_types[field_pos] <= MYSQL_TYPE_STRING));
-  field_pos++;
-#endif
   return store_string_aux(from, length, fromcs, tocs);
 }
 
 
 bool Protocol_text::store_tiny(longlong from)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 || field_types[field_pos] == MYSQL_TYPE_TINY);
-  field_pos++;
-#endif
   char buff[20];
   return net_store_data((uchar*) buff,
 			(size_t) (int10_to_str((int) from, buff, -10) - buff));
@@ -813,12 +740,6 @@ bool Protocol_text::store_tiny(longlong from)
 
 bool Protocol_text::store_short(longlong from)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_YEAR ||
-	      field_types[field_pos] == MYSQL_TYPE_SHORT);
-  field_pos++;
-#endif
   char buff[20];
   return net_store_data((uchar*) buff,
 			(size_t) (int10_to_str((int) from, buff, -10) -
@@ -828,11 +749,6 @@ bool Protocol_text::store_short(longlong from)
 
 bool Protocol_text::store_long(longlong from)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-              field_types[field_pos] == MYSQL_TYPE_LONG);
-  field_pos++;
-#endif
   char buff[20];
   return net_store_data((uchar*) buff,
 			(size_t) (int10_to_str((long int)from, buff,
@@ -842,11 +758,6 @@ bool Protocol_text::store_long(longlong from)
 
 bool Protocol_text::store_longlong(longlong from, bool unsigned_flag)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_LONGLONG);
-  field_pos++;
-#endif
   char buff[22];
   return net_store_data((uchar*) buff,
 			(size_t) (longlong10_to_str(from,buff,
@@ -857,11 +768,6 @@ bool Protocol_text::store_longlong(longlong from, bool unsigned_flag)
 
 bool Protocol_text::store_decimal(const my_decimal *d)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-              field_types[field_pos] == MYSQL_TYPE_NEWDECIMAL);
-  field_pos++;
-#endif
   char buff[DECIMAL_MAX_STR_LENGTH];
   String str(buff, sizeof(buff), &my_charset_bin);
   (void) my_decimal2string(E_DEC_FATAL_ERROR, d, 0, 0, 0, &str);
@@ -871,11 +777,6 @@ bool Protocol_text::store_decimal(const my_decimal *d)
 
 bool Protocol_text::store(float from, uint32 decimals, String *buffer)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_FLOAT);
-  field_pos++;
-#endif
   buffer->set_real((double) from, decimals, thd->charset());
   return net_store_data((uchar*) buffer->ptr(), buffer->length());
 }
@@ -883,11 +784,6 @@ bool Protocol_text::store(float from, uint32 decimals, String *buffer)
 
 bool Protocol_text::store(double from, uint32 decimals, String *buffer)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_DOUBLE);
-  field_pos++;
-#endif
   buffer->set_real(from, decimals, thd->charset());
   return net_store_data((uchar*) buffer->ptr(), buffer->length());
 }
@@ -897,24 +793,11 @@ bool Protocol_text::store(Field *field)
 {
   if (field->is_null())
     return store_null();
-#ifndef DBUG_OFF
-  field_pos++;
-#endif
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
   CHARSET_INFO *tocs= this->thd->variables.character_set_results;
-#ifndef DBUG_OFF
-  TABLE *table= field->table;
-  my_bitmap_map *old_map= 0;
-  if (table->file)
-    old_map= dbug_tmp_use_all_columns(table, table->read_set);
-#endif
 
   field->val_str(&str);
-#ifndef DBUG_OFF
-  if (old_map)
-    dbug_tmp_restore_column_map(table->read_set, old_map);
-#endif
 
   return store_string_aux(str.ptr(), str.length(), str.charset(), tocs);
 }
@@ -928,12 +811,6 @@ bool Protocol_text::store(Field *field)
 
 bool Protocol_text::store(MYSQL_TIME *tm)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_DATETIME ||
-	      field_types[field_pos] == MYSQL_TYPE_TIMESTAMP);
-  field_pos++;
-#endif
   char buff[40];
   uint length;
   length= my_sprintf(buff,(buff, "%04d-%02d-%02d %02d:%02d:%02d",
@@ -952,11 +829,6 @@ bool Protocol_text::store(MYSQL_TIME *tm)
 
 bool Protocol_text::store_date(MYSQL_TIME *tm)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_DATE);
-  field_pos++;
-#endif
   char buff[MAX_DATE_STRING_REP_LENGTH];
   size_t length= my_date_to_str(tm, buff);
   return net_store_data((uchar*) buff, length);
@@ -971,11 +843,6 @@ bool Protocol_text::store_date(MYSQL_TIME *tm)
 
 bool Protocol_text::store_time(MYSQL_TIME *tm)
 {
-#ifndef DBUG_OFF
-  DBUG_ASSERT(field_types == 0 ||
-	      field_types[field_pos] == MYSQL_TYPE_TIME);
-  field_pos++;
-#endif
   char buff[40];
   uint length;
   uint day= (tm->year || tm->month) ? 0 : tm->day;

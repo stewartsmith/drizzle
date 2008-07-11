@@ -445,7 +445,7 @@ pthread_cond_t  COND_server_started;
 
 /* replication parameters, if master_host is not NULL, we are a slave */
 uint report_port= MYSQL_PORT;
-ulong master_retry_count=0;
+uint32_t master_retry_count= 0;
 char *master_info_file;
 char *relay_log_info_file, *report_user, *report_password, *report_host;
 char *opt_relay_logname = 0, *opt_relaylog_index_name=0;
@@ -477,10 +477,6 @@ static uint thr_kill_signal;
 /* OS specific variables */
 
 bool mysqld_embedded=0;
-
-#ifndef DBUG_OFF
-static const char* default_dbug_option;
-#endif
 
 scheduler_functions thread_scheduler;
 
@@ -1748,7 +1744,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
       if (!abort_loop)
       {
         bool not_used;
-	mysql_print_status();		// Print some debug info
         reload_cache((THD*) 0,
                      (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
                       REFRESH_GRANT |
@@ -1832,12 +1827,8 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       thd->lex->current_select == 0 if lex structure is not inited
       (not query command (COM_QUERY))
     */
-    if (thd->lex->current_select &&
-        thd->lex->current_select->no_error && !thd->is_fatal_error)
-    {
-      /* DBUG_WAS_HERE */
-    }
-    else
+    if (! (thd->lex->current_select &&
+        thd->lex->current_select->no_error && !thd->is_fatal_error))
     {
       if (! thd->main_da.is_error())            // Return only first message
       {
@@ -2065,31 +2056,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   */
   if (add_status_vars(status_vars))
     return 1; // an error was already reported
-
-#ifndef DBUG_OFF
-  /*
-    We have few debug-only commands in com_status_vars, only visible in debug
-    builds. for simplicity we enable the assert only in debug builds
-
-    There are 7 Com_ variables which don't have corresponding SQLCOM_ values:
-    (TODO strictly speaking they shouldn't be here, should not have Com_ prefix
-    that is. Perhaps Stmt_ ? Comstmt_ ? Prepstmt_ ?)
-
-      Com_admin_commands       => com_other
-      Com_stmt_close           => com_stmt_close
-      Com_stmt_execute         => com_stmt_execute
-      Com_stmt_fetch           => com_stmt_fetch
-      Com_stmt_prepare         => com_stmt_prepare
-      Com_stmt_reset           => com_stmt_reset
-      Com_stmt_send_long_data  => com_stmt_send_long_data
-
-    With this correction the number of Com_ variables (number of elements in
-    the array, excluding the last element - terminator) must match the number
-    of SQLCOM_ constants.
-  */
-  compile_time_assert(sizeof(com_status_vars)/sizeof(com_status_vars[0]) - 1 ==
-                     SQLCOM_END + 7);
-#endif
 
   load_defaults(conf_file_name, groups, &argc, &argv);
   defaults_argv=argv;
@@ -3057,9 +3023,6 @@ enum options_mysqld
   OPT_REPLICATE_IGNORE_DB,     OPT_LOG_SLAVE_UPDATES,
   OPT_BINLOG_DO_DB,            OPT_BINLOG_IGNORE_DB,
   OPT_BINLOG_FORMAT,
-#ifndef DBUG_OFF
-  OPT_BINLOG_SHOW_XID,
-#endif
   OPT_BINLOG_ROWS_EVENT_MAX_SIZE, 
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
@@ -3272,10 +3235,6 @@ struct my_option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"datadir", 'h', "Path to the database root.", (uchar**) &mysql_data_home,
    (uchar**) &mysql_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DBUG_OFF
-  {"debug", '#', "Debug log.", (uchar**) &default_dbug_option,
-   (uchar**) &default_dbug_option, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"default-character-set", 'C', "Set the default character set (deprecated option, use --character-set-server instead).",
    (uchar**) &default_character_set_name, (uchar**) &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
@@ -3579,11 +3538,6 @@ replicating a LOAD DATA INFILE command.",
   {"slow-query-log", OPT_SLOW_LOG,
    "Enable|disable slow query log", (uchar**) &opt_slow_log,
    (uchar**) &opt_slow_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"sporadic-binlog-dump-fail", OPT_SPORADIC_BINLOG_DUMP_FAIL,
-   "Option used by mysql-test for debugging and testing of replication.",
-   (uchar**) &opt_sporadic_binlog_dump_fail,
-   (uchar**) &opt_sporadic_binlog_dump_fail, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
-   0},
   {"sql-bin-update-same", OPT_SQL_BIN_UPDATE_SAME,
    "The update log is deprecated since version 5.0, is replaced by the binary \
 log and this option does nothing anymore.",
@@ -4449,10 +4403,6 @@ static void mysql_init_variables(void)
   global_system_variables.myisam_stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   /* Variables that depends on compile options */
-#ifndef DBUG_OFF
-  default_dbug_option=IF_WIN("d:t:i:O,\\mysqld.trace",
-			     "d:t:i:o,/tmp/mysqld.trace");
-#endif
   opt_error_log= IF_WIN(1,0);
 #ifdef HAVE_BROKEN_REALPATH
   have_symlink=SHOW_OPTION_NO;
@@ -4489,9 +4439,6 @@ mysqld_get_one_option(int optid,
 {
   switch(optid) {
   case '#':
-#ifndef DBUG_OFF
-    DBUG_SET_INITIAL(argument ? argument : default_dbug_option);
-#endif
     opt_endinfo=1;				/* unireg: memory allocation */
     break;
   case 'a':
@@ -4978,10 +4925,6 @@ static void set_server_version(void)
 {
   char *end= strxmov(server_version, MYSQL_SERVER_VERSION,
                      MYSQL_SERVER_SUFFIX_STR, NullS);
-#ifndef DBUG_OFF
-  if (!strstr(MYSQL_SERVER_SUFFIX_STR, "-debug"))
-    end= strmov(end, "-debug");
-#endif
   if (opt_log || opt_slow_log || opt_bin_log)
     strmov(end, "-log");                        // This may slow down system
 }

@@ -122,7 +122,7 @@ public:
 
   void set(String &str,uint32 offset,uint32 arg_length)
   {
-    DBUG_ASSERT(&str != this);
+    assert(&str != this);
     free();
     Ptr=(char*) str.ptr()+offset; str_length=arg_length; alloced=0;
     if (str.Alloced_length)
@@ -231,7 +231,7 @@ public:
         It is forbidden to do assignments like 
         some_string = substring_of_that_string
        */
-      DBUG_ASSERT(!s.uses_buffer_owned_by(this));
+      assert(!s.uses_buffer_owned_by(this));
       free();
       Ptr=s.Ptr ; str_length=s.str_length ; Alloced_length=s.Alloced_length;
       alloced=0;

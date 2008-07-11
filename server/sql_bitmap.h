@@ -147,7 +147,7 @@ public:
   {
     if (sizeof(buffer) >= 8)
       return uint8korr(buffer);
-    DBUG_ASSERT(sizeof(buffer) >= 4);
+    assert(sizeof(buffer) >= 4);
     return (ulonglong) uint4korr(buffer);
   }
 };

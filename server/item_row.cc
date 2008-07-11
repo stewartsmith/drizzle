@@ -50,23 +50,21 @@ Item_row::Item_row(List<Item> &arg):
 
 void Item_row::illegal_method_call(const char *method __attribute__((__unused__)))
 {
-  DBUG_ENTER("Item_row::illegal_method_call");
-  DBUG_PRINT("error", ("!!! %s method was called for row item", method));
-  DBUG_ASSERT(0);
+  assert(0);
   my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 bool Item_row::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
 {
-  DBUG_ASSERT(fixed == 0);
+  assert(fixed == 0);
   null_value= 0;
   maybe_null= 0;
   Item **arg, **arg_end;
   for (arg= items, arg_end= items+arg_count; arg != arg_end ; arg++)
   {
     if ((*arg)->fix_fields(thd, arg))
-      return TRUE;
+      return true;
     // we can't assign 'item' before, because fix_fields() can change arg
     Item *item= *arg;
     used_tables_cache |= item->used_tables();
@@ -85,21 +83,19 @@ bool Item_row::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
     with_sum_func= with_sum_func || item->with_sum_func;
   }
   fixed= 1;
-  return FALSE;
+  return false;
 }
 
 
 void Item_row::cleanup()
 {
-  DBUG_ENTER("Item_row::cleanup");
-
   Item::cleanup();
   /* Reset to the original values */
   used_tables_cache= 0;
   const_item_cache= 1;
   with_null= 0;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -108,7 +104,7 @@ void Item_row::split_sum_func(THD *thd, Item **ref_pointer_array,
 {
   Item **arg, **arg_end;
   for (arg= items, arg_end= items+arg_count; arg != arg_end ; arg++)
-    (*arg)->split_sum_func2(thd, ref_pointer_array, fields, arg, TRUE);
+    (*arg)->split_sum_func2(thd, ref_pointer_array, fields, arg, true);
 }
 
 

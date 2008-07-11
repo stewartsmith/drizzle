@@ -63,8 +63,7 @@ LEX_STRING interval_type_to_name[INTERVAL_LAST] = {
 
 int calc_weekday(long daynr,bool sunday_first_day_of_week)
 {
-  DBUG_ENTER("calc_weekday");
-  DBUG_RETURN ((int) ((daynr + 5L + (sunday_first_day_of_week ? 1L : 0L)) % 7));
+  return ((int) ((daynr + 5L + (sunday_first_day_of_week ? 1L : 0L)) % 7));
 }
 
 /*
@@ -144,7 +143,6 @@ void get_date_from_daynr(long daynr,uint *ret_year,uint *ret_month,
 {
   uint year,temp,leap_day,day_of_year,days_in_year;
   uchar *month_pos;
-  DBUG_ENTER("get_date_from_daynr");
 
   if (daynr <= 365L || daynr >= 3652500)
   {						/* Fix if wrong daynr */
@@ -178,7 +176,7 @@ void get_date_from_daynr(long daynr,uint *ret_year,uint *ret_month,
     *ret_year=year;
     *ret_day=day_of_year+leap_day;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 	/* Functions to handle periods */
@@ -557,7 +555,7 @@ bool parse_date_time_format(timestamp_type format_type,
       return 0;
     break;
   default:
-    DBUG_ASSERT(1);
+    assert(1);
     break;
   }
   return 1;					// Error
@@ -668,7 +666,7 @@ const char *get_date_time_format_str(KNOWN_DATE_TIME_FORMAT *format,
   case MYSQL_TIMESTAMP_TIME:
     return format->time_format;
   default:
-    DBUG_ASSERT(0);				// Impossible
+    assert(0);				// Impossible
     return 0;
   }
 }

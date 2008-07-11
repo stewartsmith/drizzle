@@ -85,15 +85,6 @@ struct st_plugin_int
   See intern_plugin_lock() for the explanation for the
   conditionally defined plugin_ref type
 */
-#ifdef DBUG_OFF
-typedef struct st_plugin_int *plugin_ref;
-#define plugin_decl(pi) ((pi)->plugin)
-#define plugin_dlib(pi) ((pi)->plugin_dl)
-#define plugin_data(pi,cast) ((cast)((pi)->data))
-#define plugin_name(pi) (&((pi)->name))
-#define plugin_state(pi) ((pi)->state)
-#define plugin_equals(p1,p2) ((p1) == (p2))
-#else
 typedef struct st_plugin_int **plugin_ref;
 #define plugin_decl(pi) ((pi)[0]->plugin)
 #define plugin_dlib(pi) ((pi)[0]->plugin_dl)
@@ -101,7 +92,6 @@ typedef struct st_plugin_int **plugin_ref;
 #define plugin_name(pi) (&((pi)[0]->name))
 #define plugin_state(pi) ((pi)[0]->state)
 #define plugin_equals(p1,p2) ((p1) && (p2) && (p1)[0] == (p2)[0])
-#endif
 
 typedef int (*plugin_type_init)(struct st_plugin_int *);
 

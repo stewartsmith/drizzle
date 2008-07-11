@@ -115,40 +115,8 @@ char* query_table_status(THD *thd,const char *db,const char *table_name);
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 #define all_bits_set(A,B) ((A) & (B) != (B))
 
-/*
-  Generates a warning that a feature is deprecated. After a specified version
-  asserts that the feature is removed.
-
-  Using it as
-
-    WARN_DEPRECATED(thd, 6,2, "BAD", "'GOOD'");
-
- Will result in a warning
-
-    "The syntax 'BAD' is deprecated and will be removed in MySQL 6.2. Please
-    use 'GOOD' instead"
-
- Note, that in macro arguments BAD is not quoted, while 'GOOD' is.
- Note, that the version is TWO numbers, separated with a comma
- (two macro arguments, that is)
-*/
-#define WARN_DEPRECATED(Thd,VerHi,VerLo,Old,New)                            \
-  do {                                                                      \
-    compile_time_assert(MYSQL_VERSION_ID < VerHi * 10000 + VerLo * 100);    \
-    if (Thd)                                                                \
-      push_warning_printf((Thd), MYSQL_ERROR::WARN_LEVEL_WARN,              \
-                        ER_WARN_DEPRECATED_SYNTAX,                          \
-                        ER(ER_WARN_DEPRECATED_SYNTAX_WITH_VER),             \
-                        (Old), #VerHi "." #VerLo, (New));                   \
-    else                                                                    \
-      sql_print_warning("The syntax '%s' is deprecated and will be removed " \
-                        "in MySQL %s. Please use %s instead.",              \
-                        (Old), #VerHi "." #VerLo, (New));                   \
-  } while(0)
-
 extern CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern CHARSET_INFO *national_charset_info, *table_alias_charset;
-
 
 enum Derivation
 {
@@ -561,20 +529,6 @@ enum open_table_mode
 
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
-#ifdef EXTRA_DEBUG
-/**
-  Sync points allow us to force the server to reach a certain line of code
-  and block there until the client tells the server it is ok to go on.
-  The client tells the server to block with SELECT GET_LOCK()
-  and unblocks it with SELECT RELEASE_LOCK(). Used for debugging difficult
-  concurrency problems
-*/
-#define DBUG_SYNC_POINT(lock_name,lock_timeout) \
- debug_sync_point(lock_name,lock_timeout)
-void debug_sync_point(const char* lock_name, uint lock_timeout);
-#else
-#define DBUG_SYNC_POINT(lock_name,lock_timeout)
-#endif /* EXTRA_DEBUG */
 
 /* BINLOG_DUMP options */
 
@@ -835,7 +789,6 @@ inline bool check_and_unset_keyword(const char *dbug_str)
   if (_db_strict_keyword_ (dbug_str))
   {
     strxmov(total_str, extra_str, dbug_str, NullS);
-    DBUG_SET(total_str);
     return 1;
   }
   return 0;
@@ -869,7 +822,7 @@ check_and_unset_inject_value(int value)
 
   ERROR_INJECT_CRASH will inject a crash of the MySQL Server if code
   is set when macro is called. ERROR_INJECT_CRASH can be used in
-  if-statements, it will always return FALSE unless of course it
+  if-statements, it will always return false unless of course it
   crashes in which case it doesn't return at all.
 
   ERROR_INJECT_ACTION will inject the action specified in the action
@@ -887,12 +840,10 @@ check_and_unset_inject_value(int value)
   Then one can later test for it by using ERROR_INJECT_CRASH_VALUE,
   ERROR_INJECT_ACTION_VALUE and ERROR_INJECT_VALUE. This have the same
   behaviour as the above described macros except that they use the
-  error inject value instead of a code used by DBUG macros.
+  error inject value instead of a code used by debug macros.
 */
 #define SET_ERROR_INJECT_VALUE(x) \
   current_thd->error_inject_value= (x)
-#define ERROR_INJECT_CRASH(code) \
-  DBUG_EVALUATE_IF(code, (abort(), 0), 0)
 #define ERROR_INJECT_ACTION(code, action) \
   (check_and_unset_keyword(code) ? ((action), 0) : 0)
 #define ERROR_INJECT(code) \
@@ -1369,10 +1320,10 @@ inline bool setup_fields_with_no_wrap(THD *thd, Item **ref_pointer_array,
                                       bool allow_sum_func)
 {
   bool res;
-  thd->lex->select_lex.no_wrap_view_item= TRUE;
+  thd->lex->select_lex.no_wrap_view_item= true;
   res= setup_fields(thd, ref_pointer_array, item, mark_used_columns, sum_func_list,
                     allow_sum_func);
-  thd->lex->select_lex.no_wrap_view_item= FALSE;
+  thd->lex->select_lex.no_wrap_view_item= false;
   return res;
 }
 int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,
@@ -1387,12 +1338,12 @@ int open_and_lock_tables_derived(THD *thd, TABLE_LIST *tables, bool derived);
 /* simple open_and_lock_tables without derived handling */
 inline int simple_open_n_lock_tables(THD *thd, TABLE_LIST *tables)
 {
-  return open_and_lock_tables_derived(thd, tables, FALSE);
+  return open_and_lock_tables_derived(thd, tables, false);
 }
 /* open_and_lock_tables with derived handling */
 inline int open_and_lock_tables(THD *thd, TABLE_LIST *tables)
 {
-  return open_and_lock_tables_derived(thd, tables, TRUE);
+  return open_and_lock_tables_derived(thd, tables, true);
 }
 /* simple open_and_lock_tables without derived handling for single table */
 TABLE *open_n_lock_single_table(THD *thd, TABLE_LIST *table_l,
@@ -1541,7 +1492,7 @@ bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
                          bool wait_for_refresh, bool wait_for_placeholders);
 bool close_cached_connection_tables(THD *thd, bool wait_for_refresh,
                                     LEX_STRING *connect_string,
-                                    bool have_lock = FALSE);
+                                    bool have_lock= false);
 void copy_field_from_tmp_record(Field *field,int offset);
 bool fill_record(THD * thd, List<Item> &fields, List<Item> &values, bool ignore_errors);
 bool fill_record(THD *thd, Field **field, List<Item> &values, bool ignore_errors);
@@ -1584,18 +1535,13 @@ bool mysql_manager_submit(void (*action)());
 
 
 /* sql_test.cc */
-#ifndef DBUG_OFF
 void print_where(COND *cond,const char *info, enum_query_type query_type);
 void print_cached_tables(void);
 void TEST_filesort(SORT_FIELD *sortorder,uint s_length);
 void print_plan(JOIN* join,uint idx, double record_count, double read_time,
                 double current_read_time, const char *info);
 void print_keyuse_array(DYNAMIC_ARRAY *keyuse_array);
-#define EXTRA_DEBUG_DUMP_TABLE_LISTS
-#ifdef EXTRA_DEBUG_DUMP_TABLE_LISTS
 void dump_TABLE_LIST_graph(SELECT_LEX *select_lex, TABLE_LIST* tl);
-#endif
-#endif
 void mysql_print_status();
 
 /* key.cc */
@@ -2045,11 +1991,6 @@ bool flush_error_log(void);
 /* sql_list.cc */
 void free_list(I_List <i_string_pair> *list);
 void free_list(I_List <i_string> *list);
-
-/* sql_yacc.cc */
-#ifndef DBUG_OFF
-extern void turn_parser_debug_on();
-#endif
 
 /* Some inline functions for more speed */
 

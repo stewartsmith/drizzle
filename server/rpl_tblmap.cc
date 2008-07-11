@@ -48,19 +48,13 @@ table_mapping::~table_mapping()
 
 st_table* table_mapping::get_table(ulong table_id)
 {
-  DBUG_ENTER("table_mapping::get_table(ulong)");
-  DBUG_PRINT("enter", ("table_id: %lu", table_id));
   entry *e= find_entry(table_id);
   if (e) 
   {
-    DBUG_PRINT("info", ("tid %lu -> table 0x%lx (%s)", 
-			table_id, (long) e->table,
-			MAYBE_TABLE_NAME(e->table)));
-    DBUG_RETURN(e->table);
+    return(e->table);
   }
 
-  DBUG_PRINT("info", ("tid %lu is not mapped!", table_id));
-  DBUG_RETURN(NULL);
+  return(NULL);
 }
 
 /*
@@ -91,15 +85,11 @@ int table_mapping::expand()
 
 int table_mapping::set_table(ulong table_id, TABLE* table)
 {
-  DBUG_ENTER("table_mapping::set_table(ulong,TABLE*)");
-  DBUG_PRINT("enter", ("table_id: %lu  table: 0x%lx (%s)", 
-		       table_id, 
-		       (long) table, MAYBE_TABLE_NAME(table)));
   entry *e= find_entry(table_id);
   if (e == 0)
   {
     if (m_free == 0 && expand())
-      DBUG_RETURN(ERR_MEMORY_ALLOCATION); // Memory allocation failed      
+      return(ERR_MEMORY_ALLOCATION); // Memory allocation failed      
     e= m_free;
     m_free= m_free->next;
   }
@@ -110,10 +100,7 @@ int table_mapping::set_table(ulong table_id, TABLE* table)
   e->table= table;
   my_hash_insert(&m_table_ids,(uchar *)e);
 
-  DBUG_PRINT("info", ("tid %lu -> table 0x%lx (%s)", 
-		      table_id, (long) e->table,
-		      MAYBE_TABLE_NAME(e->table)));
-  DBUG_RETURN(0);		// All OK
+  return(0);		// All OK
 }
 
 int table_mapping::remove_table(ulong table_id)
@@ -136,7 +123,6 @@ int table_mapping::remove_table(ulong table_id)
 */
 void table_mapping::clear_tables()
 {
-  DBUG_ENTER("table_mapping::clear_tables()");
   for (uint i= 0; i < m_table_ids.records; i++)
   {
     entry *e= (entry *)hash_element(&m_table_ids, i);
@@ -144,7 +130,7 @@ void table_mapping::clear_tables()
     m_free= e;
   }
   my_hash_reset(&m_table_ids);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 #endif

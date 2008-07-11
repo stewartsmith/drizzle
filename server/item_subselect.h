@@ -108,7 +108,7 @@ public:
   Item *get_tmp_table_item(THD *thd);
   void update_used_tables();
   virtual void print(String *str, enum_query_type query_type);
-  virtual bool have_guarded_conds() { return FALSE; }
+  virtual bool have_guarded_conds() { return false; }
   bool change_engine(subselect_engine *eng)
   {
     old_engine= engine;
@@ -210,8 +210,8 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   void cleanup();
   bool any_value() { return was_values; }
-  void register_value() { was_values= TRUE; }
-  void reset_value_registration() { was_values= FALSE; }
+  void register_value() { was_values= true; }
+  void reset_value_registration() { was_values= false; }
 };
 
 /* exists subselect */
@@ -320,7 +320,7 @@ public:
 
   Item_in_subselect(Item * left_expr, st_select_lex *select_lex);
   Item_in_subselect()
-    :Item_exists_subselect(), left_expr_cache(0), first_execution(TRUE),
+    :Item_exists_subselect(), left_expr_cache(0), first_execution(true),
     optimizer(0), abort_on_null(0), pushed_cond_guards(NULL),
     exec_method(NOT_TRANSFORMED), upper_item(0)
   {}
@@ -449,7 +449,7 @@ public:
   virtual bool change_result(Item_subselect *si,
                              select_result_interceptor *result)= 0;
   virtual bool no_tables()= 0;
-  virtual bool is_executed() const { return FALSE; }
+  virtual bool is_executed() const { return false; }
   /* Check if subquery produced any rows during last query execution */
   virtual bool no_rows() = 0;
   virtual enum_engine_type engine_type() { return ABSTRACT_ENGINE; }
@@ -665,7 +665,7 @@ public:
   subselect_hash_sj_engine(THD *thd, Item_subselect *in_predicate,
                                subselect_single_select_engine *old_engine)
     :subselect_uniquesubquery_engine(thd, NULL, in_predicate, NULL),
-    is_materialized(FALSE), materialize_engine(old_engine),
+    is_materialized(false), materialize_engine(old_engine),
     materialize_join(NULL), tmp_param(NULL)
   {}
   ~subselect_hash_sj_engine();

@@ -149,10 +149,10 @@ public:
     max_binlog_size.
   */
   char group_relay_log_name[FN_REFLEN];
-  ulonglong group_relay_log_pos;
+  uint64_t group_relay_log_pos;
   char event_relay_log_name[FN_REFLEN];
-  ulonglong event_relay_log_pos;
-  ulonglong future_event_relay_log_pos;
+  uint64_t event_relay_log_pos;
+  uint64_t future_event_relay_log_pos;
 
 #ifdef HAVE_purify
   bool is_fake; /* Mark that this is a fake relay log info structure */
@@ -174,7 +174,7 @@ public:
     threads, the SQL thread sets it to unblock the I/O thread and make it
     temporarily forget about the constraint.
   */
-  ulonglong log_space_limit,log_space_total;
+  uint64_t log_space_limit,log_space_total;
   bool ignore_log_space_limit;
 
   /*
@@ -183,11 +183,7 @@ public:
     committing event (the COMMIT query event, or the event if in autocommit
     mode).
   */
-#if MYSQL_VERSION_ID < 40100
-  ulonglong future_master_log_pos;
-#else
-  ulonglong future_group_master_log_pos;
-#endif
+  uint64_t future_group_master_log_pos;
 
   time_t last_master_timestamp;
 
@@ -199,19 +195,17 @@ public:
     errors, and have been manually applied by DBA already.
   */
   volatile uint32 slave_skip_counter;
-  volatile ulong abort_pos_wait;	/* Incremented on change master */
-  volatile ulong slave_run_id;		/* Incremented on slave start */
+  volatile uint32_t abort_pos_wait;	/* Incremented on change master */
+  volatile uint32_t slave_run_id;		/* Incremented on slave start */
   pthread_mutex_t log_space_lock;
   pthread_cond_t log_space_cond;
   THD * sql_thd;
-#ifndef DBUG_OFF
-  int events_till_abort;
-#endif  
+  int32_t events_till_abort;
 
   /* if not set, the value of other members of the structure are undefined */
   bool inited;
   volatile bool abort_slave;
-  volatile uint slave_running;
+  volatile uint32_t slave_running;
 
   /* 
      Condition and its parameters from START SLAVE UNTIL clause.
@@ -226,9 +220,9 @@ public:
   
   enum {UNTIL_NONE= 0, UNTIL_MASTER_POS, UNTIL_RELAY_POS} until_condition;
   char until_log_name[FN_REFLEN];
-  ulonglong until_log_pos;
-  /* extension extracted from log_name and converted to int */
-  ulong until_log_name_extension;   
+  uint64_t until_log_pos;
+  /* extension extracted from log_name and converted to int32_t */
+  uint32_t until_log_name_extension;   
   /* 
      Cached result of comparison of until_log_name and current log name
      -2 means unitialised, -1,0,1 are comarison results 
@@ -247,7 +241,7 @@ public:
     counter: how many times the slave has retried a transaction (any) since
     slave started.
   */
-  ulong trans_retries, retried_trans;
+  uint32_t trans_retries, retried_trans;
 
   /*
     If the end of the hot relay log is made of master's events ignored by the
@@ -258,7 +252,7 @@ public:
     are both protected by rli->relay_log.LOCK_log.
   */
   char ign_master_log_name_end[FN_REFLEN];
-  ulonglong ign_master_log_pos_end;
+  uint64_t ign_master_log_pos_end;
 
   Relay_log_info();
   ~Relay_log_info();
@@ -288,23 +282,23 @@ public:
     event_relay_log_pos= future_event_relay_log_pos;
   }
 
-  void inc_group_relay_log_pos(ulonglong log_pos,
+  void inc_group_relay_log_pos(uint64_t log_pos,
 			       bool skip_lock=0);
 
-  int wait_for_pos(THD* thd, String* log_name, longlong log_pos, 
+  int32_t wait_for_pos(THD* thd, String* log_name, longlong log_pos, 
 		   longlong timeout);
   void close_temporary_tables();
 
   /* Check if UNTIL condition is satisfied. See slave.cc for more. */
   bool is_until_satisfied(my_off_t master_beg_pos);
-  inline ulonglong until_pos()
+  inline uint64_t until_pos()
   {
     return ((until_condition == UNTIL_MASTER_POS) ? group_master_log_pos :
 	    group_relay_log_pos);
   }
 
   RPL_TABLE_LIST *tables_to_lock;           /* RBR: Tables to lock  */
-  uint tables_to_lock_count;        /* RBR: Count of tables to lock */
+  uint32_t tables_to_lock_count;        /* RBR: Count of tables to lock */
   table_mapping m_table_map;      /* RBR: Mapping table-id to table */
 
   inline table_def *get_tabledef(TABLE *tbl)
@@ -412,7 +406,7 @@ private:
 
 
 // Defined in rpl_rli.cc
-int init_relay_log_info(Relay_log_info* rli, const char* info_fname);
+int32_t init_relay_log_info(Relay_log_info* rli, const char* info_fname);
 
 
 #endif /* RPL_RLI_H */

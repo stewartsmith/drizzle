@@ -204,7 +204,7 @@ static uint collect_cmp_types(Item **items, uint nitems)
   uint i;
   uint found_types;
   Item_result left_result= items[0]->result_type();
-  DBUG_ASSERT(nitems > 1);
+  assert(nitems > 1);
   found_types= 0;
   for (i= 1; i < nitems ; i++)
   {
@@ -271,7 +271,7 @@ Item_bool_func2* Le_creator::create(Item *a, Item *b) const
 
 longlong Item_func_not::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   bool value= args[0]->val_bool();
   null_value=args[0]->null_value;
   return ((!null_value && value == 0) ? 1 : 0);
@@ -300,7 +300,7 @@ void Item_func_not::print(String *str, enum_query_type query_type)
 
 longlong Item_func_not_all::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   bool value= args[0]->val_bool();
 
   /*
@@ -341,7 +341,7 @@ void Item_func_not_all::print(String *str, enum_query_type query_type)
 
 longlong Item_func_nop_all::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   longlong value= args[0]->val_int();
 
   /*
@@ -427,7 +427,7 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
     {
       result= field->store(orig_field_val, true);
       /* orig_field_val must be a valid value that can be restored back. */
-      DBUG_ASSERT(!result);
+      assert(!result);
     }
     thd->variables.sql_mode= orig_sql_mode;
     thd->count_cuted_fields= orig_count_cuted_fields;
@@ -619,7 +619,7 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
     break;
   }
   default:
-    DBUG_ASSERT(0);
+    assert(0);
   }
   return 0;
 }
@@ -1500,7 +1500,7 @@ bool Item_in_optimizer::fix_left(THD *thd, Item **ref __attribute__((__unused__)
 
 bool Item_in_optimizer::fix_fields(THD *thd, Item **ref)
 {
-  DBUG_ASSERT(fixed == 0);
+  assert(fixed == 0);
   if (fix_left(thd, ref))
     return true;
   if (args[0]->maybe_null)
@@ -1528,7 +1528,7 @@ bool Item_in_optimizer::fix_fields(THD *thd, Item **ref)
 longlong Item_in_optimizer::val_int()
 {
   bool tmp;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   cache->store(args[0]);
   
   if (cache->null_value)
@@ -1606,11 +1606,10 @@ void Item_in_optimizer::keep_top_level_cache()
 
 void Item_in_optimizer::cleanup()
 {
-  DBUG_ENTER("Item_in_optimizer::cleanup");
   Item_bool_func::cleanup();
   if (!save_cache)
     cache= 0;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1647,7 +1646,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, uchar *argument
 {
   Item *new_item;
 
-  DBUG_ASSERT(arg_count == 2);
+  assert(arg_count == 2);
 
   /* Transform the left IN operand. */
   new_item= (*args)->transform(transformer, argument);
@@ -1669,7 +1668,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, uchar *argument
     transformation, we only make both operands the same.
     TODO: is it the way it should be?
   */
-  DBUG_ASSERT((args[1])->type() == Item::SUBSELECT_ITEM &&
+  assert((args[1])->type() == Item::SUBSELECT_ITEM &&
               (((Item_subselect*)(args[1]))->substype() ==
                Item_subselect::IN_SUBS ||
                ((Item_subselect*)(args[1]))->substype() ==
@@ -1687,7 +1686,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, uchar *argument
 
 longlong Item_func_eq::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int value= cmp.compare();
   return value == 0 ? 1 : 0;
 }
@@ -1703,13 +1702,13 @@ void Item_func_equal::fix_length_and_dec()
 
 longlong Item_func_equal::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   return cmp.compare();
 }
 
 longlong Item_func_ne::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int value= cmp.compare();
   return value != 0 && !null_value ? 1 : 0;
 }
@@ -1717,7 +1716,7 @@ longlong Item_func_ne::val_int()
 
 longlong Item_func_ge::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int value= cmp.compare();
   return value >= 0 ? 1 : 0;
 }
@@ -1725,14 +1724,14 @@ longlong Item_func_ge::val_int()
 
 longlong Item_func_gt::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int value= cmp.compare();
   return value > 0 ? 1 : 0;
 }
 
 longlong Item_func_le::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int value= cmp.compare();
   return value <= 0 && !null_value ? 1 : 0;
 }
@@ -1740,7 +1739,7 @@ longlong Item_func_le::val_int()
 
 longlong Item_func_lt::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   int value= cmp.compare();
   return value < 0 && !null_value ? 1 : 0;
 }
@@ -1748,7 +1747,7 @@ longlong Item_func_lt::val_int()
 
 longlong Item_func_strcmp::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *a=args[0]->val_str(&tmp_value1);
   String *b=args[1]->val_str(&tmp_value2);
   if (!a || !b)
@@ -1863,7 +1862,7 @@ void Item_func_interval::fix_length_and_dec()
 
 longlong Item_func_interval::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   double value;
   my_decimal dec_buf, *dec= NULL;
   uint i;
@@ -2062,7 +2061,7 @@ void Item_func_between::fix_length_and_dec()
 
 longlong Item_func_between::val_int()
 {						// ANSI BETWEEN
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   if (compare_as_dates)
   {
     int ge_res, le_res;
@@ -2216,7 +2215,7 @@ Item_func_ifnull::fix_length_and_dec()
     break;
   case ROW_RESULT:
   default:
-    DBUG_ASSERT(0);
+    assert(0);
   }
   cached_field_type= agg_field_type(args, 2);
 }
@@ -2242,7 +2241,7 @@ Field *Item_func_ifnull::tmp_table_field(TABLE *table)
 double
 Item_func_ifnull::real_op()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   double value= args[0]->val_real();
   if (!args[0]->null_value)
   {
@@ -2258,7 +2257,7 @@ Item_func_ifnull::real_op()
 longlong
 Item_func_ifnull::int_op()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   longlong value=args[0]->val_int();
   if (!args[0]->null_value)
   {
@@ -2274,7 +2273,7 @@ Item_func_ifnull::int_op()
 
 my_decimal *Item_func_ifnull::decimal_op(my_decimal *decimal_value)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   my_decimal *value= args[0]->val_decimal(decimal_value);
   if (!args[0]->null_value)
   {
@@ -2291,7 +2290,7 @@ my_decimal *Item_func_ifnull::decimal_op(my_decimal *decimal_value)
 String *
 Item_func_ifnull::str_op(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res  =args[0]->val_str(str);
   if (!args[0]->null_value)
   {
@@ -2336,7 +2335,7 @@ Item_func_ifnull::str_op(String *str)
 bool
 Item_func_if::fix_fields(THD *thd, Item **ref)
 {
-  DBUG_ASSERT(fixed == 0);
+  assert(fixed == 0);
   args[0]->top_level_item();
 
   if (Item_func::fix_fields(thd, ref))
@@ -2415,7 +2414,7 @@ uint Item_func_if::decimal_precision() const
 double
 Item_func_if::val_real()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
   double value= arg->val_real();
   null_value=arg->null_value;
@@ -2425,7 +2424,7 @@ Item_func_if::val_real()
 longlong
 Item_func_if::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
   longlong value=arg->val_int();
   null_value=arg->null_value;
@@ -2435,7 +2434,7 @@ Item_func_if::val_int()
 String *
 Item_func_if::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
   String *res=arg->val_str(str);
   if (res)
@@ -2448,7 +2447,7 @@ Item_func_if::val_str(String *str)
 my_decimal *
 Item_func_if::val_decimal(my_decimal *decimal_value)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
   my_decimal *value= arg->val_decimal(decimal_value);
   null_value= arg->null_value;
@@ -2487,7 +2486,7 @@ Item_func_nullif::fix_length_and_dec()
 double
 Item_func_nullif::val_real()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   double value;
   if (!cmp.compare())
   {
@@ -2502,7 +2501,7 @@ Item_func_nullif::val_real()
 longlong
 Item_func_nullif::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   longlong value;
   if (!cmp.compare())
   {
@@ -2517,7 +2516,7 @@ Item_func_nullif::val_int()
 String *
 Item_func_nullif::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res;
   if (!cmp.compare())
   {
@@ -2533,7 +2532,7 @@ Item_func_nullif::val_str(String *str)
 my_decimal *
 Item_func_nullif::val_decimal(my_decimal * decimal_value)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   my_decimal *res;
   if (!cmp.compare())
   {
@@ -2594,8 +2593,8 @@ Item *Item_func_case::find_item(String *str __attribute__((__unused__)))
     for (uint i=0 ; i < ncases ; i+=2)
     {
       cmp_type= item_cmp_type(left_result_type, args[i]->result_type());
-      DBUG_ASSERT(cmp_type != ROW_RESULT);
-      DBUG_ASSERT(cmp_items[(uint)cmp_type]);
+      assert(cmp_type != ROW_RESULT);
+      assert(cmp_items[(uint)cmp_type]);
       if (!(value_added_map & (1<<(uint)cmp_type)))
       {
         cmp_items[(uint)cmp_type]->store_value(args[first_expr_num]);
@@ -2614,7 +2613,7 @@ Item *Item_func_case::find_item(String *str __attribute__((__unused__)))
 
 String *Item_func_case::val_str(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String *res;
   Item *item=find_item(str);
 
@@ -2632,7 +2631,7 @@ String *Item_func_case::val_str(String *str)
 
 longlong Item_func_case::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH];
   String dummy_str(buff,sizeof(buff),default_charset());
   Item *item=find_item(&dummy_str);
@@ -2650,7 +2649,7 @@ longlong Item_func_case::val_int()
 
 double Item_func_case::val_real()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH];
   String dummy_str(buff,sizeof(buff),default_charset());
   Item *item=find_item(&dummy_str);
@@ -2669,7 +2668,7 @@ double Item_func_case::val_real()
 
 my_decimal *Item_func_case::val_decimal(my_decimal *decimal_value)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH];
   String dummy_str(buff, sizeof(buff), default_charset());
   Item *item= find_item(&dummy_str);
@@ -2768,7 +2767,7 @@ void Item_func_case::fix_length_and_dec()
     {
       if (found_types & (1 << i) && !cmp_items[i])
       {
-        DBUG_ASSERT((Item_result)i != ROW_RESULT);
+        assert((Item_result)i != ROW_RESULT);
         if ((Item_result)i == STRING_RESULT &&
             agg_arg_charsets(cmp_collation, agg, nagg, MY_COLL_CMP_CONV, 1))
           return;
@@ -2851,14 +2850,13 @@ void Item_func_case::print(String *str, enum_query_type query_type)
 void Item_func_case::cleanup()
 {
   uint i;
-  DBUG_ENTER("Item_func_case::cleanup");
   Item_func::cleanup();
   for (i= 0; i <= (uint)DECIMAL_RESULT; i++)
   {
     delete cmp_items[i];
     cmp_items[i]= 0;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -2868,7 +2866,7 @@ void Item_func_case::cleanup()
 
 String *Item_func_coalesce::str_op(String *str)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   null_value=0;
   for (uint i=0 ; i < arg_count ; i++)
   {
@@ -2882,7 +2880,7 @@ String *Item_func_coalesce::str_op(String *str)
 
 longlong Item_func_coalesce::int_op()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   null_value=0;
   for (uint i=0 ; i < arg_count ; i++)
   {
@@ -2896,7 +2894,7 @@ longlong Item_func_coalesce::int_op()
 
 double Item_func_coalesce::real_op()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   null_value=0;
   for (uint i=0 ; i < arg_count ; i++)
   {
@@ -2911,7 +2909,7 @@ double Item_func_coalesce::real_op()
 
 my_decimal *Item_func_coalesce::decimal_op(my_decimal *decimal_value)
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   null_value= 0;
   for (uint i= 0; i < arg_count; i++)
   {
@@ -2946,7 +2944,7 @@ void Item_func_coalesce::fix_length_and_dec()
     break;
   case ROW_RESULT:
   default:
-    DBUG_ASSERT(0);
+    assert(0);
   }
 }
 
@@ -3167,10 +3165,8 @@ uchar *in_row::get_value(Item *item)
 
 void in_row::set(uint pos, Item *item)
 {
-  DBUG_ENTER("in_row::set");
-  DBUG_PRINT("enter", ("pos: %u  item: 0x%lx", pos, (ulong) item));
   ((cmp_item_row*) base)[pos].store_value_by_template(&tmp, item);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 in_longlong::in_longlong(uint elements)
@@ -3275,7 +3271,7 @@ cmp_item* cmp_item::get_comparator(Item_result type,
   case DECIMAL_RESULT:
     return new cmp_item_decimal;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     break;
   }
   return 0; // to satisfy compiler :)
@@ -3305,8 +3301,6 @@ cmp_item* cmp_item_row::make_same()
 
 cmp_item_row::~cmp_item_row()
 {
-  DBUG_ENTER("~cmp_item_row");
-  DBUG_PRINT("enter",("this: 0x%lx", (long) this));
   if (comparators)
   {
     for (uint i= 0; i < n; i++)
@@ -3315,7 +3309,7 @@ cmp_item_row::~cmp_item_row()
 	delete comparators[i];
     }
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -3328,7 +3322,6 @@ void cmp_item_row::alloc_comparators()
 
 void cmp_item_row::store_value(Item *item)
 {
-  DBUG_ENTER("cmp_item_row::store_value");
   n= item->cols();
   alloc_comparators();
   if (comparators)
@@ -3346,7 +3339,7 @@ void cmp_item_row::store_value(Item *item)
       item->null_value|= item->element_index(i)->null_value;
     }
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -3722,7 +3715,7 @@ void Item_func_in::fix_length_and_dec()
         array= new in_decimal(arg_count - 1);
         break;
       default:
-        DBUG_ASSERT(0);
+        assert(0);
         return;
       }
     }
@@ -3807,7 +3800,7 @@ void Item_func_in::print(String *str, enum_query_type query_type)
 longlong Item_func_in::val_int()
 {
   cmp_item *in_item;
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   uint value_added_map= 0;
   if (array)
   {
@@ -3820,7 +3813,7 @@ longlong Item_func_in::val_int()
   {
     Item_result cmp_type= item_cmp_type(left_result_type, args[i]->result_type());
     in_item= cmp_items[(uint)cmp_type];
-    DBUG_ASSERT(in_item);
+    assert(in_item);
     if (!(value_added_map & (1 << (uint)cmp_type)))
     {
       in_item->store_value(args[0]);
@@ -3841,7 +3834,7 @@ longlong Item_func_in::val_int()
 
 longlong Item_func_bit_or::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   ulonglong arg1= (ulonglong) args[0]->val_int();
   if (args[0]->null_value)
   {
@@ -3861,7 +3854,7 @@ longlong Item_func_bit_or::val_int()
 
 longlong Item_func_bit_and::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   ulonglong arg1= (ulonglong) args[0]->val_int();
   if (args[0]->null_value)
   {
@@ -3900,7 +3893,7 @@ void Item_cond::copy_andor_arguments(THD *thd, Item_cond *item)
 bool
 Item_cond::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
 {
-  DBUG_ASSERT(fixed == 0);
+  assert(fixed == 0);
   List_iterator<Item> li(list);
   Item *item;
   void *orig_thd_marker= thd->thd_marker;
@@ -4236,7 +4229,7 @@ void Item_cond::neg_arguments(THD *thd)
 
 longlong Item_cond_and::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   List_iterator_fast<Item> li(list);
   Item *item;
   null_value= 0;
@@ -4254,7 +4247,7 @@ longlong Item_cond_and::val_int()
 
 longlong Item_cond_or::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   List_iterator_fast<Item> li(list);
   Item *item;
   null_value=0;
@@ -4315,7 +4308,7 @@ Item *and_expressions(Item *a, Item *b, Item **org_item)
 
 longlong Item_func_isnull::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   /*
     Handle optimization if the argument can't be null
     This has to be here because of the test in update_used_tables().
@@ -4327,22 +4320,19 @@ longlong Item_func_isnull::val_int()
 
 longlong Item_is_not_null_test::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
-  DBUG_ENTER("Item_is_not_null_test::val_int");
+  assert(fixed == 1);
   if (!used_tables_cache && !with_subselect)
   {
     owner->was_null|= (!cached_value);
-    DBUG_PRINT("info", ("cached: %ld", (long) cached_value));
-    DBUG_RETURN(cached_value);
+    return(cached_value);
   }
   if (args[0]->is_null())
   {
-    DBUG_PRINT("info", ("null"));
     owner->was_null|= 1;
-    DBUG_RETURN(0);
+    return(0);
   }
   else
-    DBUG_RETURN(1);
+    return(1);
 }
 
 /**
@@ -4369,7 +4359,7 @@ void Item_is_not_null_test::update_used_tables()
 
 longlong Item_func_isnotnull::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   return args[0]->is_null() ? 0 : 1;
 }
 
@@ -4384,7 +4374,7 @@ void Item_func_isnotnull::print(String *str, enum_query_type query_type)
 
 longlong Item_func_like::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   String* res = args[0]->val_str(&tmp_value1);
   if (args[0]->null_value)
   {
@@ -4432,7 +4422,7 @@ Item_func::optimize_type Item_func_like::select_optimize() const
 
 bool Item_func_like::fix_fields(THD *thd, Item **ref)
 {
-  DBUG_ASSERT(fixed == 0);
+  assert(fixed == 0);
   if (Item_bool_func2::fix_fields(thd, ref) ||
       escape_item->fix_fields(thd, &escape_item))
     return true;
@@ -4525,7 +4515,6 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
       {
         pattern     = first + 1;
         pattern_len = (int) len - 2;
-        DBUG_PRINT("info", ("Initializing pattern: '%s'", first));
         int *suff = (int*) thd->alloc((int) (sizeof(int)*
                                       ((pattern_len + 1)*2+
                                       alphabet_size)));
@@ -4533,7 +4522,6 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
         bmBc      = bmGs + pattern_len + 1;
         turboBM_compute_good_suffix_shifts(suff);
         turboBM_compute_bad_character_shifts();
-        DBUG_PRINT("info",("done"));
       }
     }
   }
@@ -4784,7 +4772,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
 
 longlong Item_cond_xor::val_int()
 {
-  DBUG_ASSERT(fixed == 1);
+  assert(fixed == 1);
   List_iterator<Item> li(list);
   Item *item;
   int result=0;	
@@ -4940,7 +4928,7 @@ Item *Item_func_le::negated_item()		/* a <= b  ->  a > b */
 */
 Item *Item_bool_rowready_func2::negated_item()
 {
-  DBUG_ASSERT(0);
+  assert(0);
   return 0;
 }
 

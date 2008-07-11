@@ -137,7 +137,6 @@ our $exe_mysqlcheck;
 our $exe_mysqldump;
 our $exe_mysqlslap;
 our $exe_mysqlimport;
-our $exe_mysqlshow;
 our $exe_mysql_fix_system_tables;
 our $exe_mysqltest;
 our $exe_slave_mysqld;
@@ -1245,7 +1244,6 @@ sub executable_setup () {
   $exe_mysqlcheck= mtr_exe_exists("$path_client_bindir/mysqlcheck");
   $exe_mysqldump= mtr_exe_exists("$path_client_bindir/mysqldump");
   $exe_mysqlimport= mtr_exe_exists("$path_client_bindir/mysqlimport");
-  $exe_mysqlshow= mtr_exe_exists("$path_client_bindir/mysqlshow");
   $exe_mysqlbinlog= mtr_exe_exists("$path_client_bindir/mysqlbinlog");
   $exe_mysqladmin= mtr_exe_exists("$path_client_bindir/mysqladmin");
   $exe_mysql=          mtr_exe_exists("$path_client_bindir/mysql");
@@ -1497,21 +1495,6 @@ sub environment_setup () {
   }
   $ENV{'MYSQL_IMPORT'}= $cmdline_mysqlimport;
 
-
-  # ----------------------------------------------------
-  # Setup env so childs can execute mysqlshow
-  # ----------------------------------------------------
-  my $cmdline_mysqlshow=
-    mtr_native_path($exe_mysqlshow) .
-    " -uroot --debug-check " .
-    "--port=$master->[0]->{'port'} ";
-
-  if ( $opt_debug )
-  {
-    $cmdline_mysqlshow .=
-      " --debug=d:t:A,$path_vardir_trace/log/mysqlshow.trace";
-  }
-  $ENV{'MYSQL_SHOW'}= $cmdline_mysqlshow;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlbinlog

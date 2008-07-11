@@ -450,7 +450,7 @@ static bool merge_walk(uchar *merge_buffer, ulong merge_buffer_size,
     bytes_read= read_to_buffer(file, top, key_length);
     if (bytes_read == (uint) (-1))
       goto end;
-    DBUG_ASSERT(bytes_read);
+    assert(bytes_read);
     queue_insert(&queue, (uchar *) top);
   }
   top= (BUFFPEK *) queue_top(&queue);

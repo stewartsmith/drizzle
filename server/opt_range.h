@@ -213,7 +213,7 @@ public:
       other Error
   */
   virtual int init_ror_merged_scan(bool reuse_handler __attribute__((__unused__)))
-  { DBUG_ASSERT(0); return 1; }
+  { assert(0); return 1; }
 
   /*
     Save ROWID of last retrieved row in file->ref. This used in ROR-merging.
@@ -251,13 +251,6 @@ public:
     Table record buffer used by this quick select.
   */
   uchar    *record;
-#ifndef DBUG_OFF
-  /*
-    Print quick select information to DBUG_FILE. Caller is responsible
-    for locking DBUG_FILE before this call and unlocking it afterwards.
-  */
-  virtual void dbug_dump(int indent, bool verbose)= 0;
-#endif
 };
 
 
@@ -338,9 +331,6 @@ public:
   int get_type() { return QS_TYPE_RANGE; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-#ifndef DBUG_OFF
-  void dbug_dump(int indent, bool verbose);
-#endif
 private:
   /* Used only by QUICK_SELECT_DESC */
   QUICK_RANGE_SELECT(const QUICK_RANGE_SELECT& org) : QUICK_SELECT_I()
@@ -454,9 +444,6 @@ public:
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
   bool is_keys_used(const MY_BITMAP *fields);
-#ifndef DBUG_OFF
-  void dbug_dump(int indent, bool verbose);
-#endif
 
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -513,9 +500,6 @@ public:
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
   bool is_keys_used(const MY_BITMAP *fields);
-#ifndef DBUG_OFF
-  void dbug_dump(int indent, bool verbose);
-#endif
   int init_ror_merged_scan(bool reuse_handler);
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -567,9 +551,6 @@ public:
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
   bool is_keys_used(const MY_BITMAP *fields);
-#ifndef DBUG_OFF
-  void dbug_dump(int indent, bool verbose);
-#endif
 
   bool push_quick_back(QUICK_SELECT_I *quick_sel_range);
 
@@ -684,9 +665,6 @@ public:
   bool unique_key_range() { return false; }
   int get_type() { return QS_TYPE_GROUP_MIN_MAX; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
-#ifndef DBUG_OFF
-  void dbug_dump(int indent, bool verbose);
-#endif
 };
 
 
@@ -729,7 +707,7 @@ class SQL_SELECT :public Sql_alloc {
   {
     key_map tmp;
     tmp.set_all();
-    return test_quick_select(thd, tmp, 0, limit, force_quick_range, FALSE) < 0;
+    return test_quick_select(thd, tmp, 0, limit, force_quick_range, false) < 0;
   }
   inline bool skip_record() { return cond ? cond->val_int() == 0 : 0; }
   int test_quick_select(THD *thd, key_map keys, table_map prev_tables,

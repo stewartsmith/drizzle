@@ -262,7 +262,7 @@ class Time_zone;
 #define THD_SENTRY_MAGIC 0xfeedd1ff
 #define THD_SENTRY_GONE  0xdeadbeef
 
-#define THD_CHECK_SENTRY(thd) DBUG_ASSERT(thd->dbug_sentry == THD_SENTRY_MAGIC)
+#define THD_CHECK_SENTRY(thd) assert(thd->dbug_sentry == THD_SENTRY_MAGIC)
 
 struct system_variables
 {
@@ -468,13 +468,7 @@ void mark_transaction_to_rollback(THD *thd, bool all);
 
 #ifdef MYSQL_SERVER
 
-
-/* The following macro is to make init of Query_arena simpler */
-#ifndef DBUG_OFF
 #define INIT_ARENA_DBUG_INFO is_backup_arena= 0
-#else
-#define INIT_ARENA_DBUG_INFO
-#endif
 
 class Query_arena
 {
@@ -485,9 +479,8 @@ public:
   */
   Item *free_list;
   MEM_ROOT *mem_root;                   // Pointer to current memroot
-#ifndef DBUG_OFF
   bool is_backup_arena; /* True if this arena is used for backup. */
-#endif
+
   /*
     The states relfects three diffrent life cycles for three
     different types of statements:
@@ -940,26 +933,26 @@ public:
   enum_diagnostics_status status() const { return m_status; }
 
   const char *message() const
-  { DBUG_ASSERT(m_status == DA_ERROR || m_status == DA_OK); return m_message; }
+  { assert(m_status == DA_ERROR || m_status == DA_OK); return m_message; }
 
   uint sql_errno() const
-  { DBUG_ASSERT(m_status == DA_ERROR); return m_sql_errno; }
+  { assert(m_status == DA_ERROR); return m_sql_errno; }
 
   uint server_status() const
   {
-    DBUG_ASSERT(m_status == DA_OK || m_status == DA_EOF);
+    assert(m_status == DA_OK || m_status == DA_EOF);
     return m_server_status;
   }
 
   ha_rows affected_rows() const
-  { DBUG_ASSERT(m_status == DA_OK); return m_affected_rows; }
+  { assert(m_status == DA_OK); return m_affected_rows; }
 
   ulonglong last_insert_id() const
-  { DBUG_ASSERT(m_status == DA_OK); return m_last_insert_id; }
+  { assert(m_status == DA_OK); return m_last_insert_id; }
 
   uint total_warn_count() const
   {
-    DBUG_ASSERT(m_status == DA_OK || m_status == DA_EOF);
+    assert(m_status == DA_OK || m_status == DA_EOF);
     return m_total_warn_count;
   }
 
@@ -1110,15 +1103,8 @@ public:
     Set it using the  thd_proc_info(THD *thread, const char *message)
     macro/function.
   */
-#ifndef DBUG_OFF
-  #define THD_SET_PROC_INFO(thd, info) \
-    (thd)->set_proc_info(__FILE__, __LINE__, (info))
-
-  void set_proc_info(const char* file, int line, const char* info);
-#else
-  #define THD_SET_PROC_INFO(thd, info) \
+#define THD_SET_PROC_INFO(thd, info) \
     (thd)->proc_info= (info)
-#endif
 
   inline const char* get_proc_info() { return proc_info;}
 
@@ -1142,9 +1128,7 @@ public:
     points to a lock object if the lock is present. See item_func.cc and
     chapter 'Miscellaneous functions', for functions GET_LOCK, RELEASE_LOCK. 
   */
-#ifndef DBUG_OFF
   uint dbug_sentry; // watch out for memory corruption
-#endif
   struct st_my_thread_var *mysys_var;
   /*
     Type of current query: COM_STMT_PREPARE, COM_QUERY, etc. Set from
@@ -1503,7 +1487,7 @@ public:
   bool       last_cuted_field;
   bool	     no_errors, password;
   /**
-    Set to TRUE if execution of the current compound statement
+    Set to true if execution of the current compound statement
     can not continue. In particular, disables activation of
     CONTINUE or EXIT handlers of stored routines.
     Reset in the end of processing of the current user request, in
@@ -1517,7 +1501,7 @@ public:
   */
   bool       transaction_rollback_request;
   /**
-    TRUE if we are in a sub-statement and the current error can
+    true if we are in a sub-statement and the current error can
     not be safely recovered until we left the sub-statement mode.
     In particular, disables activation of CONTINUE and EXIT
     handlers inside sub-statements. E.g. if it is a deadlock
@@ -1525,7 +1509,7 @@ public:
     raised (traditionally, MySQL first has to close all the reads
     via @see handler::ha_index_or_rnd_end() and only then perform
     the rollback).
-    Reset to FALSE when we leave the sub-statement mode.
+    Reset to false when we leave the sub-statement mode.
   */
   bool       is_fatal_sub_stmt_error;
   bool	     query_start_used, rand_used, time_zone_used;
@@ -1551,7 +1535,7 @@ public:
   bool	     no_warnings_for_error; /* no warnings on call to my_error() */
   /* set during loop of derived table processing */
   bool       derived_tables_processing;
-  bool    tablespace_op;	/* This is TRUE in DISCARD/IMPORT TABLESPACE */
+  bool    tablespace_op;	/* This is true in DISCARD/IMPORT TABLESPACE */
 
   /*
     If we do a purge of binary logs, log index info of the threads
@@ -1577,13 +1561,13 @@ public:
     */
     bool do_union;
     /*
-      If TRUE, at least one mysql_bin_log::write(Log_event) call has been
+      If true, at least one mysql_bin_log::write(Log_event) call has been
       made after last mysql_bin_log.start_union_events() call.
     */
     bool unioned_events;
     /*
-      If TRUE, at least one mysql_bin_log::write(Log_event e), where 
-      e.cache_stmt == TRUE call has been made after last 
+      If true, at least one mysql_bin_log::write(Log_event e), where 
+      e.cache_stmt == true call has been made after last 
       mysql_bin_log.start_union_events() call.
     */
     bool unioned_events_trans;
@@ -1762,14 +1746,13 @@ public:
   */
   inline void clear_error()
   {
-    DBUG_ENTER("clear_error");
     if (main_da.is_error())
       main_da.reset_diagnostics_area();
     is_slave_error= 0;
-    DBUG_VOID_RETURN;
+    return;
   }
   inline bool vio_ok() const { return net.vio != 0; }
-  /** Return FALSE if connection to client is broken. */
+  /** Return false if connection to client is broken. */
   bool vio_is_connected();
   /**
     Mark the current error as fatal. Warning: this does not
@@ -1778,17 +1761,16 @@ public:
   */
   inline void fatal_error()
   {
-    DBUG_ASSERT(main_da.is_error());
+    assert(main_da.is_error());
     is_fatal_error= 1;
-    DBUG_PRINT("error",("Fatal error set"));
   }
   /**
-    TRUE if there is an error in the error stack.
+    true if there is an error in the error stack.
 
     Please use this method instead of direct access to
     net.report_error.
 
-    If TRUE, the current (sub)-statement should be aborted.
+    If true, the current (sub)-statement should be aborted.
     The main difference between this member and is_fatal_error
     is that a fatal error can not be handled by a stored
     procedure continue handler, whereas a normal error can.
@@ -1826,7 +1808,7 @@ public:
     if (err)
       my_message(err, ER(err), MYF(0));
   }
-  /* return TRUE if we will abort query if we make a warning now */
+  /* return true if we will abort query if we make a warning now */
   inline bool really_abort_on_warning()
   {
     return (abort_on_warning);
@@ -1853,15 +1835,15 @@ public:
     */
     if ((variables.binlog_format == BINLOG_FORMAT_MIXED) &&
         (in_sub_stmt == 0))
-      current_stmt_binlog_row_based= TRUE;
+      current_stmt_binlog_row_based= true;
   }
   inline void set_current_stmt_binlog_row_based()
   {
-    current_stmt_binlog_row_based= TRUE;
+    current_stmt_binlog_row_based= true;
   }
   inline void clear_current_stmt_binlog_row_based()
   {
-    current_stmt_binlog_row_based= FALSE;
+    current_stmt_binlog_row_based= false;
   }
   inline void reset_current_stmt_binlog_row_based()
   {
@@ -1898,7 +1880,7 @@ public:
 
     Initialize the current database from a NULL-terminated string with
     length. If we run out of memory, we free the current database and
-    return TRUE.  This way the user will notice the error as there will be
+    return true.  This way the user will notice the error as there will be
     no current database selected (in addition to the error message set by
     malloc).
 
@@ -1908,8 +1890,8 @@ public:
     will be made private and more convenient interface will be provided.
 
     @return Operation status
-      @retval FALSE Success
-      @retval TRUE  Out-of-memory error
+      @retval false Success
+      @retval true  Out-of-memory error
   */
   bool set_db(const char *new_db, size_t new_db_len)
   {
@@ -1954,11 +1936,11 @@ public:
     if (db == NULL)
     {
       my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-      return TRUE;
+      return true;
     }
     *p_db= strmake(db, db_length);
     *p_db_length= db_length;
-    return FALSE;
+    return false;
   }
   thd_scheduler scheduler;
 
@@ -2089,8 +2071,8 @@ public:
     Check if this query returns a result set and therefore is allowed in
     cursors and set an error message if it is not the case.
 
-    @retval FALSE     success
-    @retval TRUE      error, an error message is set
+    @retval false     success
+    @retval true      error, an error message is set
   */
   virtual bool check_simple_select() const;
   virtual void abort() {}
@@ -2117,7 +2099,7 @@ public:
   uint field_count(List<Item> &fields __attribute__((__unused__))) const
   { return 0; }
   bool send_fields(List<Item> &fields __attribute__((__unused__)),
-                   uint flag __attribute__((__unused__))) { return FALSE; }
+                   uint flag __attribute__((__unused__))) { return false; }
 };
 
 
@@ -2129,11 +2111,11 @@ class select_send :public select_result {
   */
   bool is_result_set_started;
 public:
-  select_send() :is_result_set_started(FALSE) {}
+  select_send() :is_result_set_started(false) {}
   bool send_fields(List<Item> &list, uint flags);
   bool send_data(List<Item> &items);
   bool send_eof();
-  virtual bool check_simple_select() const { return FALSE; }
+  virtual bool check_simple_select() const { return false; }
   void abort();
   virtual void cleanup();
 };
@@ -2313,7 +2295,7 @@ public:
   bool precomputed_group_by;
   bool force_copy_fields;
   /*
-    If TRUE, create_tmp_field called from create_tmp_table will convert
+    If true, create_tmp_field called from create_tmp_table will convert
     all BIT fields to 64-bit longs. This is a workaround the limitation
     that MEMORY tables cannot index BIT columns.
   */
@@ -2515,11 +2497,9 @@ public:
   ulong elements_in_tree() { return tree.elements_in_tree; }
   inline bool unique_add(void *ptr)
   {
-    DBUG_ENTER("unique_add");
-    DBUG_PRINT("info", ("tree %u - %lu", tree.elements_in_tree, max_elements));
     if (tree.elements_in_tree > max_elements && flush())
-      DBUG_RETURN(1);
-    DBUG_RETURN(!tree_insert(&tree, ptr, 0, tree.custom_arg));
+      return(1);
+    return(!tree_insert(&tree, ptr, 0, tree.custom_arg));
   }
 
   bool get(TABLE *table);

@@ -48,7 +48,7 @@ Cached_item *new_Cached_item(THD *thd, Item *item, bool use_result_field)
     return new Cached_item_decimal(item);
   case ROW_RESULT:
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     return 0;
   }
 }
@@ -71,24 +71,22 @@ bool Cached_item_str::cmp(void)
   String *res;
   bool tmp;
 
-  DBUG_ENTER("Cached_item_str::cmp");
   if ((res=item->val_str(&tmp_value)))
     res->length(min(res->length(), value.alloced_length()));
-  DBUG_PRINT("info", ("old: %s, new: %s",
-                      value.c_ptr_safe(), res ? res->c_ptr_safe() : ""));
+
   if (null_value != item->null_value)
   {
     if ((null_value= item->null_value))
-      DBUG_RETURN(TRUE);			// New value was null
-    tmp=TRUE;
+      return(true);			// New value was null
+    tmp=true;
   }
   else if (null_value)
-    DBUG_RETURN(0);				// new and old value was null
+    return(0);				// new and old value was null
   else
     tmp= sortcmp(&value,res,item->collation.collation) != 0;
   if (tmp)
     value.copy(*res);				// Remember for next cmp
-  DBUG_RETURN(tmp);
+  return(tmp);
 }
 
 Cached_item_str::~Cached_item_str()
@@ -98,46 +96,40 @@ Cached_item_str::~Cached_item_str()
 
 bool Cached_item_real::cmp(void)
 {
-  DBUG_ENTER("Cached_item_real::cmp");
   double nr= item->val_real();
-  DBUG_PRINT("info", ("old: %f, new: %f", value, nr));
   if (null_value != item->null_value || nr != value)
   {
     null_value= item->null_value;
     value=nr;
-    DBUG_RETURN(TRUE);
+    return(true);
   }
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 bool Cached_item_int::cmp(void)
 {
-  DBUG_ENTER("Cached_item_int::cmp");
   longlong nr=item->val_int();
-  DBUG_PRINT("info", ("old: %Ld, new: %Ld", value, nr));
   if (null_value != item->null_value || nr != value)
   {
     null_value= item->null_value;
     value=nr;
-    DBUG_RETURN(TRUE);
+    return(true);
   }
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 
 bool Cached_item_field::cmp(void)
 {
-  DBUG_ENTER("Cached_item_field::cmp");
   bool tmp= field->cmp(buff) != 0;		// This is not a blob!
-  DBUG_EXECUTE("info", dbug_print(););
   if (tmp)
     field->get_image(buff,length,field->charset());
   if (null_value != field->is_null())
   {
     null_value= !null_value;
-    tmp=TRUE;
+    tmp=true;
   }
-  DBUG_RETURN(tmp);
+  return(tmp);
 }
 
 
@@ -160,11 +152,11 @@ bool Cached_item_decimal::cmp()
     if (!null_value)
     {
       my_decimal2decimal(ptmp, &value);
-      return TRUE;
+      return true;
     }
-    return FALSE;
+    return false;
   }
-  return FALSE;
+  return false;
 }
 
 

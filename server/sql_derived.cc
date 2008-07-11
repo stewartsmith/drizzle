@@ -19,11 +19,8 @@
   These were introduced by Sinisa <sinisa@mysql.com>
 */
 
-
 #include "mysql_priv.h"
 #include "sql_select.h"
-
-
 
 /*
   Call given derived table processor (preparing or filling tables)
@@ -34,17 +31,16 @@
     processor           procedure of derived table processing
 
   RETURN
-    FALSE  OK
-    TRUE   Error
+    false  OK
+    true   Error
 */
-
 bool
 mysql_handle_derived(LEX *lex, bool (*processor)(THD*, LEX*, TABLE_LIST*))
 {
-  bool res= FALSE;
+  bool res= false;
   if (lex->derived_tables)
   {
-    lex->thd->derived_tables_processing= TRUE;
+    lex->thd->derived_tables_processing= true;
     for (SELECT_LEX *sl= lex->all_selects_list;
 	 sl;
 	 sl= sl->next_select_in_list())
@@ -68,7 +64,7 @@ mysql_handle_derived(LEX *lex, bool (*processor)(THD*, LEX*, TABLE_LIST*))
     }
   }
 out:
-  lex->thd->derived_tables_processing= FALSE;
+  lex->thd->derived_tables_processing= false;
   return res;
 }
 
@@ -94,8 +90,8 @@ out:
     close_thread_tables()
 
   RETURN
-    FALSE  OK
-    TRUE   Error
+    false  OK
+    true   Error
 */
 
 bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((__unused__)),
@@ -103,8 +99,7 @@ bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((__unused__)),
 {
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
   ulonglong create_options;
-  DBUG_ENTER("mysql_derived_prepare");
-  bool res= FALSE;
+  bool res= false;
   if (unit)
   {
     SELECT_LEX *first_select= unit->first_select();
@@ -116,7 +111,7 @@ bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((__unused__)),
       sl->context.outer_context= 0;
 
     if (!(derived_result= new select_union))
-      DBUG_RETURN(TRUE); // out of memory
+      return(true); // out of memory
 
     // st_select_lex_unit::prepare correctly work for single select
     if ((res= unit->prepare(thd, derived_result, 0)))
@@ -128,16 +123,16 @@ bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((__unused__)),
       Temp table is created so that it hounours if UNION without ALL is to be 
       processed
 
-      As 'distinct' parameter we always pass FALSE (0), because underlying
+      As 'distinct' parameter we always pass false (0), because underlying
       query will control distinct condition by itself. Correct test of
       distinct underlying query will be is_union &&
       !unit->union_distinct->next_select() (i.e. it is union and last distinct
       SELECT is last SELECT of UNION).
     */
-    if ((res= derived_result->create_result_table(thd, &unit->types, FALSE,
+    if ((res= derived_result->create_result_table(thd, &unit->types, false,
                                                   create_options,
                                                   orig_table_list->alias,
-                                                  FALSE)))
+                                                  false)))
       goto exit;
 
     table= derived_result->table;
@@ -177,7 +172,7 @@ exit:
     }
   }
 
-  DBUG_RETURN(res);
+  return(res);
 }
 
 
@@ -200,15 +195,15 @@ exit:
     Due to evaluation of LIMIT clause it can not be used at prepared stage.
 
   RETURN
-    FALSE  OK
-    TRUE   Error
+    false  OK
+    true   Error
 */
 
 bool mysql_derived_filling(THD *thd, LEX *lex, TABLE_LIST *orig_table_list)
 {
   TABLE *table= orig_table_list->table;
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
-  bool res= FALSE;
+  bool res= false;
 
   /*check that table creation pass without problem and it is derived table */
   if (table && unit)
@@ -249,7 +244,7 @@ bool mysql_derived_filling(THD *thd, LEX *lex, TABLE_LIST *orig_table_list)
         there were no derived tables
       */
       if (derived_result->flush())
-        res= TRUE;
+        res= true;
 
       if (!lex->describe)
         unit->cleanup();

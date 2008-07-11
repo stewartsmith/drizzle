@@ -30,9 +30,6 @@ protected:
   String *packet;
   String *convert;
   uint field_pos;
-#ifndef DBUG_OFF
-  enum enum_field_types *field_types;
-#endif
   uint field_count;
   bool net_store_data(const uchar *from, size_t length);
   bool net_store_data(const uchar *from, size_t length,

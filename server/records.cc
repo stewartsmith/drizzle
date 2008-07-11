@@ -145,7 +145,6 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
 		      int use_record_cache, bool print_error)
 {
   IO_CACHE *tempfile;
-  DBUG_ENTER("init_read_record");
 
   bzero((char*) info,sizeof(*info));
   info->thd=thd;
@@ -179,7 +178,6 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
     tempfile= table->sort.io_cache;
   if (tempfile && my_b_inited(tempfile)) // Test if ref-records was used
   {
-    DBUG_PRINT("info",("using rr_from_tempfile"));
     info->read_record= (table->sort.addon_field ?
                         rr_unpack_from_tempfile : rr_from_tempfile);
     info->io_cache=tempfile;
@@ -209,19 +207,16 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
     {
       if (! init_rr_cache(thd, info))
       {
-	DBUG_PRINT("info",("using rr_from_cache"));
 	info->read_record=rr_from_cache;
       }
     }
   }
   else if (select && select->quick)
   {
-    DBUG_PRINT("info",("using rr_quick"));
     info->read_record=rr_quick;
   }
   else if (table->sort.record_pointers)
   {
-    DBUG_PRINT("info",("using record_pointers"));
     table->file->ha_rnd_init(0);
     info->cache_pos=table->sort.record_pointers;
     info->cache_end=info->cache_pos+ 
@@ -231,7 +226,6 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
   }
   else
   {
-    DBUG_PRINT("info",("using rr_sequential"));
     info->read_record=rr_sequential;
     table->file->ha_rnd_init(1);
     /* We can use record cache if we don't update dynamic length tables */
@@ -488,7 +482,6 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 static int init_rr_cache(THD *thd, READ_RECORD *info)
 {
   uint rec_cache_size;
-  DBUG_ENTER("init_rr_cache");
 
   info->struct_length= 3+MAX_REFLENGTH;
   info->reclength= ALIGN_SIZE(info->table->s->reclength+1);
@@ -511,7 +504,6 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
   // Avoid warnings in qsort
   bzero(info->cache,rec_cache_size+info->cache_records* info->struct_length+1);
 #endif
-  DBUG_PRINT("info",("Allocated buffert for %d records",info->cache_records));
   info->read_positions=info->cache+rec_cache_size;
   info->cache_pos=info->cache_end=info->cache;
   return(0);
@@ -552,7 +544,6 @@ static int rr_from_cache(READ_RECORD *info)
       length= (ulong) rest_of_file;
     if (!length || my_b_read(info->io_cache,info->cache,length))
     {
-      DBUG_PRINT("info",("Found end of file"));
       return -1;			/* End of file */
     }
 
@@ -581,8 +572,6 @@ static int rr_from_cache(READ_RECORD *info)
       {
 	record_pos[info->error_offset]=1;
 	shortstore(record_pos,error);
-	DBUG_PRINT("error",("Got error: %d:%d when reading row",
-			    my_errno, error));
       }
       else
 	record_pos[info->error_offset]=0;

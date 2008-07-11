@@ -93,7 +93,7 @@ public:
   Item_func_month(Item *a) :Item_func(a) {}
   longlong val_int();
   double val_real()
-  { DBUG_ASSERT(fixed == 1); return (double) Item_func_month::val_int(); }
+  { assert(fixed == 1); return (double) Item_func_month::val_int(); }
   String *val_str(String *str) 
   {
     str->set(val_int(), &my_charset_bin);
@@ -256,10 +256,10 @@ public:
   Item_func_weekday(Item *a,bool type_arg)
     :Item_func(a), odbc_type(type_arg) {}
   longlong val_int();
-  double val_real() { DBUG_ASSERT(fixed == 1); return (double) val_int(); }
+  double val_real() { assert(fixed == 1); return (double) val_int(); }
   String *val_str(String *str)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     str->set(val_int(), &my_charset_bin);
     return null_value ? 0 : str;
   }
@@ -349,10 +349,10 @@ public:
   {
     return tmp_table_field_from_field_type(table, 0);
   }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_longlong() { return true; }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
   int save_in_field(Field *field,
@@ -375,11 +375,11 @@ public:
   {
     return tmp_table_field_from_field_type(table, 0);
   }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_longlong() { return true; }
   double val_real() { return (double) val_int(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
   int save_in_field(Field *field,
@@ -410,7 +410,7 @@ public:
   double val_real() { return val_real_from_decimal(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return  val_decimal_from_time(decimal_value);
   }
   int save_in_field(Field *field,
@@ -431,8 +431,8 @@ class Item_func_curtime :public Item_str_timefunc
 public:
   Item_func_curtime() :Item_str_timefunc() {}
   Item_func_curtime(Item *a) :Item_str_timefunc(a) {}
-  double val_real() { DBUG_ASSERT(fixed == 1); return (double) value; }
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return value; }
+  double val_real() { assert(fixed == 1); return (double) value; }
+  longlong val_int() { assert(fixed == 1); return value; }
   String *val_str(String *str);
   void fix_length_and_dec();
   /* 
@@ -441,7 +441,7 @@ public:
     MYSQL_TIME representation using UTC-SYSTEM or per-thread time zone.
   */
   virtual void store_now_in_TIME(MYSQL_TIME *now_time)=0;
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_longlong() { return true; }
 };
 
 
@@ -473,7 +473,7 @@ class Item_func_curdate :public Item_date
   MYSQL_TIME ltime;
 public:
   Item_func_curdate() :Item_date() {}
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return (value) ; }
+  longlong val_int() { assert(fixed == 1); return (value) ; }
   String *val_str(String *str);
   void fix_length_and_dec();
   bool get_date(MYSQL_TIME *res, uint fuzzy_date);
@@ -512,7 +512,7 @@ public:
   Item_func_now() :Item_date_func() {}
   Item_func_now(Item *a) :Item_date_func(a) {}
   enum Item_result result_type () const { return STRING_RESULT; }
-  longlong val_int() { DBUG_ASSERT(fixed == 1); return value; }
+  longlong val_int() { assert(fixed == 1); return value; }
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
@@ -649,7 +649,7 @@ public:
   Item_func_sec_to_time(Item *item) :Item_str_timefunc(item) {}
   double val_real()
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return (double) Item_func_sec_to_time::val_int();
   }
   longlong val_int();
@@ -661,7 +661,7 @@ public:
     maybe_null=1;
   }
   const char *func_name() const { return "sec_to_time"; }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_longlong() { return true; }
 };
 
 
@@ -709,7 +709,7 @@ public:
   Item_typecast(Item *a) :Item_str_func(a) {}
   String *val_str(String *a)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     String *tmp=args[0]->val_str(a);
     null_value=args[0]->null_value;
     if (tmp)
@@ -778,12 +778,12 @@ public:
     max_length= 10;
     maybe_null= 1;
   }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_longlong() { return true; }
   longlong val_int();
   double val_real() { return (double) val_int(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
   int save_in_field(Field *field,
@@ -807,12 +807,12 @@ public:
   {
     return tmp_table_field_from_field_type(table, 0);
   }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_longlong() { return true; }
   longlong val_int();
   double val_real() { return val_real_from_decimal(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return  val_decimal_from_time(decimal_value);
   }
   int save_in_field(Field *field,
@@ -842,13 +842,13 @@ public:
     max_length= MAX_DATETIME_FULL_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
     decimals= DATETIME_DEC;
   }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_longlong() { return true; }
   longlong val_int();
   double val_real() { return val_real_from_decimal(); }
   double val() { return (double) val_int(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     return  val_decimal_from_date(decimal_value);
   }
   int save_in_field(Field *field,
@@ -896,7 +896,7 @@ public:
   double val_real() { return val_real_from_decimal(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
-    DBUG_ASSERT(fixed == 1);
+    assert(fixed == 1);
     if (cached_field_type == MYSQL_TYPE_TIME)
       return  val_decimal_from_time(decimal_value);
     if (cached_field_type == MYSQL_TYPE_DATETIME)
@@ -933,7 +933,7 @@ public:
   Item_func_maketime(Item *a, Item *b, Item *c)
     :Item_str_timefunc(a, b, c) 
   {
-    maybe_null= TRUE;
+    maybe_null= true;
   }
   String *val_str(String *str);
   const char *func_name() const { return "maketime"; }

@@ -99,7 +99,7 @@ public:
   {
     len= DECIMAL_BUFF_LENGTH;
     buf= buffer;
-#if !defined (HAVE_purify) && !defined(DBUG_OFF)
+#if !defined (HAVE_purify) 
     /* Set buffer to 'random' value to find wrong buffer usage */
     for (uint i= 0; i < DECIMAL_BUFF_LENGTH; i++)
       buffer[i]= i;
@@ -116,15 +116,6 @@ public:
   uint precision() const { return intg + frac; }
 };
 
-
-#ifndef DBUG_OFF
-void print_decimal(const my_decimal *dec);
-void print_decimal_buff(const my_decimal *dec, const uchar* ptr, int length);
-const char *dbug_decimal_as_string(char *buff, const my_decimal *val);
-#else
-#define dbug_decimal_as_string(A) NULL
-#endif
-
 #ifndef MYSQL_CLIENT
 int decimal_operation_results(int result);
 #else
@@ -137,7 +128,7 @@ inline int decimal_operation_results(int result)
 inline
 void max_my_decimal(my_decimal *to, int precision, int frac)
 {
-  DBUG_ASSERT((precision <= DECIMAL_MAX_PRECISION)&&
+  assert((precision <= DECIMAL_MAX_PRECISION)&&
               (frac <= DECIMAL_MAX_SCALE));
   max_decimal(precision, frac, (decimal_t*) to);
 }

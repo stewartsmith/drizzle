@@ -96,17 +96,15 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
           length is stored in little-endian format, since this is the
           format used for the binlog.
         */
-#ifndef DBUG_OFF
         const uchar *old_pack_ptr= pack_ptr;
-#endif
         pack_ptr= field->pack(pack_ptr, field->ptr + offset,
-                              field->max_data_length(), TRUE);
+                              field->max_data_length(), true);
       }
 
       null_mask <<= 1;
       if ((null_mask & 0xFF) == 0)
       {
-        DBUG_ASSERT(null_ptr < row_data + null_byte_count);
+        assert(null_ptr < row_data + null_byte_count);
         null_mask = 1U;
         *null_ptr++ = null_bits;
         null_bits= (1U << 8) - 1;
@@ -119,7 +117,7 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
   */
   if ((null_mask & 0xFF) > 1)
   {
-    DBUG_ASSERT(null_ptr < row_data + null_byte_count);
+    assert(null_ptr < row_data + null_byte_count);
     *null_ptr++ = null_bits;
   }
 
@@ -127,8 +125,7 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
     The null pointer should now point to the first byte of the
     packed data. If it doesn't, something is very wrong.
   */
-  DBUG_ASSERT(null_ptr == row_data + null_byte_count);
-  DBUG_DUMP("row_data", row_data, pack_ptr - row_data);
+  assert(null_ptr == row_data + null_byte_count);
   return(static_cast<size_t>(pack_ptr - row_data));
 }
 #endif
@@ -174,7 +171,7 @@ unpack_row(Relay_log_info const *rli,
            uchar const *const row_data, MY_BITMAP const *cols,
            uchar const **const row_end, ulong *const master_reclength)
 {
-  DBUG_ASSERT(row_data);
+  assert(row_data);
   size_t const master_null_byte_count= (bitmap_bits_set(cols) + 7) / 8;
   int error= 0;
 
@@ -185,7 +182,7 @@ unpack_row(Relay_log_info const *rli,
   Field **field_ptr;
   Field **const end_ptr= begin_ptr + colcnt;
 
-  DBUG_ASSERT(null_ptr < row_data + master_null_byte_count);
+  assert(null_ptr < row_data + master_null_byte_count);
 
   // Mask to mask out the correct bit among the null bits
   unsigned int null_mask= 1U;
@@ -213,15 +210,15 @@ unpack_row(Relay_log_info const *rli,
     {
       if ((null_mask & 0xFF) == 0)
       {
-        DBUG_ASSERT(null_ptr < row_data + master_null_byte_count);
+        assert(null_ptr < row_data + master_null_byte_count);
         null_mask= 1U;
         null_bits= *null_ptr++;
       }
 
-      DBUG_ASSERT(null_mask & 0xFF); // One of the 8 LSB should be set
+      assert(null_mask & 0xFF); // One of the 8 LSB should be set
 
       /* Field...::unpack() cannot return 0 */
-      DBUG_ASSERT(pack_ptr != NULL);
+      assert(pack_ptr != NULL);
 
       if ((null_bits & null_mask) && f->maybe_null())
       {
@@ -242,10 +239,8 @@ unpack_row(Relay_log_info const *rli,
           the packed row comes from the table to which it is unpacked.
         */
         uint16 metadata= tabledef ? tabledef->field_metadata(i) : 0;
-#ifndef DBUG_OFF
         uchar const *const old_pack_ptr= pack_ptr;
-#endif
-        pack_ptr= f->unpack(f->ptr, pack_ptr, metadata, TRUE);
+        pack_ptr= f->unpack(f->ptr, pack_ptr, metadata, true);
       }
 
       null_mask <<= 1;
@@ -267,11 +262,11 @@ unpack_row(Relay_log_info const *rli,
     {
       if ((null_mask & 0xFF) == 0)
       {
-        DBUG_ASSERT(null_ptr < row_data + master_null_byte_count);
+        assert(null_ptr < row_data + master_null_byte_count);
         null_mask= 1U;
         null_bits= *null_ptr++;
       }
-      DBUG_ASSERT(null_mask & 0xFF); // One of the 8 LSB should be set
+      assert(null_mask & 0xFF); // One of the 8 LSB should be set
 
       if (!((null_bits & null_mask) && tabledef->maybe_null(i)))
         pack_ptr+= tabledef->calc_field_size(i, (uchar *) pack_ptr);
@@ -283,9 +278,7 @@ unpack_row(Relay_log_info const *rli,
     We should now have read all the null bytes, otherwise something is
     really wrong.
    */
-  DBUG_ASSERT(null_ptr == row_data + master_null_byte_count);
-
-  DBUG_DUMP("row_data", row_data, pack_ptr - row_data);
+  assert(null_ptr == row_data + master_null_byte_count);
 
   *row_end = pack_ptr;
   if (master_reclength)

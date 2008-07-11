@@ -60,8 +60,6 @@ Master_info::~Master_info()
 
 void init_master_log_pos(Master_info* mi)
 {
-  DBUG_ENTER("init_master_log_pos");
-
   mi->master_log_name[0] = 0;
   mi->master_log_pos = BIN_LOG_HEADER_SIZE;             // skip magic number
   /* 
@@ -72,9 +70,9 @@ void init_master_log_pos(Master_info* mi)
   */
   mi->heartbeat_period= (float) min(SLAVE_MAX_HEARTBEAT_PERIOD,
                                     (slave_net_timeout/2.0));
-  DBUG_ASSERT(mi->heartbeat_period > (float) 0.001
+  assert(mi->heartbeat_period > (float) 0.001
               || mi->heartbeat_period == 0);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -99,7 +97,6 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
 {
   int fd,error;
   char fname[FN_REFLEN+128];
-  DBUG_ENTER("init_master_info");
 
   if (mi->inited)
   {
@@ -119,7 +116,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     {
       my_b_seek(mi->rli.cur_log, (my_off_t) 0);
     }
-    DBUG_RETURN(0);
+    return(0);
   }
 
   mi->mysql=0;
@@ -141,7 +138,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     if (abort_if_no_master_info_file)
     {
       pthread_mutex_unlock(&mi->data_lock);
-      DBUG_RETURN(0);
+      return(0);
     }
     /*
       if someone removed the file from underneath our feet, just close
@@ -294,9 +291,6 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     mi->ssl_verify_server_cert= ssl_verify_server_cert;
     mi->heartbeat_period= master_heartbeat_period;
   }
-  DBUG_PRINT("master_info",("log_file_name: %s  position: %ld",
-                            mi->master_log_name,
-                            (ulong) mi->master_log_pos));
 
   mi->rli.mi = mi;
   if (init_relay_log_info(&mi->rli, slave_info_fname))
@@ -308,7 +302,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
   if ((error=test(flush_master_info(mi, 1))))
     sql_print_error("Failed to flush master info file");
   pthread_mutex_unlock(&mi->data_lock);
-  DBUG_RETURN(error);
+  return(error);
 
 errwithmsg:
   sql_print_error("Error reading master configuration");
@@ -321,7 +315,7 @@ err:
   }
   mi->fd= -1;
   pthread_mutex_unlock(&mi->data_lock);
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -335,9 +329,6 @@ int flush_master_info(Master_info* mi, bool flush_relay_log_cache)
 {
   IO_CACHE* file = &mi->file;
   char lbuf[22];
-
-  DBUG_ENTER("flush_master_info");
-  DBUG_PRINT("enter",("master_pos: %ld", (long) mi->master_log_pos));
 
   /*
     Flush the relay log to disk. If we don't do it, then the relay log while
@@ -353,7 +344,7 @@ int flush_master_info(Master_info* mi, bool flush_relay_log_cache)
   */
   if (flush_relay_log_cache &&
       flush_io_cache(mi->rli.relay_log.get_log_file()))
-    DBUG_RETURN(2);
+    return(2);
 
   /*
     We flushed the relay log BEFORE the master.info file, because if we crash
@@ -383,16 +374,14 @@ int flush_master_info(Master_info* mi, bool flush_relay_log_cache)
               (int)(mi->ssl), mi->ssl_ca, mi->ssl_capath, mi->ssl_cert,
               mi->ssl_cipher, mi->ssl_key, mi->ssl_verify_server_cert,
               heartbeat_buf);
-  DBUG_RETURN(-flush_io_cache(file));
+  return(-flush_io_cache(file));
 }
 
 
 void end_master_info(Master_info* mi)
 {
-  DBUG_ENTER("end_master_info");
-
   if (!mi->inited)
-    DBUG_VOID_RETURN;
+    return;
   end_relay_log_info(&mi->rli);
   if (mi->fd >= 0)
   {
@@ -402,7 +391,7 @@ void end_master_info(Master_info* mi)
   }
   mi->inited = 0;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 

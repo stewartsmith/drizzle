@@ -32,7 +32,7 @@ Slave_reporting_capability::report(loglevel level, int err_code,
     report_function= sql_print_information;
     break;
   default:
-    DBUG_ASSERT(0);                            // should not come here
+    assert(0);                            // should not come here
     return;          // don't crash production builds, just do nothing
   }
 

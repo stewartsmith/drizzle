@@ -68,7 +68,6 @@ pthread_handler_t handle_manager(void *arg __attribute__((unused)))
   bool reset_flush_time = true;
   struct handler_cb *cb= NULL;
   my_thread_init();
-  DBUG_ENTER("handle_manager");
 
   pthread_detach_this_thread();
   manager_thread = pthread_self();
@@ -121,11 +120,8 @@ pthread_handler_t handle_manager(void *arg __attribute__((unused)))
       my_free((uchar*)cb, MYF(0));
       cb= next;
     }
-
-    if (status)
-      DBUG_PRINT("error", ("manager did not handle something: %lx", status));
   }
   manager_thread_in_use = 0;
   my_thread_end();
-  DBUG_RETURN(NULL);
+  return(NULL);
 }

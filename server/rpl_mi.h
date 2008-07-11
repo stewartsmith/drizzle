@@ -85,13 +85,11 @@ class Master_info : public Slave_reporting_capability
   uint connect_retry;
   float heartbeat_period;         // interface with CHANGE MASTER or master.info
   ulonglong received_heartbeats;  // counter of received heartbeat events
-#ifndef DBUG_OFF
   int events_till_disconnect;
-#endif
   bool inited;
   volatile bool abort_slave;
   volatile uint slave_running;
-  volatile ulong slave_run_id;
+  volatile uint32_t slave_run_id;
   /*
      The difference in seconds between the clock of the master and the clock of
      the slave (second - first). It must be signed as it may be <0 or >0.
