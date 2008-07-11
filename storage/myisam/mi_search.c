@@ -239,8 +239,8 @@ int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
                    uchar *key, uint key_len, uint comp_flag, uchar **ret_pos,
                    uchar *buff, my_bool *last_key)
 {
-  int flag;
-  uint nod_flag,length,not_used[2];
+  int flag=0;
+  uint nod_flag,length=0,not_used[2];
   uchar t_buff[MI_MAX_KEY_BUFF],*end;
   DBUG_ENTER("_mi_seq_search");
 
@@ -289,13 +289,13 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
     flag is the value returned by ha_key_cmp and as treated as final
   */
   int flag=0, my_flag=-1;
-  uint nod_flag, length, len, matched, cmplen, kseg_len;
+  uint nod_flag, length=0, len, matched, cmplen, kseg_len;
   uint prefix_len,suffix_len;
   int key_len_skip, seg_len_pack, key_len_left;
   uchar *end, *kseg, *vseg;
   uchar *sort_order=keyinfo->seg->charset->sort_order;
   uchar tt_buff[MI_MAX_KEY_BUFF+2], *t_buff=tt_buff+2;
-  uchar *saved_from, *saved_to, *saved_vseg;
+  uchar *saved_from=NULL, *saved_to=NULL, *saved_vseg=NULL;
   uint  saved_length=0, saved_prefix_len=0;
   uint  length_pack;
   DBUG_ENTER("_mi_prefix_search");

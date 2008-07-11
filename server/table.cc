@@ -474,14 +474,14 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   uint new_frm_ver, field_pack_length, new_field_pack_flag;
   uint interval_count, interval_parts, read_length, int_length;
   uint db_create_options, keys, key_parts, n_length;
-  uint key_info_length, com_length, null_bit_pos;
+  uint key_info_length, com_length, null_bit_pos=0;
   uint extra_rec_buf_length;
   uint i,j;
   bool use_hash;
   uchar forminfo[288];
   char *keynames, *names, *comment_pos;
   uchar *record;
-  uchar *disk_buff, *strpos, *null_flags, *null_pos;
+  uchar *disk_buff, *strpos, *null_flags=NULL, *null_pos=NULL;
   ulong pos, record_offset, *rec_per_key, rec_buff_length;
   handler *handler_file= 0;
   KEY	*keyinfo;
@@ -3073,7 +3073,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
 {
   Natural_join_column *nj_col;
   bool is_created= true;
-  uint field_count;
+  uint field_count=0;
   TABLE_LIST *add_table_ref= parent_table_ref ?
                              parent_table_ref : table_ref;
 

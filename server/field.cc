@@ -7409,6 +7409,9 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   case MYSQL_TYPE_VAR_STRING:
     assert(0);  /* Impossible. */
     break;
+  case MYSQL_TYPE_INT24:
+    assert(0);  /* Impossible, we killed it */
+    break;
   }
   /* Remember the value of length */
   char_length= length;

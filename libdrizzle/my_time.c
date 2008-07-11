@@ -160,12 +160,12 @@ enum enum_mysql_timestamp_type
 str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
                 uint flags, int *was_cut)
 {
-  uint field_length, year_length, digits, i, number_of_fields;
+  uint field_length, year_length=4, digits, i, number_of_fields;
   uint date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
   uint add_hours= 0, start_loop;
   ulong not_zero_date, allow_space;
   my_bool is_internal_format;
-  const char *pos, *last_field_pos;
+  const char *pos, *last_field_pos=NULL;
   const char *end=str+length;
   const uchar *format_position;
   my_bool found_delimitier= 0, found_space= 0;

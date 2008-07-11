@@ -2120,7 +2120,7 @@ void Query_arena::set_query_arena(Query_arena *set)
 
 void Query_arena::cleanup_stmt()
 {
-  assert("Query_arena::cleanup_stmt()" == "not implemented");
+  assert("not implemented");
 }
 
 /*

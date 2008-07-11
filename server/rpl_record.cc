@@ -96,7 +96,6 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
           length is stored in little-endian format, since this is the
           format used for the binlog.
         */
-        const uchar *old_pack_ptr= pack_ptr;
         pack_ptr= field->pack(pack_ptr, field->ptr + offset,
                               field->max_data_length(), true);
       }
@@ -239,7 +238,6 @@ unpack_row(Relay_log_info const *rli,
           the packed row comes from the table to which it is unpacked.
         */
         uint16 metadata= tabledef ? tabledef->field_metadata(i) : 0;
-        uchar const *const old_pack_ptr= pack_ptr;
         pack_ptr= f->unpack(f->ptr, pack_ptr, metadata, true);
       }
 

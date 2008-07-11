@@ -1283,23 +1283,23 @@ int mysql_init_character_set(MYSQL *mysql)
 C_MODE_END
 
 
-MYSQL * STDCALL 
+MYSQL * STDCALL
 CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
-		       const char *passwd, const char *db,
-		       uint port, const char *unix_socket,ulong client_flag)
+                       const char *passwd, const char *db,
+                       uint port, const char *unix_socket,ulong client_flag)
 {
-  char		buff[NAME_LEN+USERNAME_LENGTH+100];
-  char		*end,*host_info;
-  ulong		pkt_length;
-  NET		*net= &mysql->net;
-  struct	sockaddr_un UNIXaddr;
+  char          buff[NAME_LEN+USERNAME_LENGTH+100];
+  char          *end,*host_info=NULL;
+  ulong         pkt_length;
+  NET           *net= &mysql->net;
+  struct        sockaddr_un UNIXaddr;
   init_sigpipe_variables
   DBUG_ENTER("mysql_real_connect");
 
   DBUG_PRINT("enter",("host: %s  db: %s  user: %s",
-		      host ? host : "(Null)",
-		      db ? db : "(Null)",
-		      user ? user : "(Null)"));
+                      host ? host : "(Null)",
+                      db ? db : "(Null)",
+                      user ? user : "(Null)"));
 
   /* Don't give sigpipe errors if the client doesn't want them */
   set_sigpipe(mysql);
