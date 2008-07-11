@@ -237,13 +237,6 @@ static struct my_option my_long_options[] =
    "To dump several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames. 'USE db_name;' will be included in the output.",
    (char**) &opt_databases, (char**) &opt_databases, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
-#ifdef DBUG_OFF
-  {"debug", '#', "This is a non-debug version. Catch this and exit",
-   0,0, 0, GET_DISABLED, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#else
-  {"debug", '#', "Output debug log", (char**) &default_dbug_option,
-   (char**) &default_dbug_option, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -505,16 +498,16 @@ static char *primary_key_fields(const char *table_name);
 static void verbose_msg(const char *fmt, ...)
 {
   va_list args;
-  DBUG_ENTER("verbose_msg");
+
 
   if (!verbose)
-    DBUG_VOID_RETURN;
+    return;
 
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /*
@@ -723,10 +716,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     }
 
     break;
-  case '#':
-    DBUG_PUSH(argument ? argument : default_dbug_option);
-    debug_check_flag= 1;
-    break;
   case 'V': print_version(); exit(0);
   case 'X':
     opt_xml= 1;
@@ -793,16 +782,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
         fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
         exit(1);
       }
-#if !defined(DBUG_OFF)
-      {
-        uint size_for_sql_mode= 0;
-        const char **ptr;
-        for (ptr= compatible_mode_names; *ptr; ptr++)
-          size_for_sql_mode+= strlen(*ptr);
-        size_for_sql_mode+= sizeof(compatible_mode_names)-1;
-        DBUG_ASSERT(sizeof(compatible_mode_normal_str)>=size_for_sql_mode);
-      }
-#endif
       mode= opt_compatible_mode;
       for (i= 0, mode= opt_compatible_mode; mode; mode>>= 1, i++)
       {
@@ -933,10 +912,10 @@ static int get_options(int *argc, char ***argv)
 */
 static void DB_error(MYSQL *mysql_arg, const char *when)
 {
-  DBUG_ENTER("DB_error");
+
   maybe_die(EX_MYSQLERR, "Got error: %d: %s %s",
           mysql_errno(mysql_arg), mysql_error(mysql_arg), when);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1122,7 +1101,7 @@ static void maybe_exit(int error)
 static int connect_to_db(char *host, char *user,char *passwd)
 {
   char buff[20+FN_REFLEN];
-  DBUG_ENTER("connect_to_db");
+
 
   verbose_msg("-- Connecting to %s...\n", host ? host : "localhost");
   mysql_init(&mysql_connection);
@@ -1140,7 +1119,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
                                   0)))
   {
     DB_error(&mysql_connection, "when trying to connect");
-    DBUG_RETURN(1);
+    return(1);
   }
   if (mysql_get_server_version(&mysql_connection) < 40100)
   {
@@ -1158,9 +1137,9 @@ static int connect_to_db(char *host, char *user,char *passwd)
   {
     snprintf(buff, sizeof(buff), "/*!40103 SET TIME_ZONE='+00:00' */");
     if (mysql_query_with_error_report(mysql, 0, buff))
-      DBUG_RETURN(1);
+      return(1);
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* connect_to_db */
 
 
@@ -1177,7 +1156,7 @@ static void dbDisconnect(char *host)
 static void unescape(FILE *file,char *pos,uint length)
 {
   char *tmp;
-  DBUG_ENTER("unescape");
+
   if (!(tmp=(char*) my_malloc(length*2+1, MYF(MY_WME))))
     die(EX_MYSQLERR, "Couldn't allocate memory");
 
@@ -1187,7 +1166,7 @@ static void unescape(FILE *file,char *pos,uint length)
   fputc('\'', file);
   check_io(file);
   my_free(tmp, MYF(MY_WME));
-  DBUG_VOID_RETURN;
+  return;
 } /* unescape */
 
 
@@ -1369,7 +1348,7 @@ static void print_xml_tag(FILE * xml_file, const char* sbeg,
   while (attribute_name != NullS)
   {
     attribute_value= va_arg(arg_list, char *);
-    DBUG_ASSERT(attribute_value != NullS);
+    assert(attribute_value != NullS);
 
     fputc(' ', xml_file);
     fputs(attribute_name, xml_file);    
@@ -1516,8 +1495,6 @@ static uint get_table_structure(char *table, char *db, char *table_type,
   int        len;
   MYSQL_RES  *result;
   MYSQL_ROW  row;
-  DBUG_ENTER("get_table_structure");
-  DBUG_PRINT("enter", ("db: %s  table: %s", db, table));
 
   *ignore_flag= check_if_ignore_table(table, table_type);
 
@@ -1574,12 +1551,12 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       if (switch_character_set_results(mysql, "binary") ||
           mysql_query_with_error_report(mysql, &result, buff) ||
           switch_character_set_results(mysql, default_charset))
-        DBUG_RETURN(0);
+        return(0);
 
       if (path)
       {
         if (!(sql_file= open_sql_file_for_table(table)))
-          DBUG_RETURN(0);
+          return(0);
 
         write_header(sql_file, db);
       }
@@ -1645,7 +1622,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
           my_free(scv_buff, MYF(MY_ALLOW_ZERO_PTR));
 
-          DBUG_RETURN(0);
+          return(0);
         }
         else
           my_free(scv_buff, MYF(MY_ALLOW_ZERO_PTR));
@@ -1700,7 +1677,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
           my_fclose(sql_file, MYF(MY_WME));
 
         seen_views= 1;
-        DBUG_RETURN(0);
+        return(0);
       }
 
       row= mysql_fetch_row(result);
@@ -1721,7 +1698,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     {
       if (path)
         my_fclose(sql_file, MYF(MY_WME));
-      DBUG_RETURN(0);
+      return(0);
     }
 
     /*
@@ -1775,7 +1752,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     snprintf(query_buff, sizeof(query_buff), "show fields from %s",
              result_table);
     if (mysql_query_with_error_report(mysql, &result, query_buff))
-      DBUG_RETURN(0);
+      return(0);
 
     /* Make an sql-file, if path was given iow. option -T was given */
     if (!opt_no_create_info)
@@ -1783,7 +1760,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       if (path)
       {
         if (!(sql_file= open_sql_file_for_table(table)))
-          DBUG_RETURN(0);
+          return(0);
         write_header(sql_file, db);
       }
       if (!opt_xml && opt_comments)
@@ -1883,7 +1860,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
                 my_progname, result_table, mysql_error(mysql));
         if (path)
           my_fclose(sql_file, MYF(MY_WME));
-        DBUG_RETURN(0);
+        return(0);
       }
 
       /* Find first which key is primary key */
@@ -2003,7 +1980,7 @@ continue_xml:
     write_footer(sql_file);
     my_fclose(sql_file, MYF(MY_WME));
   }
-  DBUG_RETURN((uint) num_fields);
+  return((uint) num_fields);
 } /* get_table_structure */
 
 static void add_load_option(DYNAMIC_STRING *str, const char *option,
@@ -2098,7 +2075,7 @@ static void dump_table(char *table, char *db)
   MYSQL_RES     *res;
   MYSQL_FIELD   *field;
   MYSQL_ROW     row;
-  DBUG_ENTER("dump_table");
+
 
   /*
     Make sure you get the create table info before the following check for
@@ -2110,19 +2087,16 @@ static void dump_table(char *table, char *db)
     The "table" could be a view.  If so, we don't do anything here.
   */
   if (strcmp(table_type, "VIEW") == 0)
-    DBUG_VOID_RETURN;
+    return;
 
   /* Check --no-data flag */
   if (opt_no_data)
   {
     verbose_msg("-- Skipping dump data for table '%s', --no-data was used\n",
                 table);
-    DBUG_VOID_RETURN;
+    return;
   }
 
-  DBUG_PRINT("info",
-             ("ignore_flag: %x  num_fields: %d", (int) ignore_flag,
-              num_fields));
   /*
     If the table type is a merge table or any type that has to be
      _completely_ ignored and no data dumped
@@ -2131,14 +2105,14 @@ static void dump_table(char *table, char *db)
   {
     verbose_msg("-- Warning: Skipping data for table '%s' because " \
                 "it's of type %s\n", table, table_type);
-    DBUG_VOID_RETURN;
+    return;
   }
   /* Check that there are any fields in the table */
   if (num_fields == 0)
   {
     verbose_msg("-- Skipping dump data for table '%s', it has no fields\n",
                 table);
-    DBUG_VOID_RETURN;
+    return;
   }
 
   /*
@@ -2150,7 +2124,7 @@ static void dump_table(char *table, char *db)
       !my_strcasecmp(&my_charset_latin1, table, "event"))
   {
     verbose_msg("-- Skipping data table mysql.event, --skip-events was used\n");
-    DBUG_VOID_RETURN;
+    return;
   }
 
   result_table= quote_name(table,table_buff, 1);
@@ -2212,7 +2186,7 @@ static void dump_table(char *table, char *db)
     {
       DB_error(mysql, "when executing 'SELECT INTO OUTFILE'");
       dynstr_free(&query_string);
-      DBUG_VOID_RETURN;
+      return;
     }
   }
   else
@@ -2369,9 +2343,9 @@ static void dump_table(char *table, char *db)
                   extended_row.length+= mysql_hex_string(extended_row.str +
                                                          extended_row.length,
                                                          row[i], length);
-                  DBUG_ASSERT(extended_row.length+1 <= extended_row.max_length);
+                  assert(extended_row.length+1 <= extended_row.max_length);
                   /* mysql_hex_string() already terminated string by '\0' */
-                  DBUG_ASSERT(extended_row.str[extended_row.length] == '\0');
+                  assert(extended_row.str[extended_row.length] == '\0');
                 }
                 else
                 {
@@ -2548,12 +2522,12 @@ static void dump_table(char *table, char *db)
     mysql_free_result(res);
   }
   dynstr_free(&query_string);
-  DBUG_VOID_RETURN;
+  return;
 
 err:
   dynstr_free(&query_string);
   maybe_exit(error);
-  DBUG_VOID_RETURN;
+  return;
 } /* dump_table */
 
 
@@ -2603,14 +2577,14 @@ static int dump_databases(char **db_names)
 {
   int result=0;
   char **db;
-  DBUG_ENTER("dump_databases");
+
 
   for (db= db_names ; *db ; db++)
   {
     if (dump_all_tables_in_db(*db))
       result=1;
   }
-  DBUG_RETURN(result);
+  return(result);
 } /* dump_databases */
 
 
@@ -2628,7 +2602,7 @@ RETURN VALUES
 
 int init_dumping_tables(char *qdatabase)
 {
-  DBUG_ENTER("init_dumping_tables");
+
 
   if (!opt_create_db)
   {
@@ -2665,7 +2639,7 @@ int init_dumping_tables(char *qdatabase)
       mysql_free_result(dbinfo);
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* init_dumping_tables */
 
 
@@ -2724,13 +2698,13 @@ static int dump_all_tables_in_db(char *database)
   char hash_key[2*NAME_LEN+2];  /* "db.tablename" */
   char *afterdot;
   int using_mysql_db= my_strcasecmp(&my_charset_latin1, database, "mysql");
-  DBUG_ENTER("dump_all_tables_in_db");
+
 
   afterdot= strmov(hash_key, database);
   *afterdot++= '.';
 
   if (init_dumping(database, init_dumping_tables))
-    DBUG_RETURN(1);
+    return(1);
   if (opt_xml)
     print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NullS);
   if (lock_tables)
@@ -2780,7 +2754,7 @@ static int dump_all_tables_in_db(char *database)
     fprintf(md_result_file,"\n--\n-- Flush Grant Tables \n--\n");
     fprintf(md_result_file,"\n/*! FLUSH PRIVILEGES */;\n");
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* dump_all_tables_in_db */
 
 
@@ -2802,10 +2776,10 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
   MYSQL_ROW  row;
   char query[50 + 2*NAME_LEN];
   char show_name_buff[FN_REFLEN];
-  DBUG_ENTER("get_actual_table_name");
+
 
   /* Check memory for quote_for_like() */
-  DBUG_ASSERT(2*sizeof(old_table_name) < sizeof(show_name_buff));
+  assert(2*sizeof(old_table_name) < sizeof(show_name_buff));
   snprintf(query, sizeof(query), "SHOW TABLES LIKE %s",
            quote_for_like(old_table_name, show_name_buff));
 
@@ -2828,8 +2802,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
     }
     mysql_free_result(table_res);
   }
-  DBUG_PRINT("exit", ("new_table_name: %s", name));
-  DBUG_RETURN(name);
+  return(name);
 }
 
 
@@ -2839,10 +2812,10 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   DYNAMIC_STRING lock_tables_query;
   MEM_ROOT root;
   char **dump_tables, **pos, **end;
-  DBUG_ENTER("dump_selected_tables");
+
 
   if (init_dumping(db, init_dumping_tables))
-    DBUG_RETURN(1);
+    return(1);
 
   init_alloc_root(&root, 8192, 0);
   if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
@@ -2905,10 +2878,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
 
   /* Dump each selected table */
   for (pos= dump_tables; pos < end; pos++)
-  {
-    DBUG_PRINT("info",("Dumping table %s", *pos));
     dump_table(*pos, db);
-  }
 
   free_root(&root, MYF(0));
   my_free(order_by, MYF(MY_ALLOW_ZERO_PTR));
@@ -2920,7 +2890,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   }
   if (lock_tables)
     VOID(mysql_query_with_error_report(mysql, 0, "UNLOCK TABLES"));
-  DBUG_RETURN(0);
+  return(0);
 } /* dump_selected_tables */
 
 
@@ -3279,10 +3249,10 @@ char check_if_ignore_table(const char *table_name, char *table_type)
   char buff[FN_REFLEN+80], show_name_buff[FN_REFLEN];
   MYSQL_RES *res= NULL;
   MYSQL_ROW row;
-  DBUG_ENTER("check_if_ignore_table");
+
 
   /* Check memory for quote_for_like() */
-  DBUG_ASSERT(2*sizeof(table_name) < sizeof(show_name_buff));
+  assert(2*sizeof(table_name) < sizeof(show_name_buff));
   snprintf(buff, sizeof(buff), "show table status like %s",
            quote_for_like(table_name, show_name_buff));
   if (mysql_query_with_error_report(mysql, &res, buff))
@@ -3291,7 +3261,7 @@ char check_if_ignore_table(const char *table_name, char *table_type)
     {                                   /* If old MySQL version */
       verbose_msg("-- Warning: Couldn't get status information for "
                   "table %s (%s)\n", table_name, mysql_error(mysql));
-      DBUG_RETURN(result);                       /* assume table is ok */
+      return(result);                       /* assume table is ok */
     }
   }
   if (!(row= mysql_fetch_row(res)))
@@ -3300,7 +3270,7 @@ char check_if_ignore_table(const char *table_name, char *table_type)
             "Error: Couldn't read status information for table %s (%s)\n",
             table_name, mysql_error(mysql));
     mysql_free_result(res);
-    DBUG_RETURN(result);                         /* assume table is ok */
+    return(result);                         /* assume table is ok */
   }
   if (!(row[1]))
     strmake(table_type, "VIEW", NAME_LEN-1);
@@ -3332,7 +3302,7 @@ char check_if_ignore_table(const char *table_name, char *table_type)
       result= IGNORE_DATA;
   }
   mysql_free_result(res);
-  DBUG_RETURN(result);
+  return(result);
 }
 
 

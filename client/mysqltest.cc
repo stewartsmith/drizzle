@@ -763,7 +763,7 @@ static void check_command_args(struct st_command *command,
       break;
 
     default:
-      DBUG_ASSERT("Unknown argument type");
+      assert("Unknown argument type");
       break;
     }
 
@@ -883,7 +883,6 @@ static void free_used_memory(void)
   if (server_initialized)
     mysql_server_end();
 
-  /* Don't use DBUG after mysql_server_end() */
   return;
 }
 
@@ -906,7 +905,7 @@ static void cleanup_and_exit(int exit_code)
     break;
     default:
       printf("unknown exit code: %d\n", exit_code);
-      DBUG_ASSERT(0);
+      assert(0);
     }
   }
 
@@ -1461,7 +1460,7 @@ static void check_result(DYNAMIC_STRING* ds)
   const char* mess= "Result content mismatch\n";
 
 
-  DBUG_ASSERT(result_file_name);
+  assert(result_file_name);
 
   if (access(result_file_name, F_OK) != 0)
     die("The specified result file does not exist: '%s'", result_file_name);
@@ -4882,7 +4881,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       argument= buff;
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
-    DBUG_ASSERT(cur_file == file_stack && cur_file->file == 0);
+    assert(cur_file == file_stack && cur_file->file == 0);
     if (!(cur_file->file=
           my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(0))))
       die("Could not open '%s' for reading: errno = %d", buff, errno);
@@ -5221,7 +5220,7 @@ static int append_warnings(DYNAMIC_STRING *ds, MYSQL* mysql)
     through PS API we should not issue SHOW WARNINGS until
     we have not read all results...
   */
-  DBUG_ASSERT(!mysql_more_results(mysql));
+  assert(!mysql_more_results(mysql));
 
   if (mysql_real_query(mysql, "SHOW WARNINGS", 13))
     die("Error running query \"SHOW WARNINGS\": %s", mysql_error(mysql));
@@ -5363,7 +5362,7 @@ static void run_query_normal(struct st_connection *cn,
 		 mysql_sqlstate(mysql), ds);
     goto end;
   }
-  DBUG_ASSERT(err == -1); /* Successful and there are no more results */
+  assert(err == -1); /* Successful and there are no more results */
 
   /* If we come here the query is both executed and read successfully */
   handle_no_error(command);
@@ -6442,7 +6441,7 @@ void replace_strings_append(REPLACE *rep, DYNAMIC_STRING* ds,
     if (!*(from-=rep_str->from_offset) && rep_pos->found != 2)
       return;
 
-    DBUG_ASSERT(from <= str+len);
+    assert(from <= str+len);
     start= from;
     rep_pos=rep;
   }

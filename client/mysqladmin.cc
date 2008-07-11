@@ -114,10 +114,6 @@ static struct my_option my_long_options[] =
    "Number of iterations to make. This works with -i (--sleep) only.",
    (char**) &nr_iterations, (char**) &nr_iterations, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DBUG_OFF
-  {"debug", '#', "Output debug log. Often this is 'd:t:o,filename'.",
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit .",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -228,9 +224,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     break;
   case 's':
     option_silent++;
-    break;
-  case '#':
-    DBUG_PUSH(argument ? argument : "d:t:o,/tmp/mysqladmin.trace");
     break;
   case 'V':
     print_version();
@@ -1251,7 +1244,7 @@ static my_bool wait_pidfile(char *pidfile, time_t last_modified,
   char buff[FN_REFLEN];
   int error= 1;
   uint count= 0;
-  DBUG_ENTER("wait_pidfile");
+
 
   system_filename(buff, pidfile);
   do
@@ -1282,10 +1275,9 @@ static my_bool wait_pidfile(char *pidfile, time_t last_modified,
 
   if (error)
   {
-    DBUG_PRINT("warning",("Pid file didn't disappear"));
     fprintf(stderr,
 	    "Warning;  Aborted waiting on pid file: '%s' after %d seconds\n",
 	    buff, count-1);
   }
-  DBUG_RETURN(error);
+  return(error);
 }
