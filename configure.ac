@@ -332,6 +332,8 @@ PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
     found_pcre="no"
   else
     found_pcre="yes"
+    # We can't search for these well, but we sure do need them!
+    PCRE_LIBS="-lpcrecpp -lpcre"
   fi
   ])
 if test "x$found_pcre" != "xyes"
@@ -1197,7 +1199,7 @@ AC_ARG_ENABLE([unreachable],
 if test "$GCC" = "yes"
 then
 
-  GCC_WARNINGS="-W -Wall"
+  GCC_WARNINGS="-W -Wall -Wextra"
   GXX_WARNINGS="${GCC_WARNINGS}"
 
 
