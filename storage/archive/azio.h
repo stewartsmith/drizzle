@@ -39,11 +39,11 @@
 /* We currently allow this on all platforms */
 #define AZIO_AIO
 
-#include <zlib.h>
 #include "my_global.h"
 #include "my_sys.h"
 
 #include <my_dir.h>
+#include <zlib.h>
 
 #ifdef  __cplusplus
 extern "C" {
