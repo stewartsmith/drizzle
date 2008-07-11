@@ -1055,9 +1055,7 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
       was read.
     */
     if (description_event->event_type_permutation)
-    {
       event_type= description_event->event_type_permutation[event_type];
-    }
 
     switch(event_type) {
     case QUERY_EVENT:
@@ -1072,11 +1070,9 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     case ROTATE_EVENT:
       ev = new Rotate_log_event(buf, event_len, description_event);
       break;
-#ifdef HAVE_REPLICATION
     case SLAVE_EVENT: /* can never happen (unused event) */
       ev = new Slave_log_event(buf, event_len);
       break;
-#endif /* HAVE_REPLICATION */
     case CREATE_FILE_EVENT:
       ev = new Create_file_log_event(buf, event_len, description_event);
       break;
@@ -5916,8 +5912,7 @@ Rows_log_event::Rows_log_event(THD *thd_arg, TABLE *tbl_arg, ulong tid,
     solution, to be able to terminate a started statement in the
     binary log: the extraneous events will be removed in the future.
    */
-  assert(tbl_arg && tbl_arg->s && tid != ~0UL ||
-              !tbl_arg && !cols && tid == ~0UL);
+  assert((tbl_arg && tbl_arg->s && tid != ~0UL) || (!tbl_arg && !cols && tid == ~0UL));
 
   if (thd_arg->options & OPTION_NO_FOREIGN_KEY_CHECKS)
       set_flags(NO_FOREIGN_KEY_CHECKS_F);
@@ -6089,7 +6084,7 @@ int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
   }
 
   assert(m_rows_buf <= m_rows_cur);
-  assert(!m_rows_buf || m_rows_end && m_rows_buf <= m_rows_end);
+  assert(!m_rows_buf || (m_rows_end && m_rows_buf <= m_rows_end));
   assert(m_rows_cur <= m_rows_end);
 
   /* The cast will always work since m_rows_cur <= m_rows_end */
