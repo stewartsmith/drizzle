@@ -3161,7 +3161,7 @@ static int32_t connect_to_master(THD* thd, MYSQL* mysql, Master_info* mi,
       suppress_warnings= 0;
       mi->report(ERROR_LEVEL, last_errno,
                  "error %s to master '%s@%s:%d'"
-                 " - retry-time: %d  retries: %lu",
+                 " - retry-time: %d  retries: %u",
                  (reconnect ? "reconnecting" : "connecting"),
                  mi->user, mi->host, mi->port,
                  mi->connect_retry, master_retry_count);
