@@ -48,6 +48,7 @@ sinclude(config/ac-macros/large_file.m4)
 sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
+sinclude(config/ac-macros/pkg.m4)
 
 # Remember to add a directory server/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
