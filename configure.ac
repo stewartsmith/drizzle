@@ -1,7 +1,7 @@
 dnl -*- ksh -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
+AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
 AC_INIT
 AC_CONFIG_SRCDIR([server/drizzled.cc])
