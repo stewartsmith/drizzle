@@ -696,8 +696,8 @@ AC_CHECK_FUNCS(strtok_r)
 if test "$ac_cv_c_compiler_gnu" = "yes"
 then
   SYMBOLS_CFLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CC="-O"
-  OPTIMIZE_CFLAGS="-O3"
+  DEBUG_OPTIMIZE_CC="-O0"
+  OPTIMIZE_CFLAGS="-O2"
 else
   SYMBOLS_CFLAGS="-g"
   DEBUG_OPTIMIZE_CC=""
@@ -706,8 +706,8 @@ fi
 if test "$ac_cv_prog_cxx_g" = "yes"
 then
   SYMBOLS_CXXFLAGS="-ggdb3"
-  DEBUG_OPTIMIZE_CXX="-O"
-  OPTIMIZE_CXXFLAGS="-O3"
+  DEBUG_OPTIMIZE_CXX="-O0"
+  OPTIMIZE_CXXFLAGS="-O2"
 else
   SYMBOLS_CXXFLAGS="-g"
   DEBUG_OPTIMIZE_CXX=""

@@ -1512,7 +1512,7 @@ static uint32_t read_event(MYSQL* mysql,
     return(packet_error);
 
   len = cli_safe_read(mysql);
-  if (len == packet_error || (long) len < 1)
+  if (len == packet_error || (int32_t) len < 1)
   {
     if (mysql_errno(mysql) == ER_NET_READ_INTERRUPTED)
     {

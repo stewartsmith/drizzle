@@ -269,7 +269,7 @@ typedef struct st_net {
 } NET;
 
 
-#define packet_error (~(unsigned long) 0)
+#define packet_error (~(uint32_t) 0)
 
 /* Start TINY at 1 because we removed DECIMAL from off the front of the enum */
 enum enum_field_types { MYSQL_TYPE_TINY=1,
