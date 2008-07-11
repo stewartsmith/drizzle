@@ -205,6 +205,10 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
 # Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y -p MYSQL'])
+if test -z "$YACC" && test -d ".bzr"
+then
+  AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
+fi
 
 AC_PATH_PROG(uname_prog, uname, no)
 
