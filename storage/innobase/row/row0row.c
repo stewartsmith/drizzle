@@ -215,7 +215,7 @@ row_build(
 		buf = mem_heap_alloc(heap, rec_offs_size(offsets));
 		rec = rec_copy(buf, rec, offsets);
 		/* Avoid a debug assertion in rec_offs_validate(). */
-		rec_offs_make_valid(rec, index, (ulint*) offsets);
+		rec_offs_make_valid(rec, index, offsets);
 	}
 
 	table = index->table;
