@@ -197,7 +197,7 @@ void*
 ut_align(
 /*=====*/
 				/* out: aligned pointer */
-	void*	ptr,		/* in: pointer */
+	const void*	ptr,		/* in: pointer */
 	ulint	align_no);	/* in: align by this number */
 /*************************************************************
 The following function rounds down a pointer to the nearest
@@ -207,7 +207,7 @@ void*
 ut_align_down(
 /*==========*/
 				/* out: aligned pointer */
-	void*	ptr,		/* in: pointer */
+	const void*	ptr,		/* in: pointer */
 	ulint	align_no)	/* in: align by this number */
 		__attribute__((const));
 /*************************************************************

@@ -47,8 +47,8 @@ struct my_option
   const char *name;                     /* Name of the option */
   int        id;                        /* unique id or short option */
   const char *comment;                  /* option comment, for autom. --help */
-  uchar      **value;                   /* The variable value */
-  uchar      **u_max_value;             /* The user def. max variable value */
+  char      **value;                   /* The variable value */
+  char      **u_max_value;             /* The user def. max variable value */
   struct st_typelib *typelib;           /* Pointer to possible values */
   ulong     var_type;
   enum get_opt_arg_type arg_type;
@@ -73,8 +73,8 @@ extern int handle_options (int *argc, char ***argv,
 extern void my_cleanup_options(const struct my_option *options);
 extern void my_print_help(const struct my_option *options);
 extern void my_print_variables(const struct my_option *options);
-extern void my_getopt_register_get_addr(uchar ** (*func_addr)(const char *, uint,
-							   const struct my_option *));
+extern void my_getopt_register_get_addr(char ** (*func_addr)(const char *, uint,
+                                                             const struct my_option *));
 
 ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
                                  my_bool *fix);

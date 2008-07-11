@@ -512,57 +512,6 @@ static void cli_flush_use_result(MYSQL *mysql)
 }
 
 
-
-#ifdef CHECK_LICENSE
-/**
-  Check server side variable 'license'.
-
-  If the variable does not exist or does not contain 'Commercial',
-  we're talking to non-commercial server from commercial client.
-
-  @retval  0   success
-  @retval  !0  network error or the server is not commercial.
-               Error code is saved in mysql->net.last_errno.
-*/
-
-static int check_license(MYSQL *mysql)
-{
-  MYSQL_ROW row;
-  MYSQL_RES *res;
-  NET *net= &mysql->net;
-  static const char query[]= "SELECT @@license";
-  static const char required_license[]= STRINGIFY_ARG(LICENSE);
-
-  if (mysql_real_query(mysql, query, sizeof(query)-1))
-  {
-    if (net->last_errno == ER_UNKNOWN_SYSTEM_VARIABLE)
-    {
-      set_mysql_extended_error(mysql, CR_WRONG_LICENSE, unknown_sqlstate,
-                               ER(CR_WRONG_LICENSE), required_license);
-    }
-    return 1;
-  }
-  if (!(res= mysql_use_result(mysql)))
-    return 1;
-  row= mysql_fetch_row(res);
-  /* 
-    If no rows in result set, or column value is NULL (none of these
-    two is ever true for server variables now), or column value
-    mismatch, set wrong license error.
-  */
-  if (!net->last_errno &&
-      (!row || !row[0] ||
-       strncmp(row[0], required_license, sizeof(required_license))))
-  {
-    set_mysql_extended_error(mysql, CR_WRONG_LICENSE, unknown_sqlstate,
-                             ER(CR_WRONG_LICENSE), required_license);
-  }
-  mysql_free_result(res);
-  return net->last_errno;
-}
-#endif /* CHECK_LICENSE */
-
-
 /**************************************************************************
   Shut down connection
 **************************************************************************/
@@ -1334,23 +1283,23 @@ int mysql_init_character_set(MYSQL *mysql)
 C_MODE_END
 
 
-MYSQL * STDCALL 
+MYSQL * STDCALL
 CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
-		       const char *passwd, const char *db,
-		       uint port, const char *unix_socket,ulong client_flag)
+                       const char *passwd, const char *db,
+                       uint port, const char *unix_socket,ulong client_flag)
 {
-  char		buff[NAME_LEN+USERNAME_LENGTH+100];
-  char		*end,*host_info;
-  ulong		pkt_length;
-  NET		*net= &mysql->net;
-  struct	sockaddr_un UNIXaddr;
+  char          buff[NAME_LEN+USERNAME_LENGTH+100];
+  char          *end,*host_info=NULL;
+  ulong         pkt_length;
+  NET           *net= &mysql->net;
+  struct        sockaddr_un UNIXaddr;
   init_sigpipe_variables
   DBUG_ENTER("mysql_real_connect");
 
   DBUG_PRINT("enter",("host: %s  db: %s  user: %s",
-		      host ? host : "(Null)",
-		      db ? db : "(Null)",
-		      user ? user : "(Null)"));
+                      host ? host : "(Null)",
+                      db ? db : "(Null)",
+                      user ? user : "(Null)"));
 
   /* Don't give sigpipe errors if the client doesn't want them */
   set_sigpipe(mysql);
@@ -1819,10 +1768,6 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
   if (client_flag & CLIENT_COMPRESS)		/* We will use compression */
     net->compress=1;
 
-#ifdef CHECK_LICENSE 
-  if (check_license(mysql))
-    goto error;
-#endif
 
   if (db && mysql_select_db(mysql, db))
   {

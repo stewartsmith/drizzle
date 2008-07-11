@@ -70,7 +70,7 @@ int find_type_or_exit(const char *x, TYPELIB *typelib, const char *option)
 
 int find_type(char *x, const TYPELIB *typelib, uint full_name)
 {
-  int find,pos,findpos;
+  int find,pos,findpos=0;
   register char * i;
   register const char *j;
   DBUG_ENTER("find_type");

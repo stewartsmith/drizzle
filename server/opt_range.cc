@@ -9742,7 +9742,7 @@ void QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths(String *key_names,
 }
 
 static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
-                           const char *msg)
+                           const char *msg __attribute__((__unused__)))
 {
   SEL_ARG **key,**end;
   int idx;
@@ -9769,7 +9769,8 @@ static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
 }
 
 
-static void print_ror_scans_arr(TABLE *table, const char *msg,
+static void print_ror_scans_arr(TABLE *table,
+                                const char *msg __attribute__((__unused__)),
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end)
 {

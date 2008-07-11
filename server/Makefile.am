@@ -146,7 +146,7 @@ probes.h: probes.d
 	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
 	rm probes.h.bak
 
-SUFFIXES : .d
+SUFFIXES = .d
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)

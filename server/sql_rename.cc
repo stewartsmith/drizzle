@@ -157,7 +157,9 @@ do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db, char *new_table_name,
   int rc= 1;
   char name[FN_REFLEN];
   const char *new_alias, *old_alias;
-  enum legacy_db_type table_type;
+  /* TODO: What should this really be set to - it doesn't
+     get set anywhere before it's used? */
+  enum legacy_db_type table_type=DB_TYPE_UNKNOWN;
 
   if (lower_case_table_names == 2)
   {
@@ -179,7 +181,7 @@ do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db, char *new_table_name,
   build_table_filename(name, sizeof(name),
                        ren_table->db, old_alias, reg_ext, 0);
 
-  rc= mysql_rename_table(ha_resolve_by_legacy_type(thd, table_type), 
+  rc= mysql_rename_table(ha_resolve_by_legacy_type(thd, table_type),
                                ren_table->db, old_alias,
                                new_db, new_alias, 0);
   if (rc && !skip_error)

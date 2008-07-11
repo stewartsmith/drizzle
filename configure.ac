@@ -1,7 +1,7 @@
 dnl -*- ksh -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)dnl		Minimum Autoconf version required.
+AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
 AC_INIT
 AC_CONFIG_SRCDIR([server/drizzled.cc])
@@ -48,6 +48,7 @@ sinclude(config/ac-macros/large_file.m4)
 sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
+sinclude(config/ac-macros/pkg.m4)
 
 # Remember to add a directory server/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
@@ -205,6 +206,10 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL_PROGRAM}'
 
 # Not critical since the generated file is distributed
 AC_CHECK_PROGS(YACC, ['bison -y -p MYSQL'])
+if test -z "$YACC" && test -d ".bzr"
+then
+  AC_MSG_ERROR(["bison is required for Drizzle to build from a bzr branch"])
+fi
 
 AC_PATH_PROG(uname_prog, uname, no)
 
@@ -263,8 +268,7 @@ then
   # We should use -Wno-invalid-offsetof flag to disable some warnings from gcc
   # regarding offset() usage in C++ which are done in a safe manner in the
   # server
-  CXXFLAGS="$CXXFLAGS ${GCC_WARNINGS} -fno-implicit-templates -fno-exceptions -fno-rtti"
-  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+  CXXFLAGS="$CXXFLAGS -fno-implicit-templates -fno-exceptions -fno-rtti"
   AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
     [1], [Defined by configure. Use explicit template instantiation.])
 fi
@@ -333,6 +337,8 @@ PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
     found_pcre="no"
   else
     found_pcre="yes"
+    # We can't search for these well, but we sure do need them!
+    PCRE_LIBS="-lpcrecpp -lpcre"
   fi
   ])
 if test "x$found_pcre" != "xyes"
@@ -689,21 +695,21 @@ AC_CHECK_FUNCS(strtok_r)
 # First check for gcc and g++
 if test "$ac_cv_c_compiler_gnu" = "yes"
 then
-  DEBUG_CFLAGS="-g"
-  DEBUG_OPTIMIZE_CC="-O"
-  OPTIMIZE_CFLAGS="$MAX_C_OPTIMIZE"
+  SYMBOLS_CFLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CC="-O0"
+  OPTIMIZE_CFLAGS="-O2"
 else
-  DEBUG_CFLAGS="-g"
+  SYMBOLS_CFLAGS="-g"
   DEBUG_OPTIMIZE_CC=""
   OPTIMIZE_CFLAGS="-O"
 fi
 if test "$ac_cv_prog_cxx_g" = "yes"
 then
-  DEBUG_CXXFLAGS="-g"
-  DEBUG_OPTIMIZE_CXX="-O"
-  OPTIMIZE_CXXFLAGS="$MAX_CXX_OPTIMIZE"
+  SYMBOLS_CXXFLAGS="-ggdb3"
+  DEBUG_OPTIMIZE_CXX="-O0"
+  OPTIMIZE_CXXFLAGS="-O2"
 else
-  DEBUG_CXXFLAGS="-g"
+  SYMBOLS_CXXFLAGS="-g"
   DEBUG_OPTIMIZE_CXX=""
   OPTIMIZE_CXXFLAGS="-O"
 fi
@@ -721,6 +727,9 @@ then
   DEBUG_OPTIMIZE_CXX=""
 fi
 
+CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
+CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
+
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
             [Add debug code (yes|no|full) @<:@default=no@:>@ 
@@ -732,15 +741,8 @@ if test "$with_debug" = "yes"
 then
   # Medium debug.
   AC_DEFINE([DBUG_ON], [1], [Use libdbug])
-  CFLAGS="$DEBUG_CFLAGS $DEBUG_OPTIMIZE_CC $CFLAGS"
-  CXXFLAGS="$DEBUG_CXXFLAGS $DEBUG_OPTIMIZE_CXX $CXXFLAGS"
-  
-elif test "$with_debug" = "full"
-then
-  # Full debug. Very slow in some cases
-  AC_DEFINE([DBUG_ON], [1], [Use libdbug])
-  CFLAGS="$DEBUG_CFLAGS $CFLAGS"
-  CXXFLAGS="$DEBUG_CXXFLAGS $CXXFLAGS"
+  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS"
+  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
 else
   # Optimized version. No debug
   AC_DEFINE([DBUG_OFF], [1], [Dont use libdbug])
@@ -1202,14 +1204,14 @@ AC_ARG_ENABLE([unreachable],
 if test "$GCC" = "yes"
 then
 
-  GCC_WARNINGS="-W -Wall"
+  GCC_WARNINGS="-W -Wall -Wextra"
   GXX_WARNINGS="${GCC_WARNINGS}"
 
 
   if test "$ac_warn_pedantic" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls  "
-    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wno-long-long "
+    GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wno-strict-aliasing "
+    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wno-long-long -Wno-strict-aliasing"
   fi
 
   if test "$ac_warn_unreachable" = "yes"

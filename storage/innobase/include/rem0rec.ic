@@ -889,7 +889,7 @@ rec_offs_make_valid(
 				/* in: record */
 	dict_index_t*	index __attribute__((unused)),
 				/* in: record descriptor */
-	ulint*		offsets __attribute__((unused)))
+	const ulint*		offsets __attribute__((unused)))
 				/* in: array returned by rec_get_offsets() */
 {
 #ifdef UNIV_DEBUG

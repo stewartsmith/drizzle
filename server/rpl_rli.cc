@@ -253,7 +253,6 @@ Failed to open the existing relay log info file '%s' (errno %d)",
       goto err;
     }
   }
-  char llbuf1[22], llbuf2[22];
   assert(rli->event_relay_log_pos >= BIN_LOG_HEADER_SIZE);
   assert(my_b_tell(rli->cur_log) == rli->event_relay_log_pos);
 

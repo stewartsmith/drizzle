@@ -4608,7 +4608,7 @@ row_search_autoinc_read_column(
 /*===========================*/
 					/* out: value read from the column */
 	dict_index_t*	index,		/* in: index to read from */
-	const rec_t*	rec,		/* in: current rec */
+	rec_t*	rec,		/* in: current rec */
 	ulint		col_no,		/* in: column number */
 	ibool		unsigned_type)	/* in: signed or unsigned flag */
 {
@@ -4623,14 +4623,9 @@ row_search_autoinc_read_column(
 
 	*offsets_ = sizeof offsets_ / sizeof *offsets_;
 
-	/* TODO: We have to cast away the const of rec for now.  This needs
-	to be fixed later.*/
-	offsets = rec_get_offsets(
-		(rec_t*) rec, index, offsets, ULINT_UNDEFINED, &heap);
+	offsets = rec_get_offsets(rec, index, offsets, ULINT_UNDEFINED, &heap);
 
-	/* TODO: We have to cast away the const of rec for now.  This needs
-	to be fixed later.*/
-	data = rec_get_nth_field((rec_t*)rec, offsets, col_no, &len);
+	data = rec_get_nth_field(rec, offsets, col_no, &len);
 
 	ut_a(len != UNIV_SQL_NULL);
 	ut_a(len <= sizeof value);
@@ -4679,7 +4674,7 @@ row_search_autoinc_read_column(
 /***********************************************************************
 Get the last row. */
 static
-const rec_t*
+rec_t*
 row_search_autoinc_get_rec(
 /*=======================*/
 					/* out: current rec or NULL */
@@ -4687,7 +4682,7 @@ row_search_autoinc_get_rec(
 	mtr_t*		mtr)		/* in: mini transaction */
 {
 	do {
-		const rec_t* rec = btr_pcur_get_rec(pcur);
+		rec_t* rec = btr_pcur_get_rec(pcur);
 
 		if (page_rec_is_user_rec(rec)) {
 			return(rec);
@@ -4741,7 +4736,7 @@ row_search_max_autoinc(
 			FALSE, index, BTR_SEARCH_LEAF, &pcur, TRUE, &mtr);
 
 		if (page_get_n_recs(btr_pcur_get_page(&pcur)) > 0) {
-			const rec_t*	rec;
+			rec_t*	rec;
 
 			rec = row_search_autoinc_get_rec(&pcur, &mtr);
 

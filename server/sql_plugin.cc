@@ -2557,7 +2557,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
   options[0].arg_type= options[1].arg_type= NO_ARG;
   options[0].def_value= options[1].def_value= **enabled;
   options[0].value= options[0].u_max_value=
-  options[1].value= options[1].u_max_value= (uchar**) (name - 1);
+  options[1].value= options[1].u_max_value= (char**) (name - 1);
   options+= 2;
 
   /*
@@ -2714,10 +2714,10 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     plugin_opt_set_limits(options, opt);
 
     if (opt->flags & PLUGIN_VAR_THDLOCAL)
-      options->value= options->u_max_value= (uchar**)
+      options->value= options->u_max_value= (char**)
         (global_system_variables.dynamic_variables_ptr + offset);
     else
-      options->value= options->u_max_value= *(uchar***) (opt + 1);
+      options->value= options->u_max_value= *(char***) (opt + 1);
 
     options[1]= options[0];
     options[1].name= p= (char*) alloc_root(mem_root, optnamelen + 8);
