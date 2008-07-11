@@ -58,19 +58,19 @@ public:
     @param metadata_size Size of the field_metadata array
     @param null_bitmap The bitmap of fields that can be null
    */
-  table_def(field_type *types, ulong size, uchar *field_metadata, 
-      int metadata_size, uchar *null_bitmap)
+  table_def(field_type *types, uint32_t size, unsigned char *field_metadata, 
+      int metadata_size, unsigned char *null_bitmap)
     : m_size(size), m_type(0), m_field_metadata_size(metadata_size),
       m_field_metadata(0), m_null_bits(0), m_memory(NULL)
   {
-    m_memory= (uchar *)my_multi_malloc(MYF(MY_WME),
+    m_memory= (unsigned char *)my_multi_malloc(MYF(MY_WME),
                                        &m_type, size,
                                        &m_field_metadata,
-                                       size * sizeof(uint16),
+                                       size * sizeof(uint16_t),
                                        &m_null_bits, (size + 7) / 8,
                                        NULL);
 
-    bzero(m_field_metadata, size * sizeof(uint16));
+    bzero(m_field_metadata, size * sizeof(uint16_t));
 
     if (m_type)
       memcpy(m_type, types, size);
@@ -104,7 +104,7 @@ public:
         case MYSQL_TYPE_ENUM:
         case MYSQL_TYPE_STRING:
         {
-          uint16 x= field_metadata[index++] << 8U; // real_type
+          uint16_t x= field_metadata[index++] << 8U; // real_type
           x+= field_metadata[index++];            // pack or field length
           m_field_metadata[i]= x;
           break;
@@ -121,7 +121,7 @@ public:
         }
         case MYSQL_TYPE_NEWDECIMAL:
         {
-          uint16 x= field_metadata[index++] << 8U; // precision
+          uint16_t x= field_metadata[index++] << 8U; // precision
           x+= field_metadata[index++];            // decimals
           m_field_metadata[i]= x;
           break;
@@ -147,7 +147,7 @@ public:
 
     @return The number of fields that there is type data for.
    */
-  ulong size() const { return m_size; }
+  uint32_t size() const { return m_size; }
 
 
   /*
@@ -159,7 +159,7 @@ public:
     <code>index</code>. Currently, only the type identifier is
     returned.
    */
-  field_type type(ulong index) const
+  field_type type(uint32_t index) const
   {
     assert(index < m_size);
     return m_type[index];
@@ -178,7 +178,7 @@ public:
     corresponding fields to properly extract the data from the binary log 
     in the event that the master's field is smaller than the slave.
   */
-  uint16 field_metadata(uint index) const
+  uint16_t field_metadata(uint32_t index) const
   {
     assert(index < m_size);
     if (m_field_metadata_size)
@@ -191,7 +191,7 @@ public:
     This function returns whether the field on the master can be null.
     This value is derived from field->maybe_null().
   */
-  my_bool maybe_null(uint index) const
+  my_bool maybe_null(uint32_t index) const
   {
     assert(index < m_size);
     return ((m_null_bits[(index / 8)] & 
@@ -205,7 +205,7 @@ public:
     WL#3915) or needs to advance the pointer for the fields in the raw 
     data from the master to a specific column.
   */
-  uint32 calc_field_size(uint col, uchar *master_data) const;
+  uint32 calc_field_size(uint32_t col, unsigned char *master_data) const;
 
   /**
     Decide if the table definition is compatible with a table.
@@ -227,12 +227,12 @@ public:
   int compatible_with(Relay_log_info const *rli, TABLE *table) const;
 
 private:
-  ulong m_size;           // Number of elements in the types array
+  uint32_t m_size;           // Number of elements in the types array
   field_type *m_type;                     // Array of type descriptors
-  uint m_field_metadata_size;
-  uint16 *m_field_metadata;
-  uchar *m_null_bits;
-  uchar *m_memory;
+  uint32_t m_field_metadata_size;
+  uint16_t *m_field_metadata;
+  unsigned char *m_null_bits;
+  unsigned char *m_memory;
 };
 
 /**

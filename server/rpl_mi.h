@@ -89,7 +89,7 @@ class Master_info : public Slave_reporting_capability
   bool inited;
   volatile bool abort_slave;
   volatile uint slave_running;
-  volatile ulong slave_run_id;
+  volatile uint32_t slave_run_id;
   /*
      The difference in seconds between the clock of the master and the clock of
      the slave (second - first). It must be signed as it may be <0 or >0.

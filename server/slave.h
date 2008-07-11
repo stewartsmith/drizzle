@@ -29,7 +29,7 @@
 */
 
 /**
-   The maximum is defined as (ULONG_MAX/1000) with 4 bytes ulong
+   The maximum is defined as (ULONG_MAX/1000) with 4 bytes uint32_t
 */
 #define SLAVE_MAX_HEARTBEAT_PERIOD 4294967
 
@@ -106,7 +106,7 @@ class Master_info;
   (so that you have to update the .index file).
 */
 
-extern ulong master_retry_count;
+extern uint32_t master_retry_count;
 extern MY_BITMAP slave_error_mask;
 extern bool use_slave_mask;
 extern char *slave_load_tmpdir;
@@ -114,7 +114,7 @@ extern char *master_info_file, *relay_log_info_file;
 extern char *opt_relay_logname, *opt_relaylog_index_name;
 extern my_bool opt_skip_slave_start, opt_reckless_slave;
 extern my_bool opt_log_slave_updates;
-extern ulonglong relay_log_space_limit;
+extern uint64_t relay_log_space_limit;
 
 /*
   3 possible values for Master_info::slave_running and
@@ -142,44 +142,44 @@ extern ulonglong relay_log_space_limit;
 */
 #define SLAVE_FORCE_ALL 4
 
-int init_slave();
+int32_t init_slave();
 void init_slave_skip_errors(const char* arg);
 bool flush_relay_log_info(Relay_log_info* rli);
-int register_slave_on_master(MYSQL* mysql);
-int terminate_slave_threads(Master_info* mi, int thread_mask,
+int32_t register_slave_on_master(MYSQL* mysql);
+int32_t terminate_slave_threads(Master_info* mi, int32_t thread_mask,
 			     bool skip_lock = 0);
-int start_slave_threads(bool need_slave_mutex, bool wait_for_start,
+int32_t start_slave_threads(bool need_slave_mutex, bool wait_for_start,
 			Master_info* mi, const char* master_info_fname,
-			const char* slave_info_fname, int thread_mask);
+			const char* slave_info_fname, int32_t thread_mask);
 /*
   cond_lock is usually same as start_lock. It is needed for the case when
   start_lock is 0 which happens if start_slave_thread() is called already
   inside the start_lock section, but at the same time we want a
   pthread_cond_wait() on start_cond,start_lock
 */
-int start_slave_thread(pthread_handler h_func, pthread_mutex_t* start_lock,
+int32_t start_slave_thread(pthread_handler h_func, pthread_mutex_t* start_lock,
 		       pthread_mutex_t *cond_lock,
 		       pthread_cond_t* start_cond,
-		       volatile uint *slave_running,
-		       volatile ulong *slave_run_id,
+		       volatile uint32_t *slave_running,
+		       volatile uint32_t *slave_run_id,
 		       Master_info* mi,
                        bool high_priority);
 
 /* If fd is -1, dump to NET */
-int mysql_table_dump(THD* thd, const char* db,
-		     const char* tbl_name, int fd = -1);
+int32_t mysql_table_dump(THD* thd, const char* db,
+		     const char* tbl_name, int32_t fd = -1);
 
 /* retrieve table from master and copy to slave*/
-int fetch_master_table(THD* thd, const char* db_name, const char* table_name,
+int32_t fetch_master_table(THD* thd, const char* db_name, const char* table_name,
 		       Master_info* mi, MYSQL* mysql, bool overwrite);
 
 bool show_master_info(THD* thd, Master_info* mi);
 bool show_binlog_info(THD* thd);
-bool rpl_master_has_bug(Relay_log_info *rli, uint bug_id, bool report= true);
+bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report= true);
 bool rpl_master_erroneous_autoinc(THD* thd);
 
 const char *print_slave_db_safe(const char *db);
-int check_expected_error(THD* thd, Relay_log_info const *rli, int error_code);
+int32_t check_expected_error(THD* thd, Relay_log_info const *rli, int32_t error_code);
 void skip_load_data_infile(NET* net);
 
 void end_slave(); /* clean up */
@@ -188,17 +188,17 @@ void clear_slave_error(Relay_log_info* rli);
 void end_relay_log_info(Relay_log_info* rli);
 void lock_slave_threads(Master_info* mi);
 void unlock_slave_threads(Master_info* mi);
-void init_thread_mask(int* mask,Master_info* mi,bool inverse);
-int init_relay_log_pos(Relay_log_info* rli,const char* log,ulonglong pos,
+void init_thread_mask(int32_t* mask,Master_info* mi,bool inverse);
+int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,uint64_t pos,
 		       bool need_data_lock, const char** errmsg,
                        bool look_for_description_event);
 
-int purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
+int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
 		     const char** errmsg);
 void set_slave_thread_options(THD* thd);
 void set_slave_thread_default_charset(THD *thd, Relay_log_info const *rli);
 void rotate_relay_log(Master_info* mi);
-int apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
+int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
                                bool skip);
 
 pthread_handler_t handle_slave_io(void *arg);
@@ -208,10 +208,10 @@ extern Master_info main_mi, *active_mi; /* active_mi for multi-master */
 extern LIST master_list;
 extern my_bool replicate_same_server_id;
 
-extern int disconnect_slave_event_count, abort_slave_event_count ;
+extern int32_t disconnect_slave_event_count, abort_slave_event_count ;
 
 /* the master variables are defaults read from my.cnf or command line */
-extern uint master_port, master_connect_retry, report_port;
+extern uint32_t master_port, master_connect_retry, report_port;
 extern char * master_user, *master_password, *master_host;
 extern char *master_info_file, *relay_log_info_file, *report_user;
 extern char *report_host, *report_password;
