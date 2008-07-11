@@ -1958,7 +1958,6 @@ pthread_handler_t handle_slave_io(void *arg)
   uint32_t retry_count;
   bool suppress_warnings;
   uint32_t retry_count_reg= 0, retry_count_dump= 0, retry_count_event= 0;
-  // needs to call my_thread_init(), otherwise we get a coredump in DBUG_ stuff
   my_thread_init();
 
   assert(mi->inited);
@@ -1971,7 +1970,7 @@ pthread_handler_t handle_slave_io(void *arg)
 
   mi->events_till_disconnect = disconnect_slave_event_count;
 
-  thd= new THD; // note that contructor of THD uses DBUG_ !
+  thd= new THD;
   THD_CHECK_SENTRY(thd);
   mi->io_thd = thd;
 
@@ -2237,7 +2236,6 @@ pthread_handler_t handle_slave_sql(void *arg)
   Relay_log_info* rli = &((Master_info*)arg)->rli;
   const char *errmsg;
 
-  // needs to call my_thread_init(), otherwise we get a coredump in DBUG_ stuff
   my_thread_init();
 
   assert(rli->inited);
@@ -2246,7 +2244,7 @@ pthread_handler_t handle_slave_sql(void *arg)
   errmsg= 0;
   rli->events_till_abort = abort_slave_event_count;
 
-  thd = new THD; // note that contructor of THD uses DBUG_ !
+  thd = new THD;
   thd->thread_stack = (char*)&thd; // remember where our stack is
   rli->sql_thd= thd;
   

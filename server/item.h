@@ -1173,8 +1173,6 @@ public:
   virtual Item *update_value_transformer(uchar *select_arg);
   virtual void print(String *str, enum_query_type query_type);
 
-  void dbug_print() {}
-
   friend class Item_default_value;
   friend class Item_insert_value;
   friend class st_select_lex_unit;
@@ -2199,18 +2197,6 @@ class Cached_item_field :public Cached_item
   uint length;
 
 public:
-  void dbug_print()
-  {
-    uchar *org_ptr;
-    org_ptr= field->ptr;
-    fprintf(DBUG_FILE, "new: ");
-    field->dbug_print();
-    field->ptr= buff;
-    fprintf(DBUG_FILE, ", old: ");
-    field->dbug_print();
-    field->ptr= org_ptr;
-    fprintf(DBUG_FILE, "\n");
-  }
   Cached_item_field(Field *arg_field) : field(arg_field)
   {
     field= arg_field;

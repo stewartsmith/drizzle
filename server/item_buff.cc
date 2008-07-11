@@ -122,7 +122,6 @@ bool Cached_item_int::cmp(void)
 bool Cached_item_field::cmp(void)
 {
   bool tmp= field->cmp(buff) != 0;		// This is not a blob!
-  dbug_print();
   if (tmp)
     field->get_image(buff,length,field->charset());
   if (null_value != field->is_null())

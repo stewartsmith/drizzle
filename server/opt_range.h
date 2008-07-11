@@ -251,11 +251,6 @@ public:
     Table record buffer used by this quick select.
   */
   uchar    *record;
-  /*
-    Print quick select information to DBUG_FILE. Caller is responsible
-    for locking DBUG_FILE before this call and unlocking it afterwards.
-  */
-  virtual void dbug_dump(int indent, bool verbose)= 0;
 };
 
 
@@ -336,7 +331,6 @@ public:
   int get_type() { return QS_TYPE_RANGE; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
-  void dbug_dump(int indent, bool verbose);
 private:
   /* Used only by QUICK_SELECT_DESC */
   QUICK_RANGE_SELECT(const QUICK_RANGE_SELECT& org) : QUICK_SELECT_I()
@@ -450,7 +444,6 @@ public:
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
   bool is_keys_used(const MY_BITMAP *fields);
-  void dbug_dump(int indent, bool verbose);
 
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -507,7 +500,6 @@ public:
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
   bool is_keys_used(const MY_BITMAP *fields);
-  void dbug_dump(int indent, bool verbose);
   int init_ror_merged_scan(bool reuse_handler);
   bool push_quick_back(QUICK_RANGE_SELECT *quick_sel_range);
 
@@ -559,7 +551,6 @@ public:
   void add_keys_and_lengths(String *key_names, String *used_lengths);
   void add_info_string(String *str);
   bool is_keys_used(const MY_BITMAP *fields);
-  void dbug_dump(int indent, bool verbose);
 
   bool push_quick_back(QUICK_SELECT_I *quick_sel_range);
 
@@ -674,7 +665,6 @@ public:
   bool unique_key_range() { return false; }
   int get_type() { return QS_TYPE_GROUP_MIN_MAX; }
   void add_keys_and_lengths(String *key_names, String *used_lengths);
-  void dbug_dump(int indent, bool verbose);
 };
 
 
@@ -717,7 +707,7 @@ class SQL_SELECT :public Sql_alloc {
   {
     key_map tmp;
     tmp.set_all();
-    return test_quick_select(thd, tmp, 0, limit, force_quick_range, FALSE) < 0;
+    return test_quick_select(thd, tmp, 0, limit, force_quick_range, false) < 0;
   }
   inline bool skip_record() { return cond ? cond->val_int() == 0 : 0; }
   int test_quick_select(THD *thd, key_map keys, table_map prev_tables,

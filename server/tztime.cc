@@ -231,7 +231,7 @@ find_time_range(my_time_t t, const my_time_t *range_boundaries,
   /*
     Function will work without this assertion but result would be meaningless.
   */
-  DBUG_ASSERT(higher_bound > 0 && t >= range_boundaries[0]);
+  assert(higher_bound > 0 && t >= range_boundaries[0]);
 
   /*
     Do binary search for minimal interval which contain t. We preserve:
@@ -382,13 +382,13 @@ static my_time_t
 sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 {
   /* Guard against my_time_t overflow(on system with 32 bit my_time_t) */
-  DBUG_ASSERT(!(year == TIMESTAMP_MAX_YEAR && mon == 1 && mday > 17));
+  assert(!(year == TIMESTAMP_MAX_YEAR && mon == 1 && mday > 17));
 #ifndef WE_WANT_TO_HANDLE_UNORMALIZED_DATES
   /*
     It turns out that only whenever month is normalized or unnormalized
     plays role.
   */
-  DBUG_ASSERT(mon > 0 && mon < 13);
+  assert(mon > 0 && mon < 13);
   long days= year * DAYS_PER_NYEAR - EPOCH_YEAR * DAYS_PER_NYEAR +
              LEAPS_THRU_END_OF(year - 1) -
              LEAPS_THRU_END_OF(EPOCH_YEAR - 1);
@@ -489,10 +489,8 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
   uint i;
   int shift= 0;
 
-  DBUG_ENTER("TIME_to_gmt_sec");
-
   if (!validate_timestamp_range(t))
-    DBUG_RETURN(0);
+    return(0);
 
 
   /* We need this for correct leap seconds handling */
@@ -529,7 +527,7 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
                            saved_seconds ? 0 : t->second);
 
   /* We have at least one range */
-  DBUG_ASSERT(sp->revcnt >= 1);
+  assert(sp->revcnt >= 1);
 
   if (local_t < sp->revts[0] || local_t > sp->revts[sp->revcnt])
   {
@@ -537,7 +535,7 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
       This means that source time can't be represented as my_time_t due to
       limited my_time_t range.
     */
-    DBUG_RETURN(0);
+    return(0);
   }
 
   /* binary search for our range */
@@ -553,7 +551,7 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
     if (local_t > (my_time_t) (TIMESTAMP_MAX_VALUE - shift * SECS_PER_DAY +
                                sp->revtis[i].rt_offset - saved_seconds))
     {
-      DBUG_RETURN(0);                           /* my_time_t overflow */
+      return(0);                           /* my_time_t overflow */
     }
     local_t+= shift * SECS_PER_DAY;
   }
@@ -576,7 +574,7 @@ TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
   if (local_t < TIMESTAMP_MIN_VALUE)
     local_t= 0;
 
-  DBUG_RETURN(local_t);
+  return(local_t);
 }
 
 
@@ -731,7 +729,7 @@ Time_zone_utc::TIME_to_gmt_sec(const MYSQL_TIME *t __attribute__((__unused__)),
                                bool *in_dst_time_gap __attribute__((__unused__))) const
 {
   /* Should be never called */
-  DBUG_ASSERT(0);
+  assert(0);
   return 0;
 }
 
@@ -777,7 +775,7 @@ const String *
 Time_zone_utc::get_name() const
 {
   /* Should be never called */
-  DBUG_ASSERT(0);
+  assert(0);
   return 0;
 }
 

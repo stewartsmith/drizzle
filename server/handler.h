@@ -605,9 +605,9 @@ struct THD_TRANS
     * stmt.modified_non_trans_table is used to keep track of
     modified non-transactional tables of top-level statements. At
     the end of the previous statement and at the beginning of the session,
-    it is reset to FALSE.  If such functions
+    it is reset to false.  If such functions
     as mysql_insert, mysql_update, mysql_delete etc modify a
-    non-transactional table, they set this flag to TRUE.  At the
+    non-transactional table, they set this flag to true.  At the
     end of the statement, the value of stmt.modified_non_trans_table 
     is merged with all.modified_non_trans_table and gets reset.
     * all.modified_non_trans_table is reset at the end of transaction
@@ -618,13 +618,13 @@ struct THD_TRANS
     At entrance into a sub-statement, a copy of the value of
     stmt.modified_non_trans_table (containing the changes of the
     outer statement) is saved on stack. Then 
-    stmt.modified_non_trans_table is reset to FALSE and the
+    stmt.modified_non_trans_table is reset to false and the
     substatement is executed. Then the new value is merged with the
     saved value.
   */
   bool modified_non_trans_table;
 
-  void reset() { no_2pc= FALSE; modified_non_trans_table= FALSE; }
+  void reset() { no_2pc= false; modified_non_trans_table= false; }
 };
 
 
@@ -651,9 +651,9 @@ public:
   /** Register this storage engine in the given transaction context. */
   void register_ha(THD_TRANS *trans, handlerton *ht_arg)
   {
-    DBUG_ASSERT(m_flags == 0);
-    DBUG_ASSERT(m_ht == NULL);
-    DBUG_ASSERT(m_next == NULL);
+    assert(m_flags == 0);
+    assert(m_ht == NULL);
+    assert(m_next == NULL);
 
     m_ht= ht_arg;
     m_flags= (int) TRX_READ_ONLY; /* Assume read-only at start. */
@@ -674,12 +674,12 @@ public:
 
   void set_trx_read_write()
   {
-    DBUG_ASSERT(is_started());
+    assert(is_started());
     m_flags|= (int) TRX_READ_WRITE;
   }
   bool is_trx_read_write() const
   {
-    DBUG_ASSERT(is_started());
+    assert(is_started());
     return m_flags & (int) TRX_READ_WRITE;
   }
   bool is_started() const { return m_ht != NULL; }
@@ -691,18 +691,18 @@ public:
       Can be called many times, e.g. when we have many
       read-write statements in a transaction.
     */
-    DBUG_ASSERT(is_started());
+    assert(is_started());
     if (stmt_trx->is_trx_read_write())
       set_trx_read_write();
   }
   Ha_trx_info *next() const
   {
-    DBUG_ASSERT(is_started());
+    assert(is_started());
     return m_next;
   }
   handlerton *ht() const
   {
-    DBUG_ASSERT(is_started());
+    assert(is_started());
     return m_ht;
   }
 private:
@@ -1141,10 +1141,10 @@ public:
   RANGE_SEQ_IF mrr_funcs;  /* Range sequence traversal functions */
   HANDLER_BUFFER *multi_range_buffer; /* MRR buffer info */
   uint ranges_in_seq; /* Total number of ranges in the traversed sequence */
-  /* TRUE <=> source MRR ranges and the output are ordered */
+  /* true <=> source MRR ranges and the output are ordered */
   bool mrr_is_output_sorted;
 
-  /** TRUE <=> we're currently traversing a range in mrr_cur_range. */
+  /** true <=> we're currently traversing a range in mrr_cur_range. */
   bool mrr_have_range;
   /** Current range (the one we're now returning rows from) */
   KEY_MULTI_RANGE mrr_cur_range;
@@ -1155,7 +1155,7 @@ public:
   int key_compare_result_on_equal;
   bool eq_range;
   /* 
-    TRUE <=> the engine guarantees that returned records are within the range
+    true <=> the engine guarantees that returned records are within the range
     being scanned.
   */
   bool in_range_check_pushed_down;
@@ -1200,18 +1200,18 @@ public:
   handler(handlerton *ht_arg, TABLE_SHARE *share_arg)
     :table_share(share_arg), table(0),
     estimation_rows_to_insert(0), ht(ht_arg),
-    ref(0), in_range_check_pushed_down(FALSE),
+    ref(0), in_range_check_pushed_down(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(my_off_t)),
     ft_handler(0), inited(NONE),
-    locked(FALSE), implicit_emptied(0),
+    locked(false), implicit_emptied(0),
     pushed_cond(0), pushed_idx_cond(NULL), pushed_idx_cond_keyno(MAX_KEY),
     next_insert_id(0), insert_id_for_cur_row(0)
     {}
   virtual ~handler(void)
   {
-    DBUG_ASSERT(locked == FALSE);
-    /* TODO: DBUG_ASSERT(inited == NONE); */
+    assert(locked == false);
+    /* TODO: assert(inited == NONE); */
   }
   virtual handler *clone(MEM_ROOT *mem_root);
   /** This is called after create to allow us to set up cached variables */
@@ -1225,35 +1225,31 @@ public:
   int ha_index_init(uint idx, bool sorted)
   {
     int result;
-    DBUG_ENTER("ha_index_init");
-    DBUG_ASSERT(inited==NONE);
+    assert(inited==NONE);
     if (!(result= index_init(idx, sorted)))
       inited=INDEX;
     end_range= NULL;
-    DBUG_RETURN(result);
+    return(result);
   }
   int ha_index_end()
   {
-    DBUG_ENTER("ha_index_end");
-    DBUG_ASSERT(inited==INDEX);
+    assert(inited==INDEX);
     inited=NONE;
     end_range= NULL;
-    DBUG_RETURN(index_end());
+    return(index_end());
   }
   int ha_rnd_init(bool scan)
   {
     int result;
-    DBUG_ENTER("ha_rnd_init");
-    DBUG_ASSERT(inited==NONE || (inited==RND && scan));
+    assert(inited==NONE || (inited==RND && scan));
     inited= (result= rnd_init(scan)) ? NONE: RND;
-    DBUG_RETURN(result);
+    return(result);
   }
   int ha_rnd_end()
   {
-    DBUG_ENTER("ha_rnd_end");
-    DBUG_ASSERT(inited==RND);
+    assert(inited==RND);
     inited=NONE;
-    DBUG_RETURN(rnd_end());
+    return(rnd_end());
   }
   int ha_reset();
   /* this is necessary in many places, e.g. in HANDLER command */
@@ -1361,8 +1357,8 @@ public:
         ((flags & HA_CHECK_DUP_KEY) &&
          (error == HA_ERR_FOUND_DUPP_KEY ||
           error == HA_ERR_FOUND_DUPP_UNIQUE)))
-      return FALSE;
-    return TRUE;
+      return false;
+    return true;
   }
 
   /**
@@ -1386,7 +1382,7 @@ public:
   virtual enum row_type get_row_type() const { return ROW_TYPE_NOT_USED; }
 
   virtual const char *index_type(uint key_number __attribute__((__unused__)))
-  { DBUG_ASSERT(0); return "";}
+  { assert(0); return "";}
 
 
   /**
@@ -1423,7 +1419,7 @@ public:
   */
   virtual int exec_bulk_update(uint *dup_key_found __attribute__((__unused__)))
   {
-    DBUG_ASSERT(FALSE);
+    assert(false);
     return HA_ERR_WRONG_COMMAND;
   }
   /**
@@ -1439,7 +1435,7 @@ public:
   */
   virtual int end_bulk_delete()
   {
-    DBUG_ASSERT(FALSE);
+    assert(false);
     return HA_ERR_WRONG_COMMAND;
   }
   /**
@@ -1527,7 +1523,7 @@ public:
   virtual void position(const uchar *record)=0;
   virtual int info(uint)=0; // see my_base.h for full description
   virtual uint32 calculate_key_hash_value(Field **field_array __attribute__((__unused__)))
-  { DBUG_ASSERT(0); return 0; }
+  { assert(0); return 0; }
   virtual int extra(enum ha_extra_function operation __attribute__((__unused__)))
   { return 0; }
   virtual int extra_opt(enum ha_extra_function operation,
@@ -1564,7 +1560,6 @@ public:
                                   uint64_t *nb_reserved_values);
   void set_next_insert_id(uint64_t id)
   {
-    DBUG_PRINT("info",("auto_increment: next value %lu", (uint32_t)id));
     next_insert_id= id;
   }
   void restore_auto_increment(uint64_t prev_insert_id)
@@ -1602,11 +1597,11 @@ public:
 
     @param  index            Index to check if foreign key uses it
 
-    @retval   TRUE            Foreign key defined on table or index
-    @retval   FALSE           No foreign key defined
+    @retval   true            Foreign key defined on table or index
+    @retval   false           No foreign key defined
   */
   virtual bool is_fk_defined_on_table_or_index(uint index __attribute__((__unused__)))
-  { return FALSE; }
+  { return false; }
   virtual char* get_foreign_key_create_info(void)
   { return(NULL);}  /* gets foreign key create string from InnoDB */
   /** used in ALTER TABLE; 1 if changing storage engine is allowed */
@@ -1731,13 +1726,13 @@ public:
 
     @note If engine_data supplied with this function is different from
       engine_data supplied with the callback function, and the callback returns
-      FALSE, a table invalidation on the current table will occur.
+      false, a table invalidation on the current table will occur.
 
     @return Upon success the engine_callback will point to the storage engine
       call back function, if any, and engine_data will point to any storage
       engine data used in the specific implementation.
-      @retval TRUE Success
-      @retval FALSE The specified table or current statement should not be
+      @retval true Success
+      @retval false The specified table or current statement should not be
         cached
   */
 
@@ -1749,16 +1744,16 @@ public:
                                uint64_t *engine_data __attribute__((__unused__)))
   {
     *engine_callback= 0;
-    return TRUE;
+    return true;
   }
 
 
  /*
-   @retval TRUE   Primary key (if there is one) is clustered
+   @retval true   Primary key (if there is one) is clustered
                   key covering all fields
-   @retval FALSE  otherwise
+   @retval false  otherwise
  */
- virtual bool primary_key_is_clustered() { return FALSE; }
+ virtual bool primary_key_is_clustered() { return false; }
  virtual int cmp_ref(const uchar *ref1, const uchar *ref2)
  {
    return memcmp(ref1, ref2, ref_length);
@@ -1843,12 +1838,11 @@ public:
                             HA_ALTER_FLAGS *alter_flags __attribute__((__unused__)),
                             uint table_changes)
  {
-   DBUG_ENTER("check_if_supported_alter");
    if (this->check_if_incompatible_data(create_info, table_changes)
        == COMPATIBLE_DATA_NO)
-     DBUG_RETURN(HA_ALTER_NOT_SUPPORTED);
+     return(HA_ALTER_NOT_SUPPORTED);
    else
-     DBUG_RETURN(HA_ALTER_SUPPORTED_WAIT_LOCK);
+     return(HA_ALTER_SUPPORTED_WAIT_LOCK);
  }
  /**
    Tell storage engine to prepare for the on-line alter table (pre-alter)
@@ -2087,7 +2081,7 @@ private:
                               uchar *new_data __attribute__((__unused__)),
                               uint *dup_key_found __attribute__((__unused__)))
   {
-    DBUG_ASSERT(FALSE);
+    assert(false);
     return HA_ERR_WRONG_COMMAND;
   }
   /**
@@ -2113,7 +2107,7 @@ private:
                       HA_CHECK_OPT* check_opt __attribute__((__unused__)))
   { return HA_ADMIN_NOT_IMPLEMENTED; }
   virtual bool check_and_repair(THD *thd __attribute__((__unused__)))
-  { return TRUE; }
+  { return true; }
   virtual int disable_indexes(uint mode __attribute__((__unused__)))
   { return HA_ERR_WRONG_COMMAND; }
   virtual int enable_indexes(uint mode __attribute__((__unused__)))
@@ -2130,7 +2124,7 @@ private:
                                    const char *old_name __attribute__((__unused__)),
                                    int action_flag __attribute__((__unused__)),
                                    HA_CREATE_INFO *info __attribute__((__unused__)))
-  { return FALSE; }
+  { return false; }
 };
 
 
@@ -2168,12 +2162,12 @@ private:
   uchar *rowids_buf_last;  /* When reading: end of used buffer space */
   uchar *rowids_buf_end;   /* End of the buffer */
 
-  bool dsmrr_eof; /* TRUE <=> We have reached EOF when reading index tuples */
+  bool dsmrr_eof; /* true <=> We have reached EOF when reading index tuples */
 
-  /* TRUE <=> need range association, buffer holds {rowid, range_id} pairs */
+  /* true <=> need range association, buffer holds {rowid, range_id} pairs */
   bool is_mrr_assoc;
 
-  bool use_default_impl; /* TRUE <=> shortcut all calls to default MRR impl */
+  bool use_default_impl; /* true <=> shortcut all calls to default MRR impl */
 public:
   void init(handler *h_arg, TABLE *table_arg)
   {
@@ -2209,8 +2203,8 @@ extern TYPELIB myisam_stats_method_typelib;
 extern uint32_t total_ha, total_ha_2pc;
 
        /* Wrapper functions */
-#define ha_commit(thd) (ha_commit_trans((thd), TRUE))
-#define ha_rollback(thd) (ha_rollback_trans((thd), TRUE))
+#define ha_commit(thd) (ha_commit_trans((thd), true))
+#define ha_rollback(thd) (ha_rollback_trans((thd), true))
 
 /* lookups */
 handlerton *ha_default_handlerton(THD *thd);
@@ -2235,13 +2229,13 @@ static inline const char *ha_resolve_storage_engine_name(const handlerton *db_ty
 
 static inline bool ha_check_storage_engine_flag(const handlerton *db_type, uint32 flag)
 {
-  return db_type == NULL ? FALSE : test(db_type->flags & flag);
+  return db_type == NULL ? false : test(db_type->flags & flag);
 }
 
 static inline bool ha_storage_engine_is_enabled(const handlerton *db_type)
 {
   return (db_type && db_type->create) ?
-         (db_type->state == SHOW_OPTION_YES) : FALSE;
+         (db_type->state == SHOW_OPTION_YES) : false;
 }
 
 /* basic stuff */

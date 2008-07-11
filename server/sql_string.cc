@@ -46,12 +46,12 @@ bool String::real_alloc(uint32 arg_length)
   {
     free();
     if (!(Ptr=(char*) my_malloc(arg_length,MYF(MY_WME))))
-      return TRUE;
+      return true;
     Alloced_length=arg_length;
     alloced=1;
   }
   Ptr[0]=0;
-  return FALSE;
+  return false;
 }
 
 
@@ -74,7 +74,7 @@ bool String::realloc(uint32 alloc_length)
 	Alloced_length=len;
       }
       else
-	return TRUE;				// Signal error
+	return true;				// Signal error
     }
     else if ((new_ptr= (char*) my_malloc(len,MYF(MY_WME))))
     {
@@ -86,10 +86,10 @@ bool String::realloc(uint32 alloc_length)
       alloced=1;
     }
     else
-      return TRUE;			// Signal error
+      return true;			// Signal error
   }
   Ptr[alloc_length]=0;			// This make other funcs shorter
-  return FALSE;
+  return false;
 }
 
 bool String::set_int(longlong num, bool unsigned_flag, CHARSET_INFO *cs)
@@ -98,10 +98,10 @@ bool String::set_int(longlong num, bool unsigned_flag, CHARSET_INFO *cs)
   int base= unsigned_flag ? 10 : -10;
 
   if (alloc(l))
-    return TRUE;
+    return true;
   str_length=(uint32) (cs->cset->longlong10_to_str)(cs,Ptr,l,base,num);
   str_charset=cs;
-  return FALSE;
+  return false;
 }
 
 bool String::set_real(double num,uint decimals, CHARSET_INFO *cs)
@@ -129,29 +129,29 @@ bool String::copy()
     Alloced_length=0;				// Force realloc
     return realloc(str_length);
   }
-  return FALSE;
+  return false;
 }
 
 bool String::copy(const String &str)
 {
   if (alloc(str.str_length))
-    return TRUE;
+    return true;
   str_length=str.str_length;
   bmove(Ptr,str.Ptr,str_length);		// May be overlapping
   Ptr[str_length]=0;
   str_charset=str.str_charset;
-  return FALSE;
+  return false;
 }
 
 bool String::copy(const char *str,uint32 arg_length, CHARSET_INFO *cs)
 {
   if (alloc(arg_length))
-    return TRUE;
+    return true;
   if ((str_length=arg_length))
     memcpy(Ptr,str,arg_length);
   Ptr[arg_length]=0;
   str_charset=cs;
-  return FALSE;
+  return false;
 }
 
 
@@ -189,8 +189,8 @@ bool String::needs_conversion(uint32 arg_length,
       my_charset_same(from_cs, to_cs) ||
       ((from_cs == &my_charset_bin) &&
        (!(*offset=(arg_length % to_cs->mbminlen)))))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }
 
 
@@ -224,11 +224,11 @@ bool String::copy_aligned(const char *str,uint32 arg_length, uint32 offset,
 {
   /* How many bytes are in incomplete character */
   offset= cs->mbmaxlen - offset; /* How many zeros we should prepend */
-  DBUG_ASSERT(offset && offset != cs->mbmaxlen);
+  assert(offset && offset != cs->mbmaxlen);
 
   uint32 aligned_length= arg_length + offset;
   if (alloc(aligned_length))
-    return TRUE;
+    return true;
   
   /*
     Note, this is only safe for big-endian UCS-2.
@@ -241,7 +241,7 @@ bool String::copy_aligned(const char *str,uint32 arg_length, uint32 offset,
   /* str_length is always >= 0 as arg_length is != 0 */
   str_length= aligned_length;
   str_charset= cs;
-  return FALSE;
+  return false;
 }
 
 
@@ -254,7 +254,7 @@ bool String::set_or_copy_aligned(const char *str,uint32 arg_length,
   if (!offset) /* All characters are complete, just copy */
   {
     set(str, arg_length, cs);
-    return FALSE;
+    return false;
   }
   return copy_aligned(str, arg_length, offset, cs);
 }
@@ -277,11 +277,11 @@ bool String::copy(const char *str, uint32 arg_length,
   }
   uint32 new_length= to_cs->mbmaxlen*arg_length;
   if (alloc(new_length))
-    return TRUE;
+    return true;
   str_length=copy_and_convert((char*) Ptr, new_length, to_cs,
                               str, arg_length, from_cs, errors);
   str_charset=to_cs;
-  return FALSE;
+  return false;
 }
 
 
@@ -325,11 +325,11 @@ bool String::fill(uint32 max_length,char fill_char)
   else
   {
     if (realloc(max_length))
-      return TRUE;
+      return true;
     bfill(Ptr+str_length,max_length-str_length,fill_char);
     str_length=max_length;
   }
-  return FALSE;
+  return false;
 }
 
 void String::strip_sp()
@@ -343,11 +343,11 @@ bool String::append(const String &s)
   if (s.length())
   {
     if (realloc(str_length+s.length()))
-      return TRUE;
+      return true;
     memcpy(Ptr+str_length,s.ptr(),s.length());
     str_length+=s.length();
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -358,7 +358,7 @@ bool String::append(const String &s)
 bool String::append(const char *s,uint32 arg_length)
 {
   if (!arg_length)
-    return FALSE;
+    return false;
 
   /*
     For an ASCII incompatible string, e.g. UCS-2, we need to convert
@@ -368,21 +368,21 @@ bool String::append(const char *s,uint32 arg_length)
     uint32 add_length=arg_length * str_charset->mbmaxlen;
     uint dummy_errors;
     if (realloc(str_length+ add_length))
-      return TRUE;
+      return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
 				  s, arg_length, &my_charset_latin1,
                                   &dummy_errors);
-    return FALSE;
+    return false;
   }
 
   /*
     For an ASCII compatinble string we can just append.
   */
   if (realloc(str_length+arg_length))
-    return TRUE;
+    return true;
   memcpy(Ptr+str_length,s,arg_length);
   str_length+=arg_length;
-  return FALSE;
+  return false;
 }
 
 
@@ -410,32 +410,32 @@ bool String::append(const char *s,uint32 arg_length, CHARSET_INFO *cs)
     uint32 add_length= arg_length / cs->mbminlen * str_charset->mbmaxlen;
     uint dummy_errors;
     if (realloc(str_length + add_length)) 
-      return TRUE;
+      return true;
     str_length+= copy_and_convert(Ptr+str_length, add_length, str_charset,
 				  s, arg_length, cs, &dummy_errors);
   }
   else
   {
     if (realloc(str_length + arg_length)) 
-      return TRUE;
+      return true;
     memcpy(Ptr + str_length, s, arg_length);
     str_length+= arg_length;
   }
-  return FALSE;
+  return false;
 }
 
 
 bool String::append(IO_CACHE* file, uint32 arg_length)
 {
   if (realloc(str_length+arg_length))
-    return TRUE;
+    return true;
   if (my_b_read(file, (uchar*) Ptr + str_length, arg_length))
   {
     shrink(str_length);
-    return TRUE;
+    return true;
   }
   str_length+=arg_length;
-  return FALSE;
+  return false;
 }
 
 bool String::append_with_prefill(const char *s,uint32 arg_length,
@@ -444,7 +444,7 @@ bool String::append_with_prefill(const char *s,uint32 arg_length,
   int t_length= arg_length > full_length ? arg_length : full_length;
 
   if (realloc(str_length + t_length))
-    return TRUE;
+    return true;
   t_length= full_length - arg_length;
   if (t_length > 0)
   {
@@ -452,7 +452,7 @@ bool String::append_with_prefill(const char *s,uint32 arg_length,
     str_length=str_length + t_length;
   }
   append(s, arg_length);
-  return FALSE;
+  return false;
 }
 
 uint32 String::numchars()
@@ -553,7 +553,7 @@ bool String::replace(uint32 offset,uint32 arg_length,
       if (diff)
       {
 	if (realloc(str_length+(uint32) diff))
-	  return TRUE;
+	  return true;
 	bmove_upp((uchar*) Ptr+str_length+diff, (uchar*) Ptr+str_length,
 		  str_length-offset-arg_length);
       }
@@ -562,7 +562,7 @@ bool String::replace(uint32 offset,uint32 arg_length,
     }
     str_length+=(uint32) diff;
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -572,9 +572,9 @@ int String::reserve(uint32 space_needed, uint32 grow_by)
   if (Alloced_length < str_length + space_needed)
   {
     if (realloc(Alloced_length + max(space_needed, grow_by) - 1))
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 void String::qs_append(const char *str, uint32 len)
@@ -814,7 +814,7 @@ copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
     }
   }
 
-  DBUG_ASSERT(FALSE); // Should never get to here
+  assert(false); // Should never get to here
   return 0;           // Make compiler happy
 }
 

@@ -13,11 +13,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-if BUILD_DBUG
-  d_dbug = $(top_builddir)/dbug/libdbuglt.la
-endif
-
-
 #called from the top level Makefile
 
 MYSQLDATAdir =		$(localstatedir)
@@ -94,7 +89,6 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_base.cc table.cc sql_select.cc sql_insert.cc \
 			sql_error.cc sql_locale.cc \
 			sql_update.cc sql_delete.cc uniques.cc \
-			sql_test.cc \
 			log.cc init.cc derror.cc \
 			unireg.cc \
 			log_event.cc rpl_record.cc \

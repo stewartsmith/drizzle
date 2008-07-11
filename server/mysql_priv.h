@@ -115,40 +115,8 @@ char* query_table_status(THD *thd,const char *db,const char *table_name);
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 #define all_bits_set(A,B) ((A) & (B) != (B))
 
-/*
-  Generates a warning that a feature is deprecated. After a specified version
-  asserts that the feature is removed.
-
-  Using it as
-
-    WARN_DEPRECATED(thd, 6,2, "BAD", "'GOOD'");
-
- Will result in a warning
-
-    "The syntax 'BAD' is deprecated and will be removed in MySQL 6.2. Please
-    use 'GOOD' instead"
-
- Note, that in macro arguments BAD is not quoted, while 'GOOD' is.
- Note, that the version is TWO numbers, separated with a comma
- (two macro arguments, that is)
-*/
-#define WARN_DEPRECATED(Thd,VerHi,VerLo,Old,New)                            \
-  do {                                                                      \
-    compile_time_assert(MYSQL_VERSION_ID < VerHi * 10000 + VerLo * 100);    \
-    if (Thd)                                                                \
-      push_warning_printf((Thd), MYSQL_ERROR::WARN_LEVEL_WARN,              \
-                        ER_WARN_DEPRECATED_SYNTAX,                          \
-                        ER(ER_WARN_DEPRECATED_SYNTAX_WITH_VER),             \
-                        (Old), #VerHi "." #VerLo, (New));                   \
-    else                                                                    \
-      sql_print_warning("The syntax '%s' is deprecated and will be removed " \
-                        "in MySQL %s. Please use %s instead.",              \
-                        (Old), #VerHi "." #VerLo, (New));                   \
-  } while(0)
-
 extern CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern CHARSET_INFO *national_charset_info, *table_alias_charset;
-
 
 enum Derivation
 {
@@ -561,20 +529,6 @@ enum open_table_mode
 
 /* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
 #define UNDEF_POS (-1)
-#ifdef EXTRA_DEBUG
-/**
-  Sync points allow us to force the server to reach a certain line of code
-  and block there until the client tells the server it is ok to go on.
-  The client tells the server to block with SELECT GET_LOCK()
-  and unblocks it with SELECT RELEASE_LOCK(). Used for debugging difficult
-  concurrency problems
-*/
-#define DBUG_SYNC_POINT(lock_name,lock_timeout) \
- debug_sync_point(lock_name,lock_timeout)
-void debug_sync_point(const char* lock_name, uint lock_timeout);
-#else
-#define DBUG_SYNC_POINT(lock_name,lock_timeout)
-#endif /* EXTRA_DEBUG */
 
 /* BINLOG_DUMP options */
 
@@ -886,12 +840,10 @@ check_and_unset_inject_value(int value)
   Then one can later test for it by using ERROR_INJECT_CRASH_VALUE,
   ERROR_INJECT_ACTION_VALUE and ERROR_INJECT_VALUE. This have the same
   behaviour as the above described macros except that they use the
-  error inject value instead of a code used by DBUG macros.
+  error inject value instead of a code used by debug macros.
 */
 #define SET_ERROR_INJECT_VALUE(x) \
   current_thd->error_inject_value= (x)
-#define ERROR_INJECT_CRASH(code) \
-  DBUG_EVALUATE_IF(code, (abort(), 0), 0)
 #define ERROR_INJECT_ACTION(code, action) \
   (check_and_unset_keyword(code) ? ((action), 0) : 0)
 #define ERROR_INJECT(code) \
@@ -2039,9 +1991,6 @@ bool flush_error_log(void);
 /* sql_list.cc */
 void free_list(I_List <i_string_pair> *list);
 void free_list(I_List <i_string> *list);
-
-/* sql_yacc.cc */
-extern void turn_parser_debug_on();
 
 /* Some inline functions for more speed */
 

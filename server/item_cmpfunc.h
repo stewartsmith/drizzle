@@ -232,7 +232,7 @@ public:
   Item_in_optimizer(Item *a, Item_in_subselect *b):
     Item_bool_func(a, my_reinterpret_cast(Item *)(b)), cache(0),
     save_cache(0), result_for_null_param(UNKNOWN)
-  { with_subselect= TRUE; }
+  { with_subselect= true; }
   bool fix_fields(THD *, Item **);
   bool fix_left(THD *thd, Item **ref);
   bool is_null();
@@ -330,7 +330,7 @@ protected:
 
 public:
   Item_bool_func2(Item *a,Item *b)
-    :Item_int_func(a,b), cmp(tmp_arg, tmp_arg+1), abort_on_null(FALSE) {}
+    :Item_int_func(a,b), cmp(tmp_arg, tmp_arg+1), abort_on_null(false) {}
   void fix_length_and_dec();
   void set_cmp_func()
   {
@@ -349,7 +349,7 @@ public:
   bool is_bool_func() { return 1; }
   CHARSET_INFO *compare_collation() { return cmp.cmp_collation.collation; }
   uint decimal_precision() const { return 1; }
-  void top_level_item() { abort_on_null= TRUE; }
+  void top_level_item() { abort_on_null= true; }
 
   friend class  Arg_comparator;
 };
@@ -364,7 +364,7 @@ public:
   Item *neg_transformer(THD *thd);
   virtual Item *negated_item();
   bool subst_argument_checker(uchar **arg __attribute__((__unused__)))
-  { return TRUE; }
+  { return true; }
 };
 
 class Item_func_not :public Item_bool_func
@@ -417,7 +417,7 @@ public:
   longlong val_int() { return *trig_var ? args[0]->val_int() : 1; }
   enum Functype functype() const { return TRIG_COND_FUNC; };
   const char *func_name() const { return "trigcond"; };
-  bool const_item() const { return FALSE; }
+  bool const_item() const { return false; }
   bool *get_trig_var() { return trig_var; }
   /* The following is needed for ICP: */
   table_map used_tables() const { return args[0]->used_tables(); }
@@ -582,7 +582,7 @@ public:
   }
   bool eq(const Item *item, bool binary_cmp) const;
   bool subst_argument_checker(uchar **arg __attribute__((__unused__)))
-  { return TRUE; }
+  { return true; }
 };
 
 
@@ -597,7 +597,7 @@ public:
   /* Comparators used for DATE/DATETIME comparison. */
   Arg_comparator ge_cmp, le_cmp;
   Item_func_between(Item *a, Item *b, Item *c)
-    :Item_func_opt_neg(a, b, c), compare_as_dates(FALSE) {}
+    :Item_func_opt_neg(a, b, c), compare_as_dates(false) {}
   longlong val_int();
   optimize_type select_optimize() const { return OPTIMIZE_KEY; }
   enum Functype functype() const   { return BETWEEN; }
@@ -906,7 +906,7 @@ public:
   uchar *get_value(Item *item);
   Item *create_item()
   { 
-    return new Item_decimal(0, FALSE);
+    return new Item_decimal(0, false);
   }
   void value_to_item(uint pos, Item *item)
   {
@@ -1204,7 +1204,7 @@ public:
 
   Item_func_in(List<Item> &list)
     :Item_func_opt_neg(list), array(0), have_null(0),
-    arg_types_compatible(FALSE)
+    arg_types_compatible(false)
   {
     bzero(&cmp_items, sizeof(cmp_items));
     allowed_arg_cols= 0;  // Fetch this value from first argument
@@ -1381,7 +1381,7 @@ public:
   int escape;
 
   Item_func_like(Item *a,Item *b, Item *escape_arg, bool escape_used)
-    :Item_bool_func2(a,b), canDoTurboBM(FALSE), pattern(0), pattern_len(0), 
+    :Item_bool_func2(a,b), canDoTurboBM(false), pattern(0), pattern_len(0), 
      bmGs(0), bmBc(0), escape_item(escape_arg),
      escape_used_in_parsing(escape_used) {}
   longlong val_int();
@@ -1438,7 +1438,7 @@ public:
   void neg_arguments(THD *thd);
   enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
   bool subst_argument_checker(uchar **arg __attribute__((__unused__)))
-  { return TRUE; }
+  { return true; }
   Item *compile(Item_analyzer analyzer, uchar **arg_p,
                 Item_transformer transformer, uchar *arg_t);
 };
@@ -1616,7 +1616,7 @@ public:
 inline bool is_cond_and(Item *item)
 {
   if (item->type() != Item::COND_ITEM)
-    return FALSE;
+    return false;
 
   Item_cond *cond_item= (Item_cond*) item;
   return (cond_item->functype() == Item_func::COND_AND_FUNC);
@@ -1646,7 +1646,7 @@ public:
 inline bool is_cond_or(Item *item)
 {
   if (item->type() != Item::COND_ITEM)
-    return FALSE;
+    return false;
 
   Item_cond *cond_item= (Item_cond*) item;
   return (cond_item->functype() == Item_func::COND_OR_FUNC);

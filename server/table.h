@@ -236,7 +236,7 @@ typedef struct st_table_share
   plugin_ref db_plugin;			/* storage engine plugin */
   inline handlerton *db_type() const	/* table_type for handler */
   { 
-    // DBUG_ASSERT(db_plugin);
+    // assert(db_plugin);
     return db_plugin ? plugin_data(db_plugin, handlerton*) : NULL;
   }
   enum row_type row_type;		/* How rows are stored */
@@ -437,7 +437,7 @@ struct st_table {
   query_id_t	query_id;
 
   /* 
-    For each key that has quick_keys.is_set(key) == TRUE: estimate of #records
+    For each key that has quick_keys.is_set(key) == true: estimate of #records
     and max #key parts that range access would use.
   */
   ha_rows	quick_rows[MAX_KEY];
@@ -852,7 +852,7 @@ struct TABLE_LIST
     an operand of such a join.
   */
   List<Natural_join_column> *join_columns;
-  /* TRUE if join_columns contains all columns of this table reference. */
+  /* true if join_columns contains all columns of this table reference. */
   bool is_join_columns_complete;
 
   /*
@@ -949,9 +949,9 @@ struct TABLE_LIST
   int           lock_timeout;           /* NOWAIT or WAIT [X]               */
   bool          lock_transactional;     /* If transactional lock requested. */
   bool          internal_tmp_table;
-  /** TRUE if an alias for this table was specified in the SQL. */
+  /** true if an alias for this table was specified in the SQL. */
   bool          is_alias;
-  /** TRUE if the table is referred to in the statement using a fully
+  /** true if the table is referred to in the statement using a fully
       qualified name (<db_name>.<table_name>).
   */
   bool          is_fqtn;

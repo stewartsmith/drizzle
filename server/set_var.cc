@@ -927,8 +927,6 @@ bool sys_var_set_slave_mode::update(THD *thd, set_var *var)
 
 void fix_slave_exec_mode(enum_var_type type __attribute__((__unused__)))
 {
-  compile_time_assert(sizeof(slave_exec_mode_options) * CHAR_BIT
-                      > SLAVE_EXEC_MODE_LAST_BIT - 1);
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
       bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
   {

@@ -944,12 +944,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     }
     break;
   }
-  case COM_DEBUG:
-    status_var_increment(thd->status_var.com_other);
-    mysql_print_status();
-    general_log_print(thd, command, NullS);
-    my_eof(thd);
-    break;
   case COM_SLEEP:
   case COM_CONNECT:				// Impossible here
   case COM_TIME:				// Impossible from client

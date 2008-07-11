@@ -492,22 +492,6 @@ public:
       ((flags >> COLUMN_FORMAT_FLAGS) & COLUMN_FORMAT_MASK);
   }
 
-  /* Print field value into debug trace, in NULL-aware way. */
-  void dbug_print()
-  {
-    if (is_real_null())
-      fprintf(DBUG_FILE, "NULL");
-    else
-    {
-      char buf[256];
-      String str(buf, sizeof(buf), &my_charset_bin);
-      str.length(0);
-      String *pstr;
-      pstr= val_str(&str);
-      fprintf(DBUG_FILE, "'%s'", pstr->c_ptr_safe());
-    }
-  }
-
   /* Hash value */
   virtual void hash(ulong *nr, ulong *nr2);
   friend bool reopen_table(THD *,struct st_table *,bool);

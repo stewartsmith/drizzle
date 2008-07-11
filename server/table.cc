@@ -1273,14 +1273,10 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if (!(bitmaps= (my_bitmap_map*) alloc_root(&share->mem_root,
                                              share->column_bitmap_size)))
     goto err;
-  bitmap_init(&share->all_set, bitmaps, share->fields, FALSE);
+  bitmap_init(&share->all_set, bitmaps, share->fields, false);
   bitmap_set_all(&share->all_set);
 
   delete handler_file;
-#ifndef DBUG_OFF
-  if (use_hash)
-    (void) hash_check(&share->name_hash);
-#endif
   if (buff)
     my_free(buff, MYF(0));
   return (0);
@@ -1335,7 +1331,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
 {
   int error;
   uint records, i, bitmap_size;
-  bool error_reported= FALSE;
+  bool error_reported= false;
   uchar *record, *bitmaps;
   Field **field_ptr;
 
@@ -1493,11 +1489,11 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   if (!(bitmaps= (uchar*) alloc_root(&outparam->mem_root, bitmap_size*3)))
     goto err;
   bitmap_init(&outparam->def_read_set,
-              (my_bitmap_map*) bitmaps, share->fields, FALSE);
+              (my_bitmap_map*) bitmaps, share->fields, false);
   bitmap_init(&outparam->def_write_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields, FALSE);
+              (my_bitmap_map*) (bitmaps+bitmap_size), share->fields, false);
   bitmap_init(&outparam->tmp_set,
-              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields, FALSE);
+              (my_bitmap_map*) (bitmaps+bitmap_size*2), share->fields, false);
   outparam->default_column_bitmaps();
 
   /* The table struct is now initialized;  Open the table */
@@ -1541,7 +1537,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
           break;
         default:
           outparam->file->print_error(ha_err, MYF(0));
-          error_reported= TRUE;
+          error_reported= true;
           if (ha_err == HA_ERR_TABLE_DEF_CHANGED)
             error= 7;
           break;
@@ -1550,7 +1546,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
     }
   }
 
-#if defined(HAVE_purify) && !defined(DBUG_OFF)
+#if defined(HAVE_purify) 
   bzero((char*) bitmaps, bitmap_size*3);
 #endif
 
@@ -2305,7 +2301,7 @@ bool check_table_name(const char *name, uint length)
 bool check_column_name(const char *name)
 {
   uint name_length= 0;  // name length in symbols
-  bool last_char_is_space= TRUE;
+  bool last_char_is_space= true;
   
   while (*name)
   {
@@ -2351,7 +2347,7 @@ bool check_column_name(const char *name)
   @param[in] table_def         Expected structure of the table (column name
                                and type)
 
-  @retval  FALSE  OK
+  @retval  false  OK
   @retval  TRUE   There was an error. An error message is output
                   to the error log.  We do not push an error
                   message into the error stack because this
@@ -2364,7 +2360,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
                    const TABLE_FIELD_W_TYPE *table_def)
 {
   uint i;
-  my_bool error= FALSE;
+  my_bool error= false;
   my_bool fields_diff_count;
 
   fields_diff_count= (table->s->fields != table_f_count);
@@ -2377,13 +2373,13 @@ table_check_intact(TABLE *table, const uint table_f_count,
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
                       table->alias, table_f_count, table->s->fields,
                       table->s->mysql_version, MYSQL_VERSION_ID);
-      return(TRUE);
+      return(true);
     }
     else if (MYSQL_VERSION_ID == table->s->mysql_version)
     {
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), table->alias,
                       table_f_count, table->s->fields);
-      return(TRUE);
+      return(true);
     }
     /*
       Something has definitely changed, but we're running an older
@@ -2441,7 +2437,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
                         "%s, found type %s.", table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->type.str,
                         sql_type.c_ptr_safe());
-        error= TRUE;
+        error= true;
       }
       else if (table_def->cset.str && !field->has_charset())
       {
@@ -2450,7 +2446,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
                         "to have character set '%s' but the type has no "
                         "character set.", table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->cset.str);
-        error= TRUE;
+        error= true;
       }
       else if (table_def->cset.str &&
                strcmp(field->charset()->csname, table_def->cset.str))
@@ -2461,7 +2457,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
                         "character set '%s'.", table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->cset.str,
                         field->charset()->csname);
-        error= TRUE;
+        error= true;
       }
     }
     else
@@ -2471,7 +2467,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
                       " but the column is not found.",
                       table->s->db.str, table->alias,
                       table_def->name.str, i, table_def->type.str);
-      error= TRUE;
+      error= true;
     }
   }
   return(error);
@@ -2505,9 +2501,9 @@ bool st_table::fill_item_list(List<Item> *item_list) const
   {
     Item_field *item= new Item_field(*ptr);
     if (!item || item_list->push_back(item))
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -2629,7 +2625,7 @@ void TABLE_LIST::cleanup_items()
     mem_root   memory pool for allocating
 
   RETURN
-    FALSE - OK
+    false - OK
     TRUE  - out of memory
 */
 
@@ -2640,10 +2636,10 @@ bool TABLE_LIST::set_insert_values(MEM_ROOT *mem_root)
     if (!table->insert_values &&
         !(table->insert_values= (uchar *)alloc_root(mem_root,
                                                    table->s->rec_buff_length)))
-      return TRUE;
+      return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -2661,7 +2657,7 @@ bool TABLE_LIST::set_insert_values(MEM_ROOT *mem_root)
     columns.
 
   RETURN
-    TRUE if a leaf, FALSE otherwise.
+    TRUE if a leaf, false otherwise.
 */
 bool TABLE_LIST::is_leaf_for_name_resolution()
 {
@@ -2790,7 +2786,7 @@ Natural_join_column::Natural_join_column(Field_translator *field_param,
   view_field= field_param;
   table_field= NULL;
   table_ref= tab;
-  is_common= FALSE;
+  is_common= false;
 }
 
 
@@ -2801,7 +2797,7 @@ Natural_join_column::Natural_join_column(Field *field_param,
   table_field= field_param;
   view_field= NULL;
   table_ref= tab;
-  is_common= FALSE;
+  is_common= false;
 }
 
 
@@ -3076,7 +3072,7 @@ Natural_join_column *
 Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
 {
   Natural_join_column *nj_col;
-  bool is_created= TRUE;
+  bool is_created= true;
   uint field_count;
   TABLE_LIST *add_table_ref= parent_table_ref ?
                              parent_table_ref : table_ref;
@@ -3104,7 +3100,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
       we just return the already created column reference.
     */
     assert(table_ref->is_join_columns_complete);
-    is_created= FALSE;
+    is_created= false;
     nj_col= natural_join_it.column_ref();
     assert(nj_col);
   }
@@ -3125,7 +3121,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
       /* Create a list of natural join columns on demand. */
       if (!(add_table_ref->join_columns= new List<Natural_join_column>))
         return NULL;
-      add_table_ref->is_join_columns_complete= FALSE;
+      add_table_ref->is_join_columns_complete= false;
     }
     add_table_ref->join_columns->push_back(nj_col);
     /*
@@ -3137,7 +3133,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
     */
     if (!parent_table_ref &&
         add_table_ref->join_columns->elements == field_count)
-      add_table_ref->is_join_columns_complete= TRUE;
+      add_table_ref->is_join_columns_complete= true;
   }
 
   return nj_col;
@@ -3513,7 +3509,7 @@ Item_subselect *TABLE_LIST::containing_subselect()
     then we have to ignore the IGNORE INDEX FROM GROUP/ORDER.
 
   RETURN VALUE
-    FALSE                no errors found
+    false                no errors found
     TRUE                 found and reported an error.
 */
 bool TABLE_LIST::process_index_hints(TABLE *tbl)
@@ -3530,8 +3526,8 @@ bool TABLE_LIST::process_index_hints(TABLE *tbl)
     key_map index_group[INDEX_HINT_FORCE + 1];
     Index_hint *hint;
     int type;
-    bool have_empty_use_join= FALSE, have_empty_use_order= FALSE, 
-         have_empty_use_group= FALSE;
+    bool have_empty_use_join= false, have_empty_use_order= false, 
+         have_empty_use_group= false;
     List_iterator <Index_hint> iter(*index_hints);
 
     /* initialize temporary variables used to collect hints of each kind */
@@ -3553,17 +3549,17 @@ bool TABLE_LIST::process_index_hints(TABLE *tbl)
         if (hint->clause & INDEX_HINT_MASK_JOIN)
         {
           index_join[hint->type].clear_all();
-          have_empty_use_join= TRUE;
+          have_empty_use_join= true;
         }
         if (hint->clause & INDEX_HINT_MASK_ORDER)
         {
           index_order[hint->type].clear_all();
-          have_empty_use_order= TRUE;
+          have_empty_use_order= true;
         }
         if (hint->clause & INDEX_HINT_MASK_GROUP)
         {
           index_group[hint->type].clear_all();
-          have_empty_use_group= TRUE;
+          have_empty_use_group= true;
         }
         continue;
       }
@@ -3609,7 +3605,7 @@ bool TABLE_LIST::process_index_hints(TABLE *tbl)
         !index_order[INDEX_HINT_FORCE].is_clear_all() ||
         !index_group[INDEX_HINT_FORCE].is_clear_all())
     {
-      tbl->force_index= TRUE;
+      tbl->force_index= true;
       index_join[INDEX_HINT_USE].merge(index_join[INDEX_HINT_FORCE]);
       index_order[INDEX_HINT_USE].merge(index_order[INDEX_HINT_FORCE]);
       index_group[INDEX_HINT_USE].merge(index_group[INDEX_HINT_FORCE]);
