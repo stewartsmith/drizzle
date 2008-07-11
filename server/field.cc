@@ -7187,6 +7187,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       length= MAX_SMALLINT_WIDTH+sign_len;
     allowed_type_modifier= AUTO_INCREMENT_FLAG;
     break;
+  case MYSQL_TYPE_INT24:
   case MYSQL_TYPE_LONG:
     if (!fld_length)
       length= MAX_INT_WIDTH+sign_len;

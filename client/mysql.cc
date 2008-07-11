@@ -1893,12 +1893,7 @@ static COMMANDS *find_command(char *name,char cmd_char)
   for (uint i= 0; commands[i].name; i++)
   {
     if (commands[i].func &&
-	((name &&
-	  !my_strnncoll(charset_info,(uchar*)name,len,
-				     (uchar*)commands[i].name,len) &&
-	  !commands[i].name[len] &&
-	  (!end || (end && commands[i].takes_params))) ||
-	 !name && commands[i].cmd_char == cmd_char))
+	((name && !my_strnncoll(charset_info,(uchar*)name,len, (uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
     {
       DBUG_PRINT("exit",("found command: %s", commands[i].name));
       DBUG_RETURN(&commands[i]);
@@ -2087,8 +2082,7 @@ static bool add_line(String &buffer,char *line,char *in_string,
       buffer.length(0);
     }
     else if (!*ml_comment && (!*in_string && (inchar == '#' ||
-			      inchar == '-' && pos[1] == '-' &&
-			      my_isspace(charset_info,pos[2]))))
+			      (inchar == '-' && pos[1] == '-' && my_isspace(charset_info,pos[2])))))
     {
       // Flush previously accepted characters
       if (out != line)
@@ -3428,7 +3422,7 @@ static void print_warnings()
     messages.  To be safe, skip printing the duplicate only if it is the only
     warning.
   */
-  if (!cur || num_rows == 1 && error == (uint) strtoul(cur[1], NULL, 10))
+  if (!cur || (num_rows == 1 && error == (uint) strtoul(cur[1], NULL, 10)))
     goto end;
 
   /* Print the warnings */

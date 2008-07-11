@@ -1055,10 +1055,7 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
       was read.
     */
     if (description_event->event_type_permutation)
-    {
-      int new_event_type= description_event->event_type_permutation[event_type];
       event_type= description_event->event_type_permutation[event_type];
-    }
 
     switch(event_type) {
     case QUERY_EVENT:
@@ -1073,11 +1070,9 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
     case ROTATE_EVENT:
       ev = new Rotate_log_event(buf, event_len, description_event);
       break;
-#ifdef HAVE_REPLICATION
     case SLAVE_EVENT: /* can never happen (unused event) */
       ev = new Slave_log_event(buf, event_len);
       break;
-#endif /* HAVE_REPLICATION */
     case CREATE_FILE_EVENT:
       ev = new Create_file_log_event(buf, event_len, description_event);
       break;
@@ -1744,25 +1739,6 @@ static void copy_str_and_move(const char **src,
 }
 
 
-static char const *
-code_name(int code)
-{
-  static char buf[255];
-  switch (code) {
-  case Q_FLAGS2_CODE: return "Q_FLAGS2_CODE";
-  case Q_SQL_MODE_CODE: return "Q_SQL_MODE_CODE";
-  case Q_CATALOG_CODE: return "Q_CATALOG_CODE";
-  case Q_AUTO_INCREMENT: return "Q_AUTO_INCREMENT";
-  case Q_CHARSET_CODE: return "Q_CHARSET_CODE";
-  case Q_TIME_ZONE_CODE: return "Q_TIME_ZONE_CODE";
-  case Q_CATALOG_NZ_CODE: return "Q_CATALOG_NZ_CODE";
-  case Q_LC_TIME_NAMES_CODE: return "Q_LC_TIME_NAMES_CODE";
-  case Q_CHARSET_DATABASE_CODE: return "Q_CHARSET_DATABASE_CODE";
-  }
-  sprintf(buf, "CODE#%d", code);
-  return buf;
-}
-
 /**
    Macro to check that there is enough space to read from memory.
 
@@ -1862,7 +1838,6 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
       break;
     case Q_SQL_MODE_CODE:
     {
-      char buff[22];
       CHECK_SPACE(pos, end, 8);
       sql_mode_inited= 1;
       sql_mode= (ulong) uint8korr(pos); // QQ: Fix when sql_mode is ulonglong
@@ -3856,7 +3831,6 @@ Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
    pos(pos_arg),ident_len(ident_len_arg ? ident_len_arg :
                           (uint) strlen(new_log_ident_arg)), flags(flags_arg)
 {
-  char buff[22];
   if (flags & DUP_NAME)
     new_log_ident= my_strndup(new_log_ident_arg, ident_len, MYF(MY_WME));
   return;
@@ -3918,8 +3892,6 @@ bool Rotate_log_event::write(IO_CACHE* file)
 */
 int Rotate_log_event::do_update_pos(Relay_log_info *rli)
 {
-  char buf[32];
-
   pthread_mutex_lock(&rli->data_lock);
   rli->event_relay_log_pos= my_b_tell(rli->cur_log);
   /*
@@ -5940,8 +5912,7 @@ Rows_log_event::Rows_log_event(THD *thd_arg, TABLE *tbl_arg, ulong tid,
     solution, to be able to terminate a started statement in the
     binary log: the extraneous events will be removed in the future.
    */
-  assert(tbl_arg && tbl_arg->s && tid != ~0UL ||
-              !tbl_arg && !cols && tid == ~0UL);
+  assert((tbl_arg && tbl_arg->s && tid != ~0UL) || (!tbl_arg && !cols && tid == ~0UL));
 
   if (thd_arg->options & OPTION_NO_FOREIGN_KEY_CHECKS)
       set_flags(NO_FOREIGN_KEY_CHECKS_F);
@@ -6113,7 +6084,7 @@ int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
   }
 
   assert(m_rows_buf <= m_rows_cur);
-  assert(!m_rows_buf || m_rows_end && m_rows_buf <= m_rows_end);
+  assert(!m_rows_buf || (m_rows_end && m_rows_buf <= m_rows_end));
   assert(m_rows_cur <= m_rows_end);
 
   /* The cast will always work since m_rows_cur <= m_rows_end */

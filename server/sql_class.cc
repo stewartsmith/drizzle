@@ -2112,7 +2112,7 @@ void Query_arena::free_items()
 
 void Query_arena::set_query_arena(Query_arena *set)
 {
-  mem_root=  set->mem_root;
+  mem_root= set->mem_root;
   free_list= set->free_list;
   state= set->state;
 }
@@ -2120,7 +2120,8 @@ void Query_arena::set_query_arena(Query_arena *set)
 
 void Query_arena::cleanup_stmt()
 {
-  assert("Query_arena::cleanup_stmt()" == "not implemented");
+  /* "Query_arena::cleanup_stmt()" == "not implemented" */
+  assert(1);
 }
 
 /*

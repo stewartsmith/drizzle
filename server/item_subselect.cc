@@ -1410,8 +1410,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
     Item *item_having_part2= 0;
     for (uint i= 0; i < cols_num; i++)
     {
-      assert(left_expr->fixed &&
-                  select_lex->ref_pointer_array[i]->fixed ||
+      assert((left_expr->fixed && select_lex->ref_pointer_array[i]->fixed) ||
                   (select_lex->ref_pointer_array[i]->type() == REF_ITEM &&
                    ((Item_ref*)(select_lex->ref_pointer_array[i]))->ref_type() ==
                     Item_ref::OUTER_REF));
@@ -1488,8 +1487,7 @@ Item_in_subselect::row_value_in_to_exists_transformer(JOIN * join)
     for (uint i= 0; i < cols_num; i++)
     {
       Item *item, *item_isnull;
-      assert(left_expr->fixed &&
-                  select_lex->ref_pointer_array[i]->fixed ||
+      assert((left_expr->fixed && select_lex->ref_pointer_array[i]->fixed) ||
                   (select_lex->ref_pointer_array[i]->type() == REF_ITEM &&
                    ((Item_ref*)(select_lex->ref_pointer_array[i]))->ref_type() ==
                     Item_ref::OUTER_REF));
