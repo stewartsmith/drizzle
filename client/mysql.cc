@@ -132,16 +132,16 @@ typedef enum enum_info_type INFO_TYPE;
 
 static MYSQL mysql;			/* The connection */
 static my_bool ignore_errors=0,wait_flag=0,quick=0,
-               connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
-	       opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
-	       opt_compress=0, using_opt_local_infile=0,
-	       vertical=0, line_numbers=1, column_names=1,opt_html=0,
-               opt_xml=0,opt_nopager=1, opt_outfile=0, named_cmds= 0,
-	       tty_password= 0, opt_nobeep=0, opt_reconnect=1,
-	       default_charset_used= 0, opt_secure_auth= 0,
-               default_pager_set= 0, opt_sigint_ignore= 0,
-               auto_vertical_output= 0,
-               show_warnings= 0, executing_query= 0, interrupted_query= 0;
+  connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
+  opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
+  opt_compress=0, using_opt_local_infile=0,
+  vertical=0, line_numbers=1, column_names=1,opt_html=0,
+  opt_xml=0,opt_nopager=1, opt_outfile=0, named_cmds= 0,
+  tty_password= 0, opt_nobeep=0, opt_reconnect=1,
+  default_charset_used= 0, opt_secure_auth= 0,
+  default_pager_set= 0, opt_sigint_ignore= 0,
+  auto_vertical_output= 0,
+  show_warnings= 0, executing_query= 0, interrupted_query= 0;
 static my_bool debug_info_flag, debug_check_flag;
 static my_bool column_types_flag;
 static my_bool preserve_comments= 0;
@@ -151,13 +151,15 @@ static uint my_end_arg;
 static char * opt_mysql_unix_port=0;
 static int connect_flag=CLIENT_INTERACTIVE;
 static char *current_host,*current_db,*current_user=0,*opt_password=0,
-            *current_prompt=0, *delimiter_str= 0,
-            *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+  *delimiter_str= 0,*current_prompt=0,
+  *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
 static char *histfile;
 static char *histfile_tmp;
 static GString *glob_buffer, *old_buffer;
 static GString *processed_prompt;
-static char *full_username=0,*part_username=0,*default_prompt=0;
+//static GString *current_prompt= g_string_sized_new(16);
+static GString *default_prompt= NULL;
+static char *full_username=0,*part_username=0;
 static int wait_time = 5;
 static STATUS status;
 static ulong select_limit,max_join_size,opt_connect_timeout=0;
@@ -171,7 +173,7 @@ static const char *xmlmeta[] = {
 };
 static const char *day_names[]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]={"Jan","Feb","Mar","Apr","May","Jun","Jul",
-			    "Aug","Sep","Oct","Nov","Dec"};
+                                  "Aug","Sep","Oct","Nov","Dec"};
 static char default_pager[FN_REFLEN];
 static char pager[FN_REFLEN], outfile[FN_REFLEN];
 static FILE *PAGER, *OUTFILE;
@@ -199,27 +201,27 @@ static int get_options(int argc,char **argv);
 extern "C" my_bool get_one_option(int optid, const struct my_option *opt,
                                   char *argument);
 static int com_quit(GString *str,char*),
-	   com_go(GString *str,char*), com_ego(GString *str,char*),
-	   com_print(GString *str,char*),
-	   com_help(GString *str,char*), com_clear(GString *str,char*),
-	   com_connect(GString *str,char*), com_status(GString *str,char*),
-	   com_use(GString *str,char*), com_source(GString *str, char*),
-	   com_rehash(GString *str, char*), com_tee(GString *str, char*),
-           com_notee(GString *str, char*), com_charset(GString *str,char*),
-           com_prompt(GString *str, char*), com_delimiter(GString *str, char*),
-     com_warnings(GString *str, char*), com_nowarnings(GString *str, char*);
+  com_go(GString *str,char*), com_ego(GString *str,char*),
+  com_print(GString *str,char*),
+  com_help(GString *str,char*), com_clear(GString *str,char*),
+  com_connect(GString *str,char*), com_status(GString *str,char*),
+  com_use(GString *str,char*), com_source(GString *str, char*),
+  com_rehash(GString *str, char*), com_tee(GString *str, char*),
+  com_notee(GString *str, char*), com_charset(GString *str,char*),
+  com_prompt(GString *str, char*), com_delimiter(GString *str, char*),
+  com_warnings(GString *str, char*), com_nowarnings(GString *str, char*);
 
 #ifdef USE_POPEN
 static int com_nopager(GString *str, char*), com_pager(GString *str, char*),
-           com_edit(GString *str,char*), com_shell(GString *str, char *);
+  com_edit(GString *str,char*), com_shell(GString *str, char *);
 #endif
 
 static int read_and_execute(bool interactive);
 static int sql_connect(char *host,char *database,char *user,char *password,
-		       uint silent);
+                       uint silent);
 static const char *server_version_string(MYSQL *mysql);
 static int put_info(const char *str,INFO_TYPE info,uint error=0,
-		    const char *sql_state=0);
+                    const char *sql_state=0);
 static int put_error(MYSQL *mysql);
 static void safe_put_field(const char *pos,ulong length);
 static void xmlencode_print(const char *src, uint length);
@@ -265,7 +267,7 @@ static COMMANDS commands[] = {
 #endif
   { "notee",  't', com_notee,  0, "Don't write into outfile." },
 #ifdef USE_POPEN
-  { "pager",  'P', com_pager,  1, 
+  { "pager",  'P', com_pager,  1,
     "Set PAGER [to_pager]. Print the query results via PAGER." },
 #endif
   { "print",  'p', com_print,  0, "Print current command." },
@@ -278,7 +280,7 @@ static COMMANDS commands[] = {
 #ifdef USE_POPEN
   { "system", '!', com_shell,  1, "Execute a system shell command."},
 #endif
-  { "tee",    'T', com_tee,    1, 
+  { "tee",    'T', com_tee,    1,
     "Set outfile [to_outfile]. Append everything into given outfile." },
   { "use",    'u', com_use,    1,
     "Use another database. Takes database name as argument." },
@@ -388,7 +390,7 @@ static COMMANDS commands[] = {
   { "DAY_MICROSECOND", 0, 0, 0, ""},
   { "DAY_MINUTE", 0, 0, 0, ""},
   { "DAY_SECOND", 0, 0, 0, ""},
-  { "DEALLOCATE", 0, 0, 0, ""},     
+  { "DEALLOCATE", 0, 0, 0, ""},
   { "DEC", 0, 0, 0, ""},
   { "DECIMAL", 0, 0, 0, ""},
   { "DECLARE", 0, 0, 0, ""},
@@ -1006,14 +1008,14 @@ static const char *embedded_server_groups[]=
 { "server", "embedded", "mysql_SERVER", 0 };
 
 /*
- HIST_ENTRY is defined for libedit, but not for the real readline
- Need to redefine it for real readline to find it
+  HIST_ENTRY is defined for libedit, but not for the real readline
+  Need to redefine it for real readline to find it
 */
 #if !defined(HAVE_HIST_ENTRY)
 typedef struct _hist_entry {
   const char      *line;
   const char      *data;
-} HIST_ENTRY; 
+} HIST_ENTRY;
 #endif
 
 extern "C" int add_history(const char *command); /* From readline directory */
@@ -1054,10 +1056,10 @@ int main(int argc,char *argv[])
   DBUG_PROCESS(argv[0]);
 
   delimiter_str= delimiter;
-  default_prompt = my_strdup(getenv("MYSQL_PS1") ? 
-			     getenv("MYSQL_PS1") : 
-			     "mysql> ",MYF(MY_WME));
-  current_prompt = my_strdup(default_prompt,MYF(MY_WME));
+  default_prompt = g_string_new(strdup(getenv("MYSQL_PS1") ?
+                                       getenv("MYSQL_PS1") :
+                                       "mysql> "));
+  current_prompt = my_strdup(default_prompt->str, MYF(MY_WME));
   prompt_counter=0;
 
   outfile[0]=0;			// no (default) outfile
@@ -1080,10 +1082,10 @@ int main(int argc,char *argv[])
   status.exit_status=1;
 
   {
-    /* 
-     The file descriptor-layer may be out-of-sync with the file-number layer,
-     so we make sure that "stdout" is really open.  If its file is closed then
-     explicitly close the FD layer. 
+    /*
+      The file descriptor-layer may be out-of-sync with the file-number layer,
+      so we make sure that "stdout" is really open.  If its file is closed then
+      explicitly close the FD layer.
     */
     int stdout_fileno_copy;
     stdout_fileno_copy= dup(fileno(stdout)); /* Okay if fileno fails. */
@@ -1108,7 +1110,7 @@ int main(int argc,char *argv[])
     my_end(0);
     exit(1);
   }
-  if (mysql_server_init(embedded_server_arg_count, embedded_server_args, 
+  if (mysql_server_init(embedded_server_arg_count, embedded_server_args,
                         (char**) embedded_server_groups))
   {
     put_error(NULL);
@@ -1120,7 +1122,7 @@ int main(int argc,char *argv[])
   init_alloc_root(&hash_mem_root, 16384, 0);
   bzero((char*) &mysql, sizeof(mysql));
   if (sql_connect(current_host,current_db,current_user,opt_password,
-		  opt_silent))
+                  opt_silent))
   {
     quick= 1;					// Avoid history
     status.exit_status= 1;
@@ -1244,7 +1246,7 @@ sig_handler mysql_end(int sig)
   This function handles sigint calls
   If query is in process, kill query
   no query in process, terminate like previous behavior
- */
+*/
 sig_handler handle_sigint(int sig)
 {
   char kill_buffer[40];
@@ -1297,9 +1299,9 @@ static struct my_option my_long_options[] =
   {"no-auto-rehash", 'A',
    "No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of mysql and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-   {"auto-vertical-output", OPT_AUTO_VERTICAL_OUTPUT,
-    "Automatically switch to vertical output mode if the result is wider than the terminal width.",
-    (char**) &auto_vertical_output, (char**) &auto_vertical_output, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"auto-vertical-output", OPT_AUTO_VERTICAL_OUTPUT,
+   "Automatically switch to vertical output mode if the result is wider than the terminal width.",
+   (char**) &auto_vertical_output, (char**) &auto_vertical_output, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"batch", 'B',
    "Don't use history file. Disable interactive behavior. (Enables --silent)", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"character-sets-dir", OPT_CHARSETS_DIR,
@@ -1356,7 +1358,7 @@ static struct my_option my_long_options[] =
    (char**) &opt_local_infile,
    (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"no-beep", 'b', "Turn off beep on error.", (char**) &opt_nobeep,
-   (char**) &opt_nobeep, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0}, 
+   (char**) &opt_nobeep, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', "Connect to host.", (char**) &current_host,
    (char**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"html", 'H', "Produce HTML output.", (char**) &opt_html, (char**) &opt_html,
@@ -1365,7 +1367,7 @@ static struct my_option my_long_options[] =
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"line-numbers", OPT_LINE_NUMBERS, "Write line numbers for errors.",
    (char**) &line_numbers, (char**) &line_numbers, 0, GET_BOOL,
-   NO_ARG, 1, 0, 0, 0, 0, 0},  
+   NO_ARG, 1, 0, 0, 0, 0, 0},
   {"skip-line-numbers", 'L', "Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead.", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"unbuffered", 'n', "Flush buffer after each query.", (char**) &unbuffered,
@@ -1415,13 +1417,13 @@ static struct my_option my_long_options[] =
   {"raw", 'r', "Write fields without conversion. Used with --batch.",
    (char**) &opt_raw_data, (char**) &opt_raw_data, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"reconnect", OPT_RECONNECT, "Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default.", 
+  {"reconnect", OPT_RECONNECT, "Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default.",
    (char**) &opt_reconnect, (char**) &opt_reconnect, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"silent", 's', "Be more silent. Print results with a tab as separator, each row on new line.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
 #ifdef HAVE_SMEM
   {"shared-memory-base-name", OPT_SHARED_MEMORY_BASE_NAME,
-   "Base name of shared memory.", (char**) &shared_memory_base_name, (char**) &shared_memory_base_name, 
+   "Base name of shared memory.", (char**) &shared_memory_base_name, (char**) &shared_memory_base_name,
    0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #endif
   {"socket", 'S', "Socket file to use for connection.",
@@ -1475,13 +1477,13 @@ static struct my_option my_long_options[] =
    (char**) &max_join_size, 0, GET_ULONG, REQUIRED_ARG, 1000000L, 1, ULONG_MAX,
    0, 1, 0},
   {"secure-auth", OPT_SECURE_AUTH, "Refuse client connecting to server if it"
-    " uses old (pre-4.1.1) protocol", (char**) &opt_secure_auth,
-    (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   " uses old (pre-4.1.1) protocol", (char**) &opt_secure_auth,
+   (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"server-arg", OPT_SERVER_ARG, "Send embedded server this as a parameter.",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"show-warnings", OPT_SHOW_WARNINGS, "Show warnings after every statement.",
-    (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG, 
-    0, 0, 0, 0, 0, 0},
+   (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
+   0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -1497,8 +1499,8 @@ static void usage(int version)
   if (version)
     return;
   printf("\
-Copyright (C) 2000-2008 MySQL AB\n\
-This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
+Copyright (C) 2000-2008 MySQL AB\n                                      \
+This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n \
 and you are welcome to modify and redistribute it under the GPL license\n");
   printf("Usage: %s [OPTIONS] [database]\n", my_progname);
   my_print_help(my_long_options);
@@ -1509,7 +1511,7 @@ and you are welcome to modify and redistribute it under the GPL license\n");
 
 my_bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+               char *argument)
 {
   switch(optid) {
   case OPT_CHARSETS_DIR:
@@ -1520,22 +1522,22 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     default_charset_used= 1;
     break;
   case OPT_DELIMITER:
-    if (argument == disabled_my_option) 
+    if (argument == disabled_my_option)
     {
       strmov(delimiter, DEFAULT_DELIMITER);
     }
-    else 
+    else
     {
       /* Check that delimiter does not contain a backslash */
-      if (!strstr(argument, "\\")) 
+      if (!strstr(argument, "\\"))
       {
         strmake(delimiter, argument, sizeof(delimiter) - 1);
       }
-      else 
+      else
       {
         put_info("DELIMITER cannot contain a backslash character", INFO_ERROR);
         return 0;
-      } 
+      }
     }
     delimiter_length= (uint)strlen(delimiter);
     delimiter_str= delimiter;
@@ -1547,7 +1549,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     if (argument == disabled_my_option)
     {
       if (opt_outfile)
-	end_tee();
+        end_tee();
     }
     else
       init_tee(argument);
@@ -1565,14 +1567,14 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       opt_nopager= 0;
       if (argument && strlen(argument))
       {
-	default_pager_set= 1;
-	strmake(pager, argument, sizeof(pager) - 1);
-	strmov(default_pager, pager);
+        default_pager_set= 1;
+        strmake(pager, argument, sizeof(pager) - 1);
+        strmov(default_pager, pager);
       }
       else if (default_pager_set)
-	strmov(pager, default_pager);
+        strmov(pager, default_pager);
       else
-	opt_nopager= 1;
+        opt_nopager= 1;
     }
     break;
   case OPT_NOPAGER:
@@ -1599,8 +1601,8 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
         !(embedded_server_args[embedded_server_arg_count++]=
           my_strdup(argument, MYF(MY_FAE))))
     {
-        put_info("Can't use server argument", INFO_ERROR);
-        return 0;
+      put_info("Can't use server argument", INFO_ERROR);
+      return 0;
     }
 #else /*EMBEDDED_LIBRARY */
     printf("WARNING: --server-arg option not supported in this configuration.\n");
@@ -1636,7 +1638,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       opt_password= my_strdup(argument, MYF(MY_FAE));
       while (*argument) *argument++= 'x';		// Destroy argument
       if (*start)
-	start[1]=0 ;
+        start[1]=0 ;
       tty_password= 0;
     }
     else
@@ -1715,10 +1717,10 @@ static int get_options(int argc, char **argv)
     opt_reconnect= 0;
     connect_flag= 0; /* Not in interactive mode */
   }
-  
+
   if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset, 
-					    MY_CS_PRIMARY, MYF(MY_WME))))
+      !(charset_info= get_charset_by_csname(default_charset,
+                                            MY_CS_PRIMARY, MYF(MY_WME))))
     exit(1);
   if (argc > 1)
   {
@@ -1745,10 +1747,10 @@ static int read_and_execute(bool interactive)
   char	*line;
   char	in_string=0;
   ulong line_number=0;
-  bool ml_comment= 0;  
+  bool ml_comment= 0;
   COMMANDS *com;
   status.exit_status=1;
-  
+
   for (;;)
   {
     if (!interactive)
@@ -1761,28 +1763,28 @@ static int read_and_execute(bool interactive)
         you save the file using "Unicode UTF-8" format.
       */
       if (!line_number &&
-           (uchar) line[0] == 0xEF &&
-           (uchar) line[1] == 0xBB &&
-           (uchar) line[2] == 0xBF)
+          (uchar) line[0] == 0xEF &&
+          (uchar) line[1] == 0xBB &&
+          (uchar) line[2] == 0xBF)
         line+= 3;
       line_number++;
       if (!glob_buffer->len)
-	status.query_start_line=line_number;
+        status.query_start_line=line_number;
     }
     else
     {
       char *prompt= (char*) (ml_comment ? "   /*> " :
                              (glob_buffer->len == 0) ?  construct_prompt() :
-			     !in_string ? "    -> " :
-			     in_string == '\'' ?
-			     "    '> " : (in_string == '`' ?
-			     "    `> " :
-			     "    \"> "));
+                             !in_string ? "    -> " :
+                             in_string == '\'' ?
+                             "    '> " : (in_string == '`' ?
+                                          "    `> " :
+                                          "    \"> "));
       if (opt_outfile && (glob_buffer->len==0))
-	fflush(OUTFILE);
+        fflush(OUTFILE);
 
       if (opt_outfile)
-	fputs(prompt, OUTFILE);
+        fputs(prompt, OUTFILE);
       line= readline(prompt);
 
       /*
@@ -1867,9 +1869,9 @@ static COMMANDS *find_command(char *name,char cmd_char)
     {
       len=(uint) (end - name);
       while (my_isspace(charset_info,*end))
-	end++;
+        end++;
       if (!*end)
-	end=0;					// no arguments to function
+        end=0;					// no arguments to function
     }
     else
       len=(uint) strlen(name);
@@ -1878,7 +1880,7 @@ static COMMANDS *find_command(char *name,char cmd_char)
   for (uint i= 0; commands[i].name; i++)
   {
     if (commands[i].func &&
-	((name && !my_strnncoll(charset_info,(uchar*)name,len, (uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
+        ((name && !my_strnncoll(charset_info,(uchar*)name,len, (uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
     {
       DBUG_PRINT("exit",("found command: %s", commands[i].name));
       DBUG_RETURN(&commands[i]);
@@ -1976,19 +1978,19 @@ static bool add_line(GString *buffer,char *line,char *in_string,
               ;	// Remove parameters
             if (!*pos)
               pos--;
-            else 
+            else
               pos+= delimiter_length - 1; // Point at last delim char
           }
         }
       }
       else
       {
-	sprintf(buff,"Unknown command '\\%c'.",inchar);
-	if (put_info(buff,INFO_ERROR) > 0)
-	  DBUG_RETURN(1);
-	*out++='\\';
-	*out++=(char) inchar;
-	continue;
+        sprintf(buff,"Unknown command '\\%c'.",inchar);
+        if (put_info(buff,INFO_ERROR) > 0)
+          DBUG_RETURN(1);
+        *out++='\\';
+        *out++=(char) inchar;
+        continue;
       }
     }
     else if (!*ml_comment && !*in_string &&
@@ -2053,9 +2055,9 @@ static bool add_line(GString *buffer,char *line,char *in_string,
 
       if ((com= find_command(buffer->str, 0)))
       {
-          
+
         if ((*com->func)(buffer, buffer->str) > 0)
-          DBUG_RETURN(1);                       // Quit 
+          DBUG_RETURN(1);                       // Quit
       }
       else
       {
@@ -2154,7 +2156,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
 }
 
 /*****************************************************************
-	    Interface to Readline Completion
+            Interface to Readline Completion
 ******************************************************************/
 
 
@@ -2170,7 +2172,7 @@ extern "C" char **new_mysql_completion (const char *text, int start, int end);
 #if defined(USE_NEW_READLINE_INTERFACE) || defined(USE_LIBEDIT_INTERFACE)
 extern "C" char *no_completion(const char*,int)
 #else
-extern "C" char *no_completion()
+  extern "C" char *no_completion()
 #endif
 {
   /* No filename completion */
@@ -2204,8 +2206,8 @@ static void fix_history(GString *final_command)
       break;
     case '\n':
       /*
-	 not in string, change to space
-         if in string, leave it alone
+        not in string, change to space
+        if in string, leave it alone
       */
       g_string_append(fixed_buffer,(str_char == '\0') ? " " : "\n");
       total_lines++;
@@ -2293,7 +2295,7 @@ static char *new_command_generator(const char *text,int state)
 
       b = find_all_matches(&ht,text,(uint) strlen(text),&len);
       if (!b)
-	return NullS;
+        return NullS;
       e = b->pData;
     }
 
@@ -2312,38 +2314,38 @@ static char *new_command_generator(const char *text,int state)
       /* find the first used bucket */
       for (i=0 ; i < ht.nTableSize ; i++)
       {
-	if (ht.arBuckets[i])
-	{
-	  b = ht.arBuckets[i];
-	  e = b->pData;
-	  break;
-	}
+        if (ht.arBuckets[i])
+        {
+          b = ht.arBuckets[i];
+          e = b->pData;
+          break;
+        }
       }
     }
     ptr= NullS;
     while (e && !ptr)
     {					/* find valid entry in bucket */
       if ((uint) strlen(e->str) == b->nKeyLength)
-	ptr = strdup(e->str);
+        ptr = strdup(e->str);
       /* find the next used entry */
       e = e->pNext;
       if (!e)
       { /* find the next used bucket */
-	b = b->pNext;
-	if (!b)
-	{
-	  for (i++ ; i<ht.nTableSize; i++)
-	  {
-	    if (ht.arBuckets[i])
-	    {
-	      b = ht.arBuckets[i];
-	      e = b->pData;
-	      break;
-	    }
-	  }
-	}
-	else
-	  e = b->pData;
+        b = b->pNext;
+        if (!b)
+        {
+          for (i++ ; i<ht.nTableSize; i++)
+          {
+            if (ht.arBuckets[i])
+            {
+              b = ht.arBuckets[i];
+              e = b->pData;
+              break;
+            }
+          }
+        }
+        else
+          e = b->pData;
       }
     }
     if (ptr)
@@ -2395,9 +2397,9 @@ static void build_completion_hash(bool rehash, bool write_info)
     {
       while ((database_row=mysql_fetch_row(databases)))
       {
-	char *str=strdup_root(&hash_mem_root, (char*) database_row[0]);
-	if (str)
-	  add_word(&ht,(char*) str);
+        char *str=strdup_root(&hash_mem_root, (char*) database_row[0]);
+        if (str)
+          add_word(&ht,(char*) str);
       }
       mysql_free_result(databases);
     }
@@ -2411,16 +2413,16 @@ static void build_completion_hash(bool rehash, bool write_info)
     {
       if (mysql_num_rows(tables) > 0 && !opt_silent && write_info)
       {
-	tee_fprintf(stdout, "\
-Reading table information for completion of table and column names\n\
+        tee_fprintf(stdout, "\
+Reading table information for completion of table and column names\n    \
 You can turn off this feature to get a quicker startup with -A\n\n");
       }
       while ((table_row=mysql_fetch_row(tables)))
       {
-	char *str=strdup_root(&hash_mem_root, (char*) table_row[0]);
-	if (str &&
-	    !completion_hash_exists(&ht,(char*) str, (uint) strlen(str)))
-	  add_word(&ht,str);
+        char *str=strdup_root(&hash_mem_root, (char*) table_row[0]);
+        if (str &&
+            !completion_hash_exists(&ht,(char*) str, (uint) strlen(str)))
+          add_word(&ht,str);
       }
     }
   }
@@ -2432,7 +2434,7 @@ You can turn off this feature to get a quicker startup with -A\n\n");
   }
   mysql_data_seek(tables,0);
   if (!(field_names= (char ***) alloc_root(&hash_mem_root,sizeof(char **) *
-					   (uint) (mysql_num_rows(tables)+1))))
+                                           (uint) (mysql_num_rows(tables)+1))))
   {
     mysql_free_result(tables);
     DBUG_VOID_RETURN;
@@ -2444,8 +2446,8 @@ You can turn off this feature to get a quicker startup with -A\n\n");
     {
       num_fields=mysql_num_fields(fields);
       if (!(field_names[i] = (char **) alloc_root(&hash_mem_root,
-						  sizeof(char *) *
-						  (num_fields*2+1))))
+                                                  sizeof(char *) *
+                                                  (num_fields*2+1))))
       {
         mysql_free_result(fields);
         break;
@@ -2454,15 +2456,15 @@ You can turn off this feature to get a quicker startup with -A\n\n");
       j=0;
       while ((sql_field=mysql_fetch_field(fields)))
       {
-	sprintf(buf,"%.64s.%.64s",table_row[0],sql_field->name);
-	field_names[i][j] = strdup_root(&hash_mem_root,buf);
-	add_word(&ht,field_names[i][j]);
-	field_names[i][num_fields+j] = strdup_root(&hash_mem_root,
-						   sql_field->name);
-	if (!completion_hash_exists(&ht,field_names[i][num_fields+j],
-				    (uint) strlen(field_names[i][num_fields+j])))
-	  add_word(&ht,field_names[i][num_fields+j]);
-	j++;
+        sprintf(buf,"%.64s.%.64s",table_row[0],sql_field->name);
+        field_names[i][j] = strdup_root(&hash_mem_root,buf);
+        add_word(&ht,field_names[i][j]);
+        field_names[i][num_fields+j] = strdup_root(&hash_mem_root,
+                                                   sql_field->name);
+        if (!completion_hash_exists(&ht,field_names[i][num_fields+j],
+                                    (uint) strlen(field_names[i][num_fields+j])))
+          add_word(&ht,field_names[i][num_fields+j]);
+        j++;
       }
       mysql_free_result(fields);
     }
@@ -2476,29 +2478,29 @@ You can turn off this feature to get a quicker startup with -A\n\n");
   DBUG_VOID_RETURN;
 }
 
-	/* for gnu readline */
+/* for gnu readline */
 
 #ifndef HAVE_INDEX
 extern "C" {
-extern char *index(const char *,int c),*rindex(const char *,int);
+  extern char *index(const char *,int c),*rindex(const char *,int);
 
-char *index(const char *s,int c)
-{
-  for (;;)
+  char *index(const char *s,int c)
   {
-     if (*s == (char) c) return (char*) s;
-     if (!*s++) return NullS;
+    for (;;)
+    {
+      if (*s == (char) c) return (char*) s;
+      if (!*s++) return NullS;
+    }
   }
-}
 
-char *rindex(const char *s,int c)
-{
-  register char *t;
+  char *rindex(const char *s,int c)
+  {
+    register char *t;
 
-  t = NullS;
-  do if (*s == (char) c) t = (char*) s; while (*s++);
-  return (char*) t;
-}
+    t = NullS;
+    do if (*s == (char) c) t = (char*) s; while (*s++);
+    return (char*) t;
+  }
 }
 #endif
 
@@ -2622,15 +2624,15 @@ static int com_server_help(GString *buffer,
     {
       if (!(cur= mysql_fetch_row(result)))
       {
-	error= -1;
-	goto err;
+        error= -1;
+        goto err;
       }
 
       init_pager();
       tee_fprintf(PAGER,   "Name: \'%s\'\n", cur[0]);
       tee_fprintf(PAGER,   "Description:\n%s", cur[1]);
       if (cur[2] && *((char*)cur[2]))
-	tee_fprintf(PAGER, "Examples:\n%s", cur[2]);
+        tee_fprintf(PAGER, "Examples:\n%s", cur[2]);
       tee_fprintf(PAGER,   "\n");
       end_pager();
     }
@@ -2643,22 +2645,22 @@ static int com_server_help(GString *buffer,
 
       if (num_fields == 2)
       {
-	put_info("Many help items for your request exist.", INFO_INFO);
-	put_info("To make a more specific request, please type 'help <item>',\nwhere <item> is one of the following", INFO_INFO);
-	num_name= 0;
-	num_cat= 1;
+        put_info("Many help items for your request exist.", INFO_INFO);
+        put_info("To make a more specific request, please type 'help <item>',\nwhere <item> is one of the following", INFO_INFO);
+        num_name= 0;
+        num_cat= 1;
       }
       else if ((cur= mysql_fetch_row(result)))
       {
-	tee_fprintf(PAGER, "You asked for help about help category: \"%s\"\n", cur[0]);
-	put_info("For more information, type 'help <item>', where <item> is one of the following", INFO_INFO);
-	num_name= 1;
-	num_cat= 2;
-	print_help_item(&cur,1,2,&last_char);
+        tee_fprintf(PAGER, "You asked for help about help category: \"%s\"\n", cur[0]);
+        put_info("For more information, type 'help <item>', where <item> is one of the following", INFO_INFO);
+        num_name= 1;
+        num_cat= 2;
+        print_help_item(&cur,1,2,&last_char);
       }
 
       while ((cur= mysql_fetch_row(result)))
-	print_help_item(&cur,num_name,num_cat,&last_char);
+        print_help_item(&cur,num_name,num_cat,&last_char);
       tee_fprintf(PAGER, "\n");
       end_pager();
     }
@@ -2676,7 +2678,7 @@ err:
 
 static int
 com_help(GString *buffer __attribute__((unused)),
-	 char *line __attribute__((unused)))
+         char *line __attribute__((unused)))
 {
   register int i, j;
   char * help_arg= strchr(line,' '), buff[32], *end;
@@ -2684,8 +2686,8 @@ com_help(GString *buffer __attribute__((unused)),
   {
     while (my_isspace(charset_info,*help_arg))
       help_arg++;
-	if (*help_arg)	  
-	  return com_server_help(buffer,line,help_arg);
+    if (*help_arg)
+      return com_server_help(buffer,line,help_arg);
   }
 
   put_info("List of all Drizzle commands:", INFO_INFO);
@@ -2698,7 +2700,7 @@ com_help(GString *buffer __attribute__((unused)),
       end= strmov(end, " ");
     if (commands[i].func)
       tee_fprintf(stdout, "%s(\\%c) %s\n", buff,
-		  commands[i].cmd_char, commands[i].doc);
+                  commands[i].cmd_char, commands[i].doc);
   }
   if (connected && mysql_get_server_version(&mysql) >= 40100)
     put_info("\nFor server side help, type 'help contents'\n", INFO_INFO);
@@ -2724,8 +2726,8 @@ com_charset(GString *buffer __attribute__((unused)), char *line)
   param= get_arg(buff, 0);
   if (!param || !*param)
   {
-    return put_info("Usage: \\C char_setname | charset charset_name", 
-		    INFO_ERROR, 0);
+    return put_info("Usage: \\C char_setname | charset charset_name",
+                    INFO_ERROR, 0);
   }
   new_cs= get_charset_by_csname(param, MY_CS_PRIMARY, MYF(MY_WME));
   if (new_cs)
@@ -2743,8 +2745,8 @@ com_charset(GString *buffer __attribute__((unused)), char *line)
 /*
   Execute command
   Returns: 0  if ok
-          -1 if not fatal error
-	  1  if fatal error
+  -1 if not fatal error
+  1  if fatal error
 */
 static int
 com_go(GString *buffer,
@@ -2838,9 +2840,9 @@ com_go(GString *buffer,
     {
       if (!mysql_num_rows(result) && ! quick && !column_types_flag)
       {
-	strmov(buff, "Empty set");
+        strmov(buff, "Empty set");
         if (opt_xml)
-        { 
+        {
           /*
             We must print XML header and footer
             to produce a well-formed XML even if
@@ -2853,21 +2855,21 @@ com_go(GString *buffer,
       }
       else
       {
-	init_pager();
-	if (opt_html)
-	  print_table_data_html(result);
-	else if (opt_xml)
-	  print_table_data_xml(result);
-  else if (vertical || (auto_vertical_output && (terminal_width < get_result_width(result))))
-	  print_table_data_vertically(result);
-	else if (opt_silent && verbose <= 2 && !output_tables)
-	  print_tab_data(result);
-	else
-	  print_table_data(result);
-	sprintf(buff,"%ld %s in set",
-		(long) mysql_num_rows(result),
-		(long) mysql_num_rows(result) == 1 ? "row" : "rows");
-	end_pager();
+        init_pager();
+        if (opt_html)
+          print_table_data_html(result);
+        else if (opt_xml)
+          print_table_data_xml(result);
+        else if (vertical || (auto_vertical_output && (terminal_width < get_result_width(result))))
+          print_table_data_vertically(result);
+        else if (opt_silent && verbose <= 2 && !output_tables)
+          print_tab_data(result);
+        else
+          print_table_data(result);
+        sprintf(buff,"%ld %s in set",
+                (long) mysql_num_rows(result),
+                (long) mysql_num_rows(result) == 1 ? "row" : "rows");
+        end_pager();
         if (mysql_errno(&mysql))
           error= put_error(&mysql);
       }
@@ -2876,8 +2878,8 @@ com_go(GString *buffer,
       strmov(buff,"Query OK");
     else
       sprintf(buff,"Query OK, %ld %s affected",
-	      (long) mysql_affected_rows(&mysql),
-	      (long) mysql_affected_rows(&mysql) == 1 ? "row" : "rows");
+              (long) mysql_affected_rows(&mysql),
+              (long) mysql_affected_rows(&mysql) == 1 ? "row" : "rows");
 
     pos=strend(buff);
     if ((warnings= mysql_warning_count(&mysql)))
@@ -2887,7 +2889,7 @@ com_go(GString *buffer,
       pos=int10_to_str(warnings, pos, 10);
       pos=strmov(pos, " warning");
       if (warnings != 1)
-	*pos++= 's';
+        *pos++= 's';
     }
     strmov(pos, time_buff);
     put_info(buff,INFO_RESULT);
@@ -2906,11 +2908,11 @@ com_go(GString *buffer,
 
 end:
 
- /* Show warnings if any or error occured */
+  /* Show warnings if any or error occured */
   if (show_warnings == 1 && (warnings >= 1 || error))
     print_warnings();
 
-  if (!error && !status.batch && 
+  if (!error && !status.batch &&
       (mysql.server_status & SERVER_STATUS_DB_DROPPED))
     get_current_db();
 
@@ -2986,25 +2988,25 @@ com_ego(GString *buffer,char *line)
 static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
-    case MYSQL_TYPE_BLOB:        return "BLOB";
-    case MYSQL_TYPE_NEWDATE:        return "DATE";
-    case MYSQL_TYPE_DATETIME:    return "DATETIME";
-    case MYSQL_TYPE_NEWDECIMAL:  return "DECIMAL";
-    case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
-    case MYSQL_TYPE_ENUM:        return "ENUM";
-    case MYSQL_TYPE_FLOAT:       return "FLOAT";
-    case MYSQL_TYPE_LONG:        return "LONG";
-    case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
-    case MYSQL_TYPE_NULL:        return "NULL";
-    case MYSQL_TYPE_SET:         return "SET";
-    case MYSQL_TYPE_SHORT:       return "SHORT";
-    case MYSQL_TYPE_STRING:      return "STRING";
-    case MYSQL_TYPE_TIME:        return "TIME";
-    case MYSQL_TYPE_TIMESTAMP:   return "TIMESTAMP";
-    case MYSQL_TYPE_TINY:        return "TINY";
-    case MYSQL_TYPE_VAR_STRING:  return "VAR_STRING";
-    case MYSQL_TYPE_YEAR:        return "YEAR";
-    default:                     return "?-unknown-?";
+  case MYSQL_TYPE_BLOB:        return "BLOB";
+  case MYSQL_TYPE_NEWDATE:        return "DATE";
+  case MYSQL_TYPE_DATETIME:    return "DATETIME";
+  case MYSQL_TYPE_NEWDECIMAL:  return "DECIMAL";
+  case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
+  case MYSQL_TYPE_ENUM:        return "ENUM";
+  case MYSQL_TYPE_FLOAT:       return "FLOAT";
+  case MYSQL_TYPE_LONG:        return "LONG";
+  case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
+  case MYSQL_TYPE_NULL:        return "NULL";
+  case MYSQL_TYPE_SET:         return "SET";
+  case MYSQL_TYPE_SHORT:       return "SHORT";
+  case MYSQL_TYPE_STRING:      return "STRING";
+  case MYSQL_TYPE_TIME:        return "TIME";
+  case MYSQL_TYPE_TIMESTAMP:   return "TIMESTAMP";
+  case MYSQL_TYPE_TINY:        return "TINY";
+  case MYSQL_TYPE_VAR_STRING:  return "VAR_STRING";
+  case MYSQL_TYPE_YEAR:        return "YEAR";
+  default:                     return "?-unknown-?";
   }
 }
 
@@ -3012,8 +3014,8 @@ static char *fieldflags2str(uint f) {
   static char buf[1024];
   char *s=buf;
   *s=0;
-#define ff2s_check_flag(X) \
-                if (f & X ## _FLAG) { s=strmov(s, # X " "); f &= ~ X ## _FLAG; }
+#define ff2s_check_flag(X)                                              \
+  if (f & X ## _FLAG) { s=strmov(s, # X " "); f &= ~ X ## _FLAG; }
   ff2s_check_flag(NOT_NULL);
   ff2s_check_flag(PRI_KEY);
   ff2s_check_flag(UNIQUE_KEY);
@@ -3048,16 +3050,16 @@ print_field_types(MYSQL_RES *result)
   while ((field = mysql_fetch_field(result)))
   {
     tee_fprintf(PAGER, "Field %3u:  `%s`\n"
-                       "Catalog:    `%s`\n"
-                       "Database:   `%s`\n"
-                       "Table:      `%s`\n"
-                       "Org_table:  `%s`\n"
-                       "Type:       %s\n"
-                       "Collation:  %s (%u)\n"
-                       "Length:     %lu\n"
-                       "Max_length: %lu\n"
-                       "Decimals:   %u\n"
-                       "Flags:      %s\n\n",
+                "Catalog:    `%s`\n"
+                "Database:   `%s`\n"
+                "Table:      `%s`\n"
+                "Org_table:  `%s`\n"
+                "Type:       %s\n"
+                "Collation:  %s (%u)\n"
+                "Length:     %lu\n"
+                "Max_length: %lu\n"
+                "Decimals:   %u\n"
+                "Flags:      %s\n\n",
                 ++i,
                 field->name, field->catalog, field->db, field->table,
                 field->org_table, fieldtype2str(field->type),
@@ -3072,7 +3074,7 @@ print_field_types(MYSQL_RES *result)
 static void
 print_table_data(MYSQL_RES *result)
 {
-  GString       *separator;
+  GString       *separator = g_string_sized_new(256);
   MYSQL_ROW     cur;
   MYSQL_FIELD   *field;
   bool          *num_flag;
@@ -3086,7 +3088,7 @@ print_table_data(MYSQL_RES *result)
       return;
     mysql_field_seek(result,0);
   }
-  separator = g_string_new("+");
+  separator = g_string_append_c(separator, '+');
   while ((field = mysql_fetch_field(result)))
   {
     uint length= column_names ? field->name_length : 0;
@@ -3095,13 +3097,19 @@ print_table_data(MYSQL_RES *result)
     else
       length=max(length,field->max_length);
     if (length < 4 && !IS_NOT_NULL(field->flags))
-      length=4;					// Room for "NULL"
+      // Room for "NULL"
+      length=4;
     field->max_length=length;
-    separator.fill(separator.length()+length+2,'-');
-    separator.append('+');
+    uint x;
+    for (x=0; x< (length+2); x++)
+      g_string_append_c(separator, '-');
+    g_string_append_c(separator, '+');
   }
-  separator.append('\0');                       // End marker for \0
-  tee_puts((char*) separator.ptr(), PAGER);
+  // End marker for \0
+  // TODO: Huh? Do we need this with GString?
+  g_string_append_c(separator, '\0');
+
+  tee_puts((char*) separator->str, PAGER);
   if (column_names)
   {
     mysql_field_seek(result,0);
@@ -3114,12 +3122,12 @@ print_table_data(MYSQL_RES *result)
                                                   field->name + name_length);
       uint display_length= field->max_length + name_length - numcells;
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
-                                            MAX_COLUMN_LENGTH),
+                                             MAX_COLUMN_LENGTH),
                   field->name);
       num_flag[off]= IS_NUM(field->type);
     }
     (void) tee_fputs("\n", PAGER);
-    tee_puts((char*) separator.ptr(), PAGER);
+    tee_puts((char*) separator->str, PAGER);
   }
 
   while ((cur= mysql_fetch_row(result)))
@@ -3141,8 +3149,8 @@ print_table_data(MYSQL_RES *result)
       {
         buffer= "NULL";
         data_length= 4;
-      } 
-      else 
+      }
+      else
       {
         buffer= cur[off];
         data_length= (uint) lengths[off];
@@ -3151,13 +3159,13 @@ print_table_data(MYSQL_RES *result)
       field= mysql_fetch_field(result);
       field_max_length= field->max_length;
 
-      /* 
-       How many text cells on the screen will this string span?  If it contains
-       multibyte characters, then the number of characters we occupy on screen
-       will be fewer than the number of bytes we occupy in memory.
+      /*
+        How many text cells on the screen will this string span?  If it contains
+        multibyte characters, then the number of characters we occupy on screen
+        will be fewer than the number of bytes we occupy in memory.
 
-       We need to find how much screen real-estate we will occupy to know how 
-       many extra padding-characters we should send with the printing function.
+        We need to find how much screen real-estate we will occupy to know how
+        many extra padding-characters we should send with the printing function.
       */
       visible_length= charset_info->cset->numcells(charset_info, buffer, buffer + data_length);
       extra_padding= data_length - visible_length;
@@ -3168,7 +3176,7 @@ print_table_data(MYSQL_RES *result)
       {
         if (num_flag[off] != 0) /* if it is numeric, we right-justify it */
           tee_print_sized_data(buffer, data_length, field_max_length+extra_padding, TRUE);
-        else 
+        else
           tee_print_sized_data(buffer, data_length,
                                field_max_length+extra_padding, FALSE);
       }
@@ -3176,25 +3184,25 @@ print_table_data(MYSQL_RES *result)
     }
     (void) tee_fputs("\n", PAGER);
   }
-  tee_puts((char*) separator.ptr(), PAGER);
+  tee_puts(separator->str, PAGER);
   my_free(num_flag, MYF(MY_ALLOW_ZERO_PTR));
 }
 
 /**
-  Return the length of a field after it would be rendered into text.
+   Return the length of a field after it would be rendered into text.
 
-  This doesn't know or care about multibyte characters.  Assume we're
-  using such a charset.  We can't know that all of the upcoming rows
-  for this column will have bytes that each render into some fraction
-  of a character.  It's at least possible that a row has bytes that 
-  all render into one character each, and so the maximum length is 
-  still the number of bytes.  (Assumption 1:  This can't be better 
-  because we can never know the number of characters that the DB is 
-  going to send -- only the number of bytes.  2: Chars <= Bytes.)
+   This doesn't know or care about multibyte characters.  Assume we're
+   using such a charset.  We can't know that all of the upcoming rows
+   for this column will have bytes that each render into some fraction
+   of a character.  It's at least possible that a row has bytes that
+   all render into one character each, and so the maximum length is
+   still the number of bytes.  (Assumption 1:  This can't be better
+   because we can never know the number of characters that the DB is
+   going to send -- only the number of bytes.  2: Chars <= Bytes.)
 
-  @param  field  Pointer to a field to be inspected
+   @param  field  Pointer to a field to be inspected
 
-  @returns  number of character positions to be used, at most
+   @returns  number of character positions to be used, at most
 */
 static int get_field_disp_length(MYSQL_FIELD *field)
 {
@@ -3212,19 +3220,19 @@ static int get_field_disp_length(MYSQL_FIELD *field)
 }
 
 /**
-  For a new result, return the max number of characters that any
-  upcoming row may return.
+   For a new result, return the max number of characters that any
+   upcoming row may return.
 
-  @param  result  Pointer to the result to judge
+   @param  result  Pointer to the result to judge
 
-  @returns  The max number of characters in any row of this result
+   @returns  The max number of characters in any row of this result
 */
 static int get_result_width(MYSQL_RES *result)
 {
   unsigned int len= 0;
   MYSQL_FIELD *field;
   MYSQL_FIELD_OFFSET offset;
-  
+
 #ifndef DBUG_OFF
   offset= mysql_field_tell(result);
   DBUG_ASSERT(offset == 0);
@@ -3235,7 +3243,7 @@ static int get_result_width(MYSQL_RES *result)
   while ((field= mysql_fetch_field(result)) != NULL)
     len+= get_field_disp_length(field) + 3; /* plus bar, space, & final space */
 
-  (void) mysql_field_seek(result, offset);	
+  (void) mysql_field_seek(result, offset);
 
   return len + 1; /* plus final bar. */
 }
@@ -3243,15 +3251,15 @@ static int get_result_width(MYSQL_RES *result)
 static void
 tee_print_sized_data(const char *data, unsigned int data_length, unsigned int total_bytes_to_send, bool right_justified)
 {
-  /* 
+  /*
     For '\0's print ASCII spaces instead, as '\0' is eaten by (at
     least my) console driver, and that messes up the pretty table
-    grid.  (The \0 is also the reason we can't use fprintf() .) 
+    grid.  (The \0 is also the reason we can't use fprintf() .)
   */
   unsigned int i;
   const char *p;
 
-  if (right_justified) 
+  if (right_justified)
     for (i= data_length; i < total_bytes_to_send; i++)
       tee_putc((int)' ', PAGER);
 
@@ -3263,7 +3271,7 @@ tee_print_sized_data(const char *data, unsigned int data_length, unsigned int to
       tee_putc((int)*p, PAGER);
   }
 
-  if (! right_justified) 
+  if (! right_justified)
     for (i= data_length; i < total_bytes_to_send; i++)
       tee_putc((int)' ', PAGER);
 }
@@ -3282,9 +3290,9 @@ print_table_data_html(MYSQL_RES *result)
   {
     while((field = mysql_fetch_field(result)))
     {
-      tee_fprintf(PAGER, "<TH>%s</TH>", (field->name ? 
-					 (field->name[0] ? field->name : 
-					  " &nbsp; ") : "NULL"));
+      tee_fprintf(PAGER, "<TH>%s</TH>", (field->name ?
+                                         (field->name[0] ? field->name :
+                                          " &nbsp; ") : "NULL"));
     }
     (void) tee_fputs("</TR>", PAGER);
   }
@@ -3315,7 +3323,7 @@ print_table_data_xml(MYSQL_RES *result)
   mysql_field_seek(result,0);
 
   tee_fputs("<?xml version=\"1.0\"?>\n\n<resultset statement=\"", PAGER);
-  xmlencode_print(glob_buffer.ptr(), (int)strlen(glob_buffer.ptr()));
+  xmlencode_print(glob_buffer->str, glob_buffer->len);
   tee_fputs("\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
             PAGER);
 
@@ -3366,8 +3374,8 @@ print_table_data_vertically(MYSQL_RES *result)
     if (interrupted_query)
       break;
     mysql_field_seek(result,0);
-    tee_fprintf(PAGER, 
-		"*************************** %d. row ***************************\n", row_count);
+    tee_fprintf(PAGER,
+                "*************************** %d. row ***************************\n", row_count);
     for (uint off=0; off < mysql_num_fields(result); off++)
     {
       field= mysql_fetch_field(result);
@@ -3386,7 +3394,7 @@ static void print_warnings()
   MYSQL_RES    *result;
   MYSQL_ROW    cur;
   my_ulonglong num_rows;
-  
+
   /* Save current error before calling "show warnings" */
   uint error= mysql_errno(&mysql);
 
@@ -3443,9 +3451,9 @@ xmlencode_print(const char *src, uint length)
     {
       const char *t;
       if ((t = array_value(xmlmeta, *p)))
-	tee_fputs(t, PAGER);
+        tee_fputs(t, PAGER);
       else
-	tee_putc(*p, PAGER);
+        tee_putc(*p, PAGER);
     }
   }
 }
@@ -3461,29 +3469,29 @@ safe_put_field(const char *pos,ulong length)
     if (opt_raw_data)
       tee_fputs(pos, PAGER);
     else for (const char *end=pos+length ; pos != end ; pos++)
-    {
+         {
 #ifdef USE_MB
-      int l;
-      if (use_mb(charset_info) &&
-          (l = my_ismbchar(charset_info, pos, end)))
-      {
-	  while (l--)
-	    tee_putc(*pos++, PAGER);
-	  pos--;
-	  continue;
-      }
+           int l;
+           if (use_mb(charset_info) &&
+               (l = my_ismbchar(charset_info, pos, end)))
+           {
+             while (l--)
+               tee_putc(*pos++, PAGER);
+             pos--;
+             continue;
+           }
 #endif
-      if (!*pos)
-	tee_fputs("\\0", PAGER); // This makes everything hard
-      else if (*pos == '\t')
-	tee_fputs("\\t", PAGER); // This would destroy tab format
-      else if (*pos == '\n')
-	tee_fputs("\\n", PAGER); // This too
-      else if (*pos == '\\')
-	tee_fputs("\\\\", PAGER);
-	else
-	tee_putc(*pos, PAGER);
-    }
+           if (!*pos)
+             tee_fputs("\\0", PAGER); // This makes everything hard
+           else if (*pos == '\t')
+             tee_fputs("\\t", PAGER); // This would destroy tab format
+           else if (*pos == '\n')
+             tee_fputs("\\n", PAGER); // This too
+           else if (*pos == '\\')
+             tee_fputs("\\\\", PAGER);
+           else
+             tee_putc(*pos, PAGER);
+         }
   }
 }
 
@@ -3501,7 +3509,7 @@ print_tab_data(MYSQL_RES *result)
     while ((field = mysql_fetch_field(result)))
     {
       if (first++)
-	(void) tee_fputs("\t", PAGER);
+        (void) tee_fputs("\t", PAGER);
       (void) tee_fputs(field->name, PAGER);
     }
     (void) tee_fputs("\n", PAGER);
@@ -3549,8 +3557,8 @@ com_tee(GString *buffer __attribute__((__unused__)), char *line )
     param++;
   end= strmake(file_name, param, sizeof(file_name) - 1);
   /* remove end space from command line */
-  while (end > file_name && (my_isspace(charset_info,end[-1]) || 
-			     my_iscntrl(charset_info,end[-1])))
+  while (end > file_name && (my_isspace(charset_info,end[-1]) ||
+                             my_iscntrl(charset_info,end[-1])))
     end--;
   end[0]= 0;
   if (end == file_name)
@@ -3565,7 +3573,7 @@ com_tee(GString *buffer __attribute__((__unused__)), char *line )
 
 static int
 com_notee(GString *buffer __attribute__((unused)),
-	  char *line __attribute__((unused)))
+          char *line __attribute__((unused)))
 {
   if (opt_outfile)
     end_tee();
@@ -3608,7 +3616,7 @@ com_pager(GString *buffer, char *line __attribute__((unused)))
   else
   {
     end= strmake(pager_name, param, sizeof(pager_name)-1);
-    while (end > pager_name && (my_isspace(charset_info,end[-1]) || 
+    while (end > pager_name && (my_isspace(charset_info,end[-1]) ||
                                 my_iscntrl(charset_info,end[-1])))
       end--;
     end[0]=0;
@@ -3623,7 +3631,7 @@ com_pager(GString *buffer, char *line __attribute__((unused)))
 
 static int
 com_nopager(GString *buffer __attribute__((unused)),
-	    char *line __attribute__((unused)))
+            char *line __attribute__((unused)))
 {
   strmov(pager, "stdout");
   opt_nopager=1;
@@ -3647,11 +3655,11 @@ com_edit(GString *buffer,char *line __attribute__((unused)))
   const char *editor;
 
   if ((fd=create_temp_file(filename,NullS,"sql", O_CREAT | O_WRONLY,
-			   MYF(MY_WME))) < 0)
+                           MYF(MY_WME))) < 0)
     goto err;
   if (buffer->is_empty() && !old_buffer.is_empty())
     (void) my_write(fd,(uchar*) old_buffer.ptr(),old_buffer.length(),
-		    MYF(MY_WME));
+                    MYF(MY_WME));
   else
     (void) my_write(fd,(uchar*) buffer->ptr(),buffer->length(),MYF(MY_WME));
   (void) my_close(fd,MYF(0));
@@ -3684,7 +3692,7 @@ err:
 
 static int
 com_quit(GString *buffer __attribute__((unused)),
-	 char *line __attribute__((unused)))
+         char *line __attribute__((unused)))
 {
   /* let the screen auto close on a normal shutdown */
   status.exit_status=0;
@@ -3693,7 +3701,7 @@ com_quit(GString *buffer __attribute__((unused)),
 
 static int
 com_rehash(GString *buffer __attribute__((unused)),
-	 char *line __attribute__((unused)))
+           char *line __attribute__((unused)))
 {
   build_completion_hash(1, 0);
   return 0;
@@ -3732,14 +3740,16 @@ static int
 com_print(GString *buffer,char *line __attribute__((unused)))
 {
   tee_puts("--------------", stdout);
-  (void) tee_fputs(buffer->c_ptr(), stdout);
-  if (!buffer->length() || (*buffer)[buffer->length()-1] != '\n')
+  (void) tee_fputs(buffer->str, stdout);
+  if ( (buffer->len == 0)
+       || (buffer->str)[(buffer->len)-1] != '\n')
     tee_putc('\n', stdout);
   tee_puts("--------------\n", stdout);
-  return 0;					/* If empty buffer */
+  /* If empty buffer */
+  return 0;
 }
 
-	/* ARGSUSED */
+/* ARGSUSED */
 static int
 com_connect(GString *buffer, char *line)
 {
@@ -3766,8 +3776,8 @@ com_connect(GString *buffer, char *line)
       tmp= get_arg(buff, 1);
       if (tmp)
       {
-	my_free(current_host,MYF(MY_ALLOW_ZERO_PTR));
-	current_host=my_strdup(tmp,MYF(MY_WME));
+        my_free(current_host,MYF(MY_ALLOW_ZERO_PTR));
+        current_host=my_strdup(tmp,MYF(MY_WME));
       }
     }
     else
@@ -3775,7 +3785,8 @@ com_connect(GString *buffer, char *line)
       /* Quick re-connect */
       opt_rehash= 0;                            /* purecov: tested */
     }
-    buffer->length(0);				// command used
+    // command used
+    g_string_truncate(buffer, 0);
   }
   else
     opt_rehash= 0;
@@ -3787,7 +3798,7 @@ com_connect(GString *buffer, char *line)
     sprintf(buff,"Connection id:    %lu",mysql_thread_id(&mysql));
     put_info(buff,INFO_INFO);
     sprintf(buff,"Current database: %.128s\n",
-	    current_db ? current_db : "*** NONE ***");
+            current_db ? current_db : "*** NONE ***");
     put_info(buff,INFO_INFO);
   }
   return error;
@@ -3806,12 +3817,12 @@ static int com_source(GString *buffer __attribute__((__unused__)), char *line)
   while (my_isspace(charset_info,*line))
     line++;
   if (!(param = strchr(line, ' ')))		// Skip command name
-    return put_info("Usage: \\. <filename> | source <filename>", 
-		    INFO_ERROR, 0);
+    return put_info("Usage: \\. <filename> | source <filename>",
+                    INFO_ERROR, 0);
   while (my_isspace(charset_info,*param))
     param++;
   end=strmake(source_name,param,sizeof(source_name)-1);
-  while (end > source_name && (my_isspace(charset_info,end[-1]) || 
+  while (end > source_name && (my_isspace(charset_info,end[-1]) ||
                                my_iscntrl(charset_info,end[-1])))
     end--;
   end[0]=0;
@@ -3834,19 +3845,22 @@ static int com_source(GString *buffer __attribute__((__unused__)), char *line)
   old_status=status;
   bfill((char*) &status,sizeof(status),(char) 0);
 
-  status.batch=old_status.batch;		// Run in batch mode
+  // Run in batch mode
+  status.batch=old_status.batch;
   status.line_buff=line_buff;
   status.file_name=source_name;
-  glob_buffer.length(0);			// Empty command buffer
+  // Empty command buffer
+  g_string_truncate(glob_buffer, 0);
   error= read_and_execute(false);
-  status=old_status;				// Continue as before
+  // Continue as before
+  status=old_status;
   my_fclose(sql_file,MYF(0));
   batch_readline_end(line_buff);
   return error;
 }
 
 
-	/* ARGSUSED */
+/* ARGSUSED */
 static int
 com_delimiter(GString *buffer __attribute__((unused)), char *line)
 {
@@ -3858,12 +3872,12 @@ com_delimiter(GString *buffer __attribute__((unused)), char *line)
   if (!tmp || !*tmp)
   {
     put_info("DELIMITER must be followed by a 'delimiter' character or string",
-	     INFO_ERROR);
+             INFO_ERROR);
     return 0;
   }
   else
   {
-    if (strstr(tmp, "\\")) 
+    if (strstr(tmp, "\\"))
     {
       put_info("DELIMITER cannot contain a backslash character", INFO_ERROR);
       return 0;
@@ -3875,7 +3889,7 @@ com_delimiter(GString *buffer __attribute__((unused)), char *line)
   return 0;
 }
 
-	/* ARGSUSED */
+/* ARGSUSED */
 static int
 com_use(GString *buffer __attribute__((unused)), char *line)
 {
@@ -3950,7 +3964,7 @@ com_use(GString *buffer __attribute__((unused)), char *line)
 
 static int
 com_warnings(GString *buffer __attribute__((unused)),
-   char *line __attribute__((unused)))
+             char *line __attribute__((unused)))
 {
   show_warnings = 1;
   put_info("Show warnings enabled.",INFO_INFO);
@@ -3959,7 +3973,7 @@ com_warnings(GString *buffer __attribute__((unused)),
 
 static int
 com_nowarnings(GString *buffer __attribute__((unused)),
-   char *line __attribute__((unused)))
+               char *line __attribute__((unused)))
 {
   show_warnings = 0;
   put_info("Show warnings disabled.",INFO_INFO);
@@ -4030,7 +4044,7 @@ char *get_arg(char *line, my_bool get_next_arg)
 
 static int
 sql_real_connect(char *host,char *database,char *user,char *password,
-		 uint silent)
+                 uint silent)
 {
   if (connected)
   {
@@ -4042,7 +4056,7 @@ sql_real_connect(char *host,char *database,char *user,char *password,
   {
     uint timeout=opt_connect_timeout;
     mysql_options(&mysql,MYSQL_OPT_CONNECT_TIMEOUT,
-		  (char*) &timeout);
+                  (char*) &timeout);
   }
   if (opt_compress)
     mysql_options(&mysql,MYSQL_OPT_COMPRESS,NullS);
@@ -4060,19 +4074,19 @@ sql_real_connect(char *host,char *database,char *user,char *password,
   {
     char init_command[100];
     sprintf(init_command,
-	    "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%lu,SQL_MAX_JOIN_SIZE=%lu",
-	    select_limit,max_join_size);
+            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%lu,SQL_MAX_JOIN_SIZE=%lu",
+            select_limit,max_join_size);
     mysql_options(&mysql, MYSQL_INIT_COMMAND, init_command);
   }
   if (default_charset_used)
     mysql_options(&mysql, MYSQL_SET_CHARSET_NAME, default_charset);
   if (!mysql_real_connect(&mysql, host, user, password,
-			  database, opt_mysql_port, opt_mysql_unix_port,
-			  connect_flag | CLIENT_MULTI_STATEMENTS))
+                          database, opt_mysql_port, opt_mysql_unix_port,
+                          connect_flag | CLIENT_MULTI_STATEMENTS))
   {
     if (!silent ||
-	(mysql_errno(&mysql) != CR_CONN_HOST_ERROR &&
-	 mysql_errno(&mysql) != CR_CONNECTION_ERROR))
+        (mysql_errno(&mysql) != CR_CONN_HOST_ERROR &&
+         mysql_errno(&mysql) != CR_CONNECTION_ERROR))
     {
       (void) put_error(&mysql);
       (void) fflush(stdout);
@@ -4099,8 +4113,8 @@ sql_connect(char *host,char *database,char *user,char *password,uint silent)
     {
       if (count)
       {
-	tee_fputs("\n", stderr);
-	(void) fflush(stderr);
+        tee_fputs("\n", stderr);
+        (void) fflush(stderr);
       }
       return error;
     }
@@ -4124,7 +4138,7 @@ sql_connect(char *host,char *database,char *user,char *password,uint silent)
 
 static int
 com_status(GString *buffer __attribute__((unused)),
-	   char *line __attribute__((unused)))
+           char *line __attribute__((unused)))
 {
   const char *status_str;
   char buff[40];
@@ -4136,12 +4150,12 @@ com_status(GString *buffer __attribute__((unused)),
   if (connected)
   {
     tee_fprintf(stdout, "\nConnection id:\t\t%lu\n",mysql_thread_id(&mysql));
-    /* 
-      Don't remove "limit 1", 
+    /*
+      Don't remove "limit 1",
       it is protection againts SQL_SELECT_LIMIT=0
     */
     if (!mysql_query(&mysql,"select DATABASE(), USER() limit 1") &&
-	(result=mysql_use_result(&mysql)))
+        (result=mysql_use_result(&mysql)))
     {
       MYSQL_ROW cur=mysql_fetch_row(result);
       if (cur)
@@ -4150,8 +4164,8 @@ com_status(GString *buffer __attribute__((unused)),
         tee_fprintf(stdout, "Current user:\t\t%s\n", cur[1]);
       }
       mysql_free_result(result);
-    } 
-      tee_puts("SSL:\t\t\tNot in use", stdout);
+    }
+    tee_puts("SSL:\t\t\tNot in use", stdout);
   }
   else
   {
@@ -4230,10 +4244,10 @@ com_status(GString *buffer __attribute__((unused)),
     vidattr(A_NORMAL);
     tee_fprintf(stdout, "\
 UPDATEs and DELETEs that don't use a key in the WHERE clause are not allowed.\n\
-(One can force an UPDATE/DELETE by adding LIMIT # at the end of the command.)\n\
-SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n\
+(One can force an UPDATE/DELETE by adding LIMIT # at the end of the command.)\n \
+SELECT has an automatic 'LIMIT %lu' if LIMIT is not used.\n             \
 Max number of examined row combination in a join is set to: %lu\n\n",
-select_limit, max_join_size);
+                select_limit, max_join_size);
   }
   tee_puts("--------------\n", stdout);
   return 0;
@@ -4286,21 +4300,21 @@ put_info(const char *str,INFO_TYPE info_type, uint error, const char *sqlstate)
       fprintf(file,"ERROR");
       if (error)
       {
-	if (sqlstate)
-	  (void) fprintf(file," %d (%s)",error, sqlstate);
+        if (sqlstate)
+          (void) fprintf(file," %d (%s)",error, sqlstate);
         else
-	  (void) fprintf(file," %d",error);
+          (void) fprintf(file," %d",error);
       }
       if (status.query_start_line && line_numbers)
       {
-	(void) fprintf(file," at line %lu",status.query_start_line);
-	if (status.file_name)
-	  (void) fprintf(file," in file: '%s'", status.file_name);
+        (void) fprintf(file," at line %lu",status.query_start_line);
+        if (status.file_name)
+          (void) fprintf(file," in file: '%s'", status.file_name);
       }
       (void) fprintf(file,": %s\n",str);
       (void) fflush(file);
       if (!ignore_errors)
-	return 1;
+        return 1;
     }
     else if (info_type == INFO_RESULT && verbose > 1)
       tee_puts(str, file);
@@ -4324,7 +4338,7 @@ put_info(const char *str,INFO_TYPE info_type, uint error, const char *sqlstate)
       vidattr(A_STANDOUT);
       if (error)
       {
-	if (sqlstate)
+        if (sqlstate)
           (void) tee_fprintf(file, "ERROR %d (%s): ", error, sqlstate);
         else
           (void) tee_fprintf(file, "ERROR %d: ", error);
@@ -4347,17 +4361,18 @@ static int
 put_error(MYSQL *con)
 {
   return put_info(mysql_error(con), INFO_ERROR, mysql_errno(con),
-		  mysql_sqlstate(con));
-}  
+                  mysql_sqlstate(con));
+}
 
 
 static void remove_cntrl(GString *buffer)
 {
-  char *start,*end;
-  end=(start=(char*) buffer.ptr())+buffer.length();
+  char *start=  buffer->str;
+  char *end= start + (buffer->len);
   while (start < end && !my_isgraph(charset_info,end[-1]))
     end--;
-  buffer.length((uint) (end-start));
+  // TODO: Verify we're not tuncating one too many chars here...
+  g_string_truncate(buffer, (buffer->len - (end-start)));
 }
 
 
@@ -4417,10 +4432,10 @@ static ulong start_timer(void)
 }
 
 
-/** 
-  Write as many as 52+1 bytes to buff, in the form of a legible duration of time.
+/**
+   Write as many as 52+1 bytes to buff, in the form of a legible duration of time.
 
-  len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
+   len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
 */
 static void nice_time(double sec,char *buff,bool part_second)
 {
@@ -4456,7 +4471,7 @@ static void nice_time(double sec,char *buff,bool part_second)
 static void end_timer(ulong start_time,char *buff)
 {
   nice_time((double) (start_timer() - start_time) /
-	    CLOCKS_PER_SEC,buff,1);
+            CLOCKS_PER_SEC,buff,1);
 }
 
 
@@ -4468,166 +4483,174 @@ static void mysql_end_timer(ulong start_time,char *buff)
   strmov(strend(buff),")");
 }
 
-static const char* construct_prompt()
+static const char * construct_prompt()
 {
-  processed_prompt.free();			// Erase the old prompt
-  time_t  lclock = time(NULL);			// Get the date struct
+  // Erase the old prompt
+  g_string_truncate(processed_prompt, 0);
+
+  // Get the date struct
+  time_t  lclock = time(NULL);
   struct tm *t = localtime(&lclock);
 
   /* parse thru the settings for the prompt */
-  for (char *c = current_prompt; *c ; *c++)
+  char *c= NULL;
+  for (c= current_prompt; *c; *c++)
   {
     if (*c != PROMPT_CHAR)
-	processed_prompt.append(*c);
+    {
+      g_string_append(processed_prompt, c);
+    }
     else
     {
       switch (*++c) {
       case '\0':
-	c--;			// stop it from going beyond if ends with %
-	break;
+        // stop it from going beyond if ends with %
+        c--;
+        break;
       case 'c':
-	add_int_to_prompt(++prompt_counter);
-	break;
+        add_int_to_prompt(++prompt_counter);
+        break;
       case 'v':
-	if (connected)
-	  processed_prompt.append(mysql_get_server_info(&mysql));
-	else
-	  processed_prompt.append("not_connected");
-	break;
+        if (connected)
+          g_string_append(processed_prompt, mysql_get_server_info(&mysql));
+        else
+          g_string_append(processed_prompt, "not_connected");
+        break;
       case 'd':
-	processed_prompt.append(current_db ? current_db : "(none)");
-	break;
+        g_string_append(processed_prompt, current_db ? current_db : "(none)");
+        break;
       case 'h':
       {
-	const char *prompt;
-	prompt= connected ? mysql_get_host_info(&mysql) : "not_connected";
-	if (strstr(prompt, "Localhost"))
-	  processed_prompt.append("localhost");
-	else
-	{
-	  const char *end=strcend(prompt,' ');
-	  processed_prompt.append(prompt, (uint) (end-prompt));
-	}
-	break;
+        const char *prompt;
+        prompt= connected ? mysql_get_host_info(&mysql) : "not_connected";
+        if (strstr(prompt, "Localhost"))
+          g_string_append(processed_prompt, "localhost");
+        else
+        {
+          const char *end=strcend(prompt,' ');
+          g_string_append_len(processed_prompt, prompt, (gssize) (end-prompt));
+        }
+        break;
       }
       case 'p':
       {
-	if (!connected)
-	{
-	  processed_prompt.append("not_connected");
-	  break;
-	}
+        if (!connected)
+        {
+          g_string_append(processed_prompt, "not_connected");
+          break;
+        }
 
-	const char *host_info = mysql_get_host_info(&mysql);
-	if (strstr(host_info, "memory")) 
-	{
-		processed_prompt.append( mysql.host );
-	}
-	else if (strstr(host_info,"TCP/IP") ||
-	    !mysql.unix_socket)
-	  add_int_to_prompt(mysql.port);
-	else
-	{
-	  char *pos=strrchr(mysql.unix_socket,'/');
- 	  processed_prompt.append(pos ? pos+1 : mysql.unix_socket);
-	}
+        const char *host_info = mysql_get_host_info(&mysql);
+        if (strstr(host_info, "memory"))
+        {
+          g_string_append(processed_prompt, mysql.host );
+        }
+        else if (strstr(host_info,"TCP/IP") ||
+                 !mysql.unix_socket)
+          add_int_to_prompt(mysql.port);
+        else
+        {
+          char *pos=strrchr(mysql.unix_socket,'/');
+          g_string_append(processed_prompt, pos ? pos+1 : mysql.unix_socket);
+        }
       }
-	break;
+      break;
       case 'U':
-	if (!full_username)
-	  init_username();
-        processed_prompt.append(full_username ? full_username :
-                                (current_user ?  current_user : "(unknown)"));
-	break;
+        if (!full_username)
+          init_username();
+        g_string_append(processed_prompt, full_username ? full_username :
+                        (current_user ?  current_user : "(unknown)"));
+        break;
       case 'u':
-	if (!full_username)
-	  init_username();
-        processed_prompt.append(part_username ? part_username :
-                                (current_user ?  current_user : "(unknown)"));
-	break;
+        if (!full_username)
+          init_username();
+        g_string_append(processed_prompt, part_username ? part_username :
+                        (current_user ?  current_user : "(unknown)"));
+        break;
       case PROMPT_CHAR:
-	processed_prompt.append(PROMPT_CHAR);
-	break;
+        g_string_append_c(processed_prompt, PROMPT_CHAR);
+        break;
       case 'n':
-	processed_prompt.append('\n');
-	break;
+        g_string_append_c(processed_prompt, '\n');
+        break;
       case ' ':
       case '_':
-	processed_prompt.append(' ');
-	break;
+        g_string_append_c(processed_prompt, ' ');
+        break;
       case 'R':
-	if (t->tm_hour < 10)
-	  processed_prompt.append('0');
-	add_int_to_prompt(t->tm_hour);
-	break;
+        if (t->tm_hour < 10)
+          g_string_append_c(processed_prompt, '0');
+        add_int_to_prompt(t->tm_hour);
+        break;
       case 'r':
-	int getHour;
-	getHour = t->tm_hour % 12;
-	if (getHour == 0)
-	  getHour=12;
-	if (getHour < 10)
-	  processed_prompt.append('0');
-	add_int_to_prompt(getHour);
-	break;
+        int getHour;
+        getHour = t->tm_hour % 12;
+        if (getHour == 0)
+          getHour=12;
+        if (getHour < 10)
+          g_string_append_c(processed_prompt, '0');
+        add_int_to_prompt(getHour);
+        break;
       case 'm':
-	if (t->tm_min < 10)
-	  processed_prompt.append('0');
-	add_int_to_prompt(t->tm_min);
-	break;
+        if (t->tm_min < 10)
+          g_string_append_c(processed_prompt, '0');
+        add_int_to_prompt(t->tm_min);
+        break;
       case 'y':
-	int getYear;
-	getYear = t->tm_year % 100;
-	if (getYear < 10)
-	  processed_prompt.append('0');
-	add_int_to_prompt(getYear);
-	break;
+        int getYear;
+        getYear = t->tm_year % 100;
+        if (getYear < 10)
+          g_string_append_c(processed_prompt, '0');
+        add_int_to_prompt(getYear);
+        break;
       case 'Y':
-	add_int_to_prompt(t->tm_year+1900);
-	break;
+        add_int_to_prompt(t->tm_year+1900);
+        break;
       case 'D':
-	char* dateTime;
-	dateTime = ctime(&lclock);
-	processed_prompt.append(strtok(dateTime,"\n"));
-	break;
+        char* dateTime;
+        dateTime = ctime(&lclock);
+        g_string_append(processed_prompt, strtok(dateTime,"\n"));
+        break;
       case 's':
-	if (t->tm_sec < 10)
-	  processed_prompt.append('0');
-	add_int_to_prompt(t->tm_sec);
-	break;
+        if (t->tm_sec < 10)
+          g_string_append_c(processed_prompt, '0');
+        add_int_to_prompt(t->tm_sec);
+        break;
       case 'w':
-	processed_prompt.append(day_names[t->tm_wday]);
-	break;
+        g_string_append(processed_prompt, (day_names[t->tm_wday]));
+        break;
       case 'P':
-	processed_prompt.append(t->tm_hour < 12 ? "am" : "pm");
-	break;
+        g_string_append(processed_prompt, t->tm_hour < 12 ? "am" : "pm");
+        break;
       case 'o':
-	add_int_to_prompt(t->tm_mon+1);
-	break;
+        add_int_to_prompt(t->tm_mon+1);
+        break;
       case 'O':
-	processed_prompt.append(month_names[t->tm_mon]);
-	break;
+        g_string_append(processed_prompt, month_names[t->tm_mon]);
+        break;
       case '\'':
-	processed_prompt.append("'");
-	break;
+        g_string_append(processed_prompt, "'");
+        break;
       case '"':
-	processed_prompt.append('"');
-	break;
+        g_string_append_c(processed_prompt, '"');
+        break;
       case 'S':
-	processed_prompt.append(';');
-	break;
+        g_string_append_c(processed_prompt, ';');
+        break;
       case 't':
-	processed_prompt.append('\t');
-	break;
+        g_string_append_c(processed_prompt, '\t');
+        break;
       case 'l':
-	processed_prompt.append(delimiter_str);
-	break;
+        g_string_append(processed_prompt, delimiter_str);
+        break;
       default:
-	processed_prompt.append(c);
+        g_string_append(processed_prompt, c);
       }
     }
   }
-  processed_prompt.append('\0');
-  return processed_prompt.ptr();
+  // TODO: Is this needed with GString?
+  g_string_append_c(processed_prompt, '\0');
+  return processed_prompt->str;
 }
 
 
@@ -4635,7 +4658,7 @@ static void add_int_to_prompt(int toadd)
 {
   char buffer[16];
   int10_to_str(toadd,buffer,10);
-  processed_prompt.append(buffer);
+  g_string_append(processed_prompt, buffer);
 }
 
 static void init_username()
@@ -4659,24 +4682,11 @@ static int com_prompt(GString *buffer __attribute__((__unused__)), char *line)
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;
   my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
-  current_prompt=my_strdup(ptr ? ptr+1 : default_prompt,MYF(MY_WME));
+  current_prompt=my_strdup(ptr ? ptr+1 : default_prompt->str,MYF(MY_WME));
   if (!ptr)
-    tee_fprintf(stdout, "Returning to default PROMPT of %s\n", default_prompt);
+    tee_fprintf(stdout, "Returning to default PROMPT of %s\n",
+                default_prompt->str);
   else
     tee_fprintf(stdout, "PROMPT set to '%s'\n", current_prompt);
   return 0;
 }
-
-#ifndef EMBEDDED_LIBRARY
-/* Keep sql_string library happy */
-
-void *sql_alloc(size_t Size)
-{
-  return my_malloc(Size,MYF(MY_WME));
-}
-
-void sql_element_free(void *ptr)
-{
-  my_free(ptr,MYF(0));
-}
-#endif /* EMBEDDED_LIBRARY */
