@@ -48,7 +48,7 @@
 #include <locale.h>
 #endif
 
-#include <glib/gstring.h>
+#include <glib.h>
 
 const char *VER= "14.14";
 
@@ -155,9 +155,8 @@ static char *current_host,*current_db,*current_user=0,*opt_password=0,
   *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
 static char *histfile;
 static char *histfile_tmp;
-static GString *glob_buffer, *old_buffer;
-static GString *processed_prompt;
-//static GString *current_prompt= g_string_sized_new(16);
+static GString *glob_buffer;
+static GString *processed_prompt= g_string_sized_new(16);
 static GString *default_prompt= NULL;
 static char *full_username=0,*part_username=0;
 static int wait_time = 5;
@@ -209,12 +208,8 @@ static int com_quit(GString *str,char*),
   com_rehash(GString *str, char*), com_tee(GString *str, char*),
   com_notee(GString *str, char*), com_charset(GString *str,char*),
   com_prompt(GString *str, char*), com_delimiter(GString *str, char*),
-  com_warnings(GString *str, char*), com_nowarnings(GString *str, char*);
-
-#ifdef USE_POPEN
-static int com_nopager(GString *str, char*), com_pager(GString *str, char*),
-  com_edit(GString *str,char*), com_shell(GString *str, char *);
-#endif
+  com_warnings(GString *str, char*), com_nowarnings(GString *str, char*),
+  com_nopager(GString *str, char*), com_pager(GString *str, char*);
 
 static int read_and_execute(bool interactive);
 static int sql_connect(char *host,char *database,char *user,char *password,
@@ -254,22 +249,15 @@ static COMMANDS commands[] = {
     "Reconnect to the server. Optional arguments are db and host." },
   { "delimiter", 'd', com_delimiter,    1,
     "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter." },
-#ifdef USE_POPEN
-  { "edit",   'e', com_edit,   0, "Edit command with $EDITOR."},
-#endif
   { "ego",    'G', com_ego,    0,
     "Send command to mysql server, display result vertically."},
   { "exit",   'q', com_quit,   0, "Exit mysql. Same as quit."},
   { "go",     'g', com_go,     0, "Send command to mysql server." },
   { "help",   'h', com_help,   1, "Display this help." },
-#ifdef USE_POPEN
   { "nopager",'n', com_nopager,0, "Disable pager, print to stdout." },
-#endif
   { "notee",  't', com_notee,  0, "Don't write into outfile." },
-#ifdef USE_POPEN
   { "pager",  'P', com_pager,  1,
     "Set PAGER [to_pager]. Print the query results via PAGER." },
-#endif
   { "print",  'p', com_print,  0, "Print current command." },
   { "prompt", 'R', com_prompt, 1, "Change your mysql prompt."},
   { "quit",   'q', com_quit,   0, "Quit mysql." },
@@ -277,9 +265,6 @@ static COMMANDS commands[] = {
   { "source", '.', com_source, 1,
     "Execute an SQL script file. Takes a file name as an argument."},
   { "status", 's', com_status, 0, "Get status information from the server."},
-#ifdef USE_POPEN
-  { "system", '!', com_shell,  1, "Execute a system shell command."},
-#endif
   { "tee",    'T', com_tee,    1,
     "Set outfile [to_outfile]. Append everything into given outfile." },
   { "use",    'u', com_use,    1,
@@ -1056,10 +1041,10 @@ int main(int argc,char *argv[])
   DBUG_PROCESS(argv[0]);
 
   delimiter_str= delimiter;
-  default_prompt = g_string_new(strdup(getenv("MYSQL_PS1") ?
-                                       getenv("MYSQL_PS1") :
-                                       "mysql> "));
-  current_prompt = my_strdup(default_prompt->str, MYF(MY_WME));
+  default_prompt = g_string_new(g_strdup(getenv("MYSQL_PS1") ?
+                                         getenv("MYSQL_PS1") :
+                                         "mysql> "));
+  current_prompt = g_strdup(default_prompt->str);
   prompt_counter=0;
 
   outfile[0]=0;			// no (default) outfile
@@ -1151,13 +1136,14 @@ int main(int argc,char *argv[])
                   "Your Drizzle connection id is %lu\nServer version: %s\n",
                   mysql_thread_id(&mysql), server_version_string(&mysql));
   put_info(glob_buffer->str,INFO_INFO);
+  g_string_truncate(glob_buffer,0);
 
   initialize_readline((char*) my_progname);
   if (!status.batch && !quick && !opt_html && !opt_xml)
   {
     /* read-history from file, default ~/.mysql_history*/
     if (getenv("MYSQL_HISTFILE"))
-      histfile=my_strdup(getenv("MYSQL_HISTFILE"),MYF(MY_WME));
+      histfile=g_strdup(getenv("MYSQL_HISTFILE"));
     else if (getenv("HOME"))
     {
       histfile=(char*) my_malloc((uint) strlen(getenv("HOME"))
@@ -1216,9 +1202,12 @@ sig_handler mysql_end(int sig)
 
   if (sig >= 0)
     put_info(sig ? "Aborted" : "Bye", INFO_RESULT);
+  assert(glob_buffer != NULL);
   g_string_free(glob_buffer,true);
-  g_string_free(old_buffer,true);
+  assert(processed_prompt != NULL);
   g_string_free(processed_prompt,true);
+  assert(default_prompt != NULL);
+  g_string_free(default_prompt,true);
   my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
   my_free(opt_mysql_unix_port,MYF(MY_ALLOW_ZERO_PTR));
   my_free(histfile,MYF(MY_ALLOW_ZERO_PTR));
@@ -1228,7 +1217,6 @@ sig_handler mysql_end(int sig)
   my_free(current_user,MYF(MY_ALLOW_ZERO_PTR));
   my_free(full_username,MYF(MY_ALLOW_ZERO_PTR));
   my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(default_prompt,MYF(MY_ALLOW_ZERO_PTR));
 #ifdef HAVE_SMEM
   my_free(shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
 #endif
@@ -1253,13 +1241,18 @@ sig_handler handle_sigint(int sig)
   MYSQL *kill_mysql= NULL;
 
   /* terminate if no query being executed, or we already tried interrupting */
-  if (!executing_query || interrupted_query)
+  if (!executing_query || interrupted_query) {
+    printf("MT: terinate?\n");
     goto err;
+  }
 
   kill_mysql= mysql_init(kill_mysql);
   if (!mysql_real_connect(kill_mysql,current_host, current_user, opt_password,
                           "", opt_mysql_port, opt_mysql_unix_port,0))
+  {
+    printf("MT:terminate\n");
     goto err;
+  }
 
   /* kill_buffer is always big enough because max length of %lu is 15 */
   sprintf(kill_buffer, "KILL /*!50000 QUERY */ %lu", mysql_thread_id(&mysql));
@@ -1387,14 +1380,12 @@ static struct my_option my_long_options[] =
   {"one-database", 'o',
    "Only update the default database. This is useful for skipping updates to other database in the update log.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef USE_POPEN
   {"pager", OPT_PAGER,
    "Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"no-pager", OPT_NOPAGER,
    "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"password", 'p',
    "Password to use when connecting to server. If password is not given it's asked from the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
@@ -1599,7 +1590,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     }
     if (embedded_server_arg_count == MAX_SERVER_ARGS-1 ||
         !(embedded_server_args[embedded_server_arg_count++]=
-          my_strdup(argument, MYF(MY_FAE))))
+          g_strdup(argument)))
     {
       put_info("Can't use server argument", INFO_ERROR);
       return 0;
@@ -1635,7 +1626,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     {
       char *start= argument;
       my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
-      opt_password= my_strdup(argument, MYF(MY_FAE));
+      opt_password= g_strdup(argument);
       while (*argument) *argument++= 'x';		// Destroy argument
       if (*start)
         start[1]=0 ;
@@ -1686,7 +1677,7 @@ static int get_options(int argc, char **argv)
 
   tmp= (char *) getenv("MYSQL_HOST");
   if (tmp)
-    current_host= my_strdup(tmp, MYF(MY_WME));
+    current_host= strdup(tmp);
 
   pagpoint= getenv("PAGER");
   if (!((char*) (pagpoint)))
@@ -1731,7 +1722,7 @@ static int get_options(int argc, char **argv)
   {
     skip_updates= 0;
     my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
-    current_db= my_strdup(*argv, MYF(MY_WME));
+    current_db= g_strdup(*argv);
   }
   if (tty_password)
     opt_password= get_tty_password(NullS);
@@ -1756,6 +1747,7 @@ static int read_and_execute(bool interactive)
     if (!interactive)
     {
       line=batch_readline(status.line_buff);
+      printf("MT:*%s*",line);
       /*
         Skip UTF8 Byte Order Marker (BOM) 0xEFBBBF.
         Editors like "notepad" put this marker in
@@ -1768,7 +1760,7 @@ static int read_and_execute(bool interactive)
           (uchar) line[2] == 0xBF)
         line+= 3;
       line_number++;
-      if (!glob_buffer->len)
+      if (glob_buffer->len!=0)
         status.query_start_line=line_number;
     }
     else
@@ -1786,7 +1778,7 @@ static int read_and_execute(bool interactive)
       if (opt_outfile)
         fputs(prompt, OUTFILE);
       line= readline(prompt);
-
+      printf("MT: readline(prompt)==*%s*\n",line);
       /*
         When Ctrl+d or Ctrl+z is pressed, the line may be NULL on some OS
         which may cause coredump.
@@ -1805,7 +1797,7 @@ static int read_and_execute(bool interactive)
       Check if line is a mysql command line
       (We want to allow help, print and clear anywhere at line start
     */
-    if ((named_cmds || (glob_buffer->len==0))
+    if ((named_cmds || (glob_buffer->len!=0))
         && !ml_comment && !in_string && (com=find_command(line,0)))
     {
       if ((*com->func)(glob_buffer,line) > 0)
@@ -1817,15 +1809,20 @@ static int read_and_execute(bool interactive)
         add_history(line);
       continue;
     }
-    if (add_line(glob_buffer,line,&in_string,&ml_comment))
+    int ret = add_line(glob_buffer,line,&in_string,&ml_comment);
+    printf("MT: ret=%d\n",ret);
+    if (ret)
       break;
   }
   /* if in batch mode, send last query even if it doesn't end with \g or go */
 
+  printf("MT: made it here %d\n", status.exit_status);
   if (!interactive && !status.exit_status)
   {
+    printf("pre remove_cntrl *%s*\n", glob_buffer->str);
     remove_cntrl(glob_buffer);
-    if (glob_buffer->len > 0)
+    printf("post remove_cntrl *%s*\n", glob_buffer->str);
+    if (glob_buffer->len != 0)
     {
       status.exit_status=1;
       if (com_go(glob_buffer,line) <= 0)
@@ -1843,6 +1840,7 @@ static COMMANDS *find_command(char *name,char cmd_char)
   char *end;
   DBUG_ENTER("find_command");
   DBUG_PRINT("enter",("name: '%s'  char: %d", name ? name : "NULL", cmd_char));
+  printf("MT: find_command name: '%s'  char: %d\n", name ? name : "NULL", cmd_char);
 
   if (!name)
   {
@@ -1891,7 +1889,7 @@ static COMMANDS *find_command(char *name,char cmd_char)
 
 
 static bool add_line(GString *buffer,char *line,char *in_string,
-                     bool *ml_comment)
+                        bool *ml_comment)
 {
   uchar inchar;
   char buff[80], *pos, *out;
@@ -1899,15 +1897,22 @@ static bool add_line(GString *buffer,char *line,char *in_string,
   bool need_space= 0;
   bool ss_comment= 0;
   DBUG_ENTER("add_line");
+  printf("MT: In add_line: buffer:*%s*, line=*%s*, in_string=*%s*\n",
+         buffer->str, line, in_string);
 
+      printf("MT %d\n",__LINE__);
   if (!line[0] && (buffer->len==0))
     DBUG_RETURN(0);
+      printf("MT %d\n",__LINE__);
   if (status.add_to_history && line[0] && not_in_history(line))
     add_history(line);
   char *end_of_line=line+(uint) strlen(line);
 
+      printf("MT %d\n",__LINE__);
   for (pos=out=line ; (inchar= (uchar) *pos) ; pos++)
   {
+    printf("MT: for pos=*%s* out=*%s* line=*%s*\n",
+           pos, out, line);
     if (!preserve_comments)
     {
       // Skip spaces at the beggining of a statement
@@ -1933,6 +1938,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
       continue;
     }
 #endif
+      printf("MT %d\n",__LINE__);
     if (!*ml_comment && inchar == '\\' &&
         !(mysql.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES))
     {
@@ -1998,6 +2004,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
              !my_strnncoll(charset_info, (uchar*) pos, 10,
                            (const uchar*) "delimiter ", 10))
     {
+      printf("MT else if\n");
       // Flush previously accepted characters
       if (out != line)
       {
@@ -2005,11 +2012,13 @@ static bool add_line(GString *buffer,char *line,char *in_string,
         out= line;
       }
 
+      printf("MT %d\n",__LINE__);
       // Flush possible comments in the buffer
-      if (buffer->len > 0)
+      if (buffer->len != 0)
       {
         if (com_go(buffer, 0) > 0) // < 0 is not fatal
           DBUG_RETURN(1);
+        assert(buffer!=NULL);
         g_string_truncate(buffer,0);
       }
 
@@ -2017,15 +2026,18 @@ static bool add_line(GString *buffer,char *line,char *in_string,
         Delimiter wants the get rest of the given line as argument to
         allow one to change ';' to ';;' and back
       */
+      printf("MT: before delimiter\n");
       g_string_append(buffer,pos);
       if (com_delimiter(buffer, pos) > 0)
         DBUG_RETURN(1);
+      printf("MT: after delimiter\n");
 
       g_string_truncate(buffer,0);
       break;
     }
     else if (!*ml_comment && !*in_string && is_prefix(pos, delimiter))
     {
+      printf("MT %d\n",__LINE__);
       // Found a statement. Continue parsing after the delimiter
       pos+= delimiter_length;
 
@@ -2053,6 +2065,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
 
       pos--;
 
+      printf("MT %d\n",__LINE__);
       if ((com= find_command(buffer->str, 0)))
       {
 
@@ -2064,6 +2077,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
         if (com_go(buffer, 0) > 0)             // < 0 is not fatal
           DBUG_RETURN(1);
       }
+      printf("MT %d\n",__LINE__);
       g_string_truncate(buffer,0);
     }
     else if (!*ml_comment
@@ -2105,6 +2119,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
     }
     else if (*ml_comment && !ss_comment && inchar == '*' && *(pos + 1) == '/')
     {
+      printf("MT %d\n",__LINE__);
       if (preserve_comments)
       {
         *out++= *pos++;                       // copy '*'
@@ -2124,6 +2139,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
     }
     else
     {
+      printf("MT %d\n",__LINE__);
       // Add found char to buffer
       if (!*in_string && inchar == '/' && *(pos + 1) == '*' &&
           *(pos + 2) == '!')
@@ -2141,9 +2157,14 @@ static bool add_line(GString *buffer,char *line,char *in_string,
           *out++= ' ';
         need_space= 0;
         *out++= (char) inchar;
+        printf("MT %d\n",__LINE__);
       }
+      printf("MT %d\n",__LINE__);
     }
+      printf("MT %d\n",__LINE__);
   }
+  printf("MT: out of loop - out *%s* line *%s* buffer->len *%d*\n",
+         out, line, (int) buffer->len);
   if (out != line || (buffer->len > 0))
   {
     *out++='\n';
@@ -2301,7 +2322,7 @@ static char *new_command_generator(const char *text,int state)
 
     if (e)
     {
-      ptr= strdup(e->str);
+      ptr= g_strdup(e->str);
       e = e->pNext;
       return ptr;
     }
@@ -2326,7 +2347,7 @@ static char *new_command_generator(const char *text,int state)
     while (e && !ptr)
     {					/* find valid entry in bucket */
       if ((uint) strlen(e->str) == b->nKeyLength)
-        ptr = strdup(e->str);
+        ptr = g_strdup(e->str);
       /* find the next used entry */
       e = e->pNext;
       if (!e)
@@ -2533,7 +2554,7 @@ static void get_current_db()
   {
     MYSQL_ROW row= mysql_fetch_row(res);
     if (row[0])
-      current_db= my_strdup(row[0], MYF(MY_WME));
+      current_db= g_strdup(row[0]);
     mysql_free_result(res);
   }
 }
@@ -2601,11 +2622,6 @@ static int com_server_help(GString *buffer,
     }
     (void) strxnmov(cmd_buf, sizeof(cmd_buf), "help '", help_arg, "'", NullS);
     server_cmd= cmd_buf;
-  }
-
-  if (!status.batch)
-  {
-    old_buffer= g_string_new(buffer->str);
   }
 
   if (!connected && reconnect())
@@ -2760,11 +2776,6 @@ com_go(GString *buffer,
   int           err= 0;
 
   interrupted_query= 0;
-  if (!status.batch)
-  {
-    // Save for edit command
-    old_buffer= g_string_new(buffer->str);
-  }
 
   /* Remove garbage for nicer messages */
   remove_cntrl(buffer);
@@ -2923,7 +2934,6 @@ end:
 
 static void init_pager()
 {
-#ifdef USE_POPEN
   if (!opt_nopager)
   {
     if (!(PAGER= popen(pager, "w")))
@@ -2933,16 +2943,13 @@ static void init_pager()
     }
   }
   else
-#endif
     PAGER= stdout;
 }
 
 static void end_pager()
 {
-#ifdef USE_POPEN
   if (!opt_nopager)
     pclose(PAGER);
-#endif
 }
 
 
@@ -3585,9 +3592,9 @@ com_notee(GString *buffer __attribute__((unused)),
   Sorry, this command is not available in Windows.
 */
 
-#ifdef USE_POPEN
 static int
-com_pager(GString *buffer, char *line __attribute__((unused)))
+com_pager(GString *buffer __attribute__((__unused__)),
+          char *line __attribute__((unused)))
 {
   char pager_name[FN_REFLEN], *end, *param;
 
@@ -3639,54 +3646,6 @@ com_nopager(GString *buffer __attribute__((unused)),
   tee_fprintf(stdout, "PAGER set to stdout\n");
   return 0;
 }
-#endif
-
-
-/*
-  Sorry, you can't send the result to an editor in Win32
-*/
-
-#ifdef USE_POPEN
-static int
-com_edit(GString *buffer,char *line __attribute__((unused)))
-{
-  char	filename[FN_REFLEN],buff[160];
-  int	fd,tmp;
-  const char *editor;
-
-  if ((fd=create_temp_file(filename,NullS,"sql", O_CREAT | O_WRONLY,
-                           MYF(MY_WME))) < 0)
-    goto err;
-  if (buffer->is_empty() && !old_buffer.is_empty())
-    (void) my_write(fd,(uchar*) old_buffer.ptr(),old_buffer.length(),
-                    MYF(MY_WME));
-  else
-    (void) my_write(fd,(uchar*) buffer->ptr(),buffer->length(),MYF(MY_WME));
-  (void) my_close(fd,MYF(0));
-
-  if (!(editor = (char *)getenv("EDITOR")) &&
-      !(editor = (char *)getenv("VISUAL")))
-    editor = "vi";
-  strxmov(buff,editor," ",filename,NullS);
-  (void) system(buff);
-
-  struct stat stat_arg;
-  if (stat(filename,&stat_arg))
-    goto err;
-  if ((fd = my_open(filename,O_RDONLY, MYF(MY_WME))) < 0)
-    goto err;
-  (void) buffer->alloc((uint) stat_arg.st_size);
-  if ((tmp=read(fd,(char*) buffer->ptr(),buffer->alloced_length())) >= 0L)
-    buffer->length((uint) tmp);
-  else
-    buffer->length(0);
-  (void) my_close(fd,MYF(0));
-  (void) my_delete(filename,MYF(MY_WME));
-err:
-  return 0;
-}
-#endif
-
 
 /* If arg is given, exit without errors. This happens on command 'quit' */
 
@@ -3707,33 +3666,6 @@ com_rehash(GString *buffer __attribute__((unused)),
   return 0;
 }
 
-
-#ifdef USE_POPEN
-static int
-com_shell(GString *buffer, char *line __attribute__((unused)))
-{
-  char *shell_cmd;
-
-  /* Skip space from line begin */
-  while (my_isspace(charset_info, *line))
-    line++;
-  if (!(shell_cmd = strchr(line, ' ')))
-  {
-    put_info("Usage: \\! shell-command", INFO_ERROR);
-    return -1;
-  }
-  /*
-    The output of the shell command does not
-    get directed to the pager or the outfile
-  */
-  if (system(shell_cmd) == -1)
-  {
-    put_info(strerror(errno), INFO_ERROR, errno);
-    return -1;
-  }
-  return 0;
-}
-#endif
 
 
 static int
@@ -3772,12 +3704,12 @@ com_connect(GString *buffer, char *line)
     if (tmp && *tmp)
     {
       my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
-      current_db= my_strdup(tmp, MYF(MY_WME));
+      current_db= g_strdup(tmp);
       tmp= get_arg(buff, 1);
       if (tmp)
       {
         my_free(current_host,MYF(MY_ALLOW_ZERO_PTR));
-        current_host=my_strdup(tmp,MYF(MY_WME));
+        current_host=g_strdup(tmp);
       }
     }
     else
@@ -3786,6 +3718,7 @@ com_connect(GString *buffer, char *line)
       opt_rehash= 0;                            /* purecov: tested */
     }
     // command used
+    assert(buffer!=NULL);
     g_string_truncate(buffer, 0);
   }
   else
@@ -3850,6 +3783,7 @@ static int com_source(GString *buffer __attribute__((__unused__)), char *line)
   status.line_buff=line_buff;
   status.file_name=source_name;
   // Empty command buffer
+  assert(glob_buffer!=NULL);
   g_string_truncate(glob_buffer, 0);
   error= read_and_execute(false);
   // Continue as before
@@ -3953,7 +3887,7 @@ com_use(GString *buffer __attribute__((unused)), char *line)
         return put_error(&mysql);
     }
     my_free(current_db,MYF(MY_ALLOW_ZERO_PTR));
-    current_db=my_strdup(tmp,MYF(MY_WME));
+    current_db=g_strdup(tmp);
     if (select_db > 1)
       build_completion_hash(opt_rehash, 1);
   }
@@ -4180,10 +4114,8 @@ com_status(GString *buffer __attribute__((unused)),
     tee_fprintf(stdout, "\nAll updates ignored to this database\n");
     vidattr(A_NORMAL);
   }
-#ifdef USE_POPEN
   tee_fprintf(stdout, "Current pager:\t\t%s\n", pager);
   tee_fprintf(stdout, "Using outfile:\t\t'%s'\n", opt_outfile ? outfile : "");
-#endif
   tee_fprintf(stdout, "Using delimiter:\t%s\n", delimiter);
   tee_fprintf(stdout, "Server version:\t\t%s\n", server_version_string(&mysql));
   tee_fprintf(stdout, "Protocol version:\t%d\n", mysql_get_proto_info(&mysql));
@@ -4371,8 +4303,9 @@ static void remove_cntrl(GString *buffer)
   char *end= start + (buffer->len);
   while (start < end && !my_isgraph(charset_info,end[-1]))
     end--;
-  // TODO: Verify we're not tuncating one too many chars here...
-  g_string_truncate(buffer, (buffer->len - (end-start)));
+  uint chars_to_truncate = end-start;
+  if (buffer->len > chars_to_truncate)
+    g_string_truncate(buffer, chars_to_truncate);
 }
 
 
@@ -4486,6 +4419,7 @@ static void mysql_end_timer(ulong start_time,char *buff)
 static const char * construct_prompt()
 {
   // Erase the old prompt
+  assert(processed_prompt!=NULL);
   g_string_truncate(processed_prompt, 0);
 
   // Get the date struct
@@ -4493,12 +4427,11 @@ static const char * construct_prompt()
   struct tm *t = localtime(&lclock);
 
   /* parse thru the settings for the prompt */
-  char *c= NULL;
-  for (c= current_prompt; *c; *c++)
+  for (char *c= current_prompt; *c; *c++)
   {
     if (*c != PROMPT_CHAR)
     {
-      g_string_append(processed_prompt, c);
+      g_string_append_c(processed_prompt, c[0]);
     }
     else
     {
@@ -4671,8 +4604,8 @@ static void init_username()
       (result=mysql_use_result(&mysql)))
   {
     MYSQL_ROW cur=mysql_fetch_row(result);
-    full_username=my_strdup(cur[0],MYF(MY_WME));
-    part_username=my_strdup(strtok(cur[0],"@"),MYF(MY_WME));
+    full_username=g_strdup(cur[0]);
+    part_username=g_strdup(strtok(cur[0],"@"));
     (void) mysql_fetch_row(result);		// Read eof
   }
 }
@@ -4682,7 +4615,7 @@ static int com_prompt(GString *buffer __attribute__((__unused__)), char *line)
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;
   my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
-  current_prompt=my_strdup(ptr ? ptr+1 : default_prompt->str,MYF(MY_WME));
+  current_prompt=g_strdup(ptr ? ptr+1 : default_prompt->str);
   if (!ptr)
     tee_fprintf(stdout, "Returning to default PROMPT of %s\n",
                 default_prompt->str);
