@@ -350,6 +350,9 @@ AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
 AM_PATH_GLIB_2_0
+if test "x$no_glib" != "x" ; then
+    AC_MSG_ERROR([Couldn't find GLib2. Try installing libglib2.0-dev or glib2-devel])
+fi
 
 # Avoid bug in fcntl on some versions of linux
 AC_MSG_CHECKING([if we should use 'skip-external-locking' as default for $target_os])
