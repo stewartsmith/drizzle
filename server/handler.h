@@ -21,7 +21,6 @@
 #endif
 
 #include <my_handler.h>
-#include <ft_global.h>
 #include <keycache.h>
 
 #ifndef NO_HASH
@@ -1165,7 +1164,6 @@ public:
   uint active_index;
   /** Length of ref (1-8 or the clustered key length) */
   uint ref_length;
-  FT_INFO *ft_handler;
   enum {NONE=0, INDEX, RND} inited;
   bool locked;
   bool implicit_emptied;                /* Can be !=0 only if HEAP */
@@ -1203,7 +1201,7 @@ public:
     ref(0), in_range_check_pushed_down(false),
     key_used_on_scan(MAX_KEY), active_index(MAX_KEY),
     ref_length(sizeof(my_off_t)),
-    ft_handler(0), inited(NONE),
+    inited(NONE),
     locked(false), implicit_emptied(0),
     pushed_cond(0), pushed_idx_cond(NULL), pushed_idx_cond_keyno(MAX_KEY),
     next_insert_id(0), insert_id_for_cur_row(0)
@@ -1488,13 +1486,6 @@ public:
   virtual int read_range_next();
   int compare_key(key_range *range);
   int compare_key2(key_range *range);
-  virtual int ft_init() { return HA_ERR_WRONG_COMMAND; }
-  void ft_end() { ft_handler=NULL; }
-  virtual FT_INFO *ft_init_ext(uint flags __attribute__((__unused__)),
-                               uint inx __attribute__((__unused__)),
-                               String *key __attribute__((__unused__)))
-    { return NULL; }
-  virtual int ft_read(uchar *buf __attribute__((__unused__))) { return HA_ERR_WRONG_COMMAND; }
   virtual int rnd_next(uchar *buf __attribute__((__unused__)))=0;
   virtual int rnd_pos(uchar * buf __attribute__((__unused__)),
                       uchar *pos __attribute__((__unused__)))=0;

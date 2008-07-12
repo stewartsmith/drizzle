@@ -2481,8 +2481,6 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
   table->null_row= table->maybe_null= table->force_index= 0;
   table->status=STATUS_NO_RECORD;
   table->insert_values= 0;
-  table->fulltext_searched= 0;
-  table->file->ft_handler= 0;
   /* Catch wrong handling of the auto_increment_field_not_null. */
   assert(!table->auto_increment_field_not_null);
   table->auto_increment_field_not_null= false;

@@ -1623,8 +1623,8 @@ extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
 extern CHARSET_INFO *character_set_filesystem;
 #endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
 #ifdef MYSQL_SERVER
-extern char *opt_mysql_tmpdir, mysql_charsets_dir[],
-            def_ft_boolean_syntax[sizeof(ft_boolean_syntax)];
+extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
+            
 #define mysql_tmpdir (my_tmpdir(&mysql_tmpdir_list))
 extern MY_TMPDIR mysql_tmpdir_list;
 extern const LEX_STRING command_name[];

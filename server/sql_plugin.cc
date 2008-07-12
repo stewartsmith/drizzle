@@ -798,18 +798,6 @@ static void plugin_del(struct st_plugin_int *plugin)
   return;
 }
 
-#ifdef NOT_USED
-
-static void plugin_del(const LEX_STRING *name)
-{
-  struct st_plugin_int *plugin;
-  if ((plugin= plugin_find_internal(name, MYSQL_ANY_PLUGIN)))
-    plugin_del(plugin);
-  return;
-}
-
-#endif
-
 static void reap_plugins(void)
 {
   uint count, idx;
@@ -1041,7 +1029,6 @@ int plugin_init(int *argc, char **argv, int flags)
   {
     for (plugin= *builtins; plugin->info; plugin++)
     {
-      /* by default, only ndbcluster is disabled */
       bzero(&tmp, sizeof(tmp));
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
@@ -1149,46 +1136,6 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
 
   return(0);
 }
-
-
-#ifdef NOT_USED_YET
-/*
-  Register a plugin at run time. (note, this doesn't initialize a plugin)
-  Will be useful for embedded applications.
-
-  SYNOPSIS
-    plugin_register_builtin()
-    thd         current thread (used to store scratch data in mem_root)
-    plugin      static plugin to install
-
-  RETURN
-    false - plugin registered successfully
-*/
-bool plugin_register_builtin(THD *thd, struct st_mysql_plugin *plugin)
-{
-  struct st_plugin_int tmp, *ptr;
-  bool result= true;
-  int dummy_argc= 0;
-
-  bzero(&tmp, sizeof(tmp));
-  tmp.plugin= plugin;
-  tmp.name.str= (char *)plugin->name;
-  tmp.name.length= strlen(plugin->name);
-
-  rw_wrlock(&LOCK_system_variables_hash);
-
-  if (test_plugin_options(thd->mem_root, &tmp, &dummy_argc, NULL))
-    goto end;
-
-  if ((result= register_builtin(plugin, &tmp, &ptr)))
-    mysql_del_sys_var_chain(tmp.system_vars);
-
-end:
-  rw_unlock(&LOCK_system_variables_hash);
-
-  return(result);;
-}
-#endif /* NOT_USED_YET */
 
 
 /*
