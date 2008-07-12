@@ -1242,7 +1242,6 @@ sig_handler handle_sigint(int sig)
 
   /* terminate if no query being executed, or we already tried interrupting */
   if (!executing_query || interrupted_query) {
-    printf("MT: terinate?\n");
     goto err;
   }
 
@@ -1250,7 +1249,6 @@ sig_handler handle_sigint(int sig)
   if (!mysql_real_connect(kill_mysql,current_host, current_user, opt_password,
                           "", opt_mysql_port, opt_mysql_unix_port,0))
   {
-    printf("MT:terminate\n");
     goto err;
   }
 
@@ -1747,7 +1745,6 @@ static int read_and_execute(bool interactive)
     if (!interactive)
     {
       line=batch_readline(status.line_buff);
-      printf("MT:*%s*",line);
       /*
         Skip UTF8 Byte Order Marker (BOM) 0xEFBBBF.
         Editors like "notepad" put this marker in
@@ -1778,7 +1775,6 @@ static int read_and_execute(bool interactive)
       if (opt_outfile)
         fputs(prompt, OUTFILE);
       line= readline(prompt);
-      printf("MT: readline(prompt)==*%s*\n",line);
       /*
         When Ctrl+d or Ctrl+z is pressed, the line may be NULL on some OS
         which may cause coredump.
@@ -1809,19 +1805,14 @@ static int read_and_execute(bool interactive)
         add_history(line);
       continue;
     }
-    int ret = add_line(glob_buffer,line,&in_string,&ml_comment);
-    printf("MT: ret=%d\n",ret);
-    if (ret)
+    if (add_line(glob_buffer,line,&in_string,&ml_comment))
       break;
   }
   /* if in batch mode, send last query even if it doesn't end with \g or go */
 
-  printf("MT: made it here %d\n", status.exit_status);
   if (!interactive && !status.exit_status)
   {
-    printf("pre remove_cntrl *%s*\n", glob_buffer->str);
     remove_cntrl(glob_buffer);
-    printf("post remove_cntrl *%s*\n", glob_buffer->str);
     if (glob_buffer->len != 0)
     {
       status.exit_status=1;
@@ -1840,7 +1831,6 @@ static COMMANDS *find_command(char *name,char cmd_char)
   char *end;
   DBUG_ENTER("find_command");
   DBUG_PRINT("enter",("name: '%s'  char: %d", name ? name : "NULL", cmd_char));
-  printf("MT: find_command name: '%s'  char: %d\n", name ? name : "NULL", cmd_char);
 
   if (!name)
   {
@@ -1897,22 +1887,15 @@ static bool add_line(GString *buffer,char *line,char *in_string,
   bool need_space= 0;
   bool ss_comment= 0;
   DBUG_ENTER("add_line");
-  printf("MT: In add_line: buffer:*%s*, line=*%s*, in_string=*%s*\n",
-         buffer->str, line, in_string);
 
-      printf("MT %d\n",__LINE__);
   if (!line[0] && (buffer->len==0))
     DBUG_RETURN(0);
-      printf("MT %d\n",__LINE__);
   if (status.add_to_history && line[0] && not_in_history(line))
     add_history(line);
   char *end_of_line=line+(uint) strlen(line);
 
-      printf("MT %d\n",__LINE__);
   for (pos=out=line ; (inchar= (uchar) *pos) ; pos++)
   {
-    printf("MT: for pos=*%s* out=*%s* line=*%s*\n",
-           pos, out, line);
     if (!preserve_comments)
     {
       // Skip spaces at the beggining of a statement
@@ -1938,8 +1921,7 @@ static bool add_line(GString *buffer,char *line,char *in_string,
       continue;
     }
 #endif
-      printf("MT %d\n",__LINE__);
-    if (!*ml_comment && inchar == '\\' &&
+        if (!*ml_comment && inchar == '\\' &&
         !(mysql.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES))
     {
       // Found possbile one character command like \c
@@ -2004,7 +1986,6 @@ static bool add_line(GString *buffer,char *line,char *in_string,
              !my_strnncoll(charset_info, (uchar*) pos, 10,
                            (const uchar*) "delimiter ", 10))
     {
-      printf("MT else if\n");
       // Flush previously accepted characters
       if (out != line)
       {
@@ -2012,7 +1993,6 @@ static bool add_line(GString *buffer,char *line,char *in_string,
         out= line;
       }
 
-      printf("MT %d\n",__LINE__);
       // Flush possible comments in the buffer
       if (buffer->len != 0)
       {
@@ -2026,18 +2006,15 @@ static bool add_line(GString *buffer,char *line,char *in_string,
         Delimiter wants the get rest of the given line as argument to
         allow one to change ';' to ';;' and back
       */
-      printf("MT: before delimiter\n");
       g_string_append(buffer,pos);
       if (com_delimiter(buffer, pos) > 0)
         DBUG_RETURN(1);
-      printf("MT: after delimiter\n");
 
       g_string_truncate(buffer,0);
       break;
     }
     else if (!*ml_comment && !*in_string && is_prefix(pos, delimiter))
     {
-      printf("MT %d\n",__LINE__);
       // Found a statement. Continue parsing after the delimiter
       pos+= delimiter_length;
 
@@ -2065,7 +2042,6 @@ static bool add_line(GString *buffer,char *line,char *in_string,
 
       pos--;
 
-      printf("MT %d\n",__LINE__);
       if ((com= find_command(buffer->str, 0)))
       {
 
@@ -2077,7 +2053,6 @@ static bool add_line(GString *buffer,char *line,char *in_string,
         if (com_go(buffer, 0) > 0)             // < 0 is not fatal
           DBUG_RETURN(1);
       }
-      printf("MT %d\n",__LINE__);
       g_string_truncate(buffer,0);
     }
     else if (!*ml_comment
@@ -2119,7 +2094,6 @@ static bool add_line(GString *buffer,char *line,char *in_string,
     }
     else if (*ml_comment && !ss_comment && inchar == '*' && *(pos + 1) == '/')
     {
-      printf("MT %d\n",__LINE__);
       if (preserve_comments)
       {
         *out++= *pos++;                       // copy '*'
@@ -2139,7 +2113,6 @@ static bool add_line(GString *buffer,char *line,char *in_string,
     }
     else
     {
-      printf("MT %d\n",__LINE__);
       // Add found char to buffer
       if (!*in_string && inchar == '/' && *(pos + 1) == '*' &&
           *(pos + 2) == '!')
@@ -2157,21 +2130,16 @@ static bool add_line(GString *buffer,char *line,char *in_string,
           *out++= ' ';
         need_space= 0;
         *out++= (char) inchar;
-        printf("MT %d\n",__LINE__);
       }
-      printf("MT %d\n",__LINE__);
     }
-      printf("MT %d\n",__LINE__);
   }
-  printf("MT: out of loop - out *%s* line *%s* buffer->len *%d*\n",
-         out, line, (int) buffer->len);
   if (out != line || (buffer->len > 0))
   {
     *out++='\n';
     uint length=(uint) (out-line);
     if ((!*ml_comment || preserve_comments)
-        || (g_string_append_len(buffer, line, length)==NULL))
-      DBUG_RETURN(1);
+        && (g_string_append_len(buffer, line, length) == NULL))
+        DBUG_RETURN(1);
   }
   DBUG_RETURN(0);
 }
