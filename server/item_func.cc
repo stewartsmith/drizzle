@@ -2749,8 +2749,6 @@ longlong Item_func_bit_count::val_int()
 ** Rewritten by monty.
 ****************************************************************************/
 
-#ifdef HAVE_DLOPEN
-
 void udf_handler::cleanup()
 {
   if (!not_original)
@@ -2762,7 +2760,7 @@ void udf_handler::cleanup()
         Udf_func_deinit deinit= u_d->func_deinit;
         (*deinit)(&initid);
       }
-      free_udf(u_d);
+
       initialized= false;
     }
     if (buffers)				// Because of bug in ecc
@@ -2802,7 +2800,6 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 	  sql_alloc(f_args.arg_count*sizeof(Item_result))))
 
     {
-      free_udf(u_d);
       return(true);
     }
     uint i;
@@ -2849,7 +2846,6 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 	!(f_args.attribute_lengths= (ulong*) sql_alloc(arg_count *
 						       sizeof(long))))
     {
-      free_udf(u_d);
       return(true);
     }
   }
@@ -2918,7 +2914,6 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
     {
       my_error(ER_CANT_INITIALIZE_UDF, MYF(0),
                u_d->name.str, init_msg_buff);
-      free_udf(u_d);
       return(true);
     }
     func->max_length=min(initid.max_length,MAX_BLOB_WIDTH);
@@ -3194,10 +3189,6 @@ udf_handler::~udf_handler()
   /* Everything should be properly cleaned up by this moment. */
   assert(not_original || !(initialized || buffers));
 }
-
-#else
-bool udf_handler::get_arguments() { return 0; }
-#endif /* HAVE_DLOPEN */
 
 /*
 ** User level locks

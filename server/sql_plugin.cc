@@ -44,6 +44,9 @@ const LEX_STRING plugin_type_names[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 extern int initialize_schema_table(st_plugin_int *plugin);
 extern int finalize_schema_table(st_plugin_int *plugin);
 
+extern int initialize_udf(st_plugin_int *plugin);
+extern int finalize_udf(st_plugin_int *plugin);
+
 /*
   The number of elements in both plugin_type_initialize and
   plugin_type_deinitialize should equal to the number of plugins
@@ -51,31 +54,29 @@ extern int finalize_schema_table(st_plugin_int *plugin);
 */
 plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0,ha_initialize_handlerton,0,0,initialize_schema_table,
+  initialize_udf,ha_initialize_handlerton,0,0,initialize_schema_table,
   0
 };
 
 plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0,ha_finalize_handlerton,0,0,finalize_schema_table,
+  finalize_udf,ha_finalize_handlerton,0,0,finalize_schema_table,
   0
 };
 
-#ifdef HAVE_DLOPEN
 static const char *plugin_interface_version_sym=
                    "_mysql_plugin_interface_version_";
 static const char *sizeof_st_plugin_sym=
                    "_mysql_sizeof_struct_st_plugin_";
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
 static int min_plugin_interface_version= MYSQL_PLUGIN_INTERFACE_VERSION & ~0xFF;
-#endif
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
 */
 static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0x0000,
+  MYSQL_UDF_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
   MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
@@ -84,7 +85,7 @@ static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 };
 static int cur_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0x0000, /* UDF: not implemented */
+  MYSQL_UDF_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
   MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
@@ -267,8 +268,6 @@ static int item_val_real(struct st_mysql_value *value, double *buf)
   Plugin support code
 ****************************************************************************/
 
-#ifdef HAVE_DLOPEN
-
 static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 {
   uint i;
@@ -284,7 +283,6 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
   }
   return(0);
 }
-
 
 static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
 {
@@ -307,15 +305,11 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
                                            sizeof(struct st_plugin_dl));
   return(tmp);
 }
-#endif /* HAVE_DLOPEN */
-
 
 static inline void free_plugin_mem(struct st_plugin_dl *p)
 {
-#ifdef HAVE_DLOPEN
   if (p->handle)
     dlclose(p->handle);
-#endif
   my_free(p->dl.str, MYF(MY_ALLOW_ZERO_PTR));
   if (p->version != MYSQL_PLUGIN_INTERFACE_VERSION)
     my_free((uchar*)p->plugins, MYF(MY_ALLOW_ZERO_PTR));
