@@ -349,6 +349,7 @@ AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
+AM_PATH_GLIB_2_0
 
 # Avoid bug in fcntl on some versions of linux
 AC_MSG_CHECKING([if we should use 'skip-external-locking' as default for $target_os])
