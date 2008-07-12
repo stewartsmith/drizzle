@@ -188,7 +188,7 @@ public:
 static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, struct st_plugin_int *,
-                               int *, char **, my_bool);
+                               int *, char **);
 static bool register_builtin(struct st_mysql_plugin *, struct st_plugin_int *,
                              struct st_plugin_int **);
 static void unlock_variables(THD *thd, struct system_variables *vars);
@@ -707,7 +707,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       tmp.name.length= name_len;
       tmp.ref_count= 0;
       tmp.state= PLUGIN_IS_UNINITIALIZED;
-      if (!test_plugin_options(tmp_root, &tmp, argc, argv, true))
+      if (!test_plugin_options(tmp_root, &tmp, argc, argv))
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
@@ -1003,7 +1003,7 @@ uchar *get_bookmark_hash_key(const uchar *buff, size_t *length,
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint i;
-  bool def_enabled, is_myisam;
+  bool is_myisam;
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr, **reap;
@@ -1043,15 +1043,13 @@ int plugin_init(int *argc, char **argv, int flags)
     for (plugin= *builtins; plugin->info; plugin++)
     {
       /* by default, only ndbcluster is disabled */
-      def_enabled=
-        my_strcasecmp(&my_charset_latin1, plugin->name, "NDBCLUSTER") != 0;
       bzero(&tmp, sizeof(tmp));
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= strlen(plugin->name);
 
       free_root(&tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-      if (test_plugin_options(&tmp_root, &tmp, argc, argv, def_enabled))
+      if (test_plugin_options(&tmp_root, &tmp, argc, argv))
         continue;
 
       if (register_builtin(plugin, &tmp, &plugin_ptr))
@@ -1186,7 +1184,7 @@ bool plugin_register_builtin(THD *thd, struct st_mysql_plugin *plugin)
 
   rw_wrlock(&LOCK_system_variables_hash);
 
-  if (test_plugin_options(thd->mem_root, &tmp, &dummy_argc, NULL, true))
+  if (test_plugin_options(thd->mem_root, &tmp, &dummy_argc, NULL))
     goto end;
 
   if ((result= register_builtin(plugin, &tmp, &ptr)))
@@ -2774,9 +2772,10 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
 static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
-                               int *argc, char **argv, my_bool default_enabled)
+                               int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
+  my_bool default_enabled= true;
   my_bool enabled_saved= default_enabled, can_disable;
   my_bool *enabled= &default_enabled;
   MEM_ROOT *mem_root= alloc_root_inited(&tmp->mem_root) ?

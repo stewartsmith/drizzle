@@ -832,14 +832,9 @@ public:
 /* Flags for the THD::system_thread variable */
 enum enum_thread_type
 {
-  NON_SYSTEM_THREAD= 0,
-  SYSTEM_THREAD_DELAYED_INSERT= 1,
-  SYSTEM_THREAD_SLAVE_IO= 2,
-  SYSTEM_THREAD_SLAVE_SQL= 4,
-  SYSTEM_THREAD_NDBCLUSTER_BINLOG= 8,
-  SYSTEM_THREAD_EVENT_SCHEDULER= 16,
-  SYSTEM_THREAD_EVENT_WORKER= 32,
-  SYSTEM_THREAD_BACKUP= 64
+  NON_SYSTEM_THREAD,
+  SYSTEM_THREAD_SLAVE_IO,
+  SYSTEM_THREAD_SLAVE_SQL
 };
 
 
@@ -1864,8 +1859,7 @@ public:
 
       Don't reset binlog format for NDB binlog injector thread.
     */
-    if ((temporary_tables == NULL) && (in_sub_stmt == 0) &&
-        (system_thread != SYSTEM_THREAD_NDBCLUSTER_BINLOG))
+    if ((temporary_tables == NULL) && (in_sub_stmt == 0))
     {
       current_stmt_binlog_row_based= 
         test(variables.binlog_format == BINLOG_FORMAT_ROW);
