@@ -2738,8 +2738,6 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  udf_init();
-
   init_status_vars();
   if (opt_bootstrap) /* If running with bootstrap, do not start replication. */
     opt_skip_slave_start= 1;

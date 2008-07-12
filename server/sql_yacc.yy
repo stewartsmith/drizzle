@@ -3797,7 +3797,6 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-#ifdef HAVE_DLOPEN
             udf_func *udf= 0;
             LEX *lex= Lex;
             if (using_udf_functions &&
@@ -3812,7 +3811,6 @@ function_call_generic:
             }
             /* Temporary placing the result of find_udf in $3 */
             $<udf>$= udf;
-#endif
           }
           opt_udf_expr_list ')'
           {
@@ -3836,10 +3834,9 @@ function_call_generic:
             }
             else
             {
-#ifdef HAVE_DLOPEN
               /* Retrieving the result of find_udf */
               udf_func *udf= $<udf>3;
-
+              if (udf)
               {
                 if (udf->type == UDFTYPE_AGGREGATE)
                 {
@@ -3848,7 +3845,6 @@ function_call_generic:
 
                 item= Create_udf_func::s_singleton.create(thd, udf, $4);
               }
-#endif
             }
 
             if (! ($$= item))
