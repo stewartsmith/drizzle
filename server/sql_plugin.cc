@@ -1003,7 +1003,6 @@ uchar *get_bookmark_hash_key(const uchar *buff, size_t *length,
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint i;
-  bool is_myisam;
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr, **reap;
@@ -1055,12 +1054,6 @@ int plugin_init(int *argc, char **argv, int flags)
       if (register_builtin(plugin, &tmp, &plugin_ptr))
         goto err_unlock;
 
-      /* only initialize MyISAM and CSV at this stage */
-      if (!(is_myisam=
-            !my_strcasecmp(&my_charset_latin1, plugin->name, "MyISAM")) &&
-          my_strcasecmp(&my_charset_latin1, plugin->name, "CSV"))
-        continue;
-
       if (plugin_initialize(plugin_ptr))
         goto err_unlock;
 
@@ -1068,7 +1061,7 @@ int plugin_init(int *argc, char **argv, int flags)
         initialize the global default storage engine so that it may
         not be null in any child thread.
       */
-      if (is_myisam)
+      if (my_strcasecmp(&my_charset_latin1, plugin->name, "MyISAM") == 0)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
