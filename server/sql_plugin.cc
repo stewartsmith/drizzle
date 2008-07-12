@@ -876,7 +876,6 @@ void plugin_unlock(THD *thd, plugin_ref plugin)
   if (!plugin)
     return;
   intern_plugin_unlock(lex, plugin);
-  reap_plugins();
   return;
 }
 
@@ -887,7 +886,6 @@ void plugin_unlock_list(THD *thd, plugin_ref *list, uint count)
   assert(list);
   while (count--)
     intern_plugin_unlock(lex, *list++);
-  reap_plugins();
   return;
 }
 
@@ -1747,8 +1745,7 @@ sys_var *find_sys_var(THD *thd, const char *str, uint length)
   Returns the 'bookmark' for the named variable.
   LOCK_system_variables_hash should be at least read locked
 */
-static st_bookmark *find_bookmark(const char *plugin, const char *name,
-                                  int flags)
+static st_bookmark *find_bookmark(const char *plugin, const char *name, int flags)
 {
   st_bookmark *result= NULL;
   uint namelen, length, pluginlen= 0;
@@ -2070,8 +2067,6 @@ void plugin_thdvar_cleanup(THD *thd)
     while ((uchar*) list >= thd->lex->plugins.buffer)
       intern_plugin_unlock(NULL, *list--);
   }
-
-  reap_plugins();
 
   reset_dynamic(&thd->lex->plugins);
 
@@ -2447,8 +2442,7 @@ my_bool get_one_plugin_option(int optid __attribute__((unused)),
 
 
 static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
-                             my_option *options, my_bool **enabled,
-                             bool can_disable)
+                             my_option *options, bool can_disable)
 {
   const char *plugin_name= tmp->plugin->name;
   uint namelen= strlen(plugin_name), optnamelen;
@@ -2481,19 +2475,11 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     options[0].comment= name + namelen*2 + 10;
   }
 
-  /*
-    NOTE: 'name' is one char above the allocated buffer!
-    NOTE: This code assumes that 'my_bool' and 'char' are of same size.
-  */
-  *((my_bool *)(name -1))= **enabled;
-  *enabled= (my_bool *)(name - 1);
-
-
   options[1].name= (options[0].name= name) + namelen + 1;
   options[0].id= options[1].id= 256; /* must be >255. dup id ok */
   options[0].var_type= options[1].var_type= GET_BOOL;
   options[0].arg_type= options[1].arg_type= NO_ARG;
-  options[0].def_value= options[1].def_value= **enabled;
+  options[0].def_value= options[1].def_value= true;
   options[0].value= options[0].u_max_value=
   options[1].value= options[1].u_max_value= (char**) (name - 1);
   options+= 2;
@@ -2674,8 +2660,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 {
   st_mysql_sys_var **opt;
   my_option *opts;
-  my_bool dummy, can_disable;
-  my_bool *dummy2= &dummy;
+  bool can_disable;
   uint count= EXTRA_OPTIONS;
 
   for (opt= p->plugin->system_vars; opt && *opt; opt++, count+= 2) {};
@@ -2685,13 +2670,15 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 
   bzero(opts, sizeof(my_option) * count);
 
-  dummy= TRUE; /* plugin is enabled. */
+  if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") == 0))
+    can_disable= false;
+  else if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MEMORY") == 0))
+    can_disable= false;
+  else
+    can_disable= true;
 
-  can_disable=
-      my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") &&
-      my_strcasecmp(&my_charset_latin1, p->name.str, "MEMORY");
 
-  if (construct_options(mem_root, p, opts, &dummy2, can_disable))
+  if (construct_options(mem_root, p, opts, can_disable))
     return(NULL);
 
   return(opts);
@@ -2715,9 +2702,8 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
                                int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
-  my_bool default_enabled= true;
-  my_bool enabled_saved= default_enabled, can_disable;
-  my_bool *enabled= &default_enabled;
+  bool enabled_saved= true;
+  bool can_disable;
   MEM_ROOT *mem_root= alloc_root_inited(&tmp->mem_root) ?
                       &tmp->mem_root : &plugin_mem_root;
   st_mysql_sys_var **opt;
@@ -2733,9 +2719,12 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
 
-  can_disable=
-      my_strcasecmp(&my_charset_latin1, tmp->name.str, "MyISAM") &&
-      my_strcasecmp(&my_charset_latin1, tmp->name.str, "MEMORY");
+  if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MyISAM") == 0))
+    can_disable= false;
+  else if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MEMORY") == 0))
+    can_disable= false;
+  else
+    can_disable= true;
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
@@ -2746,7 +2735,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
     bzero(opts, sizeof(my_option) * count);
 
-    if (construct_options(tmp_root, tmp, opts, &enabled, can_disable))
+    if (construct_options(tmp_root, tmp, opts, can_disable))
     {
       sql_print_error("Bad options for plugin '%s'.", tmp->name.str);
       return(-1);
@@ -2763,15 +2752,8 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
   }
 
-  if (!*enabled && !can_disable)
-  {
-    sql_print_warning("Plugin '%s' cannot be disabled", tmp->name.str);
-    *enabled= TRUE;
-  }
-
   error= 1;
 
-  if (*enabled)
   {
     for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     {
