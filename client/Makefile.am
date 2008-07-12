@@ -24,7 +24,7 @@ AM_CPPFLAGS =			-I$(top_builddir)/include \
 LDADD=				$(top_builddir)/libdrizzle/libdrizzle.la -lz
 
 
-noinst_HEADERS =		sql_string.h completion_hash.h my_readline.h \
+noinst_HEADERS =		completion_hash.h my_readline.h \
 				client_priv.h
 
 CLEANFILES =			$(BUILT_SOURCES)
@@ -38,10 +38,11 @@ bin_PROGRAMS =			mysql \
 				mysqltest \
 				mysqlslap 
 
-mysql_SOURCES =			mysql.cc readline.cc sql_string.cc \
+mysql_SOURCES =			mysql.cc readline.cc \
 				completion_hash.cc
-mysql_LDADD =			-lreadline @TERMCAP_LIB@ \
+mysql_LDADD =			-lreadline @TERMCAP_LIB@ $(GLIB_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
+mysql_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
 mysqladmin_SOURCES =		mysqladmin.cc
 
 mysqlbinlog_SOURCES =		mysqlbinlog.cc \
@@ -52,18 +53,14 @@ mysqlbinlog_SOURCES =		mysqlbinlog.cc \
 				$(top_srcdir)/mysys/base64.c 
 mysqlbinlog_LDADD =		$(LDADD) $(CXXLDFLAGS) 
 
-mysqldump_SOURCES=              mysqldump.c \
-	                        $(top_srcdir)/mysys/mf_getdate.c
+mysqldump_SOURCES=              mysqldump.c 
 
 mysqlimport_SOURCES=		mysqlimport.c
 
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 
-mysqltest_SOURCES=		mysqltest.cc \
-				$(top_srcdir)/mysys/my_getsystime.c \
-				$(top_srcdir)/mysys/my_copy.c \
-                                $(top_srcdir)/mysys/my_mkdir.c
+mysqltest_SOURCES=		mysqltest.cc 
 mysqltest_LDADD =		${LDADD} @PCRE_LIBS@
 mysqltest_CFLAGS = 		${AM_CPPFLAGS} @PCRE_CFLAGS@
 
