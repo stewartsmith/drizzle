@@ -243,11 +243,13 @@ static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-my_bool opt_log, opt_slow_log;
+bool opt_log; 
+bool opt_slow_log;
 ulong log_output_options;
-my_bool opt_log_queries_not_using_indexes= 0;
+bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= IF_WIN(1,0);
-bool opt_disable_networking=0, opt_skip_show_db=0;
+bool opt_disable_networking= false;
+bool opt_skip_show_db= false;
 my_bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
@@ -258,7 +260,8 @@ bool volatile shutdown_in_progress;
 my_bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
 my_bool opt_reckless_slave = 0;
 my_bool opt_enable_named_pipe= 0;
-my_bool opt_local_infile, opt_slave_compressed_protocol;
+bool opt_local_infile;
+bool opt_slave_compressed_protocol;
 my_bool opt_safe_user_create = 0;
 my_bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
 my_bool opt_log_slave_updates= 0;
@@ -269,13 +272,15 @@ my_bool opt_log_slave_updates= 0;
 handlerton *heap_hton;
 handlerton *myisam_hton;
 
-my_bool opt_readonly, use_temp_pool, relay_log_purge;
-my_bool opt_sync_frm;
-my_bool opt_secure_auth= 0;
+bool opt_readonly;
+my_bool use_temp_pool;
+bool relay_log_purge;
+bool opt_sync_frm;
+bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
 my_bool opt_log_slow_admin_statements= 0;
 my_bool opt_log_slow_slave_statements= 0;
-my_bool lower_case_file_system= 0;
+bool lower_case_file_system= 0;
 my_bool opt_old_style_user_limits= 0, trust_function_creators= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
@@ -308,7 +313,7 @@ ulong what_to_log;
 ulong query_buff_size, slow_launch_time, slave_open_temp_tables;
 ulong open_files_limit, max_binlog_size, max_relay_log_size;
 ulong slave_net_timeout, slave_trans_retries;
-my_bool slave_allow_batching;
+bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
 ulong thread_cache_size=0, thread_pool_size= 0;
@@ -4885,7 +4890,7 @@ static void get_options(int *argc,char **argv)
     Set some global variables from the global_system_variables
     In most cases the global variables will not be used
   */
-  my_disable_locking= myisam_single_user= test(opt_external_locking == 0);
+  my_disable_locking= myisam_single_user= test((opt_external_locking == 0));
   my_default_record_cache_size=global_system_variables.read_buff_size;
   myisam_max_temp_length=
     (my_off_t) global_system_variables.myisam_max_sort_file_size;

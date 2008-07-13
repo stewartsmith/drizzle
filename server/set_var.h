@@ -206,30 +206,8 @@ public:
 class sys_var_bool_ptr :public sys_var
 {
 public:
-  my_bool *value;
-  sys_var_bool_ptr(sys_var_chain *chain, const char *name_arg, my_bool *value_arg)
-    :sys_var(name_arg),value(value_arg)
-  { chain_sys_var(chain); }
-  bool check(THD *thd, set_var *var)
-  {
-    return check_enum(thd, var, &bool_typelib);
-  }
-  bool update(THD *thd, set_var *var);
-  void set_default(THD *thd, enum_var_type type);
-  SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
-  uchar *value_ptr(THD *thd __attribute__((__unused__)),
-                   enum_var_type type __attribute__((__unused__)),
-                   LEX_STRING *base __attribute__((__unused__)))
-  { return (uchar*) value; }
-  bool check_update_type(Item_result type __attribute__((__unused__)))
-  { return 0; }
-};
-
-class sys_var_rbool_ptr :public sys_var
-{
-public:
   bool *value;
-  sys_var_rbool_ptr(sys_var_chain *chain, const char *name_arg, bool *value_arg)
+  sys_var_bool_ptr(sys_var_chain *chain, const char *name_arg, bool *value_arg)
     :sys_var(name_arg),value(value_arg)
   { chain_sys_var(chain); }
   bool check(THD *thd, set_var *var)
@@ -246,13 +224,12 @@ public:
   bool check_update_type(Item_result type __attribute__((__unused__)))
   { return 0; }
 };
-
 
 class sys_var_bool_ptr_readonly :public sys_var_bool_ptr
 {
 public:
   sys_var_bool_ptr_readonly(sys_var_chain *chain, const char *name_arg,
-                            my_bool *value_arg)
+                            bool *value_arg)
     :sys_var_bool_ptr(chain, name_arg, value_arg)
   {}
   bool is_readonly() const { return 1; }
@@ -869,7 +846,7 @@ class sys_var_log_state :public sys_var_bool_ptr
 {
   uint log_type;
 public:
-  sys_var_log_state(sys_var_chain *chain, const char *name_arg, my_bool *value_arg, 
+  sys_var_log_state(sys_var_chain *chain, const char *name_arg, bool *value_arg, 
                     uint log_type_arg)
     :sys_var_bool_ptr(chain, name_arg, value_arg), log_type(log_type_arg) {}
   bool update(THD *thd, set_var *var);
@@ -1093,19 +1070,6 @@ public:
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
 };
 
-
-class sys_var_trust_routine_creators :public sys_var_bool_ptr
-{
-  /* We need a derived class only to have a warn_deprecated() */
-public:
-  sys_var_trust_routine_creators(sys_var_chain *chain,
-                                 const char *name_arg, my_bool *value_arg) :
-    sys_var_bool_ptr(chain, name_arg, value_arg) {};
-  void warn_deprecated(THD *thd);
-  void set_default(THD *thd, enum_var_type type);
-  bool update(THD *thd, set_var *var);
-};
-
 /**
   Handler for setting the system variable --read-only.
 */
@@ -1114,7 +1078,7 @@ class sys_var_opt_readonly :public sys_var_bool_ptr
 {
 public:
   sys_var_opt_readonly(sys_var_chain *chain, const char *name_arg, 
-                       my_bool *value_arg) :
+                       bool *value_arg) :
     sys_var_bool_ptr(chain, name_arg, value_arg) {};
   ~sys_var_opt_readonly() {};
   bool update(THD *thd, set_var *var);

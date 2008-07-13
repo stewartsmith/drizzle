@@ -466,17 +466,12 @@ TYPELIB myisam_stats_method_typelib= {
 
 	 /* Read options */
 
-static my_bool
+static bool
 get_one_option(int optid,
 	       const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
   switch (optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case 'a':
     if (argument == disabled_my_option)
       check_param.testflag&= ~T_STATISTICS;

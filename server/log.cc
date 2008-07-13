@@ -615,7 +615,7 @@ bool LOGGER::activate_log_handler(THD* thd __attribute__((__unused__)),
 void LOGGER::deactivate_log_handler(THD *thd __attribute__((__unused__)),
                                     uint log_type)
 {
-  my_bool *tmp_opt= 0;
+  bool *tmp_opt= 0;
   MYSQL_LOG *file_log;
 
   switch (log_type) {

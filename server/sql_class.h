@@ -329,8 +329,7 @@ struct system_variables
     compatibility option:
       - index usage hints (USE INDEX without a FOR clause) behave as in 5.0 
   */
-  my_bool old_mode;
-  my_bool query_cache_wlock_invalidate;
+  bool old_mode;
   my_bool engine_condition_pushdown;
   my_bool keep_files_on_create;
 
