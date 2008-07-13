@@ -38,8 +38,7 @@ bin_PROGRAMS =			mysql \
 				mysqltest \
 				mysqlslap 
 
-mysql_SOURCES =			mysql.cc readline.cc \
-				completion_hash.cc
+mysql_SOURCES =			mysql.c readline.c completion_hash.c
 mysql_LDADD =			-lreadline @TERMCAP_LIB@ $(GLIB_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
 mysql_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
