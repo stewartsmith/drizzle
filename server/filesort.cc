@@ -136,8 +136,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   param.ref_length= table->file->ref_length;
   param.addon_field= 0;
   param.addon_length= 0;
-  if (!(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
-      !table->fulltext_searched && !sort_positions)
+  if (!(table->file->ha_table_flags() & HA_FAST_KEY_READ) && !sort_positions)
   {
     /* 
       Get the descriptors of all fields whose values are appended 

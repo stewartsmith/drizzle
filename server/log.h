@@ -468,7 +468,6 @@ public:
   void lock_shared() { rw_rdlock(&LOCK_logger); }
   void lock_exclusive() { rw_wrlock(&LOCK_logger); }
   void unlock() { rw_unlock(&LOCK_logger); }
-  bool is_log_table_enabled(uint log_table_type);
   bool log_command(THD *thd, enum enum_server_command command);
 
   /*

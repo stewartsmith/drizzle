@@ -491,7 +491,7 @@ uint connection_count= 0;
 pthread_handler_t signal_hand(void *arg);
 static void mysql_init_variables(void);
 static void get_options(int *argc,char **argv);
-extern "C" my_bool mysqld_get_one_option(int, const struct my_option *, char *);
+extern "C" bool mysqld_get_one_option(int, const struct my_option *, char *);
 static void set_server_version(void);
 static int init_thread_environment();
 static char *get_relative_path(const char *path);
@@ -2738,8 +2738,6 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  udf_init();
-
   init_status_vars();
   if (opt_bootstrap) /* If running with bootstrap, do not start replication. */
     opt_skip_slave_start= 1;
@@ -4432,7 +4430,7 @@ static void mysql_init_variables(void)
 }
 
 
-my_bool
+bool
 mysqld_get_one_option(int optid,
                       const struct my_option *opt __attribute__((unused)),
                       char *argument)

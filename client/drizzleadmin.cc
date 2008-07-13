@@ -31,10 +31,10 @@ char truncated_var_names[MAX_MYSQL_VAR][MAX_TRUNC_LENGTH];
 char ex_var_names[MAX_MYSQL_VAR][FN_REFLEN];
 ulonglong last_values[MAX_MYSQL_VAR];
 static int interval=0;
-static my_bool option_force=0,interrupted=0,new_line=0,
+static bool option_force=0,interrupted=0,new_line=0,
                opt_compress=0, opt_relative=0, opt_verbose=0, opt_vertical=0,
                tty_password= 0, opt_nobeep;
-static my_bool debug_info_flag= 0, debug_check_flag= 0;
+static bool debug_info_flag= 0, debug_check_flag= 0;
 static uint tcp_port = 0, option_wait = 0, option_silent=0, nr_iterations;
 static uint opt_count_iterations= 0, my_end_arg;
 static ulong opt_connect_timeout, opt_shutdown_timeout;
@@ -53,14 +53,14 @@ static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 */
 
 static uint ex_val_max_len[MAX_MYSQL_VAR];
-static my_bool ex_status_printed = 0; /* First output is not relative. */
+static bool ex_status_printed = 0; /* First output is not relative. */
 static uint ex_var_count, max_var_length, max_val_length;
 
 static void print_version(void);
 static void usage(void);
-extern "C" my_bool get_one_option(int optid, const struct my_option *opt,
+extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                   char *argument);
-static my_bool sql_connect(MYSQL *mysql, uint wait);
+static bool sql_connect(MYSQL *mysql, uint wait);
 static int execute_commands(MYSQL *mysql,int argc, char **argv);
 static int drop_db(MYSQL *mysql,const char *db);
 extern "C" sig_handler endprog(int signal_number);
@@ -73,8 +73,8 @@ static void print_relative_row_vert(MYSQL_RES *result, MYSQL_ROW cur, uint row);
 static void print_relative_header();
 static void print_relative_line();
 static void truncate_names();
-static my_bool get_pidfile(MYSQL *mysql, char *pidfile);
-static my_bool wait_pidfile(char *pidfile, time_t last_modified,
+static bool get_pidfile(MYSQL *mysql, char *pidfile);
+static bool wait_pidfile(char *pidfile, time_t last_modified,
 			    struct stat *pidfile_status);
 static void store_values(MYSQL_RES *result);
 
@@ -114,10 +114,6 @@ static struct my_option my_long_options[] =
    "Number of iterations to make. This works with -i (--sleep) only.",
    (char**) &nr_iterations, (char**) &nr_iterations, 0, GET_UINT,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DBUG_OFF
-  {"debug", '#', "Output debug log. Often this is 'd:t:o,filename'.",
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit .",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -202,7 +198,7 @@ static struct my_option my_long_options[] =
 
 static const char *load_default_groups[]= { "mysqladmin","client",0 };
 
-my_bool
+bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -228,9 +224,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     break;
   case 's':
     option_silent++;
-    break;
-  case '#':
-    DBUG_PUSH(argument ? argument : "d:t:o,/tmp/mysqladmin.trace");
     break;
   case 'V':
     print_version();
@@ -389,9 +382,9 @@ sig_handler endprog(int signal_number __attribute__((unused)))
 }
 
 
-static my_bool sql_connect(MYSQL *mysql, uint wait)
+static bool sql_connect(MYSQL *mysql, uint wait)
 {
-  my_bool info=0;
+  bool info=0;
 
   for (;;)
   {
@@ -517,7 +510,7 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
     case ADMIN_SHUTDOWN:
     {
       char pidfile[FN_REFLEN];
-      my_bool got_pidfile= 0;
+      bool got_pidfile= 0;
       time_t last_modified= 0;
       struct stat pidfile_status;
 
@@ -1220,7 +1213,7 @@ static void truncate_names()
 }
 
 
-static my_bool get_pidfile(MYSQL *mysql, char *pidfile)
+static bool get_pidfile(MYSQL *mysql, char *pidfile)
 {
   MYSQL_RES* result;
 
@@ -1245,13 +1238,13 @@ static my_bool get_pidfile(MYSQL *mysql, char *pidfile)
   Return 1 if pid file didn't disappear or change
 */
 
-static my_bool wait_pidfile(char *pidfile, time_t last_modified,
+static bool wait_pidfile(char *pidfile, time_t last_modified,
 			    struct stat *pidfile_status)
 {
   char buff[FN_REFLEN];
   int error= 1;
   uint count= 0;
-  DBUG_ENTER("wait_pidfile");
+
 
   system_filename(buff, pidfile);
   do
@@ -1282,10 +1275,9 @@ static my_bool wait_pidfile(char *pidfile, time_t last_modified,
 
   if (error)
   {
-    DBUG_PRINT("warning",("Pid file didn't disappear"));
     fprintf(stderr,
 	    "Warning;  Aborted waiting on pid file: '%s' after %d seconds\n",
 	    buff, count-1);
   }
-  DBUG_RETURN(error);
+  return(error);
 }

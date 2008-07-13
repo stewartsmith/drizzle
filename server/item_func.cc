@@ -2749,8 +2749,6 @@ longlong Item_func_bit_count::val_int()
 ** Rewritten by monty.
 ****************************************************************************/
 
-#ifdef HAVE_DLOPEN
-
 void udf_handler::cleanup()
 {
   if (!not_original)
@@ -2762,7 +2760,7 @@ void udf_handler::cleanup()
         Udf_func_deinit deinit= u_d->func_deinit;
         (*deinit)(&initid);
       }
-      free_udf(u_d);
+
       initialized= false;
     }
     if (buffers)				// Because of bug in ecc
@@ -2781,7 +2779,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
   if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
     return(true);				// Fatal error flag is set!
 
-  udf_func *tmp_udf=find_udf(u_d->name.str,(uint) u_d->name.length,1);
+  udf_func *tmp_udf=find_udf(u_d->name.str,(uint) u_d->name.length);
 
   if (!tmp_udf)
   {
@@ -2802,7 +2800,6 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 	  sql_alloc(f_args.arg_count*sizeof(Item_result))))
 
     {
-      free_udf(u_d);
       return(true);
     }
     uint i;
@@ -2849,7 +2846,6 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 	!(f_args.attribute_lengths= (ulong*) sql_alloc(arg_count *
 						       sizeof(long))))
     {
-      free_udf(u_d);
       return(true);
     }
   }
@@ -2918,7 +2914,6 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
     {
       my_error(ER_CANT_INITIALIZE_UDF, MYF(0),
                u_d->name.str, init_msg_buff);
-      free_udf(u_d);
       return(true);
     }
     func->max_length=min(initid.max_length,MAX_BLOB_WIDTH);
@@ -3194,10 +3189,6 @@ udf_handler::~udf_handler()
   /* Everything should be properly cleaned up by this moment. */
   assert(not_original || !(initialized || buffers));
 }
-
-#else
-bool udf_handler::get_arguments() { return 0; }
-#endif /* HAVE_DLOPEN */
 
 /*
 ** User level locks
@@ -4594,42 +4585,4 @@ longlong Item_func_found_rows::val_int()
   THD *thd= current_thd;
 
   return thd->found_rows();
-}
-
-
-
-/*
-  uuid_short handling.
-
-  The short uuid is defined as a longlong that contains the following bytes:
-
-  Bytes  Comment
-  1      Server_id & 255
-  4      Startup time of server in seconds
-  3      Incrementor
-
-  This means that an uuid is guaranteed to be unique
-  even in a replication environment if the following holds:
-
-  - The last byte of the server id is unique
-  - If you between two shutdown of the server don't get more than
-    an average of 2^24 = 16M calls to uuid_short() per second.
-*/
-
-ulonglong uuid_value;
-
-void uuid_short_init()
-{
-  uuid_value= ((((ulonglong) server_id) << 56) + 
-               (((ulonglong) server_start_time) << 24));
-}
-
-
-longlong Item_func_uuid_short::val_int()
-{
-  ulonglong val;
-  pthread_mutex_lock(&LOCK_uuid_generator);
-  val= uuid_value++;
-  pthread_mutex_unlock(&LOCK_uuid_generator);
-  return (longlong) val;
 }

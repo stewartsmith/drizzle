@@ -97,7 +97,7 @@ pthread_mutex_t sleeper_mutex;
 pthread_cond_t sleep_threshhold;
 
 /* Global Thread timer */
-static my_bool timer_alarm= FALSE;
+static bool timer_alarm= FALSE;
 pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 
@@ -119,12 +119,12 @@ const char *delimiter= "\n";
 
 const char *create_schema_string= "mysqlslap";
 
-static my_bool opt_preserve= TRUE;
-static my_bool debug_info_flag= 0, debug_check_flag= 0;
-static my_bool opt_only_print= FALSE;
-static my_bool opt_burnin= FALSE;
-static my_bool opt_ignore_sql_errors= FALSE;
-static my_bool opt_compress= FALSE, tty_password= FALSE,
+static bool opt_preserve= TRUE;
+static bool debug_info_flag= 0, debug_check_flag= 0;
+static bool opt_only_print= FALSE;
+static bool opt_burnin= FALSE;
+static bool opt_ignore_sql_errors= FALSE;
+static bool opt_compress= FALSE, tty_password= FALSE,
                opt_silent= FALSE,
                auto_generate_sql_autoincrement= FALSE,
                auto_generate_sql_guid_primary= FALSE,
@@ -274,7 +274,7 @@ uint get_random_string(char *buf, size_t size);
 static statement *build_table_string(void);
 static statement *build_insert_string(void);
 static statement *build_update_string(void);
-static statement * build_select_string(my_bool key);
+static statement * build_select_string(bool key);
 static int generate_primary_key_list(MYSQL *mysql, option_string *engine_stmt);
 static int drop_primary_key_list(void);
 static int create_schema(MYSQL *mysql, const char *db, statement *stmt, 
@@ -287,7 +287,7 @@ void statement_cleanup(statement *stmt);
 void option_cleanup(option_string *stmt);
 void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr);
 static int run_statements(MYSQL *mysql, statement *stmt);
-void slap_connect(MYSQL *mysql, my_bool connect_to_schema);
+void slap_connect(MYSQL *mysql, bool connect_to_schema);
 void slap_close(MYSQL *mysql);
 static int run_query(MYSQL *mysql, const char *query, int len);
 void standard_deviation (conclusions *con, stats *sptr);
@@ -592,14 +592,6 @@ static struct my_option my_long_options[] =
 	"Generate CSV output to named file or to stdout if no file is named.",
     (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR, 
     OPT_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef DBUG_OFF
-  {"debug", '#', "This is a non-debug version. Catch this and exit.",
-   0, 0, 0, GET_DISABLED, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#else
-  {"debug", '#', "Output debug log. Often this is 'd:t:o,filename'.",
-    (char**) &default_dbug_option, (char**) &default_dbug_option, 0, GET_STR,
-    OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -739,11 +731,11 @@ static void usage(void)
 
 #include <help_end.h>
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                char *argument)
 {
-  DBUG_ENTER("get_one_option");
+
   switch(optid) {
   case 'v':
     verbose++;
@@ -762,10 +754,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     else
       tty_password= 1;
     break;
-  case '#':
-    DBUG_PUSH(argument ? argument : default_dbug_option);
-    debug_check_flag= 1;
-    break;
   case 'V':
     print_version();
     exit(0);
@@ -775,7 +763,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     usage();
     exit(0);
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -784,10 +772,10 @@ get_random_string(char *buf, size_t size)
 {
   char *buf_ptr= buf;
   size_t x;
-  DBUG_ENTER("get_random_string");
+
   for (x= size; x > 0; x--)
     *buf_ptr++= ALPHANUMERICS[random() % ALPHANUMERICS_SIZE];
-  DBUG_RETURN(buf_ptr - buf);
+  return(buf_ptr - buf);
 }
 
 
@@ -804,10 +792,6 @@ build_table_string(void)
   unsigned int        col_count;
   statement *ptr;
   DYNAMIC_STRING table_string;
-  DBUG_ENTER("build_table_string");
-
-  DBUG_PRINT("info", ("num int cols %u num char cols %u",
-                      num_int_cols, num_char_cols));
 
   init_dynamic_string(&table_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
 
@@ -930,7 +914,7 @@ build_table_string(void)
   ptr->type= CREATE_TABLE_TYPE;
   strmov(ptr->string, table_string.str);
   dynstr_free(&table_string);
-  DBUG_RETURN(ptr);
+  return(ptr);
 }
 
 /*
@@ -946,7 +930,7 @@ build_update_string(void)
   unsigned int        col_count;
   statement *ptr;
   DYNAMIC_STRING update_string;
-  DBUG_ENTER("build_update_string");
+
 
   init_dynamic_string(&update_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
 
@@ -1002,7 +986,7 @@ build_update_string(void)
     ptr->type= UPDATE_TYPE;
   strmov(ptr->string, update_string.str);
   dynstr_free(&update_string);
-  DBUG_RETURN(ptr);
+  return(ptr);
 }
 
 
@@ -1019,7 +1003,7 @@ build_insert_string(void)
   unsigned int        col_count;
   statement *ptr;
   DYNAMIC_STRING insert_string;
-  DBUG_ENTER("build_insert_string");
+
 
   init_dynamic_string(&insert_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
 
@@ -1142,7 +1126,7 @@ build_insert_string(void)
   strmov(ptr->string, insert_string.str);
   dynstr_free(&insert_string);
 
-  DBUG_RETURN(ptr);
+  return(ptr);
 }
 
 
@@ -1153,13 +1137,13 @@ build_insert_string(void)
   statement or file containing a query statement
 */
 static statement *
-build_select_string(my_bool key)
+build_select_string(bool key)
 {
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
   statement *ptr;
   static DYNAMIC_STRING query_string;
-  DBUG_ENTER("build_select_string");
+
 
   init_dynamic_string(&query_string, "", HUGE_STRING_LENGTH, HUGE_STRING_LENGTH);
 
@@ -1230,7 +1214,7 @@ build_select_string(my_bool key)
     ptr->type= SELECT_TYPE;
   strmov(ptr->string, query_string.str);
   dynstr_free(&query_string);
-  DBUG_RETURN(ptr);
+  return(ptr);
 }
 
 static int
@@ -1242,7 +1226,7 @@ get_options(int *argc,char ***argv)
   option_string *sql_type;
   unsigned int sql_type_count= 0;
 
-  DBUG_ENTER("get_options");
+
   if ((ho_error= handle_options(argc, argv, my_long_options, get_one_option)))
     exit(ho_error);
   if (debug_info_flag)
@@ -1631,7 +1615,7 @@ get_options(int *argc,char ***argv)
 
   if (tty_password)
     opt_password= get_tty_password(NullS);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -1655,7 +1639,7 @@ generate_primary_key_list(MYSQL *mysql, option_string *engine_stmt)
   MYSQL_RES *result;
   MYSQL_ROW row;
   unsigned long long counter;
-  DBUG_ENTER("generate_primary_key_list");
+
 
   /* 
     Blackhole is a special case, this allows us to test the upper end 
@@ -1701,7 +1685,7 @@ generate_primary_key_list(MYSQL *mysql, option_string *engine_stmt)
     mysql_free_result(result);
   }
 
-  DBUG_RETURN(0);
+  return(0);
 }
 
 static int
@@ -1730,7 +1714,7 @@ create_schema(MYSQL *mysql, const char *db, statement *stmt,
   int len;
   ulonglong count;
   struct timeval start_time, end_time;
-  DBUG_ENTER("create_schema");
+
 
   gettimeofday(&start_time, NULL);
 
@@ -1829,7 +1813,7 @@ limit_not_met:
 
   sptr->create_timing= timedif(end_time, start_time);
 
-  DBUG_RETURN(0);
+  return(0);
 }
 
 static int
@@ -1837,7 +1821,7 @@ drop_schema(MYSQL *mysql, const char *db)
 {
   char query[HUGE_STRING_LENGTH];
   int len;
-  DBUG_ENTER("drop_schema");
+
   len= snprintf(query, HUGE_STRING_LENGTH, "DROP SCHEMA IF EXISTS `%s`", db);
 
   if (run_query(mysql, query, len))
@@ -1849,7 +1833,7 @@ drop_schema(MYSQL *mysql, const char *db)
 
 
 
-  DBUG_RETURN(0);
+  return(0);
 }
 
 static int
@@ -1857,7 +1841,7 @@ run_statements(MYSQL *mysql, statement *stmt)
 {
   statement *ptr;
   MYSQL_RES *result;
-  DBUG_ENTER("run_statements");
+
 
   for (ptr= stmt; ptr && ptr->length; ptr= ptr->next)
   {
@@ -1877,7 +1861,7 @@ run_statements(MYSQL *mysql, statement *stmt)
     }
   }
 
-  DBUG_RETURN(0);
+  return(0);
 }
 
 static int
@@ -1891,7 +1875,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, ulonglong limit)
   thread_context *con;
   pthread_t mainthread;            /* Thread descriptor */
   pthread_attr_t attr;          /* Thread attributes */
-  DBUG_ENTER("run_scheduler");
+
 
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr,
@@ -1987,7 +1971,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, ulonglong limit)
   sptr->real_users= real_concurrency;
   sptr->rows= limit;
 
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -1996,7 +1980,7 @@ pthread_handler_t timer_thread(void *p)
   uint *timer_length= (uint *)p;
   struct timespec abstime;
 
-  DBUG_ENTER("timer_thread");
+
 
   if (mysql_thread_init())
   {
@@ -2027,7 +2011,7 @@ pthread_handler_t timer_thread(void *p)
   pthread_mutex_unlock(&timer_alarm_mutex);
 
   mysql_thread_end();
-  DBUG_RETURN(0);
+  return(0);
 }
 
 pthread_handler_t run_task(void *p)
@@ -2041,16 +2025,12 @@ pthread_handler_t run_task(void *p)
   statement *ptr;
   thread_context *con= (thread_context *)p;
 
-  DBUG_ENTER("run_task");
-
   if (mysql_thread_init())
   {
     fprintf(stderr,"%s: mysql_thread_init() failed.\n",
             my_progname);
     exit(1);
   }
-
-  DBUG_PRINT("info", ("task script \"%s\"", con->stmt ? con->stmt->string : ""));
 
   pthread_mutex_lock(&sleeper_mutex);
   while (master_wakeup)
@@ -2059,11 +2039,8 @@ pthread_handler_t run_task(void *p)
   }
   pthread_mutex_unlock(&sleeper_mutex);
 
-  DBUG_PRINT("info", ("trying to connect to host %s as user %s", host, user));
-
   slap_connect(&mysql, TRUE);
 
-  DBUG_PRINT("info", ("connected."));
   if (verbose >= 3)
     printf("connected!\n");
   queries= 0;
@@ -2101,13 +2078,13 @@ limit_not_met:
           Just in case someone runs this under an experimental engine we don't
           want a crash so the if() is placed here.
         */
-        DBUG_ASSERT(primary_keys_number_of);
+        assert(primary_keys_number_of);
         if (primary_keys_number_of)
         {
           key_val= (unsigned int)(random() % primary_keys_number_of);
           key= primary_keys[key_val];
 
-          DBUG_ASSERT(key);
+          assert(key);
 
           length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'", 
                            (int)ptr->length, ptr->string, key);
@@ -2181,7 +2158,7 @@ end:
   my_free(con, MYF(0));
 
   mysql_thread_end();
-  DBUG_RETURN(0);
+  return(0);
 }
 
 /*
@@ -2513,7 +2490,7 @@ slap_close(MYSQL *mysql)
 }
 
 void 
-slap_connect(MYSQL *mysql, my_bool connect_to_schema)
+slap_connect(MYSQL *mysql, bool connect_to_schema)
 {
   /* Connect to server */
   static ulong connection_retry_sleep= 100000; /* Microseconds */

@@ -1623,8 +1623,8 @@ extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
 extern CHARSET_INFO *character_set_filesystem;
 #endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
 #ifdef MYSQL_SERVER
-extern char *opt_mysql_tmpdir, mysql_charsets_dir[],
-            def_ft_boolean_syntax[sizeof(ft_boolean_syntax)];
+extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
+            
 #define mysql_tmpdir (my_tmpdir(&mysql_tmpdir_list))
 extern MY_TMPDIR mysql_tmpdir_list;
 extern const LEX_STRING command_name[];
@@ -1658,7 +1658,6 @@ extern ulong thread_id;
 extern ulong binlog_cache_use, binlog_cache_disk_use;
 extern ulong aborted_threads,aborted_connects;
 extern ulong slave_open_temp_tables;
-extern ulong query_cache_size, query_cache_min_res_unit;
 extern ulong slow_launch_threads, slow_launch_time;
 extern ulong table_cache_size, table_def_size;
 extern ulong max_connections,max_connect_errors, connect_timeout;

@@ -801,29 +801,7 @@ sub collect_one_test_case($$$$$$$$$) {
       return;
     }
 
-    if ( $tinfo->{'ndb_test'} )
     {
-      # This is a NDB test
-      if ( ! $::glob_ndbcluster_supported )
-      {
-	# Ndb is not supported, skip it
-	$tinfo->{'skip'}= 1;
-	$tinfo->{'comment'}= "No ndbcluster support";
-	return;
-      }
-      elsif ( $::opt_skip_ndbcluster )
-      {
-	# All ndb test's should be skipped
-	$tinfo->{'skip'}= 1;
-	$tinfo->{'comment'}= "No ndbcluster tests(--skip-ndbcluster)";
-	return;
-      }
-      # Ndb tests run with two mysqld masters
-      $tinfo->{'master_num'}= 2;
-    }
-    else
-    {
-      # This is not a ndb test
       if ( $::opt_with_ndbcluster_only )
       {
 	# Only the ndb test should be run, all other should be skipped
@@ -886,10 +864,6 @@ our @tags=
   "sup_binlog_formats", ["row","statement"]],
  ["include/big_test.inc", "big_test", 1],
  ["include/have_debug.inc", "need_debug", 1],
- ["include/have_ndb.inc", "ndb_test", 1],
- ["include/have_multi_ndb.inc", "ndb_test", 1],
- ["include/have_ndb_extra.inc", "ndb_extra", 1],
- ["include/ndb_master-slave.inc", "ndb_test", 1],
  ["require_manager", "require_manager", 1],
 );
 
