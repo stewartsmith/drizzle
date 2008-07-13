@@ -2656,19 +2656,6 @@ longlong Item_func_uncompressed_length::val_int()
   return uint4korr(res->ptr()) & 0x3FFFFFFF;
 }
 
-longlong Item_func_crc32::val_int()
-{
-  assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
-  if (!res)
-  {
-    null_value=1;
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-  return (longlong) crc32(0L, (uchar*)res->ptr(), res->length());
-}
-
 #ifdef HAVE_COMPRESS
 #include "zlib.h"
 
