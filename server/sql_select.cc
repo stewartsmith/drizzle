@@ -4948,7 +4948,7 @@ best_access_path(JOIN      *join,
 {
   KEYUSE *best_key=         0;
   uint best_max_key_part=   0;
-  my_bool found_constraint= 0;
+  bool found_constraint= 0;
   double best=              DBL_MAX;
   double best_time=         DBL_MAX;
   double records=           DBL_MAX;
@@ -6277,7 +6277,7 @@ static void calc_used_field_length(THD *thd __attribute__((__unused__)),
   if (null_fields)
     rec_length+=(join_tab->table->s->null_fields+7)/8;
   if (join_tab->table->maybe_null)
-    rec_length+=sizeof(my_bool);
+    rec_length+=sizeof(bool);
   if (blobs)
   {
     uint blob_length=(uint) (join_tab->table->file->stats.mean_rec_length-
@@ -14487,7 +14487,7 @@ static int test_if_order_by_key(ORDER *order, TABLE *table, uint idx,
   key_part_end=key_part+table->key_info[idx].key_parts;
   key_part_map const_key_parts=table->const_key_parts[idx];
   int reverse=0;
-  my_bool on_primary_key= false;
+  bool on_primary_key= false;
 
   for (; order ; order=order->next, const_key_parts>>=1)
   {
@@ -17937,7 +17937,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
 
       /* Build "Extra" field and add it to item_list. */
-      my_bool key_read=table->key_read;
+      bool key_read=table->key_read;
       if ((tab->type == JT_NEXT || tab->type == JT_CONST) &&
           table->covering_keys.is_set(tab->index))
 	key_read=1;
