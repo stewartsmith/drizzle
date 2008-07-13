@@ -38,18 +38,6 @@ public:
   bool fix_fields(THD *thd, Item **ref);
 };
 
-class Item_func_md5 :public Item_str_func
-{
-  String tmp_value;
-public:
-  Item_func_md5(Item *a) :Item_str_func(a)
-  {
-    collation.set(&my_charset_bin);
-  }
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "md5"; }
-};
 
 class Item_func_aes_encrypt :public Item_str_func
 {

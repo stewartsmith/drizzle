@@ -964,20 +964,6 @@ protected:
   virtual ~Create_func_master_pos_wait() {}
 };
 
-
-class Create_func_md5 : public Create_func_arg1
-{
-public:
-  virtual Item *create(THD *thd, Item *arg1);
-
-  static Create_func_md5 s_singleton;
-
-protected:
-  Create_func_md5() {}
-  virtual ~Create_func_md5() {}
-};
-
-
 class Create_func_monthname : public Create_func_arg1
 {
 public:
@@ -2629,15 +2615,6 @@ Create_func_master_pos_wait::create_native(THD *thd, LEX_STRING name,
 }
 
 
-Create_func_md5 Create_func_md5::s_singleton;
-
-Item*
-Create_func_md5::create(THD *thd, Item *arg1)
-{
-  return new (thd->mem_root) Item_func_md5(arg1);
-}
-
-
 Create_func_monthname Create_func_monthname::s_singleton;
 
 Item*
@@ -3202,7 +3179,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("MAKETIME") }, BUILDER(Create_func_maketime)},
   { { C_STRING_WITH_LEN("MAKE_SET") }, BUILDER(Create_func_make_set)},
   { { C_STRING_WITH_LEN("MASTER_POS_WAIT") }, BUILDER(Create_func_master_pos_wait)},
-  { { C_STRING_WITH_LEN("MD5") }, BUILDER(Create_func_md5)},
   { { C_STRING_WITH_LEN("MONTHNAME") }, BUILDER(Create_func_monthname)},
   { { C_STRING_WITH_LEN("NULLIF") }, BUILDER(Create_func_nullif)},
   { { C_STRING_WITH_LEN("OCT") }, BUILDER(Create_func_oct)},

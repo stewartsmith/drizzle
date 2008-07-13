@@ -57,7 +57,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			default_modify.c default.c \
                         my_compress.c checksum.c \
 			my_sleep.c \
-			charset.c charset-def.c my_bitmap.c my_bit.c md5.c \
+			charset.c charset-def.c my_bitmap.c my_bit.c \
 			sha1.c \
 			my_memmem.c \
 			my_access.c base64.c \
