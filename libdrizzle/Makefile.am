@@ -20,7 +20,7 @@
 #
 # This file is public domain and comes with NO WARRANTY of any kind
 
-AM_CPPFLAGS =	-I$(top_builddir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys
+AM_CPPFLAGS =	-I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/vio -I$(top_srcdir)/mysys
 
 if BUILD_DBUG
   d_dbug = $(top_builddir)/dbug/libdbuglt.la
@@ -34,7 +34,6 @@ pkglib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = libdrizzle.c client.c net_serv.c get_password.c
 libdrizzle_la_LIBADD = ${sql_cmn_objects} ${sqlobjects} \
 			   ${top_builddir}/mysys/libmysyslt.la \
-			   ${top_builddir}/strings/libmystringslt.la \
 			   $(d_dbug) \
 			   libsqlcommon.la \
 			   ${top_builddir}/vio/libviolt.la 
