@@ -87,7 +87,7 @@ static int make_version_string(char *buf, int buf_length, uint version)
   return snprintf(buf, buf_length, "%d.%d", version>>8,version&0xff);
 }
 
-static my_bool show_plugins(THD *thd, plugin_ref plugin,
+static bool show_plugins(THD *thd, plugin_ref plugin,
                             void *arg)
 {
   TABLE *table= (TABLE*) arg;
@@ -1588,7 +1588,7 @@ static bool show_status_array(THD *thd, const char *wild,
           end= strmov(buff, *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_MY_BOOL:
-          end= strmov(buff, *(my_bool*) value ? "ON" : "OFF");
+          end= strmov(buff, *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_INT:
           end= int10_to_str((long) *(uint32*) value, buff, 10);
@@ -2099,7 +2099,7 @@ struct st_add_schema_table
 };
 
 
-static my_bool add_schema_table(THD *thd, plugin_ref plugin,
+static bool add_schema_table(THD *thd, plugin_ref plugin,
                                 void* p_data)
 {
   LEX_STRING *file_name= 0;
@@ -3783,7 +3783,7 @@ struct schema_table_ref
     0	table not found
     1   found the schema table
 */
-static my_bool find_schema_table_in_plugin(THD *thd __attribute__((__unused__)),
+static bool find_schema_table_in_plugin(THD *thd __attribute__((__unused__)),
                                            plugin_ref plugin,
                                            void* p_table)
 {

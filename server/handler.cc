@@ -463,9 +463,9 @@ int ha_end()
   return(error);
 }
 
-static my_bool dropdb_handlerton(THD *unused1 __attribute__((__unused__)),
-                                 plugin_ref plugin,
-                                 void *path)
+static bool dropdb_handlerton(THD *unused1 __attribute__((__unused__)),
+                              plugin_ref plugin,
+                              void *path)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->drop_database)
@@ -480,8 +480,8 @@ void ha_drop_database(char* path)
 }
 
 
-static my_bool closecon_handlerton(THD *thd, plugin_ref plugin,
-                                   void *unused __attribute__((__unused__)))
+static bool closecon_handlerton(THD *thd, plugin_ref plugin,
+                                void *unused __attribute__((__unused__)))
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   /*
@@ -1201,9 +1201,9 @@ struct xahton_st {
   int result;
 };
 
-static my_bool xacommit_handlerton(THD *unused1 __attribute__((__unused__)),
-                                   plugin_ref plugin,
-                                   void *arg)
+static bool xacommit_handlerton(THD *unused1 __attribute__((__unused__)),
+                                plugin_ref plugin,
+                                void *arg)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->recover)
@@ -1214,9 +1214,9 @@ static my_bool xacommit_handlerton(THD *unused1 __attribute__((__unused__)),
   return false;
 }
 
-static my_bool xarollback_handlerton(THD *unused1 __attribute__((__unused__)),
-                                     plugin_ref plugin,
-                                     void *arg)
+static bool xarollback_handlerton(THD *unused1 __attribute__((__unused__)),
+                                  plugin_ref plugin,
+                                  void *arg)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->recover)
@@ -1264,9 +1264,9 @@ struct xarecover_st
   bool dry_run;
 };
 
-static my_bool xarecover_handlerton(THD *unused __attribute__((__unused__)),
-                                    plugin_ref plugin,
-                                    void *arg)
+static bool xarecover_handlerton(THD *unused __attribute__((__unused__)),
+                                 plugin_ref plugin,
+                                 void *arg)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   struct xarecover_st *info= (struct xarecover_st *) arg;
@@ -1444,8 +1444,8 @@ bool mysql_xa_recover(THD *thd)
   @return
     always 0
 */
-static my_bool release_temporary_latches(THD *thd, plugin_ref plugin,
-                                         void *unused __attribute__((__unused__)))
+static bool release_temporary_latches(THD *thd, plugin_ref plugin,
+                                      void *unused __attribute__((__unused__)))
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
 
@@ -1575,8 +1575,7 @@ int ha_release_savepoint(THD *thd, SAVEPOINT *sv)
 }
 
 
-static my_bool snapshot_handlerton(THD *thd, plugin_ref plugin,
-                                   void *arg)
+static bool snapshot_handlerton(THD *thd, plugin_ref plugin, void *arg)
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES &&
@@ -1606,9 +1605,9 @@ int ha_start_consistent_snapshot(THD *thd)
 }
 
 
-static my_bool flush_handlerton(THD *thd __attribute__((__unused__)),
-                                plugin_ref plugin,
-                                void *arg __attribute__((__unused__)))
+static bool flush_handlerton(THD *thd __attribute__((__unused__)),
+                             plugin_ref plugin,
+                             void *arg __attribute__((__unused__)))
 {
   handlerton *hton= plugin_data(plugin, handlerton *);
   if (hton->state == SHOW_OPTION_YES && hton->flush_logs && 
@@ -3295,8 +3294,8 @@ struct st_discover_args
   size_t *frmlen;
 };
 
-static my_bool discover_handlerton(THD *thd, plugin_ref plugin,
-                                   void *arg)
+static bool discover_handlerton(THD *thd, plugin_ref plugin,
+                                void *arg)
 {
   st_discover_args *vargs= (st_discover_args *)arg;
   handlerton *hton= plugin_data(plugin, handlerton *);
@@ -3358,8 +3357,8 @@ struct st_table_exists_in_engine_args
   int err;
 };
 
-static my_bool table_exists_in_engine_handlerton(THD *thd, plugin_ref plugin,
-                                   void *arg)
+static bool table_exists_in_engine_handlerton(THD *thd, plugin_ref plugin,
+                                              void *arg)
 {
   st_table_exists_in_engine_args *vargs= (st_table_exists_in_engine_args *)arg;
   handlerton *hton= plugin_data(plugin, handlerton *);
@@ -4408,9 +4407,9 @@ int handler::index_read_idx_map(uchar * buf, uint index, const uchar * key,
   @retval
     pointer		pointer to TYPELIB structure
 */
-static my_bool exts_handlerton(THD *unused __attribute__((__unused__)),
-                               plugin_ref plugin,
-                               void *arg)
+static bool exts_handlerton(THD *unused __attribute__((__unused__)),
+                            plugin_ref plugin,
+                            void *arg)
 {
   List<char> *found_exts= (List<char> *) arg;
   handlerton *hton= plugin_data(plugin, handlerton *);
