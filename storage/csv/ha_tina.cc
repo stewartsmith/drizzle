@@ -1164,23 +1164,6 @@ int ha_tina::info(uint flag __attribute__((__unused__)))
 }
 
 /*
-  Grab bag of flags that are sent to the able handler every so often.
-  HA_EXTRA_RESET and HA_EXTRA_RESET_STATE are the most frequently called.
-  You are not required to implement any of these.
-*/
-int ha_tina::extra(enum ha_extra_function operation)
-{
-  DBUG_ENTER("ha_tina::extra");
- if (operation == HA_EXTRA_MARK_AS_LOG_TABLE)
- {
-   pthread_mutex_lock(&share->mutex);
-   share->is_log_table= TRUE;
-   pthread_mutex_unlock(&share->mutex);
- }
-  DBUG_RETURN(0);
-}
-
-/*
   Set end_pos to the last valid byte of continuous area, closest
   to the given "hole", stored in the buffer. "Valid" here means,
   not listed in the chain of deleted records ("holes").

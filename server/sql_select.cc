@@ -3527,8 +3527,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
     }
     if ((table->s->system || table->file->stats.records <= 1) &&
 	!s->dependent &&
-	(table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) &&
-        !table->fulltext_searched && !join->no_const_tables)
+	(table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && !join->no_const_tables)
     {
       set_position(join,const_count++,s,(KEYUSE*) 0);
     }
@@ -3696,7 +3695,6 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
 	  } while (keyuse->table == table && keyuse->key == key);
 
 	  if (eq_part.is_prefix(table->key_info[key].key_parts) &&
-              !table->fulltext_searched && 
               !table->pos_in_table_list->embedding)
 	  {
             if ((table->key_info[key].flags & (HA_NOSAME))

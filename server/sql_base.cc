@@ -2481,8 +2481,6 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
   table->null_row= table->maybe_null= table->force_index= 0;
   table->status=STATUS_NO_RECORD;
   table->insert_values= 0;
-  table->fulltext_searched= 0;
-  table->file->ft_handler= 0;
   /* Catch wrong handling of the auto_increment_field_not_null. */
   assert(!table->auto_increment_field_not_null);
   table->auto_increment_field_not_null= false;
@@ -6518,21 +6516,6 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table_name,
         if (table->is_name_opened())
         {
   	  result=1;
-        }
-        /* Kill delayed insert threads */
-        if ((in_use->system_thread & SYSTEM_THREAD_DELAYED_INSERT) &&
-            ! in_use->killed)
-        {
-	  in_use->killed= THD::KILL_CONNECTION;
-	  pthread_mutex_lock(&in_use->mysys_var->mutex);
-	  if (in_use->mysys_var->current_cond)
-	  {
-	    pthread_mutex_lock(in_use->mysys_var->current_mutex);
-            signalled= 1;
-	    pthread_cond_broadcast(in_use->mysys_var->current_cond);
-	    pthread_mutex_unlock(in_use->mysys_var->current_mutex);
-	  }
-	  pthread_mutex_unlock(&in_use->mysys_var->mutex);
         }
         /*
 	  Now we must abort all tables locks used by this thread

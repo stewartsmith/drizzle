@@ -1633,11 +1633,11 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
 
   if (killed_status_arg == THD::KILLED_NO_VALUE)
     killed_status_arg= thd_arg->killed;
+
   error_code=
     (killed_status_arg == THD::NOT_KILLED) ?
     (thd_arg->is_error() ? thd_arg->main_da.sql_errno() : 0) :
-    ((thd_arg->system_thread & SYSTEM_THREAD_DELAYED_INSERT) ? 0 :
-     thd_arg->killed_errno());
+    (thd_arg->killed_errno());
   
   time(&end_time);
   exec_time = (ulong) (end_time  - thd_arg->start_time);

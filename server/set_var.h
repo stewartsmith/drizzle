@@ -1155,7 +1155,7 @@ public:
 };
 
 
-/* MySQL internal variables, like query_cache_size */
+/* MySQL internal variables */
 
 class set_var :public set_var_base
 {

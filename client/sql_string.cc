@@ -241,7 +241,7 @@ bool String::copy_aligned(const char *str,uint32 arg_length, uint32 offset,
 {
   /* How many bytes are in incomplete character */
   offset= cs->mbmaxlen - offset; /* How many zeros we should prepend */
-  DBUG_ASSERT(offset && offset != cs->mbmaxlen);
+  assert(offset && offset != cs->mbmaxlen);
 
   uint32 aligned_length= arg_length + offset;
   if (alloc(aligned_length))

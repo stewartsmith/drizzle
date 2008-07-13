@@ -22,4 +22,4 @@ AUTOMAKE_OPTIONS =	foreign
 #EXTRA_DIST =	fulltext/configure.in	
 
 SUBDIRS =	@mysql_pg_dirs@
-DIST_SUBDIRS =	
+DIST_SUBDIRS =	hello_world

@@ -44,6 +44,9 @@ const LEX_STRING plugin_type_names[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 extern int initialize_schema_table(st_plugin_int *plugin);
 extern int finalize_schema_table(st_plugin_int *plugin);
 
+extern int initialize_udf(st_plugin_int *plugin);
+extern int finalize_udf(st_plugin_int *plugin);
+
 /*
   The number of elements in both plugin_type_initialize and
   plugin_type_deinitialize should equal to the number of plugins
@@ -51,31 +54,29 @@ extern int finalize_schema_table(st_plugin_int *plugin);
 */
 plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0,ha_initialize_handlerton,0,0,initialize_schema_table,
+  initialize_udf,ha_initialize_handlerton,0,0,initialize_schema_table,
   0
 };
 
 plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0,ha_finalize_handlerton,0,0,finalize_schema_table,
+  finalize_udf,ha_finalize_handlerton,0,0,finalize_schema_table,
   0
 };
 
-#ifdef HAVE_DLOPEN
 static const char *plugin_interface_version_sym=
                    "_mysql_plugin_interface_version_";
 static const char *sizeof_st_plugin_sym=
                    "_mysql_sizeof_struct_st_plugin_";
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
 static int min_plugin_interface_version= MYSQL_PLUGIN_INTERFACE_VERSION & ~0xFF;
-#endif
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
 */
 static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0x0000,
+  MYSQL_UDF_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
   MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
@@ -84,7 +85,7 @@ static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 };
 static int cur_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0x0000, /* UDF: not implemented */
+  MYSQL_UDF_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
   MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
@@ -188,7 +189,7 @@ public:
 static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, struct st_plugin_int *,
-                               int *, char **, my_bool);
+                               int *, char **);
 static bool register_builtin(struct st_mysql_plugin *, struct st_plugin_int *,
                              struct st_plugin_int **);
 static void unlock_variables(THD *thd, struct system_variables *vars);
@@ -267,8 +268,6 @@ static int item_val_real(struct st_mysql_value *value, double *buf)
   Plugin support code
 ****************************************************************************/
 
-#ifdef HAVE_DLOPEN
-
 static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 {
   uint i;
@@ -284,7 +283,6 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
   }
   return(0);
 }
-
 
 static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
 {
@@ -307,15 +305,11 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
                                            sizeof(struct st_plugin_dl));
   return(tmp);
 }
-#endif /* HAVE_DLOPEN */
-
 
 static inline void free_plugin_mem(struct st_plugin_dl *p)
 {
-#ifdef HAVE_DLOPEN
   if (p->handle)
     dlclose(p->handle);
-#endif
   my_free(p->dl.str, MYF(MY_ALLOW_ZERO_PTR));
   if (p->version != MYSQL_PLUGIN_INTERFACE_VERSION)
     my_free((uchar*)p->plugins, MYF(MY_ALLOW_ZERO_PTR));
@@ -707,7 +701,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       tmp.name.length= name_len;
       tmp.ref_count= 0;
       tmp.state= PLUGIN_IS_UNINITIALIZED;
-      if (!test_plugin_options(tmp_root, &tmp, argc, argv, true))
+      if (!test_plugin_options(tmp_root, &tmp, argc, argv))
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
@@ -798,18 +792,6 @@ static void plugin_del(struct st_plugin_int *plugin)
   return;
 }
 
-#ifdef NOT_USED
-
-static void plugin_del(const LEX_STRING *name)
-{
-  struct st_plugin_int *plugin;
-  if ((plugin= plugin_find_internal(name, MYSQL_ANY_PLUGIN)))
-    plugin_del(plugin);
-  return;
-}
-
-#endif
-
 static void reap_plugins(void)
 {
   uint count, idx;
@@ -888,7 +870,6 @@ void plugin_unlock(THD *thd, plugin_ref plugin)
   if (!plugin)
     return;
   intern_plugin_unlock(lex, plugin);
-  reap_plugins();
   return;
 }
 
@@ -899,7 +880,6 @@ void plugin_unlock_list(THD *thd, plugin_ref *list, uint count)
   assert(list);
   while (count--)
     intern_plugin_unlock(lex, *list++);
-  reap_plugins();
   return;
 }
 
@@ -1003,7 +983,6 @@ uchar *get_bookmark_hash_key(const uchar *buff, size_t *length,
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint i;
-  bool def_enabled, is_myisam;
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr, **reap;
@@ -1042,26 +1021,17 @@ int plugin_init(int *argc, char **argv, int flags)
   {
     for (plugin= *builtins; plugin->info; plugin++)
     {
-      /* by default, only ndbcluster is disabled */
-      def_enabled=
-        my_strcasecmp(&my_charset_latin1, plugin->name, "NDBCLUSTER") != 0;
       bzero(&tmp, sizeof(tmp));
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= strlen(plugin->name);
 
       free_root(&tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-      if (test_plugin_options(&tmp_root, &tmp, argc, argv, def_enabled))
+      if (test_plugin_options(&tmp_root, &tmp, argc, argv))
         continue;
 
       if (register_builtin(plugin, &tmp, &plugin_ptr))
         goto err_unlock;
-
-      /* only initialize MyISAM and CSV at this stage */
-      if (!(is_myisam=
-            !my_strcasecmp(&my_charset_latin1, plugin->name, "MyISAM")) &&
-          my_strcasecmp(&my_charset_latin1, plugin->name, "CSV"))
-        continue;
 
       if (plugin_initialize(plugin_ptr))
         goto err_unlock;
@@ -1070,7 +1040,7 @@ int plugin_init(int *argc, char **argv, int flags)
         initialize the global default storage engine so that it may
         not be null in any child thread.
       */
-      if (is_myisam)
+      if (my_strcasecmp(&my_charset_latin1, plugin->name, "MyISAM") == 0)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
@@ -1158,46 +1128,6 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
 
   return(0);
 }
-
-
-#ifdef NOT_USED_YET
-/*
-  Register a plugin at run time. (note, this doesn't initialize a plugin)
-  Will be useful for embedded applications.
-
-  SYNOPSIS
-    plugin_register_builtin()
-    thd         current thread (used to store scratch data in mem_root)
-    plugin      static plugin to install
-
-  RETURN
-    false - plugin registered successfully
-*/
-bool plugin_register_builtin(THD *thd, struct st_mysql_plugin *plugin)
-{
-  struct st_plugin_int tmp, *ptr;
-  bool result= true;
-  int dummy_argc= 0;
-
-  bzero(&tmp, sizeof(tmp));
-  tmp.plugin= plugin;
-  tmp.name.str= (char *)plugin->name;
-  tmp.name.length= strlen(plugin->name);
-
-  rw_wrlock(&LOCK_system_variables_hash);
-
-  if (test_plugin_options(thd->mem_root, &tmp, &dummy_argc, NULL, true))
-    goto end;
-
-  if ((result= register_builtin(plugin, &tmp, &ptr)))
-    mysql_del_sys_var_chain(tmp.system_vars);
-
-end:
-  rw_unlock(&LOCK_system_variables_hash);
-
-  return(result);;
-}
-#endif /* NOT_USED_YET */
 
 
 /*
@@ -1549,7 +1479,7 @@ err:
 static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
@@ -1569,7 +1499,7 @@ static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
 static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
@@ -1589,7 +1519,7 @@ static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
 static int check_func_longlong(THD *thd, struct st_mysql_sys_var *var,
                                void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
@@ -1809,8 +1739,7 @@ sys_var *find_sys_var(THD *thd, const char *str, uint length)
   Returns the 'bookmark' for the named variable.
   LOCK_system_variables_hash should be at least read locked
 */
-static st_bookmark *find_bookmark(const char *plugin, const char *name,
-                                  int flags)
+static st_bookmark *find_bookmark(const char *plugin, const char *name, int flags)
 {
   st_bookmark *result= NULL;
   uint namelen, length, pluginlen= 0;
@@ -2132,8 +2061,6 @@ void plugin_thdvar_cleanup(THD *thd)
     while ((uchar*) list >= thd->lex->plugins.buffer)
       intern_plugin_unlock(NULL, *list--);
   }
-
-  reap_plugins();
 
   reset_dynamic(&thd->lex->plugins);
 
@@ -2497,10 +2424,10 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-extern "C" my_bool get_one_plugin_option(int optid, const struct my_option *,
+extern "C" bool get_one_plugin_option(int optid, const struct my_option *,
                                          char *);
 
-my_bool get_one_plugin_option(int optid __attribute__((unused)),
+bool get_one_plugin_option(int optid __attribute__((unused)),
                               const struct my_option *opt __attribute__((__unused__)),
                               char *argument __attribute__((__unused__)))
 {
@@ -2509,8 +2436,7 @@ my_bool get_one_plugin_option(int optid __attribute__((unused)),
 
 
 static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
-                             my_option *options, my_bool **enabled,
-                             bool can_disable)
+                             my_option *options, bool can_disable)
 {
   const char *plugin_name= tmp->plugin->name;
   uint namelen= strlen(plugin_name), optnamelen;
@@ -2543,19 +2469,11 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     options[0].comment= name + namelen*2 + 10;
   }
 
-  /*
-    NOTE: 'name' is one char above the allocated buffer!
-    NOTE: This code assumes that 'my_bool' and 'char' are of same size.
-  */
-  *((my_bool *)(name -1))= **enabled;
-  *enabled= (my_bool *)(name - 1);
-
-
   options[1].name= (options[0].name= name) + namelen + 1;
   options[0].id= options[1].id= 256; /* must be >255. dup id ok */
   options[0].var_type= options[1].var_type= GET_BOOL;
   options[0].arg_type= options[1].arg_type= NO_ARG;
-  options[0].def_value= options[1].def_value= **enabled;
+  options[0].def_value= options[1].def_value= true;
   options[0].value= options[0].u_max_value=
   options[1].value= options[1].u_max_value= (char**) (name - 1);
   options+= 2;
@@ -2736,8 +2654,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 {
   st_mysql_sys_var **opt;
   my_option *opts;
-  my_bool dummy, can_disable;
-  my_bool *dummy2= &dummy;
+  bool can_disable;
   uint count= EXTRA_OPTIONS;
 
   for (opt= p->plugin->system_vars; opt && *opt; opt++, count+= 2) {};
@@ -2747,13 +2664,15 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 
   bzero(opts, sizeof(my_option) * count);
 
-  dummy= TRUE; /* plugin is enabled. */
+  if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") == 0))
+    can_disable= false;
+  else if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MEMORY") == 0))
+    can_disable= false;
+  else
+    can_disable= true;
 
-  can_disable=
-      my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") &&
-      my_strcasecmp(&my_charset_latin1, p->name.str, "MEMORY");
 
-  if (construct_options(mem_root, p, opts, &dummy2, can_disable))
+  if (construct_options(mem_root, p, opts, can_disable))
     return(NULL);
 
   return(opts);
@@ -2774,11 +2693,11 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
 static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
-                               int *argc, char **argv, my_bool default_enabled)
+                               int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
-  my_bool enabled_saved= default_enabled, can_disable;
-  my_bool *enabled= &default_enabled;
+  bool enabled_saved= true;
+  bool can_disable;
   MEM_ROOT *mem_root= alloc_root_inited(&tmp->mem_root) ?
                       &tmp->mem_root : &plugin_mem_root;
   st_mysql_sys_var **opt;
@@ -2794,9 +2713,12 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
 
-  can_disable=
-      my_strcasecmp(&my_charset_latin1, tmp->name.str, "MyISAM") &&
-      my_strcasecmp(&my_charset_latin1, tmp->name.str, "MEMORY");
+  if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MyISAM") == 0))
+    can_disable= false;
+  else if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MEMORY") == 0))
+    can_disable= false;
+  else
+    can_disable= true;
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
@@ -2807,7 +2729,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
     bzero(opts, sizeof(my_option) * count);
 
-    if (construct_options(tmp_root, tmp, opts, &enabled, can_disable))
+    if (construct_options(tmp_root, tmp, opts, can_disable))
     {
       sql_print_error("Bad options for plugin '%s'.", tmp->name.str);
       return(-1);
@@ -2824,15 +2746,8 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
   }
 
-  if (!*enabled && !can_disable)
-  {
-    sql_print_warning("Plugin '%s' cannot be disabled", tmp->name.str);
-    *enabled= TRUE;
-  }
-
   error= 1;
 
-  if (*enabled)
   {
     for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     {

@@ -126,7 +126,7 @@ enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
 
 static MYSQL mysql;			/* The connection */
-static my_bool ignore_errors=0,wait_flag=0,quick=0,
+static bool ignore_errors=0,wait_flag=0,quick=0,
                connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
 	       opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
 	       opt_compress=0, using_opt_local_infile=0,
@@ -137,9 +137,9 @@ static my_bool ignore_errors=0,wait_flag=0,quick=0,
                default_pager_set= 0, opt_sigint_ignore= 0,
                auto_vertical_output= 0,
                show_warnings= 0, executing_query= 0, interrupted_query= 0;
-static my_bool debug_info_flag, debug_check_flag;
-static my_bool column_types_flag;
-static my_bool preserve_comments= 0;
+static bool debug_info_flag, debug_check_flag;
+static bool column_types_flag;
+static bool preserve_comments= 0;
 static ulong opt_max_allowed_packet, opt_net_buffer_length;
 static int verbose=0,opt_silent=0,opt_mysql_port=0, opt_local_infile=0;
 static uint my_end_arg;
@@ -191,7 +191,7 @@ void tee_putc(int c, FILE *file);
 static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool);
 /* The names of functions that actually do the manipulation. */
 static int get_options(int argc,char **argv);
-extern "C" my_bool get_one_option(int optid, const struct my_option *opt,
+extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                   char *argument);
 static int com_quit(String *str,char*),
 	   com_go(String *str,char*), com_ego(String *str,char*),
@@ -223,7 +223,7 @@ static void end_pager();
 static void init_tee(const char *);
 static void end_tee();
 static const char* construct_prompt();
-static char *get_arg(char *line, my_bool get_next_arg);
+static char *get_arg(char *line, bool get_next_arg);
 static void init_username();
 static void add_int_to_prompt(int toadd);
 static int get_result_width(MYSQL_RES *res);
@@ -1047,13 +1047,11 @@ int main(int argc,char *argv[])
   char buff[80];
 
   MY_INIT(argv[0]);
-  DBUG_ENTER("main");
-  DBUG_PROCESS(argv[0]);
-  
+
   delimiter_str= delimiter;
   default_prompt = my_strdup(getenv("MYSQL_PS1") ? 
 			     getenv("MYSQL_PS1") : 
-			     "mysql> ",MYF(MY_WME));
+			     "drizzle> ",MYF(MY_WME));
   current_prompt = my_strdup(default_prompt,MYF(MY_WME));
   prompt_counter=0;
 
@@ -1197,7 +1195,7 @@ int main(int argc,char *argv[])
     end_tee();
   mysql_end(0);
 #ifndef _lint
-  DBUG_RETURN(0);				// Keep compiler happy
+  return(0);				// Keep compiler happy
 #endif
 }
 
@@ -1321,14 +1319,6 @@ static struct my_option my_long_options[] =
   {"compress", 'C', "Use compression in server/client protocol.",
    (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-
-#ifdef DBUG_OFF
-  {"debug", '#', "This is a non-debug version. Catch this and exit",
-   0,0, 0, GET_DISABLED, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#else
-  {"debug", '#', "Output debug log", (char**) &default_dbug_option,
-   (char**) &default_dbug_option, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit .",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -1522,7 +1512,7 @@ and you are welcome to modify and redistribute it under the GPL license\n");
 }
 
 
-my_bool
+bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -1656,10 +1646,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     }
     else
       tty_password= 1;
-    break;
-  case '#':
-    DBUG_PUSH(argument ? argument : default_dbug_option);
-    debug_info_flag= 1;
     break;
   case 's':
     if (argument == disabled_my_option)
@@ -1854,8 +1840,6 @@ static COMMANDS *find_command(char *name,char cmd_char)
 {
   uint len;
   char *end;
-  DBUG_ENTER("find_command");
-  DBUG_PRINT("enter",("name: '%s'  char: %d", name ? name : "NULL", cmd_char));
 
   if (!name)
   {
@@ -1877,7 +1861,7 @@ static COMMANDS *find_command(char *name,char cmd_char)
                                                 (uchar*) name, 9,
                                                 (const uchar*) "delimiter",
                                                 9))))
-      DBUG_RETURN((COMMANDS *) 0);
+      return((COMMANDS *) 0);
     if ((end=strcont(name," \t")))
     {
       len=(uint) (end - name);
@@ -1895,11 +1879,10 @@ static COMMANDS *find_command(char *name,char cmd_char)
     if (commands[i].func &&
 	((name && !my_strnncoll(charset_info,(uchar*)name,len, (uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
     {
-      DBUG_PRINT("exit",("found command: %s", commands[i].name));
-      DBUG_RETURN(&commands[i]);
+      return(&commands[i]);
     }
   }
-  DBUG_RETURN((COMMANDS *) 0);
+  return((COMMANDS *) 0);
 }
 
 
@@ -1911,10 +1894,10 @@ static bool add_line(String &buffer,char *line,char *in_string,
   COMMANDS *com;
   bool need_space= 0;
   bool ss_comment= 0;
-  DBUG_ENTER("add_line");
+
 
   if (!line[0] && buffer.is_empty())
-    DBUG_RETURN(0);
+    return(0);
 #ifdef HAVE_READLINE
   if (status.add_to_history && line[0] && not_in_history(line))
     add_history(line);
@@ -1971,7 +1954,7 @@ static bool add_line(String &buffer,char *line,char *in_string,
         }
         
         if ((*com->func)(&buffer,pos-1) > 0)
-          DBUG_RETURN(1);                       // Quit
+          return(1);                       // Quit
         if (com->takes_params)
         {
           if (ss_comment)
@@ -2002,7 +1985,7 @@ static bool add_line(String &buffer,char *line,char *in_string,
       {
 	sprintf(buff,"Unknown command '\\%c'.",inchar);
 	if (put_info(buff,INFO_ERROR) > 0)
-	  DBUG_RETURN(1);
+	  return(1);
 	*out++='\\';
 	*out++=(char) inchar;
 	continue;
@@ -2024,7 +2007,7 @@ static bool add_line(String &buffer,char *line,char *in_string,
       if (!buffer.is_empty())
       {
         if (com_go(&buffer, 0) > 0) // < 0 is not fatal
-          DBUG_RETURN(1);
+          return(1);
         buffer.length(0);
       }
 
@@ -2034,7 +2017,7 @@ static bool add_line(String &buffer,char *line,char *in_string,
       */
       buffer.append(pos);
       if (com_delimiter(&buffer, pos) > 0)
-        DBUG_RETURN(1);
+        return(1);
 
       buffer.length(0);
       break;
@@ -2072,12 +2055,12 @@ static bool add_line(String &buffer,char *line,char *in_string,
       {
           
         if ((*com->func)(&buffer, buffer.c_ptr()) > 0)
-          DBUG_RETURN(1);                       // Quit 
+          return(1);                       // Quit 
       }
       else
       {
         if (com_go(&buffer, 0) > 0)             // < 0 is not fatal
-          DBUG_RETURN(1);
+          return(1);
       }
       buffer.length(0);
     }
@@ -2161,9 +2144,9 @@ static bool add_line(String &buffer,char *line,char *in_string,
     if (buffer.length() + length >= buffer.alloced_length())
       buffer.realloc(buffer.length()+length+IO_SIZE);
     if ((!*ml_comment || preserve_comments) && buffer.append(line, length))
-      DBUG_RETURN(1);
+      return(1);
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 /*****************************************************************
@@ -2376,12 +2359,12 @@ static void build_completion_hash(bool rehash, bool write_info)
   MYSQL_FIELD *sql_field;
   char buf[NAME_LEN*2+2];		 // table name plus field name plus 2
   int i,j,num_fields;
-  DBUG_ENTER("build_completion_hash");
+
 
   if (status.batch || quick || !current_db)
-    DBUG_VOID_RETURN;			// We don't need completion in batches
+    return;			// We don't need completion in batches
   if (!rehash)
-    DBUG_VOID_RETURN;
+    return;
 
   /* Free old used memory */
   if (field_names)
@@ -2439,14 +2422,14 @@ You can turn off this feature to get a quicker startup with -A\n\n");
   /* hash all field names, both with the table prefix and without it */
   if (!tables)					/* no tables */
   {
-    DBUG_VOID_RETURN;
+    return;
   }
   mysql_data_seek(tables,0);
   if (!(field_names= (char ***) alloc_root(&hash_mem_root,sizeof(char **) *
 					   (uint) (mysql_num_rows(tables)+1))))
   {
     mysql_free_result(tables);
-    DBUG_VOID_RETURN;
+    return;
   }
   i=0;
   while ((table_row=mysql_fetch_row(tables)))
@@ -2484,7 +2467,7 @@ You can turn off this feature to get a quicker startup with -A\n\n");
   }
   mysql_free_result(tables);
   field_names[i]=0;				// End pointer
-  DBUG_VOID_RETURN;
+  return;
 }
 
 	/* for gnu readline */
@@ -3240,12 +3223,8 @@ static int get_result_width(MYSQL_RES *result)
   MYSQL_FIELD *field;
   MYSQL_FIELD_OFFSET offset;
   
-#ifndef DBUG_OFF
   offset= mysql_field_tell(result);
-  DBUG_ASSERT(offset == 0);
-#else
-  offset= 0;
-#endif
+  assert(offset == 0);
 
   while ((field= mysql_fetch_field(result)) != NULL)
     len+= get_field_disp_length(field) + 3; /* plus bar, space, & final space */
@@ -3995,10 +3974,10 @@ com_nowarnings(String *buffer __attribute__((unused)),
   items in the array to zero first.
 */
 
-char *get_arg(char *line, my_bool get_next_arg)
+char *get_arg(char *line, bool get_next_arg)
 {
   char *ptr, *start;
-  my_bool quoted= 0, valid_arg= 0;
+  bool quoted= 0, valid_arg= 0;
   char qtype= 0;
 
   ptr= line;
