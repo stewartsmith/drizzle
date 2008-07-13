@@ -29,39 +29,39 @@ noinst_HEADERS =		completion_hash.h my_readline.h \
 
 CLEANFILES =			$(BUILT_SOURCES)
 
-bin_PROGRAMS =			mysql \
-				mysqladmin \
-				mysqlbinlog \
-				mysqlcheck \
-				mysqldump \
-				mysqlimport \
-				mysqltest \
+bin_PROGRAMS =			drizzle \
+				drizzleadmin \
+				drizzlebinlog \
+				drizzlecheck \
+				drizzledump \
+				drizzleimport \
+				drizzletest \
 				mysqlslap 
 
-mysql_SOURCES =			mysql.c readline.c completion_hash.c
-mysql_LDADD =			-lreadline @TERMCAP_LIB@ $(GLIB_LIBS) \
+drizzle_SOURCES =		drizzle.c readline.c completion_hash.c
+drizzle_LDADD =			-lreadline @TERMCAP_LIB@ $(GLIB_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
-mysql_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
-mysqladmin_SOURCES =		mysqladmin.cc
+drizzle_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
+drizzleadmin_SOURCES =		drizzleadmin.cc
 
-mysqlbinlog_SOURCES =		mysqlbinlog.cc \
+drizzlebinlog_SOURCES =		drizzlebinlog.cc \
 				$(top_srcdir)/mysys/mf_tempdir.c \
 				$(top_srcdir)/mysys/my_new.cc \
 				$(top_srcdir)/mysys/my_bit.c \
 				$(top_srcdir)/mysys/my_bitmap.c \
 				$(top_srcdir)/mysys/base64.c 
-mysqlbinlog_LDADD =		$(LDADD) $(CXXLDFLAGS) 
+drizzlebinlog_LDADD =		$(LDADD) $(CXXLDFLAGS) 
 
-mysqldump_SOURCES=              mysqldump.c 
+drizzledump_SOURCES=            drizzledump.c 
 
-mysqlimport_SOURCES=		mysqlimport.c
+drizzleimport_SOURCES=		drizzleimport.c
 
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 
-mysqltest_SOURCES=		mysqltest.cc 
-mysqltest_LDADD =		${LDADD} @PCRE_LIBS@
-mysqltest_CFLAGS = 		${AM_CPPFLAGS} @PCRE_CFLAGS@
+drizzletest_SOURCES=		drizzletest.cc 
+drizzletest_LDADD =		${LDADD} @PCRE_LIBS@
+drizzletest_CFLAGS = 		${AM_CPPFLAGS} @PCRE_CFLAGS@
 
 # Fix for mit-threads
 DEFS =			-DUNDEF_THREADS_HACK \

@@ -9,7 +9,7 @@
 #  Tool used for executing a suite of .test file
 #
 #  See the "MySQL Test framework manual" for more information
-#  http://dev.mysql.com/doc/mysqltest/en/index.html
+#  http://dev.mysql.com/doc/drizzletest/en/index.html
 #
 #  Please keep the test framework tools identical in all versions!
 #
@@ -109,7 +109,7 @@ our $path_share;
 our $path_language;
 our $path_timefile;
 our $path_snapshot;
-our $path_mysqltest_log;
+our $path_drizzletest_log;
 our $path_current_test_log;
 our $path_my_basedir;
 
@@ -127,18 +127,18 @@ our $opt_script_debug= 0;  # Script debugging, enable with --script-debug
 our $opt_verbose= 0;  # Verbose output, enable with --verbose
 
 our $exe_master_mysqld;
-our $exe_mysql;
-our $exe_mysqladmin;
-our $exe_mysqlbinlog;
-our $exe_mysql_client_test;
+our $exe_drizzle;
+our $exe_drizzleadmin;
+our $exe_drizzlebinlog;
+our $exe_drizzle_client_test;
 our $exe_bug25714;
-our $exe_mysqld;
-our $exe_mysqlcheck;
-our $exe_mysqldump;
+our $exe_drizzled;
+our $exe_drizzlecheck;
+our $exe_drizzledump;
 our $exe_mysqlslap;
-our $exe_mysqlimport;
-our $exe_mysql_fix_system_tables;
-our $exe_mysqltest;
+our $exe_drizzleimport;
+our $exe_drizzle_fix_system_tables;
+our $exe_drizzletest;
 our $exe_slave_mysqld;
 our $exe_my_print_defaults;
 our $exe_perror;
@@ -227,7 +227,7 @@ our $opt_user;
 
 my $opt_valgrind= 0;
 my $opt_valgrind_mysqld= 0;
-my $opt_valgrind_mysqltest= 0;
+my $opt_valgrind_drizzletest= 0;
 my @default_valgrind_args= ("--show-reachable=yes");
 my @valgrind_args;
 my $opt_valgrind_path;
@@ -295,7 +295,7 @@ sub do_before_start_slave ($);
 sub mysqld_start ($$$);
 sub mysqld_arguments ($$$$);
 sub stop_all_servers ();
-sub run_mysqltest ($);
+sub run_drizzletest ($);
 sub usage ($);
 
 
@@ -511,7 +511,7 @@ sub command_line_setup () {
              'gcov'                     => \$opt_gcov,
              'gprof'                    => \$opt_gprof,
              'valgrind|valgrind-all'    => \$opt_valgrind,
-             'valgrind-mysqltest'       => \$opt_valgrind_mysqltest,
+             'valgrind-drizzletest'       => \$opt_valgrind_drizzletest,
              'valgrind-mysqld'          => \$opt_valgrind_mysqld,
              'valgrind-options=s'       => sub {
 	       my ($opt, $value)= @_;
@@ -647,7 +647,7 @@ sub command_line_setup () {
 
   if (!$opt_extern)
   {
-    $exe_mysqld=       mtr_exe_exists ("$glob_basedir/server/drizzled",
+    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/server/drizzled",
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
@@ -848,8 +848,8 @@ sub command_line_setup () {
   # --------------------------------------------------------------------------
   # Check if special exe was selected for master or slave
   # --------------------------------------------------------------------------
-  $exe_master_mysqld= $exe_master_mysqld || $exe_mysqld;
-  $exe_slave_mysqld=  $exe_slave_mysqld  || $exe_mysqld;
+  $exe_master_mysqld= $exe_master_mysqld || $exe_drizzled;
+  $exe_slave_mysqld=  $exe_slave_mysqld  || $exe_drizzled;
 
   # --------------------------------------------------------------------------
   # Check valgrind arguments
@@ -859,16 +859,16 @@ sub command_line_setup () {
     mtr_report("Turning on valgrind for all executables");
     $opt_valgrind= 1;
     $opt_valgrind_mysqld= 1;
-    $opt_valgrind_mysqltest= 1;
+    $opt_valgrind_drizzletest= 1;
   }
   elsif ( $opt_valgrind_mysqld )
   {
     mtr_report("Turning on valgrind for mysqld(s) only");
     $opt_valgrind= 1;
   }
-  elsif ( $opt_valgrind_mysqltest )
+  elsif ( $opt_valgrind_drizzletest )
   {
-    mtr_report("Turning on valgrind for mysqltest and mysql_client_test only");
+    mtr_report("Turning on valgrind for drizzletest and drizzle_client_test only");
     $opt_valgrind= 1;
   }
 
@@ -1025,8 +1025,8 @@ sub command_line_setup () {
   }
 
 
-  $path_timefile=  "$opt_vardir/log/mysqltest-time";
-  $path_mysqltest_log=  "$opt_vardir/log/mysqltest.log";
+  $path_timefile=  "$opt_vardir/log/drizzletest-time";
+  $path_drizzletest_log=  "$opt_vardir/log/drizzletest.log";
   $path_current_test_log= "$opt_vardir/log/current_test";
 
   $path_snapshot= "$opt_tmpdir/snapshot_$opt_master_myport/";
@@ -1119,7 +1119,7 @@ sub collect_mysqld_features () {
   #
   # --datadir must exist, mysqld will chdir into it
   #
-  my $list= `$exe_mysqld --no-defaults --datadir=$tmpdir --language=$path_language --skip-grant-tables --verbose --help`;
+  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --language=$path_language --skip-grant-tables --verbose --help`;
 
   foreach my $line (split('\n', $list))
   {
@@ -1127,7 +1127,7 @@ sub collect_mysqld_features () {
     if ( !$mysql_version_id )
     {
       # Look for version
-      my $exe_name= basename($exe_mysqld);
+      my $exe_name= basename($exe_drizzled);
       mtr_verbose("exe_name: $exe_name");
       if ( $line =~ /^\S*$exe_name\s\sVer\s([0-9]*)\.([0-9]*)\.([0-9]*)/ )
       {
@@ -1193,7 +1193,7 @@ sub run_query($$) {
   mtr_add_arg($args, "--silent"); # Tab separated output
   mtr_add_arg($args, "-e '%s'", $query);
 
-  my $cmd= "$exe_mysql " . join(' ', @$args);
+  my $cmd= "$exe_drizzle " . join(' ', @$args);
   mtr_verbose("cmd: $cmd");
   return `$cmd`;
 }
@@ -1241,12 +1241,12 @@ sub executable_setup () {
   $exe_perror= "perror";
 
 # Look for the client binaries
-  $exe_mysqlcheck= mtr_exe_exists("$path_client_bindir/mysqlcheck");
-  $exe_mysqldump= mtr_exe_exists("$path_client_bindir/mysqldump");
-  $exe_mysqlimport= mtr_exe_exists("$path_client_bindir/mysqlimport");
-  $exe_mysqlbinlog= mtr_exe_exists("$path_client_bindir/mysqlbinlog");
-  $exe_mysqladmin= mtr_exe_exists("$path_client_bindir/mysqladmin");
-  $exe_mysql=          mtr_exe_exists("$path_client_bindir/mysql");
+  $exe_drizzlecheck= mtr_exe_exists("$path_client_bindir/drizzlecheck");
+  $exe_drizzledump= mtr_exe_exists("$path_client_bindir/drizzledump");
+  $exe_drizzleimport= mtr_exe_exists("$path_client_bindir/drizzleimport");
+  $exe_drizzlebinlog= mtr_exe_exists("$path_client_bindir/drizzlebinlog");
+  $exe_drizzleadmin= mtr_exe_exists("$path_client_bindir/drizzleadmin");
+  $exe_drizzle=          mtr_exe_exists("$path_client_bindir/drizzle");
 
   if (!$opt_extern)
   {
@@ -1257,18 +1257,18 @@ sub executable_setup () {
     }
   }
 
-# Look for mysqltest executable
+# Look for drizzletest executable
   {
-    $exe_mysqltest= mtr_exe_exists("$path_client_bindir/mysqltest");
+    $exe_drizzletest= mtr_exe_exists("$path_client_bindir/drizzletest");
   }
 
-# Look for mysql_client_test executable which may _not_ exist in
+# Look for drizzle_client_test executable which may _not_ exist in
 # some versions, test using it should be skipped
   {
-    $exe_mysql_client_test=
+    $exe_drizzle_client_test=
       mtr_exe_maybe_exists(
-          "$glob_basedir/tests/mysql_client_test",
-          "$glob_basedir/bin/mysql_client_test");
+          "$glob_basedir/tests/drizzle_client_test",
+          "$glob_basedir/bin/drizzle_client_test");
   }
 
 # Look for bug25714 executable which may _not_ exist in
@@ -1283,7 +1283,7 @@ sub executable_setup () {
 sub generate_cmdline_mysqldump ($) {
   my($mysqld) = @_;
   return
-    mtr_native_path($exe_mysqldump) .
+    mtr_native_path($exe_drizzledump) .
       " --no-defaults -uroot --debug-check " .
       "--port=$mysqld->{'port'} ";
 }
@@ -1296,13 +1296,13 @@ sub generate_cmdline_mysqldump ($) {
 #
 ##############################################################################
 
-sub mysql_client_test_arguments()
+sub drizzle_client_test_arguments()
 {
-  my $exe= $exe_mysql_client_test;
+  my $exe= $exe_drizzle_client_test;
 
   my $args;
   mtr_init_args(\$args);
-  if ( $opt_valgrind_mysqltest )
+  if ( $opt_valgrind_drizzletest )
   {
     valgrind_arguments($args, \$exe);
   }
@@ -1320,7 +1320,7 @@ sub mysql_client_test_arguments()
   if ( $opt_debug )
   {
     mtr_add_arg($args,
-      "--debug=d:t:A,$path_vardir_trace/log/mysql_client_test.trace");
+      "--debug=d:t:A,$path_vardir_trace/log/drizzle_client_test.trace");
   }
 
   return join(" ", $exe, @$args);
@@ -1428,13 +1428,13 @@ sub environment_setup () {
 
   $ENV{MTR_BUILD_THREAD}=      $opt_mtr_build_thread;
 
-  $ENV{'EXE_MYSQL'}=          $exe_mysql;
+  $ENV{'EXE_MYSQL'}=          $exe_drizzle;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqlcheck
   # ----------------------------------------------------
   my $cmdline_mysqlcheck=
-    mtr_native_path($exe_mysqlcheck) .
+    mtr_native_path($exe_drizzlecheck) .
     " --no-defaults --debug-check -uroot " .
     "--port=$master->[0]->{'port'} ";
 
@@ -1484,7 +1484,7 @@ sub environment_setup () {
   # Setup env so childs can execute mysqlimport
   # ----------------------------------------------------
   my $cmdline_mysqlimport=
-    mtr_native_path($exe_mysqlimport) .
+    mtr_native_path($exe_drizzleimport) .
     " -uroot --debug-check " .
     "--port=$master->[0]->{'port'} ";
 
@@ -1500,7 +1500,7 @@ sub environment_setup () {
   # Setup env so childs can execute mysqlbinlog
   # ----------------------------------------------------
   my $cmdline_mysqlbinlog=
-    mtr_native_path($exe_mysqlbinlog) .
+    mtr_native_path($exe_drizzlebinlog) .
       " --no-defaults --disable-force-if-open --debug-check";
   if ( !$opt_extern && $mysql_version_id >= 50000 )
   {
@@ -1518,7 +1518,7 @@ sub environment_setup () {
   # Setup env so childs can execute mysql
   # ----------------------------------------------------
   my $cmdline_mysql=
-    mtr_native_path($exe_mysql) .
+    mtr_native_path($exe_drizzle) .
     " --no-defaults --debug-check --host=localhost  --user=root --password= " .
     "--port=$master->[0]->{'port'} " .
     "--character-sets-dir=$path_charsetsdir";
@@ -1531,9 +1531,9 @@ sub environment_setup () {
   $ENV{'MYSQL_BUG25714'}=  $exe_bug25714;
 
   # ----------------------------------------------------
-  # Setup env so childs can execute mysql_client_test
+  # Setup env so childs can execute drizzle_client_test
   # ----------------------------------------------------
-  $ENV{'MYSQL_CLIENT_TEST'}=  mysql_client_test_arguments();
+  $ENV{'MYSQL_CLIENT_TEST'}=  drizzle_client_test_arguments();
 
 
   # ----------------------------------------------------
@@ -1543,7 +1543,7 @@ sub environment_setup () {
   if ( 0 )
   {
     my $cmdline_mysql_fix_system_tables=
-      "$exe_mysql_fix_system_tables --no-defaults --host=localhost " .
+      "$exe_drizzle_fix_system_tables --no-defaults --host=localhost " .
       "--user=root --password= " .
       "--basedir=$glob_basedir --bindir=$path_client_bindir --verbose " .
       "--port=$master->[0]->{'port'} ";
@@ -1559,7 +1559,7 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env so childs can execute mysqladmin
   # ----------------------------------------------------
-  $ENV{'MYSQLADMIN'}= mtr_native_path($exe_mysqladmin);
+  $ENV{'MYSQLADMIN'}= mtr_native_path($exe_drizzleadmin);
 
   # ----------------------------------------------------
   # Setup env so childs can execute perror  
@@ -2066,7 +2066,7 @@ sub run_testcase_check_skip_test($)
   # If marked to skip, just print out and return.
   # Note that a test case not marked as 'skip' can still be
   # skipped later, because of the test case itself in cooperation
-  # with the mysqltest program tells us so.
+  # with the drizzletest program tells us so.
   # ----------------------------------------------------------------------
 
   if ( $tinfo->{'skip'} )
@@ -2080,12 +2080,12 @@ sub run_testcase_check_skip_test($)
 }
 
 
-sub do_before_run_mysqltest($)
+sub do_before_run_drizzletest($)
 {
   my $tinfo= shift;
   my $args;
 
-  # Remove old files produced by mysqltest
+  # Remove old files produced by drizzletest
   my $base_file= mtr_match_extension($tinfo->{'result_file'},
 				    "result"); # Trim extension
   unlink("$base_file.reject");
@@ -2110,7 +2110,7 @@ sub do_before_run_mysqltest($)
 
 	my $sql= "include/set_binlog_format_".$tinfo->{binlog_format}.".sql";
 	mtr_verbose("Setting binlog format:", $tinfo->{binlog_format});
-	if (mtr_run($exe_mysql, $args, $sql, "", "", "") != 0)
+	if (mtr_run($exe_drizzle, $args, $sql, "", "", "") != 0)
 	{
 	  mtr_error("Failed to switch binlog format");
 	}
@@ -2119,14 +2119,14 @@ sub do_before_run_mysqltest($)
   }
 }
 
-sub do_after_run_mysqltest($)
+sub do_after_run_drizzletest($)
 {
   my $tinfo= shift;
 
-  # Save info from this testcase run to mysqltest.log
-  mtr_appendfile_to_file($path_current_test_log, $path_mysqltest_log)
+  # Save info from this testcase run to drizzletest.log
+  mtr_appendfile_to_file($path_current_test_log, $path_drizzletest_log)
     if -f $path_current_test_log;
-  mtr_appendfile_to_file($path_timefile, $path_mysqltest_log)
+  mtr_appendfile_to_file($path_timefile, $path_drizzletest_log)
     if -f $path_timefile;
 }
 
@@ -2155,7 +2155,7 @@ sub find_testcase_skipped_reason($)
   # Set default message
   $tinfo->{'comment'}= "Detected by testcase(no log file)";
 
-  # Open mysqltest-time(the mysqltest log file)
+  # Open drizzletest-time(the drizzletest log file)
   my $F= IO::File->new($path_timefile)
     or return;
   my $reason;
@@ -2246,12 +2246,12 @@ sub run_testcase ($) {
   }
 
   {
-    do_before_run_mysqltest($tinfo);
+    do_before_run_drizzletest($tinfo);
 
-    my $res= run_mysqltest($tinfo);
+    my $res= run_drizzletest($tinfo);
     mtr_report_test_name($tinfo);
 
-    do_after_run_mysqltest($tinfo);
+    do_after_run_drizzletest($tinfo);
 
     if ( $res == 0 )
     {
@@ -2261,7 +2261,7 @@ sub run_testcase ($) {
     {
       # Testcase itself tell us to skip this one
 
-      # Try to get reason from mysqltest.log
+      # Try to get reason from drizzletest.log
       find_testcase_skipped_reason($tinfo);
       mtr_report_test_skipped($tinfo);
     }
@@ -2272,19 +2272,19 @@ sub run_testcase ($) {
     }
     elsif ( $res == 1 )
     {
-      # Test case failure reported by mysqltest
+      # Test case failure reported by drizzletest
       report_failure_and_restart($tinfo);
     }
     else
     {
-      # mysqltest failed, probably crashed
+      # drizzletest failed, probably crashed
       $tinfo->{comment}=
-	"mysqltest returned unexpected code $res, it has probably crashed";
+	"drizzletest returned unexpected code $res, it has probably crashed";
       report_failure_and_restart($tinfo);
     }
   }
 
-  # Remove the file that mysqltest writes info to
+  # Remove the file that drizzletest writes info to
   unlink($path_timefile);
 
   # ----------------------------------------------------------------------
@@ -2485,7 +2485,7 @@ sub mysqld_arguments ($$$$) {
     $sidx= $idx;
   }
 
-  my $prefix= "";               # If mysqltest server arg
+  my $prefix= "";               # If drizzletest server arg
 
   mtr_add_arg($args, "%s--no-defaults", $prefix);
 
@@ -3111,7 +3111,7 @@ sub run_check_testcase ($$) {
     mtr_add_arg($args, "--record");
   }
 
-  my $res = mtr_run_test($exe_mysqltest,$args,
+  my $res = mtr_run_test($exe_drizzletest,$args,
 	        "include/check-testcase.test", "", "", "");
 
   if ( $res == 1  and $mode eq "after")
@@ -3157,7 +3157,7 @@ sub run_report_features () {
   $tinfo->{'slave_opt'} = [];
   $tinfo->{'slave_mi'} = [];
   $tinfo->{'comment'} = 'report server features';
-  run_mysqltest($tinfo);
+  run_drizzletest($tinfo);
 
   {
     stop_all_servers();
@@ -3165,9 +3165,9 @@ sub run_report_features () {
 }
 
 
-sub run_mysqltest ($) {
+sub run_drizzletest ($) {
   my ($tinfo)= @_;
-  my $exe= $exe_mysqltest;
+  my $exe= $exe_drizzletest;
   my $args;
 
   mtr_init_args(\$args);
@@ -3193,8 +3193,8 @@ sub run_mysqltest ($) {
   {
     $exe=  "strace";            # FIXME there are ktrace, ....
     mtr_add_arg($args, "-o");
-    mtr_add_arg($args, "%s/log/mysqltest.strace", $opt_vardir);
-    mtr_add_arg($args, "$exe_mysqltest");
+    mtr_add_arg($args, "%s/log/drizzletest.strace", $opt_vardir);
+    mtr_add_arg($args, "$exe_drizzletest");
   }
 
   if ( $opt_timer )
@@ -3214,25 +3214,25 @@ sub run_mysqltest ($) {
 
   if ( $opt_debug )
   {
-    mtr_add_arg($args, "--debug=d:t:A,%s/log/mysqltest.trace",
+    mtr_add_arg($args, "--debug=d:t:A,%s/log/drizzletest.trace",
 		$path_vardir_trace);
   }
 
   # ----------------------------------------------------------------------
-  # export MYSQL_TEST variable containing <path>/mysqltest <args>
+  # export MYSQL_TEST variable containing <path>/drizzletest <args>
   # ----------------------------------------------------------------------
   $ENV{'MYSQL_TEST'}=
-    mtr_native_path($exe_mysqltest) . " " . join(" ", @$args);
+    mtr_native_path($exe_drizzletest) . " " . join(" ", @$args);
 
   # ----------------------------------------------------------------------
   # Add arguments that should not go into the MYSQL_TEST env var
   # ----------------------------------------------------------------------
 
-  if ( $opt_valgrind_mysqltest )
+  if ( $opt_valgrind_drizzletest )
   {
     # Prefix the Valgrind options to the argument list.
     # We do this here, since we do not want to Valgrind the nested invocations
-    # of mysqltest; that would mess up the stderr output causing test failure.
+    # of drizzletest; that would mess up the stderr output causing test failure.
     my @args_saved = @$args;
     mtr_init_args(\$args);
     valgrind_arguments($args, \$exe);
@@ -3609,9 +3609,9 @@ Options to run test on running server
 
 Options for debugging the product
 
-  client-ddd            Start mysqltest client in ddd
-  client-debugger=NAME  Start mysqltest in the selected debugger
-  client-gdb            Start mysqltest client in gdb
+  client-ddd            Start drizzletest client in ddd
+  client-debugger=NAME  Start drizzletest in the selected debugger
+  client-gdb            Start drizzletest client in gdb
   ddd                   Start mysqld in ddd
   debug                 Dump trace output for all servers and client programs
   debugger=NAME         Start mysqld in the selected debugger
@@ -3624,7 +3624,7 @@ Options for debugging the product
                         test(s)
   master-binary=PATH    Specify the master "mysqld" to use
   slave-binary=PATH     Specify the slave "mysqld" to use
-  strace-client         Create strace output for mysqltest client
+  strace-client         Create strace output for drizzletest client
   max-save-core         Limit the number of core files saved (to avoid filling
                         up disks for heavily crashing server). Defaults to
                         $opt_max_save_core, set to 0 for no limit.
@@ -3633,10 +3633,10 @@ Options for coverage, profiling etc
 
   gcov                  FIXME
   gprof                 FIXME
-  valgrind              Run the "mysqltest" and "mysqld" executables using
+  valgrind              Run the "drizzletest" and "mysqld" executables using
                         valgrind with default options
   valgrind-all          Synonym for --valgrind
-  valgrind-mysqltest    Run the "mysqltest" and "mysql_client_test" executable
+  valgrind-drizzletest    Run the "drizzletest" and "drizzle_client_test" executable
                         with valgrind
   valgrind-mysqld       Run the "mysqld" executable with valgrind
   valgrind-options=ARGS Deprecated, use --valgrind-option
@@ -3663,7 +3663,7 @@ Misc options
   suite-timeout=MINUTES Max test suite run time (default $default_suite_timeout)
   warnings | log-warnings Pass --log-warnings to mysqld
 
-  sleep=SECONDS         Passed to mysqltest, will be used as fixed sleep time
+  sleep=SECONDS         Passed to drizzletest, will be used as fixed sleep time
 
 HERE
   mtr_exit(1);
