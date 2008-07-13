@@ -1479,7 +1479,7 @@ err:
 static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
@@ -1499,7 +1499,7 @@ static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
 static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
@@ -1519,7 +1519,7 @@ static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
 static int check_func_longlong(THD *thd, struct st_mysql_sys_var *var,
                                void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
@@ -2424,10 +2424,10 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-extern "C" my_bool get_one_plugin_option(int optid, const struct my_option *,
+extern "C" bool get_one_plugin_option(int optid, const struct my_option *,
                                          char *);
 
-my_bool get_one_plugin_option(int optid __attribute__((unused)),
+bool get_one_plugin_option(int optid __attribute__((unused)),
                               const struct my_option *opt __attribute__((__unused__)),
                               char *argument __attribute__((__unused__)))
 {

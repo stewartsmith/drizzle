@@ -70,19 +70,19 @@ const char *opt_logdir= "";
 const char *opt_include= 0, *opt_charsets_dir;
 static int opt_port= 0;
 static int opt_max_connect_retries;
-static my_bool opt_compress= 0, silent= 0, verbose= 0;
-static my_bool debug_info_flag= 0, debug_check_flag= 0;
-static my_bool tty_password= 0;
-static my_bool opt_mark_progress= 0;
-static my_bool parsing_disabled= 0;
-static my_bool display_result_vertically= FALSE,
+static bool opt_compress= 0, silent= 0, verbose= 0;
+static bool debug_info_flag= 0, debug_check_flag= 0;
+static bool tty_password= 0;
+static bool opt_mark_progress= 0;
+static bool parsing_disabled= 0;
+static bool display_result_vertically= FALSE,
   display_metadata= FALSE, display_result_sorted= FALSE;
-static my_bool disable_query_log= 0, disable_result_log= 0;
-static my_bool disable_warnings= 0;
-static my_bool disable_info= 1;
-static my_bool abort_on_error= 1;
-static my_bool server_initialized= 0;
-static my_bool is_windows= 0;
+static bool disable_query_log= 0, disable_result_log= 0;
+static bool disable_warnings= 0;
+static bool disable_info= 1;
+static bool abort_on_error= 1;
+static bool server_initialized= 0;
+static bool is_windows= 0;
 static char **default_argv;
 static const char *load_default_groups[]= { "mysqltest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
@@ -108,7 +108,7 @@ enum block_cmd {
 struct st_block
 {
   int             line; /* Start line of block */
-  my_bool         ok;   /* Should block be executed */
+  bool         ok;   /* Should block be executed */
   enum block_cmd  cmd;  /* Command owning the block */
 };
 
@@ -364,7 +364,7 @@ struct st_command
 {
   char *query, *query_buf,*first_argument,*last_argument,*end;
   int first_word_len, query_len;
-  my_bool abort_on_error;
+  bool abort_on_error;
   struct st_expected_errors expected_errors;
   char require_file[FN_REFLEN];
   enum enum_commands type;
@@ -393,18 +393,18 @@ VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
               int val_len);
 void var_free(void* v);
 VAR* var_get(const char *var_name, const char** var_name_end,
-             my_bool raw, my_bool ignore_not_existing);
+             bool raw, bool ignore_not_existing);
 void eval_expr(VAR* v, const char *p, const char** p_end);
-my_bool match_delimiter(int c, const char *delim, uint length);
+bool match_delimiter(int c, const char *delim, uint length);
 void dump_result_to_reject_file(char *buf, int size);
 void dump_result_to_log_file(char *buf, int size);
 void dump_warning_messages(void);
 void dump_progress(void);
 
 void do_eval(DYNAMIC_STRING *query_eval, const char *query,
-             const char *query_end, my_bool pass_through_escape_chars);
+             const char *query_end, bool pass_through_escape_chars);
 void str_to_file(const char *fname, char *str, int size);
-void str_to_file2(const char *fname, char *str, int size, my_bool append);
+void str_to_file2(const char *fname, char *str, int size, bool append);
 
 /* For replace_column */
 static char *replace_column[MAX_COLUMNS];
@@ -508,7 +508,7 @@ static void wait_query_thread_end(struct st_connection *con)
 #endif /*EMBEDDED_LIBRARY*/
 
 void do_eval(DYNAMIC_STRING *query_eval, const char *query,
-             const char *query_end, my_bool pass_through_escape_chars)
+             const char *query_end, bool pass_through_escape_chars)
 {
   const char *p;
   register char c, next_c;
@@ -708,7 +708,7 @@ enum arg_type
 struct command_arg {
   const char *argname;       /* Name of argument   */
   enum arg_type type;        /* Type of argument   */
-  my_bool required;          /* Argument required  */
+  bool required;          /* Argument required  */
   DYNAMIC_STRING *ds;        /* Storage for argument */
   const char *description;   /* Description of the argument */
 };
@@ -1673,8 +1673,8 @@ VAR* var_from_env(const char *name, const char *def_val)
 }
 
 
-VAR* var_get(const char *var_name, const char **var_name_end, my_bool raw,
-	     my_bool ignore_not_existing)
+VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
+	     bool ignore_not_existing)
 {
   int digit;
   VAR *v;
@@ -2310,7 +2310,7 @@ static void do_exec(struct st_command *command)
   if (error > 0)
   {
     uint status= WEXITSTATUS(error), i;
-    my_bool ok= 0;
+    bool ok= 0;
 
     if (command->abort_on_error)
     {
@@ -2742,7 +2742,7 @@ static void read_until_delimiter(DYNAMIC_STRING *ds,
 }
 
 
-static void do_write_file_command(struct st_command *command, my_bool append)
+static void do_write_file_command(struct st_command *command, bool append)
 {
   static DYNAMIC_STRING ds_content;
   static DYNAMIC_STRING ds_filename;
@@ -3499,7 +3499,7 @@ static void do_let(struct st_command *command)
   used for cpu-independent delays.
 */
 
-static int do_sleep(struct st_command *command, my_bool real_sleep)
+static int do_sleep(struct st_command *command, bool real_sleep)
 {
   int error= 0;
   char *p= command->first_argument;
@@ -3819,7 +3819,7 @@ static char *get_string(char **to_ptr, char **from_ptr,
 
 static void set_reconnect(MYSQL* mysql, int val)
 {
-  my_bool reconnect= val;
+  bool reconnect= val;
   DBUG_ENTER("set_reconnect");
   DBUG_PRINT("info", ("val: %d", val));
 #if MYSQL_VERSION_ID < 50000
@@ -4083,7 +4083,7 @@ static void do_connect(struct st_command *command)
 {
   int con_port= opt_port;
   char *con_options;
-  my_bool con_ssl= 0, con_compress= 0;
+  bool con_ssl= 0, con_compress= 0;
   struct st_connection* con_slot;
 
   static DYNAMIC_STRING ds_connection_name;
@@ -4291,7 +4291,7 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
   const char *expr_start, *expr_end;
   VAR v;
   const char *cmd_name= (cmd == cmd_while ? "while" : "if");
-  my_bool not_expr= FALSE;
+  bool not_expr= FALSE;
   DBUG_ENTER("do_block");
   DBUG_PRINT("enter", ("%s", cmd_name));
 
@@ -4373,7 +4373,7 @@ static void do_delimiter(struct st_command* command)
 }
 
 
-my_bool match_delimiter(int c, const char *delim, uint length)
+bool match_delimiter(int c, const char *delim, uint length)
 {
   uint i;
   char tmp[MAX_DELIMITER_LENGTH];
@@ -4397,7 +4397,7 @@ my_bool match_delimiter(int c, const char *delim, uint length)
 }
 
 
-static my_bool end_of_query(int c)
+static bool end_of_query(int c)
 {
   return match_delimiter(c, delimiter, delimiter_length);
 }
@@ -5016,7 +5016,7 @@ static void read_embedded_server_arguments(const char *name)
 }
 
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -5137,7 +5137,7 @@ static int parse_args(int argc, char **argv)
   append - append to file instead of overwriting old file
 */
 
-void str_to_file2(const char *fname, char *str, int size, my_bool append)
+void str_to_file2(const char *fname, char *str, int size, bool append)
 {
   int fd;
   char buff[FN_REFLEN];
@@ -5214,7 +5214,7 @@ void dump_warning_messages(void)
 */
 
 static void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
-                         const char* val, ulonglong len, my_bool is_null)
+                         const char* val, ulonglong len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
   {
@@ -5923,7 +5923,7 @@ static void mark_progress(struct st_command* command __attribute__((unused)),
 int main(int argc, char **argv)
 {
   struct st_command *command;
-  my_bool q_send_flag= 0, abort_flag= 0;
+  bool q_send_flag= 0, abort_flag= 0;
   uint command_executed= 0, last_command_executed= 0;
   char save_file[FN_REFLEN];
   struct stat res_info;
@@ -6123,7 +6123,7 @@ int main(int argc, char **argv)
       case Q_QUERY:
       case Q_REAP:
       {
-	my_bool old_display_result_vertically= display_result_vertically;
+	bool old_display_result_vertically= display_result_vertically;
         /* Default is full query, both reap and send  */
         int flags= QUERY_REAP_FLAG | QUERY_SEND_FLAG;
 
@@ -6566,12 +6566,12 @@ void free_replace()
 
 
 typedef struct st_replace {
-  my_bool found;
+  bool found;
   struct st_replace *next[256];
 } REPLACE;
 
 typedef struct st_replace_found {
-  my_bool found;
+  bool found;
   char *replace_string;
   uint to_offset;
   int from_offset;

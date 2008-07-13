@@ -28,7 +28,7 @@
 #define EX_MYSQLERR 2
 
 static MYSQL mysql_connection, *sock = 0;
-static my_bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
+static bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
                opt_compress = 0, opt_databases = 0, opt_fast = 0,
                opt_medium_check = 0, opt_quick = 0, opt_all_in_1 = 0,
                opt_silent = 0, opt_auto_repair = 0, ignore_errors = 0,
@@ -238,7 +238,7 @@ static void usage(void)
 
 #include <help_end.h>
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -686,7 +686,7 @@ static void print_result()
   MYSQL_ROW row;
   char prev[NAME_LEN*2+2];
   uint i;
-  my_bool found_error=0;
+  bool found_error=0;
 
   res = mysql_use_result(sock);
 
@@ -694,7 +694,7 @@ static void print_result()
   for (i = 0; (row = mysql_fetch_row(res)); i++)
   {
     int changed = strcmp(prev, row[0]);
-    my_bool status = !strcmp(row[2], "status");
+    bool status = !strcmp(row[2], "status");
 
     if (status)
     {

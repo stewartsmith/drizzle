@@ -1056,7 +1056,7 @@ bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
 static ulonglong fix_unsigned(THD *thd, ulonglong num,
                               const struct my_option *option_limits)
 {
-  my_bool fixed= false;
+  bool fixed= false;
   ulonglong out= getopt_ull_limit_value(num, option_limits, &fixed);
 
   throw_bounds_warning(thd, fixed, true, option_limits->name, (longlong) num);
@@ -1116,7 +1116,7 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
 
 void sys_var_long_ptr_global::set_default(THD *thd __attribute__((__unused__)), enum_var_type type __attribute__((__unused__)))
 {
-  my_bool not_used;
+  bool not_used;
   pthread_mutex_lock(guard);
   *value= (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
                                          option_limits, &not_used);
@@ -1140,7 +1140,7 @@ bool sys_var_ulonglong_ptr::update(THD *thd, set_var *var)
 void sys_var_ulonglong_ptr::set_default(THD *thd __attribute__((__unused__)),
                                         enum_var_type type __attribute__((__unused__)))
 {
-  my_bool not_used;
+  bool not_used;
   pthread_mutex_lock(&LOCK_global_system_variables);
   *value= getopt_ull_limit_value((ulonglong) option_limits->def_value,
                                  option_limits, &not_used);
@@ -1223,7 +1223,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
  {
    if (type == OPT_GLOBAL)
    {
-     my_bool not_used;
+     bool not_used;
      /* We will not come here if option_limits is not set */
      global_system_variables.*offset=
        (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
@@ -1270,7 +1270,7 @@ void sys_var_thd_ha_rows::set_default(THD *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
   {
-    my_bool not_used;
+    bool not_used;
     /* We will not come here if option_limits is not set */
     pthread_mutex_lock(&LOCK_global_system_variables);
     global_system_variables.*offset=
@@ -1322,7 +1322,7 @@ void sys_var_thd_ulonglong::set_default(THD *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
   {
-    my_bool not_used;
+    bool not_used;
     pthread_mutex_lock(&LOCK_global_system_variables);
     global_system_variables.*offset=
       getopt_ull_limit_value((ulonglong) option_limits->def_value,

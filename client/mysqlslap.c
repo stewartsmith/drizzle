@@ -97,7 +97,7 @@ pthread_mutex_t sleeper_mutex;
 pthread_cond_t sleep_threshhold;
 
 /* Global Thread timer */
-static my_bool timer_alarm= FALSE;
+static bool timer_alarm= FALSE;
 pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 
@@ -119,12 +119,12 @@ const char *delimiter= "\n";
 
 const char *create_schema_string= "mysqlslap";
 
-static my_bool opt_preserve= TRUE;
-static my_bool debug_info_flag= 0, debug_check_flag= 0;
-static my_bool opt_only_print= FALSE;
-static my_bool opt_burnin= FALSE;
-static my_bool opt_ignore_sql_errors= FALSE;
-static my_bool opt_compress= FALSE, tty_password= FALSE,
+static bool opt_preserve= TRUE;
+static bool debug_info_flag= 0, debug_check_flag= 0;
+static bool opt_only_print= FALSE;
+static bool opt_burnin= FALSE;
+static bool opt_ignore_sql_errors= FALSE;
+static bool opt_compress= FALSE, tty_password= FALSE,
                opt_silent= FALSE,
                auto_generate_sql_autoincrement= FALSE,
                auto_generate_sql_guid_primary= FALSE,
@@ -274,7 +274,7 @@ uint get_random_string(char *buf, size_t size);
 static statement *build_table_string(void);
 static statement *build_insert_string(void);
 static statement *build_update_string(void);
-static statement * build_select_string(my_bool key);
+static statement * build_select_string(bool key);
 static int generate_primary_key_list(MYSQL *mysql, option_string *engine_stmt);
 static int drop_primary_key_list(void);
 static int create_schema(MYSQL *mysql, const char *db, statement *stmt, 
@@ -287,7 +287,7 @@ void statement_cleanup(statement *stmt);
 void option_cleanup(option_string *stmt);
 void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr);
 static int run_statements(MYSQL *mysql, statement *stmt);
-void slap_connect(MYSQL *mysql, my_bool connect_to_schema);
+void slap_connect(MYSQL *mysql, bool connect_to_schema);
 void slap_close(MYSQL *mysql);
 static int run_query(MYSQL *mysql, const char *query, int len);
 void standard_deviation (conclusions *con, stats *sptr);
@@ -739,7 +739,7 @@ static void usage(void)
 
 #include <help_end.h>
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                char *argument)
 {
@@ -1153,7 +1153,7 @@ build_insert_string(void)
   statement or file containing a query statement
 */
 static statement *
-build_select_string(my_bool key)
+build_select_string(bool key)
 {
   char       buf[HUGE_STRING_LENGTH];
   unsigned int        col_count;
@@ -2513,7 +2513,7 @@ slap_close(MYSQL *mysql)
 }
 
 void 
-slap_connect(MYSQL *mysql, my_bool connect_to_schema)
+slap_connect(MYSQL *mysql, bool connect_to_schema)
 {
   /* Connect to server */
   static ulong connection_retry_sleep= 100000; /* Microseconds */

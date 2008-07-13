@@ -71,9 +71,9 @@ TYPELIB base64_output_mode_typelib=
 static enum_base64_output_mode opt_base64_output_mode= BASE64_OUTPUT_UNSPEC;
 static const char *opt_base64_output_mode_str= NullS;
 static const char* database= 0;
-static my_bool force_opt= 0, short_form= 0, remote_opt= 0;
-static my_bool debug_info_flag, debug_check_flag;
-static my_bool force_if_open_opt= 1;
+static bool force_opt= 0, short_form= 0, remote_opt= 0;
+static bool debug_info_flag, debug_check_flag;
+static bool force_if_open_opt= 1;
 static ulonglong offset = 0;
 static const char* host = 0;
 static int port= 0;
@@ -1193,7 +1193,7 @@ static my_time_t convert_str_to_timestamp(const char* str)
 
 #include <help_end.h>
 
-extern "C" my_bool
+extern "C" bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {

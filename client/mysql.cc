@@ -126,7 +126,7 @@ enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
 
 static MYSQL mysql;			/* The connection */
-static my_bool ignore_errors=0,wait_flag=0,quick=0,
+static bool ignore_errors=0,wait_flag=0,quick=0,
                connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
 	       opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
 	       opt_compress=0, using_opt_local_infile=0,
@@ -137,9 +137,9 @@ static my_bool ignore_errors=0,wait_flag=0,quick=0,
                default_pager_set= 0, opt_sigint_ignore= 0,
                auto_vertical_output= 0,
                show_warnings= 0, executing_query= 0, interrupted_query= 0;
-static my_bool debug_info_flag, debug_check_flag;
-static my_bool column_types_flag;
-static my_bool preserve_comments= 0;
+static bool debug_info_flag, debug_check_flag;
+static bool column_types_flag;
+static bool preserve_comments= 0;
 static ulong opt_max_allowed_packet, opt_net_buffer_length;
 static int verbose=0,opt_silent=0,opt_mysql_port=0, opt_local_infile=0;
 static uint my_end_arg;
@@ -191,7 +191,7 @@ void tee_putc(int c, FILE *file);
 static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool);
 /* The names of functions that actually do the manipulation. */
 static int get_options(int argc,char **argv);
-extern "C" my_bool get_one_option(int optid, const struct my_option *opt,
+extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                   char *argument);
 static int com_quit(String *str,char*),
 	   com_go(String *str,char*), com_ego(String *str,char*),
@@ -223,7 +223,7 @@ static void end_pager();
 static void init_tee(const char *);
 static void end_tee();
 static const char* construct_prompt();
-static char *get_arg(char *line, my_bool get_next_arg);
+static char *get_arg(char *line, bool get_next_arg);
 static void init_username();
 static void add_int_to_prompt(int toadd);
 static int get_result_width(MYSQL_RES *res);
@@ -1522,7 +1522,7 @@ and you are welcome to modify and redistribute it under the GPL license\n");
 }
 
 
-my_bool
+bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -3995,10 +3995,10 @@ com_nowarnings(String *buffer __attribute__((unused)),
   items in the array to zero first.
 */
 
-char *get_arg(char *line, my_bool get_next_arg)
+char *get_arg(char *line, bool get_next_arg)
 {
   char *ptr, *start;
-  my_bool quoted= 0, valid_arg= 0;
+  bool quoted= 0, valid_arg= 0;
   char qtype= 0;
 
   ptr= line;

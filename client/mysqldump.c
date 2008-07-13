@@ -80,7 +80,7 @@ static ulong find_set(TYPELIB *lib, const char *x, uint length,
                       char **err_pos, uint *err_len);
 
 static void field_escape(DYNAMIC_STRING* in, const char *from);
-static my_bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
+static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 quick= 1, extended_insert= 1,
                 lock_tables=1,ignore_errors=0,flush_logs=0,flush_privileges=0,
                 opt_drop=1,opt_keywords=0,opt_lock=1,opt_compress=0,
@@ -98,7 +98,7 @@ static my_bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 opt_include_master_host_port= 0,
                 opt_events= 0,
                 opt_alltspcs=0, opt_notspcs= 0;
-static my_bool insert_pat_inited= 0, debug_info_flag= 0, debug_check_flag= 0;
+static bool insert_pat_inited= 0, debug_info_flag= 0, debug_check_flag= 0;
 static ulong opt_max_allowed_packet, opt_net_buffer_length;
 static MYSQL mysql_connection,*mysql=0;
 static DYNAMIC_STRING insert_pat;
@@ -112,7 +112,7 @@ static char  *opt_password=0,*current_user=0,
 static char **defaults_argv= 0;
 static char compatible_mode_normal_str[255];
 /* Server supports character_set_results session variable? */
-static my_bool server_supports_switching_charsets= TRUE;
+static bool server_supports_switching_charsets= TRUE;
 static ulong opt_compatible_mode= 0;
 #define MYSQL_OPT_MASTER_DATA_EFFECTIVE_SQL 1
 #define MYSQL_OPT_MASTER_DATA_COMMENTED_SQL 2
@@ -154,7 +154,7 @@ static char *default_charset;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
 const char *default_dbug_option="d:t:o,/tmp/mysqldump.trace";
 /* have we seen any VIEWs during table scanning? */
-my_bool seen_views= 0;
+bool seen_views= 0;
 const char *compatible_mode_names[]=
 {
   "MYSQL323", "MYSQL40", "POSTGRESQL", "ORACLE", "MSSQL", "DB2",
@@ -487,7 +487,7 @@ static int init_dumping_tables(char *);
 static int init_dumping(char *, int init_func(char*));
 static int dump_databases(char **);
 static int dump_all_databases(void);
-static char *quote_name(const char *name, char *buff, my_bool force);
+static char *quote_name(const char *name, char *buff, bool force);
 char check_if_ignore_table(const char *table_name, char *table_type);
 static char *primary_key_fields(const char *table_name);
 
@@ -674,14 +674,14 @@ static void free_table_ent(char *key)
 
 
 static uchar* get_table_key(const char *entry, size_t *length,
-                            my_bool not_used __attribute__((unused)))
+                            bool not_used __attribute__((unused)))
 {
   *length= strlen(entry);
   return (uchar*) entry;
 }
 
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                char *argument)
 {
@@ -1191,7 +1191,7 @@ static void unescape(FILE *file,char *pos,uint length)
 } /* unescape */
 
 
-static my_bool test_if_special_chars(const char *str)
+static bool test_if_special_chars(const char *str)
 {
 #if MYSQL_VERSION_ID >= 32300
   for ( ; *str ; str++)
@@ -1219,7 +1219,7 @@ static my_bool test_if_special_chars(const char *str)
   buff                 quoted string
 
 */
-static char *quote_name(const char *name, char *buff, my_bool force)
+static char *quote_name(const char *name, char *buff, bool force)
 {
   char *to= buff;
   char qtype= (opt_compatible_mode & MASK_ANSI_QUOTES) ? '\"' : '`';
@@ -1506,7 +1506,7 @@ static void print_blob_as_hex(FILE *output_file, const char *str, ulong len)
 static uint get_table_structure(char *table, char *db, char *table_type,
                                 char *ignore_flag)
 {
-  my_bool    init=0, delayed, write_data, complete_insert;
+  bool    init=0, delayed, write_data, complete_insert;
   my_ulonglong num_fields;
   char       *result_table, *opt_quoted_table;
   const char *insert_option;
@@ -2710,7 +2710,7 @@ static int init_dumping(char *database, int init_func(char*))
 
 /* Return 1 if we should copy the table */
 
-static my_bool include_table(const uchar *hash_key, size_t len)
+static bool include_table(const uchar *hash_key, size_t len)
 {
   return !hash_search(&ignore_table, hash_key, len);
 }
