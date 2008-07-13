@@ -51,13 +51,13 @@ public:
   inline void free() { packet->free(); }
   virtual bool write();
   inline  bool store(int from)
-  { return store_long((longlong) from); }
+  { return store_long((int64_t) from); }
   inline  bool store(uint32 from)
-  { return store_long((longlong) from); }
-  inline  bool store(longlong from)
-  { return store_longlong((longlong) from, 0); }
+  { return store_long((int64_t) from); }
+  inline  bool store(int64_t from)
+  { return store_int64_t((int64_t) from, 0); }
   inline  bool store(uint64_t from)
-  { return store_longlong((longlong) from, 1); }
+  { return store_int64_t((int64_t) from, 1); }
   inline bool store(String *str)
   { return store((char*) str->ptr(), str->length(), str->charset()); }
 
@@ -71,10 +71,10 @@ public:
   virtual void prepare_for_resend()=0;
 
   virtual bool store_null()=0;
-  virtual bool store_tiny(longlong from)=0;
-  virtual bool store_short(longlong from)=0;
-  virtual bool store_long(longlong from)=0;
-  virtual bool store_longlong(longlong from, bool unsigned_flag)=0;
+  virtual bool store_tiny(int64_t from)=0;
+  virtual bool store_short(int64_t from)=0;
+  virtual bool store_long(int64_t from)=0;
+  virtual bool store_int64_t(int64_t from, bool unsigned_flag)=0;
   virtual bool store_decimal(const my_decimal *)=0;
   virtual bool store(const char *from, size_t length, CHARSET_INFO *cs)=0;
   virtual bool store(const char *from, size_t length, 
@@ -107,10 +107,10 @@ public:
   Protocol_text(THD *thd_arg) :Protocol(thd_arg) {}
   virtual void prepare_for_resend();
   virtual bool store_null();
-  virtual bool store_tiny(longlong from);
-  virtual bool store_short(longlong from);
-  virtual bool store_long(longlong from);
-  virtual bool store_longlong(longlong from, bool unsigned_flag);
+  virtual bool store_tiny(int64_t from);
+  virtual bool store_short(int64_t from);
+  virtual bool store_long(int64_t from);
+  virtual bool store_int64_t(int64_t from, bool unsigned_flag);
   virtual bool store_decimal(const my_decimal *);
   virtual bool store(const char *from, size_t length, CHARSET_INFO *cs);
   virtual bool store(const char *from, size_t length,
@@ -129,5 +129,5 @@ void net_send_error(THD *thd, uint sql_errno=0, const char *err=0);
 void net_end_statement(THD *thd);
 uchar *net_store_data(uchar *to,const uchar *from, size_t length);
 uchar *net_store_data(uchar *to,int32 from);
-uchar *net_store_data(uchar *to,longlong from);
+uchar *net_store_data(uchar *to,int64_t from);
 

@@ -5539,7 +5539,7 @@ store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
     /* Add a true condition to outer joins that have no common columns. */
     if (table_ref_2->outer_join &&
         !table_ref_1->on_expr && !table_ref_2->on_expr)
-      table_ref_2->on_expr= new Item_int((longlong) 1,1);   /* Always true. */
+      table_ref_2->on_expr= new Item_int((int64_t) 1,1);   /* Always true. */
 
     /* Change this table reference to become a leaf for name resolution. */
     if (left_neighbor)
@@ -5673,7 +5673,7 @@ int setup_wild(THD *thd,
 
           Item_int do not need fix_fields() because it is basic constant.
         */
-        it.replace(new Item_int("Not_used", (longlong) 1,
+        it.replace(new Item_int("Not_used", (int64_t) 1,
                                 MY_INT64_NUM_DECIMAL_DIGITS));
       }
       else if (insert_fields(thd, ((Item_field*) item)->context,

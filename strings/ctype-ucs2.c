@@ -315,7 +315,7 @@ bs:
 }
 
 
-static longlong 
+static int64_t 
 my_strntoll_mb2_or_mb4(CHARSET_INFO *cs,
                        const char *nptr, size_t l, int base,
                        char **endptr, int *err)
@@ -427,7 +427,7 @@ bs:
     return negative ? LONGLONG_MIN : LONGLONG_MAX;
   }
   
-  return (negative ? -((longlong)res) : (longlong)res);
+  return (negative ? -((int64_t)res) : (int64_t)res);
 }
 
 
@@ -536,7 +536,7 @@ bs:
     return (~(uint64_t) 0);
   }
 
-  return (negative ? -((longlong) res) : (longlong) res);
+  return (negative ? -((int64_t) res) : (int64_t) res);
 }
 
 
@@ -662,7 +662,7 @@ my_l10tostr_mb2_or_mb4(CHARSET_INFO *cs,
 
 static size_t
 my_ll10tostr_mb2_or_mb4(CHARSET_INFO *cs,
-                        char *dst, size_t len, int radix, longlong val)
+                        char *dst, size_t len, int radix, int64_t val)
 {
   char buffer[65];
   register char *p, *db, *de;
@@ -726,7 +726,7 @@ cnv:
 
 
 #ifdef HAVE_CHARSET_mb2
-static longlong
+static int64_t
 my_strtoll10_mb2(CHARSET_INFO *cs __attribute__((unused)),
                  const char *nptr, char **endptr, int *error)
 {
@@ -856,25 +856,25 @@ my_strtoll10_mb2(CHARSET_INFO *cs __attribute__((unused)),
                                      k > cutoff3)))
     goto overflow;
   li=i*LFACTOR2+ (uint64_t) j*100 + k;
-  return (longlong) li;
+  return (int64_t) li;
 
 overflow:                                        /* *endptr is set here */
   *error= MY_ERRNO_ERANGE;
-  return negative ? LONGLONG_MIN : (longlong) ULONGLONG_MAX;
+  return negative ? LONGLONG_MIN : (int64_t) ULONGLONG_MAX;
 
 end_i:
   *endptr= (char*) s;
-  return (negative ? ((longlong) -(long) i) : (longlong) i);
+  return (negative ? ((int64_t) -(long) i) : (int64_t) i);
 
 end_i_and_j:
   li= (uint64_t) i * lfactor[(size_t) (s-start) / 2] + j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end3:
   li=(uint64_t) i*LFACTOR+ (uint64_t) j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end4:
   li=(uint64_t) i*LFACTOR1+ (uint64_t) j * 10 + k;
@@ -883,9 +883,9 @@ end4:
   {
    if (li > MAX_NEGATIVE_NUMBER)
      goto overflow;
-   return -((longlong) li);
+   return -((int64_t) li);
   }
-  return (longlong) li;
+  return (int64_t) li;
 
 no_conv:
   /* There was no number to convert.  */
@@ -2322,7 +2322,7 @@ my_snprintf_utf32(CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static longlong
+static int64_t
 my_strtoll10_utf32(CHARSET_INFO *cs __attribute__((unused)),
                    const char *nptr, char **endptr, int *error)
 {
@@ -2453,25 +2453,25 @@ my_strtoll10_utf32(CHARSET_INFO *cs __attribute__((unused)),
                                      k > cutoff3)))
     goto overflow;
   li= i * LFACTOR2+ (uint64_t) j * 100 + k;
-  return (longlong) li;
+  return (int64_t) li;
 
 overflow:                                        /* *endptr is set here */
   *error= MY_ERRNO_ERANGE;
-  return negative ? LONGLONG_MIN : (longlong) ULONGLONG_MAX;
+  return negative ? LONGLONG_MIN : (int64_t) ULONGLONG_MAX;
 
 end_i:
   *endptr= (char*) s;
-  return (negative ? ((longlong) -(long) i) : (longlong) i);
+  return (negative ? ((int64_t) -(long) i) : (int64_t) i);
 
 end_i_and_j:
   li= (uint64_t) i * lfactor[(size_t) (s-start) / 4] + j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end3:
   li= (uint64_t) i*LFACTOR+ (uint64_t) j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end4:
   li= (uint64_t) i*LFACTOR1+ (uint64_t) j * 10 + k;
@@ -2480,9 +2480,9 @@ end4:
   {
    if (li > MAX_NEGATIVE_NUMBER)
      goto overflow;
-   return -((longlong) li);
+   return -((int64_t) li);
   }
-  return (longlong) li;
+  return (int64_t) li;
 
 no_conv:
   /* There was no number to convert.  */

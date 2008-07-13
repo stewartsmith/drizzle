@@ -228,8 +228,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 #define MY_GCVT_MAX_FIELD_WIDTH (DBL_DIG + 4 + max(5, MAX_DECPT_FOR_F_FORMAT))
   
 
-extern char *llstr(longlong value,char *buff);
-extern char *ullstr(longlong value,char *buff);
+extern char *llstr(int64_t value,char *buff);
+extern char *ullstr(int64_t value,char *buff);
 #ifndef HAVE_STRTOUL
 extern long strtol(const char *str, char **ptr, int base);
 extern ulong strtoul(const char *str, char **ptr, int base);
@@ -239,10 +239,10 @@ extern char *int2str(long val, char *dst, int radix, int upcase);
 extern char *int10_to_str(long val,char *dst,int radix);
 extern char *str2int(const char *src,int radix,long lower,long upper,
 			 long *val);
-longlong my_strtoll10(const char *nptr, char **endptr, int *error);
+int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
 #if SIZEOF_LONG == SIZEOF_LONG_LONG
-#define longlong2str(A,B,C) int2str((A),(B),(C),1)
-#define longlong10_to_str(A,B,C) int10_to_str((A),(B),(C))
+#define int64_t2str(A,B,C) int2str((A),(B),(C),1)
+#define int64_t10_to_str(A,B,C) int10_to_str((A),(B),(C))
 #undef strtoll
 #define strtoll(A,B,C) strtol((A),(B),(C))
 #define strtoull(A,B,C) strtoul((A),(B),(C))
@@ -253,10 +253,10 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error);
 #define HAVE_STRTOLL
 #endif
 #else
-extern char *longlong2str(longlong val,char *dst,int radix);
-extern char *longlong10_to_str(longlong val,char *dst,int radix);
+extern char *int64_t2str(int64_t val,char *dst,int radix);
+extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
 #if (!defined(HAVE_STRTOULL) || defined(NO_STRTOLL_PROTO))
-extern longlong strtoll(const char *str, char **ptr, int base);
+extern int64_t strtoll(const char *str, char **ptr, int base);
 extern uint64_t strtoull(const char *str, char **ptr, int base);
 #endif
 #endif

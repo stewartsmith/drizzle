@@ -3796,7 +3796,7 @@ The minimum value for this variable is 4096.",
    "Don't use the fast sort index method to created index if the temporary file would get bigger than this.",
    (char**) &global_system_variables.myisam_max_sort_file_size,
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
-   GET_ULL, REQUIRED_ARG, (longlong) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
+   GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
   {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
    "Number of threads to use when repairing MyISAM tables. The value of 1 disables parallel repair.",
@@ -3914,7 +3914,7 @@ The minimum value for this variable is 4096.",
    "Maximum space to use for all relay logs.",
    (char**) &relay_log_space_limit,
    (char**) &relay_log_space_limit, 0, GET_ULL, REQUIRED_ARG, 0L, 0L,
-   (longlong) ULONG_MAX, 0, 1, 0},
+   (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave_compressed_protocol", OPT_SLAVE_COMPRESSED_PROTOCOL,
    "Use compression on master/slave protocol.",
    (char**) &opt_slave_compressed_protocol,
@@ -3929,7 +3929,7 @@ The minimum value for this variable is 4096.",
    "it failed with a deadlock or elapsed lock wait timeout, "
    "before giving up and stopping.",
    (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
-   GET_ULONG, REQUIRED_ARG, 10L, 0L, (longlong) ULONG_MAX, 0, 1, 0},
+   GET_ULONG, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
    "Allow slave to batch requests.",
    (char**) &slave_allow_batching, (char**) &slave_allow_batching,
@@ -4094,7 +4094,7 @@ static int show_slave_received_heartbeats(THD *thd __attribute__((__unused__)),
     var->type= SHOW_LONGLONG;
     var->value= buff;
     pthread_mutex_lock(&active_mi->rli.data_lock);
-    *((longlong *)buff)= active_mi->received_heartbeats;
+    *((int64_t *)buff)= active_mi->received_heartbeats;
     pthread_mutex_unlock(&active_mi->rli.data_lock);
   }
   else
@@ -4901,7 +4901,7 @@ static void get_options(int *argc,char **argv)
 
   /* long_query_time is in microseconds */
   global_system_variables.long_query_time= max_system_variables.long_query_time=
-    (longlong) (long_query_time * 1000000.0);
+    (int64_t) (long_query_time * 1000000.0);
 
   if (opt_short_log_format)
     opt_specialflag|= SPECIAL_SHORT_LOG_FORMAT;

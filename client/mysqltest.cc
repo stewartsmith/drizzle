@@ -5724,7 +5724,7 @@ static void mark_progress(struct st_command* command __attribute__((unused)),
   timer-= progress_start;
 
   /* Milliseconds since start */
-  end= longlong2str(timer, buf, 10);
+  end= int64_t2str(timer, buf, 10);
   dynstr_append_mem(&ds_progress, buf, (int)(end-buf));
   dynstr_append_mem(&ds_progress, "\t", 1);
 
@@ -6233,7 +6233,7 @@ void timer_output(void)
   {
     char buf[32], *end;
     uint64_t timer= timer_now() - timer_start;
-    end= longlong2str(timer, buf, 10);
+    end= int64_t2str(timer, buf, 10);
     str_to_file(timer_file,buf, (int) (end-buf));
     /* Timer has been written to the file, don't use it anymore */
     timer_file= 0;
@@ -7419,7 +7419,7 @@ void replace_dynstr_append(DYNAMIC_STRING *ds, const char *val)
 void replace_dynstr_append_uint(DYNAMIC_STRING *ds, uint val)
 {
   char buff[22]; /* This should be enough for any int */
-  char *end= longlong10_to_str(val, buff, 10);
+  char *end= int64_t10_to_str(val, buff, 10);
   replace_dynstr_append_mem(ds, buff, end - buff);
 }
 

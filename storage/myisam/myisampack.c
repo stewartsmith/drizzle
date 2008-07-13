@@ -736,8 +736,8 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   {
     if (old_length)
       VOID(printf("%.4g%%     \n",
-                  (((longlong) (old_length - new_length)) * 100.0 /
-                   (longlong) old_length)));
+                  (((int64_t) (old_length - new_length)) * 100.0 /
+                   (int64_t) old_length)));
     else
       puts("Empty file saved in compressed format");
   }
@@ -1121,18 +1121,18 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
       {
         total_count+= count->counts[idx];
         DBUG_PRINT("info", ("counts[0x%02x]: %12s", idx,
-                            llstr((longlong) count->counts[idx], llbuf)));
+                            llstr((int64_t) count->counts[idx], llbuf)));
         if (verbose >= 2)
           VOID(printf("counts[0x%02x]: %12s\n", idx,
-                      llstr((longlong) count->counts[idx], llbuf)));
+                      llstr((int64_t) count->counts[idx], llbuf)));
       }
     }
-    DBUG_PRINT("info", ("total:        %12s", llstr((longlong) total_count,
+    DBUG_PRINT("info", ("total:        %12s", llstr((int64_t) total_count,
                                                     llbuf)));
     if ((verbose >= 2) && total_count)
     {
       VOID(printf("total:        %12s\n",
-                  llstr((longlong) total_count, llbuf)));
+                  llstr((int64_t) total_count, llbuf)));
     }
   }
 
@@ -2768,7 +2768,7 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
                  my_progname, error));
   }
   if (verbose >= 2)
-    VOID(printf("wrote %s records.\n", llstr((longlong) record_count, llbuf)));
+    VOID(printf("wrote %s records.\n", llstr((int64_t) record_count, llbuf)));
 
   my_afree((uchar*) record);
   mrg->ref_length=max_pack_length;

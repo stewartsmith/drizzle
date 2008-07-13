@@ -22,7 +22,7 @@
 #include <errno.h>
 
 typedef void (*init_func_p)(const struct my_option *option, char **variable,
-                            longlong value);
+                            int64_t value);
 
 static void default_reporter(enum loglevel level, const char *format, ...);
 my_error_reporter my_getopt_error_reporter= &default_reporter;
@@ -30,16 +30,16 @@ my_error_reporter my_getopt_error_reporter= &default_reporter;
 static int findopt(char *optpat, uint length,
 		   const struct my_option **opt_res,
 		   char **ffname);
-static longlong getopt_ll(char *arg, const struct my_option *optp, int *err);
+static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err);
 static uint64_t getopt_ull(char *arg, const struct my_option *optp,
 			    int *err);
 static double getopt_double(char *arg, const struct my_option *optp, int *err);
 static void init_variables(const struct my_option *options,
                            init_func_p init_one_value);
 static void init_one_value(const struct my_option *option, char **variable,
-			   longlong value);
+			   int64_t value);
 static void fini_one_value(const struct my_option *option, char **variable,
-			   longlong value);
+			   int64_t value);
 static int setval(const struct my_option *opts, char* *value, char *argument,
 		  bool set_maximum_value);
 static char *check_struct_option(char *cur_arg, char *key_name);
@@ -616,7 +616,7 @@ static int setval(const struct my_option *opts, char* *value, char *argument,
       *((long*) result_pos)= (long) getopt_ull(argument, opts, &err);
       break;
     case GET_LL:
-      *((longlong*) result_pos)= getopt_ll(argument, opts, &err);
+      *((int64_t*) result_pos)= getopt_ll(argument, opts, &err);
       break;
     case GET_ULL:
       *((uint64_t*) result_pos)= getopt_ull(argument, opts, &err);
@@ -733,10 +733,10 @@ bool getopt_compare_strings(register const char *s, register const char *t,
   be k|K for kilo, m|M for mega or g|G for giga.
 */
 
-static longlong eval_num_suffix(char *argument, int *error, char *option_name)
+static int64_t eval_num_suffix(char *argument, int *error, char *option_name)
 {
   char *endchar;
-  longlong num;
+  int64_t num;
   
   *error= 0;
   errno= 0;
@@ -776,9 +776,9 @@ static longlong eval_num_suffix(char *argument, int *error, char *option_name)
   In case of an error, set error value in *err.
 */
 
-static longlong getopt_ll(char *arg, const struct my_option *optp, int *err)
+static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err)
 {
-  longlong num=eval_num_suffix(arg, err, (char*) optp->name);
+  int64_t num=eval_num_suffix(arg, err, (char*) optp->name);
   return getopt_ll_limit_value(num, optp, NULL);
 }
 
@@ -789,10 +789,10 @@ static longlong getopt_ll(char *arg, const struct my_option *optp, int *err)
   Returns "fixed" value.
 */
 
-longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
+int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
                                bool *fix)
 {
-  longlong old= num;
+  int64_t old= num;
   bool adjusted= FALSE;
   char buf1[255], buf2[255];
   uint64_t block_size= (optp->block_size ? (uint64_t) optp->block_size : 1L);
@@ -806,17 +806,17 @@ longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
 
   switch ((optp->var_type & GET_TYPE_MASK)) {
   case GET_INT:
-    if (num > (longlong) INT_MAX)
+    if (num > (int64_t) INT_MAX)
     {
-      num= ((longlong) INT_MAX);
+      num= ((int64_t) INT_MAX);
       adjusted= TRUE;
     }
     break;
   case GET_LONG:
 #if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (longlong) LONG_MAX)
+    if (num > (int64_t) LONG_MAX)
     {
-      num= ((longlong) LONG_MAX);
+      num= ((int64_t) LONG_MAX);
       adjusted= TRUE;
     }
 #endif
@@ -827,7 +827,7 @@ longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
   }
 
   num= ((num - optp->sub_size) / block_size);
-  num= (longlong) (num * block_size);
+  num= (int64_t) (num * block_size);
 
   if (num < optp->min_value)
   {
@@ -958,7 +958,7 @@ static double getopt_double(char *arg, const struct my_option *optp, int *err)
 */
 
 static void init_one_value(const struct my_option *option, char** variable,
-			   longlong value)
+			   int64_t value)
 {
   DBUG_ENTER("init_one_value");
   switch ((option->var_type & GET_TYPE_MASK)) {
@@ -979,7 +979,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     *((ulong*) variable)= (ulong) value;
     break;
   case GET_LL:
-    *((longlong*) variable)= (longlong) value;
+    *((int64_t*) variable)= (int64_t) value;
     break;
   case GET_ULL:
   case GET_SET:
@@ -992,7 +992,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     /*
       Do not clear variable value if it has no default value.
       The default value may already be set.
-      NOTE: To avoid compiler warnings, we first cast longlong to intptr,
+      NOTE: To avoid compiler warnings, we first cast int64_t to intptr,
       so that the value has the same size as a pointer.
     */
     if ((char*) (intptr) value)
@@ -1002,7 +1002,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     /*
       Do not clear variable value if it has no default value.
       The default value may already be set.
-      NOTE: To avoid compiler warnings, we first cast longlong to intptr,
+      NOTE: To avoid compiler warnings, we first cast int64_t to intptr,
       so that the value has the same size as a pointer.
     */
     if ((char*) (intptr) value)
@@ -1028,7 +1028,7 @@ static void init_one_value(const struct my_option *option, char** variable,
 */
 
 static void fini_one_value(const struct my_option *option, char **variable,
-			   longlong value __attribute__ ((unused)))
+			   int64_t value __attribute__ ((unused)))
 {
   DBUG_ENTER("fini_one_value");
   switch ((option->var_type & GET_TYPE_MASK)) {
@@ -1236,10 +1236,10 @@ void my_print_variables(const struct my_option *options)
 	printf("%lu\n", *((ulong*) value));
 	break;
       case GET_LL:
-	printf("%s\n", llstr(*((longlong*) value), buff));
+	printf("%s\n", llstr(*((int64_t*) value), buff));
 	break;
       case GET_ULL:
-	longlong2str(*((uint64_t*) value), buff, 10);
+	int64_t2str(*((uint64_t*) value), buff, 10);
 	printf("%s\n", buff);
 	break;
       case GET_DOUBLE:

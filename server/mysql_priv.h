@@ -1026,7 +1026,7 @@ void sp_prepare_create_field(THD *thd, Create_field *sql_field);
 int prepare_create_field(Create_field *sql_field, 
 			 uint *blob_columns, 
 			 int *timestamps, int *timestamps_with_niladic,
-			 longlong table_flags);
+			 int64_t table_flags);
 bool mysql_create_table(THD *thd,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         Alter_info *alter_info,
@@ -1904,7 +1904,7 @@ void make_truncated_value_warning(THD *thd, MYSQL_ERROR::enum_warning_level leve
 
 bool date_add_interval(MYSQL_TIME *ltime, interval_type int_type, INTERVAL interval);
 bool calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign,
-                    longlong *seconds_out, long *microseconds_out);
+                    int64_t *seconds_out, long *microseconds_out);
 
 extern LEX_STRING interval_type_to_name[];
 
@@ -1941,7 +1941,7 @@ ha_rows filesort(THD *thd, TABLE *form,struct st_sort_field *sortorder,
                  ha_rows *examined_rows);
 void filesort_free_buffers(TABLE *table, bool full);
 void change_double_for_sort(double nr,uchar *to);
-double my_double_round(double value, longlong dec, bool dec_unsigned,
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
 int get_quick_record(SQL_SELECT *select);
 

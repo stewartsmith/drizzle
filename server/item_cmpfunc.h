@@ -121,7 +121,7 @@ class Item_func_truth : public Item_bool_func
 {
 public:
   virtual bool val_bool();
-  virtual longlong val_int();
+  virtual int64_t val_int();
   virtual void fix_length_and_dec();
   virtual void print(String *str, enum_query_type query_type);
 
@@ -236,7 +236,7 @@ public:
   bool fix_fields(THD *, Item **);
   bool fix_left(THD *thd, Item **ref);
   bool is_null();
-  longlong val_int();
+  int64_t val_int();
   void cleanup();
   const char *func_name() const { return "<in_optimizer>"; }
   Item_cache **get_cache() { return &cache; }
@@ -371,7 +371,7 @@ class Item_func_not :public Item_bool_func
 {
 public:
   Item_func_not(Item *a) :Item_bool_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return NOT_FUNC; }
   const char *func_name() const { return "not"; }
   Item *neg_transformer(THD *thd);
@@ -414,7 +414,7 @@ class Item_func_trig_cond: public Item_bool_func
   bool *trig_var;
 public:
   Item_func_trig_cond(Item *a, bool *f) : Item_bool_func(a) { trig_var= f; }
-  longlong val_int() { return *trig_var ? args[0]->val_int() : 1; }
+  int64_t val_int() { return *trig_var ? args[0]->val_int() : 1; }
   enum Functype functype() const { return TRIG_COND_FUNC; };
   const char *func_name() const { return "trigcond"; };
   bool const_item() const { return false; }
@@ -439,7 +439,7 @@ public:
     {}
   virtual void top_level_item() { abort_on_null= 1; }
   bool top_level() { return abort_on_null; }
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return NOT_ALL_FUNC; }
   const char *func_name() const { return "<not>"; }
   virtual void print(String *str, enum_query_type query_type);
@@ -455,7 +455,7 @@ class Item_func_nop_all :public Item_func_not_all
 public:
 
   Item_func_nop_all(Item *a) :Item_func_not_all(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "<nop>"; }
   Item *neg_transformer(THD *thd);
 };
@@ -465,7 +465,7 @@ class Item_func_eq :public Item_bool_rowready_func2
 {
 public:
   Item_func_eq(Item *a,Item *b) :Item_bool_rowready_func2(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return EQ_FUNC; }
   enum Functype rev_functype() const { return EQ_FUNC; }
   cond_result eq_cmp_result() const { return COND_TRUE; }
@@ -477,7 +477,7 @@ class Item_func_equal :public Item_bool_rowready_func2
 {
 public:
   Item_func_equal(Item *a,Item *b) :Item_bool_rowready_func2(a,b) {};
-  longlong val_int();
+  int64_t val_int();
   void fix_length_and_dec();
   table_map not_null_tables() const { return 0; }
   enum Functype functype() const { return EQUAL_FUNC; }
@@ -492,7 +492,7 @@ class Item_func_ge :public Item_bool_rowready_func2
 {
 public:
   Item_func_ge(Item *a,Item *b) :Item_bool_rowready_func2(a,b) {};
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return GE_FUNC; }
   enum Functype rev_functype() const { return LE_FUNC; }
   cond_result eq_cmp_result() const { return COND_TRUE; }
@@ -505,7 +505,7 @@ class Item_func_gt :public Item_bool_rowready_func2
 {
 public:
   Item_func_gt(Item *a,Item *b) :Item_bool_rowready_func2(a,b) {};
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return GT_FUNC; }
   enum Functype rev_functype() const { return LT_FUNC; }
   cond_result eq_cmp_result() const { return COND_FALSE; }
@@ -518,7 +518,7 @@ class Item_func_le :public Item_bool_rowready_func2
 {
 public:
   Item_func_le(Item *a,Item *b) :Item_bool_rowready_func2(a,b) {};
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return LE_FUNC; }
   enum Functype rev_functype() const { return GE_FUNC; }
   cond_result eq_cmp_result() const { return COND_TRUE; }
@@ -531,7 +531,7 @@ class Item_func_lt :public Item_bool_rowready_func2
 {
 public:
   Item_func_lt(Item *a,Item *b) :Item_bool_rowready_func2(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return LT_FUNC; }
   enum Functype rev_functype() const { return GT_FUNC; }
   cond_result eq_cmp_result() const { return COND_FALSE; }
@@ -544,7 +544,7 @@ class Item_func_ne :public Item_bool_rowready_func2
 {
 public:
   Item_func_ne(Item *a,Item *b) :Item_bool_rowready_func2(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return NE_FUNC; }
   cond_result eq_cmp_result() const { return COND_FALSE; }
   optimize_type select_optimize() const { return OPTIMIZE_KEY; } 
@@ -598,7 +598,7 @@ public:
   Arg_comparator ge_cmp, le_cmp;
   Item_func_between(Item *a, Item *b, Item *c)
     :Item_func_opt_neg(a, b, c), compare_as_dates(false) {}
-  longlong val_int();
+  int64_t val_int();
   optimize_type select_optimize() const { return OPTIMIZE_KEY; }
   enum Functype functype() const   { return BETWEEN; }
   const char *func_name() const { return "between"; }
@@ -615,7 +615,7 @@ class Item_func_strcmp :public Item_bool_func2
 {
 public:
   Item_func_strcmp(Item *a,Item *b) :Item_bool_func2(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   optimize_type select_optimize() const { return OPTIMIZE_NONE; }
   const char *func_name() const { return "strcmp"; }
 
@@ -644,7 +644,7 @@ public:
   {
     allowed_arg_cols= 0;    // Fetch this value from first argument
   }
-  longlong val_int();
+  int64_t val_int();
   void fix_length_and_dec();
   const char *func_name() const { return "interval"; }
   uint decimal_precision() const { return 2; }
@@ -659,7 +659,7 @@ protected:
 public:
   Item_func_coalesce(List<Item> &list) :Item_func_numhybrid(list) {}
   double real_op();
-  longlong int_op();
+  int64_t int_op();
   String *str_op(String *);
   my_decimal *decimal_op(my_decimal *);
   void fix_length_and_dec();
@@ -678,7 +678,7 @@ protected:
 public:
   Item_func_ifnull(Item *a, Item *b) :Item_func_coalesce(a,b) {}
   double real_op();
-  longlong int_op();
+  int64_t int_op();
   String *str_op(String *str);
   my_decimal *decimal_op(my_decimal *);
   enum_field_types field_type() const;
@@ -698,7 +698,7 @@ public:
     :Item_func(a,b,c), cached_result_type(INT_RESULT)
   {}
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return cached_result_type; }
@@ -718,7 +718,7 @@ public:
     :Item_bool_func2(a,b), cached_result_type(INT_RESULT)
   {}
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return cached_result_type; }
@@ -816,7 +816,7 @@ public:
   Item_result result_type() { return STRING_RESULT; }
 };
 
-class in_longlong :public in_vector
+class in_int64_t :public in_vector
 {
 protected:
   /*
@@ -824,13 +824,13 @@ protected:
     elements of this vector. tmp is used in finding if a given value is in 
     the list. 
   */
-  struct packed_longlong 
+  struct packed_int64_t 
   {
-    longlong val;
-    longlong unsigned_flag;  // Use longlong, not bool, to preserve alignment
+    int64_t val;
+    int64_t unsigned_flag;  // Use int64_t, not bool, to preserve alignment
   } tmp;
 public:
-  in_longlong(uint elements);
+  in_int64_t(uint elements);
   void set(uint pos,Item *item);
   uchar *get_value(Item *item);
   
@@ -840,17 +840,17 @@ public:
       We're created a signed INT, this may not be correct in 
       general case (see BUG#19342).
     */
-    return new Item_int((longlong)0);
+    return new Item_int((int64_t)0);
   }
   void value_to_item(uint pos, Item *item)
   {
-    ((Item_int*) item)->value= ((packed_longlong*) base)[pos].val;
+    ((Item_int*) item)->value= ((packed_int64_t*) base)[pos].val;
     ((Item_int*) item)->unsigned_flag= (my_bool)
-      ((packed_longlong*) base)[pos].unsigned_flag;
+      ((packed_int64_t*) base)[pos].unsigned_flag;
   }
   Item_result result_type() { return INT_RESULT; }
 
-  friend int cmp_longlong(void *cmp_arg, packed_longlong *a,packed_longlong *b);
+  friend int cmp_int64_t(void *cmp_arg, packed_int64_t *a,packed_int64_t *b);
 };
 
 
@@ -860,7 +860,7 @@ public:
   If the left item is a constant one then its value is cached in the
   lval_cache variable.
 */
-class in_datetime :public in_longlong
+class in_datetime :public in_int64_t
 {
 public:
   THD *thd;
@@ -870,11 +870,11 @@ public:
   Item *lval_cache;
 
   in_datetime(Item *warn_item_arg, uint elements)
-    :in_longlong(elements), thd(current_thd), warn_item(warn_item_arg),
+    :in_int64_t(elements), thd(current_thd), warn_item(warn_item_arg),
      lval_cache(0) {};
   void set(uint pos,Item *item);
   uchar *get_value(Item *item);
-  friend int cmp_longlong(void *cmp_arg, packed_longlong *a,packed_longlong *b);
+  friend int cmp_int64_t(void *cmp_arg, packed_int64_t *a,packed_int64_t *b);
 };
 
 
@@ -992,7 +992,7 @@ public:
 
 class cmp_item_int :public cmp_item
 {
-  longlong value;
+  int64_t value;
 public:
   cmp_item_int() {}                           /* Remove gcc warning */
   void store_value(Item *item)
@@ -1152,7 +1152,7 @@ public:
     bzero(&cmp_items, sizeof(cmp_items));
   }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *);
   my_decimal *val_decimal(my_decimal *);
   bool fix_fields(THD *thd, Item **ref);
@@ -1209,7 +1209,7 @@ public:
     bzero(&cmp_items, sizeof(cmp_items));
     allowed_arg_cols= 0;  // Fetch this value from first argument
   }
-  longlong val_int();
+  int64_t val_int();
   bool fix_fields(THD *, Item **);
   void fix_length_and_dec();
   uint decimal_precision() const { return 1; }
@@ -1270,10 +1270,10 @@ public:
 class Item_func_isnull :public Item_bool_func
 {
 protected:
-  longlong cached_value;
+  int64_t cached_value;
 public:
   Item_func_isnull(Item *a) :Item_bool_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return ISNULL_FUNC; }
   void fix_length_and_dec()
   {
@@ -1288,7 +1288,7 @@ public:
     {
       used_tables_cache= 0;			/* is always false */
       const_item_cache= 1;
-      cached_value= (longlong) 0;
+      cached_value= (int64_t) 0;
     }
     else
     {
@@ -1297,7 +1297,7 @@ public:
           !with_subselect)
       {
 	/* Remember if the value is always NULL or never NULL */
-	cached_value= (longlong) args[0]->is_null();
+	cached_value= (int64_t) args[0]->is_null();
       }
     }
   }
@@ -1323,7 +1323,7 @@ public:
     :Item_func_isnull(a), owner(ow)
   {}
   enum Functype functype() const { return ISNOTNULLTEST_FUNC; }
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "<is_not_null_test>"; }
   void update_used_tables();
   /*
@@ -1339,7 +1339,7 @@ class Item_func_isnotnull :public Item_bool_func
   bool abort_on_null;
 public:
   Item_func_isnotnull(Item *a) :Item_bool_func(a), abort_on_null(0) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return ISNOTNULL_FUNC; }
   void fix_length_and_dec()
   {
@@ -1384,7 +1384,7 @@ public:
     :Item_bool_func2(a,b), canDoTurboBM(false), pattern(0), pattern_len(0), 
      bmGs(0), bmBc(0), escape_item(escape_arg),
      escape_used_in_parsing(escape_used) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return LIKE_FUNC; }
   optimize_type select_optimize() const;
   cond_result eq_cmp_result() const { return COND_TRUE; }
@@ -1541,7 +1541,7 @@ public:
   void merge(Item_equal *item);
   void update_const();
   enum Functype functype() const { return MULT_EQUAL_FUNC; }
-  longlong val_int(); 
+  int64_t val_int(); 
   const char *func_name() const { return "multiple equal"; }
   optimize_type select_optimize() const { return OPTIMIZE_EQUAL; }
   void sort(Item_field_cmpfunc cmp, void *arg);
@@ -1599,7 +1599,7 @@ public:
   Item_cond_and(THD *thd, Item_cond_and *item) :Item_cond(thd, item) {}
   Item_cond_and(List<Item> &list_arg): Item_cond(list_arg) {}
   enum Functype functype() const { return COND_AND_FUNC; }
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "and"; }
   table_map not_null_tables() const
   { return abort_on_null ? not_null_tables_cache: and_tables_cache; }
@@ -1630,7 +1630,7 @@ public:
   Item_cond_or(THD *thd, Item_cond_or *item) :Item_cond(thd, item) {}
   Item_cond_or(List<Item> &list_arg): Item_cond(list_arg) {}
   enum Functype functype() const { return COND_OR_FUNC; }
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "or"; }
   table_map not_null_tables() const { return and_tables_cache; }
   Item* copy_andor_structure(THD *thd)
@@ -1665,7 +1665,7 @@ public:
   enum Functype functype() const { return COND_XOR_FUNC; }
   /* TODO: remove the next line when implementing XOR optimization */
   enum Type type() const { return FUNC_ITEM; }
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "xor"; }
   void top_level_item() {}
 };

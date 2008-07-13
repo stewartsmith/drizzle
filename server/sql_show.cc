@@ -893,7 +893,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
     {
       char *end;
       packet->append(STRING_WITH_LEN(" AUTO_INCREMENT="));
-      end= longlong10_to_str(create_info.auto_increment_value, buff,10);
+      end= int64_t10_to_str(create_info.auto_increment_value, buff,10);
       packet->append(buff, (uint) (end - buff));
     }
 
@@ -921,7 +921,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
     {
       char *end;
       packet->append(STRING_WITH_LEN(" MIN_ROWS="));
-      end= longlong10_to_str(share->min_rows, buff, 10);
+      end= int64_t10_to_str(share->min_rows, buff, 10);
       packet->append(buff, (uint) (end- buff));
     }
 
@@ -929,7 +929,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
     {
       char *end;
       packet->append(STRING_WITH_LEN(" MAX_ROWS="));
-      end= longlong10_to_str(share->max_rows, buff, 10);
+      end= int64_t10_to_str(share->max_rows, buff, 10);
       packet->append(buff, (uint) (end - buff));
     }
 
@@ -937,7 +937,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
     {
       char *end;
       packet->append(STRING_WITH_LEN(" AVG_ROW_LENGTH="));
-      end= longlong10_to_str(share->avg_row_length, buff,10);
+      end= int64_t10_to_str(share->avg_row_length, buff,10);
       packet->append(buff, (uint) (end - buff));
     }
 
@@ -969,7 +969,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
     {
       char *end;
       packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-      end= longlong10_to_str(table->s->key_block_size, buff, 10);
+      end= int64_t10_to_str(table->s->key_block_size, buff, 10);
       packet->append(buff, (uint) (end - buff));
     }
     table->file->append_create_info(packet);
@@ -1074,7 +1074,7 @@ static void store_key_options(THD *thd __attribute__((__unused__)),
       table->s->key_block_size != key_info->block_size)
   {
     packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
-    end= longlong10_to_str(key_info->block_size, buff, 10);
+    end= int64_t10_to_str(key_info->block_size, buff, 10);
     packet->append(buff, (uint) (end - buff));
   }
 
@@ -1249,7 +1249,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
 
       restore_record(table, s->default_values);
       /* ID */
-      table->field[0]->store((longlong) tmp->thread_id, TRUE);
+      table->field[0]->store((int64_t) tmp->thread_id, TRUE);
       /* USER */
       val= tmp_sctx->user ? tmp_sctx->user :
             (tmp->system_thread ? "system user" : "unauthenticated user");
@@ -1579,10 +1579,10 @@ static bool show_status_array(THD *thd, const char *wild,
           value= ((char *) status_var + (uint64_t) value);
           /* fall through */
         case SHOW_LONGLONG:
-          end= longlong10_to_str(*(longlong*) value, buff, 10);
+          end= int64_t10_to_str(*(int64_t*) value, buff, 10);
           break;
         case SHOW_HA_ROWS:
-          end= longlong10_to_str((longlong) *(ha_rows*) value, buff, 10);
+          end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
           break;
         case SHOW_BOOL:
           end= strmov(buff, *(bool*) value ? "ON" : "OFF");
@@ -1620,7 +1620,7 @@ static bool show_status_array(THD *thd, const char *wild,
           break;
         case SHOW_KEY_CACHE_LONGLONG:
           value= (char*) dflt_key_cache + (ulong)value;
-	  end= longlong10_to_str(*(longlong*) value, buff, 10);
+	  end= int64_t10_to_str(*(int64_t*) value, buff, 10);
 	  break;
         case SHOW_UNDEF:
           break;                                        // Return empty string
@@ -2847,23 +2847,23 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
     }
     tmp_buff= (char *) ha_resolve_storage_engine_name(tmp_db_type);
     table->field[4]->store(tmp_buff, strlen(tmp_buff), cs);
-    table->field[5]->store((longlong) share->frm_version, TRUE);
+    table->field[5]->store((int64_t) share->frm_version, TRUE);
 
     ptr=option_buff;
     if (share->min_rows)
     {
       ptr=strmov(ptr," min_rows=");
-      ptr=longlong10_to_str(share->min_rows,ptr,10);
+      ptr=int64_t10_to_str(share->min_rows,ptr,10);
     }
     if (share->max_rows)
     {
       ptr=strmov(ptr," max_rows=");
-      ptr=longlong10_to_str(share->max_rows,ptr,10);
+      ptr=int64_t10_to_str(share->max_rows,ptr,10);
     }
     if (share->avg_row_length)
     {
       ptr=strmov(ptr," avg_row_length=");
-      ptr=longlong10_to_str(share->avg_row_length,ptr,10);
+      ptr=int64_t10_to_str(share->avg_row_length,ptr,10);
     }
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
       ptr=strmov(ptr," pack_keys=1");
@@ -2936,21 +2936,21 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       table->field[6]->store(tmp_buff, strlen(tmp_buff), cs);
       if (!tables->schema_table)
       {
-        table->field[7]->store((longlong) file->stats.records, TRUE);
+        table->field[7]->store((int64_t) file->stats.records, TRUE);
         table->field[7]->set_notnull();
       }
-      table->field[8]->store((longlong) file->stats.mean_rec_length, TRUE);
-      table->field[9]->store((longlong) file->stats.data_file_length, TRUE);
+      table->field[8]->store((int64_t) file->stats.mean_rec_length, TRUE);
+      table->field[9]->store((int64_t) file->stats.data_file_length, TRUE);
       if (file->stats.max_data_file_length)
       {
-        table->field[10]->store((longlong) file->stats.max_data_file_length,
+        table->field[10]->store((int64_t) file->stats.max_data_file_length,
                                 TRUE);
       }
-      table->field[11]->store((longlong) file->stats.index_file_length, TRUE);
-      table->field[12]->store((longlong) file->stats.delete_length, TRUE);
+      table->field[11]->store((int64_t) file->stats.index_file_length, TRUE);
+      table->field[12]->store((int64_t) file->stats.delete_length, TRUE);
       if (show_table->found_next_number_field)
       {
-        table->field[13]->store((longlong) file->stats.auto_increment_value,
+        table->field[13]->store((int64_t) file->stats.auto_increment_value,
                                 TRUE);
         table->field[13]->set_notnull();
       }
@@ -2977,7 +2977,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       }
       if (file->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
       {
-        table->field[18]->store((longlong) file->checksum(), TRUE);
+        table->field[18]->store((int64_t) file->checksum(), TRUE);
         table->field[18]->set_notnull();
       }
     }
@@ -3024,14 +3024,14 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
     uint32 octet_max_length= field->max_display_length();
     if (is_blob && octet_max_length != (uint32) 4294967295U)
       octet_max_length /= field->charset()->mbmaxlen;
-    longlong char_max_len= is_blob ? 
-      (longlong) octet_max_length / field->charset()->mbminlen :
-      (longlong) octet_max_length / field->charset()->mbmaxlen;
+    int64_t char_max_len= is_blob ? 
+      (int64_t) octet_max_length / field->charset()->mbminlen :
+      (int64_t) octet_max_length / field->charset()->mbmaxlen;
     /* CHARACTER_MAXIMUM_LENGTH column*/
     table->field[offset + 1]->store(char_max_len, TRUE);
     table->field[offset + 1]->set_notnull();
     /* CHARACTER_OCTET_LENGTH column */
-    table->field[offset + 2]->store((longlong) octet_max_length, TRUE);
+    table->field[offset + 2]->store((int64_t) octet_max_length, TRUE);
     table->field[offset + 2]->set_notnull();
   }
 
@@ -3065,13 +3065,13 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
   /* NUMERIC_PRECISION column */
   if (field_length >= 0)
   {
-    table->field[offset + 3]->store((longlong) field_length, TRUE);
+    table->field[offset + 3]->store((int64_t) field_length, TRUE);
     table->field[offset + 3]->set_notnull();
   }
   /* NUMERIC_SCALE column */
   if (decimals >= 0)
   {
-    table->field[offset + 4]->store((longlong) decimals, TRUE);
+    table->field[offset + 4]->store((int64_t) decimals, TRUE);
     table->field[offset + 4]->set_notnull();
   }
   if (field->has_charset())
@@ -3174,7 +3174,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
     table->field[2]->store(table_name->str, table_name->length, cs);
     table->field[3]->store(field->field_name, strlen(field->field_name),
                            cs);
-    table->field[4]->store((longlong) count, TRUE);
+    table->field[4]->store((int64_t) count, TRUE);
 
     if (get_field_default_value(thd, timestamp_field, field, &type, 0))
     {
@@ -3243,7 +3243,7 @@ int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__(
       table->field[1]->store(tmp_cs->name, strlen(tmp_cs->name), scs);
       comment= tmp_cs->comment ? tmp_cs->comment : "";
       table->field[2]->store(comment, strlen(comment), scs);
-      table->field[3]->store((longlong) tmp_cs->mbmaxlen, TRUE);
+      table->field[3]->store((int64_t) tmp_cs->mbmaxlen, TRUE);
       if (schema_table_store_record(thd, table))
         return 1;
     }
@@ -3279,12 +3279,12 @@ int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__
 	restore_record(table, s->default_values);
 	table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
         table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-        table->field[2]->store((longlong) tmp_cl->number, TRUE);
+        table->field[2]->store((int64_t) tmp_cl->number, TRUE);
         tmp_buff= (tmp_cl->state & MY_CS_PRIMARY) ? "Yes" : "";
 	table->field[3]->store(tmp_buff, strlen(tmp_buff), scs);
         tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
 	table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
-        table->field[5]->store((longlong) tmp_cl->strxfrm_multiply, TRUE);
+        table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, TRUE);
         if (schema_table_store_record(thd, table))
           return 1;
       }
@@ -3362,11 +3362,11 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
         restore_record(table, s->default_values);
         table->field[1]->store(db_name->str, db_name->length, cs);
         table->field[2]->store(table_name->str, table_name->length, cs);
-        table->field[3]->store((longlong) ((key_info->flags &
+        table->field[3]->store((int64_t) ((key_info->flags &
                                             HA_NOSAME) ? 0 : 1), TRUE);
         table->field[4]->store(db_name->str, db_name->length, cs);
         table->field[5]->store(key_info->name, strlen(key_info->name), cs);
-        table->field[6]->store((longlong) (j+1), TRUE);
+        table->field[6]->store((int64_t) (j+1), TRUE);
         str=(key_part->field ? key_part->field->field_name :
              "?unknown field?");
         table->field[7]->store(str, strlen(str), cs);
@@ -3384,7 +3384,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
           {
             ha_rows records=(show_table->file->stats.records /
                              key->rec_per_key[j]);
-            table->field[9]->store((longlong) records, TRUE);
+            table->field[9]->store((int64_t) records, TRUE);
             table->field[9]->set_notnull();
           }
           str= show_table->file->index_type(i);
@@ -3394,7 +3394,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
              key_part->length !=
              show_table->s->field[key_part->fieldnr-1]->key_length()))
         {
-          table->field[10]->store((longlong) key_part->length /
+          table->field[10]->store((int64_t) key_part->length /
                                   key_part->field->charset()->mbmaxlen, TRUE);
           table->field[10]->set_notnull();
         }
@@ -3497,7 +3497,7 @@ static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
 void store_key_column_usage(TABLE *table, LEX_STRING *db_name,
                             LEX_STRING *table_name, const char *key_name,
                             uint key_len, const char *con_type, uint con_len,
-                            longlong idx)
+                            int64_t idx)
 {
   CHARSET_INFO *cs= system_charset_info;
   table->field[1]->store(db_name->str, db_name->length, cs);
@@ -3505,7 +3505,7 @@ void store_key_column_usage(TABLE *table, LEX_STRING *db_name,
   table->field[4]->store(db_name->str, db_name->length, cs);
   table->field[5]->store(table_name->str, table_name->length, cs);
   table->field[6]->store(con_type, con_len, cs);
-  table->field[7]->store((longlong) idx, TRUE);
+  table->field[7]->store((int64_t) idx, TRUE);
 }
 
 
@@ -3549,7 +3549,7 @@ static int get_schema_key_column_usage_record(THD *thd,
                                  strlen(key_info->name), 
                                  key_part->field->field_name, 
                                  strlen(key_part->field->field_name),
-                                 (longlong) f_idx);
+                                 (int64_t) f_idx);
           if (schema_table_store_record(thd, table))
             return(1);
         }
@@ -3575,8 +3575,8 @@ static int get_schema_key_column_usage_record(THD *thd,
                                f_key_info->forein_id->str,
                                f_key_info->forein_id->length,
                                f_info->str, f_info->length,
-                               (longlong) f_idx);
-        table->field[8]->store((longlong) f_idx, TRUE);
+                               (int64_t) f_idx);
+        table->field[8]->store((int64_t) f_idx, TRUE);
         table->field[8]->set_notnull();
         table->field[9]->store(f_key_info->referenced_db->str,
                                f_key_info->referenced_db->length,
@@ -3613,8 +3613,8 @@ int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__u
     restore_record(table, s->default_values);
     table->field[0]->store(open_list->db, strlen(open_list->db), cs);
     table->field[1]->store(open_list->table, strlen(open_list->table), cs);
-    table->field[2]->store((longlong) open_list->in_use, TRUE);
-    table->field[3]->store((longlong) open_list->locked, TRUE);
+    table->field[2]->store((int64_t) open_list->in_use, TRUE);
+    table->field[3]->store((int64_t) open_list->locked, TRUE);
     if (schema_table_store_record(thd, table))
       return(1);
   }
@@ -3901,7 +3901,7 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
         return(NULL);
       break;
     case MYSQL_TYPE_NEWDECIMAL:
-      if (!(item= new Item_decimal((longlong) fields_info->value, false)))
+      if (!(item= new Item_decimal((int64_t) fields_info->value, false)))
       {
         return(0);
       }

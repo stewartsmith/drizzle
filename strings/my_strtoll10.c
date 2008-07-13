@@ -62,7 +62,7 @@ static unsigned long lfactor[9]=
     will not read characters after *endptr.
  
   RETURN VALUES
-    Value of string as a signed/unsigned longlong integer
+    Value of string as a signed/unsigned int64_t integer
 
     if no error and endptr != NULL, it will be set to point at the character
     after the number
@@ -82,7 +82,7 @@ static unsigned long lfactor[9]=
 */
 
 
-longlong my_strtoll10(const char *nptr, char **endptr, int *error)
+int64_t my_strtoll10(const char *nptr, char **endptr, int *error)
 {
   const char *s, *end, *start, *n_end, *true_end;
   char *dummy;
@@ -208,25 +208,25 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error)
                                      k > cutoff3)))
     goto overflow;
   li=i*LFACTOR2+ (uint64_t) j*100 + k;
-  return (longlong) li;
+  return (int64_t) li;
 
 overflow:					/* *endptr is set here */
   *error= MY_ERRNO_ERANGE;
-  return negative ? LONGLONG_MIN : (longlong) ULONGLONG_MAX;
+  return negative ? LONGLONG_MIN : (int64_t) ULONGLONG_MAX;
 
 end_i:
   *endptr= (char*) s;
-  return (negative ? ((longlong) -(long) i) : (longlong) i);
+  return (negative ? ((int64_t) -(long) i) : (int64_t) i);
 
 end_i_and_j:
   li= (uint64_t) i * lfactor[(uint) (s-start)] + j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end3:
   li=(uint64_t) i*LFACTOR+ (uint64_t) j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end4:
   li=(uint64_t) i*LFACTOR1+ (uint64_t) j * 10 + k;
@@ -235,9 +235,9 @@ end4:
   {
    if (li > MAX_NEGATIVE_NUMBER)
      goto overflow;
-   return -((longlong) li);
+   return -((int64_t) li);
   }
-  return (longlong) li;
+  return (int64_t) li;
 
 no_conv:
   /* There was no number to convert.  */

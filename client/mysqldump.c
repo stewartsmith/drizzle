@@ -359,7 +359,7 @@ static struct my_option my_long_options[] =
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET, "",
     (char**) &opt_max_allowed_packet, (char**) &opt_max_allowed_packet, 0,
     GET_ULONG, REQUIRED_ARG, 24*1024*1024, 4096,
-   (longlong) 2L*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
+   (int64_t) 2L*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH, "",
     (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0,
     GET_ULONG, REQUIRED_ARG, 1024*1024L-1025, 4096, 16*1024L*1024L,
@@ -3180,7 +3180,7 @@ static ulong find_set(TYPELIB *lib, const char *x, uint length,
         *err_len= var_len;
       }
       else
-        found|= ((longlong) 1 << (find - 1));
+        found|= ((int64_t) 1 << (find - 1));
       if (pos == end)
         break;
       start= pos + 1;

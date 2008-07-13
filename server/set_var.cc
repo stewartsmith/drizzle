@@ -116,7 +116,7 @@ static void fix_server_id(THD *thd, enum_var_type type);
 static uint64_t fix_unsigned(THD *, uint64_t, const struct my_option *);
 static bool get_unsigned(THD *thd, set_var *var);
 bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
-                          const char *name, longlong val);
+                          const char *name, int64_t val);
 static KEY_CACHE *create_key_cache(const char *name, uint length);
 static uchar *get_error_count(THD *thd);
 static uchar *get_warning_count(THD *thd);
@@ -798,7 +798,7 @@ static void fix_completion_type(THD *thd __attribute__((unused)),
 static int check_completion_type(THD *thd __attribute__((__unused__)),
                                  set_var *var)
 {
-  longlong val= var->value->val_int();
+  int64_t val= var->value->val_int();
   if (val < 0 || val > 2)
   {
     char buf[64];
@@ -1033,7 +1033,7 @@ static void fix_server_id(THD *thd __attribute__((__unused__)),
 
 
 bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
-                          const char *name, longlong val)
+                          const char *name, int64_t val)
 {
   if (fixed)
   {
@@ -1057,7 +1057,7 @@ static uint64_t fix_unsigned(THD *thd, uint64_t num,
   bool fixed= false;
   uint64_t out= getopt_ull_limit_value(num, option_limits, &fixed);
 
-  throw_bounds_warning(thd, fixed, true, option_limits->name, (longlong) num);
+  throw_bounds_warning(thd, fixed, true, option_limits->name, (int64_t) num);
   return out;
 }
 
@@ -1067,7 +1067,7 @@ static bool get_unsigned(THD *thd __attribute__((__unused__)), set_var *var)
     var->save_result.uint64_t_value= (uint64_t) var->value->val_int();
   else
   {
-    longlong v= var->value->val_int();
+    int64_t v= var->value->val_int();
     var->save_result.uint64_t_value= (uint64_t) ((v < 0) ? 0 : v);
   }
   return 0;
@@ -1101,7 +1101,7 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
     {
       tmp= ULONG_MAX;
       throw_bounds_warning(thd, true, true, name,
-                           (longlong) var->save_result.uint64_t_value);
+                           (int64_t) var->save_result.uint64_t_value);
     }
 #endif
     *value= (ulong) tmp;
@@ -1194,7 +1194,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((ulong) tmp > max_system_variables.*offset)
   {
-    throw_bounds_warning(thd, true, true, name, (longlong) tmp);
+    throw_bounds_warning(thd, true, true, name, (int64_t) tmp);
     tmp= max_system_variables.*offset;
   }
   
@@ -1204,7 +1204,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
   else if (tmp > ULONG_MAX)
   {
     tmp= ULONG_MAX;
-    throw_bounds_warning(thd, true, true, name, (longlong) var->save_result.uint64_t_value);
+    throw_bounds_warning(thd, true, true, name, (int64_t) var->save_result.uint64_t_value);
   }
 #endif
   
@@ -1513,9 +1513,9 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
   }
   case SHOW_LONGLONG:
   {
-    longlong value;
+    int64_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
-    value= *(longlong*) value_ptr(thd, var_type, base);
+    value= *(int64_t*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_int(value);
   }
@@ -2665,12 +2665,12 @@ void sys_var_thd_lc_time_names::set_default(THD *thd, enum_var_type type)
 bool sys_var_microseconds::update(THD *thd, set_var *var)
 {
   double num= var->value->val_real();
-  longlong microseconds;
+  int64_t microseconds;
   if (num > (double) option_limits->max_value)
     num= (double) option_limits->max_value;
   if (num < (double) option_limits->min_value)
     num= (double) option_limits->min_value;
-  microseconds= (longlong) (num * 1000000.0 + 0.5);
+  microseconds= (int64_t) (num * 1000000.0 + 0.5);
   if (var->type == OPT_GLOBAL)
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
@@ -2685,7 +2685,7 @@ bool sys_var_microseconds::update(THD *thd, set_var *var)
 
 void sys_var_microseconds::set_default(THD *thd, enum_var_type type)
 {
-  longlong microseconds= (longlong) (option_limits->def_value * 1000000.0);
+  int64_t microseconds= (int64_t) (option_limits->def_value * 1000000.0);
   if (type == OPT_GLOBAL)
   {
     pthread_mutex_lock(&LOCK_global_system_variables);

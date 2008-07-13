@@ -930,32 +930,32 @@ my_bool hp_if_null_in_key(HP_KEYDEF *keydef, const uchar *record)
 void heap_update_auto_increment(HP_INFO *info, const uchar *record)
 {
   uint64_t value= 0;			/* Store unsigned values here */
-  longlong s_value= 0;			/* Store signed values here */
+  int64_t s_value= 0;			/* Store signed values here */
 
   HA_KEYSEG *keyseg= info->s->keydef[info->s->auto_key - 1].seg;
   const uchar *key=  (uchar*) record + keyseg->start;
 
   switch (info->s->auto_key_type) {
   case HA_KEYTYPE_INT8:
-    s_value= (longlong) *(char*)key;
+    s_value= (int64_t) *(char*)key;
     break;
   case HA_KEYTYPE_BINARY:
     value=(uint64_t)  *(uchar*) key;
     break;
   case HA_KEYTYPE_SHORT_INT:
-    s_value= (longlong) sint2korr(key);
+    s_value= (int64_t) sint2korr(key);
     break;
   case HA_KEYTYPE_USHORT_INT:
     value=(uint64_t) uint2korr(key);
     break;
   case HA_KEYTYPE_LONG_INT:
-    s_value= (longlong) sint4korr(key);
+    s_value= (int64_t) sint4korr(key);
     break;
   case HA_KEYTYPE_ULONG_INT:
     value=(uint64_t) uint4korr(key);
     break;
   case HA_KEYTYPE_INT24:
-    s_value= (longlong) sint3korr(key);
+    s_value= (int64_t) sint3korr(key);
     break;
   case HA_KEYTYPE_UINT24:
     value=(uint64_t) uint3korr(key);

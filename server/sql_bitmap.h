@@ -184,12 +184,12 @@ public:
   my_bool is_subset(const Bitmap<64>& map2) const { return !(map & ~map2.map); }
   my_bool is_overlapping(const Bitmap<64>& map2) const { return (map & map2.map)!= 0; }
   my_bool operator==(const Bitmap<64>& map2) const { return map == map2.map; }
-  char *print(char *buf) const { longlong2str(map,buf,16); return buf; }
+  char *print(char *buf) const { int64_t2str(map,buf,16); return buf; }
   uint64_t to_uint64_t() const { return map; }
 };
 
 
-/* An iterator to quickly walk over bits in unlonglong bitmap. */
+/* An iterator to quickly walk over bits in unint64_t bitmap. */
 class Table_map_iterator
 {
   uint64_t bmp;

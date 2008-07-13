@@ -34,8 +34,8 @@ int decimal2string(decimal_t *from, char *to, int *to_len,
                    char filler);
 int decimal2uint64_t(decimal_t *from, uint64_t *to);
 int uint64_t2decimal(uint64_t from, decimal_t *to);
-int decimal2longlong(decimal_t *from, longlong *to);
-int longlong2decimal(longlong from, decimal_t *to);
+int decimal2int64_t(decimal_t *from, int64_t *to);
+int int64_t2decimal(int64_t from, decimal_t *to);
 int decimal2double(decimal_t *from, double *to);
 int double2decimal(double from, decimal_t *to);
 int decimal_actual_fraction(decimal_t *from);

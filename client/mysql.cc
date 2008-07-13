@@ -1455,7 +1455,7 @@ static struct my_option my_long_options[] =
    "Max packet length to send to, or receive from server",
    (char**) &opt_max_allowed_packet, (char**) &opt_max_allowed_packet, 0,
    GET_ULONG, REQUIRED_ARG, 16 *1024L*1024L, 4096,
-   (longlong) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
+   (int64_t) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
    "Buffer for TCP/IP and socket communication",
    (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0, GET_ULONG,

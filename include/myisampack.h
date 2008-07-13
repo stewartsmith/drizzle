@@ -38,7 +38,7 @@
                                   ((int32) (((uchar*) (A))[2]) << 8) +\
                                   ((int32) (((uchar*) (A))[1]) << 16) +\
                                   ((int32) ((int16) ((char*) (A))[0]) << 24)))
-#define mi_sint8korr(A) ((longlong) mi_uint8korr(A))
+#define mi_sint8korr(A) ((int64_t) mi_uint8korr(A))
 #define mi_uint2korr(A) ((uint16) (((uint16) (((uchar*) (A))[1])) +\
                                    ((uint16) (((uchar*) (A))[0]) << 8)))
 #define mi_uint3korr(A) ((uint32) (((uint32) (((uchar*) (A))[2])) +\

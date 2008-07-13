@@ -1371,7 +1371,7 @@ public:
 
   uint64_t  limit_found_rows;
   uint64_t  options;           /* Bitmap of states */
-  longlong   row_count_func;    /* For the ROW_COUNT() function */
+  int64_t   row_count_func;    /* For the ROW_COUNT() function */
   ha_rows    cuted_fields;
 
   /*
@@ -2436,7 +2436,7 @@ class user_var_entry
   bool unsigned_flag;
 
   double val_real(my_bool *null_value);
-  longlong val_int(my_bool *null_value) const;
+  int64_t val_int(my_bool *null_value) const;
   String *val_str(my_bool *null_value, String *str, uint decimals);
   my_decimal *val_decimal(my_bool *null_value, my_decimal *result);
   DTCollation collation;

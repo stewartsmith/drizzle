@@ -141,7 +141,7 @@ public:
     }
     str_charset=cs;
   }
-  bool set(longlong num, CHARSET_INFO *cs);
+  bool set(int64_t num, CHARSET_INFO *cs);
   bool set(uint64_t num, CHARSET_INFO *cs);
   bool set(double num,uint decimals, CHARSET_INFO *cs);
 

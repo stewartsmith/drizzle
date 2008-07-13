@@ -671,7 +671,7 @@ fractional:
 
 int check_time_range(struct st_mysql_time *my_time, int *warning) 
 {
-  longlong hour;
+  int64_t hour;
 
   if (my_time->minute >= 60 || my_time->second >= 60)
     return 1;
@@ -1094,7 +1094,7 @@ int my_TIME_to_str(const MYSQL_TIME *l_time, char *to)
     Datetime value in YYYYMMDDHHMMSS format.
 */
 
-longlong number_to_datetime(longlong nr, MYSQL_TIME *time_res,
+int64_t number_to_datetime(int64_t nr, MYSQL_TIME *time_res,
                             uint flags, int *was_cut)
 {
   long part1,part2;
@@ -1146,7 +1146,7 @@ longlong number_to_datetime(longlong nr, MYSQL_TIME *time_res,
 
  ok:
   part1=(long) (nr / 1000000LL);
-  part2=(long) (nr - (longlong) part1 * 1000000LL);
+  part2=(long) (nr - (int64_t) part1 * 1000000LL);
   time_res->year=  (int) (part1/10000L);  part1%=10000L;
   time_res->month= (int) part1 / 100;
   time_res->day=   (int) part1 % 100;

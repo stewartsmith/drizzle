@@ -85,7 +85,7 @@ double Item_str_func::val_real()
 }
 
 
-longlong Item_str_func::val_int()
+int64_t Item_str_func::val_int()
 {
   assert(fixed == 1);
   int err;
@@ -95,7 +95,7 @@ longlong Item_str_func::val_int()
   return (res ?
 	  my_strntoll(res->charset(), res->ptr(), res->length(), 10, NULL,
 		      &err) :
-	  (longlong) 0);
+	  (int64_t) 0);
 }
 
 
@@ -675,7 +675,7 @@ String *Item_func_insert::val_str(String *str)
 {
   assert(fixed == 1);
   String *res,*res2;
-  longlong start, length;  /* must be longlong to avoid truncation */
+  int64_t start, length;  /* must be int64_t to avoid truncation */
 
   null_value=0;
   res=args[0]->val_str(str);
@@ -793,8 +793,8 @@ String *Item_func_left::val_str(String *str)
   assert(fixed == 1);
   String *res= args[0]->val_str(str);
 
-  /* must be longlong to avoid truncation */
-  longlong length= args[1]->val_int();
+  /* must be int64_t to avoid truncation */
+  int64_t length= args[1]->val_int();
   uint char_pos;
 
   if ((null_value=(args[0]->null_value || args[1]->null_value)))
@@ -838,8 +838,8 @@ String *Item_func_right::val_str(String *str)
 {
   assert(fixed == 1);
   String *res= args[0]->val_str(str);
-  /* must be longlong to avoid truncation */
-  longlong length= args[1]->val_int();
+  /* must be int64_t to avoid truncation */
+  int64_t length= args[1]->val_int();
 
   if ((null_value=(args[0]->null_value || args[1]->null_value)))
     return 0; /* purecov: inspected */
@@ -871,12 +871,12 @@ String *Item_func_substr::val_str(String *str)
 {
   assert(fixed == 1);
   String *res  = args[0]->val_str(str);
-  /* must be longlong to avoid truncation */
-  longlong start= args[1]->val_int();
+  /* must be int64_t to avoid truncation */
+  int64_t start= args[1]->val_int();
   /* Assumes that the maximum length of a String is < INT_MAX32. */
   /* Limit so that code sees out-of-bound value properly. */
-  longlong length= arg_count == 3 ? args[2]->val_int() : INT_MAX32;
-  longlong tmp_length;
+  int64_t length= arg_count == 3 ? args[2]->val_int() : INT_MAX32;
+  int64_t tmp_length;
 
   if ((null_value=(args[0]->null_value || args[1]->null_value ||
 		   (arg_count == 3 && args[2]->null_value))))
@@ -907,7 +907,7 @@ String *Item_func_substr::val_str(String *str)
   tmp_length= res->length() - start;
   length= min(length, tmp_length);
 
-  if (!start && (longlong) res->length() == length)
+  if (!start && (int64_t) res->length() == length)
     return res;
   tmp_value.set(*res, (uint32) start, (uint32) length);
   return &tmp_value;
@@ -1587,7 +1587,7 @@ String *Item_func_format::val_str(String *str)
     double nr= args[0]->val_real();
     if ((null_value=args[0]->null_value))
       return 0; /* purecov: inspected */
-    nr= my_double_round(nr, (longlong) dec, false, false);
+    nr= my_double_round(nr, (int64_t) dec, false, false);
     /* Here default_charset() is right as this is not an automatic conversion */
     str->set_real(nr, dec, default_charset());
     if (isnan(nr))
@@ -1662,7 +1662,7 @@ double Item_func_elt::val_real()
 }
 
 
-longlong Item_func_elt::val_int()
+int64_t Item_func_elt::val_int()
 {
   assert(fixed == 1);
   uint tmp;
@@ -1670,7 +1670,7 @@ longlong Item_func_elt::val_int()
   if ((tmp=(uint) args[0]->val_int()) == 0 || tmp >= arg_count)
     return 0;
 
-  longlong result= args[tmp]->val_int();
+  int64_t result= args[tmp]->val_int();
   null_value= args[tmp]->null_value;
   return result;
 }
@@ -1865,8 +1865,8 @@ void Item_func_repeat::fix_length_and_dec()
   collation.set(args[0]->collation);
   if (args[1]->const_item())
   {
-    /* must be longlong to avoid truncation */
-    longlong count= args[1]->val_int();
+    /* must be int64_t to avoid truncation */
+    int64_t count= args[1]->val_int();
 
     /* Assumes that the maximum length of a String is < INT_MAX32. */
     /* Set here so that rest of code sees out-of-bound value as such. */
@@ -1898,8 +1898,8 @@ String *Item_func_repeat::val_str(String *str)
   assert(fixed == 1);
   uint length,tot_length;
   char *to;
-  /* must be longlong to avoid truncation */
-  longlong count= args[1]->val_int();
+  /* must be int64_t to avoid truncation */
+  int64_t count= args[1]->val_int();
   String *res= args[0]->val_str(str);
 
   if (args[0]->null_value || args[1]->null_value)
@@ -1985,9 +1985,9 @@ String *Item_func_rpad::val_str(String *str)
   uint32 res_byte_length,res_char_length,pad_char_length,pad_byte_length;
   char *to;
   const char *ptr_pad;
-  /* must be longlong to avoid truncation */
-  longlong count= args[1]->val_int();
-  longlong byte_count;
+  /* must be int64_t to avoid truncation */
+  int64_t count= args[1]->val_int();
+  int64_t byte_count;
   String *res= args[0]->val_str(str);
   String *rpad= args[2]->val_str(&rpad_str);
 
@@ -2086,9 +2086,9 @@ String *Item_func_lpad::val_str(String *str)
 {
   assert(fixed == 1);
   uint32 res_char_length,pad_char_length;
-  /* must be longlong to avoid truncation */
-  longlong count= args[1]->val_int();
-  longlong byte_count;
+  /* must be int64_t to avoid truncation */
+  int64_t count= args[1]->val_int();
+  int64_t byte_count;
   String *res= args[0]->val_str(&tmp_value);
   String *pad= args[2]->val_str(&lpad_str);
 
@@ -2151,7 +2151,7 @@ String *Item_func_conv::val_str(String *str)
   assert(fixed == 1);
   String *res= args[0]->val_str(str);
   char *endptr,ans[65],*ptr;
-  longlong dec;
+  int64_t dec;
   int from_base= (int) args[1]->val_int();
   int to_base= (int) args[2]->val_int();
   int err;
@@ -2170,10 +2170,10 @@ String *Item_func_conv::val_str(String *str)
     dec= my_strntoll(res->charset(), res->ptr(), res->length(),
                      -from_base, &endptr, &err);
   else
-    dec= (longlong) my_strntoull(res->charset(), res->ptr(), res->length(),
+    dec= (int64_t) my_strntoull(res->charset(), res->ptr(), res->length(),
                                  from_base, &endptr, &err);
 
-  ptr= longlong2str(dec, ans, to_base);
+  ptr= int64_t2str(dec, ans, to_base);
   if (str->copy(ans, (uint32) (ptr-ans), default_charset()))
     return &my_empty_string;
   return str;
@@ -2361,14 +2361,14 @@ String *Item_func_hex::val_str(String *str)
   {
     uint64_t dec;
     char ans[65],*ptr;
-    /* Return hex of unsigned longlong value */
+    /* Return hex of unsigned int64_t value */
     if (args[0]->result_type() == REAL_RESULT ||
         args[0]->result_type() == DECIMAL_RESULT)
     {
       double val= args[0]->val_real();
       if ((val <= (double) LONGLONG_MIN) || 
           (val >= (double) (uint64_t) ULONGLONG_MAX))
-        dec=  ~(longlong) 0;
+        dec=  ~(int64_t) 0;
       else
         dec= (uint64_t) (val + (val > 0 ? 0.5 : -0.5));
     }
@@ -2377,7 +2377,7 @@ String *Item_func_hex::val_str(String *str)
 
     if ((null_value= args[0]->null_value))
       return 0;
-    ptr= longlong2str(dec,ans,16);
+    ptr= int64_t2str(dec,ans,16);
     if (str->copy(ans,(uint32) (ptr-ans),default_charset()))
       return &my_empty_string;			// End of memory
     return str;
@@ -2682,7 +2682,7 @@ null:
   return 0;
 }
 
-longlong Item_func_uncompressed_length::val_int()
+int64_t Item_func_uncompressed_length::val_int()
 {
   assert(fixed == 1);
   String *res= args[0]->val_str(&value);
@@ -2704,7 +2704,7 @@ longlong Item_func_uncompressed_length::val_int()
   return uint4korr(res->ptr()) & 0x3FFFFFFF;
 }
 
-longlong Item_func_crc32::val_int()
+int64_t Item_func_crc32::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -2714,7 +2714,7 @@ longlong Item_func_crc32::val_int()
     return 0; /* purecov: inspected */
   }
   null_value=0;
-  return (longlong) crc32(0L, (uchar*)res->ptr(), res->length());
+  return (int64_t) crc32(0L, (uchar*)res->ptr(), res->length());
 }
 
 #ifdef HAVE_COMPRESS

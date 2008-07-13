@@ -44,7 +44,7 @@ ulong STDCALL net_field_length(uchar **packet)
   return (ulong) uint4korr(pos+1);
 }
 
-/* The same as above but returns longlong */
+/* The same as above but returns int64_t */
 my_uint64_t net_field_length_ll(uchar **packet)
 {
   register uchar *pos= *packet;

@@ -152,11 +152,11 @@ public:
     }
     str_charset=cs;
   }
-  bool set_int(longlong num, bool unsigned_flag, CHARSET_INFO *cs);
-  bool set(longlong num, CHARSET_INFO *cs)
+  bool set_int(int64_t num, bool unsigned_flag, CHARSET_INFO *cs);
+  bool set(int64_t num, CHARSET_INFO *cs)
   { return set_int(num, false, cs); }
   bool set(uint64_t num, CHARSET_INFO *cs)
-  { return set_int((longlong)num, true, cs); }
+  { return set_int((int64_t)num, true, cs); }
   bool set_real(double num,uint decimals, CHARSET_INFO *cs);
 
   /*

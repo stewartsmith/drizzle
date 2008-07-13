@@ -1408,9 +1408,9 @@ bool mysql_xa_recover(THD *thd)
     if (xs->xa_state==XA_PREPARED)
     {
       protocol->prepare_for_resend();
-      protocol->store_longlong((longlong)xs->xid.formatID, false);
-      protocol->store_longlong((longlong)xs->xid.gtrid_length, false);
-      protocol->store_longlong((longlong)xs->xid.bqual_length, false);
+      protocol->store_int64_t((int64_t)xs->xid.formatID, false);
+      protocol->store_int64_t((int64_t)xs->xid.gtrid_length, false);
+      protocol->store_int64_t((int64_t)xs->xid.bqual_length, false);
       protocol->store(xs->xid.data, xs->xid.gtrid_length+xs->xid.bqual_length,
                       &my_charset_bin);
       if (protocol->write())
@@ -2128,7 +2128,7 @@ int handler::update_auto_increment()
     }
   }
 
-  if (unlikely(table->next_number_field->store((longlong) nr, true)))
+  if (unlikely(table->next_number_field->store((int64_t) nr, true)))
   {
     /*
       first test if the query was aborted due to strict mode constraints
@@ -2145,7 +2145,7 @@ int handler::update_auto_increment()
       interval will cause a duplicate key).
     */
     nr= prev_insert_id(table->next_number_field->val_int(), variables);
-    if (unlikely(table->next_number_field->store((longlong) nr, true)))
+    if (unlikely(table->next_number_field->store((int64_t) nr, true)))
       nr= table->next_number_field->val_int();
   }
   if (append)

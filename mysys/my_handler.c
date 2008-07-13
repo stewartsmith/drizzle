@@ -426,7 +426,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
     }
     case HA_KEYTYPE_LONGLONG:
     {
-      longlong ll_a,ll_b;
+      int64_t ll_a,ll_b;
       ll_a= mi_sint8korr(a);
       ll_b= mi_sint8korr(b);
       if (piks && (flag = CMP_NUM(ll_a,ll_b)))

@@ -92,14 +92,14 @@ bool String::realloc(uint32 alloc_length)
   return false;
 }
 
-bool String::set_int(longlong num, bool unsigned_flag, CHARSET_INFO *cs)
+bool String::set_int(int64_t num, bool unsigned_flag, CHARSET_INFO *cs)
 {
   uint l=20*cs->mbmaxlen+1;
   int base= unsigned_flag ? 10 : -10;
 
   if (alloc(l))
     return true;
-  str_length=(uint32) (cs->cset->longlong10_to_str)(cs,Ptr,l,base,num);
+  str_length=(uint32) (cs->cset->int64_t10_to_str)(cs,Ptr,l,base,num);
   str_charset=cs;
   return false;
 }

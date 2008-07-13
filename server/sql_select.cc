@@ -1411,7 +1411,7 @@ JOIN::optimize()
   if (!conds && outer_join)
   {
     /* Handle the case where we have an OUTER JOIN without a WHERE */
-    conds=new Item_int((longlong) 1,1);	// Always true
+    conds=new Item_int((int64_t) 1,1);	// Always true
   }
   select= make_select(*table, const_table_map,
                       const_table_map, conds, 1, &error);
@@ -1455,7 +1455,7 @@ JOIN::optimize()
       (select_options & SELECT_DESCRIBE) &&
       select_lex->master_unit() == &thd->lex->unit) // upper level SELECT
   {
-    conds=new Item_int((longlong) 0,1);	// Always false
+    conds=new Item_int((int64_t) 0,1);	// Always false
   }
   if (make_join_select(this, select, conds))
   {
@@ -7064,7 +7064,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             in the ON part of an OUTER JOIN. In this case we want the code
             below to check if we should use 'quick' instead.
           */
-          tmp= new Item_int((longlong) 1,1);	// Always true
+          tmp= new Item_int((int64_t) 1,1);	// Always true
         }
 
       }
@@ -8988,7 +8988,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
     {
       int n= cond_equal.current_level.elements + eq_list.elements;
       if (n == 0)
-        return new Item_int((longlong) 1,1);
+        return new Item_int((int64_t) 1,1);
       else if (n == 1)
       {
         if ((item_equal= cond_equal.current_level.pop()))
@@ -9252,7 +9252,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels,
   List<Item> eq_list;
   Item_func_eq *eq_item= 0;
   if (((Item *) item_equal)->const_item() && !item_equal->val_int())
-    return new Item_int((longlong) 0,1); 
+    return new Item_int((int64_t) 0,1); 
   Item *item_const= item_equal->get_const();
   Item_equal_iterator it(*item_equal);
   Item *head;
@@ -9297,7 +9297,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels,
   if (!cond && !eq_list.head())
   {
     if (!eq_item)
-      return new Item_int((longlong) 1,1);
+      return new Item_int((int64_t) 1,1);
     return eq_item;
   }
 
@@ -10643,10 +10643,10 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
       Select an integer type with the minimal fit precision.
       MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
       Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into 
-      Field_long : make them Field_longlong.  
+      Field_long : make them Field_int64_t.  
     */
     if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
-      new_field=new Field_longlong(item->max_length, maybe_null,
+      new_field=new Field_int64_t(item->max_length, maybe_null,
                                    item->name, item->unsigned_flag);
     else
       new_field=new Field_long(item->max_length, maybe_null,
@@ -16509,7 +16509,7 @@ calc_group_buffer(JOIN *join,ORDER *group)
         key_length+= sizeof(double);
         break;
       case INT_RESULT:
-        key_length+= sizeof(longlong);
+        key_length+= sizeof(int64_t);
         break;
       case DECIMAL_RESULT:
         key_length+= my_decimal_get_binary_size(group_item->max_length - 
@@ -17837,7 +17837,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	item_list.push_back(new Item_string(key_info->name,
 					    strlen(key_info->name),
 					    system_charset_info));
-        length= longlong2str(tab->ref.key_length, keylen_str_buf, 10) - 
+        length= int64_t2str(tab->ref.key_length, keylen_str_buf, 10) - 
                 keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, length,
                                             system_charset_info));
@@ -17856,7 +17856,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         register uint length;
 	item_list.push_back(new Item_string(key_info->name,
 					    strlen(key_info->name),cs));
-        length= longlong2str(key_info->key_length, keylen_str_buf, 10) - 
+        length= int64_t2str(key_info->key_length, keylen_str_buf, 10) - 
                 keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, 
                                             length,
@@ -17922,7 +17922,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else
           examined_rows= join->best_positions[i].records_read; 
  
-        item_list.push_back(new Item_int((longlong) (uint64_t) examined_rows, 
+        item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows, 
                                          MY_INT64_NUM_DECIMAL_DIGITS));
 
         /* Add "filtered" field to item_list. */

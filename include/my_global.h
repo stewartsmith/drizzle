@@ -752,13 +752,13 @@ typedef unsigned long uint32;
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
 typedef uint32_t	ulong;		  /* Short for unsigned long */
 #endif
-#ifndef longlong_defined
+#ifndef int64_t_defined
 /* 
-  Using [unsigned] long long is preferable as [u]longlong because we use 
+  Using [unsigned] long long is preferable as [u]int64_t because we use 
   [unsigned] long long unconditionally in many places, 
   for example in constants with [U]LL suffix.
 */
-typedef int64_t	longlong;
+typedef int64_t	int64_t;
 #endif
 
 #ifndef HAVE_INT64
@@ -877,7 +877,7 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
                          (((uint64_t) ((uchar) (A)[4])) << 32) +       \
                          (((uint64_t) ((uchar) (A)[5])) << 40))
 #define uint8korr(A)	(*((uint64_t *) (A)))
-#define sint8korr(A)	(*((longlong *) (A)))
+#define sint8korr(A)	(*((int64_t *) (A)))
 #define int2store(T,A)	*((uint16*) (T))= (uint16) (A)
 #define int3store(T,A)  do { *(T)=  (uchar) ((A));\
                             *(T+1)=(uchar) (((uint) (A) >> 8));\
@@ -934,7 +934,7 @@ do { doubleget_union _tmp; \
 				(((int32) ((uchar) (A)[1]) << 8)) +\
 				(((int32) ((uchar) (A)[2]) << 16)) +\
 				(((int32) ((int16) (A)[3]) << 24)))
-#define sint8korr(A)	(longlong) uint8korr(A)
+#define sint8korr(A)	(int64_t) uint8korr(A)
 #define uint2korr(A)	(uint16) (((uint16) ((uchar) (A)[0])) +\
 				  ((uint16) ((uchar) (A)[1]) << 8))
 #define uint3korr(A)	(uint32) (((uint32) ((uchar) (A)[0])) +\
@@ -1100,8 +1100,8 @@ do { doubleget_union _tmp; \
 #define floatstore(T,V)  memcpy_fixed((uchar*) (T),(uchar*)(&V),sizeof(float))
 #define doubleget(V,M)	 memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(double))
 #define doublestore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(double))
-#define longlongget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
-#define longlongstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
+#define int64_tget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
+#define int64_tstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
 
 #else
 
@@ -1119,8 +1119,8 @@ do { doubleget_union _tmp; \
 #define doubleget(V,M)	 memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(double))
 #define doublestore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(double))
 #endif /* doubleget */
-#define longlongget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
-#define longlongstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
+#define int64_tget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
+#define int64_tstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
 
 #endif /* WORDS_BIGENDIAN */
 

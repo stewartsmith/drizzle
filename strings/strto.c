@@ -52,7 +52,7 @@
 #define UTYPE_MAX (~(uint64_t) 0)
 #define TYPE_MIN LONGLONG_MIN
 #define TYPE_MAX LONGLONG_MAX
-#define longtype longlong
+#define longtype int64_t
 #define ulongtype uint64_t
 #ifdef USE_UNSIGNED
 #define function ulongtype strtoull

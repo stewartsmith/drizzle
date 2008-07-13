@@ -70,6 +70,8 @@ C_MODE_END
 
 #define INSIDE_HA_INNOBASE_CC
 
+typedef int64_t longlong;
+
 /* Include necessary InnoDB headers */
 extern "C" {
 #include "../storage/innobase/include/univ.i"
@@ -2036,7 +2038,7 @@ innobase_rollback_to_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 
-	longlong2str((ulint)savepoint, name, 36);
+	int64_t2str((ulint)savepoint, name, 36);
 
 	error = (int) trx_rollback_to_savepoint_for_mysql(trx, name,
 						&mysql_binlog_cache_pos);
@@ -2066,7 +2068,7 @@ innobase_release_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 
-	longlong2str((ulint)savepoint, name, 36);
+	int64_t2str((ulint)savepoint, name, 36);
 
 	error = (int) trx_release_savepoint_for_mysql(trx, name);
 
@@ -2112,7 +2114,7 @@ innobase_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 	char name[64];
-	longlong2str((ulint)savepoint,name,36);
+	int64_t2str((ulint)savepoint,name,36);
 
 	error = (int) trx_savepoint_for_mysql(trx, name, (ib_longlong)0);
 
@@ -3789,7 +3791,7 @@ ha_innobase::update_row(
 	    && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
 		== TRX_DUP_IGNORE)  {
 
-		longlong	auto_inc;
+		int64_t	auto_inc;
 
 		auto_inc = table->next_number_field->val_int();
 
@@ -5825,7 +5827,7 @@ ha_innobase::info(
 	}
 
 	if (flag & HA_STATUS_AUTO && table->found_next_number_field) {
-		longlong	auto_inc;
+		int64_t	auto_inc;
 		int		ret;
 
 		/* The following function call can the first time fail in
@@ -7191,9 +7193,9 @@ ha_innobase::innobase_read_and_init_auto_inc(
 /*=========================================*/
 						/* out: 0 or generic MySQL
 						error code */
-        longlong*	value)			/* out: the autoinc value */
+        int64_t*	value)			/* out: the autoinc value */
 {
-	longlong	auto_inc;
+	int64_t	auto_inc;
 	ibool		stmt_start;
 	int		mysql_error = 0;
 	dict_table_t*	innodb_table = prebuilt->table;
@@ -7581,7 +7583,7 @@ uint64_t
 ha_innobase::get_mysql_bin_log_pos()
 {
 	/* trx... is ib_longlong, which is a typedef for a 64-bit integer
-	(__int64 or longlong) so it's ok to cast it to uint64_t. */
+	(__int64 or int64_t) so it's ok to cast it to uint64_t. */
 
 	return(trx_sys_mysql_bin_log_pos);
 }

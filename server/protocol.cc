@@ -444,10 +444,10 @@ uchar *net_store_data(uchar *to,int32 from)
   return to+length;
 }
 
-uchar *net_store_data(uchar *to,longlong from)
+uchar *net_store_data(uchar *to,int64_t from)
 {
   char buff[22];
-  uint length=(uint) (longlong10_to_str(from,buff,10)-buff);
+  uint length=(uint) (int64_t10_to_str(from,buff,10)-buff);
   to=net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -730,7 +730,7 @@ bool Protocol_text::store(const char *from, size_t length,
 }
 
 
-bool Protocol_text::store_tiny(longlong from)
+bool Protocol_text::store_tiny(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -738,7 +738,7 @@ bool Protocol_text::store_tiny(longlong from)
 }
 
 
-bool Protocol_text::store_short(longlong from)
+bool Protocol_text::store_short(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -747,7 +747,7 @@ bool Protocol_text::store_short(longlong from)
 }
 
 
-bool Protocol_text::store_long(longlong from)
+bool Protocol_text::store_long(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -756,11 +756,11 @@ bool Protocol_text::store_long(longlong from)
 }
 
 
-bool Protocol_text::store_longlong(longlong from, bool unsigned_flag)
+bool Protocol_text::store_int64_t(int64_t from, bool unsigned_flag)
 {
   char buff[22];
   return net_store_data((uchar*) buff,
-			(size_t) (longlong10_to_str(from,buff,
+			(size_t) (int64_t10_to_str(from,buff,
                                                     unsigned_flag ? 10 : -10)-
                                   buff));
 }

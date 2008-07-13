@@ -208,7 +208,7 @@ static void reap_plugins(void);
 /* declared in set_var.cc */
 extern sys_var *intern_find_sys_var(const char *str, uint length, bool no_error);
 extern bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
-                                 const char *name, longlong val);
+                                 const char *name, int64_t val);
 
 /****************************************************************************
   Value type thunks, allows the C world to play in the C++ world
@@ -1415,14 +1415,14 @@ typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_set_t, uint64_t);
 
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_int_t, int);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_long_t, long);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_longlong_t, longlong);
+typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_int64_t_t, int64_t);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint_t, uint);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_ulong_t, ulong);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint64_t_t, uint64_t);
 
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_int_t, int);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_long_t, long);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_longlong_t, longlong);
+typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_int64_t_t, int64_t);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint_t, uint);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_ulong_t, ulong);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint64_t_t, uint64_t);
@@ -1492,7 +1492,7 @@ static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
     *(int *)save= (int) getopt_ll_limit_value(tmp, &options, &fixed);
 
   return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
-                              var->name, (longlong) tmp);
+                              var->name, (int64_t) tmp);
 }
 
 
@@ -1512,11 +1512,11 @@ static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
     *(long *)save= (long) getopt_ll_limit_value(tmp, &options, &fixed);
 
   return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
-                              var->name, (longlong) tmp);
+                              var->name, (int64_t) tmp);
 }
 
 
-static int check_func_longlong(THD *thd, struct st_mysql_sys_var *var,
+static int check_func_int64_t(THD *thd, struct st_mysql_sys_var *var,
                                void *save, st_mysql_value *value)
 {
   bool fixed;
@@ -1529,10 +1529,10 @@ static int check_func_longlong(THD *thd, struct st_mysql_sys_var *var,
     *(uint64_t *)save= getopt_ull_limit_value((uint64_t) tmp, &options,
                                                &fixed);
   else
-    *(longlong *)save= getopt_ll_limit_value(tmp, &options, &fixed);
+    *(int64_t *)save= getopt_ll_limit_value(tmp, &options, &fixed);
 
   return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
-                              var->name, (longlong) tmp);
+                              var->name, (int64_t) tmp);
 }
 
 static int check_func_str(THD *thd,
@@ -1673,11 +1673,11 @@ static void update_func_long(THD *thd __attribute__((__unused__)),
 }
 
 
-static void update_func_longlong(THD *thd __attribute__((__unused__)),
+static void update_func_int64_t(THD *thd __attribute__((__unused__)),
                                  struct st_mysql_sys_var *var __attribute__((__unused__)),
                                  void *tgt, const void *save)
 {
-  *(longlong *)tgt= *(uint64_t *) save;
+  *(int64_t *)tgt= *(uint64_t *) save;
 }
 
 
@@ -2344,7 +2344,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_ULONG, options, (sysvar_ulong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG:
-    OPTION_SET_LIMITS(GET_LL, options, (sysvar_longlong_t*) opt);
+    OPTION_SET_LIMITS(GET_LL, options, (sysvar_int64_t_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED:
     OPTION_SET_LIMITS(GET_ULL, options, (sysvar_uint64_t_t*) opt);
@@ -2386,7 +2386,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_ULONG, options, (thdvar_ulong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL:
-    OPTION_SET_LIMITS(GET_LL, options, (thdvar_longlong_t*) opt);
+    OPTION_SET_LIMITS(GET_LL, options, (thdvar_int64_t_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_THDLOCAL:
     OPTION_SET_LIMITS(GET_ULL, options, (thdvar_uint64_t_t*) opt);
@@ -2502,7 +2502,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       SET_PLUGIN_VAR_RESOLVE((thdvar_long_t *) opt);
       break;
     case PLUGIN_VAR_LONGLONG:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_longlong_t *) opt);
+      SET_PLUGIN_VAR_RESOLVE((thdvar_int64_t_t *) opt);
       break;
     case PLUGIN_VAR_STR:
       SET_PLUGIN_VAR_RESOLVE((thdvar_str_t *) opt);
@@ -2544,9 +2544,9 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       break;
     case PLUGIN_VAR_LONGLONG:
       if (!opt->check)
-        opt->check= check_func_longlong;
+        opt->check= check_func_int64_t;
       if (!opt->update)
-        opt->update= update_func_longlong;
+        opt->update= update_func_int64_t;
       break;
     case PLUGIN_VAR_STR:
       if (!opt->check)
@@ -2574,7 +2574,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       if (!opt->check)
         opt->check= check_func_set;
       if (!opt->update)
-        opt->update= update_func_longlong;
+        opt->update= update_func_int64_t;
       break;
     default:
       sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",

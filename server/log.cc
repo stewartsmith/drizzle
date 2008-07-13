@@ -1599,7 +1599,7 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
     if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
     {
       end=strmov(end, ",last_insert_id=");
-      end=longlong10_to_str((longlong)
+      end=int64_t10_to_str((int64_t)
                             thd->first_successful_insert_id_in_prev_stmt_for_binlog,
                             end, -10);
     }
@@ -1609,7 +1609,7 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
       if (!(specialflag & SPECIAL_SHORT_LOG_FORMAT))
       {
         end=strmov(end,",insert_id=");
-        end=longlong10_to_str((longlong)
+        end=int64_t10_to_str((int64_t)
                               thd->auto_inc_intervals_in_cur_stmt_for_binlog.minimum(),
                               end, -10);
       }

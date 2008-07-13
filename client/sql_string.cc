@@ -95,13 +95,13 @@ bool String::realloc(uint32 alloc_length)
   return FALSE;
 }
 
-bool String::set(longlong num, CHARSET_INFO *cs)
+bool String::set(int64_t num, CHARSET_INFO *cs)
 {
   uint l=20*cs->mbmaxlen+1;
 
   if (alloc(l))
     return TRUE;
-  str_length=(uint32) (cs->cset->longlong10_to_str)(cs,Ptr,l,-10,num);
+  str_length=(uint32) (cs->cset->int64_t10_to_str)(cs,Ptr,l,-10,num);
   str_charset=cs;
   return FALSE;
 }
@@ -112,7 +112,7 @@ bool String::set(uint64_t num, CHARSET_INFO *cs)
 
   if (alloc(l))
     return TRUE;
-  str_length=(uint32) (cs->cset->longlong10_to_str)(cs,Ptr,l,10,num);
+  str_length=(uint32) (cs->cset->int64_t10_to_str)(cs,Ptr,l,10,num);
   str_charset=cs;
   return FALSE;
 }

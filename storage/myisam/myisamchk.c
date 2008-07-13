@@ -49,7 +49,7 @@ static MY_TMPDIR myisamchk_tmpdir;
 static const char *type_names[]=
 { "impossible","char","binary", "short", "long", "float",
   "double","number","unsigned short",
-  "unsigned long","longlong","uint64_t","int24",
+  "unsigned long","int64_t","uint64_t","int24",
   "uint24","int8","varchar", "varbin","?",
   "?"};
 
@@ -1274,7 +1274,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   printf("Recordlength:        %13d\n",(int) share->base.pack_reclength);
   if (! mi_is_all_keys_active(share->state.key_map, share->base.keys))
   {
-    longlong2str(share->state.key_map,buff,2);
+    int64_t2str(share->state.key_map,buff,2);
     printf("Using only keys '%s' of %d possibly keys\n",
 	   buff, share->base.keys);
   }

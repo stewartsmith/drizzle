@@ -43,7 +43,7 @@ public:
     illegal_method_call((const char*)"val");
     return 0;
   };
-  longlong val_int()
+  int64_t val_int()
   {
     illegal_method_call((const char*)"val_int");
     return 0;

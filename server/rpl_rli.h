@@ -285,8 +285,8 @@ public:
   void inc_group_relay_log_pos(uint64_t log_pos,
 			       bool skip_lock=0);
 
-  int32_t wait_for_pos(THD* thd, String* log_name, longlong log_pos, 
-		   longlong timeout);
+  int32_t wait_for_pos(THD* thd, String* log_name, int64_t log_pos, 
+		   int64_t timeout);
   void close_temporary_tables();
 
   /* Check if UNTIL condition is satisfied. See slave.cc for more. */

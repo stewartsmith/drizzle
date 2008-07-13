@@ -559,7 +559,7 @@ noconv:
 }
 
 
-longlong my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
+int64_t my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
 			  const char *nptr, size_t l, int base,
 			  char **endptr,int *err)
 {
@@ -672,7 +672,7 @@ longlong my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
     return negative ? LONGLONG_MIN : LONGLONG_MAX;
   }
 
-  return (negative ? -((longlong) i) : (longlong) i);
+  return (negative ? -((int64_t) i) : (int64_t) i);
 
 noconv:
   err[0]= EDOM;
@@ -788,7 +788,7 @@ uint64_t my_strntoull_8bit(CHARSET_INFO *cs,
     return (~(uint64_t) 0);
   }
 
-  return (negative ? -((longlong) i) : (longlong) i);
+  return (negative ? -((int64_t) i) : (int64_t) i);
 
 noconv:
   err[0]= EDOM;
@@ -879,9 +879,9 @@ size_t my_long10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-size_t my_longlong10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
+size_t my_int64_t10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
                                  char *dst, size_t len, int radix,
-                                 longlong val)
+                                 int64_t val)
 {
   char buffer[65];
   register char *p, *e;
@@ -1366,7 +1366,7 @@ static my_bool my_coll_init_simple(CHARSET_INFO *cs,
 }
 
 
-longlong my_strtoll10_8bit(CHARSET_INFO *cs __attribute__((unused)),
+int64_t my_strtoll10_8bit(CHARSET_INFO *cs __attribute__((unused)),
                            const char *nptr, char **endptr, int *error)
 {
   return my_strtoll10(nptr, endptr, error);
@@ -1466,7 +1466,7 @@ static uint64_t d10[DIGITS_IN_ULONGLONG]=
     <unsigned integer>   ::= <digit>...
      
   RETURN VALUES
-    Value of string as a signed/unsigned longlong integer
+    Value of string as a signed/unsigned int64_t integer
 
     endptr cannot be NULL. The function will store the end pointer
     to the stop character here.
@@ -1528,7 +1528,7 @@ my_strntoull10rnd_8bit(CHARSET_INFO *cs __attribute__((unused)),
       else
       {
         *error= 0;
-        return (uint64_t) (longlong) -(long) ul;
+        return (uint64_t) (int64_t) -(long) ul;
       }
     }
     else
@@ -1683,7 +1683,7 @@ ret_sign:
         return (uint64_t) LONGLONG_MIN;
       }
       *error= 0;
-      return (uint64_t) -(longlong) ull;
+      return (uint64_t) -(int64_t) ull;
     }
     else
     {
@@ -1933,7 +1933,7 @@ MY_CHARSET_HANDLER my_charset_8bit_handler=
     my_casedn_8bit,
     my_snprintf_8bit,
     my_long10_to_str_8bit,
-    my_longlong10_to_str_8bit,
+    my_int64_t10_to_str_8bit,
     my_fill_8bit,
     my_strntol_8bit,
     my_strntoul_8bit,

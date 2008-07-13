@@ -14,10 +14,10 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
-  Defines: longlong2str();
+  Defines: int64_t2str();
 
-  longlong2str(dst, radix, val)
-  converts the (longlong) integer "val" to character form and moves it to
+  int64_t2str(dst, radix, val)
+  converts the (int64_t) integer "val" to character form and moves it to
   the destination string "dst" followed by a terminating NUL.  The
   result is normally a pointer to this NUL character, but if the radix
   is dud the result will be NullS and nothing will be changed.
@@ -40,13 +40,13 @@
 #include <my_global.h>
 #include "m_string.h"
 
-#if !defined(longlong2str) && !defined(HAVE_LONGLONG2STR)
+#if !defined(int64_t2str) && !defined(HAVE_LONGLONG2STR)
 
 /*
-  This assumes that longlong multiplication is faster than longlong division.
+  This assumes that int64_t multiplication is faster than int64_t division.
 */
 
-char *longlong2str(longlong val,char *dst,int radix)
+char *int64_t2str(int64_t val,char *dst,int radix)
 {
   char buffer[65];
   register char *p;
@@ -96,8 +96,8 @@ char *longlong2str(longlong val,char *dst,int radix)
 
 #endif
 
-#ifndef longlong10_to_str
-char *longlong10_to_str(longlong val,char *dst,int radix)
+#ifndef int64_t10_to_str
+char *int64_t10_to_str(int64_t val,char *dst,int radix)
 {
   char buffer[65];
   register char *p;
