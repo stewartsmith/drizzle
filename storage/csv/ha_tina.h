@@ -152,7 +152,6 @@ public:
   bool auto_repair() const { return 1; }
   void position(const uchar *record);
   int info(uint);
-  int extra(enum ha_extra_function operation);
   int delete_all_rows(void);
   int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
   bool check_if_incompatible_data(HA_CREATE_INFO *info,

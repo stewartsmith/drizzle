@@ -170,8 +170,6 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
 			   MYF(MY_WME))) == MY_FILE_ERROR)
     return (size_t) -1;
 
-  DBUG_PRINT("fill_buff", ("Got %lu bytes", (ulong) read_count));
-
   /* Kludge to pretend every nonempty file ends with a newline. */
   if (!read_count && bufbytes && buffer->end[-1] != '\n')
   {
@@ -190,7 +188,7 @@ char *intern_read_line(LINE_BUFFER *buffer,ulong *out_length)
 {
   char *pos;
   size_t length;
-  DBUG_ENTER("intern_read_line");
+
 
   buffer->start_of_line=buffer->end_of_line;
   for (;;)
@@ -203,13 +201,13 @@ char *intern_read_line(LINE_BUFFER *buffer,ulong *out_length)
       if ((uint) (pos - buffer->start_of_line) < buffer->max_size)
       {
 	if (!(length=fill_buffer(buffer)) || length == (size_t) -1)
-	  DBUG_RETURN(0);
+	  return(0);
 	continue;
       }
       pos--;					/* break line here */
     }
     buffer->end_of_line=pos+1;
     *out_length=(ulong) (pos + 1 - buffer->eof - buffer->start_of_line);
-    DBUG_RETURN(buffer->start_of_line);
+    return(buffer->start_of_line);
   }
 }

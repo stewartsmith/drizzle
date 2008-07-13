@@ -54,9 +54,6 @@ uint test_flags = 0;
 static uint opt_protocol= 0;
 static FILE *result_file;
 
-#ifndef DBUG_OFF
-static const char* default_dbug_option = "d:t:o,/tmp/mysqlbinlog.trace";
-#endif
 static const char *load_default_groups[]= { "mysqlbinlog","client",0 };
 
 static void error(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
@@ -71,9 +68,9 @@ TYPELIB base64_output_mode_typelib=
 static enum_base64_output_mode opt_base64_output_mode= BASE64_OUTPUT_UNSPEC;
 static const char *opt_base64_output_mode_str= NullS;
 static const char* database= 0;
-static my_bool force_opt= 0, short_form= 0, remote_opt= 0;
-static my_bool debug_info_flag, debug_check_flag;
-static my_bool force_if_open_opt= 1;
+static bool force_opt= 0, short_form= 0, remote_opt= 0;
+static bool debug_info_flag, debug_check_flag;
+static bool force_if_open_opt= 1;
 static ulonglong offset = 0;
 static const char* host = 0;
 static int port= 0;
@@ -419,13 +416,13 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
   char *fname, *ptr;
   File file;
   File_name_record rec;
-  DBUG_ENTER("Load_log_processor::process_first_event");
+
 
   if (!(fname= (char*) my_malloc(full_len,MYF(MY_WME))))
   {
     error("Out of memory.");
     delete ce;
-    DBUG_RETURN(ERROR_STOP);
+    return(ERROR_STOP);
   }
 
   memcpy(fname, target_dir_name, target_dir_name_len);
@@ -439,7 +436,7 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
     error("Could not construct local filename %s%s.",
           target_dir_name,bname);
     delete ce;
-    DBUG_RETURN(ERROR_STOP);
+    return(ERROR_STOP);
   }
 
   rec.fname= fname;
@@ -449,7 +446,7 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
   {
     error("Out of memory.");
     delete ce;
-    DBUG_RETURN(ERROR_STOP);
+    return(ERROR_STOP);
   }
 
   if (ce)
@@ -465,7 +462,7 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
     error("Failed closing file.");
     retval= ERROR_STOP;
   }
-  DBUG_RETURN(retval);
+  return(retval);
 }
 
 
@@ -530,7 +527,7 @@ Exit_status Load_log_processor::process(Begin_load_query_log_event *blqe)
 */
 Exit_status Load_log_processor::process(Append_block_log_event *ae)
 {
-  DBUG_ENTER("Load_log_processor::process");
+
   const char* fname= ((ae->file_id < file_names.elements) ?
                        dynamic_element(&file_names, ae->file_id,
                                        File_name_record*)->fname : 0);
@@ -543,7 +540,7 @@ Exit_status Load_log_processor::process(Append_block_log_event *ae)
 			O_APPEND|O_BINARY|O_WRONLY,MYF(MY_WME))) < 0))
     {
       error("Failed opening file %s", fname);
-      DBUG_RETURN(ERROR_STOP);
+      return(ERROR_STOP);
     }
     if (my_write(file,(uchar*)ae->block,ae->block_len,MYF(MY_WME|MY_NABP)))
     {
@@ -555,7 +552,7 @@ Exit_status Load_log_processor::process(Append_block_log_event *ae)
       error("Failed closing file %s", fname);
       retval= ERROR_STOP;
     }
-    DBUG_RETURN(retval);
+    return(retval);
   }
 
   /*
@@ -565,7 +562,7 @@ Exit_status Load_log_processor::process(Append_block_log_event *ae)
   */
   warning("Ignoring Append_block as there is no "
           "Create_file event for file_id: %u", ae->file_id);
-  DBUG_RETURN(OK_CONTINUE);
+  return(OK_CONTINUE);
 }
 
 
@@ -636,7 +633,7 @@ write_event_header_and_base64(Log_event *ev, FILE *result_file,
 {
   IO_CACHE *head= &print_event_info->head_cache;
   IO_CACHE *body= &print_event_info->body_cache;
-  DBUG_ENTER("write_event_header_and_base64");
+
 
   /* Write header and base64 output to cache */
   ev->print_header(head, print_event_info, FALSE);
@@ -647,9 +644,9 @@ write_event_header_and_base64(Log_event *ev, FILE *result_file,
       copy_event_cache_to_file_and_reinit(body, result_file))
   {
     error("Error writing event to file.");
-    DBUG_RETURN(ERROR_STOP);
+    return(ERROR_STOP);
   }
-  DBUG_RETURN(OK_CONTINUE);
+  return(OK_CONTINUE);
 }
 
 
@@ -678,7 +675,7 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
 {
   char ll_buff[21];
   Log_event_type ev_type= ev->get_type_code();
-  DBUG_ENTER("process_event");
+
   print_event_info->short_form= short_form;
   Exit_status retval= OK_CONTINUE;
 
@@ -717,8 +714,6 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
       print_event_info->hexdump_from= pos;
 
     print_event_info->base64_output_mode= opt_base64_output_mode;
-
-    DBUG_PRINT("debug", ("event_type: %s", ev->get_type_str()));
 
     switch (ev_type) {
     case QUERY_EVENT:
@@ -835,7 +830,7 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
         error("Attempting to dump binlog '%s', which was not closed properly. "
               "Most probably, mysqld is still writing it, or it crashed. "
               "Rerun with --force-if-open to ignore this problem.", logname);
-        DBUG_RETURN(ERROR_STOP);
+        return(ERROR_STOP);
       }
       break;
     case BEGIN_LOAD_QUERY_EVENT:
@@ -916,7 +911,7 @@ end:
       ev->temp_buf= 0;
     delete ev;
   }
-  DBUG_RETURN(retval);
+  return(retval);
 }
 
 
@@ -947,10 +942,6 @@ static struct my_option my_long_options[] =
   {"database", 'd', "List entries for just this database (local log only).",
    (char**) &database, (char**) &database, 0, GET_STR_ALLOC, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-#ifndef DBUG_OFF
-  {"debug", '#', "Output debug log.", (char**) &default_dbug_option,
-   (char**) &default_dbug_option, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit .",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -1193,17 +1184,12 @@ static my_time_t convert_str_to_timestamp(const char* str)
 
 #include <help_end.h>
 
-extern "C" my_bool
+extern "C" bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
   bool tty_password=0;
   switch (optid) {
-#ifndef DBUG_OFF
-  case '#':
-    DBUG_PUSH(argument ? argument : default_dbug_option);
-    break;
-#endif
   case 'd':
     one_database = 1;
     break;
@@ -1442,7 +1428,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
   my_off_t old_off= start_position_mot;
   char fname[FN_REFLEN+1];
   Exit_status retval= OK_CONTINUE;
-  DBUG_ENTER("dump_remote_log_entries");
+
 
   /*
     Even if we already read one binlog (case of >=2 binlogs on command line),
@@ -1450,11 +1436,11 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
     (COM_BINLOG_DUMP kills the thread when it finishes).
   */
   if ((retval= safe_connect()) != OK_CONTINUE)
-    DBUG_RETURN(retval);
+    return(retval);
   net= &mysql->net;
 
   if ((retval= check_master_version()) != OK_CONTINUE)
-    DBUG_RETURN(retval);
+    return(retval);
 
   /*
     COM_BINLOG_DUMP accepts only 4 bytes for the position, so we are forced to
@@ -1467,7 +1453,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
   if (tlen > UINT_MAX) 
   {
     error("Log name too long.");
-    DBUG_RETURN(ERROR_STOP);
+    return(ERROR_STOP);
   }
   logname_len = (uint) tlen;
   int4store(buf + 6, 0);
@@ -1475,7 +1461,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
   if (simple_command(mysql, COM_BINLOG_DUMP, buf, logname_len + 10, 1))
   {
     error("Got fatal error sending the log dump command.");
-    DBUG_RETURN(ERROR_STOP);
+    return(ERROR_STOP);
   }
 
   for (;;)
@@ -1487,18 +1473,16 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
     if (len == packet_error)
     {
       error("Got error reading packet from server: %s", mysql_error(mysql));
-      DBUG_RETURN(ERROR_STOP);
+      return(ERROR_STOP);
     }
     if (len < 8 && net->read_pos[0] == 254)
       break; // end of data
-    DBUG_PRINT("info",( "len: %lu  net->read_pos[5]: %d\n",
-			len, net->read_pos[5]));
     if (!(ev= Log_event::read_log_event((const char*) net->read_pos + 1 ,
                                         len - 1, &error_msg,
                                         glob_description_event)))
     {
       error("Could not construct log event object: %s", error_msg);
-      DBUG_RETURN(ERROR_STOP);
+      return(ERROR_STOP);
     }   
     /*
       If reading from a remote host, ensure the temp_buf for the
@@ -1537,7 +1521,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
             if ((rev->ident_len != logname_len) ||
                 memcmp(rev->new_log_ident, logname, logname_len))
             {
-              DBUG_RETURN(OK_CONTINUE);
+              return(OK_CONTINUE);
             }
             /*
               Otherwise, this is a fake Rotate for our log, at the very
@@ -1564,7 +1548,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
       }
       Exit_status retval= process_event(print_event_info, ev, old_off, logname);
       if (retval != OK_CONTINUE)
-        DBUG_RETURN(retval);
+        return(retval);
     }
     else
     {
@@ -1575,18 +1559,18 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
       Exit_status retval;
 
       if ((file= load_processor.prepare_new_file_for_old_format(le,fname)) < 0)
-        DBUG_RETURN(ERROR_STOP);
+        return(ERROR_STOP);
 
       retval= process_event(print_event_info, ev, old_off, logname);
       if (retval != OK_CONTINUE)
       {
         my_close(file,MYF(MY_WME));
-        DBUG_RETURN(retval);
+        return(retval);
       }
       retval= load_processor.load_old_format_file(net,old_fname,old_len,file);
       my_close(file,MYF(MY_WME));
       if (retval != OK_CONTINUE)
-        DBUG_RETURN(retval);
+        return(retval);
     }
     /*
       Let's adjust offset for remote log as for local log to produce
@@ -1595,7 +1579,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
     old_off+= len-1;
   }
 
-  DBUG_RETURN(OK_CONTINUE);
+  return(OK_CONTINUE);
 }
 
 
@@ -1695,8 +1679,6 @@ static Exit_status check_header(IO_CACHE* file,
     }
     else
     {
-      DBUG_PRINT("info",("buf[EVENT_TYPE_OFFSET=%d]=%d",
-                         EVENT_TYPE_OFFSET, buf[EVENT_TYPE_OFFSET]));
       /* always test for a Start_v3, even if no --start-position */
       if (buf[EVENT_TYPE_OFFSET] == START_EVENT_V3)
       {
@@ -1750,7 +1732,6 @@ static Exit_status check_header(IO_CACHE* file,
           delete glob_description_event;
           glob_description_event= new_description_event;
         }
-        DBUG_PRINT("info",("Setting description_event"));
       }
       else if (buf[EVENT_TYPE_OFFSET] == ROTATE_EVENT)
       {
@@ -1896,8 +1877,6 @@ int main(int argc, char** argv)
   Exit_status retval= OK_CONTINUE;
   ulonglong save_stop_position;
   MY_INIT(argv[0]);
-  DBUG_ENTER("main");
-  DBUG_PROCESS(argv[0]);
 
   init_time(); // for time functions
 

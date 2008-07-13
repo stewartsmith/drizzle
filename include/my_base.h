@@ -159,11 +159,6 @@ enum ha_extra_function {
   HA_EXTRA_IGNORE_NO_KEY,
   HA_EXTRA_NO_IGNORE_NO_KEY,
   /*
-    Mark the table as a log table. For some handlers (e.g. CSV) this results
-    in a special locking for the table.
-  */
-  HA_EXTRA_MARK_AS_LOG_TABLE,
-  /*
     Informs handler that write_row() which tries to insert new row into the
     table and encounters some already existing row with same primary/unique
     key can replace old row with new row instead of reporting error (basically

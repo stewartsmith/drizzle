@@ -1,0 +1,3 @@
+MYSQL_PLUGIN(hello_world,[Daemon Example Plugin],
+        [UDF Plugin for Hello World.])
+MYSQL_PLUGIN_DYNAMIC(hello_world,   [libhello_world.la])

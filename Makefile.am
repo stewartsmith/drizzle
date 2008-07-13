@@ -31,15 +31,14 @@ DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
 
 DISTCLEANFILES = ac_available_languages_fragment
 
-# Create permission databases
-init-db:		all
-	$(top_builddir)/scripts/mysql_install_db
+# Create empty datadir 
+install-data-local:
+	$(MKDIR_P) $(DESTDIR)$(localstatedir) 
+	@if test `id -u` = 0 ; then \
+		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
+	fi
 
-bin-dist:		all
-	$(top_builddir)/scripts/make_binary_distribution @MAKE_BINARY_DISTRIBUTION_OPTIONS@
-
-.PHONY:	init-db bin-dist \
-  test    test-force    test-full    test-force-full    test-force-mem \
+.PHONY: test    test-force    test-full    test-force-full    test-force-mem \
   test-pl test-force-pl test-full-pl test-force-full-pl test-force-pl-mem \
   test-ps test-nr test-pr test-ns test-binlog-statement \
   test-ext-funcs test-ext-rpl test-ext-jp \

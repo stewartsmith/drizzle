@@ -427,6 +427,24 @@ struct st_mysql_daemon
 
 
 /*************************************************************************
+  API for UDF plugin. (MYSQL_UDF_PLUGIN)
+*/
+
+/* handlertons of different MySQL releases are incompatible */
+#define MYSQL_UDF_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
+
+/*
+  Here we define only the descriptor structure, that is referred from
+  st_mysql_plugin.
+*/
+
+struct st_mysql_udf
+{
+  int interface_version;
+};
+
+
+/*************************************************************************
   API for I_S plugin. (MYSQL_INFORMATION_SCHEMA_PLUGIN)
 */
 

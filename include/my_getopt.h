@@ -60,12 +60,12 @@ struct my_option
   void       *app_type;                 /* To be used by an application */
 };
 
-typedef my_bool (* my_get_one_option) (int, const struct my_option *, char * );
+typedef bool (* my_get_one_option) (int, const struct my_option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
 
 extern char *disabled_my_option;
-extern my_bool my_getopt_print_errors;
-extern my_bool my_getopt_skip_unknown;
+extern bool my_getopt_print_errors;
+extern bool my_getopt_skip_unknown;
 extern my_error_reporter my_getopt_error_reporter;
 
 extern int handle_options (int *argc, char ***argv, 
@@ -77,10 +77,10 @@ extern void my_getopt_register_get_addr(char ** (*func_addr)(const char *, uint,
                                                              const struct my_option *));
 
 ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
-                                 my_bool *fix);
+                                 bool *fix);
 longlong getopt_ll_limit_value(longlong, const struct my_option *,
-                               my_bool *fix);
-my_bool getopt_compare_strings(const char *s, const char *t, uint length);
+                               bool *fix);
+bool getopt_compare_strings(const char *s, const char *t, uint length);
 
 C_MODE_END
 

@@ -58,40 +58,6 @@ static int binlog_commit(handlerton *hton, THD *thd, bool all);
 static int binlog_rollback(handlerton *hton, THD *thd, bool all);
 static int binlog_prepare(handlerton *hton, THD *thd, bool all);
 
-/**
-  Silence all errors and warnings reported when performing a write
-  to a log table.
-  Errors and warnings are not reported to the client or SQL exception
-  handlers, so that the presence of logging does not interfere and affect
-  the logic of an application.
-*/
-class Silence_log_table_errors : public Internal_error_handler
-{
-  char m_message[MYSQL_ERRMSG_SIZE];
-public:
-  Silence_log_table_errors()
-  {
-    m_message[0]= '\0';
-  }
-
-  virtual ~Silence_log_table_errors() {}
-
-  virtual bool handle_error(uint sql_errno, const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
-                            THD *thd);
-  const char *message() const { return m_message; }
-};
-
-bool
-Silence_log_table_errors::handle_error(uint /* sql_errno */,
-                                       const char *message_arg,
-                                       MYSQL_ERROR::enum_warning_level /* level */,
-                                       THD * /* thd */)
-{
-  strmake(m_message, message_arg, sizeof(m_message)-1);
-  return true;
-}
-
 
 sql_print_message_func sql_print_message_handlers[3] =
 {

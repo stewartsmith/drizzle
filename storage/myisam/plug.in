@@ -4,4 +4,6 @@ MYSQL_PLUGIN_DIRECTORY(myisam,  [storage/myisam])
 MYSQL_PLUGIN_STATIC(myisam,     [libmyisam.la])
 MYSQL_PLUGIN_MANDATORY(myisam)  dnl Default
 MYSQL_PLUGIN_DEPENDS_ON_MYSQL_INTERNALS(myisam, [ha_myisam.cc])
-
+MYSQL_PLUGIN_ACTIONS(myisam,[
+  AC_CONFIG_FILES(storage/myisam/mi_test_all)
+])
