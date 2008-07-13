@@ -83,8 +83,8 @@ static int md5udf_plugin_init(void *p)
 {
   udf_func *udff= (udf_func *) p;
 
-  udff->name.str= "md5udf";
-  udff->name.length= strlen("md5udf");
+  udff->name.str= "md5";
+  udff->name.length= strlen("md5");
   udff->type= UDFTYPE_FUNCTION;
   udff->returns= STRING_RESULT;
   udff->func_init= udf_init_md5udf;
