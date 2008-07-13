@@ -165,7 +165,6 @@ Hybrid_type_traits_integer::fix_length_and_dec(Item *item,
 
 void item_init(void)
 {
-  uuid_short_init();
 }
 
 
