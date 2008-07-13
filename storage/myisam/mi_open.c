@@ -449,11 +449,11 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	 (open_flags & HA_OPEN_TMP_TABLE) || have_rtree) ? 0 : 1;
       if (share->concurrent_insert)
       {
-	share->lock.get_status=mi_get_status;
-	share->lock.copy_status=mi_copy_status;
-	share->lock.update_status=mi_update_status;
+	share->lock.get_status= mi_get_status;
+	share->lock.copy_status= mi_copy_status;
+	share->lock.update_status= mi_update_status;
         share->lock.restore_status= mi_restore_status;
-	share->lock.check_status=mi_check_status;
+	share->lock.check_status= mi_check_status;
       }
     }
     /*

@@ -36,8 +36,8 @@
 
 uint thr_client_alarm;
 static int alarm_aborted=1;			/* No alarm thread */
-my_bool thr_alarm_inited= 0;
-volatile my_bool alarm_thread_running= 0;
+bool thr_alarm_inited= 0;
+volatile bool alarm_thread_running= 0;
 time_t next_alarm_expire_time= ~ (time_t) 0;
 static sig_handler process_alarm_part2(int sig);
 
@@ -147,13 +147,13 @@ void resize_thr_alarm(uint max_alarms)
     when the alarm has been given
 */
 
-my_bool thr_alarm(thr_alarm_t *alrm, uint sec, ALARM *alarm_data)
+bool thr_alarm(thr_alarm_t *alrm, uint sec, ALARM *alarm_data)
 {
   time_t now;
 #ifndef USE_ONE_SIGNAL_HAND
   sigset_t old_mask;
 #endif
-  my_bool reschedule;
+  bool reschedule;
   struct st_my_thread_var *current_my_thread_var= my_thread_var;
   DBUG_ENTER("thr_alarm");
   DBUG_PRINT("enter",("thread: %s  sec: %d",my_thread_name(),sec));
@@ -426,7 +426,7 @@ static sig_handler process_alarm_part2(int sig __attribute__((unused)))
     - All new alarms will be rescheduled to one second
 */
 
-void end_thr_alarm(my_bool free_structures)
+void end_thr_alarm(bool free_structures)
 {
   DBUG_ENTER("end_thr_alarm");
   if (alarm_aborted != 1)			/* If memory not freed */

@@ -51,7 +51,7 @@ struct utimbuf {
 int my_copy(const char *from, const char *to, myf MyFlags)
 {
   uint Count;
-  my_bool new_file_stat= 0; /* 1 if we could stat "to" */
+  bool new_file_stat= 0; /* 1 if we could stat "to" */
   int create_flag;
   File from_file,to_file;
   uchar buff[IO_SIZE];

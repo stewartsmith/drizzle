@@ -79,7 +79,7 @@ static uint get_thread_lib(void);
     1  error (Couldn't create THR_KEY_mysys)
 */
 
-my_bool my_thread_global_init(void)
+bool my_thread_global_init(void)
 {
   int pth_ret;
   thd_lib_detected= get_thread_lib();
@@ -168,7 +168,7 @@ my_bool my_thread_global_init(void)
 void my_thread_global_end(void)
 {
   struct timespec abstime;
-  my_bool all_threads_killed= 1;
+  bool all_threads_killed= 1;
 
   set_timespec(abstime, my_thread_end_wait_time);
   pthread_mutex_lock(&THR_LOCK_threads);
@@ -246,10 +246,10 @@ static my_thread_id thread_id= 0;
     1  Fatal error; mysys/dbug functions can't be used
 */
 
-my_bool my_thread_init(void)
+bool my_thread_init(void)
 {
   struct st_my_thread_var *tmp;
-  my_bool error=0;
+  bool error=0;
 
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_init(): thread_id: 0x%lx\n",

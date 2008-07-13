@@ -80,7 +80,7 @@ multiple read locks.
 #include <m_string.h>
 #include <errno.h>
 
-my_bool thr_lock_inited=0;
+bool thr_lock_inited=0;
 ulong locks_immediate = 0L, locks_waited = 0L;
 ulong table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
@@ -102,13 +102,13 @@ static inline pthread_cond_t *get_cond(void)
 ** For the future (now the thread specific cond is alloced by my_pthread.c)
 */
 
-my_bool init_thr_lock()
+bool init_thr_lock()
 {
   thr_lock_inited=1;
   return 0;
 }
 
-static inline my_bool
+static inline bool
 thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 {
   return rhs == lhs;
@@ -120,7 +120,7 @@ thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 static uint found_errors=0;
 
 static int check_lock(struct st_lock_list *list, const char* lock_type,
-		      const char *where, my_bool same_owner, my_bool no_cond)
+		      const char *where, bool same_owner, bool no_cond)
 {
   THR_LOCK_DATA *data,**prev;
   uint count=0;
@@ -180,7 +180,7 @@ static int check_lock(struct st_lock_list *list, const char* lock_type,
 
 
 static void check_locks(THR_LOCK *lock, const char *where,
-			my_bool allow_no_locks)
+			bool allow_no_locks)
 {
   uint old_found_errors=found_errors;
   DBUG_ENTER("check_locks");
@@ -359,7 +359,7 @@ void thr_lock_data_init(THR_LOCK *lock,THR_LOCK_DATA *data, void *param)
 }
 
 
-static inline my_bool
+static inline bool
 have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
 {
   for ( ; data ; data=data->next)
@@ -370,7 +370,7 @@ have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
   return 0;
 }
 
-static inline my_bool have_specific_lock(THR_LOCK_DATA *data,
+static inline bool have_specific_lock(THR_LOCK_DATA *data,
 					 enum thr_lock_type type)
 {
   for ( ; data ; data=data->next)
@@ -387,13 +387,13 @@ static void wake_up_waiters(THR_LOCK *lock);
 
 static enum enum_thr_lock_result
 wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
-              my_bool in_wait_list)
+              bool in_wait_list)
 {
   struct st_my_thread_var *thread_var= my_thread_var;
   pthread_cond_t *cond= &thread_var->suspend;
   struct timespec wait_timeout;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
-  my_bool can_deadlock= test(data->owner->info->n_cursors);
+  bool can_deadlock= test(data->owner->info->n_cursors);
   DBUG_ENTER("wait_for_lock");
 
   if (!in_wait_list)
@@ -653,7 +653,7 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
                           (ulong) lock->write_wait.data));
       if (!lock->write_wait.data)
       {						/* no scheduled write locks */
-        my_bool concurrent_insert= 0;
+        bool concurrent_insert= 0;
 	if (lock_type == TL_WRITE_CONCURRENT_INSERT)
         {
           concurrent_insert= 1;
@@ -707,7 +707,7 @@ end:
 
 
 static inline void free_all_read_locks(THR_LOCK *lock,
-				       my_bool using_concurrent_insert)
+				       bool using_concurrent_insert)
 {
   THR_LOCK_DATA *data=lock->read_wait.data;
 
@@ -1061,7 +1061,7 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint count)
   TL_WRITE_ONLY to abort any new accesses to the lock
 */
 
-void thr_abort_locks(THR_LOCK *lock, my_bool upgrade_lock)
+void thr_abort_locks(THR_LOCK *lock, bool upgrade_lock)
 {
   THR_LOCK_DATA *data;
   DBUG_ENTER("thr_abort_locks");
@@ -1096,10 +1096,10 @@ void thr_abort_locks(THR_LOCK *lock, my_bool upgrade_lock)
   This is used to abort all locks for a specific thread
 */
 
-my_bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
+bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
 {
   THR_LOCK_DATA *data;
-  my_bool found= FALSE;
+  bool found= FALSE;
   DBUG_ENTER("thr_abort_locks_for_thread");
 
   pthread_mutex_lock(&lock->mutex);
@@ -1193,7 +1193,7 @@ void thr_downgrade_write_lock(THR_LOCK_DATA *in_data,
 
 /* Upgrade a WRITE_DELAY lock to a WRITE_LOCK */
 
-my_bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
+bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
   DBUG_ENTER("thr_upgrade_write_delay_lock");
@@ -1242,7 +1242,7 @@ my_bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
 
 /* downgrade a WRITE lock to a WRITE_DELAY lock if there is pending locks */
 
-my_bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
+bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
   DBUG_ENTER("thr_reschedule_write_lock");
@@ -1414,7 +1414,7 @@ static void test_copy_status(void* to __attribute__((unused)) ,
 {
 }
 
-static my_bool test_check_status(void* param __attribute__((unused)))
+static bool test_check_status(void* param __attribute__((unused)))
 {
   return 0;
 }

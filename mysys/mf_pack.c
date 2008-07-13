@@ -241,7 +241,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 */
 
 
-my_bool my_use_symdir=0;	/* Set this if you want to use symdirs */
+bool my_use_symdir=0;	/* Set this if you want to use symdirs */
 
 #ifdef USE_SYMDIR
 void symdirget(char *dir)

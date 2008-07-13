@@ -30,7 +30,7 @@
   @retval TRUE   Failure, array is full
 */
 
-my_bool array_append_string_unique(const char *str,
+bool array_append_string_unique(const char *str,
                                    const char **array, size_t size)
 {
   const char **p;

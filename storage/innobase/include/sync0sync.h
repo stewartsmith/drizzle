@@ -18,7 +18,7 @@ Created 9/5/1995 Heikki Tuuri
 #include "sync0arr.h"
 
 #ifndef UNIV_HOTBACKUP
-extern my_bool	timed_mutexes;
+extern bool	timed_mutexes;
 #endif /* UNIV_HOTBACKUP */
 
 /**********************************************************************

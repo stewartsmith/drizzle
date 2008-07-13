@@ -225,6 +225,28 @@ public:
   { return 0; }
 };
 
+class sys_var_rbool_ptr :public sys_var
+{
+public:
+  bool *value;
+  sys_var_rbool_ptr(sys_var_chain *chain, const char *name_arg, bool *value_arg)
+    :sys_var(name_arg),value(value_arg)
+  { chain_sys_var(chain); }
+  bool check(THD *thd, set_var *var)
+  {
+    return check_enum(thd, var, &bool_typelib);
+  }
+  bool update(THD *thd, set_var *var);
+  void set_default(THD *thd, enum_var_type type);
+  SHOW_TYPE show_type() { return SHOW_MY_BOOL; }
+  uchar *value_ptr(THD *thd __attribute__((__unused__)),
+                   enum_var_type type __attribute__((__unused__)),
+                   LEX_STRING *base __attribute__((__unused__)))
+  { return (uchar*) value; }
+  bool check_update_type(Item_result type __attribute__((__unused__)))
+  { return 0; }
+};
+
 
 class sys_var_bool_ptr_readonly :public sys_var_bool_ptr
 {

@@ -692,7 +692,7 @@ impossible position";
               set_timespec_nsec(*heartbeat_ts, heartbeat_period);
             }
             ret= mysql_bin_log.wait_for_update_bin_log(thd, heartbeat_ts);
-            assert(ret == 0 || heartbeat_period != 0LL && coord != NULL);
+            assert(ret == 0 || (heartbeat_period != 0LL && coord != NULL));
             if (ret == ETIMEDOUT || ret == ETIME)
             {
               if (send_heartbeat_event(net, packet, coord))

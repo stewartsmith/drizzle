@@ -168,7 +168,7 @@ int test_if_hard_path(register const char *dir_name)
     FALSE       name does not contain a path.
 */
 
-my_bool has_path(const char *name)
+bool has_path(const char *name)
 {
   return test(strchr(name, FN_LIBCHAR)) 
 #if FN_LIBCHAR != '/'

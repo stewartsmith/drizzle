@@ -2430,7 +2430,7 @@ extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, my_bool);
 extern "C" void xid_free_hash(void *);
 
 uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
-                                  my_bool not_used __attribute__((unused)))
+                        bool not_used __attribute__((unused)))
 {
   *length=((XID_STATE*)ptr)->xid.key_length();
   return ((XID_STATE*)ptr)->xid.key();

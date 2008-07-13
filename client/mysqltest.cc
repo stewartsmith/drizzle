@@ -1583,7 +1583,7 @@ static void strip_parentheses(struct st_command *command)
 
 
 static uchar *get_var_key(const uchar* var, size_t *len,
-                          my_bool __attribute__((unused)) t)
+                          bool __attribute__((unused)) t)
 {
   register char* key;
   key = ((VAR*)var)->name;

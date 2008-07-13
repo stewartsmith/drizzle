@@ -416,8 +416,7 @@ static sys_var_thd_enum	sys_tx_isolation(&vars, "tx_isolation",
 					 check_tx_isolation);
 static sys_var_thd_ulonglong	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
-static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes",
-                                    &timed_mutexes);
+static sys_var_rbool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
 static sys_var_const_str	sys_version(&vars, "version", server_version);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             MYSQL_COMPILATION_COMMENT);
@@ -1158,6 +1157,18 @@ bool sys_var_bool_ptr::update(THD *thd __attribute__((__unused__)), set_var *var
 void sys_var_bool_ptr::set_default(THD *thd __attribute__((__unused__)), enum_var_type type __attribute__((__unused__)))
 {
   *value= (my_bool) option_limits->def_value;
+}
+
+bool sys_var_rbool_ptr::update(THD *thd __attribute__((__unused__)), set_var *var)
+{
+  *value= (bool) var->save_result.ulong_value;
+  return 0;
+}
+
+
+void sys_var_rbool_ptr::set_default(THD *thd __attribute__((__unused__)), enum_var_type type __attribute__((__unused__)))
+{
+  *value= (bool) option_limits->def_value;
 }
 
 

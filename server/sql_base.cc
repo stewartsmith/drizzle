@@ -45,7 +45,7 @@ static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
 
 
 extern "C" uchar *table_cache_key(const uchar *record, size_t *length,
-				 my_bool not_used __attribute__((unused)))
+                                  bool not_used __attribute__((unused)))
 {
   TABLE *entry=(TABLE*) record;
   *length= entry->s->table_cache_key.length;
@@ -122,7 +122,7 @@ uint create_table_def_key(THD *thd, char *key, TABLE_LIST *table_list,
 *****************************************************************************/
 
 extern "C" uchar *table_def_key(const uchar *record, size_t *length,
-                               my_bool not_used __attribute__((unused)))
+                                bool not_used __attribute__((unused)))
 {
   TABLE_SHARE *entry=(TABLE_SHARE*) record;
   *length= entry->table_cache_key.length;

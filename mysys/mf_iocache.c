@@ -317,7 +317,7 @@ static void my_aiowait(my_aio_result *result)
   in the cache, we are reusing this memory without flushing it to disk.
 */
 
-my_bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
+bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 			my_off_t seek_offset,
 			pbool use_async_io __attribute__((unused)),
 			pbool clear_cache)
@@ -1672,7 +1672,7 @@ int my_block_write(register IO_CACHE *info, const uchar *Buffer, size_t Count,
 int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 {
   size_t length;
-  my_bool append_cache;
+  bool append_cache;
   my_off_t pos_in_file;
   DBUG_ENTER("my_b_flush_io_cache");
   DBUG_PRINT("enter", ("cache: 0x%lx", (long) info));

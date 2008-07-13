@@ -352,7 +352,7 @@ extern "C" uchar *get_table_key(const uchar *, size_t *, my_bool);
 extern "C" void free_table_ent(void* a);
 
 uchar *get_table_key(const uchar* a, size_t *len,
-                     my_bool __attribute__((unused)))
+                     bool __attribute__((unused)))
 {
   TABLE_RULE_ENT *e= (TABLE_RULE_ENT *) a;
 

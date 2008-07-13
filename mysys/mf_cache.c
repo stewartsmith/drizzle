@@ -26,7 +26,7 @@
 	  this, just remember the file name for later removal
 	*/
 
-static my_bool cache_remove_open_tmp(IO_CACHE *cache __attribute__((unused)),
+static bool cache_remove_open_tmp(IO_CACHE *cache __attribute__((unused)),
 				     const char *name)
 {
 #if O_TEMPORARY == 0
@@ -57,7 +57,7 @@ static my_bool cache_remove_open_tmp(IO_CACHE *cache __attribute__((unused)),
 	** If dir is not given, use TMPDIR.
 	*/
 
-my_bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
+bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
                          size_t cache_size, myf cache_myflags)
 {
   DBUG_ENTER("open_cached_file");
@@ -78,7 +78,7 @@ my_bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
 
 	/* Create the temporary file */
 
-my_bool real_open_cached_file(IO_CACHE *cache)
+bool real_open_cached_file(IO_CACHE *cache)
 {
   char name_buff[FN_REFLEN];
   int error=1;

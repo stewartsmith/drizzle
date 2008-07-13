@@ -254,7 +254,7 @@ typedef struct st_safe_mutex_t
 
 int safe_mutex_init(safe_mutex_t *mp, const pthread_mutexattr_t *attr,
                     const char *file, uint line);
-int safe_mutex_lock(safe_mutex_t *mp, my_bool try_lock, const char *file, uint line);
+int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint line);
 int safe_mutex_unlock(safe_mutex_t *mp,const char *file, uint line);
 int safe_mutex_destroy(safe_mutex_t *mp,const char *file, uint line);
 int safe_cond_wait(pthread_cond_t *cond, safe_mutex_t *mp,const char *file,
@@ -388,9 +388,9 @@ extern pthread_mutexattr_t my_errorcheck_mutexattr;
 
 typedef ulong my_thread_id;
 
-extern my_bool my_thread_global_init(void);
+extern bool my_thread_global_init(void);
 extern void my_thread_global_end(void);
-extern my_bool my_thread_init(void);
+extern bool my_thread_init(void);
 extern void my_thread_end(void);
 extern const char *my_thread_name(void);
 extern my_thread_id my_thread_dbug_id(void);
@@ -420,7 +420,7 @@ struct st_my_thread_var
   my_thread_id id;
   int cmp_length;
   int volatile abort;
-  my_bool init;
+  bool init;
   struct st_my_thread_var *next,**prev;
   void *opt_info;
 #ifndef DBUG_OFF
