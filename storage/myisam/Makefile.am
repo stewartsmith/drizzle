@@ -22,7 +22,6 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir =          $(prefix)
 MYSQLLIBdir =           $(pkglibdir)
 AM_CPPFLAGS =           -I$(top_srcdir)/include -I$(top_builddir)/include \
-			-I$(top_srcdir)/regex \
 			-I$(top_srcdir)/server \
                         -I$(srcdir)
 WRAPLIBS=
