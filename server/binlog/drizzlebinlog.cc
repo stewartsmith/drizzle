@@ -30,12 +30,27 @@
 
 #define MYSQL_CLIENT
 #undef MYSQL_SERVER
-#include "client_priv.h"
 #include <my_time.h>
+#include <my_global.h>
+#include <my_sys.h>
+#include <m_string.h>
+#include <drizzle.h>
+#include <errmsg.h>
+#include <my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
 #include "mysql_priv.h" 
 #include "log_event.h"
 #include "sql_common.h"
+
+
+enum options_drizzlebinlog
+{
+  OPT_CHARSETS_DIR=256, OPT_BASE64_OUTPUT_MODE,
+  OPT_DEBUG_CHECK, OPT_DEBUG_INFO, OPT_MYSQL_PROTOCOL,
+  OPT_SERVER_ID, OPT_SET_CHARSET, OPT_START_DATETIME,
+  OPT_START_POSITION, OPT_STOP_DATETIME, OPT_STOP_POSITION,
+  OPT_OPEN_FILES_LIMIT
+};
 
 #define BIN_LOG_HEADER_SIZE	4
 #define PROBE_HEADER_LEN	(EVENT_LEN_OFFSET+4)

@@ -1244,7 +1244,7 @@ sub executable_setup () {
   $exe_drizzlecheck= mtr_exe_exists("$path_client_bindir/drizzlecheck");
   $exe_drizzledump= mtr_exe_exists("$path_client_bindir/drizzledump");
   $exe_drizzleimport= mtr_exe_exists("$path_client_bindir/drizzleimport");
-  $exe_drizzlebinlog= mtr_exe_exists("$path_client_bindir/drizzlebinlog");
+  $exe_drizzlebinlog= mtr_exe_exists("$glob_basedir/server/binlog/drizzlebinlog");
   $exe_drizzleadmin= mtr_exe_exists("$path_client_bindir/drizzleadmin");
   $exe_drizzle=          mtr_exe_exists("$path_client_bindir/drizzle");
 

@@ -24,7 +24,7 @@ AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			-I$(srcdir) $(openssl_includes) \
 			$(libevent_includes) \
 			-ggdb
-SUBDIRS =		share
+SUBDIRS =		. binlog share
 libexec_PROGRAMS =	drizzled
 EXTRA_PROGRAMS =	gen_lex_hash
 bin_PROGRAMS =		
