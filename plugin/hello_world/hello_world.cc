@@ -38,6 +38,10 @@ my_bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
 char *udf_doit_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *result,
 			   unsigned long *length, char *is_null, char *error)
 {
+  /* We don't use these, so void them out */
+  (void)initid;
+  (void)args;
+
   /* "result" is preallocated 255 bytes for me, if i want to use it */
   strncpy(result, "Hello, world!", 255);
 
@@ -56,6 +60,9 @@ char *udf_doit_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *result,
 
 void udf_deinit_hello_world(UDF_INIT *initid)
 {
+  /* We don't use this, so void it out */
+  (void)initid;
+
   /* if we allocated initid->ptr, free it here */
   return;
 }
@@ -65,7 +72,7 @@ static int hello_world_plugin_init(void *p)
 {
   udf_func *udff= (udf_func *) p;
 
-  udff->name.str= "hello_world";
+  udff->name.str= (char *)"hello_world";
   udff->name.length= strlen("hello_world");
   udff->type= UDFTYPE_FUNCTION;
   udff->returns= STRING_RESULT;
@@ -78,7 +85,14 @@ static int hello_world_plugin_init(void *p)
 
 static int hello_world_plugin_deinit(void *p)
 {
-  udf_func *udff = (udf_func *) p;
+  /* We don't use this, so void it out */
+  (void)p;
+
+  /* There is nothing to de-init here, but if 
+   * something is needed from the udf_func, it 
+   * can be had from p with:
+   *   udf_func *udff = (udf_func *) p;
+   */
 
   return 0;
 }
