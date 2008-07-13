@@ -1692,7 +1692,7 @@ extern uint lower_case_table_names;
 #endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
 #ifdef MYSQL_SERVER
 extern bool opt_endinfo, using_udf_functions;
-extern my_bool locked_in_memory;
+extern bool locked_in_memory;
 extern bool opt_using_transactions;
 #endif /* MYSQL_SERVER */
 #if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
@@ -1705,25 +1705,28 @@ extern bool opt_slow_log;
 extern ulong log_output_options;
 extern bool opt_log_queries_not_using_indexes;
 extern bool opt_disable_networking, opt_skip_show_db;
-extern my_bool opt_character_set_client_handshake;
+extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint volatile thread_count, thread_running, global_read_lock;
 extern uint connection_count;
-extern my_bool opt_sql_bin_update, opt_safe_user_create, opt_no_mix_types;
+extern bool opt_sql_bin_update;
+extern bool opt_safe_user_create;
+extern my_bool opt_no_mix_types;
 extern my_bool opt_safe_show_db, opt_myisam_use_mmap;
 extern bool opt_local_infile;
 extern bool opt_slave_compressed_protocol;
-extern my_bool use_temp_pool;
+extern bool use_temp_pool;
 extern ulong slave_exec_mode_options;
 extern bool opt_readonly;
 extern bool lower_case_file_system;
-extern my_bool opt_enable_named_pipe;
+extern bool opt_enable_named_pipe;
 extern bool opt_sync_frm;
 extern bool opt_secure_auth;
 extern char* opt_secure_file_priv;
-extern my_bool opt_log_slow_admin_statements, opt_log_slow_slave_statements;
-extern my_bool opt_noacl;
-extern my_bool opt_old_style_user_limits;
+extern bool opt_log_slow_admin_statements;
+extern bool opt_log_slow_slave_statements;
+extern bool opt_noacl;
+extern bool opt_old_style_user_limits;
 extern uint opt_crash_binlog_innodb;
 extern char *shared_memory_base_name;
 extern my_bool opt_enable_shared_memory;

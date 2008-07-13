@@ -199,7 +199,7 @@ const char *my_localhost= "localhost";
 /*
   Used with --help for detailed option
 */
-static my_bool opt_help= 0, opt_verbose= 0;
+static bool opt_help= 0, opt_verbose= 0;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -220,8 +220,8 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool lower_case_table_names_used= 0;
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
-static my_bool opt_debugging= 0, opt_external_locking= 0, opt_console= 0;
-static my_bool opt_short_log_format= 0;
+static bool opt_debugging= 0, opt_external_locking= 0, opt_console= 0;
+static bool opt_short_log_format= 0;
 static uint kill_cached_threads, wake_thread;
 static ulong killed_threads, thread_created;
 static ulong max_used_connections;
@@ -250,21 +250,21 @@ bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= IF_WIN(1,0);
 bool opt_disable_networking= false;
 bool opt_skip_show_db= false;
-my_bool opt_character_set_client_handshake= 1;
+bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
-my_bool locked_in_memory;
+bool locked_in_memory;
 bool opt_using_transactions, using_update_log;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-my_bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
-my_bool opt_reckless_slave = 0;
-my_bool opt_enable_named_pipe= 0;
+bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
+bool opt_reckless_slave = 0;
+bool opt_enable_named_pipe= 0;
 bool opt_local_infile;
 bool opt_slave_compressed_protocol;
-my_bool opt_safe_user_create = 0;
-my_bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
-my_bool opt_log_slave_updates= 0;
+bool opt_safe_user_create = 0;
+bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
+bool opt_log_slave_updates= 0;
 
 /*
   Legacy global handlerton. These will be removed (please do not add more).
@@ -273,22 +273,23 @@ handlerton *heap_hton;
 handlerton *myisam_hton;
 
 bool opt_readonly;
-my_bool use_temp_pool;
+bool use_temp_pool;
 bool relay_log_purge;
 bool opt_sync_frm;
 bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
-my_bool opt_log_slow_admin_statements= 0;
-my_bool opt_log_slow_slave_statements= 0;
+bool opt_log_slow_admin_statements= 0;
+bool opt_log_slow_slave_statements= 0;
 bool lower_case_file_system= 0;
-my_bool opt_old_style_user_limits= 0, trust_function_creators= 0;
+bool opt_old_style_user_limits= 0;
+bool trust_function_creators= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
   check them before each query (and possibly reset counters when hour is
   changed). False otherwise.
 */
 volatile bool mqh_used = 0;
-my_bool opt_noacl;
+bool opt_noacl;
 
 ulong opt_binlog_rows_event_max_size;
 const char *binlog_format_names[]= {"MIXED", "STATEMENT", "ROW", NullS};
@@ -460,9 +461,9 @@ char *opt_logname, *opt_slow_logname;
 
 static bool kill_in_progress, segfaulted;
 #ifdef HAVE_STACK_TRACE_ON_SEGV
-static my_bool opt_do_pstack;
+static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-static my_bool opt_bootstrap, opt_myisam_log;
+static bool opt_bootstrap, opt_myisam_log;
 static int cleanup_done;
 static ulong opt_specialflag, opt_myisam_block_size;
 static char *opt_binlog_index_name;
@@ -4050,7 +4051,7 @@ static int show_slave_running(THD *thd __attribute__((__unused__)),
   var->type= SHOW_MY_BOOL;
   pthread_mutex_lock(&LOCK_active_mi);
   var->value= buff;
-  *((my_bool *)buff)= (my_bool) (active_mi && active_mi->slave_running &&
+  *((bool *)buff)= (bool) (active_mi && active_mi->slave_running &&
                                  active_mi->rli.slave_running);
   pthread_mutex_unlock(&LOCK_active_mi);
   return 0;

@@ -29,7 +29,7 @@ typedef struct st_slave_info
   THD* thd;
 } SLAVE_INFO;
 
-extern my_bool opt_show_slave_auth_info;
+extern bool opt_show_slave_auth_info;
 extern char *master_host, *master_info_file;
 extern bool server_id_supplied;
 

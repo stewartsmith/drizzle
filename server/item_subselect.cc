@@ -830,7 +830,6 @@ longlong Item_in_subselect::val_int()
     As far as Item_in_subselect called only from Item_in_optimizer this
     method should not be used
   */
-  assert(0);
   assert(fixed == 1);
   null_value= 0;
   if (exec())
