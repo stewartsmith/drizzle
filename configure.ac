@@ -1189,10 +1189,10 @@ AC_ARG_ENABLE([pedantic-warnings],
     [ac_warn_pedantic="yes"])
 
 AC_ARG_ENABLE([fail],
-    [AS_HELP_STRING([--enable-fail],
-       [Turn warnings into failures @<:@default=off@:>@])],
+    [AS_HELP_STRING([--disable-fail],
+       [Turn warnings into failures @<:@default=on@:>@])],
     [ac_warn_fail="$enableval"],
-    [ac_warn_fail="no"])
+    [ac_warn_fail="yes"])
 
 AC_ARG_ENABLE([unreachable],
     [AS_HELP_STRING([--enable-unreachable],
