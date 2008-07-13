@@ -233,27 +233,6 @@ public:
   LEX_COLUMN (const String& x,const  uint& y ): column (x),rights (y) {}
 };
 
-/**
-  Query_cache_tls -- query cache thread local data.
-*/
-
-struct Query_cache_block;
-
-struct Query_cache_tls
-{
-  /*
-    'first_query_block' should be accessed only via query cache
-    functions and methods to maintain proper locking.
-  */
-  Query_cache_block *first_query_block;
-  void set_first_query_block(Query_cache_block *first_query_block_arg)
-  {
-    first_query_block= first_query_block_arg;
-  }
-
-  Query_cache_tls() :first_query_block(NULL) {}
-};
-
 #include "sql_lex.h"				/* Must be here */
 
 class select_result;

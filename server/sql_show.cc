@@ -2558,10 +2558,8 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
       if lookup value is empty string then
       it's impossible table name or db name
     */
-    if (lookup_field_vals.db_value.str &&
-        !lookup_field_vals.db_value.str[0] ||
-        lookup_field_vals.table_value.str &&
-        !lookup_field_vals.table_value.str[0])
+    if ((lookup_field_vals.db_value.str && !lookup_field_vals.db_value.str[0]) ||
+        (lookup_field_vals.table_value.str && !lookup_field_vals.table_value.str[0]))
     {
       error= 0;
       goto err;
