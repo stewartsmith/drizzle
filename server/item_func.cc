@@ -2779,7 +2779,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
   if (check_stack_overrun(thd, STACK_MIN_SIZE, buff))
     return(true);				// Fatal error flag is set!
 
-  udf_func *tmp_udf=find_udf(u_d->name.str,(uint) u_d->name.length,1);
+  udf_func *tmp_udf=find_udf(u_d->name.str,(uint) u_d->name.length);
 
   if (!tmp_udf)
   {

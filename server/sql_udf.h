@@ -132,6 +132,6 @@ class udf_handler :public Sql_alloc
 
 
 void udf_init(void),udf_free(void);
-udf_func *find_udf(const char *name, uint len=0,bool mark_used=0);
+udf_func *find_udf(const char *name, uint len=0);
 void free_udf(udf_func *udf);
 int mysql_create_function(THD *thd,udf_func *udf);
