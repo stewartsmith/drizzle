@@ -49,11 +49,11 @@
 #undef strtoul
 #undef strtol
 #ifdef USE_LONGLONG
-#define UTYPE_MAX (~(ulonglong) 0)
+#define UTYPE_MAX (~(uint64_t) 0)
 #define TYPE_MIN LONGLONG_MIN
 #define TYPE_MAX LONGLONG_MAX
 #define longtype longlong
-#define ulongtype ulonglong
+#define ulongtype uint64_t
 #ifdef USE_UNSIGNED
 #define function ulongtype strtoull
 #else

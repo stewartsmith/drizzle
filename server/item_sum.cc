@@ -906,7 +906,7 @@ struct Hybrid_type_traits_fast_decimal: public
   virtual void fix_length_and_dec(Item *item, Item *arg) const
   { Hybrid_type_traits_decimal::instance()->fix_length_and_dec(item, arg); }
 
-  virtual void div(Hybrid_type *val, ulonglong u) const
+  virtual void div(Hybrid_type *val, uint64_t u) const
   {
     int2my_decimal(E_DEC_FATAL_ERROR, val->integer, 0, val->dec_buf);
     val->used_dec_buf_no= 0;
@@ -1264,7 +1264,7 @@ double Item_sum_avg::val_real()
     null_value=1;
     return 0.0;
   }
-  return Item_sum_sum::val_real() / ulonglong2double(count);
+  return Item_sum_sum::val_real() / uint64_t2double(count);
 }
 
 
@@ -1336,7 +1336,7 @@ Item *Item_sum_std::copy_or_same(THD* thd)
   variance.  The difference between the two classes is that the first is used
   for a mundane SELECT, while the latter is used in a GROUPing SELECT.
 */
-static void variance_fp_recurrence_next(double *m, double *s, ulonglong *count, double nr)
+static void variance_fp_recurrence_next(double *m, double *s, uint64_t *count, double nr)
 {
   *count += 1;
 
@@ -1354,7 +1354,7 @@ static void variance_fp_recurrence_next(double *m, double *s, ulonglong *count, 
 }
 
 
-static double variance_fp_recurrence_result(double s, ulonglong count, bool is_sample_variance)
+static double variance_fp_recurrence_result(double s, uint64_t count, bool is_sample_variance)
 {
   if (count == 1)
     return 0.0;
@@ -1509,7 +1509,7 @@ void Item_sum_variance::reset_field()
   else
   {
     /* Serialize format is (double)m, (double)s, (longlong)count */
-    ulonglong tmp_count;
+    uint64_t tmp_count;
     double tmp_s;
     float8store(res, nr);               /* recurrence variable m */
     tmp_s= 0.0;
@@ -1522,7 +1522,7 @@ void Item_sum_variance::reset_field()
 
 void Item_sum_variance::update_field()
 {
-  ulonglong field_count;
+  uint64_t field_count;
   uchar *res=result_field->ptr;
 
   double nr= args[0]->val_real();       /* sets null_value as side-effect */
@@ -1581,7 +1581,7 @@ double Item_sum_hybrid::val_real()
   }
   case INT_RESULT:
     if (unsigned_flag)
-      return ulonglong2double(sum_int);
+      return uint64_t2double(sum_int);
     return (double) sum_int;
   case DECIMAL_RESULT:
     my_decimal2double(E_DEC_FATAL_ERROR, &sum_dec, &sum);
@@ -1720,7 +1720,7 @@ bool Item_sum_min::add()
     longlong nr=args[0]->val_int();
     if (!args[0]->null_value && (null_value ||
 				 (unsigned_flag && 
-				  (ulonglong) nr < (ulonglong) sum_int) ||
+				  (uint64_t) nr < (uint64_t) sum_int) ||
 				 (!unsigned_flag && nr < sum_int)))
     {
       sum_int=nr;
@@ -1784,7 +1784,7 @@ bool Item_sum_max::add()
     longlong nr=args[0]->val_int();
     if (!args[0]->null_value && (null_value ||
 				 (unsigned_flag && 
-				  (ulonglong) nr > (ulonglong) sum_int) ||
+				  (uint64_t) nr > (uint64_t) sum_int) ||
 				 (!unsigned_flag && nr > sum_int)))
     {
       sum_int=nr;
@@ -1845,7 +1845,7 @@ Item *Item_sum_or::copy_or_same(THD* thd)
 
 bool Item_sum_or::add()
 {
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if (!args[0]->null_value)
     bits|=value;
   return 0;
@@ -1859,7 +1859,7 @@ Item *Item_sum_xor::copy_or_same(THD* thd)
 
 bool Item_sum_xor::add()
 {
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if (!args[0]->null_value)
     bits^=value;
   return 0;
@@ -1873,7 +1873,7 @@ Item *Item_sum_and::copy_or_same(THD* thd)
 
 bool Item_sum_and::add()
 {
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if (!args[0]->null_value)
     bits&=value;
   return 0;
@@ -2230,7 +2230,7 @@ Item_sum_hybrid::min_max_update_int_field()
     else
     {
       bool res=(unsigned_flag ?
-		(ulonglong) old_nr > (ulonglong) nr :
+		(uint64_t) old_nr > (uint64_t) nr :
 		old_nr > nr);
       /* (cmp_sign > 0 && res) || (!(cmp_sign > 0) && !res) */
       if ((cmp_sign > 0) ^ (!res))
@@ -2415,7 +2415,7 @@ double Item_variance_field::val_real()
     return val_real_from_decimal();
 
   double recurrence_s;
-  ulonglong count;
+  uint64_t count;
   float8get(recurrence_s, (field->ptr + sizeof(double)));
   count=sint8korr(field->ptr+sizeof(double)*2);
 
@@ -2469,7 +2469,7 @@ static int count_distinct_walk(void *elem __attribute__((__unused__)),
                                element_count count __attribute__((__unused__)),
                                void *arg)
 {
-  (*((ulonglong*)arg))++;
+  (*((uint64_t*)arg))++;
   return 0;
 }
 

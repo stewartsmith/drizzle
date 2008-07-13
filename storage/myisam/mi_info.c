@@ -93,7 +93,7 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
   {
     x->auto_increment= share->state.auto_increment+1;
     if (!x->auto_increment)			/* This shouldn't happen */
-      x->auto_increment= ~(ulonglong) 0;
+      x->auto_increment= ~(uint64_t) 0;
   }
   DBUG_RETURN(0);
 }

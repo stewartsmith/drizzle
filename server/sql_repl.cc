@@ -42,7 +42,7 @@ int max_binlog_dump_events = 0; // unlimited
     part.
 */
 static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
-                             ulonglong position, const char** errmsg)
+                             uint64_t position, const char** errmsg)
 {
   char header[LOG_EVENT_HEADER_LEN], buf[ROTATE_HEADER_LEN+100];
   /*
@@ -312,10 +312,10 @@ Increase max_allowed_packet on master";
 
   @param[in]    thd  THD to access a user variable
 
-  @return        heartbeat period an ulonglong of nanoseconds
+  @return        heartbeat period an uint64_t of nanoseconds
                  or zero if heartbeat was not demanded by slave
 */ 
-static ulonglong get_heartbeat_period(THD * thd)
+static uint64_t get_heartbeat_period(THD * thd)
 {
   my_bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
@@ -396,7 +396,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   /* 
      heartbeat_period from @master_heartbeat_period user variable
   */
-  ulonglong heartbeat_period= get_heartbeat_period(thd);
+  uint64_t heartbeat_period= get_heartbeat_period(thd);
   struct timespec heartbeat_buf;
   struct event_coordinates coord_buf;
   struct timespec *heartbeat_ts= NULL;
@@ -1347,8 +1347,8 @@ int reset_master(THD* thd)
   return mysql_bin_log.reset_logs(thd);
 }
 
-int cmp_master_pos(const char* log_file_name1, ulonglong log_pos1,
-		   const char* log_file_name2, ulonglong log_pos2)
+int cmp_master_pos(const char* log_file_name1, uint64_t log_pos1,
+		   const char* log_file_name2, uint64_t log_pos2)
 {
   int res;
   uint log_file_name1_len=  strlen(log_file_name1);
@@ -1535,7 +1535,7 @@ bool show_binlog_info(THD* thd)
     mysql_bin_log.get_current_log(&li);
     int dir_len = dirname_length(li.log_file_name);
     protocol->store(li.log_file_name + dir_len, &my_charset_bin);
-    protocol->store((ulonglong) li.pos);
+    protocol->store((uint64_t) li.pos);
     protocol->store(binlog_filter->get_do_db());
     protocol->store(binlog_filter->get_ignore_db());
     if (protocol->write())
@@ -1597,7 +1597,7 @@ bool show_binlogs(THD* thd)
   while ((length=my_b_gets(index_file, fname, sizeof(fname))) > 1)
   {
     int dir_len;
-    ulonglong file_length= 0;                   // Length if open fails
+    uint64_t file_length= 0;                   // Length if open fails
     fname[--length] = '\0';                     // remove the newline
 
     protocol->prepare_for_resend();
@@ -1613,7 +1613,7 @@ bool show_binlogs(THD* thd)
       if ((file= my_open(fname, O_RDONLY | O_SHARE | O_BINARY,
                          MYF(0))) >= 0)
       {
-        file_length= (ulonglong) my_seek(file, 0L, MY_SEEK_END, MYF(0));
+        file_length= (uint64_t) my_seek(file, 0L, MY_SEEK_END, MYF(0));
         my_close(file, MYF(0));
       }
     }
@@ -1833,7 +1833,7 @@ bool sys_var_slave_skip_counter::update(THD *thd __attribute__((__unused__)),
 bool sys_var_sync_binlog_period::update(THD *thd __attribute__((__unused__)),
                                         set_var *var)
 {
-  sync_binlog_period= (ulong) var->save_result.ulonglong_value;
+  sync_binlog_period= (ulong) var->save_result.uint64_t_value;
   return 0;
 }
 

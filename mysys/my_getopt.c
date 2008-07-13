@@ -31,7 +31,7 @@ static int findopt(char *optpat, uint length,
 		   const struct my_option **opt_res,
 		   char **ffname);
 static longlong getopt_ll(char *arg, const struct my_option *optp, int *err);
-static ulonglong getopt_ull(char *arg, const struct my_option *optp,
+static uint64_t getopt_ull(char *arg, const struct my_option *optp,
 			    int *err);
 static double getopt_double(char *arg, const struct my_option *optp, int *err);
 static void init_variables(const struct my_option *options,
@@ -619,7 +619,7 @@ static int setval(const struct my_option *opts, char* *value, char *argument,
       *((longlong*) result_pos)= getopt_ll(argument, opts, &err);
       break;
     case GET_ULL:
-      *((ulonglong*) result_pos)= getopt_ull(argument, opts, &err);
+      *((uint64_t*) result_pos)= getopt_ull(argument, opts, &err);
       break;
     case GET_DOUBLE:
       *((double*) result_pos)= getopt_double(argument, opts, &err);
@@ -638,7 +638,7 @@ static int setval(const struct my_option *opts, char* *value, char *argument,
         return EXIT_ARGUMENT_INVALID;
       break;
     case GET_SET:
-      *((ulonglong*)result_pos)= find_typeset(argument, opts->typelib, &err);
+      *((uint64_t*)result_pos)= find_typeset(argument, opts->typelib, &err);
       if (err)
         return EXIT_ARGUMENT_INVALID;
       break;
@@ -795,12 +795,12 @@ longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
   longlong old= num;
   bool adjusted= FALSE;
   char buf1[255], buf2[255];
-  ulonglong block_size= (optp->block_size ? (ulonglong) optp->block_size : 1L);
+  uint64_t block_size= (optp->block_size ? (uint64_t) optp->block_size : 1L);
 
-  if (num > 0 && ((ulonglong) num > (ulonglong) optp->max_value) &&
+  if (num > 0 && ((uint64_t) num > (uint64_t) optp->max_value) &&
       optp->max_value) /* if max value is not set -> no upper limit */
   {
-    num= (ulonglong) optp->max_value;
+    num= (uint64_t) optp->max_value;
     adjusted= TRUE;
   }
 
@@ -851,40 +851,40 @@ longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
   values.
 */
 
-static ulonglong getopt_ull(char *arg, const struct my_option *optp, int *err)
+static uint64_t getopt_ull(char *arg, const struct my_option *optp, int *err)
 {
-  ulonglong num= eval_num_suffix(arg, err, (char*) optp->name);
+  uint64_t num= eval_num_suffix(arg, err, (char*) optp->name);
   return getopt_ull_limit_value(num, optp, NULL);
 }
 
 
-ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
+uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
                                  bool *fix)
 {
   bool adjusted= FALSE;
-  ulonglong old= num;
+  uint64_t old= num;
   char buf1[255], buf2[255];
 
-  if ((ulonglong) num > (ulonglong) optp->max_value &&
+  if ((uint64_t) num > (uint64_t) optp->max_value &&
       optp->max_value) /* if max value is not set -> no upper limit */
   {
-    num= (ulonglong) optp->max_value;
+    num= (uint64_t) optp->max_value;
     adjusted= TRUE;
   }
 
   switch ((optp->var_type & GET_TYPE_MASK)) {
   case GET_UINT:
-    if (num > (ulonglong) UINT_MAX)
+    if (num > (uint64_t) UINT_MAX)
     {
-      num= ((ulonglong) UINT_MAX);
+      num= ((uint64_t) UINT_MAX);
       adjusted= TRUE;
     }
     break;
   case GET_ULONG:
 #if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (ulonglong) ULONG_MAX)
+    if (num > (uint64_t) ULONG_MAX)
     {
-      num= ((ulonglong) ULONG_MAX);
+      num= ((uint64_t) ULONG_MAX);
       adjusted= TRUE;
     }
 #endif
@@ -896,13 +896,13 @@ ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
 
   if (optp->block_size > 1)
   {
-    num/= (ulonglong) optp->block_size;
-    num*= (ulonglong) optp->block_size;
+    num/= (uint64_t) optp->block_size;
+    num*= (uint64_t) optp->block_size;
   }
 
-  if (num < (ulonglong) optp->min_value)
+  if (num < (uint64_t) optp->min_value)
   {
-    num= (ulonglong) optp->min_value;
+    num= (uint64_t) optp->min_value;
     adjusted= TRUE;
   }
 
@@ -983,7 +983,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     break;
   case GET_ULL:
   case GET_SET:
-    *((ulonglong*) variable)=  (ulonglong) value;
+    *((uint64_t*) variable)=  (uint64_t) value;
     break;
   case GET_DOUBLE:
     *((double*) variable)=  (double) value;
@@ -1182,7 +1182,7 @@ void my_print_help(const struct my_option *options)
 void my_print_variables(const struct my_option *options)
 {
   uint name_space= 34, length, nr;
-  ulonglong bit, llvalue;
+  uint64_t bit, llvalue;
   char buff[255];
   const struct my_option *optp;
 
@@ -1201,7 +1201,7 @@ void my_print_variables(const struct my_option *options)
 	putchar(' ');
       switch ((optp->var_type & GET_TYPE_MASK)) {
       case GET_SET:
-        if (!(llvalue= *(ulonglong*) value))
+        if (!(llvalue= *(uint64_t*) value))
 	  printf("%s\n", "(No default value)");
 	else
         for (nr= 0, bit= 1; llvalue && nr < optp->typelib->count; nr++, bit<<=1)
@@ -1239,7 +1239,7 @@ void my_print_variables(const struct my_option *options)
 	printf("%s\n", llstr(*((longlong*) value), buff));
 	break;
       case GET_ULL:
-	longlong2str(*((ulonglong*) value), buff, 10);
+	longlong2str(*((uint64_t*) value), buff, 10);
 	printf("%s\n", buff);
 	break;
       case GET_DOUBLE:

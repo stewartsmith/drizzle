@@ -510,9 +510,9 @@ int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record)
     less than zero.
 */
 
-ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
+uint64_t retrieve_auto_increment(MI_INFO *info,const uchar *record)
 {
-  ulonglong value= 0;			/* Store unsigned values here */
+  uint64_t value= 0;			/* Store unsigned values here */
   longlong s_value= 0;			/* Store signed values here */
   HA_KEYSEG *keyseg= info->s->keyinfo[info->s->base.auto_key-1].seg;
   const uchar *key= (uchar*) record + keyseg->start;
@@ -522,32 +522,32 @@ ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
     s_value= (longlong) *(char*)key;
     break;
   case HA_KEYTYPE_BINARY:
-    value=(ulonglong)  *(uchar*) key;
+    value=(uint64_t)  *(uchar*) key;
     break;
   case HA_KEYTYPE_SHORT_INT:
     s_value= (longlong) sint2korr(key);
     break;
   case HA_KEYTYPE_USHORT_INT:
-    value=(ulonglong) uint2korr(key);
+    value=(uint64_t) uint2korr(key);
     break;
   case HA_KEYTYPE_LONG_INT:
     s_value= (longlong) sint4korr(key);
     break;
   case HA_KEYTYPE_ULONG_INT:
-    value=(ulonglong) uint4korr(key);
+    value=(uint64_t) uint4korr(key);
     break;
   case HA_KEYTYPE_INT24:
     s_value= (longlong) sint3korr(key);
     break;
   case HA_KEYTYPE_UINT24:
-    value=(ulonglong) uint3korr(key);
+    value=(uint64_t) uint3korr(key);
     break;
   case HA_KEYTYPE_FLOAT:                        /* This shouldn't be used */
   {
     float f_1;
     float4get(f_1,key);
     /* Ignore negative values */
-    value = (f_1 < (float) 0.0) ? 0 : (ulonglong) f_1;
+    value = (f_1 < (float) 0.0) ? 0 : (uint64_t) f_1;
     break;
   }
   case HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
@@ -555,7 +555,7 @@ ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
     double f_1;
     float8get(f_1,key);
     /* Ignore negative values */
-    value = (f_1 < 0.0) ? 0 : (ulonglong) f_1;
+    value = (f_1 < 0.0) ? 0 : (uint64_t) f_1;
     break;
   }
   case HA_KEYTYPE_LONGLONG:
@@ -575,5 +575,5 @@ ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
     and if s_value == 0 then value will contain either s_value or the
     correct value.
   */
-  return (s_value > 0) ? (ulonglong) s_value : value;
+  return (s_value > 0) ? (uint64_t) s_value : value;
 }

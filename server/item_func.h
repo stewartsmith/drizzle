@@ -740,7 +740,7 @@ public:
   void fix_length_and_dec();
   enum Item_result result_type () const { return cmp_type; }
   bool result_as_longlong() { return compare_as_dates; };
-  uint cmp_datetimes(ulonglong *value);
+  uint cmp_datetimes(uint64_t *value);
   enum_field_types field_type() const { return cached_field_type; }
 };
 
@@ -879,7 +879,7 @@ class Item_func_find_in_set :public Item_int_func
 {
   String value,value2;
   uint enum_value;
-  ulonglong enum_bit;
+  uint64_t enum_bit;
   DTCollation cmp_collation;
 public:
   Item_func_find_in_set(Item *a,Item *b) :Item_int_func(a,b),enum_value(0) {}

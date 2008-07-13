@@ -71,7 +71,7 @@ static const char* database= 0;
 static bool force_opt= 0, short_form= 0, remote_opt= 0;
 static bool debug_info_flag, debug_check_flag;
 static bool force_if_open_opt= 1;
-static ulonglong offset = 0;
+static uint64_t offset = 0;
 static const char* host = 0;
 static int port= 0;
 static uint my_end_arg;
@@ -80,13 +80,13 @@ static const char* user = 0;
 static char* pass = 0;
 static char *charset= 0;
 
-static ulonglong start_position, stop_position;
+static uint64_t start_position, stop_position;
 #define start_position_mot ((my_off_t)start_position)
 #define stop_position_mot  ((my_off_t)stop_position)
 
 static char *start_datetime_str, *stop_datetime_str;
 static my_time_t start_datetime= 0, stop_datetime= MY_TIME_T_MAX;
-static ulonglong rec_count= 0;
+static uint64_t rec_count= 0;
 static short binlog_flags = 0; 
 static MYSQL* mysql = NULL;
 static const char* dirname_for_local_load= 0;
@@ -985,7 +985,7 @@ static struct my_option my_long_options[] =
    (char**) &start_position, (char**) &start_position, 0, GET_ULL,
    REQUIRED_ARG, BIN_LOG_HEADER_SIZE, BIN_LOG_HEADER_SIZE,
    /* COM_BINLOG_DUMP accepts only 4 bytes for the position */
-   (ulonglong)(~(uint32)0), 0, 0, 0},
+   (uint64_t)(~(uint32)0), 0, 0, 0},
   {"protocol", OPT_MYSQL_PROTOCOL,
    "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -1024,7 +1024,7 @@ static struct my_option my_long_options[] =
    (char**) &start_position, (char**) &start_position, 0, GET_ULL,
    REQUIRED_ARG, BIN_LOG_HEADER_SIZE, BIN_LOG_HEADER_SIZE,
    /* COM_BINLOG_DUMP accepts only 4 bytes for the position */
-   (ulonglong)(~(uint32)0), 0, 0, 0},
+   (uint64_t)(~(uint32)0), 0, 0, 0},
   {"stop-datetime", OPT_STOP_DATETIME,
    "Stop reading the binlog at first event having a datetime equal or "
    "posterior to the argument; the argument must be a date and time "
@@ -1037,8 +1037,8 @@ static struct my_option my_long_options[] =
    "Stop reading the binlog at position N. Applies to the last binlog "
    "passed on the command line.",
    (char**) &stop_position, (char**) &stop_position, 0, GET_ULL,
-   REQUIRED_ARG, (ulonglong)(~(my_off_t)0), BIN_LOG_HEADER_SIZE,
-   (ulonglong)(~(my_off_t)0), 0, 0, 0},
+   REQUIRED_ARG, (uint64_t)(~(my_off_t)0), BIN_LOG_HEADER_SIZE,
+   (uint64_t)(~(my_off_t)0), 0, 0, 0},
   {"to-last-log", 't', "Requires -R. Will not stop at the end of the \
 requested binlog but rather continue printing until the end of the last \
 binlog of the MySQL server. If you send the output to the same MySQL server, \
@@ -1658,7 +1658,7 @@ static Exit_status check_header(IO_CACHE* file,
       if (file->error)
       {
         error("Could not read entry at offset %lu: "
-              "Error in log format or read error.", (ulonglong)tmp_pos);
+              "Error in log format or read error.", (uint64_t)tmp_pos);
         return ERROR_STOP;
       }
       /*
@@ -1710,7 +1710,7 @@ static Exit_status check_header(IO_CACHE* file,
         {
           error("Could not read a Format_description_log_event event at "
                 "offset %lu; this could be a log format error or read error.",
-                (ulonglong)tmp_pos);
+                (uint64_t)tmp_pos);
           return ERROR_STOP;
         }
         if (opt_base64_output_mode == BASE64_OUTPUT_AUTO
@@ -1742,7 +1742,7 @@ static Exit_status check_header(IO_CACHE* file,
           /* EOF can't be hit here normally, so it's a real error */
           error("Could not read a Rotate_log_event event at offset %lu;"
                 " this could be a log format error or read error.",
-                (ulonglong)tmp_pos);
+                (uint64_t)tmp_pos);
           return ERROR_STOP;
         }
         delete ev;
@@ -1875,7 +1875,7 @@ int main(int argc, char** argv)
 {
   char **defaults_argv;
   Exit_status retval= OK_CONTINUE;
-  ulonglong save_stop_position;
+  uint64_t save_stop_position;
   MY_INIT(argv[0]);
 
   init_time(); // for time functions

@@ -57,7 +57,7 @@ int unique_write_to_ptrs(uchar* key,
 }
 
 Unique::Unique(qsort_cmp2 comp_func, void * comp_func_fixed_arg,
-	       uint size_arg, ulonglong max_in_memory_size_arg)
+	       uint size_arg, uint64_t max_in_memory_size_arg)
   :max_in_memory_size(max_in_memory_size_arg), size(size_arg), elements(0)
 {
   my_b_clear(&file);
@@ -264,7 +264,7 @@ static double get_merge_many_buffs_cost(uint *buffer,
 */
 
 double Unique::get_use_cost(uint *buffer, uint nkeys, uint key_size,
-                            ulonglong max_in_memory_size)
+                            uint64_t max_in_memory_size)
 {
   ulong max_elements_in_tree;
   ulong last_tree_elems;

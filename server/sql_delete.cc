@@ -31,7 +31,7 @@
 */
 
 bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
-                  SQL_LIST *order, ha_rows limit, ulonglong options,
+                  SQL_LIST *order, ha_rows limit, uint64_t options,
                   bool reset_auto_increment)
 {
   bool          will_batch;
@@ -941,7 +941,7 @@ end:
 
 trunc_by_del:
   /* Probably InnoDB table */
-  ulonglong save_options= thd->options;
+  uint64_t save_options= thd->options;
   table_list->lock_type= TL_WRITE;
   thd->options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
   ha_enable_transaction(thd, FALSE);

@@ -199,7 +199,7 @@ static bool sec_to_time(longlong seconds, bool unsigned_flag, MYSQL_TIME *ltime)
   else if (seconds > 3020399)
     goto overflow;
   
-  sec= (uint) ((ulonglong) seconds % 3600);
+  sec= (uint) ((uint64_t) seconds % 3600);
   ltime->hour= (uint) (seconds/3600);
   ltime->minute= sec/60;
   ltime->second= sec % 60;
@@ -858,7 +858,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
 */
 
 static bool get_interval_info(const char *str,uint length,CHARSET_INFO *cs,
-                              uint count, ulonglong *values,
+                              uint count, uint64_t *values,
                               bool transform_msec)
 {
   const char *end=str+length;
@@ -1295,7 +1295,7 @@ longlong Item_func_time_to_sec::val_int()
 bool get_interval_value(Item *args,interval_type int_type,
 			       String *str_value, INTERVAL *interval)
 {
-  ulonglong array[5];
+  uint64_t array[5];
   longlong value= 0;
   const char *str= NULL;
   size_t length= 0;
@@ -1493,7 +1493,7 @@ void Item_func_curdate::fix_length_and_dec()
   /* We don't need to set second_part and neg because they already 0 */
   ltime.hour= ltime.minute= ltime.second= 0;
   ltime.time_type= MYSQL_TIMESTAMP_DATE;
-  value= (longlong) TIME_to_ulonglong_date(&ltime);
+  value= (longlong) TIME_to_uint64_t_date(&ltime);
 }
 
 String *Item_func_curdate::val_str(String *str)
@@ -1559,7 +1559,7 @@ void Item_func_curtime::fix_length_and_dec()
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
   store_now_in_TIME(&ltime);
-  value= TIME_to_ulonglong_time(&ltime);
+  value= TIME_to_uint64_t_time(&ltime);
   buff_length= (uint) my_time_to_str(&ltime, buff);
   max_length= buff_length;
 }
@@ -1607,7 +1607,7 @@ void Item_func_now::fix_length_and_dec()
   collation.set(&my_charset_bin);
 
   store_now_in_TIME(&ltime);
-  value= (longlong) TIME_to_ulonglong_datetime(&ltime);
+  value= (longlong) TIME_to_uint64_t_datetime(&ltime);
 
   buff_length= (uint) my_datetime_to_str(&ltime, buff);
   max_length= buff_length;
@@ -1683,7 +1683,7 @@ longlong Item_func_sysdate_local::val_int()
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  return (longlong) TIME_to_ulonglong_datetime(&ltime);
+  return (longlong) TIME_to_uint64_t_datetime(&ltime);
 }
 
 
@@ -1691,7 +1691,7 @@ double Item_func_sysdate_local::val_real()
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  return ulonglong2double(TIME_to_ulonglong_datetime(&ltime));
+  return uint64_t2double(TIME_to_uint64_t_datetime(&ltime));
 }
 
 
@@ -1985,13 +1985,13 @@ longlong Item_func_from_unixtime::val_int()
   if (get_date(&time_tmp, 0))
     return 0;
 
-  return (longlong) TIME_to_ulonglong_datetime(&time_tmp);
+  return (longlong) TIME_to_uint64_t_datetime(&time_tmp);
 }
 
 bool Item_func_from_unixtime::get_date(MYSQL_TIME *ltime,
 				       uint fuzzy_date __attribute__((unused)))
 {
-  ulonglong tmp= (ulonglong)(args[0]->val_int());
+  uint64_t tmp= (uint64_t)(args[0]->val_int());
   /*
     "tmp > TIMESTAMP_MAX_VALUE" check also covers case of negative
     from_unixtime() argument since tmp is unsigned.
@@ -2300,7 +2300,7 @@ void Item_char_typecast::print(String *str, enum_query_type query_type)
     char buffer[20];
     // my_charset_bin is good enough for numbers
     String st(buffer, sizeof(buffer), &my_charset_bin);
-    st.set((ulonglong)cast_length, &my_charset_bin);
+    st.set((uint64_t)cast_length, &my_charset_bin);
     str->append(st);
     str->append(')');
   }
@@ -2449,7 +2449,7 @@ longlong Item_datetime_typecast::val_int()
     return 0;
   }
 
-  return TIME_to_ulonglong_datetime(&ltime);
+  return TIME_to_uint64_t_datetime(&ltime);
 }
 
 

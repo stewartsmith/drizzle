@@ -375,7 +375,7 @@ Diagnostics_area::reset_diagnostics_area()
 
 void
 Diagnostics_area::set_ok_status(THD *thd, ha_rows affected_rows_arg,
-                                ulonglong last_insert_id_arg,
+                                uint64_t last_insert_id_arg,
                                 const char *message_arg)
 {
   assert(! is_set());
@@ -2953,8 +2953,8 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
   return(0);
 }
 
-bool Discrete_intervals_list::append(ulonglong start, ulonglong val,
-                                 ulonglong incr)
+bool Discrete_intervals_list::append(uint64_t start, uint64_t val,
+                                 uint64_t incr)
 {
   /* first, see if this can be merged with previous */
   if ((head == NULL) || tail->merge_if_contiguous(start, val, incr))

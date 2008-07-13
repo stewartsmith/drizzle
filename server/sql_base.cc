@@ -3681,7 +3681,7 @@ int decide_logging_format(THD *thd, TABLE_LIST *tables)
     {
       if (!table->placeholder() && table->lock_type >= TL_WRITE_ALLOW_WRITE)
       {
-        ulonglong const flags= table->table->file->ha_table_flags();
+        uint64_t const flags= table->table->file->ha_table_flags();
         if (prev_ht && prev_ht != table->table->file->ht)
           multi_engine= true;
         prev_ht= table->table->file->ht;

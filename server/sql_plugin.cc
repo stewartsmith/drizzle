@@ -1410,22 +1410,22 @@ typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_str_t, char *);
 
 typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
 typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_enum_t, unsigned long);
-typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_set_t, ulonglong);
-typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_set_t, ulonglong);
+typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
+typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_set_t, uint64_t);
 
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_int_t, int);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_long_t, long);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_longlong_t, longlong);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint_t, uint);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_ulong_t, ulong);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_ulonglong_t, ulonglong);
+typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint64_t_t, uint64_t);
 
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_int_t, int);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_long_t, long);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_longlong_t, longlong);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint_t, uint);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_ulong_t, ulong);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_ulonglong_t, ulonglong);
+typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint64_t_t, uint64_t);
 
 #define SET_PLUGIN_VAR_RESOLVE(opt)\
   *(mysql_sys_var_ptr_p*)&((opt)->resolve)= mysql_sys_var_ptr
@@ -1486,7 +1486,7 @@ static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(uint *)save= (uint) getopt_ull_limit_value((ulonglong) tmp, &options,
+    *(uint *)save= (uint) getopt_ull_limit_value((uint64_t) tmp, &options,
                                                    &fixed);
   else
     *(int *)save= (int) getopt_ll_limit_value(tmp, &options, &fixed);
@@ -1506,7 +1506,7 @@ static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(ulong *)save= (ulong) getopt_ull_limit_value((ulonglong) tmp, &options,
+    *(ulong *)save= (ulong) getopt_ull_limit_value((uint64_t) tmp, &options,
                                                    &fixed);
   else
     *(long *)save= (long) getopt_ll_limit_value(tmp, &options, &fixed);
@@ -1526,7 +1526,7 @@ static int check_func_longlong(THD *thd, struct st_mysql_sys_var *var,
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(ulonglong *)save= getopt_ull_limit_value((ulonglong) tmp, &options,
+    *(uint64_t *)save= getopt_ull_limit_value((uint64_t) tmp, &options,
                                                &fixed);
   else
     *(longlong *)save= getopt_ll_limit_value(tmp, &options, &fixed);
@@ -1605,7 +1605,7 @@ static int check_func_set(THD *thd __attribute__((__unused__)),
   char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
   const char *strvalue= "NULL", *str;
   TYPELIB *typelib;
-  ulonglong result;
+  uint64_t result;
   uint error_len;
   bool not_used;
   int length;
@@ -1641,7 +1641,7 @@ static int check_func_set(THD *thd __attribute__((__unused__)),
       goto err;
     }
   }
-  *(ulonglong*)save= result;
+  *(uint64_t*)save= result;
   return 0;
 err:
   my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->name, strvalue);
@@ -1677,7 +1677,7 @@ static void update_func_longlong(THD *thd __attribute__((__unused__)),
                                  struct st_mysql_sys_var *var __attribute__((__unused__)),
                                  void *tgt, const void *save)
 {
-  *(longlong *)tgt= *(ulonglong *) save;
+  *(longlong *)tgt= *(uint64_t *) save;
 }
 
 
@@ -1802,7 +1802,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     break;
   case PLUGIN_VAR_LONGLONG:
   case PLUGIN_VAR_SET:
-    size= sizeof(ulonglong);
+    size= sizeof(uint64_t);
     break;
   case PLUGIN_VAR_STR:
     size= sizeof(char*);
@@ -2185,7 +2185,7 @@ uchar* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
     char buffer[STRING_BUFFER_USUAL_SIZE];
     String str(buffer, sizeof(buffer), system_charset_info);
     TYPELIB *typelib= plugin_var_typelib();
-    ulonglong mask= 1, value= *(ulonglong*) result;
+    uint64_t mask= 1, value= *(uint64_t*) result;
     uint i;
 
     str.length(0);
@@ -2248,7 +2248,7 @@ void sys_var_pluginvar::set_default(THD *thd, enum_var_type type)
 	  src= &((thdvar_ulong_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_LONGLONG:
-	  src= &((thdvar_ulonglong_t*) plugin_var)->def_val;
+	  src= &((thdvar_uint64_t_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_ENUM:
 	  src= &((thdvar_enum_t*) plugin_var)->def_val;
@@ -2347,7 +2347,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_LL, options, (sysvar_longlong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED:
-    OPTION_SET_LIMITS(GET_ULL, options, (sysvar_ulonglong_t*) opt);
+    OPTION_SET_LIMITS(GET_ULL, options, (sysvar_uint64_t_t*) opt);
     break;
   case PLUGIN_VAR_ENUM:
     options->var_type= GET_ENUM;
@@ -2389,7 +2389,7 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_LL, options, (thdvar_longlong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_THDLOCAL:
-    OPTION_SET_LIMITS(GET_ULL, options, (thdvar_ulonglong_t*) opt);
+    OPTION_SET_LIMITS(GET_ULL, options, (thdvar_uint64_t_t*) opt);
     break;
   case PLUGIN_VAR_ENUM | PLUGIN_VAR_THDLOCAL:
     options->var_type= GET_ENUM;

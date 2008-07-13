@@ -396,7 +396,7 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
     enum_check_fields orig_count_cuted_fields= thd->count_cuted_fields;
     my_bitmap_map *old_write_map;
     my_bitmap_map *old_read_map;
-    ulonglong orig_field_val= 0; /* original field value if valid */
+    uint64_t orig_field_val= 0; /* original field value if valid */
 
     if (table)
     {
@@ -647,11 +647,11 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
     converted value. 0 on error and on zero-dates -- check 'failure'
 */
 
-static ulonglong
+static uint64_t
 get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
                   char *warn_name, bool *error_arg)
 {
-  ulonglong value= 0;
+  uint64_t value= 0;
   int error;
   MYSQL_TIME l_time;
   enum_mysql_timestamp_type ret;
@@ -669,7 +669,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
       warning.
     */
     *error_arg= false;
-    value= TIME_to_ulonglong_datetime(&l_time);
+    value= TIME_to_uint64_t_datetime(&l_time);
   }
   else
   {
@@ -719,7 +719,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
 */
 
 enum Arg_comparator::enum_date_cmp_type
-Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
+Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
   Item *str_arg= 0, *date_arg= 0;
@@ -756,7 +756,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
         ((Item_func*)str_arg)->functype() != Item_func::GUSERVAR_FUNC))
     {
       THD *thd= current_thd;
-      ulonglong value;
+      uint64_t value;
       bool error;
       String tmp, *str_val= 0;
       timestamp_type t_type= (date_arg->field_type() == MYSQL_TYPE_NEWDATE ?
@@ -801,13 +801,13 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
     obtained value
 */
 
-ulonglong
+uint64_t
 get_time_value(THD *thd __attribute__((__unused__)),
                Item ***item_arg, Item **cache_arg,
                Item *warn_item __attribute__((__unused__)),
                bool *is_null)
 {
-  ulonglong value;
+  uint64_t value;
   Item *item= **item_arg;
   MYSQL_TIME ltime;
 
@@ -819,7 +819,7 @@ get_time_value(THD *thd __attribute__((__unused__)),
   else
   {
     *is_null= item->get_time(&ltime);
-    value= !*is_null ? TIME_to_ulonglong_datetime(&ltime) : 0;
+    value= !*is_null ? TIME_to_uint64_t_datetime(&ltime) : 0;
   }
   /*
     Do not cache GET_USER_VAR() function as its const_item() may return true
@@ -844,7 +844,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
                                         Item_result type)
 {
   enum enum_date_cmp_type cmp_type;
-  ulonglong const_value= (ulonglong)-1;
+  uint64_t const_value= (uint64_t)-1;
   a= a1;
   b= a2;
 
@@ -857,7 +857,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     a_cache= 0;
     b_cache= 0;
 
-    if (const_value != (ulonglong)-1)
+    if (const_value != (uint64_t)-1)
     {
       Item_cache_int *cache= new Item_cache_int();
       /* Mark the cache as non-const to prevent re-caching. */
@@ -944,11 +944,11 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
     obtained value
 */
 
-ulonglong
+uint64_t
 get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
                    Item *warn_item, bool *is_null)
 {
-  ulonglong value= 0;
+  uint64_t value= 0;
   String buf, *str= 0;
   Item *item= **item_arg;
 
@@ -973,7 +973,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     *is_null= item->null_value;
   }
   if (*is_null)
-    return ~(ulonglong) 0;
+    return ~(uint64_t) 0;
   /*
     Convert strings to the integer DATE/DATETIME representation.
     Even if both dates provided in strings we can't compare them directly as
@@ -1035,7 +1035,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
 int Arg_comparator::compare_datetime()
 {
   bool is_null= false;
-  ulonglong a_value, b_value;
+  uint64_t a_value, b_value;
 
   /* Get DATE/DATETIME/TIME value of the 'a' item. */
   a_value= (*get_value_func)(thd, &a, &a_cache, *b, &is_null);
@@ -1262,10 +1262,10 @@ int Arg_comparator::compare_int_signed()
 
 int Arg_comparator::compare_int_unsigned()
 {
-  ulonglong val1= (*a)->val_int();
+  uint64_t val1= (*a)->val_int();
   if (!(*a)->null_value)
   {
-    ulonglong val2= (*b)->val_int();
+    uint64_t val2= (*b)->val_int();
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
@@ -1288,13 +1288,13 @@ int Arg_comparator::compare_int_signed_unsigned()
   longlong sval1= (*a)->val_int();
   if (!(*a)->null_value)
   {
-    ulonglong uval2= (ulonglong)(*b)->val_int();
+    uint64_t uval2= (uint64_t)(*b)->val_int();
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
-      if (sval1 < 0 || (ulonglong)sval1 < uval2)
+      if (sval1 < 0 || (uint64_t)sval1 < uval2)
         return -1;
-      if ((ulonglong)sval1 == uval2)
+      if ((uint64_t)sval1 == uval2)
         return 0;
       return 1;
     }
@@ -1310,7 +1310,7 @@ int Arg_comparator::compare_int_signed_unsigned()
 
 int Arg_comparator::compare_int_unsigned_signed()
 {
-  ulonglong uval1= (ulonglong)(*a)->val_int();
+  uint64_t uval1= (uint64_t)(*a)->val_int();
   if (!(*a)->null_value)
   {
     longlong sval2= (*b)->val_int();
@@ -1319,9 +1319,9 @@ int Arg_comparator::compare_int_unsigned_signed()
       owner->null_value= 0;
       if (sval2 < 0)
         return 1;
-      if (uval1 < (ulonglong)sval2)
+      if (uval1 < (uint64_t)sval2)
         return -1;
-      if (uval1 == (ulonglong)sval2)
+      if (uval1 == (uint64_t)sval2)
         return 0;
       return 1;
     }
@@ -2994,7 +2994,7 @@ static inline int cmp_longs (longlong a_val, longlong b_val)
     0           left argument is equal to the right argument.
     1           left argument is greater than the right argument.
 */
-static inline int cmp_ulongs (ulonglong a_val, ulonglong b_val)
+static inline int cmp_ulongs (uint64_t a_val, uint64_t b_val)
 {
   return a_val < b_val ? -1 : a_val == b_val ? 0 : 1;
 }
@@ -3033,8 +3033,8 @@ int cmp_longlong(void *cmp_arg __attribute__((__unused__)),
       One of the args is unsigned and is too big to fit into the 
       positive signed range. Report no match.
     */  
-    if ((a->unsigned_flag && ((ulonglong) a->val) > (ulonglong) LONGLONG_MAX) ||
-        (b->unsigned_flag && ((ulonglong) b->val) > (ulonglong) LONGLONG_MAX))
+    if ((a->unsigned_flag && ((uint64_t) a->val) > (uint64_t) LONGLONG_MAX) ||
+        (b->unsigned_flag && ((uint64_t) b->val) > (uint64_t) LONGLONG_MAX))
       return a->unsigned_flag ? 1 : -1;
     /*
       Although the signedness differs both args can fit into the signed 
@@ -3043,7 +3043,7 @@ int cmp_longlong(void *cmp_arg __attribute__((__unused__)),
     return cmp_longs (a->val, b->val);
   }
   if (a->unsigned_flag)
-    return cmp_ulongs ((ulonglong) a->val, (ulonglong) b->val);
+    return cmp_ulongs ((uint64_t) a->val, (uint64_t) b->val);
   else
     return cmp_longs (a->val, b->val);
 }
@@ -3835,13 +3835,13 @@ longlong Item_func_in::val_int()
 longlong Item_func_bit_or::val_int()
 {
   assert(fixed == 1);
-  ulonglong arg1= (ulonglong) args[0]->val_int();
+  uint64_t arg1= (uint64_t) args[0]->val_int();
   if (args[0]->null_value)
   {
     null_value=1; /* purecov: inspected */
     return 0; /* purecov: inspected */
   }
-  ulonglong arg2= (ulonglong) args[1]->val_int();
+  uint64_t arg2= (uint64_t) args[1]->val_int();
   if (args[1]->null_value)
   {
     null_value=1;
@@ -3855,13 +3855,13 @@ longlong Item_func_bit_or::val_int()
 longlong Item_func_bit_and::val_int()
 {
   assert(fixed == 1);
-  ulonglong arg1= (ulonglong) args[0]->val_int();
+  uint64_t arg1= (uint64_t) args[0]->val_int();
   if (args[0]->null_value)
   {
     null_value=1; /* purecov: inspected */
     return 0; /* purecov: inspected */
   }
-  ulonglong arg2= (ulonglong) args[1]->val_int();
+  uint64_t arg2= (uint64_t) args[1]->val_int();
   if (args[1]->null_value)
   {
     null_value=1; /* purecov: inspected */

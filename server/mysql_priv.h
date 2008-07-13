@@ -64,7 +64,7 @@ enum enum_query_type
 };
 
 /* TODO convert all these three maps to Bitmap classes */
-typedef ulonglong table_map;          /* Used for table bits in join */
+typedef uint64_t table_map;          /* Used for table bits in join */
 #if MAX_INDEXES <= 64
 typedef Bitmap<64>  key_map;          /* Used for finding keys */
 #else
@@ -76,10 +76,10 @@ typedef ulong nesting_map;  /* Used for flags of nesting constructs */
   structures that have not been simplified away and embed more the one
   element)
 */
-typedef ulonglong nested_join_map;
+typedef uint64_t nested_join_map;
 
 /* query_id */
-typedef ulonglong query_id_t;
+typedef uint64_t query_id_t;
 extern query_id_t global_query_id;
 
 /* increment query_id and return it.  */
@@ -659,7 +659,7 @@ extern ulong server_id;
 
 typedef my_bool (*qc_engine_callback)(THD *thd, char *table_key,
                                       uint key_length,
-                                      ulonglong *engine_data);
+                                      uint64_t *engine_data);
 #include "sql_string.h"
 #include "sql_list.h"
 #include "sql_map.h"
@@ -751,7 +751,7 @@ int error_log_print(enum loglevel level, const char *format,
                     va_list args);
 
 bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    ulonglong current_utime);
+                    uint64_t current_utime);
 
 bool general_log_print(THD *thd, enum enum_server_command command,
                        const char *format,...);
@@ -1000,7 +1000,7 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
 bool mysql_select(THD *thd, Item ***rref_pointer_array,
                   TABLE_LIST *tables, uint wild_num,  List<Item> &list,
                   COND *conds, uint og_num, ORDER *order, ORDER *group,
-                  Item *having, ORDER *proc_param, ulonglong select_type, 
+                  Item *having, ORDER *proc_param, uint64_t select_type, 
                   select_result *result, SELECT_LEX_UNIT *unit, 
                   SELECT_LEX *select_lex);
 void free_underlaid_joins(THD *thd, SELECT_LEX *select);
@@ -1057,7 +1057,7 @@ int mysql_update(THD *thd,TABLE_LIST *tables,List<Item> &fields,
 		 enum enum_duplicates handle_duplicates, bool ignore);
 bool mysql_multi_update(THD *thd, TABLE_LIST *table_list,
                         List<Item> *fields, List<Item> *values,
-                        COND *conds, ulonglong options,
+                        COND *conds, uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
                         SELECT_LEX_UNIT *unit, SELECT_LEX *select_lex);
 bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list, TABLE *table,
@@ -1075,7 +1075,7 @@ int check_that_all_fields_are_given_values(THD *thd, TABLE *entry,
 void prepare_triggers_for_insert_stmt(TABLE *table);
 int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds);
 bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
-                  SQL_LIST *order, ha_rows rows, ulonglong options,
+                  SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
 bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok);
 bool mysql_create_or_drop_trigger(THD *thd, TABLE_LIST *tables, bool create);
@@ -1582,7 +1582,7 @@ extern bool check_reserved_words(LEX_STRING *name);
 extern enum_field_types agg_field_type(Item **items, uint nitems);
 
 /* strfunc.cc */
-ulonglong find_set(TYPELIB *lib, const char *x, uint length, CHARSET_INFO *cs,
+uint64_t find_set(TYPELIB *lib, const char *x, uint length, CHARSET_INFO *cs,
 		   char **err_pos, uint *err_len, bool *set_warning);
 uint find_type(const TYPELIB *lib, const char *find, uint length,
                bool part_match);
@@ -1651,9 +1651,9 @@ extern char glob_hostname[FN_REFLEN], mysql_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;
 extern char log_error_file[FN_REFLEN], *opt_tc_log_file;
 extern const double log_10[309];
-extern ulonglong log_10_int[20];
-extern ulonglong keybuff_size;
-extern ulonglong thd_startup_options;
+extern uint64_t log_10_int[20];
+extern uint64_t keybuff_size;
+extern uint64_t thd_startup_options;
 extern ulong thread_id;
 extern ulong binlog_cache_use, binlog_cache_disk_use;
 extern ulong aborted_threads,aborted_connects;
@@ -1924,7 +1924,7 @@ void make_date(const DATE_TIME_FORMAT *format, const MYSQL_TIME *l_time,
 void make_time(const DATE_TIME_FORMAT *format, const MYSQL_TIME *l_time,
                String *str);
 int my_time_compare(MYSQL_TIME *a, MYSQL_TIME *b);
-ulonglong get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
+uint64_t get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);

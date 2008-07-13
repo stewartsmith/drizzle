@@ -49,7 +49,7 @@ static MY_TMPDIR myisamchk_tmpdir;
 static const char *type_names[]=
 { "impossible","char","binary", "short", "long", "float",
   "double","number","unsigned short",
-  "unsigned long","longlong","ulonglong","int24",
+  "unsigned long","longlong","uint64_t","int24",
   "uint24","int8","varchar", "varbin","?",
   "?"};
 
@@ -563,7 +563,7 @@ get_one_option(int optid,
       check_param.testflag|= T_FAST;
     break;
   case 'k':
-    check_param.keys_in_use= (ulonglong) strtoll(argument, NULL, 10);
+    check_param.keys_in_use= (uint64_t) strtoll(argument, NULL, 10);
     break;
   case 'm':
     if (argument == disabled_my_option)
@@ -964,7 +964,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
     {
       if (param->testflag & T_REP_ANY)
       {
-	ulonglong tmp=share->state.key_map;
+	uint64_t tmp=share->state.key_map;
 	mi_copy_keys_active(share->state.key_map, share->base.keys,
                             param->keys_in_use);
 	if (tmp != share->state.key_map)

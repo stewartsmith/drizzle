@@ -155,7 +155,7 @@ public:
   bool set_int(longlong num, bool unsigned_flag, CHARSET_INFO *cs);
   bool set(longlong num, CHARSET_INFO *cs)
   { return set_int(num, false, cs); }
-  bool set(ulonglong num, CHARSET_INFO *cs)
+  bool set(uint64_t num, CHARSET_INFO *cs)
   { return set_int((longlong)num, true, cs); }
   bool set_real(double num,uint decimals, CHARSET_INFO *cs);
 

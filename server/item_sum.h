@@ -460,7 +460,7 @@ class Item_sum_distinct :public Item_sum_num
 {
 protected:
   /* storage for the summation result */
-  ulonglong count;
+  uint64_t count;
   Hybrid_type val;
   /* storage for unique elements */
   Unique *tree;
@@ -660,7 +660,7 @@ public:
 class Item_sum_avg :public Item_sum_sum
 {
 public:
-  ulonglong count;
+  uint64_t count;
   uint prec_increment;
   uint f_precision, f_scale, dec_bin_size;
 
@@ -753,7 +753,7 @@ public:
   Item_result hybrid_type;
   int cur_dec;
   double recurrence_m, recurrence_s;    /* Used in recurrence relation. */
-  ulonglong count;
+  uint64_t count;
   uint f_precision0, f_scale0;
   uint f_precision1, f_scale1;
   uint dec_bin_size0, dec_bin_size1;
@@ -894,10 +894,10 @@ public:
 class Item_sum_bit :public Item_sum_int
 {
 protected:
-  ulonglong reset_bits,bits;
+  uint64_t reset_bits,bits;
 
 public:
-  Item_sum_bit(Item *item_par,ulonglong reset_arg)
+  Item_sum_bit(Item *item_par,uint64_t reset_arg)
     :Item_sum_int(item_par),reset_bits(reset_arg),bits(reset_arg) {}
   Item_sum_bit(THD *thd, Item_sum_bit *item):
     Item_sum_int(thd, item), reset_bits(item->reset_bits), bits(item->bits) {}

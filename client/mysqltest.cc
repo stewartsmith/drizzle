@@ -146,11 +146,11 @@ static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];
   See the timer_output() definition for details
 */
 static char *timer_file = NULL;
-static ulonglong timer_start;
+static uint64_t timer_start;
 static void timer_output(void);
-static ulonglong timer_now(void);
+static uint64_t timer_now(void);
 
-static ulonglong progress_start= 0;
+static uint64_t progress_start= 0;
 
 DYNAMIC_ARRAY q_lines;
 
@@ -3198,7 +3198,7 @@ static int do_save_master_pos(void)
 
     if (have_ndbcluster)
     {
-      ulonglong start_epoch= 0, handled_epoch= 0,
+      uint64_t start_epoch= 0, handled_epoch= 0,
 	latest_epoch=0, latest_trans_epoch=0,
 	latest_handled_binlog_epoch= 0, latest_received_binlog_epoch= 0,
 	latest_applied_binlog_epoch= 0;
@@ -5053,7 +5053,7 @@ void dump_warning_messages(void)
 */
 
 static void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
-                         const char* val, ulonglong len, bool is_null)
+                         const char* val, uint64_t len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
   {
@@ -5163,7 +5163,7 @@ static void append_metadata(DYNAMIC_STRING *ds,
   Append affected row count and other info to output
 */
 
-static void append_info(DYNAMIC_STRING *ds, ulonglong affected_rows,
+static void append_info(DYNAMIC_STRING *ds, uint64_t affected_rows,
                         const char *info)
 {
   char buf[40], buff2[21];
@@ -5304,7 +5304,7 @@ static void run_query_normal(struct st_connection *cn,
 
     if (!disable_result_log)
     {
-      ulonglong affected_rows= 0;    /* Ok to be undef if 'disable_info' is set */
+      uint64_t affected_rows= 0;    /* Ok to be undef if 'disable_info' is set */
 
       if (res)
       {
@@ -5718,7 +5718,7 @@ static void mark_progress(struct st_command* command __attribute__((unused)),
                           int line)
 {
   char buf[32], *end;
-  ulonglong timer= timer_now();
+  uint64_t timer= timer_now();
   if (!progress_start)
     progress_start= timer;
   timer-= progress_start;
@@ -6232,7 +6232,7 @@ void timer_output(void)
   if (timer_file)
   {
     char buf[32], *end;
-    ulonglong timer= timer_now() - timer_start;
+    uint64_t timer= timer_now() - timer_start;
     end= longlong2str(timer, buf, 10);
     str_to_file(timer_file,buf, (int) (end-buf));
     /* Timer has been written to the file, don't use it anymore */
@@ -6241,7 +6241,7 @@ void timer_output(void)
 }
 
 
-ulonglong timer_now(void)
+uint64_t timer_now(void)
 {
   return my_micro_time() / 1000;
 }

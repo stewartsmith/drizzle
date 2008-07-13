@@ -241,7 +241,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   bool was_insert_delayed= (table_list->lock_type ==  TL_WRITE_DELAYED);
   uint value_count;
   ulong counter = 1;
-  ulonglong id;
+  uint64_t id;
   COPY_INFO info;
   TABLE *table= 0;
   List_iterator_fast<List_item> its(values_list);
@@ -800,8 +800,8 @@ int write_record(THD *thd, TABLE *table,COPY_INFO *info)
   int error;
   char *key=0;
   MY_BITMAP *save_read_set, *save_write_set;
-  ulonglong prev_insert_id= table->file->next_insert_id;
-  ulonglong insert_id_for_cur_row= 0;
+  uint64_t prev_insert_id= table->file->next_insert_id;
+  uint64_t insert_id_for_cur_row= 0;
   
 
   info->records++;
@@ -1422,7 +1422,7 @@ bool select_insert::send_eof()
 {
   int error;
   bool const trans_table= table->file->has_transactions();
-  ulonglong id;
+  uint64_t id;
   bool changed;
   THD::killed_state killed_status= thd->killed;
   

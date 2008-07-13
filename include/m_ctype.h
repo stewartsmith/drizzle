@@ -262,13 +262,13 @@ typedef struct my_charset_handler_st
 			 int base, char **e, int *err);
   longlong   (*strntoll)(struct charset_info_st *, const char *s, size_t l,
 			 int base, char **e, int *err);
-  ulonglong (*strntoull)(struct charset_info_st *, const char *s, size_t l,
+  uint64_t (*strntoull)(struct charset_info_st *, const char *s, size_t l,
 			 int base, char **e, int *err);
   double      (*strntod)(struct charset_info_st *, char *s, size_t l, char **e,
 			 int *err);
   longlong    (*strtoll10)(struct charset_info_st *cs,
                            const char *nptr, char **endptr, int *error);
-  ulonglong   (*strntoull10rnd)(struct charset_info_st *cs,
+  uint64_t   (*strntoull10rnd)(struct charset_info_st *cs,
                                 const char *str, size_t length,
                                 int unsigned_fl,
                                 char **endptr, int *error);
@@ -420,7 +420,7 @@ ulong      my_strntoul_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
 			    char **e, int *err);
 longlong   my_strntoll_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
 			    char **e, int *err);
-ulonglong my_strntoull_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
+uint64_t my_strntoull_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
 			    char **e, int *err);
 double      my_strntod_8bit(CHARSET_INFO *, char *s, size_t l,char **e,
 			    int *err);
@@ -434,10 +434,10 @@ longlong my_strtoll10_8bit(CHARSET_INFO *cs,
 longlong my_strtoll10_ucs2(CHARSET_INFO *cs, 
                            const char *nptr, char **endptr, int *error);
 
-ulonglong my_strntoull10rnd_8bit(CHARSET_INFO *cs,
+uint64_t my_strntoull10rnd_8bit(CHARSET_INFO *cs,
                                  const char *str, size_t length, int
                                  unsigned_fl, char **endptr, int *error);
-ulonglong my_strntoull10rnd_ucs2(CHARSET_INFO *cs, 
+uint64_t my_strntoull10rnd_ucs2(CHARSET_INFO *cs, 
                                  const char *str, size_t length,
                                  int unsigned_fl, char **endptr, int *error);
 

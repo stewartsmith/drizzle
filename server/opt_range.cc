@@ -8046,9 +8046,9 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
         all_parts have all bits set from 0 to (max_key_part-1).
         cur_parts have bits set for only used keyparts.
       */
-      ulonglong all_parts, cur_parts;
+      uint64_t all_parts, cur_parts;
       all_parts= (1<<max_key_part) - 1;
-      cur_parts= cur_used_key_parts.to_ulonglong() >> 1;
+      cur_parts= cur_used_key_parts.to_uint64_t() >> 1;
       if (all_parts != cur_parts)
         goto next_index;
     }

@@ -257,7 +257,7 @@ extern char *longlong2str(longlong val,char *dst,int radix);
 extern char *longlong10_to_str(longlong val,char *dst,int radix);
 #if (!defined(HAVE_STRTOULL) || defined(NO_STRTOLL_PROTO))
 extern longlong strtoll(const char *str, char **ptr, int base);
-extern ulonglong strtoull(const char *str, char **ptr, int base);
+extern uint64_t strtoull(const char *str, char **ptr, int base);
 #endif
 #endif
 
@@ -334,11 +334,11 @@ static inline const uchar *skip_trailing_space(const uchar *ptr,size_t len)
   if (len > 20)
   {
     const uchar *end_words= (const uchar *)(intptr)
-      (((ulonglong)(intptr)end) / SIZEOF_INT * SIZEOF_INT);
+      (((uint64_t)(intptr)end) / SIZEOF_INT * SIZEOF_INT);
     const uchar *start_words= (const uchar *)(intptr)
-       ((((ulonglong)(intptr)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
+       ((((uint64_t)(intptr)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
 
-    DBUG_ASSERT(((ulonglong)(intptr)ptr) >= SIZEOF_INT);
+    DBUG_ASSERT(((uint64_t)(intptr)ptr) >= SIZEOF_INT);
     if (end_words > ptr)
     {
       while (end > end_words && end[-1] == 0x20)

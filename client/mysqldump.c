@@ -1486,7 +1486,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
                                 char *ignore_flag)
 {
   bool    init=0, delayed, write_data, complete_insert;
-  my_ulonglong num_fields;
+  my_uint64_t num_fields;
   char       *result_table, *opt_quoted_table;
   const char *insert_option;
   char	     name_buff[NAME_LEN+3],table_buff[NAME_LEN*2+3];
@@ -2788,7 +2788,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 
   if ((table_res= mysql_store_result(mysql)))
   {
-    my_ulonglong num_rows= mysql_num_rows(table_res);
+    my_uint64_t num_rows= mysql_num_rows(table_res);
     if (num_rows > 0)
     {
       ulong *lengths;

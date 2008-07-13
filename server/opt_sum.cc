@@ -74,9 +74,9 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
     #			Multiplication of number of rows in all tables
 */
 
-static ulonglong get_exact_record_count(TABLE_LIST *tables)
+static uint64_t get_exact_record_count(TABLE_LIST *tables)
 {
-  ulonglong count= 1;
+  uint64_t count= 1;
   for (TABLE_LIST *tl= tables; tl; tl= tl->next_leaf)
   {
     ha_rows tmp= tl->table->file->records();
@@ -114,7 +114,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
   List_iterator_fast<Item> it(all_fields);
   int const_result= 1;
   bool recalc_const_item= 0;
-  ulonglong count= 1;
+  uint64_t count= 1;
   bool is_exact_count= TRUE, maybe_exact_count= true;
   table_map removed_tables= 0, outer_tables= 0, used_tables= 0;
   table_map where_tables= 0;

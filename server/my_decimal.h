@@ -263,7 +263,7 @@ int my_decimal2int(uint mask, const my_decimal *d, my_bool unsigned_flag,
   /* decimal_round can return only E_DEC_TRUNCATED */
   decimal_round((decimal_t*)d, &rounded, 0, HALF_UP);
   return check_result(mask, (unsigned_flag ?
-			     decimal2ulonglong(&rounded, (ulonglong *)l) :
+			     decimal2uint64_t(&rounded, (uint64_t *)l) :
 			     decimal2longlong(&rounded, l)));
 }
 
@@ -312,7 +312,7 @@ inline
 int int2my_decimal(uint mask, longlong i, my_bool unsigned_flag, my_decimal *d)
 {
   return check_result(mask, (unsigned_flag ?
-			     ulonglong2decimal((ulonglong)i, d) :
+			     uint64_t2decimal((uint64_t)i, d) :
 			     longlong2decimal(i, d)));
 }
 

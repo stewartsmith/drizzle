@@ -50,7 +50,7 @@
 #if SIZEOF_CHARP == 4
 #define MAX_MEM_TABLE_SIZE ~(ulong) 0
 #else
-#define MAX_MEM_TABLE_SIZE ~(ulonglong) 0
+#define MAX_MEM_TABLE_SIZE ~(uint64_t) 0
 #endif
 
 /* We have HAVE_purify below as this speeds up the shutdown of MySQL */
@@ -307,7 +307,7 @@ uint delay_key_write_options, protocol_version;
 uint lower_case_table_names;
 uint tc_heuristic_recover= 0;
 uint volatile thread_count, thread_running;
-ulonglong thd_startup_options;
+uint64_t thd_startup_options;
 ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
@@ -3790,13 +3790,13 @@ The minimum value for this variable is 4096.",
    "Deprecated option",
    (char**) &global_system_variables.myisam_max_extra_sort_file_size,
    (char**) &max_system_variables.myisam_max_extra_sort_file_size,
-   0, GET_ULL, REQUIRED_ARG, (ulonglong) MI_MAX_TEMP_LENGTH,
-   0, (ulonglong) MAX_FILE_SIZE, 0, 1, 0},
+   0, GET_ULL, REQUIRED_ARG, (uint64_t) MI_MAX_TEMP_LENGTH,
+   0, (uint64_t) MAX_FILE_SIZE, 0, 1, 0},
   {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
    "Don't use the fast sort index method to created index if the temporary file would get bigger than this.",
    (char**) &global_system_variables.myisam_max_sort_file_size,
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
-   GET_ULL, REQUIRED_ARG, (longlong) LONG_MAX, 0, (ulonglong) MAX_FILE_SIZE,
+   GET_ULL, REQUIRED_ARG, (longlong) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
   {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
    "Number of threads to use when repairing MyISAM tables. The value of 1 disables parallel repair.",
@@ -4394,10 +4394,10 @@ static void mysql_init_variables(void)
   default_storage_engine_str= (char*) "MyISAM";
   global_system_variables.table_plugin= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
-  global_system_variables.select_limit= (ulonglong) HA_POS_ERROR;
-  max_system_variables.select_limit=    (ulonglong) HA_POS_ERROR;
-  global_system_variables.max_join_size= (ulonglong) HA_POS_ERROR;
-  max_system_variables.max_join_size=   (ulonglong) HA_POS_ERROR;
+  global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;
+  max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
+  global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
+  max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
   global_system_variables.old_alter_table= 0;
   global_system_variables.binlog_format= BINLOG_FORMAT_UNSPEC;
   /*

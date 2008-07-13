@@ -162,8 +162,8 @@ struct Hybrid_type_traits
   virtual void set_zero(Hybrid_type *val) const { val->real= 0.0; }
   virtual void add(Hybrid_type *val, Field *f) const
   { val->real+= f->val_real(); }
-  virtual void div(Hybrid_type *val, ulonglong u) const
-  { val->real/= ulonglong2double(u); }
+  virtual void div(Hybrid_type *val, uint64_t u) const
+  { val->real/= uint64_t2double(u); }
 
   virtual longlong val_int(Hybrid_type *val,
                            bool unsigned_flag __attribute__((__unused__))) const
@@ -187,7 +187,7 @@ struct Hybrid_type_traits_decimal: public Hybrid_type_traits
   /* Hybrid_type operations. */
   virtual void set_zero(Hybrid_type *val) const;
   virtual void add(Hybrid_type *val, Field *f) const;
-  virtual void div(Hybrid_type *val, ulonglong u) const;
+  virtual void div(Hybrid_type *val, uint64_t u) const;
 
   virtual longlong val_int(Hybrid_type *val, bool unsigned_flag) const;
   virtual double val_real(Hybrid_type *val) const;
@@ -212,7 +212,7 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
   { val->integer= 0; }
   virtual void add(Hybrid_type *val, Field *f) const
   { val->integer+= f->val_int(); }
-  virtual void div(Hybrid_type *val, ulonglong u) const
+  virtual void div(Hybrid_type *val, uint64_t u) const
   { val->integer/= (longlong) u; }
 
   virtual longlong val_int(Hybrid_type *val,
@@ -616,7 +616,7 @@ public:
     This is just a shortcut to avoid the cast. You should still use
     unsigned_flag to check the sign of the item.
   */
-  inline ulonglong val_uint() { return (ulonglong) val_int(); }
+  inline uint64_t val_uint() { return (uint64_t) val_int(); }
   /*
     Return string representation of this item object.
 
@@ -1376,7 +1376,7 @@ public:
   Item_int(longlong i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value(i)
     { max_length=length; fixed= 1; }
-  Item_int(ulonglong i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+  Item_int(uint64_t i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value((longlong)i)
     { max_length=length; fixed= 1; unsigned_flag= 1; }
   Item_int(const char *str_arg,longlong i,uint length) :value(i)
@@ -1404,10 +1404,10 @@ class Item_uint :public Item_int
 {
 public:
   Item_uint(const char *str_arg, uint length);
-  Item_uint(ulonglong i) :Item_int((ulonglong) i, 10) {}
+  Item_uint(uint64_t i) :Item_int((uint64_t) i, 10) {}
   Item_uint(const char *str_arg, longlong i, uint length);
   double val_real()
-    { assert(fixed == 1); return ulonglong2double((ulonglong)value); }
+    { assert(fixed == 1); return uint64_t2double((uint64_t)value); }
   String *val_str(String*);
   Item *clone_item() { return new Item_uint(name, value, max_length); }
   int save_in_field(Field *field, bool no_conversions);
@@ -1489,7 +1489,7 @@ public:
     {
        return LONGLONG_MIN;
     }
-    else if (value >= (double) (ulonglong) LONGLONG_MAX)
+    else if (value >= (double) (uint64_t) LONGLONG_MAX)
     {
       return LONGLONG_MAX;
     }
@@ -1739,7 +1739,7 @@ public:
   double val_real()
   { 
     assert(fixed == 1); 
-    return (double) (ulonglong) Item_hex_string::val_int();
+    return (double) (uint64_t) Item_hex_string::val_int();
   }
   longlong val_int();
   bool basic_const_item() const { return 1; }

@@ -51,7 +51,7 @@ char *longlong2str(longlong val,char *dst,int radix)
   char buffer[65];
   register char *p;
   long long_val;
-  ulonglong uval= (ulonglong) val;
+  uint64_t uval= (uint64_t) val;
 
   if (radix < 0)
   {
@@ -59,7 +59,7 @@ char *longlong2str(longlong val,char *dst,int radix)
     if (val < 0) {
       *dst++ = '-';
       /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
-      uval = (ulonglong)0 - uval;
+      uval = (uint64_t)0 - uval;
     }
     radix = -radix;
   }
@@ -76,9 +76,9 @@ char *longlong2str(longlong val,char *dst,int radix)
   p = &buffer[sizeof(buffer)-1];
   *p = '\0';
 
-  while (uval > (ulonglong) LONG_MAX)
+  while (uval > (uint64_t) LONG_MAX)
   {
-    ulonglong quo= uval/(uint) radix;
+    uint64_t quo= uval/(uint) radix;
     uint rem= (uint) (uval- quo* (uint) radix);
     *--p = _dig_vec_upper[rem];
     uval= quo;
@@ -102,7 +102,7 @@ char *longlong10_to_str(longlong val,char *dst,int radix)
   char buffer[65];
   register char *p;
   long long_val;
-  ulonglong uval= (ulonglong) val;
+  uint64_t uval= (uint64_t) val;
 
   if (radix < 0)
   {
@@ -110,7 +110,7 @@ char *longlong10_to_str(longlong val,char *dst,int radix)
     {
       *dst++ = '-';
       /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
-      uval = (ulonglong)0 - uval;
+      uval = (uint64_t)0 - uval;
     }
   }
 
@@ -123,9 +123,9 @@ char *longlong10_to_str(longlong val,char *dst,int radix)
   p = &buffer[sizeof(buffer)-1];
   *p = '\0';
 
-  while (uval > (ulonglong) LONG_MAX)
+  while (uval > (uint64_t) LONG_MAX)
   {
-    ulonglong quo= uval/(uint) 10;
+    uint64_t quo= uval/(uint) 10;
     uint rem= (uint) (uval- quo* (uint) 10);
     *--p = _dig_vec_upper[rem];
     uval= quo;

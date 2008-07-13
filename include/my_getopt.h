@@ -76,7 +76,7 @@ extern void my_print_variables(const struct my_option *options);
 extern void my_getopt_register_get_addr(char ** (*func_addr)(const char *, uint,
                                                              const struct my_option *));
 
-ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
+uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
                                  bool *fix);
 longlong getopt_ll_limit_value(longlong, const struct my_option *,
                                bool *fix);

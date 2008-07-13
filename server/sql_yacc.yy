@@ -311,7 +311,7 @@ bool setup_select_in_parentheses(LEX *lex)
 %union {
   int  num;
   ulong ulong_num;
-  ulonglong ulonglong_number;
+  uint64_t ulonglong_number;
   longlong longlong_number;
   LEX_STRING lex_str;
   LEX_STRING *lex_str_ptr;
@@ -4941,11 +4941,11 @@ real_ulong_num:
         ;
 
 ulonglong_num:
-          NUM           { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | LONG_NUM      { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 dec_num_error:

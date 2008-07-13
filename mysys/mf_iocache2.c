@@ -138,7 +138,7 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   if (info->type == READ_CACHE || info->type == SEQ_READ_APPEND)
   {
     /* TODO: explain why this works if pos < info->pos_in_file */
-    if ((ulonglong) offset < (ulonglong) (info->read_end - info->buffer))
+    if ((uint64_t) offset < (uint64_t) (info->read_end - info->buffer))
     {
       /* The read is in the current buffer; Reuse it */
       info->read_pos = info->buffer + offset;
@@ -153,8 +153,8 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   else if (info->type == WRITE_CACHE)
   {
     /* If write is in current buffer, reuse it */
-    if ((ulonglong) offset <
-	(ulonglong) (info->write_end - info->write_buffer))
+    if ((uint64_t) offset <
+	(uint64_t) (info->write_end - info->write_buffer))
     {
       info->write_pos = info->write_buffer + offset;
       DBUG_VOID_RETURN;

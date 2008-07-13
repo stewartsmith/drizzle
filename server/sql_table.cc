@@ -6113,7 +6113,7 @@ copy_data_between_tables(TABLE *from,TABLE *to,
   ha_rows examined_rows;
   bool auto_increment_field_copied= 0;
   ulong save_sql_mode;
-  ulonglong prev_insert_id;
+  uint64_t prev_insert_id;
 
   /*
     Turn off recovery logging since rollback of an alter table is to
@@ -6382,7 +6382,7 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
     {
       if (t->file->ha_table_flags() & HA_HAS_CHECKSUM &&
 	  !(check_opt->flags & T_EXTEND))
-	protocol->store((ulonglong)t->file->checksum());
+	protocol->store((uint64_t)t->file->checksum());
       else if (!(t->file->ha_table_flags() & HA_HAS_CHECKSUM) &&
 	       (check_opt->flags & T_QUICK))
 	protocol->store_null();
@@ -6435,7 +6435,7 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
 
 	    crc+= row_crc;
 	  }
-	  protocol->store((ulonglong)crc);
+	  protocol->store((uint64_t)crc);
           t->file->ha_rnd_end();
 	}
       }

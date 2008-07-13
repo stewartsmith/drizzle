@@ -106,7 +106,7 @@ bool String::set(longlong num, CHARSET_INFO *cs)
   return FALSE;
 }
 
-bool String::set(ulonglong num, CHARSET_INFO *cs)
+bool String::set(uint64_t num, CHARSET_INFO *cs)
 {
   uint l=20*cs->mbmaxlen+1;
 

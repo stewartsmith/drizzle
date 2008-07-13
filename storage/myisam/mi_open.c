@@ -71,7 +71,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   MYISAM_SHARE share_buff,*share;
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
   my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
-  ulonglong max_key_file_length, max_data_file_length;
+  uint64_t max_key_file_length, max_data_file_length;
   DBUG_ENTER("mi_open");
 
   kfile= -1;
@@ -231,12 +231,12 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     /* Correct max_file_length based on length of sizeof(off_t) */
     max_data_file_length=
       (share->options & (HA_OPTION_PACK_RECORD | HA_OPTION_COMPRESS_RECORD)) ?
-      (((ulonglong) 1 << (share->base.rec_reflength*8))-1) :
+      (((uint64_t) 1 << (share->base.rec_reflength*8))-1) :
       (mi_safe_mul(share->base.pack_reclength,
-		   (ulonglong) 1 << (share->base.rec_reflength*8))-1);
+		   (uint64_t) 1 << (share->base.rec_reflength*8))-1);
     max_key_file_length=
       mi_safe_mul(MI_MIN_KEY_BLOCK_LENGTH,
-		  ((ulonglong) 1 << (share->base.key_reflength*8))-1);
+		  ((uint64_t) 1 << (share->base.key_reflength*8))-1);
 #if SIZEOF_OFF_T == 4
     set_if_smaller(max_data_file_length, INT_MAX32);
     set_if_smaller(max_key_file_length, INT_MAX32);
@@ -638,9 +638,9 @@ uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
 }
 
 
-ulonglong mi_safe_mul(ulonglong a, ulonglong b)
+uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 {
-  ulonglong max_val= ~ (ulonglong) 0;		/* my_off_t is unsigned */
+  uint64_t max_val= ~ (uint64_t) 0;		/* my_off_t is unsigned */
 
   if (!a || max_val / a < b)
     return max_val;
@@ -783,7 +783,7 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
   mi_sizestore(ptr,state->state.empty);		ptr +=8;
   mi_sizestore(ptr,state->state.key_empty);	ptr +=8;
   mi_int8store(ptr,state->auto_increment);	ptr +=8;
-  mi_int8store(ptr,(ulonglong) state->state.checksum);ptr +=8;
+  mi_int8store(ptr,(uint64_t) state->state.checksum);ptr +=8;
   mi_int4store(ptr,state->process);		ptr +=4;
   mi_int4store(ptr,state->unique);		ptr +=4;
   mi_int4store(ptr,state->status);		ptr +=4;
@@ -806,9 +806,9 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
     mi_int4store(ptr,state->sec_index_used);	ptr +=4;
     mi_int4store(ptr,state->version);		ptr +=4;
     mi_int8store(ptr,state->key_map);		ptr +=8;
-    mi_int8store(ptr,(ulonglong) state->create_time);	ptr +=8;
-    mi_int8store(ptr,(ulonglong) state->recover_time);	ptr +=8;
-    mi_int8store(ptr,(ulonglong) state->check_time);	ptr +=8;
+    mi_int8store(ptr,(uint64_t) state->create_time);	ptr +=8;
+    mi_int8store(ptr,(uint64_t) state->recover_time);	ptr +=8;
+    mi_int8store(ptr,(uint64_t) state->check_time);	ptr +=8;
     mi_sizestore(ptr,state->rec_per_key_rows);	ptr+=8;
     for (i=0 ; i < key_parts ; i++)
     {

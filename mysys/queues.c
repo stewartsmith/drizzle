@@ -386,7 +386,7 @@ static uint expected_part= 0;
 static uint expected_num= 0;
 static bool max_ind= 0;
 static bool fix_used= 0;
-static ulonglong start_time= 0;
+static uint64_t start_time= 0;
 
 static bool is_divisible_by(uint num, uint divisor)
 {
@@ -601,7 +601,7 @@ static void start_measurement()
 
 static void stop_measurement()
 {
-  ulonglong stop_time= my_getsystime();
+  uint64_t stop_time= my_getsystime();
   uint time_in_micros;
   stop_time-= start_time;
   stop_time/= 10; /* Convert to microseconds */

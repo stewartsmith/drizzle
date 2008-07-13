@@ -437,7 +437,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
     }
     case HA_KEYTYPE_ULONGLONG:
     {
-      ulonglong ll_a,ll_b;
+      uint64_t ll_a,ll_b;
       ll_a= mi_uint8korr(a);
       ll_b= mi_uint8korr(b);
       if (piks && (flag = CMP_NUM(ll_a,ll_b)))

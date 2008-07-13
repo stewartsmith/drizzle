@@ -1054,7 +1054,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
   map= ~(uint64_t) 0;
   if (!table->keys_in_use_for_query.is_clear_all())
     /* use all keys if there's no list specified by the user through hints */
-    map= table->keys_in_use_for_query.to_ulonglong();
+    map= table->keys_in_use_for_query.to_uint64_t();
 
   if ((error= mi_assign_to_key_cache(file, map, new_key_cache)))
   { 

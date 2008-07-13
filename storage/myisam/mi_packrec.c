@@ -1434,7 +1434,7 @@ static void fill_buffer(MI_BIT_BUFF *bit_buff)
 			     (((uint) ((uchar) bit_buff->pos[6])) << 8) +
 			     (((uint) ((uchar) bit_buff->pos[5])) << 16) +
 			     (((uint) ((uchar) bit_buff->pos[4])) << 24) +
-			     ((ulonglong)
+			     ((uint64_t)
 			      ((((uint) ((uchar) bit_buff->pos[3]))) +
 			       (((uint) ((uchar) bit_buff->pos[2])) << 8) +
 			       (((uint) ((uchar) bit_buff->pos[1])) << 16) +

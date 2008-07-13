@@ -4233,7 +4233,7 @@ void get_sweep_read_cost(TABLE *table, ha_rows nrows, bool interrupted,
   else
   {
     double n_blocks=
-      ceil(ulonglong2double(table->file->stats.data_file_length) / IO_SIZE);
+      ceil(uint64_t2double(table->file->stats.data_file_length) / IO_SIZE);
     double busy_blocks=
       n_blocks * (1.0 - pow(1.0 - 1.0/n_blocks, rows2double(nrows)));
     if (busy_blocks < 1.0)

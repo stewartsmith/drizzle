@@ -280,7 +280,7 @@ null:
 
 void Item_func_concat::fix_length_and_dec()
 {
-  ulonglong max_result_length= 0;
+  uint64_t max_result_length= 0;
 
   if (agg_arg_charsets(collation, args, arg_count, MY_COLL_ALLOW_CONV, 1))
     return;
@@ -449,7 +449,7 @@ null:
 
 void Item_func_concat_ws::fix_length_and_dec()
 {
-  ulonglong max_result_length;
+  uint64_t max_result_length;
 
   if (agg_arg_charsets(collation, args, arg_count, MY_COLL_ALLOW_CONV, 1))
     return;
@@ -459,7 +459,7 @@ void Item_func_concat_ws::fix_length_and_dec()
      it is done on parser level in sql_yacc.yy
      so, (arg_count - 2) is safe here.
   */
-  max_result_length= (ulonglong) args[0]->max_length * (arg_count - 2);
+  max_result_length= (uint64_t) args[0]->max_length * (arg_count - 2);
   for (uint i=1 ; i < arg_count ; i++)
     max_result_length+=args[i]->max_length;
 
@@ -652,11 +652,11 @@ null:
 
 void Item_func_replace::fix_length_and_dec()
 {
-  ulonglong max_result_length= args[0]->max_length;
+  uint64_t max_result_length= args[0]->max_length;
   int diff=(int) (args[2]->max_length - args[1]->max_length);
   if (diff > 0 && args[1]->max_length)
   {						// Calculate of maxreplaces
-    ulonglong max_substrs= max_result_length/args[1]->max_length;
+    uint64_t max_substrs= max_result_length/args[1]->max_length;
     max_result_length+= max_substrs * (uint) diff;
   }
   if (max_result_length >= MAX_BLOB_WIDTH)
@@ -702,8 +702,8 @@ String *Item_func_insert::val_str(String *str)
   if (length > res->length() - start)
     length= res->length() - start;
 
-  if ((ulonglong) (res->length() - length + res2->length()) >
-      (ulonglong) current_thd->variables.max_allowed_packet)
+  if ((uint64_t) (res->length() - length + res2->length()) >
+      (uint64_t) current_thd->variables.max_allowed_packet)
   {
     push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
@@ -722,13 +722,13 @@ null:
 
 void Item_func_insert::fix_length_and_dec()
 {
-  ulonglong max_result_length;
+  uint64_t max_result_length;
 
   // Handle character set for args[0] and args[3].
   if (agg_arg_charsets(collation, &args[0], 2, MY_COLL_ALLOW_CONV, 3))
     return;
-  max_result_length= ((ulonglong) args[0]->max_length+
-                      (ulonglong) args[3]->max_length);
+  max_result_length= ((uint64_t) args[0]->max_length+
+                      (uint64_t) args[3]->max_length);
   if (max_result_length >= MAX_BLOB_WIDTH)
   {
     max_result_length= MAX_BLOB_WIDTH;
@@ -804,7 +804,7 @@ String *Item_func_left::val_str(String *str)
   if ((length <= 0) && (!args[1]->unsigned_flag))
     return &my_empty_string;
 
-  if ((res->length() <= (ulonglong) length) ||
+  if ((res->length() <= (uint64_t) length) ||
       (res->length() <= (char_pos= res->charpos((int) length))))
     return res;
 
@@ -848,7 +848,7 @@ String *Item_func_right::val_str(String *str)
   if ((length <= 0) && (!args[1]->unsigned_flag))
     return &my_empty_string; /* purecov: inspected */
 
-  if (res->length() <= (ulonglong) length)
+  if (res->length() <= (uint64_t) length)
     return res; /* purecov: inspected */
 
   uint start=res->numchars();
@@ -895,7 +895,7 @@ String *Item_func_substr::val_str(String *str)
   /* if "unsigned_flag" is set, we have a *huge* positive number. */
   /* Assumes that the maximum length of a String is < INT_MAX32. */
   if ((!args[1]->unsigned_flag && (start < INT_MIN32 || start > INT_MAX32)) ||
-      (args[1]->unsigned_flag && ((ulonglong) start > INT_MAX32)))
+      (args[1]->unsigned_flag && ((uint64_t) start > INT_MAX32)))
     return &my_empty_string;
 
   start= ((start < 0) ? res->numchars() + start : start - 1);
@@ -1729,7 +1729,7 @@ void Item_func_make_set::update_used_tables()
 String *Item_func_make_set::val_str(String *str)
 {
   assert(fixed == 1);
-  ulonglong bits;
+  uint64_t bits;
   bool first_found=0;
   Item **ptr=args;
   String *result=&my_empty_string;
@@ -1739,7 +1739,7 @@ String *Item_func_make_set::val_str(String *str)
     return NULL;
 
   if (arg_count < 64)
-    bits &= ((ulonglong) 1 << arg_count)-1;
+    bits &= ((uint64_t) 1 << arg_count)-1;
 
   for (; bits; bits >>= 1, ptr++)
   {
@@ -1873,7 +1873,7 @@ void Item_func_repeat::fix_length_and_dec()
     if (count > INT_MAX32)
       count= INT_MAX32;
 
-    ulonglong max_result_length= (ulonglong) args[0]->max_length * count;
+    uint64_t max_result_length= (uint64_t) args[0]->max_length * count;
     if (max_result_length >= MAX_BLOB_WIDTH)
     {
       max_result_length= MAX_BLOB_WIDTH;
@@ -1911,7 +1911,7 @@ String *Item_func_repeat::val_str(String *str)
 
   /* Assumes that the maximum length of a String is < INT_MAX32. */
   /* Bounds check on count:  If this is triggered, we will error. */
-  if ((ulonglong) count > INT_MAX32)
+  if ((uint64_t) count > INT_MAX32)
     count= INT_MAX32;
   if (count == 1)			// To avoid reallocs
     return res;
@@ -1950,11 +1950,11 @@ void Item_func_rpad::fix_length_and_dec()
     return;
   if (args[1]->const_item())
   {
-    ulonglong length= 0;
+    uint64_t length= 0;
 
     if (collation.collation->mbmaxlen > 0)
     {
-      ulonglong temp= (ulonglong) args[1]->val_int();
+      uint64_t temp= (uint64_t) args[1]->val_int();
 
       /* Assumes that the maximum length of a String is < INT_MAX32. */
       /* Set here so that rest of code sees out-of-bound value as such. */
@@ -1997,7 +1997,7 @@ String *Item_func_rpad::val_str(String *str)
   null_value=0;
   /* Assumes that the maximum length of a String is < INT_MAX32. */
   /* Set here so that rest of code sees out-of-bound value as such. */
-  if ((ulonglong) count > INT_MAX32)
+  if ((uint64_t) count > INT_MAX32)
     count= INT_MAX32;
   if (count <= (res_char_length= res->numchars()))
   {						// String to pad is big enough
@@ -2007,7 +2007,7 @@ String *Item_func_rpad::val_str(String *str)
   pad_char_length= rpad->numchars();
 
   byte_count= count * collation.collation->mbmaxlen;
-  if ((ulonglong) byte_count > current_thd->variables.max_allowed_packet)
+  if ((uint64_t) byte_count > current_thd->variables.max_allowed_packet)
   {
     push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
@@ -2053,11 +2053,11 @@ void Item_func_lpad::fix_length_and_dec()
   
   if (args[1]->const_item())
   {
-    ulonglong length= 0;
+    uint64_t length= 0;
 
     if (collation.collation->mbmaxlen > 0)
     {
-      ulonglong temp= (ulonglong) args[1]->val_int();
+      uint64_t temp= (uint64_t) args[1]->val_int();
 
       /* Assumes that the maximum length of a String is < INT_MAX32. */
       /* Set here so that rest of code sees out-of-bound value as such. */
@@ -2098,7 +2098,7 @@ String *Item_func_lpad::val_str(String *str)
   null_value=0;
   /* Assumes that the maximum length of a String is < INT_MAX32. */
   /* Set here so that rest of code sees out-of-bound value as such. */
-  if ((ulonglong) count > INT_MAX32)
+  if ((uint64_t) count > INT_MAX32)
     count= INT_MAX32;
 
   res_char_length= res->numchars();
@@ -2112,7 +2112,7 @@ String *Item_func_lpad::val_str(String *str)
   pad_char_length= pad->numchars();
   byte_count= count * collation.collation->mbmaxlen;
   
-  if ((ulonglong) byte_count > current_thd->variables.max_allowed_packet)
+  if ((uint64_t) byte_count > current_thd->variables.max_allowed_packet)
   {
     push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
 			ER_WARN_ALLOWED_PACKET_OVERFLOWED,
@@ -2359,7 +2359,7 @@ String *Item_func_hex::val_str(String *str)
   assert(fixed == 1);
   if (args[0]->result_type() != STRING_RESULT)
   {
-    ulonglong dec;
+    uint64_t dec;
     char ans[65],*ptr;
     /* Return hex of unsigned longlong value */
     if (args[0]->result_type() == REAL_RESULT ||
@@ -2367,13 +2367,13 @@ String *Item_func_hex::val_str(String *str)
     {
       double val= args[0]->val_real();
       if ((val <= (double) LONGLONG_MIN) || 
-          (val >= (double) (ulonglong) ULONGLONG_MAX))
+          (val >= (double) (uint64_t) ULONGLONG_MAX))
         dec=  ~(longlong) 0;
       else
-        dec= (ulonglong) (val + (val > 0 ? 0.5 : -0.5));
+        dec= (uint64_t) (val + (val > 0 ? 0.5 : -0.5));
     }
     else
-      dec= (ulonglong) args[0]->val_int();
+      dec= (uint64_t) args[0]->val_int();
 
     if ((null_value= args[0]->null_value))
       return 0;
@@ -2507,7 +2507,7 @@ err:
 String* Item_func_export_set::val_str(String* str)
 {
   assert(fixed == 1);
-  ulonglong the_set = (ulonglong) args[0]->val_int();
+  uint64_t the_set = (uint64_t) args[0]->val_int();
   String yes_buf, *yes;
   yes = args[1]->val_str(&yes_buf);
   String no_buf, *no;
@@ -2515,7 +2515,7 @@ String* Item_func_export_set::val_str(String* str)
   String *sep = NULL, sep_buf ;
 
   uint num_set_values = 64;
-  ulonglong mask = 0x1;
+  uint64_t mask = 0x1;
   str->length(0);
   str->set_charset(collation.collation);
 
@@ -2847,14 +2847,14 @@ err:
 
 static struct rand_struct uuid_rand;
 static uint nanoseq;
-static ulonglong uuid_time=0;
+static uint64_t uuid_time=0;
 static char clock_seq_and_node_str[]="-0000-000000000000";
 
 /**
   number of 100-nanosecond intervals between
   1582-10-15 00:00:00.00 and 1970-01-01 00:00:00.00.
 */
-#define UUID_TIME_OFFSET ((ulonglong) 141427 * 24 * 60 * 60 * 1000 * 10 )
+#define UUID_TIME_OFFSET ((uint64_t) 141427 * 24 * 60 * 60 * 1000 * 10 )
 
 #define UUID_VERSION      0x1000
 #define UUID_VARIANT      0x8000
@@ -2913,7 +2913,7 @@ String *Item_func_uuid::val_str(String *str)
     set_clock_seq_str();
   }
 
-  ulonglong tv=my_getsystime() + UUID_TIME_OFFSET + nanoseq;
+  uint64_t tv=my_getsystime() + UUID_TIME_OFFSET + nanoseq;
   if (unlikely(tv < uuid_time))
     set_clock_seq_str();
   else if (unlikely(tv == uuid_time))

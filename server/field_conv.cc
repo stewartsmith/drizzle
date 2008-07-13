@@ -313,7 +313,7 @@ static void do_field_string(Copy_field *copy)
 static void do_field_enum(Copy_field *copy)
 {
   if (copy->from_field->val_int() == 0)
-    ((Field_enum *) copy->to_field)->store_type((ulonglong) 0);
+    ((Field_enum *) copy->to_field)->store_type((uint64_t) 0);
   else
     do_field_string(copy);
 }

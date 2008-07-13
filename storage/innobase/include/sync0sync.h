@@ -503,8 +503,8 @@ struct mutex_struct {
 	ulong		count_spin_loop; /* count of spin loops */
 	ulong		count_spin_rounds; /* count of spin rounds */
 	ulong		count_os_yield; /* count of os_wait */
-	ulonglong	lspent_time; /* mutex os_wait timer msec */
-	ulonglong	lmax_spent_time; /* mutex os_wait timer msec */
+	uint64_t	lspent_time; /* mutex os_wait timer msec */
+	uint64_t	lmax_spent_time; /* mutex os_wait timer msec */
 	const char*	cmutex_name;/* mutex name */
 	ulint		mutex_type;/* 0 - usual mutex 1 - rw_lock mutex	 */
 # endif /* UNIV_DEBUG */

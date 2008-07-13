@@ -182,14 +182,14 @@ public:
 };
 
 
-class sys_var_ulonglong_ptr :public sys_var
+class sys_var_uint64_t_ptr :public sys_var
 {
-  ulonglong *value;
+  uint64_t *value;
 public:
-  sys_var_ulonglong_ptr(sys_var_chain *chain, const char *name_arg, ulonglong *value_ptr_arg)
+  sys_var_uint64_t_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr_arg)
     :sys_var(name_arg),value(value_ptr_arg)
   { chain_sys_var(chain); }
-  sys_var_ulonglong_ptr(sys_var_chain *chain, const char *name_arg, ulonglong *value_ptr_arg,
+  sys_var_uint64_t_ptr(sys_var_chain *chain, const char *name_arg, uint64_t *value_ptr_arg,
 		       sys_after_update_func func)
     :sys_var(name_arg,func), value(value_ptr_arg)
   { chain_sys_var(chain); }
@@ -450,17 +450,17 @@ public:
 };
 
 
-class sys_var_thd_ulonglong :public sys_var_thd
+class sys_var_thd_uint64_t :public sys_var_thd
 {
 public:
-  ulonglong SV::*offset;
+  uint64_t SV::*offset;
   bool only_global;
-  sys_var_thd_ulonglong(sys_var_chain *chain, const char *name_arg, 
-                        ulonglong SV::*offset_arg)
+  sys_var_thd_uint64_t(sys_var_chain *chain, const char *name_arg, 
+                        uint64_t SV::*offset_arg)
     :sys_var_thd(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
-  sys_var_thd_ulonglong(sys_var_chain *chain, const char *name_arg, 
-                        ulonglong SV::*offset_arg,
+  sys_var_thd_uint64_t(sys_var_chain *chain, const char *name_arg, 
+                        uint64_t SV::*offset_arg,
 			sys_after_update_func func, bool only_global_arg)
     :sys_var_thd(name_arg, func), offset(offset_arg),
     only_global(only_global_arg)
@@ -549,7 +549,7 @@ public:
   }
   void set_default(THD *thd, enum_var_type type);
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
-  static bool symbolic_mode_representation(THD *thd, ulonglong sql_mode,
+  static bool symbolic_mode_representation(THD *thd, uint64_t sql_mode,
                                            LEX_STRING *rep);
 };
 
@@ -579,11 +579,11 @@ class sys_var_thd_bit :public sys_var_thd
   sys_check_func check_func;
   sys_update_func update_func;
 public:
-  ulonglong bit_flag;
+  uint64_t bit_flag;
   bool reverse;
   sys_var_thd_bit(sys_var_chain *chain, const char *name_arg,
                   sys_check_func c_func, sys_update_func u_func,
-                  ulonglong bit, bool reverse_arg=0,
+                  uint64_t bit, bool reverse_arg=0,
                   Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_thd(name_arg, NULL, binlog_status_arg), check_func(c_func),
     update_func(u_func), bit_flag(bit), reverse(reverse_arg)
@@ -1052,10 +1052,10 @@ public:
 
 class sys_var_microseconds :public sys_var_thd
 {
-  ulonglong SV::*offset;
+  uint64_t SV::*offset;
 public:
   sys_var_microseconds(sys_var_chain *chain, const char *name_arg,
-                       ulonglong SV::*offset_arg):
+                       uint64_t SV::*offset_arg):
     sys_var_thd(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
   bool check(THD *thd __attribute__((__unused__)),
@@ -1153,7 +1153,7 @@ public:
   {
     CHARSET_INFO *charset;
     ulong ulong_value;
-    ulonglong ulonglong_value;
+    uint64_t uint64_t_value;
     plugin_ref plugin;
     DATE_TIME_FORMAT *date_time_format;
     Time_zone *time_zone;

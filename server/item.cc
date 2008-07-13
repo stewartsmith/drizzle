@@ -97,7 +97,7 @@ void Hybrid_type_traits_decimal::add(Hybrid_type *val, Field *f) const
   @todo
   what is '4' for scale?
 */
-void Hybrid_type_traits_decimal::div(Hybrid_type *val, ulonglong u) const
+void Hybrid_type_traits_decimal::div(Hybrid_type *val, uint64_t u) const
 {
   int2my_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
   /* XXX: what is '4' for scale? */
@@ -1826,7 +1826,7 @@ String *Item_uint::val_str(String *str)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
-  str->set((ulonglong) value, &my_charset_bin);
+  str->set((uint64_t) value, &my_charset_bin);
   return str;
 }
 
@@ -1835,7 +1835,7 @@ void Item_uint::print(String *str,
                       enum_query_type query_type __attribute__((__unused__)))
 {
   // latin1 is good enough for numbers
-  str_value.set((ulonglong) value, default_charset());
+  str_value.set((uint64_t) value, default_charset());
   str->append(str_value);
 }
 
@@ -2500,7 +2500,7 @@ double Item_param::val_real()
       This works for example when user says SELECT ?+0.0 and supplies
       time value for the placeholder.
     */
-    return ulonglong2double(TIME_to_ulonglong(&value.time));
+    return uint64_t2double(TIME_to_uint64_t(&value.time));
   case NULL_VALUE:
     return 0.0;
   default:
@@ -2531,7 +2531,7 @@ longlong Item_param::val_int()
                          str_value.length(), 10, (char**) 0, &dummy_err);
     }
   case TIME_VALUE:
-    return (longlong) TIME_to_ulonglong(&value.time);
+    return (longlong) TIME_to_uint64_t(&value.time);
   case NULL_VALUE:
     return 0; 
   default:
@@ -2558,7 +2558,7 @@ my_decimal *Item_param::val_decimal(my_decimal *dec)
     return dec;
   case TIME_VALUE:
   {
-    longlong i= (longlong) TIME_to_ulonglong(&value.time);
+    longlong i= (longlong) TIME_to_uint64_t(&value.time);
     int2my_decimal(E_DEC_FATAL_ERROR, i, 0, dec);
     return dec;
   }
@@ -4565,9 +4565,9 @@ longlong Item_hex_string::val_int()
   char *end=(char*) str_value.ptr()+str_value.length(),
        *ptr=end-min(str_value.length(),sizeof(longlong));
 
-  ulonglong value=0;
+  uint64_t value=0;
   for (; ptr != end ; ptr++)
-    value=(value << 8)+ (ulonglong) (uchar) *ptr;
+    value=(value << 8)+ (uint64_t) (uchar) *ptr;
   return (longlong) value;
 }
 
@@ -4576,7 +4576,7 @@ my_decimal *Item_hex_string::val_decimal(my_decimal *decimal_value)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
-  ulonglong value= (ulonglong)val_int();
+  uint64_t value= (uint64_t)val_int();
   int2my_decimal(E_DEC_FATAL_ERROR, value, true, decimal_value);
   return (decimal_value);
 }
@@ -4590,14 +4590,14 @@ int Item_hex_string::save_in_field(Field *field,
     return field->store(str_value.ptr(), str_value.length(), 
                         collation.collation);
 
-  ulonglong nr;
+  uint64_t nr;
   uint32 length= str_value.length();
   if (length > 8)
   {
     nr= field->flags & UNSIGNED_FLAG ? ULONGLONG_MAX : LONGLONG_MAX;
     goto warn;
   }
-  nr= (ulonglong) val_int();
+  nr= (uint64_t) val_int();
   if ((length == 8) && !(field->flags & UNSIGNED_FLAG) && (nr > LONGLONG_MAX))
   {
     nr= LONGLONG_MAX;

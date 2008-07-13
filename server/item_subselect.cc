@@ -773,7 +773,7 @@ String *Item_exists_subselect::val_str(String *str)
     reset();
     return 0;
   }
-  str->set((ulonglong)value,&my_charset_bin);
+  str->set((uint64_t)value,&my_charset_bin);
   return str;
 }
 
@@ -864,7 +864,7 @@ String *Item_in_subselect::val_str(String *str)
     null_value= 1;
     return 0;
   }
-  str->set((ulonglong)value, &my_charset_bin);
+  str->set((uint64_t)value, &my_charset_bin);
   return str;
 }
 

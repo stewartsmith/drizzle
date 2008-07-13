@@ -61,7 +61,7 @@ typedef struct st_mi_state_info
   MI_STATUS_INFO state;
   ha_rows split;			/* number of split blocks */
   my_off_t dellink;			/* Link to next removed block */
-  ulonglong auto_increment;
+  uint64_t auto_increment;
   ulong process;			/* process that updated table last */
   ulong unique;				/* Unique number for this process */
   ulong update_count;			/* Updated for each write lock */
@@ -73,7 +73,7 @@ typedef struct st_mi_state_info
 
   ulong sec_index_changed;		/* Updated when new sec_index */
   ulong sec_index_used;			/* which extra index are in use */
-  ulonglong key_map;			/* Which keys are in use */
+  uint64_t key_map;			/* Which keys are in use */
   ha_checksum checksum;                 /* Table checksum */
   ulong version;			/* timestamp of create */
   time_t create_time;			/* Time when created database */
@@ -321,8 +321,8 @@ typedef struct st_mi_sort_param
     The next two are used to collect statistics, see update_key_parts for
     description.
   */
-  ulonglong unique[MI_MAX_KEY_SEG+1];
-  ulonglong notnull[MI_MAX_KEY_SEG+1];
+  uint64_t unique[MI_MAX_KEY_SEG+1];
+  uint64_t notnull[MI_MAX_KEY_SEG+1];
 
   my_off_t pos,max_pos,filepos,start_recpos;
   uint key, key_length,real_key_length,sortbuff_size;
@@ -603,7 +603,7 @@ extern uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key,
 extern int _mi_read_key_record(MI_INFO *info,my_off_t filepos,uchar *buf);
 extern int _mi_read_cache(IO_CACHE *info,uchar *buff,my_off_t pos,
 			  uint length,int re_read_if_possibly);
-extern ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record);
+extern uint64_t retrieve_auto_increment(MI_INFO *info,const uchar *record);
 
 extern uchar *mi_alloc_rec_buff(MI_INFO *,ulong, uchar**);
 #define mi_get_rec_buff_ptr(info,buf)                              \
@@ -626,7 +626,7 @@ extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,uchar *buf);
 extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, my_bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                uchar *to, uchar *from, ulong reclength);
-extern ulonglong mi_safe_mul(ulonglong a,ulonglong b);
+extern uint64_t mi_safe_mul(uint64_t a,uint64_t b);
 
 struct st_sort_info;
 

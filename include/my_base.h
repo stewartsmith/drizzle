@@ -547,7 +547,7 @@ typedef struct st_key_multi_range
 
 /* For number of records */
 #ifdef BIG_TABLES
-#define rows2double(A)	ulonglong2double(A)
+#define rows2double(A)	uint64_t2double(A)
 typedef my_off_t	ha_rows;
 #else
 #define rows2double(A)	(double) (A)

@@ -625,7 +625,7 @@ double Item_int_func::val_real()
 {
   assert(fixed == 1);
 
-  return unsigned_flag ? (double) ((ulonglong) val_int()) : (double) val_int();
+  return unsigned_flag ? (double) ((uint64_t) val_int()) : (double) val_int();
 }
 
 
@@ -785,7 +785,7 @@ double Item_func_numhybrid::val_real()
   case INT_RESULT:
   {
     longlong result= int_op();
-    return unsigned_flag ? (double) ((ulonglong) result) : (double) result;
+    return unsigned_flag ? (double) ((uint64_t) result) : (double) result;
   }
   case REAL_RESULT:
     return real_op();
@@ -1348,7 +1348,7 @@ longlong Item_func_int_div::val_int()
     return 0;
   }
   return (unsigned_flag ?
-	  (ulonglong) value / (ulonglong) val2 :
+	  (uint64_t) value / (uint64_t) val2 :
 	  value / val2);
 }
 
@@ -1382,10 +1382,10 @@ longlong Item_func_mod::int_op()
 
   if (args[0]->unsigned_flag)
     result= args[1]->unsigned_flag ? 
-      ((ulonglong) value) % ((ulonglong) val2) : ((ulonglong) value) % val2;
+      ((uint64_t) value) % ((uint64_t) val2) : ((uint64_t) value) % val2;
   else
     result= args[1]->unsigned_flag ?
-      value % ((ulonglong) val2) : value % val2;
+      value % ((uint64_t) val2) : value % val2;
 
   return result;
 }
@@ -1496,8 +1496,8 @@ void Item_func_neg::fix_length_and_dec()
   if (hybrid_type == INT_RESULT && args[0]->const_item())
   {
     longlong val= args[0]->val_int();
-    if ((ulonglong) val >= (ulonglong) LONGLONG_MIN &&
-        ((ulonglong) val != (ulonglong) LONGLONG_MIN ||
+    if ((uint64_t) val >= (uint64_t) LONGLONG_MIN &&
+        ((uint64_t) val != (uint64_t) LONGLONG_MIN ||
           args[0]->type() != INT_ITEM))        
     {
       /*
@@ -1727,7 +1727,7 @@ longlong Item_func_shift_left::val_int()
 {
   assert(fixed == 1);
   uint shift;
-  ulonglong res= ((ulonglong) args[0]->val_int() <<
+  uint64_t res= ((uint64_t) args[0]->val_int() <<
 		  (shift=(uint) args[1]->val_int()));
   if (args[0]->null_value || args[1]->null_value)
   {
@@ -1742,7 +1742,7 @@ longlong Item_func_shift_right::val_int()
 {
   assert(fixed == 1);
   uint shift;
-  ulonglong res= (ulonglong) args[0]->val_int() >>
+  uint64_t res= (uint64_t) args[0]->val_int() >>
     (shift=(uint) args[1]->val_int());
   if (args[0]->null_value || args[1]->null_value)
   {
@@ -1757,7 +1757,7 @@ longlong Item_func_shift_right::val_int()
 longlong Item_func_bit_neg::val_int()
 {
   assert(fixed == 1);
-  ulonglong res= (ulonglong) args[0]->val_int();
+  uint64_t res= (uint64_t) args[0]->val_int();
   if ((null_value=args[0]->null_value))
     return 0;
   return ~res;
@@ -1990,7 +1990,7 @@ double my_double_round(double value, longlong dec, bool dec_unsigned,
 {
   double tmp;
   bool dec_negative= (dec < 0) && !dec_unsigned;
-  ulonglong abs_dec= dec_negative ? -dec : dec;
+  uint64_t abs_dec= dec_negative ? -dec : dec;
   /*
     tmp2 is here to avoid return the value with 80 bit precision
     This will fix that the test round(0.1,1) = round(0.1,1) is true
@@ -2030,12 +2030,12 @@ double Item_func_round::real_op()
 
 /*
   Rounds a given value to a power of 10 specified as the 'to' argument,
-  avoiding overflows when the value is close to the ulonglong range boundary.
+  avoiding overflows when the value is close to the uint64_t range boundary.
 */
 
-static inline ulonglong my_unsigned_round(ulonglong value, ulonglong to)
+static inline uint64_t my_unsigned_round(uint64_t value, uint64_t to)
 {
-  ulonglong tmp= value / to * to;
+  uint64_t tmp= value / to * to;
   return (value - tmp < (to >> 1)) ? tmp : tmp + to;
 }
 
@@ -2045,7 +2045,7 @@ longlong Item_func_round::int_op()
   longlong value= args[0]->val_int();
   longlong dec= args[1]->val_int();
   decimals= 0;
-  ulonglong abs_dec;
+  uint64_t abs_dec;
   if ((null_value= args[0]->null_value || args[1]->null_value))
     return 0;
   if ((dec >= 0) || args[1]->unsigned_flag)
@@ -2061,11 +2061,11 @@ longlong Item_func_round::int_op()
   
   if (truncate)
     value= (unsigned_flag) ?
-      ((ulonglong) value / tmp) * tmp : (value / tmp) * tmp;
+      ((uint64_t) value / tmp) * tmp : (value / tmp) * tmp;
   else
     value= (unsigned_flag || value >= 0) ?
-      my_unsigned_round((ulonglong) value, tmp) :
-      -(longlong) my_unsigned_round((ulonglong) -value, tmp);
+      my_unsigned_round((uint64_t) value, tmp) :
+      -(longlong) my_unsigned_round((uint64_t) -value, tmp);
   return value;
 }
 
@@ -2075,7 +2075,7 @@ my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
   my_decimal val, *value= args[0]->val_decimal(&val);
   longlong dec= args[1]->val_int();
   if (dec >= 0 || args[1]->unsigned_flag)
-    dec= min((ulonglong) dec, decimals);
+    dec= min((uint64_t) dec, decimals);
   else if (dec < INT_MIN)
     dec= INT_MIN;
     
@@ -2234,16 +2234,16 @@ void Item_func_min_max::fix_length_and_dec()
    #	index of the least/greatest argument
 */
 
-uint Item_func_min_max::cmp_datetimes(ulonglong *value)
+uint Item_func_min_max::cmp_datetimes(uint64_t *value)
 {
-  ulonglong min_max= 0;
+  uint64_t min_max= 0;
   uint min_max_idx= 0;
 
   for (uint i=0; i < arg_count ; i++)
   {
     Item **arg= args + i;
     bool is_null;
-    ulonglong res= get_datetime_value(thd, &arg, 0, datetime_item, &is_null);
+    uint64_t res= get_datetime_value(thd, &arg, 0, datetime_item, &is_null);
     if ((null_value= args[i]->null_value))
       return 0;
     if (i == 0 || (res < min_max ? cmp_sign : -cmp_sign) > 0)
@@ -2341,7 +2341,7 @@ double Item_func_min_max::val_real()
   double value=0.0;
   if (compare_as_dates)
   {
-    ulonglong result= 0;
+    uint64_t result= 0;
     (void)cmp_datetimes(&result);
     return (double)result;
   }
@@ -2368,7 +2368,7 @@ longlong Item_func_min_max::val_int()
   longlong value=0;
   if (compare_as_dates)
   {
-    ulonglong result= 0;
+    uint64_t result= 0;
     (void)cmp_datetimes(&result);
     return (longlong)result;
   }
@@ -2396,9 +2396,9 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
 
   if (compare_as_dates)
   {
-    ulonglong value= 0;
+    uint64_t value= 0;
     (void)cmp_datetimes(&value);
-    ulonglong2decimal(value, dec);
+    uint64_t2decimal(value, dec);
     return dec;
   }
   for (uint i=0; i < arg_count ; i++)
@@ -2670,7 +2670,7 @@ longlong Item_func_find_in_set::val_int()
   assert(fixed == 1);
   if (enum_value)
   {
-    ulonglong tmp=(ulonglong) args[1]->val_int();
+    uint64_t tmp=(uint64_t) args[1]->val_int();
     if (!(null_value=args[1]->null_value || args[0]->null_value))
     {
       if (tmp & enum_bit)
@@ -2736,7 +2736,7 @@ longlong Item_func_find_in_set::val_int()
 longlong Item_func_bit_count::val_int()
 {
   assert(fixed == 1);
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if ((null_value= args[0]->null_value))
     return 0; /* purecov: inspected */
   return (longlong) my_count_bits(value);
@@ -3352,9 +3352,9 @@ longlong Item_func_benchmark::val_int()
   String tmp(buff,sizeof(buff), &my_charset_bin);
   my_decimal tmp_decimal;
   THD *thd=current_thd;
-  ulonglong loop_count;
+  uint64_t loop_count;
 
-  loop_count= (ulonglong) args[0]->val_int();
+  loop_count= (uint64_t) args[0]->val_int();
 
   if (args[0]->null_value ||
       (!args[0]->unsigned_flag && (((longlong) loop_count) < 0)))
@@ -3373,7 +3373,7 @@ longlong Item_func_benchmark::val_int()
   }
 
   null_value=0;
-  for (ulonglong loop=0 ; loop < loop_count && !thd->killed; loop++)
+  for (uint64_t loop=0 ; loop < loop_count && !thd->killed; loop++)
   {
     switch (args[1]->result_type()) {
     case REAL_RESULT:
@@ -3703,7 +3703,7 @@ String *user_var_entry::val_str(my_bool *null_value, String *str,
     if (!unsigned_flag)
       str->set(*(longlong*) value, &my_charset_bin);
     else
-      str->set(*(ulonglong*) value, &my_charset_bin);
+      str->set(*(uint64_t*) value, &my_charset_bin);
     break;
   case DECIMAL_RESULT:
     my_decimal2string(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, 0, 0, str);
@@ -4452,8 +4452,8 @@ bool Item_func_get_system_var::is_written_to_binlog()
 longlong Item_func_bit_xor::val_int()
 {
   assert(fixed == 1);
-  ulonglong arg1= (ulonglong) args[0]->val_int();
-  ulonglong arg2= (ulonglong) args[1]->val_int();
+  uint64_t arg1= (uint64_t) args[0]->val_int();
+  uint64_t arg2= (uint64_t) args[1]->val_int();
   if ((null_value= (args[0]->null_value || args[1]->null_value)))
     return 0;
   return (longlong) (arg1 ^ arg2);

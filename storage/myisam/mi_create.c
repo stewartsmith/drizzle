@@ -45,7 +45,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   ulong reclength, real_reclength,min_pack_length;
   char filename[FN_REFLEN],linkname[FN_REFLEN], *linkname_ptr;
   ulong pack_reclength;
-  ulonglong tot_length,max_rows, tmp;
+  uint64_t tot_length,max_rows, tmp;
   enum en_fieldtype type;
   MYISAM_SHARE share;
   MI_KEYDEF *keydef,tmp_keydef;
@@ -196,10 +196,10 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   if (!ci->data_file_length && ci->max_rows)
   {
     if (pack_reclength == INT_MAX32 ||
-             (~(ulonglong) 0)/ci->max_rows < (ulonglong) pack_reclength)
-      ci->data_file_length= ~(ulonglong) 0;
+             (~(uint64_t) 0)/ci->max_rows < (uint64_t) pack_reclength)
+      ci->data_file_length= ~(uint64_t) 0;
     else
-      ci->data_file_length=(ulonglong) ci->max_rows*pack_reclength;
+      ci->data_file_length=(uint64_t) ci->max_rows*pack_reclength;
   }
   else if (!ci->max_rows)
     ci->max_rows=(ha_rows) (ci->data_file_length/(min_pack_length +
@@ -210,8 +210,8 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     pointer=mi_get_pointer_length(ci->data_file_length,myisam_data_pointer_size);
   else
     pointer=mi_get_pointer_length(ci->max_rows,myisam_data_pointer_size);
-  if (!(max_rows=(ulonglong) ci->max_rows))
-    max_rows= ((((ulonglong) 1 << (pointer*8)) -1) / min_pack_length);
+  if (!(max_rows=(uint64_t) ci->max_rows))
+    max_rows= ((((uint64_t) 1 << (pointer*8)) -1) / min_pack_length);
 
 
   real_reclength=reclength;
@@ -742,7 +742,7 @@ err:
 }
 
 
-uint mi_get_pointer_length(ulonglong file_length, uint def)
+uint mi_get_pointer_length(uint64_t file_length, uint def)
 {
   DBUG_ASSERT(def >= 2 && def <= 7);
   if (file_length)				/* If not default */

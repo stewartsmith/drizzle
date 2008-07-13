@@ -197,9 +197,9 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
 	!(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
 	(table->db_stat & HA_READ_ONLY ||
 	 table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
-	(ulonglong) table->s->reclength* (table->file->stats.records+
+	(uint64_t) table->s->reclength* (table->file->stats.records+
                                           table->file->stats.deleted) >
-	(ulonglong) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
+	(uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
 	info->io_cache->end_of_file/info->ref_length * table->s->reclength >
 	(my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
 	!table->s->blob_fields &&

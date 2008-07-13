@@ -25,7 +25,7 @@
 
 C_MODE_START
 
-extern ulonglong log_10_int[20];
+extern uint64_t log_10_int[20];
 extern uchar days_in_month[];
 
 /*
@@ -80,10 +80,10 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
                 uint flags, int *was_cut);
 longlong number_to_datetime(longlong nr, MYSQL_TIME *time_res,
                             uint flags, int *was_cut);
-ulonglong TIME_to_ulonglong_datetime(const MYSQL_TIME *);
-ulonglong TIME_to_ulonglong_date(const MYSQL_TIME *);
-ulonglong TIME_to_ulonglong_time(const MYSQL_TIME *);
-ulonglong TIME_to_ulonglong(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t_datetime(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t_date(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t_time(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t(const MYSQL_TIME *);
 
 
 my_bool str_to_time(const char *str,uint length, MYSQL_TIME *l_time,

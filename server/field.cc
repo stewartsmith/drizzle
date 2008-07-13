@@ -2766,7 +2766,7 @@ double Field_longlong::val_real(void)
   if (unsigned_flag)
   {
     uint64_t tmp= (uint64_t) j;
-    return ulonglong2double(tmp);
+    return uint64_t2double(tmp);
   }
   return (double) j;
 }
@@ -2959,7 +2959,7 @@ int Field_float::store(double nr)
 
 int Field_float::store(longlong nr, bool unsigned_val)
 {
-  return Field_float::store(unsigned_val ? ulonglong2double((uint64_t) nr) :
+  return Field_float::store(unsigned_val ? uint64_t2double((uint64_t) nr) :
                             (double) nr);
 }
 
@@ -3168,7 +3168,7 @@ int Field_double::store(double nr)
 
 int Field_double::store(longlong nr, bool unsigned_val)
 {
-  return Field_double::store(unsigned_val ? ulonglong2double((uint64_t) nr) :
+  return Field_double::store(unsigned_val ? uint64_t2double((uint64_t) nr) :
                              (double) nr);
 }
 
@@ -4469,7 +4469,7 @@ int Field_datetime::store(const char *from,
                                MODE_INVALID_DATES))),
                             &error);
   if ((int) func_res > (int) MYSQL_TIMESTAMP_ERROR)
-    tmp= TIME_to_ulonglong_datetime(&time_tmp);
+    tmp= TIME_to_uint64_t_datetime(&time_tmp);
   else
     error= 1;                                 // Fix if invalid zero date
 

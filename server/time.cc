@@ -813,7 +813,7 @@ bool date_add_interval(MYSQL_TIME *ltime, interval_type int_type, INTERVAL inter
     ltime->hour=   (uint) (sec/3600);
     daynr= calc_daynr(ltime->year,ltime->month,1) + days;
     /* Day number from year 0 to 9999-12-31 */
-    if ((ulonglong) daynr > MAX_DAY_NUMBER)
+    if ((uint64_t) daynr > MAX_DAY_NUMBER)
       goto invalid_date;
     get_date_from_daynr((long) daynr, &ltime->year, &ltime->month,
                         &ltime->day);
@@ -966,8 +966,8 @@ calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign, longlong *s
 int
 my_time_compare(MYSQL_TIME *a, MYSQL_TIME *b)
 {
-  my_ulonglong a_t= TIME_to_ulonglong_datetime(a);
-  my_ulonglong b_t= TIME_to_ulonglong_datetime(b);
+  my_uint64_t a_t= TIME_to_uint64_t_datetime(a);
+  my_uint64_t b_t= TIME_to_uint64_t_datetime(b);
 
   if (a_t > b_t)
     return 1;

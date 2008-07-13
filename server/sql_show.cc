@@ -1200,7 +1200,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
   while ((thd_info=thread_infos.get()))
   {
     protocol->prepare_for_resend();
-    protocol->store((ulonglong) thd_info->thread_id);
+    protocol->store((uint64_t) thd_info->thread_id);
     protocol->store(thd_info->user, system_charset_info);
     protocol->store(thd_info->host, system_charset_info);
     protocol->store(thd_info->db, system_charset_info);
@@ -1576,7 +1576,7 @@ static bool show_status_array(THD *thd, const char *wild,
           end= int10_to_str(*(long*) value, buff, 10);
           break;
         case SHOW_LONGLONG_STATUS:
-          value= ((char *) status_var + (ulonglong) value);
+          value= ((char *) status_var + (uint64_t) value);
           /* fall through */
         case SHOW_LONGLONG:
           end= longlong10_to_str(*(longlong*) value, buff, 10);

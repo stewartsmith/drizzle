@@ -56,7 +56,7 @@ public:
   { return store_long((longlong) from); }
   inline  bool store(longlong from)
   { return store_longlong((longlong) from, 0); }
-  inline  bool store(ulonglong from)
+  inline  bool store(uint64_t from)
   { return store_longlong((longlong) from, 1); }
   inline bool store(String *str)
   { return store((char*) str->ptr(), str->length(), str->charset()); }

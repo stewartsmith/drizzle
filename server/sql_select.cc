@@ -88,7 +88,7 @@ static store_key *get_store_key(THD *thd,
 static bool make_simple_join(JOIN *join,TABLE *tmp_table);
 static void make_outerjoin_info(JOIN *join);
 static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *item);
-static bool make_join_readinfo(JOIN *join, ulonglong options, uint no_jbuf_after);
+static bool make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after);
 static bool only_eq_ref_tables(JOIN *join, ORDER *order, table_map tables);
 static void update_depend_map(JOIN *join);
 static void update_depend_map(JOIN *join, ORDER *order);
@@ -96,7 +96,7 @@ static ORDER *remove_const(JOIN *join,ORDER *first_order,COND *cond,
 			   bool change_list, bool *simple_order);
 static int return_zero_rows(JOIN *join, select_result *res,TABLE_LIST *tables,
                             List<Item> &fields, bool send_row,
-                            ulonglong select_options, const char *info,
+                            uint64_t select_options, const char *info,
                             Item *having);
 static COND *build_equal_items(THD *thd, COND *cond,
                                COND_EQUAL *inherited,
@@ -126,7 +126,7 @@ static bool open_tmp_table(TABLE *table);
 static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo, 
                                     MI_COLUMNDEF *start_recinfo,
                                     MI_COLUMNDEF **recinfo,
-				    ulonglong options);
+				    uint64_t options);
 static int do_select(JOIN *join,List<Item> *fields,TABLE *tmp_table);
 
 static enum_nested_loop_state
@@ -958,7 +958,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd, uint uniq_tuple_length_arg,
 */
 
 static
-int setup_semijoin_dups_elimination(JOIN *join, ulonglong options, uint no_jbuf_after)
+int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint no_jbuf_after)
 {
   table_map cur_map= join->const_table_map | PSEUDO_TABLE_BITS;
   struct {
@@ -1656,7 +1656,7 @@ JOIN::optimize()
 	      test(select_options & OPTION_BUFFER_RESULT)));
 
   uint no_jbuf_after= make_join_orderinfo(this);
-  ulonglong select_opts_for_readinfo= 
+  uint64_t select_opts_for_readinfo= 
     (select_options & (SELECT_DESCRIBE | SELECT_NO_JOIN_CACHE)) | (0);
 
   sj_tmp_tables= NULL;
@@ -2632,7 +2632,7 @@ bool
 mysql_select(THD *thd, Item ***rref_pointer_array,
 	     TABLE_LIST *tables, uint wild_num, List<Item> &fields,
 	     COND *conds, uint og_num,  ORDER *order, ORDER *group,
-	     Item *having, ORDER *proc_param, ulonglong select_options,
+	     Item *having, ORDER *proc_param, uint64_t select_options,
 	     select_result *result, SELECT_LEX_UNIT *unit,
 	     SELECT_LEX *select_lex)
 {
@@ -4888,13 +4888,13 @@ set_position(JOIN *join,uint idx,JOIN_TAB *table,KEYUSE *key)
     Bitmap of bound IN-equalities.
 */
 
-ulonglong get_bound_sj_equalities(TABLE_LIST *sj_nest, 
+uint64_t get_bound_sj_equalities(TABLE_LIST *sj_nest, 
                                   table_map remaining_tables)
 {
   List_iterator<Item> li(sj_nest->nested_join->sj_outer_expr_list);
   Item *item;
   uint i= 0;
-  ulonglong res= 0;
+  uint64_t res= 0;
   while ((item= li++))
   {
     /*
@@ -4963,7 +4963,7 @@ best_access_path(JOIN      *join,
     KEYUSE *keyuse,*start_key=0;
     double best_records= DBL_MAX;
     uint max_key_part=0;
-    ulonglong bound_sj_equalities= 0;
+    uint64_t bound_sj_equalities= 0;
     bool try_sj_inside_out= false;
     /*
       Discover the bound equalites. We need to do this, if
@@ -5002,7 +5002,7 @@ best_access_path(JOIN      *join,
 
       /* Calculate how many key segments of the current key we can use */
       start_key= keyuse;
-      ulonglong handled_sj_equalities=0;
+      uint64_t handled_sj_equalities=0;
       key_part_map sj_insideout_map= 0;
 
       do /* For each keypart */
@@ -5081,7 +5081,7 @@ best_access_path(JOIN      *join,
         if (try_sj_inside_out && 
             table->covering_keys.is_set(key) &&
             (handled_sj_equalities | bound_sj_equalities) ==     // (1)
-            PREV_BITS(ulonglong, s->emb_sj_nest->sj_in_exprs)) // (1)
+            PREV_BITS(uint64_t, s->emb_sj_nest->sj_in_exprs)) // (1)
         {
           uint n_fixed_parts= max_part_bit(found_part);
           if (n_fixed_parts != keyinfo->key_parts &&
@@ -7677,7 +7677,7 @@ uint make_join_orderinfo(JOIN *join)
 */
 
 static bool
-make_join_readinfo(JOIN *join, ulonglong options, uint no_jbuf_after)
+make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after)
 {
   uint i;
   bool statistics= test(!(join->select_options & SELECT_DESCRIBE));
@@ -8334,7 +8334,7 @@ remove_const(JOIN *join,ORDER *first_order, COND *cond,
 
 static int
 return_zero_rows(JOIN *join, select_result *result,TABLE_LIST *tables,
-		 List<Item> &fields, bool send_row, ulonglong select_options,
+		 List<Item> &fields, bool send_row, uint64_t select_options,
 		 const char *info, Item *having)
 {
   if (select_options & SELECT_DESCRIBE)
@@ -10952,7 +10952,7 @@ void setup_tmp_table_column_bitmaps(TABLE *table, uchar *bitmaps)
 TABLE *
 create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 		 ORDER *group, bool distinct, bool save_sum_fields,
-		 ulonglong select_options, ha_rows rows_limit,
+		 uint64_t select_options, ha_rows rows_limit,
 		 char *table_alias)
 {
   MEM_ROOT *mem_root_save, own_root;
@@ -11430,7 +11430,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   param->recinfo=recinfo;
   store_record(table,s->default_values);        // Make empty default record
 
-  if (thd->variables.tmp_table_size == ~ (ulonglong) 0)		// No limit
+  if (thd->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
@@ -11877,7 +11877,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   //param->recinfo=recinfo;
   //store_record(table,s->default_values);        // Make empty default record
 
-  if (thd->variables.tmp_table_size == ~ (ulonglong) 0)		// No limit
+  if (thd->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
@@ -12122,7 +12122,7 @@ static bool open_tmp_table(TABLE *table)
 static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo, 
                                     MI_COLUMNDEF *start_recinfo,
                                     MI_COLUMNDEF **recinfo, 
-				    ulonglong options)
+				    uint64_t options)
 {
   int error;
   MI_KEYDEF keydef;
@@ -12209,7 +12209,7 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
 
   if ((options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
       OPTION_BIG_TABLES)
-    create_info.data_file_length= ~(ulonglong) 0;
+    create_info.data_file_length= ~(uint64_t) 0;
 
   if ((error=mi_create(share->table_name.str, share->keys, &keydef,
 		       (uint) (*recinfo-start_recinfo),
@@ -17922,7 +17922,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else
           examined_rows= join->best_positions[i].records_read; 
  
-        item_list.push_back(new Item_int((longlong) (ulonglong) examined_rows, 
+        item_list.push_back(new Item_int((longlong) (uint64_t) examined_rows, 
                                          MY_INT64_NUM_DECIMAL_DIGITS));
 
         /* Add "filtered" field to item_list. */

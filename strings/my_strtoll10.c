@@ -23,12 +23,12 @@
   properly handle a constant expression containing a mod operator
 */
 #if defined(__NETWARE__) && defined(__MWERKS__) 
-static ulonglong ulonglong_max= ~(ulonglong) 0;
-#define ULONGLONG_MAX ulonglong_max
+static uint64_t uint64_t_max= ~(uint64_t) 0;
+#define ULONGLONG_MAX uint64_t_max
 #else
-#define ULONGLONG_MAX		(~(ulonglong) 0)
+#define ULONGLONG_MAX		(~(uint64_t) 0)
 #endif /* __NETWARE__ && __MWERKS__ */
-#define MAX_NEGATIVE_NUMBER	((ulonglong) 0x8000000000000000LL)
+#define MAX_NEGATIVE_NUMBER	((uint64_t) 0x8000000000000000LL)
 #define INIT_CNT  9
 #define LFACTOR   1000000000ULL
 #define LFACTOR1  10000000000ULL
@@ -88,7 +88,7 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error)
   char *dummy;
   uchar c;
   unsigned long i, j, k;
-  ulonglong li;
+  uint64_t li;
   int negative;
   ulong cutoff, cutoff2, cutoff3;
 
@@ -207,7 +207,7 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error)
   if (i > cutoff || (i == cutoff && ((j > cutoff2 || j == cutoff2) &&
                                      k > cutoff3)))
     goto overflow;
-  li=i*LFACTOR2+ (ulonglong) j*100 + k;
+  li=i*LFACTOR2+ (uint64_t) j*100 + k;
   return (longlong) li;
 
 overflow:					/* *endptr is set here */
@@ -219,17 +219,17 @@ end_i:
   return (negative ? ((longlong) -(long) i) : (longlong) i);
 
 end_i_and_j:
-  li= (ulonglong) i * lfactor[(uint) (s-start)] + j;
+  li= (uint64_t) i * lfactor[(uint) (s-start)] + j;
   *endptr= (char*) s;
   return (negative ? -((longlong) li) : (longlong) li);
 
 end3:
-  li=(ulonglong) i*LFACTOR+ (ulonglong) j;
+  li=(uint64_t) i*LFACTOR+ (uint64_t) j;
   *endptr= (char*) s;
   return (negative ? -((longlong) li) : (longlong) li);
 
 end4:
-  li=(ulonglong) i*LFACTOR1+ (ulonglong) j * 10 + k;
+  li=(uint64_t) i*LFACTOR1+ (uint64_t) j * 10 + k;
   *endptr= (char*) s;
   if (negative)
   {

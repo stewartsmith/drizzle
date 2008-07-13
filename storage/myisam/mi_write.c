@@ -844,7 +844,7 @@ int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows)
   MI_KEYDEF *key=share->keyinfo;
   bulk_insert_param *params;
   uint i, num_keys, total_keylength;
-  ulonglong key_map;
+  uint64_t key_map;
   DBUG_ENTER("_mi_init_bulk_insert");
   DBUG_PRINT("enter",("cache_size: %lu", cache_size));
 
