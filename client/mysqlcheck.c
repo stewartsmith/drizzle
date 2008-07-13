@@ -85,13 +85,6 @@ static struct my_option my_long_options[] =
    "To check several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames.",
    (char**) &opt_databases, (char**) &opt_databases, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-#ifdef DBUG_OFF
-  {"debug", '#', "This is a non-debug version. Catch this and exit.",
-   0, 0, 0, GET_DISABLED, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#else
-  {"debug", '#', "Output debug log. Often this is 'd:t:o,filename'.",
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -293,10 +286,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'g':
     what_to_do= DO_CHECK;
     opt_upgrade= 1;
-    break;
-  case '#':
-    DBUG_PUSH(argument ? argument : "d:t:o");
-    debug_check_flag= 1;
     break;
   case OPT_TABLES:
     opt_databases = 0;
@@ -732,7 +721,7 @@ static void print_result()
 
 static int dbConnect(char *host, char *user, char *passwd)
 {
-  DBUG_ENTER("dbConnect");
+
   if (verbose)
   {
     fprintf(stderr, "# Connecting to %s...\n", host ? host : "localhost");
@@ -767,11 +756,10 @@ static void dbDisconnect(char *host)
 
 static void DBerror(MYSQL *mysql, const char *when)
 {
-  DBUG_ENTER("DBerror");
   my_printf_error(0,"Got error: %d: %s %s", MYF(0),
 		  mysql_errno(mysql), mysql_error(mysql), when);
   safe_exit(EX_MYSQLERR);
-  DBUG_VOID_RETURN;
+  return;
 } /* DBerror */
 
 
