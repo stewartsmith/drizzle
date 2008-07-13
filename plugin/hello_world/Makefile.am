@@ -19,20 +19,18 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-AM_CPPFLAGS =              -I$(top_srcdir)/include -I$(top_builddir)/include \
+AM_CPPFLAGS =           -I$(top_srcdir)/include -I$(top_builddir)/include \
 			-I$(top_srcdir)/server \
                         -I$(srcdir)
 
 EXTRA_LTLIBRARIES =	libhello_world.la
 pkgplugin_LTLIBRARIES =	@plugin_hello_world_shared_target@
 libhello_world_la_LDFLAGS =	-module -rpath $(pkgplugindir)
-libhello_world_la_CXXFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-libhello_world_la_CFLAGS =	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+libhello_world_la_CPPFLAGS=	$(AM_CPPFLAGS) -DMYSQL_DYNAMIC_PLUGIN
 libhello_world_la_SOURCES =	hello_world.cc
 
 
 EXTRA_LIBRARIES =	libhello_world.a
 noinst_LIBRARIES =	@plugin_hello_world_static_target@
-libhello_world_a_CXXFLAGS =	$(AM_CFLAGS)
-libhello_world_a_CFLAGS =	$(AM_CFLAGS)
+libhello_world_a_CPPFLAGS =	$(AM_CPPFLAGS)
 libhello_world_a_SOURCES=	hello_world.cc
