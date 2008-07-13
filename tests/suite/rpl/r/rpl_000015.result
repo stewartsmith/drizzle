@@ -9,7 +9,7 @@ SHOW SLAVE STATUS;
 Slave_IO_State	#
 Master_Host	127.0.0.1
 Master_User	
-Master_Port	3306
+Master_Port	4427
 Connect_Retry	60
 Master_Log_File	
 Read_Master_Log_Pos	#
