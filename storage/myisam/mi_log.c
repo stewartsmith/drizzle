@@ -64,7 +64,7 @@ void _myisam_log(enum myisam_log_commands command, MI_INFO *info,
 		 const uchar *buffert, uint length)
 {
   uchar buff[11];
-  int error,old_errno;
+  int old_errno;
   ulong pid=(ulong) GETPID();
   old_errno=my_errno;
   bzero(buff,sizeof(buff));
@@ -74,11 +74,8 @@ void _myisam_log(enum myisam_log_commands command, MI_INFO *info,
   mi_int2store(buff+9,length);
 
   pthread_mutex_lock(&THR_LOCK_myisam);
-  error=my_lock(myisam_log_file,F_WRLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE));
   VOID(my_write(myisam_log_file,buff,sizeof(buff),MYF(0)));
   VOID(my_write(myisam_log_file,buffert,length,MYF(0)));
-  if (!error)
-    error=my_lock(myisam_log_file,F_UNLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE));
   pthread_mutex_unlock(&THR_LOCK_myisam);
   my_errno=old_errno;
 }
@@ -88,7 +85,7 @@ void _myisam_log_command(enum myisam_log_commands command, MI_INFO *info,
 			 const uchar *buffert, uint length, int result)
 {
   uchar buff[9];
-  int error,old_errno;
+  int old_errno;
   ulong pid=(ulong) GETPID();
 
   old_errno=my_errno;
@@ -97,12 +94,9 @@ void _myisam_log_command(enum myisam_log_commands command, MI_INFO *info,
   mi_int4store(buff+3,pid);
   mi_int2store(buff+7,result);
   pthread_mutex_lock(&THR_LOCK_myisam);
-  error=my_lock(myisam_log_file,F_WRLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE));
   VOID(my_write(myisam_log_file,buff,sizeof(buff),MYF(0)));
   if (buffert)
     VOID(my_write(myisam_log_file,buffert,length,MYF(0)));
-  if (!error)
-    error=my_lock(myisam_log_file,F_UNLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE));
   pthread_mutex_unlock(&THR_LOCK_myisam);
   my_errno=old_errno;
 }
@@ -112,7 +106,7 @@ void _myisam_log_record(enum myisam_log_commands command, MI_INFO *info,
 			const uchar *record, my_off_t filepos, int result)
 {
   uchar buff[21],*pos;
-  int error,old_errno;
+  int old_errno;
   uint length;
   ulong pid=(ulong) GETPID();
 
@@ -128,7 +122,6 @@ void _myisam_log_record(enum myisam_log_commands command, MI_INFO *info,
   mi_sizestore(buff+9,filepos);
   mi_int4store(buff+17,length);
   pthread_mutex_lock(&THR_LOCK_myisam);
-  error=my_lock(myisam_log_file,F_WRLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE));
   VOID(my_write(myisam_log_file, buff,sizeof(buff),MYF(0)));
   VOID(my_write(myisam_log_file, record,info->s->base.reclength,MYF(0)));
   if (info->s->base.blobs)
@@ -144,8 +137,6 @@ void _myisam_log_record(enum myisam_log_commands command, MI_INFO *info,
       VOID(my_write(myisam_log_file,pos,blob->length,MYF(0)));
     }
   }
-  if (!error)
-    error=my_lock(myisam_log_file,F_UNLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE));
   pthread_mutex_unlock(&THR_LOCK_myisam);
   my_errno=old_errno;
 }

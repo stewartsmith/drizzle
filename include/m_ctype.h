@@ -176,11 +176,11 @@ typedef struct my_collation_handler_st
                       const uchar *src, size_t srclen, uint flags);
   size_t    (*strnxfrmlen)(struct charset_info_st *, size_t);
   my_bool (*like_range)(struct charset_info_st *,
-			const char *s, size_t s_length,
-			char w_prefix, char w_one, char w_many, 
-			size_t res_length,
-			char *min_str, char *max_str,
-			size_t *min_len, size_t *max_len);
+                        const char *s, size_t s_length,
+                        char escape, char w_one, char w_many,
+                        size_t res_length,
+                        char *min_str, char *max_str,
+                        size_t *min_len, size_t *max_len);
   int     (*wildcmp)(struct charset_info_st *,
   		     const char *str,const char *str_end,
                      const char *wildstr,const char *wildend,
@@ -445,35 +445,35 @@ void my_fill_8bit(CHARSET_INFO *cs, char* to, size_t l, int fill);
 
 my_bool  my_like_range_simple(CHARSET_INFO *cs,
 			      const char *ptr, size_t ptr_length,
-			      bool escape, bool w_one, bool w_many,
+			      char escape, char w_one, char w_many,
 			      size_t res_length,
 			      char *min_str, char *max_str,
 			      size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_mb(CHARSET_INFO *cs,
 			  const char *ptr, size_t ptr_length,
-			  bool escape, bool w_one, bool w_many,
+			  char escape, char w_one, char w_many,
 			  size_t res_length,
 			  char *min_str, char *max_str,
 			  size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_ucs2(CHARSET_INFO *cs,
 			    const char *ptr, size_t ptr_length,
-			    bool escape, bool w_one, bool w_many,
+			    char escape, char w_one, char w_many,
 			    size_t res_length,
 			    char *min_str, char *max_str,
 			    size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_utf16(CHARSET_INFO *cs,
 			     const char *ptr, size_t ptr_length,
-			     bool escape, bool w_one, bool w_many,
+			     char escape, char w_one, char w_many,
 			     size_t res_length,
 			     char *min_str, char *max_str,
 			     size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_utf32(CHARSET_INFO *cs,
 			     const char *ptr, size_t ptr_length,
-			     bool escape, bool w_one, bool w_many,
+			     char escape, char w_one, char w_many,
 			     size_t res_length,
 			     char *min_str, char *max_str,
 			     size_t *min_length, size_t *max_length);

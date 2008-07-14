@@ -142,8 +142,6 @@ extern  char *strcend(const char *, char);
 extern	char *strfield(char *src,int fields,int chars,int blanks,
 			   int tabch);
 extern	char *strfill(char * s,size_t len,char fill);
-extern	size_t strinstr(const char *str,const char *search);
-extern  size_t r_strinstr(const char *str, size_t from, const char *search);
 extern	char *strkey(char *dst,char *head,char *tail,char *flags);
 extern	char *strmake(char *dst,const char *src,size_t length);
 #ifndef strmake_overlapp

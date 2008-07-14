@@ -2051,24 +2051,6 @@ int change_to_newfile(const char * filename, const char * old_ext,
 } /* change_to_newfile */
 
 
-	/* Locks a whole file */
-	/* Gives an error-message if file can't be locked */
-
-int lock_file(MI_CHECK *param, File file, my_off_t start, int lock_type,
-	      const char *filetype, const char *filename)
-{
-  if (my_lock(file,lock_type,start,F_TO_EOF,
-	      param->testflag & T_WAIT_FOREVER ? MYF(MY_SEEK_NOT_DONE) :
-	      MYF(MY_SEEK_NOT_DONE |  MY_DONT_WAIT)))
-  {
-    mi_check_print_error(param," %d when locking %s '%s'",my_errno,filetype,filename);
-    param->error_printed=2;		/* Don't give that data is crashed */
-    return 1;
-  }
-  return 0;
-} /* lock_file */
-
-
 	/* Copy a block between two files */
 
 int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
