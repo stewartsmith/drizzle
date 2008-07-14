@@ -1315,7 +1315,7 @@ public:
   }
   /* Estimates calculation */
   virtual double scan_time(void)
-  { return ulonglong2double(stats.data_file_length) / IO_SIZE + 2; }
+  { return uint64_t2double(stats.data_file_length) / IO_SIZE + 2; }
   virtual double read_time(uint index __attribute__((__unused__)),
                            uint ranges, ha_rows rows)
   { return rows2double(ranges+rows); }

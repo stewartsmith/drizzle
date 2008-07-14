@@ -550,7 +550,7 @@ err:
     timeout         timeout in seconds before giving up waiting
 
   NOTES
-    timeout is longlong whereas it should be uint32_t ; but this is
+    timeout is int64_t whereas it should be uint32_t ; but this is
     to catch if the user submitted a negative timeout.
 
   RETURN VALUES
@@ -564,8 +564,8 @@ err:
  */
 
 int32_t Relay_log_info::wait_for_pos(THD* thd, String* log_name,
-                                    longlong log_pos,
-                                    longlong timeout)
+                                    int64_t log_pos,
+                                    int64_t timeout)
 {
   int32_t event_count = 0;
   uint32_t init_abort_pos_wait;

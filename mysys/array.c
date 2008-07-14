@@ -40,7 +40,7 @@
     FALSE	Ok
 */
 
-my_bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
+bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
                             void *init_buffer, uint init_alloc, 
                             uint alloc_increment CALLER_INFO_PROTO)
 {
@@ -72,7 +72,7 @@ my_bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
   DBUG_RETURN(FALSE);
 } 
 
-my_bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
+bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
                            uint init_alloc, 
                            uint alloc_increment CALLER_INFO_PROTO)
 {
@@ -93,7 +93,7 @@ my_bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
     FALSE	Ok
 */
 
-my_bool insert_dynamic(DYNAMIC_ARRAY *array, uchar* element)
+bool insert_dynamic(DYNAMIC_ARRAY *array, uchar* element)
 {
   uchar* buffer;
   if (array->elements == array->max_element)
@@ -197,7 +197,7 @@ uchar *pop_dynamic(DYNAMIC_ARRAY *array)
     FALSE	Ok
 */
 
-my_bool set_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
+bool set_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
 {
   if (idx >= array->elements)
   {
@@ -229,7 +229,7 @@ my_bool set_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
     TRUE	Allocation of new memory failed
 */
 
-my_bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
+bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
 {
   if (max_elements >= array->max_element)
   {

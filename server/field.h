@@ -103,13 +103,13 @@ public:
   /* Store functions returns 1 on overflow and -1 on fatal error */
   virtual int  store(const char *to, uint length,CHARSET_INFO *cs)=0;
   virtual int  store(double nr)=0;
-  virtual int  store(longlong nr, bool unsigned_val)=0;
+  virtual int  store(int64_t nr, bool unsigned_val)=0;
   virtual int  store_decimal(const my_decimal *d)=0;
   virtual int store_time(MYSQL_TIME *ltime, timestamp_type t_type);
   int store(const char *to, uint length, CHARSET_INFO *cs,
             enum_check_fields check_level);
   virtual double val_real(void)=0;
-  virtual longlong val_int(void)=0;
+  virtual int64_t val_int(void)=0;
   virtual my_decimal *val_decimal(my_decimal *);
   inline String *val_str(String *str) { return val_str(str, str); }
   /*
@@ -292,12 +292,12 @@ public:
   virtual bool optimize_range(uint idx, uint part);
   /*
     This should be true for fields which, when compared with constant
-    items, can be casted to longlong. In this case we will at 'fix_fields'
-    stage cast the constant items to longlongs and at the execution stage
+    items, can be casted to int64_t. In this case we will at 'fix_fields'
+    stage cast the constant items to int64_ts and at the execution stage
     use field->val_int() for comparison.  Used to optimize clauses like
     'a_column BETWEEN date_const, date_const'.
   */
-  virtual bool can_be_compared_as_longlong() const { return false; }
+  virtual bool can_be_compared_as_int64_t() const { return false; }
   virtual void free() {}
   virtual Field *new_field(MEM_ROOT *root, struct st_table *new_table,
                            bool keep_type);
@@ -358,17 +358,17 @@ public:
   }
   virtual void set_key_image(const uchar *buff,uint length)
     { set_image(buff,length, &my_charset_bin); }
-  inline longlong val_int_offset(uint row_offset)
+  inline int64_t val_int_offset(uint row_offset)
     {
       ptr+=row_offset;
-      longlong tmp=val_int();
+      int64_t tmp=val_int();
       ptr-=row_offset;
       return tmp;
     }
-  inline longlong val_int(const uchar *new_ptr)
+  inline int64_t val_int(const uchar *new_ptr)
   {
     uchar *old_ptr= ptr;
-    longlong return_value;
+    int64_t return_value;
     ptr= (uchar*) new_ptr;
     return_value= val_int();
     ptr= old_ptr;
@@ -458,7 +458,7 @@ public:
                             const char *str, uint str_len,
                             timestamp_type ts_type, int cuted_increment);
   void set_datetime_warning(MYSQL_ERROR::enum_warning_level, uint code, 
-                            longlong nr, timestamp_type ts_type,
+                            int64_t nr, timestamp_type ts_type,
                             int cuted_increment);
   void set_datetime_warning(MYSQL_ERROR::enum_warning_level, const uint code, 
                             double nr, timestamp_type ts_type);
@@ -477,8 +477,8 @@ public:
   virtual uint32 max_display_length()= 0;
 
   virtual uint is_equal(Create_field *new_field);
-  /* convert decimal to longlong with overflow check */
-  longlong convert_decimal2longlong(const my_decimal *val, bool unsigned_flag,
+  /* convert decimal to int64_t with overflow check */
+  int64_t convert_decimal2int64_t(const my_decimal *val, bool unsigned_flag,
                                     int *err);
   /* The max. number of characters */
   inline uint32 char_length() const
@@ -561,8 +561,8 @@ public:
   int check_int(CHARSET_INFO *cs, const char *str, int length,
                 const char *int_end, int error);
   bool get_int(CHARSET_INFO *cs, const char *from, uint len, 
-               longlong *rnd, uint64_t unsigned_max, 
-               longlong signed_min, longlong signed_max);
+               int64_t *rnd, uint64_t unsigned_max, 
+               int64_t signed_min, int64_t signed_max);
 };
 
 
@@ -577,7 +577,7 @@ public:
   Item_result result_type () const { return STRING_RESULT; }
   uint decimals() const { return NOT_FIXED_DEC; }
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val)=0;
+  int  store(int64_t nr, bool unsigned_val)=0;
   int  store_decimal(const my_decimal *);
   int  store(const char *to,uint length,CHARSET_INFO *cs)=0;
   uint size_of() const { return sizeof(*this); }
@@ -668,11 +668,11 @@ public:
   void set_value_on_overflow(my_decimal *decimal_value, bool sign);
   int  store(const char *to, uint length, CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   int store_time(MYSQL_TIME *ltime, timestamp_type t_type);
   int  store_decimal(const my_decimal *);
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*, String *);
   int cmp(const uchar *, const uchar *);
@@ -707,10 +707,10 @@ public:
     { return unsigned_flag ? HA_KEYTYPE_BINARY : HA_KEYTYPE_INT8; }
   int store(const char *to,uint length,CHARSET_INFO *charset);
   int store(double nr);
-  int store(longlong nr, bool unsigned_val);
+  int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=0; return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
@@ -758,10 +758,10 @@ public:
     { return unsigned_flag ? HA_KEYTYPE_USHORT_INT : HA_KEYTYPE_SHORT_INT;}
   int store(const char *to,uint length,CHARSET_INFO *charset);
   int store(double nr);
-  int store(longlong nr, bool unsigned_val);
+  int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=0; return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
@@ -834,10 +834,10 @@ public:
     { return unsigned_flag ? HA_KEYTYPE_ULONG_INT : HA_KEYTYPE_LONG_INT; }
   int store(const char *to,uint length,CHARSET_INFO *charset);
   int store(double nr);
-  int store(longlong nr, bool unsigned_val);
+  int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   bool send_binary(Protocol *protocol);
   String *val_str(String*,String *);
   int cmp(const uchar *,const uchar *);
@@ -889,9 +889,9 @@ public:
 };
 
 
-class Field_longlong :public Field_num {
+class Field_int64_t :public Field_num {
 public:
-  Field_longlong(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_int64_t(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
 	      uchar null_bit_arg,
 	      enum utype unireg_check_arg, const char *field_name_arg,
 	      bool zero_arg, bool unsigned_arg)
@@ -899,7 +899,7 @@ public:
 	       unireg_check_arg, field_name_arg,
 	       0, zero_arg,unsigned_arg)
     {}
-  Field_longlong(uint32 len_arg,bool maybe_null_arg,
+  Field_int64_t(uint32 len_arg,bool maybe_null_arg,
 		 const char *field_name_arg,
 		  bool unsigned_arg)
     :Field_num((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0,0,
@@ -911,21 +911,21 @@ public:
     { return unsigned_flag ? HA_KEYTYPE_ULONGLONG : HA_KEYTYPE_LONGLONG; }
   int store(const char *to,uint length,CHARSET_INFO *charset);
   int store(double nr);
-  int store(longlong nr, bool unsigned_val);
+  int store(int64_t nr, bool unsigned_val);
   int reset(void)
   {
     ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0;
     return 0;
   }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 8; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return true; }
+  bool can_be_compared_as_int64_t() const { return true; }
   uint32 max_display_length() { return 20; }
   virtual uchar *pack(uchar* to, const uchar *from,
                       uint max_length __attribute__((__unused__)),
@@ -937,14 +937,14 @@ public:
       val = sint8korr(from);
     else
 #endif
-      longlongget(val, from);
+      int64_tget(val, from);
 
 #ifdef WORDS_BIGENDIAN
     if (low_byte_first)
       int8store(to, val);
     else
 #endif
-      longlongstore(to, val);
+      int64_tstore(to, val);
     return to + sizeof(val);
   }
 
@@ -958,14 +958,14 @@ public:
       val = sint8korr(from);
     else
 #endif
-      longlongget(val, from);
+      int64_tget(val, from);
 
 #ifdef WORDS_BIGENDIAN
     if (table->s->db_low_byte_first)
       int8store(to, val);
     else
 #endif
-      longlongstore(to, val);
+      int64_tstore(to, val);
     return from + sizeof(val);
   }
 };
@@ -989,10 +989,10 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_FLOAT; }
   int store(const char *to,uint length,CHARSET_INFO *charset);
   int store(double nr);
-  int store(longlong nr, bool unsigned_val);
+  int store(int64_t nr, bool unsigned_val);
   int reset(void) { bzero(ptr,sizeof(float)); return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
@@ -1029,10 +1029,10 @@ public:
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_DOUBLE; }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   int reset(void) { bzero(ptr,sizeof(double)); return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
@@ -1063,7 +1063,7 @@ public:
   { null[0]=1; return 0; }
   int store(double nr __attribute__((__unused__)))
   { null[0]=1; return 0; }
-  int store(longlong nr __attribute__((__unused__)),
+  int store(int64_t nr __attribute__((__unused__)),
             bool unsigned_val __attribute__((__unused__)))
   { null[0]=1; return 0; }
   int store_decimal(const my_decimal *d __attribute__((__unused__)))
@@ -1072,7 +1072,7 @@ public:
   { return 0; }
   double val_real(void)
   { return 0.0;}
-  longlong val_int(void)
+  int64_t val_int(void)
   { return 0;}
   my_decimal *val_decimal(my_decimal *) { return 0; }
   String *val_str(String *value __attribute__((__unused__)),
@@ -1102,17 +1102,17 @@ public:
   enum Item_result cmp_type () const { return INT_RESULT; }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 4; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return true; }
+  bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 0; }
   void set_time();
   virtual void set_default()
@@ -1164,13 +1164,13 @@ public:
   enum_field_types type() const { return MYSQL_TYPE_YEAR;}
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return true; }
+  bool can_be_compared_as_int64_t() const { return true; }
 };
 
 
@@ -1192,18 +1192,18 @@ public:
   enum Item_result cmp_type () const { return INT_RESULT; }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   int store_time(MYSQL_TIME *ltime, timestamp_type type);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 3; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return true; }
+  bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);
@@ -1228,10 +1228,10 @@ public:
   int store_time(MYSQL_TIME *ltime, timestamp_type type);
   int store(const char *to,uint length,CHARSET_INFO *charset);
   int store(double nr);
-  int store(longlong nr, bool unsigned_val);
+  int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool get_date(MYSQL_TIME *ltime, uint fuzzydate);
   bool send_binary(Protocol *protocol);
@@ -1240,7 +1240,7 @@ public:
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 3; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return true; }
+  bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }
 };
 
@@ -1263,7 +1263,7 @@ public:
   uint decimals() const { return DATETIME_DEC; }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   int store_time(MYSQL_TIME *ltime, timestamp_type type);
   int reset(void)
   {
@@ -1271,14 +1271,14 @@ public:
     return 0;
   }
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
   uint32 pack_length() const { return 8; }
   void sql_type(String &str) const;
-  bool can_be_compared_as_longlong() const { return true; }
+  bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);
@@ -1315,10 +1315,10 @@ public:
     return 0;
   }
   int store(const char *to,uint length,CHARSET_INFO *charset);
-  int store(longlong nr, bool unsigned_val);
+  int store(int64_t nr, bool unsigned_val);
   int store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
   int cmp(const uchar *,const uchar *);
@@ -1390,10 +1390,10 @@ public:
                                     length_bytes : 0);
   }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   int  store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
   int cmp_max(const uchar *, const uchar *, uint max_length);
@@ -1478,9 +1478,9 @@ public:
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
   int cmp_max(const uchar *, const uchar *, uint max_length);
@@ -1636,9 +1636,9 @@ public:
   enum ha_base_keytype key_type() const;
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
-  int  store(longlong nr, bool unsigned_val);
+  int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
-  longlong val_int(void);
+  int64_t val_int(void);
   String *val_str(String*,String *);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
@@ -1678,8 +1678,8 @@ public:
       flags=(flags & ~ENUM_FLAG) | SET_FLAG;
     }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
-  int  store(double nr) { return Field_set::store((longlong) nr, false); }
-  int  store(longlong nr, bool unsigned_val);
+  int  store(double nr) { return Field_set::store((int64_t) nr, false); }
+  int  store(int64_t nr, bool unsigned_val);
 
   virtual bool zero_pack() const { return 1; }
   String *val_str(String*,String *);

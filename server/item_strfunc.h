@@ -30,7 +30,7 @@ public:
   Item_str_func(Item *a,Item *b,Item *c,Item *d) :Item_func(a,b,c,d) {decimals=NOT_FIXED_DEC; }
   Item_str_func(Item *a,Item *b,Item *c,Item *d, Item* e) :Item_func(a,b,c,d,e) {decimals=NOT_FIXED_DEC; }
   Item_str_func(List<Item> &list) :Item_func(list) {decimals=NOT_FIXED_DEC; }
-  longlong val_int();
+  int64_t val_int();
   double val_real();
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return STRING_RESULT; }
@@ -413,7 +413,7 @@ class Item_func_elt :public Item_str_func
 public:
   Item_func_elt(List<Item> &list) :Item_str_func(list) {}
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
   void fix_length_and_dec();
   const char *func_name() const { return "elt"; }
@@ -739,7 +739,7 @@ public:
   Item_func_crc32(Item *a) :Item_int_func(a) { unsigned_flag= 1; }
   const char *func_name() const { return "crc32"; }
   void fix_length_and_dec() { max_length=10; }
-  longlong val_int();
+  int64_t val_int();
 };
 
 class Item_func_uncompressed_length : public Item_int_func
@@ -749,7 +749,7 @@ public:
   Item_func_uncompressed_length(Item *a):Item_int_func(a){}
   const char *func_name() const{return "uncompressed_length";}
   void fix_length_and_dec() { max_length=10; }
-  longlong val_int();
+  int64_t val_int();
 };
 
 #ifdef HAVE_COMPRESS

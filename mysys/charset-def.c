@@ -142,7 +142,7 @@ extern CHARSET_INFO my_charset_utf8mb4_sinhala_uca_ci;
 #endif /* HAVE_UCA_COLLATIONS */
 
 
-my_bool init_compiled_charsets(myf flags __attribute__((unused)))
+bool init_compiled_charsets(myf flags __attribute__((unused)))
 {
   CHARSET_INFO *cs;
 

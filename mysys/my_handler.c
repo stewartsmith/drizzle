@@ -25,19 +25,19 @@
 #include "my_handler_errors.h"
 
 int ha_compare_text(CHARSET_INFO *charset_info, uchar *a, uint a_length,
-		    uchar *b, uint b_length, my_bool part_key,
-		    my_bool skip_end_space)
+		    uchar *b, uint b_length, bool part_key,
+		    bool skip_end_space)
 {
   if (!part_key)
     return charset_info->coll->strnncollsp(charset_info, a, a_length,
-                                           b, b_length, (my_bool)!skip_end_space);
+                                           b, b_length, (bool)!skip_end_space);
   return charset_info->coll->strnncoll(charset_info, a, a_length,
                                        b, b_length, part_key);
 }
 
 
 static int compare_bin(uchar *a, uint a_length, uchar *b, uint b_length,
-                       my_bool part_key, my_bool skip_end_space)
+                       bool part_key, bool skip_end_space)
 {
   uint length= min(a_length,b_length);
   uchar *end= a+ length;
@@ -181,9 +181,9 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 
         if (piks &&
             (flag=ha_compare_text(keyseg->charset,a,a_length,b,b_length,
-				  (my_bool) ((nextflag & SEARCH_PREFIX) &&
+				  (bool) ((nextflag & SEARCH_PREFIX) &&
 					     next_key_length <= 0),
-				  (my_bool)!(nextflag & SEARCH_PREFIX))))
+				  (bool)!(nextflag & SEARCH_PREFIX))))
           return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
         a+=a_length;
         b+=b_length;
@@ -194,9 +194,9 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 	uint length=(uint) (end-a), a_length=length, b_length=length;
         if (piks &&
             (flag= ha_compare_text(keyseg->charset, a, a_length, b, b_length,
-				   (my_bool) ((nextflag & SEARCH_PREFIX) &&
+				   (bool) ((nextflag & SEARCH_PREFIX) &&
 					      next_key_length <= 0),
-				   (my_bool)!(nextflag & SEARCH_PREFIX))))
+				   (bool)!(nextflag & SEARCH_PREFIX))))
           return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
         a=end;
         b+=length;
@@ -213,7 +213,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 
         if (piks &&
 	    (flag=compare_bin(a,a_length,b,b_length,
-                              (my_bool) ((nextflag & SEARCH_PREFIX) &&
+                              (bool) ((nextflag & SEARCH_PREFIX) &&
                                          next_key_length <= 0),1)))
           return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
         a+=a_length;
@@ -225,7 +225,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
         uint length=keyseg->length;
         if (piks &&
 	    (flag=compare_bin(a,length,b,length,
-                              (my_bool) ((nextflag & SEARCH_PREFIX) &&
+                              (bool) ((nextflag & SEARCH_PREFIX) &&
                                          next_key_length <= 0),0)))
           return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
         a+=length;
@@ -242,9 +242,9 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 
         if (piks &&
 	    (flag= ha_compare_text(keyseg->charset,a,a_length,b,b_length,
-                                   (my_bool) ((nextflag & SEARCH_PREFIX) &&
+                                   (bool) ((nextflag & SEARCH_PREFIX) &&
                                               next_key_length <= 0),
-				   (my_bool) ((nextflag & (SEARCH_FIND |
+				   (bool) ((nextflag & (SEARCH_FIND |
 							   SEARCH_UPDATE)) ==
 					      SEARCH_FIND &&
                                               ! (keyseg->flag &
@@ -265,7 +265,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 
         if (piks &&
 	    (flag=compare_bin(a,a_length,b,b_length,
-                              (my_bool) ((nextflag & SEARCH_PREFIX) &&
+                              (bool) ((nextflag & SEARCH_PREFIX) &&
                                          next_key_length <= 0), 0)))
           return ((keyseg->flag & HA_REVERSE_SORT) ? -flag : flag);
         a+=a_length;
@@ -426,7 +426,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
     }
     case HA_KEYTYPE_LONGLONG:
     {
-      longlong ll_a,ll_b;
+      int64_t ll_a,ll_b;
       ll_a= mi_sint8korr(a);
       ll_b= mi_sint8korr(b);
       if (piks && (flag = CMP_NUM(ll_a,ll_b)))
@@ -437,7 +437,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
     }
     case HA_KEYTYPE_ULONGLONG:
     {
-      ulonglong ll_a,ll_b;
+      uint64_t ll_a,ll_b;
       ll_a= mi_uint8korr(a);
       ll_b= mi_uint8korr(b);
       if (piks && (flag = CMP_NUM(ll_a,ll_b)))

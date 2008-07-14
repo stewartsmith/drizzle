@@ -195,7 +195,7 @@ int mysql_update(THD *thd,
   READ_RECORD	info;
   SELECT_LEX    *select_lex= &thd->lex->select_lex;
   bool          need_reopen;
-  ulonglong     id;
+  uint64_t     id;
   List<Item> all_fields;
   THD::killed_state killed_status= THD::NOT_KILLED;
   
@@ -991,7 +991,7 @@ bool mysql_multi_update(THD *thd,
                         List<Item> *fields,
                         List<Item> *values,
                         COND *conds,
-                        ulonglong options,
+                        uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
                         SELECT_LEX_UNIT *unit, SELECT_LEX *select_lex)
 {
@@ -1692,7 +1692,7 @@ err:
 bool multi_update::send_eof()
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
-  ulonglong id;
+  uint64_t id;
   THD::killed_state killed_status= THD::NOT_KILLED;
   
   thd_proc_info(thd, "updating reference tables");

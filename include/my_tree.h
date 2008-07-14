@@ -55,14 +55,14 @@ typedef struct st_tree {
   qsort_cmp2 compare;
   void *custom_arg;
   MEM_ROOT mem_root;
-  my_bool with_delete;
+  bool with_delete;
   tree_element_free free;
   uint flag;
 } TREE;
 
 	/* Functions on whole tree */
 void init_tree(TREE *tree, ulong default_alloc_size, ulong memory_limit,
-               int size, qsort_cmp2 compare, my_bool with_delete,
+               int size, qsort_cmp2 compare, bool with_delete,
 	       tree_element_free free_element, void *custom_arg);
 void delete_tree(TREE*);
 void reset_tree(TREE*);

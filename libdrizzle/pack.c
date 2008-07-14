@@ -44,35 +44,35 @@ ulong STDCALL net_field_length(uchar **packet)
   return (ulong) uint4korr(pos+1);
 }
 
-/* The same as above but returns longlong */
-my_ulonglong net_field_length_ll(uchar **packet)
+/* The same as above but returns int64_t */
+my_uint64_t net_field_length_ll(uchar **packet)
 {
   register uchar *pos= *packet;
   if (*pos < 251)
   {
     (*packet)++;
-    return (my_ulonglong) *pos;
+    return (my_uint64_t) *pos;
   }
   if (*pos == 251)
   {
     (*packet)++;
-    return (my_ulonglong) NULL_LENGTH;
+    return (my_uint64_t) NULL_LENGTH;
   }
   if (*pos == 252)
   {
     (*packet)+=3;
-    return (my_ulonglong) uint2korr(pos+1);
+    return (my_uint64_t) uint2korr(pos+1);
   }
   if (*pos == 253)
   {
     (*packet)+=4;
-    return (my_ulonglong) uint3korr(pos+1);
+    return (my_uint64_t) uint3korr(pos+1);
   }
   (*packet)+=9;					/* Must be 254 when here */
 #ifdef NO_CLIENT_LONGLONG
-  return (my_ulonglong) uint4korr(pos+1);
+  return (my_uint64_t) uint4korr(pos+1);
 #else
-  return (my_ulonglong) uint8korr(pos+1);
+  return (my_uint64_t) uint8korr(pos+1);
 #endif
 }
 
@@ -93,21 +93,21 @@ my_ulonglong net_field_length_ll(uchar **packet)
    Position in 'pkg' after the packed length
 */
 
-uchar *net_store_length(uchar *packet, ulonglong length)
+uchar *net_store_length(uchar *packet, uint64_t length)
 {
-  if (length < (ulonglong) 251LL)
+  if (length < (uint64_t) 251LL)
   {
     *packet=(uchar) length;
     return packet+1;
   }
   /* 251 is reserved for NULL */
-  if (length < (ulonglong) 65536LL)
+  if (length < (uint64_t) 65536LL)
   {
     *packet++=252;
     int2store(packet,(uint) length);
     return packet+2;
   }
-  if (length < (ulonglong) 16777216LL)
+  if (length < (uint64_t) 16777216LL)
   {
     *packet++=253;
     int3store(packet,(ulong) length);

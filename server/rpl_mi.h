@@ -84,7 +84,7 @@ class Master_info : public Slave_reporting_capability
   uint port;
   uint connect_retry;
   float heartbeat_period;         // interface with CHANGE MASTER or master.info
-  ulonglong received_heartbeats;  // counter of received heartbeat events
+  uint64_t received_heartbeats;  // counter of received heartbeat events
   int events_till_disconnect;
   bool inited;
   volatile bool abort_slave;

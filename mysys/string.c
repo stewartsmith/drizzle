@@ -22,7 +22,7 @@
 #include "mysys_priv.h"
 #include <m_string.h>
 
-my_bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
+bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
 			    size_t init_alloc, size_t alloc_increment)
 {
   uint length;
@@ -47,7 +47,7 @@ my_bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
 }
 
 
-my_bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
+bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
 {
   uint length=0;
   DBUG_ENTER("dynstr_set");
@@ -72,7 +72,7 @@ my_bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
 }
 
 
-my_bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size)
+bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size)
 {
   DBUG_ENTER("dynstr_realloc");
 
@@ -88,13 +88,13 @@ my_bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size)
 }
 
 
-my_bool dynstr_append(DYNAMIC_STRING *str, const char *append)
+bool dynstr_append(DYNAMIC_STRING *str, const char *append)
 {
   return dynstr_append_mem(str,append,(uint) strlen(append));
 }
 
 
-my_bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
+bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
 			  size_t length)
 {
   char *new_ptr;
@@ -115,7 +115,7 @@ my_bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
 }
 
 
-my_bool dynstr_trunc(DYNAMIC_STRING *str, size_t n)
+bool dynstr_trunc(DYNAMIC_STRING *str, size_t n)
 {
   str->length-=n;
   str->str[str->length]= '\0';
@@ -138,11 +138,11 @@ my_bool dynstr_trunc(DYNAMIC_STRING *str, size_t n)
   @return True = Success.
 */
 
-my_bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append, ...)
+bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append, ...)
 {
   const char *quote_str= "\'";
   const uint  quote_len= 1;
-  my_bool ret= TRUE;
+  bool ret= TRUE;
   va_list dirty_text;
 
   ret&= dynstr_append_mem(str, quote_str, quote_len); /* Leading quote */

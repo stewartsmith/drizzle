@@ -49,7 +49,7 @@ static MY_TMPDIR myisamchk_tmpdir;
 static const char *type_names[]=
 { "impossible","char","binary", "short", "long", "float",
   "double","number","unsigned short",
-  "unsigned long","longlong","ulonglong","int24",
+  "unsigned long","int64_t","uint64_t","int24",
   "uint24","int8","varchar", "varbin","?",
   "?"};
 
@@ -472,11 +472,6 @@ get_one_option(int optid,
 	       char *argument)
 {
   switch (optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case 'a':
     if (argument == disabled_my_option)
       check_param.testflag&= ~T_STATISTICS;
@@ -568,7 +563,7 @@ get_one_option(int optid,
       check_param.testflag|= T_FAST;
     break;
   case 'k':
-    check_param.keys_in_use= (ulonglong) strtoll(argument, NULL, 10);
+    check_param.keys_in_use= (uint64_t) strtoll(argument, NULL, 10);
     break;
   case 'm':
     if (argument == disabled_my_option)
@@ -969,7 +964,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
     {
       if (param->testflag & T_REP_ANY)
       {
-	ulonglong tmp=share->state.key_map;
+	uint64_t tmp=share->state.key_map;
 	mi_copy_keys_active(share->state.key_map, share->base.keys,
                             param->keys_in_use);
 	if (tmp != share->state.key_map)
@@ -1279,7 +1274,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   printf("Recordlength:        %13d\n",(int) share->base.pack_reclength);
   if (! mi_is_all_keys_active(share->state.key_map, share->base.keys))
   {
-    longlong2str(share->state.key_map,buff,2);
+    int64_t2str(share->state.key_map,buff,2);
     printf("Using only keys '%s' of %d possibly keys\n",
 	   buff, share->base.keys);
   }

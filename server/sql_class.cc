@@ -375,7 +375,7 @@ Diagnostics_area::reset_diagnostics_area()
 
 void
 Diagnostics_area::set_ok_status(THD *thd, ha_rows affected_rows_arg,
-                                ulonglong last_insert_id_arg,
+                                uint64_t last_insert_id_arg,
                                 const char *message_arg)
 {
   assert(! is_set());
@@ -2008,7 +2008,7 @@ bool select_max_min_finder_subselect::cmp_real()
 bool select_max_min_finder_subselect::cmp_int()
 {
   Item *maxmin= ((Item_singlerow_subselect *)item)->element_index(0);
-  longlong val1= cache->val_int(), val2= maxmin->val_int();
+  int64_t val1= cache->val_int(), val2= maxmin->val_int();
   if (fmax)
     return (cache->null_value && !maxmin->null_value) ||
       (!cache->null_value && !maxmin->null_value &&
@@ -2430,7 +2430,7 @@ extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, my_bool);
 extern "C" void xid_free_hash(void *);
 
 uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
-                                  my_bool not_used __attribute__((unused)))
+                        bool not_used __attribute__((unused)))
 {
   *length=((XID_STATE*)ptr)->xid.key_length();
   return ((XID_STATE*)ptr)->xid.key();
@@ -2953,8 +2953,8 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
   return(0);
 }
 
-bool Discrete_intervals_list::append(ulonglong start, ulonglong val,
-                                 ulonglong incr)
+bool Discrete_intervals_list::append(uint64_t start, uint64_t val,
+                                 uint64_t incr)
 {
   /* first, see if this can be merged with previous */
   if ((head == NULL) || tail->merge_if_contiguous(start, val, incr))

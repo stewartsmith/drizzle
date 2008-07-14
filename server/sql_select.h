@@ -464,7 +464,7 @@ public:
   Item	    *having;
   Item      *tmp_having; ///< To store having when processed temporary table
   Item      *having_history; ///< Store having for explain
-  ulonglong  select_options;
+  uint64_t  select_options;
   select_result *result;
   TMP_TABLE_PARAM tmp_table_param;
   MYSQL_LOCK *lock;
@@ -555,14 +555,14 @@ public:
   JOIN_TAB *join_tab_reexec;                    // make_simple_join()
   /* end of allocation caching storage */
 
-  JOIN(THD *thd_arg, List<Item> &fields_arg, ulonglong select_options_arg,
+  JOIN(THD *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
        select_result *result_arg)
     :fields_list(fields_arg), sj_subselects(thd_arg->mem_root, 4)
   {
     init(thd_arg, fields_arg, select_options_arg, result_arg);
   }
 
-  void init(THD *thd_arg, List<Item> &fields_arg, ulonglong select_options_arg,
+  void init(THD *thd_arg, List<Item> &fields_arg, uint64_t select_options_arg,
        select_result *result_arg)
   {
     join_tab= join_tab_save= 0;
@@ -689,7 +689,7 @@ void TEST_join(JOIN *join);
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
 TABLE *create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 			ORDER *group, bool distinct, bool save_sum_fields,
-			ulonglong select_options, ha_rows rows_limit,
+			uint64_t select_options, ha_rows rows_limit,
 			char* alias);
 void free_tmp_table(THD *thd, TABLE *entry);
 void count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param, 

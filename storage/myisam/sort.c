@@ -515,7 +515,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         update_key_parts(sinfo->keyinfo, rec_per_key_part, sinfo->unique,
                          param->stats_method == MI_STATS_METHOD_IGNORE_NULLS?
                          sinfo->notnull: NULL,
-                         (ulonglong) info->state->records);
+                         (uint64_t) info->state->records);
     }
     my_free((uchar*) sinfo->sort_keys,MYF(0));
     my_free(mi_get_rec_buff_ptr(info, sinfo->rec_buff),

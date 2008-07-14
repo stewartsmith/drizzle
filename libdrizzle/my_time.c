@@ -19,7 +19,7 @@
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 #include <my_pthread.h>
 
-ulonglong log_10_int[20]=
+uint64_t log_10_int[20]=
 {
   1, 10, 100, 1000, 10000UL, 100000UL, 1000000UL, 10000000UL,
   100000000ULL, 1000000000ULL, 10000000000ULL, 100000000000ULL,
@@ -474,7 +474,7 @@ my_bool str_to_time(const char *str, uint length, MYSQL_TIME *l_time,
                     int *warning)
 {
   ulong date[5];
-  ulonglong value;
+  uint64_t value;
   const char *end=str+length, *end_of_days;
   my_bool found_days,found_hours;
   uint state;
@@ -671,7 +671,7 @@ fractional:
 
 int check_time_range(struct st_mysql_time *my_time, int *warning) 
 {
-  longlong hour;
+  int64_t hour;
 
   if (my_time->minute >= 60 || my_time->second >= 60)
     return 1;
@@ -1094,7 +1094,7 @@ int my_TIME_to_str(const MYSQL_TIME *l_time, char *to)
     Datetime value in YYYYMMDDHHMMSS format.
 */
 
-longlong number_to_datetime(longlong nr, MYSQL_TIME *time_res,
+int64_t number_to_datetime(int64_t nr, MYSQL_TIME *time_res,
                             uint flags, int *was_cut)
 {
   long part1,part2;
@@ -1146,7 +1146,7 @@ longlong number_to_datetime(longlong nr, MYSQL_TIME *time_res,
 
  ok:
   part1=(long) (nr / 1000000LL);
-  part2=(long) (nr - (longlong) part1 * 1000000LL);
+  part2=(long) (nr - (int64_t) part1 * 1000000LL);
   time_res->year=  (int) (part1/10000L);  part1%=10000L;
   time_res->month= (int) part1 / 100;
   time_res->day=   (int) part1 % 100;
@@ -1172,12 +1172,12 @@ longlong number_to_datetime(longlong nr, MYSQL_TIME *time_res,
 
 /* Convert time value to integer in YYYYMMDDHHMMSS format */
 
-ulonglong TIME_to_ulonglong_datetime(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t_datetime(const MYSQL_TIME *my_time)
 {
-  return ((ulonglong) (my_time->year * 10000UL +
+  return ((uint64_t) (my_time->year * 10000UL +
                        my_time->month * 100UL +
                        my_time->day) * 1000000ULL +
-          (ulonglong) (my_time->hour * 10000UL +
+          (uint64_t) (my_time->hour * 10000UL +
                        my_time->minute * 100UL +
                        my_time->second));
 }
@@ -1185,9 +1185,9 @@ ulonglong TIME_to_ulonglong_datetime(const MYSQL_TIME *my_time)
 
 /* Convert MYSQL_TIME value to integer in YYYYMMDD format */
 
-ulonglong TIME_to_ulonglong_date(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t_date(const MYSQL_TIME *my_time)
 {
-  return (ulonglong) (my_time->year * 10000UL + my_time->month * 100UL +
+  return (uint64_t) (my_time->year * 10000UL + my_time->month * 100UL +
                       my_time->day);
 }
 
@@ -1198,9 +1198,9 @@ ulonglong TIME_to_ulonglong_date(const MYSQL_TIME *my_time)
   it's assumed that days have been converted to hours already.
 */
 
-ulonglong TIME_to_ulonglong_time(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t_time(const MYSQL_TIME *my_time)
 {
-  return (ulonglong) (my_time->hour * 10000UL +
+  return (uint64_t) (my_time->hour * 10000UL +
                       my_time->minute * 100UL +
                       my_time->second);
 }
@@ -1212,7 +1212,7 @@ ulonglong TIME_to_ulonglong_time(const MYSQL_TIME *my_time)
   YYYYMMDD (DATE)  or HHMMSS (TIME).
 
   SYNOPSIS
-    TIME_to_ulonglong()
+    TIME_to_uint64_t()
 
   DESCRIPTION
     The function is used when we need to convert value of time item
@@ -1226,15 +1226,15 @@ ulonglong TIME_to_ulonglong_time(const MYSQL_TIME *my_time)
     valid date either.
 */
 
-ulonglong TIME_to_ulonglong(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t(const MYSQL_TIME *my_time)
 {
   switch (my_time->time_type) {
   case MYSQL_TIMESTAMP_DATETIME:
-    return TIME_to_ulonglong_datetime(my_time);
+    return TIME_to_uint64_t_datetime(my_time);
   case MYSQL_TIMESTAMP_DATE:
-    return TIME_to_ulonglong_date(my_time);
+    return TIME_to_uint64_t_date(my_time);
   case MYSQL_TIMESTAMP_TIME:
-    return TIME_to_ulonglong_time(my_time);
+    return TIME_to_uint64_t_time(my_time);
   case MYSQL_TIMESTAMP_NONE:
   case MYSQL_TIMESTAMP_ERROR:
     return 0ULL;

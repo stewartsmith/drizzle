@@ -45,7 +45,7 @@ enum sha_result_codes
 
 typedef struct SHA1_CONTEXT
 {
-  ulonglong  Length;		/* Message length in bits      */
+  uint64_t  Length;		/* Message length in bits      */
   uint32 Intermediate_Hash[SHA1_HASH_SIZE/4]; /* Message Digest  */
   int Computed;			/* Is the digest computed?	   */
   int Corrupted;		/* Is the message digest corrupted? */

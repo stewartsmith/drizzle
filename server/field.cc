@@ -878,7 +878,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
     cs            Character set
     from          String to convert
     len           Length of the string
-    rnd           OUT longlong value
+    rnd           OUT int64_t value
     unsigned_max  max unsigned value
     signed_min    min signed value
     signed_max    max signed value
@@ -894,19 +894,19 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
 */
 
 bool Field_num::get_int(CHARSET_INFO *cs, const char *from, uint len,
-                        longlong *rnd, uint64_t unsigned_max, 
-                        longlong signed_min, longlong signed_max)
+                        int64_t *rnd, uint64_t unsigned_max, 
+                        int64_t signed_min, int64_t signed_max)
 {
   char *end;
   int error;
   
-  *rnd= (longlong) cs->cset->strntoull10rnd(cs, from, len,
+  *rnd= (int64_t) cs->cset->strntoull10rnd(cs, from, len,
                                             unsigned_flag, &end,
                                             &error);
   if (unsigned_flag)
   {
 
-    if ((((uint64_t) *rnd > unsigned_max) && (*rnd= (longlong) unsigned_max)) ||
+    if ((((uint64_t) *rnd > unsigned_max) && (*rnd= (int64_t) unsigned_max)) ||
         error == MY_ERRNO_ERANGE)
     {
       goto out_of_range;
@@ -1028,11 +1028,11 @@ String *Field::val_int_as_str(String *val_buffer, my_bool unsigned_val)
 {
   CHARSET_INFO *cs= &my_charset_bin;
   uint length;
-  longlong value= val_int();
+  int64_t value= val_int();
 
   if (val_buffer->alloc(MY_INT64_NUM_DECIMAL_DIGITS))
     return 0;
-  length= (uint) (*cs->cset->longlong10_to_str)(cs, (char*) val_buffer->ptr(),
+  length= (uint) (*cs->cset->int64_t10_to_str)(cs, (char*) val_buffer->ptr(),
                                                 MY_INT64_NUM_DECIMAL_DIGITS,
                                                 unsigned_val ? 10 : -10,
                                                 value);
@@ -1291,7 +1291,7 @@ void Field::make_field(Send_field *field)
 
 
 /**
-  Conversion from decimal to longlong with checking overflow and
+  Conversion from decimal to int64_t with checking overflow and
   setting correct value (min/max) in case of overflow.
 
   @param val             value which have to be converted
@@ -1301,10 +1301,10 @@ void Field::make_field(Send_field *field)
   @return
     value converted from val
 */
-longlong Field::convert_decimal2longlong(const my_decimal *val,
+int64_t Field::convert_decimal2int64_t(const my_decimal *val,
                                          bool unsigned_flag, int *err)
 {
-  longlong i;
+  int64_t i;
   if (unsigned_flag)
   {
     if (val->sign())
@@ -1317,7 +1317,7 @@ longlong Field::convert_decimal2longlong(const my_decimal *val,
                                            ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
                                            val, true, &i)))
     {
-      i= ~(longlong) 0;
+      i= ~(int64_t) 0;
       *err= 1;
     }
   }
@@ -1349,7 +1349,7 @@ longlong Field::convert_decimal2longlong(const my_decimal *val,
 int Field_num::store_decimal(const my_decimal *val)
 {
   int err= 0;
-  longlong i= convert_decimal2longlong(val, unsigned_flag, &err);
+  int64_t i= convert_decimal2int64_t(val, unsigned_flag, &err);
   return test(err | store(i, unsigned_flag));
 }
 
@@ -1361,7 +1361,7 @@ int Field_num::store_decimal(const my_decimal *val)
 
   @note
     This method is used by all integer fields, real/decimal redefine it.
-    All longlong values fit in our decimal buffer which cal store 8*9=72
+    All int64_t values fit in our decimal buffer which cal store 8*9=72
     digits of integer number
 
   @return
@@ -1371,7 +1371,7 @@ int Field_num::store_decimal(const my_decimal *val)
 my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 {
   assert(result_type() == INT_RESULT);
-  longlong nr= val_int();
+  int64_t nr= val_int();
   int2my_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
   return decimal_value;
 }
@@ -1428,7 +1428,7 @@ int Field_str::store_decimal(const my_decimal *d)
 
 my_decimal *Field_str::val_decimal(my_decimal *decimal_value)
 {
-  longlong nr= val_int();
+  int64_t nr= val_int();
   int2my_decimal(E_DEC_FATAL_ERROR, nr, 0, decimal_value);
   return decimal_value;
 }
@@ -1757,7 +1757,7 @@ int Field_new_decimal::store(double nr)
 }
 
 
-int Field_new_decimal::store(longlong nr, bool unsigned_val)
+int Field_new_decimal::store(int64_t nr, bool unsigned_val)
 {
   my_decimal decimal_value;
   int err;
@@ -1801,9 +1801,9 @@ double Field_new_decimal::val_real(void)
 }
 
 
-longlong Field_new_decimal::val_int(void)
+int64_t Field_new_decimal::val_int(void)
 {
-  longlong i;
+  int64_t i;
   my_decimal decimal_value;
   my_decimal2int(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
                  unsigned_flag, &i);
@@ -1994,7 +1994,7 @@ Field_new_decimal::unpack(uchar* to,
 int Field_tiny::store(const char *from,uint len,CHARSET_INFO *cs)
 {
   int error;
-  longlong rnd;
+  int64_t rnd;
   
   error= get_int(cs, from, len, &rnd, 255, -128, 127);
   ptr[0]= unsigned_flag ? (char) (uint64_t) rnd : (char) rnd;
@@ -2044,7 +2044,7 @@ int Field_tiny::store(double nr)
 }
 
 
-int Field_tiny::store(longlong nr, bool unsigned_val)
+int Field_tiny::store(int64_t nr, bool unsigned_val)
 {
   int error= 0;
 
@@ -2096,11 +2096,11 @@ double Field_tiny::val_real(void)
 }
 
 
-longlong Field_tiny::val_int(void)
+int64_t Field_tiny::val_int(void)
 {
   int tmp= unsigned_flag ? (int) ptr[0] :
     (int) ((signed char*) ptr)[0];
-  return (longlong) tmp;
+  return (int64_t) tmp;
 }
 
 
@@ -2128,7 +2128,7 @@ String *Field_tiny::val_str(String *val_buffer,
 
 bool Field_tiny::send_binary(Protocol *protocol)
 {
-  return protocol->store_tiny((longlong) (int8) ptr[0]);
+  return protocol->store_tiny((int64_t) (int8) ptr[0]);
 }
 
 int Field_tiny::cmp(const uchar *a_ptr, const uchar *b_ptr)
@@ -2164,7 +2164,7 @@ int Field_short::store(const char *from,uint len,CHARSET_INFO *cs)
 {
   int store_tmp;
   int error;
-  longlong rnd;
+  int64_t rnd;
   
   error= get_int(cs, from, len, &rnd, UINT_MAX16, INT_MIN16, INT_MAX16);
   store_tmp= unsigned_flag ? (int) (uint64_t) rnd : (int) rnd;
@@ -2231,7 +2231,7 @@ int Field_short::store(double nr)
 }
 
 
-int Field_short::store(longlong nr, bool unsigned_val)
+int Field_short::store(int64_t nr, bool unsigned_val)
 {
   int error= 0;
   int16 res;
@@ -2264,7 +2264,7 @@ int Field_short::store(longlong nr, bool unsigned_val)
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
-    else if (nr > (longlong) INT_MAX16)
+    else if (nr > (int64_t) INT_MAX16)
     {
       res=INT_MAX16;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
@@ -2297,7 +2297,7 @@ double Field_short::val_real(void)
   return unsigned_flag ? (double) (unsigned short) j : (double) j;
 }
 
-longlong Field_short::val_int(void)
+int64_t Field_short::val_int(void)
 {
   short j;
 #ifdef WORDS_BIGENDIAN
@@ -2306,7 +2306,7 @@ longlong Field_short::val_int(void)
   else
 #endif
     shortget(j,ptr);
-  return unsigned_flag ? (longlong) (unsigned short) j : (longlong) j;
+  return unsigned_flag ? (int64_t) (unsigned short) j : (int64_t) j;
 }
 
 
@@ -2405,7 +2405,7 @@ int Field_long::store(const char *from,uint len,CHARSET_INFO *cs)
 {
   long store_tmp;
   int error;
-  longlong rnd;
+  int64_t rnd;
   
   error= get_int(cs, from, len, &rnd, UINT_MAX32, INT_MIN32, INT_MAX32);
   store_tmp= unsigned_flag ? (long) (uint64_t) rnd : (long) rnd;
@@ -2455,7 +2455,7 @@ int Field_long::store(double nr)
       error= 1;
     }
     else
-      res=(int32) (longlong) nr;
+      res=(int32) (int64_t) nr;
   }
   if (error)
     set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
@@ -2472,7 +2472,7 @@ int Field_long::store(double nr)
 }
 
 
-int Field_long::store(longlong nr, bool unsigned_val)
+int Field_long::store(int64_t nr, bool unsigned_val)
 {
   int error= 0;
   int32 res;
@@ -2495,13 +2495,13 @@ int Field_long::store(longlong nr, bool unsigned_val)
   else
   {
     if (nr < 0 && unsigned_val)
-      nr= ((longlong) INT_MAX32) + 1;           // Generate overflow
-    if (nr < (longlong) INT_MIN32) 
+      nr= ((int64_t) INT_MAX32) + 1;           // Generate overflow
+    if (nr < (int64_t) INT_MIN32) 
     {
       res=(int32) INT_MIN32;
       error= 1;
     }
-    else if (nr > (longlong) INT_MAX32)
+    else if (nr > (int64_t) INT_MAX32)
     {
       res=(int32) INT_MAX32;
       error= 1;
@@ -2536,7 +2536,7 @@ double Field_long::val_real(void)
   return unsigned_flag ? (double) (uint32) j : (double) j;
 }
 
-longlong Field_long::val_int(void)
+int64_t Field_long::val_int(void)
 {
   int32 j;
   /* See the comment in Field_long::store(long long) */
@@ -2547,7 +2547,7 @@ longlong Field_long::val_int(void)
   else
 #endif
     longget(j,ptr);
-  return unsigned_flag ? (longlong) (uint32) j : (longlong) j;
+  return unsigned_flag ? (int64_t) (uint32) j : (int64_t) j;
 }
 
 String *Field_long::val_str(String *val_buffer,
@@ -2638,10 +2638,10 @@ void Field_long::sql_type(String &res) const
 }
 
 /****************************************************************************
- Field type longlong int (8 bytes)
+ Field type int64_t int (8 bytes)
 ****************************************************************************/
 
-int Field_longlong::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_int64_t::store(const char *from,uint len,CHARSET_INFO *cs)
 {
   int error= 0;
   char *end;
@@ -2665,15 +2665,15 @@ int Field_longlong::store(const char *from,uint len,CHARSET_INFO *cs)
   }
   else
 #endif
-    longlongstore(ptr,tmp);
+    int64_tstore(ptr,tmp);
   return error;
 }
 
 
-int Field_longlong::store(double nr)
+int Field_int64_t::store(double nr)
 {
   int error= 0;
-  longlong res;
+  int64_t res;
 
   nr= rint(nr);
   if (unsigned_flag)
@@ -2685,11 +2685,11 @@ int Field_longlong::store(double nr)
     }
     else if (nr >= (double) ULONGLONG_MAX)
     {
-      res= ~(longlong) 0;
+      res= ~(int64_t) 0;
       error= 1;
     }
     else
-      res=(longlong) (uint64_t) nr;
+      res=(int64_t) (uint64_t) nr;
   }
   else
   {
@@ -2704,7 +2704,7 @@ int Field_longlong::store(double nr)
       error= (nr > (double) LONGLONG_MAX);
     }
     else
-      res=(longlong) nr;
+      res=(int64_t) nr;
   }
   if (error)
     set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
@@ -2716,12 +2716,12 @@ int Field_longlong::store(double nr)
   }
   else
 #endif
-    longlongstore(ptr,res);
+    int64_tstore(ptr,res);
   return error;
 }
 
 
-int Field_longlong::store(longlong nr, bool unsigned_val)
+int Field_int64_t::store(int64_t nr, bool unsigned_val)
 {
   int error= 0;
 
@@ -2746,14 +2746,14 @@ int Field_longlong::store(longlong nr, bool unsigned_val)
   }
   else
 #endif
-    longlongstore(ptr,nr);
+    int64_tstore(ptr,nr);
   return error;
 }
 
 
-double Field_longlong::val_real(void)
+double Field_int64_t::val_real(void)
 {
-  longlong j;
+  int64_t j;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
   {
@@ -2761,31 +2761,31 @@ double Field_longlong::val_real(void)
   }
   else
 #endif
-    longlongget(j,ptr);
+    int64_tget(j,ptr);
   /* The following is open coded to avoid a bug in gcc 3.3 */
   if (unsigned_flag)
   {
     uint64_t tmp= (uint64_t) j;
-    return ulonglong2double(tmp);
+    return uint64_t2double(tmp);
   }
   return (double) j;
 }
 
 
-longlong Field_longlong::val_int(void)
+int64_t Field_int64_t::val_int(void)
 {
-  longlong j;
+  int64_t j;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint8korr(ptr);
   else
 #endif
-    longlongget(j,ptr);
+    int64_tget(j,ptr);
   return j;
 }
 
 
-String *Field_longlong::val_str(String *val_buffer,
+String *Field_int64_t::val_str(String *val_buffer,
 				String *val_ptr __attribute__((unused)))
 {
   CHARSET_INFO *cs= &my_charset_bin;
@@ -2793,15 +2793,15 @@ String *Field_longlong::val_str(String *val_buffer,
   uint mlength=max(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
   char *to=(char*) val_buffer->ptr();
-  longlong j;
+  int64_t j;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
     j=sint8korr(ptr);
   else
 #endif
-    longlongget(j,ptr);
+    int64_tget(j,ptr);
 
-  length=(uint) (cs->cset->longlong10_to_str)(cs,to,mlength,
+  length=(uint) (cs->cset->int64_t10_to_str)(cs,to,mlength,
 					unsigned_flag ? 10 : -10, j);
   val_buffer->length(length);
   if (zerofill)
@@ -2810,15 +2810,15 @@ String *Field_longlong::val_str(String *val_buffer,
 }
 
 
-bool Field_longlong::send_binary(Protocol *protocol)
+bool Field_int64_t::send_binary(Protocol *protocol)
 {
-  return protocol->store_longlong(Field_longlong::val_int(), unsigned_flag);
+  return protocol->store_int64_t(Field_int64_t::val_int(), unsigned_flag);
 }
 
 
-int Field_longlong::cmp(const uchar *a_ptr, const uchar *b_ptr)
+int Field_int64_t::cmp(const uchar *a_ptr, const uchar *b_ptr)
 {
-  longlong a,b;
+  int64_t a,b;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
   {
@@ -2828,8 +2828,8 @@ int Field_longlong::cmp(const uchar *a_ptr, const uchar *b_ptr)
   else
 #endif
   {
-    longlongget(a,a_ptr);
-    longlongget(b,b_ptr);
+    int64_tget(a,a_ptr);
+    int64_tget(b,b_ptr);
   }
   if (unsigned_flag)
     return ((uint64_t) a < (uint64_t) b) ? -1 :
@@ -2837,7 +2837,7 @@ int Field_longlong::cmp(const uchar *a_ptr, const uchar *b_ptr)
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 
-void Field_longlong::sort_string(uchar *to,uint length __attribute__((unused)))
+void Field_int64_t::sort_string(uchar *to,uint length __attribute__((unused)))
 {
 #ifdef WORDS_BIGENDIAN
   if (!table->s->db_low_byte_first)
@@ -2872,7 +2872,7 @@ void Field_longlong::sort_string(uchar *to,uint length __attribute__((unused)))
 }
 
 
-void Field_longlong::sql_type(String &res) const
+void Field_int64_t::sql_type(String &res) const
 {
   CHARSET_INFO *cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
@@ -2957,9 +2957,9 @@ int Field_float::store(double nr)
 }
 
 
-int Field_float::store(longlong nr, bool unsigned_val)
+int Field_float::store(int64_t nr, bool unsigned_val)
 {
-  return Field_float::store(unsigned_val ? ulonglong2double((uint64_t) nr) :
+  return Field_float::store(unsigned_val ? uint64_t2double((uint64_t) nr) :
                             (double) nr);
 }
 
@@ -2978,7 +2978,7 @@ double Field_float::val_real(void)
   return ((double) j);
 }
 
-longlong Field_float::val_int(void)
+int64_t Field_float::val_int(void)
 {
   float j;
 #ifdef WORDS_BIGENDIAN
@@ -2989,7 +2989,7 @@ longlong Field_float::val_int(void)
   else
 #endif
     memcpy_fixed((uchar*) &j,ptr,sizeof(j));
-  return (longlong) rint(j);
+  return (int64_t) rint(j);
 }
 
 
@@ -3166,9 +3166,9 @@ int Field_double::store(double nr)
 }
 
 
-int Field_double::store(longlong nr, bool unsigned_val)
+int Field_double::store(int64_t nr, bool unsigned_val)
 {
-  return Field_double::store(unsigned_val ? ulonglong2double((uint64_t) nr) :
+  return Field_double::store(unsigned_val ? uint64_t2double((uint64_t) nr) :
                              (double) nr);
 }
 
@@ -3255,10 +3255,10 @@ double Field_double::val_real(void)
   return j;
 }
 
-longlong Field_double::val_int(void)
+int64_t Field_double::val_int(void)
 {
   double j;
-  longlong res;
+  int64_t res;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
   {
@@ -3267,18 +3267,18 @@ longlong Field_double::val_int(void)
   else
 #endif
     doubleget(j,ptr);
-  /* Check whether we fit into longlong range */
+  /* Check whether we fit into int64_t range */
   if (j <= (double) LONGLONG_MIN)
   {
-    res= (longlong) LONGLONG_MIN;
+    res= (int64_t) LONGLONG_MIN;
     goto warn;
   }
   if (j >= (double) (uint64_t) LONGLONG_MAX)
   {
-    res= (longlong) LONGLONG_MAX;
+    res= (int64_t) LONGLONG_MAX;
     goto warn;
   }
-  return (longlong) rint(j);
+  return (int64_t) rint(j);
 
 warn:
   {
@@ -3579,12 +3579,12 @@ int Field_timestamp::store(double nr)
     nr= 0;					// Avoid overflow on buff
     error= 1;
   }
-  error|= Field_timestamp::store((longlong) rint(nr), false);
+  error|= Field_timestamp::store((int64_t) rint(nr), false);
   return error;
 }
 
 
-int Field_timestamp::store(longlong nr,
+int Field_timestamp::store(int64_t nr,
                            bool unsigned_val __attribute__((__unused__)))
 {
   MYSQL_TIME l_time;
@@ -3594,7 +3594,7 @@ int Field_timestamp::store(longlong nr,
   THD *thd= table ? table->in_use : current_thd;
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
-  longlong tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
+  int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
                                                  MODE_NO_ZERO_DATE) |
                                    MODE_NO_ZERO_IN_DATE, &error);
   if (tmp == -1LL)
@@ -3632,7 +3632,7 @@ double Field_timestamp::val_real(void)
   return (double) Field_timestamp::val_int();
 }
 
-longlong Field_timestamp::val_int(void)
+int64_t Field_timestamp::val_int(void)
 {
   uint32 temp;
   MYSQL_TIME time_tmp;
@@ -3879,7 +3879,7 @@ int Field_time::store_time(MYSQL_TIME *ltime,
             (ltime->minute * 100 + ltime->second);
   if (ltime->neg)
     tmp= -tmp;
-  return Field_time::store((longlong) tmp, false);
+  return Field_time::store((int64_t) tmp, false);
 }
 
 
@@ -3920,11 +3920,11 @@ int Field_time::store(double nr)
 }
 
 
-int Field_time::store(longlong nr, bool unsigned_val)
+int Field_time::store(int64_t nr, bool unsigned_val)
 {
   long tmp;
   int error= 0;
-  if (nr < (longlong) -TIME_MAX_VALUE && !unsigned_val)
+  if (nr < (int64_t) -TIME_MAX_VALUE && !unsigned_val)
   {
     tmp= -TIME_MAX_VALUE;
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
@@ -3932,7 +3932,7 @@ int Field_time::store(longlong nr, bool unsigned_val)
                          MYSQL_TIMESTAMP_TIME, 1);
     error= 1;
   }
-  else if (nr > (longlong) TIME_MAX_VALUE || (nr < 0 && unsigned_val))
+  else if (nr > (int64_t) TIME_MAX_VALUE || (nr < 0 && unsigned_val))
   {
     tmp= TIME_MAX_VALUE;
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
@@ -3963,9 +3963,9 @@ double Field_time::val_real(void)
   return (double) j;
 }
 
-longlong Field_time::val_int(void)
+int64_t Field_time::val_int(void)
 {
-  return (longlong) sint3korr(ptr);
+  return (int64_t) sint3korr(ptr);
 }
 
 
@@ -4091,7 +4091,7 @@ int Field_year::store(const char *from, uint len,CHARSET_INFO *cs)
 {
   char *end;
   int error;
-  longlong nr= cs->cset->strntoull10rnd(cs, from, len, 0, &end, &error);
+  int64_t nr= cs->cset->strntoull10rnd(cs, from, len, 0, &end, &error);
 
   if (nr < 0 || (nr >= 100 && nr <= 1900) || nr > 2155 || 
       error == MY_ERRNO_ERANGE)
@@ -4127,14 +4127,14 @@ int Field_year::store(double nr)
 {
   if (nr < 0.0 || nr >= 2155.0)
   {
-    (void) Field_year::store((longlong) -1, false);
+    (void) Field_year::store((int64_t) -1, false);
     return 1;
   }
-  return Field_year::store((longlong) nr, false);
+  return Field_year::store((int64_t) nr, false);
 }
 
 
-int Field_year::store(longlong nr,
+int Field_year::store(int64_t nr,
                       bool unsigned_val __attribute__((__unused__)))
 {
   if (nr < 0 || (nr >= 100 && nr <= 1900) || nr > 2155)
@@ -4168,14 +4168,14 @@ double Field_year::val_real(void)
 }
 
 
-longlong Field_year::val_int(void)
+int64_t Field_year::val_int(void)
 {
   int tmp= (int) ptr[0];
   if (field_length != 4)
     tmp%=100;					// Return last 2 char
   else if (tmp)
     tmp+=1900;
-  return (longlong) tmp;
+  return (int64_t) tmp;
 }
 
 
@@ -4270,15 +4270,15 @@ int Field_newdate::store(double nr)
                          WARN_DATA_TRUNCATED, nr, MYSQL_TIMESTAMP_DATE);
     return 1;
   }
-  return Field_newdate::store((longlong) rint(nr), false);
+  return Field_newdate::store((int64_t) rint(nr), false);
 }
 
 
-int Field_newdate::store(longlong nr,
+int Field_newdate::store(int64_t nr,
                          bool unsigned_val __attribute__((__unused__)))
 {
   MYSQL_TIME l_time;
-  longlong tmp;
+  int64_t tmp;
   int error;
   THD *thd= table ? table->in_use : current_thd;
   if (number_to_datetime(nr, &l_time,
@@ -4367,11 +4367,11 @@ double Field_newdate::val_real(void)
 }
 
 
-longlong Field_newdate::val_int(void)
+int64_t Field_newdate::val_int(void)
 {
   ulong j= uint3korr(ptr);
   j= (j % 32L)+(j / 32L % 16L)*100L + (j/(16L*32L))*10000L;
-  return (longlong) j;
+  return (int64_t) j;
 }
 
 
@@ -4469,7 +4469,7 @@ int Field_datetime::store(const char *from,
                                MODE_INVALID_DATES))),
                             &error);
   if ((int) func_res > (int) MYSQL_TIMESTAMP_ERROR)
-    tmp= TIME_to_ulonglong_datetime(&time_tmp);
+    tmp= TIME_to_uint64_t_datetime(&time_tmp);
   else
     error= 1;                                 // Fix if invalid zero date
 
@@ -4485,7 +4485,7 @@ int Field_datetime::store(const char *from,
   }
   else
 #endif
-    longlongstore(ptr,tmp);
+    int64_tstore(ptr,tmp);
   return error;
 }
 
@@ -4501,17 +4501,17 @@ int Field_datetime::store(double nr)
     nr= 0.0;
     error= 1;
   }
-  error|= Field_datetime::store((longlong) rint(nr), false);
+  error|= Field_datetime::store((int64_t) rint(nr), false);
   return error;
 }
 
 
-int Field_datetime::store(longlong nr,
+int Field_datetime::store(int64_t nr,
                           bool unsigned_val __attribute__((__unused__)))
 {
   MYSQL_TIME not_used;
   int error;
-  longlong initial_nr= nr;
+  int64_t initial_nr= nr;
   THD *thd= table ? table->in_use : current_thd;
 
   nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
@@ -4539,14 +4539,14 @@ int Field_datetime::store(longlong nr,
   }
   else
 #endif
-    longlongstore(ptr,nr);
+    int64_tstore(ptr,nr);
   return error;
 }
 
 
 int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
 {
-  longlong tmp;
+  int64_t tmp;
   int error= 0;
   /*
     We don't perform range checking here since values stored in TIME
@@ -4583,7 +4583,7 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
   }
   else
 #endif
-    longlongstore(ptr,tmp);
+    int64_tstore(ptr,tmp);
   return error;
 }
 
@@ -4600,15 +4600,15 @@ double Field_datetime::val_real(void)
   return (double) Field_datetime::val_int();
 }
 
-longlong Field_datetime::val_int(void)
+int64_t Field_datetime::val_int(void)
 {
-  longlong j;
+  int64_t j;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
     j=sint8korr(ptr);
   else
 #endif
-    longlongget(j,ptr);
+    int64_tget(j,ptr);
   return j;
 }
 
@@ -4628,10 +4628,10 @@ String *Field_datetime::val_str(String *val_buffer,
     tmp=sint8korr(ptr);
   else
 #endif
-    longlongget(tmp,ptr);
+    int64_tget(tmp,ptr);
 
   /*
-    Avoid problem with slow longlong arithmetic and sprintf
+    Avoid problem with slow int64_t arithmetic and sprintf
   */
 
   part1=(long) (tmp/1000000LL);
@@ -4663,7 +4663,7 @@ String *Field_datetime::val_str(String *val_buffer,
 
 bool Field_datetime::get_date(MYSQL_TIME *ltime, uint fuzzydate)
 {
-  longlong tmp=Field_datetime::val_int();
+  int64_t tmp=Field_datetime::val_int();
   uint32 part1,part2;
   part1=(uint32) (tmp/1000000LL);
   part2=(uint32) (tmp - (uint64_t) part1*1000000LL);
@@ -4687,7 +4687,7 @@ bool Field_datetime::get_time(MYSQL_TIME *ltime)
 
 int Field_datetime::cmp(const uchar *a_ptr, const uchar *b_ptr)
 {
-  longlong a,b;
+  int64_t a,b;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
   {
@@ -4697,8 +4697,8 @@ int Field_datetime::cmp(const uchar *a_ptr, const uchar *b_ptr)
   else
 #endif
   {
-    longlongget(a,a_ptr);
-    longlongget(b,b_ptr);
+    int64_tget(a,a_ptr);
+    int64_tget(b,b_ptr);
   }
   return ((uint64_t) a < (uint64_t) b) ? -1 :
     ((uint64_t) a > (uint64_t) b) ? 1 : 0;
@@ -4957,12 +4957,12 @@ uint Field_str::is_equal(Create_field *new_field)
 }
 
 
-int Field_string::store(longlong nr, bool unsigned_val)
+int Field_string::store(int64_t nr, bool unsigned_val)
 {
   char buff[64];
   int  l;
   CHARSET_INFO *cs=charset();
-  l= (cs->cset->longlong10_to_str)(cs,buff,sizeof(buff),
+  l= (cs->cset->int64_t10_to_str)(cs,buff,sizeof(buff),
                                    unsigned_val ? 10 : -10, nr);
   return Field_string::store(buff,(uint)l,cs);
 }
@@ -5007,12 +5007,12 @@ double Field_string::val_real(void)
 }
 
 
-longlong Field_string::val_int(void)
+int64_t Field_string::val_int(void)
 {
   int error;
   char *end;
   CHARSET_INFO *cs= charset();
-  longlong result;
+  int64_t result;
 
   result= my_strntoll(cs, (char*) ptr,field_length,10,&end,&error);
   if (!table->in_use->no_errors &&
@@ -5407,11 +5407,11 @@ int Field_varstring::store(const char *from,uint length,CHARSET_INFO *cs)
 }
 
 
-int Field_varstring::store(longlong nr, bool unsigned_val)
+int Field_varstring::store(int64_t nr, bool unsigned_val)
 {
   char buff[64];
   uint  length;
-  length= (uint) (field_charset->cset->longlong10_to_str)(field_charset,
+  length= (uint) (field_charset->cset->int64_t10_to_str)(field_charset,
                                                           buff,
                                                           sizeof(buff),
                                                           (unsigned_val ? 10:
@@ -5431,7 +5431,7 @@ double Field_varstring::val_real(void)
 }
 
 
-longlong Field_varstring::val_int(void)
+int64_t Field_varstring::val_int(void)
 {
   int not_used;
   char *end_not_used;
@@ -6128,7 +6128,7 @@ int Field_blob::store(double nr)
 }
 
 
-int Field_blob::store(longlong nr, bool unsigned_val)
+int Field_blob::store(int64_t nr, bool unsigned_val)
 {
   CHARSET_INFO *cs=charset();
   value.set_int(nr, unsigned_val, cs);
@@ -6152,7 +6152,7 @@ double Field_blob::val_real(void)
 }
 
 
-longlong Field_blob::val_int(void)
+int64_t Field_blob::val_int(void)
 {
   int not_used;
   char *blob;
@@ -6649,7 +6649,7 @@ void Field_enum::store_type(uint64_t value)
   }
   else
 #endif
-    longlongstore(ptr,value); break;
+    int64_tstore(ptr,value); break;
   }
 }
 
@@ -6704,11 +6704,11 @@ int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
 
 int Field_enum::store(double nr)
 {
-  return Field_enum::store((longlong) nr, false);
+  return Field_enum::store((int64_t) nr, false);
 }
 
 
-int Field_enum::store(longlong nr,
+int Field_enum::store(int64_t nr,
                       bool unsigned_val __attribute__((__unused__)))
 {
   int error= 0;
@@ -6732,11 +6732,11 @@ double Field_enum::val_real(void)
 }
 
 
-longlong Field_enum::val_int(void)
+int64_t Field_enum::val_int(void)
 {
   switch (packlength) {
   case 1:
-    return (longlong) ptr[0];
+    return (int64_t) ptr[0];
   case 2:
   {
     uint16 tmp;
@@ -6746,10 +6746,10 @@ longlong Field_enum::val_int(void)
     else
 #endif
       shortget(tmp,ptr);
-    return (longlong) tmp;
+    return (int64_t) tmp;
   }
   case 3:
-    return (longlong) uint3korr(ptr);
+    return (int64_t) uint3korr(ptr);
   case 4:
   {
     uint32 tmp;
@@ -6759,17 +6759,17 @@ longlong Field_enum::val_int(void)
     else
 #endif
       longget(tmp,ptr);
-    return (longlong) tmp;
+    return (int64_t) tmp;
   }
   case 8:
   {
-    longlong tmp;
+    int64_t tmp;
 #ifdef WORDS_BIGENDIAN
     if (table->s->db_low_byte_first)
       tmp=sint8korr(ptr);
     else
 #endif
-      longlongget(tmp,ptr);
+      int64_tget(tmp,ptr);
     return tmp;
   }
   }
@@ -6871,7 +6871,7 @@ Field *Field_enum::new_field(MEM_ROOT *root, struct st_table *new_table,
    This is a string which can have a collection of different values.
    Each string value is separated with a ','.
    For example "One,two,five"
-   If one uses this string in a number context one gets the bits as a longlong
+   If one uses this string in a number context one gets the bits as a int64_t
    number.
 */
 
@@ -6902,7 +6902,7 @@ int Field_set::store(const char *from,uint length,CHARSET_INFO *cs)
     char *end;
     tmp=my_strntoull(cs,from,length,10,&end,&err);
     if (err || end != from+length ||
-	tmp > (uint64_t) (((longlong) 1 << typelib->count) - (longlong) 1))
+	tmp > (uint64_t) (((int64_t) 1 << typelib->count) - (int64_t) 1))
     {
       tmp=0;      
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
@@ -6915,7 +6915,7 @@ int Field_set::store(const char *from,uint length,CHARSET_INFO *cs)
 }
 
 
-int Field_set::store(longlong nr,
+int Field_set::store(int64_t nr,
                      bool unsigned_val __attribute__((__unused__)))
 {
   int error= 0;
@@ -7472,7 +7472,7 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   case MYSQL_TYPE_FLOAT : return sizeof(float);
   case MYSQL_TYPE_DOUBLE: return sizeof(double);
   case MYSQL_TYPE_DATETIME:
-  case MYSQL_TYPE_LONGLONG: return 8;	/* Don't crash if no longlong */
+  case MYSQL_TYPE_LONGLONG: return 8;	/* Don't crash if no int64_t */
   case MYSQL_TYPE_NULL	: return 0;
   case MYSQL_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
   case MYSQL_TYPE_SET:
@@ -7602,7 +7602,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
 			   f_is_zerofill(pack_flag) != 0,
 			   f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_LONGLONG:
-    return new Field_longlong(ptr,field_length,null_pos,null_bit,
+    return new Field_int64_t(ptr,field_length,null_pos,null_bit,
 			      unireg_check, field_name,
 			      f_is_zerofill(pack_flag) != 0,
 			      f_is_dec(pack_flag) == 0);
@@ -7828,7 +7828,7 @@ Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code,
 
 void 
 Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code, 
-                            longlong nr, timestamp_type ts_type,
+                            int64_t nr, timestamp_type ts_type,
                             int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
@@ -7836,7 +7836,7 @@ Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code,
       set_warning(level, code, cuted_increment))
   {
     char str_nr[22];
-    char *str_end= longlong10_to_str(nr, str_nr, -10);
+    char *str_end= int64_t10_to_str(nr, str_nr, -10);
     make_truncated_value_warning(thd, level, str_nr, (uint) (str_end - str_nr), 
                                  ts_type, field_name);
   }

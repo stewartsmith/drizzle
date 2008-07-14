@@ -99,7 +99,7 @@ qsort_t my_qsort(void *base_ptr, size_t count, size_t size, qsort_cmp cmp)
 {
   char *low, *high, *pivot;
   stack_node stack[STACK_SIZE], *stack_ptr;
-  my_bool ptr_cmp;
+  bool ptr_cmp;
   /* Handle the simple case first */
   /* This will also make the rest of the code simpler */
   if (count <= 1)

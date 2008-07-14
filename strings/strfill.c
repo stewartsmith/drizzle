@@ -26,7 +26,7 @@
 #include <my_global.h>
 #include "m_string.h"
 
-char * strfill(char *s, size_t len, pchar fill)
+char * strfill(char *s, size_t len, char fill)
 {
   while (len--) *s++ = fill;
   *(s) = '\0';

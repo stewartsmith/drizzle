@@ -122,7 +122,7 @@
         not in bytes
 */
 typedef decimal_digit_t dec1;
-typedef longlong      dec2;
+typedef int64_t      dec2;
 
 #define DIG_PER_DEC1 9
 #define DIG_MASK     100000000
@@ -897,7 +897,7 @@ internal_str2dec(const char *from, decimal_t *to, char **end, my_bool fixed)
   if (endp+1 < end_of_string && (*endp == 'e' || *endp == 'E'))
   {
     int str_error;
-    longlong exponent= my_strtoll10(endp+1, (char**) &end_of_string,
+    int64_t exponent= my_strtoll10(endp+1, (char**) &end_of_string,
                                     &str_error);
 
     if (end_of_string != endp +1)               /* If at least one digit */
@@ -984,10 +984,10 @@ int double2decimal(double from, decimal_t *to)
 }
 
 
-static int ull2dec(ulonglong from, decimal_t *to)
+static int ull2dec(uint64_t from, decimal_t *to)
 {
   int intg1, error=E_DEC_OK;
-  ulonglong x=from;
+  uint64_t x=from;
   dec1 *buf;
 
   sanity(to);
@@ -1003,30 +1003,30 @@ static int ull2dec(ulonglong from, decimal_t *to)
 
   for (buf=to->buf+intg1; intg1; intg1--)
   {
-    ulonglong y=x/DIG_BASE;
+    uint64_t y=x/DIG_BASE;
     *--buf=(dec1)(x-y*DIG_BASE);
     x=y;
   }
   return error;
 }
 
-int ulonglong2decimal(ulonglong from, decimal_t *to)
+int uint64_t2decimal(uint64_t from, decimal_t *to)
 {
   to->sign=0;
   return ull2dec(from, to);
 }
 
-int longlong2decimal(longlong from, decimal_t *to)
+int int64_t2decimal(int64_t from, decimal_t *to)
 {
   if ((to->sign= from < 0))
     return ull2dec(-from, to);
   return ull2dec(from, to);
 }
 
-int decimal2ulonglong(decimal_t *from, ulonglong *to)
+int decimal2uint64_t(decimal_t *from, uint64_t *to)
 {
   dec1 *buf=from->buf;
-  ulonglong x=0;
+  uint64_t x=0;
   int intg, frac;
 
   if (from->sign)
@@ -1037,9 +1037,9 @@ int decimal2ulonglong(decimal_t *from, ulonglong *to)
 
   for (intg=from->intg; intg > 0; intg-=DIG_PER_DEC1)
   {
-    ulonglong y=x;
+    uint64_t y=x;
     x=x*DIG_BASE + *buf++;
-    if (unlikely(y > ((ulonglong) ULONGLONG_MAX/DIG_BASE) || x < y))
+    if (unlikely(y > ((uint64_t) ULONGLONG_MAX/DIG_BASE) || x < y))
     {
       *to=ULONGLONG_MAX;
       return E_DEC_OVERFLOW;
@@ -1052,15 +1052,15 @@ int decimal2ulonglong(decimal_t *from, ulonglong *to)
   return E_DEC_OK;
 }
 
-int decimal2longlong(decimal_t *from, longlong *to)
+int decimal2int64_t(decimal_t *from, int64_t *to)
 {
   dec1 *buf=from->buf;
-  longlong x=0;
+  int64_t x=0;
   int intg, frac;
 
   for (intg=from->intg; intg > 0; intg-=DIG_PER_DEC1)
   {
-    longlong y=x;
+    int64_t y=x;
     /*
       Attention: trick!
       we're calculating -|from| instead of |from| here
@@ -1357,7 +1357,7 @@ int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale)
     }
     from+=i;
     *buf=x ^ mask;
-    if (((ulonglong)*buf) >= (ulonglong) powers10[intg0x+1])
+    if (((uint64_t)*buf) >= (uint64_t) powers10[intg0x+1])
       goto err;
     if (buf > to->buf || *buf != 0)
       buf++;
@@ -2522,25 +2522,25 @@ void test_f2d(double from, int ex)
   printf("\n");
 }
 
-void test_ull2d(ulonglong from, const char *orig, int ex)
+void test_ull2d(uint64_t from, const char *orig, int ex)
 {
   char s[100];
   int res;
 
-  res=ulonglong2decimal(from, &a);
-  longlong10_to_str(from,s,10);
+  res=uint64_t2decimal(from, &a);
+  int64_t10_to_str(from,s,10);
   printf("%-40s => res=%d    ", s, res);
   print_decimal(&a, orig, res, ex);
   printf("\n");
 }
 
-void test_ll2d(longlong from, const char *orig, int ex)
+void test_ll2d(int64_t from, const char *orig, int ex)
 {
   char s[100];
   int res;
 
-  res=longlong2decimal(from, &a);
-  longlong10_to_str(from,s,-10);
+  res=int64_t2decimal(from, &a);
+  int64_t10_to_str(from,s,-10);
   printf("%-40s => res=%d    ", s, res);
   print_decimal(&a, orig, res, ex);
   printf("\n");
@@ -2549,14 +2549,14 @@ void test_ll2d(longlong from, const char *orig, int ex)
 void test_d2ull(const char *s, const char *orig, int ex)
 {
   char s1[100], *end;
-  ulonglong x;
+  uint64_t x;
   int res;
 
   end= strend(s);
   string2decimal(s, &a, &end);
-  res=decimal2ulonglong(&a, &x);
+  res=decimal2uint64_t(&a, &x);
   if (full) dump_decimal(&a);
-  longlong10_to_str(x,s1,10);
+  int64_t10_to_str(x,s1,10);
   printf("%-40s => res=%d    %s\n", s, res, s1);
   check_result_code(res, ex);
   if (orig && strcmp(orig, s1))
@@ -2569,14 +2569,14 @@ void test_d2ull(const char *s, const char *orig, int ex)
 void test_d2ll(const char *s, const char *orig, int ex)
 {
   char s1[100], *end;
-  longlong x;
+  int64_t x;
   int res;
 
   end= strend(s);
   string2decimal(s, &a, &end);
-  res=decimal2longlong(&a, &x);
+  res=decimal2int64_t(&a, &x);
   if (full) dump_decimal(&a);
-  longlong10_to_str(x,s1,-10);
+  int64_t10_to_str(x,s1,-10);
   printf("%-40s => res=%d    %s\n", s, res, s1);
   check_result_code(res, ex);
   if (orig && strcmp(orig, s1))
@@ -2809,12 +2809,12 @@ int main()
   test_f2d(0.00012345000098765, 0);
   test_f2d(1234500009876.5, 0);
 
-  printf("==== ulonglong2decimal ====\n");
+  printf("==== uint64_t2decimal ====\n");
   test_ull2d(12345ULL, "12345", 0);
   test_ull2d(0ULL, "0", 0);
   test_ull2d(18446744073709551615ULL, "18446744073709551615", 0);
 
-  printf("==== decimal2ulonglong ====\n");
+  printf("==== decimal2uint64_t ====\n");
   test_d2ull("12345", "12345", 0);
   test_d2ull("0", "0", 0);
   test_d2ull("18446744073709551615", "18446744073709551615", 0);
@@ -2823,13 +2823,13 @@ int main()
   test_d2ull("1.23", "1", 1);
   test_d2ull("9999999999999999999999999.000", "9999999999999999", 2);
 
-  printf("==== longlong2decimal ====\n");
+  printf("==== int64_t2decimal ====\n");
   test_ll2d(12345LL, "-12345", 0);
   test_ll2d(1LL, "-1", 0);
   test_ll2d(9223372036854775807LL, "-9223372036854775807", 0);
   test_ll2d(9223372036854775808ULL, "-9223372036854775808", 0);
 
-  printf("==== decimal2longlong ====\n");
+  printf("==== decimal2int64_t ====\n");
   test_d2ll("18446744073709551615", "18446744073", 2);
   test_d2ll("-1", "-1", 0);
   test_d2ll("-1.23", "-1", 1);

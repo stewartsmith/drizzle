@@ -142,7 +142,7 @@ typedef struct st_lex_master_info
   char *host, *user, *password, *log_file_name;
   uint port, connect_retry;
   float heartbeat_period;
-  ulonglong pos;
+  uint64_t pos;
   ulong server_id;
   /*
     Enum is used for making it possible to detect if the user
@@ -343,7 +343,7 @@ protected:
     *link_next, **link_prev;          /* list of whole SELECT_LEX */
 public:
 
-  ulonglong options;
+  uint64_t options;
 
   /*
     result of this query can't be cached, bit field, can be :
@@ -422,7 +422,7 @@ protected:
   TABLE *table; /* temporary table using for appending UNION results */
 
   select_result *result;
-  ulonglong found_rows_for_union;
+  uint64_t found_rows_for_union;
   bool saved_error;
 
 public:

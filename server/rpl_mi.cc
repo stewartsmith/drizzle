@@ -287,7 +287,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     mi->master_log_pos= (my_off_t) master_log_pos;
     mi->port= (uint) port;
     mi->connect_retry= (uint) connect_retry;
-    mi->ssl= (my_bool) ssl;
+    mi->ssl= (bool) ssl;
     mi->ssl_verify_server_cert= ssl_verify_server_cert;
     mi->heartbeat_period= master_heartbeat_period;
   }

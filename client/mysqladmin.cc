@@ -29,7 +29,7 @@ char *host= NULL, *user= 0, *opt_password= 0,
      *default_charset= NULL;
 char truncated_var_names[MAX_MYSQL_VAR][MAX_TRUNC_LENGTH];
 char ex_var_names[MAX_MYSQL_VAR][FN_REFLEN];
-ulonglong last_values[MAX_MYSQL_VAR];
+uint64_t last_values[MAX_MYSQL_VAR];
 static int interval=0;
 static bool option_force=0,interrupted=0,new_line=0,
                opt_compress=0, opt_relative=0, opt_verbose=0, opt_vertical=0,
@@ -1090,7 +1090,7 @@ static void print_row(MYSQL_RES *result, MYSQL_ROW cur,
 
 static void print_relative_row(MYSQL_RES *result, MYSQL_ROW cur, uint row)
 {
-  ulonglong tmp;
+  uint64_t tmp;
   char buff[22];
   MYSQL_FIELD *field;
 
@@ -1099,7 +1099,7 @@ static void print_relative_row(MYSQL_RES *result, MYSQL_ROW cur, uint row)
   printf("| %-*s|", (int) field->max_length + 1, cur[0]);
 
   field = mysql_fetch_field(result);
-  tmp = cur[1] ? strtoull(cur[1], NULL, 10) : (ulonglong) 0;
+  tmp = cur[1] ? strtoull(cur[1], NULL, 10) : (uint64_t) 0;
   printf(" %-*s|\n", (int) field->max_length + 1,
 	 llstr((tmp - last_values[row]), buff));
   last_values[row] = tmp;
@@ -1111,13 +1111,13 @@ static void print_relative_row_vert(MYSQL_RES *result __attribute__((unused)),
 				    uint row __attribute__((unused)))
 {
   uint length;
-  ulonglong tmp;
+  uint64_t tmp;
   char buff[22];
 
   if (!row)
     putchar('|');
 
-  tmp = cur[1] ? strtoull(cur[1], NULL, 10) : (ulonglong) 0;
+  tmp = cur[1] ? strtoull(cur[1], NULL, 10) : (uint64_t) 0;
   printf(" %-*s|", ex_val_max_len[row] + 1,
 	 llstr((tmp - last_values[row]), buff));
 

@@ -158,13 +158,13 @@ static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
 static uint my_end_arg= 0;
 static char *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
-static ulonglong actual_queries= 0;
-static ulonglong auto_actual_queries;
-static ulonglong auto_generate_sql_unique_write_number;
-static ulonglong auto_generate_sql_unique_query_number;
+static uint64_t actual_queries= 0;
+static uint64_t auto_actual_queries;
+static uint64_t auto_generate_sql_unique_write_number;
+static uint64_t auto_generate_sql_unique_query_number;
 static unsigned int auto_generate_sql_secondary_indexes;
-static ulonglong num_of_query;
-static ulonglong auto_generate_sql_number;
+static uint64_t num_of_query;
+static uint64_t auto_generate_sql_number;
 const char *concurrency_str= NULL;
 static char *create_string;
 uint *concurrency;
@@ -227,7 +227,7 @@ typedef struct thread_context thread_context;
 
 struct thread_context {
   statement *stmt;
-  ulonglong limit;
+  uint64_t limit;
 };
 
 typedef struct conclusions conclusions;
@@ -280,7 +280,7 @@ static int drop_primary_key_list(void);
 static int create_schema(MYSQL *mysql, const char *db, statement *stmt, 
                          option_string *engine_stmt, stats *sptr);
 static int run_scheduler(stats *sptr, statement **stmts, uint concur, 
-                         ulonglong limit);
+                         uint64_t limit);
 pthread_handler_t run_task(void *p);
 pthread_handler_t timer_thread(void *p);
 void statement_cleanup(statement *stmt);
@@ -1712,7 +1712,7 @@ create_schema(MYSQL *mysql, const char *db, statement *stmt,
   statement *ptr;
   statement *after_create;
   int len;
-  ulonglong count;
+  uint64_t count;
   struct timeval start_time, end_time;
 
 
@@ -1865,7 +1865,7 @@ run_statements(MYSQL *mysql, statement *stmt)
 }
 
 static int
-run_scheduler(stats *sptr, statement **stmts, uint concur, ulonglong limit)
+run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
 {
   uint x;
   uint y;
@@ -2016,8 +2016,8 @@ pthread_handler_t timer_thread(void *p)
 
 pthread_handler_t run_task(void *p)
 {
-  ulonglong counter= 0, queries;
-  ulonglong detach_counter;
+  uint64_t counter= 0, queries;
+  uint64_t detach_counter;
   unsigned int commit_counter;
   MYSQL mysql;
   MYSQL_RES *result;

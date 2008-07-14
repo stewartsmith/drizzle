@@ -723,11 +723,11 @@ int Log_event::net_send(Protocol *protocol, const char* log_name, my_off_t pos)
 
   protocol->prepare_for_resend();
   protocol->store(log_name, &my_charset_bin);
-  protocol->store((ulonglong) pos);
+  protocol->store((uint64_t) pos);
   event_type = get_type_str();
   protocol->store(event_type, strlen(event_type), &my_charset_bin);
   protocol->store((uint32) server_id);
-  protocol->store((ulonglong) log_pos);
+  protocol->store((uint64_t) log_pos);
   pack_info(protocol);
   return protocol->write();
 }
@@ -1488,7 +1488,7 @@ bool Query_log_event::write(IO_CACHE* file)
   if (sql_mode_inited)
   {
     *start++= Q_SQL_MODE_CODE;
-    int8store(start, (ulonglong)sql_mode);
+    int8store(start, (uint64_t)sql_mode);
     start+= 8;
   }
   if (catalog_len) // i.e. this var is inited (false for 4.0 events)
@@ -1840,7 +1840,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
     {
       CHECK_SPACE(pos, end, 8);
       sql_mode_inited= 1;
-      sql_mode= (ulong) uint8korr(pos); // QQ: Fix when sql_mode is ulonglong
+      sql_mode= (ulong) uint8korr(pos); // QQ: Fix when sql_mode is uint64_t
       pos+= 8;
       break;
     }
@@ -3109,7 +3109,7 @@ void Load_log_event::print_query(bool need_db, char *buf,
   if ((long) skip_lines > 0)
   {
     pos= strmov(pos, " IGNORE ");
-    pos= longlong10_to_str((longlong) skip_lines, pos, 10);
+    pos= int64_t10_to_str((int64_t) skip_lines, pos, 10);
     pos= strmov(pos," LINES ");    
   }
 
@@ -3825,7 +3825,7 @@ void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 
 #ifndef MYSQL_CLIENT
 Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
-                                   uint ident_len_arg, ulonglong pos_arg,
+                                   uint ident_len_arg, uint64_t pos_arg,
                                    uint flags_arg)
   :Log_event(), new_log_ident(new_log_ident_arg),
    pos(pos_arg),ident_len(ident_len_arg ? ident_len_arg :
@@ -3974,7 +3974,7 @@ void Intvar_log_event::pack_info(Protocol *protocol)
   char buf[256], *pos;
   pos= strmake(buf, get_var_type_name(), sizeof(buf)-23);
   *pos++= '=';
-  pos= longlong10_to_str(val, pos, -10);
+  pos= int64_t10_to_str(val, pos, -10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
 #endif
@@ -4215,7 +4215,7 @@ void Xid_log_event::pack_info(Protocol *protocol)
 {
   char buf[128], *pos;
   pos= strmov(buf, "COMMIT /* xid=");
-  pos= longlong10_to_str(xid, pos, 10);
+  pos= int64_t10_to_str(xid, pos, 10);
   pos= strmov(pos, " */");
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
@@ -4224,7 +4224,7 @@ void Xid_log_event::pack_info(Protocol *protocol)
 /**
   @note
   It's ok not to use int8store here,
-  as long as xid_t::set(ulonglong) and
+  as long as xid_t::set(uint64_t) and
   xid_t::get_my_xid doesn't do it either.
   We don't care about actual values of xids as long as
   identical numbers compare identically
@@ -4258,7 +4258,7 @@ void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   if (!print_event_info->short_form)
   {
     char buf[64];
-    longlong10_to_str(xid, buf, 10);
+    int64_t10_to_str(xid, buf, 10);
 
     print_header(&cache, print_event_info, false);
     my_b_printf(&cache, "\tXid = %s\n", buf);
@@ -4322,7 +4322,7 @@ void User_var_log_event::pack_info(Protocol* protocol)
     case INT_RESULT:
       if (!(buf= (char*) my_malloc(val_offset + 22, MYF(MY_WME))))
         return;
-      event_len= longlong10_to_str(uint8korr(val), buf + val_offset,-10)-buf;
+      event_len= int64_t10_to_str(uint8korr(val), buf + val_offset,-10)-buf;
       break;
     case DECIMAL_RESULT:
     {
@@ -4430,7 +4430,7 @@ bool User_var_log_event::write(IO_CACHE* file)
       float8store(buf2, *(double*) val);
       break;
     case INT_RESULT:
-      int8store(buf2, *(longlong*) val);
+      int8store(buf2, *(int64_t*) val);
       break;
     case DECIMAL_RESULT:
     {
@@ -4502,7 +4502,7 @@ void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
       break;
     case INT_RESULT:
       char int_buf[22];
-      longlong10_to_str(uint8korr(val), int_buf, -10);
+      int64_t10_to_str(uint8korr(val), int_buf, -10);
       my_b_printf(&cache, ":=%s%s\n", int_buf, print_event_info->delimiter);
       break;
     case DECIMAL_RESULT:
@@ -4588,7 +4588,7 @@ int User_var_log_event::do_apply_event(Relay_log_info const *rli)
   user_var_name.str= name;
   user_var_name.length= name_len;
   double real_val;
-  longlong int_val;
+  int64_t int_val;
 
   /*
     We are now in a statement until the associated query log event has
@@ -4610,7 +4610,7 @@ int User_var_log_event::do_apply_event(Relay_log_info const *rli)
       val_len= 8;
       break;
     case INT_RESULT:
-      int_val= (longlong) uint8korr(val);
+      int_val= (int64_t) uint8korr(val);
       it= new Item_int(int_val);
       val= (char*) &int_val;		// Pointer to value in native format
       val_len= 8;
@@ -4699,7 +4699,7 @@ void Slave_log_event::pack_info(Protocol *protocol)
   pos= strmov(pos, ",log=");
   pos= strmov(pos, master_log);
   pos= strmov(pos, ",pos=");
-  pos= longlong10_to_str(master_pos, pos, 10);
+  pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
 }
 #endif /* !MYSQL_CLIENT */
@@ -6621,7 +6621,7 @@ bool Rows_log_event::write_data_header(IO_CACHE *file)
 {
   uchar buf[ROWS_HEADER_LEN];	// No need to init the buffer
   assert(m_table_id != ~0UL);
-  int6store(buf + RW_MAPID_OFFSET, (ulonglong)m_table_id);
+  int6store(buf + RW_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + RW_FLAGS_OFFSET, m_flags);
   return (my_b_safe_write(file, buf, ROWS_HEADER_LEN));
 }
@@ -7123,7 +7123,7 @@ bool Table_map_log_event::write_data_header(IO_CACHE *file)
 {
   assert(m_table_id != ~0UL);
   uchar buf[TABLE_MAP_HEADER_LEN];
-  int6store(buf + TM_MAPID_OFFSET, (ulonglong)m_table_id);
+  int6store(buf + TM_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + TM_FLAGS_OFFSET, m_flags);
   return (my_b_safe_write(file, buf, TABLE_MAP_HEADER_LEN));
 }

@@ -96,8 +96,8 @@ static inline void bitmap_unlock(MY_BITMAP *map __attribute__((unused)))
 }
 
 
-my_bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint n_bits,
-		    my_bool thread_safe __attribute__((unused)))
+bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint n_bits,
+		    bool thread_safe __attribute__((unused)))
 {
   DBUG_ENTER("bitmap_init");
   if (!buf)
@@ -158,7 +158,7 @@ void bitmap_free(MY_BITMAP *map)
     !=0  bit was set
 */
 
-my_bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit)
+bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit)
 {
   uchar *value= ((uchar*) map->bitmap) + (bitmap_bit / 8);
   uchar bit= 1 << ((bitmap_bit) & 7);
@@ -181,9 +181,9 @@ my_bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit)
     !=0  bit was set
 */
 
-my_bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit)
+bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit)
 {
-  my_bool res;
+  bool res;
   DBUG_ASSERT(map->bitmap && bitmap_bit < map->n_bits);
   bitmap_lock(map);
   res= bitmap_fast_test_and_set(map, bitmap_bit);
@@ -204,7 +204,7 @@ my_bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit)
     !=0  bit was set
 */
 
-my_bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit)
+bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit)
 {
   uchar *byte= (uchar*) map->bitmap + (bitmap_bit / 8);
   uchar bit= 1 << ((bitmap_bit) & 7);
@@ -214,9 +214,9 @@ my_bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit)
 }
 
 
-my_bool bitmap_test_and_clear(MY_BITMAP *map, uint bitmap_bit)
+bool bitmap_test_and_clear(MY_BITMAP *map, uint bitmap_bit)
 {
-  my_bool res;
+  bool res;
   DBUG_ASSERT(map->bitmap && bitmap_bit < map->n_bits);
   bitmap_lock(map);
   res= bitmap_fast_test_and_clear(map, bitmap_bit);
@@ -253,7 +253,7 @@ void bitmap_set_prefix(MY_BITMAP *map, uint prefix_size)
 }
 
 
-my_bool bitmap_is_prefix(const MY_BITMAP *map, uint prefix_size)
+bool bitmap_is_prefix(const MY_BITMAP *map, uint prefix_size)
 {
   uint prefix_bits= prefix_size & 0x7, res;
   uchar *m= (uchar*)map->bitmap;
@@ -280,7 +280,7 @@ ret:
 }
 
 
-my_bool bitmap_is_set_all(const MY_BITMAP *map)
+bool bitmap_is_set_all(const MY_BITMAP *map)
 {
   my_bitmap_map *data_ptr= map->bitmap;
   my_bitmap_map *end= map->last_word_ptr;
@@ -292,7 +292,7 @@ my_bool bitmap_is_set_all(const MY_BITMAP *map)
 }
 
 
-my_bool bitmap_is_clear_all(const MY_BITMAP *map)
+bool bitmap_is_clear_all(const MY_BITMAP *map)
 {
   my_bitmap_map *data_ptr= map->bitmap;
   my_bitmap_map *end;
@@ -307,7 +307,7 @@ my_bool bitmap_is_clear_all(const MY_BITMAP *map)
 
 /* Return TRUE if map1 is a subset of map2 */
 
-my_bool bitmap_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
+bool bitmap_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
 {
   my_bitmap_map *m1= map1->bitmap, *m2= map2->bitmap, *end;
 
@@ -327,7 +327,7 @@ my_bool bitmap_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
 
 /* True if bitmaps has any common bits */
 
-my_bool bitmap_is_overlapping(const MY_BITMAP *map1, const MY_BITMAP *map2)
+bool bitmap_is_overlapping(const MY_BITMAP *map1, const MY_BITMAP *map2)
 {
   my_bitmap_map *m1= map1->bitmap, *m2= map2->bitmap, *end;
 
@@ -560,9 +560,9 @@ void bitmap_lock_clear_bit(MY_BITMAP *map, uint bitmap_bit)
 
 
 #ifdef NOT_USED
-my_bool bitmap_lock_is_prefix(const MY_BITMAP *map, uint prefix_size)
+bool bitmap_lock_is_prefix(const MY_BITMAP *map, uint prefix_size)
 {
-  my_bool res;
+  bool res;
   bitmap_lock((MY_BITMAP *)map);
   res= bitmap_is_prefix(map, prefix_size);
   bitmap_unlock((MY_BITMAP *)map);
@@ -594,7 +594,7 @@ void bitmap_lock_set_prefix(MY_BITMAP *map, uint prefix_size)
 }
 
 
-my_bool bitmap_lock_is_clear_all(const MY_BITMAP *map)
+bool bitmap_lock_is_clear_all(const MY_BITMAP *map)
 {
   uint res;
   bitmap_lock((MY_BITMAP *)map);
@@ -604,7 +604,7 @@ my_bool bitmap_lock_is_clear_all(const MY_BITMAP *map)
 }
 
 
-my_bool bitmap_lock_is_set_all(const MY_BITMAP *map)
+bool bitmap_lock_is_set_all(const MY_BITMAP *map)
 {
   uint res;
   bitmap_lock((MY_BITMAP *)map);
@@ -614,9 +614,9 @@ my_bool bitmap_lock_is_set_all(const MY_BITMAP *map)
 }
 
 
-my_bool bitmap_lock_is_set(const MY_BITMAP *map, uint bitmap_bit)
+bool bitmap_lock_is_set(const MY_BITMAP *map, uint bitmap_bit)
 {
-  my_bool res;
+  bool res;
   DBUG_ASSERT(map->bitmap && bitmap_bit < map->n_bits);
   bitmap_lock((MY_BITMAP *)map);
   res= bitmap_is_set(map, bitmap_bit);
@@ -625,7 +625,7 @@ my_bool bitmap_lock_is_set(const MY_BITMAP *map, uint bitmap_bit)
 }
 
 
-my_bool bitmap_lock_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
+bool bitmap_lock_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
 {
   uint res;
   bitmap_lock((MY_BITMAP *)map1);
@@ -637,7 +637,7 @@ my_bool bitmap_lock_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
 }
 
 
-my_bool bitmap_lock_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2)
+bool bitmap_lock_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2)
 {
   uint res;
 
@@ -751,7 +751,7 @@ uint get_rand_bit(uint bitsize)
   return (rand() % bitsize);
 }
 
-my_bool test_set_get_clear_bit(MY_BITMAP *map, uint bitsize)
+bool test_set_get_clear_bit(MY_BITMAP *map, uint bitsize)
 {
   uint i, test_bit;
   uint no_loops= bitsize > 128 ? 128 : bitsize;
@@ -774,7 +774,7 @@ error2:
   return TRUE;
 }
 
-my_bool test_flip_bit(MY_BITMAP *map, uint bitsize)
+bool test_flip_bit(MY_BITMAP *map, uint bitsize)
 {
   uint i, test_bit;
   uint no_loops= bitsize > 128 ? 128 : bitsize;
@@ -797,13 +797,13 @@ error2:
   return TRUE;
 }
 
-my_bool test_operators(MY_BITMAP *map __attribute__((unused)),
+bool test_operators(MY_BITMAP *map __attribute__((unused)),
                     uint bitsize __attribute__((unused)))
 {
   return FALSE;
 }
 
-my_bool test_get_all_bits(MY_BITMAP *map, uint bitsize)
+bool test_get_all_bits(MY_BITMAP *map, uint bitsize)
 {
   uint i;
   bitmap_set_all(map);
@@ -845,7 +845,7 @@ error6:
   return TRUE;
 }
 
-my_bool test_compare_operators(MY_BITMAP *map, uint bitsize)
+bool test_compare_operators(MY_BITMAP *map, uint bitsize)
 {
   uint i, j, test_bit1, test_bit2, test_bit3,test_bit4;
   uint no_loops= bitsize > 128 ? 128 : bitsize;
@@ -951,7 +951,7 @@ error5:
   return TRUE;
 }
 
-my_bool test_count_bits_set(MY_BITMAP *map, uint bitsize)
+bool test_count_bits_set(MY_BITMAP *map, uint bitsize)
 {
   uint i, bit_count=0, test_bit;
   uint no_loops= bitsize > 128 ? 128 : bitsize;
@@ -977,7 +977,7 @@ error2:
   return TRUE;
 }
 
-my_bool test_get_first_bit(MY_BITMAP *map, uint bitsize)
+bool test_get_first_bit(MY_BITMAP *map, uint bitsize)
 {
   uint i, test_bit;
   uint no_loops= bitsize > 128 ? 128 : bitsize;
@@ -1002,7 +1002,7 @@ error2:
   return TRUE;
 }
 
-my_bool test_get_next_bit(MY_BITMAP *map, uint bitsize)
+bool test_get_next_bit(MY_BITMAP *map, uint bitsize)
 {
   uint i, j, test_bit;
   uint no_loops= bitsize > 128 ? 128 : bitsize;
@@ -1021,7 +1021,7 @@ error1:
   return TRUE;
 }
 
-my_bool test_prefix(MY_BITMAP *map, uint bitsize)
+bool test_prefix(MY_BITMAP *map, uint bitsize)
 {
   uint i, j, test_bit;
   uint no_loops= bitsize > 128 ? 128 : bitsize;
@@ -1056,7 +1056,7 @@ error3:
 }
 
 
-my_bool do_test(uint bitsize)
+bool do_test(uint bitsize)
 {
   MY_BITMAP map;
   my_bitmap_map buf[1024];

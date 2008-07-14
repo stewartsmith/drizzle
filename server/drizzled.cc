@@ -50,7 +50,7 @@
 #if SIZEOF_CHARP == 4
 #define MAX_MEM_TABLE_SIZE ~(ulong) 0
 #else
-#define MAX_MEM_TABLE_SIZE ~(ulonglong) 0
+#define MAX_MEM_TABLE_SIZE ~(uint64_t) 0
 #endif
 
 /* We have HAVE_purify below as this speeds up the shutdown of MySQL */
@@ -199,7 +199,7 @@ const char *my_localhost= "localhost";
 /*
   Used with --help for detailed option
 */
-static my_bool opt_help= 0, opt_verbose= 0;
+static bool opt_help= 0, opt_verbose= 0;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -220,8 +220,8 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool lower_case_table_names_used= 0;
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
-static my_bool opt_debugging= 0, opt_external_locking= 0, opt_console= 0;
-static my_bool opt_short_log_format= 0;
+static bool opt_debugging= 0, opt_external_locking= 0, opt_console= 0;
+static bool opt_short_log_format= 0;
 static uint kill_cached_threads, wake_thread;
 static ulong killed_threads, thread_created;
 static ulong max_used_connections;
@@ -243,25 +243,28 @@ static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-my_bool opt_log, opt_slow_log;
+bool opt_log; 
+bool opt_slow_log;
 ulong log_output_options;
-my_bool opt_log_queries_not_using_indexes= 0;
+bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= IF_WIN(1,0);
-bool opt_disable_networking=0, opt_skip_show_db=0;
-my_bool opt_character_set_client_handshake= 1;
+bool opt_disable_networking= false;
+bool opt_skip_show_db= false;
+bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
 bool opt_endinfo, using_udf_functions;
-my_bool locked_in_memory;
+bool locked_in_memory;
 bool opt_using_transactions, using_update_log;
 bool volatile abort_loop;
 bool volatile shutdown_in_progress;
-my_bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
-my_bool opt_reckless_slave = 0;
-my_bool opt_enable_named_pipe= 0;
-my_bool opt_local_infile, opt_slave_compressed_protocol;
-my_bool opt_safe_user_create = 0;
-my_bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
-my_bool opt_log_slave_updates= 0;
+bool opt_skip_slave_start = 0; ///< If set, slave is not autostarted
+bool opt_reckless_slave = 0;
+bool opt_enable_named_pipe= 0;
+bool opt_local_infile;
+bool opt_slave_compressed_protocol;
+bool opt_safe_user_create = 0;
+bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
+bool opt_log_slave_updates= 0;
 
 /*
   Legacy global handlerton. These will be removed (please do not add more).
@@ -269,21 +272,24 @@ my_bool opt_log_slave_updates= 0;
 handlerton *heap_hton;
 handlerton *myisam_hton;
 
-my_bool opt_readonly, use_temp_pool, relay_log_purge;
-my_bool opt_sync_frm;
-my_bool opt_secure_auth= 0;
+bool opt_readonly;
+bool use_temp_pool;
+bool relay_log_purge;
+bool opt_sync_frm;
+bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
-my_bool opt_log_slow_admin_statements= 0;
-my_bool opt_log_slow_slave_statements= 0;
-my_bool lower_case_file_system= 0;
-my_bool opt_old_style_user_limits= 0, trust_function_creators= 0;
+bool opt_log_slow_admin_statements= 0;
+bool opt_log_slow_slave_statements= 0;
+bool lower_case_file_system= 0;
+bool opt_old_style_user_limits= 0;
+bool trust_function_creators= 0;
 /*
   True if there is at least one per-hour limit for some user, so we should
   check them before each query (and possibly reset counters when hour is
   changed). False otherwise.
 */
 volatile bool mqh_used = 0;
-my_bool opt_noacl;
+bool opt_noacl;
 
 ulong opt_binlog_rows_event_max_size;
 const char *binlog_format_names[]= {"MIXED", "STATEMENT", "ROW", NullS};
@@ -301,14 +307,14 @@ uint delay_key_write_options, protocol_version;
 uint lower_case_table_names;
 uint tc_heuristic_recover= 0;
 uint volatile thread_count, thread_running;
-ulonglong thd_startup_options;
+uint64_t thd_startup_options;
 ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
 ulong query_buff_size, slow_launch_time, slave_open_temp_tables;
 ulong open_files_limit, max_binlog_size, max_relay_log_size;
 ulong slave_net_timeout, slave_trans_retries;
-my_bool slave_allow_batching;
+bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
 ulong thread_cache_size=0, thread_pool_size= 0;
@@ -455,9 +461,9 @@ char *opt_logname, *opt_slow_logname;
 
 static bool kill_in_progress, segfaulted;
 #ifdef HAVE_STACK_TRACE_ON_SEGV
-static my_bool opt_do_pstack;
+static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-static my_bool opt_bootstrap, opt_myisam_log;
+static bool opt_bootstrap, opt_myisam_log;
 static int cleanup_done;
 static ulong opt_specialflag, opt_myisam_block_size;
 static char *opt_binlog_index_name;
@@ -3784,13 +3790,13 @@ The minimum value for this variable is 4096.",
    "Deprecated option",
    (char**) &global_system_variables.myisam_max_extra_sort_file_size,
    (char**) &max_system_variables.myisam_max_extra_sort_file_size,
-   0, GET_ULL, REQUIRED_ARG, (ulonglong) MI_MAX_TEMP_LENGTH,
-   0, (ulonglong) MAX_FILE_SIZE, 0, 1, 0},
+   0, GET_ULL, REQUIRED_ARG, (uint64_t) MI_MAX_TEMP_LENGTH,
+   0, (uint64_t) MAX_FILE_SIZE, 0, 1, 0},
   {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
    "Don't use the fast sort index method to created index if the temporary file would get bigger than this.",
    (char**) &global_system_variables.myisam_max_sort_file_size,
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
-   GET_ULL, REQUIRED_ARG, (longlong) LONG_MAX, 0, (ulonglong) MAX_FILE_SIZE,
+   GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
   {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
    "Number of threads to use when repairing MyISAM tables. The value of 1 disables parallel repair.",
@@ -3908,7 +3914,7 @@ The minimum value for this variable is 4096.",
    "Maximum space to use for all relay logs.",
    (char**) &relay_log_space_limit,
    (char**) &relay_log_space_limit, 0, GET_ULL, REQUIRED_ARG, 0L, 0L,
-   (longlong) ULONG_MAX, 0, 1, 0},
+   (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave_compressed_protocol", OPT_SLAVE_COMPRESSED_PROTOCOL,
    "Use compression on master/slave protocol.",
    (char**) &opt_slave_compressed_protocol,
@@ -3923,7 +3929,7 @@ The minimum value for this variable is 4096.",
    "it failed with a deadlock or elapsed lock wait timeout, "
    "before giving up and stopping.",
    (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
-   GET_ULONG, REQUIRED_ARG, 10L, 0L, (longlong) ULONG_MAX, 0, 1, 0},
+   GET_ULONG, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
    "Allow slave to batch requests.",
    (char**) &slave_allow_batching, (char**) &slave_allow_batching,
@@ -4045,7 +4051,7 @@ static int show_slave_running(THD *thd __attribute__((__unused__)),
   var->type= SHOW_MY_BOOL;
   pthread_mutex_lock(&LOCK_active_mi);
   var->value= buff;
-  *((my_bool *)buff)= (my_bool) (active_mi && active_mi->slave_running &&
+  *((bool *)buff)= (bool) (active_mi && active_mi->slave_running &&
                                  active_mi->rli.slave_running);
   pthread_mutex_unlock(&LOCK_active_mi);
   return 0;
@@ -4088,7 +4094,7 @@ static int show_slave_received_heartbeats(THD *thd __attribute__((__unused__)),
     var->type= SHOW_LONGLONG;
     var->value= buff;
     pthread_mutex_lock(&active_mi->rli.data_lock);
-    *((longlong *)buff)= active_mi->received_heartbeats;
+    *((int64_t *)buff)= active_mi->received_heartbeats;
     pthread_mutex_unlock(&active_mi->rli.data_lock);
   }
   else
@@ -4388,10 +4394,10 @@ static void mysql_init_variables(void)
   default_storage_engine_str= (char*) "MyISAM";
   global_system_variables.table_plugin= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
-  global_system_variables.select_limit= (ulonglong) HA_POS_ERROR;
-  max_system_variables.select_limit=    (ulonglong) HA_POS_ERROR;
-  global_system_variables.max_join_size= (ulonglong) HA_POS_ERROR;
-  max_system_variables.max_join_size=   (ulonglong) HA_POS_ERROR;
+  global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;
+  max_system_variables.select_limit=    (uint64_t) HA_POS_ERROR;
+  global_system_variables.max_join_size= (uint64_t) HA_POS_ERROR;
+  max_system_variables.max_join_size=   (uint64_t) HA_POS_ERROR;
   global_system_variables.old_alter_table= 0;
   global_system_variables.binlog_format= BINLOG_FORMAT_UNSPEC;
   /*
@@ -4885,7 +4891,7 @@ static void get_options(int *argc,char **argv)
     Set some global variables from the global_system_variables
     In most cases the global variables will not be used
   */
-  my_disable_locking= myisam_single_user= test(opt_external_locking == 0);
+  my_disable_locking= myisam_single_user= test((opt_external_locking == 0));
   my_default_record_cache_size=global_system_variables.read_buff_size;
   myisam_max_temp_length=
     (my_off_t) global_system_variables.myisam_max_sort_file_size;
@@ -4895,7 +4901,7 @@ static void get_options(int *argc,char **argv)
 
   /* long_query_time is in microseconds */
   global_system_variables.long_query_time= max_system_variables.long_query_time=
-    (longlong) (long_query_time * 1000000.0);
+    (int64_t) (long_query_time * 1000000.0);
 
   if (opt_short_log_format)
     opt_specialflag|= SPECIAL_SHORT_LOG_FORMAT;

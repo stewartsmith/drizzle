@@ -54,8 +54,8 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (info->opt_flag & READ_CACHE_USED)
     {
       reinit_io_cache(&info->rec_cache,READ_CACHE,0,
-		      (pbool) (info->lock_type != F_UNLCK),
-		      (pbool) test(info->update & HA_STATE_ROW_CHANGED)
+		      (bool) (info->lock_type != F_UNLCK),
+		      (bool) test(info->update & HA_STATE_ROW_CHANGED)
 		      );
     }
     info->update= ((info->update & HA_STATE_CHANGED) | HA_STATE_NEXT_FOUND |
@@ -101,7 +101,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       if (!(init_io_cache(&info->rec_cache,info->dfile,
 			 (uint) min(info->state->data_file_length+1,
 				    cache_size),
-			  READ_CACHE,0L,(pbool) (info->lock_type != F_UNLCK),
+			  READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
 	info->opt_flag|=READ_CACHE_USED;
@@ -115,8 +115,8 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (info->opt_flag & READ_CACHE_USED)
     {
       reinit_io_cache(&info->rec_cache,READ_CACHE,info->nextpos,
-		      (pbool) (info->lock_type != F_UNLCK),
-		      (pbool) test(info->update & HA_STATE_ROW_CHANGED));
+		      (bool) (info->lock_type != F_UNLCK),
+		      (bool) test(info->update & HA_STATE_ROW_CHANGED));
       info->update&= ~HA_STATE_ROW_CHANGED;
       if (share->concurrent_insert)
 	info->rec_cache.end_of_file=info->state->data_file_length;
@@ -136,7 +136,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	!share->state.header.uniques)
       if (!(init_io_cache(&info->rec_cache,info->dfile, cache_size,
 			 WRITE_CACHE,info->state->data_file_length,
-			  (pbool) (info->lock_type != F_UNLCK),
+			  (bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
 	info->opt_flag|=WRITE_CACHE_USED;

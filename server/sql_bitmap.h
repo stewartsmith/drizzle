@@ -46,14 +46,14 @@ public:
   void set_all() { bitmap_set_all(&map); }
   void clear_all() { bitmap_clear_all(&map); }
   void intersect(Bitmap& map2) { bitmap_intersect(&map, &map2.map); }
-  void intersect(ulonglong map2buff)
+  void intersect(uint64_t map2buff)
   {
     MY_BITMAP map2;
-    bitmap_init(&map2, (uint32 *)&map2buff, sizeof(ulonglong)*8, 0);
+    bitmap_init(&map2, (uint32 *)&map2buff, sizeof(uint64_t)*8, 0);
     bitmap_intersect(&map, &map2);
   }
-  /* Use highest bit for all bits above sizeof(ulonglong)*8. */
-  void intersect_extended(ulonglong map2buff)
+  /* Use highest bit for all bits above sizeof(uint64_t)*8. */
+  void intersect_extended(uint64_t map2buff)
   {
     intersect(map2buff);
     if (map.n_bits > sizeof(uint64_t) * 8)
@@ -143,59 +143,59 @@ public:
     *s=0;
     return buf;
   }
-  ulonglong to_ulonglong() const
+  uint64_t to_uint64_t() const
   {
     if (sizeof(buffer) >= 8)
       return uint8korr(buffer);
     assert(sizeof(buffer) >= 4);
-    return (ulonglong) uint4korr(buffer);
+    return (uint64_t) uint4korr(buffer);
   }
 };
 
 template <> class Bitmap<64>
 {
-  ulonglong map;
+  uint64_t map;
 public:
   Bitmap<64>() { map= 0; }
   explicit Bitmap<64>(uint prefix_to_set) { set_prefix(prefix_to_set); }
   void init() { }
   void init(uint prefix_to_set) { set_prefix(prefix_to_set); }
   uint length() const { return 64; }
-  void set_bit(uint n) { map|= ((ulonglong)1) << n; }
-  void clear_bit(uint n) { map&= ~(((ulonglong)1) << n); }
+  void set_bit(uint n) { map|= ((uint64_t)1) << n; }
+  void clear_bit(uint n) { map&= ~(((uint64_t)1) << n); }
   void set_prefix(uint n)
   {
     if (n >= length())
       set_all();
     else
-      map= (((ulonglong)1) << n)-1;
+      map= (((uint64_t)1) << n)-1;
   }
-  void set_all() { map=~(ulonglong)0; }
-  void clear_all() { map=(ulonglong)0; }
+  void set_all() { map=~(uint64_t)0; }
+  void clear_all() { map=(uint64_t)0; }
   void intersect(Bitmap<64>& map2) { map&= map2.map; }
-  void intersect(ulonglong map2) { map&= map2; }
-  void intersect_extended(ulonglong map2) { map&= map2; }
+  void intersect(uint64_t map2) { map&= map2; }
+  void intersect_extended(uint64_t map2) { map&= map2; }
   void subtract(Bitmap<64>& map2) { map&= ~map2.map; }
   void merge(Bitmap<64>& map2) { map|= map2.map; }
-  my_bool is_set(uint n) const { return test(map & (((ulonglong)1) << n)); }
-  my_bool is_prefix(uint n) const { return map == (((ulonglong)1) << n)-1; }
-  my_bool is_clear_all() const { return map == (ulonglong)0; }
-  my_bool is_set_all() const { return map == ~(ulonglong)0; }
+  my_bool is_set(uint n) const { return test(map & (((uint64_t)1) << n)); }
+  my_bool is_prefix(uint n) const { return map == (((uint64_t)1) << n)-1; }
+  my_bool is_clear_all() const { return map == (uint64_t)0; }
+  my_bool is_set_all() const { return map == ~(uint64_t)0; }
   my_bool is_subset(const Bitmap<64>& map2) const { return !(map & ~map2.map); }
   my_bool is_overlapping(const Bitmap<64>& map2) const { return (map & map2.map)!= 0; }
   my_bool operator==(const Bitmap<64>& map2) const { return map == map2.map; }
-  char *print(char *buf) const { longlong2str(map,buf,16); return buf; }
-  ulonglong to_ulonglong() const { return map; }
+  char *print(char *buf) const { int64_t2str(map,buf,16); return buf; }
+  uint64_t to_uint64_t() const { return map; }
 };
 
 
-/* An iterator to quickly walk over bits in unlonglong bitmap. */
+/* An iterator to quickly walk over bits in unint64_t bitmap. */
 class Table_map_iterator
 {
-  ulonglong bmp;
+  uint64_t bmp;
   uint no;
 public:
-  Table_map_iterator(ulonglong t) : bmp(t), no(0) {}
+  Table_map_iterator(uint64_t t) : bmp(t), no(0) {}
   int next_bit()
   {
     static const char last_bit[16]= {32, 0, 1, 0, 

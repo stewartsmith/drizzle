@@ -313,7 +313,7 @@ static void do_field_string(Copy_field *copy)
 static void do_field_enum(Copy_field *copy)
 {
   if (copy->from_field->val_int() == 0)
-    ((Field_enum *) copy->to_field)->store_type((ulonglong) 0);
+    ((Field_enum *) copy->to_field)->store_type((uint64_t) 0);
   else
     do_field_string(copy);
 }
@@ -336,7 +336,7 @@ static void do_field_varbinary_pre50(Copy_field *copy)
 
 static void do_field_int(Copy_field *copy)
 {
-  longlong value= copy->from_field->val_int();
+  int64_t value= copy->from_field->val_int();
   copy->to_field->store(value,
                         test(copy->from_field->flags & UNSIGNED_FLAG));
 }
