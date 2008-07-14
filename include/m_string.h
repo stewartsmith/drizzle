@@ -333,12 +333,12 @@ static inline const uchar *skip_trailing_space(const uchar *ptr,size_t len)
 
   if (len > 20)
   {
-    const uchar *end_words= (const uchar *)(intptr)
-      (((uint64_t)(intptr)end) / SIZEOF_INT * SIZEOF_INT);
-    const uchar *start_words= (const uchar *)(intptr)
-       ((((uint64_t)(intptr)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
+    const uchar *end_words= (const uchar *)(intptr_t)
+      (((uint64_t)(intptr_t)end) / SIZEOF_INT * SIZEOF_INT);
+    const uchar *start_words= (const uchar *)(intptr_t)
+       ((((uint64_t)(intptr_t)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
 
-    DBUG_ASSERT(((uint64_t)(intptr)ptr) >= SIZEOF_INT);
+    DBUG_ASSERT(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);
     if (end_words > ptr)
     {
       while (end > end_words && end[-1] == 0x20)

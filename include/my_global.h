@@ -746,16 +746,6 @@ typedef uint32_t	ulong;		  /* Short for unsigned long */
 typedef int64_t	int64_t;
 #endif
 
-#if SIZEOF_CHARP == SIZEOF_INT
-typedef int intptr;
-#elif SIZEOF_CHARP == SIZEOF_LONG
-typedef long intptr;
-#elif SIZEOF_CHARP == SIZEOF_LONG_LONG
-typedef long long intptr;
-#else
-#error sizeof(void *) is neither sizeof(int) nor sizeof(long) nor sizeof(long long)
-#endif
-
 #define MY_ERRPTR ((void*)(intptr)1)
 
 #if SIZEOF_OFF_T > 4
