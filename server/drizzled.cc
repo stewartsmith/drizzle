@@ -2630,15 +2630,9 @@ int main(int argc, char **argv)
     unireg_abort(1);				// Will do exit
 
   init_signals();
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
-  {
-    struct sched_param tmp_sched_param;
 
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= my_thread_stack_size*2;
-    (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
-  }
   pthread_attr_setstacksize(&connection_attrib,my_thread_stack_size);
+
 #ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
   {
     /* Retrieve used stack size;  Needed for checking stack overflows */
