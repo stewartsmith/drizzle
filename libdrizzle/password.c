@@ -134,23 +134,6 @@ void hash_password(ulong *result, const char *password, uint password_len)
 
 
 /*
-    Create password to be stored in user database from raw string
-    Used for pre-4.1 password handling
-  SYNOPSIS
-    make_scrambled_password_323()
-    to        OUT store scrambled password here
-    password  IN  user-supplied password
-*/
-
-void make_scrambled_password_323(char *to, const char *password)
-{
-  ulong hash_res[2];
-  hash_password(hash_res, password, (uint) strlen(password));
-  sprintf(to, "%08lx%08lx", hash_res[0], hash_res[1]);
-}
-
-
-/*
     Scramble string with password.
     Used in pre 4.1 authentication phase.
   SYNOPSIS
@@ -184,98 +167,10 @@ void scramble_323(char *to, const char *message, const char *password)
   *to= 0;
 }
 
-
-/*
-    Check scrambled message
-    Used in pre 4.1 password handling
-  SYNOPSIS
-    check_scramble_323()
-    scrambled  scrambled message to check.
-    message    original random message which was used for scrambling; must
-               be exactly SCRAMBLED_LENGTH_323 bytes long and
-               NULL-terminated.
-    hash_pass  password which should be used for scrambling
-    All params are IN.
-
-  RETURN VALUE
-    0 - password correct
-   !0 - password invalid
-*/
-
-my_bool
-check_scramble_323(const char *scrambled, const char *message,
-                   ulong *hash_pass)
-{
-  struct rand_struct rand_st;
-  ulong hash_message[2];
-  char buff[16],*to,extra;                      /* Big enough for check */
-  const char *pos;
-
-  hash_password(hash_message, message, SCRAMBLE_LENGTH_323);
-  randominit(&rand_st,hash_pass[0] ^ hash_message[0],
-             hash_pass[1] ^ hash_message[1]);
-  to=buff;
-  DBUG_ASSERT(sizeof(buff) > SCRAMBLE_LENGTH_323);
-  for (pos=scrambled ; *pos && to < buff+sizeof(buff) ; pos++)
-    *to++=(char) (floor(my_rnd(&rand_st)*31)+64);
-  if (pos-scrambled != SCRAMBLE_LENGTH_323)
-    return 1;
-  extra=(char) (floor(my_rnd(&rand_st)*31));
-  to=buff;
-  while (*scrambled)
-  {
-    if (*scrambled++ != (char) (*to++ ^ extra))
-      return 1;                                 /* Wrong password */
-  }
-  return 0;
-}
-
 static inline uint8 char_val(uint8 X)
 {
   return (uint) (X >= '0' && X <= '9' ? X-'0' :
       X >= 'A' && X <= 'Z' ? X-'A'+10 : X-'a'+10);
-}
-
-
-/*
-    Convert password from hex string (as stored in mysql.user) to binary form.
-  SYNOPSIS
-    get_salt_from_password_323()
-    res       OUT store salt here 
-    password  IN  password string as stored in mysql.user
-  NOTE
-    This function does not have length check for passwords. It will just crash
-    Password hashes in old format must have length divisible by 8
-*/
-
-void get_salt_from_password_323(ulong *res, const char *password)
-{
-  res[0]= res[1]= 0;
-  if (password)
-  {
-    while (*password)
-    {
-      ulong val=0;
-      uint i;
-      for (i=0 ; i < 8 ; i++)
-        val=(val << 4)+char_val(*password++);
-      *res++=val;
-    }
-  }
-}
-
-
-/*
-    Convert scrambled password from binary form to asciiz hex string.
-  SYNOPSIS
-    make_password_from_salt_323()
-    to    OUT store resulting string password here, at least 17 bytes 
-    salt  IN  password in salt format, 2 ulongs 
-*/
-
-void make_password_from_salt_323(char *to, const ulong *salt)
-{
-  sprintf(to,"%08lx%08lx", salt[0], salt[1]);
 }
 
 
