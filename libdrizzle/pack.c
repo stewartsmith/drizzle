@@ -45,34 +45,34 @@ ulong STDCALL net_field_length(uchar **packet)
 }
 
 /* The same as above but returns int64_t */
-my_uint64_t net_field_length_ll(uchar **packet)
+uint64_t net_field_length_ll(uchar **packet)
 {
   register uchar *pos= *packet;
   if (*pos < 251)
   {
     (*packet)++;
-    return (my_uint64_t) *pos;
+    return (uint64_t) *pos;
   }
   if (*pos == 251)
   {
     (*packet)++;
-    return (my_uint64_t) NULL_LENGTH;
+    return (uint64_t) NULL_LENGTH;
   }
   if (*pos == 252)
   {
     (*packet)+=3;
-    return (my_uint64_t) uint2korr(pos+1);
+    return (uint64_t) uint2korr(pos+1);
   }
   if (*pos == 253)
   {
     (*packet)+=4;
-    return (my_uint64_t) uint3korr(pos+1);
+    return (uint64_t) uint3korr(pos+1);
   }
   (*packet)+=9;					/* Must be 254 when here */
 #ifdef NO_CLIENT_LONGLONG
-  return (my_uint64_t) uint4korr(pos+1);
+  return (uint64_t) uint4korr(pos+1);
 #else
-  return (my_uint64_t) uint8korr(pos+1);
+  return (uint64_t) uint8korr(pos+1);
 #endif
 }
 

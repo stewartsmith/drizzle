@@ -931,7 +931,7 @@ public:
                       uint max_length __attribute__((__unused__)),
                       bool low_byte_first __attribute__((__unused__)))
   {
-    int64 val;
+    int64_t val;
 #ifdef WORDS_BIGENDIAN
     if (table->s->db_low_byte_first)
       val = sint8korr(from);
@@ -952,7 +952,7 @@ public:
                               uint param_data __attribute__((__unused__)),
                               bool low_byte_first __attribute__((__unused__)))
   {
-    int64 val;
+    int64_t val;
 #ifdef WORDS_BIGENDIAN
     if (low_byte_first)
       val = sint8korr(from);

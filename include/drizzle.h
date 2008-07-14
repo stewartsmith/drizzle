@@ -92,17 +92,9 @@ typedef struct st_mysql_field {
 typedef char **MYSQL_ROW;		/* return data as array of strings */
 typedef unsigned int MYSQL_FIELD_OFFSET; /* offset to current field */
 
-#ifndef _global_h
-#if defined(NO_CLIENT_LONG_LONG)
-typedef unsigned long my_uint64_t;
-#else
-typedef unsigned long long my_uint64_t;
-#endif
-#endif
-
 #include "typelib.h"
 
-#define MYSQL_COUNT_ERROR (~(my_uint64_t) 0)
+#define MYSQL_COUNT_ERROR (~(uint64_t) 0)
 
 /* backward compatibility define - to be removed eventually */
 #define ER_WARN_DATA_TRUNCATED WARN_DATA_TRUNCATED
@@ -122,7 +114,7 @@ typedef struct st_mysql_data {
   MYSQL_ROWS *data;
   struct embedded_query_result *embedded_info;
   MEM_ROOT alloc;
-  my_uint64_t rows;
+  uint64_t rows;
   unsigned int fields;
   /* extra info for embedded library */
   void *extension;
@@ -212,9 +204,9 @@ typedef struct st_mysql
   struct charset_info_st *charset;
   MYSQL_FIELD	*fields;
   MEM_ROOT	field_alloc;
-  my_uint64_t affected_rows;
-  my_uint64_t insert_id;		/* id if insert on table with NEXTNR */
-  my_uint64_t extra_info;		/* Not used */
+  uint64_t affected_rows;
+  uint64_t insert_id;		/* id if insert on table with NEXTNR */
+  uint64_t extra_info;		/* Not used */
   unsigned long thread_id;		/* Id for connection in server */
   unsigned long packet_length;
   unsigned int	port;
@@ -249,7 +241,7 @@ typedef struct st_mysql
 
 
 typedef struct st_mysql_res {
-  my_uint64_t  row_count;
+  uint64_t  row_count;
   MYSQL_FIELD	*fields;
   MYSQL_DATA	*data;
   MYSQL_ROWS	*data_cursor;
@@ -320,7 +312,7 @@ void STDCALL mysql_thread_end(void);
   Should definitely be used if one uses shared libraries.
 */
 
-my_uint64_t STDCALL mysql_num_rows(MYSQL_RES *res);
+uint64_t STDCALL mysql_num_rows(MYSQL_RES *res);
 unsigned int STDCALL mysql_num_fields(MYSQL_RES *res);
 my_bool STDCALL mysql_eof(MYSQL_RES *res);
 MYSQL_FIELD *STDCALL mysql_fetch_field_direct(MYSQL_RES *res,
@@ -330,8 +322,8 @@ MYSQL_ROW_OFFSET STDCALL mysql_row_tell(MYSQL_RES *res);
 MYSQL_FIELD_OFFSET STDCALL mysql_field_tell(MYSQL_RES *res);
 
 unsigned int STDCALL mysql_field_count(MYSQL *mysql);
-my_uint64_t STDCALL mysql_affected_rows(MYSQL *mysql);
-my_uint64_t STDCALL mysql_insert_id(MYSQL *mysql);
+uint64_t STDCALL mysql_affected_rows(MYSQL *mysql);
+uint64_t STDCALL mysql_insert_id(MYSQL *mysql);
 unsigned int STDCALL mysql_errno(MYSQL *mysql);
 const char * STDCALL mysql_error(MYSQL *mysql);
 const char *STDCALL mysql_sqlstate(MYSQL *mysql);
@@ -410,7 +402,7 @@ int		STDCALL mysql_options(MYSQL *mysql,enum mysql_option option,
 				      const void *arg);
 void		STDCALL mysql_free_result(MYSQL_RES *result);
 void		STDCALL mysql_data_seek(MYSQL_RES *result,
-					my_uint64_t offset);
+					uint64_t offset);
 MYSQL_ROW_OFFSET STDCALL mysql_row_seek(MYSQL_RES *result,
 						MYSQL_ROW_OFFSET offset);
 MYSQL_FIELD_OFFSET STDCALL mysql_field_seek(MYSQL_RES *result,

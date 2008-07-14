@@ -746,15 +746,6 @@ typedef uint32_t	ulong;		  /* Short for unsigned long */
 typedef int64_t	int64_t;
 #endif
 
-#ifndef HAVE_INT64
-typedef int64_t int64;
-#endif
-#ifndef HAVE_UINT64
-typedef uint64_t uint64;
-#endif
-
-typedef uint64_t my_uint64_t;
-
 #if SIZEOF_CHARP == SIZEOF_INT
 typedef int intptr;
 #elif SIZEOF_CHARP == SIZEOF_LONG

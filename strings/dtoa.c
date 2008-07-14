@@ -539,10 +539,10 @@ double my_atof(const char *nptr)
   TODO: check if we can get rid of the above two
 */
 
-typedef int32 Long;
-typedef uint32 ULong;
-typedef int64 LLong;
-typedef uint64 ULLong;
+typedef int32_t Long;
+typedef uint32_t ULong;
+typedef int64_t LLong;
+typedef uint64_t ULLong;
 
 typedef union { double d; ULong L[2]; } U;
 
