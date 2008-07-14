@@ -294,9 +294,6 @@ struct st_myisam_info {
 
   index_cond_func_t index_cond_func;   /* Index condition function */
   void *index_cond_func_arg;           /* parameter for the func */
-#ifdef __WIN__
-  my_bool owned_by_merge;                       /* This MyISAM table is part of a merge union */
-#endif
   THR_LOCK_DATA lock;
   uchar  *rtree_recursion_state;	/* For RTREE */
   int     rtree_recursion_depth;
@@ -747,7 +744,7 @@ void mi_get_status(void* param, int concurrent_insert);
 void mi_update_status(void* param);
 void mi_restore_status(void* param);
 void mi_copy_status(void* to,void *from);
-my_bool mi_check_status(void* param);
+bool mi_check_status(void* param);
 
 extern MI_INFO *test_if_reopen(char *filename);
 my_bool check_table_is_closed(const char *name, const char *where);

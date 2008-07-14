@@ -1403,8 +1403,8 @@ err:
 
 #define EXTRA_OPTIONS 3 /* options for: 'foo', 'plugin-foo' and NULL */
 
-typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_bool_t, my_bool);
-typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_bool_t, my_bool);
+typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_bool_t, bool);
+typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_bool_t, bool);
 typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_str_t, char *);
 typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_str_t, char *);
 
@@ -2493,7 +2493,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       continue;
     switch (opt->flags & PLUGIN_VAR_TYPEMASK) {
     case PLUGIN_VAR_BOOL:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_bool_t *) opt);
+      SET_PLUGIN_VAR_RESOLVE(((thdvar_bool_t *) opt));
       break;
     case PLUGIN_VAR_INT:
       SET_PLUGIN_VAR_RESOLVE((thdvar_int_t *) opt);
