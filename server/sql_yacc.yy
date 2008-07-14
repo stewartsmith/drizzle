@@ -312,7 +312,7 @@ bool setup_select_in_parentheses(LEX *lex)
   int  num;
   ulong ulong_num;
   uint64_t ulonglong_number;
-  longlong longlong_number;
+  int64_t longlong_number;
   LEX_STRING lex_str;
   LEX_STRING *lex_str_ptr;
   LEX_SYMBOL symbol;
@@ -6161,12 +6161,12 @@ NUM_literal:
           NUM
           {
             int error;
-            $$ = new Item_int($1.str, (longlong) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | LONG_NUM
           {
             int error;
-            $$ = new Item_int($1.str, (longlong) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | ULONGLONG_NUM
           { $$ = new Item_uint($1.str, $1.length); }

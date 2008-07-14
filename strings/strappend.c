@@ -27,7 +27,7 @@
 #include "m_string.h"
 
 
-void strappend(register char *s, size_t len, pchar fill)
+void strappend(register char *s, size_t len, char fill)
 {
   register char *endpos;
 

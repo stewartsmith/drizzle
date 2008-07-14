@@ -147,7 +147,7 @@ init_functions(IO_CACHE* info)
 
 int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 		  enum cache_type type, my_off_t seek_offset,
-		  pbool use_async_io, myf cache_myflags)
+		  bool use_async_io, myf cache_myflags)
 {
   size_t min_cache;
   my_off_t pos;
@@ -319,8 +319,8 @@ static void my_aiowait(my_aio_result *result)
 
 bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 			my_off_t seek_offset,
-			pbool use_async_io __attribute__((unused)),
-			pbool clear_cache)
+			bool use_async_io __attribute__((unused)),
+			bool clear_cache)
 {
   DBUG_ENTER("reinit_io_cache");
   DBUG_PRINT("enter",("cache: 0x%lx type: %d  seek_offset: %lu  clear_cache: %d",

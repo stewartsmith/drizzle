@@ -47,13 +47,13 @@ typedef struct st_queue {
 typedef int (*queue_compare)(void *,uchar *, uchar *);
 
 int init_queue(QUEUE *queue,uint max_elements,uint offset_to_key,
-	       pbool max_at_top, queue_compare compare,
-	       void *first_cmp_arg);
+               bool max_at_top, queue_compare compare,
+               void *first_cmp_arg);
 int init_queue_ex(QUEUE *queue,uint max_elements,uint offset_to_key,
-	       pbool max_at_top, queue_compare compare,
-	       void *first_cmp_arg, uint auto_extent);
+                  bool max_at_top, queue_compare compare,
+                  void *first_cmp_arg, uint auto_extent);
 int reinit_queue(QUEUE *queue,uint max_elements,uint offset_to_key,
-                 pbool max_at_top, queue_compare compare,
+                 bool max_at_top, queue_compare compare,
                  void *first_cmp_arg);
 int resize_queue(QUEUE *queue, uint max_elements);
 void delete_queue(QUEUE *queue);

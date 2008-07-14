@@ -106,7 +106,7 @@ extern char _dig_vec_lower[];
 	/* Prototypes for string functions */
 
 #if !defined(bfill) && !defined(HAVE_BFILL)
-extern	void bfill(uchar *dst,size_t len,pchar fill);
+extern	void bfill(uchar *dst,size_t len,char fill);
 #endif
 
 #if !defined(bzero) && !defined(HAVE_BZERO)
@@ -136,12 +136,12 @@ extern	void bmove(uuchar *dst, const uchar *src,size_t len);
 extern	void bmove_upp(uchar *dst,const uchar *src,size_t len);
 extern	void bchange(uchar *dst,size_t old_len,const uchar *src,
 		     size_t new_len,size_t tot_len);
-extern	void strappend(char *s,size_t len,pchar fill);
+extern	void strappend(char *s,size_t len,char fill);
 extern	char *strend(const char *s);
-extern  char *strcend(const char *, pchar);
+extern  char *strcend(const char *, char);
 extern	char *strfield(char *src,int fields,int chars,int blanks,
 			   int tabch);
-extern	char *strfill(char * s,size_t len,pchar fill);
+extern	char *strfill(char * s,size_t len,char fill);
 extern	size_t strinstr(const char *str,const char *search);
 extern  size_t r_strinstr(const char *str, size_t from, const char *search);
 extern	char *strkey(char *dst,char *head,char *tail,char *flags);
@@ -167,8 +167,8 @@ extern	char *strxncpy _VARARGS((char *dst,size_t len, const char *src, ...));
 
 #ifdef WANT_STRING_PROTOTYPES
 extern char *strcat(char *, const char *);
-extern char *strchr(const char *, pchar);
-extern char *strrchr(const char *, pchar);
+extern char *strchr(const char *, char);
+extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
 extern int strcmp(const char *, const char *);
 #ifndef __GNUC__

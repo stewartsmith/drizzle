@@ -619,7 +619,7 @@ extern char * my_path(char * to,const char *progname,
 extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
 extern int wild_compare(const char *str,const char *wildstr,
-                        pbool str_is_pattern);
+                        bool str_is_pattern);
 extern WF_PACK *wf_comp(char * str);
 extern int wf_test(struct wild_file_pack *wf_pack,const char *name);
 extern void wf_end(struct wild_file_pack *buffer);
@@ -628,10 +628,10 @@ extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
 extern void soundex(CHARSET_INFO *, char * out_pntr, char * in_pntr,
-                    pbool remove_garbage);
+                    bool remove_garbage);
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,File file,
 			     size_t reclength,enum cache_type type,
-			     pbool use_async_io);
+			     bool use_async_io);
 extern int read_cache_record(RECORD_CACHE *info,uchar *to);
 extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
@@ -654,10 +654,10 @@ void my_store_ptr(uchar *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(uchar *ptr, size_t pack_length);
 extern int init_io_cache(IO_CACHE *info,File file,size_t cachesize,
 			 enum cache_type type,my_off_t seek_offset,
-			 pbool use_async_io, myf cache_myflags);
+			 bool use_async_io, myf cache_myflags);
 extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
-			       my_off_t seek_offset,pbool use_async_io,
-			       pbool clear_cache);
+			       my_off_t seek_offset,bool use_async_io,
+			       bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
 extern int _my_b_read(IO_CACHE *info,uchar *Buffer,size_t Count);
 extern int _my_b_read_r(IO_CACHE *info,uchar *Buffer,size_t Count);

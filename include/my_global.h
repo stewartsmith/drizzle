@@ -455,21 +455,6 @@ typedef int	my_socket;	/* File descriptor for sockets */
 #define sig_handler RETSIGTYPE
 C_MODE_START
 typedef void	(*sig_return)(void);/* Returns type from signal */
-C_MODE_END
-#if defined(__GNUC__) && !defined(_lint)
-typedef char	pchar;		/* Mixed prototypes can take char */
-typedef char	puchar;		/* Mixed prototypes can take char */
-typedef char	pbool;		/* Mixed prototypes can take char */
-typedef short	pshort;		/* Mixed prototypes can take short int */
-typedef float	pfloat;		/* Mixed prototypes can take float */
-#else
-typedef int	pchar;		/* Mixed prototypes can't take char */
-typedef uint	puchar;		/* Mixed prototypes can't take char */
-typedef int	pbool;		/* Mixed prototypes can't take char */
-typedef int	pshort;		/* Mixed prototypes can't take short int */
-typedef double	pfloat;		/* Mixed prototypes can't take float */
-#endif
-C_MODE_START
 typedef int	(*qsort_cmp)(const void *,const void *);
 typedef int	(*qsort_cmp2)(void*, const void *,const void *);
 C_MODE_END

@@ -49,7 +49,7 @@
 */
 
 int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
-	       pbool max_at_top, int (*compare) (void *, uchar *, uchar *),
+	       bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 	       void *first_cmp_arg)
 {
   DBUG_ENTER("init_queue");
@@ -92,7 +92,7 @@ int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 */
 
 int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
-	       pbool max_at_top, int (*compare) (void *, uchar *, uchar *),
+	       bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 	       void *first_cmp_arg, uint auto_extent)
 {
   int ret;
@@ -129,7 +129,7 @@ int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
 */
 
 int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
-		 pbool max_at_top, int (*compare) (void *, uchar *, uchar *),
+		 bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 		 void *first_cmp_arg)
 {
   DBUG_ENTER("reinit_queue");

@@ -129,7 +129,7 @@ static mi_bit_type mask[]=
 
 	/* Read all packed info, allocate memory and fix field structs */
 
-my_bool _mi_read_pack_info(MI_INFO *info, pbool fix_keys)
+my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
 {
   File file;
   int diff_length;
