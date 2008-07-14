@@ -110,7 +110,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     If we are running with external locking, we must update the index file
     that something has changed.
   */
-  if (changed || !my_disable_locking)
+  if (changed)
     key_changed|= HA_STATE_CHANGED;
 
   if (share->calc_checksum)

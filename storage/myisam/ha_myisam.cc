@@ -1352,7 +1352,7 @@ bool ha_myisam::check_and_repair(THD *thd)
 bool ha_myisam::is_crashed() const
 {
   return (file->s->state.changed & STATE_CRASHED ||
-	  (my_disable_locking && file->s->state.open_count));
+	  (file->s->state.open_count));
 }
 
 int ha_myisam::update_row(const uchar *old_data, uchar *new_data)

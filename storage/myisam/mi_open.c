@@ -161,14 +161,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     errpos=2;
 
     VOID(my_seek(kfile,0L,MY_SEEK_SET,MYF(0)));
-    if (!(open_flags & HA_OPEN_TMP_TABLE))
-    {
-      if ((lock_error=my_lock(kfile,F_RDLCK,0L,F_TO_EOF,
-			      MYF(open_flags & HA_OPEN_WAIT_IF_LOCKED ?
-				  0 : MY_DONT_WAIT))) &&
-	  !(open_flags & HA_OPEN_IGNORE_IF_LOCKED))
-	goto err;
-    }
     errpos=3;
     if (my_read(kfile,disk_cache,info_length,MYF(MY_NABP)))
     {
@@ -202,12 +194,12 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     if (!(open_flags & HA_OPEN_FOR_REPAIR) &&
 	((share->state.changed & STATE_CRASHED) ||
 	 ((open_flags & HA_OPEN_ABORT_IF_CRASHED) &&
-	  (my_disable_locking && share->state.open_count))))
+	  (share->state.open_count))))
     {
       DBUG_PRINT("error",("Table is marked as crashed. open_flags: %u  "
-                          "changed: %u  open_count: %u  !locking: %d",
+                          "changed: %u  open_count: %u",
                           open_flags, share->state.changed,
-                          share->state.open_count, my_disable_locking));
+                          share->state.open_count));
       my_errno=((share->state.changed & STATE_CRASHED_ON_REPAIR) ?
 		HA_ERR_CRASHED_ON_REPAIR : HA_ERR_CRASHED_ON_USAGE);
       goto err;
@@ -392,7 +384,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 
     if (! lock_error)
     {
-      VOID(my_lock(kfile,F_UNLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE)));
       lock_error=1;			/* Database unlocked */
     }
 
@@ -582,8 +573,6 @@ err:
     my_free((uchar*) share,MYF(0));
     /* fall through */
   case 3:
-    if (! lock_error)
-      VOID(my_lock(kfile, F_UNLCK, 0L, F_TO_EOF, MYF(MY_SEEK_NOT_DONE)));
     /* fall through */
   case 2:
     my_afree(disk_cache);
