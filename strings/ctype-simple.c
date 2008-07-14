@@ -559,14 +559,14 @@ noconv:
 }
 
 
-longlong my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
+int64_t my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
 			  const char *nptr, size_t l, int base,
 			  char **endptr,int *err)
 {
   int negative;
-  register ulonglong cutoff;
+  register uint64_t cutoff;
   register uint cutlim;
-  register ulonglong i;
+  register uint64_t i;
   register const char *s, *e;
   const char *save;
   int overflow;
@@ -625,8 +625,8 @@ longlong my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
 
   save = s;
 
-  cutoff = (~(ulonglong) 0) / (unsigned long int) base;
-  cutlim = (uint) ((~(ulonglong) 0) % (unsigned long int) base);
+  cutoff = (~(uint64_t) 0) / (unsigned long int) base;
+  cutlim = (uint) ((~(uint64_t) 0) % (unsigned long int) base);
 
   overflow = 0;
   i = 0;
@@ -647,7 +647,7 @@ longlong my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
       overflow = 1;
     else
     {
-      i *= (ulonglong) base;
+      i *= (uint64_t) base;
       i += c;
     }
   }
@@ -660,10 +660,10 @@ longlong my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
 
   if (negative)
   {
-    if (i  > (ulonglong) LONGLONG_MIN)
+    if (i  > (uint64_t) LONGLONG_MIN)
       overflow = 1;
   }
-  else if (i > (ulonglong) LONGLONG_MAX)
+  else if (i > (uint64_t) LONGLONG_MAX)
     overflow = 1;
 
   if (overflow)
@@ -672,7 +672,7 @@ longlong my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
     return negative ? LONGLONG_MIN : LONGLONG_MAX;
   }
 
-  return (negative ? -((longlong) i) : (longlong) i);
+  return (negative ? -((int64_t) i) : (int64_t) i);
 
 noconv:
   err[0]= EDOM;
@@ -682,14 +682,14 @@ noconv:
 }
 
 
-ulonglong my_strntoull_8bit(CHARSET_INFO *cs,
+uint64_t my_strntoull_8bit(CHARSET_INFO *cs,
 			   const char *nptr, size_t l, int base,
 			   char **endptr, int *err)
 {
   int negative;
-  register ulonglong cutoff;
+  register uint64_t cutoff;
   register uint cutlim;
-  register ulonglong i;
+  register uint64_t i;
   register const char *s, *e;
   const char *save;
   int overflow;
@@ -748,8 +748,8 @@ ulonglong my_strntoull_8bit(CHARSET_INFO *cs,
 
   save = s;
 
-  cutoff = (~(ulonglong) 0) / (unsigned long int) base;
-  cutlim = (uint) ((~(ulonglong) 0) % (unsigned long int) base);
+  cutoff = (~(uint64_t) 0) / (unsigned long int) base;
+  cutlim = (uint) ((~(uint64_t) 0) % (unsigned long int) base);
 
   overflow = 0;
   i = 0;
@@ -771,7 +771,7 @@ ulonglong my_strntoull_8bit(CHARSET_INFO *cs,
       overflow = 1;
     else
     {
-      i *= (ulonglong) base;
+      i *= (uint64_t) base;
       i += c;
     }
   }
@@ -785,10 +785,10 @@ ulonglong my_strntoull_8bit(CHARSET_INFO *cs,
   if (overflow)
   {
     err[0]= ERANGE;
-    return (~(ulonglong) 0);
+    return (~(uint64_t) 0);
   }
 
-  return (negative ? -((longlong) i) : (longlong) i);
+  return (negative ? -((int64_t) i) : (int64_t) i);
 
 noconv:
   err[0]= EDOM;
@@ -879,22 +879,22 @@ size_t my_long10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-size_t my_longlong10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
+size_t my_int64_t10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
                                  char *dst, size_t len, int radix,
-                                 longlong val)
+                                 int64_t val)
 {
   char buffer[65];
   register char *p, *e;
   long long_val;
   uint sign= 0;
-  ulonglong uval = (ulonglong)val;
+  uint64_t uval = (uint64_t)val;
   
   if (radix < 0)
   {
     if (val < 0)
     {
       /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
-      uval = (ulonglong)0 - uval;
+      uval = (uint64_t)0 - uval;
       *dst++= '-';
       len--;
       sign= 1;
@@ -911,9 +911,9 @@ size_t my_longlong10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
     goto cnv;
   }
   
-  while (uval > (ulonglong) LONG_MAX)
+  while (uval > (uint64_t) LONG_MAX)
   {
-    ulonglong quo= uval/(uint) 10;
+    uint64_t quo= uval/(uint) 10;
     uint rem= (uint) (uval- quo* (uint) 10);
     *--p = '0' + rem;
     uval= quo;
@@ -1035,7 +1035,8 @@ int my_wildcmp_8bit(CHARSET_INFO *cs,
 ** ptr		Pointer to LIKE string.
 ** ptr_length	Length of LIKE string.
 ** escape	Escape character in LIKE.  (Normally '\').
-**		All escape characters should be removed from min_str and max_str
+**		All escape characters should be removed from 
+**              min_str and max_str
 ** res_length	Length of min_str and max_str.
 ** min_str	Smallest case sensitive string that ranges LIKE.
 **		Should be space padded to res_length.
@@ -1047,11 +1048,11 @@ int my_wildcmp_8bit(CHARSET_INFO *cs,
 */
 
 my_bool my_like_range_simple(CHARSET_INFO *cs,
-			     const char *ptr, size_t ptr_length,
-			     pbool escape, pbool w_one, pbool w_many,
-			     size_t res_length,
-			     char *min_str,char *max_str,
-			     size_t *min_length, size_t *max_length)
+                             const char *ptr, size_t ptr_length,
+                             char escape, char w_one, char w_many,
+                             size_t res_length,
+                             char *min_str,char *max_str,
+                             size_t *min_length, size_t *max_length)
 {
   const char *end= ptr + ptr_length;
   char *min_org=min_str;
@@ -1366,7 +1367,7 @@ static my_bool my_coll_init_simple(CHARSET_INFO *cs,
 }
 
 
-longlong my_strtoll10_8bit(CHARSET_INFO *cs __attribute__((unused)),
+int64_t my_strtoll10_8bit(CHARSET_INFO *cs __attribute__((unused)),
                            const char *nptr, char **endptr, int *error)
 {
   return my_strtoll10(nptr, endptr, error);
@@ -1392,10 +1393,10 @@ int my_mb_ctype_8bit(CHARSET_INFO *cs, int *ctype,
   properly handle a constant expression containing a mod operator
 */
 #if defined(__NETWARE__) && defined(__MWERKS__)
-static ulonglong ulonglong_max= ~(ulonglong) 0;
-#define ULONGLONG_MAX ulonglong_max
+static uint64_t uint64_t_max= ~(uint64_t) 0;
+#define ULONGLONG_MAX uint64_t_max
 #else
-#define ULONGLONG_MAX           (~(ulonglong) 0)
+#define ULONGLONG_MAX           (~(uint64_t) 0)
 #endif /* __NETWARE__ && __MWERKS__ */
 
     
@@ -1403,7 +1404,7 @@ static ulonglong ulonglong_max= ~(ulonglong) 0;
 #define CUTLIM  (ULONGLONG_MAX % 10)
 #define DIGITS_IN_ULONGLONG 20
 
-static ulonglong d10[DIGITS_IN_ULONGLONG]=
+static uint64_t d10[DIGITS_IN_ULONGLONG]=
 {
   1,
   10,
@@ -1466,7 +1467,7 @@ static ulonglong d10[DIGITS_IN_ULONGLONG]=
     <unsigned integer>   ::= <digit>...
      
   RETURN VALUES
-    Value of string as a signed/unsigned longlong integer
+    Value of string as a signed/unsigned int64_t integer
 
     endptr cannot be NULL. The function will store the end pointer
     to the stop character here.
@@ -1484,13 +1485,13 @@ static ulonglong d10[DIGITS_IN_ULONGLONG]=
     In this case the return value is 0.
 */
 
-ulonglong
+uint64_t
 my_strntoull10rnd_8bit(CHARSET_INFO *cs __attribute__((unused)),
                        const char *str, size_t length, int unsigned_flag,
                        char **endptr, int *error)
 {
   const char *dot, *end9, *beg, *end= str + length;
-  ulonglong ull;
+  uint64_t ull;
   ulong ul;
   uchar ch;
   int shift= 0, digits= 0, negative, addon;
@@ -1528,19 +1529,19 @@ my_strntoull10rnd_8bit(CHARSET_INFO *cs __attribute__((unused)),
       else
       {
         *error= 0;
-        return (ulonglong) (longlong) -(long) ul;
+        return (uint64_t) (int64_t) -(long) ul;
       }
     }
     else
     {
       *error=0;
-      return (ulonglong) ul;
+      return (uint64_t) ul;
     }
   }
   
   digits= str - beg;
 
-  /* Continue to accumulate into ulonglong */
+  /* Continue to accumulate into uint64_t */
   for (dot= NULL, ull= ul; str < end; str++)
   {
     if ((ch= (uchar) (*str - '0')) < 10)
@@ -1644,7 +1645,7 @@ exp:    /* [ E [ <sign> ] <unsigned integer> ] */
 
   if (shift < 0) /* Right shift */
   {
-    ulonglong d, r;
+    uint64_t d, r;
     
     if (-shift >= DIGITS_IN_ULONGLONG)
       goto ret_zero; /* Exponent is a big negative number, return 0 */
@@ -1677,20 +1678,20 @@ ret_sign:
   {
     if (negative)
     {
-      if (ull > (ulonglong) LONGLONG_MIN)
+      if (ull > (uint64_t) LONGLONG_MIN)
       {
         *error= MY_ERRNO_ERANGE;
-        return (ulonglong) LONGLONG_MIN;
+        return (uint64_t) LONGLONG_MIN;
       }
       *error= 0;
-      return (ulonglong) -(longlong) ull;
+      return (uint64_t) -(int64_t) ull;
     }
     else
     {
-      if (ull > (ulonglong) LONGLONG_MAX)
+      if (ull > (uint64_t) LONGLONG_MAX)
       {
         *error= MY_ERRNO_ERANGE;
-        return (ulonglong) LONGLONG_MAX;
+        return (uint64_t) LONGLONG_MAX;
       }
       *error= 0;
       return ull;
@@ -1721,7 +1722,7 @@ ret_too_big:
   *error= MY_ERRNO_ERANGE;
   return unsigned_flag ?
          ULONGLONG_MAX :
-         negative ? (ulonglong) LONGLONG_MIN : (ulonglong) LONGLONG_MAX;
+         negative ? (uint64_t) LONGLONG_MIN : (uint64_t) LONGLONG_MAX;
 }
 
 
@@ -1933,7 +1934,7 @@ MY_CHARSET_HANDLER my_charset_8bit_handler=
     my_casedn_8bit,
     my_snprintf_8bit,
     my_long10_to_str_8bit,
-    my_longlong10_to_str_8bit,
+    my_int64_t10_to_str_8bit,
     my_fill_8bit,
     my_strntol_8bit,
     my_strntoul_8bit,

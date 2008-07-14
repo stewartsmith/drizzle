@@ -88,7 +88,7 @@ static store_key *get_store_key(THD *thd,
 static bool make_simple_join(JOIN *join,TABLE *tmp_table);
 static void make_outerjoin_info(JOIN *join);
 static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *item);
-static bool make_join_readinfo(JOIN *join, ulonglong options, uint no_jbuf_after);
+static bool make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after);
 static bool only_eq_ref_tables(JOIN *join, ORDER *order, table_map tables);
 static void update_depend_map(JOIN *join);
 static void update_depend_map(JOIN *join, ORDER *order);
@@ -96,7 +96,7 @@ static ORDER *remove_const(JOIN *join,ORDER *first_order,COND *cond,
 			   bool change_list, bool *simple_order);
 static int return_zero_rows(JOIN *join, select_result *res,TABLE_LIST *tables,
                             List<Item> &fields, bool send_row,
-                            ulonglong select_options, const char *info,
+                            uint64_t select_options, const char *info,
                             Item *having);
 static COND *build_equal_items(THD *thd, COND *cond,
                                COND_EQUAL *inherited,
@@ -126,7 +126,7 @@ static bool open_tmp_table(TABLE *table);
 static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo, 
                                     MI_COLUMNDEF *start_recinfo,
                                     MI_COLUMNDEF **recinfo,
-				    ulonglong options);
+				    uint64_t options);
 static int do_select(JOIN *join,List<Item> *fields,TABLE *tmp_table);
 
 static enum_nested_loop_state
@@ -958,7 +958,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd, uint uniq_tuple_length_arg,
 */
 
 static
-int setup_semijoin_dups_elimination(JOIN *join, ulonglong options, uint no_jbuf_after)
+int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint no_jbuf_after)
 {
   table_map cur_map= join->const_table_map | PSEUDO_TABLE_BITS;
   struct {
@@ -1411,7 +1411,7 @@ JOIN::optimize()
   if (!conds && outer_join)
   {
     /* Handle the case where we have an OUTER JOIN without a WHERE */
-    conds=new Item_int((longlong) 1,1);	// Always true
+    conds=new Item_int((int64_t) 1,1);	// Always true
   }
   select= make_select(*table, const_table_map,
                       const_table_map, conds, 1, &error);
@@ -1455,7 +1455,7 @@ JOIN::optimize()
       (select_options & SELECT_DESCRIBE) &&
       select_lex->master_unit() == &thd->lex->unit) // upper level SELECT
   {
-    conds=new Item_int((longlong) 0,1);	// Always false
+    conds=new Item_int((int64_t) 0,1);	// Always false
   }
   if (make_join_select(this, select, conds))
   {
@@ -1656,7 +1656,7 @@ JOIN::optimize()
 	      test(select_options & OPTION_BUFFER_RESULT)));
 
   uint no_jbuf_after= make_join_orderinfo(this);
-  ulonglong select_opts_for_readinfo= 
+  uint64_t select_opts_for_readinfo= 
     (select_options & (SELECT_DESCRIBE | SELECT_NO_JOIN_CACHE)) | (0);
 
   sj_tmp_tables= NULL;
@@ -2632,7 +2632,7 @@ bool
 mysql_select(THD *thd, Item ***rref_pointer_array,
 	     TABLE_LIST *tables, uint wild_num, List<Item> &fields,
 	     COND *conds, uint og_num,  ORDER *order, ORDER *group,
-	     Item *having, ORDER *proc_param, ulonglong select_options,
+	     Item *having, ORDER *proc_param, uint64_t select_options,
 	     select_result *result, SELECT_LEX_UNIT *unit,
 	     SELECT_LEX *select_lex)
 {
@@ -4888,13 +4888,13 @@ set_position(JOIN *join,uint idx,JOIN_TAB *table,KEYUSE *key)
     Bitmap of bound IN-equalities.
 */
 
-ulonglong get_bound_sj_equalities(TABLE_LIST *sj_nest, 
+uint64_t get_bound_sj_equalities(TABLE_LIST *sj_nest, 
                                   table_map remaining_tables)
 {
   List_iterator<Item> li(sj_nest->nested_join->sj_outer_expr_list);
   Item *item;
   uint i= 0;
-  ulonglong res= 0;
+  uint64_t res= 0;
   while ((item= li++))
   {
     /*
@@ -4948,7 +4948,7 @@ best_access_path(JOIN      *join,
 {
   KEYUSE *best_key=         0;
   uint best_max_key_part=   0;
-  my_bool found_constraint= 0;
+  bool found_constraint= 0;
   double best=              DBL_MAX;
   double best_time=         DBL_MAX;
   double records=           DBL_MAX;
@@ -4963,7 +4963,7 @@ best_access_path(JOIN      *join,
     KEYUSE *keyuse,*start_key=0;
     double best_records= DBL_MAX;
     uint max_key_part=0;
-    ulonglong bound_sj_equalities= 0;
+    uint64_t bound_sj_equalities= 0;
     bool try_sj_inside_out= false;
     /*
       Discover the bound equalites. We need to do this, if
@@ -5002,7 +5002,7 @@ best_access_path(JOIN      *join,
 
       /* Calculate how many key segments of the current key we can use */
       start_key= keyuse;
-      ulonglong handled_sj_equalities=0;
+      uint64_t handled_sj_equalities=0;
       key_part_map sj_insideout_map= 0;
 
       do /* For each keypart */
@@ -5081,7 +5081,7 @@ best_access_path(JOIN      *join,
         if (try_sj_inside_out && 
             table->covering_keys.is_set(key) &&
             (handled_sj_equalities | bound_sj_equalities) ==     // (1)
-            PREV_BITS(ulonglong, s->emb_sj_nest->sj_in_exprs)) // (1)
+            PREV_BITS(uint64_t, s->emb_sj_nest->sj_in_exprs)) // (1)
         {
           uint n_fixed_parts= max_part_bit(found_part);
           if (n_fixed_parts != keyinfo->key_parts &&
@@ -6277,7 +6277,7 @@ static void calc_used_field_length(THD *thd __attribute__((__unused__)),
   if (null_fields)
     rec_length+=(join_tab->table->s->null_fields+7)/8;
   if (join_tab->table->maybe_null)
-    rec_length+=sizeof(my_bool);
+    rec_length+=sizeof(bool);
   if (blobs)
   {
     uint blob_length=(uint) (join_tab->table->file->stats.mean_rec_length-
@@ -7064,7 +7064,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
             in the ON part of an OUTER JOIN. In this case we want the code
             below to check if we should use 'quick' instead.
           */
-          tmp= new Item_int((longlong) 1,1);	// Always true
+          tmp= new Item_int((int64_t) 1,1);	// Always true
         }
 
       }
@@ -7677,7 +7677,7 @@ uint make_join_orderinfo(JOIN *join)
 */
 
 static bool
-make_join_readinfo(JOIN *join, ulonglong options, uint no_jbuf_after)
+make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after)
 {
   uint i;
   bool statistics= test(!(join->select_options & SELECT_DESCRIBE));
@@ -8334,7 +8334,7 @@ remove_const(JOIN *join,ORDER *first_order, COND *cond,
 
 static int
 return_zero_rows(JOIN *join, select_result *result,TABLE_LIST *tables,
-		 List<Item> &fields, bool send_row, ulonglong select_options,
+		 List<Item> &fields, bool send_row, uint64_t select_options,
 		 const char *info, Item *having)
 {
   if (select_options & SELECT_DESCRIBE)
@@ -8988,7 +8988,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
     {
       int n= cond_equal.current_level.elements + eq_list.elements;
       if (n == 0)
-        return new Item_int((longlong) 1,1);
+        return new Item_int((int64_t) 1,1);
       else if (n == 1)
       {
         if ((item_equal= cond_equal.current_level.pop()))
@@ -9252,7 +9252,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels,
   List<Item> eq_list;
   Item_func_eq *eq_item= 0;
   if (((Item *) item_equal)->const_item() && !item_equal->val_int())
-    return new Item_int((longlong) 0,1); 
+    return new Item_int((int64_t) 0,1); 
   Item *item_const= item_equal->get_const();
   Item_equal_iterator it(*item_equal);
   Item *head;
@@ -9297,7 +9297,7 @@ static Item *eliminate_item_equal(COND *cond, COND_EQUAL *upper_levels,
   if (!cond && !eq_list.head())
   {
     if (!eq_item)
-      return new Item_int((longlong) 1,1);
+      return new Item_int((int64_t) 1,1);
     return eq_item;
   }
 
@@ -10643,10 +10643,10 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
       Select an integer type with the minimal fit precision.
       MY_INT32_NUM_DECIMAL_DIGITS is sign inclusive, don't consider the sign.
       Values with MY_INT32_NUM_DECIMAL_DIGITS digits may or may not fit into 
-      Field_long : make them Field_longlong.  
+      Field_long : make them Field_int64_t.  
     */
     if (item->max_length >= (MY_INT32_NUM_DECIMAL_DIGITS - 1))
-      new_field=new Field_longlong(item->max_length, maybe_null,
+      new_field=new Field_int64_t(item->max_length, maybe_null,
                                    item->name, item->unsigned_flag);
     else
       new_field=new Field_long(item->max_length, maybe_null,
@@ -10952,7 +10952,7 @@ void setup_tmp_table_column_bitmaps(TABLE *table, uchar *bitmaps)
 TABLE *
 create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 		 ORDER *group, bool distinct, bool save_sum_fields,
-		 ulonglong select_options, ha_rows rows_limit,
+		 uint64_t select_options, ha_rows rows_limit,
 		 char *table_alias)
 {
   MEM_ROOT *mem_root_save, own_root;
@@ -11430,7 +11430,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   param->recinfo=recinfo;
   store_record(table,s->default_values);        // Make empty default record
 
-  if (thd->variables.tmp_table_size == ~ (ulonglong) 0)		// No limit
+  if (thd->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
@@ -11877,7 +11877,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   //param->recinfo=recinfo;
   //store_record(table,s->default_values);        // Make empty default record
 
-  if (thd->variables.tmp_table_size == ~ (ulonglong) 0)		// No limit
+  if (thd->variables.tmp_table_size == ~ (uint64_t) 0)		// No limit
     share->max_rows= ~(ha_rows) 0;
   else
     share->max_rows= (ha_rows) (((share->db_type() == heap_hton) ?
@@ -12122,7 +12122,7 @@ static bool open_tmp_table(TABLE *table)
 static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo, 
                                     MI_COLUMNDEF *start_recinfo,
                                     MI_COLUMNDEF **recinfo, 
-				    ulonglong options)
+				    uint64_t options)
 {
   int error;
   MI_KEYDEF keydef;
@@ -12209,7 +12209,7 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
 
   if ((options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
       OPTION_BIG_TABLES)
-    create_info.data_file_length= ~(ulonglong) 0;
+    create_info.data_file_length= ~(uint64_t) 0;
 
   if ((error=mi_create(share->table_name.str, share->keys, &keydef,
 		       (uint) (*recinfo-start_recinfo),
@@ -14487,7 +14487,7 @@ static int test_if_order_by_key(ORDER *order, TABLE *table, uint idx,
   key_part_end=key_part+table->key_info[idx].key_parts;
   key_part_map const_key_parts=table->const_key_parts[idx];
   int reverse=0;
-  my_bool on_primary_key= false;
+  bool on_primary_key= false;
 
   for (; order ; order=order->next, const_key_parts>>=1)
   {
@@ -16509,7 +16509,7 @@ calc_group_buffer(JOIN *join,ORDER *group)
         key_length+= sizeof(double);
         break;
       case INT_RESULT:
-        key_length+= sizeof(longlong);
+        key_length+= sizeof(int64_t);
         break;
       case DECIMAL_RESULT:
         key_length+= my_decimal_get_binary_size(group_item->max_length - 
@@ -17837,7 +17837,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 	item_list.push_back(new Item_string(key_info->name,
 					    strlen(key_info->name),
 					    system_charset_info));
-        length= longlong2str(tab->ref.key_length, keylen_str_buf, 10) - 
+        length= int64_t2str(tab->ref.key_length, keylen_str_buf, 10) - 
                 keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, length,
                                             system_charset_info));
@@ -17856,7 +17856,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         register uint length;
 	item_list.push_back(new Item_string(key_info->name,
 					    strlen(key_info->name),cs));
-        length= longlong2str(key_info->key_length, keylen_str_buf, 10) - 
+        length= int64_t2str(key_info->key_length, keylen_str_buf, 10) - 
                 keylen_str_buf;
         item_list.push_back(new Item_string(keylen_str_buf, 
                                             length,
@@ -17922,7 +17922,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else
           examined_rows= join->best_positions[i].records_read; 
  
-        item_list.push_back(new Item_int((longlong) (ulonglong) examined_rows, 
+        item_list.push_back(new Item_int((int64_t) (uint64_t) examined_rows, 
                                          MY_INT64_NUM_DECIMAL_DIGITS));
 
         /* Add "filtered" field to item_list. */
@@ -17937,7 +17937,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
 
       /* Build "Extra" field and add it to item_list. */
-      my_bool key_read=table->key_read;
+      bool key_read=table->key_read;
       if ((tab->type == JT_NEXT || tab->type == JT_CONST) &&
           table->covering_keys.is_set(tab->index))
 	key_read=1;

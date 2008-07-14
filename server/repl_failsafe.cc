@@ -153,7 +153,7 @@ err2:
 
 extern "C" uint32
 *slave_list_key(SLAVE_INFO* si, size_t *len,
-		my_bool not_used __attribute__((unused)))
+		bool not_used __attribute__((unused)))
 {
   *len = 4;
   return &si->server_id;

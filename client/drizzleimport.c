@@ -58,7 +58,7 @@ static char	*opt_password=0, *current_user=0,
 		*default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
 static uint     opt_mysql_port= 0, opt_protocol= 0;
 static char * opt_mysql_unix_port=0;
-static longlong opt_ignore_lines= -1;
+static int64_t opt_ignore_lines= -1;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
 
 #ifdef HAVE_SMEM
@@ -326,7 +326,7 @@ static int write_to_table(char *filename, MYSQL *mysql)
   end= add_load_option(end, escaped, " ESCAPED BY");
   end= add_load_option(end, lines_terminated, " LINES TERMINATED BY");
   if (opt_ignore_lines >= 0)
-    end= strmov(longlong10_to_str(opt_ignore_lines, 
+    end= strmov(int64_t10_to_str(opt_ignore_lines, 
 				  strmov(end, " IGNORE "),10), " LINES");
   if (opt_columns)
     end= strmov(strmov(strmov(end, " ("), opt_columns), ")");

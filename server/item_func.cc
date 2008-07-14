@@ -453,7 +453,7 @@ Field *Item_func::tmp_table_field(TABLE *table)
   switch (result_type()) {
   case INT_RESULT:
     if (max_length > MY_INT32_NUM_DECIMAL_DIGITS)
-      field= new Field_longlong(max_length, maybe_null, name, unsigned_flag);
+      field= new Field_int64_t(max_length, maybe_null, name, unsigned_flag);
     else
       field= new Field_long(max_length, maybe_null, name, unsigned_flag);
     break;
@@ -625,14 +625,14 @@ double Item_int_func::val_real()
 {
   assert(fixed == 1);
 
-  return unsigned_flag ? (double) ((ulonglong) val_int()) : (double) val_int();
+  return unsigned_flag ? (double) ((uint64_t) val_int()) : (double) val_int();
 }
 
 
 String *Item_int_func::val_str(String *str)
 {
   assert(fixed == 1);
-  longlong nr=val_int();
+  int64_t nr=val_int();
   if (null_value)
     return 0;
   str->set_int(nr, unsigned_flag, &my_charset_bin);
@@ -746,7 +746,7 @@ String *Item_func_numhybrid::val_str(String *str)
   }
   case INT_RESULT:
   {
-    longlong nr= int_op();
+    int64_t nr= int_op();
     if (null_value)
       return 0; /* purecov: inspected */
     str->set_int(nr, unsigned_flag, &my_charset_bin);
@@ -784,8 +784,8 @@ double Item_func_numhybrid::val_real()
   }
   case INT_RESULT:
   {
-    longlong result= int_op();
-    return unsigned_flag ? (double) ((ulonglong) result) : (double) result;
+    int64_t result= int_op();
+    return unsigned_flag ? (double) ((uint64_t) result) : (double) result;
   }
   case REAL_RESULT:
     return real_op();
@@ -804,7 +804,7 @@ double Item_func_numhybrid::val_real()
 }
 
 
-longlong Item_func_numhybrid::val_int()
+int64_t Item_func_numhybrid::val_int()
 {
   assert(fixed == 1);
   switch (hybrid_type) {
@@ -813,14 +813,14 @@ longlong Item_func_numhybrid::val_int()
     my_decimal decimal_value, *val;
     if (!(val= decimal_op(&decimal_value)))
       return 0;                                 // null is set
-    longlong result;
+    int64_t result;
     my_decimal2int(E_DEC_FATAL_ERROR, val, unsigned_flag, &result);
     return result;
   }
   case INT_RESULT:
     return int_op();
   case REAL_RESULT:
-    return (longlong) rint(real_op());
+    return (int64_t) rint(real_op());
   case STRING_RESULT:
   {
     int err_not_used;
@@ -849,7 +849,7 @@ my_decimal *Item_func_numhybrid::val_decimal(my_decimal *decimal_value)
     break;
   case INT_RESULT:
   {
-    longlong result= int_op();
+    int64_t result= int_op();
     int2my_decimal(E_DEC_FATAL_ERROR, result, unsigned_flag, decimal_value);
     break;
   }
@@ -886,16 +886,16 @@ void Item_func_signed::print(String *str, enum_query_type query_type)
 }
 
 
-longlong Item_func_signed::val_int_from_str(int *error)
+int64_t Item_func_signed::val_int_from_str(int *error)
 {
   char buff[MAX_FIELD_WIDTH], *end, *start;
   uint32 length;
   String tmp(buff,sizeof(buff), &my_charset_bin), *res;
-  longlong value;
+  int64_t value;
 
   /*
     For a string result, we must first get the string and then convert it
-    to a longlong
+    to a int64_t
   */
 
   if (!(res= args[0]->val_str(&tmp)))
@@ -924,13 +924,13 @@ longlong Item_func_signed::val_int_from_str(int *error)
 }
 
 
-longlong Item_func_signed::val_int()
+int64_t Item_func_signed::val_int()
 {
-  longlong value;
+  int64_t value;
   int error;
 
   if (args[0]->cast_to_int_type() != STRING_RESULT ||
-      args[0]->result_as_longlong())
+      args[0]->result_as_int64_t())
   {
     value= args[0]->val_int();
     null_value= args[0]->null_value; 
@@ -957,9 +957,9 @@ void Item_func_unsigned::print(String *str, enum_query_type query_type)
 }
 
 
-longlong Item_func_unsigned::val_int()
+int64_t Item_func_unsigned::val_int()
 {
-  longlong value;
+  int64_t value;
   int error;
 
   if (args[0]->cast_to_int_type() == DECIMAL_RESULT)
@@ -972,7 +972,7 @@ longlong Item_func_unsigned::val_int()
     return value;
   }
   else if (args[0]->cast_to_int_type() != STRING_RESULT ||
-           args[0]->result_as_longlong())
+           args[0]->result_as_int64_t())
   {
     value= args[0]->val_int();
     null_value= args[0]->null_value; 
@@ -1009,10 +1009,10 @@ double Item_decimal_typecast::val_real()
 }
 
 
-longlong Item_decimal_typecast::val_int()
+int64_t Item_decimal_typecast::val_int()
 {
   my_decimal tmp_buf, *tmp= val_decimal(&tmp_buf);
-  longlong res;
+  int64_t res;
   if (null_value)
     return 0;
   my_decimal2int(E_DEC_FATAL_ERROR, tmp, unsigned_flag, &res);
@@ -1090,9 +1090,9 @@ double Item_func_plus::real_op()
 }
 
 
-longlong Item_func_plus::int_op()
+int64_t Item_func_plus::int_op()
 {
-  longlong value=args[0]->val_int()+args[1]->val_int();
+  int64_t value=args[0]->val_int()+args[1]->val_int();
   if ((null_value=args[0]->null_value || args[1]->null_value))
     return 0;
   return value;
@@ -1168,9 +1168,9 @@ double Item_func_minus::real_op()
 }
 
 
-longlong Item_func_minus::int_op()
+int64_t Item_func_minus::int_op()
 {
-  longlong value=args[0]->val_int() - args[1]->val_int();
+  int64_t value=args[0]->val_int() - args[1]->val_int();
   if ((null_value=args[0]->null_value || args[1]->null_value))
     return 0;
   return value;
@@ -1208,10 +1208,10 @@ double Item_func_mul::real_op()
 }
 
 
-longlong Item_func_mul::int_op()
+int64_t Item_func_mul::int_op()
 {
   assert(fixed == 1);
-  longlong value=args[0]->val_int()*args[1]->val_int();
+  int64_t value=args[0]->val_int()*args[1]->val_int();
   if ((null_value=args[0]->null_value || args[1]->null_value))
     return 0;
   return value;
@@ -1335,11 +1335,11 @@ void Item_func_div::fix_length_and_dec()
 
 
 /* Integer division */
-longlong Item_func_int_div::val_int()
+int64_t Item_func_int_div::val_int()
 {
   assert(fixed == 1);
-  longlong value=args[0]->val_int();
-  longlong val2=args[1]->val_int();
+  int64_t value=args[0]->val_int();
+  int64_t val2=args[1]->val_int();
   if ((null_value= (args[0]->null_value || args[1]->null_value)))
     return 0;
   if (val2 == 0)
@@ -1348,7 +1348,7 @@ longlong Item_func_int_div::val_int()
     return 0;
   }
   return (unsigned_flag ?
-	  (ulonglong) value / (ulonglong) val2 :
+	  (uint64_t) value / (uint64_t) val2 :
 	  value / val2);
 }
 
@@ -1365,12 +1365,12 @@ void Item_func_int_div::fix_length_and_dec()
 }
 
 
-longlong Item_func_mod::int_op()
+int64_t Item_func_mod::int_op()
 {
   assert(fixed == 1);
-  longlong value=  args[0]->val_int();
-  longlong val2= args[1]->val_int();
-  longlong result;
+  int64_t value=  args[0]->val_int();
+  int64_t val2= args[1]->val_int();
+  int64_t result;
 
   if ((null_value= args[0]->null_value || args[1]->null_value))
     return 0; /* purecov: inspected */
@@ -1382,10 +1382,10 @@ longlong Item_func_mod::int_op()
 
   if (args[0]->unsigned_flag)
     result= args[1]->unsigned_flag ? 
-      ((ulonglong) value) % ((ulonglong) val2) : ((ulonglong) value) % val2;
+      ((uint64_t) value) % ((uint64_t) val2) : ((uint64_t) value) % val2;
   else
     result= args[1]->unsigned_flag ?
-      value % ((ulonglong) val2) : value % val2;
+      value % ((uint64_t) val2) : value % val2;
 
   return result;
 }
@@ -1454,9 +1454,9 @@ double Item_func_neg::real_op()
 }
 
 
-longlong Item_func_neg::int_op()
+int64_t Item_func_neg::int_op()
 {
-  longlong value= args[0]->val_int();
+  int64_t value= args[0]->val_int();
   null_value= args[0]->null_value;
   return -value;
 }
@@ -1495,13 +1495,13 @@ void Item_func_neg::fix_length_and_dec()
   */
   if (hybrid_type == INT_RESULT && args[0]->const_item())
   {
-    longlong val= args[0]->val_int();
-    if ((ulonglong) val >= (ulonglong) LONGLONG_MIN &&
-        ((ulonglong) val != (ulonglong) LONGLONG_MIN ||
+    int64_t val= args[0]->val_int();
+    if ((uint64_t) val >= (uint64_t) LONGLONG_MIN &&
+        ((uint64_t) val != (uint64_t) LONGLONG_MIN ||
           args[0]->type() != INT_ITEM))        
     {
       /*
-        Ensure that result is converted to DECIMAL, as longlong can't hold
+        Ensure that result is converted to DECIMAL, as int64_t can't hold
         the negated number
       */
       hybrid_type= DECIMAL_RESULT;
@@ -1520,9 +1520,9 @@ double Item_func_abs::real_op()
 }
 
 
-longlong Item_func_abs::int_op()
+int64_t Item_func_abs::int_op()
 {
-  longlong value= args[0]->val_int();
+  int64_t value= args[0]->val_int();
   if ((null_value= args[0]->null_value))
     return 0;
   return (value >= 0) || unsigned_flag ? value : -value;
@@ -1723,11 +1723,11 @@ double Item_func_tan::val_real()
 // Shift-functions, same as << and >> in C/C++
 
 
-longlong Item_func_shift_left::val_int()
+int64_t Item_func_shift_left::val_int()
 {
   assert(fixed == 1);
   uint shift;
-  ulonglong res= ((ulonglong) args[0]->val_int() <<
+  uint64_t res= ((uint64_t) args[0]->val_int() <<
 		  (shift=(uint) args[1]->val_int()));
   if (args[0]->null_value || args[1]->null_value)
   {
@@ -1735,14 +1735,14 @@ longlong Item_func_shift_left::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(longlong)*8 ? (longlong) res : 0LL);
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0LL);
 }
 
-longlong Item_func_shift_right::val_int()
+int64_t Item_func_shift_right::val_int()
 {
   assert(fixed == 1);
   uint shift;
-  ulonglong res= (ulonglong) args[0]->val_int() >>
+  uint64_t res= (uint64_t) args[0]->val_int() >>
     (shift=(uint) args[1]->val_int());
   if (args[0]->null_value || args[1]->null_value)
   {
@@ -1750,14 +1750,14 @@ longlong Item_func_shift_right::val_int()
     return 0;
   }
   null_value=0;
-  return (shift < sizeof(longlong)*8 ? (longlong) res : 0LL);
+  return (shift < sizeof(int64_t)*8 ? (int64_t) res : 0LL);
 }
 
 
-longlong Item_func_bit_neg::val_int()
+int64_t Item_func_bit_neg::val_int()
 {
   assert(fixed == 1);
-  ulonglong res= (ulonglong) args[0]->val_int();
+  uint64_t res= (uint64_t) args[0]->val_int();
   if ((null_value=args[0]->null_value))
     return 0;
   return ~res;
@@ -1797,7 +1797,7 @@ void Item_func_int_val::find_num_type()
   case INT_RESULT:
   case DECIMAL_RESULT:
     /*
-      -2 because in most high position can't be used any digit for longlong
+      -2 because in most high position can't be used any digit for int64_t
       and one position for increasing value during operation
     */
     if ((args[0]->max_length - args[0]->decimals) >=
@@ -1818,9 +1818,9 @@ void Item_func_int_val::find_num_type()
 }
 
 
-longlong Item_func_ceiling::int_op()
+int64_t Item_func_ceiling::int_op()
 {
-  longlong result;
+  int64_t result;
   switch (args[0]->result_type()) {
   case INT_RESULT:
     result= args[0]->val_int();
@@ -1836,7 +1836,7 @@ longlong Item_func_ceiling::int_op()
     break;
   }
   default:
-    result= (longlong)Item_func_ceiling::real_op();
+    result= (int64_t)Item_func_ceiling::real_op();
   };
   return result;
 }
@@ -1865,9 +1865,9 @@ my_decimal *Item_func_ceiling::decimal_op(my_decimal *decimal_value)
 }
 
 
-longlong Item_func_floor::int_op()
+int64_t Item_func_floor::int_op()
 {
-  longlong result;
+  int64_t result;
   switch (args[0]->result_type()) {
   case INT_RESULT:
     result= args[0]->val_int();
@@ -1883,7 +1883,7 @@ longlong Item_func_floor::int_op()
     break;
   }
   default:
-    result= (longlong)Item_func_floor::real_op();
+    result= (int64_t)Item_func_floor::real_op();
   };
   return result;
 }
@@ -1915,7 +1915,7 @@ my_decimal *Item_func_floor::decimal_op(my_decimal *decimal_value)
 void Item_func_round::fix_length_and_dec()
 {
   int      decimals_to_set;
-  longlong val1;
+  int64_t val1;
   bool     val1_unsigned;
   
   unsigned_flag= args[0]->unsigned_flag;
@@ -1985,12 +1985,12 @@ void Item_func_round::fix_length_and_dec()
   }
 }
 
-double my_double_round(double value, longlong dec, bool dec_unsigned,
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate)
 {
   double tmp;
   bool dec_negative= (dec < 0) && !dec_unsigned;
-  ulonglong abs_dec= dec_negative ? -dec : dec;
+  uint64_t abs_dec= dec_negative ? -dec : dec;
   /*
     tmp2 is here to avoid return the value with 80 bit precision
     This will fix that the test round(0.1,1) = round(0.1,1) is true
@@ -2030,29 +2030,29 @@ double Item_func_round::real_op()
 
 /*
   Rounds a given value to a power of 10 specified as the 'to' argument,
-  avoiding overflows when the value is close to the ulonglong range boundary.
+  avoiding overflows when the value is close to the uint64_t range boundary.
 */
 
-static inline ulonglong my_unsigned_round(ulonglong value, ulonglong to)
+static inline uint64_t my_unsigned_round(uint64_t value, uint64_t to)
 {
-  ulonglong tmp= value / to * to;
+  uint64_t tmp= value / to * to;
   return (value - tmp < (to >> 1)) ? tmp : tmp + to;
 }
 
 
-longlong Item_func_round::int_op()
+int64_t Item_func_round::int_op()
 {
-  longlong value= args[0]->val_int();
-  longlong dec= args[1]->val_int();
+  int64_t value= args[0]->val_int();
+  int64_t dec= args[1]->val_int();
   decimals= 0;
-  ulonglong abs_dec;
+  uint64_t abs_dec;
   if ((null_value= args[0]->null_value || args[1]->null_value))
     return 0;
   if ((dec >= 0) || args[1]->unsigned_flag)
     return value; // integer have not digits after point
 
   abs_dec= -dec;
-  longlong tmp;
+  int64_t tmp;
   
   if(abs_dec >= array_elements(log_10_int))
     return 0;
@@ -2061,11 +2061,11 @@ longlong Item_func_round::int_op()
   
   if (truncate)
     value= (unsigned_flag) ?
-      ((ulonglong) value / tmp) * tmp : (value / tmp) * tmp;
+      ((uint64_t) value / tmp) * tmp : (value / tmp) * tmp;
   else
     value= (unsigned_flag || value >= 0) ?
-      my_unsigned_round((ulonglong) value, tmp) :
-      -(longlong) my_unsigned_round((ulonglong) -value, tmp);
+      my_unsigned_round((uint64_t) value, tmp) :
+      -(int64_t) my_unsigned_round((uint64_t) -value, tmp);
   return value;
 }
 
@@ -2073,9 +2073,9 @@ longlong Item_func_round::int_op()
 my_decimal *Item_func_round::decimal_op(my_decimal *decimal_value)
 {
   my_decimal val, *value= args[0]->val_decimal(&val);
-  longlong dec= args[1]->val_int();
+  int64_t dec= args[1]->val_int();
   if (dec >= 0 || args[1]->unsigned_flag)
-    dec= min((ulonglong) dec, decimals);
+    dec= min((uint64_t) dec, decimals);
   else if (dec < INT_MIN)
     dec= INT_MIN;
     
@@ -2157,7 +2157,7 @@ double Item_func_rand::val_real()
   return my_rnd(rand);
 }
 
-longlong Item_func_sign::val_int()
+int64_t Item_func_sign::val_int()
 {
   assert(fixed == 1);
   double value= args[0]->val_real();
@@ -2234,16 +2234,16 @@ void Item_func_min_max::fix_length_and_dec()
    #	index of the least/greatest argument
 */
 
-uint Item_func_min_max::cmp_datetimes(ulonglong *value)
+uint Item_func_min_max::cmp_datetimes(uint64_t *value)
 {
-  ulonglong min_max= 0;
+  uint64_t min_max= 0;
   uint min_max_idx= 0;
 
   for (uint i=0; i < arg_count ; i++)
   {
     Item **arg= args + i;
     bool is_null;
-    ulonglong res= get_datetime_value(thd, &arg, 0, datetime_item, &is_null);
+    uint64_t res= get_datetime_value(thd, &arg, 0, datetime_item, &is_null);
     if ((null_value= args[i]->null_value))
       return 0;
     if (i == 0 || (res < min_max ? cmp_sign : -cmp_sign) > 0)
@@ -2278,7 +2278,7 @@ String *Item_func_min_max::val_str(String *str)
   switch (cmp_type) {
   case INT_RESULT:
   {
-    longlong nr=val_int();
+    int64_t nr=val_int();
     if (null_value)
       return 0;
     str->set_int(nr, unsigned_flag, &my_charset_bin);
@@ -2341,7 +2341,7 @@ double Item_func_min_max::val_real()
   double value=0.0;
   if (compare_as_dates)
   {
-    ulonglong result= 0;
+    uint64_t result= 0;
     (void)cmp_datetimes(&result);
     return (double)result;
   }
@@ -2362,15 +2362,15 @@ double Item_func_min_max::val_real()
 }
 
 
-longlong Item_func_min_max::val_int()
+int64_t Item_func_min_max::val_int()
 {
   assert(fixed == 1);
-  longlong value=0;
+  int64_t value=0;
   if (compare_as_dates)
   {
-    ulonglong result= 0;
+    uint64_t result= 0;
     (void)cmp_datetimes(&result);
-    return (longlong)result;
+    return (int64_t)result;
   }
   for (uint i=0; i < arg_count ; i++)
   {
@@ -2378,7 +2378,7 @@ longlong Item_func_min_max::val_int()
       value=args[i]->val_int();
     else
     {
-      longlong tmp=args[i]->val_int();
+      int64_t tmp=args[i]->val_int();
       if (!args[i]->null_value && (tmp < value ? cmp_sign : -cmp_sign) > 0)
 	value=tmp;
     }
@@ -2396,9 +2396,9 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
 
   if (compare_as_dates)
   {
-    ulonglong value= 0;
+    uint64_t value= 0;
     (void)cmp_datetimes(&value);
-    ulonglong2decimal(value, dec);
+    uint64_t2decimal(value, dec);
     return dec;
   }
   for (uint i=0; i < arg_count ; i++)
@@ -2430,7 +2430,7 @@ my_decimal *Item_func_min_max::val_decimal(my_decimal *dec)
 }
 
 
-longlong Item_func_length::val_int()
+int64_t Item_func_length::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -2440,11 +2440,11 @@ longlong Item_func_length::val_int()
     return 0; /* purecov: inspected */
   }
   null_value=0;
-  return (longlong) res->length();
+  return (int64_t) res->length();
 }
 
 
-longlong Item_func_char_length::val_int()
+int64_t Item_func_char_length::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -2454,15 +2454,15 @@ longlong Item_func_char_length::val_int()
     return 0; /* purecov: inspected */
   }
   null_value=0;
-  return (longlong) res->numchars();
+  return (int64_t) res->numchars();
 }
 
 
-longlong Item_func_coercibility::val_int()
+int64_t Item_func_coercibility::val_int()
 {
   assert(fixed == 1);
   null_value= 0;
-  return (longlong) args[0]->collation.derivation;
+  return (int64_t) args[0]->collation.derivation;
 }
 
 
@@ -2473,7 +2473,7 @@ void Item_func_locate::fix_length_and_dec()
 }
 
 
-longlong Item_func_locate::val_int()
+int64_t Item_func_locate::val_int()
 {
   assert(fixed == 1);
   String *a=args[0]->val_str(&value1);
@@ -2484,9 +2484,9 @@ longlong Item_func_locate::val_int()
     return 0; /* purecov: inspected */
   }
   null_value=0;
-  /* must be longlong to avoid truncation */
-  longlong start=  0; 
-  longlong start0= 0;
+  /* must be int64_t to avoid truncation */
+  int64_t start=  0; 
+  int64_t start0= 0;
   my_match_t match;
 
   if (arg_count == 3)
@@ -2512,7 +2512,7 @@ longlong Item_func_locate::val_int()
                                             b->ptr(), b->length(),
                                             &match, 1))
     return 0;
-  return (longlong) match.mb_len + start0 + 1;
+  return (int64_t) match.mb_len + start0 + 1;
 }
 
 
@@ -2531,7 +2531,7 @@ void Item_func_locate::print(String *str, enum_query_type query_type)
 }
 
 
-longlong Item_func_field::val_int()
+int64_t Item_func_field::val_int()
 {
   assert(fixed == 1);
 
@@ -2544,18 +2544,18 @@ longlong Item_func_field::val_int()
     {
       String *tmp_value=args[i]->val_str(&tmp);
       if (tmp_value && !sortcmp(field,tmp_value,cmp_collation.collation))
-        return (longlong) (i);
+        return (int64_t) (i);
     }
   }
   else if (cmp_type == INT_RESULT)
   {
-    longlong val= args[0]->val_int();
+    int64_t val= args[0]->val_int();
     if (args[0]->null_value)
       return 0;
     for (uint i=1; i < arg_count ; i++)
     {
       if (val == args[i]->val_int() && !args[i]->null_value)
-        return (longlong) (i);
+        return (int64_t) (i);
     }
   }
   else if (cmp_type == DECIMAL_RESULT)
@@ -2568,7 +2568,7 @@ longlong Item_func_field::val_int()
     {
       dec_arg= args[i]->val_decimal(&dec_arg_buf);
       if (!args[i]->null_value && !my_decimal_cmp(dec_arg, dec))
-        return (longlong) (i);
+        return (int64_t) (i);
     }
   }
   else
@@ -2579,7 +2579,7 @@ longlong Item_func_field::val_int()
     for (uint i=1; i < arg_count ; i++)
     {
       if (val == args[i]->val_real() && !args[i]->null_value)
-        return (longlong) (i);
+        return (int64_t) (i);
     }
   }
   return 0;
@@ -2597,7 +2597,7 @@ void Item_func_field::fix_length_and_dec()
 }
 
 
-longlong Item_func_ascii::val_int()
+int64_t Item_func_ascii::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -2607,10 +2607,10 @@ longlong Item_func_ascii::val_int()
     return 0;
   }
   null_value=0;
-  return (longlong) (res->length() ? (uchar) (*res)[0] : (uchar) 0);
+  return (int64_t) (res->length() ? (uchar) (*res)[0] : (uchar) 0);
 }
 
-longlong Item_func_ord::val_int()
+int64_t Item_func_ord::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -2627,13 +2627,13 @@ longlong Item_func_ord::val_int()
     register const char *str=res->ptr();
     register uint32 n=0, l=my_ismbchar(res->charset(),str,str+res->length());
     if (!l)
-      return (longlong)((uchar) *str);
+      return (int64_t)((uchar) *str);
     while (l--)
       n=(n<<8)|(uint32)((uchar) *str++);
-    return (longlong) n;
+    return (int64_t) n;
   }
 #endif
-  return (longlong) ((uchar) (*res)[0]);
+  return (int64_t) ((uchar) (*res)[0]);
 }
 
 	/* Search after a string in a string of strings separated by ',' */
@@ -2665,12 +2665,12 @@ void Item_func_find_in_set::fix_length_and_dec()
 
 static const char separator=',';
 
-longlong Item_func_find_in_set::val_int()
+int64_t Item_func_find_in_set::val_int()
 {
   assert(fixed == 1);
   if (enum_value)
   {
-    ulonglong tmp=(ulonglong) args[1]->val_int();
+    uint64_t tmp=(uint64_t) args[1]->val_int();
     if (!(null_value=args[1]->null_value || args[0]->null_value))
     {
       if (tmp & enum_bit)
@@ -2716,7 +2716,7 @@ longlong Item_func_find_in_set::val_int()
           if (!my_strnncoll(cs, (const uchar *) str_begin,
                             str_end - str_begin,
                             find_str, find_str_len))
-            return (longlong) position;
+            return (int64_t) position;
           else
             str_begin= substr_end;
         }
@@ -2725,7 +2725,7 @@ longlong Item_func_find_in_set::val_int()
       else if (str_end - str_begin == 0 &&
                find_str_len == 0 &&
                wc == (my_wc_t) separator)
-        return (longlong) ++position;
+        return (int64_t) ++position;
       else
         return 0LL;
     }
@@ -2733,13 +2733,13 @@ longlong Item_func_find_in_set::val_int()
   return 0;
 }
 
-longlong Item_func_bit_count::val_int()
+int64_t Item_func_bit_count::val_int()
 {
   assert(fixed == 1);
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if ((null_value= args[0]->null_value))
     return 0; /* purecov: inspected */
-  return (longlong) my_count_bits(value);
+  return (int64_t) my_count_bits(value);
 }
 
 
@@ -2888,11 +2888,11 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
           break;
         }
         case INT_RESULT:
-          *((longlong*) to)= arguments[i]->val_int();
+          *((int64_t*) to)= arguments[i]->val_int();
           if (arguments[i]->null_value)
             continue;
           f_args.args[i]= to;
-          to+= ALIGN_SIZE(sizeof(longlong));
+          to+= ALIGN_SIZE(sizeof(int64_t));
           break;
         case REAL_RESULT:
           *((double*) to)= arguments[i]->val_real();
@@ -2960,11 +2960,11 @@ bool udf_handler::get_arguments()
 	}
       }
     case INT_RESULT:
-      *((longlong*) to) = args[i]->val_int();
+      *((int64_t*) to) = args[i]->val_int();
       if (!args[i]->null_value)
       {
 	f_args.args[i]=to;
-	to+= ALIGN_SIZE(sizeof(longlong));
+	to+= ALIGN_SIZE(sizeof(int64_t));
       }
       break;
     case REAL_RESULT:
@@ -3093,7 +3093,7 @@ String *Item_func_udf_float::val_str(String *str)
 }
 
 
-longlong Item_func_udf_int::val_int()
+int64_t Item_func_udf_int::val_int()
 {
   assert(fixed == 1);
   return(udf.val_int(&null_value));
@@ -3103,7 +3103,7 @@ longlong Item_func_udf_int::val_int()
 String *Item_func_udf_int::val_str(String *str)
 {
   assert(fixed == 1);
-  longlong nr=val_int();
+  int64_t nr=val_int();
   if (null_value)
     return 0;
   str->set_int(nr, unsigned_flag, &my_charset_bin);
@@ -3111,10 +3111,10 @@ String *Item_func_udf_int::val_str(String *str)
 }
 
 
-longlong Item_func_udf_decimal::val_int()
+int64_t Item_func_udf_decimal::val_int()
 {
   my_decimal dec_buf, *dec= udf.val_decimal(&null_value, &dec_buf);
-  longlong result;
+  int64_t result;
   if (null_value)
     return 0;
   my_decimal2int(E_DEC_FATAL_ERROR, dec, unsigned_flag, &result);
@@ -3281,7 +3281,7 @@ void item_user_lock_release(User_level_lock *ull)
   on the slave.
 */
 
-longlong Item_master_pos_wait::val_int()
+int64_t Item_master_pos_wait::val_int()
 {
   assert(fixed == 1);
   THD* thd = current_thd;
@@ -3295,8 +3295,8 @@ longlong Item_master_pos_wait::val_int()
     return 0;
   }
 #ifdef HAVE_REPLICATION
-  longlong pos = (ulong)args[1]->val_int();
-  longlong timeout = (arg_count==3) ? args[2]->val_int() : 0 ;
+  int64_t pos = (ulong)args[1]->val_int();
+  int64_t timeout = (arg_count==3) ? args[2]->val_int() : 0 ;
   if ((event_count = active_mi->rli.wait_for_pos(thd, log_name, pos, timeout)) == -2)
   {
     null_value = 1;
@@ -3314,13 +3314,13 @@ void debug_sync_point(const char* lock_name, uint lock_timeout)
 #endif
 
 
-longlong Item_func_last_insert_id::val_int()
+int64_t Item_func_last_insert_id::val_int()
 {
   THD *thd= current_thd;
   assert(fixed == 1);
   if (arg_count)
   {
-    longlong value= args[0]->val_int();
+    int64_t value= args[0]->val_int();
     null_value= args[0]->null_value;
     /*
       LAST_INSERT_ID(X) must affect the client's mysql_insert_id() as
@@ -3345,24 +3345,24 @@ bool Item_func_last_insert_id::fix_fields(THD *thd, Item **ref)
 
 /* This function is just used to test speed of different functions */
 
-longlong Item_func_benchmark::val_int()
+int64_t Item_func_benchmark::val_int()
 {
   assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH];
   String tmp(buff,sizeof(buff), &my_charset_bin);
   my_decimal tmp_decimal;
   THD *thd=current_thd;
-  ulonglong loop_count;
+  uint64_t loop_count;
 
-  loop_count= (ulonglong) args[0]->val_int();
+  loop_count= (uint64_t) args[0]->val_int();
 
   if (args[0]->null_value ||
-      (!args[0]->unsigned_flag && (((longlong) loop_count) < 0)))
+      (!args[0]->unsigned_flag && (((int64_t) loop_count) < 0)))
   {
     if (!args[0]->null_value)
     {
       char buff[22];
-      llstr(((longlong) loop_count), buff);
+      llstr(((int64_t) loop_count), buff);
       push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");
@@ -3373,7 +3373,7 @@ longlong Item_func_benchmark::val_int()
   }
 
   null_value=0;
-  for (ulonglong loop=0 ; loop < loop_count && !thd->killed; loop++)
+  for (uint64_t loop=0 ; loop < loop_count && !thd->killed; loop++)
   {
     switch (args[1]->result_type()) {
     case REAL_RESULT:
@@ -3639,7 +3639,7 @@ double user_var_entry::val_real(my_bool *null_value)
   case REAL_RESULT:
     return *(double*) value;
   case INT_RESULT:
-    return (double) *(longlong*) value;
+    return (double) *(int64_t*) value;
   case DECIMAL_RESULT:
   {
     double result;
@@ -3658,19 +3658,19 @@ double user_var_entry::val_real(my_bool *null_value)
 
 /** Get the value of a variable as an integer. */
 
-longlong user_var_entry::val_int(my_bool *null_value) const
+int64_t user_var_entry::val_int(my_bool *null_value) const
 {
   if ((*null_value= (value == 0)))
     return 0LL;
 
   switch (type) {
   case REAL_RESULT:
-    return (longlong) *(double*) value;
+    return (int64_t) *(double*) value;
   case INT_RESULT:
-    return *(longlong*) value;
+    return *(int64_t*) value;
   case DECIMAL_RESULT:
   {
-    longlong result;
+    int64_t result;
     my_decimal2int(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, &result);
     return result;
   }
@@ -3701,9 +3701,9 @@ String *user_var_entry::val_str(my_bool *null_value, String *str,
     break;
   case INT_RESULT:
     if (!unsigned_flag)
-      str->set(*(longlong*) value, &my_charset_bin);
+      str->set(*(int64_t*) value, &my_charset_bin);
     else
-      str->set(*(ulonglong*) value, &my_charset_bin);
+      str->set(*(uint64_t*) value, &my_charset_bin);
     break;
   case DECIMAL_RESULT:
     my_decimal2string(E_DEC_FATAL_ERROR, (my_decimal *)value, 0, 0, 0, str);
@@ -3730,7 +3730,7 @@ my_decimal *user_var_entry::val_decimal(my_bool *null_value, my_decimal *val)
     double2my_decimal(E_DEC_FATAL_ERROR, *(double*) value, val);
     break;
   case INT_RESULT:
-    int2my_decimal(E_DEC_FATAL_ERROR, *(longlong*) value, 0, val);
+    int2my_decimal(E_DEC_FATAL_ERROR, *(int64_t*) value, 0, val);
     break;
   case DECIMAL_RESULT:
     val= (my_decimal *)value;
@@ -3878,7 +3878,7 @@ double Item_func_set_user_var::val_real()
   return entry->val_real(&null_value);
 }
 
-longlong Item_func_set_user_var::val_int()
+int64_t Item_func_set_user_var::val_int()
 {
   assert(fixed == 1);
   check(0);
@@ -3912,7 +3912,7 @@ double Item_func_set_user_var::val_result()
   return entry->val_real(&null_value);
 }
 
-longlong Item_func_set_user_var::val_int_result()
+int64_t Item_func_set_user_var::val_int_result()
 {
   assert(fixed == 1);
   check(true);
@@ -4072,7 +4072,7 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
   }
   else
   {
-    longlong nr= entry->val_int(&null_value);
+    int64_t nr= entry->val_int(&null_value);
     if (null_value)
       return set_field_to_null_with_conversions(field, no_conversions);
     field->set_notnull();
@@ -4110,7 +4110,7 @@ my_decimal *Item_func_get_user_var::val_decimal(my_decimal *dec)
 }
 
 
-longlong Item_func_get_user_var::val_int()
+int64_t Item_func_get_user_var::val_int()
 {
   assert(fixed == 1);
   if (!var_entry)
@@ -4385,7 +4385,7 @@ double Item_user_var_as_out_param::val_real()
 }
 
 
-longlong Item_user_var_as_out_param::val_int()
+int64_t Item_user_var_as_out_param::val_int()
 {
   assert(0);
   return 0;
@@ -4449,14 +4449,14 @@ bool Item_func_get_system_var::is_written_to_binlog()
   return var->is_written_to_binlog(var_type);
 }
 
-longlong Item_func_bit_xor::val_int()
+int64_t Item_func_bit_xor::val_int()
 {
   assert(fixed == 1);
-  ulonglong arg1= (ulonglong) args[0]->val_int();
-  ulonglong arg2= (ulonglong) args[1]->val_int();
+  uint64_t arg1= (uint64_t) args[0]->val_int();
+  uint64_t arg2= (uint64_t) args[1]->val_int();
   if ((null_value= (args[0]->null_value || args[1]->null_value)))
     return 0;
-  return (longlong) (arg1 ^ arg2);
+  return (int64_t) (arg1 ^ arg2);
 }
 
 
@@ -4527,7 +4527,7 @@ Item *get_system_var(THD *thd, enum_var_type var_type, LEX_STRING name,
     0		Already taken, or error
 */
 
-longlong Item_func_is_free_lock::val_int()
+int64_t Item_func_is_free_lock::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -4549,7 +4549,7 @@ longlong Item_func_is_free_lock::val_int()
   return 0;
 }
 
-longlong Item_func_is_used_lock::val_int()
+int64_t Item_func_is_used_lock::val_int()
 {
   assert(fixed == 1);
   String *res=args[0]->val_str(&value);
@@ -4571,7 +4571,7 @@ longlong Item_func_is_used_lock::val_int()
 }
 
 
-longlong Item_func_row_count::val_int()
+int64_t Item_func_row_count::val_int()
 {
   assert(fixed == 1);
   THD *thd= current_thd;
@@ -4579,7 +4579,7 @@ longlong Item_func_row_count::val_int()
   return thd->row_count_func;
 }
 
-longlong Item_func_found_rows::val_int()
+int64_t Item_func_found_rows::val_int()
 {
   assert(fixed == 1);
   THD *thd= current_thd;

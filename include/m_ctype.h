@@ -176,11 +176,11 @@ typedef struct my_collation_handler_st
                       const uchar *src, size_t srclen, uint flags);
   size_t    (*strnxfrmlen)(struct charset_info_st *, size_t);
   my_bool (*like_range)(struct charset_info_st *,
-			const char *s, size_t s_length,
-			pchar w_prefix, pchar w_one, pchar w_many, 
-			size_t res_length,
-			char *min_str, char *max_str,
-			size_t *min_len, size_t *max_len);
+                        const char *s, size_t s_length,
+                        char escape, char w_one, char w_many,
+                        size_t res_length,
+                        char *min_str, char *max_str,
+                        size_t *min_len, size_t *max_len);
   int     (*wildcmp)(struct charset_info_st *,
   		     const char *str,const char *str_end,
                      const char *wildstr,const char *wildend,
@@ -250,8 +250,8 @@ typedef struct my_charset_handler_st
                      ...) ATTRIBUTE_FORMAT_FPTR(printf, 4, 5);
   size_t (*long10_to_str)(struct charset_info_st *, char *to, size_t n,
                           int radix, long int val);
-  size_t (*longlong10_to_str)(struct charset_info_st *, char *to, size_t n,
-                              int radix, longlong val);
+  size_t (*int64_t10_to_str)(struct charset_info_st *, char *to, size_t n,
+                              int radix, int64_t val);
   
   void (*fill)(struct charset_info_st *, char *to, size_t len, int fill);
   
@@ -260,15 +260,15 @@ typedef struct my_charset_handler_st
 			 int base, char **e, int *err);
   ulong      (*strntoul)(struct charset_info_st *, const char *s, size_t l,
 			 int base, char **e, int *err);
-  longlong   (*strntoll)(struct charset_info_st *, const char *s, size_t l,
+  int64_t   (*strntoll)(struct charset_info_st *, const char *s, size_t l,
 			 int base, char **e, int *err);
-  ulonglong (*strntoull)(struct charset_info_st *, const char *s, size_t l,
+  uint64_t (*strntoull)(struct charset_info_st *, const char *s, size_t l,
 			 int base, char **e, int *err);
   double      (*strntod)(struct charset_info_st *, char *s, size_t l, char **e,
 			 int *err);
-  longlong    (*strtoll10)(struct charset_info_st *cs,
+  int64_t    (*strtoll10)(struct charset_info_st *cs,
                            const char *nptr, char **endptr, int *error);
-  ulonglong   (*strntoull10rnd)(struct charset_info_st *cs,
+  uint64_t   (*strntoull10rnd)(struct charset_info_st *cs,
                                 const char *str, size_t length,
                                 int unsigned_fl,
                                 char **endptr, int *error);
@@ -418,26 +418,26 @@ long       my_strntol_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
                            char **e, int *err);
 ulong      my_strntoul_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
 			    char **e, int *err);
-longlong   my_strntoll_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
+int64_t   my_strntoll_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
 			    char **e, int *err);
-ulonglong my_strntoull_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
+uint64_t my_strntoull_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
 			    char **e, int *err);
 double      my_strntod_8bit(CHARSET_INFO *, char *s, size_t l,char **e,
 			    int *err);
 size_t my_long10_to_str_8bit(CHARSET_INFO *, char *to, size_t l, int radix,
                              long int val);
-size_t my_longlong10_to_str_8bit(CHARSET_INFO *, char *to, size_t l, int radix,
-                                 longlong val);
+size_t my_int64_t10_to_str_8bit(CHARSET_INFO *, char *to, size_t l, int radix,
+                                 int64_t val);
 
-longlong my_strtoll10_8bit(CHARSET_INFO *cs,
+int64_t my_strtoll10_8bit(CHARSET_INFO *cs,
                            const char *nptr, char **endptr, int *error);
-longlong my_strtoll10_ucs2(CHARSET_INFO *cs, 
+int64_t my_strtoll10_ucs2(CHARSET_INFO *cs, 
                            const char *nptr, char **endptr, int *error);
 
-ulonglong my_strntoull10rnd_8bit(CHARSET_INFO *cs,
+uint64_t my_strntoull10rnd_8bit(CHARSET_INFO *cs,
                                  const char *str, size_t length, int
                                  unsigned_fl, char **endptr, int *error);
-ulonglong my_strntoull10rnd_ucs2(CHARSET_INFO *cs, 
+uint64_t my_strntoull10rnd_ucs2(CHARSET_INFO *cs, 
                                  const char *str, size_t length,
                                  int unsigned_fl, char **endptr, int *error);
 
@@ -445,35 +445,35 @@ void my_fill_8bit(CHARSET_INFO *cs, char* to, size_t l, int fill);
 
 my_bool  my_like_range_simple(CHARSET_INFO *cs,
 			      const char *ptr, size_t ptr_length,
-			      pbool escape, pbool w_one, pbool w_many,
+			      char escape, char w_one, char w_many,
 			      size_t res_length,
 			      char *min_str, char *max_str,
 			      size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_mb(CHARSET_INFO *cs,
 			  const char *ptr, size_t ptr_length,
-			  pbool escape, pbool w_one, pbool w_many,
+			  char escape, char w_one, char w_many,
 			  size_t res_length,
 			  char *min_str, char *max_str,
 			  size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_ucs2(CHARSET_INFO *cs,
 			    const char *ptr, size_t ptr_length,
-			    pbool escape, pbool w_one, pbool w_many,
+			    char escape, char w_one, char w_many,
 			    size_t res_length,
 			    char *min_str, char *max_str,
 			    size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_utf16(CHARSET_INFO *cs,
 			     const char *ptr, size_t ptr_length,
-			     pbool escape, pbool w_one, pbool w_many,
+			     char escape, char w_one, char w_many,
 			     size_t res_length,
 			     char *min_str, char *max_str,
 			     size_t *min_length, size_t *max_length);
 
 my_bool  my_like_range_utf32(CHARSET_INFO *cs,
 			     const char *ptr, size_t ptr_length,
-			     pbool escape, pbool w_one, pbool w_many,
+			     char escape, char w_one, char w_many,
 			     size_t res_length,
 			     char *min_str, char *max_str,
 			     size_t *min_length, size_t *max_length);
@@ -554,7 +554,7 @@ int my_wildcmp_unicode(CHARSET_INFO *cs,
 extern my_bool my_parse_charset_xml(const char *bug, size_t len,
 				    int (*add)(CHARSET_INFO *cs));
 extern char *my_strchr(CHARSET_INFO *cs, const char *str, const char *end,
-                       pchar c);
+                       char c);
 
 my_bool my_propagate_simple(CHARSET_INFO *cs, const uchar *str, size_t len);
 my_bool my_propagate_complex(CHARSET_INFO *cs, const uchar *str, size_t len);

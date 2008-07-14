@@ -45,7 +45,7 @@ static void close_old_data_files(THD *thd, TABLE *table, bool morph_locks,
 
 
 extern "C" uchar *table_cache_key(const uchar *record, size_t *length,
-				 my_bool not_used __attribute__((unused)))
+                                  bool not_used __attribute__((unused)))
 {
   TABLE *entry=(TABLE*) record;
   *length= entry->s->table_cache_key.length;
@@ -122,7 +122,7 @@ uint create_table_def_key(THD *thd, char *key, TABLE_LIST *table_list,
 *****************************************************************************/
 
 extern "C" uchar *table_def_key(const uchar *record, size_t *length,
-                               my_bool not_used __attribute__((unused)))
+                                bool not_used __attribute__((unused)))
 {
   TABLE_SHARE *entry=(TABLE_SHARE*) record;
   *length= entry->table_cache_key.length;
@@ -3681,7 +3681,7 @@ int decide_logging_format(THD *thd, TABLE_LIST *tables)
     {
       if (!table->placeholder() && table->lock_type >= TL_WRITE_ALLOW_WRITE)
       {
-        ulonglong const flags= table->table->file->ha_table_flags();
+        uint64_t const flags= table->table->file->ha_table_flags();
         if (prev_ht && prev_ht != table->table->file->ht)
           multi_engine= true;
         prev_ht= table->table->file->ht;
@@ -5539,7 +5539,7 @@ store_top_level_join_columns(THD *thd, TABLE_LIST *table_ref,
     /* Add a true condition to outer joins that have no common columns. */
     if (table_ref_2->outer_join &&
         !table_ref_1->on_expr && !table_ref_2->on_expr)
-      table_ref_2->on_expr= new Item_int((longlong) 1,1);   /* Always true. */
+      table_ref_2->on_expr= new Item_int((int64_t) 1,1);   /* Always true. */
 
     /* Change this table reference to become a leaf for name resolution. */
     if (left_neighbor)
@@ -5673,7 +5673,7 @@ int setup_wild(THD *thd,
 
           Item_int do not need fix_fields() because it is basic constant.
         */
-        it.replace(new Item_int("Not_used", (longlong) 1,
+        it.replace(new Item_int("Not_used", (int64_t) 1,
                                 MY_INT64_NUM_DECIMAL_DIGITS));
       }
       else if (insert_fields(thd, ((Item_field*) item)->context,

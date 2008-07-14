@@ -21,7 +21,7 @@
 #include "mysys_priv.h"
 #include "my_static.h"
 
-my_bool timed_mutexes= 0;
+bool timed_mutexes= 0;
 
 	/* from my_init */
 char *	home_dir=0;
@@ -81,8 +81,8 @@ void (*fatal_error_handler_hook)(uint error,const char *str,myf MyFlags)=
   my_message_no_curses;
 
 	/* How to disable options */
-my_bool my_disable_locking=0;
-my_bool my_disable_async_io=0;
-my_bool my_disable_flush_key_blocks=0;
-my_bool my_disable_symlinks=0;
-my_bool mysys_uses_curses=0;
+bool my_disable_locking=0;
+bool my_disable_async_io=0;
+bool my_disable_flush_key_blocks=0;
+bool my_disable_symlinks=0;
+bool mysys_uses_curses=0;

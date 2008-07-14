@@ -27,7 +27,7 @@
 
 #if defined(MC68000) && defined(DS90)
 
-char *strcend(const char *s, pchar c)
+char *strcend(const char *s, char c)
 {
 asm("		movl	4(a7),a0	");
 asm("		movl	8(a7),d1	");
@@ -42,7 +42,7 @@ asm("		subql	#1,d0		");
 
 #else
 
-char *strcend(register const char *s, register pchar c)
+char *strcend(register const char *s, register char c)
 {
   for (;;)
   {

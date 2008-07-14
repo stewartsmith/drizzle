@@ -1674,7 +1674,7 @@ void calculate_interval_lengths(CHARSET_INFO *cs, TYPELIB *interval,
 int prepare_create_field(Create_field *sql_field, 
                          uint *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
-                         longlong table_flags __attribute__((__unused__)))
+                         int64_t table_flags __attribute__((__unused__)))
 {
   unsigned int dup_val_count;
 
@@ -1723,7 +1723,7 @@ int prepare_create_field(Create_field *sql_field,
                                      sql_field->charset, &dup_val_count))
       return(1);
     /* Check that count of unique members is not more then 64 */
-    if (sql_field->interval->count -  dup_val_count > sizeof(longlong)*8)
+    if (sql_field->interval->count -  dup_val_count > sizeof(int64_t)*8)
     {
        my_error(ER_TOO_BIG_SET, MYF(0), sql_field->field_name);
        return(1);
@@ -6113,7 +6113,7 @@ copy_data_between_tables(TABLE *from,TABLE *to,
   ha_rows examined_rows;
   bool auto_increment_field_copied= 0;
   ulong save_sql_mode;
-  ulonglong prev_insert_id;
+  uint64_t prev_insert_id;
 
   /*
     Turn off recovery logging since rollback of an alter table is to
@@ -6351,7 +6351,7 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
 
   field_list.push_back(item = new Item_empty_string("Table", NAME_LEN*2));
   item->maybe_null= 1;
-  field_list.push_back(item= new Item_int("Checksum", (longlong) 1,
+  field_list.push_back(item= new Item_int("Checksum", (int64_t) 1,
                                           MY_INT64_NUM_DECIMAL_DIGITS));
   item->maybe_null= 1;
   if (protocol->send_fields(&field_list,
@@ -6382,7 +6382,7 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
     {
       if (t->file->ha_table_flags() & HA_HAS_CHECKSUM &&
 	  !(check_opt->flags & T_EXTEND))
-	protocol->store((ulonglong)t->file->checksum());
+	protocol->store((uint64_t)t->file->checksum());
       else if (!(t->file->ha_table_flags() & HA_HAS_CHECKSUM) &&
 	       (check_opt->flags & T_QUICK))
 	protocol->store_null();
@@ -6435,7 +6435,7 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
 
 	    crc+= row_crc;
 	  }
-	  protocol->store((ulonglong)crc);
+	  protocol->store((uint64_t)crc);
           t->file->ha_rnd_end();
 	}
       }

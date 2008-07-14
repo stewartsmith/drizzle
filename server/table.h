@@ -1172,7 +1172,7 @@ typedef struct st_table_field_w_type
 } TABLE_FIELD_W_TYPE;
 
 
-my_bool
+bool
 table_check_intact(TABLE *table, const uint table_f_count,
                    const TABLE_FIELD_W_TYPE *table_def);
 

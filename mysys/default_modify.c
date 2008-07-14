@@ -65,7 +65,7 @@ int modify_defaults_file(const char *file_location, const char *option,
   char linebuff[BUFF_SIZE], *src_ptr, *dst_ptr, *file_buffer;
   size_t opt_len= 0, optval_len= 0, sect_len;
   uint nr_newlines= 0, buffer_size;
-  my_bool in_section= FALSE, opt_applied= 0;
+  bool in_section= FALSE, opt_applied= 0;
   uint reserve_extended;
   uint new_opt_len;
   int reserve_occupied= 0;

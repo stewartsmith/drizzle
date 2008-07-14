@@ -455,21 +455,6 @@ typedef int	my_socket;	/* File descriptor for sockets */
 #define sig_handler RETSIGTYPE
 C_MODE_START
 typedef void	(*sig_return)(void);/* Returns type from signal */
-C_MODE_END
-#if defined(__GNUC__) && !defined(_lint)
-typedef char	pchar;		/* Mixed prototypes can take char */
-typedef char	puchar;		/* Mixed prototypes can take char */
-typedef char	pbool;		/* Mixed prototypes can take char */
-typedef short	pshort;		/* Mixed prototypes can take short int */
-typedef float	pfloat;		/* Mixed prototypes can take float */
-#else
-typedef int	pchar;		/* Mixed prototypes can't take char */
-typedef uint	puchar;		/* Mixed prototypes can't take char */
-typedef int	pbool;		/* Mixed prototypes can't take char */
-typedef int	pshort;		/* Mixed prototypes can't take short int */
-typedef double	pfloat;		/* Mixed prototypes can't take float */
-#endif
-C_MODE_START
 typedef int	(*qsort_cmp)(const void *,const void *);
 typedef int	(*qsort_cmp2)(void*, const void *,const void *);
 C_MODE_END
@@ -570,8 +555,8 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 #undef remove		/* Crashes MySQL on SCO 5.0.0 */
 #define closesocket(A)	close(A)
-#ifndef ulonglong2double
-#define ulonglong2double(A) ((double) (ulonglong) (A))
+#ifndef uint64_t2double
+#define uint64_t2double(A) ((double) (uint64_t) (A))
 #define my_off_t2double(A)  ((double) (my_off_t) (A))
 #endif
 
@@ -752,14 +737,13 @@ typedef unsigned long uint32;
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
 typedef uint32_t	ulong;		  /* Short for unsigned long */
 #endif
-#ifndef longlong_defined
+#ifndef int64_t_defined
 /* 
-  Using [unsigned] long long is preferable as [u]longlong because we use 
+  Using [unsigned] long long is preferable as [u]int64_t because we use 
   [unsigned] long long unconditionally in many places, 
   for example in constants with [U]LL suffix.
 */
-typedef uint64_t ulonglong; /* ulong or unsigned long long */
-typedef int64_t	longlong;
+typedef int64_t	int64_t;
 #endif
 
 #ifndef HAVE_INT64
@@ -769,7 +753,7 @@ typedef int64_t int64;
 typedef uint64_t uint64;
 #endif
 
-typedef uint64_t my_ulonglong;
+typedef uint64_t my_uint64_t;
 
 #if SIZEOF_CHARP == SIZEOF_INT
 typedef int intptr;
@@ -784,7 +768,7 @@ typedef long long intptr;
 #define MY_ERRPTR ((void*)(intptr)1)
 
 #if SIZEOF_OFF_T > 4
-typedef ulonglong my_off_t;
+typedef uint64_t my_off_t;
 #else
 typedef unsigned long my_off_t;
 #endif
@@ -866,19 +850,19 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #define uint3korr(A)	(long) (*((unsigned int *) (A)) & 0xFFFFFF)
 #endif /* HAVE_purify */
 #define uint4korr(A)	(*((uint32 *) (A)))
-#define uint5korr(A)	((ulonglong)(((uint32) ((uchar) (A)[0])) +\
+#define uint5korr(A)	((uint64_t)(((uint32) ((uchar) (A)[0])) +\
 				    (((uint32) ((uchar) (A)[1])) << 8) +\
 				    (((uint32) ((uchar) (A)[2])) << 16) +\
 				    (((uint32) ((uchar) (A)[3])) << 24)) +\
-				    (((ulonglong) ((uchar) (A)[4])) << 32))
-#define uint6korr(A)	((ulonglong)(((uint32)    ((uchar) (A)[0]))          + \
+				    (((uint64_t) ((uchar) (A)[4])) << 32))
+#define uint6korr(A)	((uint64_t)(((uint32)    ((uchar) (A)[0]))          + \
                                      (((uint32)    ((uchar) (A)[1])) << 8)   + \
                                      (((uint32)    ((uchar) (A)[2])) << 16)  + \
                                      (((uint32)    ((uchar) (A)[3])) << 24)) + \
-                         (((ulonglong) ((uchar) (A)[4])) << 32) +       \
-                         (((ulonglong) ((uchar) (A)[5])) << 40))
-#define uint8korr(A)	(*((ulonglong *) (A)))
-#define sint8korr(A)	(*((longlong *) (A)))
+                         (((uint64_t) ((uchar) (A)[4])) << 32) +       \
+                         (((uint64_t) ((uchar) (A)[5])) << 40))
+#define uint8korr(A)	(*((uint64_t *) (A)))
+#define sint8korr(A)	(*((int64_t *) (A)))
 #define int2store(T,A)	*((uint16*) (T))= (uint16) (A)
 #define int3store(T,A)  do { *(T)=  (uchar) ((A));\
                             *(T+1)=(uchar) (((uint) (A) >> 8));\
@@ -895,7 +879,7 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
                              *((T)+3)=(uchar) (((A) >> 24)); \
                              *((T)+4)=(uchar) (((A) >> 32)); \
                              *((T)+5)=(uchar) (((A) >> 40)); } while(0)
-#define int8store(T,A)	*((ulonglong *) (T))= (ulonglong) (A)
+#define int8store(T,A)	*((uint64_t *) (T))= (uint64_t) (A)
 
 typedef union {
   double v;
@@ -935,7 +919,7 @@ do { doubleget_union _tmp; \
 				(((int32) ((uchar) (A)[1]) << 8)) +\
 				(((int32) ((uchar) (A)[2]) << 16)) +\
 				(((int32) ((int16) (A)[3]) << 24)))
-#define sint8korr(A)	(longlong) uint8korr(A)
+#define sint8korr(A)	(int64_t) uint8korr(A)
 #define uint2korr(A)	(uint16) (((uint16) ((uchar) (A)[0])) +\
 				  ((uint16) ((uchar) (A)[1]) << 8))
 #define uint3korr(A)	(uint32) (((uint32) ((uchar) (A)[0])) +\
@@ -945,22 +929,22 @@ do { doubleget_union _tmp; \
 				  (((uint32) ((uchar) (A)[1])) << 8) +\
 				  (((uint32) ((uchar) (A)[2])) << 16) +\
 				  (((uint32) ((uchar) (A)[3])) << 24))
-#define uint5korr(A)	((ulonglong)(((uint32) ((uchar) (A)[0])) +\
+#define uint5korr(A)	((uint64_t)(((uint32) ((uchar) (A)[0])) +\
 				    (((uint32) ((uchar) (A)[1])) << 8) +\
 				    (((uint32) ((uchar) (A)[2])) << 16) +\
 				    (((uint32) ((uchar) (A)[3])) << 24)) +\
-				    (((ulonglong) ((uchar) (A)[4])) << 32))
-#define uint6korr(A)	((ulonglong)(((uint32)    ((uchar) (A)[0]))          + \
+				    (((uint64_t) ((uchar) (A)[4])) << 32))
+#define uint6korr(A)	((uint64_t)(((uint32)    ((uchar) (A)[0]))          + \
                                      (((uint32)    ((uchar) (A)[1])) << 8)   + \
                                      (((uint32)    ((uchar) (A)[2])) << 16)  + \
                                      (((uint32)    ((uchar) (A)[3])) << 24)) + \
-                         (((ulonglong) ((uchar) (A)[4])) << 32) +       \
-                         (((ulonglong) ((uchar) (A)[5])) << 40))
-#define uint8korr(A)	((ulonglong)(((uint32) ((uchar) (A)[0])) +\
+                         (((uint64_t) ((uchar) (A)[4])) << 32) +       \
+                         (((uint64_t) ((uchar) (A)[5])) << 40))
+#define uint8korr(A)	((uint64_t)(((uint32) ((uchar) (A)[0])) +\
 				    (((uint32) ((uchar) (A)[1])) << 8) +\
 				    (((uint32) ((uchar) (A)[2])) << 16) +\
 				    (((uint32) ((uchar) (A)[3])) << 24)) +\
-			(((ulonglong) (((uint32) ((uchar) (A)[4])) +\
+			(((uint64_t) (((uint32) ((uchar) (A)[4])) +\
 				    (((uint32) ((uchar) (A)[5])) << 8) +\
 				    (((uint32) ((uchar) (A)[6])) << 16) +\
 				    (((uint32) ((uchar) (A)[7])) << 24))) <<\
@@ -1101,8 +1085,8 @@ do { doubleget_union _tmp; \
 #define floatstore(T,V)  memcpy_fixed((uchar*) (T),(uchar*)(&V),sizeof(float))
 #define doubleget(V,M)	 memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(double))
 #define doublestore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(double))
-#define longlongget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(ulonglong))
-#define longlongstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(ulonglong))
+#define int64_tget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
+#define int64_tstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
 
 #else
 
@@ -1120,8 +1104,8 @@ do { doubleget_union _tmp; \
 #define doubleget(V,M)	 memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(double))
 #define doublestore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(double))
 #endif /* doubleget */
-#define longlongget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(ulonglong))
-#define longlongstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(ulonglong))
+#define int64_tget(V,M) memcpy_fixed((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
+#define int64_tstore(T,V) memcpy_fixed((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
 
 #endif /* WORDS_BIGENDIAN */
 

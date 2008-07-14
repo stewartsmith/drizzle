@@ -381,7 +381,7 @@ void mi_copy_status(void* to,void *from)
     1  not ok
 */
 
-my_bool mi_check_status(void *param)
+bool mi_check_status(void *param)
 {
   MI_INFO *info=(MI_INFO*) param;
   /*

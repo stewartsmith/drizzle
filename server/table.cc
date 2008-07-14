@@ -94,7 +94,7 @@ void Default_object_creation_ctx::change_env(THD *thd) const
 /* Get column name from column hash */
 
 static uchar *get_field_name(Field **buff, size_t *length,
-                             my_bool not_used __attribute__((unused)))
+                             bool not_used __attribute__((unused)))
 {
   *length= (uint) strlen((*buff)->field_name);
   return (uchar*) (*buff)->field_name;
@@ -1042,7 +1042,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     uint primary_key=(uint) (find_type((char*) primary_key_name,
 				       &share->keynames, 3) - 1);
-    longlong ha_option= handler_file->ha_table_flags();
+    int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
@@ -2355,13 +2355,13 @@ bool check_column_name(const char *name)
                   and such errors never reach the user.
 */
 
-my_bool
+bool
 table_check_intact(TABLE *table, const uint table_f_count,
                    const TABLE_FIELD_W_TYPE *table_def)
 {
   uint i;
-  my_bool error= false;
-  my_bool fields_diff_count;
+  bool error= false;
+  bool fields_diff_count;
 
   fields_diff_count= (table->s->fields != table_f_count);
   if (fields_diff_count)

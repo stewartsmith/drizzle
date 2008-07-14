@@ -207,7 +207,7 @@ public:
              const char *sql_text, uint sql_text_len);
   bool write(THD *thd, time_t current_time, time_t query_start_arg,
              const char *user_host, uint user_host_len,
-             ulonglong query_utime, ulonglong lock_utime, bool is_command,
+             uint64_t query_utime, uint64_t lock_utime, bool is_command,
              const char *sql_text, uint sql_text_len);
   bool open_slow_log(const char *log_name)
   {
@@ -234,7 +234,7 @@ class MYSQL_BIN_LOG: public TC_LOG, private MYSQL_LOG
   pthread_mutex_t LOCK_prep_xids;
   pthread_cond_t  COND_prep_xids;
   pthread_cond_t update_cond;
-  ulonglong bytes_written;
+  uint64_t bytes_written;
   IO_CACHE index_file;
   char index_file_name[FN_REFLEN];
   /*
@@ -263,7 +263,7 @@ class MYSQL_BIN_LOG: public TC_LOG, private MYSQL_LOG
   */
   bool no_auto_events;
 
-  ulonglong m_table_map_version;
+  uint64_t m_table_map_version;
 
   int write_to_file(IO_CACHE *cache);
   /*
@@ -306,7 +306,7 @@ public:
     return table->s->table_map_version == table_map_version();
   }
 
-  ulonglong table_map_version() const { return m_table_map_version; }
+  uint64_t table_map_version() const { return m_table_map_version; }
   void update_table_map_version() { ++m_table_map_version; }
 
   int flush_and_set_pending_rows_event(THD *thd, Rows_log_event* event);
@@ -316,7 +316,7 @@ public:
   {
     bytes_written = 0;
   }
-  void harvest_bytes_written(ulonglong* counter)
+  void harvest_bytes_written(uint64_t* counter)
   {
     (*counter)+=bytes_written;
     bytes_written=0;
@@ -364,7 +364,7 @@ public:
   bool flush_and_sync();
   int purge_logs(const char *to_log, bool included,
                  bool need_mutex, bool need_update_threads,
-                 ulonglong *decrease_log_space);
+                 uint64_t *decrease_log_space);
   int purge_logs_before_date(time_t purge_time);
   int purge_first_log(Relay_log_info* rli, bool included);
   bool reset_logs(THD* thd);
@@ -398,8 +398,8 @@ public:
 
   virtual bool log_slow(THD *thd, time_t current_time,
                         time_t query_start_arg, const char *user_host,
-                        uint user_host_len, ulonglong query_utime,
-                        ulonglong lock_utime, bool is_command,
+                        uint user_host_len, uint64_t query_utime,
+                        uint64_t lock_utime, bool is_command,
                         const char *sql_text, uint sql_text_len)= 0;
   virtual bool log_error(enum loglevel level, const char *format,
                          va_list args)= 0;
@@ -429,8 +429,8 @@ public:
 
   virtual bool log_slow(THD *thd, time_t current_time,
                         time_t query_start_arg, const char *user_host,
-                        uint user_host_len, ulonglong query_utime,
-                        ulonglong lock_utime, bool is_command,
+                        uint user_host_len, uint64_t query_utime,
+                        uint64_t lock_utime, bool is_command,
                         const char *sql_text, uint sql_text_len);
   virtual bool log_error(enum loglevel level, const char *format,
                          va_list args);
@@ -485,7 +485,7 @@ public:
   bool error_log_print(enum loglevel level, const char *format,
                       va_list args);
   bool slow_log_print(THD *thd, const char *query, uint query_length,
-                      ulonglong current_utime);
+                      uint64_t current_utime);
   bool general_log_print(THD *thd,enum enum_server_command command,
                          const char *format, va_list args);
   bool general_log_write(THD *thd, enum enum_server_command command,

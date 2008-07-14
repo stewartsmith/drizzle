@@ -636,7 +636,10 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
 ** ptr		Pointer to LIKE string.
 ** ptr_length	Length of LIKE string.
 ** escape	Escape character in LIKE.  (Normally '\').
-**		All escape characters should be removed from min_str and max_str
+**		All escape characters should be removed from
+**              min_str and max_str
+** w_one        Single char matching char in LIKE (Normally '_')
+** w_many       Multiple char matching char in LIKE (Normally '%')
 ** res_length	Length of min_str and max_str.
 ** min_str	Smallest case sensitive string that ranges LIKE.
 **		Should be space padded to res_length.
@@ -648,11 +651,11 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
 */
 
 my_bool my_like_range_mb(CHARSET_INFO *cs,
-			 const char *ptr,size_t ptr_length,
-			 pbool escape, pbool w_one, pbool w_many,
-			 size_t res_length,
-			 char *min_str,char *max_str,
-			 size_t *min_length,size_t *max_length)
+                         const char *ptr,size_t ptr_length,
+                         char escape, char w_one, char w_many,
+                         size_t res_length,
+                         char *min_str,char *max_str,
+                         size_t *min_length,size_t *max_length)
 {
   uint mb_len;
   const char *end= ptr + ptr_length;

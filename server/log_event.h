@@ -2198,11 +2198,11 @@ protected:
 class Intvar_log_event: public Log_event
 {
 public:
-  ulonglong val;
+  uint64_t val;
   uchar type;
 
 #ifndef MYSQL_CLIENT
-  Intvar_log_event(THD* thd_arg,uchar type_arg, ulonglong val_arg)
+  Intvar_log_event(THD* thd_arg,uchar type_arg, uint64_t val_arg)
     :Log_event(thd_arg,0,0),val(val_arg),type(type_arg)
   {}
 #ifdef HAVE_REPLICATION
@@ -2273,11 +2273,11 @@ private:
 class Rand_log_event: public Log_event
 {
  public:
-  ulonglong seed1;
-  ulonglong seed2;
+  uint64_t seed1;
+  uint64_t seed2;
 
 #ifndef MYSQL_CLIENT
-  Rand_log_event(THD* thd_arg, ulonglong seed1_arg, ulonglong seed2_arg)
+  Rand_log_event(THD* thd_arg, uint64_t seed1_arg, uint64_t seed2_arg)
     :Log_event(thd_arg,0,0),seed1(seed1_arg),seed2(seed2_arg)
   {}
 #ifdef HAVE_REPLICATION
@@ -2291,7 +2291,7 @@ class Rand_log_event: public Log_event
                  const Format_description_log_event *description_event);
   ~Rand_log_event() {}
   Log_event_type get_type_code() { return RAND_EVENT;}
-  int get_data_size() { return 16; /* sizeof(ulonglong) * 2*/ }
+  int get_data_size() { return 16; /* sizeof(uint64_t) * 2*/ }
 #ifndef MYSQL_CLIENT
   bool write(IO_CACHE* file);
 #endif
@@ -2314,7 +2314,7 @@ private:
   @section Xid_log_event_binary_format Binary Format  
 */
 #ifdef MYSQL_CLIENT
-typedef ulonglong my_xid; // this line is the same as in handler.h
+typedef uint64_t my_xid; // this line is the same as in handler.h
 #endif
 
 class Xid_log_event: public Log_event
@@ -2497,13 +2497,13 @@ public:
     DUP_NAME= 2 // if constructor should dup the string argument
   };
   const char* new_log_ident;
-  ulonglong pos;
+  uint64_t pos;
   uint ident_len;
   uint flags;
 #ifndef MYSQL_CLIENT
   Rotate_log_event(const char* new_log_ident_arg,
 		   uint ident_len_arg,
-		   ulonglong pos_arg, uint flags);
+		   uint64_t pos_arg, uint flags);
 #ifdef HAVE_REPLICATION
   void pack_info(Protocol* protocol);
 #endif /* HAVE_REPLICATION */

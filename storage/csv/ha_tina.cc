@@ -71,7 +71,7 @@ static int write_meta_file(File meta_file, ha_rows rows, bool dirty);
 
 extern "C" void tina_get_status(void* param, int concurrent_insert);
 extern "C" void tina_update_status(void* param);
-extern "C" my_bool tina_check_status(void* param);
+extern "C" bool tina_check_status(void* param);
 
 /* Stuff for shares */
 pthread_mutex_t tina_mutex;
@@ -98,7 +98,7 @@ int sort_set (tina_set *a, tina_set *b)
 }
 
 static uchar* tina_get_key(TINA_SHARE *share, size_t *length,
-                          my_bool not_used __attribute__((unused)))
+                          bool not_used __attribute__((unused)))
 {
   *length=share->table_name_length;
   return (uchar*) share->table_name;
@@ -749,7 +749,7 @@ void tina_update_status(void* param)
 }
 
 /* this should exist and return 0 for concurrent insert to work */
-my_bool tina_check_status(void* param __attribute__((__unused__)))
+bool tina_check_status(void* param __attribute__((__unused__)))
 {
   return 0;
 }

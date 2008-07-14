@@ -491,7 +491,7 @@ Field *Item_sum::create_tmp_field(bool group __attribute__((__unused__)),
     field= new Field_double(max_length, maybe_null, name, decimals, true);
     break;
   case INT_RESULT:
-    field= new Field_longlong(max_length, maybe_null, name, unsigned_flag);
+    field= new Field_int64_t(max_length, maybe_null, name, unsigned_flag);
     break;
   case STRING_RESULT:
     if (max_length/collation.collation->mbmaxlen <= 255 ||
@@ -810,17 +810,17 @@ bool Item_sum_sum::add()
 }
 
 
-longlong Item_sum_sum::val_int()
+int64_t Item_sum_sum::val_int()
 {
   assert(fixed == 1);
   if (hybrid_type == DECIMAL_RESULT)
   {
-    longlong result;
+    int64_t result;
     my_decimal2int(E_DEC_FATAL_ERROR, dec_buffs + curr_dec_buff, unsigned_flag,
                    &result);
     return result;
   }
-  return (longlong) rint(val_real());
+  return (int64_t) rint(val_real());
 }
 
 
@@ -906,7 +906,7 @@ struct Hybrid_type_traits_fast_decimal: public
   virtual void fix_length_and_dec(Item *item, Item *arg) const
   { Hybrid_type_traits_decimal::instance()->fix_length_and_dec(item, arg); }
 
-  virtual void div(Hybrid_type *val, ulonglong u) const
+  virtual void div(Hybrid_type *val, uint64_t u) const
   {
     int2my_decimal(E_DEC_FATAL_ERROR, val->integer, 0, val->dec_buf);
     val->used_dec_buf_no= 0;
@@ -943,7 +943,7 @@ void Item_sum_distinct::fix_length_and_dec()
   /*
     Preserving int8, int16, int32 field types gives ~10% performance boost
     as the size of result tree becomes significantly smaller.
-    Another speed up we gain by using longlong for intermediate
+    Another speed up we gain by using int64_t for intermediate
     calculations. The range of int64 is enough to hold sum 2^32 distinct
     integers each <= 2^32.
   */
@@ -1104,7 +1104,7 @@ my_decimal *Item_sum_distinct::val_decimal(my_decimal *to)
 }
 
 
-longlong Item_sum_distinct::val_int()
+int64_t Item_sum_distinct::val_int()
 {
   calculate_val_and_count();
   return val.traits->val_int(&val, unsigned_flag);
@@ -1168,10 +1168,10 @@ bool Item_sum_count::add()
   return 0;
 }
 
-longlong Item_sum_count::val_int()
+int64_t Item_sum_count::val_int()
 {
   assert(fixed == 1);
-  return (longlong) count;
+  return (int64_t) count;
 }
 
 
@@ -1226,7 +1226,7 @@ Field *Item_sum_avg::create_tmp_field(bool group, TABLE *table,
       and unpack on access.
     */
     field= new Field_string(((hybrid_type == DECIMAL_RESULT) ?
-                             dec_bin_size : sizeof(double)) + sizeof(longlong),
+                             dec_bin_size : sizeof(double)) + sizeof(int64_t),
                             0, name, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
@@ -1264,7 +1264,7 @@ double Item_sum_avg::val_real()
     null_value=1;
     return 0.0;
   }
-  return Item_sum_sum::val_real() / ulonglong2double(count);
+  return Item_sum_sum::val_real() / uint64_t2double(count);
 }
 
 
@@ -1336,7 +1336,7 @@ Item *Item_sum_std::copy_or_same(THD* thd)
   variance.  The difference between the two classes is that the first is used
   for a mundane SELECT, while the latter is used in a GROUPing SELECT.
 */
-static void variance_fp_recurrence_next(double *m, double *s, ulonglong *count, double nr)
+static void variance_fp_recurrence_next(double *m, double *s, uint64_t *count, double nr)
 {
   *count += 1;
 
@@ -1354,7 +1354,7 @@ static void variance_fp_recurrence_next(double *m, double *s, ulonglong *count, 
 }
 
 
-static double variance_fp_recurrence_result(double s, ulonglong count, bool is_sample_variance)
+static double variance_fp_recurrence_result(double s, uint64_t count, bool is_sample_variance)
 {
   if (count == 1)
     return 0.0;
@@ -1435,7 +1435,7 @@ Field *Item_sum_variance::create_tmp_field(bool group, TABLE *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_string(sizeof(double)*2 + sizeof(longlong), 0, name, &my_charset_bin);
+    field= new Field_string(sizeof(double)*2 + sizeof(int64_t), 0, name, &my_charset_bin);
   }
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
@@ -1505,11 +1505,11 @@ void Item_sum_variance::reset_field()
   nr= args[0]->val_real();              /* sets null_value as side-effect */
 
   if (args[0]->null_value)
-    bzero(res,sizeof(double)*2+sizeof(longlong));
+    bzero(res,sizeof(double)*2+sizeof(int64_t));
   else
   {
-    /* Serialize format is (double)m, (double)s, (longlong)count */
-    ulonglong tmp_count;
+    /* Serialize format is (double)m, (double)s, (int64_t)count */
+    uint64_t tmp_count;
     double tmp_s;
     float8store(res, nr);               /* recurrence variable m */
     tmp_s= 0.0;
@@ -1522,7 +1522,7 @@ void Item_sum_variance::reset_field()
 
 void Item_sum_variance::update_field()
 {
-  ulonglong field_count;
+  uint64_t field_count;
   uchar *res=result_field->ptr;
 
   double nr= args[0]->val_real();       /* sets null_value as side-effect */
@@ -1530,7 +1530,7 @@ void Item_sum_variance::update_field()
   if (args[0]->null_value)
     return;
 
-  /* Serialize format is (double)m, (double)s, (longlong)count */
+  /* Serialize format is (double)m, (double)s, (int64_t)count */
   double field_recurrence_m, field_recurrence_s;
   float8get(field_recurrence_m, res);
   float8get(field_recurrence_s, res + sizeof(double));
@@ -1581,7 +1581,7 @@ double Item_sum_hybrid::val_real()
   }
   case INT_RESULT:
     if (unsigned_flag)
-      return ulonglong2double(sum_int);
+      return uint64_t2double(sum_int);
     return (double) sum_int;
   case DECIMAL_RESULT:
     my_decimal2double(E_DEC_FATAL_ERROR, &sum_dec, &sum);
@@ -1596,7 +1596,7 @@ double Item_sum_hybrid::val_real()
   }
 }
 
-longlong Item_sum_hybrid::val_int()
+int64_t Item_sum_hybrid::val_int()
 {
   assert(fixed == 1);
   if (null_value)
@@ -1606,12 +1606,12 @@ longlong Item_sum_hybrid::val_int()
     return sum_int;
   case DECIMAL_RESULT:
   {
-    longlong result;
+    int64_t result;
     my_decimal2int(E_DEC_FATAL_ERROR, &sum_dec, unsigned_flag, &result);
     return sum_int;
   }
   default:
-    return (longlong) rint(Item_sum_hybrid::val_real());
+    return (int64_t) rint(Item_sum_hybrid::val_real());
   }
 }
 
@@ -1717,10 +1717,10 @@ bool Item_sum_min::add()
   break;
   case INT_RESULT:
   {
-    longlong nr=args[0]->val_int();
+    int64_t nr=args[0]->val_int();
     if (!args[0]->null_value && (null_value ||
 				 (unsigned_flag && 
-				  (ulonglong) nr < (ulonglong) sum_int) ||
+				  (uint64_t) nr < (uint64_t) sum_int) ||
 				 (!unsigned_flag && nr < sum_int)))
     {
       sum_int=nr;
@@ -1781,10 +1781,10 @@ bool Item_sum_max::add()
   break;
   case INT_RESULT:
   {
-    longlong nr=args[0]->val_int();
+    int64_t nr=args[0]->val_int();
     if (!args[0]->null_value && (null_value ||
 				 (unsigned_flag && 
-				  (ulonglong) nr > (ulonglong) sum_int) ||
+				  (uint64_t) nr > (uint64_t) sum_int) ||
 				 (!unsigned_flag && nr > sum_int)))
     {
       sum_int=nr;
@@ -1825,10 +1825,10 @@ bool Item_sum_max::add()
 
 /* bit_or and bit_and */
 
-longlong Item_sum_bit::val_int()
+int64_t Item_sum_bit::val_int()
 {
   assert(fixed == 1);
-  return (longlong) bits;
+  return (int64_t) bits;
 }
 
 
@@ -1845,7 +1845,7 @@ Item *Item_sum_or::copy_or_same(THD* thd)
 
 bool Item_sum_or::add()
 {
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if (!args[0]->null_value)
     bits|=value;
   return 0;
@@ -1859,7 +1859,7 @@ Item *Item_sum_xor::copy_or_same(THD* thd)
 
 bool Item_sum_xor::add()
 {
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if (!args[0]->null_value)
     bits^=value;
   return 0;
@@ -1873,7 +1873,7 @@ Item *Item_sum_and::copy_or_same(THD* thd)
 
 bool Item_sum_and::add()
 {
-  ulonglong value= (ulonglong) args[0]->val_int();
+  uint64_t value= (uint64_t) args[0]->val_int();
   if (!args[0]->null_value)
     bits&=value;
   return 0;
@@ -1925,7 +1925,7 @@ void Item_sum_hybrid::reset_field()
   }
   case INT_RESULT:
   {
-    longlong nr=args[0]->val_int();
+    int64_t nr=args[0]->val_int();
 
     if (maybe_null)
     {
@@ -2009,7 +2009,7 @@ void Item_sum_sum::reset_field()
 void Item_sum_count::reset_field()
 {
   uchar *res=result_field->ptr;
-  longlong nr=0;
+  int64_t nr=0;
 
   if (!args[0]->maybe_null || !args[0]->is_null())
     nr=1;
@@ -2022,7 +2022,7 @@ void Item_sum_avg::reset_field()
   uchar *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
-    longlong tmp;
+    int64_t tmp;
     my_decimal value, *arg_dec= args[0]->val_decimal(&value);
     if (args[0]->null_value)
     {
@@ -2040,10 +2040,10 @@ void Item_sum_avg::reset_field()
     double nr= args[0]->val_real();
 
     if (args[0]->null_value)
-      bzero(res,sizeof(double)+sizeof(longlong));
+      bzero(res,sizeof(double)+sizeof(int64_t));
     else
     {
-      longlong tmp= 1;
+      int64_t tmp= 1;
       float8store(res,nr);
       res+=sizeof(double);
       int8store(res,tmp);
@@ -2111,7 +2111,7 @@ void Item_sum_sum::update_field()
 
 void Item_sum_count::update_field()
 {
-  longlong nr;
+  int64_t nr;
   uchar *res=result_field->ptr;
 
   nr=sint8korr(res);
@@ -2123,7 +2123,7 @@ void Item_sum_count::update_field()
 
 void Item_sum_avg::update_field()
 {
-  longlong field_count;
+  int64_t field_count;
   uchar *res=result_field->ptr;
   if (hybrid_type == DECIMAL_RESULT)
   {
@@ -2219,7 +2219,7 @@ Item_sum_hybrid::min_max_update_real_field()
 void
 Item_sum_hybrid::min_max_update_int_field()
 {
-  longlong nr,old_nr;
+  int64_t nr,old_nr;
 
   old_nr=result_field->val_int();
   nr=args[0]->val_int();
@@ -2230,7 +2230,7 @@ Item_sum_hybrid::min_max_update_int_field()
     else
     {
       bool res=(unsigned_flag ?
-		(ulonglong) old_nr > (ulonglong) nr :
+		(uint64_t) old_nr > (uint64_t) nr :
 		old_nr > nr);
       /* (cmp_sign > 0 && res) || (!(cmp_sign > 0) && !res) */
       if ((cmp_sign > 0) ^ (!res))
@@ -2296,7 +2296,7 @@ double Item_avg_field::val_real()
 {
   // fix_fields() never calls for this Item
   double nr;
-  longlong count;
+  int64_t count;
   uchar *res;
 
   if (hybrid_type == DECIMAL_RESULT)
@@ -2312,9 +2312,9 @@ double Item_avg_field::val_real()
 }
 
 
-longlong Item_avg_field::val_int()
+int64_t Item_avg_field::val_int()
 {
-  return (longlong) rint(val_real());
+  return (int64_t) rint(val_real());
 }
 
 
@@ -2324,7 +2324,7 @@ my_decimal *Item_avg_field::val_decimal(my_decimal *dec_buf)
   if (hybrid_type == REAL_RESULT)
     return val_decimal_from_real(dec_buf);
 
-  longlong count= sint8korr(field->ptr + dec_bin_size);
+  int64_t count= sint8korr(field->ptr + dec_bin_size);
   if ((null_value= !count))
     return 0;
 
@@ -2415,7 +2415,7 @@ double Item_variance_field::val_real()
     return val_real_from_decimal();
 
   double recurrence_s;
-  ulonglong count;
+  uint64_t count;
   float8get(recurrence_s, (field->ptr + sizeof(double)));
   count=sint8korr(field->ptr+sizeof(double)*2);
 
@@ -2469,7 +2469,7 @@ static int count_distinct_walk(void *elem __attribute__((__unused__)),
                                element_count count __attribute__((__unused__)),
                                void *arg)
 {
-  (*((ulonglong*)arg))++;
+  (*((uint64_t*)arg))++;
   return 0;
 }
 
@@ -2691,7 +2691,7 @@ bool Item_sum_count_distinct::add()
 }
 
 
-longlong Item_sum_count_distinct::val_int()
+int64_t Item_sum_count_distinct::val_int()
 {
   int error;
   assert(fixed == 1);
@@ -2703,11 +2703,11 @@ longlong Item_sum_count_distinct::val_int()
       return count;
 
     if (tree->elements == 0)
-      return (longlong) tree->elements_in_tree(); // everything fits in memory
+      return (int64_t) tree->elements_in_tree(); // everything fits in memory
     count= 0;
     tree->walk(count_distinct_walk, (void*) &count);
     is_evaluated= true;
-    return (longlong) count;
+    return (int64_t) count;
   }
 
   error= table->file->info(HA_STATUS_VARIABLE | HA_STATUS_NO_LOCK);
@@ -2803,7 +2803,7 @@ double Item_sum_udf_decimal::val_real()
 }
 
 
-longlong Item_sum_udf_decimal::val_int()
+int64_t Item_sum_udf_decimal::val_int()
 {
   return val_int_from_decimal();
 }
@@ -2827,7 +2827,7 @@ Item *Item_sum_udf_int::copy_or_same(THD* thd)
   return new (thd->mem_root) Item_sum_udf_int(thd, this);
 }
 
-longlong Item_sum_udf_int::val_int()
+int64_t Item_sum_udf_int::val_int()
 {
   assert(fixed == 1);
   return(udf.val_int(&null_value));

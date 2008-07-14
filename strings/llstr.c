@@ -18,8 +18,8 @@
 
   llstr(value, buff);
 
-  This function saves a longlong value in a buffer and returns the pointer to
-  the buffer.  This is useful when trying to portable print longlong
+  This function saves a int64_t value in a buffer and returns the pointer to
+  the buffer.  This is useful when trying to portable print int64_t
   variables with printf() as there is no usable printf() standard one can use.
 */
 
@@ -27,14 +27,14 @@
 #include <my_global.h>
 #include "m_string.h"
 
-char *llstr(longlong value,char *buff)
+char *llstr(int64_t value,char *buff)
 {
-  longlong10_to_str(value,buff,-10);
+  int64_t10_to_str(value,buff,-10);
   return buff;
 }
 
-char *ullstr(longlong value,char *buff)
+char *ullstr(int64_t value,char *buff)
 {
-  longlong10_to_str(value,buff,10);
+  int64_t10_to_str(value,buff,10);
   return buff;
 }

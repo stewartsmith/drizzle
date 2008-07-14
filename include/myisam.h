@@ -137,8 +137,8 @@ typedef struct st_mi_isaminfo		/* Struct from h_info */
            delete_length;
   ulong reclength;			/* Recordlength */
   ulong mean_reclength;			/* Mean recordlength (if packed) */
-  ulonglong auto_increment;
-  ulonglong key_map;			/* Which keys are used */
+  uint64_t auto_increment;
+  uint64_t key_map;			/* Which keys are used */
   char  *data_file_name, *index_file_name;
   uint  keys;				/* Number of keys in use */
   uint	options;			/* HA_OPTION_... used */
@@ -159,9 +159,9 @@ typedef struct st_mi_create_info
   const char *index_file_name, *data_file_name;	/* If using symlinks */
   ha_rows max_rows;
   ha_rows reloc_rows;
-  ulonglong auto_increment;
-  ulonglong data_file_length;
-  ulonglong key_file_length;
+  uint64_t auto_increment;
+  uint64_t data_file_length;
+  uint64_t key_file_length;
   uint old_options;
   uint8 language;
   my_bool with_auto_increment;
@@ -253,7 +253,7 @@ typedef struct st_columndef		/* column information */
 extern char * myisam_log_filename;		/* Name of logfile */
 extern ulong myisam_block_size;
 extern ulong myisam_concurrent_insert;
-extern my_bool myisam_flush,myisam_delay_key_write,myisam_single_user;
+extern bool myisam_flush,myisam_delay_key_write,myisam_single_user;
 extern my_off_t myisam_max_temp_length;
 extern ulong myisam_bulk_insert_tree_size, myisam_data_pointer_size;
 
@@ -299,7 +299,7 @@ extern int mi_log(int activate_log);
 extern int mi_is_changed(struct st_myisam_info *info);
 extern int mi_delete_all_rows(struct st_myisam_info *info);
 extern ulong _mi_calc_blob_length(uint length , const uchar *pos);
-extern uint mi_get_pointer_length(ulonglong file_length, uint def);
+extern uint mi_get_pointer_length(uint64_t file_length, uint def);
 
 /* this is used to pass to mysql_myisamchk_table */
 
@@ -392,10 +392,10 @@ typedef enum
 
 typedef struct st_mi_check_param
 {
-  ulonglong auto_increment_value;
-  ulonglong max_data_file_length;
-  ulonglong keys_in_use;
-  ulonglong max_record_length;
+  uint64_t auto_increment_value;
+  uint64_t max_data_file_length;
+  uint64_t keys_in_use;
+  uint64_t max_record_length;
   my_off_t search_after_block;
   my_off_t new_file_pos,key_file_blocks;
   my_off_t keydata,totaldata,key_blocks,start_check_pos;
@@ -419,8 +419,8 @@ typedef struct st_mi_check_param
     The next two are used to collect statistics, see update_key_parts for
     description.
   */
-  ulonglong unique_count[MI_MAX_KEY_SEG+1];
-  ulonglong notnull_count[MI_MAX_KEY_SEG+1];
+  uint64_t unique_count[MI_MAX_KEY_SEG+1];
+  uint64_t notnull_count[MI_MAX_KEY_SEG+1];
   
   ha_checksum key_crc[HA_MAX_POSSIBLE_KEY];
   ulong rec_per_key_part[MI_MAX_KEY_SEG*HA_MAX_POSSIBLE_KEY];
@@ -479,8 +479,8 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
 			       my_bool repair);
 int update_state_info(MI_CHECK *param, MI_INFO *info,uint update);
 void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
-                      ulonglong *unique, ulonglong *notnull, 
-                      ulonglong records);
+                      uint64_t *unique, uint64_t *notnull, 
+                      uint64_t records);
 int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
 	     my_off_t length, const char *type);
 int movepoint(MI_INFO *info,uchar *record,my_off_t oldpos,
@@ -488,17 +488,17 @@ int movepoint(MI_INFO *info,uchar *record,my_off_t oldpos,
 int write_data_suffix(SORT_INFO *sort_info, my_bool fix_datafile);
 int test_if_almost_full(MI_INFO *info);
 int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename);
-my_bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, ulonglong key_map,
+my_bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 			    my_bool force);
 
 int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint inx);
 void mi_end_bulk_insert(MI_INFO *info);
-int mi_assign_to_key_cache(MI_INFO *info, ulonglong key_map, 
+int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map, 
 			   KEY_CACHE *key_cache);
 void mi_change_key_cache(KEY_CACHE *old_key_cache,
 			 KEY_CACHE *new_key_cache);
-int mi_preload(MI_INFO *info, ulonglong key_map, my_bool ignore_leaves);
+int mi_preload(MI_INFO *info, uint64_t key_map, my_bool ignore_leaves);
 
 #ifdef	__cplusplus
 }

@@ -43,10 +43,10 @@ extern TYPELIB merge_insert_method;
 
 typedef struct st_mymerge_info		/* Struct from h_info */
 {
-  ulonglong records;			/* Records in database */
-  ulonglong deleted;			/* Deleted records in database */
-  ulonglong recpos;			/* Pos for last used record */
-  ulonglong data_file_length;
+  uint64_t records;			/* Records in database */
+  uint64_t deleted;			/* Deleted records in database */
+  uint64_t recpos;			/* Pos for last used record */
+  uint64_t data_file_length;
   uint	reclength;			/* Recordlength */
   int	errkey;				/* With key was dupplicated on err */
   uint	options;			/* HA_OPTION_... used */
@@ -56,15 +56,15 @@ typedef struct st_mymerge_info		/* Struct from h_info */
 typedef struct st_myrg_table_info
 {
   struct st_myisam_info *table;
-  ulonglong file_offset;
+  uint64_t file_offset;
 } MYRG_TABLE;
 
 typedef struct st_myrg_info
 {
   MYRG_TABLE *open_tables,*current_table,*end_table,*last_used_table;
-  ulonglong records;			/* records in tables */
-  ulonglong del;			/* Removed records */
-  ulonglong data_file_length;
+  uint64_t records;			/* records in tables */
+  uint64_t del;			/* Removed records */
+  uint64_t data_file_length;
   ulong  cache_size;
   uint	 merge_insert_method;
   uint	 tables,options,reclength,keys;
@@ -98,7 +98,7 @@ extern int myrg_rprev(MYRG_INFO *file,uchar *buf,int inx);
 extern int myrg_rnext_same(MYRG_INFO *file,uchar *buf);
 extern int myrg_rkey(MYRG_INFO *info,uchar *buf,int inx, const uchar *key,
                      key_part_map keypart_map, enum ha_rkey_function search_flag);
-extern int myrg_rrnd(MYRG_INFO *file,uchar *buf,ulonglong pos);
+extern int myrg_rrnd(MYRG_INFO *file,uchar *buf,uint64_t pos);
 extern int myrg_rsame(MYRG_INFO *file,uchar *record,int inx);
 extern int myrg_update(MYRG_INFO *file,const uchar *old,uchar *new_rec);
 extern int myrg_write(MYRG_INFO *info,uchar *rec);
@@ -113,7 +113,7 @@ extern void myrg_extrafunc(MYRG_INFO *info,invalidator_by_filename inv);
 extern ha_rows myrg_records_in_range(MYRG_INFO *info, int inx,
                                      key_range *min_key, key_range *max_key);
 
-extern ulonglong myrg_position(MYRG_INFO *info);
+extern uint64_t myrg_position(MYRG_INFO *info);
 #ifdef	__cplusplus
 }
 #endif

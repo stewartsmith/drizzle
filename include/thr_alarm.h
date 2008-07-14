@@ -46,8 +46,8 @@ void thr_alarm_info(ALARM_INFO *info);
 #define USE_ALARM_THREAD
 #undef USE_ONE_SIGNAL_HAND
 
-typedef my_bool thr_alarm_t;
-typedef my_bool ALARM;
+typedef bool thr_alarm_t;
+typedef bool ALARM;
 
 #define thr_alarm_init(A) (*(A))=0
 #define thr_alarm_in_use(A) (*(A) != 0)
@@ -72,7 +72,7 @@ typedef struct st_alarm {
   thr_alarm_entry alarmed;		/* set when alarm is due */
   pthread_t thread;
   my_thread_id thread_id;
-  my_bool malloced;
+  bool malloced;
 } ALARM;
 
 extern uint thr_client_alarm;
@@ -82,13 +82,13 @@ extern pthread_t alarm_thread;
 #define thr_alarm_in_use(A) (*(A)!= 0)
 void init_thr_alarm(uint max_alarm);
 void resize_thr_alarm(uint max_alarms);
-my_bool thr_alarm(thr_alarm_t *alarmed, uint sec, ALARM *buff);
+bool thr_alarm(thr_alarm_t *alarmed, uint sec, ALARM *buff);
 void thr_alarm_kill(my_thread_id thread_id);
 void thr_end_alarm(thr_alarm_t *alarmed);
-void end_thr_alarm(my_bool free_structures);
+void end_thr_alarm(bool free_structures);
 sig_handler process_alarm(int);
 #ifndef thr_got_alarm
-my_bool thr_got_alarm(thr_alarm_t *alrm);
+bool thr_got_alarm(thr_alarm_t *alrm);
 #endif
 
 

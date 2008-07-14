@@ -124,7 +124,7 @@ struct Hybrid_type_traits;
 
 struct Hybrid_type
 {
-  longlong integer;
+  int64_t integer;
 
   double real;
   /*
@@ -162,12 +162,12 @@ struct Hybrid_type_traits
   virtual void set_zero(Hybrid_type *val) const { val->real= 0.0; }
   virtual void add(Hybrid_type *val, Field *f) const
   { val->real+= f->val_real(); }
-  virtual void div(Hybrid_type *val, ulonglong u) const
-  { val->real/= ulonglong2double(u); }
+  virtual void div(Hybrid_type *val, uint64_t u) const
+  { val->real/= uint64_t2double(u); }
 
-  virtual longlong val_int(Hybrid_type *val,
+  virtual int64_t val_int(Hybrid_type *val,
                            bool unsigned_flag __attribute__((__unused__))) const
-  { return (longlong) rint(val->real); }
+  { return (int64_t) rint(val->real); }
   virtual double val_real(Hybrid_type *val) const { return val->real; }
   virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
   virtual String *val_str(Hybrid_type *val, String *buf, uint8 decimals) const;
@@ -187,9 +187,9 @@ struct Hybrid_type_traits_decimal: public Hybrid_type_traits
   /* Hybrid_type operations. */
   virtual void set_zero(Hybrid_type *val) const;
   virtual void add(Hybrid_type *val, Field *f) const;
-  virtual void div(Hybrid_type *val, ulonglong u) const;
+  virtual void div(Hybrid_type *val, uint64_t u) const;
 
-  virtual longlong val_int(Hybrid_type *val, bool unsigned_flag) const;
+  virtual int64_t val_int(Hybrid_type *val, bool unsigned_flag) const;
   virtual double val_real(Hybrid_type *val) const;
   virtual my_decimal *val_decimal(Hybrid_type *val,
                                   my_decimal *buf __attribute__((__unused__))) const
@@ -212,10 +212,10 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
   { val->integer= 0; }
   virtual void add(Hybrid_type *val, Field *f) const
   { val->integer+= f->val_int(); }
-  virtual void div(Hybrid_type *val, ulonglong u) const
-  { val->integer/= (longlong) u; }
+  virtual void div(Hybrid_type *val, uint64_t u) const
+  { val->integer/= (int64_t) u; }
 
-  virtual longlong val_int(Hybrid_type *val,
+  virtual int64_t val_int(Hybrid_type *val,
                            bool unsigned_flag __attribute__((__unused__))) const
   { return val->integer; }
   virtual double val_real(Hybrid_type *val) const
@@ -391,7 +391,7 @@ public:
   etc etc). An Item* tree is assumed to have the same monotonicity properties
   as its correspoinding function F:
 
-  [signed] longlong F(field1, field2, ...) {
+  [signed] int64_t F(field1, field2, ...) {
     put values of field_i into table record buffer;
     return item->val_int(); 
   }
@@ -584,7 +584,7 @@ public:
         - If the value of the function is NULL then the bound is the
           smallest possible value of LONGLONG_MIN
   */
-  virtual longlong val_int_endpoint(bool left_endp __attribute__((__unused__)),
+  virtual int64_t val_int_endpoint(bool left_endp __attribute__((__unused__)),
                                     bool *incl_endp __attribute__((__unused__)))
   { assert(0); return 0; }
 
@@ -611,12 +611,12 @@ public:
       In case of NULL value return 0 and set null_value flag to TRUE.
       If value is not null null_value flag will be reset to FALSE.
   */
-  virtual longlong val_int()=0;
+  virtual int64_t val_int()=0;
   /*
     This is just a shortcut to avoid the cast. You should still use
     unsigned_flag to check the sign of the item.
   */
-  inline ulonglong val_uint() { return (ulonglong) val_int(); }
+  inline uint64_t val_uint() { return (uint64_t) val_int(); }
   /*
     Return string representation of this item object.
 
@@ -689,7 +689,7 @@ public:
   my_decimal *val_decimal_from_string(my_decimal *decimal_value);
   my_decimal *val_decimal_from_date(my_decimal *decimal_value);
   my_decimal *val_decimal_from_time(my_decimal *decimal_value);
-  longlong val_int_from_decimal();
+  int64_t val_int_from_decimal();
   double val_real_from_decimal();
 
   int save_time_in_field(Field *field);
@@ -709,7 +709,7 @@ public:
     way as *val* methods do it.
   */
   virtual double  val_result() { return val_real(); }
-  virtual longlong val_int_result() { return val_int(); }
+  virtual int64_t val_int_result() { return val_int(); }
   virtual String *str_result(String* tmp) { return val_str(tmp); }
   virtual my_decimal *val_decimal_result(my_decimal *val)
   { return val_decimal(val); }
@@ -936,13 +936,13 @@ public:
   }
 
   /*
-    result_as_longlong() must return TRUE for Items representing DATE/TIME
+    result_as_int64_t() must return TRUE for Items representing DATE/TIME
     functions and DATE/TIME table fields.
     Those Items have result_type()==STRING_RESULT (and not INT_RESULT), but
     their values should be compared as integers (because the integer
     representation is more precise than the string one).
   */
-  virtual bool result_as_longlong() { return FALSE; }
+  virtual bool result_as_int64_t() { return FALSE; }
   bool is_datetime();
 
   /*
@@ -1065,7 +1065,7 @@ public:
 
   enum Type type() const { return FIELD_ITEM; }
   double val_real() { return field->val_real(); }
-  longlong val_int() { return field->val_int(); }
+  int64_t val_int() { return field->val_int(); }
   String *val_str(String *str) { return field->val_str(str); }
   my_decimal *val_decimal(my_decimal *dec) { return field->val_decimal(dec); }
   void make_field(Send_field *tmp_field);
@@ -1112,11 +1112,11 @@ public:
   enum Type type() const { return FIELD_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
   double val_result();
-  longlong val_int_result();
+  int64_t val_int_result();
   String *str_result(String* tmp);
   my_decimal *val_decimal_result(my_decimal *);
   bool val_bool_result();
@@ -1144,7 +1144,7 @@ public:
   {
     return MONOTONIC_STRICT_INCREASING;
   }
-  longlong val_int_endpoint(bool left_endp, bool *incl_endp);
+  int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
   Field *tmp_table_field(TABLE *t_arg __attribute__((__unused__))) { return result_field; }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
@@ -1157,9 +1157,9 @@ public:
   bool find_item_in_field_list_processor(uchar *arg);
   bool register_field_in_read_map(uchar *arg);
   void cleanup();
-  bool result_as_longlong()
+  bool result_as_int64_t()
   {
-    return field->can_be_compared_as_longlong();
+    return field->can_be_compared_as_int64_t();
   }
   Item_equal *find_item_equal(COND_EQUAL *cond_equal);
   bool subst_argument_checker(uchar **arg);
@@ -1192,7 +1192,7 @@ public:
   enum Type type() const { return NULL_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   int save_in_field(Field *field, bool no_conversions);
@@ -1255,7 +1255,7 @@ public:
   my_decimal decimal_value;
   union
   {
-    longlong integer;
+    int64_t integer;
     double   real;
     /*
       Character sets conversion info for string values.
@@ -1304,7 +1304,7 @@ public:
   enum_field_types field_type() const { return param_type; }
 
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal*);
   String *val_str(String*);
   bool get_time(MYSQL_TIME *tm);
@@ -1312,7 +1312,7 @@ public:
   int  save_in_field(Field *field, bool no_conversions);
 
   void set_null();
-  void set_int(longlong i, uint32 max_length_arg);
+  void set_int(int64_t i, uint32 max_length_arg);
   void set_double(double i);
   void set_decimal(const char *str, ulong length);
   bool set_str(const char *str, ulong length);
@@ -1369,23 +1369,23 @@ public:
 class Item_int :public Item_num
 {
 public:
-  longlong value;
+  int64_t value;
   Item_int(int32 i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
-    :value((longlong) i)
+    :value((int64_t) i)
     { max_length=length; fixed= 1; }
-  Item_int(longlong i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+  Item_int(int64_t i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value(i)
     { max_length=length; fixed= 1; }
-  Item_int(ulonglong i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
-    :value((longlong)i)
+  Item_int(uint64_t i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+    :value((int64_t)i)
     { max_length=length; fixed= 1; unsigned_flag= 1; }
-  Item_int(const char *str_arg,longlong i,uint length) :value(i)
+  Item_int(const char *str_arg,int64_t i,uint length) :value(i)
     { max_length=length; name=(char*) str_arg; fixed= 1; }
   Item_int(const char *str_arg, uint length=64);
   enum Type type() const { return INT_ITEM; }
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
-  longlong val_int() { assert(fixed == 1); return value; }
+  int64_t val_int() { assert(fixed == 1); return value; }
   double val_real() { assert(fixed == 1); return (double) value; }
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
@@ -1404,10 +1404,10 @@ class Item_uint :public Item_int
 {
 public:
   Item_uint(const char *str_arg, uint length);
-  Item_uint(ulonglong i) :Item_int((ulonglong) i, 10) {}
-  Item_uint(const char *str_arg, longlong i, uint length);
+  Item_uint(uint64_t i) :Item_int((uint64_t) i, 10) {}
+  Item_uint(const char *str_arg, int64_t i, uint length);
   double val_real()
-    { assert(fixed == 1); return ulonglong2double((ulonglong)value); }
+    { assert(fixed == 1); return uint64_t2double((uint64_t)value); }
   String *val_str(String*);
   Item *clone_item() { return new Item_uint(name, value, max_length); }
   int save_in_field(Field *field, bool no_conversions);
@@ -1427,14 +1427,14 @@ public:
   Item_decimal(const char *str, const my_decimal *val_arg,
                uint decimal_par, uint length);
   Item_decimal(my_decimal *value_par);
-  Item_decimal(longlong val, bool unsig);
+  Item_decimal(int64_t val, bool unsig);
   Item_decimal(double val, int precision, int scale);
   Item_decimal(const uchar *bin, int precision, int scale);
 
   enum Type type() const { return DECIMAL_ITEM; }
   enum Item_result result_type () const { return DECIMAL_RESULT; }
   enum_field_types field_type() const { return MYSQL_TYPE_NEWDECIMAL; }
-  longlong val_int();
+  int64_t val_int();
   double val_real();
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *val __attribute__((__unused__)))
@@ -1482,18 +1482,18 @@ public:
   enum Type type() const { return REAL_ITEM; }
   enum_field_types field_type() const { return MYSQL_TYPE_DOUBLE; }
   double val_real() { assert(fixed == 1); return value; }
-  longlong val_int()
+  int64_t val_int()
   {
     assert(fixed == 1);
     if (value <= (double) LONGLONG_MIN)
     {
        return LONGLONG_MIN;
     }
-    else if (value >= (double) (ulonglong) LONGLONG_MAX)
+    else if (value >= (double) (uint64_t) LONGLONG_MAX)
     {
       return LONGLONG_MAX;
     }
-    return (longlong) rint(value);
+    return (int64_t) rint(value);
   }
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);
@@ -1588,7 +1588,7 @@ public:
   }
   enum Type type() const { return STRING_ITEM; }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String*)
   {
     assert(fixed == 1);
@@ -1721,7 +1721,7 @@ class Item_return_int :public Item_int
   enum_field_types int_field_type;
 public:
   Item_return_int(const char *name_arg, uint length,
-		  enum_field_types field_type_arg, longlong value= 0)
+		  enum_field_types field_type_arg, int64_t value= 0)
     :Item_int(name_arg, value, length), int_field_type(field_type_arg)
   {
     unsigned_flag=1;
@@ -1739,9 +1739,9 @@ public:
   double val_real()
   { 
     assert(fixed == 1); 
-    return (double) (ulonglong) Item_hex_string::val_int();
+    return (double) (uint64_t) Item_hex_string::val_int();
   }
-  longlong val_int();
+  int64_t val_int();
   bool basic_const_item() const { return 1; }
   String *val_str(String*) { assert(fixed == 1); return &str_value; }
   my_decimal *val_decimal(my_decimal *);
@@ -1827,14 +1827,14 @@ public:
     return ref && (*ref)->eq(it, binary_cmp);
   }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
   String *val_str(String* tmp);
   bool is_null();
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   double val_result();
-  longlong val_int_result();
+  int64_t val_int_result();
   String *str_result(String* tmp);
   my_decimal *val_decimal_result(my_decimal *);
   bool val_bool_result();
@@ -1872,9 +1872,9 @@ public:
   bool walk(Item_processor processor, bool walk_subquery, uchar *arg)
   { return (*ref)->walk(processor, walk_subquery, arg); }
   virtual void print(String *str, enum_query_type query_type);
-  bool result_as_longlong()
+  bool result_as_int64_t()
   {
-    return (*ref)->result_as_longlong();
+    return (*ref)->result_as_int64_t();
   }
   void cleanup();
   Item_field *filed_for_view_update()
@@ -1930,7 +1930,7 @@ public:
   Item_direct_ref(THD *thd, Item_direct_ref *item) : Item_ref(thd, item) {}
 
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String* tmp);
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
@@ -2043,7 +2043,7 @@ public:
     :Item_ref(context_arg, item, table_name_arg, field_name_arg),
      owner(master) {}
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String* s);
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
@@ -2073,7 +2073,7 @@ class Item_int_with_ref :public Item_int
 {
   Item *ref;
 public:
-  Item_int_with_ref(longlong i, Item *ref_arg, my_bool unsigned_arg) :
+  Item_int_with_ref(int64_t i, Item *ref_arg, my_bool unsigned_arg) :
     Item_int(i), ref(ref_arg)
   {
     unsigned_flag= unsigned_arg;
@@ -2120,7 +2120,7 @@ public:
 	    my_strntod(str_value.charset(), (char*) str_value.ptr(),
 		       str_value.length(), &end_not_used, &err_not_used));
   }
-  longlong val_int()
+  int64_t val_int()
   {
     int err;
     return null_value ? 0LL : my_strntoll(str_value.charset(),str_value.ptr(),
@@ -2174,7 +2174,7 @@ public:
 class Cached_item_int :public Cached_item
 {
   Item *item;
-  longlong value;
+  int64_t value;
 public:
   Cached_item_int(Item *item_par) :item(item_par),value(0) {}
   bool cmp(void);
@@ -2337,20 +2337,20 @@ public:
 class Item_cache_int: public Item_cache
 {
 protected:
-  longlong value;
+  int64_t value;
 public:
   Item_cache_int(): Item_cache(), value(0) {}
   Item_cache_int(enum_field_types field_type_arg):
     Item_cache(field_type_arg), value(0) {}
 
   void store(Item *item);
-  void store(Item *item, longlong val_arg);
+  void store(Item *item, int64_t val_arg);
   double val_real() { assert(fixed == 1); return (double) value; }
-  longlong val_int() { assert(fixed == 1); return value; }
+  int64_t val_int() { assert(fixed == 1); return value; }
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return INT_RESULT; }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_int64_t() { return TRUE; }
 };
 
 
@@ -2362,7 +2362,7 @@ public:
 
   void store(Item *item);
   double val_real() { assert(fixed == 1); return value; }
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return REAL_RESULT; }
@@ -2378,7 +2378,7 @@ public:
 
   void store(Item *item);
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return DECIMAL_RESULT; }
@@ -2401,7 +2401,7 @@ public:
   {}
   void store(Item *item);
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String *) { assert(fixed == 1); return value; }
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return STRING_RESULT; }
@@ -2439,7 +2439,7 @@ public:
     illegal_method_call((const char*)"val");
     return 0;
   };
-  longlong val_int()
+  int64_t val_int()
   {
     illegal_method_call((const char*)"val_int");
     return 0;
@@ -2500,7 +2500,7 @@ public:
   enum_field_types field_type() const { return fld_type; };
   enum Type type() const { return TYPE_HOLDER; }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
   bool join_types(THD *thd, Item *);

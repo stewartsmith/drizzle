@@ -1300,7 +1300,7 @@ bool show_master_info(THD* thd, Master_info* mi)
         last_master_timestamp == 0 (an "impossible" timestamp 1970) is a
         special marker to say "consider we have caught up".
       */
-      protocol->store((longlong)(mi->rli.last_master_timestamp ?
+      protocol->store((int64_t)(mi->rli.last_master_timestamp ?
                                  max(0, time_diff) : 0));
     }
     else
@@ -3246,7 +3246,7 @@ static int32_t safe_reconnect(THD* thd, MYSQL* mysql, Master_info* mi,
 
   TODO
     - Change the log file information to a binary format to avoid calling
-      longlong2str.
+      int64_t2str.
 
   RETURN VALUES
     0   ok
@@ -3266,11 +3266,11 @@ bool flush_relay_log_info(Relay_log_info* rli)
   my_b_seek(file, 0L);
   pos=strmov(buff, rli->group_relay_log_name);
   *pos++='\n';
-  pos=longlong2str(rli->group_relay_log_pos, pos, 10);
+  pos=int64_t2str(rli->group_relay_log_pos, pos, 10);
   *pos++='\n';
   pos=strmov(pos, rli->group_master_log_name);
   *pos++='\n';
-  pos=longlong2str(rli->group_master_log_pos, pos, 10);
+  pos=int64_t2str(rli->group_master_log_pos, pos, 10);
   *pos='\n';
   if (my_b_write(file, (uchar*) buff, (size_t) (pos-buff)+1))
     error=1;

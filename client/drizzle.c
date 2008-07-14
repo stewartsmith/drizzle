@@ -1442,7 +1442,7 @@ static struct my_option my_long_options[] =
    "Max packet length to send to, or receive from server",
    (char**) &opt_max_allowed_packet, (char**) &opt_max_allowed_packet, 0,
    GET_ULONG, REQUIRED_ARG, 16 *1024L*1024L, 4096,
-   (longlong) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
+   (int64_t) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
    "Buffer for TCP/IP and socket communication",
    (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0, GET_ULONG,
@@ -2589,7 +2589,7 @@ static int com_server_help(GString *buffer,
   if (result)
   {
     unsigned int num_fields= mysql_num_fields(result);
-    my_ulonglong num_rows= mysql_num_rows(result);
+    my_uint64_t num_rows= mysql_num_rows(result);
     mysql_fetch_fields(result);
     if (num_fields==3 && num_rows==1)
     {
@@ -2840,7 +2840,7 @@ com_go(GString *buffer,
           error= put_error(&mysql);
       }
     }
-    else if (mysql_affected_rows(&mysql) == ~(ulonglong) 0)
+    else if (mysql_affected_rows(&mysql) == ~(uint64_t) 0)
       strmov(buff,"Query OK");
     else
       sprintf(buff,"Query OK, %ld %s affected",
@@ -3351,8 +3351,8 @@ static void print_warnings()
   const char   *query;
   MYSQL_RES    *result;
   MYSQL_ROW    cur;
-  my_ulonglong num_rows;
-
+  my_uint64_t num_rows;
+  
   /* Save current error before calling "show warnings" */
   uint error= mysql_errno(&mysql);
 
@@ -4028,7 +4028,7 @@ com_status(GString *buffer __attribute__((unused)),
 {
   const char *status_str;
   char buff[40];
-  ulonglong id;
+  uint64_t id;
   MYSQL_RES *result;
 
   tee_puts("--------------", stdout);

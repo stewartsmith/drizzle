@@ -147,7 +147,7 @@ init_functions(IO_CACHE* info)
 
 int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 		  enum cache_type type, my_off_t seek_offset,
-		  pbool use_async_io, myf cache_myflags)
+		  bool use_async_io, myf cache_myflags)
 {
   size_t min_cache;
   my_off_t pos;
@@ -317,10 +317,10 @@ static void my_aiowait(my_aio_result *result)
   in the cache, we are reusing this memory without flushing it to disk.
 */
 
-my_bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
+bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 			my_off_t seek_offset,
-			pbool use_async_io __attribute__((unused)),
-			pbool clear_cache)
+			bool use_async_io __attribute__((unused)),
+			bool clear_cache)
 {
   DBUG_ENTER("reinit_io_cache");
   DBUG_PRINT("enter",("cache: 0x%lx type: %d  seek_offset: %lu  clear_cache: %d",
@@ -1672,7 +1672,7 @@ int my_block_write(register IO_CACHE *info, const uchar *Buffer, size_t Count,
 int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 {
   size_t length;
-  my_bool append_cache;
+  bool append_cache;
   my_off_t pos_in_file;
   DBUG_ENTER("my_b_flush_io_cache");
   DBUG_PRINT("enter", ("cache: 0x%lx", (long) info));

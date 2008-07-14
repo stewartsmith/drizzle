@@ -31,7 +31,7 @@
     - Setting server default character set
 */
 
-my_bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2)
+bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2)
 {
   return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
 }
@@ -53,7 +53,7 @@ get_collation_number_internal(const char *name)
 }
 
 
-static my_bool init_state_maps(CHARSET_INFO *cs)
+static bool init_state_maps(CHARSET_INFO *cs)
 {
   uint i;
   uchar *state_map;
@@ -193,7 +193,7 @@ err:
 
 
 
-static my_bool simple_cs_is_full(CHARSET_INFO *cs)
+static bool simple_cs_is_full(CHARSET_INFO *cs)
 {
   return ((cs->csname && cs->tab_to_uni && cs->ctype && cs->to_upper &&
 	   cs->to_lower) &&
@@ -350,7 +350,7 @@ const char *charsets_dir= NULL;
 static int charset_initialized=0;
 
 
-static my_bool my_read_charset_file(const char *filename, myf myflags)
+static bool my_read_charset_file(const char *filename, myf myflags)
 {
   uchar *buf;
   int  fd;
@@ -425,10 +425,10 @@ static void *cs_alloc(size_t size)
 }
 
 
-static my_bool init_available_charsets(myf myflags)
+static bool init_available_charsets(myf myflags)
 {
   char fname[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-  my_bool error=FALSE;
+  bool error=FALSE;
   /*
     We have to use charset_initialized to not lock on THR_LOCK_charset
     inside get_internal_charset...
@@ -628,7 +628,7 @@ CHARSET_INFO *get_charset_by_csname(const char *cs_name,
   is no character set with given name.
 */
 
-my_bool resolve_charset(const char *cs_name,
+bool resolve_charset(const char *cs_name,
                         CHARSET_INFO *default_cs,
                         CHARSET_INFO **cs)
 {
@@ -660,7 +660,7 @@ my_bool resolve_charset(const char *cs_name,
   collation with given name.
 */
 
-my_bool resolve_collation(const char *cl_name,
+bool resolve_collation(const char *cl_name,
                           CHARSET_INFO *default_cl,
                           CHARSET_INFO **cl)
 {
@@ -707,9 +707,9 @@ size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
-  my_bool overflow= FALSE;
+  bool overflow= FALSE;
 #ifdef USE_MB
-  my_bool use_mb_flag= use_mb(charset_info);
+  bool use_mb_flag= use_mb(charset_info);
 #endif
   for (end= from + length; from < end; from++)
   {
@@ -847,9 +847,9 @@ size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
-  my_bool overflow= FALSE;
+  bool overflow= FALSE;
 #ifdef USE_MB
-  my_bool use_mb_flag= use_mb(charset_info);
+  bool use_mb_flag= use_mb(charset_info);
 #endif
   for (end= from + length; from < end; from++)
   {

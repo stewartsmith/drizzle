@@ -101,7 +101,7 @@ void trie_free (TRIE *trie)
 
 /*
   SYNOPSIS
-    my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen);
+    bool trie_insert (TRIE *trie, const uchar *key, uint keylen);
     trie - valid pointer to `TRIE'
     key - valid pointer to key to insert
     keylen - non-0 key length
@@ -118,7 +118,7 @@ void trie_free (TRIE *trie)
     However it can be freed with trie_free().
 */
 
-my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
+bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
 {
   TRIE_NODE *node;
   TRIE_NODE *next;
@@ -169,7 +169,7 @@ my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
 
 /*
   SYNOPSIS
-    my_bool trie_prepare (TRIE *trie);
+    bool trie_prepare (TRIE *trie);
     trie - valid pointer to `TRIE'
 
   DESCRIPTION
@@ -180,7 +180,7 @@ my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
     `TRUE' is returned.
 */
 
-my_bool ac_trie_prepare (TRIE *trie)
+bool ac_trie_prepare (TRIE *trie)
 {
   TRIE_NODE **tmp_nodes;
   TRIE_NODE *node;

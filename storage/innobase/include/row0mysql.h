@@ -675,7 +675,7 @@ struct row_prebuilt_struct {
 					to this heap */
 	mem_heap_t*	old_vers_heap;	/* memory heap where a previous
 					version is built in consistent read */
-	ulonglong	last_value;	/* last value of AUTO-INC interval */
+	uint64_t	last_value;	/* last value of AUTO-INC interval */
 
         index_cond_func_t idx_cond_func;/* Index Condition Pushdown function,
                                         or NULL if there is none set */
