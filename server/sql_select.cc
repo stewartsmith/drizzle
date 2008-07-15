@@ -517,7 +517,6 @@ JOIN::prepare(Item ***rref_pointer_array,
     thd->lex->allow_sum_func= save_allow_sum_func;
   }
 
-  if (!thd->lex->view_prepare_mode)
   {
     Item_subselect *subselect;
     Item_in_subselect *in_subs= NULL;

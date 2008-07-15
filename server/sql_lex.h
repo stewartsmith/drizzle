@@ -1529,14 +1529,6 @@ typedef struct st_lex : public Query_tables_list
   bool verbose, no_write_to_binlog;
 
   bool tx_chain, tx_release;
-  /*
-    Special JOIN::prepare mode: changing of query is prohibited.
-    When creating a view, we need to just check its syntax omitting
-    any optimizations: afterwards definition of the view will be
-    reconstructed by means of ::print() methods and written to
-    to an .frm file. We need this definition to stay untouched.
-  */
-  bool view_prepare_mode;
   bool subqueries, ignore;
   st_parsing_options parsing_options;
   Alter_info alter_info;
