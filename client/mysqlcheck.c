@@ -43,9 +43,6 @@ static char *opt_password = 0, *current_user = 0,
 	    *current_host = 0;
 static int first_error = 0;
 DYNAMIC_ARRAY tables4repair;
-#ifdef HAVE_SMEM
-static char *shared_memory_base_name=0;
-#endif
 static uint opt_protocol=0;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
 
@@ -144,11 +141,6 @@ static struct my_option my_long_options[] =
   {"repair", 'r',
    "Can fix almost anything except unique keys that aren't unique.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_SMEM
-  {"shared-memory-base-name", OPT_SHARED_MEMORY_BASE_NAME,
-   "Base name of shared memory.", (char**) &shared_memory_base_name, (char**) &shared_memory_base_name,
-   0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"silent", 's', "Print only error messages.", (char**) &opt_silent,
    (char**) &opt_silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
@@ -731,10 +723,6 @@ static int dbConnect(char *host, char *user, char *passwd)
     mysql_options(&mysql_connection, MYSQL_OPT_COMPRESS, NullS);
   if (opt_protocol)
     mysql_options(&mysql_connection,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-#ifdef HAVE_SMEM
-  if (shared_memory_base_name)
-    mysql_options(&mysql_connection,MYSQL_SHARED_MEMORY_BASE_NAME,shared_memory_base_name);
-#endif
   if (!(sock = mysql_real_connect(&mysql_connection, host, user, passwd,
          NULL, opt_mysql_port, opt_mysql_unix_port, 0)))
   {
@@ -822,9 +810,6 @@ int main(int argc, char **argv)
   if (opt_auto_repair)
     delete_dynamic(&tables4repair);
   my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
-#ifdef HAVE_SMEM
-  my_free(shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-#endif
   my_end(my_end_arg);
   return(first_error!=0);
 } /* main */
