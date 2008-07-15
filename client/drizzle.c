@@ -3236,7 +3236,7 @@ print_table_data_html(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    uint32_t *lengths= mysql_fetch_lengths(result);
+    uint32_t *lengths=mysql_fetch_lengths(result);
     (void) tee_fputs("<TR>", PAGER);
     for (uint32_t i= 0; i < mysql_num_fields(result); i++)
     {
@@ -3268,7 +3268,7 @@ print_table_data_xml(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    uint32_t *lengths= mysql_fetch_lengths(result);
+    uint32_t *lengths=mysql_fetch_lengths(result);
     (void) tee_fputs("\n  <row>\n", PAGER);
     for (uint i=0; i < mysql_num_fields(result); i++)
     {

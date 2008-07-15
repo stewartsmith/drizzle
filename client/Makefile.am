@@ -15,19 +15,19 @@
 
 # This file is public domain and comes with NO WARRANTY of any kind
 
-AM_CPPFLAGS =			-I$(top_builddir)/include \
-				-I$(top_srcdir)/include 
+AM_CPPFLAGS =		-I$(top_builddir)/include \
+					-I$(top_srcdir)/include 
 
 LDADD=				$(top_builddir)/libdrizzle/libdrizzle.la -lz
 
 
-noinst_HEADERS =		completion_hash.h my_readline.h \
-				client_priv.h
+noinst_HEADERS =	completion_hash.h my_readline.h client_priv.h
 
-CLEANFILES =			$(BUILT_SOURCES)
+CLEANFILES =		$(BUILT_SOURCES)
 
-bin_PROGRAMS =			drizzle \
+bin_PROGRAMS =	drizzle \
 				drizzleadmin \
+				drizzlebinlog \
 				drizzlecheck \
 				drizzledump \
 				drizzleimport \
@@ -39,6 +39,14 @@ drizzle_LDADD =			-lreadline @TERMCAP_LIB@ $(GLIB_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
 drizzle_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
 drizzleadmin_SOURCES =		drizzleadmin.cc
+
+drizzlebinlog_SOURCES =     drizzlebinlog.cc \
+                $(top_srcdir)/mysys/mf_tempdir.c \
+                $(top_srcdir)/mysys/my_new.cc \
+                $(top_srcdir)/mysys/my_bit.c \
+                $(top_srcdir)/mysys/my_bitmap.c \
+                $(top_srcdir)/mysys/base64.c
+drizzlebinlog_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/server
 
 drizzledump_SOURCES=            drizzledump.c 
 
