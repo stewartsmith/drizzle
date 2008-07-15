@@ -638,7 +638,6 @@ static SHOW_VAR fixed_vars[]= {
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
   {"port",                    (char*) &mysqld_port,                 SHOW_INT},
   {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
-  {"skip_external_locking",   (char*) &my_disable_locking,          SHOW_MY_BOOL},
   {"skip_networking",         (char*) &opt_disable_networking,      SHOW_BOOL},
   {"skip_show_database",      (char*) &opt_skip_show_db,            SHOW_BOOL},
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_LONG},

@@ -205,7 +205,7 @@ extern bool mysys_uses_curses, my_use_symdir;
 extern ulong sf_malloc_cur_memory, sf_malloc_max_memory;
 
 extern ulong	my_default_record_cache_size;
-extern bool my_disable_locking, my_disable_async_io,
+extern bool my_disable_async_io,
                my_disable_flush_key_blocks, my_disable_symlinks;
 extern char	wild_many, wild_one, wild_prefix;
 extern const char *charsets_dir;
@@ -500,7 +500,6 @@ extern int my_append(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
 extern int my_getwd(char * buf,size_t size,myf MyFlags);
 extern int my_setwd(const char *dir,myf MyFlags);
-extern int my_lock(File fd,int op,my_off_t start, my_off_t length,myf MyFlags);
 extern void *my_once_alloc(size_t Size,myf MyFlags);
 extern void my_once_free(void);
 extern char *my_once_strdup(const char *src,myf myflags);

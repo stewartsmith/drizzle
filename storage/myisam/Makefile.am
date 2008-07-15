@@ -50,7 +50,7 @@ libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_statrec.c mi_packrec.c mi_dynrec.c \
 			mi_update.c mi_write.c mi_unique.c \
 			mi_delete.c \
-			my_pread.c my_lock.c \
+			my_pread.c \
 			mf_keycache.c mf_keycaches.c \
 			mi_rprev.c mi_rfirst.c mi_rlast.c mi_rsame.c \
 			mi_rsamepos.c mi_panic.c mi_close.c mi_create.c\

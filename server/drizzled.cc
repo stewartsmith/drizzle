@@ -220,7 +220,7 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool lower_case_table_names_used= 0;
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
-static bool opt_debugging= 0, opt_external_locking= 0, opt_console= 0;
+static bool opt_debugging= 0, opt_console= 0;
 static bool opt_short_log_format= 0;
 static uint kill_cached_threads, wake_thread;
 static ulong killed_threads, thread_created;
@@ -3006,7 +3006,7 @@ void handle_connections_sockets()
 enum options_mysqld
 {
   OPT_ISAM_LOG=256,            OPT_SKIP_NEW, 
-  OPT_SKIP_GRANT,              OPT_SKIP_LOCK, 
+  OPT_SKIP_GRANT,              
   OPT_ENABLE_LOCK,             OPT_USE_LOCKING,
   OPT_SOCKET,                  OPT_UPDATE_LOG,
   OPT_BIN_LOG,                 
@@ -4641,9 +4641,6 @@ mysqld_get_one_option(int optid,
   case (int) OPT_SKIP_PRIOR:
     opt_specialflag|= SPECIAL_NO_PRIOR;
     break;
-  case (int) OPT_SKIP_LOCK:
-    opt_external_locking=0;
-    break;
   case (int) OPT_SKIP_SHOW_DB:
     opt_skip_show_db=1;
     opt_specialflag|=SPECIAL_SKIP_SHOW_DB;
@@ -4891,7 +4888,6 @@ static void get_options(int *argc,char **argv)
     Set some global variables from the global_system_variables
     In most cases the global variables will not be used
   */
-  my_disable_locking= myisam_single_user= test((opt_external_locking == 0));
   my_default_record_cache_size=global_system_variables.read_buff_size;
   myisam_max_temp_length=
     (my_off_t) global_system_variables.myisam_max_sort_file_size;

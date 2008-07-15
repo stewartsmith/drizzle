@@ -354,23 +354,6 @@ if test "x$no_glib" != "x" ; then
     AC_MSG_ERROR([Couldn't find GLib2. Try installing libglib2.0-dev or glib2-devel])
 fi
 
-# Avoid bug in fcntl on some versions of linux
-AC_MSG_CHECKING([if we should use 'skip-external-locking' as default for $target_os])
-# Any variation of Linux
-if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
-then
-  MYSQLD_DEFAULT_SWITCHES="--skip-external-locking"
-  TARGET_LINUX="true"
-  AC_MSG_RESULT([yes])
-  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
-else
-  MYSQLD_DEFAULT_SWITCHES=""
-  TARGET_LINUX="false"
-  AC_MSG_RESULT([no])
-fi
-AC_SUBST(MYSQLD_DEFAULT_SWITCHES)
-AC_SUBST(TARGET_LINUX)
-
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
 # This must be able to take a -f flag like normal unix ln.
@@ -799,6 +782,14 @@ else
   COMPILATION_COMMENT="Source distribution"
 fi
 AC_SUBST(COMPILATION_COMMENT)
+
+if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
+then
+  TARGET_LINUX="true"
+  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
+else
+  TARGET_LINUX="false"
+fi
 
 AC_MSG_CHECKING("need of special linking flags")
 if test "$TARGET_LINUX" = "true" -a "$ac_cv_c_compiler_gnu" = "yes" -a "$all_is_static" != "yes"
