@@ -51,8 +51,6 @@
     (*tree->compare)(custom_arg, ELEMENT_KEY(tree,element), key)
   and not other way around, as
     (*tree->compare)(custom_arg, key, ELEMENT_KEY(tree,element))
-
-  ft_boolean_search.c (at least) relies on that.
 */
 
 #include "mysys_priv.h"

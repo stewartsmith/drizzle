@@ -70,7 +70,7 @@ class QUICK_RANGE :public Sql_alloc {
 
 /*
   Quick select interface.
-  This class is a parent for all QUICK_*_SELECT and FT_SELECT classes.
+  This class is a parent for all QUICK_*_SELECT classes.
 
   The usage scenario is as follows:
   1. Create quick select

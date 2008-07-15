@@ -41,7 +41,7 @@ public:
   table_map used_tables_cache, not_null_tables_cache;
   bool const_item_cache;
   enum Functype { UNKNOWN_FUNC,EQ_FUNC,EQUAL_FUNC,NE_FUNC,LT_FUNC,LE_FUNC,
-		  GE_FUNC,GT_FUNC,FT_FUNC,
+		  GE_FUNC,GT_FUNC,
 		  LIKE_FUNC,ISNULL_FUNC,ISNOTNULL_FUNC,
 		  COND_AND_FUNC, COND_OR_FUNC, COND_XOR_FUNC,
                   BETWEEN, IN_FUNC, MULT_EQUAL_FUNC,

@@ -186,10 +186,9 @@ typedef struct st_mi_keydef		/* Key definition with open & info */
   uint16 maxlength;			/* max length of (packed) key (auto) */
   uint16 block_size_index;		/* block_size (auto) */
   uint32 version;			/* For concurrent read/write */
-  uint32 ftparser_nr;                   /* distinct ftparser number */
 
   HA_KEYSEG *seg,*end;
-  struct st_mysql_ftparser *parser;     /* Fulltext [pre]parser */
+
   int (*bin_search)(struct st_myisam_info *info,struct st_mi_keydef *keyinfo,
 		    uchar *page,uchar *key,
 		    uint key_len,uint comp_flag,uchar * *ret_pos,
@@ -430,13 +429,6 @@ typedef struct st_mi_check_param
   enum_mi_stats_method stats_method;
 } MI_CHECK;
 
-typedef struct st_sort_ft_buf
-{
-  uchar *buf, *end;
-  int   count;
-  uchar lastkey[MI_MAX_KEY_BUFF];
-} SORT_FT_BUF;
-
 typedef struct st_sort_info
 {
   my_off_t filelength,dupp,buff_length;
@@ -448,7 +440,6 @@ typedef struct st_sort_info
   MI_CHECK *param;
   uchar *buff;
   SORT_KEY_BLOCKS *key_block,*key_block_end;
-  SORT_FT_BUF *ft_buf;
   /* sync things */
   uint got_error, threads_running;
   pthread_mutex_t mutex;
