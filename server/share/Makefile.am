@@ -54,3 +54,6 @@ uninstall-local:
 
 distclean-local:
 	@RM@ -f */errmsg.sys
+	@for lang in @AVAILABLE_LANGUAGES@ japanese-sjis ; do \
+		rmdir $$lang ; \
+	done

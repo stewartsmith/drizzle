@@ -29,7 +29,7 @@ SUBDIRS =		. include \
 
 DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
 
-DISTCLEANFILES = ac_available_languages_fragment
+DISTCLEANFILES = ac_available_languages_fragment INSTALL
 
 # Create empty datadir 
 install-data-local:
