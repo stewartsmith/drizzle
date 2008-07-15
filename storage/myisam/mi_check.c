@@ -1566,8 +1566,6 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
       {
 	VOID(_mi_make_key(info,(uint) info->errkey,info->lastkey,
 			  sort_param.record,0L));
-	_mi_print_key(stdout,share->keyinfo[info->errkey].seg,info->lastkey,
-		      USE_WHOLE_KEY);
       }
       sort_info.dupp++;
       if ((param->testflag & (T_FORCE_UNIQUENESS|T_QUICK)) == T_QUICK)
@@ -3574,8 +3572,6 @@ static int sort_key_write(MI_SORT_PARAM *sort_param, const void *a)
 						    lastkey),
 				 llbuff2));
     param->testflag|=T_RETRY_WITHOUT_QUICK;
-    if (sort_info->param->testflag & T_VERBOSE)
-      _mi_print_key(stdout,sort_param->seg,(uchar*) a, USE_WHOLE_KEY);
     return (sort_delete_record(sort_param));
   }
   return (sort_insert_key(sort_param,sort_info->key_block,
