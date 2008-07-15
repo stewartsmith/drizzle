@@ -28,7 +28,6 @@ int mi_panic(enum ha_panic_function flag)
   int error=0;
   LIST *list_element,*next_open;
   MI_INFO *info;
-  DBUG_ENTER("mi_panic");
 
   pthread_mutex_lock(&THR_LOCK_myisam);
   for (list_element=myisam_open_list ; list_element ; list_element=next_open)
@@ -107,6 +106,6 @@ int mi_panic(enum ha_panic_function flag)
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
   if (!error)
-    DBUG_RETURN(0);
-  DBUG_RETURN(my_errno=error);
+    return(0);
+  return(my_errno=error);
 } /* mi_panic */
