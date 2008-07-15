@@ -109,10 +109,10 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
       if (type == FIELD_BLOB)
       {
 	share.base.blobs++;
-	if (pack_reclength != INT_MAX32)
+	if (pack_reclength != INT32_MAX)
 	{
 	  if (rec->length == 4+portable_sizeof_char_ptr)
-	    pack_reclength= INT_MAX32;
+	    pack_reclength= INT32_MAX;
 	  else
 	    pack_reclength+=(1 << ((rec->length-portable_sizeof_char_ptr)*8)); /* Max blob length */
 	}
@@ -120,7 +120,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
       else if (type == FIELD_SKIP_PRESPACE ||
 	       type == FIELD_SKIP_ENDSPACE)
       {
-	if (pack_reclength != INT_MAX32)
+	if (pack_reclength != INT32_MAX)
 	  pack_reclength+= rec->length > 255 ? 2 : 1;
 	min_pack_length++;
       }
@@ -188,14 +188,14 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     options|= HA_OPTION_RELIES_ON_SQL_LAYER;
 
   packed=(packed+7)/8;
-  if (pack_reclength != INT_MAX32)
+  if (pack_reclength != INT32_MAX)
     pack_reclength+= reclength+packed +
       test(test_all_bits(options, HA_OPTION_CHECKSUM | HA_PACK_RECORD));
   min_pack_length+=packed;
 
   if (!ci->data_file_length && ci->max_rows)
   {
-    if (pack_reclength == INT_MAX32 ||
+    if (pack_reclength == INT32_MAX ||
              (~(uint64_t) 0)/ci->max_rows < (uint64_t) pack_reclength)
       ci->data_file_length= ~(uint64_t) 0;
     else

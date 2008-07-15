@@ -327,9 +327,9 @@ long my_strntol_8bit(CHARSET_INFO *cs,
 		     char **endptr, int *err)
 {
   int negative;
-  register uint32 cutoff;
+  register uint32_t cutoff;
   register uint cutlim;
-  register uint32 i;
+  register uint32_t i;
   register const char *s;
   register uchar c;
   const char *save, *e;
@@ -389,8 +389,8 @@ long my_strntol_8bit(CHARSET_INFO *cs,
 #endif
 
   save = s;
-  cutoff = ((uint32)~0L) / (uint32) base;
-  cutlim = (uint) (((uint32)~0L) % (uint32) base);
+  cutoff = ((uint32_t)~0L) / (uint32_t) base;
+  cutlim = (uint) (((uint32_t)~0L) % (uint32_t) base);
 
   overflow = 0;
   i = 0;
@@ -410,7 +410,7 @@ long my_strntol_8bit(CHARSET_INFO *cs,
       overflow = 1;
     else
     {
-      i *= (uint32) base;
+      i *= (uint32_t) base;
       i += c;
     }
   }
@@ -423,16 +423,16 @@ long my_strntol_8bit(CHARSET_INFO *cs,
   
   if (negative)
   {
-    if (i  > (uint32) INT_MIN32)
+    if (i  > (uint32_t) INT32_MIN)
       overflow = 1;
   }
-  else if (i > INT_MAX32)
+  else if (i > INT32_MAX)
     overflow = 1;
   
   if (overflow)
   {
     err[0]= ERANGE;
-    return negative ? INT_MIN32 : INT_MAX32;
+    return negative ? INT32_MIN : INT32_MAX;
   }
   
   return (negative ? -((long) i) : (long) i);
@@ -450,9 +450,9 @@ ulong my_strntoul_8bit(CHARSET_INFO *cs,
 		       char **endptr, int *err)
 {
   int negative;
-  register uint32 cutoff;
+  register uint32_t cutoff;
   register uint cutlim;
-  register uint32 i;
+  register uint32_t i;
   register const char *s;
   register uchar c;
   const char *save, *e;
@@ -511,8 +511,8 @@ ulong my_strntoul_8bit(CHARSET_INFO *cs,
 #endif
 
   save = s;
-  cutoff = ((uint32)~0L) / (uint32) base;
-  cutlim = (uint) (((uint32)~0L) % (uint32) base);
+  cutoff = ((uint32_t)~0L) / (uint32_t) base;
+  cutlim = (uint) (((uint32_t)~0L) % (uint32_t) base);
   overflow = 0;
   i = 0;
   
@@ -532,7 +532,7 @@ ulong my_strntoul_8bit(CHARSET_INFO *cs,
       overflow = 1;
     else
     {
-      i *= (uint32) base;
+      i *= (uint32_t) base;
       i += c;
     }
   }
@@ -546,7 +546,7 @@ ulong my_strntoul_8bit(CHARSET_INFO *cs,
   if (overflow)
   {
     err[0]= ERANGE;
-    return (~(uint32) 0);
+    return (~(uint32_t) 0);
   }
   
   return (negative ? -((long) i) : (long) i);
@@ -660,16 +660,16 @@ int64_t my_strntoll_8bit(CHARSET_INFO *cs __attribute__((unused)),
 
   if (negative)
   {
-    if (i  > (uint64_t) LONGLONG_MIN)
+    if (i  > (uint64_t) INT64_MIN)
       overflow = 1;
   }
-  else if (i > (uint64_t) LONGLONG_MAX)
+  else if (i > (uint64_t) INT64_MAX)
     overflow = 1;
 
   if (overflow)
   {
     err[0]= ERANGE;
-    return negative ? LONGLONG_MIN : LONGLONG_MAX;
+    return negative ? INT64_MIN : INT64_MAX;
   }
 
   return (negative ? -((int64_t) i) : (int64_t) i);
@@ -810,9 +810,9 @@ noconv:
     err		Error number if failed conversion
     
   NOTES:
-    If length is not INT_MAX32 or str[length] != 0 then the given str must
+    If length is not INT32_MAX or str[length] != 0 then the given str must
     be writeable
-    If length == INT_MAX32 the str must be \0 terminated.
+    If length == INT32_MAX the str must be \0 terminated.
 
     It's implemented this way to save a buffer allocation and a memory copy.
 
@@ -825,7 +825,7 @@ double my_strntod_8bit(CHARSET_INFO *cs __attribute__((unused)),
 		       char *str, size_t length,
 		       char **end, int *err)
 {
-  if (length == INT_MAX32)
+  if (length == INT32_MAX)
     length= 65535;                          /* Should be big enough */
   *end= str + length;
   return my_strtod(str, end, err);
@@ -854,7 +854,7 @@ size_t my_long10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
   {
     if (val < 0)
     {
-      /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
+      /* Avoid integer overflow in (-val) for INT64_MIN (BUG#31799). */
       uval= (unsigned long int)0 - uval;
       *dst++= '-';
       len--;
@@ -893,7 +893,7 @@ size_t my_int64_t10_to_str_8bit(CHARSET_INFO *cs __attribute__((unused)),
   {
     if (val < 0)
     {
-      /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
+      /* Avoid integer overflow in (-val) for INT64_MIN (BUG#31799). */
       uval = (uint64_t)0 - uval;
       *dst++= '-';
       len--;
@@ -1265,7 +1265,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
     in the character set specific XML file.
   */
   if (!cs->tab_to_uni)
-    return TRUE;
+    return true;
   
   /* Clear plane statistics */
   bzero(idx,sizeof(idx));
@@ -1304,7 +1304,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
     
     numchars=idx[i].uidx.to-idx[i].uidx.from+1;
     if (!(idx[i].uidx.tab=(uchar*) alloc(numchars * sizeof(*idx[i].uidx.tab))))
-      return TRUE;
+      return true;
     
     bzero(idx[i].uidx.tab,numchars*sizeof(*idx[i].uidx.tab));
     
@@ -1322,14 +1322,14 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
   /* Allocate and fill reverse table for each plane */
   n=i;
   if (!(cs->tab_from_uni= (MY_UNI_IDX*) alloc(sizeof(MY_UNI_IDX)*(n+1))))
-    return TRUE;
+    return true;
 
   for (i=0; i< n; i++)
     cs->tab_from_uni[i]= idx[i].uidx;
   
   /* Set end-of-list marker */
   bzero(&cs->tab_from_uni[i],sizeof(MY_UNI_IDX));
-  return FALSE;
+  return false;
 }
 
 static my_bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
@@ -1363,7 +1363,7 @@ static my_bool my_coll_init_simple(CHARSET_INFO *cs,
                                    void *(*alloc)(size_t) __attribute__((unused)))
 {
   set_max_sort_char(cs);
-  return FALSE;
+  return false;
 }
 
 
@@ -1387,21 +1387,21 @@ int my_mb_ctype_8bit(CHARSET_INFO *cs, int *ctype,
 }
 
 
-#undef  ULONGLONG_MAX
+#undef  UINT64_MAX
 /*
   Needed under MetroWerks Compiler, since MetroWerks compiler does not
   properly handle a constant expression containing a mod operator
 */
 #if defined(__NETWARE__) && defined(__MWERKS__)
 static uint64_t uint64_t_max= ~(uint64_t) 0;
-#define ULONGLONG_MAX uint64_t_max
+#define UINT64_MAX uint64_t_max
 #else
-#define ULONGLONG_MAX           (~(uint64_t) 0)
+#define UINT64_MAX           (~(uint64_t) 0)
 #endif /* __NETWARE__ && __MWERKS__ */
 
     
-#define CUTOFF  (ULONGLONG_MAX / 10)
-#define CUTLIM  (ULONGLONG_MAX % 10)
+#define CUTOFF  (UINT64_MAX / 10)
+#define CUTLIM  (UINT64_MAX % 10)
 #define DIGITS_IN_ULONGLONG 20
 
 static uint64_t d10[DIGITS_IN_ULONGLONG]=
@@ -1476,10 +1476,10 @@ static uint64_t d10[DIGITS_IN_ULONGLONG]=
     0	     ok
     ERANGE   If the the value of the converted number is out of range
     In this case the return value is:
-    - ULONGLONG_MAX if unsigned_flag and the number was too big
+    - UINT64_MAX if unsigned_flag and the number was too big
     - 0 if unsigned_flag and the number was negative
-    - LONGLONG_MAX if no unsigned_flag and the number is too big
-    - LONGLONG_MIN if no unsigned_flag and the number it too big negative
+    - INT64_MAX if no unsigned_flag and the number is too big
+    - INT64_MIN if no unsigned_flag and the number it too big negative
     
     EDOM If the string didn't contain any digits.
     In this case the return value is 0.
@@ -1559,7 +1559,7 @@ my_strntoull10rnd_8bit(CHARSET_INFO *cs __attribute__((unused)),
       */
       if (ull == CUTOFF)
       {
-        ull= ULONGLONG_MAX;
+        ull= UINT64_MAX;
         addon= 1;
         str++;
       }
@@ -1636,7 +1636,7 @@ exp:    /* [ E [ <sign> ] <unsigned integer> ] */
   {
     if (addon)
     {
-      if (ull == ULONGLONG_MAX)
+      if (ull == UINT64_MAX)
         goto ret_too_big;
       ull++;
     }
@@ -1678,20 +1678,20 @@ ret_sign:
   {
     if (negative)
     {
-      if (ull > (uint64_t) LONGLONG_MIN)
+      if (ull > (uint64_t) INT64_MIN)
       {
         *error= MY_ERRNO_ERANGE;
-        return (uint64_t) LONGLONG_MIN;
+        return (uint64_t) INT64_MIN;
       }
       *error= 0;
       return (uint64_t) -(int64_t) ull;
     }
     else
     {
-      if (ull > (uint64_t) LONGLONG_MAX)
+      if (ull > (uint64_t) INT64_MAX)
       {
         *error= MY_ERRNO_ERANGE;
-        return (uint64_t) LONGLONG_MAX;
+        return (uint64_t) INT64_MAX;
       }
       *error= 0;
       return ull;
@@ -1721,8 +1721,8 @@ ret_too_big:
   *endptr= (char*) str;
   *error= MY_ERRNO_ERANGE;
   return unsigned_flag ?
-         ULONGLONG_MAX :
-         negative ? (uint64_t) LONGLONG_MIN : (uint64_t) LONGLONG_MAX;
+         UINT64_MAX :
+         negative ? (uint64_t) INT64_MIN : (uint64_t) INT64_MAX;
 }
 
 

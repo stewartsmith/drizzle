@@ -352,5 +352,5 @@ bool init_compiled_charsets(myf flags __attribute__((unused)))
   for (cs=compiled_charsets; cs->name; cs++)
     add_compiled_collation(cs);
   
-  return FALSE;
+  return false;
 }

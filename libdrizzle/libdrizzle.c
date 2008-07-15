@@ -367,7 +367,7 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   if (mysql_init_character_set(mysql))
   {
     mysql->charset= saved_cs;
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   /* Use an empty string instead of NULL. */

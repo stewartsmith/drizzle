@@ -71,8 +71,8 @@ static bool debug_info_flag= 0, debug_check_flag= 0;
 static bool tty_password= 0;
 static bool opt_mark_progress= 0;
 static bool parsing_disabled= 0;
-static bool display_result_vertically= FALSE,
-  display_metadata= FALSE, display_result_sorted= FALSE;
+static bool display_result_vertically= false,
+  display_metadata= false, display_result_sorted= false;
 static bool disable_query_log= 0, disable_result_log= 0;
 static bool disable_warnings= 0;
 static bool disable_info= 1;
@@ -736,7 +736,7 @@ static void check_command_args(struct st_command *command,
       if (ptr > start)
       {
         init_dynamic_string(arg->ds, 0, ptr-start, 32);
-        do_eval(arg->ds, start, ptr, FALSE);
+        do_eval(arg->ds, start, ptr, false);
       }
       else
       {
@@ -754,7 +754,7 @@ static void check_command_args(struct st_command *command,
     case ARG_REST:
       start= ptr;
       init_dynamic_string(arg->ds, 0, command->query_len, 256);
-      do_eval(arg->ds, start, command->end, FALSE);
+      do_eval(arg->ds, start, command->end, false);
       command->last_argument= command->end;
       break;
 
@@ -1837,7 +1837,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
 
   /* Eval the query, thus replacing all environment variables */
   init_dynamic_string(&ds_query, 0, (end - query) + 32, 256);
-  do_eval(&ds_query, query, end, FALSE);
+  do_eval(&ds_query, query, end, false);
 
   if (mysql_real_query(mysql, ds_query.str, ds_query.length))
     die("Error running query '%s': %d %s", ds_query.str,
@@ -1912,9 +1912,9 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
   static DYNAMIC_STRING ds_col;
   static DYNAMIC_STRING ds_row;
   const struct command_arg query_get_value_args[] = {
-    {"query", ARG_STRING, TRUE, &ds_query, "Query to run"},
-    {"column name", ARG_STRING, TRUE, &ds_col, "Name of column"},
-    {"row number", ARG_STRING, TRUE, &ds_row, "Number for row"}
+    {"query", ARG_STRING, true, &ds_query, "Query to run"},
+    {"column name", ARG_STRING, true, &ds_col, "Name of column"},
+    {"row number", ARG_STRING, true, &ds_row, "Number for row"}
   };
 
 
@@ -2114,7 +2114,7 @@ static void do_source(struct st_command *command)
 {
   static DYNAMIC_STRING ds_filename;
   const struct command_arg source_args[] = {
-    { "filename", ARG_STRING, TRUE, &ds_filename, "File to source" }
+    { "filename", ARG_STRING, true, &ds_filename, "File to source" }
   };
 
 
@@ -2418,7 +2418,7 @@ static void do_remove_file(struct st_command *command)
   int error;
   static DYNAMIC_STRING ds_filename;
   const struct command_arg rm_args[] = {
-    { "filename", ARG_STRING, TRUE, &ds_filename, "File to delete" }
+    { "filename", ARG_STRING, true, &ds_filename, "File to delete" }
   };
 
 
@@ -2451,8 +2451,8 @@ static void do_copy_file(struct st_command *command)
   static DYNAMIC_STRING ds_from_file;
   static DYNAMIC_STRING ds_to_file;
   const struct command_arg copy_file_args[] = {
-    { "from_file", ARG_STRING, TRUE, &ds_from_file, "Filename to copy from" },
-    { "to_file", ARG_STRING, TRUE, &ds_to_file, "Filename to copy to" }
+    { "from_file", ARG_STRING, true, &ds_from_file, "Filename to copy from" },
+    { "to_file", ARG_STRING, true, &ds_to_file, "Filename to copy to" }
   };
 
 
@@ -2487,8 +2487,8 @@ static void do_chmod_file(struct st_command *command)
   static DYNAMIC_STRING ds_mode;
   static DYNAMIC_STRING ds_file;
   const struct command_arg chmod_file_args[] = {
-    { "mode", ARG_STRING, TRUE, &ds_mode, "Mode of file(octal) ex. 0660"}, 
-    { "filename", ARG_STRING, TRUE, &ds_file, "Filename of file to modify" }
+    { "mode", ARG_STRING, true, &ds_mode, "Mode of file(octal) ex. 0660"}, 
+    { "filename", ARG_STRING, true, &ds_file, "Filename of file to modify" }
   };
 
 
@@ -2524,7 +2524,7 @@ static void do_file_exist(struct st_command *command)
   int error;
   static DYNAMIC_STRING ds_filename;
   const struct command_arg file_exist_args[] = {
-    { "filename", ARG_STRING, TRUE, &ds_filename, "File to check if it exist" }
+    { "filename", ARG_STRING, true, &ds_filename, "File to check if it exist" }
   };
 
 
@@ -2555,7 +2555,7 @@ static void do_mkdir(struct st_command *command)
   int error;
   static DYNAMIC_STRING ds_dirname;
   const struct command_arg mkdir_args[] = {
-    {"dirname", ARG_STRING, TRUE, &ds_dirname, "Directory to create"}
+    {"dirname", ARG_STRING, true, &ds_dirname, "Directory to create"}
   };
 
 
@@ -2584,7 +2584,7 @@ static void do_rmdir(struct st_command *command)
   int error;
   static DYNAMIC_STRING ds_dirname;
   const struct command_arg rmdir_args[] = {
-    {"dirname", ARG_STRING, TRUE, &ds_dirname, "Directory to remove"}
+    {"dirname", ARG_STRING, true, &ds_dirname, "Directory to remove"}
   };
 
 
@@ -2672,8 +2672,8 @@ static void do_write_file_command(struct st_command *command, bool append)
   static DYNAMIC_STRING ds_filename;
   static DYNAMIC_STRING ds_delimiter;
   const struct command_arg write_file_args[] = {
-    { "filename", ARG_STRING, TRUE, &ds_filename, "File to write to" },
-    { "delimiter", ARG_STRING, FALSE, &ds_delimiter, "Delimiter to read until" }
+    { "filename", ARG_STRING, true, &ds_filename, "File to write to" },
+    { "delimiter", ARG_STRING, false, &ds_delimiter, "Delimiter to read until" }
   };
 
 
@@ -2732,7 +2732,7 @@ static void do_write_file_command(struct st_command *command, bool append)
 
 static void do_write_file(struct st_command *command)
 {
-  do_write_file_command(command, FALSE);
+  do_write_file_command(command, false);
 }
 
 
@@ -2763,7 +2763,7 @@ static void do_write_file(struct st_command *command)
 
 static void do_append_file(struct st_command *command)
 {
-  do_write_file_command(command, TRUE);
+  do_write_file_command(command, true);
 }
 
 
@@ -2783,7 +2783,7 @@ static void do_cat_file(struct st_command *command)
 {
   static DYNAMIC_STRING ds_filename;
   const struct command_arg cat_file_args[] = {
-    { "filename", ARG_STRING, TRUE, &ds_filename, "File to read from" }
+    { "filename", ARG_STRING, true, &ds_filename, "File to read from" }
   };
 
 
@@ -2818,8 +2818,8 @@ static void do_diff_files(struct st_command *command)
   static DYNAMIC_STRING ds_filename;
   static DYNAMIC_STRING ds_filename2;
   const struct command_arg diff_file_args[] = {
-    { "file1", ARG_STRING, TRUE, &ds_filename, "First file to diff" },
-    { "file2", ARG_STRING, TRUE, &ds_filename2, "Second file to diff" }
+    { "file1", ARG_STRING, true, &ds_filename, "First file to diff" },
+    { "file2", ARG_STRING, true, &ds_filename2, "Second file to diff" }
   };
 
 
@@ -2914,9 +2914,9 @@ static void do_change_user(struct st_command *command)
   /* static keyword to make the NetWare compiler happy. */
   static DYNAMIC_STRING ds_user, ds_passwd, ds_db;
   const struct command_arg change_user_args[] = {
-    { "user", ARG_STRING, FALSE, &ds_user, "User to connect as" },
-    { "password", ARG_STRING, FALSE, &ds_passwd, "Password used when connecting" },
-    { "database", ARG_STRING, FALSE, &ds_db, "Database to select after connect" },
+    { "user", ARG_STRING, false, &ds_user, "User to connect as" },
+    { "password", ARG_STRING, false, &ds_passwd, "Password used when connecting" },
+    { "database", ARG_STRING, false, &ds_db, "Database to select after connect" },
   };
 
 
@@ -2975,7 +2975,7 @@ static void do_perl(struct st_command *command)
   static DYNAMIC_STRING ds_script;
   static DYNAMIC_STRING ds_delimiter;
   const struct command_arg perl_args[] = {
-    { "delimiter", ARG_STRING, FALSE, &ds_delimiter, "Delimiter to read until" }
+    { "delimiter", ARG_STRING, false, &ds_delimiter, "Delimiter to read until" }
   };
 
 
@@ -3056,7 +3056,7 @@ static int do_echo(struct st_command *command)
 
 
   init_dynamic_string(&ds_echo, "", command->query_len, 256);
-  do_eval(&ds_echo, command->first_argument, command->end, FALSE);
+  do_eval(&ds_echo, command->first_argument, command->end, false);
   dynstr_append_mem(&ds_res, ds_echo.str, ds_echo.length);
   dynstr_append_mem(&ds_res, "\n", 1);
   dynstr_free(&ds_echo);
@@ -3236,7 +3236,7 @@ static void do_let(struct st_command *command)
   while (*p && my_isspace(charset_info,*p))
     p++;
 
-  do_eval(&let_rhs_expr, p, command->end, FALSE);
+  do_eval(&let_rhs_expr, p, command->end, false);
 
   command->last_argument= command->end;
   /* Assign var_val to var_name */
@@ -3842,14 +3842,14 @@ static void do_connect(struct st_command *command)
   static DYNAMIC_STRING ds_sock;
   static DYNAMIC_STRING ds_options;
   const struct command_arg connect_args[] = {
-    { "connection name", ARG_STRING, TRUE, &ds_connection_name, "Name of the connection" },
-    { "host", ARG_STRING, TRUE, &ds_host, "Host to connect to" },
-    { "user", ARG_STRING, FALSE, &ds_user, "User to connect as" },
-    { "passsword", ARG_STRING, FALSE, &ds_password, "Password used when connecting" },
-    { "database", ARG_STRING, FALSE, &ds_database, "Database to select after connect" },
-    { "port", ARG_STRING, FALSE, &ds_port, "Port to connect to" },
-    { "socket", ARG_STRING, FALSE, &ds_sock, "Socket to connect with" },
-    { "options", ARG_STRING, FALSE, &ds_options, "Options to use while connecting" }
+    { "connection name", ARG_STRING, true, &ds_connection_name, "Name of the connection" },
+    { "host", ARG_STRING, true, &ds_host, "Host to connect to" },
+    { "user", ARG_STRING, false, &ds_user, "User to connect as" },
+    { "passsword", ARG_STRING, false, &ds_password, "Password used when connecting" },
+    { "database", ARG_STRING, false, &ds_database, "Database to select after connect" },
+    { "port", ARG_STRING, false, &ds_port, "Port to connect to" },
+    { "socket", ARG_STRING, false, &ds_sock, "Socket to connect with" },
+    { "options", ARG_STRING, false, &ds_options, "Options to use while connecting" }
   };
 
 
@@ -4047,7 +4047,7 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
     /* Inner block should be ignored too */
     cur_block++;
     cur_block->cmd= cmd;
-    cur_block->ok= FALSE;
+    cur_block->ok= false;
     return;
   }
 
@@ -4059,7 +4059,7 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
   /* Check for !<expr> */
   if (*expr_start == '!')
   {
-    not_expr= TRUE;
+    not_expr= true;
     expr_start++; /* Step past the '!' */
   }
   /* Find ending ')' */
@@ -4079,7 +4079,7 @@ static void do_block(enum block_cmd cmd, struct st_command* command)
   /* Define inner block */
   cur_block++;
   cur_block->cmd= cmd;
-  cur_block->ok= (v.int_val ? TRUE : FALSE);
+  cur_block->ok= (v.int_val ? true : false);
 
   if (not_expr)
     cur_block->ok = !cur_block->ok;
@@ -4870,7 +4870,7 @@ void str_to_file2(const char *fname, char *str, int size, bool append)
 
 void str_to_file(const char *fname, char *str, int size)
 {
-  str_to_file2(fname, str, size, FALSE);
+  str_to_file2(fname, str, size, false);
 }
 
 
@@ -5405,7 +5405,7 @@ static void run_query(struct st_connection *cn,
   if (command->type == Q_EVAL)
   {
     init_dynamic_string(&eval_query, "", command->query_len+256, 1024);
-    do_eval(&eval_query, command->query, command->end, FALSE);
+    do_eval(&eval_query, command->query, command->end, false);
     query = eval_query.str;
     query_len = eval_query.length;
   }
@@ -5643,7 +5643,7 @@ int main(int argc, char **argv)
   block_stack_end=
     block_stack + (sizeof(block_stack)/sizeof(struct st_block)) - 1;
   cur_block= block_stack;
-  cur_block->ok= TRUE; /* Outer block should always be executed */
+  cur_block->ok= true; /* Outer block should always be executed */
   cur_block->cmd= cmd_none;
 
   my_init_dynamic_array(&q_lines, sizeof(struct st_command*), 1024, 1024);
@@ -5778,17 +5778,17 @@ int main(int argc, char **argv)
         do_delimiter(command);
 	break;
       case Q_DISPLAY_VERTICAL_RESULTS:
-        display_result_vertically= TRUE;
+        display_result_vertically= true;
         break;
       case Q_DISPLAY_HORIZONTAL_RESULTS:
-	display_result_vertically= FALSE;
+	display_result_vertically= false;
         break;
       case Q_SORTED_RESULT:
         /*
           Turn on sorting of result set, will be reset after next
           command
         */
-	display_result_sorted= TRUE;
+	display_result_sorted= true;
         break;
       case Q_LET: do_let(command); break;
       case Q_EVAL_RESULT:
@@ -5987,7 +5987,7 @@ int main(int argc, char **argv)
       free_all_replace();
 
       /* Also reset "sorted_result" */
-      display_result_sorted= FALSE;
+      display_result_sorted= false;
     }
     last_command_executed= command_executed;
 

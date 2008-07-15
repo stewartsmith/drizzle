@@ -564,9 +564,9 @@ static SHOW_COMP_OPTION plugin_status(const LEX_STRING *name, int type)
 
 bool plugin_is_ready(const LEX_STRING *name, int type)
 {
-  bool rc= FALSE;
+  bool rc= false;
   if (plugin_status(name, type) == SHOW_OPTION_YES)
-    rc= TRUE;
+    rc= true;
   return rc;
 }
 
@@ -664,12 +664,12 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       my_error(ER_UDF_EXISTS, MYF(0), name->str);
     if (report & REPORT_TO_LOG)
       sql_print_error(ER(ER_UDF_EXISTS), name->str);
-    return(TRUE);
+    return(true);
   }
   /* Clear the whole struct to catch future extensions. */
   bzero((char*) &tmp, sizeof(tmp));
   if (! (tmp.plugin_dl= plugin_dl_add(dl, report)))
-    return(TRUE);
+    return(true);
   /* Find plugin by name */
   for (plugin= tmp.plugin_dl->plugins; plugin->info; plugin++)
   {
@@ -709,7 +709,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
           if (!my_hash_insert(&plugin_hash[plugin->type], (uchar*)tmp_plugin_ptr))
           {
             init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
-            return(FALSE);
+            return(false);
           }
           tmp_plugin_ptr->state= PLUGIN_IS_FREED;
         }
@@ -718,7 +718,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       }
       /* plugin was disabled */
       plugin_dl_del(dl);
-      return(FALSE);
+      return(false);
     }
   }
   if (report & REPORT_TO_USER)
@@ -727,7 +727,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
     sql_print_error(ER(ER_CANT_FIND_DL_ENTRY), name->str);
 err:
   plugin_dl_del(dl);
-  return(TRUE);
+  return(true);
 }
 
 
@@ -1146,7 +1146,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
     if (p == buffer + sizeof(buffer) - 1)
     {
       sql_print_error("plugin-load parameter too long");
-      return(TRUE);
+      return(true);
     }
 
     switch ((*(p++)= *(list++))) {
@@ -1203,11 +1203,11 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
       continue;
     }
   }
-  return(FALSE);
+  return(false);
 error:
   sql_print_error("Couldn't load plugin named '%s' with soname '%s'.",
                   name.str, dl.str);
-  return(TRUE);
+  return(true);
 }
 
 
@@ -1343,7 +1343,7 @@ bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
   int version=plugin_array_version;
 
   if (!initialized)
-    return(FALSE);
+    return(false);
 
   state_mask= ~state_mask; // do it only once
 
@@ -1380,16 +1380,16 @@ bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
           plugins[i]=0;
     }
     plugin= plugins[idx];
-    /* It will stop iterating on first engine error when "func" returns TRUE */
+    /* It will stop iterating on first engine error when "func" returns true */
     if (plugin && func(thd, plugin_int_to_ref(plugin), arg))
         goto err;
   }
 
   my_afree(plugins);
-  return(FALSE);
+  return(false);
 err:
   my_afree(plugins);
-  return(TRUE);
+  return(true);
 }
 
 

@@ -298,16 +298,16 @@ my_bool vio_peek_read(Vio *vio, uint *bytes)
 #if FIONREAD_IN_SYS_IOCTL
   int len;
   if (ioctl(vio->sd, FIONREAD, &len) < 0)
-    return TRUE;
+    return true;
   *bytes= len;
-  return FALSE;
+  return false;
 #else
   char buf[1024];
   ssize_t res= recv(vio->sd, &buf, sizeof(buf), MSG_PEEK);
   if (res < 0)
-    return TRUE;
+    return true;
   *bytes= res;
-  return FALSE;
+  return false;
 #endif
 }
 

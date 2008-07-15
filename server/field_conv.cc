@@ -175,7 +175,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
   field->reset();
   if (field == field->table->next_number_field)
   {
-    field->table->auto_increment_field_not_null= FALSE;
+    field->table->auto_increment_field_not_null= false;
     return 0;				  // field is set in fill_record()
   }
   if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
@@ -263,7 +263,7 @@ static void do_copy_next_number(Copy_field *copy)
   if (*copy->from_null_ptr & copy->from_bit)
   {
     /* Same as in set_field_to_null_with_conversions() */
-    copy->to_field->table->auto_increment_field_not_null= FALSE;
+    copy->to_field->table->auto_increment_field_not_null= false;
     copy->to_field->reset();
   }
   else

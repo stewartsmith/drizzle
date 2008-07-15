@@ -969,7 +969,7 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
   {
     /* got NULL, leave the incl_endp intact */
-    return LONGLONG_MIN;
+    return INT64_MIN;
   }
   res=(int64_t) calc_daynr(ltime.year,ltime.month,ltime.day);
   
@@ -1222,7 +1222,7 @@ int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
   if (get_arg0_date(&ltime, TIME_FUZZY_DATE))
   {
     /* got NULL, leave the incl_endp intact */
-    return LONGLONG_MIN;
+    return INT64_MIN;
   }
 
   /*

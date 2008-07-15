@@ -226,13 +226,13 @@ void net_clear(NET *net, my_bool clear_buffer)
     {
       /* Read unblocking to clear net */
       my_bool old_mode;
-      if (!vio_blocking(net->vio, FALSE, &old_mode))
+      if (!vio_blocking(net->vio, false, &old_mode))
       {
         while ((long) (count= vio_read(net->vio, net->buff,
                                        (size_t) net->max_packet)) > 0)
           DBUG_PRINT("info",("skipped %ld bytes from file: %s",
                              (long) count, vio_description(net->vio)));
-        vio_blocking(net->vio, TRUE, &old_mode);
+        vio_blocking(net->vio, true, &old_mode);
       }
     }
 #endif /* NET_DATA_IS_READY_CAN_RETURN_MINUS_ONE */
@@ -518,7 +518,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
         if (!thr_alarm(&alarmed, net->write_timeout, &alarm_buff))
         {                                       /* Always true for client */
 	  my_bool old_mode;
-	  while (vio_blocking(net->vio, TRUE, &old_mode) < 0)
+	  while (vio_blocking(net->vio, true, &old_mode) < 0)
 	  {
 	    if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
 	      continue;
