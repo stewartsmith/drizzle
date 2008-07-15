@@ -744,7 +744,7 @@ mysql_fetch_field(MYSQL_RES *result)
 **************************************************************************/
 
 void STDCALL
-mysql_data_seek(MYSQL_RES *result, my_uint64_t row)
+mysql_data_seek(MYSQL_RES *result, uint64_t row)
 {
   MYSQL_ROWS	*tmp=0;
   DBUG_PRINT("info",("mysql_data_seek(%ld)",(long) row));
@@ -1056,12 +1056,12 @@ unsigned int STDCALL mysql_field_count(MYSQL *mysql)
   return mysql->field_count;
 }
 
-my_uint64_t STDCALL mysql_affected_rows(MYSQL *mysql)
+uint64_t STDCALL mysql_affected_rows(MYSQL *mysql)
 {
   return mysql->affected_rows;
 }
 
-my_uint64_t STDCALL mysql_insert_id(MYSQL *mysql)
+uint64_t STDCALL mysql_insert_id(MYSQL *mysql)
 {
   return mysql->insert_id;
 }
@@ -1309,7 +1309,7 @@ int STDCALL mysql_next_result(MYSQL *mysql)
   }
 
   net_clear_error(&mysql->net);
-  mysql->affected_rows= ~(my_uint64_t) 0;
+  mysql->affected_rows= ~(uint64_t) 0;
 
   if (mysql->server_status & SERVER_MORE_RESULTS_EXISTS)
     DBUG_RETURN((*mysql->methods->next_result)(mysql));

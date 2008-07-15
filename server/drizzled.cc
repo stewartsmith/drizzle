@@ -322,7 +322,6 @@ ulong binlog_cache_size=0, max_binlog_cache_size=0;
 ulong refresh_version;  /* Increments on each reload */
 query_id_t global_query_id;
 ulong aborted_threads, aborted_connects;
-ulong flush_time;
 ulong specialflag=0;
 ulong binlog_cache_use= 0, binlog_cache_disk_use= 0;
 ulong max_connections, max_connect_errors;
@@ -532,14 +531,6 @@ static void close_connections(void)
   /* Clear thread cache */
   kill_cached_threads++;
   flush_thread_cache();
-
-  /* kill flush thread */
-  (void) pthread_mutex_lock(&LOCK_manager);
-  if (manager_thread_in_use)
-  {
-   (void) pthread_cond_signal(&COND_manager);
-  }
-  (void) pthread_mutex_unlock(&LOCK_manager);
 
   /* kill connection thread */
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -921,7 +912,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_mapped_file);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_error_log);
-  (void) pthread_mutex_destroy(&LOCK_manager);
   (void) pthread_mutex_destroy(&LOCK_crypt);
   (void) pthread_mutex_destroy(&LOCK_user_conn);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
@@ -939,7 +929,6 @@ static void clean_up_mutexes()
   (void) pthread_cond_destroy(&COND_global_read_lock);
   (void) pthread_cond_destroy(&COND_thread_cache);
   (void) pthread_cond_destroy(&COND_flush_thread_cache);
-  (void) pthread_cond_destroy(&COND_manager);
 }
 
 
@@ -2298,7 +2287,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_mapped_file,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_manager,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_crypt,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_user_conn, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
@@ -2314,7 +2302,6 @@ static int init_thread_environment()
   (void) pthread_cond_init(&COND_global_read_lock,NULL);
   (void) pthread_cond_init(&COND_thread_cache,NULL);
   (void) pthread_cond_init(&COND_flush_thread_cache,NULL);
-  (void) pthread_cond_init(&COND_manager,NULL);
   (void) pthread_mutex_init(&LOCK_rpl_status, MY_MUTEX_INIT_FAST);
   (void) pthread_cond_init(&COND_rpl_status, NULL);
 
@@ -2612,17 +2599,6 @@ server.");
 }
 
 
-static void create_maintenance_thread()
-{
-  if (flush_time && flush_time != ~(ulong) 0L)
-  {
-    pthread_t hThread;
-    if (pthread_create(&hThread,&connection_attrib,handle_manager,0))
-      sql_print_warning("Can't create thread to manage maintenance");
-  }
-}
-
-
 int main(int argc, char **argv)
 {
   MY_INIT(argv[0]);		// init my_sys library & pthreads
@@ -2757,8 +2733,6 @@ int main(int argc, char **argv)
   {
     unireg_abort(1);
   }
-
-  create_maintenance_thread();
 
   sql_print_information(ER(ER_STARTUP),my_progname,server_version,
                         "", mysqld_port, MYSQL_COMPILATION_COMMENT);
@@ -3636,10 +3610,6 @@ log and this option does nothing anymore.",
    (char**) &expire_logs_days,
    (char**) &expire_logs_days, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
-  { "flush_time", OPT_FLUSH_TIME,
-    "A dedicated thread is created to flush all tables at the given interval.",
-    (char**) &flush_time, (char**) &flush_time, 0, GET_ULONG, REQUIRED_ARG,
-    FLUSH_TIME, 0, LONG_TIMEOUT, 0, 1, 0},
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
     "The maximum length of the result of function  group_concat.",
     (char**) &global_system_variables.group_concat_max_len,
@@ -4682,10 +4652,6 @@ mysqld_get_one_option(int optid,
   case OPT_CONSOLE:
     if (opt_console)
       opt_error_log= 0;			// Force logs to stdout
-    break;
-  case (int) OPT_FLUSH:
-    myisam_flush=1;
-    flush_time=0;			// No auto flush
     break;
   case OPT_LOW_PRIORITY_UPDATES:
     thr_upgraded_concurrent_insert_lock= TL_WRITE_LOW_PRIORITY;

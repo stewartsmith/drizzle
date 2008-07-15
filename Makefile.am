@@ -171,6 +171,7 @@ test-drizzle:
 		join_outer_innodb \
 		delete \
 		join_outer \
+		distinct \
 		join \
 		subselect \
 		subselect3 \
