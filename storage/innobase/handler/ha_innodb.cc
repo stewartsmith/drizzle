@@ -5963,7 +5963,7 @@ ha_innobase::update_table_comment(
 	mutex_enter_noninline(&srv_dict_tmpfile_mutex);
 	rewind(srv_dict_tmpfile);
 
-	fprintf(srv_dict_tmpfile, "InnoDB free: %lu kB",
+	fprintf(srv_dict_tmpfile, "InnoDB free: %"PRIu64" kB",
 		fsp_get_available_space_in_free_extents(
 			prebuilt->table->space));
 

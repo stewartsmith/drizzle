@@ -185,6 +185,7 @@
 #define _GNU_SOURCE 1
 #endif
 
+
 /*
   Temporary solution to solve bug#7156. Include "sys/types.h" before
   the thread headers, else the function madvise() will not be defined
@@ -315,9 +316,13 @@
 
 #if defined(HAVE_STDINT_H)
 /* We are mixing C and C++, so we wan the C limit macros in the C++ too */
+/* Enable some extra C99 extensions */
 #define __STDC_LIMIT_MACROS
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #include <stdint.h>
 #endif
+
 #if defined(HAVE_STDBOOL_H)
 #include <stdbool.h>
 #endif
@@ -748,11 +753,11 @@ typedef int64_t	int64_t;
 
 #define MY_ERRPTR ((void*)(intptr)1)
 
-#if SIZEOF_OFF_T > 4
+#if SIZEOF_OFF_T > 4 
 typedef uint64_t my_off_t;
 #else
 typedef unsigned long my_off_t;
-#endif
+#endif 
 #define MY_FILEPOS_ERROR	(~(my_off_t) 0)
 
 typedef off_t os_off_t;
