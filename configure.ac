@@ -282,6 +282,7 @@ if $LD --version 2>/dev/null|grep -q GNU; then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+
 #--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
@@ -303,6 +304,21 @@ then
   AC_MSG_ERROR([Couldn't find pthread.h.])
 fi
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
+
+#--------------------------------------------------------------------
+# Check for tcmalloc
+#--------------------------------------------------------------------
+
+AC_ARG_ENABLE([tcmalloc],
+    [AS_HELP_STRING([--enable-tcmalloc],
+       [Enable linking with tcmalloc @<:@default=off@:>@])],
+    [ac_warn_strict_aliasing="$enableval"],
+    [ac_warn_strict_aliasing="no"])
+
+if test "x$ac_warn_strict_aliasing" = "xyes"
+then
+  AC_CHECK_LIB(tcmalloc,malloc,[],[])
+fi
 
 #--------------------------------------------------------------------
 # Check for libz
