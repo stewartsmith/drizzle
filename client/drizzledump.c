@@ -1411,7 +1411,7 @@ static void print_xml_row(FILE *xml_file, const char *row_name,
 {
   uint i;
   MYSQL_FIELD *field;
-  ulong *lengths= mysql_fetch_lengths(tableRes);
+  uint32_t *lengths= mysql_fetch_lengths(tableRes);
 
   fprintf(xml_file, "\t\t<%s", row_name);
   check_io(xml_file);
@@ -1785,7 +1785,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
 
     while ((row= mysql_fetch_row(result)))
     {
-      ulong *lengths= mysql_fetch_lengths(result);
+      uint32_t *lengths= mysql_fetch_lengths(result);
       if (init)
       {
         if (!opt_xml && !opt_no_create_info)
@@ -2269,7 +2269,7 @@ static void dump_table(char *table, char *db)
     while ((row= mysql_fetch_row(res)))
     {
       uint i;
-      ulong *lengths= mysql_fetch_lengths(res);
+      uint32_t *lengths= mysql_fetch_lengths(res);
       rownr++;
       if (!extended_insert && !opt_xml)
       {
@@ -2779,7 +2779,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
     uint64_t num_rows= mysql_num_rows(table_res);
     if (num_rows > 0)
     {
-      ulong *lengths;
+      uint32_t *lengths;
       /*
         Return first row
         TODO: Return all matching rows

@@ -109,7 +109,7 @@ void sql_element_free(void *ptr);
 typedef struct st_status
 {
   int exit_status;
-  ulong query_start_line;
+  uint32_t query_start_line;
   char *file_name;
   LINE_BUFFER *line_buff;
   bool batch,add_to_history;
@@ -153,7 +153,9 @@ static GString *default_prompt= NULL;
 static char *full_username=0,*part_username=0;
 static int wait_time = 5;
 static STATUS status;
-static ulong select_limit,max_join_size,opt_connect_timeout=0;
+static uint32_t select_limit;
+static uint32_t max_join_size;
+static ulong opt_connect_timeout= 0;
 static char mysql_charsets_dir[FN_REFLEN+1];
 static const char *xmlmeta[] = {
   "&", "&amp;",
@@ -3926,8 +3928,9 @@ sql_real_connect(char *host,char *database,char *user,char *password,
   {
     char init_command[100];
     sprintf(init_command,
-            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%lu,SQL_MAX_JOIN_SIZE=%lu",
-            select_limit,max_join_size);
+	    "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
+            ",SQL_MAX_JOIN_SIZE=%"PRIu32,
+	    select_limit, max_join_size);
     mysql_options(&mysql, MYSQL_INIT_COMMAND, init_command);
   }
   if (default_charset_used)
@@ -4157,7 +4160,7 @@ put_info(const char *str,INFO_TYPE info_type, uint error, const char *sqlstate)
       }
       if (status.query_start_line && line_numbers)
       {
-        (void) fprintf(file," at line %lu",status.query_start_line);
+        (void) fprintf(file," at line %"PRIu32,status.query_start_line);
         if (status.file_name)
           (void) fprintf(file," in file: '%s'", status.file_name);
       }
