@@ -54,7 +54,6 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
   uchar *start;
   register HA_KEYSEG *keyseg;
   my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
-  DBUG_ENTER("_mi_make_key");
 
   start=key;
   for (keyseg=info->s->keyinfo[keynr].seg ; keyseg->type ;keyseg++)
@@ -175,12 +174,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
     key+= length;
   }
   _mi_dpointer(info,key,filepos);
-  DBUG_PRINT("exit",("keynr: %d",keynr));
-  DBUG_DUMP("key",(uchar*) start,(uint) (key-start)+keyseg->length);
-  DBUG_EXECUTE("key",
-	       _mi_print_key(DBUG_FILE,info->s->keyinfo[keynr].seg,start,
-			     (uint) (key-start)););
-  DBUG_RETURN((uint) (key-start));		/* Return keylength */
+  return((uint) (key-start));		/* Return keylength */
 } /* _mi_make_key */
 
 
@@ -208,10 +202,9 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
   uchar *start_key=key;
   HA_KEYSEG *keyseg;
   my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
-  DBUG_ENTER("_mi_pack_key");
 
   /* only key prefixes are supported */
-  DBUG_ASSERT(((keypart_map+1) & keypart_map) == 0);
+  assert(((keypart_map+1) & keypart_map) == 0);
 
   for (keyseg= info->s->keyinfo[keynr].seg ; keyseg->type && keypart_map;
        old+= keyseg->length, keyseg++)
@@ -282,7 +275,7 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
   if (last_used_keyseg)
     *last_used_keyseg= keyseg;
 
-  DBUG_RETURN((uint) (key-start_key));
+  return((uint) (key-start_key));
 } /* _mi_pack_key */
 
 
@@ -313,7 +306,6 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
   uchar *pos,*key_end;
   register HA_KEYSEG *keyseg;
   uchar *blob_ptr;
-  DBUG_ENTER("_mi_put_key_in_record");
 
   blob_ptr= (uchar*) info->lastkey2;             /* Place to put blob parts */
   key=(uchar*) info->lastkey;                    /* KEy that was read */
@@ -437,10 +429,10 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
       key+= keyseg->length;
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 
 err:
-  DBUG_RETURN(1);				/* Crashed row */
+  return(1);				/* Crashed row */
 } /* _mi_put_key_in_record */
 
 
@@ -565,7 +557,7 @@ ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
     value= uint8korr(key);
     break;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     value=0;                                    /* Error */
     break;
   }
