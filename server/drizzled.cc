@@ -947,7 +947,7 @@ static void set_ports()
       if builder specifically requested a default port, use that
       (even if it coincides with our factory default).
       only if they didn't do we check /etc/services (and, failing
-      on that, fall back to the factory default of 3306).
+      on that, fall back to the factory default of 4427).
       either default can be overridden by the environment variable
       MYSQL_TCP_PORT, which in turn can be overridden with command
       line options.
@@ -3022,7 +3022,7 @@ enum options_mysqld
   OPT_SSL_CAPATH, OPT_SSL_CIPHER,
   OPT_BACK_LOG, OPT_BINLOG_CACHE_SIZE,
   OPT_CONNECT_TIMEOUT,
-  OPT_FLUSH_TIME, OPT_FT_MIN_WORD_LEN, OPT_FT_BOOLEAN_SYNTAX,
+  OPT_FLUSH_TIME,
   OPT_INTERACTIVE_TIMEOUT, OPT_JOIN_BUFF_SIZE,
   OPT_KEY_BUFFER_SIZE, OPT_KEY_CACHE_BLOCK_SIZE,
   OPT_KEY_CACHE_DIVISION_LIMIT, OPT_KEY_CACHE_AGE_THRESHOLD,

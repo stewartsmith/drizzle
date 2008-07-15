@@ -35,7 +35,7 @@ MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
     awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
 
 # The port should be constant for a LONG time
-MYSQL_TCP_PORT_DEFAULT=3306
+MYSQL_TCP_PORT_DEFAULT=4427
 
 dnl Include m4 
 sinclude(config/ac-macros/alloca.m4)
@@ -555,7 +555,7 @@ fi
 
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
-            [Which port to use for Drizzle services @<:@default=3306@:>@])],
+            [Which port to use for Drizzle services @<:@default=4427@:>@])],
     [ MYSQL_TCP_PORT=$withval ],
     [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -567,8 +567,8 @@ AC_ARG_WITH([tcp-port],
       # testing for MYSQL_TCP_PORT==MYSQL_TCP_PORT_DEFAULT would make a
       # a port of MYSQL_TCP_PORT_DEFAULT magic even if the builder did not
       # intend it to mean "use the default, in fact, look up a good default
-      # from /etc/services if you can", but really, really meant 3306 when
-      # they passed in 3306. When they pass in a specific value, let them
+      # from /etc/services if you can", but really, really meant 4427 when
+      # they passed in 4427. When they pass in a specific value, let them
       # have it; don't second guess user and think we know better, this will
       # just make people cross.  this makes the the logic work like this
       # (which is complicated enough):
@@ -576,7 +576,7 @@ AC_ARG_WITH([tcp-port],
       # - if a port was set during build, use that as a default.
       #
       # - otherwise, try to look up a port in /etc/services; if that fails,
-      #   use MYSQL_TCP_PORT_DEFAULT (at the time of this writing 3306)
+      #   use MYSQL_TCP_PORT_DEFAULT (at the time of this writing 4427)
       #
       # - allow the MYSQL_TCP_PORT environment variable to override that.
       #

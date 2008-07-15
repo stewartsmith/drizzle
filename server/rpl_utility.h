@@ -91,7 +91,6 @@ public:
         switch (m_type[i]) {
         case MYSQL_TYPE_BLOB:
         case MYSQL_TYPE_DOUBLE:
-        case MYSQL_TYPE_FLOAT:
         {
           /*
             These types store a single byte.

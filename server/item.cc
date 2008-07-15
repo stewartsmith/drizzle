@@ -4146,10 +4146,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
     field= new Field_int64_t((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			      name, 0, unsigned_flag);
     break;
-  case MYSQL_TYPE_FLOAT:
-    field= new Field_float((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
-			   name, decimals, 0, unsigned_flag);
-    break;
   case MYSQL_TYPE_DOUBLE:
     field= new Field_double((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			    name, decimals, 0, unsigned_flag);
@@ -4755,14 +4751,6 @@ bool Item::send(Protocol *protocol, String *buffer)
     nr= val_int();
     if (!null_value)
       result= protocol->store_int64_t(nr, unsigned_flag);
-    break;
-  }
-  case MYSQL_TYPE_FLOAT:
-  {
-    float nr;
-    nr= (float) val_real();
-    if (!null_value)
-      result= protocol->store(nr, decimals, buffer);
     break;
   }
   case MYSQL_TYPE_DOUBLE:
@@ -6385,11 +6373,6 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
       int delta1= max_length_orig - decimals_orig;
       int delta2= item->max_length - item->decimals;
       max_length= max(delta1, delta2) + decimals;
-      if (fld_type == MYSQL_TYPE_FLOAT && max_length > FLT_DIG + 2) 
-      {
-        max_length= FLT_DIG + 6;
-        decimals= NOT_FIXED_DEC;
-      } 
       if (fld_type == MYSQL_TYPE_DOUBLE && max_length > DBL_DIG + 2) 
       {
         max_length= DBL_DIG + 7;
@@ -6397,7 +6380,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
       }
     }
     else
-      max_length= (fld_type == MYSQL_TYPE_FLOAT) ? FLT_DIG+6 : DBL_DIG+7;
+      max_length= DBL_DIG+7;
     break;
   }
   default:
@@ -6445,8 +6428,6 @@ uint32 Item_type_holder::display_length(Item *item)
     return 6;
   case MYSQL_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;
-  case MYSQL_TYPE_FLOAT:
-    return 25;
   case MYSQL_TYPE_DOUBLE:
     return 53;
   case MYSQL_TYPE_NULL:

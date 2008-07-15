@@ -658,7 +658,7 @@ sub command_line_setup () {
   }
   else
   {
-    $mysqld_variables{'port'}= 3306;
+    $mysqld_variables{'port'}= 4427;
   }
 
   if ( $opt_comment )

@@ -19,7 +19,7 @@ BUILT_SOURCES =		$(HEADERS_GEN)
 HEADERS_GEN =		drizzle_version.h
 HEADERS_ABI =		drizzle.h drizzle_com.h drizzle_time.h \
 			my_list.h my_alloc.h typelib.h mysql/plugin.h \
-			mysql/plugin_audit.h mysql/plugin_ftparser.h
+			mysql/plugin_audit.h
 pkginclude_HEADERS =	$(HEADERS_ABI) my_dbug.h m_string.h my_sys.h \
 			my_xml.h \
 		  	my_pthread.h \
@@ -29,7 +29,7 @@ pkginclude_HEADERS =	$(HEADERS_ABI) my_dbug.h m_string.h my_sys.h \
 			m_ctype.h my_attribute.h $(HEADERS_GEN)
 noinst_HEADERS =	my_bit.h \
 			heap.h my_bitmap.h my_uctype.h \
-			myisam.h myisampack.h myisammrg.h ft_global.h\
+			myisam.h myisampack.h myisammrg.h \
 			mysys_err.h my_base.h help_start.h help_end.h \
 			my_nosys.h queues.h sha1.h sha2.h \
 			my_tree.h my_trie.h hash.h thr_alarm.h \

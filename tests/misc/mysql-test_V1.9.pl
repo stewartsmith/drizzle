@@ -13,7 +13,7 @@ $| = 1;
 $opt_db =            "test";
 $opt_user =         $opt_password = $opt_without = "";
 $opt_host =         "localhost";
-$opt_port =          "3306";
+$opt_port =          "4427";
 $opt_socket =      "/tmp/mysql.sock";
 $opt_help =          0;
 

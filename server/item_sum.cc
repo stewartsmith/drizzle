@@ -936,8 +936,7 @@ void Item_sum_distinct::fix_length_and_dec()
   case STRING_RESULT:
   case REAL_RESULT:
     val.traits= Hybrid_type_traits::instance();
-    if (table_field_type != MYSQL_TYPE_FLOAT)
-      table_field_type= MYSQL_TYPE_DOUBLE;
+    table_field_type= MYSQL_TYPE_DOUBLE;
     break;
   case INT_RESULT:
   /*
