@@ -2398,7 +2398,7 @@ static void plugin_opt_set_limits(struct my_option *options,
   case PLUGIN_VAR_STR:
     options->var_type= ((opt->flags & PLUGIN_VAR_MEMALLOC) ?
                         GET_STR_ALLOC : GET_STR);
-    options->def_value= (intptr) ((sysvar_str_t*) opt)->def_val;
+    options->def_value= (intptr_t) ((sysvar_str_t*) opt)->def_val;
     break;
   /* threadlocal variables */
   case PLUGIN_VAR_INT | PLUGIN_VAR_THDLOCAL:
@@ -2440,7 +2440,7 @@ static void plugin_opt_set_limits(struct my_option *options,
   case PLUGIN_VAR_STR | PLUGIN_VAR_THDLOCAL:
     options->var_type= ((opt->flags & PLUGIN_VAR_MEMALLOC) ?
                         GET_STR_ALLOC : GET_STR);
-    options->def_value= (intptr) ((thdvar_str_t*) opt)->def_val;
+    options->def_value= (intptr_t) ((thdvar_str_t*) opt)->def_val;
     break;
   default:
     assert(0);

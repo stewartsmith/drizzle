@@ -1526,13 +1526,6 @@ int mysql_load(THD *thd, sql_exchange *ex, TABLE_LIST *table_list,
                 bool local_file);
 int write_record(THD *thd, TABLE *table, COPY_INFO *info);
 
-/* sql_manager.cc */
-extern ulong volatile manager_status;
-extern bool volatile manager_thread_in_use, mqh_used;
-extern pthread_t manager_thread;
-pthread_handler_t handle_manager(void *arg);
-bool mysql_manager_submit(void (*action)());
-
 
 /* sql_test.cc */
 void print_where(COND *cond,const char *info, enum_query_type query_type);
@@ -1747,7 +1740,7 @@ extern pthread_mutex_t LOCK_mysql_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_mapped_file,LOCK_user_locks, LOCK_status,
        LOCK_error_log, LOCK_uuid_generator,
        LOCK_crypt, LOCK_timezone,
-       LOCK_slave_list, LOCK_active_mi, LOCK_manager, LOCK_global_read_lock,
+       LOCK_slave_list, LOCK_active_mi, LOCK_global_read_lock,
        LOCK_global_system_variables, LOCK_user_conn,
        LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
 extern pthread_mutex_t LOCK_server_started;

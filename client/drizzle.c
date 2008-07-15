@@ -2579,7 +2579,7 @@ static int com_server_help(GString *buffer,
   if (result)
   {
     unsigned int num_fields= mysql_num_fields(result);
-    my_uint64_t num_rows= mysql_num_rows(result);
+    uint64_t num_rows= mysql_num_rows(result);
     mysql_fetch_fields(result);
     if (num_fields==3 && num_rows==1)
     {
@@ -3341,7 +3341,7 @@ static void print_warnings()
   const char   *query;
   MYSQL_RES    *result;
   MYSQL_ROW    cur;
-  my_uint64_t num_rows;
+  uint64_t num_rows;
   
   /* Save current error before calling "show warnings" */
   uint error= mysql_errno(&mysql);

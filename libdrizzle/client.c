@@ -432,7 +432,7 @@ cli_advanced_command(MYSQL *mysql, enum enum_server_command command,
 
   net_clear_error(net);
   mysql->info=0;
-  mysql->affected_rows= ~(my_uint64_t) 0;
+  mysql->affected_rows= ~(uint64_t) 0;
   /*
     We don't want to clear the protocol buffer on COM_QUIT, because if
     the previous command was a shutdown command, we may have the
@@ -1873,7 +1873,7 @@ my_bool mysql_reconnect(MYSQL *mysql)
   mysql_close(mysql);
   *mysql=tmp_mysql;
   net_clear(&mysql->net, 1);
-  mysql->affected_rows= ~(my_uint64_t) 0;
+  mysql->affected_rows= ~(uint64_t) 0;
   DBUG_RETURN(0);
 }
 
@@ -2334,7 +2334,7 @@ mysql_options(MYSQL *mysql,enum mysql_option option, const void *arg)
 ****************************************************************************/
 
 /* MYSQL_RES */
-my_uint64_t STDCALL mysql_num_rows(MYSQL_RES *res)
+uint64_t STDCALL mysql_num_rows(MYSQL_RES *res)
 {
   return res->row_count;
 }
