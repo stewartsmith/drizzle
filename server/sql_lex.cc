@@ -1603,7 +1603,7 @@ void st_select_lex::init_query()
   first_execution= 1;
   first_cond_optimization= 1;
   parsing_place= NO_MATTER;
-  exclude_from_table_unique_test= no_wrap_view_item= false;
+  exclude_from_table_unique_test= false;
   nest_level= 0;
   link_next= 0;
 }

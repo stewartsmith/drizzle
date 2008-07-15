@@ -1320,10 +1320,8 @@ inline bool setup_fields_with_no_wrap(THD *thd, Item **ref_pointer_array,
                                       bool allow_sum_func)
 {
   bool res;
-  thd->lex->select_lex.no_wrap_view_item= true;
   res= setup_fields(thd, ref_pointer_array, item, mark_used_columns, sum_func_list,
                     allow_sum_func);
-  thd->lex->select_lex.no_wrap_view_item= false;
   return res;
 }
 int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,

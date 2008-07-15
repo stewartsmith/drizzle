@@ -98,7 +98,6 @@ static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
     }
 
     thd->dup_field= 0;
-    select_lex->no_wrap_view_item= true;
 
     /* Save the state of the current name resolution context. */
     ctx_state.save_state(context, table_list);
@@ -113,7 +112,6 @@ static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
 
     /* Restore the current context. */
     ctx_state.restore_state(context, table_list);
-    thd->lex->select_lex.no_wrap_view_item= false;
 
     if (res)
       return -1;
@@ -721,9 +719,7 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
 
     if (!res && duplic == DUP_UPDATE)
     {
-      select_lex->no_wrap_view_item= true;
       res= check_update_fields(thd, context->table_list, update_fields, &map);
-      select_lex->no_wrap_view_item= false;
     }
 
     /* Restore the current context. */
@@ -1197,10 +1193,8 @@ select_insert::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     table_list->next_local= 0;
     context->resolve_in_table_list_only(table_list);
 
-    lex->select_lex.no_wrap_view_item= true;
     res= res || check_update_fields(thd, context->table_list,
                                     *info.update_fields, &map);
-    lex->select_lex.no_wrap_view_item= false;
     /*
       When we are not using GROUP BY and there are no ungrouped aggregate functions 
       we can refer to other tables in the ON DUPLICATE KEY part.

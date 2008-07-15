@@ -615,8 +615,6 @@ public:
   */
   bool first_execution;
   bool first_cond_optimization;
-  /* do not wrap view fields with Item_ref */
-  bool no_wrap_view_item;
   /* exclude this select from check of unique_table() */
   bool exclude_from_table_unique_test;
   /* List of fields that aren't under an aggregate function */
