@@ -30,6 +30,7 @@
 
 #define MYSQL_CLIENT
 #undef MYSQL_SERVER
+#include <my_global.h>
 #include "client_priv.h"
 #include <my_time.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
@@ -1615,7 +1616,7 @@ static Exit_status check_header(IO_CACHE* file,
 {
   uchar header[BIN_LOG_HEADER_SIZE];
   uchar buf[PROBE_HEADER_LEN];
-  my_off_t tmp_pos, pos;
+  uint64_t tmp_pos, pos;
 
   delete glob_description_event;
   if (!(glob_description_event= new Format_description_log_event(3)))
@@ -1657,8 +1658,8 @@ static Exit_status check_header(IO_CACHE* file,
     {
       if (file->error)
       {
-        error("Could not read entry at offset %lu: "
-              "Error in log format or read error.", (uint64_t)tmp_pos);
+        error("Could not read entry at offset %"PRIu64": "
+              "Error in log format or read error.", tmp_pos);
         return ERROR_STOP;
       }
       /*
@@ -1709,8 +1710,8 @@ static Exit_status check_header(IO_CACHE* file,
           /* EOF can't be hit here normally, so it's a real error */
         {
           error("Could not read a Format_description_log_event event at "
-                "offset %lu; this could be a log format error or read error.",
-                (uint64_t)tmp_pos);
+                "offset %"PRIu64"; this could be a log format error or read error.",
+                tmp_pos);
           return ERROR_STOP;
         }
         if (opt_base64_output_mode == BASE64_OUTPUT_AUTO
@@ -1740,9 +1741,10 @@ static Exit_status check_header(IO_CACHE* file,
         if (!(ev= Log_event::read_log_event(file, glob_description_event)))
         {
           /* EOF can't be hit here normally, so it's a real error */
-          error("Could not read a Rotate_log_event event at offset %lu;"
+          error("Could not read a Rotate_log_event event at offset "
+                "%"PRIu64";"
                 " this could be a log format error or read error.",
-                (uint64_t)tmp_pos);
+                tmp_pos);
           return ERROR_STOP;
         }
         delete ev;

@@ -131,7 +131,7 @@ EXTRA_DIST =		$(BUILT_MAINT_SRC) \
 			message.mc \
 			probes.d
 CLEANFILES =        	lex_hash.h sql_yacc.output $(nodist_drizzled_SOURCES)
-DISTCLEANFILES =        $(EXTRA_PROGRAMS)
+DISTCLEANFILES =        $(EXTRA_PROGRAMS) $(BUILT_MAINT_SRC)
 MAINTAINERCLEANFILES =  $(BUILT_MAINT_SRC)
 AM_YFLAGS =		-d --verbose
 

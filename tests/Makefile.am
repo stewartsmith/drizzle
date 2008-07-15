@@ -26,7 +26,7 @@ EXTRA_DIST = 		$(EXTRA_SCRIPTS) suite
 GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
 test_SCRIPTS = 		$(GENSCRIPTS) $(PRESCRIPTS)
-CLEANFILES = 		$(GENSCRIPTS)
+CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
 
 AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \

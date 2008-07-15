@@ -38,6 +38,9 @@ install-data-local:
 		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
 	fi
 
+distclean-local:
+	@RM@ -r -f autom4te.cache
+
 .PHONY: test    test-force    test-full    test-force-full    test-force-mem \
   test-pl test-force-pl test-full-pl test-force-full-pl test-force-pl-mem \
   test-ps test-nr test-pr test-ns test-binlog-statement \

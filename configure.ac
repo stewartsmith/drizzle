@@ -282,6 +282,7 @@ if $LD --version 2>/dev/null|grep -q GNU; then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+
 #--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
@@ -303,6 +304,21 @@ then
   AC_MSG_ERROR([Couldn't find pthread.h.])
 fi
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
+
+#--------------------------------------------------------------------
+# Check for tcmalloc
+#--------------------------------------------------------------------
+
+AC_ARG_ENABLE([tcmalloc],
+    [AS_HELP_STRING([--enable-tcmalloc],
+       [Enable linking with tcmalloc @<:@default=off@:>@])],
+    [ac_warn_strict_aliasing="$enableval"],
+    [ac_warn_strict_aliasing="no"])
+
+if test "x$ac_warn_strict_aliasing" = "xyes"
+then
+  AC_CHECK_LIB(tcmalloc,malloc,[],[])
+fi
 
 #--------------------------------------------------------------------
 # Check for libz
@@ -332,7 +348,7 @@ PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
   dnl Only check the header here, because autoconf can't handle
   dnl checking for C++ methods without C linkages
   AC_CHECK_HEADERS(pcrecpp.h)
-  if test "x$ac_cv_header_prcecpp_h" = "xno" 
+  if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
   then
     found_pcre="no"
   else
@@ -1179,10 +1195,10 @@ AC_ARG_ENABLE([pedantic-warnings],
     [ac_warn_pedantic="yes"])
 
 AC_ARG_ENABLE([fail],
-    [AS_HELP_STRING([--enable-fail],
-       [Turn warnings into failures @<:@default=off@:>@])],
+    [AS_HELP_STRING([--disable-fail],
+       [Turn warnings into failures @<:@default=on@:>@])],
     [ac_warn_fail="$enableval"],
-    [ac_warn_fail="no"])
+    [ac_warn_fail="yes"])
 
 AC_ARG_ENABLE([unreachable],
     [AS_HELP_STRING([--enable-unreachable],
@@ -1190,34 +1206,58 @@ AC_ARG_ENABLE([unreachable],
     [ac_warn_unreachable="$enableval"],
     [ac_warn_unreachable="no"])
 
+AC_ARG_ENABLE([longlong-warnings],
+    [AS_HELP_STRING([--enable-longlong-warnings],
+       [Enable warnings about longlong in C++ @<:@default=off@:>@])],
+    [ac_warn_longlong="$enableval"],
+    [ac_warn_longlong="no"])
+
+AC_ARG_ENABLE([strict-aliasing],
+    [AS_HELP_STRING([--enable-strict-aliasing],
+       [Enable warnings about stict-aliasing @<:@default=off@:>@])],
+    [ac_warn_strict_aliasing="$enableval"],
+    [ac_warn_strict_aliasing="no"])
+
 
 if test "$GCC" = "yes"
 then
 
-  GCC_WARNINGS="-W -Wall -Wextra"
-  GXX_WARNINGS="${GCC_WARNINGS}"
+  if test "$ac_warn_longlong" = "yes"
+  then
+    W_LONGLONG="-Wlong-long"
+  else
+    W_LONGLONG="-Wno-long-long"
+  fi
 
+  if test "$ac_warn_strict_aliasing" = "yes"
+  then
+    W_STRICT_ALIASING="-Wstrict-aliasing"
+  else
+    W_STRICT_ALIASING="-Wno-strict-aliasing"
+  fi
 
   if test "$ac_warn_pedantic" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wno-strict-aliasing "
-    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wno-long-long -Wno-strict-aliasing"
+    GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef -Wredundant-decls ${W_LONGLONG} ${W_STRICT_ALIASING}"
   fi
 
   if test "$ac_warn_unreachable" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS} -Wunreachable-code"
-    GXX_WARNINGS="${GXX_WARNINGS} -Wunreachable-code"
+    W_UNREACHABLE="-Wunreachable-code"
   fi
 
   if test "$ac_warn_fail" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS} -Werror"
-    GXX_WARNINGS="${GXX_WARNINGS} -Werror"
+    W_FAIL="-Werror"
   fi
 
-    CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
-    CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+  BASE_WARNINGS="-W -Wall -Wextra"
+  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL}"
+  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL}"
+
+  CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
+  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 
 # Some usefull subst
