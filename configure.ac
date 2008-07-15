@@ -1275,7 +1275,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  include/drizzle_version.h plugin/Makefile dnl
  server/drizzled_safe support-files/libdrizzle.pc dnl
- server/binlog/Makefile dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)

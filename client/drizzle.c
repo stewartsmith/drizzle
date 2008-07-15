@@ -35,6 +35,7 @@
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__		      // Skip warnings in getopt.h
 #endif
+#include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
 #include <violite.h>
@@ -986,7 +987,7 @@ static char       *embedded_server_args[MAX_SERVER_ARGS];
 static const char *embedded_server_groups[]=
 { "server", "mysql_SERVER", 0 };
 
-extern "C" int history_length;
+int history_length;
 static int not_in_history(const char *line);
 static void initialize_readline (const char *name);
 static void fix_history(GString *final_command);
@@ -1110,7 +1111,7 @@ int main(int argc,char *argv[])
            INFO_INFO,0,0);
   glob_buffer = g_string_sized_new(512);
   g_string_printf(glob_buffer,
-                  "Your Drizzle connection id is %lu\nServer version: %s\n",
+                  "Your Drizzle connection id is %u\nServer version: %s\n",
                   mysql_thread_id(&mysql), server_version_string(&mysql));
   put_info(glob_buffer->str,INFO_INFO,0,0);
   g_string_truncate(glob_buffer,0);
@@ -1230,7 +1231,7 @@ sig_handler handle_sigint(int sig)
   }
 
   /* kill_buffer is always big enough because max length of %lu is 15 */
-  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %lu", mysql_thread_id(&mysql));
+  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u", mysql_thread_id(&mysql));
   mysql_real_query(kill_mysql, kill_buffer, strlen(kill_buffer));
   mysql_close(kill_mysql);
   tee_fprintf(stdout, "Query aborted by Ctrl+C\n");
@@ -3068,7 +3069,7 @@ print_table_data(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    ulong *lengths= mysql_fetch_lengths(result);
+    uint32_t *lengths= mysql_fetch_lengths(result);
     (void) tee_fputs("| ", PAGER);
     mysql_field_seek(result, 0);
     for (uint off= 0; off < mysql_num_fields(result); off++)
@@ -3230,7 +3231,7 @@ print_table_data_html(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    ulong *lengths=mysql_fetch_lengths(result);
+    uint32_t *lengths=mysql_fetch_lengths(result);
     (void) tee_fputs("<TR>", PAGER);
     for (uint i=0; i < mysql_num_fields(result); i++)
     {
@@ -3262,7 +3263,7 @@ print_table_data_xml(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    ulong *lengths=mysql_fetch_lengths(result);
+    uint32_t *lengths=mysql_fetch_lengths(result);
     (void) tee_fputs("\n  <row>\n", PAGER);
     for (uint i=0; i < mysql_num_fields(result); i++)
     {
@@ -3431,7 +3432,7 @@ print_tab_data(MYSQL_RES *result)
 {
   MYSQL_ROW	cur;
   MYSQL_FIELD	*field;
-  ulong		*lengths;
+  uint32_t		*lengths;
 
   if (opt_silent < 2 && column_names)
   {
@@ -3651,7 +3652,7 @@ com_connect(GString *buffer, char *line)
 
   if (connected)
   {
-    sprintf(buff,"Connection id:    %lu",mysql_thread_id(&mysql));
+    sprintf(buff,"Connection id:    %u",mysql_thread_id(&mysql));
     put_info(buff,INFO_INFO,0,0);
     sprintf(buff,"Current database: %.128s\n",
             current_db ? current_db : "*** NONE ***");
