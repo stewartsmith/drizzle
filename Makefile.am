@@ -174,6 +174,8 @@ test-drizzle:
 		distinct \
 		join \
 		subselect \
+		subselect3 \
+		subselect_innodb \
 		insert \
 		select \
 		update \

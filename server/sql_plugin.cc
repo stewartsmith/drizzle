@@ -1427,9 +1427,7 @@ typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint_t, uint);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_ulong_t, ulong);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint64_t_t, uint64_t);
 
-#define SET_PLUGIN_VAR_RESOLVE(opt)\
-  *(mysql_sys_var_ptr_p*)&((opt)->resolve)= mysql_sys_var_ptr
-typedef uchar *(*mysql_sys_var_ptr_p)(void* a_thd, int offset);
+typedef bool *(*mysql_sys_var_ptr_p)(THD* a_thd, int offset);
 
 
 /****************************************************************************
@@ -1963,9 +1961,39 @@ static uchar *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
   return (uchar*)thd->variables.dynamic_variables_ptr + offset;
 }
 
-static uchar *mysql_sys_var_ptr(void* a_thd, int offset)
+static bool *mysql_sys_var_ptr_bool(THD* a_thd, int offset)
 {
-  return intern_sys_var_ptr((THD *)a_thd, offset, true);
+  return (bool *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static int *mysql_sys_var_ptr_int(THD* a_thd, int offset)
+{
+  return (int *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static long *mysql_sys_var_ptr_long(THD* a_thd, int offset)
+{
+  return (long *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static int64_t *mysql_sys_var_ptr_int64_t(THD* a_thd, int offset)
+{
+  return (int64_t *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static char **mysql_sys_var_ptr_str(THD* a_thd, int offset)
+{
+  return (char **)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static uint64_t *mysql_sys_var_ptr_set(THD* a_thd, int offset)
+{
+  return (uint64_t *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static unsigned long *mysql_sys_var_ptr_enum(THD* a_thd, int offset)
+{
+  return (unsigned long *)intern_sys_var_ptr(a_thd, offset, true);
 }
 
 
@@ -2493,25 +2521,25 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       continue;
     switch (opt->flags & PLUGIN_VAR_TYPEMASK) {
     case PLUGIN_VAR_BOOL:
-      SET_PLUGIN_VAR_RESOLVE(((thdvar_bool_t *) opt));
+      (((thdvar_bool_t *)opt)->resolve)= mysql_sys_var_ptr_bool;
       break;
     case PLUGIN_VAR_INT:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_int_t *) opt);
+      (((thdvar_int_t *)opt)->resolve)= mysql_sys_var_ptr_int;
       break;
     case PLUGIN_VAR_LONG:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_long_t *) opt);
+      (((thdvar_long_t *)opt)->resolve)= mysql_sys_var_ptr_long;
       break;
     case PLUGIN_VAR_LONGLONG:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_int64_t_t *) opt);
+      (((thdvar_int64_t_t *)opt)->resolve)= mysql_sys_var_ptr_int64_t;
       break;
     case PLUGIN_VAR_STR:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_str_t *) opt);
+      (((thdvar_str_t *)opt)->resolve)= mysql_sys_var_ptr_str;
       break;
     case PLUGIN_VAR_ENUM:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_enum_t *) opt);
+      (((thdvar_enum_t *)opt)->resolve)= mysql_sys_var_ptr_enum;
       break;
     case PLUGIN_VAR_SET:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_set_t *) opt);
+      (((thdvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
       break;
     default:
       sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",
