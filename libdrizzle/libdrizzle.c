@@ -123,7 +123,7 @@ int STDCALL mysql_server_init(int argc __attribute__((unused)),
           if builder specifically requested a default port, use that
           (even if it coincides with our factory default).
           only if they didn't do we check /etc/services (and, failing
-          on that, fall back to the factory default of 3306).
+          on that, fall back to the factory default of 4427).
           either default can be overridden by the environment variable
           MYSQL_TCP_PORT, which in turn can be overridden with command
           line options.
