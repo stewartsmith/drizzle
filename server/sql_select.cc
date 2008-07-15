@@ -14231,7 +14231,7 @@ static bool test_if_ref(Item_field *left_item,Item *right_item)
 	if (field->binary() &&
 	    field->real_type() != MYSQL_TYPE_STRING &&
 	    field->real_type() != MYSQL_TYPE_VARCHAR &&
-	    (field->type() != MYSQL_TYPE_FLOAT || field->decimals() == 0))
+	    field->decimals() == 0)
 	{
 	  return !store_val_in_field(field, right_item, CHECK_FIELD_WARN);
 	}

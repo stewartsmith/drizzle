@@ -3051,7 +3051,6 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
   case MYSQL_TYPE_LONGLONG:
     field_length= field->max_display_length() - 1;
     break;
-  case MYSQL_TYPE_FLOAT:  
   case MYSQL_TYPE_DOUBLE:
     field_length= field->field_length;
     if (decimals == NOT_FIXED_DEC)
@@ -3894,7 +3893,6 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
         return(0);
       }
       break;
-    case MYSQL_TYPE_FLOAT:
     case MYSQL_TYPE_DOUBLE:
       if ((item= new Item_float(fields_info->field_name, 0.0, NOT_FIXED_DEC, 
                            fields_info->field_length)) == NULL)

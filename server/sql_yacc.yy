@@ -542,7 +542,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  FIRST_SYM                     /* SQL-2003-N */
 %token  FIXED_SYM
 %token  FLOAT_NUM
-%token  FLOAT_SYM                     /* SQL-2003-R */
 %token  FLUSH_SYM
 %token  FORCE_SYM
 %token  FOREIGN                       /* SQL-2003-R */
@@ -1809,7 +1808,6 @@ field_spec:
 type:
           int_type opt_len field_options { $$=$1; }
         | real_type opt_precision field_options { $$=$1; }
-        | FLOAT_SYM float_options field_options { $$=MYSQL_TYPE_FLOAT; }
         | BIT_SYM
           {
             Lex->length= (char*) "1";

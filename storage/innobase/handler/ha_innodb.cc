@@ -1443,7 +1443,7 @@ innobase_init(
         innobase_hton->flags=HTON_NO_FLAGS;
         innobase_hton->release_temporary_latches=innobase_release_temporary_latches;
 
-	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)MYSQL_TYPE_VARCHAR);
+        ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)MYSQL_TYPE_VARCHAR);
 
 #ifdef UNIV_DEBUG
 	static const char	test_filename[] = "-@";
@@ -2633,7 +2633,6 @@ get_innobase_type_from_mysql_type(
 	DBUG_ASSERT((ulint)MYSQL_TYPE_STRING < 256);
 	DBUG_ASSERT((ulint)MYSQL_TYPE_VAR_STRING < 256);
 	DBUG_ASSERT((ulint)MYSQL_TYPE_DOUBLE < 256);
-	DBUG_ASSERT((ulint)MYSQL_TYPE_FLOAT < 256);
 
 	if (field->flags & UNSIGNED_FLAG) {
 
@@ -2692,8 +2691,6 @@ get_innobase_type_from_mysql_type(
 	case MYSQL_TYPE_TIME:
 	case MYSQL_TYPE_TIMESTAMP:
 		return(DATA_INT);
-	case MYSQL_TYPE_FLOAT:
-		return(DATA_FLOAT);
 	case MYSQL_TYPE_DOUBLE:
 		return(DATA_DOUBLE);
 	case MYSQL_TYPE_BLOB:
