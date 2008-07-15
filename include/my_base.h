@@ -558,9 +558,9 @@ typedef ulong		ha_rows;
 #define HA_OFFSET_ERROR	(~ (my_off_t) 0)
 
 #if SIZEOF_OFF_T == 4
-#define MAX_FILE_SIZE	INT_MAX32
+#define MAX_FILE_SIZE	INT32_MAX
 #else
-#define MAX_FILE_SIZE	LONGLONG_MAX
+#define MAX_FILE_SIZE	INT64_MAX
 #endif
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)

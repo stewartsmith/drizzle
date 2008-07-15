@@ -72,7 +72,7 @@ my_coll_init_8bit_bin(CHARSET_INFO *cs,
                       void *(*alloc)(size_t) __attribute__((unused)))
 {
   cs->max_sort_char=255; 
-  return FALSE;
+  return false;
 }
 
 static int my_strnncoll_binary(CHARSET_INFO * cs __attribute__((unused)),

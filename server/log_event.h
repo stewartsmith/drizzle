@@ -3707,7 +3707,7 @@ public:
   }
 
   Incident_log_event(THD *thd_arg, Incident incident, LEX_STRING const msg)
-    : Log_event(thd_arg, 0, FALSE), m_incident(incident)
+    : Log_event(thd_arg, 0, false), m_incident(incident)
   {
     m_message= msg;
     return;

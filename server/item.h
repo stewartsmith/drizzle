@@ -300,8 +300,8 @@ struct Name_resolution_context: Sql_alloc
   void *error_processor_data;
 
   /*
-    When TRUE items are resolved in this context both against the
-    SELECT list and this->table_list. If FALSE, items are resolved
+    When true items are resolved in this context both against the
+    SELECT list and this->table_list. If false, items are resolved
     only against this->table_list.
   */
   bool resolve_in_select_list;
@@ -320,7 +320,7 @@ struct Name_resolution_context: Sql_alloc
 
   void init()
   {
-    resolve_in_select_list= FALSE;
+    resolve_in_select_list= false;
     error_processor= &dummy_error_processor;
     first_name_resolution_table= NULL;
     last_name_resolution_table= NULL;
@@ -329,7 +329,7 @@ struct Name_resolution_context: Sql_alloc
   void resolve_in_table_list_only(TABLE_LIST *tables)
   {
     table_list= first_name_resolution_table= tables;
-    resolve_in_select_list= FALSE;
+    resolve_in_select_list= false;
   }
 
   void process_error(THD *thd)
@@ -420,8 +420,8 @@ typedef bool (Item::*Item_processor) (uchar *arg);
                     OUT: Parameter to be passed to the transformer
 
     RETURN 
-      TRUE   Invoke the transformer
-      FALSE  Don't do it
+      true   Invoke the transformer
+      false  Don't do it
 
 */
 typedef bool (Item::*Item_analyzer) (uchar **argp);
@@ -556,11 +556,11 @@ public:
 
     SYNOPSIS
       val_int_endpoint()
-        left_endp  FALSE  <=> The interval is "x < const" or "x <= const"
-                   TRUE   <=> The interval is "x > const" or "x >= const"
+        left_endp  false  <=> The interval is "x < const" or "x <= const"
+                   true   <=> The interval is "x > const" or "x >= const"
 
-        incl_endp  IN   TRUE <=> the comparison is '<' or '>'
-                        FALSE <=> the comparison is '<=' or '>='
+        incl_endp  IN   true <=> the comparison is '<' or '>'
+                        false <=> the comparison is '<=' or '>='
                    OUT  The same but for the "F(x) $CMP$ F(const)" comparison
 
     DESCRIPTION
@@ -582,7 +582,7 @@ public:
     RETURN
       The output range bound, which equal to the value of val_int()
         - If the value of the function is NULL then the bound is the
-          smallest possible value of LONGLONG_MIN
+          smallest possible value of INT64_MIN
   */
   virtual int64_t val_int_endpoint(bool left_endp __attribute__((__unused__)),
                                     bool *incl_endp __attribute__((__unused__)))
@@ -597,8 +597,8 @@ public:
       val_real()
 
     RETURN
-      In case of NULL value return 0.0 and set null_value flag to TRUE.
-      If value is not null null_value flag will be reset to FALSE.
+      In case of NULL value return 0.0 and set null_value flag to true.
+      If value is not null null_value flag will be reset to false.
   */
   virtual double val_real()=0;
   /*
@@ -608,8 +608,8 @@ public:
       val_int()
 
     RETURN
-      In case of NULL value return 0 and set null_value flag to TRUE.
-      If value is not null null_value flag will be reset to FALSE.
+      In case of NULL value return 0 and set null_value flag to true.
+      If value is not null null_value flag will be reset to false.
   */
   virtual int64_t val_int()=0;
   /*
@@ -648,8 +648,8 @@ public:
 
     RETURN
       In case of NULL value return 0 (NULL pointer) and set null_value flag
-      to TRUE.
-      If value is not null null_value flag will be reset to FALSE.
+      to true.
+      If value is not null null_value flag will be reset to false.
   */
   virtual String *val_str(String *str)=0;
   /*
@@ -666,17 +666,17 @@ public:
 
     RETURN
       Return pointer on my_decimal (it can be other then passed via argument)
-        if value is not NULL (null_value flag will be reset to FALSE).
+        if value is not NULL (null_value flag will be reset to false).
       In case of NULL value it return 0 pointer and set null_value flag
-        to TRUE.
+        to true.
   */
   virtual my_decimal *val_decimal(my_decimal *decimal_buffer)= 0;
   /*
     Return boolean value of item.
 
     RETURN
-      FALSE value is false or NULL
-      TRUE value is true (not equal to 0)
+      false value is false or NULL
+      true value is true (not equal to 0)
   */
   virtual bool val_bool();
   virtual String *val_nodeset(String*) { return 0; }
@@ -799,7 +799,7 @@ public:
 
   /*
     Inform the item that there will be no distinction between its result
-    being FALSE or NULL.
+    being false or NULL.
 
     NOTE
       This function will be called for eg. Items that are top-level AND-parts
@@ -936,13 +936,13 @@ public:
   }
 
   /*
-    result_as_int64_t() must return TRUE for Items representing DATE/TIME
+    result_as_int64_t() must return true for Items representing DATE/TIME
     functions and DATE/TIME table fields.
     Those Items have result_type()==STRING_RESULT (and not INT_RESULT), but
     their values should be compared as integers (because the integer
     representation is more precise than the string one).
   */
-  virtual bool result_as_int64_t() { return FALSE; }
+  virtual bool result_as_int64_t() { return false; }
   bool is_datetime();
 
   /*
@@ -1043,7 +1043,7 @@ public:
   bool remove_dependence_processor(uchar * arg);
   virtual void print(String *str, enum_query_type query_type);
   virtual bool change_context_processor(uchar *cntx)
-    { context= (Name_resolution_context *)cntx; return FALSE; }
+    { context= (Name_resolution_context *)cntx; return false; }
   friend bool insert_fields(THD *thd, Name_resolution_context *context,
                             const char *db_name,
                             const char *table_name, List_iterator<Item> *it,
@@ -1084,7 +1084,7 @@ public:
   Item_equal *item_equal;
   bool no_const_subst;
   /*
-    if any_privileges set to TRUE then here real effective privileges will
+    if any_privileges set to true then here real effective privileges will
     be stored
   */
   uint have_privileges;
@@ -1183,7 +1183,7 @@ class Item_null :public Item_basic_constant
 public:
   Item_null(char *name_par=0)
   {
-    maybe_null= null_value= TRUE;
+    maybe_null= null_value= true;
     max_length= 0;
     name= name_par ? name_par : (char*) "NULL";
     fixed= 1;
@@ -1351,14 +1351,14 @@ public:
     words, avoid pointing at one item from two different nodes of the tree.
     Return a new basic constant item if parameter value is a basic
     constant, assert otherwise. This method is called only if
-    basic_const_item returned TRUE.
+    basic_const_item returned true.
   */
   Item *safe_charset_converter(CHARSET_INFO *tocs);
   Item *clone_item();
   /*
     Implement by-value equality evaluation if parameter value
     is set and is a basic constant (integer, real or string).
-    Otherwise return FALSE.
+    Otherwise return false.
   */
   bool eq(const Item *item, bool binary_cmp) const;
   /** Item is a argument to a limit clause. */
@@ -1485,13 +1485,13 @@ public:
   int64_t val_int()
   {
     assert(fixed == 1);
-    if (value <= (double) LONGLONG_MIN)
+    if (value <= (double) INT64_MIN)
     {
-       return LONGLONG_MIN;
+       return INT64_MIN;
     }
-    else if (value >= (double) (uint64_t) LONGLONG_MAX)
+    else if (value >= (double) (uint64_t) INT64_MAX)
     {
-      return LONGLONG_MAX;
+      return INT64_MAX;
     }
     return (int64_t) rint(value);
   }
@@ -1531,7 +1531,7 @@ public:
   Item_string(const char *str,uint length,
               CHARSET_INFO *cs, Derivation dv= DERIVATION_COERCIBLE,
               uint repertoire= MY_REPERTOIRE_UNICODE30)
-    : m_cs_specified(FALSE)
+    : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
     collation.set(cs, dv, repertoire);
@@ -1550,7 +1550,7 @@ public:
   }
   /* Just create an item and do not fill string representation */
   Item_string(CHARSET_INFO *cs, Derivation dv= DERIVATION_COERCIBLE)
-    : m_cs_specified(FALSE)
+    : m_cs_specified(false)
   {
     collation.set(cs, dv);
     max_length= 0;
@@ -1561,7 +1561,7 @@ public:
   Item_string(const char *name_par, const char *str, uint length,
               CHARSET_INFO *cs, Derivation dv= DERIVATION_COERCIBLE,
               uint repertoire= MY_REPERTOIRE_UNICODE30)
-    : m_cs_specified(FALSE)
+    : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
     collation.set(cs, dv, repertoire);
@@ -1614,7 +1614,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
 
   /**
-    Return TRUE if character-set-introducer was explicitly specified in the
+    Return true if character-set-introducer was explicitly specified in the
     original query for this item (text literal).
 
     This operation is to be called from Item_string::print(). The idea is
@@ -1628,9 +1628,9 @@ public:
     one day when we start using original query as a view definition.
 
     @return This operation returns the value of m_cs_specified attribute.
-      @retval TRUE if character set introducer was explicitly specified in
+      @retval true if character set introducer was explicitly specified in
       the original query.
-      @retval FALSE otherwise.
+      @retval false otherwise.
   */
   inline bool is_cs_specified() const
   {
@@ -1815,7 +1815,7 @@ public:
   */
   Item_ref(Name_resolution_context *context_arg, Item **item,
            const char *table_name_arg, const char *field_name_arg,
-           bool alias_name_used_arg= FALSE);
+           bool alias_name_used_arg= false);
 
   /* Constructor need to process subselect with temporary tables (see Item) */
   Item_ref(THD *thd, Item_ref *item)
@@ -1922,7 +1922,7 @@ public:
   Item_direct_ref(Name_resolution_context *context_arg, Item **item,
                   const char *table_name_arg,
                   const char *field_name_arg,
-                  bool alias_name_used_arg= FALSE)
+                  bool alias_name_used_arg= false)
     :Item_ref(context_arg, item, table_name_arg,
               field_name_arg, alias_name_used_arg)
   {}
@@ -1984,7 +1984,7 @@ public:
   /* The aggregate function under which this outer ref is used, if any. */
   Item_sum *in_sum_func;
   /*
-    TRUE <=> that the outer_ref is already present in the select list
+    true <=> that the outer_ref is already present in the select list
     of the outer select.
   */
   bool found_in_select_list;
@@ -2026,7 +2026,7 @@ class Item_in_subselect;
 /*
   An object of this class:
    - Converts val_XXX() calls to ref->val_XXX_result() calls, like Item_ref.
-   - Sets owner->was_null=TRUE if it has returned a NULL value from any
+   - Sets owner->was_null=true if it has returned a NULL value from any
      val_XXX() function. This allows to inject an Item_ref_null_helper
      object into subquery and then check if the subquery has produced a row
      with NULL value.
@@ -2324,7 +2324,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq_def(Field *field) 
   { 
-    return cached_field ? cached_field->eq_def (field) : FALSE;
+    return cached_field ? cached_field->eq_def (field) : false;
   }
   bool eq(const Item *item,
           bool binary_cmp __attribute__((__unused__))) const
@@ -2350,7 +2350,7 @@ public:
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return INT_RESULT; }
-  bool result_as_int64_t() { return TRUE; }
+  bool result_as_int64_t() { return true; }
 };
 
 

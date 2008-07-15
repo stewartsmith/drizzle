@@ -3033,8 +3033,8 @@ int cmp_int64_t(void *cmp_arg __attribute__((__unused__)),
       One of the args is unsigned and is too big to fit into the 
       positive signed range. Report no match.
     */  
-    if ((a->unsigned_flag && ((uint64_t) a->val) > (uint64_t) LONGLONG_MAX) ||
-        (b->unsigned_flag && ((uint64_t) b->val) > (uint64_t) LONGLONG_MAX))
+    if ((a->unsigned_flag && ((uint64_t) a->val) > (uint64_t) INT64_MAX) ||
+        (b->unsigned_flag && ((uint64_t) b->val) > (uint64_t) INT64_MAX))
       return a->unsigned_flag ? 1 : -1;
     /*
       Although the signedness differs both args can fit into the signed 

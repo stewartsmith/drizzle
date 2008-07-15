@@ -320,8 +320,7 @@ static void set_mysql_extended_error(MYSQL *mysql, int errcode,
   or packet is an error message
 *****************************************************************************/
 
-ulong
-cli_safe_read(MYSQL *mysql)
+uint32_t cli_safe_read(MYSQL *mysql)
 {
   NET *net= &mysql->net;
   ulong len=0;
@@ -403,15 +402,15 @@ void free_rows(MYSQL_DATA *cur)
   }
 }
 
-my_bool
+bool
 cli_advanced_command(MYSQL *mysql, enum enum_server_command command,
-		     const uchar *header, ulong header_length,
-		     const uchar *arg, ulong arg_length, my_bool skip_check)
+		     const unsigned char *header, uint32_t header_length,
+		     const unsigned char *arg, uint32_t arg_length, bool skip_check)
 {
   NET *net= &mysql->net;
   my_bool result= 1;
   init_sigpipe_variables
-  my_bool stmt_skip= FALSE;
+  my_bool stmt_skip= false;
   DBUG_ENTER("cli_advanced_command");
 
   /* Don't give sigpipe errors if the client doesn't want them */
@@ -553,7 +552,7 @@ mysql_free_result(MYSQL_RES *result)
         (*mysql->methods->flush_use_result)(mysql);
         mysql->status=MYSQL_STATUS_READY;
         if (mysql->unbuffered_fetch_owner)
-          *mysql->unbuffered_fetch_owner= TRUE;
+          *mysql->unbuffered_fetch_owner= true;
       }
     }
     free_rows(result->data);
@@ -758,7 +757,7 @@ void mysql_read_default_options(struct st_mysql_options *options,
 	  options->client_flag|= CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS;
 	  break;
         case 30: /* secure-auth */
-          options->secure_auth= TRUE;
+          options->secure_auth= true;
           break;
         case 31: /* report-data-truncation */
           options->report_data_truncation= opt_arg ? test(atoi(opt_arg)) : 1;
@@ -780,10 +779,9 @@ void mysql_read_default_options(struct st_mysql_options *options,
   else the lengths are calculated from the offset between pointers.
 **************************************************************************/
 
-static void cli_fetch_lengths(ulong *to, MYSQL_ROW column,
-			      unsigned int field_count)
+static void cli_fetch_lengths(uint32_t *to, MYSQL_ROW column, uint32_t field_count)
 { 
-  ulong *prev_length;
+  uint32_t *prev_length;
   char *start=0;
   MYSQL_ROW end;
 
@@ -812,7 +810,7 @@ unpack_fields(MYSQL_DATA *data,MEM_ROOT *alloc,uint fields,
 {
   MYSQL_ROWS	*row;
   MYSQL_FIELD	*field,*result;
-  ulong lengths[9];				/* Max of fields */
+  uint32_t lengths[9];				/* Max of fields */
   DBUG_ENTER("unpack_fields");
 
   field= result= (MYSQL_FIELD*) alloc_root(alloc,
@@ -1016,8 +1014,8 @@ MYSQL_DATA *cli_read_rows(MYSQL *mysql,MYSQL_FIELD *mysql_fields,
 */
 
 
-static int
-read_one_row(MYSQL *mysql,uint fields,MYSQL_ROW row, ulong *lengths)
+static int32_t
+read_one_row(MYSQL *mysql, uint32_t fields, MYSQL_ROW row, uint32_t *lengths)
 {
   uint field;
   ulong pkt_len,len;
@@ -1104,7 +1102,7 @@ mysql_init(MYSQL *mysql)
 #endif
 
   mysql->options.methods_to_use= MYSQL_OPT_GUESS_CONNECTION;
-  mysql->options.report_data_truncation= TRUE;  /* default */
+  mysql->options.report_data_truncation= true;  /* default */
 
   /*
     By default we don't reconnect because it could silently corrupt data (after
@@ -1134,64 +1132,12 @@ mysql_init(MYSQL *mysql)
 
 #define strdup_if_not_null(A) (A) == 0 ? 0 : my_strdup((A),MYF(MY_WME))
 
-my_bool STDCALL
-mysql_ssl_set(MYSQL *mysql __attribute__((unused)) ,
-	      const char *key __attribute__((unused)),
-	      const char *cert __attribute__((unused)),
-	      const char *ca __attribute__((unused)),
-	      const char *capath __attribute__((unused)),
-	      const char *cipher __attribute__((unused)))
-{
-  DBUG_ENTER("mysql_ssl_set");
-  DBUG_RETURN(0);
-}
-
-
-/*
-  Free strings in the SSL structure and clear 'use_ssl' flag.
-  NB! Errors are not reported until you do mysql_real_connect.
-*/
-
-/*
-  Return the SSL cipher (if any) used for current
-  connection to the server.
-
-  SYNOPSYS
-    mysql_get_ssl_cipher()
-      mysql pointer to the mysql connection
-
-*/
-
-const char * STDCALL
-mysql_get_ssl_cipher(MYSQL *mysql __attribute__((unused)))
-{
-  DBUG_ENTER("mysql_get_ssl_cipher");
-  DBUG_RETURN(NULL);
-}
-
-
-/*
-  Check the server's (subject) Common Name against the
-  hostname we connected to
-
-  SYNOPSIS
-  ssl_verify_server_cert()
-    vio              pointer to a SSL connected vio
-    server_hostname  name of the server that we connected to
-
-  RETURN VALUES
-   0 Success
-   1 Failed to validate server
-
- */
-
-
 /*
   Note that the mysql argument must be initialized with mysql_init()
   before calling mysql_real_connect !
 */
 
-static my_bool cli_read_query_result(MYSQL *mysql);
+static bool cli_read_query_result(MYSQL *mysql);
 static MYSQL_RES *cli_use_result(MYSQL *mysql);
 
 static MYSQL_METHODS client_methods=
@@ -1286,11 +1232,11 @@ C_MODE_END
 MYSQL * STDCALL
 CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
                        const char *passwd, const char *db,
-                       uint port, const char *unix_socket,ulong client_flag)
+                       uint32_t port, const char *unix_socket, uint32_t client_flag)
 {
   char          buff[NAME_LEN+USERNAME_LENGTH+100];
   char          *end,*host_info=NULL;
-  ulong         pkt_length;
+  uint32_t         pkt_length;
   NET           *net= &mysql->net;
   struct        sockaddr_un UNIXaddr;
   init_sigpipe_variables
@@ -1526,7 +1472,7 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
     set_mysql_error(mysql, CR_OUT_OF_MEMORY, unknown_sqlstate);
     goto error;
   }
-  vio_keepalive(net->vio,TRUE);
+  vio_keepalive(net->vio,true);
 
   /* If user set read_timeout, let it override the default */
   if (mysql->options.read_timeout)
@@ -1689,16 +1635,10 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
   end= strend(end) + 1;
   if (passwd[0])
   {
-    if (mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
     {
       *end++= SCRAMBLE_LENGTH;
       scramble(end, mysql->scramble, passwd);
       end+= SCRAMBLE_LENGTH;
-    }
-    else
-    {
-      scramble_323(end, mysql->scramble, passwd);
-      end+= SCRAMBLE_LENGTH_323 + 1;
     }
   }
   else
@@ -1734,35 +1674,6 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
                                "reading authorization packet",
                                errno);
     goto error;
-  }
-
-  if (pkt_length == 1 && net->read_pos[0] == 254 && 
-      mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
-  {
-    /*
-      By sending this very specific reply server asks us to send scrambled
-      password in old format.
-    */
-    scramble_323(buff, mysql->scramble, passwd);
-    if (my_net_write(net, (uchar*) buff, SCRAMBLE_LENGTH_323 + 1) ||
-        net_flush(net))
-    {
-      set_mysql_extended_error(mysql, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "sending password information",
-                               errno);
-      goto error;
-    }
-    /* Read what server thinks about out new auth message report */
-    if (cli_safe_read(mysql) == packet_error)
-    {
-      if (mysql->net.last_errno == CR_SERVER_LOST)
-        set_mysql_extended_error(mysql, CR_SERVER_LOST, unknown_sqlstate,
-                                 ER(CR_SERVER_LOST_EXTENDED),
-                                 "reading final connect information",
-                                 errno);
-      goto error;
-    }
   }
 
   if (client_flag & CLIENT_COMPRESS)		/* We will use compression */
@@ -1973,7 +1884,7 @@ void STDCALL mysql_close(MYSQL *mysql)
 }
 
 
-static my_bool cli_read_query_result(MYSQL *mysql)
+static bool cli_read_query_result(MYSQL *mysql)
 {
   uchar *pos;
   ulong field_count;
@@ -2051,19 +1962,19 @@ get_info:
   finish processing it.
 */
 
-int STDCALL
-mysql_send_query(MYSQL* mysql, const char* query, ulong length)
+int32_t STDCALL
+mysql_send_query(MYSQL* mysql, const char* query, uint32_t length)
 {
   DBUG_ENTER("mysql_send_query");
   DBUG_RETURN(simple_command(mysql, COM_QUERY, (uchar*) query, length, 1));
 }
 
 
-int STDCALL
-mysql_real_query(MYSQL *mysql, const char *query, ulong length)
+int32_t STDCALL
+mysql_real_query(MYSQL *mysql, const char *query, uint32_t length)
 {
   DBUG_ENTER("mysql_real_query");
-  DBUG_PRINT("enter",("handle: 0x%lx", (long) mysql));
+  DBUG_PRINT("enter",("handle: 0x%lx", (int32_t) mysql));
   DBUG_PRINT("query",("Query = '%-.4096s'",query));
 
   if (mysql_send_query(mysql,query,length))
@@ -2099,8 +2010,8 @@ MYSQL_RES * STDCALL mysql_store_result(MYSQL *mysql)
     DBUG_RETURN(0);
   }
   result->methods= mysql->methods;
-  result->eof=1;				/* Marker for buffered */
-  result->lengths=(ulong*) (result+1);
+  result->eof= 1;				/* Marker for buffered */
+  result->lengths= (uint32_t*) (result+1);
   if (!(result->data=
 	(*mysql->methods->read_rows)(mysql,mysql->fields,mysql->field_count)))
   {
@@ -2147,7 +2058,7 @@ static MYSQL_RES * cli_use_result(MYSQL *mysql)
 				      sizeof(ulong)*mysql->field_count,
 				      MYF(MY_WME | MY_ZEROFILL))))
     DBUG_RETURN(0);
-  result->lengths=(ulong*) (result+1);
+  result->lengths=(uint32_t*) (result+1);
   result->methods= mysql->methods;
   if (!(result->row=(MYSQL_ROW)
 	my_malloc(sizeof(result->row[0])*(mysql->field_count+1), MYF(MY_WME))))
@@ -2228,7 +2139,7 @@ mysql_fetch_row(MYSQL_RES *res)
   else the lengths are calculated from the offset between pointers.
 **************************************************************************/
 
-ulong * STDCALL
+uint32_t * STDCALL
 mysql_fetch_lengths(MYSQL_RES *res)
 {
   MYSQL_ROW column;
@@ -2373,7 +2284,7 @@ const char * STDCALL mysql_error(MYSQL *mysql)
    Signed number > 323000
 */
 
-ulong STDCALL
+uint32_t STDCALL
 mysql_get_server_version(MYSQL *mysql)
 {
   uint major, minor, version;

@@ -254,7 +254,7 @@ int handle_options(int *argc, char ***argv,
 		  case OPT_DISABLE: /* fall through */
 		    /*
 		      double negation is actually enable again,
-		      for example: --skip-option=0 -> option = TRUE
+		      for example: --skip-option=0 -> option = true
 		    */
 		    optend= (optend && *optend == '0' && !(*(optend + 1))) ?
 		      (char*) "1" : disabled_my_option;
@@ -793,7 +793,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
                                bool *fix)
 {
   int64_t old= num;
-  bool adjusted= FALSE;
+  bool adjusted= false;
   char buf1[255], buf2[255];
   uint64_t block_size= (optp->block_size ? (uint64_t) optp->block_size : 1L);
 
@@ -801,7 +801,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
       optp->max_value) /* if max value is not set -> no upper limit */
   {
     num= (uint64_t) optp->max_value;
-    adjusted= TRUE;
+    adjusted= true;
   }
 
   switch ((optp->var_type & GET_TYPE_MASK)) {
@@ -809,7 +809,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
     if (num > (int64_t) INT_MAX)
     {
       num= ((int64_t) INT_MAX);
-      adjusted= TRUE;
+      adjusted= true;
     }
     break;
   case GET_LONG:
@@ -817,7 +817,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
     if (num > (int64_t) LONG_MAX)
     {
       num= ((int64_t) LONG_MAX);
-      adjusted= TRUE;
+      adjusted= true;
     }
 #endif
     break;
@@ -832,7 +832,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
   if (num < optp->min_value)
   {
     num= optp->min_value;
-    adjusted= TRUE;
+    adjusted= true;
   }
 
   if (fix)
@@ -861,7 +861,7 @@ static uint64_t getopt_ull(char *arg, const struct my_option *optp, int *err)
 uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
                                  bool *fix)
 {
-  bool adjusted= FALSE;
+  bool adjusted= false;
   uint64_t old= num;
   char buf1[255], buf2[255];
 
@@ -869,7 +869,7 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
       optp->max_value) /* if max value is not set -> no upper limit */
   {
     num= (uint64_t) optp->max_value;
-    adjusted= TRUE;
+    adjusted= true;
   }
 
   switch ((optp->var_type & GET_TYPE_MASK)) {
@@ -877,7 +877,7 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
     if (num > (uint64_t) UINT_MAX)
     {
       num= ((uint64_t) UINT_MAX);
-      adjusted= TRUE;
+      adjusted= true;
     }
     break;
   case GET_ULONG:
@@ -885,7 +885,7 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
     if (num > (uint64_t) ULONG_MAX)
     {
       num= ((uint64_t) ULONG_MAX);
-      adjusted= TRUE;
+      adjusted= true;
     }
 #endif
     break;
@@ -903,7 +903,7 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
   if (num < (uint64_t) optp->min_value)
   {
     num= (uint64_t) optp->min_value;
-    adjusted= TRUE;
+    adjusted= true;
   }
 
   if (fix)
@@ -1187,7 +1187,7 @@ void my_print_variables(const struct my_option *options)
   const struct my_option *optp;
 
   printf("\nVariables (--variable-name=value)\n");
-  printf("and boolean options {FALSE|TRUE}  Value (after reading options)\n");
+  printf("and boolean options {false|true}  Value (after reading options)\n");
   printf("--------------------------------- -----------------------------\n");
   for (optp= options; optp->id; optp++)
   {
@@ -1221,7 +1221,7 @@ void my_print_variables(const struct my_option *options)
 	       "(No default value)");
 	break;
       case GET_BOOL:
-	printf("%s\n", *((bool*) value) ? "TRUE" : "FALSE");
+	printf("%s\n", *((bool*) value) ? "true" : "false");
 	break;
       case GET_INT:
 	printf("%d\n", *((int*) value));

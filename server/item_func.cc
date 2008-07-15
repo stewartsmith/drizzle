@@ -596,7 +596,7 @@ void Item_func::count_real_length()
     max_length= length;
     length+= decimals;
     if (length < max_length)  // If previous operation gave overflow
-      max_length= UINT_MAX32;
+      max_length= UINT32_MAX;
     else
       max_length= length;
   }
@@ -1496,8 +1496,8 @@ void Item_func_neg::fix_length_and_dec()
   if (hybrid_type == INT_RESULT && args[0]->const_item())
   {
     int64_t val= args[0]->val_int();
-    if ((uint64_t) val >= (uint64_t) LONGLONG_MIN &&
-        ((uint64_t) val != (uint64_t) LONGLONG_MIN ||
+    if ((uint64_t) val >= (uint64_t) INT64_MIN &&
+        ((uint64_t) val != (uint64_t) INT64_MIN ||
           args[0]->type() != INT_ITEM))        
     {
       /*

@@ -97,7 +97,7 @@ pthread_mutex_t sleeper_mutex;
 pthread_cond_t sleep_threshhold;
 
 /* Global Thread timer */
-static bool timer_alarm= FALSE;
+static bool timer_alarm= false;
 pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 
@@ -119,16 +119,16 @@ const char *delimiter= "\n";
 
 const char *create_schema_string= "mysqlslap";
 
-static bool opt_preserve= TRUE;
+static bool opt_preserve= true;
 static bool debug_info_flag= 0, debug_check_flag= 0;
-static bool opt_only_print= FALSE;
-static bool opt_burnin= FALSE;
-static bool opt_ignore_sql_errors= FALSE;
-static bool opt_compress= FALSE, tty_password= FALSE,
-               opt_silent= FALSE,
-               auto_generate_sql_autoincrement= FALSE,
-               auto_generate_sql_guid_primary= FALSE,
-               auto_generate_sql= FALSE;
+static bool opt_only_print= false;
+static bool opt_burnin= false;
+static bool opt_ignore_sql_errors= false;
+static bool opt_compress= false, tty_password= false,
+               opt_silent= false,
+               auto_generate_sql_autoincrement= false,
+               auto_generate_sql_guid_primary= false,
+               auto_generate_sql= false;
 const char *opt_auto_generate_sql_type= "mixed";
 
 static unsigned long connect_flags= CLIENT_MULTI_RESULTS |
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  slap_connect(&mysql, FALSE);
+  slap_connect(&mysql, false);
 
   VOID(pthread_mutex_init(&counter_mutex, NULL));
   VOID(pthread_cond_init(&count_threshhold, NULL));
@@ -454,7 +454,7 @@ void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr)
       a stored_procedure that doesn't use data, or we know we already have
       data in the table.
     */
-    if (opt_preserve == FALSE)
+    if (opt_preserve == false)
       drop_schema(mysql, create_schema_string);
 
     /* First we create */
@@ -1239,7 +1239,7 @@ get_options(int *argc,char ***argv)
 
   /* If something is created we clean it up, otherwise we leave schemas alone */
   if (create_string || auto_generate_sql)
-    opt_preserve= FALSE;
+    opt_preserve= false;
 
   if (auto_generate_sql && (create_string || user_supplied_query))
   {
@@ -1270,7 +1270,7 @@ get_options(int *argc,char ***argv)
 
   if (opt_csv_str)
   {
-    opt_silent= TRUE;
+    opt_silent= true;
     
     if (opt_csv_str[0] == '-')
     {
@@ -1289,7 +1289,7 @@ get_options(int *argc,char ***argv)
   }
 
   if (opt_only_print)
-    opt_silent= TRUE;
+    opt_silent= true;
 
   if (num_int_cols_opt)
   {
@@ -1380,12 +1380,12 @@ get_options(int *argc,char ***argv)
         if (verbose >= 2)
           printf("Generating SELECT Statements for Auto\n");
 
-        query_statements[sql_type_count]= build_select_string(FALSE);
+        query_statements[sql_type_count]= build_select_string(false);
         for (ptr_statement= query_statements[sql_type_count], x= 0; 
              x < auto_generate_sql_unique_query_number; 
              x++, ptr_statement= ptr_statement->next)
         {
-          ptr_statement->next= build_select_string(FALSE);
+          ptr_statement->next= build_select_string(false);
         }
       }
       else if (sql_type->string[0] == 'k')
@@ -1393,8 +1393,8 @@ get_options(int *argc,char ***argv)
         if (verbose >= 2)
           printf("Generating SELECT for keys Statements for Auto\n");
 
-        if ( auto_generate_sql_autoincrement == FALSE &&
-             auto_generate_sql_guid_primary == FALSE)
+        if ( auto_generate_sql_autoincrement == false &&
+             auto_generate_sql_guid_primary == false)
         {
           fprintf(stderr,
                   "%s: Can't perform key test without a primary key!\n",
@@ -1402,12 +1402,12 @@ get_options(int *argc,char ***argv)
           exit(1);
         }
 
-        query_statements[sql_type_count]= build_select_string(TRUE);
+        query_statements[sql_type_count]= build_select_string(true);
         for (ptr_statement= query_statements[sql_type_count], x= 0; 
              x < auto_generate_sql_unique_query_number; 
              x++, ptr_statement= ptr_statement->next)
         {
-          ptr_statement->next= build_select_string(TRUE);
+          ptr_statement->next= build_select_string(true);
         }
       }
       else if (sql_type->string[0] == 'w')
@@ -1429,8 +1429,8 @@ get_options(int *argc,char ***argv)
       }
       else if (sql_type->string[0] == 'u')
       {
-        if ( auto_generate_sql_autoincrement == FALSE &&
-             auto_generate_sql_guid_primary == FALSE)
+        if ( auto_generate_sql_autoincrement == false &&
+             auto_generate_sql_guid_primary == false)
         {
           fprintf(stderr,
                   "%s: Can't perform update test without a primary key!\n",
@@ -1466,7 +1466,7 @@ get_options(int *argc,char ***argv)
           }
           else
           {
-            ptr_statement->next= build_select_string(TRUE);
+            ptr_statement->next= build_select_string(true);
             coin= 1;
           }
         }
@@ -1929,7 +1929,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
   if (opt_timer_length)
   {
     pthread_mutex_lock(&timer_alarm_mutex);
-    timer_alarm= TRUE;
+    timer_alarm= true;
     pthread_mutex_unlock(&timer_alarm_mutex);
 
     if (pthread_create(&mainthread, &attr, timer_thread, 
@@ -2007,7 +2007,7 @@ pthread_handler_t timer_thread(void *p)
   pthread_mutex_unlock(&timer_alarm_mutex);
 
   pthread_mutex_lock(&timer_alarm_mutex);
-  timer_alarm= FALSE;
+  timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
   mysql_thread_end();
@@ -2039,7 +2039,7 @@ pthread_handler_t run_task(void *p)
   }
   pthread_mutex_unlock(&sleeper_mutex);
 
-  slap_connect(&mysql, TRUE);
+  slap_connect(&mysql, true);
 
   if (verbose >= 3)
     printf("connected!\n");
@@ -2057,7 +2057,7 @@ limit_not_met:
       if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
       {
         slap_close(&mysql);
-        slap_connect(&mysql, TRUE);
+        slap_connect(&mysql, true);
       }
 
       /* 
@@ -2129,15 +2129,15 @@ limit_not_met:
       }
 
       /* If the timer is set, and the alarm is not active then end */
-      if (opt_timer_length && timer_alarm == FALSE)
+      if (opt_timer_length && timer_alarm == false)
         goto end;
 
       /* If limit has been reached, and we are not in a timer_alarm just end */
-      if (con->limit && queries == con->limit && timer_alarm == FALSE)
+      if (con->limit && queries == con->limit && timer_alarm == false)
         goto end;
     }
 
-    if (opt_timer_length && timer_alarm == TRUE)
+    if (opt_timer_length && timer_alarm == true)
       goto limit_not_met;
 
     if (con->limit && queries < con->limit)

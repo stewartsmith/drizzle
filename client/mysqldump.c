@@ -112,7 +112,7 @@ static char  *opt_password=0,*current_user=0,
 static char **defaults_argv= 0;
 static char compatible_mode_normal_str[255];
 /* Server supports character_set_results session variable? */
-static bool server_supports_switching_charsets= TRUE;
+static bool server_supports_switching_charsets= true;
 static ulong opt_compatible_mode= 0;
 #define MYSQL_OPT_MASTER_DATA_EFFECTIVE_SQL 1
 #define MYSQL_OPT_MASTER_DATA_COMMENTED_SQL 2
@@ -1024,7 +1024,7 @@ static int switch_character_set_results(MYSQL *mysql, const char *cs_name)
 
   /* Server lacks facility.  This is not an error, by arbitrary decision . */
   if (!server_supports_switching_charsets)
-    return FALSE;
+    return false;
 
   query_length= snprintf(query_buffer,
                          sizeof (query_buffer),
@@ -1115,7 +1115,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
     opt_set_charset= 0;
 
     /* Don't switch charsets for 4.1 and earlier.  (bug#34192). */
-    server_supports_switching_charsets= FALSE;
+    server_supports_switching_charsets= false;
   } 
   /*
     set time_zone to UTC to allow dumping date types between servers with
@@ -3212,7 +3212,7 @@ static void print_value(FILE *file, MYSQL_RES  *result, MYSQL_ROW row,
 
   Check if we the table is one of the table types that should be ignored:
   MRG_ISAM, MRG_MYISAM, if opt_delayed, if that table supports delayed inserts.
-  If the table should be altogether ignored, it returns a TRUE, FALSE if it
+  If the table should be altogether ignored, it returns a true, false if it
   should not be ignored. If the user has selected to use INSERT DELAYED, it
   sets the value of the bool pointer supports_delayed_inserts to 0 if not
   supported, 1 if it is supported.
