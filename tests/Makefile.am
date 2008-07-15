@@ -23,8 +23,8 @@ benchdir_root=		$(prefix)
 testdir =	        $(benchdir_root)/mysql-test
 EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
 EXTRA_DIST = 		$(EXTRA_SCRIPTS) suite
-GENSCRIPTS =		install_test_db dtr drizzle-test-run
-PRESCRIPTS =		drizzle-test-run.pl drizzle-stress-test.pl
+GENSCRIPTS =		install_test_db dtr test-run
+PRESCRIPTS =		test-run.pl stress-test.pl
 test_SCRIPTS = 		$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS)
 noinst_PROGRAMS = 	resolve_stack_dump
@@ -126,14 +126,14 @@ install-data-local:
 uninstall-local:
 	@RM@ -f -r $(DESTDIR)$(testdir)
 
-# dtr - a shortcut for executing drizzle-test-run.pl
+# dtr - a shortcut for executing test-run.pl
 dtr:
 	$(RM) -f mtr dtr
-	$(LN_S) drizzle-test-run.pl mtr
-	$(LN_S) drizzle-test-run.pl dtr
+	$(LN_S) test-run.pl mtr
+	$(LN_S) test-run.pl dtr
 
-# drizzle-test-run - a shortcut for executing drizzle-test-run.pl
-drizzle-test-run:
-	$(RM) -f drizzle-test-run
-	$(LN_S) drizzle-test-run.pl drizzle-test-run
+# test-run - a shortcut for executing test-run.pl
+test-run:
+	$(RM) -f test-run
+	$(LN_S) test-run.pl test-run
 
