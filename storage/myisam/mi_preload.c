@@ -51,7 +51,7 @@ int mi_preload(MI_INFO *info, ulonglong key_map, my_bool ignore_leaves)
   DBUG_ENTER("mi_preload");
 
   if (!keys || !mi_is_any_key_active(key_map) || key_file_length == pos)
-    DBUG_RETURN(0);
+    return(0);
 
   block_length= keyinfo[0].block_length;
 
@@ -61,7 +61,7 @@ int mi_preload(MI_INFO *info, ulonglong key_map, my_bool ignore_leaves)
     for (i= 1 ; i < keys ; i++)
     {
       if (keyinfo[i].block_length != block_length)
-        DBUG_RETURN(my_errno= HA_ERR_NON_UNIQUE_BLOCK_SIZE);
+        return(my_errno= HA_ERR_NON_UNIQUE_BLOCK_SIZE);
     }
   }
   else
@@ -71,7 +71,7 @@ int mi_preload(MI_INFO *info, ulonglong key_map, my_bool ignore_leaves)
   set_if_bigger(length, block_length);
 
   if (!(buff= (uchar *) my_malloc(length, MYF(MY_WME))))
-    DBUG_RETURN(my_errno= HA_ERR_OUT_OF_MEM);
+    return(my_errno= HA_ERR_OUT_OF_MEM);
 
   if (flush_key_blocks(share->key_cache,share->kfile, FLUSH_RELEASE))
     goto err;
@@ -113,10 +113,10 @@ int mi_preload(MI_INFO *info, ulonglong key_map, my_bool ignore_leaves)
   while (pos != key_file_length);
 
   my_free((char*) buff, MYF(0));
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   my_free((char*) buff, MYF(MY_ALLOW_ZERO_PTR));
-  DBUG_RETURN(my_errno= errno);
+  return(my_errno= errno);
 }
 
