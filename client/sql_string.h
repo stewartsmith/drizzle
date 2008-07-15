@@ -340,10 +340,10 @@ public:
   {
     uint32 new_length= arg_length + str_length;
     if (new_length > Alloced_length && realloc(new_length + step_alloc))
-      return TRUE;
+      return true;
     memcpy(Ptr+str_length, s, arg_length);
     str_length+= arg_length;
-    return FALSE;
+    return false;
   }
   void print(String *print);
 

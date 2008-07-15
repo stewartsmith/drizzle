@@ -58,13 +58,6 @@
 /* Make it easier to add conditionl code for windows */
 #define IF_WIN(A,B) (B)
 
-/* Some defines to avoid ifdefs in the code */
-#ifndef NETWARE_YIELD
-#define NETWARE_YIELD
-#define NETWARE_SET_SCREEN_MODE(A)
-#endif
-
-
 /*
   The macros below are borrowed from include/linux/compiler.h in the
   Linux kernel. Use them to indicate the likelyhood of the truthfulness
@@ -109,48 +102,6 @@
 #define PREFETCH_READ_LOCALITY(addr, locality)
 #define PREFETCH_WRITE(addr)
 #define PREFETCH_WRITE_LOCALITY(addr, locality)
-#endif
-
-/*
-  The following macro is used to ensure that code often used in most
-  SQL statements and definitely for parts of the SQL processing are
-  kept in a code segment by itself. This has the advantage that the
-  risk of common code being overlapping in caches of the CPU is less.
-  This can be a cause of big performance problems.
-  Routines should be put in this category with care and when they are
-  put there one should also strive to make as much of the error handling
-  as possible (or uncommon code of the routine) to execute in a
-  separate method to avoid moving to much code to this code segment.
-
-  It is very easy to use, simply add HOT_METHOD at the end of the
-  function declaration.
-  For more input see GCC manual (available in GCC 2.95 and later)
-*/
-
-#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR > 94)
-#define HOT_METHOD \
-  __attribute__ ((section ("hot_code_section")))
-#else
-#define HOT_METHOD
-#endif
-
-/*
-  The following macro is used to ensure that popular global variables
-  are located next to each other to avoid that they contend for the
-  same cache lines.
-
-  It is very easy to use, simply add HOT_DATA at the end of the declaration
-  of the variable, the variable must be initialised because of the way
-  that linker works so a declaration using HOT_DATA should look like:
-  uint global_hot_data HOT_DATA = 0;
-  For more input see GCC manual (available in GCC 2.95 and later)
-*/
-
-#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR > 94)
-#define HOT_DATA \
-  __attribute__ ((section ("hot_data_section")))
-#else
-#define HOT_DATA
 #endif
 
 /*
@@ -358,7 +309,6 @@ extern "C" int madvise(void *addr, size_t len, int behav);
 #define MASTER 1		/* Compile without unireg */
 #define ENGLISH 1		/* Messages in English */
 #define POSIX_MISTAKE 1		/* regexp: Fix stupid spec error */
-#define USE_REGEX 1		/* We want the use the regex library */
 /* Do not define for ultra sparcs */
 #define USE_BMOVE512 1		/* Use this unless system bmove is faster */
 
@@ -398,12 +348,6 @@ typedef unsigned short ushort;
 #define array_elements(A) ((uint32_t) (sizeof(A)/sizeof(A[0])))
 #ifndef HAVE_RINT
 #define rint(A) floor((A)+(((A) < 0)? -0.5 : 0.5))
-#endif
-
-/* Define some general constants */
-#ifndef TRUE
-#define TRUE		(1)	/* Logical true */
-#define FALSE		(0)	/* Logical false */
 #endif
 
 #if defined(__GNUC__)
@@ -554,8 +498,6 @@ typedef SOCKET_SIZE_TYPE size_socket;
 
 	/* Some things that this system doesn't have */
 
-#define NO_HASH			/* Not needed anymore */
-
 /* Some defines of functions for portability */
 
 #undef remove		/* Crashes MySQL on SCO 5.0.0 */
@@ -578,37 +520,6 @@ typedef SOCKET_SIZE_TYPE size_socket;
 #if !defined(HAVE_STRTOK_R)
 #define strtok_r(A,B,C) strtok((A),(B))
 #endif
-
-
-#if defined(INT64_MAX)
-#define LONGLONG_MAX INT64_MAX
-#endif
-
-#if defined(INT64_MIN)
-#define LONGLONG_MIN INT64_MIN
-#endif
-
-#if !defined(ULONGLONG_MAX)
-/* First check for ANSI C99 definition: */
-#if defined(UINT64_MAX)
-#define ULONGLONG_MAX  UINT64_MAX
-#else
-#define ULONGLONG_MAX ((uint64_t)(~0ULL))
-#endif
-#endif /* !defined(ULONGLONG_MAX)*/
-
-#define INT_MIN32       (~0x7FFFFFFFL)
-#define INT_MAX32       0x7FFFFFFFL
-#define UINT_MAX32      0xFFFFFFFFL
-#define INT_MIN24       (~0x007FFFFF)
-#define INT_MAX24       0x007FFFFF
-#define UINT_MAX24      0x00FFFFFF
-#define INT_MIN16       (~0x7FFF)
-#define INT_MAX16       0x7FFF
-#define UINT_MAX16      0xFFFF
-#define INT_MIN8        (~0x7F)
-#define INT_MAX8        0x7F
-#define UINT_MAX8       0xFF
 
 #ifdef HAVE_FLOAT_H
 #include <float.h>

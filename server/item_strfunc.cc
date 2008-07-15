@@ -873,9 +873,9 @@ String *Item_func_substr::val_str(String *str)
   String *res  = args[0]->val_str(str);
   /* must be int64_t to avoid truncation */
   int64_t start= args[1]->val_int();
-  /* Assumes that the maximum length of a String is < INT_MAX32. */
+  /* Assumes that the maximum length of a String is < INT32_MAX. */
   /* Limit so that code sees out-of-bound value properly. */
-  int64_t length= arg_count == 3 ? args[2]->val_int() : INT_MAX32;
+  int64_t length= arg_count == 3 ? args[2]->val_int() : INT32_MAX;
   int64_t tmp_length;
 
   if ((null_value=(args[0]->null_value || args[1]->null_value ||
@@ -887,15 +887,15 @@ String *Item_func_substr::val_str(String *str)
       (length == 0 || !args[2]->unsigned_flag))
     return &my_empty_string;
 
-  /* Assumes that the maximum length of a String is < INT_MAX32. */
+  /* Assumes that the maximum length of a String is < INT32_MAX. */
   /* Set here so that rest of code sees out-of-bound value as such. */
-  if ((length <= 0) || (length > INT_MAX32))
-    length= INT_MAX32;
+  if ((length <= 0) || (length > INT32_MAX))
+    length= INT32_MAX;
 
   /* if "unsigned_flag" is set, we have a *huge* positive number. */
-  /* Assumes that the maximum length of a String is < INT_MAX32. */
-  if ((!args[1]->unsigned_flag && (start < INT_MIN32 || start > INT_MAX32)) ||
-      (args[1]->unsigned_flag && ((uint64_t) start > INT_MAX32)))
+  /* Assumes that the maximum length of a String is < INT32_MAX. */
+  if ((!args[1]->unsigned_flag && (start < INT32_MIN || start > INT32_MAX)) ||
+      (args[1]->unsigned_flag && ((uint64_t) start > INT32_MAX)))
     return &my_empty_string;
 
   start= ((start < 0) ? res->numchars() + start : start - 1);
@@ -1868,10 +1868,10 @@ void Item_func_repeat::fix_length_and_dec()
     /* must be int64_t to avoid truncation */
     int64_t count= args[1]->val_int();
 
-    /* Assumes that the maximum length of a String is < INT_MAX32. */
+    /* Assumes that the maximum length of a String is < INT32_MAX. */
     /* Set here so that rest of code sees out-of-bound value as such. */
-    if (count > INT_MAX32)
-      count= INT_MAX32;
+    if (count > INT32_MAX)
+      count= INT32_MAX;
 
     uint64_t max_result_length= (uint64_t) args[0]->max_length * count;
     if (max_result_length >= MAX_BLOB_WIDTH)
@@ -1909,10 +1909,10 @@ String *Item_func_repeat::val_str(String *str)
   if (count <= 0 && (count == 0 || !args[1]->unsigned_flag))
     return &my_empty_string;
 
-  /* Assumes that the maximum length of a String is < INT_MAX32. */
+  /* Assumes that the maximum length of a String is < INT32_MAX. */
   /* Bounds check on count:  If this is triggered, we will error. */
-  if ((uint64_t) count > INT_MAX32)
-    count= INT_MAX32;
+  if ((uint64_t) count > INT32_MAX)
+    count= INT32_MAX;
   if (count == 1)			// To avoid reallocs
     return res;
   length=res->length();
@@ -1956,10 +1956,10 @@ void Item_func_rpad::fix_length_and_dec()
     {
       uint64_t temp= (uint64_t) args[1]->val_int();
 
-      /* Assumes that the maximum length of a String is < INT_MAX32. */
+      /* Assumes that the maximum length of a String is < INT32_MAX. */
       /* Set here so that rest of code sees out-of-bound value as such. */
-      if (temp > INT_MAX32)
-	temp = INT_MAX32;
+      if (temp > INT32_MAX)
+	temp = INT32_MAX;
 
       length= temp * collation.collation->mbmaxlen;
     }
@@ -1995,10 +1995,10 @@ String *Item_func_rpad::val_str(String *str)
       ((count < 0) && !args[1]->unsigned_flag))
     goto err;
   null_value=0;
-  /* Assumes that the maximum length of a String is < INT_MAX32. */
+  /* Assumes that the maximum length of a String is < INT32_MAX. */
   /* Set here so that rest of code sees out-of-bound value as such. */
-  if ((uint64_t) count > INT_MAX32)
-    count= INT_MAX32;
+  if ((uint64_t) count > INT32_MAX)
+    count= INT32_MAX;
   if (count <= (res_char_length= res->numchars()))
   {						// String to pad is big enough
     res->length(res->charpos((int) count));	// Shorten result if longer
@@ -2059,10 +2059,10 @@ void Item_func_lpad::fix_length_and_dec()
     {
       uint64_t temp= (uint64_t) args[1]->val_int();
 
-      /* Assumes that the maximum length of a String is < INT_MAX32. */
+      /* Assumes that the maximum length of a String is < INT32_MAX. */
       /* Set here so that rest of code sees out-of-bound value as such. */
-      if (temp > INT_MAX32)
-        temp= INT_MAX32;
+      if (temp > INT32_MAX)
+        temp= INT32_MAX;
 
       length= temp * collation.collation->mbmaxlen;
     }
@@ -2096,10 +2096,10 @@ String *Item_func_lpad::val_str(String *str)
       ((count < 0) && !args[1]->unsigned_flag))
     goto err;  
   null_value=0;
-  /* Assumes that the maximum length of a String is < INT_MAX32. */
+  /* Assumes that the maximum length of a String is < INT32_MAX. */
   /* Set here so that rest of code sees out-of-bound value as such. */
-  if ((uint64_t) count > INT_MAX32)
-    count= INT_MAX32;
+  if ((uint64_t) count > INT32_MAX)
+    count= INT32_MAX;
 
   res_char_length= res->numchars();
 
@@ -2366,8 +2366,8 @@ String *Item_func_hex::val_str(String *str)
         args[0]->result_type() == DECIMAL_RESULT)
     {
       double val= args[0]->val_real();
-      if ((val <= (double) LONGLONG_MIN) || 
-          (val >= (double) (uint64_t) ULONGLONG_MAX))
+      if ((val <= (double) INT64_MIN) || 
+          (val >= (double) (uint64_t) UINT64_MAX))
         dec=  ~(int64_t) 0;
       else
         dec= (uint64_t) (val + (val > 0 ? 0.5 : -0.5));

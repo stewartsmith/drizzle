@@ -726,7 +726,7 @@ void ha_heap::get_auto_increment(uint64_t offset __attribute__((__unused__)),
   ha_heap::info(HA_STATUS_AUTO);
   *first_value= stats.auto_increment_value;
   /* such table has only table-level locking so reserves up to +inf */
-  *nb_reserved_values= ULONGLONG_MAX;
+  *nb_reserved_values= UINT64_MAX;
 }
 
 

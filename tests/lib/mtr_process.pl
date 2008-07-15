@@ -734,10 +734,6 @@ sub mtr_mysqladmin_start($$$) {
   {
     mtr_add_arg($args, "--port=%s", $srv->{'port'});
   }
-  if ( $srv->{'port'} and ! -e $srv->{'path_sock'} )
-  {
-    mtr_add_arg($args, "--protocol=tcp"); # Needed if no --socket
-  }
   mtr_add_arg($args, "--connect_timeout=5");
 
   # Shutdown time must be high as slave may be in reconnect

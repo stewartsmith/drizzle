@@ -70,7 +70,7 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
     or HA_STATS_RECORDS_IS_EXACT
 
   RETURN
-    ULONGLONG_MAX	Error: Could not calculate number of rows
+    UINT64_MAX	Error: Could not calculate number of rows
     #			Multiplication of number of rows in all tables
 */
 
@@ -81,7 +81,7 @@ static uint64_t get_exact_record_count(TABLE_LIST *tables)
   {
     ha_rows tmp= tl->table->file->records();
     if ((tmp == HA_POS_ERROR))
-      return ULONGLONG_MAX;
+      return UINT64_MAX;
     count*= tmp;
   }
   return count;
@@ -115,7 +115,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
   int const_result= 1;
   bool recalc_const_item= 0;
   uint64_t count= 1;
-  bool is_exact_count= TRUE, maybe_exact_count= true;
+  bool is_exact_count= true, maybe_exact_count= true;
   table_map removed_tables= 0, outer_tables= 0, used_tables= 0;
   table_map where_tables= 0;
   Item *item;
@@ -203,7 +203,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
         {
           if (!is_exact_count)
           {
-            if ((count= get_exact_record_count(tables)) == ULONGLONG_MAX)
+            if ((count= get_exact_record_count(tables)) == UINT64_MAX)
             {
               /* Error from handler in counting rows. Don't optimize count() */
               const_result= 0;
@@ -356,7 +356,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
         }
         if (!count)
         {
-          /* If count == 0, then we know that is_exact_count == TRUE. */
+          /* If count == 0, then we know that is_exact_count == true. */
           ((Item_sum_min*) item_sum)->clear(); /* Set to NULL. */
         }
         else
@@ -443,7 +443,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
         }
         if (!count)
         {
-          /* If count != 1, then we know that is_exact_count == TRUE. */
+          /* If count != 1, then we know that is_exact_count == true. */
           ((Item_sum_max*) item_sum)->clear(); /* Set to NULL. */
         }
         else
