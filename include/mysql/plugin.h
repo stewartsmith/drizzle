@@ -65,7 +65,6 @@ typedef struct st_mysql_xid MYSQL_XID;
 #define MYSQL_UDF_PLUGIN             0  /* User-Defined Function */
 #define MYSQL_UDA_PLUGIN             1  /* User-Defined Aggregate function */
 #define MYSQL_STORAGE_ENGINE_PLUGIN  2  /* Storage Engine */
-#define MYSQL_FTPARSER_PLUGIN        3  /* Full-text Parser */
 #define MYSQL_DAEMON_PLUGIN          4  /* Daemon / Raw */
 #define MYSQL_INFORMATION_SCHEMA_PLUGIN  5  /* Information Schema */
 #define MYSQL_AUDIT_PLUGIN           6  /* Audit */
@@ -405,11 +404,6 @@ struct st_mysql_plugin
   struct st_mysql_sys_var **system_vars;
   void * __reserved1;   /* reserved for dependency checking             */
 };
-
-/*************************************************************************
-  API for Full-text parser plugin. (MYSQL_FTPARSER_PLUGIN)
-*/
-#include "plugin_ftparser.h"
 
 /*************************************************************************
   API for Daemon plugin. (MYSQL_DAEMON_PLUGIN)

@@ -36,7 +36,6 @@ const LEX_STRING plugin_type_names[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   { C_STRING_WITH_LEN("UDF") },
   { C_STRING_WITH_LEN("UDA") },
   { C_STRING_WITH_LEN("STORAGE ENGINE") },
-  { C_STRING_WITH_LEN("FTPARSER") },
   { C_STRING_WITH_LEN("DAEMON") },
   { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
   { C_STRING_WITH_LEN("AUDIT") },
@@ -60,7 +59,6 @@ plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   initialize_udf,  /* UDF */
   0,  /* UDA */
   ha_initialize_handlerton,  /* Storage Engine */
-  0,  /* Full Text Parser */
   0,  /* Daemon */
   initialize_schema_table,  /* Information Schema */
   0,  /* Audit */
@@ -73,7 +71,6 @@ plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   finalize_udf,  /* UDF */
   0,  /* UDA */
   ha_finalize_handlerton,  /* Storage Engine */
-  0,  /* Full Text Parser */
   0,  /* Daemon */
   finalize_schema_table,  /* Information Schema */
   0,  /* Audit */
@@ -96,7 +93,6 @@ static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   MYSQL_UDF_INTERFACE_VERSION,
   MYSQL_UDA_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
   MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
   MYSQL_AUDIT_INTERFACE_VERSION,
@@ -108,7 +104,6 @@ static int cur_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   MYSQL_UDF_INTERFACE_VERSION,
   MYSQL_UDA_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
   MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
   MYSQL_AUDIT_INTERFACE_VERSION,
