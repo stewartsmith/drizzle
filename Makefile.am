@@ -29,7 +29,7 @@ SUBDIRS =		. include \
 
 DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
 
-DISTCLEANFILES = ac_available_languages_fragment INSTALL
+DISTCLEANFILES = ac_available_languages_fragment
 
 # Create empty datadir 
 install-data-local:
@@ -37,6 +37,9 @@ install-data-local:
 	@if test `id -u` = 0 ; then \
 		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
 	fi
+
+distclean-local:
+	@RM@ -r -f autom4te.cache
 
 .PHONY: test    test-force    test-full    test-force-full    test-force-mem \
   test-pl test-force-pl test-full-pl test-force-full-pl test-force-pl-mem \
