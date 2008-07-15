@@ -332,7 +332,7 @@ PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
   dnl Only check the header here, because autoconf can't handle
   dnl checking for C++ methods without C linkages
   AC_CHECK_HEADERS(pcrecpp.h)
-  if test "x$ac_cv_header_prcecpp_h" = "xno" 
+  if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
   then
     found_pcre="no"
   else

@@ -276,7 +276,7 @@ void _downheap(register QUEUE *queue, uint idx)
 {
   uchar *element;
   uint elements,half_queue,offset_to_key, next_index;
-  bool first= TRUE;
+  bool first= true;
   uint start_idx= idx;
 
   offset_to_key=queue->offset_to_key;
@@ -302,7 +302,7 @@ void _downheap(register QUEUE *queue, uint idx)
     }
     queue->root[idx]=queue->root[next_index];
     idx=next_index;
-    first= FALSE;
+    first= false;
   }
 
   next_index= idx >> 1;
@@ -392,8 +392,8 @@ static bool is_divisible_by(uint num, uint divisor)
 {
   uint quotient= num / divisor;
   if (quotient * divisor == num)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 void calculate_next()
@@ -501,10 +501,10 @@ bool check_num(uint num_part)
   uint num= num_part & 0x3FFFFF;
   if (part == expected_part)
     if (num == expected_num)
-      return FALSE;
+      return false;
   printf("Expect part %u Expect num 0x%x got part %u num 0x%x max_ind %u fix_used %u \n",
           expected_part, expected_num, part, num, max_ind, fix_used);
-  return TRUE;
+  return true;
 }
 
 
@@ -554,7 +554,7 @@ bool perform_ins_del(QUEUE *queue, bool max_ind)
     uint num_part= *(uint*)queue_top(queue);
     uint part= num_part >> 22;
     if (check_num(num_part))
-      return TRUE;
+      return true;
     if (j++ >= no_loops)
     {
       calculate_end_next(part);
@@ -571,7 +571,7 @@ bool perform_ins_del(QUEUE *queue, bool max_ind)
       queue_replaced(queue);
     }
   } while (++i < no_loops);
-  return FALSE;
+  return false;
 }
 
 bool do_test(uint no_parts, uint l_max_ind, bool l_fix_used)
@@ -589,9 +589,9 @@ bool do_test(uint no_parts, uint l_max_ind, bool l_fix_used)
   if (result)
   {
     printf("Error\n");
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static void start_measurement()
@@ -614,8 +614,8 @@ static void benchmark_test()
   QUEUE queue_real;
   QUEUE *queue= &queue_real;
   uint i, add;
-  fix_used= TRUE;
-  max_ind= FALSE;
+  fix_used= true;
+  max_ind= false;
   tot_no_parts= 1024;
   init_queue(queue, tot_no_parts, 0, max_ind, test_compare, NULL);
   /*
@@ -634,7 +634,7 @@ static void benchmark_test()
     }
     stop_measurement();
 
-    fix_used= FALSE;
+    fix_used= false;
     printf("Start benchmark queue_insert\n");
     start_measurement();
     for (i= 0; i < 128; i++)

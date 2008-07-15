@@ -79,12 +79,12 @@ int main(int argc, char *argv[])
   if (reader_handle.version > 2)
   {
     printf("\tMinor version %u\n", reader_handle.minor_version);
-    printf("\tStart position %lu\n", (uint64_t)reader_handle.start);
+    printf("\tStart position %"PRIu64"\n", (uint64_t)reader_handle.start);
     printf("\tBlock size %u\n", reader_handle.block_size);
-    printf("\tRows %lu\n", reader_handle.rows);
-    printf("\tAutoincrement %lu\n", reader_handle.auto_increment);
-    printf("\tCheck Point %lu\n", reader_handle.check_point);
-    printf("\tForced Flushes %lu\n", reader_handle.forced_flushes);
+    printf("\tRows %"PRIu64"\n", reader_handle.rows);
+    printf("\tAutoincrement %"PRIu64"\n", reader_handle.auto_increment);
+    printf("\tCheck Point %"PRIu64"\n", reader_handle.check_point);
+    printf("\tForced Flushes %"PRIu64"\n", reader_handle.forced_flushes);
     printf("\tLongest Row %u\n", reader_handle.longest_row);
     printf("\tShortest Row %u\n", reader_handle.shortest_row);
     printf("\tState %s\n", ( reader_handle.dirty ? "dirty" : "clean"));
@@ -128,12 +128,12 @@ int main(int argc, char *argv[])
 
       if (read > reader_handle.longest_row)
       {
-        printf("Table is damaged, row %lu is invalid\n", row_count);
+        printf("Table is damaged, row %"PRIu64" is invalid\n", row_count);
         goto end;
       }
     }
 
-    printf("Found %lu rows\n", row_count);
+    printf("Found %"PRIu64" rows\n", row_count);
   }
 
   if (opt_backup)
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
     buffer= (char *)malloc(reader_handle.longest_row);
     if (buffer == NULL)
     {
-      printf("Could not allocate memory for row %lu\n", row_count);
+      printf("Could not allocate memory for row %"PRIu64"\n", row_count);
       goto end;
     }
 

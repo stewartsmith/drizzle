@@ -1325,7 +1325,7 @@ int64_t Field::convert_decimal2int64_t(const my_decimal *val,
                                          ~E_DEC_OVERFLOW & ~E_DEC_TRUNCATED,
                                          val, false, &i)))
   {
-    i= (val->sign() ? LONGLONG_MIN : LONGLONG_MAX);
+    i= (val->sign() ? INT64_MIN : INT64_MAX);
     *err= 1;
   }
   return i;
@@ -2166,7 +2166,7 @@ int Field_short::store(const char *from,uint len,CHARSET_INFO *cs)
   int error;
   int64_t rnd;
   
-  error= get_int(cs, from, len, &rnd, UINT_MAX16, INT_MIN16, INT_MAX16);
+  error= get_int(cs, from, len, &rnd, UINT16_MAX, INT16_MIN, INT16_MAX);
   store_tmp= unsigned_flag ? (int) (uint64_t) rnd : (int) rnd;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -2193,9 +2193,9 @@ int Field_short::store(double nr)
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
-    else if (nr > (double) UINT_MAX16)
+    else if (nr > (double) UINT16_MAX)
     {
-      res=(int16) UINT_MAX16;
+      res=(int16) UINT16_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -2204,15 +2204,15 @@ int Field_short::store(double nr)
   }
   else
   {
-    if (nr < (double) INT_MIN16)
+    if (nr < (double) INT16_MIN)
     {
-      res=INT_MIN16;
+      res=INT16_MIN;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
-    else if (nr > (double) INT_MAX16)
+    else if (nr > (double) INT16_MAX)
     {
-      res=INT_MAX16;
+      res=INT16_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -2244,9 +2244,9 @@ int Field_short::store(int64_t nr, bool unsigned_val)
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
-    else if ((uint64_t) nr > (uint64_t) UINT_MAX16)
+    else if ((uint64_t) nr > (uint64_t) UINT16_MAX)
     {
-      res=(int16) UINT_MAX16;
+      res=(int16) UINT16_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -2256,17 +2256,17 @@ int Field_short::store(int64_t nr, bool unsigned_val)
   else
   {
     if (nr < 0 && unsigned_val)
-      nr= UINT_MAX16+1;                         // Generate overflow
+      nr= UINT16_MAX+1;                         // Generate overflow
 
-    if (nr < INT_MIN16)
+    if (nr < INT16_MIN)
     {
-      res=INT_MIN16;
+      res=INT16_MIN;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
-    else if (nr > (int64_t) INT_MAX16)
+    else if (nr > (int64_t) INT16_MAX)
     {
-      res=INT_MAX16;
+      res=INT16_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -2407,7 +2407,7 @@ int Field_long::store(const char *from,uint len,CHARSET_INFO *cs)
   int error;
   int64_t rnd;
   
-  error= get_int(cs, from, len, &rnd, UINT_MAX32, INT_MIN32, INT_MAX32);
+  error= get_int(cs, from, len, &rnd, UINT32_MAX, INT32_MIN, INT32_MAX);
   store_tmp= unsigned_flag ? (long) (uint64_t) rnd : (long) rnd;
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -2433,9 +2433,9 @@ int Field_long::store(double nr)
       res=0;
       error= 1;
     }
-    else if (nr > (double) UINT_MAX32)
+    else if (nr > (double) UINT32_MAX)
     {
-      res= INT_MAX32;
+      res= INT32_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -2444,14 +2444,14 @@ int Field_long::store(double nr)
   }
   else
   {
-    if (nr < (double) INT_MIN32)
+    if (nr < (double) INT32_MIN)
     {
-      res=(int32) INT_MIN32;
+      res=(int32) INT32_MIN;
       error= 1;
     }
-    else if (nr > (double) INT_MAX32)
+    else if (nr > (double) INT32_MAX)
     {
-      res=(int32) INT_MAX32;
+      res=(int32) INT32_MAX;
       error= 1;
     }
     else
@@ -2495,15 +2495,15 @@ int Field_long::store(int64_t nr, bool unsigned_val)
   else
   {
     if (nr < 0 && unsigned_val)
-      nr= ((int64_t) INT_MAX32) + 1;           // Generate overflow
-    if (nr < (int64_t) INT_MIN32) 
+      nr= ((int64_t) INT32_MAX) + 1;           // Generate overflow
+    if (nr < (int64_t) INT32_MIN) 
     {
-      res=(int32) INT_MIN32;
+      res=(int32) INT32_MIN;
       error= 1;
     }
-    else if (nr > (int64_t) INT_MAX32)
+    else if (nr > (int64_t) INT32_MAX)
     {
-      res=(int32) INT_MAX32;
+      res=(int32) INT32_MAX;
       error= 1;
     }
     else
@@ -2683,7 +2683,7 @@ int Field_int64_t::store(double nr)
       res=0;
       error= 1;
     }
-    else if (nr >= (double) ULONGLONG_MAX)
+    else if (nr >= (double) UINT64_MAX)
     {
       res= ~(int64_t) 0;
       error= 1;
@@ -2693,15 +2693,15 @@ int Field_int64_t::store(double nr)
   }
   else
   {
-    if (nr <= (double) LONGLONG_MIN)
+    if (nr <= (double) INT64_MIN)
     {
-      res= LONGLONG_MIN;
-      error= (nr < (double) LONGLONG_MIN);
+      res= INT64_MIN;
+      error= (nr < (double) INT64_MIN);
     }
-    else if (nr >= (double) (uint64_t) LONGLONG_MAX)
+    else if (nr >= (double) (uint64_t) INT64_MAX)
     {
-      res= LONGLONG_MAX;
-      error= (nr > (double) LONGLONG_MAX);
+      res= INT64_MAX;
+      error= (nr > (double) INT64_MAX);
     }
     else
       res=(int64_t) nr;
@@ -2733,7 +2733,7 @@ int Field_int64_t::store(int64_t nr, bool unsigned_val)
     */
     if (unsigned_flag != unsigned_val)
     {
-      nr= unsigned_flag ? (uint64_t) 0 : (uint64_t) LONGLONG_MAX;
+      nr= unsigned_flag ? (uint64_t) 0 : (uint64_t) INT64_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
@@ -3268,14 +3268,14 @@ int64_t Field_double::val_int(void)
 #endif
     doubleget(j,ptr);
   /* Check whether we fit into int64_t range */
-  if (j <= (double) LONGLONG_MIN)
+  if (j <= (double) INT64_MIN)
   {
-    res= (int64_t) LONGLONG_MIN;
+    res= (int64_t) INT64_MIN;
     goto warn;
   }
-  if (j >= (double) (uint64_t) LONGLONG_MAX)
+  if (j >= (double) (uint64_t) INT64_MAX)
   {
-    res= (int64_t) LONGLONG_MAX;
+    res= (int64_t) INT64_MAX;
     goto warn;
   }
   return (int64_t) rint(j);
@@ -5357,7 +5357,7 @@ Field *Field_string::new_field(MEM_ROOT *root, struct st_table *new_table,
   is 2.
 ****************************************************************************/
 
-const uint Field_varstring::MAX_SIZE= UINT_MAX16;
+const uint Field_varstring::MAX_SIZE= UINT16_MAX;
 
 /**
    Save the field metadata for varstring fields.

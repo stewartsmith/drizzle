@@ -30,14 +30,14 @@
 
 SQL_CRYPT::SQL_CRYPT(const char *password)
 {
-  ulong rand_nr[2];
-  hash_password(rand_nr,password, strlen(password));
+  uint32_t rand_nr[2];
+  hash_password(rand_nr, password, strlen(password));
   crypt_init(rand_nr);
 }
 
-void SQL_CRYPT::crypt_init(ulong *rand_nr)
+void SQL_CRYPT::crypt_init(uint32_t *rand_nr)
 {
-  uint i;
+  uint32_t i;
   randominit(&rand,rand_nr[0],rand_nr[1]);
 
   for (i=0 ; i<=255; i++)
@@ -57,25 +57,25 @@ void SQL_CRYPT::crypt_init(ulong *rand_nr)
 }
 
 
-void SQL_CRYPT::encode(char *str,uint length)
+void SQL_CRYPT::encode(char *str, uint32_t length)
 {
-  for (uint i=0; i < length; i++)
+  for (uint32_t i=0; i < length; i++)
   {
-    shift^=(uint) (my_rnd(&rand)*255.0);
-    uint idx= (uint) (uchar) str[0];
+    shift^=(uint32_t) (my_rnd(&rand)*255.0);
+    uint32_t idx= (uint) (uchar) str[0];
     *str++ = (char) ((uchar) encode_buff[idx] ^ shift);
     shift^= idx;
   }
 }
 
 
-void SQL_CRYPT::decode(char *str,uint length)
+void SQL_CRYPT::decode(char *str, uint32_t length)
 {
-  for (uint i=0; i < length; i++)
+  for (uint32_t i=0; i < length; i++)
   {
-    shift^=(uint) (my_rnd(&rand)*255.0);
-    uint idx= (uint) ((uchar) str[0] ^ shift);
+    shift^=(uint32_t) (my_rnd(&rand)*255.0);
+    uint32_t idx= (uint32_t) ((uchar) str[0] ^ shift);
     *str = decode_buff[idx];
-    shift^= (uint) (uchar) *str++;
+    shift^= (uint32_t) (uchar) *str++;
   }
 }

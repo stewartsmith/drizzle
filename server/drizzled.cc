@@ -299,7 +299,7 @@ TYPELIB binlog_format_typelib=
 ulong opt_binlog_format_id= (ulong) BINLOG_FORMAT_UNSPEC;
 const char *opt_binlog_format= binlog_format_names[opt_binlog_format_id];
 #ifdef HAVE_INITGROUPS
-static bool calling_initgroups= FALSE; /**< Used in SIGSEGV handler. */
+static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 #endif
 uint mysqld_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint mysqld_port_timeout;
@@ -708,7 +708,7 @@ static void *kill_server(void *sig_ptr)
   // if there is a signal during the kill in progress, ignore the other
   if (kill_in_progress)				// Safety
     RETURN_FROM_KILL_SERVER;
-  kill_in_progress=TRUE;
+  kill_in_progress=true;
   abort_loop=1;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
     my_sigset(sig, SIG_IGN);                    /* purify inspected */
@@ -1038,9 +1038,9 @@ static void set_user(const char *user, struct passwd *user_info_arg)
     calling_initgroups as a flag to the SIGSEGV handler that is then used to
     output a specific message to help the user resolve this problem.
   */
-  calling_initgroups= TRUE;
+  calling_initgroups= true;
   initgroups((char*) user, user_info_arg->pw_gid);
-  calling_initgroups= FALSE;
+  calling_initgroups= false;
 #endif
   if (setgid(user_info_arg->pw_gid) == -1)
   {
@@ -1841,9 +1841,9 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
         Suppress infinite recursion if there a memory allocation error
         inside push_warning.
       */
-      thd->no_warnings_for_error= TRUE;
+      thd->no_warnings_for_error= true;
       push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, error, str);
-      thd->no_warnings_for_error= FALSE;
+      thd->no_warnings_for_error= false;
     }
   }
   if (!thd || MyFlags & ME_NOREFRESH)
@@ -2630,15 +2630,9 @@ int main(int argc, char **argv)
     unireg_abort(1);				// Will do exit
 
   init_signals();
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
-  {
-    struct sched_param tmp_sched_param;
 
-    memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-    tmp_sched_param.sched_priority= my_thread_stack_size*2;
-    (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
-  }
   pthread_attr_setstacksize(&connection_attrib,my_thread_stack_size);
+
 #ifdef HAVE_PTHREAD_ATTR_GETSTACKSIZE
   {
     /* Retrieve used stack size;  Needed for checking stack overflows */
@@ -3857,7 +3851,7 @@ The minimum value for this variable is 4096.",
    "Each thread that does a sequential scan allocates a buffer of this size for each table it scans. If you do many sequential scans, you may want to increase this value.",
    (char**) &global_system_variables.read_buff_size,
    (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT_MAX32, MALLOC_OVERHEAD, IO_SIZE,
+   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
    0},
   {"read_only", OPT_READONLY,
    "Make all non-temporary tables read-only, with the exception for replication (slave) threads and users with the SUPER privilege",
@@ -3869,12 +3863,12 @@ The minimum value for this variable is 4096.",
    (char**) &global_system_variables.read_rnd_buff_size,
    (char**) &max_system_variables.read_rnd_buff_size, 0,
    GET_ULONG, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
-   INT_MAX32, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
+   INT32_MAX, MALLOC_OVERHEAD, 1 /* Small lower limit to be able to test MRR */, 0},
   {"record_buffer", OPT_RECORD_BUFFER,
    "Alias for read_buffer_size",
    (char**) &global_system_variables.read_buff_size,
    (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT_MAX32, MALLOC_OVERHEAD, IO_SIZE, 0},
+   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE, 0},
   {"relay_log_purge", OPT_RELAY_LOG_PURGE,
    "0 = do not purge relay logs. 1 = purge them as soon as they are no more needed.",
    (char**) &relay_log_purge,
@@ -3976,7 +3970,7 @@ The minimum value for this variable is 4096.",
    "The number of seconds the server waits for activity on a connection before closing it.",
    (char**) &global_system_variables.net_wait_timeout,
    (char**) &max_system_variables.net_wait_timeout, 0, GET_ULONG,
-   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, IF_WIN(INT_MAX32/1000, LONG_TIMEOUT),
+   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, IF_WIN(INT32_MAX/1000, LONG_TIMEOUT),
    0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -4811,7 +4805,7 @@ static void get_options(int *argc,char **argv)
   my_getopt_error_reporter= option_error_reporter;
 
   /* Skip unknown options so that they may be processed later by plugins */
-  my_getopt_skip_unknown= TRUE;
+  my_getopt_skip_unknown= true;
 
   if ((ho_error= handle_options(argc, &argv, my_long_options,
                                 mysqld_get_one_option)))

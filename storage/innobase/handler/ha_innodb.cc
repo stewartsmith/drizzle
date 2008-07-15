@@ -1465,7 +1465,7 @@ innobase_init(
 
 	/* Check that values don't overflow on 32-bit systems. */
 	if (sizeof(ulint) == 4) {
-		if (innobase_buffer_pool_size > UINT_MAX32) {
+		if (innobase_buffer_pool_size > UINT32_MAX) {
 			sql_print_error(
 				"innobase_buffer_pool_size can't be over 4GB"
 				" on 32-bit systems");
@@ -1473,7 +1473,7 @@ innobase_init(
 			goto error;
 		}
 
-		if (innobase_log_file_size > UINT_MAX32) {
+		if (innobase_log_file_size > UINT32_MAX) {
 			sql_print_error(
 				"innobase_log_file_size can't be over 4GB"
 				" on 32-bit systems");
@@ -5963,7 +5963,7 @@ ha_innobase::update_table_comment(
 	mutex_enter_noninline(&srv_dict_tmpfile_mutex);
 	rewind(srv_dict_tmpfile);
 
-	fprintf(srv_dict_tmpfile, "InnoDB free: %lu kB",
+	fprintf(srv_dict_tmpfile, "InnoDB free: %"PRIu64" kB",
 		fsp_get_available_space_in_free_extents(
 			prebuilt->table->space));
 
@@ -7351,7 +7351,7 @@ ha_innobase::innobase_get_auto_increment(
 This function initializes the auto-inc counter if it has not been
 initialized yet. This function does not change the value of the auto-inc
 counter if it already has been initialized. Returns the value of the
-auto-inc counter in *first_value, and ULONGLONG_MAX in *nb_reserved_values (as
+auto-inc counter in *first_value, and UINT64_MAX in *nb_reserved_values (as
 we have a table-level lock). offset, increment, nb_desired_values are ignored.
 *first_value is set to -1 if error (deadlock or lock wait timeout)            */
 
@@ -8031,7 +8031,7 @@ static MYSQL_SYSVAR_ULONG(autoextend_increment, srv_auto_extend_increment,
 static MYSQL_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
-  NULL, NULL, 8*1024*1024L, 1024*1024L, LONGLONG_MAX, 1024*1024L);
+  NULL, NULL, 8*1024*1024L, 1024*1024L, INT64_MAX, 1024*1024L);
 
 static MYSQL_SYSVAR_ULONG(commit_concurrency, srv_commit_concurrency,
   PLUGIN_VAR_RQCMDARG,
@@ -8066,7 +8066,7 @@ static MYSQL_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
 static MYSQL_SYSVAR_LONGLONG(log_file_size, innobase_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Size of each log file in a log group.",
-  NULL, NULL, 5*1024*1024L, 1*1024*1024L, LONGLONG_MAX, 1024*1024L);
+  NULL, NULL, 5*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
 
 static MYSQL_SYSVAR_LONG(log_files_in_group, innobase_log_files_in_group,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,

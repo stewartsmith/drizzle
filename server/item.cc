@@ -1765,7 +1765,7 @@ int64_t Item_field::val_int_endpoint(bool left_endp __attribute__((__unused__)),
                                       bool *incl_endp __attribute__((__unused__)))
 {
   int64_t res= val_int();
-  return null_value? LONGLONG_MIN : res;
+  return null_value? INT64_MIN : res;
 }
 
 /**
@@ -4594,13 +4594,13 @@ int Item_hex_string::save_in_field(Field *field,
   uint32 length= str_value.length();
   if (length > 8)
   {
-    nr= field->flags & UNSIGNED_FLAG ? ULONGLONG_MAX : LONGLONG_MAX;
+    nr= field->flags & UNSIGNED_FLAG ? UINT64_MAX : INT64_MAX;
     goto warn;
   }
   nr= (uint64_t) val_int();
-  if ((length == 8) && !(field->flags & UNSIGNED_FLAG) && (nr > LONGLONG_MAX))
+  if ((length == 8) && !(field->flags & UNSIGNED_FLAG) && (nr > INT64_MAX))
   {
-    nr= LONGLONG_MAX;
+    nr= INT64_MAX;
     goto warn;
   }
   return field->store((int64_t) nr, true);  // Assume hex numbers are unsigned

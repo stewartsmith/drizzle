@@ -207,23 +207,23 @@ typedef struct st_mysql
   uint64_t affected_rows;
   uint64_t insert_id;		/* id if insert on table with NEXTNR */
   uint64_t extra_info;		/* Not used */
-  unsigned long thread_id;		/* Id for connection in server */
-  unsigned long packet_length;
-  unsigned int	port;
-  unsigned long client_flag,server_capabilities;
-  unsigned int	protocol_version;
-  unsigned int	field_count;
-  unsigned int 	server_status;
-  unsigned int  server_language;
-  unsigned int	warning_count;
+  uint32_t thread_id;		/* Id for connection in server */
+  uint32_t packet_length;
+  uint32_t	port;
+  uint32_t client_flag,server_capabilities;
+  uint32_t	protocol_version;
+  uint32_t	field_count;
+  uint32_t 	server_status;
+  uint32_t  server_language;
+  uint32_t	warning_count;
   struct st_mysql_options options;
   enum mysql_status status;
-  my_bool	free_me;		/* If free in mysql_close */
-  my_bool	reconnect;		/* set to 1 if automatic reconnect */
+  bool	free_me;		/* If free in mysql_close */
+  bool	reconnect;		/* set to 1 if automatic reconnect */
 
   /* session-wide random string */
   char	        scramble[SCRAMBLE_LENGTH+1];
-  my_bool unused1;
+  bool unused1;
   void *unused2, *unused3, *unused4, *unused5;
 
   LIST  *stmts;                     /* list of all statements */
@@ -233,7 +233,7 @@ typedef struct st_mysql
     Points to boolean flag in MYSQL_RES  or MYSQL_STMT. We set this flag 
     from mysql_stmt_close if close had to cancel result set of this object.
   */
-  my_bool *unbuffered_fetch_owner;
+  bool *unbuffered_fetch_owner;
   /* needed for embedded server - no net buffer to store the 'info' */
   char *info_buffer;
   void *extension;
@@ -245,16 +245,16 @@ typedef struct st_mysql_res {
   MYSQL_FIELD	*fields;
   MYSQL_DATA	*data;
   MYSQL_ROWS	*data_cursor;
-  unsigned long *lengths;		/* column lengths of current row */
+  uint32_t *lengths;		/* column lengths of current row */
   MYSQL		*handle;		/* for unbuffered reads */
   const struct st_mysql_methods *methods;
   MYSQL_ROW	row;			/* If unbuffered read */
   MYSQL_ROW	current_row;		/* buffer to current row */
   MEM_ROOT	field_alloc;
-  unsigned int	field_count, current_field;
-  my_bool	eof;			/* Used by mysql_fetch_row */
+  uint32_t	field_count, current_field;
+  bool	eof;			/* Used by mysql_fetch_row */
   /* mysql_stmt_close() had to cancel this result */
-  my_bool       unbuffered_fetch_cancelled;  
+  bool       unbuffered_fetch_cancelled;  
   void *extension;
 } MYSQL_RES;
 
@@ -266,8 +266,8 @@ typedef struct st_mysql_res {
 
 typedef struct st_mysql_parameters
 {
-  unsigned long *p_max_allowed_packet;
-  unsigned long *p_net_buffer_length;
+  uint32_t *p_max_allowed_packet;
+  uint32_t *p_net_buffer_length;
   void *extension;
 } MYSQL_PARAMETERS;
 
@@ -321,38 +321,32 @@ MYSQL_FIELD * STDCALL mysql_fetch_fields(MYSQL_RES *res);
 MYSQL_ROW_OFFSET STDCALL mysql_row_tell(MYSQL_RES *res);
 MYSQL_FIELD_OFFSET STDCALL mysql_field_tell(MYSQL_RES *res);
 
-unsigned int STDCALL mysql_field_count(MYSQL *mysql);
+uint32_t STDCALL mysql_field_count(MYSQL *mysql);
 uint64_t STDCALL mysql_affected_rows(MYSQL *mysql);
 uint64_t STDCALL mysql_insert_id(MYSQL *mysql);
-unsigned int STDCALL mysql_errno(MYSQL *mysql);
+uint32_t STDCALL mysql_errno(MYSQL *mysql);
 const char * STDCALL mysql_error(MYSQL *mysql);
 const char *STDCALL mysql_sqlstate(MYSQL *mysql);
-unsigned int STDCALL mysql_warning_count(MYSQL *mysql);
+uint32_t STDCALL mysql_warning_count(MYSQL *mysql);
 const char * STDCALL mysql_info(MYSQL *mysql);
-unsigned long STDCALL mysql_thread_id(MYSQL *mysql);
+uint32_t STDCALL mysql_thread_id(MYSQL *mysql);
 const char * STDCALL mysql_character_set_name(MYSQL *mysql);
-int          STDCALL mysql_set_character_set(MYSQL *mysql, const char *csname);
+int32_t          STDCALL mysql_set_character_set(MYSQL *mysql, const char *csname);
 
 MYSQL *		STDCALL mysql_init(MYSQL *mysql);
-my_bool		STDCALL mysql_ssl_set(MYSQL *mysql, const char *key,
-				      const char *cert, const char *ca,
-				      const char *capath, const char *cipher);
-const char *    STDCALL mysql_get_ssl_cipher(MYSQL *mysql);
 my_bool		STDCALL mysql_change_user(MYSQL *mysql, const char *user, 
 					  const char *passwd, const char *db);
 MYSQL *		STDCALL mysql_real_connect(MYSQL *mysql, const char *host,
 					   const char *user,
 					   const char *passwd,
 					   const char *db,
-					   unsigned int port,
+					   uint32_t port,
 					   const char *unix_socket,
-					   unsigned long clientflag);
-int		STDCALL mysql_select_db(MYSQL *mysql, const char *db);
-int		STDCALL mysql_query(MYSQL *mysql, const char *q);
-int		STDCALL mysql_send_query(MYSQL *mysql, const char *q,
-					 unsigned long length);
-int		STDCALL mysql_real_query(MYSQL *mysql, const char *q,
-					unsigned long length);
+					   uint32_t clientflag);
+int32_t		STDCALL mysql_select_db(MYSQL *mysql, const char *db);
+int32_t		STDCALL mysql_query(MYSQL *mysql, const char *q);
+int32_t		STDCALL mysql_send_query(MYSQL *mysql, const char *q, uint32_t length);
+int32_t		STDCALL mysql_real_query(MYSQL *mysql, const char *q, uint32_t length);
 MYSQL_RES *     STDCALL mysql_store_result(MYSQL *mysql);
 MYSQL_RES *     STDCALL mysql_use_result(MYSQL *mysql);
 
@@ -377,51 +371,37 @@ mysql_set_local_infile_handler(MYSQL *mysql,
 void
 mysql_set_local_infile_default(MYSQL *mysql);
 
-int		STDCALL mysql_shutdown(MYSQL *mysql,
-                                       enum mysql_enum_shutdown_level
-                                       shutdown_level);
-int		STDCALL mysql_dump_debug_info(MYSQL *mysql);
-int		STDCALL mysql_refresh(MYSQL *mysql,
-				     unsigned int refresh_options);
-int		STDCALL mysql_kill(MYSQL *mysql,unsigned long pid);
-int		STDCALL mysql_set_server_option(MYSQL *mysql,
-						enum enum_mysql_set_option
-						option);
-int		STDCALL mysql_ping(MYSQL *mysql);
+int32_t		STDCALL mysql_shutdown(MYSQL *mysql, enum mysql_enum_shutdown_level shutdown_level);
+int32_t		STDCALL mysql_dump_debug_info(MYSQL *mysql);
+int32_t		STDCALL mysql_refresh(MYSQL *mysql, uint32_t refresh_options);
+int32_t		STDCALL mysql_kill(MYSQL *mysql, uint32_t pid);
+int32_t		STDCALL mysql_set_server_option(MYSQL *mysql, enum enum_mysql_set_option option);
+int32_t		STDCALL mysql_ping(MYSQL *mysql);
 const char *	STDCALL mysql_stat(MYSQL *mysql);
 const char *	STDCALL mysql_get_server_info(MYSQL *mysql);
 const char *	STDCALL mysql_get_client_info(void);
-unsigned long	STDCALL mysql_get_client_version(void);
+uint32_t	STDCALL mysql_get_client_version(void);
 const char *	STDCALL mysql_get_host_info(MYSQL *mysql);
-unsigned long	STDCALL mysql_get_server_version(MYSQL *mysql);
-unsigned int	STDCALL mysql_get_proto_info(MYSQL *mysql);
+uint32_t	STDCALL mysql_get_server_version(MYSQL *mysql);
+uint32_t	STDCALL mysql_get_proto_info(MYSQL *mysql);
 MYSQL_RES *	STDCALL mysql_list_dbs(MYSQL *mysql,const char *wild);
 MYSQL_RES *	STDCALL mysql_list_tables(MYSQL *mysql,const char *wild);
 MYSQL_RES *	STDCALL mysql_list_processes(MYSQL *mysql);
-int		STDCALL mysql_options(MYSQL *mysql,enum mysql_option option,
-				      const void *arg);
+int32_t		STDCALL mysql_options(MYSQL *mysql,enum mysql_option option, const void *arg);
 void		STDCALL mysql_free_result(MYSQL_RES *result);
-void		STDCALL mysql_data_seek(MYSQL_RES *result,
-					uint64_t offset);
-MYSQL_ROW_OFFSET STDCALL mysql_row_seek(MYSQL_RES *result,
-						MYSQL_ROW_OFFSET offset);
-MYSQL_FIELD_OFFSET STDCALL mysql_field_seek(MYSQL_RES *result,
-					   MYSQL_FIELD_OFFSET offset);
+void		STDCALL mysql_data_seek(MYSQL_RES *result, uint64_t offset);
+MYSQL_ROW_OFFSET STDCALL mysql_row_seek(MYSQL_RES *result, MYSQL_ROW_OFFSET offset);
+MYSQL_FIELD_OFFSET STDCALL mysql_field_seek(MYSQL_RES *result, MYSQL_FIELD_OFFSET offset);
 MYSQL_ROW	STDCALL mysql_fetch_row(MYSQL_RES *result);
-unsigned long * STDCALL mysql_fetch_lengths(MYSQL_RES *result);
+uint32_t * STDCALL mysql_fetch_lengths(MYSQL_RES *result);
 MYSQL_FIELD *	STDCALL mysql_fetch_field(MYSQL_RES *result);
-MYSQL_RES *     STDCALL mysql_list_fields(MYSQL *mysql, const char *table,
-					  const char *wild);
-unsigned long	STDCALL mysql_escape_string(char *to,const char *from,
-					    unsigned long from_length);
-unsigned long	STDCALL mysql_hex_string(char *to,const char *from,
-                                         unsigned long from_length);
-unsigned long STDCALL mysql_real_escape_string(MYSQL *mysql,
-					       char *to,const char *from,
-					       unsigned long length);
+MYSQL_RES *     STDCALL mysql_list_fields(MYSQL *mysql, const char *table, const char *wild);
+uint32_t	STDCALL mysql_escape_string(char *to,const char *from, uint32_t from_length);
+uint32_t	STDCALL mysql_hex_string(char *to,const char *from, uint32_t from_length);
+uint32_t        STDCALL mysql_real_escape_string(MYSQL *mysql, char *to, const char *from, uint32_t length);
 void		STDCALL mysql_debug(const char *debug);
 void 		STDCALL myodbc_remove_escape(MYSQL *mysql,char *name);
-unsigned int	STDCALL mysql_thread_safe(void);
+uint32_t	STDCALL mysql_thread_safe(void);
 my_bool		STDCALL mysql_embedded(void);
 my_bool         STDCALL mysql_read_query_result(MYSQL *mysql);
 
@@ -429,25 +409,23 @@ my_bool         STDCALL mysql_read_query_result(MYSQL *mysql);
 
 typedef struct st_mysql_methods
 {
-  my_bool (*read_query_result)(MYSQL *mysql);
-  my_bool (*advanced_command)(MYSQL *mysql,
-			      enum enum_server_command command,
-			      const unsigned char *header,
-			      unsigned long header_length,
-			      const unsigned char *arg,
-			      unsigned long arg_length,
-			      my_bool skip_check);
-  MYSQL_DATA *(*read_rows)(MYSQL *mysql,MYSQL_FIELD *mysql_fields,
-			   unsigned int fields);
+  bool (*read_query_result)(MYSQL *mysql);
+  bool (*advanced_command)(MYSQL *mysql,
+                           enum enum_server_command command,
+                           const unsigned char *header,
+                           uint32_t header_length,
+                           const unsigned char *arg,
+                           uint32_t arg_length,
+                           bool skip_check);
+  MYSQL_DATA *(*read_rows)(MYSQL *mysql,MYSQL_FIELD *mysql_fields, uint32_t fields);
   MYSQL_RES * (*use_result)(MYSQL *mysql);
-  void (*fetch_lengths)(unsigned long *to, 
-			MYSQL_ROW column, unsigned int field_count);
+  void (*fetch_lengths)(uint32_t *to, MYSQL_ROW column, uint32_t field_count);
   void (*flush_use_result)(MYSQL *mysql);
   MYSQL_FIELD * (*list_fields)(MYSQL *mysql);
-  int (*unbuffered_fetch)(MYSQL *mysql, char **row);
+  int32_t (*unbuffered_fetch)(MYSQL *mysql, char **row);
   const char *(*read_statistics)(MYSQL *mysql);
-  my_bool (*next_result)(MYSQL *mysql);
-  int (*read_change_user_result)(MYSQL *mysql, char *buff, const char *passwd);
+  bool (*next_result)(MYSQL *mysql);
+  int32_t (*read_change_user_result)(MYSQL *mysql, char *buff, const char *passwd);
 } MYSQL_METHODS;
 
 
@@ -464,14 +442,6 @@ void STDCALL mysql_close(MYSQL *sock);
 #define MYSQL_DATA_TRUNCATED 101
 
 #define mysql_reload(mysql) mysql_refresh((mysql),REFRESH_GRANT)
-
-#ifdef USE_OLD_FUNCTIONS
-MYSQL *		STDCALL mysql_connect(MYSQL *mysql, const char *host,
-				      const char *user, const char *passwd);
-int		STDCALL mysql_create_db(MYSQL *mysql, const char *DB);
-int		STDCALL mysql_drop_db(MYSQL *mysql, const char *DB);
-#endif
-#define HAVE_MYSQL_REAL_CONNECT
 
 /*
   The following functions are mainly exported because of mysqlbinlog;

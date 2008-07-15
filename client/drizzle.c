@@ -40,6 +40,7 @@
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__		      // Skip warnings in getopt.h
 #endif
+#include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
 #include <violite.h>
@@ -158,7 +159,9 @@ static GString *default_prompt= NULL;
 static char *full_username=0,*part_username=0;
 static int wait_time = 5;
 static STATUS status;
-static ulong select_limit,max_join_size,opt_connect_timeout=0;
+static uint32_t select_limit;
+static ulong max_join_size;
+static ulong opt_connect_timeout= 0;
 static char mysql_charsets_dir[FN_REFLEN+1];
 static const char *xmlmeta[] = {
   "&", "&amp;",
@@ -987,24 +990,9 @@ static const char *load_default_groups[]= { "mysql","client",0 };
 static int         embedded_server_arg_count= 0;
 static char       *embedded_server_args[MAX_SERVER_ARGS];
 static const char *embedded_server_groups[]=
-{ "server", "embedded", "mysql_SERVER", 0 };
+{ "server", "mysql_SERVER", 0 };
 
-/*
-  HIST_ENTRY is defined for libedit, but not for the real readline
-  Need to redefine it for real readline to find it
-*/
-#if !defined(HAVE_HIST_ENTRY)
-typedef struct _hist_entry {
-  const char      *line;
-  const char      *data;
-} HIST_ENTRY;
-#endif
-
-extern int add_history(const char *command); /* From readline directory */
-extern int read_history(const char *command);
-extern int write_history(const char *command);
-extern HIST_ENTRY *history_get(int num);
-extern int history_length;
+int history_length;
 static int not_in_history(const char *line);
 static void initialize_readline (const char *name);
 static void fix_history(GString *final_command);
@@ -1128,7 +1116,7 @@ int main(int argc,char *argv[])
            INFO_INFO,0,0);
   glob_buffer = g_string_sized_new(512);
   g_string_printf(glob_buffer,
-                  "Your Drizzle connection id is %lu\nServer version: %s\n",
+                  "Your Drizzle connection id is %u\nServer version: %s\n",
                   mysql_thread_id(&mysql), server_version_string(&mysql));
   put_info(glob_buffer->str,INFO_INFO,0,0);
   g_string_truncate(glob_buffer,0);
@@ -1248,7 +1236,7 @@ sig_handler handle_sigint(int sig)
   }
 
   /* kill_buffer is always big enough because max length of %lu is 15 */
-  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %lu", mysql_thread_id(&mysql));
+  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u", mysql_thread_id(&mysql));
   mysql_real_query(kill_mysql, kill_buffer, strlen(kill_buffer));
   mysql_close(kill_mysql);
   tee_fprintf(stdout, "Query aborted by Ctrl+C\n");
@@ -2218,7 +2206,7 @@ static int not_in_history(const char *line)
 static void initialize_readline (const char *name)
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
-  rl_readline_name = name;
+  rl_readline_name= name;
 
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function= (rl_completion_func_t*)&new_mysql_completion;
@@ -3086,7 +3074,7 @@ print_table_data(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    ulong *lengths= mysql_fetch_lengths(result);
+    uint32_t *lengths= mysql_fetch_lengths(result);
     (void) tee_fputs("| ", PAGER);
     mysql_field_seek(result, 0);
     for (uint off= 0; off < mysql_num_fields(result); off++)
@@ -3248,9 +3236,9 @@ print_table_data_html(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    ulong *lengths=mysql_fetch_lengths(result);
+    uint32_t *lengths= mysql_fetch_lengths(result);
     (void) tee_fputs("<TR>", PAGER);
-    for (uint i=0; i < mysql_num_fields(result); i++)
+    for (uint32_t i= 0; i < mysql_num_fields(result); i++)
     {
       (void) tee_fputs("<TD>", PAGER);
       safe_put_field(cur[i],lengths[i]);
@@ -3280,7 +3268,7 @@ print_table_data_xml(MYSQL_RES *result)
   {
     if (interrupted_query)
       break;
-    ulong *lengths=mysql_fetch_lengths(result);
+    uint32_t *lengths= mysql_fetch_lengths(result);
     (void) tee_fputs("\n  <row>\n", PAGER);
     for (uint i=0; i < mysql_num_fields(result); i++)
     {
@@ -3449,7 +3437,7 @@ print_tab_data(MYSQL_RES *result)
 {
   MYSQL_ROW	cur;
   MYSQL_FIELD	*field;
-  ulong		*lengths;
+  uint32_t		*lengths;
 
   if (opt_silent < 2 && column_names)
   {
@@ -3464,7 +3452,7 @@ print_tab_data(MYSQL_RES *result)
   }
   while ((cur = mysql_fetch_row(result)))
   {
-    lengths=mysql_fetch_lengths(result);
+    lengths= mysql_fetch_lengths(result);
     safe_put_field(cur[0],lengths[0]);
     for (uint off=1 ; off < mysql_num_fields(result); off++)
     {
@@ -3669,7 +3657,7 @@ com_connect(GString *buffer, char *line)
 
   if (connected)
   {
-    sprintf(buff,"Connection id:    %lu",mysql_thread_id(&mysql));
+    sprintf(buff,"Connection id:    %u",mysql_thread_id(&mysql));
     put_info(buff,INFO_INFO,0,0);
     sprintf(buff,"Current database: %.128s\n",
             current_db ? current_db : "*** NONE ***");
@@ -3946,7 +3934,7 @@ sql_real_connect(char *host,char *database,char *user,char *password,
   {
     char init_command[100];
     sprintf(init_command,
-            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%lu,SQL_MAX_JOIN_SIZE=%lu",
+            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%u,SQL_MAX_JOIN_SIZE=%u",
             select_limit,max_join_size);
     mysql_options(&mysql, MYSQL_INIT_COMMAND, init_command);
   }
@@ -4177,7 +4165,7 @@ put_info(const char *str,INFO_TYPE info_type, uint error, const char *sqlstate)
       }
       if (status.query_start_line && line_numbers)
       {
-        (void) fprintf(file," at line %lu",status.query_start_line);
+        (void) fprintf(file," at line %u",status.query_start_line);
         if (status.file_name)
           (void) fprintf(file," in file: '%s'", status.file_name);
       }
