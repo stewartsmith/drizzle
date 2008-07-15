@@ -28,17 +28,13 @@
 
 #include "client_priv.h"
 #include "drizzle_version.h"
-#ifdef HAVE_LIBPTHREAD
 #include <my_pthread.h>
-#endif
 
 
 /* Global Thread counter */
 uint counter;
-#ifdef HAVE_LIBPTHREAD
 pthread_mutex_t counter_mutex;
 pthread_cond_t count_threshhold;
-#endif
 
 static void db_error_with_table(MYSQL *mysql, char *table);
 static void db_error(MYSQL *mysql);
@@ -60,10 +56,6 @@ static uint     opt_mysql_port= 0, opt_protocol= 0;
 static char * opt_mysql_unix_port=0;
 static int64_t opt_ignore_lines= -1;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
-
-#ifdef HAVE_SMEM
-static char *shared_memory_base_name=0;
-#endif
 
 static struct my_option my_long_options[] =
 {
@@ -141,11 +133,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replace", 'r', "If duplicate unique key was found, replace old row.",
    (char**) &replace, (char**) &replace, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_SMEM
-  {"shared-memory-base-name", OPT_SHARED_MEMORY_BASE_NAME,
-   "Base name of shared memory.", (char**) &shared_memory_base_name, (char**) &shared_memory_base_name,
-   0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"silent", 's', "Be more silent.", (char**) &silent, (char**) &silent, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
@@ -387,10 +374,6 @@ static MYSQL *db_connect(char *host, char *database,
 		  (char*) &opt_local_file);
   if (opt_protocol)
     mysql_options(mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-#ifdef HAVE_SMEM
-  if (shared_memory_base_name)
-    mysql_options(mysql,MYSQL_SHARED_MEMORY_BASE_NAME,shared_memory_base_name);
-#endif
   if (!(mysql_real_connect(mysql,host,user,passwd,
                            database,opt_mysql_port,opt_mysql_unix_port,
                            0)))
@@ -498,7 +481,6 @@ static char *field_escape(char *to,const char *from,uint length)
 
 int exitcode= 0;
 
-#ifdef HAVE_LIBPTHREAD
 static pthread_handler_t worker_thread(void *arg)
 {
   int error;
@@ -538,7 +520,6 @@ error:
 
   return 0;
 }
-#endif
 
 
 int main(int argc, char **argv)
@@ -634,9 +615,6 @@ int main(int argc, char **argv)
     db_disconnect(current_host, mysql);
   }
   my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
-#ifdef HAVE_SMEM
-  my_free(shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-#endif
   free_defaults(argv_to_free);
   my_end(my_end_arg);
   return(exitcode);

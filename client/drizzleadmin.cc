@@ -40,9 +40,6 @@ static uint opt_count_iterations= 0, my_end_arg;
 static ulong opt_connect_timeout, opt_shutdown_timeout;
 static char * unix_port=0;
 
-#ifdef HAVE_SMEM
-static char *shared_memory_base_name=0;
-#endif
 static uint opt_protocol=0;
 static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 
@@ -159,11 +156,6 @@ static struct my_option my_long_options[] =
   {"set-variable", 'O',
    "Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value.",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_SMEM
-  {"shared-memory-base-name", OPT_SHARED_MEMORY_BASE_NAME,
-   "Base name of shared memory.", (char**) &shared_memory_base_name, (char**) &shared_memory_base_name,
-   0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"silent", 's', "Silently exit if one can't connect to server.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
@@ -302,10 +294,6 @@ int main(int argc,char *argv[])
   }
   if (opt_protocol)
     mysql_options(&mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-#ifdef HAVE_SMEM
-  if (shared_memory_base_name)
-    mysql_options(&mysql,MYSQL_SHARED_MEMORY_BASE_NAME,shared_memory_base_name);
-#endif
   if (default_charset)
     mysql_options(&mysql, MYSQL_SET_CHARSET_NAME, default_charset);
   error_flags= (myf)(opt_nobeep ? 0 : ME_BELL);
@@ -367,9 +355,6 @@ int main(int argc,char *argv[])
   }
   my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
   my_free(user,MYF(MY_ALLOW_ZERO_PTR));
-#ifdef HAVE_SMEM
-  my_free(shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-#endif
   free_defaults(save_argv);
   my_end(my_end_arg);
   exit(error ? 1 : 0);

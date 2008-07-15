@@ -179,9 +179,6 @@ static char delimiter[16]= DEFAULT_DELIMITER;
 static uint delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-#ifdef HAVE_SMEM
-static char *shared_memory_base_name=0;
-#endif
 static uint opt_protocol= MYSQL_PROTOCOL_TCP;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
 
@@ -1217,9 +1214,7 @@ sig_handler mysql_end(int sig)
   my_free(current_user,MYF(MY_ALLOW_ZERO_PTR));
   my_free(full_username,MYF(MY_ALLOW_ZERO_PTR));
   my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
-#ifdef HAVE_SMEM
-  my_free(shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-#endif
+  my_free(default_prompt,MYF(MY_ALLOW_ZERO_PTR));
   my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
   while (embedded_server_arg_count > 1)
     my_free(embedded_server_args[--embedded_server_arg_count],MYF(0));
@@ -1402,11 +1397,6 @@ static struct my_option my_long_options[] =
    (char**) &opt_reconnect, (char**) &opt_reconnect, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"silent", 's', "Be more silent. Print results with a tab as separator, each row on new line.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
-#ifdef HAVE_SMEM
-  {"shared-memory-base-name", OPT_SHARED_MEMORY_BASE_NAME,
-   "Base name of shared memory.", (char**) &shared_memory_base_name, (char**) &shared_memory_base_name,
-   0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"socket", 'S', "Socket file to use for connection.",
    (char**) &opt_mysql_unix_port, (char**) &opt_mysql_unix_port, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -3952,10 +3942,6 @@ sql_real_connect(char *host,char *database,char *user,char *password,
     mysql_options(&mysql,MYSQL_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
   if (opt_protocol)
     mysql_options(&mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-#ifdef HAVE_SMEM
-  if (shared_memory_base_name)
-    mysql_options(&mysql,MYSQL_SHARED_MEMORY_BASE_NAME,shared_memory_base_name);
-#endif
   if (safe_updates)
   {
     char init_command[100];

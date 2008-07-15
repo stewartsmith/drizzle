@@ -173,6 +173,8 @@ test-drizzle:
 		join_outer \
 		join \
 		subselect \
+		subselect3 \
+		subselect_innodb \
 		insert \
 		select \
 		update \
