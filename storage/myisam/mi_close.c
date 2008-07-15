@@ -26,10 +26,6 @@ int mi_close(register MI_INFO *info)
 {
   int error=0,flag;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_close");
-  DBUG_PRINT("enter",("base: 0x%lx  reopen: %u  locks: %u",
-		      (long) info, (uint) share->reopen,
-                      (uint) share->tot_locks));
 
   pthread_mutex_lock(&THR_LOCK_myisam);
   if (info->lock_type == F_EXTRA_LCK)
@@ -112,7 +108,7 @@ int mi_close(register MI_INFO *info)
 
   if (error)
   {
-    DBUG_RETURN(my_errno=error);
+    return(my_errno=error);
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* mi_close */
