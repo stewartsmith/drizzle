@@ -49,12 +49,12 @@
 #define TEST_BLOCKING		8
 #define MAX_PACKET_LENGTH (256L*256L*256L-1)
 
-static my_bool net_write_buff(NET *net,const uchar *packet,ulong len);
+static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
 
 /** Init with packet info. */
 
-my_bool my_net_init(NET *net, Vio* vio)
+bool my_net_init(NET *net, Vio* vio)
 {
   DBUG_ENTER("my_net_init");
   net->vio = vio;
@@ -93,7 +93,7 @@ void net_end(NET *net)
 
 /** Realloc the packet buffer. */
 
-my_bool net_realloc(NET *net, size_t length)
+bool net_realloc(NET *net, size_t length)
 {
   uchar *buff;
   size_t pkt_length;
@@ -196,10 +196,10 @@ static int net_data_is_ready(my_socket sd)
   @param clear_buffer           if <> 0, then clear all data from comm buff
 */
 
-void net_clear(NET *net, my_bool clear_buffer)
+void net_clear(NET *net, bool clear_buffer)
 {
   size_t count;
-  int ready;
+  int32_t ready;
   DBUG_ENTER("net_clear");
 
   if (clear_buffer)
@@ -245,7 +245,7 @@ void net_clear(NET *net, my_bool clear_buffer)
 
 /** Flush write_buffer if not empty. */
 
-my_bool net_flush(NET *net)
+bool net_flush(NET *net)
 {
   my_bool error= 0;
   DBUG_ENTER("net_flush");
@@ -276,7 +276,7 @@ my_bool net_flush(NET *net)
     If compression is used the original package is modified!
 */
 
-my_bool
+bool
 my_net_write(NET *net,const uchar *packet,size_t len)
 {
   uchar buff[NET_HEADER_SIZE];
@@ -336,7 +336,7 @@ my_net_write(NET *net,const uchar *packet,size_t len)
     1	error
 */
 
-my_bool
+bool
 net_write_command(NET *net,uchar command,
 		  const uchar *header, size_t head_len,
 		  const uchar *packet, size_t len)
@@ -402,8 +402,8 @@ net_write_command(NET *net,uchar command,
     1
 */
 
-static my_bool
-net_write_buff(NET *net, const uchar *packet, ulong len)
+static bool
+net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
 {
   ulong left_length;
   if (net->compress && net->max_packet > MAX_PACKET_LENGTH)
@@ -725,7 +725,7 @@ end:
   net->read_pos points to the read data.
 */
 
-ulong
+uint32_t
 my_net_read(NET *net)
 {
   size_t len, complen;

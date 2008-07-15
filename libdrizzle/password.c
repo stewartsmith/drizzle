@@ -75,7 +75,7 @@
     seed2      IN   Second initialization parameter
 */
 
-void randominit(struct rand_struct *rand_st, ulong seed1, ulong seed2)
+void randominit(struct rand_struct *rand_st, uint32_t seed1, uint32_t seed2)
 {                                               /* For mysql 3.21.# */
 #ifdef HAVE_purify
   bzero((char*) rand_st,sizeof(*rand_st));      /* Avoid UMC varnings */
@@ -114,22 +114,22 @@ double my_rnd(struct rand_struct *rand_st)
     password_len IN  password length (password may be not null-terminated)
 */
 
-void hash_password(ulong *result, const char *password, uint password_len)
+void hash_password(uint32_t *result, const char *password, uint32_t password_len)
 {
   register ulong nr=1345345333L, add=7, nr2=0x12345671L;
-  ulong tmp;
+  uint32_t tmp;
   const char *password_end= password + password_len;
   for (; password < password_end; password++)
   {
     if (*password == ' ' || *password == '\t')
       continue;                                 /* skip space in password */
-    tmp= (ulong) (uchar) *password;
+    tmp= (uint32_t) (uchar) *password;
     nr^= (((nr & 63)+add)*tmp)+ (nr << 8);
     nr2+=(nr2 << 8) ^ nr;
     add+=tmp;
   }
-  result[0]=nr & (((ulong) 1L << 31) -1L); /* Don't use sign bit (str2int) */;
-  result[1]=nr2 & (((ulong) 1L << 31) -1L);
+  result[0]=nr & (((uint32_t) 1L << 31) -1L); /* Don't use sign bit (str2int) */;
+  result[1]=nr2 & (((uint32_t) 1L << 31) -1L);
 }
 
 
@@ -146,7 +146,7 @@ void make_scrambled_password_323(char *to, const char *password)
 {
   ulong hash_res[2];
   hash_password(hash_res, password, (uint) strlen(password));
-  sprintf(to, "%08lx%08lx", hash_res[0], hash_res[1]);
+  sprintf(to, "%08x%08x", hash_res[0], hash_res[1]);
 }
 
 
@@ -203,8 +203,7 @@ void scramble_323(char *to, const char *message, const char *password)
 */
 
 my_bool
-check_scramble_323(const char *scrambled, const char *message,
-                   ulong *hash_pass)
+check_scramble_323(const char *scrambled, const char *message, uint32_t *hash_pass)
 {
   struct rand_struct rand_st;
   ulong hash_message[2];
@@ -248,7 +247,7 @@ static inline uint8 char_val(uint8 X)
     Password hashes in old format must have length divisible by 8
 */
 
-void get_salt_from_password_323(ulong *res, const char *password)
+void get_salt_from_password_323(uint32_t *res, const char *password)
 {
   res[0]= res[1]= 0;
   if (password)
@@ -273,9 +272,9 @@ void get_salt_from_password_323(ulong *res, const char *password)
     salt  IN  password in salt format, 2 ulongs 
 */
 
-void make_password_from_salt_323(char *to, const ulong *salt)
+void make_password_from_salt_323(char *to, const uint32_t *salt)
 {
-  sprintf(to,"%08lx%08lx", salt[0], salt[1]);
+  sprintf(to,"%08x%08x", salt[0], salt[1]);
 }
 
 

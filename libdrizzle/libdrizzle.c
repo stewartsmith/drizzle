@@ -63,8 +63,8 @@
 #undef net_buffer_length
 #undef max_allowed_packet
 
-ulong 		net_buffer_length=8192;
-ulong		max_allowed_packet= 1024L*1024L*1024L;
+uint32_t 		net_buffer_length= 8192;
+uint32_t		max_allowed_packet= 1024L*1024L*1024L;
 
 #include <errno.h>
 #define SOCKET_ERROR -1
@@ -409,7 +409,7 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   }
 
   /* Write authentication package */
-  simple_command(mysql,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
+  (void)simple_command(mysql,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
 
   rc= (*mysql->methods->read_change_user_result)(mysql, buff, passwd);
 
@@ -931,8 +931,8 @@ mysql_refresh(MYSQL *mysql,uint options)
 }
 
 
-int STDCALL
-mysql_kill(MYSQL *mysql,ulong pid)
+int32_t STDCALL
+mysql_kill(MYSQL *mysql, uint32_t pid)
 {
   uchar buff[4];
   DBUG_ENTER("mysql_kill");
@@ -1019,7 +1019,7 @@ mysql_get_client_info(void)
   return (char*) MYSQL_SERVER_VERSION;
 }
 
-ulong STDCALL mysql_get_client_version(void)
+uint32_t STDCALL mysql_get_client_version(void)
 {
   return MYSQL_VERSION_ID;
 }
@@ -1071,7 +1071,7 @@ const char *STDCALL mysql_sqlstate(MYSQL *mysql)
   return mysql ? mysql->net.sqlstate : cant_connect_sqlstate;
 }
 
-uint STDCALL mysql_warning_count(MYSQL *mysql)
+uint32_t STDCALL mysql_warning_count(MYSQL *mysql)
 {
   return mysql->warning_count;
 }
@@ -1081,7 +1081,7 @@ const char *STDCALL mysql_info(MYSQL *mysql)
   return mysql->info;
 }
 
-ulong STDCALL mysql_thread_id(MYSQL *mysql)
+uint32_t STDCALL mysql_thread_id(MYSQL *mysql)
 {
   return (mysql)->thread_id;
 }
@@ -1159,8 +1159,8 @@ void my_net_local_init(NET *net)
   trailing '. The caller must supply whichever of those is desired.
 */
 
-ulong STDCALL
-mysql_hex_string(char *to, const char *from, ulong length)
+uint32_t STDCALL
+mysql_hex_string(char *to, const char *from, uint32_t length)
 {
   char *to0= to;
   const char *end;
@@ -1171,7 +1171,7 @@ mysql_hex_string(char *to, const char *from, ulong length)
     *to++= _dig_vec_upper[((unsigned char) *from) & 0x0F];
   }
   *to= '\0';
-  return (ulong) (to-to0);
+  return (uint32_t) (to-to0);
 }
 
 /*
@@ -1180,15 +1180,15 @@ mysql_hex_string(char *to, const char *from, ulong length)
   Returns the length of the to string
 */
 
-ulong STDCALL
-mysql_escape_string(char *to,const char *from,ulong length)
+uint32_t STDCALL
+mysql_escape_string(char *to,const char *from, uint32_t length)
 {
   return escape_string_for_mysql(default_charset_info, to, 0, from, length);
 }
 
-ulong STDCALL
+uint32_t STDCALL
 mysql_real_escape_string(MYSQL *mysql, char *to,const char *from,
-			 ulong length)
+			 uint32_t length)
 {
   if (mysql->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
     return escape_quotes_for_mysql(mysql->charset, to, 0, from, length);

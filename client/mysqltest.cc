@@ -603,7 +603,7 @@ static void show_query(MYSQL* mysql, const char* query)
     fprintf(stderr, "=== %s ===\n", query);
     while ((row= mysql_fetch_row(res)))
     {
-      unsigned long *lengths= mysql_fetch_lengths(res);
+      uint32_t *lengths= mysql_fetch_lengths(res);
       row_num++;
 
       fprintf(stderr, "---- %d. ----\n", row_num);
@@ -672,8 +672,8 @@ static void show_warnings_before_error(MYSQL* mysql)
     fprintf(stderr, "\nWarnings from just before the error:\n");
     while ((row= mysql_fetch_row(res)))
     {
-      unsigned int i;
-      unsigned long *lengths= mysql_fetch_lengths(res);
+      uint32_t i;
+      uint32_t *lengths= mysql_fetch_lengths(res);
 
       if (++row_num >= mysql_num_rows(res))
       {
@@ -1853,8 +1853,8 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
       and assign that string to the $variable
     */
     DYNAMIC_STRING result;
-    uint i;
-    ulong *lengths;
+    uint32_t i;
+    uint32_t *lengths;
 
     init_dynamic_string(&result, "", 512, 512);
     lengths= mysql_fetch_lengths(res);
@@ -4948,13 +4948,13 @@ static void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
 static void append_result(DYNAMIC_STRING *ds, MYSQL_RES *res)
 {
   MYSQL_ROW row;
-  uint num_fields= mysql_num_fields(res);
+  uint32_t num_fields= mysql_num_fields(res);
   MYSQL_FIELD *fields= mysql_fetch_fields(res);
-  ulong *lengths;
+  uint32_t *lengths;
 
   while ((row = mysql_fetch_row(res)))
   {
-    uint i;
+    uint32_t i;
     lengths = mysql_fetch_lengths(res);
     for (i = 0; i < num_fields; i++)
       append_field(ds, i, &fields[i],

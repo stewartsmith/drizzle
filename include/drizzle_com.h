@@ -366,18 +366,18 @@ enum enum_mysql_set_option
 extern "C" {
 #endif
 
-my_bool	my_net_init(NET *net, Vio* vio);
+bool	my_net_init(NET *net, Vio* vio);
 void	my_net_local_init(NET *net);
 void	net_end(NET *net);
-  void	net_clear(NET *net, my_bool clear_buffer);
-my_bool net_realloc(NET *net, size_t length);
-my_bool	net_flush(NET *net);
-my_bool	my_net_write(NET *net,const unsigned char *packet, size_t len);
-my_bool	net_write_command(NET *net,unsigned char command,
+void	net_clear(NET *net, bool clear_buffer);
+bool    net_realloc(NET *net, size_t length);
+bool	net_flush(NET *net);
+bool	my_net_write(NET *net,const unsigned char *packet, size_t len);
+bool	net_write_command(NET *net,unsigned char command,
 			  const unsigned char *header, size_t head_len,
 			  const unsigned char *packet, size_t len);
-int	net_real_write(NET *net,const unsigned char *packet, size_t len);
-unsigned long my_net_read(NET *net);
+int32_t	net_real_write(NET *net,const unsigned char *packet, size_t len);
+uint32_t my_net_read(NET *net);
 
 #ifdef _global_h
 void my_net_set_write_timeout(NET *net, uint timeout);
@@ -445,18 +445,16 @@ extern "C" {
   implemented in sql/password.c
 */
 
-void randominit(struct rand_struct *, unsigned long seed1,
-                unsigned long seed2);
+void randominit(struct rand_struct *, uint32_t seed1, uint32_t seed2);
 double my_rnd(struct rand_struct *);
 void create_random_string(char *to, unsigned int length, struct rand_struct *rand_st);
 
-void hash_password(unsigned long *to, const char *password, unsigned int password_len);
+void hash_password(uint32_t *to, const char *password, uint32_t password_len);
 void make_scrambled_password_323(char *to, const char *password);
 void scramble_323(char *to, const char *message, const char *password);
-my_bool check_scramble_323(const char *, const char *message,
-                           unsigned long *salt);
-void get_salt_from_password_323(unsigned long *res, const char *password);
-void make_password_from_salt_323(char *to, const unsigned long *salt);
+my_bool check_scramble_323(const char *, const char *message, uint32_t *salt);
+void get_salt_from_password_323(uint32_t *res, const char *password);
+void make_password_from_salt_323(char *to, const uint32_t *salt);
 
 void make_scrambled_password(char *to, const char *password);
 void scramble(char *to, const char *message, const char *password);
