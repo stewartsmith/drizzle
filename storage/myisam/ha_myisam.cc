@@ -1389,7 +1389,7 @@ C_MODE_END
 int ha_myisam::index_init(uint idx, bool sorted __attribute__((__unused__)))
 { 
   active_index=idx;
-  //in_range_read= FALSE;
+  //in_range_read= false;
   if (pushed_idx_cond_keyno == idx)
     mi_set_index_cond_func(file, index_cond_func_myisam, this);
   return 0; 
@@ -1401,7 +1401,7 @@ int ha_myisam::index_end()
   active_index=MAX_KEY;
   //pushed_idx_cond_keyno= MAX_KEY;
   mi_set_index_cond_func(file, NULL, 0);
-  in_range_check_pushed_down= FALSE;
+  in_range_check_pushed_down= false;
   ds_mrr.dsmrr_close();
   return 0; 
 }
@@ -1498,12 +1498,12 @@ int ha_myisam::read_range_first(const key_range *start_key,
 {
   int res;
   //if (!eq_range_arg)
-  //  in_range_read= TRUE;
+  //  in_range_read= true;
 
   res= handler::read_range_first(start_key, end_key, eq_range_arg, sorted);
 
   //if (res)
-  //  in_range_read= FALSE;
+  //  in_range_read= false;
   return res;
 }
 
@@ -1512,7 +1512,7 @@ int ha_myisam::read_range_next()
 {
   int res= handler::read_range_next();
   //if (res)
-  //  in_range_read= FALSE;
+  //  in_range_read= false;
   return res;
 }
 
@@ -1765,7 +1765,7 @@ void ha_myisam::get_auto_increment(uint64_t offset __attribute__((__unused__)),
     ha_myisam::info(HA_STATUS_AUTO);
     *first_value= stats.auto_increment_value;
     /* MyISAM has only table-level lock, so reserves to +inf */
-    *nb_reserved_values= ULONGLONG_MAX;
+    *nb_reserved_values= UINT64_MAX;
     return;
   }
 
@@ -1926,7 +1926,7 @@ Item *ha_myisam::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
 {
   pushed_idx_cond_keyno= keyno_arg;
   pushed_idx_cond= idx_cond_arg;
-  in_range_check_pushed_down= TRUE;
+  in_range_check_pushed_down= true;
   if (active_index == pushed_idx_cond_keyno)
     mi_set_index_cond_func(file, index_cond_func_myisam, this);
   return NULL;
@@ -1971,8 +1971,8 @@ mysql_declare_plugin_end;
   @see handler::register_query_cache_table
 
   @return The error code. The engine_data and engine_callback will be set to 0.
-    @retval TRUE Success
-    @retval FALSE An error occured
+    @retval true Success
+    @retval false An error occured
 */
 
 my_bool ha_myisam::register_query_cache_table(THD *thd, char *table_name,
@@ -2030,11 +2030,11 @@ my_bool ha_myisam::register_query_cache_table(THD *thd, char *table_name,
     if (current_data_file_length != actual_data_file_length)
     {
       /* Don't cache current statement. */
-      DBUG_RETURN(FALSE);
+      DBUG_RETURN(false);
     }
   }
 
   /* It is ok to try to cache current statement. */
-  DBUG_RETURN(TRUE);
+  DBUG_RETURN(true);
 }
 #endif

@@ -930,7 +930,7 @@ public:
 class Item_sum_and :public Item_sum_bit
 {
   public:
-  Item_sum_and(Item *item_par) :Item_sum_bit(item_par, ULONGLONG_MAX) {}
+  Item_sum_and(Item *item_par) :Item_sum_bit(item_par, UINT64_MAX) {}
   Item_sum_and(THD *thd, Item_sum_and *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_and("; }

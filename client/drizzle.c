@@ -1,22 +1,17 @@
-/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
- *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
- *
- *  Copyright (C) 2008 MySQL
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
+/* Copyright (C) 2000-2008 MySQL AB
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; version 2 of the License.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* mysql command tool
  * Commands compatible with mSQL by David J. Hughes
@@ -987,24 +982,9 @@ static const char *load_default_groups[]= { "mysql","client",0 };
 static int         embedded_server_arg_count= 0;
 static char       *embedded_server_args[MAX_SERVER_ARGS];
 static const char *embedded_server_groups[]=
-{ "server", "embedded", "mysql_SERVER", 0 };
+{ "server", "mysql_SERVER", 0 };
 
-/*
-  HIST_ENTRY is defined for libedit, but not for the real readline
-  Need to redefine it for real readline to find it
-*/
-#if !defined(HAVE_HIST_ENTRY)
-typedef struct _hist_entry {
-  const char      *line;
-  const char      *data;
-} HIST_ENTRY;
-#endif
-
-extern int add_history(const char *command); /* From readline directory */
-extern int read_history(const char *command);
-extern int write_history(const char *command);
-extern HIST_ENTRY *history_get(int num);
-extern int history_length;
+extern "C" int history_length;
 static int not_in_history(const char *line);
 static void initialize_readline (const char *name);
 static void fix_history(GString *final_command);

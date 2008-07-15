@@ -303,7 +303,7 @@ my_bool my_parse_charset_xml(const char *buf, size_t len,
   my_xml_set_leave_handler(&p,cs_leave);
   i.add_collation= add_collation;
   my_xml_set_user_data(&p,(void*)&i);
-  rc= (my_xml_parse(&p,buf,len) == MY_XML_OK) ? FALSE : TRUE;
+  rc= (my_xml_parse(&p,buf,len) == MY_XML_OK) ? false : true;
   my_xml_parser_free(&p);
   return rc;
 }
@@ -341,7 +341,7 @@ my_string_repertoire(CHARSET_INFO *cs, const char *str, ulong length)
 /*
   Detect whether a character set is ASCII compatible.
 
-  Returns TRUE for:
+  Returns true for:
   
   - all 8bit character sets whose Unicode mapping of 0x7B is '{'
     (ignores swe7 which maps 0x7B to "LATIN LETTER A WITH DIAERESIS")

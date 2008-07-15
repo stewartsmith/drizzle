@@ -1366,7 +1366,7 @@ public:
   inline void force_one_auto_inc_interval(uint64_t next_id)
   {
     auto_inc_intervals_forced.empty(); // in case of multiple SET INSERT_ID
-    auto_inc_intervals_forced.append(next_id, ULONGLONG_MAX, 0);
+    auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
   uint64_t  limit_found_rows;

@@ -88,7 +88,7 @@ my_bool check_date(const MYSQL_TIME *ltime, my_bool not_zero_date,
           ltime->day != 29)))
     {
       *was_cut= 2;
-      return TRUE;
+      return true;
     }
   }
   else if (flags & TIME_NO_ZERO_DATE)
@@ -97,9 +97,9 @@ my_bool check_date(const MYSQL_TIME *ltime, my_bool not_zero_date,
       We don't set *was_cut here to signal that the problem was a zero date
       and not an invalid date
     */
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 

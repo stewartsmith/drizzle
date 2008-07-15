@@ -37,13 +37,13 @@ bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
     init_alloc=alloc_increment;
 
   if (!(str->str=(char*) my_malloc(init_alloc,MYF(MY_WME))))
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   str->length=length-1;
   if (init_str)
     memcpy(str->str,init_str,length);
   str->max_length=init_alloc;
   str->alloc_increment=alloc_increment;
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -59,7 +59,7 @@ bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
     if (!str->max_length)
       str->max_length=str->alloc_increment;
     if (!(str->str=(char*) my_realloc(str->str,str->max_length,MYF(MY_WME))))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
   }
   if (init_str)
   {
@@ -68,7 +68,7 @@ bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
   }
   else
     str->length=0;
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -76,15 +76,15 @@ bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size)
 {
   DBUG_ENTER("dynstr_realloc");
 
-  if (!additional_size) DBUG_RETURN(FALSE);
+  if (!additional_size) DBUG_RETURN(false);
   if (str->length + additional_size > str->max_length)
   {
     str->max_length=((str->length + additional_size+str->alloc_increment-1)/
 		     str->alloc_increment)*str->alloc_increment;
     if (!(str->str=(char*) my_realloc(str->str,str->max_length,MYF(MY_WME))))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
   }
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -104,14 +104,14 @@ bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
       str->alloc_increment;
     new_length*=str->alloc_increment;
     if (!(new_ptr=(char*) my_realloc(str->str,new_length,MYF(MY_WME))))
-      return TRUE;
+      return true;
     str->str=new_ptr;
     str->max_length=new_length;
   }
   memcpy(str->str + str->length,append,length);
   str->length+=length;
   str->str[str->length]=0;			/* Safety for C programs */
-  return FALSE;
+  return false;
 }
 
 
@@ -119,7 +119,7 @@ bool dynstr_trunc(DYNAMIC_STRING *str, size_t n)
 {
   str->length-=n;
   str->str[str->length]= '\0';
-  return FALSE;
+  return false;
 }
 
 /*
@@ -142,7 +142,7 @@ bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append, ...)
 {
   const char *quote_str= "\'";
   const uint  quote_len= 1;
-  bool ret= TRUE;
+  bool ret= true;
   va_list dirty_text;
 
   ret&= dynstr_append_mem(str, quote_str, quote_len); /* Leading quote */

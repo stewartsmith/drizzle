@@ -203,7 +203,7 @@ int fill_plugins(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unuse
     db                  database name to set in TABLE_LIST structure
     path                path to database
     wild                filter for found files
-    dir                 read databases in path if TRUE, read .frm files in
+    dir                 read databases in path if true, read .frm files in
                         database otherwise
 
   RETURN
@@ -272,7 +272,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
       if (wild && wild_compare(uname, wild, 0))
         continue;
       if (!(file_name= 
-            thd->make_lex_string(file_name, uname, file_name_len, TRUE)))
+            thd->make_lex_string(file_name, uname, file_name_len, true)))
       {
         my_dirend(dirp);
         return(FIND_FILES_OOM);
@@ -298,7 +298,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
       }
     }
     if (!(file_name= 
-          thd->make_lex_string(file_name, uname, file_name_len, TRUE)) ||
+          thd->make_lex_string(file_name, uname, file_name_len, true)) ||
         files->push_back(file_name))
     {
       my_dirend(dirp);
@@ -322,7 +322,7 @@ mysqld_show_create(THD *thd, TABLE_LIST *table_list)
   if (open_normal_and_derived_tables(thd, table_list, 0))
   {
     if (thd->is_error() && thd->main_da.sql_errno() != ER_VIEW_INVALID)
-      return(TRUE);
+      return(true);
 
     /*
       Clear all messages with 'error' level status and
@@ -336,7 +336,7 @@ mysqld_show_create(THD *thd, TABLE_LIST *table_list)
   buffer.length(0);
 
   if (store_create_info(thd, table_list, &buffer, NULL))
-    return(TRUE);
+    return(true);
 
   List<Item> field_list;
   {
@@ -348,7 +348,7 @@ mysqld_show_create(THD *thd, TABLE_LIST *table_list)
 
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(TRUE);
+    return(true);
   protocol->prepare_for_resend();
   {
     if (table_list->schema_table)
@@ -361,10 +361,10 @@ mysqld_show_create(THD *thd, TABLE_LIST *table_list)
   protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
 
   if (protocol->write())
-    return(TRUE);
+    return(true);
 
   my_eof(thd);
-  return(FALSE);
+  return(false);
 }
 
 bool mysqld_show_create_db(THD *thd, char *dbname,
@@ -381,7 +381,7 @@ bool mysqld_show_create_db(THD *thd, char *dbname,
       can fail is incorrect database name (which is the case now).
     */
     my_error(ER_BAD_DB_ERROR, MYF(0), dbname);
-    return(TRUE);    
+    return(true);    
   }
 
   List<Item> field_list;
@@ -390,16 +390,16 @@ bool mysqld_show_create_db(THD *thd, char *dbname,
 
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
-    return(TRUE);
+    return(true);
 
   protocol->prepare_for_resend();
   protocol->store(dbname, strlen(dbname), system_charset_info);
   protocol->store(buffer.ptr(), buffer.length(), buffer.charset());
 
   if (protocol->write())
-    return(TRUE);
+    return(true);
   my_eof(thd);
-  return(FALSE);
+  return(false);
 }
 
 
@@ -455,7 +455,7 @@ mysqld_list_fields(THD *thd, TABLE_LIST *table_list, const char *wild)
 static const char *require_quotes(const char *name, uint name_length)
 {
   uint length;
-  bool pure_digit= TRUE;
+  bool pure_digit= true;
   const char *end= name + name_length;
 
   for (; name < end ; name++)
@@ -465,7 +465,7 @@ static const char *require_quotes(const char *name, uint name_length)
     if (length == 1 && !system_charset_info->ident_map[chr])
       return name;
     if (length == 1 && (chr < '0' || chr > '9'))
-      pure_digit= FALSE;
+      pure_digit= false;
   }
   if (pure_digit)
     return name;
@@ -674,7 +674,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
   handler *file= table->file;
   TABLE_SHARE *share= table->s;
   HA_CREATE_INFO create_info;
-  bool show_table_options= FALSE;
+  bool show_table_options= false;
   my_bitmap_map *old_map;
 
   restore_record(table, s->default_values); // Get empty record
@@ -861,7 +861,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
 
   packet->append(STRING_WITH_LEN("\n)"));
   {
-    show_table_options= TRUE;
+    show_table_options= true;
     /*
       Get possible table space definitions and append them
       to the CREATE TABLE statement
@@ -1009,7 +1009,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
   @param  create_info   If not NULL, the options member influences the resulting 
                         CRATE statement.
 
-  @returns TRUE if errors are detected, FALSE otherwise.
+  @returns true if errors are detected, false otherwise.
 */
 
 bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
@@ -1027,7 +1027,7 @@ bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
   else
   {
     if (check_db_dir_existence(dbname))
-      return(TRUE);
+      return(true);
 
     load_db_opt_by_name(thd, dbname, &create);
   }
@@ -1055,7 +1055,7 @@ bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
     buffer->append(STRING_WITH_LEN(" */"));
   }
 
-  return(FALSE);
+  return(false);
 }
 
 static void store_key_options(THD *thd __attribute__((__unused__)),
@@ -1249,7 +1249,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
 
       restore_record(table, s->default_values);
       /* ID */
-      table->field[0]->store((int64_t) tmp->thread_id, TRUE);
+      table->field[0]->store((int64_t) tmp->thread_id, true);
       /* USER */
       val= tmp_sctx->user ? tmp_sctx->user :
             (tmp->system_thread ? "system user" : "unauthenticated user");
@@ -1274,7 +1274,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
                                command_name[tmp->command].length, cs);
       /* MYSQL_TIME */
       table->field[5]->store((uint32)(tmp->start_time ?
-                                      now - tmp->start_time : 0), TRUE);
+                                      now - tmp->start_time : 0), true);
       /* STATE */
       val= (char*) (tmp->net.reading_or_writing ?
                     (tmp->net.reading_or_writing == 2 ?
@@ -1638,12 +1638,12 @@ static bool show_status_array(THD *thd, const char *wild,
         pthread_mutex_unlock(&LOCK_global_system_variables);
 
         if (schema_table_store_record(thd, table))
-          return(TRUE);
+          return(true);
       }
     }
   }
 
-  return(FALSE);
+  return(false);
 }
 
 
@@ -1789,7 +1789,7 @@ bool get_lookup_value(THD *thd, Item_func *item_func,
                                strlen(item_field->field_name), 0))
     {
       thd->make_lex_string(&lookup_field_vals->db_value, tmp_str->ptr(),
-                           tmp_str->length(), FALSE);
+                           tmp_str->length(), false);
     }
     /* Lookup value is table name */
     else if (!cs->coll->strnncollsp(cs, (uchar *) field_name2,
@@ -1798,7 +1798,7 @@ bool get_lookup_value(THD *thd, Item_func *item_func,
                                     strlen(item_field->field_name), 0))
     {
       thd->make_lex_string(&lookup_field_vals->table_value, tmp_str->ptr(),
-                           tmp_str->length(), FALSE);
+                           tmp_str->length(), false);
     }
   }
   return 0;
@@ -2038,7 +2038,7 @@ int make_db_list(THD *thd, List<LEX_STRING> *files,
   LEX_STRING *i_s_name_copy= 0;
   i_s_name_copy= thd->make_lex_string(i_s_name_copy,
                                       INFORMATION_SCHEMA_NAME.str,
-                                      INFORMATION_SCHEMA_NAME.length, TRUE);
+                                      INFORMATION_SCHEMA_NAME.length, true);
   *with_i_schema= 0;
   if (lookup_field_vals->wild_db_value)
   {
@@ -2125,7 +2125,7 @@ static bool add_schema_table(THD *thd, plugin_ref plugin,
 
   if ((file_name= thd->make_lex_string(file_name, schema_table->table_name,
                                        strlen(schema_table->table_name),
-                                       TRUE)) &&
+                                       true)) &&
       !file_list->push_back(file_name))
     return(0);
   return(1);
@@ -2156,7 +2156,7 @@ int schema_tables_add(THD *thd, List<LEX_STRING> *files, const char *wild)
     }
     if ((file_name= 
          thd->make_lex_string(file_name, tmp_schema_table->table_name,
-                              strlen(tmp_schema_table->table_name), TRUE)) &&
+                              strlen(tmp_schema_table->table_name), true)) &&
         !files->push_back(file_name))
       continue;
     return(1);
@@ -2182,7 +2182,7 @@ int schema_tables_add(THD *thd, List<LEX_STRING> *files, const char *wild)
   @param[in]      table_names           List of table names in database
   @param[in]      lex                   pointer to LEX struct
   @param[in]      lookup_field_vals     pointer to LOOKUP_FIELD_VALUE struct
-  @param[in]      with_i_schema         TRUE means that we add I_S tables to list
+  @param[in]      with_i_schema         true means that we add I_S tables to list
   @param[in]      db_name               database name
 
   @return         Operation status
@@ -2308,9 +2308,9 @@ fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
     'show columns' & 'show statistics' commands).
   */
    table_name= thd->make_lex_string(&tmp_lex_string1, show_table_list->alias,
-                                    strlen(show_table_list->alias), FALSE);
+                                    strlen(show_table_list->alias), false);
    db_name= thd->make_lex_string(&tmp_lex_string, show_table_list->db,
-                                 show_table_list->db_length, FALSE);
+                                 show_table_list->db_length, false);
       
 
    error= test(schema_table->process_table(thd, show_table_list,
@@ -2329,7 +2329,7 @@ fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
   @param[in]      table                    TABLE struct for I_S table
   @param[in]      db_name                  database name
   @param[in]      table_name               table name
-  @param[in]      with_i_schema            I_S table if TRUE
+  @param[in]      with_i_schema            I_S table if true
 
   @return         Operation status
     @retval       0           success
@@ -2568,10 +2568,10 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
 
   if (lookup_field_vals.db_value.length &&
       !lookup_field_vals.wild_db_value)
-    tables->has_db_lookup_value= TRUE;
+    tables->has_db_lookup_value= true;
   if (lookup_field_vals.table_value.length &&
       !lookup_field_vals.wild_table_value) 
-    tables->has_table_lookup_value= TRUE;
+    tables->has_table_lookup_value= true;
 
   if (tables->has_db_lookup_value && tables->has_table_lookup_value)
     partial_cond= 0;
@@ -2654,7 +2654,7 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
             sel.parent_lex= lex;
             /* db_name can be changed in make_table_list() func */
             if (!thd->make_lex_string(&orig_db_name, db_name->str,
-                                      db_name->length, FALSE))
+                                      db_name->length, false))
               goto err;
             if (make_table_list(thd, &sel, db_name, table_name))
               goto err;
@@ -2697,7 +2697,7 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
                 in this case.
               */
               thd->make_lex_string(&tmp_lex_string, show_table_list->alias,
-                                   strlen(show_table_list->alias), FALSE);
+                                   strlen(show_table_list->alias), false);
               res= schema_table->process_table(thd, show_table_list, table,
                                                res, &orig_db_name,
                                                &tmp_lex_string);
@@ -2847,7 +2847,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
     }
     tmp_buff= (char *) ha_resolve_storage_engine_name(tmp_db_type);
     table->field[4]->store(tmp_buff, strlen(tmp_buff), cs);
-    table->field[5]->store((int64_t) share->frm_version, TRUE);
+    table->field[5]->store((int64_t) share->frm_version, true);
 
     ptr=option_buff;
     if (share->min_rows)
@@ -2936,22 +2936,22 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       table->field[6]->store(tmp_buff, strlen(tmp_buff), cs);
       if (!tables->schema_table)
       {
-        table->field[7]->store((int64_t) file->stats.records, TRUE);
+        table->field[7]->store((int64_t) file->stats.records, true);
         table->field[7]->set_notnull();
       }
-      table->field[8]->store((int64_t) file->stats.mean_rec_length, TRUE);
-      table->field[9]->store((int64_t) file->stats.data_file_length, TRUE);
+      table->field[8]->store((int64_t) file->stats.mean_rec_length, true);
+      table->field[9]->store((int64_t) file->stats.data_file_length, true);
       if (file->stats.max_data_file_length)
       {
         table->field[10]->store((int64_t) file->stats.max_data_file_length,
-                                TRUE);
+                                true);
       }
-      table->field[11]->store((int64_t) file->stats.index_file_length, TRUE);
-      table->field[12]->store((int64_t) file->stats.delete_length, TRUE);
+      table->field[11]->store((int64_t) file->stats.index_file_length, true);
+      table->field[12]->store((int64_t) file->stats.delete_length, true);
       if (show_table->found_next_number_field)
       {
         table->field[13]->store((int64_t) file->stats.auto_increment_value,
-                                TRUE);
+                                true);
         table->field[13]->set_notnull();
       }
       if (file->stats.create_time)
@@ -2977,7 +2977,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       }
       if (file->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
       {
-        table->field[18]->store((int64_t) file->checksum(), TRUE);
+        table->field[18]->store((int64_t) file->checksum(), true);
         table->field[18]->set_notnull();
       }
     }
@@ -3028,10 +3028,10 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
       (int64_t) octet_max_length / field->charset()->mbminlen :
       (int64_t) octet_max_length / field->charset()->mbmaxlen;
     /* CHARACTER_MAXIMUM_LENGTH column*/
-    table->field[offset + 1]->store(char_max_len, TRUE);
+    table->field[offset + 1]->store(char_max_len, true);
     table->field[offset + 1]->set_notnull();
     /* CHARACTER_OCTET_LENGTH column */
-    table->field[offset + 2]->store((int64_t) octet_max_length, TRUE);
+    table->field[offset + 2]->store((int64_t) octet_max_length, true);
     table->field[offset + 2]->set_notnull();
   }
 
@@ -3065,13 +3065,13 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
   /* NUMERIC_PRECISION column */
   if (field_length >= 0)
   {
-    table->field[offset + 3]->store((int64_t) field_length, TRUE);
+    table->field[offset + 3]->store((int64_t) field_length, true);
     table->field[offset + 3]->set_notnull();
   }
   /* NUMERIC_SCALE column */
   if (decimals >= 0)
   {
-    table->field[offset + 4]->store((int64_t) decimals, TRUE);
+    table->field[offset + 4]->store((int64_t) decimals, true);
     table->field[offset + 4]->set_notnull();
   }
   if (field->has_charset())
@@ -3144,7 +3144,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
       if (!(bitmaps= (uchar*) alloc_root(thd->mem_root, bitmap_size)))
         return(0);
       bitmap_init(&show_table->def_read_set,
-                  (my_bitmap_map*) bitmaps, show_table_share->fields, FALSE);
+                  (my_bitmap_map*) bitmaps, show_table_share->fields, false);
       bitmap_set_all(&show_table->def_read_set);
       show_table->read_set= &show_table->def_read_set;
     }
@@ -3174,7 +3174,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
     table->field[2]->store(table_name->str, table_name->length, cs);
     table->field[3]->store(field->field_name, strlen(field->field_name),
                            cs);
-    table->field[4]->store((int64_t) count, TRUE);
+    table->field[4]->store((int64_t) count, true);
 
     if (get_field_default_value(thd, timestamp_field, field, &type, 0))
     {
@@ -3243,7 +3243,7 @@ int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__(
       table->field[1]->store(tmp_cs->name, strlen(tmp_cs->name), scs);
       comment= tmp_cs->comment ? tmp_cs->comment : "";
       table->field[2]->store(comment, strlen(comment), scs);
-      table->field[3]->store((int64_t) tmp_cs->mbmaxlen, TRUE);
+      table->field[3]->store((int64_t) tmp_cs->mbmaxlen, true);
       if (schema_table_store_record(thd, table))
         return 1;
     }
@@ -3279,12 +3279,12 @@ int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__
 	restore_record(table, s->default_values);
 	table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
         table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
-        table->field[2]->store((int64_t) tmp_cl->number, TRUE);
+        table->field[2]->store((int64_t) tmp_cl->number, true);
         tmp_buff= (tmp_cl->state & MY_CS_PRIMARY) ? "Yes" : "";
 	table->field[3]->store(tmp_buff, strlen(tmp_buff), scs);
         tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
 	table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
-        table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, TRUE);
+        table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, true);
         if (schema_table_store_record(thd, table))
           return 1;
       }
@@ -3363,10 +3363,10 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
         table->field[1]->store(db_name->str, db_name->length, cs);
         table->field[2]->store(table_name->str, table_name->length, cs);
         table->field[3]->store((int64_t) ((key_info->flags &
-                                            HA_NOSAME) ? 0 : 1), TRUE);
+                                            HA_NOSAME) ? 0 : 1), true);
         table->field[4]->store(db_name->str, db_name->length, cs);
         table->field[5]->store(key_info->name, strlen(key_info->name), cs);
-        table->field[6]->store((int64_t) (j+1), TRUE);
+        table->field[6]->store((int64_t) (j+1), true);
         str=(key_part->field ? key_part->field->field_name :
              "?unknown field?");
         table->field[7]->store(str, strlen(str), cs);
@@ -3384,7 +3384,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
           {
             ha_rows records=(show_table->file->stats.records /
                              key->rec_per_key[j]);
-            table->field[9]->store((int64_t) records, TRUE);
+            table->field[9]->store((int64_t) records, true);
             table->field[9]->set_notnull();
           }
           str= show_table->file->index_type(i);
@@ -3395,7 +3395,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
              show_table->s->field[key_part->fieldnr-1]->key_length()))
         {
           table->field[10]->store((int64_t) key_part->length /
-                                  key_part->field->charset()->mbmaxlen, TRUE);
+                                  key_part->field->charset()->mbmaxlen, true);
           table->field[10]->set_notnull();
         }
         uint flags= key_part->field ? key_part->field->flags : 0;
@@ -3505,7 +3505,7 @@ void store_key_column_usage(TABLE *table, LEX_STRING *db_name,
   table->field[4]->store(db_name->str, db_name->length, cs);
   table->field[5]->store(table_name->str, table_name->length, cs);
   table->field[6]->store(con_type, con_len, cs);
-  table->field[7]->store((int64_t) idx, TRUE);
+  table->field[7]->store((int64_t) idx, true);
 }
 
 
@@ -3576,7 +3576,7 @@ static int get_schema_key_column_usage_record(THD *thd,
                                f_key_info->forein_id->length,
                                f_info->str, f_info->length,
                                (int64_t) f_idx);
-        table->field[8]->store((int64_t) f_idx, TRUE);
+        table->field[8]->store((int64_t) f_idx, true);
         table->field[8]->set_notnull();
         table->field[9]->store(f_key_info->referenced_db->str,
                                f_key_info->referenced_db->length,
@@ -3613,8 +3613,8 @@ int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__u
     restore_record(table, s->default_values);
     table->field[0]->store(open_list->db, strlen(open_list->db), cs);
     table->field[1]->store(open_list->table, strlen(open_list->table), cs);
-    table->field[2]->store((int64_t) open_list->in_use, TRUE);
-    table->field[3]->store((int64_t) open_list->locked, TRUE);
+    table->field[2]->store((int64_t) open_list->in_use, true);
+    table->field[3]->store((int64_t) open_list->locked, true);
     if (schema_table_store_record(thd, table))
       return(1);
   }
@@ -3954,7 +3954,7 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
   my_bitmap_map* bitmaps=
     (my_bitmap_map*) thd->alloc(bitmap_buffer_size(field_count));
   bitmap_init(&table->def_read_set, (my_bitmap_map*) bitmaps, field_count,
-              FALSE);
+              false);
   table->read_set= &table->def_read_set;
   bitmap_clear_all(table->read_set);
   table_list->schema_table_param= tmp_table_param;
@@ -4246,8 +4246,8 @@ int make_schema_select(THD *thd, SELECT_LEX *sel,
     executed_place place where I_S table processed
 
   RETURN
-    FALSE success
-    TRUE  error
+    false success
+    true  error
 */
 
 bool get_schema_tables_result(JOIN *join,

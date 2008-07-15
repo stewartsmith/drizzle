@@ -2434,7 +2434,7 @@ my_strnncollsp_utf8mb4(CHARSET_INFO *cs,
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
 
   while ( s < se && t < te )
@@ -3327,7 +3327,7 @@ my_strnncollsp_utf8mb3(CHARSET_INFO *cs,
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
 
   while ( s < se && t < te )
@@ -3831,7 +3831,7 @@ my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
     
   while ( s < se && t < te )

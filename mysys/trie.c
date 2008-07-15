@@ -110,8 +110,8 @@ void trie_free (TRIE *trie)
     Inserts new key into trie.
 
   RETURN VALUE
-    Upon successful completion, `trie_insert' returns `FALSE'. Otherwise
-    `TRUE' is returned.
+    Upon successful completion, `trie_insert' returns `false'. Otherwise
+    `true' is returned.
 
   NOTES
     If this function fails you must assume `trie' is broken.
@@ -140,7 +140,7 @@ bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
       TRIE_NODE *tmp= (TRIE_NODE *)alloc_root(&trie->mem_root,
                                               sizeof(TRIE_NODE));
       if (! tmp)
-        DBUG_RETURN(TRUE);
+        DBUG_RETURN(true);
       tmp->leaf= 0;
       tmp->c= p;
       tmp->links= tmp->fail= tmp->next= NULL;
@@ -163,7 +163,7 @@ bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
   }
   node->leaf= keylen;
   trie->nwords++;
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
@@ -176,8 +176,8 @@ bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
     Constructs Aho-Corasick automaton.
 
   RETURN VALUE
-    Upon successful completion, `trie_prepare' returns `FALSE'. Otherwise
-    `TRUE' is returned.
+    Upon successful completion, `trie_prepare' returns `false'. Otherwise
+    `true' is returned.
 */
 
 bool ac_trie_prepare (TRIE *trie)
@@ -191,7 +191,7 @@ bool ac_trie_prepare (TRIE *trie)
 
   tmp_nodes= (TRIE_NODE **)my_malloc(trie->nnodes * sizeof(TRIE_NODE *), MYF(0));
   if (! tmp_nodes)
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
 
   trie->root.fail= &trie->root;
   for (node= trie->root.links; node; node= node->next)
@@ -212,7 +212,7 @@ bool ac_trie_prepare (TRIE *trie)
     }
   }
   my_free((uchar*)tmp_nodes, MYF(0));
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 }
 
 
