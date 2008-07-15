@@ -1217,7 +1217,7 @@ then
   then
     W_STRICT_ALIASING="-Wstrict-aliasing"
   else
-    W_STRICT_ALIASING="-Wno-strict_aliasing"
+    W_STRICT_ALIASING="-Wno-strict-aliasing"
   fi
 
   if test "$ac_warn_pedantic" = "yes"
