@@ -558,9 +558,14 @@ my_real_read(NET *net, size_t *complen)
     waittime.tv_usec= 0;
 
     memset(&backtime, 0, sizeof(struct timeval));
+    length= sizeof(struct timeval);
     error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
                       &backtime, &length);
-    assert(error == 0);
+    if (error != 0)
+    {
+      perror("getsockopt");
+      assert(error == 0);
+    }
     error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
                       &waittime, (socklen_t)sizeof(struct timeval));
     assert(error == 0);
