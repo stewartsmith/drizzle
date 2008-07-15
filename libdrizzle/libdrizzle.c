@@ -323,6 +323,8 @@ mysql_connect(MYSQL *mysql,const char *host,
 
 int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
 {
+  (void)buff;
+  (void)passwd;
   ulong pkt_length;
 
   pkt_length= cli_safe_read(mysql);
