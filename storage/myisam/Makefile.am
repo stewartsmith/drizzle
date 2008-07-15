@@ -13,10 +13,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-if BUILD_DBUG
-  d_dbug = $(top_builddir)/dbug/libdbuglt.la
-endif
-
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir =          $(prefix)
@@ -40,17 +36,14 @@ bin_PROGRAMS =		myisamchk myisamlog myisampack
 myisamchk_LDADD=	libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 myisamlog_LDADD=	libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 myisampack_LDADD=	libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3
 noinst_HEADERS =	myisamdef.h \
@@ -58,17 +51,14 @@ noinst_HEADERS =	myisamdef.h \
 mi_test1_LDADD=		libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 mi_test2_LDADD=		libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 mi_test3_LDADD=		libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la -lz
 libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \
@@ -81,7 +71,7 @@ libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mf_keycache.c mf_keycaches.c \
 			mi_rprev.c mi_rfirst.c mi_rlast.c mi_rsame.c \
 			mi_rsamepos.c mi_panic.c mi_close.c mi_create.c\
-			mi_range.c mi_dbug.c mi_checksum.c mi_log.c \
+			mi_range.c mi_checksum.c mi_log.c \
 			mi_changed.c mi_static.c mi_delete_all.c \
 			mi_delete_table.c mi_rename.c  mi_check.c \
 			mi_keycache.c mi_preload.c \
