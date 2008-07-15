@@ -450,11 +450,6 @@ double my_rnd(struct rand_struct *);
 void create_random_string(char *to, unsigned int length, struct rand_struct *rand_st);
 
 void hash_password(uint32_t *to, const char *password, uint32_t password_len);
-void make_scrambled_password_323(char *to, const char *password);
-void scramble_323(char *to, const char *message, const char *password);
-my_bool check_scramble_323(const char *, const char *message, uint32_t *salt);
-void get_salt_from_password_323(uint32_t *res, const char *password);
-void make_password_from_salt_323(char *to, const uint32_t *salt);
 
 void make_scrambled_password(char *to, const char *password);
 void scramble(char *to, const char *message, const char *password);

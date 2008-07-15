@@ -1635,16 +1635,10 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
   end= strend(end) + 1;
   if (passwd[0])
   {
-    if (mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
     {
       *end++= SCRAMBLE_LENGTH;
       scramble(end, mysql->scramble, passwd);
       end+= SCRAMBLE_LENGTH;
-    }
-    else
-    {
-      scramble_323(end, mysql->scramble, passwd);
-      end+= SCRAMBLE_LENGTH_323 + 1;
     }
   }
   else
@@ -1680,35 +1674,6 @@ CLI_MYSQL_REAL_CONNECT(MYSQL *mysql,const char *host, const char *user,
                                "reading authorization packet",
                                errno);
     goto error;
-  }
-
-  if (pkt_length == 1 && net->read_pos[0] == 254 && 
-      mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
-  {
-    /*
-      By sending this very specific reply server asks us to send scrambled
-      password in old format.
-    */
-    scramble_323(buff, mysql->scramble, passwd);
-    if (my_net_write(net, (uchar*) buff, SCRAMBLE_LENGTH_323 + 1) ||
-        net_flush(net))
-    {
-      set_mysql_extended_error(mysql, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "sending password information",
-                               errno);
-      goto error;
-    }
-    /* Read what server thinks about out new auth message report */
-    if (cli_safe_read(mysql) == packet_error)
-    {
-      if (mysql->net.last_errno == CR_SERVER_LOST)
-        set_mysql_extended_error(mysql, CR_SERVER_LOST, unknown_sqlstate,
-                                 ER(CR_SERVER_LOST_EXTENDED),
-                                 "reading final connect information",
-                                 errno);
-      goto error;
-    }
   }
 
   if (client_flag & CLIENT_COMPRESS)		/* We will use compression */

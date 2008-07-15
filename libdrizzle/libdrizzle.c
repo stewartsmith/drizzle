@@ -323,7 +323,6 @@ mysql_connect(MYSQL *mysql,const char *host,
 
 int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
 {
-  NET *net= &mysql->net;
   ulong pkt_length;
 
   pkt_length= cli_safe_read(mysql);
@@ -331,24 +330,6 @@ int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
   if (pkt_length == packet_error)
     return 1;
 
-  if (pkt_length == 1 && net->read_pos[0] == 254 &&
-      mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
-  {
-    /*
-      By sending this very specific reply server asks us to send scrambled
-      password in old format. The reply contains scramble_323.
-    */
-    scramble_323(buff, mysql->scramble, passwd);
-    if (my_net_write(net, (uchar*) buff, SCRAMBLE_LENGTH_323 + 1) ||
-        net_flush(net))
-    {
-      set_mysql_error(mysql, CR_SERVER_LOST, unknown_sqlstate);
-      return 1;
-    }
-    /* Read what server thinks about out new auth message report */
-    if (cli_safe_read(mysql) == packet_error)
-      return 1;
-  }
   return 0;
 }
 
@@ -383,16 +364,10 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   /* write scrambled password according to server capabilities */
   if (passwd[0])
   {
-    if (mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
     {
       *end++= SCRAMBLE_LENGTH;
       scramble(end, mysql->scramble, passwd);
       end+= SCRAMBLE_LENGTH;
-    }
-    else
-    {
-      scramble_323(end, mysql->scramble, passwd);
-      end+= SCRAMBLE_LENGTH_323 + 1;
     }
   }
   else
