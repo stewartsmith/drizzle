@@ -1039,9 +1039,9 @@ int decimal2uint64_t(decimal_t *from, uint64_t *to)
   {
     uint64_t y=x;
     x=x*DIG_BASE + *buf++;
-    if (unlikely(y > ((uint64_t) ULONGLONG_MAX/DIG_BASE) || x < y))
+    if (unlikely(y > ((uint64_t) UINT64_MAX/DIG_BASE) || x < y))
     {
-      *to=ULONGLONG_MAX;
+      *to=UINT64_MAX;
       return E_DEC_OVERFLOW;
     }
   }
@@ -1064,24 +1064,24 @@ int decimal2int64_t(decimal_t *from, int64_t *to)
     /*
       Attention: trick!
       we're calculating -|from| instead of |from| here
-      because |LONGLONG_MIN| > LONGLONG_MAX
+      because |INT64_MIN| > INT64_MAX
       so we can convert -9223372036854775808 correctly
     */
     x=x*DIG_BASE - *buf++;
-    if (unlikely(y < (LONGLONG_MIN/DIG_BASE) || x > y))
+    if (unlikely(y < (INT64_MIN/DIG_BASE) || x > y))
     {
       /*
         the decimal is bigger than any possible integer
         return border integer depending on the sign
       */
-      *to= from->sign ? LONGLONG_MIN : LONGLONG_MAX;
+      *to= from->sign ? INT64_MIN : INT64_MAX;
       return E_DEC_OVERFLOW;
     }
   }
   /* boundary case: 9223372036854775808 */
-  if (unlikely(from->sign==0 && x == LONGLONG_MIN))
+  if (unlikely(from->sign==0 && x == INT64_MIN))
   {
-    *to= LONGLONG_MAX;
+    *to= INT64_MAX;
     return E_DEC_OVERFLOW;
   }
 
@@ -1528,7 +1528,7 @@ decimal_round(decimal_t *from, decimal_t *to, int scale,
   buf1+=intg0+frac0-1;
   if (scale == frac0*DIG_PER_DEC1)
   {
-    int do_inc= FALSE;
+    int do_inc= false;
     DBUG_ASSERT(frac0+intg0 >= 0);
     switch (round_digit) {
     case 0:
@@ -1538,7 +1538,7 @@ decimal_round(decimal_t *from, decimal_t *to, int scale,
       {
         if (*p0)
         {
-          do_inc= TRUE;
+          do_inc= true;
           break;
         }
       }

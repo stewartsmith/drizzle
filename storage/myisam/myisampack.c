@@ -290,7 +290,6 @@ static void print_version(void)
 {
   VOID(printf("%s Ver 1.23 for %s on %s\n",
               my_progname, SYSTEM_TYPE, MACHINE_TYPE));
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 

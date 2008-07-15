@@ -1099,7 +1099,7 @@ void thr_abort_locks(THR_LOCK *lock, bool upgrade_lock)
 bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
 {
   THR_LOCK_DATA *data;
-  bool found= FALSE;
+  bool found= false;
   DBUG_ENTER("thr_abort_locks_for_thread");
 
   pthread_mutex_lock(&lock->mutex);
@@ -1110,7 +1110,7 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
       DBUG_PRINT("info",("Aborting read-wait lock"));
       data->type= TL_UNLOCK;			/* Mark killed */
       /* It's safe to signal the cond first: we're still holding the mutex. */
-      found= TRUE;
+      found= true;
       pthread_cond_signal(data->cond);
       data->cond= 0;				/* Removed from list */
 
@@ -1126,7 +1126,7 @@ bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
     {
       DBUG_PRINT("info",("Aborting write-wait lock"));
       data->type= TL_UNLOCK;
-      found= TRUE;
+      found= true;
       pthread_cond_signal(data->cond);
       data->cond= 0;
 

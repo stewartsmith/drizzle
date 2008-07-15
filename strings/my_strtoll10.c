@@ -212,7 +212,7 @@ int64_t my_strtoll10(const char *nptr, char **endptr, int *error)
 
 overflow:					/* *endptr is set here */
   *error= MY_ERRNO_ERANGE;
-  return negative ? LONGLONG_MIN : (int64_t) ULONGLONG_MAX;
+  return negative ? INT64_MIN: (int64_t) ULONGLONG_MAX;
 
 end_i:
   *endptr= (char*) s;

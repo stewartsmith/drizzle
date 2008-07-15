@@ -803,8 +803,6 @@ extern void make_password_from_salt(char * to, unsigned char const * hash_stage2
 extern void make_password_from_salt_323(char * to, unsigned long int const * salt);
 # 450 "mysql_com.h"
 extern void make_scrambled_password(char * to, char const * password);
-# 443 "mysql_com.h"
-extern void make_scrambled_password_323(char * to, char const * password);
 # 33 "typelib.h"
 extern void make_type(char * to, unsigned int, TYPELIB * typelib);
 # 377 "mysql_com.h"

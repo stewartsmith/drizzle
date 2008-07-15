@@ -218,7 +218,7 @@ static struct my_option my_long_options[] =
    "Skip rows bigger than this if myisamchk can't allocate memory to hold it",
    (char**) &check_param.max_record_length,
    (char**) &check_param.max_record_length,
-   0, GET_ULL, REQUIRED_ARG, LONGLONG_MAX, 0, LONGLONG_MAX, 0, 0, 0},
+   0, GET_ULL, REQUIRED_ARG, INT64_MAX, 0, INT64_MAX, 0, 0, 0},
   {"medium-check", 'm',
    "Faster than extend-check, but only finds 99.99% of all errors. Should be good enough for most cases.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -335,7 +335,6 @@ static void print_version(void)
 {
   printf("%s  Ver 2.7 for %s at %s\n", my_progname, SYSTEM_TYPE,
 	 MACHINE_TYPE);
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 

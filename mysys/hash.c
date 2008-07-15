@@ -318,12 +318,12 @@ bool my_hash_insert(HASH *info,const uchar *record)
   {
     uchar *key= (uchar*) hash_key(info, record, &idx, 1);
     if (hash_search(info, key, idx))
-      return(TRUE);				/* Duplicate entry */
+      return(true);				/* Duplicate entry */
   }
 
   flag=0;
   if (!(empty=(HASH_LINK*) alloc_dynamic(&info->array)))
-    return(TRUE);				/* No more memory */
+    return(true);				/* No more memory */
 
   data=dynamic_element(&info->array,0,HASH_LINK*);
   halfbuff= info->blength >> 1;

@@ -2201,7 +2201,7 @@ void handler::column_bitmaps_signal()
   offset and increment means that we want values to be of the form
   offset + N * increment, where N>=0 is integer.
   If the function sets *first_value to ~(uint64_t)0 it means an error.
-  If the function sets *nb_reserved_values to ULONGLONG_MAX it means it has
+  If the function sets *nb_reserved_values to UINT64_MAX it means it has
   reserved to "positive infinite".
 
   @param offset
@@ -2232,7 +2232,7 @@ void handler::get_auto_increment(uint64_t offset __attribute__((__unused__)),
       use nr+increment without checking again with the handler, in
       handler::update_auto_increment()), so reserves to infinite.
     */
-    *nb_reserved_values= ULONGLONG_MAX;
+    *nb_reserved_values= UINT64_MAX;
   }
   else
   {

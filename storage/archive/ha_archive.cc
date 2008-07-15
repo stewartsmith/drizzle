@@ -118,7 +118,7 @@ int archive_discover(handlerton *hton, THD* thd, const char *db,
                      uchar **frmblob, 
                      size_t *frmlen);
 
-static my_bool archive_use_aio= FALSE;
+static my_bool archive_use_aio= false;
 
 /*
   Number of rows that will force a bulk insert.
@@ -156,8 +156,8 @@ static uchar* archive_get_key(ARCHIVE_SHARE *share, size_t *length,
     void *
 
   RETURN
-    FALSE       OK
-    TRUE        Error
+    false       OK
+    true        Error
 */
 
 int archive_db_init(void *p)
@@ -184,10 +184,10 @@ int archive_db_init(void *p)
   }
   else
   {
-    DBUG_RETURN(FALSE);
+    DBUG_RETURN(false);
   }
 error:
-  DBUG_RETURN(TRUE);
+  DBUG_RETURN(true);
 }
 
 /*
@@ -198,7 +198,7 @@ error:
     void
 
   RETURN
-    FALSE       OK
+    false       OK
 */
 
 int archive_db_done(void *p __attribute__((__unused__)))
@@ -218,7 +218,7 @@ ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
 
   /* The size of the offset value we will use for position() */
   ref_length= sizeof(my_off_t);
-  archive_reader_open= FALSE;
+  archive_reader_open= false;
 }
 
 int archive_discover(handlerton *hton __attribute__((__unused__)),
@@ -315,8 +315,8 @@ ARCHIVE_SHARE *ha_archive::get_share(const char *table_name, int *rc)
     share->use_count= 0;
     share->table_name_length= length;
     share->table_name= tmp_name;
-    share->crashed= FALSE;
-    share->archive_write_open= FALSE;
+    share->crashed= false;
+    share->archive_write_open= false;
     fn_format(share->data_file_name, table_name, "",
               ARZ, MY_REPLACE_EXT | MY_UNPACK_FILENAME);
     strmov(share->table_name, table_name);
@@ -393,7 +393,7 @@ int ha_archive::free_share()
       Since we will close the data down after this, we go on and count
       the flush on close;
     */
-    if (share->archive_write_open == TRUE)
+    if (share->archive_write_open == true)
     {
       if (azclose(&(share->archive_write)))
         rc= 1;
@@ -417,10 +417,10 @@ int ha_archive::init_archive_writer()
                O_RDWR|O_BINARY, AZ_METHOD_BLOCK)))
   {
     DBUG_PRINT("ha_archive", ("Could not open archive write file"));
-    share->crashed= TRUE;
+    share->crashed= true;
     DBUG_RETURN(1);
   }
-  share->archive_write_open= TRUE;
+  share->archive_write_open= true;
 
   DBUG_RETURN(0);
 }
@@ -437,16 +437,16 @@ int ha_archive::init_archive_reader()
     a gzip file that can be both read and written we keep a writer open
     that is shared amoung all open tables.
   */
-  if (archive_reader_open == FALSE)
+  if (archive_reader_open == false)
   {
     az_method method;
 
     switch (archive_use_aio)
     {
-    case FALSE:
+    case false:
       method= AZ_METHOD_BLOCK;
       break;
-    case TRUE:
+    case true:
       method= AZ_METHOD_AIO;
       break;
     default:
@@ -456,10 +456,10 @@ int ha_archive::init_archive_reader()
                  method)))
     {
       DBUG_PRINT("ha_archive", ("Could not open archive read file"));
-      share->crashed= TRUE;
+      share->crashed= true;
       DBUG_RETURN(1);
     }
-    archive_reader_open= TRUE;
+    archive_reader_open= true;
   }
 
   DBUG_RETURN(0);
@@ -558,7 +558,7 @@ int ha_archive::close(void)
   destroy_record_buffer(record_buffer);
 
   /* First close stream */
-  if (archive_reader_open == TRUE)
+  if (archive_reader_open == true)
   {
     if (azclose(&archive))
       rc= 1;
@@ -724,7 +724,7 @@ int ha_archive::real_write_row(uchar *buf, azio_stream *writer)
   }
 
   if (!delayed_insert || !bulk_insert)
-    share->dirty= TRUE;
+    share->dirty= true;
 
   DBUG_RETURN(0);
 }
@@ -805,7 +805,7 @@ int ha_archive::write_row(uchar *buf)
     table->timestamp_field->set_time();
   pthread_mutex_lock(&share->mutex);
 
-  if (share->archive_write_open == FALSE)
+  if (share->archive_write_open == false)
     if (init_archive_writer())
       DBUG_RETURN(HA_ERR_CRASHED_ON_USAGE);
 
@@ -900,7 +900,7 @@ void ha_archive::get_auto_increment(uint64_t offset __attribute__((__unused__)),
                                     uint64_t *first_value __attribute__((__unused__)),
                                     uint64_t *nb_reserved_values __attribute__((__unused__)))
 {
-  *nb_reserved_values= ULONGLONG_MAX;
+  *nb_reserved_values= UINT64_MAX;
   *first_value= share->archive_write.auto_increment + 1;
 }
 
@@ -941,7 +941,7 @@ int ha_archive::index_read_idx(uchar *buf, uint index, const uchar *key,
 
   DBUG_ENTER("ha_archive::index_read_idx");
 
-  rc= rnd_init(TRUE);
+  rc= rnd_init(true);
 
   if (rc)
     goto error;
@@ -1167,7 +1167,7 @@ int ha_archive::repair(THD* thd, HA_CHECK_OPT* check_opt)
   if (rc)
     DBUG_RETURN(HA_ERR_CRASHED_ON_REPAIR);
 
-  share->crashed= FALSE;
+  share->crashed= false;
   DBUG_RETURN(0);
 }
 
@@ -1189,7 +1189,7 @@ int ha_archive::optimize(THD* thd __attribute__((__unused__)),
   if (share->archive_write_open)
   {
     azclose(&(share->archive_write));
-    share->archive_write_open= FALSE;
+    share->archive_write_open= false;
   }
 
   /* Lets create a file to contain the new data */
@@ -1272,7 +1272,7 @@ int ha_archive::optimize(THD* thd __attribute__((__unused__)),
   } 
 
   azclose(&writer);
-  share->dirty= FALSE;
+  share->dirty= false;
   
   azclose(&archive);
 
@@ -1296,9 +1296,9 @@ THR_LOCK_DATA **ha_archive::store_lock(THD *thd,
                                        enum thr_lock_type lock_type)
 {
   if (lock_type == TL_WRITE_DELAYED)
-    delayed_insert= TRUE;
+    delayed_insert= true;
   else
-    delayed_insert= FALSE;
+    delayed_insert= false;
 
   if (lock_type != TL_IGNORE && lock.type == TL_UNLOCK) 
   {
@@ -1362,12 +1362,12 @@ int ha_archive::info(uint flag)
     I found that just calling azflush() doesn't always work.
   */
   pthread_mutex_lock(&share->mutex);
-  if (share->dirty == TRUE)
+  if (share->dirty == true)
   {
     DBUG_PRINT("ha_archive", ("archive flushing out rows for scan"));
     azflush(&(share->archive_write), Z_SYNC_FLUSH);
     share->rows_recorded= share->archive_write.rows;
-    share->dirty= FALSE;
+    share->dirty= false;
     if (share->version < global_version)
     {
       share->version_rows= share->rows_recorded;
@@ -1426,7 +1426,7 @@ void ha_archive::start_bulk_insert(ha_rows rows)
 {
   DBUG_ENTER("ha_archive::start_bulk_insert");
   if (!rows || rows >= ARCHIVE_MIN_ROWS_TO_USE_BULK_INSERT)
-    bulk_insert= TRUE;
+    bulk_insert= true;
   DBUG_VOID_RETURN;
 }
 
@@ -1438,8 +1438,8 @@ void ha_archive::start_bulk_insert(ha_rows rows)
 int ha_archive::end_bulk_insert()
 {
   DBUG_ENTER("ha_archive::end_bulk_insert");
-  bulk_insert= FALSE;
-  share->dirty= TRUE;
+  bulk_insert= false;
+  share->dirty= true;
   DBUG_RETURN(0);
 }
 
@@ -1500,7 +1500,7 @@ int ha_archive::check(THD* thd,
 
   if ((rc && rc != HA_ERR_END_OF_FILE))  
   {
-    share->crashed= FALSE;
+    share->crashed= false;
     DBUG_RETURN(HA_ADMIN_CORRUPT);
   }
   else
@@ -1555,7 +1555,7 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
 static MYSQL_SYSVAR_BOOL(aio, archive_use_aio,
   PLUGIN_VAR_NOCMDOPT,
   "Whether or not to use asynchronous IO.",
-  NULL, NULL, TRUE);
+  NULL, NULL, true);
 
 static struct st_mysql_sys_var* archive_system_variables[]= {
   MYSQL_SYSVAR(aio),

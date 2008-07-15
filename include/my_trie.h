@@ -125,11 +125,11 @@ static inline bool trie_search (TRIE *trie, const uchar *key, uint keylen)
   {
     uchar p;
     if (! (node= node->links))
-      DBUG_RETURN(FALSE);
+      DBUG_RETURN(false);
     p= key[k];
     while (p != node->c)
       if (! (node= node->next))
-        DBUG_RETURN(FALSE);
+        DBUG_RETURN(false);
   }
 
   DBUG_RETURN(node->leaf > 0);

@@ -287,8 +287,8 @@ bool bitmap_is_set_all(const MY_BITMAP *map)
   *map->last_word_ptr |= map->last_word_mask;
   for (; data_ptr <= end; data_ptr++)
     if (*data_ptr != 0xFFFFFFFF)
-      return FALSE;
-  return TRUE;
+      return false;
+  return true;
 }
 
 
@@ -297,15 +297,15 @@ bool bitmap_is_clear_all(const MY_BITMAP *map)
   my_bitmap_map *data_ptr= map->bitmap;
   my_bitmap_map *end;
   if (*map->last_word_ptr & ~map->last_word_mask)
-    return FALSE;
+    return false;
   end= map->last_word_ptr;
   for (; data_ptr < end; data_ptr++)
     if (*data_ptr)
-      return FALSE;
-  return TRUE;
+      return false;
+  return true;
 }
 
-/* Return TRUE if map1 is a subset of map2 */
+/* Return true if map1 is a subset of map2 */
 
 bool bitmap_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2)
 {
@@ -765,13 +765,13 @@ bool test_set_get_clear_bit(MY_BITMAP *map, uint bitsize)
     if (bitmap_is_set(map, test_bit))
       goto error2;
   }
-  return FALSE;
+  return false;
 error1:
   printf("Error in set bit, bit %u, bitsize = %u", test_bit, bitsize);
-  return TRUE;
+  return true;
 error2:
   printf("Error in clear bit, bit %u, bitsize = %u", test_bit, bitsize);
-  return TRUE;
+  return true;
 }
 
 bool test_flip_bit(MY_BITMAP *map, uint bitsize)
@@ -788,19 +788,19 @@ bool test_flip_bit(MY_BITMAP *map, uint bitsize)
     if (bitmap_is_set(map, test_bit))
       goto error2;
   }
-  return FALSE;
+  return false;
 error1:
   printf("Error in flip bit 1, bit %u, bitsize = %u", test_bit, bitsize);
-  return TRUE;
+  return true;
 error2:
   printf("Error in flip bit 2, bit %u, bitsize = %u", test_bit, bitsize);
-  return TRUE;
+  return true;
 }
 
 bool test_operators(MY_BITMAP *map __attribute__((unused)),
                     uint bitsize __attribute__((unused)))
 {
-  return FALSE;
+  return false;
 }
 
 bool test_get_all_bits(MY_BITMAP *map, uint bitsize)
@@ -824,25 +824,25 @@ bool test_get_all_bits(MY_BITMAP *map, uint bitsize)
     bitmap_clear_bit(map, i);
   if (!bitmap_is_clear_all(map))
     goto error4;
-  return FALSE;
+  return false;
 error1:
   printf("Error in set_all, bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 error2:
   printf("Error in clear_all, bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 error3:
   printf("Error in bitmap_is_set_all, bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 error4:
   printf("Error in bitmap_is_clear_all, bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 error5:
   printf("Error in set_all through set_prefix, bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 error6:
   printf("Error in clear_all through set_prefix, bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 }
 
 bool test_compare_operators(MY_BITMAP *map, uint bitsize)
@@ -853,8 +853,8 @@ bool test_compare_operators(MY_BITMAP *map, uint bitsize)
   MY_BITMAP *map2= &map2_obj, *map3= &map3_obj;
   my_bitmap_map map2buf[1024];
   my_bitmap_map map3buf[1024];
-  bitmap_init(&map2_obj, map2buf, bitsize, FALSE);
-  bitmap_init(&map3_obj, map3buf, bitsize, FALSE);
+  bitmap_init(&map2_obj, map2buf, bitsize, false);
+  bitmap_init(&map3_obj, map3buf, bitsize, false);
   bitmap_clear_all(map2);
   bitmap_clear_all(map3);
   for (i=0; i < no_loops; i++)
@@ -928,27 +928,27 @@ bool test_compare_operators(MY_BITMAP *map, uint bitsize)
     bitmap_clear_all(map);
     bitmap_clear_all(map3);
   }
-  return FALSE;
+  return false;
 error1:
   printf("intersect error  bitsize=%u,size1=%u,size2=%u", bitsize,
   test_bit1,test_bit2);
-  return TRUE;
+  return true;
 error2:
   printf("union error  bitsize=%u,size1=%u,size2=%u", bitsize,
   test_bit1,test_bit2);
-  return TRUE;
+  return true;
 error3:
   printf("xor error  bitsize=%u,size1=%u,size2=%u", bitsize,
   test_bit1,test_bit2);
-  return TRUE;
+  return true;
 error4:
   printf("subtract error  bitsize=%u,size1=%u,size2=%u", bitsize,
   test_bit1,test_bit2);
-  return TRUE;
+  return true;
 error5:
   printf("invert error  bitsize=%u,size=%u", bitsize,
   test_bit1);
-  return TRUE;
+  return true;
 }
 
 bool test_count_bits_set(MY_BITMAP *map, uint bitsize)
@@ -968,13 +968,13 @@ bool test_count_bits_set(MY_BITMAP *map, uint bitsize)
     goto error1;
   if (bitmap_bits_set(map) != bit_count)
     goto error2;
-  return FALSE;
+  return false;
 error1:
   printf("No bits set  bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 error2:
   printf("Wrong count of bits set, bitsize = %u", bitsize);
-  return TRUE;
+  return true;
 }
 
 bool test_get_first_bit(MY_BITMAP *map, uint bitsize)
@@ -993,13 +993,13 @@ bool test_get_first_bit(MY_BITMAP *map, uint bitsize)
       goto error2;
     bitmap_clear_all(map);
   }
-  return FALSE;
+  return false;
 error1:
   printf("get_first_set error bitsize=%u,prefix_size=%u",bitsize,test_bit);
-  return TRUE;
+  return true;
 error2:
   printf("get_first error bitsize= %u, prefix_size= %u",bitsize,test_bit);
-  return TRUE;
+  return true;
 }
 
 bool test_get_next_bit(MY_BITMAP *map, uint bitsize)
@@ -1015,10 +1015,10 @@ bool test_get_next_bit(MY_BITMAP *map, uint bitsize)
       goto error1;
     bitmap_clear_all(map);
   }
-  return FALSE;
+  return false;
 error1:
   printf("get_next error  bitsize= %u, prefix_size= %u", bitsize,test_bit);
-  return TRUE;
+  return true;
 }
 
 bool test_prefix(MY_BITMAP *map, uint bitsize)
@@ -1043,16 +1043,16 @@ bool test_prefix(MY_BITMAP *map, uint bitsize)
       goto error3;
     bitmap_clear_all(map);
   }
-  return FALSE;
+  return false;
 error1:
   printf("prefix1 error  bitsize = %u, prefix_size = %u", bitsize,test_bit);
-  return TRUE;
+  return true;
 error2:
   printf("prefix2 error  bitsize = %u, prefix_size = %u", bitsize,test_bit);
-  return TRUE;
+  return true;
 error3:
   printf("prefix3 error  bitsize = %u, prefix_size = %u", bitsize,test_bit);
-  return TRUE;
+  return true;
 }
 
 
@@ -1060,7 +1060,7 @@ bool do_test(uint bitsize)
 {
   MY_BITMAP map;
   my_bitmap_map buf[1024];
-  if (bitmap_init(&map, buf, bitsize, FALSE))
+  if (bitmap_init(&map, buf, bitsize, false))
   {
     printf("init error for bitsize %d", bitsize);
     goto error;
@@ -1090,10 +1090,10 @@ bool do_test(uint bitsize)
     goto error;
   if (test_prefix(&map,bitsize))
     goto error;
-  return FALSE;
+  return false;
 error:
   printf("\n");
-  return TRUE;
+  return true;
 }
 
 int main()

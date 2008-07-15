@@ -1289,12 +1289,12 @@ static void reg_requests(KEY_CACHE *keycache, BLOCK_LINK *block, int count)
 
   NOTES.
     Every linking to the LRU ring decrements by one a special block
-    counter (if it's positive). If the at_end parameter is TRUE the block is
+    counter (if it's positive). If the at_end parameter is true the block is
     added either at the end of warm sub-chain or at the end of hot sub-chain.
     It is added to the hot subchain if its counter is zero and number of
     blocks in warm sub-chain is not less than some low limit (determined by
     the division_limit parameter). Otherwise the block is added to the warm
-    sub-chain. If the at_end parameter is FALSE the block is always added
+    sub-chain. If the at_end parameter is false the block is always added
     at beginning of the warm sub-chain.
     Thus a warm block can be promoted to the hot sub-chain when its counter
     becomes zero for the first time.
@@ -2222,7 +2222,7 @@ restart:
               and hash_link refer to each other. Hence we need to assign
               the hash_link first, but then we would not know if it was
               linked before. Hence we would not know if to unlink it. So
-              unlink it here and call link_to_file_list(..., FALSE).
+              unlink it here and call link_to_file_list(..., false).
             */
             unlink_changed(block);
           }
@@ -2459,7 +2459,7 @@ static void read_block(KEY_CACHE *keycache,
     The function ensures that a block of data of size length from file
     positioned at filepos is in the buffers for some key cache blocks.
     Then the function either copies the data into the buffer buff, or,
-    if return_buffer is TRUE, it just returns the pointer to the key cache
+    if return_buffer is true, it just returns the pointer to the key cache
     buffer with the data.
     Filepos must be a multiple of 'block_length', but it doesn't
     have to be a multiple of key_cache_block_size;
@@ -2471,7 +2471,7 @@ uchar *key_cache_read(KEY_CACHE *keycache,
                       uint block_length __attribute__((unused)),
                       int return_buffer __attribute__((unused)))
 {
-  my_bool locked_and_incremented= FALSE;
+  my_bool locked_and_incremented= false;
   int error=0;
   uchar *start= buff;
   DBUG_ENTER("key_cache_read");
@@ -2512,7 +2512,7 @@ uchar *key_cache_read(KEY_CACHE *keycache,
       wait_on_queue(&keycache->resize_queue, &keycache->cache_lock);
     /* Register the I/O for the next resize. */
     inc_counter_for_resize_op(keycache);
-    locked_and_incremented= TRUE;
+    locked_and_incremented= true;
     /* Requested data may not always be aligned to cache blocks. */
     offset= (uint) (filepos % keycache->key_cache_block_size);
     /* Read data in key_cache_block_size increments */
@@ -2679,7 +2679,7 @@ int key_cache_insert(KEY_CACHE *keycache,
     uint read_length;
     uint offset;
     int page_st;
-    my_bool locked_and_incremented= FALSE;
+    my_bool locked_and_incremented= false;
 
     /*
       When the keycache is once initialized, we use the cache_lock to
@@ -2696,7 +2696,7 @@ int key_cache_insert(KEY_CACHE *keycache,
 	goto no_key_cache;
     /* Register the pseudo I/O for the next resize. */
     inc_counter_for_resize_op(keycache);
-    locked_and_incremented= TRUE;
+    locked_and_incremented= true;
     /* Loaded data may not always be aligned to cache blocks. */
     offset= (uint) (filepos % keycache->key_cache_block_size);
     /* Load data in key_cache_block_size increments. */
@@ -2741,7 +2741,7 @@ int key_cache_insert(KEY_CACHE *keycache,
             hash_link). So we cannot call remove_reader() on the block.
             And we cannot access the hash_link directly here. We need to
             wait until the assignment is complete. read_block() executes
-            the correct wait when called with primary == FALSE.
+            the correct wait when called with primary == false.
 
             Or
 
@@ -2898,11 +2898,11 @@ int key_cache_insert(KEY_CACHE *keycache,
     The function copies the data of size length from buff into buffers
     for key cache blocks that are  assigned to contain the portion of
     the file starting with position filepos.
-    It ensures that this data is flushed to the file if dont_write is FALSE.
+    It ensures that this data is flushed to the file if dont_write is false.
     Filepos must be a multiple of 'block_length', but it doesn't
     have to be a multiple of key_cache_block_size;
 
-    dont_write is always TRUE in the server (info->lock_type is never F_UNLCK).
+    dont_write is always true in the server (info->lock_type is never F_UNLCK).
 */
 
 int key_cache_write(KEY_CACHE *keycache,
@@ -2911,7 +2911,7 @@ int key_cache_write(KEY_CACHE *keycache,
                     uint block_length  __attribute__((unused)),
                     int dont_write)
 {
-  my_bool locked_and_incremented= FALSE;
+  my_bool locked_and_incremented= false;
   int error=0;
   DBUG_ENTER("key_cache_write");
   DBUG_PRINT("enter",
@@ -2971,7 +2971,7 @@ int key_cache_write(KEY_CACHE *keycache,
       wait_on_queue(&keycache->resize_queue, &keycache->cache_lock);
     /* Register the I/O for the next resize. */
     inc_counter_for_resize_op(keycache);
-    locked_and_incremented= TRUE;
+    locked_and_incremented= true;
     /* Requested data may not always be aligned to cache blocks. */
     offset= (uint) (filepos % keycache->key_cache_block_size);
     /* Write data in key_cache_block_size increments. */

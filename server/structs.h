@@ -263,7 +263,7 @@ public:
   {
     interval_min=    start;
     interval_values= val;
-    interval_max=    (val == ULONGLONG_MAX) ? val : start + val * incr;
+    interval_max=    (val == UINT64_MAX) ? val : start + val * incr;
   }
   Discrete_interval(uint64_t start, uint64_t val, uint64_t incr) :
     next(NULL) { replace(start, val, incr); };
@@ -280,7 +280,7 @@ public:
   {
     if (interval_max == start)
     {
-      if (val == ULONGLONG_MAX)
+      if (val == UINT64_MAX)
       {
         interval_values=   interval_max= val;
       }
