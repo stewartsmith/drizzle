@@ -370,7 +370,6 @@ err:
 */
 int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
 {
-  Item *fake_conds= 0;
   SELECT_LEX *select_lex= &thd->lex->select_lex;
   
   List<Item> all_fields;
@@ -408,7 +407,6 @@ int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
     fix_inner_refs(thd, all_fields, select_lex, select_lex->ref_pointer_array))
     return(-1);
 
-  select_lex->fix_prepare_information(thd, conds, &fake_conds);
   return(false);
 }
 

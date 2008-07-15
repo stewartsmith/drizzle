@@ -741,14 +741,12 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
 
   if (!select_insert)
   {
-    Item *fake_conds= 0;
     TABLE_LIST *duplicate;
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 1)))
     {
       update_non_unique_table_error(table_list, "INSERT", duplicate);
       return(true);
     }
-    select_lex->fix_prepare_information(thd, &fake_conds, &fake_conds);
     select_lex->first_execution= 0;
   }
   if (duplic == DUP_UPDATE || duplic == DUP_REPLACE)
