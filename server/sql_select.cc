@@ -4691,7 +4691,6 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
     - keyparts without previous keyparts
       (e.g. if there is a key(a,b,c) but only b < 5 (or a=2 and c < 3) is
       used in the query, we drop the partial key parts from consideration).
-    Special treatment for ft-keys.
   */
   if (keyuse->elements)
   {
@@ -14231,7 +14230,7 @@ static bool test_if_ref(Item_field *left_item,Item *right_item)
 	if (field->binary() &&
 	    field->real_type() != MYSQL_TYPE_STRING &&
 	    field->real_type() != MYSQL_TYPE_VARCHAR &&
-	    (field->type() != MYSQL_TYPE_FLOAT || field->decimals() == 0))
+	    field->decimals() == 0)
 	{
 	  return !store_val_in_field(field, right_item, CHECK_FIELD_WARN);
 	}

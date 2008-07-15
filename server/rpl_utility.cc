@@ -33,7 +33,6 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
     length= my_decimal_get_binary_size(m_field_metadata[col] >> 8, 
                                        m_field_metadata[col] & 0xff);
     break;
-  case MYSQL_TYPE_FLOAT:
   case MYSQL_TYPE_DOUBLE:
     length= m_field_metadata[col];
     break;

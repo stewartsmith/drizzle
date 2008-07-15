@@ -3015,14 +3015,6 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_FLOAT</td><td>4</td>
-    <td>1 byte</td>
-    <td>1 byte unsigned integer, representing the "pack_length", which
-    is equal to sizeof(float) on the server from which the event
-    originates.</td>
-  </tr>
-
-  <tr>
     <td>MYSQL_TYPE_DOUBLE</td><td>5</td>
     <td>1 byte</td>
     <td>1 byte unsigned integer, representing the "pack_length", which

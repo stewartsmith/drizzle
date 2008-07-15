@@ -434,7 +434,7 @@ EOF
 #Adding mysql server specific command line options for mysqltest binary
 #
 $opt_server_host= $opt_server_host ? $opt_server_host : "localhost";
-$opt_server_port= $opt_server_port ? $opt_server_port : "3306";
+$opt_server_port= $opt_server_port ? $opt_server_port : "4427";
 $opt_server_user= $opt_server_user ? $opt_server_user : "root";
 $opt_server_socket= $opt_server_socket ? $opt_server_socket : "/tmp/mysql.sock";
 $opt_server_database= $opt_server_database ? $opt_server_database : "test";

@@ -77,12 +77,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_NEWDECIMAL,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_NEWDECIMAL,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-  //MYSQL_TYPE_DECIMAL,     MYSQL_TYPE_DECIMAL,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_NEWDECIMAL,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -104,12 +104,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_TINY,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_SHORT,       MYSQL_TYPE_LONG,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_TINY,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_INT24,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -131,12 +131,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_SHORT,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_SHORT,       MYSQL_TYPE_LONG,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_SHORT,       MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_INT24,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -158,12 +158,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_LONG,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_LONG,        MYSQL_TYPE_LONG,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_LONG,         MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_INT24,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -179,45 +179,18 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   //MYSQL_TYPE_STRING
     MYSQL_TYPE_STRING
   },
-  /* MYSQL_TYPE_FLOAT -> */
-  {
-  //MYSQL_TYPE_DECIMAL      MYSQL_TYPE_TINY
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_FLOAT,
-  //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_DOUBLE,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_DOUBLE,
-  //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_INT24,
-  //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_FLOAT,
-  //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_NEWDECIMAL   MYSQL_TYPE_ENUM
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_SET
-    MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
-    MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING
-    MYSQL_TYPE_STRING
-  },
   /* MYSQL_TYPE_DOUBLE -> */
   {
   //MYSQL_TYPE_DECIMAL      MYSQL_TYPE_TINY
     MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_DOUBLE,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_INT24,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -239,12 +212,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_TINY,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_SHORT,       MYSQL_TYPE_LONG,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_NULL,        MYSQL_TYPE_TIMESTAMP,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_INT24,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_TIME,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -266,12 +239,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_TIMESTAMP,   MYSQL_TYPE_TIMESTAMP,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_DATETIME,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -293,12 +266,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_LONGLONG,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_LONG,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -314,45 +287,18 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
   //MYSQL_TYPE_STRING
     MYSQL_TYPE_STRING
   },
-  /* MYSQL_TYPE_INT24 -> */
-  {
-  //MYSQL_TYPE_DECIMAL      MYSQL_TYPE_TINY
-    MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_INT24,
-  //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
-    MYSQL_TYPE_INT24,       MYSQL_TYPE_LONG,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_DOUBLE,
-  //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
-    MYSQL_TYPE_INT24,       MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_INT24,
-  //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_INT24,
-  //MYSQL_TYPE_NEWDATE      MYSQL_TYPE_VARCHAR
-    MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_NEWDECIMAL    MYSQL_TYPE_ENUM
-    MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_SET
-    MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_BLOB         MYSQL_TYPE_VAR_STRING
-    MYSQL_TYPE_BLOB,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_STRING
-    MYSQL_TYPE_STRING
-  },
   /* MYSQL_TYPE_DATE -> */
   {
   //MYSQL_TYPE_DECIMAL      MYSQL_TYPE_TINY
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_DATETIME,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_DATETIME,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -374,12 +320,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_TIME,        MYSQL_TYPE_DATETIME,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_TIME,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -401,12 +347,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_DATETIME,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_DATETIME,    MYSQL_TYPE_DATETIME,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -428,12 +374,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_TINY,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_SHORT,       MYSQL_TYPE_LONG,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_FLOAT,       MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_YEAR,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_LONGLONG,    MYSQL_TYPE_INT24,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_LONGLONG,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -455,12 +401,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_DATETIME,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_NEWDATE,     MYSQL_TYPE_DATETIME,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -482,12 +428,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -509,12 +455,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_NEWDECIMAL,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_NEWDECIMAL,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_DOUBLE,      MYSQL_TYPE_DOUBLE,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_DOUBLE,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_NEWDECIMAL,  MYSQL_TYPE_NEWDECIMAL,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_NEWDECIMAL,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -536,12 +482,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_ENUM,        MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -563,12 +509,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_SET,         MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -590,12 +536,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_BLOB,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_BLOB,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_BLOB,        MYSQL_TYPE_BLOB,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -617,12 +563,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_VARCHAR,     MYSQL_TYPE_VARCHAR,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -644,12 +590,12 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
     MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
+  //MYSQL_TYPE_DOUBLE
+    MYSQL_TYPE_STRING,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
     MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-    MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
+  //MYSQL_TYPE_LONGLONG
+    MYSQL_TYPE_STRING,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
     MYSQL_TYPE_STRING,      MYSQL_TYPE_STRING,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -693,12 +639,12 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
   DECIMAL_RESULT,           INT_RESULT,
   //MYSQL_TYPE_SHORT        MYSQL_TYPE_LONG
   INT_RESULT,               INT_RESULT,
-  //MYSQL_TYPE_FLOAT        MYSQL_TYPE_DOUBLE
-  REAL_RESULT,              REAL_RESULT,
+  //MYSQL_TYPE_DOUBLE
+  REAL_RESULT,
   //MYSQL_TYPE_NULL         MYSQL_TYPE_TIMESTAMP
   STRING_RESULT,            STRING_RESULT,
-  //MYSQL_TYPE_LONGLONG     MYSQL_TYPE_INT24
-  INT_RESULT,               INT_RESULT,
+  //MYSQL_TYPE_LONGLONG
+  INT_RESULT,
   //MYSQL_TYPE_DATE         MYSQL_TYPE_TIME
   STRING_RESULT,            STRING_RESULT,
   //MYSQL_TYPE_DATETIME     MYSQL_TYPE_YEAR
@@ -2919,216 +2865,6 @@ Field_real::unpack(uchar *to, const uchar *from,
 #endif
     return(Field::unpack(to, from, param_data, low_byte_first));
 }
-
-/****************************************************************************
-  single precision float
-****************************************************************************/
-
-int Field_float::store(const char *from,uint len,CHARSET_INFO *cs)
-{
-  int error;
-  char *end;
-  double nr= my_strntod(cs,(char*) from,len,&end,&error);
-  if (error || (!len || (((uint)(end-from) != len) && table->in_use->count_cuted_fields)))
-  {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                (error ? ER_WARN_DATA_OUT_OF_RANGE : WARN_DATA_TRUNCATED), 1);
-    error= error ? 1 : 2;
-  }
-  Field_float::store(nr);
-  return error;
-}
-
-
-int Field_float::store(double nr)
-{
-  int error= truncate(&nr, FLT_MAX);
-  float j= (float)nr;
-
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    float4store(ptr,j);
-  }
-  else
-#endif
-    memcpy_fixed(ptr,(uchar*) &j,sizeof(j));
-  return error;
-}
-
-
-int Field_float::store(int64_t nr, bool unsigned_val)
-{
-  return Field_float::store(unsigned_val ? uint64_t2double((uint64_t) nr) :
-                            (double) nr);
-}
-
-
-double Field_float::val_real(void)
-{
-  float j;
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    float4get(j,ptr);
-  }
-  else
-#endif
-    memcpy_fixed((uchar*) &j,ptr,sizeof(j));
-  return ((double) j);
-}
-
-int64_t Field_float::val_int(void)
-{
-  float j;
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    float4get(j,ptr);
-  }
-  else
-#endif
-    memcpy_fixed((uchar*) &j,ptr,sizeof(j));
-  return (int64_t) rint(j);
-}
-
-
-String *Field_float::val_str(String *val_buffer,
-			     String *val_ptr __attribute__((unused)))
-{
-  float nr;
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    float4get(nr,ptr);
-  }
-  else
-#endif
-    memcpy_fixed((uchar*) &nr,ptr,sizeof(nr));
-
-  uint to_length=max(field_length,70);
-  val_buffer->alloc(to_length);
-  char *to=(char*) val_buffer->ptr();
-  size_t len;
-
-  if (dec >= NOT_FIXED_DEC)
-    len= my_gcvt(nr, MY_GCVT_ARG_FLOAT, to_length - 1, to, NULL);
-  else
-  {
-    /*
-      We are safe here because the buffer length is >= 70, and
-      fabs(float) < 10^39, dec < NOT_FIXED_DEC. So the resulting string
-      will be not longer than 69 chars + terminating '\0'.
-    */
-    len= my_fcvt(nr, dec, to, NULL);
-  }
-  val_buffer->length((uint) len);
-  if (zerofill)
-    prepend_zeros(val_buffer);
-  return val_buffer;
-}
-
-
-int Field_float::cmp(const uchar *a_ptr, const uchar *b_ptr)
-{
-  float a,b;
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    float4get(a,a_ptr);
-    float4get(b,b_ptr);
-  }
-  else
-#endif
-  {
-    memcpy_fixed(&a,a_ptr,sizeof(float));
-    memcpy_fixed(&b,b_ptr,sizeof(float));
-  }
-  return (a < b) ? -1 : (a > b) ? 1 : 0;
-}
-
-#define FLT_EXP_DIG (sizeof(float)*8-FLT_MANT_DIG)
-
-void Field_float::sort_string(uchar *to,uint length __attribute__((unused)))
-{
-  float nr;
-#ifdef WORDS_BIGENDIAN
-  if (table->s->db_low_byte_first)
-  {
-    float4get(nr,ptr);
-  }
-  else
-#endif
-    memcpy_fixed(&nr,ptr,sizeof(float));
-
-  uchar *tmp= to;
-  if (nr == (float) 0.0)
-  {						/* Change to zero string */
-    tmp[0]=(uchar) 128;
-    bzero((char*) tmp+1,sizeof(nr)-1);
-  }
-  else
-  {
-#ifdef WORDS_BIGENDIAN
-    memcpy_fixed(tmp,&nr,sizeof(nr));
-#else
-    tmp[0]= ptr[3]; tmp[1]=ptr[2]; tmp[2]= ptr[1]; tmp[3]=ptr[0];
-#endif
-    if (tmp[0] & 128)				/* Negative */
-    {						/* make complement */
-      uint i;
-      for (i=0 ; i < sizeof(nr); i++)
-	tmp[i]= (uchar) (tmp[i] ^ (uchar) 255);
-    }
-    else
-    {
-      ushort exp_part=(((ushort) tmp[0] << 8) | (ushort) tmp[1] |
-		       (ushort) 32768);
-      exp_part+= (ushort) 1 << (16-1-FLT_EXP_DIG);
-      tmp[0]= (uchar) (exp_part >> 8);
-      tmp[1]= (uchar) exp_part;
-    }
-  }
-}
-
-
-bool Field_float::send_binary(Protocol *protocol)
-{
-  return protocol->store((float) Field_float::val_real(), dec, (String*) 0);
-}
-
-
-/**
-   Save the field metadata for float fields.
-
-   Saves the pack length in the first byte.
-
-   @param   metadata_ptr   First byte of field metadata
-
-   @returns number of bytes written to metadata_ptr
-*/
-int Field_float::do_save_field_metadata(uchar *metadata_ptr)
-{
-  *metadata_ptr= pack_length();
-  return 1;
-}
-
-
-void Field_float::sql_type(String &res) const
-{
-  if (dec == NOT_FIXED_DEC)
-  {
-    res.set_ascii(STRING_WITH_LEN("float"));
-  }
-  else
-  {
-    CHARSET_INFO *cs= res.charset();
-    res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
-			    "float(%d,%d)",(int) field_length,dec));
-  }
-  add_zerofill_and_unsigned(res);
-}
-
 
 /****************************************************************************
   double precision floating point numbers
@@ -7264,39 +7000,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       length= 4; /* Default length */
     flags|= ZEROFILL_FLAG | UNSIGNED_FLAG;
     break;
-  case MYSQL_TYPE_FLOAT:
-    /* change FLOAT(precision) to FLOAT or DOUBLE */
-    allowed_type_modifier= AUTO_INCREMENT_FLAG;
-    if (fld_length && !fld_decimals)
-    {
-      uint tmp_length= length;
-      if (tmp_length > PRECISION_FOR_DOUBLE)
-      {
-        my_error(ER_WRONG_FIELD_SPEC, MYF(0), fld_name);
-        return(true);
-      }
-      else if (tmp_length > PRECISION_FOR_FLOAT)
-      {
-        sql_type= MYSQL_TYPE_DOUBLE;
-        length= DBL_DIG+7; /* -[digits].E+### */
-      }
-      else
-        length= FLT_DIG+6; /* -[digits].E+## */
-      decimals= NOT_FIXED_DEC;
-      break;
-    }
-    if (!fld_length && !fld_decimals)
-    {
-      length=  FLT_DIG+6;
-      decimals= NOT_FIXED_DEC;
-    }
-    if (length < decimals &&
-        decimals != NOT_FIXED_DEC)
-    {
-      my_error(ER_M_BIGGER_THAN_D, MYF(0), fld_name);
-      return(true);
-    }
-    break;
   case MYSQL_TYPE_DOUBLE:
     allowed_type_modifier= AUTO_INCREMENT_FLAG;
     if (!fld_length && !fld_decimals)
@@ -7407,7 +7110,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       break;
    }
   case MYSQL_TYPE_VAR_STRING:
-  case MYSQL_TYPE_INT24:
     assert(0);  /* Impossible, we killed it */
     break;
   }
@@ -7469,7 +7171,6 @@ uint32 calc_pack_length(enum_field_types type,uint32 length)
   case MYSQL_TYPE_TIME:   return 3;
   case MYSQL_TYPE_TIMESTAMP:
   case MYSQL_TYPE_LONG	: return 4;
-  case MYSQL_TYPE_FLOAT : return sizeof(float);
   case MYSQL_TYPE_DOUBLE: return sizeof(double);
   case MYSQL_TYPE_DATETIME:
   case MYSQL_TYPE_LONGLONG: return 8;	/* Don't crash if no int64_t */
@@ -7574,12 +7275,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
                                  f_decimals(pack_flag),
                                  f_is_zerofill(pack_flag) != 0,
                                  f_is_dec(pack_flag) == 0);
-  case MYSQL_TYPE_FLOAT:
-    return new Field_float(ptr,field_length,null_pos,null_bit,
-			   unireg_check, field_name,
-			   f_decimals(pack_flag),
-			   f_is_zerofill(pack_flag) != 0,
-			   f_is_dec(pack_flag)== 0);
   case MYSQL_TYPE_DOUBLE:
     return new Field_double(ptr,field_length,null_pos,null_bit,
 			    unireg_check, field_name,
