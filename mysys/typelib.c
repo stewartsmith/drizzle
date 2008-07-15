@@ -162,9 +162,9 @@ const char *get_type(TYPELIB *typelib, uint nr)
     a integer representation of the supplied string
 */
 
-my_uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
+uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
 {
-  my_uint64_t result;
+  uint64_t result;
   int find;
   char *i;
   DBUG_ENTER("find_set");

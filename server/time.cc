@@ -966,8 +966,8 @@ calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign, int64_t *se
 int
 my_time_compare(MYSQL_TIME *a, MYSQL_TIME *b)
 {
-  my_uint64_t a_t= TIME_to_uint64_t_datetime(a);
-  my_uint64_t b_t= TIME_to_uint64_t_datetime(b);
+  uint64_t a_t= TIME_to_uint64_t_datetime(a);
+  uint64_t b_t= TIME_to_uint64_t_datetime(b);
 
   if (a_t > b_t)
     return 1;

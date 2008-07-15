@@ -209,7 +209,6 @@ static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 static sys_var_long_ptr	sys_expire_logs_days(&vars, "expire_logs_days",
 					     &expire_logs_days);
 static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
-static sys_var_long_ptr	sys_flush_time(&vars, "flush_time", &flush_time);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
                                          sys_default_init_connect,0);
@@ -638,7 +637,6 @@ static SHOW_VAR fixed_vars[]= {
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
   {"port",                    (char*) &mysqld_port,                 SHOW_INT},
   {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
-  {"skip_external_locking",   (char*) &my_disable_locking,          SHOW_MY_BOOL},
   {"skip_networking",         (char*) &opt_disable_networking,      SHOW_BOOL},
   {"skip_show_database",      (char*) &opt_skip_show_db,            SHOW_BOOL},
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_LONG},

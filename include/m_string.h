@@ -142,8 +142,6 @@ extern  char *strcend(const char *, char);
 extern	char *strfield(char *src,int fields,int chars,int blanks,
 			   int tabch);
 extern	char *strfill(char * s,size_t len,char fill);
-extern	size_t strinstr(const char *str,const char *search);
-extern  size_t r_strinstr(const char *str, size_t from, const char *search);
 extern	char *strkey(char *dst,char *head,char *tail,char *flags);
 extern	char *strmake(char *dst,const char *src,size_t length);
 #ifndef strmake_overlapp
@@ -333,12 +331,12 @@ static inline const uchar *skip_trailing_space(const uchar *ptr,size_t len)
 
   if (len > 20)
   {
-    const uchar *end_words= (const uchar *)(intptr)
-      (((uint64_t)(intptr)end) / SIZEOF_INT * SIZEOF_INT);
-    const uchar *start_words= (const uchar *)(intptr)
-       ((((uint64_t)(intptr)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
+    const uchar *end_words= (const uchar *)(intptr_t)
+      (((uint64_t)(intptr_t)end) / SIZEOF_INT * SIZEOF_INT);
+    const uchar *start_words= (const uchar *)(intptr_t)
+       ((((uint64_t)(intptr_t)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
 
-    DBUG_ASSERT(((uint64_t)(intptr)ptr) >= SIZEOF_INT);
+    DBUG_ASSERT(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);
     if (end_words > ptr)
     {
       while (end > end_words && end[-1] == 0x20)

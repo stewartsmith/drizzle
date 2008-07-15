@@ -30,7 +30,7 @@ pkglib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = libdrizzle.c client.c net_serv.c get_password.c
 libdrizzle_la_LIBADD =	${sql_cmn_objects} ${sqlobjects} \
 			${top_builddir}/mysys/libmysyslt.la \
-			${top_builddir}/strings/libmystringslt.la \	
+			${top_builddir}/strings/libmystringslt.la \
 			libsqlcommon.la \
 			${top_builddir}/vio/libviolt.la 
 libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 

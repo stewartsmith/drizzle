@@ -469,7 +469,7 @@ const char *mysql_errno_to_sqlstate(unsigned int mysql_errno);
 
 #ifdef _global_h
 ulong STDCALL net_field_length(uchar **packet);
-my_uint64_t net_field_length_ll(uchar **packet);
+uint64_t net_field_length_ll(uchar **packet);
 uchar *net_store_length(uchar *pkg, uint64_t length);
 #endif
 
