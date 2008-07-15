@@ -22,13 +22,14 @@
 
 #define ADMIN_VERSION "8.42"
 #define SHUTDOWN_DEF_TIMEOUT 3600		/* Wait for shutdown */
+#define PROTOCOL_TCP 1
 
-char *host= NULL;
-static bool interrupted=0,opt_verbose=0;
+char *host= NULL, *user= 0, *opt_password= 0;
+static bool interrupted=0,opt_verbose=0,tty_password=0; 
+static uint8_t opt_protocol = PROTOCOL_TCP;  
 static uint32_t tcp_port = 0, option_wait = 0, option_silent=0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
-static char *unix_port=0;
 static myf error_flags; /* flags to pass to my_printf_error, like ME_BELL */
 
 /*
@@ -41,9 +42,6 @@ extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
 static int execute_commands(MYSQL *mysql,int argc, char **argv);
 static bool sql_connect(MYSQL *mysql, uint wait);
-static bool get_pidfile(MYSQL *mysql, char *pidfile);
-static bool wait_pidfile(char *pidfile, time_t last_modified,
-                         struct stat *pidfile_status);
 
 /*
   The order of commands must be the same as command_names,
@@ -70,6 +68,9 @@ static struct my_option my_long_options[] =
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', "Connect to host.", (char**) &host, (char**) &host, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"password", 'p',
+   "Password to use when connecting to server. If password is not given it's asked from the tty.",
+   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
 #if MYSQL_PORT_DEFAULT == 0
@@ -78,16 +79,12 @@ static struct my_option my_long_options[] =
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &tcp_port,
    (char**) &tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_MYSQL_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
-    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"set-variable", 'O',
-   "Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value.",
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Silently exit if one can't connect to server.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"socket", 'S', "Socket file to use for connection.",
-   (char**) &unix_port, (char**) &unix_port, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
-   0, 0, 0},
+#ifndef DONT_ALLOW_USER_CHANGE
+  {"user", 'u', "User for login if not current user.", (char**) &user,
+   (char**) &user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+#endif
   {"verbose", 'v', "Write more information.", (char**) &opt_verbose,
    (char**) &opt_verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
@@ -113,6 +110,20 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   int error = 0;
 
   switch(optid) {
+  case 'p':
+    if (argument)
+    {
+      char *start=argument;
+      my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+      opt_password= my_strdup(argument,MYF(MY_FAE));
+      while (*argument) *argument++= 'x';   /* Destroy argument */
+      if (*start)
+        start[1]=0; /* Cut length of argument */
+      tty_password= 0;
+    }
+    else 
+      tty_password= 1; 
+    break;
   case 's':
     option_silent++;
     break;
@@ -166,6 +177,8 @@ int main(int argc,char *argv[])
   }
 
   commands = argv;
+  if (tty_password)
+    opt_password = get_tty_password(NullS);
 
   VOID(signal(SIGINT,endprog));			/* Here if abort */
   VOID(signal(SIGTERM,endprog));		/* Here if abort */
@@ -176,6 +189,8 @@ int main(int argc,char *argv[])
     mysql_options(&mysql,MYSQL_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
 
+  /* force mysqladmin to use TCP */
+  mysql_options(&mysql, MYSQL_OPT_PROTOCOL, (char*)&opt_protocol);
 
   error_flags= (myf)0;
 
@@ -202,6 +217,8 @@ int main(int argc,char *argv[])
     error=execute_commands(&mysql,argc,commands);
     mysql_close(&mysql);
   }
+  my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
+  my_free(user,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(save_argv);
   my_end(my_end_arg);
   exit(error ? 1 : 0);
@@ -218,8 +235,7 @@ static bool sql_connect(MYSQL *mysql, uint wait)
 
   for (;;)
   {
-    if (mysql_real_connect(mysql,host,NULL,NULL,NullS,tcp_port,
-			   unix_port, 0))
+    if (mysql_real_connect(mysql,host,user,opt_password,NullS,tcp_port,NULL,0))
     {
       mysql->reconnect= 1;
       if (info)
@@ -239,16 +255,11 @@ static bool sql_connect(MYSQL *mysql, uint wait)
 
         my_printf_error(0,"connect to server at '%s' failed\nerror: '%s'",
         error_flags, host, mysql_error(mysql));
-        if (mysql_errno(mysql) == CR_CONNECTION_ERROR)
-        {
-          fprintf(stderr,
-                  "Check that mysqld is running and that the socket: '%s' exists!\n",
-                  unix_port ? unix_port : mysql_unix_port);
-        }
-        else if (mysql_errno(mysql) == CR_CONN_HOST_ERROR ||
+
+        if (mysql_errno(mysql) == CR_CONN_HOST_ERROR ||
           mysql_errno(mysql) == CR_UNKNOWN_HOST)
         {
-          fprintf(stderr,"Check that mysqld is running on %s",host);
+          fprintf(stderr,"Check that drizzled is running on %s",host);
           fprintf(stderr," and that the port is %d.\n",
           tcp_port ? tcp_port: mysql_port);
           fprintf(stderr,"You can check this by doing 'telnet %s %d'\n",
@@ -269,7 +280,7 @@ static bool sql_connect(MYSQL *mysql, uint wait)
       if (!info)
       {
         info=1;
-        fputs("Waiting for MySQL server to answer",stderr);
+        fputs("Waiting for Drizzle server to answer",stderr);
         (void) fflush(stderr);
       }
       else
@@ -301,18 +312,8 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
     switch (find_type(argv[0],&command_typelib,2)) {
     case ADMIN_SHUTDOWN:
     {
-      char pidfile[FN_REFLEN];
-      bool got_pidfile= 0;
-      time_t last_modified= 0;
-      struct stat pidfile_status;
-
-      /*
-        Only wait for pidfile on local connections if pidfile doesn't 
-        exist, continue without pid file checking
-      */
-      if (mysql->unix_socket && (got_pidfile= !get_pidfile(mysql, pidfile)) &&
-	        !stat(pidfile, &pidfile_status))
-	      last_modified= pidfile_status.st_mtime;
+      if (opt_verbose)
+        printf("shutting down drizzled...\n");
 
       if (mysql_shutdown(mysql, SHUTDOWN_DEFAULT))
       {
@@ -320,27 +321,20 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
                         mysql_error(mysql));
         return -1;
       }
-
       mysql_close(mysql);	/* Close connection to avoid error messages */
+
+      if (opt_verbose)
+        printf("done\n");
+
       argc=1;             /* Force SHUTDOWN to be the last command */
-
-      if (got_pidfile)
-      {
-        if (opt_verbose)
-        printf("Shutdown signal sent to server;  Waiting for pid file to disappear\n");
-
-        /* Wait until pid file is gone */
-        if (wait_pidfile(pidfile, last_modified, &pidfile_status))
-          return -1;
-        }
-        break;
+      break;
     }
     case ADMIN_PING:
       mysql->reconnect=0;	/* We want to know of reconnects */
       if (!mysql_ping(mysql))
       {
         if (option_silent < 2)
-          puts("mysqld is alive");
+          puts("drizzled is alive");
       }
       else
       {
@@ -348,11 +342,11 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
         {
           mysql->reconnect=1;
           if (!mysql_ping(mysql))
-            puts("connection was down, but mysqld is now alive");
+            puts("connection was down, but drizzled is now alive");
         }
         else
 	      {
-          my_printf_error(0,"mysqld doesn't answer to ping, error: '%s'",
+          my_printf_error(0,"drizzled doesn't answer to ping, error: '%s'",
           error_flags, mysql_error(mysql));
           return -1;
         }
@@ -381,7 +375,7 @@ static void usage(void)
   print_version();
   puts("Copyright (C) 2000-2006 MySQL AB");
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
-  puts("Administration program for the mysqld daemon.");
+  puts("Administration program for the drizzled daemon.");
   printf("Usage: %s [OPTIONS] command command....\n", my_progname);
   my_print_help(my_long_options);
   puts("\
@@ -390,71 +384,4 @@ static void usage(void)
 }
 
 #include <help_end.h>
-
-static bool get_pidfile(MYSQL *mysql, char *pidfile)
-{
-  MYSQL_RES* result;
-
-  if (mysql_query(mysql, "SHOW VARIABLES LIKE 'pid_file'"))
-  {
-    my_printf_error(0, "query failed; error: '%s'", error_flags,
-		    mysql_error(mysql));
-  }
-  result = mysql_store_result(mysql);
-  if (result)
-  {
-    MYSQL_ROW row=mysql_fetch_row(result);
-    if (row)
-      strmov(pidfile, row[1]);
-    mysql_free_result(result);
-    return row == 0;				/* Error if row = 0 */
-  }
-  return 1;					/* Error */
-}
-
-/*
-  Return 1 if pid file didn't disappear or change
-*/
-static bool wait_pidfile(char *pidfile, time_t last_modified,
-                         struct stat *pidfile_status)
-{
-  char buff[FN_REFLEN];
-  int error= 1;
-  uint count= 0;
-
-  system_filename(buff, pidfile);
-  do
-  {
-    int fd;
-    if ((fd= my_open(buff, O_RDONLY, MYF(0))) < 0)
-    {
-      error= 0;
-      break;
-    }
-    (void) my_close(fd,MYF(0));
-    if (last_modified && !stat(pidfile, pidfile_status))
-    {
-      if (last_modified != pidfile_status->st_mtime)
-      {
-        /* File changed;  Let's assume that mysqld did restart */
-        if (opt_verbose)
-          printf("pid file '%s' changed while waiting for it to disappear!\n\
-                 mysqld did probably restart\n", buff);
-        error= 0;
-        break;
-      }
-    }
-    if (count++ == opt_shutdown_timeout)
-      break;
-    sleep(1);
-  } while (!interrupted);
-
-  if (error)
-  {
-    fprintf(stderr,
-	    "Warning;  Aborted waiting on pid file: '%s' after %d seconds\n",
-	    buff, count-1);
-  }
-  return(error);
-}
 
