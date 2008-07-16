@@ -549,6 +549,7 @@ my_real_read(NET *net, size_t *complen)
 
 
   /* Check for error, currently assert */
+  if (net->read_timeout)
   {
     struct timeval waittime;
     socklen_t length;
@@ -635,8 +636,9 @@ my_real_read(NET *net, size_t *complen)
   }
 
 end:
-  error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
-                    &backtime, (socklen_t)sizeof(struct timeval));
+  if  (net->read_timeout)
+    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
+                      &backtime, (socklen_t)sizeof(struct timeval));
   assert(error == 0);
   net->reading_or_writing= 0;
 
