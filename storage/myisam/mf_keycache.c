@@ -231,68 +231,18 @@ static void free_block(KEY_CACHE *keycache, BLOCK_LINK *block);
                                      (ulong) (f)) & (keycache->hash_entries-1))
 #define FILE_HASH(f)                 ((uint) (f) & (CHANGED_BLOCKS_HASH-1))
 
-#define DEFAULT_KEYCACHE_DEBUG_LOG  "keycache_debug.log"
-
-#if defined(KEYCACHE_DEBUG) && ! defined(KEYCACHE_DEBUG_LOG)
-#define KEYCACHE_DEBUG_LOG  DEFAULT_KEYCACHE_DEBUG_LOG
-#endif
-
-#if defined(KEYCACHE_DEBUG_LOG)
-static FILE *keycache_debug_log=NULL;
-static void keycache_debug_print _VARARGS((const char *fmt,...));
-#define KEYCACHE_DEBUG_OPEN                                                   \
-          if (!keycache_debug_log)                                            \
-          {                                                                   \
-            keycache_debug_log= fopen(KEYCACHE_DEBUG_LOG, "w");               \
-            (void) setvbuf(keycache_debug_log, NULL, _IOLBF, BUFSIZ);         \
-          }
-
-#define KEYCACHE_DEBUG_CLOSE                                                  \
-          if (keycache_debug_log)                                             \
-          {                                                                   \
-            fclose(keycache_debug_log);                                       \
-            keycache_debug_log= 0;                                            \
-          }
-#else
-#define KEYCACHE_DEBUG_OPEN
-#define KEYCACHE_DEBUG_CLOSE
-#endif /* defined(KEYCACHE_DEBUG_LOG) */
-
-#if defined(KEYCACHE_DEBUG_LOG) && defined(KEYCACHE_DEBUG)
-#define KEYCACHE_DBUG_PRINT(l, m)                                             \
-            { if (keycache_debug_log) fprintf(keycache_debug_log, "%s: ", l); \
-              keycache_debug_print m; }
-
-#define KEYCACHE_DBUG_ASSERT(a)                                               \
-            { if (! (a) && keycache_debug_log) fclose(keycache_debug_log);    \
-              assert(a); }
-#else
-#define KEYCACHE_DBUG_PRINT(l, m)  DBUG_PRINT(l, m)
-#define KEYCACHE_DBUG_ASSERT(a)    DBUG_ASSERT(a)
-#endif /* defined(KEYCACHE_DEBUG_LOG) && defined(KEYCACHE_DEBUG) */
-
-#if defined(KEYCACHE_DEBUG) || !defined(DBUG_OFF)
-static long keycache_thread_id;
-#define KEYCACHE_THREAD_TRACE(l)                                              \
-             KEYCACHE_DBUG_PRINT(l,("|thread %ld",keycache_thread_id))
-
-#define KEYCACHE_THREAD_TRACE_BEGIN(l)                                        \
-            { struct st_my_thread_var *thread_var= my_thread_var;             \
-              keycache_thread_id= thread_var->id;                             \
-              KEYCACHE_DBUG_PRINT(l,("[thread %ld",keycache_thread_id)) }
-
-#define KEYCACHE_THREAD_TRACE_END(l)                                          \
-            KEYCACHE_DBUG_PRINT(l,("]thread %ld",keycache_thread_id))
-#else
-#define KEYCACHE_THREAD_TRACE_BEGIN(l)
-#define KEYCACHE_THREAD_TRACE_END(l)
-#define KEYCACHE_THREAD_TRACE(l)
-#endif /* defined(KEYCACHE_DEBUG) || !defined(DBUG_OFF) */
-
 #define BLOCK_NUMBER(b)                                                       \
   ((uint) (((char*)(b)-(char *) keycache->block_root)/sizeof(BLOCK_LINK)))
 #define HASH_LINK_NUMBER(h)                                                   \
   ((uint) (((char*)(h)-(char *) keycache->hash_link_root)/sizeof(HASH_LINK)))
+
+#if defined(KEYCACHE_DEBUG_LOG) && defined(KEYCACHE_DEBUG)
+#define KEYCACHE_DBUG_ASSERT(a)                                               \
+            { if (! (a) && keycache_debug_log) fclose(keycache_debug_log);    \
+              assert(a); }
+#else
+#define KEYCACHE_DBUG_ASSERT(a)    DBUG_ASSERT(a)
+#endif /* defined(KEYCACHE_DEBUG_LOG) && defined(KEYCACHE_DEBUG) */
 
 #if (defined(KEYCACHE_TIMEOUT)) || defined(KEYCACHE_DEBUG)
 static int keycache_pthread_cond_wait(pthread_cond_t *cond,
@@ -301,25 +251,13 @@ static int keycache_pthread_cond_wait(pthread_cond_t *cond,
 #define  keycache_pthread_cond_wait pthread_cond_wait
 #endif
 
-#if defined(KEYCACHE_DEBUG)
-static int keycache_pthread_mutex_lock(pthread_mutex_t *mutex);
-static void keycache_pthread_mutex_unlock(pthread_mutex_t *mutex);
-static int keycache_pthread_cond_signal(pthread_cond_t *cond);
-#else
 #define keycache_pthread_mutex_lock pthread_mutex_lock
 #define keycache_pthread_mutex_unlock pthread_mutex_unlock
 #define keycache_pthread_cond_signal pthread_cond_signal
-#endif /* defined(KEYCACHE_DEBUG) */
 
-#if !defined(DBUG_OFF)
-#if defined(inline)
-#undef inline
-#endif
-#define inline  /* disabled inline for easier debugging */
 static int fail_block(BLOCK_LINK *block);
 static int fail_hlink(HASH_LINK *hlink);
 static int cache_empty(KEY_CACHE *keycache);
-#endif
 
 static inline uint next_power(uint value)
 {
@@ -361,10 +299,9 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
   int error;
   DBUG_ASSERT(key_cache_block_size >= 512);
 
-  KEYCACHE_DEBUG_OPEN;
   if (keycache->key_cache_inited && keycache->disk_blocks > 0)
   {
-    DBUG_RETURN(0);
+    return(0);
   }
 
   keycache->global_cache_w_requests= keycache->global_cache_r_requests= 0;
@@ -481,7 +418,7 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
   }
 
   keycache->blocks= keycache->disk_blocks > 0 ? keycache->disk_blocks : 0;
-  DBUG_RETURN((int) keycache->disk_blocks);
+  return((int) keycache->disk_blocks);
 
 err:
   error= my_errno;
@@ -499,7 +436,7 @@ err:
   }
   my_errno= error;
   keycache->can_be_used= 0;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -539,13 +476,13 @@ int resize_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
   int blocks;
 
   if (!keycache->key_cache_inited)
-    DBUG_RETURN(keycache->disk_blocks);
+    return(keycache->disk_blocks);
 
   if(key_cache_block_size == keycache->key_cache_block_size &&
      use_mem == keycache->key_cache_mem_size)
   {
     change_key_cache_param(keycache, division_limit, age_threshold);
-    DBUG_RETURN(keycache->disk_blocks);
+    return(keycache->disk_blocks);
   }
 
   keycache_pthread_mutex_lock(&keycache->cache_lock);
@@ -626,7 +563,7 @@ finish:
   release_whole_queue(&keycache->resize_queue);
 
   keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  DBUG_RETURN(blocks);
+  return(blocks);
 }
 
 
@@ -678,7 +615,7 @@ void change_key_cache_param(KEY_CACHE *keycache, uint division_limit,
     keycache->age_threshold=   (keycache->disk_blocks *
 				age_threshold / 100);
   keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -697,7 +634,7 @@ void change_key_cache_param(KEY_CACHE *keycache, uint division_limit,
 void end_key_cache(KEY_CACHE *keycache, my_bool cleanup)
 {
   if (!keycache->key_cache_inited)
-    DBUG_VOID_RETURN;
+    return;
 
   if (keycache->disk_blocks > 0)
   {
@@ -717,9 +654,8 @@ void end_key_cache(KEY_CACHE *keycache, my_bool cleanup)
   {
     pthread_mutex_destroy(&keycache->cache_lock);
     keycache->key_cache_inited= keycache->can_be_used= 0;
-    KEYCACHE_DEBUG_CLOSE;
   }
-  DBUG_VOID_RETURN;
+  return;
 } /* end_key_cache */
 
 
@@ -1118,7 +1054,6 @@ static void link_block(KEY_CACHE *keycache, BLOCK_LINK *block, my_bool hot,
       probably easier to read.
     */
     block->status|= BLOCK_IN_EVICTION;
-    KEYCACHE_THREAD_TRACE("link_block: after signaling");
     return;
   }
   pins= hot ? &keycache->used_ins : &keycache->used_last;
@@ -1138,7 +1073,6 @@ static void link_block(KEY_CACHE *keycache, BLOCK_LINK *block, my_bool hot,
     keycache->used_last= keycache->used_ins= block->next_used= block;
     block->prev_used= &block->next_used;
   }
-  KEYCACHE_THREAD_TRACE("link_block");
 #if defined(KEYCACHE_DEBUG)
   keycache->blocks_available++;
   KEYCACHE_DBUG_ASSERT((ulong) keycache->blocks_available <=
@@ -1192,7 +1126,6 @@ static void unlink_block(KEY_CACHE *keycache, BLOCK_LINK *block)
   block->prev_used= NULL;
 #endif
 
-  KEYCACHE_THREAD_TRACE("unlink_block");
 #if defined(KEYCACHE_DEBUG)
   KEYCACHE_DBUG_ASSERT(keycache->blocks_available != 0);
   keycache->blocks_available--;
@@ -1551,7 +1484,7 @@ restart:
     unusable. This will be detected only after "goto restart".
   */
   if (!keycache->can_be_used)
-    DBUG_RETURN(0);
+    return(0);
 
   /*
     Find the hash_link for the requested file block (file, filepos). We
@@ -1616,7 +1549,7 @@ restart:
         */
         hash_link->requests--;
         unlink_hash(keycache, hash_link);
-        DBUG_RETURN(0);
+        return(0);
       }
 
       /*
@@ -1713,7 +1646,7 @@ restart:
       DBUG_ASSERT((hash_link->file == file) &&
                   (hash_link->diskpos == filepos) &&
                   (block->hash_link == hash_link));
-      DBUG_RETURN(block);
+      return(block);
     }
 
     /*
@@ -1762,7 +1695,7 @@ restart:
       DBUG_ASSERT((hash_link->file == file) &&
                   (hash_link->diskpos == filepos) &&
                   (block->hash_link == hash_link));
-      DBUG_RETURN(block);
+      return(block);
     }
 
     /*
@@ -1830,7 +1763,7 @@ restart:
                (block->hash_link->file == file) &&
                (block->hash_link->diskpos == filepos));
     }
-    DBUG_RETURN(0);
+    return(0);
   }
 
   if (page_status == PAGE_READ &&
@@ -2206,8 +2139,7 @@ restart:
                (block->hash_link->diskpos == filepos)));
   *page_st=page_status;
 
-  KEYCACHE_THREAD_TRACE("find_key_block:end");
-  DBUG_RETURN(block);
+  return(block);
 }
 
 
@@ -2243,7 +2175,6 @@ static void read_block(KEY_CACHE *keycache,
 
   /* On entry cache_lock is locked */
 
-  KEYCACHE_THREAD_TRACE("read_block");
   if (primary)
   {
     /*
@@ -2511,7 +2442,7 @@ end:
     dec_counter_for_resize_op(keycache);
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
   }
-  DBUG_RETURN(error ? (uchar*) 0 : start);
+  return(error ? (uchar*) 0 : start);
 }
 
 
@@ -2739,7 +2670,7 @@ int key_cache_insert(KEY_CACHE *keycache,
       dec_counter_for_resize_op(keycache);
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
   }
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -2789,7 +2720,7 @@ int key_cache_write(KEY_CACHE *keycache,
     keycache->global_cache_w_requests++;
     keycache->global_cache_write++;
     if (pwrite(file, buff, length, filepos) == 0)
-      DBUG_RETURN(1);
+      return(1);
     /* purecov: end */
   }
 
@@ -3037,7 +2968,7 @@ end:
     dec_counter_for_resize_op(keycache);
     keycache_pthread_mutex_unlock(&keycache->cache_lock);
   }
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -3742,7 +3673,7 @@ err:
     my_free((uchar*) cache, MYF(0));
   if (last_errno)
     errno=last_errno;                /* Return first error */
-  DBUG_RETURN(last_errno != 0);
+  return(last_errno != 0);
 }
 
 
@@ -3767,7 +3698,7 @@ int flush_key_blocks(KEY_CACHE *keycache,
   int res= 0;
 
   if (!keycache->key_cache_inited)
-    DBUG_RETURN(0);
+    return(0);
 
   keycache_pthread_mutex_lock(&keycache->cache_lock);
   /* While waiting for lock, keycache could have been ended. */
@@ -3778,7 +3709,7 @@ int flush_key_blocks(KEY_CACHE *keycache,
     dec_counter_for_resize_op(keycache);
   }
   keycache_pthread_mutex_unlock(&keycache->cache_lock);
-  DBUG_RETURN(res);
+  return(res);
 }
 
 
@@ -3854,7 +3785,7 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
           */
           if (flush_key_blocks_int(keycache, block->hash_link->file,
                                    FLUSH_FORCE_WRITE))
-            DBUG_RETURN(1);
+            return(1);
         }
       }
 
@@ -3888,7 +3819,7 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
           found++;
           if (flush_key_blocks_int(keycache, block->hash_link->file,
                                    FLUSH_RELEASE))
-            DBUG_RETURN(1);
+            return(1);
         }
       }
 
@@ -3911,7 +3842,7 @@ static int flush_all_key_blocks(KEY_CACHE *keycache)
   }
 #endif
 
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -3936,14 +3867,14 @@ int reset_key_cache_counters(const char *name __attribute__((unused)),
 {
   if (!key_cache->key_cache_inited)
   {
-    DBUG_RETURN(0);
+    return(0);
   }
   key_cache->global_blocks_changed= 0;   /* Key_blocks_not_flushed */
   key_cache->global_cache_r_requests= 0; /* Key_read_requests */
   key_cache->global_cache_read= 0;       /* Key_reads */
   key_cache->global_cache_w_requests= 0; /* Key_write_requests */
   key_cache->global_cache_write= 0;      /* Key_writes */
-  DBUG_RETURN(0);
+  return(0);
 }
 
 #if defined(KEYCACHE_TIMEOUT)
@@ -4068,7 +3999,6 @@ static int keycache_pthread_cond_wait(pthread_cond_t *cond,
    1 nanosecond = 1000 micro seconds
  */
   timeout.tv_nsec= now.tv_usec * 1000;
-  KEYCACHE_THREAD_TRACE_END("started waiting");
 #if defined(KEYCACHE_DEBUG)
   cnt++;
   if (cnt % 100 == 0)
@@ -4076,7 +4006,6 @@ static int keycache_pthread_cond_wait(pthread_cond_t *cond,
     fflush(keycache_debug_log);
 #endif
   rc= pthread_cond_timedwait(cond, mutex, &timeout);
-  KEYCACHE_THREAD_TRACE_BEGIN("finished waiting");
   if (rc == ETIMEDOUT || rc == ETIME)
   {
 #if defined(KEYCACHE_DEBUG)
@@ -4100,9 +4029,7 @@ static int keycache_pthread_cond_wait(pthread_cond_t *cond,
                                       pthread_mutex_t *mutex)
 {
   int rc;
-  KEYCACHE_THREAD_TRACE_END("started waiting");
   rc= pthread_cond_wait(cond, mutex);
-  KEYCACHE_THREAD_TRACE_BEGIN("finished waiting");
   return rc;
 }
 #endif
@@ -4115,14 +4042,12 @@ static int keycache_pthread_mutex_lock(pthread_mutex_t *mutex)
 {
   int rc;
   rc= pthread_mutex_lock(mutex);
-  KEYCACHE_THREAD_TRACE_BEGIN("");
   return rc;
 }
 
 
 static void keycache_pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-  KEYCACHE_THREAD_TRACE_END("");
   pthread_mutex_unlock(mutex);
 }
 
@@ -4130,7 +4055,6 @@ static void keycache_pthread_mutex_unlock(pthread_mutex_t *mutex)
 static int keycache_pthread_cond_signal(pthread_cond_t *cond)
 {
   int rc;
-  KEYCACHE_THREAD_TRACE("signal");
   rc= pthread_cond_signal(cond);
   return rc;
 }
