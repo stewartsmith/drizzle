@@ -271,14 +271,15 @@ int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
   */
   int flag=0, my_flag=-1;
   uint nod_flag, length=0, len, matched, cmplen, kseg_len;
-  uint prefix_len,suffix_len;
-  int key_len_skip, seg_len_pack, key_len_left;
+  uint prefix_len=0,suffix_len;
+  int key_len_skip, seg_len_pack=0, key_len_left;
   uchar *end, *kseg, *vseg;
   uchar *sort_order=keyinfo->seg->charset->sort_order;
   uchar tt_buff[MI_MAX_KEY_BUFF+2], *t_buff=tt_buff+2;
   uchar *saved_from=NULL, *saved_to=NULL, *saved_vseg=NULL;
   uint  saved_length=0, saved_prefix_len=0;
   uint  length_pack;
+
 
   t_buff[0]=0;                                  /* Avoid bugs */
   end= page+mi_getint(page);
