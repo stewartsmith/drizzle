@@ -423,15 +423,16 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
     - TODO is it needed to set this variable if we have no socket
 */
 
+/*
+  TODO: rewrite this in a manner to do non-block writes. If a write can not be made, and we are
+  in the server, yield to another process and come back later.
+*/
 int
 net_real_write(NET *net,const uchar *packet, size_t len)
 {
   size_t length;
   const uchar *pos,*end;
-  thr_alarm_t alarmed;
-  uint retry_count=0;
-  my_bool net_blocking = vio_is_blocking(net->vio);
-  DBUG_ENTER("net_real_write");
+  uint retry_count= 0;
 
   if (net->error == 2)
     DBUG_RETURN(-1);				/* socket can't be used */
@@ -462,61 +463,47 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     packet= b;
   }
 
-#ifdef DEBUG_DATA_PACKETS
-  DBUG_DUMP("data", packet, len);
-#endif
-
-  alarmed=0;
-  /* Write timeout is set in my_net_set_write_timeout */
-
   pos= packet;
   end=pos+len;
+  /* Loop until we have read everything */
   while (pos != end)
   {
     if ((long) (length= vio_write(net->vio,pos,(size_t) (end-pos))) <= 0)
     {
-      my_bool interrupted = vio_should_retry(net->vio);
-      if ((interrupted || length == 0) && !thr_alarm_in_use(&alarmed))
+      my_bool interrupted= vio_should_retry(net->vio);
+      /* 
+        If we read 0, or we were interrupted this means that 
+        we need to switch to blocking mode and wait until the timeout 
+        on the socket kicks in.
+      */
+      if ((interrupted || length == 0))
       {
-        if (!thr_alarm(&alarmed, net->write_timeout, &alarm_buff))
-        {                                       /* Always true for client */
-	  bool old_mode;
-	  while (vio_blocking(net->vio, true, &old_mode) < 0)
-	  {
-	    if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
-	      continue;
-#ifdef EXTRA_DEBUG
-	    fprintf(stderr,
-		    "%s: my_net_write: fcntl returned error %d, aborting thread\n",
-		    my_progname,vio_errno(net->vio));
-#endif /* EXTRA_DEBUG */
-	    net->error= 2;                     /* Close socket */
-            net->last_errno= ER_NET_PACKET_TOO_LARGE;
-	    goto end;
-	  }
-	  retry_count=0;
-	  continue;
-	}
+        bool old_mode;
+
+        while (vio_blocking(net->vio, true, &old_mode) < 0)
+        {
+          if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
+            continue;
+          net->error= 2;                     /* Close socket */
+          net->last_errno= ER_NET_PACKET_TOO_LARGE;
+          goto end;
+        }
+        retry_count=0;
+        continue;
       }
       else
-	if (thr_alarm_in_use(&alarmed) && !thr_got_alarm(&alarmed) &&
-	    interrupted)
       {
-	if (retry_count++ < net->retry_count)
-	    continue;
-#ifdef EXTRA_DEBUG
-	  fprintf(stderr, "%s: write looped, aborting thread\n",
-		  my_progname);
-#endif /* EXTRA_DEBUG */
+        if (retry_count++ < net->retry_count)
+          continue;
       }
+      
       if (vio_errno(net->vio) == SOCKET_EINTR)
       {
-	DBUG_PRINT("warning",("Interrupted write. Retrying..."));
-	continue;
+        continue;
       }
       net->error= 2;				/* Close socket */
       net->last_errno= (interrupted ? ER_NET_WRITE_INTERRUPTED :
-                               ER_NET_ERROR_ON_WRITE);
+                        ER_NET_ERROR_ON_WRITE);
       break;
     }
     pos+=length;
@@ -525,13 +512,8 @@ net_real_write(NET *net,const uchar *packet, size_t len)
  end:
   if (net->compress)
     my_free((char*) packet,MYF(0));
-  if (thr_alarm_in_use(&alarmed))
-  {
-    bool old_mode;
-    thr_end_alarm(&alarmed);
-    vio_blocking(net->vio, net_blocking, &old_mode);
-  }
   net->reading_or_writing=0;
+
   DBUG_RETURN(((int) (pos != end)));
 }
 
