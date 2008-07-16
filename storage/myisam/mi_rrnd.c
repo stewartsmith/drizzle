@@ -32,7 +32,6 @@
 int mi_rrnd(MI_INFO *info, uchar *buf, register my_off_t filepos)
 {
   my_bool skip_deleted_blocks;
-  DBUG_ENTER("mi_rrnd");
 
   skip_deleted_blocks=0;
 
@@ -53,7 +52,7 @@ int mi_rrnd(MI_INFO *info, uchar *buf, register my_off_t filepos)
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
 
   if (info->opt_flag & WRITE_CACHE_USED && flush_io_cache(&info->rec_cache))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
 
-  DBUG_RETURN ((*info->s->read_rnd)(info,buf,filepos,skip_deleted_blocks));
+  return ((*info->s->read_rnd)(info,buf,filepos,skip_deleted_blocks));
 }
