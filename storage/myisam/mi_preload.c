@@ -48,7 +48,6 @@ int mi_preload(MI_INFO *info, ulonglong key_map, my_bool ignore_leaves)
   MI_KEYDEF *keyinfo= share->keyinfo;
   my_off_t key_file_length= share->state.state.key_file_length;
   my_off_t pos= share->base.keystart;
-  DBUG_ENTER("mi_preload");
 
   if (!keys || !mi_is_any_key_active(key_map) || key_file_length == pos)
     return(0);
