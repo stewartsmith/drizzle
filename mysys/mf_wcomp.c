@@ -25,7 +25,7 @@ char wild_one='?';
 char wild_prefix=0; /* QQ this can potentially cause a SIGSEGV */
 
 int wild_compare(register const char *str, register const char *wildstr,
-                 pbool str_is_pattern)
+                 bool str_is_pattern)
 {
   char cmp;
   DBUG_ENTER("wild_compare");

@@ -24,7 +24,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
   uint i;
   uchar old_key[MI_MAX_KEY_BUFF],*new_key;
   my_bool auto_key_changed=0;
-  ulonglong changed;
+  uint64_t changed;
   MYISAM_SHARE *share= info->s;
   ha_checksum old_checksum= 0;
 
@@ -92,7 +92,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
 	{
 	  if ((int) i == info->lastinx)
 	    key_changed|=HA_STATE_WRITTEN;	/* Mark that keyfile changed */
-	  changed|=((ulonglong) 1 << i);
+	  changed|=((uint64_t) 1 << i);
 	  share->keyinfo[i].version++;
 	  if (share->keyinfo[i].ck_delete(info,i,old_key,old_length)) goto err;
 	  if (share->keyinfo[i].ck_insert(info,i,new_key,new_length)) goto err;
@@ -106,7 +106,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     If we are running with external locking, we must update the index file
     that something has changed.
   */
-  if (changed || !my_disable_locking)
+  if (changed)
     key_changed|= HA_STATE_CHANGED;
 
   if (share->calc_checksum)
@@ -173,7 +173,7 @@ err:
     flag=0;
     do
     {
-      if (((ulonglong) 1 << i) & changed)
+      if (((uint64_t) 1 << i) & changed)
       {
 	{
 	  uint new_length=_mi_make_key(info,i,new_key,newrec,pos);

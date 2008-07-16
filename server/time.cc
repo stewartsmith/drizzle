@@ -784,7 +784,7 @@ bool date_add_interval(MYSQL_TIME *ltime, interval_type int_type, INTERVAL inter
   case INTERVAL_DAY_MINUTE:
   case INTERVAL_DAY_HOUR:
   {
-    longlong sec, days, daynr, microseconds, extra_sec;
+    int64_t sec, days, daynr, microseconds, extra_sec;
     ltime->time_type= MYSQL_TIMESTAMP_DATETIME; // Return full date
     microseconds= ltime->second_part + sign*interval.second_part;
     extra_sec= microseconds/1000000L;
@@ -792,7 +792,7 @@ bool date_add_interval(MYSQL_TIME *ltime, interval_type int_type, INTERVAL inter
 
     sec=((ltime->day-1)*3600*24L+ltime->hour*3600+ltime->minute*60+
 	 ltime->second +
-	 sign* (longlong) (interval.day*3600*24L +
+	 sign* (int64_t) (interval.day*3600*24L +
                            interval.hour*3600LL+interval.minute*60LL+
                            interval.second))+ extra_sec;
     if (microseconds < 0)
@@ -813,7 +813,7 @@ bool date_add_interval(MYSQL_TIME *ltime, interval_type int_type, INTERVAL inter
     ltime->hour=   (uint) (sec/3600);
     daynr= calc_daynr(ltime->year,ltime->month,1) + days;
     /* Day number from year 0 to 9999-12-31 */
-    if ((ulonglong) daynr > MAX_DAY_NUMBER)
+    if ((uint64_t) daynr > MAX_DAY_NUMBER)
       goto invalid_date;
     get_date_from_daynr((long) daynr, &ltime->year, &ltime->month,
                         &ltime->day);
@@ -896,12 +896,12 @@ null_date:
 */
 
 bool
-calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign, longlong *seconds_out,
+calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign, int64_t *seconds_out,
                long *microseconds_out)
 {
   long days;
   bool neg;
-  longlong microseconds;
+  int64_t microseconds;
 
   /*
     We suppose that if first argument is MYSQL_TIMESTAMP_TIME
@@ -923,15 +923,15 @@ calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign, longlong *s
 			       (uint) l_time2->day);
   }
 
-  microseconds= ((longlong)days*86400LL +
-                 (longlong)(l_time1->hour*3600L +
+  microseconds= ((int64_t)days*86400LL +
+                 (int64_t)(l_time1->hour*3600L +
                             l_time1->minute*60L +
                             l_time1->second) -
-                 l_sign*(longlong)(l_time2->hour*3600L +
+                 l_sign*(int64_t)(l_time2->hour*3600L +
                                    l_time2->minute*60L +
                                    l_time2->second)) * 1000000LL +
-                (longlong)l_time1->second_part -
-                l_sign*(longlong)l_time2->second_part;
+                (int64_t)l_time1->second_part -
+                l_sign*(int64_t)l_time2->second_part;
 
   neg= 0;
   if (microseconds < 0)
@@ -966,8 +966,8 @@ calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign, longlong *s
 int
 my_time_compare(MYSQL_TIME *a, MYSQL_TIME *b)
 {
-  my_ulonglong a_t= TIME_to_ulonglong_datetime(a);
-  my_ulonglong b_t= TIME_to_ulonglong_datetime(b);
+  uint64_t a_t= TIME_to_uint64_t_datetime(a);
+  uint64_t b_t= TIME_to_uint64_t_datetime(b);
 
   if (a_t > b_t)
     return 1;

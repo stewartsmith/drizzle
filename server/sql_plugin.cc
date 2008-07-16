@@ -34,15 +34,20 @@ char opt_plugin_dir[FN_REFLEN];
 const LEX_STRING plugin_type_names[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
   { C_STRING_WITH_LEN("UDF") },
+  { C_STRING_WITH_LEN("UDA") },
   { C_STRING_WITH_LEN("STORAGE ENGINE") },
-  { C_STRING_WITH_LEN("FTPARSER") },
   { C_STRING_WITH_LEN("DAEMON") },
   { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
-  { C_STRING_WITH_LEN("AUDIT") }
+  { C_STRING_WITH_LEN("AUDIT") },
+  { C_STRING_WITH_LEN("LOG") },
+  { C_STRING_WITH_LEN("AUTH") }
 };
 
 extern int initialize_schema_table(st_plugin_int *plugin);
 extern int finalize_schema_table(st_plugin_int *plugin);
+
+extern int initialize_udf(st_plugin_int *plugin);
+extern int finalize_udf(st_plugin_int *plugin);
 
 /*
   The number of elements in both plugin_type_initialize and
@@ -51,45 +56,59 @@ extern int finalize_schema_table(st_plugin_int *plugin);
 */
 plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0,ha_initialize_handlerton,0,0,initialize_schema_table,
-  0
+  initialize_udf,  /* UDF */
+  0,  /* UDA */
+  ha_initialize_handlerton,  /* Storage Engine */
+  0,  /* Daemon */
+  initialize_schema_table,  /* Information Schema */
+  0,  /* Audit */
+  0,  /* Log */
+  0  /* Auth */
 };
 
 plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0,ha_finalize_handlerton,0,0,finalize_schema_table,
-  0
+  finalize_udf,  /* UDF */
+  0,  /* UDA */
+  ha_finalize_handlerton,  /* Storage Engine */
+  0,  /* Daemon */
+  finalize_schema_table,  /* Information Schema */
+  0,  /* Audit */
+  0,  /* Log */
+  0  /* Auth */
 };
 
-#ifdef HAVE_DLOPEN
 static const char *plugin_interface_version_sym=
                    "_mysql_plugin_interface_version_";
 static const char *sizeof_st_plugin_sym=
                    "_mysql_sizeof_struct_st_plugin_";
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
 static int min_plugin_interface_version= MYSQL_PLUGIN_INTERFACE_VERSION & ~0xFF;
-#endif
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
 */
 static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0x0000,
+  MYSQL_UDF_INTERFACE_VERSION,
+  MYSQL_UDA_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
   MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
-  MYSQL_AUDIT_INTERFACE_VERSION
+  MYSQL_AUDIT_INTERFACE_VERSION,
+  MYSQL_LOG_INTERFACE_VERSION,
+  MYSQL_AUTH_INTERFACE_VERSION
 };
 static int cur_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
-  0x0000, /* UDF: not implemented */
+  MYSQL_UDF_INTERFACE_VERSION,
+  MYSQL_UDA_INTERFACE_VERSION,
   MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_FTPARSER_INTERFACE_VERSION,
   MYSQL_DAEMON_INTERFACE_VERSION,
   MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
-  MYSQL_AUDIT_INTERFACE_VERSION
+  MYSQL_AUDIT_INTERFACE_VERSION,
+  MYSQL_LOG_INTERFACE_VERSION,
+  MYSQL_AUTH_INTERFACE_VERSION
 };
 
 static bool initialized= 0;
@@ -188,7 +207,7 @@ public:
 static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
                              const char *list);
 static int test_plugin_options(MEM_ROOT *, struct st_plugin_int *,
-                               int *, char **, my_bool);
+                               int *, char **);
 static bool register_builtin(struct st_mysql_plugin *, struct st_plugin_int *,
                              struct st_plugin_int **);
 static void unlock_variables(THD *thd, struct system_variables *vars);
@@ -207,7 +226,7 @@ static void reap_plugins(void);
 /* declared in set_var.cc */
 extern sys_var *intern_find_sys_var(const char *str, uint length, bool no_error);
 extern bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
-                                 const char *name, longlong val);
+                                 const char *name, int64_t val);
 
 /****************************************************************************
   Value type thunks, allows the C world to play in the C++ world
@@ -267,8 +286,6 @@ static int item_val_real(struct st_mysql_value *value, double *buf)
   Plugin support code
 ****************************************************************************/
 
-#ifdef HAVE_DLOPEN
-
 static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
 {
   uint i;
@@ -284,7 +301,6 @@ static struct st_plugin_dl *plugin_dl_find(const LEX_STRING *dl)
   }
   return(0);
 }
-
 
 static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
 {
@@ -307,15 +323,11 @@ static st_plugin_dl *plugin_dl_insert_or_reuse(struct st_plugin_dl *plugin_dl)
                                            sizeof(struct st_plugin_dl));
   return(tmp);
 }
-#endif /* HAVE_DLOPEN */
-
 
 static inline void free_plugin_mem(struct st_plugin_dl *p)
 {
-#ifdef HAVE_DLOPEN
   if (p->handle)
     dlclose(p->handle);
-#endif
   my_free(p->dl.str, MYF(MY_ALLOW_ZERO_PTR));
   if (p->version != MYSQL_PLUGIN_INTERFACE_VERSION)
     my_free((uchar*)p->plugins, MYF(MY_ALLOW_ZERO_PTR));
@@ -570,9 +582,9 @@ static SHOW_COMP_OPTION plugin_status(const LEX_STRING *name, int type)
 
 bool plugin_is_ready(const LEX_STRING *name, int type)
 {
-  bool rc= FALSE;
+  bool rc= false;
   if (plugin_status(name, type) == SHOW_OPTION_YES)
-    rc= TRUE;
+    rc= true;
   return rc;
 }
 
@@ -670,12 +682,12 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       my_error(ER_UDF_EXISTS, MYF(0), name->str);
     if (report & REPORT_TO_LOG)
       sql_print_error(ER(ER_UDF_EXISTS), name->str);
-    return(TRUE);
+    return(true);
   }
   /* Clear the whole struct to catch future extensions. */
   bzero((char*) &tmp, sizeof(tmp));
   if (! (tmp.plugin_dl= plugin_dl_add(dl, report)))
-    return(TRUE);
+    return(true);
   /* Find plugin by name */
   for (plugin= tmp.plugin_dl->plugins; plugin->info; plugin++)
   {
@@ -707,7 +719,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       tmp.name.length= name_len;
       tmp.ref_count= 0;
       tmp.state= PLUGIN_IS_UNINITIALIZED;
-      if (!test_plugin_options(tmp_root, &tmp, argc, argv, true))
+      if (!test_plugin_options(tmp_root, &tmp, argc, argv))
       {
         if ((tmp_plugin_ptr= plugin_insert_or_reuse(&tmp)))
         {
@@ -715,7 +727,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
           if (!my_hash_insert(&plugin_hash[plugin->type], (uchar*)tmp_plugin_ptr))
           {
             init_alloc_root(&tmp_plugin_ptr->mem_root, 4096, 4096);
-            return(FALSE);
+            return(false);
           }
           tmp_plugin_ptr->state= PLUGIN_IS_FREED;
         }
@@ -724,7 +736,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
       }
       /* plugin was disabled */
       plugin_dl_del(dl);
-      return(FALSE);
+      return(false);
     }
   }
   if (report & REPORT_TO_USER)
@@ -733,7 +745,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
     sql_print_error(ER(ER_CANT_FIND_DL_ENTRY), name->str);
 err:
   plugin_dl_del(dl);
-  return(TRUE);
+  return(true);
 }
 
 
@@ -797,18 +809,6 @@ static void plugin_del(struct st_plugin_int *plugin)
   free_root(&plugin->mem_root, MYF(0));
   return;
 }
-
-#ifdef NOT_USED
-
-static void plugin_del(const LEX_STRING *name)
-{
-  struct st_plugin_int *plugin;
-  if ((plugin= plugin_find_internal(name, MYSQL_ANY_PLUGIN)))
-    plugin_del(plugin);
-  return;
-}
-
-#endif
 
 static void reap_plugins(void)
 {
@@ -888,7 +888,6 @@ void plugin_unlock(THD *thd, plugin_ref plugin)
   if (!plugin)
     return;
   intern_plugin_unlock(lex, plugin);
-  reap_plugins();
   return;
 }
 
@@ -899,7 +898,6 @@ void plugin_unlock_list(THD *thd, plugin_ref *list, uint count)
   assert(list);
   while (count--)
     intern_plugin_unlock(lex, *list++);
-  reap_plugins();
   return;
 }
 
@@ -971,12 +969,12 @@ err:
 }
 
 
-extern "C" uchar *get_plugin_hash_key(const uchar *, size_t *, my_bool);
-extern "C" uchar *get_bookmark_hash_key(const uchar *, size_t *, my_bool);
+extern "C" uchar *get_plugin_hash_key(const uchar *, size_t *, bool);
+extern "C" uchar *get_bookmark_hash_key(const uchar *, size_t *, bool);
 
 
 uchar *get_plugin_hash_key(const uchar *buff, size_t *length,
-                           my_bool not_used __attribute__((unused)))
+                           bool not_used __attribute__((unused)))
 {
   struct st_plugin_int *plugin= (st_plugin_int *)buff;
   *length= (uint)plugin->name.length;
@@ -985,7 +983,7 @@ uchar *get_plugin_hash_key(const uchar *buff, size_t *length,
 
 
 uchar *get_bookmark_hash_key(const uchar *buff, size_t *length,
-                             my_bool not_used __attribute__((unused)))
+                             bool not_used __attribute__((unused)))
 {
   struct st_bookmark *var= (st_bookmark *)buff;
   *length= var->name_len + 1;
@@ -1003,7 +1001,6 @@ uchar *get_bookmark_hash_key(const uchar *buff, size_t *length,
 int plugin_init(int *argc, char **argv, int flags)
 {
   uint i;
-  bool def_enabled, is_myisam;
   struct st_mysql_plugin **builtins;
   struct st_mysql_plugin *plugin;
   struct st_plugin_int tmp, *plugin_ptr, **reap;
@@ -1042,26 +1039,17 @@ int plugin_init(int *argc, char **argv, int flags)
   {
     for (plugin= *builtins; plugin->info; plugin++)
     {
-      /* by default, only ndbcluster is disabled */
-      def_enabled=
-        my_strcasecmp(&my_charset_latin1, plugin->name, "NDBCLUSTER") != 0;
       bzero(&tmp, sizeof(tmp));
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= strlen(plugin->name);
 
       free_root(&tmp_root, MYF(MY_MARK_BLOCKS_FREE));
-      if (test_plugin_options(&tmp_root, &tmp, argc, argv, def_enabled))
+      if (test_plugin_options(&tmp_root, &tmp, argc, argv))
         continue;
 
       if (register_builtin(plugin, &tmp, &plugin_ptr))
         goto err_unlock;
-
-      /* only initialize MyISAM and CSV at this stage */
-      if (!(is_myisam=
-            !my_strcasecmp(&my_charset_latin1, plugin->name, "MyISAM")) &&
-          my_strcasecmp(&my_charset_latin1, plugin->name, "CSV"))
-        continue;
 
       if (plugin_initialize(plugin_ptr))
         goto err_unlock;
@@ -1070,7 +1058,7 @@ int plugin_init(int *argc, char **argv, int flags)
         initialize the global default storage engine so that it may
         not be null in any child thread.
       */
-      if (is_myisam)
+      if (my_strcasecmp(&my_charset_latin1, plugin->name, "MyISAM") == 0)
       {
         assert(!global_system_variables.table_plugin);
         global_system_variables.table_plugin=
@@ -1160,46 +1148,6 @@ static bool register_builtin(struct st_mysql_plugin *plugin,
 }
 
 
-#ifdef NOT_USED_YET
-/*
-  Register a plugin at run time. (note, this doesn't initialize a plugin)
-  Will be useful for embedded applications.
-
-  SYNOPSIS
-    plugin_register_builtin()
-    thd         current thread (used to store scratch data in mem_root)
-    plugin      static plugin to install
-
-  RETURN
-    false - plugin registered successfully
-*/
-bool plugin_register_builtin(THD *thd, struct st_mysql_plugin *plugin)
-{
-  struct st_plugin_int tmp, *ptr;
-  bool result= true;
-  int dummy_argc= 0;
-
-  bzero(&tmp, sizeof(tmp));
-  tmp.plugin= plugin;
-  tmp.name.str= (char *)plugin->name;
-  tmp.name.length= strlen(plugin->name);
-
-  rw_wrlock(&LOCK_system_variables_hash);
-
-  if (test_plugin_options(thd->mem_root, &tmp, &dummy_argc, NULL, true))
-    goto end;
-
-  if ((result= register_builtin(plugin, &tmp, &ptr)))
-    mysql_del_sys_var_chain(tmp.system_vars);
-
-end:
-  rw_unlock(&LOCK_system_variables_hash);
-
-  return(result);;
-}
-#endif /* NOT_USED_YET */
-
-
 /*
   called only by plugin_init()
 */
@@ -1216,7 +1164,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
     if (p == buffer + sizeof(buffer) - 1)
     {
       sql_print_error("plugin-load parameter too long");
-      return(TRUE);
+      return(true);
     }
 
     switch ((*(p++)= *(list++))) {
@@ -1273,11 +1221,11 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
       continue;
     }
   }
-  return(FALSE);
+  return(false);
 error:
   sql_print_error("Couldn't load plugin named '%s' with soname '%s'.",
                   name.str, dl.str);
-  return(TRUE);
+  return(true);
 }
 
 
@@ -1413,7 +1361,7 @@ bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
   int version=plugin_array_version;
 
   if (!initialized)
-    return(FALSE);
+    return(false);
 
   state_mask= ~state_mask; // do it only once
 
@@ -1450,16 +1398,16 @@ bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
           plugins[i]=0;
     }
     plugin= plugins[idx];
-    /* It will stop iterating on first engine error when "func" returns TRUE */
+    /* It will stop iterating on first engine error when "func" returns true */
     if (plugin && func(thd, plugin_int_to_ref(plugin), arg))
         goto err;
   }
 
   my_afree(plugins);
-  return(FALSE);
+  return(false);
 err:
   my_afree(plugins);
-  return(TRUE);
+  return(true);
 }
 
 
@@ -1473,33 +1421,31 @@ err:
 
 #define EXTRA_OPTIONS 3 /* options for: 'foo', 'plugin-foo' and NULL */
 
-typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_bool_t, my_bool);
-typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_bool_t, my_bool);
+typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_bool_t, bool);
+typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_bool_t, bool);
 typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_str_t, char *);
 typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_str_t, char *);
 
 typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
 typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_enum_t, unsigned long);
-typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_set_t, ulonglong);
-typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_set_t, ulonglong);
+typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
+typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_set_t, uint64_t);
 
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_int_t, int);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_long_t, long);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_longlong_t, longlong);
+typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_int64_t_t, int64_t);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint_t, uint);
 typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_ulong_t, ulong);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_ulonglong_t, ulonglong);
+typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint64_t_t, uint64_t);
 
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_int_t, int);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_long_t, long);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_longlong_t, longlong);
+typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_int64_t_t, int64_t);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint_t, uint);
 typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_ulong_t, ulong);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_ulonglong_t, ulonglong);
+typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint64_t_t, uint64_t);
 
-#define SET_PLUGIN_VAR_RESOLVE(opt)\
-  *(mysql_sys_var_ptr_p*)&((opt)->resolve)= mysql_sys_var_ptr
-typedef uchar *(*mysql_sys_var_ptr_p)(void* a_thd, int offset);
+typedef bool *(*mysql_sys_var_ptr_p)(THD* a_thd, int offset);
 
 
 /****************************************************************************
@@ -1549,60 +1495,60 @@ err:
 static int check_func_int(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(uint *)save= (uint) getopt_ull_limit_value((ulonglong) tmp, &options,
+    *(uint *)save= (uint) getopt_ull_limit_value((uint64_t) tmp, &options,
                                                    &fixed);
   else
     *(int *)save= (int) getopt_ll_limit_value(tmp, &options, &fixed);
 
   return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
-                              var->name, (longlong) tmp);
+                              var->name, (int64_t) tmp);
 }
 
 
 static int check_func_long(THD *thd, struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(ulong *)save= (ulong) getopt_ull_limit_value((ulonglong) tmp, &options,
+    *(ulong *)save= (ulong) getopt_ull_limit_value((uint64_t) tmp, &options,
                                                    &fixed);
   else
     *(long *)save= (long) getopt_ll_limit_value(tmp, &options, &fixed);
 
   return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
-                              var->name, (longlong) tmp);
+                              var->name, (int64_t) tmp);
 }
 
 
-static int check_func_longlong(THD *thd, struct st_mysql_sys_var *var,
+static int check_func_int64_t(THD *thd, struct st_mysql_sys_var *var,
                                void *save, st_mysql_value *value)
 {
-  my_bool fixed;
+  bool fixed;
   int64_t tmp;
   struct my_option options;
   value->val_int(value, &tmp);
   plugin_opt_set_limits(&options, var);
 
   if (var->flags & PLUGIN_VAR_UNSIGNED)
-    *(ulonglong *)save= getopt_ull_limit_value((ulonglong) tmp, &options,
+    *(uint64_t *)save= getopt_ull_limit_value((uint64_t) tmp, &options,
                                                &fixed);
   else
-    *(longlong *)save= getopt_ll_limit_value(tmp, &options, &fixed);
+    *(int64_t *)save= getopt_ll_limit_value(tmp, &options, &fixed);
 
   return throw_bounds_warning(thd, fixed, var->flags & PLUGIN_VAR_UNSIGNED,
-                              var->name, (longlong) tmp);
+                              var->name, (int64_t) tmp);
 }
 
 static int check_func_str(THD *thd,
@@ -1675,7 +1621,7 @@ static int check_func_set(THD *thd __attribute__((__unused__)),
   char buff[STRING_BUFFER_USUAL_SIZE], *error= 0;
   const char *strvalue= "NULL", *str;
   TYPELIB *typelib;
-  ulonglong result;
+  uint64_t result;
   uint error_len;
   bool not_used;
   int length;
@@ -1711,7 +1657,7 @@ static int check_func_set(THD *thd __attribute__((__unused__)),
       goto err;
     }
   }
-  *(ulonglong*)save= result;
+  *(uint64_t*)save= result;
   return 0;
 err:
   my_error(ER_WRONG_VALUE_FOR_VAR, MYF(0), var->name, strvalue);
@@ -1743,11 +1689,11 @@ static void update_func_long(THD *thd __attribute__((__unused__)),
 }
 
 
-static void update_func_longlong(THD *thd __attribute__((__unused__)),
+static void update_func_int64_t(THD *thd __attribute__((__unused__)),
                                  struct st_mysql_sys_var *var __attribute__((__unused__)),
                                  void *tgt, const void *save)
 {
-  *(longlong *)tgt= *(ulonglong *) save;
+  *(int64_t *)tgt= *(uint64_t *) save;
 }
 
 
@@ -1809,8 +1755,7 @@ sys_var *find_sys_var(THD *thd, const char *str, uint length)
   Returns the 'bookmark' for the named variable.
   LOCK_system_variables_hash should be at least read locked
 */
-static st_bookmark *find_bookmark(const char *plugin, const char *name,
-                                  int flags)
+static st_bookmark *find_bookmark(const char *plugin, const char *name, int flags)
 {
   st_bookmark *result= NULL;
   uint namelen, length, pluginlen= 0;
@@ -1873,7 +1818,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
     break;
   case PLUGIN_VAR_LONGLONG:
   case PLUGIN_VAR_SET:
-    size= sizeof(ulonglong);
+    size= sizeof(uint64_t);
     break;
   case PLUGIN_VAR_STR:
     size= sizeof(char*);
@@ -2034,9 +1979,39 @@ static uchar *intern_sys_var_ptr(THD* thd, int offset, bool global_lock)
   return (uchar*)thd->variables.dynamic_variables_ptr + offset;
 }
 
-static uchar *mysql_sys_var_ptr(void* a_thd, int offset)
+static bool *mysql_sys_var_ptr_bool(THD* a_thd, int offset)
 {
-  return intern_sys_var_ptr((THD *)a_thd, offset, true);
+  return (bool *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static int *mysql_sys_var_ptr_int(THD* a_thd, int offset)
+{
+  return (int *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static long *mysql_sys_var_ptr_long(THD* a_thd, int offset)
+{
+  return (long *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static int64_t *mysql_sys_var_ptr_int64_t(THD* a_thd, int offset)
+{
+  return (int64_t *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static char **mysql_sys_var_ptr_str(THD* a_thd, int offset)
+{
+  return (char **)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static uint64_t *mysql_sys_var_ptr_set(THD* a_thd, int offset)
+{
+  return (uint64_t *)intern_sys_var_ptr(a_thd, offset, true);
+}
+
+static unsigned long *mysql_sys_var_ptr_enum(THD* a_thd, int offset)
+{
+  return (unsigned long *)intern_sys_var_ptr(a_thd, offset, true);
 }
 
 
@@ -2132,8 +2107,6 @@ void plugin_thdvar_cleanup(THD *thd)
     while ((uchar*) list >= thd->lex->plugins.buffer)
       intern_plugin_unlock(NULL, *list--);
   }
-
-  reap_plugins();
 
   reset_dynamic(&thd->lex->plugins);
 
@@ -2258,7 +2231,7 @@ uchar* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
     char buffer[STRING_BUFFER_USUAL_SIZE];
     String str(buffer, sizeof(buffer), system_charset_info);
     TYPELIB *typelib= plugin_var_typelib();
-    ulonglong mask= 1, value= *(ulonglong*) result;
+    uint64_t mask= 1, value= *(uint64_t*) result;
     uint i;
 
     str.length(0);
@@ -2321,7 +2294,7 @@ void sys_var_pluginvar::set_default(THD *thd, enum_var_type type)
 	  src= &((thdvar_ulong_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_LONGLONG:
-	  src= &((thdvar_ulonglong_t*) plugin_var)->def_val;
+	  src= &((thdvar_uint64_t_t*) plugin_var)->def_val;
 	  break;
 	case PLUGIN_VAR_ENUM:
 	  src= &((thdvar_enum_t*) plugin_var)->def_val;
@@ -2417,10 +2390,10 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_ULONG, options, (sysvar_ulong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG:
-    OPTION_SET_LIMITS(GET_LL, options, (sysvar_longlong_t*) opt);
+    OPTION_SET_LIMITS(GET_LL, options, (sysvar_int64_t_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED:
-    OPTION_SET_LIMITS(GET_ULL, options, (sysvar_ulonglong_t*) opt);
+    OPTION_SET_LIMITS(GET_ULL, options, (sysvar_uint64_t_t*) opt);
     break;
   case PLUGIN_VAR_ENUM:
     options->var_type= GET_ENUM;
@@ -2443,7 +2416,7 @@ static void plugin_opt_set_limits(struct my_option *options,
   case PLUGIN_VAR_STR:
     options->var_type= ((opt->flags & PLUGIN_VAR_MEMALLOC) ?
                         GET_STR_ALLOC : GET_STR);
-    options->def_value= (intptr) ((sysvar_str_t*) opt)->def_val;
+    options->def_value= (intptr_t) ((sysvar_str_t*) opt)->def_val;
     break;
   /* threadlocal variables */
   case PLUGIN_VAR_INT | PLUGIN_VAR_THDLOCAL:
@@ -2459,10 +2432,10 @@ static void plugin_opt_set_limits(struct my_option *options,
     OPTION_SET_LIMITS(GET_ULONG, options, (thdvar_ulong_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_THDLOCAL:
-    OPTION_SET_LIMITS(GET_LL, options, (thdvar_longlong_t*) opt);
+    OPTION_SET_LIMITS(GET_LL, options, (thdvar_int64_t_t*) opt);
     break;
   case PLUGIN_VAR_LONGLONG | PLUGIN_VAR_UNSIGNED | PLUGIN_VAR_THDLOCAL:
-    OPTION_SET_LIMITS(GET_ULL, options, (thdvar_ulonglong_t*) opt);
+    OPTION_SET_LIMITS(GET_ULL, options, (thdvar_uint64_t_t*) opt);
     break;
   case PLUGIN_VAR_ENUM | PLUGIN_VAR_THDLOCAL:
     options->var_type= GET_ENUM;
@@ -2485,7 +2458,7 @@ static void plugin_opt_set_limits(struct my_option *options,
   case PLUGIN_VAR_STR | PLUGIN_VAR_THDLOCAL:
     options->var_type= ((opt->flags & PLUGIN_VAR_MEMALLOC) ?
                         GET_STR_ALLOC : GET_STR);
-    options->def_value= (intptr) ((thdvar_str_t*) opt)->def_val;
+    options->def_value= (intptr_t) ((thdvar_str_t*) opt)->def_val;
     break;
   default:
     assert(0);
@@ -2497,10 +2470,10 @@ static void plugin_opt_set_limits(struct my_option *options,
     options->arg_type= OPT_ARG;
 }
 
-extern "C" my_bool get_one_plugin_option(int optid, const struct my_option *,
+extern "C" bool get_one_plugin_option(int optid, const struct my_option *,
                                          char *);
 
-my_bool get_one_plugin_option(int optid __attribute__((unused)),
+bool get_one_plugin_option(int optid __attribute__((unused)),
                               const struct my_option *opt __attribute__((__unused__)),
                               char *argument __attribute__((__unused__)))
 {
@@ -2509,8 +2482,7 @@ my_bool get_one_plugin_option(int optid __attribute__((unused)),
 
 
 static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
-                             my_option *options, my_bool **enabled,
-                             bool can_disable)
+                             my_option *options, bool can_disable)
 {
   const char *plugin_name= tmp->plugin->name;
   uint namelen= strlen(plugin_name), optnamelen;
@@ -2543,21 +2515,13 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     options[0].comment= name + namelen*2 + 10;
   }
 
-  /*
-    NOTE: 'name' is one char above the allocated buffer!
-    NOTE: This code assumes that 'my_bool' and 'char' are of same size.
-  */
-  *((my_bool *)(name -1))= **enabled;
-  *enabled= (my_bool *)(name - 1);
-
-
   options[1].name= (options[0].name= name) + namelen + 1;
   options[0].id= options[1].id= 256; /* must be >255. dup id ok */
   options[0].var_type= options[1].var_type= GET_BOOL;
   options[0].arg_type= options[1].arg_type= NO_ARG;
-  options[0].def_value= options[1].def_value= **enabled;
+  options[0].def_value= options[1].def_value= true;
   options[0].value= options[0].u_max_value=
-  options[1].value= options[1].u_max_value= (uchar**) (name - 1);
+  options[1].value= options[1].u_max_value= (char**) (name - 1);
   options+= 2;
 
   /*
@@ -2575,25 +2539,25 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       continue;
     switch (opt->flags & PLUGIN_VAR_TYPEMASK) {
     case PLUGIN_VAR_BOOL:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_bool_t *) opt);
+      (((thdvar_bool_t *)opt)->resolve)= mysql_sys_var_ptr_bool;
       break;
     case PLUGIN_VAR_INT:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_int_t *) opt);
+      (((thdvar_int_t *)opt)->resolve)= mysql_sys_var_ptr_int;
       break;
     case PLUGIN_VAR_LONG:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_long_t *) opt);
+      (((thdvar_long_t *)opt)->resolve)= mysql_sys_var_ptr_long;
       break;
     case PLUGIN_VAR_LONGLONG:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_longlong_t *) opt);
+      (((thdvar_int64_t_t *)opt)->resolve)= mysql_sys_var_ptr_int64_t;
       break;
     case PLUGIN_VAR_STR:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_str_t *) opt);
+      (((thdvar_str_t *)opt)->resolve)= mysql_sys_var_ptr_str;
       break;
     case PLUGIN_VAR_ENUM:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_enum_t *) opt);
+      (((thdvar_enum_t *)opt)->resolve)= mysql_sys_var_ptr_enum;
       break;
     case PLUGIN_VAR_SET:
-      SET_PLUGIN_VAR_RESOLVE((thdvar_set_t *) opt);
+      (((thdvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
       break;
     default:
       sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",
@@ -2626,9 +2590,9 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       break;
     case PLUGIN_VAR_LONGLONG:
       if (!opt->check)
-        opt->check= check_func_longlong;
+        opt->check= check_func_int64_t;
       if (!opt->update)
-        opt->update= update_func_longlong;
+        opt->update= update_func_int64_t;
       break;
     case PLUGIN_VAR_STR:
       if (!opt->check)
@@ -2656,7 +2620,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       if (!opt->check)
         opt->check= check_func_set;
       if (!opt->update)
-        opt->update= update_func_longlong;
+        opt->update= update_func_int64_t;
       break;
     default:
       sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",
@@ -2714,10 +2678,10 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
     plugin_opt_set_limits(options, opt);
 
     if (opt->flags & PLUGIN_VAR_THDLOCAL)
-      options->value= options->u_max_value= (uchar**)
+      options->value= options->u_max_value= (char**)
         (global_system_variables.dynamic_variables_ptr + offset);
     else
-      options->value= options->u_max_value= *(uchar***) (opt + 1);
+      options->value= options->u_max_value= *(char***) (opt + 1);
 
     options[1]= options[0];
     options[1].name= p= (char*) alloc_root(mem_root, optnamelen + 8);
@@ -2736,8 +2700,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 {
   st_mysql_sys_var **opt;
   my_option *opts;
-  my_bool dummy, can_disable;
-  my_bool *dummy2= &dummy;
+  bool can_disable;
   uint count= EXTRA_OPTIONS;
 
   for (opt= p->plugin->system_vars; opt && *opt; opt++, count+= 2) {};
@@ -2747,13 +2710,15 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
 
   bzero(opts, sizeof(my_option) * count);
 
-  dummy= TRUE; /* plugin is enabled. */
+  if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") == 0))
+    can_disable= false;
+  else if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MEMORY") == 0))
+    can_disable= false;
+  else
+    can_disable= true;
 
-  can_disable=
-      my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") &&
-      my_strcasecmp(&my_charset_latin1, p->name.str, "MEMORY");
 
-  if (construct_options(mem_root, p, opts, &dummy2, can_disable))
+  if (construct_options(mem_root, p, opts, can_disable))
     return(NULL);
 
   return(opts);
@@ -2774,11 +2739,11 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
     Requires that a write-lock is held on LOCK_system_variables_hash
 */
 static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
-                               int *argc, char **argv, my_bool default_enabled)
+                               int *argc, char **argv)
 {
   struct sys_var_chain chain= { NULL, NULL };
-  my_bool enabled_saved= default_enabled, can_disable;
-  my_bool *enabled= &default_enabled;
+  bool enabled_saved= true;
+  bool can_disable;
   MEM_ROOT *mem_root= alloc_root_inited(&tmp->mem_root) ?
                       &tmp->mem_root : &plugin_mem_root;
   st_mysql_sys_var **opt;
@@ -2794,9 +2759,12 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     count+= 2; /* --{plugin}-{optname} and --plugin-{plugin}-{optname} */
 
-  can_disable=
-      my_strcasecmp(&my_charset_latin1, tmp->name.str, "MyISAM") &&
-      my_strcasecmp(&my_charset_latin1, tmp->name.str, "MEMORY");
+  if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MyISAM") == 0))
+    can_disable= false;
+  else if ((my_strcasecmp(&my_charset_latin1, tmp->name.str, "MEMORY") == 0))
+    can_disable= false;
+  else
+    can_disable= true;
 
   if (count > EXTRA_OPTIONS || (*argc > 1))
   {
@@ -2807,7 +2775,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
     bzero(opts, sizeof(my_option) * count);
 
-    if (construct_options(tmp_root, tmp, opts, &enabled, can_disable))
+    if (construct_options(tmp_root, tmp, opts, can_disable))
     {
       sql_print_error("Bad options for plugin '%s'.", tmp->name.str);
       return(-1);
@@ -2824,15 +2792,8 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
     }
   }
 
-  if (!*enabled && !can_disable)
-  {
-    sql_print_warning("Plugin '%s' cannot be disabled", tmp->name.str);
-    *enabled= TRUE;
-  }
-
   error= 1;
 
-  if (*enabled)
   {
     for (opt= tmp->plugin->system_vars; opt && *opt; opt++)
     {

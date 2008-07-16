@@ -606,22 +606,22 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 
 
 /*
-** Calc type of integer; long integer, longlong integer or real.
+** Calc type of integer; long integer, int64_t integer or real.
 ** Returns smallest type that match the string.
 ** When using unsigned long long values the result is converted to a real
 ** because else they will be unexpected sign changes because all calculation
-** is done with longlong or double.
+** is done with int64_t or double.
 */
 
 static const char *long_str="2147483647";
 static const uint long_len=10;
 static const char *signed_long_str="-2147483648";
-static const char *longlong_str="9223372036854775807";
-static const uint longlong_len=19;
-static const char *signed_longlong_str="-9223372036854775808";
-static const uint signed_longlong_len=19;
-static const char *unsigned_longlong_str="18446744073709551615";
-static const uint unsigned_longlong_len=20;
+static const char *int64_t_str="9223372036854775807";
+static const uint int64_t_len=19;
+static const char *signed_int64_t_str="-9223372036854775808";
+static const uint signed_int64_t_len=19;
+static const char *unsigned_int64_t_str="18446744073709551615";
+static const uint unsigned_int64_t_len=20;
 
 static inline uint int_token(const char *str,uint length)
 {
@@ -655,14 +655,14 @@ static inline uint int_token(const char *str,uint length)
       smaller=NUM;				// If <= signed_long_str
       bigger=LONG_NUM;				// If >= signed_long_str
     }
-    else if (length < signed_longlong_len)
+    else if (length < signed_int64_t_len)
       return LONG_NUM;
-    else if (length > signed_longlong_len)
+    else if (length > signed_int64_t_len)
       return DECIMAL_NUM;
     else
     {
-      cmp=signed_longlong_str+1;
-      smaller=LONG_NUM;				// If <= signed_longlong_str
+      cmp=signed_int64_t_str+1;
+      smaller=LONG_NUM;				// If <= signed_int64_t_str
       bigger=DECIMAL_NUM;
     }
   }
@@ -674,19 +674,19 @@ static inline uint int_token(const char *str,uint length)
       smaller=NUM;
       bigger=LONG_NUM;
     }
-    else if (length < longlong_len)
+    else if (length < int64_t_len)
       return LONG_NUM;
-    else if (length > longlong_len)
+    else if (length > int64_t_len)
     {
-      if (length > unsigned_longlong_len)
+      if (length > unsigned_int64_t_len)
         return DECIMAL_NUM;
-      cmp=unsigned_longlong_str;
+      cmp=unsigned_int64_t_str;
       smaller=ULONGLONG_NUM;
       bigger=DECIMAL_NUM;
     }
     else
     {
-      cmp=longlong_str;
+      cmp=int64_t_str;
       smaller=LONG_NUM;
       bigger= ULONGLONG_NUM;
     }
@@ -2411,16 +2411,16 @@ st_lex::copy_db_to(char **p_db, size_t *p_db_length) const
 void st_select_lex_unit::set_limit(st_select_lex *sl)
 {
   ha_rows select_limit_val;
-  ulonglong val;
+  uint64_t val;
 
   val= sl->select_limit ? sl->select_limit->val_uint() : HA_POS_ERROR;
   select_limit_val= (ha_rows)val;
 #ifndef BIG_TABLES
   /* 
-    Check for overflow : ha_rows can be smaller then ulonglong if
+    Check for overflow : ha_rows can be smaller then uint64_t if
     BIG_TABLES is off.
     */
-  if (val != (ulonglong)select_limit_val)
+  if (val != (uint64_t)select_limit_val)
     select_limit_val= HA_POS_ERROR;
 #endif
   offset_limit_cnt= (ha_rows)(sl->offset_limit ? sl->offset_limit->val_uint() :

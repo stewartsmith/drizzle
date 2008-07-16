@@ -47,25 +47,25 @@ struct my_option
   const char *name;                     /* Name of the option */
   int        id;                        /* unique id or short option */
   const char *comment;                  /* option comment, for autom. --help */
-  uchar      **value;                   /* The variable value */
-  uchar      **u_max_value;             /* The user def. max variable value */
+  char      **value;                   /* The variable value */
+  char      **u_max_value;             /* The user def. max variable value */
   struct st_typelib *typelib;           /* Pointer to possible values */
   ulong     var_type;
   enum get_opt_arg_type arg_type;
-  longlong   def_value;                 /* Default value */
-  longlong   min_value;                 /* Min allowed value */
-  longlong   max_value;                 /* Max allowed value */
-  longlong   sub_size;                  /* Subtract this from given value */
+  int64_t   def_value;                 /* Default value */
+  int64_t   min_value;                 /* Min allowed value */
+  int64_t   max_value;                 /* Max allowed value */
+  int64_t   sub_size;                  /* Subtract this from given value */
   long       block_size;                /* Value should be a mult. of this */
   void       *app_type;                 /* To be used by an application */
 };
 
-typedef my_bool (* my_get_one_option) (int, const struct my_option *, char * );
+typedef bool (* my_get_one_option) (int, const struct my_option *, char * );
 typedef void (* my_error_reporter) (enum loglevel level, const char *format, ... );
 
 extern char *disabled_my_option;
-extern my_bool my_getopt_print_errors;
-extern my_bool my_getopt_skip_unknown;
+extern bool my_getopt_print_errors;
+extern bool my_getopt_skip_unknown;
 extern my_error_reporter my_getopt_error_reporter;
 
 extern int handle_options (int *argc, char ***argv, 
@@ -73,14 +73,14 @@ extern int handle_options (int *argc, char ***argv,
 extern void my_cleanup_options(const struct my_option *options);
 extern void my_print_help(const struct my_option *options);
 extern void my_print_variables(const struct my_option *options);
-extern void my_getopt_register_get_addr(uchar ** (*func_addr)(const char *, uint,
-							   const struct my_option *));
+extern void my_getopt_register_get_addr(char ** (*func_addr)(const char *, uint,
+                                                             const struct my_option *));
 
-ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
-                                 my_bool *fix);
-longlong getopt_ll_limit_value(longlong, const struct my_option *,
-                               my_bool *fix);
-my_bool getopt_compare_strings(const char *s, const char *t, uint length);
+uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
+                                 bool *fix);
+int64_t getopt_ll_limit_value(int64_t, const struct my_option *,
+                               bool *fix);
+bool getopt_compare_strings(const char *s, const char *t, uint length);
 
 C_MODE_END
 

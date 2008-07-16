@@ -25,17 +25,17 @@
 #include "mysys_priv.h"
 #include "my_static.h"
 
-ulonglong my_getsystime()
+uint64_t my_getsystime()
 {
 #ifdef HAVE_CLOCK_GETTIME
   struct timespec tp;
   clock_gettime(CLOCK_REALTIME, &tp);
-  return (ulonglong)tp.tv_sec*10000000+(ulonglong)tp.tv_nsec/100;
+  return (uint64_t)tp.tv_sec*10000000+(uint64_t)tp.tv_nsec/100;
 #else
   /* TODO: check for other possibilities for hi-res timestamping */
   struct timeval tv;
   gettimeofday(&tv,NULL);
-  return (ulonglong)tv.tv_sec*10000000+(ulonglong)tv.tv_usec*10;
+  return (uint64_t)tv.tv_sec*10000000+(uint64_t)tv.tv_usec*10;
 #endif
 }
 
@@ -88,19 +88,19 @@ time_t my_time(myf flags __attribute__((unused)))
     Value in microseconds from some undefined point in time
 */
 
-ulonglong my_micro_time()
+uint64_t my_micro_time()
 {
 #if defined(HAVE_GETHRTIME)
   return gethrtime()/1000;
 #else
-  ulonglong newtime;
+  uint64_t newtime;
   struct timeval t;
   /*
     The following loop is here because gettimeofday may fail on some systems
   */
   while (gettimeofday(&t, NULL) != 0)
   {}
-  newtime= (ulonglong)t.tv_sec * 1000000 + t.tv_usec;
+  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
   return newtime;
 #endif  /* defined(HAVE_GETHRTIME) */
 }
@@ -130,7 +130,7 @@ ulonglong my_micro_time()
 
 #define DELTA_FOR_SECONDS 500000000LL  /* Half a second */
 
-ulonglong my_micro_time_and_time(time_t *time_arg)
+uint64_t my_micro_time_and_time(time_t *time_arg)
 {
 #if defined(HAVE_GETHRTIME)
   /*
@@ -152,7 +152,7 @@ ulonglong my_micro_time_and_time(time_t *time_arg)
   pthread_mutex_unlock(&THR_LOCK_time);
   return cur_gethrtime/1000;
 #else
-  ulonglong newtime;
+  uint64_t newtime;
   struct timeval t;
   /*
     The following loop is here because gettimeofday may fail on some systems
@@ -160,7 +160,7 @@ ulonglong my_micro_time_and_time(time_t *time_arg)
   while (gettimeofday(&t, NULL) != 0)
   {}
   *time_arg= t.tv_sec;
-  newtime= (ulonglong)t.tv_sec * 1000000 + t.tv_usec;
+  newtime= (uint64_t)t.tv_sec * 1000000 + t.tv_usec;
   return newtime;
 #endif  /* defined(HAVE_GETHRTIME) */
 }
@@ -182,7 +182,7 @@ ulonglong my_micro_time_and_time(time_t *time_arg)
     current time
 */
 
-time_t my_time_possible_from_micro(ulonglong microtime __attribute__((unused)))
+time_t my_time_possible_from_micro(uint64_t microtime __attribute__((unused)))
 {
 #if defined(HAVE_GETHRTIME)
   return my_time(0);                            /* Cached time */

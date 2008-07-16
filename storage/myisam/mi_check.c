@@ -87,7 +87,7 @@ void myisamchk_init(MI_CHECK *param)
 {
   bzero((uchar*) param,sizeof(*param));
   param->opt_follow_links=1;
-  param->keys_in_use= ~(ulonglong) 0;
+  param->keys_in_use= ~(uint64_t) 0;
   param->search_after_block=HA_OFFSET_ERROR;
   param->auto_increment_value= 0;
   param->use_buffers=USE_BUFFER_INIT;
@@ -98,7 +98,7 @@ void myisamchk_init(MI_CHECK *param)
   param->tmpfile_createflag=O_RDWR | O_TRUNC | O_EXCL;
   param->myf_rw=MYF(MY_NABP | MY_WME | MY_WAIT_IF_FULL);
   param->start_check_pos=0;
-  param->max_record_length= LONGLONG_MAX;
+  param->max_record_length= INT64_MAX;
   param->key_cache_block_size= KEY_CACHE_BLOCK_SIZE;
   param->stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 }
@@ -346,8 +346,8 @@ int chk_size(MI_CHECK *param, register MI_INFO *info)
   }
   if (!(param->testflag & T_VERY_SILENT) &&
       ! (info->s->options & HA_OPTION_COMPRESS_RECORD) &&
-      ulonglong2double(info->state->key_file_length) >
-      ulonglong2double(info->s->base.margin_key_file_length)*0.9)
+      uint64_t2double(info->state->key_file_length) >
+      uint64_t2double(info->s->base.margin_key_file_length)*0.9)
     mi_check_print_warning(param,"Keyfile is almost full, %10s of %10s used",
 			   llstr(info->state->key_file_length,buff),
 			   llstr(info->s->base.max_key_file_length-1,buff));
@@ -380,8 +380,8 @@ int chk_size(MI_CHECK *param, register MI_INFO *info)
   }
   if (!(param->testflag & T_VERY_SILENT) &&
       !(info->s->options & HA_OPTION_COMPRESS_RECORD) &&
-      ulonglong2double(info->state->data_file_length) >
-      (ulonglong2double(info->s->base.max_data_file_length)*0.9))
+      uint64_t2double(info->state->data_file_length) >
+      (uint64_t2double(info->s->base.max_data_file_length)*0.9))
     mi_check_print_warning(param, "Datafile is almost full, %10s of %10s used",
 			   llstr(info->state->data_file_length,buff),
 			   llstr(info->s->base.max_data_file_length-1,buff2));
@@ -499,7 +499,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
     if ((uint) share->base.auto_key -1 == key)
     {
       /* Check that auto_increment key is bigger than max key value */
-      ulonglong auto_increment;
+      uint64_t auto_increment;
       info->lastinx=key;
       _mi_read_key_record(info, 0L, info->rec_buff);
       auto_increment= retrieve_auto_increment(info, info->rec_buff);
@@ -548,7 +548,7 @@ do_stat:
       update_key_parts(keyinfo, rec_per_key_part, param->unique_count,
                        param->stats_method == MI_STATS_METHOD_IGNORE_NULLS?
                        param->notnull_count: NULL, 
-                       (ulonglong)info->state->records);
+                       (uint64_t)info->state->records);
   }
   if (param->testflag & T_INFO)
   {
@@ -563,7 +563,7 @@ do_stat:
       puts("");
   }
   if (param->key_file_blocks != info->state->key_file_length &&
-      param->keys_in_use != ~(ulonglong) 0)
+      param->keys_in_use != ~(uint64_t) 0)
     mi_check_print_warning(param, "Some data are unreferenced in keyfile");
   if (found_keys != full_text_keys)
     param->record_checksum=old_record_checksum-init_checksum;	/* Remove delete links */
@@ -644,7 +644,7 @@ err:
 */
 
 static
-void mi_collect_stats_nonulls_first(HA_KEYSEG *keyseg, ulonglong *notnull,
+void mi_collect_stats_nonulls_first(HA_KEYSEG *keyseg, uint64_t *notnull,
                                     uchar *key)
 {
   uint first_null, kp;
@@ -684,7 +684,7 @@ void mi_collect_stats_nonulls_first(HA_KEYSEG *keyseg, ulonglong *notnull,
 */
 
 static
-int mi_collect_stats_nonulls_next(HA_KEYSEG *keyseg, ulonglong *notnull,
+int mi_collect_stats_nonulls_next(HA_KEYSEG *keyseg, uint64_t *notnull,
                                   uchar *prev_key, uchar *last_key)
 {
   uint diffs[2];
@@ -840,7 +840,7 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
 
 static ha_checksum calc_checksum(ha_rows count)
 {
-  ulonglong sum,a,b;
+  uint64_t sum,a,b;
 
   sum=0;
   a=count; b=count+1;
@@ -1285,14 +1285,14 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       printf("Records:%18s    M.recordlength:%9lu   Packed:%14.0f%%\n",
 	     llstr(records,llbuff), (long)((used-link_used)/records),
 	     (info->s->base.blobs ? 0.0 :
-	      (ulonglong2double((ulonglong) info->s->base.reclength*records)-
+	      (uint64_t2double((uint64_t) info->s->base.reclength*records)-
 	       my_off_t2double(used))/
-	      ulonglong2double((ulonglong) info->s->base.reclength*records)*100.0));
+	      uint64_t2double((uint64_t) info->s->base.reclength*records)*100.0));
       printf("Recordspace used:%9.0f%%   Empty space:%12d%%  Blocks/Record: %6.2f\n",
-	     (ulonglong2double(used-link_used)/ulonglong2double(used-link_used+empty)*100.0),
-	     (!records ? 100 : (int) (ulonglong2double(del_length+empty)/
+	     (uint64_t2double(used-link_used)/uint64_t2double(used-link_used+empty)*100.0),
+	     (!records ? 100 : (int) (uint64_t2double(del_length+empty)/
 				      my_off_t2double(used)*100.0)),
-	     ulonglong2double(splits - del_blocks) / records);
+	     uint64_t2double(splits - del_blocks) / records);
     }
     printf("Record blocks:%12s    Delete blocks:%10s\n",
 	   llstr(splits-del_blocks,llbuff),llstr(del_blocks,llbuff2));
@@ -2088,7 +2088,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   ulong   *rec_per_key_part;
   char llbuff[22];
   SORT_INFO sort_info;
-  ulonglong key_map= 0;
+  uint64_t key_map= 0;
 
   start_records=info->state->records;
   got_error=1;
@@ -2266,7 +2266,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
       update_key_parts(sort_param.keyinfo, rec_per_key_part, sort_param.unique,
                        param->stats_method == MI_STATS_METHOD_IGNORE_NULLS?
                        sort_param.notnull: NULL,
-                       (ulonglong) info->state->records);
+                       (uint64_t) info->state->records);
     /* Enable this index in the permanent (not the copied) key_map. */
     mi_set_key_active(share->state.key_map, sort_param.key);
 
@@ -2396,7 +2396,6 @@ err:
   my_free(mi_get_rec_buff_ptr(info, sort_param.record),
           MYF(MY_ALLOW_ZERO_PTR));
   my_free((uchar*) sort_info.key_block,MYF(MY_ALLOW_ZERO_PTR));
-  my_free((uchar*) sort_info.ft_buf, MYF(MY_ALLOW_ZERO_PTR));
   my_free(sort_info.buff,MYF(MY_ALLOW_ZERO_PTR));
   VOID(end_io_cache(&param->read_cache));
   info->opt_flag&= ~(READ_CACHE_USED | WRITE_CACHE_USED);
@@ -2467,7 +2466,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
   IO_CACHE new_data_cache; /* For non-quick repair. */
   IO_CACHE_SHARE io_share;
   SORT_INFO sort_info;
-  ulonglong key_map= 0;
+  uint64_t key_map= 0;
   pthread_attr_t thr_attr;
   ulong max_pack_reclength;
 
@@ -2903,7 +2902,6 @@ err:
   pthread_cond_destroy (&sort_info.cond);
   pthread_mutex_destroy(&sort_info.mutex);
 
-  my_free((uchar*) sort_info.ft_buf, MYF(MY_ALLOW_ZERO_PTR));
   my_free((uchar*) sort_info.key_block,MYF(MY_ALLOW_ZERO_PTR));
   my_free((uchar*) sort_param,MYF(MY_ALLOW_ZERO_PTR));
   my_free(sort_info.buff,MYF(MY_ALLOW_ZERO_PTR));
@@ -3817,7 +3815,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   MI_STATUS_INFO status_info;
   uint unpack,key_parts;
   ha_rows max_records;
-  ulonglong file_length,tmp_length;
+  uint64_t file_length,tmp_length;
   MI_CREATE_INFO create_info;
 
   error=1;					/* Default error */
@@ -3904,11 +3902,11 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
     (param->testflag & T_UNPACK);
   share.options&= ~HA_OPTION_TEMP_COMPRESS_RECORD;
 
-  file_length=(ulonglong) my_seek(info.dfile,0L,MY_SEEK_END,MYF(0));
+  file_length=(uint64_t) my_seek(info.dfile,0L,MY_SEEK_END,MYF(0));
   tmp_length= file_length+file_length/10;
   set_if_bigger(file_length,param->max_data_file_length);
   set_if_bigger(file_length,tmp_length);
-  set_if_bigger(file_length,(ulonglong) share.base.max_data_file_length);
+  set_if_bigger(file_length,(uint64_t) share.base.max_data_file_length);
 
   VOID(mi_close(*org_info));
   bzero((char*) &create_info,sizeof(create_info));
@@ -4112,7 +4110,7 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
   }
   else
   {
-    ulonglong auto_increment= retrieve_auto_increment(info, record);
+    uint64_t auto_increment= retrieve_auto_increment(info, record);
     set_if_bigger(info->s->state.auto_increment,auto_increment);
     if (!repair_only)
       set_if_bigger(info->s->state.auto_increment, param->auto_increment_value);
@@ -4176,11 +4174,11 @@ void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
 */
 
 void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
-                      ulonglong *unique, ulonglong *notnull,
-                      ulonglong records)
+                      uint64_t *unique, uint64_t *notnull,
+                      uint64_t records)
 {
-  ulonglong count=0,tmp, unique_tuples;
-  ulonglong tuples= records;
+  uint64_t count=0,tmp, unique_tuples;
+  uint64_t tuples= records;
   uint parts;
   for (parts=0 ; parts < keyinfo->keysegs  ; parts++)
   {
@@ -4209,8 +4207,8 @@ void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
       let's ensure it is not
     */
     set_if_bigger(tmp,1);
-    if (tmp >= (ulonglong) ~(ulong) 0)
-      tmp=(ulonglong) ~(ulong) 0;
+    if (tmp >= (uint64_t) ~(ulong) 0)
+      tmp=(uint64_t) ~(ulong) 0;
 
     *rec_per_key_part=(ulong) tmp;
     rec_per_key_part++;
@@ -4232,8 +4230,8 @@ static my_bool mi_too_big_key_for_sort(MI_KEYDEF *key, ha_rows rows)
 {
   uint key_maxlength=key->maxlength;
   return (key->flag & (HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY | HA_FULLTEXT) &&
-	  ((ulonglong) rows * key_maxlength >
-	   (ulonglong) myisam_max_temp_length));
+	  ((uint64_t) rows * key_maxlength >
+	   (uint64_t) myisam_max_temp_length));
 }
 
 /*
@@ -4272,7 +4270,7 @@ void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows)
 */
 
 my_bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows,
-			    ulonglong key_map, my_bool force)
+			    uint64_t key_map, my_bool force)
 {
   MYISAM_SHARE *share=info->s;
   MI_KEYDEF *key=share->keyinfo;

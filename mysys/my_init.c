@@ -20,7 +20,7 @@
 #include <m_ctype.h>
 #include <signal.h>
 
-my_bool my_init_done= 0;
+bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */
 ulong   my_thread_stack_size= 65536;
 
@@ -47,7 +47,7 @@ static ulong atoi_octal(const char *str)
     1  Couldn't initialize environment
 */
 
-my_bool my_init(void)
+bool my_init(void)
 {
   char * str;
   if (my_init_done)
@@ -99,7 +99,7 @@ void my_end(int infoflag)
     optimized until this compiler is not in use anymore
   */
   FILE *info_file= DBUG_FILE;
-  my_bool print_info= (info_file != stderr);
+  bool print_info= (info_file != stderr);
   /*
     We do not use DBUG_ENTER here, as after cleanup DBUG is no longer
     operational, so we cannot use DBUG_RETURN.

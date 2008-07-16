@@ -45,8 +45,8 @@ typedef struct st_ac_trie_state
 
 extern TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset);
 extern void trie_free (TRIE *trie);
-extern my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen);
-extern my_bool ac_trie_prepare (TRIE *trie);
+extern bool trie_insert (TRIE *trie, const uchar *key, uint keylen);
+extern bool ac_trie_prepare (TRIE *trie);
 extern void ac_trie_init (TRIE *trie, AC_TRIE_STATE *state);
 
 
@@ -94,7 +94,7 @@ static inline int ac_trie_next (AC_TRIE_STATE *state, uchar *c)
 
 /*
   SYNOPSIS
-    my_bool trie_search (TRIE *trie, const uchar *key, uint keylen);
+    bool trie_search (TRIE *trie, const uchar *key, uint keylen);
     trie - valid pointer to `TRIE'
     key - valid pointer to key to insert
     keylen - non-0 key length
@@ -113,7 +113,7 @@ static inline int ac_trie_next (AC_TRIE_STATE *state, uchar *c)
     consecutive loop better (tested)
 */
 
-static inline my_bool trie_search (TRIE *trie, const uchar *key, uint keylen)
+static inline bool trie_search (TRIE *trie, const uchar *key, uint keylen)
 {
   TRIE_NODE *node;
   uint k;
@@ -125,11 +125,11 @@ static inline my_bool trie_search (TRIE *trie, const uchar *key, uint keylen)
   {
     uchar p;
     if (! (node= node->links))
-      DBUG_RETURN(FALSE);
+      DBUG_RETURN(false);
     p= key[k];
     while (p != node->c)
       if (! (node= node->next))
-        DBUG_RETURN(FALSE);
+        DBUG_RETURN(false);
   }
 
   DBUG_RETURN(node->leaf > 0);

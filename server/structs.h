@@ -35,12 +35,12 @@ typedef struct st_keyfile_info {	/* used with ha_info() */
   File filenr;				/* (uniq) filenr for table */
   ha_rows records;			/* Records i datafilen */
   ha_rows deleted;			/* Deleted records */
-  ulonglong data_file_length;		/* Length off data file */
-  ulonglong max_data_file_length;	/* Length off data file */
-  ulonglong index_file_length;
-  ulonglong max_index_file_length;
-  ulonglong delete_length;		/* Free bytes */
-  ulonglong auto_increment_value;
+  uint64_t data_file_length;		/* Length off data file */
+  uint64_t max_data_file_length;	/* Length off data file */
+  uint64_t index_file_length;
+  uint64_t max_index_file_length;
+  uint64_t delete_length;		/* Free bytes */
+  uint64_t auto_increment_value;
   int errkey,sortkey;			/* Last errorkey and sorted by */
   time_t create_time;			/* When table was created */
   time_t check_time;
@@ -140,7 +140,7 @@ typedef enum enum_mysql_timestamp_type timestamp_type;
 
 typedef struct {
   ulong year,month,day,hour;
-  ulonglong minute,second,second_part;
+  uint64_t minute,second,second_part;
   bool neg;
 } INTERVAL;
 
@@ -207,7 +207,7 @@ typedef struct  user_conn {
      The moment of time when per hour counters were reset last time
      (i.e. start of "hour" for conn_per_hour, updates, questions counters).
   */
-  ulonglong reset_utime;
+  uint64_t reset_utime;
   /* Total length of the key. */
   uint len;
   /* Current amount of concurrent connections for this account. */
@@ -254,33 +254,33 @@ typedef struct  user_conn {
 */
 class Discrete_interval {
 private:
-  ulonglong interval_min;
-  ulonglong interval_values;
-  ulonglong  interval_max;    // excluded bound. Redundant.
+  uint64_t interval_min;
+  uint64_t interval_values;
+  uint64_t  interval_max;    // excluded bound. Redundant.
 public:
   Discrete_interval *next;    // used when linked into Discrete_intervals_list
-  void replace(ulonglong start, ulonglong val, ulonglong incr)
+  void replace(uint64_t start, uint64_t val, uint64_t incr)
   {
     interval_min=    start;
     interval_values= val;
-    interval_max=    (val == ULONGLONG_MAX) ? val : start + val * incr;
+    interval_max=    (val == UINT64_MAX) ? val : start + val * incr;
   }
-  Discrete_interval(ulonglong start, ulonglong val, ulonglong incr) :
+  Discrete_interval(uint64_t start, uint64_t val, uint64_t incr) :
     next(NULL) { replace(start, val, incr); };
   Discrete_interval() : next(NULL) { replace(0, 0, 0); };
-  ulonglong minimum() const { return interval_min;    };
-  ulonglong values()  const { return interval_values; };
-  ulonglong maximum() const { return interval_max;    };
+  uint64_t minimum() const { return interval_min;    };
+  uint64_t values()  const { return interval_values; };
+  uint64_t maximum() const { return interval_max;    };
   /*
     If appending [3,5] to [1,2], we merge both in [1,5] (they should have the
     same increment for that, user of the class has to ensure that). That is
     just a space optimization. Returns 0 if merge succeeded.
   */
-  bool merge_if_contiguous(ulonglong start, ulonglong val, ulonglong incr)
+  bool merge_if_contiguous(uint64_t start, uint64_t val, uint64_t incr)
   {
     if (interval_max == start)
     {
-      if (val == ULONGLONG_MAX)
+      if (val == UINT64_MAX)
       {
         interval_values=   interval_max= val;
       }
@@ -353,9 +353,9 @@ public:
     return tmp;
   }
   ~Discrete_intervals_list() { empty(); };
-  bool append(ulonglong start, ulonglong val, ulonglong incr);
+  bool append(uint64_t start, uint64_t val, uint64_t incr);
   bool append(Discrete_interval *interval);
-  ulonglong minimum()     const { return (head ? head->minimum() : 0); };
-  ulonglong maximum()     const { return (head ? tail->maximum() : 0); };
+  uint64_t minimum()     const { return (head ? head->minimum() : 0); };
+  uint64_t maximum()     const { return (head ? tail->maximum() : 0); };
   uint      nb_elements() const { return elements; }
 };

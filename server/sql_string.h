@@ -152,11 +152,11 @@ public:
     }
     str_charset=cs;
   }
-  bool set_int(longlong num, bool unsigned_flag, CHARSET_INFO *cs);
-  bool set(longlong num, CHARSET_INFO *cs)
+  bool set_int(int64_t num, bool unsigned_flag, CHARSET_INFO *cs);
+  bool set(int64_t num, CHARSET_INFO *cs)
   { return set_int(num, false, cs); }
-  bool set(ulonglong num, CHARSET_INFO *cs)
-  { return set_int((longlong)num, true, cs); }
+  bool set(uint64_t num, CHARSET_INFO *cs)
+  { return set_int((int64_t)num, true, cs); }
   bool set_real(double num,uint decimals, CHARSET_INFO *cs);
 
   /*
@@ -354,10 +354,10 @@ public:
   {
     uint32 new_length= arg_length + str_length;
     if (new_length > Alloced_length && realloc(new_length + step_alloc))
-      return TRUE;
+      return true;
     memcpy(Ptr+str_length, s, arg_length);
     str_length+= arg_length;
-    return FALSE;
+    return false;
   }
   void print(String *print);
 

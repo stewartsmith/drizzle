@@ -18,7 +18,7 @@
 
 #define DELIM ':'
 
-my_bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
+bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
 {
   char *end, *copy;
   char buff[FN_REFLEN];
@@ -43,7 +43,7 @@ my_bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
     length= cleanup_dirname(buff, buff);
     if (!(copy= my_strndup(buff, length, MYF(MY_WME))) ||
         insert_dynamic(&tmpdir->full_list, (uchar*) &copy))
-      DBUG_RETURN(TRUE);
+      DBUG_RETURN(true);
     pathlist=end+1;
   }
   while (*end);
@@ -51,12 +51,12 @@ my_bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
   tmpdir->list=(char **)tmpdir->full_list.buffer;
   tmpdir->max=tmpdir->full_list.elements-1;
   tmpdir->cur=0;
-  DBUG_RETURN(FALSE);
+  DBUG_RETURN(false);
 
 err:
   delete_dynamic(&tmpdir->full_list);           /* Safe to free */
   pthread_mutex_destroy(&tmpdir->mutex);
-  DBUG_RETURN(TRUE);
+  DBUG_RETURN(true);
 }
 
 

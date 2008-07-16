@@ -108,7 +108,7 @@ bool Cached_item_real::cmp(void)
 
 bool Cached_item_int::cmp(void)
 {
-  longlong nr=item->val_int();
+  int64_t nr=item->val_int();
   if (null_value != item->null_value || nr != value)
   {
     null_value= item->null_value;

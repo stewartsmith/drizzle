@@ -679,7 +679,7 @@ dict_field_t*
 dict_index_get_nth_field(
 /*=====================*/
 				/* out: pointer to field object */
-	dict_index_t*	index,	/* in: index */
+	const dict_index_t*	index,	/* in: index */
 	ulint		pos);	/* in: position of field */
 /************************************************************************
 Gets pointer to the nth column in an index. */

@@ -139,7 +139,7 @@ page_t*
 page_align(
 /*=======*/
 			/* out: start of the page */
-	void*	ptr)	/* in: pointer to page frame */
+	const void*	ptr)	/* in: pointer to page frame */
 		__attribute__((const));
 /****************************************************************
 Gets the offset within a page. */

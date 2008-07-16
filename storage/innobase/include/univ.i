@@ -213,7 +213,7 @@ typedef long int		lint;
 #ifdef __WIN__
 typedef __int64			ib_longlong;
 #else
-typedef longlong		ib_longlong;
+typedef int64_t		ib_longlong;
 #endif
 
 typedef uint64_t 	ullint;

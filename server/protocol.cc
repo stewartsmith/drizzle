@@ -30,7 +30,7 @@
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
 void net_send_error_packet(THD *thd, uint sql_errno, const char *err);
-void net_send_ok(THD *, uint, uint, ha_rows, ulonglong, const char *);
+void net_send_ok(THD *, uint, uint, ha_rows, uint64_t, const char *);
 void net_send_eof(THD *thd, uint server_status, uint total_warn_count);
 static void write_eof_packet(THD *thd, NET *net,
                              uint server_status, uint total_warn_count);
@@ -165,7 +165,7 @@ void net_send_error(THD *thd, uint sql_errno, const char *err)
 void
 net_send_ok(THD *thd,
             uint server_status, uint total_warn_count,
-            ha_rows affected_rows, ulonglong id, const char *message)
+            ha_rows affected_rows, uint64_t id, const char *message)
 {
   NET *net= &thd->net;
   uchar buff[MYSQL_ERRMSG_SIZE+10],*pos;
@@ -315,7 +315,7 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
   uint is used as agrument type because of MySQL type conventions:
   - uint for 0..65536
   - ulong for 0..4294967296
-  - ulonglong for bigger numbers.
+  - uint64_t for bigger numbers.
 */
 
 static uchar *net_store_length_fast(uchar *packet, uint length)
@@ -444,10 +444,10 @@ uchar *net_store_data(uchar *to,int32 from)
   return to+length;
 }
 
-uchar *net_store_data(uchar *to,longlong from)
+uchar *net_store_data(uchar *to,int64_t from)
 {
   char buff[22];
-  uint length=(uint) (longlong10_to_str(from,buff,10)-buff);
+  uint length=(uint) (int64_t10_to_str(from,buff,10)-buff);
   to=net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -730,7 +730,7 @@ bool Protocol_text::store(const char *from, size_t length,
 }
 
 
-bool Protocol_text::store_tiny(longlong from)
+bool Protocol_text::store_tiny(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -738,7 +738,7 @@ bool Protocol_text::store_tiny(longlong from)
 }
 
 
-bool Protocol_text::store_short(longlong from)
+bool Protocol_text::store_short(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -747,7 +747,7 @@ bool Protocol_text::store_short(longlong from)
 }
 
 
-bool Protocol_text::store_long(longlong from)
+bool Protocol_text::store_long(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -756,11 +756,11 @@ bool Protocol_text::store_long(longlong from)
 }
 
 
-bool Protocol_text::store_longlong(longlong from, bool unsigned_flag)
+bool Protocol_text::store_int64_t(int64_t from, bool unsigned_flag)
 {
   char buff[22];
   return net_store_data((uchar*) buff,
-			(size_t) (longlong10_to_str(from,buff,
+			(size_t) (int64_t10_to_str(from,buff,
                                                     unsigned_flag ? 10 : -10)-
                                   buff));
 }

@@ -30,8 +30,8 @@
 #endif
 
 #undef  ULONGLONG_MAX
-#define ULONGLONG_MAX                (~(ulonglong) 0)
-#define MAX_NEGATIVE_NUMBER        ((ulonglong) 0x8000000000000000LL)
+#define ULONGLONG_MAX                (~(uint64_t) 0)
+#define MAX_NEGATIVE_NUMBER        ((uint64_t) 0x8000000000000000LL)
 #define INIT_CNT  9
 #define LFACTOR   1000000000ULL
 #define LFACTOR1  10000000000ULL
@@ -315,7 +315,7 @@ bs:
 }
 
 
-static longlong 
+static int64_t 
 my_strntoll_mb2_or_mb4(CHARSET_INFO *cs,
                        const char *nptr, size_t l, int base,
                        char **endptr, int *err)
@@ -324,9 +324,9 @@ my_strntoll_mb2_or_mb4(CHARSET_INFO *cs,
   int      overflow;
   int      cnv;
   my_wc_t  wc;
-  register ulonglong    cutoff;
+  register uint64_t    cutoff;
   register unsigned int cutlim;
-  register ulonglong    res;
+  register uint64_t    res;
   register const uchar *s= (const uchar*) nptr;
   register const uchar *e= (const uchar*) nptr+l;
   const uchar *save;
@@ -365,8 +365,8 @@ bs:
   overflow = 0;
   res = 0;
   save = s;
-  cutoff = (~(ulonglong) 0) / (unsigned long int) base;
-  cutlim = (uint) ((~(ulonglong) 0) % (unsigned long int) base);
+  cutoff = (~(uint64_t) 0) / (unsigned long int) base;
+  cutlim = (uint) ((~(uint64_t) 0) % (unsigned long int) base);
 
   do {
     if ((cnv=cs->cset->mb_wc(cs,&wc,s,e))>0)
@@ -386,7 +386,7 @@ bs:
         overflow = 1;
       else
       {
-        res *= (ulonglong) base;
+        res *= (uint64_t) base;
         res += wc;
       }
     }
@@ -415,10 +415,10 @@ bs:
   
   if (negative)
   {
-    if (res  > (ulonglong) LONGLONG_MIN)
+    if (res  > (uint64_t) LONGLONG_MIN)
       overflow = 1;
   }
-  else if (res > (ulonglong) LONGLONG_MAX)
+  else if (res > (uint64_t) LONGLONG_MAX)
     overflow = 1;
   
   if (overflow)
@@ -427,11 +427,11 @@ bs:
     return negative ? LONGLONG_MIN : LONGLONG_MAX;
   }
   
-  return (negative ? -((longlong)res) : (longlong)res);
+  return (negative ? -((int64_t)res) : (int64_t)res);
 }
 
 
-static ulonglong
+static uint64_t
 my_strntoull_mb2_or_mb4(CHARSET_INFO *cs,
                         const char *nptr, size_t l, int base,
                         char **endptr, int *err)
@@ -440,9 +440,9 @@ my_strntoull_mb2_or_mb4(CHARSET_INFO *cs,
   int      overflow;
   int      cnv;
   my_wc_t  wc;
-  register ulonglong    cutoff;
+  register uint64_t    cutoff;
   register unsigned int cutlim;
-  register ulonglong    res;
+  register uint64_t    res;
   register const uchar *s= (const uchar*) nptr;
   register const uchar *e= (const uchar*) nptr + l;
   const uchar *save;
@@ -481,8 +481,8 @@ bs:
   overflow = 0;
   res = 0;
   save = s;
-  cutoff = (~(ulonglong) 0) / (unsigned long int) base;
-  cutlim = (uint) ((~(ulonglong) 0) % (unsigned long int) base);
+  cutoff = (~(uint64_t) 0) / (unsigned long int) base;
+  cutlim = (uint) ((~(uint64_t) 0) % (unsigned long int) base);
 
   do
   {
@@ -503,7 +503,7 @@ bs:
         overflow = 1;
       else
       {
-        res *= (ulonglong) base;
+        res *= (uint64_t) base;
         res += wc;
       }
     }
@@ -533,10 +533,10 @@ bs:
   if (overflow)
   {
     err[0]= ERANGE;
-    return (~(ulonglong) 0);
+    return (~(uint64_t) 0);
   }
 
-  return (negative ? -((longlong) res) : (longlong) res);
+  return (negative ? -((int64_t) res) : (int64_t) res);
 }
 
 
@@ -574,14 +574,14 @@ my_strntod_mb2_or_mb4(CHARSET_INFO *cs,
 }
 
 
-static ulonglong
+static uint64_t
 my_strntoull10rnd_mb2_or_mb4(CHARSET_INFO *cs,
                              const char *nptr, size_t length,
                              int unsign_fl,
                              char **endptr, int *err)
 {
   char  buf[256], *b= buf;
-  ulonglong res;
+  uint64_t res;
   const uchar *end, *s= (const uchar*) nptr;
   my_wc_t  wc;
   int     cnv;
@@ -662,13 +662,13 @@ my_l10tostr_mb2_or_mb4(CHARSET_INFO *cs,
 
 static size_t
 my_ll10tostr_mb2_or_mb4(CHARSET_INFO *cs,
-                        char *dst, size_t len, int radix, longlong val)
+                        char *dst, size_t len, int radix, int64_t val)
 {
   char buffer[65];
   register char *p, *db, *de;
   long long_val;
   int sl= 0;
-  ulonglong uval= (ulonglong) val;
+  uint64_t uval= (uint64_t) val;
   
   if (radix < 0)
   {
@@ -676,7 +676,7 @@ my_ll10tostr_mb2_or_mb4(CHARSET_INFO *cs,
     {
       sl= 1;
       /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
-      uval = (ulonglong)0 - uval;
+      uval = (uint64_t)0 - uval;
     }
   }
   
@@ -689,9 +689,9 @@ my_ll10tostr_mb2_or_mb4(CHARSET_INFO *cs,
     goto cnv;
   }
   
-  while (uval > (ulonglong) LONG_MAX)
+  while (uval > (uint64_t) LONG_MAX)
   {
-    ulonglong quo= uval/(uint) 10;
+    uint64_t quo= uval/(uint) 10;
     uint rem= (uint) (uval- quo* (uint) 10);
     *--p= '0' + rem;
     uval= quo;
@@ -726,14 +726,14 @@ cnv:
 
 
 #ifdef HAVE_CHARSET_mb2
-static longlong
+static int64_t
 my_strtoll10_mb2(CHARSET_INFO *cs __attribute__((unused)),
                  const char *nptr, char **endptr, int *error)
 {
   const char *s, *end, *start, *n_end, *true_end;
   uchar c;
   unsigned long i, j, k;
-  ulonglong li;
+  uint64_t li;
   int negative;
   ulong cutoff, cutoff2, cutoff3;
 
@@ -855,37 +855,37 @@ my_strtoll10_mb2(CHARSET_INFO *cs __attribute__((unused)),
   if (i > cutoff || (i == cutoff && ((j > cutoff2 || j == cutoff2) &&
                                      k > cutoff3)))
     goto overflow;
-  li=i*LFACTOR2+ (ulonglong) j*100 + k;
-  return (longlong) li;
+  li=i*LFACTOR2+ (uint64_t) j*100 + k;
+  return (int64_t) li;
 
 overflow:                                        /* *endptr is set here */
   *error= MY_ERRNO_ERANGE;
-  return negative ? LONGLONG_MIN : (longlong) ULONGLONG_MAX;
+  return negative ? LONGLONG_MIN : (int64_t) ULONGLONG_MAX;
 
 end_i:
   *endptr= (char*) s;
-  return (negative ? ((longlong) -(long) i) : (longlong) i);
+  return (negative ? ((int64_t) -(long) i) : (int64_t) i);
 
 end_i_and_j:
-  li= (ulonglong) i * lfactor[(size_t) (s-start) / 2] + j;
+  li= (uint64_t) i * lfactor[(size_t) (s-start) / 2] + j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end3:
-  li=(ulonglong) i*LFACTOR+ (ulonglong) j;
+  li=(uint64_t) i*LFACTOR+ (uint64_t) j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end4:
-  li=(ulonglong) i*LFACTOR1+ (ulonglong) j * 10 + k;
+  li=(uint64_t) i*LFACTOR1+ (uint64_t) j * 10 + k;
   *endptr= (char*) s;
   if (negative)
   {
    if (li > MAX_NEGATIVE_NUMBER)
      goto overflow;
-   return -((longlong) li);
+   return -((int64_t) li);
   }
-  return (longlong) li;
+  return (int64_t) li;
 
 no_conv:
   /* There was no number to convert.  */
@@ -2322,14 +2322,14 @@ my_snprintf_utf32(CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static longlong
+static int64_t
 my_strtoll10_utf32(CHARSET_INFO *cs __attribute__((unused)),
                    const char *nptr, char **endptr, int *error)
 {
   const char *s, *end, *start, *n_end, *true_end;
   uchar c;
   unsigned long i, j, k;
-  ulonglong li;
+  uint64_t li;
   int negative;
   ulong cutoff, cutoff2, cutoff3;
 
@@ -2452,37 +2452,37 @@ my_strtoll10_utf32(CHARSET_INFO *cs __attribute__((unused)),
   if (i > cutoff || (i == cutoff && ((j > cutoff2 || j == cutoff2) &&
                                      k > cutoff3)))
     goto overflow;
-  li= i * LFACTOR2+ (ulonglong) j * 100 + k;
-  return (longlong) li;
+  li= i * LFACTOR2+ (uint64_t) j * 100 + k;
+  return (int64_t) li;
 
 overflow:                                        /* *endptr is set here */
   *error= MY_ERRNO_ERANGE;
-  return negative ? LONGLONG_MIN : (longlong) ULONGLONG_MAX;
+  return negative ? LONGLONG_MIN : (int64_t) ULONGLONG_MAX;
 
 end_i:
   *endptr= (char*) s;
-  return (negative ? ((longlong) -(long) i) : (longlong) i);
+  return (negative ? ((int64_t) -(long) i) : (int64_t) i);
 
 end_i_and_j:
-  li= (ulonglong) i * lfactor[(size_t) (s-start) / 4] + j;
+  li= (uint64_t) i * lfactor[(size_t) (s-start) / 4] + j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end3:
-  li= (ulonglong) i*LFACTOR+ (ulonglong) j;
+  li= (uint64_t) i*LFACTOR+ (uint64_t) j;
   *endptr= (char*) s;
-  return (negative ? -((longlong) li) : (longlong) li);
+  return (negative ? -((int64_t) li) : (int64_t) li);
 
 end4:
-  li= (ulonglong) i*LFACTOR1+ (ulonglong) j * 10 + k;
+  li= (uint64_t) i*LFACTOR1+ (uint64_t) j * 10 + k;
   *endptr= (char*) s;
   if (negative)
   {
    if (li > MAX_NEGATIVE_NUMBER)
      goto overflow;
-   return -((longlong) li);
+   return -((int64_t) li);
   }
-  return (longlong) li;
+  return (int64_t) li;
 
 no_conv:
   /* There was no number to convert.  */

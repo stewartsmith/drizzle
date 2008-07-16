@@ -45,7 +45,7 @@ static uint calc_hash(const HASH *hash, const uchar *key, size_t length)
   return nr1;
 }
 
-my_bool
+bool
 _hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
 	   ulong size, size_t key_offset, size_t key_length,
 	   hash_get_key get_key,
@@ -147,7 +147,7 @@ void my_hash_reset(HASH *hash)
 
 static inline char*
 hash_key(const HASH *hash, const uchar *record, size_t *length,
-         my_bool first)
+         bool first)
 {
   if (hash->get_key)
     return (char*) (*hash->get_key)(record,length,first);
@@ -306,24 +306,24 @@ static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
 
 	/* Write a hash-key to the hash-index */
 
-my_bool my_hash_insert(HASH *info,const uchar *record)
+bool my_hash_insert(HASH *info,const uchar *record)
 {
   int flag;
   size_t idx;
   uint halfbuff,hash_nr,first_index;
-  uchar *ptr_to_rec,*ptr_to_rec2;
-  HASH_LINK *data,*empty,*gpos,*gpos2,*pos;
+  uchar *ptr_to_rec=NULL,*ptr_to_rec2=NULL;
+  HASH_LINK *data,*empty,*gpos=NULL,*gpos2=NULL,*pos;
 
   if (HASH_UNIQUE & info->flags)
   {
     uchar *key= (uchar*) hash_key(info, record, &idx, 1);
     if (hash_search(info, key, idx))
-      return(TRUE);				/* Duplicate entry */
+      return(true);				/* Duplicate entry */
   }
 
   flag=0;
   if (!(empty=(HASH_LINK*) alloc_dynamic(&info->array)))
-    return(TRUE);				/* No more memory */
+    return(true);				/* No more memory */
 
   data=dynamic_element(&info->array,0,HASH_LINK*);
   halfbuff= info->blength >> 1;
@@ -444,7 +444,7 @@ my_bool my_hash_insert(HASH *info,const uchar *record)
 ** if there is a free-function it's called for record if found
 ******************************************************************************/
 
-my_bool hash_delete(HASH *hash,uchar *record)
+bool hash_delete(HASH *hash,uchar *record)
 {
   uint blength,pos2,pos_hashnr,lastpos_hashnr,idx,empty_index;
   HASH_LINK *data,*lastpos,*gpos,*pos,*pos3,*empty;
@@ -531,7 +531,7 @@ exit:
 	  This is much more efficent than using a delete & insert.
 	  */
 
-my_bool hash_update(HASH *hash, uchar *record, uchar *old_key,
+bool hash_update(HASH *hash, uchar *record, uchar *old_key,
                     size_t old_key_length)
 {
   uint new_index,new_pos_index,blength,records,empty;
@@ -653,7 +653,7 @@ void hash_replace(HASH *hash, HASH_SEARCH_STATE *current_record, uchar *new_row)
 
 #ifndef DBUG_OFF
 
-my_bool hash_check(HASH *hash)
+bool hash_check(HASH *hash)
 {
   int error;
   uint i,rec_link,found,max_links,seek,links,idx;

@@ -35,14 +35,14 @@ else
 if ASSEMBLER_sparc32
 # These file MUST all be on the same line!! Otherwise automake
 # generats a very broken makefile
-ASRCS		= bmove_upp-sparc.s strappend-sparc.s strend-sparc.s strinstr-sparc.s strmake-sparc.s strmov-sparc.s strnmov-sparc.s strstr-sparc.s
+ASRCS		= bmove_upp-sparc.s strappend-sparc.s strend-sparc.s strmake-sparc.s strmov-sparc.s strnmov-sparc.s strstr-sparc.s
 CSRCS 	= strcont.c strfill.c strcend.c is_prefix.c longlong2str.c strxmov.c my_strtoll10.c 
 else
 #no assembler
 ASRCS		=
 # These file MUST all be on the same line!! Otherwise automake
 # generats a very broken makefile
-CSRCS 	= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strinstr.c strmake.c strnmov.c strmov.c longlong2str.c my_strtoll10.c
+CSRCS 	= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.c is_prefix.c strstr.c strmake.c strnmov.c strmov.c longlong2str.c my_strtoll10.c
 endif
 endif
 
@@ -70,10 +70,10 @@ EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
 		longlong2str.c longlong2str-x86.s longlong2str_asm.c \
 		my_strtoll10.c my_strtoll10-x86.s \
 		strxmov.c bmove_upp.c strappend.c strcont.c strend.c \
-		strfill.c strcend.c is_prefix.c strstr.c strinstr.c \
+		strfill.c strcend.c is_prefix.c strstr.c \
 		strmake.c strnmov.c strmov.c strnlen.c \
 		bmove_upp-sparc.s strappend-sparc.s strend-sparc.s \
-		strinstr-sparc.s strmake-sparc.s strmov-sparc.s \
+		strmake-sparc.s strmov-sparc.s \
 		strnmov-sparc.s strstr-sparc.s strxmov-sparc.s \
 		t_ctype.h my_strchr.c
 

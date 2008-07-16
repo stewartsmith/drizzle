@@ -188,7 +188,7 @@ extern CHARSET_INFO compiled_charsets[];
 extern ulong	my_file_opened,my_stream_opened, my_tmp_file_created;
 extern ulong    my_file_total_opened;
 extern uint	mysys_usage_id;
-extern my_bool	my_init_done;
+extern bool	my_init_done;
 
 					/* Point to current my_message() */
 extern void (*my_sigtstp_cleanup)(void),
@@ -201,11 +201,11 @@ extern int my_umask,		/* Default creation mask  */
 	   my_recived_signals,	/* Signals we have got */
 	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
 	   my_dont_interrupt;	/* call remember_intr when set */
-extern my_bool mysys_uses_curses, my_use_symdir;
+extern bool mysys_uses_curses, my_use_symdir;
 extern ulong sf_malloc_cur_memory, sf_malloc_max_memory;
 
 extern ulong	my_default_record_cache_size;
-extern my_bool my_disable_locking, my_disable_async_io,
+extern bool my_disable_async_io,
                my_disable_flush_key_blocks, my_disable_symlinks;
 extern char	wild_many, wild_one, wild_prefix;
 extern const char *charsets_dir;
@@ -214,7 +214,7 @@ extern char *my_defaults_extra_file;
 extern const char *my_defaults_group_suffix;
 extern const char *my_defaults_file;
 
-extern my_bool timed_mutexes;
+extern bool timed_mutexes;
 
 typedef struct wild_file_pack	/* Struct to hold info when selecting files */
 {
@@ -307,7 +307,7 @@ typedef struct st_io_cache_share
   int                   error;           /* Last error. */
 #ifdef NOT_YET_IMPLEMENTED
   /* whether the structure should be free'd */
-  my_bool alloced;
+  bool alloced;
 #endif
 } IO_CACHE_SHARE;
 
@@ -421,7 +421,7 @@ typedef struct st_io_cache		/* Used when cacheing files */
     Currently READ_NET is the only one that will use a buffer allocated
     somewhere else
   */
-  my_bool alloced_buffer;
+  bool alloced_buffer;
 #ifdef HAVE_AIOWAIT
   /*
     As inidicated by ifdef, this is for async I/O, which is not currently
@@ -500,7 +500,6 @@ extern int my_append(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
 extern int my_getwd(char * buf,size_t size,myf MyFlags);
 extern int my_setwd(const char *dir,myf MyFlags);
-extern int my_lock(File fd,int op,my_off_t start, my_off_t length,myf MyFlags);
 extern void *my_once_alloc(size_t Size,myf MyFlags);
 extern void my_once_free(void);
 extern char *my_once_strdup(const char *src,myf myflags);
@@ -577,7 +576,7 @@ extern int my_error_register(const char **errmsgs, int first, int last);
 extern const char **my_error_unregister(int first, int last);
 extern void my_message(uint my_err, const char *str,myf MyFlags);
 extern void my_message_no_curses(uint my_err, const char *str,myf MyFlags);
-extern my_bool my_init(void);
+extern bool my_init(void);
 extern void my_end(int infoflag);
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);
@@ -589,7 +588,7 @@ void my_print_open_files(void);
 #define my_print_open_files()
 #endif
 
-extern my_bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist);
+extern bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist);
 extern char *my_tmpdir(MY_TMPDIR *tmpdir);
 extern void free_tmpdir(MY_TMPDIR *tmpdir);
 
@@ -598,7 +597,7 @@ extern size_t dirname_part(char * to,const char *name, size_t *to_res_length);
 extern size_t dirname_length(const char *name);
 #define base_name(A) (A+dirname_length(A))
 extern int test_if_hard_path(const char *dir_name);
-extern my_bool has_path(const char *name);
+extern bool has_path(const char *name);
 extern char *convert_dirname(char *to, const char *from, const char *from_end);
 extern void to_unix_path(char * name);
 extern char * fn_ext(const char *name);
@@ -619,19 +618,19 @@ extern char * my_path(char * to,const char *progname,
 extern char * my_load_path(char * to, const char *path,
 			      const char *own_path_prefix);
 extern int wild_compare(const char *str,const char *wildstr,
-                        pbool str_is_pattern);
+                        bool str_is_pattern);
 extern WF_PACK *wf_comp(char * str);
 extern int wf_test(struct wild_file_pack *wf_pack,const char *name);
 extern void wf_end(struct wild_file_pack *buffer);
 extern size_t strip_sp(char * str);
-extern my_bool array_append_string_unique(const char *str,
+extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
 extern void soundex(CHARSET_INFO *, char * out_pntr, char * in_pntr,
-                    pbool remove_garbage);
+                    bool remove_garbage);
 extern int init_record_cache(RECORD_CACHE *info,size_t cachesize,File file,
 			     size_t reclength,enum cache_type type,
-			     pbool use_async_io);
+			     bool use_async_io);
 extern int read_cache_record(RECORD_CACHE *info,uchar *to);
 extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
@@ -654,10 +653,10 @@ void my_store_ptr(uchar *buff, size_t pack_length, my_off_t pos);
 my_off_t my_get_ptr(uchar *ptr, size_t pack_length);
 extern int init_io_cache(IO_CACHE *info,File file,size_t cachesize,
 			 enum cache_type type,my_off_t seek_offset,
-			 pbool use_async_io, myf cache_myflags);
-extern my_bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
-			       my_off_t seek_offset,pbool use_async_io,
-			       pbool clear_cache);
+			 bool use_async_io, myf cache_myflags);
+extern bool reinit_io_cache(IO_CACHE *info,enum cache_type type,
+			       my_off_t seek_offset,bool use_async_io,
+			       bool clear_cache);
 extern void setup_io_cache(IO_CACHE* info);
 extern int _my_b_read(IO_CACHE *info,uchar *Buffer,size_t Count);
 extern int _my_b_read_r(IO_CACHE *info,uchar *Buffer,size_t Count);
@@ -685,10 +684,10 @@ extern size_t my_b_gets(IO_CACHE *info, char *to, size_t max_length);
 extern my_off_t my_b_filelength(IO_CACHE *info);
 extern size_t my_b_printf(IO_CACHE *info, const char* fmt, ...);
 extern size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list ap);
-extern my_bool open_cached_file(IO_CACHE *cache,const char *dir,
+extern bool open_cached_file(IO_CACHE *cache,const char *dir,
 				 const char *prefix, size_t cache_size,
 				 myf cache_myflags);
-extern my_bool real_open_cached_file(IO_CACHE *cache);
+extern bool real_open_cached_file(IO_CACHE *cache);
 extern void close_cached_file(IO_CACHE *cache);
 File create_temp_file(char *to, const char *dir, const char *pfx,
 		      int mode, myf MyFlags);
@@ -696,19 +695,19 @@ File create_temp_file(char *to, const char *dir, const char *pfx,
 #define my_init_dynamic_array_ci(A,B,C,D) init_dynamic_array2(A,B,NULL,C,D ORIG_CALLER_INFO)
 #define my_init_dynamic_array2(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E CALLER_INFO)
 #define my_init_dynamic_array2_ci(A,B,C,D,E) init_dynamic_array2(A,B,C,D,E ORIG_CALLER_INFO)
-extern my_bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint element_size,
+extern bool init_dynamic_array2(DYNAMIC_ARRAY *array,uint element_size,
                                    void *init_buffer, uint init_alloc, 
                                    uint alloc_increment
                                    CALLER_INFO_PROTO);
 /* init_dynamic_array() function is deprecated */
-extern my_bool init_dynamic_array(DYNAMIC_ARRAY *array,uint element_size,
+extern bool init_dynamic_array(DYNAMIC_ARRAY *array,uint element_size,
                                   uint init_alloc,uint alloc_increment
                                   CALLER_INFO_PROTO);
-extern my_bool insert_dynamic(DYNAMIC_ARRAY *array,uchar * element);
+extern bool insert_dynamic(DYNAMIC_ARRAY *array,uchar * element);
 extern uchar *alloc_dynamic(DYNAMIC_ARRAY *array);
 extern uchar *pop_dynamic(DYNAMIC_ARRAY*);
-extern my_bool set_dynamic(DYNAMIC_ARRAY *array,uchar * element,uint array_index);
-extern my_bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements);
+extern bool set_dynamic(DYNAMIC_ARRAY *array,uchar * element,uint array_index);
+extern bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements);
 extern void get_dynamic(DYNAMIC_ARRAY *array,uchar * element,uint array_index);
 extern void delete_dynamic(DYNAMIC_ARRAY *array);
 extern void delete_dynamic_element(DYNAMIC_ARRAY *array, uint array_index);
@@ -720,16 +719,16 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, uchar * element);
 #define reset_dynamic(array) ((array)->elements= 0)
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
-extern my_bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
+extern bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
 				   size_t init_alloc,size_t alloc_increment);
-extern my_bool dynstr_append(DYNAMIC_STRING *str, const char *append);
-my_bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
+extern bool dynstr_append(DYNAMIC_STRING *str, const char *append);
+bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
 			  size_t length);
-extern my_bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append,
+extern bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append,
                                        ...);
-extern my_bool dynstr_set(DYNAMIC_STRING *str, const char *init_str);
-extern my_bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size);
-extern my_bool dynstr_trunc(DYNAMIC_STRING *str, size_t n);
+extern bool dynstr_set(DYNAMIC_STRING *str, const char *init_str);
+extern bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size);
+extern bool dynstr_trunc(DYNAMIC_STRING *str, size_t n);
 extern void dynstr_free(DYNAMIC_STRING *str);
 #ifdef HAVE_MLOCK
 extern void *my_malloc_lock(size_t length,myf flags);
@@ -766,8 +765,8 @@ extern int my_search_option_files(const char *conf_file, int *argc,
 extern void free_defaults(char **argv);
 extern void my_print_default_files(const char *conf_file);
 extern void print_defaults(const char *conf_file, const char **groups);
-extern my_bool my_compress(uchar *, size_t *, size_t *);
-extern my_bool my_uncompress(uchar *, size_t , size_t *);
+extern bool my_compress(uchar *, size_t *, size_t *);
+extern bool my_uncompress(uchar *, size_t , size_t *);
 extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
                                 size_t *complen);
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
@@ -777,11 +776,11 @@ extern uint my_set_max_open_files(uint files);
 void my_free_open_file_info(void);
 
 extern time_t my_time(myf flags);
-extern ulonglong my_getsystime(void);
-extern ulonglong my_micro_time(void);
-extern ulonglong my_micro_time_and_time(time_t *time_arg);
-time_t my_time_possible_from_micro(ulonglong microtime);
-extern my_bool my_gethwaddr(uchar *to);
+extern uint64_t my_getsystime(void);
+extern uint64_t my_micro_time(void);
+extern uint64_t my_micro_time_and_time(time_t *time_arg);
+time_t my_time_possible_from_micro(uint64_t microtime);
+extern bool my_gethwaddr(uchar *to);
 extern int my_getncpus(void);
 
 #ifdef HAVE_SYS_MMAN_H
@@ -837,17 +836,17 @@ extern CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags);
 extern CHARSET_INFO *get_charset_by_csname(const char *cs_name,
 					   uint cs_flags, myf my_flags);
 
-extern my_bool resolve_charset(const char *cs_name,
+extern bool resolve_charset(const char *cs_name,
                                CHARSET_INFO *default_cs,
                                CHARSET_INFO **cs);
-extern my_bool resolve_collation(const char *cl_name,
+extern bool resolve_collation(const char *cl_name,
                                  CHARSET_INFO *default_cl,
                                  CHARSET_INFO **cl);
 
 extern void free_charsets(void);
 extern char *get_charsets_dir(char *buf);
-extern my_bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2);
-extern my_bool init_compiled_charsets(myf flags);
+extern bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2);
+extern bool init_compiled_charsets(myf flags);
 extern void add_compiled_collation(CHARSET_INFO *cs);
 extern size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
                                       char *to, size_t to_length,

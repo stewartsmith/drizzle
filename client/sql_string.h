@@ -111,7 +111,7 @@ public:
 
   void set(String &str,uint32 offset,uint32 arg_length)
   {
-    DBUG_ASSERT(&str != this);
+    assert(&str != this);
     free();
     Ptr=(char*) str.ptr()+offset; str_length=arg_length; alloced=0;
     if (str.Alloced_length)
@@ -141,8 +141,8 @@ public:
     }
     str_charset=cs;
   }
-  bool set(longlong num, CHARSET_INFO *cs);
-  bool set(ulonglong num, CHARSET_INFO *cs);
+  bool set(int64_t num, CHARSET_INFO *cs);
+  bool set(uint64_t num, CHARSET_INFO *cs);
   bool set(double num,uint decimals, CHARSET_INFO *cs);
 
   /*
@@ -217,7 +217,7 @@ public:
         It is forbidden to do assignments like 
         some_string = substring_of_that_string
        */
-      DBUG_ASSERT(!s.uses_buffer_owned_by(this));
+      assert(!s.uses_buffer_owned_by(this));
       free();
       Ptr=s.Ptr ; str_length=s.str_length ; Alloced_length=s.Alloced_length;
       alloced=0;
@@ -340,10 +340,10 @@ public:
   {
     uint32 new_length= arg_length + str_length;
     if (new_length > Alloced_length && realloc(new_length + step_alloc))
-      return TRUE;
+      return true;
     memcpy(Ptr+str_length, s, arg_length);
     str_length+= arg_length;
-    return FALSE;
+    return false;
   }
   void print(String *print);
 

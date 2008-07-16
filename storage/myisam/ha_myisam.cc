@@ -1009,7 +1009,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
   map= ~(uint64_t) 0;
   if (!table->keys_in_use_for_query.is_clear_all())
     /* use all keys if there's no list specified by the user through hints */
-    map= table->keys_in_use_for_query.to_ulonglong();
+    map= table->keys_in_use_for_query.to_uint64_t();
 
   if ((error= mi_assign_to_key_cache(file, map, new_key_cache)))
   { 
@@ -1303,7 +1303,7 @@ bool ha_myisam::check_and_repair(THD *thd)
 bool ha_myisam::is_crashed() const
 {
   return (file->s->state.changed & STATE_CRASHED ||
-	  (my_disable_locking && file->s->state.open_count));
+	  (file->s->state.open_count));
 }
 
 int ha_myisam::update_row(const uchar *old_data, uchar *new_data)
@@ -1714,7 +1714,7 @@ void ha_myisam::get_auto_increment(uint64_t offset __attribute__((__unused__)),
     ha_myisam::info(HA_STATUS_AUTO);
     *first_value= stats.auto_increment_value;
     /* MyISAM has only table-level lock, so reserves to +inf */
-    *nb_reserved_values= ULONGLONG_MAX;
+    *nb_reserved_values= UINT64_MAX;
     return;
   }
 

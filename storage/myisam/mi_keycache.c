@@ -47,7 +47,7 @@
 */
 
 int mi_assign_to_key_cache(MI_INFO *info,
-			   ulonglong key_map __attribute__((unused)),
+			   uint64_t key_map __attribute__((unused)),
 			   KEY_CACHE *key_cache)
 {
   int error= 0;
@@ -145,7 +145,7 @@ void mi_change_key_cache(KEY_CACHE *old_key_cache,
     MI_INFO *info= (MI_INFO*) pos->data;
     MYISAM_SHARE *share= info->s;
     if (share->key_cache == old_key_cache)
-      mi_assign_to_key_cache(info, (ulonglong) ~0, new_key_cache);
+      mi_assign_to_key_cache(info, (uint64_t) ~0, new_key_cache);
   }
 
   /*

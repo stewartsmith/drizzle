@@ -25,7 +25,7 @@
 
 C_MODE_START
 
-extern ulonglong log_10_int[20];
+extern uint64_t log_10_int[20];
 extern uchar days_in_month[];
 
 /*
@@ -40,13 +40,13 @@ extern uchar days_in_month[];
 */
 typedef long my_time_t;
 
-#define MY_TIME_T_MAX LONG_MAX
-#define MY_TIME_T_MIN LONG_MIN
+#define MY_TIME_T_MAX INT32_MAX
+#define MY_TIME_T_MIN INT32_MIN
 
 /* Time handling defaults */
 #define TIMESTAMP_MAX_YEAR 2038
 #define TIMESTAMP_MIN_YEAR (1900 + YY_PART_YEAR - 1)
-#define TIMESTAMP_MAX_VALUE INT_MAX32
+#define TIMESTAMP_MAX_VALUE INT32_MAX
 #define TIMESTAMP_MIN_VALUE 1
 
 /* two-digit years < this are 20..; >= this are 19.. */
@@ -78,12 +78,12 @@ my_bool check_date(const MYSQL_TIME *ltime, my_bool not_zero_date,
 enum enum_mysql_timestamp_type
 str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
                 uint flags, int *was_cut);
-longlong number_to_datetime(longlong nr, MYSQL_TIME *time_res,
+int64_t number_to_datetime(int64_t nr, MYSQL_TIME *time_res,
                             uint flags, int *was_cut);
-ulonglong TIME_to_ulonglong_datetime(const MYSQL_TIME *);
-ulonglong TIME_to_ulonglong_date(const MYSQL_TIME *);
-ulonglong TIME_to_ulonglong_time(const MYSQL_TIME *);
-ulonglong TIME_to_ulonglong(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t_datetime(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t_date(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t_time(const MYSQL_TIME *);
+uint64_t TIME_to_uint64_t(const MYSQL_TIME *);
 
 
 my_bool str_to_time(const char *str,uint length, MYSQL_TIME *l_time,
@@ -107,8 +107,8 @@ void init_time(void);
     estimate.
 
   RETURN VALUES
-    FALSE   The value seems sane
-    TRUE    The MYSQL_TIME value is definitely out of range
+    false   The value seems sane
+    true    The MYSQL_TIME value is definitely out of range
 */
 
 static inline my_bool validate_timestamp_range(const MYSQL_TIME *t)
@@ -116,9 +116,9 @@ static inline my_bool validate_timestamp_range(const MYSQL_TIME *t)
   if ((t->year > TIMESTAMP_MAX_YEAR || t->year < TIMESTAMP_MIN_YEAR) ||
       (t->year == TIMESTAMP_MAX_YEAR && (t->month > 1 || t->day > 19)) ||
       (t->year == TIMESTAMP_MIN_YEAR && (t->month < 12 || t->day < 31)))
-    return FALSE;
+    return false;
 
-  return TRUE;
+  return true;
 }
 
 my_time_t 

@@ -63,8 +63,8 @@
 #undef net_buffer_length
 #undef max_allowed_packet
 
-ulong 		net_buffer_length=8192;
-ulong		max_allowed_packet= 1024L*1024L*1024L;
+uint32_t 		net_buffer_length= 8192;
+uint32_t		max_allowed_packet= 1024L*1024L*1024L;
 
 #include <errno.h>
 #define SOCKET_ERROR -1
@@ -123,7 +123,7 @@ int STDCALL mysql_server_init(int argc __attribute__((unused)),
           if builder specifically requested a default port, use that
           (even if it coincides with our factory default).
           only if they didn't do we check /etc/services (and, failing
-          on that, fall back to the factory default of 3306).
+          on that, fall back to the factory default of 4427).
           either default can be overridden by the environment variable
           MYSQL_TCP_PORT, which in turn can be overridden with command
           line options.
@@ -323,7 +323,8 @@ mysql_connect(MYSQL *mysql,const char *host,
 
 int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
 {
-  NET *net= &mysql->net;
+  (void)buff;
+  (void)passwd;
   ulong pkt_length;
 
   pkt_length= cli_safe_read(mysql);
@@ -331,24 +332,6 @@ int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
   if (pkt_length == packet_error)
     return 1;
 
-  if (pkt_length == 1 && net->read_pos[0] == 254 &&
-      mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
-  {
-    /*
-      By sending this very specific reply server asks us to send scrambled
-      password in old format. The reply contains scramble_323.
-    */
-    scramble_323(buff, mysql->scramble, passwd);
-    if (my_net_write(net, (uchar*) buff, SCRAMBLE_LENGTH_323 + 1) ||
-        net_flush(net))
-    {
-      set_mysql_error(mysql, CR_SERVER_LOST, unknown_sqlstate);
-      return 1;
-    }
-    /* Read what server thinks about out new auth message report */
-    if (cli_safe_read(mysql) == packet_error)
-      return 1;
-  }
   return 0;
 }
 
@@ -367,7 +350,7 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   if (mysql_init_character_set(mysql))
   {
     mysql->charset= saved_cs;
-    DBUG_RETURN(TRUE);
+    DBUG_RETURN(true);
   }
 
   /* Use an empty string instead of NULL. */
@@ -383,16 +366,10 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   /* write scrambled password according to server capabilities */
   if (passwd[0])
   {
-    if (mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
     {
       *end++= SCRAMBLE_LENGTH;
       scramble(end, mysql->scramble, passwd);
       end+= SCRAMBLE_LENGTH;
-    }
-    else
-    {
-      scramble_323(end, mysql->scramble, passwd);
-      end+= SCRAMBLE_LENGTH_323 + 1;
     }
   }
   else
@@ -409,7 +386,7 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   }
 
   /* Write authentication package */
-  simple_command(mysql,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
+  (void)simple_command(mysql,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
 
   rc= (*mysql->methods->read_change_user_result)(mysql, buff, passwd);
 
@@ -744,7 +721,7 @@ mysql_fetch_field(MYSQL_RES *result)
 **************************************************************************/
 
 void STDCALL
-mysql_data_seek(MYSQL_RES *result, my_ulonglong row)
+mysql_data_seek(MYSQL_RES *result, uint64_t row)
 {
   MYSQL_ROWS	*tmp=0;
   DBUG_PRINT("info",("mysql_data_seek(%ld)",(long) row));
@@ -931,8 +908,8 @@ mysql_refresh(MYSQL *mysql,uint options)
 }
 
 
-int STDCALL
-mysql_kill(MYSQL *mysql,ulong pid)
+int32_t STDCALL
+mysql_kill(MYSQL *mysql, uint32_t pid)
 {
   uchar buff[4];
   DBUG_ENTER("mysql_kill");
@@ -1019,7 +996,7 @@ mysql_get_client_info(void)
   return (char*) MYSQL_SERVER_VERSION;
 }
 
-ulong STDCALL mysql_get_client_version(void)
+uint32_t STDCALL mysql_get_client_version(void)
 {
   return MYSQL_VERSION_ID;
 }
@@ -1056,12 +1033,12 @@ unsigned int STDCALL mysql_field_count(MYSQL *mysql)
   return mysql->field_count;
 }
 
-my_ulonglong STDCALL mysql_affected_rows(MYSQL *mysql)
+uint64_t STDCALL mysql_affected_rows(MYSQL *mysql)
 {
   return mysql->affected_rows;
 }
 
-my_ulonglong STDCALL mysql_insert_id(MYSQL *mysql)
+uint64_t STDCALL mysql_insert_id(MYSQL *mysql)
 {
   return mysql->insert_id;
 }
@@ -1071,7 +1048,7 @@ const char *STDCALL mysql_sqlstate(MYSQL *mysql)
   return mysql ? mysql->net.sqlstate : cant_connect_sqlstate;
 }
 
-uint STDCALL mysql_warning_count(MYSQL *mysql)
+uint32_t STDCALL mysql_warning_count(MYSQL *mysql)
 {
   return mysql->warning_count;
 }
@@ -1081,7 +1058,7 @@ const char *STDCALL mysql_info(MYSQL *mysql)
   return mysql->info;
 }
 
-ulong STDCALL mysql_thread_id(MYSQL *mysql)
+uint32_t STDCALL mysql_thread_id(MYSQL *mysql)
 {
   return (mysql)->thread_id;
 }
@@ -1159,8 +1136,8 @@ void my_net_local_init(NET *net)
   trailing '. The caller must supply whichever of those is desired.
 */
 
-ulong STDCALL
-mysql_hex_string(char *to, const char *from, ulong length)
+uint32_t STDCALL
+mysql_hex_string(char *to, const char *from, uint32_t length)
 {
   char *to0= to;
   const char *end;
@@ -1171,7 +1148,7 @@ mysql_hex_string(char *to, const char *from, ulong length)
     *to++= _dig_vec_upper[((unsigned char) *from) & 0x0F];
   }
   *to= '\0';
-  return (ulong) (to-to0);
+  return (uint32_t) (to-to0);
 }
 
 /*
@@ -1180,15 +1157,15 @@ mysql_hex_string(char *to, const char *from, ulong length)
   Returns the length of the to string
 */
 
-ulong STDCALL
-mysql_escape_string(char *to,const char *from,ulong length)
+uint32_t STDCALL
+mysql_escape_string(char *to,const char *from, uint32_t length)
 {
   return escape_string_for_mysql(default_charset_info, to, 0, from, length);
 }
 
-ulong STDCALL
+uint32_t STDCALL
 mysql_real_escape_string(MYSQL *mysql, char *to,const char *from,
-			 ulong length)
+			 uint32_t length)
 {
   if (mysql->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
     return escape_quotes_for_mysql(mysql->charset, to, 0, from, length);
@@ -1201,7 +1178,7 @@ myodbc_remove_escape(MYSQL *mysql,char *name)
   char *to;
 #ifdef USE_MB
   my_bool use_mb_flag=use_mb(mysql->charset);
-  char *end;
+  char *end=NULL;
   if (use_mb_flag)
     for (end=name; *end ; end++) ;
 #endif
@@ -1309,7 +1286,7 @@ int STDCALL mysql_next_result(MYSQL *mysql)
   }
 
   net_clear_error(&mysql->net);
-  mysql->affected_rows= ~(my_ulonglong) 0;
+  mysql->affected_rows= ~(uint64_t) 0;
 
   if (mysql->server_status & SERVER_MORE_RESULTS_EXISTS)
     DBUG_RETURN((*mysql->methods->next_result)(mysql));

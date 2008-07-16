@@ -200,7 +200,7 @@ struct st_block_link
   uint status;            /* state of the block                              */
   enum BLOCK_TEMPERATURE temperature; /* block temperature: cold, warm, hot */
   uint hits_left;         /* number of hits left until promotion             */
-  ulonglong last_hit_time; /* timestamp of the last hit                      */
+  uint64_t last_hit_time; /* timestamp of the last hit                      */
   KEYCACHE_CONDVAR *condvar; /* condition variable for 'no readers' event    */
 };
 

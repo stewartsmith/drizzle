@@ -21,8 +21,8 @@ UNIV_INLINE
 page_t*
 page_align(
 /*=======*/
-			/* out: start of the page */
-	void*	ptr)	/* in: pointer to page frame */
+				/* out: start of the page */
+	const void*	ptr)	/* in: pointer to page frame */
 {
 	return((page_t*) ut_align_down(ptr, UNIV_PAGE_SIZE));
 }
@@ -197,7 +197,7 @@ page_rec_is_comp(
 				/* out: nonzero if in compact format */
 	const rec_t*	rec)	/* in: record */
 {
-	return(page_is_comp(page_align((rec_t*) rec)));
+	return(page_is_comp(page_align(rec)));
 }
 
 /****************************************************************

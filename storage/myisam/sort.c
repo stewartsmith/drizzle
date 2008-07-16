@@ -130,7 +130,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
 
   while (memavl >= MIN_SORT_MEMORY)
   {
-    if ((records < UINT_MAX32) && 
+    if ((records < UINT32_MAX) && 
        ((my_off_t) (records + 1) * 
         (sort_length + sizeof(char*)) <= (my_off_t) memavl))
       keys= (uint)records+1;
@@ -506,7 +506,7 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
         update_key_parts(sinfo->keyinfo, rec_per_key_part, sinfo->unique,
                          param->stats_method == MI_STATS_METHOD_IGNORE_NULLS?
                          sinfo->notnull: NULL,
-                         (ulonglong) info->state->records);
+                         (uint64_t) info->state->records);
     }
     my_free((uchar*) sinfo->sort_keys,MYF(0));
     my_free(mi_get_rec_buff_ptr(info, sinfo->rec_buff),

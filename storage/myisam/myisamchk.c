@@ -49,7 +49,7 @@ static MY_TMPDIR myisamchk_tmpdir;
 static const char *type_names[]=
 { "impossible","char","binary", "short", "long", "float",
   "double","number","unsigned short",
-  "unsigned long","longlong","ulonglong","int24",
+  "unsigned long","int64_t","uint64_t","int24",
   "uint24","int8","varchar", "varbin","?",
   "?"};
 
@@ -146,8 +146,7 @@ enum options_mc {
   OPT_CORRECT_CHECKSUM, OPT_KEY_BUFFER_SIZE,
   OPT_KEY_CACHE_BLOCK_SIZE, OPT_MYISAM_BLOCK_SIZE,
   OPT_READ_BUFFER_SIZE, OPT_WRITE_BUFFER_SIZE, OPT_SORT_BUFFER_SIZE,
-  OPT_SORT_KEY_BLOCKS, OPT_DECODE_BITS, OPT_FT_MIN_WORD_LEN,
-  OPT_FT_MAX_WORD_LEN, OPT_FT_STOPWORD_FILE,
+  OPT_SORT_KEY_BLOCKS, OPT_DECODE_BITS,
   OPT_MAX_RECORD_LENGTH, OPT_AUTO_CLOSE, OPT_STATS_METHOD
 };
 
@@ -168,7 +167,7 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"character-sets-dir", OPT_CHARSETS_DIR,
    "Directory where character sets are.",
-   (uchar**) &charsets_dir, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &charsets_dir, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"check", 'c',
    "Check table for errors.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -183,8 +182,8 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"data-file-length", 'D',
    "Max length of data file (when recreating data-file when it's full).",
-   (uchar**) &check_param.max_data_file_length,
-   (uchar**) &check_param.max_data_file_length,
+   (char**) &check_param.max_data_file_length,
+   (char**) &check_param.max_data_file_length,
    0, GET_LL, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"extend-check", 'e',
    "If used when checking a table, ensure that the table is 100 percent consistent, which will take a long time. If used when repairing a table, try to recover every possible row from the data file. Normally this will also find a lot of garbage rows; Don't use this option with repair if you are not totally desperate.",
@@ -206,14 +205,14 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"keys-used", 'k',
    "Tell MyISAM to update only some specific keys. # is a bit mask of which keys to use. This can be used to get faster inserts.",
-   (uchar**) &check_param.keys_in_use,
-   (uchar**) &check_param.keys_in_use,
+   (char**) &check_param.keys_in_use,
+   (char**) &check_param.keys_in_use,
    0, GET_ULL, REQUIRED_ARG, -1, 0, 0, 0, 0, 0},
   {"max-record-length", OPT_MAX_RECORD_LENGTH,
    "Skip rows bigger than this if myisamchk can't allocate memory to hold it",
-   (uchar**) &check_param.max_record_length,
-   (uchar**) &check_param.max_record_length,
-   0, GET_ULL, REQUIRED_ARG, LONGLONG_MAX, 0, LONGLONG_MAX, 0, 0, 0},
+   (char**) &check_param.max_record_length,
+   (char**) &check_param.max_record_length,
+   0, GET_ULL, REQUIRED_ARG, INT64_MAX, 0, INT64_MAX, 0, 0, 0},
   {"medium-check", 'm',
    "Faster than extend-check, but only finds 99.99% of all errors. Should be good enough for most cases.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -241,12 +240,12 @@ static struct my_option my_long_options[] =
 #endif
   {"set-auto-increment", 'A',
    "Force auto_increment to start at this or higher value. If no value is given, then sets the next auto_increment value to the highest used value for the auto key + 1.",
-   (uchar**) &check_param.auto_increment_value,
-   (uchar**) &check_param.auto_increment_value,
+   (char**) &check_param.auto_increment_value,
+   (char**) &check_param.auto_increment_value,
    0, GET_ULL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"set-collation", OPT_SET_COLLATION,
    "Change the collation used by the index",
-   (uchar**) &set_collation_name, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &set_collation_name, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"set-variable", 'O',
    "Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value.",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -258,12 +257,12 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"sort-records", 'R',
    "Sort records according to an index. This makes your data much more localized and may speed up things. (It may be VERY slow to do a sort the first time!)",
-   (uchar**) &check_param.opt_sort_key,
-   (uchar**) &check_param.opt_sort_key,
+   (char**) &check_param.opt_sort_key,
+   (char**) &check_param.opt_sort_key,
    0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tmpdir", 't',
    "Path for temporary files.",
-   (uchar**) &opt_tmpdir,
+   (char**) &opt_tmpdir,
    0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"update-state", 'U',
    "Mark tables as crashed if any errors were found.",
@@ -281,44 +280,44 @@ static struct my_option my_long_options[] =
    "Wait if table is locked.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   { "key_buffer_size", OPT_KEY_BUFFER_SIZE, "",
-    (uchar**) &check_param.use_buffers, (uchar**) &check_param.use_buffers, 0,
+    (char**) &check_param.use_buffers, (char**) &check_param.use_buffers, 0,
     GET_ULONG, REQUIRED_ARG, (long) USE_BUFFER_INIT, (long) MALLOC_OVERHEAD,
     (long) ~0L, (long) MALLOC_OVERHEAD, (long) IO_SIZE, 0},
   { "key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,  "",
-    (uchar**) &opt_key_cache_block_size,
-    (uchar**) &opt_key_cache_block_size, 0,
+    (char**) &opt_key_cache_block_size,
+    (char**) &opt_key_cache_block_size, 0,
     GET_LONG, REQUIRED_ARG, MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH,
     MI_MAX_KEY_BLOCK_LENGTH, 0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   { "myisam_block_size", OPT_MYISAM_BLOCK_SIZE,  "",
-    (uchar**) &opt_myisam_block_size, (uchar**) &opt_myisam_block_size, 0,
+    (char**) &opt_myisam_block_size, (char**) &opt_myisam_block_size, 0,
     GET_LONG, REQUIRED_ARG, MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH,
     MI_MAX_KEY_BLOCK_LENGTH, 0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   { "read_buffer_size", OPT_READ_BUFFER_SIZE, "",
-    (uchar**) &check_param.read_buffer_length,
-    (uchar**) &check_param.read_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.read_buffer_length,
+    (char**) &check_param.read_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
     (long) ~0L, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "write_buffer_size", OPT_WRITE_BUFFER_SIZE, "",
-    (uchar**) &check_param.write_buffer_length,
-    (uchar**) &check_param.write_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.write_buffer_length,
+    (char**) &check_param.write_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) READ_BUFFER_INIT, (long) MALLOC_OVERHEAD,
     (long) ~0L, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_buffer_size", OPT_SORT_BUFFER_SIZE, "",
-    (uchar**) &check_param.sort_buffer_length,
-    (uchar**) &check_param.sort_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.sort_buffer_length,
+    (char**) &check_param.sort_buffer_length, 0, GET_ULONG, REQUIRED_ARG,
     (long) SORT_BUFFER_INIT, (long) (MIN_SORT_BUFFER + MALLOC_OVERHEAD),
     (long) ~0L, (long) MALLOC_OVERHEAD, (long) 1L, 0},
   { "sort_key_blocks", OPT_SORT_KEY_BLOCKS, "",
-    (uchar**) &check_param.sort_key_blocks,
-    (uchar**) &check_param.sort_key_blocks, 0, GET_ULONG, REQUIRED_ARG,
+    (char**) &check_param.sort_key_blocks,
+    (char**) &check_param.sort_key_blocks, 0, GET_ULONG, REQUIRED_ARG,
     BUFFERS_WHEN_SORTING, 4L, 100L, 0L, 1L, 0},
-  { "decode_bits", OPT_DECODE_BITS, "", (uchar**) &decode_bits,
-    (uchar**) &decode_bits, 0, GET_UINT, REQUIRED_ARG, 9L, 4L, 17L, 0L, 1L, 0},
+  { "decode_bits", OPT_DECODE_BITS, "", (char**) &decode_bits,
+    (char**) &decode_bits, 0, GET_UINT, REQUIRED_ARG, 9L, 4L, 17L, 0L, 1L, 0},
   {"stats_method", OPT_STATS_METHOD,
    "Specifies how index statistics collection code should treat NULLs. "
    "Possible values of name are \"nulls_unequal\" (default behavior for 4.1/5.0), "
    "\"nulls_equal\" (emulate 4.0 behavior), and \"nulls_ignored\".",
-   (uchar**) &myisam_stats_method_str, (uchar**) &myisam_stats_method_str, 0,
+   (char**) &myisam_stats_method_str, (char**) &myisam_stats_method_str, 0,
     GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -330,7 +329,6 @@ static void print_version(void)
 {
   printf("%s  Ver 2.7 for %s at %s\n", my_progname, SYSTEM_TYPE,
 	 MACHINE_TYPE);
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 
@@ -457,17 +455,12 @@ TYPELIB myisam_stats_method_typelib= {
 
 	 /* Read options */
 
-static my_bool
+static bool
 get_one_option(int optid,
 	       const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
   switch (optid) {
-#ifdef __NETWARE__
-  case OPT_AUTO_CLOSE:
-    setscreenmode(SCR_AUTOCLOSE_ON_EXIT);
-    break;
-#endif
   case 'a':
     if (argument == disabled_my_option)
       check_param.testflag&= ~T_STATISTICS;
@@ -559,7 +552,7 @@ get_one_option(int optid,
       check_param.testflag|= T_FAST;
     break;
   case 'k':
-    check_param.keys_in_use= (ulonglong) strtoll(argument, NULL, 10);
+    check_param.keys_in_use= (uint64_t) strtoll(argument, NULL, 10);
     break;
   case 'm':
     if (argument == disabled_my_option)
@@ -949,7 +942,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
     {
       if (param->testflag & T_REP_ANY)
       {
-	ulonglong tmp=share->state.key_map;
+	uint64_t tmp=share->state.key_map;
 	mi_copy_keys_active(share->state.key_map, share->base.keys,
                             param->keys_in_use);
 	if (tmp != share->state.key_map)
@@ -1096,7 +1089,6 @@ static int myisamchk(MI_CHECK *param, char * filename)
 				(state_updated ? UPDATE_STAT : 0) |
 				((param->testflag & T_SORT_RECORDS) ?
 				 UPDATE_SORT : 0)));
-    VOID(lock_file(param, share->kfile,0L,F_UNLCK,"indexfile",filename));
     info->update&= ~HA_STATE_CHANGED;
   }
   mi_lock_database(info, F_UNLCK);
@@ -1258,7 +1250,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   printf("Recordlength:        %13d\n",(int) share->base.pack_reclength);
   if (! mi_is_all_keys_active(share->state.key_map, share->base.keys))
   {
-    longlong2str(share->state.key_map,buff,2);
+    int64_t2str(share->state.key_map,buff,2);
     printf("Using only keys '%s' of %d possibly keys\n",
 	   buff, share->base.keys);
   }

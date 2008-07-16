@@ -48,7 +48,7 @@ struct st_file_buffer {
   uchar *buffer,*pos,*end;
   my_off_t pos_in_file;
   int bits;
-  ulonglong bitbucket;
+  uint64_t bitbucket;
 };
 
 struct st_huff_tree;
@@ -98,7 +98,7 @@ typedef struct st_huff_tree {
   my_off_t bytes_packed;
   uint tree_pack_length;
   uint min_chr,max_chr,char_bits,offset_bits,max_offset,height;
-  ulonglong *code;
+  uint64_t *code;
   uchar *code_len;
 } HUFF_TREE;
 
@@ -146,7 +146,7 @@ static uint join_same_trees(HUFF_COUNTS *huff_counts,uint trees);
 static int make_huff_decode_table(HUFF_TREE *huff_tree,uint trees);
 static void make_traverse_code_tree(HUFF_TREE *huff_tree,
 				    HUFF_ELEMENT *element,uint size,
-				    ulonglong code);
+				    uint64_t code);
 static int write_header(PACK_MRG_INFO *isam_file, uint header_length,uint trees,
 			my_off_t tot_elements,my_off_t filelength);
 static void write_field_info(HUFF_COUNTS *counts, uint fields,uint trees);
@@ -158,10 +158,10 @@ static uint max_bit(uint value);
 static int compress_isam_file(PACK_MRG_INFO *file,HUFF_COUNTS *huff_counts);
 static char *make_new_name(char *new_name,char *old_name);
 static char *make_old_name(char *new_name,char *old_name);
-static void init_file_buffer(File file,pbool read_buffer);
+static void init_file_buffer(File file,bool read_buffer);
 static int flush_buffer(ulong neaded_length);
 static void end_file_buffer(void);
-static void write_bits(ulonglong value, uint bits);
+static void write_bits(uint64_t value, uint bits);
 static void flush_bits(void);
 static int save_state(MI_INFO *isam_file,PACK_MRG_INFO *mrg,my_off_t new_length,
 		      ha_checksum crc);
@@ -249,10 +249,10 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #endif
   {"backup", 'b', "Make a backup of the table as table_name.OLD.",
-   (uchar**) &backup, (uchar**) &backup, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &backup, (char**) &backup, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"character-sets-dir", OPT_CHARSETS_DIR_MP,
-   "Directory where character sets are.", (uchar**) &charsets_dir,
-   (uchar**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Directory where character sets are.", (char**) &charsets_dir,
+   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"debug", '#', "Output debug log. Often this is 'd:t:o,filename'.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"force", 'f',
@@ -260,7 +260,7 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"join", 'j',
    "Join all given tables into 'new_table_name'. All tables MUST have identical layouts.",
-   (uchar**) &join_table, (uchar**) &join_table, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
+   (char**) &join_table, (char**) &join_table, 0, GET_STR, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
   {"help", '?', "Display this help and exit.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -274,8 +274,8 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"wait", 'w', "Wait and retry if table is in use.", (uchar**) &opt_wait,
-   (uchar**) &opt_wait, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"wait", 'w', "Wait and retry if table is in use.", (char**) &opt_wait,
+   (char**) &opt_wait, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -285,7 +285,6 @@ static void print_version(void)
 {
   VOID(printf("%s Ver 1.23 for %s on %s\n",
               my_progname, SYSTEM_TYPE, MACHINE_TYPE));
-  NETWARE_SET_SCREEN_MODE(1);
 }
 
 
@@ -309,7 +308,7 @@ static void usage(void)
 
 #include <help_end.h>
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -717,8 +716,8 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   {
     if (old_length)
       VOID(printf("%.4g%%     \n",
-                  (((longlong) (old_length - new_length)) * 100.0 /
-                   (longlong) old_length)));
+                  (((int64_t) (old_length - new_length)) * 100.0 /
+                   (int64_t) old_length)));
     else
       puts("Empty file saved in compressed format");
   }
@@ -1090,13 +1089,13 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
         total_count+= count->counts[idx];
         if (verbose >= 2)
           VOID(printf("counts[0x%02x]: %12s\n", idx,
-                      llstr((longlong) count->counts[idx], llbuf)));
+                      llstr((int64_t) count->counts[idx], llbuf)));
       }
     }
     if ((verbose >= 2) && total_count)
     {
       VOID(printf("total:        %12s\n",
-                  llstr((longlong) total_count, llbuf)));
+                  llstr((int64_t) total_count, llbuf)));
     }
   }
 
@@ -1847,13 +1846,13 @@ static int make_huff_decode_table(HUFF_TREE *huff_tree, uint trees)
     {
       elements=huff_tree->counts->tree_buff ? huff_tree->elements : 256;
       if (!(huff_tree->code =
-            (ulonglong*) my_malloc(elements*
-                                   (sizeof(ulonglong) + sizeof(uchar)),
+            (uint64_t*) my_malloc(elements*
+                                   (sizeof(uint64_t) + sizeof(uchar)),
                                    MYF(MY_WME | MY_ZEROFILL))))
 	return 1;
       huff_tree->code_len=(uchar*) (huff_tree->code+elements);
       make_traverse_code_tree(huff_tree, huff_tree->root,
-                              8 * sizeof(ulonglong), 0LL);
+                              8 * sizeof(uint64_t), 0LL);
     }
   }
   return 0;
@@ -1862,23 +1861,23 @@ static int make_huff_decode_table(HUFF_TREE *huff_tree, uint trees)
 
 static void make_traverse_code_tree(HUFF_TREE *huff_tree,
 				    HUFF_ELEMENT *element,
-				    uint size, ulonglong code)
+				    uint size, uint64_t code)
 {
   uint chr;
   if (!element->a.leaf.null)
   {
     chr=element->a.leaf.element_nr;
-    huff_tree->code_len[chr]= (uchar) (8 * sizeof(ulonglong) - size);
+    huff_tree->code_len[chr]= (uchar) (8 * sizeof(uint64_t) - size);
     huff_tree->code[chr]= (code >> size);
-    if (huff_tree->height < 8 * sizeof(ulonglong) - size)
-        huff_tree->height= 8 * sizeof(ulonglong) - size;
+    if (huff_tree->height < 8 * sizeof(uint64_t) - size)
+        huff_tree->height= 8 * sizeof(uint64_t) - size;
   }
   else
   {
     size--;
     make_traverse_code_tree(huff_tree,element->a.nod.left,size,code);
     make_traverse_code_tree(huff_tree, element->a.nod.right, size,
-			    code + (((ulonglong) 1) << size));
+			    code + (((uint64_t) 1) << size));
   }
   return;
 }
@@ -1900,7 +1899,7 @@ static void make_traverse_code_tree(HUFF_TREE *huff_tree,
     A pointer to a static NUL-terminated string.
  */
 
-static char *bindigits(ulonglong value, uint bits)
+static char *bindigits(uint64_t value, uint bits)
 {
   static char digits[72];
   char *ptr= digits;
@@ -1929,7 +1928,7 @@ static char *bindigits(ulonglong value, uint bits)
     A pointer to a static NUL-terminated string.
  */
 
-static char *hexdigits(ulonglong value)
+static char *hexdigits(uint64_t value)
 {
   static char digits[20];
   char *ptr= digits;
@@ -1963,7 +1962,7 @@ static int write_header(PACK_MRG_INFO *mrg,uint head_length,uint trees,
   int2store(buff+24,trees);
   buff[26]=(char) mrg->ref_length;
 	/* Save record pointer length */
-  buff[27]= (uchar) mi_get_pointer_length((ulonglong) filelength,2);
+  buff[27]= (uchar) mi_get_pointer_length((uint64_t) filelength,2);
   if (test_only)
     return 0;
   VOID(my_seek(file_buffer.file,0L,MY_SEEK_SET,MYF(0)));
@@ -2002,13 +2001,13 @@ static void write_field_info(HUFF_COUNTS *counts, uint fields, uint trees)
   }
   for (i=0 ; i++ < fields ; counts++)
   {
-    write_bits((ulonglong) (int) counts->field_type, 5);
+    write_bits((uint64_t) (int) counts->field_type, 5);
     write_bits(counts->pack_type,6);
     if (counts->pack_type & PACK_TYPE_ZERO_FILL)
       write_bits(counts->max_zero_fill,5);
     else
       write_bits(counts->length_bits,5);
-    write_bits((ulonglong) counts->tree->tree_number - 1, huff_tree_bits);
+    write_bits((uint64_t) counts->tree->tree_number - 1, huff_tree_bits);
     if (verbose >= 2)
       VOID(printf("column: %3u  type: %2u  pack: %2u  zero: %4u  lbits: %2u  "
                   "tree: %2u  length: %4u\n", i , counts->field_type,
@@ -2143,7 +2142,7 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
     codes= huff_tree->counts->tree_buff ? huff_tree->elements : 256;
     for (i= 0; i < codes; i++)
     {
-      ulonglong code;
+      uint64_t code;
       uint bits;
       uint len;
       uint idx;
@@ -2214,7 +2213,7 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
     {
       for (i=0 ; i < int_length ; i++)
       {
- 	write_bits((ulonglong) (uchar) huff_tree->counts->tree_buff[i], 8);
+ 	write_bits((uint64_t) (uchar) huff_tree->counts->tree_buff[i], 8);
         if (verbose >= 3)
           VOID(printf("column_values[0x%04x]: 0x%02x\n",
                       i, (uchar) huff_tree->counts->tree_buff[i]));
@@ -2566,7 +2565,7 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
                  my_progname, error));
   }
   if (verbose >= 2)
-    VOID(printf("wrote %s records.\n", llstr((longlong) record_count, llbuf)));
+    VOID(printf("wrote %s records.\n", llstr((int64_t) record_count, llbuf)));
 
   my_afree((uchar*) record);
   mrg->ref_length=max_pack_length;
@@ -2588,7 +2587,7 @@ static char *make_old_name(char *new_name, char *old_name)
 
 	/* rutines for bit writing buffer */
 
-static void init_file_buffer(File file, pbool read_buffer)
+static void init_file_buffer(File file, bool read_buffer)
 {
   file_buffer.file=file;
   file_buffer.buffer= (uchar*) my_malloc(ALIGN_SIZE(RECORD_CACHE_SIZE),
@@ -2667,7 +2666,7 @@ static void end_file_buffer(void)
 
 	/* output `bits` low bits of `value' */
 
-static void write_bits(register ulonglong value, register uint bits)
+static void write_bits(register uint64_t value, register uint bits)
 {
   assert(((bits < 8 * sizeof(value)) && ! (value >> bits)) ||
               (bits == 8 * sizeof(value)));
@@ -2678,7 +2677,7 @@ static void write_bits(register ulonglong value, register uint bits)
   }
   else
   {
-    register ulonglong bit_buffer;
+    register uint64_t bit_buffer;
     bits= (uint) -file_buffer.bits;
     bit_buffer= (file_buffer.bitbucket |
                  ((bits != 8 * sizeof(value)) ? (value >> bits) : 0));
@@ -2694,7 +2693,7 @@ static void write_bits(register ulonglong value, register uint bits)
     *file_buffer.pos++= (uchar) (bit_buffer);
 
     if (bits != 8 * sizeof(value))
-      value&= (((ulonglong) 1) << bits) - 1;
+      value&= (((uint64_t) 1) << bits) - 1;
     if (file_buffer.pos >= file_buffer.end)
       VOID(flush_buffer(~ (ulong) 0));
     file_buffer.bits=(int) (BITS_SAVED - bits);
@@ -2708,7 +2707,7 @@ static void write_bits(register ulonglong value, register uint bits)
 static void flush_bits(void)
 {
   int bits;
-  ulonglong bit_buffer;
+  uint64_t bit_buffer;
 
   bits= file_buffer.bits & ~7;
   bit_buffer= file_buffer.bitbucket >> bits;

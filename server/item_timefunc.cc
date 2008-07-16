@@ -181,7 +181,7 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
     0                otherwise
 */
   
-static bool sec_to_time(longlong seconds, bool unsigned_flag, MYSQL_TIME *ltime)
+static bool sec_to_time(int64_t seconds, bool unsigned_flag, MYSQL_TIME *ltime)
 {
   uint sec;
 
@@ -199,7 +199,7 @@ static bool sec_to_time(longlong seconds, bool unsigned_flag, MYSQL_TIME *ltime)
   else if (seconds > 3020399)
     goto overflow;
   
-  sec= (uint) ((ulonglong) seconds % 3600);
+  sec= (uint) ((uint64_t) seconds % 3600);
   ltime->hour= (uint) (seconds/3600);
   ltime->minute= sec/60;
   ltime->second= sec % 60;
@@ -212,7 +212,7 @@ overflow:
   ltime->second= TIME_MAX_SECOND;
 
   char buf[22];
-  int len= (int)(longlong10_to_str(seconds, buf, unsigned_flag ? 10 : -10)
+  int len= (int)(int64_t10_to_str(seconds, buf, unsigned_flag ? 10 : -10)
                  - buf);
   make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                                buf, len, MYSQL_TIMESTAMP_TIME,
@@ -858,7 +858,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
 */
 
 static bool get_interval_info(const char *str,uint length,CHARSET_INFO *cs,
-                              uint count, ulonglong *values,
+                              uint count, uint64_t *values,
                               bool transform_msec)
 {
   const char *end=str+length;
@@ -868,10 +868,10 @@ static bool get_interval_info(const char *str,uint length,CHARSET_INFO *cs,
 
   for (i=0 ; i < count ; i++)
   {
-    longlong value;
+    int64_t value;
     const char *start= str;
     for (value=0; str != end && my_isdigit(cs,*str) ; str++)
-      value= value * 10LL + (longlong) (*str - '0');
+      value= value * 10LL + (int64_t) (*str - '0');
     if (transform_msec && i == count - 1) // microseconds always last
     {
       long msec_length= 6 - (str - start);
@@ -895,7 +895,7 @@ static bool get_interval_info(const char *str,uint length,CHARSET_INFO *cs,
 }
 
 
-longlong Item_func_period_add::val_int()
+int64_t Item_func_period_add::val_int()
 {
   assert(fixed == 1);
   ulong period=(ulong) args[0]->val_int();
@@ -904,13 +904,13 @@ longlong Item_func_period_add::val_int()
   if ((null_value=args[0]->null_value || args[1]->null_value) ||
       period == 0L)
     return 0; /* purecov: inspected */
-  return (longlong)
+  return (int64_t)
     convert_month_to_period((uint) ((int) convert_period_to_month(period)+
 				    months));
 }
 
 
-longlong Item_func_period_diff::val_int()
+int64_t Item_func_period_diff::val_int()
 {
   assert(fixed == 1);
   ulong period1=(ulong) args[0]->val_int();
@@ -918,19 +918,19 @@ longlong Item_func_period_diff::val_int()
 
   if ((null_value=args[0]->null_value || args[1]->null_value))
     return 0; /* purecov: inspected */
-  return (longlong) ((long) convert_period_to_month(period1)-
+  return (int64_t) ((long) convert_period_to_month(period1)-
 		     (long) convert_period_to_month(period2));
 }
 
 
 
-longlong Item_func_to_days::val_int()
+int64_t Item_func_to_days::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
-  return (longlong) calc_daynr(ltime.year,ltime.month,ltime.day);
+  return (int64_t) calc_daynr(ltime.year,ltime.month,ltime.day);
 }
 
 
@@ -961,17 +961,17 @@ enum_monotonicity_info Item_func_to_days::get_monotonicity_info() const
 }
 
 
-longlong Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
+int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
-  longlong res;
+  int64_t res;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
   {
     /* got NULL, leave the incl_endp intact */
-    return LONGLONG_MIN;
+    return INT64_MIN;
   }
-  res=(longlong) calc_daynr(ltime.year,ltime.month,ltime.day);
+  res=(int64_t) calc_daynr(ltime.year,ltime.month,ltime.day);
   
   if (args[0]->field_type() == MYSQL_TYPE_NEWDATE)
   {
@@ -999,30 +999,30 @@ longlong Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
 }
 
 
-longlong Item_func_dayofyear::val_int()
+int64_t Item_func_dayofyear::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   if (get_arg0_date(&ltime,TIME_NO_ZERO_DATE))
     return 0;
-  return (longlong) calc_daynr(ltime.year,ltime.month,ltime.day) -
+  return (int64_t) calc_daynr(ltime.year,ltime.month,ltime.day) -
     calc_daynr(ltime.year,1,1) + 1;
 }
 
-longlong Item_func_dayofmonth::val_int()
+int64_t Item_func_dayofmonth::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   (void) get_arg0_date(&ltime, TIME_FUZZY_DATE);
-  return (longlong) ltime.day;
+  return (int64_t) ltime.day;
 }
 
-longlong Item_func_month::val_int()
+int64_t Item_func_month::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   (void) get_arg0_date(&ltime, TIME_FUZZY_DATE);
-  return (longlong) ltime.month;
+  return (int64_t) ltime.month;
 }
 
 
@@ -1049,16 +1049,16 @@ String* Item_func_monthname::val_str(String* str)
   Returns the quarter of the year.
 */
 
-longlong Item_func_quarter::val_int()
+int64_t Item_func_quarter::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   if (get_arg0_date(&ltime, TIME_FUZZY_DATE))
     return 0;
-  return (longlong) ((ltime.month+2)/3);
+  return (int64_t) ((ltime.month+2)/3);
 }
 
-longlong Item_func_hour::val_int()
+int64_t Item_func_hour::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
@@ -1066,7 +1066,7 @@ longlong Item_func_hour::val_int()
   return ltime.hour;
 }
 
-longlong Item_func_minute::val_int()
+int64_t Item_func_minute::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
@@ -1077,7 +1077,7 @@ longlong Item_func_minute::val_int()
 /**
   Returns the second in time_exp in the range of 0 - 59.
 */
-longlong Item_func_second::val_int()
+int64_t Item_func_second::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
@@ -1125,20 +1125,20 @@ uint week_mode(uint mode)
  @endverbatim
 */
 
-longlong Item_func_week::val_int()
+int64_t Item_func_week::val_int()
 {
   assert(fixed == 1);
   uint year;
   MYSQL_TIME ltime;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
-  return (longlong) calc_week(&ltime,
+  return (int64_t) calc_week(&ltime,
 			      week_mode((uint) args[1]->val_int()),
 			      &year);
 }
 
 
-longlong Item_func_yearweek::val_int()
+int64_t Item_func_yearweek::val_int()
 {
   assert(fixed == 1);
   uint year,week;
@@ -1152,7 +1152,7 @@ longlong Item_func_yearweek::val_int()
 }
 
 
-longlong Item_func_weekday::val_int()
+int64_t Item_func_weekday::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
@@ -1160,7 +1160,7 @@ longlong Item_func_weekday::val_int()
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
 
-  return (longlong) calc_weekday(calc_daynr(ltime.year, ltime.month,
+  return (int64_t) calc_weekday(calc_daynr(ltime.year, ltime.month,
                                             ltime.day),
                                  odbc_type) + test(odbc_type);
 }
@@ -1182,12 +1182,12 @@ String* Item_func_dayname::val_str(String* str)
 }
 
 
-longlong Item_func_year::val_int()
+int64_t Item_func_year::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   (void) get_arg0_date(&ltime, TIME_FUZZY_DATE);
-  return (longlong) ltime.year;
+  return (int64_t) ltime.year;
 }
 
 
@@ -1215,14 +1215,14 @@ enum_monotonicity_info Item_func_year::get_monotonicity_info() const
 }
 
 
-longlong Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
+int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   if (get_arg0_date(&ltime, TIME_FUZZY_DATE))
   {
     /* got NULL, leave the incl_endp intact */
-    return LONGLONG_MIN;
+    return INT64_MIN;
   }
 
   /*
@@ -1245,14 +1245,14 @@ longlong Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
 }
 
 
-longlong Item_func_unix_timestamp::val_int()
+int64_t Item_func_unix_timestamp::val_int()
 {
   MYSQL_TIME ltime;
   bool not_used;
   
   assert(fixed == 1);
   if (arg_count == 0)
-    return (longlong) current_thd->query_start();
+    return (int64_t) current_thd->query_start();
   if (args[0]->type() == FIELD_ITEM)
   {						// Optimize timestamp field
     Field *field=((Item_field*) args[0])->field;
@@ -1271,15 +1271,15 @@ longlong Item_func_unix_timestamp::val_int()
     return 0;
   }
   
-  return (longlong) TIME_to_timestamp(current_thd, &ltime, &not_used);
+  return (int64_t) TIME_to_timestamp(current_thd, &ltime, &not_used);
 }
 
 
-longlong Item_func_time_to_sec::val_int()
+int64_t Item_func_time_to_sec::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
-  longlong seconds;
+  int64_t seconds;
   (void) get_arg0_time(&ltime);
   seconds=ltime.hour*3600L+ltime.minute*60+ltime.second;
   return ltime.neg ? -seconds : seconds;
@@ -1295,8 +1295,8 @@ longlong Item_func_time_to_sec::val_int()
 bool get_interval_value(Item *args,interval_type int_type,
 			       String *str_value, INTERVAL *interval)
 {
-  ulonglong array[5];
-  longlong value= 0;
+  uint64_t array[5];
+  int64_t value= 0;
   const char *str= NULL;
   size_t length= 0;
   CHARSET_INFO *cs=str_value->charset();
@@ -1460,19 +1460,19 @@ String *Item_date::val_str(String *str)
 }
 
 
-longlong Item_date::val_int()
+int64_t Item_date::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return 0;
-  return (longlong) (ltime.year*10000L+ltime.month*100+ltime.day);
+  return (int64_t) (ltime.year*10000L+ltime.month*100+ltime.day);
 }
 
 
 bool Item_func_from_days::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((__unused__)))
 {
-  longlong value=args[0]->val_int();
+  int64_t value=args[0]->val_int();
   if ((null_value=args[0]->null_value))
     return 1;
   bzero(ltime, sizeof(MYSQL_TIME));
@@ -1493,7 +1493,7 @@ void Item_func_curdate::fix_length_and_dec()
   /* We don't need to set second_part and neg because they already 0 */
   ltime.hour= ltime.minute= ltime.second= 0;
   ltime.time_type= MYSQL_TIMESTAMP_DATE;
-  value= (longlong) TIME_to_ulonglong_date(&ltime);
+  value= (int64_t) TIME_to_uint64_t_date(&ltime);
 }
 
 String *Item_func_curdate::val_str(String *str)
@@ -1559,7 +1559,7 @@ void Item_func_curtime::fix_length_and_dec()
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
   store_now_in_TIME(&ltime);
-  value= TIME_to_ulonglong_time(&ltime);
+  value= TIME_to_uint64_t_time(&ltime);
   buff_length= (uint) my_time_to_str(&ltime, buff);
   max_length= buff_length;
 }
@@ -1607,7 +1607,7 @@ void Item_func_now::fix_length_and_dec()
   collation.set(&my_charset_bin);
 
   store_now_in_TIME(&ltime);
-  value= (longlong) TIME_to_ulonglong_datetime(&ltime);
+  value= (int64_t) TIME_to_uint64_t_datetime(&ltime);
 
   buff_length= (uint) my_datetime_to_str(&ltime, buff);
   max_length= buff_length;
@@ -1679,11 +1679,11 @@ String *Item_func_sysdate_local::val_str(String *str __attribute__((__unused__))
 }
 
 
-longlong Item_func_sysdate_local::val_int()
+int64_t Item_func_sysdate_local::val_int()
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  return (longlong) TIME_to_ulonglong_datetime(&ltime);
+  return (int64_t) TIME_to_uint64_t_datetime(&ltime);
 }
 
 
@@ -1691,7 +1691,7 @@ double Item_func_sysdate_local::val_real()
 {
   assert(fixed == 1);
   store_now_in_TIME(&ltime);
-  return ulonglong2double(TIME_to_ulonglong_datetime(&ltime));
+  return uint64_t2double(TIME_to_uint64_t_datetime(&ltime));
 }
 
 
@@ -1725,7 +1725,7 @@ String *Item_func_sec_to_time::val_str(String *str)
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
-  longlong arg_val= args[0]->val_int(); 
+  int64_t arg_val= args[0]->val_int(); 
 
   if ((null_value=args[0]->null_value) ||
       str->alloc(MAX_DATE_STRING_REP_LENGTH))
@@ -1741,11 +1741,11 @@ String *Item_func_sec_to_time::val_str(String *str)
 }
 
 
-longlong Item_func_sec_to_time::val_int()
+int64_t Item_func_sec_to_time::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
-  longlong arg_val= args[0]->val_int(); 
+  int64_t arg_val= args[0]->val_int(); 
   
   if ((null_value=args[0]->null_value))
     return 0;
@@ -1976,7 +1976,7 @@ String *Item_func_from_unixtime::val_str(String *str)
 }
 
 
-longlong Item_func_from_unixtime::val_int()
+int64_t Item_func_from_unixtime::val_int()
 {
   MYSQL_TIME time_tmp;
 
@@ -1985,13 +1985,13 @@ longlong Item_func_from_unixtime::val_int()
   if (get_date(&time_tmp, 0))
     return 0;
 
-  return (longlong) TIME_to_ulonglong_datetime(&time_tmp);
+  return (int64_t) TIME_to_uint64_t_datetime(&time_tmp);
 }
 
 bool Item_func_from_unixtime::get_date(MYSQL_TIME *ltime,
 				       uint fuzzy_date __attribute__((unused)))
 {
-  ulonglong tmp= (ulonglong)(args[0]->val_int());
+  uint64_t tmp= (uint64_t)(args[0]->val_int());
   /*
     "tmp > TIMESTAMP_MAX_VALUE" check also covers case of negative
     from_unixtime() argument since tmp is unsigned.
@@ -2083,13 +2083,13 @@ String *Item_date_add_interval::val_str(String *str)
 }
 
 
-longlong Item_date_add_interval::val_int()
+int64_t Item_date_add_interval::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
-  longlong date;
+  int64_t date;
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
-    return (longlong) 0;
+    return (int64_t) 0;
   date = (ltime.year*100L + ltime.month)*100L + ltime.day;
   return ltime.time_type == MYSQL_TIMESTAMP_DATE ? date :
     ((date*100L + ltime.hour)*100L+ ltime.minute)*100L + ltime.second;
@@ -2173,7 +2173,7 @@ void Item_extract::fix_length_and_dec()
 }
 
 
-longlong Item_extract::val_int()
+int64_t Item_extract::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
@@ -2212,8 +2212,8 @@ longlong Item_extract::val_int()
   case INTERVAL_DAY_MINUTE:	return (long) (ltime.day*10000L+
 					       ltime.hour*100L+
 					       ltime.minute)*neg;
-  case INTERVAL_DAY_SECOND:	 return ((longlong) ltime.day*1000000L+
-					 (longlong) (ltime.hour*10000L+
+  case INTERVAL_DAY_SECOND:	 return ((int64_t) ltime.day*1000000L+
+					 (int64_t) (ltime.hour*10000L+
 						     ltime.minute*100+
 						     ltime.second))*neg;
   case INTERVAL_HOUR:		return (long) ltime.hour*neg;
@@ -2224,19 +2224,19 @@ longlong Item_extract::val_int()
   case INTERVAL_MINUTE_SECOND:	return (long) (ltime.minute*100+ltime.second)*neg;
   case INTERVAL_SECOND:		return (long) ltime.second*neg;
   case INTERVAL_MICROSECOND:	return (long) ltime.second_part*neg;
-  case INTERVAL_DAY_MICROSECOND: return (((longlong)ltime.day*1000000L +
-					  (longlong)ltime.hour*10000L +
+  case INTERVAL_DAY_MICROSECOND: return (((int64_t)ltime.day*1000000L +
+					  (int64_t)ltime.hour*10000L +
 					  ltime.minute*100 +
 					  ltime.second)*1000000L +
 					 ltime.second_part)*neg;
-  case INTERVAL_HOUR_MICROSECOND: return (((longlong)ltime.hour*10000L +
+  case INTERVAL_HOUR_MICROSECOND: return (((int64_t)ltime.hour*10000L +
 					   ltime.minute*100 +
 					   ltime.second)*1000000L +
 					  ltime.second_part)*neg;
-  case INTERVAL_MINUTE_MICROSECOND: return (((longlong)(ltime.minute*100+
+  case INTERVAL_MINUTE_MICROSECOND: return (((int64_t)(ltime.minute*100+
 							ltime.second))*1000000L+
 					    ltime.second_part)*neg;
-  case INTERVAL_SECOND_MICROSECOND: return ((longlong)ltime.second*1000000L+
+  case INTERVAL_SECOND_MICROSECOND: return ((int64_t)ltime.second*1000000L+
 					    ltime.second_part)*neg;
   case INTERVAL_LAST: assert(0); break;  /* purecov: deadcode */
   }
@@ -2300,7 +2300,7 @@ void Item_char_typecast::print(String *str, enum_query_type query_type)
     char buffer[20];
     // my_charset_bin is good enough for numbers
     String st(buffer, sizeof(buffer), &my_charset_bin);
-    st.set((ulonglong)cast_length, &my_charset_bin);
+    st.set((uint64_t)cast_length, &my_charset_bin);
     str->append(st);
     str->append(')');
   }
@@ -2439,7 +2439,7 @@ String *Item_datetime_typecast::val_str(String *str)
 }
 
 
-longlong Item_datetime_typecast::val_int()
+int64_t Item_datetime_typecast::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
@@ -2449,7 +2449,7 @@ longlong Item_datetime_typecast::val_int()
     return 0;
   }
 
-  return TIME_to_ulonglong_datetime(&ltime);
+  return TIME_to_uint64_t_datetime(&ltime);
 }
 
 
@@ -2467,7 +2467,7 @@ bool Item_time_typecast::get_time(MYSQL_TIME *ltime)
 }
 
 
-longlong Item_time_typecast::val_int()
+int64_t Item_time_typecast::val_int()
 {
   MYSQL_TIME ltime;
   if (get_time(&ltime))
@@ -2525,13 +2525,13 @@ String *Item_date_typecast::val_str(String *str)
   return 0;
 }
 
-longlong Item_date_typecast::val_int()
+int64_t Item_date_typecast::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
   if ((null_value= args[0]->get_date(&ltime, TIME_FUZZY_DATE)))
     return 0;
-  return (longlong) (ltime.year * 10000L + ltime.month * 100 + ltime.day);
+  return (int64_t) (ltime.year * 10000L + ltime.month * 100 + ltime.day);
 }
 
 /**
@@ -2587,7 +2587,7 @@ err:
     for dates between 0000-01-01 and 0099-12-31
 */
 
-longlong Item_func_makedate::val_int()
+int64_t Item_func_makedate::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME l_time;
@@ -2608,7 +2608,7 @@ longlong Item_func_makedate::val_int()
   {
     null_value=0;
     get_date_from_daynr(days,&l_time.year,&l_time.month,&l_time.day);
-    return (longlong) (l_time.year * 10000L + l_time.month * 100 + l_time.day);
+    return (int64_t) (l_time.year * 10000L + l_time.month * 100 + l_time.day);
   }
 
 err:
@@ -2660,7 +2660,7 @@ String *Item_func_add_time::val_str(String *str)
   MYSQL_TIME l_time1, l_time2, l_time3;
   bool is_time= 0;
   long days, microseconds;
-  longlong seconds;
+  int64_t seconds;
   int l_sign= sign;
 
   null_value=0;
@@ -2757,7 +2757,7 @@ void Item_func_add_time::print(String *str, enum_query_type query_type)
 String *Item_func_timediff::val_str(String *str)
 {
   assert(fixed == 1);
-  longlong seconds;
+  int64_t seconds;
   long microseconds;
   int l_sign= 1;
   MYSQL_TIME l_time1 ,l_time2, l_time3;
@@ -2808,9 +2808,9 @@ String *Item_func_maketime::val_str(String *str)
   MYSQL_TIME ltime;
   bool overflow= 0;
 
-  longlong hour=   args[0]->val_int();
-  longlong minute= args[1]->val_int();
-  longlong second= args[2]->val_int();
+  int64_t hour=   args[0]->val_int();
+  int64_t minute= args[1]->val_int();
+  int64_t second= args[2]->val_int();
 
   if ((null_value=(args[0]->null_value || 
                    args[1]->null_value ||
@@ -2846,7 +2846,7 @@ String *Item_func_maketime::val_str(String *str)
     ltime.minute= TIME_MAX_MINUTE;
     ltime.second= TIME_MAX_SECOND;
     char buf[28];
-    char *ptr= longlong10_to_str(hour, buf, args[0]->unsigned_flag ? 10 : -10);
+    char *ptr= int64_t10_to_str(hour, buf, args[0]->unsigned_flag ? 10 : -10);
     int len = (int)(ptr - buf) +
       my_sprintf(ptr, (ptr, ":%02u:%02u", (uint)minute, (uint)second));
     make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
@@ -2871,7 +2871,7 @@ String *Item_func_maketime::val_str(String *str)
   Result: int value
 */
 
-longlong Item_func_microsecond::val_int()
+int64_t Item_func_microsecond::val_int()
 {
   assert(fixed == 1);
   MYSQL_TIME ltime;
@@ -2881,10 +2881,10 @@ longlong Item_func_microsecond::val_int()
 }
 
 
-longlong Item_func_timestamp_diff::val_int()
+int64_t Item_func_timestamp_diff::val_int()
 {
   MYSQL_TIME ltime1, ltime2;
-  longlong seconds;
+  int64_t seconds;
   long microseconds;
   long months= 0;
   int neg= 1;
@@ -2973,7 +2973,7 @@ longlong Item_func_timestamp_diff::val_int()
   case INTERVAL_MICROSECOND:
     /*
       In MySQL difference between any two valid datetime values
-      in microseconds fits into longlong.
+      in microseconds fits into int64_t.
     */
     return (seconds*1000000L+microseconds)*neg;
   default:

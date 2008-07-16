@@ -129,7 +129,7 @@ static mi_bit_type mask[]=
 
 	/* Read all packed info, allocate memory and fix field structs */
 
-my_bool _mi_read_pack_info(MI_INFO *info, pbool fix_keys)
+my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
 {
   File file;
   int diff_length;
@@ -1385,7 +1385,7 @@ static void fill_buffer(MI_BIT_BUFF *bit_buff)
 			     (((uint) ((uchar) bit_buff->pos[6])) << 8) +
 			     (((uint) ((uchar) bit_buff->pos[5])) << 16) +
 			     (((uint) ((uchar) bit_buff->pos[4])) << 24) +
-			     ((ulonglong)
+			     ((uint64_t)
 			      ((((uint) ((uchar) bit_buff->pos[3]))) +
 			       (((uint) ((uchar) bit_buff->pos[2])) << 8) +
 			       (((uint) ((uchar) bit_buff->pos[1])) << 16) +

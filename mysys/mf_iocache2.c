@@ -54,7 +54,7 @@ my_b_copy_to_file(IO_CACHE *cache, FILE *file)
   DBUG_ENTER("my_b_copy_to_file");
 
   /* Reinit the cache to read from the beginning of the cache */
-  if (reinit_io_cache(cache, READ_CACHE, 0L, FALSE, FALSE))
+  if (reinit_io_cache(cache, READ_CACHE, 0L, false, false))
     DBUG_RETURN(1);
   bytes_in_cache= my_b_bytes_in_cache(cache);
   do
@@ -138,7 +138,7 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   if (info->type == READ_CACHE || info->type == SEQ_READ_APPEND)
   {
     /* TODO: explain why this works if pos < info->pos_in_file */
-    if ((ulonglong) offset < (ulonglong) (info->read_end - info->buffer))
+    if ((uint64_t) offset < (uint64_t) (info->read_end - info->buffer))
     {
       /* The read is in the current buffer; Reuse it */
       info->read_pos = info->buffer + offset;
@@ -153,8 +153,8 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   else if (info->type == WRITE_CACHE)
   {
     /* If write is in current buffer, reuse it */
-    if ((ulonglong) offset <
-	(ulonglong) (info->write_end - info->write_buffer))
+    if ((uint64_t) offset <
+	(uint64_t) (info->write_end - info->write_buffer))
     {
       info->write_pos = info->write_buffer + offset;
       DBUG_VOID_RETURN;
@@ -300,7 +300,7 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
   uint minimum_width; /* as yet unimplemented */
   uint minimum_width_sign;
   uint precision; /* as yet unimplemented for anything but %b */
-  my_bool is_zero_padded;
+  bool is_zero_padded;
 
   /*
     Store the location of the beginning of a format directive, for the
@@ -334,7 +334,7 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
     backtrack= fmt;
     fmt++;
 
-    is_zero_padded= FALSE;
+    is_zero_padded= false;
     minimum_width_sign= 1;
     minimum_width= 0;
     precision= 0;
@@ -346,7 +346,7 @@ process_flags:
       case '-': 
         minimum_width_sign= -1; fmt++; goto process_flags;
       case '0':
-        is_zero_padded= TRUE; fmt++; goto process_flags;
+        is_zero_padded= true; fmt++; goto process_flags;
       case '#':
         /** @todo Implement "#" conversion flag. */  fmt++; goto process_flags;
       case ' ':

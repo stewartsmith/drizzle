@@ -175,7 +175,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
   field->reset();
   if (field == field->table->next_number_field)
   {
-    field->table->auto_increment_field_not_null= FALSE;
+    field->table->auto_increment_field_not_null= false;
     return 0;				  // field is set in fill_record()
   }
   if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
@@ -263,7 +263,7 @@ static void do_copy_next_number(Copy_field *copy)
   if (*copy->from_null_ptr & copy->from_bit)
   {
     /* Same as in set_field_to_null_with_conversions() */
-    copy->to_field->table->auto_increment_field_not_null= FALSE;
+    copy->to_field->table->auto_increment_field_not_null= false;
     copy->to_field->reset();
   }
   else
@@ -313,7 +313,7 @@ static void do_field_string(Copy_field *copy)
 static void do_field_enum(Copy_field *copy)
 {
   if (copy->from_field->val_int() == 0)
-    ((Field_enum *) copy->to_field)->store_type((ulonglong) 0);
+    ((Field_enum *) copy->to_field)->store_type((uint64_t) 0);
   else
     do_field_string(copy);
 }
@@ -336,7 +336,7 @@ static void do_field_varbinary_pre50(Copy_field *copy)
 
 static void do_field_int(Copy_field *copy)
 {
-  longlong value= copy->from_field->val_int();
+  int64_t value= copy->from_field->val_int();
   copy->to_field->store(value,
                         test(copy->from_field->flags & UNSIGNED_FLAG));
 }

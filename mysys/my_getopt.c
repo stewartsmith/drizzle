@@ -21,8 +21,8 @@
 #include <my_getopt.h>
 #include <errno.h>
 
-typedef void (*init_func_p)(const struct my_option *option, uchar* *variable,
-                            longlong value);
+typedef void (*init_func_p)(const struct my_option *option, char **variable,
+                            int64_t value);
 
 static void default_reporter(enum loglevel level, const char *format, ...);
 my_error_reporter my_getopt_error_reporter= &default_reporter;
@@ -30,18 +30,18 @@ my_error_reporter my_getopt_error_reporter= &default_reporter;
 static int findopt(char *optpat, uint length,
 		   const struct my_option **opt_res,
 		   char **ffname);
-static longlong getopt_ll(char *arg, const struct my_option *optp, int *err);
-static ulonglong getopt_ull(char *arg, const struct my_option *optp,
+static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err);
+static uint64_t getopt_ull(char *arg, const struct my_option *optp,
 			    int *err);
 static double getopt_double(char *arg, const struct my_option *optp, int *err);
 static void init_variables(const struct my_option *options,
                            init_func_p init_one_value);
-static void init_one_value(const struct my_option *option, uchar* *variable,
-			   longlong value);
-static void fini_one_value(const struct my_option *option, uchar* *variable,
-			   longlong value);
-static int setval(const struct my_option *opts, uchar* *value, char *argument,
-		  my_bool set_maximum_value);
+static void init_one_value(const struct my_option *option, char **variable,
+			   int64_t value);
+static void fini_one_value(const struct my_option *option, char **variable,
+			   int64_t value);
+static int setval(const struct my_option *opts, char* *value, char *argument,
+		  bool set_maximum_value);
 static char *check_struct_option(char *cur_arg, char *key_name);
 
 /*
@@ -63,14 +63,14 @@ char *disabled_my_option= (char*) "0";
    it by itself
 */
 
-my_bool my_getopt_print_errors= 1;
+bool my_getopt_print_errors= 1;
 
 /* 
    This is a flag that can be set in client programs. 1 means that
    my_getopt will skip over options it does not know how to handle.
 */
 
-my_bool my_getopt_skip_unknown= 0;
+bool my_getopt_skip_unknown= 0;
 
 static void default_reporter(enum loglevel level,
                              const char *format, ...)
@@ -97,9 +97,9 @@ static void default_reporter(enum loglevel level,
   one. Call function 'get_one_option()' once for each option.
 */
 
-static uchar** (*getopt_get_addr)(const char *, uint, const struct my_option *);
+static char** (*getopt_get_addr)(const char *, uint, const struct my_option *);
 
-void my_getopt_register_get_addr(uchar** (*func_addr)(const char *, uint,
+void my_getopt_register_get_addr(char** (*func_addr)(const char *, uint,
 						    const struct my_option *))
 {
   getopt_get_addr= func_addr;
@@ -110,12 +110,12 @@ int handle_options(int *argc, char ***argv,
                    my_get_one_option get_one_option)
 {
   uint opt_found, argvpos= 0, length;
-  my_bool end_of_options= 0, must_be_var, set_maximum_value,
+  bool end_of_options= 0, must_be_var, set_maximum_value,
           option_is_loose;
-  char **pos, **pos_end, *optend, *prev_found,
+  char **pos, **pos_end, *optend, *prev_found=NULL,
        *opt_str, key_name[FN_REFLEN];
   const struct my_option *optp;
-  uchar* *value;
+  char* *value;
   int error, i;
 
   /* handle_options() assumes arg0 (program name) always exists */
@@ -254,7 +254,7 @@ int handle_options(int *argc, char ***argv,
 		  case OPT_DISABLE: /* fall through */
 		    /*
 		      double negation is actually enable again,
-		      for example: --skip-option=0 -> option = TRUE
+		      for example: --skip-option=0 -> option = true
 		    */
 		    optend= (optend && *optend == '0' && !(*(optend + 1))) ?
 		      (char*) "1" : disabled_my_option;
@@ -380,10 +380,10 @@ int handle_options(int *argc, char ***argv,
 	    (*argc)--;
 	    if (!optend || *optend == '1' ||
 		!my_strcasecmp(&my_charset_latin1, optend, "true"))
-	      *((my_bool*) value)= (my_bool) 1;
+	      *((bool*) value)= (bool) 1;
 	    else if (*optend == '0' ||
 		     !my_strcasecmp(&my_charset_latin1, optend, "false"))
-	      *((my_bool*) value)= (my_bool) 0;
+	      *((bool*) value)= (bool) 0;
 	    else
 	    {
 	      my_getopt_error_reporter(WARNING_LEVEL,
@@ -393,7 +393,7 @@ invalid value '%s'",
 	      continue;
 	    }
 	    get_one_option(optp->id, optp,
-			   *((my_bool*) value) ?
+			   *((bool*) value) ?
 			   (char*) "1" : disabled_my_option);
 	    continue;
 	  }
@@ -403,11 +403,11 @@ invalid value '%s'",
 		 (optp->var_type & GET_TYPE_MASK) == GET_BOOL)
 	{
 	  if (optend == disabled_my_option)
-	    *((my_bool*) value)= (my_bool) 0;
+	    *((bool*) value)= (bool) 0;
 	  else
 	  {
 	    if (!optend) /* No argument -> enable option */
-	      *((my_bool*) value)= (my_bool) 1;
+	      *((bool*) value)= (bool) 1;
             else
               argument= optend;
 	  }
@@ -451,7 +451,7 @@ invalid value '%s'",
 	      if ((optp->var_type & GET_TYPE_MASK) == GET_BOOL &&
 		  optp->arg_type == NO_ARG)
 	      {
-		*((my_bool*) optp->value)= (my_bool) 1;
+		*((bool*) optp->value)= (bool) 1;
 		get_one_option(optp->id, optp, argument);
 		continue;
 	      }
@@ -470,7 +470,7 @@ invalid value '%s'",
                   if (optp->arg_type == OPT_ARG)
                   {
                     if (optp->var_type == GET_BOOL)
-                      *((my_bool*) optp->value)= (my_bool) 1;
+                      *((bool*) optp->value)= (bool) 1;
                     get_one_option(optp->id, optp, argument);
                     continue;
                   }
@@ -488,7 +488,7 @@ invalid value '%s'",
 		  /* the other loop will break, because *optend + 1 == 0 */
 		}
 	      }
-	      if ((error= setval(optp, optp->value, argument,
+              if ((error= setval(optp, optp->value, argument,
 				 set_maximum_value)))
 	      {
                 my_getopt_error_reporter(ERROR_LEVEL,
@@ -586,22 +586,22 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   Will set the option value to given value
 */
 
-static int setval(const struct my_option *opts, uchar* *value, char *argument,
-		  my_bool set_maximum_value)
+static int setval(const struct my_option *opts, char* *value, char *argument,
+		  bool set_maximum_value)
 {
   int err= 0;
 
   if (value && argument)
   {
-    uchar* *result_pos= ((set_maximum_value) ?
-		       opts->u_max_value : value);
+    char* *result_pos= ((set_maximum_value) ?
+                        opts->u_max_value : value);
 
     if (!result_pos)
       return EXIT_NO_PTR_TO_VARIABLE;
 
     switch ((opts->var_type & GET_TYPE_MASK)) {
     case GET_BOOL: /* If argument differs from 0, enable option, else disable */
-      *((my_bool*) result_pos)= (my_bool) atoi(argument) != 0;
+      *((bool*) result_pos)= (bool) atoi(argument) != 0;
       break;
     case GET_INT:
       *((int*) result_pos)= (int) getopt_ll(argument, opts, &err);
@@ -616,10 +616,10 @@ static int setval(const struct my_option *opts, uchar* *value, char *argument,
       *((long*) result_pos)= (long) getopt_ull(argument, opts, &err);
       break;
     case GET_LL:
-      *((longlong*) result_pos)= getopt_ll(argument, opts, &err);
+      *((int64_t*) result_pos)= getopt_ll(argument, opts, &err);
       break;
     case GET_ULL:
-      *((ulonglong*) result_pos)= getopt_ull(argument, opts, &err);
+      *((uint64_t*) result_pos)= getopt_ull(argument, opts, &err);
       break;
     case GET_DOUBLE:
       *((double*) result_pos)= getopt_double(argument, opts, &err);
@@ -638,7 +638,7 @@ static int setval(const struct my_option *opts, uchar* *value, char *argument,
         return EXIT_ARGUMENT_INVALID;
       break;
     case GET_SET:
-      *((ulonglong*)result_pos)= find_typeset(argument, opts->typelib, &err);
+      *((uint64_t*)result_pos)= find_typeset(argument, opts->typelib, &err);
       if (err)
         return EXIT_ARGUMENT_INVALID;
       break;
@@ -714,7 +714,7 @@ static int findopt(char *optpat, uint length,
   2.) Returns -1 if strings differ, 0 if they are equal
 */
 
-my_bool getopt_compare_strings(register const char *s, register const char *t,
+bool getopt_compare_strings(register const char *s, register const char *t,
 			       uint length)
 {
   char const *end= s + length;
@@ -733,10 +733,10 @@ my_bool getopt_compare_strings(register const char *s, register const char *t,
   be k|K for kilo, m|M for mega or g|G for giga.
 */
 
-static longlong eval_num_suffix(char *argument, int *error, char *option_name)
+static int64_t eval_num_suffix(char *argument, int *error, char *option_name)
 {
   char *endchar;
-  longlong num;
+  int64_t num;
   
   *error= 0;
   errno= 0;
@@ -776,9 +776,9 @@ static longlong eval_num_suffix(char *argument, int *error, char *option_name)
   In case of an error, set error value in *err.
 */
 
-static longlong getopt_ll(char *arg, const struct my_option *optp, int *err)
+static int64_t getopt_ll(char *arg, const struct my_option *optp, int *err)
 {
-  longlong num=eval_num_suffix(arg, err, (char*) optp->name);
+  int64_t num=eval_num_suffix(arg, err, (char*) optp->name);
   return getopt_ll_limit_value(num, optp, NULL);
 }
 
@@ -789,35 +789,35 @@ static longlong getopt_ll(char *arg, const struct my_option *optp, int *err)
   Returns "fixed" value.
 */
 
-longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
-                               my_bool *fix)
+int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
+                               bool *fix)
 {
-  longlong old= num;
-  my_bool adjusted= FALSE;
+  int64_t old= num;
+  bool adjusted= false;
   char buf1[255], buf2[255];
-  ulonglong block_size= (optp->block_size ? (ulonglong) optp->block_size : 1L);
+  uint64_t block_size= (optp->block_size ? (uint64_t) optp->block_size : 1L);
 
-  if (num > 0 && ((ulonglong) num > (ulonglong) optp->max_value) &&
+  if (num > 0 && ((uint64_t) num > (uint64_t) optp->max_value) &&
       optp->max_value) /* if max value is not set -> no upper limit */
   {
-    num= (ulonglong) optp->max_value;
-    adjusted= TRUE;
+    num= (uint64_t) optp->max_value;
+    adjusted= true;
   }
 
   switch ((optp->var_type & GET_TYPE_MASK)) {
   case GET_INT:
-    if (num > (longlong) INT_MAX)
+    if (num > (int64_t) INT_MAX)
     {
-      num= ((longlong) INT_MAX);
-      adjusted= TRUE;
+      num= ((int64_t) INT_MAX);
+      adjusted= true;
     }
     break;
   case GET_LONG:
 #if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (longlong) LONG_MAX)
+    if (num > (int64_t) LONG_MAX)
     {
-      num= ((longlong) LONG_MAX);
-      adjusted= TRUE;
+      num= ((int64_t) LONG_MAX);
+      adjusted= true;
     }
 #endif
     break;
@@ -827,12 +827,12 @@ longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
   }
 
   num= ((num - optp->sub_size) / block_size);
-  num= (longlong) (num * block_size);
+  num= (int64_t) (num * block_size);
 
   if (num < optp->min_value)
   {
     num= optp->min_value;
-    adjusted= TRUE;
+    adjusted= true;
   }
 
   if (fix)
@@ -851,41 +851,41 @@ longlong getopt_ll_limit_value(longlong num, const struct my_option *optp,
   values.
 */
 
-static ulonglong getopt_ull(char *arg, const struct my_option *optp, int *err)
+static uint64_t getopt_ull(char *arg, const struct my_option *optp, int *err)
 {
-  ulonglong num= eval_num_suffix(arg, err, (char*) optp->name);
+  uint64_t num= eval_num_suffix(arg, err, (char*) optp->name);
   return getopt_ull_limit_value(num, optp, NULL);
 }
 
 
-ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
-                                 my_bool *fix)
+uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
+                                 bool *fix)
 {
-  my_bool adjusted= FALSE;
-  ulonglong old= num;
+  bool adjusted= false;
+  uint64_t old= num;
   char buf1[255], buf2[255];
 
-  if ((ulonglong) num > (ulonglong) optp->max_value &&
+  if ((uint64_t) num > (uint64_t) optp->max_value &&
       optp->max_value) /* if max value is not set -> no upper limit */
   {
-    num= (ulonglong) optp->max_value;
-    adjusted= TRUE;
+    num= (uint64_t) optp->max_value;
+    adjusted= true;
   }
 
   switch ((optp->var_type & GET_TYPE_MASK)) {
   case GET_UINT:
-    if (num > (ulonglong) UINT_MAX)
+    if (num > (uint64_t) UINT_MAX)
     {
-      num= ((ulonglong) UINT_MAX);
-      adjusted= TRUE;
+      num= ((uint64_t) UINT_MAX);
+      adjusted= true;
     }
     break;
   case GET_ULONG:
 #if SIZEOF_LONG < SIZEOF_LONG_LONG
-    if (num > (ulonglong) ULONG_MAX)
+    if (num > (uint64_t) ULONG_MAX)
     {
-      num= ((ulonglong) ULONG_MAX);
-      adjusted= TRUE;
+      num= ((uint64_t) ULONG_MAX);
+      adjusted= true;
     }
 #endif
     break;
@@ -896,14 +896,14 @@ ulonglong getopt_ull_limit_value(ulonglong num, const struct my_option *optp,
 
   if (optp->block_size > 1)
   {
-    num/= (ulonglong) optp->block_size;
-    num*= (ulonglong) optp->block_size;
+    num/= (uint64_t) optp->block_size;
+    num*= (uint64_t) optp->block_size;
   }
 
-  if (num < (ulonglong) optp->min_value)
+  if (num < (uint64_t) optp->min_value)
   {
-    num= (ulonglong) optp->min_value;
-    adjusted= TRUE;
+    num= (uint64_t) optp->min_value;
+    adjusted= true;
   }
 
   if (fix)
@@ -957,13 +957,13 @@ static double getopt_double(char *arg, const struct my_option *optp, int *err)
     value		Pointer to variable
 */
 
-static void init_one_value(const struct my_option *option, uchar* *variable,
-			   longlong value)
+static void init_one_value(const struct my_option *option, char** variable,
+			   int64_t value)
 {
   DBUG_ENTER("init_one_value");
   switch ((option->var_type & GET_TYPE_MASK)) {
   case GET_BOOL:
-    *((my_bool*) variable)= (my_bool) value;
+    *((bool*) variable)= (bool) value;
     break;
   case GET_INT:
     *((int*) variable)= (int) value;
@@ -979,11 +979,11 @@ static void init_one_value(const struct my_option *option, uchar* *variable,
     *((ulong*) variable)= (ulong) value;
     break;
   case GET_LL:
-    *((longlong*) variable)= (longlong) value;
+    *((int64_t*) variable)= (int64_t) value;
     break;
   case GET_ULL:
   case GET_SET:
-    *((ulonglong*) variable)=  (ulonglong) value;
+    *((uint64_t*) variable)=  (uint64_t) value;
     break;
   case GET_DOUBLE:
     *((double*) variable)=  (double) value;
@@ -992,23 +992,23 @@ static void init_one_value(const struct my_option *option, uchar* *variable,
     /*
       Do not clear variable value if it has no default value.
       The default value may already be set.
-      NOTE: To avoid compiler warnings, we first cast longlong to intptr,
+      NOTE: To avoid compiler warnings, we first cast int64_t to intptr_t,
       so that the value has the same size as a pointer.
     */
-    if ((char*) (intptr) value)
-      *((char**) variable)= (char*) (intptr) value;
+    if ((char*) (intptr_t) value)
+      *((char**) variable)= (char*) (intptr_t) value;
     break;
   case GET_STR_ALLOC:
     /*
       Do not clear variable value if it has no default value.
       The default value may already be set.
-      NOTE: To avoid compiler warnings, we first cast longlong to intptr,
+      NOTE: To avoid compiler warnings, we first cast int64_t to intptr_t,
       so that the value has the same size as a pointer.
     */
-    if ((char*) (intptr) value)
+    if ((char*) (intptr_t) value)
     {
       my_free((*(char**) variable), MYF(MY_ALLOW_ZERO_PTR));
-      *((char**) variable)= my_strdup((char*) (intptr) value, MYF(MY_WME));
+      *((char**) variable)= my_strdup((char*) (intptr_t) value, MYF(MY_WME));
     }
     break;
   default: /* dummy default to avoid compiler warnings */
@@ -1027,8 +1027,8 @@ static void init_one_value(const struct my_option *option, uchar* *variable,
     value		Pointer to variable
 */
 
-static void fini_one_value(const struct my_option *option, uchar* *variable,
-			   longlong value __attribute__ ((unused)))
+static void fini_one_value(const struct my_option *option, char **variable,
+			   int64_t value __attribute__ ((unused)))
 {
   DBUG_ENTER("fini_one_value");
   switch ((option->var_type & GET_TYPE_MASK)) {
@@ -1068,7 +1068,7 @@ static void init_variables(const struct my_option *options,
   DBUG_ENTER("init_variables");
   for (; options->name; options++)
   {
-    uchar* *variable;
+    char* *variable;
     DBUG_PRINT("options", ("name: '%s'", options->name));
     /*
       We must set u_max_value first as for some variables
@@ -1182,16 +1182,16 @@ void my_print_help(const struct my_option *options)
 void my_print_variables(const struct my_option *options)
 {
   uint name_space= 34, length, nr;
-  ulonglong bit, llvalue;
+  uint64_t bit, llvalue;
   char buff[255];
   const struct my_option *optp;
 
   printf("\nVariables (--variable-name=value)\n");
-  printf("and boolean options {FALSE|TRUE}  Value (after reading options)\n");
+  printf("and boolean options {false|true}  Value (after reading options)\n");
   printf("--------------------------------- -----------------------------\n");
   for (optp= options; optp->id; optp++)
   {
-    uchar* *value= (optp->var_type & GET_ASK_ADDR ?
+    char* *value= (optp->var_type & GET_ASK_ADDR ?
 		  (*getopt_get_addr)("", 0, optp) : optp->value);
     if (value)
     {
@@ -1201,7 +1201,7 @@ void my_print_variables(const struct my_option *options)
 	putchar(' ');
       switch ((optp->var_type & GET_TYPE_MASK)) {
       case GET_SET:
-        if (!(llvalue= *(ulonglong*) value))
+        if (!(llvalue= *(uint64_t*) value))
 	  printf("%s\n", "(No default value)");
 	else
         for (nr= 0, bit= 1; llvalue && nr < optp->typelib->count; nr++, bit<<=1)
@@ -1221,7 +1221,7 @@ void my_print_variables(const struct my_option *options)
 	       "(No default value)");
 	break;
       case GET_BOOL:
-	printf("%s\n", *((my_bool*) value) ? "TRUE" : "FALSE");
+	printf("%s\n", *((bool*) value) ? "true" : "false");
 	break;
       case GET_INT:
 	printf("%d\n", *((int*) value));
@@ -1236,10 +1236,10 @@ void my_print_variables(const struct my_option *options)
 	printf("%lu\n", *((ulong*) value));
 	break;
       case GET_LL:
-	printf("%s\n", llstr(*((longlong*) value), buff));
+	printf("%s\n", llstr(*((int64_t*) value), buff));
 	break;
       case GET_ULL:
-	longlong2str(*((ulonglong*) value), buff, 10);
+	int64_t2str(*((uint64_t*) value), buff, 10);
 	printf("%s\n", buff);
 	break;
       case GET_DOUBLE:

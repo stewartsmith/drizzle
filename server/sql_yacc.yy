@@ -311,8 +311,8 @@ bool setup_select_in_parentheses(LEX *lex)
 %union {
   int  num;
   ulong ulong_num;
-  ulonglong ulonglong_number;
-  longlong longlong_number;
+  uint64_t ulonglong_number;
+  int64_t longlong_number;
   LEX_STRING lex_str;
   LEX_STRING *lex_str_ptr;
   LEX_SYMBOL symbol;
@@ -542,7 +542,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  FIRST_SYM                     /* SQL-2003-N */
 %token  FIXED_SYM
 %token  FLOAT_NUM
-%token  FLOAT_SYM                     /* SQL-2003-R */
 %token  FLUSH_SYM
 %token  FORCE_SYM
 %token  FOREIGN                       /* SQL-2003-R */
@@ -1809,7 +1808,6 @@ field_spec:
 type:
           int_type opt_len field_options { $$=$1; }
         | real_type opt_precision field_options { $$=$1; }
-        | FLOAT_SYM float_options field_options { $$=MYSQL_TYPE_FLOAT; }
         | BIT_SYM
           {
             Lex->length= (char*) "1";
@@ -3797,7 +3795,6 @@ function_call_conflict:
 function_call_generic:
           IDENT_sys '('
           {
-#ifdef HAVE_DLOPEN
             udf_func *udf= 0;
             LEX *lex= Lex;
             if (using_udf_functions &&
@@ -3812,7 +3809,6 @@ function_call_generic:
             }
             /* Temporary placing the result of find_udf in $3 */
             $<udf>$= udf;
-#endif
           }
           opt_udf_expr_list ')'
           {
@@ -3836,10 +3832,9 @@ function_call_generic:
             }
             else
             {
-#ifdef HAVE_DLOPEN
               /* Retrieving the result of find_udf */
               udf_func *udf= $<udf>3;
-
+              if (udf)
               {
                 if (udf->type == UDFTYPE_AGGREGATE)
                 {
@@ -3848,7 +3843,6 @@ function_call_generic:
 
                 item= Create_udf_func::s_singleton.create(thd, udf, $4);
               }
-#endif
             }
 
             if (! ($$= item))
@@ -4945,11 +4939,11 @@ real_ulong_num:
         ;
 
 ulonglong_num:
-          NUM           { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | ULONGLONG_NUM { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | LONG_NUM      { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | DECIMAL_NUM   { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
-        | FLOAT_NUM     { int error; $$= (ulonglong) my_strtoll10($1.str, (char**) 0, &error); }
+          NUM           { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | ULONGLONG_NUM { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | LONG_NUM      { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | DECIMAL_NUM   { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
+        | FLOAT_NUM     { int error; $$= (uint64_t) my_strtoll10($1.str, (char**) 0, &error); }
         ;
 
 dec_num_error:
@@ -6165,12 +6159,12 @@ NUM_literal:
           NUM
           {
             int error;
-            $$ = new Item_int($1.str, (longlong) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | LONG_NUM
           {
             int error;
-            $$ = new Item_int($1.str, (longlong) my_strtoll10($1.str, NULL, &error), $1.length);
+            $$ = new Item_int($1.str, (int64_t) my_strtoll10($1.str, NULL, &error), $1.length);
           }
         | ULONGLONG_NUM
           { $$ = new Item_uint($1.str, $1.length); }

@@ -58,40 +58,6 @@ static int binlog_commit(handlerton *hton, THD *thd, bool all);
 static int binlog_rollback(handlerton *hton, THD *thd, bool all);
 static int binlog_prepare(handlerton *hton, THD *thd, bool all);
 
-/**
-  Silence all errors and warnings reported when performing a write
-  to a log table.
-  Errors and warnings are not reported to the client or SQL exception
-  handlers, so that the presence of logging does not interfere and affect
-  the logic of an application.
-*/
-class Silence_log_table_errors : public Internal_error_handler
-{
-  char m_message[MYSQL_ERRMSG_SIZE];
-public:
-  Silence_log_table_errors()
-  {
-    m_message[0]= '\0';
-  }
-
-  virtual ~Silence_log_table_errors() {}
-
-  virtual bool handle_error(uint sql_errno, const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
-                            THD *thd);
-  const char *message() const { return m_message; }
-};
-
-bool
-Silence_log_table_errors::handle_error(uint /* sql_errno */,
-                                       const char *message_arg,
-                                       MYSQL_ERROR::enum_warning_level /* level */,
-                                       THD * /* thd */)
-{
-  strmake(m_message, message_arg, sizeof(m_message)-1);
-  return true;
-}
-
 
 sql_print_message_func sql_print_message_handlers[3] =
 {
@@ -267,7 +233,7 @@ void Log_to_file_event_handler::init_pthread_objects()
 bool Log_to_file_event_handler::
   log_slow(THD *thd, time_t current_time, time_t query_start_arg,
            const char *user_host, uint user_host_len,
-           ulonglong query_utime, ulonglong lock_utime, bool is_command,
+           uint64_t query_utime, uint64_t lock_utime, bool is_command,
            const char *sql_text, uint sql_text_len)
 {
   return mysql_slow_log.write(thd, current_time, query_start_arg,
@@ -436,7 +402,7 @@ bool LOGGER::flush_logs(THD *thd __attribute__((__unused__)))
 */
 
 bool LOGGER::slow_log_print(THD *thd, const char *query, uint query_length,
-                            ulonglong current_utime)
+                            uint64_t current_utime)
 
 {
   bool error= false;
@@ -445,7 +411,7 @@ bool LOGGER::slow_log_print(THD *thd, const char *query, uint query_length,
   char user_host_buff[MAX_USER_HOST_SIZE];
   Security_context *sctx= thd->security_ctx;
   uint user_host_len= 0;
-  ulonglong query_utime, lock_utime;
+  uint64_t query_utime, lock_utime;
 
   /*
     Print the message to the buffer if we have slow log enabled
@@ -649,7 +615,7 @@ bool LOGGER::activate_log_handler(THD* thd __attribute__((__unused__)),
 void LOGGER::deactivate_log_handler(THD *thd __attribute__((__unused__)),
                                     uint log_type)
 {
-  my_bool *tmp_opt= 0;
+  bool *tmp_opt= 0;
   MYSQL_LOG *file_log;
 
   switch (log_type) {
@@ -979,7 +945,7 @@ static int binlog_commit(handlerton *hton __attribute__((__unused__)),
 
     Otherwise, we accumulate the statement
   */
-  ulonglong const in_transaction=
+  uint64_t const in_transaction=
     thd->options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN);
   if ((in_transaction && (all || (!trx_data->at_least_one_stmt && thd->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
   {
@@ -1566,8 +1532,8 @@ err:
 bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
                             time_t query_start_arg __attribute__((__unused__)),
                             const char *user_host,
-                            uint user_host_len, ulonglong query_utime,
-                            ulonglong lock_utime, bool is_command,
+                            uint user_host_len, uint64_t query_utime,
+                            uint64_t lock_utime, bool is_command,
                             const char *sql_text, uint sql_text_len)
 {
   bool error= 0;
@@ -1615,8 +1581,8 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
         tmp_errno= errno;
     }
     /* For slow query log */
-    sprintf(query_time_buff, "%.6f", ulonglong2double(query_utime)/1000000.0);
-    sprintf(lock_time_buff,  "%.6f", ulonglong2double(lock_utime)/1000000.0);
+    sprintf(query_time_buff, "%.6f", uint64_t2double(query_utime)/1000000.0);
+    sprintf(lock_time_buff,  "%.6f", uint64_t2double(lock_utime)/1000000.0);
     if (my_b_printf(&log_file,
                     "# Query_time: %s  Lock_time: %s"
                     " Rows_sent: %lu  Rows_examined: %lu\n",
@@ -1633,7 +1599,7 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
     if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
     {
       end=strmov(end, ",last_insert_id=");
-      end=longlong10_to_str((longlong)
+      end=int64_t10_to_str((int64_t)
                             thd->first_successful_insert_id_in_prev_stmt_for_binlog,
                             end, -10);
     }
@@ -1643,7 +1609,7 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
       if (!(specialflag & SPECIAL_SHORT_LOG_FORMAT))
       {
         end=strmov(end,",insert_id=");
-        end=longlong10_to_str((longlong)
+        end=int64_t10_to_str((int64_t)
                               thd->auto_inc_intervals_in_cur_stmt_for_binlog.minimum(),
                               end, -10);
       }
@@ -2425,7 +2391,7 @@ int MYSQL_BIN_LOG::purge_logs(const char *to_log,
                           bool included,
                           bool need_mutex, 
                           bool need_update_threads, 
-                          ulonglong *decrease_log_space)
+                          uint64_t *decrease_log_space)
 {
   int error;
   int ret = 0;
@@ -3331,7 +3297,7 @@ int error_log_print(enum loglevel level, const char *format,
 
 
 bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    ulonglong current_utime)
+                    uint64_t current_utime)
 {
   return logger.slow_log_print(thd, query, query_length, current_utime);
 }
@@ -4706,9 +4672,9 @@ const char* mysql_bin_log_file_name(void)
   @return byte offset from the beginning of the binlog
 */
 extern "C"
-ulonglong mysql_bin_log_file_pos(void)
+uint64_t mysql_bin_log_file_pos(void)
 {
-  return (ulonglong) mysql_bin_log.get_log_file()->pos_in_file;
+  return (uint64_t) mysql_bin_log.get_log_file()->pos_in_file;
 }
 #endif /* INNODB_COMPATIBILITY_HOOKS */
 

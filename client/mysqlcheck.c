@@ -28,7 +28,7 @@
 #define EX_MYSQLERR 2
 
 static MYSQL mysql_connection, *sock = 0;
-static my_bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
+static bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
                opt_compress = 0, opt_databases = 0, opt_fast = 0,
                opt_medium_check = 0, opt_quick = 0, opt_all_in_1 = 0,
                opt_silent = 0, opt_auto_repair = 0, ignore_errors = 0,
@@ -43,9 +43,6 @@ static char *opt_password = 0, *current_user = 0,
 	    *current_host = 0;
 static int first_error = 0;
 DYNAMIC_ARRAY tables4repair;
-#ifdef HAVE_SMEM
-static char *shared_memory_base_name=0;
-#endif
 static uint opt_protocol=0;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
 
@@ -55,21 +52,21 @@ static struct my_option my_long_options[] =
 {
   {"all-databases", 'A',
    "Check all the databases. This will be same as  --databases with all databases selected.",
-   (uchar**) &opt_alldbs, (uchar**) &opt_alldbs, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
+   (char**) &opt_alldbs, (char**) &opt_alldbs, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"analyze", 'a', "Analyze given tables.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"all-in-1", '1',
    "Instead of issuing one query for each table, use one query per database, naming all tables in the database in a comma-separated list.",
-   (uchar**) &opt_all_in_1, (uchar**) &opt_all_in_1, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   (char**) &opt_all_in_1, (char**) &opt_all_in_1, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
   {"auto-repair", OPT_AUTO_REPAIR,
    "If a checked table is corrupted, automatically fix it. Repairing will be done after all tables have been checked, if corrupted ones were found.",
-   (uchar**) &opt_auto_repair, (uchar**) &opt_auto_repair, 0, GET_BOOL, NO_ARG, 0,
+   (char**) &opt_auto_repair, (char**) &opt_auto_repair, 0, GET_BOOL, NO_ARG, 0,
    0, 0, 0, 0, 0},
   {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (uchar**) &charsets_dir,
-   (uchar**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Directory where character sets are.", (char**) &charsets_dir,
+   (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"check", 'c', "Check table for errors.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"check-only-changed", 'C',
@@ -79,54 +76,47 @@ static struct my_option my_long_options[] =
    "Check tables for version-dependent changes. May be used with --auto-repair to correct tables requiring version-dependent updates.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"compress", OPT_COMPRESS, "Use compression in server/client protocol.",
-   (uchar**) &opt_compress, (uchar**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
   {"databases", 'B',
    "To check several databases. Note the difference in usage; In this case no tables are given. All name arguments are regarded as databasenames.",
-   (uchar**) &opt_databases, (uchar**) &opt_databases, 0, GET_BOOL, NO_ARG,
+   (char**) &opt_databases, (char**) &opt_databases, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
-#ifdef DBUG_OFF
-  {"debug", '#', "This is a non-debug version. Catch this and exit.",
-   0, 0, 0, GET_DISABLED, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#else
-  {"debug", '#', "Output debug log. Often this is 'd:t:o,filename'.",
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
-   (uchar**) &debug_check_flag, (uchar**) &debug_check_flag, 0,
+   (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-info", OPT_DEBUG_INFO, "Print some debug info at exit.",
-   (uchar**) &debug_info_flag, (uchar**) &debug_info_flag,
+   (char**) &debug_info_flag, (char**) &debug_info_flag,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
-   "Set the default character set.", (uchar**) &default_charset,
-   (uchar**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   "Set the default character set.", (char**) &default_charset,
+   (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"fast",'F', "Check only tables that haven't been closed properly.",
-   (uchar**) &opt_fast, (uchar**) &opt_fast, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
+   (char**) &opt_fast, (char**) &opt_fast, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
   {"fix-db-names", OPT_FIX_DB_NAMES, "Fix database names.",
-    (uchar**) &opt_fix_db_names, (uchar**) &opt_fix_db_names,
+    (char**) &opt_fix_db_names, (char**) &opt_fix_db_names,
     0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"fix-table-names", OPT_FIX_TABLE_NAMES, "Fix table names.",
-    (uchar**) &opt_fix_table_names, (uchar**) &opt_fix_table_names,
+    (char**) &opt_fix_table_names, (char**) &opt_fix_table_names,
     0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"force", 'f', "Continue even if we get an sql-error.",
-   (uchar**) &ignore_errors, (uchar**) &ignore_errors, 0, GET_BOOL, NO_ARG, 0, 0,
+   (char**) &ignore_errors, (char**) &ignore_errors, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"extended", 'e',
    "If you are using this option with CHECK TABLE, it will ensure that the table is 100 percent consistent, but will take a long time. If you are using this option with REPAIR TABLE, it will force using old slow repair with keycache method, instead of much faster repair by sorting.",
-   (uchar**) &opt_extended, (uchar**) &opt_extended, 0, GET_BOOL, NO_ARG, 0, 0, 0,
+   (char**) &opt_extended, (char**) &opt_extended, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
   {"help", '?', "Display this help message and exit.", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"host",'h', "Connect to host.", (uchar**) &current_host,
-   (uchar**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"host",'h', "Connect to host.", (char**) &current_host,
+   (char**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"medium-check", 'm',
    "Faster than extended-check, but only finds 99.99 percent of all errors. Should be good enough for most cases.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"write-binlog", OPT_WRITE_BINLOG,
    "Log ANALYZE, OPTIMIZE and REPAIR TABLE commands. Use --skip-write-binlog when commands should not be sent to replication slaves.",
-   (uchar**) &opt_write_binlog, (uchar**) &opt_write_binlog, 0, GET_BOOL, NO_ARG,
+   (char**) &opt_write_binlog, (char**) &opt_write_binlog, 0, GET_BOOL, NO_ARG,
    1, 0, 0, 0, 0, 0},
   {"optimize", 'o', "Optimize table.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
@@ -139,37 +129,32 @@ static struct my_option my_long_options[] =
    "/etc/services, "
 #endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
-   (uchar**) &opt_mysql_port,
-   (uchar**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
+   (char**) &opt_mysql_port,
+   (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
    0},
   {"protocol", OPT_MYSQL_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
    "If you are using this option with CHECK TABLE, it prevents the check from scanning the rows to check for wrong links. This is the fastest check. If you are using this option with REPAIR TABLE, it will try to repair only the index tree. This is the fastest repair method for a table.",
-   (uchar**) &opt_quick, (uchar**) &opt_quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
+   (char**) &opt_quick, (char**) &opt_quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
   {"repair", 'r',
    "Can fix almost anything except unique keys that aren't unique.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_SMEM
-  {"shared-memory-base-name", OPT_SHARED_MEMORY_BASE_NAME,
-   "Base name of shared memory.", (uchar**) &shared_memory_base_name, (uchar**) &shared_memory_base_name,
-   0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#endif
-  {"silent", 's', "Print only error messages.", (uchar**) &opt_silent,
-   (uchar**) &opt_silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"silent", 's', "Print only error messages.", (char**) &opt_silent,
+   (char**) &opt_silent, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-   (uchar**) &opt_mysql_unix_port, (uchar**) &opt_mysql_unix_port, 0, GET_STR,
+   (char**) &opt_mysql_unix_port, (char**) &opt_mysql_unix_port, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tables", OPT_TABLES, "Overrides option --databases (-B).", 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"use-frm", OPT_FRM,
    "When used with REPAIR, get table structure from .frm file, so the table can be repaired even if .MYI header is corrupted.",
-   (uchar**) &opt_frm, (uchar**) &opt_frm, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
+   (char**) &opt_frm, (char**) &opt_frm, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
 #ifndef DONT_ALLOW_USER_CHANGE
-  {"user", 'u', "User for login if not current user.", (uchar**) &current_user,
-   (uchar**) &current_user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"user", 'u', "User for login if not current user.", (char**) &current_user,
+   (char**) &current_user, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #endif
   {"verbose", 'v', "Print info about the various stages.", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -238,7 +223,7 @@ static void usage(void)
 
 #include <help_end.h>
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument)
 {
@@ -293,10 +278,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'g':
     what_to_do= DO_CHECK;
     opt_upgrade= 1;
-    break;
-  case '#':
-    DBUG_PUSH(argument ? argument : "d:t:o");
-    debug_check_flag= 1;
     break;
   case OPT_TABLES:
     opt_databases = 0;
@@ -686,7 +667,7 @@ static void print_result()
   MYSQL_ROW row;
   char prev[NAME_LEN*2+2];
   uint i;
-  my_bool found_error=0;
+  bool found_error=0;
 
   res = mysql_use_result(sock);
 
@@ -694,7 +675,7 @@ static void print_result()
   for (i = 0; (row = mysql_fetch_row(res)); i++)
   {
     int changed = strcmp(prev, row[0]);
-    my_bool status = !strcmp(row[2], "status");
+    bool status = !strcmp(row[2], "status");
 
     if (status)
     {
@@ -732,7 +713,7 @@ static void print_result()
 
 static int dbConnect(char *host, char *user, char *passwd)
 {
-  DBUG_ENTER("dbConnect");
+
   if (verbose)
   {
     fprintf(stderr, "# Connecting to %s...\n", host ? host : "localhost");
@@ -742,10 +723,6 @@ static int dbConnect(char *host, char *user, char *passwd)
     mysql_options(&mysql_connection, MYSQL_OPT_COMPRESS, NullS);
   if (opt_protocol)
     mysql_options(&mysql_connection,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-#ifdef HAVE_SMEM
-  if (shared_memory_base_name)
-    mysql_options(&mysql_connection,MYSQL_SHARED_MEMORY_BASE_NAME,shared_memory_base_name);
-#endif
   if (!(sock = mysql_real_connect(&mysql_connection, host, user, passwd,
          NULL, opt_mysql_port, opt_mysql_unix_port, 0)))
   {
@@ -767,11 +744,10 @@ static void dbDisconnect(char *host)
 
 static void DBerror(MYSQL *mysql, const char *when)
 {
-  DBUG_ENTER("DBerror");
   my_printf_error(0,"Got error: %d: %s %s", MYF(0),
 		  mysql_errno(mysql), mysql_error(mysql), when);
   safe_exit(EX_MYSQLERR);
-  DBUG_VOID_RETURN;
+  return;
 } /* DBerror */
 
 
@@ -834,9 +810,6 @@ int main(int argc, char **argv)
   if (opt_auto_repair)
     delete_dynamic(&tables4repair);
   my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
-#ifdef HAVE_SMEM
-  my_free(shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-#endif
   my_end(my_end_arg);
   return(first_error!=0);
 } /* main */

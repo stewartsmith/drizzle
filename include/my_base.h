@@ -159,11 +159,6 @@ enum ha_extra_function {
   HA_EXTRA_IGNORE_NO_KEY,
   HA_EXTRA_NO_IGNORE_NO_KEY,
   /*
-    Mark the table as a log table. For some handlers (e.g. CSV) this results
-    in a special locking for the table.
-  */
-  HA_EXTRA_MARK_AS_LOG_TABLE,
-  /*
     Informs handler that write_row() which tries to insert new row into the
     table and encounters some already existing row with same primary/unique
     key can replace old row with new row instead of reporting error (basically
@@ -552,7 +547,7 @@ typedef struct st_key_multi_range
 
 /* For number of records */
 #ifdef BIG_TABLES
-#define rows2double(A)	ulonglong2double(A)
+#define rows2double(A)	uint64_t2double(A)
 typedef my_off_t	ha_rows;
 #else
 #define rows2double(A)	(double) (A)
@@ -563,9 +558,9 @@ typedef ulong		ha_rows;
 #define HA_OFFSET_ERROR	(~ (my_off_t) 0)
 
 #if SIZEOF_OFF_T == 4
-#define MAX_FILE_SIZE	INT_MAX32
+#define MAX_FILE_SIZE	INT32_MAX
 #else
-#define MAX_FILE_SIZE	LONGLONG_MAX
+#define MAX_FILE_SIZE	INT64_MAX
 #endif
 
 #define HA_VARCHAR_PACKLENGTH(field_length) ((field_length) < 256 ? 1 :2)

@@ -48,7 +48,7 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
   register os_off_t newpos= -1;
   DBUG_ENTER("my_seek");
   DBUG_PRINT("my",("Fd: %d  Hpos: %lu  Pos: %lu  Whence: %d  MyFlags: %d",
-		   fd, (ulong) (((ulonglong) pos) >> 32), (ulong) pos, 
+		   fd, (ulong) (((uint64_t) pos) >> 32), (ulong) pos, 
 		   whence, MyFlags));
   DBUG_ASSERT(pos != MY_FILEPOS_ERROR);		/* safety check */
 

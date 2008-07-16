@@ -39,11 +39,11 @@
 /* We currently allow this on all platforms */
 #define AZIO_AIO
 
-#include <zlib.h>
 #include "my_global.h"
 #include "my_sys.h"
 
 #include <my_dir.h>
+#include <zlib.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -58,7 +58,7 @@ extern "C" {
 #define WATCHPOINT_ERRNO(A) fprintf(stderr, "\nWATCHPOINT %s:%d (%s) %s\n", __FILE__, __LINE__,__func__, strerror(A));A= 0;fflush(stderr);
 
 /*
-  ulonglong + ulonglong + ulonglong + ulonglong + uchar
+  uint64_t + uint64_t + uint64_t + uint64_t + uchar
 */
 #define AZMETA_BUFFER_SIZE sizeof(uint64_t) \
   + sizeof(uint64_t) + sizeof(uint64_t) + sizeof(uint64_t) \

@@ -54,11 +54,6 @@ int mi_write(MI_INFO *info, uchar *record)
   }
   if (_mi_readinfo(info,F_WRLCK,1))
     return(my_errno);
-#if !defined(NO_LOCKING) && defined(USE_RECORD_LOCK)
-  if (!info->locked && my_lock(info->dfile,F_WRLCK,0L,F_TO_EOF,
-			       MYF(MY_SEEK_NOT_DONE) | info->lock_wait))
-    goto err;
-#endif
   filepos= ((share->state.dellink != HA_OFFSET_ERROR &&
              !info->append_insert_at_end) ?
 	    share->state.dellink :
@@ -794,7 +789,7 @@ int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows)
   MI_KEYDEF *key=share->keyinfo;
   bulk_insert_param *params;
   uint i, num_keys, total_keylength;
-  ulonglong key_map;
+  uint64_t key_map;
 
   assert(!info->bulk_insert &&
 	      (!rows || rows >= MI_MIN_ROWS_TO_USE_BULK_INSERT));

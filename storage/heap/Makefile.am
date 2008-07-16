@@ -13,10 +13,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-if BUILD_DBUG
-  d_dbug = $(top_builddir)/dbug/libdbuglt.la
-endif
-
 MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
@@ -27,24 +23,15 @@ AM_CPPFLAGS =           -I$(top_srcdir)/include -I$(top_builddir)/include \
                         -I$(srcdir)
 WRAPLIBS=
 
-LDADD =
+LDADD =			libheap.la \
+			$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/strings/libmystringslt.la
 
 DEFS =                  @DEFS@
-pkglib_LIBRARIES =	libheap.a
+noinst_LTLIBRARIES  =	libheap.la
 noinst_PROGRAMS	=	hp_test1 hp_test2
-noinst_LIBRARIES =	libheap.a
-hp_test1_LDFLAGS = 
-hp_test1_LDADD =	libheap.a \
-			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
-			$(top_builddir)/strings/libmystringslt.la
-hp_test2_LDFLAGS = 
-hp_test2_LDADD =	libheap.a \
-			$(top_builddir)/mysys/libmysyslt.la \
-			$(d_dbug) \
-			$(top_builddir)/strings/libmystringslt.la
 noinst_HEADERS =	heapdef.h ha_heap.h
-libheap_a_SOURCES =	hp_open.c hp_extra.c hp_close.c hp_panic.c hp_info.c \
+libheap_la_SOURCES =	hp_open.c hp_extra.c hp_close.c hp_panic.c hp_info.c \
 			hp_rrnd.c hp_scan.c hp_update.c hp_write.c hp_delete.c \
 			hp_rsame.c hp_create.c hp_rename.c hp_rfirst.c \
 			hp_rnext.c hp_rlast.c hp_rprev.c hp_clear.c \

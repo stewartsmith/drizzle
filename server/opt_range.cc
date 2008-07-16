@@ -685,7 +685,7 @@ class PARAM : public RANGE_OPT_PARAM
 {
 public:
   KEY_PART *key[MAX_KEY]; /* First key parts of keys used in the query */
-  longlong baseflag;
+  int64_t baseflag;
   uint max_key_part;
   /* Number of ranges in the last checked tree->key */
   uint range_count;
@@ -4193,7 +4193,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
       {
         field_item= (Item_field*) (cond_func->arguments()[i]->real_item());
         SEL_TREE *tmp= get_full_func_mm_tree(param, cond_func, 
-                                    field_item, (Item*)(intptr)i, inv);
+                                    field_item, (Item*)(intptr_t)i, inv);
         if (inv)
           tree= !tree ? tmp : tree_or(param, tree, tmp);
         else 
@@ -4572,7 +4572,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
       value->result_type() == INT_RESULT &&
       ((Field_num*)field)->unsigned_flag && !((Item_int*)value)->unsigned_flag)
   {
-    longlong item_val= value->val_int();
+    int64_t item_val= value->val_int();
     if (item_val < 0)
     {
       if (type == Item_func::LT_FUNC || type == Item_func::LE_FUNC)
@@ -7587,7 +7587,7 @@ void QUICK_RANGE_SELECT::add_keys_and_lengths(String *key_names,
   uint length;
   KEY *key_info= head->key_info + index;
   key_names->append(key_info->name);
-  length= longlong2str(max_used_key_length, buf, 10) - buf;
+  length= int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
@@ -7612,7 +7612,7 @@ void QUICK_INDEX_MERGE_SELECT::add_keys_and_lengths(String *key_names,
 
     KEY *key_info= head->key_info + quick->index;
     key_names->append(key_info->name);
-    length= longlong2str(quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
   if (pk_quick_select)
@@ -7620,7 +7620,7 @@ void QUICK_INDEX_MERGE_SELECT::add_keys_and_lengths(String *key_names,
     KEY *key_info= head->key_info + pk_quick_select->index;
     key_names->append(',');
     key_names->append(key_info->name);
-    length= longlong2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
     used_lengths->append(',');
     used_lengths->append(buf, length);
   }
@@ -7645,7 +7645,7 @@ void QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_names,
       used_lengths->append(',');
     }
     key_names->append(key_info->name);
-    length= longlong2str(quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
 
@@ -7654,7 +7654,7 @@ void QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_names,
     KEY *key_info= head->key_info + cpk_quick->index;
     key_names->append(',');
     key_names->append(key_info->name);
-    length= longlong2str(cpk_quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(',');
     used_lengths->append(buf, length);
   }
@@ -8046,9 +8046,9 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
         all_parts have all bits set from 0 to (max_key_part-1).
         cur_parts have bits set for only used keyparts.
       */
-      ulonglong all_parts, cur_parts;
+      uint64_t all_parts, cur_parts;
       all_parts= (1<<max_key_part) - 1;
-      cur_parts= cur_used_key_parts.to_ulonglong() >> 1;
+      cur_parts= cur_used_key_parts.to_uint64_t() >> 1;
       if (all_parts != cur_parts)
         goto next_index;
     }
@@ -9737,12 +9737,12 @@ void QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths(String *key_names,
   char buf[64];
   uint length;
   key_names->append(index_info->name);
-  length= longlong2str(max_used_key_length, buf, 10) - buf;
+  length= int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
 static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
-                           const char *msg)
+                           const char *msg __attribute__((__unused__)))
 {
   SEL_ARG **key,**end;
   int idx;
@@ -9769,7 +9769,8 @@ static void print_sel_tree(PARAM *param, SEL_TREE *tree, key_map *tree_map,
 }
 
 
-static void print_ror_scans_arr(TABLE *table, const char *msg,
+static void print_ror_scans_arr(TABLE *table,
+                                const char *msg __attribute__((__unused__)),
                                 struct st_ror_scan_info **start,
                                 struct st_ror_scan_info **end)
 {

@@ -91,7 +91,7 @@ int safe_mutex_init(safe_mutex_t *mp,
 }
 
 
-int safe_mutex_lock(safe_mutex_t *mp, my_bool try_lock, const char *file, uint line)
+int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint line)
 {
   int error;
   if (!mp->file)

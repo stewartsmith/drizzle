@@ -94,7 +94,7 @@ void Default_object_creation_ctx::change_env(THD *thd) const
 /* Get column name from column hash */
 
 static uchar *get_field_name(Field **buff, size_t *length,
-                             my_bool not_used __attribute__((unused)))
+                             bool not_used __attribute__((unused)))
 {
   *length= (uint) strlen((*buff)->field_name);
   return (uchar*) (*buff)->field_name;
@@ -474,14 +474,14 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   uint new_frm_ver, field_pack_length, new_field_pack_flag;
   uint interval_count, interval_parts, read_length, int_length;
   uint db_create_options, keys, key_parts, n_length;
-  uint key_info_length, com_length, null_bit_pos;
+  uint key_info_length, com_length, null_bit_pos=0;
   uint extra_rec_buf_length;
   uint i,j;
   bool use_hash;
   uchar forminfo[288];
   char *keynames, *names, *comment_pos;
   uchar *record;
-  uchar *disk_buff, *strpos, *null_flags, *null_pos;
+  uchar *disk_buff, *strpos, *null_flags=NULL, *null_pos=NULL;
   ulong pos, record_offset, *rec_per_key, rec_buff_length;
   handler *handler_file= 0;
   KEY	*keyinfo;
@@ -1042,7 +1042,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     uint primary_key=(uint) (find_type((char*) primary_key_name,
 				       &share->keynames, 3) - 1);
-    longlong ha_option= handler_file->ha_table_flags();
+    int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
@@ -2032,10 +2032,10 @@ File create_frm(THD *thd, const char *name, const char *db,
     create_flags|= O_EXCL | O_NOFOLLOW;
 
   /* Fix this when we have new .frm files;  Current limit is 4G rows (QQ) */
-  if (create_info->max_rows > UINT_MAX32)
-    create_info->max_rows= UINT_MAX32;
-  if (create_info->min_rows > UINT_MAX32)
-    create_info->min_rows= UINT_MAX32;
+  if (create_info->max_rows > UINT32_MAX)
+    create_info->max_rows= UINT32_MAX;
+  if (create_info->min_rows > UINT32_MAX)
+    create_info->min_rows= UINT32_MAX;
 
   if ((file= my_create(name, CREATE_MODE, create_flags, MYF(0))) >= 0)
   {
@@ -2355,13 +2355,13 @@ bool check_column_name(const char *name)
                   and such errors never reach the user.
 */
 
-my_bool
+bool
 table_check_intact(TABLE *table, const uint table_f_count,
                    const TABLE_FIELD_W_TYPE *table_def)
 {
   uint i;
-  my_bool error= false;
-  my_bool fields_diff_count;
+  bool error= false;
+  bool fields_diff_count;
 
   fields_diff_count= (table->s->fields != table_f_count);
   if (fields_diff_count)
@@ -2951,16 +2951,9 @@ void Field_iterator_table_ref::set_field_iterator()
     /* Necesary, but insufficient conditions. */
     assert(table_ref->is_natural_join ||
                 table_ref->nested_join ||
-                table_ref->join_columns &&
-                /* This is a merge view. */
-                ((table_ref->field_translation &&
-                  table_ref->join_columns->elements ==
-                  (ulong)(table_ref->field_translation_end -
-                          table_ref->field_translation)) ||
+                ((table_ref->join_columns && /* This is a merge view. */ (table_ref->field_translation && table_ref->join_columns->elements == (ulong)(table_ref->field_translation_end - table_ref->field_translation))) ||
                  /* This is stored table or a tmptable view. */
-                 (!table_ref->field_translation &&
-                  table_ref->join_columns->elements ==
-                  table_ref->table->s->fields)));
+                 (!table_ref->field_translation && table_ref->join_columns->elements == table_ref->table->s->fields)));
     field_it= &natural_join_it;
   }
   /* This is a base table or stored view. */
@@ -3073,7 +3066,7 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
 {
   Natural_join_column *nj_col;
   bool is_created= true;
-  uint field_count;
+  uint field_count=0;
   TABLE_LIST *add_table_ref= parent_table_ref ?
                              parent_table_ref : table_ref;
 

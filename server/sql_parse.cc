@@ -704,15 +704,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
     general_log_write(thd, command, thd->query, thd->query_length);
 
-    if (!(specialflag & SPECIAL_NO_PRIOR))
-    {
-      struct sched_param tmp_sched_param;
-
-      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-      tmp_sched_param.sched_priority= QUERY_PRIOR;
-      (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
-    }
-
     mysql_parse(thd, thd->query, thd->query_length, &end_of_stmt);
 
     while (!thd->killed && (end_of_stmt != NULL) && ! thd->is_error())
@@ -748,15 +739,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       VOID(pthread_mutex_unlock(&LOCK_thread_count));
 
       mysql_parse(thd, beginning_of_next_stmt, length, &end_of_stmt);
-    }
-
-    if (!(specialflag & SPECIAL_NO_PRIOR))
-    {
-      struct sched_param tmp_sched_param;
-
-      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-      tmp_sched_param.sched_priority= WAIT_PRIOR;
-      (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
     }
     break;
   }
@@ -877,7 +859,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     STATUS_VAR current_global_status_var;
     ulong uptime;
     uint length;
-    ulonglong queries_per_second1000;
+    uint64_t queries_per_second1000;
     char buff[250];
     uint buff_len= sizeof(buff);
 
@@ -1012,7 +994,7 @@ void log_slow_statement(THD *thd)
   if (thd->enable_slow_log && !thd->user_time)
   {
     thd_proc_info(thd, "logging slow query");
-    ulonglong end_utime_of_query= thd->current_utime();
+    uint64_t end_utime_of_query= thd->current_utime();
 
     if (((end_utime_of_query - thd->utime_after_lock) >
          thd->variables.long_query_time ||
@@ -2709,7 +2691,7 @@ static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
     SELECT_LEX *param= lex->unit.global_parameters;
     if (!param->explicit_limit)
       param->select_limit=
-        new Item_int((ulonglong) thd->variables.select_limit);
+        new Item_int((uint64_t) thd->variables.select_limit);
   }
   if (!(res= open_and_lock_tables(thd, all_tables)))
   {

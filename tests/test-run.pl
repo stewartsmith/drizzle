@@ -658,7 +658,7 @@ sub command_line_setup () {
   }
   else
   {
-    $mysqld_variables{'port'}= 3306;
+    $mysqld_variables{'port'}= 4427;
   }
 
   if ( $opt_comment )
@@ -3541,11 +3541,6 @@ $0 [ OPTIONS ] [ TESTCASE ]
 
 Options to control what engine/variation to run
 
-  ps-protocol           Use the binary protocol between client and server
-  cursor-protocol       Use the cursor protocol between client and server
-                        (implies --ps-protocol)
-  view-protocol         Create a view to execute all non updating queries
-  sp-protocol           Create a stored procedure to execute all queries
   compress              Use the compressed protocol between client and server
   bench                 Run the benchmark suite
   small-bench           Run the benchmarks with --small-tests --small-tables

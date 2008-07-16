@@ -70,7 +70,7 @@ int find_type_or_exit(const char *x, TYPELIB *typelib, const char *option)
 
 int find_type(char *x, const TYPELIB *typelib, uint full_name)
 {
-  int find,pos,findpos;
+  int find,pos,findpos=0;
   register char * i;
   register const char *j;
   DBUG_ENTER("find_type");
@@ -162,9 +162,9 @@ const char *get_type(TYPELIB *typelib, uint nr)
     a integer representation of the supplied string
 */
 
-my_ulonglong find_typeset(char *x, TYPELIB *lib, int *err)
+uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
 {
-  my_ulonglong result;
+  uint64_t result;
   int find;
   char *i;
   DBUG_ENTER("find_set");

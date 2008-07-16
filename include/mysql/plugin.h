@@ -62,13 +62,15 @@ typedef struct st_mysql_xid MYSQL_XID;
 /*
   The allowable types of plugins
 */
-#define MYSQL_UDF_PLUGIN             0  /* User-defined function        */
-#define MYSQL_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine               */
-#define MYSQL_FTPARSER_PLUGIN        2  /* Full-text parser plugin      */
-#define MYSQL_DAEMON_PLUGIN          3  /* The daemon/raw plugin type */
-#define MYSQL_INFORMATION_SCHEMA_PLUGIN  4  /* The I_S plugin type */
-#define MYSQL_AUDIT_PLUGIN           5  /* The Audit plugin type        */
-#define MYSQL_MAX_PLUGIN_TYPE_NUM    6  /* The number of plugin types   */
+#define MYSQL_UDF_PLUGIN             0  /* User-Defined Function */
+#define MYSQL_UDA_PLUGIN             1  /* User-Defined Aggregate function */
+#define MYSQL_STORAGE_ENGINE_PLUGIN  2  /* Storage Engine */
+#define MYSQL_DAEMON_PLUGIN          4  /* Daemon / Raw */
+#define MYSQL_INFORMATION_SCHEMA_PLUGIN  5  /* Information Schema */
+#define MYSQL_AUDIT_PLUGIN           6  /* Audit */
+#define MYSQL_LOG_PLUGIN             7  /* Logging */
+#define MYSQL_AUTH_PLUGIN            8  /* Authorization */
+#define MYSQL_MAX_PLUGIN_TYPE_NUM    9  /* The number of plugin types   */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0
@@ -404,12 +406,7 @@ struct st_mysql_plugin
 };
 
 /*************************************************************************
-  API for Full-text parser plugin. (MYSQL_FTPARSER_PLUGIN)
-*/
-#include "plugin_ftparser.h"
-
-/*************************************************************************
-  API for Storage Engine plugin. (MYSQL_DAEMON_PLUGIN)
+  API for Daemon plugin. (MYSQL_DAEMON_PLUGIN)
 */
 
 /* handlertons of different MySQL releases are incompatible */
@@ -421,6 +418,42 @@ struct st_mysql_plugin
 */
 
 struct st_mysql_daemon
+{
+  int interface_version;
+};
+
+
+/*************************************************************************
+  API for UDF plugin. (MYSQL_UDF_PLUGIN)
+*/
+
+/* handlertons of different MySQL releases are incompatible */
+#define MYSQL_UDF_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
+
+/*
+  Here we define only the descriptor structure, that is referred from
+  st_mysql_plugin.
+*/
+
+struct st_mysql_udf
+{
+  int interface_version;
+};
+
+
+/*************************************************************************
+  API for UDA plugin. (MYSQL_UDA_PLUGIN)
+*/
+
+/* handlertons of different MySQL releases are incompatible */
+#define MYSQL_UDA_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
+
+/*
+  Here we define only the descriptor structure, that is referred from
+  st_mysql_plugin.
+*/
+
+struct st_mysql_uda
 {
   int interface_version;
 };
@@ -439,6 +472,42 @@ struct st_mysql_daemon
 */
 
 struct st_mysql_information_schema
+{
+  int interface_version;
+};
+
+
+/*************************************************************************
+  API for Log plugin. (MYSQL_LOG_PLUGIN)
+*/
+
+/* handlertons of different MySQL releases are incompatible */
+#define MYSQL_LOG_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
+
+/*
+  Here we define only the descriptor structure, that is referred from
+  st_mysql_plugin.
+*/
+
+struct st_mysql_log
+{
+  int interface_version;
+};
+
+
+/*************************************************************************
+  API for Auth plugin. (MYSQL_AUTH_PLUGIN)
+*/
+
+/* handlertons of different MySQL releases are incompatible */
+#define MYSQL_AUTH_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
+
+/*
+  Here we define only the descriptor structure, that is referred from
+  st_mysql_plugin.
+*/
+
+struct st_auth_schema
 {
   int interface_version;
 };

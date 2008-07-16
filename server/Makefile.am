@@ -22,7 +22,8 @@ MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			-I$(srcdir) $(openssl_includes) \
-			$(libevent_includes)
+			$(libevent_includes) \
+			-ggdb
 SUBDIRS =		share
 libexec_PROGRAMS =	drizzled
 EXTRA_PROGRAMS =	gen_lex_hash
@@ -47,6 +48,7 @@ SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(top_builddir)/strings/libmystringslt.la 
 LDADD = $(SUPPORTING_LIBS) -lz -levent
 drizzled_LDADD =	libhandler.la \
+			$(top_builddir)/libdrizzle/libdrizzle.la \
 			$(libevent_libs) \
 			@mysql_plugin_libs@ \
 			$(LDADD)  $(CXXLDFLAGS) @LIBDL@
@@ -81,7 +83,7 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			field.cc strfunc.cc key.cc sql_class.cc sql_list.cc \
 			protocol.cc sql_state.c \
 			lock.cc \
-			sql_string.cc sql_manager.cc sql_map.cc \
+			sql_string.cc sql_map.cc \
 			drizzled.cc \
 			sql_connect.cc scheduler.cc sql_parse.cc \
 			set_var.cc sql_yacc.yy \
@@ -108,7 +110,6 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			sql_builtin.cc 
 
 libhandler_la_SOURCES = handler.cc
-nodist_drizzled_SOURCES = client.c net_serv.c
 
 if HAVE_DTRACE
   drizzled_SOURCES += probes.d
@@ -125,23 +126,14 @@ DEFS =			-DMYSQL_SERVER \
 			@DEFS@
 
 BUILT_MAINT_SRC =	sql_yacc.cc sql_yacc.h
-BUILT_SOURCES =		$(BUILT_MAINT_SRC) lex_hash.h link_sources
+BUILT_SOURCES =		$(BUILT_MAINT_SRC) lex_hash.h 
 EXTRA_DIST =		$(BUILT_MAINT_SRC) \
 			message.mc \
 			probes.d
-CLEANFILES =        	lex_hash.h sql_yacc.output link_sources $(nodist_drizzled_SOURCES)
-DISTCLEANFILES =        $(EXTRA_PROGRAMS)
+CLEANFILES =        	lex_hash.h sql_yacc.output $(nodist_drizzled_SOURCES)
+DISTCLEANFILES =        $(EXTRA_PROGRAMS) $(BUILT_MAINT_SRC)
 MAINTAINERCLEANFILES =  $(BUILT_MAINT_SRC)
 AM_YFLAGS =		-d --verbose
-
-# These are listed in 'nodist_drizzled_SOURCES'
-link_sources:
-	rm -f client.c
-	@LN_CP_F@ $(top_srcdir)/libdrizzle/client.c client.c
-	rm -f net_serv.c
-	@LN_CP_F@ $(top_srcdir)/libdrizzle/net_serv.c net_serv.c
-	echo timestamp > link_sources
-
 
 # This generates lex_hash.h
 # NOTE Built sources should depend on their sources not the tool
@@ -155,7 +147,7 @@ probes.h: probes.d
 	sed "s/#include <unistd.h>//g" probes.h.bak > probes.h
 	rm probes.h.bak
 
-SUFFIXES : .d
+SUFFIXES = .d
 
 .d.o : $(DTRACEFILES)
 	$(DTRACE) $(DTRACEFLAGS) -G -s $< $(DTRACEFILES)

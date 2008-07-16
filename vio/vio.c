@@ -27,7 +27,7 @@
  */
 
 static void vio_init(Vio* vio, enum enum_vio_type type,
-                     my_socket sd, HANDLE hPipe, uint flags)
+                     my_socket sd, uint32_t flags)
 {
 #ifndef HAVE_VIO_READ_BUFF
   flags&= ~VIO_BUFFERED_READ;
@@ -35,8 +35,6 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
   bzero((char*) vio, sizeof(*vio));
   vio->type	= type;
   vio->sd	= sd;
-  vio->hPipe	= hPipe;
-  vio->localhost= flags & VIO_LOCALHOST;
   if ((flags & VIO_BUFFERED_READ) &&
       !(vio->read_buffer= (char*)my_malloc(VIO_READ_BUFFER_SIZE, MYF(MY_WME))))
     flags&= ~VIO_BUFFERED_READ;
@@ -61,10 +59,10 @@ static void vio_init(Vio* vio, enum enum_vio_type type,
 /* Reset initialized VIO to use with another transport type */
 
 void vio_reset(Vio* vio, enum enum_vio_type type,
-               my_socket sd, HANDLE hPipe, uint flags)
+               my_socket sd, uint flags)
 {
   my_free(vio->read_buffer, MYF(MY_ALLOW_ZERO_PTR));
-  vio_init(vio, type, sd, hPipe, flags);
+  vio_init(vio, type, sd, flags);
 }
 
 
@@ -76,11 +74,8 @@ Vio *vio_new(my_socket sd, enum enum_vio_type type, uint flags)
 
   if ((vio = (Vio*) my_malloc(sizeof(*vio),MYF(MY_WME))))
   {
-    vio_init(vio, type, sd, 0, flags);
-    sprintf(vio->desc,
-	    (vio->type == VIO_TYPE_SOCKET ? "socket (%d)" : "TCP/IP (%d)"),
-	    vio->sd);
-#if !defined(NO_FCNTL_NONBLOCK)
+    vio_init(vio, type, sd, flags);
+    sprintf(vio->desc, "TCP/IP (%d)", vio->sd);
     /*
       We call fcntl() to set the flags and then immediately read them back
       to make sure that we and the system are in agreement on the state of
@@ -93,11 +88,6 @@ Vio *vio_new(my_socket sd, enum enum_vio_type type, uint flags)
     */
     fcntl(sd, F_SETFL, 0);
     vio->fcntl_mode= fcntl(sd, F_GETFL);
-#elif defined(HAVE_SYS_IOCTL_H)			/* hpux */
-    /* Non blocking sockets doesn't work good on HPUX 11.0 */
-    (void) ioctl(sd,FIOSNBIO,0);
-    vio->fcntl_mode &= ~O_NONBLOCK;
-#endif
   }
   return vio;
 }
@@ -111,7 +101,7 @@ void vio_delete(Vio* vio)
   if (vio->type != VIO_CLOSED)
     vio->vioclose(vio);
   my_free((uchar*) vio->read_buffer, MYF(MY_ALLOW_ZERO_PTR));
-  my_free((uchar*) vio,MYF(0));
+  my_free((uchar*) vio, MYF(0));
 }
 
 

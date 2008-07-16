@@ -241,7 +241,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 */
 
 
-my_bool my_use_symdir=0;	/* Set this if you want to use symdirs */
+bool my_use_symdir=0;	/* Set this if you want to use symdirs */
 
 #ifdef USE_SYMDIR
 void symdirget(char *dir)
@@ -446,7 +446,7 @@ size_t system_filename(char * to, const char *from)
   if (strchr(from_pos,FN_LIBCHAR))
   {
     *(to_pos++) = FN_C_BEFORE_DIR;
-    if (strinstr(from_pos,FN_ROOTDIR) == 1)
+    if (strstr(from_pos,FN_ROOTDIR) == from_pos)
     {
       from_pos+=strlen(FN_ROOTDIR);		/* Actually +1 but... */
       if (! strchr(from_pos,FN_LIBCHAR))
@@ -462,7 +462,7 @@ size_t system_filename(char * to, const char *from)
     {
       if (libchar_found++)
 	*(to_pos++)=FN_C_DIR_SEP;		/* Add '.' between dirs */
-      if (strinstr(from_pos,FN_PARENTDIR) == 1 &&
+      if (strstr(from_pos,FN_PARENTDIR) == from_pos &&
 	  from_pos+strlen(FN_PARENTDIR) == pos)
 	to_pos=strmov(to_pos,FN_C_PARENT_DIR);	/* Found '../' */
       else

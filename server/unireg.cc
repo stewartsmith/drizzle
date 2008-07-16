@@ -61,7 +61,7 @@ struct Pack_header_error_handler: public Internal_error_handler
                             MYSQL_ERROR::enum_warning_level level,
                             THD *thd);
   bool is_handled;
-  Pack_header_error_handler() :is_handled(FALSE) {}
+  Pack_header_error_handler() :is_handled(false) {}
 };
 
 
@@ -973,7 +973,7 @@ static bool make_empty_rec(THD *thd, File file,
 	     (field->flags & NOT_NULL_FLAG))
     {
       regfield->set_notnull();
-      regfield->store((longlong) 1, TRUE);
+      regfield->store((int64_t) 1, true);
     }
     else if (type == Field::YES)		// Old unireg type
       regfield->store(ER(ER_YES),(uint) strlen(ER(ER_YES)),system_charset_info);

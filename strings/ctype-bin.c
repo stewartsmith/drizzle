@@ -72,7 +72,7 @@ my_coll_init_8bit_bin(CHARSET_INFO *cs,
                       void *(*alloc)(size_t) __attribute__((unused)))
 {
   cs->max_sort_char=255; 
-  return FALSE;
+  return false;
 }
 
 static int my_strnncoll_binary(CHARSET_INFO * cs __attribute__((unused)),
@@ -523,7 +523,7 @@ static MY_CHARSET_HANDLER my_charset_handler=
   my_case_bin,
   my_snprintf_8bit,
   my_long10_to_str_8bit,
-  my_longlong10_to_str_8bit,
+  my_int64_t10_to_str_8bit,
   my_fill_8bit,
   my_strntol_8bit,
   my_strntoul_8bit,

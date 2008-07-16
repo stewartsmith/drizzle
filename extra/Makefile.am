@@ -28,7 +28,7 @@ BUILT_SOURCES=		$(top_builddir)/include/mysqld_error.h \
                         $(top_builddir)/include/sql_state.h \
                         $(top_builddir)/include/mysqld_ername.h
 pkginclude_HEADERS=	$(BUILT_SOURCES)
-DISTCLEANFILES =	$(BUILT_SOURCES)
+DISTCLEANFILES =	$(BUILT_SOURCES) comp_err
 SUBDIRS =		
 DIST_SUBDIRS =		
 

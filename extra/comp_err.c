@@ -102,28 +102,28 @@ static struct my_option my_long_options[]=
   {"debug", '#', "Output debug log", (uchar**) & default_dbug_option,
    (uchar**) & default_dbug_option, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
 #endif
-  {"debug-info", 'T', "Print some debug info at exit.", (uchar**) & info_flag,
-   (uchar**) & info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"debug-info", 'T', "Print some debug info at exit.", (char**) & info_flag,
+   (char**) & info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"help", '?', "Displays this help and exits.", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Prints version", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"charset", 'C', "Charset dir", (uchar**) & charsets_dir,
-   (uchar**) & charsets_dir,
+  {"charset", 'C', "Charset dir", (char**) & charsets_dir,
+   (char**) & charsets_dir,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"in_file", 'F', "Input file", (uchar**) & TXTFILE, (uchar**) & TXTFILE,
+  {"in_file", 'F', "Input file", (char**) & TXTFILE, (char**) & TXTFILE,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"out_dir", 'D', "Output base directory", (uchar**) & DATADIRECTORY,
-   (uchar**) & DATADIRECTORY,
+  {"out_dir", 'D', "Output base directory", (char**) & DATADIRECTORY,
+   (char**) & DATADIRECTORY,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"out_file", 'O', "Output filename (errmsg.sys)", (uchar**) & OUTFILE,
-   (uchar**) & OUTFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"header_file", 'H', "mysqld_error.h file ", (uchar**) & HEADERFILE,
-   (uchar**) & HEADERFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"name_file", 'N', "mysqld_ername.h file ", (uchar**) & NAMEFILE,
-   (uchar**) & NAMEFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"state_file", 'S', "sql_state.h file", (uchar**) & STATEFILE,
-   (uchar**) & STATEFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"out_file", 'O', "Output filename (errmsg.sys)", (char**) & OUTFILE,
+   (char**) & OUTFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"header_file", 'H', "mysqld_error.h file ", (char**) & HEADERFILE,
+   (char**) & HEADERFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"name_file", 'N', "mysqld_ername.h file ", (char**) & NAMEFILE,
+   (char**) & NAMEFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"state_file", 'S', "sql_state.h file", (char**) & STATEFILE,
+   (char**) & STATEFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
@@ -141,7 +141,7 @@ static int parse_input_file(const char *file_name, struct errors **top_error,
 static int get_options(int *argc, char ***argv);
 static void print_version(void);
 static void usage(void);
-static my_bool get_one_option(int optid, const struct my_option *opt,
+static bool get_one_option(int optid, const struct my_option *opt,
 			      char *argument);
 static char *parse_text_line(char *pos);
 static int copy_rows(FILE * to, char *row, int row_nr, long start_pos);
@@ -310,7 +310,7 @@ static int create_sys_files(struct languages *lang_head,
     for (tmp_error= error_head; tmp_error; tmp_error= tmp_error->next_error)
     {
       /* dealing with messages */
-      tmp= find_message(tmp_error, tmp_lang->lang_short_name, FALSE);
+      tmp= find_message(tmp_error, tmp_lang->lang_short_name, false);
 
       if (!tmp)
       {
@@ -457,7 +457,7 @@ static int parse_input_file(const char *file_name, struct errors **top_error,
 		current_error->er_name);
 	DBUG_RETURN(0);
       }
-      if (find_message(current_error, current_message.lang_short_name, TRUE))
+      if (find_message(current_error, current_message.lang_short_name, true))
       {
 	fprintf(stderr, "Duplicate message string for error '%s'"
                         " in language '%s'\n",
@@ -972,7 +972,7 @@ static void print_version(void)
 }
 
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__ ((unused)),
 	       char *argument __attribute__ ((unused)))
 {

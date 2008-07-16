@@ -21,11 +21,11 @@
 #include "sql_repl.h"  // For check_binlog_magic
 #include "rpl_utility.h"
 
-static int count_relay_log_space(Relay_log_info* rli);
+static int32_t count_relay_log_space(Relay_log_info* rli);
 
 // Defined in slave.cc
-int init_intvar_from_file(int* var, IO_CACHE* f, int default_val);
-int init_strvar_from_file(char *var, int max_size, IO_CACHE *f,
+int32_t init_intvar_from_file(int32_t* var, IO_CACHE* f, int32_t default_val);
+int32_t init_strvar_from_file(char *var, int32_t max_size, IO_CACHE *f,
 			  const char *default_val);
 
 
@@ -77,13 +77,13 @@ Relay_log_info::~Relay_log_info()
 }
 
 
-int init_relay_log_info(Relay_log_info* rli,
+int32_t init_relay_log_info(Relay_log_info* rli,
 			const char* info_fname)
 {
   char fname[FN_REFLEN+128];
-  int info_fd;
+  int32_t info_fd;
   const char* msg = 0;
-  int error = 0;
+  int32_t error = 0;
   assert(!rli->no_storage);         // Don't init if there is no storage
 
   if (rli->inited)                       // Set if this function called
@@ -194,7 +194,7 @@ file '%s', errno %d)", fname, my_errno);
       reinit_io_cache(&rli->info_file, READ_CACHE, 0L,0,0);
     else
     {
-      int error=0;
+      int32_t error=0;
       if ((info_fd = my_open(fname, O_RDWR|O_BINARY, MYF(MY_WME))) < 0)
       {
         sql_print_error("\
@@ -221,7 +221,7 @@ Failed to open the existing relay log info file '%s' (errno %d)",
     }
 
     rli->info_fd = info_fd;
-    int relay_log_pos, master_log_pos;
+    int32_t relay_log_pos, master_log_pos;
     if (init_strvar_from_file(rli->group_relay_log_name,
                               sizeof(rli->group_relay_log_name),
                               &rli->info_file, "") ||
@@ -253,7 +253,6 @@ Failed to open the existing relay log info file '%s' (errno %d)",
       goto err;
     }
   }
-  char llbuf1[22], llbuf2[22];
   assert(rli->event_relay_log_pos >= BIN_LOG_HEADER_SIZE);
   assert(my_b_tell(rli->cur_log) == rli->event_relay_log_pos);
 
@@ -285,7 +284,7 @@ err:
 }
 
 
-static inline int add_relay_log(Relay_log_info* rli,LOG_INFO* linfo)
+static inline int32_t add_relay_log(Relay_log_info* rli,LOG_INFO* linfo)
 {
   struct stat s;
   if (stat(linfo->log_file_name,&s))
@@ -299,7 +298,7 @@ static inline int add_relay_log(Relay_log_info* rli,LOG_INFO* linfo)
 }
 
 
-static int count_relay_log_space(Relay_log_info* rli)
+static int32_t count_relay_log_space(Relay_log_info* rli)
 {
   LOG_INFO linfo;
   rli->log_space_total= 0;
@@ -372,8 +371,8 @@ void Relay_log_info::clear_until_condition()
     1   error.  errmsg is set to point to the error message
 */
 
-int init_relay_log_pos(Relay_log_info* rli,const char* log,
-                       ulonglong pos, bool need_data_lock,
+int32_t init_relay_log_pos(Relay_log_info* rli,const char* log,
+                       uint64_t pos, bool need_data_lock,
                        const char** errmsg,
                        bool look_for_description_event)
 {
@@ -551,7 +550,7 @@ err:
     timeout         timeout in seconds before giving up waiting
 
   NOTES
-    timeout is longlong whereas it should be ulong ; but this is
+    timeout is int64_t whereas it should be uint32_t ; but this is
     to catch if the user submitted a negative timeout.
 
   RETURN VALUES
@@ -564,13 +563,13 @@ err:
                 before reaching the desired log/position
  */
 
-int Relay_log_info::wait_for_pos(THD* thd, String* log_name,
-                                    longlong log_pos,
-                                    longlong timeout)
+int32_t Relay_log_info::wait_for_pos(THD* thd, String* log_name,
+                                    int64_t log_pos,
+                                    int64_t timeout)
 {
-  int event_count = 0;
-  ulong init_abort_pos_wait;
-  int error=0;
+  int32_t event_count = 0;
+  uint32_t init_abort_pos_wait;
+  int32_t error=0;
   struct timespec abstime; // for timeout checking
   const char *msg;
 
@@ -600,10 +599,10 @@ int Relay_log_info::wait_for_pos(THD* thd, String* log_name,
   /*
     We'll need to
     handle all possible log names comparisons (e.g. 999 vs 1000).
-    We use ulong for string->number conversion ; this is no
+    We use uint32_t for string->number conversion ; this is no
     stronger limitation than in find_uniq_filename in sql/log.cc
   */
-  ulong log_name_extension;
+  uint32_t log_name_extension;
   char log_name_tmp[FN_REFLEN]; //make a char[] from String
 
   strmake(log_name_tmp, log_name->ptr(), min(log_name->length(), FN_REFLEN-1));
@@ -636,7 +635,7 @@ int Relay_log_info::wait_for_pos(THD* thd, String* log_name,
          slave_running)
   {
     bool pos_reached;
-    int cmp_result= 0;
+    int32_t cmp_result= 0;
 
     /*
       group_master_log_name can be "", if we are just after a fresh
@@ -662,20 +661,20 @@ int Relay_log_info::wait_for_pos(THD* thd, String* log_name,
         if the names do not match up to '.' included, return error
       */
       char *q= (char*)(fn_ext(basename)+1);
-      if (strncmp(basename, log_name_tmp, (int)(q-basename)))
+      if (strncmp(basename, log_name_tmp, (int32_t)(q-basename)))
       {
         error= -2;
         break;
       }
       // Now compare extensions.
       char *q_end;
-      ulong group_master_log_name_extension= strtoul(q, &q_end, 10);
+      uint32_t group_master_log_name_extension= strtoul(q, &q_end, 10);
       if (group_master_log_name_extension < log_name_extension)
         cmp_result= -1 ;
       else
         cmp_result= (group_master_log_name_extension > log_name_extension) ? 1 : 0 ;
 
-      pos_reached= ((!cmp_result && group_master_log_pos >= (ulonglong)log_pos) ||
+      pos_reached= ((!cmp_result && group_master_log_pos >= (uint64_t)log_pos) ||
                     cmp_result > 0);
       if (pos_reached || thd->killed)
         break;
@@ -724,7 +723,7 @@ err:
 }
 
 
-void Relay_log_info::inc_group_relay_log_pos(ulonglong log_pos,
+void Relay_log_info::inc_group_relay_log_pos(uint64_t log_pos,
                                                 bool skip_lock)
 {
   if (!skip_lock)
@@ -802,10 +801,10 @@ void Relay_log_info::close_temporary_tables()
     Assumes to have a run lock on rli and that no slave thread are running.
 */
 
-int purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
+int32_t purge_relay_logs(Relay_log_info* rli, THD *thd, bool just_reset,
                      const char** errmsg)
 {
-  int error=0;
+  int32_t error=0;
 
   /*
     Even if rli->inited==0, we still try to empty rli->master_log_* variables.
@@ -916,7 +915,7 @@ err:
 bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
 {
   const char *log_name;
-  ulonglong log_pos;
+  uint64_t log_pos;
 
   assert(until_condition != UNTIL_NONE);
 
@@ -946,11 +945,11 @@ bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
       const char *basename= log_name + dirname_length(log_name);
 
       const char *q= (const char*)(fn_ext(basename)+1);
-      if (strncmp(basename, until_log_name, (int)(q-basename)) == 0)
+      if (strncmp(basename, until_log_name, (int32_t)(q-basename)) == 0)
       {
         /* Now compare extensions. */
         char *q_end;
-        ulong log_name_extension= strtoul(q, &q_end, 10);
+        uint32_t log_name_extension= strtoul(q, &q_end, 10);
         if (log_name_extension < until_log_name_extension)
           until_log_names_cmp_result= UNTIL_LOG_NAMES_CMP_LESS;
         else
@@ -999,7 +998,7 @@ bool Relay_log_info::cached_charset_compare(char *charset) const
 void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
                                   time_t event_creation_time)
 {
-  extern uint debug_not_change_ts_if_art_event;
+  extern uint32_t debug_not_change_ts_if_art_event;
   clear_flag(IN_STMT);
 
   /*

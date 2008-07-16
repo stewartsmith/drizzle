@@ -1746,7 +1746,7 @@ int my_wildcmp_unicode(CHARSET_INFO *cs,
 		       MY_UNICASE_INFO **weights)
 {
   int result= -1;			/* Not found, using wildcards */
-  my_wc_t s_wc, w_wc;
+  my_wc_t s_wc=0, w_wc=0;
   int scan, plane;
   int (*mb_wc)(struct charset_info_st *, my_wc_t *,
                const uchar *, const uchar *);
@@ -2364,7 +2364,7 @@ my_strnncoll_utf8mb4(CHARSET_INFO *cs,
                      const uchar *t, size_t tlen,
                      my_bool t_is_prefix)
 {
-  my_wc_t s_wc,t_wc;
+  my_wc_t s_wc=0, t_wc;
   const uchar *se= s + slen;
   const uchar *te= t + tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
@@ -2429,12 +2429,12 @@ my_strnncollsp_utf8mb4(CHARSET_INFO *cs,
                        my_bool diff_if_only_endspace_difference)
 {
   int res;
-  my_wc_t s_wc, t_wc;
+  my_wc_t s_wc=0, t_wc;
   const uchar *se= s + slen, *te= t + tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
 
   while ( s < se && t < te )
@@ -2711,7 +2711,7 @@ MY_CHARSET_HANDLER my_charset_utf8mb4_handler=
   my_casedn_utf8mb4,
   my_snprintf_8bit,
   my_long10_to_str_8bit,
-  my_longlong10_to_str_8bit,
+  my_int64_t10_to_str_8bit,
   my_fill_8bit,
   my_strntol_8bit,
   my_strntoul_8bit,
@@ -3255,7 +3255,7 @@ my_strnncoll_utf8mb3(CHARSET_INFO *cs,
                      my_bool t_is_prefix)
 {
   int s_res,t_res;
-  my_wc_t s_wc,t_wc;
+  my_wc_t s_wc=0,t_wc;
   const uchar *se=s+slen;
   const uchar *te=t+tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
@@ -3322,12 +3322,12 @@ my_strnncollsp_utf8mb3(CHARSET_INFO *cs,
                        my_bool diff_if_only_endspace_difference)
 {
   int s_res, t_res, res;
-  my_wc_t s_wc,t_wc;
+  my_wc_t s_wc=0, t_wc=0;
   const uchar *se= s+slen, *te= t+tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
 
   while ( s < se && t < te )
@@ -3678,7 +3678,7 @@ MY_CHARSET_HANDLER my_charset_utf8mb3_handler=
     my_casedn_utf8mb3,
     my_snprintf_8bit,
     my_long10_to_str_8bit,
-    my_longlong10_to_str_8bit,
+    my_int64_t10_to_str_8bit,
     my_fill_8bit,
     my_strntol_8bit,
     my_strntoul_8bit,
@@ -3831,7 +3831,7 @@ my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
     
   while ( s < se && t < te )
@@ -5201,7 +5201,7 @@ static MY_CHARSET_HANDLER my_charset_filename_handler=
     my_casedn_utf8mb3,
     my_snprintf_8bit,
     my_long10_to_str_8bit,
-    my_longlong10_to_str_8bit,
+    my_int64_t10_to_str_8bit,
     my_fill_8bit,
     my_strntol_8bit,
     my_strntoul_8bit,

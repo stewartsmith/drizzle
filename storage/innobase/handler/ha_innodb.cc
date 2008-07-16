@@ -70,6 +70,8 @@ C_MODE_END
 
 #define INSIDE_HA_INNOBASE_CC
 
+typedef int64_t longlong;
+
 /* Include necessary InnoDB headers */
 extern "C" {
 #include "../storage/innobase/include/univ.i"
@@ -1126,7 +1128,7 @@ innobase_query_caching_of_table_permitted(
 				name */
 	uint	full_name_len,	/* in: length of the full name, i.e.
 				len(dbname) + len(tablename) + 1 */
-	ulonglong *unused __attribute__((__unused__)))	/* unused for this engine */
+	uint64_t *unused __attribute__((__unused__)))	/* unused for this engine */
 {
 	ibool	is_autocommit;
 	trx_t*	trx;
@@ -1441,7 +1443,7 @@ innobase_init(
         innobase_hton->flags=HTON_NO_FLAGS;
         innobase_hton->release_temporary_latches=innobase_release_temporary_latches;
 
-	ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)MYSQL_TYPE_VARCHAR);
+        ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)MYSQL_TYPE_VARCHAR);
 
 #ifdef UNIV_DEBUG
 	static const char	test_filename[] = "-@";
@@ -1463,7 +1465,7 @@ innobase_init(
 
 	/* Check that values don't overflow on 32-bit systems. */
 	if (sizeof(ulint) == 4) {
-		if (innobase_buffer_pool_size > UINT_MAX32) {
+		if (innobase_buffer_pool_size > UINT32_MAX) {
 			sql_print_error(
 				"innobase_buffer_pool_size can't be over 4GB"
 				" on 32-bit systems");
@@ -1471,7 +1473,7 @@ innobase_init(
 			goto error;
 		}
 
-		if (innobase_log_file_size > UINT_MAX32) {
+		if (innobase_log_file_size > UINT32_MAX) {
 			sql_print_error(
 				"innobase_log_file_size can't be over 4GB"
 				" on 32-bit systems");
@@ -2036,7 +2038,7 @@ innobase_rollback_to_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 
-	longlong2str((ulint)savepoint, name, 36);
+	int64_t2str((ulint)savepoint, name, 36);
 
 	error = (int) trx_rollback_to_savepoint_for_mysql(trx, name,
 						&mysql_binlog_cache_pos);
@@ -2066,7 +2068,7 @@ innobase_release_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 
-	longlong2str((ulint)savepoint, name, 36);
+	int64_t2str((ulint)savepoint, name, 36);
 
 	error = (int) trx_release_savepoint_for_mysql(trx, name);
 
@@ -2112,7 +2114,7 @@ innobase_savepoint(
 
 	/* TODO: use provided savepoint data area to store savepoint data */
 	char name[64];
-	longlong2str((ulint)savepoint,name,36);
+	int64_t2str((ulint)savepoint,name,36);
 
 	error = (int) trx_savepoint_for_mysql(trx, name, (ib_longlong)0);
 
@@ -2631,7 +2633,6 @@ get_innobase_type_from_mysql_type(
 	DBUG_ASSERT((ulint)MYSQL_TYPE_STRING < 256);
 	DBUG_ASSERT((ulint)MYSQL_TYPE_VAR_STRING < 256);
 	DBUG_ASSERT((ulint)MYSQL_TYPE_DOUBLE < 256);
-	DBUG_ASSERT((ulint)MYSQL_TYPE_FLOAT < 256);
 
 	if (field->flags & UNSIGNED_FLAG) {
 
@@ -2690,8 +2691,6 @@ get_innobase_type_from_mysql_type(
 	case MYSQL_TYPE_TIME:
 	case MYSQL_TYPE_TIMESTAMP:
 		return(DATA_INT);
-	case MYSQL_TYPE_FLOAT:
-		return(DATA_FLOAT);
 	case MYSQL_TYPE_DOUBLE:
 		return(DATA_DOUBLE);
 	case MYSQL_TYPE_BLOB:
@@ -3325,7 +3324,7 @@ ha_innobase::innobase_reset_autoinc(
 /*================================*/
 					/* out: DB_SUCCESS if all went well
 					else error code */
-	ulonglong	autoinc)	/* in: value to store */
+	uint64_t	autoinc)	/* in: value to store */
 {
 	ulint		error;
 
@@ -3350,7 +3349,7 @@ ha_innobase::innobase_set_max_autoinc(
 /*==================================*/
 					/* out: DB_SUCCES if all went well
 					else error code */
-	ulonglong	auto_inc)	/* in: value to store */
+	uint64_t	auto_inc)	/* in: value to store */
 {
 	ulint		error;
 
@@ -3503,7 +3502,7 @@ no_commit:
 	/* Handle duplicate key errors */
 	if (auto_inc_used) {
 		ulint		err;
-		ulonglong	auto_inc;
+		uint64_t	auto_inc;
 
 		/* Note the number of rows processed for this statement, used
 		by get_auto_increment() to determine the number of AUTO-INC
@@ -3789,7 +3788,7 @@ ha_innobase::update_row(
 	    && (trx->duplicates & (TRX_DUP_IGNORE | TRX_DUP_REPLACE))
 		== TRX_DUP_IGNORE)  {
 
-		longlong	auto_inc;
+		int64_t	auto_inc;
 
 		auto_inc = table->next_number_field->val_int();
 
@@ -3830,7 +3829,7 @@ ha_innobase::delete_row(
 
 	/* Only if the table has an AUTOINC column */
 	if (table->found_next_number_field && record == table->record[0]) {
-		ulonglong	dummy = 0;
+		uint64_t	dummy = 0;
 
 		/* First check whether the AUTOINC sub-system has been
 		initialized using the AUTOINC mutex. If not then we
@@ -5543,8 +5542,8 @@ ha_innobase::estimate_rows_upper_bound(void)
 			/* out: upper bound of rows */
 {
 	dict_index_t*	index;
-	ulonglong	estimate;
-	ulonglong	local_data_file_length;
+	uint64_t	estimate;
+	uint64_t	local_data_file_length;
 
 	DBUG_ENTER("estimate_rows_upper_bound");
 
@@ -5564,7 +5563,7 @@ ha_innobase::estimate_rows_upper_bound(void)
 
 	index = dict_table_get_first_index_noninline(prebuilt->table);
 
-	local_data_file_length = ((ulonglong) index->stat_n_leaf_pages)
+	local_data_file_length = ((uint64_t) index->stat_n_leaf_pages)
 							* UNIV_PAGE_SIZE;
 
 	/* Calculate a minimum length for a clustered index record and from
@@ -5736,10 +5735,10 @@ ha_innobase::info(
 
 		stats.records = (ha_rows)n_rows;
 		stats.deleted = 0;
-		stats.data_file_length = ((ulonglong)
+		stats.data_file_length = ((uint64_t)
 				ib_table->stat_clustered_index_size)
 					* UNIV_PAGE_SIZE;
-		stats.index_file_length = ((ulonglong)
+		stats.index_file_length = ((uint64_t)
 				ib_table->stat_sum_of_other_index_sizes)
 					* UNIV_PAGE_SIZE;
 		stats.delete_length = 0;
@@ -5825,7 +5824,7 @@ ha_innobase::info(
 	}
 
 	if (flag & HA_STATUS_AUTO && table->found_next_number_field) {
-		longlong	auto_inc;
+		int64_t	auto_inc;
 		int		ret;
 
 		/* The following function call can the first time fail in
@@ -5961,7 +5960,7 @@ ha_innobase::update_table_comment(
 	mutex_enter_noninline(&srv_dict_tmpfile_mutex);
 	rewind(srv_dict_tmpfile);
 
-	fprintf(srv_dict_tmpfile, "InnoDB free: %lu kB",
+	fprintf(srv_dict_tmpfile, "InnoDB free: %"PRIu64" kB",
 		fsp_get_available_space_in_free_extents(
 			prebuilt->table->space));
 
@@ -6817,7 +6816,7 @@ innodb_mutex_show_status(
 	ulint	  rw_lock_count_spin_rounds= 0;
 	ulint	  rw_lock_count_os_wait= 0;
 	ulint	  rw_lock_count_os_yield= 0;
-	ulonglong rw_lock_wait_time= 0;
+	uint64_t rw_lock_wait_time= 0;
 #endif /* UNIV_DEBUG */
 	uint	  hton_name_len= strlen(innobase_hton_name), buf1len, buf2len;
 	DBUG_ENTER("innodb_mutex_show_status");
@@ -7191,9 +7190,9 @@ ha_innobase::innobase_read_and_init_auto_inc(
 /*=========================================*/
 						/* out: 0 or generic MySQL
 						error code */
-        longlong*	value)			/* out: the autoinc value */
+        int64_t*	value)			/* out: the autoinc value */
 {
-	longlong	auto_inc;
+	int64_t	auto_inc;
 	ibool		stmt_start;
 	int		mysql_error = 0;
 	dict_table_t*	innodb_table = prebuilt->table;
@@ -7283,7 +7282,7 @@ On return if there is no error then the tables AUTOINC lock is locked.*/
 
 ulong
 ha_innobase::innobase_get_auto_increment(
-	ulonglong*	value)		/* out: autoinc value */
+	uint64_t*	value)		/* out: autoinc value */
 {
 	ulong		error;
 
@@ -7329,7 +7328,7 @@ ha_innobase::innobase_get_auto_increment(
 					error = DB_ERROR;
 				}
 			} else {
-				*value = (ulonglong) autoinc;
+				*value = (uint64_t) autoinc;
 			}
 		/* A deadlock error during normal processing is OK
 		and can be ignored. */
@@ -7349,22 +7348,22 @@ ha_innobase::innobase_get_auto_increment(
 This function initializes the auto-inc counter if it has not been
 initialized yet. This function does not change the value of the auto-inc
 counter if it already has been initialized. Returns the value of the
-auto-inc counter in *first_value, and ULONGLONG_MAX in *nb_reserved_values (as
+auto-inc counter in *first_value, and UINT64_MAX in *nb_reserved_values (as
 we have a table-level lock). offset, increment, nb_desired_values are ignored.
 *first_value is set to -1 if error (deadlock or lock wait timeout)            */
 
 void
 ha_innobase::get_auto_increment(
 /*============================*/
-        ulonglong	offset __attribute__((__unused__)),              /* in: */
-        ulonglong	increment,           /* in: table autoinc increment */
-        ulonglong	nb_desired_values,   /* in: number of values reqd */
-        ulonglong	*first_value,        /* out: the autoinc value */
-        ulonglong	*nb_reserved_values) /* out: count of reserved values */
+        uint64_t	offset __attribute__((__unused__)),              /* in: */
+        uint64_t	increment,           /* in: table autoinc increment */
+        uint64_t	nb_desired_values,   /* in: number of values reqd */
+        uint64_t	*first_value,        /* out: the autoinc value */
+        uint64_t	*nb_reserved_values) /* out: count of reserved values */
 {
 	trx_t*		trx;
 	ulint		error;
-	ulonglong	autoinc = 0;
+	uint64_t	autoinc = 0;
 
 	/* Prepare prebuilt->trx in the table handle */
 	update_thd(ha_thd());
@@ -7372,7 +7371,7 @@ ha_innobase::get_auto_increment(
 	error = innobase_get_auto_increment(&autoinc);
 
 	if (error != DB_SUCCESS) {
-		*first_value = (~(ulonglong) 0);
+		*first_value = (~(uint64_t) 0);
 		return;
 	}
 
@@ -7442,7 +7441,7 @@ ha_innobase::get_auto_increment(
 int
 ha_innobase::reset_auto_increment(
 /*==============================*/
-	ulonglong	value)		/* in: new value for table autoinc */
+	uint64_t	value)		/* in: new value for table autoinc */
 {
 	DBUG_ENTER("ha_innobase::reset_auto_increment");
 
@@ -7562,7 +7561,7 @@ ha_innobase::register_query_cache_table(
 			call_back,	/* out: pointer to function for
 					checking if query caching
 					is permitted */
-	ulonglong	*engine_data)	/* in/out: data to call_back */
+	uint64_t	*engine_data)	/* in/out: data to call_back */
 {
 	*call_back = innobase_query_caching_of_table_permitted;
 	*engine_data = 0;
@@ -7577,11 +7576,11 @@ ha_innobase::get_mysql_bin_log_name()
 	return(trx_sys_mysql_bin_log_name);
 }
 
-ulonglong
+uint64_t
 ha_innobase::get_mysql_bin_log_pos()
 {
 	/* trx... is ib_longlong, which is a typedef for a 64-bit integer
-	(__int64 or longlong) so it's ok to cast it to ulonglong. */
+	(__int64 or int64_t) so it's ok to cast it to uint64_t. */
 
 	return(trx_sys_mysql_bin_log_pos);
 }
@@ -8029,7 +8028,7 @@ static MYSQL_SYSVAR_ULONG(autoextend_increment, srv_auto_extend_increment,
 static MYSQL_SYSVAR_LONGLONG(buffer_pool_size, innobase_buffer_pool_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "The size of the memory buffer InnoDB uses to cache data and indexes of its tables.",
-  NULL, NULL, 8*1024*1024L, 1024*1024L, LONGLONG_MAX, 1024*1024L);
+  NULL, NULL, 8*1024*1024L, 1024*1024L, INT64_MAX, 1024*1024L);
 
 static MYSQL_SYSVAR_ULONG(commit_concurrency, srv_commit_concurrency,
   PLUGIN_VAR_RQCMDARG,
@@ -8064,7 +8063,7 @@ static MYSQL_SYSVAR_LONG(log_buffer_size, innobase_log_buffer_size,
 static MYSQL_SYSVAR_LONGLONG(log_file_size, innobase_log_file_size,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "Size of each log file in a log group.",
-  NULL, NULL, 5*1024*1024L, 1*1024*1024L, LONGLONG_MAX, 1024*1024L);
+  NULL, NULL, 5*1024*1024L, 1*1024*1024L, INT64_MAX, 1024*1024L);
 
 static MYSQL_SYSVAR_LONG(log_files_in_group, innobase_log_files_in_group,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,

@@ -117,16 +117,10 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  if (share->r_locks)
 	  {					/* Only read locks left */
 	    flag=1;
-	    if (my_lock(share->kfile,F_RDLCK,0L,F_TO_EOF,
-			MYF(MY_WME | MY_SEEK_NOT_DONE)) && !error)
-	      error=my_errno;
 	  }
 	  else if (!share->w_locks)
 	  {					/* No more locks */
 	    flag=1;
-	    if (my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-			MYF(MY_WME | MY_SEEK_NOT_DONE)) && !error)
-	      error=my_errno;
 	  }
 	}
       }
@@ -146,12 +140,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (share->w_locks == 1)
 	{
 	  flag=1;
-          if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		      MYF(MY_SEEK_NOT_DONE)))
-	  {
-	    error=my_errno;
-	    break;
-	  }
 	}
 	share->w_locks--;
 	share->r_locks++;
@@ -161,8 +149,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       if (!share->r_locks && !share->w_locks)
       {
 	flag=1;
-	if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		    info->lock_wait | MY_SEEK_NOT_DONE))
+	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
 	  error=my_errno;
 	  break;
@@ -170,7 +157,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
 	  error=my_errno;
-	  VOID(my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE)));
 	  my_errno=error;
 	  break;
 	}
@@ -187,12 +173,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (share->r_locks == 1)
 	{
 	  flag=1;
-	  if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		      MYF(info->lock_wait | MY_SEEK_NOT_DONE)))
-	  {
-	    error=my_errno;
-	    break;
-	  }
 	  share->r_locks--;
 	  share->w_locks++;
 	  info->lock_type=lock_type;
@@ -204,19 +184,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (!share->w_locks)
 	{
 	  flag=1;
-	  if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		      info->lock_wait | MY_SEEK_NOT_DONE))
-	  {
-	    error=my_errno;
-	    break;
-	  }
 	  if (!share->r_locks)
 	  {
 	    if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	    {
 	      error=my_errno;
-	      VOID(my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-			   info->lock_wait | MY_SEEK_NOT_DONE));
 	      my_errno=error;
 	      break;
 	    }
@@ -352,7 +324,7 @@ void mi_copy_status(void* to,void *from)
     1  not ok
 */
 
-my_bool mi_check_status(void *param)
+bool mi_check_status(void *param)
 {
   MI_INFO *info=(MI_INFO*) param;
   /*
@@ -377,14 +349,9 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
     MYISAM_SHARE *share=info->s;
     if (!share->tot_locks)
     {
-      if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		  info->lock_wait | MY_SEEK_NOT_DONE))
-	return(1);
       if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
       {
 	int error=my_errno ? my_errno : -1;
-	VOID(my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-		     MYF(MY_SEEK_NOT_DONE)));
 	my_errno=error;
 	return(1);
       }
@@ -431,10 +398,6 @@ int _mi_writeinfo(register MI_INFO *info, uint operation)
       }
 #endif
     }
-    if (!(operation & WRITEINFO_NO_UNLOCK) &&
-	my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-		MYF(MY_WME | MY_SEEK_NOT_DONE)) && !error)
-      return(1);
     my_errno=olderror;
   }
   else if (operation)
@@ -482,9 +445,7 @@ int _mi_test_if_changed(register MI_INFO *info)
     was incremented in the same process.
 
   This mean that if we are the only process using the file, the open_count
-  tells us if the MYISAM file wasn't properly closed. (This is true if
-  my_disable_locking is set).
-*/
+  tells us if the MYISAM file wasn't properly closed.*/
 
 
 int _mi_mark_file_changed(MI_INFO *info)

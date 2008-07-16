@@ -19,7 +19,7 @@ static inline uint my_bit_log2(ulong value)
   return bit;
 }
 
-static inline uint my_count_bits(ulonglong v)
+static inline uint my_count_bits(uint64_t v)
 {
 #if SIZEOF_LONG_LONG > 4
   /* The following code is a bit faster on 16 bit machines than if we would

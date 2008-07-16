@@ -79,8 +79,8 @@ static void dtoa_free(char *, char *, size_t);
                       (including the terminating '\0').
    @param error       if not NULL, points to a location where the status of
                       conversion is stored upon return.
-                      FALSE  successful conversion
-                      TRUE   the input number is [-,+]infinity or nan.
+                      false  successful conversion
+                      true   the input number is [-,+]infinity or nan.
                              The output string in this case is always '0'.
    @return            number of written characters (excluding terminating '\0')
 */
@@ -100,7 +100,7 @@ size_t my_fcvt(double x, int precision, char *to, my_bool *error)
     *to++= '0';
     *to= '\0';
     if (error != NULL)
-      *error= TRUE;
+      *error= true;
     return 1;
   }
 
@@ -138,7 +138,7 @@ size_t my_fcvt(double x, int precision, char *to, my_bool *error)
   
   *dst= '\0';
   if (error != NULL)
-    *error= FALSE;
+    *error= false;
 
   dtoa_free(res, buf, sizeof(buf));
 
@@ -181,8 +181,8 @@ size_t my_fcvt(double x, int precision, char *to, my_bool *error)
                       'width + 1' bytes.
    @param error       if not NULL, points to a location where the status of
                       conversion is stored upon return.
-                      FALSE  successful conversion
-                      TRUE   the input number is [-,+]infinity or nan.
+                      false  successful conversion
+                      true   the input number is [-,+]infinity or nan.
                              The output string in this case is always '0'.
    @return            number of written characters (excluding terminating '\0')
 
@@ -229,12 +229,12 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
     *to++= '0';
     *to= '\0';
     if (error != NULL)
-      *error= TRUE;
+      *error= true;
     return 1;
   }
 
   if (error != NULL)
-    *error= FALSE;
+    *error= false;
 
   src= res;
   len= end - res;
@@ -317,7 +317,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
       if (width < decpt)
       {
         if (error != NULL)
-          *error= TRUE;
+          *error= true;
         width= decpt;
       }
       
@@ -384,7 +384,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
     {
       /* Overflow */
       if (error != NULL)
-        *error= TRUE;
+        *error= true;
       width= 0;
     }
       
@@ -539,10 +539,10 @@ double my_atof(const char *nptr)
   TODO: check if we can get rid of the above two
 */
 
-typedef int32 Long;
-typedef uint32 ULong;
-typedef int64 LLong;
-typedef uint64 ULLong;
+typedef int32_t Long;
+typedef uint32_t ULong;
+typedef int64_t LLong;
+typedef uint64_t ULLong;
 
 typedef union { double d; ULong L[2]; } U;
 
@@ -2159,7 +2159,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
     to hold the suppressed trailing zeros.
   */
 
-  int bbits, b2, b5, be, dig, i, ieps, ilim, ilim0, ilim1= 0,
+  int bbits, b2, b5, be, dig, i, ieps, ilim=0, ilim0, ilim1= 0,
     j, j1, k, k0, k_check, leftright, m2, m5, s2, s5,
     spec_case, try_quick;
   Long L;

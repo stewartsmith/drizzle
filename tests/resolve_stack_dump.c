@@ -52,10 +52,10 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"symbols-file", 's', "Use specified symbols file.", (uchar**) &sym_fname,
-   (uchar**) &sym_fname, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+  {"symbols-file", 's', "Use specified symbols file.", (char**) &sym_fname,
+   (char**) &sym_fname, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"numeric-dump-file", 'n', "Read the dump from specified file.",
-   (uchar**) &dump_fname, (uchar**) &dump_fname, 0, GET_STR, REQUIRED_ARG,
+   (char**) &dump_fname, (char**) &dump_fname, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -104,7 +104,7 @@ static void die(const char* fmt, ...)
 }
 
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument __attribute__((unused)))
 {
@@ -124,7 +124,7 @@ static int parse_args(int argc, char **argv)
 {
   int ho_error;
 
-  if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
+  if ((ho_error= handle_options(&argc, &argv, my_long_options, get_one_option)))
     exit(ho_error);
 
   /*

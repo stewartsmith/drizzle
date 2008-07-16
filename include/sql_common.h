@@ -31,12 +31,11 @@ void end_server(MYSQL *mysql);
 my_bool mysql_reconnect(MYSQL *mysql);
 void mysql_read_default_options(struct st_mysql_options *options,
 				const char *filename,const char *group);
-my_bool
+bool
 cli_advanced_command(MYSQL *mysql, enum enum_server_command command,
-		     const unsigned char *header, ulong header_length,
-		     const unsigned char *arg, ulong arg_length,
-                     my_bool skip_check);
-unsigned long cli_safe_read(MYSQL *mysql);
+		     const unsigned char *header, uint32_t header_length,
+		     const unsigned char *arg, uint32_t arg_length, bool skip_check);
+uint32_t cli_safe_read(MYSQL *mysql);
 void net_clear_error(NET *net);
 void set_mysql_error(MYSQL *mysql, int errcode, const char *sqlstate);
 #ifdef	__cplusplus

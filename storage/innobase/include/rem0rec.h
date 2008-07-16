@@ -252,7 +252,7 @@ rec_offs_make_valid(
 /*================*/
 	rec_t*		rec,	/* in: record */
 	dict_index_t*	index,/* in: record descriptor */
-	ulint*		offsets);/* in: array returned by rec_get_offsets() */
+	const ulint*		offsets);/* in: array returned by rec_get_offsets() */
 
 /****************************************************************
 The following function is used to get a pointer to the nth

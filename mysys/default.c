@@ -372,7 +372,7 @@ int load_defaults(const char *conf_file, const char **groups,
 {
   DYNAMIC_ARRAY args;
   TYPELIB group;
-  my_bool found_print_defaults= 0;
+  bool found_print_defaults= 0;
   uint args_used= 0;
   int error= 0;
   MEM_ROOT alloc;
@@ -489,7 +489,7 @@ static int search_default_file(Process_option_func opt_handler,
 {
   char **ext;
   const char *empty_list[]= { "", 0 };
-  my_bool have_ext= fn_ext(config_file)[0] != 0;
+  bool have_ext= fn_ext(config_file)[0] != 0;
   const char **exts_to_use= have_ext ? empty_list : f_extensions;
 
   for (ext= (char**) exts_to_use; *ext; ext++)
@@ -590,7 +590,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   const int max_recursion_level= 10;
   FILE *fp;
   uint line=0;
-  my_bool found_group=0;
+  bool found_group=0;
   uint i;
   MY_DIR *search_dir;
   FILEINFO *search_file;
@@ -858,7 +858,7 @@ static char *remove_end_comment(char *ptr)
 void my_print_default_files(const char *conf_file)
 {
   const char *empty_list[]= { "", 0 };
-  my_bool have_ext= fn_ext(conf_file)[0] != 0;
+  bool have_ext= fn_ext(conf_file)[0] != 0;
   const char **exts_to_use= have_ext ? empty_list : f_extensions;
   char name[FN_REFLEN], **ext;
   const char **dirs;
@@ -937,7 +937,7 @@ void print_defaults(const char *conf_file, const char **groups)
 #else
 #define ADD_DIRECTORY(DIR) \
   do { \
-    my_bool rc= ADD_DIRECTORY_INTERNAL(DIR); \
+    bool rc= ADD_DIRECTORY_INTERNAL(DIR); \
     DBUG_ASSERT(rc == FALSE);                   /* Success */ \
   } while (0)
 #endif

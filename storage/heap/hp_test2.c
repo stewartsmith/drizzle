@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   HP_SHARE *tmp_share;
   HP_KEYDEF keyinfo[MAX_KEYS];
   HA_KEYSEG keyseg[MAX_KEYS*5];
-  HEAP_PTR position;
+  HEAP_PTR position= NULL;
   HP_CREATE_INFO hp_create_info;
   CHARSET_INFO *cs= &my_charset_latin1;
   MY_INIT(argv[0]);		/* init my_sys library & pthreads */

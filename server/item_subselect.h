@@ -165,7 +165,7 @@ public:
   trans_res select_transformer(JOIN *join);
   void store(uint i, Item* item);
   double val_real();
-  longlong val_int ();
+  int64_t val_int ();
   String *val_str (String *);
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
@@ -232,7 +232,7 @@ public:
   }
 
   enum Item_result result_type() const { return INT_RESULT;}
-  longlong val_int();
+  int64_t val_int();
   double val_real();
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);
@@ -340,7 +340,7 @@ public:
                                                   Comp_creator *func);
   trans_res row_value_in_to_exists_transformer(JOIN * join);
   virtual bool exec();
-  longlong val_int();
+  int64_t val_int();
   double val_real();
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);

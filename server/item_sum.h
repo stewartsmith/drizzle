@@ -397,10 +397,10 @@ public:
   Item_sum_num(THD *thd, Item_sum_num *item) 
     :Item_sum(thd, item),is_evaluated(item->is_evaluated) {}
   bool fix_fields(THD *, Item **);
-  longlong val_int()
+  int64_t val_int()
   {
     assert(fixed == 1);
-    return (longlong) rint(val_real());             /* Real as default */
+    return (int64_t) rint(val_real());             /* Real as default */
   }
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *);
@@ -439,7 +439,7 @@ public:
   void clear();
   bool add();
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String*str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return hybrid_type; }
@@ -460,7 +460,7 @@ class Item_sum_distinct :public Item_sum_num
 {
 protected:
   /* storage for the summation result */
-  ulonglong count;
+  uint64_t count;
   Hybrid_type val;
   /* storage for unique elements */
   Unique *tree;
@@ -479,7 +479,7 @@ public:
   bool add();
   double val_real();
   my_decimal *val_decimal(my_decimal *);
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
 
   /* XXX: does it need make_unique? */
@@ -536,7 +536,7 @@ public:
 
 class Item_sum_count :public Item_sum_int
 {
-  longlong count;
+  int64_t count;
 
   public:
   Item_sum_count(Item *item_par)
@@ -549,12 +549,12 @@ class Item_sum_count :public Item_sum_int
   void clear();
   void no_rows_in_result() { count=0; }
   bool add();
-  void make_const(longlong count_arg) 
+  void make_const(int64_t count_arg) 
   { 
     count=count_arg;
     Item_sum::make_const();
   }
-  longlong val_int();
+  int64_t val_int();
   void reset_field();
   void cleanup();
   void update_field();
@@ -582,7 +582,7 @@ class Item_sum_count_distinct :public Item_sum_int
    will not recalculate on each call. Validitiy of the value is stored in
    is_evaluated.
   */
-  longlong count;
+  int64_t count;
   /*
     Following is 0 normal object and pointer to original one for copy 
     (to correctly free resources)
@@ -618,7 +618,7 @@ public:
   enum Sumfunctype sum_func () const { return COUNT_DISTINCT_FUNC; }
   void clear();
   bool add();
-  longlong val_int();
+  int64_t val_int();
   void reset_field() { return ;}		// Never called
   void update_field() { return ; }		// Never called
   const char *func_name() const { return "count(distinct "; }
@@ -643,7 +643,7 @@ public:
   Item_avg_field(Item_result res_type, Item_sum_avg *item);
   enum Type type() const { return FIELD_AVG_ITEM; }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   bool is_null() { update_null_value(); return null_value; }
   String *val_str(String*);
@@ -660,7 +660,7 @@ public:
 class Item_sum_avg :public Item_sum_sum
 {
 public:
-  ulonglong count;
+  uint64_t count;
   uint prec_increment;
   uint f_precision, f_scale, dec_bin_size;
 
@@ -675,7 +675,7 @@ public:
   bool add();
   double val_real();
   // In SPs we might force the "wrong" type with select into a declare variable
-  longlong val_int() { return (longlong) rint(val_real()); }
+  int64_t val_int() { return (int64_t) rint(val_real()); }
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String *str);
   void reset_field();
@@ -708,8 +708,8 @@ public:
   Item_variance_field(Item_sum_variance *item);
   enum Type type() const {return FIELD_VARIANCE_ITEM; }
   double val_real();
-  longlong val_int()
-  { /* can't be fix_fields()ed */ return (longlong) rint(val_real()); }
+  int64_t val_int()
+  { /* can't be fix_fields()ed */ return (int64_t) rint(val_real()); }
   String *val_str(String *str)
   { return val_string_from_real(str); }
   my_decimal *val_decimal(my_decimal *dec_buf)
@@ -753,7 +753,7 @@ public:
   Item_result hybrid_type;
   int cur_dec;
   double recurrence_m, recurrence_s;    /* Used in recurrence relation. */
-  ulonglong count;
+  uint64_t count;
   uint f_precision0, f_scale0;
   uint f_precision1, f_scale1;
   uint dec_bin_size0, dec_bin_size1;
@@ -828,7 +828,7 @@ class Item_sum_hybrid :public Item_sum
 protected:
   String value,tmp_value;
   double sum;
-  longlong sum_int;
+  int64_t sum_int;
   my_decimal sum_dec;
   Item_result hybrid_type;
   enum_field_types hybrid_field_type;
@@ -845,7 +845,7 @@ protected:
   bool fix_fields(THD *, Item **);
   void clear();
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   void reset_field();
   String *val_str(String *);
@@ -894,16 +894,16 @@ public:
 class Item_sum_bit :public Item_sum_int
 {
 protected:
-  ulonglong reset_bits,bits;
+  uint64_t reset_bits,bits;
 
 public:
-  Item_sum_bit(Item *item_par,ulonglong reset_arg)
+  Item_sum_bit(Item *item_par,uint64_t reset_arg)
     :Item_sum_int(item_par),reset_bits(reset_arg),bits(reset_arg) {}
   Item_sum_bit(THD *thd, Item_sum_bit *item):
     Item_sum_int(thd, item), reset_bits(item->reset_bits), bits(item->bits) {}
   enum Sumfunctype sum_func () const {return SUM_BIT_FUNC;}
   void clear();
-  longlong val_int();
+  int64_t val_int();
   void reset_field();
   void update_field();
   void fix_length_and_dec()
@@ -930,7 +930,7 @@ public:
 class Item_sum_and :public Item_sum_bit
 {
   public:
-  Item_sum_and(Item *item_par) :Item_sum_bit(item_par, ULONGLONG_MAX) {}
+  Item_sum_and(Item *item_par) :Item_sum_bit(item_par, UINT64_MAX) {}
   Item_sum_and(THD *thd, Item_sum_and *item) :Item_sum_bit(thd, item) {}
   bool add();
   const char *func_name() const { return "bit_and("; }
@@ -1004,10 +1004,10 @@ class Item_sum_udf_float :public Item_udf_sum
     :Item_udf_sum(udf_arg, list) {}
   Item_sum_udf_float(THD *thd, Item_sum_udf_float *item)
     :Item_udf_sum(thd, item) {}
-  longlong val_int()
+  int64_t val_int()
   {
     assert(fixed == 1);
-    return (longlong) rint(Item_sum_udf_float::val_real());
+    return (int64_t) rint(Item_sum_udf_float::val_real());
   }
   double val_real();
   String *val_str(String*str);
@@ -1026,7 +1026,7 @@ public:
     :Item_udf_sum(udf_arg, list) {}
   Item_sum_udf_int(THD *thd, Item_sum_udf_int *item)
     :Item_udf_sum(thd, item) {}
-  longlong val_int();
+  int64_t val_int();
   double val_real()
     { assert(fixed == 1); return (double) Item_sum_udf_int::val_int(); }
   String *val_str(String*str);
@@ -1056,7 +1056,7 @@ public:
     return res ? my_strntod(res->charset(),(char*) res->ptr(),res->length(),
 			    &end_not_used, &err_not_used) : 0.0;
   }
-  longlong val_int()
+  int64_t val_int()
   {
     int err_not_used;
     char *end;
@@ -1087,7 +1087,7 @@ public:
     :Item_udf_sum(thd, item) {}
   String *val_str(String *);
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return DECIMAL_RESULT; }
   void fix_length_and_dec() { fix_num_length_and_dec(); }
@@ -1121,7 +1121,7 @@ public:
   Item_sum_udf_int(THD *thd, Item_sum_udf_int *item)
     :Item_sum_num(thd, item) {}
   enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  longlong val_int() { assert(fixed == 1); return 0; }
+  int64_t val_int() { assert(fixed == 1); return 0; }
   double val_real() { assert(fixed == 1); return 0; }
   void clear() {}
   bool add() { return 0; }  
@@ -1159,7 +1159,7 @@ public:
   String *val_str(String *)
     { assert(fixed == 1); null_value=1; return 0; }
   double val_real() { assert(fixed == 1); null_value=1; return 0.0; }
-  longlong val_int() { assert(fixed == 1); null_value=1; return 0; }
+  int64_t val_int() { assert(fixed == 1); null_value=1; return 0; }
   enum Item_result result_type () const { return STRING_RESULT; }
   void fix_length_and_dec() { maybe_null=1; max_length=0; }
   enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
@@ -1247,13 +1247,13 @@ public:
     String *res;  res=val_str(&str_value);
     return res ? my_atof(res->c_ptr()) : 0.0;
   }
-  longlong val_int()
+  int64_t val_int()
   {
     String *res;
     char *end_ptr;
     int error;
     if (!(res= val_str(&str_value)))
-      return (longlong) 0;
+      return (int64_t) 0;
     end_ptr= (char*) res->ptr()+ res->length();
     return my_strtoll10(res->ptr(), &end_ptr, &error);
   }
