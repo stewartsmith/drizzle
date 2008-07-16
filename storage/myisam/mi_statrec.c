@@ -17,7 +17,6 @@
 
 #include "myisamdef.h"
 
-
 int _mi_write_static_record(MI_INFO *info, const uchar *record)
 {
   uchar temp[8];				/* max pointer length */
@@ -112,13 +111,11 @@ int _mi_delete_static_record(MI_INFO *info)
 
 int _mi_cmp_static_record(register MI_INFO *info, register const uchar *old)
 {
-  DBUG_ENTER("_mi_cmp_static_record");
-
   if (info->opt_flag & WRITE_CACHE_USED)
   {
     if (flush_io_cache(&info->rec_cache))
     {
-      DBUG_RETURN(-1);
+      return(-1);
     }
     info->rec_cache.seek_not_done=1;		/* We have done a seek */
   }
@@ -129,30 +126,26 @@ int _mi_cmp_static_record(register MI_INFO *info, register const uchar *old)
     if (info->s->file_read(info, info->rec_buff, info->s->base.reclength,
 		 info->lastpos,
 		 MYF(MY_NABP)))
-      DBUG_RETURN(-1);
+      return(-1);
     if (memcmp(info->rec_buff, old,
 	       (uint) info->s->base.reclength))
     {
-      DBUG_DUMP("read",old,info->s->base.reclength);
-      DBUG_DUMP("disk",info->rec_buff,info->s->base.reclength);
       my_errno=HA_ERR_RECORD_CHANGED;		/* Record have changed */
-      DBUG_RETURN(1);
+      return(1);
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
 int _mi_cmp_static_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 			  const uchar *record, my_off_t pos)
 {
-  DBUG_ENTER("_mi_cmp_static_unique");
-
   info->rec_cache.seek_not_done=1;		/* We have done a seek */
   if (info->s->file_read(info, info->rec_buff, info->s->base.reclength,
 	       pos, MYF(MY_NABP)))
-    DBUG_RETURN(-1);
-  DBUG_RETURN(mi_unique_comp(def, record, info->rec_buff,
+    return(-1);
+  return(mi_unique_comp(def, record, info->rec_buff,
 			     def->null_are_equal));
 }
 
@@ -203,14 +196,13 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
   int locked,error,cache_read;
   uint cache_length;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("_mi_read_rnd_static_record");
 
   cache_read=0;
   cache_length=0;
   if (info->opt_flag & WRITE_CACHE_USED &&
       (info->rec_cache.pos_in_file <= filepos || skip_deleted_blocks) &&
       flush_io_cache(&info->rec_cache))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
   if (info->opt_flag & READ_CACHE_USED)
   {						/* Cache in use */
     if (filepos == my_b_tell(&info->rec_cache) &&
@@ -228,7 +220,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
     if (filepos >= info->state->data_file_length)
     {						/* Test if new records */
       if (_mi_readinfo(info,F_RDLCK,0))
-	DBUG_RETURN(my_errno);
+	return(my_errno);
       locked=1;
     }
     else
@@ -239,7 +231,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
       {						/* record not in cache */
 	if (my_lock(share->kfile,F_RDLCK,0L,F_TO_EOF,
 		    MYF(MY_SEEK_NOT_DONE) | info->lock_wait))
-	  DBUG_RETURN(my_errno);
+	  return(my_errno);
 	locked=1;
       }
 #else
@@ -249,11 +241,8 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
   }
   if (filepos >= info->state->data_file_length)
   {
-    DBUG_PRINT("test",("filepos: %ld (%ld)  records: %ld  del: %ld",
-		       (long) filepos/share->base.reclength, (long) filepos,
-		       (long) info->state->records, (long) info->state->del));
     fast_mi_writeinfo(info);
-    DBUG_RETURN(my_errno=HA_ERR_END_OF_FILE);
+    return(my_errno=HA_ERR_END_OF_FILE);
   }
   info->lastpos= filepos;
   info->nextpos= filepos+share->base.pack_reclength;
@@ -267,7 +256,7 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
       else
 	error=my_errno;
     }
-    DBUG_RETURN(error);
+    return(error);
   }
 
 	/* Read record with cacheing */
@@ -284,14 +273,14 @@ int _mi_read_rnd_static_record(MI_INFO *info, uchar *buf,
   {
     if (!buf[0])
     {						/* Record is removed */
-      DBUG_RETURN(my_errno=HA_ERR_RECORD_DELETED);
+      return(my_errno=HA_ERR_RECORD_DELETED);
     }
 						/* Found and may be updated */
     info->update|= HA_STATE_AKTIV | HA_STATE_KEY_CHANGED;
-    DBUG_RETURN(0);
+    return(0);
   }
   /* my_errno should be set if rec_cache.error == -1 */
   if (info->rec_cache.error != -1 || my_errno == 0)
     my_errno=HA_ERR_WRONG_IN_RECORD;
-  DBUG_RETURN(my_errno);			/* Something wrong (EOF?) */
+  return(my_errno);			/* Something wrong (EOF?) */
 }
