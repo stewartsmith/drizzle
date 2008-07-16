@@ -25,5 +25,5 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-void	vio_ignore_timeout(Vio *vio, uint which, uint timeout);
-void	vio_timeout(Vio *vio,uint which, uint timeout);
+void	vio_ignore_timeout(Vio *vio, uint32_t which, uint32_t timeout);
+void	vio_timeout(Vio *vio,uint32_t which, uint32_t timeout);
