@@ -225,7 +225,7 @@ void net_clear(NET *net, bool clear_buffer)
     if (ready == -1)
     {
       /* Read unblocking to clear net */
-      my_bool old_mode;
+      bool old_mode;
       if (!vio_blocking(net->vio, false, &old_mode))
       {
         while ((long) (count= vio_read(net->vio, net->buff,
@@ -517,7 +517,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
       {
         if (!thr_alarm(&alarmed, net->write_timeout, &alarm_buff))
         {                                       /* Always true for client */
-	  my_bool old_mode;
+	  bool old_mode;
 	  while (vio_blocking(net->vio, true, &old_mode) < 0)
 	  {
 	    if (vio_should_retry(net->vio) && retry_count++ < net->retry_count)
@@ -564,7 +564,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     my_free((char*) packet,MYF(0));
   if (thr_alarm_in_use(&alarmed))
   {
-    my_bool old_mode;
+    bool old_mode;
     thr_end_alarm(&alarmed);
     vio_blocking(net->vio, net_blocking, &old_mode);
   }
@@ -696,7 +696,7 @@ my_real_read(NET *net, size_t *complen)
 end:
   if (thr_alarm_in_use(&alarmed))
   {
-    my_bool old_mode;
+    bool old_mode;
     thr_end_alarm(&alarmed);
     vio_blocking(net->vio, net_blocking, &old_mode);
   }
