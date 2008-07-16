@@ -22,10 +22,9 @@ int heap_rnext(HP_INFO *info, uchar *record)
   uchar *pos;
   HP_SHARE *share=info->s;
   HP_KEYDEF *keyinfo;
-  DBUG_ENTER("heap_rnext");
   
   if (info->lastinx < 0)
-    DBUG_RETURN(my_errno=HA_ERR_WRONG_INDEX);
+    return(my_errno=HA_ERR_WRONG_INDEX);
 
   keyinfo = share->keydef + info->lastinx;
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
@@ -107,9 +106,9 @@ int heap_rnext(HP_INFO *info, uchar *record)
     info->update=HA_STATE_NEXT_FOUND;		/* For heap_rprev */
     if (my_errno == HA_ERR_KEY_NOT_FOUND)
       my_errno=HA_ERR_END_OF_FILE;
-    DBUG_RETURN(my_errno);
+    return(my_errno);
   }
   memcpy(record,pos,(size_t) share->reclength);
   info->update=HA_STATE_AKTIV | HA_STATE_NEXT_FOUND;
-  DBUG_RETURN(0);
+  return(0);
 }

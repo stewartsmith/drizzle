@@ -28,14 +28,13 @@
 int heap_rsame(register HP_INFO *info, uchar *record, int inx)
 {
   HP_SHARE *share=info->s;
-  DBUG_ENTER("heap_rsame");
 
   test_active(info);
   if (info->current_ptr[share->reclength])
   {
     if (inx < -1 || inx >= (int) share->keys)
     {
-      DBUG_RETURN(my_errno=HA_ERR_WRONG_INDEX);
+      return(my_errno=HA_ERR_WRONG_INDEX);
     }
     else if (inx != -1)
     {
@@ -44,13 +43,13 @@ int heap_rsame(register HP_INFO *info, uchar *record, int inx)
       if (!hp_search(info, share->keydef + inx, info->lastkey, 3))
       {
 	info->update=0;
-	DBUG_RETURN(my_errno);
+	return(my_errno);
       }
     }
     memcpy(record,info->current_ptr,(size_t) share->reclength);
-    DBUG_RETURN(0);
+    return(0);
   }
   info->update=0;
 
-  DBUG_RETURN(my_errno=HA_ERR_RECORD_DELETED);
+  return(my_errno=HA_ERR_RECORD_DELETED);
 }

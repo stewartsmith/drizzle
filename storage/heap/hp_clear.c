@@ -28,8 +28,6 @@ void heap_clear(HP_INFO *info)
 
 void hp_clear(HP_SHARE *info)
 {
-  DBUG_ENTER("hp_clear");
-
   if (info->block.levels)
     VOID(hp_free_level(&info->block,info->block.levels,info->block.root,
 			(uchar*) 0));
@@ -40,7 +38,7 @@ void hp_clear(HP_SHARE *info)
   info->blength=1;
   info->changed=0;
   info->del_link=0;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -81,7 +79,6 @@ void heap_clear_keys(HP_INFO *info)
 void hp_clear_keys(HP_SHARE *info)
 {
   uint key;
-  DBUG_ENTER("hp_clear_keys");
 
   for (key=0 ; key < info->keys ; key++)
   {
@@ -101,7 +98,7 @@ void hp_clear_keys(HP_SHARE *info)
     }
   }
   info->index_length=0;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
