@@ -39,26 +39,18 @@ int mi_delete(MI_INFO *info,const uchar *record)
   char lastpos[8];
 
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_delete");
 
 	/* Test if record is in datafile */
-
-  DBUG_EXECUTE_IF("myisam_pretend_crashed_table_on_usage",
-                  mi_print_error(info->s, HA_ERR_CRASHED);
-                  DBUG_RETURN(my_errno= HA_ERR_CRASHED););
-  DBUG_EXECUTE_IF("my_error_test_undefined_error",
-                  mi_print_error(info->s, INT_MAX);
-                  DBUG_RETURN(my_errno= INT_MAX););
   if (!(info->update & HA_STATE_AKTIV))
   {
-    DBUG_RETURN(my_errno=HA_ERR_KEY_NOT_FOUND);	/* No database read */
+    return(my_errno=HA_ERR_KEY_NOT_FOUND);	/* No database read */
   }
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    DBUG_RETURN(my_errno=EACCES);
+    return(my_errno=EACCES);
   }
   if (_mi_readinfo(info,F_WRLCK,1))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
   if (info->s->calc_checksum)
     info->checksum=(*info->s->calc_checksum)(info,record);
   if ((*share->compare_record)(info,record))
@@ -97,11 +89,10 @@ int mi_delete(MI_INFO *info,const uchar *record)
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
   if (info->invalidator != 0)
   {
-    DBUG_PRINT("info", ("invalidator... '%s' (delete)", info->filename));
     (*info->invalidator)(info->filename);
     info->invalidator=0;
   }
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   save_errno=my_errno;
@@ -121,7 +112,7 @@ err:
     my_errno=HA_ERR_CRASHED;
   }
 
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 } /* mi_delete */
 
 
@@ -142,20 +133,17 @@ static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
   uint nod_flag;
   my_off_t old_root;
   uchar *root_buff;
-  DBUG_ENTER("_mi_ck_real_delete");
 
   if ((old_root=*root) == HA_OFFSET_ERROR)
   {
     mi_print_error(info->s, HA_ERR_CRASHED);
-    DBUG_RETURN(my_errno=HA_ERR_CRASHED);
+    return(my_errno=HA_ERR_CRASHED);
   }
   if (!(root_buff= (uchar*) my_alloca((uint) keyinfo->block_length+
 				      MI_MAX_KEY_BUFF*2)))
   {
-    DBUG_PRINT("error",("Couldn't allocate memory"));
-    DBUG_RETURN(my_errno=ENOMEM);
+    return(my_errno=ENOMEM);
   }
-  DBUG_PRINT("info",("root_page: %ld", (long) old_root));
   if (!_mi_fetch_keypage(info,keyinfo,old_root,DFLT_INIT_HITS,root_buff,0))
   {
     error= -1;
@@ -165,7 +153,6 @@ static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
   {
     if (error == 2)
     {
-      DBUG_PRINT("test",("Enlarging of root when deleting"));
       error=_mi_enlarge_root(info,keyinfo,key,root);
     }
     else /* error == 1 */
@@ -187,8 +174,7 @@ static int _mi_ck_real_delete(register MI_INFO *info, MI_KEYDEF *keyinfo,
   }
 err:
   my_afree((uchar*) root_buff);
-  DBUG_PRINT("exit",("Return: %d",error));
-  DBUG_RETURN(error);
+  return(error);
 } /* _mi_ck_real_delete */
 
 
@@ -210,16 +196,13 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   uchar *leaf_buff,*keypos;
   my_off_t leaf_page= 0, next_block;
   uchar lastkey[MI_MAX_KEY_BUFF];
-  DBUG_ENTER("d_search");
-  DBUG_DUMP("page",(uchar*) anc_buff,mi_getint(anc_buff));
 
   search_key_length= (comp_flag & SEARCH_FIND) ? key_length : USE_WHOLE_KEY;
   flag=(*keyinfo->bin_search)(info,keyinfo,anc_buff,key, search_key_length,
                               comp_flag, &keypos, lastkey, &last_key);
   if (flag == MI_FOUND_WRONG_KEY)
   {
-    DBUG_PRINT("error",("Found wrong key"));
-    DBUG_RETURN(-1);
+    return(-1);
   }
   nod_flag=mi_test_if_nod(anc_buff);
 
@@ -230,10 +213,8 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (!(leaf_buff= (uchar*) my_alloca((uint) keyinfo->block_length+
 					MI_MAX_KEY_BUFF*2)))
     {
-      DBUG_PRINT("error",("Couldn't allocate memory"));
       my_errno=ENOMEM;
-      DBUG_PRINT("exit",("Return: %d",-1));
-      DBUG_RETURN(-1);
+      return(-1);
     }
     if (!_mi_fetch_keypage(info,keyinfo,leaf_page,DFLT_INIT_HITS,leaf_buff,0))
       goto err;
@@ -243,7 +224,6 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   {
     if (!nod_flag)
     {
-      DBUG_PRINT("error",("Didn't find key"));
       mi_print_error(info->s, HA_ERR_CRASHED);
       my_errno=HA_ERR_CRASHED;		/* This should newer happend */
       goto err;
@@ -267,11 +247,10 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     {						/* On leaf page */
       if (_mi_write_keypage(info,keyinfo,page,DFLT_INIT_HITS,anc_buff))
       {
-        DBUG_PRINT("exit",("Return: %d",-1));
-	DBUG_RETURN(-1);
+	return(-1);
       }
       /* Page will be update later if we return 1 */
-      DBUG_RETURN(test(length <= (info->quick_mode ? MI_MIN_KEYBLOCK_LENGTH :
+      return(test(length <= (info->quick_mode ? MI_MIN_KEYBLOCK_LENGTH :
 				  (uint) keyinfo->underflow_block_length)));
     }
     save_flag=1;
@@ -285,7 +264,6 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       ret_value= underflow(info,keyinfo,anc_buff,leaf_page,leaf_buff,keypos);
     else
     {				/* This happens only with packed keys */
-      DBUG_PRINT("test",("Enlarging of key when deleting"));
       if (!_mi_get_last_key(info,keyinfo,anc_buff,lastkey,keypos,&length))
       {
 	goto err;
@@ -301,18 +279,12 @@ static int d_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   }
   if (save_flag && ret_value != 1)
     ret_value|=_mi_write_keypage(info,keyinfo,page,DFLT_INIT_HITS,anc_buff);
-  else
-  {
-    DBUG_DUMP("page",(uchar*) anc_buff,mi_getint(anc_buff));
-  }
   my_afree((uchar*) leaf_buff);
-  DBUG_PRINT("exit",("Return: %d",ret_value));
-  DBUG_RETURN(ret_value);
+  return(ret_value);
 
 err:
   my_afree((uchar*) leaf_buff);
-  DBUG_PRINT("exit",("Error: %d",my_errno));
-  DBUG_RETURN (-1);
+  return (-1);
 } /* d_search */
 
 
@@ -330,27 +302,22 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *key,
   uchar keybuff[MI_MAX_KEY_BUFF],*endpos,*next_buff,*key_start, *prev_key;
   MYISAM_SHARE *share=info->s;
   MI_KEY_PARAM s_temp;
-  DBUG_ENTER("del");
-  DBUG_PRINT("enter",("leaf_page: %ld  keypos: 0x%lx", (long) leaf_page,
-		      (ulong) keypos));
-  DBUG_DUMP("leaf_buff",(uchar*) leaf_buff,mi_getint(leaf_buff));
 
   endpos=leaf_buff+mi_getint(leaf_buff);
   if (!(key_start=_mi_get_last_key(info,keyinfo,leaf_buff,keybuff,endpos,
 				   &tmp)))
-    DBUG_RETURN(-1);
+    return(-1);
 
   if ((nod_flag=mi_test_if_nod(leaf_buff)))
   {
     next_page= _mi_kpos(nod_flag,endpos);
     if (!(next_buff= (uchar*) my_alloca((uint) keyinfo->block_length+
 					MI_MAX_KEY_BUFF*2)))
-      DBUG_RETURN(-1);
+      return(-1);
     if (!_mi_fetch_keypage(info,keyinfo,next_page,DFLT_INIT_HITS,next_buff,0))
       ret_value= -1;
     else
     {
-      DBUG_DUMP("next_page",(uchar*) next_buff,mi_getint(next_buff));
       if ((ret_value=del(info,keyinfo,key,anc_buff,next_page,next_buff,
 			 keypos,next_block,ret_key)) >0)
       {
@@ -366,7 +333,6 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *key,
 	}
 	else
 	{
-	  DBUG_PRINT("test",("Inserting of key when deleting"));
 	  if (!_mi_get_last_key(info,keyinfo,leaf_buff,keybuff,endpos,
 				&tmp))
 	    goto err;
@@ -378,7 +344,7 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *key,
 	goto err;
     }
     my_afree((uchar*) next_buff);
-    DBUG_RETURN(ret_value);
+    return(ret_value);
   }
 
 	/* Remove last key from leaf page */
@@ -411,11 +377,11 @@ static int del(register MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *key,
   _mi_kpointer(info,keypos - share->base.key_reflength,next_block);
   mi_putint(anc_buff,a_length+length,share->base.key_reflength);
 
-  DBUG_RETURN( mi_getint(leaf_buff) <=
+  return( mi_getint(leaf_buff) <=
 	       (info->quick_mode ? MI_MIN_KEYBLOCK_LENGTH :
 		(uint) keyinfo->underflow_block_length));
 err:
-  DBUG_RETURN(-1);
+  return(-1);
 } /* del */
 
 
@@ -436,11 +402,6 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
         *after_key;
   MI_KEY_PARAM s_temp;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("underflow");
-  DBUG_PRINT("enter",("leaf_page: %ld  keypos: 0x%lx",(long) leaf_page,
-		      (ulong) keypos));
-  DBUG_DUMP("anc_buff",(uchar*) anc_buff,mi_getint(anc_buff));
-  DBUG_DUMP("leaf_buff",(uchar*) leaf_buff,mi_getint(leaf_buff));
 
   buff=info->buff;
   info->buff_used=1;
@@ -456,8 +417,6 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   if ((keypos < anc_buff+anc_length && (info->state->records & 1)) ||
       keypos == anc_buff+2+key_reflength)
   {					/* Use page right of anc-page */
-    DBUG_PRINT("test",("use right page"));
-
     if (keyinfo->flag & HA_BINARY_PACK_KEY)
     {
       if (!(next_keypos=_mi_get_key(info, keyinfo,
@@ -476,7 +435,6 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     if (!_mi_fetch_keypage(info,keyinfo,next_page,DFLT_INIT_HITS,buff,0))
       goto err;
     buff_length=mi_getint(buff);
-    DBUG_DUMP("next",(uchar*) buff,buff_length);
 
     /* find keys to make a big key-page */
     bmove((uchar*) next_keypos-key_reflength,(uchar*) buff+2,
@@ -518,8 +476,6 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     else
     {						/* Page is full */
       endpos=anc_buff+anc_length;
-      DBUG_PRINT("test",("anc_buff: 0x%lx  endpos: 0x%lx",
-                         (long) anc_buff, (long) endpos));
       if (keypos != anc_buff+2+key_reflength &&
 	  !_mi_get_last_key(info,keyinfo,anc_buff,anc_key,keypos,&length))
 	goto err;
@@ -567,11 +523,9 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
     }
     if (_mi_write_keypage(info,keyinfo,leaf_page,DFLT_INIT_HITS,leaf_buff))
       goto err;
-    DBUG_RETURN(anc_length <= ((info->quick_mode ? MI_MIN_BLOCK_LENGTH :
+    return(anc_length <= ((info->quick_mode ? MI_MIN_BLOCK_LENGTH :
 				(uint) keyinfo->underflow_block_length)));
   }
-
-  DBUG_PRINT("test",("use left page"));
 
   keypos=_mi_get_last_key(info,keyinfo,anc_buff,anc_key,keypos,&length);
   if (!keypos)
@@ -581,7 +535,6 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       goto err;
   buff_length=mi_getint(buff);
   endpos=buff+buff_length;
-  DBUG_DUMP("prev",(uchar*) buff,buff_length);
 
   /* find keys to make a big key-page */
   bmove((uchar*) next_keypos - key_reflength,(uchar*) leaf_buff+2,
@@ -637,8 +590,6 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       goto err;
     _mi_kpointer(info,leaf_key+key_length,leaf_page);
     /* Save key in anc_buff */
-    DBUG_DUMP("anc_buff",(uchar*) anc_buff,anc_length);
-    DBUG_DUMP("key_to_anc",(uchar*) leaf_key,key_length);
 
     temp_pos=anc_buff+anc_length;
     t_length=(*keyinfo->pack_key)(keyinfo,key_reflength,
@@ -659,11 +610,9 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       bmove((uchar*) leaf_buff+2,(uchar*) half_pos-nod_flag,(size_t) nod_flag);
     if (!(length=(*keyinfo->get_key)(keyinfo,nod_flag,&half_pos,leaf_key)))
       goto err;
-    DBUG_DUMP("key_to_leaf",(uchar*) leaf_key,length);
     t_length=(*keyinfo->pack_key)(keyinfo,nod_flag, (uchar*) 0,
 				  (uchar*) 0, (uchar*) 0, leaf_key, &s_temp);
     length=(uint) ((buff+buff_length)-half_pos);
-    DBUG_PRINT("info",("t_length: %d  length: %d",t_length,(int) length));
     bmove((uchar*) leaf_buff+p_length+t_length,(uchar*) half_pos,
 	  (size_t) length);
     (*keyinfo->store_key)(keyinfo,leaf_buff+p_length,&s_temp);
@@ -674,10 +623,10 @@ static int underflow(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   }
   if (_mi_write_keypage(info,keyinfo,next_page,DFLT_INIT_HITS,buff))
     goto err;
-  DBUG_RETURN(anc_length <= (uint) keyinfo->block_length/2);
+  return(anc_length <= (uint) keyinfo->block_length/2);
 
 err:
-  DBUG_RETURN(-1);
+  return(-1);
 } /* underflow */
 
 
@@ -696,8 +645,6 @@ static uint remove_key(MI_KEYDEF *keyinfo, uint nod_flag,
 {
   int s_length;
   uchar *start;
-  DBUG_ENTER("remove_key");
-  DBUG_PRINT("enter",("keypos: 0x%lx  page_end: 0x%lx",(long) keypos, (long) page_end));
 
   start=keypos;
   if (!(keyinfo->flag &
@@ -712,7 +659,7 @@ static uint remove_key(MI_KEYDEF *keyinfo, uint nod_flag,
   {					 /* Let keypos point at next key */
     /* Calculate length of key */
     if (!(*keyinfo->get_key)(keyinfo,nod_flag,&keypos,lastkey))
-      DBUG_RETURN(0);				/* Error */
+      return(0);				/* Error */
 
     if (next_block && nod_flag)
       *next_block= _mi_kpos(nod_flag,keypos);
@@ -810,5 +757,5 @@ static uint remove_key(MI_KEYDEF *keyinfo, uint nod_flag,
   end:
   bmove((uchar*) start,(uchar*) start+s_length,
 	(uint) (page_end-start-s_length));
-  DBUG_RETURN((uint) s_length);
+  return((uint) s_length);
 } /* remove_key */

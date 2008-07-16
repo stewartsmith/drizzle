@@ -27,16 +27,15 @@ int mi_rprev(MI_INFO *info, uchar *buf, int inx)
   int error,changed;
   register uint flag;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_rprev");
 
   if ((inx = _mi_check_index(info,inx)) < 0)
-    DBUG_RETURN(my_errno);
+    return(my_errno);
   flag=SEARCH_SMALLER;				/* Read previous */
   if (info->lastpos == HA_OFFSET_ERROR && info->update & HA_STATE_NEXT_FOUND)
     flag=0;					/* Read last */
 
   if (fast_mi_readinfo(info))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
   changed=_mi_test_if_changed(info);
   if (share->concurrent_insert)
     rw_rdlock(&share->key_root_lock[inx]);
@@ -76,12 +75,12 @@ int mi_rprev(MI_INFO *info, uchar *buf, int inx)
   }
   else if (!buf)
   {
-    DBUG_RETURN(info->lastpos==HA_OFFSET_ERROR ? my_errno : 0);
+    return(info->lastpos==HA_OFFSET_ERROR ? my_errno : 0);
   }
   else if (!(*info->read_record)(info,info->lastpos,buf))
   {
     info->update|= HA_STATE_AKTIV;		/* Record is read */
-    DBUG_RETURN(0);
+    return(0);
   }
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 } /* mi_rprev */

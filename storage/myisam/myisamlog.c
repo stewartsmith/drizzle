@@ -144,10 +144,6 @@ static void get_options(register int *argc, register char ***argv)
     {
       version=0;
       switch((option=*pos)) {
-      case '#':
-	DBUG_PUSH (++pos);
-	pos=" ";				/* Skip rest of arg */
-	break;
       case 'c':
 	if (! *++pos)
 	{
@@ -264,7 +260,6 @@ static void get_options(register int *argc, register char ***argv)
 	puts("         -o \"offset\"         -p # \"remove # components from path\"");
 	puts("         -r \"recover\"        -R \"file recordposition\"");
 	puts("         -u \"update\"         -v \"verbose\"   -w \"write file\"");
-	puts("         -D \"myisam compiled with DBUG\"   -P \"processes\"");
 	puts("\nOne can give a second and a third '-v' for more verbose.");
 	puts("Normaly one does a update (-u).");
 	puts("If a recover is done all writes and all possibly updates and deletes is done\nand errors are only counted.");
@@ -314,17 +309,16 @@ static int examine_log(char * file_name, char **table_names)
   enum ha_extra_function extra_command;
   TREE tree;
   struct file_info file_info,*curr_file_info;
-  DBUG_ENTER("examine_log");
 
   if ((file=my_open(file_name,O_RDONLY,MYF(MY_WME))) < 0)
-    DBUG_RETURN(1);
+    return(1);
   write_file=0;
   if (write_filename)
   {
     if (!(write_file=my_fopen(write_filename,O_WRONLY,MYF(MY_WME))))
     {
       my_close(file,MYF(0));
-      DBUG_RETURN(1);
+      return(1);
     }
   }
 
@@ -653,8 +647,8 @@ static int examine_log(char * file_name, char **table_names)
   VOID(end_io_cache(&cache));
   VOID(my_close(file,MYF(0)));
   if (write_file && my_fclose(write_file,MYF(MY_WME)))
-    DBUG_RETURN(1);
-  DBUG_RETURN(0);
+    return(1);
+  return(0);
 
  err:
   fflush(stdout);
@@ -674,14 +668,12 @@ static int examine_log(char * file_name, char **table_names)
   VOID(my_close(file,MYF(0)));
   if (write_file)
     VOID(my_fclose(write_file,MYF(MY_WME)));
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
 static int read_string(IO_CACHE *file, register uchar* *to, register uint length)
 {
-  DBUG_ENTER("read_string");
-
   if (*to)
     my_free((uchar*) *to,MYF(0));
   if (!(*to= (uchar*) my_malloc(length+1,MYF(MY_WME))) ||
@@ -690,10 +682,10 @@ static int read_string(IO_CACHE *file, register uchar* *to, register uint length
     if (*to)
       my_free(*to,MYF(0));
     *to= 0;
-    DBUG_RETURN(1);
+    return(1);
   }
   *((char*) *to+length)= '\0';
-  DBUG_RETURN (0);
+  return (0);
 }				/* read_string */
 
 
@@ -753,7 +745,6 @@ static int test_when_accessed (struct file_info *key,
 
 static void file_info_free(struct file_info *fileinfo)
 {
-  DBUG_ENTER("file_info_free");
   if (update)
   {
     if (!fileinfo->closed)
@@ -763,7 +754,7 @@ static void file_info_free(struct file_info *fileinfo)
   }
   my_free(fileinfo->name,MYF(0));
   my_free(fileinfo->show_name,MYF(0));
-  DBUG_VOID_RETURN;
+  return;
 }
 
 

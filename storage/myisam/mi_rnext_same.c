@@ -28,13 +28,12 @@ int mi_rnext_same(MI_INFO *info, uchar *buf)
   int error;
   uint inx,not_used[2];
   MI_KEYDEF *keyinfo;
-  DBUG_ENTER("mi_rnext_same");
 
   if ((int) (inx=info->lastinx) < 0 || info->lastpos == HA_OFFSET_ERROR)
-    DBUG_RETURN(my_errno=HA_ERR_WRONG_INDEX);
+    return(my_errno=HA_ERR_WRONG_INDEX);
   keyinfo=info->s->keyinfo+inx;
   if (fast_mi_readinfo(info))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
 
   if (info->s->concurrent_insert)
     rw_rdlock(&info->s->key_root_lock[inx]);
@@ -81,12 +80,12 @@ int mi_rnext_same(MI_INFO *info, uchar *buf)
   }
   else if (!buf)
   {
-    DBUG_RETURN(info->lastpos==HA_OFFSET_ERROR ? my_errno : 0);
+    return(info->lastpos==HA_OFFSET_ERROR ? my_errno : 0);
   }
   else if (!(*info->read_record)(info,info->lastpos,buf))
   {
     info->update|= HA_STATE_AKTIV;		/* Record is read */
-    DBUG_RETURN(0);
+    return(0);
   }
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 } /* mi_rnext_same */

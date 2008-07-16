@@ -35,11 +35,10 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
 {
   struct stat state;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_status");
 
   x->recpos  = info->lastpos;
   if (flag == HA_STATUS_POS)
-    DBUG_RETURN(0);				/* Compatible with ISAM */
+    return(0);				/* Compatible with ISAM */
   if (!(flag & HA_STATUS_NO_LOCK))
   {
     pthread_mutex_lock(&share->intern_lock);
@@ -95,7 +94,7 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
     if (!x->auto_increment)			/* This shouldn't happen */
       x->auto_increment= ~(uint64_t) 0;
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -121,12 +120,10 @@ int mi_status(MI_INFO *info, register MI_ISAMINFO *x, uint flag)
 void mi_report_error(int errcode, const char *file_name)
 {
   size_t        lgt;
-  DBUG_ENTER("mi_report_error");
-  DBUG_PRINT("enter",("errcode %d, table '%s'", errcode, file_name));
 
   if ((lgt= strlen(file_name)) > 64)
     file_name+= lgt - 64;
   my_error(errcode, MYF(ME_NOREFRESH), file_name);
-  DBUG_VOID_RETURN;
+  return;
 }
 
