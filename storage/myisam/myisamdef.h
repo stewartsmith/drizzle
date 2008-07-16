@@ -385,26 +385,17 @@ typedef struct st_mi_sort_param
 #define mi_test_if_nod(x) (x[0] & 128 ? info->s->base.key_reflength : 0)
 #define mi_report_crashed(A, B) _mi_report_crashed((A), (B), __FILE__, __LINE__)
 #define mi_mark_crashed(x) do{(x)->s->state.changed|= STATE_CRASHED; \
-                              DBUG_PRINT("error", ("Marked table crashed")); \
                               mi_report_crashed((x), 0); \
                            }while(0)
 #define mi_mark_crashed_on_repair(x) do{(x)->s->state.changed|= \
                                         STATE_CRASHED|STATE_CRASHED_ON_REPAIR; \
                                         (x)->update|= HA_STATE_CHANGED; \
-                                        DBUG_PRINT("error", \
-                                                   ("Marked table crashed")); \
                                      }while(0)
 #define mi_is_crashed(x) ((x)->s->state.changed & STATE_CRASHED)
 #define mi_is_crashed_on_repair(x) ((x)->s->state.changed & STATE_CRASHED_ON_REPAIR)
 #define mi_print_error(SHARE, ERRNO)                     \
         mi_report_error((ERRNO), (SHARE)->index_file_name)
 
-C_MODE_START
-void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
-                        const char *message __attribute__((unused)),
-                        const char *sfile __attribute__((unused)),
-                        uint sline __attribute__((unused)));
-C_MODE_END
 /* Functions to store length of space packed keys, VARCHAR or BLOB keys */
 
 #define store_key_length(key,length) \

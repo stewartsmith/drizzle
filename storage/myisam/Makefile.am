@@ -27,8 +27,7 @@ LDADD =
 
 DEFS =                  @DEFS@
 
-EXTRA_DIST =		mi_test_all.sh mi_test_all.res plug.in
-pkgdata_DATA =		mi_test_all mi_test_all.res
+EXTRA_DIST =		plug.in
 
 noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
@@ -45,21 +44,8 @@ myisampack_LDADD=	libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(top_builddir)/strings/libmystringslt.la -lz
-noinst_PROGRAMS =	mi_test1 mi_test2 mi_test3
 noinst_HEADERS =	myisamdef.h \
 			ha_myisam.h
-mi_test1_LDADD=		libmyisamutil.la \
-			libmyisamnone.la \
-			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/strings/libmystringslt.la -lz
-mi_test2_LDADD=		libmyisamutil.la \
-			libmyisamnone.la \
-			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/strings/libmystringslt.la -lz
-mi_test3_LDADD=		libmyisamutil.la \
-			libmyisamnone.la \
-			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/strings/libmystringslt.la -lz
 libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \
 			mi_search.c mi_page.c mi_key.c mi_locking.c \
@@ -81,7 +67,7 @@ libmyisamnone_la_SOURCES = mi_reportnone.c
 libmyisam_la_SOURCES = 
 libmyisam_la_LIBADD = libmyisamha.la libmyisamutil.la
 
-CLEANFILES =		test?.MY? FT?.MY? isam.log mi_test_all
+CLEANFILES =		FT?.MY? isam.log 
 
 # Move to automake rules ?
 prolint:;	plparse -b -u -hF1 "-width(0,0)" "-format=%f:%l:\s%t:%n\s%m" \
