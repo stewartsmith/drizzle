@@ -92,8 +92,7 @@ size_t vio_write(Vio * vio, const uchar* buf, size_t size)
   return r;
 }
 
-int vio_blocking(Vio * vio __attribute__((unused)), bool set_blocking_mode,
-		 bool *old_mode)
+int vio_blocking(Vio * vio, bool set_blocking_mode, bool *old_mode)
 {
   int r=0;
 
