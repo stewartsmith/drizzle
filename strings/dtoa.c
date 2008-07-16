@@ -1338,6 +1338,7 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
 #endif
   Stack_alloc alloc;
 
+  c= 0;
   *error= 0;
 
   alloc.begin= alloc.free= buf;

@@ -125,7 +125,7 @@ bool String::set(double num,uint decimals, CHARSET_INFO *cs)
   str_charset=cs;
   if (decimals >= NOT_FIXED_DEC)
   {
-    uint32 len= my_sprintf(buff,(buff, "%.14g",num));// Enough for a DATETIME
+    uint32 len= sprintf(buff, "%.14g",num);// Enough for a DATETIME
     return copy(buff, len, &my_charset_latin1, cs, &dummy_errors);
   }
 #ifdef HAVE_SNPRINTF
