@@ -42,8 +42,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   int error=0;
   ulong cache_size;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_extra");
-  DBUG_PRINT("enter",("function: %d",(int) function));
 
   switch (function) {
   case HA_EXTRA_RESET_STATE:		/* Reset state (don't free buffers) */
@@ -361,7 +359,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     {
       if (mi_dynmap_file(info, share->state.state.data_file_length))
       {
-        DBUG_PRINT("warning",("mmap failed: errno: %d",errno));
         error= my_errno= errno;
       }
       else
@@ -383,7 +380,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     tmp[0]=function;
     myisam_log_command(MI_LOG_EXTRA,info,(uchar*) tmp,1,error);
   }
-  DBUG_RETURN(error);
+  return(error);
 } /* mi_extra */
 
 
@@ -421,7 +418,6 @@ int mi_reset(MI_INFO *info)
 {
   int error= 0;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_reset");
   /*
     Free buffers and reset the following flags:
     EXTRA_CACHE, EXTRA_WRITE_CACHE, EXTRA_KEYREAD, EXTRA_QUICK
@@ -448,5 +444,5 @@ int mi_reset(MI_INFO *info)
   info->page_changed= 1;
   info->update= ((info->update & HA_STATE_CHANGED) | HA_STATE_NEXT_FOUND |
                  HA_STATE_PREV_FOUND);
-  DBUG_RETURN(error);
+  return(error);
 }

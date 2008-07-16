@@ -24,7 +24,6 @@ my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
   my_off_t lastpos=info->lastpos;
   MI_KEYDEF *key= &info->s->keyinfo[def->key];
   uchar *key_buff=info->lastkey2;
-  DBUG_ENTER("mi_check_unique");
 
   mi_unique_store(record+key->seg->start, unique_hash);
   _mi_make_key(info,def->key,key_buff,record,0);
@@ -37,7 +36,7 @@ my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
   {
     info->page_changed=1;			/* Can't optimize read next */
     info->lastpos= lastpos;
-    DBUG_RETURN(0);				/* No matching rows */
+    return(0);				/* No matching rows */
   }
 
   for (;;)
@@ -50,8 +49,7 @@ my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
       info->dupp_key_pos= info->lastpos;
       info->page_changed=1;			/* Can't optimize read next */
       info->lastpos=lastpos;
-      DBUG_PRINT("info",("Found duplicate"));
-      DBUG_RETURN(1);				/* Found identical  */
+      return(1);				/* Found identical  */
     }
     if (_mi_search_next(info,info->s->keyinfo+def->key, info->lastkey,
 			MI_UNIQUE_HASH_LENGTH, SEARCH_BIGGER,
@@ -60,7 +58,7 @@ my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
     {
       info->page_changed=1;			/* Can't optimize read next */
       info->lastpos=lastpos;
-      DBUG_RETURN(0);				/* end of tree */
+      return(0);				/* end of tree */
     }
   }
 }

@@ -55,9 +55,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   ulong *rec_per_key_part;
   my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   MI_CREATE_INFO tmp_create_info;
-  DBUG_ENTER("mi_create");
-  DBUG_PRINT("enter", ("keys: %u  columns: %u  uniques: %u  flags: %u",
-                      keys, columns, uniques, flags));
 
   if (!ci)
   {
@@ -67,7 +64,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 
   if (keys + uniques > MI_MAX_KEY || columns == 0)
   {
-    DBUG_RETURN(my_errno=HA_WRONG_CREATE_OPTION);
+    return(my_errno=HA_WRONG_CREATE_OPTION);
   }
   errpos= 0;
   options= 0;
@@ -91,7 +88,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   if (!(rec_per_key_part=
 	(ulong*) my_malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long),
 			   MYF(MY_WME | MY_ZEROFILL))))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
 
 	/* Start by checking fields and field-types used */
 
@@ -306,7 +303,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	}
 	if (keyseg->flag & HA_SPACE_PACK)
 	{
-          DBUG_ASSERT(!(keyseg->flag & HA_VAR_LENGTH_PART));
+          assert(!(keyseg->flag & HA_VAR_LENGTH_PART));
 	  keydef->flag |= HA_SPACE_PACK_USED | HA_VAR_LENGTH_KEY;
 	  options|=HA_OPTION_PACK_KEYS;		/* Using packed keys */
 	  length++;				/* At least one length byte */
@@ -319,7 +316,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	}
 	if (keyseg->flag & (HA_VAR_LENGTH_PART | HA_BLOB_PART))
 	{
-          DBUG_ASSERT(!test_all_bits(keyseg->flag,
+          assert(!test_all_bits(keyseg->flag,
                                     (HA_VAR_LENGTH_PART | HA_BLOB_PART)));
 	  keydef->flag|=HA_VAR_LENGTH_KEY;
 	  length++;				/* At least one length byte */
@@ -409,7 +406,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 			       uniques * MI_UNIQUEDEF_SIZE +
 			       (key_segs + unique_key_parts)*HA_KEYSEG_SIZE+
 			       columns*MI_COLUMNDEF_SIZE);
-  DBUG_PRINT("info", ("info_length: %u", info_length));
   /* There are only 16 bits for the total header length. */
   if (info_length > 65535)
   {
@@ -603,21 +599,11 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     errpos=3;
   }
 
-  DBUG_PRINT("info", ("write state info and base info"));
   if (mi_state_info_write(file, &share.state, 2) ||
       mi_base_info_write(file, &share.base))
     goto err;
-#ifndef DBUG_OFF
-  if ((uint) my_tell(file,MYF(0)) != base_pos+ MI_BASE_INFO_SIZE)
-  {
-    uint pos=(uint) my_tell(file,MYF(0));
-    DBUG_PRINT("warning",("base_length: %d  != used_length: %d",
-			  base_pos+ MI_BASE_INFO_SIZE, pos));
-  }
-#endif
 
   /* Write key and keyseg definitions */
-  DBUG_PRINT("info", ("write key and keyseg definitions"));
   for (i=0 ; i < share.base.keys - uniques; i++)
   {
     uint sp_segs= 0;
@@ -649,7 +635,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
 
   /* Save unique definition */
-  DBUG_PRINT("info", ("write unique definitions"));
   for (i=0 ; i < share.state.header.uniques ; i++)
   {
     HA_KEYSEG *keyseg_end;
@@ -680,22 +665,11 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	goto err;
     }
   }
-  DBUG_PRINT("info", ("write field definitions"));
   for (i=0 ; i < share.base.fields ; i++)
     if (mi_recinfo_write(file, &recinfo[i]))
       goto err;
 
-#ifndef DBUG_OFF
-  if ((uint) my_tell(file,MYF(0)) != info_length)
-  {
-    uint pos= (uint) my_tell(file,MYF(0));
-    DBUG_PRINT("warning",("info_length: %d  != used_length: %d",
-			  info_length, pos));
-  }
-#endif
-
 	/* Enlarge files */
-  DBUG_PRINT("info", ("enlarge to keystart: %lu", (ulong) share.base.keystart));
   if (ftruncate(file, (off_t) share.base.keystart))
     goto err;
 
@@ -714,7 +688,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   if (my_close(file,MYF(0)))
     goto err;
   my_free((char*) rec_per_key_part,MYF(0));
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   pthread_mutex_unlock(&THR_LOCK_myisam);
@@ -738,13 +712,13 @@ err:
 			     MYF(0));
   }
   my_free((char*) rec_per_key_part, MYF(0));
-  DBUG_RETURN(my_errno=save_errno);		/* return the fatal errno */
+  return(my_errno=save_errno);		/* return the fatal errno */
 }
 
 
 uint mi_get_pointer_length(uint64_t file_length, uint def)
 {
-  DBUG_ASSERT(def >= 2 && def <= 7);
+  assert(def >= 2 && def <= 7);
   if (file_length)				/* If not default */
   {
 #ifdef NOT_YET_READY_FOR_8_BYTE_POINTERS

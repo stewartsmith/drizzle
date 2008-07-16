@@ -1221,7 +1221,7 @@ master_def:
                 Lex->mi.heartbeat_period < 0.0)
             {
               char buf[sizeof(SLAVE_MAX_HEARTBEAT_PERIOD*4)];
-              my_sprintf(buf, (buf, "%d seconds", SLAVE_MAX_HEARTBEAT_PERIOD));
+              sprintf(buf, "%d seconds", SLAVE_MAX_HEARTBEAT_PERIOD);
               my_error(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
                        MYF(0),
                        " is negative or exceeds the maximum ",

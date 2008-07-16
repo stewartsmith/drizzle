@@ -72,7 +72,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   ulong rec_per_key_part[HA_MAX_POSSIBLE_KEY*MI_MAX_KEY_SEG];
   my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   uint64_t max_key_file_length, max_data_file_length;
-  DBUG_ENTER("mi_open");
 
   kfile= -1;
   lock_error=1;
@@ -93,12 +92,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     share_buff.key_cache= multi_key_cache_search((uchar*) name_buff,
                                                  strlen(name_buff));
 
-    DBUG_EXECUTE_IF("myisam_pretend_crashed_table_on_open",
-                    if (strstr(name, "/t1"))
-                    {
-                      my_errno= HA_ERR_CRASHED;
-                      goto err;
-                    });
     if ((kfile=my_open(name_buff,(open_mode=O_RDWR) | O_SHARE,MYF(0))) < 0)
     {
       if ((errno != EROFS && errno != EACCES) ||
@@ -117,9 +110,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     if (memcmp((uchar*) share->state.header.file_version,
 	       (uchar*) myisam_file_magic, 4))
     {
-      DBUG_PRINT("error",("Wrong header in %s",name_buff));
-      DBUG_DUMP("error_dump",(uchar*) share->state.header.file_version,
-		head_length);
       my_errno=HA_ERR_NOT_A_TABLE;
       goto err;
     }
@@ -131,14 +121,12 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
           HA_OPTION_TMP_TABLE | HA_OPTION_DELAY_KEY_WRITE |
           HA_OPTION_RELIES_ON_SQL_LAYER))
     {
-      DBUG_PRINT("error",("wrong options: 0x%lx", share->options));
       my_errno=HA_ERR_OLD_FILE;
       goto err;
     }
     if ((share->options & HA_OPTION_RELIES_ON_SQL_LAYER) &&
         ! (open_flags & HA_OPEN_FROM_SQL_LAYER))
     {
-      DBUG_PRINT("error", ("table cannot be openned from non-sql layer"));
       my_errno= HA_ERR_UNSUPPORTED;
       goto err;
     }
@@ -173,21 +161,10 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     fulltext_keys= (uint) share->state.header.fulltext_keys;
     key_parts= mi_uint2korr(share->state.header.key_parts);
     unique_key_parts= mi_uint2korr(share->state.header.unique_key_parts);
-    if (len != MI_STATE_INFO_SIZE)
-    {
-      DBUG_PRINT("warning",
-		 ("saved_state_info_length: %d  state_info_length: %d",
-		  len,MI_STATE_INFO_SIZE));
-    }
     share->state_diff_length=len-MI_STATE_INFO_SIZE;
 
     mi_state_info_read(disk_cache, &share->state);
     len= mi_uint2korr(share->state.header.base_info_length);
-    if (len != MI_BASE_INFO_SIZE)
-    {
-      DBUG_PRINT("warning",("saved_base_info_length: %d  base_info_length: %d",
-			    len,MI_BASE_INFO_SIZE));
-    }
     disk_pos= my_n_base_info_read(disk_cache + base_pos, &share->base);
     share->state.state_length=base_pos;
 
@@ -196,10 +173,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 	 ((open_flags & HA_OPEN_ABORT_IF_CRASHED) &&
 	  (share->state.open_count))))
     {
-      DBUG_PRINT("error",("Table is marked as crashed. open_flags: %u  "
-                          "changed: %u  open_count: %u",
-                          open_flags, share->state.changed,
-                          share->state.open_count));
       my_errno=((share->state.changed & STATE_CRASHED_ON_REPAIR) ?
 		HA_ERR_CRASHED_ON_REPAIR : HA_ERR_CRASHED_ON_USAGE);
       goto err;
@@ -215,7 +188,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     if (share->base.max_key_length > MI_MAX_KEY_BUFF || keys > MI_MAX_KEY ||
 	key_parts > MI_MAX_KEY * MI_MAX_KEY_SEG)
     {
-      DBUG_PRINT("error",("Wrong key info:  Max_key_length: %d  keys: %d  key_parts: %d", share->base.max_key_length, keys, key_parts));
       my_errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
@@ -235,7 +207,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 #endif
     if (share->base.raid_type)
     {
-      DBUG_PRINT("error",("Table uses RAID but we don't have RAID support"));
       my_errno=HA_ERR_UNSUPPORTED;
       goto err;
     }
@@ -552,7 +523,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     intern_filename(name_buff,share->index_file_name);
     _myisam_log(MI_LOG_OPEN, m_info, (uchar*) name_buff, strlen(name_buff));
   }
-  DBUG_RETURN(m_info);
+  return(m_info);
 
 err:
   save_errno=my_errno ? my_errno : HA_ERR_END_OF_FILE;
@@ -586,7 +557,7 @@ err:
   }
   pthread_mutex_unlock(&THR_LOCK_myisam);
   my_errno=save_errno;
-  DBUG_RETURN (NULL);
+  return (NULL);
 } /* mi_open */
 
 
@@ -755,7 +726,6 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
   uchar *ptr=buff;
   uint	i, keys= (uint) state->header.keys,
 	key_blocks=state->header.max_block_size_index;
-  DBUG_ENTER("mi_state_info_write");
 
   memcpy_fixed(ptr,&state->header,sizeof(state->header));
   ptr+=sizeof(state->header);
@@ -806,9 +776,9 @@ uint mi_state_info_write(File file, MI_STATE_INFO *state, uint pWrite)
   }
 
   if (pWrite & 1)
-    DBUG_RETURN(my_pwrite(file, buff, (size_t) (ptr-buff), 0L,
+    return(my_pwrite(file, buff, (size_t) (ptr-buff), 0L,
 			  MYF(MY_NABP | MY_THREADSAFE)) != 0);
-  DBUG_RETURN(my_write(file, buff, (size_t) (ptr-buff),
+  return(my_write(file, buff, (size_t) (ptr-buff),
 		       MYF(MY_NABP)) != 0);
 }
 

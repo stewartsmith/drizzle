@@ -41,7 +41,6 @@ int _mi_read_cache(IO_CACHE *info, uchar *buff, my_off_t pos, uint length,
   uint read_length,in_buff_length;
   my_off_t offset;
   uchar *in_buff_pos;
-  DBUG_ENTER("_mi_read_cache");
 
   if (pos < info->pos_in_file)
   {
@@ -50,9 +49,9 @@ int _mi_read_cache(IO_CACHE *info, uchar *buff, my_off_t pos, uint length,
       read_length=(uint) (info->pos_in_file-pos);
     info->seek_not_done=1;
     if (my_pread(info->file,buff,read_length,pos,MYF(MY_NABP)))
-      DBUG_RETURN(1);
+      return(1);
     if (!(length-=read_length))
-      DBUG_RETURN(0);
+      return(0);
     pos+=read_length;
     buff+=read_length;
   }
@@ -64,7 +63,7 @@ int _mi_read_cache(IO_CACHE *info, uchar *buff, my_off_t pos, uint length,
     in_buff_length= min(length, (size_t) (info->read_end-in_buff_pos));
     memcpy(buff,info->request_pos+(uint) offset,(size_t) in_buff_length);
     if (!(length-=in_buff_length))
-      DBUG_RETURN(0);
+      return(0);
     pos+=in_buff_length;
     buff+=in_buff_length;
   }
@@ -82,26 +81,23 @@ int _mi_read_cache(IO_CACHE *info, uchar *buff, my_off_t pos, uint length,
     else
       info->read_pos=info->read_end;			/* All block used */
     if (!(*info->read_function)(info,buff,length))
-      DBUG_RETURN(0);
+      return(0);
     read_length=info->error;
   }
   else
   {
     info->seek_not_done=1;
     if ((read_length=my_pread(info->file,buff,length,pos,MYF(0))) == length)
-      DBUG_RETURN(0);
+      return(0);
   }
   if (!(flag & READING_HEADER) || (int) read_length == -1 ||
       read_length+in_buff_length < 3)
   {
-    DBUG_PRINT("error",
-               ("Error %d reading next-multi-part block (Got %d bytes)",
-                my_errno, (int) read_length));
     if (!my_errno || my_errno == -1)
       my_errno=HA_ERR_WRONG_IN_RECORD;
-    DBUG_RETURN(1);
+    return(1);
   }
   bzero(buff+read_length,MI_BLOCK_INFO_HEADER_LENGTH - in_buff_length -
         read_length);
-  DBUG_RETURN(0);
+  return(0);
 } /* _mi_read_cache */
