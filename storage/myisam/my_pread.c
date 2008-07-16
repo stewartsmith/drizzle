@@ -44,10 +44,6 @@ size_t my_pread(File Filedes, uchar *Buffer, size_t Count, my_off_t offset,
 {
   size_t readbytes;
   int error= 0;
-  DBUG_ENTER("my_pread");
-  DBUG_PRINT("my",("Fd: %d  Seek: %lu  Buffer: 0x%lx  Count: %u  MyFlags: %d",
-		   Filedes, (ulong) offset, (long) Buffer, (uint) Count,
-                   MyFlags));
   for (;;)
   {
     errno=0;					/* Linux doesn't reset this */
@@ -55,12 +51,8 @@ size_t my_pread(File Filedes, uchar *Buffer, size_t Count, my_off_t offset,
       my_errno= errno ? errno : -1;
     if (error || readbytes != Count)
     {
-      DBUG_PRINT("warning",("Read only %d bytes off %u from %d, errno: %d",
-                            (int) readbytes, (uint) Count,Filedes,my_errno));
       if ((readbytes == 0 || readbytes == (size_t) -1) && errno == EINTR)
       {
-        DBUG_PRINT("debug", ("my_pread() was interrupted and returned %d",
-                             (int) readbytes));
         continue;                              /* Interrupted */
       }
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
@@ -73,11 +65,11 @@ size_t my_pread(File Filedes, uchar *Buffer, size_t Count, my_off_t offset,
 		   my_filename(Filedes),my_errno);
       }
       if (readbytes == (size_t) -1 || (MyFlags & (MY_FNABP | MY_NABP)))
-	DBUG_RETURN(MY_FILE_ERROR);		/* Return with error */
+	return(MY_FILE_ERROR);		/* Return with error */
     }
     if (MyFlags & (MY_NABP | MY_FNABP))
-      DBUG_RETURN(0);				/* Read went ok; Return 0 */
-    DBUG_RETURN(readbytes);			/* purecov: inspected */
+      return(0);				/* Read went ok; Return 0 */
+    return(readbytes);			/* purecov: inspected */
   }
 } /* my_pread */
 
@@ -108,10 +100,6 @@ size_t my_pwrite(int Filedes, const uchar *Buffer, size_t Count,
 {
   size_t writenbytes, written;
   uint errors;
-  DBUG_ENTER("my_pwrite");
-  DBUG_PRINT("my",("Fd: %d  Seek: %lu  Buffer: 0x%lx  Count: %u  MyFlags: %d",
-		   Filedes, (ulong) offset, (long) Buffer, (uint) Count,
-                   MyFlags));
   errors= 0;
   written= 0;
 
@@ -127,7 +115,6 @@ size_t my_pwrite(int Filedes, const uchar *Buffer, size_t Count,
       Count-=writenbytes;
       offset+=writenbytes;
     }
-    DBUG_PRINT("error",("Write only %u bytes", (uint) writenbytes));
 #ifndef NO_BACKGROUND
     if (my_thread_var->abort)
       MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
@@ -150,13 +137,12 @@ size_t my_pwrite(int Filedes, const uchar *Buffer, size_t Count,
 	my_error(EE_WRITE, MYF(ME_BELL | ME_WAITTANG),
 		 my_filename(Filedes),my_errno);
       }
-      DBUG_RETURN(MY_FILE_ERROR);		/* Error on read */
+      return(MY_FILE_ERROR);		/* Error on read */
     }
     else
       break;					/* Return bytes written */
   }
-  DBUG_EXECUTE_IF("check", my_seek(Filedes, -1, SEEK_SET, MYF(0)););
   if (MyFlags & (MY_NABP | MY_FNABP))
-    DBUG_RETURN(0);			/* Want only errors */
-  DBUG_RETURN(writenbytes+written); /* purecov: inspected */
+    return(0);			/* Want only errors */
+  return(writenbytes+written); /* purecov: inspected */
 } /* my_pwrite */
