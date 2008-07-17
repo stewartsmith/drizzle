@@ -22,11 +22,6 @@ int main(int argc, char *argv[])
 {
   MY_DIR	*a;
   uint		f;
-  DBUG_ENTER ("main");
-  DBUG_PROCESS (argv[0]);
-
-  if (--argc > 0 && (*(++argv))[0] == '-' && (*argv)[1] == '#' )
-    DBUG_PUSH (*argv+2);
 
   a = my_dir("./", 0);
   for (f = 0; f < a->number_off_files; f++)
