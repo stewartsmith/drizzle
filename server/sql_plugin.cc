@@ -88,28 +88,6 @@ static int min_plugin_interface_version= MYSQL_PLUGIN_INTERFACE_VERSION & ~0xFF;
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
 */
-static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
-{
-  MYSQL_UDF_INTERFACE_VERSION,
-  MYSQL_UDA_INTERFACE_VERSION,
-  MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_DAEMON_INTERFACE_VERSION,
-  MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
-  MYSQL_AUDIT_INTERFACE_VERSION,
-  MYSQL_LOG_INTERFACE_VERSION,
-  MYSQL_AUTH_INTERFACE_VERSION
-};
-static int cur_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
-{
-  MYSQL_UDF_INTERFACE_VERSION,
-  MYSQL_UDA_INTERFACE_VERSION,
-  MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_DAEMON_INTERFACE_VERSION,
-  MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
-  MYSQL_AUDIT_INTERFACE_VERSION,
-  MYSQL_LOG_INTERFACE_VERSION,
-  MYSQL_AUTH_INTERFACE_VERSION
-};
 
 static bool initialized= 0;
 
@@ -397,19 +375,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     return(0);
   }
   plugin_dl.version= *(int *)sym;
-  /* Versioning */
-  if (plugin_dl.version < min_plugin_interface_version ||
-      (plugin_dl.version >> 8) > (MYSQL_PLUGIN_INTERFACE_VERSION >> 8))
-  {
-    free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath, 0,
-               "plugin interface version mismatch");
-    if (report & REPORT_TO_LOG)
-      sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dlpath, 0,
-                      "plugin interface version mismatch");
-    return(0);
-  }
+
   /* Find plugin declarations */
   if (!(sym= dlsym(plugin_dl.handle, plugin_declarations_sym)))
   {
@@ -699,21 +665,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
                        name_len))
     {
       struct st_plugin_int *tmp_plugin_ptr;
-      if (*(int*)plugin->info <
-          min_plugin_info_interface_version[plugin->type] ||
-          ((*(int*)plugin->info) >> 8) >
-          (cur_plugin_info_interface_version[plugin->type] >> 8))
-      {
-        char buf[256];
-        strxnmov(buf, sizeof(buf) - 1, "API version for ",
-                 plugin_type_names[plugin->type].str,
-                 " plugin is too different", NullS);
-        if (report & REPORT_TO_USER)
-          my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dl->str, 0, buf);
-        if (report & REPORT_TO_LOG)
-          sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dl->str, 0, buf);
-        goto err;
-      }
+
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= name_len;
