@@ -1169,14 +1169,6 @@ innobase_start_or_create_for_mysql(void)
 	maximum number of threads that can wait in the 'srv_conc array' for
 	their time to enter InnoDB. */
 
-#if defined(__NETWARE__)
-
-	/* Create less event semaphores because Win 98/ME had
-	difficulty creating 40000 event semaphores.  Comment from
-	Novell, Inc.: also, these just take a lot of memory on
-	NetWare. */
-	srv_max_n_threads = 1000;
-#else
 	if (srv_pool_size >= 1000 * 1024) {
 		/* Here we still have srv_pool_size counted
 		in kilobytes (in 4.0 this was in bytes)
@@ -1193,7 +1185,6 @@ innobase_start_or_create_for_mysql(void)
 						especially in 64-bit
 						computers */
 	}
-#endif
 	err = srv_boot(); /* This changes srv_pool_size to units of a page */
 
 	if (err != DB_SUCCESS) {
@@ -1803,9 +1794,6 @@ innobase_shutdown_for_mysql(void)
 				/* out: DB_SUCCESS or error code */
 {
 	ulint	i;
-#ifdef __NETWARE__
-	extern ibool panic_shutdown;
-#endif
 	if (!srv_was_started) {
 		if (srv_is_being_started) {
 			ut_print_timestamp(stderr);
@@ -1834,10 +1822,7 @@ innobase_shutdown_for_mysql(void)
 			"InnoDB will do a crash recovery!\n");
 	}
 
-#ifdef __NETWARE__
-	if(!panic_shutdown)
-#endif
-		logs_empty_and_mark_files_at_shutdown();
+	logs_empty_and_mark_files_at_shutdown();
 
 	if (srv_conc_n_threads != 0) {
 		fprintf(stderr,
@@ -1987,11 +1972,4 @@ innobase_shutdown_for_mysql(void)
 	return((int) DB_SUCCESS);
 }
 
-#ifdef __NETWARE__
-void set_panic_flag_for_netware()
-{
-	extern ibool panic_shutdown;
-	panic_shutdown = TRUE;
-}
-#endif /* __NETWARE__ */
 #endif /* !UNIV_HOTBACKUP */

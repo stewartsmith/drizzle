@@ -19,12 +19,7 @@ ulint	ut_dbg_zero	= 0;
 and assert */
 ibool	ut_dbg_stop_threads	= FALSE;
 #endif
-#ifdef __NETWARE__
-ibool panic_shutdown = FALSE;	/* This is set to TRUE when on NetWare there
-				happens an InnoDB assertion failure or other
-				fatal error condition that requires an
-				immediate shutdown. */
-#elif !defined(UT_DBG_USE_ABORT)
+#if !defined(UT_DBG_USE_ABORT)
 /* Null pointer used to generate memory trap */
 
 ulint*	ut_dbg_null_ptr		= NULL;
@@ -65,21 +60,6 @@ ut_dbg_assertion_failed(
 #endif
 }
 
-#ifdef __NETWARE__
-/*****************************************************************
-Shut down MySQL/InnoDB after assertion failure. */
-
-void
-ut_dbg_panic(void)
-/*==============*/
-{
-	if (!panic_shutdown) {
-		panic_shutdown = TRUE;
-		innobase_shutdown_for_mysql();
-	}
-	exit(1);
-}
-#else /* __NETWARE__ */
 # if defined(UNIV_SYNC_DEBUG) || !defined(UT_DBG_USE_ABORT)
 /*****************************************************************
 Stop a thread after assertion failure. */
@@ -95,4 +75,3 @@ ut_dbg_stop_thread(
 	os_thread_sleep(1000000000);
 }
 # endif
-#endif /* __NETWARE__ */
