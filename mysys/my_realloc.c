@@ -31,20 +31,17 @@
 void* my_realloc(void* oldpoint, size_t size, myf my_flags)
 {
   void *point;
-  DBUG_ENTER("my_realloc");
-  DBUG_PRINT("my",("ptr: 0x%lx  size: %lu  my_flags: %d", (long) oldpoint,
-                   (ulong) size, my_flags));
 
-  DBUG_ASSERT(size > 0);
+  assert(size > 0);
   if (!oldpoint && (my_flags & MY_ALLOW_ZERO_PTR))
-    DBUG_RETURN(my_malloc(size,my_flags));
+    return(my_malloc(size,my_flags));
 #ifdef USE_HALLOC
   if (!(point = malloc(size)))
   {
     if (my_flags & MY_FREE_ON_ERROR)
       my_free(oldpoint,my_flags);
     if (my_flags & MY_HOLD_ON_ERROR)
-      DBUG_RETURN(oldpoint);
+      return(oldpoint);
     my_errno=errno;
     if (my_flags & MY_FAE+MY_WME)
       my_error(EE_OUTOFMEMORY, MYF(ME_BELL+ME_WAITTANG),size);
@@ -60,12 +57,11 @@ void* my_realloc(void* oldpoint, size_t size, myf my_flags)
     if (my_flags & MY_FREE_ON_ERROR)
       my_free(oldpoint, my_flags);
     if (my_flags & MY_HOLD_ON_ERROR)
-      DBUG_RETURN(oldpoint);
+      return(oldpoint);
     my_errno=errno;
     if (my_flags & (MY_FAE+MY_WME))
       my_error(EE_OUTOFMEMORY, MYF(ME_BELL+ME_WAITTANG), size);
   }
 #endif
-  DBUG_PRINT("exit",("ptr: 0x%lx", (long) point));
-  DBUG_RETURN(point);
+  return(point);
 } /* my_realloc */

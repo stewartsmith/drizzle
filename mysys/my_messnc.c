@@ -18,8 +18,6 @@
 void my_message_no_curses(uint error __attribute__((unused)),
 			 const char *str, myf MyFlags)
 {
-  DBUG_ENTER("my_message_no_curses");
-  DBUG_PRINT("enter",("message: %s",str));
   (void) fflush(stdout);
   if (MyFlags & ME_BELL)
     (void) fputc('\007',stderr);				/* Bell */
@@ -30,5 +28,5 @@ void my_message_no_curses(uint error __attribute__((unused)),
   (void)fputs(str,stderr);
   (void)fputc('\n',stderr);
   (void)fflush(stderr);
-  DBUG_VOID_RETURN;
+  return;
 }
