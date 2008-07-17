@@ -25,13 +25,12 @@
 
 char * my_filename(File fd)
 {
-  DBUG_ENTER("my_filename");
   if ((uint) fd >= (uint) my_file_limit)
-    DBUG_RETURN((char*) "UNKNOWN");
+    return((char*) "UNKNOWN");
   if (fd >= 0 && my_file_info[fd].type != UNOPEN)
   {
-    DBUG_RETURN(my_file_info[fd].name);
+    return(my_file_info[fd].name);
   }
   else
-    DBUG_RETURN((char*) "UNOPENED");	/* Debug message */
+    return((char*) "UNOPENED");	/* Debug message */
 }

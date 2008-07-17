@@ -23,11 +23,9 @@ File my_dup(File file, myf MyFlags)
 {
   File fd;
   const char *filename;
-  DBUG_ENTER("my_dup");
-  DBUG_PRINT("my",("file: %d  MyFlags: %d", file, MyFlags));
   fd = dup(file);
   filename= (((uint) file < my_file_limit) ?
 	     my_file_info[(int) file].name : "Unknown");
-  DBUG_RETURN(my_register_filename(fd, filename, FILE_BY_DUP,
+  return(my_register_filename(fd, filename, FILE_BY_DUP,
 				   EE_FILENOTFOUND, MyFlags));
 } /* my_open */
