@@ -93,11 +93,6 @@ const uint32 sha_const_key[5]=
 
 int mysql_sha1_reset(SHA1_CONTEXT *context)
 {
-#ifndef DBUG_OFF
-  if (!context)
-    return SHA_NULL;
-#endif
-
   context->Length		  = 0;
   context->Message_Block_Index	  = 0;
 
@@ -136,14 +131,6 @@ int mysql_sha1_result(SHA1_CONTEXT *context,
 {
   int i;
 
-#ifndef DBUG_OFF
-  if (!context || !Message_Digest)
-    return SHA_NULL;
-
-  if (context->Corrupted)
-    return context->Corrupted;
-#endif
-
   if (!context->Computed)
   {
     SHA1PadMessage(context);
@@ -181,30 +168,11 @@ int mysql_sha1_input(SHA1_CONTEXT *context, const uint8 *message_array,
   if (!length)
     return SHA_SUCCESS;
 
-#ifndef DBUG_OFF
-  /* We assume client konows what it is doing in non-debug mode */
-  if (!context || !message_array)
-    return SHA_NULL;
-  if (context->Computed)
-    return (context->Corrupted= SHA_STATE_ERROR);
-  if (context->Corrupted)
-    return context->Corrupted;
-#endif
-
   while (length--)
   {
     context->Message_Block[context->Message_Block_Index++]=
       (*message_array & 0xFF);
     context->Length  += 8;  /* Length is in bits */
-
-#ifndef DBUG_OFF
-    /*
-      Then we're not debugging we assume we never will get message longer
-      2^64 bits.
-    */
-    if (context->Length == 0)
-      return (context->Corrupted= 1);	   /* Message is too long */
-#endif
 
     if (context->Message_Block_Index == 64)
     {

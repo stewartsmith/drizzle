@@ -52,17 +52,16 @@ int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 	       bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 	       void *first_cmp_arg)
 {
-  DBUG_ENTER("init_queue");
   if ((queue->root= (uchar **) my_malloc((max_elements+1)*sizeof(void*),
 					 MYF(MY_WME))) == 0)
-    DBUG_RETURN(1);
+    return(1);
   queue->elements=0;
   queue->compare=compare;
   queue->first_cmp_arg=first_cmp_arg;
   queue->max_elements=max_elements;
   queue->offset_to_key=offset_to_key;
   queue_set_max_at_top(queue, max_at_top);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -96,14 +95,13 @@ int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
 	       void *first_cmp_arg, uint auto_extent)
 {
   int ret;
-  DBUG_ENTER("init_queue_ex");
 
   if ((ret= init_queue(queue, max_elements, offset_to_key, max_at_top, compare,
                        first_cmp_arg)))
-    DBUG_RETURN(ret);
+    return(ret);
   
   queue->auto_extent= auto_extent;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 /*
@@ -132,14 +130,13 @@ int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 		 bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 		 void *first_cmp_arg)
 {
-  DBUG_ENTER("reinit_queue");
   queue->elements=0;
   queue->compare=compare;
   queue->first_cmp_arg=first_cmp_arg;
   queue->offset_to_key=offset_to_key;
   queue_set_max_at_top(queue, max_at_top);
   resize_queue(queue, max_elements);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -163,17 +160,16 @@ int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 int resize_queue(QUEUE *queue, uint max_elements)
 {
   uchar **new_root;
-  DBUG_ENTER("resize_queue");
   if (queue->max_elements == max_elements)
-    DBUG_RETURN(0);
+    return(0);
   if ((new_root= (uchar **) my_realloc((void *)queue->root,
 				      (max_elements+1)*sizeof(void*),
 				      MYF(MY_WME))) == 0)
-    DBUG_RETURN(1);
+    return(1);
   set_if_smaller(queue->elements, max_elements);
   queue->max_elements= max_elements;
   queue->root= new_root;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -193,13 +189,12 @@ int resize_queue(QUEUE *queue, uint max_elements)
 
 void delete_queue(QUEUE *queue)
 {
-  DBUG_ENTER("delete_queue");
   if (queue->root)
   {
     my_free((uchar*) queue->root,MYF(0));
     queue->root=0;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -208,7 +203,7 @@ void delete_queue(QUEUE *queue)
 void queue_insert(register QUEUE *queue, uchar *element)
 {
   register uint idx, next;
-  DBUG_ASSERT(queue->elements < queue->max_elements);
+  assert(queue->elements < queue->max_elements);
   queue->root[0]= element;
   idx= ++queue->elements;
   /* max_at_top swaps the comparison if we want to order by desc */
@@ -254,7 +249,7 @@ int queue_insert_safe(register QUEUE *queue, uchar *element)
 uchar *queue_remove(register QUEUE *queue, uint idx)
 {
   uchar *element;
-  DBUG_ASSERT(idx < queue->max_elements);
+  assert(idx < queue->max_elements);
   element= queue->root[++idx];  /* Intern index starts from 1 */
   queue->root[idx]= queue->root[queue->elements--];
   _downheap(queue, idx);
