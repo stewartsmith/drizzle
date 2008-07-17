@@ -190,8 +190,8 @@ int azopen(azio_stream *s, const char *path, int Flags, az_method method)
     We do our own version of append by nature. 
     We must always have write access to take card of the header.
   */
-  DBUG_ASSERT(Flags | O_APPEND);
-  DBUG_ASSERT(Flags | O_WRONLY);
+  assert(Flags | O_APPEND);
+  assert(Flags | O_WRONLY);
 
   if (Flags & O_RDWR) 
     s->mode = 'w';
