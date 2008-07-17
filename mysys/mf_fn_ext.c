@@ -36,8 +36,6 @@
 char *fn_ext(const char *name)
 {
   register const char *pos, *gpos;
-  DBUG_ENTER("fn_ext");
-  DBUG_PRINT("mfunkt",("name: '%s'",name));
 
 #if defined(FN_DEVCHAR) || defined(FN_C_AFTER_DIR) || defined(BASKSLASH_MBTAIL)
   {
@@ -50,5 +48,5 @@ char *fn_ext(const char *name)
     gpos= name;
 #endif
   pos=strchr(gpos,FN_EXTCHAR);
-  DBUG_RETURN((char*) (pos ? pos : strend(gpos)));
+  return((char*) (pos ? pos : strend(gpos)));
 } /* fn_ext */

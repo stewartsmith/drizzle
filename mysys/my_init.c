@@ -95,14 +95,8 @@ void my_end(int infoflag)
     Sun CC: Sun C++ 5.6 2004/06/02 for x86, and should not be
     optimized until this compiler is not in use anymore
   */
-  FILE *info_file= DBUG_FILE;
-  bool print_info= (info_file != stderr);
-
-  if (!info_file)
-  {
-    info_file= stderr;
-    print_info= 0;
-  }
+  FILE *info_file= stderr;
+  bool print_info= 0;
 
   if ((infoflag & MY_CHECK_ERROR) || print_info)
 

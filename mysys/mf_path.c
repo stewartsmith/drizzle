@@ -35,7 +35,6 @@ char * my_path(char * to, const char *progname,
 {
   char *start, *end, *prog;
   size_t to_length;
-  DBUG_ENTER("my_path");
 
   start=to;					/* Return this */
   if (progname && (dirname_part(to, progname, &to_length) ||
@@ -67,8 +66,7 @@ char * my_path(char * to, const char *progname,
       *to++ = FN_LIBCHAR;
     VOID(strmov(to,own_pathname_part));
   }
-  DBUG_PRINT("exit",("to: '%s'",start));
-  DBUG_RETURN(start);
+  return(start);
 } /* my_path */
 
 
