@@ -336,7 +336,6 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
 
 static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
 {
-#ifdef HAVE_DLOPEN
   char dlpath[FN_REFLEN];
   uint plugin_dir_len, dummy_errors, dlpathlen;
   struct st_plugin_dl *tmp, plugin_dl;
@@ -505,19 +504,11 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     return(0);
   }
   return(tmp);
-#else
-  if (report & REPORT_TO_USER)
-    my_error(ER_FEATURE_DISABLED, MYF(0), "plugin", "HAVE_DLOPEN");
-  if (report & REPORT_TO_LOG)
-    sql_print_error(ER(ER_FEATURE_DISABLED), "plugin", "HAVE_DLOPEN");
-  return(0);
-#endif
 }
 
 
 static void plugin_dl_del(const LEX_STRING *dl)
 {
-#ifdef HAVE_DLOPEN
   uint i;
 
   for (i= 0; i < plugin_dl_array.elements; i++)
@@ -539,7 +530,6 @@ static void plugin_dl_del(const LEX_STRING *dl)
     }
   }
   return;
-#endif
 }
 
 

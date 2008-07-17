@@ -426,8 +426,9 @@ CHARSET_INFO *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
 
-SHOW_COMP_OPTION have_symlink, have_dlopen;
-SHOW_COMP_OPTION have_crypt, have_compress;
+SHOW_COMP_OPTION have_symlink;
+SHOW_COMP_OPTION have_crypt;
+SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
@@ -4376,11 +4377,6 @@ static void mysql_init_variables(void)
   have_symlink=SHOW_OPTION_NO;
 #else
   have_symlink=SHOW_OPTION_YES;
-#endif
-#ifdef HAVE_DLOPEN
-  have_dlopen=SHOW_OPTION_YES;
-#else
-  have_dlopen=SHOW_OPTION_NO;
 #endif
 #ifdef HAVE_CRYPT
   have_crypt=SHOW_OPTION_YES;

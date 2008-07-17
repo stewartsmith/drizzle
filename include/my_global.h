@@ -1014,21 +1014,14 @@ do { doubleget_union _tmp; \
 #define MYSQL_UNIVERSAL_CLIENT_CHARSET MYSQL_DEFAULT_CHARSET_NAME
 #endif
 
-#ifdef HAVE_DLOPEN
 #if defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
-#endif
 #endif
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
 #define RTLD_NOW 1
 #endif
-
-#ifndef HAVE_DLERROR
-#define dlerror() ""
-#endif
-
 
 /*
  *  Include standard definitions of operator new and delete.

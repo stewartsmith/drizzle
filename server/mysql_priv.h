@@ -1785,7 +1785,7 @@ extern SHOW_COMP_OPTION have_community_features;
 extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
-extern SHOW_COMP_OPTION have_symlink, have_dlopen;
+extern SHOW_COMP_OPTION have_symlink;
 extern SHOW_COMP_OPTION have_crypt;
 extern SHOW_COMP_OPTION have_compress;
 

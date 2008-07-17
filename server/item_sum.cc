@@ -2727,8 +2727,6 @@ int64_t Item_sum_count_distinct::val_int()
 ** Rewritten by: Monty.
 ****************************************************************************/
 
-#ifdef HAVE_DLOPEN
-
 void Item_udf_sum::clear()
 {
   udf.clear();
@@ -2873,9 +2871,6 @@ String *Item_sum_udf_str::val_str(String *str)
   null_value = !res;
   return(res);
 }
-
-#endif /* HAVE_DLOPEN */
-
 
 /*****************************************************************************
  GROUP_CONCAT function
