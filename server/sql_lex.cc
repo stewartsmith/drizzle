@@ -139,7 +139,6 @@ Lex_input_stream::Lex_input_stream(THD *thd,
   next_state(MY_LEX_START),
   found_semicolon(NULL),
   ignore_space(1),
-  stmt_prepare_mode(false),
   in_comment(NO_COMMENT),
   m_underscore_cs(NULL)
 {
@@ -829,17 +828,6 @@ int lex_one_token(void *arg, void *yythd)
         */
         lip->restart_token();
       }
-      else
-      {
-        /*
-          Check for a placeholder: it should not precede a possible identifier
-          because of binlogging: when a placeholder is replaced with
-          its value in a query for the binlog, the query must stay
-          grammatically correct.
-        */
-        if (c == '?' && lip->stmt_prepare_mode && !ident_map[(uint8_t)(lip->yyPeek())])
-        return(PARAM_MARKER);
-      }
 
       return((int) c);
 
@@ -1357,8 +1345,7 @@ int lex_one_token(void *arg, void *yythd)
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
-        if ((thd->client_capabilities & CLIENT_MULTI_STATEMENTS) && 
-            !lip->stmt_prepare_mode)
+        if ((thd->client_capabilities & CLIENT_MULTI_STATEMENTS))
         {
           lip->found_semicolon= lip->get_ptr();
           thd->server_status|= SERVER_MORE_RESULTS_EXISTS;
