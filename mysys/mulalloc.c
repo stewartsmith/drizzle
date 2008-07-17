@@ -36,7 +36,6 @@ void* my_multi_malloc(myf myFlags, ...)
   va_list args;
   char **ptr,*start,*res;
   size_t tot_length,length;
-  DBUG_ENTER("my_multi_malloc");
 
   va_start(args,myFlags);
   tot_length=0;
@@ -48,7 +47,7 @@ void* my_multi_malloc(myf myFlags, ...)
   va_end(args);
 
   if (!(start=(char *) my_malloc(tot_length,myFlags)))
-    DBUG_RETURN(0); /* purecov: inspected */
+    return(0); /* purecov: inspected */
 
   va_start(args,myFlags);
   res=start;
@@ -59,5 +58,5 @@ void* my_multi_malloc(myf myFlags, ...)
     res+=ALIGN_SIZE(length);
   }
   va_end(args);
-  DBUG_RETURN((void*) start);
+  return((void*) start);
 }
