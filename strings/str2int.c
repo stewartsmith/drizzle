@@ -65,13 +65,10 @@ char *str2int(register const char *src, register int radix, long int lower,
   *val = 0;
 
   /*  Check that the radix is in the range 2..36  */
-
-#ifndef DBUG_OFF
   if (radix < 2 || radix > 36) {
     errno=EDOM;
     return NullS;
   }
-#endif
 
   /*  The basic problem is: how do we handle the conversion of
       a number without resorting to machine-specific code to

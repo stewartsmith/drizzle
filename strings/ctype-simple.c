@@ -220,7 +220,7 @@ size_t my_caseup_8bit(CHARSET_INFO * cs, char *src, size_t srclen,
 {
   char *end= src + srclen;
   register uchar *map= cs->to_upper;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
   for ( ; src != end ; src++)
     *src= (char) map[(uchar) *src];
   return srclen;
@@ -233,7 +233,7 @@ size_t my_casedn_8bit(CHARSET_INFO * cs, char *src, size_t srclen,
 {
   char *end= src + srclen;
   register uchar *map=cs->to_lower;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
   for ( ; src != end ; src++)
     *src= (char) map[(uchar) *src];
   return srclen;
@@ -1800,7 +1800,7 @@ my_bool my_propagate_complex(CHARSET_INFO *cs __attribute__((unused)),
 
 uint my_strxfrm_flag_normalize(uint flags, uint maximum)
 {
-  DBUG_ASSERT(maximum >= 1 && maximum <= MY_STRXFRM_NLEVELS);
+  assert(maximum >= 1 && maximum <= MY_STRXFRM_NLEVELS);
   
   /* If levels are omitted, then 1-maximum is assumed*/
   if (!(flags & MY_STRXFRM_LEVEL_ALL))
@@ -1834,7 +1834,7 @@ uint my_strxfrm_flag_normalize(uint flags, uint maximum)
       else
       {
         /* Check that there are no DESC or REVERSE flag for skipped level */
-        DBUG_ASSERT(!(flag_dsc & src_bit) && !(flag_rev & src_bit));
+        assert(!(flag_dsc & src_bit) && !(flag_rev & src_bit));
       }
     }
     flags|= flag_pad;
