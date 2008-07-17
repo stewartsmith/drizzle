@@ -110,7 +110,7 @@ int handle_options(int *argc, char ***argv,
                    my_get_one_option get_one_option)
 {
   uint opt_found, argvpos= 0, length;
-  bool end_of_options= 0, must_be_var, set_maximum_value,
+  bool end_of_options= 0, must_be_var, set_maximum_value=false,
           option_is_loose;
   char **pos, **pos_end, *optend, *prev_found=NULL,
        *opt_str, key_name[FN_REFLEN];
@@ -264,8 +264,8 @@ int handle_options(int *argc, char ***argv,
                       disabled_my_option : (char*) "1";
 		    break;
 		  case OPT_MAXIMUM:
-		    set_maximum_value= 1;
-		    must_be_var= 1;
+		    set_maximum_value= true;
+		    must_be_var= true;
 		    break;
 		  }
 		  break; /* break from the inner loop, main loop continues */
@@ -489,35 +489,35 @@ invalid value '%s'",
 		}
 	      }
               if ((error= setval(optp, optp->value, argument,
-				 set_maximum_value)))
-	      {
+                                 set_maximum_value)))
+              {
                 my_getopt_error_reporter(ERROR_LEVEL,
                                          "%s: Error while setting value '%s' to '%s'",
                                          my_progname, argument, optp->name);
-		return error;
-	      }
-	      get_one_option(optp->id, optp, argument);
-	      break;
-	    }
-	  }
-	  if (!opt_found)
-	  {
-	    if (my_getopt_print_errors)
+                return error;
+              }
+              get_one_option(optp->id, optp, argument);
+              break;
+            }
+          }
+          if (!opt_found)
+          {
+            if (my_getopt_print_errors)
               my_getopt_error_reporter(ERROR_LEVEL,
                                        "%s: unknown option '-%c'", 
                                        my_progname, *optend);
-	    return EXIT_UNKNOWN_OPTION;
-	  }
-	}
-	(*argc)--; /* option handled (short), decrease argument count */
-	continue;
+            return EXIT_UNKNOWN_OPTION;
+          }
+        }
+        (*argc)--; /* option handled (short), decrease argument count */
+        continue;
       }
       if ((error= setval(optp, value, argument, set_maximum_value)))
       {
         my_getopt_error_reporter(ERROR_LEVEL,
                                  "%s: Error while setting value '%s' to '%s'",
                                  my_progname, argument, optp->name);
-	return error;
+        return error;
       }
       get_one_option(optp->id, optp, argument);
 
@@ -586,8 +586,8 @@ static char *check_struct_option(char *cur_arg, char *key_name)
   Will set the option value to given value
 */
 
-static int setval(const struct my_option *opts, char* *value, char *argument,
-		  bool set_maximum_value)
+static int setval(const struct my_option *opts, char **value, char *argument,
+                  bool set_maximum_value)
 {
   int err= 0;
 

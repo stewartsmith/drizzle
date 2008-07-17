@@ -57,4 +57,6 @@ extern void completion_hash_clean(HashTable *ht);
 extern int completion_hash_exists(HashTable *ht, char *arKey, uint nKeyLength);
 extern void completion_hash_free(HashTable *ht);
 
+uint hashpjw(const char *arKey, uint nKeyLength);
+
 #endif /* _HASH_ */

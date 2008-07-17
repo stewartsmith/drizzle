@@ -158,10 +158,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
     TERMINATE(stderr, 0);		/* Print memory leaks on screen */
   }
 
-  if (!(infoflag & MY_DONT_FREE_DBUG))
-  {
-    DBUG_END();                /* Must be done before my_thread_end */
-  }
   my_thread_end();
   my_thread_global_end();
 #if defined(SAFE_MUTEX)

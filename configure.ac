@@ -365,6 +365,11 @@ AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
+AM_PATH_GLIB_2_0
+if test "x$no_glib" != "x" ; then
+    AC_MSG_ERROR([Couldn't find GLib2. Try installing libglib2.0-dev or glib2-devel])
+fi
+
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
 # This must be able to take a -f flag like normal unix ln.

@@ -70,7 +70,6 @@ typedef struct my_aio_result {
 
 #define MY_CHECK_ERROR	1	/* Params to my_end; Check open-close */
 #define MY_GIVE_INFO	2	/* Give time info about process*/
-#define MY_DONT_FREE_DBUG 4     /* Do not call DBUG_END() in my_end() */
 
 #define MY_REMOVE_NONE    0     /* Params for modify_defaults_file */
 #define MY_REMOVE_OPTION  1

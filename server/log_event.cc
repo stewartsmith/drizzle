@@ -4497,7 +4497,7 @@ void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
       double real_val;
       char real_buf[FMT_G_BUFSIZE(14)];
       float8get(real_val, val);
-      my_sprintf(real_buf, (real_buf, "%.14g", real_val));
+      sprintf(real_buf, "%.14g", real_val);
       my_b_printf(&cache, ":=%s%s\n", real_buf, print_event_info->delimiter);
       break;
     case INT_RESULT:
@@ -5229,9 +5229,8 @@ void Append_block_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
   uint length;
-  length= (uint) my_sprintf(buf,
-			    (buf, ";file_id=%u;block_len=%u", file_id,
-			     block_len));
+  length= (uint) sprintf(buf, ";file_id=%u;block_len=%u", file_id,
+			     block_len);
   protocol->store(buf, length, &my_charset_bin);
 }
 
@@ -5370,7 +5369,7 @@ void Delete_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
   uint length;
-  length= (uint) my_sprintf(buf, (buf, ";file_id=%u", (uint) file_id));
+  length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
   protocol->store(buf, (int32) length, &my_charset_bin);
 }
 #endif
@@ -5468,7 +5467,7 @@ void Execute_load_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
   uint length;
-  length= (uint) my_sprintf(buf, (buf, ";file_id=%u", (uint) file_id));
+  length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
   protocol->store(buf, (int32) length, &my_charset_bin);
 }
 
