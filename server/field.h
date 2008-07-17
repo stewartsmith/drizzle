@@ -1404,179 +1404,6 @@ private:
 };
 
 
-class Field_blob :public Field_longstr {
-protected:
-  uint packlength;
-  String value;				// For temporaries
-public:
-  Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     TABLE_SHARE *share, uint blob_pack_length, CHARSET_INFO *cs);
-  Field_blob(uint32 len_arg,bool maybe_null_arg, const char *field_name_arg,
-             CHARSET_INFO *cs)
-    :Field_longstr((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
-                   NONE, field_name_arg, cs),
-    packlength(4)
-  {
-    flags|= BLOB_FLAG;
-  }
-  Field_blob(uint32 len_arg,bool maybe_null_arg, const char *field_name_arg,
-	     CHARSET_INFO *cs, bool set_packlength)
-    :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
-                   NONE, field_name_arg, cs)
-  {
-    flags|= BLOB_FLAG;
-    packlength= 4;
-    if (set_packlength)
-    {
-      uint32 l_char_length= len_arg/cs->mbmaxlen;
-      packlength= l_char_length <= 255 ? 1 :
-                  l_char_length <= 65535 ? 2 :
-                  l_char_length <= 16777215 ? 3 : 4;
-    }
-  }
-  Field_blob(uint32 packlength_arg)
-    :Field_longstr((uchar*) 0, 0, (uchar*) "", 0, NONE, "temp", system_charset_info),
-    packlength(packlength_arg) {}
-  enum_field_types type() const { return MYSQL_TYPE_BLOB;}
-  enum ha_base_keytype key_type() const
-    { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val);
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  my_decimal *val_decimal(my_decimal *);
-  int cmp_max(const uchar *, const uchar *, uint max_length);
-  int cmp(const uchar *a,const uchar *b)
-    { return cmp_max(a, b, ~0L); }
-  int cmp(const uchar *a, uint32 a_length, const uchar *b, uint32 b_length);
-  int cmp_binary(const uchar *a,const uchar *b, uint32 max_length=~0L);
-  int key_cmp(const uchar *,const uchar*);
-  int key_cmp(const uchar *str, uint length);
-  uint32 key_length() const { return 0; }
-  void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const
-  { return (uint32) (packlength+table->s->blob_ptr_size); }
-
-  /**
-     Return the packed length without the pointer size added. 
-
-     This is used to determine the size of the actual data in the row
-     buffer.
-
-     @returns The length of the raw data itself without the pointer.
-  */
-  uint32 pack_length_no_ptr() const
-  { return (uint32) (packlength); }
-  uint row_pack_length() { return pack_length_no_ptr(); }
-  uint32 sort_length() const;
-  virtual uint32 max_data_length() const
-  {
-    return (uint32) (((uint64_t) 1 << (packlength*8)) -1);
-  }
-  int reset(void) { bzero(ptr, packlength+sizeof(uchar*)); return 0; }
-  void reset_fields() { bzero((uchar*) &value,sizeof(value)); }
-#ifndef WORDS_BIGENDIAN
-  static
-#endif
-  void store_length(uchar *i_ptr, uint i_packlength, uint32 i_number, bool low_byte_first);
-  void store_length(uchar *i_ptr, uint i_packlength, uint32 i_number)
-  {
-    store_length(i_ptr, i_packlength, i_number, table->s->db_low_byte_first);
-  }
-  inline void store_length(uint32 number)
-  {
-    store_length(ptr, packlength, number);
-  }
-
-  /**
-     Return the packed length plus the length of the data. 
-
-     This is used to determine the size of the data plus the 
-     packed length portion in the row data.
-
-     @returns The length in the row plus the size of the data.
-  */
-  uint32 get_packed_size(const uchar *ptr_arg, bool low_byte_first)
-    {return packlength + get_length(ptr_arg, packlength, low_byte_first);}
-
-  inline uint32 get_length(uint row_offset= 0)
-  { return get_length(ptr+row_offset, this->packlength, table->s->db_low_byte_first); }
-  uint32 get_length(const uchar *ptr, uint packlength, bool low_byte_first);
-  uint32 get_length(const uchar *ptr_arg)
-  { return get_length(ptr_arg, this->packlength, table->s->db_low_byte_first); }
-  void put_length(uchar *pos, uint32 length);
-  inline void get_ptr(uchar **str)
-    {
-      memcpy_fixed((uchar*) str,ptr+packlength,sizeof(uchar*));
-    }
-  inline void get_ptr(uchar **str, uint row_offset)
-    {
-      memcpy_fixed((uchar*) str,ptr+packlength+row_offset,sizeof(char*));
-    }
-  inline void set_ptr(uchar *length, uchar *data)
-    {
-      memcpy(ptr,length,packlength);
-      memcpy_fixed(ptr+packlength,&data,sizeof(char*));
-    }
-  void set_ptr_offset(my_ptrdiff_t ptr_diff, uint32 length, uchar *data)
-    {
-      uchar *ptr_ofs= ADD_TO_PTR(ptr,ptr_diff,uchar*);
-      store_length(ptr_ofs, packlength, length);
-      memcpy_fixed(ptr_ofs+packlength,&data,sizeof(char*));
-    }
-  inline void set_ptr(uint32 length, uchar *data)
-    {
-      set_ptr_offset(0, length, data);
-    }
-  uint get_key_image(uchar *buff,uint length, imagetype type);
-  void set_key_image(const uchar *buff,uint length);
-  void sql_type(String &str) const;
-  inline bool copy()
-  {
-    uchar *tmp;
-    get_ptr(&tmp);
-    if (value.copy((char*) tmp, get_length(), charset()))
-    {
-      Field_blob::reset();
-      return 1;
-    }
-    tmp=(uchar*) value.ptr();
-    memcpy_fixed(ptr+packlength,&tmp,sizeof(char*));
-    return 0;
-  }
-  virtual uchar *pack(uchar *to, const uchar *from,
-                      uint max_length, bool low_byte_first);
-  uchar *pack_key(uchar *to, const uchar *from,
-                  uint max_length, bool low_byte_first);
-  uchar *pack_key_from_key_image(uchar* to, const uchar *from,
-                                 uint max_length, bool low_byte_first);
-  virtual const uchar *unpack(uchar *to, const uchar *from,
-                              uint param_data, bool low_byte_first);
-  const uchar *unpack_key(uchar* to, const uchar *from,
-                          uint max_length, bool low_byte_first);
-  int pack_cmp(const uchar *a, const uchar *b, uint key_length,
-               my_bool insert_or_update);
-  int pack_cmp(const uchar *b, uint key_length,my_bool insert_or_update);
-  uint packed_col_length(const uchar *col_ptr, uint length);
-  uint max_packed_col_length(uint max_length);
-  void free() { value.free(); }
-  inline void clear_temporary() { bzero((uchar*) &value,sizeof(value)); }
-  friend int field_conv(Field *to,Field *from);
-  uint size_of() const { return sizeof(*this); }
-  bool has_charset(void) const
-  { return charset() == &my_charset_bin ? false : true; }
-  uint32 max_display_length();
-  uint is_equal(Create_field *new_field);
-  inline bool in_read_set() { return bitmap_is_set(table->read_set, field_index); }
-  inline bool in_write_set() { return bitmap_is_set(table->write_set, field_index); }
-private:
-  int do_save_field_metadata(uchar *first_byte);
-};
-
-
 class Field_enum :public Field_str {
 protected:
   uint packlength;
@@ -1772,6 +1599,12 @@ uint32 calc_pack_length(enum_field_types type,uint32 length);
 int set_field_to_null(Field *field);
 int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 
+bool
+check_string_copy_error(Field_str *field,
+                        const char *well_formed_error_pos,
+                        const char *cannot_convert_error_pos,
+                        const char *end,
+                        CHARSET_INFO *cs);
 /*
   The following are for the interface with the .frm file
 */
