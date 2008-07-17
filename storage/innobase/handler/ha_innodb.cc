@@ -151,10 +151,6 @@ static ulong	innobase_active_counter	= 0;
 
 static HASH	innobase_open_tables;
 
-#ifdef __NETWARE__	/* some special cleanup for NetWare */
-bool nw_panic = FALSE;
-#endif
-
 static uchar* innobase_get_key(INNOBASE_SHARE *share, size_t *length,
 	my_bool not_used __attribute__((unused)));
 static INNOBASE_SHARE *get_share(const char *table_name);
@@ -1692,11 +1688,6 @@ innobase_end(handlerton *hton __attribute__((__unused__)),
 {
 	int	err= 0;
 
-#ifdef __NETWARE__	/* some special cleanup for NetWare */
-	if (nw_panic) {
-		set_panic_flag_for_netware();
-	}
-#endif
 	if (innodb_inited) {
 
 		srv_fast_shutdown = (ulint) innobase_fast_shutdown;
