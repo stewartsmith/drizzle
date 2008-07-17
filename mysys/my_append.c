@@ -39,8 +39,6 @@ int my_append(const char *from, const char *to, myf MyFlags)
   uint Count;
   File from_file,to_file;
   uchar buff[IO_SIZE];
-  DBUG_ENTER("my_append");
-  DBUG_PRINT("my",("from %s to %s MyFlags %d", from, to, MyFlags));
 
   from_file= to_file= -1;
 
@@ -53,12 +51,12 @@ int my_append(const char *from, const char *to, myf MyFlags)
 	    my_write(to_file,buff,Count,MYF(MyFlags | MY_NABP)))
 	  goto err;
       if (my_close(from_file,MyFlags) | my_close(to_file,MyFlags))
-	DBUG_RETURN(-1);				/* Error on close */
-      DBUG_RETURN(0);
+	return(-1);				/* Error on close */
+      return(0);
     }
   }
 err:
   if (from_file >= 0) VOID(my_close(from_file,MyFlags));
   if (to_file >= 0)   VOID(my_close(to_file,MyFlags));
-  DBUG_RETURN(-1);
+  return(-1);
 }

@@ -119,8 +119,8 @@ int handle_options(int *argc, char ***argv,
   int error, i;
 
   /* handle_options() assumes arg0 (program name) always exists */
-  DBUG_ASSERT(argc && *argc >= 1);
-  DBUG_ASSERT(argv && *argv);
+  assert(argc && *argc >= 1);
+  assert(argv && *argv);
   (*argc)--; /* Skip the program name */
   (*argv)++; /*      --- || ----      */
   init_variables(longopts, init_one_value);
@@ -822,7 +822,7 @@ int64_t getopt_ll_limit_value(int64_t num, const struct my_option *optp,
 #endif
     break;
   default:
-    DBUG_ASSERT((optp->var_type & GET_TYPE_MASK) == GET_LL);
+    assert((optp->var_type & GET_TYPE_MASK) == GET_LL);
     break;
   }
 
@@ -890,7 +890,7 @@ uint64_t getopt_ull_limit_value(uint64_t num, const struct my_option *optp,
 #endif
     break;
   default:
-    DBUG_ASSERT((optp->var_type & GET_TYPE_MASK) == GET_ULL);
+    assert((optp->var_type & GET_TYPE_MASK) == GET_ULL);
     break;
   }
 
@@ -960,7 +960,6 @@ static double getopt_double(char *arg, const struct my_option *optp, int *err)
 static void init_one_value(const struct my_option *option, char** variable,
 			   int64_t value)
 {
-  DBUG_ENTER("init_one_value");
   switch ((option->var_type & GET_TYPE_MASK)) {
   case GET_BOOL:
     *((bool*) variable)= (bool) value;
@@ -1014,7 +1013,7 @@ static void init_one_value(const struct my_option *option, char** variable,
   default: /* dummy default to avoid compiler warnings */
     break;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1030,7 +1029,6 @@ static void init_one_value(const struct my_option *option, char** variable,
 static void fini_one_value(const struct my_option *option, char **variable,
 			   int64_t value __attribute__ ((unused)))
 {
-  DBUG_ENTER("fini_one_value");
   switch ((option->var_type & GET_TYPE_MASK)) {
   case GET_STR_ALLOC:
     my_free((*(char**) variable), MYF(MY_ALLOW_ZERO_PTR));
@@ -1039,7 +1037,7 @@ static void fini_one_value(const struct my_option *option, char **variable,
   default: /* dummy default to avoid compiler warnings */
     break;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1065,11 +1063,9 @@ void my_cleanup_options(const struct my_option *options)
 static void init_variables(const struct my_option *options,
                            init_func_p init_one_value)
 {
-  DBUG_ENTER("init_variables");
   for (; options->name; options++)
   {
     char* *variable;
-    DBUG_PRINT("options", ("name: '%s'", options->name));
     /*
       We must set u_max_value first as for some variables
       options->u_max_value == options->value and in this case we want to
@@ -1083,7 +1079,7 @@ static void init_variables(const struct my_option *options,
 	(variable= (*getopt_get_addr)("", 0, options)))
       init_one_value(options, variable, options->def_value);
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
