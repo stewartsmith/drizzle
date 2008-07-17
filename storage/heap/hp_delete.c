@@ -25,7 +25,7 @@ int heap_delete(HP_INFO *info, const uchar *record)
 
   test_active(info);
 
-  if (info->opt_flag & READ_CHECK_USED && hp_rectest(info,record))
+  if (info->opt_flag & READ_CHECK_USED)
     return(my_errno);			/* Record changed */
   share->changed=1;
 

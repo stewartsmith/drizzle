@@ -376,6 +376,7 @@ typedef struct st_mi_sort_param
 #define READING_NEXT	1
 #define READING_HEADER	2
 
+
 #define mi_getint(x)	((uint) mi_uint2korr(x) & 32767)
 #define mi_putint(x,y,nod) { uint16 boh=(nod ? (uint16) 32768 : 0) + (uint16) (y);\
 			  mi_int2store(x,boh); }
@@ -770,8 +771,14 @@ extern size_t my_pread(File Filedes,uchar *Buffer,size_t Count,my_off_t offset,
 
 /* Needed for handler */
 void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
+void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
+                        const char *message __attribute__((unused)),
+                        const char *sfile __attribute__((unused)),
+                        uint sline __attribute__((unused)));
+
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif

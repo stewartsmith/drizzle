@@ -27,7 +27,7 @@ int heap_update(HP_INFO *info, const uchar *old, const uchar *heap_new)
   test_active(info);
   pos=info->current_ptr;
 
-  if (info->opt_flag & READ_CHECK_USED && hp_rectest(info,old))
+  if (info->opt_flag & READ_CHECK_USED)
     return(my_errno);				/* Record changed */
   if (--(share->records) < share->blength >> 1) share->blength>>= 1;
   share->changed=1;

@@ -545,7 +545,10 @@ static uchar *_mi_find_last_pos(MI_KEYDEF *keyinfo, uchar *page,
 				uchar *key, uint *return_key_length,
 				uchar **after_key)
 {
-  uint keys, length, last_length, key_ref_length;
+  uint keys;
+  uint length;
+  uint last_length= 0;
+  uint key_ref_length;
   uchar *end, *lastpos, *prevpos= NULL;
   uchar key_buff[MI_MAX_KEY_BUFF];
 
