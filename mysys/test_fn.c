@@ -46,12 +46,7 @@ int main(int argc __attribute__((unused)), char **argv)
 {
   const char **pos;
   char buff[FN_REFLEN],buff2[FN_REFLEN];
-  DBUG_ENTER ("main");
-  DBUG_PROCESS (argv[0]);
   MY_INIT(argv[0]);
-
-  if (argv[1] && argv[1][1] == '#')
-    DBUG_PUSH(argv[1]+2);
 
   for (pos=test_names; *pos ; pos++)
   {
@@ -65,5 +60,5 @@ int main(int argc __attribute__((unused)), char **argv)
     }
     puts("");
   }
-  DBUG_RETURN(0);
+  return(0);
 }
