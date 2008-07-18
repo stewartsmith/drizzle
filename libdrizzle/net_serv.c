@@ -434,6 +434,10 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   const uchar *pos,*end;
   uint retry_count= 0;
 
+  /* Backup of the original SO_RCVTIMEO timeout */
+  struct timeval backtime;
+  int error;
+
   if (net->error == 2)
     DBUG_RETURN(-1);				/* socket can't be used */
 
@@ -463,6 +467,28 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     packet= b;
   }
 
+  /* Check for error, currently assert */
+  if (net->write_timeout)
+  {
+    struct timeval waittime;
+    socklen_t length;
+
+    waittime.tv_sec= net->write_timeout;
+    waittime.tv_usec= 0;
+
+    memset(&backtime, 0, sizeof(struct timeval));
+    length= sizeof(struct timeval);
+    error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
+                      &backtime, &length);
+    if (error != 0)
+    {
+      perror("getsockopt");
+      assert(error == 0);
+    }
+    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
+                      &waittime, (socklen_t)sizeof(struct timeval));
+    assert(error == 0);
+  }
   pos= packet;
   end=pos+len;
   /* Loop until we have read everything */
@@ -513,6 +539,10 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   if (net->compress)
     my_free((char*) packet,MYF(0));
   net->reading_or_writing=0;
+
+  if (net->write_timeout)
+    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
+                      &backtime, (socklen_t)sizeof(struct timeval));
 
   DBUG_RETURN(((int) (pos != end)));
 }
