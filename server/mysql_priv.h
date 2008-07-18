@@ -670,7 +670,6 @@ typedef my_bool (*qc_engine_callback)(THD *thd, char *table_key,
 
 /* Field definitions */
 #include "field.h"
-#include "field/blob.h"
 
 #include "protocol.h"
 #include "sql_udf.h"
