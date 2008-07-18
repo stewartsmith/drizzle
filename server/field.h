@@ -1010,50 +1010,6 @@ private:
 };
 
 
-/* Everything saved in this will disappear. It will always return NULL */
-
-class Field_null :public Field_str {
-  static uchar null[1];
-public:
-  Field_null(uchar *ptr_arg, uint32 len_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     CHARSET_INFO *cs)
-    :Field_str(ptr_arg, len_arg, null, 1,
-	       unireg_check_arg, field_name_arg, cs)
-    {}
-  enum_field_types type() const { return MYSQL_TYPE_NULL;}
-  int  store(const char *to __attribute__((__unused__)),
-             uint length __attribute__((__unused__)),
-             CHARSET_INFO *cs __attribute__((__unused__)))
-  { null[0]=1; return 0; }
-  int store(double nr __attribute__((__unused__)))
-  { null[0]=1; return 0; }
-  int store(int64_t nr __attribute__((__unused__)),
-            bool unsigned_val __attribute__((__unused__)))
-  { null[0]=1; return 0; }
-  int store_decimal(const my_decimal *d __attribute__((__unused__)))
-  { null[0]=1; return 0; }
-  int reset(void)
-  { return 0; }
-  double val_real(void)
-  { return 0.0;}
-  int64_t val_int(void)
-  { return 0;}
-  my_decimal *val_decimal(my_decimal *) { return 0; }
-  String *val_str(String *value __attribute__((__unused__)),
-                  String *value2)
-  { value2->length(0); return value2;}
-  int cmp(const uchar *a __attribute__((__unused__)),
-          const uchar *b __attribute__((__unused__))) { return 0;}
-  void sort_string(uchar *buff __attribute__((__unused__)),
-                   uint length __attribute__((__unused__)))  {}
-  uint32 pack_length() const { return 0; }
-  void sql_type(String &str) const;
-  uint size_of() const { return sizeof(*this); }
-  uint32 max_display_length() { return 4; }
-};
-
-
 class Field_timestamp :public Field_str {
 public:
   Field_timestamp(uchar *ptr_arg, uint32 len_arg,
@@ -1115,27 +1071,6 @@ public:
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);
   timestamp_auto_set_type get_auto_set_type() const;
-};
-
-
-class Field_year :public Field_tiny {
-public:
-  Field_year(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
-	     uchar null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg)
-    :Field_tiny(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-		unireg_check_arg, field_name_arg, 1, 1)
-    {}
-  enum_field_types type() const { return MYSQL_TYPE_YEAR;}
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val);
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
-  void sql_type(String &str) const;
-  bool can_be_compared_as_int64_t() const { return true; }
 };
 
 
@@ -1570,6 +1505,8 @@ check_string_copy_error(Field_str *field,
   Field subclasses
  */
 #include "field/blob.h"
+#include "field/null.h"
+#include "field/year.h"
 #include "field/datetime.h"
 
 /*
