@@ -958,41 +958,6 @@ private:
 };
 
 
-class Field_time :public Field_str {
-public:
-  Field_time(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
-	     enum utype unireg_check_arg, const char *field_name_arg,
-	     CHARSET_INFO *cs)
-    :Field_str(ptr_arg, 8, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg, cs)
-    {}
-  Field_time(bool maybe_null_arg, const char *field_name_arg,
-             CHARSET_INFO *cs)
-    :Field_str((uchar*) 0,8, maybe_null_arg ? (uchar*) "": 0,0,
-	       NONE, field_name_arg, cs) {}
-  enum_field_types type() const { return MYSQL_TYPE_TIME;}
-  enum ha_base_keytype key_type() const { return HA_KEYTYPE_INT24; }
-  enum Item_result cmp_type () const { return INT_RESULT; }
-  int store_time(MYSQL_TIME *ltime, timestamp_type type);
-  int store(const char *to,uint length,CHARSET_INFO *charset);
-  int store(double nr);
-  int store(int64_t nr, bool unsigned_val);
-  int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  bool get_date(MYSQL_TIME *ltime, uint fuzzydate);
-  bool send_binary(Protocol *protocol);
-  bool get_time(MYSQL_TIME *ltime);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 3; }
-  void sql_type(String &str) const;
-  bool can_be_compared_as_int64_t() const { return true; }
-  bool zero_pack() const { return 1; }
-};
-
-
 class Field_string :public Field_longstr {
 public:
   bool can_alter_field_type;
@@ -1050,98 +1015,6 @@ public:
   { return charset() == &my_charset_bin ? false : true; }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
   virtual uint get_key_image(uchar *buff,uint length, imagetype type);
-private:
-  int do_save_field_metadata(uchar *first_byte);
-};
-
-
-class Field_varstring :public Field_longstr {
-public:
-  /*
-    The maximum space available in a Field_varstring, in bytes. See
-    length_bytes.
-  */
-  static const uint MAX_SIZE;
-  /* Store number of bytes used to store length (1 or 2) */
-  uint32 length_bytes;
-  Field_varstring(uchar *ptr_arg,
-                  uint32 len_arg, uint length_bytes_arg,
-                  uchar *null_ptr_arg, uchar null_bit_arg,
-		  enum utype unireg_check_arg, const char *field_name_arg,
-		  TABLE_SHARE *share, CHARSET_INFO *cs)
-    :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-                   unireg_check_arg, field_name_arg, cs),
-     length_bytes(length_bytes_arg)
-  {
-    share->varchar_fields++;
-  }
-  Field_varstring(uint32 len_arg,bool maybe_null_arg,
-                  const char *field_name_arg,
-                  TABLE_SHARE *share, CHARSET_INFO *cs)
-    :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
-                   NONE, field_name_arg, cs),
-     length_bytes(len_arg < 256 ? 1 :2)
-  {
-    share->varchar_fields++;
-  }
-
-  enum_field_types type() const { return MYSQL_TYPE_VARCHAR; }
-  enum ha_base_keytype key_type() const;
-  uint row_pack_length() { return field_length; }
-  bool zero_pack() const { return 0; }
-  int  reset(void) { bzero(ptr,field_length+length_bytes); return 0; }
-  uint32 pack_length() const { return (uint32) field_length+length_bytes; }
-  uint32 key_length() const { return (uint32) field_length; }
-  uint32 sort_length() const
-  {
-    return (uint32) field_length + (field_charset == &my_charset_bin ?
-                                    length_bytes : 0);
-  }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
-  int  store(int64_t nr, bool unsigned_val);
-  int  store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  my_decimal *val_decimal(my_decimal *);
-  int cmp_max(const uchar *, const uchar *, uint max_length);
-  int cmp(const uchar *a,const uchar *b)
-  {
-    return cmp_max(a, b, ~0L);
-  }
-  void sort_string(uchar *buff,uint length);
-  uint get_key_image(uchar *buff,uint length, imagetype type);
-  void set_key_image(const uchar *buff,uint length);
-  void sql_type(String &str) const;
-  virtual uchar *pack(uchar *to, const uchar *from,
-                      uint max_length, bool low_byte_first);
-  uchar *pack_key(uchar *to, const uchar *from, uint max_length, bool low_byte_first);
-  uchar *pack_key_from_key_image(uchar* to, const uchar *from,
-                                 uint max_length, bool low_byte_first);
-  virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data, bool low_byte_first);
-  const uchar *unpack_key(uchar* to, const uchar *from,
-                          uint max_length, bool low_byte_first);
-  int pack_cmp(const uchar *a, const uchar *b, uint key_length,
-               my_bool insert_or_update);
-  int pack_cmp(const uchar *b, uint key_length,my_bool insert_or_update);
-  int cmp_binary(const uchar *a,const uchar *b, uint32 max_length=~0L);
-  int key_cmp(const uchar *,const uchar*);
-  int key_cmp(const uchar *str, uint length);
-  uint packed_col_length(const uchar *to, uint length);
-  uint max_packed_col_length(uint max_length);
-  uint32 data_length();
-  uint32 used_length();
-  uint size_of() const { return sizeof(*this); }
-  enum_field_types real_type() const { return MYSQL_TYPE_VARCHAR; }
-  bool has_charset(void) const
-  { return charset() == &my_charset_bin ? false : true; }
-  Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
-  Field *new_key_field(MEM_ROOT *root, struct st_table *new_table,
-                       uchar *new_ptr, uchar *new_null_ptr,
-                       uint new_null_bit);
-  uint is_equal(Create_field *new_field);
-  void hash(ulong *nr, ulong *nr2);
 private:
   int do_save_field_metadata(uchar *first_byte);
 };
@@ -1357,8 +1230,10 @@ check_string_copy_error(Field_str *field,
 #include "field/year.h"
 #include "field/new_date.h"
 #include "field/new_decimal.h"
+#include "field/timetype.h"
 #include "field/timestamp.h"
 #include "field/datetime.h"
+#include "field/varstring.h"
 
 /*
   The following are for the interface with the .frm file

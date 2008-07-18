@@ -81,8 +81,8 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			thr_malloc.cc item_create.cc item_subselect.cc \
 			item_row.cc \
 			field.cc field/blob.cc field/null.cc field/datetime.cc \
-			field/timestamp.cc field/new_date.cc field/year.cc \
-			field/new_decimal.cc \
+			field/timetype.cc field/timestamp.cc field/new_date.cc field/year.cc \
+			field/new_decimal.cc field/varstring.cc\
 			strfunc.cc key.cc sql_class.cc sql_list.cc \
 			protocol.cc sql_state.c \
 			lock.cc \
