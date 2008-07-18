@@ -121,52 +121,48 @@ static bool show_plugins(THD *thd, plugin_ref plugin,
   table->field[3]->store(plugin_type_names[plug->type].str,
                          plugin_type_names[plug->type].length,
                          cs);
-  table->field[4]->set_null();
 
   if (plugin_dl)
   {
-    table->field[5]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
-    table->field[5]->set_notnull();
+    table->field[4]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
+    table->field[4]->set_notnull();
   }
   else
   {
-    table->field[5]->set_null();
+    table->field[4]->set_null();
   }
-
-  table->field[6]->set_null();
-
 
   if (plug->author)
   {
-    table->field[7]->store(plug->author, strlen(plug->author), cs);
-    table->field[7]->set_notnull();
+    table->field[5]->store(plug->author, strlen(plug->author), cs);
+    table->field[5]->set_notnull();
   }
   else
-    table->field[7]->set_null();
+    table->field[5]->set_null();
 
   if (plug->descr)
   {
-    table->field[8]->store(plug->descr, strlen(plug->descr), cs);
-    table->field[8]->set_notnull();
+    table->field[6]->store(plug->descr, strlen(plug->descr), cs);
+    table->field[6]->set_notnull();
   }
   else
-    table->field[8]->set_null();
+    table->field[6]->set_null();
 
   switch (plug->license) {
   case PLUGIN_LICENSE_GPL:
-    table->field[9]->store(PLUGIN_LICENSE_GPL_STRING, 
+    table->field[7]->store(PLUGIN_LICENSE_GPL_STRING, 
                            strlen(PLUGIN_LICENSE_GPL_STRING), cs);
     break;
   case PLUGIN_LICENSE_BSD:
-    table->field[9]->store(PLUGIN_LICENSE_BSD_STRING, 
+    table->field[7]->store(PLUGIN_LICENSE_BSD_STRING, 
                            strlen(PLUGIN_LICENSE_BSD_STRING), cs);
     break;
   default:
-    table->field[9]->store(PLUGIN_LICENSE_PROPRIETARY_STRING, 
+    table->field[7]->store(PLUGIN_LICENSE_PROPRIETARY_STRING, 
                            strlen(PLUGIN_LICENSE_PROPRIETARY_STRING), cs);
     break;
   }
-  table->field[9]->set_notnull();
+  table->field[7]->set_notnull();
 
   return schema_table_store_record(thd, table);
 }
@@ -4630,15 +4626,13 @@ ST_FIELD_INFO processlist_fields_info[]=
 
 ST_FIELD_INFO plugin_fields_info[]=
 {
-  {"PLUGIN_NAME", NAME_CHAR_LEN, MYSQL_TYPE_STRING, 0, 0, "Name",
+  {"PLUGIN_NAME", NAME_CHAR_LEN, MYSQL_TYPE_STRING, 0, 0, "Name", 
    SKIP_OPEN_TABLE},
   {"PLUGIN_VERSION", 20, MYSQL_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_STATUS", 10, MYSQL_TYPE_STRING, 0, 0, "Status", SKIP_OPEN_TABLE},
   {"PLUGIN_TYPE", 80, MYSQL_TYPE_STRING, 0, 0, "Type", SKIP_OPEN_TABLE},
-  {"PLUGIN_TYPE_VERSION", 20, MYSQL_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_LIBRARY", NAME_CHAR_LEN, MYSQL_TYPE_STRING, 0, 1, "Library",
    SKIP_OPEN_TABLE},
-  {"PLUGIN_LIBRARY_VERSION", 20, MYSQL_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_AUTHOR", NAME_CHAR_LEN, MYSQL_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_DESCRIPTION", 65535, MYSQL_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
   {"PLUGIN_LICENSE", 80, MYSQL_TYPE_STRING, 0, 1, "License", SKIP_OPEN_TABLE},
