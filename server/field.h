@@ -567,6 +567,7 @@ public:
                int64_t signed_min, int64_t signed_max);
 };
 
+/* base class for all string related classes */
 
 class Field_str :public Field {
 protected:
@@ -683,164 +684,6 @@ public:
   {
     *to= *from;
     return from + 1;
-  }
-};
-
-
-class Field_short :public Field_num {
-public:
-  Field_short(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
-	      uchar null_bit_arg,
-	      enum utype unireg_check_arg, const char *field_name_arg,
-	      bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg,
-	       0, zero_arg,unsigned_arg)
-    {}
-  Field_short(uint32 len_arg,bool maybe_null_arg, const char *field_name_arg,
-	      bool unsigned_arg)
-    :Field_num((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0,0,
-	       NONE, field_name_arg, 0, 0, unsigned_arg)
-    {}
-  enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types type() const { return MYSQL_TYPE_SHORT;}
-  enum ha_base_keytype key_type() const
-    { return unsigned_flag ? HA_KEYTYPE_USHORT_INT : HA_KEYTYPE_SHORT_INT;}
-  int store(const char *to,uint length,CHARSET_INFO *charset);
-  int store(double nr);
-  int store(int64_t nr, bool unsigned_val);
-  int reset(void) { ptr[0]=ptr[1]=0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 2; }
-  void sql_type(String &str) const;
-  uint32 max_display_length() { return 6; }
-
-  virtual uchar *pack(uchar* to, const uchar *from,
-                      uint max_length __attribute__((__unused__)),
-                      bool low_byte_first __attribute__((__unused__)))
-  {
-    int16 val;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      val = sint2korr(from);
-    else
-#endif
-      shortget(val, from);
-
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      int2store(to, val);
-    else
-#endif
-      shortstore(to, val);
-    return to + sizeof(val);
-  }
-
-  virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data __attribute__((__unused__)),
-                              bool low_byte_first __attribute__((__unused__)))
-  {
-    int16 val;
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      val = sint2korr(from);
-    else
-#endif
-      shortget(val, from);
-
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      int2store(to, val);
-    else
-#endif
-      shortstore(to, val);
-    return from + sizeof(val);
-  }
-};
-
-class Field_int64_t :public Field_num {
-public:
-  Field_int64_t(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
-	      uchar null_bit_arg,
-	      enum utype unireg_check_arg, const char *field_name_arg,
-	      bool zero_arg, bool unsigned_arg)
-    :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg,
-	       0, zero_arg,unsigned_arg)
-    {}
-  Field_int64_t(uint32 len_arg,bool maybe_null_arg,
-		 const char *field_name_arg,
-		  bool unsigned_arg)
-    :Field_num((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0,0,
-	       NONE, field_name_arg,0,0,unsigned_arg)
-    {}
-  enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types type() const { return MYSQL_TYPE_LONGLONG;}
-  enum ha_base_keytype key_type() const
-    { return unsigned_flag ? HA_KEYTYPE_ULONGLONG : HA_KEYTYPE_LONGLONG; }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
-  int store(double nr);
-  int store(int64_t nr, bool unsigned_val);
-  int reset(void)
-  {
-    ptr[0]=ptr[1]=ptr[2]=ptr[3]=ptr[4]=ptr[5]=ptr[6]=ptr[7]=0;
-    return 0;
-  }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 8; }
-  void sql_type(String &str) const;
-  bool can_be_compared_as_int64_t() const { return true; }
-  uint32 max_display_length() { return 20; }
-  virtual uchar *pack(uchar* to, const uchar *from,
-                      uint max_length __attribute__((__unused__)),
-                      bool low_byte_first __attribute__((__unused__)))
-  {
-    int64_t val;
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      val = sint8korr(from);
-    else
-#endif
-      int64_tget(val, from);
-
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      int8store(to, val);
-    else
-#endif
-      int64_tstore(to, val);
-    return to + sizeof(val);
-  }
-
-  virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data __attribute__((__unused__)),
-                              bool low_byte_first __attribute__((__unused__)))
-  {
-    int64_t val;
-#ifdef WORDS_BIGENDIAN
-    if (low_byte_first)
-      val = sint8korr(from);
-    else
-#endif
-      int64_tget(val, from);
-
-#ifdef WORDS_BIGENDIAN
-    if (table->s->db_low_byte_first)
-      int8store(to, val);
-    else
-#endif
-      int64_tstore(to, val);
-    return from + sizeof(val);
   }
 };
 
@@ -1056,7 +899,9 @@ check_string_copy_error(Field_str *field,
 #include "field/date.h"
 #include "field/decimal.h"
 #include "field/double.h"
+#include "field/short.h"
 #include "field/long.h"
+#include "field/int64_t.h"
 #include "field/timetype.h"
 #include "field/timestamp.h"
 #include "field/datetime.h"

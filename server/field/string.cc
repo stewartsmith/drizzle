@@ -27,6 +27,11 @@
 #define LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE 128
 #define DECIMAL_TO_STRING_CONVERSION_BUFFER_SIZE 128
 
+/****************************************************************************
+** string type
+** A string may be varchar or binary
+****************************************************************************/
+
 /* Copy a string and fill with space */
 int Field_string::store(const char *from,uint length,CHARSET_INFO *cs)
 {
