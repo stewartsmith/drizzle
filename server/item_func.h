@@ -987,8 +987,6 @@ public:
 };
 
 
-#ifdef HAVE_DLOPEN
-
 class Item_udf_func :public Item_func
 {
 protected:
@@ -1164,57 +1162,6 @@ public:
   void fix_length_and_dec();
 };
 
-#else /* Dummy functions to get sql_yacc.cc compiled */
-
-class Item_func_udf_float :public Item_real_func
-{
- public:
-  Item_func_udf_float(udf_func *udf_arg)
-    :Item_real_func() {}
-  Item_func_udf_float(udf_func *udf_arg, List<Item> &list)
-    :Item_real_func(list) {}
-  double val_real() { assert(fixed == 1); return 0.0; }
-};
-
-
-class Item_func_udf_int :public Item_int_func
-{
-public:
-  Item_func_udf_int(udf_func *udf_arg)
-    :Item_int_func() {}
-  Item_func_udf_int(udf_func *udf_arg, List<Item> &list)
-    :Item_int_func(list) {}
-  int64_t val_int() { assert(fixed == 1); return 0; }
-};
-
-
-class Item_func_udf_decimal :public Item_int_func
-{
-public:
-  Item_func_udf_decimal(udf_func *udf_arg)
-    :Item_int_func() {}
-  Item_func_udf_decimal(udf_func *udf_arg, List<Item> &list)
-    :Item_int_func(list) {}
-  my_decimal *val_decimal(my_decimal *) { assert(fixed == 1); return 0; }
-};
-
-
-class Item_func_udf_str :public Item_func
-{
-public:
-  Item_func_udf_str(udf_func *udf_arg)
-    :Item_func() {}
-  Item_func_udf_str(udf_func *udf_arg, List<Item> &list)
-    :Item_func(list) {}
-  String *val_str(String *)
-    { assert(fixed == 1); null_value=1; return 0; }
-  double val_real() { assert(fixed == 1); null_value= 1; return 0.0; }
-  int64_t val_int() { assert(fixed == 1); null_value=1; return 0; }
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void fix_length_and_dec() { maybe_null=1; max_length=0; }
-};
-
-#endif /* HAVE_DLOPEN */
 
 /* replication functions */
 

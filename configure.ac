@@ -679,18 +679,17 @@ AC_CHECK_TYPES([fp_except], [], [], [
 #include <ieeefp.h>
 ])
 
-
 my_save_LIBS="$LIBS"
 LIBS=""
 AC_CHECK_LIB(dl,dlopen)
+AC_CHECK_FUNCS(dlopen dlerror)
+if test "$ac_cv_func_dlopen" != "yes"
+then
+  AC_MSG_ERROR([Drizzle requires dlopen])
+fi
 LIBDL=$LIBS
 LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL)
-
-my_save_LIBS="$LIBS"
-LIBS="$LIBS $LIBDL"
-AC_CHECK_FUNCS(dlopen dlerror)
-LIBS="$my_save_LIBS"
 
 AC_CHECK_FUNCS(strtok_r)
 
