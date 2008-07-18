@@ -288,7 +288,6 @@ bool trust_function_creators= 0;
   check them before each query (and possibly reset counters when hour is
   changed). False otherwise.
 */
-volatile bool mqh_used = 0;
 bool opt_noacl;
 
 ulong opt_binlog_rows_event_max_size;
@@ -4269,7 +4268,6 @@ static void mysql_init_variables(void)
   opt_secure_auth= 0;
   opt_secure_file_priv= 0;
   opt_bootstrap= opt_myisam_log= 0;
-  mqh_used= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
   defaults_argc= 0;

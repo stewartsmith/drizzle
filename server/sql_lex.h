@@ -1366,12 +1366,6 @@ public:
   /** SQL_MODE = IGNORE_SPACE. */
   bool ignore_space;
 
-  /**
-    true if we're parsing a prepared statement: in this mode
-    we should allow placeholders and disallow multi-statements.
-  */
-  bool stmt_prepare_mode;
-
   /** State of the lexical analyser for comments. */
   enum_comment_state in_comment;
 
@@ -1414,7 +1408,6 @@ typedef struct st_lex : public Query_tables_list
   char *length,*dec,*change;
   LEX_STRING name;
   char *help_arg;
-  LEX_STRING backup_dir;				/* For RESTORE/BACKUP */
   char* to_log;                                 /* For PURGE MASTER LOGS TO */
   char* x509_subject,*x509_issuer,*ssl_cipher;
   String *wild;
@@ -1468,7 +1461,6 @@ typedef struct st_lex : public Query_tables_list
   KEY_CREATE_INFO key_create_info;
   LEX_MASTER_INFO mi;				// used by CHANGE MASTER
   LEX_SERVER_OPTIONS server_options;
-  USER_RESOURCES mqh;
   ulong type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
