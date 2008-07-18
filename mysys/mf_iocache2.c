@@ -73,7 +73,7 @@ my_off_t my_b_append_tell(IO_CACHE* info)
     Prevent optimizer from putting res in a register when debugging
     we need this to be able to see the value of res when the assert fails
   */
-  dbug_volatile my_off_t res; 
+  volatile my_off_t res; 
 
   /*
     We need to lock the append buffer mutex to keep flush_io_cache()
