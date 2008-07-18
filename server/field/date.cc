@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "new_date.h"
+#include "date.h"
 
 /****************************************************************************
 ** The new date type
