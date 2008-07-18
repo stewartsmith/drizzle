@@ -7917,9 +7917,6 @@ static SHOW_VAR innodb_status_variables_export[]= {
 /**/
 
 
-static struct st_mysql_storage_engine innobase_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 /* plugin options */
 static MYSQL_SYSVAR_BOOL(checksums, innobase_use_checksums,
   PLUGIN_VAR_NOCMDARG | PLUGIN_VAR_READONLY,
@@ -8157,14 +8154,13 @@ static struct st_mysql_sys_var* innobase_system_variables[]= {
 mysql_declare_plugin(innobase)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &innobase_storage_engine,
   innobase_hton_name,
+  "1.0", 
   "Innobase OY",
   "Supports transactions, row-level locking, and foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
   NULL, /* Plugin Deinit */
-  0x0100 /* 1.0 */,
   innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */

@@ -1586,20 +1586,16 @@ bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *info __attribute__((__u
   return COMPATIBLE_DATA_YES;
 }
 
-struct st_mysql_storage_engine csv_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 mysql_declare_plugin(csv)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &csv_storage_engine,
   "CSV",
+  "1.0",
   "Brian Aker, MySQL AB",
   "CSV storage engine",
   PLUGIN_LICENSE_GPL,
   tina_init_func, /* Plugin Init */
   tina_done_func, /* Plugin Deinit */
-  0x0100 /* 1.0 */,
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */

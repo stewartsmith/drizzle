@@ -82,11 +82,6 @@ int wild_case_compare(CHARSET_INFO *cs, const char *str,const char *wildstr)
 ** List all table types supported
 ***************************************************************************/
 
-static int make_version_string(char *buf, int buf_length, uint version)
-{
-  return snprintf(buf, buf_length, "%d.%d", version>>8,version&0xff);
-}
-
 static bool show_plugins(THD *thd, plugin_ref plugin,
                             void *arg)
 {
@@ -94,17 +89,19 @@ static bool show_plugins(THD *thd, plugin_ref plugin,
   struct st_mysql_plugin *plug= plugin_decl(plugin);
   struct st_plugin_dl *plugin_dl= plugin_dlib(plugin);
   CHARSET_INFO *cs= system_charset_info;
-  char version_buf[20];
 
   restore_record(table, s->default_values);
 
   table->field[0]->store(plugin_name(plugin)->str,
                          plugin_name(plugin)->length, cs);
 
-  table->field[1]->store(version_buf,
-        make_version_string(version_buf, sizeof(version_buf), plug->version),
-        cs);
-
+  if (plug->version)
+  {
+    table->field[1]->store(plug->version, strlen(plug->version), cs);
+    table->field[1]->set_notnull();
+  }
+  else
+    table->field[1]->set_null();
 
   switch (plugin_state(plugin)) {
   /* case PLUGIN_IS_FREED: does not happen */
@@ -124,25 +121,19 @@ static bool show_plugins(THD *thd, plugin_ref plugin,
   table->field[3]->store(plugin_type_names[plug->type].str,
                          plugin_type_names[plug->type].length,
                          cs);
-  table->field[4]->store(version_buf,
-        make_version_string(version_buf, sizeof(version_buf),
-                            *(uint *)plug->info), cs);
+  table->field[4]->set_null();
 
   if (plugin_dl)
   {
     table->field[5]->store(plugin_dl->dl.str, plugin_dl->dl.length, cs);
     table->field[5]->set_notnull();
-    table->field[6]->store(version_buf,
-          make_version_string(version_buf, sizeof(version_buf),
-                              plugin_dl->version),
-          cs);
-    table->field[6]->set_notnull();
   }
   else
   {
     table->field[5]->set_null();
-    table->field[6]->set_null();
   }
+
+  table->field[6]->set_null();
 
 
   if (plug->author)

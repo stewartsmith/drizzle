@@ -1562,20 +1562,16 @@ static struct st_mysql_sys_var* archive_system_variables[]= {
   NULL
 };
 
-struct st_mysql_storage_engine archive_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 mysql_declare_plugin(archive)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &archive_storage_engine,
   "ARCHIVE",
+  "3.5",
   "Brian Aker, MySQL AB",
   "Archive storage engine",
   PLUGIN_LICENSE_GPL,
   archive_db_init, /* Plugin Init */
   archive_db_done, /* Plugin Deinit */
-  0x0350 /* 3.0 */,
   NULL,                       /* status variables                */
   archive_system_variables,   /* system variables                */
   NULL                        /* config options                  */

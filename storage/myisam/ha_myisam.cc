@@ -1882,20 +1882,16 @@ Item *ha_myisam::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
 }
 
 
-struct st_mysql_storage_engine myisam_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 mysql_declare_plugin(myisam)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &myisam_storage_engine,
   "MyISAM",
+  "1.0",
   "MySQL AB",
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
   NULL, /* Plugin Deinit */
-  0x0100, /* 1.0 */
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
