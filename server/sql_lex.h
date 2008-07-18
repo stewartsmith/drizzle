@@ -615,8 +615,6 @@ public:
   */
   bool first_execution;
   bool first_cond_optimization;
-  /* do not wrap view fields with Item_ref */
-  bool no_wrap_view_item;
   /* exclude this select from check of unique_table() */
   bool exclude_from_table_unique_test;
   /* List of fields that aren't under an aggregate function */
@@ -1368,12 +1366,6 @@ public:
   /** SQL_MODE = IGNORE_SPACE. */
   bool ignore_space;
 
-  /**
-    true if we're parsing a prepared statement: in this mode
-    we should allow placeholders and disallow multi-statements.
-  */
-  bool stmt_prepare_mode;
-
   /** State of the lexical analyser for comments. */
   enum_comment_state in_comment;
 
@@ -1416,7 +1408,6 @@ typedef struct st_lex : public Query_tables_list
   char *length,*dec,*change;
   LEX_STRING name;
   char *help_arg;
-  LEX_STRING backup_dir;				/* For RESTORE/BACKUP */
   char* to_log;                                 /* For PURGE MASTER LOGS TO */
   char* x509_subject,*x509_issuer,*ssl_cipher;
   String *wild;
@@ -1440,13 +1431,11 @@ typedef struct st_lex : public Query_tables_list
   List<Key_part_spec> col_list;
   List<Key_part_spec> ref_list;
   List<String>	      interval_list;
-  List<LEX_USER>      users_list;
   List<LEX_COLUMN>    columns;
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
   List<set_var_base>  var_list;
   List<Item_param>    param_list;
-  List<LEX_STRING>    view_list; // view list (list of field names in view)
   /*
     A stack of name resolution contexts for the query. This stack is used
     at parse time to set local name resolution contexts for various parts
@@ -1472,7 +1461,6 @@ typedef struct st_lex : public Query_tables_list
   KEY_CREATE_INFO key_create_info;
   LEX_MASTER_INFO mi;				// used by CHANGE MASTER
   LEX_SERVER_OPTIONS server_options;
-  USER_RESOURCES mqh;
   ulong type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -1531,14 +1519,6 @@ typedef struct st_lex : public Query_tables_list
   bool verbose, no_write_to_binlog;
 
   bool tx_chain, tx_release;
-  /*
-    Special JOIN::prepare mode: changing of query is prohibited.
-    When creating a view, we need to just check its syntax omitting
-    any optimizations: afterwards definition of the view will be
-    reconstructed by means of ::print() methods and written to
-    to an .frm file. We need this definition to stay untouched.
-  */
-  bool view_prepare_mode;
   bool subqueries, ignore;
   st_parsing_options parsing_options;
   Alter_info alter_info;

@@ -517,7 +517,6 @@ JOIN::prepare(Item ***rref_pointer_array,
     thd->lex->allow_sum_func= save_allow_sum_func;
   }
 
-  if (!thd->lex->view_prepare_mode)
   {
     Item_subselect *subselect;
     Item_in_subselect *in_subs= NULL;
@@ -632,14 +631,11 @@ JOIN::prepare(Item ***rref_pointer_array,
         if ((trans_res= subselect->select_transformer(this)) !=
             Item_subselect::RES_OK)
         {
-          select_lex->fix_prepare_information(thd, &conds, &having);
           return((trans_res == Item_subselect::RES_ERROR));
         }
       }
     }
   }
-
-  select_lex->fix_prepare_information(thd, &conds, &having);
 
   if (order)
   {
@@ -1282,8 +1278,6 @@ JOIN::optimize()
     /* Convert all outer joins to inner joins if possible */
     conds= simplify_joins(this, join_list, conds, true, false);
     build_bitmap_for_nested_joins(join_list, 0);
-
-    sel->prep_where= conds ? conds->copy_andor_structure(thd) : 0;
   }
 
   conds= optimize_cond(this, conds, join_list, &cond_value);   

@@ -1787,8 +1787,6 @@ public:
     return (abort_on_warning);
   }
   void set_status_var_init();
-  bool is_context_analysis_only()
-    { return lex->view_prepare_mode; }
   void reset_n_backup_open_tables_state(Open_tables_state *backup);
   void restore_backup_open_tables_state(Open_tables_state *backup);
   void restore_sub_statement_state(Sub_statement_state *backup);
