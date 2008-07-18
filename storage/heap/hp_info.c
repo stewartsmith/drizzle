@@ -29,7 +29,6 @@ uchar *heap_position(HP_INFO *info)
 
 int heap_info(register HP_INFO *info, register HEAPINFO *x, int flag )
 {
-  DBUG_ENTER("heap_info");
   x->records         = info->s->records;
   x->deleted         = info->s->deleted;
   x->reclength       = info->s->reclength;
@@ -39,5 +38,5 @@ int heap_info(register HP_INFO *info, register HEAPINFO *x, int flag )
   x->errkey          = info->errkey;
   if (flag & HA_STATUS_AUTO)
     x->auto_increment= info->s->auto_increment + 1;
-  DBUG_RETURN(0);
+  return(0);
 } /* heap_info */

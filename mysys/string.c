@@ -26,7 +26,6 @@ bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
 			    size_t init_alloc, size_t alloc_increment)
 {
   uint length;
-  DBUG_ENTER("init_dynamic_string");
 
   if (!alloc_increment)
     alloc_increment=128;
@@ -37,20 +36,19 @@ bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
     init_alloc=alloc_increment;
 
   if (!(str->str=(char*) my_malloc(init_alloc,MYF(MY_WME))))
-    DBUG_RETURN(true);
+    return(true);
   str->length=length-1;
   if (init_str)
     memcpy(str->str,init_str,length);
   str->max_length=init_alloc;
   str->alloc_increment=alloc_increment;
-  DBUG_RETURN(false);
+  return(false);
 }
 
 
 bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
 {
   uint length=0;
-  DBUG_ENTER("dynstr_set");
 
   if (init_str && (length= (uint) strlen(init_str)+1) > str->max_length)
   {
@@ -59,7 +57,7 @@ bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
     if (!str->max_length)
       str->max_length=str->alloc_increment;
     if (!(str->str=(char*) my_realloc(str->str,str->max_length,MYF(MY_WME))))
-      DBUG_RETURN(true);
+      return(true);
   }
   if (init_str)
   {
@@ -68,23 +66,21 @@ bool dynstr_set(DYNAMIC_STRING *str, const char *init_str)
   }
   else
     str->length=0;
-  DBUG_RETURN(false);
+  return(false);
 }
 
 
 bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size)
 {
-  DBUG_ENTER("dynstr_realloc");
-
-  if (!additional_size) DBUG_RETURN(false);
+  if (!additional_size) return(false);
   if (str->length + additional_size > str->max_length)
   {
     str->max_length=((str->length + additional_size+str->alloc_increment-1)/
 		     str->alloc_increment)*str->alloc_increment;
     if (!(str->str=(char*) my_realloc(str->str,str->max_length,MYF(MY_WME))))
-      DBUG_RETURN(true);
+      return(true);
   }
-  DBUG_RETURN(false);
+  return(false);
 }
 
 

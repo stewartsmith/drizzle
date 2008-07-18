@@ -20,16 +20,12 @@
 
 int my_mkdir(const char *dir, int Flags, myf MyFlags)
 {
-  DBUG_ENTER("my_dir");
-  DBUG_PRINT("enter",("dir: %s",dir));
-
   if (mkdir((char*) dir, Flags & my_umask_dir))
   {
     my_errno=errno;
-    DBUG_PRINT("error",("error %d when creating direcory %s",my_errno,dir));
     if (MyFlags & (MY_FFNF | MY_FAE | MY_WME))
       my_error(EE_CANT_MKDIR,  MYF(ME_BELL+ME_WAITTANG), dir, my_errno);
-    DBUG_RETURN(-1);
+    return(-1);
   }
-  DBUG_RETURN(0);
+  return(0);
 }

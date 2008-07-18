@@ -32,9 +32,6 @@ File my_create(const char *FileName, int CreateFlags, int access_flags,
 	       myf MyFlags)
 {
   int fd, rc;
-  DBUG_ENTER("my_create");
-  DBUG_PRINT("my",("Name: '%s' CreateFlags: %d  AccessFlags: %d  MyFlags: %d",
-		   FileName, CreateFlags, access_flags, MyFlags));
 
 #if !defined(NO_OPEN_3)
   fd = open((char *) FileName, access_flags | O_CREAT,
@@ -65,5 +62,5 @@ File my_create(const char *FileName, int CreateFlags, int access_flags,
     my_errno= tmp;
   }
   
-  DBUG_RETURN(rc);
+  return(rc);
 } /* my_create */

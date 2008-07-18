@@ -36,9 +36,6 @@
 size_t my_read(File Filedes, uchar *Buffer, size_t Count, myf MyFlags)
 {
   size_t readbytes, save_count;
-  DBUG_ENTER("my_read");
-  DBUG_PRINT("my",("Fd: %d  Buffer: 0x%lx  Count: %lu  MyFlags: %d",
-                   Filedes, (long) Buffer, (ulong) Count, MyFlags));
   save_count= Count;
 
   for (;;)
@@ -47,13 +44,8 @@ size_t my_read(File Filedes, uchar *Buffer, size_t Count, myf MyFlags)
     if ((readbytes= read(Filedes, Buffer, Count)) != Count)
     {
       my_errno= errno ? errno : -1;
-      DBUG_PRINT("warning",("Read only %d bytes off %lu from %d, errno: %d",
-                            (int) readbytes, (ulong) Count, Filedes,
-                            my_errno));
       if ((readbytes == 0 || (int) readbytes == -1) && errno == EINTR)
       {  
-        DBUG_PRINT("debug", ("my_read() was interrupted and returned %ld",
-                             (long) readbytes));
         continue;                              /* Interrupted */
       }
       if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
@@ -67,7 +59,7 @@ size_t my_read(File Filedes, uchar *Buffer, size_t Count, myf MyFlags)
       }
       if (readbytes == (size_t) -1 ||
           ((MyFlags & (MY_FNABP | MY_NABP)) && !(MyFlags & MY_FULL_IO)))
-        DBUG_RETURN(MY_FILE_ERROR);	/* Return with error */
+        return(MY_FILE_ERROR);	/* Return with error */
       if (readbytes != (size_t) -1 && (MyFlags & MY_FULL_IO))
       {
         Buffer+= readbytes;
@@ -82,5 +74,5 @@ size_t my_read(File Filedes, uchar *Buffer, size_t Count, myf MyFlags)
       readbytes= save_count;
     break;
   }
-  DBUG_RETURN(readbytes);
+  return(readbytes);
 } /* my_read */

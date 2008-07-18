@@ -170,8 +170,6 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
   const uchar *format_position;
   my_bool found_delimitier= 0, found_space= 0;
   uint frac_pos, frac_len;
-  DBUG_ENTER("str_to_datetime");
-  DBUG_PRINT("ENTER",("str: %.*s",length,str));
 
   *was_cut= 0;
 
@@ -181,7 +179,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
   if (str == end || ! my_isdigit(&my_charset_latin1, *str))
   {
     *was_cut= 1;
-    DBUG_RETURN(MYSQL_TIMESTAMP_NONE);
+    return(MYSQL_TIMESTAMP_NONE);
   }
 
   is_internal_format= 0;
@@ -228,7 +226,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
         if (flags & TIME_DATETIME_ONLY)
         {
           *was_cut= 1;
-          DBUG_RETURN(MYSQL_TIMESTAMP_NONE);   /* Can't be a full datetime */
+          return(MYSQL_TIMESTAMP_NONE);   /* Can't be a full datetime */
         }
         /* Date field.  Set hour, minutes and seconds to 0 */
         date[0]= date[1]= date[2]= date[3]= date[4]= 0;
@@ -270,7 +268,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
     if (tmp_value > 999999)                     /* Impossible date part */
     {
       *was_cut= 1;
-      DBUG_RETURN(MYSQL_TIMESTAMP_NONE);
+      return(MYSQL_TIMESTAMP_NONE);
     }
     date[i]=tmp_value;
     not_zero_date|= tmp_value;
@@ -307,7 +305,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
         if (!(allow_space & (1 << i)))
         {
           *was_cut= 1;
-          DBUG_RETURN(MYSQL_TIMESTAMP_NONE);
+          return(MYSQL_TIMESTAMP_NONE);
         }
         found_space= 1;
       }
@@ -338,7 +336,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
   if (found_delimitier && !found_space && (flags & TIME_DATETIME_ONLY))
   {
     *was_cut= 1;
-    DBUG_RETURN(MYSQL_TIMESTAMP_NONE);          /* Can't be a datetime */
+    return(MYSQL_TIMESTAMP_NONE);          /* Can't be a datetime */
   }
 
   str= last_field_pos;
@@ -356,7 +354,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
     if (!year_length)                           /* Year must be specified */
     {
       *was_cut= 1;
-      DBUG_RETURN(MYSQL_TIMESTAMP_NONE);
+      return(MYSQL_TIMESTAMP_NONE);
     }
 
     l_time->year=               date[(uint) format_position[0]];
@@ -435,13 +433,13 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
     }
   }
 
-  DBUG_RETURN(l_time->time_type=
+  return(l_time->time_type=
               (number_of_fields <= 3 ? MYSQL_TIMESTAMP_DATE :
                                        MYSQL_TIMESTAMP_DATETIME));
 
 err:
   bzero((char*) l_time, sizeof(*l_time));
-  DBUG_RETURN(MYSQL_TIMESTAMP_ERROR);
+  return(MYSQL_TIMESTAMP_ERROR);
 }
 
 
@@ -757,19 +755,16 @@ long calc_daynr(uint year,uint month,uint day)
 {
   long delsum;
   int temp;
-  DBUG_ENTER("calc_daynr");
 
   if (year == 0 && month == 0 && day == 0)
-    DBUG_RETURN(0);				/* Skip errors */
+    return(0);				/* Skip errors */
   delsum= (long) (365L * year+ 31*(month-1) +day);
   if (month <= 2)
       year--;
   else
     delsum-= (long) (month*4+23)/10;
   temp=(int) ((year/100+1)*3)/4;
-  DBUG_PRINT("exit",("year: %d  month: %d  day: %d -> daynr: %ld",
-		     year+(month <= 2),month,day,delsum+year/4-temp));
-  DBUG_RETURN(delsum+(int) year/4-temp);
+  return(delsum+(int) year/4-temp);
 } /* calc_daynr */
 
 
@@ -1062,7 +1057,7 @@ int my_TIME_to_str(const MYSQL_TIME *l_time, char *to)
     to[0]='\0';
     return 0;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     return 0;
   }
 }
@@ -1239,7 +1234,7 @@ uint64_t TIME_to_uint64_t(const MYSQL_TIME *my_time)
   case MYSQL_TIMESTAMP_ERROR:
     return 0ULL;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
   }
   return 0;
 }

@@ -22,7 +22,6 @@ int heap_rfirst(HP_INFO *info, uchar *record, int inx)
   HP_SHARE *share = info->s;
   HP_KEYDEF *keyinfo = share->keydef + inx;
   
-  DBUG_ENTER("heap_rfirst");
   info->lastinx= inx;
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
   {
@@ -51,21 +50,21 @@ int heap_rfirst(HP_INFO *info, uchar *record, int inx)
     else
     {
       my_errno = HA_ERR_END_OF_FILE;
-      DBUG_RETURN(my_errno);
+      return(my_errno);
     }
-    DBUG_RETURN(0);
+    return(0);
   }
   else
   {
     if (!(info->s->records))
     {
       my_errno=HA_ERR_END_OF_FILE;
-      DBUG_RETURN(my_errno);
+      return(my_errno);
     }
-    DBUG_ASSERT(0); /* TODO fix it */
+    assert(0); /* TODO fix it */
     info->current_record=0;
     info->current_hash_ptr=0;
     info->update=HA_STATE_PREV_FOUND;
-    DBUG_RETURN(heap_rnext(info,record));
+    return(heap_rnext(info,record));
   }
 }

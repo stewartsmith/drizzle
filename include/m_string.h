@@ -336,7 +336,7 @@ static inline const uchar *skip_trailing_space(const uchar *ptr,size_t len)
     const uchar *start_words= (const uchar *)(intptr_t)
        ((((uint64_t)(intptr_t)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
 
-    DBUG_ASSERT(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);
+    assert(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);
     if (end_words > ptr)
     {
       while (end > end_words && end[-1] == 0x20)

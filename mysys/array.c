@@ -44,7 +44,6 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
                             void *init_buffer, uint init_alloc, 
                             uint alloc_increment CALLER_INFO_PROTO)
 {
-  DBUG_ENTER("init_dynamic_array");
   if (!alloc_increment)
   {
     alloc_increment=max((8192-MALLOC_OVERHEAD)/element_size,16);
@@ -62,14 +61,14 @@ bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
   array->alloc_increment=alloc_increment;
   array->size_of_element=element_size;
   if ((array->buffer= init_buffer))
-    DBUG_RETURN(false);
+    return(false);
   if (!(array->buffer=(uchar*) my_malloc_ci(element_size*init_alloc,
                                             MYF(MY_WME))))
   {
     array->max_element=0;
-    DBUG_RETURN(true);
+    return(true);
   }
-  DBUG_RETURN(false);
+  return(false);
 } 
 
 bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
@@ -278,8 +277,6 @@ void get_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
 {
   if (idx >= array->elements)
   {
-    DBUG_PRINT("warning",("To big array idx: %d, array size is %d",
-                          idx,array->elements));
     bzero(element,array->size_of_element);
     return;
   }

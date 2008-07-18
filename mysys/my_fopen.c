@@ -38,9 +38,6 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
 {
   FILE *fd;
   char type[5];
-  DBUG_ENTER("my_fopen");
-  DBUG_PRINT("my",("Name: '%s'  flags: %d  MyFlags: %d",
-		   filename, flags, MyFlags));
   /* 
     if we are not creating, then we need to use my_access to make sure  
     the file exists since Windows doesn't handle files like "com1.sym" 
@@ -61,7 +58,7 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
     if ((uint) fileno(fd) >= my_file_limit)
     {
       thread_safe_increment(my_stream_opened,&THR_LOCK_open);
-      DBUG_RETURN(fd);				/* safeguard */
+      return(fd);				/* safeguard */
     }
     pthread_mutex_lock(&THR_LOCK_open);
     if ((my_file_info[fileno(fd)].name = (char*)
@@ -71,8 +68,7 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
       my_file_total_opened++;
       my_file_info[fileno(fd)].type = STREAM_BY_FOPEN;
       pthread_mutex_unlock(&THR_LOCK_open);
-      DBUG_PRINT("exit",("stream: 0x%lx", (long) fd));
-      DBUG_RETURN(fd);
+      return(fd);
     }
     pthread_mutex_unlock(&THR_LOCK_open);
     (void) my_fclose(fd,MyFlags);
@@ -80,12 +76,11 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
   }
   else
     my_errno=errno;
-  DBUG_PRINT("error",("Got error %d on open",my_errno));
   if (MyFlags & (MY_FFNF | MY_FAE | MY_WME))
     my_error((flags & O_RDONLY) || (flags == O_RDONLY ) ? EE_FILENOTFOUND :
 	     EE_CANTCREATEFILE,
 	     MYF(ME_BELL+ME_WAITTANG), filename, my_errno);
-  DBUG_RETURN((FILE*) 0);
+  return((FILE*) 0);
 } /* my_fopen */
 
 
@@ -94,8 +89,6 @@ FILE *my_fopen(const char *filename, int flags, myf MyFlags)
 int my_fclose(FILE *fd, myf MyFlags)
 {
   int err,file;
-  DBUG_ENTER("my_fclose");
-  DBUG_PRINT("my",("stream: 0x%lx  MyFlags: %d", (long) fd, MyFlags));
 
   pthread_mutex_lock(&THR_LOCK_open);
   file=fileno(fd);
@@ -114,7 +107,7 @@ int my_fclose(FILE *fd, myf MyFlags)
     my_free(my_file_info[file].name, MYF(MY_ALLOW_ZERO_PTR));
   }
   pthread_mutex_unlock(&THR_LOCK_open);
-  DBUG_RETURN(err);
+  return(err);
 } /* my_fclose */
 
 
@@ -125,9 +118,6 @@ FILE *my_fdopen(File Filedes, const char *name, int Flags, myf MyFlags)
 {
   FILE *fd;
   char type[5];
-  DBUG_ENTER("my_fdopen");
-  DBUG_PRINT("my",("Fd: %d  Flags: %d  MyFlags: %d",
-		   Filedes, Flags, MyFlags));
 
   make_ftype(type,Flags);
   if ((fd = fdopen(Filedes, type)) == 0)
@@ -155,8 +145,7 @@ FILE *my_fdopen(File Filedes, const char *name, int Flags, myf MyFlags)
     pthread_mutex_unlock(&THR_LOCK_open);
   }
 
-  DBUG_PRINT("exit",("stream: 0x%lx", (long) fd));
-  DBUG_RETURN(fd);
+  return(fd);
 } /* my_fdopen */
 
 
@@ -188,8 +177,8 @@ FILE *my_fdopen(File Filedes, const char *name, int Flags, myf MyFlags)
 static void make_ftype(register char * to, register int flag)
 {
   /* check some possible invalid combinations */  
-  DBUG_ASSERT((flag & (O_TRUNC | O_APPEND)) != (O_TRUNC | O_APPEND));
-  DBUG_ASSERT((flag & (O_WRONLY | O_RDWR)) != (O_WRONLY | O_RDWR));
+  assert((flag & (O_TRUNC | O_APPEND)) != (O_TRUNC | O_APPEND));
+  assert((flag & (O_WRONLY | O_RDWR)) != (O_WRONLY | O_RDWR));
 
   if ((flag & (O_RDONLY|O_WRONLY)) == O_WRONLY)    
     *to++= (flag & O_APPEND) ? 'a' : 'w';  

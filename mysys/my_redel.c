@@ -42,9 +42,6 @@ struct utimbuf {
 int my_redel(const char *org_name, const char *tmp_name, myf MyFlags)
 {
   int error=1;
-  DBUG_ENTER("my_redel");
-  DBUG_PRINT("my",("org_name: '%s' tmp_name: '%s'  MyFlags: %d",
-		   org_name,tmp_name,MyFlags));
 
   if (my_copystat(org_name,tmp_name,MyFlags) < 0)
     goto end;
@@ -66,7 +63,7 @@ int my_redel(const char *org_name, const char *tmp_name, myf MyFlags)
 
   error=0;
 end:
-  DBUG_RETURN(error);
+  return(error);
 } /* my_redel */
 
 

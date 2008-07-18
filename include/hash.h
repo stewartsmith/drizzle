@@ -65,7 +65,6 @@ bool my_hash_insert(HASH *info,const uchar *data);
 bool hash_delete(HASH *hash,uchar *record);
 bool hash_update(HASH *hash,uchar *record,uchar *old_key,size_t old_key_length);
 void hash_replace(HASH *hash, HASH_SEARCH_STATE *state, uchar *new_row);
-bool hash_check(HASH *hash);			/* Only in debug library */
 
 #define hash_clear(H) bzero((char*) (H),sizeof(*(H)))
 #define hash_inited(H) ((H)->array.buffer != 0)

@@ -37,20 +37,17 @@ uchar *my_malloc_lock(uint size,myf MyFlags)
   uint pagesize=sysconf(_SC_PAGESIZE);
   uchar *ptr;
   struct st_mem_list *element;
-  DBUG_ENTER("my_malloc_lock");
 
   size=((size-1) & ~(pagesize-1))+pagesize;
   if (!(ptr=memalign(pagesize,size)))
   {
     if (MyFlags & (MY_FAE+MY_WME))
       my_error(EE_OUTOFMEMORY, MYF(ME_BELL+ME_WAITTANG),size);
-    DBUG_RETURN(0);
+    return(0);
   }
   success = mlock((uchar*) ptr,size);
   if (success != 0 && geteuid() == 0)
   {
-    DBUG_PRINT("warning",("Failed to lock memory. errno %d\n",
-			  errno));
     fprintf(stderr, "Warning: Failed to lock memory. errno %d\n",
 	    errno);
   }
@@ -61,7 +58,7 @@ uchar *my_malloc_lock(uint size,myf MyFlags)
     {
       VOID(munlock((uchar*) ptr,size));
       free(ptr);
-      DBUG_RETURN(0);
+      return(0);
     }
     element->list.data=(uchar*) element;
     element->page=ptr;
@@ -70,7 +67,7 @@ uchar *my_malloc_lock(uint size,myf MyFlags)
     mem_list=list_add(mem_list,&element->list);
     pthread_mutex_unlock(&THR_LOCK_malloc);
   }
-  DBUG_RETURN(ptr);
+  return(ptr);
 }
 
 

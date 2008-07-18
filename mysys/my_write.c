@@ -24,14 +24,11 @@ size_t my_write(int Filedes, const uchar *Buffer, size_t Count, myf MyFlags)
 {
   size_t writenbytes, written;
   uint errors;
-  DBUG_ENTER("my_write");
-  DBUG_PRINT("my",("Fd: %d  Buffer: 0x%lx  Count: %lu  MyFlags: %d",
-		   Filedes, (long) Buffer, (ulong) Count, MyFlags));
   errors=0; written=0;
 
   /* The behavior of write(fd, buf, 0) is not portable */
   if (unlikely(!Count))
-    DBUG_RETURN(0);
+    return(0);
   
   for (;;)
   {
@@ -44,8 +41,6 @@ size_t my_write(int Filedes, const uchar *Buffer, size_t Count, myf MyFlags)
       Count-=writenbytes;
     }
     my_errno=errno;
-    DBUG_PRINT("error",("Write only %ld bytes, error: %d",
-			(long) writenbytes, my_errno));
 #ifndef NO_BACKGROUND
     if (my_thread_var->abort)
       MyFlags&= ~ MY_WAIT_IF_FULL;		/* End if aborted by user */
@@ -63,8 +58,6 @@ size_t my_write(int Filedes, const uchar *Buffer, size_t Count, myf MyFlags)
     {
       if (my_errno == EINTR)
       {
-        DBUG_PRINT("debug", ("my_write() was interrupted and returned %ld",
-                             (long) writenbytes));
         continue;                               /* Interrupted */
       }
 
@@ -85,12 +78,12 @@ size_t my_write(int Filedes, const uchar *Buffer, size_t Count, myf MyFlags)
 	my_error(EE_WRITE, MYF(ME_BELL+ME_WAITTANG),
 		 my_filename(Filedes),my_errno);
       }
-      DBUG_RETURN(MY_FILE_ERROR);		/* Error on read */
+      return(MY_FILE_ERROR);		/* Error on read */
     }
     else
       break;					/* Return bytes written */
   }
   if (MyFlags & (MY_NABP | MY_FNABP))
-    DBUG_RETURN(0);			/* Want only errors */
-  DBUG_RETURN(writenbytes+written);
+    return(0);			/* Want only errors */
+  return(writenbytes+written);
 } /* my_write */

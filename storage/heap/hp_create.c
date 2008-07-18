@@ -28,7 +28,6 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
   uint i, j, key_segs, max_length, length;
   HP_SHARE *share= 0;
   HA_KEYSEG *keyseg;
-  DBUG_ENTER("heap_create");
 
   if (!create_info->internal_table)
   {
@@ -43,7 +42,6 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
   if (!share)
   {
     HP_KEYDEF *keyinfo;
-    DBUG_PRINT("info",("Initializing new table"));
     
     /*
       We have to store sometimes uchar* del_link in records,
@@ -200,12 +198,12 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
     pthread_mutex_unlock(&THR_LOCK_heap);
 
   *res= share;
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   if (!create_info->internal_table)
     pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_RETURN(1);
+  return(1);
 } /* heap_create */
 
 
@@ -256,7 +254,6 @@ int heap_delete_table(const char *name)
 {
   int result;
   register HP_SHARE *share;
-  DBUG_ENTER("heap_delete_table");
 
   pthread_mutex_lock(&THR_LOCK_heap);
   if ((share= hp_find_named_heap(name)))
@@ -269,17 +266,16 @@ int heap_delete_table(const char *name)
     result= my_errno=ENOENT;
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_RETURN(result);
+  return(result);
 }
 
 
 void heap_drop_table(HP_INFO *info)
 {
-  DBUG_ENTER("heap_drop_table");
   pthread_mutex_lock(&THR_LOCK_heap);
   heap_try_free(info->s);
   pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 

@@ -36,7 +36,7 @@ bool array_append_string_unique(const char *str,
   const char **p;
   /* end points at the terminating NULL element */
   const char **end= array + size - 1;
-  DBUG_ASSERT(*end == NULL);
+  assert(*end == NULL);
 
   for (p= array; *p; ++p)
   {
@@ -46,7 +46,7 @@ bool array_append_string_unique(const char *str,
   if (p >= end)
     return true;                               /* Array is full */
 
-  DBUG_ASSERT(*p == NULL || strcmp(*p, str) == 0);
+  assert(*p == NULL || strcmp(*p, str) == 0);
 
   while (*(p + 1))
   {
@@ -54,7 +54,7 @@ bool array_append_string_unique(const char *str,
     ++p;
   }
 
-  DBUG_ASSERT(p < end);
+  assert(p < end);
   *p= str;
 
   return false;                                 /* Success */

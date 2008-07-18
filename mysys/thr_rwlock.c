@@ -145,8 +145,6 @@ int my_rw_trywrlock(rw_lock_t *rwp)
 
 int my_rw_unlock(rw_lock_t *rwp)
 {
-  DBUG_PRINT("rw_unlock",
-	     ("state: %d waiters: %d", rwp->state, rwp->waiters));
   pthread_mutex_lock(&rwp->lock);
 
   if (rwp->state == -1)		/* writer releasing */

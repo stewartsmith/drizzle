@@ -23,29 +23,21 @@
 int heap_close(HP_INFO *info)
 {
   int tmp;
-  DBUG_ENTER("heap_close");
   pthread_mutex_lock(&THR_LOCK_heap);
   tmp= hp_close(info);
   pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_RETURN(tmp);
+  return(tmp);
 }
 
 
 int hp_close(register HP_INFO *info)
 {
   int error=0;
-  DBUG_ENTER("hp_close");
-#ifndef DBUG_OFF
-  if (info->s->changed && heap_check_heap(info,0))
-  {
-    error=my_errno=HA_ERR_CRASHED;
-  }
-#endif
   info->s->changed=0;
   if (info->open_list.data)
     heap_open_list=list_delete(heap_open_list,&info->open_list);
   if (!--info->s->open_count && info->s->delete_on_close)
     hp_free(info->s);				/* Table was deleted */
   my_free((uchar*) info,MYF(0));
-  DBUG_RETURN(error);
+  return(error);
 }
