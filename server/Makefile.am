@@ -82,6 +82,7 @@ drizzled_SOURCES =	sql_lex.cc sql_handler.cc \
 			item_row.cc \
 			field.cc field/blob.cc field/null.cc field/datetime.cc \
 			field/timetype.cc field/timestamp.cc field/date.cc field/year.cc \
+			field/long.cc \
 			field/decimal.cc field/double.cc field/string.cc field/varstring.cc\
 			strfunc.cc key.cc sql_class.cc sql_list.cc \
 			protocol.cc sql_state.c \
