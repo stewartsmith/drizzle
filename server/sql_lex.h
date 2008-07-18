@@ -109,7 +109,7 @@ typedef struct st_lex_server_options
 {
   long port;
   uint server_name_length;
-  char *server_name, *host, *db, *username, *password, *scheme, *socket, *owner;
+  char *server_name, *host, *db, *username, *password, *scheme, *owner;
 } LEX_SERVER_OPTIONS;
 
 typedef struct st_lex_master_info
@@ -1539,32 +1539,6 @@ typedef struct st_lex : public Query_tables_list
   bool can_not_use_merged();
   bool only_view_structure();
   bool need_correct_ident();
-  uint8 get_effective_with_check(TABLE_LIST *view);
-  /*
-    Is this update command where 'WHITH CHECK OPTION' clause is important
-
-    SYNOPSIS
-      st_lex::which_check_option_applicable()
-
-    RETURN
-      true   have to take 'WHITH CHECK OPTION' clause into account
-      false  'WHITH CHECK OPTION' clause do not need
-  */
-  inline bool which_check_option_applicable()
-  {
-    switch (sql_command) {
-    case SQLCOM_UPDATE:
-    case SQLCOM_UPDATE_MULTI:
-    case SQLCOM_INSERT:
-    case SQLCOM_INSERT_SELECT:
-    case SQLCOM_REPLACE:
-    case SQLCOM_REPLACE_SELECT:
-    case SQLCOM_LOAD:
-      return true;
-    default:
-      return false;
-    }
-  }
 
   void cleanup_after_one_table_open();
 

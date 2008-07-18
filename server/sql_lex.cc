@@ -352,7 +352,6 @@ void lex_start(THD *thd)
   lex->server_options.username= 0;
   lex->server_options.password= 0;
   lex->server_options.scheme= 0;
-  lex->server_options.socket= 0;
   lex->server_options.owner= 0;
   lex->server_options.port= -1;
 
@@ -2336,28 +2335,6 @@ bool st_lex::need_correct_ident()
   default:
     return false;
   }
-}
-
-/*
-  Get effective type of CHECK OPTION for given view
-
-  SYNOPSIS
-    get_effective_with_check()
-    view    given view
-
-  NOTE
-    It have not sense to set CHECK OPTION for SELECT satement or subqueries,
-    so we do not.
-
-  RETURN
-    VIEW_CHECK_NONE      no need CHECK OPTION
-    VIEW_CHECK_LOCAL     CHECK OPTION LOCAL
-    VIEW_CHECK_CASCADED  CHECK OPTION CASCADED
-*/
-
-uint8 st_lex::get_effective_with_check(TABLE_LIST *view __attribute__((__unused__)))
-{
-  return 0;
 }
 
 
