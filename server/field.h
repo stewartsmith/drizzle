@@ -639,58 +639,6 @@ public:
 };
 
 
-/* New decimal/numeric field which use fixed point arithmetic */
-class Field_new_decimal :public Field_num {
-private:
-  int do_save_field_metadata(uchar *first_byte);
-public:
-  /* The maximum number of decimal digits can be stored */
-  uint precision;
-  uint bin_size;
-  /*
-    Constructors take max_length of the field as a parameter - not the
-    precision as the number of decimal digits allowed.
-    So for example we need to count length from precision handling
-    CREATE TABLE ( DECIMAL(x,y)) 
-  */
-  Field_new_decimal(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
-                    uchar null_bit_arg,
-                    enum utype unireg_check_arg, const char *field_name_arg,
-                    uint8 dec_arg, bool zero_arg, bool unsigned_arg);
-  Field_new_decimal(uint32 len_arg, bool maybe_null_arg,
-                    const char *field_name_arg, uint8 dec_arg,
-                    bool unsigned_arg);
-  enum_field_types type() const { return MYSQL_TYPE_NEWDECIMAL;}
-  enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
-  Item_result result_type () const { return DECIMAL_RESULT; }
-  int  reset(void);
-  bool store_value(const my_decimal *decimal_value);
-  void set_value_on_overflow(my_decimal *decimal_value, bool sign);
-  int  store(const char *to, uint length, CHARSET_INFO *charset);
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val);
-  int store_time(MYSQL_TIME *ltime, timestamp_type t_type);
-  int  store_decimal(const my_decimal *);
-  double val_real(void);
-  int64_t val_int(void);
-  my_decimal *val_decimal(my_decimal *);
-  String *val_str(String*, String *);
-  int cmp(const uchar *, const uchar *);
-  void sort_string(uchar *buff, uint length);
-  bool zero_pack() const { return 0; }
-  void sql_type(String &str) const;
-  uint32 max_display_length() { return field_length; }
-  uint size_of() const { return sizeof(*this); } 
-  uint32 pack_length() const { return (uint32) bin_size; }
-  uint pack_length_from_metadata(uint field_metadata);
-  uint row_pack_length() { return pack_length(); }
-  int compatible_field_size(uint field_metadata);
-  uint is_equal(Create_field *new_field);
-  virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data, bool low_byte_first);
-};
-
-
 class Field_tiny :public Field_num {
 public:
   Field_tiny(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
@@ -1071,42 +1019,6 @@ public:
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);
   timestamp_auto_set_type get_auto_set_type() const;
-};
-
-
-class Field_newdate :public Field_str {
-public:
-  Field_newdate(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
-		enum utype unireg_check_arg, const char *field_name_arg,
-		CHARSET_INFO *cs)
-    :Field_str(ptr_arg, 10, null_ptr_arg, null_bit_arg,
-	       unireg_check_arg, field_name_arg, cs)
-    {}
-  Field_newdate(bool maybe_null_arg, const char *field_name_arg,
-                CHARSET_INFO *cs)
-    :Field_str((uchar*) 0,10, maybe_null_arg ? (uchar*) "": 0,0,
-               NONE, field_name_arg, cs) {}
-  enum_field_types type() const { return MYSQL_TYPE_NEWDATE;}
-  enum_field_types real_type() const { return MYSQL_TYPE_NEWDATE; }
-  enum ha_base_keytype key_type() const { return HA_KEYTYPE_UINT24; }
-  enum Item_result cmp_type () const { return INT_RESULT; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
-  int  store(double nr);
-  int  store(int64_t nr, bool unsigned_val);
-  int store_time(MYSQL_TIME *ltime, timestamp_type type);
-  int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
-  double val_real(void);
-  int64_t val_int(void);
-  String *val_str(String*,String *);
-  bool send_binary(Protocol *protocol);
-  int cmp(const uchar *,const uchar *);
-  void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 3; }
-  void sql_type(String &str) const;
-  bool can_be_compared_as_int64_t() const { return true; }
-  bool zero_pack() const { return 1; }
-  bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
-  bool get_time(MYSQL_TIME *ltime);
 };
 
 
@@ -1507,6 +1419,8 @@ check_string_copy_error(Field_str *field,
 #include "field/blob.h"
 #include "field/null.h"
 #include "field/year.h"
+#include "field/new_date.h"
+#include "field/new_decimal.h"
 #include "field/datetime.h"
 
 /*
