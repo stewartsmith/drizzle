@@ -1014,9 +1014,7 @@ do { doubleget_union _tmp; \
 #define MYSQL_UNIVERSAL_CLIENT_CHARSET MYSQL_DEFAULT_CHARSET_NAME
 #endif
 
-#if defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
-#endif
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
