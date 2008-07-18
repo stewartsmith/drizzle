@@ -837,8 +837,6 @@ extern void mysql_close(MYSQL * sock);
 extern my_bool mysql_commit(MYSQL * mysql);
 # 441 "mysql.h"
 extern void mysql_data_seek(MYSQL_RES * result, my_ulonglong);
-# 459 "mysql.h"
-extern void mysql_debug(char const * debug);
 # 420 "mysql.h"
 extern int mysql_dump_debug_info(MYSQL * mysql);
 # 462 "mysql.h"

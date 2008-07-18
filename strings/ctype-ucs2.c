@@ -66,7 +66,7 @@ static size_t
 my_caseup_str_mb2_or_mb4(CHARSET_INFO * cs  __attribute__((unused)), 
                          char * s __attribute__((unused)))
 {
-  DBUG_ASSERT(0);
+  assert(0);
   return 0;
 }
 
@@ -75,7 +75,7 @@ static size_t
 my_casedn_str_mb2_or_mb4(CHARSET_INFO *cs __attribute__((unused)), 
                          char * s __attribute__((unused)))
 {
-  DBUG_ASSERT(0);
+  assert(0);
   return 0;
 }
 
@@ -85,7 +85,7 @@ my_strcasecmp_mb2_or_mb4(CHARSET_INFO *cs __attribute__((unused)),
                          const char *s __attribute__((unused)),
                          const char *t __attribute__((unused)))
 {
-  DBUG_ASSERT(0);
+  assert(0);
   return 0;
 }
 
@@ -997,7 +997,7 @@ my_vsnprintf_mb2(char *dst, size_t n, const char* fmt, va_list ap)
     *dst++= '%';                            /* % used as % or unknown code */
   }
   
-  DBUG_ASSERT(dst <= end);
+  assert(dst <= end);
   *dst='\0';                                /* End of errmessage */
   return (size_t) (dst - start);
 }
@@ -1153,7 +1153,7 @@ my_caseup_utf16(CHARSET_INFO *cs, char *src, size_t srclen,
   int res;
   char *srcend= src + srclen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
   
   while ((src < srcend) &&
          (res= my_utf16_uni(cs, &wc, (uchar *)src, (uchar*) srcend)) > 0)
@@ -1200,7 +1200,7 @@ my_casedn_utf16(CHARSET_INFO *cs, char *src, size_t srclen,
   int res;
   char *srcend= src + srclen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
 
   while ((src < srcend) &&
          (res= my_utf16_uni(cs, &wc, (uchar*) src, (uchar*) srcend)) > 0)
@@ -1289,8 +1289,8 @@ my_strnncollsp_utf16(CHARSET_INFO *cs,
   const uchar *se= s + slen, *te= t + tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
-  DBUG_ASSERT((slen % 2) == 0);
-  DBUG_ASSERT((tlen % 2) == 0);
+  assert((slen % 2) == 0);
+  assert((tlen % 2) == 0);
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
   diff_if_only_endspace_difference= FALSE;
@@ -1341,7 +1341,7 @@ my_strnncollsp_utf16(CHARSET_INFO *cs,
     {
       if ((s_res= my_utf16_uni(cs, &s_wc, s, se)) < 0)
       {
-        DBUG_ASSERT(0);
+        assert(0);
         return 0;
       }
       if (s_wc != ' ')
@@ -1532,8 +1532,8 @@ my_strnncollsp_utf16_bin(CHARSET_INFO *cs,
   my_wc_t s_wc= 0, t_wc= 0;
   const uchar *se= s + slen, *te= t + tlen;
 
-  DBUG_ASSERT((slen % 2) == 0);
-  DBUG_ASSERT((tlen % 2) == 0);
+  assert((slen % 2) == 0);
+  assert((tlen % 2) == 0);
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
   diff_if_only_endspace_difference= FALSE;
@@ -1581,7 +1581,7 @@ my_strnncollsp_utf16_bin(CHARSET_INFO *cs,
     {
       if ((s_res= my_utf16_uni(cs, &s_wc, s, se)) < 0)
       {
-        DBUG_ASSERT(0);
+        assert(0);
         return 0;
       }
       if (s_wc != ' ')
@@ -1927,7 +1927,7 @@ my_caseup_utf32(CHARSET_INFO *cs, char *src, size_t srclen,
   int res;
   char *srcend= src + srclen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
   
   while ((src < srcend) &&
          (res= my_utf32_uni(cs, &wc, (uchar *)src, (uchar*) srcend)) > 0)
@@ -1983,7 +1983,7 @@ my_casedn_utf32(CHARSET_INFO *cs, char *src, size_t srclen,
   int res;
   char *srcend= src + srclen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
 
   while ((res= my_utf32_uni(cs, &wc, (uchar*) src, (uchar*) srcend)) > 0)
   {
@@ -2071,8 +2071,8 @@ my_strnncollsp_utf32(CHARSET_INFO *cs,
   const uchar *se= s + slen, *te= t + tlen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
-  DBUG_ASSERT((slen % 4) == 0);
-  DBUG_ASSERT((tlen % 4) == 0);
+  assert((slen % 4) == 0);
+  assert((tlen % 4) == 0);
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
   diff_if_only_endspace_difference= FALSE;
@@ -2123,7 +2123,7 @@ my_strnncollsp_utf32(CHARSET_INFO *cs,
     {
       if ((s_res= my_utf32_uni(cs, &s_wc, s, se)) < 0)
       {
-        DBUG_ASSERT(0);
+        assert(0);
         return 0;
       }
       if (s_wc != ' ')
@@ -2145,7 +2145,7 @@ static void
 my_fill_utf32_for_strxfrm(CHARSET_INFO *cs __attribute__((unused)),
                           char *s, size_t slen, int fill)
 {
-  DBUG_ASSERT(fill <= 0xFFFF);
+  assert(fill <= 0xFFFF);
   
   for ( ; slen > 1; slen-= 2)
   {
@@ -2227,7 +2227,7 @@ static int
 my_vsnprintf_utf32(char *dst, size_t n, const char* fmt, va_list ap)
 {
   char *start= dst, *end= dst + n;
-  DBUG_ASSERT((n % 4) == 0);
+  assert((n % 4) == 0);
   for (; *fmt ; fmt++)
   {
     if (fmt[0] != '%')
@@ -2303,7 +2303,7 @@ my_vsnprintf_utf32(char *dst, size_t n, const char* fmt, va_list ap)
     *dst++= '%';    /* % used as % or unknown code */
   }
   
-  DBUG_ASSERT(dst < end);
+  assert(dst < end);
   *dst++= '\0';
   *dst++= '\0';
   *dst++= '\0';
@@ -2517,7 +2517,7 @@ my_well_formed_len_utf32(CHARSET_INFO *cs __attribute__((unused)),
   /* Ensure string length is divisible by 4 */
   const char *b0= b;
   size_t length= e - b;
-  DBUG_ASSERT((length % 4) == 0);
+  assert((length % 4) == 0);
   *error= 0;
   nchars*= 4;
   if (length > nchars)
@@ -2545,11 +2545,11 @@ void my_fill_utf32(CHARSET_INFO *cs,
   uint buflen;
   char *e= s + slen;
   
-  DBUG_ASSERT((slen % 4) == 0);
+  assert((slen % 4) == 0);
 
   buflen= cs->cset->wc_mb(cs, (my_wc_t) fill, (uchar*) buf,
                           (uchar*) buf + sizeof(buf));
-  DBUG_ASSERT(buflen == 4);
+  assert(buflen == 4);
   while (s < e)
   {
     memcpy(s, buf, 4);
@@ -2563,7 +2563,7 @@ my_lengthsp_utf32(CHARSET_INFO *cs __attribute__((unused)),
                   const char *ptr, size_t length)
 {
   const char *end= ptr + length;
-  DBUG_ASSERT((length % 4) == 0);
+  assert((length % 4) == 0);
   while (end > ptr + 3 && end[-1] == ' ' && !end[-2] && !end[-3] && !end[-4])
     end-= 4;
   return (size_t) (end - ptr);
@@ -2646,8 +2646,8 @@ my_strnncollsp_utf32_bin(CHARSET_INFO *cs __attribute__((unused)),
   const uchar *se, *te;
   size_t minlen;
 
-  DBUG_ASSERT((slen % 4) == 0);
-  DBUG_ASSERT((tlen % 4) == 0);
+  assert((slen % 4) == 0);
+  assert((tlen % 4) == 0);
 
   se= s + slen;
   te= t + tlen;
@@ -2717,7 +2717,7 @@ my_like_range_utf32(CHARSET_INFO *cs,
   char *max_end= max_str + res_length;
   size_t charlen= res_length / cs->mbmaxlen;
   
-  DBUG_ASSERT((res_length % 4) == 0);
+  assert((res_length % 4) == 0);
   
   for ( ; charlen > 0; ptr+= 4, charlen--)
   {
@@ -3043,7 +3043,7 @@ static size_t my_caseup_ucs2(CHARSET_INFO *cs, char *src, size_t srclen,
   int res;
   char *srcend= src + srclen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
   
   while ((src < srcend) &&
          (res= my_ucs2_uni(cs, &wc, (uchar *)src, (uchar*) srcend)) > 0)
@@ -3090,7 +3090,7 @@ static size_t my_casedn_ucs2(CHARSET_INFO *cs, char *src, size_t srclen,
   int res;
   char *srcend= src + srclen;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
 
   while ((src < srcend) &&
          (res= my_ucs2_uni(cs, &wc, (uchar*) src, (uchar*) srcend)) > 0)

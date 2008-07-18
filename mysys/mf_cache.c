@@ -60,7 +60,6 @@ static bool cache_remove_open_tmp(IO_CACHE *cache __attribute__((unused)),
 bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
                          size_t cache_size, myf cache_myflags)
 {
-  DBUG_ENTER("open_cached_file");
   cache->dir=	 dir ? my_strdup(dir,MYF(cache_myflags & MY_WME)) : (char*) 0;
   cache->prefix= (prefix ? my_strdup(prefix,MYF(cache_myflags & MY_WME)) :
 		 (char*) 0);
@@ -69,11 +68,11 @@ bool open_cached_file(IO_CACHE *cache, const char* dir, const char *prefix,
   if (!init_io_cache(cache,-1,cache_size,WRITE_CACHE,0L,0,
 		     MYF(cache_myflags | MY_NABP)))
   {
-    DBUG_RETURN(0);
+    return(0);
   }
   my_free(cache->dir,	MYF(MY_ALLOW_ZERO_PTR));
   my_free(cache->prefix,MYF(MY_ALLOW_ZERO_PTR));
-  DBUG_RETURN(1);
+  return(1);
 }
 
 	/* Create the temporary file */
@@ -82,7 +81,6 @@ bool real_open_cached_file(IO_CACHE *cache)
 {
   char name_buff[FN_REFLEN];
   int error=1;
-  DBUG_ENTER("real_open_cached_file");
   if ((cache->file=create_temp_file(name_buff, cache->dir, cache->prefix,
 				    (O_RDWR | O_BINARY | O_TRUNC |
 				     O_TEMPORARY | O_SHORT_LIVED),
@@ -91,13 +89,12 @@ bool real_open_cached_file(IO_CACHE *cache)
     error=0;
     cache_remove_open_tmp(cache, name_buff);
   }
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
 void close_cached_file(IO_CACHE *cache)
 {
-  DBUG_ENTER("close_cached_file");
   if (my_b_inited(cache))
   {
     File file=cache->file;
@@ -117,5 +114,5 @@ void close_cached_file(IO_CACHE *cache)
     my_free(cache->dir,MYF(MY_ALLOW_ZERO_PTR));
     my_free(cache->prefix,MYF(MY_ALLOW_ZERO_PTR));
   }
-  DBUG_VOID_RETURN;
+  return;
 }

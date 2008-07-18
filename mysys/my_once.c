@@ -27,9 +27,6 @@
     my_once_alloc()
       Size
       MyFlags
-
-  NOTES
-    No DBUG_ENTER... here to get smaller dbug-startup 
 */
 
 void* my_once_alloc(size_t Size, myf MyFlags)
@@ -61,7 +58,6 @@ void* my_once_alloc(size_t Size, myf MyFlags)
 	my_error(EE_OUTOFMEMORY, MYF(ME_BELL+ME_WAITTANG),get_size);
       return((uchar*) 0);
     }
-    DBUG_PRINT("test",("my_once_malloc %lu byte malloced", (ulong) get_size));
     next->next= 0;
     next->size= get_size;
     next->left= get_size-ALIGN_SIZE(sizeof(USED_MEM));
@@ -105,7 +101,6 @@ void *my_once_memdup(const void *src, size_t len, myf myflags)
 void my_once_free(void)
 {
   register USED_MEM *next,*old;
-  DBUG_ENTER("my_once_free");
 
   for (next=my_once_root_block ; next ; )
   {
@@ -114,5 +109,5 @@ void my_once_free(void)
   }
   my_once_root_block=0;
 
-  DBUG_VOID_RETURN;
+  return;
 } /* my_once_free */

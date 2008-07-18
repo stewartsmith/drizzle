@@ -1502,7 +1502,6 @@ static bool has_named_parameters(List<Item> *params)
 }
 
 
-#ifdef HAVE_DLOPEN
 Create_udf_func Create_udf_func::s_singleton;
 
 Item*
@@ -1608,7 +1607,6 @@ Create_udf_func::create(THD *thd, udf_func *udf, List<Item> *item_list)
   }
   return func;
 }
-#endif
 
 
 Item*

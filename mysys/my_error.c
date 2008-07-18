@@ -72,8 +72,6 @@ void my_error(int nr, myf MyFlags, ...)
   struct my_err_head *meh_p;
   va_list args;
   char ebuff[ERRMSGSIZE + 20];
-  DBUG_ENTER("my_error");
-  DBUG_PRINT("my", ("nr: %d  MyFlags: %d  errno: %d", nr, MyFlags, errno));
 
   /* Search for the error messages array, which could contain the message. */
   for (meh_p= my_errmsgs_list; meh_p; meh_p= meh_p->meh_next)
@@ -91,7 +89,7 @@ void my_error(int nr, myf MyFlags, ...)
     va_end(args);
   }
   (*error_handler_hook)(nr, ebuff, MyFlags);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -110,15 +108,12 @@ void my_printf_error(uint error, const char *format, myf MyFlags, ...)
 {
   va_list args;
   char ebuff[ERRMSGSIZE+20];
-  DBUG_ENTER("my_printf_error");
-  DBUG_PRINT("my", ("nr: %d  MyFlags: %d  errno: %d  Format: %s",
-		    error, MyFlags, errno, format));
 
   va_start(args,MyFlags);
   (void) vsnprintf (ebuff, sizeof(ebuff), format, args);
   va_end(args);
   (*error_handler_hook)(error, ebuff, MyFlags);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /*

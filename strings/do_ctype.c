@@ -16,10 +16,6 @@
 /* Prints case-convert and sort-convert tabell on stdout. This is used to
    make _ctype.c easyer */
 
-#ifdef DBUG_OFF
-#undef DBUG_OFF
-#endif
-
 #include <my_global.h>
 #include <ctype.h>
 #include <my_sys.h>
@@ -39,8 +35,6 @@ int argc;
 char *argv[];
 {
   int i,j,ch;
-  DBUG_ENTER ("main");
-  DBUG_PROCESS (argv[0]);
 
   get_options(&argc,&argv);
   init_case_convert();
@@ -65,7 +59,7 @@ char *argv[];
     }
     puts("};\n");
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* main */
 
 	/* Read options */
@@ -88,10 +82,6 @@ register char **argv[];
       case 'n':					/* Numeric output */
 	ascii_output=0;
 	break;
-      case '#':
-	DBUG_PUSH (++pos);
-      *(pos--) = '\0';			/* Skippa argument */
-      break;
       case 'V':
 	version=1;
       case 'I':
@@ -128,7 +118,6 @@ void init_case_convert()
 {
   reg1 int16 i;
   reg2 uchar *higher_pos,*lower_pos;
-  DBUG_ENTER("init_case_convert");
 
   for (i=0 ; i <= MAX_CHAR_OK ; i++)
   {
@@ -170,5 +159,5 @@ void init_case_convert()
       sort_order[(uchar)to_lower[*higher_pos]] = *lower_pos;
     higher_pos++; lower_pos++;
   }
-  DBUG_VOID_RETURN;
+  return;
 } /* init_case_convert */

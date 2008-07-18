@@ -49,8 +49,7 @@
 TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
 {
   MEM_ROOT mem_root;
-  DBUG_ENTER("trie_init");
-  DBUG_ASSERT(charset);
+  assert(charset);
   init_alloc_root(&mem_root,
                   (sizeof(TRIE_NODE) * 128) + ALLOC_ROOT_MIN_BLOCK_SIZE,
                   sizeof(TRIE_NODE) * 128);
@@ -59,7 +58,7 @@ TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
     if (! (trie= (TRIE *)alloc_root(&mem_root, sizeof(TRIE))))
     {
       free_root(&mem_root, MYF(0));
-      DBUG_RETURN(NULL);
+      return(NULL);
     }
   }
 
@@ -72,7 +71,7 @@ TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
   trie->charset= charset;
   trie->nnodes= 0;
   trie->nwords= 0;
-  DBUG_RETURN(trie);
+  return(trie);
 }
 
 
@@ -91,11 +90,10 @@ TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
 void trie_free (TRIE *trie)
 {
   MEM_ROOT mem_root;
-  DBUG_ENTER("trie_free");
-  DBUG_ASSERT(trie);
+  assert(trie);
   memcpy(&mem_root, &trie->mem_root, sizeof(MEM_ROOT));
   free_root(&mem_root, MYF(0));
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -124,8 +122,7 @@ bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
   TRIE_NODE *next;
   uchar p;
   uint k;
-  DBUG_ENTER("trie_insert");
-  DBUG_ASSERT(trie && key && keylen);
+  assert(trie && key && keylen);
   node= &trie->root;
   trie->root.fail= NULL;
   for (k= 0; k < keylen; k++)
@@ -140,7 +137,7 @@ bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
       TRIE_NODE *tmp= (TRIE_NODE *)alloc_root(&trie->mem_root,
                                               sizeof(TRIE_NODE));
       if (! tmp)
-        DBUG_RETURN(true);
+        return(true);
       tmp->leaf= 0;
       tmp->c= p;
       tmp->links= tmp->fail= tmp->next= NULL;
@@ -163,7 +160,7 @@ bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
   }
   node->leaf= keylen;
   trie->nwords++;
-  DBUG_RETURN(false);
+  return(false);
 }
 
 
@@ -186,12 +183,11 @@ bool ac_trie_prepare (TRIE *trie)
   TRIE_NODE *node;
   uint32 fnode= 0;
   uint32 lnode= 0;
-  DBUG_ENTER("trie_prepare");
-  DBUG_ASSERT(trie);
+  assert(trie);
 
   tmp_nodes= (TRIE_NODE **)my_malloc(trie->nnodes * sizeof(TRIE_NODE *), MYF(0));
   if (! tmp_nodes)
-    DBUG_RETURN(true);
+    return(true);
 
   trie->root.fail= &trie->root;
   for (node= trie->root.links; node; node= node->next)
@@ -212,7 +208,7 @@ bool ac_trie_prepare (TRIE *trie)
     }
   }
   my_free((uchar*)tmp_nodes, MYF(0));
-  DBUG_RETURN(false);
+  return(false);
 }
 
 
@@ -228,9 +224,8 @@ bool ac_trie_prepare (TRIE *trie)
 
 void ac_trie_init (TRIE *trie, AC_TRIE_STATE *state)
 {
-  DBUG_ENTER("ac_trie_init");
-  DBUG_ASSERT(trie && state);
+  assert(trie && state);
   state->trie= trie;
   state->node= &trie->root;
-  DBUG_VOID_RETURN;
+  return;
 }

@@ -36,7 +36,6 @@ WF_PACK *wf_comp(char * str)
   register char * pos;
   char * buffer;
   WF_PACK *ret;
-  DBUG_ENTER("wf_comp");
 
   not_pos= -1;			/* Skip space and '!' in front */
   while (*str == ' ')
@@ -47,7 +46,7 @@ WF_PACK *wf_comp(char * str)
     while (*++str == ' ') {};
   }
   if (*str == 0)				/* Empty == everything */
-    DBUG_RETURN((WF_PACK *) NULL);
+    return((WF_PACK *) NULL);
 
   ant=1;					/* Count filespecs */
   for (pos=str ; *pos ; pos++)
@@ -57,7 +56,7 @@ WF_PACK *wf_comp(char * str)
 				 sizeof(WF_PACK)+ (uint) strlen(str)+1,
 				 MYF(MY_WME)))
 	== 0)
-    DBUG_RETURN((WF_PACK *) NULL);
+    return((WF_PACK *) NULL);
   ret->wild= (char **) (ret+1);
   buffer= (char *) (ret->wild+ant);
 
@@ -80,8 +79,7 @@ WF_PACK *wf_comp(char * str)
   else
     ret->not_pos=(uint) not_pos;
 
-  DBUG_PRINT("exit",("antal: %d  not_pos: %d",ret->wilds,ret->not_pos));
-  DBUG_RETURN(ret);
+  return(ret);
 } /* wf_comp */
 
 
@@ -91,25 +89,24 @@ int wf_test(register WF_PACK *wf_pack, register const char *name)
 {
   register uint i;
   register uint not_pos;
-  DBUG_ENTER("wf_test");
 
   if (! wf_pack || wf_pack->wilds == 0)
-    DBUG_RETURN(0);			/* Everything goes */
+    return(0);			/* Everything goes */
 
   not_pos=wf_pack->not_pos;
   for (i=0 ; i < not_pos; i++)
     if (wild_compare(name,wf_pack->wild[i],0) == 0)
       goto found;
   if (i)
-    DBUG_RETURN(1);			/* No-match */
+    return(1);			/* No-match */
 
 found:
 /* Test that it isn't in not-list */
 
   for (i=not_pos ; i < wf_pack->wilds; i++)
     if (wild_compare(name,wf_pack->wild[i],0) == 0)
-      DBUG_RETURN(1);
-  DBUG_RETURN(0);
+      return(1);
+  return(0);
 } /* wf_test */
 
 
@@ -117,8 +114,7 @@ found:
 
 void wf_end(WF_PACK *buffer)
 {
-  DBUG_ENTER("wf_end");
   if (buffer)
     my_free((uchar*) buffer,MYF(0));
-  DBUG_VOID_RETURN;
+  return;
 } /* wf_end */

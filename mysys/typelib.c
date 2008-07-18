@@ -73,13 +73,10 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
   int find,pos,findpos=0;
   register char * i;
   register const char *j;
-  DBUG_ENTER("find_type");
-  DBUG_PRINT("enter",("x: '%s'  lib: 0x%lx", x, (long) typelib));
 
   if (!typelib->count)
   {
-    DBUG_PRINT("exit",("no count"));
-    DBUG_RETURN(0);
+    return(0);
   }
   find=0;
   for (pos=0 ; (j=typelib->type_names[pos]) ; pos++)
@@ -93,7 +90,7 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
       while (*i == ' ')
 	i++;					/* skip_end_space */
       if (! *i || ((full_name & 8) && *i == field_separator))
-	DBUG_RETURN(pos+1);
+	return(pos+1);
     }
     if ((!*i && (!(full_name & 8) || *i != field_separator)) && 
         (!*j || !(full_name & 1)))
@@ -107,17 +104,15 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
     find=1;
   else if (find == 0 || ! x[0])
   {
-    DBUG_PRINT("exit",("Couldn't find type"));
-    DBUG_RETURN(0);
+    return(0);
   }
   else if (find != 1 || (full_name & 1))
   {
-    DBUG_PRINT("exit",("Too many possybilities"));
-    DBUG_RETURN(-1);
+    return(-1);
   }
   if (!(full_name & 2))
     (void) strmov(x,typelib->type_names[findpos]);
-  DBUG_RETURN(findpos+1);
+  return(findpos+1);
 } /* find_type */
 
 
@@ -127,12 +122,11 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
 void make_type(register char * to, register uint nr,
 	       register TYPELIB *typelib)
 {
-  DBUG_ENTER("make_type");
   if (!nr)
     to[0]=0;
   else
     (void) strmov(to,get_type(typelib,nr-1));
-  DBUG_VOID_RETURN;
+  return;
 } /* make_type */
 
 
@@ -167,13 +161,10 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
   uint64_t result;
   int find;
   char *i;
-  DBUG_ENTER("find_set");
-  DBUG_PRINT("enter",("x: '%s'  lib: 0x%lx", x, (long) lib));
 
   if (!lib->count)
   {
-    DBUG_PRINT("exit",("no count"));
-    DBUG_RETURN(0);
+    return(0);
   }
   result= 0;
   *err= 0;
@@ -183,11 +174,11 @@ uint64_t find_typeset(char *x, TYPELIB *lib, int *err)
     i= x;
     while (*x && *x != field_separator) x++;
     if ((find= find_type(i, lib, 2 | 8) - 1) < 0)
-      DBUG_RETURN(0);
+      return(0);
     result|= (1ULL << find);
   }
   *err= 0;
-  DBUG_RETURN(result);
+  return(result);
 } /* find_set */
 
 

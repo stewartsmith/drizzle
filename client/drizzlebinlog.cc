@@ -1985,8 +1985,7 @@ int main(int argc, char** argv)
   free_defaults(defaults_argv);
   my_free_open_file_info();
   load_processor.destroy();
-  /* We cannot free DBUG, it is used in global destructors after exit(). */
-  my_end(my_end_arg | MY_DONT_FREE_DBUG);
+  my_end(my_end_arg);
 
   exit(retval == ERROR_STOP ? 1 : 0);
 }

@@ -75,19 +75,10 @@ static void rb_insert(TREE *tree,TREE_ELEMENT ***parent,
 static void rb_delete_fixup(TREE *tree,TREE_ELEMENT ***parent);
 
 
-	/* The actuall code for handling binary trees */
-
-#ifndef DBUG_OFF
-static int test_rb_tree(TREE_ELEMENT *element);
-#endif
-
 void init_tree(TREE *tree, ulong default_alloc_size, ulong memory_limit,
                int size, qsort_cmp2 compare, bool with_delete,
 	       tree_element_free free_element, void *custom_arg)
 {
-  DBUG_ENTER("init_tree");
-  DBUG_PRINT("enter",("tree: 0x%lx  size: %d", (long) tree, size));
-
   if (default_alloc_size < DEFAULT_ALLOC_SIZE)
     default_alloc_size= DEFAULT_ALLOC_SIZE;
   default_alloc_size= MY_ALIGN(default_alloc_size, DEFAULT_ALIGN_SIZE);
@@ -128,14 +119,11 @@ void init_tree(TREE *tree, ulong default_alloc_size, ulong memory_limit,
     init_alloc_root(&tree->mem_root, (uint) default_alloc_size, 0);
     tree->mem_root.min_malloc=(sizeof(TREE_ELEMENT)+tree->size_of_element);
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 static void free_tree(TREE *tree, myf free_flags)
 {
-  DBUG_ENTER("free_tree");
-  DBUG_PRINT("enter",("tree: 0x%lx", (long) tree));
-
   if (tree->root)				/* If initialized */
   {
     if (tree->with_delete)
@@ -157,7 +145,7 @@ static void free_tree(TREE *tree, myf free_flags)
   tree->elements_in_tree=0;
   tree->allocated=0;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 void delete_tree(TREE* tree)
@@ -264,7 +252,6 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
     if (! element->count)
       element->count--;
   }
-  DBUG_EXECUTE("check_tree", test_rb_tree(tree->root););
   return element;
 }
 
@@ -725,31 +712,3 @@ static void rb_delete_fixup(TREE *tree, TREE_ELEMENT ***parent)
   }
   x->colour=BLACK;
 }
-
-#ifndef DBUG_OFF
-
-	/* Test that the proporties for a red-black tree holds */
-
-static int test_rb_tree(TREE_ELEMENT *element)
-{
-  int count_l,count_r;
-
-  if (!element->left)
-    return 0;				/* Found end of tree */
-  if (element->colour == RED &&
-      (element->left->colour == RED || element->right->colour == RED))
-  {
-    printf("Wrong tree: Found two red in a row\n");
-    return -1;
-  }
-  count_l=test_rb_tree(element->left);
-  count_r=test_rb_tree(element->right);
-  if (count_l >= 0 && count_r >= 0)
-  {
-    if (count_l == count_r)
-      return count_l+(element->colour == BLACK);
-    printf("Wrong tree: Incorrect black-count: %d - %d\n",count_l,count_r);
-  }
-  return -1;
-}
-#endif

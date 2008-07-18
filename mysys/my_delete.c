@@ -20,8 +20,6 @@
 int my_delete(const char *name, myf MyFlags)
 {
   int err;
-  DBUG_ENTER("my_delete");
-  DBUG_PRINT("my",("name %s MyFlags %d", name, MyFlags));
 
   if ((err = unlink(name)) == -1)
   {
@@ -33,5 +31,5 @@ int my_delete(const char *name, myf MyFlags)
   else if ((MyFlags & MY_SYNC_DIR) &&
            my_sync_dir_by_file(name, MyFlags))
     err= -1;
-  DBUG_RETURN(err);
+  return(err);
 } /* my_delete */

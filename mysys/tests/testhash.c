@@ -30,12 +30,6 @@ static int rnd(int max_value);
 static uint testflag=0,recant=10000,reclength=37;
 static uint16 key1[1000];
 
-#ifdef DBUG_OFF
-#define hash_check(A) 0
-#else
-my_bool hash_check(HASH *hash);
-#endif
-
 void free_record(void *record);
 
 static uchar *hash2_key(const uchar *rec,uint *length,
@@ -50,7 +44,6 @@ static uchar *hash2_key(const uchar *rec,uint *length,
 int main(int argc,char *argv[])
 {
   MY_INIT(argv[0]);
-  DBUG_PROCESS(argv[0]);
 
   get_options(argc,argv);
 
@@ -66,7 +59,6 @@ static int do_test()
   unsigned long key_check;
   char *record,*recpos,oldrecord[120],key[10];
   HASH hash,hash2;
-  DBUG_ENTER("do_test");
 
   write_count=update=delete=0;
   key_check=0;
@@ -91,11 +83,6 @@ static int do_test()
     key_check+=n1;
     write_count++;
   }
-  if (hash_check(&hash))
-  {
-    puts("Heap keys crashed");
-    goto err;
-  }
   printf("- Delete\n");
   for (i=0 ; i < write_count/10 ; i++)
   {
@@ -117,17 +104,12 @@ static int do_test()
 	goto err;
       }
       delete++;
-      if (testflag == 2 && hash_check(&hash))
+      if (testflag == 2)
       {
 	puts("Heap keys crashed");
 	goto err;
       }
     }
-  }
-  if (hash_check(&hash))
-  {
-    puts("Hash keys crashed");
-    goto err;
   }
 
   printf("- Update\n");
@@ -153,17 +135,12 @@ static int do_test()
 	printf("can't update key1: \"%s\"\n",key);
 	goto err;
       }
-      if (testflag == 3 && hash_check(&hash))
+      if (testflag == 3) 
       {
 	printf("Heap keys crashed for %d update\n",update);
 	goto err;
       }
     }
-  }
-  if (hash_check(&hash))
-  {
-    puts("Heap keys crashed");
-    goto err;
   }
 
   for (j=0 ; j < 1000 ; j++)
@@ -211,20 +188,7 @@ static int do_test()
       printf("Got error when deleting record: %*s",reclength,recpos);
       goto err;
     }
-    if (testflag==4)
-    {
-      if (hash_check(&hash) || hash_check(&hash2))
-      {
-	puts("Hash keys crashed");
-	goto err;
-      }
-    }
     pos++;
-  }
-  if (hash_check(&hash) || hash_check(&hash2))
-  {
-    puts("Hash keys crashed");
-    goto err;
   }
   if (key_check != 0)
   {
@@ -236,15 +200,14 @@ static int do_test()
 	 update,delete);
   hash_free(&hash); hash_free(&hash2);
   my_end(MY_GIVE_INFO);
-  DBUG_RETURN(0);
+  return(0);
 err:
   printf("Got error: %d when using hashing\n",my_errno);
-  DBUG_RETURN(-1);
+  return(-1);
 } /* main */
 
 
 /* read options */
-/* NOTE! DBUG not initialised - no debugging here! */
 
 static int get_options(int argc, char **argv)
 {
@@ -267,9 +230,6 @@ static int get_options(int argc, char **argv)
       printf("MySQL AB, by Monty\n\n");
       printf("Usage: %s [-?ABIKLWv] [-m#] [-t#]\n",progname);
       exit(0);
-    case '#':
-      DBUG_PUSH (++pos);
-      break;
     }
   }
   return 0;

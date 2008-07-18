@@ -60,7 +60,6 @@ static int	comp_names(struct fileinfo *a,struct fileinfo *b);
 
 void my_dirend(MY_DIR *buffer)
 {
-  DBUG_ENTER("my_dirend");
   if (buffer)
   {
     delete_dynamic((DYNAMIC_ARRAY*)((char*)buffer + 
@@ -69,7 +68,7 @@ void my_dirend(MY_DIR *buffer)
                           ALIGN_SIZE(sizeof(DYNAMIC_ARRAY))), MYF(0));
     my_free((uchar*) buffer,MYF(0));
   }
-  DBUG_VOID_RETURN;
+  return;
 } /* my_dirend */
 
 
@@ -92,8 +91,6 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   struct dirent *dp;
   char		tmp_path[FN_REFLEN+1],*tmp_file;
   char	dirent_tmp[sizeof(struct dirent)+_POSIX_PATH_MAX+1];
-  DBUG_ENTER("my_dir");
-  DBUG_PRINT("my",("path: '%s' MyFlags: %d",path,MyFlags));
 
 #if !defined(HAVE_READDIR_R)
   pthread_mutex_lock(&THR_LOCK_open);
@@ -159,7 +156,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   if (!(MyFlags & MY_DONT_SORT))
     my_qsort((void *) result->dir_entry, result->number_off_files,
           sizeof(FILEINFO), (qsort_cmp) comp_names);
-  DBUG_RETURN(result);
+  return(result);
 
  error:
 #if !defined(HAVE_READDIR_R)
@@ -171,7 +168,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
   my_dirend(result);
   if (MyFlags & (MY_FAE | MY_WME))
     my_error(EE_DIR,MYF(ME_BELL+ME_WAITTANG),path,my_errno);
-  DBUG_RETURN((MY_DIR *) NULL);
+  return((MY_DIR *) NULL);
 } /* my_dir */
 
 

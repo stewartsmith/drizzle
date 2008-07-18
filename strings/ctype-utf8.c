@@ -2210,7 +2210,7 @@ my_caseup_utf8mb4(CHARSET_INFO *cs, char *src, size_t srclen,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->caseup_multiply == 1);
+  assert(src != dst || cs->caseup_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb4(cs, &wc,
@@ -2278,7 +2278,7 @@ my_caseup_str_utf8mb4(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->caseup_multiply == 1);
+  assert(cs->caseup_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (uchar *) src)) > 0)
@@ -2303,7 +2303,7 @@ my_casedn_utf8mb4(CHARSET_INFO *cs,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->casedn_multiply == 1);
+  assert(src != dst || cs->casedn_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb4(cs, &wc,
@@ -2326,7 +2326,7 @@ my_casedn_str_utf8mb4(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->casedn_multiply == 1);
+  assert(cs->casedn_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (uchar *) src)) > 0)
@@ -3112,7 +3112,7 @@ my_caseup_utf8mb3(CHARSET_INFO *cs, char *src, size_t srclen,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->caseup_multiply == 1);
+  assert(src != dst || cs->caseup_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb3(cs, &wc,
@@ -3166,7 +3166,7 @@ my_caseup_str_utf8mb3(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->caseup_multiply == 1);
+  assert(cs->caseup_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (uchar *) src)) > 0)
@@ -3191,7 +3191,7 @@ my_casedn_utf8mb3(CHARSET_INFO *cs, char *src, size_t srclen,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->casedn_multiply == 1);
+  assert(src != dst || cs->casedn_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb3(cs, &wc,
@@ -3215,7 +3215,7 @@ my_casedn_str_utf8mb3(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->casedn_multiply == 1);
+  assert(cs->casedn_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (uchar *) src)) > 0)

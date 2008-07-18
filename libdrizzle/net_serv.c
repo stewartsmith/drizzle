@@ -56,13 +56,12 @@ static bool net_write_buff(NET *net, const unsigned char *packet, uint32_t len);
 
 bool my_net_init(NET *net, Vio* vio)
 {
-  DBUG_ENTER("my_net_init");
   net->vio = vio;
   my_net_local_init(net);			/* Set some limits */
   if (!(net->buff=(uchar*) my_malloc((size_t) net->max_packet+
 				     NET_HEADER_SIZE + COMP_HEADER_SIZE,
 				     MYF(MY_WME))))
-    DBUG_RETURN(1);
+    return(1);
   net->buff_end=net->buff+net->max_packet;
   net->error=0; net->return_status=0;
   net->pkt_nr=net->compress_pkt_nr=0;
@@ -78,16 +77,15 @@ bool my_net_init(NET *net, Vio* vio)
     net->fd  = vio_fd(vio);			/* For perl DBI/DBD */
     vio_fastsend(vio);
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
 void net_end(NET *net)
 {
-  DBUG_ENTER("net_end");
   my_free(net->buff,MYF(MY_ALLOW_ZERO_PTR));
   net->buff=0;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -97,17 +95,13 @@ bool net_realloc(NET *net, size_t length)
 {
   uchar *buff;
   size_t pkt_length;
-  DBUG_ENTER("net_realloc");
-  DBUG_PRINT("enter",("length: %lu", (ulong) length));
 
   if (length >= net->max_packet_size)
   {
-    DBUG_PRINT("error", ("Packet too large. Max size: %lu",
-                         net->max_packet_size));
     /* @todo: 1 and 2 codes are identical. */
     net->error= 1;
     net->last_errno= ER_NET_PACKET_TOO_LARGE;
-    DBUG_RETURN(1);
+    return(1);
   }
   pkt_length = (length+IO_SIZE-1) & ~(IO_SIZE-1); 
   /*
@@ -122,11 +116,11 @@ bool net_realloc(NET *net, size_t length)
     net->error= 1;
     net->last_errno= ER_OUT_OF_RESOURCES;
     /* In the server the error is reported by MY_WME flag. */
-    DBUG_RETURN(1);
+    return(1);
   }
   net->buff=net->write_pos=buff;
   net->buff_end=buff+(net->max_packet= (ulong) pkt_length);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -179,7 +173,6 @@ void net_clear(NET *net, bool clear_buffer)
 {
   size_t count;
   int32_t ready;
-  DBUG_ENTER("net_clear");
 
   if (clear_buffer)
   {
@@ -187,14 +180,8 @@ void net_clear(NET *net, bool clear_buffer)
     {
       /* The socket is ready */
       if ((long) (count= vio_read(net->vio, net->buff,
-                                  (size_t) net->max_packet)) > 0)
+                                  (size_t) net->max_packet)) <= 0)
       {
-        DBUG_PRINT("info",("skipped %ld bytes from file: %s",
-                           (long) count, vio_description(net->vio)));
-      }
-      else
-      {
-        DBUG_PRINT("info",("socket ready but only EOF to read - disconnected"));
         net->error= 2;
         break;
       }
@@ -202,7 +189,7 @@ void net_clear(NET *net, bool clear_buffer)
   }
   net->pkt_nr=net->compress_pkt_nr=0;		/* Ready for new command */
   net->write_pos=net->buff;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -211,7 +198,6 @@ void net_clear(NET *net, bool clear_buffer)
 bool net_flush(NET *net)
 {
   my_bool error= 0;
-  DBUG_ENTER("net_flush");
   if (net->buff != net->write_pos)
   {
     error=test(net_real_write(net, net->buff,
@@ -221,7 +207,7 @@ bool net_flush(NET *net)
   /* Sync packet number if using compression */
   if (net->compress)
     net->pkt_nr=net->compress_pkt_nr;
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -266,9 +252,6 @@ my_net_write(NET *net,const uchar *packet,size_t len)
   buff[3]= (uchar) net->pkt_nr++;
   if (net_write_buff(net, buff, NET_HEADER_SIZE))
     return 1;
-#ifndef DEBUG_DATA_PACKETS
-  DBUG_DUMP("packet_header", buff, NET_HEADER_SIZE);
-#endif
   return test(net_write_buff(net,packet,len));
 }
 
@@ -307,8 +290,6 @@ net_write_command(NET *net,uchar command,
   ulong length=len+1+head_len;			/* 1 extra byte for command */
   uchar buff[NET_HEADER_SIZE+1];
   uint header_size=NET_HEADER_SIZE+1;
-  DBUG_ENTER("net_write_command");
-  DBUG_PRINT("enter",("length: %lu", (ulong) len));
 
   buff[4]=command;				/* For first packet */
 
@@ -323,7 +304,7 @@ net_write_command(NET *net,uchar command,
       if (net_write_buff(net, buff, header_size) ||
 	  net_write_buff(net, header, head_len) ||
 	  net_write_buff(net, packet, len))
-	DBUG_RETURN(1);
+	return(1);
       packet+= len;
       length-= MAX_PACKET_LENGTH;
       len= MAX_PACKET_LENGTH;
@@ -334,7 +315,7 @@ net_write_command(NET *net,uchar command,
   }
   int3store(buff,length);
   buff[3]= (uchar) net->pkt_nr++;
-  DBUG_RETURN(test(net_write_buff(net, buff, header_size) ||
+  return(test(net_write_buff(net, buff, header_size) ||
                    (head_len && net_write_buff(net, header, head_len)) ||
                    net_write_buff(net, packet, len) || net_flush(net)));
 }
@@ -374,9 +355,6 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
   else
     left_length= (ulong) (net->buff_end - net->write_pos);
 
-#ifdef DEBUG_DATA_PACKETS
-  DBUG_DUMP("data", packet, len);
-#endif
   if (len > left_length)
   {
     if (net->write_pos != net->buff)
@@ -434,8 +412,12 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   const uchar *pos,*end;
   uint retry_count= 0;
 
+  /* Backup of the original SO_RCVTIMEO timeout */
+  struct timeval backtime;
+  int error;
+
   if (net->error == 2)
-    DBUG_RETURN(-1);				/* socket can't be used */
+    return(-1);				/* socket can't be used */
 
   net->reading_or_writing=2;
   if (net->compress)
@@ -450,7 +432,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
       net->last_errno= ER_OUT_OF_RESOURCES;
       /* In the server, the error is reported by MY_WME flag. */
       net->reading_or_writing= 0;
-      DBUG_RETURN(1);
+      return(1);
     }
     memcpy(b+header_length,packet,len);
 
@@ -463,6 +445,28 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     packet= b;
   }
 
+  /* Check for error, currently assert */
+  if (net->write_timeout)
+  {
+    struct timeval waittime;
+    socklen_t length;
+
+    waittime.tv_sec= net->write_timeout;
+    waittime.tv_usec= 0;
+
+    memset(&backtime, 0, sizeof(struct timeval));
+    length= sizeof(struct timeval);
+    error= getsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
+                      &backtime, &length);
+    if (error != 0)
+    {
+      perror("getsockopt");
+      assert(error == 0);
+    }
+    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
+                      &waittime, (socklen_t)sizeof(struct timeval));
+    assert(error == 0);
+  }
   pos= packet;
   end=pos+len;
   /* Loop until we have read everything */
@@ -514,7 +518,11 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     my_free((char*) packet,MYF(0));
   net->reading_or_writing=0;
 
-  DBUG_RETURN(((int) (pos != end)));
+  if (net->write_timeout)
+    error= setsockopt(net->vio->sd, SOL_SOCKET, SO_RCVTIMEO, 
+                      &backtime, (socklen_t)sizeof(struct timeval));
+
+  return(((int) (pos != end)));
 }
 
 
@@ -580,8 +588,6 @@ my_real_read(NET *net, size_t *complen)
       {
         bool interrupted = vio_should_retry(net->vio);
 
-        DBUG_PRINT("info",("vio_read returned %ld  errno: %d",
-                           (long) length, vio_errno(net->vio)));
         if (interrupted)
         {					/* Probably in MIT threads */
           if (retry_count++ < net->retry_count)
@@ -800,21 +806,17 @@ my_net_read(NET *net)
 
 void my_net_set_read_timeout(NET *net, uint timeout)
 {
-  DBUG_ENTER("my_net_set_read_timeout");
-  DBUG_PRINT("enter", ("timeout: %d", timeout));
   net->read_timeout= timeout;
   if (net->vio)
     vio_timeout(net->vio, 0, timeout);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 void my_net_set_write_timeout(NET *net, uint timeout)
 {
-  DBUG_ENTER("my_net_set_write_timeout");
-  DBUG_PRINT("enter", ("timeout: %d", timeout));
   net->write_timeout= timeout;
   if (net->vio)
     vio_timeout(net->vio, 1, timeout);
-  DBUG_VOID_RETURN;
+  return;
 }

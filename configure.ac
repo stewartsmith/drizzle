@@ -679,18 +679,17 @@ AC_CHECK_TYPES([fp_except], [], [], [
 #include <ieeefp.h>
 ])
 
-
 my_save_LIBS="$LIBS"
 LIBS=""
 AC_CHECK_LIB(dl,dlopen)
+AC_CHECK_FUNCS(dlopen dlerror)
+if test "$ac_cv_func_dlopen" != "yes"
+then
+  AC_MSG_ERROR([Drizzle requires dlopen])
+fi
 LIBDL=$LIBS
 LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL)
-
-my_save_LIBS="$LIBS"
-LIBS="$LIBS $LIBDL"
-AC_CHECK_FUNCS(dlopen dlerror)
-LIBS="$my_save_LIBS"
 
 AC_CHECK_FUNCS(strtok_r)
 
@@ -733,42 +732,6 @@ fi
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
 CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
 
-AC_ARG_WITH([debug],
-    [AS_HELP_STRING([--with-debug],
-            [Add debug code (yes|no|full) @<:@default=no@:>@ 
-	    Full adds memory checked, very slow.])],
-    [with_debug=$withval],
-    [with_debug=no])
-AM_CONDITIONAL(BUILD_DBUG, test "$with_debug" != "no")
-if test "$with_debug" = "yes"
-then
-  # Medium debug.
-  AC_DEFINE([DBUG_ON], [1], [Use libdbug])
-  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
-else
-  # Optimized version. No debug
-  AC_DEFINE([DBUG_OFF], [1], [Dont use libdbug])
-  CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
-  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
-fi
-
-# If we should allow error injection tests
-AC_ARG_WITH([error-inject],
-    [AS_HELP_STRING([--with-error-inject],
-	    [Enable error injection in Drizzle Server @<:@default=off@:>@])],
-    [ with_error_inject=$withval ],
-    [ with_error_inject=no ])
-
-if test $with_debug != "no"
-then
-  if test "$with_error_inject" = "yes"
-  then
-    AC_DEFINE([ERROR_INJECT_SUPPORT], [1],
-              [Enable error injection in Drizzle Server])
-  fi
-fi
-
 AC_ARG_WITH([fast-mutexes],
     [AS_HELP_STRING([--with-fast-mutexes],
 	    [Compile with fast mutexes  @<:@default=off@:>@])],
@@ -777,13 +740,8 @@ AC_ARG_WITH([fast-mutexes],
 
 if test "$with_fast_mutexes" != "no"
 then
-  if test "$with_debug" != "no"
-  then
-    AC_MSG_WARN(['--with-fast-mutexes' ignored when '--with-debug' is given])
-  else
-    AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
-	      [Define to 1 if you want to use fast mutexes])
-  fi
+	AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
+			[Define to 1 if you want to use fast mutexes])
 fi
 
 AC_ARG_WITH([comment],
@@ -1286,7 +1244,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  server/Makefile server/share/Makefile dnl
  server/sql_builtin.cc dnl
- dbug/Makefile include/Makefile dnl
+ include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  include/drizzle_version.h plugin/Makefile dnl
