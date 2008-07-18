@@ -758,7 +758,6 @@ abort:
 bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
 			 Item **conds, uint order_num, ORDER *order)
 {
-  Item *fake_conds= 0;
   List<Item> all_fields;
   SELECT_LEX *select_lex= &thd->lex->select_lex;
   
@@ -799,7 +798,7 @@ bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
       return(true);
     }
   }
-  select_lex->fix_prepare_information(thd, conds, &fake_conds);
+
   return(false);
 }
 

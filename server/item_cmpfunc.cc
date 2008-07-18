@@ -483,24 +483,22 @@ void Item_bool_func2::fix_length_and_dec()
   }
 
   thd= current_thd;
-  if (!thd->is_context_analysis_only())
+
+  if (args[0]->real_item()->type() == FIELD_ITEM)
   {
-    if (args[0]->real_item()->type() == FIELD_ITEM)
+    Item_field *field_item= (Item_field*) (args[0]->real_item());
+    if (field_item->field->can_be_compared_as_int64_t() &&
+        !(field_item->is_datetime() && args[1]->result_type() == STRING_RESULT))
     {
-      Item_field *field_item= (Item_field*) (args[0]->real_item());
-      if (field_item->field->can_be_compared_as_int64_t() &&
-          !(field_item->is_datetime() &&
-            args[1]->result_type() == STRING_RESULT))
+      if (convert_constant_item(thd, field_item, &args[1]))
       {
-        if (convert_constant_item(thd, field_item, &args[1]))
-        {
-          cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
-                           INT_RESULT);		// Works for all types.
-          args[0]->cmp_context= args[1]->cmp_context= INT_RESULT;
-          return;
-        }
+        cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
+                         INT_RESULT);		// Works for all types.
+        args[0]->cmp_context= args[1]->cmp_context= INT_RESULT;
+        return;
       }
     }
+
     if (args[1]->real_item()->type() == FIELD_ITEM)
     {
       Item_field *field_item= (Item_field*) (args[1]->real_item());

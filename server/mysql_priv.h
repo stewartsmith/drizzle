@@ -866,8 +866,6 @@ int check_user(THD *thd, enum enum_server_command command,
 	       bool check_count);
 pthread_handler_t handle_one_connection(void *arg);
 bool init_new_connection_handler_thread();
-void reset_mqh(LEX_USER *lu, bool get_them);
-bool check_mqh(THD *thd, uint check_command);
 void time_out_user_resource_limits(THD *thd, USER_CONN *uc);
 void decrease_user_connections(USER_CONN *uc);
 void thd_init_client_charset(THD *thd, uint cs_number);
@@ -1320,10 +1318,8 @@ inline bool setup_fields_with_no_wrap(THD *thd, Item **ref_pointer_array,
                                       bool allow_sum_func)
 {
   bool res;
-  thd->lex->select_lex.no_wrap_view_item= true;
   res= setup_fields(thd, ref_pointer_array, item, mark_used_columns, sum_func_list,
                     allow_sum_func);
-  thd->lex->select_lex.no_wrap_view_item= false;
   return res;
 }
 int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,

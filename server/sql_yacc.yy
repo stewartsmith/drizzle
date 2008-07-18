@@ -971,7 +971,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         predicate bit_expr
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
-        param_marker 
         signed_literal now_or_signed_literal opt_escape
         simple_ident_nospvar simple_ident_q
         field_or_var limit_option
@@ -3470,7 +3469,6 @@ simple_expr:
             $$= new (thd->mem_root) Item_func_set_collation($1, i1);
           }
         | literal
-        | param_marker
         | variable
         | sum_expr
         | '+' simple_expr %prec NEG { $$= $2; }
@@ -4898,11 +4896,7 @@ limit_options:
         ;
 
 limit_option:
-        param_marker
-        {
-          ((Item_param *) $1)->limit_clause_param= true;
-        }
-        | ULONGLONG_NUM { $$= new Item_uint($1.str, $1.length); }
+          ULONGLONG_NUM { $$= new Item_uint($1.str, $1.length); }
         | LONG_NUM      { $$= new Item_uint($1.str, $1.length); }
         | NUM           { $$= new Item_uint($1.str, $1.length); }
         ;
@@ -6051,27 +6045,6 @@ text_string:
             */
             $$= tmp ? tmp->quick_fix_field(), tmp->val_str((String*) 0) :
               (String*) 0;
-          }
-        ;
-
-param_marker:
-          PARAM_MARKER
-          {
-            THD *thd= YYTHD;
-            LEX *lex= thd->lex;
-            Lex_input_stream *lip= thd->m_lip;
-            Item_param *item;
-            if (! lex->parsing_options.allows_variable)
-            {
-              my_error(ER_VIEW_SELECT_VARIABLE, MYF(0));
-              MYSQL_YYABORT;
-            }
-            item= new Item_param((uint) (lip->get_tok_start() - thd->query));
-            if (!($$= item) || lex->param_list.push_back(item))
-            {
-              my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-              MYSQL_YYABORT;
-            }
           }
         ;
 

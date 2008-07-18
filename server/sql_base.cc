@@ -5195,11 +5195,6 @@ mark_common_columns(THD *thd, TABLE_LIST *table_ref_1, TABLE_LIST *table_ref_2,
         goto err;                               // out of memory
 
       /*
-        The following assert checks that the two created items are of
-        type Item_ident.
-      */
-      assert(!thd->lex->current_select->no_wrap_view_item);
-      /*
         In the case of no_wrap_view_item == 0, the created items must be
         of sub-classes of Item_ident.
       */
