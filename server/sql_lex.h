@@ -99,33 +99,8 @@ enum enum_sql_command {
 
 #ifdef MYSQL_SERVER
 
-enum enum_sp_data_access
-{
-  SP_DEFAULT_ACCESS= 0,
-  SP_CONTAINS_SQL,
-  SP_NO_SQL,
-  SP_READS_SQL_DATA,
-  SP_MODIFIES_SQL_DATA
-};
-
-const LEX_STRING sp_data_access_name[]=
-{
-  { C_STRING_WITH_LEN("") },
-  { C_STRING_WITH_LEN("CONTAINS SQL") },
-  { C_STRING_WITH_LEN("NO SQL") },
-  { C_STRING_WITH_LEN("READS SQL DATA") },
-  { C_STRING_WITH_LEN("MODIFIES SQL DATA") }
-};
-
 #define DERIVED_NONE	0
 #define DERIVED_SUBQUERY	1
-
-enum enum_drop_mode
-{
-  DROP_DEFAULT, // mode is not specified
-  DROP_CASCADE, // CASCADE option
-  DROP_RESTRICT // RESTRICT option
-};
 
 typedef List<Item> List_item;
 
@@ -1491,7 +1466,6 @@ typedef struct st_lex : public Query_tables_list
     bool lock_transactional;            /* For LOCK TABLE ... IN ... MODE */
   };
   enum enum_var_type option_type;
-  enum enum_drop_mode drop_mode;
 
   uint profile_query_id;
   uint profile_options;
