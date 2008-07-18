@@ -20,7 +20,7 @@ HEADERS_GEN =		drizzle_version.h
 HEADERS_ABI =		drizzle.h drizzle_com.h drizzle_time.h \
 			my_list.h my_alloc.h typelib.h mysql/plugin.h \
 			mysql/plugin_audit.h
-pkginclude_HEADERS =	$(HEADERS_ABI) my_dbug.h m_string.h my_sys.h \
+pkginclude_HEADERS =	$(HEADERS_ABI) m_string.h my_sys.h \
 			my_xml.h \
 		  	my_pthread.h \
 			decimal.h errmsg.h my_global.h my_net.h \
