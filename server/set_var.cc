@@ -583,8 +583,6 @@ sys_var_thd_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
 
 static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_crypt(&vars, "have_crypt", &have_crypt);
-static sys_var_have_plugin sys_have_csv(&vars, "have_csv", C_STRING_WITH_LEN("csv"), MYSQL_STORAGE_ENGINE_PLUGIN);
-static sys_var_have_plugin sys_have_innodb(&vars, "have_innodb", C_STRING_WITH_LEN("innodb"), MYSQL_STORAGE_ENGINE_PLUGIN);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /* Global read-only variable describing server license */
 static sys_var_const_str	sys_license(&vars, "license", STRINGIFY_ARG(LICENSE));
