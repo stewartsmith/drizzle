@@ -742,20 +742,16 @@ bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info,
   return COMPATIBLE_DATA_YES;
 }
 
-struct st_mysql_storage_engine heap_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 mysql_declare_plugin(heap)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &heap_storage_engine,
   "MEMORY",
+  "1.0",
   "MySQL AB",
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
   NULL,
-  0x0100, /* 1.0 */
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */

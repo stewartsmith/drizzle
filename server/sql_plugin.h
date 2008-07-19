@@ -62,7 +62,6 @@ struct st_plugin_dl
   LEX_STRING dl;
   void *handle;
   struct st_mysql_plugin *plugins;
-  int version;
   uint ref_count;            /* number of plugins loaded from the library */
 };
 
