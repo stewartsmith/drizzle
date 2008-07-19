@@ -1383,7 +1383,6 @@ extern "C" sig_handler handle_segfault(int sig)
 {
   time_t curr_time;
   struct tm tm;
-  THD *thd=current_thd;
 
   /*
     Strictly speaking, one needs a mutex here
@@ -1431,6 +1430,8 @@ bytes of memory\n", ((ulong) dflt_key_cache->key_cache_mem_size +
   fprintf(stderr, "Hope that's ok; if not, decrease some variables in the equation.\n\n");
 
 #ifdef HAVE_STACKTRACE
+  THD *thd= current_thd;
+
   if (!(test_flags & TEST_NO_STACKTRACE))
   {
     fprintf(stderr,"thd: 0x%lx\n",(long) thd);
