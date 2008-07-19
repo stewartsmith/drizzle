@@ -1561,14 +1561,6 @@ public:
   */
   Lex_input_stream *m_lip;
 
-  /*
-    @todo The following is a work around for online backup and the DDL blocker.
-          It should be removed when the generalized solution is in place.
-          This is needed to ensure the restore (which uses DDL) is not blocked
-          when the DDL blocker is engaged.
-  */
-  my_bool DDL_exception; // Allow some DDL if there is an exception
-
   THD();
   ~THD();
 

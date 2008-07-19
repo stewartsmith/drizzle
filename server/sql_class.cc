@@ -493,14 +493,7 @@ THD::THD()
    in_lock_tables(0),
    bootstrap(0),
    derived_tables_processing(false),
-   m_lip(NULL),
-  /*
-    @todo The following is a work around for online backup and the DDL blocker.
-          It should be removed when the generalized solution is in place.
-          This is needed to ensure the restore (which uses DDL) is not blocked
-          when the DDL blocker is engaged.
-  */
-   DDL_exception(false)
+   m_lip(NULL)
 {
   ulong tmp;
 
