@@ -1439,7 +1439,9 @@ int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
       my_printf_error(ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR), MYF(0),
                       wrong_tables.c_ptr());
     else
+    {
       my_message(ER_ROW_IS_REFERENCED, ER(ER_ROW_IS_REFERENCED), MYF(0));
+    }
     error= 1;
   }
 
@@ -5503,9 +5505,10 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     goto err;
   new_db_type= create_info->db_type;
 
-  if (new_db_type != old_db_type ||
+  if (new_db_type != old_db_type &&
       !table->file->can_switch_engines())
   {
+    assert(0);
     my_error(ER_ROW_IS_REFERENCED, MYF(0));
     goto err;
   }

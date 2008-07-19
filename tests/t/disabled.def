@@ -25,7 +25,7 @@ ctype_latin2_ch      : BUG #33791 2008-01-18 mats Wrong ORDER BY with latin2_cze
 cast                 : Bug#35594 2008-03-27 main.cast fails on Windows2003-64
 
 subselect_notembedded  : Bug#35803, Bug#33506 2008-Apr-03 subselect_notembedded crashes the server
-alter_table : Bug introduced around datatime
+#alter_table : Bug introduced around datatime
 archive: Something is up in crashed table
 archive_aio_posix: Something is up in crashed table
 archive_bitfield: Something is up in crashed table
