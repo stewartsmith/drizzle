@@ -188,8 +188,6 @@ else
   AC_PATH_PROG(AS, as, as)
 fi
 
-# Still need ranlib for readline; local static use only so no libtool.
-AC_PROG_RANLIB
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
@@ -536,23 +534,6 @@ else
   AC_MSG_RESULT([no])
 fi
 
-# Add query profiler
-AC_MSG_CHECKING(if SHOW PROFILE should be enabled.)
-AC_ARG_ENABLE([profiling],
-    [AS_HELP_STRING([--enable-profiling], 
-	    [Build a version with query profiling code])],
-    [ ENABLED_PROFILING=$enableval ],
-    [ ENABLED_PROFILING=no ])
-
-if test "$ENABLED_PROFILING" = "yes"
-then
-  AC_DEFINE([ENABLED_PROFILING], [1],
-            [If SHOW PROFILE should be enabled])
-  AC_MSG_RESULT([yes]) 
-else
-  AC_MSG_RESULT([no])
-fi
-
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
             [Which port to use for Drizzle services @<:@default=4427@:>@])],
@@ -763,26 +744,6 @@ then
   AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
 else
   TARGET_LINUX="false"
-fi
-
-AC_MSG_CHECKING("need of special linking flags")
-if test "$TARGET_LINUX" = "true" -a "$ac_cv_c_compiler_gnu" = "yes" -a "$all_is_static" != "yes"
-then
-  LDFLAGS="$LDFLAGS -rdynamic"
-  AC_MSG_RESULT("-rdynamic")
-else
-  case "$SYSTEM_TYPE$with_mysqld_ldflags " in
-  *freebsd*"-all-static "*|*dragonfly*"-all-static "*)
-    AC_MSG_RESULT("none")
-    ;;
-  *freebsd*|*dragonfly*)
-    MYSQLD_EXTRA_LDFLAGS="$MYSQLD_EXTRA_LDFLAGS -export-dynamic"
-    AC_MSG_RESULT("-export-dynamic")
-    ;;
-  *)
-    AC_MSG_RESULT("none")
-    ;;
-  esac
 fi
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -1151,6 +1112,18 @@ AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
 
+AC_ARG_ENABLE([profiling],
+    [AS_HELP_STRING([--enable-profiling],
+       [Toggle profiling @<:@default=off@:>@])],
+    [ac_profiling="$enableval"],
+    [ac_profiling="no"])
+
+AC_ARG_ENABLE([coverage],
+    [AS_HELP_STRING([--enable-coverage],
+       [Toggle coverage @<:@default=off@:>@])],
+    [ac_coverage="$enableval"],
+    [ac_coverage="no"])
+
 AC_ARG_ENABLE([pedantic-warnings],
     [AS_HELP_STRING([--disable-pedantic-warnings],
        [Toggle pedanticness @<:@default=on@:>@])],
@@ -1199,6 +1172,20 @@ then
     W_STRICT_ALIASING="-Wno-strict-aliasing"
   fi
 
+  if test "$ac_profiling" = "yes"
+  then
+    GPROF_PROFILING="-pg"
+  else
+    GPROF_PROFILING=" "
+  fi
+
+  if test "$ac_coverage" = "yes"
+  then
+    GPROF_COVERAGE="-fprofile-arcs -ftest-coverage"
+  else
+    GPROF_COVERAGE=" "
+  fi
+
   if test "$ac_warn_pedantic" = "yes"
   then
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
@@ -1216,8 +1203,8 @@ then
   fi
 
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL}"
-  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL}"
+  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
   CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
