@@ -60,15 +60,16 @@ typedef struct st_mysql_xid MYSQL_XID;
 /*
   The allowable types of plugins
 */
-#define MYSQL_UDF_PLUGIN             0  /* User-Defined Function */
-#define MYSQL_UDA_PLUGIN             1  /* User-Defined Aggregate function */
-#define MYSQL_STORAGE_ENGINE_PLUGIN  2  /* Storage Engine */
-#define MYSQL_DAEMON_PLUGIN          4  /* Daemon / Raw */
-#define MYSQL_INFORMATION_SCHEMA_PLUGIN  5  /* Information Schema */
-#define MYSQL_AUDIT_PLUGIN           6  /* Audit */
-#define MYSQL_LOG_PLUGIN             7  /* Logging */
-#define MYSQL_AUTH_PLUGIN            8  /* Authorization */
-#define MYSQL_MAX_PLUGIN_TYPE_NUM    9  /* The number of plugin types   */
+#define MYSQL_DAEMON_PLUGIN          0  /* Daemon / Raw */
+#define MYSQL_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine */
+#define MYSQL_INFORMATION_SCHEMA_PLUGIN  2  /* Information Schema */
+#define MYSQL_UDF_PLUGIN             3  /* User-Defined Function */
+#define MYSQL_UDA_PLUGIN             4  /* User-Defined Aggregate function */
+#define MYSQL_AUDIT_PLUGIN           5  /* Audit */
+#define MYSQL_LOGGER_PLUGIN          6  /* Logging */
+#define MYSQL_AUTH_PLUGIN            7  /* Authorization */
+
+#define MYSQL_MAX_PLUGIN_TYPE_NUM    8  /* The number of plugin types */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0
