@@ -12,9 +12,15 @@ ACL code. Etc.
 * What is the goal?
 
 A micro-kernel that we then extend to add what we need (all additions come
-through interfaces that can be compiled/loaded in as needed). 
+through interfaces that can be compiled/loaded in as needed).  The target
+for the project is web infrastructure backend and cloud components. 
 
-* So the differences?
+* Is the his a product of Sun/MySQL?
+
+No, though several authors do work for Sun/MySQL. The development model is
+one based around open collaboration.  Drizzle's license is the GPL v2.
+
+* So what are the differences between is and MySQL?
 
 No modes, views, triggers, prepared statements, stored procedures, query cache, 
 data conversion inserts, ACL. Fewer data types.  Less engines, less code. 
@@ -136,12 +142,6 @@ operations to generate debugging code for us so our binaries are not
 optimal.  Therefore, do not go out and benchmark this and expect it to be one way or
 the other. We are currently only doing benchmarks where it makes sense for
 us to determine where bottlenecks are.
-
-* And what is the license?
-
-Drizzle inherits its license from MySQL's GPL. Any libraries not connected
-to this are licensed under their own distribution license. All source files
-are clearly identified.
 
 * Why drizzle?
 
