@@ -541,12 +541,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   case COM_STATISTICS:
   case COM_PING:
     break;
-  /* Only increase id on these statements but don't count them. */
-  case COM_STMT_PREPARE: 
-  case COM_STMT_CLOSE:
-  case COM_STMT_RESET:
-    next_query_id();
-    break;
   /* Increase id and count all other statements. */
   default:
     statistic_increment(thd->status_var.questions, &LOCK_status);
@@ -683,16 +677,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
         thd->update_charset();
       }
     }
-    break;
-  }
-  case COM_STMT_EXECUTE:
-  case COM_STMT_FETCH:
-  case COM_STMT_SEND_LONG_DATA:
-  case COM_STMT_PREPARE:
-  case COM_STMT_CLOSE:
-  case COM_STMT_RESET:
-  {
-    /* We should toss an error here */
     break;
   }
   case COM_QUERY:
@@ -1674,7 +1658,6 @@ end_with_restore_list:
                            0, (ORDER*) 0, 0);
     break;
   }
-#ifdef HAVE_REPLICATION
   case SQLCOM_SLAVE_START:
   {
     pthread_mutex_lock(&LOCK_active_mi);
@@ -1708,7 +1691,6 @@ end_with_restore_list:
     pthread_mutex_unlock(&LOCK_active_mi);
     break;
   }
-#endif /* HAVE_REPLICATION */
 
   case SQLCOM_ALTER_TABLE:
     assert(first_table == all_tables && first_table != 0);
@@ -1899,7 +1881,6 @@ end_with_restore_list:
 
     res= mysql_multi_update_prepare(thd);
 
-#ifdef HAVE_REPLICATION
     /* Check slave filtering rules */
     if (unlikely(thd->slave_thread))
     {
@@ -1919,7 +1900,6 @@ end_with_restore_list:
     }
     else
     {
-#endif /* HAVE_REPLICATION */
       if (res)
         break;
       if (opt_readonly &&
@@ -1928,9 +1908,7 @@ end_with_restore_list:
 	my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
 	break;
       }
-#ifdef HAVE_REPLICATION
     }  /* unlikely */
-#endif
 
     res= mysql_multi_update(thd, all_tables,
                             &select_lex->item_list,
@@ -2357,7 +2335,6 @@ end_with_restore_list:
       do_db/ignore_db. And as this query involves no tables, tables_ok()
       above was not called. So we have to check rules again here.
     */
-#ifdef HAVE_REPLICATION
     if (thd->slave_thread && 
 	(!rpl_filter->db_ok(lex->name.str) ||
 	 !rpl_filter->db_ok_with_wild_table(lex->name.str)))
@@ -2365,7 +2342,6 @@ end_with_restore_list:
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
-#endif
     if (thd->locked_tables || thd->active_transaction())
     {
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
@@ -2383,7 +2359,6 @@ end_with_restore_list:
       res= 1;
       break;
     }
-#ifdef HAVE_REPLICATION
     if (thd->slave_thread && 
        (!rpl_filter->db_ok(db->str) ||
         !rpl_filter->db_ok_with_wild_table(db->str)))
@@ -2392,7 +2367,6 @@ end_with_restore_list:
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
-#endif
     if (check_db_name(db))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
@@ -2427,7 +2401,6 @@ end_with_restore_list:
       do_db/ignore_db. And as this query involves no tables, tables_ok()
       above was not called. So we have to check rules again here.
     */
-#ifdef HAVE_REPLICATION
     if (thd->slave_thread &&
 	(!rpl_filter->db_ok(db->str) ||
 	 !rpl_filter->db_ok_with_wild_table(db->str)))
@@ -2435,7 +2408,6 @@ end_with_restore_list:
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
-#endif
     if (thd->locked_tables || thd->active_transaction())
     {
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
@@ -3080,7 +3052,6 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
 }
 
 
-#ifdef HAVE_REPLICATION
 /*
   Usable by the replication SQL thread only: just parse a query to know if it
   can be ignored because of replicate-*-table rules.
@@ -3107,7 +3078,6 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
   thd->cleanup_after_query();
   return(error);
 }
-#endif
 
 
 
