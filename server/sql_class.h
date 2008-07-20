@@ -323,17 +323,17 @@ struct system_variables
   */
   my_thread_id pseudo_thread_id;
 
-  my_bool low_priority_updates;
-  my_bool new_mode;
+  bool low_priority_updates;
+  bool new_mode;
   /* 
     compatibility option:
       - index usage hints (USE INDEX without a FOR clause) behave as in 5.0 
   */
   bool old_mode;
-  my_bool engine_condition_pushdown;
-  my_bool keep_files_on_create;
+  bool engine_condition_pushdown;
+  bool keep_files_on_create;
 
-  my_bool old_alter_table;
+  bool old_alter_table;
 
   plugin_ref table_plugin;
 
@@ -356,7 +356,7 @@ struct system_variables
   DATE_TIME_FORMAT *date_format;
   DATE_TIME_FORMAT *datetime_format;
   DATE_TIME_FORMAT *time_format;
-  my_bool sysdate_is_now;
+  bool sysdate_is_now;
 
 };
 
@@ -1520,7 +1520,7 @@ public:
   /* Used by the sys_var class to store temporary values */
   union
   {
-    my_bool   my_bool_value;
+    bool   bool_value;
     long      long_value;
     ulong     ulong_value;
     uint64_t uint64_t_value;

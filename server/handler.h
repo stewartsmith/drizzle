@@ -1291,7 +1291,7 @@ public:
   bool ha_check_and_repair(THD *thd);
   int ha_disable_indexes(uint mode);
   int ha_enable_indexes(uint mode);
-  int ha_discard_or_import_tablespace(my_bool discard);
+  int ha_discard_or_import_tablespace(bool discard);
   void ha_prepare_for_alter();
   int ha_rename_table(const char *from, const char *to);
   int ha_delete_table(const char *name);
@@ -1727,7 +1727,7 @@ public:
         cached
   */
 
-  virtual my_bool
+  virtual bool
     register_query_cache_table(THD *thd __attribute__((__unused__)),
                                char *table_key __attribute__((__unused__)),
                                uint key_length __attribute__((__unused__)),
@@ -2103,7 +2103,7 @@ private:
   { return HA_ERR_WRONG_COMMAND; }
   virtual int enable_indexes(uint mode __attribute__((__unused__)))
   { return HA_ERR_WRONG_COMMAND; }
-  virtual int discard_or_import_tablespace(my_bool discard __attribute__((__unused__)))
+  virtual int discard_or_import_tablespace(bool discard __attribute__((__unused__)))
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);

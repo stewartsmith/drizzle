@@ -7446,7 +7446,7 @@ ha_innobase::cmp_ref(
 /***********************************************************************
 Ask InnoDB if a query to a table can be cached. */
 
-my_bool
+bool
 ha_innobase::register_query_cache_table(
 /*====================================*/
 					/* out: TRUE if query caching
