@@ -35,7 +35,7 @@ bin_PROGRAMS =	drizzle \
 				mysqlslap 
 
 drizzle_SOURCES =		drizzle.c readline.c completion_hash.c
-drizzle_LDADD =			-lreadline @TERMCAP_LIB@ $(GLIB_LIBS) \
+drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) $(GLIB_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
 drizzle_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
 drizzleadmin_SOURCES =		drizzleadmin.cc
@@ -56,8 +56,8 @@ mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 
 drizzletest_SOURCES=		drizzletest.cc 
-drizzletest_LDADD =		${LDADD} @PCRE_LIBS@
-drizzletest_CFLAGS = 		${AM_CPPFLAGS} @PCRE_CFLAGS@
+drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
+drizzletest_CFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
 
 # Fix for mit-threads
 DEFS =			-DUNDEF_THREADS_HACK \

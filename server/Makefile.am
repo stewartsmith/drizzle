@@ -27,9 +27,7 @@ pkgplugindir =$(pkglibdir)/plugin
 
 AM_CPPFLAGS =-I$(top_builddir)/include \
 	     -I$(top_srcdir)/include \
-	     -I$(srcdir) $(openssl_includes) \
-	     $(libevent_includes) \
-	     -ggdb
+	     -I$(srcdir) $(openssl_includes) 
 
 SUBDIRS =. share
 
@@ -55,12 +53,11 @@ DTRACEFILES = handler.o \
 
 noinst_LTLIBRARIES = libhandler.la
 
-SUPPORTING_LIBS = $(top_builddir)/vio/libviolt.la \
-		  $(top_builddir)/libdrizzle/libsqlcommon.la \
-		  $(top_builddir)/mysys/libmysyslt.la \
-		  $(top_builddir)/strings/libmystringslt.la 
-
-LDADD = $(SUPPORTING_LIBS) -lz -levent
+LDADD = $(top_builddir)/vio/libviolt.la \
+	$(top_builddir)/libdrizzle/libsqlcommon.la \
+	$(top_builddir)/mysys/libmysyslt.la \
+	$(top_builddir)/strings/libmystringslt.la \
+	$(ZLIB_LIBS)
 
 drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
@@ -68,7 +65,7 @@ drizzled_LDADD = libhandler.la \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
-		 @LIBDL@
+		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
 
 noinst_HEADERS = item.h \
 		 item_func.h \
