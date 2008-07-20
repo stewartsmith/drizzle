@@ -3240,7 +3240,7 @@ bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
 TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
 					     Table_ident *table,
 					     LEX_STRING *alias,
-					     ulong table_options,
+					     uint32_t table_options,
 					     thr_lock_type lock_type,
 					     List<Index_hint> *index_hints_arg,
                                              LEX_STRING *option)

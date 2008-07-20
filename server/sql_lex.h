@@ -107,18 +107,18 @@ typedef List<Item> List_item;
 /* SERVERS CACHE CHANGES */
 typedef struct st_lex_server_options
 {
-  long port;
-  uint server_name_length;
+  int32_t port;
+  uint32_t server_name_length;
   char *server_name, *host, *db, *username, *password, *scheme, *owner;
 } LEX_SERVER_OPTIONS;
 
 typedef struct st_lex_master_info
 {
   char *host, *user, *password, *log_file_name;
-  uint port, connect_retry;
+  uint32_t port, connect_retry;
   float heartbeat_period;
   uint64_t pos;
-  ulong server_id;
+  uint32_t server_id;
   /*
     Enum is used for making it possible to detect if the user
     changed variable or if it should be left at old value
@@ -127,7 +127,7 @@ typedef struct st_lex_master_info
     ssl, ssl_verify_server_cert, heartbeat_opt;
   char *ssl_key, *ssl_cert, *ssl_ca, *ssl_capath, *ssl_cipher;
   char *relay_log_name;
-  ulong relay_log_pos;
+  uint32_t relay_log_pos;
 } LEX_MASTER_INFO;
 
 
@@ -180,7 +180,7 @@ public:
   LEX_STRING key_name;
 
   Index_hint (enum index_hint_type type_arg, index_clause_map clause_arg,
-              char *str, uint length) :
+              char *str, uint32_t length) :
     type(type_arg), clause(clause_arg)
   {
     key_name.str= str;
@@ -328,7 +328,7 @@ public:
       UNCACHEABLE_EXPLAIN
       UNCACHEABLE_PREPARE
   */
-  uint8 uncacheable;
+  uint8_t uncacheable;
   enum sub_select_type linkage;
   bool no_table_names_allowed; /* used for global order by */
   bool no_error; /* suppress error message (convert it to warnings) */
@@ -338,7 +338,7 @@ public:
     return sql_alloc(size);
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
-  { return (void*) alloc_root(mem_root, (uint) size); }
+  { return (void*) alloc_root(mem_root, (uint32_t) size); }
   static void operator delete(void *ptr __attribute__((__unused__)),
                               size_t size __attribute__((__unused__)))
   { TRASH(ptr, size); }
@@ -362,13 +362,13 @@ public:
 
   virtual bool set_braces(bool value);
   virtual bool inc_in_sum_expr();
-  virtual uint get_in_sum_expr();
+  virtual uint32_t get_in_sum_expr();
   virtual TABLE_LIST* get_table_list();
   virtual List<Item>* get_item_list();
-  virtual ulong get_table_join_options();
+  virtual uint32_t get_table_join_options();
   virtual TABLE_LIST *add_table_to_list(THD *thd, Table_ident *table,
                                         LEX_STRING *alias,
-                                        ulong table_options,
+                                        uint32_t table_options,
                                         thr_lock_type flags= TL_UNLOCK,
                                         List<Index_hint> *hints= 0,
                                         LEX_STRING *option= 0);
@@ -458,7 +458,7 @@ public:
   void exclude_tree();
 
   /* UNION methods */
-  bool prepare(THD *thd, select_result *result, ulong additional_options);
+  bool prepare(THD *thd, select_result *result, uint32_t additional_options);
   bool exec();
   bool cleanup();
   inline void unclean() { cleaned= 0; }
@@ -534,15 +534,15 @@ public:
     bigger then can be number of entries that will be added to all item
     list during split_sum_func
   */
-  uint select_n_having_items;
-  uint cond_count;    /* number of arguments of and/or/xor in where/having/on */
-  uint between_count; /* number of between predicates in where/having/on      */
-  uint max_equal_elems; /* maximal number of elements in multiple equalities  */   
+  uint32_t select_n_having_items;
+  uint32_t cond_count;    /* number of arguments of and/or/xor in where/having/on */
+  uint32_t between_count; /* number of between predicates in where/having/on      */
+  uint32_t max_equal_elems; /* maximal number of elements in multiple equalities  */   
   /*
     Number of fields used in select list or where clause of current select
     and all inner subselects.
   */
-  uint select_n_where_fields;
+  uint32_t select_n_where_fields;
   enum_parsing_place parsing_place; /* where we are parsing expression */
   bool with_sum_func;   /* sum function indicator */
   /* 
@@ -551,21 +551,21 @@ public:
   */
   bool conds_processed_with_permanent_arena;
 
-  ulong table_join_options;
-  uint in_sum_expr;
-  uint select_number; /* number of select (used for EXPLAIN) */
+  uint32_t table_join_options;
+  uint32_t in_sum_expr;
+  uint32_t select_number; /* number of select (used for EXPLAIN) */
   int nest_level;     /* nesting level of select */
   Item_sum *inner_sum_func_list; /* list of sum func in nested selects */ 
-  uint with_wild; /* item list contain '*' */
+  uint32_t with_wild; /* item list contain '*' */
   bool  braces;   	/* SELECT ... UNION (SELECT ... ) <- this braces */
   /* true when having fix field called in processing of this SELECT */
   bool having_fix_field;
   /* List of references to fields referenced from inner selects */
   List<Item_outer_ref> inner_refs_list;
   /* Number of Item_sum-derived objects in this SELECT */
-  uint n_sum_items;
+  uint32_t n_sum_items;
   /* Number of Item_sum-derived objects in children and descendant SELECTs */
-  uint n_child_sum_items;
+  uint32_t n_child_sum_items;
 
   /* explicit LIMIT clause was used */
   bool explicit_limit;
@@ -621,7 +621,7 @@ public:
       1 - aggregate functions are used in this select,
           defined as SUM_FUNC_USED.
   */
-  uint8 full_group_by_flag;
+  uint8_t full_group_by_flag;
   void init_query();
   void init_select();
   st_select_lex_unit* master_unit();
@@ -648,14 +648,14 @@ public:
 
   bool set_braces(bool value);
   bool inc_in_sum_expr();
-  uint get_in_sum_expr();
+  uint32_t get_in_sum_expr();
 
   bool add_item_to_list(THD *thd, Item *item);
   bool add_group_to_list(THD *thd, Item *item, bool asc);
   bool add_order_to_list(THD *thd, Item *item, bool asc);
   TABLE_LIST* add_table_to_list(THD *thd, Table_ident *table,
 				LEX_STRING *alias,
-				ulong table_options,
+				uint32_t table_options,
 				thr_lock_type flags= TL_UNLOCK,
 				List<Index_hint> *hints= 0,
                                 LEX_STRING *option= 0);
@@ -666,7 +666,7 @@ public:
   void add_joined_table(TABLE_LIST *table);
   TABLE_LIST *convert_right_join();
   List<Item>* get_item_list();
-  ulong get_table_join_options();
+  uint32_t get_table_join_options();
   void set_lock_for_tables(thr_lock_type lock_type);
   inline void init_order()
   {
@@ -690,7 +690,7 @@ public:
     init_query();
     init_select();
   }
-  bool setup_ref_array(THD *thd, uint order_group_num);
+  bool setup_ref_array(THD *thd, uint32_t order_group_num);
   void print(THD *thd, String *str, enum_query_type query_type);
   static void print_order(String *str,
                           ORDER *order,
@@ -714,7 +714,7 @@ public:
    Add a index hint to the tagged list of hints. The type and clause of the
    hint will be the current ones (set by set_index_hint()) 
   */
-  bool add_index_hint (THD *thd, char *str, uint length);
+  bool add_index_hint (THD *thd, char *str, uint32_t length);
 
   /* make a list to hold index hints */
   void alloc_index_hints (THD *thd);
@@ -778,10 +778,10 @@ public:
   List<Alter_column>            alter_list;
   List<Key>                     key_list;
   List<Create_field>            create_list;
-  uint                          flags;
+  uint32_t                          flags;
   enum enum_enable_or_disable   keys_onoff;
   enum tablespace_op_type       tablespace_op;
-  uint                          no_parts;
+  uint32_t                          no_parts;
   enum ha_build_method          build_method;
   Create_field                 *datetime_field;
   bool                          error_if_not_empty;
@@ -865,7 +865,7 @@ public:
   */
   SQL_LIST sroutines_list;
   uchar    **sroutines_list_own_last;
-  uint     sroutines_list_own_elements;
+  uint32_t     sroutines_list_own_elements;
 
   /*
     These constructor and destructor serve for creation/destruction
@@ -1215,14 +1215,14 @@ public:
   }
 
   /** Get the length of the current token, in the raw buffer. */
-  uint yyLength()
+  uint32_t yyLength()
   {
     /*
       The assumption is that the lexical analyser is always 1 character ahead,
       which the -1 account for.
     */
     assert(m_ptr > m_tok_start);
-    return (uint) ((m_ptr - m_tok_start) - 1);
+    return (uint32_t) ((m_ptr - m_tok_start) - 1);
   }
 
   /** Get the utf8-body string. */
@@ -1232,7 +1232,7 @@ public:
   }
 
   /** Get the utf8-body length. */
-  uint get_body_utf8_length()
+  uint32_t get_body_utf8_length()
   {
     return m_body_utf8_ptr - m_body_utf8;
   }
@@ -1249,10 +1249,10 @@ public:
   THD *m_thd;
 
   /** Current line number. */
-  uint yylineno;
+  uint32_t yylineno;
 
   /** Length of the last token parsed. */
-  uint yytoklen;
+  uint32_t yytoklen;
 
   /** Interface with bison, value of the last token parsed. */
   LEX_YYSTYPE yylval;
@@ -1283,7 +1283,7 @@ private:
   const char *m_buf;
 
   /** Length of the raw buffer. */
-  uint m_buf_length;
+  uint32_t m_buf_length;
 
   /** Echo the parsed stream to the pre-processed buffer. */
   bool m_echo;
@@ -1436,7 +1436,7 @@ typedef struct st_lex : public Query_tables_list
   KEY_CREATE_INFO key_create_info;
   LEX_MASTER_INFO mi;				// used by CHANGE MASTER
   LEX_SERVER_OPTIONS server_options;
-  ulong type;
+  uint32_t type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
     or functions which have sense only if GROUP BY is present, are allowed.
@@ -1467,27 +1467,27 @@ typedef struct st_lex : public Query_tables_list
   };
   enum enum_var_type option_type;
 
-  uint profile_query_id;
-  uint profile_options;
+  uint32_t profile_query_id;
+  uint32_t profile_options;
   enum column_format_type column_format;
-  uint which_columns;
+  uint32_t which_columns;
   enum Foreign_key::fk_match_opt fk_match_option;
   enum Foreign_key::fk_option fk_update_opt;
   enum Foreign_key::fk_option fk_delete_opt;
-  uint slave_thd_opt, start_transaction_opt;
+  uint32_t slave_thd_opt, start_transaction_opt;
   int nest_level;
   /*
     In LEX representing update which were transformed to multi-update
     stores total number of tables. For LEX representing multi-delete
     holds number of tables from which we will delete records.
   */
-  uint table_count;
-  uint8 describe;
+  uint32_t table_count;
+  uint8_t describe;
   /*
     A flag that indicates what kinds of derived tables are present in the
     query (0 if no derived tables, otherwise DERIVED_SUBQUERY).
   */
-  uint8 derived_tables;
+  uint8_t derived_tables;
   bool drop_if_exists, drop_temporary, local_file, one_shot_set;
   bool autocommit;
   bool verbose, no_write_to_binlog;
@@ -1599,7 +1599,7 @@ struct st_lex_local: public st_lex
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root) throw()
   {
-    return (void*) alloc_root(mem_root, (uint) size);
+    return (void*) alloc_root(mem_root, (uint32_t) size);
   }
   static void operator delete(void *ptr __attribute__((__unused__)),
                               size_t size __attribute__((__unused__)))

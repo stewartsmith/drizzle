@@ -1840,14 +1840,14 @@ List<Item>* st_select_lex_node::get_item_list()      { return 0; }
 TABLE_LIST *st_select_lex_node::add_table_to_list (THD *thd __attribute__((__unused__)),
                                                    Table_ident *table __attribute__((__unused__)),
 						  LEX_STRING *alias __attribute__((__unused__)),
-						  ulong table_join_options __attribute__((__unused__)),
+						  uint32_t table_join_options __attribute__((__unused__)),
 						  thr_lock_type flags __attribute__((__unused__)),
 						  List<Index_hint> *hints __attribute__((__unused__)),
                                                   LEX_STRING *option __attribute__((__unused__)))
 {
   return 0;
 }
-ulong st_select_lex_node::get_table_join_options()
+uint32_t st_select_lex_node::get_table_join_options()
 {
   return 0;
 }
@@ -1940,7 +1940,7 @@ List<Item>* st_select_lex::get_item_list()
   return &item_list;
 }
 
-ulong st_select_lex::get_table_join_options()
+uint32_t st_select_lex::get_table_join_options()
 {
   return table_join_options;
 }
