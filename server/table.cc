@@ -1974,7 +1974,7 @@ void append_unescaped(String *res, const char *pos, uint length)
 
   for (; pos != end ; pos++)
   {
-#if defined(USE_MB) && MYSQL_VERSION_ID < 40100
+#if defined(USE_MB)
     uint mblen;
     if (use_mb(default_charset_info) &&
         (mblen= my_ismbchar(default_charset_info, pos, end)))

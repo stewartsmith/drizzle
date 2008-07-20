@@ -3337,7 +3337,6 @@ static void do_set_charset(struct st_command *command)
 }
 
 
-#if MYSQL_VERSION_ID >= 50000
 /* List of error names to error codes, available from 5.0 */
 typedef struct
 {
@@ -3374,16 +3373,6 @@ static uint get_errcode_from_name(char *error_name, char *error_end)
     die("Unknown SQL error name '%s'", error_name);
   return(0);
 }
-#else
-uint get_errcode_from_name(char *error_name __attribute__((unused)),
-                           char *error_end __attribute__((unused)))
-{
-  abort_not_in_this_version();
-  return 0; /* Never reached */
-}
-#endif
-
-
 
 static void do_get_errcodes(struct st_command *command)
 {
