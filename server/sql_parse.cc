@@ -2119,8 +2119,7 @@ end_with_restore_list:
       thd->options|= OPTION_KEEP_LOG;
     }
     /* DDL and binlog write order protected by LOCK_open */
-    res= mysql_rm_table(thd, first_table, lex->drop_if_exists,
-			lex->drop_temporary);
+    res= mysql_rm_table(thd, first_table, lex->drop_if_exists, lex->drop_temporary);
   }
   break;
   case SQLCOM_SHOW_PROCESSLIST:

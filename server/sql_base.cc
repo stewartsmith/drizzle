@@ -6333,7 +6333,7 @@ err:
 }
 
 
-my_bool mysql_rm_tmp_tables(void)
+bool mysql_rm_tmp_tables(void)
 {
   uint i, idx;
   char	filePath[FN_REFLEN], *tmpdir, filePathCopy[FN_REFLEN];
