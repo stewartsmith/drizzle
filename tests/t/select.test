@@ -1282,30 +1282,30 @@ select t2.fld3 from t2 where fld3 LIKE 'don_t_find_me_please%';
 # Test using INDEX and IGNORE INDEX
 #
 
-explain select t2.fld3 from t2 where fld3 = 'honeysuckle';
+#explain select t2.fld3 from t2 where fld3 = 'honeysuckle';
 
-explain select fld3 from t2 ignore index (fld3) where fld3 = 'honeysuckle';
-explain select fld3 from t2 use index (fld1) where fld3 = 'honeysuckle';
+#explain select fld3 from t2 ignore index (fld3) where fld3 = 'honeysuckle';
+#explain select fld3 from t2 use index (fld1) where fld3 = 'honeysuckle';
 
-explain select fld3 from t2 use index (fld3) where fld3 = 'honeysuckle';
-explain select fld3 from t2 use index (fld1,fld3) where fld3 = 'honeysuckle';
+#explain select fld3 from t2 use index (fld3) where fld3 = 'honeysuckle';
+#explain select fld3 from t2 use index (fld1,fld3) where fld3 = 'honeysuckle';
 
 #
 # NOTE NOTE NOTE
 # The next should give an error
 #
 
--- error 1176
-explain select fld3 from t2 ignore index (fld3,not_used);
--- error 1176
-explain select fld3 from t2 use index (not_used);
+#-- error 1176
+#explain select fld3 from t2 ignore index (fld3,not_used);
+#-- error 1176
+#explain select fld3 from t2 use index (not_used);
 
 #
 # Test sorting with a used key (there is no need for sorting)
 #
 
 select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
-explain select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
+#explain select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
 select fld1,fld3 from t2 where fld3="Colombo" or fld3 = "nondecreasing" order by fld3;
 
 # 
@@ -1323,9 +1323,9 @@ select fld1,fld3 from t2 where companynr = 37 and fld3 = 'appendixes';
 #
 
 select fld1 from t2 where fld1=250501 or fld1="250502";
-explain select fld1 from t2 where fld1=250501 or fld1="250502"; 
+#explain select fld1 from t2 where fld1=250501 or fld1="250502"; 
 select fld1 from t2 where fld1=250501 or fld1=250502 or fld1 >= 250505 and fld1 <= 250601 or fld1 between 250501 and 250502;
-explain select fld1 from t2 where fld1=250501 or fld1=250502 or fld1 >= 250505 and fld1 <= 250601 or fld1 between 250501 and 250502;
+#explain select fld1 from t2 where fld1=250501 or fld1=250502 or fld1 >= 250505 and fld1 <= 250601 or fld1 between 250501 and 250502;
 
 #
 # Search with a key with LIKE constant
@@ -1443,15 +1443,15 @@ select distinct fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr orde
 # Here the last fld3 is optimized away from the order by
 #
 
-explain select t3.t2nr,fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr order by t3.t2nr,fld3;
+#explain select t3.t2nr,fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr order by t3.t2nr,fld3;
 
 #
 # Some test with ORDER BY and limit
 #
 
-explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period;
-explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period limit 10;
-explain select * from t3 as t1,t3 where t1.period=t3.period order by t1.period limit 10;
+#explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period;
+#explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period limit 10;
+#explain select * from t3 as t1,t3 where t1.period=t3.period order by t1.period limit 10;
 
 #
 # Search with a constant table.
@@ -1468,7 +1468,7 @@ select fld3,period from t1,t2 where fld1 = 011401 order by period;
 
 select fld3,period from t2,t3 where t2.fld1 = 011401 and t2.fld1=t3.t2nr and t3.period=1001;
 
-explain select fld3,period from t2,t3 where t2.fld1 = 011401 and t3.t2nr=t2.fld1 and 1001 = t3.period;
+#explain select fld3,period from t2,t3 where t2.fld1 = 011401 and t3.t2nr=t2.fld1 and 1001 = t3.period;
 
 #
 # Search with a constant table and several rows from another table
@@ -1539,40 +1539,40 @@ insert into t2 (fld1, companynr) values (999999,99);
 
 select t2.companynr,companyname from t2 left join t4 using (companynr) where t4.companynr is null;
 select count(*) from t2 left join t4 using (companynr) where t4.companynr is not null;
-explain select t2.companynr,companyname from t2 left join t4 using (companynr) where t4.companynr is null;
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr is null;
+#explain select t2.companynr,companyname from t2 left join t4 using (companynr) where t4.companynr is null;
+#explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr is null;
 
 select companynr,companyname from t2 left join t4 using (companynr) where companynr is null;
 select count(*) from t2 left join t4 using (companynr) where companynr is not null;
-explain select companynr,companyname from t2 left join t4 using (companynr) where companynr is null;
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr is null;
+#explain select companynr,companyname from t2 left join t4 using (companynr) where companynr is null;
+#explain select companynr,companyname from t4 left join t2 using (companynr) where companynr is null;
 delete from t2 where fld1=999999;
 
 #
 # Test left join optimization
 
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0;
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0;
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 and t4.companynr > 0;
-
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0;
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0;
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 and companynr > 0;
-# Following can't be optimized
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr is null;
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0 or t4.companynr > 0;
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where ifnull(t2.companynr,1)>0;
-
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr is null;
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0 or companynr > 0;
-explain select companynr,companyname from t4 left join t2 using (companynr) where ifnull(companynr,1)>0;
+#explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0;
+#explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0;
+#explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 and t4.companynr > 0;
+#
+#explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0;
+#explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0;
+#explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 and companynr > 0;
+## Following can't be optimized
+#explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr is null;
+#explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0 or t4.companynr > 0;
+#explain select t2.companynr,companyname from t4 left join t2 using (companynr) where ifnull(t2.companynr,1)>0;
+#
+#explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr is null;
+#explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0 or companynr > 0;
+#explain select companynr,companyname from t4 left join t2 using (companynr) where ifnull(companynr,1)>0;
 
 #
 # Joins with forms.
 #
 
 select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
-explain select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
+#explain select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
 
 #
 # Search using 'or' with the same referens group.
@@ -1611,7 +1611,7 @@ select count(*) from t1;
 select companynr,count(*),sum(fld1) from t2 group by companynr;
 select companynr,count(*) from t2 group by companynr order by companynr desc limit 5;
 select count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 where companynr = 34 and fld4<>"";
-explain extended select count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 where companynr = 34 and fld4<>"";
+#explain extended select count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 where companynr = 34 and fld4<>"";
 select companynr,count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 group by companynr limit 3;
 select companynr,t2nr,count(price),sum(price),min(price),max(price),avg(price) from t3 where companynr = 37 group by companynr,t2nr limit 10;
 select /*! SQL_SMALL_RESULT */ companynr,t2nr,count(price),sum(price),min(price),max(price),avg(price) from t3 where companynr = 37 group by companynr,t2nr limit 10;
@@ -1700,8 +1700,8 @@ select sum(price) from t3,t2 where t2.fld1 = t3.t2nr and t3.companynr = 512 and 
 
 select t2.fld1,sum(price) from t3,t2 where t2.fld1 = t3.t2nr and t3.companynr = 512 and t3.t2nr = 38008 and t2.fld1 = 38008 or t2.fld1 = t3.t2nr and t3.t2nr = 38008 and t2.fld1 = 38008 or t3.t2nr = t2.fld1 and t2.fld1 = 38008 group by t2.fld1;
 
-explain select fld3 from t2 where 1>2 or 2>3;
-explain select fld3 from t2 where fld1=fld1;
+#explain select fld3 from t2 where 1>2 or 2>3;
+#explain select fld3 from t2 where fld1=fld1;
 
 #
 # HAVING
@@ -1726,7 +1726,7 @@ select min(fld1) from t2 where fld1>= 098024;
 select max(fld1) from t2 where fld1>= 098024;
 select count(*) from t3 where price2=76234234;
 select count(*) from t3 where companynr=512 and price2=76234234;
-explain select min(fld1),max(fld1),count(*) from t2;
+#explain select min(fld1),max(fld1),count(*) from t2;
 # PS does correct pre-zero here. MySQL can't do it as it returns a number.
 --disable_ps_protocol
 select min(fld1),max(fld1),count(*) from t2;
@@ -1762,7 +1762,7 @@ show full columns from t2;
 show full columns from t2 from test like 'f%';
 --replace_column 8 #
 show full columns from t2 from test like 's%';
-show keys from t2;
+#show keys from t2;
 
 drop table t4, t3, t2, t1;
 
@@ -1879,8 +1879,7 @@ insert into t1 values (2);
 insert into t2 values (1);
 insert into t4 values (1,1);
 
-explain select * from t1 left join t2 on id1 = id2 left join t3 on id1 = id3
-left join t4 on id3 = id4 where id2 = 1 or id4 = 1;
+#explain select * from t1 left join t2 on id1 = id2 left join t3 on id1 = id3 left join t4 on id3 = id4 where id2 = 1 or id4 = 1;
 select * from t1 left join t2 on id1 = id2 left join t3 on id1 = id3
 left join t4 on id3 = id4 where id2 = 1 or id4 = 1;
 
@@ -1910,9 +1909,9 @@ create table t1 (a integer,  b integer, index(a), index(b));
 create table t2 (c integer,  d integer, index(c), index(d));
 insert into t1 values (1,2), (2,2), (3,2), (4,2);
 insert into t2 values (1,3), (2,3), (3,4), (4,4);
-explain select * from t1 left join t2 on a=c where d in (4);
+#explain select * from t1 left join t2 on a=c where d in (4);
 select * from t1 left join t2 on a=c where d in (4);
-explain select * from t1 left join t2 on a=c where d = 4;
+#explain select * from t1 left join t2 on a=c where d = 4;
 select * from t1 left join t2 on a=c where d = 4;
 drop table t1, t2;
 
@@ -2136,7 +2135,7 @@ drop table t1,t2;
 create table t2 (a tinyint unsigned);
 create index t2i on t2(a);
 insert into t2 values (0), (254), (255);
-explain select * from t2 where a > -1;
+#explain select * from t2 where a > -1;
 select * from t2 where a > -1;
 drop table t2;
 
@@ -2223,9 +2222,7 @@ insert into t2 values (1,'',''), (2,'','');
 CREATE TABLE t3 (a int, b int, PRIMARY KEY (a,b), KEY a (a), KEY b (b));
 insert into t3 values (1,1),(1,2);
 # must have "range checked" for t2
-explain select straight_join DISTINCT t2.a,t2.b, t1.c from t1, t3, t2 
- where (t1.c=t2.a or (t1.c=t3.a and t2.a=t3.b)) and t1.b=556476786 and 
-       t2.b like '%%' order by t2.b limit 0,1;
+#explain select straight_join DISTINCT t2.a,t2.b, t1.c from t1, t3, t2 where (t1.c=t2.a or (t1.c=t3.a and t2.a=t3.b)) and t1.b=556476786 and t2.b like '%%' order by t2.b limit 0,1;
 DROP TABLE t1,t2,t3;
 
 #
@@ -2268,14 +2265,13 @@ CREATE TABLE t2 (key2 float default NULL, UNIQUE KEY key2 (key2));
 INSERT INTO t1 VALUES (0.3762),(0.3845),(0.6158),(0.7941);
 INSERT INTO t2 VALUES (1.3762),(1.3845),(1.6158),(1.7941);
 
-explain select max(key1) from t1 where key1 <= 0.6158;
-explain select max(key2) from t2 where key2 <= 1.6158;
-explain select min(key1) from t1 where key1 >= 0.3762;
-explain select min(key2) from t2 where key2 >= 1.3762;
-explain select max(key1), min(key2) from t1, t2
-where key1 <= 0.6158 and key2 >= 1.3762;
-explain select max(key1) from t1 where key1 <= 0.6158 and rand() + 0.5 >= 0.5;
-explain select min(key1) from t1 where key1 >= 0.3762 and rand() + 0.5 >= 0.5;
+#explain select max(key1) from t1 where key1 <= 0.6158;
+#explain select max(key2) from t2 where key2 <= 1.6158;
+#explain select min(key1) from t1 where key1 >= 0.3762;
+#explain select min(key2) from t2 where key2 >= 1.3762;
+#explain select max(key1), min(key2) from t1, t2 where key1 <= 0.6158 and key2 >= 1.3762;
+#explain select max(key1) from t1 where key1 <= 0.6158 and rand() + 0.5 >= 0.5;
+#explain select min(key1) from t1 where key1 >= 0.3762 and rand() + 0.5 >= 0.5;
 
 select max(key1) from t1 where key1 <= 0.6158;
 select max(key2) from t2 where key2 <= 1.6158;
@@ -2732,8 +2728,7 @@ insert into t2 select A.a, B.a, C.a, C.a from t1 A, t1 B, t1 C;
 analyze table t2;
 select 'In next EXPLAIN, B.rows must be exactly 10:' Z;
 
-explain select * from t2 A, t2 B where A.a=5 and A.b=5 and A.C<5
-          and B.a=5 and B.b=A.e and (B.b =1 or B.b = 3 or B.b=5);
+#explain select * from t2 A, t2 B where A.a=5 and A.b=5 and A.C<5 and B.a=5 and B.b=A.e and (B.b =1 or B.b = 3 or B.b=5);
 drop table t1, t2;
 
 #

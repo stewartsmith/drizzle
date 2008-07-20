@@ -593,7 +593,7 @@ insert into t2
 insert into t3 select * from t2 where a < 800;
 
 # The order of tables must be t2,t3:
-explain select * from t2,t3 where t2.a < 200 and t2.b=t3.b;
+#explain select * from t2,t3 where t2.a < 200 and t2.b=t3.b;
 
 drop table t1, t2, t3;
 
