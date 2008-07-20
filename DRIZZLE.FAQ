@@ -132,6 +132,12 @@ optimum, so do not got out and benchmark this and expect it to be one way or
 the other. We are currently only doing benchmarks where it makes sense for
 us to determine where bottlenecks are.
 
+* And what is the license?
+
+Drizzle inherits its license from MySQL's GPL. Any libraries not connected
+to this are licensed under their own distribution license. All source files
+are clearly idenified.
+
 * Why drizzle?
 
 I am from Seattle. Drizzle is our normal form of "rain" but it is not "rain",
