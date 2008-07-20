@@ -3675,7 +3675,7 @@ int decide_logging_format(THD *thd, TABLE_LIST *tables)
   {
     handler::Table_flags flags_some_set= handler::Table_flags();
     handler::Table_flags flags_all_set= ~handler::Table_flags();
-    my_bool multi_engine= false;
+    bool multi_engine= false;
     void* prev_ht= NULL;
     for (TABLE_LIST *table= tables; table; table= table->next_global)
     {

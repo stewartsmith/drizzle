@@ -1537,7 +1537,7 @@ static void update_func_bool(THD *thd __attribute__((__unused__)),
                              struct st_mysql_sys_var *var __attribute__((__unused__)),
                              void *tgt, const void *save)
 {
-  *(my_bool *) tgt= *(int *) save ? 1 : 0;
+  *(bool *) tgt= *(int *) save ? 1 : 0;
 }
 
 
@@ -1675,7 +1675,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
   switch (flags & PLUGIN_VAR_TYPEMASK) {
   case PLUGIN_VAR_BOOL:
-    size= sizeof(my_bool);
+    size= sizeof(bool);
     break;
   case PLUGIN_VAR_INT:
     size= sizeof(int);

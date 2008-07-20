@@ -3224,7 +3224,7 @@ mysql_discard_or_import_tablespace(THD *thd,
                                    enum tablespace_op_type tablespace_op)
 {
   TABLE *table;
-  my_bool discard;
+  bool discard;
   int error;
 
   /*

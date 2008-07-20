@@ -21,7 +21,7 @@
 #include <my_global.h>
 #include <my_dir.h>
 
-my_bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
+bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
   /* this is how to fail */
   if (args->arg_count != 0)  {

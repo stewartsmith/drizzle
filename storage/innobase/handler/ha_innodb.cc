@@ -1108,7 +1108,7 @@ query cache mutex, and this function will reserver the InnoDB kernel mutex.
 Thus, the 'rank' in sync0sync.h of the MySQL query cache mutex is above
 the InnoDB kernel mutex. */
 static
-my_bool
+bool
 innobase_query_caching_of_table_permitted(
 /*======================================*/
 				/* out: TRUE if permitted, FALSE if not;
