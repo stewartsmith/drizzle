@@ -33,13 +33,13 @@ char opt_plugin_dir[FN_REFLEN];
 */
 const LEX_STRING plugin_type_names[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
+  { C_STRING_WITH_LEN("DAEMON") },
+  { C_STRING_WITH_LEN("STORAGE ENGINE") },
+  { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
   { C_STRING_WITH_LEN("UDF") },
   { C_STRING_WITH_LEN("UDA") },
-  { C_STRING_WITH_LEN("STORAGE ENGINE") },
-  { C_STRING_WITH_LEN("DAEMON") },
-  { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
   { C_STRING_WITH_LEN("AUDIT") },
-  { C_STRING_WITH_LEN("LOG") },
+  { C_STRING_WITH_LEN("LOGGER") },
   { C_STRING_WITH_LEN("AUTH") }
 };
 
@@ -56,25 +56,25 @@ extern int finalize_udf(st_plugin_int *plugin);
 */
 plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
+  0,  /* Daemon */
+  ha_initialize_handlerton,  /* Storage Engine */
+  initialize_schema_table,  /* Information Schema */
   initialize_udf,  /* UDF */
   0,  /* UDA */
-  ha_initialize_handlerton,  /* Storage Engine */
-  0,  /* Daemon */
-  initialize_schema_table,  /* Information Schema */
   0,  /* Audit */
-  0,  /* Log */
+  0,  /* Logger */
   0  /* Auth */
 };
 
 plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
+  0,  /* Daemon */
+  ha_finalize_handlerton,  /* Storage Engine */
+  finalize_schema_table,  /* Information Schema */
   finalize_udf,  /* UDF */
   0,  /* UDA */
-  ha_finalize_handlerton,  /* Storage Engine */
-  0,  /* Daemon */
-  finalize_schema_table,  /* Information Schema */
   0,  /* Audit */
-  0,  /* Log */
+  0,  /* Logger */
   0  /* Auth */
 };
 
