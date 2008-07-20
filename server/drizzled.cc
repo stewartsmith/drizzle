@@ -2119,7 +2119,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   if (init_replication_sys_vars())
     return 1;
-  mysys_uses_curses=0;
   /*
     Process a comma-separated character set list and choose
     the first available character set. This is mostly for
