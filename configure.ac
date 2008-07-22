@@ -730,6 +730,23 @@ fi
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
 CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
 
+AC_ARG_WITH([debug],
+    [AS_HELP_STRING([--with-debug],
+       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
+    [with_debug=$withval],
+    [with_debug=no])
+if test "$with_debug" = "yes"
+then
+  # Medium debug.
+  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS"
+  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
+else
+  # Optimized version. No debug
+  CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
+  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
+fi
+
+
 AC_ARG_WITH([fast-mutexes],
     [AS_HELP_STRING([--with-fast-mutexes],
 	    [Compile with fast mutexes  @<:@default=off@:>@])],
