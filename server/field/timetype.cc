@@ -162,7 +162,7 @@ int Field_time::store(int64_t nr, bool unsigned_val)
 
 double Field_time::val_real(void)
 {
-  uint32 j= (uint32) uint3korr(ptr);
+  uint32_t j= (uint32_t) uint3korr(ptr);
   return (double) j;
 }
 
@@ -266,9 +266,9 @@ bool Field_time::send_binary(Protocol *protocol)
 
 int Field_time::cmp(const uchar *a_ptr, const uchar *b_ptr)
 {
-  int32 a,b;
-  a=(int32) sint3korr(a_ptr);
-  b=(int32) sint3korr(b_ptr);
+  int32_t a,b;
+  a=(int32_t) sint3korr(a_ptr);
+  b=(int32_t) sint3korr(b_ptr);
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 

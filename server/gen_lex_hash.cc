@@ -497,7 +497,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
   if (function){\n\
     if (len>sql_functions_max_len) return 0;\n\
     hash_map= sql_functions_map;\n\
-    register uint32 cur_struct= uint4korr(hash_map+((len-1)*4));\n\
+    register uint32_t cur_struct= uint4korr(hash_map+((len-1)*4));\n\
 \n\
     for (;;){\n\
       register uchar first_char= (uchar)cur_struct;\n\
@@ -531,7 +531,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
   }else{\n\
     if (len>symbols_max_len) return 0;\n\
     hash_map= symbols_map;\n\
-    register uint32 cur_struct= uint4korr(hash_map+((len-1)*4));\n\
+    register uint32_t cur_struct= uint4korr(hash_map+((len-1)*4));\n\
 \n\
     for (;;){\n\
       register uchar first_char= (uchar)cur_struct;\n\

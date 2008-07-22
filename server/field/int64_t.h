@@ -25,7 +25,7 @@
 
 class Field_int64_t :public Field_num {
 public:
-  Field_int64_t(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_int64_t(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
 	      uchar null_bit_arg,
 	      enum utype unireg_check_arg, const char *field_name_arg,
 	      bool zero_arg, bool unsigned_arg)
@@ -33,7 +33,7 @@ public:
 	       unireg_check_arg, field_name_arg,
 	       0, zero_arg,unsigned_arg)
     {}
-  Field_int64_t(uint32 len_arg,bool maybe_null_arg,
+  Field_int64_t(uint32_t len_arg,bool maybe_null_arg,
 		 const char *field_name_arg,
 		  bool unsigned_arg)
     :Field_num((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0,0,
@@ -57,10 +57,10 @@ public:
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 8; }
+  uint32_t pack_length() const { return 8; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
-  uint32 max_display_length() { return 20; }
+  uint32_t max_display_length() { return 20; }
   virtual uchar *pack(uchar* to, const uchar *from,
                       uint max_length __attribute__((__unused__)),
                       bool low_byte_first __attribute__((__unused__)))

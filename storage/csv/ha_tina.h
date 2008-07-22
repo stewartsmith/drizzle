@@ -79,7 +79,7 @@ class ha_tina: public handler
   tina_set *chain;
   tina_set *chain_ptr;
   uchar chain_alloced;
-  uint32 chain_size;
+  uint32_t chain_size;
   uint local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
   MEM_ROOT blobroot;

@@ -48,8 +48,8 @@ extern "C" {
 typedef struct st_HA_KEYSEG		/* Key-portion */
 {
   CHARSET_INFO *charset;
-  uint32 start;				/* Start of key in record */
-  uint32 null_pos;			/* position to NULL indicator */
+  uint32_t start;				/* Start of key in record */
+  uint32_t null_pos;			/* position to NULL indicator */
   uint16 bit_pos;                       /* Position to bit part */
   uint16 flag;
   uint16 length;			/* Keylength */

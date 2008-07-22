@@ -33,8 +33,8 @@ typedef struct st_trie
   TRIE_NODE root;
   MEM_ROOT mem_root;
   CHARSET_INFO *charset;
-  uint32 nnodes;
-  uint32 nwords;
+  uint32_t nnodes;
+  uint32_t nwords;
 } TRIE;
 
 typedef struct st_ac_trie_state

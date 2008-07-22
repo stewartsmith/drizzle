@@ -247,7 +247,7 @@ struct st_myisam_info {
   uchar *int_keypos,			/* Save position for next/previous  */
         *int_maxpos;			/*  -""-  */
   uint  int_nod_flag;			/*  -""-  */
-  uint32 int_keytree_version;		/*  -""-  */
+  uint32_t int_keytree_version;		/*  -""-  */
   int (*read_record)(struct st_myisam_info*, my_off_t, uchar*);
   invalidator_by_filename invalidator;  /* query cache invalidator */
   ulong this_unique;			/* uniq filenumber or thread */
@@ -430,7 +430,7 @@ typedef struct st_mi_sort_param
 #define MI_DYN_ALIGN_SIZE	4	/* Align blocks on this */
 #define MI_MAX_DYN_HEADER_BYTE	13	/* max header byte for dynamic rows */
 #define MI_MAX_BLOCK_LENGTH	((((ulong) 1 << 24)-1) & (~ (ulong) (MI_DYN_ALIGN_SIZE-1)))
-#define MI_REC_BUFF_OFFSET      ALIGN_SIZE(MI_DYN_DELETE_BLOCK_HEADER+sizeof(uint32))
+#define MI_REC_BUFF_OFFSET      ALIGN_SIZE(MI_DYN_DELETE_BLOCK_HEADER+sizeof(uint32_t))
 
 #define MEMMAP_EXTRA_MARGIN	7	/* Write this as a suffix for file */
 
@@ -599,7 +599,7 @@ extern uchar *mi_alloc_rec_buff(MI_INFO *,ulong, uchar**);
         ((((info)->s->options & HA_OPTION_PACK_RECORD) && (buf)) ? \
         (buf) - MI_REC_BUFF_OFFSET : (buf))
 #define mi_get_rec_buff_len(info,buf)                              \
-        (*((uint32 *)(mi_get_rec_buff_ptr(info,buf))))
+        (*((uint32_t *)(mi_get_rec_buff_ptr(info,buf))))
 
 extern ulong _mi_rec_unpack(MI_INFO *info,uchar *to,uchar *from,
 			    ulong reclength);

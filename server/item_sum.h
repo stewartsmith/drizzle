@@ -568,7 +568,7 @@ class TMP_TABLE_PARAM;
 class Item_sum_count_distinct :public Item_sum_int
 {
   TABLE *table;
-  uint32 *field_lengths;
+  uint32_t *field_lengths;
   TMP_TABLE_PARAM *tmp_table_param;
   bool force_copy_fields;
   /*

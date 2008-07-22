@@ -586,7 +586,7 @@ typedef struct st_print_event_info
   // TODO: have the last catalog here ??
   char db[FN_REFLEN+1]; // TODO: make this a LEX_STRING when thd->db is
   bool flags2_inited;
-  uint32 flags2;
+  uint32_t flags2;
   bool sql_mode_inited;
   ulong sql_mode;		/* must be same as THD.variables.sql_mode */
   ulong auto_increment_increment, auto_increment_offset;
@@ -848,7 +848,7 @@ public:
     The master's server id (is preserved in the relay log; used to
     prevent from infinite loops in circular replication).
   */
-  uint32 server_id;
+  uint32_t server_id;
 
   /**
     Some 16 flags. See the definitions above for LOG_EVENT_TIME_F,
@@ -1488,8 +1488,8 @@ public:
     we pass it with q_len, so we would not have to call strlen()
     otherwise, set it to 0, in which case, we compute it with strlen()
   */
-  uint32 q_len;
-  uint32 db_len;
+  uint32_t q_len;
+  uint32_t db_len;
   uint16 error_code;
   ulong thread_id;
   /*
@@ -1542,7 +1542,7 @@ public:
   bool sql_mode_inited;
   bool charset_inited;
 
-  uint32 flags2;
+  uint32_t flags2;
   /* In connections sql_mode is 32 bits now but will be 64 bits soon */
   ulong sql_mode;
   ulong auto_increment_increment, auto_increment_offset;
@@ -1598,7 +1598,7 @@ public:        /* !!! Public in this patch to allow old usage */
 
   int do_apply_event(Relay_log_info const *rli,
                        const char *query_arg,
-                       uint32 q_len_arg);
+                       uint32_t q_len_arg);
 #endif /* HAVE_REPLICATION */
 };
 
@@ -1904,23 +1904,23 @@ protected:
 public:
   ulong thread_id;
   ulong slave_proxy_id;
-  uint32 table_name_len;
+  uint32_t table_name_len;
   /*
     No need to have a catalog, as these events can only come from 4.x.
     TODO: this may become false if Dmitri pushes his new LOAD DATA INFILE in
     5.0 only (not in 4.x).
   */
-  uint32 db_len;
-  uint32 fname_len;
-  uint32 num_fields;
+  uint32_t db_len;
+  uint32_t fname_len;
+  uint32_t num_fields;
   const char* fields;
   const uchar* field_lens;
-  uint32 field_block_len;
+  uint32_t field_block_len;
 
   const char* table_name;
   const char* db;
   const char* fname;
-  uint32 skip_lines;
+  uint32_t skip_lines;
   sql_ex_info sql_ex;
   bool local_fname;
 
@@ -3375,8 +3375,8 @@ protected:
   ulong       m_master_reclength; /* Length of record on master side */
 
   /* Bit buffers in the same memory as the class */
-  uint32    m_bitbuf[128/(sizeof(uint32)*8)];
-  uint32    m_bitbuf_ai[128/(sizeof(uint32)*8)];
+  uint32_t    m_bitbuf[128/(sizeof(uint32_t)*8)];
+  uint32_t    m_bitbuf_ai[128/(sizeof(uint32_t)*8)];
 
   uchar    *m_rows_buf;		/* The rows in packed format */
   uchar    *m_rows_cur;		/* One-after the end of the data */

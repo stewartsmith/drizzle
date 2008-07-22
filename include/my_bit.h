@@ -66,7 +66,7 @@ static inline uint my_count_bits_ushort(ushort v)
     Comments shows how this works with 01100000000000000000000000001011
 */
 
-static inline uint32 my_round_up_to_next_power(uint32 v)
+static inline uint32_t my_round_up_to_next_power(uint32_t v)
 {
   v--;			/* 01100000000000000000000000001010 */
   v|= v >> 1;		/* 01110000000000000000000000001111 */
@@ -77,9 +77,9 @@ static inline uint32 my_round_up_to_next_power(uint32 v)
   return v+1;		/* 10000000000000000000000000000000 */
 }
 
-static inline uint32 my_clear_highest_bit(uint32 v)
+static inline uint32_t my_clear_highest_bit(uint32_t v)
 {
-  uint32 w=v >> 1;
+  uint32_t w=v >> 1;
   w|= w >> 1;
   w|= w >> 2;
   w|= w >> 4;
@@ -88,7 +88,7 @@ static inline uint32 my_clear_highest_bit(uint32 v)
   return v & w;
 }
 
-static inline uint32 my_reverse_bits(uint32 key)
+static inline uint32_t my_reverse_bits(uint32_t key)
 {
   return
     (_my_bits_reverse_table[ key      & 255] << 24) |

@@ -1370,7 +1370,7 @@ class Item_int :public Item_num
 {
 public:
   int64_t value;
-  Item_int(int32 i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
+  Item_int(int32_t i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
     :value((int64_t) i)
     { max_length=length; fixed= 1; }
   Item_int(int64_t i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)

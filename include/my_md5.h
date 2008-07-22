@@ -61,7 +61,7 @@ typedef unsigned char *POINTER;
 typedef uint16 UINT2;				/* Fix for MySQL / Alpha */
 
 /* UINT4 defines a four byte word */
-typedef uint32 UINT4;				/* Fix for MySQL / Alpha */
+typedef uint32_t UINT4;				/* Fix for MySQL / Alpha */
 
 /* PROTO_LIST is defined depending on how PROTOTYPES is defined above.
 If using PROTOTYPES, then PROTO_LIST returns the list, otherwise it

@@ -25,7 +25,7 @@
 
 class Field_year :public Field_tiny {
 public:
-  Field_year(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_year(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
 	     uchar null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg)
     :Field_tiny(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,

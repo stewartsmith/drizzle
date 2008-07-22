@@ -454,7 +454,7 @@ append_query_string(CHARSET_INFO *csinfo,
                     String const *from, String *to)
 {
   char *beg, *ptr;
-  uint32 const orig_len= to->length();
+  uint32_t const orig_len= to->length();
   if (to->reserve(orig_len + from->length()*2+3))
     return 1;
 
@@ -482,8 +482,8 @@ append_query_string(CHARSET_INFO *csinfo,
 
 #ifdef MYSQL_CLIENT
 
-static void print_set_option(IO_CACHE* file, uint32 bits_changed,
-                             uint32 option, uint32 flags, const char* name,
+static void print_set_option(IO_CACHE* file, uint32_t bits_changed,
+                             uint32_t option, uint32_t flags, const char* name,
                              bool* need_comma)
 {
   if (bits_changed & option)
@@ -726,7 +726,7 @@ int Log_event::net_send(Protocol *protocol, const char* log_name, my_off_t pos)
   protocol->store((uint64_t) pos);
   event_type = get_type_str();
   protocol->store(event_type, strlen(event_type), &my_charset_bin);
-  protocol->store((uint32) server_id);
+  protocol->store((uint32_t) server_id);
   protocol->store((uint64_t) log_pos);
   pack_info(protocol);
   return protocol->write();
@@ -1278,7 +1278,7 @@ void Log_event::print_base64(IO_CACHE* file,
                              bool more)
 {
   const uchar *ptr= (const uchar *)temp_buf;
-  uint32 size= uint4korr(ptr + EVENT_LEN_OFFSET);
+  uint32_t size= uint4korr(ptr + EVENT_LEN_OFFSET);
 
   size_t const tmp_str_sz= base64_needed_encoded_length((int) size);
   char *const tmp_str= (char *) my_malloc(tmp_str_sz, MYF(MY_WME));
@@ -1618,7 +1618,7 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
              (suppress_use ? LOG_EVENT_SUPPRESS_USE_F : 0),
 	     using_trans),
    data_buf(0), query(query_arg), catalog(thd_arg->catalog),
-   db(thd_arg->db), q_len((uint32) query_length),
+   db(thd_arg->db), q_len((uint32_t) query_length),
    thread_id(thd_arg->thread_id),
    /* save the original thread id; we already know the server id */
    slave_proxy_id(thd_arg->variables.pseudo_thread_id),
@@ -1645,9 +1645,9 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
     @todo this means that if we have no catalog, then it is replicated
     as an existing catalog of length zero. is that safe? /sven
   */
-  catalog_len = (catalog) ? (uint32) strlen(catalog) : 0;
+  catalog_len = (catalog) ? (uint32_t) strlen(catalog) : 0;
   /* status_vars_len is set just before writing the event */
-  db_len = (db) ? (uint32) strlen(db) : 0;
+  db_len = (db) ? (uint32_t) strlen(db) : 0;
   if (thd_arg->variables.collation_database != thd_arg->db_charset)
     charset_database_number= thd_arg->variables.collation_database->number;
   
@@ -1658,7 +1658,7 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
     But it's likely that we don't want to use 32 bits for 3 bits; in the future
     we will probably want to reclaim the 29 bits. So we need the &.
   */
-  flags2= (uint32) (thd_arg->options & OPTIONS_WRITTEN_TO_BIN_LOG);
+  flags2= (uint32_t) (thd_arg->options & OPTIONS_WRITTEN_TO_BIN_LOG);
   assert(thd_arg->variables.character_set_client->number < 256*256);
   assert(thd_arg->variables.collation_connection->number < 256*256);
   assert(thd_arg->variables.collation_server->number < 256*256);
@@ -1770,7 +1770,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
    time_zone_len(0), lc_time_names_number(0), charset_database_number(0)
 {
   ulong data_len;
-  uint32 tmp;
+  uint32_t tmp;
   uint8 common_header_len, post_header_len;
   Log_event::Byte *start;
   const Log_event::Byte *end;
@@ -1952,7 +1952,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
   // TODO: print the catalog ??
   char buff[40],*end;				// Enough for SET TIMESTAMP
   bool different_db= 1;
-  uint32 tmp;
+  uint32_t tmp;
 
   if (!print_event_info->short_form)
   {
@@ -2000,7 +2000,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
     else /* that's the first Query event we read */
     {
       print_event_info->flags2_inited= 1;
-      tmp= ~((uint32)0); /* all bits have changed */
+      tmp= ~((uint32_t)0); /* all bits have changed */
     }
 
     if (unlikely(tmp)) /* some bits have changed */
@@ -2123,7 +2123,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
   Compare the values of "affected rows" around here. Something
   like:
   @code
-     if ((uint32) affected_in_event != (uint32) affected_on_slave)
+     if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
      {
      sql_print_error("Slave: did not get the expected number of affected \
      rows running query from master - expected %d, got %d (this numbers \
@@ -2136,7 +2136,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
   to ignore it you would use --slave-skip-errors...
 */
 int Query_log_event::do_apply_event(Relay_log_info const *rli,
-                                      const char *query_arg, uint32 q_len_arg)
+                                      const char *query_arg, uint32_t q_len_arg)
 {
   LEX_STRING new_db;
   int expected_error,actual_error= 0;
@@ -2348,7 +2348,7 @@ Default database: '%s'. Query: '%s'",
     /*
       TODO: compare the values of "affected rows" around here. Something
       like:
-      if ((uint32) affected_in_event != (uint32) affected_on_slave)
+      if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
       {
       sql_print_error("Slave: did not get the expected number of affected \
       rows running query from master - expected %d, got %d (this numbers \
@@ -2929,7 +2929,7 @@ int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
     perform, we don't call Start_log_event_v3::do_apply_event()
     (this was just to update the log's description event).
   */
-  if (server_id != (uint32) ::server_id)
+  if (server_id != (uint32_t) ::server_id)
   {
     /*
       If the event was not requested by the slave i.e. the master sent
@@ -2951,7 +2951,7 @@ int Format_description_log_event::do_update_pos(Relay_log_info *rli)
   delete rli->relay_log.description_event_for_exec;
   rli->relay_log.description_event_for_exec= this;
 
-  if (server_id == (uint32) ::server_id)
+  if (server_id == (uint32_t) ::server_id)
   {
     /*
       We only increase the relay log position if we are skipping
@@ -3211,8 +3211,8 @@ Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
   time(&end_time);
   exec_time = (ulong) (end_time  - thd_arg->start_time);
   /* db can never be a zero pointer in 4.0 */
-  db_len = (uint32) strlen(db);
-  table_name_len = (uint32) strlen(table_name);
+  db_len = (uint32_t) strlen(db);
+  table_name_len = (uint32_t) strlen(table_name);
   fname_len = (fname) ? (uint) strlen(fname) : 0;
   sql_ex.field_term = (char*) ex->field_term->ptr();
   sql_ex.field_term_len = (uint8) ex->field_term->length();
@@ -5370,7 +5370,7 @@ void Delete_file_log_event::pack_info(Protocol *protocol)
   char buf[64];
   uint length;
   length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
-  protocol->store(buf, (int32) length, &my_charset_bin);
+  protocol->store(buf, (int32_t) length, &my_charset_bin);
 }
 #endif
 
@@ -5468,7 +5468,7 @@ void Execute_load_log_event::pack_info(Protocol *protocol)
   char buf[64];
   uint length;
   length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
-  protocol->store(buf, (int32) length, &my_charset_bin);
+  protocol->store(buf, (int32_t) length, &my_charset_bin);
 }
 
 
@@ -6726,7 +6726,7 @@ void Rows_log_event::print_helper(FILE *file,
   type uint16. This allows the least number of casts to prevent casting bugs
   when the field metadata is used in comparisons of field attributes. When
   the field metadata is used for calculating addresses in pointer math, the
-  type used is uint32. 
+  type used is uint32_t. 
 */
 
 #if !defined(MYSQL_CLIENT)

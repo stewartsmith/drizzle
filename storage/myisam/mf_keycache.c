@@ -238,7 +238,7 @@ static int keycache_pthread_cond_wait(pthread_cond_t *cond,
 
 static inline uint next_power(uint value)
 {
-  return (uint) my_round_up_to_next_power((uint32) value) << 1;
+  return (uint) my_round_up_to_next_power((uint32_t) value) << 1;
 }
 
 

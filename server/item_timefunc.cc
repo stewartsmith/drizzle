@@ -1766,7 +1766,7 @@ void Item_func_date_format::fix_length_and_dec()
 
   decimals=0;
   CHARSET_INFO *cs= thd->variables.collation_connection;
-  uint32 repertoire= arg1->collation.repertoire;
+  uint32_t repertoire= arg1->collation.repertoire;
   if (!thd->variables.lc_time_names->is_ascii)
     repertoire|= MY_REPERTOIRE_EXTENDED;
   collation.set(cs, arg1->collation.derivation, repertoire);
@@ -2314,7 +2314,7 @@ String *Item_char_typecast::val_str(String *str)
 {
   assert(fixed == 1);
   String *res;
-  uint32 length;
+  uint32_t length;
 
   if (!charset_conversion)
   {
@@ -2347,7 +2347,7 @@ String *Item_char_typecast::val_str(String *str)
   */
   if (cast_length >= 0)
   {
-    if (res->length() > (length= (uint32) res->charpos(cast_length)))
+    if (res->length() > (length= (uint32_t) res->charpos(cast_length)))
     {                                           // Safe even if const arg
       char char_type[40];
       snprintf(char_type, sizeof(char_type), "%s(%lu)",
@@ -2385,7 +2385,7 @@ String *Item_char_typecast::val_str(String *str)
 
 void Item_char_typecast::fix_length_and_dec()
 {
-  uint32 char_length;
+  uint32_t char_length;
   /* 
      We always force character set conversion if cast_cs
      is a multi-byte character set. It garantees that the

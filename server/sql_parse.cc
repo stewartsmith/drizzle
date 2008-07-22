@@ -793,7 +793,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     {
       ulong pos;
       ushort flags;
-      uint32 slave_server_id;
+      uint32_t slave_server_id;
 
       status_var_increment(thd->status_var.com_other);
       thd->enable_slow_log= opt_log_slow_admin_statements;
@@ -2681,7 +2681,7 @@ static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
       if (lex->describe & DESCRIBE_EXTENDED)
       {
         char buff[1024];
-        String str(buff,(uint32) sizeof(buff), system_charset_info);
+        String str(buff,(uint32_t) sizeof(buff), system_charset_info);
         str.length(0);
         thd->lex->unit.print(&str, QT_ORDINARY);
         str.append('\0');

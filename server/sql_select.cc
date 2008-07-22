@@ -9392,7 +9392,7 @@ static COND* substitute_for_best_equal_field(COND *cond,
     }
     if (cond->type() == Item::COND_ITEM &&
         !((Item_cond*)cond)->argument_list()->elements)
-      cond= new Item_int((int32)cond->val_bool());
+      cond= new Item_int((int32_t)cond->val_bool());
 
   }
   else if (cond->type() == Item::FUNC_ITEM && 
@@ -10675,7 +10675,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
   {
     uint8 dec= item->decimals;
     uint8 intg= ((Item_decimal *) item)->decimal_precision() - dec;
-    uint32 len= item->max_length;
+    uint32_t len= item->max_length;
 
     /*
       Trying to put too many digits overall in a DECIMAL(prec,dec)
@@ -11548,7 +11548,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       key_part_info->offset=hidden_null_pack_length;
       key_part_info->length=null_pack_length;
       key_part_info->field= new Field_string(table->record[0],
-                                             (uint32) key_part_info->length,
+                                             (uint32_t) key_part_info->length,
                                              (uchar*) 0,
                                              (uint) 0,
                                              Field::NONE,
@@ -17661,7 +17661,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
   */
   if (message)
   {
-    item_list.push_back(new Item_int((int32)
+    item_list.push_back(new Item_int((int32_t)
 				     join->select_lex->select_number));
     item_list.push_back(new Item_string(join->select_lex->type,
 					strlen(join->select_lex->type), cs));
@@ -17765,7 +17765,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       quick_type= -1;
       item_list.empty();
       /* id */
-      item_list.push_back(new Item_uint((uint32)
+      item_list.push_back(new Item_uint((uint32_t)
 				       join->select_lex->select_number));
       /* select_type */
       item_list.push_back(new Item_string(join->select_lex->type,
@@ -17950,7 +17950,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           extra.append(STRING_WITH_LEN("; Full scan on NULL key"));
         /* Skip initial "; "*/
         const char *str= extra.ptr();
-        uint32 len= extra.length();
+        uint32_t len= extra.length();
         if (len)
         {
           str += 2;
@@ -18095,7 +18095,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 
         /* Skip initial "; "*/
         const char *str= extra.ptr();
-        uint32 len= extra.length();
+        uint32_t len= extra.length();
         if (len)
         {
           str += 2;

@@ -81,7 +81,7 @@ static void SHA1ProcessMessageBlock(SHA1_CONTEXT*);
 */
 
 
-const uint32 sha_const_key[5]=
+const uint32_t sha_const_key[5]=
 {
   0x67452301,
   0xEFCDAB89,
@@ -197,7 +197,7 @@ int mysql_sha1_input(SHA1_CONTEXT *context, const uint8 *message_array,
 */
 
 /* Constants defined in SHA-1	*/
-static const uint32  K[]=
+static const uint32_t  K[]=
 {
   0x5A827999,
   0x6ED9EBA1,
@@ -209,9 +209,9 @@ static const uint32  K[]=
 static void SHA1ProcessMessageBlock(SHA1_CONTEXT *context)
 {
   int		t;		   /* Loop counter		  */
-  uint32	temp;		   /* Temporary word value	  */
-  uint32	W[80];		   /* Word sequence		  */
-  uint32	A, B, C, D, E;	   /* Word buffers		  */
+  uint32_t	temp;		   /* Temporary word value	  */
+  uint32_t	W[80];		   /* Word sequence		  */
+  uint32_t	A, B, C, D, E;	   /* Word buffers		  */
   int idx;
 
   /*

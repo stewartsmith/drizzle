@@ -128,7 +128,7 @@ public:
     Needed to deal properly with cur_log getting closed and re-opened with
     a different log under our feet
   */
-  uint32 cur_log_old_open_count;
+  uint32_t cur_log_old_open_count;
   
   /*
     Let's call a group (of events) :
@@ -194,7 +194,7 @@ public:
     skipping one or more events in the master log that have caused
     errors, and have been manually applied by DBA already.
   */
-  volatile uint32 slave_skip_counter;
+  volatile uint32_t slave_skip_counter;
   volatile uint32_t abort_pos_wait;	/* Incremented on change master */
   volatile uint32_t slave_run_id;		/* Incremented on slave start */
   pthread_mutex_t log_space_lock;
@@ -401,7 +401,7 @@ public:
   }
 
 private:
-  uint32 m_flags;
+  uint32_t m_flags;
 };
 
 

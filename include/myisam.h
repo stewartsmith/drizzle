@@ -185,7 +185,7 @@ typedef struct st_mi_keydef		/* Key definition with open & info */
   uint16 minlength;			/* min length of (packed) key (auto) */
   uint16 maxlength;			/* max length of (packed) key (auto) */
   uint16 block_size_index;		/* block_size (auto) */
-  uint32 version;			/* For concurrent read/write */
+  uint32_t version;			/* For concurrent read/write */
 
   HA_KEYSEG *seg,*end;
 
@@ -235,7 +235,7 @@ typedef struct st_columndef		/* column information */
 {
   int16  type;				/* en_fieldtype */
   uint16 length;			/* length of field */
-  uint32 offset;			/* Offset to position in row */
+  uint32_t offset;			/* Offset to position in row */
   uint8  null_bit;			/* If column may be 0 */
   uint16 null_pos;			/* position for null marker */
 

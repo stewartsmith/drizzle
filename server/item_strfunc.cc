@@ -223,10 +223,10 @@ String *Item_func_concat::val_str(String *str)
 	  now work in place in tmp_value to set it to res | res2
 	*/
 	/* Chop the last characters in tmp_value that isn't in res2 */
-	tmp_value.length((uint32) (res2->ptr() - tmp_value.ptr()) +
+	tmp_value.length((uint32_t) (res2->ptr() - tmp_value.ptr()) +
 			 res2->length());
 	/* Place res2 at start of tmp_value, remove chars before res2 */
-	if (tmp_value.replace(0,(uint32) (res2->ptr() - tmp_value.ptr()),
+	if (tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()),
 			      *res))
 	  goto null;
 	res= &tmp_value;
@@ -392,10 +392,10 @@ String *Item_func_concat_ws::val_str(String *str)
 	now work in place in tmp_value to set it to res | sep_str | res2
       */
       /* Chop the last characters in tmp_value that isn't in res2 */
-      tmp_value.length((uint32) (res2->ptr() - tmp_value.ptr()) +
+      tmp_value.length((uint32_t) (res2->ptr() - tmp_value.ptr()) +
 		       res2->length());
       /* Place res2 at start of tmp_value, remove chars before res2 */
-      if (tmp_value.replace(0,(uint32) (res2->ptr() - tmp_value.ptr()),
+      if (tmp_value.replace(0,(uint32_t) (res2->ptr() - tmp_value.ptr()),
 			    *res) ||
 	  tmp_value.replace(res->length(),0, *sep_str))
 	goto null;
@@ -497,7 +497,7 @@ String *Item_func_reverse::val_str(String *str)
 #ifdef USE_MB
   if (use_mb(res->charset()))
   {
-    register uint32 l;
+    register uint32_t l;
     while (ptr < end)
     {
       if ((l= my_ismbchar(res->charset(),ptr,end)))
@@ -544,7 +544,7 @@ String *Item_func_replace::val_str(String *str)
   bool alloced=0;
 #ifdef USE_MB
   const char *ptr,*end,*strend,*search,*search_end;
-  register uint32 l;
+  register uint32_t l;
   bool binary_cmp;
 #endif
 
@@ -694,7 +694,7 @@ String *Item_func_insert::val_str(String *str)
 
   /* start and length are now sufficiently valid to pass to charpos function */
    start= res->charpos((int) start);
-   length= res->charpos((int) length, (uint32) start);
+   length= res->charpos((int) length, (uint32_t) start);
 
   /* Re-testing with corrected params */
   if (start > res->length())
@@ -712,7 +712,7 @@ String *Item_func_insert::val_str(String *str)
     goto null;
   }
   res=copy_if_not_alloced(str,res,res->length());
-  res->replace((uint32) start,(uint32) length,*res2);
+  res->replace((uint32_t) start,(uint32_t) length,*res2);
   return res;
 null:
   null_value=1;
@@ -903,13 +903,13 @@ String *Item_func_substr::val_str(String *str)
   if ((start < 0) || ((uint) start + 1 > res->length()))
     return &my_empty_string;
 
-  length= res->charpos((int) length, (uint32) start);
+  length= res->charpos((int) length, (uint32_t) start);
   tmp_length= res->length() - start;
   length= min(length, tmp_length);
 
   if (!start && (int64_t) res->length() == length)
     return res;
-  tmp_value.set(*res, (uint32) start, (uint32) length);
+  tmp_value.set(*res, (uint32_t) start, (uint32_t) length);
   return &tmp_value;
 }
 
@@ -921,7 +921,7 @@ void Item_func_substr::fix_length_and_dec()
   collation.set(args[0]->collation);
   if (args[1]->const_item())
   {
-    int32 start= (int32) args[1]->val_int();
+    int32_t start= (int32_t) args[1]->val_int();
     if (start < 0)
       max_length= ((uint)(-start) > max_length) ? 0 : (uint)(-start);
     else
@@ -929,7 +929,7 @@ void Item_func_substr::fix_length_and_dec()
   }
   if (arg_count == 3 && args[2]->const_item())
   {
-    int32 length= (int32) args[2]->val_int();
+    int32_t length= (int32_t) args[2]->val_int();
     if (length <= 0)
       max_length=0; /* purecov: inspected */
     else
@@ -953,7 +953,7 @@ String *Item_func_substr_index::val_str(String *str)
   assert(fixed == 1);
   String *res= args[0]->val_str(str);
   String *delimiter= args[1]->val_str(&tmp_value);
-  int32 count= (int32) args[2]->val_int();
+  int32_t count= (int32_t) args[2]->val_int();
   uint offset;
 
   if (args[0]->null_value || args[1]->null_value || args[2]->null_value)
@@ -976,8 +976,8 @@ String *Item_func_substr_index::val_str(String *str)
     const char *end= strend-delimiter_length+1;
     const char *search= delimiter->ptr();
     const char *search_end= search+delimiter_length;
-    int32 n=0,c=count,pass;
-    register uint32 l;
+    int32_t n=0,c=count,pass;
+    register uint32_t l;
     for (pass=(count>0);pass<2;++pass)
     {
       while (ptr < end)
@@ -1151,7 +1151,7 @@ String *Item_func_rtrim::val_str(String *str)
   end= ptr+res->length();
 #ifdef USE_MB
   char *p=ptr;
-  register uint32 l;
+  register uint32_t l;
 #endif
   if (remove_length == 1)
   {
@@ -1237,7 +1237,7 @@ String *Item_func_trim::val_str(String *str)
   if (use_mb(res->charset()))
   {
     char *p=ptr;
-    register uint32 l;
+    register uint32_t l;
  loop:
     while (ptr + remove_length < end)
     {
@@ -1549,12 +1549,12 @@ void Item_func_format::fix_length_and_dec()
 
 String *Item_func_format::val_str(String *str)
 {
-  uint32 length;
-  uint32 str_length;
+  uint32_t length;
+  uint32_t str_length;
   /* Number of decimal digits */
   int dec;
   /* Number of characters used to represent the decimals, including '.' */
-  uint32 dec_length;
+  uint32_t dec_length;
   int diff;
   assert(fixed == 1);
 
@@ -1817,7 +1817,7 @@ String *Item_func_char::val_str(String *str)
   str->set_charset(collation.collation);
   for (uint i=0 ; i < arg_count ; i++)
   {
-    int32 num=(int32) args[i]->val_int();
+    int32_t num=(int32_t) args[i]->val_int();
     if (!args[i]->null_value)
     {
       char char_num= (char) num;
@@ -1982,7 +1982,7 @@ void Item_func_rpad::fix_length_and_dec()
 String *Item_func_rpad::val_str(String *str)
 {
   assert(fixed == 1);
-  uint32 res_byte_length,res_char_length,pad_char_length,pad_byte_length;
+  uint32_t res_byte_length,res_char_length,pad_char_length,pad_byte_length;
   char *to;
   const char *ptr_pad;
   /* must be int64_t to avoid truncation */
@@ -2025,7 +2025,7 @@ String *Item_func_rpad::val_str(String *str)
   ptr_pad=rpad->ptr();
   pad_byte_length= rpad->length();
   count-= res_char_length;
-  for ( ; (uint32) count > pad_char_length; count-= pad_char_length)
+  for ( ; (uint32_t) count > pad_char_length; count-= pad_char_length)
   {
     memcpy(to,ptr_pad,pad_byte_length);
     to+= pad_byte_length;
@@ -2085,7 +2085,7 @@ void Item_func_lpad::fix_length_and_dec()
 String *Item_func_lpad::val_str(String *str)
 {
   assert(fixed == 1);
-  uint32 res_char_length,pad_char_length;
+  uint32_t res_char_length,pad_char_length;
   /* must be int64_t to avoid truncation */
   int64_t count= args[1]->val_int();
   int64_t byte_count;
@@ -2122,7 +2122,7 @@ String *Item_func_lpad::val_str(String *str)
   }
 
   if (args[2]->null_value || !pad_char_length ||
-      str->alloc((uint32) byte_count))
+      str->alloc((uint32_t) byte_count))
     goto err;
   
   str->length(0);
@@ -2174,7 +2174,7 @@ String *Item_func_conv::val_str(String *str)
                                  from_base, &endptr, &err);
 
   ptr= int64_t2str(dec, ans, to_base);
-  if (str->copy(ans, (uint32) (ptr-ans), default_charset()))
+  if (str->copy(ans, (uint32_t) (ptr-ans), default_charset()))
     return &my_empty_string;
   return str;
 }
@@ -2378,7 +2378,7 @@ String *Item_func_hex::val_str(String *str)
     if ((null_value= args[0]->null_value))
       return 0;
     ptr= int64_t2str(dec,ans,16);
-    if (str->copy(ans,(uint32) (ptr-ans),default_charset()))
+    if (str->copy(ans,(uint32_t) (ptr-ans),default_charset()))
       return &my_empty_string;			// End of memory
     return str;
   }
@@ -2749,8 +2749,8 @@ String *Item_func_compress::val_str(String *str)
   new_size= res->length() + res->length() / 5 + 12;
 
   // Check new_size overflow: new_size <= res->length()
-  if (((uint32) (new_size+5) <= res->length()) || 
-      buffer.realloc((uint32) new_size + 4 + 1))
+  if (((uint32_t) (new_size+5) <= res->length()) || 
+      buffer.realloc((uint32_t) new_size + 4 + 1))
   {
     null_value= 1;
     return 0;
@@ -2779,7 +2779,7 @@ String *Item_func_compress::val_str(String *str)
     new_size++;
   }
 
-  buffer.length((uint32)new_size + 4);
+  buffer.length((uint32_t)new_size + 4);
   return &buffer;
 }
 
@@ -2817,13 +2817,13 @@ String *Item_func_uncompress::val_str(String *str)
                         current_thd->variables.max_allowed_packet);
     goto err;
   }
-  if (buffer.realloc((uint32)new_size))
+  if (buffer.realloc((uint32_t)new_size))
     goto err;
 
   if ((err= uncompress((Byte*)buffer.ptr(), &new_size,
 		       ((const Bytef*)res->ptr())+4,res->length())) == Z_OK)
   {
-    buffer.length((uint32) new_size);
+    buffer.length((uint32_t) new_size);
     return &buffer;
   }
 
@@ -2934,7 +2934,7 @@ String *Item_func_uuid::val_str(String *str)
   uuid_time=tv;
   pthread_mutex_unlock(&LOCK_uuid_generator);
 
-  uint32 time_low=            (uint32) (tv & 0xFFFFFFFF);
+  uint32_t time_low=            (uint32_t) (tv & 0xFFFFFFFF);
   uint16 time_mid=            (uint16) ((tv >> 32) & 0xFFFF);
   uint16 time_hi_and_version= (uint16) ((tv >> 48) | UUID_VERSION);
 

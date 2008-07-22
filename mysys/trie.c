@@ -181,8 +181,8 @@ bool ac_trie_prepare (TRIE *trie)
 {
   TRIE_NODE **tmp_nodes;
   TRIE_NODE *node;
-  uint32 fnode= 0;
-  uint32 lnode= 0;
+  uint32_t fnode= 0;
+  uint32_t lnode= 0;
   assert(trie);
 
   tmp_nodes= (TRIE_NODE **)my_malloc(trie->nnodes * sizeof(TRIE_NODE *), MYF(0));

@@ -386,7 +386,7 @@ public:
   inline void lock_index() { pthread_mutex_lock(&LOCK_index);}
   inline void unlock_index() { pthread_mutex_unlock(&LOCK_index);}
   inline IO_CACHE *get_index_file() { return &index_file;}
-  inline uint32 get_open_count() { return open_count; }
+  inline uint32_t get_open_count() { return open_count; }
 };
 
 class Log_event_handler

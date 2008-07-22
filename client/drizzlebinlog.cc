@@ -1000,7 +1000,7 @@ static struct my_option my_long_options[] =
    (char**) &start_position, (char**) &start_position, 0, GET_ULL,
    REQUIRED_ARG, BIN_LOG_HEADER_SIZE, BIN_LOG_HEADER_SIZE,
    /* COM_BINLOG_DUMP accepts only 4 bytes for the position */
-   (uint64_t)(~(uint32)0), 0, 0, 0},
+   (uint64_t)(~(uint32_t)0), 0, 0, 0},
   {"protocol", OPT_MYSQL_PROTOCOL,
    "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -1039,7 +1039,7 @@ static struct my_option my_long_options[] =
    (char**) &start_position, (char**) &start_position, 0, GET_ULL,
    REQUIRED_ARG, BIN_LOG_HEADER_SIZE, BIN_LOG_HEADER_SIZE,
    /* COM_BINLOG_DUMP accepts only 4 bytes for the position */
-   (uint64_t)(~(uint32)0), 0, 0, 0},
+   (uint64_t)(~(uint32_t)0), 0, 0, 0},
   {"stop-datetime", OPT_STOP_DATETIME,
    "Stop reading the binlog at first event having a datetime equal or "
    "posterior to the argument; the argument must be a date and time "
@@ -1459,9 +1459,9 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
 
   /*
     COM_BINLOG_DUMP accepts only 4 bytes for the position, so we are forced to
-    cast to uint32.
+    cast to uint32_t.
   */
-  int4store(buf, (uint32)start_position);
+  int4store(buf, (uint32_t)start_position);
   int2store(buf + BIN_LOG_HEADER_SIZE, binlog_flags);
 
   size_t tlen = strlen(logname);

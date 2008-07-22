@@ -899,8 +899,8 @@ innobase_convert_string(
 	CHARSET_INFO*	from_cs,
 	uint*		errors)
 {
-  return(copy_and_convert((char*)to, (uint32) to_length, to_cs,
-                          (const char*)from, (uint32) from_length, from_cs,
+  return(copy_and_convert((char*)to, (uint32_t) to_length, to_cs,
+                          (const char*)from, (uint32_t) from_length, from_cs,
                           errors));
 }
 
@@ -1237,7 +1237,7 @@ innobase_invalidate_query_cache(
 #ifdef HAVE_QUERY_CACHE
 	mysql_query_cache_invalidate4((THD*) trx->mysql_thd,
 				      (const char*) full_name,
-				      (uint32) full_name_len,
+				      (uint32_t) full_name_len,
 				      TRUE);
 #endif
 }

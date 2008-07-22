@@ -339,7 +339,7 @@ int prepare_record(TABLE *const table,
     if ((uint) (field_ptr - table->field) >= cols->n_bits ||
         !bitmap_is_set(cols, field_ptr - table->field))
     {
-      uint32 const mask= NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG;
+      uint32_t const mask= NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG;
       Field *const f= *field_ptr;
 
       if (check && ((f->flags & mask) == mask))

@@ -564,7 +564,7 @@ err:
 uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
 {
   uint extra;
-  uint32 old_length= 0;
+  uint32_t old_length= 0;
 
   if (! *buf || length > (old_length=mi_get_rec_buff_len(info, *buf)))
   {
@@ -591,7 +591,7 @@ uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
     if (!(newptr=(uchar*) my_realloc((uchar*)newptr, length+extra+8,
                                      MYF(MY_ALLOW_ZERO_PTR))))
       return newptr;
-    *((uint32 *) newptr)= (uint32) length;
+    *((uint32_t *) newptr)= (uint32_t) length;
     *buf= newptr+(extra ?  MI_REC_BUFF_OFFSET : 0);
   }
   return *buf;

@@ -30,7 +30,7 @@
 class Field_null :public Field_str {
   static uchar null[1];
 public:
-  Field_null(uchar *ptr_arg, uint32 len_arg,
+  Field_null(uchar *ptr_arg, uint32_t len_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     CHARSET_INFO *cs)
     :Field_str(ptr_arg, len_arg, null, 1,
@@ -62,10 +62,10 @@ public:
           const uchar *b __attribute__((__unused__))) { return 0;}
   void sort_string(uchar *buff __attribute__((__unused__)),
                    uint length __attribute__((__unused__)))  {}
-  uint32 pack_length() const { return 0; }
+  uint32_t pack_length() const { return 0; }
   void sql_type(String &str) const;
   uint size_of() const { return sizeof(*this); }
-  uint32 max_display_length() { return 4; }
+  uint32_t max_display_length() { return 4; }
 };
 
 #endif

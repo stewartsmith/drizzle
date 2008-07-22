@@ -65,7 +65,7 @@ public:
     }
 
     /** Error code */
-    uint32 number;
+    uint32_t number;
     /** Error message */
     char message[MAX_SLAVE_ERRMSG];
   };

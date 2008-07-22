@@ -694,9 +694,9 @@ int ha_archive::real_write_row(uchar *buf, azio_stream *writer)
   the bytes required for the length in the header.
 */
 
-uint32 ha_archive::max_row_length(const uchar *buf __attribute__((__unused__)))
+uint32_t ha_archive::max_row_length(const uchar *buf __attribute__((__unused__)))
 {
-  uint32 length= (uint32)(table->s->reclength + table->s->fields*2);
+  uint32_t length= (uint32_t)(table->s->reclength + table->s->fields*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
 
   uint *ptr, *end;

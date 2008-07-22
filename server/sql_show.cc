@@ -1196,7 +1196,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
     else
       protocol->store(command_name[thd_info->command].str, system_charset_info);
     if (thd_info->start_time)
-      protocol->store((uint32) (now - thd_info->start_time));
+      protocol->store((uint32_t) (now - thd_info->start_time));
     else
       protocol->store_null();
     protocol->store(thd_info->state_info, system_charset_info);
@@ -1260,7 +1260,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
         table->field[4]->store(command_name[tmp->command].str,
                                command_name[tmp->command].length, cs);
       /* MYSQL_TIME */
-      table->field[5]->store((uint32)(tmp->start_time ?
+      table->field[5]->store((uint32_t)(tmp->start_time ?
                                       now - tmp->start_time : 0), true);
       /* STATE */
       val= (char*) (tmp->net.reading_or_writing ?
@@ -1578,7 +1578,7 @@ static bool show_status_array(THD *thd, const char *wild,
           end= strmov(buff, *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_INT:
-          end= int10_to_str((long) *(uint32*) value, buff, 10);
+          end= int10_to_str((long) *(uint32_t*) value, buff, 10);
           break;
         case SHOW_HAVE:
         {
@@ -1619,7 +1619,7 @@ static bool show_status_array(THD *thd, const char *wild,
         restore_record(table, s->default_values);
         table->field[0]->store(name_buffer, strlen(name_buffer),
                                system_charset_info);
-        table->field[1]->store(pos, (uint32) (end - pos), system_charset_info);
+        table->field[1]->store(pos, (uint32_t) (end - pos), system_charset_info);
         table->field[1]->set_notnull();
 
         pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -3008,8 +3008,8 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
       field->real_type() == MYSQL_TYPE_VARCHAR ||  // For varbinary type
       field->real_type() == MYSQL_TYPE_STRING)     // For binary type
   {
-    uint32 octet_max_length= field->max_display_length();
-    if (is_blob && octet_max_length != (uint32) 4294967295U)
+    uint32_t octet_max_length= field->max_display_length();
+    if (is_blob && octet_max_length != (uint32_t) 4294967295U)
       octet_max_length /= field->charset()->mbmaxlen;
     int64_t char_max_len= is_blob ? 
       (int64_t) octet_max_length / field->charset()->mbminlen :

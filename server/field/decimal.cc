@@ -29,7 +29,7 @@
 ****************************************************************************/
 
 Field_new_decimal::Field_new_decimal(uchar *ptr_arg,
-                                     uint32 len_arg, uchar *null_ptr_arg,
+                                     uint32_t len_arg, uchar *null_ptr_arg,
                                      uchar null_bit_arg,
                                      enum utype unireg_check_arg,
                                      const char *field_name_arg,
@@ -46,7 +46,7 @@ Field_new_decimal::Field_new_decimal(uchar *ptr_arg,
 }
 
 
-Field_new_decimal::Field_new_decimal(uint32 len_arg,
+Field_new_decimal::Field_new_decimal(uint32_t len_arg,
                                      bool maybe_null_arg,
                                      const char *name,
                                      uint8 dec_arg,

@@ -37,11 +37,11 @@ public:
     So for example we need to count length from precision handling
     CREATE TABLE ( DECIMAL(x,y)) 
   */
-  Field_new_decimal(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_new_decimal(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
                     uchar null_bit_arg,
                     enum utype unireg_check_arg, const char *field_name_arg,
                     uint8 dec_arg, bool zero_arg, bool unsigned_arg);
-  Field_new_decimal(uint32 len_arg, bool maybe_null_arg,
+  Field_new_decimal(uint32_t len_arg, bool maybe_null_arg,
                     const char *field_name_arg, uint8 dec_arg,
                     bool unsigned_arg);
   enum_field_types type() const { return MYSQL_TYPE_NEWDECIMAL;}
@@ -63,9 +63,9 @@ public:
   void sort_string(uchar *buff, uint length);
   bool zero_pack() const { return 0; }
   void sql_type(String &str) const;
-  uint32 max_display_length() { return field_length; }
+  uint32_t max_display_length() { return field_length; }
   uint size_of() const { return sizeof(*this); } 
-  uint32 pack_length() const { return (uint32) bin_size; }
+  uint32_t pack_length() const { return (uint32_t) bin_size; }
   uint pack_length_from_metadata(uint field_metadata);
   uint row_pack_length() { return pack_length(); }
   int compatible_field_size(uint field_metadata);

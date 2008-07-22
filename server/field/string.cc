@@ -85,7 +85,7 @@ double Field_string::val_real(void)
   
   result=  my_strntod(cs,(char*) ptr,field_length,&end,&error);
   if (!table->in_use->no_errors &&
-      (error || (field_length != (uint32)(end - (char*) ptr) && 
+      (error || (field_length != (uint32_t)(end - (char*) ptr) && 
                  !check_if_only_end_space(cs, end,
                                           (char*) ptr + field_length))))
   {
@@ -110,7 +110,7 @@ int64_t Field_string::val_int(void)
 
   result= my_strntoll(cs, (char*) ptr,field_length,10,&end,&error);
   if (!table->in_use->no_errors &&
-      (error || (field_length != (uint32)(end - (char*) ptr) && 
+      (error || (field_length != (uint32_t)(end - (char*) ptr) && 
                  !check_if_only_end_space(cs, end,
                                           (char*) ptr + field_length))))
   {

@@ -722,7 +722,7 @@ void make_truncated_value_warning(THD *thd, MYSQL_ERROR::enum_warning_level leve
   const char *type_str;
   CHARSET_INFO *cs= &my_charset_latin1;
   char buff[128];
-  String str(buff,(uint32) sizeof(buff), system_charset_info);
+  String str(buff,(uint32_t) sizeof(buff), system_charset_info);
   str.copy(str_val, str_length, system_charset_info);
   str[str_length]= 0;               // Ensure we have end 0 for snprintf
 

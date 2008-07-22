@@ -542,7 +542,7 @@ my_real_read(NET *net, size_t *complen)
   size_t length;
   uint i,retry_count=0;
   ulong len=packet_error;
-  uint32 remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
+  uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
                   NET_HEADER_SIZE);
   /* Backup of the original SO_RCVTIMEO timeout */
   struct timeval backtime;
@@ -604,7 +604,7 @@ my_real_read(NET *net, size_t *complen)
                           ER_NET_READ_ERROR);
         goto end;
       }
-      remain -= (uint32) length;
+      remain -= (uint32_t) length;
       pos+= length;
       update_statistics(thd_increment_bytes_received(length));
     }
@@ -642,7 +642,7 @@ my_real_read(NET *net, size_t *complen)
         }
       }
       pos=net->buff + net->where_b;
-      remain = (uint32) len;
+      remain = (uint32_t) len;
     }
   }
 

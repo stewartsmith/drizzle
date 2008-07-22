@@ -125,8 +125,8 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 {
   int flag;
   int16 s_1,s_2;
-  int32 l_1,l_2;
-  uint32 u_1,u_2;
+  int32_t l_1,l_2;
+  uint32_t u_1,u_2;
   float f_1,f_2;
   double d_1,d_2;
   uint next_key_length;

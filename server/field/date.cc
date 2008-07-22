@@ -91,7 +91,7 @@ int Field_newdate::store(double nr)
 {
   if (nr < 0.0 || nr > 99991231235959.0)
   {
-    int3store(ptr,(int32) 0);
+    int3store(ptr,(int32_t) 0);
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                          WARN_DATA_TRUNCATED, nr, MYSQL_TIMESTAMP_DATE);
     return 1;
@@ -206,7 +206,7 @@ String *Field_newdate::val_str(String *val_buffer,
 {
   val_buffer->alloc(field_length);
   val_buffer->length(field_length);
-  uint32 tmp=(uint32) uint3korr(ptr);
+  uint32_t tmp=(uint32_t) uint3korr(ptr);
   int part;
   char *pos=(char*) val_buffer->ptr()+10;
 
@@ -231,7 +231,7 @@ String *Field_newdate::val_str(String *val_buffer,
 
 bool Field_newdate::get_date(MYSQL_TIME *ltime,uint fuzzydate)
 {
-  uint32 tmp=(uint32) uint3korr(ptr);
+  uint32_t tmp=(uint32_t) uint3korr(ptr);
   ltime->day=   tmp & 31;
   ltime->month= (tmp >> 5) & 15;
   ltime->year=  (tmp >> 9);
@@ -250,9 +250,9 @@ bool Field_newdate::get_time(MYSQL_TIME *ltime)
 
 int Field_newdate::cmp(const uchar *a_ptr, const uchar *b_ptr)
 {
-  uint32 a,b;
-  a=(uint32) uint3korr(a_ptr);
-  b=(uint32) uint3korr(b_ptr);
+  uint32_t a,b;
+  a=(uint32_t) uint3korr(a_ptr);
+  b=(uint32_t) uint3korr(b_ptr);
   return (a < b) ? -1 : (a > b) ? 1 : 0;
 }
 

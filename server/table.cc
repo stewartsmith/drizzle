@@ -999,7 +999,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
 
     *field_ptr= reg_field=
       make_field(share, record+recpos,
-		 (uint32) field_length,
+		 (uint32_t) field_length,
 		 null_pos, null_bit_pos,
 		 pack_flag,
 		 field_type,

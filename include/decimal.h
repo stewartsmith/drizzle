@@ -19,7 +19,7 @@
 typedef enum
 {TRUNCATE=0, HALF_EVEN, HALF_UP, CEILING, FLOOR}
   decimal_round_mode;
-typedef int32 decimal_digit_t;
+typedef int32_t decimal_digit_t;
 
 typedef struct st_decimal_t {
   int    intg, frac, len;

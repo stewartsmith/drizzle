@@ -26,7 +26,7 @@
 #define DATETIME_DEC                     6
 #define DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE FLOATING_POINT_BUFFER
 
-const uint32 max_field_size= (uint32) 4294967295U;
+const uint32_t max_field_size= (uint32_t) 4294967295U;
 
 class Send_field;
 class Protocol;
@@ -83,8 +83,8 @@ public:
   enum imagetype { itRAW, itMBR};
 
   utype		unireg_check;
-  uint32	field_length;		// Length of field
-  uint32	flags;
+  uint32_t	field_length;		// Length of field
+  uint32_t	flags;
   uint16        field_index;            // field number in fields array
   uchar		null_bit;		// Bit used to test null bit
   /**
@@ -98,7 +98,7 @@ public:
    */
   bool is_created_from_null_item;
 
-  Field(uchar *ptr_arg,uint32 length_arg,uchar *null_ptr_arg,
+  Field(uchar *ptr_arg,uint32_t length_arg,uchar *null_ptr_arg,
         uchar null_bit_arg, utype unireg_check_arg,
         const char *field_name_arg);
   virtual ~Field() {}
@@ -151,14 +151,14 @@ public:
     (i.e. it returns the maximum size of the field in a row of the table,
     which is located in RAM).
   */
-  virtual uint32 pack_length() const { return (uint32) field_length; }
+  virtual uint32_t pack_length() const { return (uint32_t) field_length; }
 
   /*
     pack_length_in_rec() returns size (in bytes) used to store field data on
     storage (i.e. it returns the maximal size of the field in a row of the
     table, which is located on disk).
   */
-  virtual uint32 pack_length_in_rec() const { return pack_length(); }
+  virtual uint32_t pack_length_in_rec() const { return pack_length(); }
   virtual int compatible_field_size(uint field_metadata);
   virtual uint pack_length_from_metadata(uint field_metadata)
   { return field_metadata; }
@@ -182,14 +182,14 @@ public:
     data_length() return the "real size" of the data in memory.
     For varstrings, this does _not_ include the length bytes.
   */
-  virtual uint32 data_length() { return pack_length(); }
+  virtual uint32_t data_length() { return pack_length(); }
   /*
     used_length() returns the number of bytes actually used to store the data
     of the field. So for a varstring it includes both lenght byte(s) and
     string data, and anything after data_length() bytes are unused.
   */
-  virtual uint32 used_length() { return pack_length(); }
-  virtual uint32 sort_length() const { return pack_length(); }
+  virtual uint32_t used_length() { return pack_length(); }
+  virtual uint32_t sort_length() const { return pack_length(); }
 
   /**
      Get the maximum size of the data in packed format.
@@ -197,7 +197,7 @@ public:
      @return Maximum data length of the field when packed using the
      Field::pack() function.
    */
-  virtual uint32 max_data_length() const {
+  virtual uint32_t max_data_length() const {
     return pack_length();
   };
 
@@ -213,7 +213,7 @@ public:
   virtual bool binary() const { return 1; }
   virtual bool zero_pack() const { return 1; }
   virtual enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }
-  virtual uint32 key_length() const { return pack_length(); }
+  virtual uint32_t key_length() const { return pack_length(); }
   virtual enum_field_types type() const =0;
   virtual enum_field_types real_type() const { return type(); }
   inline  int cmp(const uchar *str) { return cmp(ptr,str); }
@@ -222,7 +222,7 @@ public:
     { return cmp(a, b); }
   virtual int cmp(const uchar *,const uchar *)=0;
   virtual int cmp_binary(const uchar *a,const uchar *b,
-                         uint32  __attribute__((__unused__)) max_length=~0)
+                         uint32_t  __attribute__((__unused__)) max_length=~0)
   { return memcmp(a,b,pack_length()); }
   virtual int cmp_offset(uint row_offset)
   { return cmp(ptr,ptr+row_offset); }
@@ -476,14 +476,14 @@ public:
   }
 
   /* maximum possible display length */
-  virtual uint32 max_display_length()= 0;
+  virtual uint32_t max_display_length()= 0;
 
   virtual uint is_equal(Create_field *new_field);
   /* convert decimal to int64_t with overflow check */
   int64_t convert_decimal2int64_t(const my_decimal *val, bool unsigned_flag,
                                     int *err);
   /* The max. number of characters */
-  inline uint32 char_length() const
+  inline uint32_t char_length() const
   {
     return field_length / charset()->mbmaxlen;
   }
@@ -545,7 +545,7 @@ class Field_num :public Field {
 public:
   const uint8 dec;
   bool zerofill,unsigned_flag;	// Purify cannot handle bit fields
-  Field_num(uchar *ptr_arg,uint32 len_arg, uchar *null_ptr_arg,
+  Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
 	    uchar null_bit_arg, utype unireg_check_arg,
 	    const char *field_name_arg,
             uint8 dec_arg, bool zero_arg, bool unsigned_arg);
@@ -574,7 +574,7 @@ protected:
   CHARSET_INFO *field_charset;
   enum Derivation field_derivation;
 public:
-  Field_str(uchar *ptr_arg,uint32 len_arg, uchar *null_ptr_arg,
+  Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
 	    uchar null_bit_arg, utype unireg_check_arg,
 	    const char *field_name_arg, CHARSET_INFO *charset);
   Item_result result_type () const { return STRING_RESULT; }
@@ -590,11 +590,11 @@ public:
   virtual void set_derivation(enum Derivation derivation_arg)
   { field_derivation= derivation_arg; }
   bool binary() const { return field_charset == &my_charset_bin; }
-  uint32 max_display_length() { return field_length; }
+  uint32_t max_display_length() { return field_length; }
   friend class Create_field;
   my_decimal *val_decimal(my_decimal *);
   virtual bool str_needs_quotes() { return true; }
-  bool compare_str_field_flags(Create_field *new_field, uint32 flags);
+  bool compare_str_field_flags(Create_field *new_field, uint32_t flags);
   uint is_equal(Create_field *new_field);
 };
 
@@ -606,7 +606,7 @@ class Field_longstr :public Field_str
 protected:
   int report_if_important_data(const char *ptr, const char *end);
 public:
-  Field_longstr(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_longstr(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
                 uchar null_bit_arg, utype unireg_check_arg,
                 const char *field_name_arg, CHARSET_INFO *charset_arg)
     :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
@@ -614,7 +614,7 @@ public:
     {}
 
   int store_decimal(const my_decimal *d);
-  uint32 max_data_length() const;
+  uint32_t max_data_length() const;
 };
 
 /* base class for float and double and decimal (old one) */
@@ -622,7 +622,7 @@ class Field_real :public Field_num {
 public:
   my_bool not_fixed;
 
-  Field_real(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_real(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
              uchar null_bit_arg, utype unireg_check_arg,
              const char *field_name_arg,
              uint8 dec_arg, bool zero_arg, bool unsigned_arg)
@@ -633,7 +633,7 @@ public:
   int store_decimal(const my_decimal *);
   my_decimal *val_decimal(my_decimal *);
   int truncate(double *nr, double max_length);
-  uint32 max_display_length() { return field_length; }
+  uint32_t max_display_length() { return field_length; }
   uint size_of() const { return sizeof(*this); }
   virtual const uchar *unpack(uchar* to, const uchar *from,
                               uint param_data, bool low_byte_first);
@@ -644,7 +644,7 @@ public:
 
 class Field_tiny :public Field_num {
 public:
-  Field_tiny(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_tiny(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
 	     uchar null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
 	     bool zero_arg, bool unsigned_arg)
@@ -666,9 +666,9 @@ public:
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 1; }
+  uint32_t pack_length() const { return 1; }
   void sql_type(String &str) const;
-  uint32 max_display_length() { return 4; }
+  uint32_t max_display_length() { return 4; }
 
   virtual uchar *pack(uchar* to, const uchar *from,
                       uint max_length __attribute__((__unused__)),
@@ -693,7 +693,7 @@ protected:
   uint packlength;
 public:
   TYPELIB *typelib;
-  Field_enum(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_enum(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
              uchar null_bit_arg,
              enum utype unireg_check_arg, const char *field_name_arg,
              uint packlength_arg,
@@ -718,7 +718,7 @@ public:
   String *val_str(String*,String *);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return (uint32) packlength; }
+  uint32_t pack_length() const { return (uint32_t) packlength; }
   void store_type(uint64_t value);
   void sql_type(String &str) const;
   uint size_of() const { return sizeof(*this); }
@@ -760,7 +760,7 @@ public:
     The value of `length' as set by parser: is the number of characters
     for most of the types, or of bytes for BLOBs or numeric types.
   */
-  uint32 char_length;
+  uint32_t char_length;
   uint  decimals, flags, pack_length, key_length;
   Field::utype unireg_check;
   TYPELIB *interval;			// Which interval to use
@@ -787,7 +787,7 @@ public:
 
   /* Init for a tmp table field. To be extended if need be. */
   void init_for_tmp_table(enum_field_types sql_type_arg,
-                          uint32 max_length, uint32 decimals,
+                          uint32_t max_length, uint32_t decimals,
                           bool maybe_null, bool is_unsigned);
 
   bool init(THD *thd, char *field_name, enum_field_types type, char *length,
@@ -844,7 +844,7 @@ public:
 };
 
 
-Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
+Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  uchar *null_pos, uchar null_bit,
 		  uint pack_flag, enum_field_types field_type,
 		  CHARSET_INFO *cs,
@@ -852,7 +852,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
 		  TYPELIB *interval, const char *field_name);
 uint pack_length_to_packflag(uint type);
 enum_field_types get_blob_type_from_length(ulong length);
-uint32 calc_pack_length(enum_field_types type,uint32 length);
+uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);
 int set_field_to_null_with_conversions(Field *field, bool no_conversions);
 

@@ -20,8 +20,8 @@
 
 typedef struct st_slave_info
 {
-  uint32 server_id;
-  uint32 rpl_recovery_rank, master_id;
+  uint32_t server_id;
+  uint32_t rpl_recovery_rank, master_id;
   char host[HOSTNAME_LENGTH+1];
   char user[USERNAME_LENGTH+1];
   char password[MAX_PASSWORD_LENGTH+1];
@@ -49,7 +49,7 @@ bool log_in_use(const char* log_name);
 void adjust_linfo_offsets(my_off_t purge_offset);
 bool show_binlogs(THD* thd);
 extern int init_master_info(Master_info* mi);
-void kill_zombie_dump_threads(uint32 slave_server_id);
+void kill_zombie_dump_threads(uint32_t slave_server_id);
 int check_binlog_magic(IO_CACHE* log, const char** errmsg);
 
 typedef struct st_load_file_info
