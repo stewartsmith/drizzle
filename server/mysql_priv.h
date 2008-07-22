@@ -667,7 +667,10 @@ typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
 #include "handler.h"
 #include "table.h"
 #include "sql_error.h"
-#include "field.h"				/* Field definitions */
+
+/* Field definitions */
+#include "field.h"
+
 #include "protocol.h"
 #include "sql_udf.h"
 
