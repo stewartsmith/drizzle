@@ -1111,9 +1111,9 @@ Tries to disable OS caching on an opened file descriptor. */
 static void
 os_file_set_nocache(
 /*================*/
-	int		fd,		/* in: file descriptor to alter */
-	const char*	file_name,	/* in: used in the diagnostic message */
-	const char*	operation_name)	/* in: used in the diagnostic message,
+	int		fd __attribute__((unused)),		/* in: file descriptor to alter */
+	const char*	file_name __attribute__((unused)),	/* in: used in the diagnostic message */
+	const char*	operation_name __attribute__((unused)))	/* in: used in the diagnostic message,
 					we call os_file_set_nocache()
 					immediately after opening or creating
 					a file, so this is either "open" or
