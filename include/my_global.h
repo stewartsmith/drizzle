@@ -281,8 +281,6 @@
 
 /*
   A lot of our programs uses asserts, so better to always include it
-  This also fixes a problem when people uses DBUG_ASSERT without including
-  assert.h
 */
 #include <assert.h>
 
@@ -374,21 +372,6 @@ typedef unsigned short ushort;
 #define _VARARGS(X) X
 #define _STATIC_VARARGS(X) X
 #define _PC(X)	X
-
-/* The DBUG_ON flag always takes precedence over default DBUG_OFF */
-#if defined(DBUG_ON) && defined(DBUG_OFF)
-#undef DBUG_OFF
-#endif
-
-/* We might be forced to turn debug off, if not turned off already */
-#if (defined(FORCE_DBUG_OFF) || defined(_lint)) && !defined(DBUG_OFF)
-#  define DBUG_OFF
-#  ifdef DBUG_ON
-#    undef DBUG_ON
-#  endif
-#endif
-
-#include <my_dbug.h>
 
 #define MIN_ARRAY_SIZE	0	/* Zero or One. Gcc allows zero*/
 #define ASCII_BITS_USED 8	/* Bit char used */
@@ -696,17 +679,6 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 #define INT32(v)	(int32) (v)
 #define MYF(v)		(myf) (v)
 
-/*
-  Sometimes we want to make sure that the variable is not put into
-  a register in debugging mode so we can see its value in the core
-*/
-
-#ifndef DBUG_OFF
-#define dbug_volatile volatile
-#else
-#define dbug_volatile
-#endif
-
 /* Defines for time function */
 #define SCALE_SEC	100
 #define SCALE_USEC	10000
@@ -1006,16 +978,7 @@ do { doubleget_union _tmp; \
 
 #endif /* WORDS_BIGENDIAN */
 
-/* sprintf does not always return the number of bytes :- */
-#ifdef SPRINTF_RETURNS_INT
-#define my_sprintf(buff,args) sprintf args
-#else
-#ifdef SPRINTF_RETURNS_PTR
-#define my_sprintf(buff,args) ((int)(sprintf args - buff))
-#else
-#define my_sprintf(buff,args) ((ulong) sprintf args, (ulong) strlen(buff))
-#endif
-#endif
+/* my_sprintf  was here. RIP */
 
 #if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)
 #define MYSQL_UNIVERSAL_CLIENT_CHARSET "utf8"
@@ -1023,21 +986,12 @@ do { doubleget_union _tmp; \
 #define MYSQL_UNIVERSAL_CLIENT_CHARSET MYSQL_DEFAULT_CHARSET_NAME
 #endif
 
-#ifdef HAVE_DLOPEN
-#if defined(HAVE_DLFCN_H)
 #include <dlfcn.h>
-#endif
-#endif
 
 /* FreeBSD 2.2.2 does not define RTLD_NOW) */
 #ifndef RTLD_NOW
 #define RTLD_NOW 1
 #endif
-
-#ifndef HAVE_DLERROR
-#define dlerror() ""
-#endif
-
 
 /*
  *  Include standard definitions of operator new and delete.

@@ -30,12 +30,9 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
   uint pack_key_length, use_key_length, nextflag;
   uint myisam_search_flag;
   int res= 0;
-  DBUG_ENTER("mi_rkey");
-  DBUG_PRINT("enter", ("base: 0x%lx  buf: 0x%lx  inx: %d  search_flag: %d",
-                       (long) info, (long) buf, inx, search_flag));
 
   if ((inx = _mi_check_index(info,inx)) < 0)
-    DBUG_RETURN(my_errno);
+    return(my_errno);
 
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
   info->last_key_func= search_flag;
@@ -55,7 +52,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
   }
   else
   {
-    DBUG_ASSERT(keypart_map);
+    assert(keypart_map);
     /* Save the packed key for later use in the second buffer of lastkey. */
     key_buff=info->lastkey+info->s->base.max_key_length;
     pack_key_length=_mi_pack_key(info,(uint) inx, key_buff, (uchar*) key,
@@ -64,8 +61,6 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
     info->pack_key_length= pack_key_length;
     info->last_used_keyseg= (uint16) (last_used_keyseg -
                                       info->s->keyinfo[inx].seg);
-    DBUG_EXECUTE("key",_mi_print_key(DBUG_FILE, keyinfo->seg,
-				     key_buff, pack_key_length););
   }
 
   if (fast_mi_readinfo(info))
@@ -140,7 +135,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
         info->lastpos= HA_OFFSET_ERROR;
         if (share->concurrent_insert)
           rw_unlock(&share->key_root_lock[inx]);
-        DBUG_RETURN((my_errno= HA_ERR_KEY_NOT_FOUND));
+        return((my_errno= HA_ERR_KEY_NOT_FOUND));
       }
       /*
         Error if no row found within the data file. (Bug #29838)
@@ -167,12 +162,12 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
 
   /* Check if we don't want to have record back, only error message */
   if (!buf)
-    DBUG_RETURN(info->lastpos == HA_OFFSET_ERROR ? my_errno : 0);
+    return(info->lastpos == HA_OFFSET_ERROR ? my_errno : 0);
 
   if (!(*info->read_record)(info,info->lastpos,buf))
   {
     info->update|= HA_STATE_AKTIV;		/* Record is read */
-    DBUG_RETURN(0);
+    return(0);
   }
 
   info->lastpos = HA_OFFSET_ERROR;		/* Didn't find key */
@@ -186,5 +181,5 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
   if (search_flag == HA_READ_AFTER_KEY)
     info->update|=HA_STATE_NEXT_FOUND;		/* Previous gives last row */
 err:
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 } /* _mi_rkey */

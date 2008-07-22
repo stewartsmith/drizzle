@@ -144,7 +144,6 @@ int STDCALL mysql_server_init(int argc __attribute__((unused)),
       if ((env = getenv("MYSQL_UNIX_PORT")))
 	mysql_unix_port = env;
     }
-    mysql_debug(NullS);
 #if defined(SIGPIPE)
     (void) signal(SIGPIPE, SIG_IGN);
 #endif
@@ -178,9 +177,7 @@ void STDCALL mysql_server_end()
   /* If library called my_init(), free memory allocated by it */
   if (!org_my_init_done)
   {
-    my_end(MY_DONT_FREE_DBUG);
-    /* Remove TRACING, if enabled by mysql_debug() */
-    DBUG_POP();
+    my_end(0);
   }
   else
   {
@@ -241,41 +238,6 @@ append_wild(char *to, char *end, const char *wild)
   }
 }
 
-
-/**************************************************************************
-  Init debugging if MYSQL_DEBUG environment variable is found
-**************************************************************************/
-
-void STDCALL
-mysql_debug(const char *debug __attribute__((unused)))
-{
-#ifndef DBUG_OFF
-  char	*env;
-  if (debug)
-  {
-    DBUG_PUSH(debug);
-  }
-  else if ((env = getenv("MYSQL_DEBUG")))
-  {
-    DBUG_PUSH(env);
-#if !defined(_WINVER) && !defined(WINVER)
-    puts("\n-------------------------------------------------------");
-    puts("MYSQL_DEBUG found. libmysql started with the following:");
-    puts(env);
-    puts("-------------------------------------------------------\n");
-#else
-    {
-      char buff[80];
-      buff[sizeof(buff)-1]= 0;
-      strxnmov(buff,sizeof(buff)-1,"libmysql: ", env, NullS);
-      MessageBox((HWND) 0,"Debugging variable MYSQL_DEBUG used",buff,MB_OK);
-    }
-#endif
-  }
-#endif
-}
-
-
 /**************************************************************************
   Ignore SIGPIPE handler
    ARGSUSED
@@ -284,7 +246,6 @@ mysql_debug(const char *debug __attribute__((unused)))
 sig_handler
 my_pipe_sig_handler(int sig __attribute__((unused)))
 {
-  DBUG_PRINT("info",("Hit by signal %d",sig));
 #ifdef DONT_REMEMBER_SIGNAL
   (void) signal(SIGPIPE, my_pipe_sig_handler);
 #endif
@@ -304,14 +265,13 @@ mysql_connect(MYSQL *mysql,const char *host,
   MYSQL *res;
   mysql=mysql_init(mysql);			/* Make it thread safe */
   {
-    DBUG_ENTER("mysql_connect");
     if (!(res=mysql_real_connect(mysql,host,user,passwd,NullS,0,NullS,0)))
     {
       if (mysql->free_me)
 	my_free((uchar*) mysql,MYF(0));
     }
     mysql->reconnect= 1;
-    DBUG_RETURN(res);
+    return(res);
   }
 }
 #endif
@@ -343,14 +303,12 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   int rc;
   CHARSET_INFO *saved_cs= mysql->charset;
 
-  DBUG_ENTER("mysql_change_user");
-
   /* Get the connection-default character set. */
 
   if (mysql_init_character_set(mysql))
   {
     mysql->charset= saved_cs;
-    DBUG_RETURN(true);
+    return(true);
   }
 
   /* Use an empty string instead of NULL. */
@@ -407,7 +365,7 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
     mysql->charset= saved_cs;
   }
 
-  DBUG_RETURN(rc);
+  return(rc);
 }
 
 #if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
@@ -417,7 +375,6 @@ char* getlogin(void);
 
 void read_user_name(char *name)
 {
-  DBUG_ENTER("read_user_name");
   if (geteuid() == 0)
     (void) strmov(name,"root");		/* allow use of surun */
   else
@@ -440,7 +397,7 @@ void read_user_name(char *name)
     strmov(name,"UNKNOWN_USER");
 #endif
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
@@ -452,7 +409,6 @@ my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
   void *li_ptr;          /* pass state to local_infile functions */
   char *buf;		/* buffer to be filled by local_infile_read */
   struct st_mysql_options *options= &mysql->options;
-  DBUG_ENTER("handle_local_infile");
 
   /* check that we've got valid callback functions */
   if (!(options->local_infile_init &&
@@ -468,7 +424,7 @@ my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
   if (!(buf=my_malloc(packet_length, MYF(0))))
   {
     set_mysql_error(mysql, CR_OUT_OF_MEMORY, unknown_sqlstate);
-    DBUG_RETURN(1);
+    return(1);
   }
 
   /* initialize local infile (open file, usually) */
@@ -492,9 +448,6 @@ my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
   {
     if (my_net_write(net, (uchar*) buf, readcount))
     {
-      DBUG_PRINT("error",
-		 ("Lost connection to MySQL server during LOAD DATA of local file"));
-      set_mysql_error(mysql, CR_SERVER_LOST, unknown_sqlstate);
       goto err;
     }
   }
@@ -521,7 +474,7 @@ err:
   /* free up memory allocated with _init, usually */
   (*options->local_infile_end)(li_ptr);
   my_free(buf, MYF(0));
-  DBUG_RETURN(result);
+  return(result);
 }
 
 
@@ -724,7 +677,6 @@ void STDCALL
 mysql_data_seek(MYSQL_RES *result, uint64_t row)
 {
   MYSQL_ROWS	*tmp=0;
-  DBUG_PRINT("info",("mysql_data_seek(%ld)",(long) row));
   if (result->data)
     for (tmp=result->data->data; row-- && tmp ; tmp = tmp->next) ;
   result->current_row=0;
@@ -765,12 +717,11 @@ MYSQL_RES * STDCALL
 mysql_list_dbs(MYSQL *mysql, const char *wild)
 {
   char buff[255];
-  DBUG_ENTER("mysql_list_dbs");
 
   append_wild(strmov(buff,"show databases"),buff+sizeof(buff),wild);
   if (mysql_query(mysql,buff))
-    DBUG_RETURN(0);
-  DBUG_RETURN (mysql_store_result(mysql));
+    return(0);
+  return (mysql_store_result(mysql));
 }
 
 
@@ -783,12 +734,11 @@ MYSQL_RES * STDCALL
 mysql_list_tables(MYSQL *mysql, const char *wild)
 {
   char buff[255];
-  DBUG_ENTER("mysql_list_tables");
 
   append_wild(strmov(buff,"show tables"),buff+sizeof(buff),wild);
   if (mysql_query(mysql,buff))
-    DBUG_RETURN(0);
-  DBUG_RETURN (mysql_store_result(mysql));
+    return(0);
+  return (mysql_store_result(mysql));
 }
 
 
@@ -818,19 +768,17 @@ mysql_list_fields(MYSQL *mysql, const char *table, const char *wild)
   MYSQL_RES   *result;
   MYSQL_FIELD *fields;
   char	     buff[257],*end;
-  DBUG_ENTER("mysql_list_fields");
-  DBUG_PRINT("enter",("table: '%s'  wild: '%s'",table,wild ? wild : ""));
 
   end=strmake(strmake(buff, table,128)+1,wild ? wild : "",128);
   free_old_query(mysql);
   if (simple_command(mysql, COM_FIELD_LIST, (uchar*) buff,
                      (ulong) (end-buff), 1) ||
       !(fields= (*mysql->methods->list_fields)(mysql)))
-    DBUG_RETURN(NULL);
+    return(NULL);
 
   if (!(result = (MYSQL_RES *) my_malloc(sizeof(MYSQL_RES),
 					 MYF(MY_WME | MY_ZEROFILL))))
-    DBUG_RETURN(NULL);
+    return(NULL);
 
   result->methods= mysql->methods;
   result->field_alloc=mysql->field_alloc;
@@ -838,7 +786,7 @@ mysql_list_fields(MYSQL *mysql, const char *table, const char *wild)
   result->field_count = mysql->field_count;
   result->fields= fields;
   result->eof=1;
-  DBUG_RETURN(result);
+  return(result);
 }
 
 /* List all running processes (threads) in server */
@@ -849,22 +797,21 @@ mysql_list_processes(MYSQL *mysql)
   MYSQL_DATA *fields;
   uint field_count;
   uchar *pos;
-  DBUG_ENTER("mysql_list_processes");
 
   if (simple_command(mysql,COM_PROCESS_INFO,0,0,0))
-    DBUG_RETURN(0);
+    return(0);
   free_old_query(mysql);
   pos=(uchar*) mysql->net.read_pos;
   field_count=(uint) net_field_length(&pos);
   if (!(fields = (*mysql->methods->read_rows)(mysql,(MYSQL_FIELD*) 0,
 					      protocol_41(mysql) ? 7 : 5)))
-    DBUG_RETURN(NULL);
+    return(NULL);
   if (!(mysql->fields=unpack_fields(fields,&mysql->field_alloc,field_count,0,
 				    mysql->server_capabilities)))
-    DBUG_RETURN(0);
+    return(0);
   mysql->status=MYSQL_STATUS_GET_RESULT;
   mysql->field_count=field_count;
-  DBUG_RETURN(mysql_store_result(mysql));
+  return(mysql_store_result(mysql));
 }
 
 
@@ -872,18 +819,14 @@ mysql_list_processes(MYSQL *mysql)
 int  STDCALL
 mysql_create_db(MYSQL *mysql, const char *db)
 {
-  DBUG_ENTER("mysql_createdb");
-  DBUG_PRINT("enter",("db: %s",db));
-  DBUG_RETURN(simple_command(mysql,COM_CREATE_DB,db, (ulong) strlen(db),0));
+  return(simple_command(mysql,COM_CREATE_DB,db, (ulong) strlen(db),0));
 }
 
 
 int  STDCALL
 mysql_drop_db(MYSQL *mysql, const char *db)
 {
-  DBUG_ENTER("mysql_drop_db");
-  DBUG_PRINT("enter",("db: %s",db));
-  DBUG_RETURN(simple_command(mysql,COM_DROP_DB,db,(ulong) strlen(db),0));
+  return(simple_command(mysql,COM_DROP_DB,db,(ulong) strlen(db),0));
 }
 #endif
 
@@ -892,9 +835,8 @@ int STDCALL
 mysql_shutdown(MYSQL *mysql, enum mysql_enum_shutdown_level shutdown_level)
 {
   uchar level[1];
-  DBUG_ENTER("mysql_shutdown");
   level[0]= (uchar) shutdown_level;
-  DBUG_RETURN(simple_command(mysql, COM_SHUTDOWN, level, 1, 0));
+  return(simple_command(mysql, COM_SHUTDOWN, level, 1, 0));
 }
 
 
@@ -902,9 +844,8 @@ int STDCALL
 mysql_refresh(MYSQL *mysql,uint options)
 {
   uchar bits[1];
-  DBUG_ENTER("mysql_refresh");
   bits[0]= (uchar) options;
-  DBUG_RETURN(simple_command(mysql, COM_REFRESH, bits, 1, 0));
+  return(simple_command(mysql, COM_REFRESH, bits, 1, 0));
 }
 
 
@@ -912,9 +853,8 @@ int32_t STDCALL
 mysql_kill(MYSQL *mysql, uint32_t pid)
 {
   uchar buff[4];
-  DBUG_ENTER("mysql_kill");
   int4store(buff,pid);
-  DBUG_RETURN(simple_command(mysql,COM_PROCESS_KILL,buff,sizeof(buff),0));
+  return(simple_command(mysql,COM_PROCESS_KILL,buff,sizeof(buff),0));
 }
 
 
@@ -922,17 +862,8 @@ int STDCALL
 mysql_set_server_option(MYSQL *mysql, enum enum_mysql_set_option option)
 {
   uchar buff[2];
-  DBUG_ENTER("mysql_set_server_option");
   int2store(buff, (uint) option);
-  DBUG_RETURN(simple_command(mysql, COM_SET_OPTION, buff, sizeof(buff), 0));
-}
-
-
-int STDCALL
-mysql_dump_debug_info(MYSQL *mysql)
-{
-  DBUG_ENTER("mysql_dump_debug_info");
-  DBUG_RETURN(simple_command(mysql,COM_DEBUG,0,0,0));
+  return(simple_command(mysql, COM_SET_OPTION, buff, sizeof(buff), 0));
 }
 
 
@@ -951,10 +882,9 @@ const char *cli_read_statistics(MYSQL *mysql)
 const char * STDCALL
 mysql_stat(MYSQL *mysql)
 {
-  DBUG_ENTER("mysql_stat");
   if (simple_command(mysql,COM_STATISTICS,0,0,0))
-    DBUG_RETURN(mysql->net.last_error);
-  DBUG_RETURN((*mysql->methods->read_statistics)(mysql));
+    return(mysql->net.last_error);
+  return((*mysql->methods->read_statistics)(mysql));
 }
 
 
@@ -962,11 +892,10 @@ int STDCALL
 mysql_ping(MYSQL *mysql)
 {
   int res;
-  DBUG_ENTER("mysql_ping");
   res= simple_command(mysql,COM_PING,0,0,0);
   if (res == CR_SERVER_LOST && mysql->reconnect)
     res= simple_command(mysql,COM_PING,0,0,0);
-  DBUG_RETURN(res);
+  return(res);
 }
 
 
@@ -1222,8 +1151,7 @@ int cli_unbuffered_fetch(MYSQL *mysql, char **row)
 
 my_bool STDCALL mysql_commit(MYSQL * mysql)
 {
-  DBUG_ENTER("mysql_commit");
-  DBUG_RETURN((my_bool) mysql_real_query(mysql, "commit", 6));
+  return((my_bool) mysql_real_query(mysql, "commit", 6));
 }
 
 /*
@@ -1232,8 +1160,7 @@ my_bool STDCALL mysql_commit(MYSQL * mysql)
 
 my_bool STDCALL mysql_rollback(MYSQL * mysql)
 {
-  DBUG_ENTER("mysql_rollback");
-  DBUG_RETURN((my_bool) mysql_real_query(mysql, "rollback", 8));
+  return((my_bool) mysql_real_query(mysql, "rollback", 8));
 }
 
 
@@ -1243,10 +1170,7 @@ my_bool STDCALL mysql_rollback(MYSQL * mysql)
 
 my_bool STDCALL mysql_autocommit(MYSQL * mysql, my_bool auto_mode)
 {
-  DBUG_ENTER("mysql_autocommit");
-  DBUG_PRINT("enter", ("mode : %d", auto_mode));
-
-  DBUG_RETURN((my_bool) mysql_real_query(mysql, auto_mode ?
+  return((my_bool) mysql_real_query(mysql, auto_mode ?
                                          "set autocommit=1":"set autocommit=0",
                                          16));
 }
@@ -1264,11 +1188,9 @@ my_bool STDCALL mysql_autocommit(MYSQL * mysql, my_bool auto_mode)
 my_bool STDCALL mysql_more_results(MYSQL *mysql)
 {
   my_bool res;
-  DBUG_ENTER("mysql_more_results");
 
   res= ((mysql->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
-  DBUG_PRINT("exit",("More results exists ? %d", res));
-  DBUG_RETURN(res);
+  return(res);
 }
 
 
@@ -1277,21 +1199,19 @@ my_bool STDCALL mysql_more_results(MYSQL *mysql)
 */
 int STDCALL mysql_next_result(MYSQL *mysql)
 {
-  DBUG_ENTER("mysql_next_result");
-
   if (mysql->status != MYSQL_STATUS_READY)
   {
     set_mysql_error(mysql, CR_COMMANDS_OUT_OF_SYNC, unknown_sqlstate);
-    DBUG_RETURN(1);
+    return(1);
   }
 
   net_clear_error(&mysql->net);
   mysql->affected_rows= ~(uint64_t) 0;
 
   if (mysql->server_status & SERVER_MORE_RESULTS_EXISTS)
-    DBUG_RETURN((*mysql->methods->next_result)(mysql));
+    return((*mysql->methods->next_result)(mysql));
 
-  DBUG_RETURN(-1);				/* No more results */
+  return(-1);				/* No more results */
 }
 
 

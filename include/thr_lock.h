@@ -107,7 +107,6 @@ typedef struct st_thr_lock_data {
   pthread_cond_t *cond;
   enum thr_lock_type type;
   void *status_param;			/* Param to status functions */
-  void *debug_print_param;
 } THR_LOCK_DATA;
 
 struct st_lock_list {

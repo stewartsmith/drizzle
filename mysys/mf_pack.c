@@ -37,7 +37,6 @@ void pack_dirname(char * to, const char *from)
   size_t d_length,length,buff_length= 0;
   char * start;
   char buff[FN_REFLEN];
-  DBUG_ENTER("pack_dirname");
 
   (void) intern_filename(to,from);		/* Change to intern name */
 
@@ -101,8 +100,7 @@ void pack_dirname(char * to, const char *from)
       }
     }
   }
-  DBUG_PRINT("exit",("to: '%s'",to));
-  DBUG_VOID_RETURN;
+  return;
 } /* pack_dirname */
 
 
@@ -137,8 +135,6 @@ size_t cleanup_dirname(register char *to, const char *from)
 #ifdef BACKSLASH_MBTAIL
   CHARSET_INFO *fs= fs_character_set();
 #endif
-  DBUG_ENTER("cleanup_dirname");
-  DBUG_PRINT("enter",("from: '%s'",from));
 
   start=buff;
   from_ptr=(char *) from;
@@ -227,8 +223,7 @@ size_t cleanup_dirname(register char *to, const char *from)
     }
   }
   (void) strmov(to,buff);
-  DBUG_PRINT("exit",("to: '%s'",to));
-  DBUG_RETURN((size_t) (pos-buff));
+  return((size_t) (pos-buff));
 } /* cleanup_dirname */
 
 
@@ -300,7 +295,6 @@ size_t unpack_dirname(char * to, const char *from)
 {
   size_t length, h_length;
   char buff[FN_REFLEN+1+4],*suffix,*tilde_expansion;
-  DBUG_ENTER("unpack_dirname");
 
   (void) intern_filename(buff,from);	    /* Change to intern name */
   length= strlen(buff);                     /* Fix that '/' is last */
@@ -337,7 +331,7 @@ size_t unpack_dirname(char * to, const char *from)
   if (my_use_symdir)
     symdirget(buff);
 #endif
-  DBUG_RETURN(system_filename(to,buff));	/* Fix for open */
+  return(system_filename(to,buff));	/* Fix for open */
 } /* unpack_dirname */
 
 
@@ -391,7 +385,6 @@ size_t unpack_filename(char * to, const char *from)
 {
   size_t length, n_length, buff_length;
   char buff[FN_REFLEN];
-  DBUG_ENTER("unpack_filename");
 
   length=dirname_part(buff, from, &buff_length);/* copy & convert dirname */
   n_length=unpack_dirname(buff,buff);
@@ -402,7 +395,7 @@ size_t unpack_filename(char * to, const char *from)
   }
   else
     length= system_filename(to,from);		/* Fix to usably filename */
-  DBUG_RETURN(length);
+  return(length);
 } /* unpack_filename */
 
 
@@ -427,7 +420,6 @@ size_t system_filename(char * to, const char *from)
   size_t length;
   char * to_pos,from_pos,pos;
   char buff[FN_REFLEN];
-  DBUG_ENTER("system_filename");
 
   libchar_found=0;
   (void) strmov(buff,from);			 /* If to == from */
@@ -472,8 +464,7 @@ size_t system_filename(char * to, const char *from)
     *(to_pos++)=FN_C_AFTER_DIR;
   }
   length= (size_t) (strmov(to_pos,from_pos)-to);
-  DBUG_PRINT("exit",("name: '%s'",to));
-  DBUG_RETURN(length);
+  return(length);
 #endif
 } /* system_filename */
 

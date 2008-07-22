@@ -52,16 +52,13 @@ int mi_assign_to_key_cache(MI_INFO *info,
 {
   int error= 0;
   MYISAM_SHARE* share= info->s;
-  DBUG_ENTER("mi_assign_to_key_cache");
-  DBUG_PRINT("enter",("old_key_cache_handle: 0x%lx  new_key_cache_handle: 0x%lx",
-		      (long) share->key_cache, (long) key_cache));
 
   /*
     Skip operation if we didn't change key cache. This can happen if we
     call this for all open instances of the same table
   */
   if (share->key_cache == key_cache)
-    DBUG_RETURN(0);
+    return(0);
 
   /*
     First flush all blocks for the table in the old key cache.
@@ -109,7 +106,7 @@ int mi_assign_to_key_cache(MI_INFO *info,
 			  share->key_cache))
     error= my_errno;
   pthread_mutex_unlock(&share->intern_lock);
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -138,7 +135,6 @@ void mi_change_key_cache(KEY_CACHE *old_key_cache,
 			 KEY_CACHE *new_key_cache)
 {
   LIST *pos;
-  DBUG_ENTER("mi_change_key_cache");
 
   /*
     Lock list to ensure that no one can close the table while we manipulate it
@@ -159,5 +155,5 @@ void mi_change_key_cache(KEY_CACHE *old_key_cache,
   */
   multi_key_cache_change(old_key_cache, new_key_cache);
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  DBUG_VOID_RETURN;
+  return;
 }

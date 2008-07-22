@@ -853,7 +853,6 @@ static MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count,
 	return(0);
       }
     }
-    THR_LOCK_DATA **org_locks = locks;
     locks_start= locks;
     locks= table->file->store_lock(thd, locks,
                                    (flags & GET_LOCK_UNLOCK) ? TL_IGNORE :
@@ -865,9 +864,6 @@ static MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count,
       table->lock_count=      (uint) (locks - locks_start);
     }
     *to++= table;
-    if (locks)
-      for ( ; org_locks != locks ; org_locks++)
-	(*org_locks)->debug_print_param= (void *) table;
   }
   /*
     We do not use 'tables', because there are cases where store_lock()

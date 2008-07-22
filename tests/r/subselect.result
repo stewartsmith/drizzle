@@ -304,13 +304,13 @@ NULL	1
 explain extended select (select a from t1 where t1.a=t2.a union select a from t5 where t5.a=t2.a), a from t2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	2	100.00	
-2	DEPENDENT SUBQUERY	t1	system	NULL	NULL	NULL	NULL	1	100.00	
+2	DEPENDENT SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	Using where
 3	DEPENDENT UNION	t5	ALL	NULL	NULL	NULL	NULL	2	100.00	Using where
 NULL	UNION RESULT	<union2,3>	ALL	NULL	NULL	NULL	NULL	NULL	NULL	
 Warnings:
 Note	1276	Field or reference 'test.t2.a' of SELECT #2 was resolved in SELECT #1
 Note	1276	Field or reference 'test.t2.a' of SELECT #3 was resolved in SELECT #1
-Note	1003	select (select '2' AS "a" from "test"."t1" where ('2' = "test"."t2"."a") union select "test"."t5"."a" AS "a" from "test"."t5" where ("test"."t5"."a" = "test"."t2"."a")) AS "(select a from t1 where t1.a=t2.a union select a from t5 where t5.a=t2.a)","test"."t2"."a" AS "a" from "test"."t2"
+Note	1003	select (select "test"."t1"."a" AS "a" from "test"."t1" where ("test"."t1"."a" = "test"."t2"."a") union select "test"."t5"."a" AS "a" from "test"."t5" where ("test"."t5"."a" = "test"."t2"."a")) AS "(select a from t1 where t1.a=t2.a union select a from t5 where t5.a=t2.a)","test"."t2"."a" AS "a" from "test"."t2"
 select (select a from t1 where t1.a=t2.a union all select a from t5 where t5.a=t2.a), a from t2;
 ERROR 21000: Subquery returns more than 1 row
 create table t6 (patient_uq int, clinic_uq int, index i1 (clinic_uq));
@@ -605,9 +605,9 @@ a	b
 2	12
 select * from t12;
 a	b
-33	10
-22	11
 2	12
+22	11
+33	10
 delete t11.*, t12.* from t11,t12 where t11.a = t12.a and t11.b = (select b from t12 where t11.a = t12.a);
 ERROR HY000: You can't specify target table 't12' for update in FROM clause
 delete t11.*, t12.* from t11,t12 where t11.a = t12.a and t11.b = (select b from t2);
@@ -619,8 +619,8 @@ a	b
 1	11
 select * from t12;
 a	b
-33	10
 22	11
+33	10
 drop table t11, t12, t2;
 CREATE TABLE t1 (x int);
 create table t2 (a int);
@@ -703,8 +703,8 @@ replace LOW_PRIORITY into t1 (x, y) VALUES ((SELECT a+1 FROM t2), (SELECT a FROM
 select * from t1;
 x	y
 1	3
-4	2
 2	1
+4	2
 drop table t1, t2, t3;
 SELECT * FROM (SELECT 1) b WHERE 1 IN (SELECT *);
 ERROR HY000: No tables used
@@ -965,20 +965,20 @@ drop table t1;
 CREATE TABLE t1 (a int(1));
 EXPLAIN EXTENDED SELECT (SELECT RAND() FROM t1) FROM t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t1	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
-2	SUBQUERY	t1	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
 Note	1003	select (select rand() AS "RAND()" from "test"."t1") AS "(SELECT RAND() FROM t1)" from "test"."t1"
 EXPLAIN EXTENDED SELECT (SELECT ENCRYPT('test') FROM t1) FROM t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t1	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
-2	SUBQUERY	t1	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
 Note	1003	select (select encrypt('test') AS "ENCRYPT('test')" from "test"."t1") AS "(SELECT ENCRYPT('test') FROM t1)" from "test"."t1"
 EXPLAIN EXTENDED SELECT (SELECT BENCHMARK(1,1) FROM t1) FROM t1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t1	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
-2	SUBQUERY	t1	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
 Note	1003	select (select benchmark(1,1) AS "BENCHMARK(1,1)" from "test"."t1") AS "(SELECT BENCHMARK(1,1) FROM t1)" from "test"."t1"
 drop table t1;
@@ -1032,7 +1032,7 @@ Table	Create Table
 t1	CREATE TABLE "t1" (
   "a" int(1) NOT NULL,
   "(SELECT 1)" int(1) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
 SHOW CREATE TABLE t1;
@@ -1040,7 +1040,7 @@ Table	Create Table
 t1	CREATE TABLE "t1" (
   "a" int(1) NOT NULL,
   "(SELECT a)" int(1) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT a+0)) a;
 SHOW CREATE TABLE t1;
@@ -1048,7 +1048,7 @@ Table	Create Table
 t1	CREATE TABLE "t1" (
   "a" int(1) NOT NULL,
   "(SELECT a+0)" int(3) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 CREATE TABLE t1 SELECT (SELECT 1 as a UNION SELECT 1+1 limit 1,1) as a;
 select * from t1;
@@ -1058,7 +1058,7 @@ SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE "t1" (
   "a" bigint(20) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 create table t1 (a int);
 insert into t1 values (1), (2), (3);
@@ -1175,7 +1175,7 @@ create table t1 (id int not null auto_increment primary key, salary int, key(sal
 insert into t1 (salary) values (100),(1000),(10000),(10),(500),(5000),(50000);
 explain extended SELECT id FROM t1 where salary = (SELECT MAX(salary) FROM t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t1	ref	salary	salary	5	const	1	100.00	Using index condition
+1	PRIMARY	t1	ref	salary	salary	5	const	1	100.00	Using where; Using index
 2	SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
 Warnings:
 Note	1003	select "test"."t1"."id" AS "id" from "test"."t1" where ("test"."t1"."salary" = (select max("test"."t1"."salary") AS "MAX(salary)" from "test"."t1"))
@@ -1238,7 +1238,7 @@ a
 explain extended select * from t2 where t2.a in (select a from t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t2	index	PRIMARY	PRIMARY	4	NULL	4	100.00	Using index
-1	PRIMARY	t1	index	PRIMARY	PRIMARY	4	NULL	4	75.00	Using where; Using index; Using join buffer
+1	PRIMARY	t1	eq_ref	PRIMARY	PRIMARY	4	test.t2.a	1	100.00	Using index
 Warnings:
 Note	1003	select "test"."t2"."a" AS "a" from ("test"."t1") join "test"."t2" where ("test"."t1"."a" = "test"."t2"."a")
 select * from t2 where t2.a in (select a from t1 where t1.b <> 30);
@@ -1277,7 +1277,7 @@ a
 explain extended select * from t2 where t2.a in (select a from t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t2	index	a	a	5	NULL	4	100.00	Using index
-1	PRIMARY	t1	ref	a	a	5	test.t2.a	101	100.00	Using index; FirstMatch(t2)
+1	PRIMARY	t1	ref	a	a	5	test.t2.a	1	100.00	Using index; FirstMatch(t2)
 Warnings:
 Note	1003	select "test"."t2"."a" AS "a" from "test"."t2" semi join ("test"."t1") where ("test"."t1"."a" = "test"."t2"."a")
 select * from t2 where t2.a in (select a from t1 where t1.b <> 30);
@@ -1287,7 +1287,7 @@ a
 explain extended select * from t2 where t2.a in (select a from t1 where t1.b <> 30);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t2	index	a	a	5	NULL	4	100.00	Using index
-1	PRIMARY	t1	ref	a	a	5	test.t2.a	101	100.00	Using where; Using index; FirstMatch(t2)
+1	PRIMARY	t1	ref	a	a	5	test.t2.a	1	100.00	Using where; Using index; FirstMatch(t2)
 Warnings:
 Note	1003	select "test"."t2"."a" AS "a" from "test"."t2" semi join ("test"."t1") where (("test"."t1"."a" = "test"."t2"."a") and ("test"."t1"."b" <> 30))
 select * from t2 where t2.a in (select t1.a from t1,t3 where t1.b=t3.a);
@@ -1296,9 +1296,9 @@ a
 3
 explain extended select * from t2 where t2.a in (select t1.a from t1,t3 where t1.b=t3.a);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t2	index	a	a	5	NULL	4	100.00	Using index; Start temporary
-1	PRIMARY	t1	ref	a	a	5	test.t2.a	101	100.00	Using index; FirstMatch(t2)
-1	PRIMARY	t3	index	a	a	5	NULL	3	100.00	Using where; Using index; End temporary; Using join buffer
+1	PRIMARY	t2	index	a	a	5	NULL	4	100.00	Using index
+1	PRIMARY	t1	ref	a	a	5	test.t2.a	1	100.00	Using index; FirstMatch(t2)
+1	PRIMARY	t3	ref	a	a	5	test.t1.b	1	100.00	Using index; FirstMatch(t2)
 Warnings:
 Note	1003	select "test"."t2"."a" AS "a" from "test"."t2" semi join ("test"."t1" join "test"."t3") where (("test"."t1"."a" = "test"."t2"."a") and ("test"."t3"."a" = "test"."t1"."b"))
 insert into t1 values (3,31);
@@ -1314,7 +1314,7 @@ a
 explain extended select * from t2 where t2.a in (select a from t1 where t1.b <> 30);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t2	index	a	a	5	NULL	4	100.00	Using index
-1	PRIMARY	t1	ref	a	a	5	test.t2.a	101	100.00	Using where; Using index; FirstMatch(t2)
+1	PRIMARY	t1	ref	a	a	5	test.t2.a	1	100.00	Using where; Using index; FirstMatch(t2)
 Warnings:
 Note	1003	select "test"."t2"."a" AS "a" from "test"."t2" semi join ("test"."t1") where (("test"."t1"."a" = "test"."t2"."a") and ("test"."t1"."b" <> 30))
 drop table t1, t2, t3;
@@ -1371,9 +1371,9 @@ s1
 tttt
 explain extended (select * from t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	t1	system	NULL	NULL	NULL	NULL	1	100.00	
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	(select 'tttt' AS "s1" from "test"."t1")
+Note	1003	(select "test"."t1"."s1" AS "s1" from "test"."t1")
 (select * from t1);
 s1
 tttt
@@ -1438,17 +1438,17 @@ a
 explain extended select * from t3 where a >= all (select b from t2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <not>(("test"."t3"."a" < (select max('0') from "test"."t2")))
+Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <not>(("test"."t3"."a" < (select max("test"."t2"."b") from "test"."t2")))
 select * from t3 where a >= some (select b from t2);
 a
 explain extended select * from t3 where a >= some (select b from t2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
-Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <nop>(("test"."t3"."a" >= (select min('0') from "test"."t2")))
+Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <nop>(("test"."t3"."a" >= (select min("test"."t2"."b") from "test"."t2")))
 select * from t3 where a >= all (select b from t2 group by 1);
 a
 6
@@ -1457,23 +1457,23 @@ a
 explain extended select * from t3 where a >= all (select b from t2 group by 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	Using temporary; Using filesort
 Warnings:
-Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <not>(("test"."t3"."a" < <max>(select '0' AS "b" from "test"."t2" group by 1)))
+Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <not>(("test"."t3"."a" < <max>(select "test"."t2"."b" AS "b" from "test"."t2" group by 1)))
 select * from t3 where a >= some (select b from t2 group by 1);
 a
 explain extended select * from t3 where a >= some (select b from t2 group by 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	t3	ALL	NULL	NULL	NULL	NULL	3	100.00	Using where
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	Using temporary; Using filesort
 Warnings:
-Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <nop>(("test"."t3"."a" >= <min>(select '0' AS "b" from "test"."t2" group by 1)))
+Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where <nop>(("test"."t3"."a" >= <min>(select "test"."t2"."b" AS "b" from "test"."t2" group by 1)))
 select * from t3 where NULL >= any (select b from t2);
 a
 explain extended select * from t3 where NULL >= any (select b from t2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
 Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where 0
 select * from t3 where NULL >= any (select b from t2 group by 1);
@@ -1481,7 +1481,7 @@ a
 explain extended select * from t3 where NULL >= any (select b from t2 group by 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	Using temporary; Using filesort
 Warnings:
 Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where 0
 select * from t3 where NULL >= some (select b from t2);
@@ -1489,7 +1489,7 @@ a
 explain extended select * from t3 where NULL >= some (select b from t2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	
 Warnings:
 Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where 0
 select * from t3 where NULL >= some (select b from t2 group by 1);
@@ -1497,7 +1497,7 @@ a
 explain extended select * from t3 where NULL >= some (select b from t2 group by 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-2	SUBQUERY	t2	system	NULL	NULL	NULL	NULL	0	0.00	const row not found
+2	SUBQUERY	t2	ALL	NULL	NULL	NULL	NULL	1	100.00	Using temporary; Using filesort
 Warnings:
 Note	1003	select "test"."t3"."a" AS "a" from "test"."t3" where 0
 insert into t2 values (2,2), (2,1), (3,3), (3,1);
@@ -1547,12 +1547,12 @@ s1
 e
 explain extended select * from t1 where 'f' > any (select s1 from t1 union select s1 from t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	PRIMARY	t1	system	NULL	NULL	NULL	NULL	1	100.00	
-2	SUBQUERY	t1	system	NULL	NULL	NULL	NULL	1	100.00	
-3	UNION	t1	system	NULL	NULL	NULL	NULL	1	100.00	
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
+3	UNION	t1	ALL	NULL	NULL	NULL	NULL	1	100.00	
 NULL	UNION RESULT	<union2,3>	ALL	NULL	NULL	NULL	NULL	NULL	NULL	
 Warnings:
-Note	1003	select 'e' AS "s1" from "test"."t1" where 1
+Note	1003	select "test"."t1"."s1" AS "s1" from "test"."t1" where 1
 drop table t1;
 CREATE TABLE t1 (number char(11) NOT NULL default '') ENGINE=MyISAM CHARSET=latin1;
 INSERT INTO t1 VALUES ('69294728265'),('18621828126'),('89356874041'),('95895001874');
@@ -1693,7 +1693,7 @@ explain extended select * from t1 a left join t2 b on (a.id=b.id or b.id is null
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
 1	SIMPLE	a	ALL	NULL	NULL	NULL	NULL	14	100.00	
 1	SIMPLE	b	eq_ref	PRIMARY	PRIMARY	4	test.a.id	2	100.00	
-1	SIMPLE	c	eq_ref	PRIMARY	PRIMARY	4	func	1	100.00	Using index condition
+1	SIMPLE	c	eq_ref	PRIMARY	PRIMARY	4	func	1	100.00	Using where
 Warnings:
 Note	1003	select "test"."a"."id" AS "id","test"."a"."text" AS "text","test"."b"."id" AS "id","test"."b"."text" AS "text","test"."c"."id" AS "id","test"."c"."text" AS "text" from "test"."t1" "a" left join "test"."t2" "b" on((("test"."b"."id" = "test"."a"."id") or isnull("test"."b"."id"))) join "test"."t1" "c" where (if(isnull("test"."b"."id"),1000,"test"."b"."id") = "test"."c"."id")
 drop table t1,t2;
@@ -1702,7 +1702,7 @@ insert into t1 values (1);
 explain select benchmark(1000, (select a from t1 where a=rand()));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	No tables used
-2	SUBQUERY	t1	system	NULL	NULL	NULL	NULL	1	
+2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	1	Using where
 drop table t1;
 create table t1(id int);
 create table t2(id int);
@@ -2740,9 +2740,9 @@ explain SELECT t1.a, r.a, r.b FROM t1 LEFT JOIN t2 r
 ON r.a = (SELECT t2.a FROM t2 WHERE t2.c = t1.a AND t2.b <= '359899' 
 ORDER BY t2.c DESC, t2.b DESC LIMIT 1) WHERE t1.a = 10;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	system	PRIMARY	NULL	NULL	NULL	1	
+1	PRIMARY	t1	const	PRIMARY	PRIMARY	4	const	1	Using index
 1	PRIMARY	r	const	PRIMARY	PRIMARY	4	const	1	
-2	DEPENDENT SUBQUERY	t2	range	b	b	40	NULL	2	Using index condition
+2	DEPENDENT SUBQUERY	t2	ref	b	b	5		1	Using where; Using index
 SELECT t1.a, r.a, r.b FROM t1 LEFT JOIN t2 r 
 ON r.a = (SELECT t2.a FROM t2 WHERE t2.c = t1.a AND t2.b <= '359899' 
 ORDER BY t2.c DESC, t2.b DESC LIMIT 1) WHERE t1.a = 10;
@@ -2752,9 +2752,9 @@ explain SELECT t1.a, r.a, r.b FROM t1 LEFT JOIN t2 r
 ON r.a = (SELECT t2.a FROM t2 WHERE t2.c = t1.a AND t2.b <= '359899' 
 ORDER BY t2.c, t2.b LIMIT 1) WHERE t1.a = 10;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	system	PRIMARY	NULL	NULL	NULL	1	
+1	PRIMARY	t1	const	PRIMARY	PRIMARY	4	const	1	Using index
 1	PRIMARY	r	const	PRIMARY	PRIMARY	4	const	1	
-2	DEPENDENT SUBQUERY	t2	range	b	b	40	NULL	2	Using index condition; Using MRR
+2	DEPENDENT SUBQUERY	t2	ref	b	b	5		1	Using where; Using index
 SELECT t1.a, r.a, r.b FROM t1 LEFT JOIN t2 r 
 ON r.a = (SELECT t2.a FROM t2 WHERE t2.c = t1.a AND t2.b <= '359899' 
 ORDER BY t2.c, t2.b LIMIT 1) WHERE t1.a = 10;
@@ -2821,13 +2821,13 @@ SHOW CREATE TABLE t2;
 Table	Create Table
 t2	CREATE TABLE "t2" (
   "sub_a" datetime
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
 CREATE TABLE t3 AS (SELECT a FROM t1 WHERE a < '2000-01-01') UNION (SELECT a FROM t1 WHERE a > '2000-01-01');
 SHOW CREATE TABLE t3;
 Table	Create Table
 t3	CREATE TABLE "t3" (
   "a" datetime
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
 DROP TABLE t1,t2,t3;
 CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (2), (4), (1), (3);
@@ -3203,7 +3203,7 @@ EXPLAIN
 SELECT * FROM t1 WHERE (a,b) = ANY (SELECT a, max(b) FROM t1 GROUP BY a);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	9	Using where
-2	SUBQUERY	t1	ALL	NULL	NULL	NULL	NULL	9	Using temporary; Using filesort
+2	SUBQUERY	t1	index	NULL	a	8	NULL	9	
 DROP TABLE t1;
 create table t1( f1 int,f2 int);
 insert into t1 values (1,1),(2,2);
@@ -3316,9 +3316,9 @@ WHERE t1.t = (SELECT t1.t FROM t1
 WHERE t1.t < t2.t  AND t1.i2=1 AND t2.i1=t1.i1
 ORDER BY t1.t DESC LIMIT 1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t2	system	NULL	NULL	NULL	NULL	1	
-1	PRIMARY	t1	index	NULL	PRIMARY	16	NULL	11	Using where; Using index
-2	DEPENDENT SUBQUERY	t1	range	PRIMARY	PRIMARY	16	NULL	5	Using where; Using index
+1	PRIMARY	t2	ALL	NULL	NULL	NULL	NULL	1	
+1	PRIMARY	t1	index	NULL	PRIMARY	16	NULL	11	Using where; Using index; Using join buffer
+2	DEPENDENT SUBQUERY	t1	ref	PRIMARY	PRIMARY	8	test.t2.i1,const	5	Using where; Using index; Using filesort
 SELECT * FROM t1,t2
 WHERE t1.t = (SELECT t1.t FROM t1 
 WHERE t1.t < t2.t  AND t1.i2=1 AND t2.i1=t1.i1
@@ -3345,36 +3345,10 @@ from t1' at line 1
 explain select * from t1 where not exists 
 ((select t11.i from t1 t11) union (select t12.i from t1 t12));
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	PRIMARY	t1	system	NULL	NULL	NULL	NULL	0	const row not found
-2	SUBQUERY	NULL	NULL	NULL	NULL	NULL	NULL	NULL	no matching row in const table
-3	UNION	NULL	NULL	NULL	NULL	NULL	NULL	NULL	no matching row in const table
+1	PRIMARY	t1	ALL	NULL	NULL	NULL	NULL	1	
+2	SUBQUERY	t11	ALL	NULL	NULL	NULL	NULL	1	
+3	UNION	t12	ALL	NULL	NULL	NULL	NULL	1	
 NULL	UNION RESULT	<union2,3>	ALL	NULL	NULL	NULL	NULL	NULL	
-DROP TABLE t1;
-CREATE TABLE t1 (a VARCHAR(250), b INT auto_increment, PRIMARY KEY (b));
-insert into t1 (a) values (FLOOR(rand() * 100));
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-SELECT a, 
-(SELECT REPEAT(' ',250) FROM t1 i1 
-WHERE i1.b=t1.a ORDER BY RAND() LIMIT 1) AS a 
-FROM t1 ORDER BY a LIMIT 5;
-a	a
-0	NULL
-0	NULL
-0	NULL
-0	NULL
-0	NULL
 DROP TABLE t1;
 CREATE TABLE t1 (a INT, b INT);
 CREATE TABLE t2 (a INT);
@@ -3433,7 +3407,7 @@ FROM (SELECT  a, b, (SELECT x FROM t2 WHERE y=b ORDER BY z DESC LIMIT 1) c
 FROM t1) t;
 COUNT(*)
 3000
-DROP TABLE t1,t2;
+DROP TABLE t2,t1;
 CREATE TABLE t1 (id char(4) PRIMARY KEY, c int);
 CREATE TABLE t2 (c int);
 INSERT INTO t1 VALUES ('aa', 1);
@@ -3897,7 +3871,7 @@ CREATE INDEX I2 ON t1 (b);
 EXPLAIN SELECT a,b FROM t1 WHERE b IN (SELECT a FROM t1);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	t1	index	I1	I1	2	NULL	2	Using index; LooseScan
-1	PRIMARY	t1	ref	I2	I2	13	test.t1.a	2	Using index condition
+1	PRIMARY	t1	ref	I2	I2	13	test.t1.a	1	Using index condition
 SELECT a,b FROM t1 WHERE b IN (SELECT a FROM t1);
 a	b
 CREATE TABLE t2 (a VARCHAR(1), b VARCHAR(10));
@@ -3907,14 +3881,14 @@ CREATE INDEX I2 ON t2 (b);
 EXPLAIN SELECT a,b FROM t2 WHERE b IN (SELECT a FROM t2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	t2	index	I1	I1	4	NULL	2	Using index; LooseScan
-1	PRIMARY	t2	ref	I2	I2	13	test.t2.a	2	Using index condition
+1	PRIMARY	t2	ref	I2	I2	13	test.t2.a	1	Using index condition
 SELECT a,b FROM t2 WHERE b IN (SELECT a FROM t2);
 a	b
 EXPLAIN
 SELECT a,b FROM t1 WHERE b IN (SELECT a FROM t1 WHERE LENGTH(a)<500);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	t1	index	I1	I1	2	NULL	2	Using where; Using index; LooseScan
-1	PRIMARY	t1	ref	I2	I2	13	test.t1.a	2	Using index condition
+1	PRIMARY	t1	ref	I2	I2	13	test.t1.a	1	Using index condition
 SELECT a,b FROM t1 WHERE b IN (SELECT a FROM t1 WHERE LENGTH(a)<500);
 a	b
 DROP TABLE t1,t2;

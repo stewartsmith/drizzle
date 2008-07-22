@@ -139,7 +139,6 @@ Lex_input_stream::Lex_input_stream(THD *thd,
   next_state(MY_LEX_START),
   found_semicolon(NULL),
   ignore_space(1),
-  stmt_prepare_mode(false),
   in_comment(NO_COMMENT),
   m_underscore_cs(NULL)
 {
@@ -299,7 +298,6 @@ void lex_start(THD *thd)
   lex->value_list.empty();
   lex->update_list.empty();
   lex->param_list.empty();
-  lex->view_list.empty();
   lex->auxiliary_table_list.empty();
   lex->unit.next= lex->unit.master=
     lex->unit.link_next= lex->unit.return_to= 0;
@@ -354,7 +352,6 @@ void lex_start(THD *thd)
   lex->server_options.username= 0;
   lex->server_options.password= 0;
   lex->server_options.scheme= 0;
-  lex->server_options.socket= 0;
   lex->server_options.owner= 0;
   lex->server_options.port= -1;
 
@@ -829,17 +826,6 @@ int lex_one_token(void *arg, void *yythd)
           first token of expr2.
         */
         lip->restart_token();
-      }
-      else
-      {
-        /*
-          Check for a placeholder: it should not precede a possible identifier
-          because of binlogging: when a placeholder is replaced with
-          its value in a query for the binlog, the query must stay
-          grammatically correct.
-        */
-        if (c == '?' && lip->stmt_prepare_mode && !ident_map[(uint8_t)(lip->yyPeek())])
-        return(PARAM_MARKER);
       }
 
       return((int) c);
@@ -1358,8 +1344,7 @@ int lex_one_token(void *arg, void *yythd)
     case MY_LEX_SEMICOLON:			// optional line terminator
       if (lip->yyPeek())
       {
-        if ((thd->client_capabilities & CLIENT_MULTI_STATEMENTS) && 
-            !lip->stmt_prepare_mode)
+        if ((thd->client_capabilities & CLIENT_MULTI_STATEMENTS))
         {
           lip->found_semicolon= lip->get_ptr();
           thd->server_status|= SERVER_MORE_RESULTS_EXISTS;
@@ -1577,7 +1562,7 @@ void st_select_lex::init_query()
   embedding= leaf_tables= 0;
   item_list.empty();
   join= 0;
-  having= prep_having= where= prep_where= 0;
+  having= where= 0;
   olap= UNSPECIFIED_OLAP_TYPE;
   having_fix_field= 0;
   context.select_lex= this;
@@ -1603,7 +1588,7 @@ void st_select_lex::init_query()
   first_execution= 1;
   first_cond_optimization= 1;
   parsing_place= NO_MATTER;
-  exclude_from_table_unique_test= no_wrap_view_item= false;
+  exclude_from_table_unique_test= false;
   nest_level= 0;
   link_next= 0;
 }
@@ -2352,28 +2337,6 @@ bool st_lex::need_correct_ident()
   }
 }
 
-/*
-  Get effective type of CHECK OPTION for given view
-
-  SYNOPSIS
-    get_effective_with_check()
-    view    given view
-
-  NOTE
-    It have not sense to set CHECK OPTION for SELECT satement or subqueries,
-    so we do not.
-
-  RETURN
-    VIEW_CHECK_NONE      no need CHECK OPTION
-    VIEW_CHECK_LOCAL     CHECK OPTION LOCAL
-    VIEW_CHECK_CASCADED  CHECK OPTION CASCADED
-*/
-
-uint8 st_lex::get_effective_with_check(TABLE_LIST *view __attribute__((__unused__)))
-{
-  return 0;
-}
-
 
 /**
   This method should be called only during parsing.
@@ -2669,45 +2632,6 @@ static void fix_prepare_info_in_table_list(THD *thd, TABLE_LIST *tbl)
       tbl->on_expr= tbl->on_expr->copy_andor_structure(thd);
     }
     fix_prepare_info_in_table_list(thd, tbl->merge_underlying_list);
-  }
-}
-
-
-/*
-  Save WHERE/HAVING/ON clauses and replace them with disposable copies
-
-  SYNOPSIS
-    st_select_lex::fix_prepare_information
-      thd          thread handler
-      conds        in/out pointer to WHERE condition to be met at execution
-      having_conds in/out pointer to HAVING condition to be met at execution
-  
-  DESCRIPTION
-    The passed WHERE and HAVING are to be saved for the future executions.
-    This function saves it, and returns a copy which can be thrashed during
-    this execution of the statement. By saving/thrashing here we mean only
-    AND/OR trees.
-    The function also calls fix_prepare_info_in_table_list that saves all
-    ON expressions.    
-*/
-
-void st_select_lex::fix_prepare_information(THD *thd, Item **conds, 
-                                            Item **having_conds)
-{
-  if (thd->stmt_arena->is_conventional() == false && first_execution)
-  {
-    first_execution= 0;
-    if (*conds)
-    {
-      prep_where= *conds;
-      *conds= where= prep_where->copy_andor_structure(thd);
-    }
-    if (*having_conds)
-    {
-      prep_having= *having_conds;
-      *having_conds= having= prep_having->copy_andor_structure(thd);
-    }
-    fix_prepare_info_in_table_list(thd, (TABLE_LIST *)table_list.first);
   }
 }
 

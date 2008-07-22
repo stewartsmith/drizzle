@@ -68,8 +68,6 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
   msg_length= vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
   msgbuf[sizeof(msgbuf) - 1] = 0; // healthy paranoia
 
-  DBUG_PRINT(msg_type,("message: %s",msgbuf));
-
   if (!thd->vio_ok())
   {
     sql_print_error(msgbuf);
@@ -140,14 +138,13 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
   HA_KEYSEG *keyseg;
   TABLE_SHARE *share= table_arg->s;
   uint options= share->db_options_in_use;
-  DBUG_ENTER("table2myisam");
   if (!(my_multi_malloc(MYF(MY_WME),
           recinfo_out, (share->fields * 2 + 2) * sizeof(MI_COLUMNDEF),
           keydef_out, share->keys * sizeof(MI_KEYDEF),
           &keyseg,
           (share->key_parts + share->keys) * sizeof(HA_KEYSEG),
           NullS)))
-    DBUG_RETURN(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
+    return(HA_ERR_OUT_OF_MEM); /* purecov: inspected */
   keydef= *keydef_out;
   recinfo= *recinfo_out;
   pos= table_arg->key_info;
@@ -242,8 +239,6 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
         }
       }
     }
-    DBUG_PRINT("loop", ("found: 0x%lx  recpos: %d  minpos: %d  length: %d",
-                        (long) found, recpos, minpos, length));
     if (recpos != minpos)
     { // Reserved space (Null bits?)
       bzero((char*) recinfo_pos, sizeof(*recinfo_pos));
@@ -282,11 +277,9 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
     }
     (recinfo_pos++)->length= (uint16) length;
     recpos= minpos + length;
-    DBUG_PRINT("loop", ("length: %d  type: %d",
-                        recinfo_pos[-1].length,recinfo_pos[-1].type));
   }
   *records_out= (uint) (recinfo_pos - recinfo);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -336,18 +329,13 @@ int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
                      uint t2_keys, uint t2_recs, bool strict)
 {
   uint i, j;
-  DBUG_ENTER("check_definition");
   if ((strict ? t1_keys != t2_keys : t1_keys > t2_keys))
   {
-    DBUG_PRINT("error", ("Number of keys differs: t1_keys=%u, t2_keys=%u",
-                         t1_keys, t2_keys));
-    DBUG_RETURN(1);
+    return(1);
   }
   if (t1_recs != t2_recs)
   {
-    DBUG_PRINT("error", ("Number of recs differs: t1_recs=%u, t2_recs=%u",
-                         t1_recs, t2_recs));
-    DBUG_RETURN(1);
+    return(1);
   }
   for (i= 0; i < t1_keys; i++)
   {
@@ -358,32 +346,19 @@ int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
     else if (t1_keyinfo[i].flag & HA_FULLTEXT ||
              t2_keyinfo[i].flag & HA_FULLTEXT)
     {
-       DBUG_PRINT("error", ("Key %d has different definition", i));
-       DBUG_PRINT("error", ("t1_fulltext= %d, t2_fulltext=%d",
-                            test(t1_keyinfo[i].flag & HA_FULLTEXT),
-                            test(t2_keyinfo[i].flag & HA_FULLTEXT)));
-       DBUG_RETURN(1);
+       return(1);
     }
     if (t1_keyinfo[i].flag & HA_SPATIAL && t2_keyinfo[i].flag & HA_SPATIAL)
       continue;
     else if (t1_keyinfo[i].flag & HA_SPATIAL ||
              t2_keyinfo[i].flag & HA_SPATIAL)
     {
-       DBUG_PRINT("error", ("Key %d has different definition", i));
-       DBUG_PRINT("error", ("t1_spatial= %d, t2_spatial=%d",
-                            test(t1_keyinfo[i].flag & HA_SPATIAL),
-                            test(t2_keyinfo[i].flag & HA_SPATIAL)));
-       DBUG_RETURN(1);
+       return(1);
     }
     if (t1_keyinfo[i].keysegs != t2_keyinfo[i].keysegs ||
         t1_keyinfo[i].key_alg != t2_keyinfo[i].key_alg)
     {
-      DBUG_PRINT("error", ("Key %d has different definition", i));
-      DBUG_PRINT("error", ("t1_keysegs=%d, t1_key_alg=%d",
-                           t1_keyinfo[i].keysegs, t1_keyinfo[i].key_alg));
-      DBUG_PRINT("error", ("t2_keysegs=%d, t2_key_alg=%d",
-                           t2_keyinfo[i].keysegs, t2_keyinfo[i].key_alg));
-      DBUG_RETURN(1);
+      return(1);
     }
     for (j=  t1_keyinfo[i].keysegs; j--;)
     {
@@ -411,18 +386,7 @@ int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
           t1_keysegs[j].null_bit != t2_keysegs[j].null_bit ||
           t1_keysegs[j].length != t2_keysegs[j].length)
       {
-        DBUG_PRINT("error", ("Key segment %d (key %d) has different "
-                             "definition", j, i));
-        DBUG_PRINT("error", ("t1_type=%d, t1_language=%d, t1_null_bit=%d, "
-                             "t1_length=%d",
-                             t1_keysegs[j].type, t1_keysegs[j].language,
-                             t1_keysegs[j].null_bit, t1_keysegs[j].length));
-        DBUG_PRINT("error", ("t2_type=%d, t2_language=%d, t2_null_bit=%d, "
-                             "t2_length=%d",
-                             t2_keysegs[j].type, t2_keysegs[j].language,
-                             t2_keysegs[j].null_bit, t2_keysegs[j].length));
-
-        DBUG_RETURN(1);
+        return(1);
       }
     }
   }
@@ -441,15 +405,10 @@ int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
         t1_rec->length != t2_rec->length ||
         t1_rec->null_bit != t2_rec->null_bit)
     {
-      DBUG_PRINT("error", ("Field %d has different definition", i));
-      DBUG_PRINT("error", ("t1_type=%d, t1_length=%d, t1_null_bit=%d",
-                           t1_rec->type, t1_rec->length, t1_rec->null_bit));
-      DBUG_PRINT("error", ("t2_type=%d, t2_length=%d, t2_null_bit=%d",
-                           t2_rec->type, t2_rec->length, t2_rec->null_bit));
-      DBUG_RETURN(1);
+      return(1);
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -597,8 +556,6 @@ int ha_myisam::open(const char *name, int mode, uint test_if_locked)
     if ((my_errno= table2myisam(table, &keyinfo, &recinfo, &recs)))
     {
       /* purecov: begin inspected */
-      DBUG_PRINT("error", ("Failed to convert TABLE object to MyISAM "
-                           "key and column definition"));
       goto err;
       /* purecov: end */
     }
@@ -889,7 +846,6 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   char fixed_name[FN_REFLEN];
   MYISAM_SHARE* share = file->s;
   ha_rows rows= file->state->records;
-  DBUG_ENTER("ha_myisam::repair");
 
   /*
     Normally this method is entered with a properly opened table. If the
@@ -904,7 +860,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
     sql_print_information("Retrying repair of: '%s' failed. "
                           "Please try REPAIR EXTENDED or myisamchk",
                           table->s->path.str);
-    DBUG_RETURN(HA_ADMIN_FAILED);
+    return(HA_ADMIN_FAILED);
   }
 
   param.db_name=    table->s->db.str;
@@ -921,7 +877,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
       mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
     mi_check_print_error(&param,ER(ER_CANT_LOCK),my_errno);
-    DBUG_RETURN(HA_ADMIN_FAILED);
+    return(HA_ADMIN_FAILED);
   }
 
   if (!do_optimize ||
@@ -1029,7 +985,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   thd_proc_info(thd, old_proc_info);
   if (!thd->locked_tables)
     mi_lock_database(file,F_UNLCK);
-  DBUG_RETURN(error ? HA_ADMIN_FAILED :
+  return(error ? HA_ADMIN_FAILED :
 	      !optimize_done ? HA_ADMIN_ALREADY_DONE : HA_ADMIN_OK);
 }
 
@@ -1045,12 +1001,11 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
   int error= HA_ADMIN_OK;
   uint64_t map;
   TABLE_LIST *table_list= table->pos_in_table_list;
-  DBUG_ENTER("ha_myisam::assign_to_keycache");
 
   table->keys_in_use_for_query.clear_all();
 
   if (table_list->process_index_hints(table))
-    DBUG_RETURN(HA_ADMIN_FAILED);
+    return(HA_ADMIN_FAILED);
   map= ~(uint64_t) 0;
   if (!table->keys_in_use_for_query.is_clear_all())
     /* use all keys if there's no list specified by the user through hints */
@@ -1077,7 +1032,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
     param.testflag= 0;
     mi_check_print_error(&param, errmsg);
   }
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -1251,12 +1206,9 @@ int ha_myisam::indexes_are_disabled(void)
 
 void ha_myisam::start_bulk_insert(ha_rows rows)
 {
-  DBUG_ENTER("ha_myisam::start_bulk_insert");
   THD *thd= current_thd;
   ulong size= min(thd->variables.read_buff_size,
                   (ulong) (table->s->avg_row_length*rows));
-  DBUG_PRINT("info",("start_bulk_insert: rows %lu size %lu",
-                     (ulong) rows, size));
 
   /* don't enable row cache if too few rows */
   if (! rows || (rows > MI_MIN_ROWS_TO_USE_WRITE_CACHE))
@@ -1283,7 +1235,7 @@ void ha_myisam::start_bulk_insert(ha_rows rows)
       mi_init_bulk_insert(file, thd->variables.bulk_insert_buff_size, rows);
     }
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /*
@@ -1315,7 +1267,6 @@ bool ha_myisam::check_and_repair(THD *thd)
   char *old_query;
   uint old_query_length;
   HA_CHECK_OPT check_opt;
-  DBUG_ENTER("ha_myisam::check_and_repair");
 
   check_opt.init();
   check_opt.flags= T_MEDIUM | T_AUTO_REPAIR;
@@ -1346,7 +1297,7 @@ bool ha_myisam::check_and_repair(THD *thd)
   thd->query= old_query;
   thd->query_length= old_query_length;
   pthread_mutex_unlock(&LOCK_thread_count);
-  DBUG_RETURN(error);
+  return(error);
 }
 
 bool ha_myisam::is_crashed() const
@@ -1411,7 +1362,7 @@ int ha_myisam::index_read_map(uchar *buf, const uchar *key,
                               key_part_map keypart_map,
                               enum ha_rkey_function find_flag)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_key_count);
   int error=mi_rkey(file, buf, active_index, key, keypart_map, find_flag);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -1431,18 +1382,17 @@ int ha_myisam::index_read_idx_map(uchar *buf, uint index, const uchar *key,
 int ha_myisam::index_read_last_map(uchar *buf, const uchar *key,
                                    key_part_map keypart_map)
 {
-  DBUG_ENTER("ha_myisam::index_read_last");
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_key_count);
   int error=mi_rkey(file, buf, active_index, key, keypart_map,
                     HA_READ_PREFIX_LAST);
   table->status=error ? STATUS_NOT_FOUND: 0;
-  DBUG_RETURN(error);
+  return(error);
 }
 
 int ha_myisam::index_next(uchar *buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_next_count);
   int error=mi_rnext(file,buf,active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -1451,7 +1401,7 @@ int ha_myisam::index_next(uchar *buf)
 
 int ha_myisam::index_prev(uchar *buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_prev_count);
   int error=mi_rprev(file,buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -1460,7 +1410,7 @@ int ha_myisam::index_prev(uchar *buf)
 
 int ha_myisam::index_first(uchar *buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_first_count);
   int error=mi_rfirst(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -1469,7 +1419,7 @@ int ha_myisam::index_first(uchar *buf)
 
 int ha_myisam::index_last(uchar *buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_last_count);
   int error=mi_rlast(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -1481,7 +1431,7 @@ int ha_myisam::index_next_same(uchar *buf,
 			       uint length __attribute__((unused)))
 {
   int error;
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_next_count);
   do
   {
@@ -1697,7 +1647,6 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
   MI_CREATE_INFO create_info;
   TABLE_SHARE *share= table_arg->s;
   uint options= share->db_options_in_use;
-  DBUG_ENTER("ha_myisam::create");
   for (i= 0; i < share->keys; i++)
   {
     if (table_arg->key_info[i].flags & HA_USES_PARSER)
@@ -1707,7 +1656,7 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
     }
   }
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
-    DBUG_RETURN(error); /* purecov: inspected */
+    return(error); /* purecov: inspected */
   bzero((char*) &create_info, sizeof(create_info));
   create_info.max_rows= share->max_rows;
   create_info.reloc_rows= share->min_rows;
@@ -1740,7 +1689,7 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
                    0, (MI_UNIQUEDEF*) 0,
                    &create_info, create_flags);
   my_free((uchar*) recinfo, MYF(0));
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -1933,108 +1882,18 @@ Item *ha_myisam::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
 }
 
 
-struct st_mysql_storage_engine myisam_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 mysql_declare_plugin(myisam)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &myisam_storage_engine,
   "MyISAM",
+  "1.0",
   "MySQL AB",
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
   NULL, /* Plugin Deinit */
-  0x0100, /* 1.0 */
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */
 }
 mysql_declare_plugin_end;
-
-
-#ifdef HAVE_QUERY_CACHE
-/**
-  @brief Register a named table with a call back function to the query cache.
-
-  @param thd The thread handle
-  @param table_key A pointer to the table name in the table cache
-  @param key_length The length of the table name
-  @param[out] engine_callback The pointer to the storage engine call back
-    function, currently 0
-  @param[out] engine_data Engine data will be set to 0.
-
-  @note Despite the name of this function, it is used to check each statement
-    before it is cached and not to register a table or callback function.
-
-  @see handler::register_query_cache_table
-
-  @return The error code. The engine_data and engine_callback will be set to 0.
-    @retval true Success
-    @retval false An error occured
-*/
-
-my_bool ha_myisam::register_query_cache_table(THD *thd, char *table_name,
-                                              uint table_name_len,
-                                              qc_engine_callback
-                                              *engine_callback,
-                                              uint64_t *engine_data)
-{
-  DBUG_ENTER("ha_myisam::register_query_cache_table");
-  /*
-    No call back function is needed to determine if a cached statement
-    is valid or not.
-  */
-  *engine_callback= 0;
-
-  /*
-    No engine data is needed.
-  */
-  *engine_data= 0;
-
-  if (file->s->concurrent_insert)
-  {
-    /*
-      If a concurrent INSERT has happened just before the currently
-      processed SELECT statement, the total size of the table is
-      unknown.
-
-      To determine if the table size is known, the current thread's snap
-      shot of the table size with the actual table size are compared.
-
-      If the table size is unknown the SELECT statement can't be cached.
-
-      When concurrent inserts are disabled at table open, mi_open()
-      does not assign a get_status() function. In this case the local
-      ("current") status is never updated. We would wrongly think that
-      we cannot cache the statement.
-    */
-    uint64_t actual_data_file_length;
-    uint64_t current_data_file_length;
-
-    /*
-      POSIX visibility rules specify that "2. Whatever memory values a
-      thread can see when it unlocks a mutex <...> can also be seen by any
-      thread that later locks the same mutex". In this particular case,
-      concurrent insert thread had modified the data_file_length in
-      MYISAM_SHARE before it has unlocked (or even locked)
-      structure_guard_mutex. So, here we're guaranteed to see at least that
-      value after we've locked the same mutex. We can see a later value
-      (modified by some other thread) though, but it's ok, as we only want
-      to know if the variable was changed, the actual new value doesn't matter
-    */
-    actual_data_file_length= file->s->state.state.data_file_length;
-    current_data_file_length= file->save_state.data_file_length;
-
-    if (current_data_file_length != actual_data_file_length)
-    {
-      /* Don't cache current statement. */
-      DBUG_RETURN(false);
-    }
-  }
-
-  /* It is ok to try to cache current statement. */
-  DBUG_RETURN(true);
-}
-#endif

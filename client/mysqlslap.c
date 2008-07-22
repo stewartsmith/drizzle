@@ -677,12 +677,6 @@ static struct my_option my_long_options[] =
     (char**)&opt_set_random_seed,
     (char**)&opt_set_random_seed,0,
     GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef HAVE_SMEM
-  {"shared-memory-base-name", OPT_SHARED_MEMORY_BASE_NAME,
-    "Base name of shared memory.", (char**) &shared_memory_base_name,
-    (char**) &shared_memory_base_name, 0, GET_STR_ALLOC, REQUIRED_ARG,
-    0, 0, 0, 0, 0, 0},
-#endif
   {"silent", 's', "Run program in silent mode - no output.",
     (char**) &opt_silent, (char**) &opt_silent, 0, GET_BOOL,  NO_ARG,
     0, 0, 0, 0, 0, 0},

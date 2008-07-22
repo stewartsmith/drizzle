@@ -30,13 +30,27 @@
 
 #define MYSQL_CLIENT
 #undef MYSQL_SERVER
-#include <my_global.h>
-#include "client_priv.h"
 #include <my_time.h>
+#include <my_global.h>
+#include <my_sys.h>
+#include <m_string.h>
+#include <drizzle.h>
+#include <errmsg.h>
+#include <my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
 #include "mysql_priv.h" 
 #include "log_event.h"
 #include "sql_common.h"
+
+
+enum options_drizzlebinlog
+{
+  OPT_CHARSETS_DIR=256, OPT_BASE64_OUTPUT_MODE,
+  OPT_DEBUG_CHECK, OPT_DEBUG_INFO, OPT_MYSQL_PROTOCOL,
+  OPT_SERVER_ID, OPT_SET_CHARSET, OPT_START_DATETIME,
+  OPT_START_POSITION, OPT_STOP_DATETIME, OPT_STOP_POSITION,
+  OPT_OPEN_FILES_LIMIT
+};
 
 #define BIN_LOG_HEADER_SIZE	4
 #define PROBE_HEADER_LEN	(EVENT_LEN_OFFSET+4)
@@ -430,7 +444,7 @@ Exit_status Load_log_processor::process_first_event(const char *bname,
   ptr= fname + target_dir_name_len;
   memcpy(ptr,bname,blen);
   ptr+= blen;
-  ptr+= my_sprintf(ptr, (ptr, "-%x", file_id));
+  ptr+= sprintf(ptr, "-%x", file_id);
 
   if ((file= create_unique_file(fname,ptr)) < 0)
   {
@@ -1971,8 +1985,7 @@ int main(int argc, char** argv)
   free_defaults(defaults_argv);
   my_free_open_file_info();
   load_processor.destroy();
-  /* We cannot free DBUG, it is used in global destructors after exit(). */
-  my_end(my_end_arg | MY_DONT_FREE_DBUG);
+  my_end(my_end_arg);
 
   exit(retval == ERROR_STOP ? 1 : 0);
 }

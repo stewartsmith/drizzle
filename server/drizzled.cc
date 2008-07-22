@@ -288,7 +288,6 @@ bool trust_function_creators= 0;
   check them before each query (and possibly reset counters when hour is
   changed). False otherwise.
 */
-volatile bool mqh_used = 0;
 bool opt_noacl;
 
 ulong opt_binlog_rows_event_max_size;
@@ -426,8 +425,9 @@ CHARSET_INFO *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
 
-SHOW_COMP_OPTION have_symlink, have_dlopen;
-SHOW_COMP_OPTION have_crypt, have_compress;
+SHOW_COMP_OPTION have_symlink;
+SHOW_COMP_OPTION have_crypt;
+SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
 
@@ -2119,7 +2119,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   if (init_replication_sys_vars())
     return 1;
-  mysys_uses_curses=0;
   /*
     Process a comma-separated character set list and choose
     the first available character set. This is mostly for
@@ -3217,10 +3216,6 @@ struct my_option my_long_options[] =
    "Set the default storage engine (table type) for tables.",
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-table-type", OPT_STORAGE_ENGINE,
-   "(deprecated) Use --default-storage-engine.",
-   (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-time-zone", OPT_DEFAULT_TIME_ZONE, "Set the default time zone.",
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
@@ -4078,7 +4073,7 @@ static int show_heartbeat_period(THD *thd __attribute__((__unused__)),
   {
     var->type= SHOW_CHAR;
     var->value= buff;
-    my_sprintf(buff, (buff, "%.3f",active_mi->heartbeat_period));
+    sprintf(buff, "%.3f",active_mi->heartbeat_period);
   }
   else
     var->type= SHOW_UNDEF;
@@ -4269,7 +4264,6 @@ static void mysql_init_variables(void)
   opt_secure_auth= 0;
   opt_secure_file_priv= 0;
   opt_bootstrap= opt_myisam_log= 0;
-  mqh_used= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
   defaults_argc= 0;
@@ -4355,7 +4349,7 @@ static void mysql_init_variables(void)
   character_set_filesystem_name= (char*) "binary";
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
-  default_storage_engine_str= (char*) "MyISAM";
+  default_storage_engine_str= (char*) "innodb";
   global_system_variables.table_plugin= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
   global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;
@@ -4376,11 +4370,6 @@ static void mysql_init_variables(void)
   have_symlink=SHOW_OPTION_NO;
 #else
   have_symlink=SHOW_OPTION_YES;
-#endif
-#ifdef HAVE_DLOPEN
-  have_dlopen=SHOW_OPTION_YES;
-#else
-  have_dlopen=SHOW_OPTION_NO;
 #endif
 #ifdef HAVE_CRYPT
   have_crypt=SHOW_OPTION_YES;

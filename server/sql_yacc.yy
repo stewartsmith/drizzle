@@ -971,7 +971,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         predicate bit_expr
         table_wild simple_expr udf_expr
         expr_or_default set_expr_or_default
-        param_marker 
         signed_literal now_or_signed_literal opt_escape
         simple_ident_nospvar simple_ident_q
         field_or_var limit_option
@@ -1058,7 +1057,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         keycache_list assign_to_keycache
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
-        opt_precision opt_ignore opt_column opt_restrict
+        opt_precision opt_ignore opt_column
         set lock unlock string_list field_options field_option
         field_opt_list opt_binary table_lock_list table_lock
         ref_list opt_match_clause opt_on_update_delete use
@@ -1221,7 +1220,7 @@ master_def:
                 Lex->mi.heartbeat_period < 0.0)
             {
               char buf[sizeof(SLAVE_MAX_HEARTBEAT_PERIOD*4)];
-              my_sprintf(buf, (buf, "%d seconds", SLAVE_MAX_HEARTBEAT_PERIOD));
+              sprintf(buf, "%d seconds", SLAVE_MAX_HEARTBEAT_PERIOD);
               my_error(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
                        MYF(0),
                        " is negative or exceeds the maximum ",
@@ -2578,7 +2577,7 @@ alter_list_item:
               MYSQL_YYABORT;
           }
           opt_place
-        | DROP opt_column field_ident opt_restrict
+        | DROP opt_column field_ident
           {
             LEX *lex=Lex;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::COLUMN,
@@ -2691,12 +2690,6 @@ opt_column:
 opt_ignore:
           /* empty */ { Lex->ignore= 0;}
         | IGNORE_SYM { Lex->ignore= 1;}
-        ;
-
-opt_restrict:
-          /* empty */ { Lex->drop_mode= DROP_DEFAULT; }
-        | RESTRICT    { Lex->drop_mode= DROP_RESTRICT; }
-        | CASCADE     { Lex->drop_mode= DROP_CASCADE; }
         ;
 
 opt_place:
@@ -3470,7 +3463,6 @@ simple_expr:
             $$= new (thd->mem_root) Item_func_set_collation($1, i1);
           }
         | literal
-        | param_marker
         | variable
         | sum_expr
         | '+' simple_expr %prec NEG { $$= $2; }
@@ -4898,11 +4890,7 @@ limit_options:
         ;
 
 limit_option:
-        param_marker
-        {
-          ((Item_param *) $1)->limit_clause_param= true;
-        }
-        | ULONGLONG_NUM { $$= new Item_uint($1.str, $1.length); }
+          ULONGLONG_NUM { $$= new Item_uint($1.str, $1.length); }
         | LONG_NUM      { $$= new Item_uint($1.str, $1.length); }
         | NUM           { $$= new Item_uint($1.str, $1.length); }
         ;
@@ -5032,7 +5020,7 @@ into_destination:
 */
 
 drop:
-          DROP opt_temporary table_or_tables if_exists table_list opt_restrict
+          DROP opt_temporary table_or_tables if_exists table_list
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_DROP_TABLE;
@@ -6051,27 +6039,6 @@ text_string:
             */
             $$= tmp ? tmp->quick_fix_field(), tmp->val_str((String*) 0) :
               (String*) 0;
-          }
-        ;
-
-param_marker:
-          PARAM_MARKER
-          {
-            THD *thd= YYTHD;
-            LEX *lex= thd->lex;
-            Lex_input_stream *lip= thd->m_lip;
-            Item_param *item;
-            if (! lex->parsing_options.allows_variable)
-            {
-              my_error(ER_VIEW_SELECT_VARIABLE, MYF(0));
-              MYSQL_YYABORT;
-            }
-            item= new Item_param((uint) (lip->get_tok_start() - thd->query));
-            if (!($$= item) || lex->param_list.push_back(item))
-            {
-              my_message(ER_OUT_OF_RESOURCES, ER(ER_OUT_OF_RESOURCES), MYF(0));
-              MYSQL_YYABORT;
-            }
           }
         ;
 

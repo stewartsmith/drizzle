@@ -55,13 +55,12 @@ extern void ac_trie_init (TRIE *trie, AC_TRIE_STATE *state);
 static inline TRIE_NODE *trie_goto (TRIE_NODE *root, TRIE_NODE *node, uchar c)
 {
   TRIE_NODE *next;
-  DBUG_ENTER("trie_goto");
   for (next= node->links; next; next= next->next)
     if (next->c == c)
-      DBUG_RETURN(next);
+      return(next);
   if (root == node)
-    DBUG_RETURN(root);
-  DBUG_RETURN(NULL);
+    return(root);
+  return(NULL);
 }
 
 
@@ -82,13 +81,12 @@ static inline TRIE_NODE *trie_goto (TRIE_NODE *root, TRIE_NODE *node, uchar c)
 static inline int ac_trie_next (AC_TRIE_STATE *state, uchar *c)
 {
   TRIE_NODE *root, *node;
-  DBUG_ENTER("ac_trie_next");
-  DBUG_ASSERT(state && c);
+  assert(state && c);
   root= &state->trie->root;
   node= state->node;
   while (! (state->node= trie_goto(root, node, *c)))
     node= node->fail;
-  DBUG_RETURN(state->node->leaf);
+  return(state->node->leaf);
 }
 
 
@@ -117,22 +115,21 @@ static inline bool trie_search (TRIE *trie, const uchar *key, uint keylen)
 {
   TRIE_NODE *node;
   uint k;
-  DBUG_ENTER("trie_search");
-  DBUG_ASSERT(trie && key && keylen);
+  assert(trie && key && keylen);
   node= &trie->root;
 
   for (k= 0; k < keylen; k++)
   {
     uchar p;
     if (! (node= node->links))
-      DBUG_RETURN(false);
+      return(false);
     p= key[k];
     while (p != node->c)
       if (! (node= node->next))
-        DBUG_RETURN(false);
+        return(false);
   }
 
-  DBUG_RETURN(node->leaf > 0);
+  return(node->leaf > 0);
 }
 
 #ifdef	__cplusplus

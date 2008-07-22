@@ -64,14 +64,12 @@ bool my_init(void)
   fastmutex_global_init();              /* Must be called early */
 #endif
 #if defined(HAVE_PTHREAD_INIT)
-  pthread_init();			/* Must be called before DBUG_ENTER */
+  pthread_init();
 #endif
   if (my_thread_global_init())
     return 1;
   sigfillset(&my_signals);		/* signals blocked by mf_brkhant */
   {
-    DBUG_ENTER("my_init");
-    DBUG_PROCESS((char*) (my_progname ? my_progname : "unknown"));
     if (!home_dir)
     {					/* Don't initialize twice */
       if ((home_dir=getenv("HOME")) != 0)
@@ -82,9 +80,8 @@ bool my_init(void)
 	/* Default creation of new dir's */
       if ((str=getenv("UMASK_DIR")) != 0)
 	my_umask_dir=(int) (atoi_octal(str) | 0700);
-      DBUG_PRINT("exit",("home: '%s'",home_dir));
     }
-    DBUG_RETURN(0);
+    return(0);
   }
 } /* my_init */
 
@@ -98,19 +95,8 @@ void my_end(int infoflag)
     Sun CC: Sun C++ 5.6 2004/06/02 for x86, and should not be
     optimized until this compiler is not in use anymore
   */
-  FILE *info_file= DBUG_FILE;
-  bool print_info= (info_file != stderr);
-  /*
-    We do not use DBUG_ENTER here, as after cleanup DBUG is no longer
-    operational, so we cannot use DBUG_RETURN.
-  */
-  DBUG_PRINT("info",("Shutting down: infoflag: %d  print_info: %d",
-                     infoflag, print_info));
-  if (!info_file)
-  {
-    info_file= stderr;
-    print_info= 0;
-  }
+  FILE *info_file= stderr;
+  bool print_info= 0;
 
   if ((infoflag & MY_CHECK_ERROR) || print_info)
 
@@ -119,7 +105,6 @@ void my_end(int infoflag)
     {
       sprintf(errbuff[0],EE(EE_OPEN_WARNING),my_file_opened,my_stream_opened);
       (void) my_message_no_curses(EE_OPEN_WARNING,errbuff[0],ME_BELL);
-      DBUG_PRINT("error",("%s",errbuff[0]));
       my_print_open_files();
     }
   }
@@ -158,10 +143,6 @@ Voluntary context switches %ld, Involuntary context switches %ld\n",
     TERMINATE(stderr, 0);		/* Print memory leaks on screen */
   }
 
-  if (!(infoflag & MY_DONT_FREE_DBUG))
-  {
-    DBUG_END();                /* Must be done before my_thread_end */
-  }
   my_thread_end();
   my_thread_global_end();
 #if defined(SAFE_MUTEX)

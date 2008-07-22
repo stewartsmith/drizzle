@@ -15,19 +15,22 @@
 
 # Process this file with automake to create Makefile.in
 
-if BUILD_DBUG
-  d_dbug = dbug
-endif
+SUBDIRS = . include \
+	  vio \
+	  strings \
+	  mysys \
+	  extra \
+	  libdrizzle \
+	  client \
+	  storage \
+	  plugin \
+	  server \
+	  tests \
+	  support-files
 
-SUBDIRS =		. include \
-			vio \
-			strings mysys $(d_dbug) \
-                        extra \
-                        libdrizzle client storage plugin \
-                        server \
-			tests support-files
-
-DIST_SUBDIRS =		$(SUBDIRS) mysys/tests strings/tests
+DIST_SUBDIRS = $(SUBDIRS) \
+	       mysys/tests \
+	       strings/tests
 
 DISTCLEANFILES = ac_available_languages_fragment
 
@@ -35,19 +38,35 @@ DISTCLEANFILES = ac_available_languages_fragment
 install-data-local:
 	$(MKDIR_P) $(DESTDIR)$(localstatedir) 
 	@if test `id -u` = 0 ; then \
-		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
-	fi
+			   chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
+			   fi
 
 distclean-local:
 	@RM@ -r -f autom4te.cache
 
-.PHONY: test    test-force    test-full    test-force-full    test-force-mem \
-  test-pl test-force-pl test-full-pl test-force-full-pl test-force-pl-mem \
-  test-ps test-nr test-pr test-ns test-binlog-statement \
-  test-ext-funcs test-ext-rpl test-ext-jp \
-  test-ext-stress test-ext test-embedded \
-  test-fast test-fast-cursor test-fast-view test-fast-prepare \
-  test-full-qa
+.PHONY: test \
+    test-force \
+    test-full \
+    test-force-full \
+    test-force-mem \
+    test-pl \
+    test-force-pl \
+    test-full-pl \
+    test-force-full-pl \
+    test-force-pl-mem \
+    test-ps test-nr \
+    test-pr test-ns \
+    test-binlog-statement \
+    test-ext-funcs \
+    test-ext-rpl \
+    test-ext-jp \
+    test-ext-stress \
+    test-ext \
+    test-embedded \
+    test-fast \
+    test-fast-cursor \
+    test-fast-view \
+    test-full-qa
 
 # Target 'test' will run the regression test suite using the built server.
 #
@@ -59,104 +78,36 @@ distclean-local:
 
 test-nr:
 	cd tests ; \
-	    @PERL@ ./test-run.pl $(force) --mysqld=--binlog-format=row
+	  ./test-run $(force) --mysqld=--binlog-format=row
 
 test-ns:
 	cd tests ; \
-	    @PERL@ ./test-run.pl $(force) $(mem) --mysqld=--binlog-format=mixed
+	  ./test-run $(force) $(mem) --mysqld=--binlog-format=mixed
 
 test-binlog-statement:
 	cd tests ; \
-	    @PERL@ ./test-run.pl $(force) --mysqld=--binlog-format=statement
+	  ./test-run $(force) --mysqld=--binlog-format=statement
 
 test: test-drizzle
 
-test-full:	test test-nr
-
-test-force:
-	$(MAKE) force=--force test
-
-test-force-full:
-	$(MAKE) force=--force test-full
-
-#used by autopush.pl to run memory based tests
-test-force-mem:
-	$(MAKE) force=--force mem=--mem test
-
-test-bt:
-	-cd tests ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./test-run.pl --force --comment=funcs1_ps --ps-protocol --suite=funcs_1
-	-cd tests ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./test-run.pl --force --comment=funcs2 --suite=funcs_2
-	-cd tests ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./test-run.pl --force --comment=rpl --suite=rpl
-	-if [ -d test/suite/nist ] ; then \
-	  cd tests ; MTR_BUILD_THREAD=auto \
-	      @PERL@ ./test-run.pl --comment=NIST+normal --force --suite=nist ; \
-	fi
-	-if [ -d test/suite/nist ] ; then \
-	  cd tests ; MTR_BUILD_THREAD=auto \
-	      @PERL@ ./test-run.pl --comment=NIST+ps --force --suite=nist --ps-protocol ; \
-	fi
-	-cd tests ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./test-run.pl --force --comment=stress --suite=stress
-
-# Re-enable the "jp" suite when bug#28563 is fixed
-#	-cd tests ; MTR_BUILD_THREAD=auto \
-#	    @PERL@ ./test-run.pl --force --comment=jp --suite=jp
-
-test-bt-debug:
-	-cd tests ; MTR_BUILD_THREAD=auto \
-	    @PERL@ ./test-run.pl --comment=debug  --force --timer \
-	        --skip-rpl --report-features
-
-# Keep these for a while
-test-pl:	test
-test-full-pl:	test-full
-test-force-pl:	test-force
-test-force-pl-mem:  test-force-mem
-test-force-full-pl: test-force-full
-
-test-ext-funcs:
-	cd tests ; \
-	    @PERL@ ./test-run.pl --force --suite=funcs_1 ; \
-	    @PERL@ ./test-run.pl --force --suite=funcs_2
-
-test-ext-rpl:
-	cd tests ; \
-	    @PERL@ ./test-run.pl --force --suite=rpl
-
-test-ext-jp:
-	cd tests ; \
-	    @PERL@ ./test-run.pl --force --suite=jp
-
-test-ext-stress:
-	cd tests ; \
-	    @PERL@ ./test-run.pl --force --big-test --suite=stress
-
-test-ext:	test-ext-funcs test-ext-rpl test-ext-jp test-ext-stress
-
-test-full-qa:
-	$(MAKE) force=--force test-pr \
-	    test-binlog-statement test-ext
-
 test-drizzle:
 	cd tests ; \
-	@PERL@ ./test-run.pl --fast --reorder --force \
-		join_crash \
-		join_nested \
-		join_outer_innodb \
-		delete \
-		join_outer \
-		distinct \
-		join \
-		subselect \
-		subselect3 \
-		subselect_innodb \
-		insert \
-		select \
-		update \
-		information_schema \
-		mysqlslap \
-		lock \
-		lock_tables_lost_commit
+	  ./test-run.pl --fast --reorder --force \
+	  alter_table \
+	  join_crash \
+	  join_nested \
+	  join_outer_innodb \
+	  delete \
+	  join_outer \
+	  distinct \
+	  join \
+	  subselect \
+	  subselect3 \
+	  subselect_innodb \
+	  insert \
+	  select \
+	  update \
+	  information_schema \
+	  mysqlslap \
+	  lock \
+	  lock_tables_lost_commit

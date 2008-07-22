@@ -99,33 +99,8 @@ enum enum_sql_command {
 
 #ifdef MYSQL_SERVER
 
-enum enum_sp_data_access
-{
-  SP_DEFAULT_ACCESS= 0,
-  SP_CONTAINS_SQL,
-  SP_NO_SQL,
-  SP_READS_SQL_DATA,
-  SP_MODIFIES_SQL_DATA
-};
-
-const LEX_STRING sp_data_access_name[]=
-{
-  { C_STRING_WITH_LEN("") },
-  { C_STRING_WITH_LEN("CONTAINS SQL") },
-  { C_STRING_WITH_LEN("NO SQL") },
-  { C_STRING_WITH_LEN("READS SQL DATA") },
-  { C_STRING_WITH_LEN("MODIFIES SQL DATA") }
-};
-
 #define DERIVED_NONE	0
 #define DERIVED_SUBQUERY	1
-
-enum enum_drop_mode
-{
-  DROP_DEFAULT, // mode is not specified
-  DROP_CASCADE, // CASCADE option
-  DROP_RESTRICT // RESTRICT option
-};
 
 typedef List<Item> List_item;
 
@@ -134,7 +109,7 @@ typedef struct st_lex_server_options
 {
   long port;
   uint server_name_length;
-  char *server_name, *host, *db, *username, *password, *scheme, *socket, *owner;
+  char *server_name, *host, *db, *username, *password, *scheme, *owner;
 } LEX_SERVER_OPTIONS;
 
 typedef struct st_lex_master_info
@@ -615,8 +590,6 @@ public:
   */
   bool first_execution;
   bool first_cond_optimization;
-  /* do not wrap view fields with Item_ref */
-  bool no_wrap_view_item;
   /* exclude this select from check of unique_table() */
   bool exclude_from_table_unique_test;
   /* List of fields that aren't under an aggregate function */
@@ -1368,12 +1341,6 @@ public:
   /** SQL_MODE = IGNORE_SPACE. */
   bool ignore_space;
 
-  /**
-    true if we're parsing a prepared statement: in this mode
-    we should allow placeholders and disallow multi-statements.
-  */
-  bool stmt_prepare_mode;
-
   /** State of the lexical analyser for comments. */
   enum_comment_state in_comment;
 
@@ -1416,7 +1383,6 @@ typedef struct st_lex : public Query_tables_list
   char *length,*dec,*change;
   LEX_STRING name;
   char *help_arg;
-  LEX_STRING backup_dir;				/* For RESTORE/BACKUP */
   char* to_log;                                 /* For PURGE MASTER LOGS TO */
   char* x509_subject,*x509_issuer,*ssl_cipher;
   String *wild;
@@ -1440,13 +1406,11 @@ typedef struct st_lex : public Query_tables_list
   List<Key_part_spec> col_list;
   List<Key_part_spec> ref_list;
   List<String>	      interval_list;
-  List<LEX_USER>      users_list;
   List<LEX_COLUMN>    columns;
   List<Item>	      *insert_list,field_list,value_list,update_list;
   List<List_item>     many_values;
   List<set_var_base>  var_list;
   List<Item_param>    param_list;
-  List<LEX_STRING>    view_list; // view list (list of field names in view)
   /*
     A stack of name resolution contexts for the query. This stack is used
     at parse time to set local name resolution contexts for various parts
@@ -1472,7 +1436,6 @@ typedef struct st_lex : public Query_tables_list
   KEY_CREATE_INFO key_create_info;
   LEX_MASTER_INFO mi;				// used by CHANGE MASTER
   LEX_SERVER_OPTIONS server_options;
-  USER_RESOURCES mqh;
   ulong type;
   /*
     This variable is used in post-parse stage to declare that sum-functions,
@@ -1503,7 +1466,6 @@ typedef struct st_lex : public Query_tables_list
     bool lock_transactional;            /* For LOCK TABLE ... IN ... MODE */
   };
   enum enum_var_type option_type;
-  enum enum_drop_mode drop_mode;
 
   uint profile_query_id;
   uint profile_options;
@@ -1531,14 +1493,6 @@ typedef struct st_lex : public Query_tables_list
   bool verbose, no_write_to_binlog;
 
   bool tx_chain, tx_release;
-  /*
-    Special JOIN::prepare mode: changing of query is prohibited.
-    When creating a view, we need to just check its syntax omitting
-    any optimizations: afterwards definition of the view will be
-    reconstructed by means of ::print() methods and written to
-    to an .frm file. We need this definition to stay untouched.
-  */
-  bool view_prepare_mode;
   bool subqueries, ignore;
   st_parsing_options parsing_options;
   Alter_info alter_info;
@@ -1585,32 +1539,6 @@ typedef struct st_lex : public Query_tables_list
   bool can_not_use_merged();
   bool only_view_structure();
   bool need_correct_ident();
-  uint8 get_effective_with_check(TABLE_LIST *view);
-  /*
-    Is this update command where 'WHITH CHECK OPTION' clause is important
-
-    SYNOPSIS
-      st_lex::which_check_option_applicable()
-
-    RETURN
-      true   have to take 'WHITH CHECK OPTION' clause into account
-      false  'WHITH CHECK OPTION' clause do not need
-  */
-  inline bool which_check_option_applicable()
-  {
-    switch (sql_command) {
-    case SQLCOM_UPDATE:
-    case SQLCOM_UPDATE_MULTI:
-    case SQLCOM_INSERT:
-    case SQLCOM_INSERT_SELECT:
-    case SQLCOM_REPLACE:
-    case SQLCOM_REPLACE_SELECT:
-    case SQLCOM_LOAD:
-      return true;
-    default:
-      return false;
-    }
-  }
 
   void cleanup_after_one_table_open();
 

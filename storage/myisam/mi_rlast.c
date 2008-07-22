@@ -19,8 +19,7 @@
 
 int mi_rlast(MI_INFO *info, uchar *buf, int inx)
 {
-  DBUG_ENTER("mi_rlast");
   info->lastpos= HA_OFFSET_ERROR;
   info->update|= HA_STATE_NEXT_FOUND;
-  DBUG_RETURN(mi_rprev(info,buf,inx));
+  return(mi_rprev(info,buf,inx));
 } /* mi_rlast */

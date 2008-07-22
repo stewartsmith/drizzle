@@ -53,7 +53,7 @@ typedef bool (*CHECK_KILLED_FUNC)(THD*,void*);
 
 char* slave_load_tmpdir = 0;
 Master_info *active_mi= 0;
-my_bool replicate_same_server_id;
+bool replicate_same_server_id;
 uint64_t relay_log_space_limit = 0;
 
 /*
@@ -980,7 +980,7 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
        the period is an uint64_t of nano-secs. 
     */
     llstr((uint64_t) (mi->heartbeat_period*1000000000UL), llbuf);
-    my_sprintf(query, (query, query_format, llbuf));
+    sprintf(query, query_format, llbuf);
 
     if (mysql_real_query(mysql, query, strlen(query))
         && !check_io_slave_killed(mi->io_thd, mi, NULL))

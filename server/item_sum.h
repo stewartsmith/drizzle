@@ -952,8 +952,6 @@ class Item_sum_xor :public Item_sum_bit
   User defined aggregates
 */
 
-#ifdef HAVE_DLOPEN
-
 class Item_udf_sum : public Item_sum
 {
 protected:
@@ -1093,82 +1091,6 @@ public:
   void fix_length_and_dec() { fix_num_length_and_dec(); }
   Item *copy_or_same(THD* thd);
 };
-
-#else /* Dummy functions to get sql_yacc.cc compiled */
-
-class Item_sum_udf_float :public Item_sum_num
-{
- public:
-  Item_sum_udf_float(udf_func *udf_arg)
-    :Item_sum_num() {}
-  Item_sum_udf_float(udf_func *udf_arg, List<Item> &list) :Item_sum_num() {}
-  Item_sum_udf_float(THD *thd, Item_sum_udf_float *item)
-    :Item_sum_num(thd, item) {}
-  enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  double val_real() { assert(fixed == 1); return 0.0; }
-  void clear() {}
-  bool add() { return 0; }  
-  void update_field() {}
-};
-
-
-class Item_sum_udf_int :public Item_sum_num
-{
-public:
-  Item_sum_udf_int(udf_func *udf_arg)
-    :Item_sum_num() {}
-  Item_sum_udf_int(udf_func *udf_arg, List<Item> &list) :Item_sum_num() {}
-  Item_sum_udf_int(THD *thd, Item_sum_udf_int *item)
-    :Item_sum_num(thd, item) {}
-  enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  int64_t val_int() { assert(fixed == 1); return 0; }
-  double val_real() { assert(fixed == 1); return 0; }
-  void clear() {}
-  bool add() { return 0; }  
-  void update_field() {}
-};
-
-
-class Item_sum_udf_decimal :public Item_sum_num
-{
- public:
-  Item_sum_udf_decimal(udf_func *udf_arg)
-    :Item_sum_num() {}
-  Item_sum_udf_decimal(udf_func *udf_arg, List<Item> &list)
-    :Item_sum_num() {}
-  Item_sum_udf_decimal(THD *thd, Item_sum_udf_float *item)
-    :Item_sum_num(thd, item) {}
-  enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  double val_real() { assert(fixed == 1); return 0.0; }
-  my_decimal *val_decimal(my_decimal *) { assert(fixed == 1); return 0; }
-  void clear() {}
-  bool add() { return 0; }
-  void update_field() {}
-};
-
-
-class Item_sum_udf_str :public Item_sum_num
-{
-public:
-  Item_sum_udf_str(udf_func *udf_arg)
-    :Item_sum_num() {}
-  Item_sum_udf_str(udf_func *udf_arg, List<Item> &list)
-    :Item_sum_num() {}
-  Item_sum_udf_str(THD *thd, Item_sum_udf_str *item)
-    :Item_sum_num(thd, item) {}
-  String *val_str(String *)
-    { assert(fixed == 1); null_value=1; return 0; }
-  double val_real() { assert(fixed == 1); null_value=1; return 0.0; }
-  int64_t val_int() { assert(fixed == 1); null_value=1; return 0; }
-  enum Item_result result_type () const { return STRING_RESULT; }
-  void fix_length_and_dec() { maybe_null=1; max_length=0; }
-  enum Sumfunctype sum_func () const { return UDF_SUM_FUNC; }
-  void clear() {}
-  bool add() { return 0; }  
-  void update_field() {}
-};
-
-#endif /* HAVE_DLOPEN */
 
 class MYSQL_ERROR;
 

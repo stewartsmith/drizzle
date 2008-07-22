@@ -91,13 +91,13 @@ int sigwait(sigset_t *setp, int *sigp);		/* Use our implemention */
 */
 #if defined(HAVE_SIGACTION) && !defined(my_sigset)
 #define my_sigset(A,B) do { struct sigaction l_s; sigset_t l_set; int l_rc; \
-                            DBUG_ASSERT((A) != 0);                          \
+                            assert((A) != 0);                          \
                             sigemptyset(&l_set);                            \
                             l_s.sa_handler = (B);                           \
                             l_s.sa_mask   = l_set;                          \
                             l_s.sa_flags   = 0;                             \
                             l_rc= sigaction((A), &l_s, (struct sigaction *) NULL);\
-                            DBUG_ASSERT(l_rc == 0);                         \
+                            assert(l_rc == 0);                         \
                           } while (0)
 #elif defined(HAVE_SIGSET) && !defined(my_sigset)
 #define my_sigset(A,B) sigset((A),(B))
@@ -423,10 +423,6 @@ struct st_my_thread_var
   bool init;
   struct st_my_thread_var *next,**prev;
   void *opt_info;
-#ifndef DBUG_OFF
-  void *dbug;
-  char name[THREAD_NAME_SIZE+1];
-#endif
 };
 
 extern struct st_my_thread_var *_my_thread_var(void) __attribute__ ((const));

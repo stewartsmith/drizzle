@@ -141,7 +141,6 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
   uchar header[HEAD_LENGTH];
   MYISAM_SHARE *share=info->s;
   MI_BIT_BUFF bit_buff;
-  DBUG_ENTER("_mi_read_pack_info");
 
   if (myisam_quick_table_bits < 4)
     myisam_quick_table_bits=4;
@@ -177,16 +176,6 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
   share->base.min_block_length=share->min_pack_length+1;
   if (share->min_pack_length > 254)
     share->base.min_block_length+=2;
-  DBUG_PRINT("info", ("fixed header length:   %u", HEAD_LENGTH));
-  DBUG_PRINT("info", ("total header length:   %lu", share->pack.header_length));
-  DBUG_PRINT("info", ("pack file version:     %u", share->pack.version));
-  DBUG_PRINT("info", ("min pack length:       %lu", share->min_pack_length));
-  DBUG_PRINT("info", ("max pack length:       %lu", share->max_pack_length));
-  DBUG_PRINT("info", ("elements of all trees: %lu", elements));
-  DBUG_PRINT("info", ("distinct values bytes: %lu", intervall_length));
-  DBUG_PRINT("info", ("number of code trees:  %u", trees));
-  DBUG_PRINT("info", ("bytes for record lgt:  %u", share->pack.ref_length));
-  DBUG_PRINT("info", ("record pointer length: %u", rec_reflength));
 
   /*
     Memory segment #1:
@@ -234,9 +223,6 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
     share->rec[i].huff_tree=share->decode_trees+(uint) get_bits(&bit_buff,
 								huff_tree_bits);
     share->rec[i].unpack=get_unpack_function(share->rec+i);
-    DBUG_PRINT("info", ("col: %2u  type: %2u  pack: %u  slbits: %2u",
-                        i, share->rec[i].base_type, share->rec[i].pack_type,
-                        share->rec[i].space_length_bits));
   }
   skip_to_next_byte(&bit_buff);
   /*
@@ -285,7 +271,7 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
   if (bit_buff.error || bit_buff.pos < bit_buff.end)
     goto err3;
 
-  DBUG_RETURN(0);
+  return(0);
 
 err3:
   my_errno=HA_ERR_WRONG_IN_RECORD;
@@ -294,7 +280,7 @@ err2:
 err1:
   my_free((uchar*) share->decode_trees,MYF(0));
 err0:
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -323,7 +309,6 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
   uint min_chr,elements,char_bits,offset_bits,size,intervall_length,table_bits,
   next_free_offset;
   uint16 *ptr,*end;
-  DBUG_ENTER("read_huff_table");
 
   if (!get_bits(bit_buff,1))
   {
@@ -334,16 +319,9 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
     offset_bits=get_bits(bit_buff,5);
     intervall_length=0;
     ptr=tmp_buff;
-    DBUG_PRINT("info", ("byte value compression"));
-    DBUG_PRINT("info", ("minimum byte value:    %u", min_chr));
-    DBUG_PRINT("info", ("number of tree nodes:  %u", elements));
-    DBUG_PRINT("info", ("bits for values:       %u", char_bits));
-    DBUG_PRINT("info", ("bits for tree offsets: %u", offset_bits));
     if (elements > 256)
     {
-      DBUG_PRINT("error", ("ERROR: illegal number of tree elements: %u",
-                           elements));
-      DBUG_RETURN(1);
+      return(1);
     }
   }
   else
@@ -356,16 +334,8 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
     offset_bits=get_bits(bit_buff,5);
     decode_tree->quick_table_bits=0;
     ptr= *decode_table;
-    DBUG_PRINT("info", ("distinct column value compression"));
-    DBUG_PRINT("info", ("number of tree nodes:  %u", elements));
-    DBUG_PRINT("info", ("value buffer length:   %u", intervall_length));
-    DBUG_PRINT("info", ("bits for value index:  %u", char_bits));
-    DBUG_PRINT("info", ("bits for tree offsets: %u", offset_bits));
   }
   size=elements*2-2;
-  DBUG_PRINT("info", ("tree size in uint16:   %u", size));
-  DBUG_PRINT("info", ("tree size in bytes:    %u",
-                      size * (uint) sizeof(uint16)));
 
   for (end=ptr+size ; ptr < end ; ptr++)
   {
@@ -374,8 +344,7 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
       *ptr= (uint16) get_bits(bit_buff,offset_bits);
       if ((ptr + *ptr >= end) || !*ptr)
       {
-        DBUG_PRINT("error", ("ERROR: illegal pointer in decode tree"));
-        DBUG_RETURN(1);
+        return(1);
       }
     }
     else
@@ -391,10 +360,9 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
     /* Find longest Huffman code from begin to end of tree in bits. */
     table_bits= find_longest_bitstream(tmp_buff, ptr);
     if (table_bits >= OFFSET_TABLE_SIZE)
-      DBUG_RETURN(1);
+      return(1);
     if (table_bits > myisam_quick_table_bits)
       table_bits=myisam_quick_table_bits;
-    DBUG_PRINT("info", ("table bits:            %u", table_bits));
 
     next_free_offset= (1 << table_bits);
     make_quick_table(*decode_table,tmp_buff,&next_free_offset,0,table_bits,
@@ -417,7 +385,7 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
     bit_buff->pos+=intervall_length;
     bit_buff->bits=0;
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -464,8 +432,6 @@ static void make_quick_table(uint16 *to_table, uint16 *decode_table,
 			     uint *next_free_offset, uint value, uint bits,
 			     uint max_bits)
 {
-  DBUG_ENTER("make_quick_table");
-
   /*
     When down the table to the requested maximum, copy the rest of the
     Huffman table.
@@ -483,7 +449,7 @@ static void make_quick_table(uint16 *to_table, uint16 *decode_table,
     */
     *next_free_offset= copy_decode_table(to_table, *next_free_offset,
                                          decode_table);
-    DBUG_VOID_RETURN;
+    return;
   }
 
   /* Descent on the left side. Left side bits are clear (0). */
@@ -522,7 +488,7 @@ static void make_quick_table(uint16 *to_table, uint16 *decode_table,
     fill_quick_table(to_table + value, bits, max_bits, (uint) *decode_table);
   }
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -554,7 +520,6 @@ static void fill_quick_table(uint16 *table, uint bits, uint max_bits,
 			     uint value)
 {
   uint16 *end;
-  DBUG_ENTER("fill_quick_table");
 
   /*
     Bits 1..8 of value represent the decoded byte value.
@@ -567,7 +532,7 @@ static void fill_quick_table(uint16 *table, uint bits, uint max_bits,
   {
     *table= (uint16) value;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -591,7 +556,6 @@ static uint copy_decode_table(uint16 *to_pos, uint offset,
 			      uint16 *decode_table)
 {
   uint prev_offset= offset;
-  DBUG_ENTER("copy_decode_table");
 
   /* Descent on the left side. */
   if (!(*decode_table & IS_CHAR))
@@ -623,7 +587,7 @@ static uint copy_decode_table(uint16 *to_pos, uint offset,
     /* Copy the byte value. */
     to_pos[prev_offset+1]= *decode_table;
   }
-  DBUG_RETURN(offset);
+  return(offset);
 }
 
 
@@ -661,7 +625,6 @@ static uint find_longest_bitstream(uint16 *table, uint16 *end)
     uint16 *next= table + *table;
     if (next > end || next == table)
     {
-      DBUG_PRINT("error", ("ERROR: illegal pointer in decode tree"));
       return OFFSET_TABLE_SIZE;
     }
     length= find_longest_bitstream(next, end) + 1;
@@ -672,7 +635,6 @@ static uint find_longest_bitstream(uint16 *table, uint16 *end)
     uint16 *next= table + *table;
     if (next > end || next == table)
     {
-      DBUG_PRINT("error", ("ERROR: illegal pointer in decode tree"));
       return OFFSET_TABLE_SIZE;
     }
     length2= find_longest_bitstream(next, end) + 1;
@@ -700,10 +662,9 @@ int _mi_read_pack_record(MI_INFO *info, my_off_t filepos, uchar *buf)
 {
   MI_BLOCK_INFO block_info;
   File file;
-  DBUG_ENTER("mi_read_pack_record");
 
   if (filepos == HA_OFFSET_ERROR)
-    DBUG_RETURN(-1);			/* _search() didn't find record */
+    return(-1);			/* _search() didn't find record */
 
   file=info->dfile;
   if (_mi_pack_get_block_info(info, &info->bit_buff, &block_info,
@@ -713,12 +674,12 @@ int _mi_read_pack_record(MI_INFO *info, my_off_t filepos, uchar *buf)
 	      block_info.rec_len - block_info.offset, MYF(MY_NABP)))
     goto panic;
   info->update|= HA_STATE_AKTIV;
-  DBUG_RETURN(_mi_pack_rec_unpack(info, &info->bit_buff, buf,
+  return(_mi_pack_rec_unpack(info, &info->bit_buff, buf,
                                   info->rec_buff, block_info.rec_len));
 panic:
   my_errno=HA_ERR_WRONG_IN_RECORD;
 err:
-  DBUG_RETURN(-1);
+  return(-1);
 }
 
 
@@ -730,7 +691,6 @@ int _mi_pack_rec_unpack(register MI_INFO *info, MI_BIT_BUFF *bit_buff,
   register MI_COLUMNDEF *end;
   MI_COLUMNDEF *current_field;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("_mi_pack_rec_unpack");
 
   init_bit_buffer(bit_buff, (uchar*) from, reclength);
 
@@ -744,9 +704,9 @@ int _mi_pack_rec_unpack(register MI_INFO *info, MI_BIT_BUFF *bit_buff,
   }
   if (!bit_buff->error &&
       bit_buff->pos - bit_buff->bits / 8 == bit_buff->end)
-    DBUG_RETURN(0);
+    return(0);
   info->update&= ~HA_STATE_AKTIV;
-  DBUG_RETURN(my_errno=HA_ERR_WRONG_IN_RECORD);
+  return(my_errno=HA_ERR_WRONG_IN_RECORD);
 } /* _mi_pack_rec_unpack */
 
 
@@ -1292,7 +1252,6 @@ int _mi_read_rnd_pack_record(MI_INFO *info, uchar *buf,
   uint b_type;
   MI_BLOCK_INFO block_info;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("_mi_read_rnd_pack_record");
 
   if (filepos >= info->state->data_file_length)
   {
@@ -1314,13 +1273,6 @@ int _mi_read_rnd_pack_record(MI_INFO *info, uchar *buf,
                                    &info->rec_buff, info->dfile, filepos);
   if (b_type)
     goto err;					/* Error code is already set */
-#ifndef DBUG_OFF
-  if (block_info.rec_len > share->max_pack_length)
-  {
-    my_errno=HA_ERR_WRONG_IN_RECORD;
-    goto err;
-  }
-#endif
 
   if (info->opt_flag & READ_CACHE_USED)
   {
@@ -1341,10 +1293,10 @@ int _mi_read_rnd_pack_record(MI_INFO *info, uchar *buf,
   info->nextpos=block_info.filepos+block_info.rec_len;
   info->update|= HA_STATE_AKTIV | HA_STATE_KEY_CHANGED;
 
-  DBUG_RETURN (_mi_pack_rec_unpack(info, &info->bit_buff, buf,
+  return (_mi_pack_rec_unpack(info, &info->bit_buff, buf,
                                    info->rec_buff, block_info.rec_len));
  err:
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 }
 
 
@@ -1367,7 +1319,6 @@ uint _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
     VOID(my_seek(file,filepos,MY_SEEK_SET,MYF(0)));
     if (my_read(file, header,ref_length,MYF(MY_NABP)))
       return BLOCK_FATAL_ERROR;
-    DBUG_DUMP("header",(uchar*) header,ref_length);
   }
   head_length= read_pack_length((uint) myisam->s->pack.version, header,
                                 &info->rec_len);
@@ -1482,23 +1433,21 @@ static int _mi_read_rnd_mempack_record(MI_INFO*, uchar *,my_off_t, my_bool);
 my_bool _mi_memmap_file(MI_INFO *info)
 {
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_memmap_file");
 
   if (!info->s->file_map)
   {
     if (my_seek(info->dfile,0L,MY_SEEK_END,MYF(0)) <
         share->state.state.data_file_length+MEMMAP_EXTRA_MARGIN)
     {
-      DBUG_PRINT("warning",("File isn't extended for memmap"));
-      DBUG_RETURN(0);
+      return(0);
     }
     if (mi_dynmap_file(info, share->state.state.data_file_length))
-      DBUG_RETURN(0);
+      return(0);
   }
   info->opt_flag|= MEMMAP_USED;
   info->read_record= share->read_record= _mi_read_mempack_record;
   share->read_rnd= _mi_read_rnd_mempack_record;
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -1535,17 +1484,16 @@ static int _mi_read_mempack_record(MI_INFO *info, my_off_t filepos, uchar *buf)
   MI_BLOCK_INFO block_info;
   MYISAM_SHARE *share=info->s;
   uchar *pos;
-  DBUG_ENTER("mi_read_mempack_record");
 
   if (filepos == HA_OFFSET_ERROR)
-    DBUG_RETURN(-1);			/* _search() didn't find record */
+    return(-1);			/* _search() didn't find record */
 
   if (!(pos= (uchar*) _mi_mempack_get_block_info(info, &info->bit_buff,
                                                 &block_info, &info->rec_buff,
 						(uchar*) share->file_map+
 						filepos)))
-    DBUG_RETURN(-1);
-  DBUG_RETURN(_mi_pack_rec_unpack(info, &info->bit_buff, buf,
+    return(-1);
+  return(_mi_pack_rec_unpack(info, &info->bit_buff, buf,
                                   pos, block_info.rec_len));
 }
 
@@ -1559,7 +1507,6 @@ static int _mi_read_rnd_mempack_record(MI_INFO *info, uchar *buf,
   MI_BLOCK_INFO block_info;
   MYISAM_SHARE *share=info->s;
   uchar *pos,*start;
-  DBUG_ENTER("_mi_read_rnd_mempack_record");
 
   if (filepos >= share->state.state.data_file_length)
   {
@@ -1572,22 +1519,15 @@ static int _mi_read_rnd_mempack_record(MI_INFO *info, uchar *buf,
 						(start=share->file_map+
 						 filepos))))
     goto err;
-#ifndef DBUG_OFF
-  if (block_info.rec_len > info->s->max_pack_length)
-  {
-    my_errno=HA_ERR_WRONG_IN_RECORD;
-    goto err;
-  }
-#endif
   info->packed_length=block_info.rec_len;
   info->lastpos=filepos;
   info->nextpos=filepos+(uint) (pos-start)+block_info.rec_len;
   info->update|= HA_STATE_AKTIV | HA_STATE_KEY_CHANGED;
 
-  DBUG_RETURN (_mi_pack_rec_unpack(info, &info->bit_buff, buf,
+  return (_mi_pack_rec_unpack(info, &info->bit_buff, buf,
                                    pos, block_info.rec_len));
  err:
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 }
 
 #endif /* HAVE_MMAP */
@@ -1610,7 +1550,7 @@ uint save_pack_length(uint version, uchar *block_buff, ulong length)
   *(uchar*) block_buff=255;
   if (version == 1) /* old format */
   {
-    DBUG_ASSERT(length <= 0xFFFFFF);
+    assert(length <= 0xFFFFFF);
     int3store(block_buff + 1, (ulong) length);
     return 4;
   }

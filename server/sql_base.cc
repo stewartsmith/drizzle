@@ -3675,7 +3675,7 @@ int decide_logging_format(THD *thd, TABLE_LIST *tables)
   {
     handler::Table_flags flags_some_set= handler::Table_flags();
     handler::Table_flags flags_all_set= ~handler::Table_flags();
-    my_bool multi_engine= false;
+    bool multi_engine= false;
     void* prev_ht= NULL;
     for (TABLE_LIST *table= tables; table; table= table->next_global)
     {
@@ -5195,11 +5195,6 @@ mark_common_columns(THD *thd, TABLE_LIST *table_ref_1, TABLE_LIST *table_ref_2,
         goto err;                               // out of memory
 
       /*
-        The following assert checks that the two created items are of
-        type Item_ident.
-      */
-      assert(!thd->lex->current_select->no_wrap_view_item);
-      /*
         In the case of no_wrap_view_item == 0, the created items must be
         of sub-classes of Item_ident.
       */
@@ -6338,7 +6333,7 @@ err:
 }
 
 
-my_bool mysql_rm_tmp_tables(void)
+bool mysql_rm_tmp_tables(void)
 {
   uint i, idx;
   char	filePath[FN_REFLEN], *tmpdir, filePathCopy[FN_REFLEN];

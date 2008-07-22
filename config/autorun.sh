@@ -24,16 +24,17 @@ run() {
 ## jump out if one of the programs returns 'false'
 set -e
 
-bzr log --short > ChangeLog || touch ChangeLog
+if test -d ".bzr" ; then
+  bzr log --short > ChangeLog || touch ChangeLog
+fi
 
-## We do not currently support glibtoolize
 if test x$LIBTOOLIZE = x; then
-#  if test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
-#    LIBTOOLIZE=glibtoolize
   if test \! "x`which libtoolize-1.5 2> /dev/null | grep -v '^no'`" = x; then
     LIBTOOLIZE=libtoolize-1.5
   elif test \! "x`which libtoolize 2> /dev/null | grep -v '^no'`" = x; then
     LIBTOOLIZE=libtoolize
+  elif test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
+    LIBTOOLIZE=glibtoolize
   else 
     echo "libtoolize 1.5.x wasn't found, exiting"; exit 0
   fi

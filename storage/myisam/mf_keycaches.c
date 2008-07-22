@@ -70,9 +70,8 @@ typedef struct st_safe_hash_with_default
 
 static void safe_hash_entry_free(SAFE_HASH_ENTRY *entry)
 {
-  DBUG_ENTER("free_assign_entry");
   my_free((uchar*) entry, MYF(0));
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -107,18 +106,17 @@ static uchar *safe_hash_entry_get(SAFE_HASH_ENTRY *entry, size_t *length,
 static my_bool safe_hash_init(SAFE_HASH *hash, uint elements,
 			      uchar *default_value)
 {
-  DBUG_ENTER("safe_hash");
   if (hash_init(&hash->hash, &my_charset_bin, elements,
 		0, 0, (hash_get_key) safe_hash_entry_get,
 		(void (*)(void*)) safe_hash_entry_free, 0))
   {
     hash->default_value= 0;
-    DBUG_RETURN(1);
+    return(1);
   }
   my_rwlock_init(&hash->mutex, 0);
   hash->default_value= default_value;
   hash->root= 0;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -150,7 +148,6 @@ static void safe_hash_free(SAFE_HASH *hash)
 static uchar *safe_hash_search(SAFE_HASH *hash, const uchar *key, uint length)
 {
   uchar *result;
-  DBUG_ENTER("safe_hash_search");
   rw_rdlock(&hash->mutex);
   result= hash_search(&hash->hash, key, length);
   rw_unlock(&hash->mutex);
@@ -158,8 +155,7 @@ static uchar *safe_hash_search(SAFE_HASH *hash, const uchar *key, uint length)
     result= hash->default_value;
   else
     result= ((SAFE_HASH_ENTRY*) result)->data;
-  DBUG_PRINT("exit",("data: 0x%lx", (long) result));
-  DBUG_RETURN(result);
+  return(result);
 }
 
 
@@ -188,8 +184,6 @@ static my_bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
 {
   SAFE_HASH_ENTRY *entry;
   my_bool error= 0;
-  DBUG_ENTER("safe_hash_set");
-  DBUG_PRINT("enter",("key: %.*s  data: 0x%lx", length, key, (long) data));
 
   rw_wrlock(&hash->mutex);
   entry= (SAFE_HASH_ENTRY*) hash_search(&hash->hash, key, length);
@@ -242,7 +236,7 @@ static my_bool safe_hash_set(SAFE_HASH *hash, const uchar *key, uint length,
 
 end:
   rw_unlock(&hash->mutex);
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -264,7 +258,6 @@ end:
 static void safe_hash_change(SAFE_HASH *hash, uchar *old_data, uchar *new_data)
 {
   SAFE_HASH_ENTRY *entry, *next;
-  DBUG_ENTER("safe_hash_set");
 
   rw_wrlock(&hash->mutex);
 
@@ -285,7 +278,7 @@ static void safe_hash_change(SAFE_HASH *hash, uchar *old_data, uchar *new_data)
   }
 
   rw_unlock(&hash->mutex);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 

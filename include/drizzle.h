@@ -399,7 +399,6 @@ MYSQL_RES *     STDCALL mysql_list_fields(MYSQL *mysql, const char *table, const
 uint32_t	STDCALL mysql_escape_string(char *to,const char *from, uint32_t from_length);
 uint32_t	STDCALL mysql_hex_string(char *to,const char *from, uint32_t from_length);
 uint32_t        STDCALL mysql_real_escape_string(MYSQL *mysql, char *to, const char *from, uint32_t length);
-void		STDCALL mysql_debug(const char *debug);
 void 		STDCALL myodbc_remove_escape(MYSQL *mysql,char *name);
 uint32_t	STDCALL mysql_thread_safe(void);
 my_bool		STDCALL mysql_embedded(void);

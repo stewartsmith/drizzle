@@ -1706,9 +1706,6 @@ bool Item_in_subselect::fix_fields(THD *thd_arg, Item **ref)
   if (exec_method == SEMI_JOIN)
     return !( (*ref)= new Item_int(1));
 
-  if (thd_arg->lex->view_prepare_mode && left_expr && !left_expr->fixed)
-    result = left_expr->fix_fields(thd_arg, &left_expr);
-
   return result || Item_subselect::fix_fields(thd_arg, ref);
 }
 

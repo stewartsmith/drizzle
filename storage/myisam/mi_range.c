@@ -47,13 +47,12 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
                             key_range *min_key, key_range *max_key)
 {
   ha_rows start_pos,end_pos,res;
-  DBUG_ENTER("mi_records_in_range");
 
   if ((inx = _mi_check_index(info,inx)) < 0)
-    DBUG_RETURN(HA_POS_ERROR);
+    return(HA_POS_ERROR);
 
   if (fast_mi_readinfo(info))
-    DBUG_RETURN(HA_POS_ERROR);
+    return(HA_POS_ERROR);
   info->update&= (HA_STATE_CHANGED+HA_STATE_ROW_CHANGED);
   if (info->s->concurrent_insert)
     rw_rdlock(&info->s->key_root_lock[inx]);
@@ -77,8 +76,7 @@ ha_rows mi_records_in_range(MI_INFO *info, int inx,
     rw_unlock(&info->s->key_root_lock[inx]);
   fast_mi_writeinfo(info);
 
-  DBUG_PRINT("info",("records: %ld",(ulong) (res)));
-  DBUG_RETURN(res);
+  return(res);
 }
 
 
@@ -93,15 +91,11 @@ static ha_rows _mi_record_pos(MI_INFO *info, const uchar *key,
   uchar *key_buff;
   double pos;
 
-  DBUG_ENTER("_mi_record_pos");
-  DBUG_PRINT("enter",("search_flag: %d",search_flag));
-  DBUG_ASSERT(keypart_map);
+  assert(keypart_map);
 
   key_buff=info->lastkey+info->s->base.max_key_length;
   key_len=_mi_pack_key(info,inx,key_buff,(uchar*) key, keypart_map,
 		       (HA_KEYSEG**) 0);
-  DBUG_EXECUTE("key",_mi_print_key(DBUG_FILE,keyinfo->seg,
-				    (uchar*) key_buff,key_len););
   nextflag=myisam_read_vec[search_flag];
   if (!(nextflag & (SEARCH_FIND | SEARCH_NO_FIND | SEARCH_LAST)))
     key_len=USE_WHOLE_KEY;
@@ -145,10 +139,9 @@ static ha_rows _mi_record_pos(MI_INFO *info, const uchar *key,
 		     info->s->state.key_root[inx]);
   if (pos >= 0.0)
   {
-    DBUG_PRINT("exit",("pos: %ld",(ulong) (pos*info->state->records)));
-    DBUG_RETURN((ulong) (pos*info->state->records+0.5));
+    return((ulong) (pos*info->state->records+0.5));
   }
-  DBUG_RETURN(HA_POS_ERROR);
+  return(HA_POS_ERROR);
 }
 
 
@@ -165,10 +158,9 @@ static double _mi_search_pos(register MI_INFO *info,
   my_bool after_key;
   uchar *keypos,*buff;
   double offset;
-  DBUG_ENTER("_mi_search_pos");
 
   if (pos == HA_OFFSET_ERROR)
-    DBUG_RETURN(0.5);
+    return(0.5);
 
   if (!(buff=_mi_fetch_keypage(info,keyinfo,pos,DFLT_INIT_HITS,info->buff,1)))
     goto err;
@@ -180,7 +172,7 @@ static double _mi_search_pos(register MI_INFO *info,
   if (flag)
   {
     if (flag == MI_FOUND_WRONG_KEY)
-      DBUG_RETURN(-1);				/* error */
+      return(-1);				/* error */
     /*
       Didn't found match. keypos points at next (bigger) key
       Try to find a smaller, better matching key.
@@ -190,7 +182,7 @@ static double _mi_search_pos(register MI_INFO *info,
       offset= 1.0;
     else if ((offset=_mi_search_pos(info,keyinfo,key,key_len,nextflag,
 				    _mi_kpos(nod_flag,keypos))) < 0)
-      DBUG_RETURN(offset);
+      return(offset);
   }
   else
   {
@@ -209,15 +201,12 @@ static double _mi_search_pos(register MI_INFO *info,
       */
       if ((offset=_mi_search_pos(info,keyinfo,key,key_len,SEARCH_FIND,
 				 _mi_kpos(nod_flag,keypos))) < 0)
-	DBUG_RETURN(offset);			/* Read error */
+	return(offset);			/* Read error */
     }
   }
-  DBUG_PRINT("info",("keynr: %d  offset: %g  max_keynr: %d  nod: %d  flag: %d",
-		     keynr,offset,max_keynr,nod_flag,flag));
-  DBUG_RETURN((keynr+offset)/(max_keynr+1));
+  return((keynr+offset)/(max_keynr+1));
 err:
-  DBUG_PRINT("exit",("Error: %d",my_errno));
-  DBUG_RETURN (-1.0);
+  return (-1.0);
 }
 
 

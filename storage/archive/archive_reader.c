@@ -263,16 +263,6 @@ get_one_option(int optid,
   case '?':
     usage();
     exit(0);
-  case '#':
-    if (argument == disabled_my_option)
-    {
-      DBUG_POP();
-    }
-    else
-    {
-      DBUG_PUSH(argument ? argument : "d:t:o,/tmp/archive_reader.trace");
-    }
-    break;
   }
   return 0;
 }
@@ -284,11 +274,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"check", 'c', "Check table for errors.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef DBUG_OFF
-  {"debug", '#',
-   "Output debug log. Often this is 'd:t:o,filename'.",
-   0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"extract-frm", 'e',
    "Extract the frm file.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},

@@ -90,7 +90,7 @@ size_t my_fcvt(double x, int precision, char *to, my_bool *error)
   int decpt, sign, len, i;
   char *res, *src, *end, *dst= to;
   char buf[DTOA_BUFF_SIZE];
-  DBUG_ASSERT(precision >= 0 && precision < NOT_FIXED_DEC && to != NULL);
+  assert(precision >= 0 && precision < NOT_FIXED_DEC && to != NULL);
   
   res= dtoa(x, 5, precision, &decpt, &sign, &end, buf, sizeof(buf));
 
@@ -215,7 +215,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   char *res, *src, *end, *dst= to, *dend= dst + width;
   char buf[DTOA_BUFF_SIZE];
   my_bool have_space, force_e_format;
-  DBUG_ASSERT(width > 0 && to != NULL);
+  assert(width > 0 && to != NULL);
   
   /* We want to remove '-' from equations early */
   if (x < 0.)
@@ -461,7 +461,7 @@ double my_strtod(const char *str, char **end, int *error)
 {
   char buf[DTOA_BUFF_SIZE];
   double res;
-  DBUG_ASSERT(str != NULL && end != NULL && *end != NULL && error != NULL);
+  assert(str != NULL && end != NULL && *end != NULL && error != NULL);
 
   res= my_strtod_int(str, end, error, buf, sizeof(buf));
   return (*error == 0) ? res : (res < 0 ? -DBL_MAX : DBL_MAX);
@@ -1338,6 +1338,7 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
 #endif
   Stack_alloc alloc;
 
+  c= 0;
   *error= 0;
 
   alloc.begin= alloc.free= buf;

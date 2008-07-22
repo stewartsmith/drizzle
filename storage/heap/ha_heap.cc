@@ -274,7 +274,7 @@ int ha_heap::index_read_map(uchar *buf, const uchar *key,
                             key_part_map keypart_map,
                             enum ha_rkey_function find_flag)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_key_count);
   int error = heap_rkey(file,buf,active_index, key, keypart_map, find_flag);
   table->status = error ? STATUS_NOT_FOUND : 0;
@@ -284,7 +284,7 @@ int ha_heap::index_read_map(uchar *buf, const uchar *key,
 int ha_heap::index_read_last_map(uchar *buf, const uchar *key,
                                  key_part_map keypart_map)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_key_count);
   int error= heap_rkey(file, buf, active_index, key, keypart_map,
 		       HA_READ_PREFIX_LAST);
@@ -304,7 +304,7 @@ int ha_heap::index_read_idx_map(uchar *buf, uint index, const uchar *key,
 
 int ha_heap::index_next(uchar * buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_next_count);
   int error=heap_rnext(file,buf);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -313,7 +313,7 @@ int ha_heap::index_next(uchar * buf)
 
 int ha_heap::index_prev(uchar * buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_prev_count);
   int error=heap_rprev(file,buf);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -322,7 +322,7 @@ int ha_heap::index_prev(uchar * buf)
 
 int ha_heap::index_first(uchar * buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_first_count);
   int error=heap_rfirst(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -331,7 +331,7 @@ int ha_heap::index_first(uchar * buf)
 
 int ha_heap::index_last(uchar * buf)
 {
-  DBUG_ASSERT(inited==INDEX);
+  assert(inited==INDEX);
   ha_statistic_increment(&SSV::ha_read_last_count);
   int error=heap_rlast(file, buf, active_index);
   table->status=error ? STATUS_NOT_FOUND: 0;
@@ -586,7 +586,7 @@ ha_rows ha_heap::records_in_range(uint inx, key_range *min_key,
     return stats.records;
 
   /* Assert that info() did run. We need current statistics here. */
-  DBUG_ASSERT(key_stat_version == file->s->key_stat_version);
+  assert(key_stat_version == file->s->key_stat_version);
   return key->rec_per_key[key->key_parts-1];
 }
 
@@ -632,7 +632,7 @@ int ha_heap::create(const char *name, TABLE *table_arg,
       mem_per_row+=sizeof(TREE_ELEMENT)+pos->key_length+sizeof(char*);
       break;
     default:
-      DBUG_ASSERT(0); // cannot happen
+      assert(0); // cannot happen
     }
 
     for (; key_part != key_part_end; key_part++, seg++)
@@ -705,7 +705,7 @@ int ha_heap::create(const char *name, TABLE *table_arg,
 			      share->max_rows : max_rows),
 		     (ulong) share->min_rows, &hp_create_info, &internal_share);
   my_free((uchar*) keydef, MYF(0));
-  DBUG_ASSERT(file == 0);
+  assert(file == 0);
   return (error);
 }
 
@@ -742,20 +742,16 @@ bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info,
   return COMPATIBLE_DATA_YES;
 }
 
-struct st_mysql_storage_engine heap_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 mysql_declare_plugin(heap)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &heap_storage_engine,
   "MEMORY",
+  "1.0",
   "MySQL AB",
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
   NULL,
-  0x0100, /* 1.0 */
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */

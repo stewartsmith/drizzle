@@ -31,16 +31,6 @@ ut_dbg_assertion_failed(
 	const char* file,	/* in: source file containing the assertion */
 	ulint line);		/* in: line number of the assertion */
 
-#ifdef __NETWARE__
-/* Flag for ignoring further assertion failures.
-On NetWare, have a graceful exit rather than a segfault to avoid abends. */
-extern ibool	panic_shutdown;
-/* Abort the execution. */
-void ut_dbg_panic(void);
-# define UT_DBG_PANIC ut_dbg_panic()
-/* Stop threads in ut_a(). */
-# define UT_DBG_STOP	while (0)	/* We do not do this on NetWare */
-#else /* __NETWARE__ */
 # if defined(__WIN__) || defined(__INTEL_COMPILER)
 #  undef UT_DBG_USE_ABORT
 # elif defined(__GNUC__) && (__GNUC__ > 2)
@@ -82,7 +72,6 @@ ut_dbg_stop_thread(
 		ut_dbg_stop_thread(__FILE__, (ulint) __LINE__);	\
 	} while (0)
 # endif /* UT_DBG_USE_ABORT */
-#endif /* __NETWARE__ */
 
 /* Abort execution if EXPR does not evaluate to nonzero. */
 #define ut_a(EXPR) do {						\

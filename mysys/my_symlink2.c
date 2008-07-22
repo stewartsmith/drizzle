@@ -32,14 +32,9 @@ File my_create_with_symlink(const char *linkname, const char *filename,
   /* Test if we should create a link */
   int create_link;
   char abs_linkname[FN_REFLEN];
-  DBUG_ENTER("my_create_with_symlink");
-  DBUG_PRINT("enter", ("linkname: %s  filename: %s",
-                       linkname ? linkname : "(null)",
-                       filename ? filename : "(null)"));
 
   if (my_disable_symlinks)
   {
-    DBUG_PRINT("info", ("Symlinks disabled"));
     /* Create only the file, not the link and file */
     create_link= 0;
     if (linkname)
@@ -58,13 +53,13 @@ File my_create_with_symlink(const char *linkname, const char *filename,
     {
       my_errno= errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), filename, EEXIST);
-      DBUG_RETURN(-1);
+      return(-1);
     }
     if (create_link && !access(linkname,F_OK))
     {
       my_errno= errno= EEXIST;
       my_error(EE_CANTCREATEFILE, MYF(0), linkname, EEXIST);
-      DBUG_RETURN(-1);
+      return(-1);
     }
   }
 
@@ -87,7 +82,7 @@ File my_create_with_symlink(const char *linkname, const char *filename,
       }
     }
   }
-  DBUG_RETURN(file);
+  return(file);
 }
 
 /*
@@ -101,14 +96,13 @@ int my_delete_with_symlink(const char *name, myf MyFlags)
   int was_symlink= (!my_disable_symlinks &&
 		    !my_readlink(link_name, name, MYF(0)));
   int result;
-  DBUG_ENTER("my_delete_with_symlink");
 
   if (!(result=my_delete(name, MyFlags)))
   {
     if (was_symlink)
       result=my_delete(link_name, MyFlags);
   }
-  DBUG_RETURN(result);
+  return(result);
 }
 
 /*
@@ -131,10 +125,9 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
 		    !my_readlink(link_name, from, MYF(0)));
   int result=0;
   int name_is_different;
-  DBUG_ENTER("my_rename_with_symlink");
 
   if (!was_symlink)
-    DBUG_RETURN(my_rename(from, to, MyFlags));
+    return(my_rename(from, to, MyFlags));
 
   /* Change filename that symlink pointed to */
   strmov(tmp_name, to);
@@ -145,12 +138,12 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     my_errno= EEXIST;
     if (MyFlags & MY_WME)
       my_error(EE_CANTCREATEFILE, MYF(0), tmp_name, EEXIST);
-    DBUG_RETURN(1);
+    return(1);
   }
 
   /* Create new symlink */
   if (my_symlink(tmp_name, to, MyFlags))
-    DBUG_RETURN(1);
+    return(1);
 
   /*
     Rename symlinked file if the base name didn't change.
@@ -163,7 +156,7 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     int save_errno=my_errno;
     my_delete(to, MyFlags);			/* Remove created symlink */
     my_errno=save_errno;
-    DBUG_RETURN(1);
+    return(1);
   }
 
   /* Remove original symlink */
@@ -178,6 +171,6 @@ int my_rename_with_symlink(const char *from, const char *to, myf MyFlags)
     my_errno=save_errno;
     result= 1;
   }
-  DBUG_RETURN(result);
+  return(result);
 #endif /* HAVE_READLINK */
 }

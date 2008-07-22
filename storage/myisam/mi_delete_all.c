@@ -23,14 +23,13 @@ int mi_delete_all_rows(MI_INFO *info)
   uint i;
   MYISAM_SHARE *share=info->s;
   MI_STATE_INFO *state=&share->state;
-  DBUG_ENTER("mi_delete_all_rows");
 
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    DBUG_RETURN(my_errno=EACCES);
+    return(my_errno=EACCES);
   }
   if (_mi_readinfo(info,F_WRLCK,1))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
   if (_mi_mark_file_changed(info))
     goto err;
 
@@ -65,13 +64,13 @@ int mi_delete_all_rows(MI_INFO *info)
   if (share->file_map)
     mi_dynmap_file(info, (my_off_t) 0);
 #endif
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   {
     int save_errno=my_errno;
     VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
     info->update|=HA_STATE_WRITTEN;	/* Buffer changed */
-    DBUG_RETURN(my_errno=save_errno);
+    return(my_errno=save_errno);
   }
 } /* mi_delete */

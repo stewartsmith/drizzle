@@ -170,11 +170,6 @@ static int save_state_mrg(File file,PACK_MRG_INFO *isam_file,my_off_t new_length
 static int mrg_close(PACK_MRG_INFO *mrg);
 static int mrg_rrnd(PACK_MRG_INFO *info,uchar *buf);
 static void mrg_reset(PACK_MRG_INFO *mrg);
-#if !defined(DBUG_OFF)
-static void fakebigcodes(HUFF_COUNTS *huff_counts, HUFF_COUNTS *end_count);
-static int fakecmp(my_off_t **count1, my_off_t **count2);
-#endif
-
 
 static int error_on_write=0,test_only=0,verbose=0,silent=0,
 	   write_loop=0,force_pack=0, isamchk_neaded=0;
@@ -351,9 +346,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     verbose++; /* Allow for selecting the level of verbosity. */
     silent= 0;
     break;
-  case '#':
-    DBUG_PUSH(argument ? argument : "d:t:o");
-    break;
   case 'V':
     print_version();
     exit(0);
@@ -397,14 +389,13 @@ static MI_INFO *open_isam_file(char *name,int mode)
 {
   MI_INFO *isam_file;
   MYISAM_SHARE *share;
-  DBUG_ENTER("open_isam_file");
 
   if (!(isam_file=mi_open(name,mode,
 			  (opt_wait ? HA_OPEN_WAIT_IF_LOCKED :
 			   HA_OPEN_ABORT_IF_LOCKED))))
   {
     VOID(fprintf(stderr, "%s gave error %d on open\n", name, my_errno));
-    DBUG_RETURN(0);
+    return(0);
   }
   share=isam_file->s;
   if (share->options & HA_OPTION_COMPRESS_RECORD && !join_table)
@@ -413,7 +404,7 @@ static MI_INFO *open_isam_file(char *name,int mode)
     {
       VOID(fprintf(stderr, "%s is already compressed\n", name));
       VOID(mi_close(isam_file));
-      DBUG_RETURN(0);
+      return(0);
     }
     if (verbose)
       puts("Recompressing already compressed table");
@@ -425,10 +416,10 @@ static MI_INFO *open_isam_file(char *name,int mode)
   {
     VOID(fprintf(stderr, "%s is too small to compress\n", name));
     VOID(mi_close(isam_file));
-    DBUG_RETURN(0);
+    return(0);
   }
   VOID(mi_lock_database(isam_file,F_WRLCK));
-  DBUG_RETURN(isam_file);
+  return(isam_file);
 }
 
 
@@ -490,7 +481,6 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   my_off_t old_length,new_length,tot_elements;
   HUFF_COUNTS *huff_counts;
   HUFF_TREE *huff_trees;
-  DBUG_ENTER("compress");
 
   isam_file=mrg->file[0];			/* Take this as an example */
   share=isam_file->s;
@@ -542,9 +532,6 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   for (i=0 ; i < mrg->count ; i++)
     mrg->records+=mrg->file[i]->s->state.state.records;
 
-  DBUG_PRINT("info", ("Compressing %s: (%lu records)",
-                      result_table ? new_name : org_name,
-                      (ulong) mrg->records));
   if (write_loop || verbose)
   {
     VOID(printf("Compressing %s: (%lu records)\n",
@@ -557,7 +544,6 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   /*
     Read the whole data file(s) for statistics.
   */
-  DBUG_PRINT("info", ("- Calculating statistics"));
   if (write_loop || verbose)
     VOID(printf("- Calculating statistics\n"));
   if (get_statistic(mrg,huff_counts))
@@ -633,7 +619,6 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   /*
     Compress the source file into the target file.
   */
-  DBUG_PRINT("info", ("- Compressing file"));
   if (write_loop || verbose)
     VOID(printf("- Compressing file\n"));
   error=compress_isam_file(mrg,huff_counts);
@@ -657,10 +642,6 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   end_file_buffer();
 
   /* Display statistics. */
-  DBUG_PRINT("info", ("Min record length: %6d  Max length: %6d  "
-                      "Mean total length: %6ld\n",
-                      mrg->min_pack_length, mrg->max_pack_length,
-                      (ulong) (mrg->records ? (new_length/mrg->records) : 0)));
   if (verbose && mrg->records)
     VOID(printf("Min record length: %6d   Max length: %6d   "
                 "Mean total length: %6ld\n", mrg->min_pack_length,
@@ -729,7 +710,7 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   {
     VOID(fprintf(stderr, "Aborting: %s is not compressed\n", org_name));
     VOID(my_delete(new_name,MYF(MY_WME)));
-    DBUG_RETURN(-1);
+    return(-1);
   }
   if (write_loop || verbose)
   {
@@ -740,7 +721,7 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
     else
       puts("Empty file saved in compressed format");
   }
-  DBUG_RETURN(0);
+  return(0);
 
  err:
   free_counts_and_tree_and_queue(huff_trees,trees,huff_counts,fields);
@@ -750,7 +731,7 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
     VOID(my_close(join_isam_file,MYF(0)));
   mrg_close(mrg);
   VOID(fprintf(stderr, "Aborted: %s is not compressed\n", org_name));
-  DBUG_RETURN(-1);
+  return(-1);
 }
 
 	/* Init a huff_count-struct for each field and init it */
@@ -841,7 +822,6 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
   my_bool static_row_size;
   HUFF_COUNTS *count,*end_count;
   TREE_ELEMENT *element;
-  DBUG_ENTER("get_statistic");
 
   reclength=mrg->file[0]->s->base.reclength;
   record=(uchar*) my_alloca(reclength);
@@ -1083,14 +1063,6 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
     VOID(fflush(stdout));
   }
 
-  /*
-    If --debug=d,fakebigcodes is set, fake the counts to get big Huffman
-    codes.
-  */
-  DBUG_EXECUTE_IF("fakebigcodes", fakebigcodes(huff_counts, end_count););
-
-  DBUG_PRINT("info", ("Found the following number of incidents "
-                      "of the byte codes:"));
   if (verbose >= 2)
     VOID(printf("Found the following number of incidents "
                 "of the byte codes:\n"));
@@ -1100,14 +1072,10 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
     my_off_t  total_count;
     char      llbuf[32];
 
-    DBUG_PRINT("info", ("column: %3u", (uint) (count - huff_counts + 1)));
     if (verbose >= 2)
       VOID(printf("column: %3u\n", (uint) (count - huff_counts + 1)));
     if (count->tree_buff)
     {
-      DBUG_PRINT("info", ("number of distinct values: %u",
-                          (uint) ((count->tree_pos - count->tree_buff) /
-                                  count->field_length)));
       if (verbose >= 2)
         VOID(printf("number of distinct values: %u\n",
                     (uint) ((count->tree_pos - count->tree_buff) /
@@ -1119,15 +1087,11 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
       if (count->counts[idx])
       {
         total_count+= count->counts[idx];
-        DBUG_PRINT("info", ("counts[0x%02x]: %12s", idx,
-                            llstr((int64_t) count->counts[idx], llbuf)));
         if (verbose >= 2)
           VOID(printf("counts[0x%02x]: %12s\n", idx,
                       llstr((int64_t) count->counts[idx], llbuf)));
       }
     }
-    DBUG_PRINT("info", ("total:        %12s", llstr((int64_t) total_count,
-                                                    llbuf)));
     if ((verbose >= 2) && total_count)
     {
       VOID(printf("total:        %12s\n",
@@ -1138,7 +1102,7 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
   mrg->records=record_count;
   mrg->max_blob_length=max_blob_length;
   my_afree((uchar*) record);
-  DBUG_RETURN(error != HA_ERR_END_OF_FILE);
+  return(error != HA_ERR_END_OF_FILE);
 }
 
 static int compare_huff_elements(void *not_used __attribute__((unused)),
@@ -1156,7 +1120,6 @@ static void check_counts(HUFF_COUNTS *huff_counts, uint trees,
 {
   uint space_fields,fill_zero_fields,field_count[(int) FIELD_enum_val_count];
   my_off_t old_length,new_length,length;
-  DBUG_ENTER("check_counts");
 
   bzero((uchar*) field_count,sizeof(field_count));
   space_fields=fill_zero_fields=0;
@@ -1310,8 +1273,6 @@ static void check_counts(HUFF_COUNTS *huff_counts, uint trees,
     {
       HUFF_TREE tree;
 
-      DBUG_EXECUTE_IF("forceintervall",
-                      huff_counts->bytes_packed= ~ (my_off_t) 0;);
       tree.element_buffer=0;
       if (!make_huff_tree(&tree,huff_counts) &&
 	  tree.bytes_packed+tree.tree_pack_length < huff_counts->bytes_packed)
@@ -1337,16 +1298,6 @@ static void check_counts(HUFF_COUNTS *huff_counts, uint trees,
       fill_zero_fields++;
     field_count[huff_counts->field_type]++;
   }
-  DBUG_PRINT("info", ("normal:    %3d  empty-space:     %3d  "
-                      "empty-zero:       %3d  empty-fill: %3d",
-                      field_count[FIELD_NORMAL],space_fields,
-                      field_count[FIELD_SKIP_ZERO],fill_zero_fields));
-  DBUG_PRINT("info", ("pre-space: %3d  end-space:       %3d  "
-                      "intervall-fields: %3d  zero:       %3d",
-                      field_count[FIELD_SKIP_PRESPACE],
-                      field_count[FIELD_SKIP_ENDSPACE],
-                      field_count[FIELD_INTERVALL],
-                      field_count[FIELD_ZERO]));
   if (verbose)
     VOID(printf("\nnormal:    %3d  empty-space:     %3d  "
                 "empty-zero:       %3d  empty-fill: %3d\n"
@@ -1358,7 +1309,7 @@ static void check_counts(HUFF_COUNTS *huff_counts, uint trees,
                 field_count[FIELD_SKIP_ENDSPACE],
                 field_count[FIELD_INTERVALL],
                 field_count[FIELD_ZERO]));
-  DBUG_VOID_RETURN;
+  return;
 }
 
 	/* Test if we can use space-compression and empty-field-compression */
@@ -1435,11 +1386,10 @@ static HUFF_TREE* make_huff_trees(HUFF_COUNTS *huff_counts, uint trees)
 {
   uint tree;
   HUFF_TREE *huff_tree;
-  DBUG_ENTER("make_huff_trees");
 
   if (!(huff_tree=(HUFF_TREE*) my_malloc(trees*sizeof(HUFF_TREE),
 					 MYF(MY_WME | MY_ZEROFILL))))
-    DBUG_RETURN(0);
+    return(0);
 
   for (tree=0 ; tree < trees ; tree++)
   {
@@ -1448,10 +1398,10 @@ static HUFF_TREE* make_huff_trees(HUFF_COUNTS *huff_counts, uint trees)
       while (tree--)
 	my_free((uchar*) huff_tree[tree].element_buffer,MYF(0));
       my_free((uchar*) huff_tree,MYF(0));
-      DBUG_RETURN(0);
+      return(0);
     }
   }
-  DBUG_RETURN(huff_tree);
+  return(huff_tree);
 }
 
 /*
@@ -1728,7 +1678,6 @@ static my_off_t calc_packed_length(HUFF_COUNTS *huff_counts,
   uint i,found,bits_packed,first,last;
   my_off_t bytes_packed;
   HUFF_ELEMENT element_buffer[256];
-  DBUG_ENTER("calc_packed_length");
 
   /* 
     WARNING: We use a small hack for efficiency: Instead of placing
@@ -1760,7 +1709,7 @@ static my_off_t calc_packed_length(HUFF_COUNTS *huff_counts,
     }
   }
   if (!found)
-    DBUG_RETURN(0);			/* Empty tree */
+    return(0);			/* Empty tree */
   /*
     If there is only a single byte value in this field in all records,
     add a second element with zero incidence. This is required to enter
@@ -1825,7 +1774,7 @@ static my_off_t calc_packed_length(HUFF_COUNTS *huff_counts,
     queue.root[1]=(uchar*) new_huff_el;
     queue_replaced(&queue);
   }
-  DBUG_RETURN(bytes_packed+(bits_packed+7)/8);
+  return(bytes_packed+(bits_packed+7)/8);
 }
 
 
@@ -1869,8 +1818,6 @@ static uint join_same_trees(HUFF_COUNTS *huff_counts, uint trees)
       }
     }
   }
-  DBUG_PRINT("info", ("Original trees:  %d  After join: %d",
-                      trees, tree_number));
   if (verbose)
     VOID(printf("Original trees:  %d  After join: %d\n", trees, tree_number));
   return tree_number;			/* Return trees left */
@@ -1958,7 +1905,7 @@ static char *bindigits(uint64_t value, uint bits)
   char *ptr= digits;
   uint idx= bits;
 
-  DBUG_ASSERT(idx < sizeof(digits));
+  assert(idx < sizeof(digits));
   while (idx)
     *(ptr++)= '0' + ((char) (value >> (--idx)) & (char) 1);
   *ptr= '\0';
@@ -1987,7 +1934,7 @@ static char *hexdigits(uint64_t value)
   char *ptr= digits;
   uint idx= 2 * sizeof(value); /* Two hex digits per byte. */
 
-  DBUG_ASSERT(idx < sizeof(digits));
+  assert(idx < sizeof(digits));
   while (idx)
   {
     if ((*(ptr++)= '0' + ((char) (value >> (4 * (--idx))) & (char) 0xf)) > '9')
@@ -2031,24 +1978,6 @@ static void write_field_info(HUFF_COUNTS *counts, uint fields, uint trees)
   uint huff_tree_bits;
   huff_tree_bits=max_bit(trees ? trees-1 : 0);
 
-  DBUG_PRINT("info", (" "));
-  DBUG_PRINT("info", ("column types:"));
-  DBUG_PRINT("info", ("FIELD_NORMAL          0"));
-  DBUG_PRINT("info", ("FIELD_SKIP_ENDSPACE   1"));
-  DBUG_PRINT("info", ("FIELD_SKIP_PRESPACE   2"));
-  DBUG_PRINT("info", ("FIELD_SKIP_ZERO       3"));
-  DBUG_PRINT("info", ("FIELD_BLOB            4"));
-  DBUG_PRINT("info", ("FIELD_CONSTANT        5"));
-  DBUG_PRINT("info", ("FIELD_INTERVALL       6"));
-  DBUG_PRINT("info", ("FIELD_ZERO            7"));
-  DBUG_PRINT("info", ("FIELD_VARCHAR         8"));
-  DBUG_PRINT("info", ("FIELD_CHECK           9"));
-  DBUG_PRINT("info", (" "));
-  DBUG_PRINT("info", ("pack type as a set of flags:"));
-  DBUG_PRINT("info", ("PACK_TYPE_SELECTED      1"));
-  DBUG_PRINT("info", ("PACK_TYPE_SPACE_FIELDS  2"));
-  DBUG_PRINT("info", ("PACK_TYPE_ZERO_FILL     4"));
-  DBUG_PRINT("info", (" "));
   if (verbose >= 2)
   {
     VOID(printf("\n"));
@@ -2079,11 +2008,6 @@ static void write_field_info(HUFF_COUNTS *counts, uint fields, uint trees)
     else
       write_bits(counts->length_bits,5);
     write_bits((uint64_t) counts->tree->tree_number - 1, huff_tree_bits);
-    DBUG_PRINT("info", ("column: %3u  type: %2u  pack: %2u  zero: %4u  "
-                        "lbits: %2u  tree: %2u  length: %4u",
-                        i , counts->field_type, counts->pack_type,
-                        counts->max_zero_fill, counts->length_bits,
-                        counts->tree->tree_number, counts->field_length));
     if (verbose >= 2)
       VOID(printf("column: %3u  type: %2u  pack: %2u  zero: %4u  lbits: %2u  "
                   "tree: %2u  length: %4u\n", i , counts->field_type,
@@ -2121,7 +2045,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
     return 0;
   }
 
-  DBUG_PRINT("info", (" "));
   if (verbose >= 2)
     VOID(printf("\n"));
   tree_no= 0;
@@ -2132,7 +2055,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
     if (huff_tree->tree_number == 0)
       continue;				/* Deleted tree */
     tree_no++;
-    DBUG_PRINT("info", (" "));
     if (verbose >= 3)
       VOID(printf("\n"));
     /* Count the total number of elements (byte codes or column values). */
@@ -2159,11 +2081,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
       return 0;
     }
 
-    DBUG_PRINT("info", ("pos: %lu  elements: %u  tree-elements: %lu  "
-                        "char_bits: %u\n",
-                        (ulong) (file_buffer.pos - file_buffer.buffer),
-                        huff_tree->elements, (ulong) (offset - packed_tree),
-                        huff_tree->char_bits));
     if (!huff_tree->counts->tree_buff)
     {
       /* We do a byte compression on this column. Mark with bit 0. */
@@ -2186,12 +2103,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
       write_bits(huff_tree->offset_bits,5);
       intervall_length+=int_length;
     }
-    DBUG_PRINT("info", ("tree: %2u  elements: %4u  char_bits: %2u  "
-                        "offset_bits: %2u  %s: %5u  codelen: %2u",
-                        tree_no, huff_tree->elements, huff_tree->char_bits,
-                        huff_tree->offset_bits, huff_tree->counts->tree_buff ?
-                        "bufflen" : "min_chr", huff_tree->counts->tree_buff ?
-                        int_length : huff_tree->min_chr, huff_tree->height));
     if (verbose >= 2)
       VOID(printf("tree: %2u  elements: %4u  char_bits: %2u  offset_bits: %2u  "
                   "%s: %5u  codelen: %2u\n", tree_no, huff_tree->elements,
@@ -2217,10 +2128,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
 		   huff_tree->offset_bits+1);
       else
 	write_bits(packed_tree[i]-huff_tree->min_chr,huff_tree->char_bits+1);
-      DBUG_PRINT("info", ("tree[0x%04x]: %s0x%04x",
-                          i, (packed_tree[i] & IS_OFFSET) ?
-                          " -> " : "", (packed_tree[i] & IS_OFFSET) ?
-                          packed_tree[i] - IS_OFFSET + i : packed_tree[i]));
       if (verbose >= 3)
         VOID(printf("tree[0x%04x]: %s0x%04x\n",
                     i, (packed_tree[i] & IS_OFFSET) ? " -> " : "",
@@ -2242,10 +2149,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
 
       if (! (len= huff_tree->code_len[i]))
         continue;
-      DBUG_PRINT("info", ("code[0x%04x]:      0x%s  bits: %2u  bin: %s", i,
-                          hexdigits(huff_tree->code[i]), huff_tree->code_len[i],
-                          bindigits(huff_tree->code[i],
-                                    huff_tree->code_len[i])));
       if (verbose >= 3)
         VOID(printf("code[0x%04x]:      0x%s  bits: %2u  bin: %s\n", i,
                     hexdigits(huff_tree->code[i]), huff_tree->code_len[i],
@@ -2255,9 +2158,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
       code= 0;
       bits= 0;
       idx= 0;
-      DBUG_EXECUTE_IF("forcechkerr1", len--;);
-      DBUG_EXECUTE_IF("forcechkerr2", bits= 8 * sizeof(code););
-      DBUG_EXECUTE_IF("forcechkerr3", idx= length;);
       for (;;)
       {
         if (! len)
@@ -2296,7 +2196,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
       if (errors)
         break;
 
-      DBUG_EXECUTE_IF("forcechkerr4", packed_tree[idx]++;);
       if (packed_tree[idx] != i)
       {
         VOID(fflush(stdout));
@@ -2315,8 +2214,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
       for (i=0 ; i < int_length ; i++)
       {
  	write_bits((uint64_t) (uchar) huff_tree->counts->tree_buff[i], 8);
-        DBUG_PRINT("info", ("column_values[0x%04x]: 0x%02x",
-                            i, (uchar) huff_tree->counts->tree_buff[i]));
         if (verbose >= 3)
           VOID(printf("column_values[0x%04x]: 0x%02x\n",
                       i, (uchar) huff_tree->counts->tree_buff[i]));
@@ -2324,7 +2221,6 @@ static my_off_t write_huff_tree(HUFF_TREE *huff_tree, uint trees)
     }
     flush_bits();
   }
-  DBUG_PRINT("info", (" "));
   if (verbose >= 2)
     VOID(printf("\n"));
   my_afree((uchar*) packed_tree);
@@ -2413,7 +2309,6 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
   HUFF_TREE *tree;
   MI_INFO *isam_file=mrg->file[0];
   uint pack_version= (uint) isam_file->s->pack.version;
-  DBUG_ENTER("compress_isam_file");
 
   /* Allocate a buffer for the records (excluding blobs). */
   if (!(record=(uchar*) my_alloca(isam_file->s->base.reclength)))
@@ -2458,7 +2353,6 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
                     calc_pack_length(pack_version, mrg->max_blob_length) : 0;
   max_pack_length=pack_ref_length+pack_blob_length;
 
-  DBUG_PRINT("fields", ("==="));
   mrg_reset(mrg);
   while ((error=mrg_rrnd(mrg,record)) != HA_ERR_END_OF_FILE)
   {
@@ -2474,29 +2368,16 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	end_pos=start_pos+(field_length=count->field_length);
 	tree=count->tree;
 
-        DBUG_PRINT("fields", ("column: %3lu  type: %2u  pack: %2u  zero: %4u  "
-                              "lbits: %2u  tree: %2u  length: %4u",
-                              (ulong) (count - huff_counts + 1),
-                              count->field_type,
-                              count->pack_type, count->max_zero_fill,
-                              count->length_bits, count->tree->tree_number,
-                              count->field_length));
-
         /* Check if the column contains spaces only. */
 	if (count->pack_type & PACK_TYPE_SPACE_FIELDS)
 	{
 	  for (pos=start_pos ; *pos == ' ' && pos < end_pos; pos++) ;
 	  if (pos == end_pos)
 	  {
-            DBUG_PRINT("fields",
-                       ("PACK_TYPE_SPACE_FIELDS spaces only, bits:  1"));
-            DBUG_PRINT("fields", ("---"));
 	    write_bits(1,1);
 	    start_pos=end_pos;
 	    continue;
 	  }
-          DBUG_PRINT("fields",
-                     ("PACK_TYPE_SPACE_FIELDS not only spaces, bits:  1"));
 	  write_bits(0,1);
 	}
 	end_pos-=count->max_zero_fill;
@@ -2506,26 +2387,15 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	case FIELD_SKIP_ZERO:
 	  if (!memcmp((uchar*) start_pos,zero_string,field_length))
 	  {
-            DBUG_PRINT("fields", ("FIELD_SKIP_ZERO zeroes only, bits:  1"));
 	    write_bits(1,1);
 	    start_pos=end_pos;
 	    break;
 	  }
-          DBUG_PRINT("fields", ("FIELD_SKIP_ZERO not only zeroes, bits:  1"));
 	  write_bits(0,1);
 	  /* Fall through */
 	case FIELD_NORMAL:
-          DBUG_PRINT("fields", ("FIELD_NORMAL %lu bytes",
-                                (ulong) (end_pos - start_pos)));
 	  for ( ; start_pos < end_pos ; start_pos++)
           {
-            DBUG_PRINT("fields",
-                       ("value: 0x%02x  code: 0x%s  bits: %2u  bin: %s",
-                        (uchar) *start_pos,
-                        hexdigits(tree->code[(uchar) *start_pos]),
-                        (uint) tree->code_len[(uchar) *start_pos],
-                        bindigits(tree->code[(uchar) *start_pos],
-                                  (uint) tree->code_len[(uchar) *start_pos])));
 	    write_bits(tree->code[(uchar) *start_pos],
 		       (uint) tree->code_len[(uchar) *start_pos]);
           }
@@ -2537,42 +2407,22 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	  {
 	    if (length > count->min_space)
 	    {
-              DBUG_PRINT("fields",
-                         ("FIELD_SKIP_ENDSPACE more than min_space, bits:  1"));
-              DBUG_PRINT("fields",
-                         ("FIELD_SKIP_ENDSPACE skip %lu/%u bytes, bits: %2u",
-                          length, field_length, count->length_bits));
 	      write_bits(1,1);
 	      write_bits(length,count->length_bits);
 	    }
 	    else
 	    {
-              DBUG_PRINT("fields",
-                         ("FIELD_SKIP_ENDSPACE not more than min_space, "
-                          "bits:  1"));
 	      write_bits(0,1);
 	      pos=end_pos;
 	    }
 	  }
 	  else
           {
-            DBUG_PRINT("fields",
-                       ("FIELD_SKIP_ENDSPACE skip %lu/%u bytes, bits: %2u",
-                        length, field_length, count->length_bits));
 	    write_bits(length,count->length_bits);
           }
           /* Encode all significant bytes. */
-          DBUG_PRINT("fields", ("FIELD_SKIP_ENDSPACE %lu bytes",
-                                (ulong) (pos - start_pos)));
 	  for ( ; start_pos < pos ; start_pos++)
           {
-            DBUG_PRINT("fields",
-                       ("value: 0x%02x  code: 0x%s  bits: %2u  bin: %s",
-                        (uchar) *start_pos,
-                        hexdigits(tree->code[(uchar) *start_pos]),
-                        (uint) tree->code_len[(uchar) *start_pos],
-                        bindigits(tree->code[(uchar) *start_pos],
-                                  (uint) tree->code_len[(uchar) *start_pos])));
 	    write_bits(tree->code[(uchar) *start_pos],
 		       (uint) tree->code_len[(uchar) *start_pos]);
           }
@@ -2585,42 +2435,22 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	  {
 	    if (length > count->min_space)
 	    {
-              DBUG_PRINT("fields",
-                         ("FIELD_SKIP_PRESPACE more than min_space, bits:  1"));
-              DBUG_PRINT("fields",
-                         ("FIELD_SKIP_PRESPACE skip %lu/%u bytes, bits: %2u",
-                          length, field_length, count->length_bits));
 	      write_bits(1,1);
 	      write_bits(length,count->length_bits);
 	    }
 	    else
 	    {
-              DBUG_PRINT("fields",
-                         ("FIELD_SKIP_PRESPACE not more than min_space, "
-                          "bits:  1"));
 	      pos=start_pos;
 	      write_bits(0,1);
 	    }
 	  }
 	  else
           {
-            DBUG_PRINT("fields",
-                       ("FIELD_SKIP_PRESPACE skip %lu/%u bytes, bits: %2u",
-                        length, field_length, count->length_bits));
 	    write_bits(length,count->length_bits);
           }
           /* Encode all significant bytes. */
-          DBUG_PRINT("fields", ("FIELD_SKIP_PRESPACE %lu bytes",
-                                (ulong) (end_pos - start_pos)));
 	  for (start_pos=pos ; start_pos < end_pos ; start_pos++)
           {
-            DBUG_PRINT("fields",
-                       ("value: 0x%02x  code: 0x%s  bits: %2u  bin: %s",
-                        (uchar) *start_pos,
-                        hexdigits(tree->code[(uchar) *start_pos]),
-                        (uint) tree->code_len[(uchar) *start_pos],
-                        bindigits(tree->code[(uchar) *start_pos],
-                                  (uint) tree->code_len[(uchar) *start_pos])));
 	    write_bits(tree->code[(uchar) *start_pos],
 		       (uint) tree->code_len[(uchar) *start_pos]);
           }
@@ -2628,7 +2458,6 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	case FIELD_CONSTANT:
 	case FIELD_ZERO:
 	case FIELD_CHECK:
-          DBUG_PRINT("fields", ("FIELD_CONSTANT/ZERO/CHECK"));
 	  start_pos=end_pos;
 	  break;
 	case FIELD_INTERVALL:
@@ -2636,10 +2465,6 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	  pos=(uchar*) tree_search(&count->int_tree, start_pos,
 				  count->int_tree.custom_arg);
 	  intervall=(uint) (pos - count->tree_buff)/field_length;
-          DBUG_PRINT("fields", ("FIELD_INTERVALL"));
-          DBUG_PRINT("fields", ("index: %4u code: 0x%s  bits: %2u",
-                                intervall, hexdigits(tree->code[intervall]),
-                                (uint) tree->code_len[intervall]));
 	  write_bits(tree->code[intervall],(uint) tree->code_len[intervall]);
 	  start_pos=end_pos;
 	  break;
@@ -2651,17 +2476,13 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
           /* Empty blobs are encoded with a single 1 bit. */
 	  if (!blob_length)
 	  {
-            DBUG_PRINT("fields", ("FIELD_BLOB empty, bits:  1"));
             write_bits(1,1);
 	  }
 	  else
 	  {
 	    uchar *blob,*blob_end;
-            DBUG_PRINT("fields", ("FIELD_BLOB not empty, bits:  1"));
 	    write_bits(0,1);
             /* Write the blob length. */
-            DBUG_PRINT("fields", ("FIELD_BLOB %lu bytes, bits: %2u",
-                                  blob_length, count->length_bits));
 	    write_bits(blob_length,count->length_bits);
 	    memcpy_fixed(&blob,end_pos-portable_sizeof_char_ptr,
 			 sizeof(char*));
@@ -2669,12 +2490,6 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
             /* Encode the blob bytes. */
 	    for ( ; blob < blob_end ; blob++)
             {
-              DBUG_PRINT("fields",
-                         ("value: 0x%02x  code: 0x%s  bits: %2u  bin: %s",
-                          (uchar) *blob, hexdigits(tree->code[(uchar) *blob]),
-                          (uint) tree->code_len[(uchar) *blob],
-                          bindigits(tree->code[(uchar) *start_pos],
-                                    (uint)tree->code_len[(uchar) *start_pos])));
 	      write_bits(tree->code[(uchar) *blob],
 			 (uint) tree->code_len[(uchar) *blob]);
             }
@@ -2692,28 +2507,17 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
           /* Empty varchar are encoded with a single 1 bit. */
 	  if (!col_length)
 	  {
-            DBUG_PRINT("fields", ("FIELD_VARCHAR empty, bits:  1"));
 	    write_bits(1,1);			/* Empty varchar */
 	  }
 	  else
 	  {
 	    uchar *end= start_pos + var_pack_length + col_length;
-            DBUG_PRINT("fields", ("FIELD_VARCHAR not empty, bits:  1"));
 	    write_bits(0,1);
             /* Write the varchar length. */
-            DBUG_PRINT("fields", ("FIELD_VARCHAR %lu bytes, bits: %2u",
-                                  col_length, count->length_bits));
 	    write_bits(col_length,count->length_bits);
             /* Encode the varchar bytes. */
 	    for (start_pos+= var_pack_length ; start_pos < end ; start_pos++)
             {
-              DBUG_PRINT("fields",
-                         ("value: 0x%02x  code: 0x%s  bits: %2u  bin: %s",
-                          (uchar) *start_pos,
-                          hexdigits(tree->code[(uchar) *start_pos]),
-                          (uint) tree->code_len[(uchar) *start_pos],
-                          bindigits(tree->code[(uchar) *start_pos],
-                                    (uint)tree->code_len[(uchar) *start_pos])));
 	      write_bits(tree->code[(uchar) *start_pos],
 			 (uint) tree->code_len[(uchar) *start_pos]);
             }
@@ -2726,7 +2530,6 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	  abort();				/* Impossible */
 	}
 	start_pos+=count->max_zero_fill;
-        DBUG_PRINT("fields", ("---"));
       }
       flush_bits();
       length=(ulong) ((uchar*) file_buffer.pos - record_pos) - max_pack_length;
@@ -2734,11 +2537,6 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
       if (pack_blob_length)
 	pack_length+= save_pack_length(pack_version, record_pos + pack_length,
 	                               tot_blob_length);
-      DBUG_PRINT("fields", ("record: %lu  length: %lu  blob-length: %lu  "
-                            "length-bytes: %lu", (ulong) record_count, length,
-                            tot_blob_length, pack_length));
-      DBUG_PRINT("fields", ("==="));
-
       /* Correct file buffer if the header was smaller */
       if (pack_length != max_pack_length)
       {
@@ -2773,7 +2571,7 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
   mrg->ref_length=max_pack_length;
   mrg->min_pack_length=max_record_length ? min_record_length : 0;
   mrg->max_pack_length=max_record_length;
-  DBUG_RETURN(error || error_on_write || flush_buffer(~(ulong) 0));
+  return(error || error_on_write || flush_buffer(~(ulong) 0));
 }
 
 
@@ -2870,7 +2668,7 @@ static void end_file_buffer(void)
 
 static void write_bits(register uint64_t value, register uint bits)
 {
-  DBUG_ASSERT(((bits < 8 * sizeof(value)) && ! (value >> bits)) ||
+  assert(((bits < 8 * sizeof(value)) && ! (value >> bits)) ||
               (bits == 8 * sizeof(value)));
 
   if ((file_buffer.bits-= (int) bits) >= 0)
@@ -2936,7 +2734,6 @@ static int save_state(MI_INFO *isam_file,PACK_MRG_INFO *mrg,my_off_t new_length,
   MYISAM_SHARE *share=isam_file->s;
   uint options=mi_uint2korr(share->state.header.options);
   uint key;
-  DBUG_ENTER("save_state");
 
   options|= HA_OPTION_COMPRESS_RECORD | HA_OPTION_READ_ONLY_DATA;
   mi_int2store(share->state.header.options,options);
@@ -2973,7 +2770,7 @@ static int save_state(MI_INFO *isam_file,PACK_MRG_INFO *mrg,my_off_t new_length,
   (void)ftruncate(share->kfile, share->base.keystart);
   if (share->base.keys)
     isamchk_neaded=1;
-  DBUG_RETURN(mi_state_info_write(share->kfile,&share->state,1+2));
+  return(mi_state_info_write(share->kfile,&share->state,1+2));
 }
 
 
@@ -2983,7 +2780,6 @@ static int save_state_mrg(File file,PACK_MRG_INFO *mrg,my_off_t new_length,
   MI_STATE_INFO state;
   MI_INFO *isam_file=mrg->file[0];
   uint options;
-  DBUG_ENTER("save_state_mrg");
 
   state= isam_file->s->state;
   options= (mi_uint2korr(state.header.options) | HA_OPTION_COMPRESS_RECORD |
@@ -3006,7 +2802,7 @@ static int save_state_mrg(File file,PACK_MRG_INFO *mrg,my_off_t new_length,
   if (isam_file->s->base.keys)
     isamchk_neaded=1;
   state.changed=STATE_CHANGED | STATE_NOT_ANALYZED; /* Force check of table */
-  DBUG_RETURN (mi_state_info_write(file,&state,1+2));
+  return (mi_state_info_write(file,&state,1+2));
 }
 
 
@@ -3070,129 +2866,3 @@ static int mrg_close(PACK_MRG_INFO *mrg)
     my_free((uchar*) mrg->file,MYF(0));
   return error;
 }
-
-
-#if !defined(DBUG_OFF)
-/*
-  Fake the counts to get big Huffman codes.
-
-  SYNOPSIS
-    fakebigcodes()
-    huff_counts                 A pointer to the counts array.
-    end_count                   A pointer past the counts array.
-
-  DESCRIPTION
-
-    Huffman coding works by removing the two least frequent values from
-    the list of values and add a new value with the sum of their
-    incidences in a loop until only one value is left. Every time a
-    value is reused for a new value, it gets one more bit for its
-    encoding. Hence, the least frequent values get the longest codes.
-
-    To get a maximum code length for a value, two of the values must
-    have an incidence of 1. As their sum is 2, the next infrequent value
-    must have at least an incidence of 2, then 4, 8, 16 and so on. This
-    means that one needs 2**n bytes (values) for a code length of n
-    bits. However, using more distinct values forces the use of longer
-    codes, or reaching the code length with less total bytes (values).
-
-    To get 64(32)-bit codes, I sort the counts by decreasing incidence.
-    I assign counts of 1 to the two most frequent values, a count of 2
-    for the next one, then 4, 8, and so on until 2**64-1(2**30-1). All
-    the remaining values get 1. That way every possible byte has an
-    assigned code, though not all codes are used if not all byte values
-    are present in the column.
-
-    This strategy would work with distinct column values too, but
-    requires that at least 64(32) values are present. To make things
-    easier here, I cancel all distinct column values and force byte
-    compression for all columns.
-
-  RETURN
-    void
-*/
-
-static void fakebigcodes(HUFF_COUNTS *huff_counts, HUFF_COUNTS *end_count)
-{
-  HUFF_COUNTS   *count;
-  my_off_t      *cur_count_p;
-  my_off_t      *end_count_p;
-  my_off_t      **cur_sort_p;
-  my_off_t      **end_sort_p;
-  my_off_t      *sort_counts[256];
-  my_off_t      total;
-  DBUG_ENTER("fakebigcodes");
-
-  for (count= huff_counts; count < end_count; count++)
-  {
-    /*
-      Remove distinct column values.
-    */
-    if (huff_counts->tree_buff)
-    {
-      my_free((uchar*) huff_counts->tree_buff, MYF(0));
-      delete_tree(&huff_counts->int_tree);
-      huff_counts->tree_buff= NULL;
-      DBUG_PRINT("fakebigcodes", ("freed distinct column values"));
-    }
-
-    /*
-      Sort counts by decreasing incidence.
-    */
-    cur_count_p= count->counts;
-    end_count_p= cur_count_p + 256;
-    cur_sort_p= sort_counts;
-    while (cur_count_p < end_count_p)
-      *(cur_sort_p++)= cur_count_p++;
-    (void) my_qsort(sort_counts, 256, sizeof(my_off_t*), (qsort_cmp) fakecmp);
-
-    /*
-      Assign faked counts.
-    */
-    cur_sort_p= sort_counts;
-#if SIZEOF_LONG_LONG > 4
-    end_sort_p= sort_counts + 8 * sizeof(uint64_t) - 1;
-#else
-    end_sort_p= sort_counts + 8 * sizeof(uint64_t) - 2;
-#endif
-    /* Most frequent value gets a faked count of 1. */
-    **(cur_sort_p++)= 1;
-    total= 1;
-    while (cur_sort_p < end_sort_p)
-    {
-      **(cur_sort_p++)= total;
-      total<<= 1;
-    }
-    /* Set the last value. */
-    **(cur_sort_p++)= --total;
-    /*
-      Set the remaining counts.
-    */
-    end_sort_p= sort_counts + 256;
-    while (cur_sort_p < end_sort_p)
-      **(cur_sort_p++)= 1;
-  }
-  DBUG_VOID_RETURN;
-}
-
-
-/*
-  Compare two counts for reverse sorting.
-
-  SYNOPSIS
-    fakecmp()
-    count1              One count.
-    count2              Another count.
-
-  RETURN
-    1                   count1  < count2
-    0                   count1 == count2
-    -1                  count1 >  count2
-*/
-
-static int fakecmp(my_off_t **count1, my_off_t **count2)
-{
-  return ((**count1 < **count2) ? 1 :
-          (**count1 > **count2) ? -1 : 0);
-}
-#endif

@@ -42,19 +42,14 @@ static uint set_max_open_files(uint max_file_limit)
 {
   struct rlimit rlimit;
   uint old_cur;
-  DBUG_ENTER("set_max_open_files");
-  DBUG_PRINT("enter",("files: %u", max_file_limit));
 
   if (!getrlimit(RLIMIT_NOFILE,&rlimit))
   {
     old_cur= (uint) rlimit.rlim_cur;
-    DBUG_PRINT("info", ("rlim_cur: %u  rlim_max: %u",
-			(uint) rlimit.rlim_cur,
-			(uint) rlimit.rlim_max));
     if (rlimit.rlim_cur == RLIM_INFINITY)
       rlimit.rlim_cur = max_file_limit;
     if (rlimit.rlim_cur >= max_file_limit)
-      DBUG_RETURN(rlimit.rlim_cur);		/* purecov: inspected */
+      return(rlimit.rlim_cur);		/* purecov: inspected */
     rlimit.rlim_cur= rlimit.rlim_max= max_file_limit;
     if (setrlimit(RLIMIT_NOFILE, &rlimit))
       max_file_limit= old_cur;			/* Use original value */
@@ -62,13 +57,11 @@ static uint set_max_open_files(uint max_file_limit)
     {
       rlimit.rlim_cur= 0;			/* Safety if next call fails */
       (void) getrlimit(RLIMIT_NOFILE,&rlimit);
-      DBUG_PRINT("info", ("rlim_cur: %u", (uint) rlimit.rlim_cur));
       if (rlimit.rlim_cur)			/* If call didn't fail */
 	max_file_limit= (uint) rlimit.rlim_cur;
     }
   }
-  DBUG_PRINT("exit",("max_file_limit: %u", max_file_limit));
-  DBUG_RETURN(max_file_limit);
+  return(max_file_limit);
 }
 
 #else
@@ -94,16 +87,14 @@ static int set_max_open_files(uint max_file_limit)
 uint my_set_max_open_files(uint files)
 {
   struct st_my_file_info *tmp;
-  DBUG_ENTER("my_set_max_open_files");
-  DBUG_PRINT("enter",("files: %u  my_file_limit: %u", files, my_file_limit));
 
   files= set_max_open_files(min(files, OS_FILE_LIMIT));
   if (files <= MY_NFILE)
-    DBUG_RETURN(files);
+    return(files);
 
   if (!(tmp= (struct st_my_file_info*) my_malloc(sizeof(*tmp) * files,
 						 MYF(MY_WME))))
-    DBUG_RETURN(MY_NFILE);
+    return(MY_NFILE);
 
   /* Copy any initialized files */
   memcpy((char*) tmp, (char*) my_file_info,
@@ -113,14 +104,12 @@ uint my_set_max_open_files(uint files)
   my_free_open_file_info();			/* Free if already allocated */
   my_file_info= tmp;
   my_file_limit= files;
-  DBUG_PRINT("exit",("files: %u", files));
-  DBUG_RETURN(files);
+  return(files);
 }
 
 
 void my_free_open_file_info()
 {
-  DBUG_ENTER("my_free_file_info");
   if (my_file_info != my_file_info_default)
   {
     /* Copy data back for my_print_open_files */
@@ -130,5 +119,5 @@ void my_free_open_file_info()
     my_file_info= my_file_info_default;
     my_file_limit= MY_NFILE;
   }
-  DBUG_VOID_RETURN;
+  return;
 }

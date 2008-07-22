@@ -70,7 +70,7 @@ size_t my_caseup_mb(CHARSET_INFO * cs, char *src, size_t srclen,
   register char *srcend= src + srclen;
   register uchar *map= cs->to_upper;
 
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
   while (src < srcend)
   {
     if ((l=my_ismbchar(cs, src, srcend)))
@@ -93,7 +93,7 @@ size_t my_casedn_mb(CHARSET_INFO * cs, char *src, size_t srclen,
   register char *srcend= src + srclen;
   register uchar *map=cs->to_lower;
 
-  DBUG_ASSERT(src == dst && srclen == dstlen);  
+  assert(src == dst && srclen == dstlen);  
   while (src < srcend)
   {
     if ((l= my_ismbchar(cs, src, srcend)))
@@ -487,7 +487,7 @@ my_strnxfrm_mb(CHARSET_INFO *cs,
   const uchar *se= src + srclen;
   const uchar *sort_order= cs->sort_order;
 
-  DBUG_ASSERT(cs->mbmaxlen <= 4);
+  assert(cs->mbmaxlen <= 4);
 
   /*
     If "srclen" is smaller than both "dstlen" and "nweights"
@@ -610,7 +610,7 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
   buflen= cs->cset->wc_mb(cs, cs->max_sort_char, (uchar*) buf,
                           (uchar*) buf + sizeof(buf));
   
-  DBUG_ASSERT(buflen > 0);
+  assert(buflen > 0);
   do
   {
     if ((str + buflen) < end)

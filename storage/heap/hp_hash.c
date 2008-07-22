@@ -53,7 +53,6 @@ ha_rows hp_rb_records_in_range(HP_INFO *info, int inx,  key_range *min_key,
   HP_KEYDEF *keyinfo= info->s->keydef + inx;
   TREE *rb_tree = &keyinfo->rb_tree;
   heap_rb_param custom_arg;
-  DBUG_ENTER("hp_rb_records_in_range");
 
   info->lastinx= inx;
   custom_arg.keyseg= keyinfo->seg;
@@ -84,11 +83,9 @@ ha_rows hp_rb_records_in_range(HP_INFO *info, int inx,  key_range *min_key,
     end_pos= rb_tree->elements_in_tree + (ha_rows)1;
   }
 
-  DBUG_PRINT("info",("start_pos: %lu  end_pos: %lu", (ulong) start_pos,
-		     (ulong) end_pos));
   if (start_pos == HA_POS_ERROR || end_pos == HA_POS_ERROR)
-    DBUG_RETURN(HA_POS_ERROR);
-  DBUG_RETURN(end_pos < start_pos ? (ha_rows) 0 :
+    return(HA_POS_ERROR);
+  return(end_pos < start_pos ? (ha_rows) 0 :
 	      (end_pos == start_pos ? (ha_rows) 1 : end_pos - start_pos));
 }
 
@@ -104,7 +101,6 @@ uchar *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
   int flag;
   uint old_nextflag;
   HP_SHARE *share=info->s;
-  DBUG_ENTER("hp_search");
   old_nextflag=nextflag;
   flag=1;
   prev_ptr=0;
@@ -119,9 +115,8 @@ uchar *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
       {
 	switch (nextflag) {
 	case 0:					/* Search after key */
-	  DBUG_PRINT("exit", ("found key at 0x%lx", (long) pos->ptr_to_rec));
 	  info->current_hash_ptr=pos;
-	  DBUG_RETURN(info->current_ptr= pos->ptr_to_rec);
+	  return(info->current_ptr= pos->ptr_to_rec);
 	case 1:					/* Search next */
 	  if (pos->ptr_to_rec == info->current_ptr)
 	    nextflag=0;
@@ -131,7 +126,7 @@ uchar *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
 	  {
 	    my_errno=HA_ERR_KEY_NOT_FOUND;	/* If gpos == 0 */
 	    info->current_hash_ptr=prev_ptr;
-	    DBUG_RETURN(info->current_ptr=prev_ptr ? prev_ptr->ptr_to_rec : 0);
+	    return(info->current_ptr=prev_ptr ? prev_ptr->ptr_to_rec : 0);
 	  }
 	  prev_ptr=pos;				/* Prev. record found */
 	  break;
@@ -139,7 +134,7 @@ uchar *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
 	  if (pos->ptr_to_rec == info->current_ptr)
 	  {
 	    info->current_hash_ptr=pos;
-	    DBUG_RETURN(info->current_ptr);
+	    return(info->current_ptr);
 	  }
 	}
       }
@@ -159,14 +154,13 @@ uchar *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
   {
     /* Do a previous from end */
     info->current_hash_ptr=prev_ptr;
-    DBUG_RETURN(info->current_ptr=prev_ptr ? prev_ptr->ptr_to_rec : 0);
+    return(info->current_ptr=prev_ptr ? prev_ptr->ptr_to_rec : 0);
   }
 
   if (old_nextflag && nextflag)
     my_errno=HA_ERR_RECORD_CHANGED;		/* Didn't find old record */
-  DBUG_PRINT("exit",("Error: %d",my_errno));
   info->current_hash_ptr=0;  
-  DBUG_RETURN((info->current_ptr= 0));
+  return((info->current_ptr= 0));
 }
 
 
@@ -178,20 +172,17 @@ uchar *hp_search(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
 uchar *hp_search_next(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
 		      HASH_INFO *pos)
 {
-  DBUG_ENTER("hp_search_next");
-
   while ((pos= pos->next_key))
   {
     if (! hp_key_cmp(keyinfo, pos->ptr_to_rec, key))
     {
       info->current_hash_ptr=pos;
-      DBUG_RETURN (info->current_ptr= pos->ptr_to_rec);
+      return (info->current_ptr= pos->ptr_to_rec);
     }
   }
   my_errno=HA_ERR_KEY_NOT_FOUND;
-  DBUG_PRINT("exit",("Error: %d",my_errno));
   info->current_hash_ptr=0;
-  DBUG_RETURN ((info->current_ptr= 0));
+  return ((info->current_ptr= 0));
 }
 
 
@@ -298,7 +289,6 @@ ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
       }
     }
   }
-  DBUG_PRINT("exit", ("hash: 0x%lx", nr));
   return((ulong) nr);
 }
 
@@ -356,7 +346,6 @@ ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
       }
     }
   }
-  DBUG_PRINT("exit", ("hash: 0x%lx", nr));
   return(nr);
 }
 
@@ -427,7 +416,6 @@ ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
       }
     }
   }
-  DBUG_PRINT("exit", ("hash: 0x%lx", nr));
   return(nr);
 }
 
@@ -472,7 +460,6 @@ ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
       }
     }
   }
-  DBUG_PRINT("exit", ("hash: 0x%lx", nr));
   return(nr);
 }
 
@@ -983,7 +970,7 @@ void heap_update_auto_increment(HP_INFO *info, const uchar *record)
     value= uint8korr(key);
     break;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     value=0;                                    /* Error */
     break;
   }

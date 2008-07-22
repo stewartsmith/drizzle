@@ -188,8 +188,6 @@ else
   AC_PATH_PROG(AS, as, as)
 fi
 
-# Still need ranlib for readline; local static use only so no libtool.
-AC_PROG_RANLIB
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
@@ -365,6 +363,11 @@ AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
 
+AM_PATH_GLIB_2_0
+if test "x$no_glib" != "x" ; then
+    AC_MSG_ERROR([Couldn't find GLib2. Try installing libglib2.0-dev or glib2-devel])
+fi
+
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
 # This must be able to take a -f flag like normal unix ln.
@@ -531,23 +534,6 @@ else
   AC_MSG_RESULT([no])
 fi
 
-# Add query profiler
-AC_MSG_CHECKING(if SHOW PROFILE should be enabled.)
-AC_ARG_ENABLE([profiling],
-    [AS_HELP_STRING([--enable-profiling], 
-	    [Build a version with query profiling code])],
-    [ ENABLED_PROFILING=$enableval ],
-    [ ENABLED_PROFILING=no ])
-
-if test "$ENABLED_PROFILING" = "yes"
-then
-  AC_DEFINE([ENABLED_PROFILING], [1],
-            [If SHOW PROFILE should be enabled])
-  AC_MSG_RESULT([yes]) 
-else
-  AC_MSG_RESULT([no])
-fi
-
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
             [Which port to use for Drizzle services @<:@default=4427@:>@])],
@@ -674,18 +660,17 @@ AC_CHECK_TYPES([fp_except], [], [], [
 #include <ieeefp.h>
 ])
 
-
 my_save_LIBS="$LIBS"
 LIBS=""
 AC_CHECK_LIB(dl,dlopen)
+AC_CHECK_FUNCS(dlopen dlerror)
+if test "$ac_cv_func_dlopen" != "yes"
+then
+  AC_MSG_ERROR([Drizzle requires dlopen])
+fi
 LIBDL=$LIBS
 LIBS="$my_save_LIBS"
 AC_SUBST(LIBDL)
-
-my_save_LIBS="$LIBS"
-LIBS="$LIBS $LIBDL"
-AC_CHECK_FUNCS(dlopen dlerror)
-LIBS="$my_save_LIBS"
 
 AC_CHECK_FUNCS(strtok_r)
 
@@ -728,42 +713,6 @@ fi
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
 CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
 
-AC_ARG_WITH([debug],
-    [AS_HELP_STRING([--with-debug],
-            [Add debug code (yes|no|full) @<:@default=no@:>@ 
-	    Full adds memory checked, very slow.])],
-    [with_debug=$withval],
-    [with_debug=no])
-AM_CONDITIONAL(BUILD_DBUG, test "$with_debug" != "no")
-if test "$with_debug" = "yes"
-then
-  # Medium debug.
-  AC_DEFINE([DBUG_ON], [1], [Use libdbug])
-  CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS"
-  CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
-else
-  # Optimized version. No debug
-  AC_DEFINE([DBUG_OFF], [1], [Dont use libdbug])
-  CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
-  CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
-fi
-
-# If we should allow error injection tests
-AC_ARG_WITH([error-inject],
-    [AS_HELP_STRING([--with-error-inject],
-	    [Enable error injection in Drizzle Server @<:@default=off@:>@])],
-    [ with_error_inject=$withval ],
-    [ with_error_inject=no ])
-
-if test $with_debug != "no"
-then
-  if test "$with_error_inject" = "yes"
-  then
-    AC_DEFINE([ERROR_INJECT_SUPPORT], [1],
-              [Enable error injection in Drizzle Server])
-  fi
-fi
-
 AC_ARG_WITH([fast-mutexes],
     [AS_HELP_STRING([--with-fast-mutexes],
 	    [Compile with fast mutexes  @<:@default=off@:>@])],
@@ -772,13 +721,8 @@ AC_ARG_WITH([fast-mutexes],
 
 if test "$with_fast_mutexes" != "no"
 then
-  if test "$with_debug" != "no"
-  then
-    AC_MSG_WARN(['--with-fast-mutexes' ignored when '--with-debug' is given])
-  else
-    AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
-	      [Define to 1 if you want to use fast mutexes])
-  fi
+	AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
+			[Define to 1 if you want to use fast mutexes])
 fi
 
 AC_ARG_WITH([comment],
@@ -800,26 +744,6 @@ then
   AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
 else
   TARGET_LINUX="false"
-fi
-
-AC_MSG_CHECKING("need of special linking flags")
-if test "$TARGET_LINUX" = "true" -a "$ac_cv_c_compiler_gnu" = "yes" -a "$all_is_static" != "yes"
-then
-  LDFLAGS="$LDFLAGS -rdynamic"
-  AC_MSG_RESULT("-rdynamic")
-else
-  case "$SYSTEM_TYPE$with_mysqld_ldflags " in
-  *freebsd*"-all-static "*|*dragonfly*"-all-static "*)
-    AC_MSG_RESULT("none")
-    ;;
-  *freebsd*|*dragonfly*)
-    MYSQLD_EXTRA_LDFLAGS="$MYSQLD_EXTRA_LDFLAGS -export-dynamic"
-    AC_MSG_RESULT("-export-dynamic")
-    ;;
-  *)
-    AC_MSG_RESULT("none")
-    ;;
-  esac
 fi
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -1188,6 +1112,18 @@ AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
 
+AC_ARG_ENABLE([profiling],
+    [AS_HELP_STRING([--enable-profiling],
+       [Toggle profiling @<:@default=off@:>@])],
+    [ac_profiling="$enableval"],
+    [ac_profiling="no"])
+
+AC_ARG_ENABLE([coverage],
+    [AS_HELP_STRING([--enable-coverage],
+       [Toggle coverage @<:@default=off@:>@])],
+    [ac_coverage="$enableval"],
+    [ac_coverage="no"])
+
 AC_ARG_ENABLE([pedantic-warnings],
     [AS_HELP_STRING([--disable-pedantic-warnings],
        [Toggle pedanticness @<:@default=on@:>@])],
@@ -1236,6 +1172,20 @@ then
     W_STRICT_ALIASING="-Wno-strict-aliasing"
   fi
 
+  if test "$ac_profiling" = "yes"
+  then
+    GPROF_PROFILING="-pg"
+  else
+    GPROF_PROFILING=" "
+  fi
+
+  if test "$ac_coverage" = "yes"
+  then
+    GPROF_COVERAGE="-fprofile-arcs -ftest-coverage"
+  else
+    GPROF_COVERAGE=" "
+  fi
+
   if test "$ac_warn_pedantic" = "yes"
   then
     GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
@@ -1253,8 +1203,8 @@ then
   fi
 
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL}"
-  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL}"
+  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
   CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
@@ -1281,7 +1231,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  server/Makefile server/share/Makefile dnl
  server/sql_builtin.cc dnl
- dbug/Makefile include/Makefile dnl
+ include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  include/drizzle_version.h plugin/Makefile dnl

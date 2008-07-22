@@ -30,9 +30,6 @@ char * fn_format(char * to, const char *name, const char *dir,
   const char *ext;
   register size_t length;
   size_t dev_length;
-  DBUG_ENTER("fn_format");
-  DBUG_PRINT("enter",("name: %s  dir: %s  extension: %s  flag: %d",
-		       name,dir,extension,flag));
 
   /* Copy and skip directory */
   name+=(length=dirname_part(dev, (startpos=(char *) name), &dev_length));
@@ -81,8 +78,6 @@ char * fn_format(char * to, const char *name, const char *dir,
     if (flag & MY_SAFE_PATH)
       return NullS;
     tmp_length= strlength(startpos);
-    DBUG_PRINT("error",("dev: '%s'  ext: '%s'  length: %u",dev,ext,
-                        (uint) length));
     (void) strmake(to,startpos,min(tmp_length,FN_REFLEN-1));
   }
   else
@@ -107,7 +102,7 @@ char * fn_format(char * to, const char *name, const char *dir,
     strmov(buff,to);
     (void) my_readlink(to, buff, MYF(0));
   }
-  DBUG_RETURN(to);
+  return(to);
 } /* fn_format */
 
 
@@ -120,7 +115,6 @@ size_t strlength(const char *str)
 {
   register const char * pos;
   register const char * found;
-  DBUG_ENTER("strlength");
 
   pos= found= str;
 
@@ -138,5 +132,5 @@ size_t strlength(const char *str)
     found=pos;
     while (*++pos == ' ') {};
   }
-  DBUG_RETURN((size_t) (found - str));
+  return((size_t) (found - str));
 } /* strlength */

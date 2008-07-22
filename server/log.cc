@@ -4679,20 +4679,16 @@ uint64_t mysql_bin_log_file_pos(void)
 #endif /* INNODB_COMPATIBILITY_HOOKS */
 
 
-struct st_mysql_storage_engine binlog_storage_engine=
-{ MYSQL_HANDLERTON_INTERFACE_VERSION };
-
 mysql_declare_plugin(binlog)
 {
   MYSQL_STORAGE_ENGINE_PLUGIN,
-  &binlog_storage_engine,
   "binlog",
+  "1.0",
   "MySQL AB",
   "This is a pseudo storage engine to represent the binlog in a transaction",
   PLUGIN_LICENSE_GPL,
   binlog_init, /* Plugin Init */
   NULL, /* Plugin Deinit */
-  0x0100 /* 1.0 */,
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */

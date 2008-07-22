@@ -2892,7 +2892,7 @@ handler::ha_enable_indexes(uint mode)
 */
 
 int
-handler::ha_discard_or_import_tablespace(my_bool discard)
+handler::ha_discard_or_import_tablespace(bool discard)
 {
   mark_trx_read_write();
 

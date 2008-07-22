@@ -484,11 +484,11 @@ public:
 class sys_var_thd_bool :public sys_var_thd
 {
 public:
-  my_bool SV::*offset;
-  sys_var_thd_bool(sys_var_chain *chain, const char *name_arg, my_bool SV::*offset_arg)
+  bool SV::*offset;
+  sys_var_thd_bool(sys_var_chain *chain, const char *name_arg, bool SV::*offset_arg)
     :sys_var_thd(name_arg), offset(offset_arg)
   { chain_sys_var(chain); }
-  sys_var_thd_bool(sys_var_chain *chain, const char *name_arg, my_bool SV::*offset_arg,
+  sys_var_thd_bool(sys_var_chain *chain, const char *name_arg, bool SV::*offset_arg,
 		   sys_after_update_func func)
     :sys_var_thd(name_arg,func), offset(offset_arg)
   { chain_sys_var(chain); }

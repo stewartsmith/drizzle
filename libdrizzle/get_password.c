@@ -80,7 +80,6 @@ char *get_tty_password(const char *opt_message)
   char to[80];
   char *pos=to,*end=to+sizeof(to)-1;
   int i=0;
-  DBUG_ENTER("get_tty_password");
   _cputs(opt_message ? opt_message : "Enter password: ");
   for (;;)
   {
@@ -106,7 +105,7 @@ char *get_tty_password(const char *opt_message)
     pos--;					/* Allow dummy space at end */
   *pos=0;
   _cputs("\n");
-  DBUG_RETURN(my_strdup(to,MYF(MY_FAE)));
+  return(my_strdup(to,MYF(MY_FAE)));
 }
 
 #else
@@ -168,8 +167,6 @@ char *get_tty_password(const char *opt_message)
 #endif /* HAVE_GETPASS */
   char buff[80];
 
-  DBUG_ENTER("get_tty_password");
-
 #ifdef HAVE_GETPASS
   passbuff = getpass(opt_message ? opt_message : "Enter password: ");
 
@@ -215,6 +212,6 @@ char *get_tty_password(const char *opt_message)
     fputc('\n',stdout);
 #endif /* HAVE_GETPASS */
 
-  DBUG_RETURN(my_strdup(buff,MYF(MY_FAE)));
+  return(my_strdup(buff,MYF(MY_FAE)));
 }
 #endif /*__WIN__*/

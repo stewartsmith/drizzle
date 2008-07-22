@@ -392,7 +392,6 @@ char *get_charsets_dir(char *buf)
 {
   const char *sharedir= SHAREDIR;
   char *res;
-  DBUG_ENTER("get_charsets_dir");
 
   if (charsets_dir != NULL)
     strmake(buf, charsets_dir, FN_REFLEN-1);
@@ -406,8 +405,7 @@ char *get_charsets_dir(char *buf)
 	      NullS);
   }
   res= convert_dirname(buf,buf,NullS);
-  DBUG_PRINT("info",("charsets dir: '%s'", buf));
-  DBUG_RETURN(res);
+  return(res);
 }
 
 CHARSET_INFO *all_charsets[256];
@@ -593,8 +591,6 @@ CHARSET_INFO *get_charset_by_csname(const char *cs_name,
 {
   uint cs_number;
   CHARSET_INFO *cs;
-  DBUG_ENTER("get_charset_by_csname");
-  DBUG_PRINT("enter",("name: '%s'", cs_name));
 
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
@@ -608,7 +604,7 @@ CHARSET_INFO *get_charset_by_csname(const char *cs_name,
     my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_name, index_file);
   }
 
-  DBUG_RETURN(cs);
+  return(cs);
 }
 
 
