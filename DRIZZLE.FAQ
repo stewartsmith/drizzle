@@ -5,7 +5,7 @@ Hi!
 I've been wondering for a long time now about all of the changes post 4.1.
 I believe there is a large market of users who never wanted them, and never
 cared for them. I also wanted to question the foundations of what we built.
-Do uses want wrong data? How often is the query cache really valuable? If
+Do users want wrong data? How often is the query cache really valuable? If
 everyone just has a root user with all privs, why carry the baggage of the
 ACL code. Etc.
 
@@ -16,8 +16,9 @@ through interfaces that can be compiled/loaded in as needed).
 
 * So the differences?
 
-No modes, views, triggers, stored procedures, query cache, data conversion inserts,
-ACL. Less engines, less code. Assume the primary engine is transactional. 
+No modes, views, triggers, prepared statements, stored procedures, query cache, 
+data conversion inserts, ACL. Fewer data types.  Less engines, less code. 
+Assume the primary engine is transactional. 
 
 * Why now?
 
@@ -61,15 +62,16 @@ Please ask on the mailing list or on IRC.
 
 * Can I get involved?
 
-Most certainly. There is plenty to do from refactoring code, design of intereface, 
-to documentation, etc... The best way to get involved it to join the mailing
-list at:
+Most certainly. There is plenty to do from refactoring code, design of interfaces, 
+documentation and blueprints, etc... The best way to get involved it to join the 
+mailing list at:
+
 https://launchpad.net/~drizzle-discuss/
 
 If you wish to suggest a refactoring project or an interface please email
 the mailing list and keep an open mind. Do not expect anyone will work on
 your idea though, you may influence someone to do that, but more then likely
-you will need to rollup your sleaves and write some code. For very simple
+you will need to rollup your sleeves and write some code. For very simple
 bits you are welcome to ask others on #drizzle on Freenode, but please be
 aware that you may be asked to email the mailing list. 
 
@@ -82,9 +84,9 @@ through someone who has been around long enough to understand code
 requirements to review your code. This system is based entirely on trust,
 and individuals who have shown that they can provide three good patches gain
 credibility. Starting small is fine, patches that are just comments or are
-event two or three line cleanups are welcome and encouraged. I would really
-recommend anyone who wants to work on something start with something of this
-size. Patches like these are valuable and they teach you how to work with
+even two or three line cleanups are welcome and encouraged. I would really
+recommend that anyone who wants to work on something first start with something 
+of this size. Patches like these are valuable and teach you how to work with
 the system.
 
 The general rule is no new code in the core of the server, and any changes
@@ -98,10 +100,11 @@ performance, and over all maintenance then we are features.
 * What is the coding style?
 
 Please look here:
+
 https://blueprints.launchpad.net/drizzle/+spec/style-cleanup
 
 If you have a question on this, please email the mailing list so that we can
-clarifying the document. And when you get the answer? Please update the code
+clarify the document. And when you get the answer? Please update the code
 style document :)
 
 * Should I email the mailing list with patches?
@@ -116,7 +119,9 @@ pull from it.
 Deliver a microkernel that we can use to build a database that meets the
 needs of a web/cloud infrastructure. To this end we are exploring http
 interfaces, sharding enhancements, etc... do not expect an Oracle, MySQL,
-Postgres, or DB2. There is no GA date at the moment.
+Postgres, or DB2. 
+
+There is no GA date at the moment.
 
 We are focusing on multi-core architecture. This is not designed to run on a
 wrist watch (hint, go use SQLite). We support both 32bit and 64bit but the
@@ -125,10 +130,10 @@ which assume very large amounts of RAM will be made available to the DB.
 
 * Can I run a website with this?
 
-No. We are stil making incompatible changes, and I certainly do not believe
+No. We are still making incompatible changes, and I certainly do not believe
 the code is production quality. Right now we are defaulting many configure
 operations to generate debugging code for us so our binaries are not
-optimum, so do not got out and benchmark this and expect it to be one way or
+optimal.  Therefore, do not go out and benchmark this and expect it to be one way or
 the other. We are currently only doing benchmarks where it makes sense for
 us to determine where bottlenecks are.
 
@@ -136,7 +141,7 @@ us to determine where bottlenecks are.
 
 Drizzle inherits its license from MySQL's GPL. Any libraries not connected
 to this are licensed under their own distribution license. All source files
-are clearly idenified.
+are clearly identified.
 
 * Why drizzle?
 

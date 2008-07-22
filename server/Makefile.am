@@ -89,6 +89,21 @@ noinst_HEADERS = item.h \
 		 unireg.h \
 		 sql_error.h \
 		 field.h \
+		 field/blob.h \
+		 field/null.h \
+		 field/datetime.h \
+		 field/timetype.h \
+		 field/timestamp.h \
+     field/date.h \
+     field/year.h \
+		 field/short.h \
+		 field/long.h \
+		 field/int64_t.h \
+		 field/decimal.h \
+		 field/double.h \
+		 field/string.h \
+		 field/varstring.h \
+		 field/set.h \
 		 handler.h \
 		 mysqld_suffix.h \
 		 rpl_constants.h \
@@ -139,6 +154,21 @@ drizzled_SOURCES = sql_lex.cc \
 		   item_subselect.cc \
 		   item_row.cc \
 		   field.cc \
+			 field/blob.cc \
+			 field/null.cc \
+			 field/datetime.cc \
+			 field/timetype.cc \
+			 field/timestamp.cc \
+       field/date.cc \
+       field/year.cc \
+			 field/short.cc \
+			 field/long.cc \
+			 field/int64_t.cc \
+			 field/decimal.cc \
+			 field/double.cc \
+			 field/string.cc \
+			 field/varstring.cc \
+			 field/set.cc \
 		   strfunc.cc \
 		   key.cc \
 		   sql_class.cc \
