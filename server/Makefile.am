@@ -26,8 +26,7 @@ MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =$(pkglibdir)/plugin
 
 AM_CPPFLAGS =-I$(top_builddir)/include \
-	     -I$(top_srcdir)/include \
-	     -I$(srcdir) $(openssl_includes) 
+	     -I$(top_srcdir)/include
 
 SUBDIRS =. share
 
