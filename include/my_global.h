@@ -630,7 +630,7 @@ typedef unsigned long uint32;
 #endif
 
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
-typedef uint32_t	ulong;		  /* Short for unsigned long */
+typedef unsigned long ulong;		  /* Short for unsigned long */
 #endif
 #ifndef int64_t_defined
 /* 

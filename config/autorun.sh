@@ -29,7 +29,9 @@ if test -d ".bzr" ; then
 fi
 
 if test x$LIBTOOLIZE = x; then
-  if test \! "x`which libtoolize-1.5 2> /dev/null | grep -v '^no'`" = x; then
+  if test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
+    LIBTOOLIZE=glibtoolize
+  elif test \! "x`which libtoolize-1.5 2> /dev/null | grep -v '^no'`" = x; then
     LIBTOOLIZE=libtoolize-1.5
   elif test \! "x`which libtoolize 2> /dev/null | grep -v '^no'`" = x; then
     LIBTOOLIZE=libtoolize

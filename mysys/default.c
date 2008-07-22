@@ -87,7 +87,7 @@ static int search_default_file_with_ext(Process_option_func func,
   @return void
 */
 
-static void (*init_default_directories)(void);
+static void init_default_directories(void);
 
 
 static char *remove_end_comment(char *ptr);
@@ -952,7 +952,7 @@ void print_defaults(const char *conf_file, const char **groups)
     6. "~/"
 */
 
-static void init_default_directories_unix(void)
+static void init_default_directories(void)
 {
   bzero((char *) default_directories, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
@@ -963,5 +963,3 @@ static void init_default_directories_unix(void)
   ADD_COMMON_DIRECTORIES();
   ADD_DIRECTORY("~/");
 }
-
-static void (*init_default_directories)(void)= init_default_directories_unix;

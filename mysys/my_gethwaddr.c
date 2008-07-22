@@ -73,7 +73,7 @@ err:
   return res;
 }
 
-#elif __linux__
+#elif defined(__linux__)
 
 #include <net/if.h>
 #include <sys/ioctl.h>
