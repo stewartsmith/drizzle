@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "short.h"
+#include "field/short.h"
 
 /****************************************************************************
  Field type short int (2 byte)

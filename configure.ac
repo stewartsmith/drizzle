@@ -1263,7 +1263,9 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
- server/Makefile server/share/Makefile dnl
+ server/Makefile dnl
+ server/field/Makefile dnl
+ server/share/Makefile dnl
  server/sql_builtin.cc dnl
  include/Makefile dnl
  support-files/Makefile dnl

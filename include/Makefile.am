@@ -71,7 +71,23 @@ noinst_HEADERS =	my_bit.h \
 			base64.h \
 			drizzle_version.h.in \
 			my_handler.h \
-			my_time.h
+			my_time.h \
+			field/blob.h \
+			field/date.h \
+			field/datetime.h \
+			field/decimal.h \
+			field/double.h \
+			field/int64_t.h \
+			field/long.h \
+			field/null.h \
+			field/set.h \
+			field/short.h \
+			field/string.h \
+			field/timestamp.h \
+			field/timetype.h \
+			field/varstring.h \
+			field/year.h
+
 
 # Remove built files and the symlinked directories
 CLEANFILES = 		$(BUILT_SOURCES)

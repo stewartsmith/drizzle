@@ -28,7 +28,7 @@ pkgplugindir =$(pkglibdir)/plugin
 AM_CPPFLAGS =-I$(top_builddir)/include \
 	     -I$(top_srcdir)/include
 
-SUBDIRS =. share
+SUBDIRS = field . share
 
 libexec_PROGRAMS =drizzled
 
@@ -36,8 +36,8 @@ EXTRA_PROGRAMS =gen_lex_hash
 
 bin_PROGRAMS =
 
-bin_SCRIPTS = drizzledumpslow \
-drizzled_safe 
+bin_SCRIPTS = 	drizzledumpslow \
+		drizzled_safe 
 
 DTRACE = @DTRACE@
 
@@ -60,6 +60,7 @@ LDADD = $(top_builddir)/vio/libviolt.la \
 
 drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
+		 $(top_builddir)/server/field/libfield.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) \
@@ -85,21 +86,6 @@ noinst_HEADERS = item.h \
 		 unireg.h \
 		 sql_error.h \
 		 field.h \
-		 field/blob.h \
-		 field/null.h \
-		 field/datetime.h \
-		 field/timetype.h \
-		 field/timestamp.h \
-     field/date.h \
-     field/year.h \
-		 field/short.h \
-		 field/long.h \
-		 field/int64_t.h \
-		 field/decimal.h \
-		 field/double.h \
-		 field/string.h \
-		 field/varstring.h \
-		 field/set.h \
 		 handler.h \
 		 mysqld_suffix.h \
 		 rpl_constants.h \
@@ -150,21 +136,6 @@ drizzled_SOURCES = sql_lex.cc \
 		   item_subselect.cc \
 		   item_row.cc \
 		   field.cc \
-			 field/blob.cc \
-			 field/null.cc \
-			 field/datetime.cc \
-			 field/timetype.cc \
-			 field/timestamp.cc \
-       field/date.cc \
-       field/year.cc \
-			 field/short.cc \
-			 field/long.cc \
-			 field/int64_t.cc \
-			 field/decimal.cc \
-			 field/double.cc \
-			 field/string.cc \
-			 field/varstring.cc \
-			 field/set.cc \
 		   strfunc.cc \
 		   key.cc \
 		   sql_class.cc \

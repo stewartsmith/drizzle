@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "int64_t.h"
+#include "field/int64_t.h"
 
 /****************************************************************************
  Field type int64_t int (8 bytes)

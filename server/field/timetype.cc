@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "timetype.h"
+#include "field/timetype.h"
 
 /****************************************************************************
 ** time type
