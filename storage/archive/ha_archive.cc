@@ -23,8 +23,6 @@
 #include "ha_archive.h"
 #include <my_dir.h>
 
-#include <mysql/plugin.h>
-
 /*
   First, if you want to understand storage engines you should look at 
   ha_example.cc and ha_example.h. 

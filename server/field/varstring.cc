@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "field/varstring.h"
+#include "drizzle/server/field/varstring.h"
 
 /****************************************************************************
   VARCHAR type

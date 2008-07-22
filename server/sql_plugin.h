@@ -35,7 +35,7 @@ class sys_var;
                      SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS, SHOW_HAVE,   \
                      SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_LONG_NOFLUSH, \
                      SHOW_LONGLONG_STATUS
-#include <mysql/plugin.h>
+#include <drizzle/plugin.h>
 #undef SHOW_FUNC
 typedef enum enum_mysql_show_type SHOW_TYPE;
 typedef struct st_mysql_show_var SHOW_VAR;

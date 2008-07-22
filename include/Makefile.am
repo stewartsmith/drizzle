@@ -25,8 +25,8 @@ HEADERS_ABI =		drizzle.h \
 			my_list.h \
 			my_alloc.h \
 			typelib.h \
-			mysql/plugin.h \
-			mysql/plugin_audit.h
+			drizzle/plugin.h \
+			drizzle/plugin_audit.h
 
 pkginclude_HEADERS =	$(HEADERS_ABI) \
 			m_string.h \
@@ -72,21 +72,21 @@ noinst_HEADERS =	my_bit.h \
 			drizzle_version.h.in \
 			my_handler.h \
 			my_time.h \
-			field/blob.h \
-			field/date.h \
-			field/datetime.h \
-			field/decimal.h \
-			field/double.h \
-			field/int64_t.h \
-			field/long.h \
-			field/null.h \
-			field/set.h \
-			field/short.h \
-			field/string.h \
-			field/timestamp.h \
-			field/timetype.h \
-			field/varstring.h \
-			field/year.h
+			drizzle/server/field/blob.h \
+			drizzle/server/field/date.h \
+			drizzle/server/field/datetime.h \
+			drizzle/server/field/decimal.h \
+			drizzle/server/field/double.h \
+			drizzle/server/field/int64_t.h \
+			drizzle/server/field/long.h \
+			drizzle/server/field/null.h \
+			drizzle/server/field/set.h \
+			drizzle/server/field/short.h \
+			drizzle/server/field/string.h \
+			drizzle/server/field/timestamp.h \
+			drizzle/server/field/timetype.h \
+			drizzle/server/field/varstring.h \
+			drizzle/server/field/year.h
 
 
 # Remove built files and the symlinked directories
