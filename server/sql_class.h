@@ -586,7 +586,7 @@ public:
     STATUS.
   */
   char *query;
-  uint32 query_length;                          // current query length
+  uint32_t query_length;                          // current query length
 
   /**
     Name of the current (default) database.
@@ -1108,8 +1108,8 @@ public:
     first byte of the packet in do_command()
   */
   enum enum_server_command command;
-  uint32     server_id;
-  uint32     file_id;			// for LOAD DATA INFILE
+  uint32_t     server_id;
+  uint32_t     file_id;			// for LOAD DATA INFILE
   /* remote (peer) port */
   uint16 peer_port;
   time_t     start_time, user_time;
@@ -1142,13 +1142,13 @@ public:
   int binlog_update_row(TABLE* table, bool is_transactional,
                         const uchar *old_data, const uchar *new_data);
 
-  void set_server_id(uint32 sid) { server_id = sid; }
+  void set_server_id(uint32_t sid) { server_id = sid; }
 
   /*
     Member functions to handle pending event for row-level logging.
   */
   template <class RowsEventT> Rows_log_event*
-    binlog_prepare_pending_rows_event(TABLE* table, uint32 serv_id,
+    binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
                                       size_t needed,
                                       bool is_transactional,
 				      RowsEventT* hint);
@@ -1168,7 +1168,7 @@ private:
      Flags with per-thread information regarding the status of the
      binary log.
    */
-  uint32 binlog_flags;
+  uint32_t binlog_flags;
 public:
   uint get_binlog_table_maps() const {
     return binlog_table_maps;

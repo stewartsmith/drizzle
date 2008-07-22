@@ -1343,7 +1343,7 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
   for (i= 0, arg= args; i < nargs; i++, arg+= item_sep)
   {
     Item* conv;
-    uint32 dummy_offset;
+    uint32_t dummy_offset;
     if (!String::needs_conversion(0, (*arg)->collation.collation,
                                   coll.collation,
                                   &dummy_offset))
@@ -2174,7 +2174,7 @@ void Item_param::set_null()
   return;
 }
 
-void Item_param::set_int(int64_t i, uint32 max_length_arg)
+void Item_param::set_int(int64_t i, uint32_t max_length_arg)
 {
   value.integer= (int64_t) i;
   state= INT_VALUE;
@@ -2236,7 +2236,7 @@ void Item_param::set_decimal(const char *str, ulong length)
     MAX_DATE_STRING_REP_LENGTH buffer.
 */
 void Item_param::set_time(MYSQL_TIME *tm, timestamp_type time_type,
-                          uint32 max_length_arg)
+                          uint32_t max_length_arg)
 { 
   value.time= *tm;
   value.time.time_type= time_type;
@@ -2338,7 +2338,7 @@ bool Item_param::set_from_user_var(THD *thd, const user_var_entry *entry)
     {
       CHARSET_INFO *fromcs= entry->collation.collation;
       CHARSET_INFO *tocs= thd->variables.collation_connection;
-      uint32 dummy_offset;
+      uint32_t dummy_offset;
 
       value.cs_info.character_set_of_placeholder= 
         value.cs_info.character_set_client= fromcs;
@@ -2646,7 +2646,7 @@ const String *Item_param::query_val_str(String* str) const
       *ptr++= '\'';
       ptr+= (uint) my_TIME_to_str(&value.time, ptr);
       *ptr++= '\'';
-      str->length((uint32) (ptr - buf));
+      str->length((uint32_t) (ptr - buf));
       break;
     }
   case STRING_VALUE:
@@ -4587,7 +4587,7 @@ int Item_hex_string::save_in_field(Field *field,
                         collation.collation);
 
   uint64_t nr;
-  uint32 length= str_value.length();
+  uint32_t length= str_value.length();
   if (length > 8)
   {
     nr= field->flags & UNSIGNED_FLAG ? UINT64_MAX : INT64_MAX;
@@ -6338,7 +6338,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
   case STRING_RESULT:
   {
     const char *old_cs, *old_derivation;
-    uint32 old_max_chars= max_length / collation.collation->mbmaxlen;
+    uint32_t old_max_chars= max_length / collation.collation->mbmaxlen;
     old_cs= collation.collation->name;
     old_derivation= collation.derivation_name();
     if (collation.aggregate(item->collation, MY_COLL_ALLOW_CONV))
@@ -6403,7 +6403,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
     length
 */
 
-uint32 Item_type_holder::display_length(Item *item)
+uint32_t Item_type_holder::display_length(Item *item)
 {
   if (item->type() == Item::FIELD_ITEM)
     return ((Item_field *)item)->max_disp_length();

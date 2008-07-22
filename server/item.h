@@ -476,7 +476,7 @@ public:
   /* Original item name (if it was renamed)*/
   char * orig_name;
   Item *next;
-  uint32 max_length;
+  uint32_t max_length;
   uint name_length;                     /* Length of name */
   int8 marker;
   uint8 decimals;
@@ -1166,7 +1166,7 @@ public:
   Item *equal_fields_propagator(uchar *arg);
   bool set_no_const_sub(uchar *arg);
   Item *replace_equal_field(uchar *arg);
-  inline uint32 max_disp_length() { return field->max_display_length(); }
+  inline uint32_t max_disp_length() { return field->max_display_length(); }
   Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(CHARSET_INFO *tocs);
   int fix_outer_field(THD *thd, Field **field, Item **reference);
@@ -1312,12 +1312,12 @@ public:
   int  save_in_field(Field *field, bool no_conversions);
 
   void set_null();
-  void set_int(int64_t i, uint32 max_length_arg);
+  void set_int(int64_t i, uint32_t max_length_arg);
   void set_double(double i);
   void set_decimal(const char *str, ulong length);
   bool set_str(const char *str, ulong length);
   bool set_longdata(const char *str, ulong length);
-  void set_time(MYSQL_TIME *tm, timestamp_type type, uint32 max_length_arg);
+  void set_time(MYSQL_TIME *tm, timestamp_type type, uint32_t max_length_arg);
   bool set_from_user_var(THD *thd, const user_var_entry *entry);
   void reset();
   /*
@@ -2505,7 +2505,7 @@ public:
   String *val_str(String*);
   bool join_types(THD *thd, Item *);
   Field *make_field_by_type(TABLE *table);
-  static uint32 display_length(Item *item);
+  static uint32_t display_length(Item *item);
   static enum_field_types get_real_type(Item *);
 };
 
