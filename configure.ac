@@ -290,7 +290,12 @@ if test "x$ac_cv_header_event_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
 fi
+my_save_LIBS="$LIBS"
+LIBS=""
 AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+LIBEVENT_LIBS="${LIBS}"
+LIBS="${my_save_LIBS}"
+AC_SUBST(LIBEVENT_LIBS)
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -322,12 +327,18 @@ fi
 # Check for libz
 #--------------------------------------------------------------------
 
+my_save_LIBS="$LIBS"
+LIBS=""
 AC_CHECK_HEADERS(zlib.h)
 if test "x$ac_cv_header_zlib_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find zlib.h. Try installing zlib development packages])
 fi
 AC_CHECK_LIB(z, crc32, [], [AC_MSG_ERROR(could not find libz)])
+ZLIB_LIBS="$LIBS"
+LIBS="$my_save_LIBS"
+AC_SUBST(ZLIB_LIBS)
+
 
 
 AC_CHECK_HEADERS([readline/readline.h])
@@ -335,6 +346,12 @@ if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+my_save_LIBS="$LIBS"
+LIBS=""
+AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find libreadline.)])
+READLINE_LIBS="$LIBS"
+LIBS="$my_save_LIBS"
+AC_SUBST(READLINE_LIBS)
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -668,9 +685,9 @@ if test "$ac_cv_func_dlopen" != "yes"
 then
   AC_MSG_ERROR([Drizzle requires dlopen])
 fi
-LIBDL=$LIBS
+LIBDL_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
-AC_SUBST(LIBDL)
+AC_SUBST(LIBDL_LIBS)
 
 AC_CHECK_FUNCS(strtok_r)
 
@@ -878,9 +895,9 @@ if test "$with_named_curses" = "no"
 then
   MYSQL_CHECK_LIB_TERMCAP
 else
-  TERMCAP_LIB="$with_named_curses"
+  TERMCAP_LIBS="$with_named_curses"
 fi
-AC_SUBST(TERMCAP_LIB)
+AC_SUBST(TERMCAP_LIBS)
 
 # Check if the termcap function 'tgoto' is already declared in
 # system header files or if it need to be declared locally
