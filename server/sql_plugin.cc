@@ -33,13 +33,13 @@ char opt_plugin_dir[FN_REFLEN];
 */
 const LEX_STRING plugin_type_names[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
+  { C_STRING_WITH_LEN("DAEMON") },
+  { C_STRING_WITH_LEN("STORAGE ENGINE") },
+  { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
   { C_STRING_WITH_LEN("UDF") },
   { C_STRING_WITH_LEN("UDA") },
-  { C_STRING_WITH_LEN("STORAGE ENGINE") },
-  { C_STRING_WITH_LEN("DAEMON") },
-  { C_STRING_WITH_LEN("INFORMATION SCHEMA") },
   { C_STRING_WITH_LEN("AUDIT") },
-  { C_STRING_WITH_LEN("LOG") },
+  { C_STRING_WITH_LEN("LOGGER") },
   { C_STRING_WITH_LEN("AUTH") }
 };
 
@@ -56,60 +56,33 @@ extern int finalize_udf(st_plugin_int *plugin);
 */
 plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
+  0,  /* Daemon */
+  ha_initialize_handlerton,  /* Storage Engine */
+  initialize_schema_table,  /* Information Schema */
   initialize_udf,  /* UDF */
   0,  /* UDA */
-  ha_initialize_handlerton,  /* Storage Engine */
-  0,  /* Daemon */
-  initialize_schema_table,  /* Information Schema */
   0,  /* Audit */
-  0,  /* Log */
+  0,  /* Logger */
   0  /* Auth */
 };
 
 plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
 {
+  0,  /* Daemon */
+  ha_finalize_handlerton,  /* Storage Engine */
+  finalize_schema_table,  /* Information Schema */
   finalize_udf,  /* UDF */
   0,  /* UDA */
-  ha_finalize_handlerton,  /* Storage Engine */
-  0,  /* Daemon */
-  finalize_schema_table,  /* Information Schema */
   0,  /* Audit */
-  0,  /* Log */
+  0,  /* Logger */
   0  /* Auth */
 };
 
-static const char *plugin_interface_version_sym=
-                   "_mysql_plugin_interface_version_";
-static const char *sizeof_st_plugin_sym=
-                   "_mysql_sizeof_struct_st_plugin_";
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";
-static int min_plugin_interface_version= MYSQL_PLUGIN_INTERFACE_VERSION & ~0xFF;
 
 /* Note that 'int version' must be the first field of every plugin
    sub-structure (plugin->info).
 */
-static int min_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
-{
-  MYSQL_UDF_INTERFACE_VERSION,
-  MYSQL_UDA_INTERFACE_VERSION,
-  MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_DAEMON_INTERFACE_VERSION,
-  MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
-  MYSQL_AUDIT_INTERFACE_VERSION,
-  MYSQL_LOG_INTERFACE_VERSION,
-  MYSQL_AUTH_INTERFACE_VERSION
-};
-static int cur_plugin_info_interface_version[MYSQL_MAX_PLUGIN_TYPE_NUM]=
-{
-  MYSQL_UDF_INTERFACE_VERSION,
-  MYSQL_UDA_INTERFACE_VERSION,
-  MYSQL_HANDLERTON_INTERFACE_VERSION,
-  MYSQL_DAEMON_INTERFACE_VERSION,
-  MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION,
-  MYSQL_AUDIT_INTERFACE_VERSION,
-  MYSQL_LOG_INTERFACE_VERSION,
-  MYSQL_AUTH_INTERFACE_VERSION
-};
 
 static bool initialized= 0;
 
@@ -329,8 +302,6 @@ static inline void free_plugin_mem(struct st_plugin_dl *p)
   if (p->handle)
     dlclose(p->handle);
   my_free(p->dl.str, MYF(MY_ALLOW_ZERO_PTR));
-  if (p->version != MYSQL_PLUGIN_INTERFACE_VERSION)
-    my_free((uchar*)p->plugins, MYF(MY_ALLOW_ZERO_PTR));
 }
 
 
@@ -385,30 +356,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
       sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dlpath, errno, errmsg);
     return(0);
   }
-  /* Determine interface version */
-  if (!(sym= dlsym(plugin_dl.handle, plugin_interface_version_sym)))
-  {
-    free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_CANT_FIND_DL_ENTRY, MYF(0), plugin_interface_version_sym);
-    if (report & REPORT_TO_LOG)
-      sql_print_error(ER(ER_CANT_FIND_DL_ENTRY), plugin_interface_version_sym);
-    return(0);
-  }
-  plugin_dl.version= *(int *)sym;
-  /* Versioning */
-  if (plugin_dl.version < min_plugin_interface_version ||
-      (plugin_dl.version >> 8) > (MYSQL_PLUGIN_INTERFACE_VERSION >> 8))
-  {
-    free_plugin_mem(&plugin_dl);
-    if (report & REPORT_TO_USER)
-      my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dlpath, 0,
-               "plugin interface version mismatch");
-    if (report & REPORT_TO_LOG)
-      sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dlpath, 0,
-                      "plugin interface version mismatch");
-    return(0);
-  }
+
   /* Find plugin declarations */
   if (!(sym= dlsym(plugin_dl.handle, plugin_declarations_sym)))
   {
@@ -420,62 +368,6 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     return(0);
   }
 
-  if (plugin_dl.version != MYSQL_PLUGIN_INTERFACE_VERSION)
-  {
-    int i;
-    uint sizeof_st_plugin;
-    struct st_mysql_plugin *old, *cur;
-    char *ptr= (char *)sym;
-
-    if ((sym= dlsym(plugin_dl.handle, sizeof_st_plugin_sym)))
-      sizeof_st_plugin= *(int *)sym;
-    else
-    {
-#ifdef ERROR_ON_NO_SIZEOF_PLUGIN_SYMBOL
-      free_plugin_mem(&plugin_dl);
-      if (report & REPORT_TO_USER)
-        my_error(ER_CANT_FIND_DL_ENTRY, MYF(0), sizeof_st_plugin_sym);
-      if (report & REPORT_TO_LOG)
-        sql_print_error(ER(ER_CANT_FIND_DL_ENTRY), sizeof_st_plugin_sym);
-      return(0);
-#else
-      /*
-        When the following assert starts failing, we'll have to switch
-        to the upper branch of the #ifdef
-      */
-      assert(min_plugin_interface_version == 0);
-      sizeof_st_plugin= (int)offsetof(struct st_mysql_plugin, version);
-#endif
-    }
-
-    for (i= 0;
-         ((struct st_mysql_plugin *)(ptr+i*sizeof_st_plugin))->info;
-         i++)
-      /* no op */;
-
-    cur= (struct st_mysql_plugin*)
-          my_malloc(i*sizeof(struct st_mysql_plugin), MYF(MY_ZEROFILL|MY_WME));
-    if (!cur)
-    {
-      free_plugin_mem(&plugin_dl);
-      if (report & REPORT_TO_USER)
-        my_error(ER_OUTOFMEMORY, MYF(0), plugin_dl.dl.length);
-      if (report & REPORT_TO_LOG)
-        sql_print_error(ER(ER_OUTOFMEMORY), plugin_dl.dl.length);
-      return(0);
-    }
-    /*
-      All st_plugin fields not initialized in the plugin explicitly, are
-      set to 0. It matches C standard behaviour for struct initializers that
-      have less values than the struct definition.
-    */
-    for (i=0;
-         (old=(struct st_mysql_plugin *)(ptr+i*sizeof_st_plugin))->info;
-         i++)
-      memcpy(cur+i, old, min(sizeof(cur[i]), sizeof_st_plugin));
-
-    sym= cur;
-  }
   plugin_dl.plugins= (struct st_mysql_plugin *)sym;
 
   /* Duplicate and convert dll name */
@@ -679,7 +571,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   if (! (tmp.plugin_dl= plugin_dl_add(dl, report)))
     return(true);
   /* Find plugin by name */
-  for (plugin= tmp.plugin_dl->plugins; plugin->info; plugin++)
+  for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
     uint name_len= strlen(plugin->name);
     if (plugin->type >= 0 && plugin->type < MYSQL_MAX_PLUGIN_TYPE_NUM &&
@@ -689,21 +581,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
                        name_len))
     {
       struct st_plugin_int *tmp_plugin_ptr;
-      if (*(int*)plugin->info <
-          min_plugin_info_interface_version[plugin->type] ||
-          ((*(int*)plugin->info) >> 8) >
-          (cur_plugin_info_interface_version[plugin->type] >> 8))
-      {
-        char buf[256];
-        strxnmov(buf, sizeof(buf) - 1, "API version for ",
-                 plugin_type_names[plugin->type].str,
-                 " plugin is too different", NullS);
-        if (report & REPORT_TO_USER)
-          my_error(ER_CANT_OPEN_LIBRARY, MYF(0), dl->str, 0, buf);
-        if (report & REPORT_TO_LOG)
-          sql_print_error(ER(ER_CANT_OPEN_LIBRARY), dl->str, 0, buf);
-        goto err;
-      }
+
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= name_len;
@@ -1027,7 +905,7 @@ int plugin_init(int *argc, char **argv, int flags)
   */
   for (builtins= mysqld_builtins; *builtins; builtins++)
   {
-    for (plugin= *builtins; plugin->info; plugin++)
+    for (plugin= *builtins; plugin->name; plugin++)
     {
       bzero(&tmp, sizeof(tmp));
       tmp.plugin= plugin;
@@ -1175,7 +1053,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
         dl= name;
         if ((plugin_dl= plugin_dl_add(&dl, REPORT_TO_LOG)))
         {
-          for (plugin= plugin_dl->plugins; plugin->info; plugin++)
+          for (plugin= plugin_dl->plugins; plugin->name; plugin++)
           {
             name.str= (char *) plugin->name;
             name.length= strlen(name.str);
@@ -1659,7 +1537,7 @@ static void update_func_bool(THD *thd __attribute__((__unused__)),
                              struct st_mysql_sys_var *var __attribute__((__unused__)),
                              void *tgt, const void *save)
 {
-  *(my_bool *) tgt= *(int *) save ? 1 : 0;
+  *(bool *) tgt= *(int *) save ? 1 : 0;
 }
 
 
@@ -1797,7 +1675,7 @@ static st_bookmark *register_var(const char *plugin, const char *name,
 
   switch (flags & PLUGIN_VAR_TYPEMASK) {
   case PLUGIN_VAR_BOOL:
-    size= sizeof(my_bool);
+    size= sizeof(bool);
     break;
   case PLUGIN_VAR_INT:
     size= sizeof(int);

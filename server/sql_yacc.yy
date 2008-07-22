@@ -1057,7 +1057,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         keycache_list assign_to_keycache
         select_item_list select_item values_list no_braces
         opt_limit_clause delete_limit_clause fields opt_values values
-        opt_precision opt_ignore opt_column opt_restrict
+        opt_precision opt_ignore opt_column
         set lock unlock string_list field_options field_option
         field_opt_list opt_binary table_lock_list table_lock
         ref_list opt_match_clause opt_on_update_delete use
@@ -2577,7 +2577,7 @@ alter_list_item:
               MYSQL_YYABORT;
           }
           opt_place
-        | DROP opt_column field_ident opt_restrict
+        | DROP opt_column field_ident
           {
             LEX *lex=Lex;
             lex->alter_info.drop_list.push_back(new Alter_drop(Alter_drop::COLUMN,
@@ -2690,12 +2690,6 @@ opt_column:
 opt_ignore:
           /* empty */ { Lex->ignore= 0;}
         | IGNORE_SYM { Lex->ignore= 1;}
-        ;
-
-opt_restrict:
-          /* empty */ { Lex->drop_mode= DROP_DEFAULT; }
-        | RESTRICT    { Lex->drop_mode= DROP_RESTRICT; }
-        | CASCADE     { Lex->drop_mode= DROP_CASCADE; }
         ;
 
 opt_place:
@@ -5026,7 +5020,7 @@ into_destination:
 */
 
 drop:
-          DROP opt_temporary table_or_tables if_exists table_list opt_restrict
+          DROP opt_temporary table_or_tables if_exists table_list
           {
             LEX *lex=Lex;
             lex->sql_command = SQLCOM_DROP_TABLE;

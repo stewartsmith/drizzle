@@ -26,7 +26,6 @@
 
 void unireg_init(ulong options)
 {
-  MYSYS_PROGRAM_DONT_USE_CURSES();
   abort_loop=0;
 
   my_disable_async_io=1;		/* aioread is only in shared library */

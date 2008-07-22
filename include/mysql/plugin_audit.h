@@ -24,9 +24,6 @@
 
 #define MYSQL_AUDIT_CLASS_MASK_SIZE 1
 
-#define MYSQL_AUDIT_INTERFACE_VERSION ( 0x010000 | MYSQL_AUDIT_CLASS_MASK_SIZE )
-
-
 /*
   The first word in every event class struct indicates the specific
   class of the event.

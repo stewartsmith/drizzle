@@ -25,7 +25,7 @@ enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
 typedef void (*Udf_func_clear)(UDF_INIT *, uchar *, uchar *);
 typedef void (*Udf_func_add)(UDF_INIT *, UDF_ARGS *, uchar *, uchar *);
 typedef void (*Udf_func_deinit)(UDF_INIT*);
-typedef my_bool (*Udf_func_init)(UDF_INIT *, UDF_ARGS *,  char *);
+typedef bool (*Udf_func_init)(UDF_INIT *, UDF_ARGS *,  char *);
 typedef void (*Udf_func_any)();
 typedef double (*Udf_func_double)(UDF_INIT *, UDF_ARGS *, uchar *, uchar *);
 typedef int64_t (*Udf_func_int64_t)(UDF_INIT *, UDF_ARGS *, uchar *,
@@ -125,7 +125,7 @@ class udf_handler :public Sql_alloc
     }
     Udf_func_add func= u_d->func_add;
     func(&initid, &f_args, &is_null, &error);
-    *null_value= (my_bool) (is_null || error);
+    *null_value= (bool) (is_null || error);
   }
   String *val_str(String *str,String *save_str);
 };

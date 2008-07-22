@@ -21,7 +21,7 @@
 #include <my_global.h>
 #include <my_dir.h>
 
-my_bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
+bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
   /* this is how to fail */
   if (args->arg_count != 0)  {
@@ -97,20 +97,16 @@ static int hello_world_plugin_deinit(void *p)
   return 0;
 }
 
-struct st_mysql_udf hello_world_plugin=
-{ MYSQL_UDF_INTERFACE_VERSION  };
-
 mysql_declare_plugin(hello_world)
 {
   MYSQL_UDF_PLUGIN,
-  &hello_world_plugin,
   "hello_world",
+  "1.0",
   "Mark Atwood",
   "Hello, world!",
   PLUGIN_LICENSE_GPL,
   hello_world_plugin_init, /* Plugin Init */
   hello_world_plugin_deinit, /* Plugin Deinit */
-  0x0100,  /* 1.0 */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

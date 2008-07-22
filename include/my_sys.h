@@ -34,7 +34,6 @@ typedef struct my_aio_result {
 #include <stdarg.h>
 #include <typelib.h>
 
-#define MYSYS_PROGRAM_DONT_USE_CURSES()  { error_handler_hook = my_message_no_curses; mysys_uses_curses=0;}
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
 #define ERRMSGSIZE	(SC_MAXWIDTH)	/* Max length of a error message */

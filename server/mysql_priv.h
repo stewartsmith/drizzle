@@ -657,7 +657,7 @@ const char *set_thd_proc_info(THD *thd, const char *info,
 extern ulong server_id;
 
 
-typedef my_bool (*qc_engine_callback)(THD *thd, char *table_key,
+typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
                                       uint key_length,
                                       uint64_t *engine_data);
 #include "sql_string.h"
@@ -881,8 +881,8 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
 bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db);
 void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
 void mysql_client_binlog_statement(THD *thd);
-bool mysql_rm_table(THD *thd,TABLE_LIST *tables, my_bool if_exists,
-                    my_bool drop_temporary);
+bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists,
+                    bool drop_temporary);
 int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
                          bool drop_temporary, bool drop_view, bool log_query);
 bool quick_rm_table(handlerton *base,const char *db,
@@ -1386,92 +1386,8 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table,
 #define NORMAL_PART_NAME 0
 #define TEMP_PART_NAME 1
 #define RENAMED_PART_NAME 2
-void create_partition_name(char *out, const char *in1,
-                           const char *in2, uint name_variant,
-                           bool translate);
-void create_subpartition_name(char *out, const char *in1,
-                              const char *in2, const char *in3,
-                              uint name_variant);
 
 void mem_alloc_error(size_t size);
-
-enum ddl_log_entry_code
-{
-  /*
-    DDL_LOG_EXECUTE_CODE:
-      This is a code that indicates that this is a log entry to
-      be executed, from this entry a linked list of log entries
-      can be found and executed.
-    DDL_LOG_ENTRY_CODE:
-      An entry to be executed in a linked list from an execute log
-      entry.
-    DDL_IGNORE_LOG_ENTRY_CODE:
-      An entry that is to be ignored
-  */
-  DDL_LOG_EXECUTE_CODE = 'e',
-  DDL_LOG_ENTRY_CODE = 'l',
-  DDL_IGNORE_LOG_ENTRY_CODE = 'i'
-};
-
-enum ddl_log_action_code
-{
-  /*
-    The type of action that a DDL_LOG_ENTRY_CODE entry is to
-    perform.
-    DDL_LOG_DELETE_ACTION:
-      Delete an entity
-    DDL_LOG_RENAME_ACTION:
-      Rename an entity
-    DDL_LOG_REPLACE_ACTION:
-      Rename an entity after removing the previous entry with the
-      new name, that is replace this entry.
-  */
-  DDL_LOG_DELETE_ACTION = 'd',
-  DDL_LOG_RENAME_ACTION = 'r',
-  DDL_LOG_REPLACE_ACTION = 's'
-};
-
-
-typedef struct st_ddl_log_entry
-{
-  const char *name;
-  const char *from_name;
-  const char *handler_name;
-  uint next_entry;
-  uint entry_pos;
-  enum ddl_log_entry_code entry_type;
-  enum ddl_log_action_code action_type;
-  /*
-    Most actions have only one phase. REPLACE does however have two
-    phases. The first phase removes the file with the new name if
-    there was one there before and the second phase renames the
-    old name to the new name.
-  */
-  char phase;
-} DDL_LOG_ENTRY;
-
-typedef struct st_ddl_log_memory_entry
-{
-  uint entry_pos;
-  struct st_ddl_log_memory_entry *next_log_entry;
-  struct st_ddl_log_memory_entry *prev_log_entry;
-  struct st_ddl_log_memory_entry *next_active_log_entry;
-} DDL_LOG_MEMORY_ENTRY;
-
-
-bool write_ddl_log_entry(DDL_LOG_ENTRY *ddl_log_entry,
-                           DDL_LOG_MEMORY_ENTRY **active_entry);
-bool write_execute_ddl_log_entry(uint first_entry,
-                                   bool complete,
-                                   DDL_LOG_MEMORY_ENTRY **active_entry);
-bool deactivate_ddl_log_entry(uint entry_no);
-void release_ddl_log_memory_entry(DDL_LOG_MEMORY_ENTRY *log_entry);
-bool sync_ddl_log();
-void release_ddl_log();
-void execute_ddl_log_recovery();
-bool execute_ddl_log_entry(THD *thd, uint first_entry);
-
-extern pthread_mutex_t LOCK_gdl;
 
 #define WFRM_WRITE_SHADOW 1
 #define WFRM_INSTALL_SHADOW 2
@@ -1559,7 +1475,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name,
 /* mysqld.cc */
 extern void MYSQLerror(const char*);
 void refresh_status(THD *thd);
-my_bool mysql_rm_tmp_tables(void);
+bool mysql_rm_tmp_tables(void);
 void handle_connection_in_main_thread(THD *thd);
 void create_thread_to_handle_connection(THD *thd);
 void unlink_thd(THD *thd);
@@ -1671,7 +1587,7 @@ extern ulong expire_logs_days, sync_binlog_period, sync_binlog_counter;
 extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
 extern ulong tc_log_page_waits;
 extern bool relay_log_purge;
-extern my_bool opt_innodb_safe_binlog, opt_innodb;
+extern bool opt_innodb_safe_binlog, opt_innodb;
 extern uint test_flags,select_errors,ha_open_options;
 extern uint protocol_version, mysqld_port, dropping_tables;
 extern uint delay_key_write_options;
@@ -1700,8 +1616,8 @@ extern uint volatile thread_count, thread_running, global_read_lock;
 extern uint connection_count;
 extern bool opt_sql_bin_update;
 extern bool opt_safe_user_create;
-extern my_bool opt_no_mix_types;
-extern my_bool opt_safe_show_db, opt_myisam_use_mmap;
+extern bool opt_no_mix_types;
+extern bool opt_safe_show_db, opt_myisam_use_mmap;
 extern bool opt_local_infile;
 extern bool opt_slave_compressed_protocol;
 extern bool use_temp_pool;
@@ -1718,7 +1634,7 @@ extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern uint opt_crash_binlog_innodb;
 extern char *shared_memory_base_name;
-extern my_bool opt_enable_shared_memory;
+extern bool opt_enable_shared_memory;
 extern char *default_tz_name;
 #endif /* MYSQL_SERVER */
 #ifdef MYSQL_SERVER

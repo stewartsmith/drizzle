@@ -2120,7 +2120,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   if (init_replication_sys_vars())
     return 1;
-  mysys_uses_curses=0;
   /*
     Process a comma-separated character set list and choose
     the first available character set. This is mostly for
@@ -3216,10 +3215,6 @@ struct my_option my_long_options[] =
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"default-storage-engine", OPT_STORAGE_ENGINE,
    "Set the default storage engine (table type) for tables.",
-   (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
-   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-table-type", OPT_STORAGE_ENGINE,
-   "(deprecated) Use --default-storage-engine.",
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-time-zone", OPT_DEFAULT_TIME_ZONE, "Set the default time zone.",
@@ -4355,7 +4350,7 @@ static void mysql_init_variables(void)
   character_set_filesystem_name= (char*) "binary";
   lc_time_names_name= (char*) "en_US";
   /* Set default values for some option variables */
-  default_storage_engine_str= (char*) "MyISAM";
+  default_storage_engine_str= (char*) "innodb";
   global_system_variables.table_plugin= NULL;
   global_system_variables.tx_isolation= ISO_REPEATABLE_READ;
   global_system_variables.select_limit= (uint64_t) HA_POS_ERROR;

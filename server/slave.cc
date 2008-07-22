@@ -53,7 +53,7 @@ typedef bool (*CHECK_KILLED_FUNC)(THD*,void*);
 
 char* slave_load_tmpdir = 0;
 Master_info *active_mi= 0;
-my_bool replicate_same_server_id;
+bool replicate_same_server_id;
 uint64_t relay_log_space_limit = 0;
 
 /*

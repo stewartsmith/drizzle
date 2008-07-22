@@ -272,11 +272,6 @@ static sys_var_thd_ulong	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
 					      &SV::max_seeks_for_key);
 static sys_var_thd_ulong   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
                                                  &SV::max_length_for_sort_data);
-#ifndef TO_BE_DELETED	/* Alias for max_join_size */
-static sys_var_thd_ha_rows	sys_sql_max_join_size(&vars, "sql_max_join_size",
-					      &SV::max_join_size,
-					      fix_max_join_size);
-#endif
 static sys_var_long_ptr	sys_max_relay_log_size(&vars, "max_relay_log_size",
                                                &max_relay_log_size,
                                                fix_max_relay_log_size);
@@ -583,8 +578,6 @@ sys_var_thd_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
 
 static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_crypt(&vars, "have_crypt", &have_crypt);
-static sys_var_have_plugin sys_have_csv(&vars, "have_csv", C_STRING_WITH_LEN("csv"), MYSQL_STORAGE_ENGINE_PLUGIN);
-static sys_var_have_plugin sys_have_innodb(&vars, "have_innodb", C_STRING_WITH_LEN("innodb"), MYSQL_STORAGE_ENGINE_PLUGIN);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /* Global read-only variable describing server license */
 static sys_var_const_str	sys_license(&vars, "license", STRINGIFY_ARG(LICENSE));
@@ -1341,9 +1334,9 @@ uchar *sys_var_thd_uint64_t::value_ptr(THD *thd, enum_var_type type,
 bool sys_var_thd_bool::update(THD *thd,  set_var *var)
 {
   if (var->type == OPT_GLOBAL)
-    global_system_variables.*offset= (my_bool) var->save_result.ulong_value;
+    global_system_variables.*offset= (bool) var->save_result.ulong_value;
   else
-    thd->variables.*offset= (my_bool) var->save_result.ulong_value;
+    thd->variables.*offset= (bool) var->save_result.ulong_value;
   return 0;
 }
 
@@ -1351,7 +1344,7 @@ bool sys_var_thd_bool::update(THD *thd,  set_var *var)
 void sys_var_thd_bool::set_default(THD *thd,  enum_var_type type)
 {
   if (type == OPT_GLOBAL)
-    global_system_variables.*offset= (my_bool) option_limits->def_value;
+    global_system_variables.*offset= (bool) option_limits->def_value;
   else
     thd->variables.*offset= global_system_variables.*offset;
 }
@@ -1537,7 +1530,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
   {
     int32 value;
     pthread_mutex_lock(&LOCK_global_system_variables);
-    value= *(my_bool*) value_ptr(thd, var_type, base);
+    value= *(bool*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_int(value,1);
   }
@@ -1632,9 +1625,9 @@ uchar *sys_var_thd_bit::value_ptr(THD *thd,
     If reverse is 0 (default) return 1 if bit is set.
     If reverse is 1, return 0 if bit is set
   */
-  thd->sys_var_tmp.my_bool_value= ((thd->options & bit_flag) ?
+  thd->sys_var_tmp.bool_value= ((thd->options & bit_flag) ?
 				   !reverse : reverse);
-  return (uchar*) &thd->sys_var_tmp.my_bool_value;
+  return (uchar*) &thd->sys_var_tmp.bool_value;
 }
 
 
@@ -2869,7 +2862,7 @@ static struct my_option *find_option(struct my_option *opt, const char *name)
 */
 
 static uchar *get_sys_var_length(const sys_var *var, size_t *length,
-                                 my_bool first __attribute__((__unused__)))
+                                 bool first __attribute__((__unused__)))
 {
   *length= var->name_length;
   return (uchar*) var->name;
@@ -3022,14 +3015,6 @@ int set_var_init()
   vars.last->next= NULL;
   if (mysql_add_sys_var_chain(vars.first, my_long_options))
     goto error;
-
-  /*
-    Special cases
-    Needed because MySQL can't find the limits for a variable it it has
-    a different name than the command line option.
-    As these variables are deprecated, this code will disappear soon...
-  */
-  sys_sql_max_join_size.option_limits= sys_max_join_size.option_limits;
 
   return(0);
 

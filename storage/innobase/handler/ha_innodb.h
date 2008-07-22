@@ -206,10 +206,10 @@ class ha_innobase: public handler
 	/*
 	  ask handler about permission to cache table during query registration
 	*/
-	my_bool register_query_cache_table(THD *thd, char *table_key,
-					   uint key_length,
-					   qc_engine_callback *call_back,
-					   uint64_t *engine_data);
+        bool register_query_cache_table(THD *thd, char *table_key,
+                                        uint key_length,
+                                        qc_engine_callback *call_back,
+                                        uint64_t *engine_data);
 	static char *get_mysql_bin_log_name();
 	static uint64_t get_mysql_bin_log_pos();
 	bool primary_key_is_clustered() { return true; }

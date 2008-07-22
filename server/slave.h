@@ -207,7 +207,7 @@ pthread_handler_t handle_slave_sql(void *arg);
 extern bool volatile abort_loop;
 extern Master_info main_mi, *active_mi; /* active_mi for multi-master */
 extern LIST master_list;
-extern my_bool replicate_same_server_id;
+extern bool replicate_same_server_id;
 
 extern int32_t disconnect_slave_event_count, abort_slave_event_count ;
 
@@ -217,7 +217,7 @@ extern char * master_user, *master_password, *master_host;
 extern char *master_info_file, *relay_log_info_file, *report_user;
 extern char *report_host, *report_password;
 
-extern my_bool master_ssl;
+extern bool master_ssl;
 extern char *master_ssl_ca, *master_ssl_capath, *master_ssl_cert;
 extern char *master_ssl_cipher, *master_ssl_key;
        

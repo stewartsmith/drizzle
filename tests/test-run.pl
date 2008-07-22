@@ -3627,7 +3627,7 @@ Options for debugging the product
 Options for coverage, profiling etc
 
   gcov                  FIXME
-  gprof                 FIXME
+  gprof                 See online documentation on how to use it.
   valgrind              Run the "drizzletest" and "mysqld" executables using
                         valgrind with default options
   valgrind-all          Synonym for --valgrind

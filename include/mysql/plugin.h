@@ -57,20 +57,19 @@ typedef struct st_mysql_xid MYSQL_XID;
   Plugin API. Common for all plugin types.
 */
 
-#define MYSQL_PLUGIN_INTERFACE_VERSION 0x0100
-
 /*
   The allowable types of plugins
 */
-#define MYSQL_UDF_PLUGIN             0  /* User-Defined Function */
-#define MYSQL_UDA_PLUGIN             1  /* User-Defined Aggregate function */
-#define MYSQL_STORAGE_ENGINE_PLUGIN  2  /* Storage Engine */
-#define MYSQL_DAEMON_PLUGIN          4  /* Daemon / Raw */
-#define MYSQL_INFORMATION_SCHEMA_PLUGIN  5  /* Information Schema */
-#define MYSQL_AUDIT_PLUGIN           6  /* Audit */
-#define MYSQL_LOG_PLUGIN             7  /* Logging */
-#define MYSQL_AUTH_PLUGIN            8  /* Authorization */
-#define MYSQL_MAX_PLUGIN_TYPE_NUM    9  /* The number of plugin types   */
+#define MYSQL_DAEMON_PLUGIN          0  /* Daemon / Raw */
+#define MYSQL_STORAGE_ENGINE_PLUGIN  1  /* Storage Engine */
+#define MYSQL_INFORMATION_SCHEMA_PLUGIN  2  /* Information Schema */
+#define MYSQL_UDF_PLUGIN             3  /* User-Defined Function */
+#define MYSQL_UDA_PLUGIN             4  /* User-Defined Aggregate function */
+#define MYSQL_AUDIT_PLUGIN           5  /* Audit */
+#define MYSQL_LOGGER_PLUGIN          6  /* Logging */
+#define MYSQL_AUTH_PLUGIN            7  /* Authorization */
+
+#define MYSQL_MAX_PLUGIN_TYPE_NUM    8  /* The number of plugin types */
 
 /* We use the following strings to define licenses for plugins */
 #define PLUGIN_LICENSE_PROPRIETARY 0
@@ -89,24 +88,18 @@ typedef struct st_mysql_xid MYSQL_XID;
 
 
 #ifndef MYSQL_DYNAMIC_PLUGIN
-#define __MYSQL_DECLARE_PLUGIN(NAME, VERSION, PSIZE, DECLS)                   \
-int VERSION= MYSQL_PLUGIN_INTERFACE_VERSION;                                  \
-int PSIZE= sizeof(struct st_mysql_plugin);                                    \
+#define __MYSQL_DECLARE_PLUGIN(NAME, DECLS) \
 struct st_mysql_plugin DECLS[]= {
 #else
-#define __MYSQL_DECLARE_PLUGIN(NAME, VERSION, PSIZE, DECLS)                   \
-int _mysql_plugin_interface_version_= MYSQL_PLUGIN_INTERFACE_VERSION;         \
-int _mysql_sizeof_struct_st_plugin_= sizeof(struct st_mysql_plugin);          \
+#define __MYSQL_DECLARE_PLUGIN(NAME, DECLS) \
 struct st_mysql_plugin _mysql_plugin_declarations_[]= {
 #endif
 
 #define mysql_declare_plugin(NAME) \
 __MYSQL_DECLARE_PLUGIN(NAME, \
-                 builtin_ ## NAME ## _plugin_interface_version, \
-                 builtin_ ## NAME ## _sizeof_struct_st_plugin, \
                  builtin_ ## NAME ## _plugin)
 
-#define mysql_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0,0}}
+#define mysql_declare_plugin_end ,{0,0,0,0,0,0,0,0,0,0,0}}
 
 /*
   declarations for SHOW STATUS support in plugins
@@ -392,143 +385,16 @@ DECLARE_MYSQL_THDVAR_TYPELIB(name, uint64_t) = { \
 struct st_mysql_plugin
 {
   int type;             /* the plugin type (a MYSQL_XXX_PLUGIN value)   */
-  void *info;           /* pointer to type-specific plugin descriptor   */
-  const char *name;     /* plugin name                                  */
+  const char *name;     /* plugin name (for SHOW PLUGINS)               */
+  const char *version;  /* plugin version (for SHOW PLUGINS)            */
   const char *author;   /* plugin author (for SHOW PLUGINS)             */
   const char *descr;    /* general descriptive text (for SHOW PLUGINS ) */
   int license;          /* the plugin license (PLUGIN_LICENSE_XXX)      */
   int (*init)(void *);  /* the function to invoke when plugin is loaded */
   int (*deinit)(void *);/* the function to invoke when plugin is unloaded */
-  unsigned int version; /* plugin version (for SHOW PLUGINS)            */
   struct st_mysql_show_var *status_vars;
   struct st_mysql_sys_var **system_vars;
   void * __reserved1;   /* reserved for dependency checking             */
-};
-
-/*************************************************************************
-  API for Daemon plugin. (MYSQL_DAEMON_PLUGIN)
-*/
-
-/* handlertons of different MySQL releases are incompatible */
-#define MYSQL_DAEMON_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
-
-/*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_mysql_daemon
-{
-  int interface_version;
-};
-
-
-/*************************************************************************
-  API for UDF plugin. (MYSQL_UDF_PLUGIN)
-*/
-
-/* handlertons of different MySQL releases are incompatible */
-#define MYSQL_UDF_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
-
-/*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_mysql_udf
-{
-  int interface_version;
-};
-
-
-/*************************************************************************
-  API for UDA plugin. (MYSQL_UDA_PLUGIN)
-*/
-
-/* handlertons of different MySQL releases are incompatible */
-#define MYSQL_UDA_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
-
-/*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_mysql_uda
-{
-  int interface_version;
-};
-
-
-/*************************************************************************
-  API for I_S plugin. (MYSQL_INFORMATION_SCHEMA_PLUGIN)
-*/
-
-/* handlertons of different MySQL releases are incompatible */
-#define MYSQL_INFORMATION_SCHEMA_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
-
-/*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_mysql_information_schema
-{
-  int interface_version;
-};
-
-
-/*************************************************************************
-  API for Log plugin. (MYSQL_LOG_PLUGIN)
-*/
-
-/* handlertons of different MySQL releases are incompatible */
-#define MYSQL_LOG_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
-
-/*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_mysql_log
-{
-  int interface_version;
-};
-
-
-/*************************************************************************
-  API for Auth plugin. (MYSQL_AUTH_PLUGIN)
-*/
-
-/* handlertons of different MySQL releases are incompatible */
-#define MYSQL_AUTH_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
-
-/*
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_auth_schema
-{
-  int interface_version;
-};
-
-
-/*************************************************************************
-  API for Storage Engine plugin. (MYSQL_STORAGE_ENGINE_PLUGIN)
-*/
-
-/* handlertons of different MySQL releases are incompatible */
-#define MYSQL_HANDLERTON_INTERFACE_VERSION (MYSQL_VERSION_ID << 8)
-
-/*
-  The real API is in the sql/handler.h
-  Here we define only the descriptor structure, that is referred from
-  st_mysql_plugin.
-*/
-
-struct st_mysql_storage_engine
-{
-  int interface_version;
 };
 
 struct handlerton;

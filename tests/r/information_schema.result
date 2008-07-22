@@ -35,10 +35,10 @@ t1
 t4
 select * from information_schema.STATISTICS where TABLE_SCHEMA = "mysqltest";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
-NULL	mysqltest	t1	1	mysqltest	string_data	1	b	A	NULL	NULL	NULL	YES	BTREE		
+NULL	mysqltest	t1	1	mysqltest	string_data	1	b	A	0	NULL	NULL	YES	BTREE		
 show keys from t3 where Key_name = "a_data";
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t3	1	a_data	1	a	A	NULL	NULL	NULL	YES	BTREE		
+t3	1	a_data	1	a	A	0	NULL	NULL	YES	BTREE		
 show tables like 't%';
 Tables_in_test (t%)
 t2
@@ -46,9 +46,9 @@ t3
 t5
 show table status;
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t2	MyISAM	10	Fixed	0	0	0	#	1024	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
-t3	MyISAM	10	Fixed	0	0	0	#	1024	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
-t5	MyISAM	10	Fixed	1	7	7	#	2048	0	11	#	#	NULL	latin1_swedish_ci	NULL		
+t2	InnoDB	10	Compact	0	0	16384	#	0	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
+t3	InnoDB	10	Compact	0	0	16384	#	16384	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
+t5	InnoDB	10	Compact	1	16384	16384	#	0	0	11	#	#	NULL	latin1_swedish_ci	NULL		
 show full columns from t3 like "a%";
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
 a	int(11)	NULL	YES	MUL	NULL			
@@ -239,8 +239,8 @@ SHOW TABLE STATUS FROM test
 WHERE name IN ( SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_SCHEMA='test' AND TABLE_TYPE='BASE TABLE');
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MyISAM	10	Fixed	0	0	0	#	1024	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
-t2	MyISAM	10	Fixed	0	0	0	#	1024	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
+t1	InnoDB	10	Compact	0	0	16384	#	0	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
+t2	InnoDB	10	Compact	0	0	16384	#	0	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
 DROP TABLE t1,t2;
 alter database information_schema;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
@@ -274,7 +274,7 @@ Field	Type	Null	Key	Default	Extra
 f1	int(11)	YES	MUL	NULL	
 show indexes from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t1	1	f1	1	f1	A	NULL	NULL	NULL	YES	BTREE		
+t1	1	f1	1	f1	A	0	NULL	NULL	YES	BTREE		
 drop table t1;
 create table t1(f1 binary(32), f2 varbinary(64));
 select character_maximum_length, character_octet_length
@@ -290,8 +290,8 @@ table_schema='information_schema' and
  or column_type = 'varchar(27)')
 group by column_type order by num;
 column_type	group_concat(table_schema, '.', table_name)	num
+varchar(20)	information_schema.PLUGINS	1
 varchar(27)	information_schema.COLUMNS	1
-varchar(20)	information_schema.PLUGINS,information_schema.PLUGINS,information_schema.PLUGINS	3
 create table t1(f1 char(1) not null, f2 char(9) not null)
 default character set utf8;
 select CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH from
@@ -415,12 +415,17 @@ group by t.table_name order by num1, t.table_name;
 table_name	group_concat(t.table_schema, '.', t.table_name)	num1
 CHARACTER_SETS	information_schema.CHARACTER_SETS	1
 COLLATIONS	information_schema.COLLATIONS	1
+COLLATION_CHARACTER_SET_APPLICABILITY	information_schema.COLLATION_CHARACTER_SET_APPLICABILITY	1
 COLUMNS	information_schema.COLUMNS	1
+GLOBAL_STATUS	information_schema.GLOBAL_STATUS	1
+GLOBAL_VARIABLES	information_schema.GLOBAL_VARIABLES	1
 KEY_COLUMN_USAGE	information_schema.KEY_COLUMN_USAGE	1
 PLUGINS	information_schema.PLUGINS	1
 PROCESSLIST	information_schema.PROCESSLIST	1
 REFERENTIAL_CONSTRAINTS	information_schema.REFERENTIAL_CONSTRAINTS	1
 SCHEMATA	information_schema.SCHEMATA	1
+SESSION_STATUS	information_schema.SESSION_STATUS	1
+SESSION_VARIABLES	information_schema.SESSION_VARIABLES	1
 STATISTICS	information_schema.STATISTICS	1
 TABLES	information_schema.TABLES	1
 TABLE_CONSTRAINTS	information_schema.TABLE_CONSTRAINTS	1

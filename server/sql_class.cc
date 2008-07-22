@@ -67,7 +67,7 @@ template class List_iterator<Alter_column>;
 ****************************************************************************/
 
 extern "C" uchar *get_var_key(user_var_entry *entry, size_t *length,
-                              my_bool not_used __attribute__((unused)))
+                              bool not_used __attribute__((unused)))
 {
   *length= entry->name.length;
   return (uchar*) entry->name.str;
@@ -493,14 +493,7 @@ THD::THD()
    in_lock_tables(0),
    bootstrap(0),
    derived_tables_processing(false),
-   m_lip(NULL),
-  /*
-    @todo The following is a work around for online backup and the DDL blocker.
-          It should be removed when the generalized solution is in place.
-          This is needed to ensure the restore (which uses DDL) is not blocked
-          when the DDL blocker is engaged.
-  */
-   DDL_exception(false)
+   m_lip(NULL)
 {
   ulong tmp;
 
@@ -2426,7 +2419,7 @@ void mark_transaction_to_rollback(THD *thd, bool all)
 pthread_mutex_t LOCK_xid_cache;
 HASH xid_cache;
 
-extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, my_bool);
+extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, bool);
 extern "C" void xid_free_hash(void *);
 
 uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
@@ -2470,7 +2463,7 @@ XID_STATE *xid_cache_search(XID *xid)
 bool xid_cache_insert(XID *xid, enum xa_states xa_state)
 {
   XID_STATE *xs;
-  my_bool res;
+  bool res;
   pthread_mutex_lock(&LOCK_xid_cache);
   if (hash_search(&xid_cache, xid->key(), xid->key_length()))
     res=0;
@@ -2493,7 +2486,7 @@ bool xid_cache_insert(XID_STATE *xid_state)
   pthread_mutex_lock(&LOCK_xid_cache);
   assert(hash_search(&xid_cache, xid_state->xid.key(),
                           xid_state->xid.key_length())==0);
-  my_bool res=my_hash_insert(&xid_cache, (uchar*)xid_state);
+  bool res=my_hash_insert(&xid_cache, (uchar*)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;
 }

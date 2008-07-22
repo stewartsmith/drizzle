@@ -127,32 +127,10 @@ select t2.fld3 from t2 where fld3 LIKE 'honeysuckle_';
 fld3
 select t2.fld3 from t2 where fld3 LIKE 'don_t_find_me_please%';
 fld3
-explain select t2.fld3 from t2 where fld3 = 'honeysuckle';
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	fld3	fld3	30	const	1	Using where; Using index
-explain select fld3 from t2 ignore index (fld3) where fld3 = 'honeysuckle';
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-explain select fld3 from t2 use index (fld1) where fld3 = 'honeysuckle';
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-explain select fld3 from t2 use index (fld3) where fld3 = 'honeysuckle';
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	fld3	fld3	30	const	1	Using where; Using index
-explain select fld3 from t2 use index (fld1,fld3) where fld3 = 'honeysuckle';
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	fld3	fld3	30	const	1	Using where; Using index
-explain select fld3 from t2 ignore index (fld3,not_used);
-ERROR 42000: Key 'not_used' doesn't exist in table 't2'
-explain select fld3 from t2 use index (not_used);
-ERROR 42000: Key 'not_used' doesn't exist in table 't2'
 select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
 fld3
 honeysuckle
 honoring
-explain select t2.fld3 from t2 where fld3 >= 'honeysuckle' and fld3 <= 'honoring' order by fld3;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	fld3	fld3	30	NULL	2	Using where; Using index
 select fld1,fld3 from t2 where fld3="Colombo" or fld3 = "nondecreasing" order by fld3;
 fld1	fld3
 148504	Colombo
@@ -170,18 +148,12 @@ select fld1 from t2 where fld1=250501 or fld1="250502";
 fld1
 250501
 250502
-explain select fld1 from t2 where fld1=250501 or fld1="250502";
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	fld1	fld1	4	NULL	2	Using where; Using index
 select fld1 from t2 where fld1=250501 or fld1=250502 or fld1 >= 250505 and fld1 <= 250601 or fld1 between 250501 and 250502;
 fld1
 250501
 250502
 250505
 250601
-explain select fld1 from t2 where fld1=250501 or fld1=250502 or fld1 >= 250505 and fld1 <= 250601 or fld1 between 250501 and 250502;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	fld1	fld1	4	NULL	4	Using where; Using index
 select fld1,fld3 from t2 where companynr = 37 and fld3 like 'f%';
 fld1	fld3
 012001	flanking
@@ -278,12 +250,12 @@ companynr
 00
 select distinct t2.fld3,period from t2,t1 where companynr=37 and fld3 like "O%";
 fld3	period
-obliterates	9410
+overlay	9410
 offload	9410
+obliterates	9410
+overestimating	9410
 opaquely	9410
 organizer	9410
-overestimating	9410
-overlay	9410
 select distinct fld3 from t2 where companynr = 34 order by fld3;
 fld3
 absentee
@@ -358,16 +330,16 @@ versatility
 vest
 select distinct fld3 from t2 limit 10;
 fld3
-abates
-abiding
-Abraham
-abrogating
-absentee
-abut
-accessed
-accruing
-accumulating
-accuracies
+Omaha
+breaking
+Romans
+intercepted
+bewilderingly
+astound
+admonishing
+sumac
+flanking
+combed
 select distinct fld3 from t2 having fld3 like "A%" limit 10;
 fld3
 abates
@@ -448,7 +420,7 @@ select distinct substring(fld3,1,3) as a from t2 having a like "A%" order by a l
 a
 aba
 abi
-Abr
+abr
 abs
 abu
 acc
@@ -470,16 +442,16 @@ Ade
 adj
 select distinct substring(fld3,1,3) as a from t2 having a like "A%" limit 10;
 a
-aba
-abi
-Abr
-abs
-abu
-acc
-acq
-acu
-Ade
-adj
+ast
+adm
+ann
+agi
+afi
+amm
+Aug
+aud
+att
+Ado
 create table t3 (
 period    int not null,
 name      char(32) not null,
@@ -596,22 +568,6 @@ companynr	rtrim(space(512+companynr))
 512	
 select distinct fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr order by fld3;
 fld3
-explain select t3.t2nr,fld3 from t2,t3 where t2.companynr = 34 and t2.fld1=t3.t2nr order by t3.t2nr,fld3;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	fld1	NULL	NULL	NULL	1199	Using where; Using temporary; Using filesort
-1	SIMPLE	t3	eq_ref	PRIMARY	PRIMARY	4	test.t2.fld1	1	Using where; Using index
-explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ALL	period	NULL	NULL	NULL	41810	Using temporary; Using filesort
-1	SIMPLE	t3	ref	period	period	4	test.t1.period	4181	
-explain select * from t3 as t1,t3 where t1.period=t3.period order by t3.period limit 10;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t3	index	period	period	4	NULL	1	
-1	SIMPLE	t1	ref	period	period	4	test.t3.period	4181	
-explain select * from t3 as t1,t3 where t1.period=t3.period order by t1.period limit 10;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	period	period	4	NULL	1	
-1	SIMPLE	t3	ref	period	period	4	test.t1.period	4181	
 select period from t1;
 period
 9410
@@ -623,10 +579,6 @@ breaking	9410
 select fld3,period from t2,t3 where t2.fld1 = 011401 and t2.fld1=t3.t2nr and t3.period=1001;
 fld3	period
 breaking	1001
-explain select fld3,period from t2,t3 where t2.fld1 = 011401 and t3.t2nr=t2.fld1 and 1001 = t3.period;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	const	fld1	fld1	4	const	1	
-1	SIMPLE	t3	const	PRIMARY,period	PRIMARY	4	const	1	
 select fld3,period from t2,t1 where companynr*10 = 37*10;
 fld3	period
 breaking	9410
@@ -1184,11 +1136,6 @@ Kevin	9410
 uncovering	9410
 chews	9410
 appendixes	9410
-appendixes	9410
-appendixes	9410
-appendixes	9410
-appendixes	9410
-appendixes	9410
 raining	9410
 infest	9410
 compartment	9410
@@ -1217,6 +1164,11 @@ dusted	9410
 encompasses	9410
 presentation	9410
 Kantian	9410
+appendixes	9410
+appendixes	9410
+appendixes	9410
+appendixes	9410
+appendixes	9410
 select fld3,period,price,price2 from t2,t3 where t2.fld1=t3.t2nr and period >= 1001 and period <= 1002 and t2.companynr = 37 order by fld3,period, price;
 fld3	period	price	price2
 admonishing	1002	28357832	8723648
@@ -1355,82 +1307,16 @@ companynr	companyname
 select count(*) from t2 left join t4 using (companynr) where t4.companynr is not null;
 count(*)
 1199
-explain select t2.companynr,companyname from t2 left join t4 using (companynr) where t4.companynr is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1200	
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	Using where; Not exists
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	NULL	NULL	NULL	NULL	12	
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1200	Using where; Not exists
 select companynr,companyname from t2 left join t4 using (companynr) where companynr is null;
 companynr	companyname
 select count(*) from t2 left join t4 using (companynr) where companynr is not null;
 count(*)
 1200
-explain select companynr,companyname from t2 left join t4 using (companynr) where companynr is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
 delete from t2 where fld1=999999;
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 and t4.companynr > 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-1	SIMPLE	t4	eq_ref	PRIMARY	PRIMARY	1	test.t2.companynr	1	
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	12	Using where
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	12	Using where
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 and companynr > 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	12	Using where
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	NULL	NULL	NULL	NULL	12	
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where t2.companynr > 0 or t2.companynr < 0 or t4.companynr > 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	12	
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-explain select t2.companynr,companyname from t4 left join t2 using (companynr) where ifnull(t2.companynr,1)>0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	NULL	NULL	NULL	NULL	12	
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr is null;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	12	Using where
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	
-explain select companynr,companyname from t4 left join t2 using (companynr) where companynr > 0 or companynr < 0 or companynr > 0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	PRIMARY	NULL	NULL	NULL	12	Using where
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	
-explain select companynr,companyname from t4 left join t2 using (companynr) where ifnull(companynr,1)>0;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	ALL	NULL	NULL	NULL	NULL	12	Using where
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	
 select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
 companynr	companynr
 37	36
 41	40
-explain select distinct t2.companynr,t4.companynr from t2,t4 where t2.companynr=t4.companynr+1;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t4	index	NULL	PRIMARY	1	NULL	12	Using index; Using temporary
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	Using where; Using join buffer
 select t2.fld1,t2.companynr,fld3,period from t3,t2 where t2.fld1 = 38208 and t2.fld1=t3.t2nr and period = 1008 or t2.fld1 = 38008 and t2.fld1 =t3.t2nr and period = 1008;
 fld1	companynr	fld3	period
 038008	37	reporters	1008
@@ -1502,11 +1388,6 @@ companynr	count(*)
 select count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 where companynr = 34 and fld4<>"";
 count(*)	min(fld4)	max(fld4)	sum(fld1)	avg(fld1)	std(fld1)	variance(fld1)
 70	absentee	vest	17788966	254128.0857	3272.5940	10709871.3069
-explain extended select count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 where companynr = 34 and fld4<>"";
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	100.00	Using where
-Warnings:
-Note	1003	select count(0) AS "count(*)",min("test"."t2"."fld4") AS "min(fld4)",max("test"."t2"."fld4") AS "max(fld4)",sum("test"."t2"."fld1") AS "sum(fld1)",avg("test"."t2"."fld1") AS "avg(fld1)",std("test"."t2"."fld1") AS "std(fld1)",variance("test"."t2"."fld1") AS "variance(fld1)" from "test"."t2" where (("test"."t2"."companynr" = 34) and ("test"."t2"."fld4" <> ''))
 select companynr,count(*),min(fld4),max(fld4),sum(fld1),avg(fld1),std(fld1),variance(fld1) from t2 group by companynr limit 3;
 companynr	count(*)	min(fld4)	max(fld4)	sum(fld1)	avg(fld1)	std(fld1)	variance(fld1)
 00	82	Anthony	windmills	10355753	126289.6707	115550.9757	13352027981.7087
@@ -1943,12 +1824,6 @@ sum(price)
 select t2.fld1,sum(price) from t3,t2 where t2.fld1 = t3.t2nr and t3.companynr = 512 and t3.t2nr = 38008 and t2.fld1 = 38008 or t2.fld1 = t3.t2nr and t3.t2nr = 38008 and t2.fld1 = 38008 or t3.t2nr = t2.fld1 and t2.fld1 = 38008 group by t2.fld1;
 fld1	sum(price)
 038008	234298
-explain select fld3 from t2 where 1>2 or 2>3;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE
-explain select fld3 from t2 where fld1=fld1;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1199	
 select companynr,fld1 from t2 HAVING fld1=250501 or fld1=250502;
 companynr	fld1
 34	250501
@@ -1998,9 +1873,6 @@ count(*)
 select count(*) from t3 where companynr=512 and price2=76234234;
 count(*)
 4181
-explain select min(fld1),max(fld1),count(*) from t2;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
 select min(fld1),max(fld1),count(*) from t2;
 min(fld1)	max(fld1)	count(*)
 0	1232609	1199
@@ -2084,11 +1956,6 @@ fld5	char(35)	latin1_swedish_ci	NO		NULL		#
 fld6	char(4)	latin1_swedish_ci	NO		NULL		#	
 show full columns from t2 from test like 's%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-show keys from t2;
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t2	0	PRIMARY	1	auto	A	1199	NULL	NULL		BTREE		
-t2	0	fld1	1	fld1	A	1199	NULL	NULL		BTREE		
-t2	1	fld3	1	fld3	A	NULL	NULL	NULL		BTREE		
 drop table t4, t3, t2, t1;
 CREATE TABLE t1 (
 id bigint(8) unsigned NOT NULL auto_increment,
@@ -2189,10 +2056,10 @@ a	a
 select * from (t1 as t2 left join t1 as t3 using (a)) inner join t1 on t1.a>1;
 a	a
 1	2
-2	2
-3	2
 1	3
+2	2
 2	3
+3	2
 3	3
 select * from t1 inner join (t1 as t2 left join t1 as t3 using (a)) on t1.a>1;
 a	a
@@ -2317,13 +2184,6 @@ insert into t1 values (1);
 insert into t1 values (2);
 insert into t2 values (1);
 insert into t4 values (1,1);
-explain select * from t1 left join t2 on id1 = id2 left join t3 on id1 = id3
-left join t4 on id3 = id4 where id2 = 1 or id4 = 1;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t3	system	NULL	NULL	NULL	NULL	0	const row not found
-1	SIMPLE	t4	const	id4	NULL	NULL	NULL	1	
-1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	2	
-1	SIMPLE	t2	ALL	NULL	NULL	NULL	NULL	1	Using where
 select * from t1 left join t2 on id1 = id2 left join t3 on id1 = id3
 left join t4 on id3 = id4 where id2 = 1 or id4 = 1;
 id1	id2	id3	id4	id44
@@ -2353,18 +2213,10 @@ create table t1 (a integer,  b integer, index(a), index(b));
 create table t2 (c integer,  d integer, index(c), index(d));
 insert into t1 values (1,2), (2,2), (3,2), (4,2);
 insert into t2 values (1,3), (2,3), (3,4), (4,4);
-explain select * from t1 left join t2 on a=c where d in (4);
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	c,d	d	5	const	2	Using index condition
-1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	4	Using where; Using join buffer
 select * from t1 left join t2 on a=c where d in (4);
 a	b	c	d
 3	2	3	4
 4	2	4	4
-explain select * from t1 left join t2 on a=c where d = 4;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	c,d	d	5	const	2	Using index condition
-1	SIMPLE	t1	ALL	a	NULL	NULL	NULL	4	Using where; Using join buffer
 select * from t1 left join t2 on a=c where d = 4;
 a	b	c	d
 3	2	3	4
@@ -2390,11 +2242,11 @@ INSERT INTO t2 VALUES ('one'),('two'),('three'),('four'),('five');
 EXPLAIN SELECT * FROM t1 LEFT JOIN t2 USE INDEX (a) ON t1.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	5	
-1	SIMPLE	t2	ref	a	a	23	test.t1.a	2	
+1	SIMPLE	t2	ref	a	a	23	test.t1.a	1	
 EXPLAIN SELECT * FROM t1 LEFT JOIN t2 FORCE INDEX (a) ON t1.a=t2.a;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	5	
-1	SIMPLE	t2	ref	a	a	23	test.t1.a	2	
+1	SIMPLE	t2	ref	a	a	23	test.t1.a	1	
 DROP TABLE t1, t2;
 CREATE TABLE t1 ( city char(30) );
 INSERT INTO t1 VALUES ('London');
@@ -2569,9 +2421,6 @@ drop table t1,t2;
 create table t2 (a tinyint unsigned);
 create index t2i on t2(a);
 insert into t2 values (0), (254), (255);
-explain select * from t2 where a > -1;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	t2i	t2i	2	NULL	3	Using where; Using index
 select * from t2 where a > -1;
 a
 0
@@ -2609,8 +2458,8 @@ create table t11 like t1;
 insert into t1 values(1,""),(2,"");
 show table status like 't1%';
 Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	MyISAM	10	Dynamic	2	20	X	X	X	X	X	X	X	X	latin1_swedish_ci	NULL		
-t11	MyISAM	10	Dynamic	0	0	X	X	X	X	X	X	X	X	latin1_swedish_ci	NULL		
+t1	InnoDB	10	Compact	2	8192	X	X	X	X	X	X	X	X	latin1_swedish_ci	NULL		
+t11	InnoDB	10	Compact	0	0	X	X	X	X	X	X	X	X	latin1_swedish_ci	NULL		
 select 123 as a from t1 where f1 is null;
 a
 drop table t1,t11;
@@ -2670,13 +2519,6 @@ CREATE TABLE t2 (a int, b varchar(2), c varchar(2), PRIMARY KEY(a));
 insert into t2 values (1,'',''), (2,'','');
 CREATE TABLE t3 (a int, b int, PRIMARY KEY (a,b), KEY a (a), KEY b (b));
 insert into t3 values (1,1),(1,2);
-explain select straight_join DISTINCT t2.a,t2.b, t1.c from t1, t3, t2 
-where (t1.c=t2.a or (t1.c=t3.a and t2.a=t3.b)) and t1.b=556476786 and 
-t2.b like '%%' order by t2.b limit 0,1;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	b,c	b	5	const	1	Using temporary; Using filesort
-1	SIMPLE	t3	index	PRIMARY,a,b	PRIMARY	8	NULL	2	Using index; Using join buffer
-1	SIMPLE	t2	ALL	PRIMARY	NULL	NULL	NULL	2	Range checked for each record (index map: 0x1)
 DROP TABLE t1,t2,t3;
 CREATE TABLE t1 (a int, INDEX idx(a));
 INSERT INTO t1 VALUES (2), (3), (1);
@@ -2693,9 +2535,11 @@ INSERT INTO t1 VALUES (1,1), (2,1), (4,10);
 CREATE TABLE t2 (a int PRIMARY KEY, b int, KEY b (b));
 INSERT INTO t2 VALUES (1,NULL), (2,10);
 ALTER TABLE t1 ENABLE KEYS;
+Warnings:
+Note	1031	Table storage engine for 't1' doesn't have this option
 EXPLAIN SELECT STRAIGHT_JOIN COUNT(*) FROM t2, t1 WHERE t1.b = t2.b OR t2.b IS NULL;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	b	b	5	NULL	2	Using index
+1	SIMPLE	t2	index	b	PRIMARY	4	NULL	2	
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	3	Using where; Using join buffer
 SELECT STRAIGHT_JOIN * FROM t2, t1 WHERE t1.b = t2.b OR t2.b IS NULL;
 a	b	a	b
@@ -2705,7 +2549,7 @@ a	b	a	b
 2	10	4	10
 EXPLAIN SELECT STRAIGHT_JOIN COUNT(*) FROM t2, t1 WHERE t1.b = t2.b OR t2.b IS NULL;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	index	b	b	5	NULL	2	Using index
+1	SIMPLE	t2	index	b	PRIMARY	4	NULL	2	
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	3	Using where; Using join buffer
 SELECT STRAIGHT_JOIN * FROM t2, t1 WHERE t1.b = t2.b OR t2.b IS NULL;
 a	b	a	b
@@ -2718,28 +2562,6 @@ CREATE TABLE t1 (key1 float default NULL, UNIQUE KEY key1 (key1));
 CREATE TABLE t2 (key2 float default NULL, UNIQUE KEY key2 (key2));
 INSERT INTO t1 VALUES (0.3762),(0.3845),(0.6158),(0.7941);
 INSERT INTO t2 VALUES (1.3762),(1.3845),(1.6158),(1.7941);
-explain select max(key1) from t1 where key1 <= 0.6158;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
-explain select max(key2) from t2 where key2 <= 1.6158;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
-explain select min(key1) from t1 where key1 >= 0.3762;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
-explain select min(key2) from t2 where key2 >= 1.3762;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
-explain select max(key1), min(key2) from t1, t2
-where key1 <= 0.6158 and key2 >= 1.3762;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
-explain select max(key1) from t1 where key1 <= 0.6158 and rand() + 0.5 >= 0.5;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
-explain select min(key1) from t1 where key1 >= 0.3762 and rand() + 0.5 >= 0.5;
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Select tables optimized away
 select max(key1) from t1 where key1 <= 0.6158;
 max(key1)
 0.6158
@@ -3129,7 +2951,7 @@ SELECT t2.sku, t2.sppr, t2.name, t1.sku, t1.pr
 FROM t2, t1 WHERE t2.sku=20 AND (t2.sku=t1.sku OR t2.sppr=t1.sku);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t2	const	PRIMARY	PRIMARY	4	const	1	
-1	SIMPLE	t1	range	PRIMARY	PRIMARY	4	NULL	2	Using index condition; Using MRR
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	4	NULL	2	Using where
 DROP TABLE t1,t2;
 CREATE TABLE t1 (i TINYINT UNSIGNED NOT NULL);
 INSERT t1 SET i = 0;
@@ -3162,11 +2984,6 @@ test.t2	analyze	status	OK
 select 'In next EXPLAIN, B.rows must be exactly 10:' Z;
 Z
 In next EXPLAIN, B.rows must be exactly 10:
-explain select * from t2 A, t2 B where A.a=5 and A.b=5 and A.C<5
-and B.a=5 and B.b=A.e and (B.b =1 or B.b = 3 or B.b=5);
-id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	A	range	PRIMARY	PRIMARY	12	NULL	4	Using index condition; Using where; Using MRR
-1	SIMPLE	B	ref	PRIMARY	PRIMARY	8	const,test.A.e	10	
 drop table t1, t2;
 CREATE TABLE t1 (a int PRIMARY KEY, b int, INDEX(b));
 INSERT INTO t1 VALUES (1, 3), (9,4), (7,5), (4,5), (6,2),
@@ -3179,13 +2996,13 @@ INSERT INTO t2 VALUES
 EXPLAIN
 SELECT a, c, d, f FROM t1,t2 WHERE a=c AND b BETWEEN 4 AND 6;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY,b	b	5	NULL	3	Using index condition; Using MRR
-1	SIMPLE	t2	ref	c	c	5	test.t1.a	2	
+1	SIMPLE	t1	range	PRIMARY,b	b	5	NULL	3	Using where; Using index
+1	SIMPLE	t2	ref	c	c	5	test.t1.a	1	
 EXPLAIN
 SELECT a, c, d, f FROM t1,t2 WHERE a=c AND b BETWEEN 4 AND 6 AND a > 0;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY,b	b	5	NULL	3	Using index condition; Using where; Using MRR
-1	SIMPLE	t2	ref	c	c	5	test.t1.a	2	
+1	SIMPLE	t1	range	PRIMARY,b	b	5	NULL	3	Using where; Using index
+1	SIMPLE	t2	ref	c	c	5	test.t1.a	1	
 DROP TABLE t1, t2;
 create table t1 (
 a int unsigned    not null auto_increment primary key,
@@ -3239,7 +3056,7 @@ WHERE t1.id=2;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	const	PRIMARY	PRIMARY	4	const	1	
 1	SIMPLE	t2	const	idx1	NULL	NULL	NULL	1	
-1	SIMPLE	t3	ref	idx1	idx1	5	const	3	
+1	SIMPLE	t3	ref	idx1	idx1	5	const	2	
 SELECT * FROM t1 LEFT JOIN t2 ON t2.b=t1.a INNER JOIN t3 ON t3.d=t1.id
 WHERE t1.id=2;
 id	a	b	c	d	e
@@ -3262,19 +3079,19 @@ EXPLAIN SELECT t2.*
 FROM t1 JOIN t2 ON t2.fk=t1.pk
 WHERE t2.fk < 'c' AND t2.pk=t1.fk;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY	PRIMARY	12	NULL	3	Using index condition; Using MRR
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	12	NULL	2	Using where
 1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	18	test.t1.fk	1	Using where
 EXPLAIN SELECT t2.* 
 FROM t1 JOIN t2 ON t2.fk=t1.pk 
 WHERE t2.fk BETWEEN 'a' AND 'b' AND t2.pk=t1.fk;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY	PRIMARY	12	NULL	2	Using index condition; Using MRR
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	12	NULL	2	Using where
 1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	18	test.t1.fk	1	Using where
 EXPLAIN SELECT t2.* 
 FROM t1 JOIN t2 ON t2.fk=t1.pk 
 WHERE t2.fk IN ('a','b') AND t2.pk=t1.fk;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	range	PRIMARY	PRIMARY	12	NULL	2	Using index condition; Using MRR
+1	SIMPLE	t1	range	PRIMARY	PRIMARY	12	NULL	2	Using where
 1	SIMPLE	t2	eq_ref	PRIMARY	PRIMARY	18	test.t1.fk	1	Using where
 DROP TABLE t1,t2;
 CREATE TABLE t1 (a int, b varchar(20) NOT NULL, PRIMARY KEY(a));
@@ -3317,8 +3134,8 @@ WHERE t1.id = 8 AND t2.i BETWEEN t1.b AND t1.e AND
 t3.a=t2.a AND t3.c IN ('bb','ee') ;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	const	PRIMARY	PRIMARY	4	const	1	
-1	SIMPLE	t2	range	si,ai	si	5	NULL	4	Using index condition; Using MRR
-1	SIMPLE	t3	eq_ref	PRIMARY,ci	PRIMARY	4	test.t2.a	1	Using where
+1	SIMPLE	t3	range	PRIMARY,ci	ci	5	NULL	6	Using where; Using index
+1	SIMPLE	t2	ref	si,ai	ai	5	test.t3.a	1	Using where
 EXPLAIN 
 SELECT t3.a FROM t1,t2 FORCE INDEX (si),t3
 WHERE t1.id = 8 AND (t2.i=t1.b OR t2.i=t1.e) AND t3.a=t2.a AND
@@ -3370,12 +3187,12 @@ COUNT(*)
 2
 EXPLAIN SELECT * FROM t1 WHERE ID_better=1 AND ID_with_null IS NULL;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	index_merge	idx1,idx2	idx2,idx1	4,5	NULL	1	Using intersect(idx2,idx1); Using where; Using index
 DROP INDEX idx1 ON t1;
 CREATE UNIQUE INDEX idx1 ON t1(ID_with_null);
 EXPLAIN SELECT * FROM t1 WHERE ID_better=1 AND ID_with_null IS NULL;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	index_merge	idx1,idx2	idx2,idx1	4,5	NULL	1	Using intersect(idx2,idx1); Using where; Using index
 DROP TABLE t1;
 CREATE TABLE t1 (
 ID1_with_null int NULL,
@@ -3407,34 +3224,34 @@ COUNT(*)
 EXPLAIN SELECT * FROM t1
 WHERE ID_better=1 AND ID1_with_null IS NULL AND ID2_with_null=3 ;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	index_merge	idx1,idx2	idx2,idx1	4,10	NULL	1	Using intersect(idx2,idx1); Using where; Using index
 EXPLAIN SELECT * FROM t1
 WHERE ID_better=1 AND ID1_with_null=3 AND ID2_with_null=3 IS NULL ;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	2	Using where
 EXPLAIN SELECT * FROM t1
 WHERE ID_better=1 AND ID1_with_null IS NULL AND ID2_with_null IS NULL;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	2	Using where
 DROP INDEX idx1 ON t1;
 CREATE UNIQUE INDEX idx1 ON t1(ID1_with_null,ID2_with_null);
 EXPLAIN SELECT * FROM t1
 WHERE ID_better=1 AND ID1_with_null IS NULL AND ID2_with_null=3 ;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	index_merge	idx1,idx2	idx2,idx1	4,10	NULL	1	Using intersect(idx2,idx1); Using where; Using index
 EXPLAIN SELECT * FROM t1
 WHERE ID_better=1 AND ID1_with_null=3 AND ID2_with_null IS NULL ;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	index_merge	idx1,idx2	idx2,idx1	4,10	NULL	1	Using intersect(idx2,idx1); Using where; Using index
 EXPLAIN SELECT * FROM t1
 WHERE ID_better=1 AND ID1_with_null IS NULL AND ID2_with_null IS NULL;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	2	Using where
 EXPLAIN SELECT * FROM t1
 WHERE ID_better=1 AND ID1_with_null IS NULL AND 
 (ID2_with_null=1 OR ID2_with_null=2);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	1	Using where
+1	SIMPLE	t1	ref	idx1,idx2	idx2	4	const	2	Using where
 DROP TABLE t1;
 CREATE TABLE t1 (a INT, ts TIMESTAMP, KEY ts(ts));
 INSERT INTO t1 VALUES (30,"2006-01-03 23:00:00"), (31,"2006-01-03 23:00:00");
@@ -3485,7 +3302,7 @@ t1	CREATE TABLE "t1" (
   "i" decimal(19,0) NOT NULL,
   "c" decimal(19,0) NOT NULL,
   "co" decimal(19,0) NOT NULL
-) ENGINE=MyISAM DEFAULT CHARSET=latin1
+) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 select 
 if(1, cast(1111111111111111111 as unsigned), 1) i,
@@ -3528,7 +3345,7 @@ cc	2	5
 cc 	3	7
 EXPLAIN SELECT name, LENGTH(name), n FROM t2 WHERE name='cc ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	name	name	6	const	3	Using where
+1	SIMPLE	t2	ALL	name	NULL	NULL	NULL	7	Using where
 SELECT name, LENGTH(name), n FROM t2 WHERE name='cc ';
 name	LENGTH(name)	n
 cc   	5	3
@@ -3536,7 +3353,7 @@ cc	2	5
 cc 	3	7
 EXPLAIN SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	name	name	6	NULL	3	Using where
+1	SIMPLE	t2	ALL	name	NULL	NULL	NULL	7	Using where
 SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%';
 name	LENGTH(name)	n
 cc   	5	3
@@ -3545,7 +3362,7 @@ cc	2	5
 cc 	3	7
 EXPLAIN SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%' ORDER BY name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	name	name	6	NULL	3	Using where; Using filesort
+1	SIMPLE	t2	ALL	name	NULL	NULL	NULL	7	Using where; Using filesort
 SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%' ORDER BY name;
 name	LENGTH(name)	n
 cc 	4	4
@@ -3555,7 +3372,7 @@ cc 	3	7
 EXPLAIN SELECT * FROM t1 LEFT JOIN t2 ON t1.name=t2.name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	5	
-1	SIMPLE	t2	ref	name	name	6	test.t1.name	2	
+1	SIMPLE	t2	ref	name	name	6	test.t1.name	1	
 SELECT * FROM t1 LEFT JOIN t2 ON t1.name=t2.name;
 name	name	n
 ccc	NULL	NULL
@@ -3602,7 +3419,7 @@ cc	2	5
 cc 	3	7
 EXPLAIN SELECT name, LENGTH(name), n FROM t2 WHERE name='cc ';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	ref	name	name	6	const	3	Using where
+1	SIMPLE	t2	ALL	name	NULL	NULL	NULL	7	Using where
 SELECT name, LENGTH(name), n FROM t2 WHERE name='cc ';
 name	LENGTH(name)	n
 cc   	5	3
@@ -3610,7 +3427,7 @@ cc	2	5
 cc 	3	7
 EXPLAIN SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%';
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	name	name	6	NULL	3	Using where
+1	SIMPLE	t2	ALL	name	NULL	NULL	NULL	7	Using where
 SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%';
 name	LENGTH(name)	n
 cc   	5	3
@@ -3619,7 +3436,7 @@ cc	2	5
 cc 	3	7
 EXPLAIN SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%' ORDER BY name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t2	range	name	name	6	NULL	3	Using where; Using filesort
+1	SIMPLE	t2	ALL	name	NULL	NULL	NULL	7	Using where; Using filesort
 SELECT name , LENGTH(name), n FROM t2 WHERE name LIKE 'cc%' ORDER BY name;
 name	LENGTH(name)	n
 cc 	4	4
@@ -3629,7 +3446,7 @@ cc 	3	7
 EXPLAIN SELECT * FROM t1 LEFT JOIN t2 ON t1.name=t2.name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	5	
-1	SIMPLE	t2	ref	name	name	6	test.t1.name	2	
+1	SIMPLE	t2	ref	name	name	6	test.t1.name	1	
 SELECT * FROM t1 LEFT JOIN t2 ON t1.name=t2.name;
 name	name	n
 ccc	NULL	NULL
@@ -3686,7 +3503,7 @@ ON ( f1.b=f2.b AND f1.a<f2.a )
 WHERE 1 AND f1.b NOT IN (100,2232,3343,51111);
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	f1	index	inx	inx	10	NULL	7	Using where; Using index
-1	SIMPLE	f2	ref	inx	inx	5	test.f1.b	1	Using where; Using index
+1	SIMPLE	f2	ref	inx	inx	5	test.f1.b	3	Using where; Using index
 DROP TABLE t1;
 CREATE TABLE t1 (c1 INT, c2 INT);
 INSERT INTO t1 VALUES (1,11), (2,22), (2,22);
@@ -3748,12 +3565,19 @@ join_7.c1,
 join_1.c1,
 join_0.c1;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	filtered	Extra
-1	SIMPLE	NULL	NULL	NULL	NULL	NULL	NULL	NULL	NULL	Impossible WHERE noticed after reading const tables
+1	SIMPLE	join_0	ALL	PRIMARY	NULL	NULL	NULL	1	100.00	Using temporary; Using filesort
+1	SIMPLE	join_1	eq_ref	PRIMARY	PRIMARY	4	test.join_0.c1	1	100.00	
+1	SIMPLE	join_2	eq_ref	PRIMARY	PRIMARY	4	test.join_1.c1	1	100.00	Using where
+1	SIMPLE	join_3	eq_ref	PRIMARY	PRIMARY	4	test.join_2.c1	1	100.00	Using where
+1	SIMPLE	join_4	eq_ref	PRIMARY	PRIMARY	4	test.join_3.c1	1	100.00	Using where
+1	SIMPLE	join_5	eq_ref	PRIMARY	PRIMARY	4	test.join_4.c1	1	100.00	Using where
+1	SIMPLE	join_6	eq_ref	PRIMARY	PRIMARY	4	test.join_5.c1	1	100.00	Using where
+1	SIMPLE	join_7	eq_ref	PRIMARY	PRIMARY	4	test.join_5.c1	1	100.00	Using where
 Warnings:
-Note	1003	select '0' AS "c1" from "test"."t1" "join_0" join "test"."t1" "join_1" join "test"."t1" "join_2" join "test"."t1" "join_3" join "test"."t1" "join_4" join "test"."t1" "join_5" join "test"."t1" "join_6" join "test"."t1" "join_7" where 0 group by '0','0','0','0','0'
+Note	1003	select "test"."join_2"."c1" AS "c1" from "test"."t1" "join_0" join "test"."t1" "join_1" join "test"."t1" "join_2" join "test"."t1" "join_3" join "test"."t1" "join_4" join "test"."t1" "join_5" join "test"."t1" "join_6" join "test"."t1" "join_7" where ((("test"."join_1"."c1" = "test"."join_0"."c1") and ("test"."join_2"."c1" = "test"."join_0"."c1") and ("test"."join_3"."c1" = "test"."join_0"."c1") and ("test"."join_4"."c1" = "test"."join_0"."c1") and ("test"."join_5"."c1" = "test"."join_0"."c1") and ("test"."join_6"."c1" = "test"."join_0"."c1") and ("test"."join_7"."c1" = "test"."join_0"."c1")) or (("test"."join_1"."c1" = "test"."join_0"."c1") and ("test"."join_2"."c1" = "test"."join_0"."c1") and ("test"."join_3"."c1" = "test"."join_0"."c1") and ("test"."join_4"."c1" = "test"."join_0"."c1") and ("test"."join_5"."c1" = "test"."join_0"."c1") and ("test"."join_6"."c1" = "test"."join_0"."c1") and ("test"."join_7"."c1" = "test"."join_0"."c1") and ("test"."join_4"."c2" = '?') and ("test"."join_0"."c2" < '?') and ("test"."join_1"."c2" < '?') and ("test"."join_2"."c2" > '?') and ("test"."join_2"."c2" < '!') and ("test"."join_3"."c2" > '?') and ("test"."join_5"."c2" <> '?') and ("test"."join_6"."c2" <> '?') and ("test"."join_7"."c2" >= '?'))) group by "test"."join_3"."c1","test"."join_2"."c1","test"."join_1"."c1","test"."join_0"."c1"
 SHOW WARNINGS;
 Level	Code	Message
-Note	1003	select '0' AS "c1" from "test"."t1" "join_0" join "test"."t1" "join_1" join "test"."t1" "join_2" join "test"."t1" "join_3" join "test"."t1" "join_4" join "test"."t1" "join_5" join "test"."t1" "join_6" join "test"."t1" "join_7" where 0 group by '0','0','0','0','0'
+Note	1003	select "test"."join_2"."c1" AS "c1" from "test"."t1" "join_0" join "test"."t1" "join_1" join "test"."t1" "join_2" join "test"."t1" "join_3" join "test"."t1" "join_4" join "test"."t1" "join_5" join "test"."t1" "join_6" join "test"."t1" "join_7" where ((("test"."join_1"."c1" = "test"."join_0"."c1") and ("test"."join_2"."c1" = "test"."join_0"."c1") and ("test"."join_3"."c1" = "test"."join_0"."c1") and ("test"."join_4"."c1" = "test"."join_0"."c1") and ("test"."join_5"."c1" = "test"."join_0"."c1") and ("test"."join_6"."c1" = "test"."join_0"."c1") and ("test"."join_7"."c1" = "test"."join_0"."c1")) or (("test"."join_1"."c1" = "test"."join_0"."c1") and ("test"."join_2"."c1" = "test"."join_0"."c1") and ("test"."join_3"."c1" = "test"."join_0"."c1") and ("test"."join_4"."c1" = "test"."join_0"."c1") and ("test"."join_5"."c1" = "test"."join_0"."c1") and ("test"."join_6"."c1" = "test"."join_0"."c1") and ("test"."join_7"."c1" = "test"."join_0"."c1") and ("test"."join_4"."c2" = '?') and ("test"."join_0"."c2" < '?') and ("test"."join_1"."c2" < '?') and ("test"."join_2"."c2" > '?') and ("test"."join_2"."c2" < '!') and ("test"."join_3"."c2" > '?') and ("test"."join_5"."c2" <> '?') and ("test"."join_6"."c2" <> '?') and ("test"."join_7"."c2" >= '?'))) group by "test"."join_3"."c1","test"."join_2"."c1","test"."join_1"."c1","test"."join_0"."c1"
 DROP TABLE t1;
 SELECT 1 AS ` `;
 
@@ -3991,8 +3815,8 @@ b
 2
 SHOW STATUS LIKE 'Handler_read%';
 Variable_name	Value
-Handler_read_first	0
-Handler_read_key	2
+Handler_read_first	1
+Handler_read_key	5
 Handler_read_next	0
 Handler_read_prev	0
 Handler_read_rnd	0

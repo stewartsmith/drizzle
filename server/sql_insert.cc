@@ -163,7 +163,7 @@ static int check_update_fields(THD *thd, TABLE_LIST *insert_table_list,
                                table_map *map __attribute__((__unused__)))
 {
   TABLE *table= insert_table_list->table;
-  my_bool timestamp_mark= false;
+  bool timestamp_mark= false;
 
   if (table->timestamp_field)
   {
