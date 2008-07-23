@@ -2109,25 +2109,22 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
 ******************************************************************/
 
 
+static char **mysql_completion (const char *text, int start, int end);
 static char *new_command_generator(const char *text, int);
-extern char **new_mysql_completion (const char *text, int start, int end);
+
 
 /*
   Tell the GNU Readline library how to complete.  We want to try to complete
   on command names if this is the first word in the line, or on filenames
   if not.
 */
-
-#if defined(USE_NEW_READLINE_INTERFACE) || defined(USE_LIBEDIT_INTERFACE)
-extern char *no_completion(const char*,int);
-#else
-char *no_completion(void);
-char *no_completion(void)
+static char *no_completion(const char * a __attribute__((unused)),
+                           int b __attribute__((unused)))
 {
   /* No filename completion */
   return 0;
 }
-#endif
+
 
 /* glues pieces of history back together if in pieces   */
 static void fix_history(DYNAMIC_STRING *final_command)
@@ -2208,9 +2205,10 @@ static void initialize_readline (const char *name)
   rl_readline_name= (char *)name;
 
   /* Tell the completer that we want a crack first. */
-  rl_attempted_completion_function= (rl_completion_func_t*)&new_mysql_completion;
+  rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;
   rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
 }
+
 
 /*
   Attempt to complete on the contents of TEXT.  START and END show the
@@ -2218,16 +2216,16 @@ static void initialize_readline (const char *name)
   entire line in case we want to do some simple parsing.  Return the
   array of matches, or NULL if there aren't any.
 */
-
-char **new_mysql_completion (const char *text,
-                             int start __attribute__((unused)),
-                             int end __attribute__((unused)))
+char **mysql_completion (const char *text,
+                        int start __attribute__((unused)),
+                        int end __attribute__((unused)))
 {
   if (!status.batch && !quick)
     return rl_completion_matches(text, new_command_generator);
   else
     return (char**) 0;
 }
+
 
 static char *new_command_generator(const char *text,int state)
 {
