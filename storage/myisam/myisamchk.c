@@ -155,10 +155,6 @@ static struct my_option my_long_options[] =
   {"analyze", 'a',
    "Analyze distribution of keys. Will make some joins in MySQL faster. You can check the calculated distribution.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"block-search", 'b',
    "No help available.",
    0, 0, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -349,7 +345,7 @@ static void usage(void)
                       directly with '--variable-name=value'.\n\
   -t, --tmpdir=path   Path for temporary files. Multiple paths can be\n\
                       specified, separated by ");
-#if defined( __WIN__) || defined(__NETWARE__)
+#if defined( __WIN__)
    printf("semicolon (;)");
 #else
    printf("colon (:)");

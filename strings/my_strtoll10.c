@@ -18,16 +18,7 @@
 #include <m_string.h>
 
 #undef  ULONGLONG_MAX
-/*
-  Needed under MetroWerks Compiler, since MetroWerks compiler does not
-  properly handle a constant expression containing a mod operator
-*/
-#if defined(__NETWARE__) && defined(__MWERKS__) 
-static uint64_t uint64_t_max= ~(uint64_t) 0;
-#define ULONGLONG_MAX uint64_t_max
-#else
 #define ULONGLONG_MAX		(~(uint64_t) 0)
-#endif /* __NETWARE__ && __MWERKS__ */
 #define MAX_NEGATIVE_NUMBER	((uint64_t) 0x8000000000000000LL)
 #define INIT_CNT  9
 #define LFACTOR   1000000000ULL
