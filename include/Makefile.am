@@ -54,8 +54,6 @@ noinst_HEADERS =						my_bit.h \
 														myisammrg.h \
 														mysys_err.h \
 														my_base.h \
-														help_start.h \
-														help_end.h \
 														my_nosys.h \
 														queues.h \
 														sha1.h \

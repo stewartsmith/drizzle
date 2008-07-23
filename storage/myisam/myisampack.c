@@ -275,8 +275,6 @@ static struct my_option my_long_options[] =
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-#include <help_start.h>
-
 static void print_version(void)
 {
   VOID(printf("%s Ver 1.23 for %s on %s\n",
@@ -301,8 +299,6 @@ static void usage(void)
   print_defaults("my", load_default_groups);
   my_print_variables(my_long_options);
 }
-
-#include <help_end.h>
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
