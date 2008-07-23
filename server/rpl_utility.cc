@@ -24,9 +24,9 @@
   This function returns the field size in raw bytes based on the type
   and the encoded field data from the master's raw data.
 */
-uint32 table_def::calc_field_size(uint col, uchar *master_data) const
+uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
 {
-  uint32 length= 0;
+  uint32_t length= 0;
 
   switch (type(col)) {
   case MYSQL_TYPE_NEWDECIMAL:
@@ -92,7 +92,7 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
   {
     length= m_field_metadata[col] > 255 ? 2 : 1; // c&p of Field_varstring::data_length()
     assert(uint2korr(master_data) > 0);
-    length+= length == 1 ? (uint32) *master_data : uint2korr(master_data);
+    length+= length == 1 ? (uint32_t) *master_data : uint2korr(master_data);
     break;
   }
   case MYSQL_TYPE_BLOB:
@@ -102,7 +102,7 @@ uint32 table_def::calc_field_size(uint col, uchar *master_data) const
     break;
   }
   default:
-    length= ~(uint32) 0;
+    length= ~(uint32_t) 0;
   }
   return length;
 }

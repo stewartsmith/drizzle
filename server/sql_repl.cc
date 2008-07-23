@@ -1094,7 +1094,7 @@ err:
 */
 
 
-void kill_zombie_dump_threads(uint32 slave_server_id)
+void kill_zombie_dump_threads(uint32_t slave_server_id)
 {
   pthread_mutex_lock(&LOCK_thread_count);
   I_List_iterator<THD> it(threads);

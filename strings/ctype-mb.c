@@ -22,7 +22,7 @@
 
 size_t my_caseup_str_mb(CHARSET_INFO * cs, char *str)
 {
-  register uint32 l;
+  register uint32_t l;
   register uchar *map= cs->to_upper;
   char *str_orig= str;
   
@@ -43,7 +43,7 @@ size_t my_caseup_str_mb(CHARSET_INFO * cs, char *str)
 
 size_t my_casedn_str_mb(CHARSET_INFO * cs, char *str)
 {
-  register uint32 l;
+  register uint32_t l;
   register uchar *map= cs->to_lower;
   char *str_orig= str;
   
@@ -66,7 +66,7 @@ size_t my_caseup_mb(CHARSET_INFO * cs, char *src, size_t srclen,
                     char *dst __attribute__((unused)),
                     size_t dstlen __attribute__((unused)))
 {
-  register uint32 l;
+  register uint32_t l;
   register char *srcend= src + srclen;
   register uchar *map= cs->to_upper;
 
@@ -89,7 +89,7 @@ size_t my_casedn_mb(CHARSET_INFO * cs, char *src, size_t srclen,
                     char *dst __attribute__((unused)),
                     size_t dstlen __attribute__((unused)))
 {
-  register uint32 l;
+  register uint32_t l;
   register char *srcend= src + srclen;
   register uchar *map=cs->to_lower;
 
@@ -114,7 +114,7 @@ size_t my_casedn_mb(CHARSET_INFO * cs, char *src, size_t srclen,
 
 int my_strcasecmp_mb(CHARSET_INFO * cs,const char *s, const char *t)
 {
-  register uint32 l;
+  register uint32_t l;
   register uchar *map=cs->to_upper;
   
   while (*s && *t)

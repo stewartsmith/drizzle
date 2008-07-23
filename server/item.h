@@ -170,7 +170,7 @@ struct Hybrid_type_traits
   { return (int64_t) rint(val->real); }
   virtual double val_real(Hybrid_type *val) const { return val->real; }
   virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8 decimals) const;
+  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
   static const Hybrid_type_traits *instance();
   Hybrid_type_traits() {}
   virtual ~Hybrid_type_traits() {}
@@ -194,7 +194,7 @@ struct Hybrid_type_traits_decimal: public Hybrid_type_traits
   virtual my_decimal *val_decimal(Hybrid_type *val,
                                   my_decimal *buf __attribute__((__unused__))) const
   { return &val->dec_buf[val->used_dec_buf_no]; }
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8 decimals) const;
+  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
   static const Hybrid_type_traits_decimal *instance();
   Hybrid_type_traits_decimal() {};
 };
@@ -227,7 +227,7 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
     return &val->dec_buf[2];
   }
   virtual String *val_str(Hybrid_type *val, String *buf,
-                          uint8 decimals __attribute__((__unused__))) const
+                          uint8_t decimals __attribute__((__unused__))) const
   { buf->set(val->integer, &my_charset_bin); return buf;}
   static const Hybrid_type_traits_integer *instance();
   Hybrid_type_traits_integer() {};
@@ -434,7 +434,7 @@ class Item
   Item(const Item &);			/* Prevent use of these */
   void operator=(Item &);
   /* Cache of the result of is_expensive(). */
-  int8 is_expensive_cache;
+  int8_t is_expensive_cache;
   virtual bool is_expensive_processor(uchar *arg __attribute__((__unused__)))
   { return 0; }
 
@@ -476,10 +476,10 @@ public:
   /* Original item name (if it was renamed)*/
   char * orig_name;
   Item *next;
-  uint32 max_length;
+  uint32_t max_length;
   uint name_length;                     /* Length of name */
-  int8 marker;
-  uint8 decimals;
+  int8_t marker;
+  uint8_t decimals;
   my_bool maybe_null;			/* If item may be null */
   my_bool null_value;			/* if item is null */
   my_bool unsigned_flag;
@@ -1166,7 +1166,7 @@ public:
   Item *equal_fields_propagator(uchar *arg);
   bool set_no_const_sub(uchar *arg);
   Item *replace_equal_field(uchar *arg);
-  inline uint32 max_disp_length() { return field->max_display_length(); }
+  inline uint32_t max_disp_length() { return field->max_display_length(); }
   Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(CHARSET_INFO *tocs);
   int fix_outer_field(THD *thd, Field **field, Item **reference);
@@ -1312,12 +1312,12 @@ public:
   int  save_in_field(Field *field, bool no_conversions);
 
   void set_null();
-  void set_int(int64_t i, uint32 max_length_arg);
+  void set_int(int64_t i, uint32_t max_length_arg);
   void set_double(double i);
   void set_decimal(const char *str, ulong length);
   bool set_str(const char *str, ulong length);
   bool set_longdata(const char *str, ulong length);
-  void set_time(MYSQL_TIME *tm, timestamp_type type, uint32 max_length_arg);
+  void set_time(MYSQL_TIME *tm, timestamp_type type, uint32_t max_length_arg);
   bool set_from_user_var(THD *thd, const user_var_entry *entry);
   void reset();
   /*
@@ -1370,7 +1370,7 @@ class Item_int :public Item_num
 {
 public:
   int64_t value;
-  Item_int(int32 i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
+  Item_int(int32_t i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
     :value((int64_t) i)
     { max_length=length; fixed= 1; }
   Item_int(int64_t i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
@@ -1469,13 +1469,13 @@ public:
     :value(val_arg)
   {
     presentation= name=(char*) str;
-    decimals=(uint8) decimal_par;
+    decimals=(uint8_t) decimal_par;
     max_length=length;
     fixed= 1;
   }
   Item_float(double value_par, uint decimal_par) :presentation(0), value(value_par)
   {
-    decimals= (uint8) decimal_par;
+    decimals= (uint8_t) decimal_par;
     fixed= 1;
   }
   int save_in_field(Field *field, bool no_conversions);
@@ -2505,7 +2505,7 @@ public:
   String *val_str(String*);
   bool join_types(THD *thd, Item *);
   Field *make_field_by_type(TABLE *table);
-  static uint32 display_length(Item *item);
+  static uint32_t display_length(Item *item);
   static enum_field_types get_real_type(Item *);
 };
 

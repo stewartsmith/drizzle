@@ -578,7 +578,7 @@ void Item_func::count_only_length()
 
 void Item_func::count_real_length()
 {
-  uint32 length= 0;
+  uint32_t length= 0;
   decimals= 0;
   max_length= 0;
   for (uint i=0 ; i < arg_count ; i++)
@@ -888,7 +888,7 @@ void Item_func_signed::print(String *str, enum_query_type query_type)
 int64_t Item_func_signed::val_int_from_str(int *error)
 {
   char buff[MAX_FIELD_WIDTH], *end, *start;
-  uint32 length;
+  uint32_t length;
   String tmp(buff,sizeof(buff), &my_charset_bin), *res;
   int64_t value;
 
@@ -912,7 +912,7 @@ int64_t Item_func_signed::val_int_from_str(int *error)
   if (*error > 0 || end != start+ length)
   {
     char err_buff[128];
-    String err_tmp(err_buff,(uint32) sizeof(err_buff), system_charset_info);
+    String err_tmp(err_buff,(uint32_t) sizeof(err_buff), system_charset_info);
     err_tmp.copy(start, length, system_charset_info);
     push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
@@ -1068,12 +1068,12 @@ void Item_decimal_typecast::print(String *str, enum_query_type query_type)
   str->append(STRING_WITH_LEN(" as decimal("));
 
   end=int10_to_str(precision, len_buf,10);
-  str->append(len_buf, (uint32) (end - len_buf));
+  str->append(len_buf, (uint32_t) (end - len_buf));
 
   str->append(',');
 
   end=int10_to_str(decimals, len_buf,10);
-  str->append(len_buf, (uint32) (end - len_buf));
+  str->append(len_buf, (uint32_t) (end - len_buf));
 
   str->append(')');
   str->append(')');
@@ -2095,9 +2095,9 @@ void Item_func_rand::seed_random(Item *arg)
     TODO: do not do reinit 'rand' for every execute of PS/SP if
     args[0] is a constant.
   */
-  uint32 tmp= (uint32) arg->val_int();
-  randominit(rand, (uint32) (tmp*0x10001L+55555555L),
-             (uint32) (tmp*0x10000001L));
+  uint32_t tmp= (uint32_t) arg->val_int();
+  randominit(rand, (uint32_t) (tmp*0x10001L+55555555L),
+             (uint32_t) (tmp*0x10000001L));
 }
 
 
@@ -2624,11 +2624,11 @@ int64_t Item_func_ord::val_int()
   if (use_mb(res->charset()))
   {
     register const char *str=res->ptr();
-    register uint32 n=0, l=my_ismbchar(res->charset(),str,str+res->length());
+    register uint32_t n=0, l=my_ismbchar(res->charset(),str,str+res->length());
     if (!l)
       return (int64_t)((uchar) *str);
     while (l--)
-      n=(n<<8)|(uint32)((uchar) *str++);
+      n=(n<<8)|(uint32_t)((uchar) *str++);
     return (int64_t) n;
   }
 #endif

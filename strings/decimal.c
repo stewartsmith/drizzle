@@ -1362,7 +1362,7 @@ int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale)
   {
     assert(sizeof(dec1) == 4);
     *buf=mi_sint4korr(from) ^ mask;
-    if (((uint32)*buf) > DIG_MAX)
+    if (((uint32_t)*buf) > DIG_MAX)
       goto err;
     if (buf > to->buf || *buf != 0)
       buf++;
@@ -1374,7 +1374,7 @@ int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale)
   {
     assert(sizeof(dec1) == 4);
     *buf=mi_sint4korr(from) ^ mask;
-    if (((uint32)*buf) > DIG_MAX)
+    if (((uint32_t)*buf) > DIG_MAX)
       goto err;
     buf++;
   }
@@ -1391,7 +1391,7 @@ int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale)
       default: assert(0);
     }
     *buf=(x ^ mask) * powers10[DIG_PER_DEC1 - frac0x];
-    if (((uint32)*buf) > DIG_MAX)
+    if (((uint32_t)*buf) > DIG_MAX)
       goto err;
     buf++;
   }

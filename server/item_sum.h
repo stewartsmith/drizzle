@@ -234,10 +234,10 @@ public:
   uint arg_count;
   Item_sum *in_sum_func;  /* embedding set function if any */ 
   st_select_lex * aggr_sel; /* select where the function is aggregated       */ 
-  int8 nest_level;        /* number of the nesting level of the set function */
-  int8 aggr_level;        /* nesting level of the aggregating subquery       */
-  int8 max_arg_level;     /* max level of unbound column references          */
-  int8 max_sum_func_level;/* max level of aggregation for embedded functions */
+  int8_t nest_level;        /* number of the nesting level of the set function */
+  int8_t aggr_level;        /* nesting level of the aggregating subquery       */
+  int8_t max_arg_level;     /* max level of unbound column references          */
+  int8_t max_sum_func_level;/* max level of aggregation for embedded functions */
   bool quick_group;			/* If incremental update of fields */
   /*
     This list is used by the check for mixing non aggregated fields and
@@ -568,7 +568,7 @@ class TMP_TABLE_PARAM;
 class Item_sum_count_distinct :public Item_sum_int
 {
   TABLE *table;
-  uint32 *field_lengths;
+  uint32_t *field_lengths;
   TMP_TABLE_PARAM *tmp_table_param;
   bool force_copy_fields;
   /*

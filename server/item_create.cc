@@ -1811,8 +1811,8 @@ Create_func_bin Create_func_bin::s_singleton;
 Item*
 Create_func_bin::create(THD *thd, Item *arg1)
 {
-  Item *i10= new (thd->mem_root) Item_int((int32) 10,2);
-  Item *i2= new (thd->mem_root) Item_int((int32) 2,1);
+  Item *i10= new (thd->mem_root) Item_int((int32_t) 10,2);
+  Item *i2= new (thd->mem_root) Item_int((int32_t) 2,1);
   return new (thd->mem_root) Item_func_conv(arg1, i10, i2);
 }
 
@@ -2646,8 +2646,8 @@ Create_func_oct Create_func_oct::s_singleton;
 Item*
 Create_func_oct::create(THD *thd, Item *arg1)
 {
-  Item *i10= new (thd->mem_root) Item_int((int32) 10,2);
-  Item *i8= new (thd->mem_root) Item_int((int32) 8,1);
+  Item *i10= new (thd->mem_root) Item_int((int32_t) 10,2);
+  Item *i8= new (thd->mem_root) Item_int((int32_t) 8,1);
   return new (thd->mem_root) Item_func_conv(arg1, i10, i8);
 }
 

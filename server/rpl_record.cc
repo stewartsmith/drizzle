@@ -237,7 +237,7 @@ unpack_row(Relay_log_info const *rli,
           (tabledef not NULL). If tabledef is NULL then it is assumed that
           the packed row comes from the table to which it is unpacked.
         */
-        uint16 metadata= tabledef ? tabledef->field_metadata(i) : 0;
+        uint16_t metadata= tabledef ? tabledef->field_metadata(i) : 0;
         pack_ptr= f->unpack(f->ptr, pack_ptr, metadata, true);
       }
 
@@ -339,7 +339,7 @@ int prepare_record(TABLE *const table,
     if ((uint) (field_ptr - table->field) >= cols->n_bits ||
         !bitmap_is_set(cols, field_ptr - table->field))
     {
-      uint32 const mask= NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG;
+      uint32_t const mask= NOT_NULL_FLAG | NO_DEFAULT_VALUE_FLAG;
       Field *const f= *field_ptr;
 
       if (check && ((f->flags & mask) == mask))

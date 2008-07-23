@@ -26,14 +26,14 @@
 class Field_string :public Field_longstr {
 public:
   bool can_alter_field_type;
-  Field_string(uchar *ptr_arg, uint32 len_arg,uchar *null_ptr_arg,
+  Field_string(uchar *ptr_arg, uint32_t len_arg,uchar *null_ptr_arg,
 	       uchar null_bit_arg,
 	       enum utype unireg_check_arg, const char *field_name_arg,
 	       CHARSET_INFO *cs)
     :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
                    unireg_check_arg, field_name_arg, cs),
      can_alter_field_type(1) {};
-  Field_string(uint32 len_arg,bool maybe_null_arg, const char *field_name_arg,
+  Field_string(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
                CHARSET_INFO *cs)
     :Field_longstr((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs),

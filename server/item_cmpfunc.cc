@@ -4464,13 +4464,13 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
           Convert to "cs" if charset of escape differs.
         */
         CHARSET_INFO *cs= cmp.cmp_collation.collation;
-        uint32 unused;
+        uint32_t unused;
         if (escape_str->needs_conversion(escape_str->length(),
                                          escape_str->charset(), cs, &unused))
         {
           char ch;
           uint errors;
-          uint32 cnvlen= copy_and_convert(&ch, 1, cs, escape_str->ptr(),
+          uint32_t cnvlen= copy_and_convert(&ch, 1, cs, escape_str->ptr(),
                                           escape_str->length(),
                                           escape_str->charset(), &errors);
           escape= cnvlen ? ch : '\\';

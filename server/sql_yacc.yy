@@ -3894,7 +3894,7 @@ sum_expr:
         | BIT_XOR  '(' in_sum_expr ')'
           { $$=new Item_sum_xor($3); }
         | COUNT_SYM '(' opt_all '*' ')'
-          { $$=new Item_sum_count(new Item_int((int32) 0L,1)); }
+          { $$=new Item_sum_count(new Item_int((int32_t) 0L,1)); }
         | COUNT_SYM '(' in_sum_expr ')'
           { $$=new Item_sum_count($3); }
         | COUNT_SYM '(' DISTINCT
@@ -6752,7 +6752,7 @@ sys_option_value:
             lex->var_list.push_back(new set_var(lex->option_type,
                                                 find_sys_var(YYTHD, "tx_isolation"),
                                                 &null_lex_str,
-                                                new Item_int((int32) $5)));
+                                                new Item_int((int32_t) $5)));
           }
         ;
 

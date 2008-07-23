@@ -435,7 +435,7 @@ uchar *net_store_data(uchar *to, const uchar *from, size_t length)
   return to+length;
 }
 
-uchar *net_store_data(uchar *to,int32 from)
+uchar *net_store_data(uchar *to,int32_t from)
 {
   char buff[20];
   uint length=(uint) (int10_to_str(from,buff,10)-buff);
@@ -657,7 +657,7 @@ bool Protocol::store(I_List<i_string>* str_list)
 {
   char buf[256];
   String tmp(buf, sizeof(buf), &my_charset_bin);
-  uint32 len;
+  uint32_t len;
   I_List_iterator<i_string> it(*str_list);
   i_string* s;
 
@@ -775,14 +775,14 @@ bool Protocol_text::store_decimal(const my_decimal *d)
 }
 
 
-bool Protocol_text::store(float from, uint32 decimals, String *buffer)
+bool Protocol_text::store(float from, uint32_t decimals, String *buffer)
 {
   buffer->set_real((double) from, decimals, thd->charset());
   return net_store_data((uchar*) buffer->ptr(), buffer->length());
 }
 
 
-bool Protocol_text::store(double from, uint32 decimals, String *buffer)
+bool Protocol_text::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, thd->charset());
   return net_store_data((uchar*) buffer->ptr(), buffer->length());

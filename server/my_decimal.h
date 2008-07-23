@@ -36,7 +36,7 @@ C_MODE_END
 #define DECIMAL_LONG_DIGITS 10
 #define DECIMAL_LONG3_DIGITS 8
 
-/** maximum length of buffer in our big digits (uint32). */
+/** maximum length of buffer in our big digits (uint32_t). */
 #define DECIMAL_BUFF_LENGTH 9
 
 /* the number of digits that my_decimal can possibly contain */
@@ -163,11 +163,11 @@ inline uint my_decimal_length_to_precision(uint length, uint scale,
   return (uint) (length - (scale>0 ? 1:0) - (unsigned_flag ? 0:1));
 }
 
-inline uint32 my_decimal_precision_to_length(uint precision, uint8 scale,
+inline uint32_t my_decimal_precision_to_length(uint precision, uint8_t scale,
                                              bool unsigned_flag)
 {
   set_if_smaller(precision, DECIMAL_MAX_PRECISION);
-  return (uint32)(precision + (scale>0 ? 1:0) + (unsigned_flag ? 0:1));
+  return (uint32_t)(precision + (scale>0 ? 1:0) + (unsigned_flag ? 0:1));
 }
 
 inline

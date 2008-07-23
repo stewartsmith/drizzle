@@ -92,7 +92,7 @@ uint32_t Field_blob::get_length(const uchar *pos,
     return (uint32_t) pos[0];
   case 2:
     {
-      uint16 tmp;
+      uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
       if (low_byte_first)
 	tmp=sint2korr(pos);

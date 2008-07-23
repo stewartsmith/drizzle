@@ -947,7 +947,7 @@ private:
     a reliable binlog/replication, or if we will use stored functions
     or triggers which themselves need require row-based binlogging.
   */
-  uint32 binlog_stmt_flags;
+  uint32_t binlog_stmt_flags;
 };
 
 

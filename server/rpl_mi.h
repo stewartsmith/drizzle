@@ -79,7 +79,7 @@ class Master_info : public Slave_reporting_capability
   pthread_cond_t data_cond,start_cond,stop_cond;
   THD *io_thd;
   MYSQL* mysql;
-  uint32 file_id;				/* for 3.23 load data infile */
+  uint32_t file_id;				/* for 3.23 load data infile */
   Relay_log_info rli;
   uint port;
   uint connect_retry;

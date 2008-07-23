@@ -243,9 +243,9 @@ String *Field_datetime::val_str(String *val_buffer,
 bool Field_datetime::get_date(MYSQL_TIME *ltime, uint fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
-  uint32 part1,part2;
-  part1=(uint32) (tmp/1000000LL);
-  part2=(uint32) (tmp - (uint64_t) part1*1000000LL);
+  uint32_t part1,part2;
+  part1=(uint32_t) (tmp/1000000LL);
+  part2=(uint32_t) (tmp - (uint64_t) part1*1000000LL);
 
   ltime->time_type=	MYSQL_TIMESTAMP_DATETIME;
   ltime->neg=		0;

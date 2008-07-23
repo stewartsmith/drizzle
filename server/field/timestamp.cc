@@ -69,7 +69,7 @@
  */
 
 Field_timestamp::Field_timestamp(uchar *ptr_arg,
-                                 uint32 len_arg __attribute__((__unused__)),
+                                 uint32_t len_arg __attribute__((__unused__)),
                                  uchar *null_ptr_arg, uchar null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
@@ -251,7 +251,7 @@ double Field_timestamp::val_real(void)
 
 int64_t Field_timestamp::val_int(void)
 {
-  uint32 temp;
+  uint32_t temp;
   MYSQL_TIME time_tmp;
   THD  *thd= table ? table->in_use : current_thd;
 
@@ -276,7 +276,7 @@ int64_t Field_timestamp::val_int(void)
 
 String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 {
-  uint32 temp, temp2;
+  uint32_t temp, temp2;
   MYSQL_TIME time_tmp;
   THD *thd= table ? table->in_use : current_thd;
   char *to;
@@ -386,7 +386,7 @@ bool Field_timestamp::send_binary(Protocol *protocol)
 
 int Field_timestamp::cmp(const uchar *a_ptr, const uchar *b_ptr)
 {
-  int32 a,b;
+  int32_t a,b;
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
   {
@@ -399,7 +399,7 @@ int Field_timestamp::cmp(const uchar *a_ptr, const uchar *b_ptr)
   longget(a,a_ptr);
   longget(b,b_ptr);
   }
-  return ((uint32) a < (uint32) b) ? -1 : ((uint32) a > (uint32) b) ? 1 : 0;
+  return ((uint32_t) a < (uint32_t) b) ? -1 : ((uint32_t) a > (uint32_t) b) ? 1 : 0;
 }
 
 

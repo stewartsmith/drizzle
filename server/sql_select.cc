@@ -9392,7 +9392,7 @@ static COND* substitute_for_best_equal_field(COND *cond,
     }
     if (cond->type() == Item::COND_ITEM &&
         !((Item_cond*)cond)->argument_list()->elements)
-      cond= new Item_int((int32)cond->val_bool());
+      cond= new Item_int((int32_t)cond->val_bool());
 
   }
   else if (cond->type() == Item::FUNC_ITEM && 
@@ -10673,9 +10673,9 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
     break;
   case DECIMAL_RESULT:
   {
-    uint8 dec= item->decimals;
-    uint8 intg= ((Item_decimal *) item)->decimal_precision() - dec;
-    uint32 len= item->max_length;
+    uint8_t dec= item->decimals;
+    uint8_t intg= ((Item_decimal *) item)->decimal_precision() - dec;
+    uint32_t len= item->max_length;
 
     /*
       Trying to put too many digits overall in a DECIMAL(prec,dec)
@@ -11463,8 +11463,8 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       key_part_info->null_bit=0;
       key_part_info->field=  field;
       key_part_info->offset= field->offset(table->record[0]);
-      key_part_info->length= (uint16) field->key_length();
-      key_part_info->type=   (uint8) field->key_type();
+      key_part_info->length= (uint16_t) field->key_length();
+      key_part_info->type=   (uint8_t) field->key_type();
       key_part_info->key_type =
 	((ha_base_keytype) key_part_info->type == HA_KEYTYPE_TEXT ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT1 ||
@@ -11532,7 +11532,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     table->key_info=keyinfo;
     keyinfo->key_part=key_part_info;
     keyinfo->flags=HA_NOSAME | HA_NULL_ARE_EQUAL;
-    keyinfo->key_length=(uint16) reclength;
+    keyinfo->key_length=(uint16_t) reclength;
     keyinfo->name= (char*) "distinct_key";
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
     keyinfo->rec_per_key=0;
@@ -11548,7 +11548,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       key_part_info->offset=hidden_null_pack_length;
       key_part_info->length=null_pack_length;
       key_part_info->field= new Field_string(table->record[0],
-                                             (uint32) key_part_info->length,
+                                             (uint32_t) key_part_info->length,
                                              (uchar*) 0,
                                              (uint) 0,
                                              Field::NONE,
@@ -11568,7 +11568,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       key_part_info->null_bit=0;
       key_part_info->field=    *reg_field;
       key_part_info->offset=   (*reg_field)->offset(table->record[0]);
-      key_part_info->length=   (uint16) (*reg_field)->pack_length();
+      key_part_info->length=   (uint16_t) (*reg_field)->pack_length();
       /* TODO:
         The below method of computing the key format length of the
         key part is a copy/paste from opt_range.cc, and table.cc.
@@ -11585,7 +11585,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
           (*reg_field)->real_type() == MYSQL_TYPE_VARCHAR)
         key_part_info->store_length+= HA_KEY_BLOB_LENGTH;
 
-      key_part_info->type=     (uint8) (*reg_field)->key_type();
+      key_part_info->type=     (uint8_t) (*reg_field)->key_type();
       key_part_info->key_type =
 	((ha_base_keytype) key_part_info->type == HA_KEYTYPE_TEXT ||
 	 (ha_base_keytype) key_part_info->type == HA_KEYTYPE_VARTEXT1 ||
@@ -11898,8 +11898,8 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
       key_part_info->null_bit=0;
       key_part_info->field=  field;
       key_part_info->offset= field->offset(table->record[0]);
-      key_part_info->length= (uint16) field->key_length();
-      key_part_info->type=   (uint8) field->key_type();
+      key_part_info->length= (uint16_t) field->key_length();
+      key_part_info->type=   (uint8_t) field->key_type();
       key_part_info->key_type = FIELDFLAG_BINARY;
       if (!using_unique_constraint)
       {
@@ -12171,7 +12171,7 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
 	seg->type=
 	((keyinfo->key_part[i].key_type & FIELDFLAG_BINARY) ?
 	 HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2);
-	seg->bit_start= (uint8)(field->pack_length() - share->blob_ptr_size);
+	seg->bit_start= (uint8_t)(field->pack_length() - share->blob_ptr_size);
 	seg->flag= HA_BLOB_PART;
 	seg->length=0;			// Whole blob in unique constraint
       }
@@ -17661,7 +17661,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
   */
   if (message)
   {
-    item_list.push_back(new Item_int((int32)
+    item_list.push_back(new Item_int((int32_t)
 				     join->select_lex->select_number));
     item_list.push_back(new Item_string(join->select_lex->type,
 					strlen(join->select_lex->type), cs));
@@ -17765,7 +17765,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       quick_type= -1;
       item_list.empty();
       /* id */
-      item_list.push_back(new Item_uint((uint32)
+      item_list.push_back(new Item_uint((uint32_t)
 				       join->select_lex->select_number));
       /* select_type */
       item_list.push_back(new Item_string(join->select_lex->type,
@@ -17950,7 +17950,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
           extra.append(STRING_WITH_LEN("; Full scan on NULL key"));
         /* Skip initial "; "*/
         const char *str= extra.ptr();
-        uint32 len= extra.length();
+        uint32_t len= extra.length();
         if (len)
         {
           str += 2;
@@ -18095,7 +18095,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
 
         /* Skip initial "; "*/
         const char *str= extra.ptr();
-        uint32 len= extra.length();
+        uint32_t len= extra.length();
         if (len)
         {
           str += 2;
@@ -18130,7 +18130,7 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
        sl= sl->next_select())
   {
     // drop UNCACHEABLE_EXPLAIN, because it is for internal usage only
-    uint8 uncacheable= (sl->uncacheable & ~UNCACHEABLE_EXPLAIN);
+    uint8_t uncacheable= (sl->uncacheable & ~UNCACHEABLE_EXPLAIN);
     sl->type= (((&thd->lex->select_lex)==sl)?
 	       (sl->first_inner_unit() || sl->next_select() ? 
 		"PRIMARY" : "SIMPLE"):

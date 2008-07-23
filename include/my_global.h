@@ -425,9 +425,9 @@ typedef SOCKET_SIZE_TYPE size_socket;
 /* #define USE_RECORD_LOCK	*/
 
 	/* Unsigned types supported by the compiler */
-#define UNSINT8			/* unsigned int8 (char) */
-#define UNSINT16		/* unsigned int16 */
-#define UNSINT32		/* unsigned int32 */
+#define UNSINT8			/* unsigned int8_t (char) */
+#define UNSINT16		/* unsigned int16_t */
+#define UNSINT32		/* unsigned int32_t */
 
 	/* General constants */
 #define SC_MAXWIDTH	256	/* Max width of screen (for error messages) */
@@ -599,46 +599,8 @@ typedef int64_t 	my_ptrdiff_t;
 typedef unsigned char	uchar;	/* Short for unsigned char */
 #endif
 
-#ifndef HAVE_INT8
-typedef signed char int8;       /* Signed integer >= 8  bits */
-#endif
-#ifndef HAVE_UINT8
-typedef unsigned char uint8;    /* Unsigned integer >= 8  bits */
-#endif
-#ifndef HAVE_INT16
-typedef short int16;
-#endif
-#ifndef HAVE_UINT16
-typedef unsigned short uint16;
-#endif
-#if SIZEOF_INT == 4
-#ifndef HAVE_INT32
-typedef int int32;
-#endif
-#ifndef HAVE_UINT32
-typedef unsigned int uint32;
-#endif
-#elif SIZEOF_LONG == 4
-#ifndef HAVE_INT32
-typedef long int32;
-#endif
-#ifndef HAVE_UINT32
-typedef unsigned long uint32;
-#endif
-#else
-#error Neither int or long is of 4 bytes width
-#endif
-
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
 typedef unsigned long ulong;		  /* Short for unsigned long */
-#endif
-#ifndef int64_t_defined
-/* 
-  Using [unsigned] long long is preferable as [u]int64_t because we use 
-  [unsigned] long long unconditionally in many places, 
-  for example in constants with [U]LL suffix.
-*/
-typedef int64_t	int64_t;
 #endif
 
 #define MY_ERRPTR ((void*)(intptr)1)
@@ -662,7 +624,7 @@ typedef off_t os_off_t;
 #define SOCKET_ENFILE	ENFILE
 #define SOCKET_EMFILE	EMFILE
 
-typedef uint8		int7;	/* Most effective integer 0 <= x <= 127 */
+typedef uint8_t		int7;	/* Most effective integer 0 <= x <= 127 */
 typedef short		int15;	/* Most effective integer 0 <= x <= 32767 */
 typedef int		myf;	/* Type of MyFlags in my_funcs */
 typedef char		my_bool; /* Small bool */
@@ -670,9 +632,9 @@ typedef char		my_bool; /* Small bool */
 typedef char		bool;	/* Ordinary boolean values 0 1 */
 #endif
 	/* Macros for converting *constants* to the right type */
-#define INT8(v)		(int8) (v)
-#define INT16(v)	(int16) (v)
-#define INT32(v)	(int32) (v)
+#define INT8(v)		(int8_t) (v)
+#define INT16(v)	(int16_t) (v)
+#define INT32(v)	(int32_t) (v)
 #define MYF(v)		(myf) (v)
 
 /* Defines for time function */
@@ -690,21 +652,21 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 
 /* Optimized store functions for Intel x86 */
 #if defined(__i386__)
-#define sint2korr(A)	(*((int16 *) (A)))
-#define sint3korr(A)	((int32) ((((uchar) (A)[2]) & 128) ? \
-				  (((uint32) 255L << 24) | \
-				   (((uint32) (uchar) (A)[2]) << 16) |\
-				   (((uint32) (uchar) (A)[1]) << 8) | \
-				   ((uint32) (uchar) (A)[0])) : \
-				  (((uint32) (uchar) (A)[2]) << 16) |\
-				  (((uint32) (uchar) (A)[1]) << 8) | \
-				  ((uint32) (uchar) (A)[0])))
+#define sint2korr(A)	(*((int16_t *) (A)))
+#define sint3korr(A)	((int32_t) ((((uchar) (A)[2]) & 128) ? \
+				  (((uint32_t) 255L << 24) | \
+				   (((uint32_t) (uchar) (A)[2]) << 16) |\
+				   (((uint32_t) (uchar) (A)[1]) << 8) | \
+				   ((uint32_t) (uchar) (A)[0])) : \
+				  (((uint32_t) (uchar) (A)[2]) << 16) |\
+				  (((uint32_t) (uchar) (A)[1]) << 8) | \
+				  ((uint32_t) (uchar) (A)[0])))
 #define sint4korr(A)	(*((long *) (A)))
-#define uint2korr(A)	(*((uint16 *) (A)))
+#define uint2korr(A)	(*((uint16_t *) (A)))
 #if defined(HAVE_purify)
-#define uint3korr(A)	(uint32) (((uint32) ((uchar) (A)[0])) +\
-				  (((uint32) ((uchar) (A)[1])) << 8) +\
-				  (((uint32) ((uchar) (A)[2])) << 16))
+#define uint3korr(A)	(uint32_t) (((uint32_t) ((uchar) (A)[0])) +\
+				  (((uint32_t) ((uchar) (A)[1])) << 8) +\
+				  (((uint32_t) ((uchar) (A)[2])) << 16))
 #else
 /*
    ATTENTION !
@@ -714,21 +676,21 @@ typedef char		bool;	/* Ordinary boolean values 0 1 */
 */
 #define uint3korr(A)	(long) (*((unsigned int *) (A)) & 0xFFFFFF)
 #endif /* HAVE_purify */
-#define uint4korr(A)	(*((uint32 *) (A)))
-#define uint5korr(A)	((uint64_t)(((uint32) ((uchar) (A)[0])) +\
-				    (((uint32) ((uchar) (A)[1])) << 8) +\
-				    (((uint32) ((uchar) (A)[2])) << 16) +\
-				    (((uint32) ((uchar) (A)[3])) << 24)) +\
+#define uint4korr(A)	(*((uint32_t *) (A)))
+#define uint5korr(A)	((uint64_t)(((uint32_t) ((uchar) (A)[0])) +\
+				    (((uint32_t) ((uchar) (A)[1])) << 8) +\
+				    (((uint32_t) ((uchar) (A)[2])) << 16) +\
+				    (((uint32_t) ((uchar) (A)[3])) << 24)) +\
 				    (((uint64_t) ((uchar) (A)[4])) << 32))
-#define uint6korr(A)	((uint64_t)(((uint32)    ((uchar) (A)[0]))          + \
-                                     (((uint32)    ((uchar) (A)[1])) << 8)   + \
-                                     (((uint32)    ((uchar) (A)[2])) << 16)  + \
-                                     (((uint32)    ((uchar) (A)[3])) << 24)) + \
+#define uint6korr(A)	((uint64_t)(((uint32_t)    ((uchar) (A)[0]))          + \
+                                     (((uint32_t)    ((uchar) (A)[1])) << 8)   + \
+                                     (((uint32_t)    ((uchar) (A)[2])) << 16)  + \
+                                     (((uint32_t)    ((uchar) (A)[3])) << 24)) + \
                          (((uint64_t) ((uchar) (A)[4])) << 32) +       \
                          (((uint64_t) ((uchar) (A)[5])) << 40))
 #define uint8korr(A)	(*((uint64_t *) (A)))
 #define sint8korr(A)	(*((int64_t *) (A)))
-#define int2store(T,A)	*((uint16*) (T))= (uint16) (A)
+#define int2store(T,A)	*((uint16_t*) (T))= (uint16_t) (A)
 #define int3store(T,A)  do { *(T)=  (uchar) ((A));\
                             *(T+1)=(uchar) (((uint) (A) >> 8));\
                             *(T+2)=(uchar) (((A) >> 16)); } while (0)
@@ -770,49 +732,49 @@ do { doubleget_union _tmp; \
   We're here if it's not a IA-32 architecture (Win32 and UNIX IA-32 defines
   were done before)
 */
-#define sint2korr(A)	(int16) (((int16) ((uchar) (A)[0])) +\
-				 ((int16) ((int16) (A)[1]) << 8))
-#define sint3korr(A)	((int32) ((((uchar) (A)[2]) & 128) ? \
-				  (((uint32) 255L << 24) | \
-				   (((uint32) (uchar) (A)[2]) << 16) |\
-				   (((uint32) (uchar) (A)[1]) << 8) | \
-				   ((uint32) (uchar) (A)[0])) : \
-				  (((uint32) (uchar) (A)[2]) << 16) |\
-				  (((uint32) (uchar) (A)[1]) << 8) | \
-				  ((uint32) (uchar) (A)[0])))
-#define sint4korr(A)	(int32) (((int32) ((uchar) (A)[0])) +\
-				(((int32) ((uchar) (A)[1]) << 8)) +\
-				(((int32) ((uchar) (A)[2]) << 16)) +\
-				(((int32) ((int16) (A)[3]) << 24)))
+#define sint2korr(A)	(int16_t) (((int16_t) ((uchar) (A)[0])) +\
+				 ((int16_t) ((int16_t) (A)[1]) << 8))
+#define sint3korr(A)	((int32_t) ((((uchar) (A)[2]) & 128) ? \
+				  (((uint32_t) 255L << 24) | \
+				   (((uint32_t) (uchar) (A)[2]) << 16) |\
+				   (((uint32_t) (uchar) (A)[1]) << 8) | \
+				   ((uint32_t) (uchar) (A)[0])) : \
+				  (((uint32_t) (uchar) (A)[2]) << 16) |\
+				  (((uint32_t) (uchar) (A)[1]) << 8) | \
+				  ((uint32_t) (uchar) (A)[0])))
+#define sint4korr(A)	(int32_t) (((int32_t) ((uchar) (A)[0])) +\
+				(((int32_t) ((uchar) (A)[1]) << 8)) +\
+				(((int32_t) ((uchar) (A)[2]) << 16)) +\
+				(((int32_t) ((int16_t) (A)[3]) << 24)))
 #define sint8korr(A)	(int64_t) uint8korr(A)
-#define uint2korr(A)	(uint16) (((uint16) ((uchar) (A)[0])) +\
-				  ((uint16) ((uchar) (A)[1]) << 8))
-#define uint3korr(A)	(uint32) (((uint32) ((uchar) (A)[0])) +\
-				  (((uint32) ((uchar) (A)[1])) << 8) +\
-				  (((uint32) ((uchar) (A)[2])) << 16))
-#define uint4korr(A)	(uint32) (((uint32) ((uchar) (A)[0])) +\
-				  (((uint32) ((uchar) (A)[1])) << 8) +\
-				  (((uint32) ((uchar) (A)[2])) << 16) +\
-				  (((uint32) ((uchar) (A)[3])) << 24))
-#define uint5korr(A)	((uint64_t)(((uint32) ((uchar) (A)[0])) +\
-				    (((uint32) ((uchar) (A)[1])) << 8) +\
-				    (((uint32) ((uchar) (A)[2])) << 16) +\
-				    (((uint32) ((uchar) (A)[3])) << 24)) +\
+#define uint2korr(A)	(uint16_t) (((uint16_t) ((uchar) (A)[0])) +\
+				  ((uint16_t) ((uchar) (A)[1]) << 8))
+#define uint3korr(A)	(uint32_t) (((uint32_t) ((uchar) (A)[0])) +\
+				  (((uint32_t) ((uchar) (A)[1])) << 8) +\
+				  (((uint32_t) ((uchar) (A)[2])) << 16))
+#define uint4korr(A)	(uint32_t) (((uint32_t) ((uchar) (A)[0])) +\
+				  (((uint32_t) ((uchar) (A)[1])) << 8) +\
+				  (((uint32_t) ((uchar) (A)[2])) << 16) +\
+				  (((uint32_t) ((uchar) (A)[3])) << 24))
+#define uint5korr(A)	((uint64_t)(((uint32_t) ((uchar) (A)[0])) +\
+				    (((uint32_t) ((uchar) (A)[1])) << 8) +\
+				    (((uint32_t) ((uchar) (A)[2])) << 16) +\
+				    (((uint32_t) ((uchar) (A)[3])) << 24)) +\
 				    (((uint64_t) ((uchar) (A)[4])) << 32))
-#define uint6korr(A)	((uint64_t)(((uint32)    ((uchar) (A)[0]))          + \
-                                     (((uint32)    ((uchar) (A)[1])) << 8)   + \
-                                     (((uint32)    ((uchar) (A)[2])) << 16)  + \
-                                     (((uint32)    ((uchar) (A)[3])) << 24)) + \
+#define uint6korr(A)	((uint64_t)(((uint32_t)    ((uchar) (A)[0]))          + \
+                                     (((uint32_t)    ((uchar) (A)[1])) << 8)   + \
+                                     (((uint32_t)    ((uchar) (A)[2])) << 16)  + \
+                                     (((uint32_t)    ((uchar) (A)[3])) << 24)) + \
                          (((uint64_t) ((uchar) (A)[4])) << 32) +       \
                          (((uint64_t) ((uchar) (A)[5])) << 40))
-#define uint8korr(A)	((uint64_t)(((uint32) ((uchar) (A)[0])) +\
-				    (((uint32) ((uchar) (A)[1])) << 8) +\
-				    (((uint32) ((uchar) (A)[2])) << 16) +\
-				    (((uint32) ((uchar) (A)[3])) << 24)) +\
-			(((uint64_t) (((uint32) ((uchar) (A)[4])) +\
-				    (((uint32) ((uchar) (A)[5])) << 8) +\
-				    (((uint32) ((uchar) (A)[6])) << 16) +\
-				    (((uint32) ((uchar) (A)[7])) << 24))) <<\
+#define uint8korr(A)	((uint64_t)(((uint32_t) ((uchar) (A)[0])) +\
+				    (((uint32_t) ((uchar) (A)[1])) << 8) +\
+				    (((uint32_t) ((uchar) (A)[2])) << 16) +\
+				    (((uint32_t) ((uchar) (A)[3])) << 24)) +\
+			(((uint64_t) (((uint32_t) ((uchar) (A)[4])) +\
+				    (((uint32_t) ((uchar) (A)[5])) << 8) +\
+				    (((uint32_t) ((uchar) (A)[6])) << 16) +\
+				    (((uint32_t) ((uchar) (A)[7])) << 24))) <<\
 				    32))
 #define int2store(T,A)       do { uint def_temp= (uint) (A) ;\
                                   *((uchar*) (T))=  (uchar)(def_temp); \
@@ -910,10 +872,10 @@ do { doubleget_union _tmp; \
   Macro for reading 32-bit integer from network byte order (big-endian)
   from unaligned memory location.
 */
-#define int4net(A)        (int32) (((uint32) ((uchar) (A)[3]))        |\
-				  (((uint32) ((uchar) (A)[2])) << 8)  |\
-				  (((uint32) ((uchar) (A)[1])) << 16) |\
-				  (((uint32) ((uchar) (A)[0])) << 24))
+#define int4net(A)        (int32_t) (((uint32_t) ((uchar) (A)[3]))        |\
+				  (((uint32_t) ((uchar) (A)[2])) << 8)  |\
+				  (((uint32_t) ((uchar) (A)[1])) << 16) |\
+				  (((uint32_t) ((uchar) (A)[0])) << 24))
 /*
   Define-funktions for reading and storing in machine format from/to
   short/long to/from some place in memory V should be a (not
@@ -922,17 +884,17 @@ do { doubleget_union _tmp; \
 
 #ifdef WORDS_BIGENDIAN
 
-#define ushortget(V,M)  do { V = (uint16) (((uint16) ((uchar) (M)[1]))+\
-                                 ((uint16) ((uint16) (M)[0]) << 8)); } while(0)
+#define ushortget(V,M)  do { V = (uint16_t) (((uint16_t) ((uchar) (M)[1]))+\
+                                 ((uint16_t) ((uint16_t) (M)[0]) << 8)); } while(0)
 #define shortget(V,M)   do { V = (short) (((short) ((uchar) (M)[1]))+\
                                  ((short) ((short) (M)[0]) << 8)); } while(0)
-#define longget(V,M)    do { int32 def_temp;\
+#define longget(V,M)    do { int32_t def_temp;\
                              ((uchar*) &def_temp)[0]=(M)[0];\
                              ((uchar*) &def_temp)[1]=(M)[1];\
                              ((uchar*) &def_temp)[2]=(M)[2];\
                              ((uchar*) &def_temp)[3]=(M)[3];\
                              (V)=def_temp; } while(0)
-#define ulongget(V,M)   do { uint32 def_temp;\
+#define ulongget(V,M)   do { uint32_t def_temp;\
                             ((uchar*) &def_temp)[0]=(M)[0];\
                             ((uchar*) &def_temp)[1]=(M)[1];\
                             ((uchar*) &def_temp)[2]=(M)[2];\

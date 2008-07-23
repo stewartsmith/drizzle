@@ -21,7 +21,7 @@ extern "C" {
 
 typedef struct st_trie_node
 {
-  uint16 leaf;                /* Depth from root node if match, 0 else */
+  uint16_t leaf;                /* Depth from root node if match, 0 else */
   uchar c;                    /* Label on this edge */
   struct st_trie_node *next;  /* Next label */
   struct st_trie_node *links; /* Array of edges leaving this node */
@@ -33,8 +33,8 @@ typedef struct st_trie
   TRIE_NODE root;
   MEM_ROOT mem_root;
   CHARSET_INFO *charset;
-  uint32 nnodes;
-  uint32 nwords;
+  uint32_t nnodes;
+  uint32_t nwords;
 } TRIE;
 
 typedef struct st_ac_trie_state

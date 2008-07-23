@@ -1112,7 +1112,7 @@ int32_t register_slave_on_master(MYSQL* mysql, Master_info *mi,
   pos= net_store_data(pos, (uchar*) report_host, report_host_len);
   pos= net_store_data(pos, (uchar*) report_user, report_user_len);
   pos= net_store_data(pos, (uchar*) report_password, report_password_len);
-  int2store(pos, (uint16) report_port); pos+= 2;
+  int2store(pos, (uint16_t) report_port); pos+= 2;
   int4store(pos, rpl_recovery_rank);    pos+= 4;
   /* The master will fill in master_id */
   int4store(pos, 0);                    pos+= 4;
@@ -1225,8 +1225,8 @@ bool show_master_info(THD* thd, Master_info* mi)
     pthread_mutex_lock(&mi->rli.data_lock);
     protocol->store(mi->host, &my_charset_bin);
     protocol->store(mi->user, &my_charset_bin);
-    protocol->store((uint32) mi->port);
-    protocol->store((uint32) mi->connect_retry);
+    protocol->store((uint32_t) mi->port);
+    protocol->store((uint32_t) mi->connect_retry);
     protocol->store(mi->master_log_name, &my_charset_bin);
     protocol->store((uint64_t) mi->master_log_pos);
     protocol->store(mi->rli.group_relay_log_name +
@@ -1253,7 +1253,7 @@ bool show_master_info(THD* thd, Master_info* mi)
 
     protocol->store(mi->rli.last_error().number);
     protocol->store(mi->rli.last_error().message, &my_charset_bin);
-    protocol->store((uint32) mi->rli.slave_skip_counter);
+    protocol->store((uint32_t) mi->rli.slave_skip_counter);
     protocol->store((uint64_t) mi->rli.group_master_log_pos);
     protocol->store((uint64_t) mi->rli.log_space_total);
 
@@ -2377,7 +2377,7 @@ Slave SQL thread aborted. Can't execute init_slave query");
           codes and warnings and print this to the error log as to
           allow the user to locate the error
         */
-        uint32 const last_errno= rli->last_error().number;
+        uint32_t const last_errno= rli->last_error().number;
 
         if (thd->is_error())
         {

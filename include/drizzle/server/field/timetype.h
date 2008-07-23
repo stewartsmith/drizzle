@@ -51,7 +51,7 @@ public:
   bool get_time(MYSQL_TIME *ltime);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 3; }
+  uint32_t pack_length() const { return 3; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }

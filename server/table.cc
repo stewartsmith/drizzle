@@ -610,7 +610,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     for (j=keyinfo->key_parts ; j-- ; key_part++)
     {
       *rec_per_key++=0;
-      key_part->fieldnr=	(uint16) (uint2korr(strpos) & FIELD_NR_MASK);
+      key_part->fieldnr=	(uint16_t) (uint2korr(strpos) & FIELD_NR_MASK);
       key_part->offset= (uint) uint2korr(strpos+2)-1;
       key_part->key_type=	(uint) uint2korr(strpos+5);
       // key_part->field=	(Field*) 0;	// Will be fixed later
@@ -999,7 +999,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
 
     *field_ptr= reg_field=
       make_field(share, record+recpos,
-		 (uint32) field_length,
+		 (uint32_t) field_length,
 		 null_pos, null_bit_pos,
 		 pack_flag,
 		 field_type,
@@ -1076,7 +1076,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       {
         Field *field;
 	if (new_field_pack_flag <= 1)
-	  key_part->fieldnr= (uint16) find_field(share->field,
+	  key_part->fieldnr= (uint16_t) find_field(share->field,
                                                  share->default_values,
                                                  (uint) key_part->offset,
                                                  (uint) key_part->length);
@@ -1157,9 +1157,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
               error.
             */
             keyinfo->key_length-= (key_part->length - field->key_length());
-            key_part->store_length-= (uint16)(key_part->length -
+            key_part->store_length-= (uint16_t)(key_part->length -
                                               field->key_length());
-            key_part->length= (uint16)field->key_length();
+            key_part->length= (uint16_t)field->key_length();
             sql_print_error("Found wrong key definition in %s; "
                             "Please do \"ALTER TABLE '%s' FORCE \" to fix it!",
                             share->table_name.str,

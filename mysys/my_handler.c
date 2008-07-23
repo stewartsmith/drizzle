@@ -124,9 +124,9 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
 	       uint *diff_pos)
 {
   int flag;
-  int16 s_1,s_2;
-  int32 l_1,l_2;
-  uint32 u_1,u_2;
+  int16_t s_1,s_2;
+  int32_t l_1,l_2;
+  uint32_t u_1,u_2;
   float f_1,f_2;
   double d_1,d_2;
   uint next_key_length;
@@ -293,7 +293,7 @@ int ha_key_cmp(register HA_KEYSEG *keyseg, register uchar *a,
       break;
     case HA_KEYTYPE_USHORT_INT:
       {
-        uint16 us_1,us_2;
+        uint16_t us_1,us_2;
         us_1= mi_sint2korr(a);
         us_2= mi_sint2korr(b);
         if (piks && (flag = CMP_NUM(us_1,us_2)))

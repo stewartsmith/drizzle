@@ -31,9 +31,9 @@ public:
   */
   static const uint MAX_SIZE;
   /* Store number of bytes used to store length (1 or 2) */
-  uint32 length_bytes;
+  uint32_t length_bytes;
   Field_varstring(uchar *ptr_arg,
-                  uint32 len_arg, uint length_bytes_arg,
+                  uint32_t len_arg, uint length_bytes_arg,
                   uchar *null_ptr_arg, uchar null_bit_arg,
 		  enum utype unireg_check_arg, const char *field_name_arg,
 		  TABLE_SHARE *share, CHARSET_INFO *cs)
@@ -43,7 +43,7 @@ public:
   {
     share->varchar_fields++;
   }
-  Field_varstring(uint32 len_arg,bool maybe_null_arg,
+  Field_varstring(uint32_t len_arg,bool maybe_null_arg,
                   const char *field_name_arg,
                   TABLE_SHARE *share, CHARSET_INFO *cs)
     :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
@@ -58,11 +58,11 @@ public:
   uint row_pack_length() { return field_length; }
   bool zero_pack() const { return 0; }
   int  reset(void) { bzero(ptr,field_length+length_bytes); return 0; }
-  uint32 pack_length() const { return (uint32) field_length+length_bytes; }
-  uint32 key_length() const { return (uint32) field_length; }
-  uint32 sort_length() const
+  uint32_t pack_length() const { return (uint32_t) field_length+length_bytes; }
+  uint32_t key_length() const { return (uint32_t) field_length; }
+  uint32_t sort_length() const
   {
-    return (uint32) field_length + (field_charset == &my_charset_bin ?
+    return (uint32_t) field_length + (field_charset == &my_charset_bin ?
                                     length_bytes : 0);
   }
   int  store(const char *to,uint length,CHARSET_INFO *charset);
@@ -93,13 +93,13 @@ public:
   int pack_cmp(const uchar *a, const uchar *b, uint key_length,
                my_bool insert_or_update);
   int pack_cmp(const uchar *b, uint key_length,my_bool insert_or_update);
-  int cmp_binary(const uchar *a,const uchar *b, uint32 max_length=~0L);
+  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=~0L);
   int key_cmp(const uchar *,const uchar*);
   int key_cmp(const uchar *str, uint length);
   uint packed_col_length(const uchar *to, uint length);
   uint max_packed_col_length(uint max_length);
-  uint32 data_length();
-  uint32 used_length();
+  uint32_t data_length();
+  uint32_t used_length();
   uint size_of() const { return sizeof(*this); }
   enum_field_types real_type() const { return MYSQL_TYPE_VARCHAR; }
   bool has_charset(void) const

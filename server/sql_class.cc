@@ -1101,7 +1101,7 @@ bool THD::convert_string(String *s, CHARSET_INFO *from_cs, CHARSET_INFO *to_cs)
 
 void THD::update_charset()
 {
-  uint32 not_used;
+  uint32_t not_used;
   charset_is_system_charset= !String::needs_conversion(0,charset(),
                                                        system_charset_info,
                                                        &not_used);
@@ -2529,7 +2529,7 @@ void xid_cache_delete(XID_STATE *xid_state)
  */
 
 template <class RowsEventT> Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE* table, uint32 serv_id,
+THD::binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
                                        size_t needed,
                                        bool is_transactional,
 				       RowsEventT *hint __attribute__((unused)))
@@ -2605,15 +2605,15 @@ THD::binlog_prepare_pending_rows_event(TABLE* table, uint32 serv_id,
   compiling option.
 */
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32, size_t, bool,
+THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
 				       Write_rows_log_event*);
 
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32, size_t, bool,
+THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
 				       Delete_rows_log_event *);
 
 template Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32, size_t, bool,
+THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
 				       Update_rows_log_event *);
 #endif
 

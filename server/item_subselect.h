@@ -438,7 +438,7 @@ public:
   */
   virtual int exec()= 0;
   virtual uint cols()= 0; /* return number of columns in select */
-  virtual uint8 uncacheable()= 0; /* query is uncacheable */
+  virtual uint8_t uncacheable()= 0; /* query is uncacheable */
   enum Item_result type() { return res_type; }
   enum_field_types field_type() { return res_field_type; }
   virtual void exclude()= 0;
@@ -475,7 +475,7 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint cols();
-  uint8 uncacheable();
+  uint8_t uncacheable();
   void exclude();
   table_map upper_select_const_tables();
   virtual void print (String *str, enum_query_type query_type);
@@ -503,7 +503,7 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint cols();
-  uint8 uncacheable();
+  uint8_t uncacheable();
   void exclude();
   table_map upper_select_const_tables();
   virtual void print (String *str, enum_query_type query_type);
@@ -560,7 +560,7 @@ public:
   void fix_length_and_dec(Item_cache** row);
   int exec();
   uint cols() { return 1; }
-  uint8 uncacheable() { return UNCACHEABLE_DEPENDENT; }
+  uint8_t uncacheable() { return UNCACHEABLE_DEPENDENT; }
   void exclude();
   table_map upper_select_const_tables() { return 0; }
   virtual void print (String *str, enum_query_type query_type);

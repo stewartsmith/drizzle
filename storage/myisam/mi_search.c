@@ -653,7 +653,7 @@ my_off_t _mi_rec_pos(MYISAM_SHARE *s, uchar *ptr)
 #endif
   case 4:
     pos= (my_off_t) mi_uint4korr(ptr);
-    if (pos == (my_off_t) (uint32) ~0L)
+    if (pos == (my_off_t) (uint32_t) ~0L)
       return  HA_OFFSET_ERROR;
     break;
   case 3:

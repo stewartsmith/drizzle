@@ -44,20 +44,20 @@
   { bits-=(bit+1); break; } \
   pos+= *pos
 
-/* Size in uint16 of a Huffman tree for byte compression of 256 byte values. */
+/* Size in uint16_t of a Huffman tree for byte compression of 256 byte values. */
 #define OFFSET_TABLE_SIZE 512
 
 static uint read_huff_table(MI_BIT_BUFF *bit_buff,MI_DECODE_TREE *decode_tree,
-			    uint16 **decode_table,uchar **intervall_buff,
-			    uint16 *tmp_buff);
-static void make_quick_table(uint16 *to_table,uint16 *decode_table,
+			    uint16_t **decode_table,uchar **intervall_buff,
+			    uint16_t *tmp_buff);
+static void make_quick_table(uint16_t *to_table,uint16_t *decode_table,
 			     uint *next_free,uint value,uint bits,
 			     uint max_bits);
-static void fill_quick_table(uint16 *table,uint bits, uint max_bits,
+static void fill_quick_table(uint16_t *table,uint bits, uint max_bits,
 			     uint value);
-static uint copy_decode_table(uint16 *to_pos,uint offset,
-			      uint16 *decode_table);
-static uint find_longest_bitstream(uint16 *table, uint16 *end);
+static uint copy_decode_table(uint16_t *to_pos,uint offset,
+			      uint16_t *decode_table);
+static uint find_longest_bitstream(uint16_t *table, uint16_t *end);
 static void (*get_unpack_function(MI_COLUMNDEF *rec))(MI_COLUMNDEF *field,
 						    MI_BIT_BUFF *buff,
 						    uchar *to,
@@ -134,7 +134,7 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
   File file;
   int diff_length;
   uint i,trees,huff_tree_bits,rec_reflength,length;
-  uint16 *decode_table,*tmp_buff;
+  uint16_t *decode_table,*tmp_buff;
   ulong elements,intervall_length;
   uchar *disk_cache;
   uchar *intervall_buff;
@@ -198,8 +198,8 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
     This segment will be reallocated after construction of the tables.
   */
   length=(uint) (elements*2+trees*(1 << myisam_quick_table_bits));
-  if (!(share->decode_tables=(uint16*)
-        my_malloc((length + OFFSET_TABLE_SIZE) * sizeof(uint16) +
+  if (!(share->decode_tables=(uint16_t*)
+        my_malloc((length + OFFSET_TABLE_SIZE) * sizeof(uint16_t) +
                   (uint) (share->pack.header_length - sizeof(header)),
                   MYF(MY_WME | MY_ZEROFILL))))
     goto err1;
@@ -235,7 +235,7 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
                         &intervall_buff,tmp_buff))
       goto err3;
   /* Reallocate the decoding tables to the used size. */
-  decode_table=(uint16*)
+  decode_table=(uint16_t*)
     my_realloc((uchar*) share->decode_tables,
 	       (uint) ((uchar*) decode_table - (uchar*) share->decode_tables),
 	       MYF(MY_HOLD_ON_ERROR));
@@ -245,7 +245,7 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
     share->decode_tables=decode_table;
     for (i=0 ; i < trees ; i++)
       share->decode_trees[i].table=ADD_TO_PTR(share->decode_trees[i].table,
-                                              diff, uint16*);
+                                              diff, uint16_t*);
   }
 
   /* Fix record-ref-length for keys */
@@ -254,17 +254,17 @@ my_bool _mi_read_pack_info(MI_INFO *info, bool fix_keys)
     for (i=0 ; i < share->base.keys ; i++)
     {
       MI_KEYDEF *keyinfo= &share->keyinfo[i];
-      keyinfo->keylength+= (uint16) diff_length;
-      keyinfo->minlength+= (uint16) diff_length;
-      keyinfo->maxlength+= (uint16) diff_length;
-      keyinfo->seg[keyinfo->keysegs].length= (uint16) rec_reflength;
+      keyinfo->keylength+= (uint16_t) diff_length;
+      keyinfo->minlength+= (uint16_t) diff_length;
+      keyinfo->maxlength+= (uint16_t) diff_length;
+      keyinfo->seg[keyinfo->keysegs].length= (uint16_t) rec_reflength;
     }
     if (share->ft2_keyinfo.seg)
     {
       MI_KEYDEF *ft2_keyinfo= &share->ft2_keyinfo;
-      ft2_keyinfo->keylength+= (uint16) diff_length;
-      ft2_keyinfo->minlength+= (uint16) diff_length;
-      ft2_keyinfo->maxlength+= (uint16) diff_length;
+      ft2_keyinfo->keylength+= (uint16_t) diff_length;
+      ft2_keyinfo->minlength+= (uint16_t) diff_length;
+      ft2_keyinfo->maxlength+= (uint16_t) diff_length;
     }
   }
 
@@ -303,12 +303,12 @@ err0:
 */
 
 static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
-			    uint16 **decode_table, uchar **intervall_buff,
-			    uint16 *tmp_buff)
+			    uint16_t **decode_table, uchar **intervall_buff,
+			    uint16_t *tmp_buff)
 {
   uint min_chr,elements,char_bits,offset_bits,size,intervall_length,table_bits,
   next_free_offset;
-  uint16 *ptr,*end;
+  uint16_t *ptr,*end;
 
   if (!get_bits(bit_buff,1))
   {
@@ -341,14 +341,14 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
   {
     if (get_bit(bit_buff))
     {
-      *ptr= (uint16) get_bits(bit_buff,offset_bits);
+      *ptr= (uint16_t) get_bits(bit_buff,offset_bits);
       if ((ptr + *ptr >= end) || !*ptr)
       {
         return(1);
       }
     }
     else
-      *ptr= (uint16) (IS_CHAR + (get_bits(bit_buff,char_bits) + min_chr));
+      *ptr= (uint16_t) (IS_CHAR + (get_bits(bit_buff,char_bits) + min_chr));
   }
   skip_to_next_byte(bit_buff);
 
@@ -428,7 +428,7 @@ static uint read_huff_table(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree,
     void
 */
 
-static void make_quick_table(uint16 *to_table, uint16 *decode_table,
+static void make_quick_table(uint16_t *to_table, uint16_t *decode_table,
 			     uint *next_free_offset, uint value, uint bits,
 			     uint max_bits)
 {
@@ -442,7 +442,7 @@ static void make_quick_table(uint16 *to_table, uint16 *decode_table,
       Remaining left  Huffman tree segment starts behind quick table.
       Remaining right Huffman tree segment starts behind left segment.
     */
-    to_table[value]= (uint16) *next_free_offset;
+    to_table[value]= (uint16_t) *next_free_offset;
     /*
       Re-construct the remaining Huffman tree segment at
       next_free_offset in to_table.
@@ -516,10 +516,10 @@ static void make_quick_table(uint16 *to_table, uint16 *decode_table,
     void
 */
 
-static void fill_quick_table(uint16 *table, uint bits, uint max_bits,
+static void fill_quick_table(uint16_t *table, uint bits, uint max_bits,
 			     uint value)
 {
-  uint16 *end;
+  uint16_t *end;
 
   /*
     Bits 1..8 of value represent the decoded byte value.
@@ -530,7 +530,7 @@ static void fill_quick_table(uint16 *table, uint bits, uint max_bits,
 
   for (end= table + ((my_ptrdiff_t) 1 << bits); table < end; table++)
   {
-    *table= (uint16) value;
+    *table= (uint16_t) value;
   }
   return;
 }
@@ -552,8 +552,8 @@ static void fill_quick_table(uint16 *table, uint bits, uint max_bits,
     next free offset from to_pos.
 */
 
-static uint copy_decode_table(uint16 *to_pos, uint offset,
-			      uint16 *decode_table)
+static uint copy_decode_table(uint16_t *to_pos, uint offset,
+			      uint16_t *decode_table)
 {
   uint prev_offset= offset;
 
@@ -578,7 +578,7 @@ static uint copy_decode_table(uint16 *to_pos, uint offset,
   if (!(*decode_table & IS_CHAR))
   {
     /* Set a pointer to the next free target node. */
-    to_pos[prev_offset+1]=(uint16) (offset-prev_offset-1);
+    to_pos[prev_offset+1]=(uint16_t) (offset-prev_offset-1);
     /* Copy the right hand subtree to the entry of that node. */
     offset=copy_decode_table(to_pos,offset,decode_table+ *decode_table);
   }
@@ -615,14 +615,14 @@ static uint copy_decode_table(uint16 *to_pos, uint offset,
     >= OFFSET_TABLE_SIZE    Error, broken tree. It does not end before 'end'.
 */
 
-static uint find_longest_bitstream(uint16 *table, uint16 *end)
+static uint find_longest_bitstream(uint16_t *table, uint16_t *end)
 {
   uint length= 1;
   uint length2;
 
   if (!(*table & IS_CHAR))
   {
-    uint16 *next= table + *table;
+    uint16_t *next= table + *table;
     if (next > end || next == table)
     {
       return OFFSET_TABLE_SIZE;
@@ -632,7 +632,7 @@ static uint find_longest_bitstream(uint16 *table, uint16 *end)
   table++;
   if (!(*table & IS_CHAR))
   {
-    uint16 *next= table + *table;
+    uint16_t *next= table + *table;
     if (next > end || next == table)
     {
       return OFFSET_TABLE_SIZE;
@@ -1045,7 +1045,7 @@ static void decode_bytes(MI_COLUMNDEF *rec,MI_BIT_BUFF *bit_buff,uchar *to,
 			 uchar *end)
 {
   register uint bits,low_byte;
-  register uint16 *pos;
+  register uint16_t *pos;
   register uint table_bits,table_and;
   MI_DECODE_TREE *decode_tree;
 
@@ -1138,7 +1138,7 @@ static void decode_bytes(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *to,
 			 uchar *end)
 {
   register uint bits,low_byte;
-  register uint16 *pos;
+  register uint16_t *pos;
   register uint table_bits,table_and;
   MI_DECODE_TREE *decode_tree;
 
@@ -1233,7 +1233,7 @@ static void decode_bytes(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *to,
 
 static uint decode_pos(MI_BIT_BUFF *bit_buff, MI_DECODE_TREE *decode_tree)
 {
-  uint16 *pos=decode_tree->table;
+  uint16_t *pos=decode_tree->table;
   for (;;)
   {
     if (get_bit(bit_buff))

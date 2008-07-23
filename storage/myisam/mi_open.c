@@ -564,7 +564,7 @@ err:
 uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
 {
   uint extra;
-  uint32 old_length= 0;
+  uint32_t old_length= 0;
 
   if (! *buf || length > (old_length=mi_get_rec_buff_len(info, *buf)))
   {
@@ -591,7 +591,7 @@ uchar *mi_alloc_rec_buff(MI_INFO *info, ulong length, uchar **buf)
     if (!(newptr=(uchar*) my_realloc((uchar*)newptr, length+extra+8,
                                      MYF(MY_ALLOW_ZERO_PTR))))
       return newptr;
-    *((uint32 *) newptr)= (uint32) length;
+    *((uint32_t *) newptr)= (uint32_t) length;
     *buf= newptr+(extra ?  MI_REC_BUFF_OFFSET : 0);
   }
   return *buf;
@@ -1010,10 +1010,10 @@ uchar *mi_keyseg_read(uchar *ptr, HA_KEYSEG *keyseg)
    keyseg->null_pos	= mi_uint4korr(ptr);  ptr +=4;
    keyseg->charset=0;				/* Will be filled in later */
    if (keyseg->null_bit)
-     keyseg->bit_pos= (uint16)(keyseg->null_pos + (keyseg->null_bit == 7));
+     keyseg->bit_pos= (uint16_t)(keyseg->null_pos + (keyseg->null_bit == 7));
    else
    {
-     keyseg->bit_pos= (uint16)keyseg->null_pos;
+     keyseg->bit_pos= (uint16_t)keyseg->null_pos;
      keyseg->null_pos= 0;
    }
    return ptr;
@@ -1063,7 +1063,7 @@ uchar *mi_recinfo_read(uchar *ptr, MI_COLUMNDEF *recinfo)
 {
    recinfo->type=  mi_sint2korr(ptr);	ptr +=2;
    recinfo->length=mi_uint2korr(ptr);	ptr +=2;
-   recinfo->null_bit= (uint8) *ptr++;
+   recinfo->null_bit= (uint8_t) *ptr++;
    recinfo->null_pos=mi_uint2korr(ptr); ptr +=2;
    return ptr;
 }

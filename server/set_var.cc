@@ -1528,7 +1528,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
   }
   case SHOW_MY_BOOL:
   {
-    int32 value;
+    int32_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(bool*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);

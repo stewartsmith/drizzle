@@ -25,7 +25,7 @@
 
 class Field_short :public Field_num {
 public:
-  Field_short(uchar *ptr_arg, uint32 len_arg, uchar *null_ptr_arg,
+  Field_short(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
 	      uchar null_bit_arg,
 	      enum utype unireg_check_arg, const char *field_name_arg,
 	      bool zero_arg, bool unsigned_arg)
@@ -33,7 +33,7 @@ public:
 	       unireg_check_arg, field_name_arg,
 	       0, zero_arg,unsigned_arg)
     {}
-  Field_short(uint32 len_arg,bool maybe_null_arg, const char *field_name_arg,
+  Field_short(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
 	      bool unsigned_arg)
     :Field_num((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0,0,
 	       NONE, field_name_arg, 0, 0, unsigned_arg)
@@ -52,15 +52,15 @@ public:
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 2; }
+  uint32_t pack_length() const { return 2; }
   void sql_type(String &str) const;
-  uint32 max_display_length() { return 6; }
+  uint32_t max_display_length() { return 6; }
 
   virtual uchar *pack(uchar* to, const uchar *from,
                       uint max_length __attribute__((__unused__)),
                       bool low_byte_first __attribute__((__unused__)))
   {
-    int16 val;
+    int16_t val;
 #ifdef WORDS_BIGENDIAN
     if (table->s->db_low_byte_first)
       val = sint2korr(from);
@@ -81,7 +81,7 @@ public:
                               uint param_data __attribute__((__unused__)),
                               bool low_byte_first __attribute__((__unused__)))
   {
-    int16 val;
+    int16_t val;
 #ifdef WORDS_BIGENDIAN
     if (low_byte_first)
       val = sint2korr(from);

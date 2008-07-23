@@ -304,7 +304,7 @@ outp:
   }
   *to= '\0';
   *errors= error_count;
-  return (uint32) (to - to_start);
+  return (uint32_t) (to - to_start);
 
 }
 

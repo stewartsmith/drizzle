@@ -40,9 +40,9 @@ extern "C" {
 
 typedef struct unicase_info_st
 {
-  uint16 toupper;
-  uint16 tolower;
-  uint16 sort;
+  uint16_t toupper;
+  uint16_t tolower;
+  uint16_t sort;
 } MY_UNICASE_INFO;
 
 
@@ -130,8 +130,8 @@ extern MY_UNI_CTYPE my_uni_ctype[256];
 
 typedef struct my_uni_idx_st
 {
-  uint16 from;
-  uint16 to;
+  uint16_t from;
+  uint16_t to;
   uchar  *tab;
 } MY_UNI_IDX;
 
@@ -295,9 +295,9 @@ typedef struct charset_info_st
   uchar    *to_lower;
   uchar    *to_upper;
   uchar    *sort_order;
-  uint16   *contractions;
-  uint16   **sort_order_big;
-  uint16      *tab_to_uni;
+  uint16_t   *contractions;
+  uint16_t   **sort_order_big;
+  uint16_t      *tab_to_uni;
   MY_UNI_IDX  *tab_from_uni;
   MY_UNICASE_INFO **caseinfo;
   uchar     *state_map;
@@ -307,8 +307,8 @@ typedef struct charset_info_st
   uchar     casedn_multiply;
   uint      mbminlen;
   uint      mbmaxlen;
-  uint16    min_sort_char;
-  uint16    max_sort_char; /* For LIKE optimization */
+  uint16_t    min_sort_char;
+  uint16_t    max_sort_char; /* For LIKE optimization */
   uchar     pad_char;
   my_bool   escape_with_backslash_is_dangerous;
   uchar     levels_for_compare;

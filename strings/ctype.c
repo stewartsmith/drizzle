@@ -133,7 +133,7 @@ typedef struct my_cs_file_info
   uchar  to_lower[MY_CS_TO_LOWER_TABLE_SIZE];
   uchar  to_upper[MY_CS_TO_UPPER_TABLE_SIZE];
   uchar  sort_order[MY_CS_SORT_ORDER_TABLE_SIZE];
-  uint16 tab_to_uni[MY_CS_TO_UNI_TABLE_SIZE];
+  uint16_t tab_to_uni[MY_CS_TO_UNI_TABLE_SIZE];
   char   comment[MY_CS_CSDESCR_SIZE];
   char   tailoring[MY_CS_TAILORING_SIZE];
   size_t tailoring_length;
@@ -160,7 +160,7 @@ static int fill_uchar(uchar *a,uint size,const char *str, uint len)
   return 0;
 }
 
-static int fill_uint16(uint16 *a,uint size,const char *str, size_t len)
+static int fill_uint16(uint16_t *a,uint size,const char *str, size_t len)
 {
   uint i= 0;
   
@@ -172,7 +172,7 @@ static int fill_uint16(uint16 *a,uint size,const char *str, size_t len)
     for ( ; (s < e) && !strchr(" \t\r\n",s[0]); s++) ;
     if (s == b || i > size)
       break;
-    a[i]= (uint16) strtol(b,NULL,16);
+    a[i]= (uint16_t) strtol(b,NULL,16);
   }
   return 0;
 }

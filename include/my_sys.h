@@ -482,7 +482,7 @@ my_off_t my_b_safe_tell(IO_CACHE* info); /* picks the correct tell() */
 #define my_b_bytes_in_cache(info) (size_t) (*(info)->current_end - \
 					  *(info)->current_pos)
 
-typedef uint32 ha_checksum;
+typedef uint32_t ha_checksum;
 
 /* Define the type of function to be passed to process_default_option_files */
 typedef int (*Process_option_func)(void *ctx, const char *group_name,

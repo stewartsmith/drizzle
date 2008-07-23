@@ -2447,7 +2447,7 @@ int composite_key_cmp(void* arg, uchar* key1, uchar* key2)
   Item_sum_count_distinct* item = (Item_sum_count_distinct*)arg;
   Field **field    = item->table->field;
   Field **field_end= field + item->table->s->fields;
-  uint32 *lengths=item->field_lengths;
+  uint32_t *lengths=item->field_lengths;
   for (; field < field_end; ++field)
   {
     Field* f = *field;
@@ -2609,10 +2609,10 @@ bool Item_sum_count_distinct::setup(THD *thd)
       }
       else
       {
-        uint32 *length;
+        uint32_t *length;
         compare_key= (qsort_cmp2) composite_key_cmp;
         cmp_arg= (void*) this;
-        field_lengths= (uint32*) thd->alloc(table->s->fields * sizeof(uint32));
+        field_lengths= (uint32_t*) thd->alloc(table->s->fields * sizeof(uint32_t));
         for (tree_key_length= 0, length= field_lengths, field= table->field;
              field < field_end; ++field, ++length)
         {
@@ -3288,11 +3288,11 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
   null_value= 1;
   max_length= thd->variables.group_concat_max_len;
 
-  uint32 offset;
+  uint32_t offset;
   if (separator->needs_conversion(separator->length(), separator->charset(),
                                   collation.collation, &offset))
   {
-    uint32 buflen= collation.collation->mbmaxlen * separator->length();
+    uint32_t buflen= collation.collation->mbmaxlen * separator->length();
     uint errors, conv_length;
     char *buf;
     String *new_separator;

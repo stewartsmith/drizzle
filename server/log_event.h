@@ -155,7 +155,7 @@ struct sql_ex_info
   const char* line_start;
   const char* escaped;
   int cached_new_format;
-  uint8 field_term_len,enclosed_len,line_term_len,line_start_len, escaped_len;
+  uint8_t field_term_len,enclosed_len,line_term_len,line_start_len, escaped_len;
   char opt_flags;
   char empty_flags;
 
@@ -586,7 +586,7 @@ typedef struct st_print_event_info
   // TODO: have the last catalog here ??
   char db[FN_REFLEN+1]; // TODO: make this a LEX_STRING when thd->db is
   bool flags2_inited;
-  uint32 flags2;
+  uint32_t flags2;
   bool sql_mode_inited;
   ulong sql_mode;		/* must be same as THD.variables.sql_mode */
   ulong auto_increment_increment, auto_increment_offset;
@@ -619,7 +619,7 @@ typedef struct st_print_event_info
   */
   bool printed_fd_event;
   my_off_t hexdump_from;
-  uint8 common_header_len;
+  uint8_t common_header_len;
   char delimiter[16];
 
   /*
@@ -848,14 +848,14 @@ public:
     The master's server id (is preserved in the relay log; used to
     prevent from infinite loops in circular replication).
   */
-  uint32 server_id;
+  uint32_t server_id;
 
   /**
     Some 16 flags. See the definitions above for LOG_EVENT_TIME_F,
     LOG_EVENT_FORCED_ROTATE_F, LOG_EVENT_THREAD_SPECIFIC_F, and
     LOG_EVENT_SUPPRESS_USE_F for notes.
   */
-  uint16 flags;
+  uint16_t flags;
 
   bool cache_stmt;
 
@@ -869,7 +869,7 @@ public:
   THD* thd;
 
   Log_event();
-  Log_event(THD* thd_arg, uint16 flags_arg, bool cache_stmt);
+  Log_event(THD* thd_arg, uint16_t flags_arg, bool cache_stmt);
   /*
     read_log_event() functions read an event from a binlog or relay
     log; used by SHOW BINLOG EVENTS, the binlog_dump thread on the
@@ -1488,9 +1488,9 @@ public:
     we pass it with q_len, so we would not have to call strlen()
     otherwise, set it to 0, in which case, we compute it with strlen()
   */
-  uint32 q_len;
-  uint32 db_len;
-  uint16 error_code;
+  uint32_t q_len;
+  uint32_t db_len;
+  uint16_t error_code;
   ulong thread_id;
   /*
     For events created by Query_log_event::do_apply_event (and
@@ -1527,7 +1527,7 @@ public:
     Query_log_event, so automatically benefit from the work already done for
     status variables in Query_log_event.
  */
-  uint16 status_vars_len;
+  uint16_t status_vars_len;
 
   /*
     'flags2' is a second set of flags (on top of those in Log_event), for
@@ -1542,7 +1542,7 @@ public:
   bool sql_mode_inited;
   bool charset_inited;
 
-  uint32 flags2;
+  uint32_t flags2;
   /* In connections sql_mode is 32 bits now but will be 64 bits soon */
   ulong sql_mode;
   ulong auto_increment_increment, auto_increment_offset;
@@ -1598,7 +1598,7 @@ public:        /* !!! Public in this patch to allow old usage */
 
   int do_apply_event(Relay_log_info const *rli,
                        const char *query_arg,
-                       uint32 q_len_arg);
+                       uint32_t q_len_arg);
 #endif /* HAVE_REPLICATION */
 };
 
@@ -1664,7 +1664,7 @@ public:
   char* master_log;
   int master_host_len;
   int master_log_len;
-  uint16 master_port;
+  uint16_t master_port;
 
 #ifndef MYSQL_CLIENT
   Slave_log_event(THD* thd_arg, Relay_log_info* rli);
@@ -1904,23 +1904,23 @@ protected:
 public:
   ulong thread_id;
   ulong slave_proxy_id;
-  uint32 table_name_len;
+  uint32_t table_name_len;
   /*
     No need to have a catalog, as these events can only come from 4.x.
     TODO: this may become false if Dmitri pushes his new LOAD DATA INFILE in
     5.0 only (not in 4.x).
   */
-  uint32 db_len;
-  uint32 fname_len;
-  uint32 num_fields;
+  uint32_t db_len;
+  uint32_t fname_len;
+  uint32_t num_fields;
   const char* fields;
   const uchar* field_lens;
-  uint32 field_block_len;
+  uint32_t field_block_len;
 
   const char* table_name;
   const char* db;
   const char* fname;
-  uint32 skip_lines;
+  uint32_t skip_lines;
   sql_ex_info sql_ex;
   bool local_fname;
 
@@ -2037,7 +2037,7 @@ public:
      fixed.
   */
   time_t created;
-  uint16 binlog_version;
+  uint16_t binlog_version;
   char server_version[ST_SERVER_VER_LEN];
   /*
     artifical_event is 1 in the case where this is a generated event that
@@ -2112,14 +2112,14 @@ public:
      LOG_EVENT_HEADER_LEN), except FORMAT_DESCRIPTION_EVENT and ROTATE_EVENT
      (those have a header of size LOG_EVENT_MINIMAL_HEADER_LEN).
   */
-  uint8 common_header_len;
-  uint8 number_of_event_types;
+  uint8_t common_header_len;
+  uint8_t number_of_event_types;
   /* The list of post-headers' lengthes */
-  uint8 *post_header_len;
+  uint8_t *post_header_len;
   uchar server_version_split[3];
-  const uint8 *event_type_permutation;
+  const uint8_t *event_type_permutation;
 
-  Format_description_log_event(uint8 binlog_ver, const char* server_ver=0);
+  Format_description_log_event(uint8_t binlog_ver, const char* server_ver=0);
   Format_description_log_event(const char* buf, uint event_len,
                                const Format_description_log_event
                                *description_event);
@@ -3149,7 +3149,7 @@ public:
     ENUM_FLAG_COUNT
   };
 
-  typedef uint16 flag_set;
+  typedef uint16_t flag_set;
 
   /* Special constants representing sets of flags */
   enum 
@@ -3163,7 +3163,7 @@ public:
 
 #ifndef MYSQL_CLIENT
   Table_map_log_event(THD *thd, TABLE *tbl, ulong tid, 
-		      bool is_transactional, uint16 flags);
+		      bool is_transactional, uint16_t flags);
 #endif
 #ifdef HAVE_REPLICATION
   Table_map_log_event(const char *buf, uint event_len, 
@@ -3281,7 +3281,7 @@ public:
     COMPLETE_ROWS_F = (1U << 3)
   };
 
-  typedef uint16 flag_set;
+  typedef uint16_t flag_set;
 
   /* Special constants representing sets of flags */
   enum 
@@ -3375,8 +3375,8 @@ protected:
   ulong       m_master_reclength; /* Length of record on master side */
 
   /* Bit buffers in the same memory as the class */
-  uint32    m_bitbuf[128/(sizeof(uint32)*8)];
-  uint32    m_bitbuf_ai[128/(sizeof(uint32)*8)];
+  uint32_t    m_bitbuf[128/(sizeof(uint32_t)*8)];
+  uint32_t    m_bitbuf_ai[128/(sizeof(uint32_t)*8)];
 
   uchar    *m_rows_buf;		/* The rows in packed format */
   uchar    *m_rows_cur;		/* One-after the end of the data */

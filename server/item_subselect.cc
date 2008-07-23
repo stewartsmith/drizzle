@@ -156,7 +156,7 @@ Item_subselect::select_transformer(JOIN *join __attribute__((__unused__)))
 bool Item_subselect::fix_fields(THD *thd_param, Item **ref)
 {
   char const *save_where= thd_param->where;
-  uint8 uncacheable;
+  uint8_t uncacheable;
   bool res;
 
   assert(fixed == 0);
@@ -740,7 +740,7 @@ void Item_exists_subselect::fix_length_and_dec()
    max_length= 1;
    max_columns= engine->cols();
   /* We need only 1 row to determine existence */
-  unit->global_parameters->select_limit= new Item_int((int32) 1);
+  unit->global_parameters->select_limit= new Item_int((int32_t) 1);
 }
 
 double Item_exists_subselect::val_real()
@@ -2622,13 +2622,13 @@ uint subselect_union_engine::cols()
 }
 
 
-uint8 subselect_single_select_engine::uncacheable()
+uint8_t subselect_single_select_engine::uncacheable()
 {
   return select_lex->uncacheable;
 }
 
 
-uint8 subselect_union_engine::uncacheable()
+uint8_t subselect_union_engine::uncacheable()
 {
   return unit->uncacheable;
 }

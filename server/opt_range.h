@@ -24,15 +24,15 @@
 #endif
 
 typedef struct st_key_part {
-  uint16           key,part;
+  uint16_t           key,part;
   /* See KEY_PART_INFO for meaning of the next two: */
-  uint16           store_length, length;
-  uint8            null_bit;
+  uint16_t           store_length, length;
+  uint8_t            null_bit;
   /*
     Keypart flags (0 when this structure is used by partition pruning code
     for fake partitioning index description)
   */
-  uint8 flag;
+  uint8_t flag;
   Field            *field;
   Field::imagetype image_type;
 } KEY_PART;
@@ -41,11 +41,11 @@ typedef struct st_key_part {
 class QUICK_RANGE :public Sql_alloc {
  public:
   uchar *min_key,*max_key;
-  uint16 min_length,max_length,flag;
+  uint16_t min_length,max_length,flag;
   key_part_map min_keypart_map, // bitmap of used keyparts in min_key
                max_keypart_map; // bitmap of used keyparts in max_key
 #ifdef HAVE_purify
-  uint16 dummy;					/* Avoid warnings on 'flag' */
+  uint16_t dummy;					/* Avoid warnings on 'flag' */
 #endif
   QUICK_RANGE();				/* Full range */
   QUICK_RANGE(const uchar *min_key_arg, uint min_length_arg,
@@ -55,9 +55,9 @@ class QUICK_RANGE :public Sql_alloc {
 	      uint flag_arg)
     : min_key((uchar*) sql_memdup(min_key_arg,min_length_arg+1)),
       max_key((uchar*) sql_memdup(max_key_arg,max_length_arg+1)),
-      min_length((uint16) min_length_arg),
-      max_length((uint16) max_length_arg),
-      flag((uint16) flag_arg),
+      min_length((uint16_t) min_length_arg),
+      max_length((uint16_t) max_length_arg),
+      flag((uint16_t) flag_arg),
       min_keypart_map(min_keypart_map_arg),
       max_keypart_map(max_keypart_map_arg)
     {

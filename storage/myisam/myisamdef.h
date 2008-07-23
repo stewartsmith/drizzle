@@ -81,7 +81,7 @@ typedef struct st_mi_state_info
   time_t check_time;			/* Time for last check */
   uint	sortkey;			/* sorted by this key  (not used) */
   uint open_count;
-  uint8 changed;			/* Changed since myisamchk */
+  uint8_t changed;			/* Changed since myisamchk */
 
   /* the following isn't saved on disk */
   uint state_diff_length;		/* Should be 0 */
@@ -170,7 +170,7 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   uchar *file_map;			/* mem-map of file if possible */
   KEY_CACHE *key_cache;			/* ref to the current key cache */
   MI_DECODE_TREE *decode_trees;
-  uint16 *decode_tables;
+  uint16_t *decode_tables;
   int (*read_record)(struct st_myisam_info*, my_off_t, uchar*);
   int (*write_record)(struct st_myisam_info*, const uchar*);
   int (*update_record)(struct st_myisam_info*, my_off_t, const uchar*);
@@ -247,7 +247,7 @@ struct st_myisam_info {
   uchar *int_keypos,			/* Save position for next/previous  */
         *int_maxpos;			/*  -""-  */
   uint  int_nod_flag;			/*  -""-  */
-  uint32 int_keytree_version;		/*  -""-  */
+  uint32_t int_keytree_version;		/*  -""-  */
   int (*read_record)(struct st_myisam_info*, my_off_t, uchar*);
   invalidator_by_filename invalidator;  /* query cache invalidator */
   ulong this_unique;			/* uniq filenumber or thread */
@@ -274,7 +274,7 @@ struct st_myisam_info {
   enum ha_rkey_function last_key_func;  /* CONTAIN, OVERLAP, etc */
   uint  save_lastkey_length;
   uint  pack_key_length;                /* For MYISAMMRG */
-  uint16 last_used_keyseg;              /* For MyISAMMRG */
+  uint16_t last_used_keyseg;              /* For MyISAMMRG */
   int	errkey;				/* Got last error on this key */
   int   lock_type;			/* How database was locked */
   int   tmp_lock_type;			/* When locked by readinfo */
@@ -378,7 +378,7 @@ typedef struct st_mi_sort_param
 
 
 #define mi_getint(x)	((uint) mi_uint2korr(x) & 32767)
-#define mi_putint(x,y,nod) { uint16 boh=(nod ? (uint16) 32768 : 0) + (uint16) (y);\
+#define mi_putint(x,y,nod) { uint16_t boh=(nod ? (uint16_t) 32768 : 0) + (uint16_t) (y);\
 			  mi_int2store(x,boh); }
 #define mi_test_if_nod(x) (x[0] & 128 ? info->s->base.key_reflength : 0)
 #define mi_report_crashed(A, B) _mi_report_crashed((A), (B), __FILE__, __LINE__)
@@ -430,7 +430,7 @@ typedef struct st_mi_sort_param
 #define MI_DYN_ALIGN_SIZE	4	/* Align blocks on this */
 #define MI_MAX_DYN_HEADER_BYTE	13	/* max header byte for dynamic rows */
 #define MI_MAX_BLOCK_LENGTH	((((ulong) 1 << 24)-1) & (~ (ulong) (MI_DYN_ALIGN_SIZE-1)))
-#define MI_REC_BUFF_OFFSET      ALIGN_SIZE(MI_DYN_DELETE_BLOCK_HEADER+sizeof(uint32))
+#define MI_REC_BUFF_OFFSET      ALIGN_SIZE(MI_DYN_DELETE_BLOCK_HEADER+sizeof(uint32_t))
 
 #define MEMMAP_EXTRA_MARGIN	7	/* Write this as a suffix for file */
 
@@ -599,7 +599,7 @@ extern uchar *mi_alloc_rec_buff(MI_INFO *,ulong, uchar**);
         ((((info)->s->options & HA_OPTION_PACK_RECORD) && (buf)) ? \
         (buf) - MI_REC_BUFF_OFFSET : (buf))
 #define mi_get_rec_buff_len(info,buf)                              \
-        (*((uint32 *)(mi_get_rec_buff_ptr(info,buf))))
+        (*((uint32_t *)(mi_get_rec_buff_ptr(info,buf))))
 
 extern ulong _mi_rec_unpack(MI_INFO *info,uchar *to,uchar *from,
 			    ulong reclength);

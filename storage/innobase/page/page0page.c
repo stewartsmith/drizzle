@@ -73,7 +73,7 @@ page_dir_find_owner_slot(
 	rec_t*	rec)	/* in: the physical record */
 {
 	page_t*				page;
-	register uint16			rec_offs_bytes;
+	register uint16_t			rec_offs_bytes;
 	register page_dir_slot_t*	slot;
 	register const page_dir_slot_t*	first_slot;
 	register rec_t*			r = rec;
@@ -100,7 +100,7 @@ page_dir_find_owner_slot(
 
 	rec_offs_bytes = mach_encode_2(r - page);
 
-	while (UNIV_LIKELY(*(uint16*) slot != rec_offs_bytes)) {
+	while (UNIV_LIKELY(*(uint16_t*) slot != rec_offs_bytes)) {
 
 		if (UNIV_UNLIKELY(slot == first_slot)) {
 			fprintf(stderr,

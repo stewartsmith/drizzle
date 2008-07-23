@@ -26,7 +26,7 @@
 template <uint default_width> class Bitmap
 {
   MY_BITMAP map;
-  uint32 buffer[(default_width+31)/32];
+  uint32_t buffer[(default_width+31)/32];
 public:
   Bitmap() { init(); }
   Bitmap(const Bitmap& from) { *this=from; }
@@ -49,7 +49,7 @@ public:
   void intersect(uint64_t map2buff)
   {
     MY_BITMAP map2;
-    bitmap_init(&map2, (uint32 *)&map2buff, sizeof(uint64_t)*8, 0);
+    bitmap_init(&map2, (uint32_t *)&map2buff, sizeof(uint64_t)*8, 0);
     bitmap_intersect(&map, &map2);
   }
   /* Use highest bit for all bits above sizeof(uint64_t)*8. */

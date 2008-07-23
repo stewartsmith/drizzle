@@ -20,7 +20,7 @@
 
 #include <m_string.h>
 
-typedef uint32 my_bitmap_map;
+typedef uint32_t my_bitmap_map;
 
 typedef struct st_bitmap
 {

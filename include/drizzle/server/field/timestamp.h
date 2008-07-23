@@ -25,7 +25,7 @@
 
 class Field_timestamp :public Field_str {
 public:
-  Field_timestamp(uchar *ptr_arg, uint32 len_arg,
+  Field_timestamp(uchar *ptr_arg, uint32_t len_arg,
                   uchar *null_ptr_arg, uchar null_bit_arg,
 		  enum utype unireg_check_arg, const char *field_name_arg,
 		  TABLE_SHARE *share, CHARSET_INFO *cs);
@@ -44,7 +44,7 @@ public:
   bool send_binary(Protocol *protocol);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
-  uint32 pack_length() const { return 4; }
+  uint32_t pack_length() const { return 4; }
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 0; }
@@ -79,7 +79,7 @@ public:
     }
     else
 #endif
-      longstore(ptr,(uint32) timestamp);
+      longstore(ptr,(uint32_t) timestamp);
   }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);

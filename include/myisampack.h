@@ -21,61 +21,61 @@
 */
 
 /* these two are for uniformity */
-#define mi_sint1korr(A) ((int8)(*A))
-#define mi_uint1korr(A) ((uint8)(*A))
+#define mi_sint1korr(A) ((int8_t)(*A))
+#define mi_uint1korr(A) ((uint8_t)(*A))
 
-#define mi_sint2korr(A) ((int16) (((int16) (((uchar*) (A))[1])) +\
-                                  ((int16) ((int16) ((char*) (A))[0]) << 8)))
-#define mi_sint3korr(A) ((int32) (((((uchar*) (A))[0]) & 128) ? \
-                                  (((uint32) 255L << 24) | \
-                                   (((uint32) ((uchar*) (A))[0]) << 16) |\
-                                   (((uint32) ((uchar*) (A))[1]) << 8) | \
-                                   ((uint32) ((uchar*) (A))[2])) : \
-                                  (((uint32) ((uchar*) (A))[0]) << 16) |\
-                                  (((uint32) ((uchar*) (A))[1]) << 8) | \
-                                  ((uint32) ((uchar*) (A))[2])))
-#define mi_sint4korr(A) ((int32) (((int32) (((uchar*) (A))[3])) +\
-                                  ((int32) (((uchar*) (A))[2]) << 8) +\
-                                  ((int32) (((uchar*) (A))[1]) << 16) +\
-                                  ((int32) ((int16) ((char*) (A))[0]) << 24)))
+#define mi_sint2korr(A) ((int16_t) (((int16_t) (((uchar*) (A))[1])) +\
+                                  ((int16_t) ((int16_t) ((char*) (A))[0]) << 8)))
+#define mi_sint3korr(A) ((int32_t) (((((uchar*) (A))[0]) & 128) ? \
+                                  (((uint32_t) 255L << 24) | \
+                                   (((uint32_t) ((uchar*) (A))[0]) << 16) |\
+                                   (((uint32_t) ((uchar*) (A))[1]) << 8) | \
+                                   ((uint32_t) ((uchar*) (A))[2])) : \
+                                  (((uint32_t) ((uchar*) (A))[0]) << 16) |\
+                                  (((uint32_t) ((uchar*) (A))[1]) << 8) | \
+                                  ((uint32_t) ((uchar*) (A))[2])))
+#define mi_sint4korr(A) ((int32_t) (((int32_t) (((uchar*) (A))[3])) +\
+                                  ((int32_t) (((uchar*) (A))[2]) << 8) +\
+                                  ((int32_t) (((uchar*) (A))[1]) << 16) +\
+                                  ((int32_t) ((int16_t) ((char*) (A))[0]) << 24)))
 #define mi_sint8korr(A) ((int64_t) mi_uint8korr(A))
-#define mi_uint2korr(A) ((uint16) (((uint16) (((uchar*) (A))[1])) +\
-                                   ((uint16) (((uchar*) (A))[0]) << 8)))
-#define mi_uint3korr(A) ((uint32) (((uint32) (((uchar*) (A))[2])) +\
-                                   (((uint32) (((uchar*) (A))[1])) << 8) +\
-                                   (((uint32) (((uchar*) (A))[0])) << 16)))
-#define mi_uint4korr(A) ((uint32) (((uint32) (((uchar*) (A))[3])) +\
-                                   (((uint32) (((uchar*) (A))[2])) << 8) +\
-                                   (((uint32) (((uchar*) (A))[1])) << 16) +\
-                                   (((uint32) (((uchar*) (A))[0])) << 24)))
-#define mi_uint5korr(A) ((uint64_t)(((uint32) (((uchar*) (A))[4])) +\
-                                    (((uint32) (((uchar*) (A))[3])) << 8) +\
-                                    (((uint32) (((uchar*) (A))[2])) << 16) +\
-                                    (((uint32) (((uchar*) (A))[1])) << 24)) +\
+#define mi_uint2korr(A) ((uint16_t) (((uint16_t) (((uchar*) (A))[1])) +\
+                                   ((uint16_t) (((uchar*) (A))[0]) << 8)))
+#define mi_uint3korr(A) ((uint32_t) (((uint32_t) (((uchar*) (A))[2])) +\
+                                   (((uint32_t) (((uchar*) (A))[1])) << 8) +\
+                                   (((uint32_t) (((uchar*) (A))[0])) << 16)))
+#define mi_uint4korr(A) ((uint32_t) (((uint32_t) (((uchar*) (A))[3])) +\
+                                   (((uint32_t) (((uchar*) (A))[2])) << 8) +\
+                                   (((uint32_t) (((uchar*) (A))[1])) << 16) +\
+                                   (((uint32_t) (((uchar*) (A))[0])) << 24)))
+#define mi_uint5korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[4])) +\
+                                    (((uint32_t) (((uchar*) (A))[3])) << 8) +\
+                                    (((uint32_t) (((uchar*) (A))[2])) << 16) +\
+                                    (((uint32_t) (((uchar*) (A))[1])) << 24)) +\
                                     (((uint64_t) (((uchar*) (A))[0])) << 32))
-#define mi_uint6korr(A) ((uint64_t)(((uint32) (((uchar*) (A))[5])) +\
-                                    (((uint32) (((uchar*) (A))[4])) << 8) +\
-                                    (((uint32) (((uchar*) (A))[3])) << 16) +\
-                                    (((uint32) (((uchar*) (A))[2])) << 24)) +\
-                        (((uint64_t) (((uint32) (((uchar*) (A))[1])) +\
-                                    (((uint32) (((uchar*) (A))[0]) << 8)))) <<\
+#define mi_uint6korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[5])) +\
+                                    (((uint32_t) (((uchar*) (A))[4])) << 8) +\
+                                    (((uint32_t) (((uchar*) (A))[3])) << 16) +\
+                                    (((uint32_t) (((uchar*) (A))[2])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((uchar*) (A))[1])) +\
+                                    (((uint32_t) (((uchar*) (A))[0]) << 8)))) <<\
                                      32))
-#define mi_uint7korr(A) ((uint64_t)(((uint32) (((uchar*) (A))[6])) +\
-                                    (((uint32) (((uchar*) (A))[5])) << 8) +\
-                                    (((uint32) (((uchar*) (A))[4])) << 16) +\
-                                    (((uint32) (((uchar*) (A))[3])) << 24)) +\
-                        (((uint64_t) (((uint32) (((uchar*) (A))[2])) +\
-                                    (((uint32) (((uchar*) (A))[1])) << 8) +\
-                                    (((uint32) (((uchar*) (A))[0])) << 16))) <<\
+#define mi_uint7korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[6])) +\
+                                    (((uint32_t) (((uchar*) (A))[5])) << 8) +\
+                                    (((uint32_t) (((uchar*) (A))[4])) << 16) +\
+                                    (((uint32_t) (((uchar*) (A))[3])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((uchar*) (A))[2])) +\
+                                    (((uint32_t) (((uchar*) (A))[1])) << 8) +\
+                                    (((uint32_t) (((uchar*) (A))[0])) << 16))) <<\
                                      32))
-#define mi_uint8korr(A) ((uint64_t)(((uint32) (((uchar*) (A))[7])) +\
-                                    (((uint32) (((uchar*) (A))[6])) << 8) +\
-                                    (((uint32) (((uchar*) (A))[5])) << 16) +\
-                                    (((uint32) (((uchar*) (A))[4])) << 24)) +\
-                        (((uint64_t) (((uint32) (((uchar*) (A))[3])) +\
-                                    (((uint32) (((uchar*) (A))[2])) << 8) +\
-                                    (((uint32) (((uchar*) (A))[1])) << 16) +\
-                                    (((uint32) (((uchar*) (A))[0])) << 24))) <<\
+#define mi_uint8korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[7])) +\
+                                    (((uint32_t) (((uchar*) (A))[6])) << 8) +\
+                                    (((uint32_t) (((uchar*) (A))[5])) << 16) +\
+                                    (((uint32_t) (((uchar*) (A))[4])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((uchar*) (A))[3])) +\
+                                    (((uint32_t) (((uchar*) (A))[2])) << 8) +\
+                                    (((uint32_t) (((uchar*) (A))[1])) << 16) +\
+                                    (((uint32_t) (((uchar*) (A))[0])) << 24))) <<\
                                     32))
 
 /* This one is for uniformity */

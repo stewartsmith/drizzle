@@ -515,7 +515,7 @@ static int rr_from_cache(READ_RECORD *info)
   register uint i;
   ulong length;
   my_off_t rest_of_file;
-  int16 error;
+  int16_t error;
   uchar *position,*ref_position,*record_pos;
   ulong record;
 
@@ -568,7 +568,7 @@ static int rr_from_cache(READ_RECORD *info)
       record=uint3korr(position);
       position+=3;
       record_pos=info->cache+record*info->reclength;
-      if ((error=(int16) info->file->rnd_pos(record_pos,info->ref_pos)))
+      if ((error=(int16_t) info->file->rnd_pos(record_pos,info->ref_pos)))
       {
 	record_pos[info->error_offset]=1;
 	shortstore(record_pos,error);

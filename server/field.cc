@@ -731,10 +731,10 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
 /**
   Numeric fields base class constructor.
 */
-Field_num::Field_num(uchar *ptr_arg,uint32 len_arg, uchar *null_ptr_arg,
+Field_num::Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
                      uchar null_bit_arg, utype unireg_check_arg,
                      const char *field_name_arg,
-                     uint8 dec_arg, bool zero_arg, bool unsigned_arg)
+                     uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg),
   dec(dec_arg),zerofill(zero_arg),unsigned_flag(unsigned_arg)
@@ -789,7 +789,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
   if (str == int_end || error == MY_ERRNO_EDOM)
   {
     char buff[128];
-    String tmp(buff, (uint32) sizeof(buff), system_charset_info);
+    String tmp(buff, (uint32_t) sizeof(buff), system_charset_info);
     tmp.copy(str, length, system_charset_info);
     push_warning_printf(table->in_use, MYSQL_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
@@ -980,7 +980,7 @@ String *Field::val_int_as_str(String *val_buffer, my_bool unsigned_val)
 
 
 /// This is used as a table name when the table structure is not set up
-Field::Field(uchar *ptr_arg,uint32 length_arg,uchar *null_ptr_arg,
+Field::Field(uchar *ptr_arg,uint32_t length_arg,uchar *null_ptr_arg,
 	     uchar null_bit_arg,
 	     utype unireg_check_arg, const char *field_name_arg)
   :ptr(ptr_arg), null_ptr(null_ptr_arg),
@@ -1115,7 +1115,7 @@ uchar *
 Field::pack(uchar *to, const uchar *from, uint max_length,
             bool low_byte_first __attribute__((unused)))
 {
-  uint32 length= pack_length();
+  uint32_t length= pack_length();
   set_if_smaller(length, max_length);
   memcpy(to, from, length);
   return to+length;
@@ -1315,7 +1315,7 @@ my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 }
 
 
-Field_str::Field_str(uchar *ptr_arg,uint32 len_arg, uchar *null_ptr_arg,
+Field_str::Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
                      uchar null_bit_arg, utype unireg_check_arg,
                      const char *field_name_arg, CHARSET_INFO *charset_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
@@ -1636,7 +1636,7 @@ String *Field_tiny::val_str(String *val_buffer,
 
 bool Field_tiny::send_binary(Protocol *protocol)
 {
-  return protocol->store_tiny((int64_t) (int8) ptr[0]);
+  return protocol->store_tiny((int64_t) (int8_t) ptr[0]);
 }
 
 int Field_tiny::cmp(const uchar *a_ptr, const uchar *b_ptr)
@@ -1825,7 +1825,7 @@ uint Field::is_equal(Create_field *new_field)
 
 /* If one of the fields is binary and the other one isn't return 1 else 0 */
 
-bool Field_str::compare_str_field_flags(Create_field *new_field, uint32 flag_arg)
+bool Field_str::compare_str_field_flags(Create_field *new_field, uint32_t flag_arg)
 {
   return (((new_field->flags & (BINCMP_FLAG | BINARY_FLAG)) &&
           !(flag_arg & (BINCMP_FLAG | BINARY_FLAG))) ||
@@ -1853,7 +1853,7 @@ int Field_longstr::store_decimal(const my_decimal *d)
   return store(str.ptr(), str.length(), str.charset());
 }
 
-uint32 Field_longstr::max_data_length() const
+uint32_t Field_longstr::max_data_length() const
 {
   return field_length + (field_length > 255 ? 2 : 1);
 }
@@ -1923,7 +1923,7 @@ void Field_enum::store_type(uint64_t value)
 int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
 {
   int err= 0;
-  uint32 not_used;
+  uint32_t not_used;
   char buff[STRING_BUFFER_USUAL_SIZE];
   String tmpstr(buff,sizeof(buff), &my_charset_bin);
 
@@ -1999,7 +1999,7 @@ int64_t Field_enum::val_int(void)
     return (int64_t) ptr[0];
   case 2:
   {
-    uint16 tmp;
+    uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
     if (table->s->db_low_byte_first)
       tmp=sint2korr(ptr);
@@ -2012,7 +2012,7 @@ int64_t Field_enum::val_int(void)
     return (int64_t) uint3korr(ptr);
   case 4:
   {
-    uint32 tmp;
+    uint32_t tmp;
 #ifdef WORDS_BIGENDIAN
     if (table->s->db_low_byte_first)
       tmp=uint4korr(ptr);
@@ -2236,7 +2236,7 @@ void Create_field::create_length_to_internal_length(void)
   Init for a tmp table field. To be extended if need be.
 */
 void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
-                                      uint32 length_arg, uint32 decimals_arg,
+                                      uint32_t length_arg, uint32_t decimals_arg,
                                       bool maybe_null, bool is_unsigned)
 {
   field_name= "";
@@ -2567,7 +2567,7 @@ enum_field_types get_blob_type_from_length(ulong length __attribute__((__unused_
   Make a field from the .frm file info
 */
 
-uint32 calc_pack_length(enum_field_types type,uint32 length)
+uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {
   case MYSQL_TYPE_VAR_STRING:
@@ -2609,7 +2609,7 @@ uint pack_length_to_packflag(uint type)
 }
 
 
-Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32 field_length,
+Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  uchar *null_pos, uchar null_bit,
 		  uint pack_flag,
 		  enum_field_types field_type,

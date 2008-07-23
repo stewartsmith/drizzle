@@ -150,7 +150,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
   pos= table_arg->key_info;
   for (i= 0; i < share->keys; i++, pos++)
   {
-    keydef[i].flag= ((uint16) pos->flags & (HA_NOSAME | HA_FULLTEXT ));
+    keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME | HA_FULLTEXT ));
     keydef[i].key_alg= pos->algorithm == HA_KEY_ALG_UNDEF ?  (HA_KEY_ALG_BTREE) : pos->algorithm;
     keydef[i].block_length= pos->block_size;
     keydef[i].seg= keyseg;
@@ -243,7 +243,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
     { // Reserved space (Null bits?)
       bzero((char*) recinfo_pos, sizeof(*recinfo_pos));
       recinfo_pos->type= (int) FIELD_NORMAL;
-      recinfo_pos++->length= (uint16) (minpos - recpos);
+      recinfo_pos++->length= (uint16_t) (minpos - recpos);
     }
     if (!found)
       break;
@@ -275,7 +275,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
       recinfo_pos->null_bit= 0;
       recinfo_pos->null_pos= 0;
     }
-    (recinfo_pos++)->length= (uint16) length;
+    (recinfo_pos++)->length= (uint16_t) length;
     recpos= minpos + length;
   }
   *records_out= (uint) (recinfo_pos - recinfo);
@@ -362,7 +362,7 @@ int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
     }
     for (j=  t1_keyinfo[i].keysegs; j--;)
     {
-      uint8 t1_keysegs_j__type= t1_keysegs[j].type;
+      uint8_t t1_keysegs_j__type= t1_keysegs[j].type;
 
       /*
         Table migration from 4.1 to 5.1. In 5.1 a *TEXT key part is

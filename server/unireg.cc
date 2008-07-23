@@ -467,9 +467,9 @@ static uchar *pack_screens(List<Create_field> &create_fields,
       pos[2]=(uchar) (length+1);
       pos=(uchar*) strmake((char*) pos+3,cfield->field_name,length)+1;
     }
-    cfield->row=(uint8) row;
-    cfield->col=(uint8) (length+1);
-    cfield->sc_length=(uint8) min(cfield->length,cols-(length+2));
+    cfield->row=(uint8_t) row;
+    cfield->col=(uint8_t) (length+1);
+    cfield->sc_length=(uint8_t) min(cfield->length,cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
@@ -699,7 +699,7 @@ static bool pack_header(uchar *forminfo,
   length=(info_length+create_fields.elements*FCOMP+288+n_length+int_length+
 	  com_length);
   int2store(forminfo,length);
-  forminfo[256] = (uint8) screens;
+  forminfo[256] = (uint8_t) screens;
   int2store(forminfo+258,create_fields.elements);
   int2store(forminfo+260,info_length);
   int2store(forminfo+262,totlength);

@@ -176,8 +176,8 @@ static int cs_copy_data(CHARSET_INFO *to, CHARSET_INFO *from)
   }
   if (from->tab_to_uni)
   {
-    uint sz= MY_CS_TO_UNI_TABLE_SIZE*sizeof(uint16);
-    if (!(to->tab_to_uni= (uint16*)  my_once_memdup((char*)from->tab_to_uni,
+    uint sz= MY_CS_TO_UNI_TABLE_SIZE*sizeof(uint16_t);
+    if (!(to->tab_to_uni= (uint16_t*)  my_once_memdup((char*)from->tab_to_uni,
 						    sz, MYF(MY_WME))))
       goto err;
   }

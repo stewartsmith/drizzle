@@ -52,7 +52,7 @@ public:
   virtual bool write();
   inline  bool store(int from)
   { return store_long((int64_t) from); }
-  inline  bool store(uint32 from)
+  inline  bool store(uint32_t from)
   { return store_long((int64_t) from); }
   inline  bool store(int64_t from)
   { return store_int64_t((int64_t) from, 0); }
@@ -79,8 +79,8 @@ public:
   virtual bool store(const char *from, size_t length, CHARSET_INFO *cs)=0;
   virtual bool store(const char *from, size_t length, 
   		     CHARSET_INFO *fromcs, CHARSET_INFO *tocs)=0;
-  virtual bool store(float from, uint32 decimals, String *buffer)=0;
-  virtual bool store(double from, uint32 decimals, String *buffer)=0;
+  virtual bool store(float from, uint32_t decimals, String *buffer)=0;
+  virtual bool store(double from, uint32_t decimals, String *buffer)=0;
   virtual bool store(MYSQL_TIME *time)=0;
   virtual bool store_date(MYSQL_TIME *time)=0;
   virtual bool store_time(MYSQL_TIME *time)=0;
@@ -118,8 +118,8 @@ public:
   virtual bool store(MYSQL_TIME *time);
   virtual bool store_date(MYSQL_TIME *time);
   virtual bool store_time(MYSQL_TIME *time);
-  virtual bool store(float nr, uint32 decimals, String *buffer);
-  virtual bool store(double from, uint32 decimals, String *buffer);
+  virtual bool store(float nr, uint32_t decimals, String *buffer);
+  virtual bool store(double from, uint32_t decimals, String *buffer);
   virtual bool store(Field *field);
   virtual enum enum_protocol_type type() { return PROTOCOL_TEXT; };
 };
@@ -128,6 +128,6 @@ void send_warning(THD *thd, uint sql_errno, const char *err=0);
 void net_send_error(THD *thd, uint sql_errno=0, const char *err=0);
 void net_end_statement(THD *thd);
 uchar *net_store_data(uchar *to,const uchar *from, size_t length);
-uchar *net_store_data(uchar *to,int32 from);
+uchar *net_store_data(uchar *to,int32_t from);
 uchar *net_store_data(uchar *to,int64_t from);
 

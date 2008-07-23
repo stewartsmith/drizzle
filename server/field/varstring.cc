@@ -261,14 +261,14 @@ void Field_varstring::sql_type(String &res) const
 }
 
 
-uint32 Field_varstring::data_length()
+uint32_t Field_varstring::data_length()
 {
-  return length_bytes == 1 ? (uint32) *ptr : uint2korr(ptr);
+  return length_bytes == 1 ? (uint32_t) *ptr : uint2korr(ptr);
 }
 
-uint32 Field_varstring::used_length()
+uint32_t Field_varstring::used_length()
 {
-  return length_bytes == 1 ? 1 + (uint32) (uchar) *ptr : 2 + uint2korr(ptr);
+  return length_bytes == 1 ? 1 + (uint32_t) (uchar) *ptr : 2 + uint2korr(ptr);
 }
 
 /*
@@ -341,7 +341,7 @@ Field_varstring::unpack_key(uchar *to __attribute__((__unused__)),
                             bool low_byte_first __attribute__((unused)))
 {
   /* get length of the blob key */
-  uint32 length= *key++;
+  uint32_t length= *key++;
   if (max_length > 255)
     length+= (*key++) << 8;
 
@@ -524,9 +524,9 @@ void Field_varstring::set_key_image(const uchar *buff,uint length)
 
 
 int Field_varstring::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
-                                uint32 max_length)
+                                uint32_t max_length)
 {
-  uint32 a_length,b_length;
+  uint32_t a_length,b_length;
 
   if (length_bytes == 1)
   {

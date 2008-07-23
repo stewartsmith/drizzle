@@ -51,7 +51,7 @@ int Field_short::store(const char *from,uint len,CHARSET_INFO *cs)
 int Field_short::store(double nr)
 {
   int error= 0;
-  int16 res;
+  int16_t res;
   nr=rint(nr);
   if (unsigned_flag)
   {
@@ -63,12 +63,12 @@ int Field_short::store(double nr)
     }
     else if (nr > (double) UINT16_MAX)
     {
-      res=(int16) UINT16_MAX;
+      res=(int16_t) UINT16_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
-      res=(int16) (uint16) nr;
+      res=(int16_t) (uint16_t) nr;
   }
   else
   {
@@ -85,7 +85,7 @@ int Field_short::store(double nr)
       error= 1;
     }
     else
-      res=(int16) (int) nr;
+      res=(int16_t) (int) nr;
   }
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -102,7 +102,7 @@ int Field_short::store(double nr)
 int Field_short::store(int64_t nr, bool unsigned_val)
 {
   int error= 0;
-  int16 res;
+  int16_t res;
 
   if (unsigned_flag)
   {
@@ -114,12 +114,12 @@ int Field_short::store(int64_t nr, bool unsigned_val)
     }
     else if ((uint64_t) nr > (uint64_t) UINT16_MAX)
     {
-      res=(int16) UINT16_MAX;
+      res=(int16_t) UINT16_MAX;
       set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
-      res=(int16) (uint16) nr;
+      res=(int16_t) (uint16_t) nr;
   }
   else
   {
@@ -139,7 +139,7 @@ int Field_short::store(int64_t nr, bool unsigned_val)
       error= 1;
     }
     else
-      res=(int16) nr;
+      res=(int16_t) nr;
   }
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -196,7 +196,7 @@ String *Field_short::val_str(String *val_buffer,
 
   if (unsigned_flag)
     length=(uint) cs->cset->long10_to_str(cs, to, mlength, 10, 
-					  (long) (uint16) j);
+					  (long) (uint16_t) j);
   else
     length=(uint) cs->cset->long10_to_str(cs, to, mlength,-10, (long) j);
   val_buffer->length(length);
