@@ -340,6 +340,9 @@ LIBS="$my_save_LIBS"
 AC_SUBST(ZLIB_LIBS)
 
 
+#--------------------------------------------------------------------
+# Check for libreadline or compatible (libedit on Mac OS X)
+#--------------------------------------------------------------------
 
 AC_CHECK_HEADERS([readline/readline.h])
 if test "x$ac_cv_header_readline_readline_h" != "xyes"
@@ -352,6 +355,8 @@ AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find li
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
+
+MYSQL_CHECK_NEW_RL_INTERFACE
 
 #--------------------------------------------------------------------
 # Check for libpcre
