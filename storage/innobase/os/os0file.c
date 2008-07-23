@@ -1105,25 +1105,16 @@ os_file_create_simple_no_error_handling(
 #endif /* __WIN__ */
 }
 
-
-/* We need to sometimes mark parameters of os_file_set_nocache() as unused. */
-#if (defined(UNIV_SOLARIS) && defined(DIRECTIO_ON)) || defined(O_DIRECT)
-# define MAYBE_UNUSED
-#else
-# define MAYBE_UNUSED __attribute__((unused))
-#endif
-
-
 /********************************************************************
 Tries to disable OS caching on an opened file descriptor. */
 
 static void
 os_file_set_nocache(
 /*================*/
-	int		fd MAYBE_UNUSED,/* in: file descriptor to alter */
-	const char*	file_name MAYBE_UNUSED,/* in: used in the diagnostic
+	int		fd,/* in: file descriptor to alter */
+	const char*	file_name,/* in: used in the diagnostic
 					message */
-	const char*	operation_name MAYBE_UNUSED)/* in: used in the
+	const char*	operation_name)/* in: used in the
 					diagnostic message,
 					we call os_file_set_nocache()
 					immediately after opening or creating
@@ -1158,6 +1149,10 @@ os_file_set_nocache(
 				"see MySQL Bug#26662\n");
 		}
 	}
+#else
+  (void)fd;
+  (void)file_name;
+  (void)operation_name;
 #endif
 }
 
