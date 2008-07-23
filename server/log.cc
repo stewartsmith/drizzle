@@ -33,7 +33,7 @@
 #include <stdarg.h>
 #include <m_ctype.h>				// For test_if_number
 
-#include <mysql/plugin.h>
+#include <drizzle/plugin.h>
 
 /* max size of the log message */
 #define MAX_LOG_BUFFER_SIZE 1024

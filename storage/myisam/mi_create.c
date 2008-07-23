@@ -19,7 +19,6 @@
 #include <m_ctype.h>
 #include <my_tree.h>
 #include <queues.h>
-#include <mysql/plugin.h>
 #include <my_bit.h>
 
 #include <m_ctype.h>
