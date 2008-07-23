@@ -94,6 +94,16 @@ void sql_element_free(void *ptr);
 
 #include <readline/readline.h>
 
+/**
+ Make the old readline interface look like the new one.
+*/
+#ifndef USE_NEW_READLINE_INTERFACE
+typedef CPPFunction rl_completion_func_t;
+typedef Function rl_compentry_func_t;
+#define rl_completion_matches(str, func) \
+  completion_matches((char *)str, (CPFunction *)func)
+#endif
+
 
 #if !defined(HAVE_VIDATTR)
 #undef vidattr
@@ -2099,10 +2109,8 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
 ******************************************************************/
 
 
-#ifdef HAVE_READLINE_COMPLETION
 static char *new_command_generator(const char *text, int);
 extern char **new_mysql_completion (const char *text, int start, int end);
-#endif
 
 /*
   Tell the GNU Readline library how to complete.  We want to try to complete
@@ -2199,14 +2207,11 @@ static void initialize_readline (const char *name)
   /* Allow conditional parsing of the ~/.inputrc file. */
   rl_readline_name= (char *)name;
 
-#ifdef HAVE_READLINE_COMPLETION
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function= (rl_completion_func_t*)&new_mysql_completion;
   rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
-#endif
 }
 
-#ifdef HAVE_READLINE_COMPLETION
 /*
   Attempt to complete on the contents of TEXT.  START and END show the
   region of TEXT that contains the word to complete.  We can use the
@@ -2301,7 +2306,6 @@ static char *new_command_generator(const char *text,int state)
   }
   return NullS;
 }
-#endif
 
 
 /* Build up the completion hash */
