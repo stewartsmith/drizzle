@@ -3913,8 +3913,8 @@ static void do_connect(struct st_command *command)
 #ifdef EMBEDDED_LIBRARY
   con_slot->query_done= 1;
 #endif
-  if (!mysql_init(&con_slot->mysql))
-    die("Failed on mysql_init()");
+  if (!drizzle_create(&con_slot->mysql))
+    die("Failed on drizzle_create()");
   if (opt_compress || con_compress)
     mysql_options(&con_slot->mysql, MYSQL_OPT_COMPRESS, NullS);
   mysql_options(&con_slot->mysql, MYSQL_OPT_LOCAL_INFILE, 0);
@@ -5667,8 +5667,8 @@ int main(int argc, char **argv)
     cur_file->lineno= 1;
   }
   cur_con= connections;
-  if (!( mysql_init(&cur_con->mysql)))
-    die("Failed in mysql_init()");
+  if (!( drizzle_create(&cur_con->mysql)))
+    die("Failed in drizzle_create()");
   if (opt_compress)
     mysql_options(&cur_con->mysql,MYSQL_OPT_COMPRESS,NullS);
   mysql_options(&cur_con->mysql, MYSQL_OPT_LOCAL_INFILE, 0);

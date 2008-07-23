@@ -2496,7 +2496,7 @@ slap_connect(MYSQL *mysql, bool connect_to_schema)
   if (opt_delayed_start)
     my_sleep(random()%opt_delayed_start);
 
-  mysql_init(mysql);
+  drizzle_create(mysql);
 
   if (opt_compress)
     mysql_options(mysql,MYSQL_OPT_COMPRESS,NullS);

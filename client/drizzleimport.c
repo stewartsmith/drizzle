@@ -365,7 +365,7 @@ static MYSQL *db_connect(char *host, char *database,
   MYSQL *mysql;
   if (verbose)
     fprintf(stdout, "Connecting to %s\n", host ? host : "localhost");
-  if (!(mysql= mysql_init(NULL)))
+  if (!(mysql= drizzle_create(NULL)))
     return 0;
   if (opt_compress)
     mysql_options(mysql,MYSQL_OPT_COMPRESS,NullS);

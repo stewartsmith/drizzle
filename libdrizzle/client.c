@@ -1030,28 +1030,34 @@ read_one_row(MYSQL *mysql, uint32_t fields, MYSQL_ROW row, uint32_t *lengths)
 
 
 /****************************************************************************
-  Init MySQL structure or allocate one
+  Init Drizzle structure or allocate one
 ****************************************************************************/
 
-MYSQL * STDCALL
-mysql_init(MYSQL *mysql)
+MYSQL *
+drizzle_create(MYSQL *ptr)
 {
   if (mysql_server_init(0, NULL, NULL))
     return 0;
-  if (!mysql)
+  if (ptr == NULL)
   {
-    if (!(mysql=(MYSQL*) my_malloc(sizeof(*mysql),MYF(MY_WME | MY_ZEROFILL))))
+    ptr= (MYSQL *) malloc(sizeof(MYSQL));
+
+    if (ptr == NULL)
     {
       set_mysql_error(NULL, CR_OUT_OF_MEMORY, unknown_sqlstate);
-      return 0;
+      return NULL;
     }
-    mysql->free_me=1;
+    memset(ptr, 0, sizeof(MYSQL));
+    ptr->free_me=1;
   }
   else
-    bzero((char*) (mysql), sizeof(*(mysql)));
-  mysql->options.connect_timeout= CONNECT_TIMEOUT;
-  mysql->charset=default_client_charset_info;
-  strmov(mysql->net.sqlstate, not_error_sqlstate);
+  {
+    memset(ptr, 0, sizeof(MYSQL)); 
+  }
+
+  ptr->options.connect_timeout= CONNECT_TIMEOUT;
+  ptr->charset=default_client_charset_info;
+  strcpy(ptr->net.sqlstate, not_error_sqlstate);
 
   /*
     Only enable LOAD DATA INFILE by default if configured with
@@ -1059,15 +1065,15 @@ mysql_init(MYSQL *mysql)
   */
 
 #if defined(ENABLED_LOCAL_INFILE) && !defined(MYSQL_SERVER)
-  mysql->options.client_flag|= CLIENT_LOCAL_FILES;
+  ptr->options.client_flag|= CLIENT_LOCAL_FILES;
 #endif
 
 #ifdef HAVE_SMEM
-  mysql->options.shared_memory_base_name= (char*) def_shared_memory_base_name;
+  ptr->options.shared_memory_base_name= (char*) def_shared_memory_base_name;
 #endif
 
-  mysql->options.methods_to_use= MYSQL_OPT_GUESS_CONNECTION;
-  mysql->options.report_data_truncation= true;  /* default */
+  ptr->options.methods_to_use= MYSQL_OPT_GUESS_CONNECTION;
+  ptr->options.report_data_truncation= true;  /* default */
 
   /*
     By default we don't reconnect because it could silently corrupt data (after
@@ -1084,9 +1090,9 @@ mysql_init(MYSQL *mysql)
     - existing apps which explicitely asked for no reconnection
     (mysql.reconnect=0) will not see a behaviour change.
   */
-  mysql->reconnect= 0;
+  ptr->reconnect= 0;
 
-  return mysql;
+  return ptr;
 }
 
 
@@ -1098,7 +1104,7 @@ mysql_init(MYSQL *mysql)
 #define strdup_if_not_null(A) (A) == 0 ? 0 : my_strdup((A),MYF(MY_WME))
 
 /*
-  Note that the mysql argument must be initialized with mysql_init()
+  Note that the mysql argument must be initialized with drizzle_create()
   before calling mysql_real_connect !
 */
 
@@ -1674,7 +1680,7 @@ my_bool mysql_reconnect(MYSQL *mysql)
     set_mysql_error(mysql, CR_SERVER_GONE_ERROR, unknown_sqlstate);
     return(1);
   }
-  mysql_init(&tmp_mysql);
+  drizzle_create(&tmp_mysql);
   tmp_mysql.options= mysql->options;
   tmp_mysql.options.my_cnf_file= tmp_mysql.options.my_cnf_group= 0;
 

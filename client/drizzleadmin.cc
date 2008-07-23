@@ -160,7 +160,7 @@ int main(int argc,char *argv[])
   char **commands, **save_argv;
 
   MY_INIT(argv[0]);
-  mysql_init(&mysql);
+  drizzle_create(&mysql);
   load_defaults("my",load_default_groups,&argc,&argv);
   save_argv = argv;				/* Save for free_defaults */
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))

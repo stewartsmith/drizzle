@@ -1991,10 +1991,10 @@ pthread_handler_t handle_slave_io(void *arg)
   pthread_mutex_unlock(&mi->run_lock);
   pthread_cond_broadcast(&mi->start_cond);
 
-  if (!(mi->mysql = mysql = mysql_init(NULL)))
+  if (!(mi->mysql = mysql = drizzle_create(NULL)))
   {
     mi->report(ERROR_LEVEL, ER_SLAVE_FATAL_ERROR,
-               ER(ER_SLAVE_FATAL_ERROR), "error in mysql_init()");
+               ER(ER_SLAVE_FATAL_ERROR), "error in drizzle_create()");
     goto err;
   }
 

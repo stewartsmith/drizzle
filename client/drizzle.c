@@ -1244,7 +1244,7 @@ sig_handler handle_sigint(int sig)
     goto err;
   }
 
-  kill_mysql= mysql_init(kill_mysql);
+  kill_mysql= drizzle_create(kill_mysql);
   if (!mysql_real_connect(kill_mysql,current_host, current_user, opt_password,
                           "", opt_mysql_port, opt_mysql_unix_port,0))
   {
@@ -3908,7 +3908,7 @@ sql_real_connect(char *host,char *database,char *user,char *password,
     connected= 0;
     mysql_close(&mysql);
   }
-  mysql_init(&mysql);
+  drizzle_create(&mysql);
   if (opt_connect_timeout)
   {
     uint timeout=opt_connect_timeout;

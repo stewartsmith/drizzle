@@ -1096,7 +1096,7 @@ static int connect_to_db(char *host, char *user,char *passwd)
 
 
   verbose_msg("-- Connecting to %s...\n", host ? host : "localhost");
-  mysql_init(&mysql_connection);
+  drizzle_create(&mysql_connection);
   if (opt_compress)
     mysql_options(&mysql_connection,MYSQL_OPT_COMPRESS,NullS);
   if (opt_protocol)

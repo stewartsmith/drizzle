@@ -333,7 +333,7 @@ uint32_t STDCALL mysql_thread_id(MYSQL *mysql);
 const char * STDCALL mysql_character_set_name(MYSQL *mysql);
 int32_t          STDCALL mysql_set_character_set(MYSQL *mysql, const char *csname);
 
-MYSQL *		STDCALL mysql_init(MYSQL *mysql);
+MYSQL *		drizzle_create(MYSQL *mysql);
 my_bool		STDCALL mysql_change_user(MYSQL *mysql, const char *user, 
 					  const char *passwd, const char *db);
 MYSQL *		STDCALL mysql_real_connect(MYSQL *mysql, const char *host,

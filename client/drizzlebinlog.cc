@@ -1286,11 +1286,11 @@ static int parse_args(int *argc, char*** argv)
 */
 static Exit_status safe_connect()
 {
-  mysql= mysql_init(NULL);
+  mysql= drizzle_create(NULL);
 
   if (!mysql)
   {
-    error("Failed on mysql_init.");
+    error("Failed on drizzle_create.");
     return ERROR_STOP;
   }
 
