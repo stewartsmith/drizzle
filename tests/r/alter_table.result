@@ -143,6 +143,8 @@ t1	1	n4	1	n4	A	0	NULL	NULL	YES	BTREE
 t1	1	n4	2	n1	A	0	NULL	NULL		BTREE		
 t1	1	n4	3	n2	A	0	NULL	NULL	YES	BTREE		
 t1	1	n4	4	n3	A	0	NULL	NULL	YES	BTREE		
+set autocommit=0;
+begin;
 insert into t1 values(10,RAND()*1000,RAND()*1000,RAND());
 insert into t1 values(9,RAND()*1000,RAND()*1000,RAND());
 insert into t1 values(8,RAND()*1000,RAND()*1000,RAND());
@@ -153,6 +155,8 @@ insert into t1 values(4,RAND()*1000,RAND()*1000,RAND());
 insert into t1 values(3,RAND()*1000,RAND()*1000,RAND());
 insert into t1 values(2,RAND()*1000,RAND()*1000,RAND());
 insert into t1 values(1,RAND()*1000,RAND()*1000,RAND());
+commit;
+set autocommit=1;
 alter table t1 enable keys;
 Warnings:
 Note	1031	Table storage engine for 't1' doesn't have this option
@@ -185,6 +189,8 @@ i	int(10) unsigned	NO	PRI	NULL	auto_increment
 c	char(10)	YES		NULL	
 drop table t1;
 create table t1 (a int, b int);
+set autocommit=0;
+begin;
 insert into t1 values(1,100), (2,100), (3, 100);
 insert into t1 values(1,99), (2,99), (3, 99);
 insert into t1 values(1,98), (2,98), (3, 98);
@@ -285,6 +291,8 @@ insert into t1 values(1,4), (2,4), (3, 4);
 insert into t1 values(1,3), (2,3), (3, 3);
 insert into t1 values(1,2), (2,2), (3, 2);
 insert into t1 values(1,1), (2,1), (3, 1);
+commit;
+set autocommit=1;
 alter table t1 add unique (a,b), add key (b);
 show keys from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
