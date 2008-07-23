@@ -647,7 +647,7 @@ static inline int
 my_var_write(MI_SORT_PARAM *info, IO_CACHE *to_file, uchar *bufs)
 {
   int err;
-  uint16 len = _mi_keylength(info->keyinfo, (uchar*) bufs);
+  uint16_t len = _mi_keylength(info->keyinfo, (uchar*) bufs);
 
   /* The following is safe as this is a local file */
   if ((err= my_b_write(to_file, (uchar*)&len, sizeof(len))))
@@ -799,7 +799,7 @@ static uint  read_to_buffer_varlen(IO_CACHE *fromfile, BUFFPEK *buffpek,
                                          uint sort_length)
 {
   register uint count;
-  uint16 length_of_key = 0;
+  uint16_t length_of_key = 0;
   uint idx;
   uchar *buffp;
 

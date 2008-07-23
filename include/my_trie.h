@@ -21,7 +21,7 @@ extern "C" {
 
 typedef struct st_trie_node
 {
-  uint16 leaf;                /* Depth from root node if match, 0 else */
+  uint16_t leaf;                /* Depth from root node if match, 0 else */
   uchar c;                    /* Label on this edge */
   struct st_trie_node *next;  /* Next label */
   struct st_trie_node *links; /* Array of edges leaving this node */

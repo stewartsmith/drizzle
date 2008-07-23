@@ -28,18 +28,18 @@ public:
   Field_double(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
 	       uchar null_bit_arg,
 	       enum utype unireg_check_arg, const char *field_name_arg,
-	       uint8 dec_arg,bool zero_arg,bool unsigned_arg)
+	       uint8_t dec_arg,bool zero_arg,bool unsigned_arg)
     :Field_real(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
                 unireg_check_arg, field_name_arg,
                 dec_arg, zero_arg, unsigned_arg)
     {}
   Field_double(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
-	       uint8 dec_arg)
+	       uint8_t dec_arg)
     :Field_real((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "" : 0, (uint) 0,
                 NONE, field_name_arg, dec_arg, 0, 0)
     {}
   Field_double(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
-	       uint8 dec_arg, my_bool not_fixed_arg)
+	       uint8_t dec_arg, my_bool not_fixed_arg)
     :Field_real((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "" : 0, (uint) 0,
                 NONE, field_name_arg, dec_arg, 0, 0)
     {not_fixed= not_fixed_arg; }

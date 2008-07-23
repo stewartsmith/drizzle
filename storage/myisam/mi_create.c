@@ -360,7 +360,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     block_length= max(block_length, MI_MIN_KEY_BLOCK_LENGTH);
     block_length= min(block_length, MI_MAX_KEY_BLOCK_LENGTH);
 
-    keydef->block_length= (uint16) MI_BLOCK_SIZE(length-real_length_diff,
+    keydef->block_length= (uint16_t) MI_BLOCK_SIZE(length-real_length_diff,
                                                  pointer,MI_MAX_KEYPTR_SIZE,
                                                  block_length);
     if (keydef->block_length > MI_MAX_KEY_BLOCK_LENGTH ||
@@ -370,9 +370,9 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
       goto err;
     }
     set_if_bigger(max_key_block_length,keydef->block_length);
-    keydef->keylength= (uint16) key_length;
-    keydef->minlength= (uint16) (length-min_key_length_skip);
-    keydef->maxlength= (uint16) length;
+    keydef->keylength= (uint16_t) key_length;
+    keydef->minlength= (uint16_t) (length-min_key_length_skip);
+    keydef->maxlength= (uint16_t) length;
 
     if (length > max_key_length)
       max_key_length= length;
@@ -622,7 +622,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   {
     tmp_keydef.keysegs=1;
     tmp_keydef.flag=		HA_UNIQUE_CHECK;
-    tmp_keydef.block_length=	(uint16)myisam_block_size;
+    tmp_keydef.block_length=	(uint16_t)myisam_block_size;
     tmp_keydef.keylength=	MI_UNIQUE_HASH_LENGTH + pointer;
     tmp_keydef.minlength=tmp_keydef.maxlength=tmp_keydef.keylength;
     tmp_keyseg.type=		MI_UNIQUE_HASH_TYPE;

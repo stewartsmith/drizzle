@@ -40,9 +40,9 @@ public:
   Field_new_decimal(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
                     uchar null_bit_arg,
                     enum utype unireg_check_arg, const char *field_name_arg,
-                    uint8 dec_arg, bool zero_arg, bool unsigned_arg);
+                    uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Field_new_decimal(uint32_t len_arg, bool maybe_null_arg,
-                    const char *field_name_arg, uint8 dec_arg,
+                    const char *field_name_arg, uint8_t dec_arg,
                     bool unsigned_arg);
   enum_field_types type() const { return MYSQL_TYPE_NEWDECIMAL;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_BINARY; }

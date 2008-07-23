@@ -237,7 +237,7 @@ unpack_row(Relay_log_info const *rli,
           (tabledef not NULL). If tabledef is NULL then it is assumed that
           the packed row comes from the table to which it is unpacked.
         */
-        uint16 metadata= tabledef ? tabledef->field_metadata(i) : 0;
+        uint16_t metadata= tabledef ? tabledef->field_metadata(i) : 0;
         pack_ptr= f->unpack(f->ptr, pack_ptr, metadata, true);
       }
 

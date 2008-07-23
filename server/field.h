@@ -85,7 +85,7 @@ public:
   utype		unireg_check;
   uint32_t	field_length;		// Length of field
   uint32_t	flags;
-  uint16        field_index;            // field number in fields array
+  uint16_t        field_index;            // field number in fields array
   uchar		null_bit;		// Bit used to test null bit
   /**
      If true, this field was created in create_tmp_field_from_item from a NULL
@@ -543,12 +543,12 @@ private:
 
 class Field_num :public Field {
 public:
-  const uint8 dec;
+  const uint8_t dec;
   bool zerofill,unsigned_flag;	// Purify cannot handle bit fields
   Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
 	    uchar null_bit_arg, utype unireg_check_arg,
 	    const char *field_name_arg,
-            uint8 dec_arg, bool zero_arg, bool unsigned_arg);
+            uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Item_result result_type () const { return REAL_RESULT; }
   void prepend_zeros(String *value);
   void add_zerofill_and_unsigned(String &res) const;
@@ -625,7 +625,7 @@ public:
   Field_real(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
              uchar null_bit_arg, utype unireg_check_arg,
              const char *field_name_arg,
-             uint8 dec_arg, bool zero_arg, bool unsigned_arg)
+             uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
     :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
                field_name_arg, dec_arg, zero_arg, unsigned_arg),
     not_fixed(dec_arg >= NOT_FIXED_DEC)
@@ -770,7 +770,7 @@ public:
   CHARSET_INFO *charset;
   Field *field;				// For alter table
 
-  uint8 row,col,sc_length,interval_id;	// For rea_create_table
+  uint8_t row,col,sc_length,interval_id;	// For rea_create_table
   uint	offset,pack_flag;
   Create_field() :after(0) {}
   Create_field(Field *field, Field *orig_field);
@@ -918,7 +918,7 @@ check_string_copy_error(Field_str *field,
 #define f_is_zerofill(x)	((x) & FIELDFLAG_ZEROFILL)
 #define f_is_packed(x)		((x) & FIELDFLAG_PACK)
 #define f_packtype(x)		(((x) >> FIELDFLAG_PACK_SHIFT) & 15)
-#define f_decimals(x)		((uint8) (((x) >> FIELDFLAG_DEC_SHIFT) & FIELDFLAG_MAX_DEC))
+#define f_decimals(x)		((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & FIELDFLAG_MAX_DEC))
 #define f_is_alpha(x)		(!f_is_num(x))
 #define f_is_binary(x)          ((x) & FIELDFLAG_BINARY) // 4.0- compatibility
 #define f_is_enum(x)            (((x) & (FIELDFLAG_INTERVAL | FIELDFLAG_NUMBER)) == FIELDFLAG_INTERVAL)

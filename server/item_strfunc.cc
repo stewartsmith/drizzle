@@ -2871,7 +2871,7 @@ static void tohex(char *to, uint from, uint len)
 
 static void set_clock_seq_str()
 {
-  uint16 clock_seq= ((uint)(my_rnd(&uuid_rand)*16383)) | UUID_VARIANT;
+  uint16_t clock_seq= ((uint)(my_rnd(&uuid_rand)*16383)) | UUID_VARIANT;
   tohex(clock_seq_and_node_str+1, clock_seq, 4);
   nanoseq= 0;
 }
@@ -2935,8 +2935,8 @@ String *Item_func_uuid::val_str(String *str)
   pthread_mutex_unlock(&LOCK_uuid_generator);
 
   uint32_t time_low=            (uint32_t) (tv & 0xFFFFFFFF);
-  uint16 time_mid=            (uint16) ((tv >> 32) & 0xFFFF);
-  uint16 time_hi_and_version= (uint16) ((tv >> 48) | UUID_VERSION);
+  uint16_t time_mid=            (uint16_t) ((tv >> 32) & 0xFFFF);
+  uint16_t time_hi_and_version= (uint16_t) ((tv >> 48) | UUID_VERSION);
 
   str->realloc(UUID_LENGTH+1);
   str->length(UUID_LENGTH);

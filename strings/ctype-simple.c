@@ -1273,7 +1273,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
   /* Count number of characters in each plane */
   for (i=0; i< 0x100; i++)
   {
-    uint16 wc=cs->tab_to_uni[i];
+    uint16_t wc=cs->tab_to_uni[i];
     int pl= PLANE_NUMBER(wc);
     
     if (wc || !i)
@@ -1310,7 +1310,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
     
     for (ch=1; ch < PLANE_SIZE; ch++)
     {
-      uint16 wc=cs->tab_to_uni[ch];
+      uint16_t wc=cs->tab_to_uni[ch];
       if (wc >= idx[i].uidx.from && wc <= idx[i].uidx.to && wc)
       {
         int ofs= wc - idx[i].uidx.from;

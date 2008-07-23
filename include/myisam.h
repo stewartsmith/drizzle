@@ -163,7 +163,7 @@ typedef struct st_mi_create_info
   uint64_t data_file_length;
   uint64_t key_file_length;
   uint old_options;
-  uint8 language;
+  uint8_t language;
   my_bool with_auto_increment;
 } MI_CREATE_INFO;
 
@@ -175,16 +175,16 @@ struct st_mi_s_param;
 typedef struct st_mi_keydef		/* Key definition with open & info */
 {
   struct st_mi_isam_share *share;       /* Pointer to base (set in mi_open) */
-  uint16 keysegs;			/* Number of key-segment */
-  uint16 flag;				/* NOSAME, PACK_USED */
+  uint16_t keysegs;			/* Number of key-segment */
+  uint16_t flag;				/* NOSAME, PACK_USED */
 
-  uint8  key_alg;			/* BTREE, RTREE */
-  uint16 block_length;			/* Length of keyblock (auto) */
-  uint16 underflow_block_length;	/* When to execute underflow */
-  uint16 keylength;			/* Tot length of keyparts (auto) */
-  uint16 minlength;			/* min length of (packed) key (auto) */
-  uint16 maxlength;			/* max length of (packed) key (auto) */
-  uint16 block_size_index;		/* block_size (auto) */
+  uint8_t  key_alg;			/* BTREE, RTREE */
+  uint16_t block_length;			/* Length of keyblock (auto) */
+  uint16_t underflow_block_length;	/* When to execute underflow */
+  uint16_t keylength;			/* Tot length of keyparts (auto) */
+  uint16_t minlength;			/* min length of (packed) key (auto) */
+  uint16_t maxlength;			/* max length of (packed) key (auto) */
+  uint16_t block_size_index;		/* block_size (auto) */
   uint32_t version;			/* For concurrent read/write */
 
   HA_KEYSEG *seg,*end;
@@ -209,15 +209,15 @@ typedef struct st_mi_keydef		/* Key definition with open & info */
 
 typedef struct st_unique_def		/* Segment definition of unique */
 {
-  uint16 keysegs;			/* Number of key-segment */
+  uint16_t keysegs;			/* Number of key-segment */
   uchar key;				/* Mapped to which key */
-  uint8 null_are_equal;
+  uint8_t null_are_equal;
   HA_KEYSEG *seg,*end;
 } MI_UNIQUEDEF;
 
 typedef struct st_mi_decode_tree	/* Decode huff-table */
 {
-  uint16 *table;
+  uint16_t *table;
   uint	 quick_table_bits;
   uchar	 *intervalls;
 } MI_DECODE_TREE;
@@ -233,11 +233,11 @@ struct st_mi_bit_buff;
 
 typedef struct st_columndef		/* column information */
 {
-  int16  type;				/* en_fieldtype */
-  uint16 length;			/* length of field */
+  int16_t  type;				/* en_fieldtype */
+  uint16_t length;			/* length of field */
   uint32_t offset;			/* Offset to position in row */
-  uint8  null_bit;			/* If column may be 0 */
-  uint16 null_pos;			/* position for null marker */
+  uint8_t  null_bit;			/* If column may be 0 */
+  uint16_t null_pos;			/* position for null marker */
 
 #ifndef NOT_PACKED_DATABASES
   void (*unpack)(struct st_columndef *rec,struct st_mi_bit_buff *buff,
@@ -405,7 +405,7 @@ typedef struct st_mi_check_param
   uint out_flag,warning_printed,error_printed,verbose;
   uint opt_sort_key,total_files,max_level;
   uint testflag, key_cache_block_size;
-  uint8 language;
+  uint8_t language;
   my_bool using_global_keycache, opt_lock_memory, opt_follow_links;
   my_bool retry_repair, force_sort;
   char temp_filename[FN_REFLEN],*isam_file_name;

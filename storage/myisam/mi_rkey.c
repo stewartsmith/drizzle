@@ -59,7 +59,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
 				 keypart_map, &last_used_keyseg);
     /* Save packed_key_length for use by the MERGE engine. */
     info->pack_key_length= pack_key_length;
-    info->last_used_keyseg= (uint16) (last_used_keyseg -
+    info->last_used_keyseg= (uint16_t) (last_used_keyseg -
                                       info->s->keyinfo[inx].seg);
   }
 

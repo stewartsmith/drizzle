@@ -132,7 +132,7 @@ void hash_password(uint32_t *result, const char *password, uint32_t password_len
   result[1]=nr2 & (((uint32_t) 1L << 31) -1L);
 }
 
-static inline uint8 char_val(uint8 X)
+static inline uint8_t char_val(uint8_t X)
 {
   return (uint) (X >= '0' && X <= '9' ? X-'0' :
       X >= 'A' && X <= 'Z' ? X-'A'+10 : X-'a'+10);
@@ -204,7 +204,7 @@ char *octet2hex(char *to, const char *str, uint len)
 */ 
 
 static void
-hex2octet(uint8 *to, const char *str, uint len)
+hex2octet(uint8_t *to, const char *str, uint len)
 {
   const char *str_end= str + len;
   while (str < str_end)
@@ -230,7 +230,7 @@ hex2octet(uint8 *to, const char *str, uint len)
 static void
 my_crypt(char *to, const uchar *s1, const uchar *s2, uint len)
 {
-  const uint8 *s1_end= s1 + len;
+  const uint8_t *s1_end= s1 + len;
   while (s1 < s1_end)
     *to++= *s1++ ^ *s2++;
 }
@@ -252,15 +252,15 @@ void
 make_scrambled_password(char *to, const char *password)
 {
   SHA1_CONTEXT sha1_context;
-  uint8 hash_stage2[SHA1_HASH_SIZE];
+  uint8_t hash_stage2[SHA1_HASH_SIZE];
 
   mysql_sha1_reset(&sha1_context);
   /* stage 1: hash password */
-  mysql_sha1_input(&sha1_context, (uint8 *) password, (uint) strlen(password));
-  mysql_sha1_result(&sha1_context, (uint8 *) to);
+  mysql_sha1_input(&sha1_context, (uint8_t *) password, (uint) strlen(password));
+  mysql_sha1_result(&sha1_context, (uint8_t *) to);
   /* stage 2: hash stage1 output */
   mysql_sha1_reset(&sha1_context);
-  mysql_sha1_input(&sha1_context, (uint8 *) to, SHA1_HASH_SIZE);
+  mysql_sha1_input(&sha1_context, (uint8_t *) to, SHA1_HASH_SIZE);
   /* separate buffer is used to pass 'to' in octet2hex */
   mysql_sha1_result(&sha1_context, hash_stage2);
   /* convert hash_stage2 to hex string */
@@ -290,12 +290,12 @@ void
 scramble(char *to, const char *message, const char *password)
 {
   SHA1_CONTEXT sha1_context;
-  uint8 hash_stage1[SHA1_HASH_SIZE];
-  uint8 hash_stage2[SHA1_HASH_SIZE];
+  uint8_t hash_stage1[SHA1_HASH_SIZE];
+  uint8_t hash_stage2[SHA1_HASH_SIZE];
 
   mysql_sha1_reset(&sha1_context);
   /* stage 1: hash password */
-  mysql_sha1_input(&sha1_context, (uint8 *) password, (uint) strlen(password));
+  mysql_sha1_input(&sha1_context, (uint8_t *) password, (uint) strlen(password));
   mysql_sha1_result(&sha1_context, hash_stage1);
   /* stage 2: hash stage 1; note that hash_stage2 is stored in the database */
   mysql_sha1_reset(&sha1_context);
@@ -303,10 +303,10 @@ scramble(char *to, const char *message, const char *password)
   mysql_sha1_result(&sha1_context, hash_stage2);
   /* create crypt string as sha1(message, hash_stage2) */;
   mysql_sha1_reset(&sha1_context);
-  mysql_sha1_input(&sha1_context, (const uint8 *) message, SCRAMBLE_LENGTH);
+  mysql_sha1_input(&sha1_context, (const uint8_t *) message, SCRAMBLE_LENGTH);
   mysql_sha1_input(&sha1_context, hash_stage2, SHA1_HASH_SIZE);
   /* xor allows 'from' and 'to' overlap: lets take advantage of it */
-  mysql_sha1_result(&sha1_context, (uint8 *) to);
+  mysql_sha1_result(&sha1_context, (uint8_t *) to);
   my_crypt(to, (const uchar *) to, hash_stage1, SCRAMBLE_LENGTH);
 }
 
@@ -333,15 +333,15 @@ scramble(char *to, const char *message, const char *password)
 
 my_bool
 check_scramble(const char *scramble_arg, const char *message,
-               const uint8 *hash_stage2)
+               const uint8_t *hash_stage2)
 {
   SHA1_CONTEXT sha1_context;
-  uint8 buf[SHA1_HASH_SIZE];
-  uint8 hash_stage2_reassured[SHA1_HASH_SIZE];
+  uint8_t buf[SHA1_HASH_SIZE];
+  uint8_t hash_stage2_reassured[SHA1_HASH_SIZE];
 
   mysql_sha1_reset(&sha1_context);
   /* create key to encrypt scramble */
-  mysql_sha1_input(&sha1_context, (const uint8 *) message, SCRAMBLE_LENGTH);
+  mysql_sha1_input(&sha1_context, (const uint8_t *) message, SCRAMBLE_LENGTH);
   mysql_sha1_input(&sha1_context, hash_stage2, SHA1_HASH_SIZE);
   mysql_sha1_result(&sha1_context, buf);
   /* encrypt scramble */
@@ -364,7 +364,7 @@ check_scramble(const char *scramble_arg, const char *message,
     password  IN  4.1.1 version value of user.password
 */
     
-void get_salt_from_password(uint8 *hash_stage2, const char *password)
+void get_salt_from_password(uint8_t *hash_stage2, const char *password)
 {
   hex2octet(hash_stage2, password+1 /* skip '*' */, SHA1_HASH_SIZE * 2);
 }
@@ -377,7 +377,7 @@ void get_salt_from_password(uint8 *hash_stage2, const char *password)
     salt  IN  password in salt format
 */
 
-void make_password_from_salt(char *to, const uint8 *hash_stage2)
+void make_password_from_salt(char *to, const uint8_t *hash_stage2)
 {
   *to++= PVERSION41_CHAR;
   octet2hex(to, (const char*) hash_stage2, SHA1_HASH_SIZE);

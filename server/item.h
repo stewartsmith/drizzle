@@ -170,7 +170,7 @@ struct Hybrid_type_traits
   { return (int64_t) rint(val->real); }
   virtual double val_real(Hybrid_type *val) const { return val->real; }
   virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8 decimals) const;
+  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
   static const Hybrid_type_traits *instance();
   Hybrid_type_traits() {}
   virtual ~Hybrid_type_traits() {}
@@ -194,7 +194,7 @@ struct Hybrid_type_traits_decimal: public Hybrid_type_traits
   virtual my_decimal *val_decimal(Hybrid_type *val,
                                   my_decimal *buf __attribute__((__unused__))) const
   { return &val->dec_buf[val->used_dec_buf_no]; }
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8 decimals) const;
+  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
   static const Hybrid_type_traits_decimal *instance();
   Hybrid_type_traits_decimal() {};
 };
@@ -227,7 +227,7 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
     return &val->dec_buf[2];
   }
   virtual String *val_str(Hybrid_type *val, String *buf,
-                          uint8 decimals __attribute__((__unused__))) const
+                          uint8_t decimals __attribute__((__unused__))) const
   { buf->set(val->integer, &my_charset_bin); return buf;}
   static const Hybrid_type_traits_integer *instance();
   Hybrid_type_traits_integer() {};
@@ -434,7 +434,7 @@ class Item
   Item(const Item &);			/* Prevent use of these */
   void operator=(Item &);
   /* Cache of the result of is_expensive(). */
-  int8 is_expensive_cache;
+  int8_t is_expensive_cache;
   virtual bool is_expensive_processor(uchar *arg __attribute__((__unused__)))
   { return 0; }
 
@@ -478,8 +478,8 @@ public:
   Item *next;
   uint32_t max_length;
   uint name_length;                     /* Length of name */
-  int8 marker;
-  uint8 decimals;
+  int8_t marker;
+  uint8_t decimals;
   my_bool maybe_null;			/* If item may be null */
   my_bool null_value;			/* if item is null */
   my_bool unsigned_flag;
@@ -1469,13 +1469,13 @@ public:
     :value(val_arg)
   {
     presentation= name=(char*) str;
-    decimals=(uint8) decimal_par;
+    decimals=(uint8_t) decimal_par;
     max_length=length;
     fixed= 1;
   }
   Item_float(double value_par, uint decimal_par) :presentation(0), value(value_par)
   {
-    decimals= (uint8) decimal_par;
+    decimals= (uint8_t) decimal_par;
     fixed= 1;
   }
   int save_in_field(Field *field, bool no_conversions);

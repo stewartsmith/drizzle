@@ -4649,7 +4649,7 @@ row_search_autoinc_read_column(
 		break;
 
 	case 2:
-		value = *(uint16 *) dest;
+		value = *(uint16_t *) dest;
 		break;
 
 	case 1:

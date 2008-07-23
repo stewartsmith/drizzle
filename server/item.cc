@@ -52,7 +52,7 @@ Hybrid_type_traits::val_decimal(Hybrid_type *val,
 
 
 String *
-Hybrid_type_traits::val_str(Hybrid_type *val, String *to, uint8 decimals) const
+Hybrid_type_traits::val_str(Hybrid_type *val, String *to, uint8_t decimals) const
 {
   to->set_real(val->real, decimals, &my_charset_bin);
   return to;
@@ -130,7 +130,7 @@ Hybrid_type_traits_decimal::val_real(Hybrid_type *val) const
 
 String *
 Hybrid_type_traits_decimal::val_str(Hybrid_type *val, String *to,
-                                    uint8 decimals) const
+                                    uint8_t decimals) const
 {
   my_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                    decimals, false, &val->dec_buf[2]);
@@ -1845,7 +1845,7 @@ Item_decimal::Item_decimal(const char *str_arg, uint length,
 {
   str2my_decimal(E_DEC_FATAL_ERROR, str_arg, length, charset, &decimal_value);
   name= (char*) str_arg;
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -1854,7 +1854,7 @@ Item_decimal::Item_decimal(const char *str_arg, uint length,
 Item_decimal::Item_decimal(int64_t val, bool unsig)
 {
   int2my_decimal(E_DEC_FATAL_ERROR, val, unsig, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -1866,7 +1866,7 @@ Item_decimal::Item_decimal(double val,
                            int scale __attribute__((__unused__)))
 {
   double2my_decimal(E_DEC_FATAL_ERROR, val, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -1878,7 +1878,7 @@ Item_decimal::Item_decimal(const char *str, const my_decimal *val_arg,
 {
   my_decimal2decimal(val_arg, &decimal_value);
   name= (char*) str;
-  decimals= (uint8) decimal_par;
+  decimals= (uint8_t) decimal_par;
   max_length= length;
   fixed= 1;
 }
@@ -1887,7 +1887,7 @@ Item_decimal::Item_decimal(const char *str, const my_decimal *val_arg,
 Item_decimal::Item_decimal(my_decimal *value_par)
 {
   my_decimal2decimal(value_par, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -1898,7 +1898,7 @@ Item_decimal::Item_decimal(const uchar *bin, int precision, int scale)
 {
   binary2my_decimal(E_DEC_FATAL_ERROR, bin,
                     &decimal_value, precision, scale);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
@@ -1956,7 +1956,7 @@ bool Item_decimal::eq(const Item *item,
 void Item_decimal::set_decimal_value(my_decimal *value_par)
 {
   my_decimal2decimal(value_par, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   unsigned_flag= !decimal_value.sign();
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -4471,7 +4471,7 @@ Item_float::Item_float(const char *str_arg, uint length)
     my_error(ER_ILLEGAL_VALUE_FOR_TYPE, MYF(0), "double", (char*) str_arg);
   }
   presentation= name=(char*) str_arg;
-  decimals=(uint8) nr_of_decimals(str_arg, str_arg+length);
+  decimals=(uint8_t) nr_of_decimals(str_arg, str_arg+length);
   max_length=length;
   fixed= 1;
 }

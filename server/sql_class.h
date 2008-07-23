@@ -1111,7 +1111,7 @@ public:
   uint32_t     server_id;
   uint32_t     file_id;			// for LOAD DATA INFILE
   /* remote (peer) port */
-  uint16 peer_port;
+  uint16_t peer_port;
   time_t     start_time, user_time;
   uint64_t  connect_utime, thr_create_utime; // track down slow pthread_create
   uint64_t  start_utime, utime_after_lock;

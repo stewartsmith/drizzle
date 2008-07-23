@@ -21,11 +21,11 @@
 */
 
 /* these two are for uniformity */
-#define mi_sint1korr(A) ((int8)(*A))
-#define mi_uint1korr(A) ((uint8)(*A))
+#define mi_sint1korr(A) ((int8_t)(*A))
+#define mi_uint1korr(A) ((uint8_t)(*A))
 
-#define mi_sint2korr(A) ((int16) (((int16) (((uchar*) (A))[1])) +\
-                                  ((int16) ((int16) ((char*) (A))[0]) << 8)))
+#define mi_sint2korr(A) ((int16_t) (((int16_t) (((uchar*) (A))[1])) +\
+                                  ((int16_t) ((int16_t) ((char*) (A))[0]) << 8)))
 #define mi_sint3korr(A) ((int32_t) (((((uchar*) (A))[0]) & 128) ? \
                                   (((uint32_t) 255L << 24) | \
                                    (((uint32_t) ((uchar*) (A))[0]) << 16) |\
@@ -37,10 +37,10 @@
 #define mi_sint4korr(A) ((int32_t) (((int32_t) (((uchar*) (A))[3])) +\
                                   ((int32_t) (((uchar*) (A))[2]) << 8) +\
                                   ((int32_t) (((uchar*) (A))[1]) << 16) +\
-                                  ((int32_t) ((int16) ((char*) (A))[0]) << 24)))
+                                  ((int32_t) ((int16_t) ((char*) (A))[0]) << 24)))
 #define mi_sint8korr(A) ((int64_t) mi_uint8korr(A))
-#define mi_uint2korr(A) ((uint16) (((uint16) (((uchar*) (A))[1])) +\
-                                   ((uint16) (((uchar*) (A))[0]) << 8)))
+#define mi_uint2korr(A) ((uint16_t) (((uint16_t) (((uchar*) (A))[1])) +\
+                                   ((uint16_t) (((uchar*) (A))[0]) << 8)))
 #define mi_uint3korr(A) ((uint32_t) (((uint32_t) (((uchar*) (A))[2])) +\
                                    (((uint32_t) (((uchar*) (A))[1])) << 8) +\
                                    (((uint32_t) (((uchar*) (A))[0])) << 16)))

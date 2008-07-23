@@ -413,11 +413,11 @@ static bool write_str(IO_CACHE *file, const char *str, uint length)
 */
 
 static inline int read_str(const char **buf, const char *buf_end,
-                           const char **str, uint8 *len)
+                           const char **str, uint8_t *len)
 {
   if (*buf + ((uint) (uchar) **buf) >= buf_end)
     return 1;
-  *len= (uint8) **buf;
+  *len= (uint8_t) **buf;
   *str= (*buf)+1;
   (*buf)+= (uint) *len+1;
   return 0;
@@ -549,7 +549,7 @@ const char* Log_event::get_type_str()
 */
 
 #ifndef MYSQL_CLIENT
-Log_event::Log_event(THD* thd_arg, uint16 flags_arg, bool using_trans)
+Log_event::Log_event(THD* thd_arg, uint16_t flags_arg, bool using_trans)
   :log_pos(0), temp_buf(0), exec_time(0), flags(flags_arg), thd(thd_arg)
 {
   server_id=	thd->server_id;
@@ -1771,7 +1771,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
 {
   ulong data_len;
   uint32_t tmp;
-  uint8 common_header_len, post_header_len;
+  uint8_t common_header_len, post_header_len;
   Log_event::Byte *start;
   const Log_event::Byte *end;
   bool catalog_nz= 1;
@@ -2650,7 +2650,7 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
 */
 
 Format_description_log_event::
-Format_description_log_event(uint8 binlog_ver, const char* server_ver)
+Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
   :Start_log_event_v3(), event_type_permutation(0)
 {
   binlog_version= binlog_ver;
@@ -2660,7 +2660,7 @@ Format_description_log_event(uint8 binlog_ver, const char* server_ver)
     common_header_len= LOG_EVENT_HEADER_LEN;
     number_of_event_types= LOG_EVENT_TYPES;
     /* we'll catch my_malloc() error in is_valid() */
-    post_header_len=(uint8*) my_malloc(number_of_event_types*sizeof(uint8),
+    post_header_len=(uint8_t*) my_malloc(number_of_event_types*sizeof(uint8_t),
                                        MYF(MY_ZEROFILL));
     /*
       This long list of assignments is not beautiful, but I see no way to
@@ -2710,7 +2710,7 @@ Format_description_log_event(uint8 binlog_ver, const char* server_ver)
       make the slave detect less corruptions).
     */
     number_of_event_types= FORMAT_DESCRIPTION_EVENT - 1;
-    post_header_len=(uint8*) my_malloc(number_of_event_types*sizeof(uint8),
+    post_header_len=(uint8_t*) my_malloc(number_of_event_types*sizeof(uint8_t),
                                        MYF(0));
     if (post_header_len)
     {
@@ -2770,7 +2770,7 @@ Format_description_log_event(const char* buf,
   number_of_event_types=
     event_len-(LOG_EVENT_MINIMAL_HEADER_LEN+ST_COMMON_HEADER_LEN_OFFSET+1);
   /* If alloc fails, we'll detect it in is_valid() */
-  post_header_len= (uint8*) my_memdup((uchar*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
+  post_header_len= (uint8_t*) my_memdup((uchar*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
                                       number_of_event_types*
                                       sizeof(*post_header_len), MYF(0));
   calc_server_version_split();
@@ -2849,7 +2849,7 @@ Format_description_log_event(const char* buf,
       post_header_len= NULL;
       return;
     }
-    static const uint8 perm[23]=
+    static const uint8_t perm[23]=
       {
         UNKNOWN_EVENT, START_EVENT_V3, QUERY_EVENT, STOP_EVENT, ROTATE_EVENT,
         INTVAR_EVENT, LOAD_EVENT, SLAVE_EVENT, CREATE_FILE_EVENT,
@@ -2870,7 +2870,7 @@ Format_description_log_event(const char* buf,
       Since we use (permuted) event id's to index the post_header_len
       array, we need to permute the post_header_len array too.
     */
-    uint8 post_header_len_temp[23];
+    uint8_t post_header_len_temp[23];
     for (int i= 1; i < 23; i++)
       post_header_len_temp[perm[i] - 1]= post_header_len[i - 1];
     for (int i= 0; i < 22; i++)
@@ -3215,15 +3215,15 @@ Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
   table_name_len = (uint32_t) strlen(table_name);
   fname_len = (fname) ? (uint) strlen(fname) : 0;
   sql_ex.field_term = (char*) ex->field_term->ptr();
-  sql_ex.field_term_len = (uint8) ex->field_term->length();
+  sql_ex.field_term_len = (uint8_t) ex->field_term->length();
   sql_ex.enclosed = (char*) ex->enclosed->ptr();
-  sql_ex.enclosed_len = (uint8) ex->enclosed->length();
+  sql_ex.enclosed_len = (uint8_t) ex->enclosed->length();
   sql_ex.line_term = (char*) ex->line_term->ptr();
-  sql_ex.line_term_len = (uint8) ex->line_term->length();
+  sql_ex.line_term_len = (uint8_t) ex->line_term->length();
   sql_ex.line_start = (char*) ex->line_start->ptr();
-  sql_ex.line_start_len = (uint8) ex->line_start->length();
+  sql_ex.line_start_len = (uint8_t) ex->line_start->length();
   sql_ex.escaped = (char*) ex->escaped->ptr();
-  sql_ex.escaped_len = (uint8) ex->escaped->length();
+  sql_ex.escaped_len = (uint8_t) ex->escaped->length();
   sql_ex.opt_flags = 0;
   sql_ex.cached_new_format = -1;
     
@@ -3843,8 +3843,8 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint event_len,
   :Log_event(buf, description_event) ,new_log_ident(0), flags(DUP_NAME)
 {
   // The caller will ensure that event_len is what we have at EVENT_LEN_OFFSET
-  uint8 header_size= description_event->common_header_len;
-  uint8 post_header_len= description_event->post_header_len[ROTATE_EVENT-1];
+  uint8_t header_size= description_event->common_header_len;
+  uint8_t post_header_len= description_event->post_header_len[ROTATE_EVENT-1];
   uint ident_offset;
   if (event_len < header_size)
     return;
@@ -4964,8 +4964,8 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint len,
 {
   uint block_offset;
   uint header_len= description_event->common_header_len;
-  uint8 load_header_len= description_event->post_header_len[LOAD_EVENT-1];
-  uint8 create_file_header_len= description_event->post_header_len[CREATE_FILE_EVENT-1];
+  uint8_t load_header_len= description_event->post_header_len[LOAD_EVENT-1];
+  uint8_t create_file_header_len= description_event->post_header_len[CREATE_FILE_EVENT-1];
   if (!(event_buf= (char*) my_memdup(buf, len, MYF(MY_WME))) ||
       copy_log_event(event_buf,len,
                      ((buf[EVENT_TYPE_OFFSET] == LOAD_EVENT) ?
@@ -5172,8 +5172,8 @@ Append_block_log_event::Append_block_log_event(const char* buf, uint len,
                                                const Format_description_log_event* description_event)
   :Log_event(buf, description_event),block(0)
 {
-  uint8 common_header_len= description_event->common_header_len; 
-  uint8 append_block_header_len=
+  uint8_t common_header_len= description_event->common_header_len; 
+  uint8_t append_block_header_len=
     description_event->post_header_len[APPEND_BLOCK_EVENT-1];
   uint total_header_len= common_header_len+append_block_header_len;
   if (len < total_header_len)
@@ -5320,8 +5320,8 @@ Delete_file_log_event::Delete_file_log_event(const char* buf, uint len,
                                              const Format_description_log_event* description_event)
   :Log_event(buf, description_event),file_id(0)
 {
-  uint8 common_header_len= description_event->common_header_len;
-  uint8 delete_file_header_len= description_event->post_header_len[DELETE_FILE_EVENT-1];
+  uint8_t common_header_len= description_event->common_header_len;
+  uint8_t delete_file_header_len= description_event->post_header_len[DELETE_FILE_EVENT-1];
   if (len < (uint)(common_header_len + delete_file_header_len))
     return;
   file_id= uint4korr(buf + common_header_len + DF_FILE_ID_OFFSET);
@@ -5417,8 +5417,8 @@ Execute_load_log_event::Execute_load_log_event(const char* buf, uint len,
                                                const Format_description_log_event* description_event)
   :Log_event(buf, description_event), file_id(0)
 {
-  uint8 common_header_len= description_event->common_header_len;
-  uint8 exec_load_header_len= description_event->post_header_len[EXEC_LOAD_EVENT-1];
+  uint8_t common_header_len= description_event->common_header_len;
+  uint8_t exec_load_header_len= description_event->post_header_len[EXEC_LOAD_EVENT-1];
   if (len < (uint)(common_header_len+exec_load_header_len))
     return;
   file_id= uint4korr(buf + common_header_len + EL_FILE_ID_OFFSET);
@@ -5952,8 +5952,8 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
     , m_curr_row(NULL), m_curr_row_end(NULL), m_key(NULL)
 #endif
 {
-  uint8 const common_header_len= description_event->common_header_len;
-  uint8 const post_header_len= description_event->post_header_len[event_type-1];
+  uint8_t const common_header_len= description_event->common_header_len;
+  uint8_t const post_header_len= description_event->post_header_len[event_type-1];
 
   const char *post_start= buf + common_header_len;
   post_start+= RW_MAPID_OFFSET;
@@ -6723,7 +6723,7 @@ void Rows_log_event::print_helper(FILE *file,
   (e.g. values > 255), the endian-safe methods are used to properly encode 
   the values on the master and decode them on the slave. When the field
   metadata values are captured on the slave, they are stored in an array of
-  type uint16. This allows the least number of casts to prevent casting bugs
+  type uint16_t. This allows the least number of casts to prevent casting bugs
   when the field metadata is used in comparisons of field attributes. When
   the field metadata is used for calculating addresses in pointer math, the
   type used is uint32_t. 
@@ -6771,7 +6771,7 @@ int Table_map_log_event::save_field_metadata()
 #if !defined(MYSQL_CLIENT)
 Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
                                          bool is_transactional __attribute__((__unused__)),
-                                         uint16 flags)
+                                         uint16_t flags)
   : Log_event(thd, 0, true),
     m_table(tbl),
     m_dbnam(tbl->s->db.str),
@@ -6871,8 +6871,8 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
 {
   unsigned int bytes_read= 0;
 
-  uint8 common_header_len= description_event->common_header_len;
-  uint8 post_header_len= description_event->post_header_len[TABLE_MAP_EVENT-1];
+  uint8_t common_header_len= description_event->common_header_len;
+  uint8_t post_header_len= description_event->post_header_len[TABLE_MAP_EVENT-1];
 
   /* Read the post-header */
   const char *post_start= buf + common_header_len;
@@ -8122,15 +8122,15 @@ Incident_log_event::Incident_log_event(const char *buf, uint event_len,
                                        const Format_description_log_event *descr_event)
   : Log_event(buf, descr_event)
 {
-  uint8 const common_header_len=
+  uint8_t const common_header_len=
     descr_event->common_header_len;
-  uint8 const post_header_len=
+  uint8_t const post_header_len=
     descr_event->post_header_len[INCIDENT_EVENT-1];
 
   m_incident= static_cast<Incident>(uint2korr(buf + common_header_len));
   char const *ptr= buf + common_header_len + post_header_len;
   char const *const str_end= buf + event_len;
-  uint8 len= 0;                   // Assignment to keep compiler happy
+  uint8_t len= 0;                   // Assignment to keep compiler happy
   const char *str= NULL;          // Assignment to keep compiler happy
   read_str(&ptr, str_end, &str, &len);
   m_message.str= const_cast<char*>(str);
@@ -8204,8 +8204,8 @@ Incident_log_event::do_apply_event(Relay_log_info const *rli)
 bool
 Incident_log_event::write_data_header(IO_CACHE *file)
 {
-  uchar buf[sizeof(int16)];
-  int2store(buf, (int16) m_incident);
+  uchar buf[sizeof(int16_t)];
+  int2store(buf, (int16_t) m_incident);
   return(my_b_safe_write(file, buf, sizeof(buf)));
 }
 
@@ -8220,7 +8220,7 @@ Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
                     const Format_description_log_event* description_event)
   :Log_event(buf, description_event)
 {
-  uint8 header_size= description_event->common_header_len;
+  uint8_t header_size= description_event->common_header_len;
   ident_len = event_len - header_size;
   set_if_smaller(ident_len,FN_REFLEN-1);
   log_ident= buf + header_size;

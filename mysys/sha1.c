@@ -127,7 +127,7 @@ int mysql_sha1_reset(SHA1_CONTEXT *context)
 */
 
 int mysql_sha1_result(SHA1_CONTEXT *context,
-                      uint8 Message_Digest[SHA1_HASH_SIZE])
+                      uint8_t Message_Digest[SHA1_HASH_SIZE])
 {
   int i;
 
@@ -141,7 +141,7 @@ int mysql_sha1_result(SHA1_CONTEXT *context,
   }
 
   for (i = 0; i < SHA1_HASH_SIZE; i++)
-    Message_Digest[i] = (int8)((context->Intermediate_Hash[i>>2] >> 8
+    Message_Digest[i] = (int8_t)((context->Intermediate_Hash[i>>2] >> 8
 			 * ( 3 - ( i & 0x03 ) )));
   return SHA_SUCCESS;
 }
@@ -162,7 +162,7 @@ int mysql_sha1_result(SHA1_CONTEXT *context,
    != SHA_SUCCESS	sha Error Code.
 */
 
-int mysql_sha1_input(SHA1_CONTEXT *context, const uint8 *message_array,
+int mysql_sha1_input(SHA1_CONTEXT *context, const uint8_t *message_array,
                      unsigned length)
 {
   if (!length)
@@ -346,14 +346,14 @@ static void SHA1PadMessage(SHA1_CONTEXT *context)
     Store the message length as the last 8 octets
   */
 
-  context->Message_Block[56] = (int8) (context->Length >> 56);
-  context->Message_Block[57] = (int8) (context->Length >> 48);
-  context->Message_Block[58] = (int8) (context->Length >> 40);
-  context->Message_Block[59] = (int8) (context->Length >> 32);
-  context->Message_Block[60] = (int8) (context->Length >> 24);
-  context->Message_Block[61] = (int8) (context->Length >> 16);
-  context->Message_Block[62] = (int8) (context->Length >> 8);
-  context->Message_Block[63] = (int8) (context->Length);
+  context->Message_Block[56] = (int8_t) (context->Length >> 56);
+  context->Message_Block[57] = (int8_t) (context->Length >> 48);
+  context->Message_Block[58] = (int8_t) (context->Length >> 40);
+  context->Message_Block[59] = (int8_t) (context->Length >> 32);
+  context->Message_Block[60] = (int8_t) (context->Length >> 24);
+  context->Message_Block[61] = (int8_t) (context->Length >> 16);
+  context->Message_Block[62] = (int8_t) (context->Length >> 8);
+  context->Message_Block[63] = (int8_t) (context->Length);
 
   SHA1ProcessMessageBlock(context);
 }

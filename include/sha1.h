@@ -49,8 +49,8 @@ typedef struct SHA1_CONTEXT
   uint32_t Intermediate_Hash[SHA1_HASH_SIZE/4]; /* Message Digest  */
   int Computed;			/* Is the digest computed?	   */
   int Corrupted;		/* Is the message digest corrupted? */
-  int16 Message_Block_Index;	/* Index into message block array   */
-  uint8 Message_Block[64];	/* 512-bit message blocks      */
+  int16_t Message_Block_Index;	/* Index into message block array   */
+  uint8_t Message_Block[64];	/* 512-bit message blocks      */
 } SHA1_CONTEXT;
 
 /*
@@ -60,7 +60,7 @@ typedef struct SHA1_CONTEXT
 C_MODE_START
 
 int mysql_sha1_reset(SHA1_CONTEXT*);
-int mysql_sha1_input(SHA1_CONTEXT*, const uint8 *, unsigned int);
-int mysql_sha1_result(SHA1_CONTEXT* , uint8 Message_Digest[SHA1_HASH_SIZE]);
+int mysql_sha1_input(SHA1_CONTEXT*, const uint8_t *, unsigned int);
+int mysql_sha1_result(SHA1_CONTEXT* , uint8_t Message_Digest[SHA1_HASH_SIZE]);
 
 C_MODE_END

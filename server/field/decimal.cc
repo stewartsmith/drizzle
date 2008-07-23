@@ -33,7 +33,7 @@ Field_new_decimal::Field_new_decimal(uchar *ptr_arg,
                                      uchar null_bit_arg,
                                      enum utype unireg_check_arg,
                                      const char *field_name_arg,
-                                     uint8 dec_arg,bool zero_arg,
+                                     uint8_t dec_arg,bool zero_arg,
                                      bool unsigned_arg)
   :Field_num(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
              unireg_check_arg, field_name_arg, dec_arg, zero_arg, unsigned_arg)
@@ -49,7 +49,7 @@ Field_new_decimal::Field_new_decimal(uchar *ptr_arg,
 Field_new_decimal::Field_new_decimal(uint32_t len_arg,
                                      bool maybe_null_arg,
                                      const char *name,
-                                     uint8 dec_arg,
+                                     uint8_t dec_arg,
                                      bool unsigned_arg)
   :Field_num((uchar*) 0, len_arg,
              maybe_null_arg ? (uchar*) "": 0, 0,

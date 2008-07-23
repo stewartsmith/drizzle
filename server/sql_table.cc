@@ -1352,7 +1352,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     if (key->generated)
       key_info->flags|= HA_GENERATED_KEY;
 
-    key_info->key_parts=(uint8) key->columns.elements;
+    key_info->key_parts=(uint8_t) key->columns.elements;
     key_info->key_part=key_part_info;
     key_info->usable_key_parts= key_number;
     key_info->algorithm= key->key_create_info.algorithm;
@@ -1463,7 +1463,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       }
 
       key_part_info->fieldnr= field;
-      key_part_info->offset=  (uint16) sql_field->offset;
+      key_part_info->offset=  (uint16_t) sql_field->offset;
       key_part_info->key_type=sql_field->pack_flag;
       length= sql_field->key_length;
 
@@ -1531,7 +1531,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	  return(true);
 	}
       }
-      key_part_info->length=(uint16) length;
+      key_part_info->length=(uint16_t) length;
       /* Use packed keys for long strings on the first column */
       if (!((*db_options) & HA_OPTION_NO_PACK_KEYS) &&
 	  (length >= KEY_DEFAULT_PACK_LENGTH &&
@@ -1584,7 +1584,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     }
     if (!(key_info->flags & HA_NULL_PART_KEY))
       unique_key=1;
-    key_info->key_length=(uint16) key_length;
+    key_info->key_length=(uint16_t) key_length;
     if (key_length > max_key_length)
     {
       my_error(ER_TOO_LONG_KEY,MYF(0),max_key_length);

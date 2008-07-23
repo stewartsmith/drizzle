@@ -734,7 +734,7 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
 Field_num::Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
                      uchar null_bit_arg, utype unireg_check_arg,
                      const char *field_name_arg,
-                     uint8 dec_arg, bool zero_arg, bool unsigned_arg)
+                     uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg),
   dec(dec_arg),zerofill(zero_arg),unsigned_flag(unsigned_arg)
@@ -1636,7 +1636,7 @@ String *Field_tiny::val_str(String *val_buffer,
 
 bool Field_tiny::send_binary(Protocol *protocol)
 {
-  return protocol->store_tiny((int64_t) (int8) ptr[0]);
+  return protocol->store_tiny((int64_t) (int8_t) ptr[0]);
 }
 
 int Field_tiny::cmp(const uchar *a_ptr, const uchar *b_ptr)
@@ -1999,7 +1999,7 @@ int64_t Field_enum::val_int(void)
     return (int64_t) ptr[0];
   case 2:
   {
-    uint16 tmp;
+    uint16_t tmp;
 #ifdef WORDS_BIGENDIAN
     if (table->s->db_low_byte_first)
       tmp=sint2korr(ptr);

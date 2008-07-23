@@ -1010,10 +1010,10 @@ uchar *mi_keyseg_read(uchar *ptr, HA_KEYSEG *keyseg)
    keyseg->null_pos	= mi_uint4korr(ptr);  ptr +=4;
    keyseg->charset=0;				/* Will be filled in later */
    if (keyseg->null_bit)
-     keyseg->bit_pos= (uint16)(keyseg->null_pos + (keyseg->null_bit == 7));
+     keyseg->bit_pos= (uint16_t)(keyseg->null_pos + (keyseg->null_bit == 7));
    else
    {
-     keyseg->bit_pos= (uint16)keyseg->null_pos;
+     keyseg->bit_pos= (uint16_t)keyseg->null_pos;
      keyseg->null_pos= 0;
    }
    return ptr;
@@ -1063,7 +1063,7 @@ uchar *mi_recinfo_read(uchar *ptr, MI_COLUMNDEF *recinfo)
 {
    recinfo->type=  mi_sint2korr(ptr);	ptr +=2;
    recinfo->length=mi_uint2korr(ptr);	ptr +=2;
-   recinfo->null_bit= (uint8) *ptr++;
+   recinfo->null_bit= (uint8_t) *ptr++;
    recinfo->null_pos=mi_uint2korr(ptr); ptr +=2;
    return ptr;
 }

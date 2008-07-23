@@ -261,13 +261,13 @@ void add_struct_to_map(hash_lex_struct *st)
                                      st->first_char == 0 ? 0 : st->last_char);
   if (st->first_char == -1)
   {
-    hash_map[size_hash_map-2]= ((unsigned int)(int16)st->iresult)&255;
-    hash_map[size_hash_map-1]= ((unsigned int)(int16)st->iresult)>>8;
+    hash_map[size_hash_map-2]= ((unsigned int)(int16_t)st->iresult)&255;
+    hash_map[size_hash_map-1]= ((unsigned int)(int16_t)st->iresult)>>8;
   }
   else if (st->first_char == 0)
   {
-    hash_map[size_hash_map-2]= ((unsigned int)(int16)array_elements_func(symbols))&255;
-    hash_map[size_hash_map-1]= ((unsigned int)(int16)array_elements(symbols))>>8;
+    hash_map[size_hash_map-2]= ((unsigned int)(int16_t)array_elements_func(symbols))&255;
+    hash_map[size_hash_map-1]= ((unsigned int)(int16_t)array_elements(symbols))>>8;
   }
 }
 
@@ -504,7 +504,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
 \n\
       if (first_char == 0)\n\
       {\n\
-        register int16 ires= (int16)(cur_struct>>16);\n\
+        register int16_t ires= (int16_t)(cur_struct>>16);\n\
         if (ires==array_elements(symbols)) return 0;\n\
         register SYMBOL *res;\n\
         if (ires>=0) \n\
@@ -522,7 +522,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
 \n\
       cur_struct>>=8;\n\
       cur_struct= uint4korr(hash_map+\n\
-                        (((uint16)cur_struct + cur_char - first_char)*4));\n\
+                        (((uint16_t)cur_struct + cur_char - first_char)*4));\n\
       cur_str++;\n\
     }\n"
 );
@@ -537,7 +537,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
       register uchar first_char= (uchar)cur_struct;\n\
 \n\
       if (first_char==0){\n\
-        register int16 ires= (int16)(cur_struct>>16);\n\
+        register int16_t ires= (int16_t)(cur_struct>>16);\n\
         if (ires==array_elements(symbols)) return 0;\n\
         register SYMBOL *res= symbols+ires;\n\
         register uint count= cur_str-s;\n\
@@ -551,7 +551,7 @@ static SYMBOL *get_hash_symbol(const char *s,\n\
 \n\
       cur_struct>>=8;\n\
       cur_struct= uint4korr(hash_map+\n\
-                        (((uint16)cur_struct + cur_char - first_char)*4));\n\
+                        (((uint16_t)cur_struct + cur_char - first_char)*4));\n\
       cur_str++;\n\
     }\n\
   }\n\
