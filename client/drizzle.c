@@ -998,8 +998,6 @@ static const char *load_default_groups[]= { "mysql","client",0 };
 
 static int         embedded_server_arg_count= 0;
 static char       *embedded_server_args[MAX_SERVER_ARGS];
-static const char *embedded_server_groups[]=
-{ "server", "mysql_SERVER", 0 };
 
 int history_length;
 static int not_in_history(const char *line);
@@ -1086,14 +1084,6 @@ int main(int argc,char *argv[])
   if (status.batch && !status.line_buff &&
       !(status.line_buff=batch_readline_init(opt_max_allowed_packet+512,stdin)))
   {
-    free_defaults(defaults_argv);
-    my_end(0);
-    exit(1);
-  }
-  if (mysql_server_init(embedded_server_arg_count, embedded_server_args,
-                        (char**) embedded_server_groups))
-  {
-    put_error(NULL);
     free_defaults(defaults_argv);
     my_end(0);
     exit(1);

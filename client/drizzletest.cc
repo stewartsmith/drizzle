@@ -126,14 +126,6 @@ static struct st_test_file* file_stack_end;
 
 static CHARSET_INFO *charset_info= &my_charset_latin1; /* Default charset */
 
-static const char *embedded_server_groups[]=
-{
-  "server",
-  "embedded",
-  "mysqltest_SERVER",
-  NullS
-};
-
 static int embedded_server_arg_count=0;
 static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];
 
@@ -5655,10 +5647,6 @@ int main(int argc, char **argv)
   init_dynamic_string(&ds_warning_messages, "", 0, 2048);
   parse_args(argc, argv);
 
-  if (mysql_server_init(embedded_server_arg_count,
-			embedded_server_args,
-			(char**) embedded_server_groups))
-    die("Can't initialize MySQL server");
   server_initialized= 1;
   if (cur_file == file_stack && cur_file->file == 0)
   {

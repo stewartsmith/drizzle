@@ -90,6 +90,9 @@ const char	*unknown_sqlstate= "HY000";
 const char	*not_error_sqlstate= "00000";
 const char	*cant_connect_sqlstate= "08001";
 
+static bool mysql_client_init= false;
+static bool org_my_init_done= false;
+
 static void mysql_close_free_options(MYSQL *mysql);
 static void mysql_close_free(MYSQL *mysql);
 
@@ -1036,8 +1039,59 @@ read_one_row(MYSQL *mysql, uint32_t fields, MYSQL_ROW row, uint32_t *lengths)
 MYSQL *
 drizzle_create(MYSQL *ptr)
 {
-  if (mysql_server_init(0, NULL, NULL))
-    return 0;
+
+  if (!mysql_client_init)
+  {
+    mysql_client_init=true;
+    org_my_init_done=my_init_done;
+
+    /* Will init threads */
+    if (my_init())
+      return NULL;
+
+    init_client_errs();
+
+    if (!mysql_port)
+    {
+      mysql_port = MYSQL_PORT;
+      {
+        struct servent *serv_ptr;
+        char *env;
+
+        /*
+          if builder specifically requested a default port, use that
+          (even if it coincides with our factory default).
+          only if they didn't do we check /etc/services (and, failing
+          on that, fall back to the factory default of 4427).
+          either default can be overridden by the environment variable
+          MYSQL_TCP_PORT, which in turn can be overridden with command
+          line options.
+        */
+
+#if MYSQL_PORT_DEFAULT == 0
+        if ((serv_ptr = getservbyname("mysql", "tcp")))
+          mysql_port = (uint) ntohs((ushort) serv_ptr->s_port);
+#endif
+        if ((env = getenv("MYSQL_TCP_PORT")))
+          mysql_port =(uint) atoi(env);
+      }
+    }
+    if (!mysql_unix_port)
+    {
+      char *env;
+      mysql_unix_port = (char*) MYSQL_UNIX_ADDR;
+      if ((env = getenv("MYSQL_UNIX_PORT")))
+        mysql_unix_port = env;
+    }
+#if defined(SIGPIPE)
+    (void) signal(SIGPIPE, SIG_IGN);
+#endif
+  }
+  else
+    /* Init if new thread */
+    if (my_thread_init())
+      return NULL;
+
   if (ptr == NULL)
   {
     ptr= (MYSQL *) malloc(sizeof(MYSQL));
@@ -1093,6 +1147,48 @@ drizzle_create(MYSQL *ptr)
   ptr->reconnect= 0;
 
   return ptr;
+}
+
+
+/*
+  Free all memory and resources used by the client library
+
+  NOTES
+    When calling this there should not be any other threads using
+    the library.
+
+    To make things simpler when used with windows dll's (which calls this
+    function automaticly), it's safe to call this function multiple times.
+*/
+
+
+void STDCALL mysql_server_end()
+{
+  if (!mysql_client_init)
+    return;
+
+  finish_client_errs();
+  vio_end();
+
+  /* If library called my_init(), free memory allocated by it */
+  if (!org_my_init_done)
+  {
+    my_end(0);
+  }
+  else
+  {
+    free_charsets();
+    mysql_thread_end();
+  }
+
+  mysql_client_init= org_my_init_done= 0;
+#ifdef EMBEDDED_SERVER
+  if (stderror_file)
+  {
+    fclose(stderror_file);
+    stderror_file= 0;
+  }
+#endif
 }
 
 

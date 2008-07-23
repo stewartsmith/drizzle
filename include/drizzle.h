@@ -281,7 +281,6 @@ typedef struct st_mysql_parameters
   work when linked against either the standard client library or the
   embedded server library, these functions should be called.
 */
-int STDCALL mysql_server_init(int argc, char **argv, char **groups);
 void STDCALL mysql_server_end(void);
 
 /*
@@ -293,7 +292,6 @@ void STDCALL mysql_server_end(void);
   names which suit well whether you're using libmysqld or libmysqlclient. We
   intend to promote these aliases over the mysql_server* ones.
 */
-#define mysql_library_init mysql_server_init
 #define mysql_library_end mysql_server_end
 
 MYSQL_PARAMETERS *STDCALL mysql_get_parameters(void);
