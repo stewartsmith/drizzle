@@ -9,6 +9,7 @@ AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
+AM_GNU_GETTEXT([external])
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -49,6 +50,15 @@ sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 sinclude(config/ac-macros/pkg.m4)
+sinclude(config/ac-macros/lib-link.m4)
+sinclude(config/ac-macros/lib-prefix.m4)
+sinclude(config/ac-macros/gettext.m4)
+sinclude(config/ac-macros/progtest.m4)
+sinclude(config/ac-macros/po.m4)
+sinclude(config/ac-macros/nls.m4)
+sinclude(config/ac-macros/iconv.m4)
+sinclude(config/ac-macros/lib-ld.m4)
+
 
 # Remember to add a directory server/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
@@ -1264,7 +1274,7 @@ case $SYSTEM_TYPE in
 esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
-AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
+AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl po/Makefile.in
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl

@@ -15,7 +15,7 @@
 
 # Process this file with automake to create Makefile.in
 
-SUBDIRS = . vio \
+SUBDIRS = po . vio \
 	  strings \
 	  mysys \
 	  include \
@@ -28,7 +28,7 @@ SUBDIRS = . vio \
 	  tests \
 	  support-files
 
-DIST_SUBDIRS = $(SUBDIRS) \
+DIST_SUBDIRS = po $(SUBDIRS) \
 	       mysys/tests \
 	       strings/tests
 
@@ -111,3 +111,7 @@ test-drizzle:
 	  mysqlslap \
 	  lock \
 	  lock_tables_lost_commit
+
+ACLOCAL_AMFLAGS = -I m4
+
+EXTRA_DIST = config/config.rpath m4/ChangeLog
