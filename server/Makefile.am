@@ -25,9 +25,6 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-AM_CPPFLAGS =-I$(top_builddir)/include \
-	     -I$(top_srcdir)/include
-
 SUBDIRS = field . share
 
 libexec_PROGRAMS =drizzled

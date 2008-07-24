@@ -90,13 +90,11 @@ noinst_HEADERS =	my_bit.h \
 			drizzle/server/field/varstring.h \
 			drizzle/server/field/year.h
 
-AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
-              -I$(top_srcdir)/server
-
 LDADD = $(top_builddir)/mysys/libmysyslt.la \
         $(top_builddir)/strings/libmystringslt.la $(ZLIB_LIBS)
 
 EXTRA_PROGRAMS = comp_err
+comperr_CFLAGS = -I${top_srcdir}/server
 
 # This will build mysqld_error.h, mysqld_ername.h and sql_state.h
 # NOTE Built files should depend on their sources to avoid
