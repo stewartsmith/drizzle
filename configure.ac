@@ -349,14 +349,17 @@ if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+
+MYSQL_CHECK_NEW_RL_INTERFACE
+
 my_save_LIBS="$LIBS"
 LIBS=""
-AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find libreadline.)])
+AC_CHECK_LIB(readline, rl_initialize, [],
+             [AC_MSG_ERROR(Couldn't find libreadline.)])
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
 
-MYSQL_CHECK_NEW_RL_INTERFACE
 
 #--------------------------------------------------------------------
 # Check for libpcre
