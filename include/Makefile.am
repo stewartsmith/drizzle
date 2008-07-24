@@ -15,9 +15,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
-BUILT_SOURCES =		$(HEADERS_GEN) 
 
-HEADERS_GEN =		drizzle_version.h
+BUILT_SOURCES =		drizzle_version.h \
+			mysqld_ername.h \
+			mysqld_error.h \
+			sql_state.h
 
 HEADERS_ABI =		drizzle.h \
 			drizzle_com.h \
@@ -43,7 +45,7 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			keycache.h \
 			m_ctype.h \
 			my_attribute.h \
-			$(HEADERS_GEN)
+			$(BUILT_SOURCES)
 
 noinst_HEADERS =	my_bit.h \
 			heap.h \
@@ -88,6 +90,28 @@ noinst_HEADERS =	my_bit.h \
 			drizzle/server/field/varstring.h \
 			drizzle/server/field/year.h
 
+AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include \
+              -I$(top_srcdir)/server
+
+LDADD = $(top_builddir)/mysys/libmysyslt.la \
+        $(top_builddir)/strings/libmystringslt.la $(ZLIB_LIBS)
+
+EXTRA_PROGRAMS = comp_err
+
+# This will build mysqld_error.h, mysqld_ername.h and sql_state.h
+# NOTE Built files should depend on their sources to avoid
+# the built files being rebuilt in source dist
+mysqld_error.h: comp_err$(EXEEXT) $(top_srcdir)/server/share/errmsg.txt
+	$(top_builddir)/include/comp_err$(EXEEXT) \
+	--charset=$(top_srcdir)/server/share/charsets \
+	--out-dir=$(top_builddir)/server/share/ \
+	--header_file=$(top_builddir)/include/mysqld_error.h \
+	--name_file=$(top_builddir)/include/mysqld_ername.h \
+	--state_file=$(top_builddir)/include/sql_state.h \
+	--in_file=$(top_srcdir)/server/share/errmsg.txt
+
+mysqld_ername.h: mysqld_error.h
+sql_state.h: mysqld_error.h
 
 # Remove built files and the symlinked directories
 CLEANFILES = 		$(BUILT_SOURCES)
