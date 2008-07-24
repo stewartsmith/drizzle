@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "timestamp.h"
+#include "drizzle/server/field/timestamp.h"
 
 /**
   TIMESTAMP type holds datetime values in range from 1970-01-01 00:00:01 UTC to 

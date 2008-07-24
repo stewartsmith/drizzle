@@ -20,7 +20,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-#include <mysql/plugin_audit.h>
+#include <drizzle/plugin_audit.h>
 #include "log.h"
 #include "rpl_tblmap.h"
 

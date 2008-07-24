@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "decimal.h"
+#include "drizzle/server/field/decimal.h"
 
 /****************************************************************************
 ** Field_new_decimal

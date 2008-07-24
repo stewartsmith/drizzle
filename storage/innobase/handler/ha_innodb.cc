@@ -38,7 +38,6 @@ have disabled the InnoDB inlining in this file. */
 #include <mysys_err.h>
 #include <my_sys.h>
 #include "ha_innodb.h"
-#include <mysql/plugin.h>
 
 #ifndef MYSQL_SERVER
 /* This is needed because of Bug #3596.  Let us hope that pthread_mutex_t

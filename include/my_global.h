@@ -260,10 +260,6 @@
 #endif
 
 #include <errno.h>				/* Recommended by debian */
-/* We need the following to go around a problem with openssl on solaris */
-#if defined(HAVE_CRYPT_H)
-#include <crypt.h>
-#endif
 
 #if defined(HAVE_STDINT_H)
 /* We are mixing C and C++, so we wan the C limit macros in the C++ too */
@@ -604,7 +600,7 @@ typedef unsigned char	uchar;	/* Short for unsigned char */
 #endif
 
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
-typedef uint32_t	ulong;		  /* Short for unsigned long */
+typedef unsigned long ulong;		  /* Short for unsigned long */
 #endif
 
 #define MY_ERRPTR ((void*)(intptr)1)

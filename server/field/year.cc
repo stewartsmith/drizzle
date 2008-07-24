@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "year.h"
+#include "drizzle/server/field/year.h"
 
 /****************************************************************************
 ** year type

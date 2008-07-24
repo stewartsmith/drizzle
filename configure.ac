@@ -340,6 +340,9 @@ LIBS="$my_save_LIBS"
 AC_SUBST(ZLIB_LIBS)
 
 
+#--------------------------------------------------------------------
+# Check for libreadline or compatible (libedit on Mac OS X)
+#--------------------------------------------------------------------
 
 AC_CHECK_HEADERS([readline/readline.h])
 if test "x$ac_cv_header_readline_readline_h" != "xyes"
@@ -352,6 +355,8 @@ AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find li
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
+
+MYSQL_CHECK_NEW_RL_INTERFACE
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -379,11 +384,6 @@ fi
 AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
-
-AM_PATH_GLIB_2_0
-if test "x$no_glib" != "x" ; then
-    AC_MSG_ERROR([Couldn't find GLib2. Try installing libglib2.0-dev or glib2-devel])
-fi
 
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
@@ -632,7 +632,7 @@ AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
 AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
 AC_CHECK_HEADERS(sys/timeb.h sys/vadvise.h sys/wait.h term.h)
-AC_CHECK_HEADERS(termio.h termios.h sched.h crypt.h alloca.h)
+AC_CHECK_HEADERS(termio.h termios.h sched.h alloca.h)
 AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
 AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
 AC_CHECK_HEADERS(execinfo.h)
@@ -726,6 +726,8 @@ then
   OPTIMIZE_CXXFLAGS=""
   DEBUG_OPTIMIZE_CXX=""
 fi
+
+AC_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
 CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
@@ -1263,7 +1265,9 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
- server/Makefile server/share/Makefile dnl
+ server/Makefile dnl
+ server/field/Makefile dnl
+ server/share/Makefile dnl
  server/sql_builtin.cc dnl
  include/Makefile dnl
  support-files/Makefile dnl

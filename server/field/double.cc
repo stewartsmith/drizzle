@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "double.h"
+#include "drizzle/server/field/double.h"
 
 /****************************************************************************
   double precision floating point numbers

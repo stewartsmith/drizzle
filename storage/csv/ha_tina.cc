@@ -46,7 +46,6 @@ TODO:
 #endif
 
 #include "mysql_priv.h"
-#include <mysql/plugin.h>
 #include "ha_tina.h"
 
 

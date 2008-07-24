@@ -1111,9 +1111,11 @@ Tries to disable OS caching on an opened file descriptor. */
 static void
 os_file_set_nocache(
 /*================*/
-	int		fd,		/* in: file descriptor to alter */
-	const char*	file_name,	/* in: used in the diagnostic message */
-	const char*	operation_name)	/* in: used in the diagnostic message,
+	int		fd,/* in: file descriptor to alter */
+	const char*	file_name,/* in: used in the diagnostic
+					message */
+	const char*	operation_name)/* in: used in the
+					diagnostic message,
 					we call os_file_set_nocache()
 					immediately after opening or creating
 					a file, so this is either "open" or
@@ -1147,6 +1149,10 @@ os_file_set_nocache(
 				"see MySQL Bug#26662\n");
 		}
 	}
+#else
+  (void)fd;
+  (void)file_name;
+  (void)operation_name;
 #endif
 }
 

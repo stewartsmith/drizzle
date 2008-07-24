@@ -29,9 +29,7 @@
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
-void net_send_error_packet(THD *thd, uint sql_errno, const char *err);
-void net_send_ok(THD *, uint, uint, ha_rows, uint64_t, const char *);
-void net_send_eof(THD *thd, uint server_status, uint total_warn_count);
+static void net_send_error_packet(THD *thd, uint sql_errno, const char *err);
 static void write_eof_packet(THD *thd, NET *net,
                              uint server_status, uint total_warn_count);
 
@@ -162,7 +160,7 @@ void net_send_error(THD *thd, uint sql_errno, const char *err)
   @param message	   Message to send to the client (Used by mysql_status)
 */
 
-void
+static void
 net_send_ok(THD *thd,
             uint server_status, uint total_warn_count,
             ha_rows affected_rows, uint64_t id, const char *message)
@@ -226,7 +224,7 @@ static uchar eof_buff[1]= { (uchar) 254 };      /* Marker for end of fields */
                     like in send_fields().
 */    
 
-void
+static void
 net_send_eof(THD *thd, uint server_status, uint total_warn_count)
 {
   NET *net= &thd->net;

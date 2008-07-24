@@ -31,7 +31,7 @@ extern "C" {
 #include "keycache.h"
 #endif
 #include "my_handler.h"
-#include <mysql/plugin.h>
+#include <drizzle/plugin.h>
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY

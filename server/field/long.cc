@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "long.h"
+#include "drizzle/server/field/long.h"
 
 /****************************************************************************
 ** long int
