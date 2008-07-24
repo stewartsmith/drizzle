@@ -15,10 +15,10 @@
 
 # Process this file with automake to create Makefile.in
 
-SUBDIRS = . include \
-	  vio \
+SUBDIRS = . vio \
 	  strings \
 	  mysys \
+	  include \
 	  extra \
 	  libdrizzle \
 	  client \
