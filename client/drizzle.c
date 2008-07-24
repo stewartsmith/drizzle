@@ -18,18 +18,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* mysql command tool
+/* drizzle command tool
  * Commands compatible with mSQL by David J. Hughes
  *
  * Written by:
  *   Michael 'Monty' Widenius
  *   Andi Gutmans  <andi@zend.com>
  *   Zeev Suraski  <zeev@zend.com>
- *   Jani Tolonen  <jani@mysql.com>
- *   Matt Wagner   <matt@mysql.com>
- *   Jeremy Cole   <jcole@mysql.com>
- *   Tonu Samuel   <tonu@mysql.com>
- *   Harrison Fisk <harrison@mysql.com>
+ *   Jani Tolonen  <jani@drizzle.com>
+ *   Matt Wagner   <matt@drizzle.com>
+ *   Jeremy Cole   <jcole@drizzle.com>
+ *   Tonu Samuel   <tonu@drizzle.com>
+ *   Harrison Fisk <harrison@drizzle.com>
  *
  **/
 
@@ -39,7 +39,7 @@
 #include <stdarg.h>
 #include <my_dir.h>
 #ifndef __GNU_LIBRARY__
-#define __GNU_LIBRARY__		      // Skip warnings in getopt.h
+#define __GNU_LIBRARY__          // Skip warnings in getopt.h
 #endif
 #include <readline/history.h>
 #include "my_readline.h"
@@ -53,15 +53,15 @@
 const char *VER= "14.14";
 
 /* Don't try to make a nice table if the data is too big */
-#define MAX_COLUMN_LENGTH	     1024
+#define MAX_COLUMN_LENGTH       1024
 
 /* Buffer to hold 'version' and 'version_comment' */
 #define MAX_SERVER_VERSION_LENGTH     128
 
-/* Array of options to pass to libemysqld */
+/* Array of options to pass to libdrizzled */
 #define MAX_SERVER_ARGS               64
 
-void* sql_alloc(unsigned size);	     // Don't use mysqld alloc for these
+void* sql_alloc(unsigned size);       // Don't use drizzled alloc for these
 void sql_element_free(void *ptr);
 
 #if defined(HAVE_CURSES_H) && defined(HAVE_TERM_H)
@@ -74,7 +74,7 @@ void sql_element_free(void *ptr);
 #elif defined(HAVE_TERMBITS_H)
 #include <termbits.h>
 #elif defined(HAVE_ASM_TERMBITS_H) && (!defined __GLIBC__ || !(__GLIBC__ > 2 || __GLIBC__ == 2 && __GLIBC_MINOR__ > 0))
-#include <asm/termbits.h>		// Standard linux
+#include <asm/termbits.h>    // Standard linux
 #endif
 #undef VOID
 #if defined(HAVE_TERMCAP_H)
@@ -83,14 +83,14 @@ void sql_element_free(void *ptr);
 #ifdef HAVE_CURSES_H
 #include <curses.h>
 #endif
-#undef SYSV				// hack to avoid syntax error
+#undef SYSV        // hack to avoid syntax error
 #ifdef HAVE_TERM_H
 #include <term.h>
 #endif
 #endif
 #endif
 
-#undef bcmp				// Fix problem with new readline
+#undef bcmp        // Fix problem with new readline
 
 #include <readline/readline.h>
 
@@ -107,7 +107,7 @@ typedef Function rl_compentry_func_t;
 
 #if !defined(HAVE_VIDATTR)
 #undef vidattr
-#define vidattr(A) {}			// Can't get this to work
+#define vidattr(A) {}      // Can't get this to work
 #endif
 
 #ifdef FN_NO_CASE_SENCE
@@ -137,8 +137,8 @@ static char **defaults_argv;
 enum enum_info_type { INFO_INFO,INFO_ERROR,INFO_RESULT};
 typedef enum enum_info_type INFO_TYPE;
 
-static MYSQL mysql;			/* The connection */
-static bool ignore_errors=0,wait_flag=0,quick=0,
+static DRIZZLE drizzle;      /* The connection */
+static bool ignore_errors=0,quick=0,
   connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
   opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
   opt_compress=0, using_opt_local_infile=0,
@@ -153,9 +153,9 @@ static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
 static bool preserve_comments= 0;
 static ulong opt_max_allowed_packet, opt_net_buffer_length;
-static int verbose=0,opt_silent=0,opt_mysql_port=0, opt_local_infile=0;
+static int verbose=0,opt_silent=0,opt_drizzle_port=0, opt_local_infile=0;
 static uint my_end_arg;
-static char * opt_mysql_unix_port=0;
+static char * opt_drizzle_unix_port=0;
 static int connect_flag=CLIENT_INTERACTIVE;
 static char *current_host,*current_db,*current_user=0,*opt_password=0,
   *delimiter_str= 0,*current_prompt=0,
@@ -166,12 +166,11 @@ static DYNAMIC_STRING *glob_buffer;
 static DYNAMIC_STRING *processed_prompt= NULL;
 static char *default_prompt= NULL;
 static char *full_username=0,*part_username=0;
-static int wait_time = 5;
 static STATUS status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
 static ulong opt_connect_timeout= 0;
-static char mysql_charsets_dir[FN_REFLEN+1];
+static char drizzle_charsets_dir[FN_REFLEN+1];
 static const char *xmlmeta[] = {
   "&", "&amp;",
   "<", "&lt;",
@@ -191,12 +190,12 @@ static char delimiter[16]= DEFAULT_DELIMITER;
 static uint delimiter_length= 1;
 unsigned short terminal_width= 80;
 
-static uint opt_protocol= MYSQL_PROTOCOL_TCP;
+static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
 
-const char *default_dbug_option="d:t:o,/tmp/mysql.trace";
-int mysql_real_query_for_lazy(const char *buf, int length);
-int mysql_store_result_for_lazy(MYSQL_RES **result);
+const char *default_dbug_option="d:t:o,/tmp/drizzle.trace";
+int drizzle_real_query_for_lazy(const char *buf, int length);
+int drizzle_store_result_for_lazy(DRIZZLE_RES **result);
 
 
 void tee_fprintf(FILE *file, const char *fmt, ...);
@@ -223,10 +222,10 @@ static int com_quit(DYNAMIC_STRING *str,char*),
 static int read_and_execute(bool interactive);
 static int sql_connect(char *host,char *database,char *user,char *password,
                        uint silent);
-static const char *server_version_string(MYSQL *mysql);
+static const char *server_version_string(DRIZZLE *drizzle);
 static int put_info(const char *str,INFO_TYPE info,uint error,
                     const char *sql_state);
-static int put_error(MYSQL *mysql);
+static int put_error(DRIZZLE *drizzle);
 static void safe_put_field(const char *pos,ulong length);
 static void xmlencode_print(const char *src, uint length);
 static void init_pager(void);
@@ -237,8 +236,8 @@ static const char* construct_prompt(void);
 static char *get_arg(char *line, bool get_next_arg);
 static void init_username(void);
 static void add_int_to_prompt(int toadd);
-static int get_result_width(MYSQL_RES *res);
-static int get_field_disp_length(MYSQL_FIELD * field);
+static int get_result_width(DRIZZLE_RES *res);
+static int get_field_disp_length(DRIZZLE_FIELD * field);
 
 /* A structure which contains information on the commands this program
    can understand. */
@@ -259,17 +258,17 @@ static COMMANDS commands[] = {
   { "delimiter", 'd', com_delimiter,    1,
     "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter." },
   { "ego",    'G', com_ego,    0,
-    "Send command to mysql server, display result vertically."},
-  { "exit",   'q', com_quit,   0, "Exit mysql. Same as quit."},
-  { "go",     'g', com_go,     0, "Send command to mysql server." },
+    "Send command to drizzle server, display result vertically."},
+  { "exit",   'q', com_quit,   0, "Exit drizzle. Same as quit."},
+  { "go",     'g', com_go,     0, "Send command to drizzle server." },
   { "help",   'h', com_help,   1, "Display this help." },
   { "nopager",'n', com_nopager,0, "Disable pager, print to stdout." },
   { "notee",  't', com_notee,  0, "Don't write into outfile." },
   { "pager",  'P', com_pager,  1,
     "Set PAGER [to_pager]. Print the query results via PAGER." },
   { "print",  'p', com_print,  0, "Print current command." },
-  { "prompt", 'R', com_prompt, 1, "Change your mysql prompt."},
-  { "quit",   'q', com_quit,   0, "Quit mysql." },
+  { "prompt", 'R', com_prompt, 1, "Change your drizzle prompt."},
+  { "quit",   'q', com_quit,   0, "Quit drizzle." },
   { "rehash", '#', com_rehash, 0, "Rebuild completion hash." },
   { "source", '.', com_source, 1,
     "Execute an SQL script file. Takes a file name as an argument."},
@@ -994,12 +993,10 @@ static COMMANDS commands[] = {
   { (char *)NULL,       0, 0, 0, ""}
 };
 
-static const char *load_default_groups[]= { "mysql","client",0 };
+static const char *load_default_groups[]= { "drizzle","client",0 };
 
 static int         embedded_server_arg_count= 0;
 static char       *embedded_server_args[MAX_SERVER_ARGS];
-static const char *embedded_server_groups[]=
-{ "server", "mysql_SERVER", 0 };
 
 int history_length;
 static int not_in_history(const char *line);
@@ -1010,17 +1007,17 @@ static COMMANDS *find_command(char *name,char cmd_name);
 static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
                      bool *ml_comment);
 static void remove_cntrl(DYNAMIC_STRING *buffer);
-static void print_table_data(MYSQL_RES *result);
-static void print_table_data_html(MYSQL_RES *result);
-static void print_table_data_xml(MYSQL_RES *result);
-static void print_tab_data(MYSQL_RES *result);
-static void print_table_data_vertically(MYSQL_RES *result);
+static void print_table_data(DRIZZLE_RES *result);
+static void print_table_data_html(DRIZZLE_RES *result);
+static void print_table_data_xml(DRIZZLE_RES *result);
+static void print_tab_data(DRIZZLE_RES *result);
+static void print_table_data_vertically(DRIZZLE_RES *result);
 static void print_warnings(void);
 static ulong start_timer(void);
 static void end_timer(ulong start_time,char *buff);
-static void mysql_end_timer(ulong start_time,char *buff);
+static void drizzle_end_timer(ulong start_time,char *buff);
 static void nice_time(double sec,char *buff,bool part_second);
-extern sig_handler mysql_end(int sig);
+extern sig_handler drizzle_end(int sig);
 extern sig_handler handle_sigint(int sig);
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
 static sig_handler window_resize(int sig);
@@ -1042,8 +1039,8 @@ int main(int argc,char *argv[])
 
   prompt_counter=0;
 
-  outfile[0]=0;			// no (default) outfile
-  strmov(pager, "stdout");	// the default, if --pager wasn't given
+  outfile[0]=0;      // no (default) outfile
+  strmov(pager, "stdout");  // the default, if --pager wasn't given
   {
     char *tmp=getenv("PAGER");
     if (tmp && strlen(tmp))
@@ -1090,32 +1087,24 @@ int main(int argc,char *argv[])
     my_end(0);
     exit(1);
   }
-  if (mysql_server_init(embedded_server_arg_count, embedded_server_args,
-                        (char**) embedded_server_groups))
-  {
-    put_error(NULL);
-    free_defaults(defaults_argv);
-    my_end(0);
-    exit(1);
-  }
   completion_hash_init(&ht, 128);
   init_alloc_root(&hash_mem_root, 16384, 0);
-  bzero((char*) &mysql, sizeof(mysql));
+  bzero((char*) &drizzle, sizeof(drizzle));
   if (sql_connect(current_host,current_db,current_user,opt_password,
                   opt_silent))
   {
-    quick= 1;					// Avoid history
+    quick= 1;          // Avoid history
     status.exit_status= 1;
-    mysql_end(-1);
+    drizzle_end(-1);
   }
   if (!status.batch)
-    ignore_errors=1;				// Don't abort monitor
+    ignore_errors=1;        // Don't abort monitor
 
   if (opt_sigint_ignore)
     signal(SIGINT, SIG_IGN);
   else
     signal(SIGINT, handle_sigint);              // Catch SIGINT to clean up
-  signal(SIGQUIT, mysql_end);			// Catch SIGQUIT to clean up
+  signal(SIGQUIT, drizzle_end);      // Catch SIGQUIT to clean up
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
   /* Readline will call this if it installs a handler */
@@ -1133,28 +1122,28 @@ int main(int argc,char *argv[])
   /* this is a slight abuse of the DYNAMIC_STRING interface. deal. */
   sprintf(glob_buffer->str,
           "Your Drizzle connection id is %u\nServer version: %s\n",
-          mysql_thread_id(&mysql), server_version_string(&mysql));
+          drizzle_thread_id(&drizzle), server_version_string(&drizzle));
   put_info(glob_buffer->str, INFO_INFO, 0, 0);
   dynstr_set(glob_buffer, NULL);
 
   initialize_readline(my_progname);
   if (!status.batch && !quick && !opt_html && !opt_xml)
   {
-    /* read-history from file, default ~/.mysql_history*/
+    /* read-history from file, default ~/.drizzle_history*/
     if (getenv("MYSQL_HISTFILE"))
       histfile= strdup(getenv("MYSQL_HISTFILE"));
     else if (getenv("HOME"))
     {
       histfile=(char*) my_malloc((uint) strlen(getenv("HOME"))
-                                 + (uint) strlen("/.mysql_history")+2,
+                                 + (uint) strlen("/.drizzle_history")+2,
                                  MYF(MY_WME));
       if (histfile)
-        sprintf(histfile,"%s/.mysql_history",getenv("HOME"));
+        sprintf(histfile,"%s/.drizzle_history",getenv("HOME"));
       char link_name[FN_REFLEN];
       if (my_readlink(link_name, histfile, 0) == 0 &&
           strncmp(link_name, "/dev/null", 10) == 0)
       {
-        /* The .mysql_history file is a symlink to /dev/null, don't use it */
+        /* The .drizzle_history file is a symlink to /dev/null, don't use it */
         my_free(histfile, MYF(MY_ALLOW_ZERO_PTR));
         histfile= 0;
       }
@@ -1180,15 +1169,15 @@ int main(int argc,char *argv[])
   status.exit_status= read_and_execute(!status.batch);
   if (opt_outfile)
     end_tee();
-  mysql_end(0);
+  drizzle_end(0);
 #ifndef _lint
-  return(0);				// Keep compiler happy
+  return(0);        // Keep compiler happy
 #endif
 }
 
-sig_handler mysql_end(int sig)
+sig_handler drizzle_end(int sig)
 {
-  mysql_close(&mysql);
+  drizzle_close(&drizzle);
   if (!status.batch && !quick && !opt_html && !opt_xml && histfile)
   {
     /* write-history */
@@ -1210,7 +1199,7 @@ sig_handler mysql_end(int sig)
     dynstr_free(processed_prompt);
   my_free(processed_prompt,MYF(MY_ALLOW_ZERO_PTR));
   my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
-  my_free(opt_mysql_unix_port,MYF(MY_ALLOW_ZERO_PTR));
+  my_free(opt_drizzle_unix_port,MYF(MY_ALLOW_ZERO_PTR));
   my_free(histfile,MYF(MY_ALLOW_ZERO_PTR));
   my_free(histfile_tmp,MYF(MY_ALLOW_ZERO_PTR));
   my_free(current_db,MYF(MY_ALLOW_ZERO_PTR));
@@ -1222,7 +1211,7 @@ sig_handler mysql_end(int sig)
   my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
   while (embedded_server_arg_count > 1)
     my_free(embedded_server_args[--embedded_server_arg_count],MYF(0));
-  mysql_server_end();
+  drizzle_server_end();
   free_defaults(defaults_argv);
   my_end(my_end_arg);
   exit(status.exit_status);
@@ -1237,24 +1226,24 @@ sig_handler mysql_end(int sig)
 sig_handler handle_sigint(int sig)
 {
   char kill_buffer[40];
-  MYSQL *kill_mysql= NULL;
+  DRIZZLE *kill_drizzle= NULL;
 
   /* terminate if no query being executed, or we already tried interrupting */
   if (!executing_query || interrupted_query) {
     goto err;
   }
 
-  kill_mysql= mysql_init(kill_mysql);
-  if (!mysql_real_connect(kill_mysql,current_host, current_user, opt_password,
-                          "", opt_mysql_port, opt_mysql_unix_port,0))
+  kill_drizzle= drizzle_create(kill_drizzle);
+  if (!drizzle_connect(kill_drizzle,current_host, current_user, opt_password,
+                          "", opt_drizzle_port, opt_drizzle_unix_port,0))
   {
     goto err;
   }
 
   /* kill_buffer is always big enough because max length of %lu is 15 */
-  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u", mysql_thread_id(&mysql));
-  mysql_real_query(kill_mysql, kill_buffer, strlen(kill_buffer));
-  mysql_close(kill_mysql);
+  sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u", drizzle_thread_id(&drizzle));
+  drizzle_real_query(kill_drizzle, kill_buffer, strlen(kill_buffer));
+  drizzle_close(kill_drizzle);
   tee_fprintf(stdout, "Query aborted by Ctrl+C\n");
 
   interrupted_query= 1;
@@ -1262,7 +1251,7 @@ sig_handler handle_sigint(int sig)
   return;
 
 err:
-  mysql_end(sig);
+  drizzle_end(sig);
 }
 
 
@@ -1287,7 +1276,7 @@ static struct my_option my_long_options[] =
    (char**) &opt_rehash, (char**) &opt_rehash, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0,
    0, 0},
   {"no-auto-rehash", 'A',
-   "No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of mysql and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead.",
+   "No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of DRIZZLE and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-vertical-output", OPT_AUTO_VERTICAL_OUTPUT,
    "Automatically switch to vertical output mode if the result is wider than the terminal width.",
@@ -1328,7 +1317,7 @@ static struct my_option my_long_options[] =
    (char**) &ignore_errors, (char**) &ignore_errors, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"named-commands", 'G',
-   "Enable named commands. Named commands mean this program's internal commands; see mysql> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default.",
+   "Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default.",
    (char**) &named_cmds, (char**) &named_cmds, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"no-named-commands", 'g',
@@ -1384,12 +1373,12 @@ static struct my_option my_long_options[] =
    "/etc/services, "
 #endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
-   (char**) &opt_mysql_port,
-   (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
-  {"prompt", OPT_PROMPT, "Set the mysql prompt to this value.",
+   (char**) &opt_drizzle_port,
+   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
+  {"prompt", OPT_PROMPT, "Set the drizzle prompt to this value.",
    (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_MYSQL_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
+  {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
    "Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file.",
@@ -1402,7 +1391,7 @@ static struct my_option my_long_options[] =
   {"silent", 's', "Be more silent. Print results with a tab as separator, each row on new line.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-   (char**) &opt_mysql_unix_port, (char**) &opt_mysql_unix_port, 0, GET_STR_ALLOC,
+   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"table", 't', "Output in table format.", (char**) &output_tables,
    (char**) &output_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -1474,7 +1463,7 @@ static void usage(int version)
   if (version)
     return;
   printf("\
-Copyright (C) 2000-2008 MySQL AB\n                                      \
+Copyright (C) 2000-2008 Drizzle AB\n                                      \
 This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n \
 and you are welcome to modify and redistribute it under the GPL license\n");
   printf("Usage: %s [OPTIONS] [database]\n", my_progname);
@@ -1490,8 +1479,8 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 {
   switch(optid) {
   case OPT_CHARSETS_DIR:
-    strmake(mysql_charsets_dir, argument, sizeof(mysql_charsets_dir) - 1);
-    charsets_dir = mysql_charsets_dir;
+    strmake(drizzle_charsets_dir, argument, sizeof(drizzle_charsets_dir) - 1);
+    charsets_dir = drizzle_charsets_dir;
     break;
   case  OPT_DEFAULT_CHARSET:
     default_charset_used= 1;
@@ -1557,7 +1546,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     printf("WARNING: option deprecated; use --disable-pager instead.\n");
     opt_nopager= 1;
     break;
-  case OPT_MYSQL_PROTOCOL:
+  case OPT_DRIZZLE_PROTOCOL:
     opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
                                     opt->name);
     break;
@@ -1586,7 +1575,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     break;
   case 'p':
     if (argument == disabled_my_option)
-      argument= (char*) "";			// Don't require password
+      argument= (char*) "";      // Don't require password
     if (argument)
     {
       char *start= argument;
@@ -1634,7 +1623,7 @@ static int get_options(int argc, char **argv)
 {
   char *tmp, *pagpoint;
   int ho_error;
-  MYSQL_PARAMETERS *mysql_params= mysql_get_parameters();
+  DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
 
   tmp= (char *) getenv("MYSQL_HOST");
   if (tmp)
@@ -1650,14 +1639,14 @@ static int get_options(int argc, char **argv)
     strmov(pager, pagpoint);
   strmov(default_pager, pager);
 
-  opt_max_allowed_packet= *mysql_params->p_max_allowed_packet;
-  opt_net_buffer_length= *mysql_params->p_net_buffer_length;
+  opt_max_allowed_packet= *drizzle_params->p_max_allowed_packet;
+  opt_net_buffer_length= *drizzle_params->p_net_buffer_length;
 
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
     exit(ho_error);
 
-  *mysql_params->p_max_allowed_packet= opt_max_allowed_packet;
-  *mysql_params->p_net_buffer_length= opt_net_buffer_length;
+  *drizzle_params->p_max_allowed_packet= opt_max_allowed_packet;
+  *drizzle_params->p_net_buffer_length= opt_net_buffer_length;
 
   if (status.batch) /* disable pager and outfile in this case */
   {
@@ -1753,7 +1742,7 @@ static int read_and_execute(bool interactive)
     }
 
     /*
-      Check if line is a mysql command line
+      Check if line is a drizzle command line
       (We want to allow help, print and clear anywhere at line start
     */
     if ((named_cmds || (glob_buffer->length==0))
@@ -1820,7 +1809,7 @@ static COMMANDS *find_command(char *name,char cmd_char)
       while (my_isspace(charset_info,*end))
         end++;
       if (!*end)
-        end=0;					// no arguments to function
+        end=0;          // no arguments to function
     }
     else
       len=(uint) strlen(name);
@@ -1882,14 +1871,14 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
     }
 #endif
         if (!*ml_comment && inchar == '\\' &&
-        !(mysql.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES))
+        !(drizzle.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES))
     {
       // Found possbile one character command like \c
 
       if (!(inchar = (uchar) *++pos))
-        break;				// readline adds one '\'
-      if (*in_string || inchar == 'N')	// \N is short for NULL
-      {					// Don't allow commands in string
+        break;        // readline adds one '\'
+      if (*in_string || inchar == 'N')  // \N is short for NULL
+      {          // Don't allow commands in string
         *out++='\\';
         *out++= (char) inchar;
         continue;
@@ -1923,7 +1912,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
             for (pos++ ;
                  *pos && (*pos != *delimiter ||
                           !is_prefix(pos + 1, delimiter + 1)) ; pos++)
-              ;	// Remove parameters
+              ;  // Remove parameters
             if (!*pos)
               pos--;
             else
@@ -2112,7 +2101,6 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
 static char **mysql_completion (const char *text, int start, int end);
 static char *new_command_generator(const char *text, int);
 
-
 /*
   Tell the GNU Readline library how to complete.  We want to try to complete
   on command names if this is the first word in the line, or on filenames
@@ -2239,7 +2227,7 @@ static char *new_command_generator(const char *text,int state)
     textlen=(uint) strlen(text);
 
   if (textlen>0)
-  {						/* lookup in the hash */
+  {            /* lookup in the hash */
     if (!state)
     {
       uint len;
@@ -2275,7 +2263,7 @@ static char *new_command_generator(const char *text,int state)
     }
     ptr= NullS;
     while (e && !ptr)
-    {					/* find valid entry in bucket */
+    {          /* find valid entry in bucket */
       if ((uint) strlen(e->str) == b->nKeyLength)
         ptr = strdup(e->str);
       /* find the next used entry */
@@ -2311,17 +2299,17 @@ static char *new_command_generator(const char *text,int state)
 static void build_completion_hash(bool rehash, bool write_info)
 {
   COMMANDS *cmd=commands;
-  MYSQL_RES *databases=0,*tables=0;
-  MYSQL_RES *fields;
+  DRIZZLE_RES *databases=0,*tables=0;
+  DRIZZLE_RES *fields;
   static char ***field_names= 0;
-  MYSQL_ROW database_row,table_row;
-  MYSQL_FIELD *sql_field;
-  char buf[NAME_LEN*2+2];		 // table name plus field name plus 2
+  DRIZZLE_ROW database_row,table_row;
+  DRIZZLE_FIELD *sql_field;
+  char buf[NAME_LEN*2+2];     // table name plus field name plus 2
   int i,j,num_fields;
 
 
   if (status.batch || quick || !current_db)
-    return;			// We don't need completion in batches
+    return;      // We don't need completion in batches
   if (!rehash)
     return;
 
@@ -2340,35 +2328,35 @@ static void build_completion_hash(bool rehash, bool write_info)
   /* hash Drizzle functions (to be implemented) */
 
   /* hash all database names */
-  if (mysql_query(&mysql,"show databases") == 0)
+  if (drizzle_query(&drizzle,"show databases") == 0)
   {
-    if (!(databases = mysql_store_result(&mysql)))
-      put_info(mysql_error(&mysql),INFO_INFO,0,0);
+    if (!(databases = drizzle_store_result(&drizzle)))
+      put_info(drizzle_error(&drizzle),INFO_INFO,0,0);
     else
     {
-      while ((database_row=mysql_fetch_row(databases)))
+      while ((database_row=drizzle_fetch_row(databases)))
       {
         char *str=strdup_root(&hash_mem_root, (char*) database_row[0]);
         if (str)
           add_word(&ht,(char*) str);
       }
-      mysql_free_result(databases);
+      drizzle_free_result(databases);
     }
   }
   /* hash all table names */
-  if (mysql_query(&mysql,"show tables")==0)
+  if (drizzle_query(&drizzle,"show tables")==0)
   {
-    if (!(tables = mysql_store_result(&mysql)))
-      put_info(mysql_error(&mysql),INFO_INFO,0,0);
+    if (!(tables = drizzle_store_result(&drizzle)))
+      put_info(drizzle_error(&drizzle),INFO_INFO,0,0);
     else
     {
-      if (mysql_num_rows(tables) > 0 && !opt_silent && write_info)
+      if (drizzle_num_rows(tables) > 0 && !opt_silent && write_info)
       {
         tee_fprintf(stdout, "\
 Reading table information for completion of table and column names\n    \
 You can turn off this feature to get a quicker startup with -A\n\n");
       }
-      while ((table_row=mysql_fetch_row(tables)))
+      while ((table_row=drizzle_fetch_row(tables)))
       {
         char *str=strdup_root(&hash_mem_root, (char*) table_row[0]);
         if (str &&
@@ -2379,33 +2367,33 @@ You can turn off this feature to get a quicker startup with -A\n\n");
   }
 
   /* hash all field names, both with the table prefix and without it */
-  if (!tables)					/* no tables */
+  if (!tables)          /* no tables */
   {
     return;
   }
-  mysql_data_seek(tables,0);
+  drizzle_data_seek(tables,0);
   if (!(field_names= (char ***) alloc_root(&hash_mem_root,sizeof(char **) *
-                                           (uint) (mysql_num_rows(tables)+1))))
+                                           (uint) (drizzle_num_rows(tables)+1))))
   {
-    mysql_free_result(tables);
+    drizzle_free_result(tables);
     return;
   }
   i=0;
-  while ((table_row=mysql_fetch_row(tables)))
+  while ((table_row=drizzle_fetch_row(tables)))
   {
-    if ((fields=mysql_list_fields(&mysql,(const char*) table_row[0],NullS)))
+    if ((fields=drizzle_list_fields(&drizzle,(const char*) table_row[0],NullS)))
     {
-      num_fields=mysql_num_fields(fields);
+      num_fields=drizzle_num_fields(fields);
       if (!(field_names[i] = (char **) alloc_root(&hash_mem_root,
                                                   sizeof(char *) *
                                                   (num_fields*2+1))))
       {
-        mysql_free_result(fields);
+        drizzle_free_result(fields);
         break;
       }
       field_names[i][num_fields*2]= '\0';
       j=0;
-      while ((sql_field=mysql_fetch_field(fields)))
+      while ((sql_field=drizzle_fetch_field(fields)))
       {
         sprintf(buf,"%.64s.%.64s",table_row[0],sql_field->name);
         field_names[i][j] = strdup_root(&hash_mem_root,buf);
@@ -2417,15 +2405,15 @@ You can turn off this feature to get a quicker startup with -A\n\n");
           add_word(&ht,field_names[i][num_fields+j]);
         j++;
       }
-      mysql_free_result(fields);
+      drizzle_free_result(fields);
     }
     else
       field_names[i]= 0;
 
     i++;
   }
-  mysql_free_result(tables);
-  field_names[i]=0;				// End pointer
+  drizzle_free_result(tables);
+  field_names[i]=0;        // End pointer
   return;
 }
 
@@ -2474,18 +2462,18 @@ static int reconnect(void)
 
 static void get_current_db(void)
 {
-  MYSQL_RES *res;
+  DRIZZLE_RES *res;
 
   my_free(current_db, MYF(MY_ALLOW_ZERO_PTR));
   current_db= NULL;
   /* In case of error below current_db will be NULL */
-  if (!mysql_query(&mysql, "SELECT DATABASE()") &&
-      (res= mysql_use_result(&mysql)))
+  if (!drizzle_query(&drizzle, "SELECT DATABASE()") &&
+      (res= drizzle_use_result(&drizzle)))
   {
-    MYSQL_ROW row= mysql_fetch_row(res);
+    DRIZZLE_ROW row= drizzle_fetch_row(res);
     if (row[0])
       current_db= strdup(row[0]);
-    mysql_free_result(res);
+    drizzle_free_result(res);
   }
 }
 
@@ -2493,15 +2481,15 @@ static void get_current_db(void)
  The different commands
 ***************************************************************************/
 
-int mysql_real_query_for_lazy(const char *buf, int length)
+int drizzle_real_query_for_lazy(const char *buf, int length)
 {
   for (uint retry=0;; retry++)
   {
     int error;
-    if (!mysql_real_query(&mysql,buf,length))
+    if (!drizzle_real_query(&drizzle,buf,length))
       return 0;
-    error= put_error(&mysql);
-    if (mysql_errno(&mysql) != CR_SERVER_GONE_ERROR || retry > 1 ||
+    error= put_error(&drizzle);
+    if (drizzle_errno(&drizzle) != CR_SERVER_GONE_ERROR || retry > 1 ||
         !opt_reconnect)
       return error;
     if (reconnect())
@@ -2509,17 +2497,17 @@ int mysql_real_query_for_lazy(const char *buf, int length)
   }
 }
 
-int mysql_store_result_for_lazy(MYSQL_RES **result)
+int drizzle_store_result_for_lazy(DRIZZLE_RES **result)
 {
-  if ((*result=mysql_store_result(&mysql)))
+  if ((*result=drizzle_store_result(&drizzle)))
     return 0;
 
-  if (mysql_error(&mysql)[0])
-    return put_error(&mysql);
+  if (drizzle_error(&drizzle)[0])
+    return put_error(&drizzle);
   return 0;
 }
 
-static void print_help_item(MYSQL_ROW *cur, int num_name, int num_cat, char *last_char)
+static void print_help_item(DRIZZLE_ROW *cur, int num_name, int num_cat, char *last_char)
 {
   char ccat= (*cur)[num_cat][0];
   if (*last_char != ccat)
@@ -2535,10 +2523,10 @@ static int com_server_help(DYNAMIC_STRING *buffer,
                            char *line __attribute__((unused)),
                            char *help_arg)
 {
-  MYSQL_ROW cur;
+  DRIZZLE_ROW cur;
   const char *server_cmd= buffer->str;
   char cmd_buf[100];
-  MYSQL_RES *result;
+  DRIZZLE_RES *result;
   int error;
 
   if (help_arg[0] != '\'')
@@ -2557,18 +2545,18 @@ static int com_server_help(DYNAMIC_STRING *buffer,
   if (!connected && reconnect())
     return 1;
 
-  if ((error= mysql_real_query_for_lazy(server_cmd,(int)strlen(server_cmd))) ||
-      (error= mysql_store_result_for_lazy(&result)))
+  if ((error= drizzle_real_query_for_lazy(server_cmd,(int)strlen(server_cmd))) ||
+      (error= drizzle_store_result_for_lazy(&result)))
     return error;
 
   if (result)
   {
-    unsigned int num_fields= mysql_num_fields(result);
-    uint64_t num_rows= mysql_num_rows(result);
-    mysql_fetch_fields(result);
+    unsigned int num_fields= drizzle_num_fields(result);
+    uint64_t num_rows= drizzle_num_rows(result);
+    drizzle_fetch_fields(result);
     if (num_fields==3 && num_rows==1)
     {
-      if (!(cur= mysql_fetch_row(result)))
+      if (!(cur= drizzle_fetch_row(result)))
       {
         error= -1;
         goto err;
@@ -2596,7 +2584,7 @@ static int com_server_help(DYNAMIC_STRING *buffer,
         num_name= 0;
         num_cat= 1;
       }
-      else if ((cur= mysql_fetch_row(result)))
+      else if ((cur= drizzle_fetch_row(result)))
       {
         tee_fprintf(PAGER, "You asked for help about help category: \"%s\"\n", cur[0]);
         put_info("For more information, type 'help <item>', where <item> is one of the following", INFO_INFO,0,0);
@@ -2605,7 +2593,7 @@ static int com_server_help(DYNAMIC_STRING *buffer,
         print_help_item(&cur,1,2,&last_char);
       }
 
-      while ((cur= mysql_fetch_row(result)))
+      while ((cur= drizzle_fetch_row(result)))
         print_help_item(&cur,num_name,num_cat,&last_char);
       tee_fprintf(PAGER, "\n");
       end_pager();
@@ -2618,7 +2606,7 @@ static int com_server_help(DYNAMIC_STRING *buffer,
   }
 
 err:
-  mysql_free_result(result);
+  drizzle_free_result(result);
   return error;
 }
 
@@ -2648,7 +2636,7 @@ com_help(DYNAMIC_STRING *buffer __attribute__((unused)),
       tee_fprintf(stdout, "%s(\\%c) %s\n", buff,
                   commands[i].cmd_char, commands[i].doc);
   }
-  if (connected && mysql_get_server_version(&mysql) >= 40100)
+  if (connected && drizzle_get_server_version(&drizzle) >= 40100)
     put_info("\nFor server side help, type 'help contents'\n", INFO_INFO,0,0);
   return 0;
 }
@@ -2679,7 +2667,7 @@ com_charset(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
   if (new_cs)
   {
     charset_info= new_cs;
-    mysql_set_character_set(&mysql, charset_info->csname);
+    drizzle_set_character_set(&drizzle, charset_info->csname);
     default_charset= (char *)charset_info->csname;
     default_charset_used= 1;
     put_info("Charset changed", INFO_INFO,0,0);
@@ -2700,7 +2688,7 @@ com_go(DYNAMIC_STRING *buffer,
 {
   char          buff[200]; /* about 110 chars used so far */
   char          time_buff[52+3+1]; /* time max + space&parens + NUL */
-  MYSQL_RES     *result;
+  DRIZZLE_RES     *result;
   ulong         timer, warnings= 0;
   uint          error= 0;
   int           err= 0;
@@ -2736,7 +2724,7 @@ com_go(DYNAMIC_STRING *buffer,
 
   timer=start_timer();
   executing_query= 1;
-  error= mysql_real_query_for_lazy(buffer->str,buffer->length);
+  error= drizzle_real_query_for_lazy(buffer->str,buffer->length);
 
   if (status.add_to_history)
   {
@@ -2756,28 +2744,28 @@ com_go(DYNAMIC_STRING *buffer,
 
     if (quick)
     {
-      if (!(result=mysql_use_result(&mysql)) && mysql_field_count(&mysql))
+      if (!(result=drizzle_use_result(&drizzle)) && drizzle_field_count(&drizzle))
       {
-        error= put_error(&mysql);
+        error= put_error(&drizzle);
         goto end;
       }
     }
     else
     {
-      error= mysql_store_result_for_lazy(&result);
+      error= drizzle_store_result_for_lazy(&result);
       if (error)
         goto end;
     }
 
     if (verbose >= 3 || !opt_silent)
-      mysql_end_timer(timer,time_buff);
+      drizzle_end_timer(timer,time_buff);
     else
       time_buff[0]= '\0';
 
     /* Every branch must truncate  buff . */
     if (result)
     {
-      if (!mysql_num_rows(result) && ! quick && !column_types_flag)
+      if (!drizzle_num_rows(result) && ! quick && !column_types_flag)
       {
         strmov(buff, "Empty set");
         if (opt_xml)
@@ -2806,22 +2794,22 @@ com_go(DYNAMIC_STRING *buffer,
         else
           print_table_data(result);
         sprintf(buff,"%ld %s in set",
-                (long) mysql_num_rows(result),
-                (long) mysql_num_rows(result) == 1 ? "row" : "rows");
+                (long) drizzle_num_rows(result),
+                (long) drizzle_num_rows(result) == 1 ? "row" : "rows");
         end_pager();
-        if (mysql_errno(&mysql))
-          error= put_error(&mysql);
+        if (drizzle_errno(&drizzle))
+          error= put_error(&drizzle);
       }
     }
-    else if (mysql_affected_rows(&mysql) == ~(uint64_t) 0)
+    else if (drizzle_affected_rows(&drizzle) == ~(uint64_t) 0)
       strmov(buff,"Query OK");
     else
       sprintf(buff,"Query OK, %ld %s affected",
-              (long) mysql_affected_rows(&mysql),
-              (long) mysql_affected_rows(&mysql) == 1 ? "row" : "rows");
+              (long) drizzle_affected_rows(&drizzle),
+              (long) drizzle_affected_rows(&drizzle) == 1 ? "row" : "rows");
 
     pos=strend(buff);
-    if ((warnings= mysql_warning_count(&mysql)))
+    if ((warnings= drizzle_warning_count(&drizzle)))
     {
       *pos++= ',';
       *pos++= ' ';
@@ -2832,18 +2820,18 @@ com_go(DYNAMIC_STRING *buffer,
     }
     strmov(pos, time_buff);
     put_info(buff,INFO_RESULT,0,0);
-    if (mysql_info(&mysql))
-      put_info(mysql_info(&mysql),INFO_RESULT,0,0);
-    put_info("",INFO_RESULT,0,0);			// Empty row
+    if (drizzle_info(&drizzle))
+      put_info(drizzle_info(&drizzle),INFO_RESULT,0,0);
+    put_info("",INFO_RESULT,0,0);      // Empty row
 
-    if (result && !mysql_eof(result))	/* Something wrong when using quick */
-      error= put_error(&mysql);
+    if (result && !drizzle_eof(result))  /* Something wrong when using quick */
+      error= put_error(&drizzle);
     else if (unbuffered)
       fflush(stdout);
-    mysql_free_result(result);
-  } while (!(err= mysql_next_result(&mysql)));
+    drizzle_free_result(result);
+  } while (!(err= drizzle_next_result(&drizzle)));
   if (err >= 1)
-    error= put_error(&mysql);
+    error= put_error(&drizzle);
 
 end:
 
@@ -2852,11 +2840,11 @@ end:
     print_warnings();
 
   if (!error && !status.batch &&
-      (mysql.server_status & SERVER_STATUS_DB_DROPPED))
+      (drizzle.server_status & SERVER_STATUS_DB_DROPPED))
     get_current_db();
 
   executing_query= 0;
-  return error;				/* New command follows */
+  return error;        /* New command follows */
 }
 
 
@@ -2976,12 +2964,12 @@ static char *fieldflags2str(uint f) {
 }
 
 static void
-print_field_types(MYSQL_RES *result)
+print_field_types(DRIZZLE_RES *result)
 {
-  MYSQL_FIELD   *field;
+  DRIZZLE_FIELD   *field;
   uint i=0;
 
-  while ((field = mysql_fetch_field(result)))
+  while ((field = drizzle_fetch_field(result)))
   {
     tee_fprintf(PAGER, "Field %3u:  `%s`\n"
                 "Catalog:    `%s`\n"
@@ -3006,26 +2994,26 @@ print_field_types(MYSQL_RES *result)
 
 
 static void
-print_table_data(MYSQL_RES *result)
+print_table_data(DRIZZLE_RES *result)
 {
-  MYSQL_ROW     cur;
-  MYSQL_FIELD   *field;
+  DRIZZLE_ROW     cur;
+  DRIZZLE_FIELD   *field;
   bool          *num_flag;
   DYNAMIC_STRING *separator=
     (DYNAMIC_STRING *)my_malloc(sizeof(DYNAMIC_STRING), MYF(0));
   init_dynamic_string(separator, "", 256, 256);
 
-  num_flag=(bool*) my_malloc(sizeof(bool)*mysql_num_fields(result),
+  num_flag=(bool*) my_malloc(sizeof(bool)*drizzle_num_fields(result),
                              MYF(MY_WME));
   if (column_types_flag)
   {
     print_field_types(result);
-    if (!mysql_num_rows(result))
+    if (!drizzle_num_rows(result))
       return;
-    mysql_field_seek(result,0);
+    drizzle_field_seek(result,0);
   }
   dynstr_append(separator, "+");
-  while ((field = mysql_fetch_field(result)))
+  while ((field = drizzle_fetch_field(result)))
   {
     uint length= column_names ? field->name_length : 0;
     if (quick)
@@ -3045,9 +3033,9 @@ print_table_data(MYSQL_RES *result)
   tee_puts((char*) separator->str, PAGER);
   if (column_names)
   {
-    mysql_field_seek(result,0);
+    drizzle_field_seek(result,0);
     (void) tee_fputs("|", PAGER);
-    for (uint off=0; (field = mysql_fetch_field(result)) ; off++)
+    for (uint off=0; (field = drizzle_fetch_field(result)) ; off++)
     {
       uint name_length= (uint) strlen(field->name);
       uint numcells= charset_info->cset->numcells(charset_info,
@@ -3063,14 +3051,14 @@ print_table_data(MYSQL_RES *result)
     tee_puts((char*) separator->str, PAGER);
   }
 
-  while ((cur= mysql_fetch_row(result)))
+  while ((cur= drizzle_fetch_row(result)))
   {
     if (interrupted_query)
       break;
-    uint32_t *lengths= mysql_fetch_lengths(result);
+    uint32_t *lengths= drizzle_fetch_lengths(result);
     (void) tee_fputs("| ", PAGER);
-    mysql_field_seek(result, 0);
-    for (uint off= 0; off < mysql_num_fields(result); off++)
+    drizzle_field_seek(result, 0);
+    for (uint off= 0; off < drizzle_num_fields(result); off++)
     {
       const char *buffer;
       uint data_length;
@@ -3089,7 +3077,7 @@ print_table_data(MYSQL_RES *result)
         data_length= (uint) lengths[off];
       }
 
-      field= mysql_fetch_field(result);
+      field= drizzle_fetch_field(result);
       field_max_length= field->max_length;
 
       /*
@@ -3137,7 +3125,7 @@ print_table_data(MYSQL_RES *result)
 
    @returns  number of character positions to be used, at most
 */
-static int get_field_disp_length(MYSQL_FIELD *field)
+static int get_field_disp_length(DRIZZLE_FIELD *field)
 {
   uint length= column_names ? field->name_length : 0;
 
@@ -3147,7 +3135,7 @@ static int get_field_disp_length(MYSQL_FIELD *field)
     length= max(length, field->max_length);
 
   if (length < 4 && !IS_NOT_NULL(field->flags))
-    length= 4;				/* Room for "NULL" */
+    length= 4;        /* Room for "NULL" */
 
   return length;
 }
@@ -3160,19 +3148,19 @@ static int get_field_disp_length(MYSQL_FIELD *field)
 
    @returns  The max number of characters in any row of this result
 */
-static int get_result_width(MYSQL_RES *result)
+static int get_result_width(DRIZZLE_RES *result)
 {
   unsigned int len= 0;
-  MYSQL_FIELD *field;
-  MYSQL_FIELD_OFFSET offset;
+  DRIZZLE_FIELD *field;
+  DRIZZLE_FIELD_OFFSET offset;
 
-  offset= mysql_field_tell(result);
+  offset= drizzle_field_tell(result);
   assert(offset == 0);
 
-  while ((field= mysql_fetch_field(result)) != NULL)
+  while ((field= drizzle_fetch_field(result)) != NULL)
     len+= get_field_disp_length(field) + 3; /* plus bar, space, & final space */
 
-  (void) mysql_field_seek(result, offset);
+  (void) drizzle_field_seek(result, offset);
 
   return len + 1; /* plus final bar. */
 }
@@ -3208,16 +3196,16 @@ tee_print_sized_data(const char *data, unsigned int data_length, unsigned int to
 
 
 static void
-print_table_data_html(MYSQL_RES *result)
+print_table_data_html(DRIZZLE_RES *result)
 {
-  MYSQL_ROW	cur;
-  MYSQL_FIELD	*field;
+  DRIZZLE_ROW  cur;
+  DRIZZLE_FIELD  *field;
 
-  mysql_field_seek(result,0);
+  drizzle_field_seek(result,0);
   (void) tee_fputs("<TABLE BORDER=1><TR>", PAGER);
   if (column_names)
   {
-    while((field = mysql_fetch_field(result)))
+    while((field = drizzle_fetch_field(result)))
     {
       tee_fprintf(PAGER, "<TH>%s</TH>", (field->name ?
                                          (field->name[0] ? field->name :
@@ -3225,13 +3213,13 @@ print_table_data_html(MYSQL_RES *result)
     }
     (void) tee_fputs("</TR>", PAGER);
   }
-  while ((cur = mysql_fetch_row(result)))
+  while ((cur = drizzle_fetch_row(result)))
   {
     if (interrupted_query)
       break;
-    uint32_t *lengths=mysql_fetch_lengths(result);
+    uint32_t *lengths=drizzle_fetch_lengths(result);
     (void) tee_fputs("<TR>", PAGER);
-    for (uint32_t i= 0; i < mysql_num_fields(result); i++)
+    for (uint32_t i= 0; i < drizzle_num_fields(result); i++)
     {
       (void) tee_fputs("<TD>", PAGER);
       safe_put_field(cur[i],lengths[i]);
@@ -3244,26 +3232,26 @@ print_table_data_html(MYSQL_RES *result)
 
 
 static void
-print_table_data_xml(MYSQL_RES *result)
+print_table_data_xml(DRIZZLE_RES *result)
 {
-  MYSQL_ROW   cur;
-  MYSQL_FIELD *fields;
+  DRIZZLE_ROW   cur;
+  DRIZZLE_FIELD *fields;
 
-  mysql_field_seek(result,0);
+  drizzle_field_seek(result,0);
 
   tee_fputs("<?xml version=\"1.0\"?>\n\n<resultset statement=\"", PAGER);
   xmlencode_print(glob_buffer->str, glob_buffer->length);
   tee_fputs("\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
             PAGER);
 
-  fields = mysql_fetch_fields(result);
-  while ((cur = mysql_fetch_row(result)))
+  fields = drizzle_fetch_fields(result);
+  while ((cur = drizzle_fetch_row(result)))
   {
     if (interrupted_query)
       break;
-    uint32_t *lengths=mysql_fetch_lengths(result);
+    uint32_t *lengths=drizzle_fetch_lengths(result);
     (void) tee_fputs("\n  <row>\n", PAGER);
-    for (uint i=0; i < mysql_num_fields(result); i++)
+    for (uint i=0; i < drizzle_num_fields(result); i++)
     {
       tee_fprintf(PAGER, "\t<field name=\"");
       xmlencode_print(fields[i].name, (uint) strlen(fields[i].name));
@@ -3283,13 +3271,13 @@ print_table_data_xml(MYSQL_RES *result)
 
 
 static void
-print_table_data_vertically(MYSQL_RES *result)
+print_table_data_vertically(DRIZZLE_RES *result)
 {
-  MYSQL_ROW	cur;
-  uint		max_length=0;
-  MYSQL_FIELD	*field;
+  DRIZZLE_ROW  cur;
+  uint    max_length=0;
+  DRIZZLE_FIELD  *field;
 
-  while ((field = mysql_fetch_field(result)))
+  while ((field = drizzle_fetch_field(result)))
   {
     uint length= field->name_length;
     if (length > max_length)
@@ -3297,17 +3285,17 @@ print_table_data_vertically(MYSQL_RES *result)
     field->max_length=length;
   }
 
-  mysql_field_seek(result,0);
-  for (uint row_count=1; (cur= mysql_fetch_row(result)); row_count++)
+  drizzle_field_seek(result,0);
+  for (uint row_count=1; (cur= drizzle_fetch_row(result)); row_count++)
   {
     if (interrupted_query)
       break;
-    mysql_field_seek(result,0);
+    drizzle_field_seek(result,0);
     tee_fprintf(PAGER,
                 "*************************** %d. row ***************************\n", row_count);
-    for (uint off=0; off < mysql_num_fields(result); off++)
+    for (uint off=0; off < drizzle_num_fields(result); off++)
     {
-      field= mysql_fetch_field(result);
+      field= drizzle_fetch_field(result);
       tee_fprintf(PAGER, "%*s: ",(int) max_length,field->name);
       tee_fprintf(PAGER, "%s\n",cur[off] ? (char*) cur[off] : "NULL");
     }
@@ -3320,23 +3308,23 @@ print_table_data_vertically(MYSQL_RES *result)
 static void print_warnings()
 {
   const char   *query;
-  MYSQL_RES    *result;
-  MYSQL_ROW    cur;
+  DRIZZLE_RES    *result;
+  DRIZZLE_ROW    cur;
   uint64_t num_rows;
-  
+ 
   /* Save current error before calling "show warnings" */
-  uint error= mysql_errno(&mysql);
+  uint error= drizzle_errno(&drizzle);
 
   /* Get the warnings */
   query= "show warnings";
-  mysql_real_query_for_lazy(query, strlen(query));
-  mysql_store_result_for_lazy(&result);
+  drizzle_real_query_for_lazy(query, strlen(query));
+  drizzle_store_result_for_lazy(&result);
 
   /* Bail out when no warnings */
-  if (!(num_rows= mysql_num_rows(result)))
+  if (!(num_rows= drizzle_num_rows(result)))
     goto end;
 
-  cur= mysql_fetch_row(result);
+  cur= drizzle_fetch_row(result);
 
   /*
     Don't print a duplicate of the current error.  It is possible for SHOW
@@ -3352,11 +3340,11 @@ static void print_warnings()
   do
   {
     tee_fprintf(PAGER, "%s (Code %s): %s\n", cur[0], cur[1], cur[2]);
-  } while ((cur= mysql_fetch_row(result)));
+  } while ((cur= drizzle_fetch_row(result)));
   end_pager();
 
 end:
-  mysql_free_result(result);
+  drizzle_free_result(result);
 }
 
 
@@ -3426,16 +3414,16 @@ safe_put_field(const char *pos,ulong length)
 
 
 static void
-print_tab_data(MYSQL_RES *result)
+print_tab_data(DRIZZLE_RES *result)
 {
-  MYSQL_ROW	cur;
-  MYSQL_FIELD	*field;
-  uint32_t		*lengths;
+  DRIZZLE_ROW  cur;
+  DRIZZLE_FIELD  *field;
+  uint32_t    *lengths;
 
   if (opt_silent < 2 && column_names)
   {
     int first=0;
-    while ((field = mysql_fetch_field(result)))
+    while ((field = drizzle_fetch_field(result)))
     {
       if (first++)
         (void) tee_fputs("\t", PAGER);
@@ -3443,11 +3431,11 @@ print_tab_data(MYSQL_RES *result)
     }
     (void) tee_fputs("\n", PAGER);
   }
-  while ((cur = mysql_fetch_row(result)))
+  while ((cur = drizzle_fetch_row(result)))
   {
-    lengths= mysql_fetch_lengths(result);
+    lengths= drizzle_fetch_lengths(result);
     safe_put_field(cur[0],lengths[0]);
-    for (uint off=1 ; off < mysql_num_fields(result); off++)
+    for (uint off=1 ; off < drizzle_num_fields(result); off++)
     {
       (void) tee_fputs("\t", PAGER);
       safe_put_field(cur[off], lengths[off]);
@@ -3478,7 +3466,7 @@ com_tee(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line )
       return 0;
     }
     else
-      param = outfile;			//resume using the old outfile
+      param = outfile;      //resume using the old outfile
   }
 
   /* eliminate the spaces before the parameters */
@@ -3650,7 +3638,7 @@ com_connect(DYNAMIC_STRING *buffer, char *line)
 
   if (connected)
   {
-    sprintf(buff,"Connection id:    %u",mysql_thread_id(&mysql));
+    sprintf(buff,"Connection id:    %u",drizzle_thread_id(&drizzle));
     put_info(buff,INFO_INFO,0,0);
     sprintf(buff,"Current database: %.128s\n",
             current_db ? current_db : "*** NONE ***");
@@ -3671,7 +3659,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *
   /* Skip space from file name */
   while (my_isspace(charset_info,*line))
     line++;
-  if (!(param = strchr(line, ' ')))		// Skip command name
+  if (!(param = strchr(line, ' ')))    // Skip command name
     return put_info("Usage: \\. <filename> | source <filename>",
                     INFO_ERROR, 0,0);
   while (my_isspace(charset_info,*param))
@@ -3773,22 +3761,22 @@ com_use(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
     if (one_database)
     {
       skip_updates= 1;
-      select_db= 0;    // don't do mysql_select_db()
+      select_db= 0;    // don't do drizzle_select_db()
     }
     else
-      select_db= 2;    // do mysql_select_db() and build_completion_hash()
+      select_db= 2;    // do drizzle_select_db() and build_completion_hash()
   }
   else
   {
     /*
       USE to the current db specified.
-      We do need to send mysql_select_db() to make server
+      We do need to send drizzle_select_db() to make server
       update database level privileges, which might
       change since last USE (see bug#10979).
       For performance purposes, we'll skip rebuilding of completion hash.
     */
     skip_updates= 0;
-    select_db= 1;      // do only mysql_select_db(), without completion
+    select_db= 1;      // do only drizzle_select_db(), without completion
   }
 
   if (select_db)
@@ -3799,15 +3787,15 @@ com_use(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
     */
     if (!connected && reconnect())
       return opt_reconnect ? -1 : 1;                        // Fatal error
-    if (mysql_select_db(&mysql,tmp))
+    if (drizzle_select_db(&drizzle,tmp))
     {
-      if (mysql_errno(&mysql) != CR_SERVER_GONE_ERROR)
-        return put_error(&mysql);
+      if (drizzle_errno(&drizzle) != CR_SERVER_GONE_ERROR)
+        return put_error(&drizzle);
 
       if (reconnect())
         return opt_reconnect ? -1 : 1;                      // Fatal error
-      if (mysql_select_db(&mysql,tmp))
-        return put_error(&mysql);
+      if (drizzle_select_db(&drizzle,tmp))
+        return put_error(&drizzle);
     }
     my_free(current_db,MYF(MY_ALLOW_ZERO_PTR));
     current_db= strdup(tmp);
@@ -3900,94 +3888,59 @@ char *get_arg(char *line, bool get_next_arg)
 
 
 static int
-sql_real_connect(char *host,char *database,char *user,char *password,
+sql_connect(char *host,char *database,char *user,char *password,
                  uint silent)
 {
   if (connected)
   {
     connected= 0;
-    mysql_close(&mysql);
+    drizzle_close(&drizzle);
   }
-  mysql_init(&mysql);
+  drizzle_create(&drizzle);
   if (opt_connect_timeout)
   {
     uint timeout=opt_connect_timeout;
-    mysql_options(&mysql,MYSQL_OPT_CONNECT_TIMEOUT,
+    drizzle_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT,
                   (char*) &timeout);
   }
   if (opt_compress)
-    mysql_options(&mysql,MYSQL_OPT_COMPRESS,NullS);
+    drizzle_options(&drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   if (opt_secure_auth)
-    mysql_options(&mysql, MYSQL_SECURE_AUTH, (char *) &opt_secure_auth);
+    drizzle_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
-    mysql_options(&mysql,MYSQL_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
+    drizzle_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
   if (opt_protocol)
-    mysql_options(&mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
+    drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (safe_updates)
   {
     char init_command[100];
     sprintf(init_command,
-	          "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
+            "SET SQL_SAFE_UPDATES=1,SQL_SELECT_LIMIT=%"PRIu32
             ",SQL_MAX_JOIN_SIZE=%"PRIu32,
-	          select_limit, max_join_size);
-    mysql_options(&mysql, MYSQL_INIT_COMMAND, init_command);
+            select_limit, max_join_size);
+    drizzle_options(&drizzle, DRIZZLE_INIT_COMMAND, init_command);
   }
   if (default_charset_used)
-    mysql_options(&mysql, MYSQL_SET_CHARSET_NAME, default_charset);
-  if (!mysql_real_connect(&mysql, host, user, password,
-                          database, opt_mysql_port, opt_mysql_unix_port,
+    drizzle_options(&drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset);
+  if (!drizzle_connect(&drizzle, host, user, password,
+                          database, opt_drizzle_port, opt_drizzle_unix_port,
                           connect_flag | CLIENT_MULTI_STATEMENTS))
   {
     if (!silent ||
-        (mysql_errno(&mysql) != CR_CONN_HOST_ERROR &&
-         mysql_errno(&mysql) != CR_CONNECTION_ERROR))
+        (drizzle_errno(&drizzle) != CR_CONN_HOST_ERROR &&
+         drizzle_errno(&drizzle) != CR_CONNECTION_ERROR))
     {
-      (void) put_error(&mysql);
+      (void) put_error(&drizzle);
       (void) fflush(stdout);
-      return ignore_errors ? -1 : 1;		// Abort
+      return ignore_errors ? -1 : 1;    // Abort
     }
-    return -1;					// Retryable
+    return -1;          // Retryable
   }
   connected=1;
-  mysql.reconnect= debug_info_flag; // We want to know if this happens
+  drizzle.reconnect= debug_info_flag; // We want to know if this happens
   build_completion_hash(opt_rehash, 1);
   return 0;
 }
-
-
-static int
-sql_connect(char *host,char *database,char *user,char *password,uint silent)
-{
-  bool message=0;
-  uint count=0;
-  int error;
-  for (;;)
-  {
-    if ((error=sql_real_connect(host,database,user,password,wait_flag)) >= 0)
-    {
-      if (count)
-      {
-        tee_fputs("\n", stderr);
-        (void) fflush(stderr);
-      }
-      return error;
-    }
-    if (!wait_flag)
-      return ignore_errors ? -1 : 1;
-    if (!message && !silent)
-    {
-      message=1;
-      tee_fputs("Waiting",stderr); (void) fflush(stderr);
-    }
-    (void) sleep(wait_time);
-    if (!silent)
-    {
-      putc('.',stderr); (void) fflush(stderr);
-      count++;
-    }
-  }
-}
-
 
 
 static int
@@ -3997,27 +3950,27 @@ com_status(DYNAMIC_STRING *buffer __attribute__((unused)),
   const char *status_str;
   char buff[40];
   uint64_t id;
-  MYSQL_RES *result;
+  DRIZZLE_RES *result;
 
   tee_puts("--------------", stdout);
-  usage(1);					/* Print version */
+  usage(1);          /* Print version */
   if (connected)
   {
-    tee_fprintf(stdout, "\nConnection id:\t\t%lu\n",mysql_thread_id(&mysql));
+    tee_fprintf(stdout, "\nConnection id:\t\t%lu\n",drizzle_thread_id(&drizzle));
     /*
       Don't remove "limit 1",
       it is protection againts SQL_SELECT_LIMIT=0
     */
-    if (!mysql_query(&mysql,"select DATABASE(), USER() limit 1") &&
-        (result=mysql_use_result(&mysql)))
+    if (!drizzle_query(&drizzle,"select DATABASE(), USER() limit 1") &&
+        (result=drizzle_use_result(&drizzle)))
     {
-      MYSQL_ROW cur=mysql_fetch_row(result);
+      DRIZZLE_ROW cur=drizzle_fetch_row(result);
       if (cur)
       {
         tee_fprintf(stdout, "Current database:\t%s\n", cur[0] ? cur[0] : "");
         tee_fprintf(stdout, "Current user:\t\t%s\n", cur[1]);
       }
-      mysql_free_result(result);
+      drizzle_free_result(result);
     }
     tee_puts("SSL:\t\t\tNot in use", stdout);
   }
@@ -4037,17 +3990,17 @@ com_status(DYNAMIC_STRING *buffer __attribute__((unused)),
   tee_fprintf(stdout, "Current pager:\t\t%s\n", pager);
   tee_fprintf(stdout, "Using outfile:\t\t'%s'\n", opt_outfile ? outfile : "");
   tee_fprintf(stdout, "Using delimiter:\t%s\n", delimiter);
-  tee_fprintf(stdout, "Server version:\t\t%s\n", server_version_string(&mysql));
-  tee_fprintf(stdout, "Protocol version:\t%d\n", mysql_get_proto_info(&mysql));
-  tee_fprintf(stdout, "Connection:\t\t%s\n", mysql_get_host_info(&mysql));
-  if ((id= mysql_insert_id(&mysql)))
+  tee_fprintf(stdout, "Server version:\t\t%s\n", server_version_string(&drizzle));
+  tee_fprintf(stdout, "Protocol version:\t%d\n", drizzle_get_proto_info(&drizzle));
+  tee_fprintf(stdout, "Connection:\t\t%s\n", drizzle_get_host_info(&drizzle));
+  if ((id= drizzle_insert_id(&drizzle)))
     tee_fprintf(stdout, "Insert id:\t\t%s\n", llstr(id, buff));
 
   /* "limit 1" is protection against SQL_SELECT_LIMIT=0 */
-  if (!mysql_query(&mysql,"select @@character_set_client, @@character_set_connection, @@character_set_server, @@character_set_database limit 1") &&
-      (result=mysql_use_result(&mysql)))
+  if (!drizzle_query(&drizzle,"select @@character_set_client, @@character_set_connection, @@character_set_server, @@character_set_database limit 1") &&
+      (result=drizzle_use_result(&drizzle)))
   {
-    MYSQL_ROW cur=mysql_fetch_row(result);
+    DRIZZLE_ROW cur=drizzle_fetch_row(result);
     if (cur)
     {
       tee_fprintf(stdout, "Server characterset:\t%s\n", cur[2] ? cur[2] : "");
@@ -4055,23 +4008,23 @@ com_status(DYNAMIC_STRING *buffer __attribute__((unused)),
       tee_fprintf(stdout, "Client characterset:\t%s\n", cur[0] ? cur[0] : "");
       tee_fprintf(stdout, "Conn.  characterset:\t%s\n", cur[1] ? cur[1] : "");
     }
-    mysql_free_result(result);
+    drizzle_free_result(result);
   }
   else
   {
     /* Probably pre-4.1 server */
     tee_fprintf(stdout, "Client characterset:\t%s\n", charset_info->csname);
-    tee_fprintf(stdout, "Server characterset:\t%s\n", mysql.charset->csname);
+    tee_fprintf(stdout, "Server characterset:\t%s\n", drizzle.charset->csname);
   }
 
-  if (strstr(mysql_get_host_info(&mysql),"TCP/IP") || ! mysql.unix_socket)
-    tee_fprintf(stdout, "TCP port:\t\t%d\n", mysql.port);
+  if (strstr(drizzle_get_host_info(&drizzle),"TCP/IP") || ! drizzle.unix_socket)
+    tee_fprintf(stdout, "TCP port:\t\t%d\n", drizzle.port);
   else
-    tee_fprintf(stdout, "UNIX socket:\t\t%s\n", mysql.unix_socket);
-  if (mysql.net.compress)
+    tee_fprintf(stdout, "UNIX socket:\t\t%s\n", drizzle.unix_socket);
+  if (drizzle.net.compress)
     tee_fprintf(stdout, "Protocol:\t\tCompressed\n");
 
-  if ((status_str= mysql_stat(&mysql)) && !mysql_error(&mysql)[0])
+  if ((status_str= drizzle_stat(&drizzle)) && !drizzle_error(&drizzle)[0])
   {
     ulong sec;
     const char *pos= strchr(status_str,' ');
@@ -4080,7 +4033,7 @@ com_status(DYNAMIC_STRING *buffer __attribute__((unused)),
     if ((status_str= str2int(pos,10,0,LONG_MAX,(long*) &sec)))
     {
       nice_time((double) sec,buff,0);
-      tee_puts(buff, stdout);			/* print nice time */
+      tee_puts(buff, stdout);      /* print nice time */
       while (*status_str == ' ')
         status_str++;  /* to next info */
       tee_putc('\n', stdout);
@@ -4104,7 +4057,7 @@ Max number of examined row combination in a join is set to: %lu\n\n",
 }
 
 static const char *
-server_version_string(MYSQL *con)
+server_version_string(DRIZZLE *con)
 {
   static char buf[MAX_SERVER_VERSION_LENGTH] = "";
 
@@ -4112,20 +4065,20 @@ server_version_string(MYSQL *con)
   if (buf[0] == '\0')
   {
     char *bufp = buf;
-    MYSQL_RES *result;
+    DRIZZLE_RES *result;
 
-    bufp= strnmov(buf, mysql_get_server_info(con), sizeof buf);
+    bufp= strnmov(buf, drizzle_get_server_info(con), sizeof buf);
 
     /* "limit 1" is protection against SQL_SELECT_LIMIT=0 */
-    if (!mysql_query(con, "select @@version_comment limit 1") &&
-        (result = mysql_use_result(con)))
+    if (!drizzle_query(con, "select @@version_comment limit 1") &&
+        (result = drizzle_use_result(con)))
     {
-      MYSQL_ROW cur = mysql_fetch_row(result);
+      DRIZZLE_ROW cur = drizzle_fetch_row(result);
       if (cur && cur[0])
       {
         bufp = strxnmov(bufp, sizeof buf - (bufp - buf), " ", cur[0], NullS);
       }
-      mysql_free_result(result);
+      drizzle_free_result(result);
     }
 
     /* str*nmov doesn't guarantee NUL-termination */
@@ -4209,10 +4162,10 @@ put_info(const char *str,INFO_TYPE info_type, uint error, const char *sqlstate)
 
 
 static int
-put_error(MYSQL *con)
+put_error(DRIZZLE *con)
 {
-  return put_info(mysql_error(con), INFO_ERROR, mysql_errno(con),
-                  mysql_sqlstate(con));
+  return put_info(drizzle_error(con), INFO_ERROR, drizzle_errno(con),
+                  drizzle_sqlstate(con));
 }
 
 
@@ -4272,7 +4225,7 @@ void tee_putc(int c, FILE *file)
 }
 
 #include <sys/times.h>
-#ifdef _SC_CLK_TCK				// For mit-pthreads
+#ifdef _SC_CLK_TCK        // For mit-pthreads
 #undef CLOCKS_PER_SEC
 #define CLOCKS_PER_SEC (sysconf(_SC_CLK_TCK))
 #endif
@@ -4327,7 +4280,7 @@ static void end_timer(ulong start_time,char *buff)
 }
 
 
-static void mysql_end_timer(ulong start_time,char *buff)
+static void drizzle_end_timer(ulong start_time,char *buff)
 {
   buff[0]=' ';
   buff[1]='(';
@@ -4367,7 +4320,7 @@ static const char * construct_prompt()
         break;
       case 'v':
         if (connected)
-          dynstr_append(processed_prompt, mysql_get_server_info(&mysql));
+          dynstr_append(processed_prompt, drizzle_get_server_info(&drizzle));
         else
           dynstr_append(processed_prompt, "not_connected");
         break;
@@ -4377,7 +4330,7 @@ static const char * construct_prompt()
       case 'h':
       {
         const char *prompt;
-        prompt= connected ? mysql_get_host_info(&mysql) : "not_connected";
+        prompt= connected ? drizzle_get_host_info(&drizzle) : "not_connected";
         if (strstr(prompt, "Localhost"))
           dynstr_append(processed_prompt, "localhost");
         else
@@ -4395,18 +4348,18 @@ static const char * construct_prompt()
           break;
         }
 
-        const char *host_info = mysql_get_host_info(&mysql);
+        const char *host_info = drizzle_get_host_info(&drizzle);
         if (strstr(host_info, "memory"))
         {
-          dynstr_append(processed_prompt, mysql.host);
+          dynstr_append(processed_prompt, drizzle.host);
         }
         else if (strstr(host_info,"TCP/IP") ||
-                 !mysql.unix_socket)
-          add_int_to_prompt(mysql.port);
+                 !drizzle.unix_socket)
+          add_int_to_prompt(drizzle.port);
         else
         {
-          char *pos=strrchr(mysql.unix_socket,'/');
-          dynstr_append(processed_prompt, pos ? pos+1 : mysql.unix_socket);
+          char *pos=strrchr(drizzle.unix_socket,'/');
+          dynstr_append(processed_prompt, pos ? pos+1 : drizzle.unix_socket);
         }
       }
       break;
@@ -4525,14 +4478,14 @@ static void init_username()
   my_free(full_username,MYF(MY_ALLOW_ZERO_PTR));
   my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
 
-  MYSQL_RES *result;
-  if (!mysql_query(&mysql,"select USER()") &&
-      (result=mysql_use_result(&mysql)))
+  DRIZZLE_RES *result;
+  if (!drizzle_query(&drizzle,"select USER()") &&
+      (result=drizzle_use_result(&drizzle)))
   {
-    MYSQL_ROW cur=mysql_fetch_row(result);
+    DRIZZLE_ROW cur=drizzle_fetch_row(result);
     full_username= strdup(cur[0]);
     part_username= strdup(strtok(cur[0],"@"));
-    (void) mysql_fetch_row(result);		// Read eof
+    (void) drizzle_fetch_row(result);		// Read eof
   }
 }
 

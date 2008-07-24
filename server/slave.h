@@ -146,7 +146,7 @@ extern uint64_t relay_log_space_limit;
 int32_t init_slave();
 void init_slave_skip_errors(const char* arg);
 bool flush_relay_log_info(Relay_log_info* rli);
-int32_t register_slave_on_master(MYSQL* mysql);
+int32_t register_slave_on_master(DRIZZLE *drizzle);
 int32_t terminate_slave_threads(Master_info* mi, int32_t thread_mask,
 			     bool skip_lock = 0);
 int32_t start_slave_threads(bool need_slave_mutex, bool wait_for_start,
@@ -172,7 +172,7 @@ int32_t mysql_table_dump(THD* thd, const char* db,
 
 /* retrieve table from master and copy to slave*/
 int32_t fetch_master_table(THD* thd, const char* db_name, const char* table_name,
-		       Master_info* mi, MYSQL* mysql, bool overwrite);
+		       Master_info* mi, DRIZZLE *drizzle, bool overwrite);
 
 bool show_master_info(THD* thd, Master_info* mi);
 bool show_binlog_info(THD* thd);

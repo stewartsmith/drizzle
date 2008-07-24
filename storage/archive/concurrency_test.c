@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
   if (argc > 1)
     exit(1);
 
-  if (!(mysql_thread_safe()))
+  if (!(drizzle_thread_safe()))
       fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
 
   srandom(time(NULL));
@@ -216,9 +216,9 @@ void *timer_thread(void *p)
   time_t *timer_length= (time_t *)p;
   struct timespec abstime;
 
-  if (mysql_thread_init())
+  if (drizzle_thread_init())
   {
-    fprintf(stderr,"%s: mysql_thread_init() failed.\n",
+    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
             my_progname);
     exit(1);
   }
@@ -244,7 +244,7 @@ void *timer_thread(void *p)
   timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
-  mysql_thread_end();
+  drizzle_thread_end();
 
   return 0;
 }
@@ -257,9 +257,9 @@ void *run_task(void *p)
   int error;
   azio_stream reader_handle;
 
-  if (mysql_thread_init())
+  if (drizzle_thread_init())
   {
-    fprintf(stderr,"%s: mysql_thread_init() failed.\n", my_progname);
+    fprintf(stderr,"%s: drizzle_thread_init() failed.\n", my_progname);
     exit(1);
   }
 
@@ -301,7 +301,7 @@ void *run_task(void *p)
   pthread_mutex_unlock(&counter_mutex);
   azclose(&reader_handle);
 
-  mysql_thread_end();
+  drizzle_thread_end();
 
   return NULL;
 }

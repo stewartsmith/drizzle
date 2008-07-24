@@ -78,7 +78,7 @@ class Master_info : public Slave_reporting_capability
   pthread_mutex_t data_lock,run_lock;
   pthread_cond_t data_cond,start_cond,stop_cond;
   THD *io_thd;
-  MYSQL* mysql;
+  DRIZZLE *drizzle;
   uint32_t file_id;				/* for 3.23 load data infile */
   Relay_log_info rli;
   uint port;

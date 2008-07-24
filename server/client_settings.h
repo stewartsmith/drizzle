@@ -33,7 +33,7 @@
 
 #define mysql_server_init(a,b,c) 0
 
-MYSQL_DATA * cli_read_rows(MYSQL *mysql,MYSQL_FIELD *mysql_fields,
+MYSQL_DATA * cli_read_rows(MYSQL *mysql,DRIZZLE_FIELD *mysql_fields,
                            uint fields);
 extern int mysql_init_character_set(MYSQL *mysql);
 
