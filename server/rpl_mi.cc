@@ -119,7 +119,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     return(0);
   }
 
-  mi->mysql=0;
+  mi->drizzle=0;
   mi->file_id=1;
   fn_format(fname, master_info_fname, mysql_data_home, "", 4+32);
 

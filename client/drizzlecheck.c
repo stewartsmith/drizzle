@@ -1,4 +1,4 @@
-/* Copyright (C) 2000 MySQL AB
+/* Copyright (C) 2008 Drizzle development team
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* By Jani Tolonen, 2001-04-20, MySQL Development Team */
+/* By Jani Tolonen, 2001-04-20, MySQL, DRIZZLE Development Team */
 
 #define CHECK_VERSION "2.5.0"
 
@@ -27,7 +27,7 @@
 #define EX_USAGE 1
 #define EX_MYSQLERR 2
 
-static MYSQL mysql_connection, *sock = 0;
+static DRIZZLE drizzle_connection, *sock = 0;
 static bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
                opt_compress = 0, opt_databases = 0, opt_fast = 0,
                opt_medium_check = 0, opt_quick = 0, opt_all_in_1 = 0,
@@ -38,9 +38,9 @@ static bool opt_alldbs = 0, opt_check_only_changed = 0, opt_extended = 0,
 static uint verbose = 0, opt_mysql_port=0;
 static int my_end_arg;
 static char * opt_mysql_unix_port = 0;
-static char *opt_password = 0, *current_user = 0, 
-	    *default_charset = (char *)MYSQL_DEFAULT_CHARSET_NAME,
-	    *current_host = 0;
+static char *opt_password = 0, *current_user = 0,
+      *default_charset = (char *)MYSQL_DEFAULT_CHARSET_NAME,
+      *current_host = 0;
 static int first_error = 0;
 DYNAMIC_ARRAY tables4repair;
 static uint opt_protocol=0;
@@ -132,7 +132,7 @@ static struct my_option my_long_options[] =
    (char**) &opt_mysql_port,
    (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
    0},
-  {"protocol", OPT_MYSQL_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
+  {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
    "If you are using this option with CHECK TABLE, it prevents the check from scanning the rows to check for wrong links. This is the fastest check. If you are using this option with REPAIR TABLE, it will try to repair only the index tree. This is the fastest repair method for a table.",
@@ -178,7 +178,7 @@ static int use_db(char *database);
 static int handle_request_for_tables(char *tables, uint length);
 static int dbConnect(char *host, char *user,char *passwd);
 static void dbDisconnect(char *host);
-static void DBerror(MYSQL *mysql, const char *when);
+static void DBerror(DRIZZLE *drizzle, const char *when);
 static void safe_exit(int error);
 static void print_result(void);
 static uint fixed_name_length(const char *name);
@@ -203,7 +203,7 @@ static void usage(void)
   puts("This program can be used to CHECK (-c,-m,-C), REPAIR (-r), ANALYZE (-a)");
   puts("or OPTIMIZE (-o) tables. Some of the options (like -e or -q) can be");
   puts("used at the same time. Not all options are supported by all storage engines.");
-  puts("Please consult the MySQL manual for latest information about the");
+  puts("Please consult the Drizzle manual for latest information about the");
   puts("above. The options -c,-r,-a and -o are exclusive to each other, which");
   puts("means that the last option will be used, if several was specified.\n");
   puts("The option -c will be used by default, if none was specified. You");
@@ -214,7 +214,7 @@ static void usage(void)
   puts("mysqloptimize: The default option will be -o\n");
   printf("Usage: %s [OPTIONS] database [tables]\n", my_progname);
   printf("OR     %s [OPTIONS] --databases DB1 [DB2 DB3...]\n",
-	 my_progname);
+   my_progname);
   printf("OR     %s [OPTIONS] --all-databases\n", my_progname);
   print_defaults("my", load_default_groups);
   my_print_help(my_long_options);
@@ -225,7 +225,7 @@ static void usage(void)
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+         char *argument)
 {
   switch(optid) {
   case 'a':
@@ -264,9 +264,9 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       char *start = argument;
       my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
       opt_password = my_strdup(argument, MYF(MY_FAE));
-      while (*argument) *argument++= 'x';		/* Destroy argument */
+      while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
-	start[1] = 0;                             /* Cut length of argument */
+  start[1] = 0;                             /* Cut length of argument */
       tty_password= 0;
     }
     else
@@ -286,7 +286,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     verbose++;
     break;
   case 'V': print_version(); exit(0);
-  case OPT_MYSQL_PROTOCOL:
+  case OPT_DRIZZLE_PROTOCOL:
     opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
                                     opt->name);
     break;
@@ -328,20 +328,20 @@ static int get_options(int *argc, char ***argv)
 
   /* TODO: This variable is not yet used */
   if (strcmp(default_charset, charset_info->csname) &&
-      !(charset_info= get_charset_by_csname(default_charset, 
-  					    MY_CS_PRIMARY, MYF(MY_WME))))
+      !(charset_info= get_charset_by_csname(default_charset,
+                MY_CS_PRIMARY, MYF(MY_WME))))
       exit(1);
   if (*argc > 0 && opt_alldbs)
   {
     printf("You should give only options, no arguments at all, with option\n");
     printf("--all-databases. Please see %s --help for more information.\n",
-	   my_progname);
+     my_progname);
     return 1;
   }
   if (*argc < 1 && !opt_alldbs)
   {
     printf("You forgot to give the arguments! Please see %s --help\n",
-	   my_progname);
+     my_progname);
     printf("for more information.\n");
     return 1;
   }
@@ -357,18 +357,18 @@ static int get_options(int *argc, char ***argv)
 
 static int process_all_databases()
 {
-  MYSQL_ROW row;
-  MYSQL_RES *tableres;
+  DRIZZLE_ROW row;
+  DRIZZLE_RES *tableres;
   int result = 0;
 
-  if (mysql_query(sock, "SHOW DATABASES") ||
-      !(tableres = mysql_store_result(sock)))
+  if (drizzle_query(sock, "SHOW DATABASES") ||
+      !(tableres = drizzle_store_result(sock)))
   {
     my_printf_error(0, "Error: Couldn't execute 'SHOW DATABASES': %s",
-		    MYF(0), mysql_error(sock));
+        MYF(0), drizzle_error(sock));
     return 1;
   }
-  while ((row = mysql_fetch_row(tableres)))
+  while ((row = drizzle_fetch_row(tableres)))
   {
     if (process_one_db(row[0]))
       result = 1;
@@ -396,11 +396,11 @@ static int process_selected_tables(char *db, char **table_names, int tables)
     return 1;
   if (opt_all_in_1)
   {
-    /* 
+    /*
       We need table list in form `a`, `b`, `c`
       that's why we need 2 more chars added to to each table name
       space is for more readable output in logs and in case of error
-    */	  
+    */   
     char *table_names_comma_sep, *end;
     int i, tot_length = 0;
 
@@ -408,11 +408,11 @@ static int process_selected_tables(char *db, char **table_names, int tables)
       tot_length+= fixed_name_length(*(table_names + i)) + 2;
 
     if (!(table_names_comma_sep = (char *)
-	  my_malloc((sizeof(char) * tot_length) + 4, MYF(MY_WME))))
+    my_malloc((sizeof(char) * tot_length) + 4, MYF(MY_WME))))
       return 1;
 
     for (end = table_names_comma_sep + 1; tables > 0;
-	 tables--, table_names++)
+   tables--, table_names++)
     {
       end= fix_table_name(end, *table_names);
       *end++= ',';
@@ -432,7 +432,7 @@ static uint fixed_name_length(const char *name)
 {
   const char *p;
   uint extra_length= 2;  /* count the first/last backticks */
-  
+ 
   for (p= name; *p; p++)
   {
     if (*p == '`')
@@ -469,17 +469,17 @@ static char *fix_table_name(char *dest, char *src)
 
 static int process_all_tables_in_db(char *database)
 {
-  MYSQL_RES *res;
-  MYSQL_ROW row;
+  DRIZZLE_RES *res;
+  DRIZZLE_ROW row;
   uint num_columns;
 
   if (use_db(database))
     return 1;
-  if (mysql_query(sock, "SHOW /*!50002 FULL*/ TABLES") ||
-	!((res= mysql_store_result(sock))))
+  if (drizzle_query(sock, "SHOW /*!50002 FULL*/ TABLES") ||
+  !((res= drizzle_store_result(sock))))
     return 1;
 
-  num_columns= mysql_num_fields(res);
+  num_columns= drizzle_num_fields(res);
 
   if (opt_all_in_1)
   {
@@ -492,16 +492,16 @@ static int process_all_tables_in_db(char *database)
     char *tables, *end;
     uint tot_length = 0;
 
-    while ((row = mysql_fetch_row(res)))
+    while ((row = drizzle_fetch_row(res)))
       tot_length+= fixed_name_length(row[0]) + 2;
-    mysql_data_seek(res, 0);
+    drizzle_data_seek(res, 0);
 
     if (!(tables=(char *) my_malloc(sizeof(char)*tot_length+4, MYF(MY_WME))))
     {
-      mysql_free_result(res);
+      drizzle_free_result(res);
       return 1;
     }
-    for (end = tables + 1; (row = mysql_fetch_row(res)) ;)
+    for (end = tables + 1; (row = drizzle_fetch_row(res)) ;)
     {
       if ((num_columns == 2) && (strcmp(row[1], "VIEW") == 0))
         continue;
@@ -516,7 +516,7 @@ static int process_all_tables_in_db(char *database)
   }
   else
   {
-    while ((row = mysql_fetch_row(res)))
+    while ((row = drizzle_fetch_row(res)))
     {
       /* Skip views if we don't perform renaming. */
       if ((what_to_do != DO_UPGRADE) && (num_columns == 2) && (strcmp(row[1], "VIEW") == 0))
@@ -525,7 +525,7 @@ static int process_all_tables_in_db(char *database)
       handle_request_for_tables(row[0], fixed_name_length(row[0]));
     }
   }
-  mysql_free_result(res);
+  drizzle_free_result(res);
   return 0;
 } /* process_all_tables_in_db */
 
@@ -538,10 +538,10 @@ static int fix_table_storage_name(const char *name)
   if (strncmp(name, "#mysql50#", 9))
     return 1;
   sprintf(qbuf, "RENAME TABLE `%s` TO `%s`", name, name + 9);
-  if (mysql_query(sock, qbuf))
+  if (drizzle_query(sock, qbuf))
   {
     fprintf(stderr, "Failed to %s\n", qbuf);
-    fprintf(stderr, "Error: %s\n", mysql_error(sock));
+    fprintf(stderr, "Error: %s\n", drizzle_error(sock));
     rc= 1;
   }
   if (verbose)
@@ -556,10 +556,10 @@ static int fix_database_storage_name(const char *name)
   if (strncmp(name, "#mysql50#", 9))
     return 1;
   sprintf(qbuf, "ALTER DATABASE `%s` UPGRADE DATA DIRECTORY NAME", name);
-  if (mysql_query(sock, qbuf))
+  if (drizzle_query(sock, qbuf))
   {
     fprintf(stderr, "Failed to %s\n", qbuf);
-    fprintf(stderr, "Error: %s\n", mysql_error(sock));
+    fprintf(stderr, "Error: %s\n", drizzle_error(sock));
     rc= 1;
   }
   if (verbose)
@@ -586,10 +586,10 @@ static int process_one_db(char *database)
 
 static int use_db(char *database)
 {
-  if (mysql_get_server_version(sock) >= 50003 &&
+  if (drizzle_get_server_version(sock) >= 50003 &&
       !my_strcasecmp(&my_charset_latin1, database, "information_schema"))
     return 1;
-  if (mysql_select_db(sock, database))
+  if (drizzle_select_db(sock, database))
   {
     DBerror(sock, "when selecting the database");
     return 1;
@@ -648,7 +648,7 @@ static int handle_request_for_tables(char *tables, uint length)
     ptr= strxmov(ptr, " ", options, NullS);
     query_length= (uint) (ptr - query);
   }
-  if (mysql_real_query(sock, query, query_length))
+  if (drizzle_real_query(sock, query, query_length))
   {
     sprintf(message, "when executing '%s TABLE ... %s'", op, options);
     DBerror(sock, message);
@@ -662,16 +662,16 @@ static int handle_request_for_tables(char *tables, uint length)
 
 static void print_result()
 {
-  MYSQL_RES *res;
-  MYSQL_ROW row;
+  DRIZZLE_RES *res;
+  DRIZZLE_ROW row;
   char prev[NAME_LEN*2+2];
   uint i;
   bool found_error=0;
 
-  res = mysql_use_result(sock);
+  res = drizzle_use_result(sock);
 
   prev[0] = '\0';
-  for (i = 0; (row = mysql_fetch_row(res)); i++)
+  for (i = 0; (row = drizzle_fetch_row(res)); i++)
   {
     int changed = strcmp(prev, row[0]);
     bool status = !strcmp(row[2], "status");
@@ -684,11 +684,11 @@ static void print_result()
         list
       */
       if (found_error && opt_auto_repair && what_to_do != DO_REPAIR &&
-	  strcmp(row[3],"OK"))
-	insert_dynamic(&tables4repair, (uchar*) prev);
+    strcmp(row[3],"OK"))
+  insert_dynamic(&tables4repair, (uchar*) prev);
       found_error=0;
       if (opt_silent)
-	continue;
+  continue;
     }
     if (status && changed)
       printf("%-50s %s", row[0], row[3]);
@@ -696,7 +696,7 @@ static void print_result()
     {
       printf("%s\n%-9s: %s", row[0], row[2], row[3]);
       if (strcmp(row[2],"note"))
-	found_error=1;
+  found_error=1;
     }
     else
       printf("%-9s: %s", row[2], row[3]);
@@ -706,7 +706,7 @@ static void print_result()
   /* add the last table to be repaired to the list */
   if (found_error && opt_auto_repair && what_to_do != DO_REPAIR)
     insert_dynamic(&tables4repair, (uchar*) prev);
-  mysql_free_result(res);
+  drizzle_free_result(res);
 }
 
 
@@ -717,18 +717,18 @@ static int dbConnect(char *host, char *user, char *passwd)
   {
     fprintf(stderr, "# Connecting to %s...\n", host ? host : "localhost");
   }
-  drizzle_create(&mysql_connection);
+  drizzle_create(&drizzle_connection);
   if (opt_compress)
-    mysql_options(&mysql_connection, MYSQL_OPT_COMPRESS, NullS);
+    drizzle_options(&drizzle_connection, DRIZZLE_OPT_COMPRESS, NullS);
   if (opt_protocol)
-    mysql_options(&mysql_connection,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (!(sock = mysql_real_connect(&mysql_connection, host, user, passwd,
+    drizzle_options(&drizzle_connection,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  if (!(sock = drizzle_connect(&drizzle_connection, host, user, passwd,
          NULL, opt_mysql_port, opt_mysql_unix_port, 0)))
   {
-    DBerror(&mysql_connection, "when trying to connect");
+    DBerror(&drizzle_connection, "when trying to connect");
     return 1;
   }
-  mysql_connection.reconnect= 1;
+  drizzle_connection.reconnect= 1;
   return 0;
 } /* dbConnect */
 
@@ -737,14 +737,14 @@ static void dbDisconnect(char *host)
 {
   if (verbose)
     fprintf(stderr, "# Disconnecting from %s...\n", host ? host : "localhost");
-  mysql_close(sock);
+  drizzle_close(sock);
 } /* dbDisconnect */
 
 
-static void DBerror(MYSQL *mysql, const char *when)
+static void DBerror(DRIZZLE *drizzle, const char *when)
 {
   my_printf_error(0,"Got error: %d: %s %s", MYF(0),
-		  mysql_errno(mysql), mysql_error(mysql), when);
+      drizzle_errno(drizzle), drizzle_error(drizzle), when);
   safe_exit(EX_MYSQLERR);
   return;
 } /* DBerror */
@@ -757,7 +757,7 @@ static void safe_exit(int error)
   if (ignore_errors)
     return;
   if (sock)
-    mysql_close(sock);
+    drizzle_close(sock);
   exit(error);
 }
 
