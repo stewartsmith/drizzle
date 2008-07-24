@@ -117,7 +117,7 @@ static char *host= NULL, *opt_password= NULL, *user= NULL,
 
 const char *delimiter= "\n";
 
-const char *create_schema_string= "drizzleslap";
+const char *create_schema_string= "mysqlslap";
 
 static bool opt_preserve= true;
 static bool debug_info_flag= 0, debug_check_flag= 0;
@@ -169,7 +169,7 @@ const char *concurrency_str= NULL;
 static char *create_string;
 uint *concurrency;
 
-const char *default_dbug_option="d:t:o,/tmp/drizzleslap.trace";
+const char *default_dbug_option="d:t:o,/tmp/mysqlslap.trace";
 const char *opt_csv_str;
 File csv_file;
 
@@ -178,7 +178,7 @@ static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static int get_options(int *argc,char ***argv);
 static uint opt_drizzle_port= 0;
 
-static const char *load_default_groups[]= { "drizzleslap","client",0 };
+static const char *load_default_groups[]= { "mysqlslap","client",0 };
 
 /* Types */
 typedef enum {
