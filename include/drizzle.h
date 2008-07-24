@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/* Copyright (C) 2000-2003 DRIZZLE AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
-  This file defines the client API to MySQL and also the ABI of the
-  dynamically linked libmysqlclient.
+  This file defines the client API to DRIZZLE and also the ABI of the
+  dynamically linked libdrizzleclient.
 
   The ABI should never be changed in a released product of MySQL
   thus you need to take great care when changing the file. In case
@@ -24,17 +24,17 @@
 
 */
 
-#ifndef _mysql_h
-#define _mysql_h
+#ifndef _drizzle_h
+#define _drizzle_h
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 extern "C" {
 #endif
 
-#ifndef _global_h				/* If not standard header */
+#ifndef _global_h        /* If not standard header */
 #include <sys/types.h>
 #ifdef __LCC__
-#include <winsock2.h>				/* For windows */
+#include <winsock2.h>        /* For windows */
 #endif
 typedef char my_bool;
 #define STDCALL
@@ -50,29 +50,29 @@ typedef int my_socket;
 
 #include "my_list.h" /* for LISTs used in 'MYSQL' */
 
-extern unsigned int mysql_port;
-extern char *mysql_unix_port;
+extern unsigned int drizzle_port;
+extern char *drizzle_unix_port;
 
-#define CLIENT_NET_READ_TIMEOUT		365*24*3600	/* Timeout on read */
-#define CLIENT_NET_WRITE_TIMEOUT	365*24*3600	/* Timeout on write */
+#define CLIENT_NET_READ_TIMEOUT    365*24*3600  /* Timeout on read */
+#define CLIENT_NET_WRITE_TIMEOUT  365*24*3600  /* Timeout on write */
 
-#define IS_PRI_KEY(n)	((n) & PRI_KEY_FLAG)
-#define IS_NOT_NULL(n)	((n) & NOT_NULL_FLAG)
-#define IS_BLOB(n)	((n) & BLOB_FLAG)
-#define IS_NUM(t)	((t) <= MYSQL_TYPE_LONGLONG || (t) == MYSQL_TYPE_YEAR || (t) == MYSQL_TYPE_NEWDECIMAL)
-#define IS_NUM_FIELD(f)	 ((f)->flags & NUM_FLAG)
+#define IS_PRI_KEY(n)  ((n) & PRI_KEY_FLAG)
+#define IS_NOT_NULL(n)  ((n) & NOT_NULL_FLAG)
+#define IS_BLOB(n)  ((n) & BLOB_FLAG)
+#define IS_NUM(t)  ((t) <= MYSQL_TYPE_LONGLONG || (t) == MYSQL_TYPE_YEAR || (t) == MYSQL_TYPE_NEWDECIMAL)
+#define IS_NUM_FIELD(f)   ((f)->flags & NUM_FLAG)
 #define INTERNAL_NUM_FIELD(f) (((f)->type <= MYSQL_TYPE_LONGLONG && ((f)->type != MYSQL_TYPE_TIMESTAMP || (f)->length == 14 || (f)->length == 8)) || (f)->type == MYSQL_TYPE_YEAR)
 #define IS_LONGDATA(t) ((t) >= MYSQL_TYPE_TINY_BLOB && (t) <= MYSQL_TYPE_STRING)
 
 
-typedef struct st_mysql_field {
+typedef struct st_drizzle_field {
   char *name;                 /* Name of column */
   char *org_name;             /* Original column name, if an alias */
   char *table;                /* Table of column if column was a field */
   char *org_table;            /* Org table name, if table was an alias */
   char *db;                   /* Database for table */
-  char *catalog;	      /* Catalog for table */
-  char *def;                  /* Default value (set by mysql_list_fields) */
+  char *catalog;        /* Catalog for table */
+  char *def;                  /* Default value (set by drizzle_list_fields) */
   unsigned long length;       /* Width of column (create length) */
   unsigned long max_length;   /* Max width for selected set */
   unsigned int name_length;
@@ -85,75 +85,75 @@ typedef struct st_mysql_field {
   unsigned int flags;         /* Div flags */
   unsigned int decimals;      /* Number of decimals in field */
   unsigned int charsetnr;     /* Character set */
-  enum enum_field_types type; /* Type of field. See mysql_com.h for types */
+  enum enum_field_types type; /* Type of field. See drizzle_com.h for types */
   void *extension;
-} MYSQL_FIELD;
+} DRIZZLE_FIELD;
 
-typedef char **MYSQL_ROW;		/* return data as array of strings */
-typedef unsigned int MYSQL_FIELD_OFFSET; /* offset to current field */
+typedef char **DRIZZLE_ROW;    /* return data as array of strings */
+typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 
 #include "typelib.h"
 
-#define MYSQL_COUNT_ERROR (~(uint64_t) 0)
+#define DRIZZLE_COUNT_ERROR (~(uint64_t) 0)
 
 /* backward compatibility define - to be removed eventually */
 #define ER_WARN_DATA_TRUNCATED WARN_DATA_TRUNCATED
 
-typedef struct st_mysql_rows {
-  struct st_mysql_rows *next;		/* list of rows */
-  MYSQL_ROW data;
+typedef struct st_drizzle_rows {
+  struct st_drizzle_rows *next;    /* list of rows */
+  DRIZZLE_ROW data;
   unsigned long length;
-} MYSQL_ROWS;
+} DRIZZLE_ROWS;
 
-typedef MYSQL_ROWS *MYSQL_ROW_OFFSET;	/* offset to current row */
+typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
 
 #include "my_alloc.h"
 
 typedef struct embedded_query_result EMBEDDED_QUERY_RESULT;
-typedef struct st_mysql_data {
-  MYSQL_ROWS *data;
+typedef struct st_drizzle_data {
+  DRIZZLE_ROWS *data;
   struct embedded_query_result *embedded_info;
   MEM_ROOT alloc;
   uint64_t rows;
   unsigned int fields;
   /* extra info for embedded library */
   void *extension;
-} MYSQL_DATA;
+} DRIZZLE_DATA;
 
-enum mysql_option 
+enum drizzle_option
 {
-  MYSQL_OPT_CONNECT_TIMEOUT, MYSQL_OPT_COMPRESS, MYSQL_OPT_NAMED_PIPE,
-  MYSQL_INIT_COMMAND, MYSQL_READ_DEFAULT_FILE, MYSQL_READ_DEFAULT_GROUP,
-  MYSQL_SET_CHARSET_DIR, MYSQL_SET_CHARSET_NAME, MYSQL_OPT_LOCAL_INFILE,
-  MYSQL_OPT_PROTOCOL, MYSQL_SHARED_MEMORY_BASE_NAME, MYSQL_OPT_READ_TIMEOUT,
-  MYSQL_OPT_WRITE_TIMEOUT, MYSQL_OPT_USE_RESULT,
-  MYSQL_OPT_USE_REMOTE_CONNECTION, MYSQL_OPT_USE_EMBEDDED_CONNECTION,
-  MYSQL_OPT_GUESS_CONNECTION, MYSQL_SET_CLIENT_IP, MYSQL_SECURE_AUTH,
-  MYSQL_REPORT_DATA_TRUNCATION, MYSQL_OPT_RECONNECT,
-  MYSQL_OPT_SSL_VERIFY_SERVER_CERT
+  DRIZZLE_OPT_CONNECT_TIMEOUT, DRIZZLE_OPT_COMPRESS, DRIZZLE_OPT_NAMED_PIPE,
+  DRIZZLE_INIT_COMMAND, DRIZZLE_READ_DEFAULT_FILE, DRIZZLE_READ_DEFAULT_GROUP,
+  DRIZZLE_SET_CHARSET_DIR, DRIZZLE_SET_CHARSET_NAME, DRIZZLE_OPT_LOCAL_INFILE,
+  DRIZZLE_OPT_PROTOCOL, DRIZZLE_SHARED_MEMORY_BASE_NAME, DRIZZLE_OPT_READ_TIMEOUT,
+  DRIZZLE_OPT_WRITE_TIMEOUT, DRIZZLE_OPT_USE_RESULT,
+  DRIZZLE_OPT_USE_REMOTE_CONNECTION, DRIZZLE_OPT_USE_EMBEDDED_CONNECTION,
+  DRIZZLE_OPT_GUESS_CONNECTION, DRIZZLE_SET_CLIENT_IP, DRIZZLE_SECURE_AUTH,
+  DRIZZLE_REPORT_DATA_TRUNCATION, DRIZZLE_OPT_RECONNECT,
+  DRIZZLE_OPT_SSL_VERIFY_SERVER_CERT
 };
 
-struct st_mysql_options {
+struct st_drizzle_options {
   unsigned int connect_timeout, read_timeout, write_timeout;
   unsigned int port, protocol;
   unsigned long client_flag;
   char *host,*user,*password,*unix_socket,*db;
   struct st_dynamic_array *init_commands;
   char *my_cnf_file,*my_cnf_group, *charset_dir, *charset_name;
-  char *ssl_key;				/* PEM key file */
-  char *ssl_cert;				/* PEM cert file */
-  char *ssl_ca;					/* PEM CA file */
-  char *ssl_capath;				/* PEM directory of CA-s? */
-  char *ssl_cipher;				/* cipher to use */
+  char *ssl_key;        /* PEM key file */
+  char *ssl_cert;        /* PEM cert file */
+  char *ssl_ca;          /* PEM CA file */
+  char *ssl_capath;        /* PEM directory of CA-s? */
+  char *ssl_cipher;        /* cipher to use */
   char *shared_memory_base_name;
   unsigned long max_allowed_packet;
-  my_bool use_ssl;				/* if to use SSL or not */
+  my_bool use_ssl;        /* if to use SSL or not */
   my_bool compress,named_pipe;
   my_bool unused1;
   my_bool unused2;
   my_bool unused3;
   my_bool unused4;
-  enum mysql_option methods_to_use;
+  enum drizzle_option methods_to_use;
   char *client_ip;
   /* Refuse client connecting to server if it uses old (pre-4.1.1) protocol */
   my_bool secure_auth;
@@ -169,15 +169,15 @@ struct st_mysql_options {
   void *extension;
 };
 
-enum mysql_status 
+enum drizzle_status
 {
-  MYSQL_STATUS_READY,MYSQL_STATUS_GET_RESULT,MYSQL_STATUS_USE_RESULT
+  DRIZZLE_STATUS_READY,DRIZZLE_STATUS_GET_RESULT,DRIZZLE_STATUS_USE_RESULT
 };
 
-enum mysql_protocol_type 
+enum drizzle_protocol_type
 {
-  MYSQL_PROTOCOL_DEFAULT, MYSQL_PROTOCOL_TCP, MYSQL_PROTOCOL_SOCKET,
-  MYSQL_PROTOCOL_PIPE, MYSQL_PROTOCOL_MEMORY
+  DRIZZLE_PROTOCOL_DEFAULT, DRIZZLE_PROTOCOL_TCP, DRIZZLE_PROTOCOL_SOCKET,
+  DRIZZLE_PROTOCOL_PIPE, DRIZZLE_PROTOCOL_MEMORY
 };
 
 typedef struct character_set
@@ -192,71 +192,71 @@ typedef struct character_set
   unsigned int      mbmaxlen;   /* max. length for multibyte strings */
 } MY_CHARSET_INFO;
 
-struct st_mysql_methods;
-struct st_mysql_stmt;
+struct st_drizzle_methods;
+struct st_drizzle_stmt;
 
-typedef struct st_mysql
+typedef struct st_drizzle
 {
-  NET		net;			/* Communication parameters */
-  unsigned char	*connector_fd;		/* ConnectorFd for SSL */
-  char		*host,*user,*passwd,*unix_socket,*server_version,*host_info;
+  NET    net;      /* Communication parameters */
+  unsigned char  *connector_fd;    /* ConnectorFd for SSL */
+  char    *host,*user,*passwd,*unix_socket,*server_version,*host_info;
   char          *info, *db;
   struct charset_info_st *charset;
-  MYSQL_FIELD	*fields;
-  MEM_ROOT	field_alloc;
+  DRIZZLE_FIELD  *fields;
+  MEM_ROOT  field_alloc;
   uint64_t affected_rows;
-  uint64_t insert_id;		/* id if insert on table with NEXTNR */
-  uint64_t extra_info;		/* Not used */
-  uint32_t thread_id;		/* Id for connection in server */
+  uint64_t insert_id;    /* id if insert on table with NEXTNR */
+  uint64_t extra_info;    /* Not used */
+  uint32_t thread_id;    /* Id for connection in server */
   uint32_t packet_length;
-  uint32_t	port;
+  uint32_t  port;
   uint32_t client_flag,server_capabilities;
-  uint32_t	protocol_version;
-  uint32_t	field_count;
-  uint32_t 	server_status;
+  uint32_t  protocol_version;
+  uint32_t  field_count;
+  uint32_t  server_status;
   uint32_t  server_language;
-  uint32_t	warning_count;
-  struct st_mysql_options options;
-  enum mysql_status status;
-  bool	free_me;		/* If free in mysql_close */
-  bool	reconnect;		/* set to 1 if automatic reconnect */
+  uint32_t  warning_count;
+  struct st_drizzle_options options;
+  enum drizzle_status status;
+  bool  free_me;    /* If free in drizzle_close */
+  bool  reconnect;    /* set to 1 if automatic reconnect */
 
   /* session-wide random string */
-  char	        scramble[SCRAMBLE_LENGTH+1];
+  char          scramble[SCRAMBLE_LENGTH+1];
   bool unused1;
   void *unused2, *unused3, *unused4, *unused5;
 
   LIST  *stmts;                     /* list of all statements */
-  const struct st_mysql_methods *methods;
+  const struct st_drizzle_methods *methods;
   void *thd;
   /*
-    Points to boolean flag in MYSQL_RES  or MYSQL_STMT. We set this flag 
-    from mysql_stmt_close if close had to cancel result set of this object.
+    Points to boolean flag in DRIZZLE_RES  or MYSQL_STMT. We set this flag
+    from drizzle_stmt_close if close had to cancel result set of this object.
   */
   bool *unbuffered_fetch_owner;
   /* needed for embedded server - no net buffer to store the 'info' */
   char *info_buffer;
   void *extension;
-} MYSQL;
+} DRIZZLE;
 
 
-typedef struct st_mysql_res {
+typedef struct st_drizzle_res {
   uint64_t  row_count;
-  MYSQL_FIELD	*fields;
-  MYSQL_DATA	*data;
-  MYSQL_ROWS	*data_cursor;
-  uint32_t *lengths;		/* column lengths of current row */
-  MYSQL		*handle;		/* for unbuffered reads */
-  const struct st_mysql_methods *methods;
-  MYSQL_ROW	row;			/* If unbuffered read */
-  MYSQL_ROW	current_row;		/* buffer to current row */
-  MEM_ROOT	field_alloc;
-  uint32_t	field_count, current_field;
-  bool	eof;			/* Used by mysql_fetch_row */
-  /* mysql_stmt_close() had to cancel this result */
-  bool       unbuffered_fetch_cancelled;  
+  DRIZZLE_FIELD  *fields;
+  DRIZZLE_DATA  *data;
+  DRIZZLE_ROWS  *data_cursor;
+  uint32_t *lengths;    /* column lengths of current row */
+  DRIZZLE *handle;    /* for unbuffered reads */
+  const struct st_drizzle_methods *methods;
+  DRIZZLE_ROW  row;      /* If unbuffered read */
+  DRIZZLE_ROW  current_row;    /* buffer to current row */
+  MEM_ROOT  field_alloc;
+  uint32_t  field_count, current_field;
+  bool  eof;      /* Used by drizzle_fetch_row */
+  /* drizzle_stmt_close() had to cancel this result */
+  bool       unbuffered_fetch_cancelled; 
   void *extension;
-} MYSQL_RES;
+} DRIZZLE_RES;
 
 
 #if !defined(MYSQL_SERVER) && !defined(MYSQL_CLIENT)
@@ -264,16 +264,16 @@ typedef struct st_mysql_res {
 #endif
 
 
-typedef struct st_mysql_parameters
+typedef struct st_drizzle_parameters
 {
   uint32_t *p_max_allowed_packet;
   uint32_t *p_net_buffer_length;
   void *extension;
-} MYSQL_PARAMETERS;
+} DRIZZLE_PARAMETERS;
 
 #if !defined(MYSQL_SERVER)
-#define max_allowed_packet (*mysql_get_parameters()->p_max_allowed_packet)
-#define net_buffer_length (*mysql_get_parameters()->p_net_buffer_length)
+#define max_allowed_packet (*drizzle_get_parameters()->p_max_allowed_packet)
+#define net_buffer_length (*drizzle_get_parameters()->p_net_buffer_length)
 #endif
 
 /*
@@ -281,22 +281,22 @@ typedef struct st_mysql_parameters
   work when linked against either the standard client library or the
   embedded server library, these functions should be called.
 */
-int STDCALL mysql_server_init(int argc, char **argv, char **groups);
-void STDCALL mysql_server_end(void);
+int STDCALL drizzle_server_init(int argc, char **argv, char **groups);
+void STDCALL drizzle_server_end(void);
 
 /*
-  mysql_server_init/end need to be called when using libmysqld or
-  libmysqlclient (exactly, mysql_server_init() is called by mysql_init() so
+  drizzle_server_init/end need to be called when using libdrizzle or
+  libdrizzleclient (exactly, drizzle_server_init() is called by drizzle_init() so
   you don't need to call it explicitely; but you need to call
-  mysql_server_end() to free memory). The names are a bit misleading
-  (mysql_SERVER* to be used when using libmysqlCLIENT). So we add more general
-  names which suit well whether you're using libmysqld or libmysqlclient. We
-  intend to promote these aliases over the mysql_server* ones.
+  drizzle_server_end() to free memory). The names are a bit misleading
+  (drizzle_SERVER* to be used when using libdrizzleCLIENT). So we add more general
+  names which suit well whether you're using libdrizzled or libdrizzleclient. We
+  intend to promote these aliases over the drizzle_server* ones.
 */
-#define mysql_library_init mysql_server_init
-#define mysql_library_end mysql_server_end
+#define drizzle_library_init drizzle_server_init
+#define drizzle_library_end drizzle_server_end
 
-MYSQL_PARAMETERS *STDCALL mysql_get_parameters(void);
+DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void);
 
 /*
   Set up and bring down a thread; these function should be called
@@ -304,53 +304,53 @@ MYSQL_PARAMETERS *STDCALL mysql_get_parameters(void);
   connection.  All uses of the connection(s) should be between these
   function calls.
 */
-my_bool STDCALL mysql_thread_init(void);
-void STDCALL mysql_thread_end(void);
+my_bool STDCALL drizzle_thread_init(void);
+void STDCALL drizzle_thread_end(void);
 
 /*
-  Functions to get information from the MYSQL and MYSQL_RES structures
+  Functions to get information from the DRIZZLE and DRIZZLE_RES structures
   Should definitely be used if one uses shared libraries.
 */
 
-uint64_t STDCALL mysql_num_rows(MYSQL_RES *res);
-unsigned int STDCALL mysql_num_fields(MYSQL_RES *res);
-my_bool STDCALL mysql_eof(MYSQL_RES *res);
-MYSQL_FIELD *STDCALL mysql_fetch_field_direct(MYSQL_RES *res,
-					      unsigned int fieldnr);
-MYSQL_FIELD * STDCALL mysql_fetch_fields(MYSQL_RES *res);
-MYSQL_ROW_OFFSET STDCALL mysql_row_tell(MYSQL_RES *res);
-MYSQL_FIELD_OFFSET STDCALL mysql_field_tell(MYSQL_RES *res);
+uint64_t STDCALL drizzle_num_rows(DRIZZLE_RES *res);
+unsigned int STDCALL drizzle_num_fields(DRIZZLE_RES *res);
+my_bool STDCALL drizzle_eof(DRIZZLE_RES *res);
+DRIZZLE_FIELD *STDCALL drizzle_fetch_field_direct(DRIZZLE_RES *res,
+                unsigned int fieldnr);
+DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(DRIZZLE_RES *res);
+DRIZZLE_ROW_OFFSET STDCALL DRIZZLE_ROW_tell(DRIZZLE_RES *res);
+DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_tell(DRIZZLE_RES *res);
 
-uint32_t STDCALL mysql_field_count(MYSQL *mysql);
-uint64_t STDCALL mysql_affected_rows(MYSQL *mysql);
-uint64_t STDCALL mysql_insert_id(MYSQL *mysql);
-uint32_t STDCALL mysql_errno(MYSQL *mysql);
-const char * STDCALL mysql_error(MYSQL *mysql);
-const char *STDCALL mysql_sqlstate(MYSQL *mysql);
-uint32_t STDCALL mysql_warning_count(MYSQL *mysql);
-const char * STDCALL mysql_info(MYSQL *mysql);
-uint32_t STDCALL mysql_thread_id(MYSQL *mysql);
-const char * STDCALL mysql_character_set_name(MYSQL *mysql);
-int32_t          STDCALL mysql_set_character_set(MYSQL *mysql, const char *csname);
+uint32_t STDCALL drizzle_field_count(DRIZZLE *drizzle);
+uint64_t STDCALL drizzle_affected_rows(DRIZZLE *drizzle);
+uint64_t STDCALL drizzle_insert_id(DRIZZLE *drizzle);
+uint32_t STDCALL drizzle_errno(DRIZZLE *drizzle);
+const char * STDCALL drizzle_error(DRIZZLE *drizzle);
+const char *STDCALL drizzle_sqlstate(DRIZZLE *drizzle);
+uint32_t STDCALL drizzle_warning_count(DRIZZLE *drizzle);
+const char * STDCALL drizzle_info(DRIZZLE *drizzle);
+uint32_t STDCALL drizzle_thread_id(DRIZZLE *drizzle);
+const char * STDCALL drizzle_character_set_name(DRIZZLE *drizzle);
+int32_t          STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *csname);
 
-MYSQL *		STDCALL mysql_init(MYSQL *mysql);
-my_bool		STDCALL mysql_change_user(MYSQL *mysql, const char *user, 
-					  const char *passwd, const char *db);
-MYSQL *		STDCALL mysql_real_connect(MYSQL *mysql, const char *host,
-					   const char *user,
-					   const char *passwd,
-					   const char *db,
-					   uint32_t port,
-					   const char *unix_socket,
-					   uint32_t clientflag);
-int32_t		STDCALL mysql_select_db(MYSQL *mysql, const char *db);
-int32_t		STDCALL mysql_query(MYSQL *mysql, const char *q);
-int32_t		STDCALL mysql_send_query(MYSQL *mysql, const char *q, uint32_t length);
-int32_t		STDCALL mysql_real_query(MYSQL *mysql, const char *q, uint32_t length);
-MYSQL_RES *     STDCALL mysql_store_result(MYSQL *mysql);
-MYSQL_RES *     STDCALL mysql_use_result(MYSQL *mysql);
+DRIZZLE * STDCALL drizzle_init(DRIZZLE *drizzle);
+my_bool   STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
+            const char *passwd, const char *db);
+DRIZZLE * STDCALL drizzle_connect(DRIZZLE *drizzle, const char *host,
+             const char *user,
+             const char *passwd,
+             const char *db,
+             uint32_t port,
+             const char *unix_socket,
+             uint32_t clientflag);
+int32_t    STDCALL drizzle_select_db(DRIZZLE *drizzle, const char *db);
+int32_t    STDCALL drizzle_query(DRIZZLE *drizzle, const char *q);
+int32_t    STDCALL drizzle_send_query(DRIZZLE *drizzle, const char *q, uint32_t length);
+int32_t    STDCALL drizzle_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
+DRIZZLE_RES * STDCALL drizzle_store_result(DRIZZLE *drizzle);
+DRIZZLE_RES * STDCALL drizzle_use_result(DRIZZLE *drizzle);
 
-void        STDCALL mysql_get_character_set_info(MYSQL *mysql,
+void        STDCALL drizzle_get_character_set_info(DRIZZLE *drizzle,
                            MY_CHARSET_INFO *charset);
 
 /* local infile support */
@@ -358,101 +358,97 @@ void        STDCALL mysql_get_character_set_info(MYSQL *mysql,
 #define LOCAL_INFILE_ERROR_LEN 512
 
 void
-mysql_set_local_infile_handler(MYSQL *mysql,
-                               int (*local_infile_init)(void **, const char *,
-                            void *),
-                               int (*local_infile_read)(void *, char *,
-							unsigned int),
-                               void (*local_infile_end)(void *),
-                               int (*local_infile_error)(void *, char*,
-							 unsigned int),
-                               void *);
+drizzle_set_local_infile_handler(DRIZZLE *drizzle,
+        int (*local_infile_init)(void **, const char *, void *),
+        int (*local_infile_read)(void *, char *, unsigned int),
+        void (*local_infile_end)(void *),int (*local_infile_error)
+        (void *, char*, unsigned int), void *);
 
 void
-mysql_set_local_infile_default(MYSQL *mysql);
+drizzle_set_local_infile_default(DRIZZLE *drizzle);
 
-int32_t		STDCALL mysql_shutdown(MYSQL *mysql, enum mysql_enum_shutdown_level shutdown_level);
-int32_t		STDCALL mysql_dump_debug_info(MYSQL *mysql);
-int32_t		STDCALL mysql_refresh(MYSQL *mysql, uint32_t refresh_options);
-int32_t		STDCALL mysql_kill(MYSQL *mysql, uint32_t pid);
-int32_t		STDCALL mysql_set_server_option(MYSQL *mysql, enum enum_mysql_set_option option);
-int32_t		STDCALL mysql_ping(MYSQL *mysql);
-const char *	STDCALL mysql_stat(MYSQL *mysql);
-const char *	STDCALL mysql_get_server_info(MYSQL *mysql);
-const char *	STDCALL mysql_get_client_info(void);
-uint32_t	STDCALL mysql_get_client_version(void);
-const char *	STDCALL mysql_get_host_info(MYSQL *mysql);
-uint32_t	STDCALL mysql_get_server_version(MYSQL *mysql);
-uint32_t	STDCALL mysql_get_proto_info(MYSQL *mysql);
-MYSQL_RES *	STDCALL mysql_list_dbs(MYSQL *mysql,const char *wild);
-MYSQL_RES *	STDCALL mysql_list_tables(MYSQL *mysql,const char *wild);
-MYSQL_RES *	STDCALL mysql_list_processes(MYSQL *mysql);
-int32_t		STDCALL mysql_options(MYSQL *mysql,enum mysql_option option, const void *arg);
-void		STDCALL mysql_free_result(MYSQL_RES *result);
-void		STDCALL mysql_data_seek(MYSQL_RES *result, uint64_t offset);
-MYSQL_ROW_OFFSET STDCALL mysql_row_seek(MYSQL_RES *result, MYSQL_ROW_OFFSET offset);
-MYSQL_FIELD_OFFSET STDCALL mysql_field_seek(MYSQL_RES *result, MYSQL_FIELD_OFFSET offset);
-MYSQL_ROW	STDCALL mysql_fetch_row(MYSQL_RES *result);
-uint32_t * STDCALL mysql_fetch_lengths(MYSQL_RES *result);
-MYSQL_FIELD *	STDCALL mysql_fetch_field(MYSQL_RES *result);
-MYSQL_RES *     STDCALL mysql_list_fields(MYSQL *mysql, const char *table, const char *wild);
-uint32_t	STDCALL mysql_escape_string(char *to,const char *from, uint32_t from_length);
-uint32_t	STDCALL mysql_hex_string(char *to,const char *from, uint32_t from_length);
-uint32_t        STDCALL mysql_real_escape_string(MYSQL *mysql, char *to, const char *from, uint32_t length);
-void 		STDCALL myodbc_remove_escape(MYSQL *mysql,char *name);
-uint32_t	STDCALL mysql_thread_safe(void);
-my_bool		STDCALL mysql_embedded(void);
-my_bool         STDCALL mysql_read_query_result(MYSQL *mysql);
+int32_t    STDCALL drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level);
+int32_t    STDCALL drizzle_dump_debug_info(DRIZZLE *drizzle);
+int32_t    STDCALL drizzle_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
+int32_t    STDCALL drizzle_kill(DRIZZLE *drizzle, uint32_t pid);
+int32_t    STDCALL drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option);
+int32_t    STDCALL drizzle_ping(DRIZZLE *drizzle);
+const char *  STDCALL drizzle_stat(DRIZZLE *drizzle);
+const char *  STDCALL drizzle_get_server_info(DRIZZLE *drizzle);
+const char *  STDCALL drizzle_get_client_info(void);
+uint32_t  STDCALL drizzle_get_client_version(void);
+const char *  STDCALL drizzle_get_host_info(DRIZZLE *drizzle);
+uint32_t  STDCALL drizzle_get_server_version(DRIZZLE *drizzle);
+uint32_t  STDCALL drizzle_get_proto_info(DRIZZLE *drizzle);
+DRIZZLE_RES *  STDCALL drizzle_list_dbs(DRIZZLE *drizzle,const char *wild);
+DRIZZLE_RES *  STDCALL drizzle_list_tables(DRIZZLE *drizzle,const char *wild);
+DRIZZLE_RES *  STDCALL drizzle_list_processes(DRIZZLE *drizzle);
+int32_t    STDCALL drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg);
+void    STDCALL drizzle_free_result(DRIZZLE_RES *result);
+void    STDCALL drizzle_data_seek(DRIZZLE_RES *result, uint64_t offset);
+DRIZZLE_ROW_OFFSET STDCALL drizzle_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET offset);
+DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET offset);
+DRIZZLE_ROW  STDCALL drizzle_fetch_row(DRIZZLE_RES *result);
+uint32_t * STDCALL drizzle_fetch_lengths(DRIZZLE_RES *result);
+DRIZZLE_FIELD *  STDCALL drizzle_fetch_field(DRIZZLE_RES *result);
+DRIZZLE_RES *     STDCALL drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild);
+uint32_t  STDCALL drizzle_escape_string(char *to,const char *from, uint32_t from_length);
+uint32_t  STDCALL drizzle_hex_string(char *to,const char *from, uint32_t from_length);
+uint32_t        STDCALL drizzle_real_escape_string(DRIZZLE *drizzle, char *to, const char *from, uint32_t length);
+void    STDCALL myodbc_remove_escape(DRIZZLE *drizzle,char *name);
+uint32_t  STDCALL drizzle_thread_safe(void);
+my_bool    STDCALL drizzle_embedded(void);
+my_bool         STDCALL drizzle_read_query_result(DRIZZLE *drizzle);
 
 
 
-typedef struct st_mysql_methods
+typedef struct st_drizzle_methods
 {
-  bool (*read_query_result)(MYSQL *mysql);
-  bool (*advanced_command)(MYSQL *mysql,
+  bool (*read_query_result)(DRIZZLE *drizzle);
+  bool (*advanced_command)(DRIZZLE *drizzle,
                            enum enum_server_command command,
                            const unsigned char *header,
                            uint32_t header_length,
                            const unsigned char *arg,
                            uint32_t arg_length,
                            bool skip_check);
-  MYSQL_DATA *(*read_rows)(MYSQL *mysql,MYSQL_FIELD *mysql_fields, uint32_t fields);
-  MYSQL_RES * (*use_result)(MYSQL *mysql);
-  void (*fetch_lengths)(uint32_t *to, MYSQL_ROW column, uint32_t field_count);
-  void (*flush_use_result)(MYSQL *mysql);
-  MYSQL_FIELD * (*list_fields)(MYSQL *mysql);
-  int32_t (*unbuffered_fetch)(MYSQL *mysql, char **row);
-  const char *(*read_statistics)(MYSQL *mysql);
-  bool (*next_result)(MYSQL *mysql);
-  int32_t (*read_change_user_result)(MYSQL *mysql, char *buff, const char *passwd);
-} MYSQL_METHODS;
+  DRIZZLE_DATA *(*read_rows)(DRIZZLE *drizzle,DRIZZLE_FIELD *drizzle_fields, uint32_t fields);
+  DRIZZLE_RES * (*use_result)(DRIZZLE *drizzle);
+  void (*fetch_lengths)(uint32_t *to, DRIZZLE_ROW column, uint32_t field_count);
+  void (*flush_use_result)(DRIZZLE *drizzle);
+  DRIZZLE_FIELD * (*list_fields)(DRIZZLE *drizzle);
+  int32_t (*unbuffered_fetch)(DRIZZLE *drizzle, char **row);
+  const char *(*read_statistics)(DRIZZLE *drizzle);
+  bool (*next_result)(DRIZZLE *drizzle);
+  int32_t (*read_change_user_result)(DRIZZLE *drizzle, char *buff, const char *passwd);
+} DRIZZLE_METHODS;
 
 
-my_bool STDCALL mysql_commit(MYSQL * mysql);
-my_bool STDCALL mysql_rollback(MYSQL * mysql);
-my_bool STDCALL mysql_autocommit(MYSQL * mysql, my_bool auto_mode);
-my_bool STDCALL mysql_more_results(MYSQL *mysql);
-int STDCALL mysql_next_result(MYSQL *mysql);
-void STDCALL mysql_close(MYSQL *sock);
+my_bool STDCALL drizzle_commit(DRIZZLE *drizzle);
+my_bool STDCALL drizzle_rollback(DRIZZLE *drizzle);
+my_bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, my_bool auto_mode);
+my_bool STDCALL drizzle_more_results(DRIZZLE *drizzle);
+int STDCALL drizzle_next_result(DRIZZLE *drizzle);
+void STDCALL drizzle_close(DRIZZLE *sock);
 
 
 /* status return codes */
-#define MYSQL_NO_DATA        100
-#define MYSQL_DATA_TRUNCATED 101
+#define DRIZZLE_NO_DATA        100
+#define DRIZZLE_DATA_TRUNCATED 101
 
-#define mysql_reload(mysql) mysql_refresh((mysql),REFRESH_GRANT)
+#define drizzle_reload(drizzle) drizzle_refresh((drizzle),REFRESH_GRANT)
 
 /*
-  The following functions are mainly exported because of mysqlbinlog;
+  The following functions are mainly exported because of binlog;
   They are not for general usage
 */
 
-#define simple_command(mysql, command, arg, length, skip_check) \
-  (*(mysql)->methods->advanced_command)(mysql, command, 0,  \
+#define simple_command(drizzle, command, arg, length, skip_check) \
+  (*(drizzle)->methods->advanced_command)(drizzle, command, 0,  \
                                         0, arg, length, skip_check)
 
-#ifdef	__cplusplus
+#ifdef  __cplusplus
 }
 #endif
 
-#endif /* _mysql_h */
+#endif /* _drizzle_h */

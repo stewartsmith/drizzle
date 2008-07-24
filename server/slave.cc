@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2003 MySQL AB
+/* Copyright (C) 2000-2003 DRIZZLE AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -126,14 +126,14 @@ static bool wait_for_relay_log_space(Relay_log_info* rli);
 static inline bool io_slave_killed(THD* thd,Master_info* mi);
 static inline bool sql_slave_killed(THD* thd,Relay_log_info* rli);
 static int32_t init_slave_thread(THD* thd, SLAVE_THD_TYPE thd_type);
-static int32_t safe_connect(THD* thd, MYSQL* mysql, Master_info* mi);
-static int32_t safe_reconnect(THD* thd, MYSQL* mysql, Master_info* mi,
+static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi);
+static int32_t safe_reconnect(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                           bool suppress_warnings);
-static int32_t connect_to_master(THD* thd, MYSQL* mysql, Master_info* mi,
+static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                              bool reconnect, bool suppress_warnings);
 static int32_t safe_sleep(THD* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed,
                       void* thread_killed_arg);
-static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi);
+static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi);
 static Log_event* next_event(Relay_log_info* rli);
 static int32_t queue_event(Master_info* mi,const char* buf,uint32_t event_len);
 static int32_t terminate_slave_thread(THD *thd,
@@ -754,15 +754,15 @@ static bool check_io_slave_killed(THD *thd, Master_info *mi, const char *info)
   1       error
 */
 
-static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
+static int32_t get_master_version_and_clock(DRIZZLE *drizzle, Master_info* mi)
 {
   char error_buf[512];
   String err_msg(error_buf, sizeof(error_buf), &my_charset_bin);
   char err_buff[MAX_SLAVE_ERRMSG];
   const char* errmsg= 0;
   int32_t err_code= 0;
-  MYSQL_RES *master_res= 0;
-  MYSQL_ROW master_row;
+  DRIZZLE_RES *master_res= 0;
+  DRIZZLE_ROW master_row;
 
   err_msg.length(0);
   /*
@@ -772,9 +772,9 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
   delete mi->rli.relay_log.description_event_for_queue;
   mi->rli.relay_log.description_event_for_queue= 0;
 
-  if (!my_isdigit(&my_charset_bin,*mysql->server_version))
+  if (!my_isdigit(&my_charset_bin,*drizzle->server_version))
   {
-    errmsg = "Master reported unrecognized MySQL version";
+    errmsg = "Master reported unrecognized DRIZZLE version";
     err_code= ER_SLAVE_FATAL_ERROR;
     sprintf(err_buff, ER(err_code), errmsg);
     err_msg.append(err_buff);
@@ -782,29 +782,29 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
   else
   {
     /*
-      Note the following switch will bug when we have MySQL branch 30 ;)
+      Note the following switch will bug when we have DRIZZLE branch 30 ;)
     */
-    switch (*mysql->server_version)
+    switch (*drizzle->server_version)
     {
     case '0':
     case '1':
     case '2':
-      errmsg = "Master reported unrecognized MySQL version";
+      errmsg = "Master reported unrecognized DRIZZLE version";
       err_code= ER_SLAVE_FATAL_ERROR;
       sprintf(err_buff, ER(err_code), errmsg);
       err_msg.append(err_buff);
       break;
     case '3':
       mi->rli.relay_log.description_event_for_queue= new
-        Format_description_log_event(1, mysql->server_version);
+        Format_description_log_event(1, drizzle->server_version);
       break;
     case '4':
       mi->rli.relay_log.description_event_for_queue= new
-        Format_description_log_event(3, mysql->server_version);
+        Format_description_log_event(3, drizzle->server_version);
       break;
     default:
       /*
-        Master is MySQL >=5.0. Give a default Format_desc event, so that we can
+        Master is DRIZZLE >=5.0. Give a default Format_desc event, so that we can
         take the early steps (like tests for "is this a 3.23 master") which we
         have to take before we receive the real master's Format_desc which will
         override this one. Note that the Format_desc we create below is garbage
@@ -812,7 +812,7 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
         master is 3.23, 4.0, etc.
       */
       mi->rli.relay_log.description_event_for_queue= new
-        Format_description_log_event(4, mysql->server_version);
+        Format_description_log_event(4, drizzle->server_version);
       break;
     }
   }
@@ -842,9 +842,9 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
     unavailable (very old master not supporting UNIX_TIMESTAMP()?).
   */
 
-  if (!mysql_real_query(mysql, STRING_WITH_LEN("SELECT UNIX_TIMESTAMP()")) &&
-      (master_res= mysql_store_result(mysql)) &&
-      (master_row= mysql_fetch_row(master_res)))
+  if (!drizzle_real_query(drizzle, STRING_WITH_LEN("SELECT UNIX_TIMESTAMP()")) &&
+      (master_res= drizzle_store_result(drizzle)) &&
+      (master_row= drizzle_fetch_row(master_res)))
   {
     mi->clock_diff_with_master=
       (long) (time((time_t*) 0) - strtoul(master_row[0], 0, 10));
@@ -855,10 +855,10 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
     sql_print_warning("\"SELECT UNIX_TIMESTAMP()\" failed on master, "
                       "do not trust column Seconds_Behind_Master of SHOW "
                       "SLAVE STATUS. Error: %s (%d)",
-                      mysql_error(mysql), mysql_errno(mysql));
+                      drizzle_error(drizzle), drizzle_errno(drizzle));
   }
   if (master_res)
-    mysql_free_result(master_res);
+    drizzle_free_result(master_res);
 
   /*
     Check that the master's server id and ours are different. Because if they
@@ -870,24 +870,24 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
     Note: we could have put a @@SERVER_ID in the previous SELECT
     UNIX_TIMESTAMP() instead, but this would not have worked on 3.23 masters.
   */
-  if (!mysql_real_query(mysql,
+  if (!drizzle_real_query(drizzle,
                         STRING_WITH_LEN("SHOW VARIABLES LIKE 'SERVER_ID'")) &&
-      (master_res= mysql_store_result(mysql)))
+      (master_res= drizzle_store_result(drizzle)))
   {
-    if ((master_row= mysql_fetch_row(master_res)) &&
+    if ((master_row= drizzle_fetch_row(master_res)) &&
         (::server_id == strtoul(master_row[1], 0, 10)) &&
         !mi->rli.replicate_same_server_id)
     {
       errmsg=
         "The slave I/O thread stops because master and slave have equal"
-        " MySQL server ids; these ids must be different for replication to work (or"
+        " DRIZZLE server ids; these ids must be different for replication to work (or"
         " the --replicate-same-server-id option must be used on slave but this does"
         " not always make sense; please check the manual before using it).";
       err_code= ER_SLAVE_FATAL_ERROR;
       sprintf(err_buff, ER(err_code), errmsg);
       err_msg.append(err_buff);
     }
-    mysql_free_result(master_res);
+    drizzle_free_result(master_res);
     if (errmsg)
       goto err;
   }
@@ -910,15 +910,15 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
   */
 
   /* redundant with rest of code but safer against later additions */
-  if (*mysql->server_version == '3')
+  if (*drizzle->server_version == '3')
     goto err;
 
-  if ((*mysql->server_version == '4') &&
-      !mysql_real_query(mysql,
+  if ((*drizzle->server_version == '4') &&
+      !drizzle_real_query(drizzle,
                         STRING_WITH_LEN("SELECT @@GLOBAL.COLLATION_SERVER")) &&
-      (master_res= mysql_store_result(mysql)))
+      (master_res= drizzle_store_result(drizzle)))
   {
-    if ((master_row= mysql_fetch_row(master_res)) &&
+    if ((master_row= drizzle_fetch_row(master_res)) &&
         strcmp(master_row[0], global_system_variables.collation_server->name))
     {
       errmsg=
@@ -929,7 +929,7 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
       sprintf(err_buff, ER(err_code), errmsg);
       err_msg.append(err_buff);
     }
-    mysql_free_result(master_res);
+    drizzle_free_result(master_res);
     if (errmsg)
       goto err;
   }
@@ -949,11 +949,11 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
     This check is only necessary for 4.x masters (and < 5.0.4 masters but
     those were alpha).
   */
-  if ((*mysql->server_version == '4') &&
-      !mysql_real_query(mysql, STRING_WITH_LEN("SELECT @@GLOBAL.TIME_ZONE")) &&
-      (master_res= mysql_store_result(mysql)))
+  if ((*drizzle->server_version == '4') &&
+      !drizzle_real_query(drizzle, STRING_WITH_LEN("SELECT @@GLOBAL.TIME_ZONE")) &&
+      (master_res= drizzle_store_result(drizzle)))
   {
-    if ((master_row= mysql_fetch_row(master_res)) &&
+    if ((master_row= drizzle_fetch_row(master_res)) &&
         strcmp(master_row[0],
                global_system_variables.time_zone->get_name()->ptr()))
     {
@@ -965,7 +965,7 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
       sprintf(err_buff, ER(err_code), errmsg);
       err_msg.append(err_buff);
     }
-    mysql_free_result(master_res);
+    drizzle_free_result(master_res);
 
     if (errmsg)
       goto err;
@@ -982,22 +982,22 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
     llstr((uint64_t) (mi->heartbeat_period*1000000000UL), llbuf);
     sprintf(query, query_format, llbuf);
 
-    if (mysql_real_query(mysql, query, strlen(query))
+    if (drizzle_real_query(drizzle, query, strlen(query))
         && !check_io_slave_killed(mi->io_thd, mi, NULL))
     {
       err_msg.append("The slave I/O thread stops because querying master with '");
       err_msg.append(query);
       err_msg.append("' failed;");
       err_msg.append(" error: ");
-      err_code= mysql_errno(mysql);
+      err_code= drizzle_errno(drizzle);
       err_msg.qs_append(err_code);
       err_msg.append("  '");
-      err_msg.append(mysql_error(mysql));
+      err_msg.append(drizzle_error(drizzle));
       err_msg.append("'");
-      mysql_free_result(mysql_store_result(mysql));
+      drizzle_free_result(drizzle_store_result(drizzle));
       goto err;
     }
-    mysql_free_result(mysql_store_result(mysql));
+    drizzle_free_result(drizzle_store_result(drizzle));
   }
   
 err:
@@ -1089,7 +1089,7 @@ static void write_ignored_events_info_to_relay_log(THD *thd __attribute__((__unu
 }
 
 
-int32_t register_slave_on_master(MYSQL* mysql, Master_info *mi,
+int32_t register_slave_on_master(DRIZZLE *drizzle, Master_info *mi,
                              bool *suppress_warnings)
 {
   uchar buf[1024], *pos= buf;
@@ -1117,17 +1117,17 @@ int32_t register_slave_on_master(MYSQL* mysql, Master_info *mi,
   /* The master will fill in master_id */
   int4store(pos, 0);                    pos+= 4;
 
-  if (simple_command(mysql, COM_REGISTER_SLAVE, buf, (size_t) (pos- buf), 0))
+  if (simple_command(drizzle, COM_REGISTER_SLAVE, buf, (size_t) (pos- buf), 0))
   {
-    if (mysql_errno(mysql) == ER_NET_READ_INTERRUPTED)
+    if (drizzle_errno(drizzle) == ER_NET_READ_INTERRUPTED)
     {
       *suppress_warnings= true;                 // Suppress reconnect warning
     }
     else if (!check_io_slave_killed(mi->io_thd, mi, NULL))
     {
       char buf[256];
-      snprintf(buf, sizeof(buf), "%s (Errno: %d)", mysql_error(mysql), 
-               mysql_errno(mysql));
+      snprintf(buf, sizeof(buf), "%s (Errno: %d)", drizzle_error(drizzle), 
+               drizzle_errno(drizzle));
       mi->report(ERROR_LEVEL, ER_SLAVE_MASTER_COM_FAILURE,
                  ER(ER_SLAVE_MASTER_COM_FAILURE), "COM_REGISTER_SLAVE", buf);
     }
@@ -1445,7 +1445,7 @@ static int32_t safe_sleep(THD* thd, int32_t sec, CHECK_KILLED_FUNC thread_killed
 }
 
 
-static int32_t request_dump(MYSQL* mysql, Master_info* mi,
+static int32_t request_dump(DRIZZLE *drizzle, Master_info* mi,
                         bool *suppress_warnings)
 {
   uchar buf[FN_REFLEN + 10];
@@ -1461,18 +1461,18 @@ static int32_t request_dump(MYSQL* mysql, Master_info* mi,
   int4store(buf + 6, server_id);
   len = (uint32_t) strlen(logname);
   memcpy(buf + 10, logname,len);
-  if (simple_command(mysql, COM_BINLOG_DUMP, buf, len + 10, 1))
+  if (simple_command(drizzle, COM_BINLOG_DUMP, buf, len + 10, 1))
   {
     /*
       Something went wrong, so we will just reconnect and retry later
       in the future, we should do a better error analysis, but for
       now we just fill up the error log :-)
     */
-    if (mysql_errno(mysql) == ER_NET_READ_INTERRUPTED)
+    if (drizzle_errno(drizzle) == ER_NET_READ_INTERRUPTED)
       *suppress_warnings= true;                 // Suppress reconnect warning
     else
       sql_print_error("Error on COM_BINLOG_DUMP: %d  %s, will retry in %d secs",
-                      mysql_errno(mysql), mysql_error(mysql),
+                      drizzle_errno(drizzle), drizzle_error(drizzle),
                       mi->connect_retry);
     return(1);
   }
@@ -1485,7 +1485,7 @@ static int32_t request_dump(MYSQL* mysql, Master_info* mi,
 
   SYNOPSIS
     read_event()
-    mysql               MySQL connection
+    DRIZZLE               DRIZZLE connection
     mi                  Master connection information
     suppress_warnings   TRUE when a normal net read timeout has caused us to
                         try a reconnect.  We do not want to print anything to
@@ -1497,7 +1497,7 @@ static int32_t request_dump(MYSQL* mysql, Master_info* mi,
     number              Length of packet
 */
 
-static uint32_t read_event(MYSQL* mysql,
+static uint32_t read_event(DRIZZLE *drizzle,
                         Master_info *mi __attribute__((__unused__)),
                         bool* suppress_warnings)
 {
@@ -1511,10 +1511,10 @@ static uint32_t read_event(MYSQL* mysql,
   if (disconnect_slave_event_count && !(mi->events_till_disconnect--))
     return(packet_error);
 
-  len = cli_safe_read(mysql);
+  len = cli_safe_read(drizzle);
   if (len == packet_error || (int32_t) len < 1)
   {
-    if (mysql_errno(mysql) == ER_NET_READ_INTERRUPTED)
+    if (drizzle_errno(drizzle) == ER_NET_READ_INTERRUPTED)
     {
       /*
         We are trying a normal reconnect after a read timeout;
@@ -1525,16 +1525,16 @@ static uint32_t read_event(MYSQL* mysql,
     }
     else
       sql_print_error("Error reading packet from server: %s ( server_errno=%d)",
-                      mysql_error(mysql), mysql_errno(mysql));
+                      drizzle_error(drizzle), drizzle_errno(drizzle));
     return(packet_error);
   }
 
   /* Check if eof packet */
-  if (len < 8 && mysql->net.read_pos[0] == 254)
+  if (len < 8 && drizzle->net.read_pos[0] == 254)
   {
     sql_print_information("Slave: received end packet from server, apparent "
                           "master shutdown: %s",
-                     mysql_error(mysql));
+                     drizzle_error(drizzle));
      return(packet_error);
   }
 
@@ -1862,7 +1862,7 @@ Could not parse relay log event entry. The possible reasons are: the master's \
 binary log is corrupted (you can check this by running 'mysqlbinlog' on the \
 binary log), the slave's relay log is corrupted (you can check this by running \
 'mysqlbinlog' on the relay log), a network problem, or a bug in the master's \
-or slave's MySQL code. If you want to check the master's binary log or slave's \
+or slave's DRIZZLE code. If you want to check the master's binary log or slave's \
 relay log, you will be able to know their names by issuing 'SHOW SLAVE STATUS' \
 on this slave.\
 ");
@@ -1884,7 +1884,7 @@ on this slave.\
   no messages are added to the log.
 
   @param[in]     thd                 Thread context.
-  @param[in]     mysql               MySQL connection.
+  @param[in]     DRIZZLE               DRIZZLE connection.
   @param[in]     mi                  Master connection information.
   @param[in,out] retry_count         Number of attempts to reconnect.
   @param[in]     suppress_warnings   TRUE when a normal net read timeout 
@@ -1896,7 +1896,7 @@ on this slave.\
   @retval        1                   There was an error.
 */
 
-static int32_t try_to_reconnect(THD *thd, MYSQL *mysql, Master_info *mi,
+static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
                             uint32_t *retry_count, bool suppress_warnings,
                             const char *messages[SLAVE_RECON_MSG_MAX])
 {
@@ -1905,7 +1905,7 @@ static int32_t try_to_reconnect(THD *thd, MYSQL *mysql, Master_info *mi,
 #ifdef SIGNAL_WITH_VIO_CLOSE  
   thd->clear_active_vio();
 #endif
-  end_server(mysql);
+  end_server(drizzle);
   if ((*retry_count)++)
   {
     if (*retry_count > master_retry_count)
@@ -1936,7 +1936,7 @@ static int32_t try_to_reconnect(THD *thd, MYSQL *mysql, Master_info *mi,
       sql_print_information(buf);
     }
   }
-  if (safe_reconnect(thd, mysql, mi, 1) || io_slave_killed(thd, mi))
+  if (safe_reconnect(thd, drizzle, mi, 1) || io_slave_killed(thd, mi))
   {
     if (global_system_variables.log_warnings)
       sql_print_information(messages[SLAVE_RECON_MSG_KILLED_AFTER]);
@@ -1951,7 +1951,7 @@ static int32_t try_to_reconnect(THD *thd, MYSQL *mysql, Master_info *mi,
 pthread_handler_t handle_slave_io(void *arg)
 {
   THD *thd; // needs to be first for thread_stack
-  MYSQL *mysql;
+  DRIZZLE *drizzle;
   Master_info *mi = (Master_info*)arg;
   Relay_log_info *rli= &mi->rli;
   char llbuff[22];
@@ -1961,7 +1961,7 @@ pthread_handler_t handle_slave_io(void *arg)
   my_thread_init();
 
   assert(mi->inited);
-  mysql= NULL ;
+  drizzle= NULL ;
   retry_count= 0;
 
   pthread_mutex_lock(&mi->run_lock);
@@ -1991,16 +1991,16 @@ pthread_handler_t handle_slave_io(void *arg)
   pthread_mutex_unlock(&mi->run_lock);
   pthread_cond_broadcast(&mi->start_cond);
 
-  if (!(mi->mysql = mysql = mysql_init(NULL)))
+  if (!(mi->drizzle= drizzle = drizzle_init(NULL)))
   {
     mi->report(ERROR_LEVEL, ER_SLAVE_FATAL_ERROR,
-               ER(ER_SLAVE_FATAL_ERROR), "error in mysql_init()");
+               ER(ER_SLAVE_FATAL_ERROR), "error in drizzle_init()");
     goto err;
   }
 
   thd_proc_info(thd, "Connecting to master");
   // we can get killed during safe_connect
-  if (!safe_connect(thd, mysql, mi))
+  if (!safe_connect(thd, drizzle, mi))
   {
     sql_print_information("Slave I/O thread: connected to master '%s@%s:%d',"
                           "replication started in log '%s' at position %s",
@@ -2012,7 +2012,7 @@ pthread_handler_t handle_slave_io(void *arg)
     thread, since a replication event can become this much larger than
     the corresponding packet (query) sent from client to master.
   */
-    mysql->net.max_packet_size= thd->net.max_packet_size+= MAX_LOG_EVENT_HEADER;
+    drizzle->net.max_packet_size= thd->net.max_packet_size+= MAX_LOG_EVENT_HEADER;
   }
   else
   {
@@ -2024,9 +2024,9 @@ connected:
 
   // TODO: the assignment below should be under mutex (5.0)
   mi->slave_running= MYSQL_SLAVE_RUN_CONNECT;
-  thd->slave_net = &mysql->net;
+  thd->slave_net = &drizzle->net;
   thd_proc_info(thd, "Checking master version");
-  if (get_master_version_and_clock(mysql, mi))
+  if (get_master_version_and_clock(drizzle, mi))
     goto err;
 
   if (mi->rli.relay_log.description_event_for_queue->binlog_version > 1)
@@ -2035,13 +2035,13 @@ connected:
       Register ourselves with the master.
     */
     thd_proc_info(thd, "Registering slave on master");
-    if (register_slave_on_master(mysql, mi, &suppress_warnings))
+    if (register_slave_on_master(drizzle, mi, &suppress_warnings))
     {
       if (!check_io_slave_killed(thd, mi, "Slave I/O thread killed "
                                 "while registering slave on master"))
       {
         sql_print_error("Slave I/O thread couldn't register on master");
-        if (try_to_reconnect(thd, mysql, mi, &retry_count, suppress_warnings,
+        if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
                              reconnect_messages[SLAVE_RECON_ACT_REG]))
           goto err;
       }
@@ -2053,7 +2053,7 @@ connected:
     {
       retry_count_reg++;
       sql_print_information("Forcing to reconnect slave I/O thread");
-      if (try_to_reconnect(thd, mysql, mi, &retry_count, suppress_warnings,
+      if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
                          reconnect_messages[SLAVE_RECON_ACT_REG]))
         goto err;
       goto connected;
@@ -2063,12 +2063,12 @@ connected:
   while (!io_slave_killed(thd,mi))
   {
     thd_proc_info(thd, "Requesting binlog dump");
-    if (request_dump(mysql, mi, &suppress_warnings))
+    if (request_dump(drizzle, mi, &suppress_warnings))
     {
       sql_print_error("Failed on request_dump()");
       if (check_io_slave_killed(thd, mi, "Slave I/O thread killed while \
 requesting master dump") ||
-          try_to_reconnect(thd, mysql, mi, &retry_count, suppress_warnings,
+          try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
                            reconnect_messages[SLAVE_RECON_ACT_DUMP]))
         goto err;
       goto connected;
@@ -2077,7 +2077,7 @@ requesting master dump") ||
     {
       retry_count_dump++;
       sql_print_information("Forcing to reconnect slave I/O thread");
-      if (try_to_reconnect(thd, mysql, mi, &retry_count, suppress_warnings,
+      if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
                            reconnect_messages[SLAVE_RECON_ACT_DUMP]))
         goto err;
       goto connected;
@@ -2093,7 +2093,7 @@ requesting master dump") ||
          we're in fact receiving nothing.
       */
       thd_proc_info(thd, "Waiting for master to send event");
-      event_len= read_event(mysql, mi, &suppress_warnings);
+      event_len= read_event(drizzle, mi, &suppress_warnings);
       if (check_io_slave_killed(thd, mi, "Slave I/O thread killed while \
 reading event"))
         goto err;
@@ -2101,7 +2101,7 @@ reading event"))
       {
         retry_count_event++;
         sql_print_information("Forcing to reconnect slave I/O thread");
-        if (try_to_reconnect(thd, mysql, mi, &retry_count, suppress_warnings,
+        if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
                              reconnect_messages[SLAVE_RECON_ACT_EVENT]))
           goto err;
         goto connected;
@@ -2109,8 +2109,8 @@ reading event"))
 
       if (event_len == packet_error)
       {
-        uint32_t mysql_error_number= mysql_errno(mysql);
-        switch (mysql_error_number) {
+        uint32_t drizzle_error_number= drizzle_errno(drizzle);
+        switch (drizzle_error_number) {
         case CR_NET_PACKET_TOO_LARGE:
           sql_print_error("\
 Log entry on master is longer than max_allowed_packet (%ld) on \
@@ -2119,8 +2119,8 @@ max_allowed_packet",
                           thd->variables.max_allowed_packet);
           goto err;
         case ER_MASTER_FATAL_ERROR_READING_BINLOG:
-          sql_print_error(ER(mysql_error_number), mysql_error_number,
-                          mysql_error(mysql));
+          sql_print_error(ER(drizzle_error_number), drizzle_error_number,
+                          drizzle_error(drizzle));
           goto err;
         case EE_OUTOFMEMORY:
         case ER_OUTOFMEMORY:
@@ -2128,7 +2128,7 @@ max_allowed_packet",
 Stopping slave I/O thread due to out-of-memory error from master");
           goto err;
         }
-        if (try_to_reconnect(thd, mysql, mi, &retry_count, suppress_warnings,
+        if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
                              reconnect_messages[SLAVE_RECON_ACT_EVENT]))
           goto err;
         goto connected;
@@ -2136,7 +2136,7 @@ Stopping slave I/O thread due to out-of-memory error from master");
 
       retry_count=0;                    // ok event, reset retry counter
       thd_proc_info(thd, "Queueing master event to the relay log");
-      if (queue_event(mi,(const char*)mysql->net.read_pos + 1, event_len))
+      if (queue_event(mi,(const char*)drizzle->net.read_pos + 1, event_len))
       {
         goto err;
       }
@@ -2178,7 +2178,7 @@ err:
   thd->query = thd->db = 0; // extra safety
   thd->query_length= thd->db_length= 0;
   VOID(pthread_mutex_unlock(&LOCK_thread_count));
-  if (mysql)
+  if (drizzle)
   {
     /*
       Here we need to clear the active VIO before closing the
@@ -2191,8 +2191,8 @@ err:
 #ifdef SIGNAL_WITH_VIO_CLOSE
     thd->clear_active_vio();
 #endif
-    mysql_close(mysql);
-    mi->mysql=0;
+    drizzle_close(drizzle);
+    mi->drizzle=0;
   }
   write_ignored_events_info_to_relay_log(thd, mi);
   thd_proc_info(thd, "Waiting for slave mutex on exit");
@@ -2503,7 +2503,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
   uint32_t num_bytes;
   bool cev_not_written;
   THD *thd = mi->io_thd;
-  NET *net = &mi->mysql->net;
+  NET *net = &mi->drizzle->net;
 
   if (unlikely(!cev->is_valid()))
     return(1);
@@ -2650,7 +2650,7 @@ static int32_t process_io_rotate(Master_info *mi, Rotate_log_event *rev)
   if (mi->rli.relay_log.description_event_for_queue->binlog_version >= 4)
   {
     delete mi->rli.relay_log.description_event_for_queue;
-    /* start from format 3 (MySQL 4.0) again */
+    /* start from format 3 (DRIZZLE 4.0) again */
     mi->rli.relay_log.description_event_for_queue= new
       Format_description_log_event(3);
   }
@@ -2664,7 +2664,7 @@ static int32_t process_io_rotate(Master_info *mi, Rotate_log_event *rev)
 
 /*
   Reads a 3.23 event and converts it to the slave's format. This code was
-  copied from MySQL 4.0.
+  copied from DRIZZLE 4.0.
 */
 static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
                            uint32_t event_len)
@@ -3106,7 +3106,7 @@ void end_relay_log_info(Relay_log_info* rli)
   SYNPOSIS
     safe_connect()
     thd                 Thread handler for slave
-    mysql               MySQL connection handle
+    DRIZZLE               DRIZZLE connection handle
     mi                  Replication handle
 
   RETURN
@@ -3114,9 +3114,9 @@ void end_relay_log_info(Relay_log_info* rli)
     #   Error
 */
 
-static int32_t safe_connect(THD* thd, MYSQL* mysql, Master_info* mi)
+static int32_t safe_connect(THD* thd, DRIZZLE *drizzle, Master_info* mi)
 {
-  return(connect_to_master(thd, mysql, mi, 0, 0));
+  return(connect_to_master(thd, drizzle, mi, 0, 0));
 }
 
 
@@ -3129,7 +3129,7 @@ static int32_t safe_connect(THD* thd, MYSQL* mysql, Master_info* mi)
     master_retry_count times
 */
 
-static int32_t connect_to_master(THD* thd, MYSQL* mysql, Master_info* mi,
+static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                              bool reconnect, bool suppress_warnings)
 {
   int32_t slave_was_killed;
@@ -3142,22 +3142,22 @@ static int32_t connect_to_master(THD* thd, MYSQL* mysql, Master_info* mi,
   if (opt_slave_compressed_protocol)
     client_flag=CLIENT_COMPRESS;                /* We will use compression */
 
-  mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT, (char *) &slave_net_timeout);
-  mysql_options(mysql, MYSQL_OPT_READ_TIMEOUT, (char *) &slave_net_timeout);
+  drizzle_options(drizzle, DRIZZLE_OPT_CONNECT_TIMEOUT, (char *) &slave_net_timeout);
+  drizzle_options(drizzle, DRIZZLE_OPT_READ_TIMEOUT, (char *) &slave_net_timeout);
 
-  mysql_options(mysql, MYSQL_SET_CHARSET_NAME, default_charset_info->csname);
+  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset_info->csname);
   /* This one is not strictly needed but we have it here for completeness */
-  mysql_options(mysql, MYSQL_SET_CHARSET_DIR, (char *) charsets_dir);
+  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_DIR, (char *) charsets_dir);
 
   while (!(slave_was_killed = io_slave_killed(thd,mi)) &&
-         (reconnect ? mysql_reconnect(mysql) != 0 :
-          mysql_real_connect(mysql, mi->host, mi->user, mi->password, 0,
+         (reconnect ? drizzle_reconnect(drizzle) != 0 :
+          drizzle_connect(drizzle, mi->host, mi->user, mi->password, 0,
                              mi->port, 0, client_flag) == 0))
   {
     /* Don't repeat last error */
-    if ((int32_t)mysql_errno(mysql) != last_errno)
+    if ((int32_t)drizzle_errno(drizzle) != last_errno)
     {
-      last_errno=mysql_errno(mysql);
+      last_errno=drizzle_errno(drizzle);
       suppress_warnings= 0;
       mi->report(ERROR_LEVEL, last_errno,
                  "error %s to master '%s@%s:%d'"
@@ -3201,10 +3201,10 @@ replication resumed in log '%s' at position %s", mi->user,
                         mi->user, mi->host, mi->port);
     }
 #ifdef SIGNAL_WITH_VIO_CLOSE
-    thd->set_active_vio(mysql->net.vio);
+    thd->set_active_vio(drizzle->net.vio);
 #endif
   }
-  mysql->reconnect= 1;
+  drizzle->reconnect= 1;
   return(slave_was_killed);
 }
 
@@ -3217,10 +3217,10 @@ replication resumed in log '%s' at position %s", mi->user,
     master_retry_count times
 */
 
-static int32_t safe_reconnect(THD* thd, MYSQL* mysql, Master_info* mi,
+static int32_t safe_reconnect(THD* thd, DRIZZLE *drizzle, Master_info* mi,
                           bool suppress_warnings)
 {
-  return(connect_to_master(thd, mysql, mi, 1, suppress_warnings));
+  return(connect_to_master(thd, drizzle, mi, 1, suppress_warnings));
 }
 
 
