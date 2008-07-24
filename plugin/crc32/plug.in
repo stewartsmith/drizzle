@@ -1,0 +1,3 @@
+MYSQL_PLUGIN(crc32,[crc32 UDF],
+        [UDF Plugin for crc32])
+MYSQL_PLUGIN_DYNAMIC(crc32,   [libcrc32udf.la])
