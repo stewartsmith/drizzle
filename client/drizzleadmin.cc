@@ -360,8 +360,6 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
   return 0;
 }
 
-#include <help_start.h>
-
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s on %s\n",my_progname,ADMIN_VERSION,
@@ -380,6 +378,3 @@ static void usage(void)
   ping         Check if server is down\n\
   shutdown     Take server down\n");
 }
-
-#include <help_end.h>
-

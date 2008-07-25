@@ -32,49 +32,40 @@
 #endif
 
 #ifdef HAVE_GETPASS
-#ifdef HAVE_PWD_H
-#include <pwd.h>
-#endif /* HAVE_PWD_H */
+# ifdef HAVE_PWD_H
+#   include <pwd.h>
+# endif /* HAVE_PWD_H */
 #else /* ! HAVE_GETPASS */
-#if !defined(__WIN__) && !defined(__NETWARE__)
-#include <sys/ioctl.h>
-#ifdef HAVE_TERMIOS_H				/* For tty-password */
-#include	<termios.h>
-#define TERMIO	struct termios
-#else
-#ifdef HAVE_TERMIO_H				/* For tty-password */
-#include	<termio.h>
-#define TERMIO	struct termio
-#else
-#include	<sgtty.h>
-#define TERMIO	struct sgttyb
-#endif
-#endif
-#ifdef alpha_linux_port
-#include <asm/ioctls.h>				/* QQ; Fix this in configure */
-#include <asm/termiobits.h>
-#endif
-#else
-#ifndef __NETWARE__
-#include <conio.h>
-#endif /* __NETWARE__ */
-#endif /* __WIN__ */
+# if !defined(__WIN__) && !defined(__NETWARE__)
+#   include <sys/ioctl.h>
+#   ifdef HAVE_TERMIOS_H				/* For tty-password */
+#     include	<termios.h>
+#     define TERMIO	struct termios
+#   else
+#     ifdef HAVE_TERMIO_H				/* For tty-password */
+#       include	<termio.h>
+#       define TERMIO	struct termio
+#     else
+#       include	<sgtty.h>
+#       define TERMIO	struct sgttyb
+#     endif
+#   endif
+#   ifdef alpha_linux_port
+#     include <asm/ioctls.h>				/* QQ; Fix this in configure */
+#     include <asm/termiobits.h>
+#   endif
+# else
+#   ifndef __NETWARE__
+#     include <conio.h>
+#   endif /* ! __NETWARE__ */
+# endif /* ! __WIN__ AND ! __NETWARE__ */
 #endif /* HAVE_GETPASS */
 
 #ifdef HAVE_GETPASSPHRASE			/* For Solaris */
 #define getpass(A) getpassphrase(A)
 #endif
 
-#if defined( __WIN__) || defined(__NETWARE__)
-/* were just going to fake it here and get input from the keyboard */
-
-#ifdef __NETWARE__
-#undef _getch
-#undef _cputs
-#define _getch getcharacter
-#define _cputs(A) putstring(A)
-#endif
-
+#if defined( __WIN__)
 char *get_tty_password(const char *opt_message)
 {
   char to[80];
@@ -110,7 +101,7 @@ char *get_tty_password(const char *opt_message)
 
 #else
 
-#ifndef HAVE_GETPASS
+# ifndef HAVE_GETPASS
 /*
   Can't use fgets, because readline will get confused
   length is max number of chars in to, not counting \0
@@ -155,33 +146,33 @@ static void get_password(char *to,uint length,int fd, my_bool echo)
   *pos=0;
   return;
 }
-#endif /* ! HAVE_GETPASS */
+# endif /* ! HAVE_GETPASS */
 
 
 char *get_tty_password(const char *opt_message)
 {
-#ifdef HAVE_GETPASS
+# ifdef HAVE_GETPASS
   char *passbuff;
-#else /* ! HAVE_GETPASS */
+# else /* ! HAVE_GETPASS */
   TERMIO org,tmp;
-#endif /* HAVE_GETPASS */
+# endif /* HAVE_GETPASS */
   char buff[80];
 
-#ifdef HAVE_GETPASS
+# ifdef HAVE_GETPASS
   passbuff = getpass(opt_message ? opt_message : "Enter password: ");
 
   /* copy the password to buff and clear original (static) buffer */
   strnmov(buff, passbuff, sizeof(buff) - 1);
-#ifdef _PASSWORD_LEN
+#   ifdef _PASSWORD_LEN
   memset(passbuff, 0, _PASSWORD_LEN);
-#endif
-#else 
+#   endif
+# else /* ! HAVE_GETPASS */
   if (isatty(fileno(stdout)))
   {
     fputs(opt_message ? opt_message : "Enter password: ",stdout);
     fflush(stdout);
   }
-#if defined(HAVE_TERMIOS_H)
+#   if defined(HAVE_TERMIOS_H)
   tcgetattr(fileno(stdin), &org);
   tmp = org;
   tmp.c_lflag &= ~(ECHO | ISIG | ICANON);
@@ -190,7 +181,7 @@ char *get_tty_password(const char *opt_message)
   tcsetattr(fileno(stdin), TCSADRAIN, &tmp);
   get_password(buff, sizeof(buff)-1, fileno(stdin), isatty(fileno(stdout)));
   tcsetattr(fileno(stdin), TCSADRAIN, &org);
-#elif defined(HAVE_TERMIO_H)
+#   elif defined(HAVE_TERMIO_H)
   ioctl(fileno(stdin), (int) TCGETA, &org);
   tmp=org;
   tmp.c_lflag &= ~(ECHO | ISIG | ICANON);
@@ -199,7 +190,7 @@ char *get_tty_password(const char *opt_message)
   ioctl(fileno(stdin),(int) TCSETA, &tmp);
   get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stdout)));
   ioctl(fileno(stdin),(int) TCSETA, &org);
-#else
+#   else
   gtty(fileno(stdin), &org);
   tmp=org;
   tmp.sg_flags &= ~ECHO;
@@ -207,10 +198,10 @@ char *get_tty_password(const char *opt_message)
   stty(fileno(stdin), &tmp);
   get_password(buff,sizeof(buff)-1,fileno(stdin),isatty(fileno(stdout)));
   stty(fileno(stdin), &org);
-#endif
+#   endif
   if (isatty(fileno(stdout)))
     fputc('\n',stdout);
-#endif /* HAVE_GETPASS */
+# endif /* HAVE_GETPASS */
 
   return(my_strdup(buff,MYF(MY_FAE)));
 }

@@ -1089,8 +1089,6 @@ static void init_variables(const struct my_option *options,
   Print help for all options and variables.
 */
 
-#include <help_start.h>
-
 void my_print_help(const struct my_option *options)
 {
   uint col, name_space= 22, comment_space= 57;
@@ -1248,5 +1246,3 @@ void my_print_variables(const struct my_option *options)
     }
   }
 }
-
-#include <help_end.h>

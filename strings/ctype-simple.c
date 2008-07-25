@@ -1388,18 +1388,8 @@ int my_mb_ctype_8bit(CHARSET_INFO *cs, int *ctype,
 
 
 #undef  UINT64_MAX
-/*
-  Needed under MetroWerks Compiler, since MetroWerks compiler does not
-  properly handle a constant expression containing a mod operator
-*/
-#if defined(__NETWARE__) && defined(__MWERKS__)
-static uint64_t uint64_t_max= ~(uint64_t) 0;
-#define UINT64_MAX uint64_t_max
-#else
 #define UINT64_MAX           (~(uint64_t) 0)
-#endif /* __NETWARE__ && __MWERKS__ */
 
-    
 #define CUTOFF  (UINT64_MAX / 10)
 #define CUTLIM  (UINT64_MAX % 10)
 #define DIGITS_IN_ULONGLONG 20
