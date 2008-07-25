@@ -30,7 +30,7 @@
 
 #ifndef bmove512
 
-#define LONG ulonglong
+#define LONG uint64_t
 
 void bmove512(uchar *to, const uchar *from, register size_t length)
 {

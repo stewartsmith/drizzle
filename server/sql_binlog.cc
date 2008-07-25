@@ -43,7 +43,7 @@ void mysql_client_binlog_statement(THD* thd)
     one here.  In this case, the first event we read must be a
     Format_description_event.
   */
-  my_bool have_fd_event= true;
+  bool have_fd_event= true;
   if (!thd->rli_fake)
   {
     thd->rli_fake= new Relay_log_info;

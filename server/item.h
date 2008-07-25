@@ -124,7 +124,7 @@ struct Hybrid_type_traits;
 
 struct Hybrid_type
 {
-  longlong integer;
+  int64_t integer;
 
   double real;
   /*
@@ -162,15 +162,15 @@ struct Hybrid_type_traits
   virtual void set_zero(Hybrid_type *val) const { val->real= 0.0; }
   virtual void add(Hybrid_type *val, Field *f) const
   { val->real+= f->val_real(); }
-  virtual void div(Hybrid_type *val, ulonglong u) const
-  { val->real/= ulonglong2double(u); }
+  virtual void div(Hybrid_type *val, uint64_t u) const
+  { val->real/= uint64_t2double(u); }
 
-  virtual longlong val_int(Hybrid_type *val,
+  virtual int64_t val_int(Hybrid_type *val,
                            bool unsigned_flag __attribute__((__unused__))) const
-  { return (longlong) rint(val->real); }
+  { return (int64_t) rint(val->real); }
   virtual double val_real(Hybrid_type *val) const { return val->real; }
   virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8 decimals) const;
+  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
   static const Hybrid_type_traits *instance();
   Hybrid_type_traits() {}
   virtual ~Hybrid_type_traits() {}
@@ -187,14 +187,14 @@ struct Hybrid_type_traits_decimal: public Hybrid_type_traits
   /* Hybrid_type operations. */
   virtual void set_zero(Hybrid_type *val) const;
   virtual void add(Hybrid_type *val, Field *f) const;
-  virtual void div(Hybrid_type *val, ulonglong u) const;
+  virtual void div(Hybrid_type *val, uint64_t u) const;
 
-  virtual longlong val_int(Hybrid_type *val, bool unsigned_flag) const;
+  virtual int64_t val_int(Hybrid_type *val, bool unsigned_flag) const;
   virtual double val_real(Hybrid_type *val) const;
   virtual my_decimal *val_decimal(Hybrid_type *val,
                                   my_decimal *buf __attribute__((__unused__))) const
   { return &val->dec_buf[val->used_dec_buf_no]; }
-  virtual String *val_str(Hybrid_type *val, String *buf, uint8 decimals) const;
+  virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
   static const Hybrid_type_traits_decimal *instance();
   Hybrid_type_traits_decimal() {};
 };
@@ -212,10 +212,10 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
   { val->integer= 0; }
   virtual void add(Hybrid_type *val, Field *f) const
   { val->integer+= f->val_int(); }
-  virtual void div(Hybrid_type *val, ulonglong u) const
-  { val->integer/= (longlong) u; }
+  virtual void div(Hybrid_type *val, uint64_t u) const
+  { val->integer/= (int64_t) u; }
 
-  virtual longlong val_int(Hybrid_type *val,
+  virtual int64_t val_int(Hybrid_type *val,
                            bool unsigned_flag __attribute__((__unused__))) const
   { return val->integer; }
   virtual double val_real(Hybrid_type *val) const
@@ -227,7 +227,7 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
     return &val->dec_buf[2];
   }
   virtual String *val_str(Hybrid_type *val, String *buf,
-                          uint8 decimals __attribute__((__unused__))) const
+                          uint8_t decimals __attribute__((__unused__))) const
   { buf->set(val->integer, &my_charset_bin); return buf;}
   static const Hybrid_type_traits_integer *instance();
   Hybrid_type_traits_integer() {};
@@ -300,8 +300,8 @@ struct Name_resolution_context: Sql_alloc
   void *error_processor_data;
 
   /*
-    When TRUE items are resolved in this context both against the
-    SELECT list and this->table_list. If FALSE, items are resolved
+    When true items are resolved in this context both against the
+    SELECT list and this->table_list. If false, items are resolved
     only against this->table_list.
   */
   bool resolve_in_select_list;
@@ -320,7 +320,7 @@ struct Name_resolution_context: Sql_alloc
 
   void init()
   {
-    resolve_in_select_list= FALSE;
+    resolve_in_select_list= false;
     error_processor= &dummy_error_processor;
     first_name_resolution_table= NULL;
     last_name_resolution_table= NULL;
@@ -329,7 +329,7 @@ struct Name_resolution_context: Sql_alloc
   void resolve_in_table_list_only(TABLE_LIST *tables)
   {
     table_list= first_name_resolution_table= tables;
-    resolve_in_select_list= FALSE;
+    resolve_in_select_list= false;
   }
 
   void process_error(THD *thd)
@@ -391,7 +391,7 @@ public:
   etc etc). An Item* tree is assumed to have the same monotonicity properties
   as its correspoinding function F:
 
-  [signed] longlong F(field1, field2, ...) {
+  [signed] int64_t F(field1, field2, ...) {
     put values of field_i into table record buffer;
     return item->val_int(); 
   }
@@ -420,8 +420,8 @@ typedef bool (Item::*Item_processor) (uchar *arg);
                     OUT: Parameter to be passed to the transformer
 
     RETURN 
-      TRUE   Invoke the transformer
-      FALSE  Don't do it
+      true   Invoke the transformer
+      false  Don't do it
 
 */
 typedef bool (Item::*Item_analyzer) (uchar **argp);
@@ -434,7 +434,7 @@ class Item
   Item(const Item &);			/* Prevent use of these */
   void operator=(Item &);
   /* Cache of the result of is_expensive(). */
-  int8 is_expensive_cache;
+  int8_t is_expensive_cache;
   virtual bool is_expensive_processor(uchar *arg __attribute__((__unused__)))
   { return 0; }
 
@@ -476,10 +476,10 @@ public:
   /* Original item name (if it was renamed)*/
   char * orig_name;
   Item *next;
-  uint32 max_length;
+  uint32_t max_length;
   uint name_length;                     /* Length of name */
-  int8 marker;
-  uint8 decimals;
+  int8_t marker;
+  uint8_t decimals;
   my_bool maybe_null;			/* If item may be null */
   my_bool null_value;			/* if item is null */
   my_bool unsigned_flag;
@@ -556,11 +556,11 @@ public:
 
     SYNOPSIS
       val_int_endpoint()
-        left_endp  FALSE  <=> The interval is "x < const" or "x <= const"
-                   TRUE   <=> The interval is "x > const" or "x >= const"
+        left_endp  false  <=> The interval is "x < const" or "x <= const"
+                   true   <=> The interval is "x > const" or "x >= const"
 
-        incl_endp  IN   TRUE <=> the comparison is '<' or '>'
-                        FALSE <=> the comparison is '<=' or '>='
+        incl_endp  IN   true <=> the comparison is '<' or '>'
+                        false <=> the comparison is '<=' or '>='
                    OUT  The same but for the "F(x) $CMP$ F(const)" comparison
 
     DESCRIPTION
@@ -582,9 +582,9 @@ public:
     RETURN
       The output range bound, which equal to the value of val_int()
         - If the value of the function is NULL then the bound is the
-          smallest possible value of LONGLONG_MIN
+          smallest possible value of INT64_MIN
   */
-  virtual longlong val_int_endpoint(bool left_endp __attribute__((__unused__)),
+  virtual int64_t val_int_endpoint(bool left_endp __attribute__((__unused__)),
                                     bool *incl_endp __attribute__((__unused__)))
   { assert(0); return 0; }
 
@@ -597,8 +597,8 @@ public:
       val_real()
 
     RETURN
-      In case of NULL value return 0.0 and set null_value flag to TRUE.
-      If value is not null null_value flag will be reset to FALSE.
+      In case of NULL value return 0.0 and set null_value flag to true.
+      If value is not null null_value flag will be reset to false.
   */
   virtual double val_real()=0;
   /*
@@ -608,15 +608,15 @@ public:
       val_int()
 
     RETURN
-      In case of NULL value return 0 and set null_value flag to TRUE.
-      If value is not null null_value flag will be reset to FALSE.
+      In case of NULL value return 0 and set null_value flag to true.
+      If value is not null null_value flag will be reset to false.
   */
-  virtual longlong val_int()=0;
+  virtual int64_t val_int()=0;
   /*
     This is just a shortcut to avoid the cast. You should still use
     unsigned_flag to check the sign of the item.
   */
-  inline ulonglong val_uint() { return (ulonglong) val_int(); }
+  inline uint64_t val_uint() { return (uint64_t) val_int(); }
   /*
     Return string representation of this item object.
 
@@ -648,8 +648,8 @@ public:
 
     RETURN
       In case of NULL value return 0 (NULL pointer) and set null_value flag
-      to TRUE.
-      If value is not null null_value flag will be reset to FALSE.
+      to true.
+      If value is not null null_value flag will be reset to false.
   */
   virtual String *val_str(String *str)=0;
   /*
@@ -666,17 +666,17 @@ public:
 
     RETURN
       Return pointer on my_decimal (it can be other then passed via argument)
-        if value is not NULL (null_value flag will be reset to FALSE).
+        if value is not NULL (null_value flag will be reset to false).
       In case of NULL value it return 0 pointer and set null_value flag
-        to TRUE.
+        to true.
   */
   virtual my_decimal *val_decimal(my_decimal *decimal_buffer)= 0;
   /*
     Return boolean value of item.
 
     RETURN
-      FALSE value is false or NULL
-      TRUE value is true (not equal to 0)
+      false value is false or NULL
+      true value is true (not equal to 0)
   */
   virtual bool val_bool();
   virtual String *val_nodeset(String*) { return 0; }
@@ -689,7 +689,7 @@ public:
   my_decimal *val_decimal_from_string(my_decimal *decimal_value);
   my_decimal *val_decimal_from_date(my_decimal *decimal_value);
   my_decimal *val_decimal_from_time(my_decimal *decimal_value);
-  longlong val_int_from_decimal();
+  int64_t val_int_from_decimal();
   double val_real_from_decimal();
 
   int save_time_in_field(Field *field);
@@ -709,7 +709,7 @@ public:
     way as *val* methods do it.
   */
   virtual double  val_result() { return val_real(); }
-  virtual longlong val_int_result() { return val_int(); }
+  virtual int64_t val_int_result() { return val_int(); }
   virtual String *str_result(String* tmp) { return val_str(tmp); }
   virtual my_decimal *val_decimal_result(my_decimal *val)
   { return val_decimal(val); }
@@ -799,7 +799,7 @@ public:
 
   /*
     Inform the item that there will be no distinction between its result
-    being FALSE or NULL.
+    being false or NULL.
 
     NOTE
       This function will be called for eg. Items that are top-level AND-parts
@@ -936,13 +936,13 @@ public:
   }
 
   /*
-    result_as_longlong() must return TRUE for Items representing DATE/TIME
+    result_as_int64_t() must return true for Items representing DATE/TIME
     functions and DATE/TIME table fields.
     Those Items have result_type()==STRING_RESULT (and not INT_RESULT), but
     their values should be compared as integers (because the integer
     representation is more precise than the string one).
   */
-  virtual bool result_as_longlong() { return FALSE; }
+  virtual bool result_as_int64_t() { return false; }
   bool is_datetime();
 
   /*
@@ -1043,7 +1043,7 @@ public:
   bool remove_dependence_processor(uchar * arg);
   virtual void print(String *str, enum_query_type query_type);
   virtual bool change_context_processor(uchar *cntx)
-    { context= (Name_resolution_context *)cntx; return FALSE; }
+    { context= (Name_resolution_context *)cntx; return false; }
   friend bool insert_fields(THD *thd, Name_resolution_context *context,
                             const char *db_name,
                             const char *table_name, List_iterator<Item> *it,
@@ -1065,7 +1065,7 @@ public:
 
   enum Type type() const { return FIELD_ITEM; }
   double val_real() { return field->val_real(); }
-  longlong val_int() { return field->val_int(); }
+  int64_t val_int() { return field->val_int(); }
   String *val_str(String *str) { return field->val_str(str); }
   my_decimal *val_decimal(my_decimal *dec) { return field->val_decimal(dec); }
   void make_field(Send_field *tmp_field);
@@ -1084,7 +1084,7 @@ public:
   Item_equal *item_equal;
   bool no_const_subst;
   /*
-    if any_privileges set to TRUE then here real effective privileges will
+    if any_privileges set to true then here real effective privileges will
     be stored
   */
   uint have_privileges;
@@ -1112,11 +1112,11 @@ public:
   enum Type type() const { return FIELD_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
   double val_result();
-  longlong val_int_result();
+  int64_t val_int_result();
   String *str_result(String* tmp);
   my_decimal *val_decimal_result(my_decimal *);
   bool val_bool_result();
@@ -1144,7 +1144,7 @@ public:
   {
     return MONOTONIC_STRICT_INCREASING;
   }
-  longlong val_int_endpoint(bool left_endp, bool *incl_endp);
+  int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
   Field *tmp_table_field(TABLE *t_arg __attribute__((__unused__))) { return result_field; }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
@@ -1157,16 +1157,16 @@ public:
   bool find_item_in_field_list_processor(uchar *arg);
   bool register_field_in_read_map(uchar *arg);
   void cleanup();
-  bool result_as_longlong()
+  bool result_as_int64_t()
   {
-    return field->can_be_compared_as_longlong();
+    return field->can_be_compared_as_int64_t();
   }
   Item_equal *find_item_equal(COND_EQUAL *cond_equal);
   bool subst_argument_checker(uchar **arg);
   Item *equal_fields_propagator(uchar *arg);
   bool set_no_const_sub(uchar *arg);
   Item *replace_equal_field(uchar *arg);
-  inline uint32 max_disp_length() { return field->max_display_length(); }
+  inline uint32_t max_disp_length() { return field->max_display_length(); }
   Item_field *filed_for_view_update() { return this; }
   Item *safe_charset_converter(CHARSET_INFO *tocs);
   int fix_outer_field(THD *thd, Field **field, Item **reference);
@@ -1183,7 +1183,7 @@ class Item_null :public Item_basic_constant
 public:
   Item_null(char *name_par=0)
   {
-    maybe_null= null_value= TRUE;
+    maybe_null= null_value= true;
     max_length= 0;
     name= name_par ? name_par : (char*) "NULL";
     fixed= 1;
@@ -1192,7 +1192,7 @@ public:
   enum Type type() const { return NULL_ITEM; }
   bool eq(const Item *item, bool binary_cmp) const;
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   int save_in_field(Field *field, bool no_conversions);
@@ -1255,7 +1255,7 @@ public:
   my_decimal decimal_value;
   union
   {
-    longlong integer;
+    int64_t integer;
     double   real;
     /*
       Character sets conversion info for string values.
@@ -1304,7 +1304,7 @@ public:
   enum_field_types field_type() const { return param_type; }
 
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal*);
   String *val_str(String*);
   bool get_time(MYSQL_TIME *tm);
@@ -1312,12 +1312,12 @@ public:
   int  save_in_field(Field *field, bool no_conversions);
 
   void set_null();
-  void set_int(longlong i, uint32 max_length_arg);
+  void set_int(int64_t i, uint32_t max_length_arg);
   void set_double(double i);
   void set_decimal(const char *str, ulong length);
   bool set_str(const char *str, ulong length);
   bool set_longdata(const char *str, ulong length);
-  void set_time(MYSQL_TIME *tm, timestamp_type type, uint32 max_length_arg);
+  void set_time(MYSQL_TIME *tm, timestamp_type type, uint32_t max_length_arg);
   bool set_from_user_var(THD *thd, const user_var_entry *entry);
   void reset();
   /*
@@ -1351,14 +1351,14 @@ public:
     words, avoid pointing at one item from two different nodes of the tree.
     Return a new basic constant item if parameter value is a basic
     constant, assert otherwise. This method is called only if
-    basic_const_item returned TRUE.
+    basic_const_item returned true.
   */
   Item *safe_charset_converter(CHARSET_INFO *tocs);
   Item *clone_item();
   /*
     Implement by-value equality evaluation if parameter value
     is set and is a basic constant (integer, real or string).
-    Otherwise return FALSE.
+    Otherwise return false.
   */
   bool eq(const Item *item, bool binary_cmp) const;
   /** Item is a argument to a limit clause. */
@@ -1369,23 +1369,23 @@ public:
 class Item_int :public Item_num
 {
 public:
-  longlong value;
-  Item_int(int32 i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
-    :value((longlong) i)
+  int64_t value;
+  Item_int(int32_t i,uint length= MY_INT32_NUM_DECIMAL_DIGITS)
+    :value((int64_t) i)
     { max_length=length; fixed= 1; }
-  Item_int(longlong i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+  Item_int(int64_t i,uint length= MY_INT64_NUM_DECIMAL_DIGITS)
     :value(i)
     { max_length=length; fixed= 1; }
-  Item_int(ulonglong i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
-    :value((longlong)i)
+  Item_int(uint64_t i, uint length= MY_INT64_NUM_DECIMAL_DIGITS)
+    :value((int64_t)i)
     { max_length=length; fixed= 1; unsigned_flag= 1; }
-  Item_int(const char *str_arg,longlong i,uint length) :value(i)
+  Item_int(const char *str_arg,int64_t i,uint length) :value(i)
     { max_length=length; name=(char*) str_arg; fixed= 1; }
   Item_int(const char *str_arg, uint length=64);
   enum Type type() const { return INT_ITEM; }
   enum Item_result result_type () const { return INT_RESULT; }
   enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
-  longlong val_int() { assert(fixed == 1); return value; }
+  int64_t val_int() { assert(fixed == 1); return value; }
   double val_real() { assert(fixed == 1); return (double) value; }
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
@@ -1404,10 +1404,10 @@ class Item_uint :public Item_int
 {
 public:
   Item_uint(const char *str_arg, uint length);
-  Item_uint(ulonglong i) :Item_int((ulonglong) i, 10) {}
-  Item_uint(const char *str_arg, longlong i, uint length);
+  Item_uint(uint64_t i) :Item_int((uint64_t) i, 10) {}
+  Item_uint(const char *str_arg, int64_t i, uint length);
   double val_real()
-    { assert(fixed == 1); return ulonglong2double((ulonglong)value); }
+    { assert(fixed == 1); return uint64_t2double((uint64_t)value); }
   String *val_str(String*);
   Item *clone_item() { return new Item_uint(name, value, max_length); }
   int save_in_field(Field *field, bool no_conversions);
@@ -1427,14 +1427,14 @@ public:
   Item_decimal(const char *str, const my_decimal *val_arg,
                uint decimal_par, uint length);
   Item_decimal(my_decimal *value_par);
-  Item_decimal(longlong val, bool unsig);
+  Item_decimal(int64_t val, bool unsig);
   Item_decimal(double val, int precision, int scale);
   Item_decimal(const uchar *bin, int precision, int scale);
 
   enum Type type() const { return DECIMAL_ITEM; }
   enum Item_result result_type () const { return DECIMAL_RESULT; }
   enum_field_types field_type() const { return MYSQL_TYPE_NEWDECIMAL; }
-  longlong val_int();
+  int64_t val_int();
   double val_real();
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *val __attribute__((__unused__)))
@@ -1469,31 +1469,31 @@ public:
     :value(val_arg)
   {
     presentation= name=(char*) str;
-    decimals=(uint8) decimal_par;
+    decimals=(uint8_t) decimal_par;
     max_length=length;
     fixed= 1;
   }
   Item_float(double value_par, uint decimal_par) :presentation(0), value(value_par)
   {
-    decimals= (uint8) decimal_par;
+    decimals= (uint8_t) decimal_par;
     fixed= 1;
   }
   int save_in_field(Field *field, bool no_conversions);
   enum Type type() const { return REAL_ITEM; }
   enum_field_types field_type() const { return MYSQL_TYPE_DOUBLE; }
   double val_real() { assert(fixed == 1); return value; }
-  longlong val_int()
+  int64_t val_int()
   {
     assert(fixed == 1);
-    if (value <= (double) LONGLONG_MIN)
+    if (value <= (double) INT64_MIN)
     {
-       return LONGLONG_MIN;
+       return INT64_MIN;
     }
-    else if (value >= (double) (ulonglong) LONGLONG_MAX)
+    else if (value >= (double) (uint64_t) INT64_MAX)
     {
-      return LONGLONG_MAX;
+      return INT64_MAX;
     }
-    return (longlong) rint(value);
+    return (int64_t) rint(value);
   }
   String *val_str(String*);
   my_decimal *val_decimal(my_decimal *);
@@ -1531,7 +1531,7 @@ public:
   Item_string(const char *str,uint length,
               CHARSET_INFO *cs, Derivation dv= DERIVATION_COERCIBLE,
               uint repertoire= MY_REPERTOIRE_UNICODE30)
-    : m_cs_specified(FALSE)
+    : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
     collation.set(cs, dv, repertoire);
@@ -1550,7 +1550,7 @@ public:
   }
   /* Just create an item and do not fill string representation */
   Item_string(CHARSET_INFO *cs, Derivation dv= DERIVATION_COERCIBLE)
-    : m_cs_specified(FALSE)
+    : m_cs_specified(false)
   {
     collation.set(cs, dv);
     max_length= 0;
@@ -1561,7 +1561,7 @@ public:
   Item_string(const char *name_par, const char *str, uint length,
               CHARSET_INFO *cs, Derivation dv= DERIVATION_COERCIBLE,
               uint repertoire= MY_REPERTOIRE_UNICODE30)
-    : m_cs_specified(FALSE)
+    : m_cs_specified(false)
   {
     str_value.set_or_copy_aligned(str, length, cs);
     collation.set(cs, dv, repertoire);
@@ -1588,7 +1588,7 @@ public:
   }
   enum Type type() const { return STRING_ITEM; }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String*)
   {
     assert(fixed == 1);
@@ -1614,7 +1614,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
 
   /**
-    Return TRUE if character-set-introducer was explicitly specified in the
+    Return true if character-set-introducer was explicitly specified in the
     original query for this item (text literal).
 
     This operation is to be called from Item_string::print(). The idea is
@@ -1628,9 +1628,9 @@ public:
     one day when we start using original query as a view definition.
 
     @return This operation returns the value of m_cs_specified attribute.
-      @retval TRUE if character set introducer was explicitly specified in
+      @retval true if character set introducer was explicitly specified in
       the original query.
-      @retval FALSE otherwise.
+      @retval false otherwise.
   */
   inline bool is_cs_specified() const
   {
@@ -1721,7 +1721,7 @@ class Item_return_int :public Item_int
   enum_field_types int_field_type;
 public:
   Item_return_int(const char *name_arg, uint length,
-		  enum_field_types field_type_arg, longlong value= 0)
+		  enum_field_types field_type_arg, int64_t value= 0)
     :Item_int(name_arg, value, length), int_field_type(field_type_arg)
   {
     unsigned_flag=1;
@@ -1739,9 +1739,9 @@ public:
   double val_real()
   { 
     assert(fixed == 1); 
-    return (double) (ulonglong) Item_hex_string::val_int();
+    return (double) (uint64_t) Item_hex_string::val_int();
   }
-  longlong val_int();
+  int64_t val_int();
   bool basic_const_item() const { return 1; }
   String *val_str(String*) { assert(fixed == 1); return &str_value; }
   my_decimal *val_decimal(my_decimal *);
@@ -1815,7 +1815,7 @@ public:
   */
   Item_ref(Name_resolution_context *context_arg, Item **item,
            const char *table_name_arg, const char *field_name_arg,
-           bool alias_name_used_arg= FALSE);
+           bool alias_name_used_arg= false);
 
   /* Constructor need to process subselect with temporary tables (see Item) */
   Item_ref(THD *thd, Item_ref *item)
@@ -1827,14 +1827,14 @@ public:
     return ref && (*ref)->eq(it, binary_cmp);
   }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
   String *val_str(String* tmp);
   bool is_null();
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   double val_result();
-  longlong val_int_result();
+  int64_t val_int_result();
   String *str_result(String* tmp);
   my_decimal *val_decimal_result(my_decimal *);
   bool val_bool_result();
@@ -1872,9 +1872,9 @@ public:
   bool walk(Item_processor processor, bool walk_subquery, uchar *arg)
   { return (*ref)->walk(processor, walk_subquery, arg); }
   virtual void print(String *str, enum_query_type query_type);
-  bool result_as_longlong()
+  bool result_as_int64_t()
   {
-    return (*ref)->result_as_longlong();
+    return (*ref)->result_as_int64_t();
   }
   void cleanup();
   Item_field *filed_for_view_update()
@@ -1922,7 +1922,7 @@ public:
   Item_direct_ref(Name_resolution_context *context_arg, Item **item,
                   const char *table_name_arg,
                   const char *field_name_arg,
-                  bool alias_name_used_arg= FALSE)
+                  bool alias_name_used_arg= false)
     :Item_ref(context_arg, item, table_name_arg,
               field_name_arg, alias_name_used_arg)
   {}
@@ -1930,7 +1930,7 @@ public:
   Item_direct_ref(THD *thd, Item_direct_ref *item) : Item_ref(thd, item) {}
 
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String* tmp);
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
@@ -1984,7 +1984,7 @@ public:
   /* The aggregate function under which this outer ref is used, if any. */
   Item_sum *in_sum_func;
   /*
-    TRUE <=> that the outer_ref is already present in the select list
+    true <=> that the outer_ref is already present in the select list
     of the outer select.
   */
   bool found_in_select_list;
@@ -2026,7 +2026,7 @@ class Item_in_subselect;
 /*
   An object of this class:
    - Converts val_XXX() calls to ref->val_XXX_result() calls, like Item_ref.
-   - Sets owner->was_null=TRUE if it has returned a NULL value from any
+   - Sets owner->was_null=true if it has returned a NULL value from any
      val_XXX() function. This allows to inject an Item_ref_null_helper
      object into subquery and then check if the subquery has produced a row
      with NULL value.
@@ -2043,7 +2043,7 @@ public:
     :Item_ref(context_arg, item, table_name_arg, field_name_arg),
      owner(master) {}
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String* s);
   my_decimal *val_decimal(my_decimal *);
   bool val_bool();
@@ -2073,7 +2073,7 @@ class Item_int_with_ref :public Item_int
 {
   Item *ref;
 public:
-  Item_int_with_ref(longlong i, Item *ref_arg, my_bool unsigned_arg) :
+  Item_int_with_ref(int64_t i, Item *ref_arg, my_bool unsigned_arg) :
     Item_int(i), ref(ref_arg)
   {
     unsigned_flag= unsigned_arg;
@@ -2120,7 +2120,7 @@ public:
 	    my_strntod(str_value.charset(), (char*) str_value.ptr(),
 		       str_value.length(), &end_not_used, &err_not_used));
   }
-  longlong val_int()
+  int64_t val_int()
   {
     int err;
     return null_value ? 0LL : my_strntoll(str_value.charset(),str_value.ptr(),
@@ -2174,7 +2174,7 @@ public:
 class Cached_item_int :public Cached_item
 {
   Item *item;
-  longlong value;
+  int64_t value;
 public:
   Cached_item_int(Item *item_par) :item(item_par),value(0) {}
   bool cmp(void);
@@ -2324,7 +2324,7 @@ public:
   virtual void print(String *str, enum_query_type query_type);
   bool eq_def(Field *field) 
   { 
-    return cached_field ? cached_field->eq_def (field) : FALSE;
+    return cached_field ? cached_field->eq_def (field) : false;
   }
   bool eq(const Item *item,
           bool binary_cmp __attribute__((__unused__))) const
@@ -2337,20 +2337,20 @@ public:
 class Item_cache_int: public Item_cache
 {
 protected:
-  longlong value;
+  int64_t value;
 public:
   Item_cache_int(): Item_cache(), value(0) {}
   Item_cache_int(enum_field_types field_type_arg):
     Item_cache(field_type_arg), value(0) {}
 
   void store(Item *item);
-  void store(Item *item, longlong val_arg);
+  void store(Item *item, int64_t val_arg);
   double val_real() { assert(fixed == 1); return (double) value; }
-  longlong val_int() { assert(fixed == 1); return value; }
+  int64_t val_int() { assert(fixed == 1); return value; }
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return INT_RESULT; }
-  bool result_as_longlong() { return TRUE; }
+  bool result_as_int64_t() { return true; }
 };
 
 
@@ -2362,7 +2362,7 @@ public:
 
   void store(Item *item);
   double val_real() { assert(fixed == 1); return value; }
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return REAL_RESULT; }
@@ -2378,7 +2378,7 @@ public:
 
   void store(Item *item);
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String *str);
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return DECIMAL_RESULT; }
@@ -2401,7 +2401,7 @@ public:
   {}
   void store(Item *item);
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   String* val_str(String *) { assert(fixed == 1); return value; }
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type() const { return STRING_RESULT; }
@@ -2439,7 +2439,7 @@ public:
     illegal_method_call((const char*)"val");
     return 0;
   };
-  longlong val_int()
+  int64_t val_int()
   {
     illegal_method_call((const char*)"val_int");
     return 0;
@@ -2500,12 +2500,12 @@ public:
   enum_field_types field_type() const { return fld_type; };
   enum Type type() const { return TYPE_HOLDER; }
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
   bool join_types(THD *thd, Item *);
   Field *make_field_by_type(TABLE *table);
-  static uint32 display_length(Item *item);
+  static uint32_t display_length(Item *item);
   static enum_field_types get_real_type(Item *);
 };
 

@@ -49,20 +49,19 @@
 */
 
 int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
-	       pbool max_at_top, int (*compare) (void *, uchar *, uchar *),
+	       bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 	       void *first_cmp_arg)
 {
-  DBUG_ENTER("init_queue");
   if ((queue->root= (uchar **) my_malloc((max_elements+1)*sizeof(void*),
 					 MYF(MY_WME))) == 0)
-    DBUG_RETURN(1);
+    return(1);
   queue->elements=0;
   queue->compare=compare;
   queue->first_cmp_arg=first_cmp_arg;
   queue->max_elements=max_elements;
   queue->offset_to_key=offset_to_key;
   queue_set_max_at_top(queue, max_at_top);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -92,18 +91,17 @@ int init_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 */
 
 int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
-	       pbool max_at_top, int (*compare) (void *, uchar *, uchar *),
+	       bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 	       void *first_cmp_arg, uint auto_extent)
 {
   int ret;
-  DBUG_ENTER("init_queue_ex");
 
   if ((ret= init_queue(queue, max_elements, offset_to_key, max_at_top, compare,
                        first_cmp_arg)))
-    DBUG_RETURN(ret);
+    return(ret);
   
   queue->auto_extent= auto_extent;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 /*
@@ -129,17 +127,16 @@ int init_queue_ex(QUEUE *queue, uint max_elements, uint offset_to_key,
 */
 
 int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
-		 pbool max_at_top, int (*compare) (void *, uchar *, uchar *),
+		 bool max_at_top, int (*compare) (void *, uchar *, uchar *),
 		 void *first_cmp_arg)
 {
-  DBUG_ENTER("reinit_queue");
   queue->elements=0;
   queue->compare=compare;
   queue->first_cmp_arg=first_cmp_arg;
   queue->offset_to_key=offset_to_key;
   queue_set_max_at_top(queue, max_at_top);
   resize_queue(queue, max_elements);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -163,17 +160,16 @@ int reinit_queue(QUEUE *queue, uint max_elements, uint offset_to_key,
 int resize_queue(QUEUE *queue, uint max_elements)
 {
   uchar **new_root;
-  DBUG_ENTER("resize_queue");
   if (queue->max_elements == max_elements)
-    DBUG_RETURN(0);
+    return(0);
   if ((new_root= (uchar **) my_realloc((void *)queue->root,
 				      (max_elements+1)*sizeof(void*),
 				      MYF(MY_WME))) == 0)
-    DBUG_RETURN(1);
+    return(1);
   set_if_smaller(queue->elements, max_elements);
   queue->max_elements= max_elements;
   queue->root= new_root;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -193,13 +189,12 @@ int resize_queue(QUEUE *queue, uint max_elements)
 
 void delete_queue(QUEUE *queue)
 {
-  DBUG_ENTER("delete_queue");
   if (queue->root)
   {
     my_free((uchar*) queue->root,MYF(0));
     queue->root=0;
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -208,7 +203,7 @@ void delete_queue(QUEUE *queue)
 void queue_insert(register QUEUE *queue, uchar *element)
 {
   register uint idx, next;
-  DBUG_ASSERT(queue->elements < queue->max_elements);
+  assert(queue->elements < queue->max_elements);
   queue->root[0]= element;
   idx= ++queue->elements;
   /* max_at_top swaps the comparison if we want to order by desc */
@@ -254,7 +249,7 @@ int queue_insert_safe(register QUEUE *queue, uchar *element)
 uchar *queue_remove(register QUEUE *queue, uint idx)
 {
   uchar *element;
-  DBUG_ASSERT(idx < queue->max_elements);
+  assert(idx < queue->max_elements);
   element= queue->root[++idx];  /* Intern index starts from 1 */
   queue->root[idx]= queue->root[queue->elements--];
   _downheap(queue, idx);
@@ -276,7 +271,7 @@ void _downheap(register QUEUE *queue, uint idx)
 {
   uchar *element;
   uint elements,half_queue,offset_to_key, next_index;
-  my_bool first= TRUE;
+  bool first= true;
   uint start_idx= idx;
 
   offset_to_key=queue->offset_to_key;
@@ -302,7 +297,7 @@ void _downheap(register QUEUE *queue, uint idx)
     }
     queue->root[idx]=queue->root[next_index];
     idx=next_index;
-    first= FALSE;
+    first= false;
   }
 
   next_index= idx >> 1;
@@ -384,16 +379,16 @@ static uint tot_no_parts= 0;
 static uint tot_no_loops= 0;
 static uint expected_part= 0;
 static uint expected_num= 0;
-static my_bool max_ind= 0;
-static my_bool fix_used= 0;
-static ulonglong start_time= 0;
+static bool max_ind= 0;
+static bool fix_used= 0;
+static uint64_t start_time= 0;
 
-static my_bool is_divisible_by(uint num, uint divisor)
+static bool is_divisible_by(uint num, uint divisor)
 {
   uint quotient= num / divisor;
   if (quotient * divisor == num)
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 void calculate_next()
@@ -495,16 +490,16 @@ static int test_compare(void *null_arg, uchar *a, uchar *b)
   return 0;
 }
 
-my_bool check_num(uint num_part)
+bool check_num(uint num_part)
 {
   uint part= num_part >> 22;
   uint num= num_part & 0x3FFFFF;
   if (part == expected_part)
     if (num == expected_num)
-      return FALSE;
+      return false;
   printf("Expect part %u Expect num 0x%x got part %u num 0x%x max_ind %u fix_used %u \n",
           expected_part, expected_num, part, num, max_ind, fix_used);
-  return TRUE;
+  return true;
 }
 
 
@@ -546,7 +541,7 @@ void perform_insert(QUEUE *queue)
   }
 }
 
-my_bool perform_ins_del(QUEUE *queue, my_bool max_ind)
+bool perform_ins_del(QUEUE *queue, bool max_ind)
 {
   uint i= 0, no_loops= tot_no_loops, j= tot_no_parts;
   do
@@ -554,7 +549,7 @@ my_bool perform_ins_del(QUEUE *queue, my_bool max_ind)
     uint num_part= *(uint*)queue_top(queue);
     uint part= num_part >> 22;
     if (check_num(num_part))
-      return TRUE;
+      return true;
     if (j++ >= no_loops)
     {
       calculate_end_next(part);
@@ -571,13 +566,13 @@ my_bool perform_ins_del(QUEUE *queue, my_bool max_ind)
       queue_replaced(queue);
     }
   } while (++i < no_loops);
-  return FALSE;
+  return false;
 }
 
-my_bool do_test(uint no_parts, uint l_max_ind, my_bool l_fix_used)
+bool do_test(uint no_parts, uint l_max_ind, bool l_fix_used)
 {
   QUEUE queue;
-  my_bool result;
+  bool result;
   max_ind= l_max_ind;
   fix_used= l_fix_used;
   init_queue(&queue, no_parts, 0, max_ind, test_compare, NULL);
@@ -589,9 +584,9 @@ my_bool do_test(uint no_parts, uint l_max_ind, my_bool l_fix_used)
   if (result)
   {
     printf("Error\n");
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static void start_measurement()
@@ -601,7 +596,7 @@ static void start_measurement()
 
 static void stop_measurement()
 {
-  ulonglong stop_time= my_getsystime();
+  uint64_t stop_time= my_getsystime();
   uint time_in_micros;
   stop_time-= start_time;
   stop_time/= 10; /* Convert to microseconds */
@@ -614,8 +609,8 @@ static void benchmark_test()
   QUEUE queue_real;
   QUEUE *queue= &queue_real;
   uint i, add;
-  fix_used= TRUE;
-  max_ind= FALSE;
+  fix_used= true;
+  max_ind= false;
   tot_no_parts= 1024;
   init_queue(queue, tot_no_parts, 0, max_ind, test_compare, NULL);
   /*
@@ -634,7 +629,7 @@ static void benchmark_test()
     }
     stop_measurement();
 
-    fix_used= FALSE;
+    fix_used= false;
     printf("Start benchmark queue_insert\n");
     start_measurement();
     for (i= 0; i < 128; i++)

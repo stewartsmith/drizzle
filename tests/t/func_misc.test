@@ -10,12 +10,6 @@ select format(1.5555,0),format(123.5555,1),format(1234.5555,2),format(12345.5555
 
 select length(uuid()), charset(uuid()), length(unhex(replace(uuid(),_utf8'-',_utf8'')));
 
-# As we can assume we are the only user for the mysqld server, the difference
-# between two calls should be -1
-set @a= uuid_short();
-set @b= uuid_short();
-select cast(@a - @b as signed);
-
 #
 # Test for core dump with nan
 #

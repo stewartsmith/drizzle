@@ -65,14 +65,13 @@ int modify_defaults_file(const char *file_location, const char *option,
   char linebuff[BUFF_SIZE], *src_ptr, *dst_ptr, *file_buffer;
   size_t opt_len= 0, optval_len= 0, sect_len;
   uint nr_newlines= 0, buffer_size;
-  my_bool in_section= FALSE, opt_applied= 0;
+  bool in_section= false, opt_applied= 0;
   uint reserve_extended;
   uint new_opt_len;
   int reserve_occupied= 0;
-  DBUG_ENTER("modify_defaults_file");
 
   if (!(cnf_file= my_fopen(file_location, O_RDWR | O_BINARY, MYF(0))))
-    DBUG_RETURN(2);
+    return(2);
 
   if (fstat(fileno(cnf_file), &file_stat))
     goto malloc_err;
@@ -175,17 +174,17 @@ int modify_defaults_file(const char *file_location, const char *option,
 
         if (*src_ptr != ']')
         {
-          in_section= FALSE;
+          in_section= false;
           continue; /* Missing closing parenthesis. Assume this was no group */
         }
 
         if (remove_option == MY_REMOVE_SECTION)
           dst_ptr= dst_ptr - strlen(linebuff);
 
-        in_section= TRUE;
+        in_section= true;
       }
       else
-        in_section= FALSE; /* mark that this section is of no interest to us */
+        in_section= false; /* mark that this section is of no interest to us */
     }
   }
 
@@ -216,16 +215,16 @@ int modify_defaults_file(const char *file_location, const char *option,
       goto err;
   }
   if (my_fclose(cnf_file, MYF(MY_WME)))
-    DBUG_RETURN(1);
+    return(1);
 
   my_free(file_buffer, MYF(0));
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   my_free(file_buffer, MYF(0));
 malloc_err:
   my_fclose(cnf_file, MYF(0));
-  DBUG_RETURN(1); /* out of resources */
+  return(1); /* out of resources */
 }
 
 

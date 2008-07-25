@@ -27,7 +27,7 @@
 
 
 char *my_strchr(CHARSET_INFO *cs, const char *str, const char *end,
-                pchar c)
+                char c)
 {
   uint mbl;
   while (str < end)

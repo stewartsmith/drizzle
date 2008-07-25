@@ -27,21 +27,19 @@
 
 int mi_rsame(MI_INFO *info, uchar *record, int inx)
 {
-  DBUG_ENTER("mi_rsame");
-
   if (inx != -1 && ! mi_is_key_active(info->s->state.key_map, inx))
   {
-    DBUG_RETURN(my_errno=HA_ERR_WRONG_INDEX);
+    return(my_errno=HA_ERR_WRONG_INDEX);
   }
   if (info->lastpos == HA_OFFSET_ERROR || info->update & HA_STATE_DELETED)
   {
-    DBUG_RETURN(my_errno=HA_ERR_KEY_NOT_FOUND);	/* No current record */
+    return(my_errno=HA_ERR_KEY_NOT_FOUND);	/* No current record */
   }
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
 
   /* Read row from data file */
   if (fast_mi_readinfo(info))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
 
   if (inx >= 0)
   {
@@ -58,8 +56,8 @@ int mi_rsame(MI_INFO *info, uchar *record, int inx)
   }
 
   if (!(*info->read_record)(info,info->lastpos,record))
-    DBUG_RETURN(0);
+    return(0);
   if (my_errno == HA_ERR_RECORD_DELETED)
     my_errno=HA_ERR_KEY_NOT_FOUND;
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 } /* mi_rsame */

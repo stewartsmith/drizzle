@@ -79,7 +79,7 @@ class ha_tina: public handler
   tina_set *chain;
   tina_set *chain_ptr;
   uchar chain_alloced;
-  uint32 chain_size;
+  uint32_t chain_size;
   uint local_data_file_version;  /* Saved version of the data file used */
   bool records_is_known;
   MEM_ROOT blobroot;
@@ -152,7 +152,6 @@ public:
   bool auto_repair() const { return 1; }
   void position(const uchar *record);
   int info(uint);
-  int extra(enum ha_extra_function operation);
   int delete_all_rows(void);
   int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
   bool check_if_incompatible_data(HA_CREATE_INFO *info,

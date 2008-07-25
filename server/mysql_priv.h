@@ -64,22 +64,22 @@ enum enum_query_type
 };
 
 /* TODO convert all these three maps to Bitmap classes */
-typedef ulonglong table_map;          /* Used for table bits in join */
+typedef uint64_t table_map;          /* Used for table bits in join */
 #if MAX_INDEXES <= 64
 typedef Bitmap<64>  key_map;          /* Used for finding keys */
 #else
 typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
 #endif
-typedef ulong nesting_map;  /* Used for flags of nesting constructs */
+typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
 /*
   Used to identify NESTED_JOIN structures within a join (applicable only to
   structures that have not been simplified away and embed more the one
   element)
 */
-typedef ulonglong nested_join_map;
+typedef uint64_t nested_join_map;
 
 /* query_id */
-typedef ulonglong query_id_t;
+typedef uint64_t query_id_t;
 extern query_id_t global_query_id;
 
 /* increment query_id and return it.  */
@@ -657,9 +657,9 @@ const char *set_thd_proc_info(THD *thd, const char *info,
 extern ulong server_id;
 
 
-typedef my_bool (*qc_engine_callback)(THD *thd, char *table_key,
+typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
                                       uint key_length,
-                                      ulonglong *engine_data);
+                                      uint64_t *engine_data);
 #include "sql_string.h"
 #include "sql_list.h"
 #include "sql_map.h"
@@ -667,7 +667,10 @@ typedef my_bool (*qc_engine_callback)(THD *thd, char *table_key,
 #include "handler.h"
 #include "table.h"
 #include "sql_error.h"
-#include "field.h"				/* Field definitions */
+
+/* Field definitions */
+#include "field.h"
+
 #include "protocol.h"
 #include "sql_udf.h"
 
@@ -751,7 +754,7 @@ int error_log_print(enum loglevel level, const char *format,
                     va_list args);
 
 bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    ulonglong current_utime);
+                    uint64_t current_utime);
 
 bool general_log_print(THD *thd, enum enum_server_command command,
                        const char *format,...);
@@ -866,8 +869,6 @@ int check_user(THD *thd, enum enum_server_command command,
 	       bool check_count);
 pthread_handler_t handle_one_connection(void *arg);
 bool init_new_connection_handler_thread();
-void reset_mqh(LEX_USER *lu, bool get_them);
-bool check_mqh(THD *thd, uint check_command);
 void time_out_user_resource_limits(THD *thd, USER_CONN *uc);
 void decrease_user_connections(USER_CONN *uc);
 void thd_init_client_charset(THD *thd, uint cs_number);
@@ -883,8 +884,8 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
 bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db);
 void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
 void mysql_client_binlog_statement(THD *thd);
-bool mysql_rm_table(THD *thd,TABLE_LIST *tables, my_bool if_exists,
-                    my_bool drop_temporary);
+bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists,
+                    bool drop_temporary);
 int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
                          bool drop_temporary, bool drop_view, bool log_query);
 bool quick_rm_table(handlerton *base,const char *db,
@@ -1000,7 +1001,7 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
 bool mysql_select(THD *thd, Item ***rref_pointer_array,
                   TABLE_LIST *tables, uint wild_num,  List<Item> &list,
                   COND *conds, uint og_num, ORDER *order, ORDER *group,
-                  Item *having, ORDER *proc_param, ulonglong select_type, 
+                  Item *having, ORDER *proc_param, uint64_t select_type, 
                   select_result *result, SELECT_LEX_UNIT *unit, 
                   SELECT_LEX *select_lex);
 void free_underlaid_joins(THD *thd, SELECT_LEX *select);
@@ -1026,7 +1027,7 @@ void sp_prepare_create_field(THD *thd, Create_field *sql_field);
 int prepare_create_field(Create_field *sql_field, 
 			 uint *blob_columns, 
 			 int *timestamps, int *timestamps_with_niladic,
-			 longlong table_flags);
+			 int64_t table_flags);
 bool mysql_create_table(THD *thd,const char *db, const char *table_name,
                         HA_CREATE_INFO *create_info,
                         Alter_info *alter_info,
@@ -1057,7 +1058,7 @@ int mysql_update(THD *thd,TABLE_LIST *tables,List<Item> &fields,
 		 enum enum_duplicates handle_duplicates, bool ignore);
 bool mysql_multi_update(THD *thd, TABLE_LIST *table_list,
                         List<Item> *fields, List<Item> *values,
-                        COND *conds, ulonglong options,
+                        COND *conds, uint64_t options,
                         enum enum_duplicates handle_duplicates, bool ignore,
                         SELECT_LEX_UNIT *unit, SELECT_LEX *select_lex);
 bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list, TABLE *table,
@@ -1075,7 +1076,7 @@ int check_that_all_fields_are_given_values(THD *thd, TABLE *entry,
 void prepare_triggers_for_insert_stmt(TABLE *table);
 int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds);
 bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
-                  SQL_LIST *order, ha_rows rows, ulonglong options,
+                  SQL_LIST *order, ha_rows rows, uint64_t options,
                   bool reset_auto_increment);
 bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok);
 bool mysql_create_or_drop_trigger(THD *thd, TABLE_LIST *tables, bool create);
@@ -1320,10 +1321,8 @@ inline bool setup_fields_with_no_wrap(THD *thd, Item **ref_pointer_array,
                                       bool allow_sum_func)
 {
   bool res;
-  thd->lex->select_lex.no_wrap_view_item= true;
   res= setup_fields(thd, ref_pointer_array, item, mark_used_columns, sum_func_list,
                     allow_sum_func);
-  thd->lex->select_lex.no_wrap_view_item= false;
   return res;
 }
 int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,
@@ -1390,92 +1389,8 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table,
 #define NORMAL_PART_NAME 0
 #define TEMP_PART_NAME 1
 #define RENAMED_PART_NAME 2
-void create_partition_name(char *out, const char *in1,
-                           const char *in2, uint name_variant,
-                           bool translate);
-void create_subpartition_name(char *out, const char *in1,
-                              const char *in2, const char *in3,
-                              uint name_variant);
 
 void mem_alloc_error(size_t size);
-
-enum ddl_log_entry_code
-{
-  /*
-    DDL_LOG_EXECUTE_CODE:
-      This is a code that indicates that this is a log entry to
-      be executed, from this entry a linked list of log entries
-      can be found and executed.
-    DDL_LOG_ENTRY_CODE:
-      An entry to be executed in a linked list from an execute log
-      entry.
-    DDL_IGNORE_LOG_ENTRY_CODE:
-      An entry that is to be ignored
-  */
-  DDL_LOG_EXECUTE_CODE = 'e',
-  DDL_LOG_ENTRY_CODE = 'l',
-  DDL_IGNORE_LOG_ENTRY_CODE = 'i'
-};
-
-enum ddl_log_action_code
-{
-  /*
-    The type of action that a DDL_LOG_ENTRY_CODE entry is to
-    perform.
-    DDL_LOG_DELETE_ACTION:
-      Delete an entity
-    DDL_LOG_RENAME_ACTION:
-      Rename an entity
-    DDL_LOG_REPLACE_ACTION:
-      Rename an entity after removing the previous entry with the
-      new name, that is replace this entry.
-  */
-  DDL_LOG_DELETE_ACTION = 'd',
-  DDL_LOG_RENAME_ACTION = 'r',
-  DDL_LOG_REPLACE_ACTION = 's'
-};
-
-
-typedef struct st_ddl_log_entry
-{
-  const char *name;
-  const char *from_name;
-  const char *handler_name;
-  uint next_entry;
-  uint entry_pos;
-  enum ddl_log_entry_code entry_type;
-  enum ddl_log_action_code action_type;
-  /*
-    Most actions have only one phase. REPLACE does however have two
-    phases. The first phase removes the file with the new name if
-    there was one there before and the second phase renames the
-    old name to the new name.
-  */
-  char phase;
-} DDL_LOG_ENTRY;
-
-typedef struct st_ddl_log_memory_entry
-{
-  uint entry_pos;
-  struct st_ddl_log_memory_entry *next_log_entry;
-  struct st_ddl_log_memory_entry *prev_log_entry;
-  struct st_ddl_log_memory_entry *next_active_log_entry;
-} DDL_LOG_MEMORY_ENTRY;
-
-
-bool write_ddl_log_entry(DDL_LOG_ENTRY *ddl_log_entry,
-                           DDL_LOG_MEMORY_ENTRY **active_entry);
-bool write_execute_ddl_log_entry(uint first_entry,
-                                   bool complete,
-                                   DDL_LOG_MEMORY_ENTRY **active_entry);
-bool deactivate_ddl_log_entry(uint entry_no);
-void release_ddl_log_memory_entry(DDL_LOG_MEMORY_ENTRY *log_entry);
-bool sync_ddl_log();
-void release_ddl_log();
-void execute_ddl_log_recovery();
-bool execute_ddl_log_entry(THD *thd, uint first_entry);
-
-extern pthread_mutex_t LOCK_gdl;
 
 #define WFRM_WRITE_SHADOW 1
 #define WFRM_INSTALL_SHADOW 2
@@ -1526,13 +1441,6 @@ int mysql_load(THD *thd, sql_exchange *ex, TABLE_LIST *table_list,
                 bool local_file);
 int write_record(THD *thd, TABLE *table, COPY_INFO *info);
 
-/* sql_manager.cc */
-extern ulong volatile manager_status;
-extern bool volatile manager_thread_in_use, mqh_used;
-extern pthread_t manager_thread;
-pthread_handler_t handle_manager(void *arg);
-bool mysql_manager_submit(void (*action)());
-
 
 /* sql_test.cc */
 void print_where(COND *cond,const char *info, enum_query_type query_type);
@@ -1570,7 +1478,7 @@ File open_binlog(IO_CACHE *log, const char *log_file_name,
 /* mysqld.cc */
 extern void MYSQLerror(const char*);
 void refresh_status(THD *thd);
-my_bool mysql_rm_tmp_tables(void);
+bool mysql_rm_tmp_tables(void);
 void handle_connection_in_main_thread(THD *thd);
 void create_thread_to_handle_connection(THD *thd);
 void unlink_thd(THD *thd);
@@ -1582,7 +1490,7 @@ extern bool check_reserved_words(LEX_STRING *name);
 extern enum_field_types agg_field_type(Item **items, uint nitems);
 
 /* strfunc.cc */
-ulonglong find_set(TYPELIB *lib, const char *x, uint length, CHARSET_INFO *cs,
+uint64_t find_set(TYPELIB *lib, const char *x, uint length, CHARSET_INFO *cs,
 		   char **err_pos, uint *err_len, bool *set_warning);
 uint find_type(const TYPELIB *lib, const char *find, uint length,
                bool part_match);
@@ -1651,18 +1559,17 @@ extern char glob_hostname[FN_REFLEN], mysql_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;
 extern char log_error_file[FN_REFLEN], *opt_tc_log_file;
 extern const double log_10[309];
-extern ulonglong log_10_int[20];
-extern ulonglong keybuff_size;
-extern ulonglong thd_startup_options;
+extern uint64_t log_10_int[20];
+extern uint64_t keybuff_size;
+extern uint64_t thd_startup_options;
 extern ulong thread_id;
 extern ulong binlog_cache_use, binlog_cache_disk_use;
 extern ulong aborted_threads,aborted_connects;
 extern ulong slave_open_temp_tables;
-extern ulong query_cache_size, query_cache_min_res_unit;
 extern ulong slow_launch_threads, slow_launch_time;
 extern ulong table_cache_size, table_def_size;
 extern ulong max_connections,max_connect_errors, connect_timeout;
-extern my_bool slave_allow_batching;
+extern bool slave_allow_batching;
 extern ulong slave_net_timeout, slave_trans_retries;
 extern uint max_user_connections;
 extern ulong what_to_log,flush_time;
@@ -1682,7 +1589,8 @@ extern ulong current_pid;
 extern ulong expire_logs_days, sync_binlog_period, sync_binlog_counter;
 extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
 extern ulong tc_log_page_waits;
-extern my_bool relay_log_purge, opt_innodb_safe_binlog, opt_innodb;
+extern bool relay_log_purge;
+extern bool opt_innodb_safe_binlog, opt_innodb;
 extern uint test_flags,select_errors,ha_open_options;
 extern uint protocol_version, mysqld_port, dropping_tables;
 extern uint delay_key_write_options;
@@ -1692,7 +1600,7 @@ extern uint lower_case_table_names;
 #endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
 #ifdef MYSQL_SERVER
 extern bool opt_endinfo, using_udf_functions;
-extern my_bool locked_in_memory;
+extern bool locked_in_memory;
 extern bool opt_using_transactions;
 #endif /* MYSQL_SERVER */
 #if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
@@ -1700,28 +1608,36 @@ extern bool opt_using_transactions;
 #ifdef MYSQL_SERVER
 extern bool using_update_log, server_id_supplied;
 extern bool opt_update_log, opt_bin_log, opt_error_log;
-extern my_bool opt_log, opt_slow_log;
+extern bool opt_log; 
+extern bool opt_slow_log;
 extern ulong log_output_options;
-extern my_bool opt_log_queries_not_using_indexes;
+extern bool opt_log_queries_not_using_indexes;
 extern bool opt_disable_networking, opt_skip_show_db;
-extern my_bool opt_character_set_client_handshake;
+extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint volatile thread_count, thread_running, global_read_lock;
 extern uint connection_count;
-extern my_bool opt_sql_bin_update, opt_safe_user_create, opt_no_mix_types;
-extern my_bool opt_safe_show_db, opt_local_infile, opt_myisam_use_mmap;
-extern my_bool opt_slave_compressed_protocol, use_temp_pool;
+extern bool opt_sql_bin_update;
+extern bool opt_safe_user_create;
+extern bool opt_no_mix_types;
+extern bool opt_safe_show_db, opt_myisam_use_mmap;
+extern bool opt_local_infile;
+extern bool opt_slave_compressed_protocol;
+extern bool use_temp_pool;
 extern ulong slave_exec_mode_options;
-extern my_bool opt_readonly, lower_case_file_system;
-extern my_bool opt_enable_named_pipe, opt_sync_frm;
-extern my_bool opt_secure_auth;
+extern bool opt_readonly;
+extern bool lower_case_file_system;
+extern bool opt_enable_named_pipe;
+extern bool opt_sync_frm;
+extern bool opt_secure_auth;
 extern char* opt_secure_file_priv;
-extern my_bool opt_log_slow_admin_statements, opt_log_slow_slave_statements;
-extern my_bool opt_noacl;
-extern my_bool opt_old_style_user_limits;
+extern bool opt_log_slow_admin_statements;
+extern bool opt_log_slow_slave_statements;
+extern bool opt_noacl;
+extern bool opt_old_style_user_limits;
 extern uint opt_crash_binlog_innodb;
 extern char *shared_memory_base_name;
-extern my_bool opt_enable_shared_memory;
+extern bool opt_enable_shared_memory;
 extern char *default_tz_name;
 #endif /* MYSQL_SERVER */
 #ifdef MYSQL_SERVER
@@ -1739,7 +1655,7 @@ extern pthread_mutex_t LOCK_mysql_create_db,LOCK_open, LOCK_lock_db,
        LOCK_thread_count,LOCK_mapped_file,LOCK_user_locks, LOCK_status,
        LOCK_error_log, LOCK_uuid_generator,
        LOCK_crypt, LOCK_timezone,
-       LOCK_slave_list, LOCK_active_mi, LOCK_manager, LOCK_global_read_lock,
+       LOCK_slave_list, LOCK_active_mi, LOCK_global_read_lock,
        LOCK_global_system_variables, LOCK_user_conn,
        LOCK_bytes_sent, LOCK_bytes_received, LOCK_connection_count;
 extern pthread_mutex_t LOCK_server_started;
@@ -1774,7 +1690,7 @@ extern struct my_option my_long_options[];
 extern const LEX_STRING view_type;
 extern scheduler_functions thread_scheduler;
 extern TYPELIB thread_handling_typelib;
-extern uint8 uc_update_queries[SQLCOM_END+1];
+extern uint8_t uc_update_queries[SQLCOM_END+1];
 extern uint sql_command_flags[];
 extern TYPELIB log_output_typelib;
 
@@ -1784,7 +1700,7 @@ extern SHOW_COMP_OPTION have_community_features;
 extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
-extern SHOW_COMP_OPTION have_symlink, have_dlopen;
+extern SHOW_COMP_OPTION have_symlink;
 extern SHOW_COMP_OPTION have_crypt;
 extern SHOW_COMP_OPTION have_compress;
 
@@ -1896,7 +1812,7 @@ void make_truncated_value_warning(THD *thd, MYSQL_ERROR::enum_warning_level leve
 
 bool date_add_interval(MYSQL_TIME *ltime, interval_type int_type, INTERVAL interval);
 bool calc_time_diff(MYSQL_TIME *l_time1, MYSQL_TIME *l_time2, int l_sign,
-                    longlong *seconds_out, long *microseconds_out);
+                    int64_t *seconds_out, long *microseconds_out);
 
 extern LEX_STRING interval_type_to_name[];
 
@@ -1916,7 +1832,7 @@ void make_date(const DATE_TIME_FORMAT *format, const MYSQL_TIME *l_time,
 void make_time(const DATE_TIME_FORMAT *format, const MYSQL_TIME *l_time,
                String *str);
 int my_time_compare(MYSQL_TIME *a, MYSQL_TIME *b);
-ulonglong get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
+uint64_t get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
                              Item *warn_item, bool *is_null);
 
 int test_if_number(char *str,int *res,bool allow_wildcards);
@@ -1933,7 +1849,7 @@ ha_rows filesort(THD *thd, TABLE *form,struct st_sort_field *sortorder,
                  ha_rows *examined_rows);
 void filesort_free_buffers(TABLE *table, bool full);
 void change_double_for_sort(double nr,uchar *to);
-double my_double_round(double value, longlong dec, bool dec_unsigned,
+double my_double_round(double value, int64_t dec, bool dec_unsigned,
                        bool truncate);
 int get_quick_record(SQL_SELECT *select);
 

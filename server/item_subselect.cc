@@ -156,7 +156,7 @@ Item_subselect::select_transformer(JOIN *join __attribute__((__unused__)))
 bool Item_subselect::fix_fields(THD *thd_param, Item **ref)
 {
   char const *save_where= thd_param->where;
-  uint8 uncacheable;
+  uint8_t uncacheable;
   bool res;
 
   assert(fixed == 0);
@@ -604,7 +604,7 @@ double Item_singlerow_subselect::val_real()
   }
 }
 
-longlong Item_singlerow_subselect::val_int()
+int64_t Item_singlerow_subselect::val_int()
 {
   assert(fixed == 1);
   if (!exec() && !value->null_value)
@@ -740,7 +740,7 @@ void Item_exists_subselect::fix_length_and_dec()
    max_length= 1;
    max_columns= engine->cols();
   /* We need only 1 row to determine existence */
-  unit->global_parameters->select_limit= new Item_int((int32) 1);
+  unit->global_parameters->select_limit= new Item_int((int32_t) 1);
 }
 
 double Item_exists_subselect::val_real()
@@ -754,7 +754,7 @@ double Item_exists_subselect::val_real()
   return (double) value;
 }
 
-longlong Item_exists_subselect::val_int()
+int64_t Item_exists_subselect::val_int()
 {
   assert(fixed == 1);
   if (exec())
@@ -773,7 +773,7 @@ String *Item_exists_subselect::val_str(String *str)
     reset();
     return 0;
   }
-  str->set((ulonglong)value,&my_charset_bin);
+  str->set((uint64_t)value,&my_charset_bin);
   return str;
 }
 
@@ -824,13 +824,12 @@ double Item_in_subselect::val_real()
 }
 
 
-longlong Item_in_subselect::val_int()
+int64_t Item_in_subselect::val_int()
 {
   /*
     As far as Item_in_subselect called only from Item_in_optimizer this
     method should not be used
   */
-  assert(0);
   assert(fixed == 1);
   null_value= 0;
   if (exec())
@@ -865,7 +864,7 @@ String *Item_in_subselect::val_str(String *str)
     null_value= 1;
     return 0;
   }
-  str->set((ulonglong)value, &my_charset_bin);
+  str->set((uint64_t)value, &my_charset_bin);
   return str;
 }
 
@@ -1182,7 +1181,7 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, Comp_creat
       Item *having= item, *orig_item= item;
       select_lex->item_list.empty();
       select_lex->item_list.push_back(new Item_int("Not_used",
-                                                   (longlong) 1,
+                                                   (int64_t) 1,
                                                    MY_INT64_NUM_DECIMAL_DIGITS));
       select_lex->ref_pointer_array[0]= select_lex->item_list.head();
        
@@ -1706,9 +1705,6 @@ bool Item_in_subselect::fix_fields(THD *thd_arg, Item **ref)
 
   if (exec_method == SEMI_JOIN)
     return !( (*ref)= new Item_int(1));
-
-  if (thd_arg->lex->view_prepare_mode && left_expr && !left_expr->fixed)
-    result = left_expr->fix_fields(thd_arg, &left_expr);
 
   return result || Item_subselect::fix_fields(thd_arg, ref);
 }
@@ -2626,13 +2622,13 @@ uint subselect_union_engine::cols()
 }
 
 
-uint8 subselect_single_select_engine::uncacheable()
+uint8_t subselect_single_select_engine::uncacheable()
 {
   return select_lex->uncacheable;
 }
 
 
-uint8 subselect_union_engine::uncacheable()
+uint8_t subselect_union_engine::uncacheable()
 {
   return unit->uncacheable;
 }

@@ -151,9 +151,9 @@ err2:
   return 1;
 }
 
-extern "C" uint32
+extern "C" uint32_t
 *slave_list_key(SLAVE_INFO* si, size_t *len,
-		my_bool not_used __attribute__((unused)))
+		bool not_used __attribute__((unused)))
 {
   *len = 4;
   return &si->server_id;
@@ -211,16 +211,16 @@ bool show_slave_hosts(THD* thd)
   {
     SLAVE_INFO* si = (SLAVE_INFO*) hash_element(&slave_list, i);
     protocol->prepare_for_resend();
-    protocol->store((uint32) si->server_id);
+    protocol->store((uint32_t) si->server_id);
     protocol->store(si->host, &my_charset_bin);
     if (opt_show_slave_auth_info)
     {
       protocol->store(si->user, &my_charset_bin);
       protocol->store(si->password, &my_charset_bin);
     }
-    protocol->store((uint32) si->port);
-    protocol->store((uint32) si->rpl_recovery_rank);
-    protocol->store((uint32) si->master_id);
+    protocol->store((uint32_t) si->port);
+    protocol->store((uint32_t) si->rpl_recovery_rank);
+    protocol->store((uint32_t) si->master_id);
     if (protocol->write())
     {
       pthread_mutex_unlock(&LOCK_slave_list);

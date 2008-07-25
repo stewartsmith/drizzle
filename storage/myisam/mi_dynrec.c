@@ -63,11 +63,9 @@ static int _mi_cmp_buffer(File file, const uchar *buff, my_off_t filepos,
 
 my_bool mi_dynmap_file(MI_INFO *info, my_off_t size)
 {
-  DBUG_ENTER("mi_dynmap_file");
   if (size > (my_off_t) (~((size_t) 0)) - MEMMAP_EXTRA_MARGIN)
   {
-    DBUG_PRINT("warning", ("File is too large for mmap"));
-    DBUG_RETURN(1);
+    return(1);
   }
   /*
     I wonder if it is good to use MAP_NORESERVE. From the Linux man page:
@@ -86,13 +84,13 @@ my_bool mi_dynmap_file(MI_INFO *info, my_off_t size)
   if (info->s->file_map == (uchar*) MAP_FAILED)
   {
     info->s->file_map= NULL;
-    DBUG_RETURN(1);
+    return(1);
   }
 #if defined(HAVE_MADVISE)
   madvise((char*) info->s->file_map, size, MADV_RANDOM);
 #endif
   info->s->mmaped_length= size;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -136,7 +134,6 @@ void mi_remap_file(MI_INFO *info, my_off_t size)
 size_t mi_mmap_pread(MI_INFO *info, uchar *Buffer,
                     size_t Count, my_off_t offset, myf MyFlags)
 {
-  DBUG_PRINT("info", ("mi_read with mmap %d\n", info->dfile));
   if (info->s->concurrent_insert)
     rw_rdlock(&info->s->mmap_lock);
 
@@ -191,7 +188,6 @@ size_t mi_nommap_pread(MI_INFO *info, uchar *Buffer,
 size_t mi_mmap_pwrite(MI_INFO *info, const uchar *Buffer,
                       size_t Count, my_off_t offset, myf MyFlags)
 {
-  DBUG_PRINT("info", ("mi_write with mmap %d\n", info->dfile));
   if (info->s->concurrent_insert)
     rw_rdlock(&info->s->mmap_lock);
 
@@ -265,9 +261,7 @@ int _mi_write_blob_record(MI_INFO *info, const uchar *record)
   }
   reclength2= _mi_rec_pack(info,rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
 			   record);
-  DBUG_PRINT("info",("reclength: %lu  reclength2: %lu",
-		     reclength, reclength2));
-  DBUG_ASSERT(reclength2 <= reclength);
+  assert(reclength2 <= reclength);
   error=write_dynamic_record(info,rec_buff+ALIGN_SIZE(MI_MAX_DYN_BLOCK_HEADER),
 			     reclength2);
   my_afree(rec_buff);
@@ -321,7 +315,6 @@ static int write_dynamic_record(MI_INFO *info, const uchar *record,
   int flag;
   ulong length;
   my_off_t filepos;
-  DBUG_ENTER("write_dynamic_record");
 
   flag=0;
 
@@ -343,7 +336,7 @@ static int write_dynamic_record(MI_INFO *info, const uchar *record,
         reclength + MI_MAX_DYN_BLOCK_HEADER)
     {
       my_errno=HA_ERR_RECORD_FILE_FULL;
-      DBUG_RETURN(1);
+      return(1);
     }
   }
 
@@ -358,9 +351,9 @@ static int write_dynamic_record(MI_INFO *info, const uchar *record,
       goto err;
   } while (reclength);
 
-  DBUG_RETURN(0);
+  return(0);
 err:
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -373,7 +366,6 @@ static int _mi_find_writepos(MI_INFO *info,
 {
   MI_BLOCK_INFO block_info;
   ulong tmp;
-  DBUG_ENTER("_mi_find_writepos");
 
   if (info->s->state.dellink != HA_OFFSET_ERROR &&
       !info->append_insert_at_end)
@@ -385,9 +377,8 @@ static int _mi_find_writepos(MI_INFO *info,
     if (!(_mi_get_block_info(&block_info,info->dfile,info->s->state.dellink) &
 	   BLOCK_DELETED))
     {
-      DBUG_PRINT("error",("Delete link crashed"));
       my_errno=HA_ERR_WRONG_IN_RECORD;
-      DBUG_RETURN(-1);
+      return(-1);
     }
     info->s->state.dellink=block_info.next_filepos;
     info->state->del--;
@@ -408,7 +399,7 @@ static int _mi_find_writepos(MI_INFO *info,
 	(info->s->base.max_data_file_length - tmp))
     {
       my_errno=HA_ERR_RECORD_FILE_FULL;
-      DBUG_RETURN(-1);
+      return(-1);
     }
     if (tmp > MI_MAX_BLOCK_LENGTH)
       tmp=MI_MAX_BLOCK_LENGTH;
@@ -417,7 +408,7 @@ static int _mi_find_writepos(MI_INFO *info,
     info->s->state.split++;
     info->update|=HA_STATE_WRITE_AT_END;
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* _mi_find_writepos */
 
 
@@ -430,7 +421,6 @@ static int _mi_find_writepos(MI_INFO *info,
 
 static my_bool unlink_deleted_block(MI_INFO *info, MI_BLOCK_INFO *block_info)
 {
-  DBUG_ENTER("unlink_deleted_block");
   if (block_info->filepos == info->s->state.dellink)
   {
     /* First deleted block;  We can just use this ! */
@@ -443,22 +433,22 @@ static my_bool unlink_deleted_block(MI_INFO *info, MI_BLOCK_INFO *block_info)
     /* Unlink block from the previous block */
     if (!(_mi_get_block_info(&tmp,info->dfile,block_info->prev_filepos)
 	  & BLOCK_DELETED))
-      DBUG_RETURN(1);				/* Something is wrong */
+      return(1);				/* Something is wrong */
     mi_sizestore(tmp.header+4,block_info->next_filepos);
     if (info->s->file_write(info, tmp.header+4,8,
 		  block_info->prev_filepos+4, MYF(MY_NABP)))
-      DBUG_RETURN(1);
+      return(1);
     /* Unlink block from next block */
     if (block_info->next_filepos != HA_OFFSET_ERROR)
     {
       if (!(_mi_get_block_info(&tmp,info->dfile,block_info->next_filepos)
 	    & BLOCK_DELETED))
-	DBUG_RETURN(1);				/* Something is wrong */
+	return(1);				/* Something is wrong */
       mi_sizestore(tmp.header+12,block_info->prev_filepos);
       if (info->s->file_write(info, tmp.header+12,8,
 		    block_info->next_filepos+12,
 		    MYF(MY_NABP)))
-	DBUG_RETURN(1);
+	return(1);
     }
   }
   /* We now have one less deleted block */
@@ -473,7 +463,7 @@ static my_bool unlink_deleted_block(MI_INFO *info, MI_BLOCK_INFO *block_info)
   */
   if (info->nextpos == block_info->filepos)
     info->nextpos+=block_info->block_len;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -496,7 +486,6 @@ static int update_backward_delete_link(MI_INFO *info, my_off_t delete_block,
 				       my_off_t filepos)
 {
   MI_BLOCK_INFO block_info;
-  DBUG_ENTER("update_backward_delete_link");
 
   if (delete_block != HA_OFFSET_ERROR)
   {
@@ -507,15 +496,15 @@ static int update_backward_delete_link(MI_INFO *info, my_off_t delete_block,
       uchar buff[8];
       mi_sizestore(buff,filepos);
       if (info->s->file_write(info,buff, 8, delete_block+12, MYF(MY_NABP)))
-	DBUG_RETURN(1);				/* Error on write */
+	return(1);				/* Error on write */
     }
     else
     {
       my_errno=HA_ERR_WRONG_IN_RECORD;
-      DBUG_RETURN(1);				/* Wrong delete link */
+      return(1);				/* Wrong delete link */
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 	/* Delete datarecord from database */
@@ -528,7 +517,6 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
   MI_BLOCK_INFO block_info,del_block;
   int error;
   my_bool remove_next_block;
-  DBUG_ENTER("delete_dynamic_record");
 
   /* First add a link from the last block to the new one */
   error= update_backward_delete_link(info, info->s->state.dellink, filepos);
@@ -544,7 +532,7 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
 	MI_MIN_BLOCK_LENGTH)
     {
       my_errno=HA_ERR_WRONG_IN_RECORD;
-      DBUG_RETURN(1);
+      return(1);
     }
     /* Check if next block is a delete block */
     del_block.second_read=0;
@@ -566,7 +554,7 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
       mi_sizestore(block_info.header+12,block_info.next_filepos);
     if (info->s->file_write(info,(uchar*) block_info.header,20,filepos,
 		  MYF(MY_NABP)))
-      DBUG_RETURN(1);
+      return(1);
     info->s->state.dellink = filepos;
     info->state->del++;
     info->state->empty+=length;
@@ -577,7 +565,7 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
       error=1;
   } while (!(b_type & BLOCK_LAST));
 
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -595,7 +583,6 @@ int _mi_write_part_record(MI_INFO *info,
   uchar *pos,*record_end;
   my_off_t  next_delete_block;
   uchar temp[MI_SPLIT_LENGTH+MI_DYN_DELETE_BLOCK_HEADER];
-  DBUG_ENTER("_mi_write_part_record");
 
   next_delete_block=HA_OFFSET_ERROR;
 
@@ -689,7 +676,6 @@ int _mi_write_part_record(MI_INFO *info,
     }
     length=	  *reclength+head_length;	/* Write only what is needed */
   }
-  DBUG_DUMP("header",(uchar*) temp,head_length);
 
 	/* Make a long block for one write */
   record_end= *record+length-head_length;
@@ -764,10 +750,9 @@ int _mi_write_part_record(MI_INFO *info,
       goto err;
   }
 
-  DBUG_RETURN(0);
+  return(0);
 err:
-  DBUG_PRINT("exit",("errno: %d",my_errno));
-  DBUG_RETURN(1);
+  return(1);
 } /*_mi_write_part_record */
 
 
@@ -780,7 +765,6 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
   uint error;
   ulong length;
   MI_BLOCK_INFO block_info;
-  DBUG_ENTER("update_dynamic_record");
 
   flag=block_info.second_read=0;
   /*
@@ -806,7 +790,6 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
     if ((error=_mi_get_block_info(&block_info,info->dfile,filepos))
         & (BLOCK_DELETED | BLOCK_ERROR | BLOCK_SYNC_ERROR | BLOCK_FATAL_ERROR))
     {
-      DBUG_PRINT("error",("Got wrong block info"));
       if (!(error & BLOCK_FATAL_ERROR))
         my_errno=HA_ERR_WRONG_IN_RECORD;
       goto err;
@@ -837,7 +820,6 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
 	  & (BLOCK_DELETED | BLOCK_ERROR | BLOCK_SYNC_ERROR |
 	     BLOCK_FATAL_ERROR))
       {
-	DBUG_PRINT("error",("Got wrong block info"));
 	if (!(error & BLOCK_FATAL_ERROR))
 	  my_errno=HA_ERR_WRONG_IN_RECORD;
 	goto err;
@@ -856,7 +838,6 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
 	    info->s->base.max_data_file_length-tmp)
 	{
 	  /* extend file */
-	  DBUG_PRINT("info",("Extending file with %d bytes",tmp));
 	  if (info->nextpos == info->state->data_file_length)
 	    info->nextpos+= tmp;
 	  info->state->data_file_length+= tmp;
@@ -879,7 +860,6 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
 	      BLOCK_DELETED)
 	  {
 	    /* Use; Unlink it and extend the current block */
-	    DBUG_PRINT("info",("Extending current block"));
 	    if (unlink_deleted_block(info,&del_block))
 	      goto err;
 	    if ((length+=del_block.block_len) > MI_MAX_BLOCK_LENGTH)
@@ -895,7 +875,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
 
 	      if (update_backward_delete_link(info, info->s->state.dellink,
 					      next_pos))
-		DBUG_RETURN(1);
+		return(1);
 
 	      /* create delete link for data that didn't fit into the page */
 	      del_block.header[0]=0;
@@ -904,7 +884,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
 	      bfill(del_block.header+12,8,255);
 	      if (info->s->file_write(info,(uchar*) del_block.header,20, next_pos,
 			    MYF(MY_NABP)))
-		DBUG_RETURN(1);
+		return(1);
 	      info->s->state.dellink= next_pos;
 	      info->s->state.split++;
 	      info->state->del++;
@@ -933,9 +913,9 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
   if (block_info.next_filepos != HA_OFFSET_ERROR)
     if (delete_dynamic_record(info,block_info.next_filepos,1))
       goto err;
-  DBUG_RETURN(0);
+  return(0);
 err:
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -949,7 +929,6 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
   enum en_fieldtype type;
   register MI_COLUMNDEF *rec;
   MI_BLOB	*blob;
-  DBUG_ENTER("_mi_rec_pack");
 
   flag=0 ; bit=1;
   startpos=packpos=to; to+= info->s->base.pack_bits; blob=info->blobs;
@@ -1056,8 +1035,7 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
     *packpos= (uchar) flag;
   if (info->s->calc_checksum)
     *to++= (uchar) info->checksum;
-  DBUG_PRINT("exit",("packed length: %d",(int) (to-startpos)));
-  DBUG_RETURN((uint) (to-startpos));
+  return((uint) (to-startpos));
 } /* _mi_rec_pack */
 
 
@@ -1074,7 +1052,6 @@ my_bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *rec_buff,
   uchar		*pos,*end,*packpos,*to;
   enum en_fieldtype type;
   register MI_COLUMNDEF *rec;
-  DBUG_ENTER("_mi_rec_check");
 
   packpos=rec_buff; to= rec_buff+info->s->base.pack_bits;
   rec=info->s->rec;
@@ -1176,13 +1153,12 @@ my_bool _mi_rec_check(MI_INFO *info,const uchar *record, uchar *rec_buff,
     goto err;
   if (with_checksum && ((uchar) info->checksum != (uchar) *to))
   {
-    DBUG_PRINT("error",("wrong checksum for row"));
     goto err;
   }
-  DBUG_RETURN(0);
+  return(0);
 
 err:
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -1198,7 +1174,6 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
   enum en_fieldtype type;
   uchar *from_end,*to_end,*packpos;
   register MI_COLUMNDEF *rec,*end_field;
-  DBUG_ENTER("_mi_rec_unpack");
 
   to_end=to + info->s->base.reclength;
   from_end=from+found_length;
@@ -1314,14 +1289,11 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
   if (info->s->calc_checksum)
     from++;
   if (to == to_end && from == from_end && (bit == 1 || !(flag & ~(bit-1))))
-    DBUG_RETURN(found_length);
+    return(found_length);
 
 err:
   my_errno= HA_ERR_WRONG_IN_RECORD;
-  DBUG_PRINT("error",("to_end: 0x%lx -> 0x%lx  from_end: 0x%lx -> 0x%lx",
-		      (long) to, (long) to_end, (long) from, (long) from_end));
-  DBUG_DUMP("from",(uchar*) info->rec_buff,info->s->base.min_pack_length);
-  DBUG_RETURN(MY_FILE_ERROR);
+  return(MY_FILE_ERROR);
 } /* _mi_rec_unpack */
 
 
@@ -1421,7 +1393,6 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *buf)
   uchar *to= NULL;
   MI_BLOCK_INFO block_info;
   File file;
-  DBUG_ENTER("mi_read_dynamic_record");
 
   if (filepos != HA_OFFSET_ERROR)
   {
@@ -1501,17 +1472,17 @@ int _mi_read_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *buf)
 
     info->update|= HA_STATE_AKTIV;	/* We have a aktive record */
     fast_mi_writeinfo(info);
-    DBUG_RETURN(_mi_rec_unpack(info,buf,info->rec_buff,block_info.rec_len) !=
+    return(_mi_rec_unpack(info,buf,info->rec_buff,block_info.rec_len) !=
 		MY_FILE_ERROR ? 0 : -1);
   }
   fast_mi_writeinfo(info);
-  DBUG_RETURN(-1);			/* Wrong data to read */
+  return(-1);			/* Wrong data to read */
 
 panic:
   my_errno=HA_ERR_WRONG_IN_RECORD;
 err:
   VOID(_mi_writeinfo(info,0));
-  DBUG_RETURN(-1);
+  return(-1);
 }
 
 	/* compare unique constraint between stored rows */
@@ -1521,10 +1492,9 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
 {
   uchar *rec_buff,*old_record;
   int error;
-  DBUG_ENTER("_mi_cmp_dynamic_unique");
 
   if (!(old_record=my_alloca(info->s->base.reclength)))
-    DBUG_RETURN(1);
+    return(1);
 
   /* Don't let the compare destroy blobs that may be in use */
   rec_buff=info->rec_buff;
@@ -1539,7 +1509,7 @@ int _mi_cmp_dynamic_unique(MI_INFO *info, MI_UNIQUEDEF *def,
     info->rec_buff=rec_buff;
   }
   my_afree(old_record);
-  DBUG_RETURN(error);
+  return(error);
 }
 
 
@@ -1551,13 +1521,12 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const uchar *record)
   my_off_t filepos;
   uchar *buffer;
   MI_BLOCK_INFO block_info;
-  DBUG_ENTER("_mi_cmp_dynamic_record");
 
   if (info->opt_flag & WRITE_CACHE_USED)
   {
     info->update&= ~(HA_STATE_WRITE_AT_END | HA_STATE_EXTEND_BLOCK);
     if (flush_io_cache(&info->rec_cache))
-      DBUG_RETURN(-1);
+      return(-1);
   }
   info->rec_cache.seek_not_done=1;
 
@@ -1570,7 +1539,7 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const uchar *record)
     {
       if (!(buffer=(uchar*) my_alloca(info->s->base.pack_reclength+
 				     _my_calc_total_blob_length(info,record))))
-	DBUG_RETURN(-1);
+	return(-1);
     }
     reclength=_mi_rec_pack(info,buffer,record);
     record= buffer;
@@ -1617,7 +1586,7 @@ int _mi_cmp_dynamic_record(register MI_INFO *info, register const uchar *record)
 err:
   if (buffer != info->rec_buff)
     my_afree((uchar*) buffer);
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 }
 
 
@@ -1628,7 +1597,6 @@ static int _mi_cmp_buffer(File file, const uchar *buff, my_off_t filepos,
 {
   uint next_length;
   uchar temp_buff[IO_SIZE*2];
-  DBUG_ENTER("_mi_cmp_buffer");
 
   next_length= IO_SIZE*2 - (uint) (filepos & (IO_SIZE-1));
 
@@ -1644,9 +1612,9 @@ static int _mi_cmp_buffer(File file, const uchar *buff, my_off_t filepos,
   }
   if (my_pread(file,temp_buff,length,filepos,MYF(MY_NABP)))
     goto err;
-  DBUG_RETURN(memcmp(buff,temp_buff,length));
+  return(memcmp(buff,temp_buff,length));
 err:
-  DBUG_RETURN(1);
+  return(1);
 }
 
 
@@ -1693,22 +1661,12 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, uchar *buf,
   uchar *to= NULL;
   MI_BLOCK_INFO block_info;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("_mi_read_rnd_dynamic_record");
 
   info_read=0;
 
   if (info->lock_type == F_UNLCK)
   {
-#ifndef UNSAFE_LOCKING
-    if (share->tot_locks == 0)
-    {
-      if (my_lock(share->kfile,F_RDLCK,0L,F_TO_EOF,
-		  MYF(MY_SEEK_NOT_DONE) | info->lock_wait))
-	DBUG_RETURN(my_errno);
-    }
-#else
     info->tmp_lock_type=F_RDLCK;
-#endif
   }
   else
     info_read=1;				/* memory-keyinfoblock is ok */
@@ -1747,7 +1705,7 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, uchar *buf,
       if (info->opt_flag & WRITE_CACHE_USED &&
 	  info->rec_cache.pos_in_file < filepos + MI_BLOCK_INFO_HEADER_LENGTH &&
 	  flush_io_cache(&info->rec_cache))
-	DBUG_RETURN(my_errno);
+	return(my_errno);
       info->rec_cache.seek_not_done=1;
       b_type=_mi_get_block_info(&block_info,info->dfile,filepos);
     }
@@ -1850,15 +1808,15 @@ int _mi_read_rnd_dynamic_record(MI_INFO *info, uchar *buf,
   fast_mi_writeinfo(info);
   if (_mi_rec_unpack(info,buf,info->rec_buff,block_info.rec_len) !=
       MY_FILE_ERROR)
-    DBUG_RETURN(0);
-  DBUG_RETURN(my_errno);			/* Wrong record */
+    return(0);
+  return(my_errno);			/* Wrong record */
 
 panic:
   my_errno=HA_ERR_WRONG_IN_RECORD;		/* Something is fatal wrong */
 err:
   save_errno=my_errno;
   VOID(_mi_writeinfo(info,0));
-  DBUG_RETURN(my_errno=save_errno);
+  return(my_errno=save_errno);
 }
 
 
@@ -1881,7 +1839,6 @@ uint _mi_get_block_info(MI_BLOCK_INFO *info, File file, my_off_t filepos)
 	sizeof(info->header))
       goto err;
   }
-  DBUG_DUMP("header",header,MI_BLOCK_INFO_HEADER_LENGTH);
   if (info->second_read)
   {
     if (info->header[0] <= 6 || info->header[0] == 13)

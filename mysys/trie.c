@@ -49,8 +49,7 @@
 TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
 {
   MEM_ROOT mem_root;
-  DBUG_ENTER("trie_init");
-  DBUG_ASSERT(charset);
+  assert(charset);
   init_alloc_root(&mem_root,
                   (sizeof(TRIE_NODE) * 128) + ALLOC_ROOT_MIN_BLOCK_SIZE,
                   sizeof(TRIE_NODE) * 128);
@@ -59,7 +58,7 @@ TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
     if (! (trie= (TRIE *)alloc_root(&mem_root, sizeof(TRIE))))
     {
       free_root(&mem_root, MYF(0));
-      DBUG_RETURN(NULL);
+      return(NULL);
     }
   }
 
@@ -72,7 +71,7 @@ TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
   trie->charset= charset;
   trie->nnodes= 0;
   trie->nwords= 0;
-  DBUG_RETURN(trie);
+  return(trie);
 }
 
 
@@ -91,17 +90,16 @@ TRIE *trie_init (TRIE *trie, CHARSET_INFO *charset)
 void trie_free (TRIE *trie)
 {
   MEM_ROOT mem_root;
-  DBUG_ENTER("trie_free");
-  DBUG_ASSERT(trie);
+  assert(trie);
   memcpy(&mem_root, &trie->mem_root, sizeof(MEM_ROOT));
   free_root(&mem_root, MYF(0));
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 /*
   SYNOPSIS
-    my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen);
+    bool trie_insert (TRIE *trie, const uchar *key, uint keylen);
     trie - valid pointer to `TRIE'
     key - valid pointer to key to insert
     keylen - non-0 key length
@@ -110,22 +108,21 @@ void trie_free (TRIE *trie)
     Inserts new key into trie.
 
   RETURN VALUE
-    Upon successful completion, `trie_insert' returns `FALSE'. Otherwise
-    `TRUE' is returned.
+    Upon successful completion, `trie_insert' returns `false'. Otherwise
+    `true' is returned.
 
   NOTES
     If this function fails you must assume `trie' is broken.
     However it can be freed with trie_free().
 */
 
-my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
+bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
 {
   TRIE_NODE *node;
   TRIE_NODE *next;
   uchar p;
   uint k;
-  DBUG_ENTER("trie_insert");
-  DBUG_ASSERT(trie && key && keylen);
+  assert(trie && key && keylen);
   node= &trie->root;
   trie->root.fail= NULL;
   for (k= 0; k < keylen; k++)
@@ -140,7 +137,7 @@ my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
       TRIE_NODE *tmp= (TRIE_NODE *)alloc_root(&trie->mem_root,
                                               sizeof(TRIE_NODE));
       if (! tmp)
-        DBUG_RETURN(TRUE);
+        return(true);
       tmp->leaf= 0;
       tmp->c= p;
       tmp->links= tmp->fail= tmp->next= NULL;
@@ -163,35 +160,34 @@ my_bool trie_insert (TRIE *trie, const uchar *key, uint keylen)
   }
   node->leaf= keylen;
   trie->nwords++;
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 
 /*
   SYNOPSIS
-    my_bool trie_prepare (TRIE *trie);
+    bool trie_prepare (TRIE *trie);
     trie - valid pointer to `TRIE'
 
   DESCRIPTION
     Constructs Aho-Corasick automaton.
 
   RETURN VALUE
-    Upon successful completion, `trie_prepare' returns `FALSE'. Otherwise
-    `TRUE' is returned.
+    Upon successful completion, `trie_prepare' returns `false'. Otherwise
+    `true' is returned.
 */
 
-my_bool ac_trie_prepare (TRIE *trie)
+bool ac_trie_prepare (TRIE *trie)
 {
   TRIE_NODE **tmp_nodes;
   TRIE_NODE *node;
-  uint32 fnode= 0;
-  uint32 lnode= 0;
-  DBUG_ENTER("trie_prepare");
-  DBUG_ASSERT(trie);
+  uint32_t fnode= 0;
+  uint32_t lnode= 0;
+  assert(trie);
 
   tmp_nodes= (TRIE_NODE **)my_malloc(trie->nnodes * sizeof(TRIE_NODE *), MYF(0));
   if (! tmp_nodes)
-    DBUG_RETURN(TRUE);
+    return(true);
 
   trie->root.fail= &trie->root;
   for (node= trie->root.links; node; node= node->next)
@@ -212,7 +208,7 @@ my_bool ac_trie_prepare (TRIE *trie)
     }
   }
   my_free((uchar*)tmp_nodes, MYF(0));
-  DBUG_RETURN(FALSE);
+  return(false);
 }
 
 
@@ -228,9 +224,8 @@ my_bool ac_trie_prepare (TRIE *trie)
 
 void ac_trie_init (TRIE *trie, AC_TRIE_STATE *state)
 {
-  DBUG_ENTER("ac_trie_init");
-  DBUG_ASSERT(trie && state);
+  assert(trie && state);
   state->trie= trie;
   state->node= &trie->root;
-  DBUG_VOID_RETURN;
+  return;
 }

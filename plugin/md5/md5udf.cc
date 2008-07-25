@@ -17,12 +17,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <drizzle_version.h>
-#include <mysql/plugin.h>
+#include <drizzle/plugin.h>
 #include <my_global.h>
 #include <my_dir.h>
 #include <openssl/md5.h>
 
-my_bool udf_init_md5udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
+bool udf_init_md5udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
   /* initid->ptr keeps state for between udf_init_foo and udf_deinit_foo */
   initid->ptr= NULL;
@@ -47,6 +47,8 @@ char *udf_doit_md5(UDF_INIT *initid, UDF_ARGS *args, char *result,
 {
   MD5_CTX context;
   uchar digest[16];
+
+  (void)initid;
 
   MD5_Init(&context);
 
@@ -74,6 +76,7 @@ char *udf_doit_md5(UDF_INIT *initid, UDF_ARGS *args, char *result,
 
 void udf_deinit_md5udf(UDF_INIT *initid)
 {
+  (void)initid;
   /* if we allocated initid->ptr, free it here */
   return;
 }
@@ -82,8 +85,11 @@ void udf_deinit_md5udf(UDF_INIT *initid)
 static int md5udf_plugin_init(void *p)
 {
   udf_func *udff= (udf_func *) p;
+  static char md5str[4];
 
-  udff->name.str= "md5";
+  strcpy(md5str, "md5");
+
+  udff->name.str= md5str;
   udff->name.length= strlen("md5");
   udff->type= UDFTYPE_FUNCTION;
   udff->returns= STRING_RESULT;
@@ -97,24 +103,20 @@ static int md5udf_plugin_init(void *p)
 static int md5udf_plugin_deinit(void *p)
 {
   udf_func *udff = (udf_func *) p;
-
+  (void)udff;
   return 0;
 }
 
-struct st_mysql_udf md5udf_plugin=
-{ MYSQL_UDF_INTERFACE_VERSION  };
-
-mysql_declare_plugin(md5udf)
+mysql_declare_plugin(md5)
 {
   MYSQL_UDF_PLUGIN,
-  &md5udf_plugin,
   "md5",
+  "1.0",
   "Stewart Smith",
-  "UDF for computing MD5",
+  "UDF for computing md5sum",
   PLUGIN_LICENSE_GPL,
   md5udf_plugin_init, /* Plugin Init */
   md5udf_plugin_deinit, /* Plugin Deinit */
-  0x0100,  /* 1.0 */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

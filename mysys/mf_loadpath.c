@@ -28,9 +28,6 @@ char * my_load_path(char * to, const char *path,
 {
   char buff[FN_REFLEN];
   int is_cur;
-  DBUG_ENTER("my_load_path");
-  DBUG_PRINT("enter",("path: %s  prefix: %s",path,
-		      own_path_prefix ? own_path_prefix : ""));
 
   if ((path[0] == FN_HOMELIB && path[1] == FN_LIBCHAR) ||
       test_if_hard_path(path))
@@ -49,6 +46,5 @@ char * my_load_path(char * to, const char *path,
   else
     VOID(strxmov(buff,own_path_prefix,path,NullS));
   strmov(to,buff);
-  DBUG_PRINT("exit",("to: %s",to));
-  DBUG_RETURN(to);
+  return(to);
 } /* my_load_path */

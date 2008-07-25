@@ -453,7 +453,7 @@ out:
     @retval false The statement isn't updating any relevant tables.
 */
 
-static my_bool deny_updates_if_read_only_option(THD *thd,
+static bool deny_updates_if_read_only_option(THD *thd,
                                                 TABLE_LIST *all_tables)
 {
   if (!opt_readonly)
@@ -468,20 +468,20 @@ static my_bool deny_updates_if_read_only_option(THD *thd,
   if (lex->sql_command == SQLCOM_UPDATE_MULTI)
     return(false);
 
-  const my_bool create_temp_tables= 
+  const bool create_temp_tables= 
     (lex->sql_command == SQLCOM_CREATE_TABLE) &&
     (lex->create_info.options & HA_LEX_CREATE_TMP_TABLE);
 
-  const my_bool drop_temp_tables= 
+  const bool drop_temp_tables= 
     (lex->sql_command == SQLCOM_DROP_TABLE) &&
     lex->drop_temporary;
 
-  const my_bool update_real_tables=
+  const bool update_real_tables=
     some_non_temp_table_to_be_updated(thd, all_tables) &&
     !(create_temp_tables || drop_temp_tables);
 
 
-  const my_bool create_or_drop_databases=
+  const bool create_or_drop_databases=
     (lex->sql_command == SQLCOM_CREATE_DB) ||
     (lex->sql_command == SQLCOM_DROP_DB);
 
@@ -540,12 +540,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
   /* Ignore these statements. */
   case COM_STATISTICS:
   case COM_PING:
-    break;
-  /* Only increase id on these statements but don't count them. */
-  case COM_STMT_PREPARE: 
-  case COM_STMT_CLOSE:
-  case COM_STMT_RESET:
-    next_query_id();
     break;
   /* Increase id and count all other statements. */
   default:
@@ -685,16 +679,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     }
     break;
   }
-  case COM_STMT_EXECUTE:
-  case COM_STMT_FETCH:
-  case COM_STMT_SEND_LONG_DATA:
-  case COM_STMT_PREPARE:
-  case COM_STMT_CLOSE:
-  case COM_STMT_RESET:
-  {
-    /* We should toss an error here */
-    break;
-  }
   case COM_QUERY:
   {
     if (alloc_query(thd, packet, packet_length))
@@ -703,15 +687,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     const char* end_of_stmt= NULL;
 
     general_log_write(thd, command, thd->query, thd->query_length);
-
-    if (!(specialflag & SPECIAL_NO_PRIOR))
-    {
-      struct sched_param tmp_sched_param;
-
-      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-      tmp_sched_param.sched_priority= QUERY_PRIOR;
-      (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
-    }
 
     mysql_parse(thd, thd->query, thd->query_length, &end_of_stmt);
 
@@ -748,15 +723,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
       VOID(pthread_mutex_unlock(&LOCK_thread_count));
 
       mysql_parse(thd, beginning_of_next_stmt, length, &end_of_stmt);
-    }
-
-    if (!(specialflag & SPECIAL_NO_PRIOR))
-    {
-      struct sched_param tmp_sched_param;
-
-      memset(&tmp_sched_param, 0, sizeof(tmp_sched_param));
-      tmp_sched_param.sched_priority= WAIT_PRIOR;
-      (void)pthread_setschedparam(pthread_self(), SCHED_OTHER, &tmp_sched_param);
     }
     break;
   }
@@ -827,7 +793,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     {
       ulong pos;
       ushort flags;
-      uint32 slave_server_id;
+      uint32_t slave_server_id;
 
       status_var_increment(thd->status_var.com_other);
       thd->enable_slow_log= opt_log_slow_admin_statements;
@@ -877,7 +843,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     STATUS_VAR current_global_status_var;
     ulong uptime;
     uint length;
-    ulonglong queries_per_second1000;
+    uint64_t queries_per_second1000;
     char buff[250];
     uint buff_len= sizeof(buff);
 
@@ -1012,7 +978,7 @@ void log_slow_statement(THD *thd)
   if (thd->enable_slow_log && !thd->user_time)
   {
     thd_proc_info(thd, "logging slow query");
-    ulonglong end_utime_of_query= thd->current_utime();
+    uint64_t end_utime_of_query= thd->current_utime();
 
     if (((end_utime_of_query - thd->utime_after_lock) >
          thd->variables.long_query_time ||
@@ -1692,7 +1658,6 @@ end_with_restore_list:
                            0, (ORDER*) 0, 0);
     break;
   }
-#ifdef HAVE_REPLICATION
   case SQLCOM_SLAVE_START:
   {
     pthread_mutex_lock(&LOCK_active_mi);
@@ -1726,7 +1691,6 @@ end_with_restore_list:
     pthread_mutex_unlock(&LOCK_active_mi);
     break;
   }
-#endif /* HAVE_REPLICATION */
 
   case SQLCOM_ALTER_TABLE:
     assert(first_table == all_tables && first_table != 0);
@@ -1917,7 +1881,6 @@ end_with_restore_list:
 
     res= mysql_multi_update_prepare(thd);
 
-#ifdef HAVE_REPLICATION
     /* Check slave filtering rules */
     if (unlikely(thd->slave_thread))
     {
@@ -1937,7 +1900,6 @@ end_with_restore_list:
     }
     else
     {
-#endif /* HAVE_REPLICATION */
       if (res)
         break;
       if (opt_readonly &&
@@ -1946,9 +1908,7 @@ end_with_restore_list:
 	my_error(ER_OPTION_PREVENTS_STATEMENT, MYF(0), "--read-only");
 	break;
       }
-#ifdef HAVE_REPLICATION
     }  /* unlikely */
-#endif
 
     res= mysql_multi_update(thd, all_tables,
                             &select_lex->item_list,
@@ -2159,8 +2119,7 @@ end_with_restore_list:
       thd->options|= OPTION_KEEP_LOG;
     }
     /* DDL and binlog write order protected by LOCK_open */
-    res= mysql_rm_table(thd, first_table, lex->drop_if_exists,
-			lex->drop_temporary);
+    res= mysql_rm_table(thd, first_table, lex->drop_if_exists, lex->drop_temporary);
   }
   break;
   case SQLCOM_SHOW_PROCESSLIST:
@@ -2375,7 +2334,6 @@ end_with_restore_list:
       do_db/ignore_db. And as this query involves no tables, tables_ok()
       above was not called. So we have to check rules again here.
     */
-#ifdef HAVE_REPLICATION
     if (thd->slave_thread && 
 	(!rpl_filter->db_ok(lex->name.str) ||
 	 !rpl_filter->db_ok_with_wild_table(lex->name.str)))
@@ -2383,7 +2341,6 @@ end_with_restore_list:
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
-#endif
     if (thd->locked_tables || thd->active_transaction())
     {
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
@@ -2401,7 +2358,6 @@ end_with_restore_list:
       res= 1;
       break;
     }
-#ifdef HAVE_REPLICATION
     if (thd->slave_thread && 
        (!rpl_filter->db_ok(db->str) ||
         !rpl_filter->db_ok_with_wild_table(db->str)))
@@ -2410,7 +2366,6 @@ end_with_restore_list:
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
-#endif
     if (check_db_name(db))
     {
       my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
@@ -2445,7 +2400,6 @@ end_with_restore_list:
       do_db/ignore_db. And as this query involves no tables, tables_ok()
       above was not called. So we have to check rules again here.
     */
-#ifdef HAVE_REPLICATION
     if (thd->slave_thread &&
 	(!rpl_filter->db_ok(db->str) ||
 	 !rpl_filter->db_ok_with_wild_table(db->str)))
@@ -2453,7 +2407,6 @@ end_with_restore_list:
       my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
       break;
     }
-#endif
     if (thd->locked_tables || thd->active_transaction())
     {
       my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
@@ -2709,7 +2662,7 @@ static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
     SELECT_LEX *param= lex->unit.global_parameters;
     if (!param->explicit_limit)
       param->select_limit=
-        new Item_int((ulonglong) thd->variables.select_limit);
+        new Item_int((uint64_t) thd->variables.select_limit);
   }
   if (!(res= open_and_lock_tables(thd, all_tables)))
   {
@@ -2728,7 +2681,7 @@ static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
       if (lex->describe & DESCRIBE_EXTENDED)
       {
         char buff[1024];
-        String str(buff,(uint32) sizeof(buff), system_charset_info);
+        String str(buff,(uint32_t) sizeof(buff), system_charset_info);
         str.length(0);
         thd->lex->unit.print(&str, QT_ORDINARY);
         str.append('\0');
@@ -3098,7 +3051,6 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
 }
 
 
-#ifdef HAVE_REPLICATION
 /*
   Usable by the replication SQL thread only: just parse a query to know if it
   can be ignored because of replicate-*-table rules.
@@ -3125,7 +3077,6 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
   thd->cleanup_after_query();
   return(error);
 }
-#endif
 
 
 
@@ -3289,7 +3240,7 @@ bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
 TABLE_LIST *st_select_lex::add_table_to_list(THD *thd,
 					     Table_ident *table,
 					     LEX_STRING *alias,
-					     ulong table_options,
+					     uint32_t table_options,
 					     thr_lock_type lock_type,
 					     List<Index_hint> *index_hints_arg,
                                              LEX_STRING *option)

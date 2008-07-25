@@ -66,10 +66,10 @@ class Master_info : public Slave_reporting_capability
   char host[HOSTNAME_LENGTH+1];
   char user[USERNAME_LENGTH+1];
   char password[MAX_PASSWORD_LENGTH+1];
-  my_bool ssl; // enables use of SSL connection if true
+  bool ssl; // enables use of SSL connection if true
   char ssl_ca[FN_REFLEN], ssl_capath[FN_REFLEN], ssl_cert[FN_REFLEN];
   char ssl_cipher[FN_REFLEN], ssl_key[FN_REFLEN];
-  my_bool ssl_verify_server_cert;
+  bool ssl_verify_server_cert;
 
   my_off_t master_log_pos;
   File fd; // we keep the file open, so we need to remember the file pointer
@@ -79,12 +79,12 @@ class Master_info : public Slave_reporting_capability
   pthread_cond_t data_cond,start_cond,stop_cond;
   THD *io_thd;
   MYSQL* mysql;
-  uint32 file_id;				/* for 3.23 load data infile */
+  uint32_t file_id;				/* for 3.23 load data infile */
   Relay_log_info rli;
   uint port;
   uint connect_retry;
   float heartbeat_period;         // interface with CHANGE MASTER or master.info
-  ulonglong received_heartbeats;  // counter of received heartbeat events
+  uint64_t received_heartbeats;  // counter of received heartbeat events
   int events_till_disconnect;
   bool inited;
   volatile bool abort_slave;

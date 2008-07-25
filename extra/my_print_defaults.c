@@ -1,4 +1,3 @@
-
 /* Copyright (C) 2000 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
@@ -29,7 +28,6 @@
 
 const char *config_file="my";			/* Default config file */
 uint verbose= 0, opt_defaults_file_used= 0;
-const char *default_dbug_option="d:t:o,/tmp/my_print_defaults.trace";
 
 static struct my_option my_long_options[] =
 {
@@ -49,13 +47,6 @@ static struct my_option my_long_options[] =
   {"config-file", 'c', "Deprecated, please use --defaults-file instead.  Name of config file to read; if no extension is given, default extension (e.g., .ini or .cnf) will be added",
    (char**) &config_file, (char**) &config_file, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-#ifdef DBUG_OFF
-  {"debug", '#', "This is a non-debug version. Catch this and exit",
-   0,0, 0, GET_DISABLED, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#else
-  {"debug", '#', "Output debug log", (char**) &default_dbug_option,
-   (char**) &default_dbug_option, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"defaults-file", 'c', "Like --config-file, except: if first option, then read this file only, do not read global or per-user config files; should be the first option",
    (char**) &config_file, (char**) &config_file, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
@@ -105,7 +96,7 @@ static void usage(my_bool version)
 #include <help_end.h>
 
 
-static my_bool
+static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 	       char *argument __attribute__((unused)))
 {
@@ -125,9 +116,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     case 'V':
     usage(1);
     exit(0);
-    case '#':
-      DBUG_PUSH(argument ? argument : default_dbug_option);
-      break;
   }
   return 0;
 }

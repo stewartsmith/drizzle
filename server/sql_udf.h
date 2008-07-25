@@ -25,10 +25,10 @@ enum Item_udftype {UDFTYPE_FUNCTION=1,UDFTYPE_AGGREGATE};
 typedef void (*Udf_func_clear)(UDF_INIT *, uchar *, uchar *);
 typedef void (*Udf_func_add)(UDF_INIT *, UDF_ARGS *, uchar *, uchar *);
 typedef void (*Udf_func_deinit)(UDF_INIT*);
-typedef my_bool (*Udf_func_init)(UDF_INIT *, UDF_ARGS *,  char *);
+typedef bool (*Udf_func_init)(UDF_INIT *, UDF_ARGS *,  char *);
 typedef void (*Udf_func_any)();
 typedef double (*Udf_func_double)(UDF_INIT *, UDF_ARGS *, uchar *, uchar *);
-typedef longlong (*Udf_func_longlong)(UDF_INIT *, UDF_ARGS *, uchar *,
+typedef int64_t (*Udf_func_int64_t)(UDF_INIT *, UDF_ARGS *, uchar *,
                                       uchar *);
 
 typedef struct st_udf_func
@@ -91,7 +91,7 @@ class udf_handler :public Sql_alloc
     *null_value=0;
     return tmp;
   }
-  longlong val_int(my_bool *null_value)
+  int64_t val_int(my_bool *null_value)
   {
     is_null= 0;
     if (get_arguments())
@@ -99,8 +99,8 @@ class udf_handler :public Sql_alloc
       *null_value=1;
       return 0LL;
     }
-    Udf_func_longlong func= (Udf_func_longlong) u_d->func;
-    longlong tmp=func(&initid, &f_args, &is_null, &error);
+    Udf_func_int64_t func= (Udf_func_int64_t) u_d->func;
+    int64_t tmp=func(&initid, &f_args, &is_null, &error);
     if (is_null || error)
     {
       *null_value=1;
@@ -125,13 +125,13 @@ class udf_handler :public Sql_alloc
     }
     Udf_func_add func= u_d->func_add;
     func(&initid, &f_args, &is_null, &error);
-    *null_value= (my_bool) (is_null || error);
+    *null_value= (bool) (is_null || error);
   }
   String *val_str(String *str,String *save_str);
 };
 
 
 void udf_init(void),udf_free(void);
-udf_func *find_udf(const char *name, uint len=0,bool mark_used=0);
+udf_func *find_udf(const char *name, uint len=0);
 void free_udf(udf_func *udf);
 int mysql_create_function(THD *thd,udf_func *udf);

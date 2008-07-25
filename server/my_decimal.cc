@@ -210,7 +210,7 @@ int str2my_decimal(uint mask, const char *from, uint length,
 
 my_decimal *date2my_decimal(MYSQL_TIME *ltime, my_decimal *dec)
 {
-  longlong date;
+  int64_t date;
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
   if (ltime->time_type > MYSQL_TIMESTAMP_DATE)
     date= ((date*100L + ltime->hour)*100L+ ltime->minute)*100L + ltime->second;

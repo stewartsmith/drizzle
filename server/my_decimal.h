@@ -36,7 +36,7 @@ C_MODE_END
 #define DECIMAL_LONG_DIGITS 10
 #define DECIMAL_LONG3_DIGITS 8
 
-/** maximum length of buffer in our big digits (uint32). */
+/** maximum length of buffer in our big digits (uint32_t). */
 #define DECIMAL_BUFF_LENGTH 9
 
 /* the number of digits that my_decimal can possibly contain */
@@ -163,11 +163,11 @@ inline uint my_decimal_length_to_precision(uint length, uint scale,
   return (uint) (length - (scale>0 ? 1:0) - (unsigned_flag ? 0:1));
 }
 
-inline uint32 my_decimal_precision_to_length(uint precision, uint8 scale,
+inline uint32_t my_decimal_precision_to_length(uint precision, uint8_t scale,
                                              bool unsigned_flag)
 {
   set_if_smaller(precision, DECIMAL_MAX_PRECISION);
-  return (uint32)(precision + (scale>0 ? 1:0) + (unsigned_flag ? 0:1));
+  return (uint32_t)(precision + (scale>0 ? 1:0) + (unsigned_flag ? 0:1));
 }
 
 inline
@@ -256,15 +256,15 @@ int my_decimal2string(uint mask, const my_decimal *d, uint fixed_prec,
 #endif
 
 inline
-int my_decimal2int(uint mask, const my_decimal *d, my_bool unsigned_flag,
-		   longlong *l)
+int my_decimal2int(uint mask, const my_decimal *d, bool unsigned_flag,
+		   int64_t *l)
 {
   my_decimal rounded;
   /* decimal_round can return only E_DEC_TRUNCATED */
   decimal_round((decimal_t*)d, &rounded, 0, HALF_UP);
   return check_result(mask, (unsigned_flag ?
-			     decimal2ulonglong(&rounded, (ulonglong *)l) :
-			     decimal2longlong(&rounded, l)));
+			     decimal2uint64_t(&rounded, (uint64_t *)l) :
+			     decimal2int64_t(&rounded, l)));
 }
 
 
@@ -309,11 +309,11 @@ int double2my_decimal(uint mask, double val, my_decimal *d)
 
 
 inline
-int int2my_decimal(uint mask, longlong i, my_bool unsigned_flag, my_decimal *d)
+int int2my_decimal(uint mask, int64_t i, bool unsigned_flag, my_decimal *d)
 {
   return check_result(mask, (unsigned_flag ?
-			     ulonglong2decimal((ulonglong)i, d) :
-			     longlong2decimal(i, d)));
+			     uint64_t2decimal((uint64_t)i, d) :
+			     int64_t2decimal(i, d)));
 }
 
 

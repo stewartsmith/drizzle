@@ -477,34 +477,6 @@ sf_fo:	mov	ax,dx			; Char found here
 _strstr	ENDP
 
 	;
-	; Find a substring in string, return index
-	; Arg: str,search
-	;
-
-	PUBLIC	_strinstr
-_strinstr	PROC
-	push	bp
-	mov	bp,sp
-	push	di
-	les	di,DWORD PTR [bp+10]	; search
-	push	es
-	push	di
-	les	di,DWORD PTR [bp+6]	; str
-	push	es
-	push	di
-	call	_strstr
-	mov	cx,ax
-	or	cx,dx
-	jz	si_99
-	sub	ax,di			; Pos from start
-	inc	ax			; And first pos = 1
-si_99:	add	sp,8
-	pop	di
-	pop	bp
-	ret
-_strinstr	ENDP
-
-	;
 	; Make a string of len length from another string
 	; Arg: dst,src,length
 	; ret: end of dst
@@ -910,29 +882,6 @@ sf_fo:	mov	eax,edx			; Char found here
 	ret
 _strstr endp
 	endcode strstr
-
-	;
-	; Find a substring in string, return index
-	; Arg: str,search
-	;
-
-	begcode	strinstr
-	public	_strinstr
-_strinstr proc near
-	push	ebp
-	mov	ebp,esp
-	push	P+SIZEPTR[ebp]		; search
-	push	P[ebp]			; str
-	call	_strstr
-	add	esp,SIZEPTR*2
-	or	eax,eax
-	jz	si_99			; Not found, return NULL
-	sub	eax,P[ebp]		; Pos from start
-	inc	eax			; And first pos = 1
-si_99:	pop	ebp
-	ret
-_strinstr	endp
-	endcode strinstr
 
 	;
 	; Make a string of len length from another string

@@ -67,12 +67,10 @@ size_t dirname_length(const char *name)
 size_t dirname_part(char *to, const char *name, size_t *to_res_length)
 {
   size_t length;
-  DBUG_ENTER("dirname_part");
-  DBUG_PRINT("enter",("'%s'",name));
 
   length=dirname_length(name);
   *to_res_length= (size_t) (convert_dirname(to, name, name+length) - to);
-  DBUG_RETURN(length);
+  return(length);
 } /* dirname */
 
 
@@ -112,7 +110,6 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
 #ifdef BACKSLASH_MBTAIL
   CHARSET_INFO *fs= fs_character_set();
 #endif
-  DBUG_ENTER("convert_dirname");
 
   /* We use -2 here, becasue we need place for the last FN_LIBCHAR */
   if (!from_end || (from_end - from) > FN_REFLEN-2)
@@ -161,5 +158,5 @@ char *convert_dirname(char *to, const char *from, const char *from_end)
     *to++=FN_LIBCHAR;
     *to=0;
   }
-  DBUG_RETURN(to);                              /* Pointer to end of dir */
+  return(to);                              /* Pointer to end of dir */
 } /* convert_dirname */

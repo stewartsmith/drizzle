@@ -43,8 +43,6 @@
 int my_sync(File fd, myf my_flags)
 {
   int res;
-  DBUG_ENTER("my_sync");
-  DBUG_PRINT("my",("Fd: %d  my_flags: %d", fd, my_flags));
 
   do
   {
@@ -56,7 +54,6 @@ int my_sync(File fd, myf my_flags)
     if (!(res= fcntl(fd, F_FULLFSYNC, 0)))
       break; /* ok */
     /* Some file systems don't support F_FULLFSYNC and fail above: */
-    DBUG_PRINT("info",("fcntl(F_FULLFSYNC) failed, falling back"));
 #endif
 #if defined(HAVE_FDATASYNC)
     res= fdatasync(fd);
@@ -76,13 +73,12 @@ int my_sync(File fd, myf my_flags)
     if ((my_flags & MY_IGNORE_BADFD) &&
         (er == EBADF || er == EINVAL || er == EROFS))
     {
-      DBUG_PRINT("info", ("ignoring errno %d", er));
       res= 0;
     }
     else if (my_flags & MY_WME)
       my_error(EE_SYNC, MYF(ME_BELL+ME_WAITTANG), my_filename(fd), my_errno);
   }
-  DBUG_RETURN(res);
+  return(res);
 } /* my_sync */
 
 
@@ -98,11 +94,10 @@ static const char cur_dir_name[]= {FN_CURLIB, 0};
   RETURN
     0 if ok, !=0 if error
 */
-int my_sync_dir(const char *dir_name, myf my_flags)
+int my_sync_dir(const char *dir_name __attribute__((unused)),
+                myf my_flags __attribute__((unused)))
 {
 #ifdef NEED_EXPLICIT_SYNC_DIR
-  DBUG_ENTER("my_sync_dir");
-  DBUG_PRINT("my",("Dir: '%s'  my_flags: %d", dir_name, my_flags));
   File dir_fd;
   int res= 0;
   const char *correct_dir_name;
@@ -121,7 +116,7 @@ int my_sync_dir(const char *dir_name, myf my_flags)
   }
   else
     res= 1;
-  DBUG_RETURN(res);
+  return(res);
 #else
   return 0;
 #endif
@@ -139,7 +134,8 @@ int my_sync_dir(const char *dir_name, myf my_flags)
   RETURN
     0 if ok, !=0 if error
 */
-int my_sync_dir_by_file(const char *file_name, myf my_flags)
+int my_sync_dir_by_file(const char *file_name __attribute__((unused)),
+                        myf my_flags __attribute__((unused)))
 {
 #ifdef NEED_EXPLICIT_SYNC_DIR
   char dir_name[FN_REFLEN];

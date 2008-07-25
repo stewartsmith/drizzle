@@ -734,16 +734,12 @@ sub mtr_mysqladmin_start($$$) {
   {
     mtr_add_arg($args, "--port=%s", $srv->{'port'});
   }
-  if ( $srv->{'port'} and ! -e $srv->{'path_sock'} )
-  {
-    mtr_add_arg($args, "--protocol=tcp"); # Needed if no --socket
-  }
   mtr_add_arg($args, "--connect_timeout=5");
 
   # Shutdown time must be high as slave may be in reconnect
   mtr_add_arg($args, "--shutdown_timeout=$adm_shutdown_tmo");
   mtr_add_arg($args, "$command");
-  my $pid= mtr_spawn($::exe_mysqladmin, $args,
+  my $pid= mtr_spawn($::exe_drizzleadmin, $args,
 		     "", "", "", "",
 		     { append_log_file => 1 });
   mtr_verbose("mtr_mysqladmin_start, pid: $pid");

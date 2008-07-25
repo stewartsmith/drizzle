@@ -98,7 +98,7 @@ bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((__unused__)),
                            TABLE_LIST *orig_table_list)
 {
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
-  ulonglong create_options;
+  uint64_t create_options;
   bool res= false;
   if (unit)
   {

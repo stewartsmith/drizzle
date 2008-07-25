@@ -1,21 +1,30 @@
+Hi!
+
 * So why?
 
 I've been wondering for a long time now about all of the changes post 4.1.
 I believe there is a large market of users who never wanted them, and never
 cared for them. I also wanted to question the foundations of what we built.
-Do uses want wrong data? How often is the query cache really valuable? If
+Do users want wrong data? How often is the query cache really valuable? If
 everyone just has a root user with all privs, why carry the baggage of the
 ACL code. Etc.
 
-* What is the GOAL?
+* What is the goal?
 
 A micro-kernel that we then extend to add what we need (all additions come
-through interfaces that can be compiled/loaded in as needed). 
+through interfaces that can be compiled/loaded in as needed).  The target
+for the project is web infrastructure backend and cloud components. 
 
-* So the differences?
+* Is this a product of Sun/MySQL?
 
-No modes, views, triggers, stored procedures, query cache, bad data inserts,
-ACL. Less engines, less code. Assume the primary engine is transactional. 
+No, though several of the authors do work for Sun/MySQL. The development model is
+one based around open collaboration.  Drizzle's license is the GPL v2.
+
+* So what are the differences between is and MySQL?
+
+No modes, views, triggers, prepared statements, stored procedures, query cache, 
+data conversion inserts, ACL. Fewer data types.  Less engines, less code. 
+Assume the primary engine is transactional.
 
 * Why now?
 
@@ -24,7 +33,7 @@ Why not now :)
 * "This is awesome, but I need you to add back..."
 
 Forget it. Nothing is going back in at this time. As for the future? Maybe,
-but at the moment this suits my needs better. If you want more features, go
+but at the moment this is not the target. If you want more features, go
 use MySQL.
 
 * What platforms?
@@ -33,10 +42,11 @@ I compile on OSX, Linux (Fedora), and Solaris Express. Windows is not
 supported and will stay that way unless it gets a working posix layer +
 autoconf system (aka becomes a platform that is reasonable to support).
 
-* What about XA?
+Really, get a working GNU chain going on Windows and you can get Drizzle
+working on it.
 
-It may return as a bit in the protocol. Lets see if anyone notices that it is
-gone first :)
+Drizzle relies on a C99 compliant compiler. Please do not ask us to support
+older hardware, compilers, or OS'es.
 
 * What is the future?
 
@@ -46,6 +56,7 @@ still need to be done:
 - Walk through all of the replication code
 - Re-implement information schema
 - Modular logging system
+- ...
 
 * "This is not a SQL compliant relational..."
 
@@ -53,12 +64,91 @@ Very true, and we do not aim to be that.
 
 * What is left to be cut out?
 
-Bit type... we need a longer list.
+Please ask on the mailing list or on IRC.
+
+* Can I get involved?
+
+Most certainly. There is plenty to do from refactoring code, design of interfaces, 
+documentation and blueprints, etc... The best way to get involved it to join the 
+mailing list at:
+
+https://launchpad.net/~drizzle-discuss/
+
+If you wish to suggest a refactoring project or an interface please email
+the mailing list and keep an open mind. Do not expect anyone will work on
+your idea though, you may influence someone to do that, but more then likely
+you will need to rollup your sleeves and write some code. For very simple
+bits you are welcome to ask others on #drizzle on Freenode, but please be
+aware that you may be asked to email the mailing list. 
+
+Showing up with a big block of code is probably the worst way of getting
+your work accepted. This is unlikely to work. 
+
+Right now we use a simple captain system for commits. Anyone can send in a
+proprosal for merge via launchpad but your changes may be flowed first
+through someone who has been around long enough to understand code
+requirements to review your code. This system is based entirely on trust,
+and individuals who have shown that they can provide three good patches gain
+credibility. Starting small is fine, patches that are just comments or are
+even two or three line cleanups are welcome and encouraged. I would really
+recommend that anyone who wants to work on something first start with something 
+of this size. Patches like these are valuable and teach you how to work with
+the system.
+
+The general rule is no new code in the core of the server, and any changes
+to interfaces need to be code line neutral. AKA if you want to add an
+interface you need to be able to remove at least the number of lines of code
+you added. This is a rule of thumb, and does not apply to code cleanup.
+
+It should be pointed out that we are more focused on code style,
+performance, and over all maintenance then we are features.
+
+* What is the coding style?
+
+Please look here:
+
+https://blueprints.launchpad.net/drizzle/+spec/style-cleanup
+
+If you have a question on this, please email the mailing list so that we can
+clarify the document. And when you get the answer? Please update the code
+style document :)
+
+* Should I email the mailing list with patches?
+
+Please god no, we live in the age of the Internet :)
+
+Create an account on launchpad.net. Create your own tree and let one of us
+pull from it.
+
+* What is the target?
+
+Deliver a microkernel that we can use to build a database that meets the
+needs of a web/cloud infrastructure. To this end we are exploring http
+interfaces, sharding enhancements, etc... do not expect an Oracle, MySQL,
+Postgres, or DB2. 
+
+There is no GA date at the moment.
+
+We are focusing on multi-core architecture. This is not designed to run on a
+wrist watch (hint, go use SQLite). We support both 32bit and 64bit but the
+class of machine we are targetting is 64bit. We are making design decisions
+which assume very large amounts of RAM will be made available to the DB.
+
+* Can I run a website with this?
+
+No. We are still making incompatible changes, and I certainly do not believe
+the code is production quality. Right now we are defaulting many configure
+operations to generate debugging code for us so our binaries are not
+optimal.  Therefore, do not go out and benchmark this and expect it to be one way or
+the other. We are currently only doing benchmarks where it makes sense for
+us to determine where bottlenecks are.
 
 * Why drizzle?
 
-I am from Seattle. Drizzle is our normal form of "rain" but its not "rain".
-It is drizzle.
+I am from Seattle. Drizzle is our normal form of "rain" but it is not "rain",
+it is drizzle. This was a bit of a rainy day project that finally found a
+spot in my schedule :)
 
   -Brian
     Seattle, USA
+    Sun, Microsystems

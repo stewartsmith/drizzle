@@ -1154,14 +1154,14 @@ typedef struct st_changed_table_list
 {
   struct	st_changed_table_list *next;
   char		*key;
-  uint32        key_length;
+  uint32_t        key_length;
 } CHANGED_TABLE_LIST;
 
 
 typedef struct st_open_table_list{
   struct st_open_table_list *next;
   char	*db,*table;
-  uint32 in_use,locked;
+  uint32_t in_use,locked;
 } OPEN_TABLE_LIST;
 
 typedef struct st_table_field_w_type
@@ -1172,7 +1172,7 @@ typedef struct st_table_field_w_type
 } TABLE_FIELD_W_TYPE;
 
 
-my_bool
+bool
 table_check_intact(TABLE *table, const uint table_f_count,
                    const TABLE_FIELD_W_TYPE *table_def);
 

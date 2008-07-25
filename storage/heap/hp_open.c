@@ -32,13 +32,12 @@
 HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
 {
   HP_INFO *info;
-  DBUG_ENTER("heap_open_from_share");
 
   if (!(info= (HP_INFO*) my_malloc((uint) sizeof(HP_INFO) +
 				  2 * share->max_key_length,
 				  MYF(MY_ZEROFILL))))
   {
-    DBUG_RETURN(0);
+    return(0);
   }
   share->open_count++; 
   thr_lock_data_init(&share->lock,&info->lock,NULL);
@@ -48,13 +47,7 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
   info->mode= mode;
   info->current_record= (ulong) ~0L;		/* No current record */
   info->lastinx= info->errkey= -1;
-#ifndef DBUG_OFF
-  info->opt_flag= READ_CHECK_USED;		/* Check when changing */
-#endif
-  DBUG_PRINT("exit",("heap: 0x%lx  reclength: %d  records_in_block: %d",
-		     (long) info, share->reclength,
-                     share->block.records_in_block));
-  DBUG_RETURN(info);
+  return(info);
 }
 
 
@@ -65,7 +58,6 @@ HP_INFO *heap_open_from_share(HP_SHARE *share, int mode)
 HP_INFO *heap_open_from_share_and_register(HP_SHARE *share, int mode)
 {
   HP_INFO *info;
-  DBUG_ENTER("heap_open_from_share_and_register");
 
   pthread_mutex_lock(&THR_LOCK_heap);
   if ((info= heap_open_from_share(share, mode)))
@@ -74,7 +66,7 @@ HP_INFO *heap_open_from_share_and_register(HP_SHARE *share, int mode)
     heap_open_list= list_add(heap_open_list,&info->open_list);
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_RETURN(info);
+  return(info);
 }
 
 
@@ -90,14 +82,13 @@ HP_INFO *heap_open(const char *name, int mode)
 {
   HP_INFO *info;
   HP_SHARE *share;
-  DBUG_ENTER("heap_open");
 
   pthread_mutex_lock(&THR_LOCK_heap);
   if (!(share= hp_find_named_heap(name)))
   {
     my_errno= ENOENT;
     pthread_mutex_unlock(&THR_LOCK_heap);
-    DBUG_RETURN(0);
+    return(0);
   }
   if ((info= heap_open_from_share(share, mode)))
   {
@@ -105,7 +96,7 @@ HP_INFO *heap_open(const char *name, int mode)
     heap_open_list= list_add(heap_open_list,&info->open_list);
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_RETURN(info);
+  return(info);
 }
 
 
@@ -115,19 +106,16 @@ HP_SHARE *hp_find_named_heap(const char *name)
 {
   LIST *pos;
   HP_SHARE *info;
-  DBUG_ENTER("heap_find");
-  DBUG_PRINT("enter",("name: %s",name));
 
   for (pos= heap_share_list; pos; pos= pos->next)
   {
     info= (HP_SHARE*) pos->data;
     if (!strcmp(name, info->name))
     {
-      DBUG_PRINT("exit", ("Old heap_database: 0x%lx", (long) info));
-      DBUG_RETURN(info);
+      return(info);
     }
   }
-  DBUG_RETURN((HP_SHARE *) 0);
+  return((HP_SHARE *) 0);
 }
 
 

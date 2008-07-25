@@ -19,7 +19,6 @@
 #include <m_ctype.h>
 #include <my_tree.h>
 #include <queues.h>
-#include <mysql/plugin.h>
 #include <my_bit.h>
 
 #include <m_ctype.h>
@@ -45,7 +44,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   ulong reclength, real_reclength,min_pack_length;
   char filename[FN_REFLEN],linkname[FN_REFLEN], *linkname_ptr;
   ulong pack_reclength;
-  ulonglong tot_length,max_rows, tmp;
+  uint64_t tot_length,max_rows, tmp;
   enum en_fieldtype type;
   MYISAM_SHARE share;
   MI_KEYDEF *keydef,tmp_keydef;
@@ -55,9 +54,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   ulong *rec_per_key_part;
   my_off_t key_root[HA_MAX_POSSIBLE_KEY],key_del[MI_MAX_KEY_BLOCK_SIZE];
   MI_CREATE_INFO tmp_create_info;
-  DBUG_ENTER("mi_create");
-  DBUG_PRINT("enter", ("keys: %u  columns: %u  uniques: %u  flags: %u",
-                      keys, columns, uniques, flags));
 
   if (!ci)
   {
@@ -67,7 +63,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 
   if (keys + uniques > MI_MAX_KEY || columns == 0)
   {
-    DBUG_RETURN(my_errno=HA_WRONG_CREATE_OPTION);
+    return(my_errno=HA_WRONG_CREATE_OPTION);
   }
   errpos= 0;
   options= 0;
@@ -91,7 +87,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   if (!(rec_per_key_part=
 	(ulong*) my_malloc((keys + uniques)*MI_MAX_KEY_SEG*sizeof(long),
 			   MYF(MY_WME | MY_ZEROFILL))))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
 
 	/* Start by checking fields and field-types used */
 
@@ -109,10 +105,10 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
       if (type == FIELD_BLOB)
       {
 	share.base.blobs++;
-	if (pack_reclength != INT_MAX32)
+	if (pack_reclength != INT32_MAX)
 	{
 	  if (rec->length == 4+portable_sizeof_char_ptr)
-	    pack_reclength= INT_MAX32;
+	    pack_reclength= INT32_MAX;
 	  else
 	    pack_reclength+=(1 << ((rec->length-portable_sizeof_char_ptr)*8)); /* Max blob length */
 	}
@@ -120,7 +116,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
       else if (type == FIELD_SKIP_PRESPACE ||
 	       type == FIELD_SKIP_ENDSPACE)
       {
-	if (pack_reclength != INT_MAX32)
+	if (pack_reclength != INT32_MAX)
 	  pack_reclength+= rec->length > 255 ? 2 : 1;
 	min_pack_length++;
       }
@@ -188,18 +184,18 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     options|= HA_OPTION_RELIES_ON_SQL_LAYER;
 
   packed=(packed+7)/8;
-  if (pack_reclength != INT_MAX32)
+  if (pack_reclength != INT32_MAX)
     pack_reclength+= reclength+packed +
       test(test_all_bits(options, HA_OPTION_CHECKSUM | HA_PACK_RECORD));
   min_pack_length+=packed;
 
   if (!ci->data_file_length && ci->max_rows)
   {
-    if (pack_reclength == INT_MAX32 ||
-             (~(ulonglong) 0)/ci->max_rows < (ulonglong) pack_reclength)
-      ci->data_file_length= ~(ulonglong) 0;
+    if (pack_reclength == INT32_MAX ||
+             (~(uint64_t) 0)/ci->max_rows < (uint64_t) pack_reclength)
+      ci->data_file_length= ~(uint64_t) 0;
     else
-      ci->data_file_length=(ulonglong) ci->max_rows*pack_reclength;
+      ci->data_file_length=(uint64_t) ci->max_rows*pack_reclength;
   }
   else if (!ci->max_rows)
     ci->max_rows=(ha_rows) (ci->data_file_length/(min_pack_length +
@@ -210,8 +206,8 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     pointer=mi_get_pointer_length(ci->data_file_length,myisam_data_pointer_size);
   else
     pointer=mi_get_pointer_length(ci->max_rows,myisam_data_pointer_size);
-  if (!(max_rows=(ulonglong) ci->max_rows))
-    max_rows= ((((ulonglong) 1 << (pointer*8)) -1) / min_pack_length);
+  if (!(max_rows=(uint64_t) ci->max_rows))
+    max_rows= ((((uint64_t) 1 << (pointer*8)) -1) / min_pack_length);
 
 
   real_reclength=reclength;
@@ -306,7 +302,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	}
 	if (keyseg->flag & HA_SPACE_PACK)
 	{
-          DBUG_ASSERT(!(keyseg->flag & HA_VAR_LENGTH_PART));
+          assert(!(keyseg->flag & HA_VAR_LENGTH_PART));
 	  keydef->flag |= HA_SPACE_PACK_USED | HA_VAR_LENGTH_KEY;
 	  options|=HA_OPTION_PACK_KEYS;		/* Using packed keys */
 	  length++;				/* At least one length byte */
@@ -319,7 +315,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	}
 	if (keyseg->flag & (HA_VAR_LENGTH_PART | HA_BLOB_PART))
 	{
-          DBUG_ASSERT(!test_all_bits(keyseg->flag,
+          assert(!test_all_bits(keyseg->flag,
                                     (HA_VAR_LENGTH_PART | HA_BLOB_PART)));
 	  keydef->flag|=HA_VAR_LENGTH_KEY;
 	  length++;				/* At least one length byte */
@@ -363,7 +359,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     block_length= max(block_length, MI_MIN_KEY_BLOCK_LENGTH);
     block_length= min(block_length, MI_MAX_KEY_BLOCK_LENGTH);
 
-    keydef->block_length= (uint16) MI_BLOCK_SIZE(length-real_length_diff,
+    keydef->block_length= (uint16_t) MI_BLOCK_SIZE(length-real_length_diff,
                                                  pointer,MI_MAX_KEYPTR_SIZE,
                                                  block_length);
     if (keydef->block_length > MI_MAX_KEY_BLOCK_LENGTH ||
@@ -373,9 +369,9 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
       goto err;
     }
     set_if_bigger(max_key_block_length,keydef->block_length);
-    keydef->keylength= (uint16) key_length;
-    keydef->minlength= (uint16) (length-min_key_length_skip);
-    keydef->maxlength= (uint16) length;
+    keydef->keylength= (uint16_t) key_length;
+    keydef->minlength= (uint16_t) (length-min_key_length_skip);
+    keydef->maxlength= (uint16_t) length;
 
     if (length > max_key_length)
       max_key_length= length;
@@ -409,7 +405,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 			       uniques * MI_UNIQUEDEF_SIZE +
 			       (key_segs + unique_key_parts)*HA_KEYSEG_SIZE+
 			       columns*MI_COLUMNDEF_SIZE);
-  DBUG_PRINT("info", ("info_length: %u", info_length));
   /* There are only 16 bits for the total header length. */
   if (info_length > 65535)
   {
@@ -603,21 +598,11 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     errpos=3;
   }
 
-  DBUG_PRINT("info", ("write state info and base info"));
   if (mi_state_info_write(file, &share.state, 2) ||
       mi_base_info_write(file, &share.base))
     goto err;
-#ifndef DBUG_OFF
-  if ((uint) my_tell(file,MYF(0)) != base_pos+ MI_BASE_INFO_SIZE)
-  {
-    uint pos=(uint) my_tell(file,MYF(0));
-    DBUG_PRINT("warning",("base_length: %d  != used_length: %d",
-			  base_pos+ MI_BASE_INFO_SIZE, pos));
-  }
-#endif
 
   /* Write key and keyseg definitions */
-  DBUG_PRINT("info", ("write key and keyseg definitions"));
   for (i=0 ; i < share.base.keys - uniques; i++)
   {
     uint sp_segs= 0;
@@ -636,7 +621,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   {
     tmp_keydef.keysegs=1;
     tmp_keydef.flag=		HA_UNIQUE_CHECK;
-    tmp_keydef.block_length=	(uint16)myisam_block_size;
+    tmp_keydef.block_length=	(uint16_t)myisam_block_size;
     tmp_keydef.keylength=	MI_UNIQUE_HASH_LENGTH + pointer;
     tmp_keydef.minlength=tmp_keydef.maxlength=tmp_keydef.keylength;
     tmp_keyseg.type=		MI_UNIQUE_HASH_TYPE;
@@ -649,7 +634,6 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
 
   /* Save unique definition */
-  DBUG_PRINT("info", ("write unique definitions"));
   for (i=0 ; i < share.state.header.uniques ; i++)
   {
     HA_KEYSEG *keyseg_end;
@@ -680,22 +664,11 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	goto err;
     }
   }
-  DBUG_PRINT("info", ("write field definitions"));
   for (i=0 ; i < share.base.fields ; i++)
     if (mi_recinfo_write(file, &recinfo[i]))
       goto err;
 
-#ifndef DBUG_OFF
-  if ((uint) my_tell(file,MYF(0)) != info_length)
-  {
-    uint pos= (uint) my_tell(file,MYF(0));
-    DBUG_PRINT("warning",("info_length: %d  != used_length: %d",
-			  info_length, pos));
-  }
-#endif
-
 	/* Enlarge files */
-  DBUG_PRINT("info", ("enlarge to keystart: %lu", (ulong) share.base.keystart));
   if (ftruncate(file, (off_t) share.base.keystart))
     goto err;
 
@@ -714,7 +687,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   if (my_close(file,MYF(0)))
     goto err;
   my_free((char*) rec_per_key_part,MYF(0));
-  DBUG_RETURN(0);
+  return(0);
 
 err:
   pthread_mutex_unlock(&THR_LOCK_myisam);
@@ -738,13 +711,13 @@ err:
 			     MYF(0));
   }
   my_free((char*) rec_per_key_part, MYF(0));
-  DBUG_RETURN(my_errno=save_errno);		/* return the fatal errno */
+  return(my_errno=save_errno);		/* return the fatal errno */
 }
 
 
-uint mi_get_pointer_length(ulonglong file_length, uint def)
+uint mi_get_pointer_length(uint64_t file_length, uint def)
 {
-  DBUG_ASSERT(def >= 2 && def <= 7);
+  assert(def >= 2 && def <= 7);
   if (file_length)				/* If not default */
   {
 #ifdef NOT_YET_READY_FOR_8_BYTE_POINTERS

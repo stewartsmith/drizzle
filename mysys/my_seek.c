@@ -46,16 +46,12 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
 		 myf MyFlags __attribute__((unused)))
 {
   register os_off_t newpos= -1;
-  DBUG_ENTER("my_seek");
-  DBUG_PRINT("my",("Fd: %d  Hpos: %lu  Pos: %lu  Whence: %d  MyFlags: %d",
-		   fd, (ulong) (((ulonglong) pos) >> 32), (ulong) pos, 
-		   whence, MyFlags));
-  DBUG_ASSERT(pos != MY_FILEPOS_ERROR);		/* safety check */
+  assert(pos != MY_FILEPOS_ERROR);		/* safety check */
 
   /*
       Make sure we are using a valid file descriptor!
   */
-  DBUG_ASSERT(fd != -1);
+  assert(fd != -1);
 #if !defined(HAVE_PREAD)
   if (MyFlags & MY_THREADSAFE)
   {
@@ -69,14 +65,9 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
   if (newpos == (os_off_t) -1)
   {
     my_errno=errno;
-    DBUG_PRINT("error",("lseek: %lu  errno: %d", (ulong) newpos,errno));
-    DBUG_RETURN(MY_FILEPOS_ERROR);
+    return(MY_FILEPOS_ERROR);
   }
-  if ((my_off_t) newpos != pos)
-  {
-    DBUG_PRINT("exit",("pos: %lu", (ulong) newpos));
-  }
-  DBUG_RETURN((my_off_t) newpos);
+  return((my_off_t) newpos);
 } /* my_seek */
 
 
@@ -86,9 +77,7 @@ my_off_t my_seek(File fd, my_off_t pos, int whence,
 my_off_t my_tell(File fd, myf MyFlags __attribute__((unused)))
 {
   os_off_t pos;
-  DBUG_ENTER("my_tell");
-  DBUG_PRINT("my",("Fd: %d  MyFlags: %d",fd, MyFlags));
-  DBUG_ASSERT(fd >= 0);
+  assert(fd >= 0);
 #ifdef HAVE_TELL
   pos=tell(fd);
 #else
@@ -96,6 +85,5 @@ my_off_t my_tell(File fd, myf MyFlags __attribute__((unused)))
 #endif
   if (pos == (os_off_t) -1)
     my_errno=errno;
-  DBUG_PRINT("exit",("pos: %lu", (ulong) pos));
-  DBUG_RETURN((my_off_t) pos);
+  return((my_off_t) pos);
 } /* my_tell */

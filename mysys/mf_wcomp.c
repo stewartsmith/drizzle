@@ -25,10 +25,9 @@ char wild_one='?';
 char wild_prefix=0; /* QQ this can potentially cause a SIGSEGV */
 
 int wild_compare(register const char *str, register const char *wildstr,
-                 pbool str_is_pattern)
+                 bool str_is_pattern)
 {
   char cmp;
-  DBUG_ENTER("wild_compare");
 
   while (*wildstr)
   {
@@ -38,17 +37,17 @@ int wild_compare(register const char *str, register const char *wildstr,
       {
 	wildstr++;
         if (str_is_pattern && *str++ != wild_prefix)
-          DBUG_RETURN(1);
+          return(1);
       }
       if (*wildstr++ != *str++)
-        DBUG_RETURN(1);
+        return(1);
     }
     if (! *wildstr )
-      DBUG_RETURN(*str != 0);
+      return(*str != 0);
     if (*wildstr++ == wild_one)
     {
       if (! *str || (str_is_pattern && *str == wild_many))
-        DBUG_RETURN(1);                     /* One char; skip */
+        return(1);                     /* One char; skip */
       if (*str++ == wild_prefix && str_is_pattern && *str)
         str++;
     }
@@ -67,10 +66,10 @@ int wild_compare(register const char *str, register const char *wildstr,
           if (str_is_pattern && *str == wild_prefix && str[1])
             str+=2;
           else if (! *str++)
-            DBUG_RETURN (1);
+            return (1);
         }
       if (!*wildstr)
-        DBUG_RETURN(0);		/* '*' as last char: OK */
+        return(0);		/* '*' as last char: OK */
       if ((cmp= *wildstr) == wild_prefix && wildstr[1] && !str_is_pattern)
         cmp=wildstr[1];
       for (;;str++)
@@ -78,12 +77,12 @@ int wild_compare(register const char *str, register const char *wildstr,
         while (*str && *str != cmp)
           str++;
         if (!*str)
-          DBUG_RETURN (1);
+          return (1);
 	if (wild_compare(str,wildstr,str_is_pattern) == 0)
-          DBUG_RETURN (0);
+          return (0);
       }
       /* We will never come here */
     }
   }
-  DBUG_RETURN (*str != 0);
+  return (*str != 0);
 } /* wild_compare */

@@ -31,7 +31,7 @@
 */
 
 bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
-                  SQL_LIST *order, ha_rows limit, ulonglong options,
+                  SQL_LIST *order, ha_rows limit, uint64_t options,
                   bool reset_auto_increment)
 {
   bool          will_batch;
@@ -49,12 +49,12 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
   
 
   if (open_and_lock_tables(thd, table_list))
-    return(TRUE);
+    return(true);
   /* TODO look at this error */
   if (!(table= table_list->table))
   {
     my_error(ER_VIEW_DELETE_MERGE_VIEW, MYF(0), "", "");
-    return(TRUE);
+    return(true);
   }
   thd_proc_info(thd, "init");
   table->map=1;
@@ -98,7 +98,7 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
   if (thd->is_error())
   {
     /* Error evaluating val_int(). */
-    return(TRUE);
+    return(true);
   }
 
   /*
@@ -311,7 +311,7 @@ cleanup:
   transactional_table= table->file->has_transactions();
 
   if (!transactional_table && deleted > 0)
-    thd->transaction.stmt.modified_non_trans_table= TRUE;
+    thd->transaction.stmt.modified_non_trans_table= true;
   
   /* See similar binlogging code in sql_update.cc, for comments */
   if ((error < 0) || thd->transaction.stmt.modified_non_trans_table)
@@ -328,7 +328,7 @@ cleanup:
       */
       int log_result= thd->binlog_query(THD::ROW_QUERY_TYPE,
                                         thd->query, thd->query_length,
-                                        transactional_table, FALSE, killed_status);
+                                        transactional_table, false, killed_status);
 
       if (log_result && transactional_table)
       {
@@ -336,7 +336,7 @@ cleanup:
       }
     }
     if (thd->transaction.stmt.modified_non_trans_table)
-      thd->transaction.all.modified_non_trans_table= TRUE;
+      thd->transaction.all.modified_non_trans_table= true;
   }
   assert(transactional_table || !deleted || thd->transaction.stmt.modified_non_trans_table);
   free_underlaid_joins(thd, select_lex);
@@ -351,7 +351,7 @@ cleanup:
 
 err:
   MYSQL_DELETE_END();
-  return(TRUE);
+  return(true);
 }
 
 
@@ -365,12 +365,11 @@ err:
     conds		- conditions
 
   RETURN VALUE
-    FALSE OK
-    TRUE  error
+    false OK
+    true  error
 */
 int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
 {
-  Item *fake_conds= 0;
   SELECT_LEX *select_lex= &thd->lex->select_lex;
   
   List<Item> all_fields;
@@ -394,13 +393,13 @@ int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
                                     table_list, 
                                     &select_lex->leaf_tables, false) ||
       setup_conds(thd, table_list, select_lex->leaf_tables, conds))
-    return(TRUE);
+    return(true);
   {
     TABLE_LIST *duplicate;
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 0)))
     {
       update_non_unique_table_error(table_list, "DELETE", duplicate);
-      return(TRUE);
+      return(true);
     }
   }
 
@@ -408,8 +407,7 @@ int mysql_prepare_delete(THD *thd, TABLE_LIST *table_list, Item **conds)
     fix_inner_refs(thd, all_fields, select_lex, select_lex->ref_pointer_array))
     return(-1);
 
-  select_lex->fix_prepare_information(thd, conds, &fake_conds);
-  return(FALSE);
+  return(false);
 }
 
 
@@ -433,8 +431,8 @@ extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b)
     thd         thread handler
 
   RETURN
-    FALSE OK
-    TRUE  Error
+    false OK
+    true  Error
 */
 
 int mysql_multi_delete_prepare(THD *thd)
@@ -454,14 +452,14 @@ int mysql_multi_delete_prepare(THD *thd)
                                     &thd->lex->select_lex.top_join_list,
                                     lex->query_tables,
                                     &lex->select_lex.leaf_tables, false))
-    return(TRUE);
+    return(true);
 
 
   /*
     Multi-delete can't be constructed over-union => we always have
     single SELECT on top and have to check underlying SELECTs of it
   */
-  lex->select_lex.exclude_from_table_unique_test= TRUE;
+  lex->select_lex.exclude_from_table_unique_test= true;
   /* Fix tables-to-be-deleted-from list to point at opened tables */
   for (target_tbl= (TABLE_LIST*) aux_tables;
        target_tbl;
@@ -473,7 +471,7 @@ int mysql_multi_delete_prepare(THD *thd)
                   target_tbl->correspondent_table->merge_underlying_list->
                   next_local);
       my_error(ER_VIEW_DELETE_MERGE_VIEW, MYF(0), "", "");
-      return(TRUE);
+      return(true);
     }
 
     /*
@@ -487,11 +485,11 @@ int mysql_multi_delete_prepare(THD *thd)
       {
         update_non_unique_table_error(target_tbl->correspondent_table,
                                       "DELETE", duplicate);
-        return(TRUE);
+        return(true);
       }
     }
   }
-  return(FALSE);
+  return(false);
 }
 
 
@@ -629,7 +627,7 @@ bool multi_delete::send_data(List<Item> &values __attribute__((__unused__)))
       {
         deleted++;
         if (!table->file->has_transactions())
-          thd->transaction.stmt.modified_non_trans_table= TRUE;
+          thd->transaction.stmt.modified_non_trans_table= true;
       }
       else
       {
@@ -700,7 +698,7 @@ void multi_delete::abort()
     {
       thd->binlog_query(THD::ROW_QUERY_TYPE,
                         thd->query, thd->query_length,
-                        transactional_tables, FALSE);
+                        transactional_tables, false);
     }
     thd->transaction.all.modified_non_trans_table= true;
   }
@@ -767,7 +765,7 @@ int multi_delete::do_deletes()
       }
     }
     if (last_deleted != deleted && !table->file->has_transactions())
-      thd->transaction.stmt.modified_non_trans_table= TRUE;
+      thd->transaction.stmt.modified_non_trans_table= true;
     end_read_record(&info);
     if (thd->killed && !local_error)
       local_error= 1;
@@ -807,17 +805,17 @@ bool multi_delete::send_eof()
         thd->clear_error();
       if (thd->binlog_query(THD::ROW_QUERY_TYPE,
                             thd->query, thd->query_length,
-                            transactional_tables, FALSE, killed_status) &&
+                            transactional_tables, false, killed_status) &&
           !normal_tables)
       {
 	local_error=1;  // Log write failed: roll back the SQL statement
       }
     }
     if (thd->transaction.stmt.modified_non_trans_table)
-      thd->transaction.all.modified_non_trans_table= TRUE;
+      thd->transaction.all.modified_non_trans_table= true;
   }
   if (local_error != 0)
-    error_handled= TRUE; // to force early leave from ::send_error()
+    error_handled= true; // to force early leave from ::send_error()
 
   if (!local_error)
   {
@@ -895,7 +893,7 @@ bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
     {
       my_error(ER_NO_SUCH_TABLE, MYF(0),
                table_list->db, table_list->table_name);
-      return(TRUE);
+      return(true);
     }
 
     if (!ha_check_storage_engine_flag(ha_resolve_by_legacy_type(thd, table_type),
@@ -903,7 +901,7 @@ bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
       goto trunc_by_del;
 
     if (lock_and_wait_for_table_name(thd, table_list))
-      return(TRUE);
+      return(true);
   }
 
   // Remove the .frm extension AIX 5.2 64-bit compiler bug (BUG#16155): this
@@ -924,7 +922,7 @@ end:
         TRUNCATE must always be statement-based binlogged (not row-based) so
         we don't test current_stmt_binlog_row_based.
       */
-      write_bin_log(thd, TRUE, thd->query, thd->query_length);
+      write_bin_log(thd, true, thd->query, thd->query_length);
       my_ok(thd);		// This should return record count
     }
     VOID(pthread_mutex_lock(&LOCK_open));
@@ -941,18 +939,18 @@ end:
 
 trunc_by_del:
   /* Probably InnoDB table */
-  ulonglong save_options= thd->options;
+  uint64_t save_options= thd->options;
   table_list->lock_type= TL_WRITE;
   thd->options&= ~(OPTION_BEGIN | OPTION_NOT_AUTOCOMMIT);
-  ha_enable_transaction(thd, FALSE);
+  ha_enable_transaction(thd, false);
   mysql_init_select(thd->lex);
   bool save_binlog_row_based= thd->current_stmt_binlog_row_based;
   thd->clear_current_stmt_binlog_row_based();
   error= mysql_delete(thd, table_list, (COND*) 0, (SQL_LIST*) 0,
-                      HA_POS_ERROR, 0LL, TRUE);
-  ha_enable_transaction(thd, TRUE);
+                      HA_POS_ERROR, 0LL, true);
+  ha_enable_transaction(thd, true);
   /*
-    Safety, in case the engine ignored ha_enable_transaction(FALSE)
+    Safety, in case the engine ignored ha_enable_transaction(false)
     above. Also clears thd->transaction.*.
   */
   error= ha_autocommit_or_rollback(thd, error);

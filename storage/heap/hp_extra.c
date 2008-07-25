@@ -28,8 +28,6 @@ static void heap_extra_keyflag(register HP_INFO *info,
 
 int heap_extra(register HP_INFO *info, enum ha_extra_function function)
 {
-  DBUG_ENTER("heap_extra");
-
   switch (function) {
   case HA_EXTRA_RESET_STATE:
     heap_reset(info);
@@ -46,7 +44,7 @@ int heap_extra(register HP_INFO *info, enum ha_extra_function function)
   default:
     break;
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* heap_extra */
 
 

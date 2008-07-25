@@ -29,13 +29,10 @@
 
 int mi_rsame_with_pos(MI_INFO *info, uchar *record, int inx, my_off_t filepos)
 {
-  DBUG_ENTER("mi_rsame_with_pos");
-  DBUG_PRINT("enter",("index: %d  filepos: %ld", inx, (long) filepos));
-
   if (inx < -1 ||
       (inx >= 0 && ! mi_is_key_active(info->s->state.key_map, inx)))
   {
-    DBUG_RETURN(my_errno=HA_ERR_WRONG_INDEX);
+    return(my_errno=HA_ERR_WRONG_INDEX);
   }
 
   info->update&= (HA_STATE_CHANGED | HA_STATE_ROW_CHANGED);
@@ -43,7 +40,7 @@ int mi_rsame_with_pos(MI_INFO *info, uchar *record, int inx, my_off_t filepos)
   {
     if (my_errno == HA_ERR_RECORD_DELETED)
       my_errno=HA_ERR_KEY_NOT_FOUND;
-    DBUG_RETURN(my_errno);
+    return(my_errno);
   }
   info->lastpos=filepos;
   info->lastinx=inx;
@@ -53,5 +50,5 @@ int mi_rsame_with_pos(MI_INFO *info, uchar *record, int inx, my_off_t filepos)
 				      info->lastpos);
     info->update|=HA_STATE_KEY_CHANGED;		/* Don't use indexposition */
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* mi_rsame_pos */

@@ -19,7 +19,7 @@
 typedef enum
 {TRUNCATE=0, HALF_EVEN, HALF_UP, CEILING, FLOOR}
   decimal_round_mode;
-typedef int32 decimal_digit_t;
+typedef int32_t decimal_digit_t;
 
 typedef struct st_decimal_t {
   int    intg, frac, len;
@@ -32,10 +32,10 @@ int internal_str2dec(const char *from, decimal_t *to, char **end,
 int decimal2string(decimal_t *from, char *to, int *to_len,
                    int fixed_precision, int fixed_decimals,
                    char filler);
-int decimal2ulonglong(decimal_t *from, ulonglong *to);
-int ulonglong2decimal(ulonglong from, decimal_t *to);
-int decimal2longlong(decimal_t *from, longlong *to);
-int longlong2decimal(longlong from, decimal_t *to);
+int decimal2uint64_t(decimal_t *from, uint64_t *to);
+int uint64_t2decimal(uint64_t from, decimal_t *to);
+int decimal2int64_t(decimal_t *from, int64_t *to);
+int int64_t2decimal(int64_t from, decimal_t *to);
 int decimal2double(decimal_t *from, double *to);
 int double2decimal(double from, decimal_t *to);
 int decimal_actual_fraction(decimal_t *from);

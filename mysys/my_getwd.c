@@ -42,9 +42,6 @@
 int my_getwd(char * buf, size_t size, myf MyFlags)
 {
   char * pos;
-  DBUG_ENTER("my_getwd");
-  DBUG_PRINT("my",("buf: 0x%lx  size: %u  MyFlags %d",
-                   (long) buf, (uint) size, MyFlags));
 
   if (curr_dir[0])				/* Current pos is saved here */
     VOID(strmake(buf,&curr_dir[0],size-1));
@@ -81,7 +78,7 @@ int my_getwd(char * buf, size_t size, myf MyFlags)
     }
     (void) strmake(&curr_dir[0],buf, (size_t) (FN_REFLEN-1));
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* my_getwd */
 
 
@@ -95,8 +92,6 @@ int my_setwd(const char *dir, myf MyFlags)
 #if defined(VMS)
   char buff[FN_REFLEN];
 #endif
-  DBUG_ENTER("my_setwd");
-  DBUG_PRINT("my",("dir: '%s'  MyFlags %d", dir, MyFlags));
 
   start=(char *) dir;
   if (! dir[0] || (dir[0] == FN_LIBCHAR && dir[1] == 0))
@@ -134,7 +129,7 @@ int my_setwd(const char *dir, myf MyFlags)
     else
       curr_dir[0]='\0';				/* Don't save name */
   }
-  DBUG_RETURN(res);
+  return(res);
 } /* my_setwd */
 
 
@@ -147,11 +142,11 @@ int test_if_hard_path(register const char *dir_name)
   if (dir_name[0] == FN_HOMELIB && dir_name[1] == FN_LIBCHAR)
     return (home_dir != NullS && test_if_hard_path(home_dir));
   if (dir_name[0] == FN_LIBCHAR)
-    return (TRUE);
+    return (true);
 #ifdef FN_DEVCHAR
   return (strchr(dir_name,FN_DEVCHAR) != 0);
 #else
-  return FALSE;
+  return false;
 #endif
 } /* test_if_hard_path */
 
@@ -164,11 +159,11 @@ int test_if_hard_path(register const char *dir_name)
     name                The name to test.
 
   RETURN
-    TRUE        name contains a path.
-    FALSE       name does not contain a path.
+    true        name contains a path.
+    false       name does not contain a path.
 */
 
-my_bool has_path(const char *name)
+bool has_path(const char *name)
 {
   return test(strchr(name, FN_LIBCHAR)) 
 #if FN_LIBCHAR != '/'

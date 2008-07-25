@@ -803,8 +803,6 @@ extern void make_password_from_salt(char * to, unsigned char const * hash_stage2
 extern void make_password_from_salt_323(char * to, unsigned long int const * salt);
 # 450 "mysql_com.h"
 extern void make_scrambled_password(char * to, char const * password);
-# 443 "mysql_com.h"
-extern void make_scrambled_password_323(char * to, char const * password);
 # 33 "typelib.h"
 extern void make_type(char * to, unsigned int, TYPELIB * typelib);
 # 377 "mysql_com.h"
@@ -839,8 +837,6 @@ extern void mysql_close(MYSQL * sock);
 extern my_bool mysql_commit(MYSQL * mysql);
 # 441 "mysql.h"
 extern void mysql_data_seek(MYSQL_RES * result, my_ulonglong);
-# 459 "mysql.h"
-extern void mysql_debug(char const * debug);
 # 420 "mysql.h"
 extern int mysql_dump_debug_info(MYSQL * mysql);
 # 462 "mysql.h"

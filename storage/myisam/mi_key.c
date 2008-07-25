@@ -54,7 +54,6 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
   uchar *start;
   register HA_KEYSEG *keyseg;
   my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
-  DBUG_ENTER("_mi_make_key");
 
   start=key;
   for (keyseg=info->s->keyinfo[keynr].seg ; keyseg->type ;keyseg++)
@@ -175,12 +174,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
     key+= length;
   }
   _mi_dpointer(info,key,filepos);
-  DBUG_PRINT("exit",("keynr: %d",keynr));
-  DBUG_DUMP("key",(uchar*) start,(uint) (key-start)+keyseg->length);
-  DBUG_EXECUTE("key",
-	       _mi_print_key(DBUG_FILE,info->s->keyinfo[keynr].seg,start,
-			     (uint) (key-start)););
-  DBUG_RETURN((uint) (key-start));		/* Return keylength */
+  return((uint) (key-start));		/* Return keylength */
 } /* _mi_make_key */
 
 
@@ -208,10 +202,9 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
   uchar *start_key=key;
   HA_KEYSEG *keyseg;
   my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
-  DBUG_ENTER("_mi_pack_key");
 
   /* only key prefixes are supported */
-  DBUG_ASSERT(((keypart_map+1) & keypart_map) == 0);
+  assert(((keypart_map+1) & keypart_map) == 0);
 
   for (keyseg= info->s->keyinfo[keynr].seg ; keyseg->type && keypart_map;
        old+= keyseg->length, keyseg++)
@@ -282,7 +275,7 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
   if (last_used_keyseg)
     *last_used_keyseg= keyseg;
 
-  DBUG_RETURN((uint) (key-start_key));
+  return((uint) (key-start_key));
 } /* _mi_pack_key */
 
 
@@ -313,7 +306,6 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
   uchar *pos,*key_end;
   register HA_KEYSEG *keyseg;
   uchar *blob_ptr;
-  DBUG_ENTER("_mi_put_key_in_record");
 
   blob_ptr= (uchar*) info->lastkey2;             /* Place to put blob parts */
   key=(uchar*) info->lastkey;                    /* KEy that was read */
@@ -437,10 +429,10 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
       key+= keyseg->length;
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 
 err:
-  DBUG_RETURN(1);				/* Crashed row */
+  return(1);				/* Crashed row */
 } /* _mi_put_key_in_record */
 
 
@@ -510,44 +502,44 @@ int mi_check_index_cond(register MI_INFO *info, uint keynr, uchar *record)
     less than zero.
 */
 
-ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
+uint64_t retrieve_auto_increment(MI_INFO *info,const uchar *record)
 {
-  ulonglong value= 0;			/* Store unsigned values here */
-  longlong s_value= 0;			/* Store signed values here */
+  uint64_t value= 0;			/* Store unsigned values here */
+  int64_t s_value= 0;			/* Store signed values here */
   HA_KEYSEG *keyseg= info->s->keyinfo[info->s->base.auto_key-1].seg;
   const uchar *key= (uchar*) record + keyseg->start;
 
   switch (keyseg->type) {
   case HA_KEYTYPE_INT8:
-    s_value= (longlong) *(char*)key;
+    s_value= (int64_t) *(char*)key;
     break;
   case HA_KEYTYPE_BINARY:
-    value=(ulonglong)  *(uchar*) key;
+    value=(uint64_t)  *(uchar*) key;
     break;
   case HA_KEYTYPE_SHORT_INT:
-    s_value= (longlong) sint2korr(key);
+    s_value= (int64_t) sint2korr(key);
     break;
   case HA_KEYTYPE_USHORT_INT:
-    value=(ulonglong) uint2korr(key);
+    value=(uint64_t) uint2korr(key);
     break;
   case HA_KEYTYPE_LONG_INT:
-    s_value= (longlong) sint4korr(key);
+    s_value= (int64_t) sint4korr(key);
     break;
   case HA_KEYTYPE_ULONG_INT:
-    value=(ulonglong) uint4korr(key);
+    value=(uint64_t) uint4korr(key);
     break;
   case HA_KEYTYPE_INT24:
-    s_value= (longlong) sint3korr(key);
+    s_value= (int64_t) sint3korr(key);
     break;
   case HA_KEYTYPE_UINT24:
-    value=(ulonglong) uint3korr(key);
+    value=(uint64_t) uint3korr(key);
     break;
   case HA_KEYTYPE_FLOAT:                        /* This shouldn't be used */
   {
     float f_1;
     float4get(f_1,key);
     /* Ignore negative values */
-    value = (f_1 < (float) 0.0) ? 0 : (ulonglong) f_1;
+    value = (f_1 < (float) 0.0) ? 0 : (uint64_t) f_1;
     break;
   }
   case HA_KEYTYPE_DOUBLE:                       /* This shouldn't be used */
@@ -555,7 +547,7 @@ ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
     double f_1;
     float8get(f_1,key);
     /* Ignore negative values */
-    value = (f_1 < 0.0) ? 0 : (ulonglong) f_1;
+    value = (f_1 < 0.0) ? 0 : (uint64_t) f_1;
     break;
   }
   case HA_KEYTYPE_LONGLONG:
@@ -565,7 +557,7 @@ ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
     value= uint8korr(key);
     break;
   default:
-    DBUG_ASSERT(0);
+    assert(0);
     value=0;                                    /* Error */
     break;
   }
@@ -575,5 +567,5 @@ ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record)
     and if s_value == 0 then value will contain either s_value or the
     correct value.
   */
-  return (s_value > 0) ? (ulonglong) s_value : value;
+  return (s_value > 0) ? (uint64_t) s_value : value;
 }

@@ -29,9 +29,7 @@
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
-void net_send_error_packet(THD *thd, uint sql_errno, const char *err);
-void net_send_ok(THD *, uint, uint, ha_rows, ulonglong, const char *);
-void net_send_eof(THD *thd, uint server_status, uint total_warn_count);
+static void net_send_error_packet(THD *thd, uint sql_errno, const char *err);
 static void write_eof_packet(THD *thd, NET *net,
                              uint server_status, uint total_warn_count);
 
@@ -162,10 +160,10 @@ void net_send_error(THD *thd, uint sql_errno, const char *err)
   @param message	   Message to send to the client (Used by mysql_status)
 */
 
-void
+static void
 net_send_ok(THD *thd,
             uint server_status, uint total_warn_count,
-            ha_rows affected_rows, ulonglong id, const char *message)
+            ha_rows affected_rows, uint64_t id, const char *message)
 {
   NET *net= &thd->net;
   uchar buff[MYSQL_ERRMSG_SIZE+10],*pos;
@@ -226,7 +224,7 @@ static uchar eof_buff[1]= { (uchar) 254 };      /* Marker for end of fields */
                     like in send_fields().
 */    
 
-void
+static void
 net_send_eof(THD *thd, uint server_status, uint total_warn_count)
 {
   NET *net= &thd->net;
@@ -315,7 +313,7 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
   uint is used as agrument type because of MySQL type conventions:
   - uint for 0..65536
   - ulong for 0..4294967296
-  - ulonglong for bigger numbers.
+  - uint64_t for bigger numbers.
 */
 
 static uchar *net_store_length_fast(uchar *packet, uint length)
@@ -435,7 +433,7 @@ uchar *net_store_data(uchar *to, const uchar *from, size_t length)
   return to+length;
 }
 
-uchar *net_store_data(uchar *to,int32 from)
+uchar *net_store_data(uchar *to,int32_t from)
 {
   char buff[20];
   uint length=(uint) (int10_to_str(from,buff,10)-buff);
@@ -444,10 +442,10 @@ uchar *net_store_data(uchar *to,int32 from)
   return to+length;
 }
 
-uchar *net_store_data(uchar *to,longlong from)
+uchar *net_store_data(uchar *to,int64_t from)
 {
   char buff[22];
-  uint length=(uint) (longlong10_to_str(from,buff,10)-buff);
+  uint length=(uint) (int64_t10_to_str(from,buff,10)-buff);
   to=net_store_length_fast(to,length);
   memcpy(to,buff,length);
   return to+length;
@@ -657,7 +655,7 @@ bool Protocol::store(I_List<i_string>* str_list)
 {
   char buf[256];
   String tmp(buf, sizeof(buf), &my_charset_bin);
-  uint32 len;
+  uint32_t len;
   I_List_iterator<i_string> it(*str_list);
   i_string* s;
 
@@ -730,7 +728,7 @@ bool Protocol_text::store(const char *from, size_t length,
 }
 
 
-bool Protocol_text::store_tiny(longlong from)
+bool Protocol_text::store_tiny(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -738,7 +736,7 @@ bool Protocol_text::store_tiny(longlong from)
 }
 
 
-bool Protocol_text::store_short(longlong from)
+bool Protocol_text::store_short(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -747,7 +745,7 @@ bool Protocol_text::store_short(longlong from)
 }
 
 
-bool Protocol_text::store_long(longlong from)
+bool Protocol_text::store_long(int64_t from)
 {
   char buff[20];
   return net_store_data((uchar*) buff,
@@ -756,11 +754,11 @@ bool Protocol_text::store_long(longlong from)
 }
 
 
-bool Protocol_text::store_longlong(longlong from, bool unsigned_flag)
+bool Protocol_text::store_int64_t(int64_t from, bool unsigned_flag)
 {
   char buff[22];
   return net_store_data((uchar*) buff,
-			(size_t) (longlong10_to_str(from,buff,
+			(size_t) (int64_t10_to_str(from,buff,
                                                     unsigned_flag ? 10 : -10)-
                                   buff));
 }
@@ -775,14 +773,14 @@ bool Protocol_text::store_decimal(const my_decimal *d)
 }
 
 
-bool Protocol_text::store(float from, uint32 decimals, String *buffer)
+bool Protocol_text::store(float from, uint32_t decimals, String *buffer)
 {
   buffer->set_real((double) from, decimals, thd->charset());
   return net_store_data((uchar*) buffer->ptr(), buffer->length());
 }
 
 
-bool Protocol_text::store(double from, uint32 decimals, String *buffer)
+bool Protocol_text::store(double from, uint32_t decimals, String *buffer)
 {
   buffer->set_real(from, decimals, thd->charset());
   return net_store_data((uchar*) buffer->ptr(), buffer->length());
@@ -813,16 +811,16 @@ bool Protocol_text::store(MYSQL_TIME *tm)
 {
   char buff[40];
   uint length;
-  length= my_sprintf(buff,(buff, "%04d-%02d-%02d %02d:%02d:%02d",
+  length= sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
 			   (int) tm->year,
 			   (int) tm->month,
 			   (int) tm->day,
 			   (int) tm->hour,
 			   (int) tm->minute,
-			   (int) tm->second));
+			   (int) tm->second);
   if (tm->second_part)
-    length+= my_sprintf(buff+length,(buff+length, ".%06d",
-                                     (int)tm->second_part));
+    length+= sprintf(buff+length, ".%06d",
+                                     (int)tm->second_part);
   return net_store_data((uchar*) buff, length);
 }
 
@@ -846,13 +844,13 @@ bool Protocol_text::store_time(MYSQL_TIME *tm)
   char buff[40];
   uint length;
   uint day= (tm->year || tm->month) ? 0 : tm->day;
-  length= my_sprintf(buff,(buff, "%s%02ld:%02d:%02d",
+  length= sprintf(buff, "%s%02ld:%02d:%02d",
 			   tm->neg ? "-" : "",
 			   (long) day*24L+(long) tm->hour,
 			   (int) tm->minute,
-			   (int) tm->second));
+			   (int) tm->second);
   if (tm->second_part)
-    length+= my_sprintf(buff+length,(buff+length, ".%06d", (int)tm->second_part));
+    length+= sprintf(buff+length, ".%06d", (int)tm->second_part);
   return net_store_data((uchar*) buff, length);
 }
 

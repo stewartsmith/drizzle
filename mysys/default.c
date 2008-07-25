@@ -87,7 +87,7 @@ static int search_default_file_with_ext(Process_option_func func,
   @return void
 */
 
-static void (*init_default_directories)(void);
+static void init_default_directories(void);
 
 
 static char *remove_end_comment(char *ptr);
@@ -131,7 +131,6 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
 {
   const char **dirs, *forced_default_file, *forced_extra_defaults;
   int error= 0;
-  DBUG_ENTER("my_search_option_files");
 
   /* Check if we want to force the use a specific default file */
   *args_used+= get_defaults_options(*argc - *args_used, *argv + *args_used,
@@ -230,7 +229,7 @@ int my_search_option_files(const char *conf_file, int *argc, char ***argv,
     }
   }
 
-  DBUG_RETURN(error);
+  return(error);
 
 err:
   fprintf(stderr,"Fatal error in defaults handling. Program aborted\n");
@@ -372,13 +371,12 @@ int load_defaults(const char *conf_file, const char **groups,
 {
   DYNAMIC_ARRAY args;
   TYPELIB group;
-  my_bool found_print_defaults= 0;
+  bool found_print_defaults= 0;
   uint args_used= 0;
   int error= 0;
   MEM_ROOT alloc;
   char *ptr,**res;
   struct handle_option_ctx ctx;
-  DBUG_ENTER("load_defaults");
 
   init_default_directories();
   init_alloc_root(&alloc,512,0);
@@ -401,7 +399,7 @@ int load_defaults(const char *conf_file, const char **groups,
     (*argc)--;
     *argv=res;
     *(MEM_ROOT*) ptr= alloc;			/* Save alloc root for free */
-    DBUG_RETURN(0);
+    return(0);
   }
 
   group.count=0;
@@ -465,7 +463,7 @@ int load_defaults(const char *conf_file, const char **groups,
     puts("");
     exit(0);
   }
-  DBUG_RETURN(error);
+  return(error);
 
  err:
   fprintf(stderr,"Fatal error in defaults handling. Program aborted\n");
@@ -489,7 +487,7 @@ static int search_default_file(Process_option_func opt_handler,
 {
   char **ext;
   const char *empty_list[]= { "", 0 };
-  my_bool have_ext= fn_ext(config_file)[0] != 0;
+  bool have_ext= fn_ext(config_file)[0] != 0;
   const char **exts_to_use= have_ext ? empty_list : f_extensions;
 
   for (ext= (char**) exts_to_use; *ext; ext++)
@@ -590,7 +588,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   const int max_recursion_level= 10;
   FILE *fp;
   uint line=0;
-  my_bool found_group=0;
+  bool found_group=0;
   uint i;
   MY_DIR *search_dir;
   FILEINFO *search_file;
@@ -858,7 +856,7 @@ static char *remove_end_comment(char *ptr)
 void my_print_default_files(const char *conf_file)
 {
   const char *empty_list[]= { "", 0 };
-  my_bool have_ext= fn_ext(conf_file)[0] != 0;
+  bool have_ext= fn_ext(conf_file)[0] != 0;
   const char **exts_to_use= have_ext ? empty_list : f_extensions;
   char name[FN_REFLEN], **ext;
   const char **dirs;
@@ -929,19 +927,8 @@ void print_defaults(const char *conf_file, const char **groups)
   This extra complexity is to avoid declaring 'rc' if it won't be
   used.
 */
-#define ADD_DIRECTORY_INTERNAL(DIR) \
-  array_append_string_unique((DIR), default_directories, \
+#define ADD_DIRECTORY(DIR)  (void) array_append_string_unique((DIR), default_directories, \
                              array_elements(default_directories))
-#ifdef DBUG_OFF
-#  define ADD_DIRECTORY(DIR)  (void) ADD_DIRECTORY_INTERNAL(DIR)
-#else
-#define ADD_DIRECTORY(DIR) \
-  do { \
-    my_bool rc= ADD_DIRECTORY_INTERNAL(DIR); \
-    DBUG_ASSERT(rc == FALSE);                   /* Success */ \
-  } while (0)
-#endif
-
 
 #define ADD_COMMON_DIRECTORIES() \
   do { \
@@ -965,7 +952,7 @@ void print_defaults(const char *conf_file, const char **groups)
     6. "~/"
 */
 
-static void init_default_directories_unix(void)
+static void init_default_directories(void)
 {
   bzero((char *) default_directories, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
@@ -976,5 +963,3 @@ static void init_default_directories_unix(void)
   ADD_COMMON_DIRECTORIES();
   ADD_DIRECTORY("~/");
 }
-
-static void (*init_default_directories)(void)= init_default_directories_unix;

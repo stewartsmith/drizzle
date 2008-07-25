@@ -106,7 +106,7 @@ extern char _dig_vec_lower[];
 	/* Prototypes for string functions */
 
 #if !defined(bfill) && !defined(HAVE_BFILL)
-extern	void bfill(uchar *dst,size_t len,pchar fill);
+extern	void bfill(uchar *dst,size_t len,char fill);
 #endif
 
 #if !defined(bzero) && !defined(HAVE_BZERO)
@@ -136,14 +136,12 @@ extern	void bmove(uuchar *dst, const uchar *src,size_t len);
 extern	void bmove_upp(uchar *dst,const uchar *src,size_t len);
 extern	void bchange(uchar *dst,size_t old_len,const uchar *src,
 		     size_t new_len,size_t tot_len);
-extern	void strappend(char *s,size_t len,pchar fill);
+extern	void strappend(char *s,size_t len,char fill);
 extern	char *strend(const char *s);
-extern  char *strcend(const char *, pchar);
+extern  char *strcend(const char *, char);
 extern	char *strfield(char *src,int fields,int chars,int blanks,
 			   int tabch);
-extern	char *strfill(char * s,size_t len,pchar fill);
-extern	size_t strinstr(const char *str,const char *search);
-extern  size_t r_strinstr(const char *str, size_t from, const char *search);
+extern	char *strfill(char * s,size_t len,char fill);
 extern	char *strkey(char *dst,char *head,char *tail,char *flags);
 extern	char *strmake(char *dst,const char *src,size_t length);
 #ifndef strmake_overlapp
@@ -167,8 +165,8 @@ extern	char *strxncpy _VARARGS((char *dst,size_t len, const char *src, ...));
 
 #ifdef WANT_STRING_PROTOTYPES
 extern char *strcat(char *, const char *);
-extern char *strchr(const char *, pchar);
-extern char *strrchr(const char *, pchar);
+extern char *strchr(const char *, char);
+extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
 extern int strcmp(const char *, const char *);
 #ifndef __GNUC__
@@ -228,8 +226,8 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 #define MY_GCVT_MAX_FIELD_WIDTH (DBL_DIG + 4 + max(5, MAX_DECPT_FOR_F_FORMAT))
   
 
-extern char *llstr(longlong value,char *buff);
-extern char *ullstr(longlong value,char *buff);
+extern char *llstr(int64_t value,char *buff);
+extern char *ullstr(int64_t value,char *buff);
 #ifndef HAVE_STRTOUL
 extern long strtol(const char *str, char **ptr, int base);
 extern ulong strtoul(const char *str, char **ptr, int base);
@@ -239,10 +237,10 @@ extern char *int2str(long val, char *dst, int radix, int upcase);
 extern char *int10_to_str(long val,char *dst,int radix);
 extern char *str2int(const char *src,int radix,long lower,long upper,
 			 long *val);
-longlong my_strtoll10(const char *nptr, char **endptr, int *error);
+int64_t my_strtoll10(const char *nptr, char **endptr, int *error);
 #if SIZEOF_LONG == SIZEOF_LONG_LONG
-#define longlong2str(A,B,C) int2str((A),(B),(C),1)
-#define longlong10_to_str(A,B,C) int10_to_str((A),(B),(C))
+#define int64_t2str(A,B,C) int2str((A),(B),(C),1)
+#define int64_t10_to_str(A,B,C) int10_to_str((A),(B),(C))
 #undef strtoll
 #define strtoll(A,B,C) strtol((A),(B),(C))
 #define strtoull(A,B,C) strtoul((A),(B),(C))
@@ -253,11 +251,11 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error);
 #define HAVE_STRTOLL
 #endif
 #else
-extern char *longlong2str(longlong val,char *dst,int radix);
-extern char *longlong10_to_str(longlong val,char *dst,int radix);
+extern char *int64_t2str(int64_t val,char *dst,int radix);
+extern char *int64_t10_to_str(int64_t val,char *dst,int radix);
 #if (!defined(HAVE_STRTOULL) || defined(NO_STRTOLL_PROTO))
-extern longlong strtoll(const char *str, char **ptr, int base);
-extern ulonglong strtoull(const char *str, char **ptr, int base);
+extern int64_t strtoll(const char *str, char **ptr, int base);
+extern uint64_t strtoull(const char *str, char **ptr, int base);
 #endif
 #endif
 
@@ -333,12 +331,12 @@ static inline const uchar *skip_trailing_space(const uchar *ptr,size_t len)
 
   if (len > 20)
   {
-    const uchar *end_words= (const uchar *)(intptr)
-      (((ulonglong)(intptr)end) / SIZEOF_INT * SIZEOF_INT);
-    const uchar *start_words= (const uchar *)(intptr)
-       ((((ulonglong)(intptr)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
+    const uchar *end_words= (const uchar *)(intptr_t)
+      (((uint64_t)(intptr_t)end) / SIZEOF_INT * SIZEOF_INT);
+    const uchar *start_words= (const uchar *)(intptr_t)
+       ((((uint64_t)(intptr_t)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
 
-    DBUG_ASSERT(((ulonglong)(intptr)ptr) >= SIZEOF_INT);
+    assert(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);
     if (end_words > ptr)
     {
       while (end > end_words && end[-1] == 0x20)

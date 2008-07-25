@@ -46,9 +46,6 @@
 void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
 		     size_t pre_alloc_size __attribute__((unused)))
 {
-  DBUG_ENTER("init_alloc_root");
-  DBUG_PRINT("enter",("root: 0x%lx", (long) mem_root));
-
   mem_root->free= mem_root->used= mem_root->pre_alloc= 0;
   mem_root->min_malloc= 32;
   mem_root->block_size= block_size - ALLOC_ROOT_MIN_BLOCK_SIZE;
@@ -69,7 +66,7 @@ void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
     }
   }
 #endif
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -93,7 +90,7 @@ void init_alloc_root(MEM_ROOT *mem_root, size_t block_size,
 void reset_root_defaults(MEM_ROOT *mem_root, size_t block_size,
                          size_t pre_alloc_size __attribute__((unused)))
 {
-  DBUG_ASSERT(alloc_root_inited(mem_root));
+  assert(alloc_root_inited(mem_root));
 
   mem_root->block_size= block_size - ALLOC_ROOT_MIN_BLOCK_SIZE;
 #if !(defined(HAVE_purify) && defined(EXTRA_DEBUG))
@@ -149,32 +146,26 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
 {
 #if defined(HAVE_purify) && defined(EXTRA_DEBUG)
   register USED_MEM *next;
-  DBUG_ENTER("alloc_root");
-  DBUG_PRINT("enter",("root: 0x%lx", (long) mem_root));
 
-  DBUG_ASSERT(alloc_root_inited(mem_root));
+  assert(alloc_root_inited(mem_root));
 
   length+=ALIGN_SIZE(sizeof(USED_MEM));
   if (!(next = (USED_MEM*) my_malloc(length,MYF(MY_WME | ME_FATALERROR))))
   {
     if (mem_root->error_handler)
       (*mem_root->error_handler)();
-    DBUG_RETURN((uchar*) 0);			/* purecov: inspected */
+    return((uchar*) 0);			/* purecov: inspected */
   }
   next->next= mem_root->used;
   next->size= length;
   mem_root->used= next;
-  DBUG_PRINT("exit",("ptr: 0x%lx", (long) (((char*) next)+
-                                           ALIGN_SIZE(sizeof(USED_MEM)))));
-  DBUG_RETURN((uchar*) (((char*) next)+ALIGN_SIZE(sizeof(USED_MEM))));
+  return((uchar*) (((char*) next)+ALIGN_SIZE(sizeof(USED_MEM))));
 #else
   size_t get_size, block_size;
   uchar* point;
   register USED_MEM *next= 0;
   register USED_MEM **prev;
-  DBUG_ENTER("alloc_root");
-  DBUG_PRINT("enter",("root: 0x%lx", (long) mem_root));
-  DBUG_ASSERT(alloc_root_inited(mem_root));
+  assert(alloc_root_inited(mem_root));
 
   length= ALIGN_SIZE(length);
   if ((*(prev= &mem_root->free)) != NULL)
@@ -202,7 +193,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     {
       if (mem_root->error_handler)
 	(*mem_root->error_handler)();
-      DBUG_RETURN((void*) 0);                      /* purecov: inspected */
+      return((void*) 0);                      /* purecov: inspected */
     }
     mem_root->block_num++;
     next->next= *prev;
@@ -220,8 +211,7 @@ void *alloc_root(MEM_ROOT *mem_root, size_t length)
     mem_root->used= next;
     mem_root->first_block_usage= 0;
   }
-  DBUG_PRINT("exit",("ptr: 0x%lx", (ulong) point));
-  DBUG_RETURN((void*) point);
+  return((void*) point);
 #endif
 }
 
@@ -250,7 +240,6 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
   va_list args;
   char **ptr, *start, *res;
   size_t tot_length, length;
-  DBUG_ENTER("multi_alloc_root");
 
   va_start(args, root);
   tot_length= 0;
@@ -262,7 +251,7 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
   va_end(args);
 
   if (!(start= (char*) alloc_root(root, tot_length)))
-    DBUG_RETURN(0);                            /* purecov: inspected */
+    return(0);                            /* purecov: inspected */
 
   va_start(args, root);
   res= start;
@@ -273,7 +262,7 @@ void *multi_alloc_root(MEM_ROOT *root, ...)
     res+= ALIGN_SIZE(length);
   }
   va_end(args);
-  DBUG_RETURN((void*) start);
+  return((void*) start);
 }
 
 #define TRASH_MEM(X) TRASH(((char*)(X) + ((X)->size-(X)->left)), (X)->left)
@@ -331,13 +320,11 @@ static inline void mark_blocks_free(MEM_ROOT* root)
 void free_root(MEM_ROOT *root, myf MyFlags)
 {
   register USED_MEM *next,*old;
-  DBUG_ENTER("free_root");
-  DBUG_PRINT("enter",("root: 0x%lx  flags: %u", (long) root, (uint) MyFlags));
 
   if (MyFlags & MY_MARK_BLOCKS_FREE)
   {
     mark_blocks_free(root);
-    DBUG_VOID_RETURN;
+    return;
   }
   if (!(MyFlags & MY_KEEP_PREALLOC))
     root->pre_alloc=0;
@@ -364,7 +351,7 @@ void free_root(MEM_ROOT *root, myf MyFlags)
   }
   root->block_num= 4;
   root->first_block_usage= 0;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /*

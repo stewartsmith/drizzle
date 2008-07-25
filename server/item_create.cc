@@ -1392,19 +1392,6 @@ protected:
 };
 
 
-class Create_func_uuid_short : public Create_func_arg0
-{
-public:
-  virtual Item *create(THD *thd);
-
-  static Create_func_uuid_short s_singleton;
-
-protected:
-  Create_func_uuid_short() {}
-  virtual ~Create_func_uuid_short() {}
-};
-
-
 class Create_func_version : public Create_func_arg0
 {
 public:
@@ -1487,7 +1474,6 @@ static bool has_named_parameters(List<Item> *params)
 }
 
 
-#ifdef HAVE_DLOPEN
 Create_udf_func Create_udf_func::s_singleton;
 
 Item*
@@ -1593,7 +1579,6 @@ Create_udf_func::create(THD *thd, udf_func *udf, List<Item> *item_list)
   }
   return func;
 }
-#endif
 
 
 Item*
@@ -1798,8 +1783,8 @@ Create_func_bin Create_func_bin::s_singleton;
 Item*
 Create_func_bin::create(THD *thd, Item *arg1)
 {
-  Item *i10= new (thd->mem_root) Item_int((int32) 10,2);
-  Item *i2= new (thd->mem_root) Item_int((int32) 2,1);
+  Item *i10= new (thd->mem_root) Item_int((int32_t) 10,2);
+  Item *i2= new (thd->mem_root) Item_int((int32_t) 2,1);
   return new (thd->mem_root) Item_func_conv(arg1, i10, i2);
 }
 
@@ -2614,8 +2599,8 @@ Create_func_oct Create_func_oct::s_singleton;
 Item*
 Create_func_oct::create(THD *thd, Item *arg1)
 {
-  Item *i10= new (thd->mem_root) Item_int((int32) 10,2);
-  Item *i8= new (thd->mem_root) Item_int((int32) 8,1);
+  Item *i10= new (thd->mem_root) Item_int((int32_t) 10,2);
+  Item *i8= new (thd->mem_root) Item_int((int32_t) 8,1);
   return new (thd->mem_root) Item_func_conv(arg1, i10, i8);
 }
 
@@ -2993,16 +2978,6 @@ Create_func_uuid::create(THD *thd)
 }
 
 
-Create_func_uuid_short Create_func_uuid_short::s_singleton;
-
-Item*
-Create_func_uuid_short::create(THD *thd)
-{
-  thd->lex->set_stmt_unsafe();
-  return new (thd->mem_root) Item_func_uuid_short();
-}
-
-
 Create_func_version Create_func_version::s_singleton;
 
 Item*
@@ -3190,7 +3165,6 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("UNIX_TIMESTAMP") }, BUILDER(Create_func_unix_timestamp)},
   { { C_STRING_WITH_LEN("UPPER") }, BUILDER(Create_func_ucase)},
   { { C_STRING_WITH_LEN("UUID") }, BUILDER(Create_func_uuid)},
-  { { C_STRING_WITH_LEN("UUID_SHORT") }, BUILDER(Create_func_uuid_short)},
   { { C_STRING_WITH_LEN("VERSION") }, BUILDER(Create_func_version)},
   { { C_STRING_WITH_LEN("WEEKDAY") }, BUILDER(Create_func_weekday)},
   { { C_STRING_WITH_LEN("WEEKOFYEAR") }, BUILDER(Create_func_weekofyear)},

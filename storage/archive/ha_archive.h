@@ -28,7 +28,7 @@
 
 typedef struct st_archive_record_buffer {
   uchar *buffer;
-  uint32 length;
+  uint32_t length;
 } archive_record_buffer;
 
 
@@ -149,7 +149,7 @@ public:
   bool is_crashed() const;
   int check(THD* thd, HA_CHECK_OPT* check_opt);
   bool check_and_repair(THD *thd);
-  uint32 max_row_length(const uchar *buf);
+  uint32_t max_row_length(const uchar *buf);
   bool fix_rec_buff(unsigned int length);
   int unpack_row(azio_stream *file_to_read, uchar *record);
   unsigned int pack_row(uchar *record);

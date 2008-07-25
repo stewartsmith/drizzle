@@ -197,9 +197,9 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
 	!(table->file->ha_table_flags() & HA_FAST_KEY_READ) &&
 	(table->db_stat & HA_READ_ONLY ||
 	 table->reginfo.lock_type <= TL_READ_NO_INSERT) &&
-	(ulonglong) table->s->reclength* (table->file->stats.records+
+	(uint64_t) table->s->reclength* (table->file->stats.records+
                                           table->file->stats.deleted) >
-	(ulonglong) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
+	(uint64_t) MIN_FILE_LENGTH_TO_USE_ROW_CACHE &&
 	info->io_cache->end_of_file/info->ref_length * table->s->reclength >
 	(my_off_t) MIN_ROWS_TO_USE_TABLE_CACHE &&
 	!table->s->blob_fields &&
@@ -515,7 +515,7 @@ static int rr_from_cache(READ_RECORD *info)
   register uint i;
   ulong length;
   my_off_t rest_of_file;
-  int16 error;
+  int16_t error;
   uchar *position,*ref_position,*record_pos;
   ulong record;
 
@@ -568,7 +568,7 @@ static int rr_from_cache(READ_RECORD *info)
       record=uint3korr(position);
       position+=3;
       record_pos=info->cache+record*info->reclength;
-      if ((error=(int16) info->file->rnd_pos(record_pos,info->ref_pos)))
+      if ((error=(int16_t) info->file->rnd_pos(record_pos,info->ref_pos)))
       {
 	record_pos[info->error_offset]=1;
 	shortstore(record_pos,error);

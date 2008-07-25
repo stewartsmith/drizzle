@@ -79,7 +79,7 @@ static uint get_thread_lib(void);
     1  error (Couldn't create THR_KEY_mysys)
 */
 
-my_bool my_thread_global_init(void)
+bool my_thread_global_init(void)
 {
   int pth_ret;
   thd_lib_detected= get_thread_lib();
@@ -168,7 +168,7 @@ my_bool my_thread_global_init(void)
 void my_thread_global_end(void)
 {
   struct timespec abstime;
-  my_bool all_threads_killed= 1;
+  bool all_threads_killed= 1;
 
   set_timespec(abstime, my_thread_end_wait_time);
   pthread_mutex_lock(&THR_LOCK_threads);
@@ -227,7 +227,7 @@ void my_thread_global_end(void)
 static my_thread_id thread_id= 0;
 
 /*
-  Allocate thread specific memory for the thread, used by mysys and dbug
+  Allocate thread specific memory for the thread, used by mysys
 
   SYNOPSIS
     my_thread_init()
@@ -246,10 +246,10 @@ static my_thread_id thread_id= 0;
     1  Fatal error; mysys/dbug functions can't be used
 */
 
-my_bool my_thread_init(void)
+bool my_thread_init(void)
 {
   struct st_my_thread_var *tmp;
-  my_bool error=0;
+  bool error=0;
 
 #ifdef EXTRA_DEBUG_THREADS
   fprintf(stderr,"my_thread_init(): thread_id: 0x%lx\n",
@@ -279,10 +279,6 @@ my_bool my_thread_init(void)
   tmp->id= ++thread_id;
   ++THR_thread_count;
   pthread_mutex_unlock(&THR_LOCK_threads);
-#ifndef DBUG_OFF
-  /* Generate unique name for thread */
-  (void) my_thread_name();
-#endif
 
 end:
   return error;
@@ -312,15 +308,6 @@ void my_thread_end(void)
 #endif  
   if (tmp && tmp->init)
   {
-#if !defined(DBUG_OFF)
-    /* tmp->dbug is allocated inside DBUG library */
-    if (tmp->dbug)
-    {
-      DBUG_POP();
-      free(tmp->dbug);
-      tmp->dbug=0;
-    }
-#endif
 #if !defined(__bsdi__) && !defined(__OpenBSD__)
  /* bsdi and openbsd 3.5 dumps core here */
     pthread_cond_destroy(&tmp->suspend);
@@ -336,10 +323,10 @@ void my_thread_end(void)
       Decrement counter for number of running threads. We are using this
       in my_thread_global_end() to wait until all threads have called
       my_thread_end and thus freed all memory they have allocated in
-      my_thread_init() and DBUG_xxxx
+      my_thread_init() 
     */
     pthread_mutex_lock(&THR_LOCK_threads);
-    DBUG_ASSERT(THR_thread_count != 0);
+    assert(THR_thread_count != 0);
     if (--THR_thread_count == 0)
       pthread_cond_signal(&THR_COND_threads);
    pthread_mutex_unlock(&THR_LOCK_threads);
@@ -373,29 +360,6 @@ my_thread_id my_thread_dbug_id()
 {
   return my_thread_var->id;
 }
-
-#ifdef DBUG_OFF
-const char *my_thread_name(void)
-{
-  return "no_name";
-}
-
-#else
-
-const char *my_thread_name(void)
-{
-  char name_buff[100];
-  struct st_my_thread_var *tmp=my_thread_var;
-  if (!tmp->name[0])
-  {
-    my_thread_id id= my_thread_dbug_id();
-    sprintf(name_buff,"T@%lu", (ulong) id);
-    strmake(tmp->name,name_buff,THREAD_NAME_SIZE);
-  }
-  return tmp->name;
-}
-#endif /* DBUG_OFF */
-
 
 static uint get_thread_lib(void)
 {

@@ -128,7 +128,7 @@ public:
     Needed to deal properly with cur_log getting closed and re-opened with
     a different log under our feet
   */
-  uint32 cur_log_old_open_count;
+  uint32_t cur_log_old_open_count;
   
   /*
     Let's call a group (of events) :
@@ -194,7 +194,7 @@ public:
     skipping one or more events in the master log that have caused
     errors, and have been manually applied by DBA already.
   */
-  volatile uint32 slave_skip_counter;
+  volatile uint32_t slave_skip_counter;
   volatile uint32_t abort_pos_wait;	/* Incremented on change master */
   volatile uint32_t slave_run_id;		/* Incremented on slave start */
   pthread_mutex_t log_space_lock;
@@ -285,8 +285,8 @@ public:
   void inc_group_relay_log_pos(uint64_t log_pos,
 			       bool skip_lock=0);
 
-  int32_t wait_for_pos(THD* thd, String* log_name, longlong log_pos, 
-		   longlong timeout);
+  int32_t wait_for_pos(THD* thd, String* log_name, int64_t log_pos, 
+		   int64_t timeout);
   void close_temporary_tables();
 
   /* Check if UNTIL condition is satisfied. See slave.cc for more. */
@@ -401,7 +401,7 @@ public:
   }
 
 private:
-  uint32 m_flags;
+  uint32_t m_flags;
 };
 
 

@@ -52,7 +52,7 @@ Hybrid_type_traits::val_decimal(Hybrid_type *val,
 
 
 String *
-Hybrid_type_traits::val_str(Hybrid_type *val, String *to, uint8 decimals) const
+Hybrid_type_traits::val_str(Hybrid_type *val, String *to, uint8_t decimals) const
 {
   to->set_real(val->real, decimals, &my_charset_bin);
   return to;
@@ -97,7 +97,7 @@ void Hybrid_type_traits_decimal::add(Hybrid_type *val, Field *f) const
   @todo
   what is '4' for scale?
 */
-void Hybrid_type_traits_decimal::div(Hybrid_type *val, ulonglong u) const
+void Hybrid_type_traits_decimal::div(Hybrid_type *val, uint64_t u) const
 {
   int2my_decimal(E_DEC_FATAL_ERROR, u, true, &val->dec_buf[2]);
   /* XXX: what is '4' for scale? */
@@ -109,10 +109,10 @@ void Hybrid_type_traits_decimal::div(Hybrid_type *val, ulonglong u) const
 }
 
 
-longlong
+int64_t
 Hybrid_type_traits_decimal::val_int(Hybrid_type *val, bool unsigned_flag) const
 {
-  longlong result;
+  int64_t result;
   my_decimal2int(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                  unsigned_flag, &result);
   return result;
@@ -130,7 +130,7 @@ Hybrid_type_traits_decimal::val_real(Hybrid_type *val) const
 
 String *
 Hybrid_type_traits_decimal::val_str(Hybrid_type *val, String *to,
-                                    uint8 decimals) const
+                                    uint8_t decimals) const
 {
   my_decimal_round(E_DEC_FATAL_ERROR, &val->dec_buf[val->used_dec_buf_no],
                    decimals, false, &val->dec_buf[2]);
@@ -165,7 +165,6 @@ Hybrid_type_traits_integer::fix_length_and_dec(Item *item,
 
 void item_init(void)
 {
-  uuid_short_init();
 }
 
 
@@ -210,7 +209,7 @@ String *Item::val_string_from_real(String *str)
 
 String *Item::val_string_from_int(String *str)
 {
-  longlong nr= val_int();
+  int64_t nr= val_int();
   if (null_value)
     return 0;
   str->set_int(nr, unsigned_flag, &my_charset_bin);
@@ -241,7 +240,7 @@ my_decimal *Item::val_decimal_from_real(my_decimal *decimal_value)
 
 my_decimal *Item::val_decimal_from_int(my_decimal *decimal_value)
 {
-  longlong nr= val_int();
+  int64_t nr= val_int();
   if (null_value)
     return 0;
   int2my_decimal(E_DEC_FATAL_ERROR, nr, unsigned_flag, decimal_value);
@@ -309,10 +308,10 @@ double Item::val_real_from_decimal()
 }
 
 
-longlong Item::val_int_from_decimal()
+int64_t Item::val_int_from_decimal()
 {
   /* Note that fix_fields may not be called for Item_avg_field items */
-  longlong result;
+  int64_t result;
   my_decimal value, *dec_val= val_decimal(&value);
   if (null_value)
     return 0;
@@ -899,12 +898,12 @@ bool Item::get_date(MYSQL_TIME *ltime,uint fuzzydate)
   }
   else
   {
-    longlong value= val_int();
+    int64_t value= val_int();
     int was_cut;
     if (number_to_datetime(value, ltime, fuzzydate, &was_cut) == -1LL)
     {
       char buff[22], *end;
-      end= longlong10_to_str(value, buff, -10);
+      end= int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                                    buff, (int) (end-buff), MYSQL_TIMESTAMP_NONE,
                                    NullS);
@@ -1344,7 +1343,7 @@ bool agg_item_charsets(DTCollation &coll, const char *fname,
   for (i= 0, arg= args; i < nargs; i++, arg+= item_sep)
   {
     Item* conv;
-    uint32 dummy_offset;
+    uint32_t dummy_offset;
     if (!String::needs_conversion(0, (*arg)->collation.collation,
                                   coll.collation,
                                   &dummy_offset))
@@ -1596,7 +1595,7 @@ double Item_field::val_real()
 }
 
 
-longlong Item_field::val_int()
+int64_t Item_field::val_int()
 {
   assert(fixed == 1);
   if ((null_value=field->is_null()))
@@ -1659,7 +1658,7 @@ double Item_field::val_result()
   return result_field->val_real();
 }
 
-longlong Item_field::val_int_result()
+int64_t Item_field::val_int_result()
 {
   if ((null_value=result_field->is_null()))
     return 0;
@@ -1762,15 +1761,15 @@ Item *Item_field::get_tmp_table_item(THD *thd)
   return new_item;
 }
 
-longlong Item_field::val_int_endpoint(bool left_endp __attribute__((__unused__)),
+int64_t Item_field::val_int_endpoint(bool left_endp __attribute__((__unused__)),
                                       bool *incl_endp __attribute__((__unused__)))
 {
-  longlong res= val_int();
-  return null_value? LONGLONG_MIN : res;
+  int64_t res= val_int();
+  return null_value? INT64_MIN : res;
 }
 
 /**
-  Create an item from a string we KNOW points to a valid longlong
+  Create an item from a string we KNOW points to a valid int64_t
   end \\0 terminated number string.
   This is always 'signed'. Unsigned values are created with Item_uint()
 */
@@ -1816,7 +1815,7 @@ Item_uint::Item_uint(const char *str_arg, uint length):
 }
 
 
-Item_uint::Item_uint(const char *str_arg, longlong i, uint length):
+Item_uint::Item_uint(const char *str_arg, int64_t i, uint length):
   Item_int(str_arg, i, length)
 {
   unsigned_flag= 1;
@@ -1827,7 +1826,7 @@ String *Item_uint::val_str(String *str)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
-  str->set((ulonglong) value, &my_charset_bin);
+  str->set((uint64_t) value, &my_charset_bin);
   return str;
 }
 
@@ -1836,7 +1835,7 @@ void Item_uint::print(String *str,
                       enum_query_type query_type __attribute__((__unused__)))
 {
   // latin1 is good enough for numbers
-  str_value.set((ulonglong) value, default_charset());
+  str_value.set((uint64_t) value, default_charset());
   str->append(str_value);
 }
 
@@ -1846,16 +1845,16 @@ Item_decimal::Item_decimal(const char *str_arg, uint length,
 {
   str2my_decimal(E_DEC_FATAL_ERROR, str_arg, length, charset, &decimal_value);
   name= (char*) str_arg;
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
 }
 
-Item_decimal::Item_decimal(longlong val, bool unsig)
+Item_decimal::Item_decimal(int64_t val, bool unsig)
 {
   int2my_decimal(E_DEC_FATAL_ERROR, val, unsig, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -1867,7 +1866,7 @@ Item_decimal::Item_decimal(double val,
                            int scale __attribute__((__unused__)))
 {
   double2my_decimal(E_DEC_FATAL_ERROR, val, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -1879,7 +1878,7 @@ Item_decimal::Item_decimal(const char *str, const my_decimal *val_arg,
 {
   my_decimal2decimal(val_arg, &decimal_value);
   name= (char*) str;
-  decimals= (uint8) decimal_par;
+  decimals= (uint8_t) decimal_par;
   max_length= length;
   fixed= 1;
 }
@@ -1888,7 +1887,7 @@ Item_decimal::Item_decimal(const char *str, const my_decimal *val_arg,
 Item_decimal::Item_decimal(my_decimal *value_par)
 {
   my_decimal2decimal(value_par, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -1899,16 +1898,16 @@ Item_decimal::Item_decimal(const uchar *bin, int precision, int scale)
 {
   binary2my_decimal(E_DEC_FATAL_ERROR, bin,
                     &decimal_value, precision, scale);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   fixed= 1;
   max_length= my_decimal_precision_to_length(precision, decimals,
                                              unsigned_flag);
 }
 
 
-longlong Item_decimal::val_int()
+int64_t Item_decimal::val_int()
 {
-  longlong result;
+  int64_t result;
   my_decimal2int(E_DEC_FATAL_ERROR, &decimal_value, unsigned_flag, &result);
   return result;
 }
@@ -1957,7 +1956,7 @@ bool Item_decimal::eq(const Item *item,
 void Item_decimal::set_decimal_value(my_decimal *value_par)
 {
   my_decimal2decimal(value_par, &decimal_value);
-  decimals= (uint8) decimal_value.frac;
+  decimals= (uint8_t) decimal_value.frac;
   unsigned_flag= !decimal_value.sign();
   max_length= my_decimal_precision_to_length(decimal_value.intg + decimals,
                                              decimals, unsigned_flag);
@@ -2049,11 +2048,11 @@ double Item_string::val_real()
   @todo
   Give error if we wanted a signed integer and we got an unsigned one
 */
-longlong Item_string::val_int()
+int64_t Item_string::val_int()
 {
   assert(fixed == 1);
   int err;
-  longlong tmp;
+  int64_t tmp;
   char *end= (char*) str_value.ptr()+ str_value.length();
   char *org_end= end;
   CHARSET_INFO *cs= str_value.charset();
@@ -2093,7 +2092,7 @@ double Item_null::val_real()
   null_value=1;
   return 0.0;
 }
-longlong Item_null::val_int()
+int64_t Item_null::val_int()
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
@@ -2175,9 +2174,9 @@ void Item_param::set_null()
   return;
 }
 
-void Item_param::set_int(longlong i, uint32 max_length_arg)
+void Item_param::set_int(int64_t i, uint32_t max_length_arg)
 {
-  value.integer= (longlong) i;
+  value.integer= (int64_t) i;
   state= INT_VALUE;
   max_length= max_length_arg;
   decimals= 0;
@@ -2237,7 +2236,7 @@ void Item_param::set_decimal(const char *str, ulong length)
     MAX_DATE_STRING_REP_LENGTH buffer.
 */
 void Item_param::set_time(MYSQL_TIME *tm, timestamp_type time_type,
-                          uint32 max_length_arg)
+                          uint32_t max_length_arg)
 { 
   value.time= *tm;
   value.time.time_type= time_type;
@@ -2332,14 +2331,14 @@ bool Item_param::set_from_user_var(THD *thd, const user_var_entry *entry)
       item_type= Item::REAL_ITEM;
       break;
     case INT_RESULT:
-      set_int(*(longlong*)entry->value, MY_INT64_NUM_DECIMAL_DIGITS);
+      set_int(*(int64_t*)entry->value, MY_INT64_NUM_DECIMAL_DIGITS);
       item_type= Item::INT_ITEM;
       break;
     case STRING_RESULT:
     {
       CHARSET_INFO *fromcs= entry->collation.collation;
       CHARSET_INFO *tocs= thd->variables.collation_connection;
-      uint32 dummy_offset;
+      uint32_t dummy_offset;
 
       value.cs_info.character_set_of_placeholder= 
         value.cs_info.character_set_client= fromcs;
@@ -2501,7 +2500,7 @@ double Item_param::val_real()
       This works for example when user says SELECT ?+0.0 and supplies
       time value for the placeholder.
     */
-    return ulonglong2double(TIME_to_ulonglong(&value.time));
+    return uint64_t2double(TIME_to_uint64_t(&value.time));
   case NULL_VALUE:
     return 0.0;
   default:
@@ -2511,16 +2510,16 @@ double Item_param::val_real()
 } 
 
 
-longlong Item_param::val_int() 
+int64_t Item_param::val_int() 
 { 
   switch (state) {
   case REAL_VALUE:
-    return (longlong) rint(value.real);
+    return (int64_t) rint(value.real);
   case INT_VALUE:
     return value.integer;
   case DECIMAL_VALUE:
   {
-    longlong i;
+    int64_t i;
     my_decimal2int(E_DEC_FATAL_ERROR, &decimal_value, unsigned_flag, &i);
     return i;
   }
@@ -2532,7 +2531,7 @@ longlong Item_param::val_int()
                          str_value.length(), 10, (char**) 0, &dummy_err);
     }
   case TIME_VALUE:
-    return (longlong) TIME_to_ulonglong(&value.time);
+    return (int64_t) TIME_to_uint64_t(&value.time);
   case NULL_VALUE:
     return 0; 
   default:
@@ -2559,7 +2558,7 @@ my_decimal *Item_param::val_decimal(my_decimal *dec)
     return dec;
   case TIME_VALUE:
   {
-    longlong i= (longlong) TIME_to_ulonglong(&value.time);
+    int64_t i= (int64_t) TIME_to_uint64_t(&value.time);
     int2my_decimal(E_DEC_FATAL_ERROR, i, 0, dec);
     return dec;
   }
@@ -2647,7 +2646,7 @@ const String *Item_param::query_val_str(String* str) const
       *ptr++= '\'';
       ptr+= (uint) my_TIME_to_str(&value.time, ptr);
       *ptr++= '\'';
-      str->length((uint32) (ptr - buf));
+      str->length((uint32_t) (ptr - buf));
       break;
     }
   case STRING_VALUE:
@@ -2850,10 +2849,10 @@ double Item_ref_null_helper::val_real()
 }
 
 
-longlong Item_ref_null_helper::val_int()
+int64_t Item_ref_null_helper::val_int()
 {
   assert(fixed == 1);
-  longlong tmp= (*ref)->val_int_result();
+  int64_t tmp= (*ref)->val_int_result();
   owner->was_null|= null_value= (*ref)->null_value;
   return tmp;
 }
@@ -4144,12 +4143,8 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
 			  name, 0, unsigned_flag);
     break;
   case MYSQL_TYPE_LONGLONG:
-    field= new Field_longlong((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
+    field= new Field_int64_t((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			      name, 0, unsigned_flag);
-    break;
-  case MYSQL_TYPE_FLOAT:
-    field= new Field_float((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
-			   name, decimals, 0, unsigned_flag);
     break;
   case MYSQL_TYPE_DOUBLE:
     field= new Field_double((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
@@ -4350,7 +4345,7 @@ int Item::save_in_field(Field *field, bool no_conversions)
   }
   else
   {
-    longlong nr=val_int();
+    int64_t nr=val_int();
     if (null_value)
       return set_field_to_null_with_conversions(field, no_conversions);
     field->set_notnull();
@@ -4379,7 +4374,7 @@ int Item_uint::save_in_field(Field *field, bool no_conversions)
 int Item_int::save_in_field(Field *field,
                             bool no_conversions __attribute__((__unused__)))
 {
-  longlong nr=val_int();
+  int64_t nr=val_int();
   if (null_value)
     return set_field_to_null(field);
   field->set_notnull();
@@ -4476,7 +4471,7 @@ Item_float::Item_float(const char *str_arg, uint length)
     my_error(ER_ILLEGAL_VALUE_FOR_TYPE, MYF(0), "double", (char*) str_arg);
   }
   presentation= name=(char*) str_arg;
-  decimals=(uint8) nr_of_decimals(str_arg, str_arg+length);
+  decimals=(uint8_t) nr_of_decimals(str_arg, str_arg+length);
   max_length=length;
   fixed= 1;
 }
@@ -4511,7 +4506,7 @@ void Item_float::print(String *str,
 /*
   hex item
   In string context this is a binary string.
-  In number context this is a longlong value.
+  In number context this is a int64_t value.
 */
 
 bool Item_float::eq(const Item *arg,
@@ -4559,17 +4554,17 @@ Item_hex_string::Item_hex_string(const char *str, uint str_length)
   unsigned_flag= 1;
 }
 
-longlong Item_hex_string::val_int()
+int64_t Item_hex_string::val_int()
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
   char *end=(char*) str_value.ptr()+str_value.length(),
-       *ptr=end-min(str_value.length(),sizeof(longlong));
+       *ptr=end-min(str_value.length(),sizeof(int64_t));
 
-  ulonglong value=0;
+  uint64_t value=0;
   for (; ptr != end ; ptr++)
-    value=(value << 8)+ (ulonglong) (uchar) *ptr;
-  return (longlong) value;
+    value=(value << 8)+ (uint64_t) (uchar) *ptr;
+  return (int64_t) value;
 }
 
 
@@ -4577,7 +4572,7 @@ my_decimal *Item_hex_string::val_decimal(my_decimal *decimal_value)
 {
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
-  ulonglong value= (ulonglong)val_int();
+  uint64_t value= (uint64_t)val_int();
   int2my_decimal(E_DEC_FATAL_ERROR, value, true, decimal_value);
   return (decimal_value);
 }
@@ -4591,23 +4586,23 @@ int Item_hex_string::save_in_field(Field *field,
     return field->store(str_value.ptr(), str_value.length(), 
                         collation.collation);
 
-  ulonglong nr;
-  uint32 length= str_value.length();
+  uint64_t nr;
+  uint32_t length= str_value.length();
   if (length > 8)
   {
-    nr= field->flags & UNSIGNED_FLAG ? ULONGLONG_MAX : LONGLONG_MAX;
+    nr= field->flags & UNSIGNED_FLAG ? UINT64_MAX : INT64_MAX;
     goto warn;
   }
-  nr= (ulonglong) val_int();
-  if ((length == 8) && !(field->flags & UNSIGNED_FLAG) && (nr > LONGLONG_MAX))
+  nr= (uint64_t) val_int();
+  if ((length == 8) && !(field->flags & UNSIGNED_FLAG) && (nr > INT64_MAX))
   {
-    nr= LONGLONG_MAX;
+    nr= INT64_MAX;
     goto warn;
   }
-  return field->store((longlong) nr, true);  // Assume hex numbers are unsigned
+  return field->store((int64_t) nr, true);  // Assume hex numbers are unsigned
 
 warn:
-  if (!field->store((longlong) nr, true))
+  if (!field->store((int64_t) nr, true))
     field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE,
                        1);
   return 1;
@@ -4618,7 +4613,7 @@ void Item_hex_string::print(String *str,
                             enum_query_type query_type __attribute__((__unused__)))
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
-       *ptr= end - min(str_value.length(), sizeof(longlong));
+       *ptr= end - min(str_value.length(), sizeof(int64_t));
   str->append("0x");
   for (; ptr != end ; ptr++)
   {
@@ -4656,7 +4651,7 @@ Item *Item_hex_string::safe_charset_converter(CHARSET_INFO *tocs)
 /*
   bin item.
   In string context this is a binary string.
-  In number context this is a longlong value.
+  In number context this is a int64_t value.
 */
   
 Item_bin_string::Item_bin_string(const char *str, uint str_length)
@@ -4727,7 +4722,7 @@ bool Item::send(Protocol *protocol, String *buffer)
   }
   case MYSQL_TYPE_TINY:
   {
-    longlong nr;
+    int64_t nr;
     nr= val_int();
     if (!null_value)
       result= protocol->store_tiny(nr);
@@ -4736,7 +4731,7 @@ bool Item::send(Protocol *protocol, String *buffer)
   case MYSQL_TYPE_SHORT:
   case MYSQL_TYPE_YEAR:
   {
-    longlong nr;
+    int64_t nr;
     nr= val_int();
     if (!null_value)
       result= protocol->store_short(nr);
@@ -4744,7 +4739,7 @@ bool Item::send(Protocol *protocol, String *buffer)
   }
   case MYSQL_TYPE_LONG:
   {
-    longlong nr;
+    int64_t nr;
     nr= val_int();
     if (!null_value)
       result= protocol->store_long(nr);
@@ -4752,18 +4747,10 @@ bool Item::send(Protocol *protocol, String *buffer)
   }
   case MYSQL_TYPE_LONGLONG:
   {
-    longlong nr;
+    int64_t nr;
     nr= val_int();
     if (!null_value)
-      result= protocol->store_longlong(nr, unsigned_flag);
-    break;
-  }
-  case MYSQL_TYPE_FLOAT:
-  {
-    float nr;
-    nr= (float) val_real();
-    if (!null_value)
-      result= protocol->store(nr, decimals, buffer);
+      result= protocol->store_int64_t(nr, unsigned_flag);
     break;
   }
   case MYSQL_TYPE_DOUBLE:
@@ -5262,7 +5249,7 @@ double Item_ref::val_result()
 }
 
 
-longlong Item_ref::val_int_result()
+int64_t Item_ref::val_int_result()
 {
   if (result_field)
   {
@@ -5337,10 +5324,10 @@ double Item_ref::val_real()
 }
 
 
-longlong Item_ref::val_int()
+int64_t Item_ref::val_int()
 {
   assert(fixed);
-  longlong tmp=(*ref)->val_int_result();
+  int64_t tmp=(*ref)->val_int_result();
   null_value=(*ref)->null_value;
   return tmp;
 }
@@ -5447,9 +5434,9 @@ double Item_direct_ref::val_real()
 }
 
 
-longlong Item_direct_ref::val_int()
+int64_t Item_direct_ref::val_int()
 {
-  longlong tmp=(*ref)->val_int();
+  int64_t tmp=(*ref)->val_int();
   null_value=(*ref)->null_value;
   return tmp;
 }
@@ -5827,7 +5814,7 @@ void resolve_const_item(THD *thd, Item **ref, Item *comp_item)
   }
   case INT_RESULT:
   {
-    longlong result=item->val_int();
+    int64_t result=item->val_int();
     uint length=item->max_length;
     bool null_value=item->null_value;
     new_item= (null_value ? (Item*) new Item_null(name) :
@@ -5974,7 +5961,7 @@ void Item_cache_int::store(Item *item)
 }
 
 
-void Item_cache_int::store(Item *item, longlong val_arg)
+void Item_cache_int::store(Item *item, int64_t val_arg)
 {
   value= val_arg;
   null_value= item->null_value;
@@ -6005,10 +5992,10 @@ void Item_cache_real::store(Item *item)
 }
 
 
-longlong Item_cache_real::val_int()
+int64_t Item_cache_real::val_int()
 {
   assert(fixed == 1);
-  return (longlong) rint(value);
+  return (int64_t) rint(value);
 }
 
 
@@ -6043,10 +6030,10 @@ double Item_cache_decimal::val_real()
   return res;
 }
 
-longlong Item_cache_decimal::val_int()
+int64_t Item_cache_decimal::val_int()
 {
   assert(fixed);
-  longlong res;
+  int64_t res;
   my_decimal2int(E_DEC_FATAL_ERROR, &decimal_value, unsigned_flag, &res);
   return res;
 }
@@ -6100,7 +6087,7 @@ double Item_cache_str::val_real()
 }
 
 
-longlong Item_cache_str::val_int()
+int64_t Item_cache_str::val_int()
 {
   assert(fixed == 1);
   int err;
@@ -6108,7 +6095,7 @@ longlong Item_cache_str::val_int()
     return my_strntoll(value->charset(), value->ptr(),
 		       value->length(), 10, (char**) 0, &err);
   else
-    return (longlong)0;
+    return (int64_t)0;
 }
 
 my_decimal *Item_cache_str::val_decimal(my_decimal *decimal_val)
@@ -6351,7 +6338,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
   case STRING_RESULT:
   {
     const char *old_cs, *old_derivation;
-    uint32 old_max_chars= max_length / collation.collation->mbmaxlen;
+    uint32_t old_max_chars= max_length / collation.collation->mbmaxlen;
     old_cs= collation.collation->name;
     old_derivation= collation.derivation_name();
     if (collation.aggregate(item->collation, MY_COLL_ALLOW_CONV))
@@ -6386,11 +6373,6 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
       int delta1= max_length_orig - decimals_orig;
       int delta2= item->max_length - item->decimals;
       max_length= max(delta1, delta2) + decimals;
-      if (fld_type == MYSQL_TYPE_FLOAT && max_length > FLT_DIG + 2) 
-      {
-        max_length= FLT_DIG + 6;
-        decimals= NOT_FIXED_DEC;
-      } 
       if (fld_type == MYSQL_TYPE_DOUBLE && max_length > DBL_DIG + 2) 
       {
         max_length= DBL_DIG + 7;
@@ -6398,7 +6380,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
       }
     }
     else
-      max_length= (fld_type == MYSQL_TYPE_FLOAT) ? FLT_DIG+6 : DBL_DIG+7;
+      max_length= DBL_DIG+7;
     break;
   }
   default:
@@ -6421,7 +6403,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
     length
 */
 
-uint32 Item_type_holder::display_length(Item *item)
+uint32_t Item_type_holder::display_length(Item *item)
 {
   if (item->type() == Item::FIELD_ITEM)
     return ((Item_field *)item)->max_disp_length();
@@ -6446,8 +6428,6 @@ uint32 Item_type_holder::display_length(Item *item)
     return 6;
   case MYSQL_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;
-  case MYSQL_TYPE_FLOAT:
-    return 25;
   case MYSQL_TYPE_DOUBLE:
     return 53;
   case MYSQL_TYPE_NULL:
@@ -6548,7 +6528,7 @@ double Item_type_holder::val_real()
 }
 
 
-longlong Item_type_holder::val_int()
+int64_t Item_type_holder::val_int()
 {
   assert(0); // should never be called
   return 0;

@@ -44,9 +44,9 @@ struct st_irem
   struct st_irem *next;		/* Linked list of structures	   */
   struct st_irem *prev;		/* Other link			   */
   char *filename;		/* File in which memory was new'ed */
-  uint32 linenum;		/* Line number in above file	   */
-  uint32 datasize;		/* Size requested		   */
-  uint32 SpecialValue;		/* Underrun marker value	   */
+  uint32_t linenum;		/* Line number in above file	   */
+  uint32_t datasize;		/* Size requested		   */
+  uint32_t SpecialValue;		/* Underrun marker value	   */
 };
 
 
@@ -66,7 +66,7 @@ extern struct st_irem *sf_malloc_root;
 
 extern struct st_my_file_info my_file_info_default[MY_NFILE];
 
-extern ulonglong query_performance_frequency, query_performance_offset;
+extern uint64_t query_performance_frequency, query_performance_offset;
 
 extern sigset_t my_signals;		/* signals blocked by mf_brkhant */
 C_MODE_END

@@ -81,10 +81,6 @@ innobase_shutdown_for_mysql(void);
 extern	dulint	srv_shutdown_lsn;
 extern	dulint	srv_start_lsn;
 
-#ifdef __NETWARE__
-void set_panic_flag_for_netware(void);
-#endif
-
 #ifdef HAVE_DARWIN_THREADS
 extern	ibool	srv_have_fullfsync;
 #endif

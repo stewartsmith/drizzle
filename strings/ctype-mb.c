@@ -22,7 +22,7 @@
 
 size_t my_caseup_str_mb(CHARSET_INFO * cs, char *str)
 {
-  register uint32 l;
+  register uint32_t l;
   register uchar *map= cs->to_upper;
   char *str_orig= str;
   
@@ -43,7 +43,7 @@ size_t my_caseup_str_mb(CHARSET_INFO * cs, char *str)
 
 size_t my_casedn_str_mb(CHARSET_INFO * cs, char *str)
 {
-  register uint32 l;
+  register uint32_t l;
   register uchar *map= cs->to_lower;
   char *str_orig= str;
   
@@ -66,11 +66,11 @@ size_t my_caseup_mb(CHARSET_INFO * cs, char *src, size_t srclen,
                     char *dst __attribute__((unused)),
                     size_t dstlen __attribute__((unused)))
 {
-  register uint32 l;
+  register uint32_t l;
   register char *srcend= src + srclen;
   register uchar *map= cs->to_upper;
 
-  DBUG_ASSERT(src == dst && srclen == dstlen);
+  assert(src == dst && srclen == dstlen);
   while (src < srcend)
   {
     if ((l=my_ismbchar(cs, src, srcend)))
@@ -89,11 +89,11 @@ size_t my_casedn_mb(CHARSET_INFO * cs, char *src, size_t srclen,
                     char *dst __attribute__((unused)),
                     size_t dstlen __attribute__((unused)))
 {
-  register uint32 l;
+  register uint32_t l;
   register char *srcend= src + srclen;
   register uchar *map=cs->to_lower;
 
-  DBUG_ASSERT(src == dst && srclen == dstlen);  
+  assert(src == dst && srclen == dstlen);  
   while (src < srcend)
   {
     if ((l= my_ismbchar(cs, src, srcend)))
@@ -114,7 +114,7 @@ size_t my_casedn_mb(CHARSET_INFO * cs, char *src, size_t srclen,
 
 int my_strcasecmp_mb(CHARSET_INFO * cs,const char *s, const char *t)
 {
-  register uint32 l;
+  register uint32_t l;
   register uchar *map=cs->to_upper;
   
   while (*s && *t)
@@ -487,7 +487,7 @@ my_strnxfrm_mb(CHARSET_INFO *cs,
   const uchar *se= src + srclen;
   const uchar *sort_order= cs->sort_order;
 
-  DBUG_ASSERT(cs->mbmaxlen <= 4);
+  assert(cs->mbmaxlen <= 4);
 
   /*
     If "srclen" is smaller than both "dstlen" and "nweights"
@@ -610,7 +610,7 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
   buflen= cs->cset->wc_mb(cs, cs->max_sort_char, (uchar*) buf,
                           (uchar*) buf + sizeof(buf));
   
-  DBUG_ASSERT(buflen > 0);
+  assert(buflen > 0);
   do
   {
     if ((str + buflen) < end)
@@ -636,7 +636,10 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
 ** ptr		Pointer to LIKE string.
 ** ptr_length	Length of LIKE string.
 ** escape	Escape character in LIKE.  (Normally '\').
-**		All escape characters should be removed from min_str and max_str
+**		All escape characters should be removed from
+**              min_str and max_str
+** w_one        Single char matching char in LIKE (Normally '_')
+** w_many       Multiple char matching char in LIKE (Normally '%')
 ** res_length	Length of min_str and max_str.
 ** min_str	Smallest case sensitive string that ranges LIKE.
 **		Should be space padded to res_length.
@@ -648,11 +651,11 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
 */
 
 my_bool my_like_range_mb(CHARSET_INFO *cs,
-			 const char *ptr,size_t ptr_length,
-			 pbool escape, pbool w_one, pbool w_many,
-			 size_t res_length,
-			 char *min_str,char *max_str,
-			 size_t *min_length,size_t *max_length)
+                         const char *ptr,size_t ptr_length,
+                         char escape, char w_one, char w_many,
+                         size_t res_length,
+                         char *min_str,char *max_str,
+                         size_t *min_length,size_t *max_length)
 {
   uint mb_len;
   const char *end= ptr + ptr_length;

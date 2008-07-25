@@ -24,7 +24,6 @@
 #include <m_ctype.h>
 #include <my_tree.h>
 #include <queues.h>
-#include <mysql/plugin.h>
 
 	/* lock table by F_UNLCK, F_RDLCK or F_WRLCK */
 
@@ -34,23 +33,17 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   uint count;
   MYISAM_SHARE *share=info->s;
   uint flag;
-  DBUG_ENTER("mi_lock_database");
-  DBUG_PRINT("enter",("lock_type: %d  old lock %d  r_locks: %u  w_locks: %u "
-                      "global_changed:  %d  open_count: %u  name: '%s'",
-                      lock_type, info->lock_type, share->r_locks,
-                      share->w_locks,
-                      share->global_changed, share->state.open_count,
-                      share->index_file_name));
+
   if (share->options & HA_OPTION_READ_ONLY_DATA ||
       info->lock_type == lock_type)
-    DBUG_RETURN(0);
+    return(0);
   if (lock_type == F_EXTRA_LCK)                 /* Used by TMP tables */
   {
     ++share->w_locks;
     ++share->tot_locks;
     info->lock_type= lock_type;
     info->s->in_use= list_add(info->s->in_use, &info->in_use);
-    DBUG_RETURN(0);
+    return(0);
   }
 
   flag=error=0;
@@ -83,8 +76,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       }
       if (!count)
       {
-	DBUG_PRINT("info",("changed: %u  w_locks: %u",
-			   (uint) share->changed, share->w_locks));
 	if (share->changed && !share->w_locks)
 	{
 #ifdef HAVE_MMAP
@@ -125,16 +116,10 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	  if (share->r_locks)
 	  {					/* Only read locks left */
 	    flag=1;
-	    if (my_lock(share->kfile,F_RDLCK,0L,F_TO_EOF,
-			MYF(MY_WME | MY_SEEK_NOT_DONE)) && !error)
-	      error=my_errno;
 	  }
 	  else if (!share->w_locks)
 	  {					/* No more locks */
 	    flag=1;
-	    if (my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-			MYF(MY_WME | MY_SEEK_NOT_DONE)) && !error)
-	      error=my_errno;
 	  }
 	}
       }
@@ -154,12 +139,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (share->w_locks == 1)
 	{
 	  flag=1;
-          if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		      MYF(MY_SEEK_NOT_DONE)))
-	  {
-	    error=my_errno;
-	    break;
-	  }
 	}
 	share->w_locks--;
 	share->r_locks++;
@@ -169,8 +148,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
       if (!share->r_locks && !share->w_locks)
       {
 	flag=1;
-	if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		    info->lock_wait | MY_SEEK_NOT_DONE))
+	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
 	  error=my_errno;
 	  break;
@@ -178,7 +156,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	{
 	  error=my_errno;
-	  VOID(my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,MYF(MY_SEEK_NOT_DONE)));
 	  my_errno=error;
 	  break;
 	}
@@ -195,12 +172,6 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (share->r_locks == 1)
 	{
 	  flag=1;
-	  if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		      MYF(info->lock_wait | MY_SEEK_NOT_DONE)))
-	  {
-	    error=my_errno;
-	    break;
-	  }
 	  share->r_locks--;
 	  share->w_locks++;
 	  info->lock_type=lock_type;
@@ -212,19 +183,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 	if (!share->w_locks)
 	{
 	  flag=1;
-	  if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		      info->lock_wait | MY_SEEK_NOT_DONE))
-	  {
-	    error=my_errno;
-	    break;
-	  }
 	  if (!share->r_locks)
 	  {
 	    if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
 	    {
 	      error=my_errno;
-	      VOID(my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-			   info->lock_wait | MY_SEEK_NOT_DONE));
 	      my_errno=error;
 	      break;
 	    }
@@ -264,7 +227,7 @@ int mi_lock_database(MI_INFO *info, int lock_type)
   myisam_log_command(MI_LOG_LOCK,info,(uchar*) &lock_type,sizeof(lock_type),
 		     error);
 #endif
-  DBUG_RETURN(error);
+  return(error);
 } /* mi_lock_database */
 
 
@@ -285,22 +248,11 @@ int mi_lock_database(MI_INFO *info, int lock_type)
 void mi_get_status(void* param, int concurrent_insert)
 {
   MI_INFO *info=(MI_INFO*) param;
-  DBUG_ENTER("mi_get_status");
-  DBUG_PRINT("info",("key_file: %ld  data_file: %ld  concurrent_insert: %d",
-		     (long) info->s->state.state.key_file_length,
-		     (long) info->s->state.state.data_file_length,
-                     concurrent_insert));
-#ifndef DBUG_OFF
-  if (info->state->key_file_length > info->s->state.state.key_file_length ||
-      info->state->data_file_length > info->s->state.state.data_file_length)
-    DBUG_PRINT("warning",("old info:  key_file: %ld  data_file: %ld",
-			  (long) info->state->key_file_length,
-			  (long) info->state->data_file_length));
-#endif
+
   info->save_state=info->s->state.state;
   info->state= &info->save_state;
   info->append_insert_at_end= concurrent_insert;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -315,16 +267,6 @@ void mi_update_status(void* param)
   */
   if (info->state == &info->save_state)
   {
-#ifndef DBUG_OFF
-    DBUG_PRINT("info",("updating status:  key_file: %ld  data_file: %ld",
-		       (long) info->state->key_file_length,
-		       (long) info->state->data_file_length));
-    if (info->state->key_file_length < info->s->state.state.key_file_length ||
-	info->state->data_file_length < info->s->state.state.data_file_length)
-      DBUG_PRINT("warning",("old info:  key_file: %ld  data_file: %ld",
-			    (long) info->s->state.state.key_file_length,
-			    (long) info->s->state.state.data_file_length));
-#endif
     info->s->state.state= *info->state;
     info->state= &info->s->state.state;
   }
@@ -381,7 +323,7 @@ void mi_copy_status(void* to,void *from)
     1  not ok
 */
 
-my_bool mi_check_status(void *param)
+bool mi_check_status(void *param)
 {
   MI_INFO *info=(MI_INFO*) param;
   /*
@@ -389,9 +331,6 @@ my_bool mi_check_status(void *param)
     external lock (in other words: w_locks == 1 means no other threads has
     a write lock)
   */
-  DBUG_PRINT("info",("dellink: %ld  r_locks: %u  w_locks: %u",
-                     (long) info->s->state.dellink, (uint) info->s->r_locks,
-                     (uint) info->s->w_locks));
   return (my_bool) !(info->s->state.dellink == HA_OFFSET_ERROR ||
                      (myisam_concurrent_insert == 2 && info->s->r_locks &&
                       info->s->w_locks == 1));
@@ -404,23 +343,16 @@ my_bool mi_check_status(void *param)
 
 int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
 {
-  DBUG_ENTER("_mi_readinfo");
-
   if (info->lock_type == F_UNLCK)
   {
     MYISAM_SHARE *share=info->s;
     if (!share->tot_locks)
     {
-      if (my_lock(share->kfile,lock_type,0L,F_TO_EOF,
-		  info->lock_wait | MY_SEEK_NOT_DONE))
-	DBUG_RETURN(1);
       if (mi_state_info_read_dsk(share->kfile, &share->state, 1))
       {
 	int error=my_errno ? my_errno : -1;
-	VOID(my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-		     MYF(MY_SEEK_NOT_DONE)));
 	my_errno=error;
-	DBUG_RETURN(1);
+	return(1);
       }
     }
     if (check_keybuffer)
@@ -430,9 +362,9 @@ int _mi_readinfo(register MI_INFO *info, int lock_type, int check_keybuffer)
   else if (lock_type == F_WRLCK && info->lock_type == F_RDLCK)
   {
     my_errno=EACCES;				/* Not allowed to change */
-    DBUG_RETURN(-1);				/* when have read_lock() */
+    return(-1);				/* when have read_lock() */
   }
-  DBUG_RETURN(0);
+  return(0);
 } /* _mi_readinfo */
 
 
@@ -445,9 +377,6 @@ int _mi_writeinfo(register MI_INFO *info, uint operation)
 {
   int error,olderror;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("_mi_writeinfo");
-  DBUG_PRINT("info",("operation: %u  tot_locks: %u", operation,
-		     share->tot_locks));
 
   error=0;
   if (share->tot_locks == 0)
@@ -468,15 +397,11 @@ int _mi_writeinfo(register MI_INFO *info, uint operation)
       }
 #endif
     }
-    if (!(operation & WRITEINFO_NO_UNLOCK) &&
-	my_lock(share->kfile,F_UNLCK,0L,F_TO_EOF,
-		MYF(MY_WME | MY_SEEK_NOT_DONE)) && !error)
-      DBUG_RETURN(1);
     my_errno=olderror;
   }
   else if (operation)
     share->changed= 1;			/* Mark keyfile changed */
-  DBUG_RETURN(error);
+  return(error);
 } /* _mi_writeinfo */
 
 
@@ -490,7 +415,6 @@ int _mi_test_if_changed(register MI_INFO *info)
       share->state.unique  != info->last_unique ||
       share->state.update_count != info->last_loop)
   {						/* Keyfile has changed */
-    DBUG_PRINT("info",("index file changed"));
     if (share->state.process != share->this_process)
       VOID(flush_key_blocks(share->key_cache, share->kfile, FLUSH_RELEASE));
     share->last_process=share->state.process;
@@ -520,16 +444,13 @@ int _mi_test_if_changed(register MI_INFO *info)
     was incremented in the same process.
 
   This mean that if we are the only process using the file, the open_count
-  tells us if the MYISAM file wasn't properly closed. (This is true if
-  my_disable_locking is set).
-*/
+  tells us if the MYISAM file wasn't properly closed.*/
 
 
 int _mi_mark_file_changed(MI_INFO *info)
 {
   uchar buff[3];
   register MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("_mi_mark_file_changed");
 
   if (!(share->state.changed & STATE_CHANGED) || ! share->global_changed)
   {
@@ -544,12 +465,12 @@ int _mi_mark_file_changed(MI_INFO *info)
     {
       mi_int2store(buff,share->state.open_count);
       buff[2]=1;				/* Mark that it's changed */
-      DBUG_RETURN(my_pwrite(share->kfile,buff,sizeof(buff),
+      return(my_pwrite(share->kfile,buff,sizeof(buff),
                             sizeof(share->state.header),
                             MYF(MY_NABP)));
     }
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 

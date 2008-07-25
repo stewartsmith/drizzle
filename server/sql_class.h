@@ -20,7 +20,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-#include <mysql/plugin_audit.h>
+#include <drizzle/plugin_audit.h>
 #include "log.h"
 #include "rpl_tblmap.h"
 
@@ -233,27 +233,6 @@ public:
   LEX_COLUMN (const String& x,const  uint& y ): column (x),rights (y) {}
 };
 
-/**
-  Query_cache_tls -- query cache thread local data.
-*/
-
-struct Query_cache_block;
-
-struct Query_cache_tls
-{
-  /*
-    'first_query_block' should be accessed only via query cache
-    functions and methods to maintain proper locking.
-  */
-  Query_cache_block *first_query_block;
-  void set_first_query_block(Query_cache_block *first_query_block_arg)
-  {
-    first_query_block= first_query_block_arg;
-  }
-
-  Query_cache_tls() :first_query_block(NULL) {}
-};
-
 #include "sql_lex.h"				/* Must be here */
 
 class select_result;
@@ -280,11 +259,11 @@ struct system_variables
   uint dynamic_variables_head;  /* largest valid variable offset */
   uint dynamic_variables_size;  /* how many bytes are in use */
   
-  ulonglong myisam_max_extra_sort_file_size;
-  ulonglong myisam_max_sort_file_size;
-  ulonglong max_heap_table_size;
-  ulonglong tmp_table_size;
-  ulonglong long_query_time;
+  uint64_t myisam_max_extra_sort_file_size;
+  uint64_t myisam_max_sort_file_size;
+  uint64_t max_heap_table_size;
+  uint64_t tmp_table_size;
+  uint64_t long_query_time;
   ha_rows select_limit;
   ha_rows max_join_size;
   ulong auto_increment_increment, auto_increment_offset;
@@ -344,18 +323,17 @@ struct system_variables
   */
   my_thread_id pseudo_thread_id;
 
-  my_bool low_priority_updates;
-  my_bool new_mode;
+  bool low_priority_updates;
+  bool new_mode;
   /* 
     compatibility option:
       - index usage hints (USE INDEX without a FOR clause) behave as in 5.0 
   */
-  my_bool old_mode;
-  my_bool query_cache_wlock_invalidate;
-  my_bool engine_condition_pushdown;
-  my_bool keep_files_on_create;
+  bool old_mode;
+  bool engine_condition_pushdown;
+  bool keep_files_on_create;
 
-  my_bool old_alter_table;
+  bool old_alter_table;
 
   plugin_ref table_plugin;
 
@@ -378,7 +356,7 @@ struct system_variables
   DATE_TIME_FORMAT *date_format;
   DATE_TIME_FORMAT *datetime_format;
   DATE_TIME_FORMAT *time_format;
-  my_bool sysdate_is_now;
+  bool sysdate_is_now;
 
 };
 
@@ -387,8 +365,8 @@ struct system_variables
 
 typedef struct system_status_var
 {
-  ulonglong bytes_received;
-  ulonglong bytes_sent;
+  uint64_t bytes_received;
+  uint64_t bytes_sent;
   ulong com_other;
   ulong com_stat[(uint) SQLCOM_END];
   ulong created_tmp_disk_tables;
@@ -608,7 +586,7 @@ public:
     STATUS.
   */
   char *query;
-  uint32 query_length;                          // current query length
+  uint32_t query_length;                          // current query length
 
   /**
     Name of the current (default) database.
@@ -814,12 +792,12 @@ public:
 class Sub_statement_state
 {
 public:
-  ulonglong options;
-  ulonglong first_successful_insert_id_in_prev_stmt;
-  ulonglong first_successful_insert_id_in_cur_stmt, insert_id_for_cur_row;
+  uint64_t options;
+  uint64_t first_successful_insert_id_in_prev_stmt;
+  uint64_t first_successful_insert_id_in_cur_stmt, insert_id_for_cur_row;
   Discrete_interval auto_inc_interval_for_cur_row;
   Discrete_intervals_list auto_inc_intervals_forced;
-  ulonglong limit_found_rows;
+  uint64_t limit_found_rows;
   ha_rows    cuted_fields, sent_row_count, examined_row_count;
   ulong client_capabilities;
   uint in_sub_stmt;
@@ -911,7 +889,7 @@ public:
   bool can_overwrite_status;
 
   void set_ok_status(THD *thd, ha_rows affected_rows_arg,
-                     ulonglong last_insert_id_arg,
+                     uint64_t last_insert_id_arg,
                      const char *message);
   void set_eof_status(THD *thd);
   void set_error_status(THD *thd, uint sql_errno_arg, const char *message_arg);
@@ -942,7 +920,7 @@ public:
   ha_rows affected_rows() const
   { assert(m_status == DA_OK); return m_affected_rows; }
 
-  ulonglong last_insert_id() const
+  uint64_t last_insert_id() const
   { assert(m_status == DA_OK); return m_last_insert_id; }
 
   uint total_warn_count() const
@@ -988,7 +966,7 @@ private:
     thd->first_successful_insert_id_in_prev_stmt, which is used
     to implement LAST_INSERT_ID().
   */
-  ulonglong   m_last_insert_id;
+  uint64_t   m_last_insert_id;
   /** The total number of warnings. */
   uint	     m_total_warn_count;
   enum_diagnostics_status m_status;
@@ -1130,13 +1108,13 @@ public:
     first byte of the packet in do_command()
   */
   enum enum_server_command command;
-  uint32     server_id;
-  uint32     file_id;			// for LOAD DATA INFILE
+  uint32_t     server_id;
+  uint32_t     file_id;			// for LOAD DATA INFILE
   /* remote (peer) port */
-  uint16 peer_port;
+  uint16_t peer_port;
   time_t     start_time, user_time;
-  ulonglong  connect_utime, thr_create_utime; // track down slow pthread_create
-  ulonglong  start_utime, utime_after_lock;
+  uint64_t  connect_utime, thr_create_utime; // track down slow pthread_create
+  uint64_t  start_utime, utime_after_lock;
   
   thr_lock_type update_lock_default;
 
@@ -1164,13 +1142,13 @@ public:
   int binlog_update_row(TABLE* table, bool is_transactional,
                         const uchar *old_data, const uchar *new_data);
 
-  void set_server_id(uint32 sid) { server_id = sid; }
+  void set_server_id(uint32_t sid) { server_id = sid; }
 
   /*
     Member functions to handle pending event for row-level logging.
   */
   template <class RowsEventT> Rows_log_event*
-    binlog_prepare_pending_rows_event(TABLE* table, uint32 serv_id,
+    binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
                                       size_t needed,
                                       bool is_transactional,
 				      RowsEventT* hint);
@@ -1190,7 +1168,7 @@ private:
      Flags with per-thread information regarding the status of the
      binary log.
    */
-  uint32 binlog_flags;
+  uint32_t binlog_flags;
 public:
   uint get_binlog_table_maps() const {
     return binlog_table_maps;
@@ -1271,20 +1249,20 @@ public:
     It can also be set by SET LAST_INSERT_ID=# or SELECT LAST_INSERT_ID(#).
     It is returned by LAST_INSERT_ID().
   */
-  ulonglong  first_successful_insert_id_in_prev_stmt;
+  uint64_t  first_successful_insert_id_in_prev_stmt;
   /*
     Variant of the above, used for storing in statement-based binlog. The
     difference is that the one above can change as the execution of a stored
     function progresses, while the one below is set once and then does not
     change (which is the value which statement-based binlog needs).
   */
-  ulonglong  first_successful_insert_id_in_prev_stmt_for_binlog;
+  uint64_t  first_successful_insert_id_in_prev_stmt_for_binlog;
   /*
     This is the first autogenerated insert id which was *successfully*
     inserted by the current statement. It is maintained only to set
     first_successful_insert_id_in_prev_stmt when statement ends.
   */
-  ulonglong  first_successful_insert_id_in_cur_stmt;
+  uint64_t  first_successful_insert_id_in_cur_stmt;
   /*
     We follow this logic:
     - when stmt starts, first_successful_insert_id_in_prev_stmt contains the
@@ -1364,12 +1342,12 @@ public:
     mode, row-based binlogging is used for such cases where two
     auto_increment columns are inserted.
   */
-  inline void record_first_successful_insert_id_in_cur_stmt(ulonglong id_arg)
+  inline void record_first_successful_insert_id_in_cur_stmt(uint64_t id_arg)
   {
     if (first_successful_insert_id_in_cur_stmt == 0)
       first_successful_insert_id_in_cur_stmt= id_arg;
   }
-  inline ulonglong read_first_successful_insert_id_in_prev_stmt(void)
+  inline uint64_t read_first_successful_insert_id_in_prev_stmt(void)
   {
     if (!stmt_depends_on_first_successful_insert_id_in_prev_stmt)
     {
@@ -1385,15 +1363,15 @@ public:
     (mysqlbinlog). We'll soon add a variant which can take many intervals in
     argument.
   */
-  inline void force_one_auto_inc_interval(ulonglong next_id)
+  inline void force_one_auto_inc_interval(uint64_t next_id)
   {
     auto_inc_intervals_forced.empty(); // in case of multiple SET INSERT_ID
-    auto_inc_intervals_forced.append(next_id, ULONGLONG_MAX, 0);
+    auto_inc_intervals_forced.append(next_id, UINT64_MAX, 0);
   }
 
-  ulonglong  limit_found_rows;
-  ulonglong  options;           /* Bitmap of states */
-  longlong   row_count_func;    /* For the ROW_COUNT() function */
+  uint64_t  limit_found_rows;
+  uint64_t  options;           /* Bitmap of states */
+  int64_t   row_count_func;    /* For the ROW_COUNT() function */
   ha_rows    cuted_fields;
 
   /*
@@ -1542,10 +1520,10 @@ public:
   /* Used by the sys_var class to store temporary values */
   union
   {
-    my_bool   my_bool_value;
+    bool   bool_value;
     long      long_value;
     ulong     ulong_value;
-    ulonglong ulonglong_value;
+    uint64_t uint64_t_value;
   } sys_var_tmp;
   
   struct {
@@ -1582,14 +1560,6 @@ public:
     and may point to invalid memory after that.
   */
   Lex_input_stream *m_lip;
-
-  /*
-    @todo The following is a work around for online backup and the DDL blocker.
-          It should be removed when the generalized solution is in place.
-          This is needed to ensure the restore (which uses DDL) is not blocked
-          when the DDL blocker is engaged.
-  */
-  my_bool DDL_exception; // Allow some DDL if there is an exception
 
   THD();
   ~THD();
@@ -1700,8 +1670,8 @@ public:
     start_utime= utime_after_lock= my_micro_time();
   }
   void set_time_after_lock()  { utime_after_lock= my_micro_time(); }
-  ulonglong current_utime()  { return my_micro_time(); }
-  inline ulonglong found_rows(void)
+  uint64_t current_utime()  { return my_micro_time(); }
+  inline uint64_t found_rows(void)
   {
     return limit_found_rows;
   }
@@ -1809,8 +1779,6 @@ public:
     return (abort_on_warning);
   }
   void set_status_var_init();
-  bool is_context_analysis_only()
-    { return lex->view_prepare_mode; }
   void reset_n_backup_open_tables_state(Open_tables_state *backup);
   void restore_backup_open_tables_state(Open_tables_state *backup);
   void restore_sub_statement_state(Sub_statement_state *backup);
@@ -1984,7 +1952,7 @@ private:
 /** A short cut for thd->main_da.set_ok_status(). */
 
 inline void
-my_ok(THD *thd, ha_rows affected_rows= 0, ulonglong id= 0,
+my_ok(THD *thd, ha_rows affected_rows= 0, uint64_t id= 0,
         const char *message= NULL)
 {
   thd->main_da.set_ok_status(thd, affected_rows, id, message);
@@ -2000,7 +1968,7 @@ my_eof(THD *thd)
 }
 
 #define tmp_disable_binlog(A)       \
-  {ulonglong tmp_disable_binlog__save_options= (A)->options; \
+  {uint64_t tmp_disable_binlog__save_options= (A)->options; \
   (A)->options&= ~OPTION_BIN_LOG
 
 #define reenable_binlog(A)   (A)->options= tmp_disable_binlog__save_options;}
@@ -2186,7 +2154,7 @@ class select_insert :public select_result_interceptor {
   TABLE_LIST *table_list;
   TABLE *table;
   List<Item> *fields;
-  ulonglong autoinc_value_of_last_inserted_row; // autogenerated or not
+  uint64_t autoinc_value_of_last_inserted_row; // autogenerated or not
   COPY_INFO info;
   bool insert_into_view;
   select_insert(TABLE_LIST *table_list_par,
@@ -2329,7 +2297,7 @@ public:
   bool flush();
   void cleanup();
   bool create_result_table(THD *thd, List<Item> *column_types,
-                           bool is_distinct, ulonglong options,
+                           bool is_distinct, uint64_t options,
                            const char *alias, bool bit_fields_as_long);
 };
 
@@ -2458,7 +2426,7 @@ class user_var_entry
   bool unsigned_flag;
 
   double val_real(my_bool *null_value);
-  longlong val_int(my_bool *null_value) const;
+  int64_t val_int(my_bool *null_value) const;
   String *val_str(my_bool *null_value, String *str, uint decimals);
   my_decimal *val_decimal(my_bool *null_value, my_decimal *result);
   DTCollation collation;
@@ -2476,7 +2444,7 @@ class Unique :public Sql_alloc
 {
   DYNAMIC_ARRAY file_ptrs;
   ulong max_elements;
-  ulonglong max_in_memory_size;
+  uint64_t max_in_memory_size;
   IO_CACHE file;
   TREE tree;
   uchar *record_pointers;
@@ -2486,7 +2454,7 @@ class Unique :public Sql_alloc
 public:
   ulong elements;
   Unique(qsort_cmp2 comp_func, void *comp_func_fixed_arg,
-	 uint size_arg, ulonglong max_in_memory_size_arg);
+	 uint size_arg, uint64_t max_in_memory_size_arg);
   ~Unique();
   ulong elements_in_tree() { return tree.elements_in_tree; }
   inline bool unique_add(void *ptr)
@@ -2498,11 +2466,11 @@ public:
 
   bool get(TABLE *table);
   static double get_use_cost(uint *buffer, uint nkeys, uint key_size, 
-                             ulonglong max_in_memory_size);
+                             uint64_t max_in_memory_size);
   inline static int get_cost_calc_buff_size(ulong nkeys, uint key_size, 
-                                            ulonglong max_in_memory_size)
+                                            uint64_t max_in_memory_size)
   {
-    register ulonglong max_elems_in_tree=
+    register uint64_t max_elems_in_tree=
       (1 + max_in_memory_size / ALIGN_SIZE(sizeof(TREE_ELEMENT)+key_size));
     return (int) (sizeof(uint)*(1 + nkeys/max_elems_in_tree));
   }

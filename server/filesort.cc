@@ -629,7 +629,7 @@ write_keys(SORTPARAM *param, register uchar **sort_keys, uint count,
                        MYF(MY_WME)))
     goto err;                                   /* purecov: inspected */
   /* check we won't have more buffpeks than we can possibly keep in memory */
-  if (my_b_tell(buffpek_pointers) + sizeof(BUFFPEK) > (ulonglong)UINT_MAX)
+  if (my_b_tell(buffpek_pointers) + sizeof(BUFFPEK) > (uint64_t)UINT_MAX)
     goto err;
   buffpek.file_pos= my_b_tell(tempfile);
   if ((ha_rows) count > param->max_rows)
@@ -774,7 +774,7 @@ static void make_sortkey(register SORTPARAM *param,
       }
       case INT_RESULT:
 	{
-          longlong value= item->val_int_result();
+          int64_t value= item->val_int_result();
           if (maybe_null)
           {
 	    *to++=1;				/* purecov: inspected */
@@ -1387,7 +1387,7 @@ sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
     else
     {
       sortorder->result_type= sortorder->item->result_type();
-      if (sortorder->item->result_as_longlong())
+      if (sortorder->item->result_as_int64_t())
         sortorder->result_type= INT_RESULT;
       switch (sortorder->result_type) {
       case STRING_RESULT:
@@ -1408,7 +1408,7 @@ sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
 	break;
       case INT_RESULT:
 #if SIZEOF_LONG_LONG > 4
-	sortorder->length=8;			// Size of intern longlong
+	sortorder->length=8;			// Size of intern int64_t
 #else
 	sortorder->length=4;
 #endif

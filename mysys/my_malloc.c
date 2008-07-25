@@ -22,8 +22,6 @@
 void *my_malloc(size_t size, myf my_flags)
 {
   void* point;
-  DBUG_ENTER("my_malloc");
-  DBUG_PRINT("my",("size: %lu  my_flags: %d", (ulong) size, my_flags));
 
   if (!size)
     size=1;					/* Safety */
@@ -39,8 +37,7 @@ void *my_malloc(size_t size, myf my_flags)
   }
   else if (my_flags & MY_ZEROFILL)
     bzero(point,size);
-  DBUG_PRINT("exit",("ptr: 0x%lx", (long) point));
-  DBUG_RETURN((void*) point);
+  return((void*) point);
 } /* my_malloc */
 
 
@@ -49,11 +46,9 @@ void *my_malloc(size_t size, myf my_flags)
 
 void my_no_flags_free(void* ptr)
 {
-  DBUG_ENTER("my_free");
-  DBUG_PRINT("my",("ptr: 0x%lx", (long) ptr));
   if (ptr)
     free(ptr);
-  DBUG_VOID_RETURN;
+  return;
 } /* my_free */
 
 

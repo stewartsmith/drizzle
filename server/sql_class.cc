@@ -67,7 +67,7 @@ template class List_iterator<Alter_column>;
 ****************************************************************************/
 
 extern "C" uchar *get_var_key(user_var_entry *entry, size_t *length,
-                              my_bool not_used __attribute__((unused)))
+                              bool not_used __attribute__((unused)))
 {
   *length= entry->name.length;
   return (uchar*) entry->name.str;
@@ -375,7 +375,7 @@ Diagnostics_area::reset_diagnostics_area()
 
 void
 Diagnostics_area::set_ok_status(THD *thd, ha_rows affected_rows_arg,
-                                ulonglong last_insert_id_arg,
+                                uint64_t last_insert_id_arg,
                                 const char *message_arg)
 {
   assert(! is_set());
@@ -493,14 +493,7 @@ THD::THD()
    in_lock_tables(0),
    bootstrap(0),
    derived_tables_processing(false),
-   m_lip(NULL),
-  /*
-    @todo The following is a work around for online backup and the DDL blocker.
-          It should be removed when the generalized solution is in place.
-          This is needed to ensure the restore (which uses DDL) is not blocked
-          when the DDL blocker is engaged.
-  */
-   DDL_exception(false)
+   m_lip(NULL)
 {
   ulong tmp;
 
@@ -1108,7 +1101,7 @@ bool THD::convert_string(String *s, CHARSET_INFO *from_cs, CHARSET_INFO *to_cs)
 
 void THD::update_charset()
 {
-  uint32 not_used;
+  uint32_t not_used;
   charset_is_system_charset= !String::needs_conversion(0,charset(),
                                                        system_charset_info,
                                                        &not_used);
@@ -2008,7 +2001,7 @@ bool select_max_min_finder_subselect::cmp_real()
 bool select_max_min_finder_subselect::cmp_int()
 {
   Item *maxmin= ((Item_singlerow_subselect *)item)->element_index(0);
-  longlong val1= cache->val_int(), val2= maxmin->val_int();
+  int64_t val1= cache->val_int(), val2= maxmin->val_int();
   if (fmax)
     return (cache->null_value && !maxmin->null_value) ||
       (!cache->null_value && !maxmin->null_value &&
@@ -2426,11 +2419,11 @@ void mark_transaction_to_rollback(THD *thd, bool all)
 pthread_mutex_t LOCK_xid_cache;
 HASH xid_cache;
 
-extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, my_bool);
+extern "C" uchar *xid_get_hash_key(const uchar *, size_t *, bool);
 extern "C" void xid_free_hash(void *);
 
 uchar *xid_get_hash_key(const uchar *ptr, size_t *length,
-                                  my_bool not_used __attribute__((unused)))
+                        bool not_used __attribute__((unused)))
 {
   *length=((XID_STATE*)ptr)->xid.key_length();
   return ((XID_STATE*)ptr)->xid.key();
@@ -2470,7 +2463,7 @@ XID_STATE *xid_cache_search(XID *xid)
 bool xid_cache_insert(XID *xid, enum xa_states xa_state)
 {
   XID_STATE *xs;
-  my_bool res;
+  bool res;
   pthread_mutex_lock(&LOCK_xid_cache);
   if (hash_search(&xid_cache, xid->key(), xid->key_length()))
     res=0;
@@ -2493,7 +2486,7 @@ bool xid_cache_insert(XID_STATE *xid_state)
   pthread_mutex_lock(&LOCK_xid_cache);
   assert(hash_search(&xid_cache, xid_state->xid.key(),
                           xid_state->xid.key_length())==0);
-  my_bool res=my_hash_insert(&xid_cache, (uchar*)xid_state);
+  bool res=my_hash_insert(&xid_cache, (uchar*)xid_state);
   pthread_mutex_unlock(&LOCK_xid_cache);
   return res;
 }
@@ -2536,7 +2529,7 @@ void xid_cache_delete(XID_STATE *xid_state)
  */
 
 template <class RowsEventT> Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE* table, uint32 serv_id,
+THD::binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
                                        size_t needed,
                                        bool is_transactional,
 				       RowsEventT *hint __attribute__((unused)))
@@ -2612,15 +2605,15 @@ THD::binlog_prepare_pending_rows_event(TABLE* table, uint32 serv_id,
   compiling option.
 */
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32, size_t, bool,
+THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
 				       Write_rows_log_event*);
 
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32, size_t, bool,
+THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
 				       Delete_rows_log_event *);
 
 template Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32, size_t, bool,
+THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
 				       Update_rows_log_event *);
 #endif
 
@@ -2953,8 +2946,8 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
   return(0);
 }
 
-bool Discrete_intervals_list::append(ulonglong start, ulonglong val,
-                                 ulonglong incr)
+bool Discrete_intervals_list::append(uint64_t start, uint64_t val,
+                                 uint64_t incr)
 {
   /* first, see if this can be merged with previous */
   if ((head == NULL) || tail->merge_if_contiguous(start, val, incr))

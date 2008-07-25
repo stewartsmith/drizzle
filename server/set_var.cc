@@ -42,7 +42,7 @@
 
   @note
     Be careful with var->save_result: sys_var::check() only updates
-    ulonglong_value; so other members of the union are garbage then; to use
+    uint64_t_value; so other members of the union are garbage then; to use
     them you must first assign a value to them (in specific ::check() for
     example).
 */
@@ -113,10 +113,10 @@ static void fix_max_connections(THD *thd, enum_var_type type);
 static void fix_thd_mem_root(THD *thd, enum_var_type type);
 static void fix_trans_mem_root(THD *thd, enum_var_type type);
 static void fix_server_id(THD *thd, enum_var_type type);
-static ulonglong fix_unsigned(THD *, ulonglong, const struct my_option *);
+static uint64_t fix_unsigned(THD *, uint64_t, const struct my_option *);
 static bool get_unsigned(THD *thd, set_var *var);
 bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
-                          const char *name, longlong val);
+                          const char *name, int64_t val);
 static KEY_CACHE *create_key_cache(const char *name, uint length);
 static uchar *get_error_count(THD *thd);
 static uchar *get_warning_count(THD *thd);
@@ -209,7 +209,6 @@ static sys_var_enum		sys_delay_key_write(&vars, "delay_key_write",
 static sys_var_long_ptr	sys_expire_logs_days(&vars, "expire_logs_days",
 					     &expire_logs_days);
 static sys_var_bool_ptr	sys_flush(&vars, "flush", &myisam_flush);
-static sys_var_long_ptr	sys_flush_time(&vars, "flush_time", &flush_time);
 sys_var_str             sys_init_connect(&vars, "init_connect", 0,
                                          sys_update_init_connect,
                                          sys_default_init_connect,0);
@@ -260,7 +259,7 @@ static sys_var_long_ptr	sys_max_connect_errors(&vars, "max_connect_errors",
 					       &max_connect_errors);
 static sys_var_thd_ulong	sys_max_error_count(&vars, "max_error_count",
 					    &SV::max_error_count);
-static sys_var_thd_ulonglong	sys_max_heap_table_size(&vars, "max_heap_table_size",
+static sys_var_thd_uint64_t	sys_max_heap_table_size(&vars, "max_heap_table_size",
 						&SV::max_heap_table_size);
 static sys_var_thd_ulong sys_pseudo_thread_id(&vars, "pseudo_thread_id",
                                               &SV::pseudo_thread_id,
@@ -273,11 +272,6 @@ static sys_var_thd_ulong	sys_max_seeks_for_key(&vars, "max_seeks_for_key",
 					      &SV::max_seeks_for_key);
 static sys_var_thd_ulong   sys_max_length_for_sort_data(&vars, "max_length_for_sort_data",
                                                  &SV::max_length_for_sort_data);
-#ifndef TO_BE_DELETED	/* Alias for max_join_size */
-static sys_var_thd_ha_rows	sys_sql_max_join_size(&vars, "sql_max_join_size",
-					      &SV::max_join_size,
-					      fix_max_join_size);
-#endif
 static sys_var_long_ptr	sys_max_relay_log_size(&vars, "max_relay_log_size",
                                                &max_relay_log_size,
                                                fix_max_relay_log_size);
@@ -292,7 +286,7 @@ static sys_var_thd_ulong       sys_min_examined_row_limit(&vars, "min_examined_r
                                                           &SV::min_examined_row_limit);
 static sys_var_long_ptr	sys_myisam_data_pointer_size(&vars, "myisam_data_pointer_size",
                                                     &myisam_data_pointer_size);
-static sys_var_thd_ulonglong	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
+static sys_var_thd_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
 static sys_var_thd_ulong       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
 static sys_var_thd_ulong	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
 
@@ -414,10 +408,9 @@ static sys_var_thd_enum	sys_tx_isolation(&vars, "tx_isolation",
 					 &tx_isolation_typelib,
 					 fix_tx_isolation,
 					 check_tx_isolation);
-static sys_var_thd_ulonglong	sys_tmp_table_size(&vars, "tmp_table_size",
+static sys_var_thd_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 					   &SV::tmp_table_size);
-static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes",
-                                    &timed_mutexes);
+static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
 static sys_var_const_str	sys_version(&vars, "version", server_version);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
                                             MYSQL_COMPILATION_COMMENT);
@@ -585,9 +578,6 @@ sys_var_thd_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
 
 static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
 static sys_var_have_variable sys_have_crypt(&vars, "have_crypt", &have_crypt);
-static sys_var_have_plugin sys_have_csv(&vars, "have_csv", C_STRING_WITH_LEN("csv"), MYSQL_STORAGE_ENGINE_PLUGIN);
-static sys_var_have_variable sys_have_dlopen(&vars, "have_dynamic_loading", &have_dlopen);
-static sys_var_have_plugin sys_have_innodb(&vars, "have_innodb", C_STRING_WITH_LEN("innodb"), MYSQL_STORAGE_ENGINE_PLUGIN);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
 /* Global read-only variable describing server license */
 static sys_var_const_str	sys_license(&vars, "license", STRINGIFY_ARG(LICENSE));
@@ -595,8 +585,7 @@ static sys_var_const_str	sys_license(&vars, "license", STRINGIFY_ARG(LICENSE));
 static sys_var_log_state sys_var_general_log(&vars, "general_log", &opt_log,
                                       QUERY_LOG_GENERAL);
 /* Synonym of "general_log" for consistency with SHOW VARIABLES output */
-static sys_var_log_state sys_var_log(&vars, "log", &opt_log,
-                                      QUERY_LOG_GENERAL);
+static sys_var_log_state sys_var_log(&vars, "log", &opt_log, QUERY_LOG_GENERAL);
 static sys_var_log_state sys_var_slow_query_log(&vars, "slow_query_log", &opt_slow_log,
                                          QUERY_LOG_SLOW);
 /* Synonym of "slow_query_log" for consistency with SHOW VARIABLES output */
@@ -640,7 +629,6 @@ static SHOW_VAR fixed_vars[]= {
   {"plugin_dir",              (char*) opt_plugin_dir,               SHOW_CHAR},
   {"port",                    (char*) &mysqld_port,                 SHOW_INT},
   {"protocol_version",        (char*) &protocol_version,            SHOW_INT},
-  {"skip_external_locking",   (char*) &my_disable_locking,          SHOW_MY_BOOL},
   {"skip_networking",         (char*) &opt_disable_networking,      SHOW_BOOL},
   {"skip_show_database",      (char*) &opt_skip_show_db,            SHOW_BOOL},
   {"thread_stack",            (char*) &my_thread_stack_size,        SHOW_LONG},
@@ -649,7 +637,7 @@ static SHOW_VAR fixed_vars[]= {
 
 bool sys_var::check(THD *thd __attribute__((__unused__)), set_var *var)
 {
-  var->save_result.ulonglong_value= var->value->val_int();
+  var->save_result.uint64_t_value= var->value->val_int();
   return 0;
 }
 
@@ -800,7 +788,7 @@ static void fix_completion_type(THD *thd __attribute__((unused)),
 static int check_completion_type(THD *thd __attribute__((__unused__)),
                                  set_var *var)
 {
-  longlong val= var->value->val_int();
+  int64_t val= var->value->val_int();
   if (val < 0 || val > 2)
   {
     char buf[64];
@@ -1035,14 +1023,14 @@ static void fix_server_id(THD *thd __attribute__((__unused__)),
 
 
 bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
-                          const char *name, longlong val)
+                          const char *name, int64_t val)
 {
   if (fixed)
   {
     char buf[22];
 
     if (unsignd)
-      ullstr((ulonglong) val, buf);
+      ullstr((uint64_t) val, buf);
     else
       llstr(val, buf);
 
@@ -1053,24 +1041,24 @@ bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
   return false;
 }
 
-static ulonglong fix_unsigned(THD *thd, ulonglong num,
+static uint64_t fix_unsigned(THD *thd, uint64_t num,
                               const struct my_option *option_limits)
 {
-  my_bool fixed= false;
-  ulonglong out= getopt_ull_limit_value(num, option_limits, &fixed);
+  bool fixed= false;
+  uint64_t out= getopt_ull_limit_value(num, option_limits, &fixed);
 
-  throw_bounds_warning(thd, fixed, true, option_limits->name, (longlong) num);
+  throw_bounds_warning(thd, fixed, true, option_limits->name, (int64_t) num);
   return out;
 }
 
 static bool get_unsigned(THD *thd __attribute__((__unused__)), set_var *var)
 {
   if (var->value->unsigned_flag)
-    var->save_result.ulonglong_value= (ulonglong) var->value->val_int();
+    var->save_result.uint64_t_value= (uint64_t) var->value->val_int();
   else
   {
-    longlong v= var->value->val_int();
-    var->save_result.ulonglong_value= (ulonglong) ((v < 0) ? 0 : v);
+    int64_t v= var->value->val_int();
+    var->save_result.uint64_t_value= (uint64_t) ((v < 0) ? 0 : v);
   }
   return 0;
 }
@@ -1091,7 +1079,7 @@ bool sys_var_long_ptr_global::check(THD *thd, set_var *var)
 
 bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
 {
-  ulonglong tmp= var->save_result.ulonglong_value;
+  uint64_t tmp= var->save_result.uint64_t_value;
   pthread_mutex_lock(guard);
   if (option_limits)
     *value= (ulong) fix_unsigned(thd, tmp, option_limits);
@@ -1103,7 +1091,7 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
     {
       tmp= ULONG_MAX;
       throw_bounds_warning(thd, true, true, name,
-                           (longlong) var->save_result.ulonglong_value);
+                           (int64_t) var->save_result.uint64_t_value);
     }
 #endif
     *value= (ulong) tmp;
@@ -1116,7 +1104,7 @@ bool sys_var_long_ptr_global::update(THD *thd, set_var *var)
 
 void sys_var_long_ptr_global::set_default(THD *thd __attribute__((__unused__)), enum_var_type type __attribute__((__unused__)))
 {
-  my_bool not_used;
+  bool not_used;
   pthread_mutex_lock(guard);
   *value= (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
                                          option_limits, &not_used);
@@ -1124,25 +1112,25 @@ void sys_var_long_ptr_global::set_default(THD *thd __attribute__((__unused__)), 
 }
 
 
-bool sys_var_ulonglong_ptr::update(THD *thd, set_var *var)
+bool sys_var_uint64_t_ptr::update(THD *thd, set_var *var)
 {
-  ulonglong tmp= var->save_result.ulonglong_value;
+  uint64_t tmp= var->save_result.uint64_t_value;
   pthread_mutex_lock(&LOCK_global_system_variables);
   if (option_limits)
-    *value= (ulonglong) fix_unsigned(thd, tmp, option_limits);
+    *value= (uint64_t) fix_unsigned(thd, tmp, option_limits);
   else
-    *value= (ulonglong) tmp;
+    *value= (uint64_t) tmp;
   pthread_mutex_unlock(&LOCK_global_system_variables);
   return 0;
 }
 
 
-void sys_var_ulonglong_ptr::set_default(THD *thd __attribute__((__unused__)),
+void sys_var_uint64_t_ptr::set_default(THD *thd __attribute__((__unused__)),
                                         enum_var_type type __attribute__((__unused__)))
 {
-  my_bool not_used;
+  bool not_used;
   pthread_mutex_lock(&LOCK_global_system_variables);
-  *value= getopt_ull_limit_value((ulonglong) option_limits->def_value,
+  *value= getopt_ull_limit_value((uint64_t) option_limits->def_value,
                                  option_limits, &not_used);
   pthread_mutex_unlock(&LOCK_global_system_variables);
 }
@@ -1150,14 +1138,14 @@ void sys_var_ulonglong_ptr::set_default(THD *thd __attribute__((__unused__)),
 
 bool sys_var_bool_ptr::update(THD *thd __attribute__((__unused__)), set_var *var)
 {
-  *value= (my_bool) var->save_result.ulong_value;
+  *value= (bool) var->save_result.ulong_value;
   return 0;
 }
 
 
 void sys_var_bool_ptr::set_default(THD *thd __attribute__((__unused__)), enum_var_type type __attribute__((__unused__)))
 {
-  *value= (my_bool) option_limits->def_value;
+  *value= (bool) option_limits->def_value;
 }
 
 
@@ -1191,12 +1179,12 @@ bool sys_var_thd_ulong::check(THD *thd, set_var *var)
 
 bool sys_var_thd_ulong::update(THD *thd, set_var *var)
 {
-  ulonglong tmp= var->save_result.ulonglong_value;
+  uint64_t tmp= var->save_result.uint64_t_value;
   
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((ulong) tmp > max_system_variables.*offset)
   {
-    throw_bounds_warning(thd, true, true, name, (longlong) tmp);
+    throw_bounds_warning(thd, true, true, name, (int64_t) tmp);
     tmp= max_system_variables.*offset;
   }
   
@@ -1206,7 +1194,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
   else if (tmp > ULONG_MAX)
   {
     tmp= ULONG_MAX;
-    throw_bounds_warning(thd, true, true, name, (longlong) var->save_result.ulonglong_value);
+    throw_bounds_warning(thd, true, true, name, (int64_t) var->save_result.uint64_t_value);
   }
 #endif
   
@@ -1223,7 +1211,7 @@ bool sys_var_thd_ulong::update(THD *thd, set_var *var)
  {
    if (type == OPT_GLOBAL)
    {
-     my_bool not_used;
+     bool not_used;
      /* We will not come here if option_limits is not set */
      global_system_variables.*offset=
        (ulong) getopt_ull_limit_value((ulong) option_limits->def_value,
@@ -1245,7 +1233,7 @@ uchar *sys_var_thd_ulong::value_ptr(THD *thd, enum_var_type type,
 
 bool sys_var_thd_ha_rows::update(THD *thd, set_var *var)
 {
-  ulonglong tmp= var->save_result.ulonglong_value;
+  uint64_t tmp= var->save_result.uint64_t_value;
 
   /* Don't use bigger value than given with --maximum-variable-name=.. */
   if ((ha_rows) tmp > max_system_variables.*offset)
@@ -1270,7 +1258,7 @@ void sys_var_thd_ha_rows::set_default(THD *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
   {
-    my_bool not_used;
+    bool not_used;
     /* We will not come here if option_limits is not set */
     pthread_mutex_lock(&LOCK_global_system_variables);
     global_system_variables.*offset=
@@ -1291,14 +1279,14 @@ uchar *sys_var_thd_ha_rows::value_ptr(THD *thd, enum_var_type type,
   return (uchar*) &(thd->variables.*offset);
 }
 
-bool sys_var_thd_ulonglong::check(THD *thd, set_var *var)
+bool sys_var_thd_uint64_t::check(THD *thd, set_var *var)
 {
   return get_unsigned(thd, var);
 }
 
-bool sys_var_thd_ulonglong::update(THD *thd,  set_var *var)
+bool sys_var_thd_uint64_t::update(THD *thd,  set_var *var)
 {
-  ulonglong tmp= var->save_result.ulonglong_value;
+  uint64_t tmp= var->save_result.uint64_t_value;
 
   if (tmp > max_system_variables.*offset)
     tmp= max_system_variables.*offset;
@@ -1309,23 +1297,23 @@ bool sys_var_thd_ulonglong::update(THD *thd,  set_var *var)
   {
     /* Lock is needed to make things safe on 32 bit systems */
     pthread_mutex_lock(&LOCK_global_system_variables);
-    global_system_variables.*offset= (ulonglong) tmp;
+    global_system_variables.*offset= (uint64_t) tmp;
     pthread_mutex_unlock(&LOCK_global_system_variables);
   }
   else
-    thd->variables.*offset= (ulonglong) tmp;
+    thd->variables.*offset= (uint64_t) tmp;
   return 0;
 }
 
 
-void sys_var_thd_ulonglong::set_default(THD *thd, enum_var_type type)
+void sys_var_thd_uint64_t::set_default(THD *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
   {
-    my_bool not_used;
+    bool not_used;
     pthread_mutex_lock(&LOCK_global_system_variables);
     global_system_variables.*offset=
-      getopt_ull_limit_value((ulonglong) option_limits->def_value,
+      getopt_ull_limit_value((uint64_t) option_limits->def_value,
                              option_limits, &not_used);
     pthread_mutex_unlock(&LOCK_global_system_variables);
   }
@@ -1334,7 +1322,7 @@ void sys_var_thd_ulonglong::set_default(THD *thd, enum_var_type type)
 }
 
 
-uchar *sys_var_thd_ulonglong::value_ptr(THD *thd, enum_var_type type,
+uchar *sys_var_thd_uint64_t::value_ptr(THD *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((__unused__)))
 {
   if (type == OPT_GLOBAL)
@@ -1346,9 +1334,9 @@ uchar *sys_var_thd_ulonglong::value_ptr(THD *thd, enum_var_type type,
 bool sys_var_thd_bool::update(THD *thd,  set_var *var)
 {
   if (var->type == OPT_GLOBAL)
-    global_system_variables.*offset= (my_bool) var->save_result.ulong_value;
+    global_system_variables.*offset= (bool) var->save_result.ulong_value;
   else
-    thd->variables.*offset= (my_bool) var->save_result.ulong_value;
+    thd->variables.*offset= (bool) var->save_result.ulong_value;
   return 0;
 }
 
@@ -1356,7 +1344,7 @@ bool sys_var_thd_bool::update(THD *thd,  set_var *var)
 void sys_var_thd_bool::set_default(THD *thd,  enum_var_type type)
 {
   if (type == OPT_GLOBAL)
-    global_system_variables.*offset= (my_bool) option_limits->def_value;
+    global_system_variables.*offset= (bool) option_limits->def_value;
   else
     thd->variables.*offset= global_system_variables.*offset;
 }
@@ -1391,7 +1379,7 @@ bool sys_var::check_enum(THD *thd __attribute__((__unused__)),
   }
   else
   {
-    ulonglong tmp=var->value->val_int();
+    uint64_t tmp=var->value->val_int();
     if (tmp >= enum_names->count)
     {
       llstr(tmp,buff);
@@ -1445,7 +1433,7 @@ bool sys_var::check_set(THD *thd __attribute__((__unused__)),
   }
   else
   {
-    ulonglong tmp= var->value->val_int();
+    uint64_t tmp= var->value->val_int();
 
     if (!m_allow_empty_value &&
         tmp == 0)
@@ -1503,7 +1491,7 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(uint*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
-    return new Item_uint((ulonglong) value);
+    return new Item_uint((uint64_t) value);
   }
   case SHOW_LONG:
   {
@@ -1511,13 +1499,13 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(ulong*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
-    return new Item_uint((ulonglong) value);
+    return new Item_uint((uint64_t) value);
   }
   case SHOW_LONGLONG:
   {
-    longlong value;
+    int64_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
-    value= *(longlong*) value_ptr(thd, var_type, base);
+    value= *(int64_t*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_int(value);
   }
@@ -1536,13 +1524,13 @@ Item *sys_var::item(THD *thd, enum_var_type var_type, LEX_STRING *base)
     pthread_mutex_lock(&LOCK_global_system_variables);
     value= *(ha_rows*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
-    return new Item_int((ulonglong) value);
+    return new Item_int((uint64_t) value);
   }
   case SHOW_MY_BOOL:
   {
-    int32 value;
+    int32_t value;
     pthread_mutex_lock(&LOCK_global_system_variables);
-    value= *(my_bool*) value_ptr(thd, var_type, base);
+    value= *(bool*) value_ptr(thd, var_type, base);
     pthread_mutex_unlock(&LOCK_global_system_variables);
     return new Item_int(value,1);
   }
@@ -1637,9 +1625,9 @@ uchar *sys_var_thd_bit::value_ptr(THD *thd,
     If reverse is 0 (default) return 1 if bit is set.
     If reverse is 1, return 0 if bit is set
   */
-  thd->sys_var_tmp.my_bool_value= ((thd->options & bit_flag) ?
+  thd->sys_var_tmp.bool_value= ((thd->options & bit_flag) ?
 				   !reverse : reverse);
-  return (uchar*) &thd->sys_var_tmp.my_bool_value;
+  return (uchar*) &thd->sys_var_tmp.bool_value;
 }
 
 
@@ -1988,7 +1976,7 @@ uchar *sys_var_key_cache_param::value_ptr(THD *thd __attribute__((__unused__)),
 
 bool sys_var_key_buffer_size::update(THD *thd, set_var *var)
 {
-  ulonglong tmp= var->save_result.ulonglong_value;
+  uint64_t tmp= var->save_result.uint64_t_value;
   LEX_STRING *base_name= &var->base;
   KEY_CACHE *key_cache;
   bool error= 0;
@@ -2053,7 +2041,7 @@ bool sys_var_key_buffer_size::update(THD *thd, set_var *var)
   }
 
   key_cache->param_buff_size=
-    (ulonglong) fix_unsigned(thd, tmp, option_limits);
+    (uint64_t) fix_unsigned(thd, tmp, option_limits);
 
   /* If key cache didn't existed initialize it, else resize it */
   key_cache->in_init= 1;
@@ -2392,7 +2380,7 @@ int set_var_collation_client::update(THD *thd)
 
 bool sys_var_timestamp::update(THD *thd,  set_var *var)
 {
-  thd->set_time((time_t) var->save_result.ulonglong_value);
+  thd->set_time((time_t) var->save_result.uint64_t_value);
   return 0;
 }
 
@@ -2416,7 +2404,7 @@ uchar *sys_var_timestamp::value_ptr(THD *thd,
 bool sys_var_last_insert_id::update(THD *thd, set_var *var)
 {
   thd->first_successful_insert_id_in_prev_stmt=
-    var->save_result.ulonglong_value;
+    var->save_result.uint64_t_value;
   return 0;
 }
 
@@ -2429,15 +2417,15 @@ uchar *sys_var_last_insert_id::value_ptr(THD *thd,
     this tmp var makes it robust againt change of type of
     read_first_successful_insert_id_in_prev_stmt().
   */
-  thd->sys_var_tmp.ulonglong_value= 
+  thd->sys_var_tmp.uint64_t_value= 
     thd->read_first_successful_insert_id_in_prev_stmt();
-  return (uchar*) &thd->sys_var_tmp.ulonglong_value;
+  return (uchar*) &thd->sys_var_tmp.uint64_t_value;
 }
 
 
 bool sys_var_insert_id::update(THD *thd, set_var *var)
 {
-  thd->force_one_auto_inc_interval(var->save_result.ulonglong_value);
+  thd->force_one_auto_inc_interval(var->save_result.uint64_t_value);
   return 0;
 }
 
@@ -2446,21 +2434,21 @@ uchar *sys_var_insert_id::value_ptr(THD *thd,
                                     enum_var_type type __attribute__((__unused__)),
                                     LEX_STRING *base __attribute__((__unused__)))
 {
-  thd->sys_var_tmp.ulonglong_value=
+  thd->sys_var_tmp.uint64_t_value=
     thd->auto_inc_intervals_forced.minimum();
-  return (uchar*) &thd->sys_var_tmp.ulonglong_value;
+  return (uchar*) &thd->sys_var_tmp.uint64_t_value;
 }
 
 
 bool sys_var_rand_seed1::update(THD *thd, set_var *var)
 {
-  thd->rand.seed1= (ulong) var->save_result.ulonglong_value;
+  thd->rand.seed1= (ulong) var->save_result.uint64_t_value;
   return 0;
 }
 
 bool sys_var_rand_seed2::update(THD *thd, set_var *var)
 {
-  thd->rand.seed2= (ulong) var->save_result.ulonglong_value;
+  thd->rand.seed2= (ulong) var->save_result.uint64_t_value;
   return 0;
 }
 
@@ -2563,7 +2551,7 @@ bool sys_var_max_user_conn::update(THD *thd __attribute__((__unused__)),
 {
   assert(var->type == OPT_GLOBAL);
   pthread_mutex_lock(&LOCK_global_system_variables);
-  max_user_connections= (uint)var->save_result.ulonglong_value;
+  max_user_connections= (uint)var->save_result.uint64_t_value;
   pthread_mutex_unlock(&LOCK_global_system_variables);
   return 0;
 }
@@ -2660,19 +2648,19 @@ void sys_var_thd_lc_time_names::set_default(THD *thd, enum_var_type type)
 
   NOTES
     The argument to long query time is in seconds in decimal
-    which is converted to ulonglong integer holding microseconds for storage.
+    which is converted to uint64_t integer holding microseconds for storage.
     This is used for handling long_query_time
 */
 
 bool sys_var_microseconds::update(THD *thd, set_var *var)
 {
   double num= var->value->val_real();
-  longlong microseconds;
+  int64_t microseconds;
   if (num > (double) option_limits->max_value)
     num= (double) option_limits->max_value;
   if (num < (double) option_limits->min_value)
     num= (double) option_limits->min_value;
-  microseconds= (longlong) (num * 1000000.0 + 0.5);
+  microseconds= (int64_t) (num * 1000000.0 + 0.5);
   if (var->type == OPT_GLOBAL)
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
@@ -2687,7 +2675,7 @@ bool sys_var_microseconds::update(THD *thd, set_var *var)
 
 void sys_var_microseconds::set_default(THD *thd, enum_var_type type)
 {
-  longlong microseconds= (longlong) (option_limits->def_value * 1000000.0);
+  int64_t microseconds= (int64_t) (option_limits->def_value * 1000000.0);
   if (type == OPT_GLOBAL)
   {
     pthread_mutex_lock(&LOCK_global_system_variables);
@@ -2728,7 +2716,7 @@ static bool set_option_autocommit(THD *thd, set_var *var)
 {
   /* The test is negative as the flag we use is NOT autocommit */
 
-  ulonglong org_options= thd->options;
+  uint64_t org_options= thd->options;
 
   if (var->save_result.ulong_value != 0)
     thd->options&= ~((sys_var_thd_bit*) var->var)->bit_flag;
@@ -2740,7 +2728,7 @@ static bool set_option_autocommit(THD *thd, set_var *var)
     if ((org_options & OPTION_NOT_AUTOCOMMIT))
     {
       /* We changed to auto_commit mode */
-      thd->options&= ~(ulonglong) (OPTION_BEGIN | OPTION_KEEP_LOG);
+      thd->options&= ~(uint64_t) (OPTION_BEGIN | OPTION_KEEP_LOG);
       thd->transaction.all.modified_non_trans_table= false;
       thd->server_status|= SERVER_STATUS_AUTOCOMMIT;
       if (ha_commit(thd))
@@ -2788,7 +2776,7 @@ static bool set_log_update(THD *thd __attribute__((__unused__)),
 static int check_pseudo_thread_id(THD *thd __attribute__((__unused__)),
                                   set_var *var)
 {
-  var->save_result.ulonglong_value= var->value->val_int();
+  var->save_result.uint64_t_value= var->value->val_int();
   return 0;
 }
 
@@ -2874,7 +2862,7 @@ static struct my_option *find_option(struct my_option *opt, const char *name)
 */
 
 static uchar *get_sys_var_length(const sys_var *var, size_t *length,
-                                 my_bool first __attribute__((__unused__)))
+                                 bool first __attribute__((__unused__)))
 {
   *length= var->name_length;
   return (uchar*) var->name;
@@ -3027,14 +3015,6 @@ int set_var_init()
   vars.last->next= NULL;
   if (mysql_add_sys_var_chain(vars.first, my_long_options))
     goto error;
-
-  /*
-    Special cases
-    Needed because MySQL can't find the limits for a variable it it has
-    a different name than the command line option.
-    As these variables are deprecated, this code will disappear soon...
-  */
-  sys_sql_max_join_size.option_limits= sys_max_join_size.option_limits;
 
   return(0);
 
@@ -3356,7 +3336,7 @@ bool sys_var_thd_storage_engine::update(THD *thd, set_var *var)
 
 bool
 sys_var_thd_optimizer_switch::
-symbolic_mode_representation(THD *thd, ulonglong val, LEX_STRING *rep)
+symbolic_mode_representation(THD *thd, uint64_t val, LEX_STRING *rep)
 {
   char buff[STRING_BUFFER_USUAL_SIZE*8];
   String tmp(buff, sizeof(buff), &my_charset_latin1);
@@ -3388,7 +3368,7 @@ uchar *sys_var_thd_optimizer_switch::value_ptr(THD *thd, enum_var_type type,
                                                LEX_STRING *base __attribute__((__unused__)))
 {
   LEX_STRING opts;
-  ulonglong val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :
+  uint64_t val= ((type == OPT_GLOBAL) ? global_system_variables.*offset :
                   thd->variables.*offset);
   (void) symbolic_mode_representation(thd, val, &opts);
   return (uchar *) opts.str;

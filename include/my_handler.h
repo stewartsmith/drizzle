@@ -48,16 +48,16 @@ extern "C" {
 typedef struct st_HA_KEYSEG		/* Key-portion */
 {
   CHARSET_INFO *charset;
-  uint32 start;				/* Start of key in record */
-  uint32 null_pos;			/* position to NULL indicator */
-  uint16 bit_pos;                       /* Position to bit part */
-  uint16 flag;
-  uint16 length;			/* Keylength */
-  uint8  type;				/* Type of key (for sort) */
-  uint8  language;
-  uint8  null_bit;			/* bitmask to test for NULL */
-  uint8  bit_start,bit_end;		/* if bit field */
-  uint8  bit_length;                    /* Length of bit part */
+  uint32_t start;				/* Start of key in record */
+  uint32_t null_pos;			/* position to NULL indicator */
+  uint16_t bit_pos;                       /* Position to bit part */
+  uint16_t flag;
+  uint16_t length;			/* Keylength */
+  uint8_t  type;				/* Type of key (for sort) */
+  uint8_t  language;
+  uint8_t  null_bit;			/* bitmask to test for NULL */
+  uint8_t  bit_start,bit_end;		/* if bit field */
+  uint8_t  bit_length;                    /* Length of bit part */
 } HA_KEYSEG;
 
 #define get_key_length(length,key) \
@@ -91,7 +91,7 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 #define size_to_store_key_length(length) ((length) < 255 ? 1 : 3)
 
 #define get_rec_bits(bit_ptr, bit_ofs, bit_len) \
-  (((((uint16) (bit_ptr)[1] << 8) | (uint16) (bit_ptr)[0]) >> (bit_ofs)) & \
+  (((((uint16_t) (bit_ptr)[1] << 8) | (uint16_t) (bit_ptr)[0]) >> (bit_ofs)) & \
    ((1 << (bit_len)) - 1))
 
 #define set_rec_bits(bits, bit_ptr, bit_ofs, bit_len) \
@@ -106,8 +106,7 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 #define clr_rec_bits(bit_ptr, bit_ofs, bit_len) \
   set_rec_bits(0, bit_ptr, bit_ofs, bit_len)
 
-extern int ha_compare_text(CHARSET_INFO *, uchar *, uint, uchar *, uint ,
-			   my_bool, my_bool);
+extern int ha_compare_text(CHARSET_INFO *, uchar *, uint, uchar *, uint, bool, bool);
 
 extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, uchar *a);
 extern void my_handler_error_register(void);

@@ -51,20 +51,19 @@ int
 my_b_copy_to_file(IO_CACHE *cache, FILE *file)
 {
   size_t bytes_in_cache;
-  DBUG_ENTER("my_b_copy_to_file");
 
   /* Reinit the cache to read from the beginning of the cache */
-  if (reinit_io_cache(cache, READ_CACHE, 0L, FALSE, FALSE))
-    DBUG_RETURN(1);
+  if (reinit_io_cache(cache, READ_CACHE, 0L, false, false))
+    return(1);
   bytes_in_cache= my_b_bytes_in_cache(cache);
   do
   {
     if (my_fwrite(file, cache->read_pos, bytes_in_cache,
                   MYF(MY_WME | MY_NABP)) == (size_t) -1)
-      DBUG_RETURN(1);
+      return(1);
     cache->read_pos= cache->read_end;
   } while ((bytes_in_cache= my_b_fill(cache)));
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -74,7 +73,7 @@ my_off_t my_b_append_tell(IO_CACHE* info)
     Prevent optimizer from putting res in a register when debugging
     we need this to be able to see the value of res when the assert fails
   */
-  dbug_volatile my_off_t res; 
+  volatile my_off_t res; 
 
   /*
     We need to lock the append buffer mutex to keep flush_io_cache()
@@ -82,24 +81,6 @@ my_off_t my_b_append_tell(IO_CACHE* info)
     answer to the question.
   */
   pthread_mutex_lock(&info->append_buffer_lock);
-#ifndef DBUG_OFF
-  /*
-    Make sure EOF is where we think it is. Note that we cannot just use
-    my_tell() because we have a reader thread that could have left the
-    file offset in a non-EOF location
-  */
-  {
-    volatile my_off_t save_pos;
-    save_pos = my_tell(info->file,MYF(0));
-    my_seek(info->file,(my_off_t)0,MY_SEEK_END,MYF(0));
-    /*
-      Save the value of my_tell in res so we can see it when studying coredump
-    */
-    DBUG_ASSERT(info->end_of_file - (info->append_read_pos-info->write_buffer)
-		== (res=my_tell(info->file,MYF(0))));
-    my_seek(info->file,save_pos,MY_SEEK_SET,MYF(0));
-  }
-#endif  
   res = info->end_of_file + (info->write_pos-info->append_read_pos);
   pthread_mutex_unlock(&info->append_buffer_lock);
   return res;
@@ -120,8 +101,6 @@ my_off_t my_b_safe_tell(IO_CACHE *info)
 void my_b_seek(IO_CACHE *info,my_off_t pos)
 {
   my_off_t offset;
-  DBUG_ENTER("my_b_seek");
-  DBUG_PRINT("enter",("pos: %lu", (ulong) pos));
 
   /*
     TODO:
@@ -138,11 +117,11 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   if (info->type == READ_CACHE || info->type == SEQ_READ_APPEND)
   {
     /* TODO: explain why this works if pos < info->pos_in_file */
-    if ((ulonglong) offset < (ulonglong) (info->read_end - info->buffer))
+    if ((uint64_t) offset < (uint64_t) (info->read_end - info->buffer))
     {
       /* The read is in the current buffer; Reuse it */
       info->read_pos = info->buffer + offset;
-      DBUG_VOID_RETURN;
+      return;
     }
     else
     {
@@ -153,11 +132,11 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   else if (info->type == WRITE_CACHE)
   {
     /* If write is in current buffer, reuse it */
-    if ((ulonglong) offset <
-	(ulonglong) (info->write_end - info->write_buffer))
+    if ((uint64_t) offset <
+	(uint64_t) (info->write_end - info->write_buffer))
     {
       info->write_pos = info->write_buffer + offset;
-      DBUG_VOID_RETURN;
+      return;
     }
     VOID(flush_io_cache(info));
     /* Correct buffer end so that we write in increments of IO_SIZE */
@@ -166,7 +145,7 @@ void my_b_seek(IO_CACHE *info,my_off_t pos)
   }
   info->pos_in_file=pos;
   info->seek_not_done=1;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -300,7 +279,7 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
   uint minimum_width; /* as yet unimplemented */
   uint minimum_width_sign;
   uint precision; /* as yet unimplemented for anything but %b */
-  my_bool is_zero_padded;
+  bool is_zero_padded;
 
   /*
     Store the location of the beginning of a format directive, for the
@@ -330,11 +309,11 @@ size_t my_b_vprintf(IO_CACHE *info, const char* fmt, va_list args)
       By this point, *fmt must be a percent;  Keep track of this location and
       skip over the percent character. 
     */
-    DBUG_ASSERT(*fmt == '%');
+    assert(*fmt == '%');
     backtrack= fmt;
     fmt++;
 
-    is_zero_padded= FALSE;
+    is_zero_padded= false;
     minimum_width_sign= 1;
     minimum_width= 0;
     precision= 0;
@@ -346,7 +325,7 @@ process_flags:
       case '-': 
         minimum_width_sign= -1; fmt++; goto process_flags;
       case '0':
-        is_zero_padded= TRUE; fmt++; goto process_flags;
+        is_zero_padded= true; fmt++; goto process_flags;
       case '#':
         /** @todo Implement "#" conversion flag. */  fmt++; goto process_flags;
       case ' ':

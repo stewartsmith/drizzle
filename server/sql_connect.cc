@@ -91,7 +91,7 @@ check_user(THD *thd, enum enum_server_command command,
   */
   thd->reset_db(NULL, 0);
 
-  my_bool opt_secure_auth_local;
+  bool opt_secure_auth_local;
   pthread_mutex_lock(&LOCK_global_system_variables);
   opt_secure_auth_local= opt_secure_auth;
   pthread_mutex_unlock(&LOCK_global_system_variables);
@@ -174,7 +174,7 @@ check_user(THD *thd, enum enum_server_command command,
 */
 
 extern "C" uchar *get_key_conn(user_conn *buff, size_t *length,
-			      my_bool not_used __attribute__((unused)))
+                               bool not_used __attribute__((unused)))
 {
   *length= buff->len;
   return (uchar*) buff->user;

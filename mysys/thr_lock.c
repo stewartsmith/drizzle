@@ -70,17 +70,13 @@ multiple read locks.
 
 */
 
-#if !defined(MAIN) && !defined(DBUG_OFF) && !defined(EXTRA_DEBUG)
-#define FORCE_DBUG_OFF
-#endif
-
 #include "mysys_priv.h"
 
 #include "thr_lock.h"
 #include <m_string.h>
 #include <errno.h>
 
-my_bool thr_lock_inited=0;
+bool thr_lock_inited=0;
 ulong locks_immediate = 0L, locks_waited = 0L;
 ulong table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
@@ -102,25 +98,24 @@ static inline pthread_cond_t *get_cond(void)
 ** For the future (now the thread specific cond is alloced by my_pthread.c)
 */
 
-my_bool init_thr_lock()
+bool init_thr_lock()
 {
   thr_lock_inited=1;
   return 0;
 }
 
-static inline my_bool
+static inline bool
 thr_lock_owner_equal(THR_LOCK_OWNER *rhs, THR_LOCK_OWNER *lhs)
 {
   return rhs == lhs;
 }
-
 
 #ifdef EXTRA_DEBUG
 #define MAX_FOUND_ERRORS	10		/* Report 10 first errors */
 static uint found_errors=0;
 
 static int check_lock(struct st_lock_list *list, const char* lock_type,
-		      const char *where, my_bool same_owner, my_bool no_cond)
+		      const char *where, bool same_owner, bool no_cond)
 {
   THR_LOCK_DATA *data,**prev;
   uint count=0;
@@ -180,10 +175,9 @@ static int check_lock(struct st_lock_list *list, const char* lock_type,
 
 
 static void check_locks(THR_LOCK *lock, const char *where,
-			my_bool allow_no_locks)
+			bool allow_no_locks)
 {
   uint old_found_errors=found_errors;
-  DBUG_ENTER("check_locks");
 
   if (found_errors < MAX_FOUND_ERRORS)
   {
@@ -202,7 +196,7 @@ static void check_locks(THR_LOCK *lock, const char *where,
 	if ((int) data->type == (int) TL_READ_NO_INSERT)
 	  count++;
         /* Protect against infinite loop. */
-        DBUG_ASSERT(count <= lock->read_no_write_count);
+        assert(count <= lock->read_no_write_count);
       }
       if (count != lock->read_no_write_count)
       {
@@ -275,9 +269,6 @@ static void check_locks(THR_LOCK *lock, const char *where,
 	    fprintf(stderr,
 		    "Warning at '%s': Found lock of type %d that is write and read locked\n",
 		    where, lock->write.data->type);
-	    DBUG_PRINT("warning",("At '%s': Found lock of type %d that is write and read locked\n",
-		    where, lock->write.data->type));
-
 	  }
 	}
 	if (lock->read_wait.data)
@@ -295,12 +286,8 @@ static void check_locks(THR_LOCK *lock, const char *where,
 	}
       }
     }
-    if (found_errors != old_found_errors)
-    {
-      DBUG_PRINT("error",("Found wrong lock"));
-    }
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 #else /* EXTRA_DEBUG */
@@ -312,7 +299,6 @@ static void check_locks(THR_LOCK *lock, const char *where,
 
 void thr_lock_init(THR_LOCK *lock)
 {
-  DBUG_ENTER("thr_lock_init");
   bzero((char*) lock,sizeof(*lock));
   VOID(pthread_mutex_init(&lock->mutex,MY_MUTEX_INIT_FAST));
   lock->read.last= &lock->read.data;
@@ -324,18 +310,17 @@ void thr_lock_init(THR_LOCK *lock)
   lock->list.data=(void*) lock;
   thr_lock_thread_list=list_add(thr_lock_thread_list,&lock->list);
   pthread_mutex_unlock(&THR_LOCK_lock);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
 void thr_lock_delete(THR_LOCK *lock)
 {
-  DBUG_ENTER("thr_lock_delete");
   VOID(pthread_mutex_destroy(&lock->mutex));
   pthread_mutex_lock(&THR_LOCK_lock);
   thr_lock_thread_list=list_delete(thr_lock_thread_list,&lock->list);
   pthread_mutex_unlock(&THR_LOCK_lock);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -359,7 +344,7 @@ void thr_lock_data_init(THR_LOCK *lock,THR_LOCK_DATA *data, void *param)
 }
 
 
-static inline my_bool
+static inline bool
 have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
 {
   for ( ; data ; data=data->next)
@@ -370,7 +355,7 @@ have_old_read_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner)
   return 0;
 }
 
-static inline my_bool have_specific_lock(THR_LOCK_DATA *data,
+static inline bool have_specific_lock(THR_LOCK_DATA *data,
 					 enum thr_lock_type type)
 {
   for ( ; data ; data=data->next)
@@ -387,14 +372,13 @@ static void wake_up_waiters(THR_LOCK *lock);
 
 static enum enum_thr_lock_result
 wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
-              my_bool in_wait_list)
+              bool in_wait_list)
 {
   struct st_my_thread_var *thread_var= my_thread_var;
   pthread_cond_t *cond= &thread_var->suspend;
   struct timespec wait_timeout;
   enum enum_thr_lock_result result= THR_LOCK_ABORTED;
-  my_bool can_deadlock= test(data->owner->info->n_cursors);
-  DBUG_ENTER("wait_for_lock");
+  bool can_deadlock= test(data->owner->info->n_cursors);
 
   if (!in_wait_list)
   {
@@ -433,21 +417,16 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
     */
     if (data->cond == 0)
     {
-      DBUG_PRINT("thr_lock", ("lock granted/aborted"));
       break;
     }
     if (rc == ETIMEDOUT || rc == ETIME)
     {
       /* purecov: begin inspected */
-      DBUG_PRINT("thr_lock", ("lock timed out"));
       result= THR_LOCK_WAIT_TIMEOUT;
       break;
       /* purecov: end */
     }
   }
-  DBUG_PRINT("thr_lock", ("aborted: %d  in_wait_list: %d",
-                          thread_var->abort, in_wait_list));
-
   if (data->cond || data->type == TL_UNLOCK)
   {
     if (data->cond)                             /* aborted or timed out */
@@ -462,7 +441,6 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
     }
     else
     {
-      DBUG_PRINT("thr_lock", ("lock aborted"));
       check_locks(data->lock, "aborted wait_for_lock", 0);
     }
   }
@@ -480,7 +458,7 @@ wait_for_lock(struct st_lock_list *wait, THR_LOCK_DATA *data,
   thread_var->current_mutex= 0;
   thread_var->current_cond=  0;
   pthread_mutex_unlock(&thread_var->mutex);
-  DBUG_RETURN(result);
+  return(result);
 }
 
 
@@ -492,16 +470,12 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
   enum enum_thr_lock_result result= THR_LOCK_SUCCESS;
   struct st_lock_list *wait_queue;
   THR_LOCK_DATA *lock_owner;
-  DBUG_ENTER("thr_lock");
 
   data->next=0;
   data->cond=0;					/* safety */
   data->type=lock_type;
   data->owner= owner;                           /* Must be reset ! */
   VOID(pthread_mutex_lock(&lock->mutex));
-  DBUG_PRINT("lock",("data: 0x%lx  thread: 0x%lx  lock: 0x%lx  type: %d",
-                     (long) data, data->owner->info->thread_id,
-                     (long) lock, (int) lock_type));
   check_locks(lock,(uint) lock_type <= (uint) TL_READ_NO_INSERT ?
 	      "enter read_lock" : "enter write_lock",0);
   if ((int) lock_type <= (int) TL_READ_NO_INSERT)
@@ -518,8 +492,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	   and the read lock is not TL_READ_NO_INSERT
       */
 
-      DBUG_PRINT("lock",("write locked 1 by thread: 0x%lx",
-			 lock->write.data->owner->info->thread_id));
       if (thr_lock_owner_equal(data->owner, lock->write.data->owner) ||
 	  (lock->write.data->type <= TL_WRITE_DELAYED &&
 	   (((int) lock_type <= (int) TL_READ_HIGH_PRIORITY) ||
@@ -631,9 +603,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
           We have already got a write lock or all locks are
           TL_WRITE_ALLOW_WRITE
         */
-        DBUG_PRINT("info", ("write_wait.data: 0x%lx  old_type: %d",
-                            (ulong) lock->write_wait.data,
-                            lock->write.data->type));
 
 	(*lock->write.last)=data;	/* Add to running fifo */
 	data->prev=lock->write.last;
@@ -644,16 +613,12 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	statistic_increment(locks_immediate,&THR_LOCK_lock);
 	goto end;
       }
-      DBUG_PRINT("lock",("write locked 2 by thread: 0x%lx",
-			 lock->write.data->owner->info->thread_id));
     }
     else
     {
-      DBUG_PRINT("info", ("write_wait.data: 0x%lx",
-                          (ulong) lock->write_wait.data));
       if (!lock->write_wait.data)
       {						/* no scheduled write locks */
-        my_bool concurrent_insert= 0;
+        bool concurrent_insert= 0;
 	if (lock_type == TL_WRITE_CONCURRENT_INSERT)
         {
           concurrent_insert= 1;
@@ -680,8 +645,6 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
 	  goto end;
 	}
       }
-      DBUG_PRINT("lock",("write locked 3 by thread: 0x%lx  type: %d",
-			 lock->read.data->owner->info->thread_id, data->type));
     }
     wait_queue= &lock->write_wait;
   }
@@ -694,20 +657,19 @@ thr_lock(THR_LOCK_DATA *data, THR_LOCK_OWNER *owner,
   lock_owner= lock->read.data ? lock->read.data : lock->write.data;
   if (lock_owner && lock_owner->owner->info == owner->info)
   {
-    DBUG_PRINT("lock",("deadlock"));
     result= THR_LOCK_DEADLOCK;
     goto end;
   }
   /* Can't get lock yet;  Wait for it */
-  DBUG_RETURN(wait_for_lock(wait_queue, data, 0));
+  return(wait_for_lock(wait_queue, data, 0));
 end:
   pthread_mutex_unlock(&lock->mutex);
-  DBUG_RETURN(result);
+  return(result);
 }
 
 
 static inline void free_all_read_locks(THR_LOCK *lock,
-				       my_bool using_concurrent_insert)
+				       bool using_concurrent_insert)
 {
   THR_LOCK_DATA *data=lock->read_wait.data;
 
@@ -743,10 +705,6 @@ static inline void free_all_read_locks(THR_LOCK *lock,
       }
       lock->read_no_write_count++;
     }      
-    /* purecov: begin inspected */
-    DBUG_PRINT("lock",("giving read lock to thread: 0x%lx",
-		       data->owner->info->thread_id));
-    /* purecov: end */
     data->cond=0;				/* Mark thread free */
     VOID(pthread_cond_signal(cond));
   } while ((data=data->next));
@@ -762,9 +720,6 @@ void thr_unlock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
   enum thr_lock_type lock_type=data->type;
-  DBUG_ENTER("thr_unlock");
-  DBUG_PRINT("lock",("data: 0x%lx  thread: 0x%lx  lock: 0x%lx",
-                     (long) data, data->owner->info->thread_id, (long) lock));
   pthread_mutex_lock(&lock->mutex);
   check_locks(lock,"start of release lock",0);
 
@@ -798,7 +753,7 @@ void thr_unlock(THR_LOCK_DATA *data)
   check_locks(lock,"after releasing lock",1);
   wake_up_waiters(lock);
   pthread_mutex_unlock(&lock->mutex);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -814,8 +769,6 @@ static void wake_up_waiters(THR_LOCK *lock)
 {
   THR_LOCK_DATA *data;
   enum thr_lock_type lock_type;
-
-  DBUG_ENTER("wake_up_waiters");
 
   if (!lock->write.data)			/* If no active write locks */
   {
@@ -833,7 +786,6 @@ static void wake_up_waiters(THR_LOCK *lock)
 	  lock->write_lock_count=0;
 	  if (lock->read_wait.data)
 	  {
-	    DBUG_PRINT("info",("Freeing all read_locks because of max_write_lock_count"));
 	    free_all_read_locks(lock,0);
 	    goto end;
 	  }
@@ -851,10 +803,6 @@ static void wake_up_waiters(THR_LOCK *lock)
 	  if (data->type == TL_WRITE_CONCURRENT_INSERT &&
 	      (*lock->check_status)(data->status_param))
 	    data->type=TL_WRITE;			/* Upgrade lock */
-          /* purecov: begin inspected */
-	  DBUG_PRINT("lock",("giving write lock of type %d to thread: 0x%lx",
-			     data->type, data->owner->info->thread_id));
-          /* purecov: end */
 	  {
 	    pthread_cond_t *cond=data->cond;
 	    data->cond=0;				/* Mark thread free */
@@ -875,10 +823,6 @@ static void wake_up_waiters(THR_LOCK *lock)
 			    data &&
 			    (data->type == TL_WRITE_CONCURRENT_INSERT ||
 			     data->type == TL_WRITE_ALLOW_WRITE));
-      else
-      {
-	DBUG_PRINT("lock",("No waiting read locks to free"));
-      }
     }
     else if (data &&
 	     (lock_type=data->type) <= TL_WRITE_DELAYED &&
@@ -923,7 +867,7 @@ static void wake_up_waiters(THR_LOCK *lock)
   }
 end:
   check_locks(lock, "after waking up waiters", 0);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -961,8 +905,6 @@ enum enum_thr_lock_result
 thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
 {
   THR_LOCK_DATA **pos,**end;
-  DBUG_ENTER("thr_multi_lock");
-  DBUG_PRINT("lock",("data: 0x%lx  count: %d", (long) data, count));
   if (count > 1)
     sort_locks(data,count);
   /* lock everything */
@@ -972,7 +914,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
     if (result != THR_LOCK_SUCCESS)
     {						/* Aborted */
       thr_multi_unlock(data,(uint) (pos-data));
-      DBUG_RETURN(result);
+      return(result);
     }
 #ifdef MAIN
     printf("Thread: %s  Got lock: 0x%lx  type: %d\n",my_thread_name(),
@@ -1026,7 +968,7 @@ thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
     } while (pos != data);
   }
 #endif
-  DBUG_RETURN(THR_LOCK_SUCCESS);
+  return(THR_LOCK_SUCCESS);
 }
 
   /* free all locks */
@@ -1034,8 +976,6 @@ thr_multi_lock(THR_LOCK_DATA **data, uint count, THR_LOCK_OWNER *owner)
 void thr_multi_unlock(THR_LOCK_DATA **data,uint count)
 {
   THR_LOCK_DATA **pos,**end;
-  DBUG_ENTER("thr_multi_unlock");
-  DBUG_PRINT("lock",("data: 0x%lx  count: %d", (long) data, count));
 
   for (pos=data,end=data+count; pos < end ; pos++)
   {
@@ -1046,14 +986,8 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint count)
 #endif
     if ((*pos)->type != TL_UNLOCK)
       thr_unlock(*pos);
-    else
-    {
-      DBUG_PRINT("lock",("Free lock: data: 0x%lx  thread: 0x%lx  lock: 0x%lx",
-                         (long) *pos, (*pos)->owner->info->thread_id,
-                         (long) (*pos)->lock));
-    }
   }
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /*
@@ -1061,10 +995,9 @@ void thr_multi_unlock(THR_LOCK_DATA **data,uint count)
   TL_WRITE_ONLY to abort any new accesses to the lock
 */
 
-void thr_abort_locks(THR_LOCK *lock, my_bool upgrade_lock)
+void thr_abort_locks(THR_LOCK *lock, bool upgrade_lock)
 {
   THR_LOCK_DATA *data;
-  DBUG_ENTER("thr_abort_locks");
   pthread_mutex_lock(&lock->mutex);
 
   for (data=lock->read_wait.data; data ; data=data->next)
@@ -1086,7 +1019,7 @@ void thr_abort_locks(THR_LOCK *lock, my_bool upgrade_lock)
   if (upgrade_lock && lock->write.data)
     lock->write.data->type=TL_WRITE_ONLY;
   pthread_mutex_unlock(&lock->mutex);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -1096,21 +1029,19 @@ void thr_abort_locks(THR_LOCK *lock, my_bool upgrade_lock)
   This is used to abort all locks for a specific thread
 */
 
-my_bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
+bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
 {
   THR_LOCK_DATA *data;
-  my_bool found= FALSE;
-  DBUG_ENTER("thr_abort_locks_for_thread");
+  bool found= false;
 
   pthread_mutex_lock(&lock->mutex);
   for (data= lock->read_wait.data; data ; data= data->next)
   {
     if (data->owner->info->thread_id == thread_id)    /* purecov: tested */
     {
-      DBUG_PRINT("info",("Aborting read-wait lock"));
       data->type= TL_UNLOCK;			/* Mark killed */
       /* It's safe to signal the cond first: we're still holding the mutex. */
-      found= TRUE;
+      found= true;
       pthread_cond_signal(data->cond);
       data->cond= 0;				/* Removed from list */
 
@@ -1124,9 +1055,8 @@ my_bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
   {
     if (data->owner->info->thread_id == thread_id) /* purecov: tested */
     {
-      DBUG_PRINT("info",("Aborting write-wait lock"));
       data->type= TL_UNLOCK;
-      found= TRUE;
+      found= true;
       pthread_cond_signal(data->cond);
       data->cond= 0;
 
@@ -1138,7 +1068,7 @@ my_bool thr_abort_locks_for_thread(THR_LOCK *lock, my_thread_id thread_id)
   }
   wake_up_waiters(lock);
   pthread_mutex_unlock(&lock->mutex);
-  DBUG_RETURN(found);
+  return(found);
 }
 
 
@@ -1176,33 +1106,26 @@ void thr_downgrade_write_lock(THR_LOCK_DATA *in_data,
                               enum thr_lock_type new_lock_type)
 {
   THR_LOCK *lock=in_data->lock;
-#ifndef DBUG_OFF
-  enum thr_lock_type old_lock_type= in_data->type;
-#endif
-  DBUG_ENTER("thr_downgrade_write_only_lock");
 
   pthread_mutex_lock(&lock->mutex);
-  DBUG_ASSERT(old_lock_type == TL_WRITE_ONLY);
-  DBUG_ASSERT(old_lock_type > new_lock_type);
   in_data->type= new_lock_type;
   check_locks(lock,"after downgrading lock",0);
 
   pthread_mutex_unlock(&lock->mutex);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /* Upgrade a WRITE_DELAY lock to a WRITE_LOCK */
 
-my_bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
+bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
-  DBUG_ENTER("thr_upgrade_write_delay_lock");
 
   pthread_mutex_lock(&lock->mutex);
   if (data->type == TL_UNLOCK || data->type >= TL_WRITE_LOW_PRIORITY)
   {
     pthread_mutex_unlock(&lock->mutex);
-    DBUG_RETURN(data->type == TL_UNLOCK);	/* Test if Aborted */
+    return(data->type == TL_UNLOCK);	/* Test if Aborted */
   }
   check_locks(lock,"before upgrading lock",0);
   /* TODO:  Upgrade to TL_WRITE_CONCURRENT_INSERT in some cases */
@@ -1216,7 +1139,7 @@ my_bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
       if (data->lock->get_status)
 	(*data->lock->get_status)(data->status_param, 0);
       pthread_mutex_unlock(&lock->mutex);
-      DBUG_RETURN(0);
+      return(0);
     }
 
     if (((*data->prev)=data->next))		/* remove from lock-list */
@@ -1236,22 +1159,21 @@ my_bool thr_upgrade_write_delay_lock(THR_LOCK_DATA *data)
   {
     check_locks(lock,"waiting for lock",0);
   }
-  DBUG_RETURN(wait_for_lock(&lock->write_wait,data,1));
+  return(wait_for_lock(&lock->write_wait,data,1));
 }
 
 
 /* downgrade a WRITE lock to a WRITE_DELAY lock if there is pending locks */
 
-my_bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
+bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
 {
   THR_LOCK *lock=data->lock;
-  DBUG_ENTER("thr_reschedule_write_lock");
 
   pthread_mutex_lock(&lock->mutex);
   if (!lock->read_wait.data)			/* No waiting read locks */
   {
     pthread_mutex_unlock(&lock->mutex);
-    DBUG_RETURN(0);
+    return(0);
   }
 
   data->type=TL_WRITE_DELAYED;
@@ -1272,7 +1194,7 @@ my_bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
   free_all_read_locks(lock,0);
 
   pthread_mutex_unlock(&lock->mutex);
-  DBUG_RETURN(thr_upgrade_write_delay_lock(data));
+  return(thr_upgrade_write_delay_lock(data));
 }
 
 
@@ -1414,7 +1336,7 @@ static void test_copy_status(void* to __attribute__((unused)) ,
 {
 }
 
-static my_bool test_check_status(void* param __attribute__((unused)))
+static bool test_check_status(void* param __attribute__((unused)))
 {
   return 0;
 }
@@ -1479,8 +1401,6 @@ int main(int argc __attribute__((unused)),char **argv __attribute__((unused)))
   pthread_attr_t thr_attr;
   int i,*param,error;
   MY_INIT(argv[0]);
-  if (argc > 1 && argv[1][0] == '-' && argv[1][1] == '#')
-    DBUG_PUSH(argv[1]+2);
 
   printf("Main thread: %s\n",my_thread_name());
 

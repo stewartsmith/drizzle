@@ -413,11 +413,11 @@ static bool write_str(IO_CACHE *file, const char *str, uint length)
 */
 
 static inline int read_str(const char **buf, const char *buf_end,
-                           const char **str, uint8 *len)
+                           const char **str, uint8_t *len)
 {
   if (*buf + ((uint) (uchar) **buf) >= buf_end)
     return 1;
-  *len= (uint8) **buf;
+  *len= (uint8_t) **buf;
   *str= (*buf)+1;
   (*buf)+= (uint) *len+1;
   return 0;
@@ -454,7 +454,7 @@ append_query_string(CHARSET_INFO *csinfo,
                     String const *from, String *to)
 {
   char *beg, *ptr;
-  uint32 const orig_len= to->length();
+  uint32_t const orig_len= to->length();
   if (to->reserve(orig_len + from->length()*2+3))
     return 1;
 
@@ -482,8 +482,8 @@ append_query_string(CHARSET_INFO *csinfo,
 
 #ifdef MYSQL_CLIENT
 
-static void print_set_option(IO_CACHE* file, uint32 bits_changed,
-                             uint32 option, uint32 flags, const char* name,
+static void print_set_option(IO_CACHE* file, uint32_t bits_changed,
+                             uint32_t option, uint32_t flags, const char* name,
                              bool* need_comma)
 {
   if (bits_changed & option)
@@ -549,7 +549,7 @@ const char* Log_event::get_type_str()
 */
 
 #ifndef MYSQL_CLIENT
-Log_event::Log_event(THD* thd_arg, uint16 flags_arg, bool using_trans)
+Log_event::Log_event(THD* thd_arg, uint16_t flags_arg, bool using_trans)
   :log_pos(0), temp_buf(0), exec_time(0), flags(flags_arg), thd(thd_arg)
 {
   server_id=	thd->server_id;
@@ -723,11 +723,11 @@ int Log_event::net_send(Protocol *protocol, const char* log_name, my_off_t pos)
 
   protocol->prepare_for_resend();
   protocol->store(log_name, &my_charset_bin);
-  protocol->store((ulonglong) pos);
+  protocol->store((uint64_t) pos);
   event_type = get_type_str();
   protocol->store(event_type, strlen(event_type), &my_charset_bin);
-  protocol->store((uint32) server_id);
-  protocol->store((ulonglong) log_pos);
+  protocol->store((uint32_t) server_id);
+  protocol->store((uint64_t) log_pos);
   pack_info(protocol);
   return protocol->write();
 }
@@ -1278,7 +1278,7 @@ void Log_event::print_base64(IO_CACHE* file,
                              bool more)
 {
   const uchar *ptr= (const uchar *)temp_buf;
-  uint32 size= uint4korr(ptr + EVENT_LEN_OFFSET);
+  uint32_t size= uint4korr(ptr + EVENT_LEN_OFFSET);
 
   size_t const tmp_str_sz= base64_needed_encoded_length((int) size);
   char *const tmp_str= (char *) my_malloc(tmp_str_sz, MYF(MY_WME));
@@ -1488,7 +1488,7 @@ bool Query_log_event::write(IO_CACHE* file)
   if (sql_mode_inited)
   {
     *start++= Q_SQL_MODE_CODE;
-    int8store(start, (ulonglong)sql_mode);
+    int8store(start, (uint64_t)sql_mode);
     start+= 8;
   }
   if (catalog_len) // i.e. this var is inited (false for 4.0 events)
@@ -1618,7 +1618,7 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
              (suppress_use ? LOG_EVENT_SUPPRESS_USE_F : 0),
 	     using_trans),
    data_buf(0), query(query_arg), catalog(thd_arg->catalog),
-   db(thd_arg->db), q_len((uint32) query_length),
+   db(thd_arg->db), q_len((uint32_t) query_length),
    thread_id(thd_arg->thread_id),
    /* save the original thread id; we already know the server id */
    slave_proxy_id(thd_arg->variables.pseudo_thread_id),
@@ -1645,9 +1645,9 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
     @todo this means that if we have no catalog, then it is replicated
     as an existing catalog of length zero. is that safe? /sven
   */
-  catalog_len = (catalog) ? (uint32) strlen(catalog) : 0;
+  catalog_len = (catalog) ? (uint32_t) strlen(catalog) : 0;
   /* status_vars_len is set just before writing the event */
-  db_len = (db) ? (uint32) strlen(db) : 0;
+  db_len = (db) ? (uint32_t) strlen(db) : 0;
   if (thd_arg->variables.collation_database != thd_arg->db_charset)
     charset_database_number= thd_arg->variables.collation_database->number;
   
@@ -1658,7 +1658,7 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
     But it's likely that we don't want to use 32 bits for 3 bits; in the future
     we will probably want to reclaim the 29 bits. So we need the &.
   */
-  flags2= (uint32) (thd_arg->options & OPTIONS_WRITTEN_TO_BIN_LOG);
+  flags2= (uint32_t) (thd_arg->options & OPTIONS_WRITTEN_TO_BIN_LOG);
   assert(thd_arg->variables.character_set_client->number < 256*256);
   assert(thd_arg->variables.collation_connection->number < 256*256);
   assert(thd_arg->variables.collation_server->number < 256*256);
@@ -1770,8 +1770,8 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
    time_zone_len(0), lc_time_names_number(0), charset_database_number(0)
 {
   ulong data_len;
-  uint32 tmp;
-  uint8 common_header_len, post_header_len;
+  uint32_t tmp;
+  uint8_t common_header_len, post_header_len;
   Log_event::Byte *start;
   const Log_event::Byte *end;
   bool catalog_nz= 1;
@@ -1840,7 +1840,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
     {
       CHECK_SPACE(pos, end, 8);
       sql_mode_inited= 1;
-      sql_mode= (ulong) uint8korr(pos); // QQ: Fix when sql_mode is ulonglong
+      sql_mode= (ulong) uint8korr(pos); // QQ: Fix when sql_mode is uint64_t
       pos+= 8;
       break;
     }
@@ -1952,7 +1952,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
   // TODO: print the catalog ??
   char buff[40],*end;				// Enough for SET TIMESTAMP
   bool different_db= 1;
-  uint32 tmp;
+  uint32_t tmp;
 
   if (!print_event_info->short_form)
   {
@@ -2000,7 +2000,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
     else /* that's the first Query event we read */
     {
       print_event_info->flags2_inited= 1;
-      tmp= ~((uint32)0); /* all bits have changed */
+      tmp= ~((uint32_t)0); /* all bits have changed */
     }
 
     if (unlikely(tmp)) /* some bits have changed */
@@ -2123,7 +2123,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
   Compare the values of "affected rows" around here. Something
   like:
   @code
-     if ((uint32) affected_in_event != (uint32) affected_on_slave)
+     if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
      {
      sql_print_error("Slave: did not get the expected number of affected \
      rows running query from master - expected %d, got %d (this numbers \
@@ -2136,7 +2136,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli)
   to ignore it you would use --slave-skip-errors...
 */
 int Query_log_event::do_apply_event(Relay_log_info const *rli,
-                                      const char *query_arg, uint32 q_len_arg)
+                                      const char *query_arg, uint32_t q_len_arg)
 {
   LEX_STRING new_db;
   int expected_error,actual_error= 0;
@@ -2348,7 +2348,7 @@ Default database: '%s'. Query: '%s'",
     /*
       TODO: compare the values of "affected rows" around here. Something
       like:
-      if ((uint32) affected_in_event != (uint32) affected_on_slave)
+      if ((uint32_t) affected_in_event != (uint32_t) affected_on_slave)
       {
       sql_print_error("Slave: did not get the expected number of affected \
       rows running query from master - expected %d, got %d (this numbers \
@@ -2650,7 +2650,7 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
 */
 
 Format_description_log_event::
-Format_description_log_event(uint8 binlog_ver, const char* server_ver)
+Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
   :Start_log_event_v3(), event_type_permutation(0)
 {
   binlog_version= binlog_ver;
@@ -2660,7 +2660,7 @@ Format_description_log_event(uint8 binlog_ver, const char* server_ver)
     common_header_len= LOG_EVENT_HEADER_LEN;
     number_of_event_types= LOG_EVENT_TYPES;
     /* we'll catch my_malloc() error in is_valid() */
-    post_header_len=(uint8*) my_malloc(number_of_event_types*sizeof(uint8),
+    post_header_len=(uint8_t*) my_malloc(number_of_event_types*sizeof(uint8_t),
                                        MYF(MY_ZEROFILL));
     /*
       This long list of assignments is not beautiful, but I see no way to
@@ -2710,7 +2710,7 @@ Format_description_log_event(uint8 binlog_ver, const char* server_ver)
       make the slave detect less corruptions).
     */
     number_of_event_types= FORMAT_DESCRIPTION_EVENT - 1;
-    post_header_len=(uint8*) my_malloc(number_of_event_types*sizeof(uint8),
+    post_header_len=(uint8_t*) my_malloc(number_of_event_types*sizeof(uint8_t),
                                        MYF(0));
     if (post_header_len)
     {
@@ -2770,7 +2770,7 @@ Format_description_log_event(const char* buf,
   number_of_event_types=
     event_len-(LOG_EVENT_MINIMAL_HEADER_LEN+ST_COMMON_HEADER_LEN_OFFSET+1);
   /* If alloc fails, we'll detect it in is_valid() */
-  post_header_len= (uint8*) my_memdup((uchar*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
+  post_header_len= (uint8_t*) my_memdup((uchar*)buf+ST_COMMON_HEADER_LEN_OFFSET+1,
                                       number_of_event_types*
                                       sizeof(*post_header_len), MYF(0));
   calc_server_version_split();
@@ -2849,7 +2849,7 @@ Format_description_log_event(const char* buf,
       post_header_len= NULL;
       return;
     }
-    static const uint8 perm[23]=
+    static const uint8_t perm[23]=
       {
         UNKNOWN_EVENT, START_EVENT_V3, QUERY_EVENT, STOP_EVENT, ROTATE_EVENT,
         INTVAR_EVENT, LOAD_EVENT, SLAVE_EVENT, CREATE_FILE_EVENT,
@@ -2870,7 +2870,7 @@ Format_description_log_event(const char* buf,
       Since we use (permuted) event id's to index the post_header_len
       array, we need to permute the post_header_len array too.
     */
-    uint8 post_header_len_temp[23];
+    uint8_t post_header_len_temp[23];
     for (int i= 1; i < 23; i++)
       post_header_len_temp[perm[i] - 1]= post_header_len[i - 1];
     for (int i= 0; i < 22; i++)
@@ -2929,7 +2929,7 @@ int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
     perform, we don't call Start_log_event_v3::do_apply_event()
     (this was just to update the log's description event).
   */
-  if (server_id != (uint32) ::server_id)
+  if (server_id != (uint32_t) ::server_id)
   {
     /*
       If the event was not requested by the slave i.e. the master sent
@@ -2951,7 +2951,7 @@ int Format_description_log_event::do_update_pos(Relay_log_info *rli)
   delete rli->relay_log.description_event_for_exec;
   rli->relay_log.description_event_for_exec= this;
 
-  if (server_id == (uint32) ::server_id)
+  if (server_id == (uint32_t) ::server_id)
   {
     /*
       We only increase the relay log position if we are skipping
@@ -3109,7 +3109,7 @@ void Load_log_event::print_query(bool need_db, char *buf,
   if ((long) skip_lines > 0)
   {
     pos= strmov(pos, " IGNORE ");
-    pos= longlong10_to_str((longlong) skip_lines, pos, 10);
+    pos= int64_t10_to_str((int64_t) skip_lines, pos, 10);
     pos= strmov(pos," LINES ");    
   }
 
@@ -3211,19 +3211,19 @@ Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
   time(&end_time);
   exec_time = (ulong) (end_time  - thd_arg->start_time);
   /* db can never be a zero pointer in 4.0 */
-  db_len = (uint32) strlen(db);
-  table_name_len = (uint32) strlen(table_name);
+  db_len = (uint32_t) strlen(db);
+  table_name_len = (uint32_t) strlen(table_name);
   fname_len = (fname) ? (uint) strlen(fname) : 0;
   sql_ex.field_term = (char*) ex->field_term->ptr();
-  sql_ex.field_term_len = (uint8) ex->field_term->length();
+  sql_ex.field_term_len = (uint8_t) ex->field_term->length();
   sql_ex.enclosed = (char*) ex->enclosed->ptr();
-  sql_ex.enclosed_len = (uint8) ex->enclosed->length();
+  sql_ex.enclosed_len = (uint8_t) ex->enclosed->length();
   sql_ex.line_term = (char*) ex->line_term->ptr();
-  sql_ex.line_term_len = (uint8) ex->line_term->length();
+  sql_ex.line_term_len = (uint8_t) ex->line_term->length();
   sql_ex.line_start = (char*) ex->line_start->ptr();
-  sql_ex.line_start_len = (uint8) ex->line_start->length();
+  sql_ex.line_start_len = (uint8_t) ex->line_start->length();
   sql_ex.escaped = (char*) ex->escaped->ptr();
-  sql_ex.escaped_len = (uint8) ex->escaped->length();
+  sql_ex.escaped_len = (uint8_t) ex->escaped->length();
   sql_ex.opt_flags = 0;
   sql_ex.cached_new_format = -1;
     
@@ -3825,7 +3825,7 @@ void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 
 #ifndef MYSQL_CLIENT
 Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
-                                   uint ident_len_arg, ulonglong pos_arg,
+                                   uint ident_len_arg, uint64_t pos_arg,
                                    uint flags_arg)
   :Log_event(), new_log_ident(new_log_ident_arg),
    pos(pos_arg),ident_len(ident_len_arg ? ident_len_arg :
@@ -3843,8 +3843,8 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint event_len,
   :Log_event(buf, description_event) ,new_log_ident(0), flags(DUP_NAME)
 {
   // The caller will ensure that event_len is what we have at EVENT_LEN_OFFSET
-  uint8 header_size= description_event->common_header_len;
-  uint8 post_header_len= description_event->post_header_len[ROTATE_EVENT-1];
+  uint8_t header_size= description_event->common_header_len;
+  uint8_t post_header_len= description_event->post_header_len[ROTATE_EVENT-1];
   uint ident_offset;
   if (event_len < header_size)
     return;
@@ -3974,7 +3974,7 @@ void Intvar_log_event::pack_info(Protocol *protocol)
   char buf[256], *pos;
   pos= strmake(buf, get_var_type_name(), sizeof(buf)-23);
   *pos++= '=';
-  pos= longlong10_to_str(val, pos, -10);
+  pos= int64_t10_to_str(val, pos, -10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
 #endif
@@ -4215,7 +4215,7 @@ void Xid_log_event::pack_info(Protocol *protocol)
 {
   char buf[128], *pos;
   pos= strmov(buf, "COMMIT /* xid=");
-  pos= longlong10_to_str(xid, pos, 10);
+  pos= int64_t10_to_str(xid, pos, 10);
   pos= strmov(pos, " */");
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
@@ -4224,7 +4224,7 @@ void Xid_log_event::pack_info(Protocol *protocol)
 /**
   @note
   It's ok not to use int8store here,
-  as long as xid_t::set(ulonglong) and
+  as long as xid_t::set(uint64_t) and
   xid_t::get_my_xid doesn't do it either.
   We don't care about actual values of xids as long as
   identical numbers compare identically
@@ -4258,7 +4258,7 @@ void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   if (!print_event_info->short_form)
   {
     char buf[64];
-    longlong10_to_str(xid, buf, 10);
+    int64_t10_to_str(xid, buf, 10);
 
     print_header(&cache, print_event_info, false);
     my_b_printf(&cache, "\tXid = %s\n", buf);
@@ -4322,7 +4322,7 @@ void User_var_log_event::pack_info(Protocol* protocol)
     case INT_RESULT:
       if (!(buf= (char*) my_malloc(val_offset + 22, MYF(MY_WME))))
         return;
-      event_len= longlong10_to_str(uint8korr(val), buf + val_offset,-10)-buf;
+      event_len= int64_t10_to_str(uint8korr(val), buf + val_offset,-10)-buf;
       break;
     case DECIMAL_RESULT:
     {
@@ -4430,7 +4430,7 @@ bool User_var_log_event::write(IO_CACHE* file)
       float8store(buf2, *(double*) val);
       break;
     case INT_RESULT:
-      int8store(buf2, *(longlong*) val);
+      int8store(buf2, *(int64_t*) val);
       break;
     case DECIMAL_RESULT:
     {
@@ -4497,12 +4497,12 @@ void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
       double real_val;
       char real_buf[FMT_G_BUFSIZE(14)];
       float8get(real_val, val);
-      my_sprintf(real_buf, (real_buf, "%.14g", real_val));
+      sprintf(real_buf, "%.14g", real_val);
       my_b_printf(&cache, ":=%s%s\n", real_buf, print_event_info->delimiter);
       break;
     case INT_RESULT:
       char int_buf[22];
-      longlong10_to_str(uint8korr(val), int_buf, -10);
+      int64_t10_to_str(uint8korr(val), int_buf, -10);
       my_b_printf(&cache, ":=%s%s\n", int_buf, print_event_info->delimiter);
       break;
     case DECIMAL_RESULT:
@@ -4588,7 +4588,7 @@ int User_var_log_event::do_apply_event(Relay_log_info const *rli)
   user_var_name.str= name;
   user_var_name.length= name_len;
   double real_val;
-  longlong int_val;
+  int64_t int_val;
 
   /*
     We are now in a statement until the associated query log event has
@@ -4610,7 +4610,7 @@ int User_var_log_event::do_apply_event(Relay_log_info const *rli)
       val_len= 8;
       break;
     case INT_RESULT:
-      int_val= (longlong) uint8korr(val);
+      int_val= (int64_t) uint8korr(val);
       it= new Item_int(int_val);
       val= (char*) &int_val;		// Pointer to value in native format
       val_len= 8;
@@ -4699,7 +4699,7 @@ void Slave_log_event::pack_info(Protocol *protocol)
   pos= strmov(pos, ",log=");
   pos= strmov(pos, master_log);
   pos= strmov(pos, ",pos=");
-  pos= longlong10_to_str(master_pos, pos, 10);
+  pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
 }
 #endif /* !MYSQL_CLIENT */
@@ -4964,8 +4964,8 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint len,
 {
   uint block_offset;
   uint header_len= description_event->common_header_len;
-  uint8 load_header_len= description_event->post_header_len[LOAD_EVENT-1];
-  uint8 create_file_header_len= description_event->post_header_len[CREATE_FILE_EVENT-1];
+  uint8_t load_header_len= description_event->post_header_len[LOAD_EVENT-1];
+  uint8_t create_file_header_len= description_event->post_header_len[CREATE_FILE_EVENT-1];
   if (!(event_buf= (char*) my_memdup(buf, len, MYF(MY_WME))) ||
       copy_log_event(event_buf,len,
                      ((buf[EVENT_TYPE_OFFSET] == LOAD_EVENT) ?
@@ -5172,8 +5172,8 @@ Append_block_log_event::Append_block_log_event(const char* buf, uint len,
                                                const Format_description_log_event* description_event)
   :Log_event(buf, description_event),block(0)
 {
-  uint8 common_header_len= description_event->common_header_len; 
-  uint8 append_block_header_len=
+  uint8_t common_header_len= description_event->common_header_len; 
+  uint8_t append_block_header_len=
     description_event->post_header_len[APPEND_BLOCK_EVENT-1];
   uint total_header_len= common_header_len+append_block_header_len;
   if (len < total_header_len)
@@ -5229,9 +5229,8 @@ void Append_block_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
   uint length;
-  length= (uint) my_sprintf(buf,
-			    (buf, ";file_id=%u;block_len=%u", file_id,
-			     block_len));
+  length= (uint) sprintf(buf, ";file_id=%u;block_len=%u", file_id,
+			     block_len);
   protocol->store(buf, length, &my_charset_bin);
 }
 
@@ -5321,8 +5320,8 @@ Delete_file_log_event::Delete_file_log_event(const char* buf, uint len,
                                              const Format_description_log_event* description_event)
   :Log_event(buf, description_event),file_id(0)
 {
-  uint8 common_header_len= description_event->common_header_len;
-  uint8 delete_file_header_len= description_event->post_header_len[DELETE_FILE_EVENT-1];
+  uint8_t common_header_len= description_event->common_header_len;
+  uint8_t delete_file_header_len= description_event->post_header_len[DELETE_FILE_EVENT-1];
   if (len < (uint)(common_header_len + delete_file_header_len))
     return;
   file_id= uint4korr(buf + common_header_len + DF_FILE_ID_OFFSET);
@@ -5370,8 +5369,8 @@ void Delete_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
   uint length;
-  length= (uint) my_sprintf(buf, (buf, ";file_id=%u", (uint) file_id));
-  protocol->store(buf, (int32) length, &my_charset_bin);
+  length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
+  protocol->store(buf, (int32_t) length, &my_charset_bin);
 }
 #endif
 
@@ -5418,8 +5417,8 @@ Execute_load_log_event::Execute_load_log_event(const char* buf, uint len,
                                                const Format_description_log_event* description_event)
   :Log_event(buf, description_event), file_id(0)
 {
-  uint8 common_header_len= description_event->common_header_len;
-  uint8 exec_load_header_len= description_event->post_header_len[EXEC_LOAD_EVENT-1];
+  uint8_t common_header_len= description_event->common_header_len;
+  uint8_t exec_load_header_len= description_event->post_header_len[EXEC_LOAD_EVENT-1];
   if (len < (uint)(common_header_len+exec_load_header_len))
     return;
   file_id= uint4korr(buf + common_header_len + EL_FILE_ID_OFFSET);
@@ -5468,8 +5467,8 @@ void Execute_load_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
   uint length;
-  length= (uint) my_sprintf(buf, (buf, ";file_id=%u", (uint) file_id));
-  protocol->store(buf, (int32) length, &my_charset_bin);
+  length= (uint) sprintf(buf, ";file_id=%u", (uint) file_id);
+  protocol->store(buf, (int32_t) length, &my_charset_bin);
 }
 
 
@@ -5953,8 +5952,8 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
     , m_curr_row(NULL), m_curr_row_end(NULL), m_key(NULL)
 #endif
 {
-  uint8 const common_header_len= description_event->common_header_len;
-  uint8 const post_header_len= description_event->post_header_len[event_type-1];
+  uint8_t const common_header_len= description_event->common_header_len;
+  uint8_t const post_header_len= description_event->post_header_len[event_type-1];
 
   const char *post_start= buf + common_header_len;
   post_start+= RW_MAPID_OFFSET;
@@ -6621,7 +6620,7 @@ bool Rows_log_event::write_data_header(IO_CACHE *file)
 {
   uchar buf[ROWS_HEADER_LEN];	// No need to init the buffer
   assert(m_table_id != ~0UL);
-  int6store(buf + RW_MAPID_OFFSET, (ulonglong)m_table_id);
+  int6store(buf + RW_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + RW_FLAGS_OFFSET, m_flags);
   return (my_b_safe_write(file, buf, ROWS_HEADER_LEN));
 }
@@ -6724,10 +6723,10 @@ void Rows_log_event::print_helper(FILE *file,
   (e.g. values > 255), the endian-safe methods are used to properly encode 
   the values on the master and decode them on the slave. When the field
   metadata values are captured on the slave, they are stored in an array of
-  type uint16. This allows the least number of casts to prevent casting bugs
+  type uint16_t. This allows the least number of casts to prevent casting bugs
   when the field metadata is used in comparisons of field attributes. When
   the field metadata is used for calculating addresses in pointer math, the
-  type used is uint32. 
+  type used is uint32_t. 
 */
 
 #if !defined(MYSQL_CLIENT)
@@ -6772,7 +6771,7 @@ int Table_map_log_event::save_field_metadata()
 #if !defined(MYSQL_CLIENT)
 Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
                                          bool is_transactional __attribute__((__unused__)),
-                                         uint16 flags)
+                                         uint16_t flags)
   : Log_event(thd, 0, true),
     m_table(tbl),
     m_dbnam(tbl->s->db.str),
@@ -6872,8 +6871,8 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
 {
   unsigned int bytes_read= 0;
 
-  uint8 common_header_len= description_event->common_header_len;
-  uint8 post_header_len= description_event->post_header_len[TABLE_MAP_EVENT-1];
+  uint8_t common_header_len= description_event->common_header_len;
+  uint8_t post_header_len= description_event->post_header_len[TABLE_MAP_EVENT-1];
 
   /* Read the post-header */
   const char *post_start= buf + common_header_len;
@@ -7123,7 +7122,7 @@ bool Table_map_log_event::write_data_header(IO_CACHE *file)
 {
   assert(m_table_id != ~0UL);
   uchar buf[TABLE_MAP_HEADER_LEN];
-  int6store(buf + TM_MAPID_OFFSET, (ulonglong)m_table_id);
+  int6store(buf + TM_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + TM_FLAGS_OFFSET, m_flags);
   return (my_b_safe_write(file, buf, TABLE_MAP_HEADER_LEN));
 }
@@ -8123,15 +8122,15 @@ Incident_log_event::Incident_log_event(const char *buf, uint event_len,
                                        const Format_description_log_event *descr_event)
   : Log_event(buf, descr_event)
 {
-  uint8 const common_header_len=
+  uint8_t const common_header_len=
     descr_event->common_header_len;
-  uint8 const post_header_len=
+  uint8_t const post_header_len=
     descr_event->post_header_len[INCIDENT_EVENT-1];
 
   m_incident= static_cast<Incident>(uint2korr(buf + common_header_len));
   char const *ptr= buf + common_header_len + post_header_len;
   char const *const str_end= buf + event_len;
-  uint8 len= 0;                   // Assignment to keep compiler happy
+  uint8_t len= 0;                   // Assignment to keep compiler happy
   const char *str= NULL;          // Assignment to keep compiler happy
   read_str(&ptr, str_end, &str, &len);
   m_message.str= const_cast<char*>(str);
@@ -8205,8 +8204,8 @@ Incident_log_event::do_apply_event(Relay_log_info const *rli)
 bool
 Incident_log_event::write_data_header(IO_CACHE *file)
 {
-  uchar buf[sizeof(int16)];
-  int2store(buf, (int16) m_incident);
+  uchar buf[sizeof(int16_t)];
+  int2store(buf, (int16_t) m_incident);
   return(my_b_safe_write(file, buf, sizeof(buf)));
 }
 
@@ -8221,7 +8220,7 @@ Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
                     const Format_description_log_event* description_event)
   :Log_event(buf, description_event)
 {
-  uint8 header_size= description_event->common_header_len;
+  uint8_t header_size= description_event->common_header_len;
   ident_len = event_len - header_size;
   set_if_smaller(ident_len,FN_REFLEN-1);
   log_ident= buf + header_size;

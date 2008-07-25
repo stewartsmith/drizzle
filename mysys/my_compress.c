@@ -34,23 +34,21 @@
      0   ok.  In this case 'len' contains the size of the compressed packet
 */
 
-my_bool my_compress(uchar *packet, size_t *len, size_t *complen)
+bool my_compress(uchar *packet, size_t *len, size_t *complen)
 {
-  DBUG_ENTER("my_compress");
   if (*len < MIN_COMPRESS_LENGTH)
   {
     *complen=0;
-    DBUG_PRINT("note",("Packet too short: Not compressed"));
   }
   else
   {
     uchar *compbuf=my_compress_alloc(packet,len,complen);
     if (!compbuf)
-      DBUG_RETURN(*complen ? 0 : 1);
+      return(*complen ? 0 : 1);
     memcpy(packet,compbuf,*len);
     my_free(compbuf,MYF(MY_WME));
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -78,7 +76,6 @@ uchar *my_compress_alloc(const uchar *packet, size_t *len, size_t *complen)
   {
     *complen= 0;
     my_free(compbuf, MYF(MY_WME));
-    DBUG_PRINT("note",("Packet got longer on compression; Not compressed"));
     return 0;
   }
   /* Store length of compressed packet in *len */
@@ -103,17 +100,16 @@ uchar *my_compress_alloc(const uchar *packet, size_t *len, size_t *complen)
               real data.
 */
 
-my_bool my_uncompress(uchar *packet, size_t len, size_t *complen)
+bool my_uncompress(uchar *packet, size_t len, size_t *complen)
 {
   uLongf tmp_complen;
-  DBUG_ENTER("my_uncompress");
 
   if (*complen)					/* If compressed */
   {
     uchar *compbuf= (uchar *) my_malloc(*complen,MYF(MY_WME));
     int error;
     if (!compbuf)
-      DBUG_RETURN(1);				/* Not enough memory */
+      return(1);				/* Not enough memory */
 
     tmp_complen= *complen;
     error= uncompress((Bytef*) compbuf, &tmp_complen, (Bytef*) packet,
@@ -121,14 +117,13 @@ my_bool my_uncompress(uchar *packet, size_t len, size_t *complen)
     *complen= tmp_complen;
     if (error != Z_OK)
     {						/* Probably wrong packet */
-      DBUG_PRINT("error",("Can't uncompress packet, error: %d",error));
       my_free(compbuf, MYF(MY_WME));
-      DBUG_RETURN(1);
+      return(1);
     }
     memcpy(packet, compbuf, *complen);
     my_free(compbuf, MYF(MY_WME));
   }
   else
     *complen= len;
-  DBUG_RETURN(0);
+  return(0);
 }

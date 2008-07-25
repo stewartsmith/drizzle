@@ -22,7 +22,7 @@
 #ifndef MAIN
 
 #if defined(__FreeBSD__) || defined(__linux__)
-static my_bool memcpy_and_test(uchar *to, uchar *from, uint len)
+static bool memcpy_and_test(uchar *to, uchar *from, uint len)
 {
   uint i, res=1;
 
@@ -41,7 +41,7 @@ static my_bool memcpy_and_test(uchar *to, uchar *from, uint len)
 #include <net/if.h>
 #include <net/if_dl.h>
 
-my_bool my_gethwaddr(uchar *to)
+bool my_gethwaddr(uchar *to)
 {
   size_t len;
   uchar  *buf, *next, *end, *addr;
@@ -73,13 +73,13 @@ err:
   return res;
 }
 
-#elif __linux__
+#elif defined(__linux__)
 
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <net/ethernet.h>
 
-my_bool my_gethwaddr(uchar *to)
+bool my_gethwaddr(uchar *to)
 {
   int fd, res=1;
   struct ifreq ifr;
@@ -103,7 +103,7 @@ err:
 
 #else   /* FreeBSD elif linux */
 /* just fail */
-my_bool my_gethwaddr(uchar *to __attribute__((unused)))
+bool my_gethwaddr(uchar *to __attribute__((unused)))
 {
   return 1;
 }

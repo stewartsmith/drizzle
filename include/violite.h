@@ -42,25 +42,23 @@ enum enum_vio_type
 #define VIO_READ_BUFFER_SIZE 16384              /* size of read buffer */
 
 Vio*	vio_new(my_socket sd, enum enum_vio_type type, uint flags);
-#define HANDLE void *
 
 void	vio_delete(Vio* vio);
 int	vio_close(Vio* vio);
-void    vio_reset(Vio* vio, enum enum_vio_type type,
-                  my_socket sd, HANDLE hPipe, uint flags);
+void    vio_reset(Vio* vio, enum enum_vio_type type, my_socket sd, uint32_t flags);
 size_t	vio_read(Vio *vio, uchar *	buf, size_t size);
 size_t  vio_read_buff(Vio *vio, uchar * buf, size_t size);
 size_t	vio_write(Vio *vio, const uchar * buf, size_t size);
-int	vio_blocking(Vio *vio, my_bool onoff, my_bool *old_mode);
-my_bool	vio_is_blocking(Vio *vio);
+int	vio_blocking(Vio *vio, bool onoff, bool *old_mode);
+bool	vio_is_blocking(Vio *vio);
 /* setsockopt TCP_NODELAY at IPPROTO_TCP level, when possible */
 int	vio_fastsend(Vio *vio);
 /* setsockopt SO_KEEPALIVE at SOL_SOCKET level, when possible */
-int	vio_keepalive(Vio *vio, my_bool	onoff);
+int32_t	vio_keepalive(Vio *vio, bool	onoff);
 /* Whenever we should retry the last read/write operation. */
-my_bool	vio_should_retry(Vio *vio);
+bool	vio_should_retry(Vio *vio);
 /* Check that operation was timed out */
-my_bool	vio_was_interrupted(Vio *vio);
+bool	vio_was_interrupted(Vio *vio);
 /* Short text description of the socket for those, who are curious.. */
 const char* vio_description(Vio *vio);
 /* Return the type of the connection */
@@ -70,15 +68,9 @@ int	vio_errno(Vio*vio);
 /* Get socket number */
 my_socket vio_fd(Vio*vio);
 /* Remote peer's address and name in text form */
-my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen);
-my_bool	vio_poll_read(Vio *vio,uint timeout);
-my_bool vio_peek_read(Vio *vio, uint *bytes);
-
-#ifdef HAVE_SMEM
-size_t vio_read_shared_memory(Vio *vio, uchar * buf, size_t size);
-size_t vio_write_shared_memory(Vio *vio, const uchar * buf, size_t size);
-int vio_close_shared_memory(Vio * vio);
-#endif
+bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen);
+bool	vio_poll_read(Vio *vio,uint timeout);
+bool vio_peek_read(Vio *vio, uint *bytes);
 
 void vio_end(void);
 
@@ -119,44 +111,31 @@ enum SSL_type
 struct st_vio
 {
   my_socket		sd;		/* my_socket - real or imaginary */
-  HANDLE hPipe;
-  my_bool		localhost;	/* Are we from localhost? */
   int			fcntl_mode;	/* Buffered fcntl(sd,F_GETFL) */
   struct sockaddr_storage	local;		/* Local internet address */
   struct sockaddr_storage	remote;		/* Remote internet address */
   int addrLen;                          /* Length of remote address */
   enum enum_vio_type	type;		/* Type of connection */
   char			desc[30];	/* String description */
-  char                  *read_buffer;   /* buffer for vio_read_buff */
   char                  *read_pos;      /* start of unfetched data in the
                                            read buffer */
   char                  *read_end;      /* end of unfetched data */
+
   /* function pointers. They are similar for socket/SSL/whatever */
   void    (*viodelete)(Vio*);
-  int     (*vioerrno)(Vio*);
+  int32_t     (*vioerrno)(Vio*);
   size_t  (*read)(Vio*, uchar *, size_t);
   size_t  (*write)(Vio*, const uchar *, size_t);
-  int     (*vioblocking)(Vio*, my_bool, my_bool *);
-  my_bool (*is_blocking)(Vio*);
-  int     (*viokeepalive)(Vio*, my_bool);
-  int     (*fastsend)(Vio*);
-  my_bool (*peer_addr)(Vio*, char *, uint16*, size_t);
+  int32_t     (*vioblocking)(Vio*, bool, bool *);
+  bool (*is_blocking)(Vio*);
+  int32_t     (*viokeepalive)(Vio*, bool);
+  int32_t     (*fastsend)(Vio*);
+  bool (*peer_addr)(Vio*, char *, uint16_t *, size_t);
   void    (*in_addr)(Vio*, struct sockaddr_storage*);
-  my_bool (*should_retry)(Vio*);
-  my_bool (*was_interrupted)(Vio*);
-  int     (*vioclose)(Vio*);
-  void	  (*timeout)(Vio*, unsigned int which, unsigned int timeout);
-#ifdef HAVE_SMEM
-  HANDLE  handle_file_map;
-  char    *handle_map;
-  HANDLE  event_server_wrote;
-  HANDLE  event_server_read;
-  HANDLE  event_client_wrote;
-  HANDLE  event_client_read;
-  HANDLE  event_conn_closed;
-  size_t  shared_memory_remain;
-  char    *shared_memory_pos;
-  NET     *net;
-#endif /* HAVE_SMEM */
+  bool (*should_retry)(Vio*);
+  bool (*was_interrupted)(Vio*);
+  int32_t     (*vioclose)(Vio*);
+  void	  (*timeout)(Vio*, uint32_t which, uint32_t timeout);
+  char                  *read_buffer;   /* buffer for vio_read_buff */
 };
 #endif /* vio_violite_h_ */

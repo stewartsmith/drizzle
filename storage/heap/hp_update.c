@@ -23,13 +23,12 @@ int heap_update(HP_INFO *info, const uchar *old, const uchar *heap_new)
   uchar *pos;
   my_bool auto_key_changed= 0;
   HP_SHARE *share= info->s;
-  DBUG_ENTER("heap_update");
 
   test_active(info);
   pos=info->current_ptr;
 
-  if (info->opt_flag & READ_CHECK_USED && hp_rectest(info,old))
-    DBUG_RETURN(my_errno);				/* Record changed */
+  if (info->opt_flag & READ_CHECK_USED)
+    return(my_errno);				/* Record changed */
   if (--(share->records) < share->blength >> 1) share->blength>>= 1;
   share->changed=1;
 
@@ -49,12 +48,9 @@ int heap_update(HP_INFO *info, const uchar *old, const uchar *heap_new)
   memcpy(pos,heap_new,(size_t) share->reclength);
   if (++(share->records) == share->blength) share->blength+= share->blength;
 
-#if !defined(DBUG_OFF) && defined(EXTRA_HEAP_DEBUG)
-  DBUG_EXECUTE("check_heap",heap_check_heap(info, 0););
-#endif
   if (auto_key_changed)
     heap_update_auto_increment(info, heap_new);
-  DBUG_RETURN(0);
+  return(0);
 
  err:
   if (my_errno == HA_ERR_FOUND_DUPP_KEY)
@@ -67,7 +63,7 @@ int heap_update(HP_INFO *info, const uchar *old, const uchar *heap_new)
       {
         if (++(share->records) == share->blength)
 	  share->blength+= share->blength;
-        DBUG_RETURN(my_errno);
+        return(my_errno);
       }
       keydef--;
     }
@@ -84,5 +80,5 @@ int heap_update(HP_INFO *info, const uchar *old, const uchar *heap_new)
   }
   if (++(share->records) == share->blength)
     share->blength+= share->blength;
-  DBUG_RETURN(my_errno);
+  return(my_errno);
 } /* heap_update */

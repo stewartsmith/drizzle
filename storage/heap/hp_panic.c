@@ -21,7 +21,6 @@
 int hp_panic(enum ha_panic_function flag)
 {
   LIST *element,*next_open;
-  DBUG_ENTER("hp_panic");
 
   pthread_mutex_lock(&THR_LOCK_heap);
   for (element=heap_open_list ; element ; element=next_open)
@@ -52,5 +51,5 @@ int hp_panic(enum ha_panic_function flag)
     }
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_RETURN(0);
+  return(0);
 } /* hp_panic */

@@ -269,7 +269,7 @@ Item_bool_func2* Le_creator::create(Item *a, Item *b) const
   NULL if some arg is NULL.
 */
 
-longlong Item_func_not::val_int()
+int64_t Item_func_not::val_int()
 {
   assert(fixed == 1);
   bool value= args[0]->val_bool();
@@ -298,7 +298,7 @@ void Item_func_not::print(String *str, enum_query_type query_type)
 */
 
 
-longlong Item_func_not_all::val_int()
+int64_t Item_func_not_all::val_int()
 {
   assert(fixed == 1);
   bool value= args[0]->val_bool();
@@ -339,10 +339,10 @@ void Item_func_not_all::print(String *str, enum_query_type query_type)
     returns some rows it return same value as argument (true/false).
 */
 
-longlong Item_func_nop_all::val_int()
+int64_t Item_func_nop_all::val_int()
 {
   assert(fixed == 1);
-  longlong value= args[0]->val_int();
+  int64_t value= args[0]->val_int();
 
   /*
     return false if there was records in underlying select in max/min
@@ -396,7 +396,7 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
     enum_check_fields orig_count_cuted_fields= thd->count_cuted_fields;
     my_bitmap_map *old_write_map;
     my_bitmap_map *old_read_map;
-    ulonglong orig_field_val= 0; /* original field value if valid */
+    uint64_t orig_field_val= 0; /* original field value if valid */
 
     if (table)
     {
@@ -483,28 +483,26 @@ void Item_bool_func2::fix_length_and_dec()
   }
 
   thd= current_thd;
-  if (!thd->is_context_analysis_only())
+
+  if (args[0]->real_item()->type() == FIELD_ITEM)
   {
-    if (args[0]->real_item()->type() == FIELD_ITEM)
+    Item_field *field_item= (Item_field*) (args[0]->real_item());
+    if (field_item->field->can_be_compared_as_int64_t() &&
+        !(field_item->is_datetime() && args[1]->result_type() == STRING_RESULT))
     {
-      Item_field *field_item= (Item_field*) (args[0]->real_item());
-      if (field_item->field->can_be_compared_as_longlong() &&
-          !(field_item->is_datetime() &&
-            args[1]->result_type() == STRING_RESULT))
+      if (convert_constant_item(thd, field_item, &args[1]))
       {
-        if (convert_constant_item(thd, field_item, &args[1]))
-        {
-          cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
-                           INT_RESULT);		// Works for all types.
-          args[0]->cmp_context= args[1]->cmp_context= INT_RESULT;
-          return;
-        }
+        cmp.set_cmp_func(this, tmp_arg, tmp_arg+1,
+                         INT_RESULT);		// Works for all types.
+        args[0]->cmp_context= args[1]->cmp_context= INT_RESULT;
+        return;
       }
     }
+
     if (args[1]->real_item()->type() == FIELD_ITEM)
     {
       Item_field *field_item= (Item_field*) (args[1]->real_item());
-      if (field_item->field->can_be_compared_as_longlong() &&
+      if (field_item->field->can_be_compared_as_int64_t() &&
           !(field_item->is_datetime() &&
             args[0]->result_type() == STRING_RESULT))
       {
@@ -647,11 +645,11 @@ int Arg_comparator::set_compare_func(Item_bool_func2 *item, Item_result type)
     converted value. 0 on error and on zero-dates -- check 'failure'
 */
 
-static ulonglong
+static uint64_t
 get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
                   char *warn_name, bool *error_arg)
 {
-  ulonglong value= 0;
+  uint64_t value= 0;
   int error;
   MYSQL_TIME l_time;
   enum_mysql_timestamp_type ret;
@@ -669,7 +667,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
       warning.
     */
     *error_arg= false;
-    value= TIME_to_ulonglong_datetime(&l_time);
+    value= TIME_to_uint64_t_datetime(&l_time);
   }
   else
   {
@@ -719,7 +717,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
 */
 
 enum Arg_comparator::enum_date_cmp_type
-Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
+Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
 {
   enum enum_date_cmp_type cmp_type= CMP_DATE_DFLT;
   Item *str_arg= 0, *date_arg= 0;
@@ -756,7 +754,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
         ((Item_func*)str_arg)->functype() != Item_func::GUSERVAR_FUNC))
     {
       THD *thd= current_thd;
-      ulonglong value;
+      uint64_t value;
       bool error;
       String tmp, *str_val= 0;
       timestamp_type t_type= (date_arg->field_type() == MYSQL_TYPE_NEWDATE ?
@@ -790,7 +788,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
   DESCRIPTION
     Retrieves the correct TIME value from given item for comparison by the
     compare_datetime() function.
-    If item's result can be compared as longlong then its int value is used
+    If item's result can be compared as int64_t then its int value is used
     and a value returned by get_time function is used otherwise.
     If an item is a constant one then its value is cached and it isn't
     get parsed again. An Item_cache_int object is used for for cached values.
@@ -801,17 +799,17 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, ulonglong *const_value)
     obtained value
 */
 
-ulonglong
+uint64_t
 get_time_value(THD *thd __attribute__((__unused__)),
                Item ***item_arg, Item **cache_arg,
                Item *warn_item __attribute__((__unused__)),
                bool *is_null)
 {
-  ulonglong value;
+  uint64_t value;
   Item *item= **item_arg;
   MYSQL_TIME ltime;
 
-  if (item->result_as_longlong())
+  if (item->result_as_int64_t())
   {
     value= item->val_int();
     *is_null= item->null_value;
@@ -819,7 +817,7 @@ get_time_value(THD *thd __attribute__((__unused__)),
   else
   {
     *is_null= item->get_time(&ltime);
-    value= !*is_null ? TIME_to_ulonglong_datetime(&ltime) : 0;
+    value= !*is_null ? TIME_to_uint64_t_datetime(&ltime) : 0;
   }
   /*
     Do not cache GET_USER_VAR() function as its const_item() may return true
@@ -844,7 +842,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
                                         Item_result type)
 {
   enum enum_date_cmp_type cmp_type;
-  ulonglong const_value= (ulonglong)-1;
+  uint64_t const_value= (uint64_t)-1;
   a= a1;
   b= a2;
 
@@ -857,7 +855,7 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     a_cache= 0;
     b_cache= 0;
 
-    if (const_value != (ulonglong)-1)
+    if (const_value != (uint64_t)-1)
     {
       Item_cache_int *cache= new Item_cache_int();
       /* Mark the cache as non-const to prevent re-caching. */
@@ -929,7 +927,7 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
   DESCRIPTION
     Retrieves the correct DATETIME value from given item for comparison by the
     compare_datetime() function.
-    If item's result can be compared as longlong then its int value is used
+    If item's result can be compared as int64_t then its int value is used
     and its string value is used otherwise. Strings are always parsed and
     converted to int values by the get_date_from_str() function.
     This allows us to compare correctly string dates with missed insignificant
@@ -944,15 +942,15 @@ void Arg_comparator::set_datetime_cmp_func(Item **a1, Item **b1)
     obtained value
 */
 
-ulonglong
+uint64_t
 get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
                    Item *warn_item, bool *is_null)
 {
-  ulonglong value= 0;
+  uint64_t value= 0;
   String buf, *str= 0;
   Item *item= **item_arg;
 
-  if (item->result_as_longlong())
+  if (item->result_as_int64_t())
   {
     value= item->val_int();
     *is_null= item->null_value;
@@ -973,7 +971,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     *is_null= item->null_value;
   }
   if (*is_null)
-    return ~(ulonglong) 0;
+    return ~(uint64_t) 0;
   /*
     Convert strings to the integer DATE/DATETIME representation.
     Even if both dates provided in strings we can't compare them directly as
@@ -1035,7 +1033,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
 int Arg_comparator::compare_datetime()
 {
   bool is_null= false;
-  ulonglong a_value, b_value;
+  uint64_t a_value, b_value;
 
   /* Get DATE/DATETIME/TIME value of the 'a' item. */
   a_value= (*get_value_func)(thd, &a, &a_cache, *b, &is_null);
@@ -1239,10 +1237,10 @@ int Arg_comparator::compare_e_real_fixed()
 
 int Arg_comparator::compare_int_signed()
 {
-  longlong val1= (*a)->val_int();
+  int64_t val1= (*a)->val_int();
   if (!(*a)->null_value)
   {
-    longlong val2= (*b)->val_int();
+    int64_t val2= (*b)->val_int();
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
@@ -1262,10 +1260,10 @@ int Arg_comparator::compare_int_signed()
 
 int Arg_comparator::compare_int_unsigned()
 {
-  ulonglong val1= (*a)->val_int();
+  uint64_t val1= (*a)->val_int();
   if (!(*a)->null_value)
   {
-    ulonglong val2= (*b)->val_int();
+    uint64_t val2= (*b)->val_int();
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
@@ -1285,16 +1283,16 @@ int Arg_comparator::compare_int_unsigned()
 
 int Arg_comparator::compare_int_signed_unsigned()
 {
-  longlong sval1= (*a)->val_int();
+  int64_t sval1= (*a)->val_int();
   if (!(*a)->null_value)
   {
-    ulonglong uval2= (ulonglong)(*b)->val_int();
+    uint64_t uval2= (uint64_t)(*b)->val_int();
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
-      if (sval1 < 0 || (ulonglong)sval1 < uval2)
+      if (sval1 < 0 || (uint64_t)sval1 < uval2)
         return -1;
-      if ((ulonglong)sval1 == uval2)
+      if ((uint64_t)sval1 == uval2)
         return 0;
       return 1;
     }
@@ -1310,18 +1308,18 @@ int Arg_comparator::compare_int_signed_unsigned()
 
 int Arg_comparator::compare_int_unsigned_signed()
 {
-  ulonglong uval1= (ulonglong)(*a)->val_int();
+  uint64_t uval1= (uint64_t)(*a)->val_int();
   if (!(*a)->null_value)
   {
-    longlong sval2= (*b)->val_int();
+    int64_t sval2= (*b)->val_int();
     if (!(*b)->null_value)
     {
       owner->null_value= 0;
       if (sval2 < 0)
         return 1;
-      if (uval1 < (ulonglong)sval2)
+      if (uval1 < (uint64_t)sval2)
         return -1;
-      if (uval1 == (ulonglong)sval2)
+      if (uval1 == (uint64_t)sval2)
         return 0;
       return 1;
     }
@@ -1333,8 +1331,8 @@ int Arg_comparator::compare_int_unsigned_signed()
 
 int Arg_comparator::compare_e_int()
 {
-  longlong val1= (*a)->val_int();
-  longlong val2= (*b)->val_int();
+  int64_t val1= (*a)->val_int();
+  int64_t val2= (*b)->val_int();
   if ((*a)->null_value || (*b)->null_value)
     return test((*a)->null_value && (*b)->null_value);
   return test(val1 == val2);
@@ -1345,8 +1343,8 @@ int Arg_comparator::compare_e_int()
 */
 int Arg_comparator::compare_e_int_diff_signedness()
 {
-  longlong val1= (*a)->val_int();
-  longlong val2= (*b)->val_int();
+  int64_t val1= (*a)->val_int();
+  int64_t val2= (*b)->val_int();
   if ((*a)->null_value || (*b)->null_value)
     return test((*a)->null_value && (*b)->null_value);
   return (val1 >= 0) && test(val1 == val2);
@@ -1458,7 +1456,7 @@ bool Item_func_truth::val_bool()
 }
 
 
-longlong Item_func_truth::val_int()
+int64_t Item_func_truth::val_int()
 {
   return (val_bool() ? 1 : 0);
 }
@@ -1525,7 +1523,7 @@ bool Item_in_optimizer::fix_fields(THD *thd, Item **ref)
 }
 
 
-longlong Item_in_optimizer::val_int()
+int64_t Item_in_optimizer::val_int()
 {
   bool tmp;
   assert(fixed == 1);
@@ -1684,7 +1682,7 @@ Item *Item_in_optimizer::transform(Item_transformer transformer, uchar *argument
 
 
 
-longlong Item_func_eq::val_int()
+int64_t Item_func_eq::val_int()
 {
   assert(fixed == 1);
   int value= cmp.compare();
@@ -1700,13 +1698,13 @@ void Item_func_equal::fix_length_and_dec()
   maybe_null=null_value=0;
 }
 
-longlong Item_func_equal::val_int()
+int64_t Item_func_equal::val_int()
 {
   assert(fixed == 1);
   return cmp.compare();
 }
 
-longlong Item_func_ne::val_int()
+int64_t Item_func_ne::val_int()
 {
   assert(fixed == 1);
   int value= cmp.compare();
@@ -1714,7 +1712,7 @@ longlong Item_func_ne::val_int()
 }
 
 
-longlong Item_func_ge::val_int()
+int64_t Item_func_ge::val_int()
 {
   assert(fixed == 1);
   int value= cmp.compare();
@@ -1722,14 +1720,14 @@ longlong Item_func_ge::val_int()
 }
 
 
-longlong Item_func_gt::val_int()
+int64_t Item_func_gt::val_int()
 {
   assert(fixed == 1);
   int value= cmp.compare();
   return value > 0 ? 1 : 0;
 }
 
-longlong Item_func_le::val_int()
+int64_t Item_func_le::val_int()
 {
   assert(fixed == 1);
   int value= cmp.compare();
@@ -1737,7 +1735,7 @@ longlong Item_func_le::val_int()
 }
 
 
-longlong Item_func_lt::val_int()
+int64_t Item_func_lt::val_int()
 {
   assert(fixed == 1);
   int value= cmp.compare();
@@ -1745,7 +1743,7 @@ longlong Item_func_lt::val_int()
 }
 
 
-longlong Item_func_strcmp::val_int()
+int64_t Item_func_strcmp::val_int()
 {
   assert(fixed == 1);
   String *a=args[0]->val_str(&tmp_value1);
@@ -1757,7 +1755,7 @@ longlong Item_func_strcmp::val_int()
   }
   int value= sortcmp(a,b,cmp.cmp_collation.collation);
   null_value=0;
-  return !value ? 0 : (value < 0 ? (longlong) -1 : (longlong) 1);
+  return !value ? 0 : (value < 0 ? (int64_t) -1 : (int64_t) 1);
 }
 
 
@@ -1860,7 +1858,7 @@ void Item_func_interval::fix_length_and_dec()
     - arg_count if higher than biggest argument
 */
 
-longlong Item_func_interval::val_int()
+int64_t Item_func_interval::val_int()
 {
   assert(fixed == 1);
   double value;
@@ -2023,7 +2021,7 @@ void Item_func_between::fix_length_and_dec()
         continue;
       }
       if (args[i]->field_type() == MYSQL_TYPE_TIME &&
-          args[i]->result_as_longlong())
+          args[i]->result_as_int64_t())
         time_items_found++;
     }
   }
@@ -2044,7 +2042,7 @@ void Item_func_between::fix_length_and_dec()
            thd->lex->sql_command != SQLCOM_SHOW_CREATE)
   {
     Item_field *field_item= (Item_field*) (args[0]->real_item());
-    if (field_item->field->can_be_compared_as_longlong())
+    if (field_item->field->can_be_compared_as_int64_t())
     {
       /*
         The following can't be recoded with || as convert_constant_item
@@ -2059,7 +2057,7 @@ void Item_func_between::fix_length_and_dec()
 }
 
 
-longlong Item_func_between::val_int()
+int64_t Item_func_between::val_int()
 {						// ANSI BETWEEN
   assert(fixed == 1);
   if (compare_as_dates)
@@ -2072,7 +2070,7 @@ longlong Item_func_between::val_int()
     le_res= le_cmp.compare();
 
     if (!args[1]->null_value && !args[2]->null_value)
-      return (longlong) ((ge_res >= 0 && le_res <=0) != negated);
+      return (int64_t) ((ge_res >= 0 && le_res <=0) != negated);
     else if (args[1]->null_value)
     {
       null_value= le_res > 0;			// not null if false range.
@@ -2091,7 +2089,7 @@ longlong Item_func_between::val_int()
     a=args[1]->val_str(&value1);
     b=args[2]->val_str(&value2);
     if (!args[1]->null_value && !args[2]->null_value)
-      return (longlong) ((sortcmp(value,a,cmp_collation.collation) >= 0 &&
+      return (int64_t) ((sortcmp(value,a,cmp_collation.collation) >= 0 &&
                           sortcmp(value,b,cmp_collation.collation) <= 0) !=
                          negated);
     if (args[1]->null_value && args[2]->null_value)
@@ -2109,13 +2107,13 @@ longlong Item_func_between::val_int()
   }
   else if (cmp_type == INT_RESULT)
   {
-    longlong value=args[0]->val_int(), a, b;
+    int64_t value=args[0]->val_int(), a, b;
     if ((null_value=args[0]->null_value))
       return 0;					/* purecov: inspected */
     a=args[1]->val_int();
     b=args[2]->val_int();
     if (!args[1]->null_value && !args[2]->null_value)
-      return (longlong) ((value >= a && value <= b) != negated);
+      return (int64_t) ((value >= a && value <= b) != negated);
     if (args[1]->null_value && args[2]->null_value)
       null_value=1;
     else if (args[1]->null_value)
@@ -2136,7 +2134,7 @@ longlong Item_func_between::val_int()
     a_dec= args[1]->val_decimal(&a_buf);
     b_dec= args[2]->val_decimal(&b_buf);
     if (!args[1]->null_value && !args[2]->null_value)
-      return (longlong) ((my_decimal_cmp(dec, a_dec) >= 0 &&
+      return (int64_t) ((my_decimal_cmp(dec, a_dec) >= 0 &&
                           my_decimal_cmp(dec, b_dec) <= 0) != negated);
     if (args[1]->null_value && args[2]->null_value)
       null_value=1;
@@ -2153,7 +2151,7 @@ longlong Item_func_between::val_int()
     a= args[1]->val_real();
     b= args[2]->val_real();
     if (!args[1]->null_value && !args[2]->null_value)
-      return (longlong) ((value >= a && value <= b) != negated);
+      return (int64_t) ((value >= a && value <= b) != negated);
     if (args[1]->null_value && args[2]->null_value)
       null_value=1;
     else if (args[1]->null_value)
@@ -2165,7 +2163,7 @@ longlong Item_func_between::val_int()
       null_value= value >= a;
     }
   }
-  return (longlong) (!null_value && negated);
+  return (int64_t) (!null_value && negated);
 }
 
 
@@ -2254,11 +2252,11 @@ Item_func_ifnull::real_op()
   return value;
 }
 
-longlong
+int64_t
 Item_func_ifnull::int_op()
 {
   assert(fixed == 1);
-  longlong value=args[0]->val_int();
+  int64_t value=args[0]->val_int();
   if (!args[0]->null_value)
   {
     null_value=0;
@@ -2421,12 +2419,12 @@ Item_func_if::val_real()
   return value;
 }
 
-longlong
+int64_t
 Item_func_if::val_int()
 {
   assert(fixed == 1);
   Item *arg= args[0]->val_bool() ? args[1] : args[2];
-  longlong value=arg->val_int();
+  int64_t value=arg->val_int();
   null_value=arg->null_value;
   return value;
 }
@@ -2498,11 +2496,11 @@ Item_func_nullif::val_real()
   return value;
 }
 
-longlong
+int64_t
 Item_func_nullif::val_int()
 {
   assert(fixed == 1);
-  longlong value;
+  int64_t value;
   if (!cmp.compare())
   {
     null_value=1;
@@ -2629,13 +2627,13 @@ String *Item_func_case::val_str(String *str)
 }
 
 
-longlong Item_func_case::val_int()
+int64_t Item_func_case::val_int()
 {
   assert(fixed == 1);
   char buff[MAX_FIELD_WIDTH];
   String dummy_str(buff,sizeof(buff),default_charset());
   Item *item=find_item(&dummy_str);
-  longlong res;
+  int64_t res;
 
   if (!item)
   {
@@ -2692,7 +2690,7 @@ bool Item_func_case::fix_fields(THD *thd, Item **ref)
     buff should match stack usage from
     Item_func_case::val_int() -> Item_func_case::find_item()
   */
-  uchar buff[MAX_FIELD_WIDTH*2+sizeof(String)*2+sizeof(String*)*2+sizeof(double)*2+sizeof(longlong)*2];
+  uchar buff[MAX_FIELD_WIDTH*2+sizeof(String)*2+sizeof(String*)*2+sizeof(double)*2+sizeof(int64_t)*2];
   bool res= Item_func::fix_fields(thd, ref);
   /*
     Call check_stack_overrun after fix_fields to be sure that stack variable
@@ -2878,13 +2876,13 @@ String *Item_func_coalesce::str_op(String *str)
   return 0;
 }
 
-longlong Item_func_coalesce::int_op()
+int64_t Item_func_coalesce::int_op()
 {
   assert(fixed == 1);
   null_value=0;
   for (uint i=0 ; i < arg_count ; i++)
   {
-    longlong res=args[i]->val_int();
+    int64_t res=args[i]->val_int();
     if (!args[i]->null_value)
       return res;
   }
@@ -2953,7 +2951,7 @@ void Item_func_coalesce::fix_length_and_dec()
 ****************************************************************************/
 
 /*
-  Determine which of the signed longlong arguments is bigger
+  Determine which of the signed int64_t arguments is bigger
 
   SYNOPSIS
     cmp_longs()
@@ -2961,7 +2959,7 @@ void Item_func_coalesce::fix_length_and_dec()
       b_val     right argument
 
   DESCRIPTION
-    This function will compare two signed longlong arguments
+    This function will compare two signed int64_t arguments
     and will return -1, 0, or 1 if left argument is smaller than,
     equal to or greater than the right argument.
 
@@ -2970,14 +2968,14 @@ void Item_func_coalesce::fix_length_and_dec()
     0           left argument is equal to the right argument.
     1           left argument is greater than the right argument.
 */
-static inline int cmp_longs (longlong a_val, longlong b_val)
+static inline int cmp_longs (int64_t a_val, int64_t b_val)
 {
   return a_val < b_val ? -1 : a_val == b_val ? 0 : 1;
 }
 
 
 /*
-  Determine which of the unsigned longlong arguments is bigger
+  Determine which of the unsigned int64_t arguments is bigger
 
   SYNOPSIS
     cmp_ulongs()
@@ -2985,7 +2983,7 @@ static inline int cmp_longs (longlong a_val, longlong b_val)
       b_val     right argument
 
   DESCRIPTION
-    This function will compare two unsigned longlong arguments
+    This function will compare two unsigned int64_t arguments
     and will return -1, 0, or 1 if left argument is smaller than,
     equal to or greater than the right argument.
 
@@ -2994,17 +2992,17 @@ static inline int cmp_longs (longlong a_val, longlong b_val)
     0           left argument is equal to the right argument.
     1           left argument is greater than the right argument.
 */
-static inline int cmp_ulongs (ulonglong a_val, ulonglong b_val)
+static inline int cmp_ulongs (uint64_t a_val, uint64_t b_val)
 {
   return a_val < b_val ? -1 : a_val == b_val ? 0 : 1;
 }
 
 
 /*
-  Compare two integers in IN value list format (packed_longlong) 
+  Compare two integers in IN value list format (packed_int64_t) 
 
   SYNOPSIS
-    cmp_longlong()
+    cmp_int64_t()
       cmp_arg   an argument passed to the calling function (my_qsort2)
       a         left argument
       b         right argument
@@ -3014,7 +3012,7 @@ static inline int cmp_ulongs (ulonglong a_val, ulonglong b_val)
     format and will return -1, 0, or 1 if left argument is smaller than,
     equal to or greater than the right argument.
     It's used in sorting the IN values list and finding an element in it.
-    Depending on the signedness of the arguments cmp_longlong() will
+    Depending on the signedness of the arguments cmp_int64_t() will
     compare them as either signed (using cmp_longs()) or unsigned (using
     cmp_ulongs()).
 
@@ -3023,9 +3021,9 @@ static inline int cmp_ulongs (ulonglong a_val, ulonglong b_val)
     0           left argument is equal to the right argument.
     1           left argument is greater than the right argument.
 */
-int cmp_longlong(void *cmp_arg __attribute__((__unused__)),
-                 in_longlong::packed_longlong *a,
-                 in_longlong::packed_longlong *b)
+int cmp_int64_t(void *cmp_arg __attribute__((__unused__)),
+                 in_int64_t::packed_int64_t *a,
+                 in_int64_t::packed_int64_t *b)
 {
   if (a->unsigned_flag != b->unsigned_flag)
   { 
@@ -3033,8 +3031,8 @@ int cmp_longlong(void *cmp_arg __attribute__((__unused__)),
       One of the args is unsigned and is too big to fit into the 
       positive signed range. Report no match.
     */  
-    if ((a->unsigned_flag && ((ulonglong) a->val) > (ulonglong) LONGLONG_MAX) ||
-        (b->unsigned_flag && ((ulonglong) b->val) > (ulonglong) LONGLONG_MAX))
+    if ((a->unsigned_flag && ((uint64_t) a->val) > (uint64_t) INT64_MAX) ||
+        (b->unsigned_flag && ((uint64_t) b->val) > (uint64_t) INT64_MAX))
       return a->unsigned_flag ? 1 : -1;
     /*
       Although the signedness differs both args can fit into the signed 
@@ -3043,7 +3041,7 @@ int cmp_longlong(void *cmp_arg __attribute__((__unused__)),
     return cmp_longs (a->val, b->val);
   }
   if (a->unsigned_flag)
-    return cmp_ulongs ((ulonglong) a->val, (ulonglong) b->val);
+    return cmp_ulongs ((uint64_t) a->val, (uint64_t) b->val);
   else
     return cmp_longs (a->val, b->val);
 }
@@ -3169,19 +3167,19 @@ void in_row::set(uint pos, Item *item)
   return;
 }
 
-in_longlong::in_longlong(uint elements)
-  :in_vector(elements,sizeof(packed_longlong),(qsort2_cmp) cmp_longlong, 0)
+in_int64_t::in_int64_t(uint elements)
+  :in_vector(elements,sizeof(packed_int64_t),(qsort2_cmp) cmp_int64_t, 0)
 {}
 
-void in_longlong::set(uint pos,Item *item)
+void in_int64_t::set(uint pos,Item *item)
 {
-  struct packed_longlong *buff= &((packed_longlong*) base)[pos];
+  struct packed_int64_t *buff= &((packed_int64_t*) base)[pos];
   
   buff->val= item->val_int();
   buff->unsigned_flag= item->unsigned_flag;
 }
 
-uchar *in_longlong::get_value(Item *item)
+uchar *in_int64_t::get_value(Item *item)
 {
   tmp.val= item->val_int();
   if (item->null_value)
@@ -3194,7 +3192,7 @@ void in_datetime::set(uint pos,Item *item)
 {
   Item **tmp_item= &item;
   bool is_null;
-  struct packed_longlong *buff= &((packed_longlong*) base)[pos];
+  struct packed_int64_t *buff= &((packed_int64_t*) base)[pos];
 
   buff->val= get_datetime_value(thd, &tmp_item, 0, warn_item, &is_null);
   buff->unsigned_flag= 1L;
@@ -3680,7 +3678,7 @@ void Item_func_in::fix_length_and_dec()
           cmp_type != INT_RESULT)
       {
         Item_field *field_item= (Item_field*) (args[0]->real_item());
-        if (field_item->field->can_be_compared_as_longlong())
+        if (field_item->field->can_be_compared_as_int64_t())
         {
           bool all_converted= true;
           for (arg=args+1, arg_end=args+arg_count; arg != arg_end ; arg++)
@@ -3698,7 +3696,7 @@ void Item_func_in::fix_length_and_dec()
                             cmp_collation.collation);
         break;
       case INT_RESULT:
-        array= new in_longlong(arg_count-1);
+        array= new in_int64_t(arg_count-1);
         break;
       case REAL_RESULT:
         array= new in_double(arg_count-1);
@@ -3797,7 +3795,7 @@ void Item_func_in::print(String *str, enum_query_type query_type)
     Value of the function
 */
 
-longlong Item_func_in::val_int()
+int64_t Item_func_in::val_int()
 {
   cmp_item *in_item;
   assert(fixed == 1);
@@ -3806,7 +3804,7 @@ longlong Item_func_in::val_int()
   {
     int tmp=array->find(args[0]);
     null_value=args[0]->null_value || (!tmp && have_null);
-    return (longlong) (!null_value && tmp != negated);
+    return (int64_t) (!null_value && tmp != negated);
   }
 
   for (uint i= 1 ; i < arg_count ; i++)
@@ -3823,52 +3821,52 @@ longlong Item_func_in::val_int()
       value_added_map|= 1 << (uint)cmp_type;
     }
     if (!in_item->cmp(args[i]) && !args[i]->null_value)
-      return (longlong) (!negated);
+      return (int64_t) (!negated);
     have_null|= args[i]->null_value;
   }
 
   null_value= have_null;
-  return (longlong) (!null_value && negated);
+  return (int64_t) (!null_value && negated);
 }
 
 
-longlong Item_func_bit_or::val_int()
+int64_t Item_func_bit_or::val_int()
 {
   assert(fixed == 1);
-  ulonglong arg1= (ulonglong) args[0]->val_int();
+  uint64_t arg1= (uint64_t) args[0]->val_int();
   if (args[0]->null_value)
   {
     null_value=1; /* purecov: inspected */
     return 0; /* purecov: inspected */
   }
-  ulonglong arg2= (ulonglong) args[1]->val_int();
+  uint64_t arg2= (uint64_t) args[1]->val_int();
   if (args[1]->null_value)
   {
     null_value=1;
     return 0;
   }
   null_value=0;
-  return (longlong) (arg1 | arg2);
+  return (int64_t) (arg1 | arg2);
 }
 
 
-longlong Item_func_bit_and::val_int()
+int64_t Item_func_bit_and::val_int()
 {
   assert(fixed == 1);
-  ulonglong arg1= (ulonglong) args[0]->val_int();
+  uint64_t arg1= (uint64_t) args[0]->val_int();
   if (args[0]->null_value)
   {
     null_value=1; /* purecov: inspected */
     return 0; /* purecov: inspected */
   }
-  ulonglong arg2= (ulonglong) args[1]->val_int();
+  uint64_t arg2= (uint64_t) args[1]->val_int();
   if (args[1]->null_value)
   {
     null_value=1; /* purecov: inspected */
     return 0; /* purecov: inspected */
   }
   null_value=0;
-  return (longlong) (arg1 & arg2);
+  return (int64_t) (arg1 & arg2);
 }
 
 Item_cond::Item_cond(THD *thd, Item_cond *item)
@@ -4227,7 +4225,7 @@ void Item_cond::neg_arguments(THD *thd)
 */
 
 
-longlong Item_cond_and::val_int()
+int64_t Item_cond_and::val_int()
 {
   assert(fixed == 1);
   List_iterator_fast<Item> li(list);
@@ -4245,7 +4243,7 @@ longlong Item_cond_and::val_int()
 }
 
 
-longlong Item_cond_or::val_int()
+int64_t Item_cond_or::val_int()
 {
   assert(fixed == 1);
   List_iterator_fast<Item> li(list);
@@ -4306,7 +4304,7 @@ Item *and_expressions(Item *a, Item *b, Item **org_item)
 }
 
 
-longlong Item_func_isnull::val_int()
+int64_t Item_func_isnull::val_int()
 {
   assert(fixed == 1);
   /*
@@ -4318,7 +4316,7 @@ longlong Item_func_isnull::val_int()
   return args[0]->is_null() ? 1: 0;
 }
 
-longlong Item_is_not_null_test::val_int()
+int64_t Item_is_not_null_test::val_int()
 {
   assert(fixed == 1);
   if (!used_tables_cache && !with_subselect)
@@ -4343,7 +4341,7 @@ void Item_is_not_null_test::update_used_tables()
   if (!args[0]->maybe_null)
   {
     used_tables_cache= 0;			/* is always true */
-    cached_value= (longlong) 1;
+    cached_value= (int64_t) 1;
   }
   else
   {
@@ -4351,13 +4349,13 @@ void Item_is_not_null_test::update_used_tables()
     if (!(used_tables_cache=args[0]->used_tables()) && !with_subselect)
     {
       /* Remember if the value is always NULL or never NULL */
-      cached_value= (longlong) !args[0]->is_null();
+      cached_value= (int64_t) !args[0]->is_null();
     }
   }
 }
 
 
-longlong Item_func_isnotnull::val_int()
+int64_t Item_func_isnotnull::val_int()
 {
   assert(fixed == 1);
   return args[0]->is_null() ? 0 : 1;
@@ -4372,7 +4370,7 @@ void Item_func_isnotnull::print(String *str, enum_query_type query_type)
 }
 
 
-longlong Item_func_like::val_int()
+int64_t Item_func_like::val_int()
 {
   assert(fixed == 1);
   String* res = args[0]->val_str(&tmp_value1);
@@ -4466,13 +4464,13 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
           Convert to "cs" if charset of escape differs.
         */
         CHARSET_INFO *cs= cmp.cmp_collation.collation;
-        uint32 unused;
+        uint32_t unused;
         if (escape_str->needs_conversion(escape_str->length(),
                                          escape_str->charset(), cs, &unused))
         {
           char ch;
           uint errors;
-          uint32 cnvlen= copy_and_convert(&ch, 1, cs, escape_str->ptr(),
+          uint32_t cnvlen= copy_and_convert(&ch, 1, cs, escape_str->ptr(),
                                           escape_str->length(),
                                           escape_str->charset(), &errors);
           escape= cnvlen ? ch : '\\';
@@ -4770,7 +4768,7 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
     very fast to use.
 */
 
-longlong Item_cond_xor::val_int()
+int64_t Item_cond_xor::val_int()
 {
   assert(fixed == 1);
   List_iterator<Item> li(list);
@@ -4786,7 +4784,7 @@ longlong Item_cond_xor::val_int()
       return 0;
     }
   }
-  return (longlong) result;
+  return (int64_t) result;
 }
 
 /**
@@ -5152,7 +5150,7 @@ void Item_equal::update_used_tables()
   }
 }
 
-longlong Item_equal::val_int()
+int64_t Item_equal::val_int()
 {
   Item_field *item_field;
   if (cond_false)

@@ -2210,7 +2210,7 @@ my_caseup_utf8mb4(CHARSET_INFO *cs, char *src, size_t srclen,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->caseup_multiply == 1);
+  assert(src != dst || cs->caseup_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb4(cs, &wc,
@@ -2278,7 +2278,7 @@ my_caseup_str_utf8mb4(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->caseup_multiply == 1);
+  assert(cs->caseup_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (uchar *) src)) > 0)
@@ -2303,7 +2303,7 @@ my_casedn_utf8mb4(CHARSET_INFO *cs,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->casedn_multiply == 1);
+  assert(src != dst || cs->casedn_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb4(cs, &wc,
@@ -2326,7 +2326,7 @@ my_casedn_str_utf8mb4(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->casedn_multiply == 1);
+  assert(cs->casedn_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb4_no_range(cs, &wc, (uchar *) src)) > 0)
@@ -2434,7 +2434,7 @@ my_strnncollsp_utf8mb4(CHARSET_INFO *cs,
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
 
   while ( s < se && t < te )
@@ -2711,7 +2711,7 @@ MY_CHARSET_HANDLER my_charset_utf8mb4_handler=
   my_casedn_utf8mb4,
   my_snprintf_8bit,
   my_long10_to_str_8bit,
-  my_longlong10_to_str_8bit,
+  my_int64_t10_to_str_8bit,
   my_fill_8bit,
   my_strntol_8bit,
   my_strntoul_8bit,
@@ -3112,7 +3112,7 @@ my_caseup_utf8mb3(CHARSET_INFO *cs, char *src, size_t srclen,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->caseup_multiply == 1);
+  assert(src != dst || cs->caseup_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb3(cs, &wc,
@@ -3166,7 +3166,7 @@ my_caseup_str_utf8mb3(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->caseup_multiply == 1);
+  assert(cs->caseup_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (uchar *) src)) > 0)
@@ -3191,7 +3191,7 @@ my_casedn_utf8mb3(CHARSET_INFO *cs, char *src, size_t srclen,
   int srcres, dstres;
   char *srcend= src + srclen, *dstend= dst + dstlen, *dst0= dst;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(src != dst || cs->casedn_multiply == 1);
+  assert(src != dst || cs->casedn_multiply == 1);
 
   while ((src < srcend) &&
          (srcres= my_mb_wc_utf8mb3(cs, &wc,
@@ -3215,7 +3215,7 @@ my_casedn_str_utf8mb3(CHARSET_INFO *cs, char *src)
   int srcres, dstres;
   char *dst= src, *dst0= src;
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
-  DBUG_ASSERT(cs->casedn_multiply == 1);
+  assert(cs->casedn_multiply == 1);
 
   while (*src &&
          (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (uchar *) src)) > 0)
@@ -3327,7 +3327,7 @@ my_strnncollsp_utf8mb3(CHARSET_INFO *cs,
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
 
   while ( s < se && t < te )
@@ -3678,7 +3678,7 @@ MY_CHARSET_HANDLER my_charset_utf8mb3_handler=
     my_casedn_utf8mb3,
     my_snprintf_8bit,
     my_long10_to_str_8bit,
-    my_longlong10_to_str_8bit,
+    my_int64_t10_to_str_8bit,
     my_fill_8bit,
     my_strntol_8bit,
     my_strntoul_8bit,
@@ -3831,7 +3831,7 @@ my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs,
   MY_UNICASE_INFO **uni_plane= cs->caseinfo;
 
 #ifndef VARCHAR_WITH_DIFF_ENDSPACE_ARE_DIFFERENT_FOR_UNIQUE
-  diff_if_only_endspace_difference= FALSE;
+  diff_if_only_endspace_difference= false;
 #endif
     
   while ( s < se && t < te )
@@ -3976,7 +3976,7 @@ All other characters are encoded using five bytes:
 */
 
 
-static uint16 touni[5994]=
+static uint16_t touni[5994]=
 {
   0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
   0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
@@ -4732,7 +4732,7 @@ static uint16 touni[5994]=
 
 
 /* 00C0-05FF */
-static uint16 uni_0C00_05FF[1344]=
+static uint16_t uni_0C00_05FF[1344]=
 {
   0x0017,0x0018,0x0019,0x001A,0x001B,0x001C,0x001D,0x001E,
   0x001F,0x0020,0x0021,0x0022,0x0023,0x0024,0x0025,0x0026,
@@ -4906,7 +4906,7 @@ static uint16 uni_0C00_05FF[1344]=
 
 
 /* 1E00-1FFF */
-static uint16 uni_1E00_1FFF[512]=
+static uint16_t uni_1E00_1FFF[512]=
 {
   0x076C,0x116C,0x07BC,0x11BC,0x080C,0x120C,0x085C,0x125C,
   0x08AC,0x12AC,0x08FC,0x12FC,0x094C,0x134C,0x099C,0x139C,
@@ -4976,7 +4976,7 @@ static uint16 uni_1E00_1FFF[512]=
 
 
 /* 2160-217F */
-static uint16 uni_2160_217F[32]=
+static uint16_t uni_2160_217F[32]=
 {
   0x0739,0x0789,0x07D9,0x0829,0x0879,0x08C9,0x0919,0x0969,
   0x09B9,0x0A09,0x0A59,0x0AA9,0x0AF9,0x0B49,0x0B99,0x0BE9,
@@ -4986,7 +4986,7 @@ static uint16 uni_2160_217F[32]=
 
 
 /* 24B0-24EF */
-static uint16 uni_24B0_24EF[64]=
+static uint16_t uni_24B0_24EF[64]=
 {
   0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0511,0x0512,
   0x0513,0x0514,0x0515,0x0516,0x0517,0x0518,0x0519,0x051A,
@@ -5000,7 +5000,7 @@ static uint16 uni_24B0_24EF[64]=
 
 
 /* FF20-FF5F */
-static uint16 uni_FF20_FF5F[64]=
+static uint16_t uni_FF20_FF5F[64]=
 {
   0x0000,0x0560,0x05B0,0x0600,0x0650,0x06A0,0x06F0,0x0740,
   0x0790,0x07E0,0x0830,0x0880,0x08D0,0x0920,0x0970,0x09C0,
@@ -5201,7 +5201,7 @@ static MY_CHARSET_HANDLER my_charset_filename_handler=
     my_casedn_utf8mb3,
     my_snprintf_8bit,
     my_long10_to_str_8bit,
-    my_longlong10_to_str_8bit,
+    my_int64_t10_to_str_8bit,
     my_fill_8bit,
     my_strntol_8bit,
     my_strntoul_8bit,

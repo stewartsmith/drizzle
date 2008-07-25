@@ -35,7 +35,7 @@ MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
     awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
 
 # The port should be constant for a LONG time
-MYSQL_TCP_PORT_DEFAULT=3306
+MYSQL_TCP_PORT_DEFAULT=4427
 
 dnl Include m4 
 sinclude(config/ac-macros/alloca.m4)
@@ -188,8 +188,6 @@ else
   AC_PATH_PROG(AS, as, as)
 fi
 
-# Still need ranlib for readline; local static use only so no libtool.
-AC_PROG_RANLIB
 # We use libtool
 #AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
@@ -282,6 +280,7 @@ if $LD --version 2>/dev/null|grep -q GNU; then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+
 #--------------------------------------------------------------------
 # Check for libevent
 #--------------------------------------------------------------------
@@ -291,7 +290,12 @@ if test "x$ac_cv_header_event_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
 fi
+my_save_LIBS="$LIBS"
+LIBS=""
 AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+LIBEVENT_LIBS="${LIBS}"
+LIBS="${my_save_LIBS}"
+AC_SUBST(LIBEVENT_LIBS)
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -305,22 +309,54 @@ fi
 AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthread)])
 
 #--------------------------------------------------------------------
+# Check for tcmalloc
+#--------------------------------------------------------------------
+
+AC_ARG_ENABLE([tcmalloc],
+    [AS_HELP_STRING([--enable-tcmalloc],
+       [Enable linking with tcmalloc @<:@default=off@:>@])],
+    [ac_warn_strict_aliasing="$enableval"],
+    [ac_warn_strict_aliasing="no"])
+
+if test "x$ac_warn_strict_aliasing" = "xyes"
+then
+  AC_CHECK_LIB(tcmalloc,malloc,[],[])
+fi
+
+#--------------------------------------------------------------------
 # Check for libz
 #--------------------------------------------------------------------
 
+my_save_LIBS="$LIBS"
+LIBS=""
 AC_CHECK_HEADERS(zlib.h)
 if test "x$ac_cv_header_zlib_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find zlib.h. Try installing zlib development packages])
 fi
 AC_CHECK_LIB(z, crc32, [], [AC_MSG_ERROR(could not find libz)])
+ZLIB_LIBS="$LIBS"
+LIBS="$my_save_LIBS"
+AC_SUBST(ZLIB_LIBS)
 
+
+#--------------------------------------------------------------------
+# Check for libreadline or compatible (libedit on Mac OS X)
+#--------------------------------------------------------------------
 
 AC_CHECK_HEADERS([readline/readline.h])
 if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+my_save_LIBS="$LIBS"
+LIBS=""
+AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find libreadline.)])
+READLINE_LIBS="$LIBS"
+LIBS="$my_save_LIBS"
+AC_SUBST(READLINE_LIBS)
+
+MYSQL_CHECK_NEW_RL_INTERFACE
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -332,7 +368,7 @@ PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
   dnl Only check the header here, because autoconf can't handle
   dnl checking for C++ methods without C linkages
   AC_CHECK_HEADERS(pcrecpp.h)
-  if test "x$ac_cv_header_prcecpp_h" = "xno" 
+  if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
   then
     found_pcre="no"
   else
@@ -348,24 +384,6 @@ fi
 AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
 AC_SUBST(PCRE_CFLAGS)
-
-
-# Avoid bug in fcntl on some versions of linux
-AC_MSG_CHECKING([if we should use 'skip-external-locking' as default for $target_os])
-# Any variation of Linux
-if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
-then
-  MYSQLD_DEFAULT_SWITCHES="--skip-external-locking"
-  TARGET_LINUX="true"
-  AC_MSG_RESULT([yes])
-  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
-else
-  MYSQLD_DEFAULT_SWITCHES=""
-  TARGET_LINUX="false"
-  AC_MSG_RESULT([no])
-fi
-AC_SUBST(MYSQLD_DEFAULT_SWITCHES)
-AC_SUBST(TARGET_LINUX)
 
 dnl Find paths to some shell programs
 AC_PATH_PROG(LN, ln, ln)
@@ -533,26 +551,9 @@ else
   AC_MSG_RESULT([no])
 fi
 
-# Add query profiler
-AC_MSG_CHECKING(if SHOW PROFILE should be enabled.)
-AC_ARG_ENABLE([profiling],
-    [AS_HELP_STRING([--enable-profiling], 
-	    [Build a version with query profiling code])],
-    [ ENABLED_PROFILING=$enableval ],
-    [ ENABLED_PROFILING=no ])
-
-if test "$ENABLED_PROFILING" = "yes"
-then
-  AC_DEFINE([ENABLED_PROFILING], [1],
-            [If SHOW PROFILE should be enabled])
-  AC_MSG_RESULT([yes]) 
-else
-  AC_MSG_RESULT([no])
-fi
-
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
-            [Which port to use for Drizzle services @<:@default=3306@:>@])],
+            [Which port to use for Drizzle services @<:@default=4427@:>@])],
     [ MYSQL_TCP_PORT=$withval ],
     [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
@@ -564,8 +565,8 @@ AC_ARG_WITH([tcp-port],
       # testing for MYSQL_TCP_PORT==MYSQL_TCP_PORT_DEFAULT would make a
       # a port of MYSQL_TCP_PORT_DEFAULT magic even if the builder did not
       # intend it to mean "use the default, in fact, look up a good default
-      # from /etc/services if you can", but really, really meant 3306 when
-      # they passed in 3306. When they pass in a specific value, let them
+      # from /etc/services if you can", but really, really meant 4427 when
+      # they passed in 4427. When they pass in a specific value, let them
       # have it; don't second guess user and think we know better, this will
       # just make people cross.  this makes the the logic work like this
       # (which is complicated enough):
@@ -573,7 +574,7 @@ AC_ARG_WITH([tcp-port],
       # - if a port was set during build, use that as a default.
       #
       # - otherwise, try to look up a port in /etc/services; if that fails,
-      #   use MYSQL_TCP_PORT_DEFAULT (at the time of this writing 3306)
+      #   use MYSQL_TCP_PORT_DEFAULT (at the time of this writing 4427)
       #
       # - allow the MYSQL_TCP_PORT environment variable to override that.
       #
@@ -631,7 +632,7 @@ AC_CHECK_HEADERS(limits.h pwd.h select.h linux/config.h)
 AC_CHECK_HEADERS(sys/fpu.h utime.h sys/utime.h )
 AC_CHECK_HEADERS(synch.h sys/mman.h sys/socket.h netinet/in.h arpa/inet.h)
 AC_CHECK_HEADERS(sys/timeb.h sys/vadvise.h sys/wait.h term.h)
-AC_CHECK_HEADERS(termio.h termios.h sched.h crypt.h alloca.h)
+AC_CHECK_HEADERS(termio.h termios.h sched.h alloca.h)
 AC_CHECK_HEADERS(sys/ioctl.h malloc.h sys/malloc.h sys/ipc.h sys/shm.h)
 AC_CHECK_HEADERS(sys/prctl.h sys/resource.h sys/param.h port.h ieeefp.h)
 AC_CHECK_HEADERS(execinfo.h)
@@ -676,18 +677,17 @@ AC_CHECK_TYPES([fp_except], [], [], [
 #include <ieeefp.h>
 ])
 
-
 my_save_LIBS="$LIBS"
 LIBS=""
 AC_CHECK_LIB(dl,dlopen)
-LIBDL=$LIBS
-LIBS="$my_save_LIBS"
-AC_SUBST(LIBDL)
-
-my_save_LIBS="$LIBS"
-LIBS="$LIBS $LIBDL"
 AC_CHECK_FUNCS(dlopen dlerror)
+if test "$ac_cv_func_dlopen" != "yes"
+then
+  AC_MSG_ERROR([Drizzle requires dlopen])
+fi
+LIBDL_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
+AC_SUBST(LIBDL_LIBS)
 
 AC_CHECK_FUNCS(strtok_r)
 
@@ -727,44 +727,27 @@ then
   DEBUG_OPTIMIZE_CXX=""
 fi
 
+AC_HEADER_ASSERT
+
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
 CXXFLAGS="${SYMBOLS_CXXFLAGS} ${CXXFLAGS}"
 
 AC_ARG_WITH([debug],
     [AS_HELP_STRING([--with-debug],
-            [Add debug code (yes|no|full) @<:@default=no@:>@ 
-	    Full adds memory checked, very slow.])],
+       [Add debug code/turns off optimizations (yes|no) @<:@default=no@:>@])],
     [with_debug=$withval],
     [with_debug=no])
-AM_CONDITIONAL(BUILD_DBUG, test "$with_debug" != "no")
 if test "$with_debug" = "yes"
 then
   # Medium debug.
-  AC_DEFINE([DBUG_ON], [1], [Use libdbug])
   CFLAGS="$DEBUG_OPTIMIZE_CC $CFLAGS"
   CXXFLAGS="$DEBUG_OPTIMIZE_CXX $CXXFLAGS"
 else
   # Optimized version. No debug
-  AC_DEFINE([DBUG_OFF], [1], [Dont use libdbug])
   CFLAGS="$OPTIMIZE_CFLAGS $CFLAGS"
   CXXFLAGS="$OPTIMIZE_CXXFLAGS $CXXFLAGS"
 fi
 
-# If we should allow error injection tests
-AC_ARG_WITH([error-inject],
-    [AS_HELP_STRING([--with-error-inject],
-	    [Enable error injection in Drizzle Server @<:@default=off@:>@])],
-    [ with_error_inject=$withval ],
-    [ with_error_inject=no ])
-
-if test $with_debug != "no"
-then
-  if test "$with_error_inject" = "yes"
-  then
-    AC_DEFINE([ERROR_INJECT_SUPPORT], [1],
-              [Enable error injection in Drizzle Server])
-  fi
-fi
 
 AC_ARG_WITH([fast-mutexes],
     [AS_HELP_STRING([--with-fast-mutexes],
@@ -774,13 +757,8 @@ AC_ARG_WITH([fast-mutexes],
 
 if test "$with_fast_mutexes" != "no"
 then
-  if test "$with_debug" != "no"
-  then
-    AC_MSG_WARN(['--with-fast-mutexes' ignored when '--with-debug' is given])
-  else
-    AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
-	      [Define to 1 if you want to use fast mutexes])
-  fi
+	AC_DEFINE([MY_PTHREAD_FASTMUTEX], [1], 
+			[Define to 1 if you want to use fast mutexes])
 fi
 
 AC_ARG_WITH([comment],
@@ -796,24 +774,12 @@ else
 fi
 AC_SUBST(COMPILATION_COMMENT)
 
-AC_MSG_CHECKING("need of special linking flags")
-if test "$TARGET_LINUX" = "true" -a "$ac_cv_c_compiler_gnu" = "yes" -a "$all_is_static" != "yes"
+if expr "$target_os" : "[[Ll]]inux.*" > /dev/null
 then
-  LDFLAGS="$LDFLAGS -rdynamic"
-  AC_MSG_RESULT("-rdynamic")
+  TARGET_LINUX="true"
+  AC_DEFINE([TARGET_OS_LINUX], [1], [Whether we build for Linux])
 else
-  case "$SYSTEM_TYPE$with_mysqld_ldflags " in
-  *freebsd*"-all-static "*|*dragonfly*"-all-static "*)
-    AC_MSG_RESULT("none")
-    ;;
-  *freebsd*|*dragonfly*)
-    MYSQLD_EXTRA_LDFLAGS="$MYSQLD_EXTRA_LDFLAGS -export-dynamic"
-    AC_MSG_RESULT("-export-dynamic")
-    ;;
-  *)
-    AC_MSG_RESULT("none")
-    ;;
-  esac
+  TARGET_LINUX="false"
 fi
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -948,9 +914,9 @@ if test "$with_named_curses" = "no"
 then
   MYSQL_CHECK_LIB_TERMCAP
 else
-  TERMCAP_LIB="$with_named_curses"
+  TERMCAP_LIBS="$with_named_curses"
 fi
-AC_SUBST(TERMCAP_LIB)
+AC_SUBST(TERMCAP_LIBS)
 
 # Check if the termcap function 'tgoto' is already declared in
 # system header files or if it need to be declared locally
@@ -1182,6 +1148,18 @@ AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
 AC_SUBST(mysql_plugin_defs)
 
+AC_ARG_ENABLE([profiling],
+    [AS_HELP_STRING([--enable-profiling],
+       [Toggle profiling @<:@default=off@:>@])],
+    [ac_profiling="$enableval"],
+    [ac_profiling="no"])
+
+AC_ARG_ENABLE([coverage],
+    [AS_HELP_STRING([--enable-coverage],
+       [Toggle coverage @<:@default=off@:>@])],
+    [ac_coverage="$enableval"],
+    [ac_coverage="no"])
+
 AC_ARG_ENABLE([pedantic-warnings],
     [AS_HELP_STRING([--disable-pedantic-warnings],
        [Toggle pedanticness @<:@default=on@:>@])],
@@ -1189,10 +1167,10 @@ AC_ARG_ENABLE([pedantic-warnings],
     [ac_warn_pedantic="yes"])
 
 AC_ARG_ENABLE([fail],
-    [AS_HELP_STRING([--enable-fail],
-       [Turn warnings into failures @<:@default=off@:>@])],
+    [AS_HELP_STRING([--disable-fail],
+       [Turn warnings into failures @<:@default=on@:>@])],
     [ac_warn_fail="$enableval"],
-    [ac_warn_fail="no"])
+    [ac_warn_fail="yes"])
 
 AC_ARG_ENABLE([unreachable],
     [AS_HELP_STRING([--enable-unreachable],
@@ -1200,34 +1178,72 @@ AC_ARG_ENABLE([unreachable],
     [ac_warn_unreachable="$enableval"],
     [ac_warn_unreachable="no"])
 
+AC_ARG_ENABLE([longlong-warnings],
+    [AS_HELP_STRING([--enable-longlong-warnings],
+       [Enable warnings about longlong in C++ @<:@default=off@:>@])],
+    [ac_warn_longlong="$enableval"],
+    [ac_warn_longlong="no"])
+
+AC_ARG_ENABLE([strict-aliasing],
+    [AS_HELP_STRING([--enable-strict-aliasing],
+       [Enable warnings about stict-aliasing @<:@default=off@:>@])],
+    [ac_warn_strict_aliasing="$enableval"],
+    [ac_warn_strict_aliasing="no"])
+
 
 if test "$GCC" = "yes"
 then
 
-  GCC_WARNINGS="-W -Wall -Wextra"
-  GXX_WARNINGS="${GCC_WARNINGS}"
+  if test "$ac_warn_longlong" = "yes"
+  then
+    W_LONGLONG="-Wlong-long"
+  else
+    W_LONGLONG="-Wno-long-long"
+  fi
 
+  if test "$ac_warn_strict_aliasing" = "yes"
+  then
+    W_STRICT_ALIASING="-Wstrict-aliasing"
+  else
+    W_STRICT_ALIASING="-Wno-strict-aliasing"
+  fi
+
+  if test "$ac_profiling" = "yes"
+  then
+    GPROF_PROFILING="-pg"
+  else
+    GPROF_PROFILING=" "
+  fi
+
+  if test "$ac_coverage" = "yes"
+  then
+    GPROF_COVERAGE="-fprofile-arcs -ftest-coverage"
+  else
+    GPROF_COVERAGE=" "
+  fi
 
   if test "$ac_warn_pedantic" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS}  -std=gnu99 -pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wno-strict-aliasing "
-    GXX_WARNINGS="${GXX_WARNINGS}  -std=gnu++98 -pedantic -Wundef -Wredundant-decls -Wno-long-long -Wno-strict-aliasing"
+    GCC_PEDANTIC="-pedantic -Wundef -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls ${W_STRICT_ALIASING}"
+    GXX_PEDANTIC="-pedantic -Wundef -Wredundant-decls ${W_LONGLONG} ${W_STRICT_ALIASING}"
   fi
 
   if test "$ac_warn_unreachable" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS} -Wunreachable-code"
-    GXX_WARNINGS="${GXX_WARNINGS} -Wunreachable-code"
+    W_UNREACHABLE="-Wunreachable-code"
   fi
 
   if test "$ac_warn_fail" = "yes"
   then
-    GCC_WARNINGS="${GCC_WARNINGS} -Werror"
-    GXX_WARNINGS="${GXX_WARNINGS} -Werror"
+    W_FAIL="-Werror"
   fi
 
-    CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
-    CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+  BASE_WARNINGS="-W -Wall -Wextra"
+  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+
+  CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
+  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 
 # Some usefull subst
@@ -1249,9 +1265,11 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
- server/Makefile server/share/Makefile dnl
+ server/Makefile dnl
+ server/field/Makefile dnl
+ server/share/Makefile dnl
  server/sql_builtin.cc dnl
- dbug/Makefile include/Makefile dnl
+ include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  include/drizzle_version.h plugin/Makefile dnl

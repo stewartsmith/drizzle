@@ -61,7 +61,7 @@ typedef struct st_mi_state_info
   MI_STATUS_INFO state;
   ha_rows split;			/* number of split blocks */
   my_off_t dellink;			/* Link to next removed block */
-  ulonglong auto_increment;
+  uint64_t auto_increment;
   ulong process;			/* process that updated table last */
   ulong unique;				/* Unique number for this process */
   ulong update_count;			/* Updated for each write lock */
@@ -73,7 +73,7 @@ typedef struct st_mi_state_info
 
   ulong sec_index_changed;		/* Updated when new sec_index */
   ulong sec_index_used;			/* which extra index are in use */
-  ulonglong key_map;			/* Which keys are in use */
+  uint64_t key_map;			/* Which keys are in use */
   ha_checksum checksum;                 /* Table checksum */
   ulong version;			/* timestamp of create */
   time_t create_time;			/* Time when created database */
@@ -81,7 +81,7 @@ typedef struct st_mi_state_info
   time_t check_time;			/* Time for last check */
   uint	sortkey;			/* sorted by this key  (not used) */
   uint open_count;
-  uint8 changed;			/* Changed since myisamchk */
+  uint8_t changed;			/* Changed since myisamchk */
 
   /* the following isn't saved on disk */
   uint state_diff_length;		/* Should be 0 */
@@ -170,7 +170,7 @@ typedef struct st_mi_isam_share {	/* Shared between opens */
   uchar *file_map;			/* mem-map of file if possible */
   KEY_CACHE *key_cache;			/* ref to the current key cache */
   MI_DECODE_TREE *decode_trees;
-  uint16 *decode_tables;
+  uint16_t *decode_tables;
   int (*read_record)(struct st_myisam_info*, my_off_t, uchar*);
   int (*write_record)(struct st_myisam_info*, const uchar*);
   int (*update_record)(struct st_myisam_info*, my_off_t, const uchar*);
@@ -247,7 +247,7 @@ struct st_myisam_info {
   uchar *int_keypos,			/* Save position for next/previous  */
         *int_maxpos;			/*  -""-  */
   uint  int_nod_flag;			/*  -""-  */
-  uint32 int_keytree_version;		/*  -""-  */
+  uint32_t int_keytree_version;		/*  -""-  */
   int (*read_record)(struct st_myisam_info*, my_off_t, uchar*);
   invalidator_by_filename invalidator;  /* query cache invalidator */
   ulong this_unique;			/* uniq filenumber or thread */
@@ -274,7 +274,7 @@ struct st_myisam_info {
   enum ha_rkey_function last_key_func;  /* CONTAIN, OVERLAP, etc */
   uint  save_lastkey_length;
   uint  pack_key_length;                /* For MYISAMMRG */
-  uint16 last_used_keyseg;              /* For MyISAMMRG */
+  uint16_t last_used_keyseg;              /* For MyISAMMRG */
   int	errkey;				/* Got last error on this key */
   int   lock_type;			/* How database was locked */
   int   tmp_lock_type;			/* When locked by readinfo */
@@ -294,9 +294,6 @@ struct st_myisam_info {
 
   index_cond_func_t index_cond_func;   /* Index condition function */
   void *index_cond_func_arg;           /* parameter for the func */
-#ifdef __WIN__
-  my_bool owned_by_merge;                       /* This MyISAM table is part of a merge union */
-#endif
   THR_LOCK_DATA lock;
   uchar  *rtree_recursion_state;	/* For RTREE */
   int     rtree_recursion_depth;
@@ -321,8 +318,8 @@ typedef struct st_mi_sort_param
     The next two are used to collect statistics, see update_key_parts for
     description.
   */
-  ulonglong unique[MI_MAX_KEY_SEG+1];
-  ulonglong notnull[MI_MAX_KEY_SEG+1];
+  uint64_t unique[MI_MAX_KEY_SEG+1];
+  uint64_t notnull[MI_MAX_KEY_SEG+1];
 
   my_off_t pos,max_pos,filepos,start_recpos;
   uint key, key_length,real_key_length,sortbuff_size;
@@ -379,32 +376,24 @@ typedef struct st_mi_sort_param
 #define READING_NEXT	1
 #define READING_HEADER	2
 
+
 #define mi_getint(x)	((uint) mi_uint2korr(x) & 32767)
-#define mi_putint(x,y,nod) { uint16 boh=(nod ? (uint16) 32768 : 0) + (uint16) (y);\
+#define mi_putint(x,y,nod) { uint16_t boh=(nod ? (uint16_t) 32768 : 0) + (uint16_t) (y);\
 			  mi_int2store(x,boh); }
 #define mi_test_if_nod(x) (x[0] & 128 ? info->s->base.key_reflength : 0)
 #define mi_report_crashed(A, B) _mi_report_crashed((A), (B), __FILE__, __LINE__)
 #define mi_mark_crashed(x) do{(x)->s->state.changed|= STATE_CRASHED; \
-                              DBUG_PRINT("error", ("Marked table crashed")); \
                               mi_report_crashed((x), 0); \
                            }while(0)
 #define mi_mark_crashed_on_repair(x) do{(x)->s->state.changed|= \
                                         STATE_CRASHED|STATE_CRASHED_ON_REPAIR; \
                                         (x)->update|= HA_STATE_CHANGED; \
-                                        DBUG_PRINT("error", \
-                                                   ("Marked table crashed")); \
                                      }while(0)
 #define mi_is_crashed(x) ((x)->s->state.changed & STATE_CRASHED)
 #define mi_is_crashed_on_repair(x) ((x)->s->state.changed & STATE_CRASHED_ON_REPAIR)
 #define mi_print_error(SHARE, ERRNO)                     \
         mi_report_error((ERRNO), (SHARE)->index_file_name)
 
-C_MODE_START
-void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
-                        const char *message __attribute__((unused)),
-                        const char *sfile __attribute__((unused)),
-                        uint sline __attribute__((unused)));
-C_MODE_END
 /* Functions to store length of space packed keys, VARCHAR or BLOB keys */
 
 #define store_key_length(key,length) \
@@ -441,7 +430,7 @@ C_MODE_END
 #define MI_DYN_ALIGN_SIZE	4	/* Align blocks on this */
 #define MI_MAX_DYN_HEADER_BYTE	13	/* max header byte for dynamic rows */
 #define MI_MAX_BLOCK_LENGTH	((((ulong) 1 << 24)-1) & (~ (ulong) (MI_DYN_ALIGN_SIZE-1)))
-#define MI_REC_BUFF_OFFSET      ALIGN_SIZE(MI_DYN_DELETE_BLOCK_HEADER+sizeof(uint32))
+#define MI_REC_BUFF_OFFSET      ALIGN_SIZE(MI_DYN_DELETE_BLOCK_HEADER+sizeof(uint32_t))
 
 #define MEMMAP_EXTRA_MARGIN	7	/* Write this as a suffix for file */
 
@@ -603,14 +592,14 @@ extern uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key,
 extern int _mi_read_key_record(MI_INFO *info,my_off_t filepos,uchar *buf);
 extern int _mi_read_cache(IO_CACHE *info,uchar *buff,my_off_t pos,
 			  uint length,int re_read_if_possibly);
-extern ulonglong retrieve_auto_increment(MI_INFO *info,const uchar *record);
+extern uint64_t retrieve_auto_increment(MI_INFO *info,const uchar *record);
 
 extern uchar *mi_alloc_rec_buff(MI_INFO *,ulong, uchar**);
 #define mi_get_rec_buff_ptr(info,buf)                              \
         ((((info)->s->options & HA_OPTION_PACK_RECORD) && (buf)) ? \
         (buf) - MI_REC_BUFF_OFFSET : (buf))
 #define mi_get_rec_buff_len(info,buf)                              \
-        (*((uint32 *)(mi_get_rec_buff_ptr(info,buf))))
+        (*((uint32_t *)(mi_get_rec_buff_ptr(info,buf))))
 
 extern ulong _mi_rec_unpack(MI_INFO *info,uchar *to,uchar *from,
 			    ulong reclength);
@@ -621,12 +610,12 @@ extern int _mi_write_part_record(MI_INFO *info,my_off_t filepos,ulong length,
 				 ulong *reclength,int *flag);
 extern void _mi_print_key(FILE *stream,HA_KEYSEG *keyseg,const uchar *key,
 			  uint length);
-extern my_bool _mi_read_pack_info(MI_INFO *info,pbool fix_keys);
+extern my_bool _mi_read_pack_info(MI_INFO *info,bool fix_keys);
 extern int _mi_read_pack_record(MI_INFO *info,my_off_t filepos,uchar *buf);
 extern int _mi_read_rnd_pack_record(MI_INFO*, uchar *,my_off_t, my_bool);
 extern int _mi_pack_rec_unpack(MI_INFO *info, MI_BIT_BUFF *bit_buff,
                                uchar *to, uchar *from, ulong reclength);
-extern ulonglong mi_safe_mul(ulonglong a,ulonglong b);
+extern uint64_t mi_safe_mul(uint64_t a,uint64_t b);
 
 struct st_sort_info;
 
@@ -747,7 +736,7 @@ void mi_get_status(void* param, int concurrent_insert);
 void mi_update_status(void* param);
 void mi_restore_status(void* param);
 void mi_copy_status(void* to,void *from);
-my_bool mi_check_status(void* param);
+bool mi_check_status(void* param);
 
 extern MI_INFO *test_if_reopen(char *filename);
 my_bool check_table_is_closed(const char *name, const char *where);
@@ -782,8 +771,14 @@ extern size_t my_pread(File Filedes,uchar *Buffer,size_t Count,my_off_t offset,
 
 /* Needed for handler */
 void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows);
+void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
+                        const char *message __attribute__((unused)),
+                        const char *sfile __attribute__((unused)),
+                        uint sline __attribute__((unused)));
+
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif

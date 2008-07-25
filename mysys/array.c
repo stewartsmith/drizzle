@@ -36,15 +36,14 @@
     Static buffers must begin immediately after the array structure.
 
   RETURN VALUE
-    TRUE	my_malloc_ci() failed
-    FALSE	Ok
+    true	my_malloc_ci() failed
+    false	Ok
 */
 
-my_bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
+bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
                             void *init_buffer, uint init_alloc, 
                             uint alloc_increment CALLER_INFO_PROTO)
 {
-  DBUG_ENTER("init_dynamic_array");
   if (!alloc_increment)
   {
     alloc_increment=max((8192-MALLOC_OVERHEAD)/element_size,16);
@@ -62,17 +61,17 @@ my_bool init_dynamic_array2(DYNAMIC_ARRAY *array, uint element_size,
   array->alloc_increment=alloc_increment;
   array->size_of_element=element_size;
   if ((array->buffer= init_buffer))
-    DBUG_RETURN(FALSE);
+    return(false);
   if (!(array->buffer=(uchar*) my_malloc_ci(element_size*init_alloc,
                                             MYF(MY_WME))))
   {
     array->max_element=0;
-    DBUG_RETURN(TRUE);
+    return(true);
   }
-  DBUG_RETURN(FALSE);
+  return(false);
 } 
 
-my_bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
+bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
                            uint init_alloc, 
                            uint alloc_increment CALLER_INFO_PROTO)
 {
@@ -89,17 +88,17 @@ my_bool init_dynamic_array(DYNAMIC_ARRAY *array, uint element_size,
       element
 
   RETURN VALUE
-    TRUE	Insert failed
-    FALSE	Ok
+    true	Insert failed
+    false	Ok
 */
 
-my_bool insert_dynamic(DYNAMIC_ARRAY *array, uchar* element)
+bool insert_dynamic(DYNAMIC_ARRAY *array, uchar* element)
 {
   uchar* buffer;
   if (array->elements == array->max_element)
   {						/* Call only when nessesary */
     if (!(buffer=alloc_dynamic(array)))
-      return TRUE;
+      return true;
   }
   else
   {
@@ -107,7 +106,7 @@ my_bool insert_dynamic(DYNAMIC_ARRAY *array, uchar* element)
     array->elements++;
   }
   memcpy(buffer,element,(size_t) array->size_of_element);
-  return FALSE;
+  return false;
 }
 
 
@@ -193,23 +192,23 @@ uchar *pop_dynamic(DYNAMIC_ARRAY *array)
     If idx > max_element insert new element. Allocate memory if needed. 
  
   RETURN VALUE
-    TRUE	Idx was out of range and allocation of new memory failed
-    FALSE	Ok
+    true	Idx was out of range and allocation of new memory failed
+    false	Ok
 */
 
-my_bool set_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
+bool set_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
 {
   if (idx >= array->elements)
   {
     if (idx >= array->max_element && allocate_dynamic(array, idx))
-      return TRUE;
+      return true;
     bzero((uchar*) (array->buffer+array->elements*array->size_of_element),
 	  (idx - array->elements)*array->size_of_element);
     array->elements=idx+1;
   }
   memcpy(array->buffer+(idx * array->size_of_element),element,
 	 (size_t) array->size_of_element);
-  return FALSE;
+  return false;
 }
 
 
@@ -225,11 +224,11 @@ my_bool set_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
    Any new allocated element are NOT initialized
 
   RETURN VALUE
-    FALSE	Ok
-    TRUE	Allocation of new memory failed
+    false	Ok
+    true	Allocation of new memory failed
 */
 
-my_bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
+bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
 {
   if (max_elements >= array->max_element)
   {
@@ -256,11 +255,11 @@ my_bool allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
     if (!(new_ptr= (uchar*) my_realloc(array->buffer,size*
                                        array->size_of_element,
                                        MYF(MY_WME | MY_ALLOW_ZERO_PTR))))
-      return TRUE;
+      return true;
     array->buffer= new_ptr;
     array->max_element= size;
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -278,8 +277,6 @@ void get_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
 {
   if (idx >= array->elements)
   {
-    DBUG_PRINT("warning",("To big array idx: %d, array size is %d",
-                          idx,array->elements));
     bzero(element,array->size_of_element);
     return;
   }

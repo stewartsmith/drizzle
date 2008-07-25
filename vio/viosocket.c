@@ -34,8 +34,8 @@ size_t vio_read(Vio * vio, uchar* buf, size_t size)
 
   /* Ensure nobody uses vio_read_buff and vio_read simultaneously */
   assert(vio->read_end == vio->read_pos);
-  errno=0;					/* For linux */
-  r = read(vio->sd, buf, size);
+  r= read(vio->sd, buf, size);
+
   return r;
 }
 
@@ -92,14 +92,12 @@ size_t vio_write(Vio * vio, const uchar* buf, size_t size)
   return r;
 }
 
-int vio_blocking(Vio * vio __attribute__((unused)), my_bool set_blocking_mode,
-		 my_bool *old_mode)
+int vio_blocking(Vio * vio, bool set_blocking_mode, bool *old_mode)
 {
   int r=0;
 
   *old_mode= test(!(vio->fcntl_mode & O_NONBLOCK));
 
-#if !defined(NO_FCNTL_NONBLOCK)
   if (vio->sd >= 0)
   {
     int old_fcntl=vio->fcntl_mode;
@@ -116,16 +114,14 @@ int vio_blocking(Vio * vio __attribute__((unused)), my_bool set_blocking_mode,
       }
     }
   }
-#else
-  r= set_blocking_mode ? 0 : 1;
-#endif /* !defined(NO_FCNTL_NONBLOCK) */
+
   return r;
 }
 
-my_bool
+bool
 vio_is_blocking(Vio * vio)
 {
-  my_bool r;
+  bool r;
   r = !(vio->fcntl_mode & O_NONBLOCK);
 
   return r;
@@ -134,49 +130,31 @@ vio_is_blocking(Vio * vio)
 
 int vio_fastsend(Vio * vio __attribute__((unused)))
 {
-  int r=0;
+  int nodelay = 1;
+  int r;
 
-#if defined(IPTOS_THROUGHPUT)
-  {
-    int tos = IPTOS_THROUGHPUT;
-    r= setsockopt(vio->sd, IPPROTO_IP, IP_TOS, (void *) &tos, sizeof(tos));
-  }
-#endif                                    /* IPTOS_THROUGHPUT */
-  if (!r)
-  {
-    int nodelay = 1;
-
-    r= setsockopt(vio->sd, IPPROTO_TCP, TCP_NODELAY,
-                  IF_WIN(const char*, void*) &nodelay,
-                  sizeof(nodelay));
-
-  }
-  if (r)
-  {
-    r= -1;
-  }
+  r= setsockopt(vio->sd, IPPROTO_TCP, TCP_NODELAY,
+                &nodelay, sizeof(nodelay));
+  assert(r == 0);
 
   return r;
 }
 
-int vio_keepalive(Vio* vio, my_bool set_keep_alive)
+int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
 {
   int r= 0;
-  uint opt= 0;
+  uint32_t opt= 0;
 
-  if (vio->type != VIO_TYPE_NAMEDPIPE)
-  {
-    if (set_keep_alive)
-      opt= 1;
-    r= setsockopt(vio->sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt,
-                  sizeof(opt));
-  }
+  if (set_keep_alive)
+    opt= 1;
+
+  r= setsockopt(vio->sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
 
   return r;
 }
 
 
-my_bool
+bool
 vio_should_retry(Vio * vio __attribute__((unused)))
 {
   int en = socket_errno;
@@ -185,7 +163,7 @@ vio_should_retry(Vio * vio __attribute__((unused)))
 }
 
 
-my_bool
+bool
 vio_was_interrupted(Vio *vio __attribute__((unused)))
 {
   int en= socket_errno;
@@ -227,45 +205,28 @@ my_socket vio_fd(Vio* vio)
   return vio->sd;
 }
 
-my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen)
+bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
 {
-  if (vio->localhost)
+  int error;
+  char port_buf[NI_MAXSERV];
+  size_socket addrLen = sizeof(vio->remote);
+
+  if (getpeername(vio->sd, (struct sockaddr *) (&vio->remote),
+                  &addrLen) != 0)
   {
-    strmov(buf, "127.0.0.1");
-    *port= 0;
+    return true;
   }
-  else
+  vio->addrLen= (int)addrLen;
+
+  if ((error= getnameinfo((struct sockaddr *)(&vio->remote), 
+                          addrLen,
+                          buf, buflen,
+                          port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
   {
-    int error;
-    char port_buf[NI_MAXSERV];
-    size_socket addrLen = sizeof(vio->remote);
-    if (getpeername(vio->sd, (struct sockaddr *) (&vio->remote),
-                    &addrLen) != 0)
-    {
-      return true;
-    }
-    vio->addrLen= (int)addrLen;
-
-    if ((error= getnameinfo((struct sockaddr *)(&vio->remote), 
-                            addrLen,
-                            buf, buflen,
-                            port_buf, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV)))
-    {
-      return true;
-    }
-
-    *port= (uint16)strtol(port_buf, (char **)NULL, 10);
-
-    /*
-      A lot of users do not have IPv6 loopback resolving to localhost
-      correctly setup. Should this exist? No. If we do not do it though
-      we will be getting a lot of support questions from users who
-      have bad setups. This code should be removed by say... 2012.
-        -Brian
-    */
-    if (!memcmp(buf, "::ffff:127.0.0.1", sizeof("::ffff:127.0.0.1")))
-      strmov(buf, "127.0.0.1");
+    return true;
   }
+
+  *port= (uint16_t)strtol(port_buf, (char **)NULL, 10);
 
   return false;
 }
@@ -273,9 +234,8 @@ my_bool vio_peer_addr(Vio *vio, char *buf, uint16 *port, size_t buflen)
 
 /* Return 0 if there is data to be read */
 
-my_bool vio_poll_read(Vio *vio,uint timeout)
+bool vio_poll_read(Vio *vio,uint timeout)
 {
-#if defined(HAVE_POLL)
   struct pollfd fds;
   int res;
 
@@ -287,36 +247,24 @@ my_bool vio_poll_read(Vio *vio,uint timeout)
     return res < 0 ? false : true;		/* Don't return 1 on errors */
   }
   return (fds.revents & (POLLIN | POLLERR | POLLHUP) ? false : true);
-#else
-  return 0;
-#endif
 }
 
 
-my_bool vio_peek_read(Vio *vio, uint *bytes)
+bool vio_peek_read(Vio *vio, uint32_t *bytes)
 {
-#if FIONREAD_IN_SYS_IOCTL
-  int len;
-  if (ioctl(vio->sd, FIONREAD, &len) < 0)
-    return TRUE;
-  *bytes= len;
-  return FALSE;
-#else
   char buf[1024];
   ssize_t res= recv(vio->sd, &buf, sizeof(buf), MSG_PEEK);
+
   if (res < 0)
-    return TRUE;
-  *bytes= res;
-  return FALSE;
-#endif
+    return true;
+  *bytes= (uint32_t)res;
+  return false;
 }
 
 void vio_timeout(Vio *vio, uint which, uint timeout)
 {
-#if defined(SO_SNDTIMEO) && defined(SO_RCVTIMEO)
   int r;
 
-  {
   /* POSIX specifies time as struct timeval. */
   struct timeval wait_timeout;
   wait_timeout.tv_sec= timeout;
@@ -325,12 +273,5 @@ void vio_timeout(Vio *vio, uint which, uint timeout)
   r= setsockopt(vio->sd, SOL_SOCKET, which ? SO_SNDTIMEO : SO_RCVTIMEO,
                 IF_WIN(const char*, const void*)&wait_timeout,
                 sizeof(wait_timeout));
-
-  }
-#else
-/*
-  Platforms not suporting setting of socket timeout should either use
-  thr_alarm or just run without read/write timeout(s)
-*/
-#endif
+  assert(r == 0);
 }

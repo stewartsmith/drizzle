@@ -17,12 +17,12 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <drizzle_version.h>
-#include <mysql/plugin.h>
+#include <drizzle/plugin.h>
 #include <my_global.h>
 #include <my_dir.h>
 #include <zlib.h>
 
-my_bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
+bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
   /* initid->ptr keeps state for between udf_init_foo and udf_deinit_foo */
   initid->ptr= NULL;
@@ -45,11 +45,17 @@ my_bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)
 long long udf_doit_crc32(UDF_INIT *initid, UDF_ARGS *args, char *result,
                          unsigned long *length, char *is_null, char *error)
 {
-  return (longlong) crc32(0L, (uchar*)args->args[0], args->lengths[0]);
+  (void)initid;
+  (void)result;
+  (void)length;
+  (void)is_null;
+  (void)error;
+  return (long long) crc32(0L, (uchar*)args->args[0], args->lengths[0]);
 }
 
 void udf_deinit_crc32udf(UDF_INIT *initid)
 {
+  (void)initid;
   /* if we allocated initid->ptr, free it here */
   return;
 }
@@ -58,8 +64,11 @@ void udf_deinit_crc32udf(UDF_INIT *initid)
 static int crc32udf_plugin_init(void *p)
 {
   udf_func *udff= (udf_func *) p;
+  static char crc32str[6];
 
-  udff->name.str= "crc32";
+  strcpy(crc32str,"crc32");
+
+  udff->name.str= crc32str;
   udff->name.length= strlen("crc32");
   udff->type= UDFTYPE_FUNCTION;
   udff->returns= INT_RESULT;
@@ -73,24 +82,20 @@ static int crc32udf_plugin_init(void *p)
 static int crc32udf_plugin_deinit(void *p)
 {
   udf_func *udff = (udf_func *) p;
-
+  (void)udff;
   return 0;
 }
 
-struct st_mysql_udf crc32udf_plugin=
-{ MYSQL_UDF_INTERFACE_VERSION  };
-
-mysql_declare_plugin(crc32udf)
+mysql_declare_plugin(crc32)
 {
   MYSQL_UDF_PLUGIN,
-  &crc32udf_plugin,
   "crc32",
+  "1.0",
   "Stewart Smith",
   "UDF for computing CRC32",
   PLUGIN_LICENSE_GPL,
   crc32udf_plugin_init, /* Plugin Init */
   crc32udf_plugin_deinit, /* Plugin Deinit */
-  0x0100,  /* 1.0 */
   NULL,   /* status variables */
   NULL,   /* system variables */
   NULL    /* config options */

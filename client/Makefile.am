@@ -15,57 +15,49 @@
 
 # This file is public domain and comes with NO WARRANTY of any kind
 
-AM_CPPFLAGS =			-I$(top_builddir)/include \
-				-I$(top_srcdir)/include \
-				-I$(top_srcdir)/regex \
-				-I$(top_srcdir)/server \
-				-I$(top_srcdir)/strings
+AM_CPPFLAGS =		-I$(top_builddir)/include \
+					-I$(top_srcdir)/include 
 
 LDADD=				$(top_builddir)/libdrizzle/libdrizzle.la -lz
 
 
-noinst_HEADERS =		sql_string.h completion_hash.h my_readline.h \
-				client_priv.h
+noinst_HEADERS =	completion_hash.h my_readline.h client_priv.h
 
-CLEANFILES =			$(BUILT_SOURCES)
+CLEANFILES =		$(BUILT_SOURCES)
 
-bin_PROGRAMS =			mysql \
-				mysqladmin \
-				mysqlbinlog \
-				mysqlcheck \
-				mysqldump \
-				mysqlimport \
-				mysqltest \
+bin_PROGRAMS =	drizzle \
+				drizzleadmin \
+				drizzlebinlog \
+				drizzlecheck \
+				drizzledump \
+				drizzleimport \
+				drizzletest \
 				mysqlslap 
 
-mysql_SOURCES =			mysql.cc readline.cc sql_string.cc \
-				completion_hash.cc
-mysql_LDADD =			-lreadline @TERMCAP_LIB@ \
+drizzle_SOURCES =		drizzle.c readline.c completion_hash.c
+drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) $(GLIB_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
-mysqladmin_SOURCES =		mysqladmin.cc
+drizzle_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
+drizzleadmin_SOURCES =		drizzleadmin.cc
 
-mysqlbinlog_SOURCES =		mysqlbinlog.cc \
-				$(top_srcdir)/mysys/mf_tempdir.c \
-				$(top_srcdir)/mysys/my_new.cc \
-				$(top_srcdir)/mysys/my_bit.c \
-				$(top_srcdir)/mysys/my_bitmap.c \
-				$(top_srcdir)/mysys/base64.c 
-mysqlbinlog_LDADD =		$(LDADD) $(CXXLDFLAGS) 
+drizzlebinlog_SOURCES =     drizzlebinlog.cc \
+                $(top_srcdir)/mysys/mf_tempdir.c \
+                $(top_srcdir)/mysys/my_new.cc \
+                $(top_srcdir)/mysys/my_bit.c \
+                $(top_srcdir)/mysys/my_bitmap.c \
+                $(top_srcdir)/mysys/base64.c
+drizzlebinlog_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/server
 
-mysqldump_SOURCES=              mysqldump.c \
-	                        $(top_srcdir)/mysys/mf_getdate.c
+drizzledump_SOURCES=            drizzledump.c 
 
-mysqlimport_SOURCES=		mysqlimport.c
+drizzleimport_SOURCES=		drizzleimport.c
 
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 
-mysqltest_SOURCES=		mysqltest.cc \
-				$(top_srcdir)/mysys/my_getsystime.c \
-				$(top_srcdir)/mysys/my_copy.c \
-                                $(top_srcdir)/mysys/my_mkdir.c
-mysqltest_LDADD =		${LDADD} @PCRE_LIBS@
-mysqltest_CFLAGS = 		${AM_CPPFLAGS} @PCRE_CFLAGS@
+drizzletest_SOURCES=		drizzletest.cc 
+drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
+drizzletest_CFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
 
 # Fix for mit-threads
 DEFS =			-DUNDEF_THREADS_HACK \

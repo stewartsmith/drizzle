@@ -37,12 +37,8 @@ static bool udf_startup= false; /* We do not lock because startup is single thre
 static MEM_ROOT mem;
 static HASH udf_hash;
 
-static udf_func *add_udf(LEX_STRING *name, Item_result ret,
-                         char *dl, Item_udftype typ);
-static void del_udf(udf_func *udf);
-
 extern "C" uchar* get_hash_key(const uchar *buff, size_t *length,
-			      my_bool not_used __attribute__((unused)))
+                               bool not_used __attribute__((unused)))
 {
   udf_func *udf= (udf_func*) buff;
   *length= (uint) udf->name.length;
@@ -71,7 +67,7 @@ void udf_free()
 }
 
 /* This is only called if using_udf_functions != 0 */
-udf_func *find_udf(const char *name, uint length, bool mark_used)
+udf_func *find_udf(const char *name, uint length)
 {
   udf_func *udf;
 

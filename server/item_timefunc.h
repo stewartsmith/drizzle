@@ -32,7 +32,7 @@ class Item_func_period_add :public Item_int_func
 {
 public:
   Item_func_period_add(Item *a,Item *b) :Item_int_func(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "period_add"; }
   void fix_length_and_dec() 
   { 
@@ -45,7 +45,7 @@ class Item_func_period_diff :public Item_int_func
 {
 public:
   Item_func_period_diff(Item *a,Item *b) :Item_int_func(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "period_diff"; }
   void fix_length_and_dec()
   { 
@@ -59,7 +59,7 @@ class Item_func_to_days :public Item_int_func
 {
 public:
   Item_func_to_days(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "to_days"; }
   void fix_length_and_dec() 
   { 
@@ -68,7 +68,7 @@ public:
     maybe_null=1; 
   }
   enum_monotonicity_info get_monotonicity_info() const;
-  longlong val_int_endpoint(bool left_endp, bool *incl_endp);
+  int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
 };
 
 
@@ -76,7 +76,7 @@ class Item_func_dayofmonth :public Item_int_func
 {
 public:
   Item_func_dayofmonth(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "dayofmonth"; }
   void fix_length_and_dec() 
   { 
@@ -91,7 +91,7 @@ class Item_func_month :public Item_func
 {
 public:
   Item_func_month(Item *a) :Item_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   double val_real()
   { assert(fixed == 1); return (double) Item_func_month::val_int(); }
   String *val_str(String *str) 
@@ -132,7 +132,7 @@ class Item_func_dayofyear :public Item_int_func
 {
 public:
   Item_func_dayofyear(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "dayofyear"; }
   void fix_length_and_dec() 
   { 
@@ -147,7 +147,7 @@ class Item_func_hour :public Item_int_func
 {
 public:
   Item_func_hour(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "hour"; }
   void fix_length_and_dec()
   {
@@ -162,7 +162,7 @@ class Item_func_minute :public Item_int_func
 {
 public:
   Item_func_minute(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "minute"; }
   void fix_length_and_dec()
   {
@@ -177,7 +177,7 @@ class Item_func_quarter :public Item_int_func
 {
 public:
   Item_func_quarter(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "quarter"; }
   void fix_length_and_dec()
   { 
@@ -192,7 +192,7 @@ class Item_func_second :public Item_int_func
 {
 public:
   Item_func_second(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "second"; }
   void fix_length_and_dec() 
   { 
@@ -207,7 +207,7 @@ class Item_func_week :public Item_int_func
 {
 public:
   Item_func_week(Item *a,Item *b) :Item_int_func(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "week"; }
   void fix_length_and_dec()
   { 
@@ -221,7 +221,7 @@ class Item_func_yearweek :public Item_int_func
 {
 public:
   Item_func_yearweek(Item *a,Item *b) :Item_int_func(a,b) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "yearweek"; }
   void fix_length_and_dec()
   { 
@@ -236,10 +236,10 @@ class Item_func_year :public Item_int_func
 {
 public:
   Item_func_year(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "year"; }
   enum_monotonicity_info get_monotonicity_info() const;
-  longlong val_int_endpoint(bool left_endp, bool *incl_endp);
+  int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   void fix_length_and_dec()
   { 
     decimals=0;
@@ -255,7 +255,7 @@ class Item_func_weekday :public Item_func
 public:
   Item_func_weekday(Item *a,bool type_arg)
     :Item_func(a), odbc_type(type_arg) {}
-  longlong val_int();
+  int64_t val_int();
   double val_real() { assert(fixed == 1); return (double) val_int(); }
   String *val_str(String *str)
   {
@@ -300,7 +300,7 @@ class Item_func_unix_timestamp :public Item_int_func
 public:
   Item_func_unix_timestamp() :Item_int_func() {}
   Item_func_unix_timestamp(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "unix_timestamp"; }
   void fix_length_and_dec()
   {
@@ -314,7 +314,7 @@ class Item_func_time_to_sec :public Item_int_func
 {
 public:
   Item_func_time_to_sec(Item *item) :Item_int_func(item) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "time_to_sec"; }
   void fix_length_and_dec()
   {
@@ -336,7 +336,7 @@ public:
   enum Item_result result_type () const { return STRING_RESULT; }
   enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
   String *val_str(String *str);
-  longlong val_int();
+  int64_t val_int();
   double val_real() { return val_real_from_decimal(); }
   const char *func_name() const { return "date"; }
   void fix_length_and_dec()
@@ -349,7 +349,7 @@ public:
   {
     return tmp_table_field_from_field_type(table, 0);
   }
-  bool result_as_longlong() { return true; }
+  bool result_as_int64_t() { return true; }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
     assert(fixed == 1);
@@ -375,7 +375,7 @@ public:
   {
     return tmp_table_field_from_field_type(table, 0);
   }
-  bool result_as_longlong() { return true; }
+  bool result_as_int64_t() { return true; }
   double val_real() { return (double) val_int(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
@@ -425,14 +425,14 @@ public:
 
 class Item_func_curtime :public Item_str_timefunc
 {
-  longlong value;
+  int64_t value;
   char buff[9*2+32];
   uint buff_length;
 public:
   Item_func_curtime() :Item_str_timefunc() {}
   Item_func_curtime(Item *a) :Item_str_timefunc(a) {}
   double val_real() { assert(fixed == 1); return (double) value; }
-  longlong val_int() { assert(fixed == 1); return value; }
+  int64_t val_int() { assert(fixed == 1); return value; }
   String *val_str(String *str);
   void fix_length_and_dec();
   /* 
@@ -441,7 +441,7 @@ public:
     MYSQL_TIME representation using UTC-SYSTEM or per-thread time zone.
   */
   virtual void store_now_in_TIME(MYSQL_TIME *now_time)=0;
-  bool result_as_longlong() { return true; }
+  bool result_as_int64_t() { return true; }
 };
 
 
@@ -469,11 +469,11 @@ public:
 
 class Item_func_curdate :public Item_date
 {
-  longlong value;
+  int64_t value;
   MYSQL_TIME ltime;
 public:
   Item_func_curdate() :Item_date() {}
-  longlong val_int() { assert(fixed == 1); return (value) ; }
+  int64_t val_int() { assert(fixed == 1); return (value) ; }
   String *val_str(String *str);
   void fix_length_and_dec();
   bool get_date(MYSQL_TIME *res, uint fuzzy_date);
@@ -504,7 +504,7 @@ public:
 class Item_func_now :public Item_date_func
 {
 protected:
-  longlong value;
+  int64_t value;
   char buff[20*2+32];	// +32 to make my_snprintf_{8bit|ucs2} happy
   uint buff_length;
   MYSQL_TIME ltime;
@@ -512,7 +512,7 @@ public:
   Item_func_now() :Item_date_func() {}
   Item_func_now(Item *a) :Item_date_func(a) {}
   enum Item_result result_type () const { return STRING_RESULT; }
-  longlong val_int() { assert(fixed == 1); return value; }
+  int64_t val_int() { assert(fixed == 1); return value; }
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
@@ -555,7 +555,7 @@ public:
   const char *func_name() const { return "sysdate"; }
   void store_now_in_TIME(MYSQL_TIME *now_time);
   double val_real();
-  longlong val_int();
+  int64_t val_int();
   int save_in_field(Field *to, bool no_conversions);
   String *val_str(String *str);
   void fix_length_and_dec();
@@ -599,7 +599,7 @@ class Item_func_from_unixtime :public Item_date_func
   THD *thd;
  public:
   Item_func_from_unixtime(Item *a) :Item_date_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
   const char *func_name() const { return "from_unixtime"; }
   void fix_length_and_dec();
@@ -634,7 +634,7 @@ class Item_func_convert_tz :public Item_date_func
  public:
   Item_func_convert_tz(Item *a, Item *b, Item *c):
     Item_date_func(a, b, c), from_tz_cached(0), to_tz_cached(0) {}
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *str);
   const char *func_name() const { return "convert_tz"; }
   void fix_length_and_dec();
@@ -652,7 +652,7 @@ public:
     assert(fixed == 1);
     return (double) Item_func_sec_to_time::val_int();
   }
-  longlong val_int();
+  int64_t val_int();
   String *val_str(String *);
   void fix_length_and_dec()
   { 
@@ -661,7 +661,7 @@ public:
     maybe_null=1;
   }
   const char *func_name() const { return "sec_to_time"; }
-  bool result_as_longlong() { return true; }
+  bool result_as_int64_t() { return true; }
 };
 
 
@@ -679,7 +679,7 @@ public:
   const char *func_name() const { return "date_add_interval"; }
   void fix_length_and_dec();
   enum_field_types field_type() const { return cached_field_type; }
-  longlong val_int();
+  int64_t val_int();
   bool get_date(MYSQL_TIME *res, uint fuzzy_date);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual void print(String *str, enum_query_type query_type);
@@ -694,7 +694,7 @@ class Item_extract :public Item_int_func
   const interval_type int_type; // keep it public
   Item_extract(interval_type type_arg, Item *a)
     :Item_int_func(a), int_type(type_arg) {}
-  longlong val_int();
+  int64_t val_int();
   enum Functype functype() const { return EXTRACT_FUNC; }
   const char *func_name() const { return "extract"; }
   void fix_length_and_dec();
@@ -778,8 +778,8 @@ public:
     max_length= 10;
     maybe_null= 1;
   }
-  bool result_as_longlong() { return true; }
-  longlong val_int();
+  bool result_as_int64_t() { return true; }
+  int64_t val_int();
   double val_real() { return (double) val_int(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
@@ -807,8 +807,8 @@ public:
   {
     return tmp_table_field_from_field_type(table, 0);
   }
-  bool result_as_longlong() { return true; }
-  longlong val_int();
+  bool result_as_int64_t() { return true; }
+  int64_t val_int();
   double val_real() { return val_real_from_decimal(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
@@ -842,8 +842,8 @@ public:
     max_length= MAX_DATETIME_FULL_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
     decimals= DATETIME_DEC;
   }
-  bool result_as_longlong() { return true; }
-  longlong val_int();
+  bool result_as_int64_t() { return true; }
+  int64_t val_int();
   double val_real() { return val_real_from_decimal(); }
   double val() { return (double) val_int(); }
   my_decimal *val_decimal(my_decimal *decimal_value)
@@ -870,7 +870,7 @@ public:
     decimals=0;
     max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
-  longlong val_int();
+  int64_t val_int();
 };
 
 
@@ -943,7 +943,7 @@ class Item_func_microsecond :public Item_int_func
 {
 public:
   Item_func_microsecond(Item *a) :Item_int_func(a) {}
-  longlong val_int();
+  int64_t val_int();
   const char *func_name() const { return "microsecond"; }
   void fix_length_and_dec() 
   { 
@@ -960,7 +960,7 @@ public:
   Item_func_timestamp_diff(Item *a,Item *b,interval_type type_arg)
     :Item_int_func(a,b), int_type(type_arg) {}
   const char *func_name() const { return "timestampdiff"; }
-  longlong val_int();
+  int64_t val_int();
   void fix_length_and_dec()
   {
     decimals=0;

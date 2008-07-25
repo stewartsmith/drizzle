@@ -51,16 +51,14 @@ struct utimbuf {
 int my_copy(const char *from, const char *to, myf MyFlags)
 {
   uint Count;
-  my_bool new_file_stat= 0; /* 1 if we could stat "to" */
+  bool new_file_stat= 0; /* 1 if we could stat "to" */
   int create_flag;
   File from_file,to_file;
   uchar buff[IO_SIZE];
   struct stat stat_buff,new_stat_buff;
-  DBUG_ENTER("my_copy");
-  DBUG_PRINT("my",("from %s to %s MyFlags %d", from, to, MyFlags));
 
   from_file=to_file= -1;
-  DBUG_ASSERT(!(MyFlags & (MY_FNABP | MY_NABP))); /* for my_read/my_write */
+  assert(!(MyFlags & (MY_FNABP | MY_NABP))); /* for my_read/my_write */
   if (MyFlags & MY_HOLD_ORIGINAL_MODES)		/* Copy stat if possible */
     new_file_stat= test(!stat((char*) to, &new_stat_buff));
 
@@ -88,12 +86,12 @@ int my_copy(const char *from, const char *to, myf MyFlags)
     }
 
     if (my_close(from_file,MyFlags) | my_close(to_file,MyFlags))
-      DBUG_RETURN(-1);				/* Error on close */
+      return(-1);				/* Error on close */
 
     /* Copy modes if possible */
 
     if (MyFlags & MY_HOLD_ORIGINAL_MODES && !new_file_stat)
-	DBUG_RETURN(0);			/* File copyed but not stat */
+	return(0);			/* File copyed but not stat */
     VOID(chmod(to, stat_buff.st_mode & 07777)); /* Copy modes */
     VOID(chown(to, stat_buff.st_uid,stat_buff.st_gid)); /* Copy ownership */
     if (MyFlags & MY_COPYTIME)
@@ -103,7 +101,7 @@ int my_copy(const char *from, const char *to, myf MyFlags)
       timep.modtime = stat_buff.st_mtime;
       VOID(utime((char*) to, &timep)); /* last accessed and modified times */
     }
-    DBUG_RETURN(0);
+    return(0);
   }
 
 err:
@@ -114,5 +112,5 @@ err:
     /* attempt to delete the to-file we've partially written */
     VOID(my_delete(to, MyFlags));
   }
-  DBUG_RETURN(-1);
+  return(-1);
 } /* my_copy */

@@ -61,7 +61,7 @@ struct Pack_header_error_handler: public Internal_error_handler
                             MYSQL_ERROR::enum_warning_level level,
                             THD *thd);
   bool is_handled;
-  Pack_header_error_handler() :is_handled(FALSE) {}
+  Pack_header_error_handler() :is_handled(false) {}
 };
 
 
@@ -467,9 +467,9 @@ static uchar *pack_screens(List<Create_field> &create_fields,
       pos[2]=(uchar) (length+1);
       pos=(uchar*) strmake((char*) pos+3,cfield->field_name,length)+1;
     }
-    cfield->row=(uint8) row;
-    cfield->col=(uint8) (length+1);
-    cfield->sc_length=(uint8) min(cfield->length,cols-(length+2));
+    cfield->row=(uint8_t) row;
+    cfield->col=(uint8_t) (length+1);
+    cfield->sc_length=(uint8_t) min(cfield->length,cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
@@ -699,7 +699,7 @@ static bool pack_header(uchar *forminfo,
   length=(info_length+create_fields.elements*FCOMP+288+n_length+int_length+
 	  com_length);
   int2store(forminfo,length);
-  forminfo[256] = (uint8) screens;
+  forminfo[256] = (uint8_t) screens;
   int2store(forminfo+258,create_fields.elements);
   int2store(forminfo+260,info_length);
   int2store(forminfo+262,totlength);
@@ -973,7 +973,7 @@ static bool make_empty_rec(THD *thd, File file,
 	     (field->flags & NOT_NULL_FLAG))
     {
       regfield->set_notnull();
-      regfield->store((longlong) 1, TRUE);
+      regfield->store((int64_t) 1, true);
     }
     else if (type == Field::YES)		// Old unireg type
       regfield->store(ER(ER_YES),(uint) strlen(ER(ER_YES)),system_charset_info);

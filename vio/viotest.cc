@@ -22,10 +22,6 @@ main(	int	argc,
 	int		fd = -1;
 	char*		hh = "hshshsh\n";
 
-	DBUG_ENTER("main");
-	DBUG_PROCESS(argv[0]);
-	DBUG_PUSH("d:t");
-
 	fd = open("/dev/tty", O_WRONLY);
 	if (fd<0)
 	{
@@ -42,6 +38,6 @@ main(	int	argc,
 	delete fs;
 	delete ss;
 
-	DBUG_RETURN(0);
+	return(0);
 }
 

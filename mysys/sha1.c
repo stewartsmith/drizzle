@@ -81,7 +81,7 @@ static void SHA1ProcessMessageBlock(SHA1_CONTEXT*);
 */
 
 
-const uint32 sha_const_key[5]=
+const uint32_t sha_const_key[5]=
 {
   0x67452301,
   0xEFCDAB89,
@@ -93,11 +93,6 @@ const uint32 sha_const_key[5]=
 
 int mysql_sha1_reset(SHA1_CONTEXT *context)
 {
-#ifndef DBUG_OFF
-  if (!context)
-    return SHA_NULL;
-#endif
-
   context->Length		  = 0;
   context->Message_Block_Index	  = 0;
 
@@ -132,17 +127,9 @@ int mysql_sha1_reset(SHA1_CONTEXT *context)
 */
 
 int mysql_sha1_result(SHA1_CONTEXT *context,
-                      uint8 Message_Digest[SHA1_HASH_SIZE])
+                      uint8_t Message_Digest[SHA1_HASH_SIZE])
 {
   int i;
-
-#ifndef DBUG_OFF
-  if (!context || !Message_Digest)
-    return SHA_NULL;
-
-  if (context->Corrupted)
-    return context->Corrupted;
-#endif
 
   if (!context->Computed)
   {
@@ -154,7 +141,7 @@ int mysql_sha1_result(SHA1_CONTEXT *context,
   }
 
   for (i = 0; i < SHA1_HASH_SIZE; i++)
-    Message_Digest[i] = (int8)((context->Intermediate_Hash[i>>2] >> 8
+    Message_Digest[i] = (int8_t)((context->Intermediate_Hash[i>>2] >> 8
 			 * ( 3 - ( i & 0x03 ) )));
   return SHA_SUCCESS;
 }
@@ -175,36 +162,17 @@ int mysql_sha1_result(SHA1_CONTEXT *context,
    != SHA_SUCCESS	sha Error Code.
 */
 
-int mysql_sha1_input(SHA1_CONTEXT *context, const uint8 *message_array,
+int mysql_sha1_input(SHA1_CONTEXT *context, const uint8_t *message_array,
                      unsigned length)
 {
   if (!length)
     return SHA_SUCCESS;
-
-#ifndef DBUG_OFF
-  /* We assume client konows what it is doing in non-debug mode */
-  if (!context || !message_array)
-    return SHA_NULL;
-  if (context->Computed)
-    return (context->Corrupted= SHA_STATE_ERROR);
-  if (context->Corrupted)
-    return context->Corrupted;
-#endif
 
   while (length--)
   {
     context->Message_Block[context->Message_Block_Index++]=
       (*message_array & 0xFF);
     context->Length  += 8;  /* Length is in bits */
-
-#ifndef DBUG_OFF
-    /*
-      Then we're not debugging we assume we never will get message longer
-      2^64 bits.
-    */
-    if (context->Length == 0)
-      return (context->Corrupted= 1);	   /* Message is too long */
-#endif
 
     if (context->Message_Block_Index == 64)
     {
@@ -229,7 +197,7 @@ int mysql_sha1_input(SHA1_CONTEXT *context, const uint8 *message_array,
 */
 
 /* Constants defined in SHA-1	*/
-static const uint32  K[]=
+static const uint32_t  K[]=
 {
   0x5A827999,
   0x6ED9EBA1,
@@ -241,9 +209,9 @@ static const uint32  K[]=
 static void SHA1ProcessMessageBlock(SHA1_CONTEXT *context)
 {
   int		t;		   /* Loop counter		  */
-  uint32	temp;		   /* Temporary word value	  */
-  uint32	W[80];		   /* Word sequence		  */
-  uint32	A, B, C, D, E;	   /* Word buffers		  */
+  uint32_t	temp;		   /* Temporary word value	  */
+  uint32_t	W[80];		   /* Word sequence		  */
+  uint32_t	A, B, C, D, E;	   /* Word buffers		  */
   int idx;
 
   /*
@@ -378,14 +346,14 @@ static void SHA1PadMessage(SHA1_CONTEXT *context)
     Store the message length as the last 8 octets
   */
 
-  context->Message_Block[56] = (int8) (context->Length >> 56);
-  context->Message_Block[57] = (int8) (context->Length >> 48);
-  context->Message_Block[58] = (int8) (context->Length >> 40);
-  context->Message_Block[59] = (int8) (context->Length >> 32);
-  context->Message_Block[60] = (int8) (context->Length >> 24);
-  context->Message_Block[61] = (int8) (context->Length >> 16);
-  context->Message_Block[62] = (int8) (context->Length >> 8);
-  context->Message_Block[63] = (int8) (context->Length);
+  context->Message_Block[56] = (int8_t) (context->Length >> 56);
+  context->Message_Block[57] = (int8_t) (context->Length >> 48);
+  context->Message_Block[58] = (int8_t) (context->Length >> 40);
+  context->Message_Block[59] = (int8_t) (context->Length >> 32);
+  context->Message_Block[60] = (int8_t) (context->Length >> 24);
+  context->Message_Block[61] = (int8_t) (context->Length >> 16);
+  context->Message_Block[62] = (int8_t) (context->Length >> 8);
+  context->Message_Block[63] = (int8_t) (context->Length);
 
   SHA1ProcessMessageBlock(context);
 }

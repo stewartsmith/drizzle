@@ -58,7 +58,7 @@ The following function is used to convert a 16-bit data item
 to the canonical format, for fast bytewise equality test
 against memory. */
 UNIV_INLINE
-uint16
+uint16_t
 mach_encode_2(
 /*==========*/
 			/* out: 16-bit integer in canonical format */
@@ -72,7 +72,7 @@ ulint
 mach_decode_2(
 /*==========*/
 			/* out: integer in machine-dependent format */
-	uint16	n);	/* in: 16-bit integer in canonical format */
+	uint16_t	n);	/* in: 16-bit integer in canonical format */
 /***********************************************************
 The following function is used to store data in 3 consecutive
 bytes. We store the most significant byte to the lowest address. */

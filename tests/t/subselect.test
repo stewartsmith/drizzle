@@ -756,12 +756,16 @@ create table t3 (a int, b int, index a (a));
 insert into t1 values (1,10), (2,20), (3,30), (4,40);
 disable_query_log;
 # making table large enough
+set autocommit=0;
+begin;
 let $1 = 10000;
 while ($1)
  {
   eval insert into t1 values (rand()*100000+200,rand()*100000); 
   dec $1;
  }
+commit;
+set autocommit=1;
 enable_query_log;
 insert into t2 values (2), (3), (4), (5);
 insert into t3 values (10,3), (20,4), (30,5);
@@ -2282,32 +2286,6 @@ explain select * from t1 where not exists
 DROP TABLE t1;
 
 #
-# Bug#21798: memory leak during query execution with subquery in column 
-#             list using a function
-#
-CREATE TABLE t1 (a VARCHAR(250), b INT auto_increment, PRIMARY KEY (b));
-insert into t1 (a) values (FLOOR(rand() * 100));
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-insert into t1 (a) select FLOOR(rand() * 100) from t1;
-
-SELECT a, 
-       (SELECT REPEAT(' ',250) FROM t1 i1 
-        WHERE i1.b=t1.a ORDER BY RAND() LIMIT 1) AS a 
-FROM t1 ORDER BY a LIMIT 5;
-DROP TABLE t1;
-
-#
 # Bug #21540: Subqueries with no from and aggregate functions return 
 #              wrong results
 CREATE TABLE t1 (a INT, b INT);
@@ -2337,8 +2315,9 @@ DROP TABLE t1,t2;
 CREATE TABLE t1 (a int, b int auto_increment, PRIMARY KEY (b));
 CREATE TABLE t2 (x int auto_increment, y int, z int,
                  PRIMARY KEY (x), FOREIGN KEY (y) REFERENCES t1 (b));
-
 disable_query_log;
+set autocommit=0;
+begin;
 let $1=3000;
 while ($1)
 {
@@ -2352,6 +2331,8 @@ while ($1)
   } 
   dec $1;
 }
+commit;
+set autocommit=1;
 enable_query_log;
 
 SET SESSION sort_buffer_size = 32 * 1024;
@@ -2364,7 +2345,7 @@ SELECT COUNT(*)
   FROM (SELECT  a, b, (SELECT x FROM t2 WHERE y=b ORDER BY z DESC LIMIT 1) c
           FROM t1) t;
 
-DROP TABLE t1,t2;
+DROP TABLE t2,t1;
 
 #
 # Bug #25219: EXIST subquery with UNION over a mix of

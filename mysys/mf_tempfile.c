@@ -60,8 +60,6 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
 {
   File file= -1;
 
-  DBUG_ENTER("create_temp_file");
-  DBUG_PRINT("enter", ("dir: %s, prefix: %s", dir, prefix));
 #if defined(_ZTC__)
   if (!dir)
     dir=getenv("TMPDIR");
@@ -86,7 +84,7 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
     if (strlen(dir)+ pfx_len > FN_REFLEN-2)
     {
       errno=my_errno= ENAMETOOLONG;
-      DBUG_RETURN(file);
+      return(file);
     }
     strmov(convert_dirname(to,dir,NullS),prefix_buff);
     org_file=mkstemp(to);
@@ -128,10 +126,6 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
 		     MYF(MY_WME));
 
     }
-    else
-    {
-      DBUG_PRINT("error",("Got error: %d from tempnam",errno));
-    }
     environ=(const char**) old_env;
   }
 #else
@@ -139,5 +133,5 @@ File create_temp_file(char *to, const char *dir, const char *prefix,
 #endif
   if (file >= 0)
     thread_safe_increment(my_tmp_file_created,&THR_LOCK_open);
-  DBUG_RETURN(file);
+  return(file);
 }

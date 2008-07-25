@@ -358,16 +358,8 @@ select 1;
 select @@session.key_buffer_size;
 
 --error 1229
-set ft_boolean_syntax = @@init_connect;
---error 1231
-set global ft_boolean_syntax = @@init_connect;
---error 1229
 set init_connect = NULL;
 set global init_connect = NULL;
---error 1229
-set ft_boolean_syntax = @@init_connect;
---error 1231
-set global ft_boolean_syntax = @@init_connect;
 
 # Bug#3754 SET GLOBAL myisam_max_sort_file_size doesn't work as
 # expected: check that there is no overflow when 64-bit unsigned

@@ -112,8 +112,9 @@ extern bool use_slave_mask;
 extern char *slave_load_tmpdir;
 extern char *master_info_file, *relay_log_info_file;
 extern char *opt_relay_logname, *opt_relaylog_index_name;
-extern my_bool opt_skip_slave_start, opt_reckless_slave;
-extern my_bool opt_log_slave_updates;
+extern bool opt_skip_slave_start;
+extern bool opt_reckless_slave;
+extern bool opt_log_slave_updates;
 extern uint64_t relay_log_space_limit;
 
 /*
@@ -206,7 +207,7 @@ pthread_handler_t handle_slave_sql(void *arg);
 extern bool volatile abort_loop;
 extern Master_info main_mi, *active_mi; /* active_mi for multi-master */
 extern LIST master_list;
-extern my_bool replicate_same_server_id;
+extern bool replicate_same_server_id;
 
 extern int32_t disconnect_slave_event_count, abort_slave_event_count ;
 
@@ -216,7 +217,7 @@ extern char * master_user, *master_password, *master_host;
 extern char *master_info_file, *relay_log_info_file, *report_user;
 extern char *report_host, *report_password;
 
-extern my_bool master_ssl;
+extern bool master_ssl;
 extern char *master_ssl_ca, *master_ssl_capath, *master_ssl_cert;
 extern char *master_ssl_cipher, *master_ssl_key;
        

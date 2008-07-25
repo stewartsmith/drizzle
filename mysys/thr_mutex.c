@@ -91,7 +91,7 @@ int safe_mutex_init(safe_mutex_t *mp,
 }
 
 
-int safe_mutex_lock(safe_mutex_t *mp, my_bool try_lock, const char *file, uint line)
+int safe_mutex_lock(safe_mutex_t *mp, bool try_lock, const char *file, uint line)
 {
   int error;
   if (!mp->file)
@@ -348,8 +348,6 @@ int safe_mutex_destroy(safe_mutex_t *mp, const char *file, uint line)
     file		Print errors on this file
 
   NOTES
-    We can't use DBUG_PRINT() here as we have in my_end() disabled
-    DBUG handling before calling this function.
 
    In MySQL one may get one warning for a mutex created in my_thr_init.c
    This is ok, as this thread may not yet have been exited.

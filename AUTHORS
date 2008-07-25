@@ -1,10 +1,12 @@
-Michael Widenius, original author
-David Axmark
-MySQL AB/Sun Microsystems Inc. 
 Brian Aker
 Mark Atwood
 Patrick Galbraith
-Stewart Smith
-Jay Pipes
-Monty Taylor
+Toru Maesaka
 Elliot Murphy
+Jay Pipes
+Stewart Smith
+Monty Taylor
+-- 
+All code descends from the work by Michael Widenius and David Axmark the original authors.
+Many others from MySQL AB have participated in the creation of this as well,
+Please see "SHOW AUTHORS" in MySQL 5.1 for a complete list of names. 

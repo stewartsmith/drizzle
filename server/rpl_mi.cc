@@ -287,7 +287,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     mi->master_log_pos= (my_off_t) master_log_pos;
     mi->port= (uint) port;
     mi->connect_retry= (uint) connect_retry;
-    mi->ssl= (my_bool) ssl;
+    mi->ssl= (bool) ssl;
     mi->ssl_verify_server_cert= ssl_verify_server_cert;
     mi->heartbeat_period= master_heartbeat_period;
   }
@@ -363,7 +363,7 @@ int flush_master_info(Master_info* mi, bool flush_relay_log_cache)
      of file we don't care about this garbage.
   */
   char heartbeat_buf[sizeof(mi->heartbeat_period) * 4]; // buffer to suffice always
-  my_sprintf(heartbeat_buf, (heartbeat_buf, "%.3f", mi->heartbeat_period));
+  sprintf(heartbeat_buf, "%.3f", mi->heartbeat_period);
   my_b_seek(file, 0L);
   my_b_printf(file,
               "%u\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%d\n%s\n",

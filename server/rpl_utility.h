@@ -91,7 +91,6 @@ public:
         switch (m_type[i]) {
         case MYSQL_TYPE_BLOB:
         case MYSQL_TYPE_DOUBLE:
-        case MYSQL_TYPE_FLOAT:
         {
           /*
             These types store a single byte.
@@ -205,7 +204,7 @@ public:
     WL#3915) or needs to advance the pointer for the fields in the raw 
     data from the master to a specific column.
   */
-  uint32 calc_field_size(uint32_t col, unsigned char *master_data) const;
+  uint32_t calc_field_size(uint32_t col, unsigned char *master_data) const;
 
   /**
     Decide if the table definition is compatible with a table.

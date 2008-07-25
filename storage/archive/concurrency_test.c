@@ -41,7 +41,7 @@ pthread_cond_t count_threshhold;
 unsigned int master_wakeup;
 pthread_mutex_t sleeper_mutex;
 pthread_cond_t sleep_threshhold;
-static my_bool timer_alarm= FALSE;
+static my_bool timer_alarm= false;
 pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 
@@ -168,7 +168,7 @@ void scheduler(az_method use_aio)
   {
     time_t opt_timer_length= DEFAULT_EXECUTE_SECONDS;
     pthread_mutex_lock(&timer_alarm_mutex);
-    timer_alarm= TRUE;
+    timer_alarm= true;
     pthread_mutex_unlock(&timer_alarm_mutex);
 
     if (pthread_create(&mainthread, &attr, timer_thread, 
@@ -241,7 +241,7 @@ void *timer_thread(void *p)
   pthread_mutex_unlock(&timer_alarm_mutex);
 
   pthread_mutex_lock(&timer_alarm_mutex);
-  timer_alarm= FALSE;
+  timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
   mysql_thread_end();
@@ -291,7 +291,7 @@ void *run_task(void *p)
     }
 
     /* If the timer is set, and the alarm is not active then end */
-    if (timer_alarm == FALSE)
+    if (timer_alarm == false)
       break;
   }
 

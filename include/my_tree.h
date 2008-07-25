@@ -33,7 +33,7 @@ extern "C" {
 #define TREE_NO_DUPS 1
 
 typedef enum { left_root_right, right_root_left } TREE_WALK;
-typedef uint32 element_count;
+typedef uint32_t element_count;
 typedef int (*tree_walk_action)(void *,element_count,void *);
 
 typedef enum { free_init, free_free, free_end } TREE_FREE;
@@ -41,7 +41,7 @@ typedef void (*tree_element_free)(void*, TREE_FREE, void *);
 
 typedef struct st_tree_element {
   struct st_tree_element *left,*right;
-  uint32 count:31,
+  uint32_t count:31,
 	 colour:1;			/* black is marked as 1 */
 } TREE_ELEMENT;
 
@@ -55,14 +55,14 @@ typedef struct st_tree {
   qsort_cmp2 compare;
   void *custom_arg;
   MEM_ROOT mem_root;
-  my_bool with_delete;
+  bool with_delete;
   tree_element_free free;
   uint flag;
 } TREE;
 
 	/* Functions on whole tree */
 void init_tree(TREE *tree, ulong default_alloc_size, ulong memory_limit,
-               int size, qsort_cmp2 compare, my_bool with_delete,
+               int size, qsort_cmp2 compare, bool with_delete,
 	       tree_element_free free_element, void *custom_arg);
 void delete_tree(TREE*);
 void reset_tree(TREE*);

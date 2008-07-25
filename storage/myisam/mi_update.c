@@ -24,29 +24,25 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
   uint i;
   uchar old_key[MI_MAX_KEY_BUFF],*new_key;
   my_bool auto_key_changed=0;
-  ulonglong changed;
+  uint64_t changed;
   MYISAM_SHARE *share= info->s;
   ha_checksum old_checksum= 0;
-  DBUG_ENTER("mi_update");
 
-  DBUG_EXECUTE_IF("myisam_pretend_crashed_table_on_usage",
-                  mi_print_error(info->s, HA_ERR_CRASHED);
-                  DBUG_RETURN(my_errno= HA_ERR_CRASHED););
   if (!(info->update & HA_STATE_AKTIV))
   {
-    DBUG_RETURN(my_errno=HA_ERR_KEY_NOT_FOUND);
+    return(my_errno=HA_ERR_KEY_NOT_FOUND);
   }
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
-    DBUG_RETURN(my_errno=EACCES);
+    return(my_errno=EACCES);
   }
   if (info->state->key_file_length >= share->base.margin_key_file_length)
   {
-    DBUG_RETURN(my_errno=HA_ERR_INDEX_FILE_FULL);
+    return(my_errno=HA_ERR_INDEX_FILE_FULL);
   }
   pos=info->lastpos;
   if (_mi_readinfo(info,F_WRLCK,1))
-    DBUG_RETURN(my_errno);
+    return(my_errno);
 
   if (share->calc_checksum)
     old_checksum=info->checksum=(*share->calc_checksum)(info,oldrec);
@@ -96,7 +92,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
 	{
 	  if ((int) i == info->lastinx)
 	    key_changed|=HA_STATE_WRITTEN;	/* Mark that keyfile changed */
-	  changed|=((ulonglong) 1 << i);
+	  changed|=((uint64_t) 1 << i);
 	  share->keyinfo[i].version++;
 	  if (share->keyinfo[i].ck_delete(info,i,old_key,old_length)) goto err;
 	  if (share->keyinfo[i].ck_insert(info,i,new_key,new_length)) goto err;
@@ -110,7 +106,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     If we are running with external locking, we must update the index file
     that something has changed.
   */
-  if (changed || !my_disable_locking)
+  if (changed)
     key_changed|= HA_STATE_CHANGED;
 
   if (share->calc_checksum)
@@ -161,14 +157,12 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
   VOID(_mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE));
   if (info->invalidator != 0)
   {
-    DBUG_PRINT("info", ("invalidator... '%s' (update)", info->filename));
     (*info->invalidator)(info->filename);
     info->invalidator=0;
   }
-  DBUG_RETURN(0);
+  return(0);
 
 err:
-  DBUG_PRINT("error",("key: %d  errno: %d",i,my_errno));
   save_errno=my_errno;
   if (changed)
     key_changed|= HA_STATE_CHANGED;
@@ -179,7 +173,7 @@ err:
     flag=0;
     do
     {
-      if (((ulonglong) 1 << i) & changed)
+      if (((uint64_t) 1 << i) & changed)
       {
 	{
 	  uint new_length=_mi_make_key(info,i,new_key,newrec,pos);
@@ -207,5 +201,5 @@ err:
     mi_print_error(info->s, HA_ERR_CRASHED);
     save_errno=HA_ERR_CRASHED;
   }
-  DBUG_RETURN(my_errno=save_errno);
+  return(my_errno=save_errno);
 } /* mi_update */

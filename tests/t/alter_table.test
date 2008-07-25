@@ -23,11 +23,11 @@ modify column col6 int not null first;
 select * from t1;
 drop table t1;
 
-create table t1 (bandID MEDIUMINT UNSIGNED NOT NULL PRIMARY KEY, payoutID SMALLINT UNSIGNED NOT NULL);
+create table t1 (bandID INT UNSIGNED NOT NULL PRIMARY KEY, payoutID SMALLINT UNSIGNED NOT NULL);
 insert into t1 (bandID,payoutID) VALUES (1,6),(2,6),(3,4),(4,9),(5,10),(6,1),(7,12),(8,12);
-alter table t1 add column new_col int, order by payoutid,bandid;
+alter table t1 add column new_col int;
 select * from t1;
-alter table t1 order by bandid,payoutid;
+alter table t1;
 select * from t1;
 drop table t1;
 
@@ -117,15 +117,19 @@ create table t1 (n1 int not null, n2 int, n3 int, n4 float,
                 key (n2, n3, n4, n1),
                 key (n3, n4, n1, n2),
                 key (n4, n1, n2, n3) );
-alter table t1 disable keys;
+alter table t1;
 show keys from t1;
 #let $1=10000;
+set autocommit=0;
+begin;
 let $1=10;
 while ($1)
 {
  eval insert into t1 values($1,RAND()*1000,RAND()*1000,RAND());
  dec $1;
 }
+commit;
+set autocommit=1;
 alter table t1 enable keys;
 show keys from t1;
 drop table t1;
@@ -144,11 +148,15 @@ drop table t1;
 
 create table t1 (a int, b int);
 let $1=100;
+set autocommit=0;
+begin;
 while ($1)
 {
  eval insert into t1 values(1,$1), (2,$1), (3, $1);
  dec $1;
 }
+commit;
+set autocommit=1;
 alter table t1 add unique (a,b), add key (b);
 show keys from t1;
 analyze table t1;
@@ -203,7 +211,7 @@ select * from t2;
 DROP TABLE t2;
 
 #
-# Test disable keys with locking
+# Test with locking
 #
 CREATE TABLE t1 (
   Host varchar(16) binary NOT NULL default '',
@@ -370,26 +378,26 @@ drop table if exists t1;
 create table t1 (a int, key(a));
 show indexes from t1;
 --echo "this used not to disable the index"
-alter table t1 modify a int, disable keys;
+alter table t1 modify a int;
 show indexes from t1;
 
 alter table t1 enable keys;
 show indexes from t1;
 
-alter table t1 modify a bigint, disable keys;
+alter table t1 modify a bigint;
 show indexes from t1;
 
 alter table t1 enable keys;
 show indexes from t1;
 
-alter table t1 add b char(10), disable keys;
+alter table t1 add b char(10);
 show indexes from t1;
 
-alter table t1 add c decimal(10,2), enable keys;
+alter table t1 add c decimal(10,2);
 show indexes from t1;
 
 --echo "this however did"
-alter table t1 disable keys;
+alter table t1;
 show indexes from t1;
 
 desc t1;
@@ -403,18 +411,18 @@ drop table t1;
 --echo "Now will test with one unique index"
 create table t1(a int, b char(10), unique(a));
 show indexes from t1;
-alter table t1 disable keys;
+alter table t1;
 show indexes from t1;
 alter table t1 enable keys;
 
 --echo "If no copy on noop change, this won't touch the data file"
 --echo "Unique index, no change"
-alter table t1 modify a int, disable keys;
+alter table t1 modify a int;
 show indexes from t1;
 
 --echo "Change the type implying data copy"
 --echo "Unique index, no change"
-alter table t1 modify a bigint, disable keys;
+alter table t1 modify a bigint;
 show indexes from t1;
 
 alter table t1 modify a bigint;
@@ -428,21 +436,21 @@ drop table t1;
 --echo "Now will test with one unique and one non-unique index"
 create table t1(a int, b char(10), unique(a), key(b));
 show indexes from t1;
-alter table t1 disable keys;
+alter table t1;
 show indexes from t1;
 alter table t1 enable keys;
 
 
 --echo "If no copy on noop change, this won't touch the data file"
 --echo "The non-unique index will be disabled"
-alter table t1 modify a int, disable keys;
+alter table t1 modify a int;
 show indexes from t1;
 alter table t1 enable keys;
 show indexes from t1;
 
 --echo "Change the type implying data copy"
 --echo "The non-unique index will be disabled"
-alter table t1 modify a bigint, disable keys;
+alter table t1 modify a bigint;
 show indexes from t1;
 
 --echo "Change again the type, but leave the indexes as_is"
@@ -572,8 +580,6 @@ alter table table_24562 order by 12;
 alter table table_24562 order by (section + 12);
 --error ER_PARSE_ERROR
 alter table table_24562 order by length(title);
---error ER_PARSE_ERROR
-alter table table_24562 order by (select 12 from dual);
 
 --error ER_BAD_FIELD_ERROR
 alter table table_24562 order by no_such_col;
@@ -619,25 +625,24 @@ select * from t1;
 
 drop table t1;
 
-#
-# Bug#27507: Wrong DATETIME value was allowed by ALTER TABLE in the
-#            NO_ZERO_DATE mode.
-#
-create table t1(f1 int);
-alter table t1 add column f2 datetime not null, add column f21 date not null;
-insert into t1 values(1,'2000-01-01','2000-01-01');
---error 1292
-alter table t1 add column f3 datetime not null;
---error 1292
-alter table t1 add column f3 date not null;
---error 1292
-alter table t1 add column f4 datetime not null default '2002-02-02',
-  add column f41 date not null;
-alter table t1 add column f4 datetime not null default '2002-02-02',
-  add column f41 date not null default '2002-02-02';
-select * from t1;
-drop table t1;
-set sql_mode= @orig_sql_mode;
+##
+## Bug#27507: Wrong DATETIME value was allowed by ALTER TABLE in the
+##            NO_ZERO_DATE mode.
+##
+#create table t1(f1 int);
+#alter table t1 add column f2 datetime not null, add column f21 date not null;
+#insert into t1 values(1,'2000-01-01','2000-01-01');
+#--error 1292
+#alter table t1 add column f3 datetime not null;
+#--error 1292
+#alter table t1 add column f3 date not null;
+#--error 1292
+#alter table t1 add column f4 datetime not null default '2002-02-02',
+#  add column f41 date not null;
+#alter table t1 add column f4 datetime not null default '2002-02-02',
+#  add column f41 date not null default '2002-02-02';
+#select * from t1;
+#drop table t1;
 
 #
 # Some additional tests for new, faster alter table.  Note that most of the
@@ -675,33 +680,6 @@ create table t1 (t varchar(255) default null, key t (t(80)))
 engine=myisam default charset=latin1;
 alter table t1 change t t text;
 drop table t1;
-
-#
-# Bug #26794: Adding an index with a prefix on a SPATIAL type breaks ALTER
-# TABLE
-#
-CREATE TABLE t1 (a varchar(500));
-
-ALTER TABLE t1 ADD b GEOMETRY NOT NULL, ADD SPATIAL INDEX(b);
-SHOW CREATE TABLE t1;
-ALTER TABLE t1 ADD KEY(b(50));
-SHOW CREATE TABLE t1;
-
-ALTER TABLE t1 ADD c POINT;
-SHOW CREATE TABLE t1;
-
---error ER_WRONG_SUB_KEY
-CREATE TABLE t2 (a INT, KEY (a(20)));
-
-ALTER TABLE t1 ADD d INT;
---error ER_WRONG_SUB_KEY
-ALTER TABLE t1 ADD KEY (d(20));
-
-# the 5.1 part of the test
---error ER_WRONG_SUB_KEY
-ALTER TABLE t1 ADD e GEOMETRY NOT NULL, ADD SPATIAL KEY (e(30));
-
-DROP TABLE t1;
 
 #
 # Bug#18038  MySQL server corrupts binary columns data
@@ -812,20 +790,20 @@ ALTER TABLE  `tt+1` RENAME `tt+2`;
 SHOW CREATE TABLE `tt+1`;
 SHOW CREATE TABLE `tt+2`;
 DROP TABLE   `tt+1`, `tt+2`;
-#
-# Check if special characters as in tmp_file_prefix work.
-CREATE TABLE `#sql1` (c1 INT);
-CREATE TABLE `@0023sql2` (c1 INT);
-SHOW TABLES;
-RENAME TABLE `#sql1`     TO `@0023sql1`;
-RENAME TABLE `@0023sql2` TO `#sql2`;
-SHOW TABLES;
-ALTER TABLE `@0023sql1`  RENAME `#sql-1`;
-ALTER TABLE `#sql2`      RENAME `@0023sql-2`;
-SHOW TABLES;
-INSERT INTO `#sql-1`     VALUES (1);
-INSERT INTO `@0023sql-2` VALUES (2);
-DROP TABLE `#sql-1`, `@0023sql-2`;
+##
+## Check if special characters as in tmp_file_prefix work.
+#CREATE TABLE `#sql1` (c1 INT);
+#CREATE TABLE `@0023sql2` (c1 INT);
+#SHOW TABLES;
+#RENAME TABLE `#sql1`     TO `@0023sql1`;
+#RENAME TABLE `@0023sql2` TO `#sql2`;
+#SHOW TABLES;
+#ALTER TABLE `@0023sql1`  RENAME `#sql-1`;
+#ALTER TABLE `#sql2`      RENAME `@0023sql-2`;
+#SHOW TABLES;
+#INSERT INTO `#sql-1`     VALUES (1);
+#INSERT INTO `@0023sql-2` VALUES (2);
+#DROP TABLE `#sql-1`, `@0023sql-2`;
 #
 # Same for temporary tables though these names do not become file names.
 CREATE TEMPORARY TABLE `#sql1` (c1 INT);

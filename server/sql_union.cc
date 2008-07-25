@@ -103,7 +103,7 @@ bool select_union::flush()
                          duplicates on insert
       options            create options
       table_alias        name of the temporary table
-      bit_fields_as_long convert bit fields to ulonglong
+      bit_fields_as_long convert bit fields to uint64_t
 
   DESCRIPTION
     Create a temporary table that is used to store the result of a UNION,
@@ -116,7 +116,7 @@ bool select_union::flush()
 
 bool
 select_union::create_result_table(THD *thd_arg, List<Item> *column_types,
-                                  bool is_union_distinct, ulonglong options,
+                                  bool is_union_distinct, uint64_t options,
                                   const char *table_alias,
                                   bool bit_fields_as_long)
 {
@@ -190,7 +190,7 @@ st_select_lex_unit::init_prepare_fake_select_lex(THD *thd_arg)
 
 
 bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
-                                 ulong additional_options)
+                                 uint32_t additional_options)
 {
   SELECT_LEX *lex_select_save= thd_arg->lex->current_select;
   SELECT_LEX *sl, *first_sl= first_select();
@@ -342,7 +342,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     */
     List_iterator_fast<Item> tp(types);
     Item *type;
-    ulonglong create_options;
+    uint64_t create_options;
 
     while ((type= tp++))
     {
@@ -397,7 +397,7 @@ bool st_select_lex_unit::exec()
 {
   SELECT_LEX *lex_select_save= thd->lex->current_select;
   SELECT_LEX *select_cursor=first_select();
-  ulonglong add_rows=0;
+  uint64_t add_rows=0;
   ha_rows examined_rows= 0;
 
   if (executed && !uncacheable && !describe)
@@ -504,7 +504,7 @@ bool st_select_lex_unit::exec()
 	  We get this from the difference of between total number of possible
 	  rows and actual rows added to the temporary table.
 	*/
-	add_rows+= (ulonglong) (thd->limit_found_rows - (ulonglong)
+	add_rows+= (uint64_t) (thd->limit_found_rows - (uint64_t)
 			      ((table->file->stats.records -  records_at_start)));
       }
     }
@@ -585,7 +585,7 @@ bool st_select_lex_unit::exec()
       fake_select_lex->table_list.empty();
       if (!saved_error)
       {
-	thd->limit_found_rows = (ulonglong)table->file->stats.records + add_rows;
+	thd->limit_found_rows = (uint64_t)table->file->stats.records + add_rows;
         thd->examined_row_count+= examined_rows;
       }
       /*

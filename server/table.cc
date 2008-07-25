@@ -94,7 +94,7 @@ void Default_object_creation_ctx::change_env(THD *thd) const
 /* Get column name from column hash */
 
 static uchar *get_field_name(Field **buff, size_t *length,
-                             my_bool not_used __attribute__((unused)))
+                             bool not_used __attribute__((unused)))
 {
   *length= (uint) strlen((*buff)->field_name);
   return (uchar*) (*buff)->field_name;
@@ -610,7 +610,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     for (j=keyinfo->key_parts ; j-- ; key_part++)
     {
       *rec_per_key++=0;
-      key_part->fieldnr=	(uint16) (uint2korr(strpos) & FIELD_NR_MASK);
+      key_part->fieldnr=	(uint16_t) (uint2korr(strpos) & FIELD_NR_MASK);
       key_part->offset= (uint) uint2korr(strpos+2)-1;
       key_part->key_type=	(uint) uint2korr(strpos+5);
       // key_part->field=	(Field*) 0;	// Will be fixed later
@@ -999,7 +999,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
 
     *field_ptr= reg_field=
       make_field(share, record+recpos,
-		 (uint32) field_length,
+		 (uint32_t) field_length,
 		 null_pos, null_bit_pos,
 		 pack_flag,
 		 field_type,
@@ -1042,7 +1042,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     uint primary_key=(uint) (find_type((char*) primary_key_name,
 				       &share->keynames, 3) - 1);
-    longlong ha_option= handler_file->ha_table_flags();
+    int64_t ha_option= handler_file->ha_table_flags();
     keyinfo= share->key_info;
     key_part= keyinfo->key_part;
 
@@ -1076,7 +1076,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       {
         Field *field;
 	if (new_field_pack_flag <= 1)
-	  key_part->fieldnr= (uint16) find_field(share->field,
+	  key_part->fieldnr= (uint16_t) find_field(share->field,
                                                  share->default_values,
                                                  (uint) key_part->offset,
                                                  (uint) key_part->length);
@@ -1157,9 +1157,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
               error.
             */
             keyinfo->key_length-= (key_part->length - field->key_length());
-            key_part->store_length-= (uint16)(key_part->length -
+            key_part->store_length-= (uint16_t)(key_part->length -
                                               field->key_length());
-            key_part->length= (uint16)field->key_length();
+            key_part->length= (uint16_t)field->key_length();
             sql_print_error("Found wrong key definition in %s; "
                             "Please do \"ALTER TABLE '%s' FORCE \" to fix it!",
                             share->table_name.str,
@@ -1974,7 +1974,7 @@ void append_unescaped(String *res, const char *pos, uint length)
 
   for (; pos != end ; pos++)
   {
-#if defined(USE_MB) && MYSQL_VERSION_ID < 40100
+#if defined(USE_MB)
     uint mblen;
     if (use_mb(default_charset_info) &&
         (mblen= my_ismbchar(default_charset_info, pos, end)))
@@ -2032,10 +2032,10 @@ File create_frm(THD *thd, const char *name, const char *db,
     create_flags|= O_EXCL | O_NOFOLLOW;
 
   /* Fix this when we have new .frm files;  Current limit is 4G rows (QQ) */
-  if (create_info->max_rows > UINT_MAX32)
-    create_info->max_rows= UINT_MAX32;
-  if (create_info->min_rows > UINT_MAX32)
-    create_info->min_rows= UINT_MAX32;
+  if (create_info->max_rows > UINT32_MAX)
+    create_info->max_rows= UINT32_MAX;
+  if (create_info->min_rows > UINT32_MAX)
+    create_info->min_rows= UINT32_MAX;
 
   if ((file= my_create(name, CREATE_MODE, create_flags, MYF(0))) >= 0)
   {
@@ -2355,13 +2355,13 @@ bool check_column_name(const char *name)
                   and such errors never reach the user.
 */
 
-my_bool
+bool
 table_check_intact(TABLE *table, const uint table_f_count,
                    const TABLE_FIELD_W_TYPE *table_def)
 {
   uint i;
-  my_bool error= false;
-  my_bool fields_diff_count;
+  bool error= false;
+  bool fields_diff_count;
 
   fields_diff_count= (table->s->fields != table_f_count);
   if (fields_diff_count)

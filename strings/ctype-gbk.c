@@ -10015,7 +10015,7 @@ static MY_CHARSET_HANDLER my_charset_handler=
   my_casedn_mb,
   my_snprintf_8bit,
   my_long10_to_str_8bit,
-  my_longlong10_to_str_8bit,
+  my_int64_t10_to_str_8bit,
   my_fill_8bit,
   my_strntol_8bit,
   my_strntoul_8bit,

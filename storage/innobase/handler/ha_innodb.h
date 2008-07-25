@@ -72,11 +72,11 @@ class ha_innobase: public handler
 	int update_thd(THD* thd);
 	int change_active_index(uint keynr);
 	int general_fetch(uchar* buf, uint direction, uint match_mode);
-	int innobase_read_and_init_auto_inc(longlong* ret);
+	int innobase_read_and_init_auto_inc(int64_t* ret);
 	ulong innobase_autoinc_lock();
-	ulong innobase_set_max_autoinc(ulonglong auto_inc);
-	ulong innobase_reset_autoinc(ulonglong auto_inc);
-	ulong innobase_get_auto_increment(ulonglong* value);
+	ulong innobase_set_max_autoinc(uint64_t auto_inc);
+	ulong innobase_reset_autoinc(uint64_t auto_inc);
+	ulong innobase_get_auto_increment(uint64_t* value);
 	dict_index_t* innobase_get_index(uint keynr);
 
 	/* Init values for the class: */
@@ -194,24 +194,24 @@ class ha_innobase: public handler
 	THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,
 					enum thr_lock_type lock_type);
 	void init_table_handle_for_HANDLER();
-        virtual void get_auto_increment(ulonglong offset, ulonglong increment,
-                                        ulonglong nb_desired_values,
-                                        ulonglong *first_value,
-                                        ulonglong *nb_reserved_values);
-	int reset_auto_increment(ulonglong value);
+        virtual void get_auto_increment(uint64_t offset, uint64_t increment,
+                                        uint64_t nb_desired_values,
+                                        uint64_t *first_value,
+                                        uint64_t *nb_reserved_values);
+	int reset_auto_increment(uint64_t value);
 
 	virtual bool get_error_message(int error, String *buf);
 
-	uint8 table_cache_type() { return HA_CACHE_TBL_ASKTRANSACT; }
+	uint8_t table_cache_type() { return HA_CACHE_TBL_ASKTRANSACT; }
 	/*
 	  ask handler about permission to cache table during query registration
 	*/
-	my_bool register_query_cache_table(THD *thd, char *table_key,
-					   uint key_length,
-					   qc_engine_callback *call_back,
-					   ulonglong *engine_data);
+        bool register_query_cache_table(THD *thd, char *table_key,
+                                        uint key_length,
+                                        qc_engine_callback *call_back,
+                                        uint64_t *engine_data);
 	static char *get_mysql_bin_log_name();
-	static ulonglong get_mysql_bin_log_pos();
+	static uint64_t get_mysql_bin_log_pos();
 	bool primary_key_is_clustered() { return true; }
 	int cmp_ref(const uchar *ref1, const uchar *ref2);
 	bool check_if_incompatible_data(HA_CREATE_INFO *info,
@@ -257,7 +257,7 @@ const char* mysql_bin_log_file_name(void);
 /** Get the current position of the MySQL binlog.
  * @return byte offset from the beginning of the binlog
  */
-ulonglong mysql_bin_log_file_pos(void);
+uint64_t mysql_bin_log_file_pos(void);
 
 /**
   Check if a user thread is a replication slave thread

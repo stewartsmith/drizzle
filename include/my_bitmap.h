@@ -20,7 +20,7 @@
 
 #include <m_string.h>
 
-typedef uint32 my_bitmap_map;
+typedef uint32_t my_bitmap_map;
 
 typedef struct st_bitmap
 {
@@ -40,18 +40,18 @@ typedef struct st_bitmap
 extern "C" {
 #endif
 extern void create_last_word_mask(MY_BITMAP *map);
-extern my_bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint n_bits,
-                           my_bool thread_safe);
-extern my_bool bitmap_is_clear_all(const MY_BITMAP *map);
-extern my_bool bitmap_is_prefix(const MY_BITMAP *map, uint prefix_size);
-extern my_bool bitmap_is_set_all(const MY_BITMAP *map);
-extern my_bool bitmap_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2);
-extern my_bool bitmap_is_overlapping(const MY_BITMAP *map1,
+extern bool bitmap_init(MY_BITMAP *map, my_bitmap_map *buf, uint n_bits,
+                           bool thread_safe);
+extern bool bitmap_is_clear_all(const MY_BITMAP *map);
+extern bool bitmap_is_prefix(const MY_BITMAP *map, uint prefix_size);
+extern bool bitmap_is_set_all(const MY_BITMAP *map);
+extern bool bitmap_is_subset(const MY_BITMAP *map1, const MY_BITMAP *map2);
+extern bool bitmap_is_overlapping(const MY_BITMAP *map1,
                                      const MY_BITMAP *map2);
-extern my_bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit);
-extern my_bool bitmap_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
-extern my_bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
-extern my_bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit);
+extern bool bitmap_test_and_set(MY_BITMAP *map, uint bitmap_bit);
+extern bool bitmap_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
+extern bool bitmap_fast_test_and_clear(MY_BITMAP *map, uint bitmap_bit);
+extern bool bitmap_fast_test_and_set(MY_BITMAP *map, uint bitmap_bit);
 extern uint bitmap_set_next(MY_BITMAP *map);
 extern uint bitmap_get_first(const MY_BITMAP *map);
 extern uint bitmap_get_first_set(const MY_BITMAP *map);
@@ -70,15 +70,15 @@ extern uint bitmap_lock_set_next(MY_BITMAP *map);
 extern void bitmap_lock_clear_bit(MY_BITMAP *map, uint bitmap_bit);
 #ifdef NOT_USED
 extern uint bitmap_lock_bits_set(const MY_BITMAP *map);
-extern my_bool bitmap_lock_is_set_all(const MY_BITMAP *map);
+extern bool bitmap_lock_is_set_all(const MY_BITMAP *map);
 extern uint bitmap_lock_get_first(const MY_BITMAP *map);
 extern uint bitmap_lock_get_first_set(const MY_BITMAP *map);
-extern my_bool bitmap_lock_is_subset(const MY_BITMAP *map1,
+extern bool bitmap_lock_is_subset(const MY_BITMAP *map1,
                                      const MY_BITMAP *map2);
-extern my_bool bitmap_lock_is_prefix(const MY_BITMAP *map, uint prefix_size);
-extern my_bool bitmap_lock_is_set(const MY_BITMAP *map, uint bitmap_bit);
-extern my_bool bitmap_lock_is_clear_all(const MY_BITMAP *map);
-extern my_bool bitmap_lock_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2);
+extern bool bitmap_lock_is_prefix(const MY_BITMAP *map, uint prefix_size);
+extern bool bitmap_lock_is_set(const MY_BITMAP *map, uint bitmap_bit);
+extern bool bitmap_lock_is_clear_all(const MY_BITMAP *map);
+extern bool bitmap_lock_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2);
 extern void bitmap_lock_set_all(MY_BITMAP *map);
 extern void bitmap_lock_clear_all(MY_BITMAP *map);
 extern void bitmap_lock_set_bit(MY_BITMAP *map, uint bitmap_bit);
@@ -104,49 +104,16 @@ extern void bitmap_lock_invert(MY_BITMAP *map);
 #define _bitmap_is_set(MAP, BIT) (uint) (((uchar*)(MAP)->bitmap)[(BIT) / 8] \
                                          & (1 << ((BIT) & 7)))
 /*
-  WARNING!
-
-  The below symbols are inline functions in DEBUG builds and macros in
-  non-DEBUG builds. The latter evaluate their 'bit' argument twice.
-
   NEVER use an increment/decrement operator with the 'bit' argument.
-  It would work with DEBUG builds, but fails later in production builds!
 
   FORBIDDEN: bitmap_set_bit($my_bitmap, (field++)->field_index);
 */
-#ifndef DBUG_OFF
-static inline void
-bitmap_set_bit(MY_BITMAP *map,uint bit)
-{
-  DBUG_ASSERT(bit < (map)->n_bits);
-  _bitmap_set_bit(map,bit);
-}
-static inline void
-bitmap_flip_bit(MY_BITMAP *map,uint bit)
-{
-  DBUG_ASSERT(bit < (map)->n_bits);
-  _bitmap_flip_bit(map,bit);
-}
-static inline void
-bitmap_clear_bit(MY_BITMAP *map,uint bit)
-{
-  DBUG_ASSERT(bit < (map)->n_bits);
-  _bitmap_clear_bit(map,bit);
-}
-static inline uint
-bitmap_is_set(const MY_BITMAP *map,uint bit)
-{
-  DBUG_ASSERT(bit < (map)->n_bits);
-  return _bitmap_is_set(map,bit);
-}
-#else
 #define bitmap_set_bit(MAP, BIT) _bitmap_set_bit(MAP, BIT)
 #define bitmap_flip_bit(MAP, BIT) _bitmap_flip_bit(MAP, BIT)
 #define bitmap_clear_bit(MAP, BIT) _bitmap_clear_bit(MAP, BIT)
 #define bitmap_is_set(MAP, BIT) _bitmap_is_set(MAP, BIT)
-#endif
 
-static inline my_bool bitmap_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2)
+static inline bool bitmap_cmp(const MY_BITMAP *map1, const MY_BITMAP *map2)
 {
   *(map1)->last_word_ptr|= (map1)->last_word_mask;
   *(map2)->last_word_ptr|= (map2)->last_word_mask;

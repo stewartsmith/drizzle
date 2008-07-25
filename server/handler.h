@@ -559,7 +559,7 @@ struct handlerton
    int (*fill_files_table)(handlerton *hton, THD *thd,
                            TABLE_LIST *tables,
                            class Item *cond);
-   uint32 flags;                                /* global handler flags */
+   uint32_t flags;                                /* global handler flags */
    int (*release_temporary_latches)(handlerton *hton, THD *thd);
 
    int (*discover)(handlerton *hton, THD* thd, const char *db, 
@@ -568,7 +568,7 @@ struct handlerton
                    size_t *frmlen);
    int (*table_exists_in_engine)(handlerton *hton, THD* thd, const char *db,
                                  const char *name);
-   uint32 license; /* Flag for Engine License */
+   uint32_t license; /* Flag for Engine License */
    void *data; /* Location for engines to keep personal structures */
 };
 
@@ -747,7 +747,7 @@ typedef struct {
 class Item;
 struct st_table_log_memory_entry;
 
-#define NOT_A_PARTITION_ID ((uint32)-1)
+#define NOT_A_PARTITION_ID ((uint32_t)-1)
 
 enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 
@@ -922,7 +922,7 @@ typedef struct st_range_seq_if
   uint (*next) (range_seq_t seq, KEY_MULTI_RANGE *range);
 } RANGE_SEQ_IF;
 
-uint16 &mrr_persistent_flag_storage(range_seq_t seq, uint idx);
+uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint idx);
 char* &mrr_get_ptr_by_idx(range_seq_t seq, uint idx);
 
 class COST_VECT
@@ -1291,7 +1291,7 @@ public:
   bool ha_check_and_repair(THD *thd);
   int ha_disable_indexes(uint mode);
   int ha_enable_indexes(uint mode);
-  int ha_discard_or_import_tablespace(my_bool discard);
+  int ha_discard_or_import_tablespace(bool discard);
   void ha_prepare_for_alter();
   int ha_rename_table(const char *from, const char *to);
   int ha_delete_table(const char *name);
@@ -1315,7 +1315,7 @@ public:
   }
   /* Estimates calculation */
   virtual double scan_time(void)
-  { return ulonglong2double(stats.data_file_length) / IO_SIZE + 2; }
+  { return uint64_t2double(stats.data_file_length) / IO_SIZE + 2; }
   virtual double read_time(uint index __attribute__((__unused__)),
                            uint ranges, ha_rows rows)
   { return rows2double(ranges+rows); }
@@ -1513,7 +1513,7 @@ public:
     { return (ha_rows) 10; }
   virtual void position(const uchar *record)=0;
   virtual int info(uint)=0; // see my_base.h for full description
-  virtual uint32 calculate_key_hash_value(Field **field_array __attribute__((__unused__)))
+  virtual uint32_t calculate_key_hash_value(Field **field_array __attribute__((__unused__)))
   { assert(0); return 0; }
   virtual int extra(enum ha_extra_function operation __attribute__((__unused__)))
   { return 0; }
@@ -1694,7 +1694,7 @@ public:
                                      enum thr_lock_type lock_type)=0;
 
   /** Type of table for caching query */
-  virtual uint8 table_cache_type() { return HA_CACHE_TBL_NONTRANSACT; }
+  virtual uint8_t table_cache_type() { return HA_CACHE_TBL_NONTRANSACT; }
 
 
   /**
@@ -1727,7 +1727,7 @@ public:
         cached
   */
 
-  virtual my_bool
+  virtual bool
     register_query_cache_table(THD *thd __attribute__((__unused__)),
                                char *table_key __attribute__((__unused__)),
                                uint key_length __attribute__((__unused__)),
@@ -2103,7 +2103,7 @@ private:
   { return HA_ERR_WRONG_COMMAND; }
   virtual int enable_indexes(uint mode __attribute__((__unused__)))
   { return HA_ERR_WRONG_COMMAND; }
-  virtual int discard_or_import_tablespace(my_bool discard __attribute__((__unused__)))
+  virtual int discard_or_import_tablespace(bool discard __attribute__((__unused__)))
   { return (my_errno=HA_ERR_WRONG_COMMAND); }
   virtual void prepare_for_alter(void) { return; }
   virtual void drop_table(const char *name);
@@ -2218,7 +2218,7 @@ static inline const char *ha_resolve_storage_engine_name(const handlerton *db_ty
   return db_type == NULL ? "UNKNOWN" : hton2plugin[db_type->slot]->name.str;
 }
 
-static inline bool ha_check_storage_engine_flag(const handlerton *db_type, uint32 flag)
+static inline bool ha_check_storage_engine_flag(const handlerton *db_type, uint32_t flag)
 {
   return db_type == NULL ? false : test(db_type->flags & flag);
 }

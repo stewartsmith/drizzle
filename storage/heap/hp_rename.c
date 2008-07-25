@@ -23,7 +23,6 @@ int heap_rename(const char *old_name, const char *new_name)
 {
   register HP_SHARE *info;
   char *name_buff;
-  DBUG_ENTER("heap_rename");
 
   pthread_mutex_lock(&THR_LOCK_heap);
   if ((info = hp_find_named_heap(old_name)))
@@ -31,11 +30,11 @@ int heap_rename(const char *old_name, const char *new_name)
     if (!(name_buff=(char*) my_strdup(new_name,MYF(MY_WME))))
     {
       pthread_mutex_unlock(&THR_LOCK_heap);
-      DBUG_RETURN(my_errno);
+      return(my_errno);
     }
     my_free(info->name,MYF(0));
     info->name=name_buff;
   }
   pthread_mutex_unlock(&THR_LOCK_heap);
-  DBUG_RETURN(0);
+  return(0);
 }

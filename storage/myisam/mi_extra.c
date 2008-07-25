@@ -42,8 +42,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   int error=0;
   ulong cache_size;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_extra");
-  DBUG_PRINT("enter",("function: %d",(int) function));
 
   switch (function) {
   case HA_EXTRA_RESET_STATE:		/* Reset state (don't free buffers) */
@@ -54,8 +52,8 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (info->opt_flag & READ_CACHE_USED)
     {
       reinit_io_cache(&info->rec_cache,READ_CACHE,0,
-		      (pbool) (info->lock_type != F_UNLCK),
-		      (pbool) test(info->update & HA_STATE_ROW_CHANGED)
+		      (bool) (info->lock_type != F_UNLCK),
+		      (bool) test(info->update & HA_STATE_ROW_CHANGED)
 		      );
     }
     info->update= ((info->update & HA_STATE_CHANGED) | HA_STATE_NEXT_FOUND |
@@ -101,7 +99,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       if (!(init_io_cache(&info->rec_cache,info->dfile,
 			 (uint) min(info->state->data_file_length+1,
 				    cache_size),
-			  READ_CACHE,0L,(pbool) (info->lock_type != F_UNLCK),
+			  READ_CACHE,0L,(bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
 	info->opt_flag|=READ_CACHE_USED;
@@ -115,8 +113,8 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (info->opt_flag & READ_CACHE_USED)
     {
       reinit_io_cache(&info->rec_cache,READ_CACHE,info->nextpos,
-		      (pbool) (info->lock_type != F_UNLCK),
-		      (pbool) test(info->update & HA_STATE_ROW_CHANGED));
+		      (bool) (info->lock_type != F_UNLCK),
+		      (bool) test(info->update & HA_STATE_ROW_CHANGED));
       info->update&= ~HA_STATE_ROW_CHANGED;
       if (share->concurrent_insert)
 	info->rec_cache.end_of_file=info->state->data_file_length;
@@ -136,7 +134,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 	!share->state.header.uniques)
       if (!(init_io_cache(&info->rec_cache,info->dfile, cache_size,
 			 WRITE_CACHE,info->state->data_file_length,
-			  (pbool) (info->lock_type != F_UNLCK),
+			  (bool) (info->lock_type != F_UNLCK),
 			  MYF(share->write_flag & MY_WAIT_IF_FULL))))
       {
 	info->opt_flag|=WRITE_CACHE_USED;
@@ -361,7 +359,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     {
       if (mi_dynmap_file(info, share->state.state.data_file_length))
       {
-        DBUG_PRINT("warning",("mmap failed: errno: %d",errno));
         error= my_errno= errno;
       }
       else
@@ -373,11 +370,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     pthread_mutex_unlock(&share->intern_lock);
 #endif
     break;
-  case HA_EXTRA_MARK_AS_LOG_TABLE:
-    pthread_mutex_lock(&share->intern_lock);
-    share->is_log_table= TRUE;
-    pthread_mutex_unlock(&share->intern_lock);
-    break;
   case HA_EXTRA_KEY_CACHE:
   case HA_EXTRA_NO_KEY_CACHE:
   default:
@@ -388,7 +380,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     tmp[0]=function;
     myisam_log_command(MI_LOG_EXTRA,info,(uchar*) tmp,1,error);
   }
-  DBUG_RETURN(error);
+  return(error);
 } /* mi_extra */
 
 
@@ -426,7 +418,6 @@ int mi_reset(MI_INFO *info)
 {
   int error= 0;
   MYISAM_SHARE *share=info->s;
-  DBUG_ENTER("mi_reset");
   /*
     Free buffers and reset the following flags:
     EXTRA_CACHE, EXTRA_WRITE_CACHE, EXTRA_KEYREAD, EXTRA_QUICK
@@ -453,5 +444,5 @@ int mi_reset(MI_INFO *info)
   info->page_changed= 1;
   info->update= ((info->update & HA_STATE_CHANGED) | HA_STATE_NEXT_FOUND |
                  HA_STATE_PREV_FOUND);
-  DBUG_RETURN(error);
+  return(error);
 }

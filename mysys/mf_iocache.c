@@ -147,14 +147,11 @@ init_functions(IO_CACHE* info)
 
 int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 		  enum cache_type type, my_off_t seek_offset,
-		  pbool use_async_io, myf cache_myflags)
+		  bool use_async_io, myf cache_myflags)
 {
   size_t min_cache;
   my_off_t pos;
   my_off_t end_of_file= ~(my_off_t) 0;
-  DBUG_ENTER("init_io_cache");
-  DBUG_PRINT("enter",("cache: 0x%lx  type: %d  pos: %ld",
-		      (ulong) info, (int) type, (ulong) seek_offset));
 
   info->file= file;
   info->type= TYPE_NOT_SET;	    /* Don't set it until mutex are created */
@@ -180,7 +177,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
         the beginning of whatever this file is, then somebody made a bad
         assumption.
       */
-      DBUG_ASSERT(seek_offset == 0);
+      assert(seek_offset == 0);
     }
     else
       info->seek_not_done= test(seek_offset != pos);
@@ -190,7 +187,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
   info->share=0;
 
   if (!cachesize && !(cachesize= my_default_record_cache_size))
-    DBUG_RETURN(1);				/* No cache requested */
+    return(1);				/* No cache requested */
   min_cache=use_async_io ? IO_SIZE*4 : IO_SIZE*2;
   if (type == READ_CACHE || type == SEQ_READ_APPEND)
   {						/* Assume file isn't growing */
@@ -235,13 +232,12 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 	break;					/* Enough memory found */
       }
       if (cachesize == min_cache)
-	DBUG_RETURN(2);				/* Can't alloc cache */
+	return(2);				/* Can't alloc cache */
       /* Try with less memory */
       cachesize= (cachesize*3/4 & ~(min_cache-1));
     }
   }
 
-  DBUG_PRINT("info",("init_io_cache: cachesize = %lu", (ulong) cachesize));
   info->read_length=info->buffer_length=cachesize;
   info->myflags=cache_myflags & ~(MY_NABP | MY_FNABP);
   info->request_pos= info->read_pos= info->write_pos = info->buffer;
@@ -273,13 +269,12 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
 #ifdef HAVE_AIOWAIT
   if (use_async_io && ! my_disable_async_io)
   {
-    DBUG_PRINT("info",("Using async io"));
     info->read_length/=2;
     info->read_function=_my_b_async_read;
   }
   info->inited=info->aio_result.pending=0;
 #endif
-  DBUG_RETURN(0);
+  return(0);
 }						/* init_io_cache */
 
 	/* Wait until current request is ready */
@@ -296,7 +291,6 @@ static void my_aiowait(my_aio_result *result)
       {
 	if (errno == EINTR)
 	  continue;
-	DBUG_PRINT("error",("No aio request, error: %d",errno));
 	result->pending=0;			/* Assume everythings is ok */
 	break;
       }
@@ -317,18 +311,13 @@ static void my_aiowait(my_aio_result *result)
   in the cache, we are reusing this memory without flushing it to disk.
 */
 
-my_bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
+bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 			my_off_t seek_offset,
-			pbool use_async_io __attribute__((unused)),
-			pbool clear_cache)
+			bool use_async_io __attribute__((unused)),
+			bool clear_cache)
 {
-  DBUG_ENTER("reinit_io_cache");
-  DBUG_PRINT("enter",("cache: 0x%lx type: %d  seek_offset: %lu  clear_cache: %d",
-		      (ulong) info, type, (ulong) seek_offset,
-		      (int) clear_cache));
-
   /* One can't do reinit with the following types */
-  DBUG_ASSERT(type != READ_NET && info->type != READ_NET &&
+  assert(type != READ_NET && info->type != READ_NET &&
 	      type != WRITE_NET && info->type != WRITE_NET &&
 	      type != SEQ_READ_APPEND && info->type != SEQ_READ_APPEND);
 
@@ -377,7 +366,7 @@ my_bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
       info->end_of_file=my_b_tell(info);
     /* flush cache if we want to reuse it */
     if (!clear_cache && my_b_flush_io_cache(info,1))
-      DBUG_RETURN(1);
+      return(1);
     info->pos_in_file=seek_offset;
     /* Better to do always do a seek */
     info->seek_not_done=1;
@@ -407,7 +396,7 @@ my_bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
   }
   info->inited=0;
 #endif
-  DBUG_RETURN(0);
+  return(0);
 } /* reinit_io_cache */
 
 
@@ -444,11 +433,10 @@ int _my_b_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
 {
   size_t length,diff_length,left_length, max_length;
   my_off_t pos_in_file;
-  DBUG_ENTER("_my_b_read");
 
   if ((left_length= (size_t) (info->read_end-info->read_pos)))
   {
-    DBUG_ASSERT(Count >= left_length);	/* User is not using my_b_read() */
+    assert(Count >= left_length);	/* User is not using my_b_read() */
     memcpy(Buffer,info->read_pos, left_length);
     Buffer+=left_length;
     Count-=left_length;
@@ -478,9 +466,9 @@ int _my_b_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
         info->file is a pipe or socket or FIFO.  We never should have tried
         to seek on that.  See Bugs#25807 and #22828 for more info.
       */
-      DBUG_ASSERT(my_errno != ESPIPE);
+      assert(my_errno != ESPIPE);
       info->error= -1;
-      DBUG_RETURN(1);
+      return(1);
     }
   }
 
@@ -491,7 +479,7 @@ int _my_b_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
     if (info->end_of_file <= pos_in_file)
     {					/* End of file */
       info->error= (int) left_length;
-      DBUG_RETURN(1);
+      return(1);
     }
     length=(Count & (size_t) ~(IO_SIZE-1))-diff_length;
     if ((read_length= my_read(info->file,Buffer, length, info->myflags))
@@ -499,7 +487,7 @@ int _my_b_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
     {
       info->error= (read_length == (size_t) -1 ? -1 :
 		    (int) (read_length+left_length));
-      DBUG_RETURN(1);
+      return(1);
     }
     Count-=length;
     Buffer+=length;
@@ -517,7 +505,7 @@ int _my_b_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
     if (Count)
     {
       info->error= left_length;		/* We only got this many char */
-      DBUG_RETURN(1);
+      return(1);
     }
     length=0;				/* Didn't read any chars */
   }
@@ -530,13 +518,13 @@ int _my_b_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
     info->pos_in_file= pos_in_file;
     info->error= length == (size_t) -1 ? -1 : (int) (length+left_length);
     info->read_pos=info->read_end=info->buffer;
-    DBUG_RETURN(1);
+    return(1);
   }
   info->read_pos=info->buffer+Count;
   info->read_end=info->buffer+length;
   info->pos_in_file=pos_in_file;
   memcpy(Buffer, info->buffer, Count);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -611,15 +599,9 @@ int _my_b_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
 void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
                          IO_CACHE *write_cache, uint num_threads)
 {
-  DBUG_ENTER("init_io_cache_share");
-  DBUG_PRINT("io_cache_share", ("read_cache: 0x%lx  share: 0x%lx  "
-                                "write_cache: 0x%lx  threads: %u",
-                                (long) read_cache, (long) cshare,
-                                (long) write_cache, num_threads));
-
-  DBUG_ASSERT(num_threads > 1);
-  DBUG_ASSERT(read_cache->type == READ_CACHE);
-  DBUG_ASSERT(!write_cache || (write_cache->type == WRITE_CACHE));
+  assert(num_threads > 1);
+  assert(read_cache->type == READ_CACHE);
+  assert(!write_cache || (write_cache->type == WRITE_CACHE));
 
   pthread_mutex_init(&cshare->mutex, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&cshare->cond, 0);
@@ -641,7 +623,7 @@ void init_io_cache_share(IO_CACHE *read_cache, IO_CACHE_SHARE *cshare,
   if (write_cache)
     write_cache->share= cshare;
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -668,20 +650,15 @@ void remove_io_thread(IO_CACHE *cache)
 {
   IO_CACHE_SHARE *cshare= cache->share;
   uint total;
-  DBUG_ENTER("remove_io_thread");
 
   /* If the writer goes, it needs to flush the write cache. */
   if (cache == cshare->source_cache)
     flush_io_cache(cache);
 
   pthread_mutex_lock(&cshare->mutex);
-  DBUG_PRINT("io_cache_share", ("%s: 0x%lx",
-                                (cache == cshare->source_cache) ?
-                                "writer" : "reader", (long) cache));
 
   /* Remove from share. */
   total= --cshare->total_threads;
-  DBUG_PRINT("io_cache_share", ("remaining threads: %u", total));
 
   /* Detach from share. */
   cache->share= NULL;
@@ -689,14 +666,12 @@ void remove_io_thread(IO_CACHE *cache)
   /* If the writer goes, let the readers know. */
   if (cache == cshare->source_cache)
   {
-    DBUG_PRINT("io_cache_share", ("writer leaves"));
     cshare->source_cache= NULL;
   }
 
   /* If all threads are waiting for me to join the lock, wake them. */
   if (!--cshare->running_threads)
   {
-    DBUG_PRINT("io_cache_share", ("the last running thread leaves, wake all"));
     pthread_cond_signal(&cshare->cond_writer);
     pthread_cond_broadcast(&cshare->cond);
   }
@@ -705,13 +680,12 @@ void remove_io_thread(IO_CACHE *cache)
 
   if (!total)
   {
-    DBUG_PRINT("io_cache_share", ("last thread removed, destroy share"));
     pthread_cond_destroy (&cshare->cond_writer);
     pthread_cond_destroy (&cshare->cond);
     pthread_mutex_destroy(&cshare->mutex);
   }
 
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -746,15 +720,10 @@ void remove_io_thread(IO_CACHE *cache)
 static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
 {
   IO_CACHE_SHARE *cshare= cache->share;
-  DBUG_ENTER("lock_io_cache");
 
   /* Enter the lock. */
   pthread_mutex_lock(&cshare->mutex);
   cshare->running_threads--;
-  DBUG_PRINT("io_cache_share", ("%s: 0x%lx  pos: %lu  running: %u",
-                                (cache == cshare->source_cache) ?
-                                "writer" : "reader", (long) cache, (ulong) pos,
-                                cshare->running_threads));
 
   if (cshare->source_cache)
   {
@@ -765,19 +734,15 @@ static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
       /* The writer waits until all readers are here. */
       while (cshare->running_threads)
       {
-        DBUG_PRINT("io_cache_share", ("writer waits in lock"));
         pthread_cond_wait(&cshare->cond_writer, &cshare->mutex);
       }
-      DBUG_PRINT("io_cache_share", ("writer awoke, going to copy"));
-
       /* Stay locked. Leave the lock later by unlock_io_cache(). */
-      DBUG_RETURN(1);
+      return(1);
     }
 
     /* The last thread wakes the writer. */
     if (!cshare->running_threads)
     {
-      DBUG_PRINT("io_cache_share", ("waking writer"));
       pthread_cond_signal(&cshare->cond_writer);
     }
 
@@ -789,7 +754,6 @@ static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
     while ((!cshare->read_end || (cshare->pos_in_file < pos)) &&
            cshare->source_cache)
     {
-      DBUG_PRINT("io_cache_share", ("reader waits in lock"));
       pthread_cond_wait(&cshare->cond, &cshare->mutex);
     }
 
@@ -803,7 +767,6 @@ static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
     */
     if (!cshare->read_end || (cshare->pos_in_file < pos))
     {
-      DBUG_PRINT("io_cache_share", ("reader found writer removed. EOF"));
       cshare->read_end= cshare->buffer; /* Empty buffer. */
       cshare->error= 0; /* EOF is not an error. */
     }
@@ -816,9 +779,8 @@ static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
     */
     if (!cshare->running_threads)
     {
-      DBUG_PRINT("io_cache_share", ("last thread joined, going to read"));
       /* Stay locked. Leave the lock later by unlock_io_cache(). */
-      DBUG_RETURN(1);
+      return(1);
     }
 
     /*
@@ -831,31 +793,25 @@ static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
     while ((!cshare->read_end || (cshare->pos_in_file < pos)) &&
            cshare->running_threads)
     {
-      DBUG_PRINT("io_cache_share", ("reader waits in lock"));
       pthread_cond_wait(&cshare->cond, &cshare->mutex);
     }
 
     /* If the block is not yet read, continue with a locked cache and read. */
     if (!cshare->read_end || (cshare->pos_in_file < pos))
     {
-      DBUG_PRINT("io_cache_share", ("reader awoke, going to read"));
       /* Stay locked. Leave the lock later by unlock_io_cache(). */
-      DBUG_RETURN(1);
+      return(1);
     }
 
     /* Another thread did read the block already. */
   }
-  DBUG_PRINT("io_cache_share", ("reader awoke, going to process %u bytes",
-                                (uint) (cshare->read_end ? (size_t)
-                                        (cshare->read_end - cshare->buffer) :
-                                        0)));
 
   /*
     Leave the lock. Do not call unlock_io_cache() later. The thread that
     filled the buffer did this and marked all threads as running.
   */
   pthread_mutex_unlock(&cshare->mutex);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -889,17 +845,11 @@ static int lock_io_cache(IO_CACHE *cache, my_off_t pos)
 static void unlock_io_cache(IO_CACHE *cache)
 {
   IO_CACHE_SHARE *cshare= cache->share;
-  DBUG_ENTER("unlock_io_cache");
-  DBUG_PRINT("io_cache_share", ("%s: 0x%lx  pos: %lu  running: %u",
-                                (cache == cshare->source_cache) ?
-                                "writer" : "reader",
-                                (long) cache, (ulong) cshare->pos_in_file,
-                                cshare->total_threads));
 
   cshare->running_threads= cshare->total_threads;
   pthread_cond_broadcast(&cshare->cond);
   pthread_mutex_unlock(&cshare->mutex);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -945,11 +895,10 @@ int _my_b_read_r(register IO_CACHE *cache, uchar *Buffer, size_t Count)
   my_off_t pos_in_file;
   size_t length, diff_length, left_length;
   IO_CACHE_SHARE *cshare= cache->share;
-  DBUG_ENTER("_my_b_read_r");
 
   if ((left_length= (size_t) (cache->read_end - cache->read_pos)))
   {
-    DBUG_ASSERT(Count >= left_length);	/* User is not using my_b_read() */
+    assert(Count >= left_length);	/* User is not using my_b_read() */
     memcpy(Buffer, cache->read_pos, left_length);
     Buffer+= left_length;
     Count-= left_length;
@@ -970,12 +919,12 @@ int _my_b_read_r(register IO_CACHE *cache, uchar *Buffer, size_t Count)
     if (length == 0)
     {
       cache->error= (int) left_length;
-      DBUG_RETURN(1);
+      return(1);
     }
     if (lock_io_cache(cache, pos_in_file))
     {
       /* With a synchronized write/read cache we won't come here... */
-      DBUG_ASSERT(!cshare->source_cache);
+      assert(!cshare->source_cache);
       /*
         ... unless the writer has gone before this thread entered the
         lock. Simulate EOF in this case. It can be distinguished by
@@ -998,13 +947,11 @@ int _my_b_read_r(register IO_CACHE *cache, uchar *Buffer, size_t Count)
           {
             cache->error= -1;
             unlock_io_cache(cache);
-            DBUG_RETURN(1);
+            return(1);
           }
         }
         len= my_read(cache->file, cache->buffer, length, cache->myflags);
       }
-      DBUG_PRINT("io_cache_share", ("read %lu bytes", (ulong) len));
-
       cache->read_end=    cache->buffer + (len == (size_t) -1 ? 0 : len);
       cache->error=       (len == length ? 0 : (int) len);
       cache->pos_in_file= pos_in_file;
@@ -1034,10 +981,8 @@ int _my_b_read_r(register IO_CACHE *cache, uchar *Buffer, size_t Count)
     cache->seek_not_done= 0;
     if (len == 0 || len == (size_t) -1)
     {
-      DBUG_PRINT("io_cache_share", ("reader error. len %lu  left %lu",
-                                    (ulong) len, (ulong) left_length));
       cache->error= (int) left_length;
-      DBUG_RETURN(1);
+      return(1);
     }
     cnt= (len > Count) ? Count : len;
     memcpy(Buffer, cache->read_pos, cnt);
@@ -1046,7 +991,7 @@ int _my_b_read_r(register IO_CACHE *cache, uchar *Buffer, size_t Count)
     left_length+= cnt;
     cache->read_pos+= cnt;
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -1072,7 +1017,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
 {
   IO_CACHE_SHARE *cshare= write_cache->share;
 
-  DBUG_ASSERT(cshare->source_cache == write_cache);
+  assert(cshare->source_cache == write_cache);
   /*
     write_length is usually less or equal to buffer_length.
     It can be bigger if _my_b_write() is called with a big length.
@@ -1084,7 +1029,7 @@ static void copy_to_read_buffer(IO_CACHE *write_cache,
 
     rc= lock_io_cache(write_cache, write_cache->pos_in_file);
     /* The writing thread does always have the lock when it awakes. */
-    DBUG_ASSERT(rc);
+    assert(rc);
 
     memcpy(cshare->buffer, write_buffer, copy_length);
 
@@ -1123,7 +1068,7 @@ int _my_b_seq_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
   /* first, read the regular buffer */
   if ((left_length=(size_t) (info->read_end-info->read_pos)))
   {
-    DBUG_ASSERT(Count > left_length);	/* User is not using my_b_read() */
+    assert(Count > left_length);	/* User is not using my_b_read() */
     memcpy(Buffer,info->read_pos, left_length);
     Buffer+=left_length;
     Count-=left_length;
@@ -1205,7 +1150,7 @@ int _my_b_seq_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
 
       /*
 	 added the line below to make
-	 DBUG_ASSERT(pos_in_file==info->end_of_file) pass.
+	 assert(pos_in_file==info->end_of_file) pass.
 	 otherwise this does not appear to be needed
       */
       pos_in_file += length;
@@ -1232,11 +1177,11 @@ read_append_buffer:
     size_t copy_len;
     size_t transfer_len;
 
-    DBUG_ASSERT(info->append_read_pos <= info->write_pos);
+    assert(info->append_read_pos <= info->write_pos);
     /*
       TODO: figure out if the assert below is needed or correct.
     */
-    DBUG_ASSERT(pos_in_file == info->end_of_file);
+    assert(pos_in_file == info->end_of_file);
     copy_len=min(Count, len_in_buff);
     memcpy(Buffer, info->append_read_pos, copy_len);
     info->append_read_pos += copy_len;
@@ -1338,13 +1283,6 @@ int _my_b_async_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
 	read_length-=offset;			/* Bytes left from read_pos */
       }
     }
-#ifndef DBUG_OFF
-    if (info->aio_read_pos > info->pos_in_file)
-    {
-      my_errno=EINVAL;
-      return(info->read_length= (size_t) -1);
-    }
-#endif
 	/* Copy found bytes to buffer */
     length=min(Count,read_length);
     memcpy(Buffer,info->read_pos,(size_t) length);
@@ -1423,15 +1361,11 @@ int _my_b_async_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
   if (max_length)
   {
     info->aio_result.result.aio_errno=AIO_INPROGRESS;	/* Marker for test */
-    DBUG_PRINT("aioread",("filepos: %ld  length: %lu",
-			  (ulong) next_pos_in_file, (ulong) max_length));
     if (aioread(info->file,read_buffer, max_length,
 		(my_off_t) next_pos_in_file,MY_SEEK_SET,
 		&info->aio_result.result))
     {						/* Skip async io */
       my_errno=errno;
-      DBUG_PRINT("error",("got error: %d, aio_result: %d from aioread, async skipped",
-			  errno, info->aio_result.result.aio_errno));
       if (info->request_pos != info->buffer)
       {
 	bmove(info->buffer,info->request_pos,
@@ -1553,7 +1487,7 @@ int my_b_append(register IO_CACHE *info, const uchar *Buffer, size_t Count)
     Assert that we cannot come here with a shared cache. If we do one
     day, we might need to add a call to copy_to_read_buffer().
   */
-  DBUG_ASSERT(!info->share);
+  assert(!info->share);
 
   lock_append_buffer(info);
   rest_length= (size_t) (info->write_end - info->write_pos);
@@ -1619,7 +1553,7 @@ int my_block_write(register IO_CACHE *info, const uchar *Buffer, size_t Count,
     Assert that we cannot come here with a shared cache. If we do one
     day, we might need to add a call to copy_to_read_buffer().
   */
-  DBUG_ASSERT(!info->share);
+  assert(!info->share);
 
   if (pos < info->pos_in_file)
   {
@@ -1672,10 +1606,8 @@ int my_block_write(register IO_CACHE *info, const uchar *Buffer, size_t Count,
 int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 {
   size_t length;
-  my_bool append_cache;
+  bool append_cache;
   my_off_t pos_in_file;
-  DBUG_ENTER("my_b_flush_io_cache");
-  DBUG_PRINT("enter", ("cache: 0x%lx", (long) info));
 
   if (!(append_cache = (info->type == SEQ_READ_APPEND)))
     need_append_buffer_lock=0;
@@ -1685,7 +1617,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
     if (info->file == -1)
     {
       if (real_open_cached_file(info))
-	DBUG_RETURN((info->error= -1));
+	return((info->error= -1));
     }
     LOCK_APPEND_BUFFER;
 
@@ -1711,7 +1643,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
 	    MY_FILEPOS_ERROR)
 	{
 	  UNLOCK_APPEND_BUFFER;
-	  DBUG_RETURN((info->error= -1));
+	  return((info->error= -1));
 	}
 	if (!append_cache)
 	  info->seek_not_done=0;
@@ -1733,13 +1665,13 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
       else
       {
 	info->end_of_file+=(info->write_pos-info->append_read_pos);
-	DBUG_ASSERT(info->end_of_file == my_tell(info->file,MYF(0)));
+	assert(info->end_of_file == my_tell(info->file,MYF(0)));
       }
 
       info->append_read_pos=info->write_pos=info->write_buffer;
       ++info->disk_writes;
       UNLOCK_APPEND_BUFFER;
-      DBUG_RETURN(info->error);
+      return(info->error);
     }
   }
 #ifdef HAVE_AIOWAIT
@@ -1750,7 +1682,7 @@ int my_b_flush_io_cache(IO_CACHE *info, int need_append_buffer_lock)
   }
 #endif
   UNLOCK_APPEND_BUFFER;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 /*
@@ -1774,14 +1706,12 @@ int end_io_cache(IO_CACHE *info)
 {
   int error=0;
   IO_CACHE_CALLBACK pre_close;
-  DBUG_ENTER("end_io_cache");
-  DBUG_PRINT("enter",("cache: 0x%lx", (ulong) info));
 
   /*
     Every thread must call remove_io_thread(). The last one destroys
     the share elements.
   */
-  DBUG_ASSERT(!info->share || !info->share->total_threads);
+  assert(!info->share || !info->share->total_threads);
 
   if ((pre_close=info->pre_close))
   {
@@ -1802,7 +1732,7 @@ int end_io_cache(IO_CACHE *info)
     info->type= TYPE_NOT_SET;
     pthread_mutex_destroy(&info->append_buffer_lock);
   }
-  DBUG_RETURN(error);
+  return(error);
 } /* end_io_cache */
 
 

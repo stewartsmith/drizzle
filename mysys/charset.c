@@ -31,7 +31,7 @@
     - Setting server default character set
 */
 
-my_bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2)
+bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2)
 {
   return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
 }
@@ -53,7 +53,7 @@ get_collation_number_internal(const char *name)
 }
 
 
-static my_bool init_state_maps(CHARSET_INFO *cs)
+static bool init_state_maps(CHARSET_INFO *cs)
 {
   uint i;
   uchar *state_map;
@@ -176,8 +176,8 @@ static int cs_copy_data(CHARSET_INFO *to, CHARSET_INFO *from)
   }
   if (from->tab_to_uni)
   {
-    uint sz= MY_CS_TO_UNI_TABLE_SIZE*sizeof(uint16);
-    if (!(to->tab_to_uni= (uint16*)  my_once_memdup((char*)from->tab_to_uni,
+    uint sz= MY_CS_TO_UNI_TABLE_SIZE*sizeof(uint16_t);
+    if (!(to->tab_to_uni= (uint16_t*)  my_once_memdup((char*)from->tab_to_uni,
 						    sz, MYF(MY_WME))))
       goto err;
   }
@@ -193,7 +193,7 @@ err:
 
 
 
-static my_bool simple_cs_is_full(CHARSET_INFO *cs)
+static bool simple_cs_is_full(CHARSET_INFO *cs)
 {
   return ((cs->csname && cs->tab_to_uni && cs->ctype && cs->to_upper &&
 	   cs->to_lower) &&
@@ -350,7 +350,7 @@ const char *charsets_dir= NULL;
 static int charset_initialized=0;
 
 
-static my_bool my_read_charset_file(const char *filename, myf myflags)
+static bool my_read_charset_file(const char *filename, myf myflags)
 {
   uchar *buf;
   int  fd;
@@ -360,7 +360,7 @@ static my_bool my_read_charset_file(const char *filename, myf myflags)
   if (stat(filename, &stat_info) ||
        ((len= (uint)stat_info.st_size) > MY_MAX_ALLOWED_BUF) ||
        !(buf= (uchar*) my_malloc(len,myflags)))
-    return TRUE;
+    return true;
   
   if ((fd=my_open(filename,O_RDONLY,myflags)) < 0)
     goto error;
@@ -380,11 +380,11 @@ static my_bool my_read_charset_file(const char *filename, myf myflags)
   }
   
   my_free(buf, myflags);
-  return FALSE;
+  return false;
 
 error:
   my_free(buf, myflags);
-  return TRUE;
+  return true;
 }
 
 
@@ -392,7 +392,6 @@ char *get_charsets_dir(char *buf)
 {
   const char *sharedir= SHAREDIR;
   char *res;
-  DBUG_ENTER("get_charsets_dir");
 
   if (charsets_dir != NULL)
     strmake(buf, charsets_dir, FN_REFLEN-1);
@@ -406,8 +405,7 @@ char *get_charsets_dir(char *buf)
 	      NullS);
   }
   res= convert_dirname(buf,buf,NullS);
-  DBUG_PRINT("info",("charsets dir: '%s'", buf));
-  DBUG_RETURN(res);
+  return(res);
 }
 
 CHARSET_INFO *all_charsets[256];
@@ -425,10 +423,10 @@ static void *cs_alloc(size_t size)
 }
 
 
-static my_bool init_available_charsets(myf myflags)
+static bool init_available_charsets(myf myflags)
 {
   char fname[FN_REFLEN + sizeof(MY_CHARSET_INDEX)];
-  my_bool error=FALSE;
+  bool error=false;
   /*
     We have to use charset_initialized to not lock on THR_LOCK_charset
     inside get_internal_charset...
@@ -593,8 +591,6 @@ CHARSET_INFO *get_charset_by_csname(const char *cs_name,
 {
   uint cs_number;
   CHARSET_INFO *cs;
-  DBUG_ENTER("get_charset_by_csname");
-  DBUG_PRINT("enter",("name: '%s'", cs_name));
 
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
@@ -608,7 +604,7 @@ CHARSET_INFO *get_charset_by_csname(const char *cs_name,
     my_error(EE_UNKNOWN_CHARSET, MYF(ME_BELL), cs_name, index_file);
   }
 
-  DBUG_RETURN(cs);
+  return(cs);
 }
 
 
@@ -617,18 +613,18 @@ CHARSET_INFO *get_charset_by_csname(const char *cs_name,
 
   The function tries to resolve character set by the specified name. If
   there is character set with the given name, it is assigned to the "cs"
-  parameter and FALSE is returned. If there is no such character set,
-  "default_cs" is assigned to the "cs" and TRUE is returned.
+  parameter and false is returned. If there is no such character set,
+  "default_cs" is assigned to the "cs" and true is returned.
 
   @param[in] cs_name    Character set name.
   @param[in] default_cs Default character set.
   @param[out] cs        Variable to store character set.
 
-  @return FALSE if character set was resolved successfully; TRUE if there
+  @return false if character set was resolved successfully; true if there
   is no character set with given name.
 */
 
-my_bool resolve_charset(const char *cs_name,
+bool resolve_charset(const char *cs_name,
                         CHARSET_INFO *default_cs,
                         CHARSET_INFO **cs)
 {
@@ -637,10 +633,10 @@ my_bool resolve_charset(const char *cs_name,
   if (*cs == NULL)
   {
     *cs= default_cs;
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -649,18 +645,18 @@ my_bool resolve_charset(const char *cs_name,
 
   The function tries to resolve collation by the specified name. If there
   is collation with the given name, it is assigned to the "cl" parameter
-  and FALSE is returned. If there is no such collation, "default_cl" is
-  assigned to the "cl" and TRUE is returned.
+  and false is returned. If there is no such collation, "default_cl" is
+  assigned to the "cl" and true is returned.
 
   @param[out] cl        Variable to store collation.
   @param[in] cl_name    Collation name.
   @param[in] default_cl Default collation.
 
-  @return FALSE if collation was resolved successfully; TRUE if there is no
+  @return false if collation was resolved successfully; true if there is no
   collation with given name.
 */
 
-my_bool resolve_collation(const char *cl_name,
+bool resolve_collation(const char *cl_name,
                           CHARSET_INFO *default_cl,
                           CHARSET_INFO **cl)
 {
@@ -669,10 +665,10 @@ my_bool resolve_collation(const char *cl_name,
   if (*cl == NULL)
   {
     *cl= default_cl;
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
@@ -707,9 +703,9 @@ size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
-  my_bool overflow= FALSE;
+  bool overflow= false;
 #ifdef USE_MB
-  my_bool use_mb_flag= use_mb(charset_info);
+  bool use_mb_flag= use_mb(charset_info);
 #endif
   for (end= from + length; from < end; from++)
   {
@@ -720,7 +716,7 @@ size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
     {
       if (to + tmp_length > to_end)
       {
-        overflow= TRUE;
+        overflow= true;
         break;
       }
       while (tmp_length--)
@@ -770,7 +766,7 @@ size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
     {
       if (to + 2 > to_end)
       {
-        overflow= TRUE;
+        overflow= true;
         break;
       }
       *to++= '\\';
@@ -780,7 +776,7 @@ size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
     {
       if (to + 1 > to_end)
       {
-        overflow= TRUE;
+        overflow= true;
         break;
       }
       *to++= *from;
@@ -847,9 +843,9 @@ size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
-  my_bool overflow= FALSE;
+  bool overflow= false;
 #ifdef USE_MB
-  my_bool use_mb_flag= use_mb(charset_info);
+  bool use_mb_flag= use_mb(charset_info);
 #endif
   for (end= from + length; from < end; from++)
   {
@@ -859,7 +855,7 @@ size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
     {
       if (to + tmp_length > to_end)
       {
-        overflow= TRUE;
+        overflow= true;
         break;
       }
       while (tmp_length--)
@@ -877,7 +873,7 @@ size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
     {
       if (to + 2 > to_end)
       {
-        overflow= TRUE;
+        overflow= true;
         break;
       }
       *to++= '\'';
@@ -887,7 +883,7 @@ size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
     {
       if (to + 1 > to_end)
       {
-        overflow= TRUE;
+        overflow= true;
         break;
       }
       *to++= *from;

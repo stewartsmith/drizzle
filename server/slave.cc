@@ -53,7 +53,7 @@ typedef bool (*CHECK_KILLED_FUNC)(THD*,void*);
 
 char* slave_load_tmpdir = 0;
 Master_info *active_mi= 0;
-my_bool replicate_same_server_id;
+bool replicate_same_server_id;
 uint64_t relay_log_space_limit = 0;
 
 /*
@@ -980,7 +980,7 @@ static int32_t get_master_version_and_clock(MYSQL* mysql, Master_info* mi)
        the period is an uint64_t of nano-secs. 
     */
     llstr((uint64_t) (mi->heartbeat_period*1000000000UL), llbuf);
-    my_sprintf(query, (query, query_format, llbuf));
+    sprintf(query, query_format, llbuf);
 
     if (mysql_real_query(mysql, query, strlen(query))
         && !check_io_slave_killed(mi->io_thd, mi, NULL))
@@ -1112,7 +1112,7 @@ int32_t register_slave_on_master(MYSQL* mysql, Master_info *mi,
   pos= net_store_data(pos, (uchar*) report_host, report_host_len);
   pos= net_store_data(pos, (uchar*) report_user, report_user_len);
   pos= net_store_data(pos, (uchar*) report_password, report_password_len);
-  int2store(pos, (uint16) report_port); pos+= 2;
+  int2store(pos, (uint16_t) report_port); pos+= 2;
   int4store(pos, rpl_recovery_rank);    pos+= 4;
   /* The master will fill in master_id */
   int4store(pos, 0);                    pos+= 4;
@@ -1225,8 +1225,8 @@ bool show_master_info(THD* thd, Master_info* mi)
     pthread_mutex_lock(&mi->rli.data_lock);
     protocol->store(mi->host, &my_charset_bin);
     protocol->store(mi->user, &my_charset_bin);
-    protocol->store((uint32) mi->port);
-    protocol->store((uint32) mi->connect_retry);
+    protocol->store((uint32_t) mi->port);
+    protocol->store((uint32_t) mi->connect_retry);
     protocol->store(mi->master_log_name, &my_charset_bin);
     protocol->store((uint64_t) mi->master_log_pos);
     protocol->store(mi->rli.group_relay_log_name +
@@ -1253,7 +1253,7 @@ bool show_master_info(THD* thd, Master_info* mi)
 
     protocol->store(mi->rli.last_error().number);
     protocol->store(mi->rli.last_error().message, &my_charset_bin);
-    protocol->store((uint32) mi->rli.slave_skip_counter);
+    protocol->store((uint32_t) mi->rli.slave_skip_counter);
     protocol->store((uint64_t) mi->rli.group_master_log_pos);
     protocol->store((uint64_t) mi->rli.log_space_total);
 
@@ -1300,7 +1300,7 @@ bool show_master_info(THD* thd, Master_info* mi)
         last_master_timestamp == 0 (an "impossible" timestamp 1970) is a
         special marker to say "consider we have caught up".
       */
-      protocol->store((longlong)(mi->rli.last_master_timestamp ?
+      protocol->store((int64_t)(mi->rli.last_master_timestamp ?
                                  max(0, time_diff) : 0));
     }
     else
@@ -1840,7 +1840,7 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
                           "the slave_transaction_retries variable.",
                           slave_trans_retries);
       }
-      else if (exec_res && !temp_err ||
+      else if ((exec_res && !temp_err) ||
                (opt_using_transactions &&
                 rli->group_relay_log_pos == rli->event_relay_log_pos))
       {
@@ -2377,7 +2377,7 @@ Slave SQL thread aborted. Can't execute init_slave query");
           codes and warnings and print this to the error log as to
           allow the user to locate the error
         */
-        uint32 const last_errno= rli->last_error().number;
+        uint32_t const last_errno= rli->last_error().number;
 
         if (thd->is_error())
         {
@@ -3246,7 +3246,7 @@ static int32_t safe_reconnect(THD* thd, MYSQL* mysql, Master_info* mi,
 
   TODO
     - Change the log file information to a binary format to avoid calling
-      longlong2str.
+      int64_t2str.
 
   RETURN VALUES
     0   ok
@@ -3266,11 +3266,11 @@ bool flush_relay_log_info(Relay_log_info* rli)
   my_b_seek(file, 0L);
   pos=strmov(buff, rli->group_relay_log_name);
   *pos++='\n';
-  pos=longlong2str(rli->group_relay_log_pos, pos, 10);
+  pos=int64_t2str(rli->group_relay_log_pos, pos, 10);
   *pos++='\n';
   pos=strmov(pos, rli->group_master_log_name);
   *pos++='\n';
-  pos=longlong2str(rli->group_master_log_pos, pos, 10);
+  pos=int64_t2str(rli->group_master_log_pos, pos, 10);
   *pos='\n';
   if (my_b_write(file, (uchar*) buff, (size_t) (pos-buff)+1))
     error=1;

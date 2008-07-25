@@ -40,7 +40,6 @@ int my_readlink(char *to, const char *filename, myf MyFlags)
 #else
   int result=0;
   int length;
-  DBUG_ENTER("my_readlink");
 
   if ((length=readlink(filename, to, FN_REFLEN-1)) < 0)
   {
@@ -59,8 +58,7 @@ int my_readlink(char *to, const char *filename, myf MyFlags)
   }
   else
     to[length]=0;
-  DBUG_PRINT("exit" ,("result: %d", result));
-  DBUG_RETURN(result);
+  return(result);
 #endif /* HAVE_READLINK */
 }
 
@@ -73,8 +71,6 @@ int my_symlink(const char *content, const char *linkname, myf MyFlags)
   return 0;
 #else
   int result;
-  DBUG_ENTER("my_symlink");
-  DBUG_PRINT("enter",("content: %s  linkname: %s", content, linkname));
 
   result= 0;
   if (symlink(content, linkname))
@@ -86,7 +82,7 @@ int my_symlink(const char *content, const char *linkname, myf MyFlags)
   }
   else if ((MyFlags & MY_SYNC_DIR) && my_sync_dir_by_file(linkname, MyFlags))
     result= -1;
-  DBUG_RETURN(result);
+  return(result);
 #endif /* HAVE_READLINK */
 }
 
@@ -115,13 +111,11 @@ int my_realpath(char *to, const char *filename,
   int result=0;
   char buff[BUFF_LEN];
   struct stat stat_buff;
-  DBUG_ENTER("my_realpath");
 
   if (!(MyFlags & MY_RESOLVE_LINK) ||
       (!lstat(filename,&stat_buff) && S_ISLNK(stat_buff.st_mode)))
   {
     char *ptr;
-    DBUG_PRINT("info",("executing realpath"));
     if ((ptr=realpath(filename,buff)))
     {
       strmake(to,ptr,FN_REFLEN-1);
@@ -133,7 +127,6 @@ int my_realpath(char *to, const char *filename,
 	original name but will at least be able to resolve paths that starts
 	with '.'.
       */
-      DBUG_PRINT("error",("realpath failed with errno: %d", errno));
       my_errno=errno;
       if (MyFlags & MY_WME)
 	my_error(EE_REALPATH, MYF(0), filename, my_errno);
@@ -141,7 +134,7 @@ int my_realpath(char *to, const char *filename,
       result= -1;
     }
   }
-  DBUG_RETURN(result);
+  return(result);
 #else
   my_load_path(to, filename, NullS);
   return 0;

@@ -122,7 +122,7 @@
 */
 #define double2rows(x) ((ha_rows)(x))
 
-static int sel_cmp(Field *f,uchar *a,uchar *b,uint8 a_flag,uint8 b_flag);
+static int sel_cmp(Field *f,uchar *a,uchar *b,uint8_t a_flag,uint8_t b_flag);
 
 static uchar is_null_string[2]= {1,0};
 
@@ -300,14 +300,14 @@ class RANGE_OPT_PARAM;
 class SEL_ARG :public Sql_alloc
 {
 public:
-  uint8 min_flag,max_flag,maybe_flag;
-  uint8 part;					// Which key part
-  uint8 maybe_null;
+  uint8_t min_flag,max_flag,maybe_flag;
+  uint8_t part;					// Which key part
+  uint8_t maybe_null;
   /* 
     Number of children of this element in the RB-tree, plus 1 for this
     element itself.
   */
-  uint16 elements;
+  uint16_t elements;
   /*
     Valid only for elements which are RB-tree roots: Number of times this
     RB-tree is referred to (it is referred by SEL_ARG::next_key_part or by
@@ -333,8 +333,8 @@ public:
   SEL_ARG() {}
   SEL_ARG(SEL_ARG &);
   SEL_ARG(Field *,const uchar *, const uchar *);
-  SEL_ARG(Field *field, uint8 part, uchar *min_value, uchar *max_value,
-	  uint8 min_flag, uint8 max_flag, uint8 maybe_flag);
+  SEL_ARG(Field *field, uint8_t part, uchar *min_value, uchar *max_value,
+	  uint8_t min_flag, uint8_t max_flag, uint8_t maybe_flag);
   SEL_ARG(enum Type type_arg)
     :min_flag(0),elements(1),use_count(1),left(0),right(0),next_key_part(0),
     color(BLACK), type(type_arg)
@@ -370,7 +370,7 @@ public:
   SEL_ARG *clone_and(SEL_ARG* arg)
   {						// Get overlapping range
     uchar *new_min,*new_max;
-    uint8 flag_min,flag_max;
+    uint8_t flag_min,flag_max;
     if (cmp_min_to_min(arg) >= 0)
     {
       new_min=min_value; flag_min=min_flag;
@@ -685,7 +685,7 @@ class PARAM : public RANGE_OPT_PARAM
 {
 public:
   KEY_PART *key[MAX_KEY]; /* First key parts of keys used in the query */
-  longlong baseflag;
+  int64_t baseflag;
   uint max_key_part;
   /* Number of ranges in the last checked tree->key */
   uint range_count;
@@ -725,7 +725,7 @@ static SEL_ARG *get_mm_leaf(RANGE_OPT_PARAM *param,COND *cond_func,Field *field,
 			    Item_func::Functype type,Item *value);
 static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond);
 
-static bool is_key_scan_ror(PARAM *param, uint keynr, uint8 nparts);
+static bool is_key_scan_ror(PARAM *param, uint keynr, uint8_t nparts);
 static ha_rows check_quick_select(PARAM *param, uint idx, bool index_only,
                                   SEL_ARG *tree, bool update_tbl_stats, 
                                   uint *mrr_flags, uint *bufsize,
@@ -1616,9 +1616,9 @@ SEL_ARG::SEL_ARG(Field *f,const uchar *min_value_arg,
   left=right= &null_element;
 }
 
-SEL_ARG::SEL_ARG(Field *field_,uint8 part_,
+SEL_ARG::SEL_ARG(Field *field_,uint8_t part_,
                  uchar *min_value_, uchar *max_value_,
-		 uint8 min_flag_,uint8 max_flag_,uint8 maybe_flag_)
+		 uint8_t min_flag_,uint8_t max_flag_,uint8_t maybe_flag_)
   :min_flag(min_flag_),max_flag(max_flag_),maybe_flag(maybe_flag_),
    part(part_),maybe_null(field_->real_maybe_null()), elements(1),use_count(1),
    field(field_), min_value(min_value_), max_value(max_value_),
@@ -1695,8 +1695,8 @@ SEL_ARG *SEL_ARG::last()
   Returns -2 or 2 if the ranges where 'joined' like  < 2 and >= 2
 */
 
-static int sel_cmp(Field *field, uchar *a, uchar *b, uint8 a_flag,
-                   uint8 b_flag)
+static int sel_cmp(Field *field, uchar *a, uchar *b, uint8_t a_flag,
+                   uint8_t b_flag)
 {
   int cmp;
   /* First check if there was a compare to a min or max element */
@@ -2241,7 +2241,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
 	key_parts->null_bit=	 key_part_info->null_bit;
         key_parts->image_type =  Field::itRAW;
         /* Only HA_PART_KEY_SEG is used */
-        key_parts->flag=         (uint8) key_part_info->key_part_flag;
+        key_parts->flag=         (uint8_t) key_part_info->key_part_flag;
       }
       param.real_keynr[param.keys++]=idx;
     }
@@ -4193,7 +4193,7 @@ static SEL_TREE *get_mm_tree(RANGE_OPT_PARAM *param,COND *cond)
       {
         field_item= (Item_field*) (cond_func->arguments()[i]->real_item());
         SEL_TREE *tmp= get_full_func_mm_tree(param, cond_func, 
-                                    field_item, (Item*)(intptr)i, inv);
+                                    field_item, (Item*)(intptr_t)i, inv);
         if (inv)
           tree= !tree ? tmp : tree_or(param, tree, tmp);
         else 
@@ -4572,7 +4572,7 @@ get_mm_leaf(RANGE_OPT_PARAM *param, COND *conf_func, Field *field,
       value->result_type() == INT_RESULT &&
       ((Field_num*)field)->unsigned_flag && !((Item_int*)value)->unsigned_flag)
   {
-    longlong item_val= value->val_int();
+    int64_t item_val= value->val_int();
     if (item_val < 0)
     {
       if (type == Item_func::LT_FUNC || type == Item_func::LE_FUNC)
@@ -5954,7 +5954,7 @@ static void step_down_to(SEL_ARG_RANGE_SEQ *arg, SEL_ARG *key_tree)
   cur->min_key_parts= prev->min_key_parts;
   cur->max_key_parts= prev->max_key_parts;
 
-  uint16 stor_length= arg->param->key[arg->keyno][key_tree->part].store_length;
+  uint16_t stor_length= arg->param->key[arg->keyno][key_tree->part].store_length;
   cur->min_key_parts += key_tree->store_min(stor_length, &cur->min_key,
                                             prev->min_key_flag);
   cur->max_key_parts += key_tree->store_max(stor_length, &cur->max_key,
@@ -6281,7 +6281,7 @@ ha_rows check_quick_select(PARAM *param, uint idx, bool index_only,
     false  Otherwise
 */
 
-static bool is_key_scan_ror(PARAM *param, uint keynr, uint8 nparts)
+static bool is_key_scan_ror(PARAM *param, uint keynr, uint8_t nparts)
 {
   KEY *table_key= param->table->key_info + keynr;
   KEY_PART_INFO *key_part= table_key->key_part + nparts;
@@ -6291,7 +6291,7 @@ static bool is_key_scan_ror(PARAM *param, uint keynr, uint8 nparts)
   
   for (KEY_PART_INFO *kp= table_key->key_part; kp < key_part; kp++)
   {
-    uint16 fieldnr= param->table->key_info[keynr].
+    uint16_t fieldnr= param->table->key_info[keynr].
                     key_part[kp - table_key->key_part].fieldnr - 1;
     if (param->table->field[fieldnr]->key_length() != kp->length)
       return false;
@@ -6652,7 +6652,7 @@ QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, TABLE *table,
     key_part->length=       key_info->key_part[part].length;
     key_part->store_length= key_info->key_part[part].store_length;
     key_part->null_bit=     key_info->key_part[part].null_bit;
-    key_part->flag=         (uint8) key_info->key_part[part].key_part_flag;
+    key_part->flag=         (uint8_t) key_info->key_part[part].key_part_flag;
   }
   if (insert_dynamic(&quick->ranges,(uchar*)&range))
     goto err;
@@ -7120,7 +7120,7 @@ uint quick_range_seq_next(range_seq_t rseq, KEY_MULTI_RANGE *range)
     Reference to range_flag associated with range number #idx
 */
 
-uint16 &mrr_persistent_flag_storage(range_seq_t seq, uint idx)
+uint16_t &mrr_persistent_flag_storage(range_seq_t seq, uint idx)
 {
   QUICK_RANGE_SEQ_CTX *ctx= (QUICK_RANGE_SEQ_CTX*)seq;
   return ctx->first[idx]->flag;
@@ -7587,7 +7587,7 @@ void QUICK_RANGE_SELECT::add_keys_and_lengths(String *key_names,
   uint length;
   KEY *key_info= head->key_info + index;
   key_names->append(key_info->name);
-  length= longlong2str(max_used_key_length, buf, 10) - buf;
+  length= int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 
@@ -7612,7 +7612,7 @@ void QUICK_INDEX_MERGE_SELECT::add_keys_and_lengths(String *key_names,
 
     KEY *key_info= head->key_info + quick->index;
     key_names->append(key_info->name);
-    length= longlong2str(quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
   if (pk_quick_select)
@@ -7620,7 +7620,7 @@ void QUICK_INDEX_MERGE_SELECT::add_keys_and_lengths(String *key_names,
     KEY *key_info= head->key_info + pk_quick_select->index;
     key_names->append(',');
     key_names->append(key_info->name);
-    length= longlong2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(pk_quick_select->max_used_key_length, buf, 10) - buf;
     used_lengths->append(',');
     used_lengths->append(buf, length);
   }
@@ -7645,7 +7645,7 @@ void QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_names,
       used_lengths->append(',');
     }
     key_names->append(key_info->name);
-    length= longlong2str(quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(buf, length);
   }
 
@@ -7654,7 +7654,7 @@ void QUICK_ROR_INTERSECT_SELECT::add_keys_and_lengths(String *key_names,
     KEY *key_info= head->key_info + cpk_quick->index;
     key_names->append(',');
     key_names->append(key_info->name);
-    length= longlong2str(cpk_quick->max_used_key_length, buf, 10) - buf;
+    length= int64_t2str(cpk_quick->max_used_key_length, buf, 10) - buf;
     used_lengths->append(',');
     used_lengths->append(buf, length);
   }
@@ -8046,9 +8046,9 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
         all_parts have all bits set from 0 to (max_key_part-1).
         cur_parts have bits set for only used keyparts.
       */
-      ulonglong all_parts, cur_parts;
+      uint64_t all_parts, cur_parts;
       all_parts= (1<<max_key_part) - 1;
-      cur_parts= cur_used_key_parts.to_ulonglong() >> 1;
+      cur_parts= cur_used_key_parts.to_uint64_t() >> 1;
       if (all_parts != cur_parts)
         goto next_index;
     }
@@ -9737,7 +9737,7 @@ void QUICK_GROUP_MIN_MAX_SELECT::add_keys_and_lengths(String *key_names,
   char buf[64];
   uint length;
   key_names->append(index_info->name);
-  length= longlong2str(max_used_key_length, buf, 10) - buf;
+  length= int64_t2str(max_used_key_length, buf, 10) - buf;
   used_lengths->append(buf, length);
 }
 

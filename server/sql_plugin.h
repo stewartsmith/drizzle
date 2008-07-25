@@ -35,7 +35,7 @@ class sys_var;
                      SHOW_LONG_STATUS, SHOW_DOUBLE_STATUS, SHOW_HAVE,   \
                      SHOW_MY_BOOL, SHOW_HA_ROWS, SHOW_SYS, SHOW_LONG_NOFLUSH, \
                      SHOW_LONGLONG_STATUS
-#include <mysql/plugin.h>
+#include <drizzle/plugin.h>
 #undef SHOW_FUNC
 typedef enum enum_mysql_show_type SHOW_TYPE;
 typedef struct st_mysql_show_var SHOW_VAR;
@@ -62,7 +62,6 @@ struct st_plugin_dl
   LEX_STRING dl;
   void *handle;
   struct st_mysql_plugin *plugins;
-  int version;
   uint ref_count;            /* number of plugins loaded from the library */
 };
 
@@ -120,9 +119,9 @@ extern bool plugin_register_builtin(struct st_mysql_plugin *plugin);
 extern void plugin_thdvar_init(THD *thd);
 extern void plugin_thdvar_cleanup(THD *thd);
 
-typedef my_bool (plugin_foreach_func)(THD *thd,
-                                      plugin_ref plugin,
-                                      void *arg);
+typedef bool (plugin_foreach_func)(THD *thd,
+                                   plugin_ref plugin,
+                                   void *arg);
 #define plugin_foreach(A,B,C,D) plugin_foreach_with_mask(A,B,C,PLUGIN_IS_READY,D)
 extern bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
                                      int type, uint state_mask, void *arg);

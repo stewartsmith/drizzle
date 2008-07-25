@@ -58,11 +58,10 @@ enum enum_server_command
 {
   COM_SLEEP, COM_QUIT, COM_INIT_DB, COM_QUERY, COM_FIELD_LIST,
   COM_CREATE_DB, COM_DROP_DB, COM_REFRESH, COM_SHUTDOWN, COM_STATISTICS,
-  COM_PROCESS_INFO, COM_CONNECT, COM_PROCESS_KILL, COM_DEBUG, COM_PING,
-  COM_TIME, COM_DELAYED_INSERT, COM_CHANGE_USER, COM_BINLOG_DUMP,
-  COM_TABLE_DUMP, COM_CONNECT_OUT, COM_REGISTER_SLAVE,
-  COM_STMT_PREPARE, COM_STMT_EXECUTE, COM_STMT_SEND_LONG_DATA, COM_STMT_CLOSE,
-  COM_STMT_RESET, COM_SET_OPTION, COM_STMT_FETCH, COM_DAEMON,
+  COM_PROCESS_INFO, COM_CONNECT, COM_PROCESS_KILL, COM_PING,
+  COM_TIME, COM_CHANGE_USER, COM_BINLOG_DUMP,
+  COM_CONNECT_OUT, COM_REGISTER_SLAVE,
+  COM_SET_OPTION, COM_DAEMON,
   /* don't forget to update const char *command_name[] in sql_parse.cc */
 
   /* Must be last */
@@ -227,7 +226,6 @@ typedef struct st_vio Vio;
 #define MAX_BLOB_WIDTH		16777216	/* Default width for blob */
 
 typedef struct st_net {
-#if !defined(CHECK_EMBEDDED_DIFFERENCES) || !defined(EMBEDDED_LIBRARY)
   Vio *vio;
   unsigned char *buff,*buff_end,*write_pos,*read_pos;
   my_socket fd;					/* For Perl DBI/dbd */
@@ -239,28 +237,24 @@ typedef struct st_net {
   unsigned long remain_in_buf,length, buf_length, where_b;
   unsigned long max_packet,max_packet_size;
   unsigned int pkt_nr,compress_pkt_nr;
-  unsigned int write_timeout, read_timeout, retry_count;
+  unsigned int write_timeout;
+  unsigned int read_timeout;
+  unsigned int retry_count;
   int fcntl;
   unsigned int *return_status;
   unsigned char reading_or_writing;
   char save_char;
-  my_bool unused1; /* Please remove with the next incompatible ABI change. */
-  my_bool unused2; /* Please remove with the next incompatible ABI change */
   my_bool compress;
-  my_bool unused3; /* Please remove with the next incompatible ABI change. */
   /*
     Pointer to query object in query cache, do not equal NULL (0) for
     queries in cache that have not stored its results yet
   */
-#endif
   /*
     Unused, please remove with the next incompatible ABI change.
   */
   unsigned char *unused;
   unsigned int last_errno;
   unsigned char error; 
-  my_bool unused4; /* Please remove with the next incompatible ABI change. */
-  my_bool unused5; /* Please remove with the next incompatible ABI change. */
   /** Client library error message buffer. Actually belongs to struct MYSQL. */
   char last_error[MYSQL_ERRMSG_SIZE];
   /** Client library sqlstate buffer. Set along with the error message. */
@@ -274,9 +268,9 @@ typedef struct st_net {
 /* Start TINY at 1 because we removed DECIMAL from off the front of the enum */
 enum enum_field_types { MYSQL_TYPE_TINY=1,
 			MYSQL_TYPE_SHORT,  MYSQL_TYPE_LONG,
-			MYSQL_TYPE_FLOAT,  MYSQL_TYPE_DOUBLE,
+			MYSQL_TYPE_DOUBLE,
 			MYSQL_TYPE_NULL,   MYSQL_TYPE_TIMESTAMP,
-			MYSQL_TYPE_LONGLONG,MYSQL_TYPE_INT24,
+			MYSQL_TYPE_LONGLONG,
 			MYSQL_TYPE_DATE,   MYSQL_TYPE_TIME,
 			MYSQL_TYPE_DATETIME, MYSQL_TYPE_YEAR,
 			MYSQL_TYPE_NEWDATE, MYSQL_TYPE_VARCHAR,
@@ -294,7 +288,6 @@ enum enum_field_types { MYSQL_TYPE_TINY=1,
 #define FIELD_TYPE_TINY        MYSQL_TYPE_TINY
 #define FIELD_TYPE_SHORT       MYSQL_TYPE_SHORT
 #define FIELD_TYPE_LONG        MYSQL_TYPE_LONG
-#define FIELD_TYPE_FLOAT       MYSQL_TYPE_FLOAT
 #define FIELD_TYPE_DOUBLE      MYSQL_TYPE_DOUBLE
 #define FIELD_TYPE_NULL        MYSQL_TYPE_NULL
 #define FIELD_TYPE_TIMESTAMP   MYSQL_TYPE_TIMESTAMP
@@ -366,18 +359,18 @@ enum enum_mysql_set_option
 extern "C" {
 #endif
 
-my_bool	my_net_init(NET *net, Vio* vio);
+bool	my_net_init(NET *net, Vio* vio);
 void	my_net_local_init(NET *net);
 void	net_end(NET *net);
-  void	net_clear(NET *net, my_bool clear_buffer);
-my_bool net_realloc(NET *net, size_t length);
-my_bool	net_flush(NET *net);
-my_bool	my_net_write(NET *net,const unsigned char *packet, size_t len);
-my_bool	net_write_command(NET *net,unsigned char command,
+void	net_clear(NET *net, bool clear_buffer);
+bool    net_realloc(NET *net, size_t length);
+bool	net_flush(NET *net);
+bool	my_net_write(NET *net,const unsigned char *packet, size_t len);
+bool	net_write_command(NET *net,unsigned char command,
 			  const unsigned char *header, size_t head_len,
 			  const unsigned char *packet, size_t len);
-int	net_real_write(NET *net,const unsigned char *packet, size_t len);
-unsigned long my_net_read(NET *net);
+int32_t	net_real_write(NET *net,const unsigned char *packet, size_t len);
+uint32_t my_net_read(NET *net);
 
 #ifdef _global_h
 void my_net_set_write_timeout(NET *net, uint timeout);
@@ -445,18 +438,11 @@ extern "C" {
   implemented in sql/password.c
 */
 
-void randominit(struct rand_struct *, unsigned long seed1,
-                unsigned long seed2);
+void randominit(struct rand_struct *, uint32_t seed1, uint32_t seed2);
 double my_rnd(struct rand_struct *);
 void create_random_string(char *to, unsigned int length, struct rand_struct *rand_st);
 
-void hash_password(unsigned long *to, const char *password, unsigned int password_len);
-void make_scrambled_password_323(char *to, const char *password);
-void scramble_323(char *to, const char *message, const char *password);
-my_bool check_scramble_323(const char *, const char *message,
-                           unsigned long *salt);
-void get_salt_from_password_323(unsigned long *res, const char *password);
-void make_password_from_salt_323(char *to, const unsigned long *salt);
+void hash_password(uint32_t *to, const char *password, uint32_t password_len);
 
 void make_scrambled_password(char *to, const char *password);
 void scramble(char *to, const char *message, const char *password);
@@ -474,8 +460,8 @@ const char *mysql_errno_to_sqlstate(unsigned int mysql_errno);
 
 #ifdef _global_h
 ulong STDCALL net_field_length(uchar **packet);
-my_ulonglong net_field_length_ll(uchar **packet);
-uchar *net_store_length(uchar *pkg, ulonglong length);
+uint64_t net_field_length_ll(uchar **packet);
+uchar *net_store_length(uchar *pkg, uint64_t length);
 #endif
 
 #ifdef __cplusplus

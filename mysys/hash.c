@@ -45,21 +45,18 @@ static uint calc_hash(const HASH *hash, const uchar *key, size_t length)
   return nr1;
 }
 
-my_bool
+bool
 _hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
 	   ulong size, size_t key_offset, size_t key_length,
 	   hash_get_key get_key,
 	   void (*free_element)(void*),uint flags CALLER_INFO_PROTO)
 {
-  DBUG_ENTER("hash_init");
-  DBUG_PRINT("enter",("hash: 0x%lx  size: %u", (long) hash, (uint) size));
-
   hash->records=0;
   if (my_init_dynamic_array_ci(&hash->array, sizeof(HASH_LINK), size,
                                growth_size))
   {
     hash->free=0;				/* Allow call to hash_free */
-    DBUG_RETURN(1);
+    return(1);
   }
   hash->key_offset=key_offset;
   hash->key_length=key_length;
@@ -68,7 +65,7 @@ _hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
   hash->free=free_element;
   hash->flags=flags;
   hash->charset=charset;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -108,13 +105,10 @@ static inline void hash_free_elements(HASH *hash)
 
 void hash_free(HASH *hash)
 {
-  DBUG_ENTER("hash_free");
-  DBUG_PRINT("enter",("hash: 0x%lx", (long) hash));
-
   hash_free_elements(hash);
   hash->free= 0;
   delete_dynamic(&hash->array);
-  DBUG_VOID_RETURN;
+  return;
 }
 
 
@@ -128,14 +122,11 @@ void hash_free(HASH *hash)
 
 void my_hash_reset(HASH *hash)
 {
-  DBUG_ENTER("my_hash_reset");
-  DBUG_PRINT("enter",("hash: 0x%lxd", (long) hash));
-
   hash_free_elements(hash);
   reset_dynamic(&hash->array);
   /* Set row pointers so that the hash can be reused at once */
   hash->blength= 1;
-  DBUG_VOID_RETURN;
+  return;
 }
 
 /* some helper functions */
@@ -147,7 +138,7 @@ void my_hash_reset(HASH *hash)
 
 static inline char*
 hash_key(const HASH *hash, const uchar *record, size_t *length,
-         my_bool first)
+         bool first)
 {
   if (hash->get_key)
     return (char*) (*hash->get_key)(record,length,first);
@@ -204,7 +195,6 @@ uchar* hash_first(const HASH *hash, const uchar *key, size_t length,
 {
   HASH_LINK *pos;
   uint flag,idx;
-  DBUG_ENTER("hash_first");
 
   flag=1;
   if (hash->records)
@@ -216,9 +206,8 @@ uchar* hash_first(const HASH *hash, const uchar *key, size_t length,
       pos= dynamic_element(&hash->array,idx,HASH_LINK*);
       if (!hashcmp(hash,pos,key,length))
       {
-	DBUG_PRINT("exit",("found key at %d",idx));
 	*current_record= idx;
-	DBUG_RETURN (pos->data);
+	return (pos->data);
       }
       if (flag)
       {
@@ -230,7 +219,7 @@ uchar* hash_first(const HASH *hash, const uchar *key, size_t length,
     while ((idx=pos->next) != NO_RECORD);
   }
   *current_record= NO_RECORD;
-  DBUG_RETURN(0);
+  return(0);
 }
 
 	/* Get next record with identical key */
@@ -306,7 +295,7 @@ static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
 
 	/* Write a hash-key to the hash-index */
 
-my_bool my_hash_insert(HASH *info,const uchar *record)
+bool my_hash_insert(HASH *info,const uchar *record)
 {
   int flag;
   size_t idx;
@@ -318,12 +307,12 @@ my_bool my_hash_insert(HASH *info,const uchar *record)
   {
     uchar *key= (uchar*) hash_key(info, record, &idx, 1);
     if (hash_search(info, key, idx))
-      return(TRUE);				/* Duplicate entry */
+      return(true);				/* Duplicate entry */
   }
 
   flag=0;
   if (!(empty=(HASH_LINK*) alloc_dynamic(&info->array)))
-    return(TRUE);				/* No more memory */
+    return(true);				/* No more memory */
 
   data=dynamic_element(&info->array,0,HASH_LINK*);
   halfbuff= info->blength >> 1;
@@ -444,13 +433,12 @@ my_bool my_hash_insert(HASH *info,const uchar *record)
 ** if there is a free-function it's called for record if found
 ******************************************************************************/
 
-my_bool hash_delete(HASH *hash,uchar *record)
+bool hash_delete(HASH *hash,uchar *record)
 {
   uint blength,pos2,pos_hashnr,lastpos_hashnr,idx,empty_index;
   HASH_LINK *data,*lastpos,*gpos,*pos,*pos3,*empty;
-  DBUG_ENTER("hash_delete");
   if (!hash->records)
-    DBUG_RETURN(1);
+    return(1);
 
   blength=hash->blength;
   data=dynamic_element(&hash->array,0,HASH_LINK*);
@@ -462,7 +450,7 @@ my_bool hash_delete(HASH *hash,uchar *record)
   {
     gpos=pos;
     if (pos->next == NO_RECORD)
-      DBUG_RETURN(1);			/* Key not found */
+      return(1);			/* Key not found */
     pos=data+pos->next;
   }
 
@@ -523,7 +511,7 @@ exit:
   VOID(pop_dynamic(&hash->array));
   if (hash->free)
     (*hash->free)((uchar*) record);
-  DBUG_RETURN(0);
+  return(0);
 }
 
 	/*
@@ -531,13 +519,12 @@ exit:
 	  This is much more efficent than using a delete & insert.
 	  */
 
-my_bool hash_update(HASH *hash, uchar *record, uchar *old_key,
+bool hash_update(HASH *hash, uchar *record, uchar *old_key,
                     size_t old_key_length)
 {
   uint new_index,new_pos_index,blength,records,empty;
   size_t idx;
   HASH_LINK org_link,*data,*previous,*pos;
-  DBUG_ENTER("hash_update");
   
   if (HASH_UNIQUE & hash->flags)
   {
@@ -548,7 +535,7 @@ my_bool hash_update(HASH *hash, uchar *record, uchar *old_key,
       do 
       {
         if (found != record)
-          DBUG_RETURN(1);		/* Duplicate entry */
+          return(1);		/* Duplicate entry */
       } 
       while ((found= hash_next(hash, new_key, idx, &state)));
     }
@@ -565,7 +552,7 @@ my_bool hash_update(HASH *hash, uchar *record, uchar *old_key,
 		  blength,records);
   new_index=hash_mask(rec_hashnr(hash,record),blength,records);
   if (idx == new_index)
-    DBUG_RETURN(0);			/* Nothing to do (No record check) */
+    return(0);			/* Nothing to do (No record check) */
   previous=0;
   for (;;)
   {
@@ -574,7 +561,7 @@ my_bool hash_update(HASH *hash, uchar *record, uchar *old_key,
       break;
     previous=pos;
     if ((idx=pos->next) == NO_RECORD)
-      DBUG_RETURN(1);			/* Not found in links */
+      return(1);			/* Not found in links */
   }
   org_link= *pos;
   empty=idx;
@@ -610,7 +597,7 @@ my_bool hash_update(HASH *hash, uchar *record, uchar *old_key,
       data[empty]= org_link;
     }
     data[empty].next= NO_RECORD;
-    DBUG_RETURN(0);
+    return(0);
   }
   pos=data+new_index;
   new_pos_index=hash_rec_mask(hash,pos,blength,records);
@@ -627,7 +614,7 @@ my_bool hash_update(HASH *hash, uchar *record, uchar *old_key,
     data[empty]=org_link;
     data[new_index].next=empty;
   }
-  DBUG_RETURN(0);
+  return(0);
 }
 
 
@@ -649,61 +636,3 @@ void hash_replace(HASH *hash, HASH_SEARCH_STATE *current_record, uchar *new_row)
   if (*current_record != NO_RECORD)            /* Safety */
     dynamic_element(&hash->array, *current_record, HASH_LINK*)->data= new_row;
 }
-
-
-#ifndef DBUG_OFF
-
-my_bool hash_check(HASH *hash)
-{
-  int error;
-  uint i,rec_link,found,max_links,seek,links,idx;
-  uint records,blength;
-  HASH_LINK *data,*hash_info;
-
-  records=hash->records; blength=hash->blength;
-  data=dynamic_element(&hash->array,0,HASH_LINK*);
-  error=0;
-
-  for (i=found=max_links=seek=0 ; i < records ; i++)
-  {
-    if (hash_rec_mask(hash,data+i,blength,records) == i)
-    {
-      found++; seek++; links=1;
-      for (idx=data[i].next ;
-	   idx != NO_RECORD && found < records + 1;
-	   idx=hash_info->next)
-      {
-	if (idx >= records)
-	{
-	  DBUG_PRINT("error",
-		     ("Found pointer outside array to %d from link starting at %d",
-		      idx,i));
-	  error=1;
-	}
-	hash_info=data+idx;
-	seek+= ++links;
-	if ((rec_link=hash_rec_mask(hash,hash_info,blength,records)) != i)
-	{
-	  DBUG_PRINT("error",
-		     ("Record in wrong link at %d: Start %d  Record: 0x%lx  Record-link %d",
-                      idx, i, (long) hash_info->data, rec_link));
-	  error=1;
-	}
-	else
-	  found++;
-      }
-      if (links > max_links) max_links=links;
-    }
-  }
-  if (found != records)
-  {
-    DBUG_PRINT("error",("Found %u of %u records", found, records));
-    error=1;
-  }
-  if (records)
-    DBUG_PRINT("info",
-	       ("records: %u   seeks: %d   max links: %d   hitrate: %.2f",
-		records,seek,max_links,(float) seek / (float) records));
-  return error;
-}
-#endif
