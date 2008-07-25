@@ -267,8 +267,8 @@ mysql_connect(MYSQL *mysql,const char *host,
   {
     if (!(res=mysql_real_connect(mysql,host,user,passwd,NullS,0,NullS,0)))
     {
-      if (mysql->free_me)
-	my_free((uchar*) mysql,MYF(0));
+      if (mysql->free_me && mysql)
+	      free((uchar*) mysql);
     }
     mysql->reconnect= 1;
     return(res);
@@ -351,9 +351,12 @@ my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   if (rc == 0)
   {
     /* Free old connect information */
-    my_free(mysql->user,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(mysql->passwd,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(mysql->db,MYF(MY_ALLOW_ZERO_PTR));
+    if(mysql->user)
+      free(mysql->user);
+    if(mysql->passwd)
+      free(mysql->passwd);
+    if(mysql->db)
+      free(mysql->db);
 
     /* alloc new connect information */
     mysql->user=  my_strdup(user,MYF(MY_WME));
@@ -421,7 +424,7 @@ my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
   }
 
   /* copy filename into local memory and allocate read buffer */
-  if (!(buf=my_malloc(packet_length, MYF(0))))
+  if (!(buf=malloc(packet_length)))
   {
     set_mysql_error(mysql, CR_OUT_OF_MEMORY, unknown_sqlstate);
     return(1);
@@ -473,7 +476,8 @@ my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
 err:
   /* free up memory allocated with _init, usually */
   (*options->local_infile_end)(li_ptr);
-  my_free(buf, MYF(0));
+  if(buf)
+    free(buf);
   return(result);
 }
 
@@ -516,7 +520,7 @@ static int default_local_infile_init(void **ptr, const char *filename,
   char tmp_name[FN_REFLEN];
 
   if (!(*ptr= data= ((default_local_infile_data *)
-		     my_malloc(sizeof(default_local_infile_data),  MYF(0)))))
+		     malloc(sizeof(default_local_infile_data)))))
     return 1; /* out of memory */
 
   data->error_msg[0]= 0;
@@ -584,7 +588,7 @@ static void default_local_infile_end(void *ptr)
   {
     if (data->fd >= 0)
       my_close(data->fd, MYF(MY_WME));
-    my_free(ptr, MYF(MY_WME));
+    free(ptr);
   }
 }
 
@@ -776,8 +780,7 @@ mysql_list_fields(MYSQL *mysql, const char *table, const char *wild)
       !(fields= (*mysql->methods->list_fields)(mysql)))
     return(NULL);
 
-  if (!(result = (MYSQL_RES *) my_malloc(sizeof(MYSQL_RES),
-					 MYF(MY_WME | MY_ZEROFILL))))
+  if (!(result = (MYSQL_RES *) malloc(sizeof(MYSQL_RES))))
     return(NULL);
 
   result->methods= mysql->methods;
