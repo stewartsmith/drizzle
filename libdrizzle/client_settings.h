@@ -19,7 +19,7 @@
 
 sig_handler my_pipe_sig_handler(int sig);
 void read_user_name(char *name);
-my_bool handle_local_infile(MYSQL *mysql, const char *net_filename);
+bool handle_local_infile(MYSQL *mysql, const char *net_filename);
 
 
 /* TODO: Do we still need these now that there's not non-threaded stuff? */

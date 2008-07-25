@@ -78,8 +78,8 @@ uint32_t		max_allowed_packet= 1024L*1024L*1024L;
 
 static void append_wild(char *to,char *end,const char *wild);
 
-static my_bool mysql_client_init= 0;
-static my_bool org_my_init_done= 0;
+static bool mysql_client_init= 0;
+static bool org_my_init_done= 0;
 
 
 /*
@@ -203,7 +203,7 @@ MYSQL_PARAMETERS *STDCALL mysql_get_parameters(void)
   return &mysql_internal_parameters;
 }
 
-my_bool STDCALL mysql_thread_init()
+bool STDCALL mysql_thread_init()
 {
   return my_thread_init();
 }
@@ -295,7 +295,7 @@ int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
   return 0;
 }
 
-my_bool	STDCALL mysql_change_user(MYSQL *mysql, const char *user,
+bool STDCALL mysql_change_user(MYSQL *mysql, const char *user,
 				  const char *passwd, const char *db)
 {
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
@@ -403,9 +403,9 @@ void read_user_name(char *name)
   return;
 }
 
-my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
+bool handle_local_infile(MYSQL *mysql, const char *net_filename)
 {
-  my_bool result= 1;
+  bool result= true;
   uint packet_length=MY_ALIGN(mysql->net.max_packet-16,IO_SIZE);
   NET *net= &mysql->net;
   int readcount;
@@ -471,7 +471,7 @@ my_bool handle_local_infile(MYSQL *mysql, const char *net_filename)
     goto err;
   }
 
-  result=0;					/* Ok */
+  result=false;					/* Ok */
 
 err:
   /* free up memory allocated with _init, usually */
@@ -933,7 +933,7 @@ uint32_t STDCALL mysql_get_client_version(void)
   return MYSQL_VERSION_ID;
 }
 
-my_bool STDCALL mysql_eof(MYSQL_RES *res)
+bool STDCALL mysql_eof(MYSQL_RES *res)
 {
   return res->eof;
 }
@@ -1022,12 +1022,12 @@ uint STDCALL mysql_thread_safe(void)
 }
 
 
-my_bool STDCALL mysql_embedded(void)
+bool STDCALL mysql_embedded(void)
 {
 #ifdef EMBEDDED_LIBRARY
-  return 1;
+  return true;
 #else
-  return 0;
+  return false;
 #endif
 }
 
@@ -1109,7 +1109,7 @@ myodbc_remove_escape(MYSQL *mysql,char *name)
 {
   char *to;
 #ifdef USE_MB
-  my_bool use_mb_flag=use_mb(mysql->charset);
+  bool use_mb_flag=use_mb(mysql->charset);
   char *end=NULL;
   if (use_mb_flag)
     for (end=name; *end ; end++) ;
@@ -1152,18 +1152,18 @@ int cli_unbuffered_fetch(MYSQL *mysql, char **row)
   Commit the current transaction
 */
 
-my_bool STDCALL mysql_commit(MYSQL * mysql)
+bool STDCALL mysql_commit(MYSQL * mysql)
 {
-  return((my_bool) mysql_real_query(mysql, "commit", 6));
+  return((bool) mysql_real_query(mysql, "commit", 6));
 }
 
 /*
   Rollback the current transaction
 */
 
-my_bool STDCALL mysql_rollback(MYSQL * mysql)
+bool STDCALL mysql_rollback(MYSQL * mysql)
 {
-  return((my_bool) mysql_real_query(mysql, "rollback", 8));
+  return((bool) mysql_real_query(mysql, "rollback", 8));
 }
 
 
@@ -1171,9 +1171,9 @@ my_bool STDCALL mysql_rollback(MYSQL * mysql)
   Set autocommit to either true or false
 */
 
-my_bool STDCALL mysql_autocommit(MYSQL * mysql, my_bool auto_mode)
+bool STDCALL mysql_autocommit(MYSQL * mysql, bool auto_mode)
 {
-  return((my_bool) mysql_real_query(mysql, auto_mode ?
+  return((bool) mysql_real_query(mysql, auto_mode ?
                                          "set autocommit=1":"set autocommit=0",
                                          16));
 }
@@ -1188,9 +1188,9 @@ my_bool STDCALL mysql_autocommit(MYSQL * mysql, my_bool auto_mode)
   to be read using mysql_next_result()
 */
 
-my_bool STDCALL mysql_more_results(MYSQL *mysql)
+bool STDCALL mysql_more_results(MYSQL *mysql)
 {
-  my_bool res;
+  bool res;
 
   res= ((mysql->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
   return(res);
@@ -1223,7 +1223,7 @@ MYSQL_RES * STDCALL mysql_use_result(MYSQL *mysql)
   return (*mysql->methods->use_result)(mysql);
 }
 
-my_bool STDCALL mysql_read_query_result(MYSQL *mysql)
+bool STDCALL mysql_read_query_result(MYSQL *mysql)
 {
   return (*mysql->methods->read_query_result)(mysql);
 }

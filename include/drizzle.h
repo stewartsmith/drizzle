@@ -304,7 +304,7 @@ MYSQL_PARAMETERS *STDCALL mysql_get_parameters(void);
   connection.  All uses of the connection(s) should be between these
   function calls.
 */
-my_bool STDCALL mysql_thread_init(void);
+bool STDCALL mysql_thread_init(void);
 void STDCALL mysql_thread_end(void);
 
 /*
@@ -314,7 +314,7 @@ void STDCALL mysql_thread_end(void);
 
 uint64_t STDCALL mysql_num_rows(MYSQL_RES *res);
 unsigned int STDCALL mysql_num_fields(MYSQL_RES *res);
-my_bool STDCALL mysql_eof(MYSQL_RES *res);
+bool STDCALL mysql_eof(MYSQL_RES *res);
 MYSQL_FIELD *STDCALL mysql_fetch_field_direct(MYSQL_RES *res,
 					      unsigned int fieldnr);
 MYSQL_FIELD * STDCALL mysql_fetch_fields(MYSQL_RES *res);
@@ -331,10 +331,10 @@ uint32_t STDCALL mysql_warning_count(MYSQL *mysql);
 const char * STDCALL mysql_info(MYSQL *mysql);
 uint32_t STDCALL mysql_thread_id(MYSQL *mysql);
 const char * STDCALL mysql_character_set_name(MYSQL *mysql);
-int32_t          STDCALL mysql_set_character_set(MYSQL *mysql, const char *csname);
+int32_t STDCALL mysql_set_character_set(MYSQL *mysql, const char *csname);
 
-MYSQL *		STDCALL mysql_init(MYSQL *mysql);
-my_bool		STDCALL mysql_change_user(MYSQL *mysql, const char *user, 
+MYSQL * STDCALL mysql_init(MYSQL *mysql);
+bool STDCALL mysql_change_user(MYSQL *mysql, const char *user, 
 					  const char *passwd, const char *db);
 MYSQL *		STDCALL mysql_real_connect(MYSQL *mysql, const char *host,
 					   const char *user,
@@ -401,8 +401,8 @@ uint32_t	STDCALL mysql_hex_string(char *to,const char *from, uint32_t from_lengt
 uint32_t        STDCALL mysql_real_escape_string(MYSQL *mysql, char *to, const char *from, uint32_t length);
 void 		STDCALL myodbc_remove_escape(MYSQL *mysql,char *name);
 uint32_t	STDCALL mysql_thread_safe(void);
-my_bool		STDCALL mysql_embedded(void);
-my_bool         STDCALL mysql_read_query_result(MYSQL *mysql);
+bool STDCALL mysql_embedded(void);
+bool STDCALL mysql_read_query_result(MYSQL *mysql);
 
 
 
@@ -428,10 +428,10 @@ typedef struct st_mysql_methods
 } MYSQL_METHODS;
 
 
-my_bool STDCALL mysql_commit(MYSQL * mysql);
-my_bool STDCALL mysql_rollback(MYSQL * mysql);
-my_bool STDCALL mysql_autocommit(MYSQL * mysql, my_bool auto_mode);
-my_bool STDCALL mysql_more_results(MYSQL *mysql);
+bool STDCALL mysql_commit(MYSQL * mysql);
+bool STDCALL mysql_rollback(MYSQL * mysql);
+bool STDCALL mysql_autocommit(MYSQL * mysql, bool auto_mode);
+bool STDCALL mysql_more_results(MYSQL *mysql);
 int STDCALL mysql_next_result(MYSQL *mysql);
 void STDCALL mysql_close(MYSQL *sock);
 
