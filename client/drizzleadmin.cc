@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2006 MySQL AB
+/* Copyright (C) 2008 Drizzle Open Source Project 
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* maintaince of mysql databases */
+/* maintaince of drizzle databases */
 
 #include "client_priv.h"
 #include <signal.h>
@@ -25,7 +25,7 @@
 
 char *host= NULL, *user= NULL, *opt_password= NULL;
 static bool interrupted= false, opt_verbose= false,tty_password= false; 
-static uint8_t opt_protocol= MYSQL_PROTOCOL_TCP;  
+static uint8_t opt_protocol= DRIZZLE_PROTOCOL_TCP;  
 static uint32_t tcp_port= 0, option_wait= 0, option_silent= 0;
 static uint32_t my_end_arg;
 static uint32_t opt_connect_timeout, opt_shutdown_timeout;
@@ -39,8 +39,8 @@ static void print_version(void);
 extern "C" sig_handler endprog(int signal_number);
 extern "C" bool get_one_option(int optid, const struct my_option *opt,
                                char *argument);
-static int execute_commands(MYSQL *mysql,int argc, char **argv);
-static bool sql_connect(MYSQL *mysql, uint wait);
+static int execute_commands(DRIZZLE *drizzle,int argc, char **argv);
+static bool sql_connect(DRIZZLE *drizzle, uint wait);
 
 /*
   The order of commands must be the same as command_names,
@@ -100,7 +100,7 @@ static struct my_option my_long_options[] =
 };
 
 
-static const char *load_default_groups[]= { "mysqladmin","client",0 };
+static const char *load_default_groups[]= { "drizzleadmin","client",0 };
 
 bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
@@ -156,11 +156,11 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 int main(int argc,char *argv[])
 {
   int error= 0, ho_error;
-  MYSQL mysql;
+  DRIZZLE drizzle;
   char **commands, **save_argv;
 
   MY_INIT(argv[0]);
-  mysql_init(&mysql);
+  drizzle_create(&drizzle);
   load_defaults("my",load_default_groups,&argc,&argv);
   save_argv = argv;				/* Save for free_defaults */
   if ((ho_error=handle_options(&argc, &argv, my_long_options, get_one_option)))
@@ -185,16 +185,16 @@ int main(int argc,char *argv[])
   if (opt_connect_timeout)
   {
     uint tmp=opt_connect_timeout;
-    mysql_options(&mysql,MYSQL_OPT_CONNECT_TIMEOUT, (char*) &tmp);
+    drizzle_options(&drizzle,DRIZZLE_OPT_CONNECT_TIMEOUT, (char*) &tmp);
   }
-  /* force mysqladmin to use TCP */
-  mysql_options(&mysql, MYSQL_OPT_PROTOCOL, (char*)&opt_protocol);
+  /* force drizzleadmin to use TCP */
+  drizzle_options(&drizzle, DRIZZLE_OPT_PROTOCOL, (char*)&opt_protocol);
 
   error_flags= (myf)0;
 
-  if (sql_connect(&mysql, option_wait))
+  if (sql_connect(&drizzle, option_wait))
   {
-    unsigned int err= mysql_errno(&mysql);
+    unsigned int err= drizzle_errno(&drizzle);
     if (err >= CR_MIN_ERROR && err <= CR_MAX_ERROR)
       error= 1;
     else
@@ -212,8 +212,8 @@ int main(int argc,char *argv[])
   }
   else
   {
-    error=execute_commands(&mysql,argc,commands);
-    mysql_close(&mysql);
+    error=execute_commands(&drizzle,argc,commands);
+    drizzle_close(&drizzle);
   }
   my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
   my_free(user,MYF(MY_ALLOW_ZERO_PTR));
@@ -227,15 +227,15 @@ sig_handler endprog(int signal_number __attribute__((unused)))
   interrupted=1;
 }
 
-static bool sql_connect(MYSQL *mysql, uint wait)
+static bool sql_connect(DRIZZLE *drizzle, uint wait)
 {
   bool info=0;
 
   for (;;)
   {
-    if (mysql_real_connect(mysql,host,user,opt_password,NullS,tcp_port,NULL,0))
+    if (drizzle_connect(drizzle,host,user,opt_password,NullS,tcp_port,NULL,0))
     {
-      mysql->reconnect= 1;
+      drizzle->reconnect= 1;
       if (info)
       {
         fputs("\n",stderr);
@@ -252,26 +252,26 @@ static bool sql_connect(MYSQL *mysql, uint wait)
           host= (char*) LOCAL_HOST;
 
         my_printf_error(0,"connect to server at '%s' failed\nerror: '%s'",
-        error_flags, host, mysql_error(mysql));
+        error_flags, host, drizzle_error(drizzle));
 
-        if (mysql_errno(mysql) == CR_CONN_HOST_ERROR ||
-          mysql_errno(mysql) == CR_UNKNOWN_HOST)
+        if (drizzle_errno(drizzle) == CR_CONN_HOST_ERROR ||
+          drizzle_errno(drizzle) == CR_UNKNOWN_HOST)
         {
           fprintf(stderr,"Check that drizzled is running on %s",host);
           fprintf(stderr," and that the port is %d.\n",
-          tcp_port ? tcp_port: mysql_port);
+          tcp_port ? tcp_port: drizzle_port);
           fprintf(stderr,"You can check this by doing 'telnet %s %d'\n",
-                  host, tcp_port ? tcp_port: mysql_port);
+                  host, tcp_port ? tcp_port: drizzle_port);
         }
       }
       return 1;
     }
     if (wait != (uint) ~0)
       wait--;				/* One less retry */
-    if ((mysql_errno(mysql) != CR_CONN_HOST_ERROR) &&
-        (mysql_errno(mysql) != CR_CONNECTION_ERROR))
+    if ((drizzle_errno(drizzle) != CR_CONN_HOST_ERROR) &&
+        (drizzle_errno(drizzle) != CR_CONNECTION_ERROR))
     {
-      fprintf(stderr,"Got error: %s\n", mysql_error(mysql));
+      fprintf(stderr,"Got error: %s\n", drizzle_error(drizzle));
     }
     else if (!option_silent)
     {
@@ -297,11 +297,11 @@ static bool sql_connect(MYSQL *mysql, uint wait)
 	 -1 on retryable error
 	 1 on fatal error
 */
-static int execute_commands(MYSQL *mysql,int argc, char **argv)
+static int execute_commands(DRIZZLE *drizzle,int argc, char **argv)
 {
 
   /*
-    MySQL documentation relies on the fact that mysqladmin will
+    DRIZZLE documentation relies on the fact that drizzleadmin will
     execute commands in the order specified.
     If this behaviour is ever changed, Docs should be notified.
   */
@@ -313,13 +313,13 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
       if (opt_verbose)
         printf("shutting down drizzled...\n");
 
-      if (mysql_shutdown(mysql, SHUTDOWN_DEFAULT))
+      if (drizzle_shutdown(drizzle, SHUTDOWN_DEFAULT))
       {
         my_printf_error(0, "shutdown failed; error: '%s'", error_flags,
-                        mysql_error(mysql));
+                        drizzle_error(drizzle));
         return -1;
       }
-      mysql_close(mysql);	/* Close connection to avoid error messages */
+      drizzle_close(drizzle);	/* Close connection to avoid error messages */
 
       if (opt_verbose)
         printf("done\n");
@@ -328,28 +328,28 @@ static int execute_commands(MYSQL *mysql,int argc, char **argv)
       break;
     }
     case ADMIN_PING:
-      mysql->reconnect=0;	/* We want to know of reconnects */
-      if (!mysql_ping(mysql))
+      drizzle->reconnect=0;	/* We want to know of reconnects */
+      if (!drizzle_ping(drizzle))
       {
         if (option_silent < 2)
           puts("drizzled is alive");
       }
       else
       {
-        if (mysql_errno(mysql) == CR_SERVER_GONE_ERROR)
+        if (drizzle_errno(drizzle) == CR_SERVER_GONE_ERROR)
         {
-          mysql->reconnect=1;
-          if (!mysql_ping(mysql))
+          drizzle->reconnect=1;
+          if (!drizzle_ping(drizzle))
             puts("connection was down, but drizzled is now alive");
         }
         else
 	      {
           my_printf_error(0,"drizzled doesn't answer to ping, error: '%s'",
-          error_flags, mysql_error(mysql));
+          error_flags, drizzle_error(drizzle));
           return -1;
         }
       }
-      mysql->reconnect=1;	/* Automatic reconnect is default */
+      drizzle->reconnect=1;	/* Automatic reconnect is default */
       break;
 
     default:
@@ -369,7 +369,7 @@ static void print_version(void)
 static void usage(void)
 {
   print_version();
-  puts("Copyright (C) 2000-2006 MySQL AB");
+  puts("Copyright (C) 2000-2006 DRIZZLE AB");
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
   puts("Administration program for the drizzled daemon.");
   printf("Usage: %s [OPTIONS] command command....\n", my_progname);

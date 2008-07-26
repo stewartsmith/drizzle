@@ -258,7 +258,7 @@ my_net_write(NET *net,const uchar *packet,size_t len)
 /**
   Send a command to the server.
 
-    The reason for having both header and packet is so that libmysql
+    The reason for having both header and packet is so that libdrizzle
     can easy add a header to a special command (like prepared statements)
     without having to re-alloc the string.
 
@@ -698,7 +698,7 @@ my_net_read(NET *net)
     }
     net->read_pos = net->buff + net->where_b;
     if (len != packet_error)
-      net->read_pos[len]=0;		/* Safeguard for mysql_use_result */
+      net->read_pos[len]=0;		/* Safeguard for drizzle_use_result */
     return len;
   }
   else
@@ -798,7 +798,7 @@ my_net_read(NET *net)
     len = ((ulong) (start_of_packet - first_packet_offset) - NET_HEADER_SIZE -
            multi_byte_packet);
     net->save_char= net->read_pos[len];	/* Must be saved */
-    net->read_pos[len]=0;		/* Safeguard for mysql_use_result */
+    net->read_pos[len]=0;		/* Safeguard for drizzle_use_result */
   }
   return len;
 }

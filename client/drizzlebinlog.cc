@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2004 MySQL AB
+/* Copyright (C) 2001-2004 DRIZZLE AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -13,12 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* 
+/*
 
    TODO: print the catalog (some USE catalog.db ????).
 
-   Standalone program to read a MySQL binary log (or relay log);
-   can read files produced by 3.23, 4.x, 5.0 servers. 
+   Standalone program to read a Drizzle binary log (or relay log);
+   can read files produced by 3.23, 4.x, 5.0 servers.
 
    Can read binlogs from 3.23/4.x/5.0 and relay logs from 4.x/5.0.
    Should be able to read any file of these categories, even with
@@ -38,7 +38,7 @@
 #include <errmsg.h>
 #include <my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
-#include "mysql_priv.h" 
+#include "mysql_priv.h"
 #include "log_event.h"
 #include "sql_common.h"
 
@@ -46,30 +46,30 @@
 enum options_drizzlebinlog
 {
   OPT_CHARSETS_DIR=256, OPT_BASE64_OUTPUT_MODE,
-  OPT_DEBUG_CHECK, OPT_DEBUG_INFO, OPT_MYSQL_PROTOCOL,
+  OPT_DEBUG_CHECK, OPT_DEBUG_INFO, OPT_DRIZZLE_PROTOCOL,
   OPT_SERVER_ID, OPT_SET_CHARSET, OPT_START_DATETIME,
   OPT_START_POSITION, OPT_STOP_DATETIME, OPT_STOP_POSITION,
   OPT_OPEN_FILES_LIMIT
 };
 
-#define BIN_LOG_HEADER_SIZE	4
-#define PROBE_HEADER_LEN	(EVENT_LEN_OFFSET+4)
+#define BIN_LOG_HEADER_SIZE  4
+#define PROBE_HEADER_LEN  (EVENT_LEN_OFFSET+4)
 
 
-#define CLIENT_CAPABILITIES	(CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG | CLIENT_LOCAL_FILES)
+#define CLIENT_CAPABILITIES  (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG | CLIENT_LOCAL_FILES)
 
 char server_version[SERVER_VERSION_LENGTH];
 ulong server_id = 0;
 
 // needed by net_serv.c
 ulong bytes_sent = 0L, bytes_received = 0L;
-ulong mysqld_net_retry_count = 10L;
+ulong drizzled_net_retry_count = 10L;
 ulong open_files_limit;
-uint test_flags = 0; 
+uint test_flags = 0;
 static uint opt_protocol= 0;
 static FILE *result_file;
 
-static const char *load_default_groups[]= { "mysqlbinlog","client",0 };
+static const char *load_default_groups[]= { "drizzlebinlog","client",0 };
 
 static void error(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
 static void warning(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
@@ -102,8 +102,8 @@ static uint64_t start_position, stop_position;
 static char *start_datetime_str, *stop_datetime_str;
 static my_time_t start_datetime= 0, stop_datetime= MY_TIME_T_MAX;
 static uint64_t rec_count= 0;
-static short binlog_flags = 0; 
-static MYSQL* mysql = NULL;
+static short binlog_flags = 0;
+static DRIZZLE *drizzle= NULL;
 static const char* dirname_for_local_load= 0;
 
 /**
@@ -184,10 +184,10 @@ class Load_log_processor
       /* If we have to try more than 1000 times, something is seriously wrong */
       for (uint version= 0; version<1000; version++)
       {
-	sprintf(file_name_end,"-%x",version);
-	if ((res= my_create(filename,0,
-			    O_CREAT|O_EXCL|O_BINARY|O_WRONLY,MYF(0)))!=-1)
-	  return res;
+  sprintf(file_name_end,"-%x",version);
+  if ((res= my_create(filename,0,
+          O_CREAT|O_EXCL|O_BINARY|O_WRONLY,MYF(0)))!=-1)
+    return res;
       }
       return -1;
     }
@@ -199,18 +199,18 @@ public:
   int init()
   {
     return init_dynamic_array(&file_names, sizeof(File_name_record),
-			      100,100 CALLER_INFO);
+            100,100 CALLER_INFO);
   }
 
   void init_by_dir_name(const char *dir)
     {
       target_dir_name_len= (convert_dirname(target_dir_name, dir, NullS) -
-			    target_dir_name);
+          target_dir_name);
     }
   void init_by_cur_dir()
     {
       if (my_getwd(target_dir_name,sizeof(target_dir_name),MYF(MY_WME)))
-	exit(1);
+  exit(1);
       target_dir_name_len= strlen(target_dir_name);
     }
   void destroy()
@@ -312,24 +312,24 @@ public:
   @return File handle >= 0 on success, -1 on error.
 */
 File Load_log_processor::prepare_new_file_for_old_format(Load_log_event *le,
-							 char *filename)
+               char *filename)
 {
   uint len;
   char *tail;
   File file;
-  
+
   fn_format(filename, le->fname, target_dir_name, "", MY_REPLACE_DIR);
   len= strlen(filename);
   tail= filename + len;
-  
+
   if ((file= create_unique_file(filename,tail)) < 0)
   {
     error("Could not construct local filename %s.",filename);
     return -1;
   }
-  
+
   le->set_fname_outside_temp_buf(filename,len+strlen(tail));
-  
+
   return file;
 }
 
@@ -362,7 +362,7 @@ Exit_status Load_log_processor::load_old_format_file(NET* net,
     error("Failed requesting the remote dump of %s.", server_fname);
     return ERROR_STOP;
   }
-  
+
   for (;;)
   {
     ulong packet_len = my_net_read(net);
@@ -374,9 +374,9 @@ Exit_status Load_log_processor::load_old_format_file(NET* net,
         return ERROR_STOP;
       }
       /*
-	we just need to send something, as the server will read but
-	not examine the packet - this is because mysql_load() sends 
-	an OK when it is done
+  we just need to send something, as the server will read but
+  not examine the packet - this is because drizzle_load() sends
+  an OK when it is done
       */
       break;
     }
@@ -385,17 +385,17 @@ Exit_status Load_log_processor::load_old_format_file(NET* net,
       error("Failed reading a packet during the dump of %s.", server_fname);
       return ERROR_STOP;
     }
-    
+
     if (packet_len > UINT_MAX)
     {
       error("Illegal length of packet read from net.");
       return ERROR_STOP;
     }
-    if (my_write(file, (uchar*) net->read_pos, 
-		 (uint) packet_len, MYF(MY_WME|MY_NABP)))
+    if (my_write(file, (uchar*) net->read_pos,
+     (uint) packet_len, MYF(MY_WME|MY_NABP)))
       return ERROR_STOP;
   }
-  
+
   return OK_CONTINUE;
 }
 
@@ -552,7 +552,7 @@ Exit_status Load_log_processor::process(Append_block_log_event *ae)
     File file;
     Exit_status retval= OK_CONTINUE;
     if (((file= my_open(fname,
-			O_APPEND|O_BINARY|O_WRONLY,MYF(MY_WME))) < 0))
+      O_APPEND|O_BINARY|O_WRONLY,MYF(MY_WME))) < 0))
     {
       error("Failed opening file %s", fname);
       return(ERROR_STOP);
@@ -586,7 +586,7 @@ static Load_log_processor load_processor;
 
 /**
   Replace windows-style backslashes by forward slashes so it can be
-  consumed by the mysql client, which requires Unix path.
+  consumed by the drizzle client, which requires Unix path.
 
   @todo This is only useful under windows, so may be ifdef'ed out on
   other systems.  /Sven
@@ -757,11 +757,11 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
       if (shall_skip_database(ce->db))
         goto end;                // Next event
       /*
-	We print the event, but with a leading '#': this is just to inform 
-	the user of the original command; the command we want to execute 
-	will be a derivation of this original command (we will change the 
-	filename and use LOCAL), prepared in the 'case EXEC_LOAD_EVENT' 
-	below.
+  We print the event, but with a leading '#': this is just to inform
+  the user of the original command; the command we want to execute
+  will be a derivation of this original command (we will change the
+  filename and use LOCAL), prepared in the 'case EXEC_LOAD_EVENT'
+  below.
       */
       if (opt_base64_output_mode == BASE64_OUTPUT_ALWAYS)
       {
@@ -805,9 +805,9 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
       Execute_load_log_event *exv= (Execute_load_log_event*)ev;
       Create_file_log_event *ce= load_processor.grab_event(exv->file_id);
       /*
-	if ce is 0, it probably means that we have not seen the Create_file
-	event (a bad binlog, or most probably --start-position is after the
-	Create_file event). Print a warning comment.
+  if ce is 0, it probably means that we have not seen the Create_file
+  event (a bad binlog, or most probably --start-position is after the
+  Create_file event). Print a warning comment.
       */
       if (ce)
       {
@@ -816,9 +816,9 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
           my_open() in Load_log_processor::append().
         */
         convert_path_to_forward_slashes((char*) ce->fname);
-	ce->print(result_file, print_event_info, true);
-	my_free((char*)ce->fname,MYF(MY_WME));
-	delete ce;
+  ce->print(result_file, print_event_info, true);
+  my_free((char*)ce->fname,MYF(MY_WME));
+  delete ce;
       }
       else
         warning("Ignoring Execute_load_log_event as there is no "
@@ -843,7 +843,7 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
           (glob_description_event->flags & LOG_EVENT_BINLOG_IN_USE_F))
       {
         error("Attempting to dump binlog '%s', which was not closed properly. "
-              "Most probably, mysqld is still writing it, or it crashed. "
+              "Most probably, drizzled is still writing it, or it crashed. "
               "Rerun with --force-if-open to ignore this problem.", logname);
         return(ERROR_STOP);
       }
@@ -872,7 +872,7 @@ Exit_status process_event(PRINT_EVENT_INFO *print_event_info, Log_event *ev,
       }
 
       if (fname)
-	my_free(fname, MYF(MY_WME));
+  my_free(fname, MYF(MY_WME));
       break;
     }
     case TABLE_MAP_EVENT:
@@ -946,7 +946,7 @@ static struct my_option my_long_options[] =
    (char**) &opt_base64_output_mode_str,
    0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   /*
-    mysqlbinlog needs charsets knowledge, to be able to convert a charset
+    drizzlebinlog needs charsets knowledge, to be able to convert a charset
     number found in binlog to a charset name (to be able to print things
     like this:
     SET @`a`:=_cp850 0x4DFC6C6C6572 COLLATE `cp850_general_ci`;
@@ -964,7 +964,7 @@ static struct my_option my_long_options[] =
    (char**) &debug_info_flag, (char**) &debug_info_flag,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"disable-log-bin", 'D', "Disable binary log. This is useful, if you "
-    "enabled --to-last-log and are sending the output to the same MySQL server. "
+    "enabled --to-last-log and are sending the output to the same DRIZZLE server. "
     "This way you could avoid an endless loop. You would also like to use it "
     "when restoring after a crash to avoid duplication of the statements you "
     "already have. NOTE: you will need a SUPER privilege to use this option.",
@@ -1001,10 +1001,10 @@ static struct my_option my_long_options[] =
    REQUIRED_ARG, BIN_LOG_HEADER_SIZE, BIN_LOG_HEADER_SIZE,
    /* COM_BINLOG_DUMP accepts only 4 bytes for the position */
    (uint64_t)(~(uint32_t)0), 0, 0, 0},
-  {"protocol", OPT_MYSQL_PROTOCOL,
+  {"protocol", OPT_DRIZZLE_PROTOCOL,
    "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"read-from-remote-server", 'R', "Read binary logs from a MySQL server",
+  {"read-from-remote-server", 'R', "Read binary logs from a Drizzle server",
    (char**) &remote_opt, (char**) &remote_opt, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"result-file", 'r', "Direct output to a given file.", 0, 0, 0, GET_STR,
@@ -1023,12 +1023,12 @@ static struct my_option my_long_options[] =
    (char**) &short_form, (char**) &short_form, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-   (char**) &sock, (char**) &sock, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 
+   (char**) &sock, (char**) &sock, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0,
    0, 0},
   {"start-datetime", OPT_START_DATETIME,
    "Start reading the binlog at first event having a datetime equal or "
    "posterior to the argument; the argument must be a date and time "
-   "in the local time zone, in any format accepted by the MySQL server "
+   "in the local time zone, in any format accepted by the Drizzle server "
    "for DATETIME and TIMESTAMP types, for example: 2004-12-25 11:25:56 "
    "(you should probably use quotes for your shell to set it properly).",
    (char**) &start_datetime_str, (char**) &start_datetime_str,
@@ -1043,7 +1043,7 @@ static struct my_option my_long_options[] =
   {"stop-datetime", OPT_STOP_DATETIME,
    "Stop reading the binlog at first event having a datetime equal or "
    "posterior to the argument; the argument must be a date and time "
-   "in the local time zone, in any format accepted by the MySQL server "
+   "in the local time zone, in any format accepted by the Drizzle server "
    "for DATETIME and TIMESTAMP types, for example: 2004-12-25 11:25:56 "
    "(you should probably use quotes for your shell to set it properly).",
    (char**) &stop_datetime_str, (char**) &stop_datetime_str,
@@ -1056,7 +1056,7 @@ static struct my_option my_long_options[] =
    (uint64_t)(~(my_off_t)0), 0, 0, 0},
   {"to-last-log", 't', "Requires -R. Will not stop at the end of the \
 requested binlog but rather continue printing until the end of the last \
-binlog of the MySQL server. If you send the output to the same MySQL server, \
+binlog of the DRIZZLE server. If you send the output to the same DRIZZLE server, \
 that may lead to an endless loop.",
    (char**) &to_last_remote_log, (char**) &to_last_remote_log, 0, GET_BOOL,
    NO_ARG, 0, 0, 0, 0, 0, 0},
@@ -1147,8 +1147,8 @@ static void cleanup()
   my_free((char*) dirname_for_local_load, MYF(MY_ALLOW_ZERO_PTR));
 
   delete glob_description_event;
-  if (mysql)
-    mysql_close(mysql);
+  if (drizzle)
+    drizzle_close(drizzle);
 }
 
 static void print_version()
@@ -1164,8 +1164,8 @@ This software comes with NO WARRANTY:  This is free software,\n\
 and you are welcome to modify and redistribute it under the GPL license\n");
 
   printf("\
-Dumps a MySQL binary log in a format usable for viewing or for piping to\n\
-the mysql command line client\n\n");
+Dumps a DRIZZLE binary log in a format usable for viewing or for piping to\n\
+the Drizzle command line client\n\n");
   printf("Usage: %s [options] log-files\n", my_progname);
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
@@ -1187,8 +1187,8 @@ static my_time_t convert_str_to_timestamp(const char* str)
   }
   /*
     Note that Feb 30th, Apr 31st cause no error messages and are mapped to
-    the next existing day, like in mysqld. Maybe this could be changed when
-    mysqld is changed too (with its "strict" mode?).
+    the next existing day, like in drizzled. Maybe this could be changed when
+    drizzled is changed too (with its "strict" mode?).
   */
   return
     my_system_gmt_sec(&l_time, &dummy_my_timezone, &dummy_in_dst_time_gap);
@@ -1196,7 +1196,7 @@ static my_time_t convert_str_to_timestamp(const char* str)
 
 extern "C" bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+         char *argument)
 {
   bool tty_password=0;
   switch (optid) {
@@ -1209,9 +1209,9 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       my_free(pass,MYF(MY_ALLOW_ZERO_PTR));
       char *start=argument;
       pass= my_strdup(argument,MYF(MY_FAE));
-      while (*argument) *argument++= 'x';		/* Destroy argument */
+      while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
-        start[1]=0;				/* Cut length of argument */
+        start[1]=0;        /* Cut length of argument */
     }
     else
       tty_password=1;
@@ -1223,7 +1223,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case 'R':
     remote_opt= 1;
     break;
-  case OPT_MYSQL_PROTOCOL:
+  case OPT_DRIZZLE_PROTOCOL:
     opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
                                     opt->name);
     break;
@@ -1273,7 +1273,7 @@ static int parse_args(int *argc, char*** argv)
 
 
 /**
-  Create and initialize the global mysql object, and connect to the
+  Create and initialize the global drizzle object, and connect to the
   server.
 
   @retval ERROR_STOP An error occurred - the program should terminate.
@@ -1281,22 +1281,22 @@ static int parse_args(int *argc, char*** argv)
 */
 static Exit_status safe_connect()
 {
-  mysql= mysql_init(NULL);
+  drizzle= drizzle_create(NULL);
 
-  if (!mysql)
+  if (!drizzle)
   {
-    error("Failed on mysql_init.");
+    error("Failed on drizzle_create.");
     return ERROR_STOP;
   }
 
   if (opt_protocol)
-    mysql_options(mysql, MYSQL_OPT_PROTOCOL, (char*) &opt_protocol);
-  if (!mysql_real_connect(mysql, host, user, pass, 0, port, sock, 0))
+    drizzle_options(drizzle, DRIZZLE_OPT_PROTOCOL, (char*) &opt_protocol);
+  if (!drizzle_connect(drizzle, host, user, pass, 0, port, sock, 0))
   {
-    error("Failed on connect: %s", mysql_error(mysql));
+    error("Failed on connect: %s", drizzle_error(drizzle));
     return ERROR_STOP;
   }
-  mysql->reconnect= 1;
+  drizzle->reconnect= 1;
   return OK_CONTINUE;
 }
 
@@ -1341,7 +1341,7 @@ static Exit_status dump_log_entries(const char* logname)
 /**
   When reading a remote binlog, this function is used to grab the
   Format_description_log_event in the beginning of the stream.
-  
+
   This is not as smart as check_header() (used for local log); it will
   not work for a binlog which mixes format. TODO: fix this.
 
@@ -1350,18 +1350,18 @@ static Exit_status dump_log_entries(const char* logname)
 */
 static Exit_status check_master_version()
 {
-  MYSQL_RES* res = 0;
-  MYSQL_ROW row;
+  DRIZZLE_RES* res = 0;
+  DRIZZLE_ROW row;
   const char* version;
 
-  if (mysql_query(mysql, "SELECT VERSION()") ||
-      !(res = mysql_store_result(mysql)))
+  if (drizzle_query(drizzle, "SELECT VERSION()") ||
+      !(res = drizzle_store_result(drizzle)))
   {
     error("Could not find server version: "
-          "Query failed when checking master version: %s", mysql_error(mysql));
+          "Query failed when checking master version: %s", drizzle_error(drizzle));
     return ERROR_STOP;
   }
-  if (!(row = mysql_fetch_row(res)))
+  if (!(row = drizzle_fetch_row(res)))
   {
     error("Could not find server version: "
           "Master returned no rows for SELECT VERSION().");
@@ -1396,7 +1396,7 @@ static Exit_status check_master_version()
   default:
     glob_description_event= NULL;
     error("Could not find server version: "
-          "Master reported unrecognized MySQL version '%s'.", version);
+          "Master reported unrecognized Drizzle version '%s'.", version);
     goto err;
   }
   if (!glob_description_event || !glob_description_event->is_valid())
@@ -1405,11 +1405,11 @@ static Exit_status check_master_version()
     goto err;
   }
 
-  mysql_free_result(res);
+  drizzle_free_result(res);
   return OK_CONTINUE;
 
 err:
-  mysql_free_result(res);
+  drizzle_free_result(res);
   return ERROR_STOP;
 }
 
@@ -1447,7 +1447,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
   */
   if ((retval= safe_connect()) != OK_CONTINUE)
     return(retval);
-  net= &mysql->net;
+  net= &drizzle->net;
 
   if ((retval= check_master_version()) != OK_CONTINUE)
     return(retval);
@@ -1460,7 +1460,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
   int2store(buf + BIN_LOG_HEADER_SIZE, binlog_flags);
 
   size_t tlen = strlen(logname);
-  if (tlen > UINT_MAX) 
+  if (tlen > UINT_MAX)
   {
     error("Log name too long.");
     return(ERROR_STOP);
@@ -1468,7 +1468,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
   logname_len = (uint) tlen;
   int4store(buf + 6, 0);
   memcpy(buf + 10, logname, logname_len);
-  if (simple_command(mysql, COM_BINLOG_DUMP, buf, logname_len + 10, 1))
+  if (simple_command(drizzle, COM_BINLOG_DUMP, buf, logname_len + 10, 1))
   {
     error("Got fatal error sending the log dump command.");
     return(ERROR_STOP);
@@ -1479,10 +1479,10 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
     const char *error_msg;
     Log_event *ev;
 
-    len= cli_safe_read(mysql);
+    len= cli_safe_read(drizzle);
     if (len == packet_error)
     {
-      error("Got error reading packet from server: %s", mysql_error(mysql));
+      error("Got error reading packet from server: %s", drizzle_error(drizzle));
       return(ERROR_STOP);
     }
     if (len < 8 && net->read_pos[0] == 254)
@@ -1493,13 +1493,13 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
     {
       error("Could not construct log event object: %s", error_msg);
       return(ERROR_STOP);
-    }   
+    }
     /*
       If reading from a remote host, ensure the temp_buf for the
       Log_event class is pointing to the incoming stream.
     */
     if (remote_opt)
-      ev->register_temp_buf((char*) net->read_pos + 1); 
+      ev->register_temp_buf((char*) net->read_pos + 1);
 
     Log_event_type type= ev->get_type_code();
     if (glob_description_event->binlog_version >= 3 ||
@@ -1693,7 +1693,7 @@ static Exit_status check_header(IO_CACHE* file,
       if (buf[EVENT_TYPE_OFFSET] == START_EVENT_V3)
       {
         /* This is 3.23 or 4.x */
-        if (uint4korr(buf + EVENT_LEN_OFFSET) < 
+        if (uint4korr(buf + EVENT_LEN_OFFSET) <
             (LOG_EVENT_MINIMAL_HEADER_LEN + START_V3_HEADER_LEN))
         {
           /* This is 3.23 (format 1) */
@@ -1714,7 +1714,7 @@ static Exit_status check_header(IO_CACHE* file,
         /* This is 5.0 */
         Format_description_log_event *new_description_event;
         my_b_seek(file, tmp_pos); /* seek back to event's start */
-        if (!(new_description_event= (Format_description_log_event*) 
+        if (!(new_description_event= (Format_description_log_event*)
               Log_event::read_log_event(file, glob_description_event)))
           /* EOF can't be hit here normally, so it's a real error */
         {
@@ -1794,7 +1794,7 @@ static Exit_status dump_local_log_entries(PRINT_EVENT_INFO *print_event_info,
     if ((fd = my_open(logname, O_RDONLY | O_BINARY, MYF(MY_WME))) < 0)
       return ERROR_STOP;
     if (init_io_cache(file, fd, 0, READ_CACHE, start_position_mot, 0,
-		      MYF(MY_WME | MY_NABP)))
+          MYF(MY_WME | MY_NABP)))
     {
       my_close(fd, MYF(MY_WME));
       return ERROR_STOP;
@@ -1805,7 +1805,7 @@ static Exit_status dump_local_log_entries(PRINT_EVENT_INFO *print_event_info,
   else
   {
     if (init_io_cache(file, fileno(stdin), 0, READ_CACHE, (my_off_t) 0,
-		      0, MYF(MY_WME | MY_NABP | MY_DONT_CHECK_FILESIZE)))
+          0, MYF(MY_WME | MY_NABP | MY_DONT_CHECK_FILESIZE)))
     {
       error("Failed to init IO cache.");
       return ERROR_STOP;
@@ -1819,8 +1819,8 @@ static Exit_status dump_local_log_entries(PRINT_EVENT_INFO *print_event_info,
       my_off_t length,tmp;
       for (length= start_position_mot ; length > 0 ; length-=tmp)
       {
-	tmp=min(length,sizeof(buff));
-	if (my_b_read(file, buff, (uint) tmp))
+  tmp=min(length,sizeof(buff));
+  if (my_b_read(file, buff, (uint) tmp))
         {
           error("Failed reading from file.");
           goto err;
@@ -1923,14 +1923,14 @@ int main(int argc, char** argv)
     load_processor.init_by_cur_dir();
 
   fprintf(result_file,
-	  "/*!40019 SET @@session.max_insert_delayed_threads=0*/;\n");
+    "/*!40019 SET @@session.max_insert_delayed_threads=0*/;\n");
 
   if (disable_log_bin)
     fprintf(result_file,
             "/*!32316 SET @OLD_SQL_LOG_BIN=@@SQL_LOG_BIN, SQL_LOG_BIN=0*/;\n");
 
   /*
-    In mysqlbinlog|mysql, don't want mysql to be disconnected after each
+    In drizzlebinlog|drizzle, don't want Drizzle to be disconnected after each
     transaction (which would be the case with GLOBAL.COMPLETION_TYPE==2).
   */
   fprintf(result_file,
@@ -1941,7 +1941,7 @@ int main(int argc, char** argv)
     fprintf(result_file,
             "\n/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;"
             "\n/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;"
-            "\n/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;"  
+            "\n/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;"
             "\n/*!40101 SET NAMES %s */;\n", charset);
 
   for (save_stop_position= stop_position, stop_position= ~(my_off_t)0 ;
@@ -1961,7 +1961,7 @@ int main(int argc, char** argv)
     of transaction.
   */
   fprintf(result_file,
-          "# End of log file\nROLLBACK /* added by mysqlbinlog */;\n"
+          "# End of log file\nROLLBACK /* added by drizzlebinlog */;\n"
           "/*!50003 SET COMPLETION_TYPE=@OLD_COMPLETION_TYPE*/;\n");
   if (disable_log_bin)
     fprintf(result_file, "/*!32316 SET SQL_LOG_BIN=@OLD_SQL_LOG_BIN*/;\n");

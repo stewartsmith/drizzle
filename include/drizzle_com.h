@@ -314,7 +314,7 @@ enum enum_field_types { MYSQL_TYPE_TINY=1,
 #define MYSQL_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
 #define MYSQL_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
 
-enum mysql_enum_shutdown_level {
+enum drizzle_enum_shutdown_level {
   /*
     We want levels to be in growing order of hardness (because we use number
     comparisons). Note that DEFAULT does not respect the growing property, but
@@ -347,7 +347,7 @@ enum enum_cursor_type
 
 
 /* options for mysql_set_option */
-enum enum_mysql_set_option
+enum enum_drizzle_set_option
 {
   MYSQL_OPTION_MULTI_STATEMENTS_ON,
   MYSQL_OPTION_MULTI_STATEMENTS_OFF
