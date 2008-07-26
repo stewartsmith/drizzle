@@ -62,8 +62,8 @@ public:
   bool can_be_compared_as_int64_t() const { return true; }
   uint32_t max_display_length() { return 20; }
   virtual uchar *pack(uchar* to, const uchar *from,
-                      uint max_length __attribute__((__unused__)),
-                      bool low_byte_first __attribute__((__unused__)))
+                      uint max_length __attribute__((unused)),
+                      bool low_byte_first __attribute__((unused)))
   {
     int64_t val;
 #ifdef WORDS_BIGENDIAN
@@ -83,8 +83,8 @@ public:
   }
 
   virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data __attribute__((__unused__)),
-                              bool low_byte_first __attribute__((__unused__)))
+                              uint param_data __attribute__((unused)),
+                              bool low_byte_first __attribute__((unused)))
   {
     int64_t val;
 #ifdef WORDS_BIGENDIAN

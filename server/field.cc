@@ -1183,7 +1183,7 @@ Field::unpack(uchar* to, const uchar *from, uint param_data,
 }
 
 
-my_decimal *Field::val_decimal(my_decimal *decimal __attribute__((__unused__)))
+my_decimal *Field::val_decimal(my_decimal *decimal __attribute__((unused)))
 {
   /* This never have to be called */
   assert(0);
@@ -1430,7 +1430,7 @@ bool Field::get_time(MYSQL_TIME *ltime)
 */
 
 int Field::store_time(MYSQL_TIME *ltime,
-                      timestamp_type type_arg __attribute__((__unused__)))
+                      timestamp_type type_arg __attribute__((unused)))
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   uint length= (uint) my_TIME_to_str(ltime, buff);
@@ -1969,7 +1969,7 @@ int Field_enum::store(double nr)
 
 
 int Field_enum::store(int64_t nr,
-                      bool unsigned_val __attribute__((__unused__)))
+                      bool unsigned_val __attribute__((unused)))
 {
   int error= 0;
   if ((uint64_t) nr > typelib->count || nr == 0)
@@ -2280,7 +2280,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
                         CHARSET_INFO *fld_charset,
-                        uint fld_geom_type __attribute__((__unused__)),
+                        uint fld_geom_type __attribute__((unused)),
                         enum column_format_type column_format)
 {
   uint sign_len, allowed_type_modifier= 0;
@@ -2553,7 +2553,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
 }
 
 
-enum_field_types get_blob_type_from_length(ulong length __attribute__((__unused__)))
+enum_field_types get_blob_type_from_length(ulong length __attribute__((unused)))
 {
   enum_field_types type;
 

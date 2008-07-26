@@ -53,7 +53,7 @@ static int rr_index(READ_RECORD *info);
 */
 
 void init_read_record_idx(READ_RECORD *info,
-                          THD *thd __attribute__((__unused__)),
+                          THD *thd __attribute__((unused)),
                           TABLE *table,
                           bool print_error, uint idx)
 {

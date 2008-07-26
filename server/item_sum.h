@@ -363,7 +363,7 @@ public:
   */
   void no_rows_in_result() { clear(); }
 
-  virtual bool setup(THD *thd __attribute__((__unused__))) {return 0;}
+  virtual bool setup(THD *thd __attribute__((unused))) {return 0;}
   virtual void make_unique(void) {}
   Item *get_tmp_table_item(THD *thd);
   virtual Field *create_tmp_field(bool group, TABLE *table,
@@ -680,7 +680,7 @@ public:
   String *val_str(String *str);
   void reset_field();
   void update_field();
-  Item *result_item(Field *field __attribute__((__unused__)))
+  Item *result_item(Field *field __attribute__((unused)))
   { return new Item_avg_field(hybrid_type, this); }
   void no_rows_in_result() {}
   const char *func_name() const { return "avg("; }
@@ -771,7 +771,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   void reset_field();
   void update_field();
-  Item *result_item(Field *field __attribute__((__unused__)))
+  Item *result_item(Field *field __attribute__((unused)))
   { return new Item_variance_field(this); }
   void no_rows_in_result() {}
   const char *func_name() const
@@ -813,7 +813,7 @@ class Item_sum_std :public Item_sum_variance
     {}
   enum Sumfunctype sum_func () const { return STD_FUNC; }
   double val_real();
-  Item *result_item(Field *field __attribute__((__unused__)))
+  Item *result_item(Field *field __attribute__((unused)))
     { return new Item_std_field(this); }
   const char *func_name() const { return "std("; }
   Item *copy_or_same(THD* thd);

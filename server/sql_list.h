@@ -37,17 +37,17 @@ public:
   { return alloc_root(mem_root, size); }
   static void *operator new(size_t size, MEM_ROOT *mem_root) throw ()
   { return alloc_root(mem_root, size); }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              size_t size __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              size_t size __attribute__((unused)))
   { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              MEM_ROOT *mem_root __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              MEM_ROOT *mem_root __attribute__((unused)))
   { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((__unused__)),
-                                MEM_ROOT *mem_root __attribute__((__unused__)))
+  static void operator delete[](void *ptr __attribute__((unused)),
+                                MEM_ROOT *mem_root __attribute__((unused)))
   { /* never called */ }
-  static void operator delete[](void *ptr __attribute__((__unused__)),
-                                size_t size __attribute__((__unused__)))
+  static void operator delete[](void *ptr __attribute__((unused)),
+                                size_t size __attribute__((unused)))
   { TRASH(ptr, size); }
 #ifdef HAVE_purify
   bool dummy;
@@ -126,7 +126,7 @@ public:
     list_copy_and_replace_each_value after creating a copy.
   */
   base_list(const base_list &rhs, MEM_ROOT *mem_root);
-  inline base_list(bool error __attribute__((__unused__))) { }
+  inline base_list(bool error __attribute__((unused))) { }
   inline bool push_back(void *info)
   {
     if (((*last)=new list_node(info, &end_of_list)))
@@ -424,10 +424,10 @@ public:
 template <class T> class List_iterator_fast :public base_list_iterator
 {
 protected:
-  inline T *replace(T *a __attribute__((__unused__)))   { return (T*) 0; }
-  inline T *replace(List<T> &a __attribute__((__unused__))) { return (T*) 0; }
+  inline T *replace(T *a __attribute__((unused)))   { return (T*) 0; }
+  inline T *replace(List<T> &a __attribute__((unused))) { return (T*) 0; }
   inline void remove(void)  { }
-  inline void after(T *a __attribute__((__unused__)))   { }
+  inline void after(T *a __attribute__((unused)))   { }
   inline T** ref(void)	    { return (T**) 0; }
 
 public:
@@ -456,7 +456,7 @@ struct ilink
     return (void*)my_malloc((uint)size, MYF(MY_WME | MY_FAE | ME_FATALERROR));
   }
   static void operator delete(void* ptr_arg,
-                              size_t size __attribute__((__unused__)))
+                              size_t size __attribute__((unused)))
   {
      my_free((uchar*)ptr_arg, MYF(MY_WME|MY_ALLOW_ZERO_PTR));
   }

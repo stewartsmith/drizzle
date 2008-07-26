@@ -131,9 +131,9 @@ static int thr_lock_errno_to_mysql[]=
   @param flags Lock flags
   @return 0 if all the check passed, non zero if a check failed.
 */
-int mysql_lock_tables_check(THD *thd __attribute__((__unused__)),
+int mysql_lock_tables_check(THD *thd __attribute__((unused)),
                             TABLE **tables, uint count,
-                            uint flags __attribute__((__unused__)))
+                            uint flags __attribute__((unused)))
 {
   uint system_count;
   uint i;
@@ -1014,7 +1014,7 @@ int lock_table_name(THD *thd, TABLE_LIST *table_list, bool check_in_use)
 }
 
 
-void unlock_table_name(THD *thd __attribute__((__unused__)),
+void unlock_table_name(THD *thd __attribute__((unused)),
                        TABLE_LIST *table_list)
 {
   if (table_list->table)
@@ -1025,7 +1025,7 @@ void unlock_table_name(THD *thd __attribute__((__unused__)),
 }
 
 
-static bool locked_named_table(THD *thd __attribute__((__unused__)),
+static bool locked_named_table(THD *thd __attribute__((unused)),
                                TABLE_LIST *table_list)
 {
   for (; table_list ; table_list=table_list->next_local)

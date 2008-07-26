@@ -4587,7 +4587,7 @@ static void add_key_fields_for_nj(JOIN *join, TABLE_LIST *nested_join_table,
 static bool
 update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
                     uint tables, COND *cond,
-                    COND_EQUAL *cond_equal __attribute__((__unused__)),
+                    COND_EQUAL *cond_equal __attribute__((unused)),
                     table_map normal_tables, SELECT_LEX *select_lex,
                     SARGABLE_PARAM **sargables)
 {
@@ -4937,7 +4937,7 @@ best_access_path(JOIN      *join,
                  table_map remaining_tables,
                  uint      idx,
                  double    record_count,
-                 double    read_time __attribute__((__unused__)))
+                 double    read_time __attribute__((unused)))
 {
   KEYUSE *best_key=         0;
   uint best_max_key_part=   0;
@@ -6246,7 +6246,7 @@ find_best(JOIN *join,table_map rest_tables,uint idx,double record_count,
   Find how much space the prevous read not const tables takes in cache.
 */
 
-static void calc_used_field_length(THD *thd __attribute__((__unused__)),
+static void calc_used_field_length(THD *thd __attribute__((unused)),
                                    JOIN_TAB *join_tab)
 {
   uint null_fields,blobs,fields,rec_length;
@@ -10618,7 +10618,7 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
     new_created field
 */
 
-static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
+static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
                                          Item *item, TABLE *table,
                                          Item ***copy_func, bool modify_item,
                                          uint convert_blob_length)
@@ -10742,7 +10742,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
     new_created field
 */
 
-Field *create_tmp_field_for_schema(THD *thd __attribute__((__unused__)),
+Field *create_tmp_field_for_schema(THD *thd __attribute__((unused)),
                                    Item *item, TABLE *table)
 {
   if (item->field_type() == MYSQL_TYPE_VARCHAR)
@@ -10796,7 +10796,7 @@ Field *create_tmp_field(THD *thd, TABLE *table,Item *item, Item::Type type,
                         Item ***copy_func, Field **from_field,
                         Field **default_field,
                         bool group, bool modify_item,
-                        bool table_cant_handle_bit_fields __attribute__((__unused__)),
+                        bool table_cant_handle_bit_fields __attribute__((unused)),
                         bool make_copy_field,
                         uint convert_blob_length)
 {
@@ -16304,7 +16304,7 @@ next_field:
 static ORDER *
 create_distinct_group(THD *thd, Item **ref_pointer_array,
                       ORDER *order_list, List<Item> &fields,
-                      List<Item> &all_fields __attribute__((__unused__)),
+                      List<Item> &all_fields __attribute__((unused)),
                       bool *all_order_by_fields_used)
 {
   List_iterator<Item> li(fields);
@@ -17189,7 +17189,7 @@ static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab)
   @param select   pointer to st_select_lex which subselects joins we will free
 */
 
-void free_underlaid_joins(THD *thd __attribute__((__unused__)),
+void free_underlaid_joins(THD *thd __attribute__((unused)),
                           SELECT_LEX *select)
 {
   for (SELECT_LEX_UNIT *unit= select->first_inner_unit();
@@ -18218,7 +18218,7 @@ static void print_table_array(THD *thd, String *str, TABLE_LIST **table,
 static void print_join(THD *thd,
                        String *str,
                        List<TABLE_LIST> *tables,
-                       enum_query_type query_type __attribute__((__unused__)))
+                       enum_query_type query_type __attribute__((unused)))
 {
   /* List is reversed => we should reverse it before using */
   List_iterator_fast<TABLE_LIST> ti(*tables);

@@ -33,7 +33,7 @@
 
 int Field_time::store(const char *from,
                       uint len,
-                      CHARSET_INFO *cs __attribute__((__unused__)))
+                      CHARSET_INFO *cs __attribute__((unused)))
 {
   MYSQL_TIME ltime;
   long tmp;
@@ -76,7 +76,7 @@ int Field_time::store(const char *from,
 
 
 int Field_time::store_time(MYSQL_TIME *ltime,
-                           timestamp_type time_type __attribute__((__unused__)))
+                           timestamp_type time_type __attribute__((unused)))
 {
   long tmp= ((ltime->month ? 0 : ltime->day * 24L) + ltime->hour) * 10000L +
             (ltime->minute * 100 + ltime->second);

@@ -37,16 +37,16 @@ public:
 	       unireg_check_arg, field_name_arg, cs)
     {}
   enum_field_types type() const { return MYSQL_TYPE_NULL;}
-  int  store(const char *to __attribute__((__unused__)),
-             uint length __attribute__((__unused__)),
-             CHARSET_INFO *cs __attribute__((__unused__)))
+  int  store(const char *to __attribute__((unused)),
+             uint length __attribute__((unused)),
+             CHARSET_INFO *cs __attribute__((unused)))
   { null[0]=1; return 0; }
-  int store(double nr __attribute__((__unused__)))
+  int store(double nr __attribute__((unused)))
   { null[0]=1; return 0; }
-  int store(int64_t nr __attribute__((__unused__)),
-            bool unsigned_val __attribute__((__unused__)))
+  int store(int64_t nr __attribute__((unused)),
+            bool unsigned_val __attribute__((unused)))
   { null[0]=1; return 0; }
-  int store_decimal(const my_decimal *d __attribute__((__unused__)))
+  int store_decimal(const my_decimal *d __attribute__((unused)))
   { null[0]=1; return 0; }
   int reset(void)
   { return 0; }
@@ -55,13 +55,13 @@ public:
   int64_t val_int(void)
   { return 0;}
   my_decimal *val_decimal(my_decimal *) { return 0; }
-  String *val_str(String *value __attribute__((__unused__)),
+  String *val_str(String *value __attribute__((unused)),
                   String *value2)
   { value2->length(0); return value2;}
-  int cmp(const uchar *a __attribute__((__unused__)),
-          const uchar *b __attribute__((__unused__))) { return 0;}
-  void sort_string(uchar *buff __attribute__((__unused__)),
-                   uint length __attribute__((__unused__)))  {}
+  int cmp(const uchar *a __attribute__((unused)),
+          const uchar *b __attribute__((unused))) { return 0;}
+  void sort_string(uchar *buff __attribute__((unused)),
+                   uint length __attribute__((unused)))  {}
   uint32_t pack_length() const { return 0; }
   void sql_type(String &str) const;
   uint size_of() const { return sizeof(*this); }

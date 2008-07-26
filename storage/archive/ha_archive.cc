@@ -198,7 +198,7 @@ error:
     false       OK
 */
 
-int archive_db_done(void *p __attribute__((__unused__)))
+int archive_db_done(void *p __attribute__((unused)))
 {
   hash_free(&archive_open_tables);
   VOID(pthread_mutex_destroy(&archive_mutex));
@@ -218,8 +218,8 @@ ha_archive::ha_archive(handlerton *hton, TABLE_SHARE *table_arg)
   archive_reader_open= false;
 }
 
-int archive_discover(handlerton *hton __attribute__((__unused__)),
-                     THD* thd __attribute__((__unused__)),
+int archive_discover(handlerton *hton __attribute__((unused)),
+                     THD* thd __attribute__((unused)),
                      const char *db,
                      const char *name,
                      uchar **frmblob,
@@ -465,7 +465,7 @@ const char **ha_archive::bas_ext() const
   We open the file we will read from.
 */
 int ha_archive::open(const char *name,
-                     int mode __attribute__((__unused__)),
+                     int mode __attribute__((unused)),
                      uint open_options)
 {
   int rc= 0;
@@ -692,7 +692,7 @@ int ha_archive::real_write_row(uchar *buf, azio_stream *writer)
   the bytes required for the length in the header.
 */
 
-uint32_t ha_archive::max_row_length(const uchar *buf __attribute__((__unused__)))
+uint32_t ha_archive::max_row_length(const uchar *buf __attribute__((unused)))
 {
   uint32_t length= (uint32_t)(table->s->reclength + table->s->fields*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
@@ -843,18 +843,18 @@ error:
 }
 
 
-void ha_archive::get_auto_increment(uint64_t offset __attribute__((__unused__)),
-                                    uint64_t increment __attribute__((__unused__)),
-                                    uint64_t nb_desired_values __attribute__((__unused__)),
-                                    uint64_t *first_value __attribute__((__unused__)),
-                                    uint64_t *nb_reserved_values __attribute__((__unused__)))
+void ha_archive::get_auto_increment(uint64_t offset __attribute__((unused)),
+                                    uint64_t increment __attribute__((unused)),
+                                    uint64_t nb_desired_values __attribute__((unused)),
+                                    uint64_t *first_value __attribute__((unused)),
+                                    uint64_t *nb_reserved_values __attribute__((unused)))
 {
   *nb_reserved_values= UINT64_MAX;
   *first_value= share->archive_write.auto_increment + 1;
 }
 
 /* Initialized at each key walk (called multiple times unlike rnd_init()) */
-int ha_archive::index_init(uint keynr, bool sorted __attribute__((__unused__)))
+int ha_archive::index_init(uint keynr, bool sorted __attribute__((unused)))
 {
   active_index= keynr;
   return(0);
@@ -876,7 +876,7 @@ int ha_archive::index_read(uchar *buf, const uchar *key,
 
 int ha_archive::index_read_idx(uchar *buf, uint index, const uchar *key,
                                uint key_len,
-                               enum ha_rkey_function find_flag __attribute__((__unused__)))
+                               enum ha_rkey_function find_flag __attribute__((unused)))
 {
   int rc;
   bool found= 0;
@@ -1052,7 +1052,7 @@ int ha_archive::rnd_next(uchar *buf)
   needed.
 */
 
-void ha_archive::position(const uchar *record __attribute__((__unused__)))
+void ha_archive::position(const uchar *record __attribute__((unused)))
 {
   my_store_ptr(ref, ref_length, current_position);
   return;
@@ -1096,8 +1096,8 @@ int ha_archive::repair(THD* thd, HA_CHECK_OPT* check_opt)
   The table can become fragmented if data was inserted, read, and then
   inserted again. What we do is open up the file and recompress it completely. 
 */
-int ha_archive::optimize(THD* thd __attribute__((__unused__)),
-                         HA_CHECK_OPT* check_opt __attribute__((__unused__)))
+int ha_archive::optimize(THD* thd __attribute__((unused)),
+                         HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;
   azio_stream writer;
@@ -1369,7 +1369,7 @@ bool ha_archive::is_crashed() const
 */
 
 int ha_archive::check(THD* thd,
-                      HA_CHECK_OPT* check_opt __attribute__((__unused__)))
+                      HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;
   const char *old_proc_info;

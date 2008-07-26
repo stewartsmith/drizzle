@@ -1256,7 +1256,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-sig_handler window_resize(int sig __attribute__((__unused__)))
+sig_handler window_resize(int sig __attribute__((unused)))
 {
   struct winsize window_size;
 
@@ -3445,7 +3445,7 @@ print_tab_data(DRIZZLE_RES *result)
 }
 
 static int
-com_tee(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line )
+com_tee(DYNAMIC_STRING *buffer __attribute__((unused)), char *line )
 {
   char file_name[FN_REFLEN], *end, *param;
 
@@ -3503,7 +3503,7 @@ com_notee(DYNAMIC_STRING *buffer __attribute__((unused)),
 */
 
 static int
-com_pager(DYNAMIC_STRING *buffer __attribute__((__unused__)),
+com_pager(DYNAMIC_STRING *buffer __attribute__((unused)),
           char *line __attribute__((unused)))
 {
   char pager_name[FN_REFLEN], *end, *param;
@@ -3648,7 +3648,7 @@ com_connect(DYNAMIC_STRING *buffer, char *line)
 }
 
 
-static int com_source(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line)
+static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
 {
   char source_name[FN_REFLEN], *end, *param;
   LINE_BUFFER *line_buff;
@@ -4490,7 +4490,7 @@ static void init_username()
   }
 }
 
-static int com_prompt(DYNAMIC_STRING *buffer __attribute__((__unused__)),
+static int com_prompt(DYNAMIC_STRING *buffer __attribute__((unused)),
                       char *line)
 {
   char *ptr=strchr(line, ' ');

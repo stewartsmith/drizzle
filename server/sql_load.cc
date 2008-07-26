@@ -839,7 +839,7 @@ static int
 read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
-               String &row_tag __attribute__((__unused__)),
+               String &row_tag __attribute__((unused)),
                ulong skip_lines,
                bool ignore_check_option_errors)
 {

@@ -520,7 +520,7 @@ const char **ha_myisam::bas_ext() const
 }
 
 
-const char *ha_myisam::index_type(uint key_number __attribute__((__unused__)))
+const char *ha_myisam::index_type(uint key_number __attribute__((unused)))
 {
   return "BTREE";
 }
@@ -732,7 +732,7 @@ int ha_myisam::check(THD* thd, HA_CHECK_OPT* check_opt)
 */
 
 int ha_myisam::analyze(THD *thd,
-                       HA_CHECK_OPT* check_opt __attribute__((__unused__)))
+                       HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int error=0;
   MI_CHECK param;
@@ -1336,7 +1336,7 @@ my_bool index_cond_func_myisam(void *arg)
 C_MODE_END
 
 
-int ha_myisam::index_init(uint idx, bool sorted __attribute__((__unused__)))
+int ha_myisam::index_init(uint idx, bool sorted __attribute__((unused)))
 { 
   active_index=idx;
   //in_range_read= false;
@@ -1495,7 +1495,7 @@ int ha_myisam::rnd_pos(uchar *buf, uchar *pos)
 }
 
 
-void ha_myisam::position(const uchar *record __attribute__((__unused__)))
+void ha_myisam::position(const uchar *record __attribute__((unused)))
 {
   my_off_t row_position= mi_position(file);
   my_store_ptr(ref, ref_length, row_position);
@@ -1613,7 +1613,7 @@ int ha_myisam::external_lock(THD *thd, int lock_type)
 				       F_UNLCK : F_EXTRA_LCK));
 }
 
-THR_LOCK_DATA **ha_myisam::store_lock(THD *thd __attribute__((__unused__)),
+THR_LOCK_DATA **ha_myisam::store_lock(THD *thd __attribute__((unused)),
 				      THR_LOCK_DATA **to,
 				      enum thr_lock_type lock_type)
 {
@@ -1698,9 +1698,9 @@ int ha_myisam::rename_table(const char * from, const char * to)
 }
 
 
-void ha_myisam::get_auto_increment(uint64_t offset __attribute__((__unused__)),
-                                   uint64_t increment __attribute__((__unused__)),
-                                   uint64_t nb_desired_values __attribute__((__unused__)),
+void ha_myisam::get_auto_increment(uint64_t offset __attribute__((unused)),
+                                   uint64_t increment __attribute__((unused)),
+                                   uint64_t nb_desired_values __attribute__((unused)),
                                    uint64_t *first_value,
                                    uint64_t *nb_reserved_values)
 {
@@ -1805,7 +1805,7 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *info,
   return COMPATIBLE_DATA_YES;
 }
 
-int myisam_panic(handlerton *hton __attribute__((__unused__)), ha_panic_function flag)
+int myisam_panic(handlerton *hton __attribute__((unused)), ha_panic_function flag)
 {
   return mi_panic(flag);
 }

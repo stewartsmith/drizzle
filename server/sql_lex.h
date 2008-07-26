@@ -339,11 +339,11 @@ public:
   }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint32_t) size); }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              size_t size __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              size_t size __attribute__((unused)))
   { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              MEM_ROOT *mem_root __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              MEM_ROOT *mem_root __attribute__((unused)))
   {}
   st_select_lex_node(): linkage(UNSPECIFIED_TYPE) {}
   virtual ~st_select_lex_node() {}
@@ -372,7 +372,7 @@ public:
                                         thr_lock_type flags= TL_UNLOCK,
                                         List<Index_hint> *hints= 0,
                                         LEX_STRING *option= 0);
-  virtual void set_lock_for_tables(thr_lock_type lock_type __attribute__((__unused__)))
+  virtual void set_lock_for_tables(thr_lock_type lock_type __attribute__((unused)))
   {}
 
   friend class st_select_lex_unit;
@@ -1601,11 +1601,11 @@ struct st_lex_local: public st_lex
   {
     return (void*) alloc_root(mem_root, (uint32_t) size);
   }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              size_t size __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              size_t size __attribute__((unused)))
   { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              MEM_ROOT *mem_root __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              MEM_ROOT *mem_root __attribute__((unused)))
   { /* Never called */ }
 };
 

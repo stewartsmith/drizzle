@@ -33,7 +33,7 @@
 
 int Field_datetime::store(const char *from,
                           uint len,
-                          CHARSET_INFO *cs __attribute__((__unused__)))
+                          CHARSET_INFO *cs __attribute__((unused)))
 {
   MYSQL_TIME time_tmp;
   int error;
@@ -86,7 +86,7 @@ int Field_datetime::store(double nr)
 
 
 int Field_datetime::store(int64_t nr,
-                          bool unsigned_val __attribute__((__unused__)))
+                          bool unsigned_val __attribute__((unused)))
 {
   MYSQL_TIME not_used;
   int error;

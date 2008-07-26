@@ -285,7 +285,7 @@ public:
 
   void fix_num_length_and_dec();
   void find_num_type();
-  String *str_op(String *str __attribute__((__unused__)))
+  String *str_op(String *str __attribute__((unused)))
   { assert(0); return 0; }
 };
 
@@ -303,7 +303,7 @@ class Item_num_op :public Item_func_numhybrid
   }
 
   void find_num_type();
-  String *str_op(String *str __attribute__((__unused__)))
+  String *str_op(String *str __attribute__((unused)))
   { assert(0); return 0; }
 };
 
@@ -991,7 +991,7 @@ class Item_udf_func :public Item_func
 {
 protected:
   udf_handler udf;
-  bool is_expensive_processor(uchar *arg __attribute__((__unused__)))
+  bool is_expensive_processor(uchar *arg __attribute__((unused)))
   { return true; }
 
 public:
@@ -1001,7 +1001,7 @@ public:
     :Item_func(list), udf(udf_arg) {}
   const char *func_name() const { return udf.name(); }
   enum Functype functype() const   { return UDF_FUNC; }
-  bool fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
+  bool fix_fields(THD *thd, Item **ref __attribute__((unused)))
   {
     assert(fixed == 0);
     bool res= udf.fix_fields(thd, this, arg_count, args);

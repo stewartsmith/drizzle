@@ -137,7 +137,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
 */
 
 bool
-Item_func::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
+Item_func::fix_fields(THD *thd, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   Item **arg,**arg_end;
@@ -195,7 +195,7 @@ Item_func::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
 
 
 void Item_func::fix_after_pullout(st_select_lex *new_parent,
-                                  Item **ref __attribute__((__unused__)))
+                                  Item **ref __attribute__((unused)))
 {
   Item **arg,**arg_end;
 
@@ -4320,7 +4320,7 @@ enum Item_result Item_func_get_user_var::result_type() const
 
 
 void Item_func_get_user_var::print(String *str,
-                                   enum_query_type query_type __attribute__((__unused__)))
+                                   enum_query_type query_type __attribute__((unused)))
 {
   str->append(STRING_WITH_LEN("(@"));
   str->append(name.str,name.length);
@@ -4329,7 +4329,7 @@ void Item_func_get_user_var::print(String *str,
 
 
 bool Item_func_get_user_var::eq(const Item *item,
-                                bool binary_cmp __attribute__((__unused__))) const
+                                bool binary_cmp __attribute__((unused))) const
 {
   /* Assume we don't have rtti */
   if (this == item)
@@ -4391,14 +4391,14 @@ int64_t Item_user_var_as_out_param::val_int()
 }
 
 
-String* Item_user_var_as_out_param::val_str(String *str __attribute__((__unused__)))
+String* Item_user_var_as_out_param::val_str(String *str __attribute__((unused)))
 {
   assert(0);
   return 0;
 }
 
 
-my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer __attribute__((__unused__)))
+my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer __attribute__((unused)))
 {
   assert(0);
   return 0;
@@ -4406,7 +4406,7 @@ my_decimal* Item_user_var_as_out_param::val_decimal(my_decimal *decimal_buffer _
 
 
 void Item_user_var_as_out_param::print(String *str,
-                                       enum_query_type query_type __attribute__((__unused__)))
+                                       enum_query_type query_type __attribute__((unused)))
 {
   str->append('@');
   str->append(name.str,name.length);

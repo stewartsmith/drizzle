@@ -320,7 +320,7 @@ unpack_row(Relay_log_info const *rli,
 */
 int prepare_record(TABLE *const table,
                    const MY_BITMAP *cols,
-                   uint width __attribute__((__unused__)),
+                   uint width __attribute__((unused)),
                    const bool check)
 {
 

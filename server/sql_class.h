@@ -2009,7 +2009,7 @@ protected:
 public:
   select_result();
   virtual ~select_result() {};
-  virtual int prepare(List<Item> &list __attribute__((__unused__)),
+  virtual int prepare(List<Item> &list __attribute__((unused)),
                       SELECT_LEX_UNIT *u)
   {
     unit= u;
@@ -2025,7 +2025,7 @@ public:
   { return fields.elements; }
   virtual bool send_fields(List<Item> &list, uint flags)=0;
   virtual bool send_data(List<Item> &items)=0;
-  virtual bool initialize_tables (JOIN  __attribute__((__unused__)) *join=0)
+  virtual bool initialize_tables (JOIN  __attribute__((unused)) *join=0)
   { return 0; }
   virtual void send_error(uint errcode,const char *err);
   virtual bool send_eof()=0;
@@ -2058,10 +2058,10 @@ class select_result_interceptor: public select_result
 {
 public:
   select_result_interceptor() {}              /* Remove gcc warning */
-  uint field_count(List<Item> &fields __attribute__((__unused__))) const
+  uint field_count(List<Item> &fields __attribute__((unused))) const
   { return 0; }
-  bool send_fields(List<Item> &fields __attribute__((__unused__)),
-                   uint flag __attribute__((__unused__))) { return false; }
+  bool send_fields(List<Item> &fields __attribute__((unused)),
+                   uint flag __attribute__((unused))) { return false; }
 };
 
 

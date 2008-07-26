@@ -769,7 +769,7 @@ void calculate_interval_lengths(CHARSET_INFO *cs, TYPELIB *interval,
 int prepare_create_field(Create_field *sql_field, 
                          uint *blob_columns,
                          int *timestamps, int *timestamps_with_niladic,
-                         int64_t table_flags __attribute__((__unused__)))
+                         int64_t table_flags __attribute__((unused)))
 {
   unsigned int dup_val_count;
 
@@ -1688,7 +1688,7 @@ static void set_table_default_charset(THD *thd,
         In this case the error is given
 */
 
-static bool prepare_blob_field(THD *thd __attribute__((__unused__)),
+static bool prepare_blob_field(THD *thd __attribute__((unused)),
                                Create_field *sql_field)
 {
 
@@ -2924,7 +2924,7 @@ bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* tables,
     0	  ok
 */
 
-int reassign_keycache_tables(THD *thd __attribute__((__unused__)),
+int reassign_keycache_tables(THD *thd __attribute__((unused)),
                              KEY_CACHE *src_cache,
                              KEY_CACHE *dst_cache)
 {

@@ -269,7 +269,7 @@ int my_decimal2int(uint mask, const my_decimal *d, bool unsigned_flag,
 
 
 inline
-int my_decimal2double(uint mask __attribute__((__unused__)), 
+int my_decimal2double(uint mask __attribute__((unused)), 
                       const my_decimal *d, double *result)
 {
   /* No need to call check_result as this will always succeed */

@@ -166,7 +166,7 @@ struct Hybrid_type_traits
   { val->real/= uint64_t2double(u); }
 
   virtual int64_t val_int(Hybrid_type *val,
-                           bool unsigned_flag __attribute__((__unused__))) const
+                           bool unsigned_flag __attribute__((unused))) const
   { return (int64_t) rint(val->real); }
   virtual double val_real(Hybrid_type *val) const { return val->real; }
   virtual my_decimal *val_decimal(Hybrid_type *val, my_decimal *buf) const;
@@ -192,7 +192,7 @@ struct Hybrid_type_traits_decimal: public Hybrid_type_traits
   virtual int64_t val_int(Hybrid_type *val, bool unsigned_flag) const;
   virtual double val_real(Hybrid_type *val) const;
   virtual my_decimal *val_decimal(Hybrid_type *val,
-                                  my_decimal *buf __attribute__((__unused__))) const
+                                  my_decimal *buf __attribute__((unused))) const
   { return &val->dec_buf[val->used_dec_buf_no]; }
   virtual String *val_str(Hybrid_type *val, String *buf, uint8_t decimals) const;
   static const Hybrid_type_traits_decimal *instance();
@@ -216,18 +216,18 @@ struct Hybrid_type_traits_integer: public Hybrid_type_traits
   { val->integer/= (int64_t) u; }
 
   virtual int64_t val_int(Hybrid_type *val,
-                           bool unsigned_flag __attribute__((__unused__))) const
+                           bool unsigned_flag __attribute__((unused))) const
   { return val->integer; }
   virtual double val_real(Hybrid_type *val) const
   { return (double) val->integer; }
   virtual my_decimal *val_decimal(Hybrid_type *val,
-                                  my_decimal *buf __attribute__((__unused__))) const
+                                  my_decimal *buf __attribute__((unused))) const
   {
     int2my_decimal(E_DEC_FATAL_ERROR, val->integer, 0, &val->dec_buf[2]);
     return &val->dec_buf[2];
   }
   virtual String *val_str(Hybrid_type *val, String *buf,
-                          uint8_t decimals __attribute__((__unused__))) const
+                          uint8_t decimals __attribute__((unused))) const
   { buf->set(val->integer, &my_charset_bin); return buf;}
   static const Hybrid_type_traits_integer *instance();
   Hybrid_type_traits_integer() {};
@@ -435,7 +435,7 @@ class Item
   void operator=(Item &);
   /* Cache of the result of is_expensive(). */
   int8_t is_expensive_cache;
-  virtual bool is_expensive_processor(uchar *arg __attribute__((__unused__)))
+  virtual bool is_expensive_processor(uchar *arg __attribute__((unused)))
   { return 0; }
 
 public:
@@ -443,11 +443,11 @@ public:
   { return sql_alloc(size); }
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return alloc_root(mem_root, size); }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              size_t size __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              size_t size __attribute__((unused)))
   { TRASH(ptr, size); }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              MEM_ROOT *mem_root __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              MEM_ROOT *mem_root __attribute__((unused)))
   {}
 
   enum Type {FIELD_ITEM= 0, FUNC_ITEM, SUM_FUNC_ITEM, STRING_ITEM,
@@ -520,8 +520,8 @@ public:
     Fix after some tables has been pulled out. Basically re-calculate all
     attributes that are dependent on the tables.
   */
-  virtual void fix_after_pullout(st_select_lex *new_parent __attribute__((__unused__)),
-                                 Item **ref __attribute__((__unused__))) {};
+  virtual void fix_after_pullout(st_select_lex *new_parent __attribute__((unused)),
+                                 Item **ref __attribute__((unused))) {};
 
   /*
     should be used in case where we are sure that we do not need
@@ -584,8 +584,8 @@ public:
         - If the value of the function is NULL then the bound is the
           smallest possible value of INT64_MIN
   */
-  virtual int64_t val_int_endpoint(bool left_endp __attribute__((__unused__)),
-                                    bool *incl_endp __attribute__((__unused__)))
+  virtual int64_t val_int_endpoint(bool left_endp __attribute__((unused)),
+                                    bool *incl_endp __attribute__((unused)))
   { assert(0); return 0; }
 
 
@@ -698,7 +698,7 @@ public:
 
   virtual Field *get_tmp_table_field(void) { return 0; }
   /* This is also used to create fields in CREATE ... SELECT: */
-  virtual Field *tmp_table_field(TABLE *t_arg __attribute__((__unused__)))
+  virtual Field *tmp_table_field(TABLE *t_arg __attribute__((unused)))
   { return 0; }
   virtual const char *full_name(void) const { return name ? name : "???"; }
 
@@ -766,16 +766,16 @@ public:
     mysql_register_view().
   */
   virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((__unused__)))
+                            enum_query_type query_type __attribute__((unused)))
   {
     str->append(full_name());
   }
 
   void print_item_w_name(String *, enum_query_type query_type);
   virtual void update_used_tables() {}
-  virtual void split_sum_func(THD *thd __attribute__((__unused__)),
-                              Item **ref_pointer_array __attribute__((__unused__)),
-                              List<Item> &fields __attribute__((__unused__))) {}
+  virtual void split_sum_func(THD *thd __attribute__((unused)),
+                              Item **ref_pointer_array __attribute__((unused)),
+                              List<Item> &fields __attribute__((unused))) {}
   /* Called for items that really have to be split */
   void split_sum_func2(THD *thd, Item **ref_pointer_array, List<Item> &fields,
                        Item **ref, bool skip_registered);
@@ -812,18 +812,18 @@ public:
     set field of temporary table for Item which can be switched on temporary
     table during query processing (grouping and so on)
   */
-  virtual void set_result_field(Field *field __attribute__((__unused__))) {}
+  virtual void set_result_field(Field *field __attribute__((unused))) {}
   virtual bool is_result_field(void) { return 0; }
   virtual bool is_bool_func(void) { return 0; }
-  virtual void save_in_result_field(bool no_conversions __attribute__((__unused__)))
+  virtual void save_in_result_field(bool no_conversions __attribute__((unused)))
   {}
   /*
     set value of aggregate function in case of no rows for grouping were found
   */
   virtual void no_rows_in_result(void) {}
-  virtual Item *copy_or_same(THD *thd __attribute__((__unused__)))
+  virtual Item *copy_or_same(THD *thd __attribute__((unused)))
   { return this; }
-  virtual Item *copy_andor_structure(THD *thd  __attribute__((__unused__)))
+  virtual Item *copy_andor_structure(THD *thd  __attribute__((unused)))
   { return this; }
   virtual Item *real_item(void) { return this; }
   virtual Item *get_tmp_table_item(THD *thd) { return copy_or_same(thd); }
@@ -831,8 +831,8 @@ public:
   static CHARSET_INFO *default_charset();
   virtual CHARSET_INFO *compare_collation() { return NULL; }
 
-  virtual bool walk(Item_processor processor __attribute__((__unused__)),
-                    bool walk_subquery __attribute__((__unused__)),
+  virtual bool walk(Item_processor processor __attribute__((unused)),
+                    bool walk_subquery __attribute__((unused)),
                     uchar *arg)
   {
     return (this->*processor)(arg);
@@ -864,30 +864,30 @@ public:
     return 0;
   }
 
-   virtual void traverse_cond(Cond_traverser traverser __attribute__((__unused__)),
+   virtual void traverse_cond(Cond_traverser traverser __attribute__((unused)),
                               void *arg,
-                              traverse_order order __attribute__((__unused__)))
+                              traverse_order order __attribute__((unused)))
    {
      (*traverser)(this, arg);
    }
 
-  virtual bool remove_dependence_processor(uchar * arg __attribute__((__unused__)))
+  virtual bool remove_dependence_processor(uchar * arg __attribute__((unused)))
   { return 0; }
-  virtual bool remove_fixed(uchar * arg __attribute__((__unused__)))
+  virtual bool remove_fixed(uchar * arg __attribute__((unused)))
   {
     fixed= 0;
     return 0;
   }
-  virtual bool cleanup_processor(uchar *arg __attribute__((__unused__)));
-  virtual bool collect_item_field_processor(uchar * arg __attribute__((__unused__)))
+  virtual bool cleanup_processor(uchar *arg __attribute__((unused)));
+  virtual bool collect_item_field_processor(uchar * arg __attribute__((unused)))
   { return 0; }
-  virtual bool find_item_in_field_list_processor(uchar *arg __attribute__((__unused__)))
+  virtual bool find_item_in_field_list_processor(uchar *arg __attribute__((unused)))
  { return 0; }
-  virtual bool change_context_processor(uchar *context __attribute__((__unused__)))
+  virtual bool change_context_processor(uchar *context __attribute__((unused)))
   { return 0; }
-  virtual bool reset_query_id_processor(uchar *query_id_arg __attribute__((__unused__)))
+  virtual bool reset_query_id_processor(uchar *query_id_arg __attribute__((unused)))
   { return 0; }
-  virtual bool register_field_in_read_map(uchar *arg __attribute__((__unused__)))
+  virtual bool register_field_in_read_map(uchar *arg __attribute__((unused)))
   { return 0; }
   virtual bool subst_argument_checker(uchar **arg)
   {
@@ -896,9 +896,9 @@ public:
     return true;
   }
 
-  virtual Item *equal_fields_propagator(uchar * arg __attribute__((__unused__))) { return this; }
-  virtual bool set_no_const_sub(uchar *arg __attribute__((__unused__))) { return false; }
-  virtual Item *replace_equal_field(uchar * arg __attribute__((__unused__))) { return this; }
+  virtual Item *equal_fields_propagator(uchar * arg __attribute__((unused))) { return this; }
+  virtual bool set_no_const_sub(uchar *arg __attribute__((unused))) { return false; }
+  virtual Item *replace_equal_field(uchar * arg __attribute__((unused))) { return this; }
 
   /*
     For SP local variable returns pointer to Item representing its
@@ -911,12 +911,12 @@ public:
     For SP local variable returns address of pointer to Item representing its
     current value and pointer passed via parameter otherwise.
   */
-  virtual Item **this_item_addr(THD *thd __attribute__((__unused__)), Item **addr_arg) { return addr_arg; }
+  virtual Item **this_item_addr(THD *thd __attribute__((unused)), Item **addr_arg) { return addr_arg; }
 
   // Row emulation
   virtual uint cols() { return 1; }
-  virtual Item* element_index(uint i __attribute__((__unused__))) { return this; }
-  virtual Item** addr(uint i __attribute__((__unused__))) { return 0; }
+  virtual Item* element_index(uint i __attribute__((unused))) { return this; }
+  virtual Item** addr(uint i __attribute__((unused))) { return 0; }
   virtual bool check_cols(uint c);
   // It is not row => null inside is impossible
   virtual bool null_inside() { return 0; }
@@ -926,8 +926,8 @@ public:
   Field *tmp_table_field_from_field_type(TABLE *table, bool fixed_length);
   virtual Item_field *filed_for_view_update() { return 0; }
 
-  virtual Item *neg_transformer(THD *thd __attribute__((__unused__))) { return NULL; }
-  virtual Item *update_value_transformer(uchar *select_arg __attribute__((__unused__))) { return this; }
+  virtual Item *neg_transformer(THD *thd __attribute__((unused))) { return NULL; }
+  virtual Item *update_value_transformer(uchar *select_arg __attribute__((unused))) { return this; }
   virtual Item *safe_charset_converter(CHARSET_INFO *tocs);
   void delete_self()
   {
@@ -1146,7 +1146,7 @@ public:
   }
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(TABLE *t_arg __attribute__((__unused__))) { return result_field; }
+  Field *tmp_table_field(TABLE *t_arg __attribute__((unused))) { return result_field; }
   bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_date_result(MYSQL_TIME *ltime,uint fuzzydate);
   bool get_time(MYSQL_TIME *ltime);
@@ -1205,7 +1205,7 @@ public:
   bool is_null() { return 1; }
 
   virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((__unused__)))
+                            enum_query_type query_type __attribute__((unused)))
   {
     str->append(STRING_WITH_LEN("NULL"));
   }
@@ -1437,7 +1437,7 @@ public:
   int64_t val_int();
   double val_real();
   String *val_str(String*);
-  my_decimal *val_decimal(my_decimal *val __attribute__((__unused__)))
+  my_decimal *val_decimal(my_decimal *val __attribute__((unused)))
   { return &decimal_value; }
   int save_in_field(Field *field, bool no_conversions);
   bool basic_const_item() const { return 1; }
@@ -1516,7 +1516,7 @@ public:
   {}
 
   virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((__unused__)))
+                            enum_query_type query_type __attribute__((unused)))
   {
     str->append(func_name);
   }
@@ -1669,7 +1669,7 @@ public:
   Item *safe_charset_converter(CHARSET_INFO *tocs);
 
   virtual inline void print(String *str,
-                            enum_query_type query_type __attribute__((__unused__)))
+                            enum_query_type query_type __attribute__((unused)))
   {
     str->append(func_name);
   }
@@ -1772,7 +1772,7 @@ public:
   {}
   ~Item_result_field() {}			/* Required with gcc 2.95 */
   Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(TABLE *t_arg __attribute__((__unused__)))
+  Field *tmp_table_field(TABLE *t_arg __attribute__((unused)))
   { return result_field; }
   table_map used_tables() const { return 1; }
   virtual void fix_length_and_dec()=0;
@@ -2006,7 +2006,7 @@ public:
                      alias_name_used_arg),
     outer_ref(0), in_sum_func(0), found_in_select_list(1)
   {}
-  void save_in_result_field(bool no_conversions __attribute__((__unused__)))
+  void save_in_result_field(bool no_conversions __attribute__((unused)))
   {
     outer_ref->save_org_in_field(result_field);
   }
@@ -2132,7 +2132,7 @@ public:
   void make_field(Send_field *field) { item->make_field(field); }
   void copy();
   int save_in_field(Field *field,
-                    bool no_conversions __attribute__((__unused__)))
+                    bool no_conversions __attribute__((unused)))
   {
     return save_str_value_in_field(field, &str_value);
   }
@@ -2302,7 +2302,7 @@ public:
 
   void set_used_tables(table_map map) { used_table_map= map; }
 
-  virtual bool allocate(uint i __attribute__((__unused__)))
+  virtual bool allocate(uint i __attribute__((unused)))
   { return 0; }
   virtual bool setup(Item *item)
   {
@@ -2327,7 +2327,7 @@ public:
     return cached_field ? cached_field->eq_def (field) : false;
   }
   bool eq(const Item *item,
-          bool binary_cmp __attribute__((__unused__))) const
+          bool binary_cmp __attribute__((unused))) const
   {
     return this == item;
   }
@@ -2449,7 +2449,7 @@ public:
     illegal_method_call((const char*)"val_str");
     return 0;
   };
-  my_decimal *val_decimal(my_decimal *val __attribute__((__unused__)))
+  my_decimal *val_decimal(my_decimal *val __attribute__((unused)))
   {
     illegal_method_call((const char*)"val_decimal");
     return 0;

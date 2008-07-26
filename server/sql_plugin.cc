@@ -151,8 +151,8 @@ public:
 
   static void *operator new(size_t size, MEM_ROOT *mem_root)
   { return (void*) alloc_root(mem_root, (uint) size); }
-  static void operator delete(void *ptr_arg __attribute__((__unused__)),
-                              size_t size __attribute__((__unused__)))
+  static void operator delete(void *ptr_arg __attribute__((unused)),
+                              size_t size __attribute__((unused)))
   { TRASH(ptr_arg, size); }
 
   sys_var_pluginvar(const char *name_arg,
@@ -168,10 +168,10 @@ public:
   TYPELIB* plugin_var_typelib(void);
   uchar* value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   bool check(THD *thd, set_var *var);
-  bool check_default(enum_var_type type __attribute__((__unused__)))
+  bool check_default(enum_var_type type __attribute__((unused)))
     { return is_readonly(); }
   void set_default(THD *thd,
-                   enum_var_type type __attribute__((__unused__)));
+                   enum_var_type type __attribute__((unused)));
   bool update(THD *thd, set_var *var);
 };
 
@@ -1320,7 +1320,7 @@ typedef bool *(*mysql_sys_var_ptr_p)(THD* a_thd, int offset);
   default variable data check and update functions
 ****************************************************************************/
 
-static int check_func_bool(THD *thd __attribute__((__unused__)),
+static int check_func_bool(THD *thd __attribute__((unused)),
                            struct st_mysql_sys_var *var,
                            void *save, st_mysql_value *value)
 {
@@ -1420,7 +1420,7 @@ static int check_func_int64_t(THD *thd, struct st_mysql_sys_var *var,
 }
 
 static int check_func_str(THD *thd,
-                          struct st_mysql_sys_var *var __attribute__((__unused__)),
+                          struct st_mysql_sys_var *var __attribute__((unused)),
                           void *save, st_mysql_value *value)
 {
   char buff[STRING_BUFFER_USUAL_SIZE];
@@ -1435,7 +1435,7 @@ static int check_func_str(THD *thd,
 }
 
 
-static int check_func_enum(THD *thd __attribute__((__unused__)),
+static int check_func_enum(THD *thd __attribute__((unused)),
                            struct st_mysql_sys_var *var,
                            void *save, st_mysql_value *value)
 {
@@ -1482,7 +1482,7 @@ err:
 }
 
 
-static int check_func_set(THD *thd __attribute__((__unused__)),
+static int check_func_set(THD *thd __attribute__((unused)),
                           struct st_mysql_sys_var *var,
                           void *save, st_mysql_value *value)
 {
@@ -1533,39 +1533,39 @@ err:
 }
 
 
-static void update_func_bool(THD *thd __attribute__((__unused__)),
-                             struct st_mysql_sys_var *var __attribute__((__unused__)),
+static void update_func_bool(THD *thd __attribute__((unused)),
+                             struct st_mysql_sys_var *var __attribute__((unused)),
                              void *tgt, const void *save)
 {
   *(bool *) tgt= *(int *) save ? 1 : 0;
 }
 
 
-static void update_func_int(THD *thd __attribute__((__unused__)),
-                            struct st_mysql_sys_var *var __attribute__((__unused__)),
+static void update_func_int(THD *thd __attribute__((unused)),
+                            struct st_mysql_sys_var *var __attribute__((unused)),
                              void *tgt, const void *save)
 {
   *(int *)tgt= *(int *) save;
 }
 
 
-static void update_func_long(THD *thd __attribute__((__unused__)),
-                             struct st_mysql_sys_var *var __attribute__((__unused__)),
+static void update_func_long(THD *thd __attribute__((unused)),
+                             struct st_mysql_sys_var *var __attribute__((unused)),
                              void *tgt, const void *save)
 {
   *(long *)tgt= *(long *) save;
 }
 
 
-static void update_func_int64_t(THD *thd __attribute__((__unused__)),
-                                 struct st_mysql_sys_var *var __attribute__((__unused__)),
+static void update_func_int64_t(THD *thd __attribute__((unused)),
+                                 struct st_mysql_sys_var *var __attribute__((unused)),
                                  void *tgt, const void *save)
 {
   *(int64_t *)tgt= *(uint64_t *) save;
 }
 
 
-static void update_func_str(THD *thd __attribute__((__unused__)), struct st_mysql_sys_var *var,
+static void update_func_str(THD *thd __attribute__((unused)), struct st_mysql_sys_var *var,
                              void *tgt, const void *save)
 {
   char *old= *(char **) tgt;
@@ -1908,7 +1908,7 @@ void plugin_thdvar_init(THD *thd)
 /*
   Unlocks all system variables which hold a reference
 */
-static void unlock_variables(THD *thd __attribute__((__unused__)),
+static void unlock_variables(THD *thd __attribute__((unused)),
                              struct system_variables *vars)
 {
   intern_plugin_unlock(NULL, vars->table_plugin);
@@ -2086,7 +2086,7 @@ TYPELIB* sys_var_pluginvar::plugin_var_typelib(void)
 
 
 uchar* sys_var_pluginvar::value_ptr(THD *thd, enum_var_type type,
-                                    LEX_STRING *base __attribute__((__unused__)))
+                                    LEX_STRING *base __attribute__((unused)))
 {
   uchar* result;
 
@@ -2342,8 +2342,8 @@ extern "C" bool get_one_plugin_option(int optid, const struct my_option *,
                                          char *);
 
 bool get_one_plugin_option(int optid __attribute__((unused)),
-                              const struct my_option *opt __attribute__((__unused__)),
-                              char *argument __attribute__((__unused__)))
+                              const struct my_option *opt __attribute__((unused)),
+                              char *argument __attribute__((unused)))
 {
   return 0;
 }

@@ -2976,7 +2976,7 @@ int Format_description_log_event::do_update_pos(Relay_log_info *rli)
 }
 
 Log_event::enum_skip_reason
-Format_description_log_event::do_shall_skip(Relay_log_info *rli __attribute__((__unused__)))
+Format_description_log_event::do_shall_skip(Relay_log_info *rli __attribute__((unused)))
 {
   return Log_event::EVENT_SKIP_NOT;
 }
@@ -4269,7 +4269,7 @@ void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 
 
 #if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
-int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((__unused__)))
+int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   /* For a slave Xid_log_event is COMMIT */
   general_log_print(thd, COM_QUERY,
@@ -4818,7 +4818,7 @@ Slave_log_event::Slave_log_event(const char* buf, uint event_len)
 
 
 #ifndef MYSQL_CLIENT
-int Slave_log_event::do_apply_event(Relay_log_info const *rli __attribute__((__unused__)))
+int Slave_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   if (mysql_bin_log.is_open())
     mysql_bin_log.write(this);
@@ -5379,7 +5379,7 @@ void Delete_file_log_event::pack_info(Protocol *protocol)
 */
 
 #if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
-int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute__((__unused__)))
+int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   char fname[FN_REFLEN+10];
   char *ext= slave_load_file_stem(fname, file_id, server_id, ".data");
@@ -6770,7 +6770,7 @@ int Table_map_log_event::save_field_metadata()
  */
 #if !defined(MYSQL_CLIENT)
 Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
-                                         bool is_transactional __attribute__((__unused__)),
+                                         bool is_transactional __attribute__((unused)),
                                          uint16_t flags)
   : Log_event(thd, 0, true),
     m_table(tbl),

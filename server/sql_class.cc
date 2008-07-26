@@ -239,9 +239,9 @@ int thd_tablespace_op(const THD *thd)
 
 extern "C"
 const char *set_thd_proc_info(THD *thd, const char *info,
-                              const char *calling_function __attribute__((__unused__)),
-                              const char *calling_file __attribute__((__unused__)),
-                              const unsigned int calling_line __attribute__((__unused__)))
+                              const char *calling_function __attribute__((unused)),
+                              const char *calling_file __attribute__((unused)),
+                              const unsigned int calling_line __attribute__((unused)))
 {
   const char *old_info= thd->proc_info;
   thd->proc_info= info;
@@ -432,7 +432,7 @@ Diagnostics_area::set_eof_status(THD *thd)
 */
 
 void
-Diagnostics_area::set_error_status(THD *thd __attribute__((__unused__)),
+Diagnostics_area::set_error_status(THD *thd __attribute__((unused)),
                                    uint sql_errno_arg,
                                    const char *message_arg)
 {
@@ -1250,14 +1250,14 @@ struct Item_change_record: public ilink
   Item **place;
   Item *old_value;
   /* Placement new was hidden by `new' in ilink (TODO: check): */
-  static void *operator new(size_t size __attribute__((__unused__)),
+  static void *operator new(size_t size __attribute__((unused)),
                             void *mem)
     { return mem; }
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              size_t size __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              size_t size __attribute__((unused)))
     {}
-  static void operator delete(void *ptr __attribute__((__unused__)),
-                              void *mem __attribute__((__unused__)))
+  static void operator delete(void *ptr __attribute__((unused)),
+                              void *mem __attribute__((unused)))
     { /* never called */ }
 };
 
@@ -2044,7 +2044,7 @@ bool select_max_min_finder_subselect::cmp_str()
      sortcmp(val1, val2, cache->collation.collation) < 0);
 }
 
-bool select_exists_subselect::send_data(List<Item> &items __attribute__((__unused__)))
+bool select_exists_subselect::send_data(List<Item> &items __attribute__((unused)))
 {
   Item_exists_subselect *it= (Item_exists_subselect *)item;
   if (unit->offset_limit_cnt)
