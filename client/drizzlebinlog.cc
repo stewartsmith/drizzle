@@ -1151,13 +1151,10 @@ static void cleanup()
     drizzle_close(drizzle);
 }
 
-#include <help_start.h>
-
 static void print_version()
 {
   printf("%s Ver 3.3 for %s at %s\n", my_progname, SYSTEM_TYPE, MACHINE_TYPE);
 }
-
 
 static void usage()
 {
@@ -1196,8 +1193,6 @@ static my_time_t convert_str_to_timestamp(const char* str)
   return
     my_system_gmt_sec(&l_time, &dummy_my_timezone, &dummy_in_dst_time_gap);
 }
-
-#include <help_end.h>
 
 extern "C" bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),

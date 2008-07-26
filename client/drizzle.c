@@ -25,11 +25,11 @@
  *   Michael 'Monty' Widenius
  *   Andi Gutmans  <andi@zend.com>
  *   Zeev Suraski  <zeev@zend.com>
- *   Jani Tolonen  <jani@drizzle.com>
- *   Matt Wagner   <matt@drizzle.com>
- *   Jeremy Cole   <jcole@drizzle.com>
- *   Tonu Samuel   <tonu@drizzle.com>
- *   Harrison Fisk <harrison@drizzle.com>
+ *   Jani Tolonen  <jani@mysql.com>
+ *   Matt Wagner   <matt@mysql.com>
+ *   Jeremy Cole   <jcole@mysql.com>
+ *   Tonu Samuel   <tonu@mysql.com>
+ *   Harrison Fisk <harrison@mysql.com>
  *
  **/
 
@@ -245,11 +245,11 @@ static int get_field_disp_length(DRIZZLE_FIELD * field);
 /* A structure which contains information on the commands this program
    can understand. */
 typedef struct {
-  const char *name;		/* User printable name of the function. */
-  char cmd_char;		/* msql command character */
+  const char *name;        /* User printable name of the function. */
+  char cmd_char;        /* msql command character */
   int (*func)(DYNAMIC_STRING *str,char *); /* Function to call to do the job. */
-  bool takes_params;		/* Max parameters for command */
-  const char *doc;		/* Documentation for this function.  */
+  bool takes_params;        /* Max parameters for command */
+  const char *doc;        /* Documentation for this function.  */
 } COMMANDS;
 
 
@@ -1585,7 +1585,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       char *start= argument;
       my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
       opt_password= strdup(argument);
-      while (*argument) *argument++= 'x';		// Destroy argument
+      while (*argument) *argument++= 'x';        // Destroy argument
       if (*start)
         start[1]=0 ;
       tty_password= 0;
@@ -4244,7 +4244,8 @@ static ulong start_timer(void)
 
 
 /**
-   Write as many as 52+1 bytes to buff, in the form of a legible duration of time.
+   Write as many as 52+1 bytes to buff, in the form of a legible
+   duration of time.
 
    len("4294967296 days, 23 hours, 59 minutes, 60.00 seconds")  ->  52
 */
@@ -4491,11 +4492,12 @@ static void init_username()
     DRIZZLE_ROW cur=drizzle_fetch_row(result);
     full_username= strdup(cur[0]);
     part_username= strdup(strtok(cur[0],"@"));
-    (void) drizzle_fetch_row(result);		// Read eof
+    (void) drizzle_fetch_row(result);        // Read eof
   }
 }
 
-static int com_prompt(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line)
+static int com_prompt(DYNAMIC_STRING *buffer __attribute__((__unused__)),
+                      char *line)
 {
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;

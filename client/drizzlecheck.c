@@ -185,14 +185,11 @@ static uint fixed_name_length(const char *name);
 static char *fix_table_name(char *dest, char *src);
 int what_to_do = 0;
 
-#include <help_start.h>
-
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n", my_progname, CHECK_VERSION,
    MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
 } /* print_version */
-
 
 static void usage(void)
 {
@@ -220,8 +217,6 @@ static void usage(void)
   my_print_help(my_long_options);
   my_print_variables(my_long_options);
 } /* usage */
-
-#include <help_end.h>
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),

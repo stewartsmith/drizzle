@@ -244,10 +244,6 @@ enum options_mp {OPT_CHARSETS_DIR_MP=256, OPT_AUTO_CLOSE};
 
 static struct my_option my_long_options[] =
 {
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"backup", 'b', "Make a backup of the table as table_name.OLD.",
    (char**) &backup, (char**) &backup, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"character-sets-dir", OPT_CHARSETS_DIR_MP,
@@ -279,8 +275,6 @@ static struct my_option my_long_options[] =
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-#include <help_start.h>
-
 static void print_version(void)
 {
   VOID(printf("%s Ver 1.23 for %s on %s\n",
@@ -305,8 +299,6 @@ static void usage(void)
   print_defaults("my", load_default_groups);
   my_print_variables(my_long_options);
 }
-
-#include <help_end.h>
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),

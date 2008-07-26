@@ -531,7 +531,6 @@ static SYMBOL symbols[] = {
   { "XML",              SYM(XML_SYM)}, /* LOAD XML Arnold/Erik */
   { "YEAR",		SYM(YEAR_SYM)},
   { "YEAR_MONTH",	SYM(YEAR_MONTH_SYM)},
-  { "ZEROFILL",		SYM(ZEROFILL)},
 };
 
 

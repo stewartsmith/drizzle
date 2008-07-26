@@ -476,8 +476,6 @@ static char *quote_name(const char *name, char *buff, bool force);
 char check_if_ignore_table(const char *table_name, char *table_type);
 static char *primary_key_fields(const char *table_name);
 
-#include <help_start.h>
-
 /*
   Print the supplied message if in verbose mode
 
@@ -486,7 +484,6 @@ static char *primary_key_fields(const char *table_name);
     fmt   format specifier
     ...   variable number of parameters
 */
-
 static void verbose_msg(const char *fmt, ...)
 {
   va_list args;
@@ -550,9 +547,6 @@ static void short_usage(void)
   short_usage_sub();
   printf("For more options, use %s --help\n", my_progname);
 }
-
-#include <help_end.h>
-
 
 static void write_header(FILE *sql_file, char *db_name)
 {

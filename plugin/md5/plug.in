@@ -1,0 +1,3 @@
+MYSQL_PLUGIN(md5,[MD5 UDF],
+        [UDF Plugin for MD5])
+MYSQL_PLUGIN_DYNAMIC(md5,   [libmd5udf.la])

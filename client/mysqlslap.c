@@ -701,8 +701,6 @@ static struct my_option my_long_options[] =
 };
 
 
-#include <help_start.h>
-
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname, SLAP_VERSION,
@@ -722,8 +720,6 @@ static void usage(void)
   print_defaults("my",load_default_groups);
   my_print_help(my_long_options);
 }
-
-#include <help_end.h>
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),

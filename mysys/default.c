@@ -851,8 +851,6 @@ static char *remove_end_comment(char *ptr)
   return ptr;
 }
 
-#include <help_start.h>
-
 void my_print_default_files(const char *conf_file)
 {
   const char *empty_list[]= { "", 0 };
@@ -919,9 +917,6 @@ void print_defaults(const char *conf_file, const char **groups)
 --defaults-file=#	Only read default options from the given file #\n\
 --defaults-extra-file=# Read this file after the global files are read");
 }
-
-#include <help_end.h>
-
 
 /*
   This extra complexity is to avoid declaring 'rc' if it won't be

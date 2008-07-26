@@ -889,7 +889,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  XOR
 %token  YEAR_MONTH_SYM
 %token  YEAR_SYM                      /* SQL-2003-R */
-%token  ZEROFILL
 
 %left   JOIN_SYM INNER_SYM STRAIGHT_JOIN CROSS LEFT RIGHT
 /* A dummy token to force the priority of table_ref production in a join. */
@@ -1987,7 +1986,6 @@ field_opt_list:
 field_option:
           SIGNED_SYM {}
         | UNSIGNED { Lex->type|= UNSIGNED_FLAG;}
-        | ZEROFILL { Lex->type|= UNSIGNED_FLAG | ZEROFILL_FLAG; }
         ;
 
 opt_len:

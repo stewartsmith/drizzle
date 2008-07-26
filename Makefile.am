@@ -36,10 +36,10 @@ DISTCLEANFILES = ac_available_languages_fragment
 
 # Create empty datadir 
 install-data-local:
-	$(MKDIR_P) $(DESTDIR)$(localstatedir) 
+	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
 	@if test `id -u` = 0 ; then \
-			   chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
-			   fi
+		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
+	fi
 
 distclean-local:
 	@RM@ -r -f autom4te.cache

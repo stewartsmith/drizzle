@@ -74,10 +74,6 @@ static struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-
-
-#include <help_start.h>
-
 static void usage(my_bool version)
 {
   printf("%s  Ver 1.6 for %s at %s\n",my_progname,SYSTEM_TYPE,
@@ -92,9 +88,6 @@ static void usage(my_bool version)
   my_print_variables(my_long_options);
   printf("\nExample usage:\n%s --defaults-file=example.cnf client mysql\n", my_progname);
 }
-
-#include <help_end.h>
-
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
