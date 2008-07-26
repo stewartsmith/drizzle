@@ -1142,7 +1142,7 @@ void my_print_help(const struct my_option *options)
       putchar(' ');
     if (optp->comment && *optp->comment)
     {
-      const char *comment= optp->comment, *end= strend(comment);
+      const char *comment= gettext(optp->comment), *end= strend(comment);
 
       while ((uint) (end - comment) > comment_space)
       {
@@ -1162,7 +1162,7 @@ void my_print_help(const struct my_option *options)
     {
       if (optp->def_value != 0)
       {
-        printf("%*s(Defaults to on; use --skip-%s to disable.)\n", name_space, "", optp->name);
+        printf(gettext("%*s(Defaults to on; use --skip-%s to disable.)\n"), name_space, "", optp->name);
       }
     }
   }

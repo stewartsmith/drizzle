@@ -1,1 +1,3 @@
 # List of source files which contain translatable strings.
+client/drizzle.c
+mysys/my_getopt.c
