@@ -51,8 +51,8 @@ class Field
   void operator=(Field &);
 public:
   static void *operator new(size_t size) {return sql_alloc(size); }
-  static void operator delete(void *ptr_arg __attribute__((__unused__)),
-                              size_t size __attribute__((__unused__)))
+  static void operator delete(void *ptr_arg __attribute__((unused)),
+                              size_t size __attribute__((unused)))
   { TRASH(ptr_arg, size); }
 
   uchar		*ptr;			// Position to field in record
@@ -218,11 +218,11 @@ public:
   virtual enum_field_types real_type() const { return type(); }
   inline  int cmp(const uchar *str) { return cmp(ptr,str); }
   virtual int cmp_max(const uchar *a, const uchar *b,
-                      uint max_len __attribute__((__unused__)))
+                      uint max_len __attribute__((unused)))
     { return cmp(a, b); }
   virtual int cmp(const uchar *,const uchar *)=0;
   virtual int cmp_binary(const uchar *a,const uchar *b,
-                         uint32_t  __attribute__((__unused__)) max_length=~0)
+                         uint32_t  __attribute__((unused)) max_length=~0)
   { return memcmp(a,b,pack_length()); }
   virtual int cmp_offset(uint row_offset)
   { return cmp(ptr,ptr+row_offset); }
@@ -230,7 +230,7 @@ public:
   { return cmp_binary(ptr, ptr+row_offset); };
   virtual int key_cmp(const uchar *a,const uchar *b)
   { return cmp(a, b); }
-  virtual int key_cmp(const uchar *str, uint length __attribute__((__unused__)))
+  virtual int key_cmp(const uchar *str, uint length __attribute__((unused)))
   { return cmp(ptr,str); }
   virtual uint decimals() const { return 0; }
   /*
@@ -319,10 +319,10 @@ public:
       null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,uchar*);
   }
   virtual void get_image(uchar *buff, uint length,
-                         CHARSET_INFO *cs __attribute__((__unused__)))
+                         CHARSET_INFO *cs __attribute__((unused)))
     { memcpy(buff,ptr,length); }
   virtual void set_image(const uchar *buff,uint length,
-                         CHARSET_INFO *cs __attribute__((__unused__)))
+                         CHARSET_INFO *cs __attribute__((unused)))
     { memcpy(ptr,buff,length); }
 
 
@@ -353,7 +353,7 @@ public:
   */
 
   virtual uint get_key_image(uchar *buff, uint length,
-                             imagetype type __attribute__((__unused__)))
+                             imagetype type __attribute__((unused)))
   {
     get_image(buff, length, &my_charset_bin);
     return length;
@@ -423,19 +423,19 @@ public:
   {
     return unpack(to, from, max_length, low_byte_first);
   }
-  virtual uint packed_col_length(const uchar *to __attribute__((__unused__)),
+  virtual uint packed_col_length(const uchar *to __attribute__((unused)),
                                  uint length)
   { return length;}
   virtual uint max_packed_col_length(uint max_length)
   { return max_length;}
 
   virtual int pack_cmp(const uchar *a,const uchar *b,
-                       uint key_length_arg __attribute__((__unused__)),
-                       my_bool insert_or_update __attribute__((__unused__)))
+                       uint key_length_arg __attribute__((unused)),
+                       my_bool insert_or_update __attribute__((unused)))
   { return cmp(a,b); }
   virtual int pack_cmp(const uchar *b,
-                       uint key_length_arg __attribute__((__unused__)),
-                       my_bool insert_or_update __attribute__((__unused__)))
+                       uint key_length_arg __attribute__((unused)),
+                       my_bool insert_or_update __attribute__((unused)))
   { return cmp(ptr,b); }
   uint offset(uchar *record)
   {
@@ -448,11 +448,11 @@ public:
   virtual CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
-  virtual void set_charset(CHARSET_INFO *charset_arg __attribute__((__unused__)))
+  virtual void set_charset(CHARSET_INFO *charset_arg __attribute__((unused)))
   { }
   virtual enum Derivation derivation(void) const
   { return DERIVATION_IMPLICIT; }
-  virtual void set_derivation(enum Derivation derivation_arg __attribute__((__unused__)))
+  virtual void set_derivation(enum Derivation derivation_arg __attribute__((unused)))
   { }
   bool set_warning(MYSQL_ERROR::enum_warning_level, unsigned int code,
                    int cuted_increment);
@@ -536,7 +536,7 @@ private:
 
    @returns 0 no bytes written.
 */
-  virtual int do_save_field_metadata(uchar *metadata_ptr __attribute__((__unused__)))
+  virtual int do_save_field_metadata(uchar *metadata_ptr __attribute__((unused)))
   { return 0; }
 };
 
@@ -671,16 +671,16 @@ public:
   uint32_t max_display_length() { return 4; }
 
   virtual uchar *pack(uchar* to, const uchar *from,
-                      uint max_length __attribute__((__unused__)),
-                      bool low_byte_first __attribute__((__unused__)))
+                      uint max_length __attribute__((unused)),
+                      bool low_byte_first __attribute__((unused)))
   {
     *to= *from;
     return to + 1;
   }
 
   virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data __attribute__((__unused__)),
-                              bool low_byte_first __attribute__((__unused__)))
+                              uint param_data __attribute__((unused)),
+                              bool low_byte_first __attribute__((unused)))
   {
     *to= *from;
     return from + 1;
@@ -727,8 +727,8 @@ public:
   { return (field_metadata & 0x00ff); }
   uint row_pack_length() { return pack_length(); }
   virtual bool zero_pack() const { return 0; }
-  bool optimize_range(uint idx __attribute__((__unused__)),
-                      uint part __attribute__((__unused__)))
+  bool optimize_range(uint idx __attribute__((unused)),
+                      uint part __attribute__((unused)))
   { return 0; }
   bool eq_def(Field *field);
   bool has_charset(void) const { return true; }

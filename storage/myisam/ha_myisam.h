@@ -54,8 +54,8 @@ class ha_myisam: public handler
   uint64_t table_flags() const { return int_table_flags; }
   int index_init(uint idx, bool sorted);
   int index_end();
-  uint32_t index_flags(uint inx, uint part __attribute__((__unused__)),
-                       bool all_parts __attribute__((__unused__))) const
+  uint32_t index_flags(uint inx, uint part __attribute__((unused)),
+                       bool all_parts __attribute__((unused))) const
   {
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_FULLTEXT) ?
             0 : HA_READ_NEXT | HA_READ_PREV | HA_READ_RANGE |

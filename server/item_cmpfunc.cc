@@ -800,9 +800,9 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
 */
 
 uint64_t
-get_time_value(THD *thd __attribute__((__unused__)),
+get_time_value(THD *thd __attribute__((unused)),
                Item ***item_arg, Item **cache_arg,
-               Item *warn_item __attribute__((__unused__)),
+               Item *warn_item __attribute__((unused)),
                bool *is_null)
 {
   uint64_t value;
@@ -1462,7 +1462,7 @@ int64_t Item_func_truth::val_int()
 }
 
 
-bool Item_in_optimizer::fix_left(THD *thd, Item **ref __attribute__((__unused__)))
+bool Item_in_optimizer::fix_left(THD *thd, Item **ref __attribute__((unused)))
 {
   if ((!args[0]->fixed && args[0]->fix_fields(thd, args)) ||
       (!cache && !(cache= Item_cache::get_cache(args[0]))))
@@ -2571,7 +2571,7 @@ Item_func_nullif::is_null()
            failed
 */
 
-Item *Item_func_case::find_item(String *str __attribute__((__unused__)))
+Item *Item_func_case::find_item(String *str __attribute__((unused)))
 {
   uint value_added_map= 0;
 
@@ -3021,7 +3021,7 @@ static inline int cmp_ulongs (uint64_t a_val, uint64_t b_val)
     0           left argument is equal to the right argument.
     1           left argument is greater than the right argument.
 */
-int cmp_int64_t(void *cmp_arg __attribute__((__unused__)),
+int cmp_int64_t(void *cmp_arg __attribute__((unused)),
                  in_int64_t::packed_int64_t *a,
                  in_int64_t::packed_int64_t *b)
 {
@@ -3046,18 +3046,18 @@ int cmp_int64_t(void *cmp_arg __attribute__((__unused__)),
     return cmp_longs (a->val, b->val);
 }
 
-static int cmp_double(void *cmp_arg __attribute__((__unused__)), double *a,double *b)
+static int cmp_double(void *cmp_arg __attribute__((unused)), double *a,double *b)
 {
   return *a < *b ? -1 : *a == *b ? 0 : 1;
 }
 
-static int cmp_row(void *cmp_arg __attribute__((__unused__)), cmp_item_row *a, cmp_item_row *b)
+static int cmp_row(void *cmp_arg __attribute__((unused)), cmp_item_row *a, cmp_item_row *b)
 {
   return a->compare(b);
 }
 
 
-static int cmp_decimal(void *cmp_arg __attribute__((__unused__)), my_decimal *a, my_decimal *b)
+static int cmp_decimal(void *cmp_arg __attribute__((unused)), my_decimal *a, my_decimal *b)
 {
   /*
     We need call of fixing buffer pointer, because fast sort just copy
@@ -3134,7 +3134,7 @@ uchar *in_string::get_value(Item *item)
   return (uchar*) item->val_str(&tmp);
 }
 
-in_row::in_row(uint elements, Item * item __attribute__((__unused__)))
+in_row::in_row(uint elements, Item * item __attribute__((unused)))
 {
   base= (char*) new cmp_item_row[count= elements];
   size= sizeof(cmp_item_row);
@@ -3889,7 +3889,7 @@ void Item_cond::copy_andor_arguments(THD *thd, Item_cond *item)
 
 
 bool
-Item_cond::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
+Item_cond::fix_fields(THD *thd, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   List_iterator<Item> li(list);
@@ -3966,7 +3966,7 @@ Item_cond::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
 }
 
 
-void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **ref __attribute__((__unused__)))
+void Item_cond::fix_after_pullout(st_select_lex *new_parent, Item **ref __attribute__((unused)))
 {
   List_iterator<Item> li(list);
   Item *item;
@@ -4813,13 +4813,13 @@ int64_t Item_cond_xor::val_int()
     NULL if we cannot apply NOT transformation (see Item::neg_transformer()).
 */
 
-Item *Item_func_not::neg_transformer(THD *thd __attribute__((__unused__)))	/* NOT(x)  ->  x */
+Item *Item_func_not::neg_transformer(THD *thd __attribute__((unused)))	/* NOT(x)  ->  x */
 {
   return args[0];
 }
 
 
-Item *Item_bool_rowready_func2::neg_transformer(THD *thd __attribute__((__unused__)))
+Item *Item_bool_rowready_func2::neg_transformer(THD *thd __attribute__((unused)))
 {
   Item *item= negated_item();
   return item;
@@ -4829,7 +4829,7 @@ Item *Item_bool_rowready_func2::neg_transformer(THD *thd __attribute__((__unused
 /**
   a IS NULL  ->  a IS NOT NULL.
 */
-Item *Item_func_isnull::neg_transformer(THD *thd __attribute__((__unused__)))
+Item *Item_func_isnull::neg_transformer(THD *thd __attribute__((unused)))
 {
   Item *item= new Item_func_isnotnull(args[0]);
   return item;
@@ -4839,7 +4839,7 @@ Item *Item_func_isnull::neg_transformer(THD *thd __attribute__((__unused__)))
 /**
   a IS NOT NULL  ->  a IS NULL.
 */
-Item *Item_func_isnotnull::neg_transformer(THD *thd __attribute__((__unused__)))
+Item *Item_func_isnotnull::neg_transformer(THD *thd __attribute__((unused)))
 {
   Item *item= new Item_func_isnull(args[0]);
   return item;
@@ -4864,7 +4864,7 @@ Item *Item_cond_or::neg_transformer(THD *thd)	/* NOT(a OR b OR ...)  -> */
 }
 
 
-Item *Item_func_nop_all::neg_transformer(THD *thd __attribute__((__unused__)))
+Item *Item_func_nop_all::neg_transformer(THD *thd __attribute__((unused)))
 {
   /* "NOT (e $cmp$ ANY (SELECT ...)) -> e $rev_cmp$" ALL (SELECT ...) */
   Item_func_not_all *new_item= new Item_func_not_all(args[0]);
@@ -4875,7 +4875,7 @@ Item *Item_func_nop_all::neg_transformer(THD *thd __attribute__((__unused__)))
   return new_item;
 }
 
-Item *Item_func_not_all::neg_transformer(THD *thd __attribute__((__unused__)))
+Item *Item_func_not_all::neg_transformer(THD *thd __attribute__((unused)))
 {
   /* "NOT (e $cmp$ ALL (SELECT ...)) -> e $rev_cmp$" ANY (SELECT ...) */
   Item_func_nop_all *new_item= new Item_func_nop_all(args[0]);
@@ -5115,7 +5115,7 @@ void Item_equal::update_const()
   }
 }
 
-bool Item_equal::fix_fields(THD *thd __attribute__((__unused__)), Item **ref __attribute__((__unused__)))
+bool Item_equal::fix_fields(THD *thd __attribute__((unused)), Item **ref __attribute__((unused)))
 {
   List_iterator_fast<Item_field> li(fields);
   Item *item;

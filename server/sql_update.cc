@@ -177,7 +177,7 @@ int mysql_update(THD *thd,
                  COND *conds,
                  uint order_num, ORDER *order,
                  ha_rows limit,
-                 enum enum_duplicates handle_duplicates __attribute__((__unused__)),
+                 enum enum_duplicates handle_duplicates __attribute__((unused)),
                  bool ignore)
 {
   bool		using_limit= limit != HA_POS_ERROR;
@@ -1046,8 +1046,8 @@ multi_update::multi_update(TABLE_LIST *table_list,
   Connect fields with tables and create list of tables that are updated
 */
 
-int multi_update::prepare(List<Item> &not_used_values __attribute__((__unused__)),
-                          SELECT_LEX_UNIT *lex_unit __attribute__((__unused__)))
+int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
+                          SELECT_LEX_UNIT *lex_unit __attribute__((unused)))
 {
   TABLE_LIST *table_ref;
   SQL_LIST update;
@@ -1340,7 +1340,7 @@ multi_update::~multi_update()
 }
 
 
-bool multi_update::send_data(List<Item> &not_used_values __attribute__((__unused__)))
+bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused)))
 {
   TABLE_LIST *cur_table;
   

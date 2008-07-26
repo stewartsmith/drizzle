@@ -56,8 +56,8 @@ public:
   void sql_type(String &str) const;
   uint32_t max_display_length() { return MY_INT32_NUM_DECIMAL_DIGITS; }
   virtual uchar *pack(uchar* to, const uchar *from,
-                      uint max_length __attribute__((__unused__)),
-                      bool low_byte_first __attribute__((__unused__)))
+                      uint max_length __attribute__((unused)),
+                      bool low_byte_first __attribute__((unused)))
   {
     int32_t val;
 #ifdef WORDS_BIGENDIAN
@@ -77,8 +77,8 @@ public:
   }
 
   virtual const uchar *unpack(uchar* to, const uchar *from,
-                              uint param_data __attribute__((__unused__)),
-                              bool low_byte_first __attribute__((__unused__)))
+                              uint param_data __attribute__((unused)),
+                              bool low_byte_first __attribute__((unused)))
   {
     int32_t val;
 #ifdef WORDS_BIGENDIAN

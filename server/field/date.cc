@@ -51,7 +51,7 @@
 
 int Field_newdate::store(const char *from,
                          uint len,
-                         CHARSET_INFO *cs __attribute__((__unused__)))
+                         CHARSET_INFO *cs __attribute__((unused)))
 {
   long tmp;
   MYSQL_TIME l_time;
@@ -101,7 +101,7 @@ int Field_newdate::store(double nr)
 
 
 int Field_newdate::store(int64_t nr,
-                         bool unsigned_val __attribute__((__unused__)))
+                         bool unsigned_val __attribute__((unused)))
 {
   MYSQL_TIME l_time;
   int64_t tmp;

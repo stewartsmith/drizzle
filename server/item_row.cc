@@ -48,14 +48,14 @@ Item_row::Item_row(List<Item> &arg):
   }
 }
 
-void Item_row::illegal_method_call(const char *method __attribute__((__unused__)))
+void Item_row::illegal_method_call(const char *method __attribute__((unused)))
 {
   assert(0);
   my_error(ER_OPERAND_COLUMNS, MYF(0), 1);
   return;
 }
 
-bool Item_row::fix_fields(THD *thd, Item **ref __attribute__((__unused__)))
+bool Item_row::fix_fields(THD *thd, Item **ref __attribute__((unused)))
 {
   assert(fixed == 0);
   null_value= 0;
@@ -121,7 +121,7 @@ void Item_row::update_used_tables()
 }
 
 void Item_row::fix_after_pullout(st_select_lex *new_parent,
-                                 Item **ref __attribute__((__unused__)))
+                                 Item **ref __attribute__((unused)))
 {
   used_tables_cache= 0;
   const_item_cache= 1;

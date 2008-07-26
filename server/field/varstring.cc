@@ -336,7 +336,7 @@ Field_varstring::pack_key(uchar *to, const uchar *key, uint max_length,
 */
 
 const uchar *
-Field_varstring::unpack_key(uchar *to __attribute__((__unused__)),
+Field_varstring::unpack_key(uchar *to __attribute__((unused)),
                             const uchar *key, uint max_length,
                             bool low_byte_first __attribute__((unused)))
 {
@@ -492,7 +492,7 @@ uint Field_varstring::max_packed_col_length(uint max_length)
 
 uint Field_varstring::get_key_image(uchar *buff,
                                     uint length,
-                                    imagetype type __attribute__((__unused__)))
+                                    imagetype type __attribute__((unused)))
 {
   uint f_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
   uint local_char_length= length / field_charset->mbmaxlen;

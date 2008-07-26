@@ -31,10 +31,10 @@
  */
 
 static bool init_dummy(void) {return 0;}
-static void post_kill_dummy(THD *thd __attribute__((__unused__))) {}
+static void post_kill_dummy(THD *thd __attribute__((unused))) {}
 static void end_dummy(void) {}
-static bool end_thread_dummy(THD *thd __attribute__((__unused__)),
-                             bool cache_thread __attribute__((__unused__)))
+static bool end_thread_dummy(THD *thd __attribute__((unused)),
+                             bool cache_thread __attribute__((unused)))
 { return 0; }
 
 /*
@@ -463,7 +463,7 @@ static bool libevent_should_close_connection(THD* thd)
   These procs only return/terminate on shutdown (kill_pool_threads == true).
 */
 
-pthread_handler_t libevent_thread_proc(void *arg __attribute__((__unused__)))
+pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
 {
   if (init_new_connection_handler_thread())
   {

@@ -69,7 +69,7 @@
  */
 
 Field_timestamp::Field_timestamp(uchar *ptr_arg,
-                                 uint32_t len_arg __attribute__((__unused__)),
+                                 uint32_t len_arg __attribute__((unused)),
                                  uchar *null_ptr_arg, uchar null_bit_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
@@ -142,7 +142,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 
 int Field_timestamp::store(const char *from,
                            uint len,
-                           CHARSET_INFO *cs __attribute__((__unused__)))
+                           CHARSET_INFO *cs __attribute__((unused)))
 {
   MYSQL_TIME l_time;
   my_time_t tmp= 0;
@@ -202,7 +202,7 @@ int Field_timestamp::store(double nr)
 
 
 int Field_timestamp::store(int64_t nr,
-                           bool unsigned_val __attribute__((__unused__)))
+                           bool unsigned_val __attribute__((unused)))
 {
   MYSQL_TIME l_time;
   my_time_t timestamp= 0;

@@ -78,7 +78,7 @@ int Field_year::store(double nr)
 
 
 int Field_year::store(int64_t nr,
-                      bool unsigned_val __attribute__((__unused__)))
+                      bool unsigned_val __attribute__((unused)))
 {
   if (nr < 0 || (nr >= 100 && nr <= 1900) || nr > 2155)
   {

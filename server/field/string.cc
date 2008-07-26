@@ -395,7 +395,7 @@ uint Field_string::max_packed_col_length(uint max_length)
 
 uint Field_string::get_key_image(uchar *buff,
                                  uint length,
-                                 imagetype type_arg __attribute__((__unused__)))
+                                 imagetype type_arg __attribute__((unused)))
 {
   uint bytes = my_charpos(field_charset, (char*) ptr,
                           (char*) ptr + field_length,

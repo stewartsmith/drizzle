@@ -147,7 +147,7 @@ Item_subselect::~Item_subselect()
 }
 
 Item_subselect::trans_res
-Item_subselect::select_transformer(JOIN *join __attribute__((__unused__)))
+Item_subselect::select_transformer(JOIN *join __attribute__((unused)))
 {
   return(RES_OK);
 }
@@ -1857,7 +1857,7 @@ bool Item_in_subselect::init_left_expr_cache()
   @retval false otherwise
 */
 
-bool Item_in_subselect::is_expensive_processor(uchar *arg __attribute__((__unused__)))
+bool Item_in_subselect::is_expensive_processor(uchar *arg __attribute__((unused)))
 {
   return exec_method == MATERIALIZATION;
 }
@@ -2110,7 +2110,7 @@ void subselect_union_engine::fix_length_and_dec(Item_cache **row)
   }
 }
 
-void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **row __attribute__((__unused__)))
+void subselect_uniquesubquery_engine::fix_length_and_dec(Item_cache **row __attribute__((unused)))
 {
   //this never should be called
   assert(0);
@@ -2823,8 +2823,8 @@ bool subselect_union_engine::change_result(Item_subselect *si,
     true  error
 */
 
-bool subselect_uniquesubquery_engine::change_result(Item_subselect *si __attribute__((__unused__)),
-                                                    select_result_interceptor *res __attribute__((__unused__)))
+bool subselect_uniquesubquery_engine::change_result(Item_subselect *si __attribute__((unused)),
+                                                    select_result_interceptor *res __attribute__((unused)))
 {
   assert(0);
   return true;

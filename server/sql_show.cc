@@ -168,7 +168,7 @@ static bool show_plugins(THD *thd, plugin_ref plugin,
 }
 
 
-int fill_plugins(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unused__)))
+int fill_plugins(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   TABLE *table= tables->table;
 
@@ -551,7 +551,7 @@ int get_quote_char_for_identifier(THD *thd, const char *name, uint length)
 
 /* Append directory name (if exists) to CREATE INFO */
 
-static void append_directory(THD *thd __attribute__((__unused__)),
+static void append_directory(THD *thd __attribute__((unused)),
                              String *packet, const char *dir_type,
 			     const char *filename)
 {
@@ -569,7 +569,7 @@ static void append_directory(THD *thd __attribute__((__unused__)),
 
 #define LIST_PROCESS_HOST_LEN 64
 
-static bool get_field_default_value(THD *thd __attribute__((__unused__)),
+static bool get_field_default_value(THD *thd __attribute__((unused)),
                                     Field *timestamp_field,
                                     Field *field, String *def_value,
                                     bool quoted)
@@ -1045,7 +1045,7 @@ bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
   return(false);
 }
 
-static void store_key_options(THD *thd __attribute__((__unused__)),
+static void store_key_options(THD *thd __attribute__((unused)),
                               String *packet, TABLE *table,
                               KEY *key_info)
 {
@@ -1209,7 +1209,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
 }
 
 int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
-                            COND* cond __attribute__((__unused__)))
+                            COND* cond __attribute__((unused)))
 {
   TABLE *table= tables->table;
   CHARSET_INFO *cs= system_charset_info;
@@ -2380,7 +2380,7 @@ static int fill_schema_table_names(THD *thd, TABLE *table,
 
 static uint get_table_open_method(TABLE_LIST *tables,
                                   ST_SCHEMA_TABLE *schema_table,
-                                  enum enum_schema_tables schema_table_idx __attribute__((__unused__)))
+                                  enum enum_schema_tables schema_table_idx __attribute__((unused)))
 {
   /*
     determine which method will be used for table opening
@@ -2423,7 +2423,7 @@ static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
                                       ST_SCHEMA_TABLE *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name,
-                                      enum enum_schema_tables schema_table_idx __attribute__((__unused__)))
+                                      enum enum_schema_tables schema_table_idx __attribute__((unused)))
 {
   TABLE *table= tables->table;
   TABLE_SHARE *share;
@@ -3207,7 +3207,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
 
 
 
-int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unused__)))
+int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
@@ -3238,7 +3238,7 @@ int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__(
 }
 
 
-int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unused__)))
+int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
@@ -3280,7 +3280,7 @@ int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__
 }
 
 
-int fill_schema_coll_charset_app(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unused__)))
+int fill_schema_coll_charset_app(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
   TABLE *table= tables->table;
@@ -3584,7 +3584,7 @@ static int get_schema_key_column_usage_record(THD *thd,
 }
 
 
-int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unused__)))
+int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
   TABLE *table= tables->table;
@@ -3608,7 +3608,7 @@ int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__u
 }
 
 
-int fill_variables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unused__)))
+int fill_variables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   int res= 0;
   LEX *lex= thd->lex;
@@ -3631,7 +3631,7 @@ int fill_variables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unu
 }
 
 
-int fill_status(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((__unused__)))
+int fill_status(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   LEX *lex= thd->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
@@ -3769,7 +3769,7 @@ struct schema_table_ref
     0	table not found
     1   found the schema table
 */
-static bool find_schema_table_in_plugin(THD *thd __attribute__((__unused__)),
+static bool find_schema_table_in_plugin(THD *thd __attribute__((unused)),
                                            plugin_ref plugin,
                                            void* p_table)
 {

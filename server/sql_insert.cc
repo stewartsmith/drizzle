@@ -65,7 +65,7 @@
 static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
                                List<Item> &fields, List<Item> &values,
                                bool check_unique,
-                               table_map *map __attribute__((__unused__)))
+                               table_map *map __attribute__((unused)))
 {
   TABLE *table= table_list->table;
 
@@ -160,7 +160,7 @@ static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
 
 static int check_update_fields(THD *thd, TABLE_LIST *insert_table_list,
                                List<Item> &update_fields,
-                               table_map *map __attribute__((__unused__)))
+                               table_map *map __attribute__((unused)))
 {
   TABLE *table= insert_table_list->table;
   bool timestamp_mark= false;
@@ -203,10 +203,10 @@ static int check_update_fields(THD *thd, TABLE_LIST *insert_table_list,
 */
 
 static
-void upgrade_lock_type(THD *thd __attribute__((__unused__)),
+void upgrade_lock_type(THD *thd __attribute__((unused)),
                        thr_lock_type *lock_type,
                        enum_duplicates duplic,
-                       bool is_multi_insert __attribute__((__unused__)))
+                       bool is_multi_insert __attribute__((unused)))
 {
   if (duplic == DUP_UPDATE ||
       (duplic == DUP_REPLACE && *lock_type == TL_WRITE_CONCURRENT_INSERT))
@@ -583,7 +583,7 @@ abort:
 */
 
 static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
-                                             List<Item> &fields __attribute__((__unused__)),
+                                             List<Item> &fields __attribute__((unused)),
                                              bool select_insert)
 {
   
@@ -641,7 +641,7 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
                           TABLE *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
-                          COND **where __attribute__((__unused__)),
+                          COND **where __attribute__((unused)),
                           bool select_insert,
                           bool check_fields, bool abort_on_warning)
 {

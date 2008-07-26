@@ -75,7 +75,7 @@ int Field_set::store(const char *from,uint length,CHARSET_INFO *cs)
 
 
 int Field_set::store(int64_t nr,
-                     bool unsigned_val __attribute__((__unused__)))
+                     bool unsigned_val __attribute__((unused)))
 {
   int error= 0;
   uint64_t max_nr= set_bits(uint64_t, typelib->count);

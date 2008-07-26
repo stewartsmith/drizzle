@@ -2225,7 +2225,7 @@ char *get_field(MEM_ROOT *mem, Field *field)
     that are present in this value, returns the length of the value
 */
 uint calculate_key_len(TABLE *table, uint key,
-                       const uchar *buf __attribute__((__unused__)),
+                       const uchar *buf __attribute__((unused)),
                        key_part_map keypart_map)
 {
   /* works only with key prefixes */
@@ -2899,9 +2899,9 @@ Item *Field_iterator_view::create_item(THD *thd)
   return create_view_field(thd, view, &ptr->item, ptr->name);
 }
 
-Item *create_view_field(THD *thd __attribute__((__unused__)),
+Item *create_view_field(THD *thd __attribute__((unused)),
                         TABLE_LIST *view, Item **field_ref,
-                        const char *name __attribute__((__unused__)))
+                        const char *name __attribute__((unused)))
 {
   if (view->schema_table_reformed)
   {
@@ -3653,7 +3653,7 @@ size_t max_row_length(TABLE *table, const uchar *data)
   FRMTYPE_TABLE       table
 */
 
-frm_type_enum mysql_frm_type(THD *thd __attribute__((__unused__)),
+frm_type_enum mysql_frm_type(THD *thd __attribute__((unused)),
                              char *path, enum legacy_db_type *dbt)
 {
   File file;

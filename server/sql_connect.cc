@@ -77,7 +77,7 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
 
 int
 check_user(THD *thd, enum enum_server_command command,
-           const char *passwd __attribute__((__unused__)),
+           const char *passwd __attribute__((unused)),
            uint passwd_len, const char *db,
            bool check_count)
 {

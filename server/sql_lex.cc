@@ -1831,19 +1831,19 @@ void st_select_lex::mark_as_dependent(st_select_lex *last)
   }
 }
 
-bool st_select_lex_node::set_braces(bool value __attribute__((__unused__)))
+bool st_select_lex_node::set_braces(bool value __attribute__((unused)))
 { return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint st_select_lex_node::get_in_sum_expr()           { return 0; }
 TABLE_LIST* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TABLE_LIST *st_select_lex_node::add_table_to_list (THD *thd __attribute__((__unused__)),
-                                                   Table_ident *table __attribute__((__unused__)),
-						  LEX_STRING *alias __attribute__((__unused__)),
-						  uint32_t table_join_options __attribute__((__unused__)),
-						  thr_lock_type flags __attribute__((__unused__)),
-						  List<Index_hint> *hints __attribute__((__unused__)),
-                                                  LEX_STRING *option __attribute__((__unused__)))
+TABLE_LIST *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
+                                                   Table_ident *table __attribute__((unused)),
+						  LEX_STRING *alias __attribute__((unused)),
+						  uint32_t table_join_options __attribute__((unused)),
+						  thr_lock_type flags __attribute__((unused)),
+						  List<Index_hint> *hints __attribute__((unused)),
+                                                  LEX_STRING *option __attribute__((unused)))
 {
   return 0;
 }
@@ -1885,7 +1885,7 @@ bool st_select_lex::add_order_to_list(THD *thd, Item *item, bool asc)
 }
 
 
-bool st_select_lex::add_item_to_list(THD *thd __attribute__((__unused__)),
+bool st_select_lex::add_item_to_list(THD *thd __attribute__((unused)),
                                      Item *item)
 {
   return(item_list.push_back(item));
@@ -2021,7 +2021,7 @@ void st_select_lex::print_order(String *str,
 }
  
 
-void st_select_lex::print_limit(THD *thd __attribute__((__unused__)),
+void st_select_lex::print_limit(THD *thd __attribute__((unused)),
                                 String *str,
                                 enum_query_type query_type)
 {
@@ -2073,7 +2073,7 @@ void st_select_lex::print_limit(THD *thd __attribute__((__unused__)),
   to implement the clean up.
 */
 
-void st_lex::cleanup_lex_after_parse_error(THD *thd __attribute__((__unused__)))
+void st_lex::cleanup_lex_after_parse_error(THD *thd __attribute__((unused)))
 {
 }
 
@@ -2569,7 +2569,7 @@ void st_lex::cleanup_after_one_table_open()
       backup  Pointer to Query_tables_list instance to be used for backup
 */
 
-void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup __attribute__((__unused__)))
+void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
 {
 }
 
@@ -2582,7 +2582,7 @@ void st_lex::reset_n_backup_query_tables_list(Query_tables_list *backup __attrib
       backup  Pointer to Query_tables_list instance used for backup
 */
 
-void st_lex::restore_backup_query_tables_list(Query_tables_list *backup __attribute__((__unused__)))
+void st_lex::restore_backup_query_tables_list(Query_tables_list *backup __attribute__((unused)))
 {
 }
 

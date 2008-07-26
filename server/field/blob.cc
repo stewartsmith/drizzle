@@ -51,7 +51,7 @@ Field_blob::Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 void Field_blob::store_length(uchar *i_ptr,
                               uint i_packlength,
                               uint32_t i_number,
-                              bool low_byte_first __attribute__((__unused__)))
+                              bool low_byte_first __attribute__((unused)))
 {
   switch (i_packlength) {
   case 1:
@@ -85,7 +85,7 @@ void Field_blob::store_length(uchar *i_ptr,
 
 uint32_t Field_blob::get_length(const uchar *pos,
                               uint packlength_arg,
-                              bool low_byte_first __attribute__((__unused__)))
+                              bool low_byte_first __attribute__((unused)))
 {
   switch (packlength_arg) {
   case 1:
@@ -343,7 +343,7 @@ int Field_blob::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
 
 uint Field_blob::get_key_image(uchar *buff,
                                uint length,
-                               imagetype type_arg __attribute__((__unused__)))
+                               imagetype type_arg __attribute__((unused)))
 {
   uint32_t blob_length= get_length(ptr);
   uchar *blob;
@@ -529,7 +529,7 @@ uchar *Field_blob::pack(uchar *to, const uchar *from,
 
    @return  New pointer into memory based on from + length of the data
 */
-const uchar *Field_blob::unpack(uchar *to __attribute__((__unused__)),
+const uchar *Field_blob::unpack(uchar *to __attribute__((unused)),
                                 const uchar *from,
                                 uint param_data,
                                 bool low_byte_first)

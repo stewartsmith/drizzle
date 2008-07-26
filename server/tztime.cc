@@ -725,8 +725,8 @@ public:
     0
 */
 my_time_t
-Time_zone_utc::TIME_to_gmt_sec(const MYSQL_TIME *t __attribute__((__unused__)),
-                               bool *in_dst_time_gap __attribute__((__unused__))) const
+Time_zone_utc::TIME_to_gmt_sec(const MYSQL_TIME *t __attribute__((unused)),
+                               bool *in_dst_time_gap __attribute__((unused))) const
 {
   /* Should be never called */
   assert(0);
@@ -938,7 +938,7 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
 */
 my_time_t
 Time_zone_offset::TIME_to_gmt_sec(const MYSQL_TIME *t,
-                                  bool *in_dst_time_gap __attribute__((__unused__))) const
+                                  bool *in_dst_time_gap __attribute__((unused))) const
 {
   my_time_t local_t;
   int shift= 0;
@@ -1052,7 +1052,7 @@ public:
 */
 bool
 my_tz_init(THD *thd, const char *default_tzname,
-           bool bootstrap __attribute__((__unused__)))
+           bool bootstrap __attribute__((unused)))
 {
   if (default_tzname)
   {
@@ -1170,8 +1170,8 @@ str_to_offset(const char *str, uint length, long *offset)
 
 */
 Time_zone *
-my_tz_find(THD *thd __attribute__((__unused__)),
-           const String *name __attribute__((__unused__)))
+my_tz_find(THD *thd __attribute__((unused)),
+           const String *name __attribute__((unused)))
 {
   return NULL;
 }

@@ -365,7 +365,7 @@ public:
   const char *func_name() const { return "user"; }
   const char *fully_qualified_func_name() const { return "user()"; }
   int save_in_field(Field *field,
-                    bool no_conversions __attribute__((__unused__)))
+                    bool no_conversions __attribute__((unused)))
   {
     return save_str_value_in_field(field, &str_value);
   }

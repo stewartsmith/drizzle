@@ -94,7 +94,7 @@ out:
     true   Error
 */
 
-bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((__unused__)),
+bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((unused)),
                            TABLE_LIST *orig_table_list)
 {
   SELECT_LEX_UNIT *unit= orig_table_list->derived;

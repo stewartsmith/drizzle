@@ -3434,7 +3434,7 @@ bool st_select_lex::init_nested_join(THD *thd)
     - 0, otherwise
 */
 
-TABLE_LIST *st_select_lex::end_nested_join(THD *thd __attribute__((__unused__)))
+TABLE_LIST *st_select_lex::end_nested_join(THD *thd __attribute__((unused)))
 {
   TABLE_LIST *ptr;
   NESTED_JOIN *nested_join;
@@ -3925,7 +3925,7 @@ bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables,
     This is written such that we have a short lock on LOCK_thread_count
 */
 
-uint kill_one_thread(THD *thd __attribute__((__unused__)),
+uint kill_one_thread(THD *thd __attribute__((unused)),
                      ulong id, bool only_kill_query)
 {
   THD *tmp;
@@ -4106,7 +4106,7 @@ Item * all_any_subquery_creator(Item *left_expr,
 */
 
 bool multi_update_precheck(THD *thd,
-                           TABLE_LIST *tables __attribute__((__unused__)))
+                           TABLE_LIST *tables __attribute__((unused)))
 {
   const char *msg= 0;
   LEX *lex= thd->lex;
@@ -4143,7 +4143,7 @@ bool multi_update_precheck(THD *thd,
 */
 
 bool multi_delete_precheck(THD *thd,
-                           TABLE_LIST *tables __attribute__((__unused__)))
+                           TABLE_LIST *tables __attribute__((unused)))
 {
   SELECT_LEX *select_lex= &thd->lex->select_lex;
   TABLE_LIST **save_query_tables_own_last= thd->lex->query_tables_own_last;
@@ -4178,7 +4178,7 @@ bool multi_delete_precheck(THD *thd,
   @return Matching table, NULL otherwise.
 */
 
-static TABLE_LIST *multi_delete_table_match(LEX *lex __attribute__((__unused__)),
+static TABLE_LIST *multi_delete_table_match(LEX *lex __attribute__((unused)),
                                             TABLE_LIST *tbl,
                                             TABLE_LIST *tables)
 {
@@ -4270,7 +4270,7 @@ bool multi_delete_set_locks_and_link_aux_tables(LEX *lex)
     true  Error
 */
 
-bool update_precheck(THD *thd, TABLE_LIST *tables __attribute__((__unused__)))
+bool update_precheck(THD *thd, TABLE_LIST *tables __attribute__((unused)))
 {
   if (thd->lex->select_lex.item_list.elements != thd->lex->value_list.elements)
   {
@@ -4293,7 +4293,7 @@ bool update_precheck(THD *thd, TABLE_LIST *tables __attribute__((__unused__)))
     true   error
 */
 
-bool insert_precheck(THD *thd, TABLE_LIST *tables __attribute__((__unused__)))
+bool insert_precheck(THD *thd, TABLE_LIST *tables __attribute__((unused)))
 {
   LEX *lex= thd->lex;
 
@@ -4324,7 +4324,7 @@ bool insert_precheck(THD *thd, TABLE_LIST *tables __attribute__((__unused__)))
 */
 
 bool create_table_precheck(THD *thd,
-                           TABLE_LIST *tables __attribute__((__unused__)),
+                           TABLE_LIST *tables __attribute__((unused)),
                            TABLE_LIST *create_table)
 {
   LEX *lex= thd->lex;

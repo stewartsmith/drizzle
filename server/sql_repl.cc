@@ -1707,7 +1707,7 @@ public:
 };
 
 static void fix_slave_net_timeout(THD *thd,
-                                  enum_var_type type __attribute__((__unused__)))
+                                  enum_var_type type __attribute__((unused)))
 {
 #ifdef HAVE_REPLICATION
   pthread_mutex_lock(&LOCK_active_mi);
@@ -1738,7 +1738,7 @@ static sys_var_slave_skip_counter sys_slave_skip_counter(&vars, "sql_slave_skip_
 static int show_slave_skip_errors(THD *thd, SHOW_VAR *var, char *buff);
 
 
-static int show_slave_skip_errors(THD *thd __attribute__((__unused__)),
+static int show_slave_skip_errors(THD *thd __attribute__((unused)),
                                   SHOW_VAR *var, char *buff)
 {
   var->type=SHOW_CHAR;
@@ -1790,7 +1790,7 @@ static SHOW_VAR fixed_vars[]= {
   {"slave_skip_errors",       (char*) &show_slave_skip_errors_cont,      SHOW_FUNC},
 };
 
-bool sys_var_slave_skip_counter::check(THD *thd __attribute__((__unused__)),
+bool sys_var_slave_skip_counter::check(THD *thd __attribute__((unused)),
                                        set_var *var)
 {
   int result= 0;
@@ -1808,7 +1808,7 @@ bool sys_var_slave_skip_counter::check(THD *thd __attribute__((__unused__)),
 }
 
 
-bool sys_var_slave_skip_counter::update(THD *thd __attribute__((__unused__)),
+bool sys_var_slave_skip_counter::update(THD *thd __attribute__((unused)),
                                         set_var *var)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -1830,7 +1830,7 @@ bool sys_var_slave_skip_counter::update(THD *thd __attribute__((__unused__)),
 }
 
 
-bool sys_var_sync_binlog_period::update(THD *thd __attribute__((__unused__)),
+bool sys_var_sync_binlog_period::update(THD *thd __attribute__((unused)),
                                         set_var *var)
 {
   sync_binlog_period= (ulong) var->save_result.uint64_t_value;
