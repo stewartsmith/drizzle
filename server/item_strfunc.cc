@@ -32,7 +32,6 @@
 
 #include "mysql_priv.h"
 #include <m_ctype.h>
-#include "my_md5.h"
 #include "sha1.h"
 #include "sha2.h"
 #include <zlib.h>
@@ -96,53 +95,6 @@ int64_t Item_str_func::val_int()
 	  my_strntoll(res->charset(), res->ptr(), res->length(), 10, NULL,
 		      &err) :
 	  (int64_t) 0);
-}
-
-
-String *Item_func_md5::val_str(String *str)
-{
-  assert(fixed == 1);
-  String * sptr= args[0]->val_str(str);
-  str->set_charset(&my_charset_bin);
-  if (sptr)
-  {
-    my_MD5_CTX context;
-    uchar digest[16];
-
-    null_value=0;
-    my_MD5Init (&context);
-    my_MD5Update (&context,(uchar *) sptr->ptr(), sptr->length());
-    my_MD5Final (digest, &context);
-    if (str->alloc(32))				// Ensure that memory is free
-    {
-      null_value=1;
-      return 0;
-    }
-    sprintf((char *) str->ptr(),
-	    "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-	    digest[0], digest[1], digest[2], digest[3],
-	    digest[4], digest[5], digest[6], digest[7],
-	    digest[8], digest[9], digest[10], digest[11],
-	    digest[12], digest[13], digest[14], digest[15]);
-    str->length((uint) 32);
-    return str;
-  }
-  null_value=1;
-  return 0;
-}
-
-
-void Item_func_md5::fix_length_and_dec()
-{
-  max_length=32;
-  /*
-    The MD5() function treats its parameter as being a case sensitive. Thus
-    we set binary collation on it so different instances of MD5() will be
-    compared properly.
-  */
-  args[0]->collation.set(
-      get_charset_by_csname(args[0]->collation.collation->csname,
-                            MY_CS_BINSORT,MYF(0)), DERIVATION_COERCIBLE);
 }
 
 /**
@@ -2702,19 +2654,6 @@ int64_t Item_func_uncompressed_length::val_int()
         confuse valgrind
   */
   return uint4korr(res->ptr()) & 0x3FFFFFFF;
-}
-
-int64_t Item_func_crc32::val_int()
-{
-  assert(fixed == 1);
-  String *res=args[0]->val_str(&value);
-  if (!res)
-  {
-    null_value=1;
-    return 0; /* purecov: inspected */
-  }
-  null_value=0;
-  return (int64_t) crc32(0L, (uchar*)res->ptr(), res->length());
 }
 
 #ifdef HAVE_COMPRESS
