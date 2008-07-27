@@ -1626,8 +1626,6 @@ extern bool opt_slave_compressed_protocol;
 extern bool use_temp_pool;
 extern ulong slave_exec_mode_options;
 extern bool opt_readonly;
-extern bool lower_case_file_system;
-extern bool opt_enable_named_pipe;
 extern bool opt_sync_frm;
 extern bool opt_secure_auth;
 extern char* opt_secure_file_priv;
@@ -1636,8 +1634,6 @@ extern bool opt_log_slow_slave_statements;
 extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern uint opt_crash_binlog_innodb;
-extern char *shared_memory_base_name;
-extern bool opt_enable_shared_memory;
 extern char *default_tz_name;
 #endif /* MYSQL_SERVER */
 #ifdef MYSQL_SERVER
@@ -1647,8 +1643,6 @@ extern const char *log_output_str;
 extern MYSQL_BIN_LOG mysql_bin_log;
 extern LOGGER logger;
 extern TABLE_LIST general_log, slow_log;
-extern FILE *bootstrap_file;
-extern int bootstrap_error;
 extern FILE *stderror_file;
 extern pthread_key(MEM_ROOT**,THR_MALLOC);
 extern pthread_mutex_t LOCK_mysql_create_db,LOCK_open, LOCK_lock_db,

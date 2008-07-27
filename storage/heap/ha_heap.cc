@@ -27,10 +27,10 @@ static handler *heap_create_handler(handlerton *hton,
                                     TABLE_SHARE *table, 
                                     MEM_ROOT *mem_root);
 
-int heap_panic(handlerton *hton __attribute__((unused)),
-               ha_panic_function flag)
+int heap_deinit(void *p __attribute__((unused)))
+            
 {
-  return hp_panic(flag);
+  return hp_panic(HA_PANIC_CLOSE);
 }
 
 
@@ -42,7 +42,6 @@ int heap_init(void *p)
   heap_hton->state=      SHOW_OPTION_YES;
   heap_hton->db_type=    DB_TYPE_HEAP;
   heap_hton->create=     heap_create_handler;
-  heap_hton->panic=      heap_panic;
   heap_hton->flags=      HTON_CAN_RECREATE;
 
   return 0;
@@ -750,7 +749,7 @@ mysql_declare_plugin(heap)
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  NULL,
+  heap_deinit,
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */

@@ -621,8 +621,6 @@ static SHOW_VAR fixed_vars[]= {
 #endif
   {"log_bin",                 (char*) &opt_bin_log,                 SHOW_BOOL},
   {"log_error",               (char*) log_error_file,               SHOW_CHAR},
-  {"lower_case_file_system",  (char*) &lower_case_file_system,      SHOW_MY_BOOL},
-  {"lower_case_table_names",  (char*) &lower_case_table_names,      SHOW_INT},
   {"myisam_recover_options",  (char*) &myisam_recover_options_str,  SHOW_CHAR_PTR},
   {"open_files_limit",	      (char*) &open_files_limit,	    SHOW_LONG},
   {"pid_file",                (char*) pidfile_name,                 SHOW_CHAR},
