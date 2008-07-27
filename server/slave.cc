@@ -1150,17 +1150,17 @@ bool show_master_info(THD* thd, Master_info* mi)
   field_list.push_back(new Item_empty_string("Master_User",
                                                      sizeof(mi->user)));
   field_list.push_back(new Item_return_int("Master_Port", 7,
-                                           MYSQL_TYPE_LONG));
+                                           FIELD_TYPE_LONG));
   field_list.push_back(new Item_return_int("Connect_Retry", 10,
-                                           MYSQL_TYPE_LONG));
+                                           FIELD_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Master_Log_File",
                                              FN_REFLEN));
   field_list.push_back(new Item_return_int("Read_Master_Log_Pos", 10,
-                                           MYSQL_TYPE_LONGLONG));
+                                           FIELD_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("Relay_Log_File",
                                              FN_REFLEN));
   field_list.push_back(new Item_return_int("Relay_Log_Pos", 10,
-                                           MYSQL_TYPE_LONGLONG));
+                                           FIELD_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("Relay_Master_Log_File",
                                              FN_REFLEN));
   field_list.push_back(new Item_empty_string("Slave_IO_Running", 3));
@@ -1172,18 +1172,18 @@ bool show_master_info(THD* thd, Master_info* mi)
   field_list.push_back(new Item_empty_string("Replicate_Wild_Do_Table", 24));
   field_list.push_back(new Item_empty_string("Replicate_Wild_Ignore_Table",
                                              28));
-  field_list.push_back(new Item_return_int("Last_Errno", 4, MYSQL_TYPE_LONG));
+  field_list.push_back(new Item_return_int("Last_Errno", 4, FIELD_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Last_Error", 20));
   field_list.push_back(new Item_return_int("Skip_Counter", 10,
-                                           MYSQL_TYPE_LONG));
+                                           FIELD_TYPE_LONG));
   field_list.push_back(new Item_return_int("Exec_Master_Log_Pos", 10,
-                                           MYSQL_TYPE_LONGLONG));
+                                           FIELD_TYPE_LONGLONG));
   field_list.push_back(new Item_return_int("Relay_Log_Space", 10,
-                                           MYSQL_TYPE_LONGLONG));
+                                           FIELD_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("Until_Condition", 6));
   field_list.push_back(new Item_empty_string("Until_Log_File", FN_REFLEN));
   field_list.push_back(new Item_return_int("Until_Log_Pos", 10,
-                                           MYSQL_TYPE_LONGLONG));
+                                           FIELD_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("Master_SSL_Allowed", 7));
   field_list.push_back(new Item_empty_string("Master_SSL_CA_File",
                                              sizeof(mi->ssl_ca)));
@@ -1196,12 +1196,12 @@ bool show_master_info(THD* thd, Master_info* mi)
   field_list.push_back(new Item_empty_string("Master_SSL_Key",
                                              sizeof(mi->ssl_key)));
   field_list.push_back(new Item_return_int("Seconds_Behind_Master", 10,
-                                           MYSQL_TYPE_LONGLONG));
+                                           FIELD_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("Master_SSL_Verify_Server_Cert",
                                              3));
-  field_list.push_back(new Item_return_int("Last_IO_Errno", 4, MYSQL_TYPE_LONG));
+  field_list.push_back(new Item_return_int("Last_IO_Errno", 4, FIELD_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Last_IO_Error", 20));
-  field_list.push_back(new Item_return_int("Last_SQL_Errno", 4, MYSQL_TYPE_LONG));
+  field_list.push_back(new Item_return_int("Last_SQL_Errno", 4, FIELD_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Last_SQL_Error", 20));
 
   if (protocol->send_fields(&field_list,

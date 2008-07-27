@@ -1436,7 +1436,7 @@ public:
   Item *transform(Item_transformer transformer, uchar *arg);
   void traverse_cond(Cond_traverser, void *arg, traverse_order order);
   void neg_arguments(THD *thd);
-  enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
+  enum_field_types field_type() const { return FIELD_TYPE_LONGLONG; }
   bool subst_argument_checker(uchar **arg __attribute__((unused)))
   { return true; }
   Item *compile(Item_analyzer analyzer, uchar **arg_p,

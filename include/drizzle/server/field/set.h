@@ -44,7 +44,7 @@ public:
   virtual bool zero_pack() const { return 1; }
   String *val_str(String*,String *);
   void sql_type(String &str) const;
-  enum_field_types real_type() const { return MYSQL_TYPE_SET; }
+  enum_field_types real_type() const { return FIELD_TYPE_SET; }
   bool has_charset(void) const { return true; }
 };
 

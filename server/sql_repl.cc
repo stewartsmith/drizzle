@@ -1520,7 +1520,7 @@ bool show_binlog_info(THD* thd)
   List<Item> field_list;
   field_list.push_back(new Item_empty_string("File", FN_REFLEN));
   field_list.push_back(new Item_return_int("Position",20,
-					   MYSQL_TYPE_LONGLONG));
+					   FIELD_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("Binlog_Do_DB",255));
   field_list.push_back(new Item_empty_string("Binlog_Ignore_DB",255));
 
@@ -1577,7 +1577,7 @@ bool show_binlogs(THD* thd)
 
   field_list.push_back(new Item_empty_string("Log_name", 255));
   field_list.push_back(new Item_return_int("File_size", 20,
-                                           MYSQL_TYPE_LONGLONG));
+                                           FIELD_TYPE_LONGLONG));
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);

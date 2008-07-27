@@ -616,7 +616,7 @@ static bool pack_header(uchar *forminfo,
       We mark first TIMESTAMP field with NOW() in DEFAULT or ON UPDATE 
       as auto-update field.
     */
-    if (field->sql_type == MYSQL_TYPE_TIMESTAMP &&
+    if (field->sql_type == FIELD_TYPE_TIMESTAMP &&
         MTYP_TYPENR(field->unireg_check) != Field::NONE &&
 	!time_stamp_pos)
       time_stamp_pos= (uint) field->offset+ (uint) data_offset + 1;
@@ -969,7 +969,7 @@ static bool make_empty_rec(THD *thd, File file,
         goto err;
       }
     }
-    else if (regfield->real_type() == MYSQL_TYPE_ENUM &&
+    else if (regfield->real_type() == FIELD_TYPE_ENUM &&
 	     (field->flags & NOT_NULL_FLAG))
     {
       regfield->set_notnull();

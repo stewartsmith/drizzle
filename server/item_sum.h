@@ -650,7 +650,7 @@ public:
   enum_field_types field_type() const
   {
     return hybrid_type == DECIMAL_RESULT ?
-      MYSQL_TYPE_NEWDECIMAL : MYSQL_TYPE_DOUBLE;
+      FIELD_TYPE_NEWDECIMAL : FIELD_TYPE_DOUBLE;
   }
   void fix_length_and_dec() {}
   enum Item_result result_type () const { return hybrid_type; }
@@ -718,7 +718,7 @@ public:
   enum_field_types field_type() const
   {
     return hybrid_type == DECIMAL_RESULT ?
-      MYSQL_TYPE_NEWDECIMAL : MYSQL_TYPE_DOUBLE;
+      FIELD_TYPE_NEWDECIMAL : FIELD_TYPE_DOUBLE;
   }
   void fix_length_and_dec() {}
   enum Item_result result_type () const { return hybrid_type; }
@@ -796,7 +796,7 @@ public:
   double val_real();
   my_decimal *val_decimal(my_decimal *);
   enum Item_result result_type () const { return REAL_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DOUBLE;}
+  enum_field_types field_type() const { return FIELD_TYPE_DOUBLE;}
 };
 
 /*
@@ -818,7 +818,7 @@ class Item_sum_std :public Item_sum_variance
   const char *func_name() const { return "std("; }
   Item *copy_or_same(THD* thd);
   enum Item_result result_type () const { return REAL_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DOUBLE;}
+  enum_field_types field_type() const { return FIELD_TYPE_DOUBLE;}
 };
 
 // This class is a string or number function depending on num_func
@@ -838,7 +838,7 @@ protected:
   public:
   Item_sum_hybrid(Item *item_par,int sign)
     :Item_sum(item_par), sum(0.0), sum_int(0),
-    hybrid_type(INT_RESULT), hybrid_field_type(MYSQL_TYPE_LONGLONG),
+    hybrid_type(INT_RESULT), hybrid_field_type(FIELD_TYPE_LONGLONG),
     cmp_sign(sign), was_values(true)
   { collation.set(&my_charset_bin); }
   Item_sum_hybrid(THD *thd, Item_sum_hybrid *item);
@@ -1153,9 +1153,9 @@ public:
   enum_field_types field_type() const
   {
     if (max_length/collation.collation->mbmaxlen > CONVERT_IF_BIGGER_TO_BLOB )
-      return MYSQL_TYPE_BLOB;
+      return FIELD_TYPE_BLOB;
     else
-      return MYSQL_TYPE_VARCHAR;
+      return FIELD_TYPE_VARCHAR;
   }
   void clear();
   bool add();

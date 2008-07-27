@@ -1436,7 +1436,7 @@ innobase_init(
         innobase_hton->flags=HTON_NO_FLAGS;
         innobase_hton->release_temporary_latches=innobase_release_temporary_latches;
 
-        ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)MYSQL_TYPE_VARCHAR);
+        ut_a(DATA_MYSQL_TRUE_VARCHAR == (ulint)FIELD_TYPE_VARCHAR);
 
 #ifdef UNIV_DEBUG
 	static const char	test_filename[] = "-@";
@@ -2526,10 +2526,10 @@ innobase_mysql_cmp(
 
 	switch (mysql_tp) {
 
-	case MYSQL_TYPE_STRING:
-	case MYSQL_TYPE_VAR_STRING:
-	case MYSQL_TYPE_BLOB:
-	case MYSQL_TYPE_VARCHAR:
+	case FIELD_TYPE_STRING:
+	case FIELD_TYPE_VAR_STRING:
+	case FIELD_TYPE_BLOB:
+	case FIELD_TYPE_VARCHAR:
 		/* Use the charset number to pick the right charset struct for
 		the comparison. Since the MySQL function get_charset may be
 		slow before Bar removes the mutex operation there, we first
@@ -2592,9 +2592,9 @@ get_innobase_type_from_mysql_type(
 	8 bits: this is used in ibuf and also when DATA_NOT_NULL is ORed to
 	the type */
 
-	assert((ulint)MYSQL_TYPE_STRING < 256);
-	assert((ulint)MYSQL_TYPE_VAR_STRING < 256);
-	assert((ulint)MYSQL_TYPE_DOUBLE < 256);
+	assert((ulint)FIELD_TYPE_STRING < 256);
+	assert((ulint)FIELD_TYPE_VAR_STRING < 256);
+	assert((ulint)FIELD_TYPE_DOUBLE < 256);
 
 	if (field->flags & UNSIGNED_FLAG) {
 
@@ -2603,8 +2603,8 @@ get_innobase_type_from_mysql_type(
 		*unsigned_flag = 0;
 	}
 
-	if (field->real_type() == MYSQL_TYPE_ENUM
-		|| field->real_type() == MYSQL_TYPE_SET) {
+	if (field->real_type() == FIELD_TYPE_ENUM
+		|| field->real_type() == FIELD_TYPE_SET) {
 
 		/* MySQL has field->type() a string type for these, but the
 		data is actually internally stored as an unsigned integer
@@ -2620,8 +2620,8 @@ get_innobase_type_from_mysql_type(
 	switch (field->type()) {
 		/* NOTE that we only allow string types in DATA_MYSQL and
 		DATA_VARMYSQL */
-	case MYSQL_TYPE_VAR_STRING: /* old <= 4.1 VARCHAR */
-	case MYSQL_TYPE_VARCHAR:    /* new >= 5.0.3 true VARCHAR */
+	case FIELD_TYPE_VAR_STRING: /* old <= 4.1 VARCHAR */
+	case FIELD_TYPE_VARCHAR:    /* new >= 5.0.3 true VARCHAR */
 		if (field->binary()) {
 			return(DATA_BINARY);
 		} else if (strcmp(
@@ -2631,7 +2631,7 @@ get_innobase_type_from_mysql_type(
 		} else {
 			return(DATA_VARMYSQL);
 		}
-	case MYSQL_TYPE_STRING: if (field->binary()) {
+	case FIELD_TYPE_STRING: if (field->binary()) {
 
 			return(DATA_FIXBINARY);
 		} else if (strcmp(
@@ -2641,21 +2641,21 @@ get_innobase_type_from_mysql_type(
 		} else {
 			return(DATA_MYSQL);
 		}
-	case MYSQL_TYPE_NEWDECIMAL:
+	case FIELD_TYPE_NEWDECIMAL:
 		return(DATA_FIXBINARY);
-	case MYSQL_TYPE_LONG:
-	case MYSQL_TYPE_LONGLONG:
-	case MYSQL_TYPE_TINY:
-	case MYSQL_TYPE_SHORT:
-	case MYSQL_TYPE_DATETIME:
-	case MYSQL_TYPE_YEAR:
-	case MYSQL_TYPE_NEWDATE:
-	case MYSQL_TYPE_TIME:
-	case MYSQL_TYPE_TIMESTAMP:
+	case FIELD_TYPE_LONG:
+	case FIELD_TYPE_LONGLONG:
+	case FIELD_TYPE_TINY:
+	case FIELD_TYPE_SHORT:
+	case FIELD_TYPE_DATETIME:
+	case FIELD_TYPE_YEAR:
+	case FIELD_TYPE_NEWDATE:
+	case FIELD_TYPE_TIME:
+	case FIELD_TYPE_TIMESTAMP:
 		return(DATA_INT);
-	case MYSQL_TYPE_DOUBLE:
+	case FIELD_TYPE_DOUBLE:
 		return(DATA_DOUBLE);
-	case MYSQL_TYPE_BLOB:
+	case FIELD_TYPE_BLOB:
 		return(DATA_BLOB);
 	default:
 		assert(0);
@@ -2758,7 +2758,7 @@ ha_innobase::store_key_val_for_row(
 		field = key_part->field;
 		mysql_type = field->type();
 
-		if (mysql_type == MYSQL_TYPE_VARCHAR) {
+		if (mysql_type == FIELD_TYPE_VARCHAR) {
 						/* >= 5.0.3 true VARCHAR */
 			ulint	lenlen;
 			ulint	len;
@@ -2822,7 +2822,7 @@ ha_innobase::store_key_val_for_row(
 
 			buff += key_len;
 
-		} else if (mysql_type == MYSQL_TYPE_BLOB) {
+		} else if (mysql_type == FIELD_TYPE_BLOB) {
 
 			CHARSET_INFO*	cs;
 			ulint		key_len;
@@ -2917,10 +2917,10 @@ ha_innobase::store_key_val_for_row(
 			type is not enum or set. For these fields check
 			if character set is multi byte. */
 
-			if (real_type != MYSQL_TYPE_ENUM
-				&& real_type != MYSQL_TYPE_SET
-				&& ( mysql_type == MYSQL_TYPE_VAR_STRING
-					|| mysql_type == MYSQL_TYPE_STRING)) {
+			if (real_type != FIELD_TYPE_ENUM
+				&& real_type != FIELD_TYPE_SET
+				&& ( mysql_type == FIELD_TYPE_VAR_STRING
+					|| mysql_type == FIELD_TYPE_STRING)) {
 
 				cs = field->charset();
 
@@ -3607,7 +3607,7 @@ calc_row_difference(
 		case DATA_VARCHAR:
 		case DATA_BINARY:
 		case DATA_VARMYSQL:
-			if (field_mysql_type == MYSQL_TYPE_VARCHAR) {
+			if (field_mysql_type == FIELD_TYPE_VARCHAR) {
 				/* This is a >= 5.0.3 type true VARCHAR where
 				the real payload data length is stored in
 				1 or 2 bytes */
@@ -4648,7 +4648,7 @@ create_table_def(
 
 		long_true_varchar = 0;
 
-		if (field->type() == MYSQL_TYPE_VARCHAR) {
+		if (field->type() == FIELD_TYPE_VARCHAR) {
 			col_len -= ((Field_varstring*)field)->length_bytes;
 
 			if (((Field_varstring*)field)->length_bytes == 2) {
@@ -4755,8 +4755,8 @@ create_index(
 
 		if (DATA_BLOB == col_type
 			|| (key_part->length < field->pack_length()
-				&& field->type() != MYSQL_TYPE_VARCHAR)
-			|| (field->type() == MYSQL_TYPE_VARCHAR
+				&& field->type() != FIELD_TYPE_VARCHAR)
+			|| (field->type() == FIELD_TYPE_VARCHAR
 				&& key_part->length < field->pack_length()
 				- ((Field_varstring*)field)->length_bytes)) {
 
@@ -7414,7 +7414,7 @@ ha_innobase::cmp_ref(
 		field = key_part->field;
 		mysql_type = field->type();
 
-		if (mysql_type == MYSQL_TYPE_BLOB) {
+		if (mysql_type == FIELD_TYPE_BLOB) {
 
 			/* In the MySQL key value format, a column prefix of
 			a BLOB is preceded by a 2-byte length field */
