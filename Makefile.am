@@ -100,6 +100,7 @@ test-drizzle:
 	  delete \
 	  join_outer \
 	  distinct \
+	  type_newdecimal \
 	  join \
 	  subselect \
 	  subselect3 \
