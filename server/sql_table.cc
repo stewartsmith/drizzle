@@ -780,7 +780,7 @@ int prepare_create_field(Create_field *sql_field,
   assert(sql_field->charset);
 
   switch (sql_field->sql_type) {
-  case MYSQL_TYPE_BLOB:
+  case FIELD_TYPE_BLOB:
     sql_field->pack_flag=FIELDFLAG_BLOB |
       pack_length_to_packflag(sql_field->pack_length -
                               portable_sizeof_char_ptr);
@@ -790,13 +790,13 @@ int prepare_create_field(Create_field *sql_field,
     sql_field->unireg_check=Field::BLOB_FIELD;
     (*blob_columns)++;
     break;
-  case MYSQL_TYPE_VARCHAR:
-  case MYSQL_TYPE_STRING:
+  case FIELD_TYPE_VARCHAR:
+  case FIELD_TYPE_STRING:
     sql_field->pack_flag=0;
     if (sql_field->charset->state & MY_CS_BINSORT)
       sql_field->pack_flag|=FIELDFLAG_BINARY;
     break;
-  case MYSQL_TYPE_ENUM:
+  case FIELD_TYPE_ENUM:
     sql_field->pack_flag=pack_length_to_packflag(sql_field->pack_length) |
       FIELDFLAG_INTERVAL;
     if (sql_field->charset->state & MY_CS_BINSORT)
@@ -807,7 +807,7 @@ int prepare_create_field(Create_field *sql_field,
                                      sql_field->charset, &dup_val_count))
       return(1);
     break;
-  case MYSQL_TYPE_SET:
+  case FIELD_TYPE_SET:
     sql_field->pack_flag=pack_length_to_packflag(sql_field->pack_length) |
       FIELDFLAG_BITFIELD;
     if (sql_field->charset->state & MY_CS_BINSORT)
@@ -824,13 +824,13 @@ int prepare_create_field(Create_field *sql_field,
        return(1);
     }
     break;
-  case MYSQL_TYPE_NEWDATE:  // Rest of string types
-  case MYSQL_TYPE_TIME:
-  case MYSQL_TYPE_DATETIME:
-  case MYSQL_TYPE_NULL:
+  case FIELD_TYPE_NEWDATE:  // Rest of string types
+  case FIELD_TYPE_TIME:
+  case FIELD_TYPE_DATETIME:
+  case FIELD_TYPE_NULL:
     sql_field->pack_flag=f_settype((uint) sql_field->sql_type);
     break;
-  case MYSQL_TYPE_NEWDECIMAL:
+  case FIELD_TYPE_NEWDECIMAL:
     sql_field->pack_flag=(FIELDFLAG_NUMBER |
                           (sql_field->flags & UNSIGNED_FLAG ? 0 :
                            FIELDFLAG_DECIMAL) |
@@ -838,7 +838,7 @@ int prepare_create_field(Create_field *sql_field,
                            FIELDFLAG_ZEROFILL : 0) |
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;
-  case MYSQL_TYPE_TIMESTAMP:
+  case FIELD_TYPE_TIMESTAMP:
     /* We should replace old TIMESTAMP fields with their newer analogs */
     if (sql_field->unireg_check == Field::TIMESTAMP_OLD_FIELD)
     {
@@ -963,10 +963,10 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     */
     if (sql_field->def && 
         save_cs != sql_field->def->collation.collation &&
-        (sql_field->sql_type == MYSQL_TYPE_VAR_STRING ||
-         sql_field->sql_type == MYSQL_TYPE_STRING ||
-         sql_field->sql_type == MYSQL_TYPE_SET ||
-         sql_field->sql_type == MYSQL_TYPE_ENUM))
+        (sql_field->sql_type == FIELD_TYPE_VAR_STRING ||
+         sql_field->sql_type == FIELD_TYPE_STRING ||
+         sql_field->sql_type == FIELD_TYPE_SET ||
+         sql_field->sql_type == FIELD_TYPE_ENUM))
     {
       /*
         Starting from 5.1 we work here with a copy of Create_field
@@ -988,8 +988,8 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       }
     }
 
-    if (sql_field->sql_type == MYSQL_TYPE_SET ||
-        sql_field->sql_type == MYSQL_TYPE_ENUM)
+    if (sql_field->sql_type == FIELD_TYPE_SET ||
+        sql_field->sql_type == FIELD_TYPE_ENUM)
     {
       uint32_t dummy;
       CHARSET_INFO *cs= sql_field->charset;
@@ -1034,7 +1034,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                                        interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((uchar *)interval->type_names[i])[lengthsp]= '\0';
-          if (sql_field->sql_type == MYSQL_TYPE_SET)
+          if (sql_field->sql_type == FIELD_TYPE_SET)
           {
             if (cs->coll->instr(cs, interval->type_names[i], 
                                 interval->type_lengths[i], 
@@ -1048,7 +1048,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         sql_field->interval_list.empty(); // Don't need interval_list anymore
       }
 
-      if (sql_field->sql_type == MYSQL_TYPE_SET)
+      if (sql_field->sql_type == FIELD_TYPE_SET)
       {
         uint32_t field_length;
         if (sql_field->def != NULL)
@@ -1084,10 +1084,10 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         calculate_interval_lengths(cs, interval, &dummy, &field_length);
         sql_field->length= field_length + (interval->count - 1);
       }
-      else  /* MYSQL_TYPE_ENUM */
+      else  /* FIELD_TYPE_ENUM */
       {
         uint32_t field_length;
-        assert(sql_field->sql_type == MYSQL_TYPE_ENUM);
+        assert(sql_field->sql_type == FIELD_TYPE_ENUM);
         if (sql_field->def != NULL)
         {
           String str, *def= sql_field->def->val_str(&str);
@@ -1177,7 +1177,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     }
     /* Don't pack rows in old tables if the user has requested this */
     if ((sql_field->flags & BLOB_FLAG) ||
-	(sql_field->sql_type == MYSQL_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED))
+	(sql_field->sql_type == FIELD_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED))
       (*db_options)|= HA_OPTION_PACK_RECORD;
     it2.rewind();
   }
@@ -1195,7 +1195,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 			     &timestamps, &timestamps_with_niladic,
 			     file->ha_table_flags()))
       return(true);
-    if (sql_field->sql_type == MYSQL_TYPE_VARCHAR)
+    if (sql_field->sql_type == FIELD_TYPE_VARCHAR)
       create_info->varchar= true;
     sql_field->offset= record_offset;
     if (MTYP_TYPENR(sql_field->unireg_check) == Field::NEXT_NUMBER)
@@ -1535,12 +1535,12 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       /* Use packed keys for long strings on the first column */
       if (!((*db_options) & HA_OPTION_NO_PACK_KEYS) &&
 	  (length >= KEY_DEFAULT_PACK_LENGTH &&
-	   (sql_field->sql_type == MYSQL_TYPE_STRING ||
-	    sql_field->sql_type == MYSQL_TYPE_VARCHAR ||
+	   (sql_field->sql_type == FIELD_TYPE_STRING ||
+	    sql_field->sql_type == FIELD_TYPE_VARCHAR ||
 	    sql_field->pack_flag & FIELDFLAG_BLOB)))
       {
 	if ((column_nr == 0 && (sql_field->pack_flag & FIELDFLAG_BLOB)) ||
-            sql_field->sql_type == MYSQL_TYPE_VARCHAR)
+            sql_field->sql_type == FIELD_TYPE_VARCHAR)
 	  key_info->flags|= HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY;
 	else
 	  key_info->flags|= HA_PACK_KEY;
@@ -1616,7 +1616,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 
     if (thd->variables.sql_mode & MODE_NO_ZERO_DATE &&
         !sql_field->def &&
-        sql_field->sql_type == MYSQL_TYPE_TIMESTAMP &&
+        sql_field->sql_type == FIELD_TYPE_TIMESTAMP &&
         (sql_field->flags & NOT_NULL_FLAG) &&
         (type == Field::NONE || type == Field::TIMESTAMP_UN_FIELD))
     {
@@ -1702,7 +1702,7 @@ static bool prepare_blob_field(THD *thd __attribute__((__unused__)),
     
   if ((sql_field->flags & BLOB_FLAG) && sql_field->length)
   {
-    if (sql_field->sql_type == MYSQL_TYPE_BLOB)
+    if (sql_field->sql_type == FIELD_TYPE_BLOB)
     {
       /* The user has given a length to the blob column */
       sql_field->sql_type= get_blob_type_from_length(sql_field->length);
@@ -1731,11 +1731,11 @@ static bool prepare_blob_field(THD *thd __attribute__((__unused__)),
 
 void sp_prepare_create_field(THD *thd, Create_field *sql_field)
 {
-  if (sql_field->sql_type == MYSQL_TYPE_SET ||
-      sql_field->sql_type == MYSQL_TYPE_ENUM)
+  if (sql_field->sql_type == FIELD_TYPE_SET ||
+      sql_field->sql_type == FIELD_TYPE_ENUM)
   {
     uint32_t field_length, dummy;
-    if (sql_field->sql_type == MYSQL_TYPE_SET)
+    if (sql_field->sql_type == FIELD_TYPE_SET)
     {
       calculate_interval_lengths(sql_field->charset,
                                  sql_field->interval, &dummy, 
@@ -1743,7 +1743,7 @@ void sp_prepare_create_field(THD *thd, Create_field *sql_field)
       sql_field->length= field_length + 
                          (sql_field->interval->count - 1);
     }
-    else /* MYSQL_TYPE_ENUM */
+    else /* FIELD_TYPE_ENUM */
     {
       calculate_interval_lengths(sql_field->charset,
                                  sql_field->interval,
@@ -3487,7 +3487,7 @@ compare_tables(THD *thd,
     /* Don't pack rows in old tables if the user has requested this. */
     if (create_info->row_type == ROW_TYPE_DYNAMIC ||
         (new_field->flags & BLOB_FLAG) ||
-        (new_field->sql_type == MYSQL_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED))
+        (new_field->sql_type == FIELD_TYPE_VARCHAR && create_info->row_type != ROW_TYPE_FIXED))
       create_info->table_options|= HA_OPTION_PACK_RECORD;
 
     /* Check how fields have been modified */
@@ -4100,7 +4100,7 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
   Field **f_ptr,*field;
   for (f_ptr=table->field ; (field= *f_ptr) ; f_ptr++)
     {
-    if (field->type() == MYSQL_TYPE_STRING)
+    if (field->type() == FIELD_TYPE_STRING)
       create_info->varchar= true;
     /* Check if field should be dropped */
     Alter_drop *drop;
@@ -4159,7 +4159,7 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
         }
       if (alter)
 	{
-	if (def->sql_type == MYSQL_TYPE_BLOB)
+	if (def->sql_type == FIELD_TYPE_BLOB)
 	{
 	  my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0), def->change);
           goto err;
@@ -4187,8 +4187,8 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
       If the '0000-00-00' value isn't allowed then raise the error_if_not_empty
       flag to allow ALTER TABLE only if the table to be altered is empty.
       */
-    if ((def->sql_type == MYSQL_TYPE_NEWDATE ||
-         def->sql_type == MYSQL_TYPE_DATETIME) &&
+    if ((def->sql_type == FIELD_TYPE_NEWDATE ||
+         def->sql_type == FIELD_TYPE_DATETIME) &&
          !alter_info->datetime_field &&
          !(~def->flags & (NO_DEFAULT_VALUE_FLAG | NOT_NULL_FLAG)) &&
          thd->variables.sql_mode & MODE_NO_ZERO_DATE)
@@ -5145,11 +5145,11 @@ err:
     enum enum_mysql_timestamp_type t_type= MYSQL_TIMESTAMP_DATE;
     switch (alter_info->datetime_field->sql_type)
     {
-      case MYSQL_TYPE_NEWDATE:
+      case FIELD_TYPE_NEWDATE:
         f_val= "0000-00-00";
         t_type= MYSQL_TIMESTAMP_DATE;
         break;
-      case MYSQL_TYPE_DATETIME:
+      case FIELD_TYPE_DATETIME:
         f_val= "0000-00-00 00:00:00";
         t_type= MYSQL_TIMESTAMP_DATETIME;
         break;
@@ -5517,8 +5517,8 @@ bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
 	    for (uint i= 0; i < t->s->fields; i++ )
 	    {
 	      Field *f= t->field[i];
-	      if ((f->type() == MYSQL_TYPE_BLOB) ||
-                  (f->type() == MYSQL_TYPE_VARCHAR))
+	      if ((f->type() == FIELD_TYPE_BLOB) ||
+                  (f->type() == FIELD_TYPE_VARCHAR))
 	      {
 		String tmp;
 		f->val_str(&tmp);

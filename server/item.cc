@@ -2141,7 +2141,7 @@ Item_param::Item_param(uint pos_in_query_arg) :
   item_result_type(STRING_RESULT),
   /* Don't pretend to be a literal unless value for this item is set. */
   item_type(PARAM_ITEM),
-  param_type(MYSQL_TYPE_VARCHAR),
+  param_type(FIELD_TYPE_VARCHAR),
   pos_in_query(pos_in_query_arg),
   set_param_func(default_set_param_func),
   limit_clause_param(false)
@@ -3953,9 +3953,9 @@ void Item::make_field(Send_field *tmp_field)
 
 enum_field_types Item::string_field_type() const
 {
-  enum_field_types f_type= MYSQL_TYPE_VAR_STRING;
+  enum_field_types f_type= FIELD_TYPE_VAR_STRING;
   if (max_length >= 65536)
-    f_type= MYSQL_TYPE_BLOB;
+    f_type= FIELD_TYPE_BLOB;
   return f_type;
 }
 
@@ -3970,13 +3970,13 @@ enum_field_types Item::field_type() const
 {
   switch (result_type()) {
   case STRING_RESULT:  return string_field_type();
-  case INT_RESULT:     return MYSQL_TYPE_LONGLONG;
-  case DECIMAL_RESULT: return MYSQL_TYPE_NEWDECIMAL;
-  case REAL_RESULT:    return MYSQL_TYPE_DOUBLE;
+  case INT_RESULT:     return FIELD_TYPE_LONGLONG;
+  case DECIMAL_RESULT: return FIELD_TYPE_NEWDECIMAL;
+  case REAL_RESULT:    return FIELD_TYPE_DOUBLE;
   case ROW_RESULT:
   default:
     assert(0);
-    return MYSQL_TYPE_VARCHAR;
+    return FIELD_TYPE_VARCHAR;
   }
 }
 
@@ -3985,9 +3985,9 @@ bool Item::is_datetime()
 {
   switch (field_type())
   {
-    case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_TIMESTAMP:
+    case FIELD_TYPE_NEWDATE:
+    case FIELD_TYPE_DATETIME:
+    case FIELD_TYPE_TIMESTAMP:
       return true;
     default:
       break;
@@ -4092,7 +4092,7 @@ Field *Item::make_string_field(TABLE *table)
                           collation.collation);
   /* Item_type_holder holds the exact type, do not change it */
   else if (max_length > 0 &&
-      (type() != Item::TYPE_HOLDER || field_type() != MYSQL_TYPE_STRING))
+      (type() != Item::TYPE_HOLDER || field_type() != FIELD_TYPE_STRING))
     field= new Field_varstring(max_length, maybe_null, name, table->s,
                                collation.collation);
   else
@@ -4125,48 +4125,48 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
   Field *field;
 
   switch (field_type()) {
-  case MYSQL_TYPE_NEWDECIMAL:
+  case FIELD_TYPE_NEWDECIMAL:
     field= new Field_new_decimal((uchar*) 0, max_length, null_ptr, 0,
                                  Field::NONE, name, decimals, 0,
                                  unsigned_flag);
     break;
-  case MYSQL_TYPE_TINY:
+  case FIELD_TYPE_TINY:
     field= new Field_tiny((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
     break;
-  case MYSQL_TYPE_SHORT:
+  case FIELD_TYPE_SHORT:
     field= new Field_short((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			   name, 0, unsigned_flag);
     break;
-  case MYSQL_TYPE_LONG:
+  case FIELD_TYPE_LONG:
     field= new Field_long((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name, 0, unsigned_flag);
     break;
-  case MYSQL_TYPE_LONGLONG:
+  case FIELD_TYPE_LONGLONG:
     field= new Field_int64_t((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			      name, 0, unsigned_flag);
     break;
-  case MYSQL_TYPE_DOUBLE:
+  case FIELD_TYPE_DOUBLE:
     field= new Field_double((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			    name, decimals, 0, unsigned_flag);
     break;
-  case MYSQL_TYPE_NULL:
+  case FIELD_TYPE_NULL:
     field= new Field_null((uchar*) 0, max_length, Field::NONE,
 			  name, &my_charset_bin);
     break;
-  case MYSQL_TYPE_NEWDATE:
+  case FIELD_TYPE_NEWDATE:
     field= new Field_newdate(maybe_null, name, &my_charset_bin);
     break;
-  case MYSQL_TYPE_TIME:
+  case FIELD_TYPE_TIME:
     field= new Field_time(maybe_null, name, &my_charset_bin);
     break;
-  case MYSQL_TYPE_TIMESTAMP:
+  case FIELD_TYPE_TIMESTAMP:
     field= new Field_timestamp(maybe_null, name, &my_charset_bin);
     break;
-  case MYSQL_TYPE_DATETIME:
+  case FIELD_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
     break;
-  case MYSQL_TYPE_YEAR:
+  case FIELD_TYPE_YEAR:
     field= new Field_year((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
 			  name);
     break;
@@ -4174,7 +4174,7 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
     /* This case should never be chosen */
     assert(0);
     /* If something goes awfully wrong, it's better to get a string than die */
-  case MYSQL_TYPE_STRING:
+  case FIELD_TYPE_STRING:
     if (fixed_length && max_length < CONVERT_IF_BIGGER_TO_BLOB)
     {
       field= new Field_string(max_length, maybe_null, name,
@@ -4182,12 +4182,12 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
       break;
     }
     /* Fall through to make_string_field() */
-  case MYSQL_TYPE_ENUM:
-  case MYSQL_TYPE_SET:
-  case MYSQL_TYPE_VAR_STRING:
-  case MYSQL_TYPE_VARCHAR:
+  case FIELD_TYPE_ENUM:
+  case FIELD_TYPE_SET:
+  case FIELD_TYPE_VAR_STRING:
+  case FIELD_TYPE_VARCHAR:
     return make_string_field(table);
-  case MYSQL_TYPE_BLOB:
+  case FIELD_TYPE_BLOB:
     if (this->type() == Item::TYPE_HOLDER)
       field= new Field_blob(max_length, maybe_null, name, collation.collation,
                             1);
@@ -4706,21 +4706,21 @@ bool Item::send(Protocol *protocol, String *buffer)
 
   switch ((f_type=field_type())) {
   default:
-  case MYSQL_TYPE_NULL:
-  case MYSQL_TYPE_ENUM:
-  case MYSQL_TYPE_SET:
-  case MYSQL_TYPE_BLOB:
-  case MYSQL_TYPE_STRING:
-  case MYSQL_TYPE_VAR_STRING:
-  case MYSQL_TYPE_VARCHAR:
-  case MYSQL_TYPE_NEWDECIMAL:
+  case FIELD_TYPE_NULL:
+  case FIELD_TYPE_ENUM:
+  case FIELD_TYPE_SET:
+  case FIELD_TYPE_BLOB:
+  case FIELD_TYPE_STRING:
+  case FIELD_TYPE_VAR_STRING:
+  case FIELD_TYPE_VARCHAR:
+  case FIELD_TYPE_NEWDECIMAL:
   {
     String *res;
     if ((res=val_str(buffer)))
       result= protocol->store(res->ptr(),res->length(),res->charset());
     break;
   }
-  case MYSQL_TYPE_TINY:
+  case FIELD_TYPE_TINY:
   {
     int64_t nr;
     nr= val_int();
@@ -4728,8 +4728,8 @@ bool Item::send(Protocol *protocol, String *buffer)
       result= protocol->store_tiny(nr);
     break;
   }
-  case MYSQL_TYPE_SHORT:
-  case MYSQL_TYPE_YEAR:
+  case FIELD_TYPE_SHORT:
+  case FIELD_TYPE_YEAR:
   {
     int64_t nr;
     nr= val_int();
@@ -4737,7 +4737,7 @@ bool Item::send(Protocol *protocol, String *buffer)
       result= protocol->store_short(nr);
     break;
   }
-  case MYSQL_TYPE_LONG:
+  case FIELD_TYPE_LONG:
   {
     int64_t nr;
     nr= val_int();
@@ -4745,7 +4745,7 @@ bool Item::send(Protocol *protocol, String *buffer)
       result= protocol->store_long(nr);
     break;
   }
-  case MYSQL_TYPE_LONGLONG:
+  case FIELD_TYPE_LONGLONG:
   {
     int64_t nr;
     nr= val_int();
@@ -4753,28 +4753,28 @@ bool Item::send(Protocol *protocol, String *buffer)
       result= protocol->store_int64_t(nr, unsigned_flag);
     break;
   }
-  case MYSQL_TYPE_DOUBLE:
+  case FIELD_TYPE_DOUBLE:
   {
     double nr= val_real();
     if (!null_value)
       result= protocol->store(nr, decimals, buffer);
     break;
   }
-  case MYSQL_TYPE_DATETIME:
-  case MYSQL_TYPE_TIMESTAMP:
+  case FIELD_TYPE_DATETIME:
+  case FIELD_TYPE_TIMESTAMP:
   {
     MYSQL_TIME tm;
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
     {
-      if (f_type == MYSQL_TYPE_NEWDATE)
+      if (f_type == FIELD_TYPE_NEWDATE)
 	return protocol->store_date(&tm);
       else
 	result= protocol->store(&tm);
     }
     break;
   }
-  case MYSQL_TYPE_TIME:
+  case FIELD_TYPE_TIME:
   {
     MYSQL_TIME tm;
     get_time(&tm);
@@ -6112,7 +6112,7 @@ my_decimal *Item_cache_str::val_decimal(my_decimal *decimal_val)
 int Item_cache_str::save_in_field(Field *field, bool no_conversions)
 {
   int res= Item_cache::save_in_field(field, no_conversions);
-  return (is_varbinary && field->type() == MYSQL_TYPE_STRING &&
+  return (is_varbinary && field->type() == FIELD_TYPE_STRING &&
           value->length() < field->field_length) ? 1 : res;
 }
 
@@ -6249,10 +6249,10 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
     Field *field= ((Item_field *) item)->field;
     enum_field_types type= field->real_type();
     if (field->is_created_from_null_item)
-      return MYSQL_TYPE_NULL;
+      return FIELD_TYPE_NULL;
     /* work around about varchar type field detection */
-    if (type == MYSQL_TYPE_STRING && field->type() == MYSQL_TYPE_VAR_STRING)
-      return MYSQL_TYPE_VAR_STRING;
+    if (type == FIELD_TYPE_STRING && field->type() == FIELD_TYPE_VAR_STRING)
+      return FIELD_TYPE_VAR_STRING;
     return type;
   }
   case SUM_FUNC_ITEM:
@@ -6277,17 +6277,17 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
       */
       switch (item->result_type()) {
       case STRING_RESULT:
-        return MYSQL_TYPE_VAR_STRING;
+        return FIELD_TYPE_VAR_STRING;
       case INT_RESULT:
-        return MYSQL_TYPE_LONGLONG;
+        return FIELD_TYPE_LONGLONG;
       case REAL_RESULT:
-        return MYSQL_TYPE_DOUBLE;
+        return FIELD_TYPE_DOUBLE;
       case DECIMAL_RESULT:
-        return MYSQL_TYPE_NEWDECIMAL;
+        return FIELD_TYPE_NEWDECIMAL;
       case ROW_RESULT:
       default:
         assert(0);
-        return MYSQL_TYPE_VAR_STRING;
+        return FIELD_TYPE_VAR_STRING;
       }
     }
     break;
@@ -6373,7 +6373,7 @@ bool Item_type_holder::join_types(THD *thd __attribute__((__unused__)),
       int delta1= max_length_orig - decimals_orig;
       int delta2= item->max_length - item->decimals;
       max_length= max(delta1, delta2) + decimals;
-      if (fld_type == MYSQL_TYPE_DOUBLE && max_length > DBL_DIG + 2) 
+      if (fld_type == FIELD_TYPE_DOUBLE && max_length > DBL_DIG + 2) 
       {
         max_length= DBL_DIG + 7;
         decimals= NOT_FIXED_DEC;
@@ -6410,29 +6410,29 @@ uint32_t Item_type_holder::display_length(Item *item)
 
   switch (item->field_type())
   {
-  case MYSQL_TYPE_TIMESTAMP:
-  case MYSQL_TYPE_TIME:
-  case MYSQL_TYPE_DATETIME:
-  case MYSQL_TYPE_YEAR:
-  case MYSQL_TYPE_NEWDATE:
-  case MYSQL_TYPE_VARCHAR:
-  case MYSQL_TYPE_NEWDECIMAL:
-  case MYSQL_TYPE_ENUM:
-  case MYSQL_TYPE_SET:
-  case MYSQL_TYPE_BLOB:
-  case MYSQL_TYPE_VAR_STRING:
-  case MYSQL_TYPE_STRING:
-  case MYSQL_TYPE_TINY:
+  case FIELD_TYPE_TIMESTAMP:
+  case FIELD_TYPE_TIME:
+  case FIELD_TYPE_DATETIME:
+  case FIELD_TYPE_YEAR:
+  case FIELD_TYPE_NEWDATE:
+  case FIELD_TYPE_VARCHAR:
+  case FIELD_TYPE_NEWDECIMAL:
+  case FIELD_TYPE_ENUM:
+  case FIELD_TYPE_SET:
+  case FIELD_TYPE_BLOB:
+  case FIELD_TYPE_VAR_STRING:
+  case FIELD_TYPE_STRING:
+  case FIELD_TYPE_TINY:
     return 4;
-  case MYSQL_TYPE_SHORT:
+  case FIELD_TYPE_SHORT:
     return 6;
-  case MYSQL_TYPE_LONG:
+  case FIELD_TYPE_LONG:
     return MY_INT32_NUM_DECIMAL_DIGITS;
-  case MYSQL_TYPE_DOUBLE:
+  case FIELD_TYPE_DOUBLE:
     return 53;
-  case MYSQL_TYPE_NULL:
+  case FIELD_TYPE_NULL:
     return 0;
-  case MYSQL_TYPE_LONGLONG:
+  case FIELD_TYPE_LONGLONG:
     return 20;
   default:
     assert(0); // we should never go there
@@ -6460,7 +6460,7 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
   Field *field;
 
   switch (fld_type) {
-  case MYSQL_TYPE_ENUM:
+  case FIELD_TYPE_ENUM:
     assert(enum_set_typelib);
     field= new Field_enum((uchar *) 0, max_length, null_ptr, 0,
                           Field::NONE, name,
@@ -6469,7 +6469,7 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
     if (field)
       field->init(table);
     return field;
-  case MYSQL_TYPE_SET:
+  case FIELD_TYPE_SET:
     assert(enum_set_typelib);
     field= new Field_set((uchar *) 0, max_length, null_ptr, 0,
                          Field::NONE, name,
@@ -6478,7 +6478,7 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
     if (field)
       field->init(table);
     return field;
-  case MYSQL_TYPE_NULL:
+  case FIELD_TYPE_NULL:
     return make_string_field(table);
   default:
     break;
@@ -6495,8 +6495,8 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
 */
 void Item_type_holder::get_full_info(Item *item)
 {
-  if (fld_type == MYSQL_TYPE_ENUM ||
-      fld_type == MYSQL_TYPE_SET)
+  if (fld_type == FIELD_TYPE_ENUM ||
+      fld_type == FIELD_TYPE_SET)
   {
     if (item->type() == Item::SUM_FUNC_ITEM &&
         (((Item_sum*)item)->sum_func() == Item_sum::MAX_FUNC ||
@@ -6507,11 +6507,11 @@ void Item_type_holder::get_full_info(Item *item)
       field (or MIN|MAX(enum|set field)) and number of NULL fields
     */
     assert((enum_set_typelib &&
-                 get_real_type(item) == MYSQL_TYPE_NULL) ||
+                 get_real_type(item) == FIELD_TYPE_NULL) ||
                 (!enum_set_typelib &&
                  item->type() == Item::FIELD_ITEM &&
-                 (get_real_type(item) == MYSQL_TYPE_ENUM ||
-                  get_real_type(item) == MYSQL_TYPE_SET) &&
+                 (get_real_type(item) == FIELD_TYPE_ENUM ||
+                  get_real_type(item) == FIELD_TYPE_SET) &&
                  ((Field_enum*)((Item_field *) item)->field)->typelib));
     if (!enum_set_typelib)
     {

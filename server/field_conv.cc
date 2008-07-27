@@ -167,7 +167,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
     when set to NULL (TIMESTAMP fields which allow setting to NULL
     are handled by first check).
   */
-  if (field->type() == MYSQL_TYPE_TIMESTAMP)
+  if (field->type() == FIELD_TYPE_TIMESTAMP)
   {
     ((Field_timestamp*) field)->set_time();
     return 0;					// Ok to set time to NULL
@@ -563,7 +563,7 @@ void Copy_field::set(uchar *to,Field *from)
  */
 void Copy_field::set(Field *to,Field *from,bool save)
 {
-  if (to->type() == MYSQL_TYPE_NULL)
+  if (to->type() == FIELD_TYPE_NULL)
   {
     to_null_ptr=0;				// For easy debugging
     to_ptr=0;
@@ -597,7 +597,7 @@ void Copy_field::set(Field *to,Field *from,bool save)
     }
     else
     {
-      if (to_field->type() == MYSQL_TYPE_TIMESTAMP)
+      if (to_field->type() == FIELD_TYPE_TIMESTAMP)
         do_copy= do_copy_timestamp;               // Automatic timestamp
       else if (to_field == to_field->table->next_number_field)
         do_copy= do_copy_next_number;
@@ -652,8 +652,8 @@ Copy_field::get_copy_func(Field *to,Field *from)
         use special copy function that removes trailing spaces and thus
         repairs data.
       */
-      if (from->type() == MYSQL_TYPE_VAR_STRING && !from->has_charset() &&
-          to->type() == MYSQL_TYPE_VARCHAR && !to->has_charset())
+      if (from->type() == FIELD_TYPE_VAR_STRING && !from->has_charset() &&
+          to->type() == FIELD_TYPE_VARCHAR && !to->has_charset())
         return do_field_varbinary_pre50;
 
       /*
@@ -662,21 +662,21 @@ Copy_field::get_copy_func(Field *to,Field *from)
       */
       if (to->real_type() != from->real_type() ||
           !compatible_db_low_byte_first ||
-          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == MYSQL_TYPE_NEWDATE) || to->type() == MYSQL_TYPE_DATETIME))
+          (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == FIELD_TYPE_NEWDATE) || to->type() == FIELD_TYPE_DATETIME))
       {
-	if (from->real_type() == MYSQL_TYPE_ENUM ||
-	    from->real_type() == MYSQL_TYPE_SET)
+	if (from->real_type() == FIELD_TYPE_ENUM ||
+	    from->real_type() == FIELD_TYPE_SET)
 	  if (to->result_type() != STRING_RESULT)
 	    return do_field_int;		// Convert SET to number
 	return do_field_string;
       }
-      if (to->real_type() == MYSQL_TYPE_ENUM ||
-	  to->real_type() == MYSQL_TYPE_SET)
+      if (to->real_type() == FIELD_TYPE_ENUM ||
+	  to->real_type() == FIELD_TYPE_SET)
       {
 	if (!to->eq_def(from))
         {
-          if (from->real_type() == MYSQL_TYPE_ENUM &&
-              to->real_type() == MYSQL_TYPE_ENUM)
+          if (from->real_type() == FIELD_TYPE_ENUM &&
+              to->real_type() == FIELD_TYPE_ENUM)
             return do_field_enum;
           else
             return do_field_string;
@@ -684,7 +684,7 @@ Copy_field::get_copy_func(Field *to,Field *from)
       }
       else if (to->charset() != from->charset())
 	return do_field_string;
-      else if (to->real_type() == MYSQL_TYPE_VARCHAR)
+      else if (to->real_type() == FIELD_TYPE_VARCHAR)
       {
         if (((Field_varstring*) to)->length_bytes !=
             ((Field_varstring*) from)->length_bytes)
@@ -747,18 +747,18 @@ Copy_field::get_copy_func(Field *to,Field *from)
 int field_conv(Field *to,Field *from)
 {
   if (to->real_type() == from->real_type() &&
-      !(to->type() == MYSQL_TYPE_BLOB && to->table->copy_blobs))
+      !(to->type() == FIELD_TYPE_BLOB && to->table->copy_blobs))
   {
     /* Please god, will someone rewrite this to be readable :( */
     if (to->pack_length() == from->pack_length() && 
         !(to->flags & UNSIGNED_FLAG && !(from->flags & UNSIGNED_FLAG)) && 
-        to->real_type() != MYSQL_TYPE_ENUM && 
-        to->real_type() != MYSQL_TYPE_SET &&
-        (to->real_type() != MYSQL_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
+        to->real_type() != FIELD_TYPE_ENUM && 
+        to->real_type() != FIELD_TYPE_SET &&
+        (to->real_type() != FIELD_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
-        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != MYSQL_TYPE_NEWDATE && to->type() != MYSQL_TYPE_DATETIME)) && 
-        (from->real_type() != MYSQL_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
+        (!(to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) || (to->type() != FIELD_TYPE_NEWDATE && to->type() != FIELD_TYPE_DATETIME)) && 
+        (from->real_type() != FIELD_TYPE_VARCHAR || ((Field_varstring*)from)->length_bytes == ((Field_varstring*)to)->length_bytes))
     {						// Identical fields
 #ifdef HAVE_purify
       /* This may happen if one does 'UPDATE ... SET x=x' */
@@ -768,7 +768,7 @@ int field_conv(Field *to,Field *from)
       return 0;
     }
   }
-  if (to->type() == MYSQL_TYPE_BLOB)
+  if (to->type() == FIELD_TYPE_BLOB)
   {						// Be sure the value is stored
     Field_blob *blob=(Field_blob*) to;
     from->val_str(&blob->value);
@@ -778,13 +778,13 @@ int field_conv(Field *to,Field *from)
     */
     if (to->table->copy_blobs ||
         (!blob->value.is_alloced() &&
-         from->real_type() != MYSQL_TYPE_STRING &&
-         from->real_type() != MYSQL_TYPE_VARCHAR))
+         from->real_type() != FIELD_TYPE_STRING &&
+         from->real_type() != FIELD_TYPE_VARCHAR))
       blob->value.copy();
     return blob->store(blob->value.ptr(),blob->value.length(),from->charset());
   }
-  if (from->real_type() == MYSQL_TYPE_ENUM &&
-      to->real_type() == MYSQL_TYPE_ENUM &&
+  if (from->real_type() == FIELD_TYPE_ENUM &&
+      to->real_type() == FIELD_TYPE_ENUM &&
       from->val_int() == 0)
   {
     ((Field_enum *)(to))->store_type(0);
@@ -792,8 +792,8 @@ int field_conv(Field *to,Field *from)
   }
   else if ((from->result_type() == STRING_RESULT &&
             (to->result_type() == STRING_RESULT ||
-             (from->real_type() != MYSQL_TYPE_ENUM &&
-              from->real_type() != MYSQL_TYPE_SET))))
+             (from->real_type() != FIELD_TYPE_ENUM &&
+              from->real_type() != FIELD_TYPE_SET))))
   {
     char buff[MAX_FIELD_WIDTH];
     String result(buff,sizeof(buff),from->charset());

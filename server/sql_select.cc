@@ -10381,8 +10381,8 @@ remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value)
         thd->substitute_null_with_insert_id= false;
       }
       /* fix to replace 'NULL' dates with '0' (shreeve@uci.edu) */
-      else if (((field->type() == MYSQL_TYPE_NEWDATE) ||
-		(field->type() == MYSQL_TYPE_DATETIME)) &&
+      else if (((field->type() == FIELD_TYPE_NEWDATE) ||
+		(field->type() == FIELD_TYPE_DATETIME)) &&
 		(field->flags & NOT_NULL_FLAG) &&
 	       !field->table->maybe_null)
       {
@@ -10585,8 +10585,8 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
     new_field->flags|= (org_field->flags & NO_DEFAULT_VALUE_FLAG);
     if (org_field->maybe_null() || (item && item->maybe_null))
       new_field->flags&= ~NOT_NULL_FLAG;	// Because of outer join
-    if (org_field->type() == MYSQL_TYPE_VAR_STRING ||
-        org_field->type() == MYSQL_TYPE_VARCHAR)
+    if (org_field->type() == FIELD_TYPE_VAR_STRING ||
+        org_field->type() == FIELD_TYPE_VARCHAR)
       table->s->db_create_options|= HA_OPTION_PACK_RECORD;
     else if (org_field->type() == FIELD_TYPE_DOUBLE)
       ((Field_double *) new_field)->not_fixed= true;
@@ -10653,9 +10653,9 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
       DATE/TIME fields have STRING_RESULT result type. 
       To preserve type they needed to be handled separately.
     */
-    if ((type= item->field_type()) == MYSQL_TYPE_DATETIME ||
-        type == MYSQL_TYPE_TIME || type == MYSQL_TYPE_NEWDATE ||
-        type == MYSQL_TYPE_TIMESTAMP)
+    if ((type= item->field_type()) == FIELD_TYPE_DATETIME ||
+        type == FIELD_TYPE_TIME || type == FIELD_TYPE_NEWDATE ||
+        type == FIELD_TYPE_TIMESTAMP)
       new_field= item->tmp_table_field_from_field_type(table, 1);
     /* 
       Make sure that the blob fits into a Field_varstring which has 
@@ -10745,7 +10745,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((__unused__)),
 Field *create_tmp_field_for_schema(THD *thd __attribute__((__unused__)),
                                    Item *item, TABLE *table)
 {
-  if (item->field_type() == MYSQL_TYPE_VARCHAR)
+  if (item->field_type() == FIELD_TYPE_VARCHAR)
   {
     Field *field;
     if (item->max_length > MAX_FIELD_VARCHARLENGTH)
@@ -11157,8 +11157,8 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 	    blob_count++;
 	  }
 	  *(reg_field++)= new_field;
-          if (new_field->real_type() == MYSQL_TYPE_STRING ||
-              new_field->real_type() == MYSQL_TYPE_VARCHAR)
+          if (new_field->real_type() == FIELD_TYPE_STRING ||
+              new_field->real_type() == FIELD_TYPE_VARCHAR)
           {
             string_count++;
             string_total_length+= new_field->pack_length();
@@ -11407,7 +11407,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     if (field->flags & BLOB_FLAG)
       recinfo->type= (int) FIELD_BLOB;
     else if (use_packed_rows &&
-             field->real_type() == MYSQL_TYPE_STRING &&
+             field->real_type() == FIELD_TYPE_STRING &&
 	     length >= MIN_STRING_LENGTH_TO_PACK_ROWS)
       recinfo->type=FIELD_SKIP_ENDSPACE;
     else
@@ -11581,8 +11581,8 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 
       if ((*reg_field)->real_maybe_null())
         key_part_info->store_length+= HA_KEY_NULL_LENGTH;
-      if ((*reg_field)->type() == MYSQL_TYPE_BLOB || 
-          (*reg_field)->real_type() == MYSQL_TYPE_VARCHAR)
+      if ((*reg_field)->type() == FIELD_TYPE_BLOB || 
+          (*reg_field)->real_type() == FIELD_TYPE_VARCHAR)
         key_part_info->store_length+= HA_KEY_BLOB_LENGTH;
 
       key_part_info->type=     (uint8_t) (*reg_field)->key_type();
@@ -11858,7 +11858,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
     if (field->flags & BLOB_FLAG)
       recinfo->type= (int) FIELD_BLOB;
     else if (use_packed_rows &&
-             field->real_type() == MYSQL_TYPE_STRING &&
+             field->real_type() == FIELD_TYPE_STRING &&
 	     length >= MIN_STRING_LENGTH_TO_PACK_ROWS)
       recinfo->type=FIELD_SKIP_ENDSPACE;
     else
@@ -12179,7 +12179,7 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
       {
 	seg->type= keyinfo->key_part[i].type;
         /* Tell handler if it can do suffic space compression */
-	if (field->real_type() == MYSQL_TYPE_STRING &&
+	if (field->real_type() == FIELD_TYPE_STRING &&
 	    keyinfo->key_part[i].length > 4)
 	  seg->flag|= HA_SPACE_PACK;
       }
@@ -14222,8 +14222,8 @@ static bool test_if_ref(Item_field *left_item,Item *right_item)
           frequent case?
 	*/
 	if (field->binary() &&
-	    field->real_type() != MYSQL_TYPE_STRING &&
-	    field->real_type() != MYSQL_TYPE_VARCHAR &&
+	    field->real_type() != FIELD_TYPE_STRING &&
+	    field->real_type() != FIELD_TYPE_VARCHAR &&
 	    field->decimals() == 0)
 	{
 	  return !store_val_in_field(field, right_item, CHECK_FIELD_WARN);
@@ -16488,9 +16488,9 @@ calc_group_buffer(JOIN *join,ORDER *group)
     if (field)
     {
       enum_field_types type;
-      if ((type= field->type()) == MYSQL_TYPE_BLOB)
+      if ((type= field->type()) == FIELD_TYPE_BLOB)
 	key_length+=MAX_BLOB_WIDTH;		// Can't be used as a key
-      else if (type == MYSQL_TYPE_VARCHAR || type == MYSQL_TYPE_VAR_STRING)
+      else if (type == FIELD_TYPE_VARCHAR || type == FIELD_TYPE_VAR_STRING)
         key_length+= field->field_length + HA_KEY_BLOB_LENGTH;
       else
 	key_length+= field->pack_length();
@@ -16517,10 +16517,10 @@ calc_group_buffer(JOIN *join,ORDER *group)
           have STRING_RESULT result type, we increase the length 
           by 8 as maximum pack length of such fields.
         */
-        if (type == MYSQL_TYPE_TIME ||
-            type == MYSQL_TYPE_NEWDATE ||
-            type == MYSQL_TYPE_DATETIME ||
-            type == MYSQL_TYPE_TIMESTAMP)
+        if (type == FIELD_TYPE_TIME ||
+            type == FIELD_TYPE_NEWDATE ||
+            type == FIELD_TYPE_DATETIME ||
+            type == FIELD_TYPE_TIMESTAMP)
         {
           key_length+= 8;
         }

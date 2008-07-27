@@ -173,8 +173,8 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
           if (j == 0)
             keydef[i].flag|= HA_PACK_KEY;
           if (!(field->flags & ZEROFILL_FLAG) &&
-              (field->type() == MYSQL_TYPE_STRING ||
-               field->type() == MYSQL_TYPE_VAR_STRING ||
+              (field->type() == FIELD_TYPE_STRING ||
+               field->type() == FIELD_TYPE_VAR_STRING ||
                ((int) (pos->key_part[j].length - field->decimals())) >= 4))
             keydef[i].seg[j].flag|= HA_SPACE_PACK;
         }
@@ -200,7 +200,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
         keydef[i].seg[j].null_bit= 0;
         keydef[i].seg[j].null_pos= 0;
       }
-      if (field->type() == MYSQL_TYPE_BLOB)
+      if (field->type() == FIELD_TYPE_BLOB)
       {
         keydef[i].seg[j].flag|= HA_BLOB_PART;
         /* save number of bytes used to pack length */
@@ -249,7 +249,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
 
     if (found->flags & BLOB_FLAG)
       recinfo_pos->type= (int) FIELD_BLOB;
-    else if (found->type() == MYSQL_TYPE_VARCHAR)
+    else if (found->type() == FIELD_TYPE_VARCHAR)
       recinfo_pos->type= FIELD_VARCHAR;
     else if (!(options & HA_OPTION_PACK_RECORD))
       recinfo_pos->type= (int) FIELD_NORMAL;
@@ -259,8 +259,8 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
       recinfo_pos->type= (int) ((length <= 3 ||
                                  (found->flags & ZEROFILL_FLAG)) ?
                                   FIELD_NORMAL :
-                                  found->type() == MYSQL_TYPE_STRING ||
-                                  found->type() == MYSQL_TYPE_VAR_STRING ?
+                                  found->type() == FIELD_TYPE_STRING ||
+                                  found->type() == FIELD_TYPE_VAR_STRING ?
                                   FIELD_SKIP_ENDSPACE :
                                   FIELD_SKIP_PRESPACE);
     if (found->null_ptr)

@@ -39,7 +39,7 @@ public:
 	       NONE, field_name_arg, 0, 0, unsigned_arg)
     {}
   enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types type() const { return MYSQL_TYPE_SHORT;}
+  enum_field_types type() const { return FIELD_TYPE_SHORT;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_USHORT_INT : HA_KEYTYPE_SHORT_INT;}
   int store(const char *to,uint length,CHARSET_INFO *charset);

@@ -36,7 +36,7 @@ public:
     :Field_str(ptr_arg, len_arg, null, 1,
 	       unireg_check_arg, field_name_arg, cs)
     {}
-  enum_field_types type() const { return MYSQL_TYPE_NULL;}
+  enum_field_types type() const { return FIELD_TYPE_NULL;}
   int  store(const char *to __attribute__((__unused__)),
              uint length __attribute__((__unused__)),
              CHARSET_INFO *cs __attribute__((__unused__)))

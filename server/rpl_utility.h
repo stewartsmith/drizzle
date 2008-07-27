@@ -89,8 +89,8 @@ public:
       for (unsigned int i= 0; i < m_size; i++)
       {
         switch (m_type[i]) {
-        case MYSQL_TYPE_BLOB:
-        case MYSQL_TYPE_DOUBLE:
+        case FIELD_TYPE_BLOB:
+        case FIELD_TYPE_DOUBLE:
         {
           /*
             These types store a single byte.
@@ -99,16 +99,16 @@ public:
           index++;
           break;
         }
-        case MYSQL_TYPE_SET:
-        case MYSQL_TYPE_ENUM:
-        case MYSQL_TYPE_STRING:
+        case FIELD_TYPE_SET:
+        case FIELD_TYPE_ENUM:
+        case FIELD_TYPE_STRING:
         {
           uint16_t x= field_metadata[index++] << 8U; // real_type
           x+= field_metadata[index++];            // pack or field length
           m_field_metadata[i]= x;
           break;
         }
-        case MYSQL_TYPE_VARCHAR:
+        case FIELD_TYPE_VARCHAR:
         {
           /*
             These types store two bytes.
@@ -118,7 +118,7 @@ public:
           index= index + 2;
           break;
         }
-        case MYSQL_TYPE_NEWDECIMAL:
+        case FIELD_TYPE_NEWDECIMAL:
         {
           uint16_t x= field_metadata[index++] << 8U; // precision
           x+= field_metadata[index++];            // decimals

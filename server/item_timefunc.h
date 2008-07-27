@@ -334,7 +334,7 @@ public:
   Item_date() :Item_func() {}
   Item_date(Item *a) :Item_func(a) {}
   enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
+  enum_field_types field_type() const { return FIELD_TYPE_NEWDATE; }
   String *val_str(String *str);
   int64_t val_int();
   double val_real() { return val_real_from_decimal(); }
@@ -370,7 +370,7 @@ public:
   Item_date_func(Item *a) :Item_str_func(a) {}
   Item_date_func(Item *a,Item *b) :Item_str_func(a,b) {}
   Item_date_func(Item *a,Item *b, Item *c) :Item_str_func(a,b,c) {}
-  enum_field_types field_type() const { return MYSQL_TYPE_DATETIME; }
+  enum_field_types field_type() const { return FIELD_TYPE_DATETIME; }
   Field *tmp_table_field(TABLE *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -397,7 +397,7 @@ public:
   Item_str_timefunc(Item *a) :Item_str_func(a) {}
   Item_str_timefunc(Item *a,Item *b) :Item_str_func(a,b) {}
   Item_str_timefunc(Item *a, Item *b, Item *c) :Item_str_func(a, b ,c) {}
-  enum_field_types field_type() const { return MYSQL_TYPE_TIME; }
+  enum_field_types field_type() const { return FIELD_TYPE_TIME; }
   void fix_length_and_dec()
   {
     decimals= DATETIME_DEC;
@@ -767,7 +767,7 @@ public:
   bool get_date(MYSQL_TIME *ltime, uint fuzzy_date);
   bool get_time(MYSQL_TIME *ltime);
   const char *cast_type() const { return "date"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
+  enum_field_types field_type() const { return FIELD_TYPE_NEWDATE; }
   Field *tmp_table_field(TABLE *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -802,7 +802,7 @@ public:
   String *val_str(String *str);
   bool get_time(MYSQL_TIME *ltime);
   const char *cast_type() const { return "time"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_TIME; }
+  enum_field_types field_type() const { return FIELD_TYPE_TIME; }
   Field *tmp_table_field(TABLE *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -830,7 +830,7 @@ public:
   const char *func_name() const { return "cast_as_datetime"; }
   String *val_str(String *str);
   const char *cast_type() const { return "datetime"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DATETIME; }
+  enum_field_types field_type() const { return FIELD_TYPE_DATETIME; }
   Field *tmp_table_field(TABLE *table)
   {
     return tmp_table_field_from_field_type(table, 0);
@@ -864,7 +864,7 @@ public:
   Item_func_makedate(Item *a,Item *b) :Item_date_func(a,b) {}
   String *val_str(String *str);
   const char *func_name() const { return "makedate"; }
-  enum_field_types field_type() const { return MYSQL_TYPE_NEWDATE; }
+  enum_field_types field_type() const { return FIELD_TYPE_NEWDATE; }
   void fix_length_and_dec()
   { 
     decimals=0;
@@ -897,17 +897,17 @@ public:
   my_decimal *val_decimal(my_decimal *decimal_value)
   {
     assert(fixed == 1);
-    if (cached_field_type == MYSQL_TYPE_TIME)
+    if (cached_field_type == FIELD_TYPE_TIME)
       return  val_decimal_from_time(decimal_value);
-    if (cached_field_type == MYSQL_TYPE_DATETIME)
+    if (cached_field_type == FIELD_TYPE_DATETIME)
       return  val_decimal_from_date(decimal_value);
     return Item_str_func::val_decimal(decimal_value);
   }
   int save_in_field(Field *field, bool no_conversions)
   {
-    if (cached_field_type == MYSQL_TYPE_TIME)
+    if (cached_field_type == FIELD_TYPE_TIME)
       return save_time_in_field(field);
-    if (cached_field_type == MYSQL_TYPE_DATETIME)
+    if (cached_field_type == FIELD_TYPE_DATETIME)
       return save_date_in_field(field);
     return Item_str_func::save_in_field(field, no_conversions);
   }

@@ -31,7 +31,7 @@ public:
     :Field_tiny(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
 		unireg_check_arg, field_name_arg, 1, 1)
     {}
-  enum_field_types type() const { return MYSQL_TYPE_YEAR;}
+  enum_field_types type() const { return FIELD_TYPE_YEAR;}
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);

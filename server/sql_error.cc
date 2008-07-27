@@ -196,7 +196,7 @@ bool mysqld_show_warnings(THD *thd, ulong levels_to_show)
   List<Item> field_list;
 
   field_list.push_back(new Item_empty_string("Level", 7));
-  field_list.push_back(new Item_return_int("Code",4, MYSQL_TYPE_LONG));
+  field_list.push_back(new Item_return_int("Code",4, FIELD_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Message",MYSQL_ERRMSG_SIZE));
 
   if (thd->protocol->send_fields(&field_list,

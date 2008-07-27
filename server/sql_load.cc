@@ -711,7 +711,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
           field->set_null();
           if (!field->maybe_null())
           {
-            if (field->type() == MYSQL_TYPE_TIMESTAMP)
+            if (field->type() == FIELD_TYPE_TIMESTAMP)
               ((Field_timestamp*) field)->set_time();
             else if (field != table->next_number_field)
               field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,

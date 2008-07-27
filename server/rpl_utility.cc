@@ -29,24 +29,24 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
   uint32_t length= 0;
 
   switch (type(col)) {
-  case MYSQL_TYPE_NEWDECIMAL:
+  case FIELD_TYPE_NEWDECIMAL:
     length= my_decimal_get_binary_size(m_field_metadata[col] >> 8, 
                                        m_field_metadata[col] & 0xff);
     break;
-  case MYSQL_TYPE_DOUBLE:
+  case FIELD_TYPE_DOUBLE:
     length= m_field_metadata[col];
     break;
   /*
     The cases for SET and ENUM are include for completeness, however
-    both are mapped to type MYSQL_TYPE_STRING and their real types
+    both are mapped to type FIELD_TYPE_STRING and their real types
     are encoded in the field metadata.
   */
-  case MYSQL_TYPE_SET:
-  case MYSQL_TYPE_ENUM:
-  case MYSQL_TYPE_STRING:
+  case FIELD_TYPE_SET:
+  case FIELD_TYPE_ENUM:
+  case FIELD_TYPE_STRING:
   {
     uchar type= m_field_metadata[col] >> 8U;
-    if ((type == MYSQL_TYPE_SET) || (type == MYSQL_TYPE_ENUM))
+    if ((type == FIELD_TYPE_SET) || (type == FIELD_TYPE_ENUM))
       length= m_field_metadata[col] & 0x00ff;
     else
     {
@@ -60,42 +60,42 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
     }
     break;
   }
-  case MYSQL_TYPE_YEAR:
-  case MYSQL_TYPE_TINY:
+  case FIELD_TYPE_YEAR:
+  case FIELD_TYPE_TINY:
     length= 1;
     break;
-  case MYSQL_TYPE_SHORT:
+  case FIELD_TYPE_SHORT:
     length= 2;
     break;
-  case MYSQL_TYPE_LONG:
+  case FIELD_TYPE_LONG:
     length= 4;
     break;
-  case MYSQL_TYPE_LONGLONG:
+  case FIELD_TYPE_LONGLONG:
     length= 8;
     break;
-  case MYSQL_TYPE_NULL:
+  case FIELD_TYPE_NULL:
     length= 0;
     break;
-  case MYSQL_TYPE_NEWDATE:
+  case FIELD_TYPE_NEWDATE:
     length= 3;
     break;
-  case MYSQL_TYPE_TIME:
+  case FIELD_TYPE_TIME:
     length= 3;
     break;
-  case MYSQL_TYPE_TIMESTAMP:
+  case FIELD_TYPE_TIMESTAMP:
     length= 4;
     break;
-  case MYSQL_TYPE_DATETIME:
+  case FIELD_TYPE_DATETIME:
     length= 8;
     break;
-  case MYSQL_TYPE_VARCHAR:
+  case FIELD_TYPE_VARCHAR:
   {
     length= m_field_metadata[col] > 255 ? 2 : 1; // c&p of Field_varstring::data_length()
     assert(uint2korr(master_data) > 0);
     length+= length == 1 ? (uint32_t) *master_data : uint2korr(master_data);
     break;
   }
-  case MYSQL_TYPE_BLOB:
+  case FIELD_TYPE_BLOB:
   {
     length= uint4korr(master_data);
     length+= m_field_metadata[col];
