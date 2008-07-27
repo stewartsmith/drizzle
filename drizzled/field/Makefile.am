@@ -15,25 +15,44 @@
 
 #called from the top level Makefile
 
-AM_CPPFLAGS =		${GLOBAL_CPPFLAGS} -I$(top_srcdir)/server
+AM_CPPFLAGS =	-I$(top_srcdir)/strings \
+		-I$(top_srcdir)/drizzled \
+		-I$(top_srcdir)/include \
+		-I$(top_srcdir)
 
 noinst_LTLIBRARIES = 	libfield.la
 
 libfield_la_SOURCES = 	blob.cc \
 			date.cc \
 			datetime.cc \
-			decimal.cc \
+			fdecimal.cc \
 			double.cc \
 			int64_t.cc \
 			long.cc \
 			null.cc \
 			set.cc \
 			short.cc \
-			string.cc \
+			fstring.cc \
 			timestamp.cc \
 			timetype.cc \
 			varstring.cc \
 			year.cc
+
+noinst_HEADERS = blob.h \
+		 date.h \
+		 datetime.h \
+		 fdecimal.h \
+		 double.h \
+		 int64_t.h \
+		 long.h \
+		 null.h \
+		 set.h \
+		 short.h \
+		 fstring.h \
+		 timestamp.h \
+		 timetype.h \
+		 varstring.h \
+		 year.h
 	
 
 DEFS= -DMYSQL_SERVER @DEFS@

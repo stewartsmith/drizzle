@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "drizzle/server/field/set.h"
+#include <drizzled/field/set.h>
 
 /*
    set type.
