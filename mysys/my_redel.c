@@ -15,7 +15,7 @@
 
 #include "mysys_priv.h"
 #include <my_dir.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include "mysys_err.h"
 #if defined(HAVE_UTIME_H)
 #include <utime.h>

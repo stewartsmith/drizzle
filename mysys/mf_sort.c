@@ -16,7 +16,7 @@
 /* Sort of string pointers in string-order with radix or qsort */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 void my_string_ptr_sort(uchar *base, uint items, size_t size)
 {

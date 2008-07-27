@@ -21,9 +21,9 @@
 */
 
 #include "myisamdef.h"
-#include <m_ctype.h>
-#include <my_tree.h>
-#include <queues.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/my_tree.h>
+#include <mysys/queues.h>
 
 	/* lock table by F_UNLCK, F_RDLCK or F_WRLCK */
 

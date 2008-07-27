@@ -34,7 +34,7 @@
  **/
 
 #include "client_priv.h"
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #include <stdarg.h>
 #include <my_dir.h>
 #ifndef __GNU_LIBRARY__

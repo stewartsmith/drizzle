@@ -74,7 +74,7 @@
 */
 
 #include "mysql_priv.h"
-#include <hash.h>
+#include <mysys/hash.h>
 #include <assert.h>
 
 /**

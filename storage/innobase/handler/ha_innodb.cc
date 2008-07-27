@@ -32,8 +32,8 @@ have disabled the InnoDB inlining in this file. */
 #include <mysql_priv.h>
 #include <drizzled_error.h>
 
-#include <m_ctype.h>
-#include <hash.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/hash.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
 #include "ha_innodb.h"

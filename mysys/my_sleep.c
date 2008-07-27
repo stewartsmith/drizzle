@@ -16,7 +16,7 @@
 /* Wait a given number of microseconds */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 void my_sleep(ulong m_seconds)
 {

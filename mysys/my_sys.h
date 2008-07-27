@@ -30,7 +30,7 @@ typedef struct my_aio_result {
 
 #include <mysys/my_pthread.h>
 
-#include <m_ctype.h>                    /* for CHARSET_INFO */
+#include <mystrings/m_ctype.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
 #include <typelib.h>
 

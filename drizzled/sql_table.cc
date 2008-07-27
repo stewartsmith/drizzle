@@ -16,7 +16,7 @@
 /* drop and alter of tables */
 
 #include "mysql_priv.h"
-#include <hash.h>
+#include <mysys/hash.h>
 #include <storage/myisam/myisam.h>
 #include <my_dir.h>
 #include "sql_show.h"

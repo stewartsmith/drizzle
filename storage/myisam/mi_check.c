@@ -41,9 +41,8 @@
 */
 
 #include "myisamdef.h"
-#include <m_ctype.h>
 #include <stdarg.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #ifdef HAVE_SYS_VADVISE_H
 #include <sys/vadvise.h>
 #endif

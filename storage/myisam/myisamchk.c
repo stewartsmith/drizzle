@@ -17,12 +17,12 @@
 
 #include <my_global.h>
 
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #include <my_bit.h>
 #include <myisam.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #ifdef HAVE_SYS_VADVICE_H
 #include <sys/vadvise.h>
 #endif

@@ -23,7 +23,7 @@
 #include <my_global.h>
 #include <my_dir.h>			/* This includes types */
 #include <mysys/my_sys.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <errno.h>
 
 #ifndef EOVERFLOW

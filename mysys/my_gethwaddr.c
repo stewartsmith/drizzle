@@ -17,7 +17,7 @@
 /* if there are many available, any non-zero one can be used */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 #ifndef MAIN
 

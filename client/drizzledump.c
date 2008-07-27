@@ -40,9 +40,9 @@
 
 #include <my_global.h>
 #include <mysys/my_sys.h>
-#include <m_string.h>
-#include <m_ctype.h>
-#include <hash.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/hash.h>
 #include <stdarg.h>
 
 #include "client_priv.h"

@@ -49,7 +49,7 @@ TODO:
 
 #define MAP_TO_USE_RAID
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #ifdef HAVE_AIOWAIT
 #include "mysys_err.h"
 static void my_aiowait(my_aio_result *result);

@@ -16,7 +16,7 @@
 /* Kopierar biblioteksstrukturen och extensionen fr}n ett filnamn */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
         /*
 	  Copy directory and/or extension between filenames.

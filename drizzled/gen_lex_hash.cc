@@ -83,7 +83,7 @@ So, we can read full search-structure as 32-bit word
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__				// Skip warnings in getopt.h
 #endif
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #include "drizzle_version.h"
 #include "lex.h"
 

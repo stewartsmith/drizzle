@@ -29,7 +29,7 @@ extern "C" {
 #include <mysys/thr_lock.h>
 
 #include "my_handler.h"
-#include "my_tree.h"
+#include <mysys/my_tree.h>
 
 	/* defines used by heap-funktions */
 

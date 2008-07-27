@@ -30,14 +30,19 @@ nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
 noinst_LTLIBRARIES = libmysyslt.la
 
 pkginclude_HEADERS = 	my_alloc.h \
+			my_getopt.h \
 			my_sys.h \
 			my_pthread.h 
 
 noinst_HEADERS =	mysys_priv.h \
+			my_bitmap.h \
 			my_static.h \
 			my_handler_errors.h \
 			my_nosys.h \
 			mysys_err.h \
+			my_tree.h \
+			queues.h \
+			hash.h \
 			sha1.h \
 			sha2.h \
 			thr_alarm.h \
@@ -60,7 +65,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_wcomp.c mf_wfile.c my_gethwaddr.c \
 			mf_qsort.c mf_qsort2.c mf_sort.c \
 			ptr_cmp.c mf_radix.c queues.c my_getncpus.c \
-			tree.c trie.c list.c hash.c array.c string.c typelib.c \
+			tree.c list.c hash.c array.c string.c typelib.c \
 			my_copy.c my_append.c my_lib.c \
 			my_delete.c my_rename.c my_redel.c \
 			my_clock.c \

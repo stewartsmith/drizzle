@@ -21,7 +21,7 @@
   also be able to use 32 or 64 bits bitmaps very efficiently
 */
 
-#include <my_bitmap.h>
+#include <mysys/my_bitmap.h>
 
 template <uint default_width> class Bitmap
 {

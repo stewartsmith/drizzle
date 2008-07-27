@@ -17,7 +17,7 @@
 /*	 Convert MSDOS-TIME to standar time_t (still needed?) */
 
 #include	"mysys_priv.h"
-#include	<m_string.h>
+#include	<mystrings/m_string.h>
 #include	<my_dir.h>	/* Structs used by my_dir,includes sys/types */
 #include	"mysys_err.h"
 #if defined(HAVE_DIRENT_H)

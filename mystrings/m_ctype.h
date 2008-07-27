@@ -639,7 +639,7 @@ my_bool my_charset_is_ascii_compatible(CHARSET_INFO *cs);
 #ifdef MY_CHARSET_TIS620
 #error The TIS620 charset is broken at the moment.  Tell tim to fix it.
 #define USE_TIS620
-#include "t_ctype.h"
+#include <mystrings/t_ctype.h>
 #endif
 
 #ifdef	__cplusplus

@@ -32,7 +32,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-#include <my_bitmap.h>
+#include <mysys/my_bitmap.h>
 #include "rpl_constants.h"
 #ifndef MYSQL_CLIENT
 #include "rpl_record.h"

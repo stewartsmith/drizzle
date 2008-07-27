@@ -15,7 +15,7 @@
 
 #include "mysql_priv.h"
 #include <mysys/my_pthread.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
 

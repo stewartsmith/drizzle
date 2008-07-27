@@ -18,7 +18,7 @@
 
 #define MY_BIT_NONE (~(uint) 0)
 
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 typedef uint32_t my_bitmap_map;
 

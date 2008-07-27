@@ -19,7 +19,7 @@
 #include <my_global.h>
 #include <drizzle_com.h>
 #include <mysys/my_sys.h>
-#include <m_string.h>
+#include <string.h>
 #include <violite.h>
 
 #include <sys/socket.h>
