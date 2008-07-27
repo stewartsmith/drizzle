@@ -18,22 +18,16 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-INCLUDES =              -I$(top_srcdir)/include -I$(top_builddir)/include \
-			-I$(top_srcdir)/drizzled \
-                        -I$(top_srcdir)
 
-AM_CFLAGS = $(openssl_includes) 
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(openssl_includes) -I${top_srcdir}/drizzled
 
 EXTRA_LTLIBRARIES =	libmd5udf.la
 pkgplugin_LTLIBRARIES =	@plugin_md5_shared_target@
 libmd5udf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lssl
-libmd5udf_la_CXXFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-libmd5udf_la_CFLAGS =	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+libmd5udf_la_CXXFLAGS=	-DMYSQL_DYNAMIC_PLUGIN
 libmd5udf_la_SOURCES =	md5udf.cc
 
 
 EXTRA_LIBRARIES =	libmd5udf.a
 noinst_LIBRARIES =	@plugin_md5_static_target@
-libmd5udf_a_CXXFLAGS =	$(AM_CFLAGS)
-libmd5udf_a_CFLAGS =	$(AM_CFLAGS)
 libmd5udf_a_SOURCES=	$(libmd5udf_la_SOURCES)
