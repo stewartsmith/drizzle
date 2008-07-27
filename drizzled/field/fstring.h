@@ -84,4 +84,4 @@ private:
   int do_save_field_metadata(uchar *first_byte);
 };
 
-#endif
+#endif /* DRIZZLE_SERVER_FIELD_STRING */ 

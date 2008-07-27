@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "drizzle/server/field/null.h"
+#include <drizzled/field/null.h>
 
 uchar Field_null::null[1]={1};
 

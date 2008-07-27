@@ -49,6 +49,11 @@ DTRACEFILES = handler.o \
 
 noinst_LTLIBRARIES = libhandler.la
 
+AM_CPPFLAGS =	-I$(top_srcdir)/strings \
+		-I$(top_srcdir)/include \
+		-I$(top_srcdir)/drizzled \
+		-I$(top_srcdir)
+
 LDADD = $(top_builddir)/vio/libviolt.la \
 	$(top_builddir)/libdrizzle/libsqlcommon.la \
 	$(top_builddir)/mysys/libmysyslt.la \
@@ -57,7 +62,7 @@ LDADD = $(top_builddir)/vio/libviolt.la \
 
 drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
-		 $(top_builddir)/server/field/libfield.la \
+		 $(top_builddir)/drizzled/field/libfield.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) \
@@ -242,7 +247,7 @@ AM_YFLAGS = -d --verbose
 # this avoid the rebuild of the built files in a source dist
 lex_hash.h: gen_lex_hash$(EXEEXT) \
 	$(srcdir)/lex.h
-	$(top_builddir)/server/gen_lex_hash$(EXEEXT) > $@
+	$(top_builddir)/drizzled/gen_lex_hash$(EXEEXT) > $@
 
 probes.h: probes.d
 	$(DTRACE) $(DTRACEFLAGS) -h -s probes.d

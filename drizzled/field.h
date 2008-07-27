@@ -866,21 +866,21 @@ check_string_copy_error(Field_str *field,
 /*
   Field subclasses
  */
-#include "drizzle/server/field/blob.h"
-#include "drizzle/server/field/null.h"
-#include "drizzle/server/field/year.h"
-#include "drizzle/server/field/date.h"
-#include "drizzle/server/field/decimal.h"
-#include "drizzle/server/field/double.h"
-#include "drizzle/server/field/short.h"
-#include "drizzle/server/field/long.h"
-#include "drizzle/server/field/int64_t.h"
-#include "drizzle/server/field/timetype.h"
-#include "drizzle/server/field/timestamp.h"
-#include "drizzle/server/field/datetime.h"
-#include "drizzle/server/field/string.h"
-#include "drizzle/server/field/varstring.h"
-#include "drizzle/server/field/set.h"
+#include <drizzled/field/blob.h>
+#include <drizzled/field/null.h>
+#include <drizzled/field/year.h>
+#include <drizzled/field/date.h>
+#include <drizzled/field/fdecimal.h>
+#include <drizzled/field/double.h>
+#include <drizzled/field/short.h>
+#include <drizzled/field/long.h>
+#include <drizzled/field/int64_t.h>
+#include <drizzled/field/timetype.h>
+#include <drizzled/field/timestamp.h>
+#include <drizzled/field/datetime.h>
+#include <drizzled/field/fstring.h>
+#include <drizzled/field/varstring.h>
+#include <drizzled/field/set.h>
 
 /*
   The following are for the interface with the .frm file

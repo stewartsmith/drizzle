@@ -20,7 +20,8 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 AM_CPPFLAGS =           ${GLOBAL_CPPFLAGS} \
-			-I$(top_srcdir)/server
+			-I$(top_builddir) \
+			-I$(top_srcdir)/drizzled
 LDADD =
 
 DEFS =	@DEFS@

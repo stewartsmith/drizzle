@@ -19,7 +19,8 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 INCLUDES =              -I$(top_srcdir)/include -I$(top_builddir)/include \
-			-I$(top_srcdir)/server \
+			-I$(top_srcdir)/drizzled \
+			-I$(top_srcdir) \
                         -I$(srcdir)
 
 EXTRA_LTLIBRARIES =	libcrc32udf.la

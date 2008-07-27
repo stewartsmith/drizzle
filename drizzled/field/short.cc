@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "drizzle/server/field/short.h"
+#include <drizzled/field/short.h>
 
 /****************************************************************************
  Field type short int (2 byte)

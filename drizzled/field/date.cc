@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "drizzle/server/field/date.h"
+#include <drizzled/field/date.h>
 
 /****************************************************************************
 ** The new date type
