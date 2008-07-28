@@ -34,6 +34,8 @@ noinst_HEADERS =	mysys_priv.h \
 			my_handler_errors.h \
 			sha1.h \
 			sha2.h \
+			thr_alarm.h \
+			thr_lock.h \
 			base64.h
 
 libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \

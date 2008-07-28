@@ -55,7 +55,7 @@
 #include "slave.h"
 #include "rpl_mi.h"
 #include <my_getopt.h>
-#include <thr_alarm.h>
+#include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
 #include <my_dir.h>
 

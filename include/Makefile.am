@@ -56,8 +56,6 @@ noinst_HEADERS =	my_bit.h \
 			my_tree.h \
 			my_trie.h \
 			hash.h \
-			thr_alarm.h \
-			thr_lock.h \
 			t_ctype.h \
 			violite.h \
 			drizzle_version.h.in \

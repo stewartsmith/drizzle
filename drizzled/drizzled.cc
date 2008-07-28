@@ -36,7 +36,7 @@
 #define DEFAULT_SKIP_THREAD_PRIORITY 0
 #endif
 
-#include <thr_alarm.h>
+#include <mysys/thr_alarm.h>
 #include <errmsg.h>
 
 #define mysqld_charset &my_charset_latin1

@@ -33,7 +33,7 @@
 #include "log_event.h"
 #include <m_ctype.h>
 #include <sys/stat.h>
-#include <thr_alarm.h>
+#include <mysys/thr_alarm.h>
 #include <mysys_err.h>
 
 /*
