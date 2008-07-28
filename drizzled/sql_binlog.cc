@@ -15,7 +15,7 @@
 
 #include "mysql_priv.h"
 #include "rpl_rli.h"
-#include "base64.h"
+#include <mysys/base64.h>
 
 /**
   Execute a BINLOG statement

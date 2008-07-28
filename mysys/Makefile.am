@@ -29,7 +29,11 @@ nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
 # Trick to get things compiled like they are shared, but linked directly in.
 noinst_LTLIBRARIES = libmysyslt.la
 
-noinst_HEADERS =	mysys_priv.h my_static.h my_handler_errors.h
+noinst_HEADERS =	mysys_priv.h \
+			my_static.h \
+			my_handler_errors.h \
+			base64.h
+
 libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_path.c mf_loadpath.c my_file.c \
 			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
