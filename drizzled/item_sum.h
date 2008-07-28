@@ -20,7 +20,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-#include <my_tree.h>
+#include <mysys/my_tree.h>
 
 /*
   Class Item_sum is the base class used for special expressions that SQL calls

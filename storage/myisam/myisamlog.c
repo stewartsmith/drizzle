@@ -20,7 +20,7 @@
 #endif
 
 #include "myisamdef.h"
-#include <my_tree.h>
+#include <mysys/my_tree.h>
 #include <stdarg.h>
 #ifdef HAVE_GETRUSAGE
 #include <sys/resource.h>

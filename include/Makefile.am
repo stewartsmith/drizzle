@@ -44,7 +44,6 @@ noinst_HEADERS =	my_bit.h \
 			my_uctype.h \
 			my_base.h \
 			queues.h \
-			my_tree.h \
 			my_trie.h \
 			hash.h \
 			t_ctype.h \

@@ -17,7 +17,7 @@
 
 #include "myisamdef.h"
 #include <m_ctype.h>
-#include <my_tree.h>
+#include <mysys/my_tree.h>
 #include <queues.h>
 #include <my_bit.h>
 
