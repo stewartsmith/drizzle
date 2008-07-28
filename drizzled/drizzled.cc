@@ -303,7 +303,7 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 uint mysqld_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint mysqld_port_timeout;
 uint delay_key_write_options, protocol_version;
-uint lower_case_table_names;
+uint lower_case_table_names= 1;
 uint tc_heuristic_recover= 0;
 uint volatile thread_count, thread_running;
 uint64_t thd_startup_options;
@@ -508,7 +508,6 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib);
 static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option);
 static void clean_up(bool print_message);
-static int test_if_case_insensitive(const char *dir_name);
 
 static void usage(void);
 static void start_signal_handler(void);
@@ -2217,52 +2216,10 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (my_database_names_init())
     return 1;
 
-  /*
-    Ensure that lower_case_table_names is set on system where we have case
-    insensitive names.  If this is not done the users MyISAM tables will
-    get corrupted if accesses with names of different case.
-  */
-  lower_case_file_system= test_if_case_insensitive(mysql_real_data_home);
-  if (!lower_case_table_names && lower_case_file_system == 1)
-  {
-    if (lower_case_table_names_used)
-    {
-      if (global_system_variables.log_warnings)
-	sql_print_warning("\
-You have forced lower_case_table_names to 0 through a command-line \
-option, even though your file system '%s' is case insensitive.  This means \
-that you can corrupt a MyISAM table by accessing it with different cases. \
-You should consider changing lower_case_table_names to 1 or 2",
-			mysql_real_data_home);
-    }
-    else
-    {
-      if (global_system_variables.log_warnings)
-	sql_print_warning("Setting lower_case_table_names=2 because file system for %s is case insensitive", mysql_real_data_home);
-      lower_case_table_names= 2;
-    }
-  }
-  else if (lower_case_table_names == 2 &&
-           !(lower_case_file_system=
-             (test_if_case_insensitive(mysql_real_data_home) == 1)))
-  {
-    if (global_system_variables.log_warnings)
-      sql_print_warning("lower_case_table_names was set to 2, even though your "
-                        "the file system '%s' is case sensitive.  Now setting "
-                        "lower_case_table_names to 0 to avoid future problems.",
-			mysql_real_data_home);
-    lower_case_table_names= 0;
-  }
-  else
-  {
-    lower_case_file_system=
-      (test_if_case_insensitive(mysql_real_data_home) == 1);
-  }
+  lower_case_file_system= true;
 
   /* Reset table_alias_charset, now that lower_case_table_names is set. */
-  table_alias_charset= (lower_case_table_names ?
-			files_charset_info :
-			&my_charset_bin);
+  table_alias_charset= files_charset_info;
 
   return 0;
 }
@@ -3641,16 +3598,6 @@ log and this option does nothing anymore.",
    "The argument will be treated as a decimal value with microsecond precission.",
    (char**) &long_query_time, (char**) &long_query_time, 0, GET_DOUBLE,
    REQUIRED_ARG, 10, 0, LONG_TIMEOUT, 0, 0, 0},
-  {"lower_case_table_names", OPT_LOWER_CASE_TABLE_NAMES,
-   "If set to 1 table names are stored in lowercase on disk and table names will be case-insensitive.  Should be set to 2 if you are using a case insensitive file system",
-   (char**) &lower_case_table_names,
-   (char**) &lower_case_table_names, 0, GET_UINT, OPT_ARG,
-#ifdef FN_NO_CASE_SENCE
-    1
-#else
-    0
-#endif
-   , 0, 2, 0, 1, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    "Max packetlength to send/receive from to server.",
    (char**) &global_system_variables.max_allowed_packet,
@@ -4714,7 +4661,7 @@ mysqld_get_one_option(int optid,
     break;
   }
   case OPT_LOWER_CASE_TABLE_NAMES:
-    lower_case_table_names= argument ? atoi(argument) : 1;
+    lower_case_table_names= 1;
     lower_case_table_names_used= 1;
     break;
   }
@@ -5052,44 +4999,6 @@ skip: ;
 
   return(found);
 } /* find_bit_type */
-
-
-/**
-  Check if file system used for databases is case insensitive.
-
-  @param dir_name			Directory to test
-
-  @retval
-    -1  Don't know (Test failed)
-  @retval
-    0   File system is case sensitive
-  @retval
-    1   File system is case insensitive
-*/
-
-static int test_if_case_insensitive(const char *dir_name)
-{
-  int result= 0;
-  File file;
-  char buff[FN_REFLEN], buff2[FN_REFLEN];
-  struct stat stat_info;
-
-  fn_format(buff, glob_hostname, dir_name, ".lower-test",
-	    MY_UNPACK_FILENAME | MY_REPLACE_EXT | MY_REPLACE_DIR);
-  fn_format(buff2, glob_hostname, dir_name, ".LOWER-TEST",
-	    MY_UNPACK_FILENAME | MY_REPLACE_EXT | MY_REPLACE_DIR);
-  (void) my_delete(buff2, MYF(0));
-  if ((file= my_create(buff, 0666, O_RDWR, MYF(0))) < 0)
-  {
-    sql_print_warning("Can't create test file %s", buff);
-    return(-1);
-  }
-  my_close(file, MYF(0));
-  if (!stat(buff2, &stat_info))
-    result= 1;					// Can access file
-  (void) my_delete(buff, MYF(MY_WME));
-  return(result);
-}
 
 
 /**
