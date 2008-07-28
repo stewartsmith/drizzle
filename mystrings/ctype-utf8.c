@@ -19,8 +19,8 @@
 /* Written by Alexander Barkov <bar@udm.net> */
 
 #include <my_global.h>
-#include "m_string.h"
-#include "m_ctype.h"
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include <errno.h>
 
 #ifndef EILSEQ
@@ -58,7 +58,7 @@
 
 #ifdef HAVE_UNIDATA
 
-#include "my_uctype.h"
+#include <mystrings/my_uctype.h>
 
 static MY_UNICASE_INFO plane00[]={
   {0x0000,0x0000,0x0000},  {0x0001,0x0001,0x0001},
