@@ -208,8 +208,8 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
  {&Arg_comparator::compare_row,        &Arg_comparator::compare_e_row},
  {&Arg_comparator::compare_decimal,    &Arg_comparator::compare_e_decimal}};
 
-const char *log_output_names[] = { "NONE", "FILE", "TABLE", NullS};
-static const unsigned int log_output_names_len[]= { 4, 4, 5, 0 };
+const char *log_output_names[] = { "NONE", "FILE", NullS};
+static const unsigned int log_output_names_len[]= { 4, 4, 0 };
 TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
                              log_output_names, 
                              (unsigned int *) log_output_names_len};
@@ -1746,19 +1746,9 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
                       REFRESH_THREADS | REFRESH_HOSTS),
                      (TABLE_LIST*) 0, &not_used); // Flush logs
       }
-      /* reenable logs after the options were reloaded */
-      if (log_output_options & LOG_NONE)
-      {
-        logger.set_handlers(LOG_FILE,
-                            opt_slow_log ? LOG_TABLE : LOG_NONE,
-                            opt_log ? LOG_TABLE : LOG_NONE);
-      }
-      else
-      {
-        logger.set_handlers(LOG_FILE,
-                            opt_slow_log ? log_output_options : LOG_NONE,
-                            opt_log ? log_output_options : LOG_NONE);
-      }
+      logger.set_handlers(LOG_FILE,
+                          opt_slow_log ? log_output_options : LOG_NONE,
+                          opt_log ? log_output_options : LOG_NONE);
       break;
 #ifdef USE_ONE_SIGNAL_HAND
     case THR_SERVER_ALARM:
@@ -1775,7 +1765,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
   return(0);					/* purecov: deadcode */
 }
 
-static void check_data_home(const char *path __attribute__((__unused__)))
+static void check_data_home(const char *path __attribute__((unused)))
 {}
 
 #endif	/* __WIN__*/
@@ -3971,9 +3961,9 @@ The minimum value for this variable is 4096.",
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static int show_net_compression(THD *thd __attribute__((__unused__)),
+static int show_net_compression(THD *thd __attribute__((unused)),
                                 SHOW_VAR *var,
-                                char *buff __attribute__((__unused__)))
+                                char *buff __attribute__((unused)))
 {
   var->type= SHOW_MY_BOOL;
   var->value= (char *)&thd->net.compress;
@@ -4005,7 +3995,7 @@ static int show_flushstatustime(THD *thd, SHOW_VAR *var, char *buff)
 static st_show_var_func_container
 show_flushstatustime_cont= { &show_flushstatustime };
 
-static int show_slave_running(THD *thd __attribute__((__unused__)),
+static int show_slave_running(THD *thd __attribute__((unused)),
                               SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_MY_BOOL;
@@ -4020,7 +4010,7 @@ static int show_slave_running(THD *thd __attribute__((__unused__)),
 static st_show_var_func_container
 show_slave_running_cont= { &show_slave_running };
 
-static int show_slave_retried_trans(THD *thd __attribute__((__unused__)),
+static int show_slave_retried_trans(THD *thd __attribute__((unused)),
                                     SHOW_VAR *var, char *buff)
 {
   /*
@@ -4045,7 +4035,7 @@ static int show_slave_retried_trans(THD *thd __attribute__((__unused__)),
 static st_show_var_func_container
 show_slave_retried_trans_cont= { &show_slave_retried_trans };
 
-static int show_slave_received_heartbeats(THD *thd __attribute__((__unused__)),
+static int show_slave_received_heartbeats(THD *thd __attribute__((unused)),
                                           SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -4066,7 +4056,7 @@ static int show_slave_received_heartbeats(THD *thd __attribute__((__unused__)),
 static st_show_var_func_container
 show_slave_received_heartbeats_cont= { &show_slave_received_heartbeats };
 
-static int show_heartbeat_period(THD *thd __attribute__((__unused__)),
+static int show_heartbeat_period(THD *thd __attribute__((unused)),
                                  SHOW_VAR *var, char *buff)
 {
   pthread_mutex_lock(&LOCK_active_mi);
@@ -4085,7 +4075,7 @@ static int show_heartbeat_period(THD *thd __attribute__((__unused__)),
 static st_show_var_func_container
 show_heartbeat_period_cont= { &show_heartbeat_period};
 
-static int show_open_tables(THD *thd __attribute__((__unused__)),
+static int show_open_tables(THD *thd __attribute__((unused)),
                             SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;
@@ -4094,7 +4084,7 @@ static int show_open_tables(THD *thd __attribute__((__unused__)),
   return 0;
 }
 
-static int show_table_definitions(THD *thd __attribute__((__unused__)),
+static int show_table_definitions(THD *thd __attribute__((unused)),
                                   SHOW_VAR *var, char *buff)
 {
   var->type= SHOW_LONG;

@@ -41,13 +41,13 @@ class TC_LOG_DUMMY: public TC_LOG // use it to disable the logging
 {
 public:
   TC_LOG_DUMMY() {}
-  int open(const char *opt_name __attribute__((__unused__)))
+  int open(const char *opt_name __attribute__((unused)))
   { return 0; }
   void close(void)                          { }
-  int log_xid(THD *thd __attribute__((__unused__)),
-              my_xid xid __attribute__((__unused__)))         { return 1; }
-  void unlog(ulong cookie __attribute__((__unused__)),
-             my_xid xid __attribute__((__unused__)))  { }
+  int log_xid(THD *thd __attribute__((unused)),
+              my_xid xid __attribute__((unused)))         { return 1; }
+  void unlog(ulong cookie __attribute__((unused)),
+             my_xid xid __attribute__((unused)))  { }
 };
 
 #ifdef HAVE_MMAP
@@ -152,7 +152,6 @@ typedef struct st_log_info
 /* log event handler flags */
 #define LOG_NONE       1
 #define LOG_FILE       2
-#define LOG_TABLE      4
 
 class Log_event;
 class Rows_log_event;

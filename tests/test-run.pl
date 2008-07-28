@@ -2529,13 +2529,6 @@ sub mysqld_arguments ($$$$) {
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $mysqld->{'path_myddir'});
 
-
-  if ( $mysql_version_id >= 50106 )
-  {
-    # Turn on logging to bothe tables and file
-    mtr_add_arg($args, "%s--log-output=table,file", $prefix);
-  }
-
   my $log_base_path= "$opt_vardir/log/$mysqld->{'type'}$sidx";
   mtr_add_arg($args, "%s--log=%s.log", $prefix, $log_base_path);
   mtr_add_arg($args,

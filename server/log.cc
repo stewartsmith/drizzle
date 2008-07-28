@@ -203,11 +203,11 @@ handlerton *binlog_hton;
 
 
 /* Check if a given table is opened log table */
-int check_if_log_table(uint db_len __attribute__((__unused__)),
-                       const char *db __attribute__((__unused__)),
-                       uint table_name_len __attribute__((__unused__)),
-                       const char *table_name __attribute__((__unused__)),
-                       uint check_if_opened __attribute__((__unused__)))
+int check_if_log_table(uint db_len __attribute__((unused)),
+                       const char *db __attribute__((unused)),
+                       uint table_name_len __attribute__((unused)),
+                       const char *table_name __attribute__((unused)),
+                       uint check_if_opened __attribute__((unused)))
 {
   return 0;
 }
@@ -249,12 +249,12 @@ bool Log_to_file_event_handler::
 */
 
 bool Log_to_file_event_handler::
-  log_general(THD *thd __attribute__((__unused__)),
+  log_general(THD *thd __attribute__((unused)),
               time_t event_time, const char *user_host,
               uint user_host_len, int thread_id,
               const char *command_type, uint command_type_len,
               const char *sql_text, uint sql_text_len,
-              CHARSET_INFO *client_cs __attribute__((__unused__)))
+              CHARSET_INFO *client_cs __attribute__((unused)))
 {
   return mysql_log.write(event_time, user_host, user_host_len,
                          thread_id, command_type, command_type_len,
@@ -366,7 +366,7 @@ void LOGGER::init_base()
 }
 
 
-bool LOGGER::flush_logs(THD *thd __attribute__((__unused__)))
+bool LOGGER::flush_logs(THD *thd __attribute__((unused)))
 {
   int rc= 0;
 
@@ -542,13 +542,6 @@ void LOGGER::init_error_log(uint error_log_printer)
     error_log_handler_list[0]= file_log_handler;
     error_log_handler_list[1]= 0;
     break;
-    /* these two are disabled for now */
-  case LOG_TABLE:
-    assert(0);
-    break;
-  case LOG_TABLE|LOG_FILE:
-    assert(0);
-    break;
   }
 }
 
@@ -577,7 +570,7 @@ void LOGGER::init_general_log(uint general_log_printer)
 }
 
 
-bool LOGGER::activate_log_handler(THD* thd __attribute__((__unused__)),
+bool LOGGER::activate_log_handler(THD* thd __attribute__((unused)),
                                   uint log_type)
 {
   MYSQL_QUERY_LOG *file_log;
@@ -612,7 +605,7 @@ bool LOGGER::activate_log_handler(THD* thd __attribute__((__unused__)),
 }
 
 
-void LOGGER::deactivate_log_handler(THD *thd __attribute__((__unused__)),
+void LOGGER::deactivate_log_handler(THD *thd __attribute__((unused)),
                                     uint log_type)
 {
   bool *tmp_opt= 0;
@@ -645,8 +638,6 @@ int LOGGER::set_handlers(uint error_log_printer,
                          uint general_log_printer)
 {
   /* error log table is not supported yet */
-  assert(error_log_printer < LOG_TABLE);
-
   lock_exclusive();
 
   init_error_log(error_log_printer);
@@ -739,7 +730,7 @@ int binlog_init(void *p)
   return 0;
 }
 
-static int binlog_close_connection(handlerton *hton __attribute__((__unused__)),
+static int binlog_close_connection(handlerton *hton __attribute__((unused)),
                                    THD *thd)
 {
   binlog_trx_data *const trx_data=
@@ -846,9 +837,9 @@ binlog_end_trans(THD *thd, binlog_trx_data *trx_data,
   return(error);
 }
 
-static int binlog_prepare(handlerton *hton __attribute__((__unused__)),
-                          THD *thd __attribute__((__unused__)),
-                          bool all __attribute__((__unused__)))
+static int binlog_prepare(handlerton *hton __attribute__((unused)),
+                          THD *thd __attribute__((unused)),
+                          bool all __attribute__((unused)))
 {
   /*
     do nothing.
@@ -874,7 +865,7 @@ static int binlog_prepare(handlerton *hton __attribute__((__unused__)),
 
   @see handlerton::commit
 */
-static int binlog_commit(handlerton *hton __attribute__((__unused__)),
+static int binlog_commit(handlerton *hton __attribute__((unused)),
                          THD *thd, bool all)
 {
   binlog_trx_data *const trx_data=
@@ -972,7 +963,7 @@ static int binlog_commit(handlerton *hton __attribute__((__unused__)),
 
   @see handlerton::rollback
 */
-static int binlog_rollback(handlerton *hton __attribute__((__unused__)),
+static int binlog_rollback(handlerton *hton __attribute__((unused)),
                            THD *thd, bool all)
 {
   int error=0;
@@ -1037,7 +1028,7 @@ static int binlog_rollback(handlerton *hton __attribute__((__unused__)),
   that case there is no need to have it in the binlog).
 */
 
-static int binlog_savepoint_set(handlerton *hton __attribute__((__unused__)),
+static int binlog_savepoint_set(handlerton *hton __attribute__((unused)),
                                 THD *thd, void *sv)
 {
   binlog_trans_log_savepos(thd, (my_off_t*) sv);
@@ -1049,7 +1040,7 @@ static int binlog_savepoint_set(handlerton *hton __attribute__((__unused__)),
   return(error);
 }
 
-static int binlog_savepoint_rollback(handlerton *hton __attribute__((__unused__)),
+static int binlog_savepoint_rollback(handlerton *hton __attribute__((unused)),
                                      THD *thd, void *sv)
 {
   /*
@@ -1428,8 +1419,8 @@ void MYSQL_QUERY_LOG::reopen_file()
 */
 
 bool MYSQL_QUERY_LOG::write(time_t event_time,
-                            const char *user_host __attribute__((__unused__)),
-                            uint user_host_len __attribute__((__unused__)),
+                            const char *user_host __attribute__((unused)),
+                            uint user_host_len __attribute__((unused)),
                             int thread_id,
                             const char *command_type, uint command_type_len,
                             const char *sql_text, uint sql_text_len)
@@ -1530,7 +1521,7 @@ err:
 */
 
 bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
-                            time_t query_start_arg __attribute__((__unused__)),
+                            time_t query_start_arg __attribute__((unused)),
                             const char *user_host,
                             uint user_host_len, uint64_t query_utime,
                             uint64_t lock_utime, bool is_command,
@@ -3896,9 +3887,9 @@ void MYSQL_BIN_LOG::signal_update()
     return an error (e.g. logging to the log tables)
 */
 static void print_buffer_to_file(enum loglevel level,
-                                 int error_code __attribute__((__unused__)),
+                                 int error_code __attribute__((unused)),
                                  const char *buffer,
-                                 size_t buffer_length __attribute__((__unused__)))
+                                 size_t buffer_length __attribute__((unused)))
 {
   time_t skr;
   struct tm tm_tmp;
@@ -4227,7 +4218,7 @@ int TC_LOG_MMAP::overflow()
     to the position in memory where xid was logged to.
 */
 
-int TC_LOG_MMAP::log_xid(THD *thd __attribute__((__unused__)), my_xid xid)
+int TC_LOG_MMAP::log_xid(THD *thd __attribute__((unused)), my_xid xid)
 {
   int err;
   PAGE *p;
@@ -4339,7 +4330,7 @@ int TC_LOG_MMAP::sync()
   cookie points directly to the memory where xid was logged.
 */
 
-void TC_LOG_MMAP::unlog(ulong cookie, my_xid xid __attribute__((__unused__)))
+void TC_LOG_MMAP::unlog(ulong cookie, my_xid xid __attribute__((unused)))
 {
   PAGE *p=pages+(cookie/tc_log_page_size);
   my_xid *x=(my_xid *)(data+cookie);
@@ -4597,8 +4588,8 @@ int TC_LOG_BINLOG::log_xid(THD *thd, my_xid xid)
   return(!binlog_end_trans(thd, trx_data, &xle, true));
 }
 
-void TC_LOG_BINLOG::unlog(ulong cookie __attribute__((__unused__)),
-                          my_xid xid __attribute__((__unused__)))
+void TC_LOG_BINLOG::unlog(ulong cookie __attribute__((unused)),
+                          my_xid xid __attribute__((unused)))
 {
   pthread_mutex_lock(&LOCK_prep_xids);
   assert(prepared_xids > 0);
