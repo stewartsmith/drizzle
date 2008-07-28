@@ -355,7 +355,9 @@ MYSQL_CHECK_NEW_RL_INTERFACE
 my_save_LIBS="$LIBS"
 LIBS=""
 AC_CHECK_LIB(readline, rl_initialize, [],
-             [AC_MSG_ERROR(Couldn't find libreadline.)])
+  [AC_CHECK_LIB(ncurses, tgetent, [], [AC_MSG_ERROR(Couldn't find ncurses)]) 
+   AC_SEARCH_LIBS(rl_initialize, readline, [],
+    [AC_MSG_ERROR(Couldn't find libreadline.)])])
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
@@ -729,6 +731,20 @@ then
   OPTIMIZE_CXXFLAGS=""
   DEBUG_OPTIMIZE_CXX=""
 fi
+
+dnl TODO: Remove this define once we are using 2.61 across the board.
+# AC_HEADER_ASSERT
+# ----------------
+# Check whether to enable assertions.
+ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
+[
+  AC_MSG_CHECKING([whether to enable assertions])
+  AC_ARG_ENABLE([assert],
+    [  --disable-assert        turn off assertions],
+    [AC_MSG_RESULT([no])
+     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
+    [AC_MSG_RESULT(yes)])
+]))
 
 AC_HEADER_ASSERT
 
