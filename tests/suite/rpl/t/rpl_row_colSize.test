@@ -23,19 +23,19 @@ sync_slave_with_master;
 # This check covers only those fields that require additional
 # metadata from the master to be replicated to the slave. These
 # field types are:
-#   FIELD_TYPE_NEWDECIMAL:
-#   FIELD_TYPE_FLOAT:
-#   FIELD_TYPE_BIT:
-#   FIELD_TYPE_SET:
-#   FIELD_TYPE_STRING:
-#   FIELD_TYPE_ENUM:
-#   FIELD_TYPE_VARCHAR:
-#   FIELD_TYPE_BLOB:
+#   DRIZZLE_TYPE_NEWDECIMAL:
+#   DRIZZLE_TYPE_FLOAT:
+#   DRIZZLE_TYPE_BIT:
+#   DRIZZLE_TYPE_SET:
+#   DRIZZLE_TYPE_STRING:
+#   DRIZZLE_TYPE_ENUM:
+#   DRIZZLE_TYPE_VARCHAR:
+#   DRIZZLE_TYPE_BLOB:
 
 #
-# Test: Checking FIELD_TYPE_NEWDECIMAL fields
+# Test: Checking DRIZZLE_TYPE_NEWDECIMAL fields
 #
---echo Checking FIELD_TYPE_NEWDECIMAL fields
+--echo Checking DRIZZLE_TYPE_NEWDECIMAL fields
 let $test_table_master = CREATE TABLE t1 (a DECIMAL(20, 10));
 let $test_table_slave = CREATE TABLE t1 (a DECIMAL(5,2));
 let $test_insert = INSERT INTO t1 VALUES (901251.90125);
@@ -52,18 +52,18 @@ let $test_insert = INSERT INTO t1 VALUES (901251.90125);
 source include/test_fieldsize.inc;
 
 #
-# Test: Checking FIELD_TYPE_FLOAT fields
+# Test: Checking DRIZZLE_TYPE_FLOAT fields
 #
---echo Checking FIELD_TYPE_FLOAT fields
+--echo Checking DRIZZLE_TYPE_FLOAT fields
 let $test_table_master = CREATE TABLE t1 (a FLOAT(47));
 let $test_table_slave = CREATE TABLE t1 (a FLOAT(20));
 let $test_insert = INSERT INTO t1 VALUES (901251.90125);
 source include/test_fieldsize.inc;
 
 #
-# Test: Checking FIELD_TYPE_BIT fields
+# Test: Checking DRIZZLE_TYPE_BIT fields
 #
---echo Checking FIELD_TYPE_BIT fields
+--echo Checking DRIZZLE_TYPE_BIT fields
 let $test_table_master = CREATE TABLE t1 (a BIT(64));
 let $test_table_slave = CREATE TABLE t1 (a BIT(5));
 let $test_insert = INSERT INTO t1 VALUES (B'10101');
@@ -75,27 +75,27 @@ let $test_insert = INSERT INTO t1 VALUES (B'10101');
 source include/test_fieldsize.inc;
 
 #
-# Test: Checking FIELD_TYPE_SET fields
+# Test: Checking DRIZZLE_TYPE_SET fields
 #
---echo Checking FIELD_TYPE_SET fields
+--echo Checking DRIZZLE_TYPE_SET fields
 let $test_table_master = CREATE TABLE t1 (a SET('1','2','3','4','5','6','7','8','9'));
 let $test_table_slave = CREATE TABLE t1 (a SET('4'));
 let $test_insert = INSERT INTO t1 VALUES ('4');
 source include/test_fieldsize.inc;
 
 #
-# Test: Checking FIELD_TYPE_STRING fields
+# Test: Checking DRIZZLE_TYPE_STRING fields
 #
---echo Checking FIELD_TYPE_STRING fields
+--echo Checking DRIZZLE_TYPE_STRING fields
 let $test_table_master = CREATE TABLE t1 (a CHAR(20));
 let $test_table_slave = CREATE TABLE t1 (a CHAR(10));
 let $test_insert = INSERT INTO t1 VALUES ('This is a test.');
 source include/test_fieldsize.inc;
 
 #
-# Test: Checking FIELD_TYPE_ENUM fields
+# Test: Checking DRIZZLE_TYPE_ENUM fields
 #
---echo Checking FIELD_TYPE_ENUM fields
+--echo Checking DRIZZLE_TYPE_ENUM fields
 let $test_table_master = CREATE TABLE t1 (a ENUM(
             '01','02','03','04','05','06','07','08','09',
             '11','12','13','14','15','16','17','18','19',
@@ -133,9 +133,9 @@ let $test_insert = INSERT INTO t1 VALUES ('44');
 source include/test_fieldsize.inc;
 
 #
-# Test: Checking FIELD_TYPE_VARCHAR fields
+# Test: Checking DRIZZLE_TYPE_VARCHAR fields
 #
---echo Checking FIELD_TYPE_VARCHAR fields
+--echo Checking DRIZZLE_TYPE_VARCHAR fields
 let $test_table_master = CREATE TABLE t1 (a VARCHAR(2000));
 let $test_table_slave = CREATE TABLE t1 (a VARCHAR(100));
 let $test_insert = INSERT INTO t1 VALUES ('This is a test.');
@@ -152,9 +152,9 @@ let $test_insert = INSERT INTO t1 VALUES ('This is a test.');
 source include/test_fieldsize.inc;
 
 #
-# Test: Checking FIELD_TYPE_BLOB fields
+# Test: Checking DRIZZLE_TYPE_BLOB fields
 #
---echo Checking FIELD_TYPE_BLOB fields
+--echo Checking DRIZZLE_TYPE_BLOB fields
 let $test_table_master = CREATE TABLE t1 (a LONGBLOB);
 let $test_table_slave = CREATE TABLE t1 (a TINYBLOB);
 let $test_insert = INSERT INTO t1 VALUES ('This is a test.');

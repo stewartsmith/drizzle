@@ -653,7 +653,7 @@ public:
 	       0, zero_arg,unsigned_arg)
     {}
   enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types type() const { return FIELD_TYPE_TINY;}
+  enum_field_types type() const { return DRIZZLE_TYPE_TINY;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_BINARY : HA_KEYTYPE_INT8; }
   int store(const char *to,uint length,CHARSET_INFO *charset);
@@ -706,7 +706,7 @@ public:
       flags|=ENUM_FLAG;
   }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
-  enum_field_types type() const { return FIELD_TYPE_STRING; }
+  enum_field_types type() const { return DRIZZLE_TYPE_STRING; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   enum Item_result cast_to_int_type () const { return INT_RESULT; }
   enum ha_base_keytype key_type() const;
@@ -722,7 +722,7 @@ public:
   void store_type(uint64_t value);
   void sql_type(String &str) const;
   uint size_of() const { return sizeof(*this); }
-  enum_field_types real_type() const { return FIELD_TYPE_ENUM; }
+  enum_field_types real_type() const { return DRIZZLE_TYPE_ENUM; }
   uint pack_length_from_metadata(uint field_metadata)
   { return (field_metadata & 0x00ff); }
   uint row_pack_length() { return pack_length(); }

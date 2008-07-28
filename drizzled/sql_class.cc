@@ -1197,7 +1197,7 @@ int THD::send_explain_fields(select_result *result)
   List<Item> field_list;
   Item *item;
   CHARSET_INFO *cs= system_charset_info;
-  field_list.push_back(new Item_return_int("id",3, FIELD_TYPE_LONGLONG));
+  field_list.push_back(new Item_return_int("id",3, DRIZZLE_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("select_type", 19, cs));
   field_list.push_back(item= new Item_empty_string("table", NAME_CHAR_LEN, cs));
   item->maybe_null= 1;
@@ -1219,7 +1219,7 @@ int THD::send_explain_fields(select_result *result)
                                                   cs));
   item->maybe_null=1;
   field_list.push_back(item= new Item_return_int("rows", 10,
-                                                 FIELD_TYPE_LONGLONG));
+                                                 DRIZZLE_TYPE_LONGLONG));
   if (lex->describe & DESCRIBE_EXTENDED)
   {
     field_list.push_back(item= new Item_float("filtered", 0.1234, 2, 4));

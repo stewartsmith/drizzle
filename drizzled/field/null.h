@@ -36,7 +36,7 @@ public:
     :Field_str(ptr_arg, len_arg, null, 1,
 	       unireg_check_arg, field_name_arg, cs)
     {}
-  enum_field_types type() const { return FIELD_TYPE_NULL;}
+  enum_field_types type() const { return DRIZZLE_TYPE_NULL;}
   int  store(const char *to __attribute__((unused)),
              uint length __attribute__((unused)),
              CHARSET_INFO *cs __attribute__((unused)))
