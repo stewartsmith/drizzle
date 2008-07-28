@@ -1872,8 +1872,6 @@ type:
             Lex->charset=&my_charset_bin;
             $$= DRIZZLE_TYPE_VARCHAR;
           }
-        | YEAR_SYM opt_len field_options
-          { $$=DRIZZLE_TYPE_YEAR; }
         | DATE_SYM
           { $$=DRIZZLE_TYPE_NEWDATE; }
         | TIME_SYM

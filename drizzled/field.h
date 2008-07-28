@@ -868,7 +868,6 @@ check_string_copy_error(Field_str *field,
  */
 #include <drizzled/field/blob.h>
 #include <drizzled/field/null.h>
-#include <drizzled/field/year.h>
 #include <drizzled/field/date.h>
 #include <drizzled/field/fdecimal.h>
 #include <drizzled/field/double.h>

@@ -60,7 +60,6 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
     }
     break;
   }
-  case DRIZZLE_TYPE_YEAR:
   case DRIZZLE_TYPE_TINY:
     length= 1;
     break;

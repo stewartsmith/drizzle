@@ -4136,10 +4136,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
     break;
-  case DRIZZLE_TYPE_YEAR:
-    field= new Field_year((uchar*) 0, max_length, null_ptr, 0, Field::NONE,
-			  name);
-    break;
   default:
     /* This case should never be chosen */
     assert(0);
@@ -4699,7 +4695,6 @@ bool Item::send(Protocol *protocol, String *buffer)
     break;
   }
   case DRIZZLE_TYPE_SHORT:
-  case DRIZZLE_TYPE_YEAR:
   {
     int64_t nr;
     nr= val_int();
@@ -6383,7 +6378,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_TIMESTAMP:
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
-  case DRIZZLE_TYPE_YEAR:
   case DRIZZLE_TYPE_NEWDATE:
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:

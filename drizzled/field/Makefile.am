@@ -35,8 +35,7 @@ libfield_la_SOURCES = 	blob.cc \
 			fstring.cc \
 			timestamp.cc \
 			timetype.cc \
-			varstring.cc \
-			year.cc
+			varstring.cc
 
 noinst_HEADERS = blob.h \
 		 date.h \
@@ -51,8 +50,7 @@ noinst_HEADERS = blob.h \
 		 fstring.h \
 		 timestamp.h \
 		 timetype.h \
-		 varstring.h \
-		 year.h
+		 varstring.h
 	
 
 DEFS= -DMYSQL_SERVER @DEFS@

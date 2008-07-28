@@ -2927,7 +2927,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";
     case DRIZZLE_TYPE_VAR_STRING:  return "VAR_STRING";
-    case DRIZZLE_TYPE_YEAR:        return "YEAR";
     default:                     return "?-unknown-?";
   }
 }
