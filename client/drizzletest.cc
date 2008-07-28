@@ -39,7 +39,7 @@
 #include <drizzled_error.h>
 #include <m_ctype.h>
 #include <my_dir.h>
-#include <hash.h>
+#include <mysys/hash.h>
 #include <stdarg.h>
 #include <vio/violite.h>
 

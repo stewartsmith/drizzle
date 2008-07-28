@@ -33,11 +33,11 @@
 #include <mysys/my_sys.h>
 #include <my_time.h>
 #include <m_string.h>
-#include <hash.h>
+#include <mysys/hash.h>
 #include <signal.h>
 #include <mysys/thr_lock.h>
 #include <my_base.h>			/* Needed by field.h */
-#include <queues.h>
+#include <mysys/queues.h>
 #include "sql_bitmap.h"
 #include "sql_array.h"
 #include "sql_plugin.h"

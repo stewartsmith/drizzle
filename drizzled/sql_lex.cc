@@ -20,7 +20,7 @@
 #include "mysql_priv.h"
 #include "item_create.h"
 #include <m_ctype.h>
-#include <hash.h>
+#include <mysys/hash.h>
 
 static int lex_one_token(void *arg, void *yythd);
 

@@ -39,6 +39,8 @@ noinst_HEADERS =	mysys_priv.h \
 			my_nosys.h \
 			mysys_err.h \
 			my_tree.h \
+			queues.h \
+			hash.h \
 			sha1.h \
 			sha2.h \
 			thr_alarm.h \

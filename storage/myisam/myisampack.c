@@ -20,7 +20,7 @@
 #endif
 
 #include "myisamdef.h"
-#include <queues.h>
+#include <mysys/queues.h>
 #include <mysys/my_tree.h>
 #include <mysys/mysys_err.h>
 #ifndef __GNU_LIBRARY__

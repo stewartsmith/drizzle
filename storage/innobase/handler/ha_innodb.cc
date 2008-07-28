@@ -33,7 +33,7 @@ have disabled the InnoDB inlining in this file. */
 #include <drizzled_error.h>
 
 #include <m_ctype.h>
-#include <hash.h>
+#include <mysys/hash.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
 #include "ha_innodb.h"

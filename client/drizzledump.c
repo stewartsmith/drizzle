@@ -42,7 +42,7 @@
 #include <mysys/my_sys.h>
 #include <m_string.h>
 #include <m_ctype.h>
-#include <hash.h>
+#include <mysys/hash.h>
 #include <stdarg.h>
 
 #include "client_priv.h"

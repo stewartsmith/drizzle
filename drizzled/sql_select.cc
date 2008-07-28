@@ -33,7 +33,7 @@
 
 #include <m_ctype.h>
 #include <my_bit.h>
-#include <hash.h>
+#include <mysys/hash.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",

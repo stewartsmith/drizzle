@@ -30,7 +30,7 @@
 extern "C"
 {
 #include <stdarg.h>
-#include <hash.h>
+#include <mysys/hash.h>
 }
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */

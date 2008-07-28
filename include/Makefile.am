@@ -43,8 +43,6 @@ noinst_HEADERS =	my_bit.h \
 			my_bitmap.h \
 			my_uctype.h \
 			my_base.h \
-			queues.h \
-			hash.h \
 			t_ctype.h \
 			drizzle_version.h.in \
 			my_handler.h \

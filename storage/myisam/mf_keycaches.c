@@ -25,7 +25,7 @@
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
 #include <keycache.h>
-#include <hash.h>
+#include <mysys/hash.h>
 #include <m_string.h>
 
 /*****************************************************************************
