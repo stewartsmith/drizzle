@@ -45,7 +45,6 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			$(BUILT_SOURCES)
 
 noinst_HEADERS =	my_bit.h \
-			heap.h \
 			my_bitmap.h \
 			my_uctype.h \
 			mysys_err.h \
