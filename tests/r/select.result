@@ -1940,8 +1940,8 @@ show tables from test like "t?";
 Tables_in_test (t?)
 show full columns from t2;
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-auto	int(11)	NULL	NO	PRI	NULL	auto_increment	#	
-fld1	int(6) unsigned	NULL	NO	UNI	NULL		#	
+auto	int	NULL	NO	PRI	NULL	auto_increment	#	
+fld1	int unsigned	NULL	NO	UNI	NULL		#	
 companynr	tinyint(2) unsigned	NULL	NO		NULL		#	
 fld3	char(30)	latin1_swedish_ci	NO	MUL	NULL		#	
 fld4	char(35)	latin1_swedish_ci	NO		NULL		#	
@@ -1949,7 +1949,7 @@ fld5	char(35)	latin1_swedish_ci	NO		NULL		#
 fld6	char(4)	latin1_swedish_ci	NO		NULL		#	
 show full columns from t2 from test like 'f%';
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-fld1	int(6) unsigned	NULL	NO	UNI	NULL		#	
+fld1	int unsigned	NULL	NO	UNI	NULL		#	
 fld3	char(30)	latin1_swedish_ci	NO	MUL	NULL		#	
 fld4	char(35)	latin1_swedish_ci	NO		NULL		#	
 fld5	char(35)	latin1_swedish_ci	NO		NULL		#	

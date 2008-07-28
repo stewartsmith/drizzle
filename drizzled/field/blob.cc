@@ -468,21 +468,10 @@ void Field_blob::sort_string(uchar *to,uint length)
 
 void Field_blob::sql_type(String &res) const
 {
-  const char *str;
-  uint length;
-  switch (packlength) {
-  default: str="tiny"; length=4; break;
-  case 2:  str="";     length=0; break;
-  case 3:  str="medium"; length= 6; break;
-  case 4:  str="long";  length=4; break;
-  }
-  res.set_ascii(str,length);
   if (charset() == &my_charset_bin)
-    res.append(STRING_WITH_LEN("blob"));
+    res.set_ascii(STRING_WITH_LEN("blob"));
   else
-  {
-    res.append(STRING_WITH_LEN("text"));
-  }
+    res.set_ascii(STRING_WITH_LEN("text"));
 }
 
 uchar *Field_blob::pack(uchar *to, const uchar *from,

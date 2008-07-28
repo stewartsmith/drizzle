@@ -51,14 +51,14 @@ t3	InnoDB	10	Compact	0	0	16384	#	16384	0	NULL	#	#	NULL	latin1_swedish_ci	NULL
 t5	InnoDB	10	Compact	1	16384	16384	#	0	0	11	#	#	NULL	latin1_swedish_ci	NULL		
 show full columns from t3 like "a%";
 Field	Type	Collation	Null	Key	Default	Extra	Privileges	Comment
-a	int(11)	NULL	YES	MUL	NULL			
+a	int	NULL	YES	MUL	NULL			
 select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
-NULL	mysqltest	t1	a	1	NULL	YES	int	NULL	NULL	10	0	NULL	NULL	int(11)					Default	Default
+NULL	mysqltest	t1	a	1	NULL	YES	int	NULL	NULL	10	0	NULL	NULL	int					Default	Default
 show columns from mysqltest.t1 where field like "%a%";
 Field	Type	Null	Key	Default	Extra
-a	int(11)	YES		NULL	
+a	int	YES		NULL	
 select table_name, column_name, privileges from information_schema.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name	privileges
@@ -66,7 +66,7 @@ t1	a
 t1	b	
 show columns from mysqltest.t1;
 Field	Type	Null	Key	Default	Extra
-a	int(11)	YES		NULL	
+a	int	YES		NULL	
 b	varchar(30)	YES	MUL	NULL	
 drop tables mysqltest.t4, mysqltest.t1, t2, t3, t5;
 drop database mysqltest;
@@ -151,10 +151,6 @@ select table_schema,table_name, column_name from
 information_schema.columns 
 where data_type = 'longtext';
 table_schema	table_name	column_name
-information_schema	COLUMNS	COLUMN_DEFAULT
-information_schema	COLUMNS	COLUMN_TYPE
-information_schema	PLUGINS	PLUGIN_DESCRIPTION
-information_schema	PROCESSLIST	INFO
 select table_name, column_name, data_type from information_schema.columns
 where data_type = 'datetime';
 table_name	column_name	data_type
@@ -203,8 +199,8 @@ CHARACTER_MAXIMUM_LENGTH
 from information_schema.columns
 where table_name='t1';
 column_name	data_type	CHARACTER_OCTET_LENGTH	CHARACTER_MAXIMUM_LENGTH
-f1	longblob	4294967295	4294967295
-f2	longtext	4294967295	4294967295
+f1	blob	4294967295	4294967295
+f2	text	4294967295	4294967295
 drop table t1;
 create table t1(f1 tinyint, f2 SMALLINT, f3 BIGINT, f4 int,
 f5 BIGINT, f6 TINYINT, f7 SMALLINT);
@@ -230,8 +226,8 @@ b	NULL
 use test;
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
-a	int(11)	NO		NULL	
-b	int(11)	YES		NULL	
+a	int	NO		NULL	
+b	int	YES		NULL	
 drop table t1;
 CREATE TABLE t1 (a int);
 CREATE TABLE t2 (b int);
@@ -268,10 +264,10 @@ drop table t1;
 create temporary table t1(f1 int, index(f1));
 show columns from t1;
 Field	Type	Null	Key	Default	Extra
-f1	int(11)	YES	MUL	NULL	
+f1	int	YES	MUL	NULL	
 describe t1;
 Field	Type	Null	Key	Default	Extra
-f1	int(11)	YES	MUL	NULL	
+f1	int	YES	MUL	NULL	
 show indexes from t1;
 Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
 t1	1	f1	1	f1	A	0	NULL	NULL	YES	BTREE		
@@ -459,8 +455,8 @@ f1	varchar(50)	YES		NULL
 f2	varchar(50)	NO		NULL	
 f3	varchar(50)	YES		NULL	
 f4	varchar(50)	YES		NULL	
-f5	bigint(20)	NO		NULL	
-f6	bigint(20)	NO		NULL	
+f5	bigint	NO		NULL	
+f6	bigint	NO		NULL	
 f7	datetime	NO		NULL	
 f8	datetime	YES		NULL	
 drop table t1;

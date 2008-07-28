@@ -1030,24 +1030,24 @@ CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT 1)) a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE "t1" (
-  "a" int(1) NOT NULL,
-  "(SELECT 1)" int(1) NOT NULL
+  "a" int NOT NULL,
+  "(SELECT 1)" int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT a)) a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE "t1" (
-  "a" int(1) NOT NULL,
-  "(SELECT a)" int(1) NOT NULL
+  "a" int NOT NULL,
+  "(SELECT a)" int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 CREATE TABLE t1 SELECT * FROM (SELECT 1 as a,(SELECT a+0)) a;
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE "t1" (
-  "a" int(1) NOT NULL,
-  "(SELECT a+0)" int(3) NOT NULL
+  "a" int NOT NULL,
+  "(SELECT a+0)" int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 CREATE TABLE t1 SELECT (SELECT 1 as a UNION SELECT 1+1 limit 1,1) as a;
@@ -1057,7 +1057,7 @@ a
 SHOW CREATE TABLE t1;
 Table	Create Table
 t1	CREATE TABLE "t1" (
-  "a" bigint(20) NOT NULL
+  "a" bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 drop table t1;
 create table t1 (a int);

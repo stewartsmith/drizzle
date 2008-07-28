@@ -258,7 +258,6 @@ void Field_short::sort_string(uchar *to,uint length __attribute__((unused)))
 void Field_short::sql_type(String &res) const
 {
   CHARSET_INFO *cs=res.charset();
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
-			  "smallint(%d)",(int) field_length));
+  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "smallint"));
   add_unsigned(res);
 }
