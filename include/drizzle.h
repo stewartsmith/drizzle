@@ -107,7 +107,7 @@ typedef struct st_drizzle_rows {
 
 typedef DRIZZLE_ROWS *DRIZZLE_ROW_OFFSET;  /* offset to current row */
 
-#include "my_alloc.h"
+#include <mysys/my_alloc.h>
 
 typedef struct embedded_query_result EMBEDDED_QUERY_RESULT;
 typedef struct st_drizzle_data {

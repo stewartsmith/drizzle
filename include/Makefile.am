@@ -25,7 +25,6 @@ HEADERS_ABI =		drizzle.h \
 			drizzle_com.h \
 			drizzle_time.h \
 			my_list.h \
-			my_alloc.h \
 			typelib.h \
 			drizzle/plugin.h \
 			drizzle/plugin_audit.h

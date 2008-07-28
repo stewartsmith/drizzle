@@ -488,7 +488,7 @@ typedef uint32_t ha_checksum;
 typedef int (*Process_option_func)(void *ctx, const char *group_name,
                                    const char *option);
 
-#include <my_alloc.h>
+#include <mysys/my_alloc.h>
 
 
 	/* Prototypes for mysys and my_func functions */
