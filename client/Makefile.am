@@ -17,7 +17,6 @@
 
 AM_CPPFLAGS =			-I$(top_builddir)/include \
 				-I$(top_srcdir)/include \
-				-I$(top_srcdir)/regex \
 				-I$(top_srcdir)/server \
 				-I$(top_srcdir)/strings
 
@@ -64,8 +63,8 @@ mysqltest_SOURCES=		mysqltest.cc \
 				$(top_srcdir)/mysys/my_getsystime.c \
 				$(top_srcdir)/mysys/my_copy.c \
                                 $(top_srcdir)/mysys/my_mkdir.c
-mysqltest_LDADD =		${LDADD} @PCRE_LIBS@
-mysqltest_CFLAGS = 		${AM_CPPFLAGS} @PCRE_CFLAGS@
+mysqltest_LDADD =		$(LDADD) $(PCRE_LIBS)
+mysqltest_CXXFLAGS = 		$(AM_CPPFLAGS) $(PCRE_CFLAGS)
 
 # Fix for mit-threads
 DEFS =			-DUNDEF_THREADS_HACK \

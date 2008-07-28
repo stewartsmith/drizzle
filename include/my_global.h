@@ -750,16 +750,16 @@ typedef unsigned long uint32;
 #endif
 
 #if !defined(HAVE_ULONG) && !defined(__USE_MISC)
-typedef uint32_t	ulong;		  /* Short for unsigned long */
+typedef unsigned long ulong; /* Short for unsigned long */
 #endif
 #ifndef longlong_defined
-/* 
+/*
   Using [unsigned] long long is preferable as [u]longlong because we use 
   [unsigned] long long unconditionally in many places, 
   for example in constants with [U]LL suffix.
 */
 typedef uint64_t ulonglong; /* ulong or unsigned long long */
-typedef int64_t	longlong;
+typedef int64_t longlong;
 #endif
 
 #ifndef HAVE_INT64

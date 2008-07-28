@@ -22,7 +22,7 @@ MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
 			-I$(srcdir) $(openssl_includes) \
-			$(libevent_includes)
+			$(EVENTINC)
 SUBDIRS =		share
 libexec_PROGRAMS =	drizzled
 EXTRA_PROGRAMS =	gen_lex_hash
@@ -45,10 +45,10 @@ SUPPORTING_LIBS =	$(top_builddir)/vio/libviolt.la \
 			$(top_builddir)/mysys/libmysyslt.la \
 			$(d_dbug) \
 			$(top_builddir)/strings/libmystringslt.la 
-LDADD = $(SUPPORTING_LIBS) -lz -levent
+LDADD = $(SUPPORTING_LIBS) -lz
 drizzled_LDADD =	libhandler.la \
 			$(top_builddir)/libdrizzle/libdrizzle.la \
-			$(libevent_libs) \
+			$(EVENTLIB) \
 			@mysql_plugin_libs@ \
 			$(LDADD)  $(CXXLDFLAGS) @LIBDL@
 

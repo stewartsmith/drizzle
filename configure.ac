@@ -286,12 +286,75 @@ AC_SUBST(LD_VERSION_SCRIPT)
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(event.h)
-if test "x$ac_cv_header_event_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
-fi
-AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+AC_MSG_CHECKING(for libevent)
+AC_ARG_WITH(libevent,
+[  --with-libevent=DIR     use libevent build directory],
+[ case "$withval" in
+  yes|no)
+     AC_MSG_RESULT(no)
+     ;;
+  *)
+     AC_MSG_RESULT($withval)
+     if test -f $withval/event.h -a -f $withval/libevent.a; then
+        owd=`pwd`
+        if cd $withval; then withval=`pwd`; cd $owd; fi
+        EVENTINC="-I$withval"
+        EVENTLIB="-L$withval -levent"
+     elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
+        owd=`pwd`
+        if cd $withval; then withval=`pwd`; cd $owd; fi
+        EVENTINC="-I$withval/include"
+        EVENTLIB="-L$withval/lib -levent"
+     else
+        AC_ERROR(event.h or libevent.a not found in $withval)
+     fi
+     ;;
+  esac ],
+[ if test -f ${prefix}/include/event.h; then
+     EVENTINC="-I${prefix}/include"
+     EVENTLIB="-L${prefix}/lib -levent"
+  elif test -f /usr/include/event/event.h; then
+     EVENTINC="-I/usr/include/event"
+     EVENTLIB="-levent"
+  elif test -f /usr/include/event.h; then
+     EVENTLIB="-levent"
+  else
+     AC_MSG_RESULT(no)
+     AC_ERROR(libevent not found)
+  fi
+  AC_MSG_RESULT(yes) ]
+)
+
+AC_SUBST(EVENTINC)
+AC_SUBST(EVENTLIB)
+
+AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
+  save_CFLAGS="$CFLAGS"
+  save_LIBS="$LIBS"
+  CFLAGS="$EVENTINC"
+  LIBS="$EVENTLIB"
+  AC_TRY_LINK([
+#include <sys/types.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <event.h>],[
+	struct bufferevent bev;
+	bufferevent_settimeout(&bev, 1, 1);
+  ], ac_libevent_works=yes, [
+        AC_ERROR([you need to install a more recent version of libevent,
+	check http://www.monkey.org/~provos/libevent/])
+  ])
+
+  CFLAGS="$save_CFLAGS"
+  LIBS="$save_LIBS"
+])
+
+dnl AC_CHECK_HEADERS(event.h)
+dnl if test "x$ac_cv_header_event_h" != "xyes"
+dnl then
+dnl   AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+dnl fi
+dnl AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -316,12 +379,6 @@ fi
 AC_CHECK_LIB(z, crc32, [], [AC_MSG_ERROR(could not find libz)])
 
 
-AC_CHECK_HEADERS([readline/readline.h])
-if test "x$ac_cv_header_readline_readline_h" != "xyes"
-then
-  AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
-fi
-
 #--------------------------------------------------------------------
 # Check for libpcre
 #--------------------------------------------------------------------
@@ -338,7 +395,8 @@ PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
   else
     found_pcre="yes"
     # We can't search for these well, but we sure do need them!
-    PCRE_LIBS="-lpcrecpp -lpcre"
+    PCRE_CFLAGS="`$PKG_CONFIG libpcrecpp --cflags`"
+    PCRE_LIBS="`$PKG_CONFIG libpcrecpp --libs`"
   fi
   ])
 if test "x$found_pcre" != "xyes"
@@ -899,6 +957,24 @@ MYSQL_PTHREAD_YIELD
 ######################################################################
 # For readline/libedit (We simply move the mimimum amount of stuff from
 # the readline/libedit configure.in here)
+
+AC_CHECK_HEADERS(readline/history.h readline/readline.h)
+if test "x$ac_cv_header_readline_readline_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
+fi
+AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
+AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(malloc.h sys/cdefs.h)
