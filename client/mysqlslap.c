@@ -76,7 +76,7 @@ TODO:
 #define DEFAULT_BLOB_SIZE 1024
 
 #include "client_priv.h"
-#include <mysqld_error.h>
+#include <drizzled_error.h>
 #include <my_dir.h>
 #include <signal.h>
 #include <stdarg.h>

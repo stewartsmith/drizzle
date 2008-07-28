@@ -225,7 +225,7 @@
 
 /* Include prototypes for unireg */
 
-#include "mysqld_error.h"
+#include "drizzled_error.h"
 #include "structs.h"				/* All structs we need */
 
 #endif

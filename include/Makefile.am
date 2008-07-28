@@ -17,8 +17,8 @@
 
 
 BUILT_SOURCES =		drizzle_version.h \
-			mysqld_ername.h \
-			mysqld_error.h \
+			drizzled_ername.h \
+			drizzled_error.h \
 			sql_state.h
 
 HEADERS_ABI =		drizzle.h \
@@ -72,20 +72,20 @@ LDADD = $(top_builddir)/mysys/libmysyslt.la \
 EXTRA_PROGRAMS = comp_err
 comperr_CFLAGS = -I${top_srcdir}/drizzled
 
-# This will build mysqld_error.h, mysqld_ername.h and sql_state.h
+# This will build drizzled_error.h, drizzled_ername.h and sql_state.h
 # NOTE Built files should depend on their sources to avoid
 # the built files being rebuilt in source dist
-mysqld_error.h: comp_err$(EXEEXT) $(top_srcdir)/drizzled/share/errmsg.txt
+drizzled_error.h: comp_err$(EXEEXT) $(top_srcdir)/drizzled/share/errmsg.txt
 	$(top_builddir)/include/comp_err$(EXEEXT) \
 	--charset=$(top_srcdir)/drizzled/share/charsets \
 	--out-dir=$(top_builddir)/drizzled/share/ \
-	--header_file=$(top_builddir)/include/mysqld_error.h \
-	--name_file=$(top_builddir)/include/mysqld_ername.h \
+	--header_file=$(top_builddir)/include/drizzled_error.h \
+	--name_file=$(top_builddir)/include/drizzled_ername.h \
 	--state_file=$(top_builddir)/include/sql_state.h \
 	--in_file=$(top_srcdir)/drizzled/share/errmsg.txt
 
-mysqld_ername.h: mysqld_error.h
-sql_state.h: mysqld_error.h
+drizzled_ername.h: drizzled_error.h
+sql_state.h: drizzled_error.h
 
 # Remove built files and the symlinked directories
 CLEANFILES = 		$(BUILT_SOURCES)

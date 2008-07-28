@@ -47,7 +47,7 @@
 
 #include "client_priv.h"
 #include "drizzle_version.h"
-#include "mysqld_error.h"
+#include "drizzled_error.h"
 
 /* Exit codes */
 

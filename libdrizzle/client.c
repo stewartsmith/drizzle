@@ -51,7 +51,7 @@
 #include <m_string.h>
 #include <m_ctype.h>
 #include "drizzle_version.h"
-#include "mysqld_error.h"
+#include "drizzled_error.h"
 #include "errmsg.h"
 #include <violite.h>
 #include <my_pthread.h>        /* because of signal()  */

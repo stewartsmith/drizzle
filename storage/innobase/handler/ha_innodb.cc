@@ -30,7 +30,7 @@ have disabled the InnoDB inlining in this file. */
 #endif
 
 #include <mysql_priv.h>
-#include <mysqld_error.h>
+#include <drizzled_error.h>
 
 #include <m_ctype.h>
 #include <hash.h>
