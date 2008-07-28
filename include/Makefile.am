@@ -53,7 +53,6 @@ noinst_HEADERS =	my_bit.h \
 			my_trie.h \
 			hash.h \
 			t_ctype.h \
-			violite.h \
 			drizzle_version.h.in \
 			my_handler.h \
 			my_time.h

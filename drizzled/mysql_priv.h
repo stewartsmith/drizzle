@@ -91,7 +91,7 @@ extern key_map key_map_full;          /* Should be threaded as const */
 extern const char *primary_key_name;
 
 #include "drizzle_com.h"
-#include <violite.h>
+#include <vio/violite.h>
 #include "unireg.h"
 
 void init_sql_alloc(MEM_ROOT *root, uint block_size, uint pre_alloc_size);

@@ -41,7 +41,7 @@
 #include <my_dir.h>
 #include <hash.h>
 #include <stdarg.h>
-#include <violite.h>
+#include <vio/violite.h>
 
 
 #define MAX_VAR_NAME_LENGTH    256

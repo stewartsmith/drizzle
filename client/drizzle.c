@@ -44,7 +44,7 @@
 #include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
-#include <violite.h>
+#include <vio/violite.h>
 
 #if defined(USE_LIBEDIT_INTERFACE) && defined(HAVE_LOCALE_H)
 #include <locale.h>
