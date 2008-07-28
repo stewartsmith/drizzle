@@ -17,7 +17,7 @@
 #ifndef _typelib_h
 #define _typelib_h
 
-#include "my_alloc.h"
+#include <mysys/my_alloc.h>
 
 typedef struct st_typelib {	/* Different types saved here */
   unsigned int count;		/* How many types */

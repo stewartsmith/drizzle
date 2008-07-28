@@ -20,7 +20,7 @@
 #include <my_global.h>
 #include <drizzle.h>
 #include <drizzle_com.h>
-#include <mysqld_error.h>
+#include <drizzled_error.h>
 #include <my_sys.h>
 #include <m_string.h>
 #include <my_net.h>

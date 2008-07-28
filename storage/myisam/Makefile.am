@@ -25,7 +25,7 @@ WRAPLIBS=
 LDADD=			libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/strings/libmystringslt.la -lz
+			$(top_builddir)/mystrings/libmystringslt.la -lz
 
 DEFS =                  @DEFS@
 

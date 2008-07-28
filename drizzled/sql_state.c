@@ -16,7 +16,7 @@
 /* Functions to map mysqld errno to sql_state */
 
 #include <my_global.h>
-#include <mysqld_error.h>
+#include <drizzled_error.h>
 #include "drizzle_com.h"
 
 struct st_map_errno_to_sqlstate

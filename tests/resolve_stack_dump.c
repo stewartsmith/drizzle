@@ -19,7 +19,7 @@
 
 #include <my_global.h>
 #include <m_ctype.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <m_string.h>
 #include <drizzle_version.h>
 #include <errno.h>

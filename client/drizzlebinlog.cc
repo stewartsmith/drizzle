@@ -32,7 +32,7 @@
 #undef MYSQL_SERVER
 #include <my_time.h>
 #include <my_global.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <m_string.h>
 #include <drizzle.h>
 #include <errmsg.h>

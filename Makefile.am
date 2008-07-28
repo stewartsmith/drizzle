@@ -16,7 +16,7 @@
 # Process this file with automake to create Makefile.in
 
 SUBDIRS = . vio \
-	  strings \
+	  mystrings \
 	  mysys \
 	  include \
 	  extra \
@@ -30,7 +30,7 @@ SUBDIRS = . vio \
 
 DIST_SUBDIRS = $(SUBDIRS) \
 	       mysys/tests \
-	       strings/tests
+	       mystrings/tests
 
 DISTCLEANFILES = ac_available_languages_fragment
 

@@ -20,7 +20,7 @@
   API for Audit plugin. (MYSQL_AUDIT_PLUGIN)
 */
 
-#include <drizzle/plugin.h>
+#include <drizzled/plugin.h>
 
 #define MYSQL_AUDIT_CLASS_MASK_SIZE 1
 

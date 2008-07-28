@@ -16,7 +16,7 @@
 #include <my_global.h>
 #include "m_string.h"
 #include "m_ctype.h"
-#include "my_sys.h"  /* Needed for MY_ERRNO_ERANGE */
+#include <mysys/my_sys.h>  /* Needed for MY_ERRNO_ERANGE */
 #include <errno.h>
 
 #include "stdarg.h"

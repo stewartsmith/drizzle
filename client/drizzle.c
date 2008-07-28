@@ -34,7 +34,6 @@
  **/
 
 #include "client_priv.h"
-#include <my_sys.h>
 #include <m_ctype.h>
 #include <stdarg.h>
 #include <my_dir.h>
@@ -44,7 +43,7 @@
 #include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
-#include <violite.h>
+#include <vio/violite.h>
 
 #if defined(USE_LIBEDIT_INTERFACE) && defined(HAVE_LOCALE_H)
 #include <locale.h>

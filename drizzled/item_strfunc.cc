@@ -32,8 +32,8 @@
 
 #include "mysql_priv.h"
 #include <m_ctype.h>
-#include "sha1.h"
-#include "sha2.h"
+#include <mysys/sha1.h>
+#include <mysys/sha2.h>
 #include <zlib.h>
 C_MODE_START
 #include "../mysys/my_static.h"			// For soundex_map

@@ -30,12 +30,12 @@ have disabled the InnoDB inlining in this file. */
 #endif
 
 #include <mysql_priv.h>
-#include <mysqld_error.h>
+#include <drizzled_error.h>
 
 #include <m_ctype.h>
 #include <hash.h>
-#include <mysys_err.h>
-#include <my_sys.h>
+#include <mysys/mysys_err.h>
+#include <mysys/my_sys.h>
 #include "ha_innodb.h"
 
 #ifndef MYSQL_SERVER

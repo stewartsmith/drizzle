@@ -40,7 +40,7 @@
 #include <my_global.h>
 #include "m_string.h"
 #include "m_ctype.h"
-#include "my_sys.h"			/* defines errno */
+#include <mysys/my_sys.h>			/* defines errno */
 #include <errno.h>
 
 #define char_val(X) (X >= '0' && X <= '9' ? X-'0' :\

@@ -17,7 +17,7 @@
 /* create and drop of databases */
 
 #include "mysql_priv.h"
-#include <mysys_err.h>
+#include <mysys/mysys_err.h>
 #include <my_dir.h>
 #include <m_ctype.h>
 #include "log.h"

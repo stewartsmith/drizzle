@@ -25,7 +25,7 @@
 #include <m_ctype.h>
 #include "drizzle.h"
 #include "drizzle_version.h"
-#include "mysqld_error.h"
+#include "drizzled_error.h"
 #include "errmsg.h"
 #include <violite.h>
 #include <sys/stat.h>

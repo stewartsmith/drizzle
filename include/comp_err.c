@@ -24,7 +24,7 @@
 
 #include <my_global.h>
 #include <m_ctype.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <m_string.h>
 #include <my_getopt.h>
 #include <assert.h>
@@ -36,8 +36,8 @@
 #define ER_PREFIX "ER_"
 #define WARN_PREFIX "WARN_"
 static char *OUTFILE= (char*) "errmsg.sys";
-static char *HEADERFILE= (char*) "mysqld_error.h";
-static char *NAMEFILE= (char*) "mysqld_ername.h";
+static char *HEADERFILE= (char*) "drizzled_error.h";
+static char *NAMEFILE= (char*) "drizzled_ername.h";
 static char *STATEFILE= (char*) "sql_state.h";
 static char *TXTFILE= (char*) "../sql/share/errmsg.txt";
 static char *DATADIRECTORY= (char*) "../sql/share/";
@@ -108,9 +108,9 @@ static struct my_option my_long_options[]=
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"out_file", 'O', "Output filename (errmsg.sys)", (char**) & OUTFILE,
    (char**) & OUTFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"header_file", 'H', "mysqld_error.h file ", (char**) & HEADERFILE,
+  {"header_file", 'H', "drizzled_error.h file ", (char**) & HEADERFILE,
    (char**) & HEADERFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"name_file", 'N', "mysqld_ername.h file ", (char**) & NAMEFILE,
+  {"name_file", 'N', "drizzled_ername.h file ", (char**) & NAMEFILE,
    (char**) & NAMEFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"state_file", 'S', "sql_state.h file", (char**) & STATEFILE,
    (char**) & STATEFILE, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -218,7 +218,7 @@ static int create_header_files(struct errors *error_head)
   for (tmp_error= error_head; tmp_error; tmp_error= tmp_error->next_error)
   {
     /*
-       generating mysqld_error.h
+       generating drizzled_error.h
        fprintf() will automatically add \r on windows
     */
     fprintf(er_definef, "#define %s %d\n", tmp_error->er_name,
@@ -235,7 +235,7 @@ static int create_header_files(struct errors *error_head)
 	    tmp_error->d_code);
 
   }
-  /* finishing off with mysqld_error.h */
+  /* finishing off with drizzled_error.h */
   fprintf(er_definef, "#define ER_ERROR_LAST %d\n", er_last);
   my_fclose(er_definef, MYF(0));
   my_fclose(sql_statef, MYF(0));

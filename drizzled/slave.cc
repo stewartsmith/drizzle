@@ -33,11 +33,11 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
-#include <thr_alarm.h>
+#include <mysys/thr_alarm.h>
 #include <my_dir.h>
 #include <sql_common.h>
 #include <errmsg.h>
-#include <mysys_err.h>
+#include <mysys/mysys_err.h>
 
 #ifdef HAVE_REPLICATION
 

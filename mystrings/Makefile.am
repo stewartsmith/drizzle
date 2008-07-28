@@ -45,6 +45,8 @@ CSRCS 	= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.
 endif
 endif
 
+pkginclude_HEADERS = 	decimal.h \
+			my_xml.h
 # C files common to all three cases are included directly below, so that
 # ASRCS and CSRCS can be smaller
 libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove.c bmove512.c \

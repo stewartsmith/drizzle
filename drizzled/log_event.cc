@@ -35,7 +35,7 @@
 
 #endif /* MYSQL_CLIENT */
 
-#include <base64.h>
+#include <mysys/base64.h>
 #include <my_bitmap.h>
 
 #define log_cs	&my_charset_latin1

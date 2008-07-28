@@ -22,7 +22,7 @@
 */
 
 #include "mysql_priv.h"
-#include "mysys_err.h"
+#include <mysys/mysys_err.h>
 
 static bool read_texts(const char *file_name,const char ***point,
 		       uint error_messages);

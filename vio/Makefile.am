@@ -19,6 +19,7 @@ libvio_la_LIBADD =      libviolt.la
 
 noinst_LTLIBRARIES =    libviolt.la
 
-noinst_HEADERS =	vio_priv.h
+noinst_HEADERS =	vio_priv.h \
+			violite.h
 
 libviolt_la_SOURCES =	vio.c viosocket.c

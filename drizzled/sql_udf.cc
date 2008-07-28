@@ -25,7 +25,7 @@
 #endif
 
 #include "mysql_priv.h"
-#include <my_pthread.h>
+#include <mysys/my_pthread.h>
 
 extern "C"
 {

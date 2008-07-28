@@ -30,12 +30,12 @@
 
 #include <my_global.h>
 #include <drizzle_version.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <my_time.h>
 #include <m_string.h>
 #include <hash.h>
 #include <signal.h>
-#include <thr_lock.h>
+#include <mysys/thr_lock.h>
 #include <my_base.h>			/* Needed by field.h */
 #include <queues.h>
 #include "sql_bitmap.h"
@@ -91,7 +91,7 @@ extern key_map key_map_full;          /* Should be threaded as const */
 extern const char *primary_key_name;
 
 #include "drizzle_com.h"
-#include <violite.h>
+#include <vio/violite.h>
 #include "unireg.h"
 
 void init_sql_alloc(MEM_ROOT *root, uint block_size, uint pre_alloc_size);

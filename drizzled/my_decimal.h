@@ -29,7 +29,7 @@
 #define my_decimal_h
 
 C_MODE_START
-#include <decimal.h>
+#include <mystrings/decimal.h>
 C_MODE_END
 
 #define DECIMAL_LONGLONG_DIGITS 22

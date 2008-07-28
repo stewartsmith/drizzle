@@ -25,8 +25,8 @@ extern "C" {
 #ifndef _my_base_h
 #include <my_base.h>
 #endif
-#include <my_pthread.h>
-#include <thr_lock.h>
+#include <mysys/my_pthread.h>
+#include <mysys/thr_lock.h>
 
 #include "my_handler.h"
 #include "my_tree.h"

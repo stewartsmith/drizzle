@@ -22,7 +22,7 @@
 #include "myisamdef.h"
 #include <queues.h>
 #include <my_tree.h>
-#include "mysys_err.h"
+#include <mysys/mysys_err.h>
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__			/* Skip warnings in getopt.h */
 #endif
