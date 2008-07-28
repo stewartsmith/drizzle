@@ -217,7 +217,6 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 /* static variables */
 
 /* the default log output is log tables */
-static bool lower_case_table_names_used= 0;
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
@@ -280,7 +279,6 @@ bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
 bool opt_log_slow_admin_statements= 0;
 bool opt_log_slow_slave_statements= 0;
-bool lower_case_file_system= 0;
 bool opt_old_style_user_limits= 0;
 bool trust_function_creators= 0;
 /*
@@ -403,8 +401,6 @@ Lt_creator lt_creator;
 Ge_creator ge_creator;
 Le_creator le_creator;
 
-FILE *bootstrap_file;
-int bootstrap_error;
 FILE *stderror_file=0;
 
 I_List<THD> threads;
@@ -2216,9 +2212,9 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (my_database_names_init())
     return 1;
 
-  lower_case_file_system= true;
 
   /* Reset table_alias_charset, now that lower_case_table_names is set. */
+  lower_case_table_names= 1; /* This we need to look at */
   table_alias_charset= files_charset_info;
 
   return 0;
@@ -4399,121 +4395,121 @@ mysqld_get_one_option(int optid,
     opt_error_log= 1;
     break;
   case (int)OPT_REPLICATE_IGNORE_DB:
-  {
-    rpl_filter->add_ignore_db(argument);
-    break;
-  }
+    {
+      rpl_filter->add_ignore_db(argument);
+      break;
+    }
   case (int)OPT_REPLICATE_DO_DB:
-  {
-    rpl_filter->add_do_db(argument);
-    break;
-  }
+    {
+      rpl_filter->add_do_db(argument);
+      break;
+    }
   case (int)OPT_REPLICATE_REWRITE_DB:
-  {
-    char* key = argument,*p, *val;
+    {
+      char* key = argument,*p, *val;
 
-    if (!(p= strstr(argument, "->")))
-    {
-      fprintf(stderr,
-	      "Bad syntax in replicate-rewrite-db - missing '->'!\n");
-      exit(1);
-    }
-    val= p--;
-    while (my_isspace(mysqld_charset, *p) && p > argument)
-      *p-- = 0;
-    if (p == argument)
-    {
-      fprintf(stderr,
-	      "Bad syntax in replicate-rewrite-db - empty FROM db!\n");
-      exit(1);
-    }
-    *val= 0;
-    val+= 2;
-    while (*val && my_isspace(mysqld_charset, *val))
-      *val++;
-    if (!*val)
-    {
-      fprintf(stderr,
-	      "Bad syntax in replicate-rewrite-db - empty TO db!\n");
-      exit(1);
-    }
+      if (!(p= strstr(argument, "->")))
+      {
+        fprintf(stderr,
+                "Bad syntax in replicate-rewrite-db - missing '->'!\n");
+        exit(1);
+      }
+      val= p--;
+      while (my_isspace(mysqld_charset, *p) && p > argument)
+        *p-- = 0;
+      if (p == argument)
+      {
+        fprintf(stderr,
+                "Bad syntax in replicate-rewrite-db - empty FROM db!\n");
+        exit(1);
+      }
+      *val= 0;
+      val+= 2;
+      while (*val && my_isspace(mysqld_charset, *val))
+        *val++;
+      if (!*val)
+      {
+        fprintf(stderr,
+                "Bad syntax in replicate-rewrite-db - empty TO db!\n");
+        exit(1);
+      }
 
-    rpl_filter->add_db_rewrite(key, val);
-    break;
-  }
+      rpl_filter->add_db_rewrite(key, val);
+      break;
+    }
 
   case (int)OPT_BINLOG_IGNORE_DB:
-  {
-    binlog_filter->add_ignore_db(argument);
-    break;
-  }
+    {
+      binlog_filter->add_ignore_db(argument);
+      break;
+    }
   case OPT_BINLOG_FORMAT:
-  {
-    int id;
-    id= find_type_or_exit(argument, &binlog_format_typelib, opt->name);
-    global_system_variables.binlog_format= opt_binlog_format_id= id - 1;
-    break;
-  }
+    {
+      int id;
+      id= find_type_or_exit(argument, &binlog_format_typelib, opt->name);
+      global_system_variables.binlog_format= opt_binlog_format_id= id - 1;
+      break;
+    }
   case (int)OPT_BINLOG_DO_DB:
-  {
-    binlog_filter->add_do_db(argument);
-    break;
-  }
+    {
+      binlog_filter->add_do_db(argument);
+      break;
+    }
   case (int)OPT_REPLICATE_DO_TABLE:
-  {
-    if (rpl_filter->add_do_table(argument))
     {
-      fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_do_table(argument))
+      {
+        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int)OPT_REPLICATE_WILD_DO_TABLE:
-  {
-    if (rpl_filter->add_wild_do_table(argument))
     {
-      fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_wild_do_table(argument))
+      {
+        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int)OPT_REPLICATE_WILD_IGNORE_TABLE:
-  {
-    if (rpl_filter->add_wild_ignore_table(argument))
     {
-      fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_wild_ignore_table(argument))
+      {
+        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int)OPT_REPLICATE_IGNORE_TABLE:
-  {
-    if (rpl_filter->add_ignore_table(argument))
     {
-      fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_ignore_table(argument))
+      {
+        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int) OPT_SLOW_QUERY_LOG:
     opt_slow_log= 1;
     break;
 #ifdef WITH_CSV_STORAGE_ENGINE
   case  OPT_LOG_OUTPUT:
-  {
-    if (!argument || !argument[0])
     {
-      log_output_options= LOG_FILE;
-      log_output_str= log_output_typelib.type_names[1];
+      if (!argument || !argument[0])
+      {
+        log_output_options= LOG_FILE;
+        log_output_str= log_output_typelib.type_names[1];
+      }
+      else
+      {
+        log_output_str= argument;
+        log_output_options=
+          find_bit_type_or_exit(argument, &log_output_typelib, opt->name);
+      }
+      break;
     }
-    else
-    {
-      log_output_str= argument;
-      log_output_options=
-        find_bit_type_or_exit(argument, &log_output_typelib, opt->name);
-  }
-    break;
-  }
 #endif
   case (int) OPT_SKIP_NEW:
     opt_specialflag|= SPECIAL_NO_NEW_FUNC;
@@ -4605,65 +4601,61 @@ mysqld_get_one_option(int optid,
     charsets_dir = mysql_charsets_dir;
     break;
   case OPT_TX_ISOLATION:
-  {
-    int type;
-    type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
-    global_system_variables.tx_isolation= (type-1);
-    break;
-  }
+    {
+      int type;
+      type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
+      global_system_variables.tx_isolation= (type-1);
+      break;
+    }
   case OPT_MYISAM_RECOVER:
-  {
-    if (!argument)
     {
-      myisam_recover_options=    HA_RECOVER_DEFAULT;
-      myisam_recover_options_str= myisam_recover_typelib.type_names[0];
+      if (!argument)
+      {
+        myisam_recover_options=    HA_RECOVER_DEFAULT;
+        myisam_recover_options_str= myisam_recover_typelib.type_names[0];
+      }
+      else if (!argument[0])
+      {
+        myisam_recover_options= HA_RECOVER_NONE;
+        myisam_recover_options_str= "OFF";
+      }
+      else
+      {
+        myisam_recover_options_str=argument;
+        myisam_recover_options=
+          find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
+      }
+      ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
+      break;
     }
-    else if (!argument[0])
-    {
-      myisam_recover_options= HA_RECOVER_NONE;
-      myisam_recover_options_str= "OFF";
-    }
-    else
-    {
-      myisam_recover_options_str=argument;
-      myisam_recover_options=
-        find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
-    }
-    ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
-    break;
-  }
   case OPT_TC_HEURISTIC_RECOVER:
     tc_heuristic_recover= find_type_or_exit(argument,
                                             &tc_heuristic_recover_typelib,
                                             opt->name);
     break;
   case OPT_MYISAM_STATS_METHOD:
-  {
-    ulong method_conv;
-    int method;
+    {
+      ulong method_conv;
+      int method;
 
-    myisam_stats_method_str= argument;
-    method= find_type_or_exit(argument, &myisam_stats_method_typelib,
-                              opt->name);
-    switch (method-1) {
-    case 2:
-      method_conv= MI_STATS_METHOD_IGNORE_NULLS;
-      break;
-    case 1:
-      method_conv= MI_STATS_METHOD_NULLS_EQUAL;
-      break;
-    case 0:
-    default:
-      method_conv= MI_STATS_METHOD_NULLS_NOT_EQUAL;
+      myisam_stats_method_str= argument;
+      method= find_type_or_exit(argument, &myisam_stats_method_typelib,
+                                opt->name);
+      switch (method-1) {
+      case 2:
+        method_conv= MI_STATS_METHOD_IGNORE_NULLS;
+        break;
+      case 1:
+        method_conv= MI_STATS_METHOD_NULLS_EQUAL;
+        break;
+      case 0:
+      default:
+        method_conv= MI_STATS_METHOD_NULLS_NOT_EQUAL;
+        break;
+      }
+      global_system_variables.myisam_stats_method= method_conv;
       break;
     }
-    global_system_variables.myisam_stats_method= method_conv;
-    break;
-  }
-  case OPT_LOWER_CASE_TABLE_NAMES:
-    lower_case_table_names= 1;
-    lower_case_table_names_used= 1;
-    break;
   }
   return 0;
 }
