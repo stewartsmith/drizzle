@@ -214,6 +214,16 @@
 #error "Please add -fno-exceptions to CXXFLAGS and reconfigure/recompile"
 #endif
 
+#if defined(HAVE_STDINT_H)
+/* Need to include this _before_ stdlib, so that all defines are right */
+/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
+/* Enable some extra C99 extensions */
+#define __STDC_LIMIT_MACROS
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+#include <stdint.h>
+#endif
+
 #ifndef stdin
 #include <stdio.h>
 #endif
@@ -260,15 +270,6 @@
 #endif
 
 #include <errno.h>				/* Recommended by debian */
-
-#if defined(HAVE_STDINT_H)
-/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
-/* Enable some extra C99 extensions */
-#define __STDC_LIMIT_MACROS
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#include <stdint.h>
-#endif
 
 #if defined(HAVE_STDBOOL_H)
 #include <stdbool.h>

@@ -15,9 +15,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 # MA 02111-1307, USA
 
-BUILT_SOURCES =		$(HEADERS_GEN) 
 
-HEADERS_GEN =		drizzle_version.h
+BUILT_SOURCES =		drizzle_version.h \
+			mysqld_ername.h \
+			mysqld_error.h \
+			sql_state.h
 
 HEADERS_ABI =		drizzle.h \
 			drizzle_com.h \
@@ -43,7 +45,7 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			keycache.h \
 			m_ctype.h \
 			my_attribute.h \
-			$(HEADERS_GEN)
+			$(BUILT_SOURCES)
 
 noinst_HEADERS =	my_bit.h \
 			heap.h \
@@ -54,8 +56,6 @@ noinst_HEADERS =	my_bit.h \
 			myisammrg.h \
 			mysys_err.h \
 			my_base.h \
-			help_start.h \
-			help_end.h \
 			my_nosys.h \
 			queues.h \
 			sha1.h \
@@ -71,23 +71,28 @@ noinst_HEADERS =	my_bit.h \
 			base64.h \
 			drizzle_version.h.in \
 			my_handler.h \
-			my_time.h \
-			drizzle/server/field/blob.h \
-			drizzle/server/field/date.h \
-			drizzle/server/field/datetime.h \
-			drizzle/server/field/decimal.h \
-			drizzle/server/field/double.h \
-			drizzle/server/field/int64_t.h \
-			drizzle/server/field/long.h \
-			drizzle/server/field/null.h \
-			drizzle/server/field/set.h \
-			drizzle/server/field/short.h \
-			drizzle/server/field/string.h \
-			drizzle/server/field/timestamp.h \
-			drizzle/server/field/timetype.h \
-			drizzle/server/field/varstring.h \
-			drizzle/server/field/year.h
+			my_time.h
 
+LDADD = $(top_builddir)/mysys/libmysyslt.la \
+        $(top_builddir)/strings/libmystringslt.la $(ZLIB_LIBS)
+
+EXTRA_PROGRAMS = comp_err
+comperr_CFLAGS = -I${top_srcdir}/drizzled
+
+# This will build mysqld_error.h, mysqld_ername.h and sql_state.h
+# NOTE Built files should depend on their sources to avoid
+# the built files being rebuilt in source dist
+mysqld_error.h: comp_err$(EXEEXT) $(top_srcdir)/drizzled/share/errmsg.txt
+	$(top_builddir)/include/comp_err$(EXEEXT) \
+	--charset=$(top_srcdir)/drizzled/share/charsets \
+	--out-dir=$(top_builddir)/drizzled/share/ \
+	--header_file=$(top_builddir)/include/mysqld_error.h \
+	--name_file=$(top_builddir)/include/mysqld_ername.h \
+	--state_file=$(top_builddir)/include/sql_state.h \
+	--in_file=$(top_srcdir)/drizzled/share/errmsg.txt
+
+mysqld_ername.h: mysqld_error.h
+sql_state.h: mysqld_error.h
 
 # Remove built files and the symlinked directories
 CLEANFILES = 		$(BUILT_SOURCES)

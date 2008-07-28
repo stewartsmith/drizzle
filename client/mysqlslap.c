@@ -1,4 +1,4 @@
-/* Copyright (C) 2005 MySQL AB
+/* Copyright (C) 2008 Drizzle Open Source Development Team
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,12 +19,12 @@
 
 
 /*
-  MySQL Slap
+  Drizzle Slap
 
   A simple program designed to work as if multiple clients querying the database,
   then reporting the timing of each stage.
 
-  MySQL slap runs three stages:
+  Drizzle slap runs three stages:
   1) Create schema,table, and optionally any SP or data you want to beign
      the test with. (single client)
   2) Load test (many clients)
@@ -32,10 +32,10 @@
 
   Examples:
 
-  Supply your own create and query SQL statements, with 50 clients 
+  Supply your own create and query SQL statements, with 50 clients
   querying (200 selects for each):
 
-    mysqlslap --delimiter=";" \
+    drizzleslap --delimiter=";" \
               --create="CREATE TABLE A (a int);INSERT INTO A VALUES (23)" \
               --query="SELECT * FROM A" --concurrency=50 --iterations=200
 
@@ -44,18 +44,18 @@
   don't create the table or insert the data (using the previous test's
   schema and data):
 
-    mysqlslap --concurrency=5 --iterations=20 \
+    drizzleslap --concurrency=5 --iterations=20 \
               --number-int-cols=2 --number-char-cols=3 \
               --auto-generate-sql
 
   Tell the program to load the create, insert and query SQL statements from
   the specified files, where the create.sql file has multiple table creation
   statements delimited by ';' and multiple insert statements delimited by ';'.
-  The --query file will have multiple queries delimited by ';', run all the 
+  The --query file will have multiple queries delimited by ';', run all the
   load statements, and then run all the queries in the query file
   with five clients (five times each):
 
-    mysqlslap --concurrency=5 \
+    drizzleslap --concurrency=5 \
               --iterations=5 --query=query.sql --create=create.sql \
               --delimiter=";"
 
@@ -84,7 +84,7 @@ TODO:
 #include <sys/wait.h>
 #include <ctype.h>
 
-#ifdef HAVE_SMEM 
+#ifdef HAVE_SMEM
 static char *shared_memory_base_name=0;
 #endif
 
@@ -113,7 +113,7 @@ static char *host= NULL, *opt_password= NULL, *user= NULL,
             *default_engine= NULL,
             *pre_system= NULL,
             *post_system= NULL,
-            *opt_mysql_unix_port= NULL;
+            *opt_drizzle_unix_port= NULL;
 
 const char *delimiter= "\n";
 
@@ -153,7 +153,7 @@ static unsigned int num_char_cols= 1;
 static unsigned int num_blob_cols= 0;
 static unsigned int num_blob_cols_size;
 static unsigned int num_blob_cols_size_min;
-static unsigned int num_int_cols_index= 0; 
+static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
 static uint my_end_arg= 0;
@@ -173,10 +173,10 @@ const char *default_dbug_option="d:t:o,/tmp/mysqlslap.trace";
 const char *opt_csv_str;
 File csv_file;
 
-static uint opt_protocol= MYSQL_PROTOCOL_TCP;
+static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 
 static int get_options(int *argc,char ***argv);
-static uint opt_mysql_port= 0;
+static uint opt_drizzle_port= 0;
 
 static const char *load_default_groups[]= { "mysqlslap","client",0 };
 
@@ -253,9 +253,9 @@ struct conclusions {
 };
 
 static option_string *engine_options= NULL;
-static option_string *query_options= NULL; 
-static statement *pre_statements= NULL; 
-static statement *post_statements= NULL; 
+static option_string *query_options= NULL;
+static statement *pre_statements= NULL;
+static statement *post_statements= NULL;
 static statement *create_statements= NULL;
 
 static statement **query_statements= NULL;
@@ -269,27 +269,27 @@ void generate_stats(conclusions *con, option_string *eng, stats *sptr);
 uint parse_comma(const char *string, uint **range);
 uint parse_delimiter(const char *script, statement **stmt, char delm);
 uint parse_option(const char *origin, option_string **stmt, char delm);
-static int drop_schema(MYSQL *mysql, const char *db);
+static int drop_schema(DRIZZLE *drizzle, const char *db);
 uint get_random_string(char *buf, size_t size);
 static statement *build_table_string(void);
 static statement *build_insert_string(void);
 static statement *build_update_string(void);
 static statement * build_select_string(bool key);
-static int generate_primary_key_list(MYSQL *mysql, option_string *engine_stmt);
+static int generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt);
 static int drop_primary_key_list(void);
-static int create_schema(MYSQL *mysql, const char *db, statement *stmt, 
+static int create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
                          option_string *engine_stmt, stats *sptr);
-static int run_scheduler(stats *sptr, statement **stmts, uint concur, 
+static int run_scheduler(stats *sptr, statement **stmts, uint concur,
                          uint64_t limit);
 pthread_handler_t run_task(void *p);
 pthread_handler_t timer_thread(void *p);
 void statement_cleanup(statement *stmt);
 void option_cleanup(option_string *stmt);
-void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr);
-static int run_statements(MYSQL *mysql, statement *stmt);
-void slap_connect(MYSQL *mysql, bool connect_to_schema);
-void slap_close(MYSQL *mysql);
-static int run_query(MYSQL *mysql, const char *query, int len);
+void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr);
+static int run_statements(DRIZZLE *drizzle, statement *stmt);
+void slap_connect(DRIZZLE *drizzle, bool connect_to_schema);
+void slap_close(DRIZZLE *drizzle);
+static int run_query(DRIZZLE *drizzle, const char *query, int len);
 void standard_deviation (conclusions *con, stats *sptr);
 
 static const char ALPHANUMERICS[]=
@@ -301,7 +301,7 @@ static const char ALPHANUMERICS[]=
 static long int timedif(struct timeval a, struct timeval b)
 {
     register int us, s;
- 
+
     us = a.tv_usec - b.tv_usec;
     us /= 1000;
     s = a.tv_sec - b.tv_sec;
@@ -311,7 +311,7 @@ static long int timedif(struct timeval a, struct timeval b)
 
 int main(int argc, char **argv)
 {
-  MYSQL mysql;
+  DRIZZLE drizzle;
   option_string *eptr;
   unsigned int x;
 
@@ -319,7 +319,7 @@ int main(int argc, char **argv)
 
   MY_INIT(argv[0]);
 
-  if (!(mysql_thread_safe()))
+  if (!(drizzle_thread_safe()))
       fprintf(stderr, "This application was compiled incorrectly. Please recompile with thread support.\n");
 
   load_defaults("my",load_default_groups,&argc,&argv);
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  slap_connect(&mysql, false);
+  slap_connect(&drizzle, false);
 
   VOID(pthread_mutex_init(&counter_mutex, NULL));
   VOID(pthread_cond_init(&count_threshhold, NULL));
@@ -374,22 +374,22 @@ burnin:
     if (*concurrency)
     {
       for (current= concurrency; current && *current; current++)
-        concurrency_loop(&mysql, *current, eptr);
+        concurrency_loop(&drizzle, *current, eptr);
     }
     else
     {
       uint infinite= 1;
       do {
-        concurrency_loop(&mysql, infinite, eptr);
+        concurrency_loop(&drizzle, infinite, eptr);
       }
       while (infinite++);
     }
 
     if (!opt_preserve)
-      drop_schema(&mysql, create_schema_string);
+      drop_schema(&drizzle, create_schema_string);
 
   } while (eptr ? (eptr= eptr->next) : 0);
-  
+ 
   if (opt_burnin)
     goto burnin;
 
@@ -400,7 +400,7 @@ burnin:
   VOID(pthread_mutex_destroy(&timer_alarm_mutex));
   VOID(pthread_cond_destroy(&timer_alarm_threshold));
 
-  slap_close(&mysql);
+  slap_close(&drizzle);
 
   /* now free all the strings we created */
   if (opt_password)
@@ -427,7 +427,7 @@ burnin:
   return 0;
 }
 
-void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr)
+void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
 {
   unsigned int x;
   stats *head_sptr;
@@ -435,7 +435,7 @@ void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr)
   conclusions conclusion;
   unsigned long long client_limit;
 
-  head_sptr= (stats *)my_malloc(sizeof(stats) * iterations, 
+  head_sptr= (stats *)my_malloc(sizeof(stats) * iterations,
                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
 
   bzero(&conclusion, sizeof(conclusions));
@@ -455,11 +455,11 @@ void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr)
       data in the table.
     */
     if (opt_preserve == false)
-      drop_schema(mysql, create_schema_string);
+      drop_schema(drizzle, create_schema_string);
 
     /* First we create */
     if (create_statements)
-      create_schema(mysql, create_schema_string, create_statements, eptr, sptr);
+      create_schema(drizzle, create_schema_string, create_statements, eptr, sptr);
 
     /*
       If we generated GUID we need to build a list of them from creation that
@@ -468,25 +468,25 @@ void concurrency_loop(MYSQL *mysql, uint current, option_string *eptr)
     if (verbose >= 2)
       printf("Generating primary key list\n");
     if (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary)
-      generate_primary_key_list(mysql, eptr);
+      generate_primary_key_list(drizzle, eptr);
 
     if (commit_rate)
-      run_query(mysql, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+      run_query(drizzle, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
     if (pre_system)
       system(pre_system);
 
-    /* 
-      Pre statements are always run after all other logic so they can 
-      correct/adjust any item that they want. 
+    /*
+      Pre statements are always run after all other logic so they can
+      correct/adjust any item that they want.
     */
     if (pre_statements)
-      run_statements(mysql, pre_statements);
+      run_statements(drizzle, pre_statements);
 
-    run_scheduler(sptr, query_statements, current, client_limit); 
-    
+    run_scheduler(sptr, query_statements, current, client_limit);
+   
     if (post_statements)
-      run_statements(mysql, post_statements);
+      run_statements(drizzle, post_statements);
 
     if (post_system)
       system(post_system);
@@ -517,7 +517,7 @@ static struct my_option my_long_options[] =
     0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-select-columns", OPT_SLAP_AUTO_GENERATE_SELECT_COLUMNS,
     "Provide a string to use for the select fields used in auto tests.",
-    (char**) &auto_generate_selected_columns_opt, 
+    (char**) &auto_generate_selected_columns_opt,
     (char**) &auto_generate_selected_columns_opt,
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql", 'a',
@@ -526,7 +526,7 @@ static struct my_option my_long_options[] =
     0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-add-autoincrement", OPT_SLAP_AUTO_GENERATE_ADD_AUTO,
     "Add an AUTO_INCREMENT column to auto-generated tables.",
-    (char**) &auto_generate_sql_autoincrement, 
+    (char**) &auto_generate_sql_autoincrement,
     (char**) &auto_generate_sql_autoincrement,
     0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-execute-number", OPT_SLAP_AUTO_GENERATE_EXECUTE_QUERIES,
@@ -535,29 +535,29 @@ static struct my_option my_long_options[] =
     0, GET_ULL, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-guid-primary", OPT_SLAP_AUTO_GENERATE_GUID_PRIMARY,
     "Add GUID based primary keys to auto-generated tables.",
-    (char**) &auto_generate_sql_guid_primary, 
+    (char**) &auto_generate_sql_guid_primary,
     (char**) &auto_generate_sql_guid_primary,
     0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-generate-sql-load-type", OPT_SLAP_AUTO_GENERATE_SQL_LOAD_TYPE,
     "Specify test load type: mixed, update, write, key, or read; default is mixed.",
     (char**) &opt_auto_generate_sql_type, (char**) &opt_auto_generate_sql_type,
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"auto-generate-sql-secondary-indexes", 
-    OPT_SLAP_AUTO_GENERATE_SECONDARY_INDEXES, 
+  {"auto-generate-sql-secondary-indexes",
+    OPT_SLAP_AUTO_GENERATE_SECONDARY_INDEXES,
     "Number of secondary indexes to add to auto-generated tables.",
-    (char**) &auto_generate_sql_secondary_indexes, 
+    (char**) &auto_generate_sql_secondary_indexes,
     (char**) &auto_generate_sql_secondary_indexes, 0,
     GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"auto-generate-sql-unique-query-number", 
+  {"auto-generate-sql-unique-query-number",
     OPT_SLAP_AUTO_GENERATE_UNIQUE_QUERY_NUM,
     "Number of unique queries to generate for automatic tests.",
-    (char**) &auto_generate_sql_unique_query_number, 
+    (char**) &auto_generate_sql_unique_query_number,
     (char**) &auto_generate_sql_unique_query_number,
     0, GET_ULL, REQUIRED_ARG, 10, 0, 0, 0, 0, 0},
-  {"auto-generate-sql-unique-write-number", 
+  {"auto-generate-sql-unique-write-number",
     OPT_SLAP_AUTO_GENERATE_UNIQUE_WRITE_NUM,
     "Number of unique queries to generate for auto-generate-sql-write-number.",
-    (char**) &auto_generate_sql_unique_write_number, 
+    (char**) &auto_generate_sql_unique_write_number,
     (char**) &auto_generate_sql_unique_write_number,
     0, GET_ULL, REQUIRED_ARG, 10, 0, 0, 0, 0, 0},
   {"auto-generate-sql-write-number", OPT_SLAP_AUTO_GENERATE_WRITE_NUM,
@@ -567,10 +567,10 @@ static struct my_option my_long_options[] =
   {"burnin", OPT_SLAP_BURNIN, "Run full test case in infinite loop.",
     (char**) &opt_burnin, (char**) &opt_burnin, 0, GET_BOOL, NO_ARG, 0, 0, 0,
     0, 0, 0},
-  {"ignore-sql-errors", OPT_SLAP_IGNORE_SQL_ERRORS, 
+  {"ignore-sql-errors", OPT_SLAP_IGNORE_SQL_ERRORS,
     "Ignore SQL erros in query run.",
-    (char**) &opt_ignore_sql_errors, 
-    (char**) &opt_ignore_sql_errors, 
+    (char**) &opt_ignore_sql_errors,
+    (char**) &opt_ignore_sql_errors,
     0, GET_BOOL, NO_ARG, 0, 0, 0,
     0, 0, 0},
   {"commit", OPT_SLAP_COMMIT, "Commit records every X number of statements.",
@@ -586,20 +586,20 @@ static struct my_option my_long_options[] =
     (char**) &create_string, (char**) &create_string, 0, GET_STR, REQUIRED_ARG,
     0, 0, 0, 0, 0, 0},
   {"create-schema", OPT_CREATE_SLAP_SCHEMA, "Schema to run tests in.",
-    (char**) &create_schema_string, (char**) &create_schema_string, 0, GET_STR, 
+    (char**) &create_schema_string, (char**) &create_schema_string, 0, GET_STR,
     REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"csv", OPT_SLAP_CSV,
-	"Generate CSV output to named file or to stdout if no file is named.",
-    (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR, 
+  "Generate CSV output to named file or to stdout if no file is named.",
+    (char**) &opt_csv_str, (char**) &opt_csv_str, 0, GET_STR,
     OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit.",
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"debug-info", 'T', "Print some debug info at exit.", (char**) &debug_info_flag,
    (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"delayed-start", OPT_SLAP_DELAYED_START, 
+  {"delayed-start", OPT_SLAP_DELAYED_START,
     "Delay the startup of threads by a random number of microsends (the maximum of the delay)",
-    (char**) &opt_delayed_start, (char**) &opt_delayed_start, 0, GET_UINT, 
+    (char**) &opt_delayed_start, (char**) &opt_delayed_start, 0, GET_UINT,
     REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"delimiter", 'F',
     "Delimiter to use in SQL statements supplied in file or command line.",
@@ -607,7 +607,7 @@ static struct my_option my_long_options[] =
     0, 0, 0, 0, 0, 0},
   {"detach", OPT_SLAP_DETACH,
     "Detach (close and reopen) connections after X number of requests.",
-    (char**) &detach_rate, (char**) &detach_rate, 0, GET_UINT, REQUIRED_ARG, 
+    (char**) &detach_rate, (char**) &detach_rate, 0, GET_UINT, REQUIRED_ARG,
     0, 0, 0, 0, 0, 0},
   {"engine", 'e', "Storage engine to use for creating the table.",
     (char**) &default_engine, (char**) &default_engine, 0,
@@ -619,60 +619,60 @@ static struct my_option my_long_options[] =
   {"label", OPT_SLAP_LABEL, "Label to use for print and csv output.",
     (char**) &opt_label, (char**) &opt_label, 0,
     GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"number-blob-cols", OPT_SLAP_BLOB_COL, 
+  {"number-blob-cols", OPT_SLAP_BLOB_COL,
     "Number of BLOB columns to create table with if specifying --auto-generate-sql. Example --number-blob-cols=3:1024/2048 would give you 3 blobs with a random size between 1024 and 2048. ",
     (char**) &num_blob_cols_opt, (char**) &num_blob_cols_opt, 0, GET_STR, REQUIRED_ARG,
     0, 0, 0, 0, 0, 0},
-  {"number-char-cols", 'x', 
+  {"number-char-cols", 'x',
     "Number of VARCHAR columns to create in table if specifying --auto-generate-sql.",
     (char**) &num_char_cols_opt, (char**) &num_char_cols_opt, 0, GET_STR, REQUIRED_ARG,
     0, 0, 0, 0, 0, 0},
-  {"number-int-cols", 'y', 
+  {"number-int-cols", 'y',
     "Number of INT columns to create in table if specifying --auto-generate-sql.",
-    (char**) &num_int_cols_opt, (char**) &num_int_cols_opt, 0, GET_STR, REQUIRED_ARG, 
+    (char**) &num_int_cols_opt, (char**) &num_int_cols_opt, 0, GET_STR, REQUIRED_ARG,
     0, 0, 0, 0, 0, 0},
-  {"number-of-queries", OPT_MYSQL_NUMBER_OF_QUERY, 
+  {"number-of-queries", OPT_DRIZZLE_NUMBER_OF_QUERY,
     "Limit each client to this number of queries (this is not exact).",
     (char**) &num_of_query, (char**) &num_of_query, 0,
     GET_ULL, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"only-print", OPT_MYSQL_ONLY_PRINT,
-    "This causes mysqlslap to not connect to the databases, but instead print "
+  {"only-print", OPT_DRIZZLE_ONLY_PRINT,
+    "This causes drizzleslap to not connect to the databases, but instead print "
       "out what it would have done instead.",
     (char**) &opt_only_print, (char**) &opt_only_print, 0, GET_BOOL,  NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"password", 'p',
     "Password to use when connecting to server. If password is not given it's "
       "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection.", (char**) &opt_mysql_port,
-    (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, MYSQL_PORT, 0, 0, 0, 0,
+  {"port", 'P', "Port number to use for connection.", (char**) &opt_drizzle_port,
+    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, MYSQL_PORT, 0, 0, 0, 0,
     0},
   {"post-query", OPT_SLAP_POST_QUERY,
     "Query to run or file containing query to execute after tests have completed.",
-    (char**) &user_supplied_post_statements, 
+    (char**) &user_supplied_post_statements,
     (char**) &user_supplied_post_statements,
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"post-system", OPT_SLAP_POST_SYSTEM,
     "system() string to execute after tests have completed.",
-    (char**) &post_system, 
+    (char**) &post_system,
     (char**) &post_system,
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"pre-query", OPT_SLAP_PRE_QUERY, 
+  {"pre-query", OPT_SLAP_PRE_QUERY,
     "Query to run or file containing query to execute before running tests.",
-    (char**) &user_supplied_pre_statements, 
+    (char**) &user_supplied_pre_statements,
     (char**) &user_supplied_pre_statements,
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"pre-system", OPT_SLAP_PRE_SYSTEM, 
+  {"pre-system", OPT_SLAP_PRE_SYSTEM,
     "system() string to execute before running tests.",
-    (char**) &pre_system, 
+    (char**) &pre_system,
     (char**) &pre_system,
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_MYSQL_PROTOCOL,
+  {"protocol", OPT_DRIZZLE_PROTOCOL,
     "The protocol of connection (tcp,socket,pipe,memory).",
     0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"query", 'q', "Query to run or file containing query to run.",
     (char**) &user_supplied_query, (char**) &user_supplied_query,
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"set-random-seed", OPT_SLAP_SET_RANDOM_SEED, 
+  {"set-random-seed", OPT_SLAP_SET_RANDOM_SEED,
     "Seed for random number generator (srandom(3))",
     (char**)&opt_set_random_seed,
     (char**)&opt_set_random_seed,0,
@@ -681,11 +681,11 @@ static struct my_option my_long_options[] =
     (char**) &opt_silent, (char**) &opt_silent, 0, GET_BOOL,  NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-    (char**) &opt_mysql_unix_port, (char**) &opt_mysql_unix_port, 0, GET_STR,
+    (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
     REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"timer-length", OPT_SLAP_TIMER_LENGTH, 
-    "Require mysqlslap to run each specific test a certain amount of time in seconds.", 
-    (char**) &opt_timer_length, (char**) &opt_timer_length, 0, GET_UINT, 
+  {"timer-length", OPT_SLAP_TIMER_LENGTH,
+    "Require drizzleslap to run each specific test a certain amount of time in seconds.",
+    (char**) &opt_timer_length, (char**) &opt_timer_length, 0, GET_UINT,
     REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &user,
@@ -693,15 +693,13 @@ static struct my_option my_long_options[] =
 #endif
   {"verbose", 'v',
     "More verbose output; you can use this multiple times to get even more "
-      "verbose output.", (char**) &verbose, (char**) &verbose, 0, 
+      "verbose output.", (char**) &verbose, (char**) &verbose, 0,
       GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
     NO_ARG, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-
-#include <help_start.h>
 
 static void print_version(void)
 {
@@ -713,7 +711,7 @@ static void print_version(void)
 static void usage(void)
 {
   print_version();
-  puts("Copyright (C) 2005 MySQL AB");
+  puts("Copyright (C) 2005 DRIZZLE AB");
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\
        \nand you are welcome to modify and redistribute it under the GPL \
        license\n");
@@ -722,8 +720,6 @@ static void usage(void)
   print_defaults("my",load_default_groups);
   my_print_help(my_long_options);
 }
-
-#include <help_end.h>
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
@@ -740,9 +736,9 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       char *start= argument;
       my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
       opt_password= my_strdup(argument,MYF(MY_FAE));
-      while (*argument) *argument++= 'x';		/* Destroy argument */
+      while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
-        start[1]= 0;				/* Cut length of argument */
+        start[1]= 0;        /* Cut length of argument */
       tty_password= 0;
     }
     else
@@ -753,7 +749,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     exit(0);
     break;
   case '?':
-  case 'I':					/* Info */
+  case 'I':          /* Info */
     usage();
     exit(0);
   }
@@ -816,7 +812,7 @@ build_table_string(void)
       if (count) /* Except for the first pass we add a comma */
         dynstr_append(&table_string, ",");
 
-      if (snprintf(buf, HUGE_STRING_LENGTH, "id%d varchar(32) unique key", count) 
+      if (snprintf(buf, HUGE_STRING_LENGTH, "id%d varchar(32) unique key", count)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in create table\n");
@@ -834,7 +830,7 @@ build_table_string(void)
     {
       if (num_int_cols_index)
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32), INDEX(intcol%d)", 
+        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32), INDEX(intcol%d)",
                      col_count, col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");
@@ -843,7 +839,7 @@ build_table_string(void)
       }
       else
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32) ", col_count) 
+        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32) ", col_count)
             > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");
@@ -861,8 +857,8 @@ build_table_string(void)
     {
       if (num_char_cols_index)
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, 
-                     "charcol%d VARCHAR(128), INDEX(charcol%d) ", 
+        if (snprintf(buf, HUGE_STRING_LENGTH,
+                     "charcol%d VARCHAR(128), INDEX(charcol%d) ",
                      col_count, col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in creating table\n");
@@ -871,7 +867,7 @@ build_table_string(void)
       }
       else
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, "charcol%d VARCHAR(128)", 
+        if (snprintf(buf, HUGE_STRING_LENGTH, "charcol%d VARCHAR(128)",
                      col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in creating table\n");
@@ -887,7 +883,7 @@ build_table_string(void)
   if (num_blob_cols)
     for (col_count= 1; col_count <= num_blob_cols; col_count++)
     {
-      if (snprintf(buf, HUGE_STRING_LENGTH, "blobcol%d blob", 
+      if (snprintf(buf, HUGE_STRING_LENGTH, "blobcol%d blob",
                    col_count) > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating table\n");
@@ -900,7 +896,7 @@ build_table_string(void)
     }
 
   dynstr_append(&table_string, ")");
-  ptr= (statement *)my_malloc(sizeof(statement), 
+  ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
   ptr->string = (char *)my_malloc(table_string.length+1,
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
@@ -933,7 +929,7 @@ build_update_string(void)
   if (num_int_cols)
     for (col_count= 1; col_count <= num_int_cols; col_count++)
     {
-      if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d = %ld", col_count, 
+      if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d = %ld", col_count,
                    random()) > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating update\n");
@@ -951,8 +947,8 @@ build_update_string(void)
       char rand_buffer[RAND_STRING_SIZE];
       int buf_len= get_random_string(rand_buffer, RAND_STRING_SIZE);
 
-      if (snprintf(buf, HUGE_STRING_LENGTH, "charcol%d = '%.*s'", col_count, 
-                   buf_len, rand_buffer) 
+      if (snprintf(buf, HUGE_STRING_LENGTH, "charcol%d = '%.*s'", col_count,
+                   buf_len, rand_buffer)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating update\n");
@@ -968,7 +964,7 @@ build_update_string(void)
     dynstr_append(&update_string, " WHERE id = ");
 
 
-  ptr= (statement *)my_malloc(sizeof(statement), 
+  ptr= (statement *)my_malloc(sizeof(statement),
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
 
   ptr->string= (char *)my_malloc(update_string.length + 1,
@@ -1086,7 +1082,7 @@ build_insert_string(void)
       unsigned int size;
       unsigned int difference= num_blob_cols_size - num_blob_cols_size_min;
 
-      size= difference ? (num_blob_cols_size_min + (random() % difference)) : 
+      size= difference ? (num_blob_cols_size_min + (random() % difference)) :
                           num_blob_cols_size;
 
       buf_len= get_random_string(blob_ptr, size);
@@ -1150,7 +1146,7 @@ build_select_string(bool key)
   {
     for (col_count= 1; col_count <= num_int_cols; col_count++)
     {
-      if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d", col_count) 
+      if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d", col_count)
           > HUGE_STRING_LENGTH)
       {
         fprintf(stderr, "Memory Allocation error in creating select\n");
@@ -1192,7 +1188,7 @@ build_select_string(bool key)
   }
   dynstr_append(&query_string, " FROM t1");
 
-  if ((key) && 
+  if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     dynstr_append(&query_string, " WHERE id = ");
 
@@ -1201,7 +1197,7 @@ build_select_string(bool key)
   ptr->string= (char *)my_malloc(query_string.length + 1,
                               MYF(MY_ZEROFILL|MY_FAE|MY_WME));
   ptr->length= query_string.length+1;
-  if ((key) && 
+  if ((key) &&
       (auto_generate_sql_autoincrement || auto_generate_sql_guid_primary))
     ptr->type= SELECT_TYPE_REQUIRES_PREFIX;
   else
@@ -1243,7 +1239,7 @@ get_options(int *argc,char ***argv)
       exit(1);
   }
 
-  if (auto_generate_sql && auto_generate_sql_guid_primary && 
+  if (auto_generate_sql && auto_generate_sql_guid_primary &&
       auto_generate_sql_autoincrement)
   {
       fprintf(stderr,
@@ -1265,7 +1261,7 @@ get_options(int *argc,char ***argv)
   if (opt_csv_str)
   {
     opt_silent= true;
-    
+   
     if (opt_csv_str[0] == '-')
     {
       csv_file= fileno(stdout);
@@ -1344,11 +1340,11 @@ get_options(int *argc,char ***argv)
       printf("Building Create Statements for Auto\n");
 
     create_statements= build_table_string();
-    /* 
-      Pre-populate table 
+    /*
+      Pre-populate table
     */
-    for (ptr_statement= create_statements, x= 0; 
-         x < auto_generate_sql_unique_write_number; 
+    for (ptr_statement= create_statements, x= 0;
+         x < auto_generate_sql_unique_write_number;
          x++, ptr_statement= ptr_statement->next)
     {
       ptr_statement->next= build_insert_string();
@@ -1360,7 +1356,7 @@ get_options(int *argc,char ***argv)
     if (!opt_auto_generate_sql_type)
       opt_auto_generate_sql_type= "mixed";
 
-    query_statements_count= 
+    query_statements_count=
       parse_option(opt_auto_generate_sql_type, &query_options, ',');
 
     query_statements= (statement **)my_malloc(sizeof(statement *) * query_statements_count,
@@ -1375,8 +1371,8 @@ get_options(int *argc,char ***argv)
           printf("Generating SELECT Statements for Auto\n");
 
         query_statements[sql_type_count]= build_select_string(false);
-        for (ptr_statement= query_statements[sql_type_count], x= 0; 
-             x < auto_generate_sql_unique_query_number; 
+        for (ptr_statement= query_statements[sql_type_count], x= 0;
+             x < auto_generate_sql_unique_query_number;
              x++, ptr_statement= ptr_statement->next)
         {
           ptr_statement->next= build_select_string(false);
@@ -1397,8 +1393,8 @@ get_options(int *argc,char ***argv)
         }
 
         query_statements[sql_type_count]= build_select_string(true);
-        for (ptr_statement= query_statements[sql_type_count], x= 0; 
-             x < auto_generate_sql_unique_query_number; 
+        for (ptr_statement= query_statements[sql_type_count], x= 0;
+             x < auto_generate_sql_unique_query_number;
              x++, ptr_statement= ptr_statement->next)
         {
           ptr_statement->next= build_select_string(true);
@@ -1407,15 +1403,15 @@ get_options(int *argc,char ***argv)
       else if (sql_type->string[0] == 'w')
       {
         /*
-          We generate a number of strings in case the engine is 
+          We generate a number of strings in case the engine is
           Archive (since strings which were identical one after another
           would be too easily optimized).
         */
         if (verbose >= 2)
           printf("Generating INSERT Statements for Auto\n");
         query_statements[sql_type_count]= build_insert_string();
-        for (ptr_statement= query_statements[sql_type_count], x= 0; 
-             x < auto_generate_sql_unique_query_number; 
+        for (ptr_statement= query_statements[sql_type_count], x= 0;
+             x < auto_generate_sql_unique_query_number;
              x++, ptr_statement= ptr_statement->next)
         {
           ptr_statement->next= build_insert_string();
@@ -1433,8 +1429,8 @@ get_options(int *argc,char ***argv)
         }
 
         query_statements[sql_type_count]= build_update_string();
-        for (ptr_statement= query_statements[sql_type_count], x= 0; 
-             x < auto_generate_sql_unique_query_number; 
+        for (ptr_statement= query_statements[sql_type_count], x= 0;
+             x < auto_generate_sql_unique_query_number;
              x++, ptr_statement= ptr_statement->next)
         {
           ptr_statement->next= build_update_string();
@@ -1445,12 +1441,12 @@ get_options(int *argc,char ***argv)
         int coin= 0;
 
         query_statements[sql_type_count]= build_insert_string();
-        /* 
+        /*
           This logic should be extended to do a more mixed load,
           at the moment it results in "every other".
         */
-        for (ptr_statement= query_statements[sql_type_count], x= 0; 
-             x < auto_generate_sql_unique_query_number; 
+        for (ptr_statement= query_statements[sql_type_count], x= 0;
+             x < auto_generate_sql_unique_query_number;
              x++, ptr_statement= ptr_statement->next)
         {
           if (coin)
@@ -1500,7 +1496,7 @@ get_options(int *argc,char ***argv)
     /* Set this up till we fully support options on user generated queries */
     if (user_supplied_query)
     {
-      query_statements_count= 
+      query_statements_count=
         parse_option("default", &query_options, ',');
 
       query_statements= (statement **)my_malloc(sizeof(statement *),
@@ -1530,7 +1526,7 @@ get_options(int *argc,char ***argv)
         actual_queries= parse_delimiter(tmp_string, &query_statements[0],
                                         delimiter[0]);
       my_free(tmp_string, MYF(0));
-    } 
+    }
     else if (user_supplied_query)
     {
       actual_queries= parse_delimiter(user_supplied_query, &query_statements[0],
@@ -1562,7 +1558,7 @@ get_options(int *argc,char ***argv)
       (void)parse_delimiter(tmp_string, &pre_statements,
                             delimiter[0]);
     my_free(tmp_string, MYF(0));
-  } 
+  }
   else if (user_supplied_pre_statements)
   {
     (void)parse_delimiter(user_supplied_pre_statements,
@@ -1594,7 +1590,7 @@ get_options(int *argc,char ***argv)
       (void)parse_delimiter(tmp_string, &post_statements,
                             delimiter[0]);
     my_free(tmp_string, MYF(0));
-  } 
+  }
   else if (user_supplied_post_statements)
   {
     (void)parse_delimiter(user_supplied_post_statements, &post_statements,
@@ -1613,7 +1609,7 @@ get_options(int *argc,char ***argv)
 }
 
 
-static int run_query(MYSQL *mysql, const char *query, int len)
+static int run_query(DRIZZLE *drizzle, const char *query, int len)
 {
   if (opt_only_print)
   {
@@ -1623,43 +1619,43 @@ static int run_query(MYSQL *mysql, const char *query, int len)
 
   if (verbose >= 3)
     printf("%.*s;\n", len, query);
-  return mysql_real_query(mysql, query, len);
+  return drizzle_real_query(drizzle, query, len);
 }
 
 
 static int
-generate_primary_key_list(MYSQL *mysql, option_string *engine_stmt)
+generate_primary_key_list(DRIZZLE *drizzle, option_string *engine_stmt)
 {
-  MYSQL_RES *result;
-  MYSQL_ROW row;
+  DRIZZLE_RES *result;
+  DRIZZLE_ROW row;
   unsigned long long counter;
 
 
-  /* 
-    Blackhole is a special case, this allows us to test the upper end 
+  /*
+    Blackhole is a special case, this allows us to test the upper end
     of the server during load runs.
   */
-  if (opt_only_print || (engine_stmt && 
+  if (opt_only_print || (engine_stmt &&
                          strstr(engine_stmt->string, "blackhole")))
   {
     primary_keys_number_of= 1;
-    primary_keys= (char **)my_malloc((uint)(sizeof(char *) * 
-                                            primary_keys_number_of), 
+    primary_keys= (char **)my_malloc((uint)(sizeof(char *) *
+                                            primary_keys_number_of),
                                     MYF(MY_ZEROFILL|MY_FAE|MY_WME));
     /* Yes, we strdup a const string to simplify the interface */
-    primary_keys[0]= my_strdup("796c4422-1d94-102a-9d6d-00e0812d", MYF(0)); 
+    primary_keys[0]= my_strdup("796c4422-1d94-102a-9d6d-00e0812d", MYF(0));
   }
   else
   {
-    if (run_query(mysql, "SELECT id from t1", strlen("SELECT id from t1")))
+    if (run_query(drizzle, "SELECT id from t1", strlen("SELECT id from t1")))
     {
       fprintf(stderr,"%s: Cannot select GUID primary keys. (%s)\n", my_progname,
-              mysql_error(mysql));
+              drizzle_error(drizzle));
       exit(1);
     }
 
-    result= mysql_store_result(mysql);
-    primary_keys_number_of= mysql_num_rows(result);
+    result= drizzle_store_result(drizzle);
+    primary_keys_number_of= drizzle_num_rows(result);
 
     /* So why check this? Blackhole :) */
     if (primary_keys_number_of)
@@ -1667,16 +1663,16 @@ generate_primary_key_list(MYSQL *mysql, option_string *engine_stmt)
       /*
         We create the structure and loop and create the items.
       */
-      primary_keys= (char **)my_malloc((uint)(sizeof(char *) * 
-                                              primary_keys_number_of), 
+      primary_keys= (char **)my_malloc((uint)(sizeof(char *) *
+                                              primary_keys_number_of),
                                        MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-      row= mysql_fetch_row(result);
-      for (counter= 0; counter < primary_keys_number_of; 
-           counter++, row= mysql_fetch_row(result))
+      row= drizzle_fetch_row(result);
+      for (counter= 0; counter < primary_keys_number_of;
+           counter++, row= drizzle_fetch_row(result))
         primary_keys[counter]= my_strdup(row[0], MYF(0));
     }
 
-    mysql_free_result(result);
+    drizzle_free_result(result);
   }
 
   return(0);
@@ -1699,7 +1695,7 @@ drop_primary_key_list(void)
 }
 
 static int
-create_schema(MYSQL *mysql, const char *db, statement *stmt, 
+create_schema(DRIZZLE *drizzle, const char *db, statement *stmt,
               option_string *engine_stmt, stats *sptr)
 {
   char query[HUGE_STRING_LENGTH];
@@ -1717,10 +1713,10 @@ create_schema(MYSQL *mysql, const char *db, statement *stmt,
   if (verbose >= 2)
     printf("Loading Pre-data\n");
 
-  if (run_query(mysql, query, len))
+  if (run_query(drizzle, query, len))
   {
     fprintf(stderr,"%s: Cannot create schema %s : %s\n", my_progname, db,
-            mysql_error(mysql));
+            drizzle_error(drizzle));
     exit(1);
   }
   else
@@ -1737,10 +1733,10 @@ create_schema(MYSQL *mysql, const char *db, statement *stmt,
     if (verbose >= 3)
       printf("%s;\n", query);
 
-    if (mysql_select_db(mysql,  db))
+    if (drizzle_select_db(drizzle,  db))
     {
       fprintf(stderr,"%s: Cannot select schema '%s': %s\n",my_progname, db,
-              mysql_error(mysql));
+              drizzle_error(drizzle));
       exit(1);
     }
     sptr->create_count++;
@@ -1750,10 +1746,10 @@ create_schema(MYSQL *mysql, const char *db, statement *stmt,
   {
     len= snprintf(query, HUGE_STRING_LENGTH, "set storage_engine=`%s`",
                   engine_stmt->string);
-    if (run_query(mysql, query, len))
+    if (run_query(drizzle, query, len))
     {
       fprintf(stderr,"%s: Cannot set default engine: %s\n", my_progname,
-              mysql_error(mysql));
+              drizzle_error(drizzle));
       exit(1);
     }
     sptr->create_count++;
@@ -1772,12 +1768,12 @@ limit_not_met:
     {
       char buffer[HUGE_STRING_LENGTH];
 
-      snprintf(buffer, HUGE_STRING_LENGTH, "%s %s", ptr->string, 
+      snprintf(buffer, HUGE_STRING_LENGTH, "%s %s", ptr->string,
                engine_stmt->option);
-      if (run_query(mysql, buffer, strlen(buffer)))
+      if (run_query(drizzle, buffer, strlen(buffer)))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint)ptr->length, ptr->string, mysql_error(mysql));
+                my_progname, (uint)ptr->length, ptr->string, drizzle_error(drizzle));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -1785,10 +1781,10 @@ limit_not_met:
     }
     else
     {
-      if (run_query(mysql, ptr->string, ptr->length))
+      if (run_query(drizzle, ptr->string, ptr->length))
       {
         fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                my_progname, (uint)ptr->length, ptr->string, mysql_error(mysql));
+                my_progname, (uint)ptr->length, ptr->string, drizzle_error(drizzle));
         if (!opt_ignore_sql_errors)
           exit(1);
       }
@@ -1811,17 +1807,17 @@ limit_not_met:
 }
 
 static int
-drop_schema(MYSQL *mysql, const char *db)
+drop_schema(DRIZZLE *drizzle, const char *db)
 {
   char query[HUGE_STRING_LENGTH];
   int len;
 
   len= snprintf(query, HUGE_STRING_LENGTH, "DROP SCHEMA IF EXISTS `%s`", db);
 
-  if (run_query(mysql, query, len))
+  if (run_query(drizzle, query, len))
   {
     fprintf(stderr,"%s: Cannot drop database '%s' ERROR : %s\n",
-            my_progname, db, mysql_error(mysql));
+            my_progname, db, drizzle_error(drizzle));
     exit(1);
   }
 
@@ -1831,26 +1827,26 @@ drop_schema(MYSQL *mysql, const char *db)
 }
 
 static int
-run_statements(MYSQL *mysql, statement *stmt) 
+run_statements(DRIZZLE *drizzle, statement *stmt)
 {
   statement *ptr;
-  MYSQL_RES *result;
+  DRIZZLE_RES *result;
 
 
   for (ptr= stmt; ptr && ptr->length; ptr= ptr->next)
   {
-    if (run_query(mysql, ptr->string, ptr->length))
+    if (run_query(drizzle, ptr->string, ptr->length))
     {
       fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-              my_progname, (uint)ptr->length, ptr->string, mysql_error(mysql));
+              my_progname, (uint)ptr->length, ptr->string, drizzle_error(drizzle));
       exit(1);
     }
     if (!opt_only_print)
     {
-      if (mysql_field_count(mysql))
+      if (drizzle_field_count(drizzle))
       {
-        result= mysql_store_result(mysql);
-        mysql_free_result(result);
+        result= drizzle_store_result(drizzle);
+        drizzle_free_result(result);
       }
     }
   }
@@ -1873,7 +1869,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
 
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr,
-		  PTHREAD_CREATE_DETACHED);
+      PTHREAD_CREATE_DETACHED);
 
   pthread_mutex_lock(&counter_mutex);
   thread_counter= 0;
@@ -1884,15 +1880,15 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
 
   real_concurrency= 0;
 
-  for (y= 0, sql_type= query_options; 
-       y < query_statements_count; 
+  for (y= 0, sql_type= query_options;
+       y < query_statements_count;
        y++, sql_type= sql_type->next)
   {
     unsigned int options_loop= 1;
 
     if (sql_type->option)
     {
-      options_loop= strtol(sql_type->option, 
+      options_loop= strtol(sql_type->option,
                            (char **)NULL, 10);
       options_loop= options_loop ? options_loop : 1;
     }
@@ -1906,7 +1902,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
 
         real_concurrency++;
         /* now you create the thread */
-        if (pthread_create(&mainthread, &attr, run_task, 
+        if (pthread_create(&mainthread, &attr, run_task,
                            (void *)con) != 0)
         {
           fprintf(stderr,"%s: Could not create thread\n", my_progname);
@@ -1916,8 +1912,8 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
       }
   }
 
-  /* 
-    The timer_thread belongs to all threads so it too obeys the wakeup 
+  /*
+    The timer_thread belongs to all threads so it too obeys the wakeup
     call that run tasks obey.
   */
   if (opt_timer_length)
@@ -1926,7 +1922,7 @@ run_scheduler(stats *sptr, statement **stmts, uint concur, uint64_t limit)
     timer_alarm= true;
     pthread_mutex_unlock(&timer_alarm_mutex);
 
-    if (pthread_create(&mainthread, &attr, timer_thread, 
+    if (pthread_create(&mainthread, &attr, timer_thread,
                        (void *)&opt_timer_length) != 0)
     {
       fprintf(stderr,"%s: Could not create timer thread\n", my_progname);
@@ -1976,15 +1972,15 @@ pthread_handler_t timer_thread(void *p)
 
 
 
-  if (mysql_thread_init())
+  if (drizzle_thread_init())
   {
-    fprintf(stderr,"%s: mysql_thread_init() failed.\n",
+    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
             my_progname);
     exit(1);
   }
 
-  /* 
-    We lock around the initial call in case were we in a loop. This 
+  /*
+    We lock around the initial call in case were we in a loop. This
     also keeps the value properly syncronized across call threads.
   */
   pthread_mutex_lock(&sleeper_mutex);
@@ -2004,7 +2000,7 @@ pthread_handler_t timer_thread(void *p)
   timer_alarm= false;
   pthread_mutex_unlock(&timer_alarm_mutex);
 
-  mysql_thread_end();
+  drizzle_thread_end();
   return(0);
 }
 
@@ -2013,15 +2009,15 @@ pthread_handler_t run_task(void *p)
   uint64_t counter= 0, queries;
   uint64_t detach_counter;
   unsigned int commit_counter;
-  MYSQL mysql;
-  MYSQL_RES *result;
-  MYSQL_ROW row;
+  DRIZZLE drizzle;
+  DRIZZLE_RES *result;
+  DRIZZLE_ROW row;
   statement *ptr;
   thread_context *con= (thread_context *)p;
 
-  if (mysql_thread_init())
+  if (drizzle_thread_init())
   {
-    fprintf(stderr,"%s: mysql_thread_init() failed.\n",
+    fprintf(stderr,"%s: drizzle_thread_init() failed.\n",
             my_progname);
     exit(1);
   }
@@ -2033,7 +2029,7 @@ pthread_handler_t run_task(void *p)
   }
   pthread_mutex_unlock(&sleeper_mutex);
 
-  slap_connect(&mysql, true);
+  slap_connect(&drizzle, true);
 
   if (verbose >= 3)
     printf("connected!\n");
@@ -2041,20 +2037,20 @@ pthread_handler_t run_task(void *p)
 
   commit_counter= 0;
   if (commit_rate)
-    run_query(&mysql, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
+    run_query(&drizzle, "SET AUTOCOMMIT=0", strlen("SET AUTOCOMMIT=0"));
 
 limit_not_met:
-    for (ptr= con->stmt, detach_counter= 0; 
-         ptr && ptr->length; 
+    for (ptr= con->stmt, detach_counter= 0;
+         ptr && ptr->length;
          ptr= ptr->next, detach_counter++)
     {
       if (!opt_only_print && detach_rate && !(detach_counter % detach_rate))
       {
-        slap_close(&mysql);
-        slap_connect(&mysql, true);
+        slap_close(&drizzle);
+        slap_connect(&drizzle, true);
       }
 
-      /* 
+      /*
         We have to execute differently based on query type. This should become a function.
       */
       if ((ptr->type == UPDATE_TYPE_REQUIRES_PREFIX) ||
@@ -2065,7 +2061,7 @@ limit_not_met:
         char *key;
         char buffer[HUGE_STRING_LENGTH];
 
-        /* 
+        /*
           This should only happen if some sort of new engine was
           implemented that didn't properly handle UPDATEs.
 
@@ -2080,23 +2076,23 @@ limit_not_met:
 
           assert(key);
 
-          length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'", 
+          length= snprintf(buffer, HUGE_STRING_LENGTH, "%.*s '%s'",
                            (int)ptr->length, ptr->string, key);
 
-          if (run_query(&mysql, buffer, length))
+          if (run_query(&drizzle, buffer, length))
           {
             fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                    my_progname, (uint)length, buffer, mysql_error(&mysql));
+                    my_progname, (uint)length, buffer, drizzle_error(&drizzle));
             exit(1);
           }
         }
       }
       else
       {
-        if (run_query(&mysql, ptr->string, ptr->length))
+        if (run_query(&drizzle, ptr->string, ptr->length))
         {
           fprintf(stderr,"%s: Cannot run query %.*s ERROR : %s\n",
-                  my_progname, (uint)ptr->length, ptr->string, mysql_error(&mysql));
+                  my_progname, (uint)ptr->length, ptr->string, drizzle_error(&drizzle));
           exit(1);
         }
       }
@@ -2105,21 +2101,21 @@ limit_not_met:
       {
         do
         {
-          if (mysql_field_count(&mysql))
+          if (drizzle_field_count(&drizzle))
           {
-            result= mysql_store_result(&mysql);
-            while ((row = mysql_fetch_row(result)))
+            result= drizzle_store_result(&drizzle);
+            while ((row = drizzle_fetch_row(result)))
               counter++;
-            mysql_free_result(result);
+            drizzle_free_result(result);
           }
-        } while(mysql_next_result(&mysql) == 0);
+        } while(drizzle_next_result(&drizzle) == 0);
       }
       queries++;
 
       if (commit_rate && (++commit_counter == commit_rate))
       {
         commit_counter= 0;
-        run_query(&mysql, "COMMIT", strlen("COMMIT"));
+        run_query(&drizzle, "COMMIT", strlen("COMMIT"));
       }
 
       /* If the timer is set, and the alarm is not active then end */
@@ -2140,9 +2136,9 @@ limit_not_met:
 
 end:
   if (commit_rate)
-    run_query(&mysql, "COMMIT", strlen("COMMIT"));
+    run_query(&drizzle, "COMMIT", strlen("COMMIT"));
 
-  slap_close(&mysql);
+  slap_close(&drizzle);
 
   pthread_mutex_lock(&counter_mutex);
   thread_counter--;
@@ -2151,7 +2147,7 @@ end:
 
   my_free(con, MYF(0));
 
-  mysql_thread_end();
+  drizzle_thread_end();
   return(0);
 }
 
@@ -2184,7 +2180,7 @@ parse_option(const char *origin, option_string **stmt, char delm)
 
     bzero(buffer, HUGE_STRING_LENGTH);
 
-    string= strchr(begin_ptr, delm); 
+    string= strchr(begin_ptr, delm);
 
     if (string)
     {
@@ -2243,7 +2239,7 @@ parse_delimiter(const char *script, statement **stmt, char delm)
 
   for (tmp= *sptr= (statement *)my_malloc(sizeof(statement),
                                           MYF(MY_ZEROFILL|MY_FAE|MY_WME));
-       (retstr= strchr(ptr, delm)); 
+       (retstr= strchr(ptr, delm));
        tmp->next=  (statement *)my_malloc(sizeof(statement),
                                           MYF(MY_ZEROFILL|MY_FAE|MY_WME)),
        tmp= tmp->next)
@@ -2258,7 +2254,7 @@ parse_delimiter(const char *script, statement **stmt, char delm)
 
   if (ptr != script+length)
   {
-    tmp->string= my_strndup(ptr, (uint)((script + length) - ptr), 
+    tmp->string= my_strndup(ptr, (uint)((script + length) - ptr),
                                        MYF(MY_FAE));
     tmp->length= (size_t)((script + length) - ptr);
     count++;
@@ -2283,9 +2279,9 @@ parse_comma(const char *string, uint **range)
 
   for (;*ptr; ptr++)
     if (*ptr == ',') count++;
-  
+ 
   /* One extra spot for the NULL */
-  nptr= *range= (uint *)my_malloc(sizeof(uint) * (count + 1), 
+  nptr= *range= (uint *)my_malloc(sizeof(uint) * (count + 1),
                                   MYF(MY_ZEROFILL|MY_FAE|MY_WME));
 
   ptr= (char *)string;
@@ -2319,14 +2315,14 @@ print_conclusions(conclusions *con)
          con->min_timing / 1000, con->min_timing % 1000);
   printf("\tMaximum number of seconds to run all queries: %ld.%03ld seconds\n",
          con->max_timing / 1000, con->max_timing % 1000);
-  printf("\tTotal time for tests: %ld.%03ld seconds\n", 
+  printf("\tTotal time for tests: %ld.%03ld seconds\n",
          con->sum_of_time / 1000, con->sum_of_time % 1000);
   printf("\tStandard Deviation: %ld.%03ld\n", con->std_dev / 1000, con->std_dev % 1000);
   printf("\tNumber of queries in create queries: %llu\n", con->create_count);
-  printf("\tNumber of clients running queries: %u/%u\n", 
+  printf("\tNumber of clients running queries: %u/%u\n",
          con->users, con->real_users);
   printf("\tNumber of times test was run: %u\n", iterations);
-  printf("\tAverage number of queries per client: %llu\n", con->avg_rows); 
+  printf("\tAverage number of queries per client: %llu\n", con->avg_rows);
   printf("\n");
 }
 
@@ -2351,7 +2347,7 @@ print_conclusions_csv(conclusions *con)
       else
         label_buffer[x]= opt_label[x] ;
     }
-  } 
+  }
   else if (opt_auto_generate_sql_type)
   {
     string_len= strlen(opt_auto_generate_sql_type);
@@ -2367,7 +2363,7 @@ print_conclusions_csv(conclusions *con)
   else
     snprintf(label_buffer, HUGE_STRING_LENGTH, "query");
 
-  snprintf(buffer, HUGE_STRING_LENGTH, 
+  snprintf(buffer, HUGE_STRING_LENGTH,
            "%s,%s,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%ld.%03ld,%u,%u,%u,%llu\n",
            con->engine ? con->engine : "", /* Storage engine we ran against */
            label_buffer, /* Load type */
@@ -2390,16 +2386,16 @@ generate_stats(conclusions *con, option_string *eng, stats *sptr)
   stats *ptr;
   unsigned int x;
 
-  con->min_timing= sptr->timing; 
+  con->min_timing= sptr->timing;
   con->max_timing= sptr->timing;
   con->min_rows= sptr->rows;
   con->max_rows= sptr->rows;
-  
+ 
   /* At the moment we assume uniform */
   con->users= sptr->users;
   con->real_users= sptr->real_users;
   con->avg_rows= sptr->rows;
-  
+ 
   /* With no next, we know it is the last element that was malloced */
   for (ptr= sptr, x= 0; x < iterations; ptr++, x++)
   {
@@ -2421,12 +2417,12 @@ generate_stats(conclusions *con, option_string *eng, stats *sptr)
   standard_deviation(con, sptr);
 
   /* Now we do the create time operations */
-  con->create_min_timing= sptr->create_timing; 
+  con->create_min_timing= sptr->create_timing;
   con->create_max_timing= sptr->create_timing;
-  
+ 
   /* At the moment we assume uniform */
   con->create_count= sptr->create_count;
-  
+ 
   /* With no next, we know it is the last element that was malloced */
   for (ptr= sptr, x= 0; x < iterations; ptr++, x++)
   {
@@ -2451,9 +2447,9 @@ option_cleanup(option_string *stmt)
   {
     nptr= ptr->next;
     if (ptr->string)
-      my_free(ptr->string, MYF(0)); 
+      my_free(ptr->string, MYF(0));
     if (ptr->option)
-      my_free(ptr->option, MYF(0)); 
+      my_free(ptr->option, MYF(0));
     my_free(ptr, MYF(0));
   }
 }
@@ -2469,49 +2465,49 @@ statement_cleanup(statement *stmt)
   {
     nptr= ptr->next;
     if (ptr->string)
-      my_free(ptr->string, MYF(0)); 
+      my_free(ptr->string, MYF(0));
     my_free(ptr, MYF(0));
   }
 }
 
-void 
-slap_close(MYSQL *mysql)
+void
+slap_close(DRIZZLE *drizzle)
 {
-  if (opt_only_print) 
+  if (opt_only_print)
     return;
 
-  mysql_close(mysql);
+  drizzle_close(drizzle);
 }
 
-void 
-slap_connect(MYSQL *mysql, bool connect_to_schema)
+void
+slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
 {
   /* Connect to server */
   static ulong connection_retry_sleep= 100000; /* Microseconds */
   int x, connect_error= 1;
 
-  if (opt_only_print) 
+  if (opt_only_print)
     return;
 
   if (opt_delayed_start)
     my_sleep(random()%opt_delayed_start);
 
-  mysql_init(mysql);
+  drizzle_create(drizzle);
 
   if (opt_compress)
-    mysql_options(mysql,MYSQL_OPT_COMPRESS,NullS);
+    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   /* We always do opt_protocol to TCP/IP */
-  mysql_options(mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-  mysql_options(mysql, MYSQL_SET_CHARSET_NAME, default_charset);
+  drizzle_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  drizzle_options(drizzle, DRIZZLE_SET_CHARSET_NAME, default_charset);
 
   for (x= 0; x < 10; x++)
   {
 
 
-    if (mysql_real_connect(mysql, host, user, opt_password,
+    if (drizzle_connect(drizzle, host, user, opt_password,
                            connect_to_schema ? create_schema_string : NULL,
-                           opt_mysql_port,
-                           opt_mysql_unix_port,
+                           opt_drizzle_port,
+                           opt_drizzle_unix_port,
                            connect_flags))
     {
       /* Connect suceeded */
@@ -2523,14 +2519,14 @@ slap_connect(MYSQL *mysql, bool connect_to_schema)
   if (connect_error)
   {
     fprintf(stderr,"%s: Error when connecting to server: %d %s\n",
-            my_progname, mysql_errno(mysql), mysql_error(mysql));
+            my_progname, drizzle_errno(drizzle), drizzle_error(drizzle));
     exit(1);
   }
 
   return;
 }
 
-void 
+void
 standard_deviation (conclusions *con, stats *sptr)
 {
   unsigned int x;

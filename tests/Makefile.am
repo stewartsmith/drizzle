@@ -29,8 +29,6 @@ test_SCRIPTS = 		$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
 
-AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
-			-I${top_srcdir}/sql
 LDADD=			$(top_builddir)/mysys/libmysyslt.la \
                         $(top_builddir)/strings/libmystringslt.la 
 

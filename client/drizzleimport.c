@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2006 MySQL AB
+/* Copyright (C) 2008 Drizzle Open Source Development Team
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,15 +14,15 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
-**	   mysqlimport.c  - Imports all given files
-**			    into a table(s).
+**     drizzleimport.c  - Imports all given files
+**          into a table(s).
 **
-**			   *************************
-**			   *			   *
-**			   * AUTHOR: Monty & Jani  *
-**			   * DATE:   June 24, 1997 *
-**			   *			   *
-**			   *************************
+**         *************************
+**         *         *
+**         * AUTHOR: Monty & Jani  *
+**         * DATE:   June 24, 1997 *
+**         *         *
+**         *************************
 */
 #define IMPORT_VERSION "3.7"
 
@@ -36,24 +36,24 @@ uint counter;
 pthread_mutex_t counter_mutex;
 pthread_cond_t count_threshhold;
 
-static void db_error_with_table(MYSQL *mysql, char *table);
-static void db_error(MYSQL *mysql);
+static void db_error_with_table(DRIZZLE *drizzle, char *table);
+static void db_error(DRIZZLE *drizzle);
 static char *field_escape(char *to,const char *from,uint length);
 static char *add_load_option(char *ptr,const char *object,
-			     const char *statement);
+           const char *statement);
 
-static bool	verbose=0,lock_tables=0,ignore_errors=0,opt_delete=0,
-		replace=0,silent=0,ignore=0,opt_compress=0,
+static bool  verbose=0,lock_tables=0,ignore_errors=0,opt_delete=0,
+    replace=0,silent=0,ignore=0,opt_compress=0,
                 opt_low_priority= 0, tty_password= 0;
 static bool debug_info_flag= 0, debug_check_flag= 0;
 static uint opt_use_threads=0, opt_local_file=0, my_end_arg= 0;
-static char	*opt_password=0, *current_user=0,
-		*current_host=0, *current_db=0, *fields_terminated=0,
-		*lines_terminated=0, *enclosed=0, *opt_enclosed=0,
-		*escaped=0, *opt_columns=0, 
-		*default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
-static uint     opt_mysql_port= 0, opt_protocol= 0;
-static char * opt_mysql_unix_port=0;
+static char  *opt_password=0, *current_user=0,
+    *current_host=0, *current_db=0, *fields_terminated=0,
+    *lines_terminated=0, *enclosed=0, *opt_enclosed=0,
+    *escaped=0, *opt_columns=0,
+    *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+static uint     opt_drizzle_port= 0, opt_protocol= 0;
+static char * opt_drizzle_unix_port=0;
 static int64_t opt_ignore_lines= -1;
 static CHARSET_INFO *charset_info= &my_charset_latin1;
 
@@ -112,7 +112,7 @@ static struct my_option my_long_options[] =
   {"local", 'L', "Read all files through the client.", (char**) &opt_local_file,
    (char**) &opt_local_file, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"lock-tables", 'l', "Lock all tables for write (this disables threads).",
-    (char**) &lock_tables, (char**) &lock_tables, 0, GET_BOOL, NO_ARG, 
+    (char**) &lock_tables, (char**) &lock_tables, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"low-priority", OPT_LOW_PRIORITY,
    "Use LOW_PRIORITY when updating the table.", (char**) &opt_low_priority,
@@ -126,22 +126,22 @@ static struct my_option my_long_options[] =
    "/etc/services, "
 #endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
-   (char**) &opt_mysql_port,
-   (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
+   (char**) &opt_drizzle_port,
+   (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
    0},
-  {"protocol", OPT_MYSQL_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
+  {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replace", 'r', "If duplicate unique key was found, replace old row.",
    (char**) &replace, (char**) &replace, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Be more silent.", (char**) &silent, (char**) &silent, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
-   (char**) &opt_mysql_unix_port, (char**) &opt_mysql_unix_port, 0, GET_STR,
+   (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"use-threads", OPT_USE_THREADS,
    "Load files in parallel. The argument is the number "
    "of threads to use for loading data.",
-   (char**) &opt_use_threads, (char**) &opt_use_threads, 0, 
+   (char**) &opt_use_threads, (char**) &opt_use_threads, 0,
    GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
   {"user", 'u', "User for login if not current user.", (char**) &current_user,
@@ -155,26 +155,24 @@ static struct my_option my_long_options[] =
 };
 
 
-static const char *load_default_groups[]= { "mysqlimport","client",0 };
-
-#include <help_start.h>
+static const char *load_default_groups[]= { "drizzleimport","client",0 };
 
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n" ,my_progname,
-	  IMPORT_VERSION, MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+    IMPORT_VERSION, MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 
 static void usage(void)
 {
   print_version();
-  puts("Copyright (C) 2000-2006 MySQL AB");
+  puts("Copyright (C) 2008 Drizzle Open Source Development Team");
   puts("This software comes with ABSOLUTELY NO WARRANTY. This is free software,\nand you are welcome to modify and redistribute it under the GPL license\n");
   printf("\
 Loads tables from text files in various formats.  The base name of the\n\
 text file must be the name of the table that should be used.\n\
-If one uses sockets to connect to the MySQL server, the server will open and\n\
+If one uses sockets to connect to the Drizzle server, the server will open and\n\
 read the text file directly. In other cases the client will open the text\n\
 file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
 
@@ -184,11 +182,9 @@ file. The SQL command 'LOAD DATA INFILE' is used to import the rows.\n");
   my_print_variables(my_long_options);
 }
 
-#include <help_end.h>
-
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+         char *argument)
 {
   switch(optid) {
   case 'p':
@@ -197,15 +193,15 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       char *start=argument;
       my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
       opt_password=my_strdup(argument,MYF(MY_FAE));
-      while (*argument) *argument++= 'x';		/* Destroy argument */
+      while (*argument) *argument++= 'x';    /* Destroy argument */
       if (*start)
-	start[1]=0;				/* Cut length of argument */
+  start[1]=0;        /* Cut length of argument */
       tty_password= 0;
     }
     else
       tty_password= 1;
     break;
-  case OPT_MYSQL_PROTOCOL:
+  case OPT_DRIZZLE_PROTOCOL:
     opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
                                     opt->name);
     break;
@@ -242,7 +238,7 @@ static int get_options(int *argc, char ***argv)
   }
   if (strcmp(default_charset, charset_info->csname) &&
       !(charset_info= get_charset_by_csname(default_charset,
-  					    MY_CS_PRIMARY, MYF(MY_WME))))
+                MY_CS_PRIMARY, MYF(MY_WME))))
     exit(1);
   if (*argc < 2)
   {
@@ -258,7 +254,7 @@ static int get_options(int *argc, char ***argv)
 
 
 
-static int write_to_table(char *filename, MYSQL *mysql)
+static int write_to_table(char *filename, DRIZZLE *drizzle)
 {
   char tablename[FN_REFLEN], hard_path[FN_REFLEN],
        sql_statement[FN_REFLEN*16+256], *end;
@@ -278,9 +274,9 @@ static int write_to_table(char *filename, MYSQL *mysql)
 #else
     sprintf(sql_statement, "DELETE FROM %s", tablename);
 #endif
-    if (mysql_query(mysql, sql_statement))
+    if (drizzle_query(drizzle, sql_statement))
     {
-      db_error_with_table(mysql, tablename);
+      db_error_with_table(drizzle, tablename);
       return(1);
     }
   }
@@ -289,14 +285,14 @@ static int write_to_table(char *filename, MYSQL *mysql)
   {
     if (opt_local_file)
       fprintf(stdout, "Loading data from LOCAL file: %s into %s\n",
-	      hard_path, tablename);
+        hard_path, tablename);
     else
       fprintf(stdout, "Loading data from SERVER file: %s into %s\n",
-	      hard_path, tablename);
+        hard_path, tablename);
   }
   sprintf(sql_statement, "LOAD DATA %s %s INFILE '%s'",
-	  opt_low_priority ? "LOW_PRIORITY" : "",
-	  opt_local_file ? "LOCAL" : "", hard_path);
+    opt_low_priority ? "LOW_PRIORITY" : "",
+    opt_local_file ? "LOCAL" : "", hard_path);
   end= strend(sql_statement);
   if (replace)
     end= strmov(end, " REPLACE");
@@ -309,27 +305,27 @@ static int write_to_table(char *filename, MYSQL *mysql)
   end= add_load_option(end, fields_terminated, " TERMINATED BY");
   end= add_load_option(end, enclosed, " ENCLOSED BY");
   end= add_load_option(end, opt_enclosed,
-		       " OPTIONALLY ENCLOSED BY");
+           " OPTIONALLY ENCLOSED BY");
   end= add_load_option(end, escaped, " ESCAPED BY");
   end= add_load_option(end, lines_terminated, " LINES TERMINATED BY");
   if (opt_ignore_lines >= 0)
-    end= strmov(int64_t10_to_str(opt_ignore_lines, 
-				  strmov(end, " IGNORE "),10), " LINES");
+    end= strmov(int64_t10_to_str(opt_ignore_lines,
+          strmov(end, " IGNORE "),10), " LINES");
   if (opt_columns)
     end= strmov(strmov(strmov(end, " ("), opt_columns), ")");
   *end= '\0';
 
-  if (mysql_query(mysql, sql_statement))
+  if (drizzle_query(drizzle, sql_statement))
   {
-    db_error_with_table(mysql, tablename);
+    db_error_with_table(drizzle, tablename);
     return(1);
   }
   if (!silent)
   {
-    if (mysql_info(mysql)) /* If NULL-pointer, print nothing */
+    if (drizzle_info(drizzle)) /* If NULL-pointer, print nothing */
     {
       fprintf(stdout, "%s.%s: %s\n", current_db, tablename,
-	      mysql_info(mysql));
+        drizzle_info(drizzle));
     }
   }
   return(0);
@@ -337,7 +333,7 @@ static int write_to_table(char *filename, MYSQL *mysql)
 
 
 
-static void lock_table(MYSQL *mysql, int tablecount, char **raw_tablename)
+static void lock_table(DRIZZLE *drizzle, int tablecount, char **raw_tablename)
 {
   DYNAMIC_STRING query;
   int i;
@@ -352,86 +348,86 @@ static void lock_table(MYSQL *mysql, int tablecount, char **raw_tablename)
     dynstr_append(&query, tablename);
     dynstr_append(&query, " WRITE,");
   }
-  if (mysql_real_query(mysql, query.str, query.length-1))
-    db_error(mysql); /* We shall countinue here, if --force was given */
+  if (drizzle_real_query(drizzle, query.str, query.length-1))
+    db_error(drizzle); /* We shall countinue here, if --force was given */
 }
 
 
 
 
-static MYSQL *db_connect(char *host, char *database,
+static DRIZZLE *db_connect(char *host, char *database,
                          char *user, char *passwd)
 {
-  MYSQL *mysql;
+  DRIZZLE *drizzle;
   if (verbose)
     fprintf(stdout, "Connecting to %s\n", host ? host : "localhost");
-  if (!(mysql= mysql_init(NULL)))
+  if (!(drizzle= drizzle_create(NULL)))
     return 0;
   if (opt_compress)
-    mysql_options(mysql,MYSQL_OPT_COMPRESS,NullS);
+    drizzle_options(drizzle,DRIZZLE_OPT_COMPRESS,NullS);
   if (opt_local_file)
-    mysql_options(mysql,MYSQL_OPT_LOCAL_INFILE,
-		  (char*) &opt_local_file);
+    drizzle_options(drizzle,DRIZZLE_OPT_LOCAL_INFILE,
+      (char*) &opt_local_file);
   if (opt_protocol)
-    mysql_options(mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
-  if (!(mysql_real_connect(mysql,host,user,passwd,
-                           database,opt_mysql_port,opt_mysql_unix_port,
+    drizzle_options(drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  if (!(drizzle_connect(drizzle,host,user,passwd,
+                           database,opt_drizzle_port,opt_drizzle_unix_port,
                            0)))
   {
-    ignore_errors=0;	  /* NO RETURN FROM db_error */
-    db_error(mysql);
+    ignore_errors=0;    /* NO RETURN FROM db_error */
+    db_error(drizzle);
   }
-  mysql->reconnect= 0;
+  drizzle->reconnect= 0;
   if (verbose)
     fprintf(stdout, "Selecting database %s\n", database);
-  if (mysql_select_db(mysql, database))
+  if (drizzle_select_db(drizzle, database))
   {
     ignore_errors=0;
-    db_error(mysql);
+    db_error(drizzle);
   }
-  return mysql;
+  return drizzle;
 }
 
 
 
-static void db_disconnect(char *host, MYSQL *mysql)
+static void db_disconnect(char *host, DRIZZLE *drizzle)
 {
   if (verbose)
     fprintf(stdout, "Disconnecting from %s\n", host ? host : "localhost");
-  mysql_close(mysql);
+  drizzle_close(drizzle);
 }
 
 
 
-static void safe_exit(int error, MYSQL *mysql)
+static void safe_exit(int error, DRIZZLE *drizzle)
 {
   if (ignore_errors)
     return;
-  if (mysql)
-    mysql_close(mysql);
+  if (drizzle)
+    drizzle_close(drizzle);
   exit(error);
 }
 
 
 
-static void db_error_with_table(MYSQL *mysql, char *table)
+static void db_error_with_table(DRIZZLE *drizzle, char *table)
 {
   my_printf_error(0,"Error: %d, %s, when using table: %s",
-		  MYF(0), mysql_errno(mysql), mysql_error(mysql), table);
-  safe_exit(1, mysql);
+      MYF(0), drizzle_errno(drizzle), drizzle_error(drizzle), table);
+  safe_exit(1, drizzle);
 }
 
 
 
-static void db_error(MYSQL *mysql)
+static void db_error(DRIZZLE *drizzle)
 {
-  my_printf_error(0,"Error: %d %s", MYF(0), mysql_errno(mysql), mysql_error(mysql));
-  safe_exit(1, mysql);
+  my_printf_error(0,"Error: %d %s", MYF(0), drizzle_errno(drizzle), drizzle_error(drizzle));
+  safe_exit(1, drizzle);
 }
 
 
 static char *add_load_option(char *ptr, const char *object,
-			     const char *statement)
+           const char *statement)
 {
   if (object)
   {
@@ -454,28 +450,28 @@ static char *add_load_option(char *ptr, const char *object,
 ** "'", "\", "\\" (escaped backslash), "\t" (tab), "\n" (newline)
 ** This is done by doubleing ' and add a end -\ if needed to avoid
 ** syntax errors from the SQL parser.
-*/ 
+*/
 
 static char *field_escape(char *to,const char *from,uint length)
 {
   const char *end;
-  uint end_backslashes=0; 
+  uint end_backslashes=0;
 
   for (end= from+length; from != end; from++)
   {
     *to++= *from;
     if (*from == '\\')
       end_backslashes^=1;    /* find odd number of backslashes */
-    else 
+    else
     {
       if (*from == '\'' && !end_backslashes)
-	*to++= *from;      /* We want a dublicate of "'" for MySQL */
+  *to++= *from;      /* We want a dublicate of "'" for DRIZZLE */
       end_backslashes=0;
     }
   }
   /* Add missing backslashes if user has specified odd number of backs.*/
   if (end_backslashes)
-    *to++= '\\';          
+    *to++= '\\';         
   return to;
 }
 
@@ -485,32 +481,32 @@ static pthread_handler_t worker_thread(void *arg)
 {
   int error;
   char *raw_table_name= (char *)arg;
-  MYSQL *mysql= 0;
+  DRIZZLE *drizzle= 0;
 
-  if (mysql_thread_init())
+  if (drizzle_thread_init())
     goto error;
-  
-  if (!(mysql= db_connect(current_host,current_db,current_user,opt_password)))
+ 
+  if (!(drizzle= db_connect(current_host,current_db,current_user,opt_password)))
   {
     goto error;
   }
 
-  if (mysql_query(mysql, "/*!40101 set @@character_set_database=binary */;"))
+  if (drizzle_query(drizzle, "/*!40101 set @@character_set_database=binary */;"))
   {
-    db_error(mysql); /* We shall countinue here, if --force was given */
+    db_error(drizzle); /* We shall countinue here, if --force was given */
     goto error;
   }
 
   /*
     We are not currently catching the error here.
   */
-  if((error= write_to_table(raw_table_name, mysql)))
+  if((error= write_to_table(raw_table_name, drizzle)))
     if (exitcode == 0)
       exitcode= error;
 
 error:
-  if (mysql)
-    db_disconnect(current_host, mysql);
+  if (drizzle)
+    db_disconnect(current_host, drizzle);
 
   pthread_mutex_lock(&counter_mutex);
   counter--;
@@ -563,7 +559,7 @@ int main(int argc, char **argv)
       counter++;
       pthread_mutex_unlock(&counter_mutex);
       /* now create the thread */
-      if (pthread_create(&mainthread, &attr, worker_thread, 
+      if (pthread_create(&mainthread, &attr, worker_thread,
                          (void *)*argv) != 0)
       {
         pthread_mutex_lock(&counter_mutex);
@@ -593,26 +589,26 @@ int main(int argc, char **argv)
   else
 #endif
   {
-    MYSQL *mysql= 0;
-    if (!(mysql= db_connect(current_host,current_db,current_user,opt_password)))
+    DRIZZLE *drizzle= 0;
+    if (!(drizzle= db_connect(current_host,current_db,current_user,opt_password)))
     {
       free_defaults(argv_to_free);
       return(1); /* purecov: deadcode */
     }
 
-    if (mysql_query(mysql, "/*!40101 set @@character_set_database=binary */;"))
+    if (drizzle_query(drizzle, "/*!40101 set @@character_set_database=binary */;"))
     {
-      db_error(mysql); /* We shall countinue here, if --force was given */
+      db_error(drizzle); /* We shall countinue here, if --force was given */
       return(1);
     }
 
     if (lock_tables)
-      lock_table(mysql, argc, argv);
+      lock_table(drizzle, argc, argv);
     for (; *argv != NULL; argv++)
-      if ((error= write_to_table(*argv, mysql)))
+      if ((error= write_to_table(*argv, drizzle)))
         if (exitcode == 0)
           exitcode= error;
-    db_disconnect(current_host, mysql);
+    db_disconnect(current_host, drizzle);
   }
   my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(argv_to_free);

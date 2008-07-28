@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2004 MySQL AB
+/* Copyright (C) 2000-2004 DRIZZLE AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>
-#ifdef	 HAVE_PWD_H
+#ifdef   HAVE_PWD_H
 #include <pwd.h>
 #endif
 
@@ -52,9 +52,9 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
-#include <my_pthread.h>				/* because of signal()	*/
+#include <my_pthread.h>        /* because of signal()  */
 #ifndef INADDR_NONE
-#define INADDR_NONE	-1
+#define INADDR_NONE  -1
 #endif
 
 #include <sql_common.h>
@@ -63,8 +63,8 @@
 #undef net_buffer_length
 #undef max_allowed_packet
 
-uint32_t 		net_buffer_length= 8192;
-uint32_t		max_allowed_packet= 1024L*1024L*1024L;
+uint32_t     net_buffer_length= 8192;
+uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 
 #include <errno.h>
 #define SOCKET_ERROR -1
@@ -78,137 +78,21 @@ uint32_t		max_allowed_packet= 1024L*1024L*1024L;
 
 static void append_wild(char *to,char *end,const char *wild);
 
-static bool mysql_client_init= 0;
-static bool org_my_init_done= 0;
 
-
-/*
-  Initialize the MySQL client library
-
-  SYNOPSIS
-    mysql_server_init()
-
-  NOTES
-    Should be called before doing any other calls to the MySQL
-    client library to initialize thread specific variables etc.
-    It's called by mysql_init() to ensure that things will work for
-    old not threaded applications that doesn't call mysql_server_init()
-    directly.
-
-  RETURN
-    0  ok
-    1  could not initialize environment (out of memory or thread keys)
-*/
-
-int STDCALL mysql_server_init(int argc __attribute__((unused)),
-			      char **argv __attribute__((unused)),
-			      char **groups __attribute__((unused)))
-{
-  int result= 0;
-  if (!mysql_client_init)
-  {
-    mysql_client_init=1;
-    org_my_init_done=my_init_done;
-    if (my_init())				/* Will init threads */
-      return 1;
-    init_client_errs();
-    if (!mysql_port)
-    {
-      mysql_port = MYSQL_PORT;
-      {
-	struct servent *serv_ptr;
-	char	*env;
-
-        /*
-          if builder specifically requested a default port, use that
-          (even if it coincides with our factory default).
-          only if they didn't do we check /etc/services (and, failing
-          on that, fall back to the factory default of 4427).
-          either default can be overridden by the environment variable
-          MYSQL_TCP_PORT, which in turn can be overridden with command
-          line options.
-        */
-
-#if MYSQL_PORT_DEFAULT == 0
-        if ((serv_ptr = getservbyname("mysql", "tcp")))
-          mysql_port = (uint) ntohs((ushort) serv_ptr->s_port);
-#endif
-        if ((env = getenv("MYSQL_TCP_PORT")))
-          mysql_port =(uint) atoi(env);
-      }
-    }
-    if (!mysql_unix_port)
-    {
-      char *env;
-      mysql_unix_port = (char*) MYSQL_UNIX_ADDR;
-      if ((env = getenv("MYSQL_UNIX_PORT")))
-	mysql_unix_port = env;
-    }
-#if defined(SIGPIPE)
-    (void) signal(SIGPIPE, SIG_IGN);
-#endif
-  }
-  else
-    result= (int)my_thread_init();         /* Init if new thread */
-  return result;
-}
-
-
-/*
-  Free all memory and resources used by the client library
-
-  NOTES
-    When calling this there should not be any other threads using
-    the library.
-
-    To make things simpler when used with windows dll's (which calls this
-    function automaticly), it's safe to call this function multiple times.
-*/
-
-
-void STDCALL mysql_server_end()
-{
-  if (!mysql_client_init)
-    return;
-
-  finish_client_errs();
-  vio_end();
-
-  /* If library called my_init(), free memory allocated by it */
-  if (!org_my_init_done)
-  {
-    my_end(0);
-  }
-  else
-  {
-    free_charsets();
-    mysql_thread_end();
-  }
-
-  mysql_client_init= org_my_init_done= 0;
-#ifdef EMBEDDED_SERVER
-  if (stderror_file)
-  {
-    fclose(stderror_file);
-    stderror_file= 0;
-  }
-#endif
-}
-
-static MYSQL_PARAMETERS mysql_internal_parameters=
+static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 {&max_allowed_packet, &net_buffer_length, 0};
 
-MYSQL_PARAMETERS *STDCALL mysql_get_parameters(void)
+DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void)
 {
-  return &mysql_internal_parameters;
+  return &drizzle_internal_parameters;
 }
 
-bool STDCALL mysql_thread_init()
+bool STDCALL drizzle_thread_init()
 {
   return my_thread_init();
 }
 
-void STDCALL mysql_thread_end()
+void STDCALL drizzle_thread_end()
 {
   my_thread_end();
 }
@@ -221,18 +105,18 @@ void STDCALL mysql_thread_end()
 static void
 append_wild(char *to, char *end, const char *wild)
 {
-  end-=5;					/* Some extra */
+  end-=5;          /* Some extra */
   if (wild && wild[0])
   {
     to=strmov(to," like '");
     while (*wild && to < end)
     {
       if (*wild == '\\' || *wild == '\'')
-	*to++='\\';
+  *to++='\\';
       *to++= *wild++;
     }
-    if (*wild)					/* Too small buffer */
-      *to++='%';				/* Nicer this way */
+    if (*wild)          /* Too small buffer */
+      *to++='%';        /* Nicer this way */
     to[0]='\'';
     to[1]=0;
   }
@@ -258,19 +142,19 @@ my_pipe_sig_handler(int sig __attribute__((unused)))
 **************************************************************************/
 
 #ifdef USE_OLD_FUNCTIONS
-MYSQL * STDCALL
-mysql_connect(MYSQL *mysql,const char *host,
-	      const char *user, const char *passwd)
+DRIZZLE * STDCALL
+drizzle_connect(DRIZZLE *drizzle,const char *host,
+        const char *user, const char *passwd)
 {
-  MYSQL *res;
-  mysql=mysql_init(mysql);			/* Make it thread safe */
+  DRIZZLE *res;
+  drizzle=drizzle_init(drizzle);      /* Make it thread safe */
   {
-    if (!(res=mysql_real_connect(mysql,host,user,passwd,NullS,0,NullS,0)))
+    if (!(res=drizzle_connect(drizzle,host,user,passwd,NullS,0,NullS,0)))
     {
-      if (mysql->free_me && mysql)
-	      free((uchar*) mysql);
+      if (drizzle->free_me && drizzle)
+        free((uchar*) drizzle);
     }
-    mysql->reconnect= 1;
+    drizzle->reconnect= 1;
     return(res);
   }
 }
@@ -281,13 +165,13 @@ mysql_connect(MYSQL *mysql,const char *host,
   Change user and database
 **************************************************************************/
 
-int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
+int cli_read_change_user_result(DRIZZLE *drizzle, char *buff, const char *passwd)
 {
   (void)buff;
   (void)passwd;
   ulong pkt_length;
 
-  pkt_length= cli_safe_read(mysql);
+  pkt_length= cli_safe_read(drizzle);
   
   if (pkt_length == packet_error)
     return 1;
@@ -295,19 +179,19 @@ int cli_read_change_user_result(MYSQL *mysql, char *buff, const char *passwd)
   return 0;
 }
 
-bool STDCALL mysql_change_user(MYSQL *mysql, const char *user,
-				  const char *passwd, const char *db)
+bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
+          const char *passwd, const char *db)
 {
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
   char *end= buff;
   int rc;
-  CHARSET_INFO *saved_cs= mysql->charset;
+  CHARSET_INFO *saved_cs= drizzle->charset;
 
   /* Get the connection-default character set. */
 
-  if (mysql_init_character_set(mysql))
+  if (drizzle_init_character_set(drizzle))
   {
-    mysql->charset= saved_cs;
+    drizzle->charset= saved_cs;
     return(true);
   }
 
@@ -326,7 +210,7 @@ bool STDCALL mysql_change_user(MYSQL *mysql, const char *user,
   {
     {
       *end++= SCRAMBLE_LENGTH;
-      scramble(end, mysql->scramble, passwd);
+      scramble(end, drizzle->scramble, passwd);
       end+= SCRAMBLE_LENGTH;
     }
   }
@@ -337,35 +221,35 @@ bool STDCALL mysql_change_user(MYSQL *mysql, const char *user,
 
   /* Add character set number. */
 
-  if (mysql->server_capabilities & CLIENT_SECURE_CONNECTION)
+  if (drizzle->server_capabilities & CLIENT_SECURE_CONNECTION)
   {
-    int2store(end, (ushort) mysql->charset->number);
+    int2store(end, (ushort) drizzle->charset->number);
     end+= 2;
   }
 
   /* Write authentication package */
-  (void)simple_command(mysql,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
+  (void)simple_command(drizzle,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
 
-  rc= (*mysql->methods->read_change_user_result)(mysql, buff, passwd);
+  rc= (*drizzle->methods->read_change_user_result)(drizzle, buff, passwd);
 
   if (rc == 0)
   {
     /* Free old connect information */
-    if(mysql->user)
-      free(mysql->user);
-    if(mysql->passwd)
-      free(mysql->passwd);
-    if(mysql->db)
-      free(mysql->db);
+    if(drizzle->user)
+      free(drizzle->user);
+    if(drizzle->passwd)
+      free(drizzle->passwd);
+    if(drizzle->db)
+      free(drizzle->db);
 
     /* alloc new connect information */
-    mysql->user=  my_strdup(user,MYF(MY_WME));
-    mysql->passwd=my_strdup(passwd,MYF(MY_WME));
-    mysql->db=    db ? my_strdup(db,MYF(MY_WME)) : 0;
+    drizzle->user=  my_strdup(user,MYF(MY_WME));
+    drizzle->passwd=my_strdup(passwd,MYF(MY_WME));
+    drizzle->db=    db ? my_strdup(db,MYF(MY_WME)) : 0;
   }
   else
   {
-    mysql->charset= saved_cs;
+    drizzle->charset= saved_cs;
   }
 
   return(rc);
@@ -379,7 +263,7 @@ char* getlogin(void);
 void read_user_name(char *name)
 {
   if (geteuid() == 0)
-    (void) strmov(name,"root");		/* allow use of surun */
+    (void) strmov(name,"root");    /* allow use of surun */
   else
   {
 #ifdef HAVE_GETPWUID
@@ -388,10 +272,10 @@ void read_user_name(char *name)
     if ((str=getlogin()) == NULL)
     {
       if ((skr=getpwuid(geteuid())) != NULL)
-	str=skr->pw_name;
+  str=skr->pw_name;
       else if (!(str=getenv("USER")) && !(str=getenv("LOGNAME")) &&
-	       !(str=getenv("LOGIN")))
-	str="UNKNOWN_USER";
+         !(str=getenv("LOGIN")))
+  str="UNKNOWN_USER";
     }
     (void) strmake(name,str,USERNAME_LENGTH);
 #elif HAVE_CUSERID
@@ -403,30 +287,30 @@ void read_user_name(char *name)
   return;
 }
 
-bool handle_local_infile(MYSQL *mysql, const char *net_filename)
+bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
   bool result= true;
-  uint packet_length=MY_ALIGN(mysql->net.max_packet-16,IO_SIZE);
-  NET *net= &mysql->net;
+  uint packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
+  NET *net= &drizzle->net;
   int readcount;
   void *li_ptr;          /* pass state to local_infile functions */
-  char *buf;		/* buffer to be filled by local_infile_read */
-  struct st_mysql_options *options= &mysql->options;
+  char *buf;    /* buffer to be filled by local_infile_read */
+  struct st_drizzle_options *options= &drizzle->options;
 
   /* check that we've got valid callback functions */
   if (!(options->local_infile_init &&
-	options->local_infile_read &&
-	options->local_infile_end &&
-	options->local_infile_error))
+  options->local_infile_read &&
+  options->local_infile_end &&
+  options->local_infile_error))
   {
     /* if any of the functions is invalid, set the default */
-    mysql_set_local_infile_default(mysql);
+    drizzle_set_local_infile_default(drizzle);
   }
 
   /* copy filename into local memory and allocate read buffer */
   if (!(buf=malloc(packet_length)))
   {
-    set_mysql_error(mysql, CR_OUT_OF_MEMORY, unknown_sqlstate);
+    set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
     return(1);
   }
 
@@ -446,8 +330,8 @@ bool handle_local_infile(MYSQL *mysql, const char *net_filename)
 
   /* read blocks of data from local infile callback */
   while ((readcount =
-	  (*options->local_infile_read)(li_ptr, buf,
-					packet_length)) > 0)
+    (*options->local_infile_read)(li_ptr, buf,
+          packet_length)) > 0)
   {
     if (my_net_write(net, (uchar*) buf, readcount))
     {
@@ -458,7 +342,7 @@ bool handle_local_infile(MYSQL *mysql, const char *net_filename)
   /* Send empty packet to mark end of file */
   if (my_net_write(net, (const uchar*) "", 0) || net_flush(net))
   {
-    set_mysql_error(mysql, CR_SERVER_LOST, unknown_sqlstate);
+    set_drizzle_error(drizzle, CR_SERVER_LOST, unknown_sqlstate);
     goto err;
   }
 
@@ -500,8 +384,8 @@ typedef struct st_default_local_infile
 
   SYNOPSIS
     default_local_infile_init()
-    ptr			Store pointer to internal data here
-    filename		File name to open. This may be in unix format !
+    ptr      Store pointer to internal data here
+    filename    File name to open. This may be in unix format !
 
 
   NOTES
@@ -509,8 +393,8 @@ typedef struct st_default_local_infile
     guarantees that default_local_infile_end() is called.
 
   RETURN
-    0	ok
-    1	error
+    0  ok
+    1  error
 */
 
 static int default_local_infile_init(void **ptr, const char *filename,
@@ -544,14 +428,14 @@ static int default_local_infile_init(void **ptr, const char *filename,
 
   SYNOPSIS
     default_local_infile_read()
-    ptr			Points to handle allocated by _init
-    buf			Read data here
-    buf_len		Ammount of data to read
+    ptr      Points to handle allocated by _init
+    buf      Read data here
+    buf_len    Ammount of data to read
 
   RETURN
-    > 0		number of bytes read
-    == 0	End of data
-    < 0		Error
+    > 0    number of bytes read
+    == 0  End of data
+    < 0    Error
 */
 
 static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
@@ -575,8 +459,8 @@ static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
 
   SYNOPSIS
     default_local_infile_end()
-    ptr			Points to handle allocated by _init
-			May be NULL if _init failed!
+    ptr      Points to handle allocated by _init
+      May be NULL if _init failed!
 
   RETURN
 */
@@ -584,7 +468,7 @@ static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
 static void default_local_infile_end(void *ptr)
 {
   default_local_infile_data *data= (default_local_infile_data *) ptr;
-  if (data)					/* If not error on open */
+  if (data)          /* If not error on open */
   {
     if (data->fd >= 0)
       my_close(data->fd, MYF(MY_WME));
@@ -598,10 +482,10 @@ static void default_local_infile_end(void *ptr)
 
   SYNOPSIS
     default_local_infile_end()
-    ptr			Points to handle allocated by _init
-			May be NULL if _init failed!
-    error_msg		Store error text here
-    error_msg_len	Max lenght of error_msg
+    ptr      Points to handle allocated by _init
+      May be NULL if _init failed!
+    error_msg    Store error text here
+    error_msg_len  Max lenght of error_msg
 
   RETURN
     error message number
@@ -611,7 +495,7 @@ static int
 default_local_infile_error(void *ptr, char *error_msg, uint error_msg_len)
 {
   default_local_infile_data *data = (default_local_infile_data *) ptr;
-  if (data)					/* If not error on open */
+  if (data)          /* If not error on open */
   {
     strmake(error_msg, data->error_msg, error_msg_len);
     return data->error_num;
@@ -623,7 +507,7 @@ default_local_infile_error(void *ptr, char *error_msg, uint error_msg_len)
 
 
 void
-mysql_set_local_infile_handler(MYSQL *mysql,
+drizzle_set_local_infile_handler(DRIZZLE *drizzle,
                                int (*local_infile_init)(void **, const char *,
                                void *),
                                int (*local_infile_read)(void *, char *, uint),
@@ -631,32 +515,32 @@ mysql_set_local_infile_handler(MYSQL *mysql,
                                int (*local_infile_error)(void *, char *, uint),
                                void *userdata)
 {
-  mysql->options.local_infile_init=  local_infile_init;
-  mysql->options.local_infile_read=  local_infile_read;
-  mysql->options.local_infile_end=   local_infile_end;
-  mysql->options.local_infile_error= local_infile_error;
-  mysql->options.local_infile_userdata = userdata;
+  drizzle->options.local_infile_init=  local_infile_init;
+  drizzle->options.local_infile_read=  local_infile_read;
+  drizzle->options.local_infile_end=   local_infile_end;
+  drizzle->options.local_infile_error= local_infile_error;
+  drizzle->options.local_infile_userdata = userdata;
 }
 
 
-void mysql_set_local_infile_default(MYSQL *mysql)
+void drizzle_set_local_infile_default(DRIZZLE *drizzle)
 {
-  mysql->options.local_infile_init=  default_local_infile_init;
-  mysql->options.local_infile_read=  default_local_infile_read;
-  mysql->options.local_infile_end=   default_local_infile_end;
-  mysql->options.local_infile_error= default_local_infile_error;
+  drizzle->options.local_infile_init=  default_local_infile_init;
+  drizzle->options.local_infile_read=  default_local_infile_read;
+  drizzle->options.local_infile_end=   default_local_infile_end;
+  drizzle->options.local_infile_error= default_local_infile_error;
 }
 
 
 /**************************************************************************
   Do a query. If query returned rows, free old rows.
-  Read data by mysql_store_result or by repeat call of mysql_fetch_row
+  Read data by drizzle_store_result or by repeat call of drizzle_fetch_row
 **************************************************************************/
 
 int STDCALL
-mysql_query(MYSQL *mysql, const char *query)
+drizzle_query(DRIZZLE *drizzle, const char *query)
 {
-  return mysql_real_query(mysql,query, (uint) strlen(query));
+  return drizzle_real_query(drizzle,query, (uint) strlen(query));
 }
 
 
@@ -664,8 +548,8 @@ mysql_query(MYSQL *mysql, const char *query)
   Return next field of the query results
 **************************************************************************/
 
-MYSQL_FIELD * STDCALL
-mysql_fetch_field(MYSQL_RES *result)
+DRIZZLE_FIELD * STDCALL
+drizzle_fetch_field(DRIZZLE_RES *result)
 {
   if (result->current_field >= result->field_count)
     return(NULL);
@@ -678,9 +562,9 @@ mysql_fetch_field(MYSQL_RES *result)
 **************************************************************************/
 
 void STDCALL
-mysql_data_seek(MYSQL_RES *result, uint64_t row)
+drizzle_data_seek(DRIZZLE_RES *result, uint64_t row)
 {
-  MYSQL_ROWS	*tmp=0;
+  DRIZZLE_ROWS  *tmp=0;
   if (result->data)
     for (tmp=result->data->data; row-- && tmp ; tmp = tmp->next) ;
   result->current_row=0;
@@ -689,25 +573,25 @@ mysql_data_seek(MYSQL_RES *result, uint64_t row)
 
 
 /*************************************************************************
-  put the row or field cursor one a position one got from mysql_row_tell()
-  This doesn't restore any data. The next mysql_fetch_row or
-  mysql_fetch_field will return the next row or field after the last used
+  put the row or field cursor one a position one got from DRIZZLE_ROW_tell()
+  This doesn't restore any data. The next drizzle_fetch_row or
+  drizzle_fetch_field will return the next row or field after the last used
 *************************************************************************/
 
-MYSQL_ROW_OFFSET STDCALL
-mysql_row_seek(MYSQL_RES *result, MYSQL_ROW_OFFSET row)
+DRIZZLE_ROW_OFFSET STDCALL
+drizzle_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET row)
 {
-  MYSQL_ROW_OFFSET return_value=result->data_cursor;
+  DRIZZLE_ROW_OFFSET return_value=result->data_cursor;
   result->current_row= 0;
   result->data_cursor= row;
   return return_value;
 }
 
 
-MYSQL_FIELD_OFFSET STDCALL
-mysql_field_seek(MYSQL_RES *result, MYSQL_FIELD_OFFSET field_offset)
+DRIZZLE_FIELD_OFFSET STDCALL
+drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET field_offset)
 {
-  MYSQL_FIELD_OFFSET return_value=result->current_field;
+  DRIZZLE_FIELD_OFFSET return_value=result->current_field;
   result->current_field=field_offset;
   return return_value;
 }
@@ -717,15 +601,15 @@ mysql_field_seek(MYSQL_RES *result, MYSQL_FIELD_OFFSET field_offset)
   List all databases
 *****************************************************************************/
 
-MYSQL_RES * STDCALL
-mysql_list_dbs(MYSQL *mysql, const char *wild)
+DRIZZLE_RES * STDCALL
+drizzle_list_dbs(DRIZZLE *drizzle, const char *wild)
 {
   char buff[255];
 
   append_wild(strmov(buff,"show databases"),buff+sizeof(buff),wild);
-  if (mysql_query(mysql,buff))
+  if (drizzle_query(drizzle,buff))
     return(0);
-  return (mysql_store_result(mysql));
+  return (drizzle_store_result(drizzle));
 }
 
 
@@ -734,28 +618,28 @@ mysql_list_dbs(MYSQL *mysql, const char *wild)
   If wild is given then only the tables matching wild is returned
 *****************************************************************************/
 
-MYSQL_RES * STDCALL
-mysql_list_tables(MYSQL *mysql, const char *wild)
+DRIZZLE_RES * STDCALL
+drizzle_list_tables(DRIZZLE *drizzle, const char *wild)
 {
   char buff[255];
 
   append_wild(strmov(buff,"show tables"),buff+sizeof(buff),wild);
-  if (mysql_query(mysql,buff))
+  if (drizzle_query(drizzle,buff))
     return(0);
-  return (mysql_store_result(mysql));
+  return (drizzle_store_result(drizzle));
 }
 
 
-MYSQL_FIELD *cli_list_fields(MYSQL *mysql)
+DRIZZLE_FIELD *cli_list_fields(DRIZZLE *drizzle)
 {
-  MYSQL_DATA *query;
-  if (!(query= cli_read_rows(mysql,(MYSQL_FIELD*) 0, 
-			     protocol_41(mysql) ? 8 : 6)))
+  DRIZZLE_DATA *query;
+  if (!(query= cli_read_rows(drizzle,(DRIZZLE_FIELD*) 0, 
+           protocol_41(drizzle) ? 8 : 6)))
     return NULL;
 
-  mysql->field_count= (uint) query->rows;
-  return unpack_fields(query,&mysql->field_alloc,
-		       mysql->field_count, 1, mysql->server_capabilities);
+  drizzle->field_count= (uint) query->rows;
+  return unpack_fields(query,&drizzle->field_alloc,
+           drizzle->field_count, 1, drizzle->server_capabilities);
 }
 
 
@@ -766,27 +650,27 @@ MYSQL_FIELD *cli_list_fields(MYSQL *mysql)
   show fields in 'table' like "wild"
 **************************************************************************/
 
-MYSQL_RES * STDCALL
-mysql_list_fields(MYSQL *mysql, const char *table, const char *wild)
+DRIZZLE_RES * STDCALL
+drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
 {
-  MYSQL_RES   *result;
-  MYSQL_FIELD *fields;
-  char	     buff[257],*end;
+  DRIZZLE_RES   *result;
+  DRIZZLE_FIELD *fields;
+  char       buff[257],*end;
 
   end=strmake(strmake(buff, table,128)+1,wild ? wild : "",128);
-  free_old_query(mysql);
-  if (simple_command(mysql, COM_FIELD_LIST, (uchar*) buff,
+  free_old_query(drizzle);
+  if (simple_command(drizzle, COM_FIELD_LIST, (uchar*) buff,
                      (ulong) (end-buff), 1) ||
-      !(fields= (*mysql->methods->list_fields)(mysql)))
+      !(fields= (*drizzle->methods->list_fields)(drizzle)))
     return(NULL);
 
-  if (!(result = (MYSQL_RES *) malloc(sizeof(MYSQL_RES))))
+  if (!(result = (DRIZZLE_RES *) malloc(sizeof(DRIZZLE_RES))))
     return(NULL);
 
-  result->methods= mysql->methods;
-  result->field_alloc=mysql->field_alloc;
-  mysql->fields=0;
-  result->field_count = mysql->field_count;
+  result->methods= drizzle->methods;
+  result->field_alloc=drizzle->field_alloc;
+  drizzle->fields=0;
+  result->field_count = drizzle->field_count;
   result->fields= fields;
   result->eof=1;
   return(result);
@@ -794,235 +678,235 @@ mysql_list_fields(MYSQL *mysql, const char *table, const char *wild)
 
 /* List all running processes (threads) in server */
 
-MYSQL_RES * STDCALL
-mysql_list_processes(MYSQL *mysql)
+DRIZZLE_RES * STDCALL
+drizzle_list_processes(DRIZZLE *drizzle)
 {
-  MYSQL_DATA *fields;
+  DRIZZLE_DATA *fields;
   uint field_count;
   uchar *pos;
 
-  if (simple_command(mysql,COM_PROCESS_INFO,0,0,0))
+  if (simple_command(drizzle,COM_PROCESS_INFO,0,0,0))
     return(0);
-  free_old_query(mysql);
-  pos=(uchar*) mysql->net.read_pos;
+  free_old_query(drizzle);
+  pos=(uchar*) drizzle->net.read_pos;
   field_count=(uint) net_field_length(&pos);
-  if (!(fields = (*mysql->methods->read_rows)(mysql,(MYSQL_FIELD*) 0,
-					      protocol_41(mysql) ? 7 : 5)))
+  if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0,
+                protocol_41(drizzle) ? 7 : 5)))
     return(NULL);
-  if (!(mysql->fields=unpack_fields(fields,&mysql->field_alloc,field_count,0,
-				    mysql->server_capabilities)))
+  if (!(drizzle->fields=unpack_fields(fields,&drizzle->field_alloc,field_count,0,
+            drizzle->server_capabilities)))
     return(0);
-  mysql->status=MYSQL_STATUS_GET_RESULT;
-  mysql->field_count=field_count;
-  return(mysql_store_result(mysql));
+  drizzle->status=DRIZZLE_STATUS_GET_RESULT;
+  drizzle->field_count=field_count;
+  return(drizzle_store_result(drizzle));
 }
 
 
 #ifdef USE_OLD_FUNCTIONS
 int  STDCALL
-mysql_create_db(MYSQL *mysql, const char *db)
+drizzle_create_db(DRIZZLE *drizzle, const char *db)
 {
-  return(simple_command(mysql,COM_CREATE_DB,db, (ulong) strlen(db),0));
+  return(simple_command(drizzle,COM_CREATE_DB,db, (ulong) strlen(db),0));
 }
 
 
 int  STDCALL
-mysql_drop_db(MYSQL *mysql, const char *db)
+drizzle_drop_db(DRIZZLE *drizzle, const char *db)
 {
-  return(simple_command(mysql,COM_DROP_DB,db,(ulong) strlen(db),0));
+  return(simple_command(drizzle,COM_DROP_DB,db,(ulong) strlen(db),0));
 }
 #endif
 
 
 int STDCALL
-mysql_shutdown(MYSQL *mysql, enum mysql_enum_shutdown_level shutdown_level)
+drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level)
 {
   uchar level[1];
   level[0]= (uchar) shutdown_level;
-  return(simple_command(mysql, COM_SHUTDOWN, level, 1, 0));
+  return(simple_command(drizzle, COM_SHUTDOWN, level, 1, 0));
 }
 
 
 int STDCALL
-mysql_refresh(MYSQL *mysql,uint options)
+drizzle_refresh(DRIZZLE *drizzle,uint options)
 {
   uchar bits[1];
   bits[0]= (uchar) options;
-  return(simple_command(mysql, COM_REFRESH, bits, 1, 0));
+  return(simple_command(drizzle, COM_REFRESH, bits, 1, 0));
 }
 
 
 int32_t STDCALL
-mysql_kill(MYSQL *mysql, uint32_t pid)
+drizzle_kill(DRIZZLE *drizzle, uint32_t pid)
 {
   uchar buff[4];
   int4store(buff,pid);
-  return(simple_command(mysql,COM_PROCESS_KILL,buff,sizeof(buff),0));
+  return(simple_command(drizzle,COM_PROCESS_KILL,buff,sizeof(buff),0));
 }
 
 
 int STDCALL
-mysql_set_server_option(MYSQL *mysql, enum enum_mysql_set_option option)
+drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option)
 {
   uchar buff[2];
   int2store(buff, (uint) option);
-  return(simple_command(mysql, COM_SET_OPTION, buff, sizeof(buff), 0));
+  return(simple_command(drizzle, COM_SET_OPTION, buff, sizeof(buff), 0));
 }
 
 
-const char *cli_read_statistics(MYSQL *mysql)
+const char *cli_read_statistics(DRIZZLE *drizzle)
 {
-  mysql->net.read_pos[mysql->packet_length]=0;	/* End of stat string */
-  if (!mysql->net.read_pos[0])
+  drizzle->net.read_pos[drizzle->packet_length]=0;  /* End of stat string */
+  if (!drizzle->net.read_pos[0])
   {
-    set_mysql_error(mysql, CR_WRONG_HOST_INFO, unknown_sqlstate);
-    return mysql->net.last_error;
+    set_drizzle_error(drizzle, CR_WRONG_HOST_INFO, unknown_sqlstate);
+    return drizzle->net.last_error;
   }
-  return (char*) mysql->net.read_pos;
+  return (char*) drizzle->net.read_pos;
 }
 
 
 const char * STDCALL
-mysql_stat(MYSQL *mysql)
+drizzle_stat(DRIZZLE *drizzle)
 {
-  if (simple_command(mysql,COM_STATISTICS,0,0,0))
-    return(mysql->net.last_error);
-  return((*mysql->methods->read_statistics)(mysql));
+  if (simple_command(drizzle,COM_STATISTICS,0,0,0))
+    return(drizzle->net.last_error);
+  return((*drizzle->methods->read_statistics)(drizzle));
 }
 
 
 int STDCALL
-mysql_ping(MYSQL *mysql)
+drizzle_ping(DRIZZLE *drizzle)
 {
   int res;
-  res= simple_command(mysql,COM_PING,0,0,0);
-  if (res == CR_SERVER_LOST && mysql->reconnect)
-    res= simple_command(mysql,COM_PING,0,0,0);
+  res= simple_command(drizzle,COM_PING,0,0,0);
+  if (res == CR_SERVER_LOST && drizzle->reconnect)
+    res= simple_command(drizzle,COM_PING,0,0,0);
   return(res);
 }
 
 
 const char * STDCALL
-mysql_get_server_info(MYSQL *mysql)
+drizzle_get_server_info(DRIZZLE *drizzle)
 {
-  return((char*) mysql->server_version);
+  return((char*) drizzle->server_version);
 }
 
 
 const char * STDCALL
-mysql_get_host_info(MYSQL *mysql)
+drizzle_get_host_info(DRIZZLE *drizzle)
 {
-  return(mysql->host_info);
+  return(drizzle->host_info);
 }
 
 
 uint STDCALL
-mysql_get_proto_info(MYSQL *mysql)
+drizzle_get_proto_info(DRIZZLE *drizzle)
 {
-  return (mysql->protocol_version);
+  return (drizzle->protocol_version);
 }
 
 const char * STDCALL
-mysql_get_client_info(void)
+drizzle_get_client_info(void)
 {
   return (char*) MYSQL_SERVER_VERSION;
 }
 
-uint32_t STDCALL mysql_get_client_version(void)
+uint32_t STDCALL drizzle_get_client_version(void)
 {
   return MYSQL_VERSION_ID;
 }
 
-bool STDCALL mysql_eof(MYSQL_RES *res)
+bool STDCALL drizzle_eof(DRIZZLE_RES *res)
 {
   return res->eof;
 }
 
-MYSQL_FIELD * STDCALL mysql_fetch_field_direct(MYSQL_RES *res,uint fieldnr)
+DRIZZLE_FIELD * STDCALL drizzle_fetch_field_direct(DRIZZLE_RES *res,uint fieldnr)
 {
   return &(res)->fields[fieldnr];
 }
 
-MYSQL_FIELD * STDCALL mysql_fetch_fields(MYSQL_RES *res)
+DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(DRIZZLE_RES *res)
 {
   return (res)->fields;
 }
 
-MYSQL_ROW_OFFSET STDCALL mysql_row_tell(MYSQL_RES *res)
+DRIZZLE_ROW_OFFSET STDCALL DRIZZLE_ROW_tell(DRIZZLE_RES *res)
 {
   return res->data_cursor;
 }
 
-MYSQL_FIELD_OFFSET STDCALL mysql_field_tell(MYSQL_RES *res)
+DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_tell(DRIZZLE_RES *res)
 {
   return (res)->current_field;
 }
 
-/* MYSQL */
+/* DRIZZLE */
 
-unsigned int STDCALL mysql_field_count(MYSQL *mysql)
+unsigned int STDCALL drizzle_field_count(DRIZZLE *drizzle)
 {
-  return mysql->field_count;
+  return drizzle->field_count;
 }
 
-uint64_t STDCALL mysql_affected_rows(MYSQL *mysql)
+uint64_t STDCALL drizzle_affected_rows(DRIZZLE *drizzle)
 {
-  return mysql->affected_rows;
+  return drizzle->affected_rows;
 }
 
-uint64_t STDCALL mysql_insert_id(MYSQL *mysql)
+uint64_t STDCALL drizzle_insert_id(DRIZZLE *drizzle)
 {
-  return mysql->insert_id;
+  return drizzle->insert_id;
 }
 
-const char *STDCALL mysql_sqlstate(MYSQL *mysql)
+const char *STDCALL drizzle_sqlstate(DRIZZLE *drizzle)
 {
-  return mysql ? mysql->net.sqlstate : cant_connect_sqlstate;
+  return drizzle ? drizzle->net.sqlstate : cant_connect_sqlstate;
 }
 
-uint32_t STDCALL mysql_warning_count(MYSQL *mysql)
+uint32_t STDCALL drizzle_warning_count(DRIZZLE *drizzle)
 {
-  return mysql->warning_count;
+  return drizzle->warning_count;
 }
 
-const char *STDCALL mysql_info(MYSQL *mysql)
+const char *STDCALL drizzle_info(DRIZZLE *drizzle)
 {
-  return mysql->info;
+  return drizzle->info;
 }
 
-uint32_t STDCALL mysql_thread_id(MYSQL *mysql)
+uint32_t STDCALL drizzle_thread_id(DRIZZLE *drizzle)
 {
-  return (mysql)->thread_id;
+  return (drizzle)->thread_id;
 }
 
-const char * STDCALL mysql_character_set_name(MYSQL *mysql)
+const char * STDCALL drizzle_character_set_name(DRIZZLE *drizzle)
 {
-  return mysql->charset->csname;
+  return drizzle->charset->csname;
 }
 
-void STDCALL mysql_get_character_set_info(MYSQL *mysql, MY_CHARSET_INFO *csinfo)
+void STDCALL drizzle_get_character_set_info(DRIZZLE *drizzle, MY_CHARSET_INFO *csinfo)
 {
-  csinfo->number   = mysql->charset->number;
-  csinfo->state    = mysql->charset->state;
-  csinfo->csname   = mysql->charset->csname;
-  csinfo->name     = mysql->charset->name;
-  csinfo->comment  = mysql->charset->comment;
-  csinfo->mbminlen = mysql->charset->mbminlen;
-  csinfo->mbmaxlen = mysql->charset->mbmaxlen;
+  csinfo->number   = drizzle->charset->number;
+  csinfo->state    = drizzle->charset->state;
+  csinfo->csname   = drizzle->charset->csname;
+  csinfo->name     = drizzle->charset->name;
+  csinfo->comment  = drizzle->charset->comment;
+  csinfo->mbminlen = drizzle->charset->mbminlen;
+  csinfo->mbmaxlen = drizzle->charset->mbmaxlen;
 
-  if (mysql->options.charset_dir)
-    csinfo->dir = mysql->options.charset_dir;
+  if (drizzle->options.charset_dir)
+    csinfo->dir = drizzle->options.charset_dir;
   else
     csinfo->dir = charsets_dir;
 }
 
-uint STDCALL mysql_thread_safe(void)
+uint STDCALL drizzle_thread_safe(void)
 {
   return 1;
 }
 
 
-bool STDCALL mysql_embedded(void)
+bool STDCALL drizzle_embedded(void)
 {
 #ifdef EMBEDDED_LIBRARY
   return true;
@@ -1051,7 +935,7 @@ void my_net_local_init(NET *net)
 /*
   This function is used to create HEX string that you
   can use in a SQL statement in of the either ways:
-    INSERT INTO blob_column VALUES (0xAABBCC);  (any MySQL version)
+    INSERT INTO blob_column VALUES (0xAABBCC);  (any DRIZZLE version)
     INSERT INTO blob_column VALUES (X'AABBCC'); (4.1 and higher)
   
   The string in "from" is encoded to a HEX string.
@@ -1060,7 +944,7 @@ void my_net_local_init(NET *net)
   The string pointed to by "from" must be "length" bytes long.
   You must allocate the "to" buffer to be at least length*2+1 bytes long.
   Each character needs two bytes, and you need room for the terminating
-  null byte. When mysql_hex_string() returns, the contents of "to" will
+  null byte. When drizzle_hex_string() returns, the contents of "to" will
   be a null-terminated string. The return value is the length of the
   encoded string, not including the terminating null character.
 
@@ -1069,7 +953,7 @@ void my_net_local_init(NET *net)
 */
 
 uint32_t STDCALL
-mysql_hex_string(char *to, const char *from, uint32_t length)
+drizzle_hex_string(char *to, const char *from, uint32_t length)
 {
   char *to0= to;
   const char *end;
@@ -1090,26 +974,26 @@ mysql_hex_string(char *to, const char *from, uint32_t length)
 */
 
 uint32_t STDCALL
-mysql_escape_string(char *to,const char *from, uint32_t length)
+drizzle_escape_string(char *to,const char *from, uint32_t length)
 {
   return escape_string_for_mysql(default_charset_info, to, 0, from, length);
 }
 
 uint32_t STDCALL
-mysql_real_escape_string(MYSQL *mysql, char *to,const char *from,
-			 uint32_t length)
+drizzle_real_escape_string(DRIZZLE *drizzle, char *to,const char *from,
+       uint32_t length)
 {
-  if (mysql->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
-    return escape_quotes_for_mysql(mysql->charset, to, 0, from, length);
-  return escape_string_for_mysql(mysql->charset, to, 0, from, length);
+  if (drizzle->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
+    return escape_quotes_for_mysql(drizzle->charset, to, 0, from, length);
+  return escape_string_for_mysql(drizzle->charset, to, 0, from, length);
 }
 
 void STDCALL
-myodbc_remove_escape(MYSQL *mysql,char *name)
+myodbc_remove_escape(DRIZZLE *drizzle,char *name)
 {
   char *to;
 #ifdef USE_MB
-  bool use_mb_flag=use_mb(mysql->charset);
+  bool use_mb_flag=use_mb(drizzle->charset);
   char *end=NULL;
   if (use_mb_flag)
     for (end=name; *end ; end++) ;
@@ -1119,10 +1003,10 @@ myodbc_remove_escape(MYSQL *mysql,char *name)
   {
 #ifdef USE_MB
     int l;
-    if (use_mb_flag && (l = my_ismbchar( mysql->charset, name , end ) ) )
+    if (use_mb_flag && (l = my_ismbchar( drizzle->charset, name , end ) ) )
     {
       while (l--)
-	*to++ = *name++;
+  *to++ = *name++;
       name--;
       continue;
     }
@@ -1134,13 +1018,13 @@ myodbc_remove_escape(MYSQL *mysql,char *name)
   *to=0;
 }
 
-int cli_unbuffered_fetch(MYSQL *mysql, char **row)
+int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
 {
-  if (packet_error == cli_safe_read(mysql))
+  if (packet_error == cli_safe_read(drizzle))
     return 1;
 
-  *row= ((mysql->net.read_pos[0] == 254) ? NULL :
-	 (char*) (mysql->net.read_pos+1));
+  *row= ((drizzle->net.read_pos[0] == 254) ? NULL :
+   (char*) (drizzle->net.read_pos+1));
   return 0;
 }
 
@@ -1152,18 +1036,18 @@ int cli_unbuffered_fetch(MYSQL *mysql, char **row)
   Commit the current transaction
 */
 
-bool STDCALL mysql_commit(MYSQL * mysql)
+bool STDCALL drizzle_commit(DRIZZLE *drizzle)
 {
-  return((bool) mysql_real_query(mysql, "commit", 6));
+  return((bool) drizzle_real_query(drizzle, "commit", 6));
 }
 
 /*
   Rollback the current transaction
 */
 
-bool STDCALL mysql_rollback(MYSQL * mysql)
+bool STDCALL drizzle_rollback(DRIZZLE *drizzle)
 {
-  return((bool) mysql_real_query(mysql, "rollback", 8));
+  return((bool) drizzle_real_query(drizzle, "rollback", 8));
 }
 
 
@@ -1171,9 +1055,9 @@ bool STDCALL mysql_rollback(MYSQL * mysql)
   Set autocommit to either true or false
 */
 
-bool STDCALL mysql_autocommit(MYSQL * mysql, bool auto_mode)
+bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode)
 {
-  return((bool) mysql_real_query(mysql, auto_mode ?
+  return((bool) drizzle_real_query(drizzle, auto_mode ?
                                          "set autocommit=1":"set autocommit=0",
                                          16));
 }
@@ -1185,14 +1069,14 @@ bool STDCALL mysql_autocommit(MYSQL * mysql, bool auto_mode)
 
 /*
   Returns true/false to indicate whether any more query results exist
-  to be read using mysql_next_result()
+  to be read using drizzle_next_result()
 */
 
-bool STDCALL mysql_more_results(MYSQL *mysql)
+bool STDCALL drizzle_more_results(DRIZZLE *drizzle)
 {
   bool res;
 
-  res= ((mysql->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
+  res= ((drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
   return(res);
 }
 
@@ -1200,31 +1084,31 @@ bool STDCALL mysql_more_results(MYSQL *mysql)
 /*
   Reads and returns the next query results
 */
-int STDCALL mysql_next_result(MYSQL *mysql)
+int STDCALL drizzle_next_result(DRIZZLE *drizzle)
 {
-  if (mysql->status != MYSQL_STATUS_READY)
+  if (drizzle->status != DRIZZLE_STATUS_READY)
   {
-    set_mysql_error(mysql, CR_COMMANDS_OUT_OF_SYNC, unknown_sqlstate);
+    set_drizzle_error(drizzle, CR_COMMANDS_OUT_OF_SYNC, unknown_sqlstate);
     return(1);
   }
 
-  net_clear_error(&mysql->net);
-  mysql->affected_rows= ~(uint64_t) 0;
+  net_clear_error(&drizzle->net);
+  drizzle->affected_rows= ~(uint64_t) 0;
 
-  if (mysql->server_status & SERVER_MORE_RESULTS_EXISTS)
-    return((*mysql->methods->next_result)(mysql));
+  if (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS)
+    return((*drizzle->methods->next_result)(drizzle));
 
-  return(-1);				/* No more results */
+  return(-1);        /* No more results */
 }
 
 
-MYSQL_RES * STDCALL mysql_use_result(MYSQL *mysql)
+DRIZZLE_RES * STDCALL drizzle_use_result(DRIZZLE *drizzle)
 {
-  return (*mysql->methods->use_result)(mysql);
+  return (*drizzle->methods->use_result)(drizzle);
 }
 
-bool STDCALL mysql_read_query_result(MYSQL *mysql)
+bool STDCALL drizzle_read_query_result(DRIZZLE *drizzle)
 {
-  return (*mysql->methods->read_query_result)(mysql);
+  return (*drizzle->methods->read_query_result)(drizzle);
 }
 

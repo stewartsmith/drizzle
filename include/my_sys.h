@@ -808,10 +808,7 @@ extern int my_getncpus(void);
 #define MAP_NOSYNC       0x0800
 #define MAP_FAILED       ((void *)-1)
 #define MS_SYNC          0x0000
-
-#ifndef __NETWARE__
 #define HAVE_MMAP
-#endif
 
 void *my_mmap(void *, size_t, int, int, int, my_off_t);
 int my_munmap(void *, size_t);

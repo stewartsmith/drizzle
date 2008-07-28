@@ -1595,7 +1595,7 @@ CREATE TABLE `t1` (
 `id` int(11) NOT NULL auto_increment,
 `id_cns` tinyint(3) unsigned NOT NULL default '0',
 `tipo` enum('','UNO','DUE') NOT NULL default '',
-`anno_dep` smallint(4) unsigned zerofill NOT NULL default '0000',
+`anno_dep` smallint(4) unsigned NOT NULL default '0',
 `particolare` bigint(8) unsigned NOT NULL default '0',
 `generale` bigint(8) unsigned NOT NULL default '0',
 `bis` tinyint(3) unsigned NOT NULL default '0',

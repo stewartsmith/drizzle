@@ -238,9 +238,6 @@ static my_thread_id thread_id= 0;
     case the checking of mutex_locks will not work until
     the pthread_self thread specific variable is initialized.
 
-   This function may called multiple times for a thread, for example
-   if one uses my_init() followed by mysql_server_init().
-
   RETURN
     0  ok
     1  Fatal error; mysys/dbug functions can't be used

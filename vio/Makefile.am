@@ -13,7 +13,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include
 pkglib_LTLIBRARIES =	libvio.la
 libvio_la_SOURCES = 
 libvio_la_LIBADD =      libviolt.la
