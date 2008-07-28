@@ -1199,7 +1199,7 @@ public:
   int save_safe_in_field(Field *field);
   bool send(Protocol *protocol, String *str);
   enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const   { return MYSQL_TYPE_NULL; }
+  enum_field_types field_type() const   { return DRIZZLE_TYPE_NULL; }
   bool basic_const_item() const { return 1; }
   Item *clone_item() { return new Item_null(name); }
   bool is_null() { return 1; }
@@ -1286,7 +1286,7 @@ public:
     Used when this item is used in a temporary table.
     This is NOT placeholder metadata sent to client, as this value
     is assigned after sending metadata (in setup_one_conversion_function).
-    For example in case of 'SELECT ?' you'll get MYSQL_TYPE_STRING both
+    For example in case of 'SELECT ?' you'll get DRIZZLE_TYPE_STRING both
     in result set and placeholders metadata, no matter what type you will
     supply for this placeholder in mysql_stmt_execute.
   */
@@ -1384,7 +1384,7 @@ public:
   Item_int(const char *str_arg, uint length=64);
   enum Type type() const { return INT_ITEM; }
   enum Item_result result_type () const { return INT_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_LONGLONG; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_LONGLONG; }
   int64_t val_int() { assert(fixed == 1); return value; }
   double val_real() { assert(fixed == 1); return (double) value; }
   my_decimal *val_decimal(my_decimal *);
@@ -1433,7 +1433,7 @@ public:
 
   enum Type type() const { return DECIMAL_ITEM; }
   enum Item_result result_type () const { return DECIMAL_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_NEWDECIMAL; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDECIMAL; }
   int64_t val_int();
   double val_real();
   String *val_str(String*);
@@ -1480,7 +1480,7 @@ public:
   }
   int save_in_field(Field *field, bool no_conversions);
   enum Type type() const { return REAL_ITEM; }
-  enum_field_types field_type() const { return MYSQL_TYPE_DOUBLE; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_DOUBLE; }
   double val_real() { assert(fixed == 1); return value; }
   int64_t val_int()
   {
@@ -1597,7 +1597,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   int save_in_field(Field *field, bool no_conversions);
   enum Item_result result_type () const { return STRING_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_VARCHAR; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool basic_const_item() const { return 1; }
   bool eq(const Item *item, bool binary_cmp) const;
   Item *clone_item() 
@@ -1696,7 +1696,7 @@ public:
     Item_string(name, length, &my_charset_bin)
   { max_length= length; }
   enum Type type() const { return TYPE_HOLDER; }
-  enum_field_types field_type() const { return MYSQL_TYPE_BLOB; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_BLOB; }
 };
 
 
@@ -1748,7 +1748,7 @@ public:
   int save_in_field(Field *field, bool no_conversions);
   enum Item_result result_type () const { return STRING_RESULT; }
   enum Item_result cast_to_int_type() const { return INT_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_VARCHAR; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_VARCHAR; }
   virtual void print(String *str, enum_query_type query_type);
   bool eq(const Item *item, bool binary_cmp) const;
   virtual Item *safe_charset_converter(CHARSET_INFO *tocs);
@@ -2288,7 +2288,7 @@ protected:
   enum enum_field_types cached_field_type;
 public:
   Item_cache(): 
-    example(0), used_table_map(0), cached_field(0), cached_field_type(MYSQL_TYPE_STRING) 
+    example(0), used_table_map(0), cached_field(0), cached_field_type(DRIZZLE_TYPE_STRING) 
   {
     fixed= 1; 
     null_value= 1;
@@ -2396,7 +2396,7 @@ public:
     Item_cache(), value(0),
     is_varbinary(item->type() == FIELD_ITEM &&
                  ((const Item_field *) item)->field->type() ==
-                   MYSQL_TYPE_VARCHAR &&
+                   DRIZZLE_TYPE_VARCHAR &&
                  !((const Item_field *) item)->field->has_charset())
   {}
   void store(Item *item);

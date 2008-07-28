@@ -2536,7 +2536,7 @@ int handler::ha_check_for_upgrade(HA_CHECK_OPT *check_opt)
         if (!keypart->fieldnr)
           continue;
         Field *field= table->field[keypart->fieldnr-1];
-        if (field->type() == MYSQL_TYPE_BLOB)
+        if (field->type() == DRIZZLE_TYPE_BLOB)
         {
           if (check_opt->sql_flags & TT_FOR_UPGRADE)
             check_opt->flags= T_MEDIUM;

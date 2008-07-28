@@ -1249,7 +1249,7 @@ then
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_builddir)/include -I$(top_srcdir)/include'])
+AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 
 # Some usefull subst

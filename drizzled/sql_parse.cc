@@ -253,7 +253,7 @@ void execute_init_command(THD *thd, sys_var_str *init_command_var,
   */
   rw_rdlock(var_mutex);
   save_client_capabilities= thd->client_capabilities;
-  thd->client_capabilities|= CLIENT_MULTI_QUERIES;
+  thd->client_capabilities|= CLIENT_MULTI_STATEMENTS;
   /*
     We don't need return result of execution to client side.
     To forbid this we should set thd->net.vio to 0.
@@ -3134,7 +3134,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
     */
     if (default_value->type() == Item::FUNC_ITEM && 
         !(((Item_func*)default_value)->functype() == Item_func::NOW_FUNC &&
-         type == MYSQL_TYPE_TIMESTAMP))
+         type == DRIZZLE_TYPE_TIMESTAMP))
     {
       my_error(ER_INVALID_DEFAULT, MYF(0), field_name->str);
       return(1);
@@ -3156,7 +3156,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
     }
   }
 
-  if (on_update_value && type != MYSQL_TYPE_TIMESTAMP)
+  if (on_update_value && type != DRIZZLE_TYPE_TIMESTAMP)
   {
     my_error(ER_INVALID_ON_UPDATE, MYF(0), field_name->str);
     return(1);

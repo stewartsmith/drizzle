@@ -1809,107 +1809,107 @@ type:
         | BIT_SYM
           {
             Lex->length= (char*) "1";
-            $$=FIELD_TYPE_TINY;
+            $$=DRIZZLE_TYPE_TINY;
           }
         | BOOL_SYM
           {
             Lex->length=(char*) "1";
-            $$=MYSQL_TYPE_TINY;
+            $$=DRIZZLE_TYPE_TINY;
           }
         | BOOLEAN_SYM
           {
             Lex->length=(char*) "1";
-            $$=MYSQL_TYPE_TINY;
+            $$=DRIZZLE_TYPE_TINY;
           }
         | char '(' NUM ')' opt_binary
           {
             Lex->length=$3.str;
-            $$=MYSQL_TYPE_STRING;
+            $$=DRIZZLE_TYPE_STRING;
           }
         | char opt_binary
           {
             Lex->length=(char*) "1";
-            $$=MYSQL_TYPE_STRING;
+            $$=DRIZZLE_TYPE_STRING;
           }
         | nchar '(' NUM ')' opt_bin_mod
           {
             Lex->length=$3.str;
-            $$=MYSQL_TYPE_STRING;
+            $$=DRIZZLE_TYPE_STRING;
             Lex->charset=national_charset_info;
           }
         | nchar opt_bin_mod
           {
             Lex->length=(char*) "1";
-            $$=MYSQL_TYPE_STRING;
+            $$=DRIZZLE_TYPE_STRING;
             Lex->charset=national_charset_info;
           }
         | BINARY '(' NUM ')'
           {
             Lex->length=$3.str;
             Lex->charset=&my_charset_bin;
-            $$=MYSQL_TYPE_STRING;
+            $$=DRIZZLE_TYPE_STRING;
           }
         | BINARY
           {
             Lex->length= (char*) "1";
             Lex->charset=&my_charset_bin;
-            $$=MYSQL_TYPE_STRING;
+            $$=DRIZZLE_TYPE_STRING;
           }
         | varchar '(' NUM ')' opt_binary
           {
             Lex->length=$3.str;
-            $$= MYSQL_TYPE_VARCHAR;
+            $$= DRIZZLE_TYPE_VARCHAR;
           }
         | nvarchar '(' NUM ')' opt_bin_mod
           {
             Lex->length=$3.str;
-            $$= MYSQL_TYPE_VARCHAR;
+            $$= DRIZZLE_TYPE_VARCHAR;
             Lex->charset=national_charset_info;
           }
         | VARBINARY '(' NUM ')'
           {
             Lex->length=$3.str;
             Lex->charset=&my_charset_bin;
-            $$= MYSQL_TYPE_VARCHAR;
+            $$= DRIZZLE_TYPE_VARCHAR;
           }
         | YEAR_SYM opt_len field_options
-          { $$=MYSQL_TYPE_YEAR; }
+          { $$=DRIZZLE_TYPE_YEAR; }
         | DATE_SYM
-          { $$=MYSQL_TYPE_NEWDATE; }
+          { $$=DRIZZLE_TYPE_NEWDATE; }
         | TIME_SYM
-          { $$=MYSQL_TYPE_TIME; }
+          { $$=DRIZZLE_TYPE_TIME; }
         | TIMESTAMP
           {
             /* Unlike other types TIMESTAMP fields are NOT NULL by default */
             Lex->type|= NOT_NULL_FLAG;
-            $$=MYSQL_TYPE_TIMESTAMP;
+            $$=DRIZZLE_TYPE_TIMESTAMP;
           }
         | DATETIME
-          { $$=MYSQL_TYPE_DATETIME; }
+          { $$=DRIZZLE_TYPE_DATETIME; }
         | BLOB_SYM opt_len
           {
             Lex->charset=&my_charset_bin;
-            $$=MYSQL_TYPE_BLOB;
+            $$=DRIZZLE_TYPE_BLOB;
           }
         | TEXT_SYM opt_len opt_binary
-          { $$=MYSQL_TYPE_BLOB; }
+          { $$=DRIZZLE_TYPE_BLOB; }
         | DECIMAL_SYM float_options field_options
-          { $$=MYSQL_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | NUMERIC_SYM float_options field_options
-          { $$=MYSQL_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | FIXED_SYM float_options field_options
-          { $$=MYSQL_TYPE_NEWDECIMAL;}
+          { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | ENUM
           {Lex->interval_list.empty();}
           '(' string_list ')' opt_binary
-          { $$=MYSQL_TYPE_ENUM; }
+          { $$=DRIZZLE_TYPE_ENUM; }
         | SET
           { Lex->interval_list.empty();}
           '(' string_list ')' opt_binary
-          { $$=MYSQL_TYPE_SET; }
+          { $$=DRIZZLE_TYPE_SET; }
         | SERIAL_SYM
           {
-            $$=MYSQL_TYPE_LONGLONG;
+            $$=DRIZZLE_TYPE_LONGLONG;
             Lex->type|= (AUTO_INCREMENT_FLAG | NOT_NULL_FLAG | UNSIGNED_FLAG |
               UNIQUE_FLAG);
           }
@@ -1938,21 +1938,21 @@ nvarchar:
         ;
 
 int_type:
-          INT_SYM   { $$=MYSQL_TYPE_LONG; }
-        | TINYINT   { $$=MYSQL_TYPE_TINY; }
-        | SMALLINT  { $$=MYSQL_TYPE_SHORT; }
-        | BIGINT    { $$=MYSQL_TYPE_LONGLONG; }
+          INT_SYM   { $$=DRIZZLE_TYPE_LONG; }
+        | TINYINT   { $$=DRIZZLE_TYPE_TINY; }
+        | SMALLINT  { $$=DRIZZLE_TYPE_SHORT; }
+        | BIGINT    { $$=DRIZZLE_TYPE_LONGLONG; }
         ;
 
 real_type:
           REAL
           {
-            $$= MYSQL_TYPE_DOUBLE;
+            $$= DRIZZLE_TYPE_DOUBLE;
           }
         | DOUBLE_SYM
-          { $$=MYSQL_TYPE_DOUBLE; }
+          { $$=DRIZZLE_TYPE_DOUBLE; }
         | DOUBLE_SYM PRECISION
-          { $$=MYSQL_TYPE_DOUBLE; }
+          { $$=DRIZZLE_TYPE_DOUBLE; }
         ;
 
 float_options:

@@ -188,18 +188,18 @@ bool show_slave_hosts(THD* thd)
   Protocol *protocol= thd->protocol;
 
   field_list.push_back(new Item_return_int("Server_id", 10,
-					   MYSQL_TYPE_LONG));
+					   DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_empty_string("Host", 20));
   if (opt_show_slave_auth_info)
   {
     field_list.push_back(new Item_empty_string("User",20));
     field_list.push_back(new Item_empty_string("Password",20));
   }
-  field_list.push_back(new Item_return_int("Port", 7, MYSQL_TYPE_LONG));
+  field_list.push_back(new Item_return_int("Port", 7, DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_return_int("Rpl_recovery_rank", 7,
-					   MYSQL_TYPE_LONG));
+					   DRIZZLE_TYPE_LONG));
   field_list.push_back(new Item_return_int("Master_id", 10,
-					   MYSQL_TYPE_LONG));
+					   DRIZZLE_TYPE_LONG));
 
   if (protocol->send_fields(&field_list,
                             Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))

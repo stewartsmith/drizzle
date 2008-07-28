@@ -950,9 +950,9 @@ enum_monotonicity_info Item_func_to_days::get_monotonicity_info() const
 {
   if (args[0]->type() == Item::FIELD_ITEM)
   {
-    if (args[0]->field_type() == MYSQL_TYPE_NEWDATE)
+    if (args[0]->field_type() == DRIZZLE_TYPE_NEWDATE)
       return MONOTONIC_STRICT_INCREASING;
-    if (args[0]->field_type() == MYSQL_TYPE_DATETIME)
+    if (args[0]->field_type() == DRIZZLE_TYPE_DATETIME)
       return MONOTONIC_INCREASING;
   }
   return NON_MONOTONIC;
@@ -971,7 +971,7 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
   }
   res=(int64_t) calc_daynr(ltime.year,ltime.month,ltime.day);
   
-  if (args[0]->field_type() == MYSQL_TYPE_NEWDATE)
+  if (args[0]->field_type() == DRIZZLE_TYPE_NEWDATE)
   {
     // TO_DAYS() is strictly monotonic for dates, leave incl_endp intact
     return res;
@@ -1206,8 +1206,8 @@ int64_t Item_func_year::val_int()
 enum_monotonicity_info Item_func_year::get_monotonicity_info() const
 {
   if (args[0]->type() == Item::FIELD_ITEM &&
-      (args[0]->field_type() == MYSQL_TYPE_NEWDATE ||
-       args[0]->field_type() == MYSQL_TYPE_DATETIME))
+      (args[0]->field_type() == DRIZZLE_TYPE_NEWDATE ||
+       args[0]->field_type() == DRIZZLE_TYPE_DATETIME))
     return MONOTONIC_INCREASING;
   return NON_MONOTONIC;
 }
@@ -1254,7 +1254,7 @@ int64_t Item_func_unix_timestamp::val_int()
   if (args[0]->type() == FIELD_ITEM)
   {						// Optimize timestamp field
     Field *field=((Item_field*) args[0])->field;
-    if (field->type() == MYSQL_TYPE_TIMESTAMP)
+    if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
       return ((Field_timestamp*) field)->get_timestamp(&null_value);
   }
   
@@ -2016,24 +2016,24 @@ void Item_date_add_interval::fix_length_and_dec()
     The field type for the result of an Item_date function is defined as
     follows:
 
-    - If first arg is a MYSQL_TYPE_DATETIME result is MYSQL_TYPE_DATETIME
-    - If first arg is a MYSQL_TYPE_NEWDATE and the interval type uses hours,
-      minutes or seconds then type is MYSQL_TYPE_DATETIME.
-    - Otherwise the result is MYSQL_TYPE_STRING
+    - If first arg is a DRIZZLE_TYPE_DATETIME result is DRIZZLE_TYPE_DATETIME
+    - If first arg is a DRIZZLE_TYPE_NEWDATE and the interval type uses hours,
+      minutes or seconds then type is DRIZZLE_TYPE_DATETIME.
+    - Otherwise the result is DRIZZLE_TYPE_STRING
       (This is because you can't know if the string contains a DATE, MYSQL_TIME or
       DATETIME argument)
   */
-  cached_field_type= MYSQL_TYPE_STRING;
+  cached_field_type= DRIZZLE_TYPE_STRING;
   arg0_field_type= args[0]->field_type();
-  if (arg0_field_type == MYSQL_TYPE_DATETIME ||
-      arg0_field_type == MYSQL_TYPE_TIMESTAMP)
-    cached_field_type= MYSQL_TYPE_DATETIME;
-  else if (arg0_field_type == MYSQL_TYPE_NEWDATE)
+  if (arg0_field_type == DRIZZLE_TYPE_DATETIME ||
+      arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
+    cached_field_type= DRIZZLE_TYPE_DATETIME;
+  else if (arg0_field_type == DRIZZLE_TYPE_NEWDATE)
   {
     if (int_type <= INTERVAL_DAY || int_type == INTERVAL_YEAR_MONTH)
       cached_field_type= arg0_field_type;
     else
-      cached_field_type= MYSQL_TYPE_DATETIME;
+      cached_field_type= DRIZZLE_TYPE_DATETIME;
   }
 }
 
@@ -2626,20 +2626,20 @@ void Item_func_add_time::fix_length_and_dec()
     The field type for the result of an Item_func_add_time function is defined
     as follows:
 
-    - If first arg is a MYSQL_TYPE_DATETIME or MYSQL_TYPE_TIMESTAMP 
-      result is MYSQL_TYPE_DATETIME
-    - If first arg is a MYSQL_TYPE_TIME result is MYSQL_TYPE_TIME
-    - Otherwise the result is MYSQL_TYPE_STRING
+    - If first arg is a DRIZZLE_TYPE_DATETIME or DRIZZLE_TYPE_TIMESTAMP 
+      result is DRIZZLE_TYPE_DATETIME
+    - If first arg is a DRIZZLE_TYPE_TIME result is DRIZZLE_TYPE_TIME
+    - Otherwise the result is DRIZZLE_TYPE_STRING
   */
 
-  cached_field_type= MYSQL_TYPE_STRING;
+  cached_field_type= DRIZZLE_TYPE_STRING;
   arg0_field_type= args[0]->field_type();
-  if (arg0_field_type == MYSQL_TYPE_NEWDATE ||
-      arg0_field_type == MYSQL_TYPE_DATETIME ||
-      arg0_field_type == MYSQL_TYPE_TIMESTAMP)
-    cached_field_type= MYSQL_TYPE_DATETIME;
-  else if (arg0_field_type == MYSQL_TYPE_TIME)
-    cached_field_type= MYSQL_TYPE_TIME;
+  if (arg0_field_type == DRIZZLE_TYPE_NEWDATE ||
+      arg0_field_type == DRIZZLE_TYPE_DATETIME ||
+      arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
+    cached_field_type= DRIZZLE_TYPE_DATETIME;
+  else if (arg0_field_type == DRIZZLE_TYPE_TIME)
+    cached_field_type= DRIZZLE_TYPE_TIME;
 }
 
 /**
@@ -3160,7 +3160,7 @@ void Item_func_str_to_date::fix_length_and_dec()
 {
   maybe_null= 1;
   decimals=0;
-  cached_field_type= MYSQL_TYPE_DATETIME;
+  cached_field_type= DRIZZLE_TYPE_DATETIME;
   max_length= MAX_DATETIME_FULL_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   cached_timestamp_type= MYSQL_TIMESTAMP_NONE;
   if ((const_item= args[1]->const_item()))
@@ -3175,18 +3175,18 @@ void Item_func_str_to_date::fix_length_and_dec()
       switch (cached_format_type) {
       case DATE_ONLY:
         cached_timestamp_type= MYSQL_TIMESTAMP_DATE;
-        cached_field_type= MYSQL_TYPE_NEWDATE; 
+        cached_field_type= DRIZZLE_TYPE_NEWDATE; 
         max_length= MAX_DATE_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       case TIME_ONLY:
       case TIME_MICROSECOND:
         cached_timestamp_type= MYSQL_TIMESTAMP_TIME;
-        cached_field_type= MYSQL_TYPE_TIME; 
+        cached_field_type= DRIZZLE_TYPE_TIME; 
         max_length= MAX_TIME_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       default:
         cached_timestamp_type= MYSQL_TIMESTAMP_DATETIME;
-        cached_field_type= MYSQL_TYPE_DATETIME; 
+        cached_field_type= DRIZZLE_TYPE_DATETIME; 
         break;
       }
     }

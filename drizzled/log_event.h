@@ -2997,25 +2997,25 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_TINY</td><td>1</td>
+    <td>DRIZZLE_TYPE_TINY</td><td>1</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_SHORT</td><td>2</td>
+    <td>DRIZZLE_TYPE_SHORT</td><td>2</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_LONG</td><td>3</td>
+    <td>DRIZZLE_TYPE_LONG</td><td>3</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_DOUBLE</td><td>5</td>
+    <td>DRIZZLE_TYPE_DOUBLE</td><td>5</td>
     <td>1 byte</td>
     <td>1 byte unsigned integer, representing the "pack_length", which
     is equal to sizeof(double) on the server from which the event
@@ -3023,93 +3023,93 @@ char *str_to_hex(char *to, const char *from, uint len);
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_NULL</td><td>6</td>
+    <td>DRIZZLE_TYPE_NULL</td><td>6</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_TIMESTAMP</td><td>7</td>
+    <td>DRIZZLE_TYPE_TIMESTAMP</td><td>7</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_LONGLONG</td><td>8</td>
+    <td>DRIZZLE_TYPE_LONGLONG</td><td>8</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_DATE</td><td>10</td>
+    <td>DRIZZLE_TYPE_DATE</td><td>10</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_TIME</td><td>11</td>
+    <td>DRIZZLE_TYPE_TIME</td><td>11</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_DATETIME</td><td>12</td>
+    <td>DRIZZLE_TYPE_DATETIME</td><td>12</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_YEAR</td><td>13</td>
+    <td>DRIZZLE_TYPE_YEAR</td><td>13</td>
     <td>0</td>
     <td>No column metadata.</td>
   </tr>
 
   <tr>
-    <td><i>MYSQL_TYPE_NEWDATE</i></td><td><i>14</i></td>
+    <td><i>DRIZZLE_TYPE_NEWDATE</i></td><td><i>14</i></td>
     <td>&ndash;</td>
     <td><i>This enumeration value is only used internally and cannot
     exist in a binlog.</i></td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_VARCHAR</td><td>15</td>
+    <td>DRIZZLE_TYPE_VARCHAR</td><td>15</td>
     <td>2 bytes</td>
     <td>2 byte unsigned integer representing the maximum length of
     the string.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_NEWDECIMAL</td><td>246</td>
+    <td>DRIZZLE_TYPE_NEWDECIMAL</td><td>246</td>
     <td>2 bytes</td>
     <td>A 1 byte unsigned int representing the precision, followed
     by a 1 byte unsigned int representing the number of decimals.</td>
   </tr>
 
   <tr>
-    <td><i>MYSQL_TYPE_ENUM</i></td><td><i>247</i></td>
+    <td><i>DRIZZLE_TYPE_ENUM</i></td><td><i>247</i></td>
     <td>&ndash;</td>
     <td><i>This enumeration value is only used internally and cannot
     exist in a binlog.</i></td>
   </tr>
 
   <tr>
-    <td><i>MYSQL_TYPE_SET</i></td><td><i>248</i></td>
+    <td><i>DRIZZLE_TYPE_SET</i></td><td><i>248</i></td>
     <td>&ndash;</td>
     <td><i>This enumeration value is only used internally and cannot
     exist in a binlog.</i></td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_BLOB</td><td>252</td>
+    <td>DRIZZLE_TYPE_BLOB</td><td>252</td>
     <td>1 byte</td>
     <td>The pack length, i.e., the number of bytes needed to represent
     the length of the blob: 1, 2, 3, or 4.</td>
   </tr>
 
   <tr>
-    <td>MYSQL_TYPE_STRING</td><td>254</td>
+    <td>DRIZZLE_TYPE_STRING</td><td>254</td>
     <td>2 bytes</td>
-    <td>The first byte is always MYSQL_TYPE_VAR_STRING (i.e., 253).
+    <td>The first byte is always DRIZZLE_TYPE_VAR_STRING (i.e., 253).
     The second byte is the field size, i.e., the number of bytes in
     the representation of size of the string: 3 or 4.</td>
   </tr>

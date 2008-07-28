@@ -378,7 +378,7 @@ public:
   int64_t val_int();
   my_decimal *val_decimal(my_decimal*);
   enum Item_result result_type () const { return DECIMAL_RESULT; }
-  enum_field_types field_type() const { return MYSQL_TYPE_NEWDECIMAL; }
+  enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDECIMAL; }
   void fix_length_and_dec() {};
   const char *func_name() const { return "decimal_typecast"; }
   virtual void print(String *str, enum_query_type query_type);

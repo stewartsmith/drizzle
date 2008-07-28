@@ -757,7 +757,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
       uint64_t value;
       bool error;
       String tmp, *str_val= 0;
-      timestamp_type t_type= (date_arg->field_type() == MYSQL_TYPE_NEWDATE ?
+      timestamp_type t_type= (date_arg->field_type() == DRIZZLE_TYPE_NEWDATE ?
                               MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME);
 
       str_val= str_arg->val_str(&tmp);
@@ -878,8 +878,8 @@ int Arg_comparator::set_cmp_func(Item_bool_func2 *owner_arg,
     get_value_func= &get_datetime_value;
     return 0;
   }
-  else if (type == STRING_RESULT && (*a)->field_type() == MYSQL_TYPE_TIME &&
-           (*b)->field_type() == MYSQL_TYPE_TIME)
+  else if (type == STRING_RESULT && (*a)->field_type() == DRIZZLE_TYPE_TIME &&
+           (*b)->field_type() == DRIZZLE_TYPE_TIME)
   {
     /* Compare TIME values as integers. */
     thd= current_thd;
@@ -956,13 +956,13 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     *is_null= item->null_value;
     enum_field_types f_type= item->field_type();
     /*
-      Item_date_add_interval may return MYSQL_TYPE_STRING as the result
+      Item_date_add_interval may return DRIZZLE_TYPE_STRING as the result
       field type. To detect that the DATE value has been returned we
       compare it with 100000000L - any DATE value should be less than it.
       Don't shift cached DATETIME values up for the second time.
     */
-    if (f_type == MYSQL_TYPE_NEWDATE ||
-        (f_type != MYSQL_TYPE_DATETIME && value < 100000000L))
+    if (f_type == DRIZZLE_TYPE_NEWDATE ||
+        (f_type != DRIZZLE_TYPE_DATETIME && value < 100000000L))
       value*= 1000000L;
   }
   else
@@ -983,7 +983,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     bool error;
     enum_field_types f_type= warn_item->field_type();
     timestamp_type t_type= f_type ==
-      MYSQL_TYPE_NEWDATE ? MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME;
+      DRIZZLE_TYPE_NEWDATE ? MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME;
     value= get_date_from_str(thd, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current
@@ -999,7 +999,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
   if (item->const_item() && cache_arg && (item->type() != Item::FUNC_ITEM ||
       ((Item_func*)item)->functype() != Item_func::GUSERVAR_FUNC))
   {
-    Item_cache_int *cache= new Item_cache_int(MYSQL_TYPE_DATETIME);
+    Item_cache_int *cache= new Item_cache_int(DRIZZLE_TYPE_DATETIME);
     /* Mark the cache as non-const to prevent re-caching. */
     cache->set_used_tables(1);
     cache->store(item, value);
@@ -2020,7 +2020,7 @@ void Item_func_between::fix_length_and_dec()
         datetime_found= true;
         continue;
       }
-      if (args[i]->field_type() == MYSQL_TYPE_TIME &&
+      if (args[i]->field_type() == DRIZZLE_TYPE_TIME &&
           args[i]->result_as_int64_t())
         time_items_found++;
     }
@@ -3625,7 +3625,7 @@ void Item_func_in::fix_length_and_dec()
             */
             if (!date_arg)
               date_arg= itm;
-            else if (itm->field_type() == MYSQL_TYPE_DATETIME)
+            else if (itm->field_type() == DRIZZLE_TYPE_DATETIME)
             {
               date_arg= itm;
               /* All arguments are already checked to have the STRING result. */

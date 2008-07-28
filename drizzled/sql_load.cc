@@ -595,7 +595,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
         push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 
                             ER_WARN_TOO_FEW_RECORDS, 
                             ER(ER_WARN_TOO_FEW_RECORDS), thd->row_count);
-        if (!field->maybe_null() && field->type() == FIELD_TYPE_TIMESTAMP)
+        if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
             ((Field_timestamp*) field)->set_time();
       }
       else
@@ -711,7 +711,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
           field->set_null();
           if (!field->maybe_null())
           {
-            if (field->type() == MYSQL_TYPE_TIMESTAMP)
+            if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
               ((Field_timestamp*) field)->set_time();
             else if (field != table->next_number_field)
               field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
@@ -776,7 +776,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
                      thd->row_count);
             return(1);
           }
-          if (!field->maybe_null() && field->type() == FIELD_TYPE_TIMESTAMP)
+          if (!field->maybe_null() && field->type() == DRIZZLE_TYPE_TIMESTAMP)
               ((Field_timestamp*) field)->set_time();
           /*
             QQ: We probably should not throw warning for each field.
@@ -894,7 +894,7 @@ read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
             table->auto_increment_field_not_null= true;
           if (!field->maybe_null())
           {
-            if (field->type() == FIELD_TYPE_TIMESTAMP)
+            if (field->type() == DRIZZLE_TYPE_TIMESTAMP)
               ((Field_timestamp *) field)->set_time();
             else if (field != table->next_number_field)
               field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,

@@ -35,7 +35,7 @@ public:
              CHARSET_INFO *cs)
     :Field_str((uchar*) 0,8, maybe_null_arg ? (uchar*) "": 0,0,
 	       NONE, field_name_arg, cs) {}
-  enum_field_types type() const { return MYSQL_TYPE_TIME;}
+  enum_field_types type() const { return DRIZZLE_TYPE_TIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_INT24; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   int store_time(MYSQL_TIME *ltime, timestamp_type type);

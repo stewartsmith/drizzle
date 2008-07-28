@@ -203,7 +203,7 @@ void Field_string::sql_type(String &res) const
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
                              res.alloced_length(), "%s(%d)",
-                             ((type() == MYSQL_TYPE_VAR_STRING &&
+                             ((type() == DRIZZLE_TYPE_VAR_STRING &&
                                !thd->variables.new_mode) ?
                               (has_charset() ? "varchar" : "varbinary") :
 			      (has_charset() ? "char" : "binary")),
@@ -412,7 +412,7 @@ Field *Field_string::new_field(MEM_ROOT *root, struct st_table *new_table,
                                bool keep_type)
 {
   Field *field;
-  if (type() != MYSQL_TYPE_VAR_STRING || keep_type)
+  if (type() != DRIZZLE_TYPE_VAR_STRING || keep_type)
     field= Field::new_field(root, new_table, keep_type);
   else if ((field= new Field_varstring(field_length, maybe_null(), field_name,
                                        new_table->s, charset())))
