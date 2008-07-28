@@ -25,9 +25,7 @@ HEADERS_ABI =		drizzle.h \
 			drizzle_com.h \
 			drizzle_time.h \
 			my_list.h \
-			typelib.h \
-			drizzle/plugin.h \
-			drizzle/plugin_audit.h
+			typelib.h
 
 pkginclude_HEADERS =	$(HEADERS_ABI) \
 			m_string.h \

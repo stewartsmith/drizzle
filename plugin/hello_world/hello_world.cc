@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <drizzle_version.h>
-#include <drizzle/plugin.h>
+#include <drizzled/plugin.h>
 #include <my_global.h>
 #include <my_dir.h>
 

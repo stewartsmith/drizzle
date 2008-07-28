@@ -31,7 +31,7 @@ extern "C" {
 #include "keycache.h"
 #endif
 #include "my_handler.h"
-#include <drizzle/plugin.h>
+#include <drizzled/plugin.h>
 
 /*
   Limit max keys according to HA_MAX_POSSIBLE_KEY

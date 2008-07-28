@@ -47,6 +47,9 @@ DTRACEFILES = handler.o \
 	      sql_select.o \
 	      sql_update.o
 
+pkginclude_HEADERS =	plugin.h \
+			plugin_audit.h
+
 noinst_LTLIBRARIES = libhandler.la
 
 AM_CPPFLAGS =	-I$(top_srcdir)/mystrings \
