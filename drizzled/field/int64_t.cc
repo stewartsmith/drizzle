@@ -191,8 +191,7 @@ String *Field_int64_t::val_str(String *val_buffer,
   length=(uint) (cs->cset->int64_t10_to_str)(cs,to,mlength,
 					unsigned_flag ? 10 : -10, j);
   val_buffer->length(length);
-  if (zerofill)
-    prepend_zeros(val_buffer);
+
   return val_buffer;
 }
 
@@ -264,7 +263,7 @@ void Field_int64_t::sql_type(String &res) const
   CHARSET_INFO *cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			  "bigint(%d)",(int) field_length));
-  add_zerofill_and_unsigned(res);
+  add_unsigned(res);
 }
 
 

@@ -208,8 +208,8 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
  {&Arg_comparator::compare_row,        &Arg_comparator::compare_e_row},
  {&Arg_comparator::compare_decimal,    &Arg_comparator::compare_e_decimal}};
 
-const char *log_output_names[] = { "NONE", "FILE", "TABLE", NullS};
-static const unsigned int log_output_names_len[]= { 4, 4, 5, 0 };
+const char *log_output_names[] = { "NONE", "FILE", NullS};
+static const unsigned int log_output_names_len[]= { 4, 4, 0 };
 TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
                              log_output_names, 
                              (unsigned int *) log_output_names_len};
@@ -1746,19 +1746,9 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
                       REFRESH_THREADS | REFRESH_HOSTS),
                      (TABLE_LIST*) 0, &not_used); // Flush logs
       }
-      /* reenable logs after the options were reloaded */
-      if (log_output_options & LOG_NONE)
-      {
-        logger.set_handlers(LOG_FILE,
-                            opt_slow_log ? LOG_TABLE : LOG_NONE,
-                            opt_log ? LOG_TABLE : LOG_NONE);
-      }
-      else
-      {
-        logger.set_handlers(LOG_FILE,
-                            opt_slow_log ? log_output_options : LOG_NONE,
-                            opt_log ? log_output_options : LOG_NONE);
-      }
+      logger.set_handlers(LOG_FILE,
+                          opt_slow_log ? log_output_options : LOG_NONE,
+                          opt_log ? log_output_options : LOG_NONE);
       break;
 #ifdef USE_ONE_SIGNAL_HAND
     case THR_SERVER_ALARM:

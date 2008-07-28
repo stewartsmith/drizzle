@@ -50,12 +50,16 @@ drop table t1;
 #
 
 create table t1 (a decimal(4,2));
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 value (10000), (1.1e10), ("11111"), (100000.1);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 value (-10000), (-1.1e10), ("-11111"), (-100000.1);
 select a from t1;
 drop table t1;
 create table t1 (a decimal(4,2) unsigned);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 value (10000), (1.1e10), ("11111"), (100000.1);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 value (-10000), (-1.1e10), ("-11111"), (-100000.1);
 select a from t1;
 drop table t1;
@@ -65,20 +69,27 @@ drop table t1;
 # saving in field with overflow from decimal
 #
 create table t1 (a bigint);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (18446744073709551615.0);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (9223372036854775808.0);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (-18446744073709551615.0);
 select * from t1;
 drop table t1;
 create table t1 (a bigint unsigned);
 insert into t1 values (18446744073709551615.0);
 insert into t1 values (9223372036854775808.0);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (9999999999999999999999999.000);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (-1.0);
 select * from t1;
 drop table t1;
 create table t1 (a tinyint);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (18446744073709551615.0);
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values (9223372036854775808.0);
 select * from t1;
 drop table t1;
@@ -93,7 +104,6 @@ drop table t1;
 #
 # Trydy's tests
 #
-set session sql_mode='traditional';
 select 1e10/0e0;
 create table wl1612 (col1 int, col2 decimal(38,10), col3 numeric(38,10));
 insert into wl1612 values(1,12345678901234567890.1234567890,12345678901234567890.1234567890);
@@ -476,8 +486,6 @@ drop table wl1612_4;
 #-- Comparisons should show that a number is
 #-- exactly equal to its value as displayed.
 #
-set sql_mode='';
-#
 select 23.4 + (-41.7), 23.4 - (41.7) = -18.3;
 #
 select -18.3=-18.3;
@@ -708,9 +716,6 @@ select 0.07 * 0.07;
 #-- should return 0.0049
 #
 #-- From WL#1612, "The future", point 5.: Division by zero is an error.
-#
-set sql_mode='traditional';
-#
 select 1E-500 = 0;
 #-- should return 1 (true).
 #
@@ -812,8 +817,6 @@ select 1 / 0;
 
 # Tests from 'traditional' mode tests
 #
-set sql_mode='ansi,traditional';
-#
 CREATE TABLE Sow6_2f (col1 NUMERIC(4,2));
 #-- should return OK
 INSERT INTO Sow6_2f VALUES (10.55);
@@ -829,11 +832,11 @@ INSERT INTO Sow6_2f VALUES (11);
 -- error 1264
 INSERT INTO Sow6_2f VALUES (101.55);
 #-- should return SQLSTATE 22003 numeric value out of range
--- error 1264
-UPDATE Sow6_2f SET col1 = col1 * 50 WHERE col1 = 11;
+#-- error 1264
+#UPDATE Sow6_2f SET col1 = col1 * 50 WHERE col1 = 11;
 #-- should return SQLSTATE 22003 numeric value out of range
--- error 1365
-UPDATE Sow6_2f SET col1 = col1 / 0 WHERE col1 > 0;
+#-- error 1365
+#UPDATE Sow6_2f SET col1 = col1 / 0 WHERE col1 > 0;
 #-- should return SQLSTATE 22012 division by zero
 SELECT MOD(col1,0) FROM Sow6_2f;
 #-- should return SQLSTATE 22012 division by zero
@@ -851,7 +854,6 @@ select 10.3330000000000/12.34500000;
 # Bug #10404
 #
 
-set sql_mode='';
 select 0/0;
 
 #
@@ -894,7 +896,6 @@ select abs(NULL);
 #
 # Bug #9894 (negative to unsigned column)
 #
-set @@sql_mode='traditional';
 create table t1( d1 decimal(18) unsigned, d2 decimal(20) unsigned, d3 decimal (22) unsigned);
 --error 1264
 insert into t1 values(1,-1,-1);
@@ -906,7 +907,6 @@ insert into t1 values (999.999,999.999);
 insert into t1 values (-999.999,-999.999);
 select * from t1;
 drop table t1;
-set sql_mode='';
 
 #
 # Bug #8425 (insufficient precision of the division)
@@ -992,39 +992,10 @@ drop table t1;
 # Bug 12173 (show create table fails)
 #
 create table t1 (
-        f0 decimal (30,30) zerofill not null DEFAULT 0,
-        f1 decimal (0,0) zerofill not null default 0);
+        f0 decimal (30,30) not null DEFAULT 0,
+        f1 decimal (0,0) not null default 0);
 show create table t1;
 drop table t1;
-
-#
-# Bug 12938 (arithmetic loop's zero)
-#
---disable_warnings
-drop procedure if exists wg2;
---enable_warnings
-delimiter //;
-create procedure wg2()
-begin
-  declare v int default 1;
-  declare tdec decimal(5) default 0;
-  while v <= 9 do set tdec =tdec * 10;
-    select v, tdec;
-    set v = v + 1;
-  end while;
-end//
-
-call wg2()//
-
-delimiter ;//
-drop procedure wg2;
-
-#
-# Bug #12979 Stored procedures: crash if inout decimal parameter
-# (not a SP bug in fact)
-#
-
-select cast(@non_existing_user_var/2 as DECIMAL);
 
 #
 # Bug #13667 (Inconsistency for decimal(m,d) specification
@@ -1087,13 +1058,14 @@ DROP TABLE t1;
 #
 
 create table t1 (c1 decimal(64));
---disable_ps_protocol
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values(
 89000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
+--error ER_TRUNCATED_WRONG_VALUE
 insert into t1 values(
 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999 *
 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999);
---enable_ps_protocol
+--error ER_WARN_DATA_OUT_OF_RANGE
 insert into t1 values(1e100);
 select * from t1;
 drop table t1;
@@ -1219,10 +1191,8 @@ DROP TABLE t1;
 
 # too many decimal places, AND too many digits altogether (90 = 45+45).
 # should preserve integers (65 = 45+20)
+--error ER_WARN_DATA_OUT_OF_RANGE
 CREATE TABLE t1 SELECT 123451234512345123451234512345123451234512345.678906789067890678906789067890678906789067890 AS f1;
-DESC t1;
-SELECT f1 FROM t1;
-DROP TABLE t1;
 
 --echo End of 5.0 tests
 

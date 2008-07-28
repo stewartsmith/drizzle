@@ -2943,7 +2943,6 @@ static char *fieldflags2str(uint f) {
   ff2s_check_flag(MULTIPLE_KEY);
   ff2s_check_flag(BLOB);
   ff2s_check_flag(UNSIGNED);
-  ff2s_check_flag(ZEROFILL);
   ff2s_check_flag(BINARY);
   ff2s_check_flag(ENUM);
   ff2s_check_flag(AUTO_INCREMENT);

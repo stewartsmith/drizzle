@@ -219,8 +219,7 @@ String *Field_double::val_str(String *val_buffer,
     len= my_fcvt(nr, dec, to, NULL);
 
   val_buffer->length((uint) len);
-  if (zerofill)
-    prepend_zeros(val_buffer);
+
   return val_buffer;
 }
 
@@ -297,6 +296,6 @@ void Field_double::sql_type(String &res) const
     res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			    "double(%d,%d)",(int) field_length,dec));
   }
-  add_zerofill_and_unsigned(res);
+  add_unsigned(res);
 }
 

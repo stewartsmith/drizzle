@@ -29,7 +29,6 @@ HEADERS_ABI =		drizzle.h \
 
 pkginclude_HEADERS =	$(HEADERS_ABI) \
 			m_string.h \
-			my_xml.h \
 			errmsg.h \
 			my_global.h \
 			my_net.h \

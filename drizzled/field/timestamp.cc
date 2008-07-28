@@ -79,7 +79,7 @@ Field_timestamp::Field_timestamp(uchar *ptr_arg,
 	     unireg_check_arg, field_name_arg, cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
-  flags|= ZEROFILL_FLAG | UNSIGNED_FLAG;
+  flags|= UNSIGNED_FLAG;
   if (!share->timestamp_field && unireg_check != NONE)
   {
     /* This timestamp has auto-update */
@@ -99,7 +99,7 @@ Field_timestamp::Field_timestamp(bool maybe_null_arg,
 	     NONE, field_name_arg, cs)
 {
   /* For 4.0 MYD and 4.0 InnoDB compatibility */
-  flags|= ZEROFILL_FLAG | UNSIGNED_FLAG;
+  flags|= UNSIGNED_FLAG;
     if (unireg_check != TIMESTAMP_DN_FIELD)
       flags|= ON_UPDATE_NOW_FLAG;
 }
