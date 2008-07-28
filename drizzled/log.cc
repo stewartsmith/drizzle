@@ -542,13 +542,6 @@ void LOGGER::init_error_log(uint error_log_printer)
     error_log_handler_list[0]= file_log_handler;
     error_log_handler_list[1]= 0;
     break;
-    /* these two are disabled for now */
-  case LOG_TABLE:
-    assert(0);
-    break;
-  case LOG_TABLE|LOG_FILE:
-    assert(0);
-    break;
   }
 }
 
@@ -645,8 +638,6 @@ int LOGGER::set_handlers(uint error_log_printer,
                          uint general_log_printer)
 {
   /* error log table is not supported yet */
-  assert(error_log_printer < LOG_TABLE);
-
   lock_exclusive();
 
   init_error_log(error_log_printer);

@@ -152,7 +152,6 @@ typedef struct st_log_info
 /* log event handler flags */
 #define LOG_NONE       1
 #define LOG_FILE       2
-#define LOG_TABLE      4
 
 class Log_event;
 class Rows_log_event;
