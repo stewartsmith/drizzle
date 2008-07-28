@@ -1804,7 +1804,11 @@ field_spec:
         ;
 
 type:
-          int_type opt_len field_options { $$=$1; }
+        int_type field_options 
+        { 
+          $$=$1; 
+          Lex->length=(char*) 0; /* use default length */
+        }
         | real_type opt_precision field_options { $$=$1; }
         | BIT_SYM
           {
@@ -1872,8 +1876,6 @@ type:
             Lex->charset=&my_charset_bin;
             $$= DRIZZLE_TYPE_VARCHAR;
           }
-        | YEAR_SYM opt_len field_options
-          { $$=DRIZZLE_TYPE_YEAR; }
         | DATE_SYM
           { $$=DRIZZLE_TYPE_NEWDATE; }
         | TIME_SYM

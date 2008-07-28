@@ -56,9 +56,9 @@ extern char *drizzle_unix_port;
 #define IS_PRI_KEY(n)  ((n) & PRI_KEY_FLAG)
 #define IS_NOT_NULL(n)  ((n) & NOT_NULL_FLAG)
 #define IS_BLOB(n)  ((n) & BLOB_FLAG)
-#define IS_NUM(t)  ((t) <= DRIZZLE_TYPE_LONGLONG || (t) == DRIZZLE_TYPE_YEAR || (t) == DRIZZLE_TYPE_NEWDECIMAL)
+#define IS_NUM(t)  ((t) <= DRIZZLE_TYPE_LONGLONG || (t) == DRIZZLE_TYPE_NEWDECIMAL)
 #define IS_NUM_FIELD(f)   ((f)->flags & NUM_FLAG)
-#define INTERNAL_NUM_FIELD(f) (((f)->type <= DRIZZLE_TYPE_LONGLONG && ((f)->type != DRIZZLE_TYPE_TIMESTAMP || (f)->length == 14 || (f)->length == 8)) || (f)->type == DRIZZLE_TYPE_YEAR)
+#define INTERNAL_NUM_FIELD(f) (((f)->type <= DRIZZLE_TYPE_LONGLONG && ((f)->type != DRIZZLE_TYPE_TIMESTAMP || (f)->length == 14 || (f)->length == 8)))
 #define IS_LONGDATA(t) ((t) >= DRIZZLE_TYPE_TINY_BLOB && (t) <= DRIZZLE_TYPE_STRING)
 
 
@@ -299,7 +299,7 @@ DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void);
   connection.  All uses of the connection(s) should be between these
   function calls.
 */
-my_bool STDCALL drizzle_thread_init(void);
+bool STDCALL drizzle_thread_init(void);
 void STDCALL drizzle_thread_end(void);
 
 /*
@@ -309,7 +309,7 @@ void STDCALL drizzle_thread_end(void);
 
 uint64_t STDCALL drizzle_num_rows(DRIZZLE_RES *res);
 unsigned int STDCALL drizzle_num_fields(DRIZZLE_RES *res);
-my_bool STDCALL drizzle_eof(DRIZZLE_RES *res);
+bool STDCALL drizzle_eof(DRIZZLE_RES *res);
 DRIZZLE_FIELD *STDCALL drizzle_fetch_field_direct(DRIZZLE_RES *res,
                 unsigned int fieldnr);
 DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(DRIZZLE_RES *res);
@@ -329,7 +329,7 @@ const char * STDCALL drizzle_character_set_name(DRIZZLE *drizzle);
 int32_t          STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *csname);
 
 DRIZZLE * STDCALL drizzle_create(DRIZZLE *drizzle);
-my_bool   STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
+bool   STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
             const char *passwd, const char *db);
 DRIZZLE * STDCALL drizzle_connect(DRIZZLE *drizzle, const char *host,
              const char *user,
@@ -392,8 +392,8 @@ uint32_t  STDCALL drizzle_hex_string(char *to,const char *from, uint32_t from_le
 uint32_t        STDCALL drizzle_real_escape_string(DRIZZLE *drizzle, char *to, const char *from, uint32_t length);
 void    STDCALL myodbc_remove_escape(DRIZZLE *drizzle,char *name);
 uint32_t  STDCALL drizzle_thread_safe(void);
-my_bool    STDCALL drizzle_embedded(void);
-my_bool         STDCALL drizzle_read_query_result(DRIZZLE *drizzle);
+bool    STDCALL drizzle_embedded(void);
+bool         STDCALL drizzle_read_query_result(DRIZZLE *drizzle);
 
 
 
@@ -419,10 +419,10 @@ typedef struct st_drizzle_methods
 } DRIZZLE_METHODS;
 
 
-my_bool STDCALL drizzle_commit(DRIZZLE *drizzle);
-my_bool STDCALL drizzle_rollback(DRIZZLE *drizzle);
-my_bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, my_bool auto_mode);
-my_bool STDCALL drizzle_more_results(DRIZZLE *drizzle);
+bool STDCALL drizzle_commit(DRIZZLE *drizzle);
+bool STDCALL drizzle_rollback(DRIZZLE *drizzle);
+bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode);
+bool STDCALL drizzle_more_results(DRIZZLE *drizzle);
 int STDCALL drizzle_next_result(DRIZZLE *drizzle);
 void STDCALL drizzle_close(DRIZZLE *sock);
 

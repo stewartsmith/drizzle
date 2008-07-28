@@ -258,8 +258,7 @@ void Field_long::sort_string(uchar *to,uint length __attribute__((unused)))
 void Field_long::sql_type(String &res) const
 {
   CHARSET_INFO *cs=res.charset();
-  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
-			  "int(%d)",(int) field_length));
+  res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
   add_unsigned(res);
 }
 

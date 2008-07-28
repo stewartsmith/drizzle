@@ -13,8 +13,8 @@ drop table if exists t1_1,t1_2,t9_1,t9_2,t1aa,t2aa;
 --enable_warnings
 
 CREATE TABLE t1 (
-  Period smallint(4) unsigned DEFAULT '0' NOT NULL,
-  Varor_period smallint(4) unsigned DEFAULT '0' NOT NULL
+  Period smallint unsigned DEFAULT '0' NOT NULL,
+  Varor_period smallint unsigned DEFAULT '0' NOT NULL
 );
 
 INSERT INTO t1 VALUES (9410,9412);
@@ -29,8 +29,8 @@ select t1.* from t1;
 
 CREATE TABLE t2 (
   auto int not null auto_increment,
-  fld1 int(6) unsigned DEFAULT '0' NOT NULL,
-  companynr tinyint(2) unsigned DEFAULT '0' NOT NULL,
+  fld1 int unsigned DEFAULT '0' NOT NULL,
+  companynr tinyint unsigned DEFAULT '0' NOT NULL,
   fld3 char(30) DEFAULT '' NOT NULL,
   fld4 char(35) DEFAULT '' NOT NULL,
   fld5 char(35) DEFAULT '' NOT NULL,
@@ -1496,7 +1496,7 @@ select t2.fld1,fld3,period,price,price2 from t2,t3 where t2.fld1>= 18201 and t2.
 #
 
 create table t4 (
-  companynr tinyint(2) unsigned NOT NULL default '0',
+  companynr tinyint unsigned NOT NULL default '0',
   companyname char(30) NOT NULL default '',
   PRIMARY KEY (companynr),
   UNIQUE KEY companyname(companyname)
@@ -1771,7 +1771,7 @@ drop table t4, t3, t2, t1;
 #
 
 CREATE TABLE t1 (
-  id bigint(8) unsigned NOT NULL auto_increment,
+  id bigint unsigned NOT NULL auto_increment,
   pseudo varchar(35) NOT NULL default '',
   PRIMARY KEY  (id),
   UNIQUE KEY pseudo (pseudo)
@@ -1785,9 +1785,9 @@ DROP TABLE t1;
 # Test of bug with SUM(CASE...)
 #
 
-CREATE TABLE t1 (gvid int(10) unsigned default NULL,  hmid int(10) unsigned default NULL,  volid int(10) unsigned default NULL,  mmid int(10) unsigned default NULL,  hdid int(10) unsigned default NULL,  fsid int(10) unsigned default NULL,  ctid int(10) unsigned default NULL,  dtid int(10) unsigned default NULL,  cost int(10) unsigned default NULL,  performance int(10) unsigned default NULL,  serialnumber bigint(20) unsigned default NULL,  monitored tinyint(3) unsigned default '1',  removed tinyint(3) unsigned default '0',  target tinyint(3) unsigned default '0',  dt_modified timestamp NOT NULL,  name varchar(255) binary default NULL,  description varchar(255) default NULL,  UNIQUE KEY hmid (hmid,volid)) ENGINE=MyISAM;
+CREATE TABLE t1 (gvid int unsigned default NULL,  hmid int unsigned default NULL,  volid int unsigned default NULL,  mmid int unsigned default NULL,  hdid int unsigned default NULL,  fsid int unsigned default NULL,  ctid int unsigned default NULL,  dtid int unsigned default NULL,  cost int unsigned default NULL,  performance int unsigned default NULL,  serialnumber bigint unsigned default NULL,  monitored tinyint unsigned default '1',  removed tinyint unsigned default '0',  target tinyint unsigned default '0',  dt_modified timestamp NOT NULL,  name varchar(255) binary default NULL,  description varchar(255) default NULL,  UNIQUE KEY hmid (hmid,volid)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES (200001,2,1,1,100,1,1,1,0,0,0,1,0,1,20020425060057,'\\\\ARKIVIO-TESTPDC\\E$',''),(200002,2,2,1,101,1,1,1,0,0,0,1,0,1,20020425060057,'\\\\ARKIVIO-TESTPDC\\C$',''),(200003,1,3,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,0,1,20020425060427,'c:',NULL);
-CREATE TABLE t2 (  hmid int(10) unsigned default NULL,  volid int(10) unsigned default NULL,  sampletid smallint(5) unsigned default NULL,  sampletime datetime default NULL,  samplevalue bigint(20) unsigned default NULL,  KEY idx1 (hmid,volid,sampletid,sampletime)) ENGINE=MyISAM;
+CREATE TABLE t2 (  hmid int unsigned default NULL,  volid int unsigned default NULL,  sampletid smallint unsigned default NULL,  sampletime datetime default NULL,  samplevalue bigint unsigned default NULL,  KEY idx1 (hmid,volid,sampletid,sampletime)) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (1,3,10,'2002-06-01 08:00:00',35),(1,3,1010,'2002-06-01 12:00:01',35);
 # Disable PS becasue we get more warnings from PS than from normal execution
 --disable_ps_protocol
@@ -1801,7 +1801,7 @@ DROP TABLE t1,t2;
 # Test of bigint comparision
 #
 
-create table  t1 (  A_Id bigint(20) NOT NULL default '0',  A_UpdateBy char(10) NOT NULL default '',  A_UpdateDate bigint(20) NOT NULL default '0',  A_UpdateSerial int(11) NOT NULL default '0',  other_types bigint(20) NOT NULL default '0',  wss_type bigint(20) NOT NULL default '0');
+create table  t1 (  A_Id bigint NOT NULL default '0',  A_UpdateBy char(10) NOT NULL default '',  A_UpdateDate bigint NOT NULL default '0',  A_UpdateSerial int NOT NULL default '0',  other_types bigint NOT NULL default '0',  wss_type bigint NOT NULL default '0');
 INSERT INTO t1 VALUES (102935998719055004,'brade',1029359987,2,102935229116544068,102935229216544093);
 select wss_type from t1 where wss_type ='102935229216544106';
 select wss_type from t1 where wss_type ='102935229216544105';
@@ -1859,9 +1859,9 @@ select * from t1 natural join (t1 as t2 left join t1 as t3 using (a));
 select * from (t1 as t2 left join t1 as t3 using (a)) natural join t1;
 drop table t1;
 
-CREATE TABLE t1 (  aa char(2),  id int(11) NOT NULL auto_increment,  t2_id int(11) NOT NULL default '0',  PRIMARY KEY  (id),  KEY replace_id (t2_id)) ENGINE=MyISAM;
+CREATE TABLE t1 (  aa char(2),  id int NOT NULL auto_increment,  t2_id int NOT NULL default '0',  PRIMARY KEY  (id),  KEY replace_id (t2_id)) ENGINE=MyISAM;
 INSERT INTO t1 VALUES ("1",8264,2506),("2",8299,2517),("3",8301,2518),("4",8302,2519),("5",8303,2520),("6",8304,2521),("7",8305,2522);
-CREATE TABLE t2 ( id int(11) NOT NULL auto_increment,  PRIMARY KEY  (id)) ENGINE=MyISAM;
+CREATE TABLE t2 ( id int NOT NULL auto_increment,  PRIMARY KEY  (id)) ENGINE=MyISAM;
 INSERT INTO t2 VALUES (2517), (2518), (2519), (2520), (2521), (2522);
 select * from t1, t2 WHERE t1.t2_id = t2.id and t1.t2_id > 0   order by t1.id   LIMIT 0, 5;
 drop table t1,t2;
@@ -1920,7 +1920,7 @@ drop table t1, t2;
 #
 
 CREATE TABLE t1 (
-  i int(11) NOT NULL default '0',
+  i int NOT NULL default '0',
   c char(10) NOT NULL default '',
   PRIMARY KEY  (i),
   UNIQUE KEY c (c)
@@ -1970,7 +1970,7 @@ DROP TABLE t1;
 # Bug#7425 inconsistent sort order on unsigned columns result of substraction
 #
 
-create table t1 (a int(11) unsigned, b int(11) unsigned);
+create table t1 (a int unsigned, b int unsigned);
 insert into t1 values (1,0), (1,1), (1,2);
 select a-b  from t1 order by 1;
 select a-b , (a-b < 0)  from t1 order by 1;
@@ -1982,7 +1982,7 @@ drop table t1;
 #
 # Bug#8733 server accepts malformed query (multiply mentioned distinct)
 #
-create table t1 (a int(11));
+create table t1 (a int);
 select all all * from t1;
 select distinct distinct * from t1;
 --error 1221
@@ -1995,9 +1995,9 @@ drop table t1;
 # Test for BUG#10095
 #
 CREATE TABLE t1 (
-  kunde_intern_id int(10) unsigned NOT NULL default '0',
-  kunde_id int(10) unsigned NOT NULL default '0',
-  FK_firma_id int(10) unsigned NOT NULL default '0',
+  kunde_intern_id int unsigned NOT NULL default '0',
+  kunde_id int unsigned NOT NULL default '0',
+  FK_firma_id int unsigned NOT NULL default '0',
   aktuell enum('Ja','Nein') NOT NULL default 'Ja',
   vorname varchar(128) NOT NULL default '',
   nachname varchar(128) NOT NULL default '',
@@ -2056,7 +2056,7 @@ drop table t1;
 # Test for Bug#8009, SELECT failed on bigint unsigned when using HEX
 #
 
-CREATE TABLE t1 (b BIGINT(20) UNSIGNED NOT NULL, PRIMARY KEY (b));
+CREATE TABLE t1 (b BIGINT UNSIGNED NOT NULL, PRIMARY KEY (b));
 INSERT INTO t1 VALUES (0x8000000000000000);
 SELECT b FROM t1 WHERE b=0x8000000000000000;
 DROP TABLE t1;
@@ -2064,12 +2064,12 @@ DROP TABLE t1;
 #
 # IN with outer join condition (BUG#9393)
 #
-CREATE TABLE `t1` ( `gid` int(11) default NULL, `uid` int(11) default NULL);
+CREATE TABLE `t1` ( `gid` int default NULL, `uid` int default NULL);
 
-CREATE TABLE `t2` ( `ident` int(11) default NULL, `level` char(16) default NULL);
+CREATE TABLE `t2` ( `ident` int default NULL, `level` char(16) default NULL);
 INSERT INTO `t2` VALUES (0,'READ');
 
-CREATE TABLE `t3` ( `id` int(11) default NULL, `name` char(16) default NULL);
+CREATE TABLE `t3` ( `id` int default NULL, `name` char(16) default NULL);
 INSERT INTO `t3` VALUES (1,'fs');
 
 select * from t3 left join t1 on t3.id = t1.uid, t2 where t2.ident in (0, t1.gid, t3.id, 0);
@@ -2078,30 +2078,30 @@ drop table t1,t2,t3;
 
 # Test for BUG#11700
 CREATE TABLE t1 (
-  acct_id int(11) NOT NULL default '0',
-  profile_id smallint(6) default NULL,
+  acct_id int NOT NULL default '0',
+  profile_id smallint default NULL,
   UNIQUE KEY t1$acct_id (acct_id),
   KEY t1$profile_id (profile_id)
 );
 INSERT INTO t1 VALUES (132,17),(133,18);
 
 CREATE TABLE t2 (
-  profile_id smallint(6) default NULL,
-  queue_id int(11) default NULL,
-  seq int(11) default NULL,
+  profile_id smallint default NULL,
+  queue_id int default NULL,
+  seq int default NULL,
   KEY t2$queue_id (queue_id)
 );
 INSERT INTO t2 VALUES (17,31,4),(17,30,3),(17,36,2),(17,37,1);
 
 CREATE TABLE t3 (
-  id int(11) NOT NULL default '0',
-  qtype int(11) default NULL,
-  seq int(11) default NULL,
-  warn_lvl int(11) default NULL,
-  crit_lvl int(11) default NULL,
-  rr1 tinyint(4) NOT NULL default '0',
-  rr2 int(11) default NULL,
-  default_queue tinyint(4) NOT NULL default '0',
+  id int NOT NULL default '0',
+  qtype int default NULL,
+  seq int default NULL,
+  warn_lvl int default NULL,
+  crit_lvl int default NULL,
+  rr1 tinyint NOT NULL default '0',
+  rr2 int default NULL,
+  default_queue tinyint NOT NULL default '0',
   KEY t3$qtype (qtype),
   KEY t3$id (id)
 );
@@ -2334,7 +2334,7 @@ DROP TABLE t1, t2;
 CREATE TABLE t1 ( 
 K2C4 varchar(4) character set latin1 collate latin1_bin NOT NULL default '', 
 K4N4 varchar(4) character set latin1 collate latin1_bin NOT NULL default '0000', 
-F2I4 int(11) NOT NULL default '0' 
+F2I4 int NOT NULL default '0' 
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 INSERT INTO t1 VALUES 
@@ -2424,7 +2424,7 @@ select x'10' + 0, X'10' + 0, b'10' + 0, B'10' + 0;
 #
 # Bug #11398 Bug in field_conv() results in wrong result of join with index
 #
-create table t1 (f1 varchar(6) default NULL, f2 int(6) primary key not null);
+create table t1 (f1 varchar(6) default NULL, f2 int primary key not null);
 create table t2 (f3 varchar(5) not null, f4 varchar(5) not null, UNIQUE KEY UKEY (f3,f4));
 insert into t1 values (" 2", 2);
 insert into t2 values (" 2", " one "),(" 2", " two ");
@@ -2446,9 +2446,9 @@ drop table t1,t2;
 #           incorrect transformation to join ... on.
 #
 
-create table t1 (a int(10), t1_val int(10));
-create table t2 (b int(10), t2_val int(10));
-create table t3 (a int(10), b int(10));
+create table t1 (a int, t1_val int);
+create table t2 (b int, t2_val int);
+create table t3 (a int, b int);
 insert into t1 values (1,1),(2,2);
 insert into t2 values (1,1),(2,2),(3,3);
 insert into t3 values (1,1),(2,1),(3,1),(4,1);
@@ -2496,8 +2496,8 @@ drop table t1, t2, t3;
 # Bug #13067 JOIN xxx USING is case sensitive
 #
 
-create table t1 (a int(10),b int(10));
-create table t2 (a int(10),b int(10));
+create table t1 (a int,b int);
+create table t2 (a int,b int);
 insert into t1 values (1,10),(2,20),(3,30);
 insert into t2 values (1,10);
 # both queries should produce the same result
@@ -2545,11 +2545,11 @@ drop table t1,t2,t3;
 # nested right join.
 #
 
-create table t1 (id int(11) not null default '0');
+create table t1 (id int not null default '0');
 insert into t1 values (123),(191),(192);
 create table t2 (id char(16) character set utf8 not null);
 insert into t2 values ('58013'),('58014'),('58015'),('58016');
-create table t3 (a_id int(11) not null, b_id char(16) character set utf8);
+create table t3 (a_id int not null, b_id char(16) character set utf8);
 insert into t3 values (123,null),(123,null),(123,null),(123,null),(123,null),(123,'58013');
 
 # both queries are equivalent
@@ -3198,10 +3198,10 @@ DROP TABLE t1;
 #
 
 CREATE TABLE t1 (
-  c1 int(11) NOT NULL AUTO_INCREMENT,
+  c1 int NOT NULL AUTO_INCREMENT,
   c2 varchar(1000) DEFAULT NULL,
-  c3 bigint(20) DEFAULT NULL,
-  c4 bigint(20) DEFAULT NULL,
+  c3 bigint DEFAULT NULL,
+  c4 bigint DEFAULT NULL,
   PRIMARY KEY (c1)
 );
 
