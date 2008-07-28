@@ -43,7 +43,7 @@ drizzlebinlog_SOURCES =     drizzlebinlog.cc \
                 $(top_srcdir)/mysys/my_bit.c \
                 $(top_srcdir)/mysys/my_bitmap.c \
                 $(top_srcdir)/mysys/base64.c
-drizzlebinlog_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/server
+drizzlebinlog_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/drizzled
 
 drizzledump_SOURCES=            drizzledump.c 
 

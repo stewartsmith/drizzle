@@ -119,7 +119,7 @@ static int tina_init_func(void *p)
   return 0;
 }
 
-static int tina_done_func(void *p __attribute__((__unused__)))
+static int tina_done_func(void *p __attribute__((unused)))
 {
   hash_free(&tina_open_tables);
   pthread_mutex_destroy(&tina_mutex);
@@ -132,7 +132,7 @@ static int tina_done_func(void *p __attribute__((__unused__)))
   Simple lock controls.
 */
 static TINA_SHARE *get_share(const char *table_name,
-                             TABLE *table __attribute__((__unused__)))
+                             TABLE *table __attribute__((unused)))
 {
   TINA_SHARE *share;
   char meta_file_name[FN_REFLEN];
@@ -449,7 +449,7 @@ ha_tina::ha_tina(handlerton *hton, TABLE_SHARE *table_arg)
   Encode a buffer into the quoted format.
 */
 
-int ha_tina::encode_quote(uchar *buf __attribute__((__unused__)))
+int ha_tina::encode_quote(uchar *buf __attribute__((unused)))
 {
   char attribute_buffer[1024];
   String attribute(attribute_buffer, sizeof(attribute_buffer),
@@ -724,7 +724,7 @@ const char **ha_tina::bas_ext() const
 */
 
 void tina_get_status(void* param,
-                     int concurrent_insert __attribute__((__unused__)))
+                     int concurrent_insert __attribute__((unused)))
 {
   ha_tina *tina= (ha_tina*) param;
   tina->get_status();
@@ -737,7 +737,7 @@ void tina_update_status(void* param)
 }
 
 /* this should exist and return 0 for concurrent insert to work */
-bool tina_check_status(void* param __attribute__((__unused__)))
+bool tina_check_status(void* param __attribute__((unused)))
 {
   return 0;
 }
@@ -804,7 +804,7 @@ void ha_tina::update_status()
   this will not be called for every request. Any sort of positions
   that need to be reset should be kept in the ::extra() call.
 */
-int ha_tina::open(const char *name, int mode __attribute__((__unused__)),
+int ha_tina::open(const char *name, int mode __attribute__((unused)),
                   uint open_options)
 {
   if (!(share= get_share(name, table)))
@@ -917,7 +917,7 @@ int ha_tina::open_update_temp_file_if_needed()
   This will be called in a table scan right before the previous ::rnd_next()
   call.
 */
-int ha_tina::update_row(const uchar * old_data __attribute__((__unused__)),
+int ha_tina::update_row(const uchar * old_data __attribute__((unused)),
                         uchar * new_data)
 {
   int size;
@@ -966,7 +966,7 @@ err:
   The table will then be deleted/positioned based on the ORDER (so RANDOM,
   DESC, ASC).
 */
-int ha_tina::delete_row(const uchar * buf __attribute__((__unused__)))
+int ha_tina::delete_row(const uchar * buf __attribute__((unused)))
 {
   ha_statistic_increment(&SSV::ha_delete_count);
 
@@ -1045,7 +1045,7 @@ int ha_tina::init_data_file()
 
 */
 
-int ha_tina::rnd_init(bool scan __attribute__((__unused__)))
+int ha_tina::rnd_init(bool scan __attribute__((unused)))
 {
   /* set buffer to the beginning of the file */
   if (share->crashed || init_data_file())
@@ -1106,7 +1106,7 @@ int ha_tina::rnd_next(uchar *buf)
   its just a position. Look at the bdb code if you want to see a case
   where something other then a number is stored.
 */
-void ha_tina::position(const uchar *record __attribute__((__unused__)))
+void ha_tina::position(const uchar *record __attribute__((unused)))
 {
   my_store_ptr(ref, ref_length, current_position);
   return;
@@ -1130,7 +1130,7 @@ int ha_tina::rnd_pos(uchar * buf, uchar *pos)
   Currently this table handler doesn't implement most of the fields
   really needed. SHOW also makes use of this data
 */
-int ha_tina::info(uint flag __attribute__((__unused__)))
+int ha_tina::info(uint flag __attribute__((unused)))
 {
   /* This is a lie, but you don't want the optimizer to see zero or 1 */
   if (!records_is_known && stats.records < 2) 
@@ -1303,7 +1303,7 @@ error:
 */
 
 int ha_tina::repair(THD* thd,
-                    HA_CHECK_OPT* check_opt __attribute__((__unused__)))
+                    HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   char repaired_fname[FN_REFLEN];
   uchar *buf;
@@ -1448,7 +1448,7 @@ int ha_tina::delete_all_rows()
   Called by the database to lock the table. Keep in mind that this
   is an internal lock.
 */
-THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((__unused__)),
+THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((unused)),
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {
@@ -1464,7 +1464,7 @@ THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((__unused__)),
 */
 
 int ha_tina::create(const char *name, TABLE *table_arg,
-                    HA_CREATE_INFO *create_info __attribute__((__unused__)))
+                    HA_CREATE_INFO *create_info __attribute__((unused)))
 {
   char name_buff[FN_REFLEN];
   File create_file;
@@ -1501,7 +1501,7 @@ int ha_tina::create(const char *name, TABLE *table_arg,
 }
 
 int ha_tina::check(THD* thd,
-                   HA_CHECK_OPT* check_opt __attribute__((__unused__)))
+                   HA_CHECK_OPT* check_opt __attribute__((unused)))
 {
   int rc= 0;
   uchar *buf;
@@ -1550,8 +1550,8 @@ int ha_tina::check(THD* thd,
 }
 
 
-bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *info __attribute__((__unused__)),
-                                         uint table_changes __attribute__((__unused__)))
+bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *info __attribute__((unused)),
+                                         uint table_changes __attribute__((unused)))
 {
   return COMPATIBLE_DATA_YES;
 }

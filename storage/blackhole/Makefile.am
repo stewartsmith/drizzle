@@ -21,7 +21,8 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 AM_CPPFLAGS =		${GLOBAL_CPPFLAGS} \
-			-I$(top_srcdir)/server
+			-I$(top_builddir) \
+			-I$(top_srcdir)/drizzled
 WRAPLIBS=
 
 LDADD =

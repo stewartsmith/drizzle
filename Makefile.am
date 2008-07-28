@@ -24,7 +24,7 @@ SUBDIRS = . vio \
 	  client \
 	  storage \
 	  plugin \
-	  server \
+	  drizzled \
 	  tests \
 	  support-files
 

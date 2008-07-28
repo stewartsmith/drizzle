@@ -19,8 +19,8 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 INCLUDES =              -I$(top_srcdir)/include -I$(top_builddir)/include \
-			-I$(top_srcdir)/server \
-                        -I$(srcdir)
+			-I$(top_srcdir)/drizzled \
+                        -I$(top_srcdir)
 
 AM_CFLAGS = $(openssl_includes) 
 

@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([server/drizzled.cc])
+AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
@@ -50,7 +50,7 @@ sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 sinclude(config/ac-macros/pkg.m4)
 
-# Remember to add a directory server/share/LANGUAGE
+# Remember to add a directory drizzled/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
 czech danish dutch english estonian french german greek hungarian \
 italian japanese korean norwegian norwegian-ny polish portuguese \
@@ -349,14 +349,17 @@ if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+
+MYSQL_CHECK_NEW_RL_INTERFACE
+
 my_save_LIBS="$LIBS"
 LIBS=""
-AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find libreadline.)])
+AC_CHECK_LIB(readline, rl_initialize, [],
+             [AC_MSG_ERROR(Couldn't find libreadline.)])
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
 
-MYSQL_CHECK_NEW_RL_INTERFACE
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -1268,15 +1271,15 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  strings/Makefile strings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
- server/Makefile dnl
- server/field/Makefile dnl
- server/share/Makefile dnl
- server/sql_builtin.cc dnl
+ drizzled/Makefile dnl
+ drizzled/field/Makefile dnl
+ drizzled/share/Makefile dnl
+ drizzled/sql_builtin.cc dnl
  include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  include/drizzle_version.h plugin/Makefile dnl
- server/drizzled_safe support-files/libdrizzle.pc dnl
+ drizzled/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)

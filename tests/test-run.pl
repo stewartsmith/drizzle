@@ -592,7 +592,7 @@ sub command_line_setup () {
               "as follows:\n./$glob_scriptname");
   }
 
-  if ( -d "../server" )
+  if ( -d "../drizzled" )
   {
     $source_dist=  1;
   }
@@ -638,7 +638,7 @@ sub command_line_setup () {
 
   # Look for language files and charsetsdir, use same share
   $path_share=      mtr_path_exists("$glob_basedir/share/mysql",
-                                    "$glob_basedir/server/share",
+                                    "$glob_basedir/drizzled/share",
                                     "$glob_basedir/share");
 
   $path_language=      mtr_path_exists("$path_share/english");
@@ -647,7 +647,7 @@ sub command_line_setup () {
 
   if (!$opt_extern)
   {
-    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/server/drizzled",
+    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/drizzled/drizzled",
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
