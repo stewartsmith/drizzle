@@ -334,7 +334,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     tmp->ref_count++;
     return(tmp);
   }
-  bzero(&plugin_dl, sizeof(plugin_dl));
+  memset(&plugin_dl, 0, sizeof(plugin_dl));
   /* Compile dll path */
   dlpathlen=
     strxnmov(dlpath, sizeof(dlpath) - 1, opt_plugin_dir, "/", dl->str, NullS) -
@@ -416,7 +416,7 @@ static void plugin_dl_del(const LEX_STRING *dl)
       if (! --tmp->ref_count)
       {
         free_plugin_mem(tmp);
-        bzero(tmp, sizeof(struct st_plugin_dl));
+        memset(tmp, 0, sizeof(struct st_plugin_dl));
       }
       break;
     }
@@ -567,7 +567,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
     return(true);
   }
   /* Clear the whole struct to catch future extensions. */
-  bzero((char*) &tmp, sizeof(tmp));
+  memset((char*) &tmp, 0, sizeof(tmp));
   if (! (tmp.plugin_dl= plugin_dl_add(dl, report)))
     return(true);
   /* Find plugin by name */
@@ -907,7 +907,7 @@ int plugin_init(int *argc, char **argv, int flags)
   {
     for (plugin= *builtins; plugin->name; plugin++)
     {
-      bzero(&tmp, sizeof(tmp));
+      memset(&tmp, 0, sizeof(tmp));
       tmp.plugin= plugin;
       tmp.name.str= (char *)plugin->name;
       tmp.name.length= strlen(plugin->name);
@@ -1732,12 +1732,12 @@ static st_bookmark *register_var(const char *plugin, const char *name,
         variables. If their value is non-NULL, it must point to a valid
         string.
       */
-      bzero(global_system_variables.dynamic_variables_ptr +
-            global_variables_dynamic_size,
-            new_size - global_variables_dynamic_size);
-      bzero(max_system_variables.dynamic_variables_ptr +
-            global_variables_dynamic_size,
-            new_size - global_variables_dynamic_size);
+      memset(global_system_variables.dynamic_variables_ptr +
+             global_variables_dynamic_size, 0,
+             new_size - global_variables_dynamic_size);
+      memset(max_system_variables.dynamic_variables_ptr +
+             global_variables_dynamic_size, 0, 
+             new_size - global_variables_dynamic_size);
       global_variables_dynamic_size= new_size;
     }
 
@@ -2576,7 +2576,7 @@ static my_option *construct_help_options(MEM_ROOT *mem_root,
   if (!(opts= (my_option*) alloc_root(mem_root, sizeof(my_option) * count)))
     return(NULL);
 
-  bzero(opts, sizeof(my_option) * count);
+  memset(opts, 0, sizeof(my_option) * count);
 
   if ((my_strcasecmp(&my_charset_latin1, p->name.str, "MyISAM") == 0))
     can_disable= false;
@@ -2641,7 +2641,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
       sql_print_error("Out of memory for plugin '%s'.", tmp->name.str);
       return(-1);
     }
-    bzero(opts, sizeof(my_option) * count);
+    memset(opts, 0, sizeof(my_option) * count);
 
     if (construct_options(tmp_root, tmp, opts, can_disable))
     {

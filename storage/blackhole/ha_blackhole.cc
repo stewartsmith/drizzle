@@ -125,7 +125,7 @@ void ha_blackhole::position(const uchar *record __attribute__((__unused__)))
 
 int ha_blackhole::info(uint flag)
 {
-  bzero((char*) &stats, sizeof(stats));
+  memset((char*) &stats, 0, sizeof(stats));
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);

@@ -184,7 +184,7 @@ static int cs_enter(MY_XML_PARSER *st,const char *attr, size_t len)
   struct my_cs_file_section_st *s= cs_file_sec(attr,len);
   
   if ( s && (s->state == _CS_CHARSET))
-    bzero(&i->cs,sizeof(i->cs));
+    memset(&i->cs, 0, sizeof(i->cs));
   
   if (s && (s->state == _CS_COLLATION))
     i->tailoring_length= 0;

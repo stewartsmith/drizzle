@@ -58,7 +58,7 @@ void init_read_record_idx(READ_RECORD *info,
                           bool print_error, uint idx)
 {
   empty_record(table);
-  bzero((char*) info,sizeof(*info));
+  memset((char*) info, 0, sizeof(*info));
   info->table= table;
   info->file=  table->file;
   info->record= table->record[0];
@@ -146,7 +146,7 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
 {
   IO_CACHE *tempfile;
 
-  bzero((char*) info,sizeof(*info));
+  memset((char*) info, 0, sizeof(*info));
   info->thd=thd;
   info->table=table;
   info->file= table->file;
@@ -502,7 +502,8 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
     return(1);
 #ifdef HAVE_purify
   // Avoid warnings in qsort
-  bzero(info->cache,rec_cache_size+info->cache_records* info->struct_length+1);
+  memset(info->cache, 0,
+         rec_cache_size+info->cache_records* info->struct_length+1);
 #endif
   info->read_positions=info->cache+rec_cache_size;
   info->cache_pos=info->cache_end=info->cache;

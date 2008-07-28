@@ -48,8 +48,8 @@ int main(int ac, char **av)
   size_t code, w;
   int pageloaded[MY_UCA_NPAGES];
   
-  bzero(uca, sizeof(uca));
-  bzero(pageloaded, sizeof(pageloaded));
+  memset(uca, 0, sizeof(uca));
+  memset(pageloaded, 0, sizeof(pageloaded));
   
   while (fgets(str,sizeof(str),stdin))
   {
@@ -263,7 +263,7 @@ int main(int ac, char **av)
         
         code= page*MY_UCA_NCHARS+offs;
         
-        bzero(weight,sizeof(weight));
+        memset(weight, 0, sizeof(weight));
         
         /* Copy non-zero weights */
         for (num=0, i=0; i < uca[code].num; i++)

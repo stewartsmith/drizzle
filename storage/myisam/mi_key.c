@@ -143,7 +143,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
 	if (isnan(nr))
 	{
 	  /* Replace NAN with zero */
-	  bzero(key,length);
+	  memset(key, 0, length);
 	  key+=length;
 	  continue;
 	}
@@ -154,7 +154,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
 	float8get(nr,pos);
 	if (isnan(nr))
 	{
-	  bzero(key,length);
+	  memset(key, 0, length);
 	  key+=length;
 	  continue;
 	}

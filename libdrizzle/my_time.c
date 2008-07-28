@@ -438,7 +438,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
                                        MYSQL_TIMESTAMP_DATETIME));
 
 err:
-  bzero((char*) l_time, sizeof(*l_time));
+  memset((char*) l_time, 0, sizeof(*l_time));
   return(MYSQL_TIMESTAMP_ERROR);
 }
 
@@ -561,10 +561,10 @@ my_bool str_to_time(const char *str, uint length, MYSQL_TIME *l_time,
     {
       bmove_upp((uchar*) (date+4), (uchar*) (date+state),
                 sizeof(long)*(state-1));
-      bzero((uchar*) date, sizeof(long)*(4-state));
+      memset((uchar*) date, 0, sizeof(long)*(4-state));
     }
     else
-      bzero((uchar*) (date+state), sizeof(long)*(4-state));
+      memset((uchar*) (date+state), 0, sizeof(long)*(4-state));
   }
 
 fractional:
@@ -984,7 +984,7 @@ my_system_gmt_sec(const MYSQL_TIME *t_src, long *my_timezone,
 
 void set_zero_time(MYSQL_TIME *tm, enum enum_mysql_timestamp_type time_type)
 {
-  bzero((void*) tm, sizeof(*tm));
+  memset((void*) tm, 0, sizeof(*tm));
   tm->time_type= time_type;
 }
 
@@ -1095,7 +1095,7 @@ int64_t number_to_datetime(int64_t nr, MYSQL_TIME *time_res,
   long part1,part2;
 
   *was_cut= 0;
-  bzero((char*) time_res, sizeof(*time_res));
+  memset((char*) time_res, 0, sizeof(*time_res));
   time_res->time_type=MYSQL_TIMESTAMP_DATE;
 
   if (nr == 0LL || nr >= 10000101000000LL)

@@ -438,7 +438,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   head_sptr= (stats *)my_malloc(sizeof(stats) * iterations,
                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
 
-  bzero(&conclusion, sizeof(conclusions));
+  memset(&conclusion, 0, sizeof(conclusions));
 
   if (auto_actual_queries)
     client_limit= auto_actual_queries;
@@ -2178,7 +2178,7 @@ parse_option(const char *origin, option_string **stmt, char delm)
     char buffer[HUGE_STRING_LENGTH];
     char *buffer_ptr;
 
-    bzero(buffer, HUGE_STRING_LENGTH);
+    memset(buffer, 0, HUGE_STRING_LENGTH);
 
     string= strchr(begin_ptr, delm);
 
@@ -2334,7 +2334,7 @@ print_conclusions_csv(conclusions *con)
   char label_buffer[HUGE_STRING_LENGTH];
   size_t string_len;
 
-  bzero(label_buffer, HUGE_STRING_LENGTH);
+  memset(label_buffer, 0, HUGE_STRING_LENGTH);
 
   if (opt_label)
   {

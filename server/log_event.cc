@@ -3579,7 +3579,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     mysql_reset_errors(thd, 0);
 
     TABLE_LIST tables;
-    bzero((char*) &tables,sizeof(tables));
+    memset((char*) &tables, 0, sizeof(tables));
     tables.db= thd->strmake(thd->db, thd->db_length);
     tables.alias = tables.table_name = (char*) table_name;
     tables.lock_type = TL_WRITE;
@@ -5081,7 +5081,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   IO_CACHE file;
   int error = 1;
 
-  bzero((char*)&file, sizeof(file));
+  memset((char*)&file, 0, sizeof(file));
   fname_buf= strmov(proc_info, "Making temp file ");
   ext= slave_load_file_stem(fname_buf, file_id, server_id, ".info");
   thd_proc_info(thd, proc_info);
@@ -6826,7 +6826,7 @@ Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
                                  &m_field_metadata, (m_colcnt * 2),
                                  NULL);
 
-  bzero(m_field_metadata, (m_colcnt * 2));
+  memset(m_field_metadata, 0, (m_colcnt * 2));
 
   /*
     Create an array for the field metadata and store it.
@@ -6843,7 +6843,7 @@ Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
   else
     m_data_size+= m_field_metadata_size + 1; 
 
-  bzero(m_null_bits, num_null_bytes);
+  memset(m_null_bits, 0, num_null_bytes);
   for (unsigned int i= 0 ; i < m_table->s->fields ; ++i)
     if (m_table->field[i]->maybe_null())
       m_null_bits[(i / 8)]+= 1 << (i % 8);
@@ -6984,7 +6984,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
                                 NullS)))
     return(HA_ERR_OUT_OF_MEM);
 
-  bzero(table_list, sizeof(*table_list));
+  memset(table_list, 0, sizeof(*table_list));
   table_list->db = db_mem;
   table_list->alias= table_list->table_name = tname_mem;
   table_list->lock_type= TL_WRITE;
@@ -8244,12 +8244,12 @@ st_print_event_info::st_print_event_info()
 {
   /*
     Currently we only use static PRINT_EVENT_INFO objects, so zeroed at
-    program's startup, but these explicit bzero() is for the day someone
+    program's startup, but these explicit memset() is for the day someone
     creates dynamic instances.
   */
-  bzero(db, sizeof(db));
-  bzero(charset, sizeof(charset));
-  bzero(time_zone_str, sizeof(time_zone_str));
+  memset(db, 0, sizeof(db));
+  memset(charset, 0, sizeof(charset));
+  memset(time_zone_str, 0, sizeof(time_zone_str));
   delimiter[0]= ';';
   delimiter[1]= 0;
   myf const flags = MYF(MY_WME | MY_NABP);

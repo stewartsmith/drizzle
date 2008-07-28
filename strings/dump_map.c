@@ -40,9 +40,9 @@ int main(void)
   unsigned short fromstat[256];
   int i;
   
-  bzero((void*)touni,sizeof(touni));
-  bzero((void*)fromuni,sizeof(fromuni));
-  bzero((void*)fromstat,sizeof(fromstat));
+  memset((void*)touni, 0, sizeof(touni));
+  memset((void*)fromuni, 0, sizeof(fromuni));
+  memset((void*)fromstat, 0, sizeof(fromstat));
   
   while (fgets(str,sizeof(str),stdin))
   {

@@ -2153,7 +2153,7 @@ static int  sys_check_log_path(THD *thd __attribute__((__unused__)),
     goto err;
 
   log_file_str= res->c_ptr();
-  bzero(&f_stat, sizeof(struct stat));
+  memset(&f_stat, 0, sizeof(struct stat));
 
   path_length= unpack_filename(path, log_file_str);
 
@@ -2978,7 +2978,7 @@ SHOW_VAR* enumerate_sys_vars(THD *thd, bool sorted)
                (qsort_cmp) show_cmp);
     
     /* make last element empty */
-    bzero(show, sizeof(SHOW_VAR));
+    memset(show, 0, sizeof(SHOW_VAR));
   }
   return result;
 }

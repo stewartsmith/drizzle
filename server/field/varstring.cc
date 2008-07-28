@@ -509,7 +509,7 @@ uint Field_varstring::get_key_image(uchar *buff,
       Must clear this as we do a memcmp in opt_range.cc to detect
       identical keys
     */
-    bzero(buff+HA_KEY_BLOB_LENGTH+f_length, (length-f_length));
+    memset(buff+HA_KEY_BLOB_LENGTH+f_length, 0, (length-f_length));
   }
   return HA_KEY_BLOB_LENGTH+f_length;
 }

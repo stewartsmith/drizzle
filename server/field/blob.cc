@@ -160,7 +160,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
 
   if (!length)
   {
-    bzero(ptr,Field_blob::pack_length());
+    memset(ptr, 0, Field_blob::pack_length());
     return 0;
   }
 
@@ -218,7 +218,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
 
 oom_error:
   /* Fatal OOM error */
-  bzero(ptr,Field_blob::pack_length());
+  memset(ptr, 0, Field_blob::pack_length());
   return -1; 
 }
 
@@ -360,7 +360,7 @@ uint Field_blob::get_key_image(uchar *buff,
       Must clear this as we do a memcmp in opt_range.cc to detect
       identical keys
     */
-    bzero(buff+HA_KEY_BLOB_LENGTH+blob_length, (length-blob_length));
+    memset(buff+HA_KEY_BLOB_LENGTH+blob_length, 0, (length-blob_length));
     length=(uint) blob_length;
   }
   int2store(buff,length);
@@ -429,7 +429,7 @@ void Field_blob::sort_string(uchar *to,uint length)
   uint blob_length=get_length();
 
   if (!blob_length)
-    bzero(to,length);
+    memset(to, 0, length);
   else
   {
     if (field_charset == &my_charset_bin)
@@ -651,7 +651,7 @@ Field_blob::unpack_key(uchar *to, const uchar *from, uint max_length,
   if (length)
     memcpy_fixed(to + packlength, &from, sizeof(from));
   else
-    bzero(to + packlength, sizeof(from));
+    memset(to + packlength, 0, sizeof(from));
 
   /* point to first byte of next field in 'from' */
   return from + length;

@@ -85,7 +85,7 @@ static void do_field_to_null_str(Copy_field *copy)
 {
   if (*copy->from_null_ptr & copy->from_bit)
   {
-    bzero(copy->to_ptr,copy->from_length);
+    memset(copy->to_ptr, 0, copy->from_length);
     copy->to_null_ptr[0]=1;			// Always bit 1
   }
   else
@@ -101,7 +101,7 @@ static void do_outer_field_to_null_str(Copy_field *copy)
   if (*copy->null_row ||
       (copy->from_null_ptr && (*copy->from_null_ptr & copy->from_bit)))
   {
-    bzero(copy->to_ptr,copy->from_length);
+    memset(copy->to_ptr, 0, copy->from_length);
     copy->to_null_ptr[0]=1;			// Always bit 1
   }
   else

@@ -528,14 +528,14 @@ THD::THD()
   utime_after_lock= 0L;
   current_linfo =  0;
   slave_thread = 0;
-  bzero(&variables, sizeof(variables));
+  memset(&variables, 0, sizeof(variables));
   thread_id= 0;
   one_shot_set= 0;
   file_id = 0;
   query_id= 0;
   warn_id= 0;
   db_charset= global_system_variables.collation_database;
-  bzero(ha_data, sizeof(ha_data));
+  memset(ha_data, 0, sizeof(ha_data));
   mysys_var=0;
   binlog_evt_union.do_union= false;
   enable_slow_log= 0;
@@ -573,7 +573,7 @@ THD::THD()
     my_init_dynamic_array(&user_var_events,
 			  sizeof(BINLOG_USER_VAR_EVENT *), 16, 16);
   else
-    bzero((char*) &user_var_events, sizeof(user_var_events));
+    memset(&user_var_events, 0, sizeof(user_var_events));
 
   /* Protocol */
   protocol= &protocol_text;			// Default protocol
@@ -700,11 +700,11 @@ void THD::init(void)
 			TL_WRITE);
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
   warn_list.empty();
-  bzero((char*) warn_count, sizeof(warn_count));
+  memset((char*) warn_count, 0, sizeof(warn_count));
   total_warn_count= 0;
   update_charset();
   reset_current_stmt_binlog_row_based();
-  bzero((char *) &status_var, sizeof(status_var));
+  memset((char *) &status_var, 0, sizeof(status_var));
 }
 
 
@@ -2281,7 +2281,7 @@ void thd_increment_net_big_packet_count(ulong length)
 
 void THD::set_status_var_init()
 {
-  bzero((char*) &status_var, sizeof(status_var));
+  memset((char*) &status_var, 0, sizeof(status_var));
 }
 
 

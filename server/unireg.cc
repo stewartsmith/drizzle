@@ -258,7 +258,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     goto err;
 
   {
-    bzero((uchar*) buff, 6);
+    memset((uchar*) buff, 0, 6);
     if (my_write(file, (uchar*) buff, 6, MYF_RW))
       goto err;
   }
@@ -279,7 +279,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     {
       uint flags= 0;
 
-      bzero(buff, format_section_header_size);
+      memset(buff, 0, format_section_header_size);
       /* length of section 2 bytes*/
       int2store(buff+0, format_section_len);
       /* flags of section 4 bytes*/
@@ -695,7 +695,7 @@ static bool pack_header(uchar *forminfo,
     return(1);
   }
 
-  bzero((char*)forminfo,288);
+  memset((char*)forminfo, 0, 288);
   length=(info_length+create_fields.elements*FCOMP+288+n_length+int_length+
 	  com_length);
   int2store(forminfo,length);
@@ -821,7 +821,7 @@ static bool pack_fields(File file, List<Create_field> &create_fields,
         uint           i;
         unsigned char *val= NULL;
 
-        bzero(occ, sizeof(occ));
+        memset(occ, 0, sizeof(occ));
 
         for (i=0; (val= (unsigned char*) field->interval->type_names[i]); i++)
           for (uint j = 0; j < field->interval->type_lengths[i]; j++)
@@ -900,8 +900,8 @@ static bool make_empty_rec(THD *thd, File file,
   
 
   /* We need a table to generate columns for default values */
-  bzero((char*) &table, sizeof(table));
-  bzero((char*) &share, sizeof(share));
+  memset((char*) &table, 0, sizeof(table));
+  memset((char*) &share, 0, sizeof(share));
   table.s= &share;
 
   if (!(buff=(uchar*) my_malloc((size_t) reclength,MYF(MY_WME | MY_ZEROFILL))))

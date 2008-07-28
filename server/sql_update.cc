@@ -1289,7 +1289,7 @@ multi_update::initialize_tables(JOIN *join)
     temp_fields.concat(fields_for_table[cnt]);
 
     /* Make an unique key over the first field to avoid duplicated updates */
-    bzero((char*) &group, sizeof(group));
+    memset((char*) &group, 0, sizeof(group));
     group.asc= 1;
     group.item= (Item**) temp_fields.head_ref();
 

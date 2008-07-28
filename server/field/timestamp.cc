@@ -361,7 +361,7 @@ bool Field_timestamp::get_date(MYSQL_TIME *ltime, uint fuzzydate)
   {				      /* Zero time is "000000" */
     if (fuzzydate & TIME_NO_ZERO_DATE)
       return 1;
-    bzero((char*) ltime,sizeof(*ltime));
+    memset((char*) ltime, 0, sizeof(*ltime));
   }
   else
   {

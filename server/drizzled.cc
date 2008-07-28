@@ -1104,7 +1104,7 @@ static void network_init(void)
     struct addrinfo hints;
     int error;
 
-    bzero(&hints, sizeof (hints));
+    memset(&hints, 0, sizeof (hints));
     hints.ai_flags= AI_PASSIVE;
     hints.ai_socktype= SOCK_STREAM;
     hints.ai_family= AF_UNSPEC;
@@ -4285,8 +4285,8 @@ static void mysql_init_variables(void)
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
   errmesg= 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
-  bzero((uchar*) &mysql_tmpdir_list, sizeof(mysql_tmpdir_list));
-  bzero((char *) &global_status_var, sizeof(global_status_var));
+  memset((uchar*) &mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
+  memset((char *) &global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
 
   /* Character sets */
@@ -4612,7 +4612,7 @@ mysqld_get_one_option(int optid,
     {
       struct addrinfo *res_lst, hints;    
 
-      bzero(&hints, sizeof(struct addrinfo));
+      memset(&hints, 0, sizeof(struct addrinfo));
       hints.ai_socktype= SOCK_STREAM;
       hints.ai_protocol= IPPROTO_TCP;
 
@@ -5134,7 +5134,7 @@ void refresh_status(THD *thd)
   add_to_status(&global_status_var, &thd->status_var);
 
   /* Reset thread's status variables */
-  bzero((uchar*) &thd->status_var, sizeof(thd->status_var));
+  memset((uchar*) &thd->status_var, 0, sizeof(thd->status_var));
 
   /* Reset some global variables */
   reset_status_vars();

@@ -180,7 +180,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
                        &path_buff, path_length + 1,
                        NULL))
   {
-    bzero((char*) share, sizeof(*share));
+    memset((char*) share, 0, sizeof(*share));
 
     share->set_table_cache_key(key_buff, key, key_length);
 
@@ -245,7 +245,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
                           const char *path)
 {
 
-  bzero((char*) share, sizeof(*share));
+  memset((char*) share, 0, sizeof(*share));
   init_sql_alloc(&share->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   share->table_category=         TABLE_CATEGORY_TEMPORARY;
   share->tmp_table=              INTERNAL_TMP_TABLE;
@@ -583,7 +583,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if (!(keyinfo = (KEY*) alloc_root(&share->mem_root,
 				    n_length + uint2korr(disk_buff+4))))
     goto err;                                   /* purecov: inspected */
-  bzero((char*) keyinfo,n_length);
+  memset((char*) keyinfo, 0, n_length);
   share->key_info= keyinfo;
   key_part= my_reinterpret_cast(KEY_PART_INFO*) (keyinfo+keys);
   strpos=disk_buff+6;
@@ -960,7 +960,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       }
       else
         charset= share->table_charset;
-      bzero((char*) &comment, sizeof(comment));
+      memset((char*) &comment, 0, sizeof(comment));
     }
 
     if (interval_nr && charset->mbminlen > 1)
@@ -1339,7 +1339,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   assert(thd->lex->is_lex_started);
 
   error= 1;
-  bzero((char*) outparam, sizeof(*outparam));
+  memset((char*) outparam, 0, sizeof(*outparam));
   outparam->in_use= thd;
   outparam->s= share;
   outparam->db_stat= db_stat;
@@ -1547,7 +1547,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   }
 
 #if defined(HAVE_purify) 
-  bzero((char*) bitmaps, bitmap_size*3);
+  memset((char*) bitmaps, 0, bitmap_size*3);
 #endif
 
   outparam->no_replicate= outparam->file &&
@@ -1656,7 +1656,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
       my_free((uchar*) buf,MYF(0));
   }
   else if (!names)
-    bzero((char*) save_names,sizeof(save_names));
+    memset((char*) save_names, 0, sizeof(save_names));
   else
   {
     char *str;
@@ -1724,7 +1724,7 @@ ulong make_new_entry(File file, uchar *fileinfo, TYPELIB *formnames,
 	return(0);
       endpos-=bufflength; bufflength=IO_SIZE;
     }
-    bzero(buff,IO_SIZE);			/* Null new block */
+    memset(buff, 0, IO_SIZE);			/* Null new block */
     VOID(my_seek(file,(ulong) maxlength,MY_SEEK_SET,MYF(0)));
     if (my_write(file,buff,bufflength,MYF(MY_NABP+MY_WME)))
 	return(0L);
@@ -2041,7 +2041,7 @@ File create_frm(THD *thd, const char *name, const char *db,
   {
     uint key_length, tmp_key_length;
     uint tmp;
-    bzero((char*) fileinfo,64);
+    memset((char*) fileinfo, 0, 64);
     /* header */
     fileinfo[0]=(uchar) 254;
     fileinfo[1]= 1;
@@ -2110,7 +2110,7 @@ File create_frm(THD *thd, const char *name, const char *db,
       61 for default_part_db_type
     */
     int2store(fileinfo+62, create_info->key_block_size);
-    bzero(fill,IO_SIZE);
+    memset(fill, 0, IO_SIZE);
     for (; length > IO_SIZE ; length-= IO_SIZE)
     {
       if (my_write(file,fill, IO_SIZE, MYF(MY_WME | MY_NABP)))
@@ -3180,7 +3180,7 @@ void st_table::clear_column_bitmaps()
     bitmap_clear_all(&table->def_read_set);
     bitmap_clear_all(&table->def_write_set);
   */
-  bzero((char*) def_read_set.bitmap, s->column_bitmap_size*2);
+  memset((char*) def_read_set.bitmap, 0, s->column_bitmap_size*2);
   column_bitmaps_set(&def_read_set, &def_write_set);
 }
 

@@ -1504,7 +1504,7 @@ void Item_sum_variance::reset_field()
   nr= args[0]->val_real();              /* sets null_value as side-effect */
 
   if (args[0]->null_value)
-    bzero(res,sizeof(double)*2+sizeof(int64_t));
+    memset(res, 0, sizeof(double)*2+sizeof(int64_t));
   else
   {
     /* Serialize format is (double)m, (double)s, (int64_t)count */
@@ -2039,7 +2039,7 @@ void Item_sum_avg::reset_field()
     double nr= args[0]->val_real();
 
     if (args[0]->null_value)
-      bzero(res,sizeof(double)+sizeof(int64_t));
+      memset(res, 0, sizeof(double)+sizeof(int64_t));
     else
     {
       int64_t tmp= 1;

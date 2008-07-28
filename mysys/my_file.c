@@ -99,8 +99,8 @@ uint my_set_max_open_files(uint files)
   /* Copy any initialized files */
   memcpy((char*) tmp, (char*) my_file_info,
          sizeof(*tmp) * min(my_file_limit, files));
-  bzero((char*) (tmp + my_file_limit),
-        max((int) (files- my_file_limit), 0)*sizeof(*tmp));
+  memset((char*) (tmp + my_file_limit), 0,
+         max((int) (files- my_file_limit), 0)*sizeof(*tmp));
   my_free_open_file_info();			/* Free if already allocated */
   my_file_info= tmp;
   my_file_limit= files;

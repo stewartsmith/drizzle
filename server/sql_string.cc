@@ -235,7 +235,7 @@ bool String::copy_aligned(const char *str,uint32_t arg_length, uint32_t offset,
     If we add little-endian UCS-2 sometimes, this code
     will be more complicated. But it's OK for now.
   */
-  bzero((char*) Ptr, offset);
+  memset((char*) Ptr, 0, offset);
   memcpy(Ptr + offset, str, arg_length);
   Ptr[aligned_length]=0;
   /* str_length is always >= 0 as arg_length is != 0 */
@@ -955,7 +955,7 @@ well_formed_copy_nchars(CHARSET_INFO *to_cs,
           0x01 -> 0x0001
         */
         uint pad_length= to_cs->mbminlen - from_offset;
-        bzero(to, pad_length);
+        memset(to, 0, pad_length);
         memmove(to + pad_length, from, from_offset);
         nchars--;
         from+= from_offset;

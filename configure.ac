@@ -958,13 +958,14 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
+AC_CHECK_FUNCS(bcmp bfill bmove bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
-  locking longjmp lrand48 madvise mallinfo memcpy memmove \
+  locking longjmp lrand48 madvise mallinfo \
+  memset memcpy memmove \
   mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 getpagesize \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \

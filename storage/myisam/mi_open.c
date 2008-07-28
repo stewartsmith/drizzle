@@ -77,7 +77,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   lock_error=1;
   errpos=0;
   head_length=sizeof(share_buff.state.header);
-  bzero((uchar*) &info,sizeof(info));
+  memset((uchar*) &info, 0, sizeof(info));
 
   my_realpath(name_buff, fn_format(org_name,name,"",MI_NAME_IEXT,
                                    MY_UNPACK_FILENAME),MYF(0));
@@ -85,7 +85,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   if (!(old_info=test_if_reopen(name_buff)))
   {
     share= &share_buff;
-    bzero((uchar*) &share_buff,sizeof(share_buff));
+    memset((uchar*) &share_buff, 0, sizeof(share_buff));
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
@@ -507,10 +507,10 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 
   /* Allocate buffer for one record */
 
-  /* prerequisites: bzero(info) && info->s=share; are met. */
+  /* prerequisites: memset(info, 0) && info->s=share; are met. */
   if (!mi_alloc_rec_buff(&info, -1, &info.rec_buff))
     goto err;
-  bzero(info.rec_buff, mi_get_rec_buff_len(&info, info.rec_buff));
+  memset(info.rec_buff, 0, mi_get_rec_buff_len(&info, info.rec_buff));
 
   *m_info=info;
   thr_lock_data_init(&share->lock,&m_info->lock,(void*) m_info);
@@ -889,7 +889,7 @@ uint mi_base_info_write(File file, MI_BASE_INFO *base)
   *ptr++= base->raid_type;
   mi_int2store(ptr,base->raid_chunks);			ptr +=2;
   mi_int4store(ptr,base->raid_chunksize);		ptr +=4;
-  bzero(ptr,6);						ptr +=6; /* extra */
+  memset(ptr, 0, 6);					ptr +=6; /* extra */
   return my_write(file, buff, (size_t) (ptr-buff), MYF(MY_NABP)) != 0;
 }
 

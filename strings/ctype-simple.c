@@ -1268,7 +1268,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
     return true;
   
   /* Clear plane statistics */
-  bzero(idx,sizeof(idx));
+  memset(idx, 0, sizeof(idx));
   
   /* Count number of characters in each plane */
   for (i=0; i< 0x100; i++)
@@ -1306,7 +1306,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
     if (!(idx[i].uidx.tab=(uchar*) alloc(numchars * sizeof(*idx[i].uidx.tab))))
       return true;
     
-    bzero(idx[i].uidx.tab,numchars*sizeof(*idx[i].uidx.tab));
+    memset(idx[i].uidx.tab, 0, numchars*sizeof(*idx[i].uidx.tab));
     
     for (ch=1; ch < PLANE_SIZE; ch++)
     {
@@ -1328,7 +1328,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
     cs->tab_from_uni[i]= idx[i].uidx;
   
   /* Set end-of-list marker */
-  bzero(&cs->tab_from_uni[i],sizeof(MY_UNI_IDX));
+  memset(&cs->tab_from_uni[i], 0, sizeof(MY_UNI_IDX));
   return false;
 }
 

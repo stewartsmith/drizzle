@@ -392,7 +392,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   pthread_mutex_t *log_lock;
   bool binlog_can_be_corrupted= false;
 
-  bzero((char*) &log,sizeof(log));
+  memset((char*) &log, 0, sizeof(log));
   /* 
      heartbeat_period from @master_heartbeat_period user variable
   */
