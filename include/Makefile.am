@@ -62,7 +62,6 @@ noinst_HEADERS =	my_bit.h \
 			thr_lock.h \
 			t_ctype.h \
 			violite.h \
-			my_md5.h \
 			base64.h \
 			drizzle_version.h.in \
 			my_handler.h \

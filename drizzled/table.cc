@@ -18,7 +18,6 @@
 
 #include "mysql_priv.h"
 #include <m_ctype.h>
-#include "my_md5.h"
 
 /* INFORMATION_SCHEMA name */
 LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};
