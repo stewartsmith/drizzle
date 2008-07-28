@@ -49,7 +49,7 @@ DTRACEFILES = handler.o \
 
 noinst_LTLIBRARIES = libhandler.la
 
-AM_CPPFLAGS =	-I$(top_srcdir)/strings \
+AM_CPPFLAGS =	-I$(top_srcdir)/mystrings \
 		-I$(top_srcdir)/include \
 		-I$(top_srcdir)/drizzled \
 		-I$(top_srcdir)
@@ -57,7 +57,7 @@ AM_CPPFLAGS =	-I$(top_srcdir)/strings \
 LDADD = $(top_builddir)/vio/libviolt.la \
 	$(top_builddir)/libdrizzle/libsqlcommon.la \
 	$(top_builddir)/mysys/libmysyslt.la \
-	$(top_builddir)/strings/libmystringslt.la \
+	$(top_builddir)/mystrings/libmystringslt.la \
 	$(ZLIB_LIBS)
 
 drizzled_LDADD = libhandler.la \

@@ -67,7 +67,7 @@ noinst_HEADERS =	my_bit.h \
 			my_time.h
 
 LDADD = $(top_builddir)/mysys/libmysyslt.la \
-        $(top_builddir)/strings/libmystringslt.la $(ZLIB_LIBS)
+        $(top_builddir)/mystrings/libmystringslt.la $(ZLIB_LIBS)
 
 EXTRA_PROGRAMS = comp_err
 comperr_CFLAGS = -I${top_srcdir}/drizzled
