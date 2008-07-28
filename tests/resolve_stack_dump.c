@@ -23,7 +23,7 @@
 #include <mystrings/m_string.h>
 #include <drizzle_version.h>
 #include <errno.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 
 #define INIT_SYM_TABLE  4096
 #define INC_SYM_TABLE  4096

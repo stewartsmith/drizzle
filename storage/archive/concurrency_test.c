@@ -3,7 +3,7 @@
   */
 #include "azio.h"
 #include <drizzle.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #include <drizzle_version.h>
 #include <stdio.h>
 #include <stdlib.h>

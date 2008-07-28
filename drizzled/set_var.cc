@@ -54,7 +54,7 @@
 #include "mysql_priv.h"
 #include "slave.h"
 #include "rpl_mi.h"
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
 #include <my_dir.h>

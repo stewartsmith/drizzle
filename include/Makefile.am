@@ -31,7 +31,6 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			errmsg.h \
 			my_global.h \
 			my_net.h \
-			my_getopt.h \
 			my_dir.h \
 			sql_common.h \
 			my_attribute.h \

@@ -26,7 +26,7 @@
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #include <assert.h>
 #include <my_dir.h>
 

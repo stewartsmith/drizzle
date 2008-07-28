@@ -36,7 +36,7 @@
 #include <mystrings/m_string.h>
 #include <drizzle.h>
 #include <errmsg.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
 #include "mysql_priv.h"
 #include "log_event.h"

@@ -26,7 +26,7 @@
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__			/* Skip warnings in getopt.h */
 #endif
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #include <assert.h>
 
 #if SIZEOF_LONG_LONG > 4

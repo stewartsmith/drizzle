@@ -30,6 +30,7 @@ nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
 noinst_LTLIBRARIES = libmysyslt.la
 
 pkginclude_HEADERS = 	my_alloc.h \
+			my_getopt.h \
 			my_sys.h \
 			my_pthread.h 
 
