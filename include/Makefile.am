@@ -42,7 +42,6 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			my_getopt.h \
 			my_dir.h \
 			sql_common.h \
-			keycache.h \
 			m_ctype.h \
 			my_attribute.h \
 			$(BUILT_SOURCES)
@@ -51,9 +50,6 @@ noinst_HEADERS =	my_bit.h \
 			heap.h \
 			my_bitmap.h \
 			my_uctype.h \
-			myisam.h \
-			myisampack.h \
-			myisammrg.h \
 			mysys_err.h \
 			my_base.h \
 			my_nosys.h \

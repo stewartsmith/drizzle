@@ -35,7 +35,12 @@ noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
 bin_PROGRAMS =		myisamchk myisamlog myisampack
 noinst_HEADERS =	myisamdef.h \
-			ha_myisam.h
+			ha_myisam.h \
+			keycache.h \
+			myisam.h \
+			myisammrg.h \
+			myisampack.h
+
 libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \
 			mi_search.c mi_page.c mi_key.c mi_locking.c \
