@@ -53,8 +53,6 @@ noinst_HEADERS =	my_bit.h \
 			my_base.h \
 			my_nosys.h \
 			queues.h \
-			sha1.h \
-			sha2.h \
 			my_tree.h \
 			my_trie.h \
 			hash.h \
