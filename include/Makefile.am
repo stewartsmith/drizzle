@@ -29,9 +29,7 @@ HEADERS_ABI =		drizzle.h \
 
 pkginclude_HEADERS =	$(HEADERS_ABI) \
 			m_string.h \
-			my_sys.h \
 			my_xml.h \
-			my_pthread.h \
 			errmsg.h \
 			my_global.h \
 			my_net.h \
@@ -45,9 +43,7 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 noinst_HEADERS =	my_bit.h \
 			my_bitmap.h \
 			my_uctype.h \
-			mysys_err.h \
 			my_base.h \
-			my_nosys.h \
 			queues.h \
 			my_tree.h \
 			my_trie.h \

@@ -29,10 +29,15 @@ nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
 # Trick to get things compiled like they are shared, but linked directly in.
 noinst_LTLIBRARIES = libmysyslt.la
 
-pkginclude_HEADERS = 	my_alloc.h
+pkginclude_HEADERS = 	my_alloc.h \
+			my_sys.h \
+			my_pthread.h 
+
 noinst_HEADERS =	mysys_priv.h \
 			my_static.h \
 			my_handler_errors.h \
+			my_nosys.h \
+			mysys_err.h \
 			sha1.h \
 			sha2.h \
 			thr_alarm.h \

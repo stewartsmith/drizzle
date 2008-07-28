@@ -24,7 +24,7 @@
 #include "repl_failsafe.h"
 #include "stacktrace.h"
 #include "mysqld_suffix.h"
-#include "mysys_err.h"
+#include <mysys/mysys_err.h>
 
 #include "../storage/myisam/ha_myisam.h"
 
@@ -145,7 +145,7 @@ inline void setup_fpu()
 
 #define MYSQL_KILL_SIGNAL SIGTERM
 
-#include <my_pthread.h>			// For thr_setconcurency()
+#include <mysys/my_pthread.h>			// For thr_setconcurency()
 
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);

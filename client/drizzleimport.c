@@ -28,7 +28,7 @@
 
 #include "client_priv.h"
 #include "drizzle_version.h"
-#include <my_pthread.h>
+#include <mysys/my_pthread.h>
 
 
 /* Global Thread counter */

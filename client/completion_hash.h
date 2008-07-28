@@ -22,7 +22,7 @@
 #define FAILURE 1
 
 #include <sys/types.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 
 typedef struct _entry {
 	char *str;

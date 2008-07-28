@@ -20,7 +20,7 @@
 #include "hp_static.c"			/* Stupid vms-linker */
 #endif
 
-#include "my_sys.h"
+#include <mysys/my_sys.h>
 
 /*
   Open heap table based on HP_SHARE structure

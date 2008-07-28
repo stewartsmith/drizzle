@@ -36,7 +36,7 @@ C_MODE_START
 #define GET_ASK_ADDR	 128
 #define GET_TYPE_MASK	 127
 
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 
 enum get_opt_arg_type { NO_ARG, OPT_ARG, REQUIRED_ARG };
 

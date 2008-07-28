@@ -34,7 +34,6 @@
  **/
 
 #include "client_priv.h"
-#include <my_sys.h>
 #include <m_ctype.h>
 #include <stdarg.h>
 #include <my_dir.h>

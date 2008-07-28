@@ -30,7 +30,7 @@
 
 #include <my_global.h>
 #include <drizzle_version.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <my_time.h>
 #include <m_string.h>
 #include <hash.h>

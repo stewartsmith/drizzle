@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysql_priv.h"
-#include <my_pthread.h>
+#include <mysys/my_pthread.h>
 #include <my_getopt.h>
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2

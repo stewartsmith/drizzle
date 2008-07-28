@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-#include <my_pthread.h>
+#include <mysys/my_pthread.h>
 #include <my_list.h>
 
 struct st_thr_lock;

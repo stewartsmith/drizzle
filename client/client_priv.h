@@ -16,7 +16,7 @@
 /* Common defines for all clients */
 
 #include <my_global.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <m_string.h>
 #include <drizzle.h>
 #include <errmsg.h>

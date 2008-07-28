@@ -34,7 +34,7 @@
 #include <m_ctype.h>
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
-#include <mysys_err.h>
+#include <mysys/mysys_err.h>
 
 /*
   The following is used to initialise Table_ident with a internal

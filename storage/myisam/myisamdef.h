@@ -21,7 +21,7 @@
 #include "myisam.h"			/* Structs & some defines */
 #include "myisampack.h"			/* packing of keys */
 #include <my_tree.h>
-#include <my_pthread.h>
+#include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
 
 #if defined(my_write) && !defined(MAP_TO_USE_RAID)

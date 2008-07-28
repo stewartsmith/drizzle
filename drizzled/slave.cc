@@ -37,7 +37,7 @@
 #include <my_dir.h>
 #include <sql_common.h>
 #include <errmsg.h>
-#include <mysys_err.h>
+#include <mysys/mysys_err.h>
 
 #ifdef HAVE_REPLICATION
 
