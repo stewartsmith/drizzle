@@ -29,7 +29,6 @@
 #include "rpl_rli.h"
 #include "rpl_record.h"
 #include "slave.h"
-#include <my_bitmap.h>
 #include "log_event.h"
 #include <m_ctype.h>
 #include <sys/stat.h>

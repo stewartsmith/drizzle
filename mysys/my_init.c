@@ -16,8 +16,8 @@
 #include "mysys_priv.h"
 #include "my_static.h"
 #include "mysys_err.h"
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include <signal.h>
 
 bool my_init_done= 0;

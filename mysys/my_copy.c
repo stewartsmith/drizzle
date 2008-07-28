@@ -15,7 +15,7 @@
 
 #include "mysys_priv.h"
 #include <my_dir.h> /* for stat */
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #if defined(HAVE_UTIME_H)
 #include <utime.h>
 #elif defined(HAVE_SYS_UTIME_H)

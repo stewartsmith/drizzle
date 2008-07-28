@@ -15,7 +15,7 @@
 
 #include "my_global.h"
 #include "mysys_priv.h"
-#include "m_string.h"
+#include <mystrings/m_string.h>
 #include <my_dir.h>
 
 #define BUFF_SIZE 1024

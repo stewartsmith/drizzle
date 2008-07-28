@@ -22,7 +22,7 @@
 #include <drizzle_com.h>
 #include <drizzled_error.h>
 #include <my_sys.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <my_net.h>
 #include <violite.h>
 #include <signal.h>

@@ -16,7 +16,7 @@
    MA 02111-1307, USA */
 
 #include <my_global.h>
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #include <my_base.h>
 #include <my_handler.h>
 #include <my_sys.h>

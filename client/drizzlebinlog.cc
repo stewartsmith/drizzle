@@ -33,7 +33,7 @@
 #include <my_time.h>
 #include <my_global.h>
 #include <mysys/my_sys.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <drizzle.h>
 #include <errmsg.h>
 #include <my_getopt.h>

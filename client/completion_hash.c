@@ -21,7 +21,7 @@
  */
 
 #include <my_global.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #undef SAFEMALLOC				// Speed things up
 #include "completion_hash.h"
 

@@ -3,8 +3,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include <m_ctype.h>
-#include <m_string.h>
+#include <mystrings/m_ctype.h>
+#include <mystrings/m_string.h>
 #include <my_getopt.h>
 #include <drizzle_version.h>
 

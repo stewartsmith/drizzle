@@ -46,7 +46,12 @@ endif
 endif
 
 pkginclude_HEADERS = 	decimal.h \
+			m_ctype.h \
+			m_string.h \
 			my_xml.h
+
+noinst_HEADERS =	my_uctype.h
+
 # C files common to all three cases are included directly below, so that
 # ASRCS and CSRCS can be smaller
 libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove.c bmove512.c \

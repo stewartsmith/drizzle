@@ -40,8 +40,8 @@
 
 #include <my_global.h>
 #include <mysys/my_sys.h>
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
 

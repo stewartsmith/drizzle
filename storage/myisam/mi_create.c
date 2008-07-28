@@ -16,12 +16,10 @@
 /* Create a MyISAM table */
 
 #include "myisamdef.h"
-#include <m_ctype.h>
 #include <mysys/my_tree.h>
 #include <mysys/queues.h>
 #include <my_bit.h>
 
-#include <m_ctype.h>
 
 /*
   Old options is used when recreating database, from myisamchk

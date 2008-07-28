@@ -28,22 +28,17 @@ HEADERS_ABI =		drizzle.h \
 			typelib.h
 
 pkginclude_HEADERS =	$(HEADERS_ABI) \
-			m_string.h \
 			errmsg.h \
 			my_global.h \
 			my_net.h \
 			my_getopt.h \
 			my_dir.h \
 			sql_common.h \
-			m_ctype.h \
 			my_attribute.h \
 			$(BUILT_SOURCES)
 
 noinst_HEADERS =	my_bit.h \
-			my_bitmap.h \
-			my_uctype.h \
 			my_base.h \
-			t_ctype.h \
 			drizzle_version.h.in \
 			my_handler.h \
 			my_time.h

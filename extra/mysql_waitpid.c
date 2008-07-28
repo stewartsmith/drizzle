@@ -16,7 +16,7 @@
 /* Wait until a program dies */
 
 #include <my_global.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <mysys/my_sys.h>
 #include <my_getopt.h>
 #include <signal.h>

@@ -32,7 +32,7 @@
 #include <drizzle_version.h>
 #include <mysys/my_sys.h>
 #include <my_time.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <mysys/hash.h>
 #include <signal.h>
 #include <mysys/thr_lock.h>

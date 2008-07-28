@@ -54,7 +54,7 @@
 */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <mysys/my_tree.h>
 #include "my_base.h"
 

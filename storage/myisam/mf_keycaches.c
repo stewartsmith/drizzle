@@ -26,7 +26,7 @@
 #include <mysys/my_sys.h>
 #include <keycache.h>
 #include <mysys/hash.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 /*****************************************************************************
   General functions to handle SAFE_HASH objects.

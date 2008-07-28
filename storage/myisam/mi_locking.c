@@ -21,7 +21,7 @@
 */
 
 #include "myisamdef.h"
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #include <mysys/my_tree.h>
 #include <mysys/queues.h>
 

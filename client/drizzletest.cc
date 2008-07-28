@@ -37,7 +37,6 @@
 #include "client_priv.h"
 #include <drizzle_version.h>
 #include <drizzled_error.h>
-#include <m_ctype.h>
 #include <my_dir.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
