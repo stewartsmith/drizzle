@@ -834,8 +834,7 @@ int prepare_create_field(Create_field *sql_field,
     sql_field->pack_flag=(FIELDFLAG_NUMBER |
                           (sql_field->flags & UNSIGNED_FLAG ? 0 :
                            FIELDFLAG_DECIMAL) |
-                          (sql_field->flags & ZEROFILL_FLAG ?
-                           FIELDFLAG_ZEROFILL : 0) |
+                          (sql_field->flags & DECIMAL_FLAG ?  FIELDFLAG_DECIMAL_POSITION : 0) |
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;
   case MYSQL_TYPE_TIMESTAMP:
@@ -859,8 +858,6 @@ int prepare_create_field(Create_field *sql_field,
     sql_field->pack_flag=(FIELDFLAG_NUMBER |
                           (sql_field->flags & UNSIGNED_FLAG ? 0 :
                            FIELDFLAG_DECIMAL) |
-                          (sql_field->flags & ZEROFILL_FLAG ?
-                           FIELDFLAG_ZEROFILL : 0) |
                           f_settype((uint) sql_field->sql_type) |
                           (sql_field->decimals << FIELDFLAG_DEC_SHIFT));
     break;

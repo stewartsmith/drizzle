@@ -280,7 +280,7 @@ String *Field_new_decimal::val_str(String *val_buffer,
                                    String *val_ptr __attribute__((unused)))
 {
   my_decimal decimal_value;
-  uint fixed_precision= zerofill ? precision : 0;
+  uint fixed_precision= decimal_precision ? precision : 0;
   my_decimal2string(E_DEC_FATAL_ERROR, val_decimal(&decimal_value),
                     fixed_precision, dec, '0', val_buffer);
   return val_buffer;
@@ -305,7 +305,7 @@ void Field_new_decimal::sql_type(String &str) const
   CHARSET_INFO *cs= str.charset();
   str.length(cs->cset->snprintf(cs, (char*) str.ptr(), str.alloced_length(),
                                 "decimal(%d,%d)", precision, (int)dec));
-  add_zerofill_and_unsigned(str);
+  add_unsigned(str);
 }
 
 

@@ -544,14 +544,14 @@ private:
 class Field_num :public Field {
 public:
   const uint8_t dec;
-  bool zerofill,unsigned_flag;	// Purify cannot handle bit fields
+  bool decimal_precision;	// Purify cannot handle bit fields & only for decimal type
+  bool unsigned_flag;	// Purify cannot handle bit fields
   Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
 	    uchar null_bit_arg, utype unireg_check_arg,
 	    const char *field_name_arg,
             uint8_t dec_arg, bool zero_arg, bool unsigned_arg);
   Item_result result_type () const { return REAL_RESULT; }
-  void prepend_zeros(String *value);
-  void add_zerofill_and_unsigned(String &res) const;
+  void add_unsigned(String &res) const;
   friend class Create_field;
   void make_field(Send_field *);
   uint decimals() const { return (uint) dec; }
@@ -889,7 +889,7 @@ check_string_copy_error(Field_str *field,
 #define FIELDFLAG_DECIMAL		1
 #define FIELDFLAG_BINARY		1	// Shares same flag
 #define FIELDFLAG_NUMBER		2
-#define FIELDFLAG_ZEROFILL		4
+#define FIELDFLAG_DECIMAL_POSITION      4
 #define FIELDFLAG_PACK			120	// Bits used for packing
 #define FIELDFLAG_INTERVAL		256     // mangled with decimals!
 #define FIELDFLAG_BITFIELD		512	// mangled with decimals!
@@ -915,7 +915,7 @@ check_string_copy_error(Field_str *field,
 
 #define f_is_dec(x)		((x) & FIELDFLAG_DECIMAL)
 #define f_is_num(x)		((x) & FIELDFLAG_NUMBER)
-#define f_is_zerofill(x)	((x) & FIELDFLAG_ZEROFILL)
+#define f_is_decimal_precision(x)	((x) & FIELDFLAG_DECIMAL_POSITION)
 #define f_is_packed(x)		((x) & FIELDFLAG_PACK)
 #define f_packtype(x)		(((x) >> FIELDFLAG_PACK_SHIFT) & 15)
 #define f_decimals(x)		((uint8_t) (((x) >> FIELDFLAG_DEC_SHIFT) & FIELDFLAG_MAX_DEC))

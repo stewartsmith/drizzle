@@ -200,8 +200,7 @@ String *Field_short::val_str(String *val_buffer,
   else
     length=(uint) cs->cset->long10_to_str(cs, to, mlength,-10, (long) j);
   val_buffer->length(length);
-  if (zerofill)
-    prepend_zeros(val_buffer);
+
   return val_buffer;
 }
 
@@ -261,6 +260,5 @@ void Field_short::sql_type(String &res) const
   CHARSET_INFO *cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			  "smallint(%d)",(int) field_length));
-  add_zerofill_and_unsigned(res);
+  add_unsigned(res);
 }
-

@@ -737,28 +737,12 @@ Field_num::Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
                      uint8_t dec_arg, bool zero_arg, bool unsigned_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg),
-  dec(dec_arg),zerofill(zero_arg),unsigned_flag(unsigned_arg)
+  dec(dec_arg),decimal_precision(zero_arg),unsigned_flag(unsigned_arg)
 {
-  if (zerofill)
-    flags|=ZEROFILL_FLAG;
   if (unsigned_flag)
     flags|=UNSIGNED_FLAG;
 }
 
-
-void Field_num::prepend_zeros(String *value)
-{
-  int diff;
-  if ((diff= (int) (field_length - value->length())) > 0)
-  {
-    bmove_upp((uchar*) value->ptr()+field_length,
-              (uchar*) value->ptr()+value->length(),
-	      value->length());
-    bfill((uchar*) value->ptr(),diff,'0');
-    value->length(field_length);
-    (void) value->c_ptr_quick();		// Avoid warnings in purify
-  }
-}
 
 /**
   Test if given number is a int.
@@ -1191,12 +1175,10 @@ my_decimal *Field::val_decimal(my_decimal *decimal __attribute__((unused)))
 }
 
 
-void Field_num::add_zerofill_and_unsigned(String &res) const
+void Field_num::add_unsigned(String &res) const
 {
   if (unsigned_flag)
     res.append(STRING_WITH_LEN(" unsigned"));
-  if (zerofill)
-    res.append(STRING_WITH_LEN(" zerofill"));
 }
 
 
@@ -1458,8 +1440,7 @@ Field *Field::new_field(MEM_ROOT *root, struct st_table *new_table,
   tmp->part_of_key.init(0);
   tmp->part_of_sortkey.init(0);
   tmp->unireg_check= Field::NONE;
-  tmp->flags&= (NOT_NULL_FLAG | BLOB_FLAG | UNSIGNED_FLAG |
-                ZEROFILL_FLAG | BINARY_FLAG | ENUM_FLAG | SET_FLAG);
+  tmp->flags&= (NOT_NULL_FLAG | BLOB_FLAG | UNSIGNED_FLAG | BINARY_FLAG | ENUM_FLAG | SET_FLAG);
   tmp->reset_fields();
   return tmp;
 }
@@ -1629,8 +1610,7 @@ String *Field_tiny::val_str(String *val_buffer,
 					   (long) *((signed char*) ptr));
   
   val_buffer->length(length);
-  if (zerofill)
-    prepend_zeros(val_buffer);
+
   return val_buffer;
 }
 
@@ -1661,7 +1641,7 @@ void Field_tiny::sql_type(String &res) const
   CHARSET_INFO *cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			  "tinyint(%d)",(int) field_length));
-  add_zerofill_and_unsigned(res);
+  add_unsigned(res);
 }
 
 
@@ -2174,7 +2154,6 @@ bool Field_num::eq_def(Field *field)
   Field_num *from_num= (Field_num*) field;
 
   if (unsigned_flag != from_num->unsigned_flag ||
-      (zerofill && !from_num->zerofill && !zero_pack()) ||
       dec != from_num->dec)
     return 0;
   return 1;
@@ -2408,7 +2387,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   case MYSQL_TYPE_YEAR:
     if (!fld_length || length != 2)
       length= 4; /* Default length */
-    flags|= ZEROFILL_FLAG | UNSIGNED_FLAG;
+    flags|= UNSIGNED_FLAG;
     break;
   case MYSQL_TYPE_DOUBLE:
     allowed_type_modifier= AUTO_INCREMENT_FLAG;
@@ -2439,7 +2418,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       length= ((length+1)/2)*2; /* purecov: inspected */
       length= min(length, MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
     }
-    flags|= ZEROFILL_FLAG | UNSIGNED_FLAG;
+    flags|= UNSIGNED_FLAG;
     if (fld_default_value)
     {
       /* Grammar allows only NOW() value for ON UPDATE clause */
@@ -2683,33 +2662,33 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
     return new Field_new_decimal(ptr,field_length,null_pos,null_bit,
                                  unireg_check, field_name,
                                  f_decimals(pack_flag),
-                                 f_is_zerofill(pack_flag) != 0,
+                                 f_is_decimal_precision(pack_flag) != 0,
                                  f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_DOUBLE:
     return new Field_double(ptr,field_length,null_pos,null_bit,
 			    unireg_check, field_name,
 			    f_decimals(pack_flag),
-			    f_is_zerofill(pack_flag) != 0,
+			    false,
 			    f_is_dec(pack_flag)== 0);
   case MYSQL_TYPE_TINY:
     return new Field_tiny(ptr,field_length,null_pos,null_bit,
 			  unireg_check, field_name,
-			  f_is_zerofill(pack_flag) != 0,
+                          false,
 			  f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_SHORT:
     return new Field_short(ptr,field_length,null_pos,null_bit,
 			   unireg_check, field_name,
-			   f_is_zerofill(pack_flag) != 0,
+                           false,
 			   f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_LONG:
     return new Field_long(ptr,field_length,null_pos,null_bit,
 			   unireg_check, field_name,
-			   f_is_zerofill(pack_flag) != 0,
+                           false,
 			   f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_LONGLONG:
     return new Field_int64_t(ptr,field_length,null_pos,null_bit,
 			      unireg_check, field_name,
-			      f_is_zerofill(pack_flag) != 0,
+                              false,
 			      f_is_dec(pack_flag) == 0);
   case MYSQL_TYPE_TIMESTAMP:
     return new Field_timestamp(ptr,field_length, null_pos, null_bit,
