@@ -101,10 +101,10 @@
 
 #include <my_global.h>
 #include <m_ctype.h>
-#include <myisampack.h>
+#include <storage/myisam/myisampack.h>
 #include <my_sys.h> /* for my_alloca */
 #include <m_string.h>
-#include <decimal.h>
+#include <strings/decimal.h>
 
 /*
   Internally decimal numbers are stored base 10^9 (see DIG_BASE below)

@@ -18,7 +18,7 @@
 #endif
 
 #include "mysql_priv.h"
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 
 #include "ha_archive.h"
 #include <my_dir.h>

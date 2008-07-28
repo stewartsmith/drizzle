@@ -25,7 +25,6 @@
 
 #include "mysql_priv.h"
 #include "rpl_filter.h"
-#include <myisampack.h>
 #include <errno.h>
 
 /*

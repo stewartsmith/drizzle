@@ -17,7 +17,7 @@
 
 #include "mysql_priv.h"
 #include <hash.h>
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 #include <my_dir.h>
 #include "sql_show.h"
 

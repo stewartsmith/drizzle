@@ -56,7 +56,7 @@
 #include "rpl_mi.h"
 #include <my_getopt.h>
 #include <thr_alarm.h>
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 #include <my_dir.h>
 
 extern CHARSET_INFO *character_set_filesystem;

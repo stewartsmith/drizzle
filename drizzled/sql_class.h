@@ -2214,7 +2214,7 @@ public:
   int prepare2(void) { return 0; }
 };
 
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 
 /* 
   Param to create temporary tables when doing SELECT:s 
