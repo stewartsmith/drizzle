@@ -101,7 +101,7 @@
 
 #include <my_global.h>
 #include <m_ctype.h>
-#include <myisampack.h>
+#include <storage/myisam/myisampack.h>
 #include <my_sys.h> /* for my_alloca */
 #include <m_string.h>
 #include <decimal.h>

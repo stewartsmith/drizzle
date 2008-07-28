@@ -18,7 +18,7 @@
 #ifndef _my_handler_h
 #define _my_handler_h
 
-#include "myisampack.h"
+#include <storage/myisam/myisampack.h>
 #ifdef	__cplusplus
 extern "C" {
 #endif

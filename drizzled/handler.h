@@ -21,7 +21,7 @@
 #endif
 
 #include <my_handler.h>
-#include <keycache.h>
+#include <storage/myisam/keycache.h>
 
 #ifndef NO_HASH
 #define NO_HASH				/* Not yet implemented */

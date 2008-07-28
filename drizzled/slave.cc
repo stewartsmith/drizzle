@@ -26,7 +26,7 @@
 
 #include "mysql_priv.h"
 
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 #include "slave.h"
 #include "rpl_mi.h"
 #include "rpl_rli.h"

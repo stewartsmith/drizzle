@@ -19,7 +19,7 @@
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
 #include <m_ctype.h>
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 #include <my_dir.h>
 
 /**

@@ -25,7 +25,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 
 /* Values in optimize */
 #define KEY_OPTIMIZE_EXISTS		1

@@ -41,7 +41,7 @@
 #include "slave.h"
 #include "lex_symbol.h"
 #include "item_create.h"
-#include <myisam.h>
+#include <storage/myisam/myisam.h>
 
 int yylex(void *yylval, void *yythd);
 
