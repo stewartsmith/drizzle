@@ -696,14 +696,14 @@ Field *Item_sum_hybrid::create_tmp_field(bool group, TABLE *table,
     fields creations separately.
   */
   switch (args[0]->field_type()) {
-  case FIELD_TYPE_NEWDATE:
+  case DRIZZLE_TYPE_NEWDATE:
     field= new Field_newdate(maybe_null, name, collation.collation);
     break;
-  case FIELD_TYPE_TIME:
+  case DRIZZLE_TYPE_TIME:
     field= new Field_time(maybe_null, name, collation.collation);
     break;
-  case FIELD_TYPE_TIMESTAMP:
-  case FIELD_TYPE_DATETIME:
+  case DRIZZLE_TYPE_TIMESTAMP:
+  case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, collation.collation);
     break;
   default:
@@ -936,7 +936,7 @@ void Item_sum_distinct::fix_length_and_dec()
   case STRING_RESULT:
   case REAL_RESULT:
     val.traits= Hybrid_type_traits::instance();
-    table_field_type= FIELD_TYPE_DOUBLE;
+    table_field_type= DRIZZLE_TYPE_DOUBLE;
     break;
   case INT_RESULT:
   /*
@@ -946,17 +946,17 @@ void Item_sum_distinct::fix_length_and_dec()
     calculations. The range of int64 is enough to hold sum 2^32 distinct
     integers each <= 2^32.
   */
-  if (table_field_type >= FIELD_TYPE_TINY && table_field_type <= FIELD_TYPE_LONG)
+  if (table_field_type >= DRIZZLE_TYPE_TINY && table_field_type <= DRIZZLE_TYPE_LONG)
   {
     val.traits= Hybrid_type_traits_fast_decimal::instance();
     break;
   }
-  table_field_type= FIELD_TYPE_LONGLONG;
+  table_field_type= DRIZZLE_TYPE_LONGLONG;
   /* fallthrough */
   case DECIMAL_RESULT:
     val.traits= Hybrid_type_traits_decimal::instance();
-    if (table_field_type != FIELD_TYPE_LONGLONG)
-      table_field_type= FIELD_TYPE_NEWDECIMAL;
+    if (table_field_type != DRIZZLE_TYPE_LONGLONG)
+      table_field_type= DRIZZLE_TYPE_NEWDECIMAL;
     break;
   case ROW_RESULT:
   default:
@@ -2582,7 +2582,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
       Field *f= *field;
       enum enum_field_types f_type= f->type();
       tree_key_length+= f->pack_length();
-      if ((f_type == FIELD_TYPE_VARCHAR) || (!f->binary() && (f_type == FIELD_TYPE_STRING)))
+      if ((f_type == DRIZZLE_TYPE_VARCHAR) || (!f->binary() && (f_type == DRIZZLE_TYPE_STRING)))
       {
         all_binary= false;
         break;

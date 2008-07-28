@@ -31,7 +31,7 @@ public:
 		  TABLE_SHARE *share, CHARSET_INFO *cs);
   Field_timestamp(bool maybe_null_arg, const char *field_name_arg,
 		  CHARSET_INFO *cs);
-  enum_field_types type() const { return FIELD_TYPE_TIMESTAMP;}
+  enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   int  store(const char *to,uint length,CHARSET_INFO *charset);

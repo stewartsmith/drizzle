@@ -2195,7 +2195,7 @@ void Item_func_min_max::fix_length_and_dec()
     if (args[i]->result_type() != ROW_RESULT && args[i]->is_datetime())
     {
       datetime_found= true;
-      if (!datetime_item || args[i]->field_type() == FIELD_TYPE_DATETIME)
+      if (!datetime_item || args[i]->field_type() == DRIZZLE_TYPE_DATETIME)
         datetime_item= args[i];
     }
   }
@@ -2254,7 +2254,7 @@ uint Item_func_min_max::cmp_datetimes(uint64_t *value)
   if (value)
   {
     *value= min_max;
-    if (datetime_item->field_type() == FIELD_TYPE_NEWDATE)
+    if (datetime_item->field_type() == DRIZZLE_TYPE_NEWDATE)
       *value/= 1000000L;
   }
   return min_max_idx;
@@ -2646,7 +2646,7 @@ void Item_func_find_in_set::fix_length_and_dec()
   if (args[0]->const_item() && args[1]->type() == FIELD_ITEM)
   {
     Field *field= ((Item_field*) args[1])->field;
-    if (field->real_type() == FIELD_TYPE_SET)
+    if (field->real_type() == DRIZZLE_TYPE_SET)
     {
       String *find=args[0]->val_str(&value);
       if (find)

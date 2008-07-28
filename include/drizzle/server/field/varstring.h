@@ -53,7 +53,7 @@ public:
     share->varchar_fields++;
   }
 
-  enum_field_types type() const { return FIELD_TYPE_VARCHAR; }
+  enum_field_types type() const { return DRIZZLE_TYPE_VARCHAR; }
   enum ha_base_keytype key_type() const;
   uint row_pack_length() { return field_length; }
   bool zero_pack() const { return 0; }
@@ -101,7 +101,7 @@ public:
   uint32_t data_length();
   uint32_t used_length();
   uint size_of() const { return sizeof(*this); }
-  enum_field_types real_type() const { return FIELD_TYPE_VARCHAR; }
+  enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);

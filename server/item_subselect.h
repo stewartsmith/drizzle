@@ -402,7 +402,7 @@ public:
     result= res;
     item= si;
     res_type= STRING_RESULT;
-    res_field_type= FIELD_TYPE_STRING;
+    res_field_type= DRIZZLE_TYPE_STRING;
     maybe_null= 0;
   }
   virtual ~subselect_engine() {}; // to satisfy compiler

@@ -726,7 +726,7 @@ public:
   store_key(THD *thd, Field *field_arg, uchar *ptr, uchar *null, uint length)
     :null_key(0), null_ptr(null), err(0)
   {
-    if (field_arg->type() == FIELD_TYPE_BLOB)
+    if (field_arg->type() == DRIZZLE_TYPE_BLOB)
     {
       /* 
         Key segments are always packed with a 2 byte length prefix.
