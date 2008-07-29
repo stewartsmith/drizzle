@@ -28,7 +28,7 @@ extern "C" {
 #include <mysys/my_pthread.h>
 #include <mysys/thr_lock.h>
 
-#include "my_handler.h"
+#include <mysys/my_handler.h>
 #include <mysys/my_tree.h>
 
 	/* defines used by heap-funktions */

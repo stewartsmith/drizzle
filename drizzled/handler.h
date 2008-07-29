@@ -20,7 +20,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-#include <my_handler.h>
+#include <mysys/my_handler.h>
 #include <storage/myisam/keycache.h>
 
 #ifndef NO_HASH

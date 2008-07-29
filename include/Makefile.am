@@ -21,26 +21,13 @@ BUILT_SOURCES =		drizzle_version.h \
 			drizzled_error.h \
 			sql_state.h
 
-HEADERS_ABI =		drizzle.h \
-			drizzle_com.h \
-			drizzle_time.h \
-			my_list.h \
-			typelib.h
-
-pkginclude_HEADERS =	$(HEADERS_ABI) \
-			errmsg.h \
+pkginclude_HEADERS =	errmsg.h \
 			my_global.h \
-			my_net.h \
 			my_dir.h \
-			sql_common.h \
-			my_attribute.h \
 			$(BUILT_SOURCES)
 
-noinst_HEADERS =	my_bit.h \
-			my_base.h \
-			drizzle_version.h.in \
-			my_handler.h \
-			my_time.h
+noinst_HEADERS =	my_base.h \
+			drizzle_version.h.in
 
 LDADD = $(top_builddir)/mysys/libmysyslt.la \
         $(top_builddir)/mystrings/libmystringslt.la $(ZLIB_LIBS)

@@ -31,7 +31,7 @@
 #endif
 
 #endif	/* stdin */
-#include <my_list.h>
+#include <mysys/my_list.h>
 
 /* The following is bits in the flag parameter to ha_open() */
 

@@ -38,6 +38,9 @@
 
 #include "drizzle.h"
 
+#include <sys/poll.h>
+#include <sys/ioctl.h>
+
 #include <netdb.h>
 
 /* Remove client convenience wrappers */
@@ -82,7 +85,7 @@
 #define CONNECT_TIMEOUT 0
 
 #include "client_settings.h"
-#include <sql_common.h>
+#include <libdrizzle/sql_common.h>
 
 uint    drizzle_port=0;
 char    *drizzle_unix_port= 0;

@@ -44,6 +44,8 @@
 #include "my_readline.h"
 #include <signal.h>
 #include <vio/violite.h>
+#include <sys/ioctl.h>
+
 
 #if defined(USE_LIBEDIT_INTERFACE) && defined(HAVE_LOCALE_H)
 #include <locale.h>

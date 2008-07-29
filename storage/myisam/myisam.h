@@ -30,7 +30,7 @@ extern "C" {
 #ifndef _keycache_h
 #include "keycache.h"
 #endif
-#include "my_handler.h"
+#include <mysys/my_handler.h>
 #include <drizzled/plugin.h>
 
 /*

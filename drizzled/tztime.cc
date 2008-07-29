@@ -19,7 +19,7 @@
 
 #include <my_global.h>
 #include "mysql_priv.h"
-#include <my_time.h>
+#include <libdrizzle/my_time.h>
 
 #include "tzfile.h"
 #include <m_string.h>

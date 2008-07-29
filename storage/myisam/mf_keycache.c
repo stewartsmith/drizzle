@@ -106,7 +106,7 @@
 #include <mysys/my_sys.h>
 #include <keycache.h>
 #include <mystrings/m_string.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 #include <errno.h>
 #include <stdarg.h>
 

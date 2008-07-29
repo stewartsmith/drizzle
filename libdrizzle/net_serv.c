@@ -19,14 +19,13 @@
  */
 #include <my_global.h>
 #include <drizzle.h>
-#include <drizzle_com.h>
 #include <drizzled_error.h>
 #include <my_sys.h>
 #include <mystrings/m_string.h>
-#include <my_net.h>
 #include <violite.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/poll.h>
 
 /*
   The following handles the differences when this is linked between the

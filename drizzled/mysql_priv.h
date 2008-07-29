@@ -31,7 +31,7 @@
 #include <my_global.h>
 #include <drizzle_version.h>
 #include <mysys/my_sys.h>
-#include <my_time.h>
+#include <libdrizzle/my_time.h>
 #include <mystrings/m_string.h>
 #include <mysys/hash.h>
 #include <signal.h>
@@ -90,7 +90,7 @@ extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
 extern const char *primary_key_name;
 
-#include "drizzle_com.h"
+#include <libdrizzle/drizzle_com.h>
 #include <vio/violite.h>
 #include "unireg.h"
 
@@ -742,12 +742,12 @@ Item *negate_expression(THD *thd, Item *expr);
 
 /* log.cc */
 int vprint_msg_to_log(enum loglevel level, const char *format, va_list args);
-void sql_print_error(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
-void sql_print_warning(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
+void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void sql_print_warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
 void sql_print_information(const char *format, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 typedef void (*sql_print_message_func)(const char *format, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 extern sql_print_message_func sql_print_message_handlers[];
 
 int error_log_print(enum loglevel level, const char *format,

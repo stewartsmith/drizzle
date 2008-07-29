@@ -31,7 +31,7 @@
 #include <m_ctype.h>
 #include <mysys/hash.h>
 #include <time.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 
 bool check_reserved_words(LEX_STRING *name)
 {

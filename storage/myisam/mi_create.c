@@ -18,7 +18,7 @@
 #include "myisamdef.h"
 #include <mysys/my_tree.h>
 #include <mysys/queues.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 
 
 /*

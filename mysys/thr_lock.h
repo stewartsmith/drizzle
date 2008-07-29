@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #include <mysys/my_pthread.h>
-#include <my_list.h>
+#include <mysys/my_list.h>
 
 struct st_thr_lock;
 extern ulong locks_immediate,locks_waited ;

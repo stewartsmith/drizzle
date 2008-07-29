@@ -16,7 +16,7 @@
 #include "mysql_priv.h"
 #include <m_ctype.h>
 #include <my_dir.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
 #include "sql_repl.h"
@@ -75,7 +75,6 @@ extern "C" {					// Because of SCO 3.2V4.2
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
-#include <my_net.h>
 
 #include <sys/resource.h>
 

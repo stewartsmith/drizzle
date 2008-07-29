@@ -21,9 +21,6 @@
 #ifndef vio_violite_h_
 #define	vio_violite_h_
 
-#include "my_net.h"			/* needed because of struct in_addr */
-
-
 /* Simple vio interface in C;  The functions are implemented in violite.c */
 
 #ifdef	__cplusplus

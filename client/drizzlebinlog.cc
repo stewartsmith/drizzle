@@ -30,17 +30,17 @@
 
 #define MYSQL_CLIENT
 #undef MYSQL_SERVER
-#include <my_time.h>
+#include <libdrizzle/my_time.h>
 #include <my_global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <drizzle.h>
+#include <libdrizzle/drizzle.h>
 #include <errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
 #include "mysql_priv.h"
 #include "log_event.h"
-#include "sql_common.h"
+#include <libdrizzle/sql_common.h>
 
 
 enum options_drizzlebinlog
@@ -71,8 +71,8 @@ static FILE *result_file;
 
 static const char *load_default_groups[]= { "drizzlebinlog","client",0 };
 
-static void error(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
-static void warning(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
+static void error(const char *format, ...) __attribute__((format(printf, 1, 2)));
+static void warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 static bool one_database=0, to_last_remote_log= 0, disable_log_bin= 0;
 static bool opt_hexdump= 0;
