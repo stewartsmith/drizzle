@@ -21,7 +21,7 @@
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <drizzle_version.h>
+#include <drizzled/version.h>
 #include <errno.h>
 #include <mysys/my_getopt.h>
 

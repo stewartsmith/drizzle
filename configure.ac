@@ -155,9 +155,13 @@ CFLAGS="$CFLAGS $C_EXTRA_FLAGS "
 CXXFLAGS="$CXXFLAGS $C_EXTRA_FLAGS "
 
 dnl Checks for programs.
-AC_PROG_AWK
 AC_PROG_CC
+AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
 AC_PROG_CXX
+if test "x$ac_ct_CXX" = "x"
+then
+  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
+fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
@@ -179,6 +183,8 @@ CC_VERSION=""
 fi
 AC_SUBST(CC_VERSION)
 MYSQL_CHECK_CXX_VERSION
+
+AC_PROG_AWK
 
 if test "$ac_cv_c_compiler_gnu" = "yes"
 then
@@ -1259,8 +1265,8 @@ then
   fi
 
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
-  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GCC_WARNINGS="${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
   CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
@@ -1295,7 +1301,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- include/drizzle_version.h plugin/Makefile dnl
+ drizzled/version.h plugin/Makefile dnl
  drizzled/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 

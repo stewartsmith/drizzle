@@ -21,8 +21,6 @@
 #ifndef _m_ctype_h
 #define _m_ctype_h
 
-#include <my_attribute.h>
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -247,7 +245,7 @@ typedef struct my_charset_handler_st
   /* Charset dependant snprintf() */
   size_t (*snprintf)(struct charset_info_st *, char *to, size_t n,
                      const char *fmt,
-                     ...) ATTRIBUTE_FORMAT_FPTR(printf, 4, 5);
+                     ...) __attribute__((format(printf, 4, 5)));
   size_t (*long10_to_str)(struct charset_info_st *, char *to, size_t n,
                           int radix, long int val);
   size_t (*int64_t10_to_str)(struct charset_info_st *, char *to, size_t n,
@@ -412,7 +410,7 @@ size_t my_scan_8bit(CHARSET_INFO *cs, const char *b, const char *e, int sq);
 
 size_t my_snprintf_8bit(struct charset_info_st *, char *to, size_t n,
                         const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 4, 5);
+  __attribute__((format(printf, 4, 5)));
 
 long       my_strntol_8bit(CHARSET_INFO *, const char *s, size_t l, int base,
                            char **e, int *err);

@@ -209,7 +209,7 @@ bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
 {
   int error;
   char port_buf[NI_MAXSERV];
-  size_socket addrLen = sizeof(vio->remote);
+  socklen_t addrLen = sizeof(vio->remote);
 
   if (getpeername(vio->sd, (struct sockaddr *) (&vio->remote),
                   &addrLen) != 0)

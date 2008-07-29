@@ -35,7 +35,6 @@
 #include <pcrecpp.h>
 
 #include "client_priv.h"
-#include <drizzle_version.h>
 #include <drizzled_error.h>
 #include <my_dir.h>
 #include <mysys/hash.h>
@@ -365,15 +364,15 @@ DYNAMIC_STRING ds_res, ds_progress, ds_warning_messages;
 char builtin_echo[FN_REFLEN];
 
 void die(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void abort_not_supported_test(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void verbose_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void warning_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void log_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,

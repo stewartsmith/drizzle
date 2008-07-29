@@ -20,7 +20,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
-#include <my_handler.h>
+#include <mysys/my_handler.h>
 #include <storage/myisam/keycache.h>
 
 #ifndef NO_HASH
@@ -724,10 +724,6 @@ private:
 
 enum enum_tx_isolation { ISO_READ_UNCOMMITTED, ISO_READ_COMMITTED,
                          ISO_REPEATABLE_READ, ISO_SERIALIZABLE};
-
-
-enum ndb_distribution { ND_KEYHASH= 0, ND_LINHASH= 1 };
-
 
 typedef struct {
   uint64_t data_file_length;

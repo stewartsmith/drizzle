@@ -36,7 +36,7 @@
 #ifdef HAVE_REPLICATION
 
 #include "log.h"
-#include "my_list.h"
+#include <mysys/my_list.h>
 #include "rpl_filter.h"
 #include "rpl_tblmap.h"
 

@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <mysys/my_getopt.h>
-#include <drizzle_version.h>
 
 #define ARCHIVE_ROW_HEADER_SIZE 4
 

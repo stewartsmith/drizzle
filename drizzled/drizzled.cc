@@ -16,7 +16,7 @@
 #include "mysql_priv.h"
 #include <m_ctype.h>
 #include <my_dir.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
 #include "sql_repl.h"
@@ -25,8 +25,10 @@
 #include "stacktrace.h"
 #include "mysqld_suffix.h"
 #include <mysys/mysys_err.h>
+#include <sys/poll.h>
+#include <netinet/tcp.h>
 
-#include "../storage/myisam/ha_myisam.h"
+#include <storage/myisam/ha_myisam.h>
 
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>
@@ -75,7 +77,6 @@ extern "C" {					// Because of SCO 3.2V4.2
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
-#include <my_net.h>
 
 #include <sys/resource.h>
 

@@ -41,11 +41,11 @@ typedef int my_socket;
 #endif /* my_socket_defined */
 #endif /* _global_h */
 
-#include "drizzle_version.h"
+#include <drizzled/version.h>
 #include "drizzle_com.h"
 #include "drizzle_time.h"
 
-#include "my_list.h" /* for LISTs used in 'MYSQL' */
+#include <mysys/my_list.h> /* for LISTs used in 'MYSQL' */
 
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;
@@ -89,7 +89,7 @@ typedef struct st_drizzle_field {
 typedef char **DRIZZLE_ROW;    /* return data as array of strings */
 typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 
-#include "typelib.h"
+#include <mysys/typelib.h>
 
 #define DRIZZLE_COUNT_ERROR (~(uint64_t) 0)
 

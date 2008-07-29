@@ -22,7 +22,7 @@
 #define STATIC_INLINE extern
 #endif
 
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 
 const char _my_bits_nbits[256] = {
   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,

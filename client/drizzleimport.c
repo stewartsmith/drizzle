@@ -27,7 +27,6 @@
 #define IMPORT_VERSION "3.7"
 
 #include "client_priv.h"
-#include "drizzle_version.h"
 #include <mysys/my_pthread.h>
 
 
