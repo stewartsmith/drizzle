@@ -27,7 +27,6 @@ HEADERS_ABI =		drizzle_time.h \
 pkginclude_HEADERS =	$(HEADERS_ABI) \
 			errmsg.h \
 			my_global.h \
-			my_net.h \
 			my_dir.h \
 			sql_common.h \
 			$(BUILT_SOURCES)

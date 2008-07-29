@@ -38,6 +38,9 @@
 
 #include "drizzle.h"
 
+#include <sys/poll.h>
+#include <sys/ioctl.h>
+
 #include <netdb.h>
 
 /* Remove client convenience wrappers */

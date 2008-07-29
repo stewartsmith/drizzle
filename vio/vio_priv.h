@@ -22,7 +22,10 @@
 #include <string.h>
 #include <violite.h>
 
+#include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
+
 #include <netdb.h>
 
 void	vio_ignore_timeout(Vio *vio, uint32_t which, uint32_t timeout);

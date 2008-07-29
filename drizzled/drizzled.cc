@@ -75,7 +75,6 @@ extern "C" {					// Because of SCO 3.2V4.2
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
-#include <my_net.h>
 
 #include <sys/resource.h>
 
