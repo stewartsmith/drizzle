@@ -89,7 +89,7 @@ typedef struct st_drizzle_field {
 typedef char **DRIZZLE_ROW;    /* return data as array of strings */
 typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 
-#include "typelib.h"
+#include <mysys/typelib.h>
 
 #define DRIZZLE_COUNT_ERROR (~(uint64_t) 0)
 

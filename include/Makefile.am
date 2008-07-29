@@ -21,8 +21,7 @@ BUILT_SOURCES =		drizzle_version.h \
 			drizzled_error.h \
 			sql_state.h
 
-HEADERS_ABI =		drizzle_time.h \
-			typelib.h
+HEADERS_ABI =		drizzle_time.h
 
 pkginclude_HEADERS =	$(HEADERS_ABI) \
 			errmsg.h \

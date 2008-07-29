@@ -33,7 +33,8 @@ pkginclude_HEADERS = 	my_alloc.h \
 			my_getopt.h \
 			my_list.h \
 			my_sys.h \
-			my_pthread.h 
+			my_pthread.h \
+			typelib.h
 
 noinst_HEADERS =	mysys_priv.h \
 			my_bit.h \

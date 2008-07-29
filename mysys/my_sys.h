@@ -32,7 +32,7 @@ typedef struct my_aio_result {
 
 #include <mystrings/m_ctype.h>                    /* for CHARSET_INFO */
 #include <stdarg.h>
-#include <typelib.h>
+#include <mysys/typelib.h>
 
 #define MY_INIT(name);		{ my_progname= name; my_init(); }
 
