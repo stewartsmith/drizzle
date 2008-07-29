@@ -247,7 +247,6 @@ bool opt_slow_log;
 ulong log_output_options;
 bool opt_log_queries_not_using_indexes= false;
 bool opt_error_log= IF_WIN(1,0);
-bool opt_disable_networking= false;
 bool opt_skip_show_db= false;
 bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
@@ -264,6 +263,7 @@ bool opt_slave_compressed_protocol;
 bool opt_safe_user_create = 0;
 bool opt_show_slave_auth_info, opt_sql_bin_update = 0;
 bool opt_log_slave_updates= 0;
+static fd_set clientFDs;
 
 /*
   Legacy global handlerton. These will be removed (please do not add more).
@@ -458,7 +458,7 @@ static bool kill_in_progress, segfaulted;
 #ifdef HAVE_STACK_TRACE_ON_SEGV
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-static bool opt_bootstrap, opt_myisam_log;
+static bool opt_myisam_log;
 static int cleanup_done;
 static ulong opt_specialflag, opt_myisam_block_size;
 static char *opt_binlog_index_name;
@@ -557,15 +557,13 @@ static void close_connections(void)
 
 
   /* Abort listening to new connections */
-  if (!opt_disable_networking )
+  if (ip_sock != INVALID_SOCKET)
   {
-    if (ip_sock != INVALID_SOCKET)
-    {
-      (void) shutdown(ip_sock, SHUT_RDWR);
-      (void) closesocket(ip_sock);
-      ip_sock= INVALID_SOCKET;
-    }
+    (void) shutdown(ip_sock, SHUT_RDWR);
+    (void) closesocket(ip_sock);
+    ip_sock= INVALID_SOCKET;
   }
+
   end_thr_alarm(0);			 // Abort old alarms.
 
   /*
@@ -783,7 +781,7 @@ extern "C" void unireg_abort(int exit_code)
     sql_print_error("Aborting\n");
   else if (opt_help)
     usage();
-  clean_up(!opt_help && (exit_code || !opt_bootstrap)); /* purecov: inspected */
+  clean_up(!opt_help && (exit_code)); /* purecov: inspected */
   mysqld_exit(exit_code);
 }
 
@@ -855,8 +853,8 @@ void clean_up(bool print_message)
   delete rpl_filter;
   vio_end();
 
-  if (!opt_bootstrap)
-    (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
+  (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
+
   if (print_message && errmesg && server_start_time)
     sql_print_information(ER(ER_SHUTDOWN_COMPLETE),my_progname);
   thread_scheduler.end();
@@ -934,7 +932,7 @@ static void clean_up_mutexes()
 static void set_ports()
 {
   char	*env;
-  if (!mysqld_port && !opt_disable_networking)
+  if (!mysqld_port)
   {					// Get port if not from commandline
     mysqld_port= MYSQL_PORT;
 
@@ -983,11 +981,9 @@ static struct passwd *check_user(const char *user)
   }
   if (!user)
   {
-    if (!opt_bootstrap)
-    {
-      sql_print_error("Fatal error: Please read \"Security\" section of the manual to find out how to run mysqld as root!\n");
-      unireg_abort(1);
-    }
+    sql_print_error("Fatal error: Please read \"Security\" section of the manual to find out how to run mysqld as root!\n");
+    unireg_abort(1);
+
     return NULL;
   }
   /* purecov: begin tested */
@@ -1093,7 +1089,8 @@ static void network_init(void)
 
   set_ports();
 
-  if (mysqld_port != 0 && !opt_disable_networking && !opt_bootstrap)
+  FD_ZERO(&clientFDs);
+  if (mysqld_port != 0)
   {
     struct addrinfo *ai;
     struct addrinfo hints;
@@ -1173,6 +1170,19 @@ static void network_init(void)
       sql_print_error("listen() on TCP/IP failed with error %d",
 		      socket_errno);
       unireg_abort(1);
+    }
+
+    /* Add the socket to our listeners */
+    {
+      int ip_flags;
+      FD_SET(ip_sock, &clientFDs);
+      ip_flags= fcntl(ip_sock, F_GETFL, 0);
+
+      if (!(test_flags & TEST_BLOCKING))
+      {
+        fcntl(ip_sock, F_SETFL, ip_flags | O_NONBLOCK);
+        fcntl(ip_sock, F_SETFL, ip_flags | O_NDELAY);
+      }
     }
   }
 
@@ -1661,8 +1671,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
   (void) sigaddset(&set,SIGTSTP);
 
   /* Save pid to this process (or thread on Linux) */
-  if (!opt_bootstrap)
-    create_pid_file();
+  create_pid_file();
 
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   if (opt_do_pstack)
@@ -2467,12 +2476,9 @@ server.");
     }
     if (!ha_storage_engine_is_enabled(hton))
     {
-      if (!opt_bootstrap)
-      {
-        sql_print_error("Default storage engine (%s) is not available",
-                        default_storage_engine_str);
-        unireg_abort(1);
-      }
+      sql_print_error("Default storage engine (%s) is not available",
+                      default_storage_engine_str);
+      unireg_abort(1);
       assert(global_system_variables.table_plugin);
     }
     else
@@ -2645,21 +2651,18 @@ int main(int argc, char **argv)
   error_handler_hook= my_message_sql;
   start_signal_handler();				// Creates pidfile
 
-  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name, opt_bootstrap))
+  if (mysql_rm_tmp_tables() || my_tz_init((THD *)0, default_tz_name, false))
   {
     abort_loop=1;
     select_thread_in_use=0;
     (void) pthread_kill(signal_thread, MYSQL_KILL_SIGNAL);
 
-    if (!opt_bootstrap)
-      (void) my_delete(pidfile_name,MYF(MY_WME));	// Not needed anymore
+    (void) my_delete(pidfile_name,MYF(MY_WME));	// Not needed anymore
 
     exit(1);
   }
 
   init_status_vars();
-  if (opt_bootstrap) /* If running with bootstrap, do not start replication. */
-    opt_skip_slave_start= 1;
   /*
     init_slave() must be called after the thread keys are created.
     Some parts of the code (e.g. SHOW STATUS LIKE 'slave_running' and other
@@ -2764,7 +2767,7 @@ static void create_new_thread(THD *thd)
 inline void kill_broken_server()
 {
   /* hack to get around signals ignored in syscalls for problem OS's */
-  if ((!opt_disable_networking && ip_sock == INVALID_SOCKET))
+  if ((ip_sock == INVALID_SOCKET))
   {
     select_thread_in_use = 0;
     /* The following call will never return */
@@ -2783,23 +2786,19 @@ void handle_connections_sockets()
   my_socket sock,new_sock;
   uint error_count=0;
   uint max_used_connection= (uint)ip_sock+1;
-  fd_set readFDs,clientFDs;
+  fd_set readFDs;
   THD *thd;
   struct sockaddr_storage cAddr;
   int ip_flags=0, flags;
   st_vio *vio_tmp;
 
-  FD_ZERO(&clientFDs);
-  if (ip_sock != INVALID_SOCKET)
-  {
-    FD_SET(ip_sock,&clientFDs);
-    ip_flags = fcntl(ip_sock, F_GETFL, 0);
-  }
+  ip_flags= fcntl(ip_sock, F_GETFL, 0);
+
   MAYBE_BROKEN_SYSCALL;
   while (!abort_loop)
   {
-    readFDs=clientFDs;
-    if (select((int) max_used_connection,&readFDs,0,0,0) < 0)
+    readFDs= clientFDs;
+    if (select((int) max_used_connection, &readFDs,0,0,0) < 0)
     {
       if (socket_errno != SOCKET_EINTR)
       {
@@ -2815,22 +2814,9 @@ void handle_connections_sockets()
       break;
     }
 
-    /* Is this a new connection request ? */
-    {
-      sock = ip_sock;
-      flags= ip_flags;
-    }
+    sock= ip_sock;
+    flags= ip_flags;
 
-#if !defined(NO_FCNTL_NONBLOCK)
-    if (!(test_flags & TEST_BLOCKING))
-    {
-#if defined(O_NONBLOCK)
-      fcntl(sock, F_SETFL, flags | O_NONBLOCK);
-#elif defined(O_NDELAY)
-      fcntl(sock, F_SETFL, flags | O_NDELAY);
-#endif
-    }
-#endif /* NO_FCNTL_NONBLOCK */
     for (uint retry=0; retry < MAX_ACCEPT_RETRY; retry++)
     {
       size_socket length= sizeof(struct sockaddr_storage);
@@ -2840,18 +2826,16 @@ void handle_connections_sockets()
 	  (socket_errno != SOCKET_EINTR && socket_errno != SOCKET_EAGAIN))
 	break;
       MAYBE_BROKEN_SYSCALL;
-#if !defined(NO_FCNTL_NONBLOCK)
       if (!(test_flags & TEST_BLOCKING))
       {
 	if (retry == MAX_ACCEPT_RETRY - 1)
 	  fcntl(sock, F_SETFL, flags);		// Try without O_NONBLOCK
       }
-#endif
     }
-#if !defined(NO_FCNTL_NONBLOCK)
+
     if (!(test_flags & TEST_BLOCKING))
       fcntl(sock, F_SETFL, flags);
-#endif
+
     if (new_sock == INVALID_SOCKET)
     {
       if ((error_count++ & 255) == 0)		// This can happen often
@@ -4192,12 +4176,12 @@ static void mysql_init_variables(void)
   opt_log= opt_slow_log= 0;
   log_output_options= find_bit_type(log_output_str, &log_output_typelib);
   opt_bin_log= 0;
-  opt_disable_networking= opt_skip_show_db=0;
+  opt_skip_show_db=0;
   opt_logname= opt_binlog_index_name= opt_slow_logname= 0;
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_auth= 0;
   opt_secure_file_priv= 0;
-  opt_bootstrap= opt_myisam_log= 0;
+  opt_myisam_log= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
   defaults_argc= 0;
@@ -4574,9 +4558,6 @@ mysqld_get_one_option(int optid,
     thr_upgraded_concurrent_insert_lock= TL_WRITE_LOW_PRIORITY;
     global_system_variables.low_priority_updates=1;
     break;
-  case OPT_BOOTSTRAP:
-    opt_noacl=opt_bootstrap=1;
-    break;
   case OPT_SERVER_ID:
     server_id_supplied = 1;
     break;
@@ -4703,8 +4684,7 @@ void option_error_reporter(enum loglevel level, const char *format, ...)
   va_start(args, format);
 
   /* Don't print warnings for --loose options during bootstrap */
-  if (level == ERROR_LEVEL || !opt_bootstrap ||
-      global_system_variables.log_warnings)
+  if (level == ERROR_LEVEL || global_system_variables.log_warnings)
   {
     vprint_msg_to_log(level, format, args);
   }
