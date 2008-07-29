@@ -36,7 +36,6 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 noinst_HEADERS =	my_bit.h \
 			my_base.h \
 			drizzle_version.h.in \
-			my_handler.h \
 			my_time.h
 
 LDADD = $(top_builddir)/mysys/libmysyslt.la \
