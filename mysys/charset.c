@@ -113,7 +113,6 @@ static bool init_state_maps(CHARSET_INFO *cs)
   /* Special handling of hex and binary strings */
   state_map[(uchar)'x']= state_map[(uchar)'X']= (uchar) MY_LEX_IDENT_OR_HEX;
   state_map[(uchar)'b']= state_map[(uchar)'B']= (uchar) MY_LEX_IDENT_OR_BIN;
-  state_map[(uchar)'n']= state_map[(uchar)'N']= (uchar) MY_LEX_IDENT_OR_NCHAR;
   return 0;
 }
 

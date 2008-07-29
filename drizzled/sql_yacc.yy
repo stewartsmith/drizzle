@@ -660,8 +660,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  NAME_SYM                      /* SQL-2003-N */
 %token  NATIONAL_SYM                  /* SQL-2003-R */
 %token  NATURAL                       /* SQL-2003-R */
-%token  NCHAR_STRING
-%token  NCHAR_SYM                     /* SQL-2003-R */
 %token  NE                            /* OPERATOR */
 %token  NEG
 %token  NEW_SYM                       /* SQL-2003-R */
@@ -914,7 +912,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         IDENT IDENT_QUOTED TEXT_STRING DECIMAL_NUM FLOAT_NUM NUM LONG_NUM HEX_NUM
         LEX_HOSTNAME ULONGLONG_NUM field_ident select_alias ident ident_or_text
         IDENT_sys TEXT_STRING_sys TEXT_STRING_literal
-        NCHAR_STRING opt_component key_cache_name
+        opt_component key_cache_name
         BIN_NUM TEXT_STRING_filesystem ident_or_empty
         opt_constraint constraint opt_ident
 
@@ -3992,8 +3990,6 @@ cast_type:
           { $$=ITEM_CAST_CHAR; Lex->charset= &my_charset_bin; Lex->dec= 0; }
         | CHAR_SYM opt_len opt_binary
           { $$=ITEM_CAST_CHAR; Lex->dec= 0; }
-        | NCHAR_SYM opt_len
-          { $$=ITEM_CAST_CHAR; Lex->charset= national_charset_info; Lex->dec=0; }
         | SIGNED_SYM
           { $$=ITEM_CAST_SIGNED_INT; Lex->charset= NULL; Lex->dec=Lex->length= (char*)0; }
         | SIGNED_SYM INT_SYM
@@ -5939,14 +5935,6 @@ text_literal:
             $$= new Item_string(tmp.str, tmp.length, cs_con,
                                 DERIVATION_COERCIBLE, repertoire);
           }
-        | NCHAR_STRING
-          {
-            uint repertoire= Lex->text_string_is_7bit ?
-                             MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
-            assert(my_charset_is_ascii_based(national_charset_info));
-            $$= new Item_string($1.str, $1.length, national_charset_info,
-                                DERIVATION_COERCIBLE, repertoire);
-          }
         | UNDERSCORE_CHARSET TEXT_STRING
           {
             Item_string *str= new Item_string($2.str, $2.length, $1);
@@ -6521,7 +6509,6 @@ keyword_sp:
         | NAME_SYM                 {}
         | NAMES_SYM                {}
         | NATIONAL_SYM             {}
-        | NCHAR_SYM                {}
         | NEXT_SYM                 {}
         | NEW_SYM                  {}
         | NO_WAIT_SYM              {}

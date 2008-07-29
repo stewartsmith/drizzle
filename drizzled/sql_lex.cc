@@ -830,23 +830,6 @@ int lex_one_token(void *arg, void *yythd)
 
       return((int) c);
 
-    case MY_LEX_IDENT_OR_NCHAR:
-      if (lip->yyPeek() != '\'')
-      {
-	state= MY_LEX_IDENT;
-	break;
-      }
-      /* Found N'string' */
-      lip->yySkip();                         // Skip '
-      if (!(yylval->lex_str.str = get_text(lip, 2, 1)))
-      {
-	state= MY_LEX_CHAR;             // Read char by char
-	break;
-      }
-      yylval->lex_str.length= lip->yytoklen;
-      lex->text_string_is_7bit= (lip->tok_bitmap & 0x80) ? 0 : 1;
-      return(NCHAR_STRING);
-
     case MY_LEX_IDENT_OR_HEX:
       if (lip->yyPeek() == '\'')
       {					// Found x'hex-number'

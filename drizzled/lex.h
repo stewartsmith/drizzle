@@ -315,7 +315,6 @@ static SYMBOL symbols[] = {
   { "NAMES",		SYM(NAMES_SYM)},
   { "NATIONAL",		SYM(NATIONAL_SYM)},
   { "NATURAL",		SYM(NATURAL)},
-  { "NCHAR",		SYM(NCHAR_SYM)},
   { "NEW",              SYM(NEW_SYM)},
   { "NEXT",		SYM(NEXT_SYM)},
   { "NO",		SYM(NO_SYM)},
