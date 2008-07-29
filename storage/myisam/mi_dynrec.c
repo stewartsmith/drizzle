@@ -682,7 +682,7 @@ int _mi_write_part_record(MI_INFO *info,
   del_length=(res_length ? MI_DYN_DELETE_BLOCK_HEADER : 0);
   bmove((uchar*) (*record-head_length),(uchar*) temp,head_length);
   memcpy(temp,record_end,(size_t) (extra_length+del_length));
-  bzero((uchar*) record_end,extra_length);
+  memset((uchar*) record_end, 0, extra_length);
 
   if (res_length)
   {
@@ -1217,7 +1217,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
       if (flag & bit)
       {
 	if (type == FIELD_BLOB || type == FIELD_SKIP_ZERO)
-	  bzero((uchar*) to,rec_length);
+	  memset((uchar*) to, 0, rec_length);
 	else if (type == FIELD_SKIP_ENDSPACE ||
 		 type == FIELD_SKIP_PRESPACE)
 	{

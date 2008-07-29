@@ -342,7 +342,7 @@ void lex_start(THD *thd)
   lex->in_sum_func= NULL;
   /*
     ok, there must be a better solution for this, long-term
-    I tried "bzero" in the sql_yacc.yy code, but that for
+    I tried "memset" in the sql_yacc.yy code, but that for
     some reason made the values zero, even if they were set
   */
   lex->server_options.server_name= 0;

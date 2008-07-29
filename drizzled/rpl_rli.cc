@@ -48,8 +48,8 @@ Relay_log_info::Relay_log_info()
   group_relay_log_name[0]= event_relay_log_name[0]=
     group_master_log_name[0]= 0;
   until_log_name[0]= ign_master_log_name_end[0]= 0;
-  bzero((char*) &info_file, sizeof(info_file));
-  bzero((char*) &cache_buf, sizeof(cache_buf));
+  memset((char*) &info_file, 0, sizeof(info_file));
+  memset((char*) &cache_buf, 0, sizeof(cache_buf));
   cached_charset_invalidate();
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
@@ -978,7 +978,7 @@ bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
 void Relay_log_info::cached_charset_invalidate()
 {
   /* Full of zeroes means uninitialized. */
-  bzero(cached_charset, sizeof(cached_charset));
+  memset(cached_charset, 0, sizeof(cached_charset));
   return;
 }
 

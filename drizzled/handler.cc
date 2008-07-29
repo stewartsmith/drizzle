@@ -352,7 +352,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
     structure. Apparently get_backup_engine was not NULL even though it was
     not initialized.
    */
-  bzero(hton, sizeof(hton));
+  memset(hton, 0, sizeof(hton));
   /* Historical Requirement */
   plugin->data= hton; // shortcut for the future
   if (plugin->plugin->init)
@@ -1695,8 +1695,8 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
   TABLE dummy_table;
   TABLE_SHARE dummy_share;
 
-  bzero((char*) &dummy_table, sizeof(dummy_table));
-  bzero((char*) &dummy_share, sizeof(dummy_share));
+  memset((char*) &dummy_table, 0, sizeof(dummy_table));
+  memset((char*) &dummy_share, 0, sizeof(dummy_share));
   dummy_table.s= &dummy_share;
 
   /* DB_TYPE_UNKNOWN is used in ALTER TABLE when renaming only .frm files */
@@ -3138,7 +3138,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   TABLE table;
   TABLE_SHARE share;
 
-  bzero((uchar*) &create_info,sizeof(create_info));
+  memset((uchar*) &create_info, 0, sizeof(create_info));
   if ((error= ha_discover(thd, db, name, &frmblob, &frmlen)))
   {
     /* Table could not be discovered and thus not created */

@@ -274,7 +274,7 @@ static int check_connection(THD *thd)
     thd->main_security_ctx.host_or_ip= thd->main_security_ctx.host;
     thd->main_security_ctx.ip= 0;
     /* Reset sin_addr */
-    bzero((char*) &net->vio->remote, sizeof(net->vio->remote));
+    memset((char*) &net->vio->remote, 0, sizeof(net->vio->remote));
   }
   vio_keepalive(net->vio, true);
   
@@ -310,7 +310,7 @@ static int check_connection(THD *thd)
     /* write server characteristics: up to 16 bytes allowed */
     end[2]=(char) default_charset_info->number;
     int2store(end+3, thd->server_status);
-    bzero(end+5, 13);
+    memset(end+5, 0, 13);
     end+= 18;
     /* write scramble tail */
     end= strmake(end, thd->scramble + SCRAMBLE_LENGTH_323, 

@@ -452,7 +452,7 @@ public:
       if (maybe_null && *min_value)
       {
 	**min_key=1;
-	bzero(*min_key+1,length-1);
+	memset(*min_key+1, 0, length-1);
       }
       else
 	memcpy(*min_key,min_value,length);
@@ -470,7 +470,7 @@ public:
       if (maybe_null && *max_value)
       {
 	**max_key=1;
-	bzero(*max_key+1,length-1);
+	memset(*max_key+1, 0, length-1);
       }
       else
 	memcpy(*max_key,max_value,length);
@@ -615,7 +615,7 @@ public:
   SEL_TREE() :type(KEY)
   {
     keys_map.clear_all();
-    bzero((char*) keys,sizeof(keys));
+    memset((char*) keys, 0, sizeof(keys));
   }
   /*
     Note: there may exist SEL_TREE objects with sel_tree->type=KEY and
@@ -1093,7 +1093,7 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, TABLE *table, uint key_nr,
     thd->mem_root= &alloc;
   }
   else
-    bzero((char*) &alloc,sizeof(alloc));
+    memset((char*) &alloc, 0, sizeof(alloc));
   file= head->file;
   record= head->record[0];
   save_read_set= head->read_set;
@@ -1163,7 +1163,7 @@ QUICK_INDEX_MERGE_SELECT::QUICK_INDEX_MERGE_SELECT(THD *thd_param,
 {
   index= MAX_KEY;
   head= table;
-  bzero(&read_record, sizeof(read_record));
+  memset(&read_record, 0, sizeof(read_record));
   init_sql_alloc(&alloc, thd->variables.range_alloc_block_size, 0);
   return;
 }
@@ -1220,7 +1220,7 @@ QUICK_ROR_INTERSECT_SELECT::QUICK_ROR_INTERSECT_SELECT(THD *thd_param,
   if (!parent_alloc)
     init_sql_alloc(&alloc, thd->variables.range_alloc_block_size, 0);
   else
-    bzero(&alloc, sizeof(MEM_ROOT));
+    memset(&alloc, 0, sizeof(MEM_ROOT));
   last_rowid= (uchar*) alloc_root(parent_alloc? parent_alloc : &alloc,
                                   head->file->ref_length);
 }
@@ -1475,7 +1475,7 @@ int QUICK_ROR_UNION_SELECT::init()
                  false , QUICK_ROR_UNION_SELECT::queue_cmp,
                  (void*) this))
   {
-    bzero(&queue, sizeof(QUEUE));
+    memset(&queue, 0, sizeof(QUEUE));
     return(1);
   }
 
@@ -8319,7 +8319,7 @@ check_group_min_max_predicates(COND *cond, Item_field *min_max_arg_item,
 
         /* Check that pred compares min_max_arg_item with a constant. */
         Item *args[3];
-        bzero(args, 3 * sizeof(Item*));
+        memset(args, 0, 3 * sizeof(Item*));
         bool inv;
         /* Test if this is a comparison of a field and a constant. */
         if (!simple_pred(pred, args, &inv))
@@ -8829,7 +8829,7 @@ QUICK_GROUP_MIN_MAX_SELECT(TABLE *table, JOIN *join_arg, bool have_min_arg,
     join->thd->mem_root= &alloc;
   }
   else
-    bzero(&alloc, sizeof(MEM_ROOT));            // ensure that it's not used
+    memset(&alloc, 0, sizeof(MEM_ROOT));  // ensure that it's not used
 }
 
 

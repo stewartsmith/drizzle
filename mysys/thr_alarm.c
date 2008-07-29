@@ -557,7 +557,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
     }
     process_alarm(0);
   }
-  bzero((char*) &alarm_thread,sizeof(alarm_thread)); /* For easy debugging */
+  memset((char*) &alarm_thread, 0, sizeof(alarm_thread)); /* For easy debugging */
   alarm_thread_running= 0;
   pthread_cond_signal(&COND_alarm);
   pthread_mutex_unlock(&LOCK_alarm);

@@ -792,7 +792,7 @@ unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
     free_rows(data);        /* Free old data */
     return(0);
   }
-  bzero((char*) field, (uint) sizeof(DRIZZLE_FIELD)*fields);
+  memset((char*) field, 0, (uint) sizeof(DRIZZLE_FIELD)*fields);
   if (server_capabilities & CLIENT_PROTOCOL_41)
   {
     /* server is 4.1, and returns the new field result format */
@@ -1411,7 +1411,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
       unix_socket= drizzle_unix_port;
     host_info= (char*) ER(CR_LOCALHOST_CONNECTION);
 
-    bzero((char*) &UNIXaddr, sizeof(UNIXaddr));
+    memset((char*) &UNIXaddr, 0, sizeof(UNIXaddr));
     UNIXaddr.sun_family= AF_UNIX;
     strmake(UNIXaddr.sun_path, unix_socket, sizeof(UNIXaddr.sun_path)-1);
 
@@ -1644,7 +1644,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     int4store(buff,client_flag);
     int4store(buff+4, net->max_packet_size);
     buff[8]= (char) drizzle->charset->number;
-    bzero(buff+9, 32-9);
+    memset(buff+9, 0, 32-9);
     end= buff+32;
   }
   else
@@ -1791,7 +1791,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   }
   if (drizzle_set_character_set(&tmp_drizzle, drizzle->charset->csname))
   {
-    bzero((char*) &tmp_drizzle.options,sizeof(tmp_drizzle.options));
+    memset((char*) &tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
     drizzle_close(&tmp_drizzle);
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
     strmov(drizzle->net.last_error, tmp_drizzle.net.last_error);
@@ -1803,7 +1803,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   tmp_drizzle.free_me= drizzle->free_me;
 
   /* Don't free options as these are now used in tmp_drizzle */
-  bzero((char*) &drizzle->options,sizeof(drizzle->options));
+  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
   drizzle->free_me=0;
   drizzle_close(drizzle);
   *drizzle=tmp_drizzle;
@@ -1862,7 +1862,7 @@ static void drizzle_close_free_options(DRIZZLE *drizzle)
   if (drizzle->options.shared_memory_base_name != def_shared_memory_base_name)
     my_free(drizzle->options.shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
 #endif /* HAVE_SMEM */
-  bzero((char*) &drizzle->options,sizeof(drizzle->options));
+  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
   return;
 }
 
@@ -2029,7 +2029,7 @@ DRIZZLE_RES * STDCALL drizzle_store_result(DRIZZLE *drizzle)
   result->fields=  drizzle->fields;
   result->field_alloc=  drizzle->field_alloc;
   result->field_count=  drizzle->field_count;
-  /* The rest of result members is bzeroed in malloc */
+  /* The rest of result members is zeroed in malloc */
   drizzle->fields=0;        /* fields is now in result */
   clear_alloc_root(&drizzle->field_alloc);
   /* just in case this was mistakenly called after drizzle_stmt_execute() */

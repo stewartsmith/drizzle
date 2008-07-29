@@ -239,7 +239,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
     }
     if (recpos != minpos)
     { // Reserved space (Null bits?)
-      bzero((char*) recinfo_pos, sizeof(*recinfo_pos));
+      memset((char*) recinfo_pos, 0, sizeof(*recinfo_pos));
       recinfo_pos->type= (int) FIELD_NORMAL;
       recinfo_pos++->length= (uint16_t) (minpos - recpos);
     }
@@ -1652,7 +1652,7 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
   }
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
     return(error); /* purecov: inspected */
-  bzero((char*) &create_info, sizeof(create_info));
+  memset((char*) &create_info, 0, sizeof(create_info));
   create_info.max_rows= share->max_rows;
   create_info.reloc_rows= share->min_rows;
   create_info.with_auto_increment= share->next_number_key_offset == 0;

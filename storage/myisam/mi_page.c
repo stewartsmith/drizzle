@@ -76,7 +76,7 @@ int _mi_write_keypage(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 #ifdef HAVE_purify
   {
     length=mi_getint(buff);
-    bzero((uchar*) buff+length,keyinfo->block_length-length);
+    memset((uchar*) buff+length, 0, keyinfo->block_length-length);
     length=keyinfo->block_length;
   }
 #endif

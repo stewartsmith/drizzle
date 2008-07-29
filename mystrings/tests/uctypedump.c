@@ -100,8 +100,8 @@ int main(int ac, char ** av)
     fprintf(stderr, "Can't open file %s\n", av[1]);
     exit(1);
   }
-  bzero(&ctypea,sizeof(ctypea));
-  bzero(&uctype, sizeof(uctype));
+  memset(&ctypea, 0, sizeof(ctypea));
+  memset(&uctype, 0, sizeof(uctype));
   
   printf("/*\n");
   printf("  Unicode ctype data\n");

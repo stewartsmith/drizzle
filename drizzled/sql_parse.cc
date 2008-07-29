@@ -177,7 +177,7 @@ uint sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
 {
-  bzero((uchar*) &sql_command_flags, sizeof(sql_command_flags));
+  memset((uchar*) &sql_command_flags, 0, sizeof(sql_command_flags));
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -737,7 +737,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     lex_start(thd);
 
     status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_FIELDS]);
-    bzero((char*) &table_list,sizeof(table_list));
+    memset((char*) &table_list, 0, sizeof(table_list));
     if (thd->copy_db_to(&table_list.db, &table_list.db_length))
       break;
     /*
@@ -1648,7 +1648,7 @@ end_with_restore_list:
     */
     thd->enable_slow_log= opt_log_slow_admin_statements;
 
-    bzero((char*) &create_info, sizeof(create_info));
+    memset((char*) &create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
     create_info.row_type= ROW_TYPE_NOT_USED;
     create_info.default_table_charset= thd->variables.collation_database;
@@ -1714,7 +1714,7 @@ end_with_restore_list:
 
       { // Rename of table
           TABLE_LIST tmp_table;
-          bzero((char*) &tmp_table,sizeof(tmp_table));
+          memset((char*) &tmp_table, 0, sizeof(tmp_table));
           tmp_table.table_name= lex->name.str;
           tmp_table.db=select_lex->db;
       }
@@ -2940,7 +2940,7 @@ void create_select_for_variable(const char *var_name)
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
-  bzero((char*) &null_lex_string.str, sizeof(null_lex_string));
+  memset((char*) &null_lex_string.str, 0, sizeof(null_lex_string));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.

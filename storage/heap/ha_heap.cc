@@ -93,7 +93,7 @@ int ha_heap::open(const char *name, int mode, uint test_if_locked)
   {
     HA_CREATE_INFO create_info;
     internal_table= test(test_if_locked & HA_OPEN_INTERNAL_TABLE);
-    bzero(&create_info, sizeof(create_info));
+    memset(&create_info, 0, sizeof(create_info));
     file= 0;
     if (!create(name, table, &create_info))
     {
