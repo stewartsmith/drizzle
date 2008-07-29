@@ -57,6 +57,7 @@ EXTRA_DIST = 		drizzle_h.ic
 
 # Some include files that may be moved and patched by configure
 DISTCLEANFILES =	sched.h \
+			comp_err \
 			$(CLEANFILES)
 
 # These files should not be included in distributions since they are
