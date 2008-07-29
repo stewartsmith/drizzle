@@ -26,6 +26,9 @@ MYSQLDATAdir =			$(localstatedir)
 MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
+pkginclude_HEADERS =	drizzle.h \
+			drizzle_com.h
+
 pkglib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = libdrizzle.c client.c net_serv.c get_password.c
 libdrizzle_la_LIBADD =	${sql_cmn_objects} ${sqlobjects} \

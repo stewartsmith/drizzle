@@ -90,7 +90,7 @@ extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
 extern const char *primary_key_name;
 
-#include "drizzle_com.h"
+#include <libdrizzle/drizzle_com.h>
 #include <vio/violite.h>
 #include "unireg.h"
 

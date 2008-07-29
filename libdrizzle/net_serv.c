@@ -19,7 +19,6 @@
  */
 #include <my_global.h>
 #include <drizzle.h>
-#include <drizzle_com.h>
 #include <drizzled_error.h>
 #include <my_sys.h>
 #include <mystrings/m_string.h>

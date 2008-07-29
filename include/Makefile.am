@@ -21,9 +21,7 @@ BUILT_SOURCES =		drizzle_version.h \
 			drizzled_error.h \
 			sql_state.h
 
-HEADERS_ABI =		drizzle.h \
-			drizzle_com.h \
-			drizzle_time.h \
+HEADERS_ABI =		drizzle_time.h \
 			my_list.h \
 			typelib.h
 
