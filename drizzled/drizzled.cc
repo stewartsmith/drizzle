@@ -25,8 +25,10 @@
 #include "stacktrace.h"
 #include "mysqld_suffix.h"
 #include <mysys/mysys_err.h>
+#include <sys/poll.h>
+#include <netinet/tcp.h>
 
-#include "../storage/myisam/ha_myisam.h"
+#include <storage/myisam/ha_myisam.h>
 
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>

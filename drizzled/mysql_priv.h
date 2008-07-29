@@ -29,7 +29,7 @@
 #ifndef MYSQL_CLIENT
 
 #include <my_global.h>
-#include <drizzle_version.h>
+#include "version.h"
 #include <mysys/my_sys.h>
 #include <libdrizzle/my_time.h>
 #include <mystrings/m_string.h>

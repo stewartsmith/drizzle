@@ -4,7 +4,6 @@
 #include "azio.h"
 #include <libdrizzle/drizzle.h>
 #include <mysys/my_getopt.h>
-#include <drizzle_version.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
