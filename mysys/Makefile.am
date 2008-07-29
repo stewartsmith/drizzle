@@ -31,10 +31,12 @@ noinst_LTLIBRARIES = libmysyslt.la
 
 pkginclude_HEADERS = 	my_alloc.h \
 			my_getopt.h \
+			my_list.h \
 			my_sys.h \
 			my_pthread.h 
 
 noinst_HEADERS =	mysys_priv.h \
+			my_bit.h \
 			my_bitmap.h \
 			my_static.h \
 			my_handler.h \

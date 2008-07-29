@@ -32,7 +32,7 @@
 #include "sql_select.h"
 
 #include <m_ctype.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 #include <mysys/hash.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",

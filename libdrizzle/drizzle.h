@@ -45,7 +45,7 @@ typedef int my_socket;
 #include "drizzle_com.h"
 #include "drizzle_time.h"
 
-#include "my_list.h" /* for LISTs used in 'MYSQL' */
+#include <mysys/my_list.h> /* for LISTs used in 'MYSQL' */
 
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;

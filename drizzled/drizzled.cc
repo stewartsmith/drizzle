@@ -16,7 +16,7 @@
 #include "mysql_priv.h"
 #include <m_ctype.h>
 #include <my_dir.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
 #include "sql_repl.h"

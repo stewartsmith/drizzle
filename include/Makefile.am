@@ -22,7 +22,6 @@ BUILT_SOURCES =		drizzle_version.h \
 			sql_state.h
 
 HEADERS_ABI =		drizzle_time.h \
-			my_list.h \
 			typelib.h
 
 pkginclude_HEADERS =	$(HEADERS_ABI) \
@@ -33,8 +32,7 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			sql_common.h \
 			$(BUILT_SOURCES)
 
-noinst_HEADERS =	my_bit.h \
-			my_base.h \
+noinst_HEADERS =	my_base.h \
 			drizzle_version.h.in \
 			my_time.h
 

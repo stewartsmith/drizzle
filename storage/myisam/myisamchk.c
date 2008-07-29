@@ -20,7 +20,7 @@
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
 #include <mysys/my_getopt.h>
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 #include <myisam.h>
 #include <mystrings/m_string.h>
 #ifdef HAVE_SYS_VADVICE_H
