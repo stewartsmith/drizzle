@@ -1060,7 +1060,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
         set lock unlock string_list field_options field_option
         field_opt_list opt_binary table_lock_list table_lock
         ref_list opt_match_clause opt_on_update_delete use
-        opt_delete_options opt_delete_option varchar nchar nvarchar
+        opt_delete_options opt_delete_option varchar
         opt_outer table_list table_name table_alias_ref_list table_alias_ref
         opt_option opt_place
         opt_attribute opt_attribute_list attribute
@@ -1895,22 +1895,9 @@ char:
           CHAR_SYM {}
         ;
 
-nchar:
-          NCHAR_SYM {}
-        | NATIONAL_SYM CHAR_SYM {}
-        ;
-
 varchar:
           char VARYING {}
         | VARCHAR {}
-        ;
-
-nvarchar:
-          NATIONAL_SYM VARCHAR {}
-        | NVARCHAR_SYM {}
-        | NCHAR_SYM VARCHAR {}
-        | NATIONAL_SYM CHAR_SYM VARYING {}
-        | NCHAR_SYM VARYING {}
         ;
 
 int_type:
