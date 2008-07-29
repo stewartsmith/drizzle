@@ -1888,13 +1888,17 @@ type:
           }
         | DATETIME
           { $$=DRIZZLE_TYPE_DATETIME; }
-        | BLOB_SYM opt_len
+        | BLOB_SYM
           {
             Lex->charset=&my_charset_bin;
             $$=DRIZZLE_TYPE_BLOB;
+            Lex->length=(char*) 0; /* use default length */
           }
-        | TEXT_SYM opt_len opt_binary
-          { $$=DRIZZLE_TYPE_BLOB; }
+        | TEXT_SYM opt_binary
+          { 
+            $$=DRIZZLE_TYPE_BLOB; 
+            Lex->length=(char*) 0; /* use default length */
+          }
         | DECIMAL_SYM float_options field_options
           { $$=DRIZZLE_TYPE_NEWDECIMAL;}
         | NUMERIC_SYM float_options field_options
