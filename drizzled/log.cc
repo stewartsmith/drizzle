@@ -727,6 +727,7 @@ int binlog_init(void *p)
   binlog_hton->rollback= binlog_rollback;
   binlog_hton->prepare= binlog_prepare;
   binlog_hton->flags= HTON_NOT_USER_SELECTABLE | HTON_HIDDEN;
+
   return 0;
 }
 

@@ -1801,9 +1801,9 @@ bool ha_myisam::check_if_incompatible_data(HA_CREATE_INFO *info,
   return COMPATIBLE_DATA_YES;
 }
 
-int myisam_panic(handlerton *hton __attribute__((unused)), ha_panic_function flag)
+int myisam_deinit(void *hton __attribute__((unused)))
 {
-  return mi_panic(flag);
+  return mi_panic(HA_PANIC_CLOSE);
 }
 
 static int myisam_init(void *p)
@@ -1814,7 +1814,6 @@ static int myisam_init(void *p)
   myisam_hton->state= SHOW_OPTION_YES;
   myisam_hton->db_type= DB_TYPE_MYISAM;
   myisam_hton->create= myisam_create_handler;
-  myisam_hton->panic= myisam_panic;
   myisam_hton->flags= HTON_CAN_RECREATE | HTON_SUPPORT_LOG_TABLES;
   return 0;
 }
@@ -1886,7 +1885,7 @@ mysql_declare_plugin(myisam)
   "Default engine as of MySQL 3.23 with great performance",
   PLUGIN_LICENSE_GPL,
   myisam_init, /* Plugin Init */
-  NULL, /* Plugin Deinit */
+  myisam_deinit, /* Plugin Deinit */
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */

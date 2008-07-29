@@ -275,11 +275,6 @@ innobase_drop_database(
 			of the last directory in the path is used as
 			the database name: for example, in 'mysql/data/test'
 			the database name is 'test' */
-/***********************************************************************
-Closes an InnoDB database. */
-static
-int
-innobase_end(handlerton *hton, ha_panic_function type);
 
 /*********************************************************************
 Creates an InnoDB transaction struct for the thd if it does not yet have one.
@@ -1428,7 +1423,6 @@ innobase_init(
         innobase_hton->close_cursor_read_view=innobase_close_cursor_view;
         innobase_hton->create=innobase_create_handler;
         innobase_hton->drop_database=innobase_drop_database;
-        innobase_hton->panic=innobase_end;
         innobase_hton->start_consistent_snapshot=innobase_start_trx_and_assign_read_view;
         innobase_hton->flush_logs=innobase_flush_logs;
         innobase_hton->show_status=innobase_show_status;
@@ -1679,8 +1673,7 @@ error:
 Closes an InnoDB database. */
 static
 int
-innobase_end(handlerton *hton __attribute__((unused)),
-             ha_panic_function type __attribute__((unused)))
+innobase_deinit(void *p __attribute__((unused)))
 /*==============*/
 				/* out: TRUE if error */
 {
@@ -8057,7 +8050,7 @@ mysql_declare_plugin(innobase)
   "Supports transactions, row-level locking, and foreign keys",
   PLUGIN_LICENSE_GPL,
   innobase_init, /* Plugin Init */
-  NULL, /* Plugin Deinit */
+  innobase_deinit, /* Plugin Deinit */
   innodb_status_variables_export,/* status variables             */
   innobase_system_variables, /* system variables */
   NULL /* reserved */

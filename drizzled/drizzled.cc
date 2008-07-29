@@ -216,7 +216,6 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 /* static variables */
 
 /* the default log output is log tables */
-static bool lower_case_table_names_used= 0;
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
@@ -279,7 +278,6 @@ bool opt_secure_auth= false;
 char* opt_secure_file_priv= 0;
 bool opt_log_slow_admin_statements= 0;
 bool opt_log_slow_slave_statements= 0;
-bool lower_case_file_system= 0;
 bool opt_old_style_user_limits= 0;
 bool trust_function_creators= 0;
 /*
@@ -302,7 +300,7 @@ static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
 uint mysqld_port, test_flags, select_errors, dropping_tables, ha_open_options;
 uint mysqld_port_timeout;
 uint delay_key_write_options, protocol_version;
-uint lower_case_table_names;
+uint lower_case_table_names= 1;
 uint tc_heuristic_recover= 0;
 uint volatile thread_count, thread_running;
 uint64_t thd_startup_options;
@@ -402,8 +400,6 @@ Lt_creator lt_creator;
 Ge_creator ge_creator;
 Le_creator le_creator;
 
-FILE *bootstrap_file;
-int bootstrap_error;
 FILE *stderror_file=0;
 
 I_List<THD> threads;
@@ -507,7 +503,6 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib);
 static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option);
 static void clean_up(bool print_message);
-static int test_if_case_insensitive(const char *dir_name);
 
 static void usage(void);
 static void start_signal_handler(void);
@@ -2216,52 +2211,10 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (my_database_names_init())
     return 1;
 
-  /*
-    Ensure that lower_case_table_names is set on system where we have case
-    insensitive names.  If this is not done the users MyISAM tables will
-    get corrupted if accesses with names of different case.
-  */
-  lower_case_file_system= test_if_case_insensitive(mysql_real_data_home);
-  if (!lower_case_table_names && lower_case_file_system == 1)
-  {
-    if (lower_case_table_names_used)
-    {
-      if (global_system_variables.log_warnings)
-	sql_print_warning("\
-You have forced lower_case_table_names to 0 through a command-line \
-option, even though your file system '%s' is case insensitive.  This means \
-that you can corrupt a MyISAM table by accessing it with different cases. \
-You should consider changing lower_case_table_names to 1 or 2",
-			mysql_real_data_home);
-    }
-    else
-    {
-      if (global_system_variables.log_warnings)
-	sql_print_warning("Setting lower_case_table_names=2 because file system for %s is case insensitive", mysql_real_data_home);
-      lower_case_table_names= 2;
-    }
-  }
-  else if (lower_case_table_names == 2 &&
-           !(lower_case_file_system=
-             (test_if_case_insensitive(mysql_real_data_home) == 1)))
-  {
-    if (global_system_variables.log_warnings)
-      sql_print_warning("lower_case_table_names was set to 2, even though your "
-                        "the file system '%s' is case sensitive.  Now setting "
-                        "lower_case_table_names to 0 to avoid future problems.",
-			mysql_real_data_home);
-    lower_case_table_names= 0;
-  }
-  else
-  {
-    lower_case_file_system=
-      (test_if_case_insensitive(mysql_real_data_home) == 1);
-  }
 
   /* Reset table_alias_charset, now that lower_case_table_names is set. */
-  table_alias_charset= (lower_case_table_names ?
-			files_charset_info :
-			&my_charset_bin);
+  lower_case_table_names= 1; /* This we need to look at */
+  table_alias_charset= files_charset_info;
 
   return 0;
 }
@@ -3640,16 +3593,6 @@ log and this option does nothing anymore.",
    "The argument will be treated as a decimal value with microsecond precission.",
    (char**) &long_query_time, (char**) &long_query_time, 0, GET_DOUBLE,
    REQUIRED_ARG, 10, 0, LONG_TIMEOUT, 0, 0, 0},
-  {"lower_case_table_names", OPT_LOWER_CASE_TABLE_NAMES,
-   "If set to 1 table names are stored in lowercase on disk and table names will be case-insensitive.  Should be set to 2 if you are using a case insensitive file system",
-   (char**) &lower_case_table_names,
-   (char**) &lower_case_table_names, 0, GET_UINT, OPT_ARG,
-#ifdef FN_NO_CASE_SENCE
-    1
-#else
-    0
-#endif
-   , 0, 2, 0, 1, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
    "Max packetlength to send/receive from to server.",
    (char**) &global_system_variables.max_allowed_packet,
@@ -4451,121 +4394,121 @@ mysqld_get_one_option(int optid,
     opt_error_log= 1;
     break;
   case (int)OPT_REPLICATE_IGNORE_DB:
-  {
-    rpl_filter->add_ignore_db(argument);
-    break;
-  }
+    {
+      rpl_filter->add_ignore_db(argument);
+      break;
+    }
   case (int)OPT_REPLICATE_DO_DB:
-  {
-    rpl_filter->add_do_db(argument);
-    break;
-  }
+    {
+      rpl_filter->add_do_db(argument);
+      break;
+    }
   case (int)OPT_REPLICATE_REWRITE_DB:
-  {
-    char* key = argument,*p, *val;
+    {
+      char* key = argument,*p, *val;
 
-    if (!(p= strstr(argument, "->")))
-    {
-      fprintf(stderr,
-	      "Bad syntax in replicate-rewrite-db - missing '->'!\n");
-      exit(1);
-    }
-    val= p--;
-    while (my_isspace(mysqld_charset, *p) && p > argument)
-      *p-- = 0;
-    if (p == argument)
-    {
-      fprintf(stderr,
-	      "Bad syntax in replicate-rewrite-db - empty FROM db!\n");
-      exit(1);
-    }
-    *val= 0;
-    val+= 2;
-    while (*val && my_isspace(mysqld_charset, *val))
-      *val++;
-    if (!*val)
-    {
-      fprintf(stderr,
-	      "Bad syntax in replicate-rewrite-db - empty TO db!\n");
-      exit(1);
-    }
+      if (!(p= strstr(argument, "->")))
+      {
+        fprintf(stderr,
+                "Bad syntax in replicate-rewrite-db - missing '->'!\n");
+        exit(1);
+      }
+      val= p--;
+      while (my_isspace(mysqld_charset, *p) && p > argument)
+        *p-- = 0;
+      if (p == argument)
+      {
+        fprintf(stderr,
+                "Bad syntax in replicate-rewrite-db - empty FROM db!\n");
+        exit(1);
+      }
+      *val= 0;
+      val+= 2;
+      while (*val && my_isspace(mysqld_charset, *val))
+        *val++;
+      if (!*val)
+      {
+        fprintf(stderr,
+                "Bad syntax in replicate-rewrite-db - empty TO db!\n");
+        exit(1);
+      }
 
-    rpl_filter->add_db_rewrite(key, val);
-    break;
-  }
+      rpl_filter->add_db_rewrite(key, val);
+      break;
+    }
 
   case (int)OPT_BINLOG_IGNORE_DB:
-  {
-    binlog_filter->add_ignore_db(argument);
-    break;
-  }
+    {
+      binlog_filter->add_ignore_db(argument);
+      break;
+    }
   case OPT_BINLOG_FORMAT:
-  {
-    int id;
-    id= find_type_or_exit(argument, &binlog_format_typelib, opt->name);
-    global_system_variables.binlog_format= opt_binlog_format_id= id - 1;
-    break;
-  }
+    {
+      int id;
+      id= find_type_or_exit(argument, &binlog_format_typelib, opt->name);
+      global_system_variables.binlog_format= opt_binlog_format_id= id - 1;
+      break;
+    }
   case (int)OPT_BINLOG_DO_DB:
-  {
-    binlog_filter->add_do_db(argument);
-    break;
-  }
+    {
+      binlog_filter->add_do_db(argument);
+      break;
+    }
   case (int)OPT_REPLICATE_DO_TABLE:
-  {
-    if (rpl_filter->add_do_table(argument))
     {
-      fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_do_table(argument))
+      {
+        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int)OPT_REPLICATE_WILD_DO_TABLE:
-  {
-    if (rpl_filter->add_wild_do_table(argument))
     {
-      fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_wild_do_table(argument))
+      {
+        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int)OPT_REPLICATE_WILD_IGNORE_TABLE:
-  {
-    if (rpl_filter->add_wild_ignore_table(argument))
     {
-      fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_wild_ignore_table(argument))
+      {
+        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int)OPT_REPLICATE_IGNORE_TABLE:
-  {
-    if (rpl_filter->add_ignore_table(argument))
     {
-      fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
-      exit(1);
+      if (rpl_filter->add_ignore_table(argument))
+      {
+        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        exit(1);
+      }
+      break;
     }
-    break;
-  }
   case (int) OPT_SLOW_QUERY_LOG:
     opt_slow_log= 1;
     break;
 #ifdef WITH_CSV_STORAGE_ENGINE
   case  OPT_LOG_OUTPUT:
-  {
-    if (!argument || !argument[0])
     {
-      log_output_options= LOG_FILE;
-      log_output_str= log_output_typelib.type_names[1];
+      if (!argument || !argument[0])
+      {
+        log_output_options= LOG_FILE;
+        log_output_str= log_output_typelib.type_names[1];
+      }
+      else
+      {
+        log_output_str= argument;
+        log_output_options=
+          find_bit_type_or_exit(argument, &log_output_typelib, opt->name);
+      }
+      break;
     }
-    else
-    {
-      log_output_str= argument;
-      log_output_options=
-        find_bit_type_or_exit(argument, &log_output_typelib, opt->name);
-  }
-    break;
-  }
 #endif
   case (int) OPT_SKIP_NEW:
     opt_specialflag|= SPECIAL_NO_NEW_FUNC;
@@ -4657,65 +4600,61 @@ mysqld_get_one_option(int optid,
     charsets_dir = mysql_charsets_dir;
     break;
   case OPT_TX_ISOLATION:
-  {
-    int type;
-    type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
-    global_system_variables.tx_isolation= (type-1);
-    break;
-  }
+    {
+      int type;
+      type= find_type_or_exit(argument, &tx_isolation_typelib, opt->name);
+      global_system_variables.tx_isolation= (type-1);
+      break;
+    }
   case OPT_MYISAM_RECOVER:
-  {
-    if (!argument)
     {
-      myisam_recover_options=    HA_RECOVER_DEFAULT;
-      myisam_recover_options_str= myisam_recover_typelib.type_names[0];
+      if (!argument)
+      {
+        myisam_recover_options=    HA_RECOVER_DEFAULT;
+        myisam_recover_options_str= myisam_recover_typelib.type_names[0];
+      }
+      else if (!argument[0])
+      {
+        myisam_recover_options= HA_RECOVER_NONE;
+        myisam_recover_options_str= "OFF";
+      }
+      else
+      {
+        myisam_recover_options_str=argument;
+        myisam_recover_options=
+          find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
+      }
+      ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
+      break;
     }
-    else if (!argument[0])
-    {
-      myisam_recover_options= HA_RECOVER_NONE;
-      myisam_recover_options_str= "OFF";
-    }
-    else
-    {
-      myisam_recover_options_str=argument;
-      myisam_recover_options=
-        find_bit_type_or_exit(argument, &myisam_recover_typelib, opt->name);
-    }
-    ha_open_options|=HA_OPEN_ABORT_IF_CRASHED;
-    break;
-  }
   case OPT_TC_HEURISTIC_RECOVER:
     tc_heuristic_recover= find_type_or_exit(argument,
                                             &tc_heuristic_recover_typelib,
                                             opt->name);
     break;
   case OPT_MYISAM_STATS_METHOD:
-  {
-    ulong method_conv;
-    int method;
+    {
+      ulong method_conv;
+      int method;
 
-    myisam_stats_method_str= argument;
-    method= find_type_or_exit(argument, &myisam_stats_method_typelib,
-                              opt->name);
-    switch (method-1) {
-    case 2:
-      method_conv= MI_STATS_METHOD_IGNORE_NULLS;
-      break;
-    case 1:
-      method_conv= MI_STATS_METHOD_NULLS_EQUAL;
-      break;
-    case 0:
-    default:
-      method_conv= MI_STATS_METHOD_NULLS_NOT_EQUAL;
+      myisam_stats_method_str= argument;
+      method= find_type_or_exit(argument, &myisam_stats_method_typelib,
+                                opt->name);
+      switch (method-1) {
+      case 2:
+        method_conv= MI_STATS_METHOD_IGNORE_NULLS;
+        break;
+      case 1:
+        method_conv= MI_STATS_METHOD_NULLS_EQUAL;
+        break;
+      case 0:
+      default:
+        method_conv= MI_STATS_METHOD_NULLS_NOT_EQUAL;
+        break;
+      }
+      global_system_variables.myisam_stats_method= method_conv;
       break;
     }
-    global_system_variables.myisam_stats_method= method_conv;
-    break;
-  }
-  case OPT_LOWER_CASE_TABLE_NAMES:
-    lower_case_table_names= argument ? atoi(argument) : 1;
-    lower_case_table_names_used= 1;
-    break;
   }
   return 0;
 }
@@ -5051,44 +4990,6 @@ skip: ;
 
   return(found);
 } /* find_bit_type */
-
-
-/**
-  Check if file system used for databases is case insensitive.
-
-  @param dir_name			Directory to test
-
-  @retval
-    -1  Don't know (Test failed)
-  @retval
-    0   File system is case sensitive
-  @retval
-    1   File system is case insensitive
-*/
-
-static int test_if_case_insensitive(const char *dir_name)
-{
-  int result= 0;
-  File file;
-  char buff[FN_REFLEN], buff2[FN_REFLEN];
-  struct stat stat_info;
-
-  fn_format(buff, glob_hostname, dir_name, ".lower-test",
-	    MY_UNPACK_FILENAME | MY_REPLACE_EXT | MY_REPLACE_DIR);
-  fn_format(buff2, glob_hostname, dir_name, ".LOWER-TEST",
-	    MY_UNPACK_FILENAME | MY_REPLACE_EXT | MY_REPLACE_DIR);
-  (void) my_delete(buff2, MYF(0));
-  if ((file= my_create(buff, 0666, O_RDWR, MYF(0))) < 0)
-  {
-    sql_print_warning("Can't create test file %s", buff);
-    return(-1);
-  }
-  my_close(file, MYF(0));
-  if (!stat(buff2, &stat_info))
-    result= 1;					// Can access file
-  (void) my_delete(buff, MYF(MY_WME));
-  return(result);
-}
 
 
 /**

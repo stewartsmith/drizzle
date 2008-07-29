@@ -330,8 +330,8 @@ int ha_finalize_handlerton(st_plugin_int *plugin)
     break;
   };
 
-  if (hton->panic)
-    hton->panic(hton, HA_PANIC_CLOSE);
+  if (hton && plugin->plugin->deinit)
+    (void)plugin->plugin->deinit(hton);
 
   my_free((uchar*)hton, MYF(0));
 

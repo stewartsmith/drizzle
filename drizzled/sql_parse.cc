@@ -4535,15 +4535,10 @@ bool test_if_data_home_dir(const char *dir)
 
   if (home_dir_len < dir_len)
   {
-    if (lower_case_file_system)
-    {
-      if (!my_strnncoll(character_set_filesystem,
-                        (const uchar*) conv_path, home_dir_len,
-                        (const uchar*) mysql_unpacked_real_data_home,
-                        home_dir_len))
-        return(1);
-    }
-    else if (!memcmp(conv_path, mysql_unpacked_real_data_home, home_dir_len))
+    if (!my_strnncoll(character_set_filesystem,
+                      (const uchar*) conv_path, home_dir_len,
+                      (const uchar*) mysql_unpacked_real_data_home,
+                      home_dir_len))
       return(1);
   }
   return(0);
