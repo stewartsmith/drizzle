@@ -53,7 +53,6 @@
 #include <mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include "drizzle_version.h"
 #include "drizzled_error.h"
 #include "errmsg.h"
 #include <violite.h>

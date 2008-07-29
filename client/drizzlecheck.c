@@ -19,7 +19,6 @@
 
 #include "client_priv.h"
 #include <mystrings/m_ctype.h>
-#include <drizzle_version.h>
 #include <drizzled_error.h>
 
 /* Exit codes */

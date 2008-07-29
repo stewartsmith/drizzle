@@ -41,7 +41,7 @@ typedef int my_socket;
 #endif /* my_socket_defined */
 #endif /* _global_h */
 
-#include <drizzle_version.h>
+#include <drizzled/version.h>
 #include "drizzle_com.h"
 #include "drizzle_time.h"
 

@@ -1301,7 +1301,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- include/drizzle_version.h plugin/Makefile dnl
+ drizzled/version.h plugin/Makefile dnl
  drizzled/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 

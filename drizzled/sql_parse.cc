@@ -3916,8 +3916,9 @@ bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables,
     This is written such that we have a short lock on LOCK_thread_count
 */
 
-uint kill_one_thread(THD *thd __attribute__((unused)),
-                     ulong id, bool only_kill_query)
+static unsigned int
+kill_one_thread(THD *thd __attribute__((unused)),
+                ulong id, bool only_kill_query)
 {
   THD *tmp;
   uint error=ER_NO_SUCH_THREAD;

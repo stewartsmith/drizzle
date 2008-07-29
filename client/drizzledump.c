@@ -46,7 +46,6 @@
 #include <stdarg.h>
 
 #include "client_priv.h"
-#include "drizzle_version.h"
 #include "drizzled_error.h"
 
 /* Exit codes */

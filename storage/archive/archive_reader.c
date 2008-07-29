@@ -6,7 +6,6 @@
 #include <mystrings/m_ctype.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
-#include <drizzle_version.h>
 
 #define BUFFER_LEN 1024
 #define ARCHIVE_ROW_HEADER_SIZE 4
@@ -320,8 +319,8 @@ static void usage(void)
 
 static void print_version(void)
 {
-  printf("%s  Ver %s Distrib %s, for %s (%s)\n", my_progname, SHOW_VERSION,
-         MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
+  printf("%s  Ver %s, for %s (%s)\n", my_progname, SHOW_VERSION,
+         SYSTEM_TYPE, MACHINE_TYPE);
 }
 
 static void get_options(int *argc, char ***argv)
