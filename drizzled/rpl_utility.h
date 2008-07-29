@@ -70,7 +70,7 @@ public:
                                        &m_null_bits, (size + 7) / 8,
                                        NULL);
 
-    bzero(m_field_metadata, size * sizeof(uint16_t));
+    memset(m_field_metadata, 0, size * sizeof(uint16_t));
 
     if (m_type)
       memcpy(m_type, types, size);

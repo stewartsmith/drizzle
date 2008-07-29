@@ -716,7 +716,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, uchar *key,
 	if (isnan(nr))
 	{
 	  /* Replace NAN with zero */
- 	  bzero(key, length);
+ 	  memset(key, 0, length);
 	  key+= length;
 	  continue;
 	}
@@ -727,7 +727,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, uchar *key,
 	float8get(nr, pos);
 	if (isnan(nr))
 	{
- 	  bzero(key, length);
+ 	  memset(key, 0, length);
 	  key+= length;
 	  continue;
 	}

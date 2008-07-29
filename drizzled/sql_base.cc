@@ -493,7 +493,7 @@ void close_handle_and_leave_table_as_lock(TABLE *table)
                        &key_buff, old_share->table_cache_key.length,
                        NULL))
   {
-    bzero((char*) share, sizeof(*share));
+    memset((char*) share, 0, sizeof(*share));
     share->set_table_cache_key(key_buff, old_share->table_cache_key.str,
                                old_share->table_cache_key.length);
     share->tmp_table= INTERNAL_TMP_TABLE;       // for intern_close_table()
@@ -536,7 +536,7 @@ OPEN_TABLE_LIST *list_open_tables(THD *thd __attribute__((unused)),
   TABLE_LIST table_list;
 
   VOID(pthread_mutex_lock(&LOCK_open));
-  bzero((char*) &table_list,sizeof(table_list));
+  memset((char*) &table_list, 0, sizeof(table_list));
   start_list= &open_list;
   open_list=0;
 
@@ -839,7 +839,7 @@ bool close_cached_connection_tables(THD *thd, bool if_wait_for_refresh,
   bool result= false;
   assert(thd);
 
-  bzero(&tmp, sizeof(TABLE_LIST));
+  memset(&tmp, 0, sizeof(TABLE_LIST));
 
   if (!have_lock)
     VOID(pthread_mutex_lock(&LOCK_open));
@@ -2541,7 +2541,7 @@ bool reopen_table(TABLE *table)
     sql_print_error("Table %s had a open data handler in reopen_table",
 		    table->alias);
 #endif
-  bzero((char*) &table_list, sizeof(TABLE_LIST));
+  memset(&table_list, 0, sizeof(TABLE_LIST));
   table_list.db=         table->s->db.str;
   table_list.table_name= table->s->table_name.str;
   table_list.table=      table;
@@ -5729,7 +5729,7 @@ bool setup_fields(THD *thd, Item **ref_pointer_array,
     ref_pointer_array
   */
   if (ref_pointer_array)
-    bzero(ref_pointer_array, sizeof(Item *) * fields.elements);
+    memset(ref_pointer_array, 0, sizeof(Item *) * fields.elements);
 
   Item **ref= ref_pointer_array;
   thd->lex->current_select->cur_pos_in_select_list= 0;

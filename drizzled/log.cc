@@ -1274,7 +1274,7 @@ MYSQL_LOG::MYSQL_LOG()
     called only in main(). Doing initialization here would make it happen
     before main().
   */
-  bzero((char*) &log_file, sizeof(log_file));
+  memset((char*) &log_file, 0, sizeof(log_file));
 }
 
 void MYSQL_LOG::init_pthread_objects()
@@ -1688,7 +1688,7 @@ MYSQL_BIN_LOG::MYSQL_BIN_LOG()
     before main().
   */
   index_file_name[0] = 0;
-  bzero((char*) &index_file, sizeof(index_file));
+  memset((char*) &index_file, 0, sizeof(index_file));
 }
 
 /* this is called only once */
@@ -4421,7 +4421,7 @@ int TC_LOG_MMAP::recover()
     goto err2;
 
   hash_free(&xids);
-  bzero(data, (size_t)file_length);
+  memset(data, 0, (size_t)file_length);
   return 0;
 
 err2:

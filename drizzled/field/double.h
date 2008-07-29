@@ -48,7 +48,7 @@ public:
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int reset(void) { bzero(ptr,sizeof(double)); return 0; }
+  int reset(void) { memset(ptr, 0, sizeof(double)); return 0; }
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);

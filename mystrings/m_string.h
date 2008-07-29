@@ -34,11 +34,6 @@
 #undef HAVE_BCMP
 #endif
 
-/*  This is needed for the definitions of bzero... on solaris */
-#if defined(HAVE_STRINGS_H)
-#include <strings.h>
-#endif
-
 /*  This is needed for the definitions of memcpy... on solaris */
 #if defined(HAVE_MEMORY_H) && !defined(__cplusplus)
 #include <memory.h>
@@ -107,10 +102,6 @@ extern char _dig_vec_lower[];
 
 #if !defined(bfill) && !defined(HAVE_BFILL)
 extern	void bfill(uchar *dst,size_t len,char fill);
-#endif
-
-#if !defined(bzero) && !defined(HAVE_BZERO)
-extern	void bzero(uchar * dst,size_t len);
 #endif
 
 #if !defined(bcmp) && !defined(HAVE_BCMP)

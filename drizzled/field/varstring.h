@@ -57,7 +57,7 @@ public:
   enum ha_base_keytype key_type() const;
   uint row_pack_length() { return field_length; }
   bool zero_pack() const { return 0; }
-  int  reset(void) { bzero(ptr,field_length+length_bytes); return 0; }
+  int  reset(void) { memset(ptr, 0, field_length+length_bytes); return 0; }
   uint32_t pack_length() const { return (uint32_t) field_length+length_bytes; }
   uint32_t key_length() const { return (uint32_t) field_length; }
   uint32_t sort_length() const

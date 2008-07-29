@@ -610,7 +610,7 @@ public:
 
     all_fields= fields_arg;
     fields_list= fields_arg;
-    bzero((char*) &keyuse,sizeof(keyuse));
+    memset((char*) &keyuse, 0, sizeof(keyuse));
     tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
     rollup.state= ROLLUP::STATE_NONE;

@@ -95,8 +95,8 @@ public:
   {
     return (uint32_t) (((uint64_t) 1 << (packlength*8)) -1);
   }
-  int reset(void) { bzero(ptr, packlength+sizeof(uchar*)); return 0; }
-  void reset_fields() { bzero((uchar*) &value,sizeof(value)); }
+  int reset(void) { memset(ptr, 0, packlength+sizeof(uchar*)); return 0; }
+  void reset_fields() { memset((uchar*) &value, 0, sizeof(value)); }
 #ifndef WORDS_BIGENDIAN
   static
 #endif
@@ -182,7 +182,7 @@ public:
   uint packed_col_length(const uchar *col_ptr, uint length);
   uint max_packed_col_length(uint max_length);
   void free() { value.free(); }
-  inline void clear_temporary() { bzero((uchar*) &value,sizeof(value)); }
+  inline void clear_temporary() { memset((uchar*) &value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);
   uint size_of() const { return sizeof(*this); }
   bool has_charset(void) const

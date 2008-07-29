@@ -88,7 +88,7 @@ bool my_gethwaddr(uchar *to)
   if (fd < 0)
     goto err;
 
-  bzero(&ifr, sizeof(ifr));
+  memset(&ifr, 0, sizeof(ifr));
   strnmov(ifr.ifr_name, "eth0", sizeof(ifr.ifr_name) - 1);
 
   do {

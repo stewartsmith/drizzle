@@ -83,8 +83,6 @@ int main(void)
 
   test_strarg("bfill(to,4,' ')",(bfill(to,4,' '),0L),INT_MAX32,4,' ',0,0);
   test_strarg("bfill(from,0,' ')",(bfill(from,0,' '),0L),INT_MAX32,0,0);
-  test_strarg("bzero(to,3)",(bzero(to,3),0L),INT_MAX32,3,0,0,0);
-  test_strarg("bzero(to,0)",(bzero(to,0),0L),INT_MAX32,0,0);
   test_strarg("bmove(to,from,4)",(bmove(to,from,4),0L),INT_MAX32,4,F_CHAR,
 	      0,0);
   test_strarg("bmove(to,from,0)",(bmove(to,from,0),0L),INT_MAX32,0,0);

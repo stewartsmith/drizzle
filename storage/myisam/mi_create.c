@@ -55,7 +55,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 
   if (!ci)
   {
-    bzero((char*) &tmp_create_info,sizeof(tmp_create_info));
+    memset((char*) &tmp_create_info, 0, sizeof(tmp_create_info));
     ci=&tmp_create_info;
   }
 
@@ -65,7 +65,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
   errpos= 0;
   options= 0;
-  bzero((uchar*) &share,sizeof(share));
+  memset((uchar*) &share, 0, sizeof(share));
 
   if (flags & HA_DONT_TOUCH_DATA)
   {
@@ -613,8 +613,8 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
   /* Create extra keys for unique definitions */
   offset=reclength-uniques*MI_UNIQUE_HASH_LENGTH;
-  bzero((char*) &tmp_keydef,sizeof(tmp_keydef));
-  bzero((char*) &tmp_keyseg,sizeof(tmp_keyseg));
+  memset((char*) &tmp_keydef, 0, sizeof(tmp_keydef));
+  memset((char*) &tmp_keyseg, 0, sizeof(tmp_keyseg));
   for (i=0; i < uniques ; i++)
   {
     tmp_keydef.keysegs=1;

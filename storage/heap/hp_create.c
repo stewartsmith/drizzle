@@ -51,8 +51,8 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
     
     for (i= key_segs= max_length= 0, keyinfo= keydef; i < keys; i++, keyinfo++)
     {
-      bzero((char*) &keyinfo->block,sizeof(keyinfo->block));
-      bzero((char*) &keyinfo->rb_tree ,sizeof(keyinfo->rb_tree));
+      memset((char*) &keyinfo->block, 0, sizeof(keyinfo->block));
+      memset((char*) &keyinfo->rb_tree , 0, sizeof(keyinfo->rb_tree));
       for (j= length= 0; j < keyinfo->keysegs; j++)
       {
 	length+= keyinfo->seg[j].length;

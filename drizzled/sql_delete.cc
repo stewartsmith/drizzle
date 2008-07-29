@@ -69,7 +69,7 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
     List<Item>   fields;
     List<Item>   all_fields;
 
-    bzero((char*) &tables,sizeof(tables));
+    memset((char*) &tables, 0, sizeof(tables));
     tables.table = table;
     tables.alias = table_list->alias;
 
@@ -851,7 +851,7 @@ bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
   uint path_length;
   
 
-  bzero((char*) &create_info,sizeof(create_info));
+  memset((char*) &create_info, 0, sizeof(create_info));
   /* If it is a temporary table, close and regenerate it */
   if (!dont_send_ok && (table= find_temporary_table(thd, table_list)))
   {

@@ -1149,7 +1149,7 @@ public:
       list.push_back(else_expr_arg);
     }
     set_arguments(list);
-    bzero(&cmp_items, sizeof(cmp_items));
+    memset(&cmp_items, 0, sizeof(cmp_items));
   }
   double val_real();
   int64_t val_int();
@@ -1206,7 +1206,7 @@ public:
     :Item_func_opt_neg(list), array(0), have_null(0),
     arg_types_compatible(false)
   {
-    bzero(&cmp_items, sizeof(cmp_items));
+    memset(&cmp_items, 0, sizeof(cmp_items));
     allowed_arg_cols= 0;  // Fetch this value from first argument
   }
   int64_t val_int();

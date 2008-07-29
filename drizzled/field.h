@@ -201,7 +201,7 @@ public:
     return pack_length();
   };
 
-  virtual int reset(void) { bzero(ptr,pack_length()); return 0; }
+  virtual int reset(void) { memset(ptr, 0, pack_length()); return 0; }
   virtual void reset_fields() {}
   virtual void set_default()
   {

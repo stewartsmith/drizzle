@@ -7758,7 +7758,7 @@ static int my_coll_rule_parse(MY_COLL_RULE *rule, size_t mitems,
   
   /* Init all variables */
   errstr[0]= '\0';
-  bzero(&item, sizeof(item));
+  memset(&item, 0, sizeof(item));
   my_coll_lexem_init(&lexem, str, str_end);
   
   while ((lexnum= my_coll_lexem_next(&lexem)))
@@ -7900,7 +7900,7 @@ static my_bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
   
   if (!(newweights= (uint16_t**) (*alloc)(256*sizeof(uint16_t*))))
     return 1;
-  bzero(newweights, 256*sizeof(uint16_t*));
+  memset(newweights, 0, 256*sizeof(uint16_t*));
   
   if (!(newlengths= (uchar*) (*alloc)(256)))
     return 1;
@@ -7941,7 +7941,7 @@ static my_bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
       
       if (!(newweights[pagec]= (uint16_t*) (*alloc)(size)))
         return 1;
-      bzero((void*) newweights[pagec], size);
+      memset((void*) newweights[pagec], 0, size);
       
       for (chc=0 ; chc < 256; chc++)
       {
@@ -7986,7 +7986,7 @@ static my_bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
     char *contraction_flags;
     if (!(cs->contractions= (uint16_t*) (*alloc)(size)))
         return 1;
-    bzero((void*)cs->contractions, size);
+    memset((void*)cs->contractions, 0, size);
     contraction_flags= ((char*) cs->contractions) + 0x40*0x40;
     for (i=0; i < rc; i++)
     {

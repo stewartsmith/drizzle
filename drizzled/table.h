@@ -794,7 +794,7 @@ struct TABLE_LIST
                              const char *table_name_arg,
                              enum thr_lock_type lock_type_arg)
   {
-    bzero((char*) this, sizeof(*this));
+    memset(this, 0, sizeof(*this));
     db= (char*) db_name_arg;
     table_name= alias= (char*) table_name_arg;
     lock_type= lock_type_arg;

@@ -215,7 +215,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
   if (wild && !wild[0])
     wild=0;
 
-  bzero((char*) &table_list,sizeof(table_list));
+  memset(&table_list, 0, sizeof(table_list));
 
   if (!(dirp = my_dir(path,MYF(dir ? MY_WANT_STAT : 0))))
   {
@@ -779,7 +779,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
   }
 
   key_info= table->key_info;
-  bzero((char*) &create_info, sizeof(create_info));
+  memset((char*) &create_info, 0, sizeof(create_info));
   /* Allow update_create_info to update row type */
   create_info.row_type= share->row_type;
   file->update_create_info(&create_info);
@@ -1327,7 +1327,7 @@ static void shrink_var_array(DYNAMIC_ARRAY *array)
       all[a++]= all[b];
   if (a)
   {
-    bzero(all+a, sizeof(SHOW_VAR)); // writing NULL-element to the end
+    memset(all+a, 0, sizeof(SHOW_VAR)); // writing NULL-element to the end
     array->elements= a;
   }
   else // array is completely empty - delete it
@@ -1963,7 +1963,7 @@ bool get_lookup_field_values(THD *thd, COND *cond, TABLE_LIST *tables,
 {
   LEX *lex= thd->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
-  bzero((char*) lookup_field_values, sizeof(LOOKUP_FIELD_VALUES));
+  memset((char*) lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
   switch (lex->sql_command) {
   case SQLCOM_SHOW_DATABASES:
     if (wild)
@@ -2434,8 +2434,8 @@ static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
   char key[MAX_DBKEY_LENGTH];
   uint key_length;
 
-  bzero((char*) &table_list, sizeof(TABLE_LIST));
-  bzero((char*) &tbl, sizeof(TABLE));
+  memset((char*) &table_list, 0, sizeof(TABLE_LIST));
+  memset((char*) &tbl, 0, sizeof(TABLE));
 
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;
