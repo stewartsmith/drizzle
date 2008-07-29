@@ -31,7 +31,6 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			my_net.h \
 			my_dir.h \
 			sql_common.h \
-			my_attribute.h \
 			$(BUILT_SOURCES)
 
 noinst_HEADERS =	my_bit.h \

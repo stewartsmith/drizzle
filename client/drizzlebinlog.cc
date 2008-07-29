@@ -71,8 +71,8 @@ static FILE *result_file;
 
 static const char *load_default_groups[]= { "drizzlebinlog","client",0 };
 
-static void error(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
-static void warning(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
+static void error(const char *format, ...) __attribute__((format(printf, 1, 2)));
+static void warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 static bool one_database=0, to_last_remote_log= 0, disable_log_bin= 0;
 static bool opt_hexdump= 0;

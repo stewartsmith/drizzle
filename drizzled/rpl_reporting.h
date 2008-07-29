@@ -37,7 +37,7 @@ public:
                         printf() format.
   */
   void report(loglevel level, int err_code, const char *msg, ...) const
-    ATTRIBUTE_FORMAT(printf, 4, 5);
+    __attribute__((format(printf, 4, 5)));
 
   /**
      Clear errors. They will not show up under <code>SHOW SLAVE

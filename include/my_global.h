@@ -129,6 +129,16 @@
 #define NEVER_INLINE
 #endif
 
+/*
+ *   Disable __attribute__ for non GNU compilers, since we're using them
+ *     only to either generate or suppress warnings.
+ *     */
+#ifndef __attribute__
+# if !defined(__GNUC__)
+#  define __attribute__(A)
+# endif
+#endif
+
 
 /* Fix problem with S_ISLNK() on Linux */
 #if defined(TARGET_OS_LINUX) || defined(__GLIBC__)
@@ -356,8 +366,6 @@ typedef unsigned short ushort;
 #define my_reinterpret_cast(A) (A)
 #define my_const_cast(A) (A)
 #endif
-
-#include <my_attribute.h>
 
 /* From old s-system.h */
 
