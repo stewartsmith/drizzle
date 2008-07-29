@@ -28,12 +28,10 @@ pkginclude_HEADERS =	$(HEADERS_ABI) \
 			errmsg.h \
 			my_global.h \
 			my_dir.h \
-			sql_common.h \
 			$(BUILT_SOURCES)
 
 noinst_HEADERS =	my_base.h \
-			drizzle_version.h.in \
-			my_time.h
+			drizzle_version.h.in
 
 LDADD = $(top_builddir)/mysys/libmysyslt.la \
         $(top_builddir)/mystrings/libmystringslt.la $(ZLIB_LIBS)

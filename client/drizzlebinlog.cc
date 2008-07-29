@@ -30,7 +30,7 @@
 
 #define MYSQL_CLIENT
 #undef MYSQL_SERVER
-#include <my_time.h>
+#include <libdrizzle/my_time.h>
 #include <my_global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
@@ -40,7 +40,7 @@
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
 #include "mysql_priv.h"
 #include "log_event.h"
-#include "sql_common.h"
+#include <libdrizzle/sql_common.h>
 
 
 enum options_drizzlebinlog

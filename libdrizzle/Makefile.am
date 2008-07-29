@@ -27,7 +27,8 @@ MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
 pkginclude_HEADERS =	drizzle.h \
-			drizzle_com.h
+			drizzle_com.h \
+			sql_common.h
 
 pkglib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = libdrizzle.c client.c net_serv.c get_password.c
@@ -49,7 +50,8 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
 			-DUNDEF_THREADS_HACK
 
-noinst_HEADERS = client_settings.h
+noinst_HEADERS = 	client_settings.h \
+			my_time.h
 
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 			$(target) $(BUILT_SOURCES)

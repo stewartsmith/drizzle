@@ -31,7 +31,7 @@
 #include <my_global.h>
 #include <drizzle_version.h>
 #include <mysys/my_sys.h>
-#include <my_time.h>
+#include <libdrizzle/my_time.h>
 #include <mystrings/m_string.h>
 #include <mysys/hash.h>
 #include <signal.h>
