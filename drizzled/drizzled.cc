@@ -1135,6 +1135,17 @@ static void network_init(void)
     fds[pollfd_count].fd= ip_sock;
     fds[pollfd_count].events= POLLIN | POLLERR;
 
+    /* Add options for our listening socket */
+    {
+      struct linger ling = {0, 0};
+      int flags =1;
+
+      (void) setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
+      (void) setsockopt(ip_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags));
+      (void) setsockopt(ip_sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(ling));
+      (void) setsockopt(ip_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
+    }
+
 
     /*
       Sometimes the port is not released fast enough when stopping and
@@ -1167,17 +1178,6 @@ static void network_init(void)
       sql_print_error("listen() on TCP/IP failed with error %d",
 		      socket_errno);
       unireg_abort(1);
-    }
-
-    /* Add the socket to our listeners */
-    {
-      struct linger ling = {0, 0};
-      int flags =1;
-
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags));
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(ling));
-      (void) setsockopt(ip_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
     }
   }
 
