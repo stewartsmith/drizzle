@@ -21,6 +21,7 @@ pkgplugindir =		$(pkglibdir)/plugin
 
 AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(openssl_includes) -I${top_srcdir}/drizzled
 
+if BUILD_MD5_UDF
 EXTRA_LTLIBRARIES =	libmd5udf.la
 pkgplugin_LTLIBRARIES =	@plugin_md5_shared_target@
 libmd5udf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lssl
@@ -31,3 +32,4 @@ libmd5udf_la_SOURCES =	md5udf.cc
 EXTRA_LIBRARIES =	libmd5udf.a
 noinst_LIBRARIES =	@plugin_md5_static_target@
 libmd5udf_a_SOURCES=	$(libmd5udf_la_SOURCES)
+endif
