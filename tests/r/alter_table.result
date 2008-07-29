@@ -418,7 +418,7 @@ alter table t1 change a a char(10) character set cp1251;
 select a,hex(a) from t1;
 a	hex(a)
 ‘≈”‘	F2E5F1F2
-alter table t1 change a a binary(4);
+alter table t1 change a a varbinary(4);
 select a,hex(a) from t1;
 a	hex(a)
 ÚÂÒÚ	F2E5F1F2
@@ -907,21 +907,21 @@ SELECT LENGTH(s) FROM t1;
 LENGTH(s)
 4
 DROP TABLE t1;
-CREATE TABLE t1 (s BINARY(8));
+CREATE TABLE t1 (s varbinary(8));
 INSERT INTO t1 VALUES ('test');
 SELECT LENGTH(s) FROM t1;
 LENGTH(s)
-8
+4
 SELECT HEX(s) FROM t1;
 HEX(s)
-7465737400000000
-ALTER TABLE t1 MODIFY s BINARY(10);
+74657374
+ALTER TABLE t1 MODIFY s varbinary(10);
 SELECT HEX(s) FROM t1;
 HEX(s)
-74657374000000000000
+74657374
 SELECT LENGTH(s) FROM t1;
 LENGTH(s)
-10
+4
 DROP TABLE t1;
 CREATE TABLE t1 (v VARCHAR(3), b INT);
 INSERT INTO t1 VALUES ('abc', 5);

@@ -1835,40 +1835,10 @@ type:
             Lex->length=(char*) "1";
             $$=DRIZZLE_TYPE_STRING;
           }
-        | nchar '(' NUM ')' opt_bin_mod
-          {
-            Lex->length=$3.str;
-            $$=DRIZZLE_TYPE_STRING;
-            Lex->charset=national_charset_info;
-          }
-        | nchar opt_bin_mod
-          {
-            Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_STRING;
-            Lex->charset=national_charset_info;
-          }
-        | BINARY '(' NUM ')'
-          {
-            Lex->length=$3.str;
-            Lex->charset=&my_charset_bin;
-            $$=DRIZZLE_TYPE_STRING;
-          }
-        | BINARY
-          {
-            Lex->length= (char*) "1";
-            Lex->charset=&my_charset_bin;
-            $$=DRIZZLE_TYPE_STRING;
-          }
         | varchar '(' NUM ')' opt_binary
           {
             Lex->length=$3.str;
             $$= DRIZZLE_TYPE_VARCHAR;
-          }
-        | nvarchar '(' NUM ')' opt_bin_mod
-          {
-            Lex->length=$3.str;
-            $$= DRIZZLE_TYPE_VARCHAR;
-            Lex->charset=national_charset_info;
           }
         | VARBINARY '(' NUM ')'
           {
