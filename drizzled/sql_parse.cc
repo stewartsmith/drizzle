@@ -31,7 +31,7 @@ static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables);
 
 const char *any_db="*any*";	// Special symbol for check_access
 
-const LEX_STRING command_name[]={
+const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Sleep") },
   { C_STRING_WITH_LEN("Quit") },
   { C_STRING_WITH_LEN("Init DB") },
@@ -45,22 +45,13 @@ const LEX_STRING command_name[]={
   { C_STRING_WITH_LEN("Processlist") },
   { C_STRING_WITH_LEN("Connect") },
   { C_STRING_WITH_LEN("Kill") },
-  { C_STRING_WITH_LEN("Debug") },
   { C_STRING_WITH_LEN("Ping") },
   { C_STRING_WITH_LEN("Time") },
-  { C_STRING_WITH_LEN("Delayed insert") },
   { C_STRING_WITH_LEN("Change user") },
   { C_STRING_WITH_LEN("Binlog Dump") },
-  { C_STRING_WITH_LEN("Table Dump") },
   { C_STRING_WITH_LEN("Connect Out") },
   { C_STRING_WITH_LEN("Register Slave") },
-  { C_STRING_WITH_LEN("Prepare") },
-  { C_STRING_WITH_LEN("Execute") },
-  { C_STRING_WITH_LEN("Long Data") },
-  { C_STRING_WITH_LEN("Close stmt") },
-  { C_STRING_WITH_LEN("Reset stmt") },
   { C_STRING_WITH_LEN("Set option") },
-  { C_STRING_WITH_LEN("Fetch") },
   { C_STRING_WITH_LEN("Daemon") },
   { C_STRING_WITH_LEN("Error") }  // Last command number
 };
