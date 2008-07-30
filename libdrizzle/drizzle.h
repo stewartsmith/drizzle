@@ -415,7 +415,7 @@ typedef struct st_drizzle_methods
   int32_t (*unbuffered_fetch)(DRIZZLE *drizzle, char **row);
   const char *(*read_statistics)(DRIZZLE *drizzle);
   bool (*next_result)(DRIZZLE *drizzle);
-  int32_t (*read_change_user_result)(DRIZZLE *drizzle, char *buff, const char *passwd);
+  int32_t (*read_change_user_result)(DRIZZLE *drizzle);
 } DRIZZLE_METHODS;
 
 

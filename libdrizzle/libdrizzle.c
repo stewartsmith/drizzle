@@ -139,10 +139,8 @@ my_pipe_sig_handler(int sig __attribute__((unused)))
   Change user and database
 **************************************************************************/
 
-int cli_read_change_user_result(DRIZZLE *drizzle, char *buff, const char *passwd)
+int cli_read_change_user_result(DRIZZLE *drizzle)
 {
-  (void)buff;
-  (void)passwd;
   ulong pkt_length;
 
   pkt_length= cli_safe_read(drizzle);
@@ -204,7 +202,7 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   /* Write authentication package */
   (void)simple_command(drizzle,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
 
-  rc= (*drizzle->methods->read_change_user_result)(drizzle, buff, passwd);
+  rc= (*drizzle->methods->read_change_user_result)(drizzle);
 
   if (rc == 0)
   {
