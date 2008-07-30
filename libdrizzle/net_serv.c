@@ -545,7 +545,7 @@ my_real_read(NET *net, size_t *complen)
                   NET_HEADER_SIZE);
   /* Backup of the original SO_RCVTIMEO timeout */
   struct timeval backtime;
-  int error;
+  int error = 0;
 
   *complen = 0;
 

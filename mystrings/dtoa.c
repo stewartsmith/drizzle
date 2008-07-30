@@ -1329,7 +1329,7 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
   double aadj, aadj1, adj, rv, rv0;
   Long L;
   ULong y, z;
-  Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
+  Bigint *bb = NULL, *bb1 = NULL, *bd = NULL, *bd0 = NULL, *bs = NULL, *delta = NULL;
 #ifdef SET_INEXACT
   int inexact, oldinexact;
 #endif
@@ -2166,7 +2166,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
   Long L;
   int denorm;
   ULong x;
-  Bigint *b, *b1, *delta, *mlo, *mhi, *S;
+  Bigint *b, *b1, *delta, *mlo = NULL, *mhi, *S;
   double d2, ds, eps;
   char *s, *s0;
 #ifdef Honor_FLT_ROUNDS
