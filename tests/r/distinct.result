@@ -614,14 +614,10 @@ SELECT a FROM t1 WHERE a=0;
 a
 A
 0
-Warnings:
-Warning	1292	Truncated incorrect DOUBLE value: 'A'
 SELECT DISTINCT a FROM t1 WHERE a=0;
 a
 A
 0
-Warnings:
-Warning	1292	Truncated incorrect DOUBLE value: 'A'
 DROP TABLE t1;
 CREATE TABLE t1 (a DATE);
 INSERT INTO t1 VALUES ('1972-07-29'), ('1972-02-06');
