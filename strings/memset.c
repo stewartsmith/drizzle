@@ -20,8 +20,7 @@
 
     memset(dst, chr, len)
     fills the memory area dst[0..len-1] with len bytes all equal to chr.
-    The result is dst.	See also bfill(), which has no return value and
-    puts the last two arguments the other way around.
+    The result is dst.
 
     Note: the VAX assembly code version can only handle 0 <= len < 2^16.
     It is presented for your interest and amusement.

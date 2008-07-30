@@ -50,10 +50,6 @@ int main(void)
   errors=tests=0;
   init_strings();
 
-  test_arg("bcmp(from,to,5)",(long) my_test(bcmp(from,to,5)),1L);
-  test_arg("bcmp(from,from,5)",(long) bcmp(from,from,5),0L);
-
-  test_arg("bcmp(from,to,0)",(long) bcmp(from,to,0),0L);
   test_arg("strend(from)",(long) strend(from),(long) from+F_LEN);
   test_arg("strchr(v1,'M')",(long) strchr(v1,'M'),(long) v1);
   test_arg("strchr(v1,'y')",(long) strchr(v1,'y'),(long) v1+4);
@@ -81,15 +77,9 @@ int main(void)
   test_arg("strnlen(from,1000)",(long) strnlen(from,1000),(long) F_LEN);
 #endif
 
-  test_strarg("bfill(to,4,' ')",(bfill(to,4,' '),0L),INT_MAX32,4,' ',0,0);
-  test_strarg("bfill(from,0,' ')",(bfill(from,0,' '),0L),INT_MAX32,0,0);
-  test_strarg("bmove(to,from,4)",(bmove(to,from,4),0L),INT_MAX32,4,F_CHAR,
-	      0,0);
-  test_strarg("bmove(to,from,0)",(bmove(to,from,0),0L),INT_MAX32,0,0);
   test_strarg("bmove_upp(to+6,from+6,3)",(bmove_upp(to+6,from+6,3),0L),INT_MAX32,
 	       3,T_CHAR,3,F_CHAR,0,0);
   test_strarg("bmove_upp(to,from,0)",(bmove_upp(to,from,0),0L),INT_MAX32,0,0);
-  test_strarg("bmove_align(to,from,8)",(bmove_align(to,from,8),0L),INT_MAX32,
 	      8,F_CHAR,0,0);
   test_strarg("strappend(to,3,' ')",(strappend(to,3,' '),0L),INT_MAX32,
 	      3,T_CHAR,1,0,T_LEN-4,T_CHAR,1,0,0,0);
@@ -229,7 +219,7 @@ int compare_buff(const char *message, char * b1, char * b2, int length,
 {
   int i,error=0;
 
-  if (bcmp(b1,b2,length))
+  if (memcmp(b1,b2,length))
   {
     errors++;
     printf("func: '%s'   Buffers differ\nIs:        ",message);
