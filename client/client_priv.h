@@ -19,7 +19,7 @@
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <libdrizzle/drizzle.h>
-#include <errmsg.h>
+#include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 
 enum options_client

@@ -38,7 +38,7 @@
 #endif
 
 #include <mysys/thr_alarm.h>
-#include <errmsg.h>
+#include <libdrizzle/errmsg.h>
 
 #define mysqld_charset &my_charset_latin1
 

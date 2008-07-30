@@ -29,6 +29,7 @@ MYSQLBASEdir=			$(prefix)
 pkginclude_HEADERS =	drizzle.h \
 			drizzle_com.h \
 			drizzle_time.h \
+			errmsg.h \
 			sql_common.h
 
 pkglib_LTLIBRARIES = libdrizzle.la
