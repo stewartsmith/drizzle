@@ -27,7 +27,7 @@ Created 1/8/1996 Heikki Tuuri
 #include "que0que.h"
 #include "rem0cmp.h"
 #ifndef UNIV_HOTBACKUP
-# include "m_ctype.h" /* my_isspace() */
+# include <mystrings/m_ctype.h> /* my_isspace() */
 #endif /* !UNIV_HOTBACKUP */
 
 #include <ctype.h>

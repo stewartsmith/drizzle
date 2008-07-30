@@ -39,15 +39,14 @@
 #define DUMP_VERSION "10.13"
 
 #include <my_global.h>
-#include <my_sys.h>
-#include <m_string.h>
-#include <m_ctype.h>
-#include <hash.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/hash.h>
 #include <stdarg.h>
 
 #include "client_priv.h"
-#include "drizzle_version.h"
-#include "mysqld_error.h"
+#include "drizzled_error.h"
 
 /* Exit codes */
 
@@ -2292,9 +2291,9 @@ static void dump_table(char *table, char *db)
            we'll dump in hex only BLOB columns.
         */
         is_blob= (opt_hex_blob && field->charsetnr == 63 &&
-                  (field->type == MYSQL_TYPE_STRING ||
-                   field->type == MYSQL_TYPE_VARCHAR ||
-                   field->type == MYSQL_TYPE_BLOB)) ? 1 : 0;
+                  (field->type == DRIZZLE_TYPE_STRING ||
+                   field->type == DRIZZLE_TYPE_VARCHAR ||
+                   field->type == DRIZZLE_TYPE_BLOB)) ? 1 : 0;
         if (extended_insert && !opt_xml)
         {
           if (i == 0)

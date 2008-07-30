@@ -16,7 +16,7 @@
 /* open a isam-database */
 
 #include "myisamdef.h"
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
 #define get_next_element(to,pos,size) { memcpy((char*) to,pos,(size_t) size); \

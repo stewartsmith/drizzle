@@ -17,7 +17,7 @@
 
 #include "client_priv.h"
 #include <signal.h>
-#include <my_pthread.h>				/* because of signal()	*/
+#include <mysys/my_pthread.h>				/* because of signal()	*/
 #include <sys/stat.h>
 
 #define ADMIN_VERSION "8.42"

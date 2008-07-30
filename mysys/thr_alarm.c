@@ -20,7 +20,7 @@
 #include <my_pthread.h>
 #include <signal.h>
 #include <my_sys.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <queues.h>
 #include "thr_alarm.h"
 

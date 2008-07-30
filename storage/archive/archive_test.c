@@ -18,8 +18,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <my_getopt.h>
-#include <drizzle_version.h>
+#include <mysys/my_getopt.h>
 
 #define ARCHIVE_ROW_HEADER_SIZE 4
 

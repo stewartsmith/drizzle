@@ -27,10 +27,10 @@ static handler *heap_create_handler(handlerton *hton,
                                     TABLE_SHARE *table, 
                                     MEM_ROOT *mem_root);
 
-int heap_panic(handlerton *hton __attribute__((__unused__)),
-               ha_panic_function flag)
+int heap_deinit(void *p __attribute__((unused)))
+            
 {
-  return hp_panic(flag);
+  return hp_panic(HA_PANIC_CLOSE);
 }
 
 
@@ -42,7 +42,6 @@ int heap_init(void *p)
   heap_hton->state=      SHOW_OPTION_YES;
   heap_hton->db_type=    DB_TYPE_HEAP;
   heap_hton->create=     heap_create_handler;
-  heap_hton->panic=      heap_panic;
   heap_hton->flags=      HTON_CAN_RECREATE;
 
   return 0;
@@ -361,7 +360,7 @@ int ha_heap::rnd_pos(uchar * buf, uchar *pos)
   return error;
 }
 
-void ha_heap::position(const uchar *record __attribute__((__unused__)))
+void ha_heap::position(const uchar *record __attribute__((unused)))
 {
   *(HEAP_PTR*) ref= heap_position(file);	// Ref is aligned
 }
@@ -418,8 +417,8 @@ int ha_heap::delete_all_rows()
   return 0;
 }
 
-int ha_heap::external_lock(THD *thd __attribute__((__unused__)),
-                           int lock_type __attribute__((__unused__)))
+int ha_heap::external_lock(THD *thd __attribute__((unused)),
+                           int lock_type __attribute__((unused)))
 {
   return 0;					// No external locking
 }
@@ -532,7 +531,7 @@ int ha_heap::indexes_are_disabled(void)
   return heap_indexes_are_disabled(file);
 }
 
-THR_LOCK_DATA **ha_heap::store_lock(THD *thd __attribute__((__unused__)),
+THR_LOCK_DATA **ha_heap::store_lock(THD *thd __attribute__((unused)),
                                     THR_LOCK_DATA **to,
                                     enum thr_lock_type lock_type)
 {
@@ -554,7 +553,7 @@ int ha_heap::delete_table(const char *name)
 }
 
 
-void ha_heap::drop_table(const char *name __attribute__((__unused__)))
+void ha_heap::drop_table(const char *name __attribute__((unused)))
 {
   file->s->delete_on_close= 1;
   close();
@@ -716,9 +715,9 @@ void ha_heap::update_create_info(HA_CREATE_INFO *create_info)
     create_info->auto_increment_value= stats.auto_increment_value;
 }
 
-void ha_heap::get_auto_increment(uint64_t offset __attribute__((__unused__)),
-                                 uint64_t increment __attribute__((__unused__)),
-                                 uint64_t nb_desired_values __attribute__((__unused__)),
+void ha_heap::get_auto_increment(uint64_t offset __attribute__((unused)),
+                                 uint64_t increment __attribute__((unused)),
+                                 uint64_t nb_desired_values __attribute__((unused)),
                                  uint64_t *first_value,
                                  uint64_t *nb_reserved_values)
 {
@@ -750,7 +749,7 @@ mysql_declare_plugin(heap)
   "Hash based, stored in memory, useful for temporary tables",
   PLUGIN_LICENSE_GPL,
   heap_init,
-  NULL,
+  heap_deinit,
   NULL,                       /* status variables                */
   NULL,                       /* system variables                */
   NULL                        /* config options                  */

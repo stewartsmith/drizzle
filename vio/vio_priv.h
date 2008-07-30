@@ -17,12 +17,15 @@
 
 #define DONT_MAP_VIO
 #include <my_global.h>
-#include <drizzle_com.h>
-#include <my_sys.h>
-#include <m_string.h>
+#include <libdrizzle/drizzle.h>
+#include <mysys/my_sys.h>
+#include <string.h>
 #include <violite.h>
 
+#include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
+
 #include <netdb.h>
 
 void	vio_ignore_timeout(Vio *vio, uint32_t which, uint32_t timeout);

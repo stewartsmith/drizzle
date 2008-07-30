@@ -34,8 +34,7 @@
  **/
 
 #include "client_priv.h"
-#include <my_sys.h>
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #include <stdarg.h>
 #include <my_dir.h>
 #ifndef __GNU_LIBRARY__
@@ -44,7 +43,9 @@
 #include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
-#include <violite.h>
+#include <vio/violite.h>
+#include <sys/ioctl.h>
+
 
 #if defined(USE_LIBEDIT_INTERFACE) && defined(HAVE_LOCALE_H)
 #include <locale.h>
@@ -1254,7 +1255,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-sig_handler window_resize(int sig __attribute__((__unused__)))
+sig_handler window_resize(int sig __attribute__((unused)))
 {
   struct winsize window_size;
 
@@ -2909,23 +2910,22 @@ com_ego(DYNAMIC_STRING *buffer,char *line)
 static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
-    case MYSQL_TYPE_BLOB:        return "BLOB";
-    case MYSQL_TYPE_NEWDATE:        return "DATE";
-    case MYSQL_TYPE_DATETIME:    return "DATETIME";
-    case MYSQL_TYPE_NEWDECIMAL:  return "DECIMAL";
-    case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
-    case MYSQL_TYPE_ENUM:        return "ENUM";
-    case MYSQL_TYPE_LONG:        return "LONG";
-    case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
-    case MYSQL_TYPE_NULL:        return "NULL";
-    case MYSQL_TYPE_SET:         return "SET";
-    case MYSQL_TYPE_SHORT:       return "SHORT";
-    case MYSQL_TYPE_STRING:      return "STRING";
-    case MYSQL_TYPE_TIME:        return "TIME";
-    case MYSQL_TYPE_TIMESTAMP:   return "TIMESTAMP";
-    case MYSQL_TYPE_TINY:        return "TINY";
-    case MYSQL_TYPE_VAR_STRING:  return "VAR_STRING";
-    case MYSQL_TYPE_YEAR:        return "YEAR";
+    case DRIZZLE_TYPE_BLOB:        return "BLOB";
+    case DRIZZLE_TYPE_NEWDATE:        return "DATE";
+    case DRIZZLE_TYPE_DATETIME:    return "DATETIME";
+    case DRIZZLE_TYPE_NEWDECIMAL:  return "DECIMAL";
+    case DRIZZLE_TYPE_DOUBLE:      return "DOUBLE";
+    case DRIZZLE_TYPE_ENUM:        return "ENUM";
+    case DRIZZLE_TYPE_LONG:        return "LONG";
+    case DRIZZLE_TYPE_LONGLONG:    return "LONGLONG";
+    case DRIZZLE_TYPE_NULL:        return "NULL";
+    case DRIZZLE_TYPE_SET:         return "SET";
+    case DRIZZLE_TYPE_SHORT:       return "SHORT";
+    case DRIZZLE_TYPE_STRING:      return "STRING";
+    case DRIZZLE_TYPE_TIME:        return "TIME";
+    case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
+    case DRIZZLE_TYPE_TINY:        return "TINY";
+    case DRIZZLE_TYPE_VAR_STRING:  return "VAR_STRING";
     default:                     return "?-unknown-?";
   }
 }
@@ -2942,7 +2942,6 @@ static char *fieldflags2str(uint f) {
   ff2s_check_flag(MULTIPLE_KEY);
   ff2s_check_flag(BLOB);
   ff2s_check_flag(UNSIGNED);
-  ff2s_check_flag(ZEROFILL);
   ff2s_check_flag(BINARY);
   ff2s_check_flag(ENUM);
   ff2s_check_flag(AUTO_INCREMENT);
@@ -3443,7 +3442,7 @@ print_tab_data(DRIZZLE_RES *result)
 }
 
 static int
-com_tee(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line )
+com_tee(DYNAMIC_STRING *buffer __attribute__((unused)), char *line )
 {
   char file_name[FN_REFLEN], *end, *param;
 
@@ -3501,7 +3500,7 @@ com_notee(DYNAMIC_STRING *buffer __attribute__((unused)),
 */
 
 static int
-com_pager(DYNAMIC_STRING *buffer __attribute__((__unused__)),
+com_pager(DYNAMIC_STRING *buffer __attribute__((unused)),
           char *line __attribute__((unused)))
 {
   char pager_name[FN_REFLEN], *end, *param;
@@ -3646,7 +3645,7 @@ com_connect(DYNAMIC_STRING *buffer, char *line)
 }
 
 
-static int com_source(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line)
+static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
 {
   char source_name[FN_REFLEN], *end, *param;
   LINE_BUFFER *line_buff;
@@ -4488,7 +4487,7 @@ static void init_username()
   }
 }
 
-static int com_prompt(DYNAMIC_STRING *buffer __attribute__((__unused__)),
+static int com_prompt(DYNAMIC_STRING *buffer __attribute__((unused)),
                       char *line)
 {
   char *ptr=strchr(line, ' ');

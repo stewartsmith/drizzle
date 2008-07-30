@@ -73,7 +73,7 @@ multiple read locks.
 #include "mysys_priv.h"
 
 #include "thr_lock.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <errno.h>
 
 bool thr_lock_inited=0;

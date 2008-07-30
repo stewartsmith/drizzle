@@ -34,8 +34,8 @@
 ****************************************************************************/
 
 #include "mysys_priv.h"
-#include "m_string.h"
-#include "m_ctype.h"
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include <my_dir.h>
 
 const char *my_defaults_file=0;

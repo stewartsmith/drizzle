@@ -16,7 +16,7 @@
 /* my_setwd() and my_getwd() works with intern_filenames !! */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include "mysys_err.h"
 #include "my_static.h"
 #ifdef HAVE_GETWD

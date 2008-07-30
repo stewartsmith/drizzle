@@ -20,7 +20,7 @@
 */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
 			    size_t init_alloc, size_t alloc_increment)

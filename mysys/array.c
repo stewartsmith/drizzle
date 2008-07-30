@@ -16,7 +16,7 @@
 /* Handling of arrays that can grow dynamicly. */
 
 #include "mysys_priv.h"
-#include "m_string.h"
+#include <mystrings/m_string.h>
 
 /*
   Initiate dynamic array

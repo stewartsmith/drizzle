@@ -19,7 +19,8 @@ MYSQLBASEdir=		$(prefix)
 AM_CPPFLAGS =		-I$(top_builddir)/include \
 			-I$(top_srcdir)/include -I$(srcdir)  \
                         -I$(top_srcdir)/mysys
-LDADD =			$(top_builddir)/mysys/libmysyslt.la $(top_builddir)/strings/libmystrings.la
+LDADD =			$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/mystrings/libmystrings.la
 
 DEFS =			-DMAIN \
 			-DDEFAULT_BASEDIR=\"$(prefix)\" \
@@ -46,4 +47,3 @@ test_io_cache_SOURCES = $(top_srcdir)/mysys/mf_iocache.c
 testhash_SOURCES = testhash.c
 test_gethwaddr_SOURCES = $(top_srcdir)/mysys/my_gethwaddr.c
 test_base64_SOURCES = $(top_srcdir)/mysys/base64.c
-test_base64_LDADD = $(top_builddir)/mysys/libmysyslt.la $(top_builddir)/strings/libmystrings.la

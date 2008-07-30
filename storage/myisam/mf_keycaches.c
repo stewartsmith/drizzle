@@ -22,11 +22,11 @@
 */
 
 #include "my_global.h"
-#include "mysys_err.h"
-#include <my_sys.h>
+#include <mysys/mysys_err.h>
+#include <mysys/my_sys.h>
 #include <keycache.h>
-#include <hash.h>
-#include <m_string.h>
+#include <mysys/hash.h>
+#include <mystrings/m_string.h>
 
 /*****************************************************************************
   General functions to handle SAFE_HASH objects.

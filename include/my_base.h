@@ -22,8 +22,8 @@
 #define CHSIZE_USED
 #include <my_global.h>
 #include <my_dir.h>			/* This includes types */
-#include <my_sys.h>
-#include <m_string.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
 #include <errno.h>
 
 #ifndef EOVERFLOW
@@ -31,7 +31,7 @@
 #endif
 
 #endif	/* stdin */
-#include <my_list.h>
+#include <mysys/my_list.h>
 
 /* The following is bits in the flag parameter to ha_open() */
 

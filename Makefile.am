@@ -16,7 +16,7 @@
 # Process this file with automake to create Makefile.in
 
 SUBDIRS = . vio \
-	  strings \
+	  mystrings \
 	  mysys \
 	  include \
 	  extra \
@@ -24,13 +24,13 @@ SUBDIRS = . vio \
 	  client \
 	  storage \
 	  plugin \
-	  server \
+	  drizzled \
 	  tests \
 	  support-files
 
 DIST_SUBDIRS = $(SUBDIRS) \
 	       mysys/tests \
-	       strings/tests
+	       mystrings/tests
 
 DISTCLEANFILES = ac_available_languages_fragment
 
@@ -100,6 +100,7 @@ test-drizzle:
 	  delete \
 	  join_outer \
 	  distinct \
+	  type_newdecimal \
 	  join \
 	  subselect \
 	  subselect3 \

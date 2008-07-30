@@ -18,9 +18,8 @@
 #define CHECK_VERSION "2.5.0"
 
 #include "client_priv.h"
-#include <m_ctype.h>
-#include <drizzle_version.h>
-#include <mysqld_error.h>
+#include <mystrings/m_ctype.h>
+#include <drizzled_error.h>
 
 /* Exit codes */
 

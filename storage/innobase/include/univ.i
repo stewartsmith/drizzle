@@ -31,7 +31,7 @@ in compiling more Posix-compatible. These headers also define __WIN__
 if we are compiling on Windows. */
 
 # include <my_global.h>
-# include <my_pthread.h>
+# include <mysys/my_pthread.h>
 
 /* Include <sys/stat.h> to get S_I... macros defined for os0file.c */
 # include <sys/stat.h>

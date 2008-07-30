@@ -40,7 +40,7 @@
 #define AZIO_AIO
 
 #include "my_global.h"
-#include "my_sys.h"
+#include <mysys/my_sys.h>
 
 #include <my_dir.h>
 #include <zlib.h>

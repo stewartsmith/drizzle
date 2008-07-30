@@ -19,7 +19,7 @@
 */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <signal.h>
 
 uint thd_lib_detected= 0;

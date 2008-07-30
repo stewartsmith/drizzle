@@ -18,13 +18,14 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir =          $(prefix)
 MYSQLLIBdir =           $(pkglibdir)
 AM_CPPFLAGS =           ${GLOBAL_CPPFLAGS} \
-			-I$(top_srcdir)/server
+			-I$(top_builddir) \
+			-I$(top_srcdir)/drizzled
 WRAPLIBS=
 
 LDADD=			libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysyslt.la \
-			$(top_builddir)/strings/libmystringslt.la -lz
+			$(top_builddir)/mystrings/libmystringslt.la -lz
 
 DEFS =                  @DEFS@
 
@@ -34,7 +35,12 @@ noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
 bin_PROGRAMS =		myisamchk myisamlog myisampack
 noinst_HEADERS =	myisamdef.h \
-			ha_myisam.h
+			ha_myisam.h \
+			keycache.h \
+			myisam.h \
+			myisammrg.h \
+			myisampack.h
+
 libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \
 			mi_search.c mi_page.c mi_key.c mi_locking.c \

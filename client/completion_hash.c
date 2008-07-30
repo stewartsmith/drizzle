@@ -21,9 +21,8 @@
  */
 
 #include <my_global.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #undef SAFEMALLOC				// Speed things up
-#include <my_sys.h>
 #include "completion_hash.h"
 
 uint hashpjw(const char *arKey, uint nKeyLength)

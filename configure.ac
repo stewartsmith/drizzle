@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([server/drizzled.cc])
+AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([include/config.h:config.h.in])
 AC_CANONICAL_TARGET
@@ -50,7 +50,7 @@ sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 sinclude(config/ac-macros/pkg.m4)
 
-# Remember to add a directory server/share/LANGUAGE
+# Remember to add a directory drizzled/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
 czech danish dutch english estonian french german greek hungarian \
 italian japanese korean norwegian norwegian-ny polish portuguese \
@@ -155,9 +155,13 @@ CFLAGS="$CFLAGS $C_EXTRA_FLAGS "
 CXXFLAGS="$CXXFLAGS $C_EXTRA_FLAGS "
 
 dnl Checks for programs.
-AC_PROG_AWK
 AC_PROG_CC
+AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
 AC_PROG_CXX
+if test "x$ac_ct_CXX" = "x"
+then
+  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
+fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
@@ -179,6 +183,8 @@ CC_VERSION=""
 fi
 AC_SUBST(CC_VERSION)
 MYSQL_CHECK_CXX_VERSION
+
+AC_PROG_AWK
 
 if test "$ac_cv_c_compiler_gnu" = "yes"
 then
@@ -349,14 +355,19 @@ if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+
+MYSQL_CHECK_NEW_RL_INTERFACE
+
 my_save_LIBS="$LIBS"
 LIBS=""
-AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find libreadline.)])
+AC_CHECK_LIB(readline, rl_initialize, [],
+  [AC_CHECK_LIB(ncurses, tgetent, [], [AC_MSG_ERROR(Couldn't find ncurses)]) 
+   AC_SEARCH_LIBS(rl_initialize, readline, [],
+    [AC_MSG_ERROR(Couldn't find libreadline.)])])
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
 
-MYSQL_CHECK_NEW_RL_INTERFACE
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -539,7 +550,7 @@ AC_ARG_ENABLE([assembler],
 
 AC_MSG_CHECKING(if we should use assembler functions)
 # For now we only support assembler on i386 and sparc systems
-AM_CONDITIONAL(ASSEMBLER_x86, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "i386" && $AS strings/strings-x86.s -o checkassembler >/dev/null 2>&1 && test -f checkassembler && (rm -f checkassembler; exit 0;))
+AM_CONDITIONAL(ASSEMBLER_x86, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "i386" && $AS mystrings/strings-x86.s -o checkassembler >/dev/null 2>&1 && test -f checkassembler && (rm -f checkassembler; exit 0;))
 AM_CONDITIONAL(ASSEMBLER_sparc32, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparc")
 AM_CONDITIONAL(ASSEMBLER_sparc64, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparcv9")
 AM_CONDITIONAL(ASSEMBLER, test "$ASSEMBLER_x86_TRUE" = "" -o "$ASSEMBLER_sparc32_TRUE" = "")
@@ -726,6 +737,20 @@ then
   OPTIMIZE_CXXFLAGS=""
   DEBUG_OPTIMIZE_CXX=""
 fi
+
+dnl TODO: Remove this define once we are using 2.61 across the board.
+# AC_HEADER_ASSERT
+# ----------------
+# Check whether to enable assertions.
+ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
+[
+  AC_MSG_CHECKING([whether to enable assertions])
+  AC_ARG_ENABLE([assert],
+    [  --disable-assert        turn off assertions],
+    [AC_MSG_RESULT([no])
+     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
+    [AC_MSG_RESULT(yes)])
+]))
 
 AC_HEADER_ASSERT
 
@@ -1240,14 +1265,14 @@ then
   fi
 
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
-  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GCC_WARNINGS="${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
   CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_builddir)/include -I$(top_srcdir)/include'])
+AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 
 # Some usefull subst
@@ -1266,18 +1291,18 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
- strings/Makefile strings/tests/Makefile storage/Makefile dnl
+ mystrings/Makefile mystrings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
- server/Makefile dnl
- server/field/Makefile dnl
- server/share/Makefile dnl
- server/sql_builtin.cc dnl
+ drizzled/Makefile dnl
+ drizzled/field/Makefile dnl
+ drizzled/share/Makefile dnl
+ drizzled/sql_builtin.cc dnl
  include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- include/drizzle_version.h plugin/Makefile dnl
- server/drizzled_safe support-files/libdrizzle.pc dnl
+ drizzled/version.h plugin/Makefile dnl
+ drizzled/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)

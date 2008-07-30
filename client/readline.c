@@ -16,8 +16,8 @@
 /* readline for batch mode */
 
 #include <my_global.h>
-#include <my_sys.h>
-#include <m_string.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
 #include "my_readline.h"
 
 static bool init_line_buffer(LINE_BUFFER *buffer,File file,ulong size,

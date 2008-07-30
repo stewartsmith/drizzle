@@ -4,7 +4,7 @@
 #ifndef UNIV_HOTBACKUP
 
 #include "univ.i" /* ulint, uint */
-#include "m_ctype.h" /* CHARSET_INFO */
+#include <mystrings/m_ctype.h> /* CHARSET_INFO */
 
 /* Prototypes for global functions in ha_innodb.cc that are called by
 InnoDB's C-code. */

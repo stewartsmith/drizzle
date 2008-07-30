@@ -14,9 +14,9 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <my_global.h>
-#include <m_string.h>  /* strchr() */
-#include <m_ctype.h>  /* my_isspace() */
-#include <base64.h>
+#include <mystrings/m_string.h>  /* strchr() */
+#include <mystrings/m_ctype.h>  /* my_isspace() */
+#include <mysys/base64.h>
 
 #ifndef MAIN
 

@@ -38,6 +38,9 @@
 
 #include "drizzle.h"
 
+#include <sys/poll.h>
+#include <sys/ioctl.h>
+
 #include <netdb.h>
 
 /* Remove client convenience wrappers */
@@ -48,10 +51,9 @@
 
 #include <my_sys.h>
 #include <mysys_err.h>
-#include <m_string.h>
-#include <m_ctype.h>
-#include "drizzle_version.h"
-#include "mysqld_error.h"
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
+#include "drizzled_error.h"
 #include "errmsg.h"
 #include <violite.h>
 #include <my_pthread.h>        /* because of signal()  */
@@ -82,7 +84,7 @@
 #define CONNECT_TIMEOUT 0
 
 #include "client_settings.h"
-#include <sql_common.h>
+#include <libdrizzle/sql_common.h>
 
 uint    drizzle_port=0;
 char    *drizzle_unix_port= 0;

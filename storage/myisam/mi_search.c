@@ -16,7 +16,7 @@
 /* key handling functions */
 
 #include "myisamdef.h"
-#include "m_ctype.h"
+#include <mystrings/m_ctype.h>
 
 static my_bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
                                 uchar *key, uchar *keypos,

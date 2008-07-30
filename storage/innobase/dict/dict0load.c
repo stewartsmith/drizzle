@@ -8,9 +8,6 @@ Created 4/24/1996 Heikki Tuuri
 *******************************************************/
 
 #include "dict0load.h"
-#ifndef UNIV_HOTBACKUP
-#include "drizzle_version.h"
-#endif /* !UNIV_HOTBACKUP */
 
 #ifdef UNIV_NONINL
 #include "dict0load.ic"

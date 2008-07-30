@@ -73,16 +73,16 @@ drop table t2,t1,t3;
 # innodb locking
 #
 CREATE TABLE t1 (
-  id int(11) NOT NULL default '0',
-  b int(11) default NULL,
+  id int NOT NULL default '0',
+  b int default NULL,
   c char(3) default NULL,
   PRIMARY KEY  (id),
   KEY t2i1 (b)
 ) ENGINE=innodb DEFAULT CHARSET=latin1;
 INSERT INTO t1 VALUES (0,0,'GPL'),(1,0,'GPL'),(2,1,'GPL'),(3,2,'GPL');
 CREATE TABLE t2 (
-  id int(11) NOT NULL default '0',
-  b int(11) default NULL,
+  id int NOT NULL default '0',
+  b int default NULL,
   c char(3) default NULL,
   PRIMARY KEY  (id),
   KEY t2i (b)

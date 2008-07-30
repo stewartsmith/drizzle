@@ -21,10 +21,7 @@
 
 
 #include "mysys_priv.h"
-#ifndef SCO
-#include <m_string.h>
-#endif
-
+#include <mystrings/m_string.h>
 /* We need to use qsort with 2 different compare functions */
 #ifdef QSORT_EXTRA_CMP_ARGUMENT
 #define CMP(A,B) ((*cmp)(cmp_argument,(A),(B)))

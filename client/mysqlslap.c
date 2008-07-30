@@ -76,7 +76,7 @@ TODO:
 #define DEFAULT_BLOB_SIZE 1024
 
 #include "client_priv.h"
-#include <mysqld_error.h>
+#include <drizzled_error.h>
 #include <my_dir.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -830,7 +830,7 @@ build_table_string(void)
     {
       if (num_int_cols_index)
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32), INDEX(intcol%d)",
+        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT, INDEX(intcol%d)",
                      col_count, col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");
@@ -839,7 +839,7 @@ build_table_string(void)
       }
       else
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32) ", col_count)
+        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT ", col_count)
             > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");

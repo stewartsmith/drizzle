@@ -16,7 +16,7 @@
 #include "mysys_priv.h"
 #include <my_dir.h>
 #include "mysys_err.h"
-#include "m_string.h"
+#include <mystrings/m_string.h>
 #undef my_rename
 
 	/* On unix rename deletes to file if it exists */

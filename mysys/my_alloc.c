@@ -17,7 +17,7 @@
 
 #include <my_global.h>
 #include <my_sys.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #undef EXTRA_DEBUG
 #define EXTRA_DEBUG
 

@@ -21,11 +21,10 @@
 #include <my_sys.h>
 #include <my_time.h>
 #include <mysys_err.h>
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include "drizzle.h"
-#include "drizzle_version.h"
-#include "mysqld_error.h"
+#include "drizzled_error.h"
 #include "errmsg.h"
 #include <violite.h>
 #include <sys/stat.h>
@@ -87,7 +86,7 @@ DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void)
   return &drizzle_internal_parameters;
 }
 
-my_bool STDCALL drizzle_thread_init()
+bool STDCALL drizzle_thread_init()
 {
   return my_thread_init();
 }
@@ -151,8 +150,8 @@ drizzle_connect(DRIZZLE *drizzle,const char *host,
   {
     if (!(res=drizzle_connect(drizzle,host,user,passwd,NullS,0,NullS,0)))
     {
-      if (drizzle->free_me)
-  my_free((uchar*) drizzle,MYF(0));
+      if (drizzle->free_me && drizzle)
+        free((uchar*) drizzle);
     }
     drizzle->reconnect= 1;
     return(res);
@@ -179,7 +178,7 @@ int cli_read_change_user_result(DRIZZLE *drizzle, char *buff, const char *passwd
   return 0;
 }
 
-my_bool  STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
+bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
           const char *passwd, const char *db)
 {
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
@@ -235,9 +234,12 @@ my_bool  STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   if (rc == 0)
   {
     /* Free old connect information */
-    my_free(drizzle->user,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(drizzle->passwd,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(drizzle->db,MYF(MY_ALLOW_ZERO_PTR));
+    if(drizzle->user)
+      free(drizzle->user);
+    if(drizzle->passwd)
+      free(drizzle->passwd);
+    if(drizzle->db)
+      free(drizzle->db);
 
     /* alloc new connect information */
     drizzle->user=  my_strdup(user,MYF(MY_WME));
@@ -284,9 +286,9 @@ void read_user_name(char *name)
   return;
 }
 
-my_bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
+bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
-  my_bool result= 1;
+  bool result= true;
   uint packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
   NET *net= &drizzle->net;
   int readcount;
@@ -305,7 +307,7 @@ my_bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   }
 
   /* copy filename into local memory and allocate read buffer */
-  if (!(buf=my_malloc(packet_length, MYF(0))))
+  if (!(buf=malloc(packet_length)))
   {
     set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
     return(1);
@@ -352,12 +354,13 @@ my_bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
     goto err;
   }
 
-  result=0;          /* Ok */
+  result=false;					/* Ok */
 
 err:
   /* free up memory allocated with _init, usually */
   (*options->local_infile_end)(li_ptr);
-  my_free(buf, MYF(0));
+  if(buf)
+    free(buf);
   return(result);
 }
 
@@ -400,7 +403,7 @@ static int default_local_infile_init(void **ptr, const char *filename,
   char tmp_name[FN_REFLEN];
 
   if (!(*ptr= data= ((default_local_infile_data *)
-         my_malloc(sizeof(default_local_infile_data),  MYF(0)))))
+		     malloc(sizeof(default_local_infile_data)))))
     return 1; /* out of memory */
 
   data->error_msg[0]= 0;
@@ -468,7 +471,7 @@ static void default_local_infile_end(void *ptr)
   {
     if (data->fd >= 0)
       my_close(data->fd, MYF(MY_WME));
-    my_free(ptr, MYF(MY_WME));
+    free(ptr);
   }
 }
 
@@ -660,8 +663,7 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
       !(fields= (*drizzle->methods->list_fields)(drizzle)))
     return(NULL);
 
-  if (!(result = (DRIZZLE_RES *) my_malloc(sizeof(DRIZZLE_RES),
-           MYF(MY_WME | MY_ZEROFILL))))
+  if (!(result = (DRIZZLE_RES *) malloc(sizeof(DRIZZLE_RES))))
     return(NULL);
 
   result->methods= drizzle->methods;
@@ -814,7 +816,7 @@ uint32_t STDCALL drizzle_get_client_version(void)
   return MYSQL_VERSION_ID;
 }
 
-my_bool STDCALL drizzle_eof(DRIZZLE_RES *res)
+bool STDCALL drizzle_eof(DRIZZLE_RES *res)
 {
   return res->eof;
 }
@@ -903,12 +905,12 @@ uint STDCALL drizzle_thread_safe(void)
 }
 
 
-my_bool STDCALL drizzle_embedded(void)
+bool STDCALL drizzle_embedded(void)
 {
 #ifdef EMBEDDED_LIBRARY
-  return 1;
+  return true;
 #else
-  return 0;
+  return false;
 #endif
 }
 
@@ -990,7 +992,7 @@ myodbc_remove_escape(DRIZZLE *drizzle,char *name)
 {
   char *to;
 #ifdef USE_MB
-  my_bool use_mb_flag=use_mb(drizzle->charset);
+  bool use_mb_flag=use_mb(drizzle->charset);
   char *end=NULL;
   if (use_mb_flag)
     for (end=name; *end ; end++) ;
@@ -1033,18 +1035,18 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
   Commit the current transaction
 */
 
-my_bool STDCALL drizzle_commit(DRIZZLE *drizzle)
+bool STDCALL drizzle_commit(DRIZZLE *drizzle)
 {
-  return((my_bool) drizzle_real_query(drizzle, "commit", 6));
+  return((bool) drizzle_real_query(drizzle, "commit", 6));
 }
 
 /*
   Rollback the current transaction
 */
 
-my_bool STDCALL drizzle_rollback(DRIZZLE *drizzle)
+bool STDCALL drizzle_rollback(DRIZZLE *drizzle)
 {
-  return((my_bool) drizzle_real_query(drizzle, "rollback", 8));
+  return((bool) drizzle_real_query(drizzle, "rollback", 8));
 }
 
 
@@ -1052,9 +1054,9 @@ my_bool STDCALL drizzle_rollback(DRIZZLE *drizzle)
   Set autocommit to either true or false
 */
 
-my_bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, my_bool auto_mode)
+bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode)
 {
-  return((my_bool) drizzle_real_query(drizzle, auto_mode ?
+  return((bool) drizzle_real_query(drizzle, auto_mode ?
                                          "set autocommit=1":"set autocommit=0",
                                          16));
 }
@@ -1069,9 +1071,9 @@ my_bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, my_bool auto_mode)
   to be read using drizzle_next_result()
 */
 
-my_bool STDCALL drizzle_more_results(DRIZZLE *drizzle)
+bool STDCALL drizzle_more_results(DRIZZLE *drizzle)
 {
-  my_bool res;
+  bool res;
 
   res= ((drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
   return(res);
@@ -1104,7 +1106,7 @@ DRIZZLE_RES * STDCALL drizzle_use_result(DRIZZLE *drizzle)
   return (*drizzle->methods->use_result)(drizzle);
 }
 
-my_bool STDCALL drizzle_read_query_result(DRIZZLE *drizzle)
+bool STDCALL drizzle_read_query_result(DRIZZLE *drizzle)
 {
   return (*drizzle->methods->read_query_result)(drizzle);
 }

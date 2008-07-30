@@ -16,7 +16,7 @@
 /* The hash functions used for saveing keys */
 
 #include "heapdef.h"
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 
 
 
