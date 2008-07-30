@@ -24,7 +24,6 @@
    for 'strtoll()' but no implementation, see "6.1 New C99 library functions" 
    in file '/usr/share/doclib/cc.dtk/release_notes.txt'.
  */
-#include <my_global.h>
 #include <m_string.h>
 
 #if !defined(HAVE_STRTOLL) 

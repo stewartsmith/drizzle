@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <mysys/my_sys.h>
 
 #ifdef USE_SYSTEM_WRAPPERS

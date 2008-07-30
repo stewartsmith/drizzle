@@ -58,7 +58,7 @@
 
 *****************************************************************************/
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <my_sys.h>
 #include <mystrings/m_string.h>
 #include <sha1.h>

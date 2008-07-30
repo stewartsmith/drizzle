@@ -21,7 +21,6 @@
   comparing a shorter string with bcmp.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 #ifdef HAVE_purify

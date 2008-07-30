@@ -36,7 +36,6 @@
     code is presented for your interest and amusement.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 #if !defined(HAVE_BMOVE) && !defined(bmove)

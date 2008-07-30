@@ -24,7 +24,6 @@
     strmake() returns pointer to closing null
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 char *strmake(register char *dst, register const char *src, size_t length)

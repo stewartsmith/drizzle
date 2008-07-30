@@ -99,11 +99,10 @@
       implementation-defined.
 */
 
-#include <my_global.h>
+#include <m_string.h>
 #include <m_ctype.h>
 #include <storage/myisam/myisampack.h>
 #include <mysys/my_sys.h> /* for my_alloca */
-#include <m_string.h>
 #include <mystrings/decimal.h>
 
 /*

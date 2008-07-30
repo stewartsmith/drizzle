@@ -77,7 +77,7 @@ So, we can read full search-structure as 32-bit word
 */
 
 #define NO_YACC_SYMBOLS
-#include "my_global.h"
+#include "global.h"
 #include <mysys/my_sys.h>
 #include "m_string.h"
 #ifndef __GNU_LIBRARY__

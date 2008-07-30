@@ -33,10 +33,9 @@
 #include "mysql_priv.h"
 #include <m_ctype.h>
 #include <mysys/sha1.h>
-#include <mysys/sha2.h>
 #include <zlib.h>
 C_MODE_START
-#include "../mysys/my_static.h"			// For soundex_map
+#include <mysys/my_static.h>			// For soundex_map
 C_MODE_END
 
 String my_empty_string("",default_charset_info);

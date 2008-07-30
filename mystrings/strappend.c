@@ -23,7 +23,6 @@
     trunked. The des+len character is allways set to NULL.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 

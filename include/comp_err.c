@@ -22,7 +22,7 @@
   multi-language text file.
 */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>

@@ -17,10 +17,10 @@
   HFTODO this must be hidden if we don't want client capabilities in 
   embedded library
  */
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <drizzle.h>
 #include <drizzled_error.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <violite.h>
 #include <signal.h>

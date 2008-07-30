@@ -20,7 +20,6 @@
     strnlen(s, len) returns the length of s or len if s is longer than len.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 #ifndef HAVE_STRNLEN

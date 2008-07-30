@@ -17,7 +17,6 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include <my_global.h>
 #include "mysql_priv.h"
 #include <libdrizzle/my_time.h>
 

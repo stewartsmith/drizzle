@@ -49,7 +49,6 @@ noinst_HEADERS =	mysys_priv.h \
 			queues.h \
 			hash.h \
 			sha1.h \
-			sha2.h \
 			thr_alarm.h \
 			thr_lock.h \
 			base64.h

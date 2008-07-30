@@ -39,7 +39,7 @@
 /* We currently allow this on all platforms */
 #define AZIO_AIO
 
-#include "my_global.h"
+#include <drizzled/global.h>
 #include <mysys/my_sys.h>
 
 #include <zlib.h>

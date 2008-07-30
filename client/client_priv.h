@@ -15,7 +15,7 @@
 
 /* Common defines for all clients */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <libdrizzle/drizzle.h>

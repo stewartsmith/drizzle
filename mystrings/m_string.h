@@ -18,6 +18,8 @@
 
 /*  This is needed for the definitions of strchr... on solaris */
 
+#include <drizzled/global.h>
+
 #ifndef _m_string_h
 #define _m_string_h
 #ifndef __USE_GNU

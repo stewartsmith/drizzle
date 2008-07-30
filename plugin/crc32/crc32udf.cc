@@ -13,11 +13,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <mysql_priv.h>
+#include <drizzled/mysql_priv.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <drizzled/plugin.h>
-#include <my_global.h>
 #include <zlib.h>
 
 bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)

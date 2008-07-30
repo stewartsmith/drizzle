@@ -31,7 +31,7 @@
 #define MYSQL_CLIENT
 #undef MYSQL_SERVER
 #include <libdrizzle/my_time.h>
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <libdrizzle/drizzle.h>

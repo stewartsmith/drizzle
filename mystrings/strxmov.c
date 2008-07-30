@@ -30,7 +30,6 @@
     character pointer, or not the same bit pattern as NullS.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 #include <stdarg.h>
 
