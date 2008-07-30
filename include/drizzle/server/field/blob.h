@@ -129,22 +129,22 @@ public:
   void put_length(uchar *pos, uint32_t length);
   inline void get_ptr(uchar **str)
     {
-      memcpy_fixed((uchar*) str,ptr+packlength,sizeof(uchar*));
+      memcpy((uchar*) str,ptr+packlength,sizeof(uchar*));
     }
   inline void get_ptr(uchar **str, uint row_offset)
     {
-      memcpy_fixed((uchar*) str,ptr+packlength+row_offset,sizeof(char*));
+      memcpy((uchar*) str,ptr+packlength+row_offset,sizeof(char*));
     }
   inline void set_ptr(uchar *length, uchar *data)
     {
       memcpy(ptr,length,packlength);
-      memcpy_fixed(ptr+packlength,&data,sizeof(char*));
+      memcpy(ptr+packlength,&data,sizeof(char*));
     }
   void set_ptr_offset(my_ptrdiff_t ptr_diff, uint32_t length, uchar *data)
     {
       uchar *ptr_ofs= ADD_TO_PTR(ptr,ptr_diff,uchar*);
       store_length(ptr_ofs, packlength, length);
-      memcpy_fixed(ptr_ofs+packlength,&data,sizeof(char*));
+      memcpy(ptr_ofs+packlength,&data,sizeof(char*));
     }
   inline void set_ptr(uint32_t length, uchar *data)
     {
@@ -163,7 +163,7 @@ public:
       return 1;
     }
     tmp=(uchar*) value.ptr();
-    memcpy_fixed(ptr+packlength,&tmp,sizeof(char*));
+    memcpy(ptr+packlength,&tmp,sizeof(char*));
     return 0;
   }
   virtual uchar *pack(uchar *to, const uchar *from,

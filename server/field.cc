@@ -754,7 +754,7 @@ void Field_num::prepend_zeros(String *value)
     bmove_upp((uchar*) value->ptr()+field_length,
               (uchar*) value->ptr()+value->length(),
 	      value->length());
-    bfill((uchar*) value->ptr(),diff,'0');
+    memset((uchar*) value->ptr(), '0', diff);
     value->length(field_length);
     (void) value->c_ptr_quick();		// Avoid warnings in purify
   }

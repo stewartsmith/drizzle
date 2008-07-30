@@ -603,7 +603,7 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
   
   if (!(cs->state & MY_CS_UNICODE))
   {
-    bfill(str, end - str, 255);
+    memset(str, 255, end - str);
     return;
   }
   

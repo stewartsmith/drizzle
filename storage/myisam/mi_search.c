@@ -804,7 +804,7 @@ uint _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
 	}
 	else if (tot_length < 255 && *start == 255)
 	{
-	  bmove(key+1,key+3,length);
+	  memcpy(key+1,key+3,length);
 	  *key=tot_length;
 	  key+=1+length;
 	}
@@ -860,7 +860,7 @@ uint _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
     page+=length;
   }
   length=keyseg->length+nod_flag;
-  bmove((uchar*) key,(uchar*) page,length);
+  memcpy((uchar*) key,(uchar*) page,length);
   *page_pos= page+length;
   return ((uint) (key-start_key)+keyseg->length);
 } /* _mi_get_pack_key */
@@ -1003,7 +1003,7 @@ uchar *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
   nod_flag=mi_test_if_nod(page);
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
   {
-    bmove((uchar*) key,(uchar*) keypos,keyinfo->keylength+nod_flag);
+    memcpy((uchar*) key,(uchar*) keypos,keyinfo->keylength+nod_flag);
     return(keypos+keyinfo->keylength+nod_flag);
   }
   else
@@ -1038,8 +1038,8 @@ static my_bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
   {
     *return_key_length=keyinfo->keylength;
-    bmove((uchar*) key,(uchar*) keypos- *return_key_length-nod_flag,
-          *return_key_length);
+    memcpy((uchar*) key,(uchar*) keypos- *return_key_length-nod_flag,
+           *return_key_length);
     return(0);
   }
   else
@@ -1077,7 +1077,7 @@ uchar *_mi_get_last_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
     lastpos=endpos-keyinfo->keylength-nod_flag;
     *return_key_length=keyinfo->keylength;
     if (lastpos > page)
-      bmove((uchar*) lastkey,(uchar*) lastpos,keyinfo->keylength+nod_flag);
+      memcpy((uchar*) lastkey,(uchar*) lastpos,keyinfo->keylength+nod_flag);
   }
   else
   {
@@ -1779,8 +1779,8 @@ void _mi_store_var_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
     /* Not packed against previous key */
     store_pack_length(s_temp->pack_marker == 128,key_pos,s_temp->key_length);
   }
-  bmove((uchar*) key_pos,(uchar*) s_temp->key,
-        (length=s_temp->totlength-(uint) (key_pos-start)));
+  memcpy((uchar*) key_pos,(uchar*) s_temp->key,
+         (length=s_temp->totlength-(uint) (key_pos-start)));
 
   if (!s_temp->next_key_pos)                    /* No following key */
     return;

@@ -1368,8 +1368,8 @@ int _my_b_async_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
       my_errno=errno;
       if (info->request_pos != info->buffer)
       {
-	bmove(info->buffer,info->request_pos,
-	      (size_t) (info->read_end - info->read_pos));
+	memcpy(info->buffer, info->request_pos,
+               (size_t) (info->read_end - info->read_pos));
 	info->request_pos=info->buffer;
 	info->read_pos-=info->read_length;
 	info->read_end-=info->read_length;

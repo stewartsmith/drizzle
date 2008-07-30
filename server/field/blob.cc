@@ -170,7 +170,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
     if (!String::needs_conversion(length, cs, field_charset, &dummy_offset))
     {
       Field_blob::store_length(length);
-      bmove(ptr+packlength,(char*) &from,sizeof(char*));
+      memcpy(ptr+packlength, (char*) &from, sizeof(char*));
       return 0;
     }
     if (tmpstr.copy(from, length, cs))
@@ -190,7 +190,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
                                             from, length);
     Field_blob::store_length(copy_length);
     tmp= value.ptr();
-    bmove(ptr + packlength, (uchar*) &tmp, sizeof(char*));
+    memcpy(ptr + packlength, (uchar*) &tmp, sizeof(char*));
     return 0;
   }
   /*
@@ -208,7 +208,7 @@ int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
 
   Field_blob::store_length(copy_length);
   tmp= value.ptr();
-  bmove(ptr+packlength,(uchar*) &tmp,sizeof(char*));
+  memcpy(ptr+packlength, (uchar*) &tmp, sizeof(char*));
 
   if (check_string_copy_error(this, well_formed_error_pos,
                               cannot_convert_error_pos, from + length, cs))
@@ -246,7 +246,7 @@ double Field_blob::val_real(void)
   uint32_t length;
   CHARSET_INFO *cs;
 
-  memcpy_fixed(&blob,ptr+packlength,sizeof(char*));
+  memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
     return 0.0;
   length= get_length(ptr);
@@ -259,7 +259,7 @@ int64_t Field_blob::val_int(void)
 {
   int not_used;
   char *blob;
-  memcpy_fixed(&blob,ptr+packlength,sizeof(char*));
+  memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
     return 0;
   uint32_t length=get_length(ptr);
@@ -270,7 +270,7 @@ String *Field_blob::val_str(String *val_buffer __attribute__((unused)),
 			    String *val_ptr)
 {
   char *blob;
-  memcpy_fixed(&blob,ptr+packlength,sizeof(char*));
+  memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
     val_ptr->set("",0,charset());	// A bit safer than ->length(0)
   else
@@ -283,7 +283,7 @@ my_decimal *Field_blob::val_decimal(my_decimal *decimal_value)
 {
   const char *blob;
   size_t length;
-  memcpy_fixed(&blob, ptr+packlength, sizeof(const uchar*));
+  memcpy(&blob, ptr+packlength, sizeof(const uchar*));
   if (!blob)
   {
     blob= "";
@@ -311,8 +311,8 @@ int Field_blob::cmp_max(const uchar *a_ptr, const uchar *b_ptr,
                         uint max_length)
 {
   uchar *blob1,*blob2;
-  memcpy_fixed(&blob1,a_ptr+packlength,sizeof(char*));
-  memcpy_fixed(&blob2,b_ptr+packlength,sizeof(char*));
+  memcpy(&blob1,a_ptr+packlength,sizeof(char*));
+  memcpy(&blob2,b_ptr+packlength,sizeof(char*));
   uint a_len= get_length(a_ptr), b_len= get_length(b_ptr);
   set_if_smaller(a_len, max_length);
   set_if_smaller(b_len, max_length);
@@ -326,8 +326,8 @@ int Field_blob::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
   char *a,*b;
   uint diff;
   uint32_t a_length,b_length;
-  memcpy_fixed(&a,a_ptr+packlength,sizeof(char*));
-  memcpy_fixed(&b,b_ptr+packlength,sizeof(char*));
+  memcpy(&a,a_ptr+packlength,sizeof(char*));
+  memcpy(&b,b_ptr+packlength,sizeof(char*));
   a_length=get_length(a_ptr);
   if (a_length > max_length)
     a_length=max_length;
@@ -381,7 +381,7 @@ int Field_blob::key_cmp(const uchar *key_ptr, uint max_key_length)
 {
   uchar *blob1;
   uint blob_length=get_length(ptr);
-  memcpy_fixed(&blob1,ptr+packlength,sizeof(char*));
+  memcpy(&blob1,ptr+packlength,sizeof(char*));
   CHARSET_INFO *cs= charset();
   uint local_char_length= max_key_length / cs->mbmaxlen;
   local_char_length= my_charpos(cs, blob1, blob1+blob_length,
@@ -457,7 +457,7 @@ void Field_blob::sort_string(uchar *to,uint length)
         break;
       }
     }
-    memcpy_fixed(&blob,ptr+packlength,sizeof(char*));
+    memcpy(&blob,ptr+packlength,sizeof(char*));
     
     blob_length=my_strnxfrm(field_charset,
                             to, length, blob, blob_length);
@@ -571,7 +571,7 @@ int Field_blob::pack_cmp(const uchar *b, uint key_length_arg,
 {
   uchar *a;
   uint a_length, b_length;
-  memcpy_fixed(&a,ptr+packlength,sizeof(char*));
+  memcpy(&a,ptr+packlength,sizeof(char*));
   if (!a)
     return key_length_arg > 0 ? -1 : 0;
 
@@ -649,7 +649,7 @@ Field_blob::unpack_key(uchar *to, const uchar *from, uint max_length,
 
   /* put the address of the blob buffer or NULL */
   if (length)
-    memcpy_fixed(to + packlength, &from, sizeof(from));
+    memcpy(to + packlength, &from, sizeof(from));
   else
     memset(to + packlength, 0, sizeof(from));
 

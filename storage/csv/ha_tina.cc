@@ -684,12 +684,12 @@ int ha_tina::find_current_row(uchar *buf)
         
         packlength= blob->pack_length_no_ptr();
         length= blob->get_length(blob->ptr);
-        memcpy_fixed(&src, blob->ptr + packlength, sizeof(char*));
+        memcpy(&src, blob->ptr + packlength, sizeof(char*));
         if (src)
         {
           tgt= (uchar*) alloc_root(&blobroot, length);
-          bmove(tgt, src, length);
-          memcpy_fixed(blob->ptr + packlength, &tgt, sizeof(char*));
+          memcpy(tgt, src, length);
+          memcpy(blob->ptr + packlength, &tgt, sizeof(char*));
         }
       }
     }
