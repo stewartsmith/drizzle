@@ -3630,7 +3630,7 @@ handler::multi_range_read_init(RANGE_SEQ_IF *seq_funcs, void *seq_init_param,
 int handler::multi_range_read_next(char **range_info)
 {
   int result= 0;
-  int range_res = 0;
+  int range_res= 0;
 
   if (!mrr_have_range)
   {
