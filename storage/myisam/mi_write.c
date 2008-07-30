@@ -411,7 +411,7 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       my_errno=HA_ERR_CRASHED;
       return(-1);
     }
-    bmove(key_pos,key_pos-t_length,(uint) (endpos-key_pos)+t_length);
+    memcpy(key_pos,key_pos-t_length,(uint) (endpos-key_pos)+t_length);
   }
   (*keyinfo->store_key)(keyinfo,key_pos,&s_temp);
   a_length+=t_length;
@@ -654,7 +654,7 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
 	     (size_t) (length=new_left_length - left_length - k_length));
       pos=buff+2+length;
       memcpy((uchar*) father_key_pos,(uchar*) pos,(size_t) k_length);
-      bmove((uchar*) buff+2,(uchar*) pos+k_length,new_right_length);
+      memcpy((uchar*) buff+2,(uchar*) pos+k_length,new_right_length);
     }
     else
     {						/* Move keys -> buff */

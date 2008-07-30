@@ -472,7 +472,7 @@ my_strnxfrm_czech(CHARSET_INFO * cs  __attribute__((unused)),
         uint pad_length= de - dst;
         set_if_smaller(pad_length, nweights);
         /* fill with weight for space character */
-        bfill(dst, pad_length, virtual_space[level]);
+        memset(dst, virtual_space[level], pad_length);
         dst+= pad_length;
       }
       

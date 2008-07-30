@@ -91,8 +91,6 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 
-#undef bcmp        // Fix problem with new readline
-
 #include <readline/readline.h>
 
 /**
@@ -3685,7 +3683,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line
 
   /* Save old status */
   old_status=status;
-  bfill((char*) &status,sizeof(status),(char) 0);
+  memset((char*) &status, 0, sizeof(status));
 
   // Run in batch mode
   status.batch=old_status.batch;

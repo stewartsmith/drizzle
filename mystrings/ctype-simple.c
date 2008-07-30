@@ -1126,7 +1126,7 @@ size_t my_scan_8bit(CHARSET_INFO *cs, const char *str, const char *end, int sq)
 void my_fill_8bit(CHARSET_INFO *cs __attribute__((unused)),
 		   char *s, size_t l, int fill)
 {
-  bfill((uchar*) s,l,fill);
+  memset((uchar*) s, fill, l);
 }
 
 

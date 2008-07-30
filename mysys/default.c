@@ -475,7 +475,7 @@ int load_defaults(const char *conf_file, const char **groups,
 void free_defaults(char **argv)
 {
   MEM_ROOT ptr;
-  memcpy_fixed((char*) &ptr,(char *) argv - sizeof(ptr), sizeof(ptr));
+  memcpy((char*) &ptr,(char *) argv - sizeof(ptr), sizeof(ptr));
   free_root(&ptr,MYF(0));
 }
 

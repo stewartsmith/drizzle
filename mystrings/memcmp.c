@@ -17,8 +17,7 @@
    compares the two memory areas lhs[0..len-1]	??  rhs[0..len-1].   It
    returns  an integer less than, equal to, or greater than 0 according
    as lhs[-] is lexicographically less than, equal to, or greater  than
-   rhs[-].  Note  that this is not at all the same as bcmp, which tells
-   you *where* the difference is but not what.
+   rhs[-].
 
    Note:  suppose we have int x, y;  then memcmp(&x, &y, sizeof x) need
    not bear any relation to x-y.  This is because byte order is machine

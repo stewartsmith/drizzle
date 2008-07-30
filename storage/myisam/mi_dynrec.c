@@ -549,7 +549,7 @@ static int delete_dynamic_record(MI_INFO *info, my_off_t filepos,
     mi_int3store(block_info.header+1,length);
     mi_sizestore(block_info.header+4,info->s->state.dellink);
     if (b_type & BLOCK_LAST)
-      bfill(block_info.header+12,8,255);
+      memset(block_info.header+12, 255, 8);
     else
       mi_sizestore(block_info.header+12,block_info.next_filepos);
     if (info->s->file_write(info,(uchar*) block_info.header,20,filepos,
@@ -680,7 +680,7 @@ int _mi_write_part_record(MI_INFO *info,
 	/* Make a long block for one write */
   record_end= *record+length-head_length;
   del_length=(res_length ? MI_DYN_DELETE_BLOCK_HEADER : 0);
-  bmove((uchar*) (*record-head_length),(uchar*) temp,head_length);
+  memcpy((uchar*) (*record-head_length),(uchar*) temp,head_length);
   memcpy(temp,record_end,(size_t) (extra_length+del_length));
   memset((uchar*) record_end, 0, extra_length);
 
@@ -709,7 +709,7 @@ int _mi_write_part_record(MI_INFO *info,
     pos[0]= '\0';
     mi_int3store(pos+1,res_length);
     mi_sizestore(pos+4,info->s->state.dellink);
-    bfill(pos+12,8,255);			/* End link */
+    memset(pos+12, 255, 8);			/* End link */
     next_delete_block=info->s->state.dellink;
     info->s->state.dellink= filepos+length+extra_length;
     info->state->del++;
@@ -881,7 +881,7 @@ static int update_dynamic_record(MI_INFO *info, my_off_t filepos, uchar *record,
 	      del_block.header[0]=0;
 	      mi_int3store(del_block.header+1, rest_length);
 	      mi_sizestore(del_block.header+4,info->s->state.dellink);
-	      bfill(del_block.header+12,8,255);
+	      memset(del_block.header+12, 255, 8);
 	      if (info->s->file_write(info,(uchar*) del_block.header,20, next_pos,
 			    MYF(MY_NABP)))
 		return(1);
@@ -948,7 +948,7 @@ uint _mi_rec_pack(MI_INFO *info, register uchar *to,
 	  char *temp_pos;
 	  size_t tmp_length=length-portable_sizeof_char_ptr;
 	  memcpy((uchar*) to,from,tmp_length);
-	  memcpy_fixed(&temp_pos,from+tmp_length,sizeof(char*));
+	  memcpy(&temp_pos,from+tmp_length,sizeof(char*));
 	  memcpy(to+tmp_length,temp_pos,(size_t) blob->length);
 	  to+=tmp_length+blob->length;
 	}
@@ -1240,11 +1240,11 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
 	  if (type == FIELD_SKIP_ENDSPACE)
 	  {
 	    memcpy(to,(uchar*) from,(size_t) length);
-	    bfill((uchar*) to+length,rec_length-length,' ');
+	    memset((uchar*) to+length, ' ', rec_length-length);
 	  }
 	  else
 	  {
-	    bfill((uchar*) to,rec_length-length,' ');
+	    memset((uchar*) to, ' ', rec_length-length);
 	    memcpy(to+rec_length-length,(uchar*) from,(size_t) length);
 	  }
 	  from+=length;
@@ -1261,7 +1261,7 @@ ulong _mi_rec_unpack(register MI_INFO *info, register uchar *to, uchar *from,
           goto err;
 	memcpy((uchar*) to,(uchar*) from,(size_t) size_length);
 	from+=size_length;
-	memcpy_fixed((uchar*) to+size_length,(uchar*) &from,sizeof(char*));
+	memcpy((uchar*) to+size_length,(uchar*) &from,sizeof(char*));
 	from+=blob_length;
       }
       else

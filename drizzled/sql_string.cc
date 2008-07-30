@@ -137,7 +137,7 @@ bool String::copy(const String &str)
   if (alloc(str.str_length))
     return true;
   str_length=str.str_length;
-  bmove(Ptr,str.Ptr,str_length);		// May be overlapping
+  memmove(Ptr, str.Ptr, str_length);		// May be overlapping
   Ptr[str_length]=0;
   str_charset=str.str_charset;
   return false;
@@ -326,7 +326,7 @@ bool String::fill(uint32_t max_length,char fill_char)
   {
     if (realloc(max_length))
       return true;
-    bfill(Ptr+str_length,max_length-str_length,fill_char);
+    memset(Ptr+str_length, fill_char, max_length-str_length);
     str_length=max_length;
   }
   return false;
@@ -448,7 +448,7 @@ bool String::append_with_prefill(const char *s,uint32_t arg_length,
   t_length= full_length - arg_length;
   if (t_length > 0)
   {
-    bfill(Ptr+str_length, t_length, fill_char);
+    memset(Ptr+str_length, fill_char, t_length);
     str_length=str_length + t_length;
   }
   append(s, arg_length);
@@ -545,8 +545,8 @@ bool String::replace(uint32_t offset,uint32_t arg_length,
     {
       if (to_length)
 	memcpy(Ptr+offset,to,to_length);
-      bmove(Ptr+offset+to_length,Ptr+offset+arg_length,
-	    str_length-offset-arg_length);
+      memcpy(Ptr+offset+to_length, Ptr+offset+arg_length,
+             str_length-offset-arg_length);
     }
     else
     {

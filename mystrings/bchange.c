@@ -33,6 +33,6 @@ void bchange(register uchar *dst, size_t old_length, register const uchar *src,
   if (old_length < new_length)
     bmove_upp(dst+rest+new_length,dst+tot_length,rest);
   else
-    bmove(dst+new_length,dst+old_length,rest);
+    memcpy(dst+new_length, dst+old_length, rest);
   memcpy(dst,src,new_length);
 }
