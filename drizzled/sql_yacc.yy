@@ -675,7 +675,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  NULL_SYM                      /* SQL-2003-R */
 %token  NUM
 %token  NUMERIC_SYM                   /* SQL-2003-R */
-%token  NVARCHAR_SYM
 %token  OFFLINE_SYM
 %token  OFFSET_SYM
 %token  ON                            /* SQL-2003-R */
@@ -702,7 +701,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PLUGINS_SYM
 %token  PLUGIN_SYM
 %token  POINT_SYM
-%token  POLYGON
 %token  PORT_SYM
 %token  POSITION_SYM                  /* SQL-2003-N */
 %token  PRECISION                     /* SQL-2003-R */
@@ -710,7 +708,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PRIMARY_SYM                   /* SQL-2003-R */
 %token  PROCESS
 %token  PROCESSLIST_SYM
-%token  PROFILE_SYM
 %token  PROFILES_SYM
 %token  PURGE
 %token  QUARTER_SYM
@@ -1826,12 +1823,12 @@ type:
         | char '(' NUM ')' opt_binary
           {
             Lex->length=$3.str;
-            $$=DRIZZLE_TYPE_STRING;
+            $$=DRIZZLE_TYPE_VARCHAR;
           }
         | char opt_binary
           {
             Lex->length=(char*) "1";
-            $$=DRIZZLE_TYPE_STRING;
+            $$=DRIZZLE_TYPE_VARCHAR;
           }
         | varchar '(' NUM ')' opt_binary
           {
@@ -6515,7 +6512,6 @@ keyword_sp:
         | NODEGROUP_SYM            {}
         | NONE_SYM                 {}
         | NOWAIT_SYM               {}
-        | NVARCHAR_SYM             {}
         | OFFLINE_SYM              {}
         | OFFSET_SYM               {}
         | ONE_SHOT_SYM             {}
@@ -6533,8 +6529,6 @@ keyword_sp:
         | PREV_SYM                 {}
         | PROCESS                  {}
         | PROCESSLIST_SYM          {}
-        | PROFILE_SYM              {}
-        | PROFILES_SYM             {}
         | QUARTER_SYM              {}
         | QUERY_SYM                {}
         | QUICK                    {}
