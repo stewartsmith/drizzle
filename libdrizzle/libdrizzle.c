@@ -136,31 +136,6 @@ my_pipe_sig_handler(int sig __attribute__((unused)))
 
 
 /**************************************************************************
-  Connect to sql server
-  If host == 0 then use localhost
-**************************************************************************/
-
-#ifdef USE_OLD_FUNCTIONS
-DRIZZLE * STDCALL
-drizzle_connect(DRIZZLE *drizzle,const char *host,
-        const char *user, const char *passwd)
-{
-  DRIZZLE *res;
-  drizzle=drizzle_init(drizzle);      /* Make it thread safe */
-  {
-    if (!(res=drizzle_connect(drizzle,host,user,passwd,NullS,0,NullS,0)))
-    {
-      if (drizzle->free_me && drizzle)
-        free((uchar*) drizzle);
-    }
-    drizzle->reconnect= 1;
-    return(res);
-  }
-}
-#endif
-
-
-/**************************************************************************
   Change user and database
 **************************************************************************/
 
@@ -699,22 +674,6 @@ drizzle_list_processes(DRIZZLE *drizzle)
   drizzle->field_count=field_count;
   return(drizzle_store_result(drizzle));
 }
-
-
-#ifdef USE_OLD_FUNCTIONS
-int  STDCALL
-drizzle_create_db(DRIZZLE *drizzle, const char *db)
-{
-  return(simple_command(drizzle,COM_CREATE_DB,db, (ulong) strlen(db),0));
-}
-
-
-int  STDCALL
-drizzle_drop_db(DRIZZLE *drizzle, const char *db)
-{
-  return(simple_command(drizzle,COM_DROP_DB,db,(ulong) strlen(db),0));
-}
-#endif
 
 
 int STDCALL
