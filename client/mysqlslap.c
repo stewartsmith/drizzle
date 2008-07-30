@@ -1469,7 +1469,7 @@ get_options(int *argc,char ***argv)
     if (create_string && !stat(create_string, &sbuf))
     {
       File data_file;
-      if (!MY_S_ISREG(sbuf.st_mode))
+      if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
                 my_progname);
@@ -1506,7 +1506,7 @@ get_options(int *argc,char ***argv)
     if (user_supplied_query && !stat(user_supplied_query, &sbuf))
     {
       File data_file;
-      if (!MY_S_ISREG(sbuf.st_mode))
+      if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
                 my_progname);
@@ -1538,7 +1538,7 @@ get_options(int *argc,char ***argv)
       && !stat(user_supplied_pre_statements, &sbuf))
   {
     File data_file;
-    if (!MY_S_ISREG(sbuf.st_mode))
+    if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
               my_progname);
@@ -1570,7 +1570,7 @@ get_options(int *argc,char ***argv)
       && !stat(user_supplied_post_statements, &sbuf))
   {
     File data_file;
-    if (!MY_S_ISREG(sbuf.st_mode))
+    if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
               my_progname);

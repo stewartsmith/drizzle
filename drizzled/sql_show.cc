@@ -252,7 +252,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
                continue;
        }
 #endif
-      if (!MY_S_ISDIR(file->mystat->st_mode))
+      if (!S_ISDIR(file->mystat->st_mode))
         continue;
 
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
