@@ -465,8 +465,8 @@ append_query_string(CHARSET_INFO *csinfo,
   else
   {
     *ptr++= '\'';
-    ptr+= escape_string_for_mysql(csinfo, ptr, 0,
-                                  from->ptr(), from->length());
+    ptr+= escape_string_for_drizzle(csinfo, ptr, 0,
+                                    from->ptr(), from->length());
     *ptr++='\'';
   }
   to->length(orig_len + ptr - beg);

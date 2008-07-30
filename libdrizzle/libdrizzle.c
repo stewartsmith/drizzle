@@ -903,7 +903,7 @@ drizzle_hex_string(char *to, const char *from, uint32_t length)
 uint32_t STDCALL
 drizzle_escape_string(char *to,const char *from, uint32_t length)
 {
-  return escape_string_for_mysql(default_charset_info, to, 0, from, length);
+  return escape_string_for_drizzle(default_charset_info, to, 0, from, length);
 }
 
 uint32_t STDCALL
@@ -911,8 +911,8 @@ drizzle_real_escape_string(DRIZZLE *drizzle, char *to,const char *from,
        uint32_t length)
 {
   if (drizzle->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
-    return escape_quotes_for_mysql(drizzle->charset, to, 0, from, length);
-  return escape_string_for_mysql(drizzle->charset, to, 0, from, length);
+    return escape_quotes_for_drizzle(drizzle->charset, to, 0, from, length);
+  return escape_string_for_drizzle(drizzle->charset, to, 0, from, length);
 }
 
 void STDCALL
