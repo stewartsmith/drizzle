@@ -54,7 +54,6 @@ pkginclude_HEADERS =	error.h \
 noinst_LTLIBRARIES = libhandler.la
 
 AM_CPPFLAGS =	-I$(top_srcdir)/mystrings \
-		-I$(top_srcdir)/include \
 		-I$(top_srcdir)/drizzled \
 		-I$(top_srcdir)
 

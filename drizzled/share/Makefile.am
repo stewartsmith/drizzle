@@ -31,10 +31,6 @@ all-local:	english/errmsg.sys
 # Use the english errmsg.sys as a flag that all errmsg.sys needs to be
 # created. Normally these are created by extra/Makefile
 
-english/errmsg.sys: errmsg.txt
-	rm -f $(top_builddir)/include/mysqld_error.h
-	(cd $(top_builddir)/extra && $(MAKE))
-
 install-data-local:
 	for lang in @AVAILABLE_LANGUAGES@; \
 	do \
