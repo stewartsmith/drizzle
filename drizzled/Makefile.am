@@ -47,7 +47,8 @@ DTRACEFILES = handler.o \
 	      sql_select.o \
 	      sql_update.o
 
-pkginclude_HEADERS =	plugin.h \
+pkginclude_HEADERS =	error.h \
+			plugin.h \
 			plugin_audit.h
 
 noinst_LTLIBRARIES = libhandler.la
@@ -87,6 +88,7 @@ noinst_HEADERS = item.h \
 		 sql_lex.h \
 		 sql_list.h \
 		 sql_map.h \
+		 sql_state.h \
 		 sql_string.h \
 		 unireg.h \
 		 sql_error.h \

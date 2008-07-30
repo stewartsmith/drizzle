@@ -37,7 +37,7 @@ int decimal_operation_results(int result)
     break;
   case E_DEC_TRUNCATED:
     push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
-			WARN_DATA_TRUNCATED, ER(WARN_DATA_TRUNCATED),
+			ER_WARN_DATA_TRUNCATED, ER(ER_WARN_DATA_TRUNCATED),
 			"", (long)-1);
     break;
   case E_DEC_OVERFLOW:

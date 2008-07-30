@@ -18,7 +18,10 @@
 LDADD=				$(top_builddir)/libdrizzle/libdrizzle.la -lz
 
 
-noinst_HEADERS =	completion_hash.h my_readline.h client_priv.h
+noinst_HEADERS =	completion_hash.h \
+			my_readline.h \
+			client_priv.h \
+			errname.h
 
 CLEANFILES =		$(BUILT_SOURCES)
 

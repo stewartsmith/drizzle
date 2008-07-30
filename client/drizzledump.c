@@ -46,7 +46,7 @@
 #include <mysys/hash.h>
 #include <stdarg.h>
 
-#include "drizzled_error.h"
+#include <drizzled/error.h>
 
 /* Exit codes */
 

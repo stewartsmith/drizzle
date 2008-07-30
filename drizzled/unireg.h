@@ -225,7 +225,7 @@
 
 /* Include prototypes for unireg */
 
-#include <include/drizzled_error.h>
+#include <drizzled/error.h>
 #include "structs.h"				/* All structs we need */
 
 #endif

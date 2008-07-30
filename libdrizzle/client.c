@@ -53,7 +53,7 @@
 #include <mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include "drizzled_error.h"
+#include <drizzled/error.h>
 #include "errmsg.h"
 #include <violite.h>
 #include <my_pthread.h>        /* because of signal()  */

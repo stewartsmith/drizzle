@@ -19,7 +19,7 @@
  */
 #include <drizzled/global.h>
 #include <drizzle.h>
-#include <drizzled_error.h>
+#include <drizzled/error.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <violite.h>

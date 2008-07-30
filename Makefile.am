@@ -18,7 +18,6 @@
 SUBDIRS = . vio \
 	  mystrings \
 	  mysys \
-	  include \
 	  extra \
 	  libdrizzle \
 	  client \

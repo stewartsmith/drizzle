@@ -24,7 +24,6 @@
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include "drizzle.h"
-#include "drizzled_error.h"
 #include "errmsg.h"
 #include <violite.h>
 #include <sys/stat.h>

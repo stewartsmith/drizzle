@@ -76,7 +76,6 @@ TODO:
 #define DEFAULT_BLOB_SIZE 1024
 
 #include "client_priv.h"
-#include <drizzled_error.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <sys/types.h>
