@@ -285,6 +285,9 @@
 #include <stdbool.h>
 #endif
 
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 /*
   A lot of our programs uses asserts, so better to always include it
