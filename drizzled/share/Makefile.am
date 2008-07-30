@@ -26,11 +26,6 @@ dist-hook:
 	$(INSTALL_DATA) $(srcdir)/charsets/README $(distdir)/charsets
 	$(INSTALL_DATA) $(srcdir)/charsets/Index.xml $(distdir)/charsets
 
-all-local:	english/errmsg.sys
-
-# Use the english errmsg.sys as a flag that all errmsg.sys needs to be
-# created. Normally these are created by extra/Makefile
-
 install-data-local:
 	for lang in @AVAILABLE_LANGUAGES@; \
 	do \
@@ -48,8 +43,3 @@ install-data-local:
 uninstall-local:
 	@RM@ -f -r $(DESTDIR)$(pkgdatadir)
 
-distclean-local:
-	@RM@ -f */errmsg.sys
-	@for lang in @AVAILABLE_LANGUAGES@ japanese-sjis ; do \
-		@RM@ -f -r $$lang ; \
-	done
