@@ -3478,11 +3478,11 @@ restart:
             if (!(block->status & (BLOCK_IN_EVICTION | BLOCK_IN_SWITCH |
                                    BLOCK_REASSIGNED)))
             {
-              struct st_hash_link *next_hash_link = NULL;
-              my_off_t            next_diskpos = 0;
-              File                next_file = 0;
-              uint                next_status = 0;
-              uint                hash_requests = 0;
+              struct st_hash_link *next_hash_link= NULL;
+              my_off_t            next_diskpos= 0;
+              File                next_file= 0;
+              uint                next_status= 0;
+              uint                hash_requests= 0;
 
               total_found++;
               found++;

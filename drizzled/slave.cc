@@ -2870,7 +2870,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
 {
   int32_t error= 0;
   String error_msg;
-  uint32_t inc_pos = 0;
+  uint32_t inc_pos= 0;
   Relay_log_info *rli= &mi->rli;
   pthread_mutex_t *log_lock= rli->relay_log.get_log_lock();
 
