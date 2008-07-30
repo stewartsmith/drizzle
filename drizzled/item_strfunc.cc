@@ -33,10 +33,9 @@
 #include "mysql_priv.h"
 #include <m_ctype.h>
 #include <mysys/sha1.h>
-#include <mysys/sha2.h>
 #include <zlib.h>
 C_MODE_START
-#include "../mysys/my_static.h"			// For soundex_map
+#include <mysys/my_static.h>			// For soundex_map
 C_MODE_END
 
 String my_empty_string("",default_charset_info);
@@ -2398,8 +2397,6 @@ void Item_func_binary::print(String *str, enum_query_type query_type)
   str->append(STRING_WITH_LEN(" as binary)"));
 }
 
-
-#include <my_dir.h>
 
 String *Item_load_file::val_str(String *str)
 {

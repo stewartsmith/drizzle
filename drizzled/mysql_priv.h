@@ -28,7 +28,7 @@
 
 #ifndef MYSQL_CLIENT
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include "version.h"
 #include <mysys/my_sys.h>
 #include <libdrizzle/my_time.h>
@@ -36,7 +36,7 @@
 #include <mysys/hash.h>
 #include <signal.h>
 #include <mysys/thr_lock.h>
-#include <my_base.h>			/* Needed by field.h */
+#include <drizzled/base.h>			/* Needed by field.h */
 #include <mysys/queues.h>
 #include "sql_bitmap.h"
 #include "sql_array.h"

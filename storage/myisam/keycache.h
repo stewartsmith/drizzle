@@ -18,7 +18,7 @@
 #ifndef _keycache_h
 #define _keycache_h
 
-#include <my_global.h>
+#include <drizzled/global.h>
 
 C_MODE_START
 

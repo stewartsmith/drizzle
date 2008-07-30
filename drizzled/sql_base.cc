@@ -19,7 +19,7 @@
 #include "mysql_priv.h"
 #include "sql_select.h"
 #include <m_ctype.h>
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 #include <mysys/hash.h>
 
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")

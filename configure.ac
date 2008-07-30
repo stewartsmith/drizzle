@@ -6,7 +6,7 @@ AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 AC_INIT
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([include/config.h:config.h.in])
+AC_CONFIG_HEADERS([drizzled/config.h:config.h.in])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
 

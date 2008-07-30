@@ -57,7 +57,6 @@
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
-#include <my_dir.h>
 
 extern CHARSET_INFO *character_set_filesystem;
 
@@ -2167,8 +2166,8 @@ static int  sys_check_log_path(THD *thd __attribute__((unused)),
       'write' permission.
     */
 
-    if (!MY_S_ISREG(f_stat.st_mode) ||
-        !(f_stat.st_mode & MY_S_IWRITE))
+    if (!S_ISREG(f_stat.st_mode) ||
+        !(f_stat.st_mode & S_IWRITE))
       goto err;
 
     return 0;

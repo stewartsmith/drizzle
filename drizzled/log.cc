@@ -29,7 +29,7 @@
 #include "rpl_filter.h"
 #include "rpl_rli.h"
 
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 #include <stdarg.h>
 #include <m_ctype.h>				// For test_if_number
 

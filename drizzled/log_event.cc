@@ -31,7 +31,7 @@
 #include "rpl_filter.h"
 #include "rpl_utility.h"
 #include "rpl_record.h"
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 
 #endif /* MYSQL_CLIENT */
 

@@ -21,7 +21,7 @@
   the cache.
 */
 
-#include "my_global.h"
+#include <drizzled/global.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
 #include <keycache.h>

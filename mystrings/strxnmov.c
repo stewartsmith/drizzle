@@ -35,7 +35,6 @@
       if total-string-length >= length then dst[length] will be set to \0
 */
 
-#include <my_global.h>
 #include "m_string.h"
 #include <stdarg.h>
 

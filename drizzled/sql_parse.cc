@@ -20,7 +20,6 @@
 #include "repl_failsafe.h"
 #include <m_ctype.h>
 #include <storage/myisam/myisam.h>
-#include <my_dir.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment

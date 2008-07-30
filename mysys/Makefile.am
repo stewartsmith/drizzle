@@ -39,6 +39,7 @@ pkginclude_HEADERS = 	my_alloc.h \
 noinst_HEADERS =	mysys_priv.h \
 			my_bit.h \
 			my_bitmap.h \
+			my_dir.h \
 			my_static.h \
 			my_handler.h \
 			my_handler_errors.h \
@@ -48,7 +49,6 @@ noinst_HEADERS =	mysys_priv.h \
 			queues.h \
 			hash.h \
 			sha1.h \
-			sha2.h \
 			thr_alarm.h \
 			thr_lock.h \
 			base64.h

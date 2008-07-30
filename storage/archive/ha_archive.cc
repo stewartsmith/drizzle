@@ -17,11 +17,10 @@
 #pragma implementation        // gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include <storage/myisam/myisam.h>
 
 #include "ha_archive.h"
-#include <my_dir.h>
 
 /*
   First, if you want to understand storage engines you should look at 

@@ -24,7 +24,6 @@
 */
 
 
-#include <my_global.h>
 #include "m_string.h"
 
 char *llstr(int64_t value,char *buff)

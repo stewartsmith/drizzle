@@ -17,7 +17,7 @@
    versions into symbolic names. By Sasha Pachev <sasha@mysql.com>
  */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>

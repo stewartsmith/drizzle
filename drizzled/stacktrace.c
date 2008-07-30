@@ -16,7 +16,6 @@
 /* Workaround for Bug#32082: VOID redefinition on Win results in compile errors*/
 #define DONT_DEFINE_VOID 1
 
-#include <my_global.h>
 #include "stacktrace.h"
 
 #include <signal.h>
