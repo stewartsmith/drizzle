@@ -50,7 +50,7 @@
 #define C_MODE_END
 #endif
 
-#include <config.h>
+#include <drizzled/config.h>
 #if defined(__cplusplus) && defined(inline)
 #undef inline				/* fix configure problem */
 #endif
