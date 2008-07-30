@@ -15,11 +15,6 @@
 
 #called from the top level Makefile
 
-AM_CPPFLAGS =	-I$(top_srcdir)/strings \
-		-I$(top_srcdir)/drizzled \
-		-I$(top_srcdir)/include \
-		-I$(top_srcdir)
-
 noinst_LTLIBRARIES = 	libfield.la
 
 libfield_la_SOURCES = 	blob.cc \

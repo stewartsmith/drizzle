@@ -19,7 +19,7 @@
 #endif
 
 #define MYSQL_SERVER 1
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include "ha_heap.h"
 #include "heapdef.h"
 

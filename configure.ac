@@ -6,7 +6,7 @@ AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 AC_INIT
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([drizzled/config.h:config.h.in])
+AC_CONFIG_HEADERS([config.h:config.h.in])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
 
@@ -1275,7 +1275,7 @@ then
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include'])
+AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 
 # Some usefull subst
@@ -1301,7 +1301,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  drizzled/field/Makefile dnl
  drizzled/share/Makefile dnl
  drizzled/sql_builtin.cc dnl
- include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  drizzled/version.h plugin/Makefile dnl

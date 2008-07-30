@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_INT_64_T
 #define DRIZZLE_SERVER_FIELD_INT_64_T
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 class Field_int64_t :public Field_num {
 public:

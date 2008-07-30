@@ -22,7 +22,6 @@
 */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_sort.h"
 
 /// How to write record_ref.

@@ -29,7 +29,6 @@
 #endif
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include <time.h>
 
 /** Day number for Dec 31st, 9999. */

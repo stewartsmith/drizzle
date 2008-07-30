@@ -93,9 +93,6 @@ typedef unsigned int DRIZZLE_FIELD_OFFSET; /* offset to current field */
 
 #define DRIZZLE_COUNT_ERROR (~(uint64_t) 0)
 
-/* backward compatibility define - to be removed eventually */
-#define ER_WARN_DATA_TRUNCATED WARN_DATA_TRUNCATED
-
 typedef struct st_drizzle_rows {
   struct st_drizzle_rows *next;    /* list of rows */
   DRIZZLE_ROW data;

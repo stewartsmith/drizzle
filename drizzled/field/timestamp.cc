@@ -158,7 +158,7 @@ int Field_timestamp::store(const char *from,
   if (error || !have_smth_to_conv)
   {
     error= 1;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
+    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                          from, len, MYSQL_TIMESTAMP_DATETIME, 1);
   }
 
@@ -237,7 +237,7 @@ int Field_timestamp::store(int64_t nr,
     }
   } else if (error)
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         WARN_DATA_TRUNCATED,
+                         ER_WARN_DATA_TRUNCATED,
                          nr, MYSQL_TIMESTAMP_DATETIME, 1);
 
   store_timestamp(timestamp);

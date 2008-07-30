@@ -18,7 +18,6 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_select.h"
 
 const String my_null_string("NULL", 4, default_charset_info);

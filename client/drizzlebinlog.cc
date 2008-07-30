@@ -38,8 +38,8 @@
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
-#include "mysql_priv.h"
-#include "log_event.h"
+#include <drizzled/mysql_priv.h>
+#include <drizzled/log_event.h>
 #include <libdrizzle/sql_common.h>
 
 
@@ -1990,5 +1990,5 @@ int main(int argc, char** argv)
   the server
 */
 
-#include "log_event.cc"
+#include <drizzled/log_event.cc>
 

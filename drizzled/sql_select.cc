@@ -31,7 +31,6 @@
 #include "mysql_priv.h"
 #include "sql_select.h"
 
-#include <m_ctype.h>
 #include <mysys/my_bit.h>
 #include <mysys/hash.h>
 

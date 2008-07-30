@@ -108,7 +108,7 @@ int Field_datetime::store(int64_t nr,
   if (error)
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                          error == 2 ? ER_WARN_DATA_OUT_OF_RANGE :
-                         WARN_DATA_TRUNCATED, initial_nr,
+                         ER_WARN_DATA_TRUNCATED, initial_nr,
                          MYSQL_TIMESTAMP_DATETIME, 1);
 
 #ifdef WORDS_BIGENDIAN
@@ -145,7 +145,7 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
+      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), MYSQL_TIMESTAMP_DATETIME,1);
     }
   }
@@ -153,7 +153,7 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
   {
     tmp=0;
     error= 1;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)

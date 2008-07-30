@@ -158,7 +158,7 @@ int Field_new_decimal::store(const char *from, uint length,
 
   switch (err) {
   case E_DEC_TRUNCATED:
-    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     break;
   case E_DEC_OVERFLOW:
     set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);

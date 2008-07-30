@@ -35,11 +35,11 @@
 #include <pcrecpp.h>
 
 #include "client_priv.h"
-#include <drizzled_error.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
 #include <vio/violite.h>
 
+#include "errname.h"
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -3324,20 +3324,6 @@ static void do_set_charset(struct st_command *command)
   if (!charset_info)
     abort_not_supported_test("Test requires charset '%s'", charset_name);
 }
-
-
-/* List of error names to error codes, available from 5.0 */
-typedef struct
-{
-  const char *name;
-  uint        code;
-} st_error;
-
-static st_error global_error_names[] =
-{
-#include <drizzled_ername.h>
-  { 0, 0 }
-};
 
 static uint get_errcode_from_name(char *error_name, char *error_end)
 {

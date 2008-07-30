@@ -19,8 +19,6 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-AM_CPPFLAGS =           ${GLOBAL_CPPFLAGS} -I$(top_srcdir)/drizzled \
-			-I$(top_srcdir)
 
 EXTRA_LTLIBRARIES =	libhello_world.la
 pkgplugin_LTLIBRARIES =	@plugin_hello_world_shared_target@

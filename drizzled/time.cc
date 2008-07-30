@@ -17,7 +17,6 @@
 /* Functions to handle date and time */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 
 
 	/* Some functions to calculate dates */

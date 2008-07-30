@@ -36,7 +36,7 @@ int Field_double::store(const char *from,uint len,CHARSET_INFO *cs)
   if (error || (!len || (((uint) (end-from) != len) && table->in_use->count_cuted_fields)))
   {
     set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                (error ? ER_WARN_DATA_OUT_OF_RANGE : WARN_DATA_TRUNCATED), 1);
+                (error ? ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED), 1);
     error= error ? 1 : 2;
   }
   Field_double::store(nr);

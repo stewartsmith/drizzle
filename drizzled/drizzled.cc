@@ -14,7 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"

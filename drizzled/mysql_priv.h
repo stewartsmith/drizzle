@@ -36,6 +36,7 @@
 #include <mysys/hash.h>
 #include <signal.h>
 #include <mysys/thr_lock.h>
+#include <drizzled/error.h>
 #include <drizzled/base.h>			/* Needed by field.h */
 #include <mysys/queues.h>
 #include "sql_bitmap.h"

@@ -79,7 +79,7 @@ int Field_newdate::store(const char *from,
   if (error)
     set_datetime_warning(error == 3 ? MYSQL_ERROR::WARN_LEVEL_NOTE :
                          MYSQL_ERROR::WARN_LEVEL_WARN,
-                         WARN_DATA_TRUNCATED,
+                         ER_WARN_DATA_TRUNCATED,
                          from, len, MYSQL_TIMESTAMP_DATE, 1);
 
   int3store(ptr, tmp);
@@ -93,7 +93,7 @@ int Field_newdate::store(double nr)
   {
     int3store(ptr,(int32_t) 0);
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         WARN_DATA_TRUNCATED, nr, MYSQL_TIMESTAMP_DATE);
+                         ER_WARN_DATA_TRUNCATED, nr, MYSQL_TIMESTAMP_DATE);
     return 1;
   }
   return Field_newdate::store((int64_t) rint(nr), false);
@@ -128,7 +128,7 @@ int Field_newdate::store(int64_t nr,
     set_datetime_warning(error == 3 ? MYSQL_ERROR::WARN_LEVEL_NOTE :
                          MYSQL_ERROR::WARN_LEVEL_WARN,
                          error == 2 ? 
-                         ER_WARN_DATA_OUT_OF_RANGE : WARN_DATA_TRUNCATED,
+                         ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED,
                          nr,MYSQL_TIMESTAMP_DATE, 1);
 
   int3store(ptr,tmp);
@@ -153,7 +153,7 @@ int Field_newdate::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_date((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
+      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), MYSQL_TIMESTAMP_DATE, 1);
     }
     if (!error && ltime->time_type != MYSQL_TIMESTAMP_DATE &&
@@ -163,7 +163,7 @@ int Field_newdate::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
       set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_NOTE,
-                           WARN_DATA_TRUNCATED,
+                           ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), MYSQL_TIMESTAMP_DATE, 1);
       error= 3;
     }
@@ -172,7 +172,7 @@ int Field_newdate::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
   {
     tmp=0;
     error= 1;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   int3store(ptr,tmp);
   return error;

@@ -49,14 +49,14 @@
 
 #define CLI_DRIZZLE_CONNECT STDCALL drizzle_connect
 
-#include <my_sys.h>
-#include <mysys_err.h>
+#include <mysys/my_sys.h>
+#include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
-#include "drizzled_error.h"
+#include <drizzled/error.h>
 #include "errmsg.h"
-#include <violite.h>
-#include <my_pthread.h>        /* because of signal()  */
+#include <vio/violite.h>
+#include <mysys/my_pthread.h>        /* because of signal()  */
 
 #include <sys/stat.h>
 #include <signal.h>

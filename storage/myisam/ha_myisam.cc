@@ -19,7 +19,7 @@
 #endif
 
 #define MYSQL_SERVER 1
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_bit.h>
 #include <myisampack.h>

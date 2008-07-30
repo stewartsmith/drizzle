@@ -44,7 +44,7 @@ int Field_time::store(const char *from,
   {
     tmp=0L;
     error= 2;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
+    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                          from, len, MYSQL_TIMESTAMP_TIME, 1);
   }
   else
@@ -52,7 +52,7 @@ int Field_time::store(const char *from,
     if (warning & MYSQL_TIME_WARN_TRUNCATED)
     {
       set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                           WARN_DATA_TRUNCATED,
+                           ER_WARN_DATA_TRUNCATED,
                            from, len, MYSQL_TIMESTAMP_TIME, 1);
       error= 1;
     }

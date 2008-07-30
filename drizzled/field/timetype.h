@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_TIME
 #define DRIZZLE_SERVER_FIELD_TIME
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 class Field_time :public Field_str {
 public:
