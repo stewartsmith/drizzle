@@ -36,6 +36,8 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${LIBEVENT_CPPFLAGS}
+
 DTRACE = @DTRACE@
 
 DTRACEFLAGS = @DTRACEFLAGS@

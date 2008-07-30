@@ -90,6 +90,11 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 
+#undef bcmp				// Fix problem with new readline
+
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
 #include <readline/readline.h>
 
 /**
@@ -2191,8 +2196,8 @@ static void initialize_readline (const char *name)
   rl_readline_name= (char *)name;
 
   /* Tell the completer that we want a crack first. */
-  rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;
-  rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
+  rl_attempted_completion_function= (typeof rl_attempted_completion_function)&new_mysql_completion;
+  rl_completion_entry_function= (typeof rl_completion_entry_function)&no_completion;
 }
 
 
@@ -2207,7 +2212,11 @@ char **mysql_completion (const char *text,
                         int end __attribute__((unused)))
 {
   if (!status.batch && !quick)
+#ifdef HAVE_DECL_COMPLETION_MATCHES
+    return completion_matches(text, new_command_generator);
+#else
     return rl_completion_matches(text, new_command_generator);
+#endif
   else
     return (char**) 0;
 }
