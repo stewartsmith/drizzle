@@ -18,7 +18,6 @@
 			     CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION)
 
 sig_handler my_pipe_sig_handler(int sig);
-void read_user_name(char *name);
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
 
 

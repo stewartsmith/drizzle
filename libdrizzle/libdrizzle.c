@@ -229,37 +229,6 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   return(rc);
 }
 
-#if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
-struct passwd *getpwuid(uid_t);
-char* getlogin(void);
-#endif
-
-void read_user_name(char *name)
-{
-  if (geteuid() == 0)
-    (void) strmov(name,"root");    /* allow use of surun */
-  else
-  {
-#ifdef HAVE_GETPWUID
-    struct passwd *skr;
-    const char *str;
-    if ((str=getlogin()) == NULL)
-    {
-      if ((skr=getpwuid(geteuid())) != NULL)
-  str=skr->pw_name;
-      else if (!(str=getenv("USER")) && !(str=getenv("LOGNAME")) &&
-         !(str=getenv("LOGIN")))
-  str="UNKNOWN_USER";
-    }
-    (void) strmake(name,str,USERNAME_LENGTH);
-#elif HAVE_CUSERID
-    (void) cuserid(name);
-#else
-    strmov(name,"UNKNOWN_USER");
-#endif
-  }
-  return;
-}
 
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
