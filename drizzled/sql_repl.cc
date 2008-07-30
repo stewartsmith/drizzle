@@ -20,7 +20,6 @@
 #include "sql_repl.h"
 #include "log_event.h"
 #include "rpl_filter.h"
-#include <my_dir.h>
 
 int max_binlog_dump_events = 0; // unlimited
 
@@ -210,7 +209,7 @@ bool log_in_use(const char* log_name)
     if ((linfo = tmp->current_linfo))
     {
       pthread_mutex_lock(&linfo->lock);
-      result = !bcmp((uchar*) log_name, (uchar*) linfo->log_file_name,
+      result = !memcmp((uchar*) log_name, (uchar*) linfo->log_file_name,
                      log_name_len);
       pthread_mutex_unlock(&linfo->lock);
       if (result)

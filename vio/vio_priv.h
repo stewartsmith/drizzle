@@ -16,7 +16,7 @@
 /* Structures and functions private to the vio package */
 
 #define DONT_MAP_VIO
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <libdrizzle/drizzle.h>
 #include <mysys/my_sys.h>
 #include <string.h>

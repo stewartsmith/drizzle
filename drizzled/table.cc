@@ -1220,7 +1220,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   {
     /* Old file format with default as not null */
     uint null_length= (share->null_fields+7)/8;
-    bfill(share->default_values + (null_flags - (uchar*) record),
+    memset(share->default_values + (null_flags - (uchar*) record), 
           null_length, 255);
   }
 
@@ -1562,7 +1562,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   delete outparam->file;
   outparam->file= 0;				// For easier error checking
   outparam->db_stat=0;
-  free_root(&outparam->mem_root, MYF(0));       // Safe to call on bzero'd root
+  free_root(&outparam->mem_root, MYF(0));       // Safe to call on zeroed root
   my_free((char*) outparam->alias, MYF(MY_ALLOW_ZERO_PTR));
   return (error);
 }
@@ -2689,7 +2689,7 @@ bool TABLE_LIST::is_leaf_for_name_resolution()
 
 TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
 {
-  TABLE_LIST *cur_table_ref;
+  TABLE_LIST *cur_table_ref= NULL;
   NESTED_JOIN *cur_nested_join;
 
   if (is_leaf_for_name_resolution())

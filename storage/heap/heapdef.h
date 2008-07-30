@@ -15,7 +15,7 @@
 
 /* This file is included in all heap-files */
 
-#include <my_base.h>			/* This includes global */
+#include <drizzled/base.h>		/* This includes global */
 C_MODE_START
 #include <mysys/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */

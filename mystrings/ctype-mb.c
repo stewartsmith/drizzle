@@ -13,9 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
-#include "m_ctype.h"
 #include "m_string.h"
+#include "m_ctype.h"
 
 #ifdef USE_MB
 
@@ -603,7 +602,7 @@ static void pad_max_char(CHARSET_INFO *cs, char *str, char *end)
   
   if (!(cs->state & MY_CS_UNICODE))
   {
-    bfill(str, end - str, 255);
+    memset(str, 255, end - str);
     return;
   }
   

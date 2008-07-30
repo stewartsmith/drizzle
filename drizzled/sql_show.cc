@@ -20,7 +20,7 @@
 #include "sql_select.h"                         // For select_describe
 #include "sql_show.h"
 #include "repl_failsafe.h"
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 
 #define STR_OR_NIL(S) ((S) ? (S) : "<nil>")
 
@@ -252,7 +252,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
                continue;
        }
 #endif
-      if (!MY_S_ISDIR(file->mystat->st_mode))
+      if (!S_ISDIR(file->mystat->st_mode))
         continue;
 
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));

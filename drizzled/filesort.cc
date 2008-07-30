@@ -691,7 +691,7 @@ static void make_sortkey(register SORTPARAM *param,
 	if (field->is_null())
 	{
 	  if (sort_field->reverse)
-	    bfill(to,sort_field->length+1,(char) 255);
+	    memset(to, 255, sort_field->length+1);
 	  else
 	    memset((char*) to, 0, sort_field->length+1);
 	  to+= sort_field->length+1;
@@ -1589,7 +1589,7 @@ void change_double_for_sort(double nr,uchar *to)
   else
   {
 #ifdef WORDS_BIGENDIAN
-    memcpy_fixed(tmp,&nr,sizeof(nr));
+    memcpy(tmp,&nr,sizeof(nr));
 #else
     {
       uchar *ptr= (uchar*) &nr;

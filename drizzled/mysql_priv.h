@@ -28,7 +28,7 @@
 
 #ifndef MYSQL_CLIENT
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include "version.h"
 #include <mysys/my_sys.h>
 #include <libdrizzle/my_time.h>
@@ -36,7 +36,7 @@
 #include <mysys/hash.h>
 #include <signal.h>
 #include <mysys/thr_lock.h>
-#include <my_base.h>			/* Needed by field.h */
+#include <drizzled/base.h>			/* Needed by field.h */
 #include <mysys/queues.h>
 #include "sql_bitmap.h"
 #include "sql_array.h"
@@ -1927,7 +1927,7 @@ inline void mark_as_null_row(TABLE *table)
 {
   table->null_row=1;
   table->status|=STATUS_NULL_ROW;
-  bfill(table->null_flags,table->s->null_bytes,255);
+  memset(table->null_flags, 255, table->s->null_bytes);
 }
 
 inline void table_case_convert(char * name, uint length)

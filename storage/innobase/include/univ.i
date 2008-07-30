@@ -30,7 +30,7 @@ Created 1/20/1994 Heikki Tuuri
 in compiling more Posix-compatible. These headers also define __WIN__
 if we are compiling on Windows. */
 
-# include <my_global.h>
+# include <drizzled/global.h>
 # include <mysys/my_pthread.h>
 
 /* Include <sys/stat.h> to get S_I... macros defined for os0file.c */

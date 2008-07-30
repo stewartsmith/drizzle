@@ -36,7 +36,6 @@
 
 #include "client_priv.h"
 #include <drizzled_error.h>
-#include <my_dir.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
 #include <vio/violite.h>
@@ -6908,8 +6907,8 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     for (i=1 ; i <= found_sets ; i++)
     {
       pos=from[found_set[i-1].table_offset];
-      rep_str[i].found= !bcmp((const uchar*) pos,
-            (const uchar*) "\\^", 3) ? 2 : 1;
+      rep_str[i].found= !memcmp((const uchar*) pos,
+                                (const uchar*) "\\^", 3) ? 2 : 1;
       rep_str[i].replace_string=to_array[found_set[i-1].table_offset];
       rep_str[i].to_offset=found_set[i-1].found_offset-start_at_word(pos);
       rep_str[i].from_offset=found_set[i-1].found_offset-replace_len(pos)+
@@ -7036,8 +7035,8 @@ void copy_bits(REP_SET *to,REP_SET *from)
 
 int cmp_bits(REP_SET *set1,REP_SET *set2)
 {
-  return bcmp((uchar*) set1->bits,(uchar*) set2->bits,
-        sizeof(uint) * set1->size_of_bits);
+  return memcmp((uchar*) set1->bits,(uchar*) set2->bits,
+                sizeof(uint) * set1->size_of_bits);
 }
 
 
@@ -7106,16 +7105,16 @@ int find_found(FOUND_SET *found_set,uint table_offset, int found_offset)
 
 uint start_at_word(char * pos)
 {
-  return (((!bcmp((const uchar*) pos, (const uchar*) "\\b",2) && pos[2]) ||
-           !bcmp((const uchar*) pos, (const uchar*) "\\^", 2)) ? 1 : 0);
+  return (((!memcmp((const uchar*) pos, (const uchar*) "\\b",2) && pos[2]) ||
+           !memcmp((const uchar*) pos, (const uchar*) "\\^", 2)) ? 1 : 0);
 }
 
 uint end_of_word(char * pos)
 {
   char * end=strend(pos);
-  return ((end > pos+2 && !bcmp((const uchar*) end-2,
-                                (const uchar*) "\\b", 2)) ||
-    (end >= pos+2 && !bcmp((const uchar*) end-2,
+  return ((end > pos+2 && !memcmp((const uchar*) end-2,
+                                  (const uchar*) "\\b", 2)) ||
+    (end >= pos+2 && !memcmp((const uchar*) end-2,
                                 (const uchar*) "\\$",2))) ? 1 : 0;
 }
 

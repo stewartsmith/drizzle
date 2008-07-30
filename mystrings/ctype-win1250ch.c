@@ -36,7 +36,6 @@
  * .configure. strxfrm_multiply_win1250ch=2
  */
 
-#include "my_global.h"
 #include "m_string.h"
 #include "m_ctype.h"
 
@@ -574,7 +573,7 @@ my_strnxfrm_win1250ch(CHARSET_INFO * cs  __attribute__((unused)),
         uint pad_length= de - dst;
         set_if_smaller(pad_length, nweights);
         /* [82.01] - weights for space character */
-        bfill(dst, pad_length, (int) (level ? 0x01 : 0x82));
+        memset(dst, (level ? 0x01 : 0x82), pad_length);
         dst+= pad_length;
       }
       my_strxfrm_desc_and_reverse(dstl, dst, flags, level);

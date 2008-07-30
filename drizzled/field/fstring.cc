@@ -275,7 +275,7 @@ Field_string::unpack(uchar *to,
 
   memcpy(to, from, length);
   // Pad the string with the pad character of the fields charset
-  bfill(to + length, field_length - length, field_charset->pad_char);
+  memset(to + length, field_charset->pad_char, field_length - length);
   return from+length;
 }
 

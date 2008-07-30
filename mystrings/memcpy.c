@@ -18,8 +18,7 @@
   moves len bytes from src to dst.  The result is dst.	This is not
   the same as strncpy or strnmov, while move a maximum of len bytes
   and stop early if they hit a NUL character.  This moves len bytes
-  exactly, no more, no less.  See also bcopy() and bmove() which do
-  not return a value but otherwise do the same job.
+  exactly, no more, no less.
 */
 
 #include "strings.h"

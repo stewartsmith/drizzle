@@ -15,7 +15,6 @@
 
 #include "mysql_priv.h"
 #include <m_ctype.h>
-#include <my_dir.h>
 #include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
@@ -39,7 +38,7 @@
 #endif
 
 #include <mysys/thr_alarm.h>
-#include <errmsg.h>
+#include <libdrizzle/errmsg.h>
 
 #define mysqld_charset &my_charset_latin1
 

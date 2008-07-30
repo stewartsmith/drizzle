@@ -1175,7 +1175,7 @@ change:
           {
             LEX *lex = Lex;
             lex->sql_command = SQLCOM_CHANGE_MASTER;
-            bzero((char*) &lex->mi, sizeof(lex->mi));
+            memset((char*) &lex->mi, 0, sizeof(lex->mi));
           }
           master_defs
           {}
@@ -1298,7 +1298,7 @@ create:
             lex->alter_info.reset();
             lex->col_list.empty();
             lex->change=NullS;
-            bzero((char*) &lex->create_info,sizeof(lex->create_info));
+            memset((char*) &lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.options=$2 | $4;
             lex->create_info.db_type= ha_default_handlerton(thd);
             lex->create_info.default_table_charset= NULL;
@@ -2420,7 +2420,7 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TABLE_LIST*) lex->select_lex.table_list.first)->db;
-            bzero((char*) &lex->create_info,sizeof(lex->create_info));
+            memset((char*) &lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.db_type= 0;
             lex->create_info.default_table_charset= NULL;
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
@@ -2680,7 +2680,7 @@ slave:
             lex->sql_command = SQLCOM_SLAVE_START;
             lex->type = 0;
             /* We'll use mi structure for UNTIL options */
-            bzero((char*) &lex->mi, sizeof(lex->mi));
+            memset((char*) &lex->mi, 0, sizeof(lex->mi));
             /* If you change this code don't forget to update SLAVE START too */
           }
           slave_until
@@ -2698,7 +2698,7 @@ slave:
             lex->sql_command = SQLCOM_SLAVE_START;
             lex->type = 0;
             /* We'll use mi structure for UNTIL options */
-            bzero((char*) &lex->mi, sizeof(lex->mi));
+            memset((char*) &lex->mi, 0, sizeof(lex->mi));
           }
           slave_until
           {}
@@ -5384,7 +5384,7 @@ show:
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
-            bzero((char*) &lex->create_info,sizeof(lex->create_info));
+            memset((char*) &lex->create_info, 0, sizeof(lex->create_info));
           }
           show_param
           {}

@@ -18,7 +18,7 @@
 
 #include "mysql_priv.h"
 #include <mysys/mysys_err.h>
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 #include <m_ctype.h>
 #include "log.h"
 

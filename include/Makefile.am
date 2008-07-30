@@ -20,12 +20,7 @@ BUILT_SOURCES =		drizzled_ername.h \
 			drizzled_error.h \
 			sql_state.h
 
-pkginclude_HEADERS =	errmsg.h \
-			my_global.h \
-			my_dir.h \
-			$(BUILT_SOURCES)
-
-noinst_HEADERS =	my_base.h
+pkginclude_HEADERS =	$(BUILT_SOURCES)
 
 LDADD = $(top_builddir)/mysys/libmysyslt.la \
         $(top_builddir)/mystrings/libmystringslt.la $(ZLIB_LIBS)

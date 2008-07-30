@@ -36,7 +36,6 @@
 #include "client_priv.h"
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include <my_dir.h>
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__          // Skip warnings in getopt.h
 #endif
@@ -90,8 +89,6 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 #endif
-
-#undef bcmp        // Fix problem with new readline
 
 #include <readline/readline.h>
 
@@ -3685,7 +3682,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line
 
   /* Save old status */
   old_status=status;
-  bfill((char*) &status,sizeof(status),(char) 0);
+  memset((char*) &status, 0, sizeof(status));
 
   // Run in batch mode
   status.batch=old_status.batch;

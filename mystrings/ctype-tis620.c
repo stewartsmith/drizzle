@@ -47,9 +47,8 @@
  * .configure. strxfrm_multiply_tis620=4
  */
 
-#include <my_global.h>
-#include <mysys/my_sys.h>
 #include "m_string.h"
+#include <mysys/my_sys.h>
 #include "m_ctype.h"
 #include "t_ctype.h"
 

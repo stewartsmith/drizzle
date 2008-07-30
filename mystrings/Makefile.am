@@ -54,9 +54,9 @@ noinst_HEADERS =	my_uctype.h
 
 # C files common to all three cases are included directly below, so that
 # ASRCS and CSRCS can be smaller
-libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove.c bmove512.c \
+libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove512.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
-				bcmp.c strtoll.c strtoull.c llstr.c strnlen.c \
+				strtoll.c strtoull.c llstr.c strnlen.c \
 				ctype.c ctype-simple.c ctype-mb.c \
 				ctype-big5.c ctype-cp932.c ctype-czech.c \
 				ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c \

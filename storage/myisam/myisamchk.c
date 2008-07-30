@@ -15,7 +15,7 @@
 
 /* Describe, check and repair of MyISAM tables */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>

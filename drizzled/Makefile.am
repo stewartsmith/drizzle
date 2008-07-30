@@ -125,6 +125,8 @@ noinst_HEADERS = item.h \
 		 sql_array.h \
 		 scheduler.h \
 		 sql_plugin.h \
+		 global.h \
+		 base.h \
 		 probes.h
 
 drizzled_SOURCES = sql_lex.cc \

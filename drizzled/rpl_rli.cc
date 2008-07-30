@@ -17,7 +17,6 @@
 
 #include "rpl_mi.h"
 #include "rpl_rli.h"
-#include <my_dir.h>
 #include "sql_repl.h"  // For check_binlog_magic
 #include "rpl_utility.h"
 
@@ -985,8 +984,8 @@ void Relay_log_info::cached_charset_invalidate()
 
 bool Relay_log_info::cached_charset_compare(char *charset) const
 {
-  if (bcmp((uchar*) cached_charset, (uchar*) charset,
-           sizeof(cached_charset)))
+  if (memcmp((uchar*) cached_charset, (uchar*) charset,
+             sizeof(cached_charset)))
   {
     memcpy(const_cast<char*>(cached_charset), charset, sizeof(cached_charset));
     return(1);

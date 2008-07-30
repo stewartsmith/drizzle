@@ -26,7 +26,6 @@ ctype-ujis.c file.
  * .configure. mbmaxlen_eucjpms=3
  */
 
-#include <my_global.h>
 #include "m_string.h"
 #include "m_ctype.h"
 

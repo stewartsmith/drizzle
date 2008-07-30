@@ -136,7 +136,7 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
       memset(finfo.mystat, 0, sizeof(struct stat));
       VOID(strmov(tmp_file,dp->d_name));
       VOID(stat(tmp_path, finfo.mystat));
-      if (!(finfo.mystat->st_mode & MY_S_IREAD))
+      if (!(finfo.mystat->st_mode & S_IREAD))
         continue;
     }
     else

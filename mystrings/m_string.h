@@ -18,6 +18,8 @@
 
 /*  This is needed for the definitions of strchr... on solaris */
 
+#include <drizzled/global.h>
+
 #ifndef _m_string_h
 #define _m_string_h
 #ifndef __USE_GNU
@@ -37,29 +39,6 @@
 /*  This is needed for the definitions of memcpy... on solaris */
 #if defined(HAVE_MEMORY_H) && !defined(__cplusplus)
 #include <memory.h>
-#endif
-
-#if !defined(HAVE_MEMCPY) && !defined(HAVE_MEMMOVE)
-# define memcpy(d, s, n)	bcopy ((s), (d), (n))
-# define memset(A,C,B)		bfill((A),(B),(C))
-# define memmove(d, s, n)	bmove ((d), (s), (n))
-#elif defined(HAVE_MEMMOVE)
-# define bmove(d, s, n)		memmove((d), (s), (n))
-#else
-# define memmove(d, s, n)	bmove((d), (s), (n)) /* our bmove */
-#endif
-
-/* Unixware 7 */
-#if !defined(HAVE_BFILL)
-# define bfill(A,B,C)           memset((A),(C),(B))
-# define bmove_align(A,B,C)    memcpy((A),(B),(C))
-#endif
-
-#if !defined(HAVE_BCMP)
-# define bcopy(s, d, n)		memcpy((d), (s), (n))
-# define bcmp(A,B,C)		memcmp((A),(B),(C))
-# define bzero(A,B)		memset((A),0,(B))
-# define bmove_align(A,B,C)     memcpy((A),(B),(C))
 #endif
 
 #if defined(__cplusplus)
@@ -88,40 +67,14 @@ extern char _dig_vec_lower[];
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
 #endif
 
-#ifdef BAD_MEMCPY			/* Problem with gcc on Alpha */
-#define memcpy_fixed(A,B,C) bmove((A),(B),(C))
-#else
-#define memcpy_fixed(A,B,C) memcpy((A),(B),(C))
-#endif
-
 #if (!defined(USE_BMOVE512) || defined(HAVE_purify)) && !defined(bmove512)
 #define bmove512(A,B,C) memcpy(A,B,C)
 #endif
 
 	/* Prototypes for string functions */
 
-#if !defined(bfill) && !defined(HAVE_BFILL)
-extern	void bfill(uchar *dst,size_t len,char fill);
-#endif
-
-#if !defined(bcmp) && !defined(HAVE_BCMP)
-extern	size_t bcmp(const uchar *s1,const uchar *s2,size_t len);
-#endif
-#ifdef HAVE_purify
-extern	size_t my_bcmp(const uchar *s1,const uchar *s2,size_t len);
-#undef bcmp
-#define bcmp(A,B,C) my_bcmp((A),(B),(C))
-#define bzero_if_purify(A,B) bzero(A,B)
-#else
-#define bzero_if_purify(A,B)
-#endif /* HAVE_purify */
-
 #ifndef bmove512
 extern	void bmove512(uchar *dst,const uchar *src,size_t len);
-#endif
-
-#if !defined(HAVE_BMOVE) && !defined(bmove)
-extern	void bmove(uuchar *dst, const uchar *src,size_t len);
 #endif
 
 extern	void bmove_upp(uchar *dst,const uchar *src,size_t len);

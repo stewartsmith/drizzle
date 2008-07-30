@@ -24,7 +24,6 @@
 
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 char * strcont(register const char *str, register const char *set)
