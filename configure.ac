@@ -299,7 +299,7 @@ AC_SUBST(LD_VERSION_SCRIPT)
 AC_MSG_CHECKING(for libevent)
 AC_ARG_WITH(libevent,
   [AS_HELP_STRING([--with-libevent],
-       [Use libevent build directory]),
+       [Use libevent build directory])],
   [ with_libevent=$withval ],
   [ with_libevent=yes ])
 

@@ -2196,8 +2196,8 @@ static void initialize_readline (const char *name)
   rl_readline_name= (char *)name;
 
   /* Tell the completer that we want a crack first. */
-  rl_attempted_completion_function= (typeof rl_attempted_completion_function)&new_mysql_completion;
-  rl_completion_entry_function= (typeof rl_completion_entry_function)&no_completion;
+  rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;
+  rl_completion_entry_function= (rl_compentry_func_t*)&no_completion;
 }
 
 
