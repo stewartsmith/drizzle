@@ -431,6 +431,9 @@ void STDCALL drizzle_close(DRIZZLE *sock);
 #define DRIZZLE_NO_DATA        100
 #define DRIZZLE_DATA_TRUNCATED 101
 
+
+#define DRIZZLE_PROTOCOL_NO_MORE_DATA 0xFE
+
 #define drizzle_reload(drizzle) drizzle_refresh((drizzle),REFRESH_GRANT)
 
 /*

@@ -950,7 +950,7 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
   if (packet_error == cli_safe_read(drizzle))
     return 1;
 
-  *row= ((drizzle->net.read_pos[0] == 254) ? NULL :
+  *row= ((drizzle->net.read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA) ? NULL :
    (char*) (drizzle->net.read_pos+1));
   return 0;
 }
@@ -1001,10 +1001,7 @@ bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode)
 
 bool STDCALL drizzle_more_results(DRIZZLE *drizzle)
 {
-  bool res;
-
-  res= ((drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
-  return(res);
+  return (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? true:false;
 }
 
 
