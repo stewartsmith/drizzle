@@ -26,7 +26,6 @@
 #endif
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_select.h"
 
 static bool convert_constant_item(THD *, Item_field *, Item **);

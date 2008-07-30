@@ -17,7 +17,6 @@
 /* Some general useful functions */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 
 /* INFORMATION_SCHEMA name */
 LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};

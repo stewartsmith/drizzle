@@ -45,7 +45,7 @@
 #define HA_ADMIN_NEEDS_CHECK    -12
 
 /* Bits to show what an alter table will do */
-#include <sql_bitmap.h>
+#include <drizzled/sql_bitmap.h>
 
 #define HA_MAX_ALTER_FLAGS 39
 typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;

@@ -27,7 +27,6 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
-#include <m_ctype.h>
 #include <errno.h>
 
 // Maximum allowed exponent value for converting string to decimal

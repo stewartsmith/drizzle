@@ -37,7 +37,6 @@ bin_PROGRAMS =	drizzle \
 drizzle_SOURCES =		drizzle.c readline.c completion_hash.c
 drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) $(GLIB_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
-drizzle_CPPFLAGS = 		$(AM_CPPFLAGS) $(GLIB_CFLAGS)
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlebinlog_SOURCES =     drizzlebinlog.cc \
@@ -46,7 +45,6 @@ drizzlebinlog_SOURCES =     drizzlebinlog.cc \
                 $(top_srcdir)/mysys/my_bit.c \
                 $(top_srcdir)/mysys/my_bitmap.c \
                 $(top_srcdir)/mysys/base64.c
-drizzlebinlog_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/drizzled
 
 drizzledump_SOURCES=            drizzledump.c 
 

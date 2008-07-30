@@ -18,8 +18,6 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
-#include <m_ctype.h>
-#include <storage/myisam/myisam.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment

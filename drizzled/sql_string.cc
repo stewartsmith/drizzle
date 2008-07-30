@@ -21,8 +21,7 @@
 
 #include "global.h"
 #include <mysys/my_sys.h>
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
 
 /*
   The following extern declarations are ok as these are interface functions

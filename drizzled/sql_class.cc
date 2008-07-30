@@ -30,7 +30,6 @@
 #include "rpl_record.h"
 #include "slave.h"
 #include "log_event.h"
-#include <m_ctype.h>
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>

@@ -29,7 +29,7 @@ have disabled the InnoDB inlining in this file. */
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include <mysql_priv.h>
+#include <drizzled/mysql_priv.h>
 #include <drizzled/error.h>
 
 #include <mystrings/m_ctype.h>
@@ -72,30 +72,30 @@ typedef int64_t longlong;
 
 /* Include necessary InnoDB headers */
 extern "C" {
-#include "../storage/innobase/include/univ.i"
-#include "../storage/innobase/include/os0file.h"
-#include "../storage/innobase/include/os0thread.h"
-#include "../storage/innobase/include/srv0start.h"
-#include "../storage/innobase/include/srv0srv.h"
-#include "../storage/innobase/include/trx0roll.h"
-#include "../storage/innobase/include/trx0trx.h"
-#include "../storage/innobase/include/trx0sys.h"
-#include "../storage/innobase/include/mtr0mtr.h"
-#include "../storage/innobase/include/row0ins.h"
-#include "../storage/innobase/include/row0mysql.h"
-#include "../storage/innobase/include/row0sel.h"
-#include "../storage/innobase/include/row0upd.h"
-#include "../storage/innobase/include/log0log.h"
-#include "../storage/innobase/include/lock0lock.h"
-#include "../storage/innobase/include/dict0crea.h"
-#include "../storage/innobase/include/btr0cur.h"
-#include "../storage/innobase/include/btr0btr.h"
-#include "../storage/innobase/include/fsp0fsp.h"
-#include "../storage/innobase/include/sync0sync.h"
-#include "../storage/innobase/include/fil0fil.h"
-#include "../storage/innobase/include/trx0xa.h"
-#include "../storage/innobase/include/thr0loc.h"
-#include "../storage/innobase/include/ha_prototypes.h"
+#include "storage/innobase/include/univ.i"
+#include "storage/innobase/include/os0file.h"
+#include "storage/innobase/include/os0thread.h"
+#include "storage/innobase/include/srv0start.h"
+#include "storage/innobase/include/srv0srv.h"
+#include "storage/innobase/include/trx0roll.h"
+#include "storage/innobase/include/trx0trx.h"
+#include "storage/innobase/include/trx0sys.h"
+#include "storage/innobase/include/mtr0mtr.h"
+#include "storage/innobase/include/row0ins.h"
+#include "storage/innobase/include/row0mysql.h"
+#include "storage/innobase/include/row0sel.h"
+#include "storage/innobase/include/row0upd.h"
+#include "storage/innobase/include/log0log.h"
+#include "storage/innobase/include/lock0lock.h"
+#include "storage/innobase/include/dict0crea.h"
+#include "storage/innobase/include/btr0cur.h"
+#include "storage/innobase/include/btr0btr.h"
+#include "storage/innobase/include/fsp0fsp.h"
+#include "storage/innobase/include/sync0sync.h"
+#include "storage/innobase/include/fil0fil.h"
+#include "storage/innobase/include/trx0xa.h"
+#include "storage/innobase/include/thr0loc.h"
+#include "storage/innobase/include/ha_prototypes.h"
 }
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;

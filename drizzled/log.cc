@@ -31,7 +31,6 @@
 
 #include <mysys/my_dir.h>
 #include <stdarg.h>
-#include <m_ctype.h>				// For test_if_number
 
 #include <drizzled/plugin.h>
 

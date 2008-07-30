@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_TIMESTAMP
 #define DRIZZLE_SERVER_FIELD_TIMESTAMP
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 class Field_timestamp :public Field_str {
 public:

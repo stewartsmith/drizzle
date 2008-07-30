@@ -25,7 +25,6 @@
 */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 
 static void do_field_eq(Copy_field *copy)
 {

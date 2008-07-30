@@ -22,7 +22,7 @@
 #include <drizzled/error.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <violite.h>
+#include <vio/violite.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/poll.h>
@@ -39,7 +39,7 @@
 
 #define DONT_USE_THR_ALARM
 
-#include "thr_alarm.h"
+#include <mysys/thr_alarm.h>
 
 
 #define update_statistics(A)

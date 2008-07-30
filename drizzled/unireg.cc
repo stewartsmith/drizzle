@@ -24,7 +24,6 @@
 */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include <assert.h>
 
 #define FCOMP			17		/* Bytes for a packed field */

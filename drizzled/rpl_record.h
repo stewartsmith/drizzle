@@ -16,7 +16,7 @@
 #ifndef RPL_RECORD_H
 #define RPL_RECORD_H
 
-#include <rpl_reporting.h>
+#include <drizzled/rpl_reporting.h>
 
 #if !defined(MYSQL_CLIENT)
 size_t pack_row(TABLE* table, MY_BITMAP const* cols,

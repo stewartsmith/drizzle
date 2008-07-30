@@ -21,7 +21,6 @@
 #include <libdrizzle/my_time.h>
 
 #include "tzfile.h"
-#include <m_string.h>
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo

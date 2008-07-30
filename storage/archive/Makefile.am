@@ -21,8 +21,6 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-AM_CPPFLAGS =		-I$(top_builddir) \
-			-I$(top_srcdir)/drizzled
 
 LDADD =
 AM_CFLAGS = -DHAVE_MYSQL_CONFIG_H

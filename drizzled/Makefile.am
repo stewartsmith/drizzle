@@ -53,10 +53,6 @@ pkginclude_HEADERS =	error.h \
 
 noinst_LTLIBRARIES = libhandler.la
 
-AM_CPPFLAGS =	-I$(top_srcdir)/mystrings \
-		-I$(top_srcdir)/drizzled \
-		-I$(top_srcdir)
-
 LDADD = $(top_builddir)/vio/libviolt.la \
 	$(top_builddir)/libdrizzle/libsqlcommon.la \
 	$(top_builddir)/mysys/libmysyslt.la \
