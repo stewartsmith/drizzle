@@ -15,7 +15,6 @@
 
 #include <my_global.h> // For HAVE_REPLICATION
 #include "mysql_priv.h"
-#include <my_dir.h>
 
 #include "rpl_mi.h"
 

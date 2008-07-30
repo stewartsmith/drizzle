@@ -57,7 +57,6 @@
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
-#include <my_dir.h>
 
 extern CHARSET_INFO *character_set_filesystem;
 

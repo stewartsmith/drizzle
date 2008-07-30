@@ -28,7 +28,6 @@
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
 #include <assert.h>
-#include <my_dir.h>
 
 #define MAX_ROWS  1000
 #define HEADER_LENGTH 32                /* Length of header in errmsg.sys */

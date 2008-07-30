@@ -22,7 +22,6 @@
 */
 
 #include "mysql_priv.h"
-#include <my_dir.h>
 
 /**
   Read the contents of a .frm file.

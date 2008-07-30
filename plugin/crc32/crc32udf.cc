@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include <drizzled/plugin.h>
 #include <my_global.h>
-#include <my_dir.h>
 #include <zlib.h>
 
 bool udf_init_crc32udf(UDF_INIT *initid, UDF_ARGS *args, char *message)

@@ -21,7 +21,6 @@
 #include <storage/myisam/myisam.h>
 
 #include "ha_archive.h"
-#include <my_dir.h>
 
 /*
   First, if you want to understand storage engines you should look at 

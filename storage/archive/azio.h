@@ -42,7 +42,6 @@
 #include "my_global.h"
 #include <mysys/my_sys.h>
 
-#include <my_dir.h>
 #include <zlib.h>
 
 #ifdef  __cplusplus

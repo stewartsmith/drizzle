@@ -36,7 +36,6 @@
 
 #include "client_priv.h"
 #include <drizzled_error.h>
-#include <my_dir.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
 #include <vio/violite.h>

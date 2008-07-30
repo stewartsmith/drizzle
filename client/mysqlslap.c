@@ -77,7 +77,6 @@ TODO:
 
 #include "client_priv.h"
 #include <drizzled_error.h>
-#include <my_dir.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <sys/types.h>

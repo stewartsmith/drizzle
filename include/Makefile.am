@@ -22,7 +22,6 @@ BUILT_SOURCES =		drizzled_ername.h \
 
 pkginclude_HEADERS =	errmsg.h \
 			my_global.h \
-			my_dir.h \
 			$(BUILT_SOURCES)
 
 noinst_HEADERS =	my_base.h

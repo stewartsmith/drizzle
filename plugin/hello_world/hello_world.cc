@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include <drizzled/plugin.h>
 #include <my_global.h>
-#include <my_dir.h>
 
 bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {

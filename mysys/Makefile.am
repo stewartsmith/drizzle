@@ -39,6 +39,7 @@ pkginclude_HEADERS = 	my_alloc.h \
 noinst_HEADERS =	mysys_priv.h \
 			my_bit.h \
 			my_bitmap.h \
+			my_dir.h \
 			my_static.h \
 			my_handler.h \
 			my_handler_errors.h \

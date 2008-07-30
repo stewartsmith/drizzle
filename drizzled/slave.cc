@@ -34,7 +34,6 @@
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
 #include <mysys/thr_alarm.h>
-#include <my_dir.h>
 #include <libdrizzle/sql_common.h>
 #include <errmsg.h>
 #include <mysys/mysys_err.h>

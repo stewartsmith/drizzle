@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include <drizzled/plugin.h>
 #include <my_global.h>
-#include <my_dir.h>
 #include <openssl/md5.h>
 
 bool udf_init_md5udf(UDF_INIT *initid, UDF_ARGS *args, char *message)

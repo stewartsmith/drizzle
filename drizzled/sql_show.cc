@@ -20,7 +20,7 @@
 #include "sql_select.h"                         // For select_describe
 #include "sql_show.h"
 #include "repl_failsafe.h"
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 
 #define STR_OR_NIL(S) ((S) ? (S) : "<nil>")
 

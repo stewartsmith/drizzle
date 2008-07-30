@@ -2399,8 +2399,6 @@ void Item_func_binary::print(String *str, enum_query_type query_type)
 }
 
 
-#include <my_dir.h>
-
 String *Item_load_file::val_str(String *str)
 {
   assert(fixed == 1);
