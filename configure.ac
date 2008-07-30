@@ -49,6 +49,7 @@ sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 sinclude(config/ac-macros/pkg.m4)
+sinclude(config/ac-macros/ac_cxx_header_stdcxx_98.m4)
 
 # Remember to add a directory drizzled/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
@@ -161,7 +162,8 @@ ifdef([AC_PROG_CC_C99],[
   C99_SUPPORT_HACK=""
 ],[C99_SUPPORT_HACK="-std=gnu99"])
 AC_PROG_CXX
-if test "x$ac_ct_CXX" = "x"
+AC_CXX_HEADER_STDCXX_98
+if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
   AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
 fi
