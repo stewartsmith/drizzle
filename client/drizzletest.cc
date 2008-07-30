@@ -587,7 +587,7 @@ static void show_query(DRIZZLE *drizzle, const char* query)
     unsigned int i;
     unsigned int row_num= 0;
     unsigned int num_fields= drizzle_num_fields(res);
-    DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+    const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
 
     fprintf(stderr, "=== %s ===\n", query);
     while ((row= drizzle_fetch_row(res)))
@@ -1933,7 +1933,7 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     /* Find column number from the given column name */
     uint i;
     uint num_fields= drizzle_num_fields(res);
-    DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+    const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
 
     for (i= 0; i < num_fields; i++)
     {
@@ -4869,7 +4869,7 @@ void dump_warning_messages(void)
   Append the result for one field to the dynamic string ds
 */
 
-static void append_field(DYNAMIC_STRING *ds, uint col_idx, DRIZZLE_FIELD* field,
+static void append_field(DYNAMIC_STRING *ds, uint col_idx, const DRIZZLE_FIELD* field,
                          const char* val, uint64_t len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
@@ -4908,7 +4908,7 @@ static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
 {
   DRIZZLE_ROW row;
   uint32_t num_fields= drizzle_num_fields(res);
-  DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+  const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
   uint32_t *lengths;
 
   while ((row = drizzle_fetch_row(res)))
@@ -4929,10 +4929,10 @@ static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
 */
 
 static void append_metadata(DYNAMIC_STRING *ds,
-                            DRIZZLE_FIELD *field,
+                            const DRIZZLE_FIELD *field,
                             uint num_fields)
 {
-  DRIZZLE_FIELD *field_end;
+  const DRIZZLE_FIELD *field_end;
   dynstr_append(ds,"Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
                 "Column_alias\tType\tLength\tMax length\tIs_null\t"
                 "Flags\tDecimals\tCharsetnr\n");
@@ -5000,7 +5000,7 @@ static void append_info(DYNAMIC_STRING *ds, uint64_t affected_rows,
 */
 
 static void append_table_headings(DYNAMIC_STRING *ds,
-                                  DRIZZLE_FIELD *field,
+                                  const DRIZZLE_FIELD *field,
                                   uint num_fields)
 {
   uint col_idx;
@@ -5125,16 +5125,16 @@ static void run_query_normal(struct st_connection *cn,
 
       if (res)
       {
-  DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
-  uint num_fields= drizzle_num_fields(res);
+        const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+        uint num_fields= drizzle_num_fields(res);
 
-  if (display_metadata)
+        if (display_metadata)
           append_metadata(ds, fields, num_fields);
 
-  if (!display_result_vertically)
-    append_table_headings(ds, fields, num_fields);
+        if (!display_result_vertically)
+          append_table_headings(ds, fields, num_fields);
 
-  append_result(ds, res);
+        append_result(ds, res);
       }
 
       /*

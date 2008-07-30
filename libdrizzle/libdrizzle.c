@@ -80,7 +80,7 @@ static void append_wild(char *to,char *end,const char *wild);
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 {&max_allowed_packet, &net_buffer_length, 0};
 
-DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void)
+const DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void)
 {
   return &drizzle_internal_parameters;
 }
@@ -135,38 +135,11 @@ my_pipe_sig_handler(int sig __attribute__((unused)))
 
 
 /**************************************************************************
-  Connect to sql server
-  If host == 0 then use localhost
-**************************************************************************/
-
-#ifdef USE_OLD_FUNCTIONS
-DRIZZLE * STDCALL
-drizzle_connect(DRIZZLE *drizzle,const char *host,
-        const char *user, const char *passwd)
-{
-  DRIZZLE *res;
-  drizzle=drizzle_init(drizzle);      /* Make it thread safe */
-  {
-    if (!(res=drizzle_connect(drizzle,host,user,passwd,NullS,0,NullS,0)))
-    {
-      if (drizzle->free_me && drizzle)
-        free((uchar*) drizzle);
-    }
-    drizzle->reconnect= 1;
-    return(res);
-  }
-}
-#endif
-
-
-/**************************************************************************
   Change user and database
 **************************************************************************/
 
-int cli_read_change_user_result(DRIZZLE *drizzle, char *buff, const char *passwd)
+int cli_read_change_user_result(DRIZZLE *drizzle)
 {
-  (void)buff;
-  (void)passwd;
   ulong pkt_length;
 
   pkt_length= cli_safe_read(drizzle);
@@ -228,7 +201,7 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   /* Write authentication package */
   (void)simple_command(drizzle,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
 
-  rc= (*drizzle->methods->read_change_user_result)(drizzle, buff, passwd);
+  rc= (*drizzle->methods->read_change_user_result)(drizzle);
 
   if (rc == 0)
   {
@@ -253,37 +226,6 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   return(rc);
 }
 
-#if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
-struct passwd *getpwuid(uid_t);
-char* getlogin(void);
-#endif
-
-void read_user_name(char *name)
-{
-  if (geteuid() == 0)
-    (void) strmov(name,"root");    /* allow use of surun */
-  else
-  {
-#ifdef HAVE_GETPWUID
-    struct passwd *skr;
-    const char *str;
-    if ((str=getlogin()) == NULL)
-    {
-      if ((skr=getpwuid(geteuid())) != NULL)
-  str=skr->pw_name;
-      else if (!(str=getenv("USER")) && !(str=getenv("LOGNAME")) &&
-         !(str=getenv("LOGIN")))
-  str="UNKNOWN_USER";
-    }
-    (void) strmake(name,str,USERNAME_LENGTH);
-#elif HAVE_CUSERID
-    (void) cuserid(name);
-#else
-    strmov(name,"UNKNOWN_USER");
-#endif
-  }
-  return;
-}
 
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
 {
@@ -700,22 +642,6 @@ drizzle_list_processes(DRIZZLE *drizzle)
 }
 
 
-#ifdef USE_OLD_FUNCTIONS
-int  STDCALL
-drizzle_create_db(DRIZZLE *drizzle, const char *db)
-{
-  return(simple_command(drizzle,COM_CREATE_DB,db, (ulong) strlen(db),0));
-}
-
-
-int  STDCALL
-drizzle_drop_db(DRIZZLE *drizzle, const char *db)
-{
-  return(simple_command(drizzle,COM_DROP_DB,db,(ulong) strlen(db),0));
-}
-#endif
-
-
 int STDCALL
 drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level)
 {
@@ -785,21 +711,21 @@ drizzle_ping(DRIZZLE *drizzle)
 
 
 const char * STDCALL
-drizzle_get_server_info(DRIZZLE *drizzle)
+drizzle_get_server_info(const DRIZZLE *drizzle)
 {
   return((char*) drizzle->server_version);
 }
 
 
 const char * STDCALL
-drizzle_get_host_info(DRIZZLE *drizzle)
+drizzle_get_host_info(const DRIZZLE *drizzle)
 {
   return(drizzle->host_info);
 }
 
 
 uint STDCALL
-drizzle_get_proto_info(DRIZZLE *drizzle)
+drizzle_get_proto_info(const DRIZZLE *drizzle)
 {
   return (drizzle->protocol_version);
 }
@@ -815,74 +741,74 @@ uint32_t STDCALL drizzle_get_client_version(void)
   return MYSQL_VERSION_ID;
 }
 
-bool STDCALL drizzle_eof(DRIZZLE_RES *res)
+bool STDCALL drizzle_eof(const DRIZZLE_RES *res)
 {
   return res->eof;
 }
 
-DRIZZLE_FIELD * STDCALL drizzle_fetch_field_direct(DRIZZLE_RES *res,uint fieldnr)
+const DRIZZLE_FIELD * STDCALL drizzle_fetch_field_direct(const DRIZZLE_RES *res, unsigned int fieldnr)
 {
   return &(res)->fields[fieldnr];
 }
 
-DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(DRIZZLE_RES *res)
+const DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(const DRIZZLE_RES *res)
 {
-  return (res)->fields;
+  return res->fields;
 }
 
-DRIZZLE_ROW_OFFSET STDCALL DRIZZLE_ROW_tell(DRIZZLE_RES *res)
+DRIZZLE_ROW_OFFSET STDCALL drizzle_row_tell(const DRIZZLE_RES *res)
 {
   return res->data_cursor;
 }
 
-DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_tell(DRIZZLE_RES *res)
+DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_tell(const DRIZZLE_RES *res)
 {
-  return (res)->current_field;
+  return res->current_field;
 }
 
 /* DRIZZLE */
 
-unsigned int STDCALL drizzle_field_count(DRIZZLE *drizzle)
+unsigned int STDCALL drizzle_field_count(const DRIZZLE *drizzle)
 {
   return drizzle->field_count;
 }
 
-uint64_t STDCALL drizzle_affected_rows(DRIZZLE *drizzle)
+uint64_t STDCALL drizzle_affected_rows(const DRIZZLE *drizzle)
 {
   return drizzle->affected_rows;
 }
 
-uint64_t STDCALL drizzle_insert_id(DRIZZLE *drizzle)
+uint64_t STDCALL drizzle_insert_id(const DRIZZLE *drizzle)
 {
   return drizzle->insert_id;
 }
 
-const char *STDCALL drizzle_sqlstate(DRIZZLE *drizzle)
+const char *STDCALL drizzle_sqlstate(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.sqlstate : cant_connect_sqlstate;
 }
 
-uint32_t STDCALL drizzle_warning_count(DRIZZLE *drizzle)
+uint32_t STDCALL drizzle_warning_count(const DRIZZLE *drizzle)
 {
   return drizzle->warning_count;
 }
 
-const char *STDCALL drizzle_info(DRIZZLE *drizzle)
+const char *STDCALL drizzle_info(const DRIZZLE *drizzle)
 {
   return drizzle->info;
 }
 
-uint32_t STDCALL drizzle_thread_id(DRIZZLE *drizzle)
+uint32_t STDCALL drizzle_thread_id(const DRIZZLE *drizzle)
 {
-  return (drizzle)->thread_id;
+  return drizzle->thread_id;
 }
 
-const char * STDCALL drizzle_character_set_name(DRIZZLE *drizzle)
+const char * STDCALL drizzle_character_set_name(const DRIZZLE *drizzle)
 {
   return drizzle->charset->csname;
 }
 
-void STDCALL drizzle_get_character_set_info(DRIZZLE *drizzle, MY_CHARSET_INFO *csinfo)
+void STDCALL drizzle_get_character_set_info(const DRIZZLE *drizzle, MY_CHARSET_INFO *csinfo)
 {
   csinfo->number   = drizzle->charset->number;
   csinfo->state    = drizzle->charset->state;
@@ -974,7 +900,7 @@ drizzle_hex_string(char *to, const char *from, uint32_t length)
 uint32_t STDCALL
 drizzle_escape_string(char *to,const char *from, uint32_t length)
 {
-  return escape_string_for_mysql(default_charset_info, to, 0, from, length);
+  return escape_string_for_drizzle(default_charset_info, to, 0, from, length);
 }
 
 uint32_t STDCALL
@@ -982,16 +908,16 @@ drizzle_real_escape_string(DRIZZLE *drizzle, char *to,const char *from,
        uint32_t length)
 {
   if (drizzle->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
-    return escape_quotes_for_mysql(drizzle->charset, to, 0, from, length);
-  return escape_string_for_mysql(drizzle->charset, to, 0, from, length);
+    return escape_quotes_for_drizzle(drizzle->charset, to, 0, from, length);
+  return escape_string_for_drizzle(drizzle->charset, to, 0, from, length);
 }
 
 void STDCALL
-myodbc_remove_escape(DRIZZLE *drizzle,char *name)
+myodbc_remove_escape(const DRIZZLE *drizzle, char *name)
 {
   char *to;
 #ifdef USE_MB
-  bool use_mb_flag=use_mb(drizzle->charset);
+  bool use_mb_flag= use_mb(drizzle->charset);
   char *end=NULL;
   if (use_mb_flag)
     for (end=name; *end ; end++) ;
@@ -1004,7 +930,7 @@ myodbc_remove_escape(DRIZZLE *drizzle,char *name)
     if (use_mb_flag && (l = my_ismbchar( drizzle->charset, name , end ) ) )
     {
       while (l--)
-  *to++ = *name++;
+        *to++ = *name++;
       name--;
       continue;
     }
@@ -1021,7 +947,7 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
   if (packet_error == cli_safe_read(drizzle))
     return 1;
 
-  *row= ((drizzle->net.read_pos[0] == 254) ? NULL :
+  *row= ((drizzle->net.read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA) ? NULL :
    (char*) (drizzle->net.read_pos+1));
   return 0;
 }
@@ -1070,12 +996,9 @@ bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode)
   to be read using drizzle_next_result()
 */
 
-bool STDCALL drizzle_more_results(DRIZZLE *drizzle)
+bool STDCALL drizzle_more_results(const DRIZZLE *drizzle)
 {
-  bool res;
-
-  res= ((drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
-  return(res);
+  return (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? true:false;
 }
 
 

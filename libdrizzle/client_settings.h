@@ -18,7 +18,6 @@
 			     CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION)
 
 sig_handler my_pipe_sig_handler(int sig);
-void read_user_name(char *name);
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
 
 
@@ -40,7 +39,7 @@ DRIZZLE_DATA * cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *drizzle_fields,
 				   uint fields);
 int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row);
 const char * cli_read_statistics(DRIZZLE *drizzle);
-int cli_read_change_user_result(DRIZZLE *drizzle, char *buff, const char *passwd);
+int cli_read_change_user_result(DRIZZLE *drizzle);
 
 C_MODE_START
 extern int drizzle_init_character_set(DRIZZLE *drizzle);

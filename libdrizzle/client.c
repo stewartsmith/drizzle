@@ -244,6 +244,40 @@ static int wait_for_data(my_socket fd, uint timeout)
 #endif /* HAVE_POLL */
 }
 
+
+#if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
+struct passwd *getpwuid(uid_t);
+char* getlogin(void);
+#endif
+
+static void read_user_name(char *name)
+{
+  if (geteuid() == 0)
+    (void) strmov(name,"root");    /* allow use of surun */
+  else
+  {
+#ifdef HAVE_GETPWUID
+    struct passwd *skr;
+    const char *str;
+    if ((str=getlogin()) == NULL)
+    {
+      if ((skr=getpwuid(geteuid())) != NULL)
+  str=skr->pw_name;
+      else if (!(str=getenv("USER")) && !(str=getenv("LOGNAME")) &&
+         !(str=getenv("LOGIN")))
+  str="UNKNOWN_USER";
+    }
+    (void) strmake(name,str,USERNAME_LENGTH);
+#elif HAVE_CUSERID
+    (void) cuserid(name);
+#else
+    strmov(name,"UNKNOWN_USER");
+#endif
+  }
+  return;
+}
+
+
 /**
   Set the internal error message to DRIZZLE handler
 
@@ -2247,23 +2281,23 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 ****************************************************************************/
 
 /* DRIZZLE_RES */
-uint64_t STDCALL drizzle_num_rows(DRIZZLE_RES *res)
+uint64_t STDCALL drizzle_num_rows(const DRIZZLE_RES *res)
 {
   return res->row_count;
 }
 
-unsigned int STDCALL drizzle_num_fields(DRIZZLE_RES *res)
+unsigned int STDCALL drizzle_num_fields(const DRIZZLE_RES *res)
 {
   return res->field_count;
 }
 
-uint STDCALL drizzle_errno(DRIZZLE *drizzle)
+uint STDCALL drizzle_errno(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.last_errno : drizzle_server_last_errno;
 }
 
 
-const char * STDCALL drizzle_error(DRIZZLE *drizzle)
+const char * STDCALL drizzle_error(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.last_error : drizzle_server_last_error;
 }
@@ -2287,7 +2321,7 @@ const char * STDCALL drizzle_error(DRIZZLE *drizzle)
 */
 
 uint32_t STDCALL
-drizzle_get_server_version(DRIZZLE *drizzle)
+drizzle_get_server_version(const DRIZZLE *drizzle)
 {
   uint major, minor, version;
   char *pos= drizzle->server_version, *end_pos;
