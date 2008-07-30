@@ -17,9 +17,8 @@
 
 /* UCS2 support. Written by Alexander Barkov <bar@mysql.com> */
 
-#include <my_global.h>
-#include <mysys/my_sys.h>
 #include "m_string.h"
+#include <mysys/my_sys.h>
 #include "m_ctype.h"
 #include <errno.h>
 #include <stdarg.h>

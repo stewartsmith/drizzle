@@ -34,7 +34,7 @@
   server.
 */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 
 #include "drizzle.h"
 

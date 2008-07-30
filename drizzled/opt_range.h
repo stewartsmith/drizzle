@@ -335,7 +335,7 @@ private:
   /* Used only by QUICK_SELECT_DESC */
   QUICK_RANGE_SELECT(const QUICK_RANGE_SELECT& org) : QUICK_SELECT_I()
   {
-    bcopy(&org, this, sizeof(*this));
+    memmove(this, &org, sizeof(*this));
     /* 
       Use default MRR implementation for reverse scans. No table engine
       currently can do an MRR scan with output in reverse index order.

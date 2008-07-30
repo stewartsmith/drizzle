@@ -21,7 +21,6 @@
     A empty t is allways a prefix.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 int is_prefix(register const char *s, register const char *t)

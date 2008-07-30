@@ -31,7 +31,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	      MI_CREATE_INFO *ci,uint flags)
 {
   register uint i, j;
-  File dfile= 0, file;
+  File dfile= 0, file= 0;
   int errpos,save_errno, create_mode= O_RDWR | O_TRUNC;
   myf create_flag;
   uint fields,length,max_key_length,packed,pointer,real_length_diff,
@@ -413,7 +413,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     goto err;
   }
 
-  bmove(share.state.header.file_version,(uchar*) myisam_file_magic,4);
+  memcpy(share.state.header.file_version,(uchar*) myisam_file_magic,4);
   ci->old_options=options| (ci->old_options & HA_OPTION_TEMP_COMPRESS_RECORD ?
 			HA_OPTION_COMPRESS_RECORD |
 			HA_OPTION_TEMP_COMPRESS_RECORD: 0);

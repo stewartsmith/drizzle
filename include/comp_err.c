@@ -22,13 +22,12 @@
   multi-language text file.
 */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mysys/my_getopt.h>
 #include <assert.h>
-#include <my_dir.h>
 
 #define MAX_ROWS  1000
 #define HEADER_LENGTH 32                /* Length of header in errmsg.sys */
@@ -316,7 +315,7 @@ static int create_sys_files(struct languages *lang_head,
     /* continue with header of the errmsg.sys file */
     length= ftell(to) - HEADER_LENGTH - row_count * 2;
     memset((uchar*) head, 0, HEADER_LENGTH);
-    bmove((uchar *) head, (uchar *) file_head, 4);
+    memcpy((uchar *) head, (uchar *) file_head, 4);
     head[4]= 1;
     int2store(head + 6, length);
     int2store(head + 8, row_count);

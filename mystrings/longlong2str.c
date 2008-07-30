@@ -37,7 +37,6 @@
 	itoa assumes that 10 -base numbers are allways signed and other arn't.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 #if !defined(int64_t2str) && !defined(HAVE_LONGLONG2STR)

@@ -6,7 +6,7 @@ AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 AC_INIT
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([include/config.h:config.h.in])
+AC_CONFIG_HEADERS([drizzled/config.h:config.h.in])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
 
@@ -156,7 +156,10 @@ CXXFLAGS="$CXXFLAGS $C_EXTRA_FLAGS "
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
+ifdef([AC_PROG_CC_C99],[
+  AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
+  C99_SUPPORT_HACK=""
+],[C99_SUPPORT_HACK="-std=gnu99"])
 AC_PROG_CXX
 if test "x$ac_ct_CXX" = "x"
 then
@@ -983,14 +986,14 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CHECK_FUNCS(bcmp bfill bmove bsearch \
+AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
   locking longjmp lrand48 madvise mallinfo \
-  memset memcpy memmove \
+  memmove \
   mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 getpagesize \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
@@ -1265,7 +1268,7 @@ then
   fi
 
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
   GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
   CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"

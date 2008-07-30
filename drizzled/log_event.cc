@@ -31,7 +31,7 @@
 #include "rpl_filter.h"
 #include "rpl_utility.h"
 #include "rpl_record.h"
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 
 #endif /* MYSQL_CLIENT */
 
@@ -1395,7 +1395,7 @@ static void write_str_with_code_and_len(char **dst, const char *src,
   assert(src);
   *((*dst)++)= code;
   *((*dst)++)= (uchar) len;
-  bmove(*dst, src, len);
+  memcpy(*dst, src, len);
   (*dst)+= len;
 }
 
@@ -2045,7 +2045,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
 
   if (likely(charset_inited) &&
       (unlikely(!print_event_info->charset_inited ||
-                bcmp((uchar*) print_event_info->charset, (uchar*) charset, 6))))
+                memcmp((uchar*) print_event_info->charset, (uchar*) charset, 6))))
   {
     CHARSET_INFO *cs_info= get_charset(uint2korr(charset), MYF(MY_WME));
     if (cs_info)
@@ -2068,8 +2068,8 @@ void Query_log_event::print_query_header(IO_CACHE* file,
   }
   if (time_zone_len)
   {
-    if (bcmp((uchar*) print_event_info->time_zone_str,
-             (uchar*) time_zone_str, time_zone_len+1))
+    if (memcmp((uchar*) print_event_info->time_zone_str,
+               (uchar*) time_zone_str, time_zone_len+1))
     {
       my_b_printf(file,"SET @@session.time_zone='%s'%s\n",
                   time_zone_str, print_event_info->delimiter);

@@ -34,9 +34,8 @@
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
 #include <mysys/thr_alarm.h>
-#include <my_dir.h>
 #include <libdrizzle/sql_common.h>
-#include <errmsg.h>
+#include <libdrizzle/errmsg.h>
 #include <mysys/mysys_err.h>
 
 #ifdef HAVE_REPLICATION
@@ -2871,7 +2870,7 @@ static int32_t queue_event(Master_info* mi,const char* buf, uint32_t event_len)
 {
   int32_t error= 0;
   String error_msg;
-  uint32_t inc_pos;
+  uint32_t inc_pos= 0;
   Relay_log_info *rli= &mi->rli;
   pthread_mutex_t *log_lock= rli->relay_log.get_log_lock();
 

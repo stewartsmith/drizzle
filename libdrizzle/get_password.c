@@ -21,8 +21,8 @@
 ** Ask for a password from tty
 ** This is an own file to avoid conflicts with curses
 */
-#include <my_global.h>
-#include <my_sys.h>
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
 #include "drizzle.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>

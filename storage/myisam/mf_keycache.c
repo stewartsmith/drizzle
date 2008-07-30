@@ -101,7 +101,7 @@
   I/O finished.
 */
 
-#include "my_global.h"
+#include <drizzled/global.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_sys.h>
 #include <keycache.h>
@@ -3478,11 +3478,11 @@ restart:
             if (!(block->status & (BLOCK_IN_EVICTION | BLOCK_IN_SWITCH |
                                    BLOCK_REASSIGNED)))
             {
-              struct st_hash_link *next_hash_link;
-              my_off_t            next_diskpos;
-              File                next_file;
-              uint                next_status;
-              uint                hash_requests;
+              struct st_hash_link *next_hash_link= NULL;
+              my_off_t            next_diskpos= 0;
+              File                next_file= 0;
+              uint                next_status= 0;
+              uint                hash_requests= 0;
 
               total_found++;
               found++;

@@ -38,14 +38,14 @@
 
 #define DUMP_VERSION "10.13"
 
-#include <my_global.h>
+#include "client_priv.h"
+
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/hash.h>
 #include <stdarg.h>
 
-#include "client_priv.h"
 #include "drizzled_error.h"
 
 /* Exit codes */
