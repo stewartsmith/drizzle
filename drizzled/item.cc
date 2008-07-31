@@ -4131,7 +4131,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length __a
   case DRIZZLE_TYPE_DATETIME:
     field= new Field_datetime(maybe_null, name, &my_charset_bin);
     break;
-  case DRIZZLE_TYPE_STRING:
   default:
     /* This case should never be chosen */
     assert(0);
@@ -4658,8 +4657,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   enum_field_types f_type;
 
   switch ((f_type=field_type())) {
-  case DRIZZLE_TYPE_STRING:
-    assert(0);
   default:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
@@ -6368,7 +6365,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_TINY:
     return 4;
   case DRIZZLE_TYPE_SHORT:

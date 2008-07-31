@@ -43,7 +43,6 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
   */
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_STRING:
   {
     length= m_field_metadata[col] & 0x00ff;
     break;
