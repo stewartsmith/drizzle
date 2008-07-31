@@ -26,6 +26,8 @@ set -e
 
 if test -d ".bzr" ; then
   bzr log --short > ChangeLog || touch ChangeLog
+else
+  touch ChangeLog
 fi
 
 if test x$LIBTOOLIZE = x; then
