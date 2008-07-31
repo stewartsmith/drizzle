@@ -157,7 +157,7 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
   char *end= buff;
   int rc;
-  CHARSET_INFO *saved_cs= drizzle->charset;
+  const CHARSET_INFO *saved_cs= drizzle->charset;
 
   /* Get the connection-default character set. */
 

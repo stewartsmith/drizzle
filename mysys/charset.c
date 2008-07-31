@@ -31,7 +31,7 @@
     - Setting server default character set
 */
 
-bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2)
+bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2)
 {
   return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
 }
@@ -696,7 +696,7 @@ bool resolve_collation(const char *cl_name,
     #           The length of the escaped string
 */
 
-size_t escape_string_for_drizzle(CHARSET_INFO *charset_info,
+size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
                                  char *to, size_t to_length,
                                  const char *from, size_t length)
 {
@@ -836,7 +836,7 @@ CHARSET_INFO *fs_character_set()
     >=0         The length of the escaped string
 */
 
-size_t escape_quotes_for_drizzle(CHARSET_INFO *charset_info,
+size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
                                  char *to, size_t to_length,
                                  const char *from, size_t length)
 {

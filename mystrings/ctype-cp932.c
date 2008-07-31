@@ -181,13 +181,13 @@ static uchar sort_order_cp932[]=
                        (0x80<=(c) && (c)<=0xfc))
 
 
-static uint ismbchar_cp932(CHARSET_INFO *cs __attribute__((unused)),
+static uint ismbchar_cp932(const CHARSET_INFO *cs __attribute__((unused)),
 			 const char* p, const char *e)
 {
   return (iscp932head((uchar) *p) && (e-p)>1 && iscp932tail((uchar)p[1]) ? 2: 0);
 }
 
-static uint mbcharlen_cp932(CHARSET_INFO *cs __attribute__((unused)),uint c)
+static uint mbcharlen_cp932(const CHARSET_INFO *cs __attribute__((unused)),uint c)
 {
   return (iscp932head((uchar) c) ? 2 : 1);
 }
@@ -196,7 +196,7 @@ static uint mbcharlen_cp932(CHARSET_INFO *cs __attribute__((unused)),uint c)
 #define cp932code(c,d)	((((uint) (uchar)(c)) << 8) | (uint) (uchar) (d))
 
 
-static int my_strnncoll_cp932_internal(CHARSET_INFO *cs,
+static int my_strnncoll_cp932_internal(const CHARSET_INFO *cs,
 				      const uchar **a_res, size_t a_length,
 				      const uchar **b_res, size_t b_length)
 {
@@ -228,7 +228,7 @@ static int my_strnncoll_cp932_internal(CHARSET_INFO *cs,
 }
 
 
-static int my_strnncoll_cp932(CHARSET_INFO *cs __attribute__((unused)),
+static int my_strnncoll_cp932(const CHARSET_INFO *cs __attribute__((unused)),
 			      const uchar *a, size_t a_length, 
 			      const uchar *b, size_t b_length,
                               my_bool b_is_prefix)
@@ -240,7 +240,7 @@ static int my_strnncoll_cp932(CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static int my_strnncollsp_cp932(CHARSET_INFO *cs __attribute__((unused)),
+static int my_strnncollsp_cp932(const CHARSET_INFO *cs __attribute__((unused)),
                                 const uchar *a, size_t a_length, 
                                 const uchar *b, size_t b_length,
                                 my_bool diff_if_only_endspace_difference
@@ -300,9 +300,9 @@ static int my_strnncollsp_cp932(CHARSET_INFO *cs __attribute__((unused)),
 
 #define max_sort_char ((char) 255)
 
-static my_bool my_like_range_cp932(CHARSET_INFO *cs __attribute__((unused)),
+static my_bool my_like_range_cp932(const CHARSET_INFO *cs __attribute__((unused)),
                                    const char *ptr,size_t ptr_length,
-                                   pbool escape, pbool w_one, pbool w_many,
+                                   char escape, char w_one, char w_many,
                                    size_t res_length,
                                    char *min_str,char *max_str,
                                    size_t *min_length, size_t *max_length)
@@ -352,7 +352,7 @@ static my_bool my_like_range_cp932(CHARSET_INFO *cs __attribute__((unused)),
 }
 
 /* page 0 0x00A1-0x00DF */
-static uint16 tab_cp932_uni0[]={
+static uint16_t tab_cp932_uni0[]={
 0xFF61,0xFF62,0xFF63,0xFF64,0xFF65,0xFF66,0xFF67,0xFF68,
 0xFF69,0xFF6A,0xFF6B,0xFF6C,0xFF6D,0xFF6E,0xFF6F,0xFF70,
 0xFF71,0xFF72,0xFF73,0xFF74,0xFF75,0xFF76,0xFF77,0xFF78,
@@ -363,7 +363,7 @@ static uint16 tab_cp932_uni0[]={
 0xFF99,0xFF9A,0xFF9B,0xFF9C,0xFF9D,0xFF9E,0xFF9F};
 
 /* page 1 0x8140-0x84BE */
-static uint16 tab_cp932_uni1[]={
+static uint16_t tab_cp932_uni1[]={
 0x3000,0x3001,0x3002,0xFF0C,0xFF0E,0x30FB,0xFF1A,0xFF1B,
 0xFF1F,0xFF01,0x309B,0x309C,0x00B4,0xFF40,0x00A8,0xFF3E,
 0xFFE3,0xFF3F,0x30FD,0x30FE,0x309D,0x309E,0x3003,0x4EDD,
@@ -478,7 +478,7 @@ static uint16 tab_cp932_uni1[]={
 0x2537,0x253F,0x251D,0x2530,0x2525,0x2538,0x2542};
 
 /* page 2 0x8740-0x879C - NEC Row 13 */
-static uint16 tab_cp932_uni2[]={
+static uint16_t tab_cp932_uni2[]={
 0x2460,0x2461,0x2462,0x2463,0x2464,0x2465,0x2466,0x2467,
 0x2468,0x2469,0x246A,0x246B,0x246C,0x246D,0x246E,0x246F,
 0x2470,0x2471,0x2472,0x2473,0x2160,0x2161,0x2162,0x2163,
@@ -493,7 +493,7 @@ static uint16 tab_cp932_uni2[]={
 0x221F,0x22BF,0x2235,0x2229,0x222A};
 
 /* page 3 0x889F-0x9FFC */
-static uint16 tab_cp932_uni3[]={
+static uint16_t tab_cp932_uni3[]={
 0x4E9C,0x5516,0x5A03,0x963F,0x54C0,0x611B,0x6328,0x59F6,
 0x9022,0x8475,0x831C,0x7A50,0x60AA,0x63E1,0x6E25,0x65ED,
 0x8466,0x82A6,0x9BF5,0x6893,0x5727,0x65A1,0x6271,0x5B9B,
@@ -1244,7 +1244,7 @@ static uint16 tab_cp932_uni3[]={
 0x6F3F,0x6EF2,0x6F31,0x6EEF,0x6F32,0x6ECC};
 
 /* page 4 0xE040-0xEAA4 */
-static uint16 tab_cp932_uni4[]={
+static uint16_t tab_cp932_uni4[]={
 0x6F3E,0x6F13,0x6EF7,0x6F86,0x6F7A,0x6F78,0x6F81,0x6F80,
 0x6F6F,0x6F5B,0x6FF3,0x6F6D,0x6F82,0x6F7C,0x6F58,0x6F8E,
 0x6F91,0x6FC2,0x6F66,0x6FB3,0x6FA3,0x6FA1,0x6FA4,0x6FB9,
@@ -1581,7 +1581,7 @@ static uint16 tab_cp932_uni4[]={
 
 /* page 5 0xED40-0xEEFC -
 IBM Selected Kanji and Non-Kanji(NEC implementation) */
-static uint16 tab_cp932_uni5[]={
+static uint16_t tab_cp932_uni5[]={
 0x7E8A,0x891C,0x9348,0x9288,0x84DC,0x4FC9,0x70BB,0x6631,
 0x68C8,0x92F9,0x66FB,0x5F45,0x4E28,0x4EE1,0x4EFC,0x4F00,
 0x4F03,0x4F39,0x4F56,0x4F92,0x4F8A,0x4F9A,0x4F94,0x4FCD,
@@ -1640,7 +1640,7 @@ static uint16 tab_cp932_uni5[]={
 0x2179,0xFFE2,0xFFE4,0xFF07,0xFF02};
 
 /* page 6 0xF040-0xF9FC - User defined characters */
-static uint16 tab_cp932_uni6[]={
+static uint16_t tab_cp932_uni6[]={
 0xE000,0xE001,0xE002,0xE003,0xE004,0xE005,0xE006,0xE007,
 0xE008,0xE009,0xE00A,0xE00B,0xE00C,0xE00D,0xE00E,0xE00F,
 0xE010,0xE011,0xE012,0xE013,0xE014,0xE015,0xE016,0xE017,
@@ -1956,7 +1956,7 @@ static uint16 tab_cp932_uni6[]={
 
 /* page 7 0xFA40-0xFC4B -
 IBM Selected Kanji and Non-Kanji */
-static uint16 tab_cp932_uni7[]={
+static uint16_t tab_cp932_uni7[]={
 0x2170,0x2171,0x2172,0x2173,0x2174,0x2175,0x2176,0x2177,
 0x2178,0x2179,0x2160,0x2161,0x2162,0x2163,0x2164,0x2165,
 0x2166,0x2167,0x2168,0x2169,0xFFE2,0xFFE4,0xFF07,0xFF02,
@@ -2045,7 +2045,7 @@ static int func_cp932_uni_onechar(int code){
 }
 
 /* page 0 0x005C-0x00F7 */
-static uint16 tab_uni_cp9320[]={
+static uint16_t tab_uni_cp9320[]={
      0,     0,     0,     0,     0,     0,     0,     0,
      0,     0,     0,     0,     0,     0,     0,     0,
      0,     0,     0,     0,     0,     0,     0,     0,
@@ -2068,7 +2068,7 @@ static uint16 tab_uni_cp9320[]={
      0,     0,     0,0x8180};
 
 /* page 1 0x0391-0x0451 */
-static uint16 tab_uni_cp9321[]={
+static uint16_t tab_uni_cp9321[]={
 0x839F,0x83A0,0x83A1,0x83A2,0x83A3,0x83A4,0x83A5,0x83A6,
 0x83A7,0x83A8,0x83A9,0x83AA,0x83AB,0x83AC,0x83AD,0x83AE,
 0x83AF,     0,0x83B0,0x83B1,0x83B2,0x83B3,0x83B4,0x83B5,
@@ -2096,7 +2096,7 @@ static uint16 tab_uni_cp9321[]={
 0x8476};
 
 /* page 2 0x2010-0x2473 */
-static uint16 tab_uni_cp9322[]={
+static uint16_t tab_uni_cp9322[]={
 0x815D,     0,     0,     0,     0,0x815C,     0,     0,
 0x8165,0x8166,     0,     0,0x8167,0x8168,     0,     0,
 0x81F5,0x81F6,     0,     0,     0,0x8164,0x8163,     0,
@@ -2240,7 +2240,7 @@ static uint16 tab_uni_cp9322[]={
 0x8750,0x8751,0x8752,0x8753};
 
 /* page 3 0x2500-0x266F */
-static uint16 tab_uni_cp9323[]={
+static uint16_t tab_uni_cp9323[]={
 0x849F,0x84AA,0x84A0,0x84AB,     0,     0,     0,     0,
      0,     0,     0,     0,0x84A1,     0,     0,0x84AC,
 0x84A2,     0,     0,0x84AD,0x84A4,     0,     0,0x84AF,
@@ -2290,7 +2290,7 @@ static uint16 tab_uni_cp9323[]={
 };
 
 /* page 4 0x3000-0x30FE */
-static uint16 tab_uni_cp9324[]={
+static uint16_t tab_uni_cp9324[]={
 0x8140,0x8141,0x8142,0x8156,     0,0x8158,0x8159,0x815A,
 0x8171,0x8172,0x8173,0x8174,0x8175,0x8176,0x8177,0x8178,
 0x8179,0x817A,0x81A7,0x81AC,0x816B,0x816C,     0,     0,
@@ -2325,7 +2325,7 @@ static uint16 tab_uni_cp9324[]={
      0,     0,     0,0x8145,0x815B,0x8152,0x8153};
 
 /* page 5 0x3230-0x33CD */
-static uint16 tab_uni_cp9325[]={
+static uint16_t tab_uni_cp9325[]={
      0,0x878A,0x878B,     0,     0,     0,     0,     0,
      0,0x878C,     0,     0,     0,     0,     0,     0,
      0,     0,     0,     0,     0,     0,     0,     0,
@@ -2380,7 +2380,7 @@ static uint16 tab_uni_cp9325[]={
      0,     0,     0,     0,     0,0x8783};
 
 /* page 6 0x4E00-0x9481 */
-static uint16 tab_uni_cp9326[]={
+static uint16_t tab_uni_cp9326[]={
 0x88EA,0x929A,     0,0x8EB5,     0,     0,     0,0x969C,
 0x8FE4,0x8E4F,0x8FE3,0x89BA,     0,0x9573,0x975E,     0,
 0x98A0,0x894E,     0,     0,0x8A8E,0x98A1,0x90A2,0x99C0,
@@ -4640,7 +4640,7 @@ static uint16 tab_uni_cp9326[]={
      0,0xE876};
 
 /* page 7 0x9577-0x9FA0 */
-static uint16 tab_uni_cp9327[]={
+static uint16_t tab_uni_cp9327[]={
 0x92B7,     0,     0,     0,     0,     0,     0,     0,
      0,0x96E5,     0,0xE878,0x914D,     0,     0,     0,
 0xE879,     0,0x95C2,0xE87A,0x8A4A,     0,     0,     0,
@@ -4969,7 +4969,7 @@ static uint16 tab_uni_cp9327[]={
      0,0xEA9E};
 
 /* page 8 0xE000-0xE757 - User defined characters */
-static uint16 tab_uni_cp9328[]={
+static uint16_t tab_uni_cp9328[]={
 0xF040,0xF041,0xF042,0xF043,0xF044,0xF045,0xF046,0xF047,
 0xF048,0xF049,0xF04A,0xF04B,0xF04C,0xF04D,0xF04E,0xF04F,
 0xF050,0xF051,0xF052,0xF053,0xF054,0xF055,0xF056,0xF057,
@@ -5207,7 +5207,7 @@ static uint16 tab_uni_cp9328[]={
 0xF9F5,0xF9F6,0xF9F7,0xF9F8,0xF9F9,0xF9FA,0xF9FB,0xF9FC};
 
 /* page 9 0xF920-0xFA2D */
-static uint16 tab_uni_cp9329[]={
+static uint16_t tab_uni_cp9329[]={
      0,     0,     0,     0,     0,     0,     0,     0,
      0,0xFAE0,     0,     0,     0,     0,     0,     0,
      0,     0,     0,     0,     0,     0,     0,     0,
@@ -5244,7 +5244,7 @@ static uint16 tab_uni_cp9329[]={
 0xFBDA,0xFBEA,0xFBF6,0xFBF7,0xFBF9,0xFC49};
 
 /* page 10 0xFF01-0xFFE5 */
-static uint16 tab_uni_cp93210[]={
+static uint16_t tab_uni_cp93210[]={
 0x8149,0xFA57,0x8194,0x8190,0x8193,0x8195,0xFA56,0x8169,
 0x816A,0x8196,0x817B,0x8143,0x817C,0x8144,0x815E,0x824F,
 0x8250,0x8251,0x8252,0x8253,0x8254,0x8255,0x8256,0x8257,
@@ -5303,7 +5303,7 @@ static int func_uni_cp932_onechar(int code){
 
 
 static int
-my_wc_mb_cp932(CHARSET_INFO *cs  __attribute__((unused)),
+my_wc_mb_cp932(const CHARSET_INFO *cs  __attribute__((unused)),
 	      my_wc_t wc, uchar *s, uchar *e)
 {
   int code;
@@ -5333,7 +5333,7 @@ my_wc_mb_cp932(CHARSET_INFO *cs  __attribute__((unused)),
 
 
 static int 
-my_mb_wc_cp932(CHARSET_INFO *cs  __attribute__((unused)),
+my_mb_wc_cp932(const CHARSET_INFO *cs  __attribute__((unused)),
 	      my_wc_t *pwc, const uchar *s, const uchar *e){
   int hi;
   
@@ -5362,7 +5362,7 @@ my_mb_wc_cp932(CHARSET_INFO *cs  __attribute__((unused)),
 }
 
 static
-size_t my_numcells_cp932(CHARSET_INFO *cs __attribute__((unused)),
+size_t my_numcells_cp932(const CHARSET_INFO *cs __attribute__((unused)),
                       const char *str, const char *str_end)
 {
   size_t clen= 0;
@@ -5396,7 +5396,7 @@ size_t my_numcells_cp932(CHARSET_INFO *cs __attribute__((unused)),
 */
 
 static
-size_t my_well_formed_len_cp932(CHARSET_INFO *cs __attribute__((unused)),
+size_t my_well_formed_len_cp932(const CHARSET_INFO *cs __attribute__((unused)),
                                 const char *b, const char *e,
                                 size_t pos, int *error)
 {
@@ -5405,11 +5405,11 @@ size_t my_well_formed_len_cp932(CHARSET_INFO *cs __attribute__((unused)),
   while (pos-- && b < e)
   {
     /*
-      Cast to int8 for extra safety.
+      Cast to int8_t for extra safety.
       "char" can be unsigned by default
       on some platforms.
     */
-    if (((int8)b[0]) >= 0)
+    if (((int8_t)b[0]) >= 0)
     {
       /* Single byte ascii character */
       b++;

@@ -42,7 +42,7 @@
 #ifdef HAVE_CHARSET_cp1250
 
 
-static uint16 tab_cp1250_uni[256]={
+static uint16_t tab_cp1250_uni[256]={
      0,0x0001,0x0002,0x0003,0x0004,0x0005,0x0006,0x0007,
 0x0008,0x0009,0x000A,0x000B,0x000C,0x000D,0x000E,0x000F,
 0x0010,0x0011,0x0012,0x0013,0x0014,0x0015,0x0016,0x0017,
@@ -459,7 +459,7 @@ static struct wordvalue doubles[]=
 
 #define IS_END(p, src, len)	(((char *)p - (char *)src) >= (len))
 
-static int my_strnncoll_win1250ch(CHARSET_INFO *cs __attribute__((unused)), 
+static int my_strnncoll_win1250ch(const CHARSET_INFO *cs __attribute__((unused)), 
 				  const uchar *s1, size_t len1,
                                   const uchar *s2, size_t len2,
                                   my_bool s2_is_prefix)
@@ -490,7 +490,7 @@ static int my_strnncoll_win1250ch(CHARSET_INFO *cs __attribute__((unused)),
 */
 
 static int
-my_strnncollsp_win1250ch(CHARSET_INFO * cs __attribute__((unused)),
+my_strnncollsp_win1250ch(const CHARSET_INFO * cs __attribute__((unused)),
                          const uchar *s, size_t slen,
                          const uchar *t, size_t tlen,
                          my_bool diff_if_only_endspace_difference
@@ -540,7 +540,7 @@ my_strnncollsp_win1250ch(CHARSET_INFO * cs __attribute__((unused)),
 
 
 static size_t
-my_strnxfrm_win1250ch(CHARSET_INFO * cs  __attribute__((unused)),
+my_strnxfrm_win1250ch(const CHARSET_INFO * cs  __attribute__((unused)),
                       uchar *dst, size_t dstlen, uint nweights_arg,
                       const uchar *src, size_t srclen, uint flags)
 {
@@ -686,9 +686,9 @@ static uchar like_range_prefix_max_win1250ch[]=
 */
 
 static my_bool
-my_like_range_win1250ch(CHARSET_INFO *cs __attribute__((unused)),
+my_like_range_win1250ch(const CHARSET_INFO *cs __attribute__((unused)),
 			const char *ptr, size_t ptr_length,
-			pbool escape, pbool w_one, pbool w_many,
+			char escape, char w_one, char w_many,
 			size_t res_length,
 			char *min_str, char *max_str,
 			size_t *min_length, size_t *max_length)
