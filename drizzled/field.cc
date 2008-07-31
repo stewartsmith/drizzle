@@ -1727,7 +1727,7 @@ int Field_str::store(double nr)
   char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
   uint local_char_length= field_length / charset()->mbmaxlen;
   size_t length;
-  my_bool error;
+  bool error;
 
   length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)

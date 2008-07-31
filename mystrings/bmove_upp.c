@@ -40,7 +40,7 @@ asm(".L5:				");
 }
 #else
 
-void bmove_upp(register uchar *dst, register const uchar *src,
+void bmove_upp(register unsigned char *dst, register const unsigned char *src,
                register size_t len)
 {
   while (len-- != 0) *--dst = *--src;

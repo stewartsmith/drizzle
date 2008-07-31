@@ -45,7 +45,7 @@ char _dig_vec_lower[] =
     optimized int10_to_str() function.
 
   RETURN VALUE
-    Pointer to ending NUL character or NullS if radix is bad.
+    Pointer to ending NUL character or (char *)0 if radix is bad.
 */
   
 char *
@@ -56,22 +56,22 @@ int2str(register long int val, register char *dst, register int radix,
   register char *p;
   long int new_val;
   char *dig_vec= upcase ? _dig_vec_upper : _dig_vec_lower;
-  ulong uval= (ulong) val;
+  unsigned long uval= (unsigned long) val;
 
   if (radix < 0)
   {
     if (radix < -36 || radix > -2)
-      return NullS;
+      return (char *)0;
     if (val < 0)
     {
       *dst++ = '-';
       /* Avoid integer overflow in (-val) for LONGLONG_MIN (BUG#31799). */
-      uval = (ulong)0 - uval;
+      uval = (unsigned long)0 - uval;
     }
     radix = -radix;
   }
   else if (radix > 36 || radix < 2)
-    return NullS;
+    return (char *)0;
 
   /*
     The slightly contorted code which follows is due to the fact that
@@ -87,8 +87,8 @@ int2str(register long int val, register char *dst, register int radix,
   */
   p = &buffer[sizeof(buffer)-1];
   *p = '\0';
-  new_val= uval / (ulong) radix;
-  *--p = dig_vec[(uchar) (uval- (ulong) new_val*(ulong) radix)];
+  new_val= uval / (unsigned long) radix;
+  *--p = dig_vec[(unsigned char) (uval- (unsigned long) new_val*(unsigned long) radix)];
   val = new_val;
 #ifdef HAVE_LDIV
   while (val != 0)
@@ -102,7 +102,7 @@ int2str(register long int val, register char *dst, register int radix,
   while (val != 0)
   {
     new_val=val/radix;
-    *--p = dig_vec[(uchar) (val-new_val*radix)];
+    *--p = dig_vec[(unsigned char) (val-new_val*radix)];
     val= new_val;
   }
 #endif
