@@ -105,3 +105,5 @@ run $LIBTOOLIZE $LIBTOOLIZE_FLAGS || die "Can't execute libtoolize"
 # and --force to overwrite them if they already exist
 run $AUTOMAKE $AUTOMAKE_FLAGS  || die "Can't execute automake"
 run $AUTOCONF || die "Can't execute autoconf"
+echo -n "Configured with: "
+$AUTOCONF --version | head -1
