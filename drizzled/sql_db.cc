@@ -19,7 +19,6 @@
 #include "mysql_priv.h"
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
-#include <m_ctype.h>
 #include "log.h"
 
 #define MAX_DROP_TABLE_Q_LEN      1024

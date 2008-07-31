@@ -144,7 +144,7 @@ int Field_timestamp::store(const char *from,
                            uint len,
                            CHARSET_INFO *cs __attribute__((unused)))
 {
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   my_time_t tmp= 0;
   int error;
   bool have_smth_to_conv;
@@ -153,13 +153,13 @@ int Field_timestamp::store(const char *from,
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   have_smth_to_conv= (str_to_datetime(from, len, &l_time, 1, &error) >
-                      MYSQL_TIMESTAMP_ERROR);
+                      DRIZZLE_TIMESTAMP_ERROR);
 
   if (error || !have_smth_to_conv)
   {
     error= 1;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
-                         from, len, MYSQL_TIMESTAMP_DATETIME, 1);
+    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+                         from, len, DRIZZLE_TIMESTAMP_DATETIME, 1);
   }
 
   /* Only convert a correct date (not a zero date) */
@@ -169,14 +169,14 @@ int Field_timestamp::store(const char *from,
     {
       set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
-                           from, len, MYSQL_TIMESTAMP_DATETIME, !error);
+                           from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
       error= 1;
     }
     else if (in_dst_time_gap)
     {
       set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_INVALID_TIMESTAMP,
-                           from, len, MYSQL_TIMESTAMP_DATETIME, !error);
+                           from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
       error= 1;
     }
   }
@@ -192,7 +192,7 @@ int Field_timestamp::store(double nr)
   {
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
-                         nr, MYSQL_TIMESTAMP_DATETIME);
+                         nr, DRIZZLE_TIMESTAMP_DATETIME);
     nr= 0;					// Avoid overflow on buff
     error= 1;
   }
@@ -204,7 +204,7 @@ int Field_timestamp::store(double nr)
 int Field_timestamp::store(int64_t nr,
                            bool unsigned_val __attribute__((unused)))
 {
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   my_time_t timestamp= 0;
   int error;
   bool in_dst_time_gap;
@@ -225,20 +225,20 @@ int Field_timestamp::store(int64_t nr,
     {
       set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
-                           nr, MYSQL_TIMESTAMP_DATETIME, 1);
+                           nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
       error= 1;
     }
     if (in_dst_time_gap)
     {
       set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_INVALID_TIMESTAMP,
-                           nr, MYSQL_TIMESTAMP_DATETIME, 1);
+                           nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
       error= 1;
     }
   } else if (error)
     set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         WARN_DATA_TRUNCATED,
-                         nr, MYSQL_TIMESTAMP_DATETIME, 1);
+                         ER_WARN_DATA_TRUNCATED,
+                         nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
 
   store_timestamp(timestamp);
   return error;
@@ -252,7 +252,7 @@ double Field_timestamp::val_real(void)
 int64_t Field_timestamp::val_int(void)
 {
   uint32_t temp;
-  MYSQL_TIME time_tmp;
+  DRIZZLE_TIME time_tmp;
   THD  *thd= table ? table->in_use : current_thd;
 
   thd->time_zone_used= 1;
@@ -277,7 +277,7 @@ int64_t Field_timestamp::val_int(void)
 String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 {
   uint32_t temp, temp2;
-  MYSQL_TIME time_tmp;
+  DRIZZLE_TIME time_tmp;
   THD *thd= table ? table->in_use : current_thd;
   char *to;
 
@@ -346,7 +346,7 @@ String *Field_timestamp::val_str(String *val_buffer, String *val_ptr)
 }
 
 
-bool Field_timestamp::get_date(MYSQL_TIME *ltime, uint fuzzydate)
+bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
 {
   long temp;
   THD *thd= table ? table->in_use : current_thd;
@@ -370,7 +370,7 @@ bool Field_timestamp::get_date(MYSQL_TIME *ltime, uint fuzzydate)
   return 0;
 }
 
-bool Field_timestamp::get_time(MYSQL_TIME *ltime)
+bool Field_timestamp::get_time(DRIZZLE_TIME *ltime)
 {
   return Field_timestamp::get_date(ltime,0);
 }
@@ -378,7 +378,7 @@ bool Field_timestamp::get_time(MYSQL_TIME *ltime)
 
 bool Field_timestamp::send_binary(Protocol *protocol)
 {
-  MYSQL_TIME tm;
+  DRIZZLE_TIME tm;
   Field_timestamp::get_date(&tm, 0);
   return protocol->store(&tm);
 }

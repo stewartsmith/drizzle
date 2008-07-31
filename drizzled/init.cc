@@ -22,7 +22,6 @@
 */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 
 void unireg_init(ulong options)
 {

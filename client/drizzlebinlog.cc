@@ -38,8 +38,8 @@
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
-#include "mysql_priv.h"
-#include "log_event.h"
+#include <drizzled/mysql_priv.h>
+#include <drizzled/log_event.h>
 #include <libdrizzle/sql_common.h>
 
 
@@ -1175,12 +1175,12 @@ the Drizzle command line client\n\n");
 static my_time_t convert_str_to_timestamp(const char* str)
 {
   int was_cut;
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   long dummy_my_timezone;
   bool dummy_in_dst_time_gap;
   /* We require a total specification (date AND time) */
   if (str_to_datetime(str, strlen(str), &l_time, 0, &was_cut) !=
-      MYSQL_TIMESTAMP_DATETIME || was_cut)
+      DRIZZLE_TIMESTAMP_DATETIME || was_cut)
   {
     error("Incorrect date and time argument: %s", str);
     exit(1);
@@ -1990,5 +1990,5 @@ int main(int argc, char** argv)
   the server
 */
 
-#include "log_event.cc"
+#include <drizzled/log_event.cc>
 

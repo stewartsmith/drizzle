@@ -17,10 +17,6 @@ MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
-AM_CPPFLAGS =           ${GLOBAL_INCLUDES} \
-			-I$(top_builddir) \
-			-I$(top_srcdir)/drizzled 
-WRAPLIBS=
 
 LDADD =			libheap.la \
 			$(top_builddir)/mysys/libmysyslt.la \

@@ -27,7 +27,6 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
-#include <m_ctype.h>
 #include <errno.h>
 
 // Maximum allowed exponent value for converting string to decimal
@@ -666,7 +665,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
   /* Test if we have garbage at the end of the given string. */
   if (test_if_important_data(cs, int_end, str + length))
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -759,7 +758,7 @@ int Field::warn_if_overflow(int op_result)
   }
   if (op_result == E_DEC_TRUNCATED)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     /* We return 0 here as this is not a critical issue */
   }
   return 0;
@@ -1257,18 +1256,18 @@ uint Field::fill_cache_field(CACHE_FIELD *copy)
 }
 
 
-bool Field::get_date(MYSQL_TIME *ltime,uint fuzzydate)
+bool Field::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   if (!(res=val_str(&tmp)) ||
       str_to_datetime_with_warn(res->ptr(), res->length(),
-                                ltime, fuzzydate) <= MYSQL_TIMESTAMP_ERROR)
+                                ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
     return 1;
   return 0;
 }
 
-bool Field::get_time(MYSQL_TIME *ltime)
+bool Field::get_time(DRIZZLE_TIME *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -1285,7 +1284,7 @@ bool Field::get_time(MYSQL_TIME *ltime)
     Needs to be changed if/when we want to support different time formats.
 */
 
-int Field::store_time(MYSQL_TIME *ltime,
+int Field::store_time(DRIZZLE_TIME *ltime,
                       timestamp_type type_arg __attribute__((unused)))
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
@@ -1634,10 +1633,10 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
       if (table->in_use->abort_on_warning)
         set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
       else
-        set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+        set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     }
     else /* If we lost only spaces then produce a NOTE, not a WARNING */
-      set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, WARN_DATA_TRUNCATED, 1);
+      set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -1657,7 +1656,7 @@ int Field_str::store(double nr)
   char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
   uint local_char_length= field_length / charset()->mbmaxlen;
   size_t length;
-  my_bool error;
+  bool error;
 
   length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
@@ -1665,7 +1664,7 @@ int Field_str::store(double nr)
     if (table->in_use->abort_on_warning)
       set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   return store(buff, length, charset());
 }
@@ -1803,13 +1802,13 @@ int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
       if (err || end != from+length || tmp > typelib->count)
       {
 	tmp=0;
-	set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+	set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
       }
       if (!table->in_use->count_cuted_fields)
         err= 0;
     }
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   store_type((uint64_t) tmp);
   return err;
@@ -1828,7 +1827,7 @@ int Field_enum::store(int64_t nr,
   int error= 0;
   if ((uint64_t) nr > typelib->count || nr == 0)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     if (nr != 0 || table->in_use->count_cuted_fields)
     {
       nr= 0;
@@ -2696,7 +2695,8 @@ Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, 
+                            unsigned int code, 
                             const char *str, uint str_length, 
                             timestamp_type ts_type, int cuted_increment)
 {

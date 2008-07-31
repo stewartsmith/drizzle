@@ -59,9 +59,9 @@
 *****************************************************************************/
 
 #include <drizzled/global.h>
-#include <my_sys.h>
+#include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <sha1.h>
+#include <mysys/sha1.h>
 #include "drizzle.h"
 
 /************ MySQL 3.23-4.0 authentication routines: untouched ***********/

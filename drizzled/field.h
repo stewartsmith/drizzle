@@ -107,7 +107,7 @@ public:
   virtual int  store(double nr)=0;
   virtual int  store(int64_t nr, bool unsigned_val)=0;
   virtual int  store_decimal(const my_decimal *d)=0;
-  virtual int store_time(MYSQL_TIME *ltime, timestamp_type t_type);
+  virtual int store_time(DRIZZLE_TIME *ltime, timestamp_type t_type);
   int store(const char *to, uint length, CHARSET_INFO *cs,
             enum_check_fields check_level);
   virtual double val_real(void)=0;
@@ -443,8 +443,8 @@ public:
   }
   void copy_from_tmp(int offset);
   uint fill_cache_field(struct st_cache_field *copy);
-  virtual bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
-  virtual bool get_time(MYSQL_TIME *ltime);
+  virtual bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  virtual bool get_time(DRIZZLE_TIME *ltime);
   virtual CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }

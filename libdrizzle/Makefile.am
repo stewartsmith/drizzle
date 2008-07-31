@@ -20,8 +20,6 @@
 #
 # This file is public domain and comes with NO WARRANTY of any kind
 
-AM_CPPFLAGS =	${GLOBAL_CPPFLAGS} -I$(top_srcdir)/vio -I$(top_srcdir)/mysys
-
 MYSQLDATAdir =			$(localstatedir)
 MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)

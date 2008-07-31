@@ -22,7 +22,7 @@
   The result is a pointer to the first character after the number;
   trailing spaces will NOT be skipped.
 
-  If an error is detected, the result will be NullS, the value put
+  If an error is detected, the result will be (char *)0, the value put
   in val will be 0, and errno will be set to
 	EDOM	if there are no digits
 	ERANGE	if the result would overflow or otherwise fail to lie
@@ -39,7 +39,6 @@
 
 #include "m_string.h"
 #include "m_ctype.h"
-#include <mysys/my_sys.h>			/* defines errno */
 #include <errno.h>
 
 #define char_val(X) (X >= '0' && X <= '9' ? X-'0' :\
@@ -66,7 +65,7 @@ char *str2int(register const char *src, register int radix, long int lower,
   /*  Check that the radix is in the range 2..36  */
   if (radix < 2 || radix > 36) {
     errno=EDOM;
-    return NullS;
+    return (char *)0;
   }
 
   /*  The basic problem is: how do we handle the conversion of
@@ -116,7 +115,7 @@ char *str2int(register const char *src, register int radix, long int lower,
 
   if (start == src) {
     errno=EDOM;
-    return NullS;
+    return (char *)0;
   }
 
   /*  The invariant we want to maintain is that src is just
@@ -136,7 +135,7 @@ char *str2int(register const char *src, register int radix, long int lower,
   {
     if ((long) -(d=digits[n]) < limit) {
       errno=ERANGE;
-      return NullS;
+      return (char *)0;
     }
     limit = (limit+d)/radix, sofar += d*scale; scale *= radix;
   }
@@ -145,7 +144,7 @@ char *str2int(register const char *src, register int radix, long int lower,
     if ((long) -(d=digits[n]) < limit)		/* get last digit */
     {
       errno=ERANGE;
-      return NullS;
+      return (char *)0;
     }
     sofar+=d*scale;
   }
@@ -162,13 +161,13 @@ char *str2int(register const char *src, register int radix, long int lower,
     if (sofar < -LONG_MAX || (sofar= -sofar) > upper)
     {
       errno=ERANGE;
-      return NullS;
+      return (char *)0;
     }
   }
   else if (sofar < lower)
   {
     errno=ERANGE;
-    return NullS;
+    return (char *)0;
   }
   *val = sofar;
   errno=0;			/* indicate that all went well */

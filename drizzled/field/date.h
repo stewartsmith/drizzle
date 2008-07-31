@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_NEW_DATE
 #define DRIZZLE_SERVER_FIELD_NEW_DATE
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 class Field_newdate :public Field_str {
 public:
@@ -42,7 +42,7 @@ public:
   int  store(const char *to,uint length,CHARSET_INFO *charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int store_time(MYSQL_TIME *ltime, timestamp_type type);
+  int store_time(DRIZZLE_TIME *ltime, timestamp_type type);
   int reset(void) { ptr[0]=ptr[1]=ptr[2]=0; return 0; }
   double val_real(void);
   int64_t val_int(void);
@@ -54,8 +54,8 @@ public:
   void sql_type(String &str) const;
   bool can_be_compared_as_int64_t() const { return true; }
   bool zero_pack() const { return 1; }
-  bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
-  bool get_time(MYSQL_TIME *ltime);
+  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_time(DRIZZLE_TIME *ltime);
 };
 
 #endif

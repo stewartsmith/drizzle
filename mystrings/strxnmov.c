@@ -44,7 +44,7 @@ char *strxnmov(char *dst, size_t len, const char *src, ...)
   char *end_of_dst=dst+len;
 
   va_start(pvar,src);
-  while (src != NullS)
+  while (src != (char *)0)
   {
     do
     {

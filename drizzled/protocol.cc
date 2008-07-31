@@ -807,7 +807,7 @@ bool Protocol_text::store(Field *field)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_text::store(MYSQL_TIME *tm)
+bool Protocol_text::store(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint length;
@@ -825,7 +825,7 @@ bool Protocol_text::store(MYSQL_TIME *tm)
 }
 
 
-bool Protocol_text::store_date(MYSQL_TIME *tm)
+bool Protocol_text::store_date(DRIZZLE_TIME *tm)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   size_t length= my_date_to_str(tm, buff);
@@ -839,7 +839,7 @@ bool Protocol_text::store_date(MYSQL_TIME *tm)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_text::store_time(MYSQL_TIME *tm)
+bool Protocol_text::store_time(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint length;

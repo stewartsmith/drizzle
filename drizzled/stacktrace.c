@@ -20,7 +20,7 @@
 
 #include <signal.h>
 #include <mysys/my_pthread.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #ifdef HAVE_STACKTRACE
 #include <unistd.h>
 #include <strings.h>

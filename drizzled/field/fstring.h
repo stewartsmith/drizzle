@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_STRING
 #define DRIZZLE_SERVER_FIELD_STRING
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 class Field_string :public Field_longstr {
 public:

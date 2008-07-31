@@ -26,7 +26,6 @@
 #endif
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_select.h"
 
 static bool convert_constant_item(THD *, Item_field *, Item **);
@@ -651,8 +650,8 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
 {
   uint64_t value= 0;
   int error;
-  MYSQL_TIME l_time;
-  enum_mysql_timestamp_type ret;
+  DRIZZLE_TIME l_time;
+  enum_drizzle_timestamp_type ret;
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
@@ -660,7 +659,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
                          (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE))),
                        &error);
 
-  if (ret == MYSQL_TIMESTAMP_DATETIME || ret == MYSQL_TIMESTAMP_DATE)
+  if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
   {
     /*
       Do not return yet, we may still want to throw a "trailing garbage"
@@ -758,7 +757,7 @@ Arg_comparator::can_compare_as_dates(Item *a, Item *b, uint64_t *const_value)
       bool error;
       String tmp, *str_val= 0;
       timestamp_type t_type= (date_arg->field_type() == DRIZZLE_TYPE_NEWDATE ?
-                              MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME);
+                              DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME);
 
       str_val= str_arg->val_str(&tmp);
       if (str_arg->null_value)
@@ -807,7 +806,7 @@ get_time_value(THD *thd __attribute__((unused)),
 {
   uint64_t value;
   Item *item= **item_arg;
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
 
   if (item->result_as_int64_t())
   {
@@ -983,7 +982,7 @@ get_datetime_value(THD *thd, Item ***item_arg, Item **cache_arg,
     bool error;
     enum_field_types f_type= warn_item->field_type();
     timestamp_type t_type= f_type ==
-      DRIZZLE_TYPE_NEWDATE ? MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME;
+      DRIZZLE_TYPE_NEWDATE ? DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME;
     value= get_date_from_str(thd, str, t_type, warn_item->name, &error);
     /*
       If str did not contain a valid date according to the current

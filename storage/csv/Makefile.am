@@ -19,10 +19,6 @@ MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
-AM_CPPFLAGS =           ${GLOBAL_CPPFLAGS} \
-			-I$(top_builddir) \
-			-I$(top_srcdir)/drizzled
-LDADD =
 
 DEFS =	@DEFS@
 noinst_HEADERS	  =	ha_tina.h transparent_file.h

@@ -50,7 +50,7 @@
 #define C_MODE_END
 #endif
 
-#include <drizzled/config.h>
+#include "config.h"
 #if defined(__cplusplus) && defined(inline)
 #undef inline				/* fix configure problem */
 #endif
@@ -285,6 +285,9 @@
 #include <stdbool.h>
 #endif
 
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 /*
   A lot of our programs uses asserts, so better to always include it

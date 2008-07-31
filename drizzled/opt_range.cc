@@ -108,7 +108,6 @@
 #endif
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_select.h"
 
 #ifndef EXTRA_DEBUG

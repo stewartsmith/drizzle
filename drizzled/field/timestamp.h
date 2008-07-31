@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_TIMESTAMP
 #define DRIZZLE_SERVER_FIELD_TIMESTAMP
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 class Field_timestamp :public Field_str {
 public:
@@ -81,8 +81,8 @@ public:
 #endif
       longstore(ptr,(uint32_t) timestamp);
   }
-  bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
-  bool get_time(MYSQL_TIME *ltime);
+  bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  bool get_time(DRIZZLE_TIME *ltime);
   timestamp_auto_set_type get_auto_set_type() const;
 };
 

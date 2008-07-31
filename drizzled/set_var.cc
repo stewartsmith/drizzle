@@ -429,13 +429,13 @@ sys_engine_condition_pushdown(&vars, "engine_condition_pushdown",
 
 static sys_var_thd_date_time_format sys_time_format(&vars, "time_format",
 					     &SV::time_format,
-					     MYSQL_TIMESTAMP_TIME);
+					     DRIZZLE_TIMESTAMP_TIME);
 static sys_var_thd_date_time_format sys_date_format(&vars, "date_format",
 					     &SV::date_format,
-					     MYSQL_TIMESTAMP_DATE);
+					     DRIZZLE_TIMESTAMP_DATE);
 static sys_var_thd_date_time_format sys_datetime_format(&vars, "datetime_format",
 						 &SV::datetime_format,
-						 MYSQL_TIMESTAMP_DATETIME);
+						 DRIZZLE_TIMESTAMP_DATETIME);
 
 /* Variables that are bits in THD */
 

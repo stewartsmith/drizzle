@@ -73,17 +73,17 @@ use warnings;
 select(STDOUT);
 $| = 1; # Automatically flush STDOUT
 
-require "lib/mtr_cases.pl";
-require "lib/mtr_process.pl";
-require "lib/mtr_timer.pl";
-require "lib/mtr_io.pl";
-require "lib/mtr_gcov.pl";
-require "lib/mtr_gprof.pl";
-require "lib/mtr_report.pl";
-require "lib/mtr_match.pl";
-require "lib/mtr_misc.pl";
-require "lib/mtr_stress.pl";
-require "lib/mtr_unique.pl";
+require "mtr_cases.pl";
+require "mtr_process.pl";
+require "mtr_timer.pl";
+require "mtr_io.pl";
+require "mtr_gcov.pl";
+require "mtr_gprof.pl";
+require "mtr_report.pl";
+require "mtr_match.pl";
+require "mtr_misc.pl";
+require "mtr_stress.pl";
+require "mtr_unique.pl";
 
 $Devel::Trace::TRACE= 1;
 

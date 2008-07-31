@@ -37,7 +37,7 @@ int decimal_operation_results(int result)
     break;
   case E_DEC_TRUNCATED:
     push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
-			WARN_DATA_TRUNCATED, ER(WARN_DATA_TRUNCATED),
+			ER_WARN_DATA_TRUNCATED, ER(ER_WARN_DATA_TRUNCATED),
 			"", (long)-1);
     break;
   case E_DEC_OVERFLOW:
@@ -208,11 +208,11 @@ int str2my_decimal(uint mask, const char *from, uint length,
 }
 
 
-my_decimal *date2my_decimal(MYSQL_TIME *ltime, my_decimal *dec)
+my_decimal *date2my_decimal(DRIZZLE_TIME *ltime, my_decimal *dec)
 {
   int64_t date;
   date = (ltime->year*100L + ltime->month)*100L + ltime->day;
-  if (ltime->time_type > MYSQL_TIMESTAMP_DATE)
+  if (ltime->time_type > DRIZZLE_TIMESTAMP_DATE)
     date= ((date*100L + ltime->hour)*100L+ ltime->minute)*100L + ltime->second;
   if (int2my_decimal(E_DEC_FATAL_ERROR, date, false, dec))
     return dec;

@@ -36,6 +36,8 @@ bin_PROGRAMS =
 bin_SCRIPTS = 	drizzledumpslow \
 		drizzled_safe 
 
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} ${LIBEVENT_CPPFLAGS}
+
 DTRACE = @DTRACE@
 
 DTRACEFLAGS = @DTRACEFLAGS@
@@ -47,15 +49,11 @@ DTRACEFILES = handler.o \
 	      sql_select.o \
 	      sql_update.o
 
-pkginclude_HEADERS =	plugin.h \
+pkginclude_HEADERS =	error.h \
+			plugin.h \
 			plugin_audit.h
 
 noinst_LTLIBRARIES = libhandler.la
-
-AM_CPPFLAGS =	-I$(top_srcdir)/mystrings \
-		-I$(top_srcdir)/include \
-		-I$(top_srcdir)/drizzled \
-		-I$(top_srcdir)
 
 LDADD = $(top_builddir)/vio/libviolt.la \
 	$(top_builddir)/libdrizzle/libsqlcommon.la \
@@ -87,6 +85,7 @@ noinst_HEADERS = item.h \
 		 sql_lex.h \
 		 sql_list.h \
 		 sql_map.h \
+		 sql_state.h \
 		 sql_string.h \
 		 unireg.h \
 		 sql_error.h \

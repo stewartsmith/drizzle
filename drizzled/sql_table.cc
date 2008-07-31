@@ -5132,16 +5132,16 @@ err:
   if (alter_info->error_if_not_empty && thd->row_count)
   {
     const char *f_val= 0;
-    enum enum_mysql_timestamp_type t_type= MYSQL_TIMESTAMP_DATE;
+    enum enum_drizzle_timestamp_type t_type= DRIZZLE_TIMESTAMP_DATE;
     switch (alter_info->datetime_field->sql_type)
     {
       case DRIZZLE_TYPE_NEWDATE:
         f_val= "0000-00-00";
-        t_type= MYSQL_TIMESTAMP_DATE;
+        t_type= DRIZZLE_TIMESTAMP_DATE;
         break;
       case DRIZZLE_TYPE_DATETIME:
         f_val= "0000-00-00 00:00:00";
-        t_type= MYSQL_TIMESTAMP_DATETIME;
+        t_type= DRIZZLE_TIMESTAMP_DATETIME;
         break;
       default:
         /* Shouldn't get here. */

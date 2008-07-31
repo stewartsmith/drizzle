@@ -6,7 +6,7 @@ AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 AC_INIT
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([drizzled/config.h:config.h.in])
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
 
@@ -49,6 +49,7 @@ sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 sinclude(config/ac-macros/pkg.m4)
+sinclude(config/ac-macros/ac_cxx_header_stdcxx_98.m4)
 
 # Remember to add a directory drizzled/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
@@ -161,7 +162,8 @@ ifdef([AC_PROG_CC_C99],[
   C99_SUPPORT_HACK=""
 ],[C99_SUPPORT_HACK="-std=gnu99"])
 AC_PROG_CXX
-if test "x$ac_ct_CXX" = "x"
+AC_CXX_HEADER_STDCXX_98
+if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
   AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
 fi
@@ -294,17 +296,67 @@ AC_SUBST(LD_VERSION_SCRIPT)
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(event.h)
-if test "x$ac_cv_header_event_h" != "xyes"
+AC_MSG_CHECKING(for libevent)
+AC_ARG_WITH(libevent,
+  [AS_HELP_STRING([--with-libevent],
+       [Use libevent build directory])],
+  [ with_libevent=$withval ],
+  [ with_libevent=yes ])
+
+if test "$withval" = "yes"
 then
-  AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+    AC_CHECK_HEADERS(event.h)
+    if test "x$ac_cv_header_event_h" != "xyes"
+    then
+      AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+    fi
+    my_save_LIBS="$LIBS"
+    LIBS=""
+    AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+    LIBEVENT_LIBS="${LIBS}"
+    LIBS="${my_save_LIBS}"
+    LIBEVENT_CFLAGS=""
+else
+    AC_MSG_RESULT($withval)
+    if test -f $withval/event.h -a -f $withval/libevent.a; then
+       owd=`pwd`
+       if cd $withval; then withval=`pwd`; cd $owd; fi
+       LIBEVENT_CFLAGS="-I$withval"
+       LIBEVENT_LIBS="-L$withval -levent"
+    elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
+       owd=`pwd`
+       if cd $withval; then withval=`pwd`; cd $owd; fi
+       LIBEVENT_CFLAGS="-I$withval/include"
+       LIBEVENT_LIBS="-L$withval/lib -levent"
+    else
+       AC_ERROR(event.h or libevent.a not found in $withval)
+    fi
 fi
-my_save_LIBS="$LIBS"
-LIBS=""
-AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
-LIBEVENT_LIBS="${LIBS}"
-LIBS="${my_save_LIBS}"
+
+AC_SUBST(LIBEVENT_CFLAGS)
 AC_SUBST(LIBEVENT_LIBS)
+
+AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
+  save_CFLAGS="$CFLAGS"
+  save_LIBS="$LIBS"
+  CFLAGS="$LIBEVENT_CFLAGS"
+  LIBS="$LIBEVENT_LIBS"
+  AC_TRY_LINK([
+#include <sys/types.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <event.h>],[
+	struct bufferevent bev;
+	bufferevent_settimeout(&bev, 1, 1);
+  ], ac_libevent_works=yes, [
+        AC_ERROR([you need to install a more recent version of libevent,
+	check http://www.monkey.org/~provos/libevent/])
+  ])
+
+  CFLAGS="$save_CFLAGS"
+  LIBS="$save_LIBS"
+])
+
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -324,10 +376,10 @@ AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthrea
 AC_ARG_ENABLE([tcmalloc],
     [AS_HELP_STRING([--enable-tcmalloc],
        [Enable linking with tcmalloc @<:@default=off@:>@])],
-    [ac_warn_strict_aliasing="$enableval"],
-    [ac_warn_strict_aliasing="no"])
+    [ac_enable_tcmalloc="$enableval"],
+    [ac_enable_tcmalloc="no"])
 
-if test "x$ac_warn_strict_aliasing" = "xyes"
+if test "x$ac_enable_tcmalloc" = "xyes"
 then
   AC_CHECK_LIB(tcmalloc,malloc,[],[])
 fi
@@ -353,11 +405,23 @@ AC_SUBST(ZLIB_LIBS)
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS([readline/readline.h])
+AC_CHECK_HEADERS(readline/history.h readline/readline.h)
 if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
+AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
 
 MYSQL_CHECK_NEW_RL_INTERFACE
 
@@ -371,29 +435,38 @@ READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
 
-
 #--------------------------------------------------------------------
 # Check for libpcre
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[found_pcre="no"])
+
+if test "$found_pcre" = "no"
+then
   dnl Only check the header here, because autoconf can't handle
   dnl checking for C++ methods without C linkages
   AC_CHECK_HEADERS(pcrecpp.h)
   if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
   then
-    found_pcre="no"
-  else
-    found_pcre="yes"
-    # We can't search for these well, but we sure do need them!
-    PCRE_LIBS="-lpcrecpp -lpcre"
-  fi
-  ])
-if test "x$found_pcre" != "xyes"
-then
     AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
+  else
+    # Found headers, now see if we can link
+    AC_MSG_CHECKING(for libpcrecpp)
+    save_LDFLAGS="$LDFLAGS"
+    LDFLAGS="-lpcrecpp -lpcre"
+    AC_TRY_LINK([
+#include <pcrecpp.h>
+    ],
+    [pcrecpp::RE_Options opt;],
+    [found_pcre="yes"],
+    [AC_MSG_ERROR([Couldn't link libpcrecpp])])
+
+    PCRE_LIBS="$LDFLAGS"
+    LDFLAGS="$save_LDFLAGS"
+    AC_MSG_RESULT([yes])
+  fi
 fi
 AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
@@ -879,7 +952,7 @@ MYSQL_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
 MYSQL_FUNC_ALLOCA
 # Do struct timespec have members tv_sec or ts_sec
-MYSQL_TIMESPEC_TS
+DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
 MYSQL_TZNAME
 # Do the c++ compiler have a bool type
@@ -890,9 +963,6 @@ AC_CHECK_TYPES([u_int32_t])
 
 MYSQL_PTHREAD_YIELD
 
-######################################################################
-# For readline/libedit (We simply move the mimimum amount of stuff from
-# the readline/libedit configure.in here)
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(malloc.h sys/cdefs.h)
@@ -1275,7 +1345,7 @@ then
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include'])
+AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 
 # Some usefull subst
@@ -1301,7 +1371,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  drizzled/field/Makefile dnl
  drizzled/share/Makefile dnl
  drizzled/sql_builtin.cc dnl
- include/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  drizzled/version.h plugin/Makefile dnl
