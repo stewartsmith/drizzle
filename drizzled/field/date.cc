@@ -57,7 +57,7 @@ int Field_newdate::store(const char *from,
   DRIZZLE_TIME l_time;
   int error;
   THD *thd= table ? table->in_use : current_thd;
-  enum enum_mysql_timestamp_type ret;
+  enum enum_drizzle_timestamp_type ret;
   if ((ret= str_to_datetime(from, len, &l_time,
                             (TIME_FUZZY_DATE |
                              (thd->variables.sql_mode &

@@ -135,7 +135,7 @@ typedef struct st_read_record {			/* Parameter to read_record */
   new names to keep existing code simple.
 */
 
-typedef enum enum_mysql_timestamp_type timestamp_type;
+typedef enum enum_drizzle_timestamp_type timestamp_type;
 
 
 typedef struct {

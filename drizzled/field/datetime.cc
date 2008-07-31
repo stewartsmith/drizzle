@@ -38,7 +38,7 @@ int Field_datetime::store(const char *from,
   DRIZZLE_TIME time_tmp;
   int error;
   uint64_t tmp= 0;
-  enum enum_mysql_timestamp_type func_res;
+  enum enum_drizzle_timestamp_type func_res;
   THD *thd= table ? table->in_use : current_thd;
 
   func_res= str_to_datetime(from, len, &time_tmp,

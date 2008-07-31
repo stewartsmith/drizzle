@@ -156,7 +156,7 @@ my_bool check_date(const DRIZZLE_TIME *ltime, my_bool not_zero_date,
 
 #define MAX_DATE_PARTS 8
 
-enum enum_mysql_timestamp_type
+enum enum_drizzle_timestamp_type
 str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
                 uint flags, int *was_cut)
 {
@@ -494,7 +494,7 @@ my_bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
   if (length >= 12)
   {                                             /* Probably full timestamp */
     int was_cut;
-    enum enum_mysql_timestamp_type
+    enum enum_drizzle_timestamp_type
       res= str_to_datetime(str, length, l_time,
                            (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), &was_cut);
     if ((int) res >= (int) DRIZZLE_TIMESTAMP_ERROR)
@@ -982,7 +982,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
 
 /* Set DRIZZLE_TIME structure to 0000-00-00 00:00:00.000000 */
 
-void set_zero_time(DRIZZLE_TIME *tm, enum enum_mysql_timestamp_type time_type)
+void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 {
   memset((void*) tm, 0, sizeof(*tm));
   tm->time_type= time_type;

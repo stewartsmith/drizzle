@@ -651,7 +651,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
   uint64_t value= 0;
   int error;
   DRIZZLE_TIME l_time;
-  enum_mysql_timestamp_type ret;
+  enum_drizzle_timestamp_type ret;
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
