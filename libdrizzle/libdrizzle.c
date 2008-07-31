@@ -242,9 +242,9 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
       free(drizzle->db);
 
     /* alloc new connect information */
-    drizzle->user=  my_strdup(user,MYF(MY_WME));
-    drizzle->passwd=my_strdup(passwd,MYF(MY_WME));
-    drizzle->db=    db ? my_strdup(db,MYF(MY_WME)) : 0;
+    drizzle->user= strdup(user);
+    drizzle->passwd= strdup(passwd);
+    drizzle->db= db ? strdup(db) : 0;
   }
   else
   {
@@ -593,22 +593,6 @@ drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET field_offset)
   DRIZZLE_FIELD_OFFSET return_value=result->current_field;
   result->current_field=field_offset;
   return return_value;
-}
-
-
-/*****************************************************************************
-  List all databases
-*****************************************************************************/
-
-DRIZZLE_RES * STDCALL
-drizzle_list_dbs(DRIZZLE *drizzle, const char *wild)
-{
-  char buff[255];
-
-  append_wild(strmov(buff,"show databases"),buff+sizeof(buff),wild);
-  if (drizzle_query(drizzle,buff))
-    return(0);
-  return (drizzle_store_result(drizzle));
 }
 
 

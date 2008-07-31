@@ -375,7 +375,6 @@ uint32_t  STDCALL drizzle_get_client_version(void);
 const char *  STDCALL drizzle_get_host_info(DRIZZLE *drizzle);
 uint32_t  STDCALL drizzle_get_server_version(DRIZZLE *drizzle);
 uint32_t  STDCALL drizzle_get_proto_info(DRIZZLE *drizzle);
-DRIZZLE_RES *  STDCALL drizzle_list_dbs(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  STDCALL drizzle_list_tables(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  STDCALL drizzle_list_processes(DRIZZLE *drizzle);
 int32_t    STDCALL drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg);
