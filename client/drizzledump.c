@@ -2291,8 +2291,7 @@ static void dump_table(char *table, char *db)
            we'll dump in hex only BLOB columns.
         */
         is_blob= (opt_hex_blob && field->charsetnr == 63 &&
-                  (field->type == DRIZZLE_TYPE_STRING ||
-                   field->type == DRIZZLE_TYPE_VARCHAR ||
+                  (field->type == DRIZZLE_TYPE_VARCHAR ||
                    field->type == DRIZZLE_TYPE_BLOB)) ? 1 : 0;
         if (extended_insert && !opt_xml)
         {

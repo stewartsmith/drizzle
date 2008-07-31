@@ -43,21 +43,8 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
   */
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_STRING:
   {
-    uchar type= m_field_metadata[col] >> 8U;
-    if ((type == DRIZZLE_TYPE_SET) || (type == DRIZZLE_TYPE_ENUM))
-      length= m_field_metadata[col] & 0x00ff;
-    else
-    {
-      /*
-        We are reading the actual size from the master_data record
-        because this field has the actual lengh stored in the first
-        byte.
-      */
-      length= (uint) *master_data + 1;
-      assert(length != 0);
-    }
+    length= m_field_metadata[col] & 0x00ff;
     break;
   }
   case DRIZZLE_TYPE_TINY:

@@ -62,7 +62,7 @@ extern char *drizzle_unix_port;
 #define IS_NUM(t)  ((t) <= DRIZZLE_TYPE_LONGLONG || (t) == DRIZZLE_TYPE_NEWDECIMAL)
 #define IS_NUM_FIELD(f)   ((f)->flags & NUM_FLAG)
 #define INTERNAL_NUM_FIELD(f) (((f)->type <= DRIZZLE_TYPE_LONGLONG && ((f)->type != DRIZZLE_TYPE_TIMESTAMP || (f)->length == 14 || (f)->length == 8)))
-#define IS_LONGDATA(t) ((t) >= DRIZZLE_TYPE_TINY_BLOB && (t) <= DRIZZLE_TYPE_STRING)
+#define IS_LONGDATA(t) ((t) == DRIZZLE_TYPE_TINY_BLOB)
 
 
 typedef struct st_drizzle_field {

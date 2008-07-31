@@ -1224,9 +1224,9 @@ Field *Item_sum_avg::create_tmp_field(bool group, TABLE *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_string(((hybrid_type == DECIMAL_RESULT) ?
-                             dec_bin_size : sizeof(double)) + sizeof(int64_t),
-                            0, name, &my_charset_bin);
+    field= new Field_varstring(((hybrid_type == DECIMAL_RESULT) ?
+                                dec_bin_size : sizeof(double)) + sizeof(int64_t),
+                               0, name, table->s, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
     field= new Field_new_decimal(max_length, maybe_null, name,
@@ -1434,7 +1434,7 @@ Field *Item_sum_variance::create_tmp_field(bool group, TABLE *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_string(sizeof(double)*2 + sizeof(int64_t), 0, name, &my_charset_bin);
+    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, table->s, &my_charset_bin);
   }
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
@@ -2582,7 +2582,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
       Field *f= *field;
       enum enum_field_types f_type= f->type();
       tree_key_length+= f->pack_length();
-      if ((f_type == DRIZZLE_TYPE_VARCHAR) || (!f->binary() && (f_type == DRIZZLE_TYPE_STRING)))
+      if (f_type == DRIZZLE_TYPE_VARCHAR)
       {
         all_binary= false;
         break;

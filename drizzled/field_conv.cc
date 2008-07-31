@@ -753,7 +753,6 @@ int field_conv(Field *to,Field *from)
     */
     if (to->table->copy_blobs ||
         (!blob->value.is_alloced() &&
-         from->real_type() != DRIZZLE_TYPE_STRING &&
          from->real_type() != DRIZZLE_TYPE_VARCHAR))
       blob->value.copy();
     return blob->store(blob->value.ptr(),blob->value.length(),from->charset());

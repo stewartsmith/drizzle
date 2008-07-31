@@ -4058,14 +4058,10 @@ Field *Item::make_string_field(TABLE *table)
   if (max_length/collation.collation->mbmaxlen > CONVERT_IF_BIGGER_TO_BLOB)
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
-  /* Item_type_holder holds the exact type, do not change it */
-  else if (max_length > 0 &&
-      (type() != Item::TYPE_HOLDER || field_type() != DRIZZLE_TYPE_STRING))
+  else
     field= new Field_varstring(max_length, maybe_null, name, table->s,
                                collation.collation);
-  else
-    field= new Field_string(max_length, maybe_null, name,
-                            collation.collation);
+
   if (field)
     field->init(table);
   return field;
@@ -4084,7 +4080,7 @@ Field *Item::make_string_field(TABLE *table)
     \#    Created field
 */
 
-Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
+Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length __attribute__((unused)))
 {
   /*
     The field functions defines a field to be not null if null_ptr is not 0
@@ -4137,14 +4133,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
   default:
     /* This case should never be chosen */
     assert(0);
-    /* If something goes awfully wrong, it's better to get a string than die */
-  case DRIZZLE_TYPE_STRING:
-    if (fixed_length && max_length < CONVERT_IF_BIGGER_TO_BLOB)
-    {
-      field= new Field_string(max_length, maybe_null, name,
-                              collation.collation);
-      break;
-    }
     /* Fall through to make_string_field() */
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
@@ -4673,7 +4661,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
   {
@@ -6073,8 +6060,8 @@ my_decimal *Item_cache_str::val_decimal(my_decimal *decimal_val)
 int Item_cache_str::save_in_field(Field *field, bool no_conversions)
 {
   int res= Item_cache::save_in_field(field, no_conversions);
-  return (is_varbinary && field->type() == DRIZZLE_TYPE_STRING &&
-          value->length() < field->field_length) ? 1 : res;
+
+  return res;
 }
 
 
@@ -6377,7 +6364,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_TINY:
     return 4;
   case DRIZZLE_TYPE_SHORT:
