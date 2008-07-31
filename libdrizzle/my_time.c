@@ -75,7 +75,7 @@ uint calc_days_in_year(uint year)
     1  error
 */
 
-my_bool check_date(const DRIZZLE_TIME *ltime, my_bool not_zero_date,
+bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
                    ulong flags, int *was_cut)
 {
   if (not_zero_date)
@@ -164,11 +164,11 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
   uint date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
   uint add_hours= 0, start_loop;
   ulong not_zero_date, allow_space;
-  my_bool is_internal_format;
+  bool is_internal_format;
   const char *pos, *last_field_pos=NULL;
   const char *end=str+length;
   const uchar *format_position;
-  my_bool found_delimitier= 0, found_space= 0;
+  bool found_delimitier= 0, found_space= 0;
   uint frac_pos, frac_len;
 
   *was_cut= 0;
@@ -468,13 +468,13 @@ err:
      1  error
 */
 
-my_bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
+bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
                     int *warning)
 {
   ulong date[5];
   uint64_t value;
   const char *end=str+length, *end_of_days;
-  my_bool found_days,found_hours;
+  bool found_days,found_hours;
   uint state;
 
   l_time->neg=0;

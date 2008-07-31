@@ -53,7 +53,7 @@ typedef struct st_drizzle_time
 {
   unsigned int  year, month, day, hour, minute, second;
   unsigned long second_part;
-  my_bool       neg;
+  bool       neg;
   enum enum_drizzle_timestamp_type time_type;
 } DRIZZLE_TIME;
 

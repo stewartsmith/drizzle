@@ -79,7 +79,7 @@ typedef long my_time_t;
 #define TIME_MAX_VALUE_SECONDS (TIME_MAX_HOUR * 3600L + \
                                 TIME_MAX_MINUTE * 60L + TIME_MAX_SECOND)
 
-my_bool check_date(const DRIZZLE_TIME *ltime, my_bool not_zero_date,
+bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
                    ulong flags, int *was_cut);
 enum enum_drizzle_timestamp_type
 str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
@@ -92,8 +92,8 @@ uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *);
 uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *);
 
 
-my_bool str_to_time(const char *str,uint length, DRIZZLE_TIME *l_time,
-                    int *warning);
+bool str_to_time(const char *str,uint length, DRIZZLE_TIME *l_time,
+                 int *warning);
 
 int check_time_range(DRIZZLE_TIME *my_time, int *warning);
 
@@ -117,7 +117,7 @@ void init_time(void);
     true    The DRIZZLE_TIME value is definitely out of range
 */
 
-static inline my_bool validate_timestamp_range(const DRIZZLE_TIME *t)
+static inline bool validate_timestamp_range(const DRIZZLE_TIME *t)
 {
   if ((t->year > TIMESTAMP_MAX_YEAR || t->year < TIMESTAMP_MIN_YEAR) ||
       (t->year == TIMESTAMP_MAX_YEAR && (t->month > 1 || t->day > 19)) ||
