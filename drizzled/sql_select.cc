@@ -10586,8 +10586,7 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
     new_field->flags|= (org_field->flags & NO_DEFAULT_VALUE_FLAG);
     if (org_field->maybe_null() || (item && item->maybe_null))
       new_field->flags&= ~NOT_NULL_FLAG;	// Because of outer join
-    if (org_field->type() == DRIZZLE_TYPE_VAR_STRING ||
-        org_field->type() == DRIZZLE_TYPE_VARCHAR)
+    if (org_field->type() == DRIZZLE_TYPE_VARCHAR)
       table->s->db_create_options|= HA_OPTION_PACK_RECORD;
     else if (org_field->type() == DRIZZLE_TYPE_DOUBLE)
       ((Field_double *) new_field)->not_fixed= true;
@@ -16491,7 +16490,7 @@ calc_group_buffer(JOIN *join,ORDER *group)
       enum_field_types type;
       if ((type= field->type()) == DRIZZLE_TYPE_BLOB)
 	key_length+=MAX_BLOB_WIDTH;		// Can't be used as a key
-      else if (type == DRIZZLE_TYPE_VARCHAR || type == DRIZZLE_TYPE_VAR_STRING)
+      else if (type == DRIZZLE_TYPE_VARCHAR)
         key_length+= field->field_length + HA_KEY_BLOB_LENGTH;
       else
 	key_length+= field->pack_length();

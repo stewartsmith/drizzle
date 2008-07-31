@@ -2519,7 +2519,6 @@ innobase_mysql_cmp(
 	switch (mysql_tp) {
 
 	case DRIZZLE_TYPE_STRING:
-	case DRIZZLE_TYPE_VAR_STRING:
 	case DRIZZLE_TYPE_BLOB:
 	case DRIZZLE_TYPE_VARCHAR:
 		/* Use the charset number to pick the right charset struct for
@@ -2585,7 +2584,6 @@ get_innobase_type_from_mysql_type(
 	the type */
 
 	assert((ulint)DRIZZLE_TYPE_STRING < 256);
-	assert((ulint)DRIZZLE_TYPE_VAR_STRING < 256);
 	assert((ulint)DRIZZLE_TYPE_DOUBLE < 256);
 
 	if (field->flags & UNSIGNED_FLAG) {
@@ -2612,7 +2610,6 @@ get_innobase_type_from_mysql_type(
 	switch (field->type()) {
 		/* NOTE that we only allow string types in DATA_MYSQL and
 		DATA_VARMYSQL */
-	case DRIZZLE_TYPE_VAR_STRING: /* old <= 4.1 VARCHAR */
 	case DRIZZLE_TYPE_VARCHAR:    /* new >= 5.0.3 true VARCHAR */
 		if (field->binary()) {
 			return(DATA_BINARY);
@@ -2910,8 +2907,7 @@ ha_innobase::store_key_val_for_row(
 
 			if (real_type != DRIZZLE_TYPE_ENUM
 				&& real_type != DRIZZLE_TYPE_SET
-				&& ( mysql_type == DRIZZLE_TYPE_VAR_STRING
-					|| mysql_type == DRIZZLE_TYPE_STRING)) {
+				&& (mysql_type == DRIZZLE_TYPE_STRING)) {
 
 				cs = field->charset();
 
