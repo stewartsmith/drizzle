@@ -2920,7 +2920,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_NULL:        return "NULL";
     case DRIZZLE_TYPE_SET:         return "SET";
     case DRIZZLE_TYPE_SHORT:       return "SHORT";
-    case DRIZZLE_TYPE_STRING:      return "STRING";
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";

@@ -663,9 +663,10 @@ Item_result Field::result_merge_type(enum_field_types field_type)
 bool Field::type_can_have_key_part(enum enum_field_types type)
 {
   switch (type) {
+  case DRIZZLE_TYPE_STRING:
+    assert(0);
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
     return true;
   default:
     return false;
@@ -1312,13 +1313,6 @@ uint Field::fill_cache_field(CACHE_FIELD *copy)
     copy->length-= table->s->blob_ptr_size;
     return copy->length;
   }
-  else if (!zero_pack() &&
-           (type() == DRIZZLE_TYPE_STRING && copy->length >= 4 &&
-            copy->length < 256))
-  {
-    copy->strip=1;				/* Remove end space */
-    store_length= 2;
-  }
   else
   {
     copy->strip=0;
@@ -1716,7 +1710,7 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
 
 
 /**
-  Store double value in Field_string or Field_varstring.
+  Store double value in Field_varstring.
 
   Pretty prints double number into field_length characters buffer.
 
@@ -2127,8 +2121,9 @@ uint Field_num::is_equal(Create_field *new_field)
 void Create_field::create_length_to_internal_length(void)
 {
   switch (sql_type) {
-  case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_STRING:
+    assert(0);
+  case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
     length*= charset->mbmaxlen;
     key_length= length;
@@ -2295,6 +2290,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
     max_field_charlength= MAX_FIELD_VARCHARLENGTH;
     break;
   case DRIZZLE_TYPE_STRING:
+    assert(0);
     break;
   case DRIZZLE_TYPE_BLOB:
     if (fld_default_value)
@@ -2445,13 +2441,9 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       ((length > max_field_charlength && fld_type != DRIZZLE_TYPE_SET &&
         fld_type != DRIZZLE_TYPE_ENUM &&
         (fld_type != DRIZZLE_TYPE_VARCHAR || fld_default_value)) ||
-       (!length &&
-        fld_type != DRIZZLE_TYPE_STRING &&
-        fld_type != DRIZZLE_TYPE_VARCHAR)))
+       (!length && fld_type != DRIZZLE_TYPE_VARCHAR)))
   {
-    my_error((fld_type == DRIZZLE_TYPE_VARCHAR ||
-              fld_type == DRIZZLE_TYPE_STRING) ?  ER_TOO_BIG_FIELDLENGTH :
-                                                ER_TOO_BIG_DISPLAYWIDTH,
+    my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
               fld_name, max_field_charlength); /* purecov: inspected */
     return(true);
@@ -2485,6 +2477,7 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {
   case DRIZZLE_TYPE_STRING:
+    assert(0);
   case DRIZZLE_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
   case DRIZZLE_TYPE_TINY	: return 1;
   case DRIZZLE_TYPE_SHORT : return 2;
@@ -2554,10 +2547,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
   {
     if (!f_is_packed(pack_flag))
     {
-      if (field_type == DRIZZLE_TYPE_STRING)
-        return new Field_string(ptr,field_length,null_pos,null_bit,
-                                unireg_check, field_name,
-                                field_charset);
       if (field_type == DRIZZLE_TYPE_VARCHAR)
         return new Field_varstring(ptr,field_length,
                                    HA_VARCHAR_PACKLENGTH(field_length),
@@ -2674,6 +2663,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
     key_length/= charset->mbmaxlen;
     break;
   case DRIZZLE_TYPE_STRING:
+    assert(0);
     /* Change CHAR -> VARCHAR if dynamic record length */
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:

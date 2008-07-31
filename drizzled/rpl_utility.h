@@ -101,7 +101,6 @@ public:
         }
         case DRIZZLE_TYPE_SET:
         case DRIZZLE_TYPE_ENUM:
-        case DRIZZLE_TYPE_STRING:
         {
           uint16_t x= field_metadata[index++] << 8U; // real_type
           x+= field_metadata[index++];            // pack or field length

@@ -789,8 +789,9 @@ int prepare_create_field(Create_field *sql_field,
     sql_field->unireg_check=Field::BLOB_FIELD;
     (*blob_columns)++;
     break;
-  case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_STRING:
+    assert(0);
+  case DRIZZLE_TYPE_VARCHAR:
     sql_field->pack_flag=0;
     if (sql_field->charset->state & MY_CS_BINSORT)
       sql_field->pack_flag|=FIELDFLAG_BINARY;
@@ -959,8 +960,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     */
     if (sql_field->def && 
         save_cs != sql_field->def->collation.collation &&
-        (sql_field->sql_type == DRIZZLE_TYPE_STRING ||
-         sql_field->sql_type == DRIZZLE_TYPE_SET ||
+        (sql_field->sql_type == DRIZZLE_TYPE_SET ||
          sql_field->sql_type == DRIZZLE_TYPE_ENUM))
     {
       /*
@@ -1530,8 +1530,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       /* Use packed keys for long strings on the first column */
       if (!((*db_options) & HA_OPTION_NO_PACK_KEYS) &&
 	  (length >= KEY_DEFAULT_PACK_LENGTH &&
-	   (sql_field->sql_type == DRIZZLE_TYPE_STRING ||
-	    sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
+	   (sql_field->sql_type == DRIZZLE_TYPE_VARCHAR ||
 	    sql_field->pack_flag & FIELDFLAG_BLOB)))
       {
 	if ((column_nr == 0 && (sql_field->pack_flag & FIELDFLAG_BLOB)) ||
@@ -4095,8 +4094,6 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
   Field **f_ptr,*field;
   for (f_ptr=table->field ; (field= *f_ptr) ; f_ptr++)
     {
-    if (field->type() == DRIZZLE_TYPE_STRING)
-      create_info->varchar= true;
     /* Check if field should be dropped */
     Alter_drop *drop;
     drop_it.rewind();

@@ -2288,7 +2288,7 @@ protected:
   enum enum_field_types cached_field_type;
 public:
   Item_cache(): 
-    example(0), used_table_map(0), cached_field(0), cached_field_type(DRIZZLE_TYPE_STRING) 
+    example(0), used_table_map(0), cached_field(0), cached_field_type(DRIZZLE_TYPE_VARCHAR) 
   {
     fixed= 1; 
     null_value= 1;

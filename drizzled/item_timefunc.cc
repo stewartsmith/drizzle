@@ -2019,11 +2019,11 @@ void Item_date_add_interval::fix_length_and_dec()
     - If first arg is a DRIZZLE_TYPE_DATETIME result is DRIZZLE_TYPE_DATETIME
     - If first arg is a DRIZZLE_TYPE_NEWDATE and the interval type uses hours,
       minutes or seconds then type is DRIZZLE_TYPE_DATETIME.
-    - Otherwise the result is DRIZZLE_TYPE_STRING
+    - Otherwise the result is DRIZZLE_TYPE_VARCHAR
       (This is because you can't know if the string contains a DATE, MYSQL_TIME or
       DATETIME argument)
   */
-  cached_field_type= DRIZZLE_TYPE_STRING;
+  cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
   if (arg0_field_type == DRIZZLE_TYPE_DATETIME ||
       arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
@@ -2629,10 +2629,10 @@ void Item_func_add_time::fix_length_and_dec()
     - If first arg is a DRIZZLE_TYPE_DATETIME or DRIZZLE_TYPE_TIMESTAMP 
       result is DRIZZLE_TYPE_DATETIME
     - If first arg is a DRIZZLE_TYPE_TIME result is DRIZZLE_TYPE_TIME
-    - Otherwise the result is DRIZZLE_TYPE_STRING
+    - Otherwise the result is DRIZZLE_TYPE_VARCHAR
   */
 
-  cached_field_type= DRIZZLE_TYPE_STRING;
+  cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
   if (arg0_field_type == DRIZZLE_TYPE_NEWDATE ||
       arg0_field_type == DRIZZLE_TYPE_DATETIME ||

@@ -119,7 +119,7 @@ public:
      if it needs a temp buffer to convert result to string - use buf1
        example Field_tiny::val_str()
      if the value exists as a string already - use buf2
-       example Field_string::val_str()
+       example Field_varstring::val_str() (???)
      consequently, buf2 may be created as 'String buf;' - no memory
      will be allocated for it. buf1 will be allocated to hold a
      value if it's too small. Using allocated buffer for buf2 may result in
@@ -171,7 +171,7 @@ public:
     metadata is 0. Thus, 0 == 0 means the fields are compatible in size.
 
     Note: While most classes that override this method return pack_length(),
-    the classes Field_string, Field_varstring, and Field_blob return 
+    the classes Field_varstring, and Field_blob return 
     field_length + 1, field_length, and pack_length_no_ptr() respectfully.
   */
   virtual uint row_pack_length() { return 0; }
@@ -599,7 +599,7 @@ public:
 };
 
 
-/* base class for Field_string, Field_varstring and Field_blob */
+/* base class for Field_varstring and Field_blob */
 
 class Field_longstr :public Field_str
 {
@@ -706,7 +706,7 @@ public:
       flags|=ENUM_FLAG;
   }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
-  enum_field_types type() const { return DRIZZLE_TYPE_STRING; }
+  enum_field_types type() const { return DRIZZLE_TYPE_ENUM; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   enum Item_result cast_to_int_type () const { return INT_RESULT; }
   enum ha_base_keytype key_type() const;
