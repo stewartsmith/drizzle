@@ -35,12 +35,6 @@
 #define LFACTOR1  10000000000ULL
 #define LFACTOR2  100000000000ULL
 
-static unsigned long lfactor[9]=
-{
-  1L, 10L, 100L, 1000L, 10000L, 100000L, 1000000L, 10000000L, 100000000L
-};
-
-
 #define REPLACEMENT_CHAR 0xFFFD;
 
 
@@ -52,6 +46,14 @@ static unsigned long lfactor[9]=
 #if defined(HAVE_CHARSET_mb2) || defined(HAVE_CHARSET_utf32)
 #define HAVE_CHARSET_mb2_or_mb4
 #endif
+
+#if defined(HAVE_CHARSET_mb2) || defined(HAVE_CHARSET_utf32)
+static unsigned long lfactor[9]=
+{
+  1L, 10L, 100L, 1000L, 10000L, 100000L, 1000000L, 10000000L, 100000000L
+};
+#endif
+
 
 
 #ifdef HAVE_CHARSET_mb2_or_mb4
