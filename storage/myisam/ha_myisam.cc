@@ -173,7 +173,6 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
           if (j == 0)
             keydef[i].flag|= HA_PACK_KEY;
           if ((field->type() == DRIZZLE_TYPE_STRING ||
-               field->type() == DRIZZLE_TYPE_VAR_STRING ||
                ((int) (pos->key_part[j].length - field->decimals())) >= 4))
             keydef[i].seg[j].flag|= HA_SPACE_PACK;
         }
@@ -255,8 +254,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
     else if (found->zero_pack())
       recinfo_pos->type= (int) FIELD_SKIP_ZERO;
     else
-      recinfo_pos->type= (int) ((length <= 3) ?  FIELD_NORMAL : found->type() == DRIZZLE_TYPE_STRING ||
-                                  found->type() == DRIZZLE_TYPE_VAR_STRING ?
+      recinfo_pos->type= (int) ((length <= 3) ?  FIELD_NORMAL : found->type() == DRIZZLE_TYPE_STRING ?
                                   FIELD_SKIP_ENDSPACE :
                                   FIELD_SKIP_PRESPACE);
     if (found->null_ptr)

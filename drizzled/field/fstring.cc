@@ -203,15 +203,12 @@ void Field_string::sql_type(String &res) const
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
                              res.alloced_length(), "%s(%d)",
-                             ((type() == DRIZZLE_TYPE_VAR_STRING &&
+                             ((type() == DRIZZLE_TYPE_VARCHAR &&
                                !thd->variables.new_mode) ?
                               (has_charset() ? "varchar" : "varbinary") :
 			      (has_charset() ? "char" : "binary")),
                              (int) field_length / charset()->mbmaxlen);
   res.length(length);
-  if ((thd->variables.sql_mode & (MODE_MYSQL323 | MODE_MYSQL40)) &&
-      has_charset() && (charset()->state & MY_CS_BINSORT))
-    res.append(STRING_WITH_LEN(" binary"));
 }
 
 
@@ -412,25 +409,7 @@ Field *Field_string::new_field(MEM_ROOT *root, struct st_table *new_table,
                                bool keep_type)
 {
   Field *field;
-  if (type() != DRIZZLE_TYPE_VAR_STRING || keep_type)
-    field= Field::new_field(root, new_table, keep_type);
-  else if ((field= new Field_varstring(field_length, maybe_null(), field_name,
-                                       new_table->s, charset())))
-  {
-    /*
-      Old VARCHAR field which should be modified to a VARCHAR on copy
-      This is done to ensure that ALTER TABLE will convert old VARCHAR fields
-      to now VARCHAR fields.
-    */
-    field->init(new_table);
-    /*
-      Normally orig_table is different from table only if field was created
-      via ::new_field.  Here we alter the type of field, so ::new_field is
-      not applicable. But we still need to preserve the original field
-      metadata for the client-server protocol.
-    */
-    field->orig_table= orig_table;
-  }
+  field= Field::new_field(root, new_table, keep_type);
   return field;
 }
 

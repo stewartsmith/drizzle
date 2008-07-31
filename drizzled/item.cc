@@ -3922,7 +3922,7 @@ void Item::make_field(Send_field *tmp_field)
 
 enum_field_types Item::string_field_type() const
 {
-  enum_field_types f_type= DRIZZLE_TYPE_VAR_STRING;
+  enum_field_types f_type= DRIZZLE_TYPE_VARCHAR;
   if (max_length >= 65536)
     f_type= DRIZZLE_TYPE_BLOB;
   return f_type;
@@ -4149,7 +4149,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
     /* Fall through to make_string_field() */
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
-  case DRIZZLE_TYPE_VAR_STRING:
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
   case DRIZZLE_TYPE_BLOB:
@@ -4676,7 +4675,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_STRING:
-  case DRIZZLE_TYPE_VAR_STRING:
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
   {
@@ -6214,9 +6212,6 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
     enum_field_types type= field->real_type();
     if (field->is_created_from_null_item)
       return DRIZZLE_TYPE_NULL;
-    /* work around about varchar type field detection */
-    if (type == DRIZZLE_TYPE_STRING && field->type() == DRIZZLE_TYPE_VAR_STRING)
-      return DRIZZLE_TYPE_VAR_STRING;
     return type;
   }
   case SUM_FUNC_ITEM:
@@ -6241,7 +6236,7 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
       */
       switch (item->result_type()) {
       case STRING_RESULT:
-        return DRIZZLE_TYPE_VAR_STRING;
+        return DRIZZLE_TYPE_VARCHAR;
       case INT_RESULT:
         return DRIZZLE_TYPE_LONGLONG;
       case REAL_RESULT:
@@ -6251,7 +6246,7 @@ enum_field_types Item_type_holder::get_real_type(Item *item)
       case ROW_RESULT:
       default:
         assert(0);
-        return DRIZZLE_TYPE_VAR_STRING;
+        return DRIZZLE_TYPE_VARCHAR;
       }
     }
     break;
@@ -6383,7 +6378,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_VAR_STRING:
   case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_TINY:
     return 4;

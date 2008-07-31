@@ -959,8 +959,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     */
     if (sql_field->def && 
         save_cs != sql_field->def->collation.collation &&
-        (sql_field->sql_type == DRIZZLE_TYPE_VAR_STRING ||
-         sql_field->sql_type == DRIZZLE_TYPE_STRING ||
+        (sql_field->sql_type == DRIZZLE_TYPE_STRING ||
          sql_field->sql_type == DRIZZLE_TYPE_SET ||
          sql_field->sql_type == DRIZZLE_TYPE_ENUM))
     {
