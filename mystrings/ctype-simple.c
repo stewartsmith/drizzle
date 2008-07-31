@@ -15,7 +15,6 @@
 
 #include "m_string.h"
 #include "m_ctype.h"
-#include <mysys/my_sys.h>  /* Needed for MY_ERRNO_ERANGE */
 #include <errno.h>
 
 #include "stdarg.h"
@@ -1512,7 +1511,7 @@ my_strntoull10rnd_8bit(const CHARSET_INFO *cs __attribute__((unused)),
     {
       if (unsigned_flag)
       {
-        *error= ul ? MY_ERRNO_ERANGE : 0;
+        *error= ul ? ERANGE : 0;
         return 0;
       }
       else
@@ -1669,7 +1668,7 @@ ret_sign:
     {
       if (ull > (uint64_t) INT64_MIN)
       {
-        *error= MY_ERRNO_ERANGE;
+        *error= ERANGE;
         return (uint64_t) INT64_MIN;
       }
       *error= 0;
@@ -1679,7 +1678,7 @@ ret_sign:
     {
       if (ull > (uint64_t) INT64_MAX)
       {
-        *error= MY_ERRNO_ERANGE;
+        *error= ERANGE;
         return (uint64_t) INT64_MAX;
       }
       *error= 0;
@@ -1690,7 +1689,7 @@ ret_sign:
   /* Unsigned number */
   if (negative && ull)
   {
-    *error= MY_ERRNO_ERANGE;
+    *error= ERANGE;
     return 0;
   }
   *error= 0;
@@ -1703,12 +1702,12 @@ ret_zero:
 
 ret_edom:
   *endptr= (char*) str;
-  *error= MY_ERRNO_EDOM;
+  *error= EDOM;
   return 0;
   
 ret_too_big:
   *endptr= (char*) str;
-  *error= MY_ERRNO_ERANGE;
+  *error= ERANGE;
   return unsigned_flag ?
          UINT64_MAX :
          negative ? (uint64_t) INT64_MIN : (uint64_t) INT64_MAX;
