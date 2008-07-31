@@ -2212,11 +2212,7 @@ char **mysql_completion (const char *text,
                         int end __attribute__((unused)))
 {
   if (!status.batch && !quick)
-#ifdef HAVE_DECL_COMPLETION_MATCHES
-    return completion_matches(text, new_command_generator);
-#else
     return rl_completion_matches(text, new_command_generator);
-#endif
   else
     return (char**) 0;
 }
