@@ -30,31 +30,31 @@
   and Time Values" chapter in documentation.
 */
 
-enum enum_mysql_timestamp_type
+enum enum_drizzle_timestamp_type
 {
-  MYSQL_TIMESTAMP_NONE= -2, MYSQL_TIMESTAMP_ERROR= -1,
-  MYSQL_TIMESTAMP_DATE= 0, MYSQL_TIMESTAMP_DATETIME= 1, MYSQL_TIMESTAMP_TIME= 2
+  DRIZZLE_TIMESTAMP_NONE= -2, DRIZZLE_TIMESTAMP_ERROR= -1,
+  DRIZZLE_TIMESTAMP_DATE= 0, DRIZZLE_TIMESTAMP_DATETIME= 1, DRIZZLE_TIMESTAMP_TIME= 2
 };
 
 
 /*
-  Structure which is used to represent datetime values inside MySQL.
+  Structure which is used to represent datetime values inside Drizzle.
 
   We assume that values in this structure are normalized, i.e. year <= 9999,
   month <= 12, day <= 31, hour <= 23, hour <= 59, hour <= 59. Many functions
   in server such as my_system_gmt_sec() or make_time() family of functions
   rely on this (actually now usage of make_*() family relies on a bit weaker
-  restriction). Also functions that produce MYSQL_TIME as result ensure this.
+  restriction). Also functions that produce DRIZZLE_TIME as result ensure this.
   There is one exception to this rule though if this structure holds time
-  value (time_type == MYSQL_TIMESTAMP_TIME) days and hour member can hold
+  value (time_type == DRIZZLE_TIMESTAMP_TIME) days and hour member can hold
   bigger values.
 */
-typedef struct st_mysql_time
+typedef struct st_drizzle_time
 {
   unsigned int  year, month, day, hour, minute, second;
   unsigned long second_part;
   my_bool       neg;
-  enum enum_mysql_timestamp_type time_type;
-} MYSQL_TIME;
+  enum enum_drizzle_timestamp_type time_type;
+} DRIZZLE_TIME;
 
 #endif /* _libdrizzle_drizzle_time_h */

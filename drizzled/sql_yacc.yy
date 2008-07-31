@@ -4593,10 +4593,10 @@ interval_time_st:
         ;
 
 date_time_type:
-          DATE_SYM  {$$=MYSQL_TIMESTAMP_DATE;}
-        | TIME_SYM  {$$=MYSQL_TIMESTAMP_TIME;}
-        | DATETIME  {$$=MYSQL_TIMESTAMP_DATETIME;}
-        | TIMESTAMP {$$=MYSQL_TIMESTAMP_DATETIME;}
+          DATE_SYM  {$$=DRIZZLE_TIMESTAMP_DATE;}
+        | TIME_SYM  {$$=DRIZZLE_TIMESTAMP_TIME;}
+        | DATETIME  {$$=DRIZZLE_TIMESTAMP_DATETIME;}
+        | TIMESTAMP {$$=DRIZZLE_TIMESTAMP_DATETIME;}
         ;
 
 table_alias:

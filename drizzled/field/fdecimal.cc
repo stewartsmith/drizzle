@@ -241,7 +241,7 @@ int Field_new_decimal::store_decimal(const my_decimal *decimal_value)
 }
 
 
-int Field_new_decimal::store_time(MYSQL_TIME *ltime,
+int Field_new_decimal::store_time(DRIZZLE_TIME *ltime,
                                   timestamp_type t_type __attribute__((unused)))
 {
     my_decimal decimal_value;

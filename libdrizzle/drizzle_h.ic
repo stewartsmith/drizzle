@@ -101,7 +101,7 @@ typedef struct st_drizzle_ftparser_param MYSQL_FTPARSER_PARAM;
 # 641 "drizzle.h"
 typedef struct st_drizzle_methods DRIZZLE_METHODS;
 # 47 "mysql_time.h"
-typedef struct st_drizzle_time MYSQL_TIME;
+typedef struct st_drizzle_time DRIZZLE_TIME;
 # 394 "drizzle_com.h"
 typedef struct st_udf_args UDF_ARGS;
 # 408 "drizzle_com.h"
@@ -658,11 +658,11 @@ enum enum_mysql_stmt_state
 # 28 "mysql_time.h"
 enum enum_mysql_timestamp_type
   {
-    MYSQL_TIMESTAMP_NONE = -(2),
-    MYSQL_TIMESTAMP_ERROR = -(1),
-    MYSQL_TIMESTAMP_DATE = 0,
-    MYSQL_TIMESTAMP_DATETIME = 1,
-    MYSQL_TIMESTAMP_TIME = 2,
+    DRIZZLE_TIMESTAMP_NONE = -(2),
+    DRIZZLE_TIMESTAMP_ERROR = -(1),
+    DRIZZLE_TIMESTAMP_DATE = 0,
+    DRIZZLE_TIMESTAMP_DATETIME = 1,
+    DRIZZLE_TIMESTAMP_TIME = 2,
   };
 # 63 "drizzle_com.h"
 enum enum_server_command

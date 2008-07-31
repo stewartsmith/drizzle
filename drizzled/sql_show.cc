@@ -1259,7 +1259,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
       else
         table->field[4]->store(command_name[tmp->command].str,
                                command_name[tmp->command].length, cs);
-      /* MYSQL_TIME */
+      /* DRIZZLE_TIME */
       table->field[5]->store((uint32_t)(tmp->start_time ?
                                       now - tmp->start_time : 0), true);
       /* STATE */
@@ -2793,7 +2793,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
 				    LEX_STRING *table_name)
 {
   const char *tmp_buff;
-  MYSQL_TIME time;
+  DRIZZLE_TIME time;
   CHARSET_INFO *cs= system_charset_info;
 
   restore_record(table, s->default_values);
@@ -2945,21 +2945,21 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       {
         thd->variables.time_zone->gmt_sec_to_TIME(&time,
                                                   (my_time_t) file->stats.create_time);
-        table->field[14]->store_time(&time, MYSQL_TIMESTAMP_DATETIME);
+        table->field[14]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[14]->set_notnull();
       }
       if (file->stats.update_time)
       {
         thd->variables.time_zone->gmt_sec_to_TIME(&time,
                                                   (my_time_t) file->stats.update_time);
-        table->field[15]->store_time(&time, MYSQL_TIMESTAMP_DATETIME);
+        table->field[15]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[15]->set_notnull();
       }
       if (file->stats.check_time)
       {
         thd->variables.time_zone->gmt_sec_to_TIME(&time,
                                                   (my_time_t) file->stats.check_time);
-        table->field[16]->store_time(&time, MYSQL_TIMESTAMP_DATETIME);
+        table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[16]->set_notnull();
       }
       if (file->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)

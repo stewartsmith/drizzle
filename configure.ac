@@ -952,7 +952,7 @@ MYSQL_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
 MYSQL_FUNC_ALLOCA
 # Do struct timespec have members tv_sec or ts_sec
-MYSQL_TIMESPEC_TS
+DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
 MYSQL_TZNAME
 # Do the c++ compiler have a bool type

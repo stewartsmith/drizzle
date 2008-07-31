@@ -38,7 +38,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_TIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_INT24; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  int store_time(MYSQL_TIME *ltime, timestamp_type type);
+  int store_time(DRIZZLE_TIME *ltime, timestamp_type type);
   int store(const char *to,uint length,CHARSET_INFO *charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
@@ -46,9 +46,9 @@ public:
   double val_real(void);
   int64_t val_int(void);
   String *val_str(String*,String *);
-  bool get_date(MYSQL_TIME *ltime, uint fuzzydate);
+  bool get_date(DRIZZLE_TIME *ltime, uint fuzzydate);
   bool send_binary(Protocol *protocol);
-  bool get_time(MYSQL_TIME *ltime);
+  bool get_time(DRIZZLE_TIME *ltime);
   int cmp(const uchar *,const uchar *);
   void sort_string(uchar *buff,uint length);
   uint32_t pack_length() const { return 3; }
