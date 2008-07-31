@@ -1,31 +1,34 @@
-/* Copyright (C) 2000-2003 DRIZZLE AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 MySQL
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /*
   This file defines the client API to DRIZZLE and also the ABI of the
   dynamically linked libdrizzleclient.
 
-  The ABI should never be changed in a released product of MySQL
-  thus you need to take great care when changing the file. In case
-  the file is changed so the ABI is broken, you must also
-  update the SHAREDLIB_MAJOR_VERSION in configure.in .
+  In case the file is changed so the ABI is broken, you must also
+  update the SHAREDLIB_MAJOR_VERSION in configure.ac.
 
 */
 
-#ifndef _drizzle_h
-#define _drizzle_h
+#ifndef _libdrizzle_drizzle_h
+#define _libdrizzle_drizzle_h
 
 #ifdef  __cplusplus
 extern "C" {
@@ -446,4 +449,4 @@ void STDCALL drizzle_close(DRIZZLE *sock);
 }
 #endif
 
-#endif /* _drizzle_h */
+#endif /* _libdrizzle_drizzle_h */
