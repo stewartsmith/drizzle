@@ -1103,7 +1103,7 @@ int main(int argc,char *argv[])
   }
   completion_hash_init(&ht, 128);
   init_alloc_root(&hash_mem_root, 16384, 0);
-  memset((char*) &drizzle, 0, sizeof(drizzle));
+  memset(&drizzle, 0, sizeof(drizzle));
   if (sql_connect(current_host,current_db,current_user,opt_password,
                   opt_silent))
   {
@@ -1556,10 +1556,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case OPT_NOPAGER:
     printf(_("WARNING: option deprecated; use --disable-pager instead.\n"));
     opt_nopager= 1;
-    break;
-  case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
     break;
   case OPT_SERVER_ARG:
     printf(_("WARNING: --server-arg option not supported in this configuration.\n"));
@@ -3695,7 +3691,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line
 
   /* Save old status */
   old_status=status;
-  memset((char*) &status, 0, sizeof(status));
+  memset(&status, 0, sizeof(status));
 
   // Run in batch mode
   status.batch=old_status.batch;
@@ -3918,8 +3914,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     drizzle_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
     drizzle_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
-  if (opt_protocol)
-    drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (safe_updates)
   {
     char init_command[100];

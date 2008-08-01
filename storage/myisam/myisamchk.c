@@ -1411,8 +1411,8 @@ static int mi_sort_records(MI_CHECK *param,
   SORT_INFO sort_info;
   MI_SORT_PARAM sort_param;
 
-  memset((char*)&sort_info, 0, sizeof(sort_info));
-  memset((char*)&sort_param, 0, sizeof(sort_param));
+  memset(&sort_info, 0, sizeof(sort_info));
+  memset(&sort_param, 0, sizeof(sort_param));
   sort_param.sort_info=&sort_info;
   sort_info.param=param;
   keyinfo= &share->keyinfo[sort_key];
@@ -1638,7 +1638,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
       goto err;
   }
   /* Clear end of block to get better compression if the table is backuped */
-  memset((uchar*) buff+used_length, 0, keyinfo->block_length-used_length);
+  memset(buff+used_length, 0, keyinfo->block_length-used_length);
   if (my_pwrite(info->s->kfile,(uchar*) buff,(uint) keyinfo->block_length,
 		page,param->myf_rw))
   {

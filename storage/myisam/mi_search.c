@@ -718,8 +718,7 @@ void _mi_dpointer(MI_INFO *info, uchar *buff, my_off_t pos)
 uint _mi_get_static_key(register MI_KEYDEF *keyinfo, uint nod_flag,
                        register uchar **page, register uchar *key)
 {
-  memcpy((uchar*) key,(uchar*) *page,
-         (size_t) (keyinfo->keylength+nod_flag));
+  memcpy(key, *page, keyinfo->keylength+nod_flag);
   *page+=keyinfo->keylength+nod_flag;
   return(keyinfo->keylength);
 } /* _mi_get_static_key */
@@ -855,12 +854,12 @@ uint _mi_get_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
       else
         length=keyseg->length;
     }
-    memcpy((uchar*) key,(uchar*) page,(size_t) length);
+    memcpy(key, page, length);
     key+=length;
     page+=length;
   }
   length=keyseg->length+nod_flag;
-  memcpy((uchar*) key,(uchar*) page,length);
+  memcpy(key,page,length);
   *page_pos= page+length;
   return ((uint) (key-start_key)+keyseg->length);
 } /* _mi_get_pack_key */
@@ -954,7 +953,7 @@ uint _mi_get_binary_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
       length-=tmp;
       from=page; from_end=page_end;
     }
-    memmove((uchar*) key, (uchar*) from, (size_t) length);
+    memmove(key, from, length);
     key+=length;
     from+=length;
   }
@@ -985,7 +984,7 @@ uint _mi_get_binary_pack_key(register MI_KEYDEF *keyinfo, uint nod_flag,
       return(0);                                 /* Error */
     }
     /* Copy data pointer and, if appropriate, key block pointer. */
-    memcpy((uchar*) key,(uchar*) from,(size_t) length);
+    memcpy(key, from, length);
     *page_pos= from+length;
   }
   return((uint) (key-start_key)+keyseg->length);
@@ -1003,7 +1002,7 @@ uchar *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
   nod_flag=mi_test_if_nod(page);
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
   {
-    memcpy((uchar*) key,(uchar*) keypos,keyinfo->keylength+nod_flag);
+    memcpy(key,keypos,keyinfo->keylength+nod_flag);
     return(keypos+keyinfo->keylength+nod_flag);
   }
   else
@@ -1038,8 +1037,7 @@ static my_bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
   if (! (keyinfo->flag & (HA_VAR_LENGTH_KEY | HA_BINARY_PACK_KEY)))
   {
     *return_key_length=keyinfo->keylength;
-    memcpy((uchar*) key,(uchar*) keypos- *return_key_length-nod_flag,
-           *return_key_length);
+    memcpy(key, keypos - *return_key_length-nod_flag, *return_key_length);
     return(0);
   }
   else
@@ -1077,7 +1075,7 @@ uchar *_mi_get_last_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
     lastpos=endpos-keyinfo->keylength-nod_flag;
     *return_key_length=keyinfo->keylength;
     if (lastpos > page)
-      memcpy((uchar*) lastkey,(uchar*) lastpos,keyinfo->keylength+nod_flag);
+      memcpy(lastkey,lastpos,keyinfo->keylength+nod_flag);
   }
   else
   {
@@ -1164,8 +1162,8 @@ uint _mi_keylength_part(MI_KEYDEF *keyinfo, register uchar *key,
 uchar *_mi_move_key(MI_KEYDEF *keyinfo, uchar *to, uchar *from)
 {
   register uint length;
-  memcpy((uchar*) to, (uchar*) from,
-         (size_t) (length=_mi_keylength(keyinfo,from)));
+  length= _mi_keylength(keyinfo, from);
+  memcpy(to, from, length);
   return to+length;
 }
 
@@ -1746,7 +1744,7 @@ void _mi_store_static_key(MI_KEYDEF *keyinfo __attribute__((unused)),
                           register uchar *key_pos,
                           register MI_KEY_PARAM *s_temp)
 {
-  memcpy((uchar*) key_pos,(uchar*) s_temp->key,(size_t) s_temp->totlength);
+  memcpy(key_pos, s_temp->key, s_temp->totlength);
 }
 
 
@@ -1779,8 +1777,9 @@ void _mi_store_var_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
     /* Not packed against previous key */
     store_pack_length(s_temp->pack_marker == 128,key_pos,s_temp->key_length);
   }
-  memcpy((uchar*) key_pos,(uchar*) s_temp->key,
-         (length=s_temp->totlength-(uint) (key_pos-start)));
+  assert(key_pos >= start);
+  length= s_temp->totlength - (key_pos - start);
+  memcpy(key_pos, s_temp->key, length);
 
   if (!s_temp->next_key_pos)                    /* No following key */
     return;
@@ -1824,9 +1823,10 @@ void _mi_store_bin_pack_key(MI_KEYDEF *keyinfo  __attribute__((unused)),
                             register uchar *key_pos,
                             register MI_KEY_PARAM *s_temp)
 {
+  assert(s_temp->totlength >= s_temp->ref_length);
   store_key_length_inc(key_pos,s_temp->ref_length);
-  memcpy((char*) key_pos,(char*) s_temp->key+s_temp->ref_length,
-          (size_t) s_temp->totlength-s_temp->ref_length);
+  memcpy(key_pos,s_temp->key+s_temp->ref_length,
+         s_temp->totlength - s_temp->ref_length);
 
   if (s_temp->next_key_pos)
   {

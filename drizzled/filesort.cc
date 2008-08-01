@@ -131,7 +131,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   my_b_clear(&buffpek_pointers);
   buffpek=0;
   error= 1;
-  memset((char*) &param, 0, sizeof(param));
+  memset(&param, 0, sizeof(param));
   param.sort_length= sortlength(thd, sortorder, s_length, &multi_byte_charset);
   param.ref_length= table->file->ref_length;
   param.addon_field= 0;
@@ -693,7 +693,7 @@ static void make_sortkey(register SORTPARAM *param,
 	  if (sort_field->reverse)
 	    memset(to, 255, sort_field->length+1);
 	  else
-	    memset((char*) to, 0, sort_field->length+1);
+	    memset(to, 0, sort_field->length+1);
 	  to+= sort_field->length+1;
 	  continue;
 	}
@@ -722,7 +722,7 @@ static void make_sortkey(register SORTPARAM *param,
         if (!res)
         {
           if (maybe_null)
-            memset((char*) to-1, 0, sort_field->length+1);
+            memset(to-1, 0, sort_field->length+1);
           else
           {
             /* purecov: begin deadcode */
@@ -732,7 +732,7 @@ static void make_sortkey(register SORTPARAM *param,
               This code is here mainly to avoid a hard crash in this case.
             */
             assert(0);
-            memset((char*) to, 0, sort_field->length);	// Avoid crash
+            memset(to, 0, sort_field->length);	// Avoid crash
             /* purecov: end */
           }
           break;
@@ -781,10 +781,10 @@ static void make_sortkey(register SORTPARAM *param,
             if (item->null_value)
             {
               if (maybe_null)
-                memset((char*) to-1, 0, sort_field->length+1);
+                memset(to-1, 0, sort_field->length+1);
               else
               {
-                memset((char*) to, 0, sort_field->length);
+                memset(to, 0, sort_field->length);
               }
               break;
             }
@@ -819,7 +819,7 @@ static void make_sortkey(register SORTPARAM *param,
           {
             if (item->null_value)
             { 
-              memset((char*)to, 0, sort_field->length+1);
+              memset(to, 0, sort_field->length+1);
               to++;
               break;
             }
@@ -837,7 +837,7 @@ static void make_sortkey(register SORTPARAM *param,
           {
             if (item->null_value)
             {
-              memset((char*) to, 0, sort_field->length+1);
+              memset(to, 0, sort_field->length+1);
               to++;
               break;
             }
@@ -879,7 +879,7 @@ static void make_sortkey(register SORTPARAM *param,
     SORT_ADDON_FIELD *addonf= param->addon_field;
     uchar *nulls= to;
     assert(addonf != 0);
-    memset((char *) nulls, 0, addonf->offset);
+    memset(nulls, 0, addonf->offset);
     to+= addonf->offset;
     for ( ; (field= addonf->field) ; addonf++)
     {
@@ -908,7 +908,7 @@ static void make_sortkey(register SORTPARAM *param,
   else
   {
     /* Save filepos last */
-    memcpy((uchar*) to, ref_pos, (size_t) param->ref_length);
+    memcpy(to, ref_pos, (size_t) param->ref_length);
   }
   return;
 }
@@ -1214,7 +1214,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
         if (!(*cmp)(first_cmp_arg, &(param->unique_buff),
                     (uchar**) &buffpek->key))
               goto skip_duplicate;
-            memcpy(param->unique_buff, (uchar*) buffpek->key, rec_length);
+            memcpy(param->unique_buff, buffpek->key, rec_length);
       }
       if (flag == 0)
       {
@@ -1584,7 +1584,7 @@ void change_double_for_sort(double nr,uchar *to)
   if (nr == 0.0)
   {						/* Change to zero string */
     tmp[0]=(uchar) 128;
-    memset((char*) tmp+1, 0, sizeof(nr)-1);
+    memset(tmp+1, 0, sizeof(nr)-1);
   }
   else
   {

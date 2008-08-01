@@ -39,7 +39,7 @@ Master_info::Master_info()
   ssl_ca[0]= 0; ssl_capath[0]= 0; ssl_cert[0]= 0;
   ssl_cipher[0]= 0; ssl_key[0]= 0;
 
-  memset((char*) &file, 0, sizeof(file));
+  memset(&file, 0, sizeof(file));
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&data_cond, NULL);

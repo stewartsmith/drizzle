@@ -49,7 +49,7 @@ This file contains the implementation of error and warnings related
   This is used to in group_concat() to register how many warnings we actually
   got after the query has been executed.
 */
-void MYSQL_ERROR::set_msg(THD *thd, const char *msg_arg)
+void DRIZZLE_ERROR::set_msg(THD *thd, const char *msg_arg)
 {
   msg= strdup_root(&thd->warn_root, msg_arg);
 }
@@ -58,7 +58,7 @@ void MYSQL_ERROR::set_msg(THD *thd, const char *msg_arg)
   Reset all warnings for the thread
 
   SYNOPSIS
-    mysql_reset_errors()
+    drizzle_reset_errors()
     thd			Thread handle
     force               Reset warnings even if it has been done before
 
@@ -68,13 +68,13 @@ void MYSQL_ERROR::set_msg(THD *thd, const char *msg_arg)
     in which case push_warnings() has already called this function.
 */  
 
-void mysql_reset_errors(THD *thd, bool force)
+void drizzle_reset_errors(THD *thd, bool force)
 {
   if (thd->query_id != thd->warn_id || force)
   {
     thd->warn_id= thd->query_id;
     free_root(&thd->warn_root,MYF(0));
-    memset((char*) thd->warn_count, 0, sizeof(thd->warn_count));
+    memset(thd->warn_count, 0, sizeof(thd->warn_count));
     if (force)
       thd->total_warn_count= 0;
     thd->warn_list.empty();
@@ -95,24 +95,24 @@ void mysql_reset_errors(THD *thd, bool force)
     msg			Clear error message
     
   RETURN
-    pointer on MYSQL_ERROR object
+    pointer on DRIZZLE_ERROR object
 */
 
-MYSQL_ERROR *push_warning(THD *thd, MYSQL_ERROR::enum_warning_level level, 
+DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level, 
                           uint code, const char *msg)
 {
-  MYSQL_ERROR *err= 0;
+  DRIZZLE_ERROR *err= 0;
 
-  if (level == MYSQL_ERROR::WARN_LEVEL_NOTE &&
+  if (level == DRIZZLE_ERROR::WARN_LEVEL_NOTE &&
       !(thd->options & OPTION_SQL_NOTES))
     return(0);
 
   if (thd->query_id != thd->warn_id)
-    mysql_reset_errors(thd, 0);
+    drizzle_reset_errors(thd, 0);
   thd->got_warning= 1;
 
   /* Abort if we are using strict mode and we are not using IGNORE */
-  if ((int) level >= (int) MYSQL_ERROR::WARN_LEVEL_WARN &&
+  if ((int) level >= (int) DRIZZLE_ERROR::WARN_LEVEL_WARN &&
       thd->really_abort_on_warning())
   {
     /* Avoid my_message() calling push_warning */
@@ -125,7 +125,7 @@ MYSQL_ERROR *push_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
 
     thd->no_warnings_for_error= no_warnings_for_error;
     /* Store error in error list (as my_message() didn't do it) */
-    level= MYSQL_ERROR::WARN_LEVEL_ERROR;
+    level= DRIZZLE_ERROR::WARN_LEVEL_ERROR;
   }
 
   if (thd->handle_error(code, msg, level))
@@ -134,7 +134,7 @@ MYSQL_ERROR *push_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
   if (thd->warn_list.elements < thd->variables.max_error_count)
   {
     /* We have to use warn_root, as mem_root is freed after each query */
-    if ((err= new (&thd->warn_root) MYSQL_ERROR(thd, code, level, msg)))
+    if ((err= new (&thd->warn_root) DRIZZLE_ERROR(thd, code, level, msg)))
       thd->warn_list.push_back(err, &thd->warn_root);
   }
   thd->warn_count[(uint) level]++;
@@ -153,7 +153,7 @@ MYSQL_ERROR *push_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
     msg			Clear error message
 */
 
-void push_warning_printf(THD *thd, MYSQL_ERROR::enum_warning_level level,
+void push_warning_printf(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
 			 uint code, const char *format, ...)
 {
   va_list args;
@@ -197,13 +197,13 @@ bool mysqld_show_warnings(THD *thd, ulong levels_to_show)
 
   field_list.push_back(new Item_empty_string("Level", 7));
   field_list.push_back(new Item_return_int("Code",4, DRIZZLE_TYPE_LONG));
-  field_list.push_back(new Item_empty_string("Message",MYSQL_ERRMSG_SIZE));
+  field_list.push_back(new Item_empty_string("Message",DRIZZLE_ERRMSG_SIZE));
 
   if (thd->protocol->send_fields(&field_list,
                                  Protocol::SEND_NUM_ROWS | Protocol::SEND_EOF))
     return(true);
 
-  MYSQL_ERROR *err;
+  DRIZZLE_ERROR *err;
   SELECT_LEX *sel= &thd->lex->select_lex;
   SELECT_LEX_UNIT *unit= &thd->lex->unit;
   ha_rows idx= 0;
@@ -211,7 +211,7 @@ bool mysqld_show_warnings(THD *thd, ulong levels_to_show)
 
   unit->set_limit(sel);
 
-  List_iterator_fast<MYSQL_ERROR> it(thd->warn_list);
+  List_iterator_fast<DRIZZLE_ERROR> it(thd->warn_list);
   while ((err= it++))
   {
     /* Skip levels that the user is not interested in */

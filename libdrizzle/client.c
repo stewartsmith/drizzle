@@ -104,7 +104,7 @@ CHARSET_INFO *default_client_charset_info = &my_charset_latin1;
 
 /* Server error code and message */
 unsigned int drizzle_server_last_errno;
-char drizzle_server_last_error[MYSQL_ERRMSG_SIZE];
+char drizzle_server_last_error[DRIZZLE_ERRMSG_SIZE];
 
 /****************************************************************************
   A modified version of connect().  my_connect() allows you to specify
@@ -1607,6 +1607,8 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     {
       *end++= SCRAMBLE_LENGTH;
+      memset(end, 0, SCRAMBLE_LENGTH-1);
+      memcpy(end, passwd, strlen(passwd));
       end+= SCRAMBLE_LENGTH;
     }
   }

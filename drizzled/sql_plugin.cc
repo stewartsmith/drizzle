@@ -569,7 +569,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
     return(true);
   }
   /* Clear the whole struct to catch future extensions. */
-  memset((char*) &tmp, 0, sizeof(tmp));
+  memset(&tmp, 0, sizeof(tmp));
   if (! (tmp.plugin_dl= plugin_dl_add(dl, report)))
     return(true);
   /* Find plugin by name */

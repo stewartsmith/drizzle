@@ -212,7 +212,7 @@ enum enum_server_command
 */
 #define SERVER_QUERY_WAS_SLOW           1024
 
-#define MYSQL_ERRMSG_SIZE	512
+#define DRIZZLE_ERRMSG_SIZE	512
 #define NET_READ_TIMEOUT	30		/* Timeout on read */
 #define NET_WRITE_TIMEOUT	60		/* Timeout on write */
 #define NET_WAIT_TIMEOUT	8*60*60		/* Wait for new query */
@@ -261,7 +261,7 @@ typedef struct st_net {
   unsigned int last_errno;
   unsigned char error; 
   /** Client library error message buffer. Actually belongs to struct MYSQL. */
-  char last_error[MYSQL_ERRMSG_SIZE];
+  char last_error[DRIZZLE_ERRMSG_SIZE];
   /** Client library sqlstate buffer. Set along with the error message. */
   char sqlstate[SQLSTATE_LENGTH+1];
   void *extension;
@@ -435,7 +435,7 @@ char *octet2hex(char *to, const char *str, unsigned int len);
 /* end of password.c */
 
 char *get_tty_password(const char *opt_message);
-const char *mysql_errno_to_sqlstate(unsigned int mysql_errno);
+const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
 
 
 #ifdef _global_h

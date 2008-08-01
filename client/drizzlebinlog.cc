@@ -223,7 +223,7 @@ public:
       {
         my_free(ptr->fname, MYF(MY_WME));
         delete ptr->event;
-        memset((char *)ptr, 0, sizeof(File_name_record));
+        memset(ptr, 0, sizeof(File_name_record));
       }
     }
 
@@ -254,7 +254,7 @@ public:
         return 0;
       ptr= dynamic_element(&file_names, file_id, File_name_record*);
       if ((res= ptr->event))
-        memset((char *)ptr, 0, sizeof(File_name_record));
+        memset(ptr, 0, sizeof(File_name_record));
       return res;
     }
 
@@ -284,7 +284,7 @@ public:
       if (!ptr->event)
       {
         res= ptr->fname;
-        memset((char *)ptr, 0, sizeof(File_name_record));
+        memset(ptr, 0, sizeof(File_name_record));
       }
       return res;
     }

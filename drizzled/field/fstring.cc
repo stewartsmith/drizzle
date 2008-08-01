@@ -93,7 +93,7 @@ double Field_string::val_real(void)
     char buf[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "DOUBLE", tmp.c_ptr());
@@ -118,7 +118,7 @@ int64_t Field_string::val_int(void)
     char buf[LONGLONG_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "INTEGER", tmp.c_ptr());
@@ -154,7 +154,7 @@ my_decimal *Field_string::val_decimal(my_decimal *decimal_value)
     CHARSET_INFO *cs= charset();
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE, 
                         ER(ER_TRUNCATED_WRONG_VALUE),
                         "DECIMAL", tmp.c_ptr());
