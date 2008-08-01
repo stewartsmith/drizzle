@@ -32,7 +32,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
                                  TABLE_LIST **dropped_tables);
          
 static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp, const char *org_path);
-static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error);
+static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(THD *thd,
                                  LEX_STRING *new_db_name,
                                  CHARSET_INFO *new_db_charset);
@@ -56,10 +56,10 @@ typedef struct my_dblock_st
   lock_db key.
 */
 
-extern "C" uchar* lock_db_get_key(my_dblock_t *, size_t *, my_bool not_used);
+extern "C" uchar* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
 
 uchar* lock_db_get_key(my_dblock_t *ptr, size_t *length,
-                       my_bool not_used __attribute__((unused)))
+                       bool not_used __attribute__((unused)))
 {
   *length= ptr->name_length;
   return (uchar*) ptr->name;
@@ -90,10 +90,10 @@ void lock_db_free_element(void *ptr)
     1 on error.
 */
 
-static my_bool lock_db_insert(const char *dbname, uint length)
+static bool lock_db_insert(const char *dbname, uint length)
 {
   my_dblock_t *opt;
-  my_bool error= 0;
+  bool error= false;
   
   safe_mutex_assert_owner(&LOCK_lock_db);
 
@@ -106,7 +106,7 @@ static my_bool lock_db_insert(const char *dbname, uint length)
                          &opt, (uint) sizeof(*opt), &tmp_name, (uint) length+1,
                          NullS))
     {
-      error= 1;
+      error= true;
       goto end;
     }
     
@@ -139,7 +139,7 @@ void lock_db_delete(const char *name, uint length)
 
 /* Database options hash */
 static HASH dboptions;
-static my_bool dboptions_init= 0;
+static bool dboptions_init= 0;
 static rw_lock_t LOCK_dboptions;
 
 /* Structure for database options */
@@ -156,10 +156,10 @@ typedef struct my_dbopt_st
 */
 
 extern "C" uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
-                                    my_bool not_used);
+                                    bool not_used);
 
 uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
-                         my_bool not_used __attribute__((unused)))
+                         bool not_used __attribute__((unused)))
 {
   *length= opt->name_length;
   return (uchar*) opt->name;
@@ -209,7 +209,7 @@ void free_dbopt(void *dbopt)
 
 bool my_database_names_init(void)
 {
-  bool error= 0;
+  bool error= false;
   (void) my_rwlock_init(&LOCK_dboptions, NULL);
   if (!dboptions_init)
   {
@@ -273,11 +273,11 @@ void my_dbopt_cleanup(void)
     1 on error.
 */
 
-static my_bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
+static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
   uint length;
-  my_bool error= 1;
+  bool error= true;
   
   length= (uint) strlen(dbname);
   
@@ -285,7 +285,7 @@ static my_bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
   if ((opt= (my_dbopt_t*) hash_search(&dboptions, (uchar*) dbname, length)))
   {
     create->default_table_charset= opt->charset;
-    error= 0;
+    error= true;
   }
   rw_unlock(&LOCK_dboptions);
   return error;
@@ -304,11 +304,11 @@ static my_bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
     1 on error.
 */
 
-static my_bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
+static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
   uint length;
-  my_bool error= 0;
+  bool error= false;
 
   length= (uint) strlen(dbname);
   
@@ -321,7 +321,7 @@ static my_bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
                          &opt, (uint) sizeof(*opt), &tmp_name, (uint) length+1,
                          NullS))
     {
-      error= 1;
+      error= true;
       goto end;
     }
     
@@ -375,7 +375,7 @@ static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 {
   register File file;
   char buf[256]; // Should be enough for one option
-  bool error=1;
+  bool error= true;
 
   if (!create->default_table_charset)
     create->default_table_charset= thd->variables.collation_server;
@@ -394,7 +394,7 @@ static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 
     /* Error is written by my_write */
     if (!my_write(file,(uchar*) buf, length, MYF(MY_NABP+MY_WME)))
-      error=0;
+      error= false;
     my_close(file,MYF(0));
   }
   return error;
@@ -596,8 +596,7 @@ CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
 
 */
 
-int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
-                     bool silent)
+int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent)
 {
   char	 path[FN_REFLEN+16];
   char	 tmp_query[FN_REFLEN+16];
@@ -755,7 +754,7 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
 {
   char path[FN_REFLEN+16];
   long result=1;
-  int error= 0;
+  int error= false;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -844,7 +843,7 @@ exit2:
 bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
 {
   long deleted=0;
-  int error= 0;
+  int error= false;
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
   uint length;
@@ -1177,7 +1176,7 @@ err:
     1 ERROR
 */
 
-static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error)
+static bool rm_dir_w_symlink(const char *org_path, bool send_error)
 {
   char tmp_path[FN_REFLEN], *pos;
   char *path= tmp_path;
@@ -1777,7 +1776,7 @@ bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
           !sl->add_table_to_list(thd, new_ident, NULL,
                                  TL_OPTION_UPDATING, TL_IGNORE))
       {
-        error= 1;
+        error= true;
         my_dirend(dirp);
         goto exit;
       }
