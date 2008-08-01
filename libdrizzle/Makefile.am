@@ -24,14 +24,15 @@ MYSQLDATAdir =			$(localstatedir)
 MYSQLSHAREdir =			$(pkgdatadir)
 MYSQLBASEdir=			$(prefix)
 
-pkginclude_HEADERS =	drizzle.h \
-			drizzle_com.h \
-			drizzle_time.h \
-			errmsg.h \
-			sql_common.h
+libdrizzleincludedir = ${includedir}/libdrizzle
+dist_libdrizzleinclude_HEADERS =	drizzle.h \
+					drizzle_com.h \
+					drizzle_time.h \
+					errmsg.h \
+					sql_common.h
 
 pkglib_LTLIBRARIES = libdrizzle.la
-libdrizzle_la_SOURCES = libdrizzle.c client.c net_serv.c get_password.c
+libdrizzle_la_SOURCES = libdrizzle.c client.c local_infile.c net_serv.c get_password.c
 libdrizzle_la_LIBADD =	${sql_cmn_objects} ${sqlobjects} \
 			${top_builddir}/mysys/libmysyslt.la \
 			${top_builddir}/mystrings/libmystringslt.la \

@@ -303,7 +303,7 @@ AC_ARG_WITH(libevent,
   [ with_libevent=$withval ],
   [ with_libevent=yes ])
 
-if test "$withval" = "yes"
+if test "$with_libevent" = "yes"
 then
     AC_CHECK_HEADERS(event.h)
     if test "x$ac_cv_header_event_h" != "xyes"
