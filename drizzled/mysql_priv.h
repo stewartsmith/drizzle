@@ -409,10 +409,6 @@ enum open_table_mode
 #define SHOW_LOG_STATUS_FREE "FREE"
 #define SHOW_LOG_STATUS_INUSE "IN USE"
 
-struct TABLE_LIST;
-class String;
-void view_store_options(THD *thd, TABLE_LIST *table, String *buff);
-
 /* Options to add_table_to_list() */
 #define TL_OPTION_UPDATING	1
 #define TL_OPTION_FORCE_INDEX	2
@@ -449,10 +445,21 @@ enum enum_parsing_place
   IN_ON
 };
 
+/* Forward declarations */
+
+struct TABLE_LIST;
+class String;
 struct st_table;
+class THD;
+class user_var_entry;
+class Security_context;
+
+#ifdef MYSQL_SERVER
+class Comp_creator;
+typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
+#endif
 
 #define thd_proc_info(thd, msg)  set_thd_proc_info(thd, msg, __func__, __FILE__, __LINE__)
-class THD;
 
 enum enum_check_fields
 {
@@ -496,18 +503,10 @@ extern ulong server_id;
 
 #include "protocol.h"
 #include "sql_udf.h"
-
-class user_var_entry;
-class Security_context;
 enum enum_var_type
 {
   OPT_DEFAULT= 0, OPT_SESSION, OPT_GLOBAL
 };
-class sys_var;
-#ifdef MYSQL_SERVER
-class Comp_creator;
-typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
-#endif
 #include "item.h"
 extern my_decimal decimal_zero;
 
