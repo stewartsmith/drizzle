@@ -52,7 +52,8 @@ static struct my_err_head
   const char            **meh_errmsgs;  /* error messages array */
   int                   meh_first;      /* error number matching array slot 0 */
   int                   meh_last;       /* error number matching last slot */
-} my_errmsgs_globerrs = {NULL, globerrs, EE_ERROR_FIRST, EE_ERROR_LAST};
+  bool			is_globerrs;
+} my_errmsgs_globerrs = {NULL, globerrs, EE_ERROR_FIRST, EE_ERROR_LAST, true};
 
 static struct my_err_head *my_errmsgs_list= &my_errmsgs_globerrs;
 
@@ -167,6 +168,7 @@ int my_error_register(const char **errmsgs, int first, int last)
   meh_p->meh_errmsgs= errmsgs;
   meh_p->meh_first= first;
   meh_p->meh_last= last;
+  meh_p->is_globerrs= false;
 
   /* Search for the right position in the list. */
   for (search_meh_pp= &my_errmsgs_list;
@@ -236,7 +238,12 @@ const char **my_error_unregister(int first, int last)
 
   /* Save the return value and free the header. */
   errmsgs= meh_p->meh_errmsgs;
+  bool is_globerrs= meh_p->is_globerrs;
+
   my_free((uchar*) meh_p, MYF(0));
+
+  if (is_globerrs)
+    return NULL;
   
   return errmsgs;
 }

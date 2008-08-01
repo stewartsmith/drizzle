@@ -870,8 +870,12 @@ void clean_up(bool print_message)
     sql_print_information(ER(ER_SHUTDOWN_COMPLETE),my_progname);
   thread_scheduler.end();
   finish_client_errs();
-  my_free((uchar*) my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST),
-          MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+  /* Returns NULL on globerrs, we don't want to try to free that */
+  //void *freeme=
+  (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
+  // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
+/*  if (freeme != NULL)
+    my_free(freeme, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));  */
   /* Tell main we are ready */
   logger.cleanup_end();
   (void) pthread_mutex_lock(&LOCK_thread_count);
