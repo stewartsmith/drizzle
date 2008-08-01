@@ -45,10 +45,11 @@ CSRCS 	= strxmov.c bmove_upp.c strappend.c strcont.c strend.c strfill.c strcend.
 endif
 endif
 
-pkginclude_HEADERS = 	decimal.h \
-			m_ctype.h \
-			m_string.h \
-			my_xml.h
+mystringsincludedir = ${includedir}/mystrings
+dist_mystringsinclude_HEADERS = 	decimal.h \
+					m_ctype.h \
+					m_string.h \
+					my_xml.h
 
 noinst_HEADERS =	my_uctype.h
 
