@@ -438,11 +438,34 @@ enum open_table_mode
 
 enum enum_parsing_place
 {
-  NO_MATTER,
-  IN_HAVING,
-  SELECT_LIST,
-  IN_WHERE,
-  IN_ON
+  NO_MATTER
+  , IN_HAVING
+  , SELECT_LIST
+  , IN_WHERE
+  , IN_ON
+};
+
+enum enum_mysql_completiontype {
+  ROLLBACK_RELEASE= -2
+  , ROLLBACK= 1
+  , ROLLBACK_AND_CHAIN= 7
+  , COMMIT_RELEASE= -1
+  , COMMIT= 0
+  , COMMIT_AND_CHAIN= 6
+};
+
+enum enum_check_fields
+{
+  CHECK_FIELD_IGNORE
+  , CHECK_FIELD_WARN
+  , CHECK_FIELD_ERROR_FOR_NULL
+};
+
+enum enum_var_type
+{
+  OPT_DEFAULT= 0
+  , OPT_SESSION
+  , OPT_GLOBAL
 };
 
 /* Forward declarations */
@@ -460,13 +483,6 @@ typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 #endif
 
 #define thd_proc_info(thd, msg)  set_thd_proc_info(thd, msg, __func__, __FILE__, __LINE__)
-
-enum enum_check_fields
-{
-  CHECK_FIELD_IGNORE,
-  CHECK_FIELD_WARN,
-  CHECK_FIELD_ERROR_FOR_NULL
-};
 
 extern pthread_key(THD*, THR_THD);
 inline THD *_current_thd(void)
@@ -490,99 +506,24 @@ const char *set_thd_proc_info(THD *thd, const char *info,
 */
 extern ulong server_id;
 
-#include "sql_string.h"
+#include <drizzled/sql_string.h>
 #include "sql_list.h"
 #include "sql_map.h"
 #include "my_decimal.h"
 #include "handler.h"
 #include "table.h"
 #include "sql_error.h"
-
-/* Field definitions */
 #include "field.h"
-
 #include "protocol.h"
 #include "sql_udf.h"
-enum enum_var_type
-{
-  OPT_DEFAULT= 0, OPT_SESSION, OPT_GLOBAL
-};
 #include "item.h"
+
 extern my_decimal decimal_zero;
 
-/* sql_parse.cc */
-void free_items(Item *item);
-void cleanup_items(Item *item);
-class THD;
+/** @TODO Find a good header to put this guy... */
 void close_thread_tables(THD *thd);
 
-bool multi_update_precheck(THD *thd, TABLE_LIST *tables);
-bool multi_delete_precheck(THD *thd, TABLE_LIST *tables);
-int mysql_multi_update_prepare(THD *thd);
-int mysql_multi_delete_prepare(THD *thd);
-bool mysql_insert_select_prepare(THD *thd);
-bool update_precheck(THD *thd, TABLE_LIST *tables);
-bool delete_precheck(THD *thd, TABLE_LIST *tables);
-bool insert_precheck(THD *thd, TABLE_LIST *tables);
-bool create_table_precheck(THD *thd, TABLE_LIST *tables,
-                           TABLE_LIST *create_table);
-int append_query_string(CHARSET_INFO *csinfo,
-                        String const *from, String *to);
-
-bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
-                              uint max_byte_length);
-bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, CHARSET_INFO *cs,
-                              bool no_error);
-bool check_identifier_name(LEX_STRING *str, uint max_char_length,
-                           uint err_code, const char *param_for_err_msg);
-inline bool check_identifier_name(LEX_STRING *str, uint err_code)
-{
-  return check_identifier_name(str, NAME_CHAR_LEN, err_code, "");
-}
-inline bool check_identifier_name(LEX_STRING *str)
-{
-  return check_identifier_name(str, NAME_CHAR_LEN, 0, "");
-}
-
-bool test_if_data_home_dir(const char *dir);
-
-bool parse_sql(THD *thd,
-               class Lex_input_stream *lip,
-               class Object_creation_ctx *creation_ctx);
-
-enum enum_mysql_completiontype {
-  ROLLBACK_RELEASE=-2, ROLLBACK=1,  ROLLBACK_AND_CHAIN=7,
-  COMMIT_RELEASE=-1,   COMMIT=0,    COMMIT_AND_CHAIN=6
-};
-
-bool begin_trans(THD *thd);
-bool end_active_trans(THD *thd);
-int end_trans(THD *thd, enum enum_mysql_completiontype completion);
-
-Item *negate_expression(THD *thd, Item *expr);
-
-/* log.cc */
-int vprint_msg_to_log(enum loglevel level, const char *format, va_list args);
-void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
-void sql_print_warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
-void sql_print_information(const char *format, ...)
-  __attribute__((format(printf, 1, 2)));
-typedef void (*sql_print_message_func)(const char *format, ...)
-  __attribute__((format(printf, 1, 2)));
-extern sql_print_message_func sql_print_message_handlers[];
-
-int error_log_print(enum loglevel level, const char *format,
-                    va_list args);
-
-bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    uint64_t current_utime);
-
-bool general_log_print(THD *thd, enum enum_server_command command,
-                       const char *format,...);
-
-bool general_log_write(THD *thd, enum enum_server_command command,
-                       const char *query, uint query_length);
+#include <drizzled/sql_parse.h>
 
 #include "sql_class.h"
 #include "slave.h" // for tables_ok(), rpl_filter
