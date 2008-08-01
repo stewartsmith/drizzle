@@ -20,8 +20,8 @@
 /* Error messages for MySQL clients */
 /* (Error messages for the daemon are in share/language/errmsg.sys) */
 
-#include <my_global.h>
-#include <my_sys.h>
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
 #include "errmsg.h"
 
 #ifdef GERMAN

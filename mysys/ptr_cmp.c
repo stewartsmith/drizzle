@@ -20,7 +20,7 @@
   */
 
 #include "mysys_priv.h"
-#include <myisampack.h>
+#include <storage/myisam/myisampack.h>
 
 static int ptr_compare(size_t *compare_length, uchar **a, uchar **b);
 static int ptr_compare_0(size_t *compare_length, uchar **a, uchar **b);

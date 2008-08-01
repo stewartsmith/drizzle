@@ -14,10 +14,10 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <my_time.h>
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
-#include <my_pthread.h>
+#include <mysys/my_pthread.h>
 
 uint64_t log_10_int[20]=
 {
@@ -75,7 +75,7 @@ uint calc_days_in_year(uint year)
     1  error
 */
 
-my_bool check_date(const MYSQL_TIME *ltime, my_bool not_zero_date,
+bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
                    ulong flags, int *was_cut)
 {
   if (not_zero_date)
@@ -104,7 +104,7 @@ my_bool check_date(const MYSQL_TIME *ltime, my_bool not_zero_date,
 
 
 /*
-  Convert a timestamp string to a MYSQL_TIME value.
+  Convert a timestamp string to a DRIZZLE_TIME value.
 
   SYNOPSIS
     str_to_datetime()
@@ -145,30 +145,30 @@ my_bool check_date(const MYSQL_TIME *ltime, my_bool not_zero_date,
    - The hour part must be specified in hour-minute-second order.
 
   RETURN VALUES
-    MYSQL_TIMESTAMP_NONE        String wasn't a timestamp, like
+    DRIZZLE_TIMESTAMP_NONE        String wasn't a timestamp, like
                                 [DD [HH:[MM:[SS]]]].fraction.
                                 l_time is not changed.
-    MYSQL_TIMESTAMP_DATE        DATE string (YY MM and DD parts ok)
-    MYSQL_TIMESTAMP_DATETIME    Full timestamp
-    MYSQL_TIMESTAMP_ERROR       Timestamp with wrong values.
+    DRIZZLE_TIMESTAMP_DATE        DATE string (YY MM and DD parts ok)
+    DRIZZLE_TIMESTAMP_DATETIME    Full timestamp
+    DRIZZLE_TIMESTAMP_ERROR       Timestamp with wrong values.
                                 All elements in l_time is set to 0
 */
 
 #define MAX_DATE_PARTS 8
 
-enum enum_mysql_timestamp_type
-str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
+enum enum_drizzle_timestamp_type
+str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
                 uint flags, int *was_cut)
 {
   uint field_length, year_length=4, digits, i, number_of_fields;
   uint date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
   uint add_hours= 0, start_loop;
   ulong not_zero_date, allow_space;
-  my_bool is_internal_format;
+  bool is_internal_format;
   const char *pos, *last_field_pos=NULL;
   const char *end=str+length;
   const uchar *format_position;
-  my_bool found_delimitier= 0, found_space= 0;
+  bool found_delimitier= 0, found_space= 0;
   uint frac_pos, frac_len;
 
   *was_cut= 0;
@@ -179,7 +179,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
   if (str == end || ! my_isdigit(&my_charset_latin1, *str))
   {
     *was_cut= 1;
-    return(MYSQL_TIMESTAMP_NONE);
+    return(DRIZZLE_TIMESTAMP_NONE);
   }
 
   is_internal_format= 0;
@@ -226,7 +226,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
         if (flags & TIME_DATETIME_ONLY)
         {
           *was_cut= 1;
-          return(MYSQL_TIMESTAMP_NONE);   /* Can't be a full datetime */
+          return(DRIZZLE_TIMESTAMP_NONE);   /* Can't be a full datetime */
         }
         /* Date field.  Set hour, minutes and seconds to 0 */
         date[0]= date[1]= date[2]= date[3]= date[4]= 0;
@@ -268,7 +268,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
     if (tmp_value > 999999)                     /* Impossible date part */
     {
       *was_cut= 1;
-      return(MYSQL_TIMESTAMP_NONE);
+      return(DRIZZLE_TIMESTAMP_NONE);
     }
     date[i]=tmp_value;
     not_zero_date|= tmp_value;
@@ -305,7 +305,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
         if (!(allow_space & (1 << i)))
         {
           *was_cut= 1;
-          return(MYSQL_TIMESTAMP_NONE);
+          return(DRIZZLE_TIMESTAMP_NONE);
         }
         found_space= 1;
       }
@@ -336,7 +336,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
   if (found_delimitier && !found_space && (flags & TIME_DATETIME_ONLY))
   {
     *was_cut= 1;
-    return(MYSQL_TIMESTAMP_NONE);          /* Can't be a datetime */
+    return(DRIZZLE_TIMESTAMP_NONE);          /* Can't be a datetime */
   }
 
   str= last_field_pos;
@@ -354,7 +354,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
     if (!year_length)                           /* Year must be specified */
     {
       *was_cut= 1;
-      return(MYSQL_TIMESTAMP_NONE);
+      return(DRIZZLE_TIMESTAMP_NONE);
     }
 
     l_time->year=               date[(uint) format_position[0]];
@@ -422,7 +422,7 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
     goto err;
 
   l_time->time_type= (number_of_fields <= 3 ?
-                      MYSQL_TIMESTAMP_DATE : MYSQL_TIMESTAMP_DATETIME);
+                      DRIZZLE_TIMESTAMP_DATE : DRIZZLE_TIMESTAMP_DATETIME);
 
   for (; str != end ; str++)
   {
@@ -434,17 +434,17 @@ str_to_datetime(const char *str, uint length, MYSQL_TIME *l_time,
   }
 
   return(l_time->time_type=
-              (number_of_fields <= 3 ? MYSQL_TIMESTAMP_DATE :
-                                       MYSQL_TIMESTAMP_DATETIME));
+              (number_of_fields <= 3 ? DRIZZLE_TIMESTAMP_DATE :
+                                       DRIZZLE_TIMESTAMP_DATETIME));
 
 err:
-  bzero((char*) l_time, sizeof(*l_time));
-  return(MYSQL_TIMESTAMP_ERROR);
+  memset((char*) l_time, 0, sizeof(*l_time));
+  return(DRIZZLE_TIMESTAMP_ERROR);
 }
 
 
 /*
- Convert a time string to a MYSQL_TIME struct.
+ Convert a time string to a DRIZZLE_TIME struct.
 
   SYNOPSIS
    str_to_time()
@@ -454,9 +454,9 @@ err:
                         There may be an optional [.second_part] after seconds
    length               Length of str
    l_time               Store result here
-   warning              Set MYSQL_TIME_WARN_TRUNCATED flag if the input string
+   warning              Set DRIZZLE_TIME_WARN_TRUNCATED flag if the input string
                         was cut during conversion, and/or
-                        MYSQL_TIME_WARN_OUT_OF_RANGE flag, if the value is
+                        DRIZZLE_TIME_WARN_OUT_OF_RANGE flag, if the value is
                         out of range.
 
    NOTES
@@ -468,13 +468,13 @@ err:
      1  error
 */
 
-my_bool str_to_time(const char *str, uint length, MYSQL_TIME *l_time,
+bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
                     int *warning)
 {
   ulong date[5];
   uint64_t value;
   const char *end=str+length, *end_of_days;
-  my_bool found_days,found_hours;
+  bool found_days,found_hours;
   uint state;
 
   l_time->neg=0;
@@ -494,14 +494,14 @@ my_bool str_to_time(const char *str, uint length, MYSQL_TIME *l_time,
   if (length >= 12)
   {                                             /* Probably full timestamp */
     int was_cut;
-    enum enum_mysql_timestamp_type
+    enum enum_drizzle_timestamp_type
       res= str_to_datetime(str, length, l_time,
                            (TIME_FUZZY_DATE | TIME_DATETIME_ONLY), &was_cut);
-    if ((int) res >= (int) MYSQL_TIMESTAMP_ERROR)
+    if ((int) res >= (int) DRIZZLE_TIMESTAMP_ERROR)
     {
       if (was_cut)
-        *warning|= MYSQL_TIME_WARN_TRUNCATED;
-      return res == MYSQL_TIMESTAMP_ERROR;
+        *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
+      return res == DRIZZLE_TIMESTAMP_ERROR;
     }
   }
 
@@ -561,10 +561,10 @@ my_bool str_to_time(const char *str, uint length, MYSQL_TIME *l_time,
     {
       bmove_upp((uchar*) (date+4), (uchar*) (date+state),
                 sizeof(long)*(state-1));
-      bzero((uchar*) date, sizeof(long)*(4-state));
+      memset((uchar*) date, 0, sizeof(long)*(4-state));
     }
     else
-      bzero((uchar*) (date+state), sizeof(long)*(4-state));
+      memset((uchar*) (date+state), 0, sizeof(long)*(4-state));
   }
 
 fractional:
@@ -581,7 +581,7 @@ fractional:
     if (field_length > 0)
       value*= (long) log_10_int[field_length];
     else if (field_length < 0)
-      *warning|= MYSQL_TIME_WARN_TRUNCATED;
+      *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
     date[4]= (ulong) value;
   }
   else
@@ -627,20 +627,20 @@ fractional:
   l_time->minute=       date[2];
   l_time->second=       date[3];
   l_time->second_part=  date[4];
-  l_time->time_type= MYSQL_TIMESTAMP_TIME;
+  l_time->time_type= DRIZZLE_TIMESTAMP_TIME;
 
-  /* Check if the value is valid and fits into MYSQL_TIME range */
+  /* Check if the value is valid and fits into DRIZZLE_TIME range */
   if (check_time_range(l_time, warning))
     return 1;
   
-  /* Check if there is garbage at end of the MYSQL_TIME specification */
+  /* Check if there is garbage at end of the DRIZZLE_TIME specification */
   if (str != end)
   {
     do
     {
       if (!my_isspace(&my_charset_latin1,*str))
       {
-        *warning|= MYSQL_TIME_WARN_TRUNCATED;
+        *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
         break;
       }
     } while (++str != end);
@@ -650,24 +650,24 @@ fractional:
 
 
 /*
-  Check 'time' value to lie in the MYSQL_TIME range
+  Check 'time' value to lie in the DRIZZLE_TIME range
 
   SYNOPSIS:
     check_time_range()
-    time     pointer to MYSQL_TIME value
-    warning  set MYSQL_TIME_WARN_OUT_OF_RANGE flag if the value is out of range
+    time     pointer to DRIZZLE_TIME value
+    warning  set DRIZZLE_TIME_WARN_OUT_OF_RANGE flag if the value is out of range
 
   DESCRIPTION
   If the time value lies outside of the range [-838:59:59, 838:59:59],
   set it to the closest endpoint of the range and set
-  MYSQL_TIME_WARN_OUT_OF_RANGE flag in the 'warning' variable.
+  DRIZZLE_TIME_WARN_OUT_OF_RANGE flag in the 'warning' variable.
 
   RETURN
     0        time value is valid, but was possibly truncated
     1        time value is invalid
 */
 
-int check_time_range(struct st_mysql_time *my_time, int *warning) 
+int check_time_range(DRIZZLE_TIME *my_time, int *warning) 
 {
   int64_t hour;
 
@@ -685,7 +685,7 @@ int check_time_range(struct st_mysql_time *my_time, int *warning)
   my_time->minute= TIME_MAX_MINUTE;
   my_time->second= TIME_MAX_SECOND;
   my_time->second_part= 0;
-  *warning|= MYSQL_TIME_WARN_OUT_OF_RANGE;
+  *warning|= DRIZZLE_TIME_WARN_OUT_OF_RANGE;
   return 0;
 }
 
@@ -700,7 +700,7 @@ void init_time(void)
 {
   time_t seconds;
   struct tm *l_time,tm_tmp;
-  MYSQL_TIME my_time;
+  DRIZZLE_TIME my_time;
   bool not_used;
 
   seconds= (time_t) time((time_t*) 0);
@@ -769,7 +769,7 @@ long calc_daynr(uint year,uint month,uint day)
 
 
 /*
-  Convert time in MYSQL_TIME representation in system time zone to its
+  Convert time in DRIZZLE_TIME representation in system time zone to its
   my_time_t form (number of seconds in UTC since begginning of Unix Epoch).
 
   SYNOPSIS
@@ -791,14 +791,14 @@ long calc_daynr(uint year,uint month,uint day)
     Time in UTC seconds since Unix Epoch representation.
 */
 my_time_t
-my_system_gmt_sec(const MYSQL_TIME *t_src, long *my_timezone,
+my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
                   bool *in_dst_time_gap)
 {
   uint loop;
   time_t tmp= 0;
   int shift= 0;
-  MYSQL_TIME tmp_time;
-  MYSQL_TIME *t= &tmp_time;
+  DRIZZLE_TIME tmp_time;
+  DRIZZLE_TIME *t= &tmp_time;
   struct tm *l_time,tm_tmp;
   long diff, current_timezone;
 
@@ -806,7 +806,7 @@ my_system_gmt_sec(const MYSQL_TIME *t_src, long *my_timezone,
     Use temp variable to avoid trashing input data, which could happen in
     case of shift required for boundary dates processing.
   */
-  memcpy(&tmp_time, t_src, sizeof(MYSQL_TIME));
+  memcpy(&tmp_time, t_src, sizeof(DRIZZLE_TIME));
 
   if (!validate_timestamp_range(t))
     return 0;
@@ -980,11 +980,11 @@ my_system_gmt_sec(const MYSQL_TIME *t_src, long *my_timezone,
 } /* my_system_gmt_sec */
 
 
-/* Set MYSQL_TIME structure to 0000-00-00 00:00:00.000000 */
+/* Set DRIZZLE_TIME structure to 0000-00-00 00:00:00.000000 */
 
-void set_zero_time(MYSQL_TIME *tm, enum enum_mysql_timestamp_type time_type)
+void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 {
-  bzero((void*) tm, sizeof(*tm));
+  memset((void*) tm, 0, sizeof(*tm));
   tm->time_type= time_type;
 }
 
@@ -992,7 +992,7 @@ void set_zero_time(MYSQL_TIME *tm, enum enum_mysql_timestamp_type time_type)
 /*
   Functions to convert time/date/datetime value to a string,
   using default format.
-  This functions don't check that given MYSQL_TIME structure members are
+  This functions don't check that given DRIZZLE_TIME structure members are
   in valid range. If they are not, return value won't reflect any
   valid date either. Additionally, make_time doesn't take into
   account time->day member: it's assumed that days have been converted
@@ -1002,7 +1002,7 @@ void set_zero_time(MYSQL_TIME *tm, enum enum_mysql_timestamp_type time_type)
     number of characters written to 'to'
 */
 
-int my_time_to_str(const MYSQL_TIME *l_time, char *to)
+int my_time_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
   uint extra_hours= 0;
   return sprintf(to, "%s%02u:%02u:%02u",
@@ -1012,7 +1012,7 @@ int my_time_to_str(const MYSQL_TIME *l_time, char *to)
                          l_time->second);
 }
 
-int my_date_to_str(const MYSQL_TIME *l_time, char *to)
+int my_date_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u",
                          l_time->year,
@@ -1020,7 +1020,7 @@ int my_date_to_str(const MYSQL_TIME *l_time, char *to)
                          l_time->day);
 }
 
-int my_datetime_to_str(const MYSQL_TIME *l_time, char *to)
+int my_datetime_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
   return sprintf(to, "%04u-%02u-%02u %02u:%02u:%02u",
                          l_time->year,
@@ -1043,17 +1043,17 @@ int my_datetime_to_str(const MYSQL_TIME *l_time, char *to)
     The string must have at least MAX_DATE_STRING_REP_LENGTH bytes reserved.
 */
 
-int my_TIME_to_str(const MYSQL_TIME *l_time, char *to)
+int my_TIME_to_str(const DRIZZLE_TIME *l_time, char *to)
 {
   switch (l_time->time_type) {
-  case MYSQL_TIMESTAMP_DATETIME:
+  case DRIZZLE_TIMESTAMP_DATETIME:
     return my_datetime_to_str(l_time, to);
-  case MYSQL_TIMESTAMP_DATE:
+  case DRIZZLE_TIMESTAMP_DATE:
     return my_date_to_str(l_time, to);
-  case MYSQL_TIMESTAMP_TIME:
+  case DRIZZLE_TIMESTAMP_TIME:
     return my_time_to_str(l_time, to);
-  case MYSQL_TIMESTAMP_NONE:
-  case MYSQL_TIMESTAMP_ERROR:
+  case DRIZZLE_TIMESTAMP_NONE:
+  case DRIZZLE_TIMESTAMP_ERROR:
     to[0]='\0';
     return 0;
   default:
@@ -1078,7 +1078,7 @@ int my_TIME_to_str(const MYSQL_TIME *l_time, char *to)
 
   DESCRIPTION
     Convert a datetime value of formats YYMMDD, YYYYMMDD, YYMMDDHHMSS,
-    YYYYMMDDHHMMSS to broken-down MYSQL_TIME representation. Return value in
+    YYYYMMDDHHMMSS to broken-down DRIZZLE_TIME representation. Return value in
     YYYYMMDDHHMMSS format as side-effect.
 
     This function also checks if datetime value fits in DATETIME range.
@@ -1089,18 +1089,18 @@ int my_TIME_to_str(const MYSQL_TIME *l_time, char *to)
     Datetime value in YYYYMMDDHHMMSS format.
 */
 
-int64_t number_to_datetime(int64_t nr, MYSQL_TIME *time_res,
+int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
                             uint flags, int *was_cut)
 {
   long part1,part2;
 
   *was_cut= 0;
-  bzero((char*) time_res, sizeof(*time_res));
-  time_res->time_type=MYSQL_TIMESTAMP_DATE;
+  memset((char*) time_res, 0, sizeof(*time_res));
+  time_res->time_type=DRIZZLE_TIMESTAMP_DATE;
 
   if (nr == 0LL || nr >= 10000101000000LL)
   {
-    time_res->time_type=MYSQL_TIMESTAMP_DATETIME;
+    time_res->time_type=DRIZZLE_TIMESTAMP_DATETIME;
     goto ok;
   }
   if (nr < 101)
@@ -1127,7 +1127,7 @@ int64_t number_to_datetime(int64_t nr, MYSQL_TIME *time_res,
   if (nr < 101000000L)
     goto err;
 
-  time_res->time_type=MYSQL_TIMESTAMP_DATETIME;
+  time_res->time_type=DRIZZLE_TIMESTAMP_DATETIME;
 
   if (nr <= (YY_PART_YEAR-1) * 10000000000LL + 1231235959LL)
   {
@@ -1167,7 +1167,7 @@ int64_t number_to_datetime(int64_t nr, MYSQL_TIME *time_res,
 
 /* Convert time value to integer in YYYYMMDDHHMMSS format */
 
-uint64_t TIME_to_uint64_t_datetime(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t_datetime(const DRIZZLE_TIME *my_time)
 {
   return ((uint64_t) (my_time->year * 10000UL +
                        my_time->month * 100UL +
@@ -1178,9 +1178,9 @@ uint64_t TIME_to_uint64_t_datetime(const MYSQL_TIME *my_time)
 }
 
 
-/* Convert MYSQL_TIME value to integer in YYYYMMDD format */
+/* Convert DRIZZLE_TIME value to integer in YYYYMMDD format */
 
-uint64_t TIME_to_uint64_t_date(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t_date(const DRIZZLE_TIME *my_time)
 {
   return (uint64_t) (my_time->year * 10000UL + my_time->month * 100UL +
                       my_time->day);
@@ -1188,12 +1188,12 @@ uint64_t TIME_to_uint64_t_date(const MYSQL_TIME *my_time)
 
 
 /*
-  Convert MYSQL_TIME value to integer in HHMMSS format.
+  Convert DRIZZLE_TIME value to integer in HHMMSS format.
   This function doesn't take into account time->day member:
   it's assumed that days have been converted to hours already.
 */
 
-uint64_t TIME_to_uint64_t_time(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t_time(const DRIZZLE_TIME *my_time)
 {
   return (uint64_t) (my_time->hour * 10000UL +
                       my_time->minute * 100UL +
@@ -1202,7 +1202,7 @@ uint64_t TIME_to_uint64_t_time(const MYSQL_TIME *my_time)
 
 
 /*
-  Convert struct MYSQL_TIME (date and time split into year/month/day/hour/...
+  Convert struct DRIZZLE_TIME (date and time split into year/month/day/hour/...
   to a number in format YYYYMMDDHHMMSS (DATETIME),
   YYYYMMDD (DATE)  or HHMMSS (TIME).
 
@@ -1216,22 +1216,22 @@ uint64_t TIME_to_uint64_t_time(const MYSQL_TIME *my_time)
     SELECT ?+1;
 
   NOTE
-    This function doesn't check that given MYSQL_TIME structure members are
+    This function doesn't check that given DRIZZLE_TIME structure members are
     in valid range. If they are not, return value won't reflect any
     valid date either.
 */
 
-uint64_t TIME_to_uint64_t(const MYSQL_TIME *my_time)
+uint64_t TIME_to_uint64_t(const DRIZZLE_TIME *my_time)
 {
   switch (my_time->time_type) {
-  case MYSQL_TIMESTAMP_DATETIME:
+  case DRIZZLE_TIMESTAMP_DATETIME:
     return TIME_to_uint64_t_datetime(my_time);
-  case MYSQL_TIMESTAMP_DATE:
+  case DRIZZLE_TIMESTAMP_DATE:
     return TIME_to_uint64_t_date(my_time);
-  case MYSQL_TIMESTAMP_TIME:
+  case DRIZZLE_TIMESTAMP_TIME:
     return TIME_to_uint64_t_time(my_time);
-  case MYSQL_TIMESTAMP_NONE:
-  case MYSQL_TIMESTAMP_ERROR:
+  case DRIZZLE_TIMESTAMP_NONE:
+  case DRIZZLE_TIMESTAMP_ERROR:
     return 0ULL;
   default:
     assert(0);

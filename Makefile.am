@@ -16,22 +16,22 @@
 # Process this file with automake to create Makefile.in
 
 SUBDIRS = po . vio \
-	  strings \
+	  mystrings \
 	  mysys \
-	  include \
 	  extra \
 	  libdrizzle \
 	  client \
 	  storage \
 	  plugin \
-	  server \
+	  drizzled \
 	  tests \
 	  support-files
 
 DIST_SUBDIRS = po $(SUBDIRS) \
 	       mysys/tests \
-	       strings/tests
+	       mystrings/tests
 
+EXTRA_DIST = config/config.rpath
 DISTCLEANFILES = ac_available_languages_fragment
 
 # Create empty datadir 
@@ -92,24 +92,4 @@ test: test-drizzle
 
 test-drizzle:
 	cd tests ; \
-	  ./test-run.pl --fast --reorder --force \
-	  alter_table \
-	  join_crash \
-	  join_nested \
-	  join_outer_innodb \
-	  delete \
-	  join_outer \
-	  distinct \
-	  join \
-	  subselect \
-	  subselect3 \
-	  subselect_innodb \
-	  insert \
-	  select \
-	  update \
-	  information_schema \
-	  mysqlslap \
-	  lock \
-	  lock_tables_lost_commit
-
-EXTRA_DIST = config/config.rpath m4/ChangeLog
+	$(MAKE) $(AM_MAKEFLAGS) test 

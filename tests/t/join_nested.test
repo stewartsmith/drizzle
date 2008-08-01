@@ -929,7 +929,7 @@ INSERT INTO t3 VALUES
  
 CREATE TABLE t4 (
   carrier char(2) NOT NULL default '' PRIMARY KEY,
-  id int(11) default NULL,
+  id int default NULL,
   INDEX id(id)
 );
 INSERT INTO t4 VALUES

@@ -15,13 +15,13 @@
    Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
    MA 02111-1307, USA */
 
-#include <my_global.h>
-#include <m_ctype.h>
-#include <my_base.h>
+#include "mysys_priv.h"
+
+#include <mystrings/m_ctype.h>
+#include <drizzled/base.h>
 #include <my_handler.h>
 #include <my_sys.h>
 
-#include "mysys_priv.h"
 #include "my_handler_errors.h"
 
 int ha_compare_text(CHARSET_INFO *charset_info, uchar *a, uint a_length,

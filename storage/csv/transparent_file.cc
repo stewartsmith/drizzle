@@ -17,7 +17,7 @@
 #pragma implementation        // gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include "transparent_file.h"
 
 Transparent_file::Transparent_file() : lower_bound(0), buff_size(IO_SIZE)

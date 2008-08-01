@@ -49,7 +49,7 @@ TODO:
 
 #define MAP_TO_USE_RAID
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #ifdef HAVE_AIOWAIT
 #include "mysys_err.h"
 static void my_aiowait(my_aio_result *result);
@@ -251,7 +251,7 @@ int init_io_cache(IO_CACHE *info, File file, size_t cachesize,
   else
   {
     /* Clear mutex so that safe_mutex will notice that it's not initialized */
-    bzero((char*) &info->append_buffer_lock, sizeof(info));
+    memset((char*) &info->append_buffer_lock, 0, sizeof(info));
   }
 #endif
 
@@ -1368,8 +1368,8 @@ int _my_b_async_read(register IO_CACHE *info, uchar *Buffer, size_t Count)
       my_errno=errno;
       if (info->request_pos != info->buffer)
       {
-	bmove(info->buffer,info->request_pos,
-	      (size_t) (info->read_end - info->read_pos));
+	memcpy(info->buffer, info->request_pos,
+               (size_t) (info->read_end - info->read_pos));
 	info->request_pos=info->buffer;
 	info->read_pos-=info->read_length;
 	info->read_end-=info->read_length;

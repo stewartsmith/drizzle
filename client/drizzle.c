@@ -34,23 +34,23 @@
  **/
 
 #include "client_priv.h"
-#include <my_sys.h>
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include <my_dir.h>
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__          // Skip warnings in getopt.h
 #endif
 #include <readline/history.h>
 #include "my_readline.h"
 #include <signal.h>
-#include <violite.h>
+#include <vio/violite.h>
+#include <sys/ioctl.h>
+
 
 #if defined(USE_LIBEDIT_INTERFACE) && defined(HAVE_LOCALE_H)
 #include <locale.h>
 #endif
 
-#include "gettext.h"
+#include <libdrizzle/gettext.h>
 
 const char *VER= "14.14";
 
@@ -92,8 +92,11 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 
-#undef bcmp        // Fix problem with new readline
+#undef bcmp				// Fix problem with new readline
 
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
 #include <readline/readline.h>
 
 /**
@@ -1096,7 +1099,7 @@ int main(int argc,char *argv[])
   }
   completion_hash_init(&ht, 128);
   init_alloc_root(&hash_mem_root, 16384, 0);
-  bzero((char*) &drizzle, sizeof(drizzle));
+  memset((char*) &drizzle, 0, sizeof(drizzle));
   if (sql_connect(current_host,current_db,current_user,opt_password,
                   opt_silent))
   {
@@ -1263,7 +1266,7 @@ err:
 
 
 #if defined(HAVE_TERMIOS_H) && defined(GWINSZ_IN_SYS_IOCTL)
-sig_handler window_resize(int sig __attribute__((__unused__)))
+sig_handler window_resize(int sig __attribute__((unused)))
 {
   struct winsize window_size;
 
@@ -1627,7 +1630,7 @@ static int get_options(int argc, char **argv)
 {
   char *tmp, *pagpoint;
   int ho_error;
-  DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
+  const DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
 
   tmp= (char *) getenv("MYSQL_HOST");
   if (tmp)
@@ -2917,23 +2920,20 @@ com_ego(DYNAMIC_STRING *buffer,char *line)
 static const char *fieldtype2str(enum enum_field_types type)
 {
   switch (type) {
-    case MYSQL_TYPE_BLOB:        return "BLOB";
-    case MYSQL_TYPE_NEWDATE:        return "DATE";
-    case MYSQL_TYPE_DATETIME:    return "DATETIME";
-    case MYSQL_TYPE_NEWDECIMAL:  return "DECIMAL";
-    case MYSQL_TYPE_DOUBLE:      return "DOUBLE";
-    case MYSQL_TYPE_ENUM:        return "ENUM";
-    case MYSQL_TYPE_LONG:        return "LONG";
-    case MYSQL_TYPE_LONGLONG:    return "LONGLONG";
-    case MYSQL_TYPE_NULL:        return "NULL";
-    case MYSQL_TYPE_SET:         return "SET";
-    case MYSQL_TYPE_SHORT:       return "SHORT";
-    case MYSQL_TYPE_STRING:      return "STRING";
-    case MYSQL_TYPE_TIME:        return "TIME";
-    case MYSQL_TYPE_TIMESTAMP:   return "TIMESTAMP";
-    case MYSQL_TYPE_TINY:        return "TINY";
-    case MYSQL_TYPE_VAR_STRING:  return "VAR_STRING";
-    case MYSQL_TYPE_YEAR:        return "YEAR";
+    case DRIZZLE_TYPE_BLOB:        return "BLOB";
+    case DRIZZLE_TYPE_NEWDATE:        return "DATE";
+    case DRIZZLE_TYPE_DATETIME:    return "DATETIME";
+    case DRIZZLE_TYPE_NEWDECIMAL:  return "DECIMAL";
+    case DRIZZLE_TYPE_DOUBLE:      return "DOUBLE";
+    case DRIZZLE_TYPE_ENUM:        return "ENUM";
+    case DRIZZLE_TYPE_LONG:        return "LONG";
+    case DRIZZLE_TYPE_LONGLONG:    return "LONGLONG";
+    case DRIZZLE_TYPE_NULL:        return "NULL";
+    case DRIZZLE_TYPE_SET:         return "SET";
+    case DRIZZLE_TYPE_SHORT:       return "SHORT";
+    case DRIZZLE_TYPE_TIME:        return "TIME";
+    case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
+    case DRIZZLE_TYPE_TINY:        return "TINY";
     default:                     return "?-unknown-?";
   }
 }
@@ -2950,7 +2950,6 @@ static char *fieldflags2str(uint f) {
   ff2s_check_flag(MULTIPLE_KEY);
   ff2s_check_flag(BLOB);
   ff2s_check_flag(UNSIGNED);
-  ff2s_check_flag(ZEROFILL);
   ff2s_check_flag(BINARY);
   ff2s_check_flag(ENUM);
   ff2s_check_flag(AUTO_INCREMENT);
@@ -3241,7 +3240,7 @@ static void
 print_table_data_xml(DRIZZLE_RES *result)
 {
   DRIZZLE_ROW   cur;
-  DRIZZLE_FIELD *fields;
+  const DRIZZLE_FIELD *fields;
 
   drizzle_field_seek(result,0);
 
@@ -3451,7 +3450,7 @@ print_tab_data(DRIZZLE_RES *result)
 }
 
 static int
-com_tee(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line )
+com_tee(DYNAMIC_STRING *buffer __attribute__((unused)), char *line )
 {
   char file_name[FN_REFLEN], *end, *param;
 
@@ -3509,7 +3508,7 @@ com_notee(DYNAMIC_STRING *buffer __attribute__((unused)),
 */
 
 static int
-com_pager(DYNAMIC_STRING *buffer __attribute__((__unused__)),
+com_pager(DYNAMIC_STRING *buffer __attribute__((unused)),
           char *line __attribute__((unused)))
 {
   char pager_name[FN_REFLEN], *end, *param;
@@ -3605,7 +3604,7 @@ com_connect(DYNAMIC_STRING *buffer, char *line)
   bool save_rehash= opt_rehash;
   int error;
 
-  bzero(buff, sizeof(buff));
+  memset(buff, 0, sizeof(buff));
   if (buffer)
   {
     /*
@@ -3654,7 +3653,7 @@ com_connect(DYNAMIC_STRING *buffer, char *line)
 }
 
 
-static int com_source(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *line)
+static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
 {
   char source_name[FN_REFLEN], *end, *param;
   LINE_BUFFER *line_buff;
@@ -3692,7 +3691,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((__unused__)), char *
 
   /* Save old status */
   old_status=status;
-  bfill((char*) &status,sizeof(status),(char) 0);
+  memset((char*) &status, 0, sizeof(status));
 
   // Run in batch mode
   status.batch=old_status.batch;
@@ -3747,7 +3746,7 @@ com_use(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
   char *tmp, buff[FN_REFLEN + 1];
   int select_db;
 
-  bzero(buff, sizeof(buff));
+  memset(buff, 0, sizeof(buff));
   strmake(buff, line, sizeof(buff) - 1);
   tmp= get_arg(buff, 0);
   if (!tmp || !*tmp)
@@ -4496,7 +4495,7 @@ static void init_username()
   }
 }
 
-static int com_prompt(DYNAMIC_STRING *buffer __attribute__((__unused__)),
+static int com_prompt(DYNAMIC_STRING *buffer __attribute__((unused)),
                       char *line)
 {
   char *ptr=strchr(line, ' ');

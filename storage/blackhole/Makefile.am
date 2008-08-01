@@ -20,9 +20,6 @@ MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
-AM_CPPFLAGS =		${GLOBAL_CPPFLAGS} \
-			-I$(top_srcdir)/server
-WRAPLIBS=
 
 LDADD =
 

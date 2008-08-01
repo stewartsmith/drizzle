@@ -17,17 +17,15 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
-#include <my_sys.h>
-#include <my_time.h>
-#include <mysys_err.h>
-#include <m_string.h>
-#include <m_ctype.h>
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
+#include "my_time.h"
+#include <mysys/mysys_err.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include "drizzle.h"
-#include "drizzle_version.h"
-#include "mysqld_error.h"
 #include "errmsg.h"
-#include <violite.h>
+#include <vio/violite.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>
@@ -52,7 +50,7 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
-#include <my_pthread.h>        /* because of signal()  */
+#include <mysys/my_pthread.h>        /* because of signal()  */
 #ifndef INADDR_NONE
 #define INADDR_NONE  -1
 #endif
@@ -82,12 +80,12 @@ static void append_wild(char *to,char *end,const char *wild);
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 {&max_allowed_packet, &net_buffer_length, 0};
 
-DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void)
+const DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void)
 {
   return &drizzle_internal_parameters;
 }
 
-my_bool STDCALL drizzle_thread_init()
+bool STDCALL drizzle_thread_init()
 {
   return my_thread_init();
 }
@@ -137,38 +135,11 @@ my_pipe_sig_handler(int sig __attribute__((unused)))
 
 
 /**************************************************************************
-  Connect to sql server
-  If host == 0 then use localhost
-**************************************************************************/
-
-#ifdef USE_OLD_FUNCTIONS
-DRIZZLE * STDCALL
-drizzle_connect(DRIZZLE *drizzle,const char *host,
-        const char *user, const char *passwd)
-{
-  DRIZZLE *res;
-  drizzle=drizzle_init(drizzle);      /* Make it thread safe */
-  {
-    if (!(res=drizzle_connect(drizzle,host,user,passwd,NullS,0,NullS,0)))
-    {
-      if (drizzle->free_me)
-  my_free((uchar*) drizzle,MYF(0));
-    }
-    drizzle->reconnect= 1;
-    return(res);
-  }
-}
-#endif
-
-
-/**************************************************************************
   Change user and database
 **************************************************************************/
 
-int cli_read_change_user_result(DRIZZLE *drizzle, char *buff, const char *passwd)
+int cli_read_change_user_result(DRIZZLE *drizzle)
 {
-  (void)buff;
-  (void)passwd;
   ulong pkt_length;
 
   pkt_length= cli_safe_read(drizzle);
@@ -179,13 +150,13 @@ int cli_read_change_user_result(DRIZZLE *drizzle, char *buff, const char *passwd
   return 0;
 }
 
-my_bool  STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
+bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
           const char *passwd, const char *db)
 {
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
   char *end= buff;
   int rc;
-  CHARSET_INFO *saved_cs= drizzle->charset;
+  const CHARSET_INFO *saved_cs= drizzle->charset;
 
   /* Get the connection-default character set. */
 
@@ -230,14 +201,17 @@ my_bool  STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   /* Write authentication package */
   (void)simple_command(drizzle,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
 
-  rc= (*drizzle->methods->read_change_user_result)(drizzle, buff, passwd);
+  rc= (*drizzle->methods->read_change_user_result)(drizzle);
 
   if (rc == 0)
   {
     /* Free old connect information */
-    my_free(drizzle->user,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(drizzle->passwd,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(drizzle->db,MYF(MY_ALLOW_ZERO_PTR));
+    if(drizzle->user)
+      free(drizzle->user);
+    if(drizzle->passwd)
+      free(drizzle->passwd);
+    if(drizzle->db)
+      free(drizzle->db);
 
     /* alloc new connect information */
     drizzle->user=  my_strdup(user,MYF(MY_WME));
@@ -250,281 +224,6 @@ my_bool  STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   }
 
   return(rc);
-}
-
-#if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
-struct passwd *getpwuid(uid_t);
-char* getlogin(void);
-#endif
-
-void read_user_name(char *name)
-{
-  if (geteuid() == 0)
-    (void) strmov(name,"root");    /* allow use of surun */
-  else
-  {
-#ifdef HAVE_GETPWUID
-    struct passwd *skr;
-    const char *str;
-    if ((str=getlogin()) == NULL)
-    {
-      if ((skr=getpwuid(geteuid())) != NULL)
-  str=skr->pw_name;
-      else if (!(str=getenv("USER")) && !(str=getenv("LOGNAME")) &&
-         !(str=getenv("LOGIN")))
-  str="UNKNOWN_USER";
-    }
-    (void) strmake(name,str,USERNAME_LENGTH);
-#elif HAVE_CUSERID
-    (void) cuserid(name);
-#else
-    strmov(name,"UNKNOWN_USER");
-#endif
-  }
-  return;
-}
-
-my_bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
-{
-  my_bool result= 1;
-  uint packet_length=MY_ALIGN(drizzle->net.max_packet-16,IO_SIZE);
-  NET *net= &drizzle->net;
-  int readcount;
-  void *li_ptr;          /* pass state to local_infile functions */
-  char *buf;    /* buffer to be filled by local_infile_read */
-  struct st_drizzle_options *options= &drizzle->options;
-
-  /* check that we've got valid callback functions */
-  if (!(options->local_infile_init &&
-  options->local_infile_read &&
-  options->local_infile_end &&
-  options->local_infile_error))
-  {
-    /* if any of the functions is invalid, set the default */
-    drizzle_set_local_infile_default(drizzle);
-  }
-
-  /* copy filename into local memory and allocate read buffer */
-  if (!(buf=my_malloc(packet_length, MYF(0))))
-  {
-    set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
-    return(1);
-  }
-
-  /* initialize local infile (open file, usually) */
-  if ((*options->local_infile_init)(&li_ptr, net_filename,
-    options->local_infile_userdata))
-  {
-    VOID(my_net_write(net,(const uchar*) "",0)); /* Server needs one packet */
-    net_flush(net);
-    strmov(net->sqlstate, unknown_sqlstate);
-    net->last_errno=
-      (*options->local_infile_error)(li_ptr,
-                                     net->last_error,
-                                     sizeof(net->last_error)-1);
-    goto err;
-  }
-
-  /* read blocks of data from local infile callback */
-  while ((readcount =
-    (*options->local_infile_read)(li_ptr, buf,
-          packet_length)) > 0)
-  {
-    if (my_net_write(net, (uchar*) buf, readcount))
-    {
-      goto err;
-    }
-  }
-
-  /* Send empty packet to mark end of file */
-  if (my_net_write(net, (const uchar*) "", 0) || net_flush(net))
-  {
-    set_drizzle_error(drizzle, CR_SERVER_LOST, unknown_sqlstate);
-    goto err;
-  }
-
-  if (readcount < 0)
-  {
-    net->last_errno=
-      (*options->local_infile_error)(li_ptr,
-                                     net->last_error,
-                                     sizeof(net->last_error)-1);
-    goto err;
-  }
-
-  result=0;          /* Ok */
-
-err:
-  /* free up memory allocated with _init, usually */
-  (*options->local_infile_end)(li_ptr);
-  my_free(buf, MYF(0));
-  return(result);
-}
-
-
-/****************************************************************************
-  Default handlers for LOAD LOCAL INFILE
-****************************************************************************/
-
-typedef struct st_default_local_infile
-{
-  int fd;
-  int error_num;
-  const char *filename;
-  char error_msg[LOCAL_INFILE_ERROR_LEN];
-} default_local_infile_data;
-
-
-/*
-  Open file for LOAD LOCAL INFILE
-
-  SYNOPSIS
-    default_local_infile_init()
-    ptr      Store pointer to internal data here
-    filename    File name to open. This may be in unix format !
-
-
-  NOTES
-    Even if this function returns an error, the load data interface
-    guarantees that default_local_infile_end() is called.
-
-  RETURN
-    0  ok
-    1  error
-*/
-
-static int default_local_infile_init(void **ptr, const char *filename,
-             void *userdata __attribute__ ((unused)))
-{
-  default_local_infile_data *data;
-  char tmp_name[FN_REFLEN];
-
-  if (!(*ptr= data= ((default_local_infile_data *)
-         my_malloc(sizeof(default_local_infile_data),  MYF(0)))))
-    return 1; /* out of memory */
-
-  data->error_msg[0]= 0;
-  data->error_num=    0;
-  data->filename= filename;
-
-  fn_format(tmp_name, filename, "", "", MY_UNPACK_FILENAME);
-  if ((data->fd = my_open(tmp_name, O_RDONLY, MYF(0))) < 0)
-  {
-    data->error_num= my_errno;
-    snprintf(data->error_msg, sizeof(data->error_msg)-1,
-             EE(EE_FILENOTFOUND), tmp_name, data->error_num);
-    return 1;
-  }
-  return 0; /* ok */
-}
-
-
-/*
-  Read data for LOAD LOCAL INFILE
-
-  SYNOPSIS
-    default_local_infile_read()
-    ptr      Points to handle allocated by _init
-    buf      Read data here
-    buf_len    Ammount of data to read
-
-  RETURN
-    > 0    number of bytes read
-    == 0  End of data
-    < 0    Error
-*/
-
-static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
-{
-  int count;
-  default_local_infile_data*data = (default_local_infile_data *) ptr;
-
-  if ((count= (int) my_read(data->fd, (uchar *) buf, buf_len, MYF(0))) < 0)
-  {
-    data->error_num= EE_READ; /* the errmsg for not entire file read */
-    snprintf(data->error_msg, sizeof(data->error_msg)-1,
-             EE(EE_READ),
-             data->filename, my_errno);
-  }
-  return count;
-}
-
-
-/*
-  Read data for LOAD LOCAL INFILE
-
-  SYNOPSIS
-    default_local_infile_end()
-    ptr      Points to handle allocated by _init
-      May be NULL if _init failed!
-
-  RETURN
-*/
-
-static void default_local_infile_end(void *ptr)
-{
-  default_local_infile_data *data= (default_local_infile_data *) ptr;
-  if (data)          /* If not error on open */
-  {
-    if (data->fd >= 0)
-      my_close(data->fd, MYF(MY_WME));
-    my_free(ptr, MYF(MY_WME));
-  }
-}
-
-
-/*
-  Return error from LOAD LOCAL INFILE
-
-  SYNOPSIS
-    default_local_infile_end()
-    ptr      Points to handle allocated by _init
-      May be NULL if _init failed!
-    error_msg    Store error text here
-    error_msg_len  Max lenght of error_msg
-
-  RETURN
-    error message number
-*/
-
-static int
-default_local_infile_error(void *ptr, char *error_msg, uint error_msg_len)
-{
-  default_local_infile_data *data = (default_local_infile_data *) ptr;
-  if (data)          /* If not error on open */
-  {
-    strmake(error_msg, data->error_msg, error_msg_len);
-    return data->error_num;
-  }
-  /* This can only happen if we got error on malloc of handle */
-  strmov(error_msg, ER(CR_OUT_OF_MEMORY));
-  return CR_OUT_OF_MEMORY;
-}
-
-
-void
-drizzle_set_local_infile_handler(DRIZZLE *drizzle,
-                               int (*local_infile_init)(void **, const char *,
-                               void *),
-                               int (*local_infile_read)(void *, char *, uint),
-                               void (*local_infile_end)(void *),
-                               int (*local_infile_error)(void *, char *, uint),
-                               void *userdata)
-{
-  drizzle->options.local_infile_init=  local_infile_init;
-  drizzle->options.local_infile_read=  local_infile_read;
-  drizzle->options.local_infile_end=   local_infile_end;
-  drizzle->options.local_infile_error= local_infile_error;
-  drizzle->options.local_infile_userdata = userdata;
-}
-
-
-void drizzle_set_local_infile_default(DRIZZLE *drizzle)
-{
-  drizzle->options.local_infile_init=  default_local_infile_init;
-  drizzle->options.local_infile_read=  default_local_infile_read;
-  drizzle->options.local_infile_end=   default_local_infile_end;
-  drizzle->options.local_infile_error= default_local_infile_error;
 }
 
 
@@ -660,8 +359,7 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
       !(fields= (*drizzle->methods->list_fields)(drizzle)))
     return(NULL);
 
-  if (!(result = (DRIZZLE_RES *) my_malloc(sizeof(DRIZZLE_RES),
-           MYF(MY_WME | MY_ZEROFILL))))
+  if (!(result = (DRIZZLE_RES *) malloc(sizeof(DRIZZLE_RES))))
     return(NULL);
 
   result->methods= drizzle->methods;
@@ -697,22 +395,6 @@ drizzle_list_processes(DRIZZLE *drizzle)
   drizzle->field_count=field_count;
   return(drizzle_store_result(drizzle));
 }
-
-
-#ifdef USE_OLD_FUNCTIONS
-int  STDCALL
-drizzle_create_db(DRIZZLE *drizzle, const char *db)
-{
-  return(simple_command(drizzle,COM_CREATE_DB,db, (ulong) strlen(db),0));
-}
-
-
-int  STDCALL
-drizzle_drop_db(DRIZZLE *drizzle, const char *db)
-{
-  return(simple_command(drizzle,COM_DROP_DB,db,(ulong) strlen(db),0));
-}
-#endif
 
 
 int STDCALL
@@ -784,21 +466,21 @@ drizzle_ping(DRIZZLE *drizzle)
 
 
 const char * STDCALL
-drizzle_get_server_info(DRIZZLE *drizzle)
+drizzle_get_server_info(const DRIZZLE *drizzle)
 {
   return((char*) drizzle->server_version);
 }
 
 
 const char * STDCALL
-drizzle_get_host_info(DRIZZLE *drizzle)
+drizzle_get_host_info(const DRIZZLE *drizzle)
 {
   return(drizzle->host_info);
 }
 
 
 uint STDCALL
-drizzle_get_proto_info(DRIZZLE *drizzle)
+drizzle_get_proto_info(const DRIZZLE *drizzle)
 {
   return (drizzle->protocol_version);
 }
@@ -814,74 +496,74 @@ uint32_t STDCALL drizzle_get_client_version(void)
   return MYSQL_VERSION_ID;
 }
 
-my_bool STDCALL drizzle_eof(DRIZZLE_RES *res)
+bool STDCALL drizzle_eof(const DRIZZLE_RES *res)
 {
   return res->eof;
 }
 
-DRIZZLE_FIELD * STDCALL drizzle_fetch_field_direct(DRIZZLE_RES *res,uint fieldnr)
+const DRIZZLE_FIELD * STDCALL drizzle_fetch_field_direct(const DRIZZLE_RES *res, unsigned int fieldnr)
 {
   return &(res)->fields[fieldnr];
 }
 
-DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(DRIZZLE_RES *res)
+const DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(const DRIZZLE_RES *res)
 {
-  return (res)->fields;
+  return res->fields;
 }
 
-DRIZZLE_ROW_OFFSET STDCALL DRIZZLE_ROW_tell(DRIZZLE_RES *res)
+DRIZZLE_ROW_OFFSET STDCALL drizzle_row_tell(const DRIZZLE_RES *res)
 {
   return res->data_cursor;
 }
 
-DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_tell(DRIZZLE_RES *res)
+DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_tell(const DRIZZLE_RES *res)
 {
-  return (res)->current_field;
+  return res->current_field;
 }
 
 /* DRIZZLE */
 
-unsigned int STDCALL drizzle_field_count(DRIZZLE *drizzle)
+unsigned int STDCALL drizzle_field_count(const DRIZZLE *drizzle)
 {
   return drizzle->field_count;
 }
 
-uint64_t STDCALL drizzle_affected_rows(DRIZZLE *drizzle)
+uint64_t STDCALL drizzle_affected_rows(const DRIZZLE *drizzle)
 {
   return drizzle->affected_rows;
 }
 
-uint64_t STDCALL drizzle_insert_id(DRIZZLE *drizzle)
+uint64_t STDCALL drizzle_insert_id(const DRIZZLE *drizzle)
 {
   return drizzle->insert_id;
 }
 
-const char *STDCALL drizzle_sqlstate(DRIZZLE *drizzle)
+const char *STDCALL drizzle_sqlstate(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.sqlstate : cant_connect_sqlstate;
 }
 
-uint32_t STDCALL drizzle_warning_count(DRIZZLE *drizzle)
+uint32_t STDCALL drizzle_warning_count(const DRIZZLE *drizzle)
 {
   return drizzle->warning_count;
 }
 
-const char *STDCALL drizzle_info(DRIZZLE *drizzle)
+const char *STDCALL drizzle_info(const DRIZZLE *drizzle)
 {
   return drizzle->info;
 }
 
-uint32_t STDCALL drizzle_thread_id(DRIZZLE *drizzle)
+uint32_t STDCALL drizzle_thread_id(const DRIZZLE *drizzle)
 {
-  return (drizzle)->thread_id;
+  return drizzle->thread_id;
 }
 
-const char * STDCALL drizzle_character_set_name(DRIZZLE *drizzle)
+const char * STDCALL drizzle_character_set_name(const DRIZZLE *drizzle)
 {
   return drizzle->charset->csname;
 }
 
-void STDCALL drizzle_get_character_set_info(DRIZZLE *drizzle, MY_CHARSET_INFO *csinfo)
+void STDCALL drizzle_get_character_set_info(const DRIZZLE *drizzle, MY_CHARSET_INFO *csinfo)
 {
   csinfo->number   = drizzle->charset->number;
   csinfo->state    = drizzle->charset->state;
@@ -903,12 +585,12 @@ uint STDCALL drizzle_thread_safe(void)
 }
 
 
-my_bool STDCALL drizzle_embedded(void)
+bool STDCALL drizzle_embedded(void)
 {
 #ifdef EMBEDDED_LIBRARY
-  return 1;
+  return true;
 #else
-  return 0;
+  return false;
 #endif
 }
 
@@ -973,7 +655,7 @@ drizzle_hex_string(char *to, const char *from, uint32_t length)
 uint32_t STDCALL
 drizzle_escape_string(char *to,const char *from, uint32_t length)
 {
-  return escape_string_for_mysql(default_charset_info, to, 0, from, length);
+  return escape_string_for_drizzle(default_charset_info, to, 0, from, length);
 }
 
 uint32_t STDCALL
@@ -981,16 +663,16 @@ drizzle_real_escape_string(DRIZZLE *drizzle, char *to,const char *from,
        uint32_t length)
 {
   if (drizzle->server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
-    return escape_quotes_for_mysql(drizzle->charset, to, 0, from, length);
-  return escape_string_for_mysql(drizzle->charset, to, 0, from, length);
+    return escape_quotes_for_drizzle(drizzle->charset, to, 0, from, length);
+  return escape_string_for_drizzle(drizzle->charset, to, 0, from, length);
 }
 
 void STDCALL
-myodbc_remove_escape(DRIZZLE *drizzle,char *name)
+myodbc_remove_escape(const DRIZZLE *drizzle, char *name)
 {
   char *to;
 #ifdef USE_MB
-  my_bool use_mb_flag=use_mb(drizzle->charset);
+  bool use_mb_flag= use_mb(drizzle->charset);
   char *end=NULL;
   if (use_mb_flag)
     for (end=name; *end ; end++) ;
@@ -1003,7 +685,7 @@ myodbc_remove_escape(DRIZZLE *drizzle,char *name)
     if (use_mb_flag && (l = my_ismbchar( drizzle->charset, name , end ) ) )
     {
       while (l--)
-  *to++ = *name++;
+        *to++ = *name++;
       name--;
       continue;
     }
@@ -1020,7 +702,7 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
   if (packet_error == cli_safe_read(drizzle))
     return 1;
 
-  *row= ((drizzle->net.read_pos[0] == 254) ? NULL :
+  *row= ((drizzle->net.read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA) ? NULL :
    (char*) (drizzle->net.read_pos+1));
   return 0;
 }
@@ -1033,18 +715,18 @@ int cli_unbuffered_fetch(DRIZZLE *drizzle, char **row)
   Commit the current transaction
 */
 
-my_bool STDCALL drizzle_commit(DRIZZLE *drizzle)
+bool STDCALL drizzle_commit(DRIZZLE *drizzle)
 {
-  return((my_bool) drizzle_real_query(drizzle, "commit", 6));
+  return((bool) drizzle_real_query(drizzle, "commit", 6));
 }
 
 /*
   Rollback the current transaction
 */
 
-my_bool STDCALL drizzle_rollback(DRIZZLE *drizzle)
+bool STDCALL drizzle_rollback(DRIZZLE *drizzle)
 {
-  return((my_bool) drizzle_real_query(drizzle, "rollback", 8));
+  return((bool) drizzle_real_query(drizzle, "rollback", 8));
 }
 
 
@@ -1052,9 +734,9 @@ my_bool STDCALL drizzle_rollback(DRIZZLE *drizzle)
   Set autocommit to either true or false
 */
 
-my_bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, my_bool auto_mode)
+bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode)
 {
-  return((my_bool) drizzle_real_query(drizzle, auto_mode ?
+  return((bool) drizzle_real_query(drizzle, auto_mode ?
                                          "set autocommit=1":"set autocommit=0",
                                          16));
 }
@@ -1069,12 +751,9 @@ my_bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, my_bool auto_mode)
   to be read using drizzle_next_result()
 */
 
-my_bool STDCALL drizzle_more_results(DRIZZLE *drizzle)
+bool STDCALL drizzle_more_results(const DRIZZLE *drizzle)
 {
-  my_bool res;
-
-  res= ((drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? 1: 0);
-  return(res);
+  return (drizzle->server_status & SERVER_MORE_RESULTS_EXISTS) ? true:false;
 }
 
 
@@ -1104,7 +783,7 @@ DRIZZLE_RES * STDCALL drizzle_use_result(DRIZZLE *drizzle)
   return (*drizzle->methods->use_result)(drizzle);
 }
 
-my_bool STDCALL drizzle_read_query_result(DRIZZLE *drizzle)
+bool STDCALL drizzle_read_query_result(DRIZZLE *drizzle)
 {
   return (*drizzle->methods->read_query_result)(drizzle);
 }

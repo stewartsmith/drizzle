@@ -47,7 +47,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
     */
     key_buff=info->lastkey+info->s->base.max_key_length;
     pack_key_length= keypart_map;
-    bmove(key_buff, key, pack_key_length);
+    memcpy(key_buff, key, pack_key_length);
     last_used_keyseg= info->s->keyinfo[inx].seg + info->last_used_keyseg;
   }
   else
@@ -175,7 +175,7 @@ int mi_rkey(MI_INFO *info, uchar *buf, int inx, const uchar *key,
   /* Store last used key as a base for read next */
   memcpy(info->lastkey,key_buff,pack_key_length);
   info->last_rkey_length= pack_key_length;
-  bzero((char*) info->lastkey+pack_key_length,info->s->base.rec_reflength);
+  memset((char*) info->lastkey+pack_key_length, 0, info->s->base.rec_reflength);
   info->lastkey_length=pack_key_length+info->s->base.rec_reflength;
 
   if (search_flag == HA_READ_AFTER_KEY)

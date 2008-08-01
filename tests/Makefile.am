@@ -30,7 +30,7 @@ CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
 
 LDADD=			$(top_builddir)/mysys/libmysyslt.la \
-                        $(top_builddir)/strings/libmystringslt.la 
+                        $(top_builddir)/mystrings/libmystringslt.la 
 
 
 
@@ -135,3 +135,72 @@ test-run:
 	$(RM) -f test-run
 	$(LN_S) test-run.pl test-run
 
+
+.PHONY: test \
+    test-force \
+    test-full \
+    test-force-full \
+    test-force-mem \
+    test-pl \
+    test-force-pl \
+    test-full-pl \
+    test-force-full-pl \
+    test-force-pl-mem \
+    test-ps test-nr \
+    test-pr test-ns \
+    test-binlog-statement \
+    test-ext-funcs \
+    test-ext-rpl \
+    test-ext-jp \
+    test-ext-stress \
+    test-ext \
+    test-embedded \
+    test-fast \
+    test-fast-cursor \
+    test-fast-view \
+    test-full-qa
+
+# Target 'test' will run the regression test suite using the built server.
+#
+# If you are running in a shared environment, users can avoid clashing
+# port numbers by setting individual small numbers 1-100 to the
+# environment variable MTR_BUILD_THREAD. The script "test-run"
+# will then calculate the various port numbers it needs from this,
+# making sure each user use different ports.
+
+test-nr:
+	cd tests ; \
+	  ./test-run $(force) --mysqld=--binlog-format=row
+
+test-ns:
+	cd tests ; \
+	  ./test-run $(force) $(mem) --mysqld=--binlog-format=mixed
+
+test-binlog-statement:
+	cd tests ; \
+	  ./test-run $(force) --mysqld=--binlog-format=statement
+
+test: test-drizzle
+
+test-drizzle:
+	  $(PERL) -I$(top_srcdir)/tests/lib \
+		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
+	  alter_table \
+	  join_crash \
+	  join_nested \
+	  join_outer_innodb \
+	  delete \
+	  join_outer \
+	  distinct \
+	  type_newdecimal \
+	  join \
+	  subselect \
+	  subselect3 \
+	  subselect_innodb \
+	  insert \
+	  select \
+	  update \
+	  information_schema \
+	  mysqlslap \
+	  lock \
+	  lock_tables_lost_commit

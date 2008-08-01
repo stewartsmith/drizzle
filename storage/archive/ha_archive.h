@@ -84,7 +84,7 @@ public:
   {
   }
   const char *table_type() const { return "ARCHIVE"; }
-  const char *index_type(uint inx __attribute__((__unused__)))
+  const char *index_type(uint inx __attribute__((unused)))
   { return "NONE"; }
   const char **bas_ext() const;
   uint64_t table_flags() const
@@ -95,9 +95,9 @@ public:
             HA_HAS_RECORDS |
             HA_FILE_BASED | HA_CAN_INSERT_DELAYED | HA_CAN_GEOMETRY);
   }
-  uint32_t index_flags(uint idx __attribute__((__unused__)),
-                       uint part __attribute__((__unused__)),
-                       bool all_parts __attribute__((__unused__))) const
+  uint32_t index_flags(uint idx __attribute__((unused)),
+                       uint part __attribute__((unused)),
+                       bool all_parts __attribute__((unused))) const
   {
     return HA_ONLY_WHOLE_INDEX;
   }

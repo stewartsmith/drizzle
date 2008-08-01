@@ -34,9 +34,12 @@
   server.
 */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 
 #include "drizzle.h"
+
+#include <sys/poll.h>
+#include <sys/ioctl.h>
 
 #include <netdb.h>
 
@@ -46,15 +49,14 @@
 
 #define CLI_DRIZZLE_CONNECT STDCALL drizzle_connect
 
-#include <my_sys.h>
-#include <mysys_err.h>
-#include <m_string.h>
-#include <m_ctype.h>
-#include "drizzle_version.h"
-#include "mysqld_error.h"
+#include <mysys/my_sys.h>
+#include <mysys/mysys_err.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
+#include <drizzled/error.h>
 #include "errmsg.h"
-#include <violite.h>
-#include <my_pthread.h>        /* because of signal()  */
+#include <vio/violite.h>
+#include <mysys/my_pthread.h>        /* because of signal()  */
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -82,7 +84,7 @@
 #define CONNECT_TIMEOUT 0
 
 #include "client_settings.h"
-#include <sql_common.h>
+#include <libdrizzle/sql_common.h>
 
 uint    drizzle_port=0;
 char    *drizzle_unix_port= 0;
@@ -241,6 +243,40 @@ static int wait_for_data(my_socket fd, uint timeout)
   return (0);          /* ok */
 #endif /* HAVE_POLL */
 }
+
+
+#if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
+struct passwd *getpwuid(uid_t);
+char* getlogin(void);
+#endif
+
+static void read_user_name(char *name)
+{
+  if (geteuid() == 0)
+    (void) strmov(name,"root");    /* allow use of surun */
+  else
+  {
+#ifdef HAVE_GETPWUID
+    struct passwd *skr;
+    const char *str;
+    if ((str=getlogin()) == NULL)
+    {
+      if ((skr=getpwuid(geteuid())) != NULL)
+  str=skr->pw_name;
+      else if (!(str=getenv("USER")) && !(str=getenv("LOGNAME")) &&
+         !(str=getenv("LOGIN")))
+  str="UNKNOWN_USER";
+    }
+    (void) strmake(name,str,USERNAME_LENGTH);
+#elif HAVE_CUSERID
+    (void) cuserid(name);
+#else
+    strmov(name,"UNKNOWN_USER");
+#endif
+  }
+  return;
+}
+
 
 /**
   Set the internal error message to DRIZZLE handler
@@ -792,7 +828,7 @@ unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
     free_rows(data);        /* Free old data */
     return(0);
   }
-  bzero((char*) field, (uint) sizeof(DRIZZLE_FIELD)*fields);
+  memset((char*) field, 0, (uint) sizeof(DRIZZLE_FIELD)*fields);
   if (server_capabilities & CLIENT_PROTOCOL_41)
   {
     /* server is 4.1, and returns the new field result format */
@@ -1411,7 +1447,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
       unix_socket= drizzle_unix_port;
     host_info= (char*) ER(CR_LOCALHOST_CONNECTION);
 
-    bzero((char*) &UNIXaddr, sizeof(UNIXaddr));
+    memset((char*) &UNIXaddr, 0, sizeof(UNIXaddr));
     UNIXaddr.sun_family= AF_UNIX;
     strmake(UNIXaddr.sun_path, unix_socket, sizeof(UNIXaddr.sun_path)-1);
 
@@ -1644,7 +1680,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     int4store(buff,client_flag);
     int4store(buff+4, net->max_packet_size);
     buff[8]= (char) drizzle->charset->number;
-    bzero(buff+9, 32-9);
+    memset(buff+9, 0, 32-9);
     end= buff+32;
   }
   else
@@ -1791,7 +1827,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   }
   if (drizzle_set_character_set(&tmp_drizzle, drizzle->charset->csname))
   {
-    bzero((char*) &tmp_drizzle.options,sizeof(tmp_drizzle.options));
+    memset((char*) &tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
     drizzle_close(&tmp_drizzle);
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
     strmov(drizzle->net.last_error, tmp_drizzle.net.last_error);
@@ -1803,7 +1839,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   tmp_drizzle.free_me= drizzle->free_me;
 
   /* Don't free options as these are now used in tmp_drizzle */
-  bzero((char*) &drizzle->options,sizeof(drizzle->options));
+  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
   drizzle->free_me=0;
   drizzle_close(drizzle);
   *drizzle=tmp_drizzle;
@@ -1862,7 +1898,7 @@ static void drizzle_close_free_options(DRIZZLE *drizzle)
   if (drizzle->options.shared_memory_base_name != def_shared_memory_base_name)
     my_free(drizzle->options.shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
 #endif /* HAVE_SMEM */
-  bzero((char*) &drizzle->options,sizeof(drizzle->options));
+  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
   return;
 }
 
@@ -2029,7 +2065,7 @@ DRIZZLE_RES * STDCALL drizzle_store_result(DRIZZLE *drizzle)
   result->fields=  drizzle->fields;
   result->field_alloc=  drizzle->field_alloc;
   result->field_count=  drizzle->field_count;
-  /* The rest of result members is bzeroed in malloc */
+  /* The rest of result members is zeroed in malloc */
   drizzle->fields=0;        /* fields is now in result */
   clear_alloc_root(&drizzle->field_alloc);
   /* just in case this was mistakenly called after drizzle_stmt_execute() */
@@ -2245,23 +2281,23 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 ****************************************************************************/
 
 /* DRIZZLE_RES */
-uint64_t STDCALL drizzle_num_rows(DRIZZLE_RES *res)
+uint64_t STDCALL drizzle_num_rows(const DRIZZLE_RES *res)
 {
   return res->row_count;
 }
 
-unsigned int STDCALL drizzle_num_fields(DRIZZLE_RES *res)
+unsigned int STDCALL drizzle_num_fields(const DRIZZLE_RES *res)
 {
   return res->field_count;
 }
 
-uint STDCALL drizzle_errno(DRIZZLE *drizzle)
+uint STDCALL drizzle_errno(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.last_errno : drizzle_server_last_errno;
 }
 
 
-const char * STDCALL drizzle_error(DRIZZLE *drizzle)
+const char * STDCALL drizzle_error(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.last_error : drizzle_server_last_error;
 }
@@ -2285,7 +2321,7 @@ const char * STDCALL drizzle_error(DRIZZLE *drizzle)
 */
 
 uint32_t STDCALL
-drizzle_get_server_version(DRIZZLE *drizzle)
+drizzle_get_server_version(const DRIZZLE *drizzle)
 {
   uint major, minor, version;
   char *pos= drizzle->server_version, *end_pos;

@@ -35,14 +35,11 @@
 #include <pcrecpp.h>
 
 #include "client_priv.h"
-#include <drizzle_version.h>
-#include <mysqld_error.h>
-#include <m_ctype.h>
-#include <my_dir.h>
-#include <hash.h>
+#include <mysys/hash.h>
 #include <stdarg.h>
-#include <violite.h>
+#include <vio/violite.h>
 
+#include "errname.h"
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -366,15 +363,15 @@ DYNAMIC_STRING ds_res, ds_progress, ds_warning_messages;
 char builtin_echo[FN_REFLEN];
 
 void die(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void abort_not_supported_test(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void verbose_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void warning_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void log_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
@@ -590,7 +587,7 @@ static void show_query(DRIZZLE *drizzle, const char* query)
     unsigned int i;
     unsigned int row_num= 0;
     unsigned int num_fields= drizzle_num_fields(res);
-    DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+    const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
 
     fprintf(stderr, "=== %s ===\n", query);
     while ((row= drizzle_fetch_row(res)))
@@ -1936,7 +1933,7 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     /* Find column number from the given column name */
     uint i;
     uint num_fields= drizzle_num_fields(res);
-    DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+    const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
 
     for (i= 0; i < num_fields; i++)
     {
@@ -3327,20 +3324,6 @@ static void do_set_charset(struct st_command *command)
   if (!charset_info)
     abort_not_supported_test("Test requires charset '%s'", charset_name);
 }
-
-
-/* List of error names to error codes, available from 5.0 */
-typedef struct
-{
-  const char *name;
-  uint        code;
-} st_error;
-
-static st_error global_error_names[] =
-{
-#include <mysqld_ername.h>
-  { 0, 0 }
-};
 
 static uint get_errcode_from_name(char *error_name, char *error_end)
 {
@@ -4886,7 +4869,7 @@ void dump_warning_messages(void)
   Append the result for one field to the dynamic string ds
 */
 
-static void append_field(DYNAMIC_STRING *ds, uint col_idx, DRIZZLE_FIELD* field,
+static void append_field(DYNAMIC_STRING *ds, uint col_idx, const DRIZZLE_FIELD* field,
                          const char* val, uint64_t len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
@@ -4925,7 +4908,7 @@ static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
 {
   DRIZZLE_ROW row;
   uint32_t num_fields= drizzle_num_fields(res);
-  DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+  const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
   uint32_t *lengths;
 
   while ((row = drizzle_fetch_row(res)))
@@ -4946,10 +4929,10 @@ static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
 */
 
 static void append_metadata(DYNAMIC_STRING *ds,
-                            DRIZZLE_FIELD *field,
+                            const DRIZZLE_FIELD *field,
                             uint num_fields)
 {
-  DRIZZLE_FIELD *field_end;
+  const DRIZZLE_FIELD *field_end;
   dynstr_append(ds,"Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
                 "Column_alias\tType\tLength\tMax length\tIs_null\t"
                 "Flags\tDecimals\tCharsetnr\n");
@@ -5017,7 +5000,7 @@ static void append_info(DYNAMIC_STRING *ds, uint64_t affected_rows,
 */
 
 static void append_table_headings(DYNAMIC_STRING *ds,
-                                  DRIZZLE_FIELD *field,
+                                  const DRIZZLE_FIELD *field,
                                   uint num_fields)
 {
   uint col_idx;
@@ -5142,16 +5125,16 @@ static void run_query_normal(struct st_connection *cn,
 
       if (res)
       {
-  DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
-  uint num_fields= drizzle_num_fields(res);
+        const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+        uint num_fields= drizzle_num_fields(res);
 
-  if (display_metadata)
+        if (display_metadata)
           append_metadata(ds, fields, num_fields);
 
-  if (!display_result_vertically)
-    append_table_headings(ds, fields, num_fields);
+        if (!display_result_vertically)
+          append_table_headings(ds, fields, num_fields);
 
-  append_result(ds, res);
+        append_result(ds, res);
       }
 
       /*
@@ -6175,8 +6158,8 @@ void do_get_replace(struct st_command *command)
 
   free_replace();
 
-  bzero((char*) &to_array,sizeof(to_array));
-  bzero((char*) &from_array,sizeof(from_array));
+  memset((char*) &to_array, 0, sizeof(to_array));
+  memset((char*) &from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
   start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
@@ -6372,7 +6355,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   /* for each regexp substitution statement */
   while (p < expr_end)
   {
-    bzero(&reg,sizeof(reg));
+    memset(&reg, 0, sizeof(reg));
     /* find the start of the statement */
     while (p < expr_end)
     {
@@ -6682,7 +6665,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     if (len > max_length)
       max_length=len;
   }
-  bzero((char*) is_word_end,sizeof(is_word_end));
+  memset((char*) is_word_end, 0, sizeof(is_word_end));
   for (i=0 ; word_end_chars[i] ; i++)
     is_word_end[(uchar) word_end_chars[i]]=1;
 
@@ -6801,7 +6784,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
       or_bits(sets.set+used_sets,sets.set);  /* Can restart from start */
 
     /* Find all chars that follows current sets */
-    bzero((char*) used_chars,sizeof(used_chars));
+    memset((char*) used_chars, 0, sizeof(used_chars));
     for (i= (uint) ~0; (i=get_next_bit(sets.set+used_sets,i)) ;)
     {
       used_chars[follow[i].chr]=1;
@@ -6910,8 +6893,8 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     for (i=1 ; i <= found_sets ; i++)
     {
       pos=from[found_set[i-1].table_offset];
-      rep_str[i].found= !bcmp((const uchar*) pos,
-            (const uchar*) "\\^", 3) ? 2 : 1;
+      rep_str[i].found= !memcmp((const uchar*) pos,
+                                (const uchar*) "\\^", 3) ? 2 : 1;
       rep_str[i].replace_string=to_array[found_set[i-1].table_offset];
       rep_str[i].to_offset=found_set[i-1].found_offset-start_at_word(pos);
       rep_str[i].from_offset=found_set[i-1].found_offset-replace_len(pos)+
@@ -6935,7 +6918,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 
 int init_sets(REP_SETS *sets,uint states)
 {
-  bzero((char*) sets,sizeof(*sets));
+  memset((char*) sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
   if (!(sets->set_buffer=(REP_SET*) my_malloc(sizeof(REP_SET)*SET_MALLOC_HUNC,
                 MYF(MY_WME))))
@@ -6966,8 +6949,8 @@ REP_SET *make_new_set(REP_SETS *sets)
   {
     sets->extra--;
     set=sets->set+ sets->count++;
-    bzero((char*) set->bits,sizeof(uint)*sets->size_of_bits);
-    bzero((char*) &set->next[0],sizeof(set->next[0])*LAST_CHAR_CODE);
+    memset((char*) set->bits, 0, sizeof(uint)*sets->size_of_bits);
+    memset((char*) &set->next[0], 0, sizeof(set->next[0])*LAST_CHAR_CODE);
     set->found_offset=0;
     set->found_len=0;
     set->table_offset= (uint) ~0;
@@ -7038,8 +7021,8 @@ void copy_bits(REP_SET *to,REP_SET *from)
 
 int cmp_bits(REP_SET *set1,REP_SET *set2)
 {
-  return bcmp((uchar*) set1->bits,(uchar*) set2->bits,
-        sizeof(uint) * set1->size_of_bits);
+  return memcmp((uchar*) set1->bits,(uchar*) set2->bits,
+                sizeof(uint) * set1->size_of_bits);
 }
 
 
@@ -7108,16 +7091,16 @@ int find_found(FOUND_SET *found_set,uint table_offset, int found_offset)
 
 uint start_at_word(char * pos)
 {
-  return (((!bcmp((const uchar*) pos, (const uchar*) "\\b",2) && pos[2]) ||
-           !bcmp((const uchar*) pos, (const uchar*) "\\^", 2)) ? 1 : 0);
+  return (((!memcmp((const uchar*) pos, (const uchar*) "\\b",2) && pos[2]) ||
+           !memcmp((const uchar*) pos, (const uchar*) "\\^", 2)) ? 1 : 0);
 }
 
 uint end_of_word(char * pos)
 {
   char * end=strend(pos);
-  return ((end > pos+2 && !bcmp((const uchar*) end-2,
-                                (const uchar*) "\\b", 2)) ||
-    (end >= pos+2 && !bcmp((const uchar*) end-2,
+  return ((end > pos+2 && !memcmp((const uchar*) end-2,
+                                  (const uchar*) "\\b", 2)) ||
+    (end >= pos+2 && !memcmp((const uchar*) end-2,
                                 (const uchar*) "\\$",2))) ? 1 : 0;
 }
 

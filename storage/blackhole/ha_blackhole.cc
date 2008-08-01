@@ -18,7 +18,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include "ha_blackhole.h"
 
 /* Static declarations for handlerton */
@@ -58,8 +58,8 @@ const char **ha_blackhole::bas_ext() const
   return ha_blackhole_exts;
 }
 
-int ha_blackhole::open(const char *name, int mode __attribute__((__unused__)),
-                       uint test_if_locked __attribute__((__unused__)))
+int ha_blackhole::open(const char *name, int mode __attribute__((unused)),
+                       uint test_if_locked __attribute__((unused)))
 {
   if (!(share= get_share(name)))
     return(HA_ERR_OUT_OF_MEM);
@@ -74,9 +74,9 @@ int ha_blackhole::close(void)
   return(0);
 }
 
-int ha_blackhole::create(const char *name __attribute__((__unused__)),
-                         TABLE *table_arg __attribute__((__unused__)),
-                         HA_CREATE_INFO *create_info __attribute__((__unused__)))
+int ha_blackhole::create(const char *name __attribute__((unused)),
+                         TABLE *table_arg __attribute__((unused)),
+                         HA_CREATE_INFO *create_info __attribute__((unused)))
 {
   return(0);
 }
@@ -91,32 +91,32 @@ const char *ha_blackhole::index_type(uint key_number)
                HA_KEY_ALG_RTREE) ? "RTREE" : "BTREE");
 }
 
-int ha_blackhole::write_row(uchar * buf __attribute__((__unused__)))
+int ha_blackhole::write_row(uchar * buf __attribute__((unused)))
 {
   return(table->next_number_field ? update_auto_increment() : 0);
 }
 
-int ha_blackhole::rnd_init(bool scan __attribute__((__unused__)))
+int ha_blackhole::rnd_init(bool scan __attribute__((unused)))
 {
   return(0);
 }
 
 
-int ha_blackhole::rnd_next(uchar *buf __attribute__((__unused__)))
+int ha_blackhole::rnd_next(uchar *buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::rnd_pos(uchar * buf __attribute__((__unused__)),
-                          uchar *pos __attribute__((__unused__)))
+int ha_blackhole::rnd_pos(uchar * buf __attribute__((unused)),
+                          uchar *pos __attribute__((unused)))
 {
   assert(0);
   return(0);
 }
 
 
-void ha_blackhole::position(const uchar *record __attribute__((__unused__)))
+void ha_blackhole::position(const uchar *record __attribute__((unused)))
 {
   assert(0);
   return;
@@ -125,14 +125,14 @@ void ha_blackhole::position(const uchar *record __attribute__((__unused__)))
 
 int ha_blackhole::info(uint flag)
 {
-  bzero((char*) &stats, sizeof(stats));
+  memset((char*) &stats, 0, sizeof(stats));
   if (flag & HA_STATUS_AUTO)
     stats.auto_increment_value= 1;
   return(0);
 }
 
-int ha_blackhole::external_lock(THD *thd __attribute__((__unused__)),
-                                int lock_type __attribute__((__unused__)))
+int ha_blackhole::external_lock(THD *thd __attribute__((unused)),
+                                int lock_type __attribute__((unused)))
 {
   return(0);
 }
@@ -174,52 +174,52 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
 }
 
 
-int ha_blackhole::index_read_map(uchar * buf __attribute__((__unused__)),
-                                 const uchar * key __attribute__((__unused__)),
-                                 key_part_map keypart_map  __attribute__((__unused__)),
-                                 enum ha_rkey_function find_flag __attribute__((__unused__)))
+int ha_blackhole::index_read_map(uchar * buf __attribute__((unused)),
+                                 const uchar * key __attribute__((unused)),
+                                 key_part_map keypart_map  __attribute__((unused)),
+                                 enum ha_rkey_function find_flag __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_idx_map(uchar * buf __attribute__((__unused__)),
-                                     uint idx __attribute__((__unused__)),
-                                     const uchar * key __attribute__((__unused__)),
-                                     key_part_map keypart_map __attribute__((__unused__)),
-                                     enum ha_rkey_function find_flag __attribute__((__unused__)))
+int ha_blackhole::index_read_idx_map(uchar * buf __attribute__((unused)),
+                                     uint idx __attribute__((unused)),
+                                     const uchar * key __attribute__((unused)),
+                                     key_part_map keypart_map __attribute__((unused)),
+                                     enum ha_rkey_function find_flag __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_read_last_map(uchar * buf __attribute__((__unused__)),
-                                      const uchar * key __attribute__((__unused__)),
-                                      key_part_map keypart_map __attribute__((__unused__)))
+int ha_blackhole::index_read_last_map(uchar * buf __attribute__((unused)),
+                                      const uchar * key __attribute__((unused)),
+                                      key_part_map keypart_map __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_next(uchar * buf __attribute__((__unused__)))
+int ha_blackhole::index_next(uchar * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_prev(uchar * buf __attribute__((__unused__)))
+int ha_blackhole::index_prev(uchar * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_first(uchar * buf __attribute__((__unused__)))
+int ha_blackhole::index_first(uchar * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
 
 
-int ha_blackhole::index_last(uchar * buf __attribute__((__unused__)))
+int ha_blackhole::index_last(uchar * buf __attribute__((unused)))
 {
   return(HA_ERR_END_OF_FILE);
 }
@@ -298,7 +298,7 @@ static int blackhole_init(void *p)
   return 0;
 }
 
-static int blackhole_fini(void *p __attribute__((__unused__)))
+static int blackhole_fini(void *p __attribute__((unused)))
 {
   hash_free(&blackhole_open_tables);
   pthread_mutex_destroy(&blackhole_mutex);

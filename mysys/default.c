@@ -34,8 +34,8 @@
 ****************************************************************************/
 
 #include "mysys_priv.h"
-#include "m_string.h"
-#include "m_ctype.h"
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include <my_dir.h>
 
 const char *my_defaults_file=0;
@@ -475,7 +475,7 @@ int load_defaults(const char *conf_file, const char **groups,
 void free_defaults(char **argv)
 {
   MEM_ROOT ptr;
-  memcpy_fixed((char*) &ptr,(char *) argv - sizeof(ptr), sizeof(ptr));
+  memcpy((char*) &ptr,(char *) argv - sizeof(ptr), sizeof(ptr));
   free_root(&ptr,MYF(0));
 }
 
@@ -949,7 +949,7 @@ void print_defaults(const char *conf_file, const char **groups)
 
 static void init_default_directories(void)
 {
-  bzero((char *) default_directories, sizeof(default_directories));
+  memset((char *) default_directories, 0, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
   ADD_DIRECTORY("/etc/mysql/");
 #if defined(DEFAULT_SYSCONFDIR)

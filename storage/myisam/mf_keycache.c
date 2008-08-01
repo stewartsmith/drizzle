@@ -101,12 +101,12 @@
   I/O finished.
 */
 
-#include "my_global.h"
-#include "mysys_err.h"
-#include <my_sys.h>
+#include <drizzled/global.h>
+#include <mysys/mysys_err.h>
+#include <mysys/my_sys.h>
 #include <keycache.h>
-#include <m_string.h>
-#include <my_bit.h>
+#include <mystrings/m_string.h>
+#include <mysys/my_bit.h>
 #include <errno.h>
 #include <stdarg.h>
 
@@ -353,12 +353,12 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
     keycache->hash_link_root= (HASH_LINK*) ((char*) keycache->hash_root +
 				            ALIGN_SIZE((sizeof(HASH_LINK*) *
 							keycache->hash_entries)));
-    bzero((uchar*) keycache->block_root,
-	  keycache->disk_blocks * sizeof(BLOCK_LINK));
-    bzero((uchar*) keycache->hash_root,
-          keycache->hash_entries * sizeof(HASH_LINK*));
-    bzero((uchar*) keycache->hash_link_root,
-	  keycache->hash_links * sizeof(HASH_LINK));
+    memset((uchar*) keycache->block_root, 0,
+           keycache->disk_blocks * sizeof(BLOCK_LINK));
+    memset((uchar*) keycache->hash_root, 0,
+           keycache->hash_entries * sizeof(HASH_LINK*));
+    memset((uchar*) keycache->hash_link_root, 0,
+           keycache->hash_links * sizeof(HASH_LINK));
     keycache->hash_links_used= 0;
     keycache->free_hash_list= NULL;
     keycache->blocks_used= keycache->blocks_changed= 0;
@@ -383,10 +383,10 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
 
     keycache->waiting_for_hash_link.last_thread= NULL;
     keycache->waiting_for_block.last_thread= NULL;
-    bzero((uchar*) keycache->changed_blocks,
-	  sizeof(keycache->changed_blocks[0]) * CHANGED_BLOCKS_HASH);
-    bzero((uchar*) keycache->file_blocks,
-	  sizeof(keycache->file_blocks[0]) * CHANGED_BLOCKS_HASH);
+    memset((uchar*) keycache->changed_blocks, 0,
+           sizeof(keycache->changed_blocks[0]) * CHANGED_BLOCKS_HASH);
+    memset((uchar*) keycache->file_blocks, 0,
+           sizeof(keycache->file_blocks[0]) * CHANGED_BLOCKS_HASH);
   }
   else
   {
@@ -3478,11 +3478,11 @@ restart:
             if (!(block->status & (BLOCK_IN_EVICTION | BLOCK_IN_SWITCH |
                                    BLOCK_REASSIGNED)))
             {
-              struct st_hash_link *next_hash_link;
-              my_off_t            next_diskpos;
-              File                next_file;
-              uint                next_status;
-              uint                hash_requests;
+              struct st_hash_link *next_hash_link= NULL;
+              my_off_t            next_diskpos= 0;
+              File                next_file= 0;
+              uint                next_status= 0;
+              uint                hash_requests= 0;
 
               total_found++;
               found++;

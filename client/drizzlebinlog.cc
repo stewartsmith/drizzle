@@ -30,17 +30,17 @@
 
 #define MYSQL_CLIENT
 #undef MYSQL_SERVER
-#include <my_time.h>
-#include <my_global.h>
-#include <my_sys.h>
-#include <m_string.h>
-#include <drizzle.h>
-#include <errmsg.h>
-#include <my_getopt.h>
+#include <libdrizzle/my_time.h>
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
+#include <libdrizzle/drizzle.h>
+#include <libdrizzle/errmsg.h>
+#include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
-#include "mysql_priv.h"
-#include "log_event.h"
-#include "sql_common.h"
+#include <drizzled/mysql_priv.h>
+#include <drizzled/log_event.h>
+#include <libdrizzle/sql_common.h>
 
 
 enum options_drizzlebinlog
@@ -71,8 +71,8 @@ static FILE *result_file;
 
 static const char *load_default_groups[]= { "drizzlebinlog","client",0 };
 
-static void error(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
-static void warning(const char *format, ...) ATTRIBUTE_FORMAT(printf, 1, 2);
+static void error(const char *format, ...) __attribute__((format(printf, 1, 2)));
+static void warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
 
 static bool one_database=0, to_last_remote_log= 0, disable_log_bin= 0;
 static bool opt_hexdump= 0;
@@ -223,7 +223,7 @@ public:
       {
         my_free(ptr->fname, MYF(MY_WME));
         delete ptr->event;
-        bzero((char *)ptr, sizeof(File_name_record));
+        memset((char *)ptr, 0, sizeof(File_name_record));
       }
     }
 
@@ -254,7 +254,7 @@ public:
         return 0;
       ptr= dynamic_element(&file_names, file_id, File_name_record*);
       if ((res= ptr->event))
-        bzero((char *)ptr, sizeof(File_name_record));
+        memset((char *)ptr, 0, sizeof(File_name_record));
       return res;
     }
 
@@ -284,7 +284,7 @@ public:
       if (!ptr->event)
       {
         res= ptr->fname;
-        bzero((char *)ptr, sizeof(File_name_record));
+        memset((char *)ptr, 0, sizeof(File_name_record));
       }
       return res;
     }
@@ -1175,12 +1175,12 @@ the Drizzle command line client\n\n");
 static my_time_t convert_str_to_timestamp(const char* str)
 {
   int was_cut;
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   long dummy_my_timezone;
   bool dummy_in_dst_time_gap;
   /* We require a total specification (date AND time) */
   if (str_to_datetime(str, strlen(str), &l_time, 0, &was_cut) !=
-      MYSQL_TIMESTAMP_DATETIME || was_cut)
+      DRIZZLE_TIMESTAMP_DATETIME || was_cut)
   {
     error("Incorrect date and time argument: %s", str);
     exit(1);
@@ -1990,5 +1990,5 @@ int main(int argc, char** argv)
   the server
 */
 
-#include "log_event.cc"
+#include <drizzled/log_event.cc>
 

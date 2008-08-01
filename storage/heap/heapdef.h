@@ -15,11 +15,11 @@
 
 /* This file is included in all heap-files */
 
-#include <my_base.h>			/* This includes global */
+#include <drizzled/base.h>		/* This includes global */
 C_MODE_START
-#include <my_pthread.h>
+#include <mysys/my_pthread.h>
 #include "heap.h"			/* Structs & some defines */
-#include "my_tree.h"
+#include <mysys/my_tree.h>
 
 /*
   When allocating keys /rows in the internal block structure, do it

@@ -1470,7 +1470,7 @@ INSERT INTO t3 VALUES
 (231063394),(231063424),(231063454),(231063514),(231063574),(231063664);
 CREATE TABLE t4 (
 carrier char(2) NOT NULL default '' PRIMARY KEY,
-id int(11) default NULL,
+id int default NULL,
 INDEX id(id)
 );
 INSERT INTO t4 VALUES
@@ -1502,7 +1502,7 @@ LEFT JOIN
 ON t4.carrier = t1.carrier;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	SIMPLE	t1	ALL	PRIMARY	NULL	NULL	NULL	36	
-1	SIMPLE	t4	eq_ref	PRIMARY,id	PRIMARY	2	test.t1.carrier	1	
+1	SIMPLE	t4	eq_ref	PRIMARY,id	PRIMARY	4	test.t1.carrier	1	
 1	SIMPLE	t5	ref	carrier_id	carrier_id	5	test.t4.id	1	Using index
 1	SIMPLE	t2	ref	package_id	package_id	5	test.t1.id	1	Using index
 1	SIMPLE	t3	ref	package_id	package_id	5	test.t1.id	1	Using index

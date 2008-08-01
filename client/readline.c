@@ -15,9 +15,9 @@
 
 /* readline for batch mode */
 
-#include <my_global.h>
-#include <my_sys.h>
-#include <m_string.h>
+#include "client_priv.h"
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
 #include "my_readline.h"
 
 static bool init_line_buffer(LINE_BUFFER *buffer,File file,ulong size,
@@ -161,7 +161,7 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
   /* Shift stuff down. */
   if (buffer->start_of_line != buffer->buffer)
   {
-    bmove(buffer->buffer,buffer->start_of_line,(uint) bufbytes);
+    memcpy(buffer->buffer, buffer->start_of_line, (uint) bufbytes);
     buffer->end=buffer->buffer+bufbytes;
   }
 

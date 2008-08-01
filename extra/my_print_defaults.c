@@ -20,10 +20,10 @@
 **  Written by Monty
 */
 
-#include <my_global.h>
-#include <my_sys.h>
-#include <m_string.h>
-#include <my_getopt.h>
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
+#include <mysys/my_getopt.h>
 
 
 const char *config_file="my";			/* Default config file */

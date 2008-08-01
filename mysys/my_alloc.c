@@ -15,9 +15,8 @@
 
 /* Routines to handle mallocing of results which will be freed the same time */
 
-#include <my_global.h>
+#include <mystrings/m_string.h>
 #include <my_sys.h>
-#include <m_string.h>
 #undef EXTRA_DEBUG
 #define EXTRA_DEBUG
 
@@ -313,7 +312,7 @@ static inline void mark_blocks_free(MEM_ROOT* root)
 
   NOTES
     One can call this function either with root block initialised with
-    init_alloc_root() or with a bzero()-ed block.
+    init_alloc_root() or with a zero:ed block.
     It's also safe to call this multiple times with the same mem_root.
 */
 

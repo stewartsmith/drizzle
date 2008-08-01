@@ -771,12 +771,12 @@ static void uf_zerofill_skip_zero(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
 				   uchar *to, uchar *end)
 {
   if (get_bit(bit_buff))
-    bzero((char*) to,(uint) (end-to));
+    memset((char*) to, 0, (uint) (end-to));
   else
   {
     end-=rec->space_length_bits;
     decode_bytes(rec,bit_buff,to,end);
-    bzero((char*) end,rec->space_length_bits);
+    memset((char*) end, 0, rec->space_length_bits);
   }
 }
 
@@ -784,7 +784,7 @@ static void uf_skip_zero(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *to,
 			  uchar *end)
 {
   if (get_bit(bit_buff))
-    bzero((char*) to,(uint) (end-to));
+    memset((char*) to, 0, (uint) (end-to));
   else
     decode_bytes(rec,bit_buff,to,end);
 }
@@ -793,7 +793,7 @@ static void uf_space_normal(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *to,
 			    uchar *end)
 {
   if (get_bit(bit_buff))
-    bfill((uchar*) to,(end-to),' ');
+    memset((uchar*) to, ' ', (end-to));
   else
     decode_bytes(rec,bit_buff,to,end);
 }
@@ -803,7 +803,7 @@ static void uf_space_endspace_selected(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
 {
   uint spaces;
   if (get_bit(bit_buff))
-    bfill((uchar*) to,(end-to),' ');
+    memset((uchar*) to, ' ', (end-to));
   else
   {
     if (get_bit(bit_buff))
@@ -815,7 +815,7 @@ static void uf_space_endspace_selected(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
       }
       if (to+spaces != end)
 	decode_bytes(rec,bit_buff,to,end-spaces);
-      bfill((uchar*) end-spaces,spaces,' ');
+      memset((uchar*) end-spaces, ' ', spaces);
     }
     else
       decode_bytes(rec,bit_buff,to,end);
@@ -835,7 +835,7 @@ static void uf_endspace_selected(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
     }
     if (to+spaces != end)
       decode_bytes(rec,bit_buff,to,end-spaces);
-    bfill((uchar*) end-spaces,spaces,' ');
+    memset((uchar*) end-spaces, ' ', spaces);
   }
   else
     decode_bytes(rec,bit_buff,to,end);
@@ -846,7 +846,7 @@ static void uf_space_endspace(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *t
 {
   uint spaces;
   if (get_bit(bit_buff))
-    bfill((uchar*) to,(end-to),' ');
+    memset((uchar*) to, ' ', (end-to));
   else
   {
     if ((spaces=get_bits(bit_buff,rec->space_length_bits))+to > end)
@@ -856,7 +856,7 @@ static void uf_space_endspace(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *t
     }
     if (to+spaces != end)
       decode_bytes(rec,bit_buff,to,end-spaces);
-    bfill((uchar*) end-spaces,spaces,' ');
+    memset((uchar*) end-spaces, ' ', spaces);
   }
 }
 
@@ -871,7 +871,7 @@ static void uf_endspace(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *to,
   }
   if (to+spaces != end)
     decode_bytes(rec,bit_buff,to,end-spaces);
-  bfill((uchar*) end-spaces,spaces,' ');
+  memset((uchar*) end-spaces, ' ', spaces);
 }
 
 static void uf_space_prespace_selected(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
@@ -879,7 +879,7 @@ static void uf_space_prespace_selected(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
 {
   uint spaces;
   if (get_bit(bit_buff))
-    bfill((uchar*) to,(end-to),' ');
+    memset((uchar*) to, ' ', (end-to));
   else
   {
     if (get_bit(bit_buff))
@@ -889,7 +889,7 @@ static void uf_space_prespace_selected(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
 	bit_buff->error=1;
 	return;
       }
-      bfill((uchar*) to,spaces,' ');
+      memset((uchar*) to, ' ', spaces);
       if (to+spaces != end)
 	decode_bytes(rec,bit_buff,to+spaces,end);
     }
@@ -910,7 +910,7 @@ static void uf_prespace_selected(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
       bit_buff->error=1;
       return;
     }
-    bfill((uchar*) to,spaces,' ');
+    memset((uchar*) to, ' ', spaces);
     if (to+spaces != end)
       decode_bytes(rec,bit_buff,to+spaces,end);
   }
@@ -924,7 +924,7 @@ static void uf_space_prespace(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *t
 {
   uint spaces;
   if (get_bit(bit_buff))
-    bfill((uchar*) to,(end-to),' ');
+    memset((uchar*) to, ' ', (end-to));
   else
   {
     if ((spaces=get_bits(bit_buff,rec->space_length_bits))+to > end)
@@ -932,7 +932,7 @@ static void uf_space_prespace(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *t
       bit_buff->error=1;
       return;
     }
-    bfill((uchar*) to,spaces,' ');
+    memset((uchar*) to, ' ', spaces);
     if (to+spaces != end)
       decode_bytes(rec,bit_buff,to+spaces,end);
   }
@@ -947,7 +947,7 @@ static void uf_prespace(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *to,
     bit_buff->error=1;
     return;
   }
-  bfill((uchar*) to,spaces,' ');
+  memset((uchar*) to, ' ', spaces);
   if (to+spaces != end)
     decode_bytes(rec,bit_buff,to+spaces,end);
 }
@@ -957,7 +957,7 @@ static void uf_zerofill_normal(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff, uchar *
 {
   end-=rec->space_length_bits;
   decode_bytes(rec,bit_buff,(uchar*) to,end);
-  bzero((char*) end,rec->space_length_bits);
+  memset((char*) end, 0, rec->space_length_bits);
 }
 
 static void uf_constant(MI_COLUMNDEF *rec,
@@ -983,14 +983,14 @@ static void uf_zero(MI_COLUMNDEF *rec __attribute__((unused)),
 		    MI_BIT_BUFF *bit_buff __attribute__((unused)),
 		    uchar *to, uchar *end)
 {
-  bzero((char*) to,(uint) (end-to));
+  memset((char*) to, 0, (uint) (end-to));
 }
 
 static void uf_blob(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
 		    uchar *to, uchar *end)
 {
   if (get_bit(bit_buff))
-    bzero((uchar*) to,(end-to));
+    memset((uchar*) to, 0, (end-to));
   else
   {
     ulong length=get_bits(bit_buff,rec->space_length_bits);
@@ -998,13 +998,13 @@ static void uf_blob(MI_COLUMNDEF *rec, MI_BIT_BUFF *bit_buff,
     if (bit_buff->blob_pos+length > bit_buff->blob_end)
     {
       bit_buff->error=1;
-      bzero((uchar*) to,(end-to));
+      memset((uchar*) to, 0, (end-to));
       return;
     }
     decode_bytes(rec,bit_buff,bit_buff->blob_pos,bit_buff->blob_pos+length);
     _my_store_blob_length((uchar*) to,pack_length,length);
-    memcpy_fixed((char*) to+pack_length,(char*) &bit_buff->blob_pos,
-		 sizeof(char*));
+    memcpy((char*) to+pack_length,(char*) &bit_buff->blob_pos,
+           sizeof(char*));
     bit_buff->blob_pos+=length;
   }
 }

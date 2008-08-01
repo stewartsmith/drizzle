@@ -25,7 +25,7 @@
 */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 	/* Store wildcard-string in a easyer format */
 

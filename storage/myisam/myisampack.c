@@ -20,13 +20,13 @@
 #endif
 
 #include "myisamdef.h"
-#include <queues.h>
-#include <my_tree.h>
-#include "mysys_err.h"
+#include <mysys/queues.h>
+#include <mysys/my_tree.h>
+#include <mysys/mysys_err.h>
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__			/* Skip warnings in getopt.h */
 #endif
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 #include <assert.h>
 
 #if SIZEOF_LONG_LONG > 4
@@ -618,7 +618,7 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
   if (!error && !test_only)
   {
     uchar buff[MEMMAP_EXTRA_MARGIN];		/* End marginal for memmap */
-    bzero(buff,sizeof(buff));
+    memset(buff, 0, sizeof(buff));
     error=my_write(file_buffer.file,buff,sizeof(buff),
 		   MYF(MY_WME | MY_NABP | MY_WAIT_IF_FULL)) != 0;
   }
@@ -978,7 +978,7 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
 	{
 	  uint field_length=count->field_length -portable_sizeof_char_ptr;
 	  ulong blob_length= _mi_calc_blob_length(field_length, start_pos);
-	  memcpy_fixed((char*) &pos,  start_pos+field_length,sizeof(char*));
+	  memcpy((char*) &pos,  start_pos+field_length,sizeof(char*));
 	  end_pos=pos+blob_length;
 	  tot_blob_length+=blob_length;
 	  set_if_bigger(count->max_length,blob_length);
@@ -1113,7 +1113,7 @@ static void check_counts(HUFF_COUNTS *huff_counts, uint trees,
   uint space_fields,fill_zero_fields,field_count[(int) FIELD_enum_val_count];
   my_off_t old_length,new_length,length;
 
-  bzero((uchar*) field_count,sizeof(field_count));
+  memset((uchar*) field_count, 0, sizeof(field_count));
   space_fields=fill_zero_fields=0;
 
   for (; trees-- ; huff_counts++)
@@ -1796,13 +1796,13 @@ static uint join_same_trees(HUFF_COUNTS *huff_counts, uint trees)
 	      i->tree->tree_pack_length+j->tree->tree_pack_length+
 	      ALLOWED_JOIN_DIFF)
 	  {
-	    memcpy_fixed((uchar*) i->counts,(uchar*) count.counts,
-			 sizeof(count.counts[0])*256);
+	    memcpy((uchar*) i->counts,(uchar*) count.counts,
+                   sizeof(count.counts[0])*256);
 	    my_free((uchar*) j->tree->element_buffer,MYF(0));
 	    j->tree->element_buffer=0;
 	    j->tree=i->tree;
-	    bmove((uchar*) i->counts,(uchar*) count.counts,
-		  sizeof(count.counts[0])*256);
+	    memcpy((uchar*) i->counts,(uchar*) count.counts,
+                   sizeof(count.counts[0])*256);
 	    if (make_huff_tree(i->tree,i))
 	      return (uint) -1;
 	  }
@@ -1944,8 +1944,8 @@ static int write_header(PACK_MRG_INFO *mrg,uint head_length,uint trees,
 {
   uchar *buff= (uchar*) file_buffer.pos;
 
-  bzero(buff,HEAD_LENGTH);
-  memcpy_fixed(buff,myisam_pack_file_magic,4);
+  memset(buff, 0, HEAD_LENGTH);
+  memcpy(buff,myisam_pack_file_magic,4);
   int4store(buff+4,head_length);
   int4store(buff+8, mrg->min_pack_length);
   int4store(buff+12,mrg->max_pack_length);
@@ -2476,8 +2476,7 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
 	    write_bits(0,1);
             /* Write the blob length. */
 	    write_bits(blob_length,count->length_bits);
-	    memcpy_fixed(&blob,end_pos-portable_sizeof_char_ptr,
-			 sizeof(char*));
+	    memcpy(&blob,end_pos-portable_sizeof_char_ptr, sizeof(char*));
 	    blob_end=blob+blob_length;
             /* Encode the blob bytes. */
 	    for ( ; blob < blob_end ; blob++)
@@ -2532,7 +2531,7 @@ static int compress_isam_file(PACK_MRG_INFO *mrg, HUFF_COUNTS *huff_counts)
       /* Correct file buffer if the header was smaller */
       if (pack_length != max_pack_length)
       {
-	bmove(record_pos+pack_length,record_pos+max_pack_length,length);
+	memcpy(record_pos+pack_length,record_pos+max_pack_length,length);
 	file_buffer.pos-= (max_pack_length-pack_length);
       }
       if (length < (ulong) min_record_length)

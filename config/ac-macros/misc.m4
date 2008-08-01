@@ -89,7 +89,7 @@ CXXFLAGS="$ac_save_CXXFLAGS"
 ])
 #---END:
 
-AC_DEFUN([MYSQL_TIMESPEC_TS],
+AC_DEFUN([DRIZZLE_TIMESPEC_TS],
 [AC_CACHE_CHECK([if struct timespec has a ts_sec member], mysql_cv_timespec_ts,
 [AC_TRY_COMPILE([#include <pthread.h>
 #ifdef __cplusplus

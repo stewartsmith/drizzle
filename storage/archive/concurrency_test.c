@@ -2,9 +2,8 @@
   Just a test application for threads.
   */
 #include "azio.h"
-#include <drizzle.h>
-#include <my_getopt.h>
-#include <drizzle_version.h>
+#include <libdrizzle/drizzle.h>
+#include <mysys/my_getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -14,7 +13,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 #include <pthread.h>
-#include <strings.h>
+#include <string.h>                             /* Pull in memset() */
 #ifndef __WIN__
 #include <sys/wait.h>
 #endif
@@ -138,7 +137,7 @@ void scheduler(az_method use_aio)
   pthread_mutex_unlock(&sleeper_mutex);
 
   context= (thread_context_st *)malloc(sizeof(thread_context_st) * DEFAULT_CONCURRENCY);
-  bzero(context, sizeof(thread_context_st) * DEFAULT_CONCURRENCY);
+  memset(context, 0, sizeof(thread_context_st) * DEFAULT_CONCURRENCY);
 
   if (!context)
   {
@@ -195,7 +194,7 @@ void scheduler(az_method use_aio)
   {
     struct timespec abstime;
 
-    bzero(&abstime, sizeof(struct timespec));
+    memset(&abstime, 0, sizeof(struct timespec));
     abstime.tv_sec= 1;
 
     pthread_cond_timedwait(&count_threshhold, &counter_mutex, &abstime);

@@ -15,10 +15,10 @@
 
 #include "mysys_priv.h"
 #include "mysys_err.h"
-#include <m_ctype.h>
-#include <m_string.h>
+#include <mystrings/m_ctype.h>
+#include <mystrings/m_string.h>
 #include <my_dir.h>
-#include <my_xml.h>
+#include <mystrings/my_xml.h>
 
 
 /*
@@ -31,7 +31,7 @@
     - Setting server default character set
 */
 
-bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2)
+bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2)
 {
   return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
 }
@@ -113,7 +113,6 @@ static bool init_state_maps(CHARSET_INFO *cs)
   /* Special handling of hex and binary strings */
   state_map[(uchar)'x']= state_map[(uchar)'X']= (uchar) MY_LEX_IDENT_OR_HEX;
   state_map[(uchar)'b']= state_map[(uchar)'B']= (uchar) MY_LEX_IDENT_OR_BIN;
-  state_map[(uchar)'n']= state_map[(uchar)'N']= (uchar) MY_LEX_IDENT_OR_NCHAR;
   return 0;
 }
 
@@ -225,7 +224,7 @@ static int add_collation(CHARSET_INFO *cs)
       if (!(all_charsets[cs->number]=
          (CHARSET_INFO*) my_once_alloc(sizeof(CHARSET_INFO),MYF(0))))
         return MY_XML_ERROR;
-      bzero((void*)all_charsets[cs->number],sizeof(CHARSET_INFO));
+      memset((void*)all_charsets[cs->number], 0, sizeof(CHARSET_INFO));
     }
     
     if (cs->primary_number == cs->number)
@@ -441,7 +440,7 @@ static bool init_available_charsets(myf myflags)
     pthread_mutex_lock(&THR_LOCK_charset);
     if (!charset_initialized)
     {
-      bzero(&all_charsets,sizeof(all_charsets));
+      memset(&all_charsets, 0, sizeof(all_charsets));
       init_compiled_charsets(myflags);
       
       /* Copy compiled charsets */
@@ -676,7 +675,7 @@ bool resolve_collation(const char *cl_name,
   Escape string with backslashes (\)
 
   SYNOPSIS
-    escape_string_for_mysql()
+    escape_string_for_drizzle()
     charset_info        Charset of the strings
     to                  Buffer for escaped string
     to_length           Length of destination buffer, or 0
@@ -697,9 +696,9 @@ bool resolve_collation(const char *cl_name,
     #           The length of the escaped string
 */
 
-size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
-                               char *to, size_t to_length,
-                               const char *from, size_t length)
+size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
+                                 char *to, size_t to_length,
+                                 const char *from, size_t length)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
@@ -816,7 +815,7 @@ CHARSET_INFO *fs_character_set()
   Escape apostrophes by doubling them up
 
   SYNOPSIS
-    escape_quotes_for_mysql()
+    escape_quotes_for_drizzle()
     charset_info        Charset of the strings
     to                  Buffer for escaped string
     to_length           Length of destination buffer, or 0
@@ -837,9 +836,9 @@ CHARSET_INFO *fs_character_set()
     >=0         The length of the escaped string
 */
 
-size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
-                               char *to, size_t to_length,
-                               const char *from, size_t length)
+size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
+                                 char *to, size_t to_length,
+                                 const char *from, size_t length)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);

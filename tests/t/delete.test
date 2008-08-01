@@ -5,7 +5,7 @@
 --disable_warnings
 drop table if exists t1,t2,t3,t11,t12;
 --enable_warnings
-CREATE TABLE t1 (a tinyint(3), b tinyint(5));
+CREATE TABLE t1 (a tinyint, b tinyint);
 INSERT INTO t1 VALUES (1,1);
 INSERT LOW_PRIORITY INTO t1 VALUES (1,2);
 INSERT INTO t1 VALUES (1,3);
@@ -61,8 +61,8 @@ delete from t1 where a=27;
 drop table t1;
 
 CREATE TABLE `t1` (
-  `i` int(10) NOT NULL default '0',
-  `i2` int(10) NOT NULL default '0',
+  `i` int NOT NULL default '0',
+  `i2` int NOT NULL default '0',
   PRIMARY KEY  (`i`)
 );
 -- error 1054
@@ -177,7 +177,7 @@ drop table t1;
 CREATE TABLE t1 (
   `date` date ,
   `time` time ,
-  `seq` int(10) unsigned NOT NULL auto_increment,
+  `seq` int unsigned NOT NULL auto_increment,
   PRIMARY KEY  (`seq`),
   KEY `seq` (`seq`),
   KEY `time` (`time`),

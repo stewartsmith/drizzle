@@ -73,7 +73,7 @@ multiple read locks.
 #include "mysys_priv.h"
 
 #include "thr_lock.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <errno.h>
 
 bool thr_lock_inited=0;
@@ -299,7 +299,7 @@ static void check_locks(THR_LOCK *lock, const char *where,
 
 void thr_lock_init(THR_LOCK *lock)
 {
-  bzero((char*) lock,sizeof(*lock));
+  memset((char*) lock, 0, sizeof(*lock));
   VOID(pthread_mutex_init(&lock->mutex,MY_MUTEX_INIT_FAST));
   lock->read.last= &lock->read.data;
   lock->read_wait.last= &lock->read_wait.data;

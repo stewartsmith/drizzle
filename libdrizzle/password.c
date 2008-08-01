@@ -58,10 +58,10 @@
 
 *****************************************************************************/
 
-#include <my_global.h>
-#include <my_sys.h>
-#include <m_string.h>
-#include <sha1.h>
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
+#include <mysys/sha1.h>
 #include "drizzle.h"
 
 /************ MySQL 3.23-4.0 authentication routines: untouched ***********/
@@ -78,7 +78,7 @@
 void randominit(struct rand_struct *rand_st, uint32_t seed1, uint32_t seed2)
 {                                               /* For mysql 3.21.# */
 #ifdef HAVE_purify
-  bzero((char*) rand_st,sizeof(*rand_st));      /* Avoid UMC varnings */
+  memset((char*) rand_st, 0, sizeof(*rand_st));      /* Avoid UMC varnings */
 #endif
   rand_st->max_value= 0x3FFFFFFFL;
   rand_st->max_value_dbl=(double) rand_st->max_value;

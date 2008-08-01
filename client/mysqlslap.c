@@ -76,8 +76,6 @@ TODO:
 #define DEFAULT_BLOB_SIZE 1024
 
 #include "client_priv.h"
-#include <mysqld_error.h>
-#include <my_dir.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <sys/types.h>
@@ -438,7 +436,7 @@ void concurrency_loop(DRIZZLE *drizzle, uint current, option_string *eptr)
   head_sptr= (stats *)my_malloc(sizeof(stats) * iterations,
                                 MYF(MY_ZEROFILL|MY_FAE|MY_WME));
 
-  bzero(&conclusion, sizeof(conclusions));
+  memset(&conclusion, 0, sizeof(conclusions));
 
   if (auto_actual_queries)
     client_limit= auto_actual_queries;
@@ -830,7 +828,7 @@ build_table_string(void)
     {
       if (num_int_cols_index)
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32), INDEX(intcol%d)",
+        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT, INDEX(intcol%d)",
                      col_count, col_count) > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");
@@ -839,7 +837,7 @@ build_table_string(void)
       }
       else
       {
-        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT(32) ", col_count)
+        if (snprintf(buf, HUGE_STRING_LENGTH, "intcol%d INT ", col_count)
             > HUGE_STRING_LENGTH)
         {
           fprintf(stderr, "Memory Allocation error in create table\n");
@@ -1469,7 +1467,7 @@ get_options(int *argc,char ***argv)
     if (create_string && !stat(create_string, &sbuf))
     {
       File data_file;
-      if (!MY_S_ISREG(sbuf.st_mode))
+      if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: Create file was not a regular file\n",
                 my_progname);
@@ -1506,7 +1504,7 @@ get_options(int *argc,char ***argv)
     if (user_supplied_query && !stat(user_supplied_query, &sbuf))
     {
       File data_file;
-      if (!MY_S_ISREG(sbuf.st_mode))
+      if (!S_ISREG(sbuf.st_mode))
       {
         fprintf(stderr,"%s: User query supplied file was not a regular file\n",
                 my_progname);
@@ -1538,7 +1536,7 @@ get_options(int *argc,char ***argv)
       && !stat(user_supplied_pre_statements, &sbuf))
   {
     File data_file;
-    if (!MY_S_ISREG(sbuf.st_mode))
+    if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
               my_progname);
@@ -1570,7 +1568,7 @@ get_options(int *argc,char ***argv)
       && !stat(user_supplied_post_statements, &sbuf))
   {
     File data_file;
-    if (!MY_S_ISREG(sbuf.st_mode))
+    if (!S_ISREG(sbuf.st_mode))
     {
       fprintf(stderr,"%s: User query supplied file was not a regular file\n",
               my_progname);
@@ -2178,7 +2176,7 @@ parse_option(const char *origin, option_string **stmt, char delm)
     char buffer[HUGE_STRING_LENGTH];
     char *buffer_ptr;
 
-    bzero(buffer, HUGE_STRING_LENGTH);
+    memset(buffer, 0, HUGE_STRING_LENGTH);
 
     string= strchr(begin_ptr, delm);
 
@@ -2334,7 +2332,7 @@ print_conclusions_csv(conclusions *con)
   char label_buffer[HUGE_STRING_LENGTH];
   size_t string_len;
 
-  bzero(label_buffer, HUGE_STRING_LENGTH);
+  memset(label_buffer, 0, HUGE_STRING_LENGTH);
 
   if (opt_label)
   {

@@ -20,7 +20,7 @@
 #endif
 
 #include "myisamdef.h"
-#include <my_tree.h>
+#include <mysys/my_tree.h>
 #include <stdarg.h>
 #ifdef HAVE_GETRUSAGE
 #include <sys/resource.h>
@@ -321,7 +321,7 @@ static int examine_log(char * file_name, char **table_names)
   }
 
   init_io_cache(&cache,file,0,READ_CACHE,start_offset,0,MYF(0));
-  bzero((uchar*) com_count,sizeof(com_count));
+  memset((uchar*) com_count, 0, sizeof(com_count));
   init_tree(&tree,0,0,sizeof(file_info),(qsort_cmp2) file_info_compare,1,
 	    (tree_element_free) file_info_free, NULL);
   VOID(init_key_cache(dflt_key_cache,KEY_CACHE_BLOCK_SIZE,KEY_CACHE_SIZE,
@@ -613,7 +613,7 @@ static int examine_log(char * file_name, char **table_names)
     case MI_LOG_LOCK:
       if (my_b_read(&cache,(uchar*) head,sizeof(lock_command)))
 	goto err;
-      memcpy_fixed(&lock_command,head,sizeof(lock_command));
+      memcpy(&lock_command,head,sizeof(lock_command));
       if (verbose && !record_pos_file &&
 	  (!table_names[0] || (curr_file_info && curr_file_info->used)))
 	printf_log("%s: %s(%d) -> %d\n",FILENAME(curr_file_info),
@@ -720,7 +720,7 @@ static void fix_blob_pointers(MI_INFO *info, uchar *record)
        blob != end ;
        blob++)
   {
-    memcpy_fixed(record+blob->offset+blob->pack_length,&pos,sizeof(char*));
+    memcpy(record+blob->offset+blob->pack_length,&pos,sizeof(char*));
     pos+=_mi_calc_blob_length(blob->pack_length,record+blob->offset);
   }
 }

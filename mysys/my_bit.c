@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
+#include "mysys_priv.h"
 
 #ifndef HAVE_INLINE
 /* the following will cause all inline functions to be instantiated */
@@ -22,7 +22,7 @@
 #define STATIC_INLINE extern
 #endif
 
-#include <my_bit.h>
+#include <mysys/my_bit.h>
 
 const char _my_bits_nbits[256] = {
   0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,

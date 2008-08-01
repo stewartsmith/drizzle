@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 /*
   Formats a filename with possible replace of directory of extension
@@ -84,7 +84,7 @@ char * fn_format(char * to, const char *name, const char *dir,
   {
     if (to == startpos)
     {
-      bmove(buff,(uchar*) name,length);		/* Save name for last copy */
+      memcpy(buff, (uchar*) name, length); /* Save name for last copy */
       name=buff;
     }
     pos=strmake(strmov(to,dev),name,length);

@@ -16,7 +16,7 @@
 /* The hash functions used for saveing keys */
 
 #include "heapdef.h"
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 
 
 
@@ -564,7 +564,7 @@ int hp_rec_key_cmp(HP_KEYDEF *keydef, const uchar *rec1, const uchar *rec2,
     }
     else
     {
-      if (bcmp(rec1+seg->start,rec2+seg->start,seg->length))
+      if (memcmp(rec1+seg->start,rec2+seg->start,seg->length))
 	return 1;
     }
   }
@@ -647,7 +647,7 @@ int hp_key_cmp(HP_KEYDEF *keydef, const uchar *rec, const uchar *key)
     }
     else
     {
-      if (bcmp(rec+seg->start,key,seg->length))
+      if (memcmp(rec+seg->start,key,seg->length))
 	return 1;
     }
   }
@@ -716,7 +716,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, uchar *key,
 	if (isnan(nr))
 	{
 	  /* Replace NAN with zero */
- 	  bzero(key, length);
+ 	  memset(key, 0, length);
 	  key+= length;
 	  continue;
 	}
@@ -727,7 +727,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, uchar *key,
 	float8get(nr, pos);
 	if (isnan(nr))
 	{
- 	  bzero(key, length);
+ 	  memset(key, 0, length);
 	  key+= length;
 	  continue;
 	}
