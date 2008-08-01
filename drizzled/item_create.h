@@ -15,8 +15,8 @@
 
 /* Functions to create an item. Used by sql/sql_yacc.yy */
 
-#ifndef ITEM_CREATE_H
-#define ITEM_CREATE_H
+#ifndef DRIZZLE_SERVER_ITEM_CREATE_H
+#define DRIZZLE_SERVER_ITEM_CREATE_H
 
 /**
   Public function builder interface.
@@ -61,7 +61,6 @@ protected:
   /** Destructor */
   virtual ~Create_func() {}
 };
-
 
 /**
   Function builder for qualified functions.
@@ -163,5 +162,8 @@ Item *
 create_func_cast(THD *thd, Item *a, Cast_target cast_type,
                  const char *len, const char *dec,
                  CHARSET_INFO *cs);
-#endif
 
+int item_create_init();
+void item_create_cleanup();
+
+#endif /* DRIZZLE_SERVER_ITEM_CREATE_H */

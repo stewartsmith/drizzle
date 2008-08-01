@@ -23,8 +23,8 @@
   except the part which must be in the server and in the client.
 */
 
-#ifndef MYSQL_PRIV_H
-#define MYSQL_PRIV_H
+#ifndef DRIZZLE_SERVER_MYSQL_PRIV_H
+#define DRIZZLE_SERVER_MYSQL_PRIV_H
 
 #ifndef MYSQL_CLIENT
 
@@ -37,9 +37,9 @@
 #include <signal.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/error.h>
-#include <drizzled/base.h>			/* Needed by field.h */
+#include <drizzled/base.h>			                /* Needed by field.h */
 #include <mysys/queues.h>
-#include "sql_bitmap.h"
+#include <drizzled/sql_bitmap.h>                /* Custom bitmap API */
 #include "sql_array.h"
 #include "sql_plugin.h"
 #include "scheduler.h"
@@ -1726,34 +1726,7 @@ Item * all_any_subquery_creator(Item *left_expr,
 				bool all,
 				SELECT_LEX *select_lex);
 
-/**
-  clean/setup table fields and map.
-
-  @param table        TABLE structure pointer (which should be setup)
-  @param table_list   TABLE_LIST structure pointer (owner of TABLE)
-  @param tablenr     table number
-*/
-
-
-inline void setup_table_map(TABLE *table, TABLE_LIST *table_list, uint tablenr)
-{
-  table->used_fields= 0;
-  table->const_table= 0;
-  table->null_row= 0;
-  table->status= STATUS_NO_RECORD;
-  table->maybe_null= table_list->outer_join;
-  TABLE_LIST *embedding= table_list->embedding;
-  while (!table->maybe_null && embedding)
-  {
-    table->maybe_null= embedding->outer_join;
-    embedding= embedding->embedding;
-  }
-  table->tablenr= tablenr;
-  table->map= (table_map) 1 << tablenr;
-  table->force_index= table_list->force_index;
-  table->covering_keys= table->s->keys_for_keyread;
-  table->merge_keys.clear_all();
-}
+#include <drizzled/item_create.h>                 /* API for factory creation of Item class instances */
 
 
 /**
@@ -1840,30 +1813,8 @@ bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
 #define IS_FILES_CHECKSUM            35
 #define IS_FILES_STATUS              36
 #define IS_FILES_EXTRA               37
-void init_fill_schema_files_row(TABLE* table);
-bool schema_table_store_record(THD *thd, TABLE *table);
-
-/* sql/item_create.cc */
-int item_create_init();
-void item_create_cleanup();
-
-inline void lex_string_set(LEX_STRING *lex_str, const char *c_str)
-{
-  lex_str->str= (char *) c_str;
-  lex_str->length= strlen(c_str);
-}
-
-bool load_charset(MEM_ROOT *mem_root,
-                  Field *field,
-                  CHARSET_INFO *dflt_cs,
-                  CHARSET_INFO **cs);
-
-bool load_collation(MEM_ROOT *mem_root,
-                    Field *field,
-                    CHARSET_INFO *dflt_cl,
-                    CHARSET_INFO **cl);
 
 #endif /* MYSQL_SERVER */
 #endif /* MYSQL_CLIENT */
 
-#endif /* MYSQL_PRIV_H */
+#endif /* DRIZZLE_SERVER_MYSQL_PRIV_H */
