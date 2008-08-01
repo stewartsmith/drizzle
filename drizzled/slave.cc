@@ -37,6 +37,7 @@
 #include <libdrizzle/sql_common.h>
 #include <libdrizzle/errmsg.h>
 #include <mysys/mysys_err.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #ifdef HAVE_REPLICATION
 

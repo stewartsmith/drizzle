@@ -36,6 +36,7 @@
 C_MODE_START
 #include <mysys/my_static.h>			// For soundex_map
 C_MODE_END
+#include <drizzled/drizzled_error_messages.h>
 
 String my_empty_string("",default_charset_info);
 

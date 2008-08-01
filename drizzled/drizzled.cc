@@ -25,6 +25,7 @@
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #include <storage/myisam/ha_myisam.h>
 
@@ -382,7 +383,6 @@ uint mysql_data_home_len;
 char mysql_data_home_buff[2], *mysql_data_home=mysql_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *opt_mysql_tmpdir;
-const char **errmesg;			/**< Error messages */
 const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
@@ -866,7 +866,7 @@ void clean_up(bool print_message)
 
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
-  if (print_message && errmesg && server_start_time)
+  if (print_message && server_start_time)
     sql_print_information(ER(ER_SHUTDOWN_COMPLETE),my_progname);
   thread_scheduler.end();
   finish_client_errs();
@@ -2436,10 +2436,6 @@ server.");
     }
   }
 
-  /* if the errmsg.sys is not loaded, terminate to maintain behaviour */
-  if (!errmesg[0][0])
-    unireg_abort(1);
-
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
@@ -3188,7 +3184,7 @@ struct my_option my_long_options[] =
    (char**) &opt_init_slave, (char**) &opt_init_slave, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"language", 'L',
-   "Client error messages in given language. May be given as a full path.",
+   "Client error messages in given language. May be given as a full path. (IGNORED)",
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
@@ -4196,7 +4192,6 @@ static void mysql_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
-  errmesg= 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
   memset((uchar*) &mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
   memset((char *) &global_status_var, 0, sizeof(global_status_var));

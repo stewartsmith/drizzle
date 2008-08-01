@@ -25,6 +25,7 @@
 
 #include "mysql_priv.h"
 #include <assert.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define FCOMP			17		/* Bytes for a packed field */
 

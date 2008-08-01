@@ -26,6 +26,7 @@
 
 #include "mysql_priv.h"
 #include <stdarg.h>
+#include <drizzled/drizzled_error_messages.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */

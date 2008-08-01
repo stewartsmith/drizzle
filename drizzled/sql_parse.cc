@@ -18,6 +18,7 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment

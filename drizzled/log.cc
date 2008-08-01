@@ -33,6 +33,7 @@
 #include <stdarg.h>
 
 #include <drizzled/plugin.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /* max size of the log message */
 #define MAX_LOG_BUFFER_SIZE 1024

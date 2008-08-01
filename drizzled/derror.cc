@@ -23,10 +23,13 @@
 
 #include "mysql_priv.h"
 #include <mysys/mysys_err.h>
+#include <drizzled/drizzled_error_messages.h>
 
 static bool read_texts(const char *file_name,const char ***point,
 		       uint error_messages);
 static void init_myfunc_errs(void);
+
+
 
 /**
   Read messages from errorfile.
@@ -64,13 +67,12 @@ bool init_errmessage(void)
   }
 
   /* Register messages for use with my_error(). */
-  if (my_error_register(errmsgs, ER_ERROR_FIRST, ER_ERROR_LAST))
+  if (my_error_register(drizzled_error_messages,
+                        ER_ERROR_FIRST, ER_ERROR_LAST))
   {
-    x_free((uchar*) errmsgs);
     return(true);
   }
 
-  errmesg= errmsgs;		        /* Init global variabel */
   init_myfunc_errs();			/* Init myfunc messages */
   return(false);
 }

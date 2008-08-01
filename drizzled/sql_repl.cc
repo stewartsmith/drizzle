@@ -20,6 +20,7 @@
 #include "sql_repl.h"
 #include "log_event.h"
 #include "rpl_filter.h"
+#include <drizzled/drizzled_error_messages.h>
 
 int max_binlog_dump_events = 0; // unlimited
 

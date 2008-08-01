@@ -1767,12 +1767,7 @@ public:
     killed_state killed_val; /* to cache the volatile 'killed' */
     return (killed_val= killed) != KILL_BAD_DATA ? killed_val : 0;
   }
-  inline void send_kill_message() const
-  {
-    int err= killed_errno();
-    if (err)
-      my_message(err, ER(err), MYF(0));
-  }
+  void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
   inline bool really_abort_on_warning()
   {
@@ -1893,17 +1888,7 @@ public:
     allocate memory for a deep copy: current database may be freed after
     a statement is parsed but before it's executed.
   */
-  bool copy_db_to(char **p_db, size_t *p_db_length)
-  {
-    if (db == NULL)
-    {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-      return true;
-    }
-    *p_db= strmake(db, db_length);
-    *p_db_length= db_length;
-    return false;
-  }
+  bool copy_db_to(char **p_db, size_t *p_db_length);
   thd_scheduler scheduler;
 
 public:

@@ -42,6 +42,7 @@
 #include "lex_symbol.h"
 #include "item_create.h"
 #include <storage/myisam/myisam.h>
+#include <drizzled/drizzled_error_messages.h>
 
 int yylex(void *yylval, void *yythd);
 

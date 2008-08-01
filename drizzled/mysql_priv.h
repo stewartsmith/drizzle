@@ -1537,7 +1537,6 @@ extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
 extern MY_TMPDIR mysql_tmpdir_list;
 extern const LEX_STRING command_name[];
 extern const char *first_keyword, *my_localhost, *delayed_user, *binary_keyword;
-extern const char **errmesg;			/* Error messages */
 extern const char *myisam_recover_options_str;
 extern const char *in_left_expr_name, *in_additional_cond, *in_having_cond;
 extern const char * const TRG_EXT;

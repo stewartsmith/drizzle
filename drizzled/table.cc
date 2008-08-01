@@ -17,6 +17,7 @@
 /* Some general useful functions */
 
 #include "mysql_priv.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /* INFORMATION_SCHEMA name */
 LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};

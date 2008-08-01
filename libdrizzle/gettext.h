@@ -267,4 +267,5 @@ dcnpgettext_expr (const char *domain,
   return (n == 1 ? msgid : msgid_plural);
 }
 
+#define _(String)  gettext(String)
 #endif /* _LIBGETTEXT_H */

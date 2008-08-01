@@ -20,6 +20,7 @@
 #include "sql_select.h"
 #include <mysys/my_dir.h>
 #include <mysys/hash.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")
 

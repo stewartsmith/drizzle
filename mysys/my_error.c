@@ -18,6 +18,7 @@
 #include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mystrings/m_ctype.h>
+#include <libdrizzle/gettext.h>
 
 /* Define some external variables for error handling */
 
@@ -80,8 +81,8 @@ void my_error(int nr, myf MyFlags, ...)
 
   /* get the error message string. Default, if NULL or empty string (""). */
   if (! (format= (meh_p && (nr >= meh_p->meh_first)) ?
-         meh_p->meh_errmsgs[nr - meh_p->meh_first] : NULL) || ! *format)
-    (void) snprintf (ebuff, sizeof(ebuff), "Unknown error %d", nr);
+         _(meh_p->meh_errmsgs[nr - meh_p->meh_first]) : NULL) || ! *format)
+    (void) snprintf (ebuff, sizeof(ebuff), _("Unknown error %d"), nr);
   else
   {
     va_start(args,MyFlags);
