@@ -27,7 +27,7 @@ pkgplugindir =$(pkglibdir)/plugin
 
 SUBDIRS = field . share
 
-libexec_PROGRAMS =drizzled
+sbin_PROGRAMS =drizzled
 
 EXTRA_PROGRAMS =gen_lex_hash
 
