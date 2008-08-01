@@ -31,7 +31,6 @@
 
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include <mysys/sha1.h>
 #include <zlib.h>
 C_MODE_START

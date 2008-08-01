@@ -83,7 +83,7 @@ static void dtoa_free(char *, char *, size_t);
    @return            number of written characters (excluding terminating '\0')
 */
 
-size_t my_fcvt(double x, int precision, char *to, my_bool *error)
+size_t my_fcvt(double x, int precision, char *to, bool *error)
 {
   int decpt, sign, len, i;
   char *res, *src, *end, *dst= to;
@@ -207,7 +207,7 @@ size_t my_fcvt(double x, int precision, char *to, my_bool *error)
 */
 
 size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
-               my_bool *error)
+               bool *error)
 {
   int decpt, sign, len, exp_len;
   char *res, *src, *end, *dst= to, *dend= dst + width;

@@ -27,7 +27,6 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
-#include <m_ctype.h>
 #include <errno.h>
 
 // Maximum allowed exponent value for converting string to decimal
@@ -87,8 +86,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING       
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_TINY -> */
   {
@@ -114,8 +111,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING       
-    DRIZZLE_TYPE_STRING     
   },
   /* DRIZZLE_TYPE_SHORT -> */
   {
@@ -141,8 +136,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_LONG -> */
   {
@@ -168,8 +161,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_DOUBLE -> */
   {
@@ -195,8 +186,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_NULL -> */
   {
@@ -222,8 +211,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_SET,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_TIMESTAMP -> */
   {
@@ -249,8 +236,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_LONGLONG -> */
   {
@@ -276,8 +261,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_DATE -> */
   {
@@ -303,8 +286,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_TIME -> */
   {
@@ -330,8 +311,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_DATETIME -> */
   {
@@ -357,8 +336,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_NEWDATE -> */
   {
@@ -384,8 +361,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_VARCHAR -> */
   {
@@ -411,8 +386,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_VARCHAR
   },
   /* DRIZZLE_TYPE_NEWDECIMAL -> */
   {
@@ -438,8 +411,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_ENUM -> */
   {
@@ -465,8 +436,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_SET -> */
   {
@@ -492,8 +461,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
   },
   /* DRIZZLE_TYPE_BLOB -> */
   {
@@ -519,36 +486,7 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_BLOB
   },
-  /* DRIZZLE_TYPE_STRING -> */
-  {
-  //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_STRING,      DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_STRING,      DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_DOUBLE
-    DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
-    DRIZZLE_TYPE_STRING,      DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_STRING,      DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_DATETIME
-    DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
-    DRIZZLE_TYPE_STRING,      DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
-    DRIZZLE_TYPE_STRING,      DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_STRING,
-  //DRIZZLE_TYPE_BLOB
-    DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_STRING
-    DRIZZLE_TYPE_STRING
-  }
 };
 
 /**
@@ -595,8 +533,6 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
   STRING_RESULT,
   //DRIZZLE_TYPE_BLOB
   STRING_RESULT,
-  //DRIZZLE_TYPE_STRING
-  STRING_RESULT
 };
 
 
@@ -665,7 +601,6 @@ bool Field::type_can_have_key_part(enum enum_field_types type)
   switch (type) {
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
     return true;
   default:
     return false;
@@ -730,7 +665,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
   /* Test if we have garbage at the end of the given string. */
   if (test_if_important_data(cs, int_end, str + length))
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -823,7 +758,7 @@ int Field::warn_if_overflow(int op_result)
   }
   if (op_result == E_DEC_TRUNCATED)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     /* We return 0 here as this is not a critical issue */
   }
   return 0;
@@ -1312,13 +1247,6 @@ uint Field::fill_cache_field(CACHE_FIELD *copy)
     copy->length-= table->s->blob_ptr_size;
     return copy->length;
   }
-  else if (!zero_pack() &&
-           (type() == DRIZZLE_TYPE_STRING && copy->length >= 4 &&
-            copy->length < 256))
-  {
-    copy->strip=1;				/* Remove end space */
-    store_length= 2;
-  }
   else
   {
     copy->strip=0;
@@ -1328,18 +1256,18 @@ uint Field::fill_cache_field(CACHE_FIELD *copy)
 }
 
 
-bool Field::get_date(MYSQL_TIME *ltime,uint fuzzydate)
+bool Field::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
   if (!(res=val_str(&tmp)) ||
       str_to_datetime_with_warn(res->ptr(), res->length(),
-                                ltime, fuzzydate) <= MYSQL_TIMESTAMP_ERROR)
+                                ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
     return 1;
   return 0;
 }
 
-bool Field::get_time(MYSQL_TIME *ltime)
+bool Field::get_time(DRIZZLE_TIME *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -1356,7 +1284,7 @@ bool Field::get_time(MYSQL_TIME *ltime)
     Needs to be changed if/when we want to support different time formats.
 */
 
-int Field::store_time(MYSQL_TIME *ltime,
+int Field::store_time(DRIZZLE_TIME *ltime,
                       timestamp_type type_arg __attribute__((unused)))
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
@@ -1705,10 +1633,10 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
       if (table->in_use->abort_on_warning)
         set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
       else
-        set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+        set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     }
     else /* If we lost only spaces then produce a NOTE, not a WARNING */
-      set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, WARN_DATA_TRUNCATED, 1);
+      set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -1716,7 +1644,7 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
 
 
 /**
-  Store double value in Field_string or Field_varstring.
+  Store double value in Field_varstring.
 
   Pretty prints double number into field_length characters buffer.
 
@@ -1728,7 +1656,7 @@ int Field_str::store(double nr)
   char buff[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
   uint local_char_length= field_length / charset()->mbmaxlen;
   size_t length;
-  my_bool error;
+  bool error;
 
   length= my_gcvt(nr, MY_GCVT_ARG_DOUBLE, local_char_length, buff, &error);
   if (error)
@@ -1736,7 +1664,7 @@ int Field_str::store(double nr)
     if (table->in_use->abort_on_warning)
       set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   return store(buff, length, charset());
 }
@@ -1874,13 +1802,13 @@ int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
       if (err || end != from+length || tmp > typelib->count)
       {
 	tmp=0;
-	set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+	set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
       }
       if (!table->in_use->count_cuted_fields)
         err= 0;
     }
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   store_type((uint64_t) tmp);
   return err;
@@ -1899,7 +1827,7 @@ int Field_enum::store(int64_t nr,
   int error= 0;
   if ((uint64_t) nr > typelib->count || nr == 0)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     if (nr != 0 || table->in_use->count_cuted_fields)
     {
       nr= 0;
@@ -2128,7 +2056,6 @@ void Create_field::create_length_to_internal_length(void)
 {
   switch (sql_type) {
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_VARCHAR:
     length*= charset->mbmaxlen;
     key_length= length;
@@ -2294,8 +2221,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
     */
     max_field_charlength= MAX_FIELD_VARCHARLENGTH;
     break;
-  case DRIZZLE_TYPE_STRING:
-    break;
   case DRIZZLE_TYPE_BLOB:
     if (fld_default_value)
     {
@@ -2445,13 +2370,9 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       ((length > max_field_charlength && fld_type != DRIZZLE_TYPE_SET &&
         fld_type != DRIZZLE_TYPE_ENUM &&
         (fld_type != DRIZZLE_TYPE_VARCHAR || fld_default_value)) ||
-       (!length &&
-        fld_type != DRIZZLE_TYPE_STRING &&
-        fld_type != DRIZZLE_TYPE_VARCHAR)))
+       (!length && fld_type != DRIZZLE_TYPE_VARCHAR)))
   {
-    my_error((fld_type == DRIZZLE_TYPE_VARCHAR ||
-              fld_type == DRIZZLE_TYPE_STRING) ?  ER_TOO_BIG_FIELDLENGTH :
-                                                ER_TOO_BIG_DISPLAYWIDTH,
+    my_error((fld_type == DRIZZLE_TYPE_VARCHAR) ?  ER_TOO_BIG_FIELDLENGTH : ER_TOO_BIG_DISPLAYWIDTH,
               MYF(0),
               fld_name, max_field_charlength); /* purecov: inspected */
     return(true);
@@ -2484,7 +2405,6 @@ enum_field_types get_blob_type_from_length(ulong length __attribute__((unused)))
 uint32_t calc_pack_length(enum_field_types type,uint32_t length)
 {
   switch (type) {
-  case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_VARCHAR:     return (length + (length < 256 ? 1: 2));
   case DRIZZLE_TYPE_TINY	: return 1;
   case DRIZZLE_TYPE_SHORT : return 2;
@@ -2554,10 +2474,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
   {
     if (!f_is_packed(pack_flag))
     {
-      if (field_type == DRIZZLE_TYPE_STRING)
-        return new Field_string(ptr,field_length,null_pos,null_bit,
-                                unireg_check, field_name,
-                                field_charset);
       if (field_type == DRIZZLE_TYPE_VARCHAR)
         return new Field_varstring(ptr,field_length,
                                    HA_VARCHAR_PACKLENGTH(field_length),
@@ -2673,7 +2589,6 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
     length/= charset->mbmaxlen;
     key_length/= charset->mbmaxlen;
     break;
-  case DRIZZLE_TYPE_STRING:
     /* Change CHAR -> VARCHAR if dynamic record length */
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
@@ -2780,7 +2695,8 @@ Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, 
+                            unsigned int code, 
                             const char *str, uint str_length, 
                             timestamp_type ts_type, int cuted_increment)
 {

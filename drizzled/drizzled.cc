@@ -14,7 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
@@ -3500,13 +3499,13 @@ log and this option does nothing anymore.",
    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
     "The DATE format (For future).",
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATE],
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATE],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "datetime_format", OPT_DATETIME_FORMAT,
     "The DATETIME/TIMESTAMP format (for future).",
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATETIME],
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATETIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "default_week_format", OPT_DEFAULT_WEEK_FORMAT,
     "The default week format used by WEEK() functions.",
@@ -3857,8 +3856,8 @@ The minimum value for this variable is 4096.",
    1024L*128L, ULONG_MAX, 0, 1024, 0},
   { "time_format", OPT_TIME_FORMAT,
     "The TIME format (for future).",
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_TIME],
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_TIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    "If an internal in-memory temporary table exceeds this size, MySQL will"
@@ -4757,11 +4756,11 @@ static void get_options(int *argc,char **argv)
   if (opt_short_log_format)
     opt_specialflag|= SPECIAL_SHORT_LOG_FORMAT;
 
-  if (init_global_datetime_format(MYSQL_TIMESTAMP_DATE,
+  if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||
-      init_global_datetime_format(MYSQL_TIMESTAMP_TIME,
+      init_global_datetime_format(DRIZZLE_TIMESTAMP_TIME,
 				  &global_system_variables.time_format) ||
-      init_global_datetime_format(MYSQL_TIMESTAMP_DATETIME,
+      init_global_datetime_format(DRIZZLE_TIMESTAMP_DATETIME,
 				  &global_system_variables.datetime_format))
     exit(1);
 

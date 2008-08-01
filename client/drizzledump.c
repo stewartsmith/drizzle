@@ -46,7 +46,7 @@
 #include <mysys/hash.h>
 #include <stdarg.h>
 
-#include "drizzled_error.h"
+#include <drizzled/error.h>
 
 /* Exit codes */
 
@@ -793,7 +793,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
 static int get_options(int *argc, char ***argv)
 {
   int ho_error;
-  DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
+  const DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
 
   opt_max_allowed_packet= *drizzle_params->p_max_allowed_packet;
   opt_net_buffer_length= *drizzle_params->p_net_buffer_length;
@@ -1523,7 +1523,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     {
       /* Make an sql-file, if path was given iow. option -T was given */
       char buff[20+FN_REFLEN];
-      DRIZZLE_FIELD *field;
+      const DRIZZLE_FIELD *field;
 
       snprintf(buff, sizeof(buff), "show create table %s", result_table);
 
@@ -2291,8 +2291,7 @@ static void dump_table(char *table, char *db)
            we'll dump in hex only BLOB columns.
         */
         is_blob= (opt_hex_blob && field->charsetnr == 63 &&
-                  (field->type == DRIZZLE_TYPE_STRING ||
-                   field->type == DRIZZLE_TYPE_VARCHAR ||
+                  (field->type == DRIZZLE_TYPE_VARCHAR ||
                    field->type == DRIZZLE_TYPE_BLOB)) ? 1 : 0;
         if (extended_insert && !opt_xml)
         {

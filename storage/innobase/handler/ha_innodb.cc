@@ -29,8 +29,8 @@ have disabled the InnoDB inlining in this file. */
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include <mysql_priv.h>
-#include <drizzled_error.h>
+#include <drizzled/mysql_priv.h>
+#include <drizzled/error.h>
 
 #include <mystrings/m_ctype.h>
 #include <mysys/hash.h>
@@ -72,30 +72,30 @@ typedef int64_t longlong;
 
 /* Include necessary InnoDB headers */
 extern "C" {
-#include "../storage/innobase/include/univ.i"
-#include "../storage/innobase/include/os0file.h"
-#include "../storage/innobase/include/os0thread.h"
-#include "../storage/innobase/include/srv0start.h"
-#include "../storage/innobase/include/srv0srv.h"
-#include "../storage/innobase/include/trx0roll.h"
-#include "../storage/innobase/include/trx0trx.h"
-#include "../storage/innobase/include/trx0sys.h"
-#include "../storage/innobase/include/mtr0mtr.h"
-#include "../storage/innobase/include/row0ins.h"
-#include "../storage/innobase/include/row0mysql.h"
-#include "../storage/innobase/include/row0sel.h"
-#include "../storage/innobase/include/row0upd.h"
-#include "../storage/innobase/include/log0log.h"
-#include "../storage/innobase/include/lock0lock.h"
-#include "../storage/innobase/include/dict0crea.h"
-#include "../storage/innobase/include/btr0cur.h"
-#include "../storage/innobase/include/btr0btr.h"
-#include "../storage/innobase/include/fsp0fsp.h"
-#include "../storage/innobase/include/sync0sync.h"
-#include "../storage/innobase/include/fil0fil.h"
-#include "../storage/innobase/include/trx0xa.h"
-#include "../storage/innobase/include/thr0loc.h"
-#include "../storage/innobase/include/ha_prototypes.h"
+#include "storage/innobase/include/univ.i"
+#include "storage/innobase/include/os0file.h"
+#include "storage/innobase/include/os0thread.h"
+#include "storage/innobase/include/srv0start.h"
+#include "storage/innobase/include/srv0srv.h"
+#include "storage/innobase/include/trx0roll.h"
+#include "storage/innobase/include/trx0trx.h"
+#include "storage/innobase/include/trx0sys.h"
+#include "storage/innobase/include/mtr0mtr.h"
+#include "storage/innobase/include/row0ins.h"
+#include "storage/innobase/include/row0mysql.h"
+#include "storage/innobase/include/row0sel.h"
+#include "storage/innobase/include/row0upd.h"
+#include "storage/innobase/include/log0log.h"
+#include "storage/innobase/include/lock0lock.h"
+#include "storage/innobase/include/dict0crea.h"
+#include "storage/innobase/include/btr0cur.h"
+#include "storage/innobase/include/btr0btr.h"
+#include "storage/innobase/include/fsp0fsp.h"
+#include "storage/innobase/include/sync0sync.h"
+#include "storage/innobase/include/fil0fil.h"
+#include "storage/innobase/include/trx0xa.h"
+#include "storage/innobase/include/thr0loc.h"
+#include "storage/innobase/include/ha_prototypes.h"
 }
 
 static const long AUTOINC_OLD_STYLE_LOCKING = 0;
@@ -2518,7 +2518,6 @@ innobase_mysql_cmp(
 
 	switch (mysql_tp) {
 
-	case DRIZZLE_TYPE_STRING:
 	case DRIZZLE_TYPE_BLOB:
 	case DRIZZLE_TYPE_VARCHAR:
 		/* Use the charset number to pick the right charset struct for
@@ -2583,7 +2582,6 @@ get_innobase_type_from_mysql_type(
 	8 bits: this is used in ibuf and also when DATA_NOT_NULL is ORed to
 	the type */
 
-	assert((ulint)DRIZZLE_TYPE_STRING < 256);
 	assert((ulint)DRIZZLE_TYPE_DOUBLE < 256);
 
 	if (field->flags & UNSIGNED_FLAG) {
@@ -2619,16 +2617,6 @@ get_innobase_type_from_mysql_type(
 			return(DATA_VARCHAR);
 		} else {
 			return(DATA_VARMYSQL);
-		}
-	case DRIZZLE_TYPE_STRING: if (field->binary()) {
-
-			return(DATA_FIXBINARY);
-		} else if (strcmp(
-				   field->charset()->name,
-				   "latin1_swedish_ci") == 0) {
-			return(DATA_CHAR);
-		} else {
-			return(DATA_MYSQL);
 		}
 	case DRIZZLE_TYPE_NEWDECIMAL:
 		return(DATA_FIXBINARY);
@@ -2881,11 +2869,9 @@ ha_innobase::store_key_val_for_row(
 			value we store may be also in a column prefix
 			index. */
 
-			CHARSET_INFO*		cs;
 			ulint			true_len;
 			ulint			key_len;
 			const uchar*		src_start;
-			int			error=0;
 			enum_field_types	real_type;
 
 			key_len = key_part->length;
@@ -2904,28 +2890,6 @@ ha_innobase::store_key_val_for_row(
 			to fields whose type is string and real field
 			type is not enum or set. For these fields check
 			if character set is multi byte. */
-
-			if (real_type != DRIZZLE_TYPE_ENUM
-				&& real_type != DRIZZLE_TYPE_SET
-				&& (mysql_type == DRIZZLE_TYPE_STRING)) {
-
-				cs = field->charset();
-
-				/* For multi byte character sets we need to
-				calculate the true length of the key */
-
-				if (key_len > 0 && cs->mbmaxlen > 1) {
-
-					true_len = (ulint)
-						cs->cset->well_formed_len(cs,
-							(const char *)src_start,
-							(const char *)src_start
-								+ key_len,
-                                                        (uint) (key_len /
-                                                                cs->mbmaxlen),
-							&error);
-				}
-			}
 
 			memcpy(buff, src_start, true_len);
 			buff += true_len;

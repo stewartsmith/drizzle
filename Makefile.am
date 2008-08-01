@@ -18,7 +18,6 @@
 SUBDIRS = . vio \
 	  mystrings \
 	  mysys \
-	  include \
 	  extra \
 	  libdrizzle \
 	  client \
@@ -92,23 +91,4 @@ test: test-drizzle
 
 test-drizzle:
 	cd tests ; \
-	  ./test-run.pl --fast --reorder --force \
-	  alter_table \
-	  join_crash \
-	  join_nested \
-	  join_outer_innodb \
-	  delete \
-	  join_outer \
-	  distinct \
-	  type_newdecimal \
-	  join \
-	  subselect \
-	  subselect3 \
-	  subselect_innodb \
-	  insert \
-	  select \
-	  update \
-	  information_schema \
-	  mysqlslap \
-	  lock \
-	  lock_tables_lost_commit
+	$(MAKE) $(AM_MAKEFLAGS) test 

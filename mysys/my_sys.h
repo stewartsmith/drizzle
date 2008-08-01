@@ -843,12 +843,12 @@ extern char *get_charsets_dir(char *buf);
 extern bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2);
 extern bool init_compiled_charsets(myf flags);
 extern void add_compiled_collation(CHARSET_INFO *cs);
-extern size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
-                                      char *to, size_t to_length,
-                                      const char *from, size_t length);
-extern size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
-                                      char *to, size_t to_length,
-                                      const char *from, size_t length);
+extern size_t escape_string_for_drizzle(CHARSET_INFO *charset_info,
+                                       char *to, size_t to_length,
+                                       const char *from, size_t length);
+extern size_t escape_quotes_for_drizzle(CHARSET_INFO *charset_info,
+                                        char *to, size_t to_length,
+                                        const char *from, size_t length);
 
 extern void thd_increment_bytes_sent(ulong length);
 extern void thd_increment_bytes_received(ulong length);

@@ -18,7 +18,6 @@
 /* 2006-12 Erik Wetterberg : LOAD XML added */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_repl.h"
 
 class XML_TAG {

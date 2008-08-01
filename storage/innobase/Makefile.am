@@ -21,9 +21,7 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 AM_CPPFLAGS =		${GLOBAL_CPPFLAGS} \
-			-I$(top_srcdir)/storage/innobase/include \
-			-I$(top_builddir) \
-			-I$(top_srcdir)/drizzled
+			-I$(top_srcdir)/storage/innobase/include
 
 DEFS =			@DEFS@
 

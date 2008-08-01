@@ -16,9 +16,6 @@
 MYSQLDATAdir =		$(localstatedir)
 MYSQLSHAREdir =		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
-AM_CPPFLAGS =		-I$(top_builddir)/include \
-			-I$(top_srcdir)/include -I$(srcdir)  \
-                        -I$(top_srcdir)/mysys
 LDADD =			$(top_builddir)/mysys/libmysyslt.la \
 			$(top_builddir)/mystrings/libmystrings.la
 

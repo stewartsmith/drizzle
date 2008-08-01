@@ -19,7 +19,7 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 
-AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(openssl_includes) -I${top_srcdir}/drizzled
+AM_CPPFLAGS = ${GLOBAL_CPPFLAGS} $(openssl_includes)
 
 if BUILD_MD5_UDF
 EXTRA_LTLIBRARIES =	libmd5udf.la

@@ -1,24 +1,29 @@
-/* Copyright (C) 2000 MySQL AB
-
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; version 2 of the License.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+/* - mode: c; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+ *  vim:expandtab:shiftwidth=2:tabstop=2:smarttab:
+ *
+ *  Copyright (C) 2008 MySQL
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
 /*
 ** Common definition between mysql server & client
 */
 
-#ifndef _mysql_com_h
-#define _mysql_com_h
+#ifndef _libdrizzle_drizzle_com_h
+#define _libdrizzle_drizzle_com_h
 
 #define HOSTNAME_LENGTH 60
 #define SYSTEM_CHARSET_MBMAXLEN 4
@@ -274,11 +279,10 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
 			DRIZZLE_TYPE_DATE,   DRIZZLE_TYPE_TIME,
 			DRIZZLE_TYPE_DATETIME,
 			DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
-                        DRIZZLE_TYPE_NEWDECIMAL=251,
-			DRIZZLE_TYPE_ENUM=252,
-			DRIZZLE_TYPE_SET=253,
-			DRIZZLE_TYPE_BLOB=254,
-			DRIZZLE_TYPE_STRING=255
+                        DRIZZLE_TYPE_NEWDECIMAL=252,
+			DRIZZLE_TYPE_ENUM=253,
+			DRIZZLE_TYPE_SET=254,
+			DRIZZLE_TYPE_BLOB=255
 };
 
 

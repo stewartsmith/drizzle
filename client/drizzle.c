@@ -90,6 +90,11 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 
+#undef bcmp				// Fix problem with new readline
+
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
 #include <readline/readline.h>
 
 /**
@@ -1621,7 +1626,7 @@ static int get_options(int argc, char **argv)
 {
   char *tmp, *pagpoint;
   int ho_error;
-  DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
+  const DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
 
   tmp= (char *) getenv("MYSQL_HOST");
   if (tmp)
@@ -2920,7 +2925,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_NULL:        return "NULL";
     case DRIZZLE_TYPE_SET:         return "SET";
     case DRIZZLE_TYPE_SHORT:       return "SHORT";
-    case DRIZZLE_TYPE_STRING:      return "STRING";
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";
@@ -3230,7 +3234,7 @@ static void
 print_table_data_xml(DRIZZLE_RES *result)
 {
   DRIZZLE_ROW   cur;
-  DRIZZLE_FIELD *fields;
+  const DRIZZLE_FIELD *fields;
 
   drizzle_field_seek(result,0);
 

@@ -26,6 +26,8 @@ set -e
 
 if test -d ".bzr" ; then
   bzr log --short > ChangeLog || touch ChangeLog
+else
+  touch ChangeLog
 fi
 
 if test x$LIBTOOLIZE = x; then
@@ -38,7 +40,7 @@ if test x$LIBTOOLIZE = x; then
   elif test \! "x`which glibtoolize 2> /dev/null | grep -v '^no'`" = x; then
     LIBTOOLIZE=glibtoolize
   else 
-    echo "libtoolize 1.5.x wasn't found, exiting"; exit 0
+    echo "libtoolize 1.5.x wasn't found, exiting"; exit 1
   fi
 fi
 
@@ -50,7 +52,7 @@ if test x$ACLOCAL = x; then
   elif test \! "x`which aclocal 2> /dev/null | grep -v '^no'`" = x; then
     ACLOCAL=aclocal
   else 
-    echo "automake 1.10.x (aclocal) wasn't found, exiting"; exit 0
+    echo "automake 1.10.x (aclocal) wasn't found, exiting"; exit 1
   fi
 fi
 
@@ -62,7 +64,7 @@ if test x$AUTOMAKE = x; then
   elif test \! "x`which automake 2> /dev/null | grep -v '^no'`" = x; then
     AUTOMAKE=automake
   else 
-    echo "automake 1.10.x wasn't found, exiting"; exit 0
+    echo "automake 1.10.x wasn't found, exiting"; exit 1
   fi
 fi
 
@@ -76,7 +78,7 @@ if test x$AUTOCONF = x; then
   elif test \! "x`which autoconf 2> /dev/null | grep -v '^no'`" = x; then
     AUTOCONF=autoconf
   else 
-    echo "autoconf 2.59+ wasn't found, exiting"; exit 0
+    echo "autoconf 2.59+ wasn't found, exiting"; exit 1
   fi
 fi
 
@@ -88,7 +90,7 @@ if test x$AUTOHEADER = x; then
   elif test \! "x`which autoheader 2> /dev/null | grep -v '^no'`" = x; then
     AUTOHEADER=autoheader
   else 
-    echo "autoconf 2.59+ (autoheader) wasn't found, exiting"; exit 0
+    echo "autoconf 2.59+ (autoheader) wasn't found, exiting"; exit 1
   fi
 fi
 

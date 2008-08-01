@@ -39,5 +39,5 @@ char * strcont(register const char *str, register const char *set)
     }
     set=start; str++;
   }
-  return (NullS);
+  return ((char *)0);
 } /* strcont */

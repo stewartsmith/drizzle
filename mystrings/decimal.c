@@ -99,10 +99,10 @@
       implementation-defined.
 */
 
+#include <alloca.h>
 #include <m_string.h>
 #include <m_ctype.h>
 #include <storage/myisam/myisampack.h>
-#include <mysys/my_sys.h> /* for my_alloca */
 #include <mystrings/decimal.h>
 
 /*
@@ -1311,7 +1311,7 @@ int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale)
   int bin_size= decimal_bin_size(precision, scale);
 
   sanity(to);
-  d_copy= (uchar*) my_alloca(bin_size);
+  d_copy= (uchar*) alloca(bin_size);
   memcpy(d_copy, from, bin_size);
   d_copy[0]^= 0x80;
   from= d_copy;
@@ -1394,11 +1394,9 @@ int bin2decimal(const uchar *from, decimal_t *to, int precision, int scale)
       goto err;
     buf++;
   }
-  my_afree(d_copy);
   return error;
 
 err:
-  my_afree(d_copy);
   decimal_make_zero(((decimal_t*) to));
   return(E_DEC_BAD_NUM);
 }
@@ -2173,7 +2171,7 @@ static int do_div_mod(decimal_t *from1, decimal_t *from2,
 
   len1=(i=ROUND_UP(prec1))+ROUND_UP(2*frac2+scale_incr+1) + 1;
   set_if_bigger(len1, 3);
-  if (!(tmp1=(dec1 *)my_alloca(len1*sizeof(dec1))))
+  if (!(tmp1=(dec1 *)alloca(len1*sizeof(dec1))))
     return E_DEC_OOM;
   memcpy(tmp1, buf1, i*sizeof(dec1));
   memset(tmp1+i, 0, (len1-i)*sizeof(dec1));
@@ -2320,7 +2318,6 @@ static int do_div_mod(decimal_t *from1, decimal_t *from2,
         *buf0++=*start1++;
   }
 done:
-  my_afree(tmp1);
   return error;
 }
 

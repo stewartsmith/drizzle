@@ -18,7 +18,6 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_select.h"
 
 const String my_null_string("NULL", 4, default_charset_info);
@@ -271,7 +270,7 @@ my_decimal *Item::val_decimal_from_string(my_decimal *decimal_value)
 my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
   {
     my_decimal_set_zero(decimal_value);
@@ -285,7 +284,7 @@ my_decimal *Item::val_decimal_from_date(my_decimal *decimal_value)
 my_decimal *Item::val_decimal_from_time(my_decimal *decimal_value)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_time(&ltime))
   {
     my_decimal_set_zero(decimal_value);
@@ -320,21 +319,21 @@ int64_t Item::val_int_from_decimal()
 
 int Item::save_time_in_field(Field *field)
 {
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_time(&ltime))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, MYSQL_TIMESTAMP_TIME);
+  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_TIME);
 }
 
 
 int Item::save_date_in_field(Field *field)
 {
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return set_field_to_null(field);
   field->set_notnull();
-  return field->store_time(&ltime, MYSQL_TIMESTAMP_DATETIME);
+  return field->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 
@@ -880,11 +879,11 @@ bool Item_string::eq(const Item *item, bool binary_cmp) const
 
 
 /**
-  Get the value of the function as a MYSQL_TIME structure.
+  Get the value of the function as a DRIZZLE_TIME structure.
   As a extra convenience the time structure is reset on error!
 */
 
-bool Item::get_date(MYSQL_TIME *ltime,uint fuzzydate)
+bool Item::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   if (result_type() == STRING_RESULT)
   {
@@ -892,7 +891,7 @@ bool Item::get_date(MYSQL_TIME *ltime,uint fuzzydate)
     String tmp(buff,sizeof(buff), &my_charset_bin),*res;
     if (!(res=val_str(&tmp)) ||
         str_to_datetime_with_warn(res->ptr(), res->length(),
-                                  ltime, fuzzydate) <= MYSQL_TIMESTAMP_ERROR)
+                                  ltime, fuzzydate) <= DRIZZLE_TIMESTAMP_ERROR)
       goto err;
   }
   else
@@ -904,7 +903,7 @@ bool Item::get_date(MYSQL_TIME *ltime,uint fuzzydate)
       char buff[22], *end;
       end= int64_t10_to_str(value, buff, -10);
       make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
-                                   buff, (int) (end-buff), MYSQL_TIMESTAMP_NONE,
+                                   buff, (int) (end-buff), DRIZZLE_TIMESTAMP_NONE,
                                    NullS);
       goto err;
     }
@@ -922,7 +921,7 @@ err:
   As a extra convenience the time structure is reset on error!
 */
 
-bool Item::get_time(MYSQL_TIME *ltime)
+bool Item::get_time(DRIZZLE_TIME *ltime)
 {
   char buff[40];
   String tmp(buff,sizeof(buff),&my_charset_bin),*res;
@@ -1619,7 +1618,7 @@ String *Item_field::str_result(String *str)
   return result_field->val_str(str,&str_value);
 }
 
-bool Item_field::get_date(MYSQL_TIME *ltime,uint fuzzydate)
+bool Item_field::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   if ((null_value=field->is_null()) || field->get_date(ltime,fuzzydate))
   {
@@ -1629,7 +1628,7 @@ bool Item_field::get_date(MYSQL_TIME *ltime,uint fuzzydate)
   return 0;
 }
 
-bool Item_field::get_date_result(MYSQL_TIME *ltime,uint fuzzydate)
+bool Item_field::get_date_result(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   if ((null_value=result_field->is_null()) ||
       result_field->get_date(ltime,fuzzydate))
@@ -1640,7 +1639,7 @@ bool Item_field::get_date_result(MYSQL_TIME *ltime,uint fuzzydate)
   return 0;
 }
 
-bool Item_field::get_time(MYSQL_TIME *ltime)
+bool Item_field::get_time(DRIZZLE_TIME *ltime)
 {
   if ((null_value=field->is_null()) || field->get_time(ltime))
   {
@@ -2222,7 +2221,7 @@ void Item_param::set_decimal(const char *str, ulong length)
 
 
 /**
-  Set parameter value from MYSQL_TIME value.
+  Set parameter value from DRIZZLE_TIME value.
 
   @param tm              datetime value to set (time_type is ignored)
   @param type            type of datetime value
@@ -2234,7 +2233,7 @@ void Item_param::set_decimal(const char *str, ulong length)
     the fact that even wrong value sent over binary protocol fits into
     MAX_DATE_STRING_REP_LENGTH buffer.
 */
-void Item_param::set_time(MYSQL_TIME *tm, timestamp_type time_type,
+void Item_param::set_time(DRIZZLE_TIME *tm, timestamp_type time_type,
                           uint32_t max_length_arg)
 { 
   value.time= *tm;
@@ -2242,14 +2241,14 @@ void Item_param::set_time(MYSQL_TIME *tm, timestamp_type time_type,
 
   if (value.time.year > 9999 || value.time.month > 12 ||
       value.time.day > 31 ||
-      ((time_type != MYSQL_TIMESTAMP_TIME) && value.time.hour > 23) ||
+      ((time_type != DRIZZLE_TIMESTAMP_TIME) && value.time.hour > 23) ||
       value.time.minute > 59 || value.time.second > 59)
   {
     char buff[MAX_DATE_STRING_REP_LENGTH];
     uint length= my_TIME_to_str(&value.time, buff);
     make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
                                  buff, length, time_type, 0);
-    set_zero_time(&value.time, MYSQL_TIMESTAMP_ERROR);
+    set_zero_time(&value.time, DRIZZLE_TIMESTAMP_ERROR);
   }
 
   state= TIME_VALUE;
@@ -2447,7 +2446,7 @@ int Item_param::save_in_field(Field *field, bool no_conversions)
 }
 
 
-bool Item_param::get_time(MYSQL_TIME *res)
+bool Item_param::get_time(DRIZZLE_TIME *res)
 {
   if (state == TIME_VALUE)
   {
@@ -2462,7 +2461,7 @@ bool Item_param::get_time(MYSQL_TIME *res)
 }
 
 
-bool Item_param::get_date(MYSQL_TIME *res, uint fuzzydate)
+bool Item_param::get_date(DRIZZLE_TIME *res, uint fuzzydate)
 {
   if (state == TIME_VALUE)
   {
@@ -2884,7 +2883,7 @@ String* Item_ref_null_helper::val_str(String* s)
 }
 
 
-bool Item_ref_null_helper::get_date(MYSQL_TIME *ltime, uint fuzzydate)
+bool Item_ref_null_helper::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
 {  
   return (owner->was_null|= null_value= (*ref)->get_date(ltime, fuzzydate));
 }
@@ -4059,14 +4058,10 @@ Field *Item::make_string_field(TABLE *table)
   if (max_length/collation.collation->mbmaxlen > CONVERT_IF_BIGGER_TO_BLOB)
     field= new Field_blob(max_length, maybe_null, name,
                           collation.collation);
-  /* Item_type_holder holds the exact type, do not change it */
-  else if (max_length > 0 &&
-      (type() != Item::TYPE_HOLDER || field_type() != DRIZZLE_TYPE_STRING))
+  else
     field= new Field_varstring(max_length, maybe_null, name, table->s,
                                collation.collation);
-  else
-    field= new Field_string(max_length, maybe_null, name,
-                            collation.collation);
+
   if (field)
     field->init(table);
   return field;
@@ -4085,7 +4080,7 @@ Field *Item::make_string_field(TABLE *table)
     \#    Created field
 */
 
-Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
+Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length __attribute__((unused)))
 {
   /*
     The field functions defines a field to be not null if null_ptr is not 0
@@ -4138,14 +4133,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length)
   default:
     /* This case should never be chosen */
     assert(0);
-    /* If something goes awfully wrong, it's better to get a string than die */
-  case DRIZZLE_TYPE_STRING:
-    if (fixed_length && max_length < CONVERT_IF_BIGGER_TO_BLOB)
-    {
-      field= new Field_string(max_length, maybe_null, name,
-                              collation.collation);
-      break;
-    }
     /* Fall through to make_string_field() */
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
@@ -4674,7 +4661,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
   {
@@ -4725,7 +4711,7 @@ bool Item::send(Protocol *protocol, String *buffer)
   case DRIZZLE_TYPE_DATETIME:
   case DRIZZLE_TYPE_TIMESTAMP:
   {
-    MYSQL_TIME tm;
+    DRIZZLE_TIME tm;
     get_date(&tm, TIME_FUZZY_DATE);
     if (!null_value)
     {
@@ -4738,7 +4724,7 @@ bool Item::send(Protocol *protocol, String *buffer)
   }
   case DRIZZLE_TYPE_TIME:
   {
-    MYSQL_TIME tm;
+    DRIZZLE_TIME tm;
     get_time(&tm);
     if (!null_value)
       result= protocol->store_time(&tm);
@@ -5320,7 +5306,7 @@ bool Item_ref::is_null()
 }
 
 
-bool Item_ref::get_date(MYSQL_TIME *ltime,uint fuzzydate)
+bool Item_ref::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   return (null_value=(*ref)->get_date_result(ltime,fuzzydate));
 }
@@ -5434,7 +5420,7 @@ bool Item_direct_ref::is_null()
 }
 
 
-bool Item_direct_ref::get_date(MYSQL_TIME *ltime,uint fuzzydate)
+bool Item_direct_ref::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   return (null_value=(*ref)->get_date(ltime,fuzzydate));
 }
@@ -6074,8 +6060,8 @@ my_decimal *Item_cache_str::val_decimal(my_decimal *decimal_val)
 int Item_cache_str::save_in_field(Field *field, bool no_conversions)
 {
   int res= Item_cache::save_in_field(field, no_conversions);
-  return (is_varbinary && field->type() == DRIZZLE_TYPE_STRING &&
-          value->length() < field->field_length) ? 1 : res;
+
+  return res;
 }
 
 
@@ -6378,7 +6364,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
-  case DRIZZLE_TYPE_STRING:
   case DRIZZLE_TYPE_TINY:
     return 4;
   case DRIZZLE_TYPE_SHORT:
