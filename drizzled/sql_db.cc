@@ -31,7 +31,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
 				 const char *db, const char *path, uint level, 
                                  TABLE_LIST **dropped_tables);
          
-static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp, const char *org_path);
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(THD *thd,
                                  LEX_STRING *new_db_name,
@@ -1019,7 +1018,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
   ulong found_other_files=0;
   char filePath[FN_REFLEN];
   TABLE_LIST *tot_list=0, **tot_list_next;
-  List<String> raid_dirs;
 
   tot_list_next= &tot_list;
 
@@ -1054,26 +1052,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
 	if ((mysql_rm_known_files(thd, new_dirp, NullS, newpath,1,0)) < 0)
 	  goto err;
 	if (!(copy_of_path= (char*) thd->memdup(newpath, length+1)) ||
-	    !(dir= new (thd->mem_root) String(copy_of_path, length,
-					       &my_charset_bin)) ||
-	    raid_dirs.push_back(dir))
-	  goto err;
-	continue;
-      }
-      found_other_files++;
-      continue;
-    }
-    else if (file->name[0] == 'a' && file->name[1] == 'r' &&
-             file->name[2] == 'c' && file->name[3] == '\0')
-    {
-      /* .frm archive */
-      char newpath[FN_REFLEN];
-      MY_DIR *new_dirp;
-      strxmov(newpath, org_path, "/", "arc", NullS);
-      (void) unpack_filename(newpath, newpath);
-      if ((new_dirp = my_dir(newpath, MYF(MY_DONT_SORT))))
-      {
-	if ((mysql_rm_arc_files(thd, new_dirp, newpath)) < 0)
+	    !(dir= new (thd->mem_root) String(copy_of_path, length, &my_charset_bin)))
 	  goto err;
 	continue;
       }
@@ -1127,14 +1106,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       (tot_list && mysql_rm_table_part2(thd, tot_list, 1, 0, 1, 1)))
     goto err;
 
-  /* Remove RAID directories */
-  {
-    List_iterator<String> it(raid_dirs);
-    String *dir;
-    while ((dir= it++))
-      if (rmdir(dir->c_ptr()) < 0)
-	found_other_files++;
-  }
   my_dirend(dirp);  
   
   if (dropped_tables)
@@ -1213,80 +1184,6 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
     return(1);
   }
   return(0);
-}
-
-
-/*
-  Remove .frm archives from directory
-
-  SYNOPSIS
-    thd       thread handler
-    dirp      list of files in archive directory
-    db        data base name
-    org_path  path of archive directory
-
-  RETURN
-    > 0 number of removed files
-    -1  error
-*/
-static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp,
-				 const char *org_path)
-{
-  long deleted= 0;
-  ulong found_other_files= 0;
-  char filePath[FN_REFLEN];
-
-  for (uint idx=0 ;
-       idx < (uint) dirp->number_off_files && !thd->killed ;
-       idx++)
-  {
-    FILEINFO *file=dirp->dir_entry+idx;
-    char *extension, *revision;
-
-    /* skiping . and .. */
-    if (file->name[0] == '.' && (!file->name[1] ||
-       (file->name[1] == '.' &&  !file->name[2])))
-      continue;
-
-    extension= fn_ext(file->name);
-    if (extension[0] != '.' ||
-        extension[1] != 'f' || extension[2] != 'r' ||
-        extension[3] != 'm' || extension[4] != '-')
-    {
-      found_other_files++;
-      continue;
-    }
-    revision= extension+5;
-    while (*revision && my_isdigit(system_charset_info, *revision))
-      revision++;
-    if (*revision)
-    {
-      found_other_files++;
-      continue;
-    }
-    strxmov(filePath, org_path, "/", file->name, NullS);
-    if (my_delete_with_symlink(filePath,MYF(MY_WME)))
-    {
-      goto err;
-    }
-  }
-  if (thd->killed)
-    goto err;
-
-  my_dirend(dirp);
-
-  /*
-    If the directory is a symbolic link, remove the link first, then
-    remove the directory the symbolic link pointed at
-  */
-  if (!found_other_files &&
-      rm_dir_w_symlink(org_path, 0))
-    return(-1);
-  return(deleted);
-
-err:
-  my_dirend(dirp);
-  return(-1);
 }
 
 
