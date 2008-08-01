@@ -422,7 +422,6 @@ CHARSET_INFO *character_set_filesystem;
 MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
-SHOW_COMP_OPTION have_crypt;
 SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
@@ -4131,8 +4130,8 @@ Starts the MySQL database server\n");
   my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
 
   puts("\n\
-To see what values a running MySQL server is using, type\n\
-'mysqladmin variables' instead of 'mysqld --verbose --help'.");
+To see what values a running DrizzleD server is using, type\n\
+'drizzleadmin variables' instead of 'mysqld --verbose --help'.");
   }
 }
 
@@ -4272,11 +4271,6 @@ static void mysql_init_variables(void)
   have_symlink=SHOW_OPTION_NO;
 #else
   have_symlink=SHOW_OPTION_YES;
-#endif
-#ifdef HAVE_CRYPT
-  have_crypt=SHOW_OPTION_YES;
-#else
-  have_crypt=SHOW_OPTION_NO;
 #endif
 #ifdef HAVE_COMPRESS
   have_compress= SHOW_OPTION_YES;

@@ -1458,7 +1458,6 @@ extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
-extern SHOW_COMP_OPTION have_crypt;
 extern SHOW_COMP_OPTION have_compress;
 
 

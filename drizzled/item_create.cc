@@ -522,32 +522,6 @@ protected:
 };
 
 
-class Create_func_encode : public Create_func_arg2
-{
-public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
-
-  static Create_func_encode s_singleton;
-
-protected:
-  Create_func_encode() {}
-  virtual ~Create_func_encode() {}
-};
-
-
-class Create_func_encrypt : public Create_native_func
-{
-public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_encrypt s_singleton;
-
-protected:
-  Create_func_encrypt() {}
-  virtual ~Create_func_encrypt() {}
-};
-
-
 class Create_func_exp : public Create_func_arg1
 {
 public:
