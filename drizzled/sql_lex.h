@@ -87,7 +87,6 @@ enum enum_sql_command {
   SQLCOM_CHECKSUM,
   SQLCOM_BINLOG_BASE64_EVENT,
   SQLCOM_SHOW_PLUGINS,
-  SQLCOM_ALTER_DB_UPGRADE,
   /*
     When a command is added here, be sure it's also added in mysqld.cc
     in "struct show_var_st status_vars[]= {" ...

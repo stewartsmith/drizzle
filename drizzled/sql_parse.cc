@@ -2337,40 +2337,6 @@ end_with_restore_list:
     res= mysql_rm_db(thd, lex->name.str, lex->drop_if_exists, 0);
     break;
   }
-  case SQLCOM_ALTER_DB_UPGRADE:
-  {
-    LEX_STRING *db= & lex->name;
-    if (end_active_trans(thd))
-    {
-      res= 1;
-      break;
-    }
-    if (thd->slave_thread && 
-       (!rpl_filter->db_ok(db->str) ||
-        !rpl_filter->db_ok_with_wild_table(db->str)))
-    {
-      res= 1;
-      my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
-      break;
-    }
-    if (check_db_name(db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
-      break;
-    }
-    if (thd->locked_tables || thd->active_transaction())
-    {
-      res= 1;
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-                 ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-
-    res= mysql_upgrade_db(thd, db);
-    if (!res)
-      my_ok(thd);
-    break;
-  }
   case SQLCOM_ALTER_DB:
   {
     LEX_STRING *db= &lex->name;

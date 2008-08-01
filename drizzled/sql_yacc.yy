@@ -2436,12 +2436,6 @@ alter:
                 lex->copy_db_to(&lex->name.str, &lex->name.length))
               MYSQL_YYABORT;
           }
-        | ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_ALTER_DB_UPGRADE;
-            lex->name= $3;
-          }
         ;
 
 ident_or_empty:
