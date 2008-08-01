@@ -377,6 +377,10 @@ typedef uint64_t my_xid; // this line is the same as in log_event.h
 #define COMPATIBLE_DATA_YES 0
 #define COMPATIBLE_DATA_NO  1
 
+typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
+                                      uint key_length,
+                                      uint64_t *engine_data);
+
 /**
   struct xid_t is binary compatible with the XID structure as
   in the X/Open CAE Specification, Distributed Transaction Processing:

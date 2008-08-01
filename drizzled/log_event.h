@@ -41,6 +41,8 @@
 #include "my_decimal.h"
 #endif
 
+#include <drizzled/sql_string.h>       /* append_query_string() needs String declaration */
+
 /**
    Either assert or return an error.
 
@@ -3739,6 +3741,9 @@ private:
   Incident m_incident;
   LEX_STRING m_message;
 };
+
+int append_query_string(CHARSET_INFO *csinfo,
+                        String const *from, String *to);
 
 static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,
                                                        FILE *file)

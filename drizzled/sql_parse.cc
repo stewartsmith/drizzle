@@ -24,7 +24,6 @@
   @{
 */
 
-static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables);
 
 const char *any_db="*any*";	// Special symbol for check_access
 
@@ -2639,8 +2638,7 @@ finish:
   return(res || thd->is_error());
 }
 
-
-static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
+bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
 {
   LEX	*lex= thd->lex;
   select_result *result=lex->result;

@@ -13,6 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef DRIZZLE_SERVER_SQL_STRING_H
+#define DRIZZLE_SERVER_SQL_STRING_H
+
 /* This file is originally from the mysql distribution. Coded by monty */
 
 #ifdef USE_PRAGMA_INTERFACE
@@ -388,3 +391,4 @@ bool operator!=(const String &s1, const String &s2)
   return !(s1 == s2);
 }
 
+#endif /* DRIZZLE_SERVER_SQL_STRING_H */
