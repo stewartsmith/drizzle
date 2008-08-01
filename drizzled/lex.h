@@ -40,7 +40,6 @@ SYM_GROUP sym_group_common= {"", ""};
 */
 
 static SYMBOL symbols[] = {
-  { "&&",		SYM(AND_AND_SYM)},
   { "<",		SYM(LT)},
   { "<=",		SYM(LE)},
   { "<>",		SYM(NE)},
@@ -48,8 +47,6 @@ static SYMBOL symbols[] = {
   { "=",		SYM(EQ)},
   { ">",		SYM(GT_SYM)},
   { ">=",		SYM(GE)},
-  { "<<",		SYM(SHIFT_LEFT)},
-  { ">>",		SYM(SHIFT_RIGHT)},
   { "<=>",		SYM(EQUAL_SYM)},
   { "ACCESSIBLE",	SYM(ACCESSIBLE_SYM)},
   { "ACTION",		SYM(ACTION)},

@@ -364,7 +364,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 100 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 100
+%expect 95
 
 /*
    Comments for TOKENS.
@@ -394,7 +394,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ALL                           /* SQL-2003-R */
 %token  ALTER                         /* SQL-2003-R */
 %token  ANALYZE_SYM
-%token  AND_AND_SYM                   /* OPERATOR */
 %token  AND_SYM                       /* SQL-2003-R */
 %token  ANY_SYM                       /* SQL-2003-R */
 %token  AS                            /* SQL-2003-R */
@@ -768,8 +767,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SET                           /* SQL-2003-R */
 %token  SET_VAR
 %token  SHARE_SYM
-%token  SHIFT_LEFT                    /* OPERATOR */
-%token  SHIFT_RIGHT                   /* OPERATOR */
 %token  SHOW
 %token  SHUTDOWN
 %token  SIGNED_SYM
@@ -890,16 +887,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %left   SET_VAR
 %left   OR_SYM
 %left   XOR
-%left   AND_SYM AND_AND_SYM
+%left   AND_SYM
 %left   BETWEEN_SYM CASE_SYM WHEN_SYM THEN_SYM ELSE
 %left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS LIKE IN_SYM
-%left   '|'
-%left   '&'
-%left   SHIFT_LEFT SHIFT_RIGHT
 %left   '-' '+'
 %left   '*' '/' '%' DIV_SYM MOD_SYM
-%left   '^'
-%left   NEG '~'
+%left   NEG
 %right  NOT_SYM
 %right  BINARY COLLATE_SYM
 %left  INTERVAL_SYM
@@ -1079,8 +1072,8 @@ END_OF_INPUT
 
 %type <NONE>
         '-' '+' '*' '/' '%' '(' ')'
-        ',' '!' '{' '}' '&' '|' AND_SYM OR_SYM BETWEEN_SYM CASE_SYM
-        THEN_SYM WHEN_SYM DIV_SYM MOD_SYM AND_AND_SYM DELETE_SYM
+        ',' '!' '{' '}' AND_SYM OR_SYM BETWEEN_SYM CASE_SYM
+        THEN_SYM WHEN_SYM DIV_SYM MOD_SYM DELETE_SYM
 %%
 
 /*
@@ -3345,15 +3338,7 @@ predicate:
         ;
 
 bit_expr:
-          bit_expr '|' bit_expr %prec '|'
-          { $$= new Item_func_bit_or($1,$3); }
-        | bit_expr '&' bit_expr %prec '&'
-          { $$= new Item_func_bit_and($1,$3); }
-        | bit_expr SHIFT_LEFT bit_expr %prec SHIFT_LEFT
-          { $$= new Item_func_shift_left($1,$3); }
-        | bit_expr SHIFT_RIGHT bit_expr %prec SHIFT_RIGHT
-          { $$= new Item_func_shift_right($1,$3); }
-        | bit_expr '+' bit_expr %prec '+'
+          bit_expr '+' bit_expr %prec '+'
           { $$= new Item_func_plus($1,$3); }
         | bit_expr '-' bit_expr %prec '-'
           { $$= new Item_func_minus($1,$3); }
@@ -3371,8 +3356,6 @@ bit_expr:
           { $$= new Item_func_int_div($1,$3); }
         | bit_expr MOD_SYM bit_expr %prec MOD_SYM
           { $$= new Item_func_mod($1,$3); }
-        | bit_expr '^' bit_expr
-          { $$= new Item_func_bit_xor($1,$3); }
         | simple_expr
         ;
 
@@ -3382,7 +3365,6 @@ or:
 
 and:
           AND_SYM
-       | AND_AND_SYM
        ;
 
 not:

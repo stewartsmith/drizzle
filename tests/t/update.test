@@ -130,38 +130,6 @@ select * from t1;
 drop table t1;
 
 #
-# Bug#5553 - Multi table UPDATE IGNORE fails on duplicate keys 
-#
-
-CREATE TABLE t1 ( 
-   `colA` int unsigned NOT NULL auto_increment,
-   `colB` int NOT NULL default '0',
-   PRIMARY KEY  (`colA`)
-);
-INSERT INTO t1 VALUES (4433,5424);
-CREATE TABLE t2 (
-  `colC` int unsigned NOT NULL default '0',
-  `colA` int unsigned NOT NULL default '0',
-  `colD` int unsigned NOT NULL default '0',
-  `colE` int unsigned NOT NULL default '0',
-  `colF` int unsigned NOT NULL default '0',
-  PRIMARY KEY  (`colC`,`colA`,`colD`,`colE`)
-);
-INSERT INTO t2 VALUES (3,4433,10005,495,500);
-INSERT INTO t2 VALUES (3,4433,10005,496,500);
-INSERT INTO t2 VALUES (3,4433,10009,494,500);
-INSERT INTO t2 VALUES (3,4433,10011,494,500);
-INSERT INTO t2 VALUES (3,4433,10005,497,500);
-INSERT INTO t2 VALUES (3,4433,10013,489,500);
-INSERT INTO t2 VALUES (3,4433,10005,494,500);
-INSERT INTO t2 VALUES (3,4433,10005,493,500);
-INSERT INTO t2 VALUES (3,4433,10005,492,500);
-UPDATE IGNORE t2,t1 set t2.colE = t2.colE + 1,colF=0 WHERE t1.colA = t2.colA AND (t1.colB & 4096) > 0 AND (colE + 1) < colF;
-SELECT * FROM t2;
-DROP TABLE t1;
-DROP TABLE t2;
-
-#
 # Bug #6054 
 #
 create table t1 (c1 int, c2 char(6), c3 int);
