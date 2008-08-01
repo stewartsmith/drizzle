@@ -568,31 +568,4 @@ typedef ulong		ha_rows;
 /* invalidator function reference for Query Cache */
 typedef void (* invalidator_by_filename)(const char * filename);
 
-/**
-  clean/setup table fields and map.
-
-  @param table        TABLE structure pointer (which should be setup)
-  @param table_list   TABLE_LIST structure pointer (owner of TABLE)
-  @param tablenr     table number
-*/
-static inline void setup_table_map(TABLE *table, TABLE_LIST *table_list, uint tablenr)
-{
-  table->used_fields= 0;
-  table->const_table= 0;
-  table->null_row= 0;
-  table->status= STATUS_NO_RECORD;
-  table->maybe_null= table_list->outer_join;
-  TABLE_LIST *embedding= table_list->embedding;
-  while (!table->maybe_null && embedding)
-  {
-    table->maybe_null= embedding->outer_join;
-    embedding= embedding->embedding;
-  }
-  table->tablenr= tablenr;
-  table->map= (table_map) 1 << tablenr;
-  table->force_index= table_list->force_index;
-  table->covering_keys= table->s->keys_for_keyread;
-  table->merge_keys.clear_all();
-}
-
 #endif /* _my_base_h */
