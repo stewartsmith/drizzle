@@ -578,7 +578,7 @@ THD::THD()
   protocol_text.init(this);
 
   tablespace_op= false;
-  tmp= sql_rnd_with_mutex();
+  tmp= sql_rnd();
   randominit(&rand, tmp + (ulong) &rand, tmp + (ulong) ::global_query_id);
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */

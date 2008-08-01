@@ -2685,7 +2685,7 @@ String *Item_func_uuid::val_str(String *str)
   pthread_mutex_lock(&LOCK_uuid_generator);
   if (! uuid_time) /* first UUID() call. initializing data */
   {
-    ulong tmp=sql_rnd_with_mutex();
+    ulong tmp= sql_rnd();
     uchar mac[6];
     int i;
     if (my_gethwaddr(mac))

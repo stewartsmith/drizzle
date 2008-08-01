@@ -1705,11 +1705,10 @@ inline const char *table_case_name(HA_CREATE_INFO *info, const char *name)
   return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
 }
 
-inline ulong sql_rnd_with_mutex()
+inline ulong sql_rnd()
 {
-  pthread_mutex_lock(&LOCK_thread_count);
-  ulong tmp=(ulong) (my_rnd(&sql_rand) * 0xffffffff); /* make all bits random */
-  pthread_mutex_unlock(&LOCK_thread_count);
+  ulong tmp= (ulong) (rand() * 0xffffffff); /* make all bits random */
+
   return tmp;
 }
 
