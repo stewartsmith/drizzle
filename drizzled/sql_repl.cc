@@ -21,6 +21,7 @@
 #include "log_event.h"
 #include "rpl_filter.h"
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 int max_binlog_dump_events = 0; // unlimited
 
@@ -98,7 +99,7 @@ static int send_file(THD *thd)
   */
   if (net_flush(net) || (packet_len = my_net_read(net)) == packet_error)
   {
-    errmsg = "while reading file name";
+    errmsg = _("Failed in send_file() while reading file name");
     goto err;
   }
 
@@ -111,7 +112,7 @@ static int send_file(THD *thd)
 
   if ((fd = my_open(fname, O_RDONLY, MYF(0))) < 0)
   {
-    errmsg = "on open of file";
+    errmsg = _("Failed in send_file() on open of file");
     goto err;
   }
 
@@ -119,7 +120,7 @@ static int send_file(THD *thd)
   {
     if (my_net_write(net, buf, bytes))
     {
-      errmsg = "while writing data to client";
+      errmsg = _("Failed in send_file() while writing data to client");
       goto err;
     }
   }
@@ -128,7 +129,7 @@ static int send_file(THD *thd)
   if (my_net_write(net, (uchar*) "", 0) || net_flush(net) ||
       (my_net_read(net) == packet_error))
   {
-    errmsg = "while negotiating file transfer close";
+    errmsg = _("Failed in send_file() while negotiating file transfer close");
     goto err;
   }
   error = 0;
@@ -139,7 +140,7 @@ static int send_file(THD *thd)
     (void) my_close(fd, MYF(0));
   if (errmsg)
   {
-    sql_print_error("Failed in send_file() %s", errmsg);
+    sql_print_error(errmsg);
   }
   return(error);
 }

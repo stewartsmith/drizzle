@@ -7401,8 +7401,7 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
      values filled in and one flag to handle the case that the default
      values should be checked. Maybe these two flags can be combined.
   */
-  if ((error= prepare_record(table, &m_cols, m_width,
-                             table->file->ht->db_type != DB_TYPE_NDBCLUSTER)))
+  if ((error= prepare_record(table, &m_cols, m_width, true)))
     return(error);
   
   /* unpack row into table->record[0] */

@@ -345,6 +345,10 @@ typedef unsigned int uint;
 typedef unsigned short ushort;
 #endif
 
+/* Declared in int2str() */
+extern char _dig_vec_upper[];
+extern char _dig_vec_lower[];
+
 #define CMP_NUM(a,b)    (((a) < (b)) ? -1 : ((a) == (b)) ? 0 : 1)
 #define sgn(a)		(((a) < 0) ? -1 : ((a) > 0) ? 1 : 0)
 #define swap_variables(t, a, b) { register t dummy; dummy= a; a= b; b= dummy; }
