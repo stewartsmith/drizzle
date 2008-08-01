@@ -18,12 +18,12 @@
 #include <string.h>
 
 typedef unsigned char uchar;
-typedef unsigned short uint16;
+typedef unsigned short uint16_t;
 
 struct uca_item_st
 {
   uchar  num;
-  uint16 weight[4][9];
+  uint16_t weight[4][9];
 };
 
 #if 0
@@ -253,12 +253,12 @@ int main(int ac, char **av)
       */
       
       
-      printf("uint16 page%03Xdata%s[]= { /* %04X (%d weights per char) */\n",
+      printf("uint16_t page%03Xdata%s[]= { /* %04X (%d weights per char) */\n",
               page, pname[w], page*MY_UCA_NCHARS, maxnum);
       
       for (offs=0; offs < MY_UCA_NCHARS; offs++)
       {
-        uint16 weight[8];
+        uint16_t weight[8];
         size_t num, i;
         
         code= page*MY_UCA_NCHARS+offs;
@@ -313,7 +313,7 @@ int main(int ac, char **av)
     printf("};\n");
 
 
-    printf("uint16 *uca_weight%s[%d]={\n", pname[w], MY_UCA_NPAGES);
+    printf("uint16_t *uca_weight%s[%d]={\n", pname[w], MY_UCA_NPAGES);
     for (page=0; page < MY_UCA_NPAGES; page++)
     {
       const char *comma= page < MY_UCA_NPAGES-1 ? "," : "";

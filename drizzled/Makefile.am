@@ -27,7 +27,7 @@ pkgplugindir =$(pkglibdir)/plugin
 
 SUBDIRS = field . share
 
-libexec_PROGRAMS =drizzled
+sbin_PROGRAMS =drizzled
 
 EXTRA_PROGRAMS =gen_lex_hash
 
@@ -49,9 +49,10 @@ DTRACEFILES = handler.o \
 	      sql_select.o \
 	      sql_update.o
 
-pkginclude_HEADERS =	error.h \
-			plugin.h \
-			plugin_audit.h
+drizzledincludedir = ${includedir}/drizzled
+dist_drizzledinclude_HEADERS =	error.h \
+				plugin.h \
+				plugin_audit.h
 
 noinst_LTLIBRARIES = libhandler.la
 
