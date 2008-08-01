@@ -48,8 +48,8 @@ Relay_log_info::Relay_log_info()
   group_relay_log_name[0]= event_relay_log_name[0]=
     group_master_log_name[0]= 0;
   until_log_name[0]= ign_master_log_name_end[0]= 0;
-  memset((char*) &info_file, 0, sizeof(info_file));
-  memset((char*) &cache_buf, 0, sizeof(cache_buf));
+  memset(&info_file, 0, sizeof(info_file));
+  memset(&cache_buf, 0, sizeof(cache_buf));
   cached_charset_invalidate();
   pthread_mutex_init(&run_lock, MY_MUTEX_INIT_FAST);
   pthread_mutex_init(&data_lock, MY_MUTEX_INIT_FAST);
@@ -985,8 +985,7 @@ void Relay_log_info::cached_charset_invalidate()
 
 bool Relay_log_info::cached_charset_compare(char *charset) const
 {
-  if (memcmp((uchar*) cached_charset, (uchar*) charset,
-             sizeof(cached_charset)))
+  if (memcmp(cached_charset, charset, sizeof(cached_charset)))
   {
     memcpy(const_cast<char*>(cached_charset), charset, sizeof(cached_charset));
     return(1);

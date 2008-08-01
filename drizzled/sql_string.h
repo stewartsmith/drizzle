@@ -98,6 +98,7 @@ public:
   inline void length(uint32_t len) { str_length=len ; }
   inline bool is_empty() { return (str_length == 0); }
   inline void mark_as_const() { Alloced_length= 0;}
+  inline char *ptr() { return Ptr; }
   inline const char *ptr() const { return Ptr; }
   inline char *c_ptr()
   {

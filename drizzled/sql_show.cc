@@ -779,7 +779,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
   }
 
   key_info= table->key_info;
-  memset((char*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   /* Allow update_create_info to update row type */
   create_info.row_type= share->row_type;
   file->update_create_info(&create_info);
@@ -1963,7 +1963,7 @@ bool get_lookup_field_values(THD *thd, COND *cond, TABLE_LIST *tables,
 {
   LEX *lex= thd->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
-  memset((char*) lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
+  memset(lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
   switch (lex->sql_command) {
   case SQLCOM_SHOW_DATABASES:
     if (wild)
@@ -2434,8 +2434,8 @@ static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
   char key[MAX_DBKEY_LENGTH];
   uint key_length;
 
-  memset((char*) &table_list, 0, sizeof(TABLE_LIST));
-  memset((char*) &tbl, 0, sizeof(TABLE));
+  memset(&table_list, 0, sizeof(TABLE_LIST));
+  memset(&tbl, 0, sizeof(TABLE));
 
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;

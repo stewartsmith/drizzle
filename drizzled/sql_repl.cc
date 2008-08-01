@@ -210,8 +210,7 @@ bool log_in_use(const char* log_name)
     if ((linfo = tmp->current_linfo))
     {
       pthread_mutex_lock(&linfo->lock);
-      result = !memcmp((uchar*) log_name, (uchar*) linfo->log_file_name,
-                     log_name_len);
+      result = !memcmp(log_name, linfo->log_file_name, log_name_len);
       pthread_mutex_unlock(&linfo->lock);
       if (result)
 	break;
@@ -392,7 +391,7 @@ void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos,
   pthread_mutex_t *log_lock;
   bool binlog_can_be_corrupted= false;
 
-  memset((char*) &log, 0, sizeof(log));
+  memset(&log, 0, sizeof(log));
   /* 
      heartbeat_period from @master_heartbeat_period user variable
   */

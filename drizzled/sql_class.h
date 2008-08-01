@@ -1203,7 +1203,7 @@ public:
     }
     st_transactions()
     {
-      memset((char*)this, 0, sizeof(*this));
+      memset(this, 0, sizeof(*this));
       xid_state.xid.null();
       init_sql_alloc(&mem_root, ALLOC_ROOT_MIN_BLOCK_SIZE, 0);
     }

@@ -168,7 +168,7 @@ uint sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
 {
-  memset((uchar*) &sql_command_flags, 0, sizeof(sql_command_flags));
+  memset(&sql_command_flags, 0, sizeof(sql_command_flags));
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -728,7 +728,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     lex_start(thd);
 
     status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_FIELDS]);
-    memset((char*) &table_list, 0, sizeof(table_list));
+    memset(&table_list, 0, sizeof(table_list));
     if (thd->copy_db_to(&table_list.db, &table_list.db_length))
       break;
     /*
@@ -1639,7 +1639,7 @@ end_with_restore_list:
     */
     thd->enable_slow_log= opt_log_slow_admin_statements;
 
-    memset((char*) &create_info, 0, sizeof(create_info));
+    memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
     create_info.row_type= ROW_TYPE_NOT_USED;
     create_info.default_table_charset= thd->variables.collation_database;
@@ -1705,7 +1705,7 @@ end_with_restore_list:
 
       { // Rename of table
           TABLE_LIST tmp_table;
-          memset((char*) &tmp_table, 0, sizeof(tmp_table));
+          memset(&tmp_table, 0, sizeof(tmp_table));
           tmp_table.table_name= lex->name.str;
           tmp_table.db=select_lex->db;
       }
@@ -2752,8 +2752,8 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
     return 1;
   if (old_info)
   {						// Copy old info from stack
-    memcpy(lex->yacc_yyss, (uchar*) *yyss, old_info*sizeof(**yyss));
-    memcpy(lex->yacc_yyvs, (uchar*) *yyvs, old_info*sizeof(**yyvs));
+    memcpy(lex->yacc_yyss, *yyss, old_info*sizeof(**yyss));
+    memcpy(lex->yacc_yyvs, *yyvs, old_info*sizeof(**yyvs));
   }
   *yyss=(short*) lex->yacc_yyss;
   *yyvs=(YYSTYPE*) lex->yacc_yyvs;
@@ -2931,7 +2931,7 @@ void create_select_for_variable(const char *var_name)
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
-  memset((char*) &null_lex_string.str, 0, sizeof(null_lex_string));
+  memset(&null_lex_string.str, 0, sizeof(null_lex_string));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.

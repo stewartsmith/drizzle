@@ -179,7 +179,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
                        &path_buff, path_length + 1,
                        NULL))
   {
-    memset((char*) share, 0, sizeof(*share));
+    memset(share, 0, sizeof(*share));
 
     share->set_table_cache_key(key_buff, key, key_length);
 
@@ -208,7 +208,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
     share->table_map_id= ~0UL;
     share->cached_row_logging_check= -1;
 
-    memcpy((char*) &share->mem_root, (char*) &mem_root, sizeof(mem_root));
+    memcpy(&share->mem_root, &mem_root, sizeof(mem_root));
     pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&share->cond, NULL);
   }
@@ -244,7 +244,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
                           const char *path)
 {
 
-  memset((char*) share, 0, sizeof(*share));
+  memset(share, 0, sizeof(*share));
   init_sql_alloc(&share->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   share->table_category=         TABLE_CATEGORY_TEMPORARY;
   share->tmp_table=              INTERNAL_TMP_TABLE;
@@ -314,7 +314,7 @@ void free_table_share(TABLE_SHARE *share)
   share->db_plugin= NULL;
 
   /* We must copy mem_root from share because share is allocated through it */
-  memcpy((char*) &mem_root, (char*) &share->mem_root, sizeof(mem_root));
+  memcpy(&mem_root, &share->mem_root, sizeof(mem_root));
   free_root(&mem_root, MYF(0));                 // Free's share
   return;
 }
@@ -582,7 +582,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if (!(keyinfo = (KEY*) alloc_root(&share->mem_root,
 				    n_length + uint2korr(disk_buff+4))))
     goto err;                                   /* purecov: inspected */
-  memset((char*) keyinfo, 0, n_length);
+  memset(keyinfo, 0, n_length);
   share->key_info= keyinfo;
   key_part= my_reinterpret_cast(KEY_PART_INFO*) (keyinfo+keys);
   strpos=disk_buff+6;
@@ -822,7 +822,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   names= (char*) (interval_array+share->fields+interval_parts+keys+3);
   if (!interval_count)
     share->intervals= 0;			// For better debugging
-  memcpy((char*) names, strpos+(share->fields*field_pack_length),
+  memcpy(names, strpos+(share->fields*field_pack_length),
 	 (uint) (n_length+int_length));
   comment_pos= names+(n_length+int_length);
   memcpy(comment_pos, disk_buff+read_length-com_length, com_length);
@@ -959,7 +959,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       }
       else
         charset= share->table_charset;
-      memset((char*) &comment, 0, sizeof(comment));
+      memset(&comment, 0, sizeof(comment));
     }
 
     if (interval_nr && charset->mbminlen > 1)
@@ -1338,7 +1338,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   assert(thd->lex->is_lex_started);
 
   error= 1;
-  memset((char*) outparam, 0, sizeof(*outparam));
+  memset(outparam, 0, sizeof(*outparam));
   outparam->in_use= thd;
   outparam->s= share;
   outparam->db_stat= db_stat;
@@ -1546,7 +1546,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   }
 
 #if defined(HAVE_purify) 
-  memset((char*) bitmaps, 0, bitmap_size*3);
+  memset(bitmaps, 0, bitmap_size*3);
 #endif
 
   outparam->no_replicate= outparam->file &&
@@ -1655,7 +1655,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
       my_free((uchar*) buf,MYF(0));
   }
   else if (!names)
-    memset((char*) save_names, 0, sizeof(save_names));
+    memset(save_names, 0, sizeof(save_names));
   else
   {
     char *str;
@@ -2040,7 +2040,7 @@ File create_frm(THD *thd, const char *name, const char *db,
   {
     uint key_length, tmp_key_length;
     uint tmp;
-    memset((char*) fileinfo, 0, 64);
+    memset(fileinfo, 0, 64);
     /* header */
     fileinfo[0]=(uchar) 254;
     fileinfo[1]= 1;
@@ -3179,7 +3179,7 @@ void st_table::clear_column_bitmaps()
     bitmap_clear_all(&table->def_read_set);
     bitmap_clear_all(&table->def_write_set);
   */
-  memset((char*) def_read_set.bitmap, 0, s->column_bitmap_size*2);
+  memset(def_read_set.bitmap, 0, s->column_bitmap_size*2);
   column_bitmaps_set(&def_read_set, &def_write_set);
 }
 

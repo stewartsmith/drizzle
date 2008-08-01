@@ -913,7 +913,7 @@ bool Item::get_date(MYSQL_TIME *ltime,uint fuzzydate)
   return 0;
 
 err:
-  memset((char*) ltime, 0, sizeof(*ltime));
+  memset(ltime, 0, sizeof(*ltime));
   return 1;
 }
 
@@ -930,7 +930,7 @@ bool Item::get_time(MYSQL_TIME *ltime)
   if (!(res=val_str(&tmp)) ||
       str_to_time_with_warn(res->ptr(), res->length(), ltime))
   {
-    memset((char*) ltime, 0, sizeof(*ltime));
+    memset(ltime, 0, sizeof(*ltime));
     return 1;
   }
   return 0;
@@ -1624,7 +1624,7 @@ bool Item_field::get_date(MYSQL_TIME *ltime,uint fuzzydate)
 {
   if ((null_value=field->is_null()) || field->get_date(ltime,fuzzydate))
   {
-    memset((char*) ltime, 0, sizeof(*ltime));
+    memset(ltime, 0, sizeof(*ltime));
     return 1;
   }
   return 0;
@@ -1635,7 +1635,7 @@ bool Item_field::get_date_result(MYSQL_TIME *ltime,uint fuzzydate)
   if ((null_value=result_field->is_null()) ||
       result_field->get_date(ltime,fuzzydate))
   {
-    memset((char*) ltime, 0, sizeof(*ltime));
+    memset(ltime, 0, sizeof(*ltime));
     return 1;
   }
   return 0;
@@ -1645,7 +1645,7 @@ bool Item_field::get_time(MYSQL_TIME *ltime)
 {
   if ((null_value=field->is_null()) || field->get_time(ltime))
   {
-    memset((char*) ltime, 0, sizeof(*ltime));
+    memset(ltime, 0, sizeof(*ltime));
     return 1;
   }
   return 0;

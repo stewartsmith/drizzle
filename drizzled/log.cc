@@ -1152,7 +1152,7 @@ static int find_uniq_filename(char *name)
   file_info= dir_info->dir_entry;
   for (i=dir_info->number_off_files ; i-- ; file_info++)
   {
-    if (memcmp((uchar*) file_info->name, (uchar*) start, length) == 0 &&
+    if (memcmp(file_info->name, start, length) == 0 &&
 	test_if_number(file_info->name+length, &number,0))
     {
       set_if_bigger(max_found,(ulong) number);
@@ -1274,7 +1274,7 @@ MYSQL_LOG::MYSQL_LOG()
     called only in main(). Doing initialization here would make it happen
     before main().
   */
-  memset((char*) &log_file, 0, sizeof(log_file));
+  memset(&log_file, 0, sizeof(log_file));
 }
 
 void MYSQL_LOG::init_pthread_objects()
@@ -1688,7 +1688,7 @@ MYSQL_BIN_LOG::MYSQL_BIN_LOG()
     before main().
   */
   index_file_name[0] = 0;
-  memset((char*) &index_file, 0, sizeof(index_file));
+  memset(&index_file, 0, sizeof(index_file));
 }
 
 /* this is called only once */
@@ -3427,7 +3427,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
       assert(carry < LOG_EVENT_HEADER_LEN);
 
       /* assemble both halves */
-      memcpy(&header[carry], (char *)cache->read_pos, LOG_EVENT_HEADER_LEN - carry);
+      memcpy(&header[carry], cache->read_pos, LOG_EVENT_HEADER_LEN - carry);
 
       /* fix end_log_pos */
       val= uint4korr(&header[LOG_POS_OFFSET]) + group;
@@ -3441,7 +3441,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
         copy fixed second half of header to cache so the correct
         version will be written later.
       */
-      memcpy((char *)cache->read_pos, &header[carry], LOG_EVENT_HEADER_LEN - carry);
+      memcpy(cache->read_pos, &header[carry], LOG_EVENT_HEADER_LEN - carry);
 
       /* next event header at ... */
       hdr_offs = uint4korr(&header[EVENT_LEN_OFFSET]) - carry;
@@ -3470,7 +3470,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
         if (hdr_offs + LOG_EVENT_HEADER_LEN > length)
         {
           carry= length - hdr_offs;
-          memcpy(header, (char *)cache->read_pos + hdr_offs, carry);
+          memcpy(header, cache->read_pos + hdr_offs, carry);
           length= hdr_offs;
         }
         else

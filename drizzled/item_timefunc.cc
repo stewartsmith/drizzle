@@ -185,7 +185,7 @@ static bool sec_to_time(int64_t seconds, bool unsigned_flag, MYSQL_TIME *ltime)
 {
   uint sec;
 
-  memset((char *)ltime, 0, sizeof(*ltime));
+  memset(ltime, 0, sizeof(*ltime));
   
   if (seconds < 0)
   {
@@ -288,7 +288,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
   CHARSET_INFO *cs= &my_charset_bin;
 
   if (!sub_pattern_end)
-    memset((char*) l_time, 0, sizeof(*l_time));
+    memset(l_time, 0, sizeof(*l_time));
 
   for (; ptr != end && val != val_end; ptr++)
   {
@@ -885,7 +885,7 @@ static bool get_interval_info(const char *str,uint length,CHARSET_INFO *cs,
       /* Change values[0...i-1] -> values[0...count-1] */
       bmove_upp((uchar*) (values+count), (uchar*) (values+i),
 		sizeof(*values)*i);
-      memset((uchar*) values, 0, sizeof(*values)*(count-i));
+      memset(values, 0, sizeof(*values)*(count-i));
       break;
     }
   }
@@ -1299,7 +1299,7 @@ bool get_interval_value(Item *args,interval_type int_type,
   size_t length= 0;
   CHARSET_INFO *cs=str_value->charset();
 
-  memset((char*) interval, 0, sizeof(*interval));
+  memset(interval, 0, sizeof(*interval));
   if ((int) int_type <= INTERVAL_MICROSECOND)
   {
     value= args->val_int();
@@ -2373,7 +2373,7 @@ String *Item_char_typecast::val_str(String *str)
         str->copy(*res);
         res= str;
       }
-      memset((char*) res->ptr() + res->length(), 0,
+      memset(res->ptr() + res->length(), 0,
              (uint) cast_length - res->length());
       res->length(cast_length);
     }
@@ -2502,7 +2502,7 @@ bool Item_date_typecast::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute
 
 bool Item_date_typecast::get_time(MYSQL_TIME *ltime)
 {
-  memset((char *)ltime, 0, sizeof(MYSQL_TIME));
+  memset(ltime, 0, sizeof(MYSQL_TIME));
   return args[0]->null_value;
 }
 
@@ -2681,7 +2681,7 @@ String *Item_func_add_time::val_str(String *str)
   if (l_time1.neg != l_time2.neg)
     l_sign= -l_sign;
   
-  memset((char *)&l_time3, 0, sizeof(l_time3));
+  memset(&l_time3, 0, sizeof(l_time3));
   
   l_time3.neg= calc_time_diff(&l_time1, &l_time2, -l_sign,
 			      &seconds, &microseconds);
@@ -2769,7 +2769,7 @@ String *Item_func_timediff::val_str(String *str)
   if (l_time1.neg != l_time2.neg)
     l_sign= -l_sign;
 
-  memset((char *)&l_time3, 0, sizeof(l_time3));
+  memset(&l_time3, 0, sizeof(l_time3));
   
   l_time3.neg= calc_time_diff(&l_time1, &l_time2, l_sign,
 			      &seconds, &microseconds);
@@ -2818,7 +2818,7 @@ String *Item_func_maketime::val_str(String *str)
                    str->alloc(MAX_DATE_STRING_REP_LENGTH))))
     return 0;
 
-  memset((char *)&ltime, 0, sizeof(ltime));
+  memset(&ltime, 0, sizeof(ltime));
   ltime.neg= 0;
 
   /* Check for integer overflows */
@@ -3207,7 +3207,7 @@ bool Item_func_str_to_date::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
     goto null_date;
 
   null_value= 0;
-  memset((char*) ltime, 0, sizeof(*ltime));
+  memset(ltime, 0, sizeof(*ltime));
   date_time_format.format.str=    (char*) format->ptr();
   date_time_format.format.length= format->length();
   if (extract_date_time(&date_time_format, val->ptr(), val->length(),

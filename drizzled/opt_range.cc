@@ -615,7 +615,7 @@ public:
   SEL_TREE() :type(KEY)
   {
     keys_map.clear_all();
-    memset((char*) keys, 0, sizeof(keys));
+    memset(keys, 0, sizeof(keys));
   }
   /*
     Note: there may exist SEL_TREE objects with sel_tree->type=KEY and
@@ -1093,7 +1093,7 @@ QUICK_RANGE_SELECT::QUICK_RANGE_SELECT(THD *thd, TABLE *table, uint key_nr,
     thd->mem_root= &alloc;
   }
   else
-    memset((char*) &alloc, 0, sizeof(alloc));
+    memset(&alloc, 0, sizeof(alloc));
   file= head->file;
   record= head->record[0];
   save_read_set= head->read_set;
