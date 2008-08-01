@@ -1005,8 +1005,7 @@ exit2:
 }
 
 /*
-  Removes files with known extensions plus all found subdirectories that
-  are 2 hex digits (raid directories).
+  Removes files with known extensions plus.
   thd MUST be set when calling this function!
 */
 
@@ -1033,32 +1032,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
        (file->name[1] == '.' &&  !file->name[2])))
       continue;
 
-    /* Check if file is a raid directory */
-    if ((my_isdigit(system_charset_info, file->name[0]) ||
-	 (file->name[0] >= 'a' && file->name[0] <= 'f')) &&
-	(my_isdigit(system_charset_info, file->name[1]) ||
-	 (file->name[1] >= 'a' && file->name[1] <= 'f')) &&
-	!file->name[2] && !level)
-    {
-      char newpath[FN_REFLEN], *copy_of_path;
-      MY_DIR *new_dirp;
-      String *dir;
-      uint length;
-
-      strxmov(newpath,org_path,"/",file->name,NullS);
-      length= unpack_filename(newpath,newpath);
-      if ((new_dirp = my_dir(newpath,MYF(MY_DONT_SORT))))
-      {
-	if ((mysql_rm_known_files(thd, new_dirp, NullS, newpath,1,0)) < 0)
-	  goto err;
-	if (!(copy_of_path= (char*) thd->memdup(newpath, length+1)) ||
-	    !(dir= new (thd->mem_root) String(copy_of_path, length, &my_charset_bin)))
-	  goto err;
-	continue;
-      }
-      found_other_files++;
-      continue;
-    }
     if (!(extension= strrchr(file->name, '.')))
       extension= strend(file->name);
     if (find_type(extension, &deletable_extentions,1+2) <= 0)
