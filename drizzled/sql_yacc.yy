@@ -696,7 +696,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
 %token  PARTIAL                       /* SQL-2003-N */
-%token  PASSWORD
 %token  PHASE_SYM
 %token  PLUGINS_SYM
 %token  PLUGIN_SYM
@@ -3688,13 +3687,6 @@ function_call_conflict:
           { $$= new (YYTHD->mem_root) Item_func_microsecond($3); }
         | MOD_SYM '(' expr ',' expr ')'
           { $$ = new (YYTHD->mem_root) Item_func_mod( $3, $5); }
-        | PASSWORD '(' expr ')'
-          {
-            THD *thd= YYTHD;
-            Item* i1;
-	    i1= new (thd->mem_root) Item_func_password($3);
-            $$= i1;
-          }
         | QUARTER_SYM '(' expr ')'
           { $$ = new (YYTHD->mem_root) Item_func_quarter($3); }
         | REPEAT_SYM '(' expr ',' expr ')'
@@ -6521,7 +6513,6 @@ keyword_sp:
         | PAGE_SYM                 {}
         | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
-        | PASSWORD                 {}
         | PHASE_SYM                {}
         | PLUGIN_SYM               {}
         | PLUGINS_SYM              {}

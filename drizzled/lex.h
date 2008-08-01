@@ -346,7 +346,6 @@ static SYMBOL symbols[] = {
   { "PAGE",	        SYM(PAGE_SYM)},
   { "PAGE_CHECKSUM",        SYM(PAGE_CHECKSUM_SYM)},
   { "PARTIAL",		SYM(PARTIAL)},
-  { "PASSWORD",		SYM(PASSWORD)},
   { "PHASE",            SYM(PHASE_SYM)},
   { "PLUGIN",           SYM(PLUGIN_SYM)},
   { "PLUGINS",          SYM(PLUGINS_SYM)},
