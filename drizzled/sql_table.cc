@@ -4071,6 +4071,8 @@ mysql_prepare_alter_table(THD *thd, TABLE *table,
     create_info->max_rows= table->s->max_rows;
   if (!(used_fields & HA_CREATE_USED_AVG_ROW_LENGTH))
     create_info->avg_row_length= table->s->avg_row_length;
+  if (!(used_fields & HA_CREATE_USED_BLOCK_SIZE))
+    create_info->block_size= table->s->block_size;
   if (!(used_fields & HA_CREATE_USED_DEFAULT_CHARSET))
     create_info->default_table_charset= table->s->table_charset;
   if (!(used_fields & HA_CREATE_USED_AUTO) && table->found_next_number_field)
