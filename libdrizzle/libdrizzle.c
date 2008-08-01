@@ -107,7 +107,9 @@ append_wild(char *to, char *end, const char *wild)
   end-=5;          /* Some extra */
   if (wild && wild[0])
   {
-    to=strmov(to," like '");
+    to= strcpy(to," like '");
+    to+= 7; /* strlen(" like '"); */
+
     while (*wild && to < end)
     {
       if (*wild == '\\' || *wild == '\'')
@@ -202,7 +204,7 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
     passwd="";
 
   /* Store user into the buffer */
-  end= strmake(end, user, USERNAME_LENGTH) + 1;
+  end= strncpy(end, user, USERNAME_LENGTH) + USERNAME_LENGTH + 1;
 
   /* write scrambled password according to server capabilities */
   if (passwd[0])
@@ -216,7 +218,7 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   else
     *end++= '\0';                               /* empty password */
   /* Add database if needed */
-  end= strmake(end, db ? db : "", NAME_LEN) + 1;
+  end= strncpy(end, db ? db : "", NAME_LEN) + NAME_LEN + 1;
 
   /* Add character set number. */
 
@@ -262,7 +264,7 @@ char* getlogin(void);
 void read_user_name(char *name)
 {
   if (geteuid() == 0)
-    (void) strmov(name,"root");    /* allow use of surun */
+    strcpy(name,"root");    /* allow use of surun */
   else
   {
 #ifdef HAVE_GETPWUID
@@ -271,16 +273,16 @@ void read_user_name(char *name)
     if ((str=getlogin()) == NULL)
     {
       if ((skr=getpwuid(geteuid())) != NULL)
-  str=skr->pw_name;
+        str=skr->pw_name;
       else if (!(str=getenv("USER")) && !(str=getenv("LOGNAME")) &&
          !(str=getenv("LOGIN")))
-  str="UNKNOWN_USER";
+      str="UNKNOWN_USER";
     }
-    (void) strmake(name,str,USERNAME_LENGTH);
+    strncpy(name,str,USERNAME_LENGTH);
 #elif HAVE_CUSERID
     (void) cuserid(name);
 #else
-    strmov(name,"UNKNOWN_USER");
+    strcpy(name,"UNKNOWN_USER");
 #endif
   }
   return;
@@ -319,7 +321,7 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename)
   {
     VOID(my_net_write(net,(const uchar*) "",0)); /* Server needs one packet */
     net_flush(net);
-    strmov(net->sqlstate, unknown_sqlstate);
+    strcpy(net->sqlstate, unknown_sqlstate);
     net->last_errno=
       (*options->local_infile_error)(li_ptr,
                                      net->last_error,
@@ -496,11 +498,11 @@ default_local_infile_error(void *ptr, char *error_msg, uint error_msg_len)
   default_local_infile_data *data = (default_local_infile_data *) ptr;
   if (data)          /* If not error on open */
   {
-    strmake(error_msg, data->error_msg, error_msg_len);
+    strncpy(error_msg, data->error_msg, error_msg_len);
     return data->error_num;
   }
   /* This can only happen if we got error on malloc of handle */
-  strmov(error_msg, ER(CR_OUT_OF_MEMORY));
+  strcpy(error_msg, ER(CR_OUT_OF_MEMORY));
   return CR_OUT_OF_MEMORY;
 }
 
@@ -605,8 +607,10 @@ DRIZZLE_RES * STDCALL
 drizzle_list_tables(DRIZZLE *drizzle, const char *wild)
 {
   char buff[255];
+  char *ptr= strcpy(buff, "show tables");
+  ptr+= 11; /* strlen("show tables"); */
 
-  append_wild(strmov(buff,"show tables"),buff+sizeof(buff),wild);
+  append_wild(ptr,buff+sizeof(buff),wild);
   if (drizzle_query(drizzle,buff))
     return(0);
   return (drizzle_store_result(drizzle));
@@ -638,9 +642,11 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
 {
   DRIZZLE_RES   *result;
   DRIZZLE_FIELD *fields;
-  char       buff[257],*end;
+  char buff[257], *end;
 
-  end=strmake(strmake(buff, table,128)+1,wild ? wild : "",128);
+  end= strncpy(buff, table, 128) + 128;
+  end= strncpy(end+1, wild ? wild : "", 128) + 128;
+
   free_old_query(drizzle);
   if (simple_command(drizzle, COM_FIELD_LIST, (uchar*) buff,
                      (ulong) (end-buff), 1) ||
