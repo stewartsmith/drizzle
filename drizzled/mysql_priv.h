@@ -159,88 +159,7 @@ extern MY_LOCALE *my_default_lc_time_names;
 MY_LOCALE *my_locale_by_name(const char *name);
 MY_LOCALE *my_locale_by_number(uint number);
 
-/*************************************************************************/
-
-/**
- Object_creation_ctx -- interface for creation context of database objects
- (views, stored routines, events, triggers). Creation context -- is a set
- of attributes, that should be fixed at the creation time and then be used
- each time the object is parsed or executed.
-*/
-
-class Object_creation_ctx
-{
-public:
-  Object_creation_ctx *set_n_backup(THD *thd);
-
-  void restore_env(THD *thd, Object_creation_ctx *backup_ctx);
-
-protected:
-  Object_creation_ctx() {}
-  virtual Object_creation_ctx *create_backup_ctx(THD *thd) const = 0;
-
-  virtual void change_env(THD *thd) const = 0;
-
-public:
-  virtual ~Object_creation_ctx()
-  { }
-};
-
-/*************************************************************************/
-
-/**
- Default_object_creation_ctx -- default implementation of
- Object_creation_ctx.
-*/
-
-class Default_object_creation_ctx : public Object_creation_ctx
-{
-public:
-  CHARSET_INFO *get_client_cs()
-  {
-    return m_client_cs;
-  }
-
-  CHARSET_INFO *get_connection_cl()
-  {
-    return m_connection_cl;
-  }
-
-protected:
-  Default_object_creation_ctx(THD *thd);
-
-  Default_object_creation_ctx(CHARSET_INFO *client_cs,
-                              CHARSET_INFO *connection_cl);
-
-protected:
-  virtual Object_creation_ctx *create_backup_ctx(THD *thd) const;
-
-  virtual void change_env(THD *thd) const;
-
-protected:
-  /**
-    client_cs stores the value of character_set_client session variable.
-    The only character set attribute is used.
-
-    Client character set is included into query context, because we save
-    query in the original character set, which is client character set. So,
-    in order to parse the query properly we have to switch client character
-    set on parsing.
-  */
-  CHARSET_INFO *m_client_cs;
-
-  /**
-    connection_cl stores the value of collation_connection session
-    variable. Both character set and collation attributes are used.
-
-    Connection collation is included into query context, becase it defines
-    the character set and collation of text literals in internal
-    representation of query (item-objects).
-  */
-  CHARSET_INFO *m_connection_cl;
-};
-
-
+#include <drizzled/object_creation_ctx.h>
 /**
   Opening modes for open_temporary_table and open_table_from_share
 */
@@ -494,11 +413,9 @@ enum open_table_mode
 #define MODE_NO_ENGINE_SUBSTITUTION     (MODE_HIGH_NOT_PRECEDENCE*2)
 #define MODE_PAD_CHAR_TO_FULL_LENGTH    (1ULL << 31)
 
-
 /* @@optimizer_switch flags */
 #define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
 #define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
-
 
 /*
   Replication uses 8 bytes to store SQL_MODE in the binary log. The day you
@@ -511,7 +428,6 @@ enum open_table_mode
   in scripts/mysql_system_tables.sql and scripts/mysql_system_tables_fix.sql
 
 */
-
 #define RAID_BLOCK_SIZE 1024
 
 #define MY_CHARSET_BIN_MB_MAXLEN 1
@@ -590,50 +506,6 @@ enum enum_check_fields
   CHECK_FIELD_ERROR_FOR_NULL
 };
 
-                                  
-/** Struct to handle simple linked lists. */
-typedef struct st_sql_list {
-  uint elements;
-  uchar *first;
-  uchar **next;
-
-  st_sql_list() {}                              /* Remove gcc warning */
-  inline void empty()
-  {
-    elements=0;
-    first=0;
-    next= &first;
-  }
-  inline void link_in_list(uchar *element,uchar **next_ptr)
-  {
-    elements++;
-    (*next)=element;
-    next= next_ptr;
-    *next=0;
-  }
-  inline void save_and_clear(struct st_sql_list *save)
-  {
-    *save= *this;
-    empty();
-  }
-  inline void push_front(struct st_sql_list *save)
-  {
-    *save->next= first;				/* link current list last */
-    first= save->first;
-    elements+= save->elements;
-  }
-  inline void push_back(struct st_sql_list *save)
-  {
-    if (save->first)
-    {
-      *next= save->first;
-      next= save->next;
-      elements+= save->elements;
-    }
-  }
-} SQL_LIST;
-
-
 extern pthread_key(THD*, THR_THD);
 inline THD *_current_thd(void)
 {
@@ -656,10 +528,6 @@ const char *set_thd_proc_info(THD *thd, const char *info,
 */
 extern ulong server_id;
 
-
-typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
-                                      uint key_length,
-                                      uint64_t *engine_data);
 #include "sql_string.h"
 #include "sql_list.h"
 #include "sql_map.h"
