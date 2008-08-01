@@ -2472,7 +2472,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     uint length=(uint) strlen(alias)+1;
     table->alias= (char*) my_realloc((char*) table->alias, length,
                                      MYF(MY_WME));
-    memcpy(table->alias, alias, length);
+    memcpy((void*) table->alias, alias, length);
   }
   /* These variables are also set in reopen_table() */
   table->tablenr=thd->current_tablenr++;
