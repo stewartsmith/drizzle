@@ -865,6 +865,8 @@ then
 			[Define to 1 if you want to use fast mutexes])
 fi
 
+AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
+
 AC_ARG_WITH([comment],
     [AS_HELP_STRING([--with-comment],
             [Comment about compilation environment. @<:@default=off@:>@])],

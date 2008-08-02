@@ -54,6 +54,10 @@ noinst_HEADERS =	mysys_priv.h \
 			thr_lock.h \
 			base64.h
 
+if BUILD_FAST_MUTEX
+thr_mutex_source=thr_mutex.c
+endif
+
 libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_path.c mf_loadpath.c my_file.c \
 			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
@@ -84,7 +88,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			my_memmem.c \
 			my_access.c base64.c \
 			thr_alarm.c thr_lock.c my_thr_init.c \
-                        thr_mutex.c thr_rwlock.c 
+                        ${thr_mutex_source} thr_rwlock.c 
 DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
 			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
