@@ -15,7 +15,7 @@
 
 #include "mysys_priv.h"
 #include "mysys_err.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <errno.h>
 #ifdef HAVE_REALPATH
 #include <sys/param.h>

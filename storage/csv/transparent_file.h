@@ -15,7 +15,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <my_dir.h>
 
 
 class Transparent_file

@@ -15,31 +15,30 @@
 
 # Process this file with automake to create Makefile.in
 
-SUBDIRS = . include \
-	  vio \
-	  strings \
+SUBDIRS = . vio \
+	  mystrings \
 	  mysys \
 	  extra \
 	  libdrizzle \
 	  client \
 	  storage \
 	  plugin \
-	  server \
+	  drizzled \
 	  tests \
 	  support-files
 
 DIST_SUBDIRS = $(SUBDIRS) \
 	       mysys/tests \
-	       strings/tests
+	       mystrings/tests
 
 DISTCLEANFILES = ac_available_languages_fragment
 
 # Create empty datadir 
 install-data-local:
-	$(MKDIR_P) $(DESTDIR)$(localstatedir) 
+	$(mkinstalldirs) $(DESTDIR)$(localstatedir) 
 	@if test `id -u` = 0 ; then \
-			   chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
-			   fi
+		chown $(MYSQLD_USER) $(DESTDIR)$(localstatedir) ;\
+	fi
 
 distclean-local:
 	@RM@ -r -f autom4te.cache
@@ -92,22 +91,4 @@ test: test-drizzle
 
 test-drizzle:
 	cd tests ; \
-	  ./test-run.pl --fast --reorder --force \
-	  alter_table \
-	  join_crash \
-	  join_nested \
-	  join_outer_innodb \
-	  delete \
-	  join_outer \
-	  distinct \
-	  join \
-	  subselect \
-	  subselect3 \
-	  subselect_innodb \
-	  insert \
-	  select \
-	  update \
-	  information_schema \
-	  mysqlslap \
-	  lock \
-	  lock_tables_lost_commit
+	$(MAKE) $(AM_MAKEFLAGS) test 

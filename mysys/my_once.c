@@ -18,7 +18,7 @@
 #include "mysys_priv.h"
 #include "my_static.h"
 #include "mysys_err.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 /*
   Alloc for things we don't nead to free
@@ -67,7 +67,7 @@ void* my_once_alloc(size_t Size, myf MyFlags)
   next->left-= Size;
 
   if (MyFlags & MY_ZEROFILL)
-    bzero(point, Size);
+    memset(point, 0, Size);
   return((void*) point);
 } /* my_once_alloc */
 

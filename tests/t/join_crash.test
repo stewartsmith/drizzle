@@ -7,13 +7,13 @@ DROP TABLE IF EXISTS t1,t2,t3,t4;
 --enable_warnings
 
 CREATE TABLE t1 (
-  project_id int(11) NOT NULL auto_increment,
-  project_row_lock int(11) NOT NULL default '0',
+  project_id int NOT NULL auto_increment,
+  project_row_lock int NOT NULL default '0',
   project_name varchar(80) NOT NULL default '',
-  client_ptr int(11) NOT NULL default '0',
-  project_contact_ptr int(11) default NULL,
-  client_contact_ptr int(11) default NULL,
-  billing_contact_ptr int(11) default NULL,
+  client_ptr int NOT NULL default '0',
+  project_contact_ptr int default NULL,
+  client_contact_ptr int default NULL,
+  billing_contact_ptr int default NULL,
   comments mediumtext,
   PRIMARY KEY  (project_id),
   UNIQUE KEY project (client_ptr,project_name)
@@ -31,12 +31,12 @@ INSERT INTO t1 VALUES (202,0,'EPOC Port',92,NULL,NULL,NULL,'');
 INSERT INTO t1 VALUES (201,0,'TravelMate',88,NULL,NULL,NULL,'');
 
 CREATE TABLE t2 (
-  period_id int(11) NOT NULL auto_increment,
+  period_id int NOT NULL auto_increment,
   period_type enum('user_table','client_table','role_table','member_table','project_table') default NULL,
-  period_key int(11) default NULL,
+  period_key int default NULL,
   start_date datetime default NULL,
   end_date datetime default NULL,
-  work_load int(11) default NULL,
+  work_load int default NULL,
   PRIMARY KEY  (period_id),
   KEY period_index (period_type,period_key),
   KEY date_index (start_date,end_date)
@@ -59,8 +59,8 @@ INSERT INTO t2 VALUES (161,'member_table',2,'2000-01-01 00:00:00',NULL,1);
 INSERT INTO t2 VALUES (162,'member_table',3,'2000-01-01 00:00:00',NULL,1);
 
 CREATE TABLE t3 (
-  budget_id int(11) NOT NULL auto_increment,
-  project_ptr int(11) NOT NULL default '0',
+  budget_id int NOT NULL auto_increment,
+  project_ptr int NOT NULL default '0',
   po_number varchar(20) NOT NULL default '',
   status enum('open','closed') default NULL,
   date_received datetime default NULL,
@@ -71,10 +71,10 @@ CREATE TABLE t3 (
 ) ENGINE=MyISAM PACK_KEYS=1;
 
 CREATE TABLE t4 (
-  client_id int(11) NOT NULL auto_increment,
-  client_row_lock int(11) NOT NULL default '0',
+  client_id int NOT NULL auto_increment,
+  client_row_lock int NOT NULL default '0',
   client_name varchar(80) NOT NULL default '',
-  contact_ptr int(11) default NULL,
+  contact_ptr int default NULL,
   comments mediumtext,
   PRIMARY KEY  (client_id),
   UNIQUE KEY client_name (client_name)

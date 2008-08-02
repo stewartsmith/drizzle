@@ -15,7 +15,8 @@
 
 /* This makes a wrapper for mutex handling to make it easier to debug mutex */
 
-#include <my_global.h>
+#include "mysys_priv.h"
+
 #if defined(TARGET_OS_LINUX) && !defined (__USE_UNIX98)
 #define __USE_UNIX98			/* To get rw locks under Linux */
 #endif
@@ -56,7 +57,7 @@ int safe_mutex_init(safe_mutex_t *mp,
 		    const char *file,
 		    uint line)
 {
-  bzero((char*) mp,sizeof(*mp));
+  memset((char*) mp, 0, sizeof(*mp));
   pthread_mutex_init(&mp->global,MY_MUTEX_INIT_ERRCHK);
   pthread_mutex_init(&mp->mutex,attr);
   /* Mark that mutex is initialized */

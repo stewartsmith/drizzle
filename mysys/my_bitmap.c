@@ -36,9 +36,9 @@
 */
 
 #include "mysys_priv.h"
-#include <my_bitmap.h>
-#include <m_string.h>
-#include <my_bit.h>
+#include <mysys/my_bitmap.h>
+#include <mystrings/m_string.h>
+#include <mysys/my_bit.h>
 
 void create_last_word_mask(MY_BITMAP *map)
 {
@@ -247,7 +247,7 @@ void bitmap_set_prefix(MY_BITMAP *map, uint prefix_size)
   if ((prefix_bits= prefix_size & 7))
     *m++= (1 << prefix_bits)-1;
   if ((d= no_bytes_in_map(map)-prefix_bytes))
-    bzero(m, d);
+    memset(m, 0, d);
 }
 
 

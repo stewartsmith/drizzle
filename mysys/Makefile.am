@@ -16,8 +16,6 @@
 MYSQLDATAdir =		$(localstatedir)
 MYSQLSHAREdir =		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
-AM_CPPFLAGS =		-I$(top_builddir)/include \
-			-I$(top_srcdir)/include -I$(srcdir)
 
 pkglib_LTLIBRARIES =	libmysys.la
 libmysys_la_LDFLAGS =   -static
@@ -31,7 +29,31 @@ nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
 # Trick to get things compiled like they are shared, but linked directly in.
 noinst_LTLIBRARIES = libmysyslt.la
 
-noinst_HEADERS =	mysys_priv.h my_static.h my_handler_errors.h
+mysysincludedir = ${includedir}/mysys
+dist_mysysinclude_HEADERS = 	my_alloc.h \
+				my_getopt.h \
+				my_list.h \
+				my_sys.h \
+				my_pthread.h \
+				typelib.h
+
+noinst_HEADERS =	mysys_priv.h \
+			my_bit.h \
+			my_bitmap.h \
+			my_dir.h \
+			my_static.h \
+			my_handler.h \
+			my_handler_errors.h \
+			my_nosys.h \
+			mysys_err.h \
+			my_tree.h \
+			queues.h \
+			hash.h \
+			sha1.h \
+			thr_alarm.h \
+			thr_lock.h \
+			base64.h
+
 libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_path.c mf_loadpath.c my_file.c \
 			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
@@ -48,7 +70,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_wcomp.c mf_wfile.c my_gethwaddr.c \
 			mf_qsort.c mf_qsort2.c mf_sort.c \
 			ptr_cmp.c mf_radix.c queues.c my_getncpus.c \
-			tree.c trie.c list.c hash.c array.c string.c typelib.c \
+			tree.c list.c hash.c array.c string.c typelib.c \
 			my_copy.c my_append.c my_lib.c \
 			my_delete.c my_rename.c my_redel.c \
 			my_clock.c \

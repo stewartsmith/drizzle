@@ -66,7 +66,7 @@ void _myisam_log(enum myisam_log_commands command, MI_INFO *info,
   int old_errno;
   ulong pid=(ulong) GETPID();
   old_errno=my_errno;
-  bzero(buff,sizeof(buff));
+  memset(buff, 0, sizeof(buff));
   buff[0]=(char) command;
   mi_int2store(buff+1,info->dfile);
   mi_int4store(buff+3,pid);
@@ -131,8 +131,7 @@ void _myisam_log_record(enum myisam_log_commands command, MI_INFO *info,
 	 blob != end ;
 	 blob++)
     {
-      memcpy_fixed((uchar*) &pos, record+blob->offset+blob->pack_length,
-                   sizeof(char*));
+      memcpy((uchar*) &pos, record+blob->offset+blob->pack_length, sizeof(char*));
       VOID(my_write(myisam_log_file,pos,blob->length,MYF(0)));
     }
   }

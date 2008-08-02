@@ -25,14 +25,12 @@ EXTRA_SCRIPTS = 	valgrind.supp $(PRESCRIPTS)
 EXTRA_DIST = 		$(EXTRA_SCRIPTS) suite
 GENSCRIPTS =		install_test_db dtr test-run
 PRESCRIPTS =		test-run.pl stress-test.pl
-test_SCRIPTS = 		$(GENSCRIPTS) $(PRESCRIPTS)
+noinst_SCRIPTS =	$(GENSCRIPTS) $(PRESCRIPTS)
 CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
 
-AM_CPPFLAGS =		-I$(top_builddir)/include -I$(top_srcdir)/include \
-			-I${top_srcdir}/sql
 LDADD=			$(top_builddir)/mysys/libmysyslt.la \
-                        $(top_builddir)/strings/libmystringslt.la 
+                        $(top_builddir)/mystrings/libmystringslt.la 
 
 
 
@@ -74,58 +72,6 @@ dist-hook:
 	$(INSTALL_DATA) $(srcdir)/lib/*.pl $(distdir)/lib
 	$(INSTALL_DATA) $(srcdir)/lib/My/*.pm $(distdir)/lib/My
 
-install-data-local:
-	$(mkinstalldirs) \
-		$(DESTDIR)$(testdir)/t \
-		$(DESTDIR)$(testdir)/extra/binlog_tests \
-		$(DESTDIR)$(testdir)/extra/rpl_tests \
-		$(DESTDIR)$(testdir)/r \
-		$(DESTDIR)$(testdir)/include \
-		$(DESTDIR)$(testdir)/std_data \
-		$(DESTDIR)$(testdir)/std_data/parts \
-		$(DESTDIR)$(testdir)/lib \
-		$(DESTDIR)$(testdir)/lib/My
-	$(INSTALL_DATA) $(srcdir)/README $(DESTDIR)$(testdir)
-	-$(INSTALL_DATA) $(srcdir)/t/*.def $(DESTDIR)$(testdir)/t
-	$(INSTALL_DATA) $(srcdir)/t/*.test $(DESTDIR)$(testdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.imtest $(DESTDIR)$(testdir)/t
-	$(INSTALL_DATA) $(srcdir)/t/*.sql $(DESTDIR)$(testdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.disabled $(DESTDIR)$(testdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.opt $(DESTDIR)$(testdir)/t
-	-$(INSTALL_SCRIPT) $(srcdir)/t/*.sh $(DESTDIR)$(testdir)/t
-	-$(INSTALL_DATA) $(srcdir)/t/*.slave-mi $(DESTDIR)$(testdir)/t
-	$(INSTALL_DATA) $(srcdir)/r/*.result $(DESTDIR)$(testdir)/r
-	$(INSTALL_DATA) $(srcdir)/r/*.require $(DESTDIR)$(testdir)/r
-	$(INSTALL_DATA) $(srcdir)/extra/binlog_tests/*.test $(DESTDIR)$(testdir)/extra/binlog_tests
-	$(INSTALL_DATA) $(srcdir)/extra/rpl_tests/*.test $(DESTDIR)$(testdir)/extra/rpl_tests
-	-$(INSTALL_DATA) $(srcdir)/extra/binlog_tests/*.opt $(DESTDIR)$(testdir)/extra/binlog_tests
-	-$(INSTALL_DATA) $(srcdir)/extra/rpl_tests/*.opt $(DESTDIR)$(testdir)/extra/rpl_tests
-	$(INSTALL_DATA) $(srcdir)/include/*.inc $(DESTDIR)$(testdir)/include
-	$(INSTALL_DATA) $(srcdir)/include/*.sql $(DESTDIR)$(testdir)/include
-	$(INSTALL_DATA) $(srcdir)/include/*.test $(DESTDIR)$(testdir)/include
-	$(INSTALL_DATA) $(srcdir)/std_data/*.dat $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.*001 $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.cnf $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/des_key_file $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/Moscow_leap $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/Index.xml $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.pem $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.frm $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.MY* $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/*.cnf $(DESTDIR)$(testdir)/std_data
-	$(INSTALL_DATA) $(srcdir)/std_data/parts/part_* $(DESTDIR)$(testdir)/std_data/parts
-	$(INSTALL_DATA) $(srcdir)/lib/*.pl $(DESTDIR)$(testdir)/lib
-	$(INSTALL_DATA) $(srcdir)/lib/My/*.pm $(DESTDIR)$(testdir)/lib/My
-	for f in `(cd $(srcdir); find suite -type f | egrep -v 'SCCS|row_lock')`; \
-	do \
-	  d=$(DESTDIR)$(testdir)/`dirname $$f`; \
-	  mkdir -p $$d ; \
-	  $(INSTALL_DATA) $(srcdir)/$$f $$d ; \
-	done
-
-uninstall-local:
-	@RM@ -f -r $(DESTDIR)$(testdir)
-
 # dtr - a shortcut for executing test-run.pl
 dtr:
 	$(RM) -f mtr dtr
@@ -137,3 +83,72 @@ test-run:
 	$(RM) -f test-run
 	$(LN_S) test-run.pl test-run
 
+
+.PHONY: test \
+    test-force \
+    test-full \
+    test-force-full \
+    test-force-mem \
+    test-pl \
+    test-force-pl \
+    test-full-pl \
+    test-force-full-pl \
+    test-force-pl-mem \
+    test-ps test-nr \
+    test-pr test-ns \
+    test-binlog-statement \
+    test-ext-funcs \
+    test-ext-rpl \
+    test-ext-jp \
+    test-ext-stress \
+    test-ext \
+    test-embedded \
+    test-fast \
+    test-fast-cursor \
+    test-fast-view \
+    test-full-qa
+
+# Target 'test' will run the regression test suite using the built server.
+#
+# If you are running in a shared environment, users can avoid clashing
+# port numbers by setting individual small numbers 1-100 to the
+# environment variable MTR_BUILD_THREAD. The script "test-run"
+# will then calculate the various port numbers it needs from this,
+# making sure each user use different ports.
+
+test-nr:
+	cd tests ; \
+	  ./test-run $(force) --mysqld=--binlog-format=row
+
+test-ns:
+	cd tests ; \
+	  ./test-run $(force) $(mem) --mysqld=--binlog-format=mixed
+
+test-binlog-statement:
+	cd tests ; \
+	  ./test-run $(force) --mysqld=--binlog-format=statement
+
+test: test-drizzle
+
+test-drizzle:
+	  $(PERL) -I$(top_srcdir)/tests/lib \
+		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
+	  alter_table \
+	  join_crash \
+	  join_nested \
+	  join_outer_innodb \
+	  delete \
+	  join_outer \
+	  distinct \
+	  type_newdecimal \
+	  join \
+	  subselect \
+	  subselect3 \
+	  subselect_innodb \
+	  insert \
+	  select \
+	  update \
+	  information_schema \
+	  mysqlslap \
+	  lock \
+	  lock_tables_lost_commit

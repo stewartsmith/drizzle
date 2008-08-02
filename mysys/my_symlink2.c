@@ -22,7 +22,7 @@
 
 #include "mysys_priv.h"
 #include "mysys_err.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 
 File my_create_with_symlink(const char *linkname, const char *filename,
 			    int createflags, int access_flags, myf MyFlags)

@@ -13,14 +13,14 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
+#include "mysys_priv.h"
 
 #if !defined(DONT_USE_THR_ALARM)
 #include <errno.h>
 #include <my_pthread.h>
 #include <signal.h>
 #include <my_sys.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <queues.h>
 #include "thr_alarm.h"
 
@@ -557,7 +557,7 @@ static void *alarm_handler(void *arg __attribute__((unused)))
     }
     process_alarm(0);
   }
-  bzero((char*) &alarm_thread,sizeof(alarm_thread)); /* For easy debugging */
+  memset((char*) &alarm_thread, 0, sizeof(alarm_thread)); /* For easy debugging */
   alarm_thread_running= 0;
   pthread_cond_signal(&COND_alarm);
   pthread_mutex_unlock(&LOCK_alarm);

@@ -4,9 +4,9 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
 AC_INIT
-AC_CONFIG_SRCDIR([server/drizzled.cc])
+AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([include/config.h:config.h.in])
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
 
@@ -49,8 +49,9 @@ sinclude(config/ac-macros/misc.m4)
 sinclude(config/ac-macros/readline.m4)
 sinclude(config/ac-macros/ssl.m4)
 sinclude(config/ac-macros/pkg.m4)
+sinclude(config/ac-macros/ac_cxx_header_stdcxx_98.m4)
 
-# Remember to add a directory server/share/LANGUAGE
+# Remember to add a directory drizzled/share/LANGUAGE
 AVAILABLE_LANGUAGES="\
 czech danish dutch english estonian french german greek hungarian \
 italian japanese korean norwegian norwegian-ny polish portuguese \
@@ -155,9 +156,17 @@ CFLAGS="$CFLAGS $C_EXTRA_FLAGS "
 CXXFLAGS="$CXXFLAGS $C_EXTRA_FLAGS "
 
 dnl Checks for programs.
-AC_PROG_AWK
 AC_PROG_CC
+ifdef([AC_PROG_CC_C99],[
+  AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
+  C99_SUPPORT_HACK=""
+],[C99_SUPPORT_HACK="-std=gnu99"])
 AC_PROG_CXX
+AC_CXX_HEADER_STDCXX_98
+if test "$ac_cv_cxx_stdcxx_98" = "no"
+then
+  AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
+fi
 AC_PROG_CPP
 AM_PROG_CC_C_O
 
@@ -179,6 +188,8 @@ CC_VERSION=""
 fi
 AC_SUBST(CC_VERSION)
 MYSQL_CHECK_CXX_VERSION
+
+AC_PROG_AWK
 
 if test "$ac_cv_c_compiler_gnu" = "yes"
 then
@@ -285,17 +296,67 @@ AC_SUBST(LD_VERSION_SCRIPT)
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(event.h)
-if test "x$ac_cv_header_event_h" != "xyes"
+AC_MSG_CHECKING(for libevent)
+AC_ARG_WITH(libevent,
+  [AS_HELP_STRING([--with-libevent],
+       [Use libevent build directory])],
+  [ with_libevent=$withval ],
+  [ with_libevent=yes ])
+
+if test "$with_libevent" = "yes"
 then
-  AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+    AC_CHECK_HEADERS(event.h)
+    if test "x$ac_cv_header_event_h" != "xyes"
+    then
+      AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+    fi
+    my_save_LIBS="$LIBS"
+    LIBS=""
+    AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+    LIBEVENT_LIBS="${LIBS}"
+    LIBS="${my_save_LIBS}"
+    LIBEVENT_CFLAGS=""
+else
+    AC_MSG_RESULT($withval)
+    if test -f $withval/event.h -a -f $withval/libevent.a; then
+       owd=`pwd`
+       if cd $withval; then withval=`pwd`; cd $owd; fi
+       LIBEVENT_CFLAGS="-I$withval"
+       LIBEVENT_LIBS="-L$withval -levent"
+    elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
+       owd=`pwd`
+       if cd $withval; then withval=`pwd`; cd $owd; fi
+       LIBEVENT_CFLAGS="-I$withval/include"
+       LIBEVENT_LIBS="-L$withval/lib -levent"
+    else
+       AC_ERROR(event.h or libevent.a not found in $withval)
+    fi
 fi
-my_save_LIBS="$LIBS"
-LIBS=""
-AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
-LIBEVENT_LIBS="${LIBS}"
-LIBS="${my_save_LIBS}"
+
+AC_SUBST(LIBEVENT_CFLAGS)
 AC_SUBST(LIBEVENT_LIBS)
+
+AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
+  save_CFLAGS="$CFLAGS"
+  save_LIBS="$LIBS"
+  CFLAGS="$LIBEVENT_CFLAGS"
+  LIBS="$LIBEVENT_LIBS"
+  AC_TRY_LINK([
+#include <sys/types.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <event.h>],[
+	struct bufferevent bev;
+	bufferevent_settimeout(&bev, 1, 1);
+  ], ac_libevent_works=yes, [
+        AC_ERROR([you need to install a more recent version of libevent,
+	check http://www.monkey.org/~provos/libevent/])
+  ])
+
+  CFLAGS="$save_CFLAGS"
+  LIBS="$save_LIBS"
+])
+
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -315,10 +376,10 @@ AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthrea
 AC_ARG_ENABLE([tcmalloc],
     [AS_HELP_STRING([--enable-tcmalloc],
        [Enable linking with tcmalloc @<:@default=off@:>@])],
-    [ac_warn_strict_aliasing="$enableval"],
-    [ac_warn_strict_aliasing="no"])
+    [ac_enable_tcmalloc="$enableval"],
+    [ac_enable_tcmalloc="no"])
 
-if test "x$ac_warn_strict_aliasing" = "xyes"
+if test "x$ac_enable_tcmalloc" = "xyes"
 then
   AC_CHECK_LIB(tcmalloc,malloc,[],[])
 fi
@@ -344,19 +405,35 @@ AC_SUBST(ZLIB_LIBS)
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS([readline/readline.h])
+AC_CHECK_HEADERS(readline/history.h readline/readline.h)
 if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
+AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
+
+MYSQL_CHECK_NEW_RL_INTERFACE
+
 my_save_LIBS="$LIBS"
 LIBS=""
-AC_CHECK_LIB(readline, rl_completion_matches, [], [AC_MSG_ERROR(Couldn't find libreadline.)])
+AC_CHECK_LIB(readline, rl_initialize, [],
+  [AC_CHECK_LIB(ncurses, tgetent, [], [AC_MSG_ERROR(Couldn't find ncurses)]) 
+   AC_SEARCH_LIBS(rl_initialize, readline, [],
+    [AC_MSG_ERROR(Couldn't find libreadline.)])])
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
-
-MYSQL_CHECK_NEW_RL_INTERFACE
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -364,22 +441,32 @@ MYSQL_CHECK_NEW_RL_INTERFACE
 
 AC_LANG_PUSH([C++])
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[found_pcre="no"])
+
+if test "$found_pcre" = "no"
+then
   dnl Only check the header here, because autoconf can't handle
   dnl checking for C++ methods without C linkages
   AC_CHECK_HEADERS(pcrecpp.h)
   if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
   then
-    found_pcre="no"
-  else
-    found_pcre="yes"
-    # We can't search for these well, but we sure do need them!
-    PCRE_LIBS="-lpcrecpp -lpcre"
-  fi
-  ])
-if test "x$found_pcre" != "xyes"
-then
     AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
+  else
+    # Found headers, now see if we can link
+    AC_MSG_CHECKING(for libpcrecpp)
+    save_LDFLAGS="$LDFLAGS"
+    LDFLAGS="-lpcrecpp -lpcre"
+    AC_TRY_LINK([
+#include <pcrecpp.h>
+    ],
+    [pcrecpp::RE_Options opt;],
+    [found_pcre="yes"],
+    [AC_MSG_ERROR([Couldn't link libpcrecpp])])
+
+    PCRE_LIBS="$LDFLAGS"
+    LDFLAGS="$save_LDFLAGS"
+    AC_MSG_RESULT([yes])
+  fi
 fi
 AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
@@ -539,7 +626,7 @@ AC_ARG_ENABLE([assembler],
 
 AC_MSG_CHECKING(if we should use assembler functions)
 # For now we only support assembler on i386 and sparc systems
-AM_CONDITIONAL(ASSEMBLER_x86, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "i386" && $AS strings/strings-x86.s -o checkassembler >/dev/null 2>&1 && test -f checkassembler && (rm -f checkassembler; exit 0;))
+AM_CONDITIONAL(ASSEMBLER_x86, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "i386" && $AS mystrings/strings-x86.s -o checkassembler >/dev/null 2>&1 && test -f checkassembler && (rm -f checkassembler; exit 0;))
 AM_CONDITIONAL(ASSEMBLER_sparc32, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparc")
 AM_CONDITIONAL(ASSEMBLER_sparc64, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparcv9")
 AM_CONDITIONAL(ASSEMBLER, test "$ASSEMBLER_x86_TRUE" = "" -o "$ASSEMBLER_sparc32_TRUE" = "")
@@ -727,6 +814,20 @@ then
   DEBUG_OPTIMIZE_CXX=""
 fi
 
+dnl TODO: Remove this define once we are using 2.61 across the board.
+# AC_HEADER_ASSERT
+# ----------------
+# Check whether to enable assertions.
+ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
+[
+  AC_MSG_CHECKING([whether to enable assertions])
+  AC_ARG_ENABLE([assert],
+    [  --disable-assert        turn off assertions],
+    [AC_MSG_RESULT([no])
+     AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
+    [AC_MSG_RESULT(yes)])
+]))
+
 AC_HEADER_ASSERT
 
 CFLAGS="${SYMBOLS_CFLAGS} ${CFLAGS}"
@@ -851,7 +952,7 @@ MYSQL_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
 MYSQL_FUNC_ALLOCA
 # Do struct timespec have members tv_sec or ts_sec
-MYSQL_TIMESPEC_TS
+DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
 MYSQL_TZNAME
 # Do the c++ compiler have a bool type
@@ -862,9 +963,6 @@ AC_CHECK_TYPES([u_int32_t])
 
 MYSQL_PTHREAD_YIELD
 
-######################################################################
-# For readline/libedit (We simply move the mimimum amount of stuff from
-# the readline/libedit configure.in here)
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(malloc.h sys/cdefs.h)
@@ -958,13 +1056,14 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
-AC_CHECK_FUNCS(bcmp bfill bmove bsearch bzero \
+AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
   getcwd getpass getpassphrase getpwnam \
   getpwuid getrlimit getrusage getwd index initgroups isnan \
   localtime_r gethrtime gmtime_r \
-  locking longjmp lrand48 madvise mallinfo memcpy memmove \
+  locking longjmp lrand48 madvise mallinfo \
+  memmove \
   mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 getpagesize \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
@@ -1239,12 +1338,15 @@ then
   fi
 
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${BASE_WARNINGS} -std=gnu99 ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
-  GXX_WARNINGS="${BASE_WARNINGS} -std=gnu++98 ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
   CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
+
+AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
+AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 
 # Some usefull subst
 AC_SUBST(CC)
@@ -1262,18 +1364,17 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
- strings/Makefile strings/tests/Makefile storage/Makefile dnl
+ mystrings/Makefile mystrings/tests/Makefile storage/Makefile dnl
  vio/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
- server/Makefile dnl
- server/field/Makefile dnl
- server/share/Makefile dnl
- server/sql_builtin.cc dnl
- include/Makefile dnl
+ drizzled/Makefile dnl
+ drizzled/field/Makefile dnl
+ drizzled/share/Makefile dnl
+ drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
- include/drizzle_version.h plugin/Makefile dnl
- server/drizzled_safe support-files/libdrizzle.pc dnl
+ drizzled/version.h plugin/Makefile dnl
+ drizzled/drizzled_safe support-files/libdrizzle.pc dnl
  support-files/drizzle.server support-files/drizzle-log-rotate)
 
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)

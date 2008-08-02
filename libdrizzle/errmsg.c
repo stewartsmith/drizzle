@@ -20,8 +20,8 @@
 /* Error messages for MySQL clients */
 /* (Error messages for the daemon are in share/language/errmsg.sys) */
 
-#include <my_global.h>
-#include <my_sys.h>
+#include <drizzled/global.h>
+#include <mysys/my_sys.h>
 #include "errmsg.h"
 
 #ifdef GERMAN
@@ -77,7 +77,7 @@ const char *client_errors[]=
   "Wrong or unknown protocol",
   "Invalid connection handle",
   "Connection using old (pre-4.1.1) authentication protocol refused (client option 'secure_auth' enabled)",
-  "Row retrieval was canceled by mysql_stmt_close() call",
+  "Row retrieval was canceled by drizzle_stmt_close() call",
   "Attempt to read column without prior row fetch",
   "Prepared statement contains no metadata",
   "Attempt to read a row while there is no result set associated with the statement",
@@ -142,7 +142,7 @@ const char *client_errors[]=
   "Wrong or unknown protocol",
   "Invalid connection handle",
   "Connection using old (pre-4.1.1) authentication protocol refused (client option 'secure_auth' enabled)",
-  "Row retrieval was canceled by mysql_stmt_close() call",
+  "Row retrieval was canceled by drizzle_stmt_close() call",
   "Attempt to read column without prior row fetch",
   "Prepared statement contains no metadata",
   "Attempt to read a row while there is no result set associated with the statement",
@@ -205,7 +205,7 @@ const char *client_errors[]=
   "Wrong or unknown protocol",
   "Invalid connection handle",
   "Connection using old (pre-4.1.1) authentication protocol refused (client option 'secure_auth' enabled)",
-  "Row retrieval was canceled by mysql_stmt_close() call",
+  "Row retrieval was canceled by drizzle_stmt_close() call",
   "Attempt to read column without prior row fetch",
   "Prepared statement contains no metadata",
   "Attempt to read a row while there is no result set associated with the statement",

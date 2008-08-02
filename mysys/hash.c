@@ -18,8 +18,8 @@
 /* Key length of 0 isn't allowed */
 
 #include "mysys_priv.h"
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include "hash.h"
 
 #define NO_RECORD	((uint) -1)

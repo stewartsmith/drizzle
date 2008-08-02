@@ -20,10 +20,9 @@
  * Small portability changes by Monty. Changed also to use my_malloc/my_free
  */
 
-#include <my_global.h>
-#include <m_string.h>
+#include "client_priv.h"
+#include <mystrings/m_string.h>
 #undef SAFEMALLOC				// Speed things up
-#include <my_sys.h>
 #include "completion_hash.h"
 
 uint hashpjw(const char *arKey, uint nKeyLength)
@@ -206,7 +205,7 @@ Bucket *find_longest_match(HashTable *ht, char *str, uint length,
 void completion_hash_clean(HashTable *ht)
 {
   free_root(&ht->mem_root,MYF(0));
-  bzero((char*) ht->arBuckets,ht->nTableSize*sizeof(Bucket *));
+  memset((char*) ht->arBuckets, 0, ht->nTableSize*sizeof(Bucket *));
 }
 
 

@@ -73,17 +73,17 @@ use warnings;
 select(STDOUT);
 $| = 1; # Automatically flush STDOUT
 
-require "lib/mtr_cases.pl";
-require "lib/mtr_process.pl";
-require "lib/mtr_timer.pl";
-require "lib/mtr_io.pl";
-require "lib/mtr_gcov.pl";
-require "lib/mtr_gprof.pl";
-require "lib/mtr_report.pl";
-require "lib/mtr_match.pl";
-require "lib/mtr_misc.pl";
-require "lib/mtr_stress.pl";
-require "lib/mtr_unique.pl";
+require "mtr_cases.pl";
+require "mtr_process.pl";
+require "mtr_timer.pl";
+require "mtr_io.pl";
+require "mtr_gcov.pl";
+require "mtr_gprof.pl";
+require "mtr_report.pl";
+require "mtr_match.pl";
+require "mtr_misc.pl";
+require "mtr_stress.pl";
+require "mtr_unique.pl";
 
 $Devel::Trace::TRACE= 1;
 
@@ -592,7 +592,7 @@ sub command_line_setup () {
               "as follows:\n./$glob_scriptname");
   }
 
-  if ( -d "../server" )
+  if ( -d "../drizzled" )
   {
     $source_dist=  1;
   }
@@ -638,7 +638,7 @@ sub command_line_setup () {
 
   # Look for language files and charsetsdir, use same share
   $path_share=      mtr_path_exists("$glob_basedir/share/mysql",
-                                    "$glob_basedir/server/share",
+                                    "$glob_basedir/drizzled/share",
                                     "$glob_basedir/share");
 
   $path_language=      mtr_path_exists("$path_share/english");
@@ -647,7 +647,7 @@ sub command_line_setup () {
 
   if (!$opt_extern)
   {
-    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/server/drizzled",
+    $exe_drizzled=       mtr_exe_exists ("$glob_basedir/drizzled/drizzled",
 				       "$path_client_bindir/drizzled",
 				       "$glob_basedir/libexec/drizzled",
 				       "$glob_basedir/bin/drizzled",
@@ -2528,13 +2528,6 @@ sub mysqld_arguments ($$$$) {
 
   mtr_add_arg($args, "%s--datadir=%s", $prefix,
 	      $mysqld->{'path_myddir'});
-
-
-  if ( $mysql_version_id >= 50106 )
-  {
-    # Turn on logging to bothe tables and file
-    mtr_add_arg($args, "%s--log-output=table,file", $prefix);
-  }
 
   my $log_base_path= "$opt_vardir/log/$mysqld->{'type'}$sidx";
   mtr_add_arg($args, "%s--log=%s.log", $prefix, $log_base_path);

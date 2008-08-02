@@ -17,16 +17,15 @@
   HFTODO this must be hidden if we don't want client capabilities in 
   embedded library
  */
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <drizzle.h>
-#include <drizzle_com.h>
-#include <mysqld_error.h>
-#include <my_sys.h>
-#include <m_string.h>
-#include <my_net.h>
-#include <violite.h>
+#include <drizzled/error.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
+#include <vio/violite.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/poll.h>
 
 /*
   The following handles the differences when this is linked between the
@@ -40,7 +39,7 @@
 
 #define DONT_USE_THR_ALARM
 
-#include "thr_alarm.h"
+#include <mysys/thr_alarm.h>
 
 
 #define update_statistics(A)
@@ -258,7 +257,7 @@ my_net_write(NET *net,const uchar *packet,size_t len)
 /**
   Send a command to the server.
 
-    The reason for having both header and packet is so that libmysql
+    The reason for having both header and packet is so that libdrizzle
     can easy add a header to a special command (like prepared statements)
     without having to re-alloc the string.
 
@@ -546,7 +545,7 @@ my_real_read(NET *net, size_t *complen)
                   NET_HEADER_SIZE);
   /* Backup of the original SO_RCVTIMEO timeout */
   struct timeval backtime;
-  int error;
+  int error= 0;
 
   *complen = 0;
 
@@ -698,7 +697,7 @@ my_net_read(NET *net)
     }
     net->read_pos = net->buff + net->where_b;
     if (len != packet_error)
-      net->read_pos[len]=0;		/* Safeguard for mysql_use_result */
+      net->read_pos[len]=0;		/* Safeguard for drizzle_use_result */
     return len;
   }
   else
@@ -798,7 +797,7 @@ my_net_read(NET *net)
     len = ((ulong) (start_of_packet - first_packet_offset) - NET_HEADER_SIZE -
            multi_byte_packet);
     net->save_char= net->read_pos[len];	/* Must be saved */
-    net->read_pos[len]=0;		/* Safeguard for mysql_use_result */
+    net->read_pos[len]=0;		/* Safeguard for drizzle_use_result */
   }
   return len;
 }

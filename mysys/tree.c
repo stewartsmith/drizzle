@@ -54,9 +54,8 @@
 */
 
 #include "mysys_priv.h"
-#include <m_string.h>
-#include <my_tree.h>
-#include "my_base.h"
+#include <mystrings/m_string.h>
+#include <mysys/my_tree.h>
 
 #define BLACK		1
 #define RED		0
@@ -82,7 +81,7 @@ void init_tree(TREE *tree, ulong default_alloc_size, ulong memory_limit,
   if (default_alloc_size < DEFAULT_ALLOC_SIZE)
     default_alloc_size= DEFAULT_ALLOC_SIZE;
   default_alloc_size= MY_ALIGN(default_alloc_size, DEFAULT_ALIGN_SIZE);
-  bzero((uchar*) &tree->null_element,sizeof(tree->null_element));
+  memset((uchar*) &tree->null_element, 0, sizeof(tree->null_element));
   tree->root= &tree->null_element;
   tree->compare=compare;
   tree->size_of_element=size > 0 ? (uint) size : 0;

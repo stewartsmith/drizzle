@@ -17,13 +17,13 @@
    versions into symbolic names. By Sasha Pachev <sasha@mysql.com>
  */
 
-#include <my_global.h>
-#include <m_ctype.h>
-#include <my_sys.h>
-#include <m_string.h>
-#include <drizzle_version.h>
+#include <drizzled/global.h>
+#include <mystrings/m_ctype.h>
+#include <mysys/my_sys.h>
+#include <mystrings/m_string.h>
+#include <drizzled/version.h>
 #include <errno.h>
-#include <my_getopt.h>
+#include <mysys/my_getopt.h>
 
 #define INIT_SYM_TABLE  4096
 #define INC_SYM_TABLE  4096
@@ -63,9 +63,6 @@ static struct my_option my_long_options[] =
 
 static void verify_sort(void);
 
-
-#include <help_start.h>
-
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,DUMP_VERSION,
@@ -88,9 +85,6 @@ The symbols-file should include the output from:  'nm --numeric-sort drizzled'.\
 The numeric-dump-file should contain a numeric stack trace from drizzled.\n\
 If the numeric-dump-file is not given, the stack trace is read from stdin.\n");
 }
-
-#include <help_end.h>
-
 
 static void die(const char* fmt, ...)
 {

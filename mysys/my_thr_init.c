@@ -19,7 +19,7 @@
 */
 
 #include "mysys_priv.h"
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #include <signal.h>
 
 uint thd_lib_detected= 0;
@@ -237,9 +237,6 @@ static my_thread_id thread_id= 0;
     we may have compiled the program with SAFE_MUTEX, in which
     case the checking of mutex_locks will not work until
     the pthread_self thread specific variable is initialized.
-
-   This function may called multiple times for a thread, for example
-   if one uses my_init() followed by mysql_server_init().
 
   RETURN
     0  ok

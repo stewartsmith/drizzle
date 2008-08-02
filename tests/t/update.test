@@ -24,13 +24,13 @@ drop table t1;
 
 CREATE TABLE t1
  (
- place_id int (10) unsigned NOT NULL,
- shows int(10) unsigned DEFAULT '0' NOT NULL,
- ishows int(10) unsigned DEFAULT '0' NOT NULL,
- ushows int(10) unsigned DEFAULT '0' NOT NULL,
- clicks int(10) unsigned DEFAULT '0' NOT NULL,
- iclicks int(10) unsigned DEFAULT '0' NOT NULL,
- uclicks int(10) unsigned DEFAULT '0' NOT NULL,
+ place_id int unsigned NOT NULL,
+ shows int unsigned DEFAULT '0' NOT NULL,
+ ishows int unsigned DEFAULT '0' NOT NULL,
+ ushows int unsigned DEFAULT '0' NOT NULL,
+ clicks int unsigned DEFAULT '0' NOT NULL,
+ iclicks int unsigned DEFAULT '0' NOT NULL,
+ uclicks int unsigned DEFAULT '0' NOT NULL,
  ts timestamp,
  PRIMARY KEY (place_id,ts)
  );
@@ -46,20 +46,20 @@ drop table t1;
 #
 
 CREATE TABLE t1 (
-  lfdnr int(10) unsigned NOT NULL default '0',
-  ticket int(10) unsigned NOT NULL default '0',
+  lfdnr int unsigned NOT NULL default '0',
+  ticket int unsigned NOT NULL default '0',
   client varchar(255) NOT NULL default '',
   replyto varchar(255) NOT NULL default '',
   subject varchar(100) NOT NULL default '',
-  timestamp int(10) unsigned NOT NULL default '0',
+  timestamp int unsigned NOT NULL default '0',
   tstamp timestamp NOT NULL,
-  status int(3) NOT NULL default '0',
+  status int NOT NULL default '0',
   type varchar(15) NOT NULL default '',
-  assignment int(10) unsigned NOT NULL default '0',
-  fupcount int(4) unsigned NOT NULL default '0',
-  parent int(10) unsigned NOT NULL default '0',
-  activity int(10) unsigned NOT NULL default '0',
-  priority tinyint(1) unsigned NOT NULL default '1',
+  assignment int unsigned NOT NULL default '0',
+  fupcount int unsigned NOT NULL default '0',
+  parent int unsigned NOT NULL default '0',
+  activity int unsigned NOT NULL default '0',
+  priority tinyint unsigned NOT NULL default '1',
   cc varchar(255) NOT NULL default '',
   bcc varchar(255) NOT NULL default '',
   body text NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE t1 (
 
 INSERT INTO t1 VALUES (773,773,'','','',980257344,20010318180652,0,'Open',10,0,0,0,1,'','','','','');
 
-alter table t1 change lfdnr lfdnr int(10) unsigned not null auto_increment;
+alter table t1 change lfdnr lfdnr int unsigned not null auto_increment;
 update t1 set status=1 where type='Open';
 select status from t1;
 drop table t1;
@@ -103,9 +103,9 @@ drop table t1,t2;
 #
 
 CREATE TABLE t1 (
-   `id_param` smallint(3) unsigned NOT NULL default '0',
+   `id_param` smallint unsigned NOT NULL default '0',
    `nom_option` char(40) NOT NULL default '',
-   `valid` tinyint(1) NOT NULL default '0',
+   `valid` tinyint NOT NULL default '0',
    KEY `id_param` (`id_param`,`nom_option`)
  ) ENGINE=MyISAM;
 
@@ -128,38 +128,6 @@ insert into t1 (F1,F2,F3,cnt,groupid) values ('0','0','0',1,6),
 delete from m1 using t1 m1,t1 m2 where m1.groupid=m2.groupid and (m1.cnt < m2.cnt or m1.cnt=m2.cnt and m1.F3>m2.F3);
 select * from t1;
 drop table t1;
-
-#
-# Bug#5553 - Multi table UPDATE IGNORE fails on duplicate keys 
-#
-
-CREATE TABLE t1 ( 
-   `colA` int(10) unsigned NOT NULL auto_increment,
-   `colB` int(11) NOT NULL default '0',
-   PRIMARY KEY  (`colA`)
-);
-INSERT INTO t1 VALUES (4433,5424);
-CREATE TABLE t2 (
-  `colC` int(10) unsigned NOT NULL default '0',
-  `colA` int(10) unsigned NOT NULL default '0',
-  `colD` int(10) unsigned NOT NULL default '0',
-  `colE` int(10) unsigned NOT NULL default '0',
-  `colF` int(10) unsigned NOT NULL default '0',
-  PRIMARY KEY  (`colC`,`colA`,`colD`,`colE`)
-);
-INSERT INTO t2 VALUES (3,4433,10005,495,500);
-INSERT INTO t2 VALUES (3,4433,10005,496,500);
-INSERT INTO t2 VALUES (3,4433,10009,494,500);
-INSERT INTO t2 VALUES (3,4433,10011,494,500);
-INSERT INTO t2 VALUES (3,4433,10005,497,500);
-INSERT INTO t2 VALUES (3,4433,10013,489,500);
-INSERT INTO t2 VALUES (3,4433,10005,494,500);
-INSERT INTO t2 VALUES (3,4433,10005,493,500);
-INSERT INTO t2 VALUES (3,4433,10005,492,500);
-UPDATE IGNORE t2,t1 set t2.colE = t2.colE + 1,colF=0 WHERE t1.colA = t2.colA AND (t1.colB & 4096) > 0 AND (colE + 1) < colF;
-SELECT * FROM t2;
-DROP TABLE t1;
-DROP TABLE t2;
 
 #
 # Bug #6054 
@@ -357,7 +325,7 @@ DROP TABLE t1;
 #
 CREATE TABLE t1 (
 
-  a INT(11),
+  a int,
   quux decimal( 31, 30 ),
 
   UNIQUE KEY bar (a),

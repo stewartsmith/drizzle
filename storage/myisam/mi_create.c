@@ -16,12 +16,10 @@
 /* Create a MyISAM table */
 
 #include "myisamdef.h"
-#include <m_ctype.h>
-#include <my_tree.h>
-#include <queues.h>
-#include <my_bit.h>
+#include <mysys/my_tree.h>
+#include <mysys/queues.h>
+#include <mysys/my_bit.h>
 
-#include <m_ctype.h>
 
 /*
   Old options is used when recreating database, from myisamchk
@@ -33,7 +31,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 	      MI_CREATE_INFO *ci,uint flags)
 {
   register uint i, j;
-  File dfile= 0, file;
+  File dfile= 0, file= 0;
   int errpos,save_errno, create_mode= O_RDWR | O_TRUNC;
   myf create_flag;
   uint fields,length,max_key_length,packed,pointer,real_length_diff,
@@ -57,7 +55,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
 
   if (!ci)
   {
-    bzero((char*) &tmp_create_info,sizeof(tmp_create_info));
+    memset((char*) &tmp_create_info, 0, sizeof(tmp_create_info));
     ci=&tmp_create_info;
   }
 
@@ -67,7 +65,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
   errpos= 0;
   options= 0;
-  bzero((uchar*) &share,sizeof(share));
+  memset((uchar*) &share, 0, sizeof(share));
 
   if (flags & HA_DONT_TOUCH_DATA)
   {
@@ -415,7 +413,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
     goto err;
   }
 
-  bmove(share.state.header.file_version,(uchar*) myisam_file_magic,4);
+  memcpy(share.state.header.file_version,(uchar*) myisam_file_magic,4);
   ci->old_options=options| (ci->old_options & HA_OPTION_TEMP_COMPRESS_RECORD ?
 			HA_OPTION_COMPRESS_RECORD |
 			HA_OPTION_TEMP_COMPRESS_RECORD: 0);
@@ -615,8 +613,8 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   }
   /* Create extra keys for unique definitions */
   offset=reclength-uniques*MI_UNIQUE_HASH_LENGTH;
-  bzero((char*) &tmp_keydef,sizeof(tmp_keydef));
-  bzero((char*) &tmp_keyseg,sizeof(tmp_keyseg));
+  memset((char*) &tmp_keydef, 0, sizeof(tmp_keydef));
+  memset((char*) &tmp_keyseg, 0, sizeof(tmp_keyseg));
   for (i=0; i < uniques ; i++)
   {
     tmp_keydef.keysegs=1;

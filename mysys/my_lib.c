@@ -17,7 +17,7 @@
 /*	 Convert MSDOS-TIME to standar time_t (still needed?) */
 
 #include	"mysys_priv.h"
-#include	<m_string.h>
+#include	<mystrings/m_string.h>
 #include	<my_dir.h>	/* Structs used by my_dir,includes sys/types */
 #include	"mysys_err.h"
 #if defined(HAVE_DIRENT_H)
@@ -133,10 +133,10 @@ MY_DIR	*my_dir(const char *path, myf MyFlags)
                                                sizeof(struct stat))))
         goto error;
       
-      bzero(finfo.mystat, sizeof(struct stat));
+      memset(finfo.mystat, 0, sizeof(struct stat));
       VOID(strmov(tmp_file,dp->d_name));
       VOID(stat(tmp_path, finfo.mystat));
-      if (!(finfo.mystat->st_mode & MY_S_IREAD))
+      if (!(finfo.mystat->st_mode & S_IREAD))
         continue;
     }
     else

@@ -17,10 +17,6 @@ MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
-AM_CPPFLAGS =           -I$(top_srcdir)/include -I$(top_builddir)/include \
-			-I$(top_srcdir)/server \
-                        -I$(srcdir)
-WRAPLIBS=
 
 LDADD =			libheap.la \
 			$(top_builddir)/mysys/libmysyslt.la \
@@ -28,7 +24,7 @@ LDADD =			libheap.la \
 
 DEFS =                  @DEFS@
 noinst_LTLIBRARIES  =	libheap.la
-noinst_HEADERS =	heapdef.h ha_heap.h
+noinst_HEADERS =	heapdef.h ha_heap.h heap.h
 libheap_la_SOURCES =	hp_open.c hp_extra.c hp_close.c hp_panic.c hp_info.c \
 			hp_rrnd.c hp_scan.c hp_update.c hp_write.c hp_delete.c \
 			hp_rsame.c hp_create.c hp_rename.c hp_rfirst.c \

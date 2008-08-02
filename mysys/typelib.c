@@ -16,8 +16,8 @@
 /* Functions to handle typelib */
 
 #include "mysys_priv.h"
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 
 
 static const char field_separator=',';

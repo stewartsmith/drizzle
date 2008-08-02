@@ -16,7 +16,7 @@
 /* Functions to handle keys */
 
 #include "myisamdef.h"
-#include "m_ctype.h"
+#include <mystrings/m_ctype.h>
 #ifdef HAVE_IEEEFP_H
 #include <ieeefp.h>
 #endif
@@ -53,7 +53,6 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
   uchar *pos;
   uchar *start;
   register HA_KEYSEG *keyseg;
-  my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
 
   start=key;
   for (keyseg=info->s->keyinfo[keynr].seg ; keyseg->type ;keyseg++)
@@ -73,7 +72,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
       *key++=1;					/* Not NULL */
     }
 
-    char_length= ((!is_ft && cs && cs->mbmaxlen > 1) ? length/cs->mbmaxlen :
+    char_length= ((cs && cs->mbmaxlen > 1) ? length/cs->mbmaxlen :
                   length);
 
     pos= (uchar*) record+keyseg->start;
@@ -125,7 +124,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
     else if (keyseg->flag & HA_BLOB_PART)
     {
       uint tmp_length=_mi_calc_blob_length(keyseg->bit_start,pos);
-      memcpy_fixed((uchar*) &pos,pos+keyseg->bit_start,sizeof(char*));
+      memcpy((uchar*) &pos,pos+keyseg->bit_start,sizeof(char*));
       set_if_smaller(length,tmp_length);
       FIX_LENGTH(cs, pos, length, char_length);
       store_key_length_inc(key,char_length);
@@ -143,7 +142,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
 	if (isnan(nr))
 	{
 	  /* Replace NAN with zero */
-	  bzero(key,length);
+	  memset(key, 0, length);
 	  key+=length;
 	  continue;
 	}
@@ -154,7 +153,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
 	float8get(nr,pos);
 	if (isnan(nr))
 	{
-	  bzero(key,length);
+	  memset(key, 0, length);
 	  key+=length;
 	  continue;
 	}
@@ -201,7 +200,6 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
 {
   uchar *start_key=key;
   HA_KEYSEG *keyseg;
-  my_bool is_ft= info->s->keyinfo[keynr].flag & HA_FULLTEXT;
 
   /* only key prefixes are supported */
   assert(((keypart_map+1) & keypart_map) == 0);
@@ -224,7 +222,7 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
 	continue;					/* Found NULL */
       }
     }
-    char_length= (!is_ft && cs && cs->mbmaxlen > 1) ? length/cs->mbmaxlen : length;
+    char_length= (cs && cs->mbmaxlen > 1) ? length/cs->mbmaxlen : length;
     pos=old;
     if (keyseg->flag & HA_SPACE_PACK)
     {
@@ -360,7 +358,7 @@ static int _mi_put_key_in_record(register MI_INFO *info, uint keynr,
       }
       else
       {
-	bfill(pos,keyseg->length-length,' ');
+	memset(pos, ' ', keyseg->length-length);
 	memcpy(pos+keyseg->length-length,key,(size_t) length);
       }
       key+=length;

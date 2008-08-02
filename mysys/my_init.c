@@ -16,8 +16,8 @@
 #include "mysys_priv.h"
 #include "my_static.h"
 #include "mysys_err.h"
-#include <m_string.h>
-#include <m_ctype.h>
+#include <mystrings/m_string.h>
+#include <mystrings/m_ctype.h>
 #include <signal.h>
 
 bool my_init_done= 0;
@@ -118,7 +118,7 @@ void my_end(int infoflag)
     struct rusage rus;
 #ifdef HAVE_purify
     /* Purify assumes that rus is uninitialized after getrusage call */
-    bzero((char*) &rus, sizeof(rus));
+    memset((char*) &rus, 0, sizeof(rus));
 #endif
     if (!getrusage(RUSAGE_SELF, &rus))
       fprintf(info_file,"\n\

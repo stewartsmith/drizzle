@@ -15,14 +15,14 @@
 
 /* Describe, check and repair of MyISAM tables */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 
-#include <m_ctype.h>
+#include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include <my_getopt.h>
-#include <my_bit.h>
+#include <mysys/my_getopt.h>
+#include <mysys/my_bit.h>
 #include <myisam.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #ifdef HAVE_SYS_VADVICE_H
 #include <sys/vadvise.h>
 #endif
@@ -155,10 +155,6 @@ static struct my_option my_long_options[] =
   {"analyze", 'a',
    "Analyze distribution of keys. Will make some joins in MySQL faster. You can check the calculated distribution.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifdef __NETWARE__
-  {"autoclose", OPT_AUTO_CLOSE, "Auto close the screen on exit for Netware.",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"block-search", 'b',
    "No help available.",
    0, 0, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -323,8 +319,6 @@ static struct my_option my_long_options[] =
 };
 
 
-#include <help_start.h>
-
 static void print_version(void)
 {
   printf("%s  Ver 2.7 for %s at %s\n", my_progname, SYSTEM_TYPE,
@@ -349,7 +343,7 @@ static void usage(void)
                       directly with '--variable-name=value'.\n\
   -t, --tmpdir=path   Path for temporary files. Multiple paths can be\n\
                       specified, separated by ");
-#if defined( __WIN__) || defined(__NETWARE__)
+#if defined( __WIN__)
    printf("semicolon (;)");
 #else
    printf("colon (:)");
@@ -444,8 +438,6 @@ static void usage(void)
   print_defaults("my", load_default_groups);
   my_print_variables(my_long_options);
 }
-
-#include <help_end.h>
 
 const char *myisam_stats_method_names[] = {"nulls_unequal", "nulls_equal",
                                            "nulls_ignored", NullS};
@@ -989,7 +981,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
 	*/
 	my_bool update_index=1;
 	for (key=0 ; key < share->base.keys; key++)
-	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY|HA_FULLTEXT))
+	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY))
 	    update_index=0;
 
 	error=mi_sort_records(param,info,filename,param->opt_sort_key,
@@ -1266,7 +1258,6 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   {
     keyseg=keyinfo->seg;
     if (keyinfo->flag & HA_NOSAME) text="unique ";
-    else if (keyinfo->flag & HA_FULLTEXT) text="fulltext ";
     else text="multip.";
 
     pos=buff;
@@ -1420,8 +1411,8 @@ static int mi_sort_records(MI_CHECK *param,
   SORT_INFO sort_info;
   MI_SORT_PARAM sort_param;
 
-  bzero((char*)&sort_info,sizeof(sort_info));
-  bzero((char*)&sort_param,sizeof(sort_param));
+  memset((char*)&sort_info, 0, sizeof(sort_info));
+  memset((char*)&sort_param, 0, sizeof(sort_param));
   sort_param.sort_info=&sort_info;
   sort_info.param=param;
   keyinfo= &share->keyinfo[sort_key];
@@ -1434,13 +1425,6 @@ static int mi_sort_records(MI_CHECK *param,
     mi_check_print_warning(param,
 			   "Can't sort table '%s' on key %d;  No such key",
 		name,sort_key+1);
-    param->error_printed=0;
-    return(0);				/* Nothing to do */
-  }
-  if (keyinfo->flag & HA_FULLTEXT)
-  {
-    mi_check_print_warning(param,"Can't sort table '%s' on FULLTEXT key %d",
-			   name,sort_key+1);
     param->error_printed=0;
     return(0);				/* Nothing to do */
   }
@@ -1654,7 +1638,7 @@ static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
       goto err;
   }
   /* Clear end of block to get better compression if the table is backuped */
-  bzero((uchar*) buff+used_length,keyinfo->block_length-used_length);
+  memset((uchar*) buff+used_length, 0, keyinfo->block_length-used_length);
   if (my_pwrite(info->s->kfile,(uchar*) buff,(uint) keyinfo->block_length,
 		page,param->myf_rw))
   {

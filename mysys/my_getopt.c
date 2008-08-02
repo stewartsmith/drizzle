@@ -13,8 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
-#include <m_string.h>
+#include "mysys_priv.h"
+
+#include <mystrings/m_string.h>
 #include <stdlib.h>
 #include <my_sys.h>
 #include <mysys_err.h>
@@ -1089,8 +1090,6 @@ static void init_variables(const struct my_option *options,
   Print help for all options and variables.
 */
 
-#include <help_start.h>
-
 void my_print_help(const struct my_option *options)
 {
   uint col, name_space= 22, comment_space= 57;
@@ -1248,5 +1247,3 @@ void my_print_variables(const struct my_option *options)
     }
   }
 }
-
-#include <help_end.h>

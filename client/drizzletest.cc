@@ -1,4 +1,4 @@
-/* Copyright (C) 2000 MySQL AB
+/* Copyright (C) 2008 Drizzle Open Source Development Team 
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,12 +14,12 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
-  mysqltest
+  drizzletest
 
   Tool used for executing a .test file
 
-  See the "MySQL Test framework manual" for more information
-  http://dev.mysql.com/doc/mysqltest/en/index.html
+  See the "DRIZZLE Test framework manual" for more information
+  http://dev.mysql.com/doc/drizzletest/en/index.html
 
   Please keep the test framework tools identical in all versions!
 
@@ -35,14 +35,11 @@
 #include <pcrecpp.h>
 
 #include "client_priv.h"
-#include <drizzle_version.h>
-#include <mysqld_error.h>
-#include <m_ctype.h>
-#include <my_dir.h>
-#include <hash.h>
+#include <mysys/hash.h>
 #include <stdarg.h>
-#include <violite.h>
+#include <vio/violite.h>
 
+#include "errname.h"
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -80,7 +77,7 @@ static bool abort_on_error= 1;
 static bool server_initialized= 0;
 static bool is_windows= 0;
 static char **default_argv;
-static const char *load_default_groups[]= { "mysqltest", "client", 0 };
+static const char *load_default_groups[]= { "drizzletest", "client", 0 };
 static char line_buffer[MAX_DELIMITER_LENGTH], *line_buffer_pos= line_buffer;
 
 static uint start_lineno= 0; /* Start line of current command */
@@ -125,14 +122,6 @@ static struct st_test_file* file_stack_end;
 
 
 static CHARSET_INFO *charset_info= &my_charset_latin1; /* Default charset */
-
-static const char *embedded_server_groups[]=
-{
-  "server",
-  "embedded",
-  "mysqltest_SERVER",
-  NullS
-};
 
 static int embedded_server_arg_count=0;
 static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];
@@ -186,34 +175,34 @@ HASH var_hash;
 
 struct st_connection
 {
-  MYSQL mysql;
+  DRIZZLE drizzle;
   /* Used when creating views and sp, to avoid implicit commit */
-  MYSQL* util_mysql;
+  DRIZZLE *util_drizzle;
   char *name;
 };
 struct st_connection connections[128];
 struct st_connection* cur_con= NULL, *next_con, *connections_end;
 
 /*
-  List of commands in mysqltest
+  List of commands in drizzletest
   Must match the "command_names" array
   Add new commands before Q_UNKNOWN!
 */
 enum enum_commands {
   Q_CONNECTION=1,     Q_QUERY,
-  Q_CONNECT,	    Q_SLEEP, Q_REAL_SLEEP,
-  Q_INC,		    Q_DEC,
-  Q_SOURCE,	    Q_DISCONNECT,
-  Q_LET,		    Q_ECHO,
-  Q_WHILE,	    Q_END_BLOCK,
-  Q_SYSTEM,	    Q_RESULT,
-  Q_REQUIRE,	    Q_SAVE_MASTER_POS,
+  Q_CONNECT,      Q_SLEEP, Q_REAL_SLEEP,
+  Q_INC,        Q_DEC,
+  Q_SOURCE,      Q_DISCONNECT,
+  Q_LET,        Q_ECHO,
+  Q_WHILE,      Q_END_BLOCK,
+  Q_SYSTEM,      Q_RESULT,
+  Q_REQUIRE,      Q_SAVE_MASTER_POS,
   Q_SYNC_WITH_MASTER,
   Q_SYNC_SLAVE_WITH_MASTER,
   Q_ERROR,
-  Q_SEND,		    Q_REAP,
-  Q_DIRTY_CLOSE,	    Q_REPLACE, Q_REPLACE_COLUMN,
-  Q_PING,		    Q_EVAL,
+  Q_SEND,        Q_REAP,
+  Q_DIRTY_CLOSE,      Q_REPLACE, Q_REPLACE_COLUMN,
+  Q_PING,        Q_EVAL,
   Q_EVAL_RESULT,
   Q_ENABLE_QUERY_LOG, Q_DISABLE_QUERY_LOG,
   Q_ENABLE_RESULT_LOG, Q_DISABLE_RESULT_LOG,
@@ -235,8 +224,8 @@ enum enum_commands {
   Q_CHMOD_FILE, Q_APPEND_FILE, Q_CAT_FILE, Q_DIFF_FILES,
   Q_SEND_QUIT, Q_CHANGE_USER, Q_MKDIR, Q_RMDIR,
 
-  Q_UNKNOWN,			       /* Unknown command.   */
-  Q_COMMENT,			       /* Comments, ignored. */
+  Q_UNKNOWN,             /* Unknown command.   */
+  Q_COMMENT,             /* Comments, ignored. */
   Q_COMMENT_WITH_COMMAND
 };
 
@@ -308,7 +297,7 @@ const char *command_names[]=
   "copy_file",
   "perl",
   "die",
-               
+              
   /* Don't execute any more commands, compare result */
   "exit",
   "skip",
@@ -367,22 +356,22 @@ struct st_command
 };
 
 TYPELIB command_typelib= {array_elements(command_names),"",
-			  command_names, 0};
+        command_names, 0};
 
 DYNAMIC_STRING ds_res, ds_progress, ds_warning_messages;
 
 char builtin_echo[FN_REFLEN];
 
 void die(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void abort_not_supported_test(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void verbose_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void warning_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 void log_msg(const char *fmt, ...)
-  ATTRIBUTE_FORMAT(printf, 1, 2);
+  __attribute__((format(printf, 1, 2)));
 
 VAR* var_from_env(const char *, const char *);
 VAR* var_init(VAR* v, const char *name, int name_len, const char *val,
@@ -446,17 +435,17 @@ pthread_attr_t cn_thd_attrib;
   send_one_query executes query in separate thread, which is
   necessary in embedded library to run 'send' in proper way.
   This implementation doesn't handle errors returned
-  by mysql_send_query. It's technically possible, though
+  by drizzle_send_query. It's technically possible, though
   I don't see where it is needed.
 */
 pthread_handler_t send_one_query(void *arg)
 {
   struct st_connection *cn= (struct st_connection*)arg;
 
-  mysql_thread_init();
-  VOID(mysql_send_query(&cn->mysql, cn->cur_query, cn->cur_query_len));
+  drizzle_thread_init();
+  VOID(drizzle_send_query(&cn->drizzle, cn->cur_query, cn->cur_query_len));
 
-  mysql_thread_end();
+  drizzle_thread_end();
   pthread_mutex_lock(&cn->mutex);
   cn->query_done= 1;
   VOID(pthread_cond_signal(&cn->cond));
@@ -471,7 +460,7 @@ static int do_send_query(struct st_connection *cn, const char *q, int q_len,
   pthread_t tid;
 
   if (flags & QUERY_REAP_FLAG)
-    return mysql_send_query(&cn->mysql, q, q_len);
+    return drizzle_send_query(&cn->drizzle, q, q_len);
 
   if (pthread_mutex_init(&cn->mutex, NULL) ||
       pthread_cond_init(&cn->cond, NULL))
@@ -499,7 +488,7 @@ static void wait_query_thread_end(struct st_connection *con)
 
 #else /*EMBEDDED_LIBRARY*/
 
-#define do_send_query(cn,q,q_len,flags) mysql_send_query(&cn->mysql, q, q_len)
+#define do_send_query(cn,q,q_len,flags) drizzle_send_query(&cn->drizzle, q, q_len)
 
 #endif /*EMBEDDED_LIBRARY*/
 
@@ -518,27 +507,27 @@ void do_eval(DYNAMIC_STRING *query_eval, const char *query,
     case '$':
       if (escaped)
       {
-	escaped= 0;
-	dynstr_append_mem(query_eval, p, 1);
+  escaped= 0;
+  dynstr_append_mem(query_eval, p, 1);
       }
       else
       {
-	if (!(v= var_get(p, &p, 0, 0)))
-	  die("Bad variable in eval");
-	dynstr_append_mem(query_eval, v->str_val, v->str_val_len);
+  if (!(v= var_get(p, &p, 0, 0)))
+    die("Bad variable in eval");
+  dynstr_append_mem(query_eval, v->str_val, v->str_val_len);
       }
       break;
     case '\\':
       next_c= *(p+1);
       if (escaped)
       {
-	escaped= 0;
-	dynstr_append_mem(query_eval, p, 1);
+  escaped= 0;
+  dynstr_append_mem(query_eval, p, 1);
       }
       else if (next_c == '\\' || next_c == '$' || next_c == '"')
       {
         /* Set escaped only if next char is \, " or $ */
-	escaped= 1;
+  escaped= 1;
 
         if (pass_through_escape_chars)
         {
@@ -547,7 +536,7 @@ void do_eval(DYNAMIC_STRING *query_eval, const char *query,
         }
       }
       else
-	dynstr_append_mem(query_eval, p, 1);
+  dynstr_append_mem(query_eval, p, 1);
       break;
     default:
       escaped= 0;
@@ -567,43 +556,43 @@ void do_eval(DYNAMIC_STRING *query_eval, const char *query,
 
   SYNOPSIS
   show_query
-  mysql - connection to use
+  drizzle - connection to use
   query - query to run
 
 */
 
-static void show_query(MYSQL* mysql, const char* query)
+static void show_query(DRIZZLE *drizzle, const char* query)
 {
-  MYSQL_RES* res;
+  DRIZZLE_RES* res;
 
 
-  if (!mysql)
+  if (!drizzle)
     return;
 
-  if (mysql_query(mysql, query))
+  if (drizzle_query(drizzle, query))
   {
     log_msg("Error running query '%s': %d %s",
-            query, mysql_errno(mysql), mysql_error(mysql));
+            query, drizzle_errno(drizzle), drizzle_error(drizzle));
     return;
   }
 
-  if ((res= mysql_store_result(mysql)) == NULL)
+  if ((res= drizzle_store_result(drizzle)) == NULL)
   {
     /* No result set returned */
     return;
   }
 
   {
-    MYSQL_ROW row;
+    DRIZZLE_ROW row;
     unsigned int i;
     unsigned int row_num= 0;
-    unsigned int num_fields= mysql_num_fields(res);
-    MYSQL_FIELD *fields= mysql_fetch_fields(res);
+    unsigned int num_fields= drizzle_num_fields(res);
+    const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
 
     fprintf(stderr, "=== %s ===\n", query);
-    while ((row= mysql_fetch_row(res)))
+    while ((row= drizzle_fetch_row(res)))
     {
-      uint32_t *lengths= mysql_fetch_lengths(res);
+      uint32_t *lengths= drizzle_fetch_lengths(res);
       row_num++;
 
       fprintf(stderr, "---- %d. ----\n", row_num);
@@ -618,7 +607,7 @@ static void show_query(MYSQL* mysql, const char* query)
       fprintf(stderr, "=");
     fprintf(stderr, "\n\n");
   }
-  mysql_free_result(res);
+  drizzle_free_result(res);
 
   return;
 }
@@ -633,49 +622,49 @@ static void show_query(MYSQL* mysql, const char* query)
 
   SYNOPSIS
   show_warnings_before_error
-  mysql - connection to use
+  drizzle - connection to use
 
 */
 
-static void show_warnings_before_error(MYSQL* mysql)
+static void show_warnings_before_error(DRIZZLE *drizzle)
 {
-  MYSQL_RES* res;
+  DRIZZLE_RES* res;
   const char* query= "SHOW WARNINGS";
 
 
-  if (!mysql)
+  if (!drizzle)
     return;
 
-  if (mysql_query(mysql, query))
+  if (drizzle_query(drizzle, query))
   {
     log_msg("Error running query '%s': %d %s",
-            query, mysql_errno(mysql), mysql_error(mysql));
+            query, drizzle_errno(drizzle), drizzle_error(drizzle));
     return;
   }
 
-  if ((res= mysql_store_result(mysql)) == NULL)
+  if ((res= drizzle_store_result(drizzle)) == NULL)
   {
     /* No result set returned */
     return;
   }
 
-  if (mysql_num_rows(res) <= 1)
+  if (drizzle_num_rows(res) <= 1)
   {
     /* Don't display the last row, it's "last error" */
   }
   else
   {
-    MYSQL_ROW row;
+    DRIZZLE_ROW row;
     unsigned int row_num= 0;
-    unsigned int num_fields= mysql_num_fields(res);
+    unsigned int num_fields= drizzle_num_fields(res);
 
     fprintf(stderr, "\nWarnings from just before the error:\n");
-    while ((row= mysql_fetch_row(res)))
+    while ((row= drizzle_fetch_row(res)))
     {
       uint32_t i;
-      uint32_t *lengths= mysql_fetch_lengths(res);
+      uint32_t *lengths= drizzle_fetch_lengths(res);
 
-      if (++row_num >= mysql_num_rows(res))
+      if (++row_num >= drizzle_num_rows(res))
       {
         /* Don't display the last row, it's "last error" */
         break;
@@ -689,7 +678,7 @@ static void show_warnings_before_error(MYSQL* mysql)
       fprintf(stderr, "\n");
     }
   }
-  mysql_free_result(res);
+  drizzle_free_result(res);
 
   return;
 }
@@ -820,9 +809,9 @@ static void close_connections(void)
 
   for (--next_con; next_con >= connections; --next_con)
   {
-    mysql_close(&next_con->mysql);
-    if (next_con->util_mysql)
-      mysql_close(next_con->util_mysql);
+    drizzle_close(&next_con->drizzle);
+    if (next_con->util_drizzle)
+      drizzle_close(next_con->util_drizzle);
     my_free(next_con->name, MYF(MY_ALLOW_ZERO_PTR));
   }
   return;
@@ -875,9 +864,9 @@ static void free_used_memory(void)
   my_free(opt_pass,MYF(MY_ALLOW_ZERO_PTR));
   free_defaults(default_argv);
 
-  /* Only call mysql_server_end if mysql_server_init has been called */
+  /* Only call drizzle_server_end if drizzle_server_init has been called */
   if (server_initialized)
-    mysql_server_end();
+    drizzle_server_end();
 
   return;
 }
@@ -923,7 +912,7 @@ void die(const char *fmt, ...)
   dying= 1;
 
   /* Print the error message */
-  fprintf(stderr, "mysqltest: ");
+  fprintf(stderr, "drizzletest: ");
   if (cur_file && cur_file != file_stack)
     fprintf(stderr, "In included file \"%s\": ",
             cur_file->file_name);
@@ -971,7 +960,7 @@ void die(const char *fmt, ...)
     been produced prior to the error
   */
   if (cur_con)
-    show_warnings_before_error(&cur_con->mysql);
+    show_warnings_before_error(&cur_con->drizzle);
 
   cleanup_and_exit(1);
 }
@@ -1018,7 +1007,7 @@ void verbose_msg(const char *fmt, ...)
     return;
 
   va_start(args, fmt);
-  fprintf(stderr, "mysqltest: ");
+  fprintf(stderr, "drizzletest: ");
   if (cur_file && cur_file != file_stack)
     fprintf(stderr, "In included file \"%s\": ",
             cur_file->file_name);
@@ -1040,7 +1029,7 @@ void warning_msg(const char *fmt, ...)
 
 
   va_start(args, fmt);
-  dynstr_append(&ds_warning_messages, "mysqltest: ");
+  dynstr_append(&ds_warning_messages, "drizzletest: ");
   if (start_lineno != 0)
   {
     dynstr_append(&ds_warning_messages, "Warning detected ");
@@ -1292,7 +1281,7 @@ static void show_diff(DYNAMIC_STRING* ds,
     /* Print diff directly to stdout */
     fprintf(stderr, "%s\n", ds_tmp.str);
   }
- 
+
   dynstr_free(&ds_tmp);
 
 }
@@ -1647,7 +1636,7 @@ VAR* var_from_env(const char *name, const char *def_val)
 
 
 VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
-	     bool ignore_not_existing)
+       bool ignore_not_existing)
 {
   int digit;
   VAR *v;
@@ -1665,7 +1654,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
     if (var_name == save_var_name)
     {
       if (ignore_not_existing)
-	return(0);
+  return(0);
       die("Empty variable");
     }
     length= (uint) (var_name - save_var_name);
@@ -1679,7 +1668,7 @@ VAR* var_get(const char *var_name, const char **var_name_end, bool raw,
       strmake(buff, save_var_name, length);
       v= var_from_env(buff, "");
     }
-    var_name--;	/* Point at last character */
+    var_name--;  /* Point at last character */
   }
   else
     v = var_reg + digit;
@@ -1776,23 +1765,23 @@ static void var_set_int(const char* name, int value)
 
 /*
   Store an integer (typically the returncode of the last SQL)
-  statement in the mysqltest builtin variable $mysql_errno
+  statement in the drizzletest builtin variable $drizzle_errno
 */
 
 static void var_set_errno(int sql_errno)
 {
-  var_set_int("$mysql_errno", sql_errno);
+  var_set_int("$drizzle_errno", sql_errno);
 }
 
 
 /*
-  Update $mysql_get_server_version variable with version
+  Update $drizzle_get_server_version variable with version
   of the currently connected server
 */
 
-static void var_set_mysql_get_server_version(MYSQL* mysql)
+static void var_set_drizzle_get_server_version(DRIZZLE *drizzle)
 {
-  var_set_int("$mysql_get_server_version", mysql_get_server_version(mysql));
+  var_set_int("$drizzle_get_server_version", drizzle_get_server_version(drizzle));
 }
 
 
@@ -1801,7 +1790,7 @@ static void var_set_mysql_get_server_version(MYSQL* mysql)
 
   SYNOPSIS
   var_query_set()
-  var	        variable to set from query
+  var          variable to set from query
   query       start of query string to execute
   query_end   end of the query string to execute
 
@@ -1822,10 +1811,10 @@ static void var_set_mysql_get_server_version(MYSQL* mysql)
 static void var_query_set(VAR *var, const char *query, const char** query_end)
 {
   char *end = (char*)((query_end && *query_end) ?
-		      *query_end : query + strlen(query));
-  MYSQL_RES *res;
-  MYSQL_ROW row;
-  MYSQL* mysql = &cur_con->mysql;
+          *query_end : query + strlen(query));
+  DRIZZLE_RES *res;
+  DRIZZLE_ROW row;
+  DRIZZLE *drizzle= &cur_con->drizzle;
   DYNAMIC_STRING ds_query;
 
 
@@ -1839,14 +1828,14 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
   init_dynamic_string(&ds_query, 0, (end - query) + 32, 256);
   do_eval(&ds_query, query, end, false);
 
-  if (mysql_real_query(mysql, ds_query.str, ds_query.length))
+  if (drizzle_real_query(drizzle, ds_query.str, ds_query.length))
     die("Error running query '%s': %d %s", ds_query.str,
-	mysql_errno(mysql), mysql_error(mysql));
-  if (!(res= mysql_store_result(mysql)))
+  drizzle_errno(drizzle), drizzle_error(drizzle));
+  if (!(res= drizzle_store_result(drizzle)))
     die("Query '%s' didn't return a result set", ds_query.str);
   dynstr_free(&ds_query);
 
-  if ((row= mysql_fetch_row(res)) && row[0])
+  if ((row= drizzle_fetch_row(res)) && row[0])
   {
     /*
       Concatenate all fields in the first row with tab in between
@@ -1857,13 +1846,13 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
     uint32_t *lengths;
 
     init_dynamic_string(&result, "", 512, 512);
-    lengths= mysql_fetch_lengths(res);
-    for (i= 0; i < mysql_num_fields(res); i++)
+    lengths= drizzle_fetch_lengths(res);
+    for (i= 0; i < drizzle_num_fields(res); i++)
     {
       if (row[i])
       {
         /* Add column to tab separated string */
-	dynstr_append_mem(&result, row[i], lengths[i]);
+  dynstr_append_mem(&result, row[i], lengths[i]);
       }
       dynstr_append_mem(&result, "\t", 1);
     }
@@ -1874,7 +1863,7 @@ static void var_query_set(VAR *var, const char *query, const char** query_end)
   else
     eval_expr(var, "", 0);
 
-  mysql_free_result(res);
+  drizzle_free_result(res);
   return;
 }
 
@@ -1905,8 +1894,8 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
 {
   long row_no;
   int col_no= -1;
-  MYSQL_RES* res;
-  MYSQL* mysql= &cur_con->mysql;
+  DRIZZLE_RES* res;
+  DRIZZLE *drizzle= &cur_con->drizzle;
 
   static DYNAMIC_STRING ds_query;
   static DYNAMIC_STRING ds_col;
@@ -1934,17 +1923,17 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     die("Mismatched \"'s around query '%s'", ds_query.str);
 
   /* Run the query */
-  if (mysql_real_query(mysql, ds_query.str, ds_query.length))
+  if (drizzle_real_query(drizzle, ds_query.str, ds_query.length))
     die("Error running query '%s': %d %s", ds_query.str,
-	mysql_errno(mysql), mysql_error(mysql));
-  if (!(res= mysql_store_result(mysql)))
+  drizzle_errno(drizzle), drizzle_error(drizzle));
+  if (!(res= drizzle_store_result(drizzle)))
     die("Query '%s' didn't return a result set", ds_query.str);
 
   {
     /* Find column number from the given column name */
     uint i;
-    uint num_fields= mysql_num_fields(res);
-    MYSQL_FIELD *fields= mysql_fetch_fields(res);
+    uint num_fields= drizzle_num_fields(res);
+    const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
 
     for (i= 0; i < num_fields; i++)
     {
@@ -1957,7 +1946,7 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     }
     if (col_no == -1)
     {
-      mysql_free_result(res);
+      drizzle_free_result(res);
       die("Could not find column '%s' in the result of '%s'",
           ds_col.str, ds_query.str);
     }
@@ -1966,11 +1955,11 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
 
   {
     /* Get the value */
-    MYSQL_ROW row;
+    DRIZZLE_ROW row;
     long rows= 0;
     const char* value= "No such row";
 
-    while ((row= mysql_fetch_row(res)))
+    while ((row= drizzle_fetch_row(res)))
     {
       if (++rows == row_no)
       {
@@ -1987,7 +1976,7 @@ static void var_set_query_get_value(struct st_command *command, VAR *var)
     eval_expr(var, value, 0);
   }
   dynstr_free(&ds_query);
-  mysql_free_result(res);
+  drizzle_free_result(res);
 
   return;
 }
@@ -2101,7 +2090,7 @@ static int open_file(const char *name)
 
   SYNOPSIS
   do_source()
-  query	called command
+  query  called command
 
   DESCRIPTION
   source <file_name>
@@ -2191,7 +2180,7 @@ static int replace(DYNAMIC_STRING *ds_str,
 
   SYNOPSIS
   do_exec()
-  query	called command
+  query  called command
 
   DESCRIPTION
   exec <command>
@@ -2202,9 +2191,9 @@ static int replace(DYNAMIC_STRING *ds_str,
   It can thus be used to execute a command that shall fail.
 
   NOTE
-  Although mysqltest is executed from cygwin shell, the command will be
+  Although drizzletest is executed from cygwin shell, the command will be
   executed in "cmd.exe". Thus commands like "rm" etc can NOT be used, use
-  mysqltest commmand(s) like "remove_file" for that
+  drizzletest commmand(s) like "remove_file" for that
 */
 
 static void do_exec(struct st_command *command)
@@ -2306,7 +2295,7 @@ enum enum_operator
 
   SYNOPSIS
   do_modify_var()
-  query	called command
+  query  called command
   operator    operation to perform on the var
 
   DESCRIPTION
@@ -2347,7 +2336,7 @@ static int do_modify_var(struct st_command *command,
   Wrapper for 'system' function
 
   NOTE
-  If mysqltest is executed from cygwin shell, the command will be
+  If drizzletest is executed from cygwin shell, the command will be
   executed in the "windows command interpreter" cmd.exe and we prepend "sh"
   to make it be executed by cygwins "bash". Thus commands like "rm",
   "mkdir" as well as shellscripts can executed by "system" in Windows.
@@ -2363,7 +2352,7 @@ static int my_system(DYNAMIC_STRING* ds_cmd)
 /*
   SYNOPSIS
   do_system
-  command	called command
+  command  called command
 
   DESCRIPTION
   system <command>
@@ -2406,7 +2395,7 @@ static void do_system(struct st_command *command)
 /*
   SYNOPSIS
   do_remove_file
-  command	called command
+  command  called command
 
   DESCRIPTION
   remove_file <file_name>
@@ -2436,7 +2425,7 @@ static void do_remove_file(struct st_command *command)
 /*
   SYNOPSIS
   do_copy_file
-  command	command handle
+  command  command handle
 
   DESCRIPTION
   copy_file <from_file> <to_file>
@@ -2473,7 +2462,7 @@ static void do_copy_file(struct st_command *command)
 /*
   SYNOPSIS
   do_chmod_file
-  command	command handle
+  command  command handle
 
   DESCRIPTION
   chmod <octal> <file_name>
@@ -2487,7 +2476,7 @@ static void do_chmod_file(struct st_command *command)
   static DYNAMIC_STRING ds_mode;
   static DYNAMIC_STRING ds_file;
   const struct command_arg chmod_file_args[] = {
-    { "mode", ARG_STRING, true, &ds_mode, "Mode of file(octal) ex. 0660"}, 
+    { "mode", ARG_STRING, true, &ds_mode, "Mode of file(octal) ex. 0660"},
     { "filename", ARG_STRING, true, &ds_file, "Filename of file to modify" }
   };
 
@@ -2512,7 +2501,7 @@ static void do_chmod_file(struct st_command *command)
 /*
   SYNOPSIS
   do_file_exists
-  command	called command
+  command  called command
 
   DESCRIPTION
   fiile_exist <file_name>
@@ -2543,7 +2532,7 @@ static void do_file_exist(struct st_command *command)
 /*
   SYNOPSIS
   do_mkdir
-  command	called command
+  command  called command
 
   DESCRIPTION
   mkdir <dir_name>
@@ -2572,7 +2561,7 @@ static void do_mkdir(struct st_command *command)
 /*
   SYNOPSIS
   do_rmdir
-  command	called command
+  command  called command
 
   DESCRIPTION
   rmdir <dir_name>
@@ -2706,7 +2695,7 @@ static void do_write_file_command(struct st_command *command, bool append)
 /*
   SYNOPSIS
   do_write_file
-  command	called command
+  command  called command
 
   DESCRIPTION
   write_file <file_name> [<delimiter>];
@@ -2739,7 +2728,7 @@ static void do_write_file(struct st_command *command)
 /*
   SYNOPSIS
   do_append_file
-  command	called command
+  command  called command
 
   DESCRIPTION
   append_file <file_name> [<delimiter>];
@@ -2770,7 +2759,7 @@ static void do_append_file(struct st_command *command)
 /*
   SYNOPSIS
   do_cat_file
-  command	called command
+  command  called command
 
   DESCRIPTION
   cat_file <file_name>;
@@ -2803,7 +2792,7 @@ static void do_cat_file(struct st_command *command)
 /*
   SYNOPSIS
   do_diff_files
-  command	called command
+  command  called command
 
   DESCRIPTION
   diff_files <file1> <file2>;
@@ -2861,7 +2850,7 @@ static struct st_connection * find_connection_by_name(const char *name)
 /*
   SYNOPSIS
   do_send_quit
-  command	called command
+  command  called command
 
   DESCRIPTION
   Sends a simple quit command to the server for the named connection.
@@ -2886,7 +2875,7 @@ static void do_send_quit(struct st_command *command)
   if (!(con= find_connection_by_name(name)))
     die("connection '%s' not found in connection pool", name);
 
-  simple_command(&con->mysql,COM_QUIT,0,0,1);
+  simple_command(&con->drizzle,COM_QUIT,0,0,1);
 
   return;
 }
@@ -2910,7 +2899,7 @@ static void do_send_quit(struct st_command *command)
 
 static void do_change_user(struct st_command *command)
 {
-  MYSQL *mysql = &cur_con->mysql;
+  DRIZZLE *drizzle= &cur_con->drizzle;
   /* static keyword to make the NetWare compiler happy. */
   static DYNAMIC_STRING ds_user, ds_passwd, ds_db;
   const struct command_arg change_user_args[] = {
@@ -2927,16 +2916,16 @@ static void do_change_user(struct st_command *command)
                      ',');
 
   if (!ds_user.length)
-    dynstr_set(&ds_user, mysql->user);
+    dynstr_set(&ds_user, drizzle->user);
 
   if (!ds_passwd.length)
-    dynstr_set(&ds_passwd, mysql->passwd);
+    dynstr_set(&ds_passwd, drizzle->passwd);
 
   if (!ds_db.length)
-    dynstr_set(&ds_db, mysql->db);
+    dynstr_set(&ds_db, drizzle->db);
 
-  if (mysql_change_user(mysql, ds_user.str, ds_passwd.str, ds_db.str))
-    die("change user failed: %s", mysql_error(mysql));
+  if (drizzle_change_user(drizzle, ds_user.str, ds_passwd.str, ds_db.str))
+    die("change user failed: %s", drizzle_error(drizzle));
 
   dynstr_free(&ds_user);
   dynstr_free(&ds_passwd);
@@ -2949,7 +2938,7 @@ static void do_change_user(struct st_command *command)
 /*
   SYNOPSIS
   do_perl
-  command	command handle
+  command  command handle
 
   DESCRIPTION
   perl [<delimiter>];
@@ -3069,24 +3058,24 @@ static void
 do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
 {
   static int SLAVE_POLL_INTERVAL= 300000;
-  MYSQL* mysql = &cur_con->mysql;
+  DRIZZLE *drizzle= &cur_con->drizzle;
   for (;;)
   {
-    MYSQL_RES *res= NULL;
-    MYSQL_ROW row;
+    DRIZZLE_RES *res= NULL;
+    DRIZZLE_ROW row;
     int done;
 
-    if (mysql_query(mysql,"show status like 'Slave_running'") ||
-	!(res=mysql_store_result(mysql)))
+    if (drizzle_query(drizzle,"show status like 'Slave_running'") ||
+  !(res=drizzle_store_result(drizzle)))
       die("Query failed while probing slave for stop: %s",
-	  mysql_error(mysql));
-    if (!(row=mysql_fetch_row(res)) || !row[1])
+    drizzle_error(drizzle));
+    if (!(row=drizzle_fetch_row(res)) || !row[1])
     {
-      mysql_free_result(res);
+      drizzle_free_result(res);
       die("Strange result from query while probing slave for stop");
     }
     done = !strcmp(row[1],"OFF");
-    mysql_free_result(res);
+    drizzle_free_result(res);
     if (done)
       break;
     my_sleep(SLAVE_POLL_INTERVAL);
@@ -3097,9 +3086,9 @@ do_wait_for_slave_to_stop(struct st_command *c __attribute__((unused)))
 
 static void do_sync_with_master2(long offset)
 {
-  MYSQL_RES *res;
-  MYSQL_ROW row;
-  MYSQL *mysql= &cur_con->mysql;
+  DRIZZLE_RES *res;
+  DRIZZLE_ROW row;
+  DRIZZLE *drizzle= &cur_con->drizzle;
   char query_buf[FN_REFLEN+128];
   int tries= 0;
 
@@ -3107,19 +3096,19 @@ static void do_sync_with_master2(long offset)
     die("Calling 'sync_with_master' without calling 'save_master_pos'");
 
   sprintf(query_buf, "select master_pos_wait('%s', %ld)", master_pos.file,
-	  master_pos.pos + offset);
+    master_pos.pos + offset);
 
 wait_for_position:
 
-  if (mysql_query(mysql, query_buf))
-    die("failed in '%s': %d: %s", query_buf, mysql_errno(mysql),
-        mysql_error(mysql));
+  if (drizzle_query(drizzle, query_buf))
+    die("failed in '%s': %d: %s", query_buf, drizzle_errno(drizzle),
+        drizzle_error(drizzle));
 
-  if (!(res= mysql_store_result(mysql)))
-    die("mysql_store_result() returned NULL for '%s'", query_buf);
-  if (!(row= mysql_fetch_row(res)))
+  if (!(res= drizzle_store_result(drizzle)))
+    die("drizzle_store_result() returned NULL for '%s'", query_buf);
+  if (!(row= drizzle_fetch_row(res)))
   {
-    mysql_free_result(res);
+    drizzle_free_result(res);
     die("empty result in %s", query_buf);
   }
   if (!row[0])
@@ -3128,17 +3117,17 @@ wait_for_position:
       It may be that the slave SQL thread has not started yet, though START
       SLAVE has been issued ?
     */
-    mysql_free_result(res);
+    drizzle_free_result(res);
     if (tries++ == 30)
     {
-      show_query(mysql, "SHOW MASTER STATUS");
-      show_query(mysql, "SHOW SLAVE STATUS");
+      show_query(drizzle, "SHOW MASTER STATUS");
+      show_query(drizzle, "SHOW SLAVE STATUS");
       die("could not sync with master ('%s' returned NULL)", query_buf);
     }
     sleep(1); /* So at most we will wait 30 seconds and make 31 tries */
     goto wait_for_position;
   }
-  mysql_free_result(res);
+  drizzle_free_result(res);
   return;
 }
 
@@ -3164,27 +3153,27 @@ static void do_sync_with_master(struct st_command *command)
 
 /*
   when ndb binlog is on, this call will wait until last updated epoch
-  (locally in the mysqld) has been received into the binlog
+  (locally in the drizzled) has been received into the binlog
 */
 static int do_save_master_pos(void)
 {
-  MYSQL_RES *res;
-  MYSQL_ROW row;
-  MYSQL *mysql = &cur_con->mysql;
+  DRIZZLE_RES *res;
+  DRIZZLE_ROW row;
+  DRIZZLE *drizzle= &cur_con->drizzle;
   const char *query;
 
 
-  if (mysql_query(mysql, query= "show master status"))
+  if (drizzle_query(drizzle, query= "show master status"))
     die("failed in 'show master status': %d %s",
-	mysql_errno(mysql), mysql_error(mysql));
+  drizzle_errno(drizzle), drizzle_error(drizzle));
 
-  if (!(res = mysql_store_result(mysql)))
-    die("mysql_store_result() retuned NULL for '%s'", query);
-  if (!(row = mysql_fetch_row(res)))
+  if (!(res = drizzle_store_result(drizzle)))
+    die("drizzle_store_result() retuned NULL for '%s'", query);
+  if (!(row = drizzle_fetch_row(res)))
     die("empty result in show master status");
   strnmov(master_pos.file, row[0], sizeof(master_pos.file)-1);
   master_pos.pos = strtoul(row[1], (char**) 0, 10);
-  mysql_free_result(res);
+  drizzle_free_result(res);
   return(0);
 }
 
@@ -3194,7 +3183,7 @@ static int do_save_master_pos(void)
 
   SYNOPSIS
   do_let()
-  query	called command
+  query  called command
 
   DESCRIPTION
   let $<var_name>=<var_val><delimiter>
@@ -3252,7 +3241,7 @@ static void do_let(struct st_command *command)
 
   SYNOPSIS
   do_sleep()
-  q	       called command
+  q         called command
   real_sleep   use the value from opt_sleep as number of seconds to sleep
                if real_sleep is false
 
@@ -3335,20 +3324,6 @@ static void do_set_charset(struct st_command *command)
   if (!charset_info)
     abort_not_supported_test("Test requires charset '%s'", charset_name);
 }
-
-
-/* List of error names to error codes, available from 5.0 */
-typedef struct
-{
-  const char *name;
-  uint        code;
-} st_error;
-
-static st_error global_error_names[] =
-{
-#include <mysqld_ername.h>
-  { 0, 0 }
-};
 
 static uint get_errcode_from_name(char *error_name, char *error_end)
 {
@@ -3455,7 +3430,7 @@ static void do_get_errcodes(struct st_command *command)
 
       /* Convert the sting to int */
       if (!str2int(start, 10, (long) INT_MIN, (long) INT_MAX, &val))
-	die("Invalid argument to error: '%s'", command->first_argument);
+  die("Invalid argument to error: '%s'", command->first_argument);
 
       to->code.errnum= (uint) val;
       to->type= ERR_ERRNO;
@@ -3505,39 +3480,39 @@ static char *get_string(char **to_ptr, char **from_ptr,
   if (*from == '"' || *from == '\'')
     sep= *from++;
   else
-    sep=' ';				/* Separated with space */
+    sep=' ';        /* Separated with space */
 
   for ( ; (c=*from) ; from++)
   {
     if (c == '\\' && from[1])
-    {					/* Escaped character */
+    {          /* Escaped character */
       /* We can't translate \0 -> ASCII 0 as replace can't handle ASCII 0 */
       switch (*++from) {
       case 'n':
-	*to++= '\n';
-	break;
+  *to++= '\n';
+  break;
       case 't':
-	*to++= '\t';
-	break;
+  *to++= '\t';
+  break;
       case 'r':
-	*to++ = '\r';
-	break;
+  *to++ = '\r';
+  break;
       case 'b':
-	*to++ = '\b';
-	break;
-      case 'Z':				/* ^Z must be escaped on Win32 */
-	*to++='\032';
-	break;
+  *to++ = '\b';
+  break;
+      case 'Z':        /* ^Z must be escaped on Win32 */
+  *to++='\032';
+  break;
       default:
-	*to++ = *from;
-	break;
+  *to++ = *from;
+  break;
       }
     }
     else if (c == sep)
     {
       if (c == ' ' || c != *++from)
-	break;				/* Found end of string */
-      *to++=c;				/* Copy duplicated separator */
+  break;        /* Found end of string */
+      *to++=c;        /* Copy duplicated separator */
     }
     else
       *to++=c;
@@ -3545,11 +3520,11 @@ static char *get_string(char **to_ptr, char **from_ptr,
   if (*from != ' ' && *from)
     die("Wrong string argument in %s", command->query);
 
-  while (my_isspace(charset_info,*from))	/* Point to next string */
+  while (my_isspace(charset_info,*from))  /* Point to next string */
     from++;
 
-  *to =0;				/* End of string marker */
-  *to_ptr= to+1;			/* Store pointer to end */
+  *to =0;        /* End of string marker */
+  *to_ptr= to+1;      /* Store pointer to end */
   *from_ptr= from;
 
   /* Check if this was a variable */
@@ -3558,17 +3533,17 @@ static char *get_string(char **to_ptr, char **from_ptr,
     const char *end= to;
     VAR *var=var_get(start, &end, 0, 1);
     if (var && to == (char*) end+1)
-      return(var->str_val);	/* return found variable value */
+      return(var->str_val);  /* return found variable value */
   }
   return(start);
 }
 
 
-static void set_reconnect(MYSQL* mysql, int val)
+static void set_reconnect(DRIZZLE *drizzle, int val)
 {
   bool reconnect= val;
 
-  mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&reconnect);
+  drizzle_options(drizzle, DRIZZLE_OPT_RECONNECT, (char *)&reconnect);
 
   return;
 }
@@ -3579,8 +3554,8 @@ static int select_connection_name(const char *name)
   if (!(cur_con= find_connection_by_name(name)))
     die("connection '%s' not found in connection pool", name);
 
-  /* Update $mysql_get_server_version to that of current connection */
-  var_set_mysql_get_server_version(&cur_con->mysql);
+  /* Update $drizzle_get_server_version to that of current connection */
+  var_set_drizzle_get_server_version(&cur_con->drizzle);
 
   return(0);
 }
@@ -3624,18 +3599,18 @@ static void do_close_connection(struct st_command *command)
 
   if (command->type == Q_DIRTY_CLOSE)
   {
-    if (con->mysql.net.vio)
+    if (con->drizzle.net.vio)
     {
-      vio_delete(con->mysql.net.vio);
-      con->mysql.net.vio = 0;
+      vio_delete(con->drizzle.net.vio);
+      con->drizzle.net.vio = 0;
     }
   }
 
-  mysql_close(&con->mysql);
+  drizzle_close(&con->drizzle);
 
-  if (con->util_mysql)
-    mysql_close(con->util_mysql);
-  con->util_mysql= 0;
+  if (con->util_drizzle)
+    drizzle_close(con->util_drizzle);
+  con->util_drizzle= 0;
 
   my_free(con->name, MYF(0));
 
@@ -3675,7 +3650,7 @@ static void do_close_connection(struct st_command *command)
 
 */
 
-static void safe_connect(MYSQL* mysql, const char *name, const char *host,
+static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
                   const char *user, const char *pass, const char *db,
                   int port)
 {
@@ -3683,7 +3658,7 @@ static void safe_connect(MYSQL* mysql, const char *name, const char *host,
   static ulong connection_retry_sleep= 100000; /* Microseconds */
 
 
-  while(!mysql_real_connect(mysql, host, user, pass, db, port, NULL,
+  while(!drizzle_connect(drizzle, host, user, pass, db, port, NULL,
                             CLIENT_MULTI_STATEMENTS | CLIENT_REMEMBER_OPTIONS))
   {
     /*
@@ -3694,23 +3669,23 @@ static void safe_connect(MYSQL* mysql, const char *name, const char *host,
       on protocol/connection type
     */
 
-    if ((mysql_errno(mysql) == CR_CONN_HOST_ERROR ||
-         mysql_errno(mysql) == CR_CONNECTION_ERROR) &&
+    if ((drizzle_errno(drizzle) == CR_CONN_HOST_ERROR ||
+         drizzle_errno(drizzle) == CR_CONNECTION_ERROR) &&
         failed_attempts < opt_max_connect_retries)
     {
       verbose_msg("Connect attempt %d/%d failed: %d: %s", failed_attempts,
-                  opt_max_connect_retries, mysql_errno(mysql),
-                  mysql_error(mysql));
+                  opt_max_connect_retries, drizzle_errno(drizzle),
+                  drizzle_error(drizzle));
       my_sleep(connection_retry_sleep);
     }
     else
     {
       if (failed_attempts > 0)
         die("Could not open connection '%s' after %d attempts: %d %s", name,
-            failed_attempts, mysql_errno(mysql), mysql_error(mysql));
+            failed_attempts, drizzle_errno(drizzle), drizzle_error(drizzle));
       else
         die("Could not open connection '%s': %d %s", name,
-            mysql_errno(mysql), mysql_error(mysql));
+            drizzle_errno(drizzle), drizzle_error(drizzle));
     }
     failed_attempts++;
   }
@@ -3742,7 +3717,7 @@ static void safe_connect(MYSQL* mysql, const char *name, const char *host,
 */
 
 static int connect_n_handle_errors(struct st_command *command,
-                            MYSQL* con, const char* host,
+                            DRIZZLE *con, const char* host,
                             const char* user, const char* pass,
                             const char* db, int port, const char* sock)
 {
@@ -3775,12 +3750,12 @@ static int connect_n_handle_errors(struct st_command *command,
     dynstr_append_mem(ds, delimiter, delimiter_length);
     dynstr_append_mem(ds, "\n", 1);
   }
-  if (!mysql_real_connect(con, host, user, pass, db, port, 0,
+  if (!drizzle_connect(con, host, user, pass, db, port, 0,
                           CLIENT_MULTI_STATEMENTS))
   {
-    var_set_errno(mysql_errno(con));
-    handle_error(command, mysql_errno(con), mysql_error(con),
-		 mysql_sqlstate(con), ds);
+    var_set_errno(drizzle_errno(con));
+    handle_error(command, drizzle_errno(con), drizzle_error(con),
+     drizzle_sqlstate(con), ds);
     return 0; /* Not connected */
   }
 
@@ -3791,12 +3766,12 @@ static int connect_n_handle_errors(struct st_command *command,
 
 
 /*
-  Open a new connection to MySQL Server with the parameters
+  Open a new connection to DRIZZLE Server with the parameters
   specified. Make the new connection the current connection.
 
   SYNOPSIS
   do_connect()
-  q	       called command
+  q         called command
 
   DESCRIPTION
   connect(<name>,<host>,<user>,[<pass>,[<db>,[<port>,<sock>[<opts>]]]]);
@@ -3892,7 +3867,7 @@ static void do_connect(struct st_command *command)
     else if (!strncmp(con_options, "COMPRESS", 8))
       con_compress= 1;
     else
-      die("Illegal option to connect: %.*s", 
+      die("Illegal option to connect: %.*s",
           (int) (end - con_options), con_options);
     /* Process next option */
     con_options= end;
@@ -3900,7 +3875,7 @@ static void do_connect(struct st_command *command)
 
   if (find_connection_by_name(ds_connection_name.str))
     die("Connection %s already exists", ds_connection_name.str);
-    
+   
   if (next_con != connections_end)
     con_slot= next_con;
   else
@@ -3913,17 +3888,17 @@ static void do_connect(struct st_command *command)
 #ifdef EMBEDDED_LIBRARY
   con_slot->query_done= 1;
 #endif
-  if (!mysql_init(&con_slot->mysql))
-    die("Failed on mysql_init()");
+  if (!drizzle_create(&con_slot->drizzle))
+    die("Failed on drizzle_create()");
   if (opt_compress || con_compress)
-    mysql_options(&con_slot->mysql, MYSQL_OPT_COMPRESS, NullS);
-  mysql_options(&con_slot->mysql, MYSQL_OPT_LOCAL_INFILE, 0);
-  mysql_options(&con_slot->mysql, MYSQL_SET_CHARSET_NAME,
+    drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_COMPRESS, NullS);
+  drizzle_options(&con_slot->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
+  drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_NAME,
                 charset_info->csname);
-  int opt_protocol= MYSQL_PROTOCOL_TCP;
-  mysql_options(&con_slot->mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
+  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
+  drizzle_options(&con_slot->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (opt_charsets_dir)
-    mysql_options(&con_slot->mysql, MYSQL_SET_CHARSET_DIR,
+    drizzle_options(&con_slot->drizzle, DRIZZLE_SET_CHARSET_DIR,
                   opt_charsets_dir);
 
   /* Use default db name */
@@ -3934,7 +3909,7 @@ static void do_connect(struct st_command *command)
   if (ds_database.length && !strcmp(ds_database.str,"*NO-ONE*"))
     dynstr_set(&ds_database, "");
 
-  if (connect_n_handle_errors(command, &con_slot->mysql,
+  if (connect_n_handle_errors(command, &con_slot->drizzle,
                               ds_host.str,ds_user.str,
                               ds_password.str, ds_database.str,
                               con_port, ds_sock.str))
@@ -3942,13 +3917,13 @@ static void do_connect(struct st_command *command)
     if (!(con_slot->name= my_strdup(ds_connection_name.str, MYF(MY_WME))))
       die("Out of memory");
     cur_con= con_slot;
-    
+   
     if (con_slot == next_con)
       next_con++; /* if we used the next_con slot, advance the pointer */
   }
 
-  /* Update $mysql_get_server_version to that of current connection */
-  var_set_mysql_get_server_version(&cur_con->mysql);
+  /* Update $drizzle_get_server_version to that of current connection */
+  var_set_drizzle_get_server_version(&cur_con->drizzle);
 
   dynstr_free(&ds_connection_name);
   dynstr_free(&ds_host);
@@ -3995,7 +3970,7 @@ static int do_done(struct st_command *command)
   SYNOPSIS
   do_block()
   cmd        Type of block
-  q	       called command
+  q         called command
 
   DESCRIPTION
   if ([!]<expr>)
@@ -4105,12 +4080,12 @@ bool match_delimiter(int c, const char *delim, uint length)
     return 0;
 
   for (i= 1; i < length &&
-	 (c= my_getc(cur_file->file)) == *(delim + i);
+   (c= my_getc(cur_file->file)) == *(delim + i);
        i++)
     tmp[i]= c;
 
   if (i == length)
-    return 1;					/* Found delimiter */
+    return 1;          /* Found delimiter */
 
   /* didn't find delimiter, push back things that we read */
   my_ungetc(c);
@@ -4169,7 +4144,7 @@ static int read_line(char *buf, int size)
   found_eof:
       if (cur_file->file != stdin)
       {
-	my_fclose(cur_file->file, MYF(0));
+  my_fclose(cur_file->file, MYF(0));
         cur_file->file= 0;
       }
       my_free((uchar*) cur_file->file_name, MYF(MY_ALLOW_ZERO_PTR));
@@ -4204,8 +4179,8 @@ static int read_line(char *buf, int size)
     case R_NORMAL:
       if (end_of_query(c))
       {
-	*p= 0;
-	return(0);
+  *p= 0;
+  return(0);
       }
       else if ((c == '{' &&
                 (!my_strnncoll_simple(charset_info, (const uchar*) "while", 5,
@@ -4215,13 +4190,13 @@ static int read_line(char *buf, int size)
       {
         /* Only if and while commands can be terminated by { */
         *p++= c;
-	*p= 0;
-	return(0);
+  *p= 0;
+  return(0);
       }
       else if (c == '\'' || c == '"' || c == '`')
       {
         last_quote= c;
-	state= R_Q;
+  state= R_Q;
       }
       break;
 
@@ -4229,8 +4204,8 @@ static int read_line(char *buf, int size)
       if (c == '\n')
       {
         /* Comments are terminated by newline */
-	*p= 0;
-	return(0);
+  *p= 0;
+  return(0);
       }
       break;
 
@@ -4238,44 +4213,44 @@ static int read_line(char *buf, int size)
       if (c == '#' || c == '-')
       {
         /* A # or - in the first position of the line - this is a comment */
-	state = R_COMMENT;
+  state = R_COMMENT;
       }
       else if (my_isspace(charset_info, c))
       {
         /* Skip all space at begining of line */
-	if (c == '\n')
+  if (c == '\n')
         {
           /* Query hasn't started yet */
-	  start_lineno= cur_file->lineno;
+    start_lineno= cur_file->lineno;
         }
-	skip_char= 1;
+  skip_char= 1;
       }
       else if (end_of_query(c))
       {
-	*p= 0;
-	return(0);
+  *p= 0;
+  return(0);
       }
       else if (c == '}')
       {
         /* A "}" need to be by itself in the begining of a line to terminate */
         *p++= c;
-	*p= 0;
-	return(0);
+  *p= 0;
+  return(0);
       }
       else if (c == '\'' || c == '"' || c == '`')
       {
         last_quote= c;
-	state= R_Q;
+  state= R_Q;
       }
       else
-	state= R_NORMAL;
+  state= R_NORMAL;
       break;
 
     case R_Q:
       if (c == last_quote)
-	state= R_NORMAL;
+  state= R_NORMAL;
       else if (c == '\\')
-	state= R_SLASH_IN_Q;
+  state= R_SLASH_IN_Q;
       break;
 
     case R_SLASH_IN_Q:
@@ -4294,29 +4269,29 @@ static int read_line(char *buf, int size)
       /* completed before we pass buf_end */
       if ((charlen > 1) && (p + charlen) <= buf_end)
       {
-	int i;
-	char* mb_start = p;
+  int i;
+  char* mb_start = p;
 
-	*p++ = c;
+  *p++ = c;
 
-	for (i= 1; i < charlen; i++)
-	{
-	  if (feof(cur_file->file))
-	    goto found_eof;
-	  c= my_getc(cur_file->file);
-	  *p++ = c;
-	}
-	if (! my_ismbchar(charset_info, mb_start, p))
-	{
-	  /* It was not a multiline char, push back the characters */
-	  /* We leave first 'c', i.e. pretend it was a normal char */
-	  while (p > mb_start)
-	    my_ungetc(*--p);
-	}
+  for (i= 1; i < charlen; i++)
+  {
+    if (feof(cur_file->file))
+      goto found_eof;
+    c= my_getc(cur_file->file);
+    *p++ = c;
+  }
+  if (! my_ismbchar(charset_info, mb_start, p))
+  {
+    /* It was not a multiline char, push back the characters */
+    /* We leave first 'c', i.e. pretend it was a normal char */
+    while (p > mb_start)
+      my_ungetc(*--p);
+  }
       }
       else
 #endif
-	*p++= c;
+  *p++= c;
     }
   }
   die("The input buffer is too small for this query.x\n" \
@@ -4379,7 +4354,7 @@ static void convert_to_format_v1(char* query)
 
 /*
   Check a command that is about to be sent (or should have been
-  sent if parsing was enabled) to mysql server for
+  sent if parsing was enabled) to DRIZZLE server for
   suspicious things and generate warnings.
 */
 
@@ -4391,7 +4366,7 @@ static void scan_command_for_warnings(struct st_command *command)
   {
     /*
       Look for query's that lines that start with a -- comment
-      and has a mysqltest command
+      and has a drizzletest command
     */
     if (ptr[0] == '\n' &&
         ptr[1] && ptr[1] == '-' &&
@@ -4412,7 +4387,7 @@ static void scan_command_for_warnings(struct st_command *command)
       *end= 0;
       type= find_type(start, &command_typelib, 1+2);
       if (type)
-        warning_msg("Embedded mysqltest command '--%s' detected in "
+        warning_msg("Embedded drizzletest command '--%s' detected in "
                     "query '%s' was this intentional? ",
                     start, command->query);
       *end= save;
@@ -4639,28 +4614,23 @@ static struct my_option my_long_options[] =
 };
 
 
-#include <help_start.h>
-
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,MTEST_VERSION,
-	 MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+   MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 static void usage(void)
 {
   print_version();
-  printf("MySQL AB, by Sasha, Matt, Monty & Jani\n");
+  printf("DRIZZLE AB, by Sasha, Matt, Monty & Jani\n");
   printf("This software comes with ABSOLUTELY NO WARRANTY\n\n");
-  printf("Runs a test against the mysql server and compares output with a results file.\n\n");
+  printf("Runs a test against the DRIZZLE server and compares output with a results file.\n\n");
   printf("Usage: %s [OPTIONS] [database] < test_file\n", my_progname);
   my_print_help(my_long_options);
   printf("  --no-defaults       Don't read default options from any options file.\n");
   my_print_variables(my_long_options);
 }
-
-#include <help_end.h>
-
 
 /*
   Read arguments for embedded server and put them into
@@ -4682,17 +4652,17 @@ static void read_embedded_server_arguments(const char *name)
   if (!embedded_server_arg_count)
   {
     embedded_server_arg_count=1;
-    embedded_server_args[0]= (char*) "";		/* Progname */
+    embedded_server_args[0]= (char*) "";    /* Progname */
   }
   if (!(file=my_fopen(buff, O_RDONLY | FILE_BINARY, MYF(MY_WME))))
     die("Failed to open file '%s'", buff);
 
   while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
-	 (str=fgets(argument,sizeof(argument), file)))
+   (str=fgets(argument,sizeof(argument), file)))
   {
-    *(strend(str)-1)=0;				/* Remove end newline */
+    *(strend(str)-1)=0;        /* Remove end newline */
     if (!(embedded_server_args[embedded_server_arg_count]=
-	  (char*) my_strdup(str,MYF(MY_WME))))
+    (char*) my_strdup(str,MYF(MY_WME))))
     {
       my_fclose(file,MYF(0));
       die("Out of memory");
@@ -4710,7 +4680,7 @@ static void read_embedded_server_arguments(const char *name)
 
 static bool
 get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
-	       char *argument)
+         char *argument)
 {
   switch(optid) {
   case 'r':
@@ -4743,7 +4713,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     }
     fn_format(buff, argument, "", "", MY_UNPACK_FILENAME);
     timer_file= buff;
-    unlink(timer_file);	     /* Ignore error, may not exist */
+    unlink(timer_file);       /* Ignore error, may not exist */
     break;
   }
   case 'p':
@@ -4751,7 +4721,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     {
       my_free(opt_pass, MYF(MY_ALLOW_ZERO_PTR));
       opt_pass= my_strdup(argument, MYF(MY_FAE));
-      while (*argument) *argument++= 'x';		/* Destroy argument */
+      while (*argument) *argument++= 'x';    /* Destroy argument */
       tty_password= 0;
     }
     else
@@ -4899,7 +4869,7 @@ void dump_warning_messages(void)
   Append the result for one field to the dynamic string ds
 */
 
-static void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
+static void append_field(DYNAMIC_STRING *ds, uint col_idx, const DRIZZLE_FIELD* field,
                          const char* val, uint64_t len, bool is_null)
 {
   if (col_idx < max_replace_column && replace_column[col_idx])
@@ -4934,17 +4904,17 @@ static void append_field(DYNAMIC_STRING *ds, uint col_idx, MYSQL_FIELD* field,
   Values may be converted with 'replace_column'
 */
 
-static void append_result(DYNAMIC_STRING *ds, MYSQL_RES *res)
+static void append_result(DYNAMIC_STRING *ds, DRIZZLE_RES *res)
 {
-  MYSQL_ROW row;
-  uint32_t num_fields= mysql_num_fields(res);
-  MYSQL_FIELD *fields= mysql_fetch_fields(res);
+  DRIZZLE_ROW row;
+  uint32_t num_fields= drizzle_num_fields(res);
+  const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
   uint32_t *lengths;
 
-  while ((row = mysql_fetch_row(res)))
+  while ((row = drizzle_fetch_row(res)))
   {
     uint32_t i;
-    lengths = mysql_fetch_lengths(res);
+    lengths = drizzle_fetch_lengths(res);
     for (i = 0; i < num_fields; i++)
       append_field(ds, i, &fields[i],
                    (const char*)row[i], lengths[i], !row[i]);
@@ -4959,10 +4929,10 @@ static void append_result(DYNAMIC_STRING *ds, MYSQL_RES *res)
 */
 
 static void append_metadata(DYNAMIC_STRING *ds,
-                            MYSQL_FIELD *field,
+                            const DRIZZLE_FIELD *field,
                             uint num_fields)
 {
-  MYSQL_FIELD *field_end;
+  const DRIZZLE_FIELD *field_end;
   dynstr_append(ds,"Catalog\tDatabase\tTable\tTable_alias\tColumn\t"
                 "Column_alias\tType\tLength\tMax length\tIs_null\t"
                 "Flags\tDecimals\tCharsetnr\n");
@@ -5030,7 +5000,7 @@ static void append_info(DYNAMIC_STRING *ds, uint64_t affected_rows,
 */
 
 static void append_table_headings(DYNAMIC_STRING *ds,
-                                  MYSQL_FIELD *field,
+                                  const DRIZZLE_FIELD *field,
                                   uint num_fields)
 {
   uint col_idx;
@@ -5050,13 +5020,13 @@ static void append_table_headings(DYNAMIC_STRING *ds,
   Number of warnings appended to ds
 */
 
-static int append_warnings(DYNAMIC_STRING *ds, MYSQL* mysql)
+static int append_warnings(DYNAMIC_STRING *ds, DRIZZLE *drizzle)
 {
   uint count;
-  MYSQL_RES *warn_res;
+  DRIZZLE_RES *warn_res;
 
 
-  if (!(count= mysql_warning_count(mysql)))
+  if (!(count= drizzle_warning_count(drizzle)))
     return(0);
 
   /*
@@ -5064,33 +5034,33 @@ static int append_warnings(DYNAMIC_STRING *ds, MYSQL* mysql)
     through PS API we should not issue SHOW WARNINGS until
     we have not read all results...
   */
-  assert(!mysql_more_results(mysql));
+  assert(!drizzle_more_results(drizzle));
 
-  if (mysql_real_query(mysql, "SHOW WARNINGS", 13))
-    die("Error running query \"SHOW WARNINGS\": %s", mysql_error(mysql));
+  if (drizzle_real_query(drizzle, "SHOW WARNINGS", 13))
+    die("Error running query \"SHOW WARNINGS\": %s", drizzle_error(drizzle));
 
-  if (!(warn_res= mysql_store_result(mysql)))
+  if (!(warn_res= drizzle_store_result(drizzle)))
     die("Warning count is %u but didn't get any warnings",
-	count);
+  count);
 
   append_result(ds, warn_res);
-  mysql_free_result(warn_res);
+  drizzle_free_result(warn_res);
 
   return(count);
 }
 
 
 /*
-  Run query using MySQL C API
+  Run query using DRIZZLE C API
 
   SYNOPSIS
     run_query_normal()
-    mysql	mysql handle
-    command	current command pointer
-    flags	flags indicating if we should SEND and/or REAP
-    query	query string to execute
-    query_len	length query string to execute
-    ds		output buffer where to store result form query
+    drizzle  DRIZZLE handle
+    command  current command pointer
+    flags  flags indicating if we should SEND and/or REAP
+    query  query string to execute
+    query_len  length query string to execute
+    ds    output buffer where to store result form query
 */
 
 static void run_query_normal(struct st_connection *cn,
@@ -5098,8 +5068,8 @@ static void run_query_normal(struct st_connection *cn,
                              int flags, char *query, int query_len,
                              DYNAMIC_STRING *ds, DYNAMIC_STRING *ds_warnings)
 {
-  MYSQL_RES *res= 0;
-  MYSQL *mysql= &cn->mysql;
+  DRIZZLE_RES *res= 0;
+  DRIZZLE *drizzle= &cn->drizzle;
   int err= 0, counter= 0;
 
   if (flags & QUERY_SEND_FLAG)
@@ -5109,8 +5079,8 @@ static void run_query_normal(struct st_connection *cn,
     */
     if (do_send_query(cn, query, query_len, flags))
     {
-      handle_error(command, mysql_errno(mysql), mysql_error(mysql),
-		   mysql_sqlstate(mysql), ds);
+      handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
+       drizzle_sqlstate(drizzle), ds);
       goto end;
     }
   }
@@ -5128,13 +5098,13 @@ static void run_query_normal(struct st_connection *cn,
   do
   {
     /*
-      When  on first result set, call mysql_read_query_result to retrieve
+      When  on first result set, call drizzle_read_query_result to retrieve
       answer to the query sent earlier
     */
-    if ((counter==0) && mysql_read_query_result(mysql))
+    if ((counter==0) && drizzle_read_query_result(drizzle))
     {
-      handle_error(command, mysql_errno(mysql), mysql_error(mysql),
-		   mysql_sqlstate(mysql), ds);
+      handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
+       drizzle_sqlstate(drizzle), ds);
       goto end;
 
     }
@@ -5142,10 +5112,10 @@ static void run_query_normal(struct st_connection *cn,
     /*
       Store the result of the query if it will return any fields
     */
-    if (mysql_field_count(mysql) && ((res= mysql_store_result(mysql)) == 0))
+    if (drizzle_field_count(drizzle) && ((res= drizzle_store_result(drizzle)) == 0))
     {
-      handle_error(command, mysql_errno(mysql), mysql_error(mysql),
-		   mysql_sqlstate(mysql), ds);
+      handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
+       drizzle_sqlstate(drizzle), ds);
       goto end;
     }
 
@@ -5155,55 +5125,55 @@ static void run_query_normal(struct st_connection *cn,
 
       if (res)
       {
-	MYSQL_FIELD *fields= mysql_fetch_fields(res);
-	uint num_fields= mysql_num_fields(res);
+        const DRIZZLE_FIELD *fields= drizzle_fetch_fields(res);
+        uint num_fields= drizzle_num_fields(res);
 
-	if (display_metadata)
+        if (display_metadata)
           append_metadata(ds, fields, num_fields);
 
-	if (!display_result_vertically)
-	  append_table_headings(ds, fields, num_fields);
+        if (!display_result_vertically)
+          append_table_headings(ds, fields, num_fields);
 
-	append_result(ds, res);
+        append_result(ds, res);
       }
 
       /*
-        Need to call mysql_affected_rows() before the "new"
+        Need to call drizzle_affected_rows() before the "new"
         query to find the warnings
       */
       if (!disable_info)
-        affected_rows= mysql_affected_rows(mysql);
+        affected_rows= drizzle_affected_rows(drizzle);
 
       /*
         Add all warnings to the result. We can't do this if we are in
         the middle of processing results from multi-statement, because
         this will break protocol.
       */
-      if (!disable_warnings && !mysql_more_results(mysql))
+      if (!disable_warnings && !drizzle_more_results(drizzle))
       {
-	if (append_warnings(ds_warnings, mysql) || ds_warnings->length)
-	{
-	  dynstr_append_mem(ds, "Warnings:\n", 10);
-	  dynstr_append_mem(ds, ds_warnings->str, ds_warnings->length);
-	}
+  if (append_warnings(ds_warnings, drizzle) || ds_warnings->length)
+  {
+    dynstr_append_mem(ds, "Warnings:\n", 10);
+    dynstr_append_mem(ds, ds_warnings->str, ds_warnings->length);
+  }
       }
 
       if (!disable_info)
-	append_info(ds, affected_rows, mysql_info(mysql));
+  append_info(ds, affected_rows, drizzle_info(drizzle));
     }
 
     if (res)
     {
-      mysql_free_result(res);
+      drizzle_free_result(res);
       res= 0;
     }
     counter++;
-  } while (!(err= mysql_next_result(mysql)));
+  } while (!(err= drizzle_next_result(drizzle)));
   if (err > 0)
   {
-    /* We got an error from mysql_next_result, maybe expected */
-    handle_error(command, mysql_errno(mysql), mysql_error(mysql),
-		 mysql_sqlstate(mysql), ds);
+    /* We got an error from drizzle_next_result, maybe expected */
+    handle_error(command, drizzle_errno(drizzle), drizzle_error(drizzle),
+     drizzle_sqlstate(drizzle), ds);
     goto end;
   }
   assert(err == -1); /* Successful and there are no more results */
@@ -5214,11 +5184,11 @@ static void run_query_normal(struct st_connection *cn,
 end:
 
   /*
-    We save the return code (mysql_errno(mysql)) from the last call sent
-    to the server into the mysqltest builtin variable $mysql_errno. This
+    We save the return code (drizzle_errno(drizzle)) from the last call sent
+    to the server into the drizzletest builtin variable $drizzle_errno. This
     variable then can be used from the test case itself.
   */
-  var_set_errno(mysql_errno(mysql));
+  var_set_errno(drizzle_errno(drizzle));
   return;
 }
 
@@ -5235,7 +5205,7 @@ end:
   ds    - dynamic string which is used for output buffer
 
   NOTE
-    If there is an unexpected error this function will abort mysqltest
+    If there is an unexpected error this function will abort drizzletest
     immediately.
 */
 
@@ -5315,7 +5285,7 @@ void handle_error(struct st_command *command,
     else
       die("query '%s' failed with wrong sqlstate %s: '%s', instead of %s...",
           command->query, err_sqlstate, err_error,
-	  command->expected_errors.err[0].code.sqlstate);
+    command->expected_errors.err[0].code.sqlstate);
   }
 
   return;
@@ -5361,15 +5331,15 @@ void handle_no_error(struct st_command *command)
 
   SYNPOSIS
     run_query()
-     mysql	mysql handle
-     command	currrent command pointer
+     drizzle  DRIZZLE handle
+     command  currrent command pointer
 
   flags control the phased/stages of query execution to be performed
   if QUERY_SEND_FLAG bit is on, the query will be sent. If QUERY_REAP_FLAG
   is on the result will be read - for regular query, both bits must be on
 */
 
-static void run_query(struct st_connection *cn, 
+static void run_query(struct st_connection *cn,
                       struct st_command *command,
                       int flags)
 {
@@ -5493,7 +5463,7 @@ static void get_command_type(struct st_command* command)
   command->query[command->first_word_len]= save;
   if (type > 0)
   {
-    command->type=(enum enum_commands) type;		/* Found command */
+    command->type=(enum enum_commands) type;    /* Found command */
 
     /*
       Look for case where "query" was explicitly specified to
@@ -5507,16 +5477,16 @@ static void get_command_type(struct st_command* command)
   }
   else
   {
-    /* No mysqltest command matched */
+    /* No drizzletest command matched */
 
     if (command->type != Q_COMMENT_WITH_COMMAND)
     {
-      /* A query that will sent to mysqld */
+      /* A query that will sent to drizzled */
       command->type= Q_QUERY;
     }
     else
     {
-      /* -- comment that didn't contain a mysqltest command */
+      /* -- comment that didn't contain a drizzletest command */
       command->type= Q_COMMENT;
       warning_msg("Suspicious command '--%s' detected, was this intentional? "\
                   "Use # instead of -- to avoid this warning",
@@ -5655,10 +5625,6 @@ int main(int argc, char **argv)
   init_dynamic_string(&ds_warning_messages, "", 0, 2048);
   parse_args(argc, argv);
 
-  if (mysql_server_init(embedded_server_arg_count,
-			embedded_server_args,
-			(char**) embedded_server_groups))
-    die("Can't initialize MySQL server");
   server_initialized= 1;
   if (cur_file == file_stack && cur_file->file == 0)
   {
@@ -5667,37 +5633,37 @@ int main(int argc, char **argv)
     cur_file->lineno= 1;
   }
   cur_con= connections;
-  if (!( mysql_init(&cur_con->mysql)))
-    die("Failed in mysql_init()");
+  if (!( drizzle_create(&cur_con->drizzle)))
+    die("Failed in drizzle_create()");
   if (opt_compress)
-    mysql_options(&cur_con->mysql,MYSQL_OPT_COMPRESS,NullS);
-  mysql_options(&cur_con->mysql, MYSQL_OPT_LOCAL_INFILE, 0);
-  mysql_options(&cur_con->mysql, MYSQL_SET_CHARSET_NAME,
+    drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_COMPRESS,NullS);
+  drizzle_options(&cur_con->drizzle, DRIZZLE_OPT_LOCAL_INFILE, 0);
+  drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_NAME,
                 charset_info->csname);
-  int opt_protocol= MYSQL_PROTOCOL_TCP;
-  mysql_options(&cur_con->mysql,MYSQL_OPT_PROTOCOL,(char*)&opt_protocol);
+  int opt_protocol= DRIZZLE_PROTOCOL_TCP;
+  drizzle_options(&cur_con->drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (opt_charsets_dir)
-    mysql_options(&cur_con->mysql, MYSQL_SET_CHARSET_DIR,
+    drizzle_options(&cur_con->drizzle, DRIZZLE_SET_CHARSET_DIR,
                   opt_charsets_dir);
 
   if (!(cur_con->name = my_strdup("default", MYF(MY_WME))))
     die("Out of memory");
 
-  safe_connect(&cur_con->mysql, cur_con->name, opt_host, opt_user, opt_pass,
+  safe_connect(&cur_con->drizzle, cur_con->name, opt_host, opt_user, opt_pass,
                opt_db, opt_port);
 
   /* Use all time until exit if no explicit 'start_timer' */
   timer_start= timer_now();
 
   /*
-    Initialize $mysql_errno with -1, so we can
+    Initialize $drizzle_errno with -1, so we can
     - distinguish it from valid values ( >= 0 ) and
     - detect if there was never a command sent to the server
   */
   var_set_errno(-1);
 
-  /* Update $mysql_get_server_version to that of current connection */
-  var_set_mysql_get_server_version(&cur_con->mysql);
+  /* Update $drizzle_get_server_version to that of current connection */
+  var_set_drizzle_get_server_version(&cur_con->drizzle);
 
   if (opt_include)
   {
@@ -5729,7 +5695,7 @@ int main(int argc, char **argv)
       case Q_CONNECTION: select_connection(command); break;
       case Q_DISCONNECT:
       case Q_DIRTY_CLOSE:
-	do_close_connection(command); break;
+  do_close_connection(command); break;
       case Q_ENABLE_QUERY_LOG:   disable_query_log=0; break;
       case Q_DISABLE_QUERY_LOG:  disable_query_log=1; break;
       case Q_ENABLE_ABORT_ON_ERROR:  abort_on_error=1; break;
@@ -5765,19 +5731,19 @@ int main(int argc, char **argv)
       case Q_PERL: do_perl(command); break;
       case Q_DELIMITER:
         do_delimiter(command);
-	break;
+  break;
       case Q_DISPLAY_VERTICAL_RESULTS:
         display_result_vertically= true;
         break;
       case Q_DISPLAY_HORIZONTAL_RESULTS:
-	display_result_vertically= false;
+  display_result_vertically= false;
         break;
       case Q_SORTED_RESULT:
         /*
           Turn on sorting of result set, will be reset after next
           command
         */
-	display_result_sorted= true;
+  display_result_sorted= true;
         break;
       case Q_LET: do_let(command); break;
       case Q_EVAL_RESULT:
@@ -5785,17 +5751,17 @@ int main(int argc, char **argv)
       case Q_EVAL:
       case Q_QUERY_VERTICAL:
       case Q_QUERY_HORIZONTAL:
-	if (command->query == command->query_buf)
+  if (command->query == command->query_buf)
         {
           /* Skip the first part of command, i.e query_xxx */
-	  command->query= command->first_argument;
+    command->query= command->first_argument;
           command->first_word_len= 0;
         }
-	/* fall through */
+  /* fall through */
       case Q_QUERY:
       case Q_REAP:
       {
-	bool old_display_result_vertically= display_result_vertically;
+  bool old_display_result_vertically= display_result_vertically;
         /* Default is full query, both reap and send  */
         int flags= QUERY_REAP_FLAG | QUERY_SEND_FLAG;
 
@@ -5813,19 +5779,19 @@ int main(int argc, char **argv)
         /* Check for special property for this query */
         display_result_vertically|= (command->type == Q_QUERY_VERTICAL);
 
-	if (save_file[0])
-	{
-	  strmake(command->require_file, save_file, sizeof(save_file) - 1);
-	  save_file[0]= 0;
-	}
-	run_query(cur_con, command, flags);
-	command_executed++;
+  if (save_file[0])
+  {
+    strmake(command->require_file, save_file, sizeof(save_file) - 1);
+    save_file[0]= 0;
+  }
+  run_query(cur_con, command, flags);
+  command_executed++;
         command->last_argument= command->end;
 
         /* Restore settings */
-	display_result_vertically= old_display_result_vertically;
+  display_result_vertically= old_display_result_vertically;
 
-	break;
+  break;
       }
       case Q_SEND:
         if (!*command->first_argument)
@@ -5839,72 +5805,72 @@ int main(int argc, char **argv)
         }
 
         /* Remove "send" if this is first iteration */
-	if (command->query == command->query_buf)
-	  command->query= command->first_argument;
+  if (command->query == command->query_buf)
+    command->query= command->first_argument;
 
-	/*
-	  run_query() can execute a query partially, depending on the flags.
-	  QUERY_SEND_FLAG flag without QUERY_REAP_FLAG tells it to just send
+  /*
+    run_query() can execute a query partially, depending on the flags.
+    QUERY_SEND_FLAG flag without QUERY_REAP_FLAG tells it to just send
           the query and read the result some time later when reap instruction
-	  is given on this connection.
+    is given on this connection.
         */
-	run_query(cur_con, command, QUERY_SEND_FLAG);
-	command_executed++;
+  run_query(cur_con, command, QUERY_SEND_FLAG);
+  command_executed++;
         command->last_argument= command->end;
-	break;
+  break;
       case Q_REQUIRE:
-	do_get_file_name(command, save_file, sizeof(save_file));
-	break;
+  do_get_file_name(command, save_file, sizeof(save_file));
+  break;
       case Q_ERROR:
         do_get_errcodes(command);
-	break;
+  break;
       case Q_REPLACE:
-	do_get_replace(command);
-	break;
+  do_get_replace(command);
+  break;
       case Q_REPLACE_REGEX:
         do_get_replace_regex(command);
         break;
       case Q_REPLACE_COLUMN:
-	do_get_replace_column(command);
-	break;
+  do_get_replace_column(command);
+  break;
       case Q_SAVE_MASTER_POS: do_save_master_pos(); break;
       case Q_SYNC_WITH_MASTER: do_sync_with_master(command); break;
       case Q_SYNC_SLAVE_WITH_MASTER:
       {
-	do_save_master_pos();
-	if (*command->first_argument)
-	  select_connection(command);
-	else
-	  select_connection_name("slave");
-	do_sync_with_master2(0);
-	break;
+  do_save_master_pos();
+  if (*command->first_argument)
+    select_connection(command);
+  else
+    select_connection_name("slave");
+  do_sync_with_master2(0);
+  break;
       }
-      case Q_COMMENT:				/* Ignore row */
+      case Q_COMMENT:        /* Ignore row */
         command->last_argument= command->end;
-	break;
+  break;
       case Q_PING:
-	(void) mysql_ping(&cur_con->mysql);
-	break;
+  (void) drizzle_ping(&cur_con->drizzle);
+  break;
       case Q_EXEC:
-	do_exec(command);
-	command_executed++;
-	break;
+  do_exec(command);
+  command_executed++;
+  break;
       case Q_START_TIMER:
-	/* Overwrite possible earlier start of timer */
-	timer_start= timer_now();
-	break;
+  /* Overwrite possible earlier start of timer */
+  timer_start= timer_now();
+  break;
       case Q_END_TIMER:
-	/* End timer before ending mysqltest */
-	timer_output();
-	break;
+  /* End timer before ending drizzletest */
+  timer_output();
+  break;
       case Q_CHARACTER_SET:
-	do_set_charset(command);
-	break;
+  do_set_charset(command);
+  break;
       case Q_DISABLE_RECONNECT:
-        set_reconnect(&cur_con->mysql, 0);
+        set_reconnect(&cur_con->drizzle, 0);
         break;
       case Q_ENABLE_RECONNECT:
-        set_reconnect(&cur_con->mysql, 1);
+        set_reconnect(&cur_con->drizzle, 1);
         break;
       case Q_DISABLE_PARSING:
         if (parsing_disabled == 0)
@@ -6003,16 +5969,16 @@ int main(int argc, char **argv)
 
       if (record)
       {
-	/* Recording - dump the output from test to result file */
-	str_to_file(result_file_name, ds_res.str, ds_res.length);
+  /* Recording - dump the output from test to result file */
+  str_to_file(result_file_name, ds_res.str, ds_res.length);
       }
       else
       {
-	/* Check that the output from test is equal to result file
-	   - detect missing result file
-	   - detect zero size result file
+  /* Check that the output from test is equal to result file
+     - detect missing result file
+     - detect zero size result file
         */
-	check_result(&ds_res);
+  check_result(&ds_res);
       }
     }
     else
@@ -6061,13 +6027,13 @@ int main(int argc, char **argv)
   before executing any commands. The time we measure is
 
   - If no explicit 'start_timer' or 'end_timer' is given in the
-  test case, the timer measure how long we execute in mysqltest.
+  test case, the timer measure how long we execute in drizzletest.
 
   - If only 'start_timer' is given we measure how long we execute
-  from that point until we terminate mysqltest.
+  from that point until we terminate drizzletest.
 
   - If only 'end_timer' is given we measure how long we execute
-  from that we enter mysqltest to the 'end_timer' is command is
+  from that we enter drizzletest to the 'end_timer' is command is
   executed.
 
   - If both 'start_timer' and 'end_timer' are given we measure
@@ -6156,16 +6122,16 @@ void free_replace_column()
 
 /* Definitions for replace result */
 
-typedef struct st_pointer_array {		/* when using array-strings */
-  TYPELIB typelib;				/* Pointer to strings */
-  uchar	*str;					/* Strings is here */
-  int7	*flag;					/* Flag about each var. */
-  uint	array_allocs,max_count,length,max_length;
+typedef struct st_pointer_array {    /* when using array-strings */
+  TYPELIB typelib;        /* Pointer to strings */
+  uchar  *str;          /* Strings is here */
+  int7  *flag;          /* Flag about each var. */
+  uint  array_allocs,max_count,length,max_length;
 } POINTER_ARRAY;
 
 struct st_replace;
 struct st_replace *init_replace(char * *from, char * *to, uint count,
-				char * word_end_chars);
+        char * word_end_chars);
 int insert_pointer_name(POINTER_ARRAY *pa,char * name);
 void replace_strings_append(struct st_replace *rep, DYNAMIC_STRING* ds,
                             const char *from, int len);
@@ -6192,8 +6158,8 @@ void do_get_replace(struct st_command *command)
 
   free_replace();
 
-  bzero((char*) &to_array,sizeof(to_array));
-  bzero((char*) &from_array,sizeof(from_array));
+  memset((char*) &to_array, 0, sizeof(to_array));
+  memset((char*) &from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
   start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
@@ -6211,11 +6177,11 @@ void do_get_replace(struct st_command *command)
   for (i= 1,pos= word_end_chars ; i < 256 ; i++)
     if (my_isspace(charset_info,i))
       *pos++= i;
-  *pos=0;					/* End pointer */
+  *pos=0;          /* End pointer */
   if (!(glob_replace= init_replace((char**) from_array.typelib.type_names,
-				  (char**) to_array.typelib.type_names,
-				  (uint) from_array.typelib.count,
-				  word_end_chars)))
+          (char**) to_array.typelib.type_names,
+          (uint) from_array.typelib.count,
+          word_end_chars)))
     die("Can't initialize replace from '%s'", command->query);
   free_pointer_array(&from_array);
   free_pointer_array(&to_array);
@@ -6389,7 +6355,7 @@ static struct st_replace_regex* init_replace_regex(char* expr)
   /* for each regexp substitution statement */
   while (p < expr_end)
   {
-    bzero(&reg,sizeof(reg));
+    memset(&reg, 0, sizeof(reg));
     /* find the start of the statement */
     while (p < expr_end)
     {
@@ -6602,21 +6568,21 @@ int reg_replace(char** buf_p, int* buf_len_p, char *pattern,
 #define LAST_CHAR_CODE 259
 
 typedef struct st_rep_set {
-  uint	*bits;				/* Pointer to used sets */
-  short next[LAST_CHAR_CODE];		/* Pointer to next sets */
-  uint	found_len;			/* Best match to date */
-  int	found_offset;
-  uint	table_offset;
-  uint	size_of_bits;			/* For convinience */
+  uint  *bits;        /* Pointer to used sets */
+  short next[LAST_CHAR_CODE];    /* Pointer to next sets */
+  uint  found_len;      /* Best match to date */
+  int  found_offset;
+  uint  table_offset;
+  uint  size_of_bits;      /* For convinience */
 } REP_SET;
 
 typedef struct st_rep_sets {
-  uint		count;			/* Number of sets */
-  uint		extra;			/* Extra sets in buffer */
-  uint		invisible;		/* Sets not chown */
-  uint		size_of_bits;
-  REP_SET	*set,*set_buffer;
-  uint		*bit_buffer;
+  uint    count;      /* Number of sets */
+  uint    extra;      /* Extra sets in buffer */
+  uint    invisible;    /* Sets not chown */
+  uint    size_of_bits;
+  REP_SET  *set,*set_buffer;
+  uint    *bit_buffer;
 } REP_SETS;
 
 typedef struct st_found_set {
@@ -6667,7 +6633,7 @@ static uint replace_len(char * str)
 /* Init a replace structure for further calls */
 
 REPLACE *init_replace(char * *from, char * *to,uint count,
-		      char * word_end_chars)
+          char * word_end_chars)
 {
   static const int SPACE_CHAR= 256;
   static const int START_OF_LINE= 257;
@@ -6699,7 +6665,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     if (len > max_length)
       max_length=len;
   }
-  bzero((char*) is_word_end,sizeof(is_word_end));
+  memset((char*) is_word_end, 0, sizeof(is_word_end));
   for (i=0 ; word_end_chars[i] ; i++)
     is_word_end[(uchar) word_end_chars[i]]=1;
 
@@ -6707,16 +6673,16 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     return(0);
   found_sets=0;
   if (!(found_set= (FOUND_SET*) my_malloc(sizeof(FOUND_SET)*max_length*count,
-					  MYF(MY_WME))))
+            MYF(MY_WME))))
   {
     free_sets(&sets);
     return(0);
   }
-  VOID(make_new_set(&sets));			/* Set starting set */
-  make_sets_invisible(&sets);			/* Hide previus sets */
+  VOID(make_new_set(&sets));      /* Set starting set */
+  make_sets_invisible(&sets);      /* Hide previus sets */
   used_sets=-1;
-  word_states=make_new_set(&sets);		/* Start of new word */
-  start_states=make_new_set(&sets);		/* This is first state */
+  word_states=make_new_set(&sets);    /* Start of new word */
+  start_states=make_new_set(&sets);    /* This is first state */
   if (!(follow=(FOLLOWS*) my_malloc((states+2)*sizeof(FOLLOWS),MYF(MY_WME))))
   {
     free_sets(&sets);
@@ -6732,8 +6698,8 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
       internal_set_bit(start_states,states+1);
       if (!from[i][2])
       {
-	start_states->table_offset=i;
-	start_states->found_offset=1;
+  start_states->table_offset=i;
+  start_states->found_offset=1;
       }
     }
     else if (from[i][0] == '\\' && from[i][1] == '$')
@@ -6742,49 +6708,49 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
       internal_set_bit(word_states,states);
       if (!from[i][2] && start_states->table_offset == (uint) ~0)
       {
-	start_states->table_offset=i;
-	start_states->found_offset=0;
+  start_states->table_offset=i;
+  start_states->found_offset=0;
       }
     }
     else
     {
       internal_set_bit(word_states,states);
       if (from[i][0] == '\\' && (from[i][1] == 'b' && from[i][2]))
-	internal_set_bit(start_states,states+1);
+  internal_set_bit(start_states,states+1);
       else
-	internal_set_bit(start_states,states);
+  internal_set_bit(start_states,states);
     }
     for (pos=from[i], len=0; *pos ; pos++)
     {
       if (*pos == '\\' && *(pos+1))
       {
-	pos++;
-	switch (*pos) {
-	case 'b':
-	  follow_ptr->chr = SPACE_CHAR;
-	  break;
-	case '^':
-	  follow_ptr->chr = START_OF_LINE;
-	  break;
-	case '$':
-	  follow_ptr->chr = END_OF_LINE;
-	  break;
-	case 'r':
-	  follow_ptr->chr = '\r';
-	  break;
-	case 't':
-	  follow_ptr->chr = '\t';
-	  break;
-	case 'v':
-	  follow_ptr->chr = '\v';
-	  break;
-	default:
-	  follow_ptr->chr = (uchar) *pos;
-	  break;
-	}
+  pos++;
+  switch (*pos) {
+  case 'b':
+    follow_ptr->chr = SPACE_CHAR;
+    break;
+  case '^':
+    follow_ptr->chr = START_OF_LINE;
+    break;
+  case '$':
+    follow_ptr->chr = END_OF_LINE;
+    break;
+  case 'r':
+    follow_ptr->chr = '\r';
+    break;
+  case 't':
+    follow_ptr->chr = '\t';
+    break;
+  case 'v':
+    follow_ptr->chr = '\v';
+    break;
+  default:
+    follow_ptr->chr = (uchar) *pos;
+    break;
+  }
       }
       else
-	follow_ptr->chr= (uchar) *pos;
+  follow_ptr->chr= (uchar) *pos;
       follow_ptr->table_offset=i;
       follow_ptr->len= ++len;
       follow_ptr++;
@@ -6800,7 +6766,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   for (set_nr=0,pos=0 ; set_nr < sets.count ; set_nr++)
   {
     set=sets.set+set_nr;
-    default_state= 0;				/* Start from beginning */
+    default_state= 0;        /* Start from beginning */
 
     /* If end of found-string not found or start-set with current set */
 
@@ -6808,101 +6774,101 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     {
       if (!follow[i].chr)
       {
-	if (! default_state)
-	  default_state= find_found(found_set,set->table_offset,
-				    set->found_offset+1);
+  if (! default_state)
+    default_state= find_found(found_set,set->table_offset,
+            set->found_offset+1);
       }
     }
-    copy_bits(sets.set+used_sets,set);		/* Save set for changes */
+    copy_bits(sets.set+used_sets,set);    /* Save set for changes */
     if (!default_state)
-      or_bits(sets.set+used_sets,sets.set);	/* Can restart from start */
+      or_bits(sets.set+used_sets,sets.set);  /* Can restart from start */
 
     /* Find all chars that follows current sets */
-    bzero((char*) used_chars,sizeof(used_chars));
+    memset((char*) used_chars, 0, sizeof(used_chars));
     for (i= (uint) ~0; (i=get_next_bit(sets.set+used_sets,i)) ;)
     {
       used_chars[follow[i].chr]=1;
       if ((follow[i].chr == SPACE_CHAR && !follow[i+1].chr &&
-	   follow[i].len > 1) || follow[i].chr == END_OF_LINE)
-	used_chars[0]=1;
+     follow[i].len > 1) || follow[i].chr == END_OF_LINE)
+  used_chars[0]=1;
     }
 
     /* Mark word_chars used if \b is in state */
     if (used_chars[SPACE_CHAR])
       for (pos= word_end_chars ; *pos ; pos++)
-	used_chars[(int) (uchar) *pos] = 1;
+  used_chars[(int) (uchar) *pos] = 1;
 
     /* Handle other used characters */
     for (chr= 0 ; chr < 256 ; chr++)
     {
       if (! used_chars[chr])
-	set->next[chr]= chr ? default_state : -1;
+  set->next[chr]= chr ? default_state : -1;
       else
       {
-	new_set=make_new_set(&sets);
-	set=sets.set+set_nr;			/* if realloc */
-	new_set->table_offset=set->table_offset;
-	new_set->found_len=set->found_len;
-	new_set->found_offset=set->found_offset+1;
-	found_end=0;
+  new_set=make_new_set(&sets);
+  set=sets.set+set_nr;      /* if realloc */
+  new_set->table_offset=set->table_offset;
+  new_set->found_len=set->found_len;
+  new_set->found_offset=set->found_offset+1;
+  found_end=0;
 
-	for (i= (uint) ~0 ; (i=get_next_bit(sets.set+used_sets,i)) ; )
-	{
-	  if (!follow[i].chr || follow[i].chr == chr ||
-	      (follow[i].chr == SPACE_CHAR &&
-	       (is_word_end[chr] ||
-		(!chr && follow[i].len > 1 && ! follow[i+1].chr))) ||
-	      (follow[i].chr == END_OF_LINE && ! chr))
-	  {
-	    if ((! chr || (follow[i].chr && !follow[i+1].chr)) &&
-		follow[i].len > found_end)
-	      found_end=follow[i].len;
-	    if (chr && follow[i].chr)
-	      internal_set_bit(new_set,i+1);		/* To next set */
-	    else
-	      internal_set_bit(new_set,i);
-	  }
-	}
-	if (found_end)
-	{
-	  new_set->found_len=0;			/* Set for testing if first */
-	  bits_set=0;
-	  for (i= (uint) ~0; (i=get_next_bit(new_set,i)) ;)
-	  {
-	    if ((follow[i].chr == SPACE_CHAR ||
-		 follow[i].chr == END_OF_LINE) && ! chr)
-	      bit_nr=i+1;
-	    else
-	      bit_nr=i;
-	    if (follow[bit_nr-1].len < found_end ||
-		(new_set->found_len &&
-		 (chr == 0 || !follow[bit_nr].chr)))
-	      internal_clear_bit(new_set,i);
-	    else
-	    {
-	      if (chr == 0 || !follow[bit_nr].chr)
-	      {					/* best match  */
-		new_set->table_offset=follow[bit_nr].table_offset;
-		if (chr || (follow[i].chr == SPACE_CHAR ||
-			    follow[i].chr == END_OF_LINE))
-		  new_set->found_offset=found_end;	/* New match */
-		new_set->found_len=found_end;
-	      }
-	      bits_set++;
-	    }
-	  }
-	  if (bits_set == 1)
-	  {
-	    set->next[chr] = find_found(found_set,
-					new_set->table_offset,
-					new_set->found_offset);
-	    free_last_set(&sets);
-	  }
-	  else
-	    set->next[chr] = find_set(&sets,new_set);
-	}
-	else
-	  set->next[chr] = find_set(&sets,new_set);
+  for (i= (uint) ~0 ; (i=get_next_bit(sets.set+used_sets,i)) ; )
+  {
+    if (!follow[i].chr || follow[i].chr == chr ||
+        (follow[i].chr == SPACE_CHAR &&
+         (is_word_end[chr] ||
+    (!chr && follow[i].len > 1 && ! follow[i+1].chr))) ||
+        (follow[i].chr == END_OF_LINE && ! chr))
+    {
+      if ((! chr || (follow[i].chr && !follow[i+1].chr)) &&
+    follow[i].len > found_end)
+        found_end=follow[i].len;
+      if (chr && follow[i].chr)
+        internal_set_bit(new_set,i+1);    /* To next set */
+      else
+        internal_set_bit(new_set,i);
+    }
+  }
+  if (found_end)
+  {
+    new_set->found_len=0;      /* Set for testing if first */
+    bits_set=0;
+    for (i= (uint) ~0; (i=get_next_bit(new_set,i)) ;)
+    {
+      if ((follow[i].chr == SPACE_CHAR ||
+     follow[i].chr == END_OF_LINE) && ! chr)
+        bit_nr=i+1;
+      else
+        bit_nr=i;
+      if (follow[bit_nr-1].len < found_end ||
+    (new_set->found_len &&
+     (chr == 0 || !follow[bit_nr].chr)))
+        internal_clear_bit(new_set,i);
+      else
+      {
+        if (chr == 0 || !follow[bit_nr].chr)
+        {          /* best match  */
+    new_set->table_offset=follow[bit_nr].table_offset;
+    if (chr || (follow[i].chr == SPACE_CHAR ||
+          follow[i].chr == END_OF_LINE))
+      new_set->found_offset=found_end;  /* New match */
+    new_set->found_len=found_end;
+        }
+        bits_set++;
+      }
+    }
+    if (bits_set == 1)
+    {
+      set->next[chr] = find_found(found_set,
+          new_set->table_offset,
+          new_set->found_offset);
+      free_last_set(&sets);
+    }
+    else
+      set->next[chr] = find_set(&sets,new_set);
+  }
+  else
+    set->next[chr] = find_set(&sets,new_set);
       }
     }
   }
@@ -6910,9 +6876,9 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   /* Alloc replace structure for the replace-state-machine */
 
   if ((replace=(REPLACE*) my_malloc(sizeof(REPLACE)*(sets.count)+
-				    sizeof(REPLACE_STRING)*(found_sets+1)+
-				    sizeof(char *)*count+result_len,
-				    MYF(MY_WME | MY_ZEROFILL))))
+            sizeof(REPLACE_STRING)*(found_sets+1)+
+            sizeof(char *)*count+result_len,
+            MYF(MY_WME | MY_ZEROFILL))))
   {
     rep_str=(REPLACE_STRING*) (replace+sets.count);
     to_array= (char **) (rep_str+found_sets+1);
@@ -6927,20 +6893,20 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     for (i=1 ; i <= found_sets ; i++)
     {
       pos=from[found_set[i-1].table_offset];
-      rep_str[i].found= !bcmp((const uchar*) pos,
-			      (const uchar*) "\\^", 3) ? 2 : 1;
+      rep_str[i].found= !memcmp((const uchar*) pos,
+                                (const uchar*) "\\^", 3) ? 2 : 1;
       rep_str[i].replace_string=to_array[found_set[i-1].table_offset];
       rep_str[i].to_offset=found_set[i-1].found_offset-start_at_word(pos);
       rep_str[i].from_offset=found_set[i-1].found_offset-replace_len(pos)+
-	end_of_word(pos);
+  end_of_word(pos);
     }
     for (i=0 ; i < sets.count ; i++)
     {
       for (j=0 ; j < 256 ; j++)
-	if (sets.set[i].next[j] >= 0)
-	  replace[i].next[j]=replace+sets.set[i].next[j];
-	else
-	  replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
+  if (sets.set[i].next[j] >= 0)
+    replace[i].next[j]=replace+sets.set[i].next[j];
+  else
+    replace[i].next[j]=(REPLACE*) (rep_str+(-sets.set[i].next[j]-1));
     }
   }
   my_free(follow,MYF(0));
@@ -6952,13 +6918,13 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 
 int init_sets(REP_SETS *sets,uint states)
 {
-  bzero((char*) sets,sizeof(*sets));
+  memset((char*) sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
   if (!(sets->set_buffer=(REP_SET*) my_malloc(sizeof(REP_SET)*SET_MALLOC_HUNC,
-					      MYF(MY_WME))))
+                MYF(MY_WME))))
     return 1;
   if (!(sets->bit_buffer=(uint*) my_malloc(sizeof(uint)*sets->size_of_bits*
-					   SET_MALLOC_HUNC,MYF(MY_WME))))
+             SET_MALLOC_HUNC,MYF(MY_WME))))
   {
     my_free(sets->set,MYF(0));
     return 1;
@@ -6983,8 +6949,8 @@ REP_SET *make_new_set(REP_SETS *sets)
   {
     sets->extra--;
     set=sets->set+ sets->count++;
-    bzero((char*) set->bits,sizeof(uint)*sets->size_of_bits);
-    bzero((char*) &set->next[0],sizeof(set->next[0])*LAST_CHAR_CODE);
+    memset((char*) set->bits, 0, sizeof(uint)*sets->size_of_bits);
+    memset((char*) &set->next[0], 0, sizeof(set->next[0])*LAST_CHAR_CODE);
     set->found_offset=0;
     set->found_len=0;
     set->table_offset= (uint) ~0;
@@ -6994,13 +6960,13 @@ REP_SET *make_new_set(REP_SETS *sets)
   count=sets->count+sets->invisible+SET_MALLOC_HUNC;
   if (!(set=(REP_SET*) my_realloc((uchar*) sets->set_buffer,
                                   sizeof(REP_SET)*count,
-				  MYF(MY_WME))))
+          MYF(MY_WME))))
     return 0;
   sets->set_buffer=set;
   sets->set=set+sets->invisible;
   if (!(bit_buffer=(uint*) my_realloc((uchar*) sets->bit_buffer,
-				      (sizeof(uint)*sets->size_of_bits)*count,
-				      MYF(MY_WME))))
+              (sizeof(uint)*sets->size_of_bits)*count,
+              MYF(MY_WME))))
     return 0;
   sets->bit_buffer=bit_buffer;
   for (i=0 ; i < count ; i++)
@@ -7050,13 +7016,13 @@ void or_bits(REP_SET *to,REP_SET *from)
 void copy_bits(REP_SET *to,REP_SET *from)
 {
   memcpy((uchar*) to->bits,(uchar*) from->bits,
-	 (size_t) (sizeof(uint) * to->size_of_bits));
+   (size_t) (sizeof(uint) * to->size_of_bits));
 }
 
 int cmp_bits(REP_SET *set1,REP_SET *set2)
 {
-  return bcmp((uchar*) set1->bits,(uchar*) set2->bits,
-	      sizeof(uint) * set1->size_of_bits);
+  return memcmp((uchar*) set1->bits,(uchar*) set2->bits,
+                sizeof(uint) * set1->size_of_bits);
 }
 
 
@@ -7098,7 +7064,7 @@ int find_set(REP_SETS *sets,REP_SET *find)
       return i;
     }
   }
-  return i;				/* return new postion */
+  return i;        /* return new postion */
 }
 
 /* find if there is a found_set with same table_offset & found_offset
@@ -7113,28 +7079,28 @@ int find_found(FOUND_SET *found_set,uint table_offset, int found_offset)
   int i;
   for (i=0 ; (uint) i < found_sets ; i++)
     if (found_set[i].table_offset == table_offset &&
-	found_set[i].found_offset == found_offset)
+  found_set[i].found_offset == found_offset)
       return -i-2;
   found_set[i].table_offset=table_offset;
   found_set[i].found_offset=found_offset;
   found_sets++;
-  return -i-2;				/* return new postion */
+  return -i-2;        /* return new postion */
 }
 
 /* Return 1 if regexp starts with \b or ends with \b*/
 
 uint start_at_word(char * pos)
 {
-  return (((!bcmp((const uchar*) pos, (const uchar*) "\\b",2) && pos[2]) ||
-           !bcmp((const uchar*) pos, (const uchar*) "\\^", 2)) ? 1 : 0);
+  return (((!memcmp((const uchar*) pos, (const uchar*) "\\b",2) && pos[2]) ||
+           !memcmp((const uchar*) pos, (const uchar*) "\\^", 2)) ? 1 : 0);
 }
 
 uint end_of_word(char * pos)
 {
   char * end=strend(pos);
-  return ((end > pos+2 && !bcmp((const uchar*) end-2,
-                                (const uchar*) "\\b", 2)) ||
-	  (end >= pos+2 && !bcmp((const uchar*) end-2,
+  return ((end > pos+2 && !memcmp((const uchar*) end-2,
+                                  (const uchar*) "\\b", 2)) ||
+    (end >= pos+2 && !memcmp((const uchar*) end-2,
                                 (const uchar*) "\\$",2))) ? 1 : 0;
 }
 
@@ -7142,8 +7108,8 @@ uint end_of_word(char * pos)
  * Handle replacement of strings
  ****************************************************************************/
 
-#define PC_MALLOC		256	/* Bytes for pointers */
-#define PS_MALLOC		512	/* Bytes for data */
+#define PC_MALLOC    256  /* Bytes for pointers */
+#define PS_MALLOC    512  /* Bytes for data */
 
 int insert_pointer_name(POINTER_ARRAY *pa,char * name)
 {
@@ -7155,18 +7121,18 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   if (! pa->typelib.count)
   {
     if (!(pa->typelib.type_names=(const char **)
-	  my_malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
-		     (sizeof(char *)+sizeof(*pa->flag))*
-		     (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
+    my_malloc(((PC_MALLOC-MALLOC_OVERHEAD)/
+         (sizeof(char *)+sizeof(*pa->flag))*
+         (sizeof(char *)+sizeof(*pa->flag))),MYF(MY_WME))))
       return(-1);
     if (!(pa->str= (uchar*) my_malloc((uint) (PS_MALLOC-MALLOC_OVERHEAD),
-				     MYF(MY_WME))))
+             MYF(MY_WME))))
     {
       my_free((char*) pa->typelib.type_names,MYF(0));
       return (-1);
     }
     pa->max_count=(PC_MALLOC-MALLOC_OVERHEAD)/(sizeof(uchar*)+
-					       sizeof(*pa->flag));
+                 sizeof(*pa->flag));
     pa->flag= (int7*) (pa->typelib.type_names+pa->max_count);
     pa->length=0;
     pa->max_length=PS_MALLOC-MALLOC_OVERHEAD;
@@ -7176,15 +7142,15 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
   if (pa->length+length >= pa->max_length)
   {
     if (!(new_pos= (uchar*) my_realloc((uchar*) pa->str,
-				      (uint) (pa->max_length+PS_MALLOC),
-				      MYF(MY_WME))))
+              (uint) (pa->max_length+PS_MALLOC),
+              MYF(MY_WME))))
       return(1);
     if (new_pos != pa->str)
     {
       my_ptrdiff_t diff=PTR_BYTE_DIFF(new_pos,pa->str);
       for (i=0 ; i < pa->typelib.count ; i++)
-	pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
-					      char*);
+  pa->typelib.type_names[i]= ADD_TO_PTR(pa->typelib.type_names[i],diff,
+                char*);
       pa->str=new_pos;
     }
     pa->max_length+=PS_MALLOC;
@@ -7195,7 +7161,7 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     pa->array_allocs++;
     len=(PC_MALLOC*pa->array_allocs - MALLOC_OVERHEAD);
     if (!(new_array=(const char **) my_realloc((uchar*) pa->typelib.type_names,
-					       (uint) len/
+                 (uint) len/
                                                (sizeof(uchar*)+sizeof(*pa->flag))*
                                                (sizeof(uchar*)+sizeof(*pa->flag)),
                                                MYF(MY_WME))))
@@ -7205,11 +7171,11 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     pa->max_count=len/(sizeof(uchar*) + sizeof(*pa->flag));
     pa->flag= (int7*) (pa->typelib.type_names+pa->max_count);
     memcpy((uchar*) pa->flag,(char *) (pa->typelib.type_names+old_count),
-	   old_count*sizeof(*pa->flag));
+     old_count*sizeof(*pa->flag));
   }
-  pa->flag[pa->typelib.count]=0;			/* Reset flag */
+  pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;
-  pa->typelib.type_names[pa->typelib.count]= NullS;	/* Put end-mark */
+  pa->typelib.type_names[pa->typelib.count]= NullS;  /* Put end-mark */
   VOID(strmov((char*) pa->str+pa->length,name));
   pa->length+=length;
   return(0);
