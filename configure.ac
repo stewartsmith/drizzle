@@ -1083,6 +1083,8 @@ AC_CHECK_FUNCS(bsearch \
   tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
 
+AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
+
 # Check that isinf() is available in math.h and can be used in both C and C++
 # code
 AC_MSG_CHECKING(for isinf in math.h)
