@@ -54,8 +54,10 @@
    it now, to make later inclusions of <libintl.h> a NOP.  */
 #if defined(__cplusplus) && defined(__GNUG__) && (__GNUC__ >= 3)
 # include <cstdlib>
-# if (__GLIBC__ >= 2) || _GLIBCXX_HAVE_LIBINTL_H
-#  include <libintl.h>
+# if defined(__GLIBC__)
+#  if (__GLIBC__ >= 2) || defined(_GLIBCXX_HAVE_LIBINTL_H)
+#    include <libintl.h>
+#  endif
 # endif
 #endif
 
