@@ -4028,7 +4028,7 @@ int TC_LOG_MMAP::open(const char *opt_name)
   assert(total_ha_2pc > 1);
   assert(opt_name && opt_name[0]);
 
-  tc_log_page_size= my_getpagesize();
+  tc_log_page_size= getpagesize();
   assert(TC_LOG_PAGE_SIZE % tc_log_page_size == 0);
 
   fn_format(logname,opt_name,mysql_data_home,"",MY_UNPACK_FILENAME);

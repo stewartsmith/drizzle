@@ -1059,7 +1059,7 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([strtoll strstr strtoull strmov])
+AC_REPLACE_FUNCS([strtoll strstr strtoull strmov getpagesize])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
@@ -1069,7 +1069,7 @@ AC_CHECK_FUNCS(bsearch \
   localtime_r gethrtime gmtime_r \
   locking longjmp lrand48 madvise mallinfo \
   memmove \
-  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 getpagesize \
+  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \

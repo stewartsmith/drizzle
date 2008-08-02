@@ -15,13 +15,9 @@
 
 #include "mysys_priv.h"
 
-#ifndef HAVE_GETPAGESIZE
-
 /* Default implementation */
-int my_getpagesize(void)
+int getpagesize(void)
 {
   return (int)8192;
 }
-
-#endif
 

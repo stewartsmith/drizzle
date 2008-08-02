@@ -814,13 +814,6 @@ void *my_mmap(void *, size_t, int, int, int, my_off_t);
 int my_munmap(void *, size_t);
 #endif
 
-/* my_getpagesize */
-#ifdef HAVE_GETPAGESIZE
-#define my_getpagesize()        getpagesize()
-#else
-int my_getpagesize(void);
-#endif
-
 /* character sets */
 extern uint get_charset_number(const char *cs_name, uint cs_flags);
 extern uint get_collation_number(const char *name);
