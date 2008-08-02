@@ -1642,7 +1642,7 @@ select t2.fld3,count(*) from t2,t3 where t2.fld1=158402 and t3.name=t2.fld3 grou
 # Group with extra not group fields.
 #
 
-select companynr|0,companyname from t4 group by 1;
+select companynr,companyname from t4 group by 1;
 select t2.companynr,companyname,count(*) from t2,t4 where t2.companynr=t4.companynr group by t2.companynr order by companyname;
 select t2.fld1,count(*) from t2,t3 where t2.fld1=158402 and t3.name=t2.fld3 group by t3.name;
 

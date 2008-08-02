@@ -58,7 +58,6 @@ bool init_errmessage(void)
 }
 
 
-
 /**
   Initiates error-messages used by my_func-library.
 */

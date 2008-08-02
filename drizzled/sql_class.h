@@ -468,17 +468,11 @@ public:
   */
   enum enum_state
   {
-    INITIALIZED= 0, INITIALIZED_FOR_SP= 1, PREPARED= 2,
+    INITIALIZED= 0,
     CONVENTIONAL_EXECUTION= 3, EXECUTED= 4, ERROR= -1
   };
 
   enum_state state;
-
-  /* We build without RTTI, so dynamic_cast can't be used. */
-  enum Type
-  {
-    STATEMENT, PREPARED_STATEMENT, STORED_PROCEDURE
-  };
 
   Query_arena(MEM_ROOT *mem_root_arg, enum enum_state state_arg) :
     free_list(0), mem_root(mem_root_arg), state(state_arg)

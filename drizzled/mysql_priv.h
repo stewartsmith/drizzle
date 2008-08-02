@@ -23,8 +23,8 @@
   except the part which must be in the server and in the client.
 */
 
-#ifndef MYSQL_PRIV_H
-#define MYSQL_PRIV_H
+#ifndef DRIZZLE_SERVER_MYSQL_PRIV_H
+#define DRIZZLE_SERVER_MYSQL_PRIV_H
 
 #ifndef MYSQL_CLIENT
 
@@ -37,9 +37,9 @@
 #include <signal.h>
 #include <mysys/thr_lock.h>
 #include <drizzled/error.h>
-#include <drizzled/base.h>			/* Needed by field.h */
+#include <drizzled/base.h>			                /* Needed by field.h */
 #include <mysys/queues.h>
-#include "sql_bitmap.h"
+#include <drizzled/sql_bitmap.h>                /* Custom bitmap API */
 #include "sql_array.h"
 #include "sql_plugin.h"
 #include "scheduler.h"
@@ -95,23 +95,8 @@ extern const char *primary_key_name;
 #include <vio/violite.h>
 #include "unireg.h"
 
-void init_sql_alloc(MEM_ROOT *root, uint block_size, uint pre_alloc_size);
-void *sql_alloc(size_t);
-void *sql_calloc(size_t);
-char *sql_strdup(const char *str);
-char *sql_strmake(const char *str, size_t len);
-void *sql_memdup(const void * ptr, size_t size);
-void sql_element_free(void *ptr);
-char *sql_strmake_with_convert(const char *str, size_t arg_length,
-			       CHARSET_INFO *from_cs,
-			       size_t max_res_length,
-			       CHARSET_INFO *to_cs, size_t *result_length);
-void sql_kill(THD *thd, ulong id, bool only_kill_query);
-bool net_request_file(NET* net, const char* fname);
-char* query_table_status(THD *thd,const char *db,const char *table_name);
+#include <drizzled/sql_alloc.h>
 
-#define x_free(A)	{ my_free((uchar*) (A),MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR)); }
-#define safeFree(x)	{ if(x) { my_free((uchar*) x,MYF(0)); x = NULL; } }
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 #define all_bits_set(A,B) ((A) & (B) != (B))
 
@@ -128,119 +113,8 @@ enum Derivation
   DERIVATION_EXPLICIT= 0
 };
 
-
-typedef struct my_locale_st
-{
-  uint  number;
-  const char *name;
-  const char *description;
-  const bool is_ascii;
-  TYPELIB *month_names;
-  TYPELIB *ab_month_names;
-  TYPELIB *day_names;
-  TYPELIB *ab_day_names;
-#ifdef __cplusplus 
-  my_locale_st(uint number_par,
-               const char *name_par, const char *descr_par, bool is_ascii_par,
-               TYPELIB *month_names_par, TYPELIB *ab_month_names_par,
-               TYPELIB *day_names_par, TYPELIB *ab_day_names_par) : 
-    number(number_par),
-    name(name_par), description(descr_par), is_ascii(is_ascii_par),
-    month_names(month_names_par), ab_month_names(ab_month_names_par),
-    day_names(day_names_par), ab_day_names(ab_day_names_par)
-  {}
-#endif
-} MY_LOCALE;
-
-extern MY_LOCALE my_locale_en_US;
-extern MY_LOCALE *my_locales[];
-extern MY_LOCALE *my_default_lc_time_names;
-
-MY_LOCALE *my_locale_by_name(const char *name);
-MY_LOCALE *my_locale_by_number(uint number);
-
-/*************************************************************************/
-
-/**
- Object_creation_ctx -- interface for creation context of database objects
- (views, stored routines, events, triggers). Creation context -- is a set
- of attributes, that should be fixed at the creation time and then be used
- each time the object is parsed or executed.
-*/
-
-class Object_creation_ctx
-{
-public:
-  Object_creation_ctx *set_n_backup(THD *thd);
-
-  void restore_env(THD *thd, Object_creation_ctx *backup_ctx);
-
-protected:
-  Object_creation_ctx() {}
-  virtual Object_creation_ctx *create_backup_ctx(THD *thd) const = 0;
-
-  virtual void change_env(THD *thd) const = 0;
-
-public:
-  virtual ~Object_creation_ctx()
-  { }
-};
-
-/*************************************************************************/
-
-/**
- Default_object_creation_ctx -- default implementation of
- Object_creation_ctx.
-*/
-
-class Default_object_creation_ctx : public Object_creation_ctx
-{
-public:
-  CHARSET_INFO *get_client_cs()
-  {
-    return m_client_cs;
-  }
-
-  CHARSET_INFO *get_connection_cl()
-  {
-    return m_connection_cl;
-  }
-
-protected:
-  Default_object_creation_ctx(THD *thd);
-
-  Default_object_creation_ctx(CHARSET_INFO *client_cs,
-                              CHARSET_INFO *connection_cl);
-
-protected:
-  virtual Object_creation_ctx *create_backup_ctx(THD *thd) const;
-
-  virtual void change_env(THD *thd) const;
-
-protected:
-  /**
-    client_cs stores the value of character_set_client session variable.
-    The only character set attribute is used.
-
-    Client character set is included into query context, because we save
-    query in the original character set, which is client character set. So,
-    in order to parse the query properly we have to switch client character
-    set on parsing.
-  */
-  CHARSET_INFO *m_client_cs;
-
-  /**
-    connection_cl stores the value of collation_connection session
-    variable. Both character set and collation attributes are used.
-
-    Connection collation is included into query context, becase it defines
-    the character set and collation of text literals in internal
-    representation of query (item-objects).
-  */
-  CHARSET_INFO *m_connection_cl;
-};
-
-
+#include <drizzled/locale.h>
+#include <drizzled/object_creation_ctx.h>
 /**
   Opening modes for open_temporary_table and open_table_from_share
 */
@@ -494,11 +368,9 @@ enum open_table_mode
 #define MODE_NO_ENGINE_SUBSTITUTION     (MODE_HIGH_NOT_PRECEDENCE*2)
 #define MODE_PAD_CHAR_TO_FULL_LENGTH    (1ULL << 31)
 
-
 /* @@optimizer_switch flags */
 #define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
 #define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
-
 
 /*
   Replication uses 8 bytes to store SQL_MODE in the binary log. The day you
@@ -511,7 +383,6 @@ enum open_table_mode
   in scripts/mysql_system_tables.sql and scripts/mysql_system_tables_fix.sql
 
 */
-
 #define RAID_BLOCK_SIZE 1024
 
 #define MY_CHARSET_BIN_MB_MAXLEN 1
@@ -537,10 +408,6 @@ enum open_table_mode
 /* sql_show.cc:show_log_files() */
 #define SHOW_LOG_STATUS_FREE "FREE"
 #define SHOW_LOG_STATUS_INUSE "IN USE"
-
-struct TABLE_LIST;
-class String;
-void view_store_options(THD *thd, TABLE_LIST *table, String *buff);
 
 /* Options to add_table_to_list() */
 #define TL_OPTION_UPDATING	1
@@ -571,68 +438,51 @@ void view_store_options(THD *thd, TABLE_LIST *table, String *buff);
 
 enum enum_parsing_place
 {
-  NO_MATTER,
-  IN_HAVING,
-  SELECT_LIST,
-  IN_WHERE,
-  IN_ON
+  NO_MATTER
+  , IN_HAVING
+  , SELECT_LIST
+  , IN_WHERE
+  , IN_ON
 };
 
-struct st_table;
-
-#define thd_proc_info(thd, msg)  set_thd_proc_info(thd, msg, __func__, __FILE__, __LINE__)
-class THD;
+enum enum_mysql_completiontype {
+  ROLLBACK_RELEASE= -2
+  , ROLLBACK= 1
+  , ROLLBACK_AND_CHAIN= 7
+  , COMMIT_RELEASE= -1
+  , COMMIT= 0
+  , COMMIT_AND_CHAIN= 6
+};
 
 enum enum_check_fields
 {
-  CHECK_FIELD_IGNORE,
-  CHECK_FIELD_WARN,
-  CHECK_FIELD_ERROR_FOR_NULL
+  CHECK_FIELD_IGNORE
+  , CHECK_FIELD_WARN
+  , CHECK_FIELD_ERROR_FOR_NULL
 };
 
-                                  
-/** Struct to handle simple linked lists. */
-typedef struct st_sql_list {
-  uint elements;
-  uchar *first;
-  uchar **next;
+enum enum_var_type
+{
+  OPT_DEFAULT= 0
+  , OPT_SESSION
+  , OPT_GLOBAL
+};
 
-  st_sql_list() {}                              /* Remove gcc warning */
-  inline void empty()
-  {
-    elements=0;
-    first=0;
-    next= &first;
-  }
-  inline void link_in_list(uchar *element,uchar **next_ptr)
-  {
-    elements++;
-    (*next)=element;
-    next= next_ptr;
-    *next=0;
-  }
-  inline void save_and_clear(struct st_sql_list *save)
-  {
-    *save= *this;
-    empty();
-  }
-  inline void push_front(struct st_sql_list *save)
-  {
-    *save->next= first;				/* link current list last */
-    first= save->first;
-    elements+= save->elements;
-  }
-  inline void push_back(struct st_sql_list *save)
-  {
-    if (save->first)
-    {
-      *next= save->first;
-      next= save->next;
-      elements+= save->elements;
-    }
-  }
-} SQL_LIST;
+/* Forward declarations */
 
+struct TABLE_LIST;
+class String;
+struct st_table;
+class THD;
+class user_var_entry;
+class Security_context;
+
+#ifdef MYSQL_SERVER
+class Comp_creator;
+typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
+#endif
+
+#define thd_proc_info(thd, msg)  set_thd_proc_info(thd, msg, __func__, __FILE__, __LINE__)
 
 extern pthread_key(THD*, THR_THD);
 inline THD *_current_thd(void)
@@ -656,111 +506,24 @@ const char *set_thd_proc_info(THD *thd, const char *info,
 */
 extern ulong server_id;
 
-
-typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
-                                      uint key_length,
-                                      uint64_t *engine_data);
-#include "sql_string.h"
+#include <drizzled/sql_string.h>
 #include "sql_list.h"
 #include "sql_map.h"
 #include "my_decimal.h"
 #include "handler.h"
 #include "table.h"
 #include "sql_error.h"
-
-/* Field definitions */
 #include "field.h"
-
 #include "protocol.h"
 #include "sql_udf.h"
-
-class user_var_entry;
-class Security_context;
-enum enum_var_type
-{
-  OPT_DEFAULT= 0, OPT_SESSION, OPT_GLOBAL
-};
-class sys_var;
-#ifdef MYSQL_SERVER
-class Comp_creator;
-typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
-#endif
 #include "item.h"
+
 extern my_decimal decimal_zero;
 
-/* sql_parse.cc */
-void free_items(Item *item);
-void cleanup_items(Item *item);
-class THD;
+/** @TODO Find a good header to put this guy... */
 void close_thread_tables(THD *thd);
 
-bool multi_update_precheck(THD *thd, TABLE_LIST *tables);
-bool multi_delete_precheck(THD *thd, TABLE_LIST *tables);
-int mysql_multi_update_prepare(THD *thd);
-int mysql_multi_delete_prepare(THD *thd);
-bool mysql_insert_select_prepare(THD *thd);
-bool update_precheck(THD *thd, TABLE_LIST *tables);
-bool delete_precheck(THD *thd, TABLE_LIST *tables);
-bool insert_precheck(THD *thd, TABLE_LIST *tables);
-bool create_table_precheck(THD *thd, TABLE_LIST *tables,
-                           TABLE_LIST *create_table);
-int append_query_string(CHARSET_INFO *csinfo,
-                        String const *from, String *to);
-
-bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
-                              uint max_byte_length);
-bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, CHARSET_INFO *cs,
-                              bool no_error);
-bool check_identifier_name(LEX_STRING *str, uint max_char_length,
-                           uint err_code, const char *param_for_err_msg);
-inline bool check_identifier_name(LEX_STRING *str, uint err_code)
-{
-  return check_identifier_name(str, NAME_CHAR_LEN, err_code, "");
-}
-inline bool check_identifier_name(LEX_STRING *str)
-{
-  return check_identifier_name(str, NAME_CHAR_LEN, 0, "");
-}
-
-bool test_if_data_home_dir(const char *dir);
-
-bool parse_sql(THD *thd,
-               class Lex_input_stream *lip,
-               class Object_creation_ctx *creation_ctx);
-
-enum enum_mysql_completiontype {
-  ROLLBACK_RELEASE=-2, ROLLBACK=1,  ROLLBACK_AND_CHAIN=7,
-  COMMIT_RELEASE=-1,   COMMIT=0,    COMMIT_AND_CHAIN=6
-};
-
-bool begin_trans(THD *thd);
-bool end_active_trans(THD *thd);
-int end_trans(THD *thd, enum enum_mysql_completiontype completion);
-
-Item *negate_expression(THD *thd, Item *expr);
-
-/* log.cc */
-int vprint_msg_to_log(enum loglevel level, const char *format, va_list args);
-void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
-void sql_print_warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
-void sql_print_information(const char *format, ...)
-  __attribute__((format(printf, 1, 2)));
-typedef void (*sql_print_message_func)(const char *format, ...)
-  __attribute__((format(printf, 1, 2)));
-extern sql_print_message_func sql_print_message_handlers[];
-
-int error_log_print(enum loglevel level, const char *format,
-                    va_list args);
-
-bool slow_log_print(THD *thd, const char *query, uint query_length,
-                    uint64_t current_utime);
-
-bool general_log_print(THD *thd, enum enum_server_command command,
-                       const char *format,...);
-
-bool general_log_write(THD *thd, enum enum_server_command command,
-                       const char *query, uint query_length);
+#include <drizzled/sql_parse.h>
 
 #include "sql_class.h"
 #include "slave.h" // for tables_ok(), rpl_filter
@@ -881,7 +644,6 @@ void end_connection(THD *thd);
 int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create, bool silent);
 bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create);
 bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
-bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db);
 void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
 void mysql_client_binlog_statement(THD *thd);
 bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists,
@@ -1611,7 +1373,6 @@ extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
 extern bool opt_log_queries_not_using_indexes;
-extern bool opt_disable_networking, opt_skip_show_db;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint volatile thread_count, thread_running, global_read_lock;
@@ -1694,7 +1455,6 @@ extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
-extern SHOW_COMP_OPTION have_crypt;
 extern SHOW_COMP_OPTION have_compress;
 
 
@@ -1942,11 +1702,10 @@ inline const char *table_case_name(HA_CREATE_INFO *info, const char *name)
   return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
 }
 
-inline ulong sql_rnd_with_mutex()
+inline ulong sql_rnd()
 {
-  pthread_mutex_lock(&LOCK_thread_count);
-  ulong tmp=(ulong) (my_rnd(&sql_rand) * 0xffffffff); /* make all bits random */
-  pthread_mutex_unlock(&LOCK_thread_count);
+  ulong tmp= (ulong) (rand() * 0xffffffff); /* make all bits random */
+
   return tmp;
 }
 
@@ -1969,8 +1728,6 @@ Item * all_any_subquery_creator(Item *left_expr,
   @param table_list   TABLE_LIST structure pointer (owner of TABLE)
   @param tablenr     table number
 */
-
-
 inline void setup_table_map(TABLE *table, TABLE_LIST *table_list, uint tablenr)
 {
   table->used_fields= 0;
@@ -1991,6 +1748,7 @@ inline void setup_table_map(TABLE *table, TABLE_LIST *table_list, uint tablenr)
   table->merge_keys.clear_all();
 }
 
+#include <drizzled/item_create.h>         /* Factory API for creating Item_* instances */
 
 /**
   convert a hex digit into number.
@@ -2076,30 +1834,8 @@ bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
 #define IS_FILES_CHECKSUM            35
 #define IS_FILES_STATUS              36
 #define IS_FILES_EXTRA               37
-void init_fill_schema_files_row(TABLE* table);
-bool schema_table_store_record(THD *thd, TABLE *table);
-
-/* sql/item_create.cc */
-int item_create_init();
-void item_create_cleanup();
-
-inline void lex_string_set(LEX_STRING *lex_str, const char *c_str)
-{
-  lex_str->str= (char *) c_str;
-  lex_str->length= strlen(c_str);
-}
-
-bool load_charset(MEM_ROOT *mem_root,
-                  Field *field,
-                  CHARSET_INFO *dflt_cs,
-                  CHARSET_INFO **cs);
-
-bool load_collation(MEM_ROOT *mem_root,
-                    Field *field,
-                    CHARSET_INFO *dflt_cl,
-                    CHARSET_INFO **cl);
 
 #endif /* MYSQL_SERVER */
 #endif /* MYSQL_CLIENT */
 
-#endif /* MYSQL_PRIV_H */
+#endif /* DRIZZLE_SERVER_MYSQL_PRIV_H */

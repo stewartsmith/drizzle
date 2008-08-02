@@ -313,7 +313,7 @@ AC_ARG_WITH(libevent,
   [ with_libevent=$withval ],
   [ with_libevent=yes ])
 
-if test "$withval" = "yes"
+if test "$with_libevent" = "yes"
 then
     AC_CHECK_HEADERS(event.h)
     if test "x$ac_cv_header_event_h" != "xyes"
@@ -339,7 +339,7 @@ else
        LIBEVENT_CFLAGS="-I$withval/include"
        LIBEVENT_LIBS="-L$withval/lib -levent"
     else
-       AC_ERROR(event.h or libevent.a not found in $withval)
+       AC_MSG_ERROR([event.h or libevent.a not found in $withval])
     fi
 fi
 
@@ -572,6 +572,7 @@ else
       ;;
     *)
       AC_MSG_ERROR([Could not find the right ps switches. Which OS is this ?. See the Installation chapter in the Reference Manual.])
+      ;;
   esac
 fi
 AC_SUBST(FIND_PROC)
@@ -744,12 +745,12 @@ AC_CHECK_HEADERS([xfs/xfs.h])
 AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
 AC_CHECK_FUNCS(log2)
 
-AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
-AC_CHECK_FUNC(yp_get_default_domain, ,
-  AC_CHECK_LIB(nsl, yp_get_default_domain))
-AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
+AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
+AC_CHECK_FUNC(yp_get_default_domain, [],
+  [AC_CHECK_LIB(nsl, yp_get_default_domain)])
+AC_CHECK_FUNC(p2open, [], [AC_CHECK_LIB(gen, p2open)])
 # This may get things to compile even if bind-8 is installed
-AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
+AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
 # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
 AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
 
@@ -757,12 +758,13 @@ AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
 AC_CHECK_LIB(rt, aio_read)
 
 # For the sched_yield() function on Solaris
-AC_CHECK_FUNC(sched_yield, , AC_CHECK_LIB(posix4, sched_yield,
-[AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"]))
+AC_CHECK_FUNC(sched_yield, [],
+  [AC_CHECK_LIB(posix4, [sched_yield],
+    [AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"])])
 
 if test "$ac_cv_header_termio_h" = "no" -a "$ac_cv_header_termios_h" = "no"
 then
-  AC_CHECK_FUNC(gtty, , AC_CHECK_LIB(compat, gtty))
+  AC_CHECK_FUNC(gtty, [], [AC_CHECK_LIB(compat, gtty)])
 fi
 
 AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
@@ -828,7 +830,7 @@ dnl TODO: Remove this define once we are using 2.61 across the board.
 # AC_HEADER_ASSERT
 # ----------------
 # Check whether to enable assertions.
-ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
+ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
 [
   AC_MSG_CHECKING([whether to enable assertions])
   AC_ARG_ENABLE([assert],
@@ -836,7 +838,7 @@ ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
     [AC_MSG_RESULT([no])
      AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
     [AC_MSG_RESULT(yes)])
-]))
+])])
 
 AC_HEADER_ASSERT
 
@@ -1124,13 +1126,15 @@ fi]
 )
 
 # Check definition of pthread_getspecific
-AC_CACHE_CHECK("args to pthread_getspecific", mysql_cv_getspecific_args,
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
+AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
 #define _REENTRANT
 #endif
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h> ]], [[ void *pthread_getspecific(pthread_key_t key);
-pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX],[mysql_cv_getspecific_args=other]))
+pthread_getspecific((pthread_key_t) NULL); ]])],
+    [mysql_cv_getspecific_args=POSIX],
+    [mysql_cv_getspecific_args=other])])
   if test "$mysql_cv_getspecific_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_GETSPECIFIC], [1],
@@ -1138,13 +1142,15 @@ pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX
   fi
 
   # Check definition of pthread_mutex_init
-  AC_CACHE_CHECK("args to pthread_mutex_init", mysql_cv_mutex_init_args,
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+  AC_CACHE_CHECK([args to pthread_mutex_init], [mysql_cv_mutex_init_args],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h> ]], [[ 
   pthread_mutexattr_t attr;
   pthread_mutex_t mp;
-  pthread_mutex_init(&mp,&attr); ]])],[mysql_cv_mutex_init_args=POSIX],[mysql_cv_mutex_init_args=other]))
+  pthread_mutex_init(&mp,&attr); ]])],
+      [mysql_cv_mutex_init_args=POSIX],
+      [mysql_cv_mutex_init_args=other])])
   if test "$mysql_cv_mutex_init_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_MUTEX_INIT], [1],
@@ -1154,27 +1160,35 @@ pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX
 
 #---START: Used in for client configure
 # Check definition of readdir_r
-AC_CACHE_CHECK("args to readdir_r", mysql_cv_readdir_r,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([args to readdir_r], [mysql_cv_readdir_r],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
 #include <dirent.h>]], [[ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
-readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],[mysql_cv_readdir_r=POSIX],[mysql_cv_readdir_r=other]))
+readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],
+    [mysql_cv_readdir_r=POSIX],
+    [mysql_cv_readdir_r=other])])
 if test "$mysql_cv_readdir_r" = "POSIX"
 then
   AC_DEFINE([HAVE_READDIR_R], [1], [POSIX readdir_r])
 fi
 
 # Check definition of posix sigwait()
-AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>]], [[#ifndef _AIX
+#include <signal.h>
+      ]], [[
+#ifndef _AIX
 sigset_t set;
 int sig;
 sigwait(&set,&sig);
-#endif]])],[mysql_cv_sigwait=POSIX],[mysql_cv_sigwait=other]))
+#endif
+      ]])],
+    [mysql_cv_sigwait=POSIX],
+    [mysql_cv_sigwait=other])])
 if test "$mysql_cv_sigwait" = "POSIX"
 then
   AC_DEFINE([HAVE_SIGWAIT], [1], [POSIX sigwait])
@@ -1184,13 +1198,19 @@ if test "$mysql_cv_sigwait" != "POSIX"
 then
 unset mysql_cv_sigwait
 # Check definition of posix sigwait()
-AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>]], [[sigset_t set;
+#include <signal.h>
+      ]], [[
+sigset_t set;
 int sig;
-sigwait(&set);]])],[mysql_cv_sigwait=NONPOSIX],[mysql_cv_sigwait=other]))
+sigwait(&set);
+      ]])],
+    [mysql_cv_sigwait=NONPOSIX],
+    [mysql_cv_sigwait=other])])
 if test "$mysql_cv_sigwait" = "NONPOSIX"
 then
   AC_DEFINE([HAVE_NONPOSIX_SIGWAIT], [1], [sigwait with one argument])
@@ -1199,11 +1219,17 @@ fi
 #---END:
 
 # Check if pthread_attr_setscope() exists
-AC_CACHE_CHECK("for pthread_attr_setscope", mysql_cv_pthread_attr_setscope,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([for pthread_attr_setscope], [mysql_cv_pthread_attr_setscope],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
-#include <pthread.h>]], [[pthread_attr_t thr_attr;
-pthread_attr_setscope(&thr_attr,0);]])],[mysql_cv_pthread_attr_setscope=yes],[mysql_cv_pthread_attr_setscope=no]))
+#include <pthread.h>
+      ]], [[
+pthread_attr_t thr_attr;
+pthread_attr_setscope(&thr_attr,0);
+      ]])],
+    [mysql_cv_pthread_attr_setscope=yes],
+    [mysql_cv_pthread_attr_setscope=no])])
 if test "$mysql_cv_pthread_attr_setscope" = "yes"
 then
   AC_DEFINE([HAVE_PTHREAD_ATTR_SETSCOPE], [1], [pthread_attr_setscope])

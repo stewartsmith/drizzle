@@ -39,25 +39,6 @@ public:
 };
 
 
-class Item_func_aes_encrypt :public Item_str_func
-{
-public:
-  Item_func_aes_encrypt(Item *a, Item *b) :Item_str_func(a,b) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "aes_encrypt"; }
-};
-
-class Item_func_aes_decrypt :public Item_str_func	
-{
-public:
-  Item_func_aes_decrypt(Item *a, Item *b) :Item_str_func(a,b) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "aes_decrypt"; }
-};
-
-
 class Item_func_concat :public Item_str_func
 {
   String tmp_value;
@@ -224,90 +205,6 @@ public:
   String *val_str(String *);
   const char *func_name() const { return "rtrim"; }
   const char *mode_name() const { return "trailing"; }
-};
-
-
-/*
-  Item_func_password -- new (4.1.1) PASSWORD() function implementation.
-  Returns strcat('*', octet2hex(sha1(sha1(password)))). '*' stands for new
-  password format, sha1(sha1(password) is so-called hash_stage2 value.
-  Length of returned string is always 41 byte. To find out how entire
-  authentication procedure works, see comments in password.c.
-*/
-
-class Item_func_password :public Item_str_func
-{
-  char tmp_value[SCRAMBLED_PASSWORD_CHAR_LENGTH+1]; 
-public:
-  Item_func_password(Item *a) :Item_str_func(a) {}
-  String *val_str(String *str);
-  void fix_length_and_dec() { max_length= SCRAMBLED_PASSWORD_CHAR_LENGTH; }
-  const char *func_name() const { return "password"; }
-  static char *alloc(THD *thd, const char *password);
-};
-
-class Item_func_des_encrypt :public Item_str_func
-{
-  String tmp_value;
-public:
-  String *val_str(String *);
-  void fix_length_and_dec()
-  { maybe_null=1; max_length = args[0]->max_length+8; }
-  const char *func_name() const { return "des_encrypt"; }
-};
-
-class Item_func_des_decrypt :public Item_str_func
-{
-  String tmp_value;
-public:
-  String *val_str(String *);
-  void fix_length_and_dec() { maybe_null=1; max_length = args[0]->max_length; }
-  const char *func_name() const { return "des_decrypt"; }
-};
-
-class Item_func_encrypt :public Item_str_func
-{
-  String tmp_value;
-
-  /* Encapsulate common constructor actions */
-  void constructor_helper()
-  {
-    collation.set(&my_charset_bin);
-  }
-public:
-  Item_func_encrypt(Item *a) :Item_str_func(a)
-  {
-    constructor_helper();
-  }
-  Item_func_encrypt(Item *a, Item *b): Item_str_func(a,b)
-  {
-    constructor_helper();
-  }
-  String *val_str(String *);
-  void fix_length_and_dec() { maybe_null=1; max_length = 13; }
-  const char *func_name() const { return "encrypt"; }
-};
-
-#include "sql_crypt.h"
-
-
-class Item_func_encode :public Item_str_func
-{
-public:
-  Item_func_encode(Item *a, Item *seed):
-    Item_str_func(a, seed) {}
-  String *val_str(String *);
-  void fix_length_and_dec();
-  const char *func_name() const { return "encode"; }
-};
-
-
-class Item_func_decode :public Item_func_encode
-{
-public:
-  Item_func_decode(Item *a, Item *seed): Item_func_encode(a, seed) {}
-  String *val_str(String *);
-  const char *func_name() const { return "decode"; }
 };
 
 

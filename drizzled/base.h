@@ -230,16 +230,14 @@ enum ha_base_keytype {
 #define HA_PACK_KEY		 2	/* Pack string key to previous key */
 #define HA_AUTO_KEY		 16
 #define HA_BINARY_PACK_KEY	 32	/* Packing of all keys to prev key */
-#define HA_FULLTEXT		128     /* For full-text search */
 #define HA_UNIQUE_CHECK		256	/* Check the key for uniqueness */
-#define HA_SPATIAL		1024    /* For spatial search */
 #define HA_NULL_ARE_EQUAL	2048	/* NULL in key are cmp as equal */
 #define HA_GENERATED_KEY	8192	/* Automaticly generated key */
 
         /* The combination of the above can be used for key type comparison. */
 #define HA_KEYFLAG_MASK (HA_NOSAME | HA_PACK_KEY | HA_AUTO_KEY | \
-                         HA_BINARY_PACK_KEY | HA_FULLTEXT | HA_UNIQUE_CHECK | \
-                         HA_SPATIAL | HA_NULL_ARE_EQUAL | HA_GENERATED_KEY)
+                         HA_BINARY_PACK_KEY | HA_UNIQUE_CHECK | \
+                         HA_NULL_ARE_EQUAL | HA_GENERATED_KEY)
 
 #define HA_KEY_HAS_PART_KEY_SEG 65536   /* Key contains partial segments */
 
@@ -249,7 +247,6 @@ enum ha_base_keytype {
 #define HA_VAR_LENGTH_KEY	 8
 #define HA_NULL_PART_KEY	 64
 #define HA_USES_COMMENT          4096
-#define HA_USES_PARSER           16384  /* Fulltext index uses [pre]parser */
 #define HA_USES_BLOCK_SIZE	 ((uint) 32768)
 #define HA_SORT_ALLOWS_SAME      512    /* Intern bit when sorting records */
 
@@ -523,11 +520,6 @@ enum data_file_type {
 */
 #define NULL_RANGE	64
 
-#define GEOM_FLAG      128
-
-/* Deprecated, currently used only by NDB at row retrieval */
-#define SKIP_RANGE     256
-
 typedef struct st_key_range
 {
   const uchar *key;
@@ -546,13 +538,8 @@ typedef struct st_key_multi_range
 
 
 /* For number of records */
-#ifdef BIG_TABLES
+typedef uint64_t	ha_rows;
 #define rows2double(A)	uint64_t2double(A)
-typedef my_off_t	ha_rows;
-#else
-#define rows2double(A)	(double) (A)
-typedef ulong		ha_rows;
-#endif
 
 #define HA_POS_ERROR	(~ (ha_rows) 0)
 #define HA_OFFSET_ERROR	(~ (my_off_t) 0)

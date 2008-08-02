@@ -27,7 +27,7 @@ pkgplugindir =$(pkglibdir)/plugin
 
 SUBDIRS = field . share
 
-libexec_PROGRAMS =drizzled
+sbin_PROGRAMS =drizzled
 
 EXTRA_PROGRAMS =gen_lex_hash
 
@@ -49,9 +49,10 @@ DTRACEFILES = handler.o \
 	      sql_select.o \
 	      sql_update.o
 
-pkginclude_HEADERS =	error.h \
-			plugin.h \
-			plugin_audit.h
+drizzledincludedir = ${includedir}/drizzled
+dist_drizzledinclude_HEADERS =	error.h \
+				plugin.h \
+				plugin_audit.h
 
 noinst_LTLIBRARIES = libhandler.la
 
@@ -108,7 +109,6 @@ noinst_HEADERS = item.h \
 		 sql_udf.h \
 		 lex.h \
 		 lex_symbol.h \
-		 sql_crypt.h  \
 		 sql_repl.h \
 		 slave.h \
 		 rpl_filter.h \
@@ -181,7 +181,6 @@ drizzled_SOURCES = sql_lex.cc \
 		   sql_db.cc \
 		   sql_table.cc \
 		   sql_rename.cc \
-		   sql_crypt.cc \
 		   sql_load.cc \
 		   mf_iocache.cc \
 		   field_conv.cc \

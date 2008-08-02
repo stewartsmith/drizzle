@@ -485,7 +485,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   handler *handler_file= 0;
   KEY	*keyinfo;
   KEY_PART_INFO *key_part;
-  SQL_CRYPT *crypted=0;
   Field  **field_ptr, *reg_field;
   const char **interval_array;
   enum legacy_db_type legacy_db_type;
@@ -1287,7 +1286,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   share->open_errno= my_errno;
   share->errarg= errarg;
   x_free((uchar*) disk_buff);
-  delete crypted;
   delete handler_file;
   hash_free(&share->name_hash);
 

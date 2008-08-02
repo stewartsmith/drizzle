@@ -150,8 +150,8 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
   pos= table_arg->key_info;
   for (i= 0; i < share->keys; i++, pos++)
   {
-    keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME | HA_FULLTEXT ));
-    keydef[i].key_alg= pos->algorithm == HA_KEY_ALG_UNDEF ?  (HA_KEY_ALG_BTREE) : pos->algorithm;
+    keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME));
+    keydef[i].key_alg= HA_KEY_ALG_BTREE;
     keydef[i].block_length= pos->block_size;
     keydef[i].seg= keyseg;
     keydef[i].keysegs= pos->key_parts;
@@ -332,20 +332,6 @@ int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
   {
     HA_KEYSEG *t1_keysegs= t1_keyinfo[i].seg;
     HA_KEYSEG *t2_keysegs= t2_keyinfo[i].seg;
-    if (t1_keyinfo[i].flag & HA_FULLTEXT && t2_keyinfo[i].flag & HA_FULLTEXT)
-      continue;
-    else if (t1_keyinfo[i].flag & HA_FULLTEXT ||
-             t2_keyinfo[i].flag & HA_FULLTEXT)
-    {
-       return(1);
-    }
-    if (t1_keyinfo[i].flag & HA_SPATIAL && t2_keyinfo[i].flag & HA_SPATIAL)
-      continue;
-    else if (t1_keyinfo[i].flag & HA_SPATIAL ||
-             t2_keyinfo[i].flag & HA_SPATIAL)
-    {
-       return(1);
-    }
     if (t1_keyinfo[i].keysegs != t2_keyinfo[i].keysegs ||
         t1_keyinfo[i].key_alg != t2_keyinfo[i].key_alg)
     {
@@ -1631,21 +1617,13 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
 		      HA_CREATE_INFO *ha_create_info)
 {
   int error;
-  uint create_flags= 0, records, i;
+  uint create_flags= 0, records;
   char buff[FN_REFLEN];
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo;
   MI_CREATE_INFO create_info;
   TABLE_SHARE *share= table_arg->s;
   uint options= share->db_options_in_use;
-  for (i= 0; i < share->keys; i++)
-  {
-    if (table_arg->key_info[i].flags & HA_USES_PARSER)
-    {
-      create_flags|= HA_CREATE_RELIES_ON_SQL_LAYER;
-      break;
-    }
-  }
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
     return(error); /* purecov: inspected */
   memset((char*) &create_info, 0, sizeof(create_info));
