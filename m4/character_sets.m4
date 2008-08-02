@@ -70,7 +70,6 @@ do
     armscii8)
       AC_DEFINE(HAVE_CHARSET_armscii8, 1,
                 [Define to enable charset armscii8])
-      build_armscii8=yes
       ;;
     ascii)
       AC_DEFINE(HAVE_CHARSET_ascii, 1,
@@ -80,13 +79,11 @@ do
       AC_DEFINE(HAVE_CHARSET_big5, 1, [Define to enable charset big5])
       AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, [1], [ ])
-      build_big5=yes
       ;;
     binary)
       ;;
     cp1250)
       AC_DEFINE(HAVE_CHARSET_cp1250, 1, [Define to enable cp1250])
-      build_cp1250=yes
       ;;
     cp1251)
       AC_DEFINE(HAVE_CHARSET_cp1251, 1, [Define to enable charset cp1251])
@@ -110,7 +107,6 @@ do
       AC_DEFINE(HAVE_CHARSET_cp932, 1, [Define to enable charset cp932])
       AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_cp932=yes
       ;;
     dec8)
       AC_DEFINE(HAVE_CHARSET_dec8, 1, [Define to enable charset dec8])
@@ -119,25 +115,21 @@ do
       AC_DEFINE(HAVE_CHARSET_eucjpms, 1, [Define to enable charset eucjpms])
       AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_eucjpms=yes
       ;;
     euckr)
       AC_DEFINE(HAVE_CHARSET_euckr, 1, [Define to enable charset euckr])
       AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_euckr=yes
       ;;
     gb2312)
       AC_DEFINE(HAVE_CHARSET_gb2312, 1, [Define to enable charset gb2312])
       AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_gb2312=yes
       ;;
     gbk)
       AC_DEFINE(HAVE_CHARSET_gbk, 1, [Define to enable charset gbk])
       AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_gbk=yes
       ;;
     geostd8)
       AC_DEFINE(HAVE_CHARSET_geostd8, 1, [Define to enable charset geostd8])
@@ -165,7 +157,6 @@ do
       ;;
     latin2)
       AC_DEFINE(HAVE_CHARSET_latin2, 1, [Define to enable charset latin2])
-      build_latin2=yes
       ;;
     latin5)
       AC_DEFINE(HAVE_CHARSET_latin5, 1, [Define to enable charset latin5])
@@ -184,26 +175,22 @@ do
       AC_DEFINE(HAVE_CHARSET_sjis, 1, [Define to enable charset sjis])
       AC_DEFINE([USE_MB], 1, [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_sjis=yes
       ;;
     swe7)
       AC_DEFINE(HAVE_CHARSET_swe7, 1, [Define to enable charset swe7])
       ;;
     tis620)
       AC_DEFINE(HAVE_CHARSET_tis620, 1, [Define to enable charset tis620])
-      build_tis620=yes
       ;;
     ucs2)
       AC_DEFINE(HAVE_CHARSET_ucs2, 1, [Define to enable charset ucs2])
       AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_ucs2=yes
       ;;
     ujis)
       AC_DEFINE(HAVE_CHARSET_ujis, 1, [Define to enable charset ujis])
       AC_DEFINE([USE_MB], [1], [Use multi-byte character routines])
       AC_DEFINE(USE_MB_IDENT, 1)
-      build_ujis=yes
       ;;
     utf8)
       AC_DEFINE(HAVE_CHARSET_utf8mb4, 1, [Define to enable ut8])
@@ -230,20 +217,6 @@ do
       See the Installation chapter in the Reference Manual.])
   esac
 done
-
-AM_CONDITIONAL(BUILD_ARMSCII8, [test "${build_armscii8}" = "yes"])
-AM_CONDITIONAL(BUILD_BIG5, [test "${build_big5}" = "yes"])
-AM_CONDITIONAL(BUILD_CP1250, [test "${build_cp1250}" = "yes"])
-AM_CONDITIONAL(BUILD_CP32, [test "${build_cp932}" = "yes"])
-AM_CONDITIONAL(BUILD_EUCJPMS, [test "${build_eucjpms}" = "yes"])
-AM_CONDITIONAL(BUILD_EUCKR, [test "${build_euckr}" = "yes"])
-AM_CONDITIONAL(BUILD_GB2312, [test "${build_gb2312}" = "yes"])
-AM_CONDITIONAL(BUILD_GBK, [test "${build_gbk}" = "yes"])
-AM_CONDITIONAL(BUILD_LATIN2, [test "${build_latin2}" = "yes"])
-AM_CONDITIONAL(BUILD_SJIS, [test "${build_sjis}" = "yes"])
-AM_CONDITIONAL(BUILD_TIS620, [test "${build_tis620}" = "yes"])
-AM_CONDITIONAL(BUILD_UCS2, [test "${build_ucs2}" = "yes"])
-AM_CONDITIONAL(BUILD_UJIS, [test "${build_ujis}" = "yes"])
 
 
       default_charset_collations=""

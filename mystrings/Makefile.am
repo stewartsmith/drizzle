@@ -54,46 +54,6 @@ dist_mystringsinclude_HEADERS = 	decimal.h \
 noinst_HEADERS =	my_uctype.h
 
 
-if BUILD_ARMSCII8
-build_armscii8=
-endif
-if BUILD_BIG5
-build_big5=ctype-big5.c
-endif
-if BUILD_CP1250
-build_cp1250=ctype-win1250ch.c
-endif
-if BUILD_CP32
-build_cp932=ctype-cp932.c
-endif
-if BUILD_EUCJPMS
-build_eucjpms=ctype-eucjpms.c
-endif
-if BUILD_EUCKR
-build_euckr=ctype-euc_kr.c
-endif
-if BUILD_GB2312
-build_gb2312=ctype-gb2312.c
-endif
-if BUILD_GBK
-build_gbk=ctype-gbk.c
-endif
-if BUILD_LATIN2
-build_latin2=ctype-czech.c
-endif
-if BUILD_SJIS
-build_sjis=ctype-sjis.c
-endif
-if BUILD_TIS620
-build_tis620=ctype-tis620.c
-endif
-if BUILD_UCS2
-build_ucs2=
-endif
-if BUILD_UJIS
-build_ujis=ctype-ujis.c
-endif
-
 # C files common to all three cases are included directly below, so that
 # ASRCS and CSRCS can be smaller
 # LIBOBJS contains strstr strtoll strtoull strmov IFF the don't exist on
@@ -101,17 +61,16 @@ endif
 libmystringslt_la_LIBADD = $(LIBOBJS)
 libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove512.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
-				llstr.c strnlen.c \
-				ctype.c ctype-simple.c ctype-mb.c \
-				${build_big5} ${build_cp932} ${build_latin2} \
-				${build_eucjpms} ${build_euckr} \
-				${build_gb2312} \
-				${build_gbk} ${build_sjis} ${build_tis620} \
-				${build_ujis} ctype-utf8.c ctype-ucs2.c \
-				ctype-uca.c ${build_cp1250} ctype-bin.c \
-				ctype-latin1.c xml.c \
-				decimal.c ctype-extra.c str_alloc.c \
-				dtoa.c my_strchr.c
+                                llstr.c strnlen.c \
+                                ctype.c ctype-simple.c ctype-mb.c \
+                                ctype-big5.c ctype-cp932.c ctype-czech.c \
+                                ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c \
+                                ctype-gbk.c ctype-sjis.c ctype-tis620.c \
+                                ctype-ujis.c ctype-utf8.c ctype-ucs2.c \
+                                ctype-uca.c ctype-win1250ch.c ctype-bin.c \
+                                ctype-latin1.c xml.c \
+                                decimal.c ctype-extra.c str_alloc.c \
+                                dtoa.c my_strchr.c
 
 # Default charset definitions
 EXTRA_DIST = 	ctype-big5.c ctype-cp932.c ctype-czech.c ctype-eucjpms.c \
