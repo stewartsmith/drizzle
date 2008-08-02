@@ -85,6 +85,7 @@ noinst_HEADERS = item.h \
 		 sql_class.h \
 		 sql_lex.h \
 		 sql_list.h \
+		 sql_locale.h \
 		 sql_map.h \
 		 sql_state.h \
 		 sql_string.h \

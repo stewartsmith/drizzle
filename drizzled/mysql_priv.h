@@ -113,7 +113,7 @@ enum Derivation
   DERIVATION_EXPLICIT= 0
 };
 
-#include <drizzled/locale.h>
+#include <drizzled/sql_locale.h>
 #include <drizzled/object_creation_ctx.h>
 /**
   Opening modes for open_temporary_table and open_table_from_share
