@@ -41,7 +41,6 @@ drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlebinlog_SOURCES =     drizzlebinlog.cc \
                 $(top_srcdir)/mysys/mf_tempdir.c \
-                $(top_srcdir)/mysys/my_new.cc \
                 $(top_srcdir)/mysys/my_bit.c \
                 $(top_srcdir)/mysys/my_bitmap.c \
                 $(top_srcdir)/mysys/base64.c
