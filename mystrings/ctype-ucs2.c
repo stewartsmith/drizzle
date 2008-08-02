@@ -865,7 +865,7 @@ my_strtoll10_mb2(const CHARSET_INFO *cs __attribute__((unused)),
   return (int64_t) li;
 
 overflow:                                        /* *endptr is set here */
-  *error= MY_ERRNO_ERANGE;
+  *error= ERANGE;
   return negative ? INT64_MIN : (int64_t) UINT64_MAX;
 
 end_i:
@@ -895,7 +895,7 @@ end4:
 
 no_conv:
   /* There was no number to convert.  */
-  *error= MY_ERRNO_EDOM;
+  *error= EDOM;
   *endptr= (char *) nptr;
   return 0;
 }
@@ -2462,7 +2462,7 @@ my_strtoll10_utf32(const CHARSET_INFO *cs __attribute__((unused)),
   return (int64_t) li;
 
 overflow:                                        /* *endptr is set here */
-  *error= MY_ERRNO_ERANGE;
+  *error= ERANGE;
   return negative ? INT64_MIN : (int64_t) UINT64_MAX;
 
 end_i:
@@ -2492,7 +2492,7 @@ end4:
 
 no_conv:
   /* There was no number to convert.  */
-  *error= MY_ERRNO_EDOM;
+  *error= EDOM;
   *endptr= (char *) nptr;
   return 0;
 }
