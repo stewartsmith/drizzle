@@ -40,7 +40,6 @@ SYM_GROUP sym_group_common= {"", ""};
 */
 
 static SYMBOL symbols[] = {
-  { "&&",		SYM(AND_AND_SYM)},
   { "<",		SYM(LT)},
   { "<=",		SYM(LE)},
   { "<>",		SYM(NE)},
@@ -48,8 +47,6 @@ static SYMBOL symbols[] = {
   { "=",		SYM(EQ)},
   { ">",		SYM(GT_SYM)},
   { ">=",		SYM(GE)},
-  { "<<",		SYM(SHIFT_LEFT)},
-  { ">>",		SYM(SHIFT_RIGHT)},
   { "<=>",		SYM(EQUAL_SYM)},
   { "ACCESSIBLE",	SYM(ACCESSIBLE_SYM)},
   { "ACTION",		SYM(ACTION)},
@@ -346,7 +343,6 @@ static SYMBOL symbols[] = {
   { "PAGE",	        SYM(PAGE_SYM)},
   { "PAGE_CHECKSUM",        SYM(PAGE_CHECKSUM_SYM)},
   { "PARTIAL",		SYM(PARTIAL)},
-  { "PASSWORD",		SYM(PASSWORD)},
   { "PHASE",            SYM(PHASE_SYM)},
   { "PLUGIN",           SYM(PLUGIN_SYM)},
   { "PLUGINS",          SYM(PLUGINS_SYM)},

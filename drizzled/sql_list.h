@@ -19,9 +19,50 @@
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
+                                  
+/** Struct to handle simple linked lists. */
+typedef struct st_sql_list {
+  uint elements;
+  uchar *first;
+  uchar **next;
+
+  st_sql_list() {}                              /* Remove gcc warning */
+  inline void empty()
+  {
+    elements=0;
+    first=0;
+    next= &first;
+  }
+  inline void link_in_list(uchar *element,uchar **next_ptr)
+  {
+    elements++;
+    (*next)=element;
+    next= next_ptr;
+    *next=0;
+  }
+  inline void save_and_clear(struct st_sql_list *save)
+  {
+    *save= *this;
+    empty();
+  }
+  inline void push_front(struct st_sql_list *save)
+  {
+    *save->next= first;				/* link current list last */
+    first= save->first;
+    elements+= save->elements;
+  }
+  inline void push_back(struct st_sql_list *save)
+  {
+    if (save->first)
+    {
+      *next= save->first;
+      next= save->next;
+      elements+= save->elements;
+    }
+  }
+} SQL_LIST;
 
 /* mysql standard class memory allocator */
-
 class Sql_alloc
 {
 public:

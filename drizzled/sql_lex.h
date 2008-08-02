@@ -13,6 +13,9 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef DRIZZLE_SERVER_SQL_LEX_H
+#define DRIZZLE_SERVER_SQL_LEX_H
+
 /**
   @defgroup Semantic_Analysis Semantic Analysis
 */
@@ -84,7 +87,6 @@ enum enum_sql_command {
   SQLCOM_CHECKSUM,
   SQLCOM_BINLOG_BASE64_EVENT,
   SQLCOM_SHOW_PLUGINS,
-  SQLCOM_ALTER_DB_UPGRADE,
   /*
     When a command is added here, be sure it's also added in mysqld.cc
     in "struct show_var_st status_vars[]= {" ...
@@ -1623,3 +1625,4 @@ extern bool is_lex_native_function(const LEX_STRING *name);
 */
 
 #endif /* MYSQL_SERVER */
+#endif /* DRIZZLE_SERVER_SQL_LEX_H */

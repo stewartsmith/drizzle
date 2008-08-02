@@ -422,7 +422,6 @@ CHARSET_INFO *character_set_filesystem;
 MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
-SHOW_COMP_OPTION have_crypt;
 SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
@@ -432,7 +431,6 @@ pthread_key(THD*, THR_THD);
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
 		LOCK_mapped_file, LOCK_status, LOCK_global_read_lock,
 		LOCK_error_log, LOCK_uuid_generator,
-		LOCK_crypt,
 	        LOCK_global_system_variables,
 		LOCK_user_conn, LOCK_slave_list, LOCK_active_mi,
                 LOCK_connection_count;
@@ -916,7 +914,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_mapped_file);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_error_log);
-  (void) pthread_mutex_destroy(&LOCK_crypt);
   (void) pthread_mutex_destroy(&LOCK_user_conn);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_mutex_destroy(&LOCK_rpl_status);
@@ -1904,7 +1901,6 @@ SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
   {"assign_to_keycache",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ASSIGN_TO_KEYCACHE]), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
-  {"alter_db_upgrade",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_DB_UPGRADE]), SHOW_LONG_STATUS},
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
   {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
   {"begin",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
@@ -2233,7 +2229,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_mapped_file,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_crypt,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_user_conn, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
@@ -2903,12 +2898,11 @@ enum options_mysqld
   OPT_BIN_LOG,
   OPT_BIN_LOG_INDEX,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
-  OPT_SKIP_PRIOR,              OPT_BIG_TABLES,
+  OPT_SKIP_PRIOR,
   OPT_STANDALONE,
   OPT_CONSOLE,                 OPT_LOW_PRIORITY_UPDATES,
   OPT_SHORT_LOG_FORMAT,
   OPT_FLUSH,                   OPT_SAFE,
-  OPT_BOOTSTRAP,               OPT_SKIP_SHOW_DB,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
   OPT_DELAY_KEY_WRITE_ALL,     OPT_SLOW_QUERY_LOG,
   OPT_DELAY_KEY_WRITE,	       OPT_CHARSETS_DIR,
@@ -2954,7 +2948,7 @@ enum options_mysqld
   OPT_MAX_BINLOG_CACHE_SIZE, OPT_MAX_BINLOG_SIZE,
   OPT_MAX_CONNECTIONS, OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
-  OPT_MAX_JOIN_SIZE, OPT_MAX_PREPARED_STMT_COUNT,
+  OPT_MAX_JOIN_SIZE,
   OPT_MAX_RELAY_LOG_SIZE, OPT_MAX_SORT_LENGTH,
   OPT_MAX_SEEKS_FOR_KEY, OPT_MAX_TMP_TABLES, OPT_MAX_USER_CONNECTIONS,
   OPT_MAX_LENGTH_FOR_SORT_DATA,
@@ -2968,8 +2962,7 @@ enum options_mysqld
   OPT_NET_READ_TIMEOUT, OPT_NET_WRITE_TIMEOUT,
   OPT_OPEN_FILES_LIMIT,
   OPT_PRELOAD_BUFFER_SIZE,
-  OPT_QUERY_CACHE_LIMIT, OPT_QUERY_CACHE_MIN_RES_UNIT, OPT_QUERY_CACHE_SIZE,
-  OPT_QUERY_CACHE_TYPE, OPT_QUERY_CACHE_WLOCK_INVALIDATE, OPT_RECORD_BUFFER,
+  OPT_RECORD_BUFFER,
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT, OPT_RELAY_LOG_SPACE_LIMIT,
   OPT_RELAY_LOG_PURGE,
   OPT_SLAVE_NET_TIMEOUT, OPT_SLAVE_COMPRESSED_PROTOCOL, OPT_SLOW_LAUNCH_TIME,
@@ -3044,8 +3037,6 @@ struct my_option my_long_options[] =
    "Option used by mysql-test for debugging and testing of replication.",
    (char**) &abort_slave_event_count,  (char**) &abort_slave_event_count,
    0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"ansi", 'a', "Use ANSI SQL syntax instead of MySQL syntax. This mode will also set transaction isolation level 'serializable'.", 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    "Auto-increment columns are incremented by this",
    (char**) &global_system_variables.auto_increment_increment,
@@ -3060,9 +3051,6 @@ struct my_option my_long_options[] =
    "Path to installation directory. All paths are usually resolved relative to this.",
    (char**) &mysql_home_ptr, (char**) &mysql_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"big-tables", OPT_BIG_TABLES,
-   "Allow big result sets by saving all temporary sets on file (Solves most 'table full' errors).",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"bind-address", OPT_BIND_ADDRESS, "IP address to bind to.",
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -3093,10 +3081,6 @@ struct my_option my_long_options[] =
    /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
   },
-#ifndef DISABLE_GRANT_OPTIONS
-  {"bootstrap", OPT_BOOTSTRAP, "Used by mysql installation scripts.", 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"character-set-client-handshake", OPT_CHARACTER_SET_CLIENT_HANDSHAKE,
    "Don't ignore client side character set value sent during handshake.",
    (char**) &opt_character_set_client_handshake,
@@ -4142,8 +4126,8 @@ Starts the MySQL database server\n");
   my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
 
   puts("\n\
-To see what values a running MySQL server is using, type\n\
-'mysqladmin variables' instead of 'mysqld --verbose --help'.");
+To see what values a running DrizzleD server is using, type\n\
+'drizzleadmin variables' instead of 'mysqld --verbose --help'.");
   }
 }
 
@@ -4284,11 +4268,6 @@ static void mysql_init_variables(void)
 #else
   have_symlink=SHOW_OPTION_YES;
 #endif
-#ifdef HAVE_CRYPT
-  have_crypt=SHOW_OPTION_YES;
-#else
-  have_crypt=SHOW_OPTION_NO;
-#endif
 #ifdef HAVE_COMPRESS
   have_compress= SHOW_OPTION_YES;
 #else
@@ -4360,9 +4339,6 @@ mysqld_get_one_option(int optid,
   case 'T':
     test_flags= argument ? (uint) atoi(argument) : 0;
     opt_endinfo=1;
-    break;
-  case (int) OPT_BIG_TABLES:
-    thd_startup_options|=OPTION_BIG_TABLES;
     break;
   case (int) OPT_ISAM_LOG:
     opt_myisam_log=1;
@@ -4490,26 +4466,8 @@ mysqld_get_one_option(int optid,
       break;
     }
 #endif
-  case (int) OPT_SKIP_NEW:
-    opt_specialflag|= SPECIAL_NO_NEW_FUNC;
-    delay_key_write_options= (uint) DELAY_KEY_WRITE_NONE;
-    myisam_concurrent_insert=0;
-    myisam_recover_options= HA_RECOVER_NONE;
-    my_use_symdir=0;
-    ha_open_options&= ~(HA_OPEN_ABORT_IF_CRASHED | HA_OPEN_DELAY_KEY_WRITE);
-    break;
-  case (int) OPT_SAFE:
-    opt_specialflag|= SPECIAL_SAFE_MODE;
-    delay_key_write_options= (uint) DELAY_KEY_WRITE_NONE;
-    myisam_recover_options= HA_RECOVER_DEFAULT;
-    ha_open_options&= ~(HA_OPEN_DELAY_KEY_WRITE);
-    break;
   case (int) OPT_SKIP_PRIOR:
     opt_specialflag|= SPECIAL_NO_PRIOR;
-    break;
-  case (int) OPT_SKIP_SHOW_DB:
-    opt_skip_show_db=1;
-    opt_specialflag|=SPECIAL_SKIP_SHOW_DB;
     break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
