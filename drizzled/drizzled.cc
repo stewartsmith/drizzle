@@ -2543,9 +2543,14 @@ server.");
 
 int main(int argc, char **argv)
 {
+
+#if defined(ENABLE_NLS)
+# if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
+# endif
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
+#endif
 
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */

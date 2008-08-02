@@ -1033,11 +1033,13 @@ int main(int argc,char *argv[])
 {
   char buff[80];
 
-#if defined(HAVE_LOCALE_H)
+#if defined(ENABLE_NLS)
+# if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
-#endif
+# endif
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
+#endif
 
   MY_INIT(argv[0]);
   delimiter_str= delimiter;
