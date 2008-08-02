@@ -39,6 +39,8 @@
 
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/errmsg.h>
+#include <locale.h>
+#include <libdrizzle/gettext.h>
 
 #define mysqld_charset &my_charset_latin1
 
@@ -2544,6 +2546,10 @@ server.");
 
 int main(int argc, char **argv)
 {
+  setlocale(LC_ALL, "");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
+
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
 

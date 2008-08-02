@@ -223,6 +223,7 @@ DEFS =-DMYSQL_SERVER \
       -DDATADIR="\"$(MYSQLDATAdir)\"" \
       -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
       -DPLUGINDIR="\"$(pkgplugindir)\"" \
+      -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
 BUILT_MAINT_SRC = sql_yacc.cc \
