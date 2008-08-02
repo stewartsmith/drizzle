@@ -1150,9 +1150,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
         thd_info->user= thd->strdup(tmp_sctx->user ? tmp_sctx->user :
                                     (tmp->system_thread ?
                                      "system user" : "unauthenticated user"));
-        thd_info->host= thd->strdup(tmp_sctx->host_or_ip[0] ? 
-                                    tmp_sctx->host_or_ip : 
-                                    tmp_sctx->host ? tmp_sctx->host : "");
+        thd_info->host= thd->strdup(tmp_sctx->ip);
         if ((thd_info->db=tmp->db))             // Safe test
           thd_info->db=thd->strdup(thd_info->db);
         thd_info->command=(int) tmp->command;
@@ -1249,8 +1247,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
             (tmp->system_thread ? "system user" : "unauthenticated user");
       table->field[1]->store(val, strlen(val), cs);
       /* HOST */
-      table->field[2]->store(tmp_sctx->host_or_ip,
-                             strlen(tmp_sctx->host_or_ip), cs);
+      table->field[2]->store(tmp_sctx->ip, strlen(tmp_sctx->ip), cs);
       /* DB */
       if (tmp->db)
       {

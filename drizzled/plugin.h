@@ -438,8 +438,6 @@ int thd_sql_command(const MYSQL_THD thd);
 const char *thd_proc_info(MYSQL_THD thd, const char *info);
 void **thd_ha_data(const MYSQL_THD thd, const struct handlerton *hton);
 int thd_tx_isolation(const MYSQL_THD thd);
-char *thd_security_context(MYSQL_THD thd, char *buffer, unsigned int length,
-                           unsigned int max_query_len);
 /* Increments the row counter, see THD::row_count */
 void thd_inc_row_count(MYSQL_THD thd);
 

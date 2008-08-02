@@ -277,73 +277,6 @@ void thd_inc_row_count(THD *thd)
   thd->row_count++;
 }
 
-/*
-  Dumps a text description of a thread, its security context
-  (user, host) and the current query.
-
-  SYNOPSIS
-    thd_security_context()
-    thd                 current thread context
-    buffer              pointer to preferred result buffer
-    length              length of buffer
-    max_query_len       how many chars of query to copy (0 for all)
-
-  RETURN VALUES
-    pointer to string
-*/
-extern "C"
-char *thd_security_context(THD *thd, char *buffer, unsigned int length,
-                           unsigned int max_query_len)
-{
-  String str(buffer, length, &my_charset_latin1);
-  const Security_context *sctx= &thd->main_security_ctx;
-  char header[64];
-  int len;
-
-  len= snprintf(header, sizeof(header),
-                "MySQL thread id %lu, query id %lu",
-                thd->thread_id, (ulong) thd->query_id);
-  str.length(0);
-  str.append(header, len);
-
-  if (sctx->host)
-  {
-    str.append(' ');
-    str.append(sctx->host);
-  }
-
-  if (sctx->ip)
-  {
-    str.append(' ');
-    str.append(sctx->ip);
-  }
-
-  if (sctx->user)
-  {
-    str.append(' ');
-    str.append(sctx->user);
-  }
-
-  if (thd->proc_info)
-  {
-    str.append(' ');
-    str.append(thd->proc_info);
-  }
-
-  if (thd->query)
-  {
-    if (max_query_len < 1)
-      len= thd->query_length;
-    else
-      len= min(thd->query_length, max_query_len);
-    str.append('\n');
-    str.append(thd->query, len);
-  }
-  if (str.c_ptr_safe() == buffer)
-    return buffer;
-  return thd->strmake(str.ptr(), str.length());
-}
-
 /**
   Clear this diagnostics area. 
 
@@ -2306,17 +2239,13 @@ void THD::set_status_var_init()
 
 void Security_context::init()
 {
-  host= user= priv_user= ip= 0;
-  host_or_ip= "connecting host";
-  priv_host[0]= '\0';
+  user= ip= 0;
 }
 
 
 void Security_context::destroy()
 {
   // If not pointer to constant
-  if (host != my_localhost)
-    safeFree(host);
   safeFree(user);
   safeFree(ip);
 }
@@ -2325,9 +2254,6 @@ void Security_context::destroy()
 void Security_context::skip_grants()
 {
   /* privileges for the user are unknown everything is allowed */
-  host_or_ip= (char *)"";
-  priv_user= (char *)"";
-  *priv_host= '\0';
 }
 
 

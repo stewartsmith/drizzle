@@ -722,16 +722,11 @@ void
 innobase_mysql_print_thd(
 /*=====================*/
 	FILE*	f,		/* in: output stream */
-	void*	input_thd,	/* in: pointer to a MySQL THD object */
-	uint	max_query_len)	/* in: max query length to print, or 0 to
+	void*	input_thd __attribute__((unused)),	/* in: pointer to a MySQL THD object */
+	uint	max_query_len __attribute__((unused)))	/* in: max query length to print, or 0 to
 				   use the default max length */
 {
-	THD*	thd;
-	char	buffer[1024];
-
-	thd = (THD*) input_thd;
-	fputs(thd_security_context(thd, buffer, sizeof(buffer), 
-				   max_query_len), f);
+        fputs("Unknown thread accessing table", f);
 	putc('\n', f);
 }
 

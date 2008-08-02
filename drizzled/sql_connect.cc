@@ -71,8 +71,7 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
   should be done with this in mind; 'thd' is INOUT, all other params
   are 'IN'.
 
-  @retval  0  OK; thd->security_ctx->user/master_access/priv_user/db_access and
-              thd->db are updated; OK is sent to the client.
+  @retval  0  OK
   @retval  1  error, e.g. access denied or handshake error, not sent to
               the client. A message is pushed into the error stack.
 */
@@ -96,7 +95,7 @@ check_user(THD *thd, enum enum_server_command command,
 
   if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.ip);
     return(1);
   }
 
@@ -106,7 +105,7 @@ check_user(THD *thd, enum enum_server_command command,
   {
     my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
              thd->main_security_ctx.user,
-             thd->main_security_ctx.host_or_ip,
+             thd->main_security_ctx.ip,
              passwd_len ? ER(ER_YES) : ER(ER_NO));
 
     return 1;
@@ -136,20 +135,10 @@ check_user(THD *thd, enum enum_server_command command,
     break-in attempts.
   */
   general_log_print(thd, command,
-                    (thd->main_security_ctx.priv_user ==
-                     thd->main_security_ctx.user ?
-                     (char*) "%s@%s on %s" :
-                     (char*) "%s@%s as anonymous on %s"),
+                    ((char*) "%s@%s on %s"),
                     thd->main_security_ctx.user,
-                    thd->main_security_ctx.host_or_ip,
+                    thd->main_security_ctx.ip,
                     db ? db : (char*) "");
-
-  /*
-    This is the default access rights for the current database.  It's
-    set to 0 here because we don't have an active database yet (and we
-    may not have an active database to set.
-  */
-  thd->main_security_ctx.db_access=0;
 
   /* Change database if necessary */
   if (db && db[0])
@@ -252,28 +241,17 @@ static int check_connection(THD *thd)
   thd->set_active_vio(net->vio);
 #endif
 
-  if (!thd->main_security_ctx.host)         // If TCP/IP connection
+  // TCP/IP connection
   {
     char ip[NI_MAXHOST];
 
     if (vio_peer_addr(net->vio, ip, &thd->peer_port, NI_MAXHOST))
     {
-      my_error(ER_BAD_HOST_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
+      my_error(ER_BAD_HOST_ERROR, MYF(0), thd->main_security_ctx.ip);
       return 1;
     }
     if (!(thd->main_security_ctx.ip= my_strdup(ip,MYF(MY_WME))))
       return 1; /* The error is set by my_strdup(). */
-    thd->main_security_ctx.host_or_ip= thd->main_security_ctx.ip;
-    thd->main_security_ctx.host= ip_to_hostname(&net->vio->remote, 
-                                                net->vio->addrLen);
-    thd->main_security_ctx.host_or_ip= thd->main_security_ctx.host;
-  }
-  else /* Hostname given means that the connection was on a socket */
-  {
-    thd->main_security_ctx.host_or_ip= thd->main_security_ctx.host;
-    thd->main_security_ctx.ip= 0;
-    /* Reset sin_addr */
-    memset(&net->vio->remote, 0, sizeof(net->vio->remote));
   }
   vio_keepalive(net->vio, true);
   
@@ -322,7 +300,7 @@ static int check_connection(THD *thd)
 	pkt_len < MIN_HANDSHAKE_SIZE)
     {
       my_error(ER_HANDSHAKE_ERROR, MYF(0),
-               thd->main_security_ctx.host_or_ip);
+               thd->main_security_ctx.ip);
       return 1;
     }
   }
@@ -355,7 +333,7 @@ static int check_connection(THD *thd)
   if (end >= (char*) net->read_pos+ pkt_len +2)
   {
 
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.ip);
     return 1;
   }
 
@@ -392,7 +370,7 @@ static int check_connection(THD *thd)
 
   if (passwd + passwd_len + db_len > (char *)net->read_pos + pkt_len)
   {
-    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
+    my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.ip);
     return 1;
   }
 
@@ -521,7 +499,7 @@ void end_connection(THD *thd)
       sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
                         thd->thread_id,(thd->db ? thd->db : "unconnected"),
                         sctx->user ? sctx->user : "unauthenticated",
-                        sctx->host_or_ip,
+                        sctx->ip,
                         (thd->main_da.is_error() ? thd->main_da.message() :
                          ER(ER_UNKNOWN_ERROR)));
     }
@@ -563,7 +541,7 @@ void prepare_new_connection_state(THD* thd)
       sql_print_warning(ER(ER_NEW_ABORTING_CONNECTION),
                         thd->thread_id,(thd->db ? thd->db : "unconnected"),
                         sctx->user ? sctx->user : "unauthenticated",
-                        sctx->host_or_ip, "init_connect command failed");
+                        sctx->ip, "init_connect command failed");
       sql_print_warning("%s", thd->main_da.message());
     }
     thd->proc_info=0;
