@@ -1,7 +1,8 @@
 # List of source files which contain translatable strings.
 client/drizzle.c
-mysys/my_getopt.c
+mysys/errors.c
 mysys/my_error.c
+mysys/my_getopt.c
 mysys/my_handler_errors.h
 drizzled/error.h
-mysys/errors.c
+drizzled/slave.cc
