@@ -1060,7 +1060,7 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([stroll strstr stroull strmov])
+AC_REPLACE_FUNCS([strtoll strstr strtoull strmov])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
