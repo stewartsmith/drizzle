@@ -93,7 +93,7 @@ extern "C" {					// Because of SCO 3.2V4.2
 #endif
 
 #define SIGNAL_FMT "signal %d"
-  
+
 
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
 #include <ieeefp.h>
@@ -210,7 +210,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 const char *log_output_names[] = { "NONE", "FILE", NullS};
 static const unsigned int log_output_names_len[]= { 4, 4, 0 };
 TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
-                             log_output_names, 
+                             log_output_names,
                              (unsigned int *) log_output_names_len};
 
 /* static variables */
@@ -230,7 +230,7 @@ static char *default_character_set_name;
 static char *character_set_filesystem_name;
 static char *lc_time_names_name;
 static char *my_bind_addr_str;
-static char *default_collation_name; 
+static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= MYSQL_DEFAULT_COLLATION_NAME;
 static I_List<THD> thread_cache;
@@ -241,7 +241,7 @@ static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log; 
+bool opt_log;
 bool opt_slow_log;
 ulong log_output_options;
 bool opt_log_queries_not_using_indexes= false;
@@ -558,7 +558,7 @@ static void close_connections(void)
   /* Abort listening to new connections */
   {
     int x;
-    
+
     for (x= 0; x < pollfd_count; x++)
     {
       if (fds[x].fd != INVALID_SOCKET)
@@ -652,7 +652,7 @@ static void close_server_sock()
 #ifdef HAVE_CLOSE_SERVER_SOCK
   {
     int x;
-    
+
     for (x= 0; x < pollfd_count; x++)
     {
       if (fds[x].fd != INVALID_SOCKET)
@@ -720,7 +720,7 @@ static void *kill_server(void *sig_ptr)
     sql_print_information(ER(ER_NORMAL_SHUTDOWN),my_progname);
   else
     sql_print_error(ER(ER_GOT_SIGNAL),my_progname,sig); /* purecov: inspected */
-  
+
   close_connections();
   if (sig != MYSQL_KILL_SIGNAL &&
       sig != 0)
@@ -1437,7 +1437,7 @@ bytes of memory\n", ((ulong) dflt_key_cache->key_cache_mem_size +
     fprintf(stderr,"\
 Attempting backtrace. You can use the following information to find out\n\
 where mysqld died. If you see no messages after this, something went\n\
-terribly wrong...\n");  
+terribly wrong...\n");
     print_stacktrace(thd ? (uchar*) thd->thread_stack : (uchar*) 0,
                      my_thread_stack_size);
   }
@@ -1491,7 +1491,7 @@ This can result in crashes on some distributions due to LT/NPTL conflicts.\n\
 You should either build a dynamically-linked binary, or force LinuxThreads\n\
 to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n\
 the documentation for your distribution on how to do that.\n");
-  
+
   if (locked_in_memory)
   {
     fprintf(stderr, "\n\
@@ -1986,7 +1986,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   server_start_time= flush_status_time= my_time(0);
   rpl_filter= new Rpl_filter;
   binlog_filter= new Rpl_filter;
-  if (!rpl_filter || !binlog_filter) 
+  if (!rpl_filter || !binlog_filter)
   {
     sql_perror("Could not allocate replication and binlog filters");
     exit(1);
@@ -2163,7 +2163,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
 
-  if (!(character_set_filesystem= 
+  if (!(character_set_filesystem=
         get_charset_by_csname(character_set_filesystem_name,
                               MY_CS_PRIMARY, MYF(MY_WME))))
     return 1;
@@ -2176,7 +2176,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
-  
+
   sys_init_connect.value_length= 0;
   if ((sys_init_connect.value= opt_init_connect))
     sys_init_connect.value_length= strlen(opt_init_connect);
@@ -2334,7 +2334,7 @@ static int init_server_components()
     if (opt_binlog_format_id == BINLOG_FORMAT_UNSPEC)
       global_system_variables.binlog_format= BINLOG_FORMAT_MIXED;
     else
-    { 
+    {
       assert(global_system_variables.binlog_format != BINLOG_FORMAT_UNSPEC);
     }
 
@@ -2459,9 +2459,9 @@ server.");
                        strlen(default_storage_engine_str) };
     plugin_ref plugin;
     handlerton *hton;
-    
+
     if ((plugin= ha_resolve_by_name(0, &name)))
-      hton= plugin_data(plugin, handlerton*);
+      hton= plugin_data(plugin, *handlerton);
     else
     {
       sql_print_error("Unknown/unsupported table type: %s",
@@ -2478,7 +2478,7 @@ server.");
     else
     {
       /*
-        Need to unlock as global_system_variables.table_plugin 
+        Need to unlock as global_system_variables.table_plugin
         was acquired during plugin_init()
       */
       plugin_unlock(0, global_system_variables.table_plugin);
@@ -2675,7 +2675,7 @@ int main(int argc, char **argv)
   handle_connections_sockets();
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
-  
+
 
 #ifdef EXTRA_DEBUG2
   sql_print_error("Before Lock_thread_count");
@@ -2801,7 +2801,7 @@ void handle_connections_sockets()
     }
     if (number_of == 0)
       continue;
-    
+
 #ifdef FIXME_IF_WE_WERE_KEEPING_THIS
     assert(number_of > 1); /* Not handling this at the moment */
 #endif
@@ -2846,7 +2846,7 @@ void handle_connections_sockets()
       size_socket dummyLen;
       struct sockaddr_storage dummy;
       dummyLen = sizeof(dummy);
-      if (  getsockname(new_sock,(struct sockaddr *)&dummy, 
+      if (  getsockname(new_sock,(struct sockaddr *)&dummy,
                   (socklen_t *)&dummyLen) < 0  )
       {
 	sql_perror("Error on new connection socket");
@@ -2896,11 +2896,11 @@ void handle_connections_sockets()
 
 enum options_mysqld
 {
-  OPT_ISAM_LOG=256,            OPT_SKIP_NEW, 
-  OPT_SKIP_GRANT,              
+  OPT_ISAM_LOG=256,            OPT_SKIP_NEW,
+  OPT_SKIP_GRANT,
   OPT_ENABLE_LOCK,             OPT_USE_LOCKING,
   OPT_SOCKET,                  OPT_UPDATE_LOG,
-  OPT_BIN_LOG,                 
+  OPT_BIN_LOG,
   OPT_BIN_LOG_INDEX,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
   OPT_SKIP_PRIOR,              OPT_BIG_TABLES,
@@ -2918,7 +2918,7 @@ enum options_mysqld
   OPT_REPLICATE_IGNORE_DB,     OPT_LOG_SLAVE_UPDATES,
   OPT_BINLOG_DO_DB,            OPT_BINLOG_IGNORE_DB,
   OPT_BINLOG_FORMAT,
-  OPT_BINLOG_ROWS_EVENT_MAX_SIZE, 
+  OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
   OPT_REPLICATE_REWRITE_DB,    OPT_SERVER_ID,
@@ -2929,7 +2929,7 @@ enum options_mysqld
   OPT_DISCONNECT_SLAVE_EVENT_COUNT, OPT_TC_HEURISTIC_RECOVER,
   OPT_ABORT_SLAVE_EVENT_COUNT,
   OPT_LOG_BIN_TRUST_FUNCTION_CREATORS,
-  OPT_ENGINE_CONDITION_PUSHDOWN, 
+  OPT_ENGINE_CONDITION_PUSHDOWN,
   OPT_TEMP_POOL, OPT_TX_ISOLATION, OPT_COMPLETION_TYPE,
   OPT_SKIP_STACK_TRACE, OPT_SKIP_SYMLINKS,
   OPT_MAX_BINLOG_DUMP_EVENTS, OPT_SPORADIC_BINLOG_DUMP_FAIL,
@@ -3037,7 +3037,7 @@ enum options_mysqld
 
 struct my_option my_long_options[] =
 {
-  {"help", '?', "Display this help and exit.", 
+  {"help", '?', "Display this help and exit.",
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"abort-slave-event-count", OPT_ABORT_SLAVE_EVENT_COUNT,
@@ -3086,11 +3086,11 @@ struct my_option my_long_options[] =
    "The maximum size of a row-based binary log event in bytes. Rows will be "
    "grouped into events smaller than this size if possible. "
    "The value has to be a multiple of 256.",
-   (char**) &opt_binlog_rows_event_max_size, 
-   (char**) &opt_binlog_rows_event_max_size, 0, 
-   GET_ULONG, REQUIRED_ARG, 
-   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX, 
-   /* sub_size */     0, /* block_size */ 256, 
+   (char**) &opt_binlog_rows_event_max_size,
+   (char**) &opt_binlog_rows_event_max_size, 0,
+   GET_ULONG, REQUIRED_ARG,
+   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX,
+   /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
   },
 #ifndef DISABLE_GRANT_OPTIONS
@@ -3233,7 +3233,7 @@ struct my_option my_long_options[] =
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-long-format", '0',
-   "Log some extra information to update log. Please note that this option is deprecated; see --log-short-format option.", 
+   "Log some extra information to update log. Please note that this option is deprecated; see --log-short-format option.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef WITH_CSV_STORAGE_ENGINE
   {"log-output", OPT_LOG_OUTPUT,
@@ -3455,7 +3455,7 @@ log and this option does nothing anymore.",
    0, 0, 0, 0, 0},
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    "Specify whether to time mutexes (only InnoDB mutexes are currently supported)",
-   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0, 
+   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"tmpdir", 't',
    "Path for temporary files. Several paths may be specified, separated by a "
@@ -3555,7 +3555,7 @@ log and this option does nothing anymore.",
    "This characterizes the number of hits a hot block has to be untouched until it is considered aged enough to be downgraded to a warm block. This specifies the percentage ratio of that number of hits to the total number of blocks in key cache",
    (char**) &dflt_key_cache_var.param_age_threshold,
    (char**) 0,
-   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG, 
+   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
    300, 100, ULONG_MAX, 0, 100, 0},
   {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
    "The default size of key cache blocks",
@@ -3707,9 +3707,9 @@ The minimum value for this variable is 4096.",
    (char**) &global_system_variables.net_write_timeout,
    (char**) &max_system_variables.net_write_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  { "old", OPT_OLD_MODE, "Use compatible behavior.", 
+  { "old", OPT_OLD_MODE, "Use compatible behavior.",
     (char**) &global_system_variables.old_mode,
-    (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG, 
+    (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"open_files_limit", OPT_OPEN_FILES_LIMIT,
    "If this is not 0, then mysqld will use this value to reserve file descriptors to use with setrlimit(). If this value is 0 then mysqld will reserve max_connections*5 or max_connections + table_cache*2 (whichever is larger) number of files.",
@@ -4522,13 +4522,13 @@ mysqld_get_one_option(int optid,
     break;
   case (int) OPT_BIND_ADDRESS:
     {
-      struct addrinfo *res_lst, hints;    
+      struct addrinfo *res_lst, hints;
 
       memset(&hints, 0, sizeof(struct addrinfo));
       hints.ai_socktype= SOCK_STREAM;
       hints.ai_protocol= IPPROTO_TCP;
 
-      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0) 
+      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
       {
         sql_print_error("Can't start server: cannot resolve hostname!");
         exit(1);
@@ -4890,7 +4890,7 @@ static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
   ulong res;
 
   const char **ptr;
-  
+
   if ((res= find_bit_type(x, bit_lib)) == ~(ulong) 0)
   {
     ptr= bit_lib->type_names;

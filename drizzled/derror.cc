@@ -70,7 +70,7 @@ bool init_errmessage(void)
     return(true);
   }
 
-  errmesg= errmsgs;		        /* Init global variabel */
+  errmesg= errmsgs;		        /* Init global variable */
   init_myfunc_errs();			/* Init myfunc messages */
   return(false);
 }
@@ -81,7 +81,7 @@ bool init_errmessage(void)
 
   If we can't read messagefile then it's panic- we can't continue.
 
-  @todo
+  @TODO
     Convert the character set to server system character set
 */
 
@@ -116,7 +116,7 @@ static bool read_texts(const char *file_name,const char ***point,
 Please install the latest version of this file.",name);
     goto err1;
   }
-  
+
   /* TODO: Convert the character set to server system character set */
   if (!get_charset(head[30],MYF(MY_WME)))
   {
@@ -124,7 +124,7 @@ Please install the latest version of this file.",name);
                     (int)head[30],name);
     goto err1;
   }
-  
+
   length=uint2korr(head+6); count=uint2korr(head+8);
 
   if (count < error_messages)
