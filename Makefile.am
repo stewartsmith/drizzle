@@ -27,7 +27,7 @@ SUBDIRS = po . vio \
 	  tests \
 	  support-files
 
-DIST_SUBDIRS = po $(SUBDIRS) \
+DIST_SUBDIRS = $(SUBDIRS) \
 	       mysys/tests \
 	       mystrings/tests
 
