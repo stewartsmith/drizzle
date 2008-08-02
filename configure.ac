@@ -1077,8 +1077,8 @@ AC_CHECK_FUNCS(bsearch \
   realpath rename rint rwlock_init setupterm \
   shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
   sighold sigset sigthreadmask port_create sleep \
-  snprintf socket stpcpy strcasecmp strerror strsignal strnlen strpbrk strstr \
-  strtol strtoll strtoul strtoull tell tempnam vidattr \
+  snprintf socket stpcpy strcasecmp strerror strsignal strnlen strpbrk \
+  tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
 
 # Check that isinf() is available in math.h and can be used in both C and C++
