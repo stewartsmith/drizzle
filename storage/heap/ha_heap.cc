@@ -354,7 +354,7 @@ int ha_heap::rnd_pos(uchar * buf, uchar *pos)
   int error;
   HEAP_PTR heap_position;
   ha_statistic_increment(&SSV::ha_read_rnd_count);
-  memcpy((char*) &heap_position, pos, sizeof(HEAP_PTR));
+  memcpy(&heap_position, pos, sizeof(HEAP_PTR));
   error=heap_rrnd(file, buf, heap_position);
   table->status=error ? STATUS_NOT_FOUND: 0;
   return error;
