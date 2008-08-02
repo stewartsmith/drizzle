@@ -25,7 +25,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = field . share
+SUBDIRS = field 
 
 sbin_PROGRAMS =drizzled
 
@@ -85,6 +85,7 @@ noinst_HEADERS = item.h \
 		 sql_class.h \
 		 sql_lex.h \
 		 sql_list.h \
+		 sql_locale.h \
 		 sql_map.h \
 		 sql_state.h \
 		 sql_string.h \
@@ -222,6 +223,7 @@ DEFS =-DMYSQL_SERVER \
       -DDATADIR="\"$(MYSQLDATAdir)\"" \
       -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
       -DPLUGINDIR="\"$(pkgplugindir)\"" \
+      -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
 BUILT_MAINT_SRC = sql_yacc.cc \

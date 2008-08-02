@@ -30,6 +30,7 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {

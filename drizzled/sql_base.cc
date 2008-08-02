@@ -20,6 +20,7 @@
 #include "sql_select.h"
 #include <mysys/my_dir.h>
 #include <mysys/hash.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")
 
@@ -56,7 +57,7 @@ bool table_cache_init(void)
 {
   return hash_init(&open_cache, &my_charset_bin, table_cache_size+16,
 		   0, 0, table_cache_key,
-		   (hash_free_key) free_cache_entry, 0) != 0;
+		   (hash_free_key) free_cache_entry, 0);
 }
 
 void table_cache_free(void)
@@ -153,7 +154,7 @@ bool table_def_init(void)
 
   return hash_init(&table_def_cache, &my_charset_bin, table_def_size,
 		   0, 0, table_def_key,
-		   (hash_free_key) table_def_free_entry, 0) != 0;
+		   (hash_free_key) table_def_free_entry, 0);
 }
 
 

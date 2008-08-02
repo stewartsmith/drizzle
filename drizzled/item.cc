@@ -19,6 +19,7 @@
 #endif
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 const String my_null_string("NULL", 4, default_charset_info);
 

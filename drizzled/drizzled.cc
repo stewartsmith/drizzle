@@ -25,6 +25,7 @@
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #include <storage/myisam/ha_myisam.h>
 
@@ -38,6 +39,8 @@
 
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/errmsg.h>
+#include <locale.h>
+#include <libdrizzle/gettext.h>
 
 #define mysqld_charset &my_charset_latin1
 
@@ -382,7 +385,6 @@ uint mysql_data_home_len;
 char mysql_data_home_buff[2], *mysql_data_home=mysql_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *opt_mysql_tmpdir;
-const char **errmesg;			/**< Error messages */
 const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
@@ -864,12 +866,16 @@ void clean_up(bool print_message)
 
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
-  if (print_message && errmesg && server_start_time)
+  if (print_message && server_start_time)
     sql_print_information(ER(ER_SHUTDOWN_COMPLETE),my_progname);
   thread_scheduler.end();
   finish_client_errs();
-  my_free((uchar*) my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST),
-          MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+  /* Returns NULL on globerrs, we don't want to try to free that */
+  //void *freeme=
+  (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
+  // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
+/*  if (freeme != NULL)
+    my_free(freeme, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));  */
   /* Tell main we are ready */
   logger.cleanup_end();
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -2431,10 +2437,6 @@ server.");
     }
   }
 
-  /* if the errmsg.sys is not loaded, terminate to maintain behaviour */
-  if (!errmesg[0][0])
-    unireg_abort(1);
-
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
@@ -2456,7 +2458,7 @@ server.");
     handlerton *hton;
 
     if ((plugin= ha_resolve_by_name(0, &name)))
-      hton= plugin_data(plugin, *handlerton);
+      hton= plugin_data(plugin,handlerton *);
     else
     {
       sql_print_error("Unknown/unsupported table type: %s",
@@ -2539,6 +2541,10 @@ server.");
 
 int main(int argc, char **argv)
 {
+  setlocale(LC_ALL, "");
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
+
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
 
@@ -3172,7 +3178,7 @@ struct my_option my_long_options[] =
    (char**) &opt_init_slave, (char**) &opt_init_slave, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"language", 'L',
-   "Client error messages in given language. May be given as a full path.",
+   "Client error messages in given language. May be given as a full path. (IGNORED)",
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
@@ -4180,7 +4186,6 @@ static void mysql_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
-  errmesg= 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
   memset((uchar*) &mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
   memset((char *) &global_status_var, 0, sizeof(global_status_var));

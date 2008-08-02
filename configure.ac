@@ -38,27 +38,28 @@ MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
 MYSQL_TCP_PORT_DEFAULT=4427
 
 dnl Include m4 
-sinclude(config/ac-macros/alloca.m4)
-sinclude(config/ac-macros/check_cpu.m4)
-sinclude(config/ac-macros/character_sets.m4)
-sinclude(config/ac-macros/compiler_flag.m4)
-sinclude(config/ac-macros/dtrace.m4)
-sinclude(config/ac-macros/plugins.m4)
-sinclude(config/ac-macros/large_file.m4)
-sinclude(config/ac-macros/misc.m4)
-sinclude(config/ac-macros/readline.m4)
-sinclude(config/ac-macros/ssl.m4)
-sinclude(config/ac-macros/pkg.m4)
-sinclude(config/ac-macros/ac_cxx_header_stdcxx_98.m4)
+sinclude(m4/alloca.m4)
+sinclude(m4/check_cpu.m4)
+sinclude(m4/character_sets.m4)
+sinclude(m4/compiler_flag.m4)
+sinclude(m4/dtrace.m4)
+sinclude(m4/plugins.m4)
+sinclude(m4/large_file.m4)
+sinclude(m4/misc.m4)
+sinclude(m4/readline.m4)
+sinclude(m4/ssl.m4)
+sinclude(m4/pkg.m4)
+sinclude(m4/lib-link.m4)
+sinclude(m4/lib-prefix.m4)
+sinclude(m4/gettext.m4)
+sinclude(m4/progtest.m4)
+sinclude(m4/po.m4)
+sinclude(m4/nls.m4)
+sinclude(m4/iconv.m4)
+sinclude(m4/lib-ld.m4)
+sinclude(m4/ac_cxx_header_stdcxx_98.m4)
 
-# Remember to add a directory drizzled/share/LANGUAGE
-AVAILABLE_LANGUAGES="\
-czech danish dutch english estonian french german greek hungarian \
-italian japanese korean norwegian norwegian-ny polish portuguese \
-romanian russian serbian slovak spanish swedish ukrainian"
-
-#####
-#####
+AM_GNU_GETTEXT([external])
 
 AC_SUBST(MYSQL_NO_DASH_VERSION)
 AC_SUBST(MYSQL_BASE_VERSION)
@@ -1391,11 +1392,10 @@ AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  mystrings/Makefile mystrings/tests/Makefile storage/Makefile dnl
- vio/Makefile dnl
+ vio/Makefile po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
- drizzled/share/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl

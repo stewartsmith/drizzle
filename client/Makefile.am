@@ -57,7 +57,6 @@ drizzletest_SOURCES=		drizzletest.cc
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
 drizzletest_CFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
 
-# Fix for mit-threads
-DEFS =			-DUNDEF_THREADS_HACK \
-			-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
-			-DDATADIR="\"$(localstatedir)\""
+DEFS =	-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
+	-DDATADIR="\"$(localstatedir)\"" \
+	-DLOCALEDIR=\"$(localedir)\" @DEFS@

@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -2195,6 +2196,20 @@ void THD::restore_active_arena(Query_arena *set, Query_arena *backup)
   return;
 }
 
+
+bool THD::copy_db_to(char **p_db, size_t *p_db_length)
+{
+  if (db == NULL)
+  {
+    my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+    return true;
+  }
+  *p_db= strmake(db, db_length);
+  *p_db_length= db_length;
+  return false;
+}
+
+
 bool select_dumpvar::send_data(List<Item> &items)
 {
   List_iterator_fast<my_var> var_li(var_list);
@@ -2276,6 +2291,12 @@ void thd_increment_net_big_packet_count(ulong length)
   current_thd->status_var.net_big_packet_count+= length;
 }
 
+void THD::send_kill_message() const
+{
+  int err= killed_errno();
+  if (err)
+    my_message(err, ER(err), MYF(0));
+}
 
 void THD::set_status_var_init()
 {
