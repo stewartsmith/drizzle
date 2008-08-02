@@ -1059,6 +1059,9 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
+AC_CONFIG_LIBOBJ_DIR([mystrings])
+AC_REPLACE_FUNCS([stroll strstr stroull strmov])
+
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
