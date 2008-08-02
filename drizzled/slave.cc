@@ -1906,8 +1906,8 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
                             const char *messages[SLAVE_RECON_MSG_MAX])
 {
   mi->slave_running= MYSQL_SLAVE_RUN_NOT_CONNECT;
-  thd->proc_info= messages[SLAVE_RECON_MSG_WAIT];
-#ifdef SIGNAL_WITH_VIO_CLOSE  
+  thd->proc_info= _(messages[SLAVE_RECON_MSG_WAIT]);
+#ifdef SIGNAL_WITH_VIO_CLOSE
   thd->clear_active_vio();
 #endif
   end_server(drizzle);
@@ -1918,23 +1918,24 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
     safe_sleep(thd, mi->connect_retry, (CHECK_KILLED_FUNC) io_slave_killed,
                (void *) mi);
   }
-  if (check_io_slave_killed(thd, mi, messages[SLAVE_RECON_MSG_KILLED_WAITING]))
+  if (check_io_slave_killed(thd, mi,
+                            _(messages[SLAVE_RECON_MSG_KILLED_WAITING])))
     return 1;
-  thd->proc_info = messages[SLAVE_RECON_MSG_AFTER];
-  if (!suppress_warnings) 
+  thd->proc_info = _(messages[SLAVE_RECON_MSG_AFTER]);
+  if (!suppress_warnings)
   {
     char buf[256], llbuff[22];
-    snprintf(buf, sizeof(buf), messages[SLAVE_RECON_MSG_FAILED], 
+    snprintf(buf, sizeof(buf), _(messages[SLAVE_RECON_MSG_FAILED]),
              IO_RPL_LOG_NAME, llstr(mi->master_log_pos, llbuff));
-    /* 
+    /*
       Raise a warining during registering on master/requesting dump.
       Log a message reading event.
     */
-    if (messages[SLAVE_RECON_MSG_COMMAND][0])
+    if (_(messages[SLAVE_RECON_MSG_COMMAND])[0])
     {
       mi->report(WARNING_LEVEL, ER_SLAVE_MASTER_COM_FAILURE,
-                 ER(ER_SLAVE_MASTER_COM_FAILURE), 
-                 messages[SLAVE_RECON_MSG_COMMAND], buf);
+                 ER(ER_SLAVE_MASTER_COM_FAILURE),
+                 _(messages[SLAVE_RECON_MSG_COMMAND]), buf);
     }
     else
     {
@@ -1944,7 +1945,7 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
   if (safe_reconnect(thd, drizzle, mi, 1) || io_slave_killed(thd, mi))
   {
     if (global_system_variables.log_warnings)
-      sql_print_information(messages[SLAVE_RECON_MSG_KILLED_AFTER]);
+      sql_print_information(_(messages[SLAVE_RECON_MSG_KILLED_AFTER]));
     return 1;
   }
   return 0;
@@ -2047,7 +2048,7 @@ connected:
       {
         sql_print_error(_("Slave I/O thread couldn't register on master"));
         if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
-                             _(reconnect_messages[SLAVE_RECON_ACT_REG])))
+                             reconnect_messages[SLAVE_RECON_ACT_REG]))
           goto err;
       }
       else
@@ -2059,7 +2060,7 @@ connected:
       retry_count_reg++;
       sql_print_information(_("Forcing to reconnect slave I/O thread"));
       if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
-                           _(reconnect_messages[SLAVE_RECON_ACT_REG])))
+                           reconnect_messages[SLAVE_RECON_ACT_REG]))
         goto err;
       goto connected;
     }
@@ -2074,7 +2075,7 @@ connected:
       if (check_io_slave_killed(thd, mi, _("Slave I/O thread killed while \
 requesting master dump")) ||
           try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
-                           _(reconnect_messages[SLAVE_RECON_ACT_DUMP])))
+                           reconnect_messages[SLAVE_RECON_ACT_DUMP]))
         goto err;
       goto connected;
     }
@@ -2083,7 +2084,7 @@ requesting master dump")) ||
       retry_count_dump++;
       sql_print_information(_("Forcing to reconnect slave I/O thread"));
       if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
-                           _(reconnect_messages[SLAVE_RECON_ACT_DUMP])))
+                           reconnect_messages[SLAVE_RECON_ACT_DUMP]))
         goto err;
       goto connected;
     }
@@ -2107,7 +2108,7 @@ requesting master dump")) ||
         retry_count_event++;
         sql_print_information(_("Forcing to reconnect slave I/O thread"));
         if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
-                             _(reconnect_messages[SLAVE_RECON_ACT_EVENT])))
+                             reconnect_messages[SLAVE_RECON_ACT_EVENT]))
           goto err;
         goto connected;
       }
@@ -2135,7 +2136,7 @@ requesting master dump")) ||
           goto err;
         }
         if (try_to_reconnect(thd, drizzle, mi, &retry_count, suppress_warnings,
-                             _(reconnect_messages[SLAVE_RECON_ACT_EVENT])))
+                             reconnect_messages[SLAVE_RECON_ACT_EVENT]))
           goto err;
         goto connected;
       } // if (event_len == packet_error)
@@ -3653,7 +3654,7 @@ static Log_event* next_event(Relay_log_info* rli)
   }
   if (!errmsg && global_system_variables.log_warnings)
   {
-    sql_print_information(_("Error reading relay log event: %s",
+    sql_print_information(_("Error reading relay log event: %s, "
                             "slave SQL thread was killed"));
     return(0);
   }
@@ -3748,33 +3749,34 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
         (memcmp(fixed_in,      master_ver, 3) >  0))
     {
       if (!report)
-	return true;
-      
+        return true;
+
       // a short message for SHOW SLAVE STATUS (message length constraints)
-      my_printf_error(ER_UNKNOWN_ERROR, "master may suffer from"
-                      " http://bugs.mysql.com/bug.php?id=%u"
-                      " so slave stops; check error log on slave"
-                      " for more info", MYF(0), bug_id);
+      my_printf_error(ER_UNKNOWN_ERROR,
+                      _("master may suffer from"
+                        " http://bugs.mysql.com/bug.php?id=%u"
+                        " so slave stops; check error log on slave"
+                        " for more info"), MYF(1), bug_id);
       // a verbose message for the error log
       rli->report(ERROR_LEVEL, ER_UNKNOWN_ERROR,
-                  "According to the master's version ('%s'),"
-                  " it is probable that master suffers from this bug:"
-                      " http://bugs.mysql.com/bug.php?id=%u"
-                      " and thus replicating the current binary log event"
-                      " may make the slave's data become different from the"
-                      " master's data."
-                      " To take no risk, slave refuses to replicate"
-                      " this event and stops."
-                      " We recommend that all updates be stopped on the"
-                      " master and slave, that the data of both be"
-                      " manually synchronized,"
-                      " that master's binary logs be deleted,"
-                      " that master be upgraded to a version at least"
-                      " equal to '%d.%d.%d'. Then replication can be"
-                      " restarted.",
-                      rli->relay_log.description_event_for_exec->server_version,
-                      bug_id,
-                      fixed_in[0], fixed_in[1], fixed_in[2]);
+                  _("According to the master's version ('%s'),"
+                    " it is probable that master suffers from this bug:"
+                    " http://bugs.mysql.com/bug.php?id=%u"
+                    " and thus replicating the current binary log event"
+                    " may make the slave's data become different from the"
+                    " master's data."
+                    " To take no risk, slave refuses to replicate"
+                    " this event and stops."
+                    " We recommend that all updates be stopped on the"
+                    " master and slave, that the data of both be"
+                    " manually synchronized,"
+                    " that master's binary logs be deleted,"
+                    " that master be upgraded to a version at least"
+                    " equal to '%d.%d.%d'. Then replication can be"
+                    " restarted."),
+                  rli->relay_log.description_event_for_exec->server_version,
+                  bug_id,
+                  fixed_in[0], fixed_in[1], fixed_in[2]);
       return true;
     }
   }
