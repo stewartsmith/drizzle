@@ -591,23 +591,6 @@ dnl END OF MYSQL_CHECK_MAX_INDEXES SECTION
 dnl ---------------------------------------------------------------------------
 
 
-dnl MYSQL_NEEDS_MYSYS_NEW
-AC_DEFUN([MYSQL_NEEDS_MYSYS_NEW],
-[AC_CACHE_CHECK([needs mysys_new helpers], mysql_use_mysys_new,
-[
-AC_LANG_PUSH(C++)
-AC_TRY_LINK([], [
-class A { public: int b; }; A *a=new A; a->b=10; delete a;
-], mysql_use_mysys_new=no, mysql_use_mysys_new=yes)
-AC_LANG_POP(C++)
-])
-if test "$mysql_use_mysys_new" = "yes"
-then
-  AC_DEFINE([USE_MYSYS_NEW], [1], [Needs to use mysys_new helpers])
-fi
-])
-
-
 AC_DEFUN([MYSQL_CHECK_CXX_VERSION], [
 case $SYSTEM_TYPE in
   *netware*)

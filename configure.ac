@@ -892,7 +892,6 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_HEADER_TIME
 AC_STRUCT_TM
-MYSQL_NEEDS_MYSYS_NEW
 # AC_CHECK_SIZEOF return 0 when it does not find the size of a
 # type. We want a error instead.
 AC_CHECK_SIZEOF(char, 1)
