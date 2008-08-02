@@ -2458,7 +2458,7 @@ server.");
     handlerton *hton;
 
     if ((plugin= ha_resolve_by_name(0, &name)))
-      hton= plugin_data(plugin, *handlerton);
+      hton= plugin_data(plugin,handlerton *);
     else
     {
       sql_print_error("Unknown/unsupported table type: %s",

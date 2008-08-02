@@ -61,15 +61,6 @@ sinclude(config/ac-macros/ac_cxx_header_stdcxx_98.m4)
 
 AM_GNU_GETTEXT([external])
 
-# Remember to add a directory drizzled/share/LANGUAGE
-AVAILABLE_LANGUAGES="\
-czech danish dutch english estonian french german greek hungarian \
-italian japanese korean norwegian norwegian-ny polish portuguese \
-romanian russian serbian slovak spanish swedish ukrainian"
-
-#####
-#####
-
 AC_SUBST(MYSQL_NO_DASH_VERSION)
 AC_SUBST(MYSQL_BASE_VERSION)
 AC_SUBST(MYSQL_VERSION_ID)
@@ -1405,7 +1396,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
- drizzled/share/Makefile dnl
  drizzled/sql_builtin.cc dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
