@@ -46,7 +46,7 @@
 #include <sys/ioctl.h>
 
 
-#if defined(USE_LIBEDIT_INTERFACE) && defined(HAVE_LOCALE_H)
+#if defined(HAVE_LOCALE_H)
 #include <locale.h>
 #endif
 
@@ -1033,7 +1033,9 @@ int main(int argc,char *argv[])
 {
   char buff[80];
 
+#if defined(HAVE_LOCALE_H)
   setlocale(LC_ALL, "");
+#endif
   bindtextdomain("drizzle", LOCALEDIR);
   textdomain("drizzle");
 
