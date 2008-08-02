@@ -3654,8 +3654,8 @@ static Log_event* next_event(Relay_log_info* rli)
   }
   if (!errmsg && global_system_variables.log_warnings)
   {
-    sql_print_information(_("Error reading relay log event: %s, "
-                            "slave SQL thread was killed"));
+    sql_print_information(_("Error reading relay log event: %s"),
+                          _("slave SQL thread was killed"));
     return(0);
   }
 
@@ -3756,7 +3756,7 @@ bool rpl_master_has_bug(Relay_log_info *rli, uint32_t bug_id, bool report)
                       _("master may suffer from"
                         " http://bugs.mysql.com/bug.php?id=%u"
                         " so slave stops; check error log on slave"
-                        " for more info"), MYF(1), bug_id);
+                        " for more info"), MYF(0), bug_id);
       // a verbose message for the error log
       rli->report(ERROR_LEVEL, ER_UNKNOWN_ERROR,
                   _("According to the master's version ('%s'),"

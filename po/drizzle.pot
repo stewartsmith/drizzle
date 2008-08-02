@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle 7.0.0\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-01 19:21-0700\n"
+"POT-Creation-Date: 2008-08-01 19:41-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1149,7 +1149,7 @@ msgid ""
 "inaccurate"
 msgstr ""
 
-#: drizzled/slave.cc:1081 drizzled/slave.cc:2151
+#: drizzled/slave.cc:1081 drizzled/slave.cc:2152
 msgid "Failed to flush master info file"
 msgstr ""
 
@@ -1172,12 +1172,12 @@ msgstr ""
 msgid "Slave: received end packet from server, apparent master shutdown: %s"
 msgstr ""
 
-#: drizzled/slave.cc:1768 drizzled/slave.cc:2366
+#: drizzled/slave.cc:1768 drizzled/slave.cc:2367
 #, c-format
 msgid "Slave SQL thread stopped because it reached its UNTIL position %s"
 msgstr ""
 
-#: drizzled/slave.cc:1827 drizzled/slave.cc:2315
+#: drizzled/slave.cc:1827 drizzled/slave.cc:2316
 #, c-format
 msgid "Error initializing relay log position: %s"
 msgstr ""
@@ -1189,46 +1189,46 @@ msgid ""
 "Consider raising the value of the slave_transaction_retries variable."
 msgstr ""
 
-#: drizzled/slave.cc:1988
+#: drizzled/slave.cc:1989
 msgid "Failed during slave I/O thread initialization"
 msgstr ""
 
-#: drizzled/slave.cc:2010
+#: drizzled/slave.cc:2011
 #, c-format
 msgid ""
 "Slave I/O thread: connected to master '%s@%s:%d',replication started in log "
 "'%s' at position %s"
 msgstr ""
 
-#: drizzled/slave.cc:2024
+#: drizzled/slave.cc:2025
 msgid "Slave I/O thread killed while connecting to master"
 msgstr ""
 
-#: drizzled/slave.cc:2048
+#: drizzled/slave.cc:2049
 msgid "Slave I/O thread couldn't register on master"
 msgstr ""
 
-#: drizzled/slave.cc:2060 drizzled/slave.cc:2084 drizzled/slave.cc:2108
+#: drizzled/slave.cc:2061 drizzled/slave.cc:2085 drizzled/slave.cc:2109
 msgid "Forcing to reconnect slave I/O thread"
 msgstr ""
 
-#: drizzled/slave.cc:2073
+#: drizzled/slave.cc:2074
 msgid "Failed on request_dump()"
 msgstr ""
 
-#: drizzled/slave.cc:2074
+#: drizzled/slave.cc:2075
 msgid "Slave I/O thread killed while requesting master dump"
 msgstr ""
 
-#: drizzled/slave.cc:2100
+#: drizzled/slave.cc:2101
 msgid "Waiting for master to send event"
 msgstr ""
 
-#: drizzled/slave.cc:2102
+#: drizzled/slave.cc:2103
 msgid "Slave I/O thread killed while reading event"
 msgstr ""
 
-#: drizzled/slave.cc:2120
+#: drizzled/slave.cc:2121
 #, c-format
 msgid ""
 "Log entry on master is longer than max_allowed_packet (%ld) on slave. If the "
@@ -1236,57 +1236,57 @@ msgid ""
 "max_allowed_packet"
 msgstr ""
 
-#: drizzled/slave.cc:2134
+#: drizzled/slave.cc:2135
 msgid "Stopping slave I/O thread due to out-of-memory error from master"
 msgstr ""
 
-#: drizzled/slave.cc:2144
+#: drizzled/slave.cc:2145
 msgid "Queueing master event to the relay log"
 msgstr ""
 
-#: drizzled/slave.cc:2171
+#: drizzled/slave.cc:2172
 msgid "Slave I/O thread aborted while waiting for relay log space"
 msgstr ""
 
-#: drizzled/slave.cc:2181
+#: drizzled/slave.cc:2182
 #, c-format
 msgid "Slave I/O thread exiting, read up to log '%s', position %s"
 msgstr ""
 
-#: drizzled/slave.cc:2205
+#: drizzled/slave.cc:2206
 msgid "Waiting for slave mutex on exit"
 msgstr ""
 
-#: drizzled/slave.cc:2271
+#: drizzled/slave.cc:2272
 msgid "Failed during slave thread initialization"
 msgstr ""
 
-#: drizzled/slave.cc:2337
+#: drizzled/slave.cc:2338
 #, c-format
 msgid ""
 "Slave SQL thread initialized, starting replication in log '%s' at position %"
 "s, relay log '%s' position: %s"
 msgstr ""
 
-#: drizzled/slave.cc:2351
+#: drizzled/slave.cc:2352
 msgid "Slave SQL thread aborted. Can't execute init_slave query"
 msgstr ""
 
-#: drizzled/slave.cc:2377
+#: drizzled/slave.cc:2378
 msgid "Reading event from the relay log"
 msgstr ""
 
-#: drizzled/slave.cc:2402
+#: drizzled/slave.cc:2403
 #, c-format
 msgid "Slave (additional info): %s Error_code: %d"
 msgstr ""
 
-#: drizzled/slave.cc:2419
+#: drizzled/slave.cc:2420
 #, c-format
 msgid "Slave: %s Error_code: %d"
 msgstr ""
 
-#: drizzled/slave.cc:2422
+#: drizzled/slave.cc:2423
 #, c-format
 msgid ""
 "Error loading user-defined library, slave SQL thread aborted. Install the "
@@ -1294,64 +1294,88 @@ msgid ""
 "stopped at log '%s' position %s"
 msgstr ""
 
-#: drizzled/slave.cc:2430
+#: drizzled/slave.cc:2431
 #, c-format
 msgid ""
 "Error running query, slave SQL thread aborted. Fix the problem, and restart "
 "the slave SQL thread with \"SLAVE START\". We stopped at log '%s' position %s"
 msgstr ""
 
-#: drizzled/slave.cc:2442
+#: drizzled/slave.cc:2443
 #, c-format
 msgid ""
 "Slave SQL thread exiting, replication stopped in log '%s' at position %s"
 msgstr ""
 
-#: drizzled/slave.cc:2538
+#: drizzled/slave.cc:2539
 #, c-format
 msgid "Slave I/O: failed requesting download of '%s'"
 msgstr ""
 
-#: drizzled/slave.cc:2555
+#: drizzled/slave.cc:2556
 #, c-format
 msgid "Network read error downloading '%s' from master"
 msgstr ""
 
-#: drizzled/slave.cc:2727 drizzled/slave.cc:2813
+#: drizzled/slave.cc:2728 drizzled/slave.cc:2814
 #, c-format
 msgid ""
 "Read invalid event from master: '%s', master could be corrupt but a more "
 "likely cause of this is a bug"
 msgstr ""
 
-#: drizzled/slave.cc:3208
+#: drizzled/slave.cc:3209
 #, c-format
 msgid ""
 "Slave: connected to master '%s@%s:%d', replication resumed in log '%s' at "
 "position %s"
 msgstr ""
 
-#: drizzled/slave.cc:3598
+#: drizzled/slave.cc:3599
 #, c-format
 msgid "next log '%s' is currently active"
 msgstr ""
 
-#: drizzled/slave.cc:3628
+#: drizzled/slave.cc:3629
 #, c-format
 msgid "next log '%s' is not active"
 msgstr ""
 
-#: drizzled/slave.cc:3644
+#: drizzled/slave.cc:3645
 #, c-format
 msgid ""
 "Slave SQL thread: I/O error reading event(errno: %d  cur_log->error: %d)"
 msgstr ""
 
-#: drizzled/slave.cc:3650
+#: drizzled/slave.cc:3651
 msgid "Aborting slave SQL thread because of partial event read"
 msgstr ""
 
-#: drizzled/slave.cc:3656 drizzled/slave.cc:3663
+#: drizzled/slave.cc:3657 drizzled/slave.cc:3664
 #, c-format
 msgid "Error reading relay log event: %s"
+msgstr ""
+
+#: drizzled/slave.cc:3658
+msgid "slave SQL thread was killed"
+msgstr ""
+
+#: drizzled/slave.cc:3756
+#, c-format
+msgid ""
+"master may suffer from http://bugs.mysql.com/bug.php?id=%u so slave stops; "
+"check error log on slave for more info"
+msgstr ""
+
+#: drizzled/slave.cc:3762
+#, c-format
+msgid ""
+"According to the master's version ('%s'), it is probable that master suffers "
+"from this bug: http://bugs.mysql.com/bug.php?id=%u and thus replicating the "
+"current binary log event may make the slave's data become different from the "
+"master's data. To take no risk, slave refuses to replicate this event and "
+"stops. We recommend that all updates be stopped on the master and slave, "
+"that the data of both be manually synchronized, that master's binary logs be "
+"deleted, that master be upgraded to a version at least equal to '%d.%d.%d'. "
+"Then replication can be restarted."
 msgstr ""
