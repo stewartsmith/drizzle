@@ -854,8 +854,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
                      cached_open_tables(),
                      (uint) (queries_per_second1000 / 1000),
                      (uint) (queries_per_second1000 % 1000));
-    /* Store the buffer in permanent memory */
-    my_ok(thd, 0, 0, buff);
     VOID(my_net_write(net, (uchar*) buff, length));
     VOID(net_flush(net));
     thd->main_da.disable_status();
