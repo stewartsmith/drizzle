@@ -1403,6 +1403,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
  drizzled/sql_builtin.cc dnl
+ drizzled/share/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  drizzled/version.h plugin/Makefile dnl

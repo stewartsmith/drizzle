@@ -25,7 +25,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = field 
+SUBDIRS = field  . share
 
 sbin_PROGRAMS =drizzled
 
