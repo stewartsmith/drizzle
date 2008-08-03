@@ -2153,7 +2153,7 @@ int schema_tables_add(THD *thd, List<LEX_STRING> *files, const char *wild)
   add_data.wild= wild;
   if (plugin_foreach(thd, add_schema_table,
                      MYSQL_INFORMATION_SCHEMA_PLUGIN, &add_data))
-      return(1);
+    return(1);
 
   return(0);
 }

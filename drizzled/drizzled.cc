@@ -198,7 +198,7 @@ const char *my_localhost= "localhost";
 /*
   Used with --help for detailed option
 */
-static bool opt_help= 0, opt_verbose= 0;
+static bool opt_help= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -3455,9 +3455,6 @@ log and this option does nothing anymore.",
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
   {"user", 'u', "Run mysqld daemon as user.", 0, 0, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"verbose", 'v', "Used with --help option for detailed help",
-   (char**) &opt_verbose, (char**) &opt_verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"warnings", 'W', "Deprecated; use --log-warnings instead.",
@@ -4111,23 +4108,22 @@ static void usage(void)
 Copyright (C) 2000 MySQL AB, by Monty and others\n\
 This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
 and you are welcome to modify and redistribute it under the GPL license\n\n\
-Starts the MySQL database server\n");
+Starts the Drizzle database server\n");
 
   printf("Usage: %s [OPTIONS]\n", my_progname);
-  if (!opt_verbose)
-    puts("\nFor more help options (several pages), use mysqld --verbose --help");
-  else
   {
+#ifdef FOO
   print_defaults(MYSQL_CONFIG_NAME,load_default_groups);
   puts("");
   set_ports();
+#endif
 
   /* Print out all the options including plugin supplied options */
   my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
 
   puts("\n\
 To see what values a running DrizzleD server is using, type\n\
-'drizzleadmin variables' instead of 'mysqld --verbose --help'.");
+'drizzleadmin variables' instead of 'drizzled --help'.");
   }
 }
 

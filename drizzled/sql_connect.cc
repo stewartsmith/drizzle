@@ -19,6 +19,7 @@
 */
 
 #include "mysql_priv.h"
+#include <drizzled/authentication.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 
@@ -77,11 +78,12 @@ char *ip_to_hostname(struct sockaddr_storage *in, int addrLen)
 
 int
 check_user(THD *thd, enum enum_server_command command,
-           const char *passwd __attribute__((unused)),
+           const char *passwd,
            uint passwd_len, const char *db,
            bool check_count)
 {
   LEX_STRING db_str= { (char *) db, db ? strlen(db) : 0 };
+  bool is_authenticated;
 
   /*
     Clear thd->db as it points to something, that will be freed when
@@ -91,28 +93,24 @@ check_user(THD *thd, enum enum_server_command command,
   */
   thd->reset_db(NULL, 0);
 
-  bool opt_secure_auth_local;
-  pthread_mutex_lock(&LOCK_global_system_variables);
-  opt_secure_auth_local= opt_secure_auth;
-  pthread_mutex_unlock(&LOCK_global_system_variables);
-
-  /*
-    If the server is running in secure auth mode, short scrambles are 
-    forbidden.
-  */
-  if (opt_secure_auth_local && passwd_len == SCRAMBLE_LENGTH_323)
-  {
-    my_error(ER_NOT_SUPPORTED_AUTH_MODE, MYF(0));
-    general_log_print(thd, COM_CONNECT, ER(ER_NOT_SUPPORTED_AUTH_MODE));
-    return(1);
-  }
-  if (passwd_len != 0 &&
-      passwd_len != SCRAMBLE_LENGTH &&
-      passwd_len != SCRAMBLE_LENGTH_323)
+  if (passwd_len != 0 && passwd_len != SCRAMBLE_LENGTH)
   {
     my_error(ER_HANDSHAKE_ERROR, MYF(0), thd->main_security_ctx.host_or_ip);
     return(1);
   }
+
+  is_authenticated= authenticate_user(thd, passwd);
+
+  if (is_authenticated != true)
+  {
+    my_error(ER_ACCESS_DENIED_ERROR, MYF(0),
+             thd->main_security_ctx.user,
+             thd->main_security_ctx.host_or_ip,
+             passwd_len ? ER(ER_YES) : ER(ER_NO));
+
+    return 1;
+  }
+
 
   USER_RESOURCES ur;
   thd->security_ctx->skip_grants();
@@ -327,9 +325,6 @@ static int check_connection(THD *thd)
       return 1;
     }
   }
-#ifdef _CUSTOMCONFIG_
-#include "_cust_sql_parse.h"
-#endif
   if (thd->packet.alloc(thd->variables.net_buffer_length))
     return 1; /* The error is set by alloc(). */
 

@@ -52,6 +52,7 @@ DTRACEFILES = handler.o \
 drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
+				plugin_authentication.h \
 				plugin_audit.h
 
 noinst_LTLIBRARIES = libhandler.la
@@ -72,6 +73,7 @@ drizzled_LDADD = libhandler.la \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
 
 noinst_HEADERS = item.h \
+		 authentication.h \
 		 item_func.h \
 		 item_sum.h \
 		 item_cmpfunc.h \
@@ -129,6 +131,7 @@ noinst_HEADERS = item.h \
 		 probes.h
 
 drizzled_SOURCES = sql_lex.cc \
+		   authentication.cc \
 		   sql_handler.cc \
 		   item.cc \
 		   item_sum.cc \

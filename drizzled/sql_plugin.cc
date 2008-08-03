@@ -16,6 +16,7 @@
 #include "mysql_priv.h"
 #include <mysys/my_pthread.h>
 #include <mysys/my_getopt.h>
+#include <authentication.h>
 #define REPORT_TO_LOG  1
 #define REPORT_TO_USER 2
 
@@ -63,7 +64,7 @@ plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   0,  /* UDA */
   0,  /* Audit */
   0,  /* Logger */
-  0  /* Auth */
+  authentication_initializer  /* Auth */
 };
 
 plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
@@ -75,7 +76,7 @@ plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   0,  /* UDA */
   0,  /* Audit */
   0,  /* Logger */
-  0  /* Auth */
+  authentication_finalizer  /* Auth */
 };
 
 static const char *plugin_declarations_sym= "_mysql_plugin_declarations_";

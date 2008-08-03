@@ -567,6 +567,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     /* Safe because there is always a trailing \0 at the end of the packet */
     char *passwd= strend(user)+1;
 
+
     thd->clear_error();                         // if errors from rollback
 
     /*

@@ -1,4 +1,4 @@
-# Copyright (C) 2005-2006 MySQL AB
+# Copyright (C) 2006 MySQL AB
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,12 +13,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-# Process this file with automake to create Makefile.in
+MYSQLDATAdir =          $(localstatedir)
+MYSQLSHAREdir =         $(pkgdatadir)
+MYSQLBASEdir=           $(prefix)
+MYSQLLIBdir=            $(pkglibdir)
+pkgplugindir =		$(pkglibdir)/plugin
 
-AUTOMAKE_OPTIONS =	foreign
-
-# extra plugin example files are listed here, to
-# keep its Makefile.am cleaner as a template
-
-SUBDIRS =	@mysql_pg_dirs@
-DIST_SUBDIRS =	auth_pam hello_world md5 crc32
+AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
+EXTRA_LTLIBRARIES =	libauth_pam.la
+pkgplugin_LTLIBRARIES =	@plugin_auth_pam_shared_target@
+libauth_pam_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lpam -lpam_misc
+libauth_pam_la_CPPFLAGS=	$(AM_CPPFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+libauth_pam_la_SOURCES =	auth_pam.cc
