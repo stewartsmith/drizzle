@@ -4174,7 +4174,7 @@ static void remove_cntrl(DYNAMIC_STRING *buffer)
   char *end= start + (buffer->length);
   while (start < end && !my_isgraph(charset_info,end[-1]))
     end--;
-  uint chars_to_truncate = end-start;
+  uint chars_to_truncate = (buffer->length) - (end-start);
   if (buffer->length > chars_to_truncate)
     dynstr_trunc(buffer, chars_to_truncate);
 }

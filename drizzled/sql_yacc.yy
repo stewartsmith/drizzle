@@ -3740,6 +3740,9 @@ function_call_generic:
                 }
 
                 item= Create_udf_func::s_singleton.create(thd, udf, $4);
+	      } else {
+                /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
+                my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
               }
             }
 
