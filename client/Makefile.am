@@ -41,7 +41,6 @@ drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlebinlog_SOURCES =     drizzlebinlog.cc \
                 $(top_srcdir)/mysys/mf_tempdir.c \
-                $(top_srcdir)/mysys/my_new.cc \
                 $(top_srcdir)/mysys/my_bit.c \
                 $(top_srcdir)/mysys/my_bitmap.c \
                 $(top_srcdir)/mysys/base64.c
@@ -57,7 +56,6 @@ drizzletest_SOURCES=		drizzletest.cc
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
 drizzletest_CFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
 
-# Fix for mit-threads
-DEFS =			-DUNDEF_THREADS_HACK \
-			-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
-			-DDATADIR="\"$(localstatedir)\""
+DEFS =	-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
+	-DDATADIR="\"$(localstatedir)\"" \
+	-DLOCALEDIR=\"$(localedir)\" @DEFS@

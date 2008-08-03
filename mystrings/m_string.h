@@ -177,10 +177,6 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 
 extern char *llstr(int64_t value,char *buff);
 extern char *ullstr(int64_t value,char *buff);
-#ifndef HAVE_STRTOUL
-extern long strtol(const char *str, char **ptr, int base);
-extern unsigned long strtoul(const char *str, char **ptr, int base);
-#endif
 
 extern char *int2str(long val, char *dst, int radix, int upcase);
 extern char *int10_to_str(long val,char *dst,int radix);

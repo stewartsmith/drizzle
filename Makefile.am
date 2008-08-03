@@ -15,7 +15,7 @@
 
 # Process this file with automake to create Makefile.in
 
-SUBDIRS = . vio \
+SUBDIRS = po . vio \
 	  mystrings \
 	  mysys \
 	  extra \
@@ -31,6 +31,7 @@ DIST_SUBDIRS = $(SUBDIRS) \
 	       mysys/tests \
 	       mystrings/tests
 
+EXTRA_DIST = config/config.rpath
 DISTCLEANFILES = ac_available_languages_fragment
 
 # Create empty datadir 

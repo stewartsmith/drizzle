@@ -28,6 +28,7 @@
 #include "sql_show.h"
 #include "slave.h"
 #include "rpl_mi.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 

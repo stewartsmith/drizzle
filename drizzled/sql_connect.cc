@@ -20,6 +20,7 @@
 
 #include "mysql_priv.h"
 #include <drizzled/authentication.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define MIN_HANDSHAKE_SIZE      6
 

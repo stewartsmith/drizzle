@@ -17,6 +17,7 @@
 /* Mallocs for used in threads */
 
 #include "mysql_priv.h"
+#include <drizzled/drizzled_error_messages.h>
 
 extern "C" {
   void sql_alloc_error_handler(void)

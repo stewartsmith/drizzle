@@ -15,6 +15,7 @@
 
 #include "mysql_priv.h"
 #include <time.h>
+#include <drizzled/drizzled_error_messages.h>
 
 
 #ifndef MYSQL_CLIENT

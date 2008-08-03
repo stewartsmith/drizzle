@@ -23,6 +23,8 @@
 #endif
 
 #include <drizzled/field/fdecimal.h>
+#include <drizzled/drizzled_error_messages.h>
+
 
 /****************************************************************************
 ** Field_new_decimal

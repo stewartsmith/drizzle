@@ -76,6 +76,7 @@
 #include "mysql_priv.h"
 #include <mysys/hash.h>
 #include <assert.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   @defgroup Locking Locking
