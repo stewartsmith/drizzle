@@ -233,7 +233,7 @@
 #define mi_sizestore(T,A)            \
   do {                               \
     if ((A) == HA_OFFSET_ERROR)      \
-      memset((char*) (T), 255, 8);   \
+      memset((T), 255, 8);           \
     else {                           \
       mi_int4store((T), 0);          \
       mi_int4store(((T) + 4), A);    \

@@ -88,7 +88,7 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
         info->update&= ~HA_STATE_RNEXT_SAME;
 
 	if (new_length != old_length ||
-	    memcmp((uchar*) old_key,(uchar*) new_key,new_length))
+	    memcmp(old_key,new_key,new_length))
 	{
 	  if ((int) i == info->lastinx)
 	    key_changed|=HA_STATE_WRITTEN;	/* Mark that keyfile changed */
@@ -124,13 +124,13 @@ int mi_update(register MI_INFO *info, const uchar *oldrec, uchar *newrec)
     ha_rows org_split;
     my_off_t org_delete_link;
 
-    memcpy((char*) &state, (char*) info->state, sizeof(state));
+    memcpy(&state, info->state, sizeof(state));
     org_split=	     share->state.split;
     org_delete_link= share->state.dellink;
     if ((*share->update_record)(info,pos,newrec))
       goto err;
     if (!key_changed &&
-	(memcmp((char*) &state, (char*) info->state, sizeof(state)) ||
+	(memcmp(&state, info->state, sizeof(state)) ||
 	 org_split != share->state.split ||
 	 org_delete_link != share->state.dellink))
       key_changed|= HA_STATE_CHANGED;		/* Must update index file */
