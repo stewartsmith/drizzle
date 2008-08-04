@@ -5,6 +5,9 @@ mysys/my_error.c
 mysys/my_getopt.c
 mysys/my_handler_errors.h
 drizzled/error.h
+drizzled/rpl_mi.cc
+drizzled/rpl_reporting.cc
+drizzled/rpl_utility.cc
 drizzled/slave.cc
 drizzled/sql_repl.cc
 drizzled/thr_malloc.cc
