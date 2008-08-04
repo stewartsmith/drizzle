@@ -10,6 +10,7 @@ drizzled/rpl_reporting.cc
 drizzled/rpl_utility.cc
 drizzled/slave.cc
 drizzled/sql_repl.cc
+drizzled/table.cc
 drizzled/thr_malloc.cc
 drizzled/tztime.cc
 drizzled/unireg.h

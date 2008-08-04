@@ -1807,15 +1807,15 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,
-                    "Unknown collation '%s' in table '%-.64s' definition", 
+                    _("Unknown collation '%s' in table '%-.64s' definition"), 
                     MYF(0), csname, share->table_name.str);
     break;
   }
   case 6:
     strxmov(buff, share->normalized_path.str, reg_ext, NullS);
     my_printf_error(ER_NOT_FORM_FILE,
-                    "Table '%-.64s' was created with a different version "
-                    "of MySQL and cannot be read", 
+                    _("Table '%-.64s' was created with a different version "
+                    "of MySQL and cannot be read"), 
                     MYF(0), buff);
     break;
   case 8:
@@ -2403,8 +2403,8 @@ table_check_intact(TABLE *table, const uint table_f_count,
           Still this can be a sign of a tampered table, output an error
           to the error log.
         */
-        sql_print_error("Incorrect definition of table %s.%s: "
-                        "expected column '%s' at position %d, found '%s'.",
+        sql_print_error(_("Incorrect definition of table %s.%s: "
+                        "expected column '%s' at position %d, found '%s'."),
                         table->s->db.str, table->alias, table_def->name.str, i,
                         field->field_name);
       }
@@ -2429,29 +2429,29 @@ table_check_intact(TABLE *table, const uint table_f_count,
       if (strncmp(sql_type.c_ptr_safe(), table_def->type.str,
                   table_def->type.length - 1))
       {
-        sql_print_error("Incorrect definition of table %s.%s: "
+        sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d to have type "
-                        "%s, found type %s.", table->s->db.str, table->alias,
+                        "%s, found type %s."), table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->type.str,
                         sql_type.c_ptr_safe());
         error= true;
       }
       else if (table_def->cset.str && !field->has_charset())
       {
-        sql_print_error("Incorrect definition of table %s.%s: "
+        sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but the type has no "
-                        "character set.", table->s->db.str, table->alias,
+                        "character set."), table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->cset.str);
         error= true;
       }
       else if (table_def->cset.str &&
                strcmp(field->charset()->csname, table_def->cset.str))
       {
-        sql_print_error("Incorrect definition of table %s.%s: "
+        sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but found "
-                        "character set '%s'.", table->s->db.str, table->alias,
+                        "character set '%s'."), table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->cset.str,
                         field->charset()->csname);
         error= true;
@@ -2459,9 +2459,9 @@ table_check_intact(TABLE *table, const uint table_f_count,
     }
     else
     {
-      sql_print_error("Incorrect definition of table %s.%s: "
+      sql_print_error(_("Incorrect definition of table %s.%s: "
                       "expected column '%s' at position %d to have type %s "
-                      " but the column is not found.",
+                      " but the column is not found."),
                       table->s->db.str, table->alias,
                       table_def->name.str, i, table_def->type.str);
       error= true;
