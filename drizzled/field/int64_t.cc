@@ -37,7 +37,7 @@ int Field_int64_t::store(const char *from,uint len,CHARSET_INFO *cs)
   tmp= cs->cset->strntoull10rnd(cs,from,len,unsigned_flag,&end,&error);
   if (error == MY_ERRNO_ERANGE)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     error= 1;
   }
   else if (table->in_use->count_cuted_fields && 
@@ -94,7 +94,7 @@ int Field_int64_t::store(double nr)
       res=(int64_t) nr;
   }
   if (error)
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
 
 #ifdef WORDS_BIGENDIAN
   if (table->s->db_low_byte_first)
@@ -121,7 +121,7 @@ int Field_int64_t::store(int64_t nr, bool unsigned_val)
     if (unsigned_flag != unsigned_val)
     {
       nr= unsigned_flag ? (uint64_t) 0 : (uint64_t) INT64_MAX;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
   }

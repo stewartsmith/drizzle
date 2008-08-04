@@ -2406,8 +2406,8 @@ pthread_handler_t handle_slave_sql(void *arg)
         }
 
         /* Print any warnings issued */
-        List_iterator_fast<MYSQL_ERROR> it(thd->warn_list);
-        MYSQL_ERROR *err;
+        List_iterator_fast<DRIZZLE_ERROR> it(thd->warn_list);
+        DRIZZLE_ERROR *err;
         /*
           Added controlled slave thread cancel for replication
           of user-defined variables.

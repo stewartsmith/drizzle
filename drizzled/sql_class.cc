@@ -601,7 +601,7 @@ void THD::push_internal_handler(Internal_error_handler *handler)
 
 
 bool THD::handle_error(uint sql_errno, const char *message,
-                       MYSQL_ERROR::enum_warning_level level)
+                       DRIZZLE_ERROR::enum_warning_level level)
 {
   if (m_internal_handler)
   {
@@ -1648,7 +1648,7 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
       (exchange->opt_enclosed && non_string_results &&
        field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
   {
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_AMBIGUOUS_FIELD_TERM, ER(ER_AMBIGUOUS_FIELD_TERM));
     is_ambiguous_field_term= true;
   }
@@ -2243,7 +2243,7 @@ bool select_dumpvar::send_data(List<Item> &items)
 bool select_dumpvar::send_eof()
 {
   if (! row_count)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_SP_FETCH_NO_DATA, ER(ER_SP_FETCH_NO_DATA));
   /*
     In order to remember the value of affected rows for ROW_COUNT()
@@ -2910,13 +2910,13 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
       variables.binlog_format == BINLOG_FORMAT_STMT)
   {
     assert(this->query != NULL);
-    push_warning(this, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(this, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_BINLOG_UNSAFE_STATEMENT,
                  ER(ER_BINLOG_UNSAFE_STATEMENT));
     if (!(binlog_flags & BINLOG_FLAG_UNSAFE_STMT_PRINTED))
     {
-      char warn_buf[MYSQL_ERRMSG_SIZE];
-      snprintf(warn_buf, MYSQL_ERRMSG_SIZE, "%s Statement: %s",
+      char warn_buf[DRIZZLE_ERRMSG_SIZE];
+      snprintf(warn_buf, DRIZZLE_ERRMSG_SIZE, "%s Statement: %s",
                ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
       sql_print_warning(warn_buf);
       binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;

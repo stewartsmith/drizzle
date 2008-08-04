@@ -133,8 +133,8 @@ static void inline slave_rows_error_report(enum loglevel level, int ha_error,
   char buff[MAX_SLAVE_ERRMSG], *slider;
   const char *buff_end= buff + sizeof(buff);
   uint len;
-  List_iterator_fast<MYSQL_ERROR> it(thd->warn_list);
-  MYSQL_ERROR *err;
+  List_iterator_fast<DRIZZLE_ERROR> it(thd->warn_list);
+  DRIZZLE_ERROR *err;
   buff[0]= 0;
 
   for (err= it++, slider= buff; err && slider < buff_end - 1;
@@ -3577,7 +3577,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       "data truncated" warning but which is absorbed and never gets to the
       error log); still we init it to avoid a Valgrind message.
     */
-    mysql_reset_errors(thd, 0);
+    drizzle_reset_errors(thd, 0);
 
     TABLE_LIST tables;
     memset((char*) &tables, 0, sizeof(tables));

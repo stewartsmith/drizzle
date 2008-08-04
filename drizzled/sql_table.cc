@@ -470,7 +470,7 @@ int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
     {
       // Table was not found on disk and table can't be created from engine
       if (if_exists)
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_BAD_TABLE_ERROR, ER(ER_BAD_TABLE_ERROR),
                             table->table_name);
       else
@@ -1472,10 +1472,10 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	    if (key->type == Key::MULTIPLE)
 	    {
 	      /* not a critical problem */
-	      char warn_buff[MYSQL_ERRMSG_SIZE];
+	      char warn_buff[DRIZZLE_ERRMSG_SIZE];
 	      snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
                        length);
-	      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+	      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 			   ER_TOO_LONG_KEY, warn_buff);
               /* Align key length to multibyte char boundary */
               length-= length % sql_field->charset->mbmaxlen;
@@ -1511,10 +1511,10 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 	if (key->type == Key::MULTIPLE)
 	{
 	  /* not a critical problem */
-	  char warn_buff[MYSQL_ERRMSG_SIZE];
+	  char warn_buff[DRIZZLE_ERRMSG_SIZE];
 	  snprintf(warn_buff, sizeof(warn_buff), ER(ER_TOO_LONG_KEY),
                    length);
-	  push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+	  push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
 		       ER_TOO_LONG_KEY, warn_buff);
           /* Align key length to multibyte char boundary */
           length-= length % sql_field->charset->mbmaxlen;
@@ -1856,7 +1856,7 @@ bool mysql_create_table_no_lock(THD *thd,
     if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
     {
       create_info->table_existed= 1;		// Mark that table existed
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                           alias);
       error= 0;
@@ -1942,10 +1942,10 @@ bool mysql_create_table_no_lock(THD *thd,
 #endif /* HAVE_READLINK */
   {
     if (create_info->data_file_name)
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                    "DATA DIRECTORY option ignored");
     if (create_info->index_file_name)
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                    "INDEX DIRECTORY option ignored");
     create_info->data_file_name= create_info->index_file_name= 0;
   }
@@ -1991,7 +1991,7 @@ err:
 
 warn:
   error= false;
-  push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+  push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                       ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                       alias);
   create_info->table_existed= 1;		// Mark that table existed
@@ -2040,7 +2040,7 @@ bool mysql_create_table(THD *thd, const char *db, const char *table_name,
     {
       if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
       {
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                             ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                             table_name);
         create_info->table_existed= 1;
@@ -2538,7 +2538,7 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
     if (!table->table)
     {
       if (!thd->warn_list.elements)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                      ER_CHECK_NO_SUCH_TABLE, ER(ER_CHECK_NO_SUCH_TABLE));
       goto send_result;
     }
@@ -2546,7 +2546,7 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
     if ((table->table->db_stat & HA_READ_ONLY) && open_for_modify)
     {
       /* purecov: begin inspected */
-      char buff[FN_REFLEN + MYSQL_ERRMSG_SIZE];
+      char buff[FN_REFLEN + DRIZZLE_ERRMSG_SIZE];
       uint length;
       protocol->prepare_for_resend();
       protocol->store(table_name, system_charset_info);
@@ -2628,8 +2628,8 @@ send_result:
     lex->cleanup_after_one_table_open();
     thd->clear_error();  // these errors shouldn't get client
     {
-      List_iterator_fast<MYSQL_ERROR> it(thd->warn_list);
-      MYSQL_ERROR *err;
+      List_iterator_fast<DRIZZLE_ERROR> it(thd->warn_list);
+      DRIZZLE_ERROR *err;
       while ((err= it++))
       {
         protocol->prepare_for_resend();
@@ -2642,7 +2642,7 @@ send_result:
         if (protocol->write())
           goto err;
       }
-      mysql_reset_errors(thd, true);
+      drizzle_reset_errors(thd, true);
     }
     protocol->prepare_for_resend();
     protocol->store(table_name, system_charset_info);
@@ -3168,10 +3168,10 @@ bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
 table_exists:
   if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
   {
-    char warn_buff[MYSQL_ERRMSG_SIZE];
+    char warn_buff[DRIZZLE_ERRMSG_SIZE];
     snprintf(warn_buff, sizeof(warn_buff),
              ER(ER_TABLE_EXISTS_ERROR), table_name);
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		 ER_TABLE_EXISTS_ERROR,warn_buff);
     res= false;
   }
@@ -3719,7 +3719,7 @@ bool alter_table_manage_keys(TABLE *table, int indexes_were_disabled,
 
   if (error == HA_ERR_WRONG_COMMAND)
   {
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                         ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                         table->s->table_name.str);
     error= 0;
@@ -4645,7 +4645,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     if (error == HA_ERR_WRONG_COMMAND)
     {
       error= 0;
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
 			  table->alias);
     }
@@ -4698,7 +4698,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     if (error == HA_ERR_WRONG_COMMAND)
   {
       error= 0;
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
 			  table->alias);
   }
@@ -5150,7 +5150,7 @@ err:
     }
     bool save_abort_on_warning= thd->abort_on_warning;
     thd->abort_on_warning= true;
-    make_truncated_value_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+    make_truncated_value_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                                  f_val, strlength(f_val), t_type,
                                  alter_info->datetime_field->field_name);
     thd->abort_on_warning= save_abort_on_warning;
@@ -5260,11 +5260,11 @@ copy_data_between_tables(TABLE *from,TABLE *to,
   {
     if (to->s->primary_key != MAX_KEY && to->file->primary_key_is_clustered())
     {
-      char warn_buff[MYSQL_ERRMSG_SIZE];
+      char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff), 
                "ORDER BY ignored as there is a user-defined clustered index"
                " in the table '%-.192s'", from->s->table_name.str);
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                    warn_buff);
     }
     else
@@ -5556,7 +5556,7 @@ static bool check_engine(THD *thd, const char *table_name,
 
   if (req_engine && req_engine != *new_engine)
   {
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                        ER_WARN_USING_OTHER_HANDLER,
                        ER(ER_WARN_USING_OTHER_HANDLER),
                        ha_resolve_storage_engine_name(*new_engine),

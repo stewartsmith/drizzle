@@ -365,7 +365,7 @@ static TABLE_SHARE
     return(0);
   }
   /* Table existed in engine. Let's open it */
-  mysql_reset_errors(thd, 1);                   // Clear warnings
+  drizzle_reset_errors(thd, 1);                   // Clear warnings
   thd->clear_error();                           // Clear error message
   return(get_table_share(thd, table_list, key, key_length,
                               db_flags, error));
@@ -3163,7 +3163,7 @@ retry:
       release_table_share(share, RELEASE_WAIT_FOR_DROP);
       if (!thd->killed)
       {
-        mysql_reset_errors(thd, 1);         // Clear warnings
+        drizzle_reset_errors(thd, 1);         // Clear warnings
         thd->clear_error();                 // Clear error message
         goto retry;
       }

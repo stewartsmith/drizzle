@@ -230,7 +230,7 @@ str_to_datetime_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time,
                                       MODE_NO_ZERO_DATE))),
                            &was_cut);
   if (was_cut || ts_type <= DRIZZLE_TIMESTAMP_ERROR)
-    make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, ts_type,  NullS);
   return ts_type;
 }
@@ -284,7 +284,7 @@ str_to_time_with_warn(const char *str, uint length, DRIZZLE_TIME *l_time)
   int warning;
   bool ret_val= str_to_time(str, length, l_time, &warning);
   if (ret_val || warning)
-    make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str, length, DRIZZLE_TIMESTAMP_TIME, NullS);
   return ret_val;
 }
@@ -713,12 +713,12 @@ void make_datetime(const DATE_TIME_FORMAT *format __attribute__((unused)),
 }
 
 
-void make_truncated_value_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
+void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				  uint str_length, timestamp_type time_type,
                                   const char *field_name)
 {
-  char warn_buff[MYSQL_ERRMSG_SIZE];
+  char warn_buff[DRIZZLE_ERRMSG_SIZE];
   const char *type_str;
   CHARSET_INFO *cs= &my_charset_latin1;
   char buff[128];
@@ -860,7 +860,7 @@ bool date_add_interval(DRIZZLE_TIME *ltime, interval_type int_type, INTERVAL int
   return 0;					// Ok
 
 invalid_date:
-  push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+  push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_DATETIME_FUNCTION_OVERFLOW,
                       ER(ER_DATETIME_FUNCTION_OVERFLOW),
                       "datetime");
