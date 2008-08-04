@@ -253,7 +253,7 @@ char* getlogin(void);
 static void read_user_name(char *name)
 {
   if (geteuid() == 0)
-    (void) strmov(name,"root");    /* allow use of surun */
+    strcpy(name,"root");    /* allow use of surun */
   else
   {
 #ifdef HAVE_GETPWUID
@@ -267,11 +267,11 @@ static void read_user_name(char *name)
          !(str=getenv("LOGIN")))
   str="UNKNOWN_USER";
     }
-    (void) strmake(name,str,USERNAME_LENGTH);
+    strncpy(name,str,USERNAME_LENGTH);
 #elif HAVE_CUSERID
     (void) cuserid(name);
 #else
-    strmov(name,"UNKNOWN_USER");
+    strcpy(name,"UNKNOWN_USER");
 #endif
   }
   return;
@@ -296,13 +296,13 @@ void set_drizzle_error(DRIZZLE *drizzle, int errcode, const char *sqlstate)
   {
     net= &drizzle->net;
     net->last_errno= errcode;
-    strmov(net->last_error, ER(errcode));
-    strmov(net->sqlstate, sqlstate);
+    strcpy(net->last_error, ER(errcode));
+    strcpy(net->sqlstate, sqlstate);
   }
   else
   {
     drizzle_server_last_errno= errcode;
-    strmov(drizzle_server_last_error, ER(errcode));
+    strcpy(drizzle_server_last_error, ER(errcode));
   }
   return;
 }
@@ -317,7 +317,7 @@ void net_clear_error(NET *net)
 {
   net->last_errno= 0;
   net->last_error[0]= '\0';
-  strmov(net->sqlstate, not_error_sqlstate);
+  strcpy(net->sqlstate, not_error_sqlstate);
 }
 
 /**
@@ -345,7 +345,7 @@ static void set_drizzle_extended_error(DRIZZLE *drizzle, int errcode,
   vsnprintf(net->last_error, sizeof(net->last_error)-1,
                format, args);
   va_end(args);
-  strmov(net->sqlstate, sqlstate);
+  strcpy(net->sqlstate, sqlstate);
 
   return;
 }
@@ -388,8 +388,8 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
       len-=2;
       if (protocol_41(drizzle) && pos[0] == '#')
       {
-  strmake(net->sqlstate, pos+1, SQLSTATE_LENGTH);
-  pos+= SQLSTATE_LENGTH+1;
+        strncpy(net->sqlstate, pos+1, SQLSTATE_LENGTH);
+        pos+= SQLSTATE_LENGTH+1;
       }
       else
       {
@@ -398,11 +398,11 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
           (unknown error sql state).
         */
 
-        strmov(net->sqlstate, unknown_sqlstate);
+        strcpy(net->sqlstate, unknown_sqlstate);
       }
 
-      (void) strmake(net->last_error,(char*) pos,
-         min((uint) len,(uint) sizeof(net->last_error)-1));
+      strncpy(net->last_error,(char*) pos, min((uint) len,
+              (uint32_t) sizeof(net->last_error)-1));
     }
     else
       set_drizzle_error(drizzle, CR_UNKNOWN_ERROR, unknown_sqlstate);
@@ -1507,7 +1507,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     Scramble is split into two parts because old clients does not understand
     long scrambles; here goes the first part.
   */
-  strmake(drizzle->scramble, end, SCRAMBLE_LENGTH_323);
+  strncpy(drizzle->scramble, end, SCRAMBLE_LENGTH_323);
   end+= SCRAMBLE_LENGTH_323+1;
 
   if (pkt_length >= (uint) (end+1 - (char*) net->read_pos))
@@ -1521,7 +1521,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   end+= 18;
   if (pkt_length >= (uint) (end + SCRAMBLE_LENGTH - SCRAMBLE_LENGTH_323 + 1 -
                            (char *) net->read_pos))
-    strmake(drizzle->scramble+SCRAMBLE_LENGTH_323, end,
+    strncpy(drizzle->scramble+SCRAMBLE_LENGTH_323, end,
             SCRAMBLE_LENGTH-SCRAMBLE_LENGTH_323);
   else
     drizzle->server_capabilities&= ~CLIENT_SECURE_CONNECTION;
@@ -1551,13 +1551,13 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     set_drizzle_error(drizzle, CR_OUT_OF_MEMORY, unknown_sqlstate);
     goto error;
   }
-  strmov(drizzle->host_info,host_info);
-  strmov(drizzle->host,host);
+  strcpy(drizzle->host_info,host_info);
+  strcpy(drizzle->host,host);
   if (unix_socket)
-    strmov(drizzle->unix_socket,unix_socket);
+    strcpy(drizzle->unix_socket,unix_socket);
   else
     drizzle->unix_socket=0;
-  strmov(drizzle->server_version,(char*) net->read_pos+1);
+  strcpy(drizzle->server_version,(char*) net->read_pos+1);
   drizzle->port=port;
 
   /*
@@ -1597,7 +1597,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
   /* This needs to be changed as it's not useful with big packets */
   if (user && user[0])
-    strmake(end,user,USERNAME_LENGTH);          /* Max user name */
+    strncpy(end,user,USERNAME_LENGTH);          /* Max user name */
   else
     read_user_name((char*) end);
 
@@ -1616,7 +1616,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   /* Add database if needed */
   if (db && (drizzle->server_capabilities & CLIENT_CONNECT_WITH_DB))
   {
-    end= strmake(end, db, NAME_LEN) + 1;
+    end= strncpy(end, db, NAME_LEN) + NAME_LEN + 1;
     drizzle->db= my_strdup(db,MYF(MY_WME));
     db= 0;
   }
@@ -1721,8 +1721,8 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
         drizzle->client_flag | CLIENT_REMEMBER_OPTIONS))
   {
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
-    strmov(drizzle->net.last_error, tmp_drizzle.net.last_error);
-    strmov(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
+    strcpy(drizzle->net.last_error, tmp_drizzle.net.last_error);
+    strcpy(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
     return(1);
   }
   if (drizzle_set_character_set(&tmp_drizzle, drizzle->charset->csname))
@@ -1730,8 +1730,8 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
     memset((char*) &tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
     drizzle_close(&tmp_drizzle);
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
-    strmov(drizzle->net.last_error, tmp_drizzle.net.last_error);
-    strmov(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
+    strcpy(drizzle->net.last_error, tmp_drizzle.net.last_error);
+    strcpy(drizzle->net.sqlstate, tmp_drizzle.net.sqlstate);
     return(1);
   }
 

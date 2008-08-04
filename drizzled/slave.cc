@@ -88,33 +88,33 @@ enum enum_slave_reconnect_messages
 static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
 {
   {
-    gettext_noop("Waiting to reconnect after a failed registration on master"),
-    gettext_noop("Slave I/O thread killed while waitnig to reconnect after a "
+    N_("Waiting to reconnect after a failed registration on master"),
+    N_("Slave I/O thread killed while waitnig to reconnect after a "
                  "failed registration on master"),
-    gettext_noop("Reconnecting after a failed registration on master"),
-    gettext_noop("failed registering on master, reconnecting to try again, "
+    N_("Reconnecting after a failed registration on master"),
+    N_("failed registering on master, reconnecting to try again, "
                  "log '%s' at postion %s"),
     "COM_REGISTER_SLAVE",
-    gettext_noop("Slave I/O thread killed during or after reconnect")
+    N_("Slave I/O thread killed during or after reconnect")
   },
   {
-    gettext_noop("Waiting to reconnect after a failed binlog dump request"),
-    gettext_noop("Slave I/O thread killed while retrying master dump"),
-    gettext_noop("Reconnecting after a failed binlog dump request"),
-    gettext_noop("failed dump request, reconnecting to try again, "
+    N_("Waiting to reconnect after a failed binlog dump request"),
+    N_("Slave I/O thread killed while retrying master dump"),
+    N_("Reconnecting after a failed binlog dump request"),
+    N_("failed dump request, reconnecting to try again, "
                  "log '%s' at postion %s"),
     "COM_BINLOG_DUMP",
-    gettext_noop("Slave I/O thread killed during or after reconnect")
+    N_("Slave I/O thread killed during or after reconnect")
   },
   {
-    gettext_noop("Waiting to reconnect after a failed master event read"),
-    gettext_noop("Slave I/O thread killed while waiting to reconnect "
+    N_("Waiting to reconnect after a failed master event read"),
+    N_("Slave I/O thread killed while waiting to reconnect "
                  "after a failed read"),
-    gettext_noop("Reconnecting after a failed master event read"),
-    gettext_noop("Slave I/O thread: Failed reading log event, "
+    N_("Reconnecting after a failed master event read"),
+    N_("Slave I/O thread: Failed reading log event, "
                  "reconnecting to retry, log '%s' at postion %s"),
     "",
-    gettext_noop("Slave I/O thread killed during or after a "
+    N_("Slave I/O thread killed during or after a "
                  "reconnect done to recover from failed read")
   }
 };
@@ -615,12 +615,12 @@ static bool sql_slave_killed(THD* thd, Relay_log_info* rli)
     if (difftime(time(0), rli->last_event_start_time) > 60)
     {
       rli->report(ERROR_LEVEL, 0,
-                  "SQL thread had to stop in an unsafe situation, in "
+                  _("SQL thread had to stop in an unsafe situation, in "
                   "the middle of applying updates to a "
                   "non-transactional table without any primary key. "
                   "There is a risk of duplicate updates when the slave "
                   "SQL thread is restarted. Please check your tables' "
-                  "contents after restart.");
+                  "contents after restart."));
       return(1);
     }
   }
@@ -1690,10 +1690,10 @@ int32_t apply_event_and_update_pos(Log_event* ev, THD* thd, Relay_log_info* rli,
     {
       char buf[22];
       rli->report(ERROR_LEVEL, ER_UNKNOWN_ERROR,
-                  "It was not possible to update the positions"
+                  _("It was not possible to update the positions"
                   " of the relay log information: the slave may"
                   " be in an inconsistent state."
-                  " Stopped in %s position %s",
+                  " Stopped in %s position %s"),
                   rli->group_relay_log_name,
                   llstr(rli->group_relay_log_pos, buf));
       return(2);
@@ -1862,15 +1862,16 @@ static int32_t exec_relay_log_event(THD* thd, Relay_log_info* rli)
   }
   pthread_mutex_unlock(&rli->data_lock);
   rli->report(ERROR_LEVEL, ER_SLAVE_RELAY_LOG_READ_FAILURE,
-              ER(ER_SLAVE_RELAY_LOG_READ_FAILURE), "\
-Could not parse relay log event entry. The possible reasons are: the master's \
-binary log is corrupted (you can check this by running 'mysqlbinlog' on the \
-binary log), the slave's relay log is corrupted (you can check this by running \
-'mysqlbinlog' on the relay log), a network problem, or a bug in the master's \
-or slave's DRIZZLE code. If you want to check the master's binary log or slave's \
-relay log, you will be able to know their names by issuing 'SHOW SLAVE STATUS' \
-on this slave.\
-");
+              ER(ER_SLAVE_RELAY_LOG_READ_FAILURE),
+              _("Could not parse relay log event entry. The possible reasons "
+                "are: the master's binary log is corrupted (you can check this "
+                "by running 'mysqlbinlog' on the binary log), the slave's "
+                "relay log is corrupted (you can check this by running "
+                "'mysqlbinlog' on the relay log), a network problem, or a bug "
+                "in the master's or slave's DRIZZLE code. If you want to check "
+                "the master's binary log or slave's relay log, you will be "
+                "able to know their names by issuing 'SHOW SLAVE STATUS' "
+                "on this slave."));
   return(1);
 }
 
@@ -2000,7 +2001,7 @@ pthread_handler_t handle_slave_io(void *arg)
   if (!(mi->drizzle= drizzle = drizzle_create(NULL)))
   {
     mi->report(ERROR_LEVEL, ER_SLAVE_FATAL_ERROR,
-               ER(ER_SLAVE_FATAL_ERROR), "error in drizzle_create()");
+               ER(ER_SLAVE_FATAL_ERROR), _("error in drizzle_create()"));
     goto err;
   }
 
@@ -2575,7 +2576,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
         {
           mi->report(ERROR_LEVEL, ER_SLAVE_RELAY_LOG_WRITE_FAILURE,
                      ER(ER_SLAVE_RELAY_LOG_WRITE_FAILURE),
-                     "error writing Exec_load event to relay log");
+                     _("error writing Exec_load event to relay log"));
           goto err;
         }
         mi->rli.relay_log.harvest_bytes_written(&mi->rli.log_space_total);
@@ -2589,7 +2590,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
         {
           mi->report(ERROR_LEVEL, ER_SLAVE_RELAY_LOG_WRITE_FAILURE,
                      ER(ER_SLAVE_RELAY_LOG_WRITE_FAILURE),
-                     "error writing Create_file event to relay log");
+                     _("error writing Create_file event to relay log"));
           goto err;
         }
         cev_not_written=0;
@@ -2604,7 +2605,7 @@ static int32_t process_io_create_file(Master_info* mi, Create_file_log_event* ce
         {
           mi->report(ERROR_LEVEL, ER_SLAVE_RELAY_LOG_WRITE_FAILURE,
                      ER(ER_SLAVE_RELAY_LOG_WRITE_FAILURE),
-                     "error writing Append_block event to relay log");
+                     _("error writing Append_block event to relay log"));
           goto err;
         }
         mi->rli.relay_log.harvest_bytes_written(&mi->rli.log_space_total) ;
@@ -2700,7 +2701,7 @@ static int32_t queue_binlog_ver_1_event(Master_info *mi, const char *buf,
     if (unlikely(!(tmp_buf=(char*)my_malloc(event_len+1,MYF(MY_WME)))))
     {
       mi->report(ERROR_LEVEL, ER_SLAVE_FATAL_ERROR,
-                 ER(ER_SLAVE_FATAL_ERROR), "Memory allocation failed");
+                 ER(ER_SLAVE_FATAL_ERROR), _("Memory allocation failed"));
       return(1);
     }
     memcpy(tmp_buf,buf,event_len);
@@ -3082,9 +3083,9 @@ skip_relay_logging:
 err:
   pthread_mutex_unlock(&mi->data_lock);
   if (error)
-    mi->report(ERROR_LEVEL, error, ER(error), 
+    mi->report(ERROR_LEVEL, error, ER(error),
                (error == ER_SLAVE_RELAY_LOG_WRITE_FAILURE)?
-               "could not queue event from master" :
+               _("could not queue event from master") :
                error_msg.ptr());
   return(error);
 }
@@ -3178,9 +3179,9 @@ static int32_t connect_to_master(THD* thd, DRIZZLE *drizzle, Master_info* mi,
       last_errno=drizzle_errno(drizzle);
       suppress_warnings= 0;
       mi->report(ERROR_LEVEL, last_errno,
-                 "error %s to master '%s@%s:%d'"
-                 " - retry-time: %d  retries: %u",
-                 (reconnect ? "reconnecting" : "connecting"),
+                 _("error %s to master '%s@%s:%d'"
+                   " - retry-time: %d  retries: %u"),
+                 (reconnect ? _("reconnecting") : _("connecting")),
                  mi->user, mi->host, mi->port,
                  mi->connect_retry, master_retry_count);
     }

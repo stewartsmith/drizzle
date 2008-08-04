@@ -16,6 +16,7 @@
 #include "mysql_priv.h"
 
 #include "rpl_mi.h"
+#include <libdrizzle/gettext.h>
 
 #ifdef HAVE_REPLICATION
 
@@ -146,13 +147,13 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
       my_close(fd, MYF(MY_WME));
     if ((fd = my_open(fname, O_CREAT|O_RDWR|O_BINARY, MYF(MY_WME))) < 0 )
     {
-      sql_print_error("Failed to create a new master info file (file '%s', errno %d)", fname, my_errno);
+      sql_print_error(_("Failed to create a new master info file (file '%s', errno %d)"), fname, my_errno);
       goto err;
     }
     if (init_io_cache(&mi->file, fd, IO_SIZE*2, READ_CACHE, 0L,0,
                       MYF(MY_WME)))
     {
-      sql_print_error("Failed to create a cache on master info file (file '%s')", fname);
+      sql_print_error(_("Failed to create a cache on master info file (file '%s')"), fname);
       goto err;
     }
 
@@ -168,13 +169,13 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     {
       if ((fd = my_open(fname, O_RDWR|O_BINARY, MYF(MY_WME))) < 0 )
       {
-        sql_print_error("Failed to open the existing master info file (file '%s', errno %d)", fname, my_errno);
+        sql_print_error(_("Failed to open the existing master info file (file '%s', errno %d)"), fname, my_errno);
         goto err;
       }
       if (init_io_cache(&mi->file, fd, IO_SIZE*2, READ_CACHE, 0L,
                         0, MYF(MY_WME)))
       {
-        sql_print_error("Failed to create a cache on master info file (file '%s')", fname);
+        sql_print_error(_("Failed to create a cache on master info file (file '%s')"), fname);
         goto err;
       }
     }
@@ -274,9 +275,9 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
     }
 
     if (ssl)
-      sql_print_warning("SSL information in the master info file "
-                      "('%s') are ignored because this MySQL slave was "
-                      "compiled without SSL support.", fname);
+      sql_print_warning(_("SSL information in the master info file "
+                          "('%s') are ignored because this MySQL slave was "
+                          "compiled without SSL support."), fname);
 
     /*
       This has to be handled here as init_intvar_from_file can't handle
@@ -298,12 +299,12 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
   // now change cache READ -> WRITE - must do this before flush_master_info
   reinit_io_cache(&mi->file, WRITE_CACHE, 0L, 0, 1);
   if ((error=test(flush_master_info(mi, 1))))
-    sql_print_error("Failed to flush master info file");
+    sql_print_error(_("Failed to flush master info file"));
   pthread_mutex_unlock(&mi->data_lock);
   return(error);
 
 errwithmsg:
-  sql_print_error("Error reading master configuration");
+  sql_print_error(_("Error reading master configuration"));
 
 err:
   if (fd >= 0)

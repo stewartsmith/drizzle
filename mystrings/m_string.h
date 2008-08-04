@@ -61,10 +61,6 @@ extern void (*my_str_free)(void *);
 #define strmov(A,B) stpcpy((A),(B))
 #endif
 
-/* Declared in int2str() */
-extern char _dig_vec_upper[];
-extern char _dig_vec_lower[];
-
 #ifdef BAD_STRING_COMPILER
 #define strmov(A,B)  (memccpy(A,B,0,INT_MAX)-1)
 #else

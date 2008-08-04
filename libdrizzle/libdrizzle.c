@@ -21,8 +21,6 @@
 #include <mysys/my_sys.h>
 #include "my_time.h"
 #include <mysys/mysys_err.h>
-#include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
 #include "drizzle.h"
 #include "errmsg.h"
 #include <vio/violite.h>
@@ -106,7 +104,9 @@ append_wild(char *to, char *end, const char *wild)
   end-=5;          /* Some extra */
   if (wild && wild[0])
   {
-    to=strmov(to," like '");
+    to= strcpy(to," like '");
+    to+= 7; /* strlen(" like '"); */
+
     while (*wild && to < end)
     {
       if (*wild == '\\' || *wild == '\'')
@@ -174,7 +174,7 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
     passwd="";
 
   /* Store user into the buffer */
-  end= strmake(end, user, USERNAME_LENGTH) + 1;
+  end= strncpy(end, user, USERNAME_LENGTH) + USERNAME_LENGTH + 1;
 
   /* write scrambled password according to server capabilities */
   if (passwd[0])
@@ -187,7 +187,7 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   else
     *end++= '\0';                               /* empty password */
   /* Add database if needed */
-  end= strmake(end, db ? db : "", NAME_LEN) + 1;
+  end= strncpy(end, db ? db : "", NAME_LEN) + NAME_LEN + 1;
 
   /* Add character set number. */
 
@@ -213,9 +213,9 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
       free(drizzle->db);
 
     /* alloc new connect information */
-    drizzle->user=  my_strdup(user,MYF(MY_WME));
-    drizzle->passwd=my_strdup(passwd,MYF(MY_WME));
-    drizzle->db=    db ? my_strdup(db,MYF(MY_WME)) : 0;
+    drizzle->user= strdup(user);
+    drizzle->passwd= strdup(passwd);
+    drizzle->db= db ? strdup(db) : 0;
   }
   else
   {
@@ -225,6 +225,10 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   return(rc);
 }
 
+#if defined(HAVE_GETPWUID) && defined(NO_GETPWUID_DECL)
+struct passwd *getpwuid(uid_t);
+char* getlogin(void);
+#endif
 
 /**************************************************************************
   Do a query. If query returned rows, free old rows.
@@ -292,22 +296,6 @@ drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET field_offset)
 
 
 /*****************************************************************************
-  List all databases
-*****************************************************************************/
-
-DRIZZLE_RES * STDCALL
-drizzle_list_dbs(DRIZZLE *drizzle, const char *wild)
-{
-  char buff[255];
-
-  append_wild(strmov(buff,"show databases"),buff+sizeof(buff),wild);
-  if (drizzle_query(drizzle,buff))
-    return(0);
-  return (drizzle_store_result(drizzle));
-}
-
-
-/*****************************************************************************
   List all tables in a database
   If wild is given then only the tables matching wild is returned
 *****************************************************************************/
@@ -316,8 +304,10 @@ DRIZZLE_RES * STDCALL
 drizzle_list_tables(DRIZZLE *drizzle, const char *wild)
 {
   char buff[255];
+  char *ptr= strcpy(buff, "show tables");
+  ptr+= 11; /* strlen("show tables"); */
 
-  append_wild(strmov(buff,"show tables"),buff+sizeof(buff),wild);
+  append_wild(ptr,buff+sizeof(buff),wild);
   if (drizzle_query(drizzle,buff))
     return(0);
   return (drizzle_store_result(drizzle));
@@ -349,9 +339,11 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
 {
   DRIZZLE_RES   *result;
   DRIZZLE_FIELD *fields;
-  char       buff[257],*end;
+  char buff[257], *end;
 
-  end=strmake(strmake(buff, table,128)+1,wild ? wild : "",128);
+  end= strncpy(buff, table, 128) + 128;
+  end= strncpy(end+1, wild ? wild : "", 128) + 128;
+
   free_old_query(drizzle);
   if (simple_command(drizzle, COM_FIELD_LIST, (uchar*) buff,
                      (ulong) (end-buff), 1) ||
