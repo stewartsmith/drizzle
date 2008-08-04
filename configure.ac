@@ -3,12 +3,12 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
-AC_INIT
+AC_INIT(drizzle, 7.0.0, drizzle-discuss@lists.launchpad.net)
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
+AM_INIT_AUTOMAKE(-Wall -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
