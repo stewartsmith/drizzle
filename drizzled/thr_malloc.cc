@@ -23,7 +23,7 @@
 extern "C" {
   void sql_alloc_error_handler(void)
   {
-    sql_print_error(_(ER(ER_OUT_OF_RESOURCES)));
+    sql_print_error(ER(ER_OUT_OF_RESOURCES));
   }
 }
 

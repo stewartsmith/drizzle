@@ -12,3 +12,4 @@ drizzled/slave.cc
 drizzled/sql_repl.cc
 drizzled/thr_malloc.cc
 drizzled/tztime.cc
+drizzled/unireg.h

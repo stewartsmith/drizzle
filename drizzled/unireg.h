@@ -18,6 +18,8 @@
 
 #ifndef _unireg_h
 
+#include <libdrizzle/gettext.h>
+
 #ifndef NO_ALARM_LOOP
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
 #endif
@@ -39,8 +41,8 @@
 #define PLUGINDIR	"lib/plugin"
 #endif
 
-#define ER(X) drizzled_error_messages[(X) - ER_ERROR_FIRST]
-#define ER_SAFE(X) (((X) >= ER_ERROR_FIRST && (X) <= ER_ERROR_LAST) ? ER(X) : "Invalid error code")
+#define ER(X) _(drizzled_error_messages[(X) - ER_ERROR_FIRST])
+#define ER_SAFE(X) (((X) >= ER_ERROR_FIRST && (X) <= ER_ERROR_LAST) ? ER(X) : _("Invalid error code"))
 
 
 #define ERRMAPP 1				/* Errormap f|r my_error */

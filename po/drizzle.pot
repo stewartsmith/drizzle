@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle 7.0.0\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-04 12:39-0700\n"
+"POT-Creation-Date: 2008-08-04 12:44-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1510,4 +1510,8 @@ msgstr ""
 #: drizzled/tztime.cc:1066
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
+msgstr ""
+
+#: drizzled/unireg.h:45
+msgid "Invalid error code"
 msgstr ""

@@ -543,9 +543,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     if (use_mb(default_charset_info))
     {
       /* Warn that we may be changing the size of character columns */
-      sql_print_warning("'%s' had no or invalid character set, "
+      sql_print_warning(_("'%s' had no or invalid character set, "
                         "and default character set is multi-byte, "
-                        "so character column sizes may have changed",
+                        "so character column sizes may have changed"),
                         share->path.str);
     }
     share->table_charset= default_charset_info;
@@ -980,14 +980,14 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       field_length= my_decimal_precision_to_length(field_length,
                                                    decimals,
                                                    f_is_dec(pack_flag) == 0);
-      sql_print_error("Found incompatible DECIMAL field '%s' in %s; "
-                      "Please do \"ALTER TABLE '%s' FORCE\" to fix it!",
+      sql_print_error(_("Found incompatible DECIMAL field '%s' in %s; "
+                      "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
                       share->fieldnames.type_names[i], share->table_name.str,
                       share->table_name.str);
       push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
                           ER_CRASHED_ON_USAGE,
-                          "Found incompatible DECIMAL field '%s' in %s; "
-                          "Please do \"ALTER TABLE '%s' FORCE\" to fix it!",
+                          _("Found incompatible DECIMAL field '%s' in %s; "
+                          "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
                           share->fieldnames.type_names[i],
                           share->table_name.str,
                           share->table_name.str);
@@ -1158,15 +1158,15 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
             key_part->store_length-= (uint16_t)(key_part->length -
                                               field->key_length());
             key_part->length= (uint16_t)field->key_length();
-            sql_print_error("Found wrong key definition in %s; "
-                            "Please do \"ALTER TABLE '%s' FORCE \" to fix it!",
+            sql_print_error(_("Found wrong key definition in %s; "
+                            "Please do \"ALTER TABLE '%s' FORCE \" to fix it!"),
                             share->table_name.str,
                             share->table_name.str);
             push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
                                 ER_CRASHED_ON_USAGE,
-                                "Found wrong key definition in %s; "
+                                _("Found wrong key definition in %s; "
                                 "Please do \"ALTER TABLE '%s' FORCE\" to fix "
-                                "it!",
+                                "it!"),
                                 share->table_name.str,
                                 share->table_name.str);
             share->crashed= 1;                // Marker for CHECK TABLE
