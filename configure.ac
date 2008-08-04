@@ -285,10 +285,9 @@ fi
 
 MYSQL_PROG_AR
 
-# libmysqlclient versioning when linked with GNU ld.
+# libdrizzle versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
   LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libdrizzle/libdrizzle.ver"
-  AC_CONFIG_FILES(libdrizzle/libdrizzle.ver)
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
