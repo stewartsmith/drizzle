@@ -21,8 +21,6 @@
 #include <mysys/my_sys.h>
 #include "my_time.h"
 #include <mysys/mysys_err.h>
-#include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
 #include "drizzle.h"
 #include "errmsg.h"
 #include <vio/violite.h>
