@@ -1562,7 +1562,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                                     opt->name);
     break;
   case OPT_SERVER_ARG:
-    printf(("WARNING: --server-arg option not supported in this configuration.\n"));
+    printf(_("WARNING: --server-arg option not supported in this configuration.\n"));
     break;
   case 'A':
     opt_rehash= 0;

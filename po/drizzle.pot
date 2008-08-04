@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle 7.0.0\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-04 01:34-0700\n"
+"POT-Creation-Date: 2008-08-04 12:39-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -478,6 +478,11 @@ msgstr ""
 #: client/drizzle.c:1557
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
+msgstr ""
+
+#: client/drizzle.c:1565
+#, c-format
+msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 
 #: client/drizzle.c:1936
