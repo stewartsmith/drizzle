@@ -6,3 +6,6 @@ mysys/my_getopt.c
 mysys/my_handler_errors.h
 drizzled/error.h
 drizzled/slave.cc
+drizzled/sql_repl.cc
+drizzled/thr_malloc.cc
+drizzled/tztime.cc

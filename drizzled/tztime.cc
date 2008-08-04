@@ -21,6 +21,7 @@
 #include <libdrizzle/my_time.h>
 
 #include "tzfile.h"
+#include <libdrizzle/gettext.h>
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo
@@ -1062,7 +1063,7 @@ my_tz_init(THD *thd, const char *default_tzname,
     */
     if (!(global_system_variables.time_zone= my_tz_find(thd, &tmp_tzname2)))
     {
-      sql_print_error("Fatal error: Illegal or unknown default time zone '%s'",
+      sql_print_error(_("Fatal error: Illegal or unknown default time zone '%s'"),
                       default_tzname);
       return true;
     }
