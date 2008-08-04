@@ -749,13 +749,6 @@ void drizzle_read_default_options(struct st_drizzle_options *options,
             exit(1);
           }
           break;
-        case 26: /* shared_memory_base_name */
-#ifdef HAVE_SMEM
-          if (options->shared_memory_base_name != def_shared_memory_base_name)
-            my_free(options->shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-          options->shared_memory_base_name=my_strdup(opt_arg,MYF(MY_WME));
-#endif
-          break;
   case 27: /* multi-results */
     options->client_flag|= CLIENT_MULTI_RESULTS;
     break;
@@ -1147,10 +1140,6 @@ drizzle_create(DRIZZLE *ptr)
 
 #if defined(ENABLED_LOCAL_INFILE) && !defined(DRIZZLE_SERVER)
   ptr->options.client_flag|= CLIENT_LOCAL_FILES;
-#endif
-
-#ifdef HAVE_SMEM
-  ptr->options.shared_memory_base_name= (char*) def_shared_memory_base_name;
 #endif
 
   ptr->options.methods_to_use= DRIZZLE_OPT_GUESS_CONNECTION;
@@ -1805,10 +1794,6 @@ static void drizzle_close_free_options(DRIZZLE *drizzle)
     delete_dynamic(init_commands);
     my_free((char*)init_commands,MYF(MY_WME));
   }
-#ifdef HAVE_SMEM
-  if (drizzle->options.shared_memory_base_name != def_shared_memory_base_name)
-    my_free(drizzle->options.shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-#endif /* HAVE_SMEM */
   memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
   return;
 }
@@ -2146,15 +2131,7 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
   case DRIZZLE_OPT_PROTOCOL:
     drizzle->options.protocol= *(uint*) arg;
     break;
-  case DRIZZLE_SHARED_MEMORY_BASE_NAME:
-#ifdef HAVE_SMEM
-    if (drizzle->options.shared_memory_base_name != def_shared_memory_base_name)
-      my_free(drizzle->options.shared_memory_base_name,MYF(MY_ALLOW_ZERO_PTR));
-    drizzle->options.shared_memory_base_name=my_strdup(arg,MYF(MY_WME));
-#endif
-    break;
   case DRIZZLE_OPT_USE_REMOTE_CONNECTION:
-  case DRIZZLE_OPT_USE_EMBEDDED_CONNECTION:
   case DRIZZLE_OPT_GUESS_CONNECTION:
     drizzle->options.methods_to_use= option;
     break;
