@@ -151,7 +151,7 @@ int cli_read_change_user_result(DRIZZLE *drizzle)
 }
 
 bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
-          const char *passwd, const char *db)
+                                 const char *passwd, const char *db)
 {
   char buff[USERNAME_LENGTH+SCRAMBLED_PASSWORD_CHAR_LENGTH+NAME_LEN+2];
   char *end= buff;

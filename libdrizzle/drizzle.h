@@ -173,8 +173,7 @@ enum drizzle_status
 
 enum drizzle_protocol_type
 {
-  DRIZZLE_PROTOCOL_DEFAULT, DRIZZLE_PROTOCOL_TCP, DRIZZLE_PROTOCOL_SOCKET,
-  DRIZZLE_PROTOCOL_PIPE, DRIZZLE_PROTOCOL_MEMORY
+  DRIZZLE_PROTOCOL_TCP
 };
 
 typedef struct character_set

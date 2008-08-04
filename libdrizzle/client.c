@@ -679,8 +679,6 @@ void drizzle_read_default_options(struct st_drizzle_options *options,
       options->password=my_strdup(opt_arg,MYF(MY_WME));
     }
     break;
-        case 5:
-          options->protocol = DRIZZLE_PROTOCOL_PIPE;
   case 20:      /* connect_timeout */
   case 6:        /* timeout */
     if (opt_arg)
@@ -1112,13 +1110,6 @@ drizzle_create(DRIZZLE *ptr)
           drizzle_port =(uint) atoi(env);
       }
     }
-    if (!drizzle_unix_port)
-    {
-      char *env;
-      drizzle_unix_port = (char*) MYSQL_UNIX_ADDR;
-      if ((env = getenv("DRIZZLE_UNIX_PORT")))
-        drizzle_unix_port = env;
-    }
 #if defined(SIGPIPE)
     (void) signal(SIGPIPE, SIG_IGN);
 #endif
@@ -1341,7 +1332,6 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   char          *end,*host_info=NULL;
   uint32_t         pkt_length;
   NET           *net= &drizzle->net;
-  struct        sockaddr_un UNIXaddr;
   init_sigpipe_variables
 
   /* Don't give sigpipe errors if the client doesn't want them */
@@ -1389,81 +1379,6 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   /*
     Part 0: Grab a socket and connect it to the server
   */
-#if defined(HAVE_SMEM)
-  if ((!drizzle->options.protocol ||
-       drizzle->options.protocol == DRIZZLE_PROTOCOL_MEMORY) &&
-      (!host || !strcmp(host,LOCAL_HOST)))
-  {
-    if ((create_shared_memory(drizzle,net, drizzle->options.connect_timeout)) ==
-  INVALID_HANDLE_VALUE)
-    {
-      if (drizzle->options.protocol == DRIZZLE_PROTOCOL_MEMORY)
-  goto error;
-
-      /*
-        Try also with PIPE or TCP/IP. Clear the error from
-        create_shared_memory().
-      */
-
-      net_clear_error(net);
-    }
-    else
-    {
-      drizzle->options.protocol=DRIZZLE_PROTOCOL_MEMORY;
-      unix_socket = 0;
-      host=drizzle->options.shared_memory_base_name;
-      snprintf(host_info=buff, sizeof(buff)-1,
-               ER(CR_SHARED_MEMORY_CONNECTION), host);
-    }
-  }
-#endif /* HAVE_SMEM */
-  if (!net->vio &&
-      (!drizzle->options.protocol ||
-       drizzle->options.protocol == DRIZZLE_PROTOCOL_SOCKET) &&
-      (unix_socket || drizzle_unix_port) &&
-      (!host || !strcmp(host,LOCAL_HOST)))
-  {
-    my_socket sock= socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sock == SOCKET_ERROR)
-    {
-      set_drizzle_extended_error(drizzle, CR_SOCKET_CREATE_ERROR,
-                               unknown_sqlstate,
-                               ER(CR_SOCKET_CREATE_ERROR),
-                               socket_errno);
-      goto error;
-    }
-
-    net->vio= vio_new(sock, VIO_TYPE_SOCKET,
-                      VIO_LOCALHOST | VIO_BUFFERED_READ);
-    if (!net->vio)
-    {
-      set_drizzle_error(drizzle, CR_CONN_UNKNOW_PROTOCOL, unknown_sqlstate);
-      closesocket(sock);
-      goto error;
-    }
-
-    host= LOCAL_HOST;
-    if (!unix_socket)
-      unix_socket= drizzle_unix_port;
-    host_info= (char*) ER(CR_LOCALHOST_CONNECTION);
-
-    memset((char*) &UNIXaddr, 0, sizeof(UNIXaddr));
-    UNIXaddr.sun_family= AF_UNIX;
-    strmake(UNIXaddr.sun_path, unix_socket, sizeof(UNIXaddr.sun_path)-1);
-
-    if (my_connect(sock, (struct sockaddr *) &UNIXaddr, sizeof(UNIXaddr),
-       drizzle->options.connect_timeout))
-    {
-      set_drizzle_extended_error(drizzle, CR_CONNECTION_ERROR,
-                               unknown_sqlstate,
-                               ER(CR_CONNECTION_ERROR),
-                               unix_socket, socket_errno);
-      vio_delete(net->vio);
-      net->vio= 0;
-      goto error;
-    }
-    drizzle->options.protocol=DRIZZLE_PROTOCOL_SOCKET;
-  }
   if (!net->vio &&
       (!drizzle->options.protocol ||
        drizzle->options.protocol == DRIZZLE_PROTOCOL_TCP))
@@ -2202,9 +2117,6 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
   case DRIZZLE_OPT_COMPRESS:
     drizzle->options.compress= 1;      /* Remember for connect */
     drizzle->options.client_flag|= CLIENT_COMPRESS;
-    break;
-  case DRIZZLE_OPT_NAMED_PIPE:      /* This option is depricated */
-    drizzle->options.protocol=DRIZZLE_PROTOCOL_PIPE; /* Force named pipe */
     break;
   case DRIZZLE_OPT_LOCAL_INFILE:      /* Allow LOAD DATA LOCAL ?*/
     if (!arg || test(*(uint*) arg))
