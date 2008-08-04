@@ -181,7 +181,6 @@ bool STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
   {
     {
       *end++= SCRAMBLE_LENGTH;
-      scramble(end, drizzle->scramble, passwd);
       end+= SCRAMBLE_LENGTH;
     }
   }

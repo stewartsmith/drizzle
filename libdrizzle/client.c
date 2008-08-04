@@ -1698,15 +1698,11 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     read_user_name((char*) end);
 
   /* We have to handle different version of handshake here */
-#ifdef _CUSTOMCONFIG_
-#include "_cust_libdrizzle.h"
-#endif
   end= strend(end) + 1;
   if (passwd[0])
   {
     {
       *end++= SCRAMBLE_LENGTH;
-      scramble(end, drizzle->scramble, passwd);
       end+= SCRAMBLE_LENGTH;
     }
   }
