@@ -981,7 +981,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
 	*/
 	my_bool update_index=1;
 	for (key=0 ; key < share->base.keys; key++)
-	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY|HA_FULLTEXT))
+	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY))
 	    update_index=0;
 
 	error=mi_sort_records(param,info,filename,param->opt_sort_key,
@@ -1258,7 +1258,6 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
   {
     keyseg=keyinfo->seg;
     if (keyinfo->flag & HA_NOSAME) text="unique ";
-    else if (keyinfo->flag & HA_FULLTEXT) text="fulltext ";
     else text="multip.";
 
     pos=buff;
@@ -1426,13 +1425,6 @@ static int mi_sort_records(MI_CHECK *param,
     mi_check_print_warning(param,
 			   "Can't sort table '%s' on key %d;  No such key",
 		name,sort_key+1);
-    param->error_printed=0;
-    return(0);				/* Nothing to do */
-  }
-  if (keyinfo->flag & HA_FULLTEXT)
-  {
-    mi_check_print_warning(param,"Can't sort table '%s' on FULLTEXT key %d",
-			   name,sort_key+1);
     param->error_printed=0;
     return(0);				/* Nothing to do */
   }

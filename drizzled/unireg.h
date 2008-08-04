@@ -39,7 +39,7 @@
 #define PLUGINDIR	"lib/plugin"
 #endif
 
-#define ER(X) errmesg[(X) - ER_ERROR_FIRST]
+#define ER(X) drizzled_error_messages[(X) - ER_ERROR_FIRST]
 #define ER_SAFE(X) (((X) >= ER_ERROR_FIRST && (X) <= ER_ERROR_LAST) ? ER(X) : "Invalid error code")
 
 

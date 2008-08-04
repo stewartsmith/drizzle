@@ -1,0 +1,3 @@
+MYSQL_PLUGIN(auth_pam,[PAM Authenication Plugin],
+        [PAM based authenication.])
+MYSQL_PLUGIN_DYNAMIC(auth_pam,   [libauth_pam.la])

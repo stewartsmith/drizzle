@@ -33,6 +33,7 @@
 
 #include <mysys/my_bit.h>
 #include <mysys/hash.h>
+#include <drizzled/drizzled_error_messages.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",

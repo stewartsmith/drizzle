@@ -21,6 +21,8 @@
 #ifndef _drizzled_error_h
 #define _drizzled_error_h
 
+#include <libdrizzle/gettext.h>
+
 enum drizzled_error_code {
   ER_ERROR_FIRST= 1000,
   ER_HASHCHK= 1000,

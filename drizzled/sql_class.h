@@ -468,17 +468,11 @@ public:
   */
   enum enum_state
   {
-    INITIALIZED= 0, INITIALIZED_FOR_SP= 1, PREPARED= 2,
+    INITIALIZED= 0,
     CONVENTIONAL_EXECUTION= 3, EXECUTED= 4, ERROR= -1
   };
 
   enum_state state;
-
-  /* We build without RTTI, so dynamic_cast can't be used. */
-  enum Type
-  {
-    STATEMENT, PREPARED_STATEMENT, STORED_PROCEDURE
-  };
 
   Query_arena(MEM_ROOT *mem_root_arg, enum enum_state state_arg) :
     free_list(0), mem_root(mem_root_arg), state(state_arg)
@@ -1767,12 +1761,7 @@ public:
     killed_state killed_val; /* to cache the volatile 'killed' */
     return (killed_val= killed) != KILL_BAD_DATA ? killed_val : 0;
   }
-  inline void send_kill_message() const
-  {
-    int err= killed_errno();
-    if (err)
-      my_message(err, ER(err), MYF(0));
-  }
+  void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
   inline bool really_abort_on_warning()
   {
@@ -1893,17 +1882,7 @@ public:
     allocate memory for a deep copy: current database may be freed after
     a statement is parsed but before it's executed.
   */
-  bool copy_db_to(char **p_db, size_t *p_db_length)
-  {
-    if (db == NULL)
-    {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-      return true;
-    }
-    *p_db= strmake(db, db_length);
-    *p_db_length= db_length;
-    return false;
-  }
+  bool copy_db_to(char **p_db, size_t *p_db_length);
   thd_scheduler scheduler;
 
 public:

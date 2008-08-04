@@ -23,6 +23,7 @@
 #endif
 
 #include <drizzled/field/timetype.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /****************************************************************************
 ** time type

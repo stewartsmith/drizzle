@@ -728,13 +728,8 @@ extern bool dynstr_set(DYNAMIC_STRING *str, const char *init_str);
 extern bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size);
 extern bool dynstr_trunc(DYNAMIC_STRING *str, size_t n);
 extern void dynstr_free(DYNAMIC_STRING *str);
-#ifdef HAVE_MLOCK
-extern void *my_malloc_lock(size_t length,myf flags);
-extern void my_free_lock(void *ptr,myf flags);
-#else
 #define my_malloc_lock(A,B) my_malloc((A),(B))
 #define my_free_lock(A,B) my_free((A),(B))
-#endif
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
 #define ALLOC_ROOT_MIN_BLOCK_SIZE (MALLOC_OVERHEAD + sizeof(USED_MEM) + 8)
 #define clear_alloc_root(A) do { (A)->free= (A)->used= (A)->pre_alloc= 0; (A)->min_malloc=0;} while(0)
@@ -814,13 +809,6 @@ void *my_mmap(void *, size_t, int, int, int, my_off_t);
 int my_munmap(void *, size_t);
 #endif
 
-/* my_getpagesize */
-#ifdef HAVE_GETPAGESIZE
-#define my_getpagesize()        getpagesize()
-#else
-int my_getpagesize(void);
-#endif
-
 /* character sets */
 extern uint get_charset_number(const char *cs_name, uint cs_flags);
 extern uint get_collation_number(const char *name);
@@ -840,13 +828,13 @@ extern bool resolve_collation(const char *cl_name,
 
 extern void free_charsets(void);
 extern char *get_charsets_dir(char *buf);
-extern bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2);
+extern bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2);
 extern bool init_compiled_charsets(myf flags);
 extern void add_compiled_collation(CHARSET_INFO *cs);
-extern size_t escape_string_for_drizzle(CHARSET_INFO *charset_info,
-                                       char *to, size_t to_length,
-                                       const char *from, size_t length);
-extern size_t escape_quotes_for_drizzle(CHARSET_INFO *charset_info,
+extern size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
+                                        char *to, size_t to_length,
+                                        const char *from, size_t length);
+extern size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
                                         char *to, size_t to_length,
                                         const char *from, size_t length);
 

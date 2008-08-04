@@ -26,6 +26,7 @@
 #include "mysql_priv.h"
 #include "rpl_filter.h"
 #include <errno.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /*
   While we have legacy_db_type, we have this array to

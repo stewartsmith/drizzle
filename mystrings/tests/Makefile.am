@@ -17,8 +17,8 @@ MYSQLDATAdir =		$(localstatedir)
 MYSQLSHAREdir =		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
 
-LDADD =			$(top_builddir)/strings/libmysyslt.la \
-			$(top_builddir)/strings/libmystrings.la
+LDADD =			$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/mystrings/libmystrings.la
 
 DEFS =			-DMAIN \
 			-DDEFAULT_BASEDIR=\"$(prefix)\" \
@@ -37,4 +37,4 @@ noinst_PROGRAMS = str_test uctypedump test_decimal
 
 str_test_SOURCES = str_test.c 
 uctypedump_SOURCES = uctypedump.c
-test_decimal_SOURCES = ${top_srcdir}/strings/decimal.c
+test_decimal_SOURCES = ${top_srcdir}/mystrings/decimal.c

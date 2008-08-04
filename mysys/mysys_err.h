@@ -19,12 +19,7 @@
 extern "C" {
 #endif
 
-#define GLOBERRS (EE_ERROR_LAST - EE_ERROR_FIRST + 1) /* Nr of global errors */
-#define EE(X)    (globerrs[(X) - EE_ERROR_FIRST])
 
-extern const char * globerrs[];	/* my_error_messages is here */
-
-/* Error message numbers in global map */
 /*
   Do not add error numbers before EE_ERROR_FIRST.
   If necessary to add lower numbers, change EE_ERROR_FIRST accordingly.
@@ -81,6 +76,11 @@ extern const char * globerrs[];	/* my_error_messages is here */
 #define EXIT_OPTION_DISABLED            12
 #define EXIT_ARGUMENT_INVALID           13
 
+#define GLOBERRS (EE_ERROR_LAST - EE_ERROR_FIRST + 1) /* Nr of global errors */
+#define EE(X)    (globerrs[(X) - EE_ERROR_FIRST])
+
+/* Error message numbers in global map */
+extern const char * globerrs[GLOBERRS];
 
 #ifdef	__cplusplus
 }

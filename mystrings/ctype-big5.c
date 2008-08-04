@@ -175,7 +175,7 @@ static uchar sort_order_big5[]=
   (uchar) '\370',(uchar) '\371',(uchar) '\372',(uchar) '\373',(uchar) '\374',(uchar) '\375',(uchar) '\376',(uchar) '\377',
 };
 
-static uint16 big5strokexfrm(uint16 i)
+static uint16_t big5strokexfrm(uint16_t i)
 {
   if ((i == 0xA440) || (i == 0xA441))  return 0xA440;
   else if (((i >= 0xA442) && (i <= 0xA453)) || ((i >= 0xC940) && (i <= 0xC944)))  return 0xA442;
@@ -247,7 +247,7 @@ static int my_strnncoll_big5_internal(const uchar **a_res,
 
 /* Compare strings */
 
-static int my_strnncoll_big5(CHARSET_INFO *cs __attribute__((unused)), 
+static int my_strnncoll_big5(const CHARSET_INFO *cs __attribute__((unused)), 
 			     const uchar *a, size_t a_length,
                              const uchar *b, size_t b_length,
                              my_bool b_is_prefix)
@@ -260,7 +260,7 @@ static int my_strnncoll_big5(CHARSET_INFO *cs __attribute__((unused)),
 
 /* compare strings, ignore end space */
 
-static int my_strnncollsp_big5(CHARSET_INFO * cs __attribute__((unused)), 
+static int my_strnncollsp_big5(const CHARSET_INFO * cs __attribute__((unused)), 
 			       const uchar *a, size_t a_length, 
 			       const uchar *b, size_t b_length,
                                my_bool diff_if_only_endspace_difference)
@@ -301,7 +301,7 @@ static int my_strnncollsp_big5(CHARSET_INFO * cs __attribute__((unused)),
 
 
 static size_t
-my_strnxfrm_big5(CHARSET_INFO *cs,
+my_strnxfrm_big5(const CHARSET_INFO *cs,
                  uchar *dst, size_t dstlen, uint nweights,
                  const uchar *src, size_t srclen, uint flags)
 {
@@ -319,7 +319,7 @@ my_strnxfrm_big5(CHARSET_INFO *cs,
         in the code below, because ismbchar() would
         not return TRUE if src was too short
       */
-      uint16 e= big5strokexfrm((uint16) big5code(*src, *(src + 1)));
+      uint16_t e= big5strokexfrm((uint16_t) big5code(*src, *(src + 1)));
       *dst++= big5head(e);
       if (dst < de)
         *dst++= big5tail(e);
@@ -351,9 +351,9 @@ my_strnxfrm_big5(CHARSET_INFO *cs,
 
 #define max_sort_char ((char) 255)
 
-static my_bool my_like_range_big5(CHARSET_INFO *cs __attribute__((unused)),
+static my_bool my_like_range_big5(const CHARSET_INFO *cs __attribute__((unused)),
 				  const char *ptr,size_t ptr_length,
-				  pbool escape, pbool w_one, pbool w_many,
+				  char escape, char w_one, char w_many,
 				  size_t res_length,
                                   char *min_str, char *max_str,
 				  size_t *min_length, size_t *max_length)
@@ -412,21 +412,21 @@ static my_bool my_like_range_big5(CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static uint ismbchar_big5(CHARSET_INFO *cs __attribute__((unused)),
+static uint ismbchar_big5(const CHARSET_INFO *cs __attribute__((unused)),
                          const char* p, const char *e)
 {
   return (isbig5head(*(p)) && (e)-(p)>1 && isbig5tail(*((p)+1))? 2: 0);
 }
 
 
-static uint mbcharlen_big5(CHARSET_INFO *cs __attribute__((unused)), uint c)
+static uint mbcharlen_big5(const CHARSET_INFO *cs __attribute__((unused)), uint c)
 {
   return (isbig5head(c)? 2 : 1);
 }
 
 
 /* page 0 0xA140-0xC7FC */
-static uint16 tab_big5_uni0[]={
+static uint16_t tab_big5_uni0[]={
 0x3000,0xFF0C,0x3001,0x3002,0xFF0E,0x2022,0xFF1B,0xFF1A,
 0xFF1F,0xFF01,0xFE30,0x2026,0x2025,0xFE50,0xFF64,0xFE52,
 0x00B7,0xFE54,0xFE55,0xFE56,0xFE57,0xFF5C,0x2013,0xFE31,
@@ -1669,7 +1669,7 @@ static uint16 tab_big5_uni0[]={
 0x2479,0x247A,0x247B,0x247C,0x247D};
 
 /* page 1 0xC940-0xF9DC */
-static uint16 tab_big5_uni1[]={
+static uint16_t tab_big5_uni1[]={
 0x4E42,0x4E5C,0x51F5,0x531A,0x5382,0x4E07,0x4E0C,0x4E47,
 0x4E8D,0x56D7,0xFA0C,0x5C6E,0x5F73,0x4E0F,0x5187,0x4E0E,
 0x4E2E,0x4E93,0x4EC2,0x4EC9,0x4EC8,0x5198,0x52FC,0x536C,
@@ -3237,7 +3237,7 @@ static int func_big5_uni_onechar(int code){
 
 
 /* page 0 0x00A2-0x00F7 */
-static uint16 tab_uni_big50[]={
+static uint16_t tab_uni_big50[]={
 0xA246,0xA247,     0,0xA244,     0,0xA1B1,     0,     0,
      0,     0,     0,     0,     0,     0,0xA258,0xA1D3,
      0,     0,     0,     0,     0,0xA150,     0,     0,
@@ -3251,7 +3251,7 @@ static uint16 tab_uni_big50[]={
      0,     0,     0,     0,     0,0xA1D2};
 
 /* page 1 0x02C7-0x0451 */
-static uint16 tab_uni_big51[]={
+static uint16_t tab_uni_big51[]={
 0xA3BE,     0,0xA3BC,0xA3BD,0xA3BF,     0,     0,     0,
      0,     0,     0,     0,     0,     0,     0,     0,
      0,     0,0xA3BB,     0,     0,     0,     0,     0,
@@ -3304,7 +3304,7 @@ static uint16 tab_uni_big51[]={
 0xC7E8,     0,0xC7CE};
 
 /* page 2 0x2013-0x22BF */
-static uint16 tab_uni_big52[]={
+static uint16_t tab_uni_big52[]={
 0xA156,0xA158,     0,     0,     0,0xA1A5,0xA1A6,     0,
      0,0xA1A7,0xA1A8,     0,     0,     0,     0,0xA145,
      0,     0,0xA14C,0xA14B,     0,     0,     0,     0,
@@ -3393,7 +3393,7 @@ static uint16 tab_uni_big52[]={
      0,     0,     0,     0,0xA1E9};
 
 /* page 3 0x2460-0x2642 */
-static uint16 tab_uni_big53[]={
+static uint16_t tab_uni_big53[]={
 0xC7E9,0xC7EA,0xC7EB,0xC7EC,0xC7ED,0xC7EE,0xC7EF,0xC7F0,
 0xC7F1,0xC7F2,     0,     0,     0,     0,     0,     0,
      0,     0,     0,     0,0xC7F3,0xC7F4,0xC7F5,0xC7F6,
@@ -3457,7 +3457,7 @@ static uint16 tab_uni_big53[]={
 0xA1F0,0xA1F2,0xA1F1};
 
 /* page 4 0x3000-0x3129 */
-static uint16 tab_uni_big54[]={
+static uint16_t tab_uni_big54[]={
 0xA140,0xA142,0xA143,0xA1B2,     0,0xC6A4,     0,     0,
 0xA171,0xA172,0xA16D,0xA16E,0xA175,0xA176,0xA179,0xA17A,
 0xA169,0xA16A,0xA245,     0,0xA165,0xA166,     0,     0,
@@ -3498,11 +3498,11 @@ static uint16 tab_uni_big54[]={
 0xA3B9,0xA3BA};
 
 /* page 5 0x32A3-0x32A3 */
-static uint16 tab_uni_big55[]={
+static uint16_t tab_uni_big55[]={
 0xA1C0};
 
 /* page 6 0x338E-0x33D5 */
-static uint16 tab_uni_big56[]={
+static uint16_t tab_uni_big56[]={
 0xA255,0xA256,     0,     0,     0,     0,     0,     0,
      0,     0,     0,     0,     0,     0,0xA250,0xA251,
 0xA252,     0,     0,0xA254,     0,     0,     0,     0,
@@ -3515,7 +3515,7 @@ static uint16 tab_uni_big56[]={
 };
 
 /* page 7 0x4E00-0x9483 */
-static uint16 tab_uni_big57[]={
+static uint16_t tab_uni_big57[]={
 0xA440,0xA442,     0,0xA443,     0,     0,     0,0xC945,
 0xA456,0xA454,0xA457,0xA455,0xC946,0xA4A3,0xC94F,0xC94D,
 0xA4A2,0xA4A1,     0,     0,0xA542,0xA541,0xA540,     0,
@@ -5775,7 +5775,7 @@ static uint16 tab_uni_big57[]={
 0xF9C0,0xF9C1,0xF9BF,0xF9C9};
 
 /* page 8 0x9577-0x9FA4 */
-static uint16 tab_uni_big58[]={
+static uint16_t tab_uni_big58[]={
 0xAAF8,     0,     0,0xD844,0xDC78,0xE8A5,0xF376,     0,
      0,0xAAF9,     0,0xADAC,0xB07B,     0,     0,0xD845,
      0,0xD846,0xB3AC,     0,0xB67D,0xDC7A,0xDC79,0xB6A3,
@@ -6104,11 +6104,11 @@ static uint16 tab_uni_big58[]={
      0,0xEFB6,     0,0xF7CF,     0,0xF9A1};
 
 /* page 9 0xFA0C-0xFA0D */
-static uint16 tab_uni_big59[]={
+static uint16_t tab_uni_big59[]={
 0xC94A,0xDDFC};
 
 /* page 10 0xFE30-0xFFFD */
-static uint16 tab_uni_big510[]={
+static uint16_t tab_uni_big510[]={
 0xA14A,0xA157,     0,0xA159,0xA15B,0xA15F,0xA160,0xA163,
 0xA164,0xA167,0xA168,0xA16B,0xA16C,0xA16F,0xA170,0xA173,
 0xA174,0xA177,0xA178,0xA17B,0xA17C,     0,     0,     0,
@@ -6196,7 +6196,7 @@ static int func_uni_big5_onechar(int code){
 
 
 static int
-my_wc_mb_big5(CHARSET_INFO *cs __attribute__((unused)),
+my_wc_mb_big5(const CHARSET_INFO *cs __attribute__((unused)),
 	      my_wc_t wc, uchar *s, uchar *e)
 {
 
@@ -6225,7 +6225,7 @@ my_wc_mb_big5(CHARSET_INFO *cs __attribute__((unused)),
 
 
 static int 
-my_mb_wc_big5(CHARSET_INFO *cs __attribute__((unused)),
+my_mb_wc_big5(const CHARSET_INFO *cs __attribute__((unused)),
 	      my_wc_t *pwc,const uchar *s,const uchar *e)
 {
 
@@ -6255,7 +6255,7 @@ my_mb_wc_big5(CHARSET_INFO *cs __attribute__((unused)),
   CP950 and HKSCS additional characters are also accepted.
 */
 static
-size_t my_well_formed_len_big5(CHARSET_INFO *cs __attribute__((unused)),
+size_t my_well_formed_len_big5(const CHARSET_INFO *cs __attribute__((unused)),
                                const char *b, const char *e,
                                size_t pos, int *error)
 {

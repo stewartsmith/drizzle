@@ -29,12 +29,13 @@ nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
 # Trick to get things compiled like they are shared, but linked directly in.
 noinst_LTLIBRARIES = libmysyslt.la
 
-pkginclude_HEADERS = 	my_alloc.h \
-			my_getopt.h \
-			my_list.h \
-			my_sys.h \
-			my_pthread.h \
-			typelib.h
+mysysincludedir = ${includedir}/mysys
+dist_mysysinclude_HEADERS = 	my_alloc.h \
+				my_getopt.h \
+				my_list.h \
+				my_sys.h \
+				my_pthread.h \
+				typelib.h
 
 noinst_HEADERS =	mysys_priv.h \
 			my_bit.h \
@@ -53,14 +54,21 @@ noinst_HEADERS =	mysys_priv.h \
 			thr_lock.h \
 			base64.h
 
+if BUILD_FAST_MUTEX
+thr_mutex_source=thr_mutex.c
+endif
+if BUILD_THR_RWLOCK
+thr_rwlock_source=thr_rwlock.c
+endif
+
 libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_path.c mf_loadpath.c my_file.c \
 			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
-			my_write.c my_getpagesize.c \
+			my_write.c \
 			mf_iocache.c mf_iocache2.c mf_cache.c mf_tempfile.c \
 			mf_tempdir.c my_handler.c \
 			my_malloc.c my_realloc.c my_once.c mulalloc.c \
-			my_alloc.c my_new.cc \
+			my_alloc.c \
 			my_fopen.c my_fstream.c my_getsystime.c \
 			my_error.c errors.c my_div.c my_messnc.c \
 			mf_format.c mf_same.c mf_dirname.c mf_fn_ext.c \
@@ -73,7 +81,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			my_copy.c my_append.c my_lib.c \
 			my_delete.c my_rename.c my_redel.c \
 			my_clock.c \
-			my_quick.c my_lockmem.c my_static.c \
+			my_quick.c my_static.c \
 			my_sync.c my_getopt.c my_mkdir.c \
 			default_modify.c default.c \
                         my_compress.c checksum.c \
@@ -83,7 +91,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			my_memmem.c \
 			my_access.c base64.c \
 			thr_alarm.c thr_lock.c my_thr_init.c \
-                        thr_mutex.c thr_rwlock.c 
+                        ${thr_mutex_source} ${thr_rwlock_source}
 DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
 			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \

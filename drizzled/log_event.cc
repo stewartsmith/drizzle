@@ -32,6 +32,7 @@
 #include "rpl_utility.h"
 #include "rpl_record.h"
 #include <mysys/my_dir.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #endif /* MYSQL_CLIENT */
 
