@@ -270,4 +270,5 @@ dcnpgettext_expr (const char *domain,
 }
 
 #define _(String)  gettext(String)
+#define N_(String) gettext_noop(String)
 #endif /* _LIBGETTEXT_H */

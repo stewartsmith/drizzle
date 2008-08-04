@@ -88,33 +88,33 @@ enum enum_slave_reconnect_messages
 static const char *reconnect_messages[SLAVE_RECON_ACT_MAX][SLAVE_RECON_MSG_MAX]=
 {
   {
-    gettext_noop("Waiting to reconnect after a failed registration on master"),
-    gettext_noop("Slave I/O thread killed while waitnig to reconnect after a "
+    N_("Waiting to reconnect after a failed registration on master"),
+    N_("Slave I/O thread killed while waitnig to reconnect after a "
                  "failed registration on master"),
-    gettext_noop("Reconnecting after a failed registration on master"),
-    gettext_noop("failed registering on master, reconnecting to try again, "
+    N_("Reconnecting after a failed registration on master"),
+    N_("failed registering on master, reconnecting to try again, "
                  "log '%s' at postion %s"),
     "COM_REGISTER_SLAVE",
-    gettext_noop("Slave I/O thread killed during or after reconnect")
+    N_("Slave I/O thread killed during or after reconnect")
   },
   {
-    gettext_noop("Waiting to reconnect after a failed binlog dump request"),
-    gettext_noop("Slave I/O thread killed while retrying master dump"),
-    gettext_noop("Reconnecting after a failed binlog dump request"),
-    gettext_noop("failed dump request, reconnecting to try again, "
+    N_("Waiting to reconnect after a failed binlog dump request"),
+    N_("Slave I/O thread killed while retrying master dump"),
+    N_("Reconnecting after a failed binlog dump request"),
+    N_("failed dump request, reconnecting to try again, "
                  "log '%s' at postion %s"),
     "COM_BINLOG_DUMP",
-    gettext_noop("Slave I/O thread killed during or after reconnect")
+    N_("Slave I/O thread killed during or after reconnect")
   },
   {
-    gettext_noop("Waiting to reconnect after a failed master event read"),
-    gettext_noop("Slave I/O thread killed while waiting to reconnect "
+    N_("Waiting to reconnect after a failed master event read"),
+    N_("Slave I/O thread killed while waiting to reconnect "
                  "after a failed read"),
-    gettext_noop("Reconnecting after a failed master event read"),
-    gettext_noop("Slave I/O thread: Failed reading log event, "
+    N_("Reconnecting after a failed master event read"),
+    N_("Slave I/O thread: Failed reading log event, "
                  "reconnecting to retry, log '%s' at postion %s"),
     "",
-    gettext_noop("Slave I/O thread killed during or after a "
+    N_("Slave I/O thread killed during or after a "
                  "reconnect done to recover from failed read")
   }
 };
