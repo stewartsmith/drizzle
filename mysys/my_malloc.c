@@ -68,7 +68,7 @@ char *my_strdup(const char *from, myf my_flags)
   char *ptr;
   size_t length= strlen(from)+1;
   if ((ptr= (char*) my_malloc(length, my_flags)))
-    memcpy((uchar*) ptr, (uchar*) from,(size_t) length);
+    memcpy(ptr, from, length);
   return(ptr);
 }
 
@@ -78,7 +78,7 @@ char *my_strndup(const char *from, size_t length, myf my_flags)
   char *ptr;
   if ((ptr= (char*) my_malloc(length+1,my_flags)) != 0)
   {
-    memcpy((uchar*) ptr, (uchar*) from, length);
+    memcpy(ptr, from, length);
     ptr[length]=0;
   }
   return((char*) ptr);

@@ -224,7 +224,7 @@ static int add_collation(CHARSET_INFO *cs)
       if (!(all_charsets[cs->number]=
          (CHARSET_INFO*) my_once_alloc(sizeof(CHARSET_INFO),MYF(0))))
         return MY_XML_ERROR;
-      memset((void*)all_charsets[cs->number], 0, sizeof(CHARSET_INFO));
+      memset(all_charsets[cs->number], 0, sizeof(CHARSET_INFO));
     }
     
     if (cs->primary_number == cs->number)
