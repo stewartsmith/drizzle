@@ -12,7 +12,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# Optimized longlong2str function for Intel 80x86  (gcc/gas syntax) 
+# Optimized int64_t2str function for Intel 80x86  (gcc/gas syntax) 
 # Some set sequences are optimized for pentuimpro II 
 
 	.file	"longlong2str-x86.s"
@@ -21,10 +21,10 @@
 .text
 	.align 4
 
-.globl	longlong2str_with_dig_vector
-	.type	 longlong2str_with_dig_vector,@function
+.globl	int64_t2str_with_dig_vector
+	.type	 int64_t2str_with_dig_vector,@function
 	
-longlong2str_with_dig_vector:
+int64_t2str_with_dig_vector:
 	subl  $80,%esp          # Temporary buffer for up to 64 radix-2 digits
 	pushl %ebp
 	pushl %esi
@@ -125,7 +125,7 @@ longlong2str_with_dig_vector:
 	jmp .L165
 
 .Lfe3:
-	.size	 longlong2str_with_dig_vector,.Lfe3-longlong2str_with_dig_vector
+	.size	 int64_t2str_with_dig_vector,.Lfe3-int64_t2str_with_dig_vector
 
 #
 # This is almost equal to the above, except that we can do the final
@@ -210,7 +210,7 @@ longlong10_to_str:
         movl %edx,%ebx
         testl %ebx,%ebx
 	jne .L10_40
-	jmp .Lcopy_end		# Shared end with longlong2str
+	jmp .Lcopy_end		# Shared end with int64_t2str
 
 .L10end:
-	.size	 longlong10_to_str,.L10end-longlong10_to_str
+	.size	 int64_t10_to_str,.L10end-int64_t10_to_str
