@@ -7348,14 +7348,12 @@ static int my_uca_charcmp(CHARSET_INFO *cs, my_wc_t wc1, my_wc_t wc2)
     return wc1 != wc2;
   
   if (length1 > length2)
-    return memcmp((const void*)weight1, (const void*)weight2, length2*2) ?
-           1: weight1[length2];
+    return memcmp(weight1, weight2, length2*2) ? 1 : weight1[length2];
   
   if (length1 < length2)
-    return memcmp((const void*)weight1, (const void*)weight2, length1*2) ?
-           1 : weight2[length1];
+    return memcmp(weight1, weight2, length1*2) ? 1 : weight2[length1];
   
-  return memcmp((const void*)weight1, (const void*)weight2, length1*2);
+  return memcmp(weight1, weight2, length1*2);
 }
 
 /*
@@ -7941,7 +7939,7 @@ static my_bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
       
       if (!(newweights[pagec]= (uint16_t*) (*alloc)(size)))
         return 1;
-      memset((void*) newweights[pagec], 0, size);
+      memset(newweights[pagec], 0, size);
       
       for (chc=0 ; chc < 256; chc++)
       {
@@ -7986,7 +7984,7 @@ static my_bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
     char *contraction_flags;
     if (!(cs->contractions= (uint16_t*) (*alloc)(size)))
         return 1;
-    memset((void*)cs->contractions, 0, size);
+    memset(cs->contractions, 0, size);
     contraction_flags= ((char*) cs->contractions) + 0x40*0x40;
     for (i=0; i < rc; i++)
     {

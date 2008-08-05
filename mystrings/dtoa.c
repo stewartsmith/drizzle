@@ -613,7 +613,7 @@ typedef union { double d; ULong L[2]; } U;
 
 #define Kmax 15
 
-#define Bcopy(x,y) memcpy((char *)&x->sign, (char *)&y->sign,   \
+#define Bcopy(x,y) memcpy(&x->sign, &y->sign, \
                           2*sizeof(int) + y->wds*sizeof(ULong))
 
 /* Arbitrary-length integer */

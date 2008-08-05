@@ -497,7 +497,7 @@ static size_t thai2sortable(uchar *tstr, size_t len)
 	  l2bias use to control position weight of l2char
 	  example (*=l2char) XX*X must come before X*XX
 	*/
-	memmove((char*) p, (char*) (p+1), tlen-1);
+	memmove(p, p+1, tlen-1);
 	tstr[len-1]= l2bias + t_ctype0[1]- L2_GARAN +1;
 	p--;
 	continue;
@@ -542,9 +542,9 @@ int my_strnncoll_tis620(CHARSET_INFO *cs __attribute__((unused)),
   if ((len1 + len2 +2) > (int) sizeof(buf))
     tc1= (uchar*) my_str_malloc(len1+len2+2);
   tc2= tc1 + len1+1;
-  memcpy((char*) tc1, (char*) s1, len1);
+  memcpy(tc1, s1, len1);
   tc1[len1]= 0;		/* if length(s1)> len1, need to put 'end of string' */
-  memcpy((char *)tc2, (char *)s2, len2);
+  memcpy(tc2, s2, len2);
   tc2[len2]= 0;		/* put end of string */
   thai2sortable(tc1, len1);
   thai2sortable(tc2, len2);
@@ -574,9 +574,9 @@ int my_strnncollsp_tis620(CHARSET_INFO * cs __attribute__((unused)),
     alloced= a= (uchar*) my_str_malloc(a_length+b_length+2);
   
   b= a + a_length+1;
-  memcpy((char*) a, (char*) a0, a_length);
+  memcpy(a, a0, a_length);
   a[a_length]= 0;	/* if length(a0)> len1, need to put 'end of string' */
-  memcpy((char *)b, (char *)b0, b_length);
+  memcpy(b, b0, b_length);
   b[b_length]= 0;	/* put end of string */
   a_length= thai2sortable(a, a_length);
   b_length= thai2sortable(b, b_length);
