@@ -609,7 +609,7 @@ bool Unique::get(TABLE *table)
     return 1;
   reinit_io_cache(outfile,WRITE_CACHE,0L,0,0);
 
-  memset((char*) &sort_param, 0, sizeof(sort_param));
+  memset(&sort_param, 0, sizeof(sort_param));
   sort_param.max_rows= elements;
   sort_param.sort_form=table;
   sort_param.rec_length= sort_param.sort_length= sort_param.ref_length=

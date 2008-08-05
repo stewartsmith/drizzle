@@ -411,7 +411,7 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
       my_errno=HA_ERR_CRASHED;
       return(-1);
     }
-    memcpy(key_pos,key_pos-t_length,(uint) (endpos-key_pos)+t_length);
+    memcpy(key_pos, key_pos - t_length, endpos - key_pos + t_length);
   }
   (*keyinfo->store_key)(keyinfo,key_pos,&s_temp);
   a_length+=t_length;
@@ -463,7 +463,7 @@ int _mi_split_page(register MI_INFO *info, register MI_KEYDEF *keyinfo,
   if (nod_flag)
   {
     pos=key_pos-nod_flag;
-    memcpy((uchar*) info->buff+2,(uchar*) pos,(size_t) nod_flag);
+    memcpy(info->buff + 2, pos, nod_flag);
   }
 
 	/* Move middle item to key and pointer to new page */
@@ -479,8 +479,7 @@ int _mi_split_page(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 				(uchar*) 0, (uchar*) 0,
 				key_buff, &s_temp);
   length=(uint) ((buff+a_length)-key_pos);
-  memcpy((uchar*) info->buff+key_ref_length+t_length,(uchar*) key_pos,
-	 (size_t) length);
+  memcpy(info->buff+key_ref_length+t_length, key_pos, length);
   (*keyinfo->store_key)(keyinfo,info->buff+key_ref_length,&s_temp);
   mi_putint(info->buff,length+t_length+key_ref_length,nod_flag);
 
@@ -649,12 +648,12 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
     if (left_length < new_left_length)
     {						/* Move keys buff -> leaf */
       pos=curr_buff+left_length;
-      memcpy((uchar*) pos,(uchar*) father_key_pos, (size_t) k_length);
-      memcpy((uchar*) pos+k_length, (uchar*) buff+2,
-	     (size_t) (length=new_left_length - left_length - k_length));
+      memcpy(pos, father_key_pos, k_length);
+      length= new_left_length - left_length - k_length;
+      memcpy(pos+k_length, buff+2, length);
       pos=buff+2+length;
-      memcpy((uchar*) father_key_pos,(uchar*) pos,(size_t) k_length);
-      memcpy((uchar*) buff+2,(uchar*) pos+k_length,new_right_length);
+      memcpy(father_key_pos, pos, k_length);
+      memcpy(buff+2, pos+k_length, new_right_length);
     }
     else
     {						/* Move keys -> buff */
@@ -662,10 +661,10 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
       bmove_upp((uchar*) buff+new_right_length,(uchar*) buff+right_length,
 		right_length-2);
       length=new_right_length-right_length-k_length;
-      memcpy((uchar*) buff+2+length,father_key_pos,(size_t) k_length);
+      memcpy(buff+2+length,father_key_pos, k_length);
       pos=curr_buff+new_left_length;
-      memcpy((uchar*) father_key_pos,(uchar*) pos,(size_t) k_length);
-      memcpy((uchar*) buff+2,(uchar*) pos+k_length,(size_t) length);
+      memcpy(father_key_pos, pos, k_length);
+      memcpy(buff+2, pos+k_length, length);
     }
 
     if (_mi_write_keypage(info,keyinfo,next_page,DFLT_INIT_HITS,info->buff) ||
@@ -688,7 +687,7 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
 
   /* move first largest keys to new page  */
   pos=buff+right_length-extra_length;
-  memcpy((uchar*) extra_buff+2,pos,(size_t) extra_length);
+  memcpy(extra_buff+2, pos, extra_length);
   /* Save new parting key */
   memcpy(tmp_part_key, pos-k_length,k_length);
   /* Make place for new keys */
@@ -696,14 +695,14 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
 	    right_length-extra_length-k_length-2);
   /* Copy keys from left page */
   pos= curr_buff+new_left_length;
-  memcpy((uchar*) buff+2,(uchar*) pos+k_length,
-	 (size_t) (length=left_length-new_left_length-k_length));
+  length= left_length - new_left_length - k_length;
+  memcpy(buff+2, pos+k_length, length);
   /* Copy old parting key */
-  memcpy((uchar*) buff+2+length,father_key_pos,(size_t) k_length);
+  memcpy(buff+2+length, father_key_pos, k_length);
 
   /* Move new parting keys up to caller */
-  memcpy((uchar*) (right ? key : father_key_pos),pos,(size_t) k_length);
-  memcpy((uchar*) (right ? father_key_pos : key),tmp_part_key, k_length);
+  memcpy((right ? key : father_key_pos), pos, k_length);
+  memcpy((right ? father_key_pos : key), tmp_part_key, k_length);
 
   if ((new_pos=_mi_new(info,keyinfo,DFLT_INIT_HITS)) == HA_OFFSET_ERROR)
     goto err;

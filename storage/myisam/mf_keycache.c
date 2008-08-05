@@ -353,11 +353,11 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
     keycache->hash_link_root= (HASH_LINK*) ((char*) keycache->hash_root +
 				            ALIGN_SIZE((sizeof(HASH_LINK*) *
 							keycache->hash_entries)));
-    memset((uchar*) keycache->block_root, 0,
+    memset(keycache->block_root, 0,
            keycache->disk_blocks * sizeof(BLOCK_LINK));
-    memset((uchar*) keycache->hash_root, 0,
+    memset(keycache->hash_root, 0,
            keycache->hash_entries * sizeof(HASH_LINK*));
-    memset((uchar*) keycache->hash_link_root, 0,
+    memset(keycache->hash_link_root, 0,
            keycache->hash_links * sizeof(HASH_LINK));
     keycache->hash_links_used= 0;
     keycache->free_hash_list= NULL;
@@ -383,9 +383,9 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
 
     keycache->waiting_for_hash_link.last_thread= NULL;
     keycache->waiting_for_block.last_thread= NULL;
-    memset((uchar*) keycache->changed_blocks, 0,
+    memset(keycache->changed_blocks, 0,
            sizeof(keycache->changed_blocks[0]) * CHANGED_BLOCKS_HASH);
-    memset((uchar*) keycache->file_blocks, 0,
+    memset(keycache->file_blocks, 0,
            sizeof(keycache->file_blocks[0]) * CHANGED_BLOCKS_HASH);
   }
   else

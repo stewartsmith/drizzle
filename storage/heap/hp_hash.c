@@ -755,7 +755,7 @@ uint hp_rb_make_key(HP_KEYDEF *keydef, uchar *key,
       set_if_smaller(length,tmp_length);
       FIX_LENGTH(cs, pos, length, char_length);
       store_key_length_inc(key,char_length);
-      memcpy((uchar*) key,(uchar*) pos,(size_t) char_length);
+      memcpy(key,pos,(size_t) char_length);
       key+= char_length;
       continue;
     }
@@ -818,7 +818,7 @@ uint hp_rb_pack_key(HP_KEYDEF *keydef, uchar *key, const uchar *old,
       set_if_smaller(length,tmp_length);	/* Safety */
       FIX_LENGTH(cs, old, length, char_length);
       store_key_length_inc(key,char_length);
-      memcpy((uchar*) key, old,(size_t) char_length);
+      memcpy(key, old,(size_t) char_length);
       key+= char_length;
       continue;
     }

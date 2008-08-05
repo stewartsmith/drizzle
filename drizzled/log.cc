@@ -1152,7 +1152,7 @@ static int find_uniq_filename(char *name)
   file_info= dir_info->dir_entry;
   for (i=dir_info->number_off_files ; i-- ; file_info++)
   {
-    if (memcmp((uchar*) file_info->name, (uchar*) start, length) == 0 &&
+    if (memcmp(file_info->name, start, length) == 0 &&
 	test_if_number(file_info->name+length, &number,0))
     {
       set_if_bigger(max_found,(ulong) number);
@@ -1274,7 +1274,7 @@ MYSQL_LOG::MYSQL_LOG()
     called only in main(). Doing initialization here would make it happen
     before main().
   */
-  memset((char*) &log_file, 0, sizeof(log_file));
+  memset(&log_file, 0, sizeof(log_file));
 }
 
 void MYSQL_LOG::init_pthread_objects()
@@ -1688,7 +1688,7 @@ MYSQL_BIN_LOG::MYSQL_BIN_LOG()
     before main().
   */
   index_file_name[0] = 0;
-  memset((char*) &index_file, 0, sizeof(index_file));
+  memset(&index_file, 0, sizeof(index_file));
 }
 
 /* this is called only once */
@@ -2164,7 +2164,7 @@ bool MYSQL_BIN_LOG::reset_logs(THD* thd)
     {
       if (my_errno == ENOENT) 
       {
-        push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             linfo.log_file_name);
         sql_print_information("Failed to delete file '%s'",
@@ -2174,7 +2174,7 @@ bool MYSQL_BIN_LOG::reset_logs(THD* thd)
       }
       else
       {
-        push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
                             "a problem with deleting %s; "
                             "consider examining correspondence "
@@ -2195,7 +2195,7 @@ bool MYSQL_BIN_LOG::reset_logs(THD* thd)
   {
     if (my_errno == ENOENT) 
     {
-      push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                           index_file_name);
       sql_print_information("Failed to delete file '%s'",
@@ -2205,7 +2205,7 @@ bool MYSQL_BIN_LOG::reset_logs(THD* thd)
     }
     else
     {
-      push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_BINLOG_PURGE_FATAL_ERR,
                           "a problem with deleting %s; "
                           "consider examining correspondence "
@@ -2413,7 +2413,7 @@ int MYSQL_BIN_LOG::purge_logs(const char *to_log,
           It's not fatal if we can't stat a log file that does not exist;
           If we could not stat, we won't delete.
         */     
-        push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
         sql_print_information("Failed to execute stat on file '%s'",
@@ -2425,7 +2425,7 @@ int MYSQL_BIN_LOG::purge_logs(const char *to_log,
         /*
           Other than ENOENT are fatal
         */
-        push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
                             "a problem with getting info on being purged %s; "
                             "consider examining correspondence "
@@ -2447,7 +2447,7 @@ int MYSQL_BIN_LOG::purge_logs(const char *to_log,
       {
         if (my_errno == ENOENT) 
         {
-          push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                               log_info.log_file_name);
           sql_print_information("Failed to delete file '%s'",
@@ -2456,7 +2456,7 @@ int MYSQL_BIN_LOG::purge_logs(const char *to_log,
         }
         else
         {
-          push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                               ER_BINLOG_PURGE_FATAL_ERR,
                               "a problem with deleting %s; "
                               "consider examining correspondence "
@@ -2539,7 +2539,7 @@ int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
         /*
           It's not fatal if we can't stat a log file that does not exist.
         */     
-        push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
 	sql_print_information("Failed to execute stat on file '%s'",
@@ -2551,7 +2551,7 @@ int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
         /*
           Other than ENOENT are fatal
         */
-        push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+        push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
                             "a problem with getting info on being purged %s; "
                             "consider examining correspondence "
@@ -2571,7 +2571,7 @@ int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
         if (my_errno == ENOENT) 
         {
           /* It's not fatal even if we can't delete a log file */
-          push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                               log_info.log_file_name);
           sql_print_information("Failed to delete file '%s'",
@@ -2580,7 +2580,7 @@ int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
         }
         else
         {
-          push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+          push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                               ER_BINLOG_PURGE_FATAL_ERR,
                               "a problem with deleting %s; "
                               "consider examining correspondence "
@@ -3427,7 +3427,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
       assert(carry < LOG_EVENT_HEADER_LEN);
 
       /* assemble both halves */
-      memcpy(&header[carry], (char *)cache->read_pos, LOG_EVENT_HEADER_LEN - carry);
+      memcpy(&header[carry], cache->read_pos, LOG_EVENT_HEADER_LEN - carry);
 
       /* fix end_log_pos */
       val= uint4korr(&header[LOG_POS_OFFSET]) + group;
@@ -3441,7 +3441,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
         copy fixed second half of header to cache so the correct
         version will be written later.
       */
-      memcpy((char *)cache->read_pos, &header[carry], LOG_EVENT_HEADER_LEN - carry);
+      memcpy(cache->read_pos, &header[carry], LOG_EVENT_HEADER_LEN - carry);
 
       /* next event header at ... */
       hdr_offs = uint4korr(&header[EVENT_LEN_OFFSET]) - carry;
@@ -3470,7 +3470,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
         if (hdr_offs + LOG_EVENT_HEADER_LEN > length)
         {
           carry= length - hdr_offs;
-          memcpy(header, (char *)cache->read_pos + hdr_offs, carry);
+          memcpy(header, cache->read_pos + hdr_offs, carry);
           length= hdr_offs;
         }
         else

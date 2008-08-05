@@ -19,8 +19,11 @@
 #include <mystrings/m_ctype.h>
 
 static void setup_key_functions(MI_KEYDEF *keyinfo);
-#define get_next_element(to,pos,size) { memcpy((char*) to,pos,(size_t) size); \
-					pos+=size;}
+#define get_next_element(to,pos,size) \
+  do {                                \
+    memcpy(to, pos, size);            \
+    pos+=size;                        \
+  } while (0)
 
 
 #define disk_pos_assert(pos, end_pos) \
@@ -77,7 +80,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   lock_error=1;
   errpos=0;
   head_length=sizeof(share_buff.state.header);
-  memset((uchar*) &info, 0, sizeof(info));
+  memset(&info, 0, sizeof(info));
 
   my_realpath(name_buff, fn_format(org_name,name,"",MI_NAME_IEXT,
                                    MY_UNPACK_FILENAME),MYF(0));
@@ -85,7 +88,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   if (!(old_info=test_if_reopen(name_buff)))
   {
     share= &share_buff;
-    memset((uchar*) &share_buff, 0, sizeof(share_buff));
+    memset(&share_buff, 0, sizeof(share_buff));
     share_buff.state.rec_per_key_part=rec_per_key_part;
     share_buff.state.key_root=key_root;
     share_buff.state.key_del=key_del;
@@ -107,8 +110,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
       my_errno= HA_ERR_NOT_A_TABLE;
       goto err;
     }
-    if (memcmp((uchar*) share->state.header.file_version,
-	       (uchar*) myisam_file_magic, 4))
+    if (memcmp(share->state.header.file_version, myisam_file_magic, 4))
     {
       my_errno=HA_ERR_NOT_A_TABLE;
       goto err;
@@ -242,13 +244,12 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
       goto err;
     errpos=4;
     *share=share_buff;
-    memcpy((char*) share->state.rec_per_key_part,
-	   (char*) rec_per_key_part, sizeof(long)*key_parts);
-    memcpy((char*) share->state.key_root,
-	   (char*) key_root, sizeof(my_off_t)*keys);
-    memcpy((char*) share->state.key_del,
-	   (char*) key_del, (sizeof(my_off_t) *
-			     share->state.header.max_block_size_index));
+    memcpy(share->state.rec_per_key_part, rec_per_key_part,
+           sizeof(long)*key_parts);
+    memcpy(share->state.key_root, key_root,
+           sizeof(my_off_t)*keys);
+    memcpy(share->state.key_del, key_del,
+           sizeof(my_off_t) * share->state.header.max_block_size_index);
     strmov(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
     strmov(share->index_file_name,  index_name);

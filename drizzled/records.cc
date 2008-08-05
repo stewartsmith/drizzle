@@ -58,7 +58,7 @@ void init_read_record_idx(READ_RECORD *info,
                           bool print_error, uint idx)
 {
   empty_record(table);
-  memset((char*) info, 0, sizeof(*info));
+  memset(info, 0, sizeof(*info));
   info->table= table;
   info->file=  table->file;
   info->record= table->record[0];
@@ -146,7 +146,7 @@ void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
 {
   IO_CACHE *tempfile;
 
-  memset((char*) info, 0, sizeof(*info));
+  memset(info, 0, sizeof(*info));
   info->thd=thd;
   info->table=table;
   info->file= table->file;

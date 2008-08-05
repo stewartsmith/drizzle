@@ -98,7 +98,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
       if (!(args=(Item**) thd->alloc(sizeof(Item*)*arg_count)))
 	return;
     }
-    memcpy((char*) args, (char*) item->args, sizeof(Item*)*arg_count);
+    memcpy(args, item->args, sizeof(Item*)*arg_count);
   }
 }
 
@@ -607,7 +607,7 @@ void Item_func::signal_divide_by_null()
 {
   THD *thd= current_thd;
   if (thd->variables.sql_mode & MODE_ERROR_FOR_DIVISION_BY_ZERO)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO,
                  ER(ER_DIVISION_BY_ZERO));
   null_value= 1;
 }
@@ -914,7 +914,7 @@ int64_t Item_func_signed::val_int_from_str(int *error)
     char err_buff[128];
     String err_tmp(err_buff,(uint32_t) sizeof(err_buff), system_charset_info);
     err_tmp.copy(start, length, system_charset_info);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "INTEGER",
                         err_tmp.c_ptr());
@@ -939,7 +939,7 @@ int64_t Item_func_signed::val_int()
   value= val_int_from_str(&error);
   if (value < 0 && error == 0)
   {
-    push_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "Cast to signed converted positive out-of-range integer to "
                  "it's negative complement");
   }
@@ -980,7 +980,7 @@ int64_t Item_func_unsigned::val_int()
 
   value= val_int_from_str(&error);
   if (error < 0)
-    push_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "Cast to unsigned converted negative integer to it's "
                  "positive complement");
   return value;
@@ -1048,7 +1048,7 @@ my_decimal *Item_decimal_typecast::val_decimal(my_decimal *dec)
   return dec;
 
 err:
-  push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+  push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                       ER_WARN_DATA_OUT_OF_RANGE,
                       ER(ER_WARN_DATA_OUT_OF_RANGE),
                       name, 1);
@@ -2857,7 +2857,7 @@ udf_handler::fix_fields(THD *thd, Item_result_field *func,
 
   if (u_d->func_init)
   {
-    char init_msg_buff[MYSQL_ERRMSG_SIZE];
+    char init_msg_buff[DRIZZLE_ERRMSG_SIZE];
     char *to=num_buffer;
     for (uint i=0; i < arg_count; i++)
     {
@@ -3362,7 +3362,7 @@ int64_t Item_func_benchmark::val_int()
     {
       char buff[22];
       llstr(((int64_t) loop_count), buff);
-      push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                           "count", buff, "benchmark");
     }

@@ -20,7 +20,7 @@
 #include <libdrizzle/drizzle.h>
 #include "sql_state.h"
 
-const char *mysql_errno_to_sqlstate(uint mysql_errno)
+const char *drizzle_errno_to_sqlstate(uint mysql_errno)
 {
   uint first=0, end= array_elements(sqlstate_map)-1;
   struct st_map_errno_to_sqlstate *map;

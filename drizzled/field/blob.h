@@ -96,7 +96,7 @@ public:
     return (uint32_t) (((uint64_t) 1 << (packlength*8)) -1);
   }
   int reset(void) { memset(ptr, 0, packlength+sizeof(uchar*)); return 0; }
-  void reset_fields() { memset((uchar*) &value, 0, sizeof(value)); }
+  void reset_fields() { memset(&value, 0, sizeof(value)); }
 #ifndef WORDS_BIGENDIAN
   static
 #endif
@@ -129,11 +129,11 @@ public:
   void put_length(uchar *pos, uint32_t length);
   inline void get_ptr(uchar **str)
     {
-      memcpy((uchar*) str,ptr+packlength,sizeof(uchar*));
+      memcpy(str,ptr+packlength,sizeof(uchar*));
     }
   inline void get_ptr(uchar **str, uint row_offset)
     {
-      memcpy((uchar*) str,ptr+packlength+row_offset,sizeof(char*));
+      memcpy(str,ptr+packlength+row_offset,sizeof(char*));
     }
   inline void set_ptr(uchar *length, uchar *data)
     {
@@ -182,7 +182,7 @@ public:
   uint packed_col_length(const uchar *col_ptr, uint length);
   uint max_packed_col_length(uint max_length);
   void free() { value.free(); }
-  inline void clear_temporary() { memset((uchar*) &value, 0, sizeof(value)); }
+  inline void clear_temporary() { memset(&value, 0, sizeof(value)); }
   friend int field_conv(Field *to,Field *from);
   uint size_of() const { return sizeof(*this); }
   bool has_charset(void) const

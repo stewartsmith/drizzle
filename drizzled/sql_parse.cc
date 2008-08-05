@@ -165,7 +165,7 @@ uint sql_command_flags[SQLCOM_END+1];
 
 void init_update_queries(void)
 {
-  memset((uchar*) &sql_command_flags, 0, sizeof(sql_command_flags));
+  memset(&sql_command_flags, 0, sizeof(sql_command_flags));
 
   sql_command_flags[SQLCOM_CREATE_TABLE]=   CF_CHANGES_DATA;
   sql_command_flags[SQLCOM_CREATE_INDEX]=   CF_CHANGES_DATA;
@@ -726,7 +726,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     lex_start(thd);
 
     status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_FIELDS]);
-    memset((char*) &table_list, 0, sizeof(table_list));
+    memset(&table_list, 0, sizeof(table_list));
     if (thd->copy_db_to(&table_list.db, &table_list.db_length))
       break;
     /*
@@ -1221,7 +1221,7 @@ mysql_execute_command(THD *thd)
     Don't reset warnings when executing a stored routine.
   */
   if (all_tables || !lex->is_single_level_stmt())
-    mysql_reset_errors(thd, 0);
+    drizzle_reset_errors(thd, 0);
 
   if (unlikely(thd->slave_thread))
   {
@@ -1350,16 +1350,16 @@ mysql_execute_command(THD *thd)
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      ((1L << (uint) MYSQL_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR)
+			      ((1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
 			       ));
     break;
   }
   case SQLCOM_SHOW_ERRORS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR));
+			      (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
   case SQLCOM_SHOW_SLAVE_HOSTS:
@@ -1395,7 +1395,7 @@ mysql_execute_command(THD *thd)
     }
     else
     {
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                    "the master info structure does not exist");
       my_ok(thd);
     }
@@ -1635,7 +1635,7 @@ end_with_restore_list:
     */
     thd->enable_slow_log= opt_log_slow_admin_statements;
 
-    memset((char*) &create_info, 0, sizeof(create_info));
+    memset(&create_info, 0, sizeof(create_info));
     create_info.db_type= 0;
     create_info.row_type= ROW_TYPE_NOT_USED;
     create_info.default_table_charset= thd->variables.collation_database;
@@ -1701,17 +1701,17 @@ end_with_restore_list:
 
       { // Rename of table
           TABLE_LIST tmp_table;
-          memset((char*) &tmp_table, 0, sizeof(tmp_table));
+          memset(&tmp_table, 0, sizeof(tmp_table));
           tmp_table.table_name= lex->name.str;
           tmp_table.db=select_lex->db;
       }
 
       /* Don't yet allow changing of symlinks with ALTER TABLE */
       if (create_info.data_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "DATA DIRECTORY option ignored");
       if (create_info.index_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "INDEX DIRECTORY option ignored");
       create_info.data_file_name= create_info.index_file_name= NULL;
       /* ALTER TABLE ends previous transaction */
@@ -2498,7 +2498,7 @@ end_with_restore_list:
         if (((thd->options & OPTION_KEEP_LOG) || 
              thd->transaction.all.modified_non_trans_table) &&
             !thd->slave_thread)
-          push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+          push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                        ER_WARNING_NOT_COMPLETE_ROLLBACK,
                        ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
         my_ok(thd);
@@ -2637,7 +2637,7 @@ bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
         str.length(0);
         thd->lex->unit.print(&str, QT_ORDINARY);
         str.append('\0');
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                      ER_YES, str.ptr());
       }
       if (res)
@@ -2713,8 +2713,8 @@ bool my_yyoverflow(short **yyss, YYSTYPE **yyvs, ulong *yystacksize)
     return 1;
   if (old_info)
   {						// Copy old info from stack
-    memcpy(lex->yacc_yyss, (uchar*) *yyss, old_info*sizeof(**yyss));
-    memcpy(lex->yacc_yyvs, (uchar*) *yyvs, old_info*sizeof(**yyvs));
+    memcpy(lex->yacc_yyss, *yyss, old_info*sizeof(**yyss));
+    memcpy(lex->yacc_yyvs, *yyvs, old_info*sizeof(**yyvs));
   }
   *yyss=(short*) lex->yacc_yyss;
   *yyvs=(YYSTYPE*) lex->yacc_yyvs;
@@ -2892,7 +2892,7 @@ void create_select_for_variable(const char *var_name)
   lex->sql_command= SQLCOM_SELECT;
   tmp.str= (char*) var_name;
   tmp.length=strlen(var_name);
-  memset((char*) &null_lex_string.str, 0, sizeof(null_lex_string));
+  memset(&null_lex_string.str, 0, sizeof(null_lex_string));
   /*
     We set the name of Item to @@session.var_name because that then is used
     as the column name in the output.

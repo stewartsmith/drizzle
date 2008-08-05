@@ -84,7 +84,7 @@ static void set_data_file_type(SORT_INFO *sort_info, MYISAM_SHARE *share);
 
 void myisamchk_init(MI_CHECK *param)
 {
-  memset((uchar*) param, 0, sizeof(*param));
+  memset(param, 0, sizeof(*param));
   param->opt_follow_links=1;
   param->keys_in_use= ~(uint64_t) 0;
   param->search_after_block=HA_OFFSET_ERROR;
@@ -430,9 +430,10 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
     if (! mi_is_key_active(share->state.key_map, key))
     {
       /* Remember old statistics for key */
-      memcpy((char*) rec_per_key_part,
-	     (char*) (share->state.rec_per_key_part +
-		      (uint) (rec_per_key_part - param->rec_per_key_part)),
+      assert(rec_per_key_part >= param->rec_per_key_part);
+      memcpy(rec_per_key_part,
+	     (share->state.rec_per_key_part +
+              (rec_per_key_part - param->rec_per_key_part)),
 	     keyinfo->keysegs*sizeof(*rec_per_key_part));
       continue;
     }
@@ -440,8 +441,8 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 
     param->record_checksum=init_checksum;
     
-    memset((char*) &param->unique_count, 0, sizeof(param->unique_count));
-    memset((char*) &param->notnull_count, 0, sizeof(param->notnull_count));
+    memset(&param->unique_count, 0, sizeof(param->unique_count));
+    memset(&param->notnull_count, 0, sizeof(param->notnull_count));
 
     if ((!(param->testflag & T_SILENT)))
       printf ("- check data record references index: %d\n",key+1);
@@ -758,7 +759,7 @@ static int chk_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
   {
     if (*killed_ptr(param))
       goto err;
-    memcpy((char*) info->lastkey,(char*) key,key_length);
+    memcpy(info->lastkey,key,key_length);
     info->lastkey_length=key_length;
     if (nod_flag)
     {
@@ -923,7 +924,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   }
 
   pos=my_b_tell(&param->read_cache);
-  memset((char*) key_checksum, 0, info->s->base.keys * sizeof(key_checksum[0]));
+  memset(key_checksum, 0, info->s->base.keys * sizeof(key_checksum[0]));
   while (pos < info->state->data_file_length)
   {
     if (*killed_ptr(param))
@@ -1447,8 +1448,8 @@ int mi_repair(MI_CHECK *param, register MI_INFO *info,
   SORT_INFO sort_info;
   MI_SORT_PARAM sort_param;
 
-  memset((char *)&sort_info, 0, sizeof(sort_info));
-  memset((char *)&sort_param, 0, sizeof(sort_param));
+  memset(&sort_info, 0, sizeof(sort_info));
+  memset(&sort_param, 0, sizeof(sort_param));
   start_records=info->state->records;
   new_header_length=(param->testflag & T_UNPACK) ? 0L :
     share->pack.header_length;
@@ -1961,7 +1962,7 @@ static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
 
   /* Fill block with zero and write it to the new index file */
   length=mi_getint(buff);
-  memset((uchar*) buff+length, 0, keyinfo->block_length-length);
+  memset(buff+length, 0, keyinfo->block_length-length);
   if (my_pwrite(new_file,(uchar*) buff,(uint) keyinfo->block_length,
 		new_page_pos,MYF(MY_NABP | MY_WAIT_IF_FULL)))
   {
@@ -2084,8 +2085,8 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
   if (info->s->options & (HA_OPTION_CHECKSUM | HA_OPTION_COMPRESS_RECORD))
     param->testflag|=T_CALC_CHECKSUM;
 
-  memset((char*)&sort_info, 0, sizeof(sort_info));
-  memset((char *)&sort_param, 0, sizeof(sort_param));
+  memset(&sort_info, 0, sizeof(sort_info));
+  memset(&sort_param, 0, sizeof(sort_param));
   if (!(sort_info.key_block=
 	alloc_key_blocks(param,
 			 (uint) param->sort_key_blocks,
@@ -2196,9 +2197,10 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
     if (! mi_is_key_active(key_map, sort_param.key))
     {
       /* Remember old statistics for key */
-      memcpy((char*) rec_per_key_part,
-	     (char*) (share->state.rec_per_key_part +
-		      (uint) (rec_per_key_part - param->rec_per_key_part)),
+      assert(rec_per_key_part >= param->rec_per_key_part);
+      memcpy(rec_per_key_part,
+	     (share->state.rec_per_key_part +
+              (rec_per_key_part - param->rec_per_key_part)),
 	     sort_param.keyinfo->keysegs*sizeof(*rec_per_key_part));
       continue;
     }
@@ -2207,7 +2209,7 @@ int mi_repair_by_sort(MI_CHECK *param, register MI_INFO *info,
       printf ("- Fixing index %d\n",sort_param.key+1);
     sort_param.max_pos=sort_param.pos=share->pack.header_length;
     keyseg=sort_param.seg;
-    memset((char*) sort_param.unique, 0, sizeof(sort_param.unique));
+    memset(sort_param.unique, 0, sizeof(sort_param.unique));
     sort_param.key_length=share->rec_reflength;
     for (i=0 ; keyseg[i].type != HA_KEYTYPE_END; i++)
     {
@@ -2492,7 +2494,7 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
       position 'new_header_length'.
     }
   */
-  memset((char*)&sort_info, 0, sizeof(sort_info));
+  memset(&sort_info, 0, sizeof(sort_info));
   /* Initialize pthread structures before goto err. */
   pthread_mutex_init(&sort_info.mutex, MY_MUTEX_INIT_FAST);
   pthread_cond_init(&sort_info.cond, 0);
@@ -2621,9 +2623,10 @@ int mi_repair_parallel(MI_CHECK *param, register MI_INFO *info,
     if (! mi_is_key_active(key_map, key))
     {
       /* Remember old statistics for key */
-      memcpy((char*) rec_per_key_part,
-	     (char*) (share->state.rec_per_key_part+
-		      (uint) (rec_per_key_part - param->rec_per_key_part)),
+      assert(rec_per_key_part >= param->rec_per_key_part);
+      memcpy(rec_per_key_part,
+	     (share->state.rec_per_key_part +
+              (rec_per_key_part - param->rec_per_key_part)),
 	     sort_param[i].keyinfo->keysegs*sizeof(*rec_per_key_part));
       istep=0;
       continue;
@@ -3621,8 +3624,8 @@ static int sort_insert_key(MI_SORT_PARAM *sort_param,
 
 	/* Fill block with end-zero and write filled block */
   mi_putint(anc_buff,key_block->last_length,nod_flag);
-  memset((uchar*) anc_buff+key_block->last_length, 0,
-         keyinfo->block_length- key_block->last_length);
+  memset(anc_buff+key_block->last_length, 0,
+         keyinfo->block_length - key_block->last_length);
   key_file_length=info->state->key_file_length;
   if ((filepos=_mi_new(info,keyinfo,DFLT_INIT_HITS)) == HA_OFFSET_ERROR)
     return(1);
@@ -3724,7 +3727,7 @@ int flush_pending_blocks(MI_SORT_PARAM *sort_param)
     if (nod_flag)
       _mi_kpointer(info,key_block->end_pos,filepos);
     key_file_length=info->state->key_file_length;
-    memset((uchar*) key_block->buff+length, 0, keyinfo->block_length-length);
+    memset(key_block->buff+length, 0, keyinfo->block_length-length);
     if ((filepos=_mi_new(info,keyinfo,DFLT_INIT_HITS)) == HA_OFFSET_ERROR)
       return(1);
 
@@ -3806,8 +3809,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
     (param->testflag & T_UNPACK);
   if (!(keyinfo=(MI_KEYDEF*) my_alloca(sizeof(MI_KEYDEF)*share.base.keys)))
     return(0);
-  memcpy((uchar*) keyinfo,(uchar*) share.keyinfo,
-	 (size_t) (sizeof(MI_KEYDEF)*share.base.keys));
+  memcpy(keyinfo,share.keyinfo,sizeof(MI_KEYDEF)*share.base.keys);
 
   key_parts= share.base.all_key_parts;
   if (!(keysegs=(HA_KEYSEG*) my_alloca(sizeof(HA_KEYSEG)*
@@ -3833,8 +3835,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   }
 
   /* Copy the column definitions */
-  memcpy((uchar*) recdef,(uchar*) share.rec,
-	 (size_t) (sizeof(MI_COLUMNDEF)*(share.base.fields+1)));
+  memcpy(recdef, share.rec, sizeof(MI_COLUMNDEF)*(share.base.fields+1));
   for (rec=recdef,end=recdef+share.base.fields; rec != end ; rec++)
   {
     if (unpack && !(share.options & HA_OPTION_PACK_RECORD) &&
@@ -3845,9 +3846,9 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   }
 
   /* Change the new key to point at the saved key segments */
-  memcpy((uchar*) keysegs,(uchar*) share.keyparts,
-	 (size_t) (sizeof(HA_KEYSEG)*(key_parts+share.base.keys+
-				      share.state.header.uniques)));
+  memcpy(keysegs,share.keyparts,
+	 sizeof(HA_KEYSEG)*(key_parts+share.base.keys+
+                            share.state.header.uniques));
   keyseg=keysegs;
   for (key=keyinfo,key_end=keyinfo+share.base.keys; key != key_end ; key++)
   {
@@ -3862,8 +3863,8 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
 
   /* Copy the unique definitions and change them to point at the new key
      segments*/
-  memcpy((uchar*) uniquedef,(uchar*) share.uniqueinfo,
-	 (size_t) (sizeof(MI_UNIQUEDEF)*(share.state.header.uniques)));
+  memcpy(uniquedef,share.uniqueinfo,
+         sizeof(MI_UNIQUEDEF)*(share.state.header.uniques));
   for (u_ptr=uniquedef,u_end=uniquedef+share.state.header.uniques;
        u_ptr != u_end ; u_ptr++)
   {
@@ -3888,7 +3889,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename)
   set_if_bigger(file_length,(uint64_t) share.base.max_data_file_length);
 
   VOID(mi_close(*org_info));
-  memset((char*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   create_info.max_rows=max(max_records,share.base.records);
   create_info.reloc_rows=share.base.reloc;
   create_info.old_options=(share.options |
@@ -4284,7 +4285,7 @@ set_data_file_type(SORT_INFO *sort_info, MYISAM_SHARE *share)
       sort_info->new_data_file_type = STATIC_RECORD;
 
     /* Set delete_function for sort_delete_record() */
-    memcpy((char*) &tmp, share, sizeof(*share));
+    memcpy(&tmp, share, sizeof(*share));
     tmp.options= ~HA_OPTION_COMPRESS_RECORD;
     mi_setup_functions(&tmp);
     share->delete_record=tmp.delete_record;

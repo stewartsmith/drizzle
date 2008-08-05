@@ -656,7 +656,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
     char buff[128];
     String tmp(buff, (uint32_t) sizeof(buff), system_charset_info);
     tmp.copy(str, length, system_charset_info);
-    push_warning_printf(table->in_use, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                         "integer", tmp.c_ptr(), field_name,
@@ -666,7 +666,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
   /* Test if we have garbage at the end of the given string. */
   if (test_if_important_data(cs, int_end, str + length))
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -734,7 +734,7 @@ bool Field_num::get_int(CHARSET_INFO *cs, const char *from, uint len,
   return 0;
 
 out_of_range:
-  set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+  set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
   return 1;
 }
 
@@ -754,12 +754,12 @@ int Field::warn_if_overflow(int op_result)
 {
   if (op_result == E_DEC_OVERFLOW)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     return 1;
   }
   if (op_result == E_DEC_TRUNCATED)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     /* We return 0 here as this is not a critical issue */
   }
   return 0;
@@ -1110,7 +1110,7 @@ int64_t Field::convert_decimal2int64_t(const my_decimal *val,
   {
     if (val->sign())
     {
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       i= 0;
       *err= 1;
     }
@@ -1374,13 +1374,13 @@ int Field_tiny::store(double nr)
     if (nr < 0.0)
     {
       *ptr=0;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > 255.0)
     {
       *ptr=(char) 255;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1391,13 +1391,13 @@ int Field_tiny::store(double nr)
     if (nr < -128.0)
     {
       *ptr= (char) -128;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > 127.0)
     {
       *ptr=127;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1416,13 +1416,13 @@ int Field_tiny::store(int64_t nr, bool unsigned_val)
     if (nr < 0 && !unsigned_val)
     {
       *ptr= 0;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if ((uint64_t) nr > (uint64_t) 255)
     {
       *ptr= (char) 255;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1435,13 +1435,13 @@ int Field_tiny::store(int64_t nr, bool unsigned_val)
     if (nr < -128)
     {
       *ptr= (char) -128;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else if (nr > 127)
     {
       *ptr=127;
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
       error= 1;
     }
     else
@@ -1596,8 +1596,8 @@ check_string_copy_error(Field_str *field,
   *t= '\0';
   push_warning_printf(field->table->in_use, 
                       field->table->in_use->abort_on_warning ?
-                      MYSQL_ERROR::WARN_LEVEL_ERROR :
-                      MYSQL_ERROR::WARN_LEVEL_WARN,
+                      DRIZZLE_ERROR::WARN_LEVEL_ERROR :
+                      DRIZZLE_ERROR::WARN_LEVEL_WARN,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
                       ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                       "string", tmp, field->field_name,
@@ -1632,12 +1632,12 @@ Field_longstr::report_if_important_data(const char *ptr, const char *end)
     if (test_if_important_data(field_charset, ptr, end))
     {
       if (table->in_use->abort_on_warning)
-        set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+        set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
       else
-        set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+        set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     }
     else /* If we lost only spaces then produce a NOTE, not a WARNING */
-      set_warning(MYSQL_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE, ER_WARN_DATA_TRUNCATED, 1);
     return 2;
   }
   return 0;
@@ -1663,9 +1663,9 @@ int Field_str::store(double nr)
   if (error)
   {
     if (table->in_use->abort_on_warning)
-      set_warning(MYSQL_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DATA_TOO_LONG, 1);
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   return store(buff, length, charset());
 }
@@ -1803,13 +1803,13 @@ int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
       if (err || end != from+length || tmp > typelib->count)
       {
 	tmp=0;
-	set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+	set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
       }
       if (!table->in_use->count_cuted_fields)
         err= 0;
     }
     else
-      set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+      set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   store_type((uint64_t) tmp);
   return err;
@@ -1828,7 +1828,7 @@ int Field_enum::store(int64_t nr,
   int error= 0;
   if ((uint64_t) nr > typelib->count || nr == 0)
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     if (nr != 0 || table->in_use->count_cuted_fields)
     {
       nr= 0;
@@ -2245,7 +2245,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
         /*
           Otherwise a default of '' is just a warning.
         */
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_BLOB_CANT_HAVE_DEFAULT,
                             ER(ER_BLOB_CANT_HAVE_DEFAULT),
                             fld_name);
@@ -2660,7 +2660,7 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
 */
 
 bool 
-Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
+Field::set_warning(DRIZZLE_ERROR::enum_warning_level level, uint code,
                    int cuted_increment)
 {
   /*
@@ -2675,7 +2675,7 @@ Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
                         thd->row_count);
     return 0;
   }
-  return level >= MYSQL_ERROR::WARN_LEVEL_WARN;
+  return level >= DRIZZLE_ERROR::WARN_LEVEL_WARN;
 }
 
 
@@ -2696,14 +2696,14 @@ Field::set_warning(MYSQL_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, 
                             unsigned int code, 
                             const char *str, uint str_length, 
                             timestamp_type ts_type, int cuted_increment)
 {
   THD *thd= table ? table->in_use : current_thd;
   if ((thd->really_abort_on_warning() &&
-       level >= MYSQL_ERROR::WARN_LEVEL_WARN) ||
+       level >= DRIZZLE_ERROR::WARN_LEVEL_WARN) ||
       set_warning(level, code, cuted_increment))
     make_truncated_value_warning(thd, level, str, str_length, ts_type,
                                  field_name);
@@ -2726,7 +2726,7 @@ Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
                             int64_t nr, timestamp_type ts_type,
                             int cuted_increment)
 {
@@ -2757,7 +2757,7 @@ Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code,
 */
 
 void 
-Field::set_datetime_warning(MYSQL_ERROR::enum_warning_level level, uint code, 
+Field::set_datetime_warning(DRIZZLE_ERROR::enum_warning_level level, uint code, 
                             double nr, timestamp_type ts_type)
 {
   THD *thd= table ? table->in_use : current_thd;

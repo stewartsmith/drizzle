@@ -867,7 +867,7 @@ int ha_prepare(THD *thd)
       }
       else
       {
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_ILLEGAL_HA, ER(ER_ILLEGAL_HA),
                             ha_resolve_storage_engine_name(ht));
       }
@@ -1157,7 +1157,7 @@ int ha_rollback_trans(THD *thd, bool all)
   */
   if (is_real_trans && thd->transaction.all.modified_non_trans_table &&
       !thd->slave_thread && thd->killed != THD::KILL_CONNECTION)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARNING_NOT_COMPLETE_ROLLBACK,
                  ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
   return(error);
@@ -1598,7 +1598,7 @@ int ha_start_consistent_snapshot(THD *thd)
     exist:
   */
   if (warn)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                  "This MySQL server does not support any "
                  "consistent-read capable storage engine");
   return 0;
@@ -1664,9 +1664,9 @@ struct Ha_delete_table_error_handler: public Internal_error_handler
 public:
   virtual bool handle_error(uint sql_errno,
                             const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
+                            DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
-  char buff[MYSQL_ERRMSG_SIZE];
+  char buff[DRIZZLE_ERRMSG_SIZE];
 };
 
 
@@ -1674,7 +1674,7 @@ bool
 Ha_delete_table_error_handler::
 handle_error(uint sql_errno  __attribute__((unused)),
              const char *message,
-             MYSQL_ERROR::enum_warning_level level __attribute__((unused)),
+             DRIZZLE_ERROR::enum_warning_level level __attribute__((unused)),
              THD *thd __attribute__((unused)))
 {
   /* Grab the error message */
@@ -1696,8 +1696,8 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
   TABLE dummy_table;
   TABLE_SHARE dummy_share;
 
-  memset((char*) &dummy_table, 0, sizeof(dummy_table));
-  memset((char*) &dummy_share, 0, sizeof(dummy_share));
+  memset(&dummy_table, 0, sizeof(dummy_table));
+  memset(&dummy_share, 0, sizeof(dummy_share));
   dummy_table.s= &dummy_share;
 
   /* DB_TYPE_UNKNOWN is used in ALTER TABLE when renaming only .frm files */
@@ -1736,7 +1736,7 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
       XXX: should we convert *all* errors to warnings here?
       What if the error is fatal?
     */
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, error,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error,
                 ha_delete_table_error_handler.buff);
   }
   delete file;
@@ -2296,7 +2296,7 @@ void handler::print_keydup_error(uint key_nr, const char *msg)
   {
     /* Table is opened and defined at this point */
     key_unpack(&str,table,(uint) key_nr);
-    uint max_length=MYSQL_ERRMSG_SIZE-(uint) strlen(msg);
+    uint max_length=DRIZZLE_ERRMSG_SIZE-(uint) strlen(msg);
     if (str.length() >= max_length)
     {
       str.length(max_length-4);
@@ -2360,7 +2360,7 @@ void handler::print_error(int error, myf errflag)
       String str(key,sizeof(key),system_charset_info);
       /* Table is opened and defined at this point */
       key_unpack(&str,table,(uint) key_nr);
-      max_length= (MYSQL_ERRMSG_SIZE-
+      max_length= (DRIZZLE_ERRMSG_SIZE-
                    (uint) strlen(ER(ER_FOREIGN_DUPLICATE_KEY)));
       if (str.length() >= max_length)
       {
@@ -3139,7 +3139,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   TABLE table;
   TABLE_SHARE share;
 
-  memset((uchar*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   if ((error= ha_discover(thd, db, name, &frmblob, &frmlen)))
   {
     /* Table could not be discovered and thus not created */
