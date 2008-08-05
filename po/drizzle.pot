@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle 7.0.0\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-04 12:48-0700\n"
+"POT-Creation-Date: 2008-08-05 11:03-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -480,139 +480,139 @@ msgstr ""
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
 msgstr ""
 
-#: client/drizzle.c:1565
+#: client/drizzle.c:1561
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 
-#: client/drizzle.c:1936
+#: client/drizzle.c:1932
 #, c-format
 msgid "Unknown command '\\%c'."
 msgstr ""
 
-#: client/drizzle.c:2366
+#: client/drizzle.c:2362
 msgid ""
 "Reading table information for completion of table and column names\n"
 "    You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 
-#: client/drizzle.c:2463
+#: client/drizzle.c:2459
 msgid "No connection. Trying to reconnect..."
 msgstr ""
 
-#: client/drizzle.c:2469
+#: client/drizzle.c:2465
 msgid "Can't connect to the server\n"
 msgstr ""
 
-#: client/drizzle.c:2526
+#: client/drizzle.c:2522
 msgid "categories:"
 msgstr ""
 
-#: client/drizzle.c:2526
+#: client/drizzle.c:2522
 msgid "topics:"
 msgstr ""
 
-#: client/drizzle.c:2577
+#: client/drizzle.c:2573
 #, c-format
 msgid "Name: '%s'\n"
 msgstr ""
 
-#: client/drizzle.c:2578
+#: client/drizzle.c:2574
 #, c-format
 msgid ""
 "Description:\n"
 "%s"
 msgstr ""
 
-#: client/drizzle.c:2580
+#: client/drizzle.c:2576
 #, c-format
 msgid ""
 "Examples:\n"
 "%s"
 msgstr ""
 
-#: client/drizzle.c:2593
+#: client/drizzle.c:2589
 msgid "Many help items for your request exist."
 msgstr ""
 
-#: client/drizzle.c:2594
+#: client/drizzle.c:2590
 msgid ""
 "To make a more specific request, please type 'help <item>',\n"
 "where <item> is one of the following"
 msgstr ""
 
-#: client/drizzle.c:2600
+#: client/drizzle.c:2596
 #, c-format
 msgid "You asked for help about help category: '%s'\n"
 msgstr ""
 
-#: client/drizzle.c:2601
+#: client/drizzle.c:2597
 msgid ""
 "For more information, type 'help <item>', where <item> is one of the "
 "following"
 msgstr ""
 
-#: client/drizzle.c:2614
+#: client/drizzle.c:2610
 msgid ""
 "\n"
 "Nothing found"
 msgstr ""
 
-#: client/drizzle.c:2615
+#: client/drizzle.c:2611
 msgid "Please try to run 'help contents' for a list of all accessible topics\n"
 msgstr ""
 
-#: client/drizzle.c:2638
+#: client/drizzle.c:2634
 msgid "List of all Drizzle commands:"
 msgstr ""
 
-#: client/drizzle.c:2640
+#: client/drizzle.c:2636
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
 
-#: client/drizzle.c:2651
+#: client/drizzle.c:2647
 msgid ""
 "\n"
 "For server side help, type 'help contents'\n"
 msgstr ""
 
-#: client/drizzle.c:2674
+#: client/drizzle.c:2670
 msgid "Usage: \\C char_setname | charset charset_name"
 msgstr ""
 
-#: client/drizzle.c:2684
+#: client/drizzle.c:2680
 msgid "Charset changed"
 msgstr ""
 
-#: client/drizzle.c:2686
+#: client/drizzle.c:2682
 msgid "Charset is not found"
 msgstr ""
 
-#: client/drizzle.c:2717
+#: client/drizzle.c:2713
 msgid "No query specified\n"
 msgstr ""
 
-#: client/drizzle.c:2732
+#: client/drizzle.c:2728
 msgid "Ignoring query to other database"
 msgstr ""
 
-#: client/drizzle.c:2781
+#: client/drizzle.c:2777
 msgid "Empty set"
 msgstr ""
 
-#: client/drizzle.c:2808
+#: client/drizzle.c:2804
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] ""
 msgstr[1] ""
 
-#: client/drizzle.c:2817
+#: client/drizzle.c:2813
 msgid "Query OK"
 msgstr ""
 
-#: client/drizzle.c:2819
+#: client/drizzle.c:2815
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
@@ -773,9 +773,71 @@ msgstr ""
 msgid "Unknown error %d"
 msgstr ""
 
-#: mysys/my_getopt.c:1164
+#: mysys/my_getopt.c:83
+msgid "Warning: "
+msgstr ""
+
+#: mysys/my_getopt.c:85
+msgid "Info: "
+msgstr ""
+
+#: mysys/my_getopt.c:345
+#, c-format
+msgid "%s: %s: Option '%s' used, but is disabled\n"
+msgstr ""
+
+#: mysys/my_getopt.c:346
+msgid "WARNING"
+msgstr ""
+
+#: mysys/my_getopt.c:346
+msgid "ERROR"
+msgstr ""
+
+#: mysys/my_getopt.c:449
+#, c-format
+msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
+msgstr ""
+
+#: mysys/my_getopt.c:762
+#, c-format
+msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
+msgstr ""
+
+#: mysys/my_getopt.c:943
+#, c-format
+msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
+msgstr ""
+
+#: mysys/my_getopt.c:1165
 #, c-format
 msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
+msgstr ""
+
+#: mysys/my_getopt.c:1185
+#, c-format
+msgid ""
+"\n"
+"Variables (--variable-name=value)\n"
+"and boolean options {false|true}  Value (after reading options)\n"
+"--------------------------------- -----------------------------\n"
+msgstr ""
+
+#: mysys/my_getopt.c:1201 mysys/my_getopt.c:1217
+msgid "(No default value)"
+msgstr ""
+
+#: mysys/my_getopt.c:1220
+msgid "true"
+msgstr ""
+
+#: mysys/my_getopt.c:1220
+msgid "false"
+msgstr ""
+
+#: mysys/my_getopt.c:1245
+#, c-format
+msgid "(Disabled)\n"
 msgstr ""
 
 #: mysys/my_handler_errors.h:10
@@ -1507,75 +1569,75 @@ msgstr ""
 msgid "Failed in send_file() while negotiating file transfer close"
 msgstr ""
 
-#: drizzled/table.cc:546
+#: drizzled/table.cc:547
 #, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
 msgstr ""
 
-#: drizzled/table.cc:983 drizzled/table.cc:989
+#: drizzled/table.cc:984 drizzled/table.cc:990
 #, c-format
 msgid ""
 "Found incompatible DECIMAL field '%s' in %s; Please do \"ALTER TABLE '%s' "
 "FORCE\" to fix it!"
 msgstr ""
 
-#: drizzled/table.cc:1161
+#: drizzled/table.cc:1162
 #, c-format
 msgid ""
 "Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE \" to "
 "fix it!"
 msgstr ""
 
-#: drizzled/table.cc:1167
+#: drizzled/table.cc:1168
 #, c-format
 msgid ""
 "Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE\" to "
 "fix it!"
 msgstr ""
 
-#: drizzled/table.cc:1810
+#: drizzled/table.cc:1811
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr ""
 
-#: drizzled/table.cc:1817
+#: drizzled/table.cc:1818
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of MySQL and cannot be "
 "read"
 msgstr ""
 
-#: drizzled/table.cc:2406
+#: drizzled/table.cc:2409
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
 "found '%s'."
 msgstr ""
 
-#: drizzled/table.cc:2432
+#: drizzled/table.cc:2435
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
 "have type %s, found type %s."
 msgstr ""
 
-#: drizzled/table.cc:2441
+#: drizzled/table.cc:2444
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 "position %d to have character set '%s' but the type has no character set."
 msgstr ""
 
-#: drizzled/table.cc:2451
+#: drizzled/table.cc:2454
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 "position %d to have character set '%s' but found character set '%s'."
 msgstr ""
 
-#: drizzled/table.cc:2462
+#: drizzled/table.cc:2465
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "

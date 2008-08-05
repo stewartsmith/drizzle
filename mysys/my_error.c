@@ -14,11 +14,11 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysys_priv.h"
+#include <libdrizzle/gettext.h>
 #include "mysys_err.h"
 #include <mystrings/m_string.h>
 #include <stdarg.h>
 #include <mystrings/m_ctype.h>
-#include <libdrizzle/gettext.h>
 
 /* Define some external variables for error handling */
 
