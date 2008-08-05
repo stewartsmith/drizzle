@@ -136,8 +136,6 @@ void net_send_error(THD *thd, uint sql_errno, const char *err)
   net_send_error_packet(thd, sql_errno, err);
 
   thd->main_da.can_overwrite_status= false;
-
-  return;
 }
 
 /**
@@ -194,8 +192,6 @@ net_send_ok(THD *thd,
   VOID(net_flush(net));
 
   thd->main_da.can_overwrite_status= false;
-
-  return;
 }
 
 /**
@@ -229,7 +225,6 @@ net_send_eof(THD *thd, uint server_status, uint total_warn_count)
     VOID(net_flush(net));
     thd->main_da.can_overwrite_status= false;
   }
-  return;
 }
 
 
