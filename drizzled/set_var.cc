@@ -57,6 +57,7 @@
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
+#include <drizzled/drizzled_error_messages.h>
 
 extern CHARSET_INFO *character_set_filesystem;
 
@@ -576,10 +577,7 @@ sys_var_thd_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
 /* Read only variables */
 
 static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
-static sys_var_have_variable sys_have_crypt(&vars, "have_crypt", &have_crypt);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
-/* Global read-only variable describing server license */
-static sys_var_const_str	sys_license(&vars, "license", STRINGIFY_ARG(LICENSE));
 /* Global variables which enable|disable logging */
 static sys_var_log_state sys_var_general_log(&vars, "general_log", &opt_log,
                                       QUERY_LOG_GENERAL);

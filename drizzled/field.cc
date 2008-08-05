@@ -28,6 +28,7 @@
 #include "mysql_priv.h"
 #include "sql_select.h"
 #include <errno.h>
+#include <drizzled/drizzled_error_messages.h>
 
 // Maximum allowed exponent value for converting string to decimal
 #define MAX_EXPONENT 1024

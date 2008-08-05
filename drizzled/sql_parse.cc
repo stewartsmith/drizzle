@@ -18,6 +18,7 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
@@ -567,6 +568,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     /* Safe because there is always a trailing \0 at the end of the packet */
     char *passwd= strend(user)+1;
 
+
     thd->clear_error();                         // if errors from rollback
 
     /*
@@ -854,8 +856,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
                      cached_open_tables(),
                      (uint) (queries_per_second1000 / 1000),
                      (uint) (queries_per_second1000 % 1000));
-    /* Store the buffer in permanent memory */
-    my_ok(thd, 0, 0, buff);
     VOID(my_net_write(net, (uchar*) buff, length));
     VOID(net_flush(net));
     thd->main_da.disable_status();
@@ -2335,40 +2335,6 @@ end_with_restore_list:
       goto error;
     }
     res= mysql_rm_db(thd, lex->name.str, lex->drop_if_exists, 0);
-    break;
-  }
-  case SQLCOM_ALTER_DB_UPGRADE:
-  {
-    LEX_STRING *db= & lex->name;
-    if (end_active_trans(thd))
-    {
-      res= 1;
-      break;
-    }
-    if (thd->slave_thread && 
-       (!rpl_filter->db_ok(db->str) ||
-        !rpl_filter->db_ok_with_wild_table(db->str)))
-    {
-      res= 1;
-      my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
-      break;
-    }
-    if (check_db_name(db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
-      break;
-    }
-    if (thd->locked_tables || thd->active_transaction())
-    {
-      res= 1;
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-                 ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-
-    res= mysql_upgrade_db(thd, db);
-    if (!res)
-      my_ok(thd);
     break;
   }
   case SQLCOM_ALTER_DB:

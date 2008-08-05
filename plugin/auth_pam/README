@@ -1,0 +1,19 @@
+Hi!
+
+First, as experimental goes, this is pretty experimental.
+
+Next thing, I do not really know PAM. What I do know is how to read man
+pages :)
+
+Go place this:
+auth       required     pam_unix.so
+account    required     pam_unix.so
+
+Into a file located here:
+/etc/pam.d/drizzled
+
+Please send email to the drizzle mailing list on Launchpad if you would like
+to contribute.
+
+Cheers,
+    -Brian

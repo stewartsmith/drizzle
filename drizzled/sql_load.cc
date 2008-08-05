@@ -19,6 +19,7 @@
 
 #include "mysql_priv.h"
 #include "sql_repl.h"
+#include <drizzled/drizzled_error_messages.h>
 
 class XML_TAG {
 public:

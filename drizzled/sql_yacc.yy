@@ -42,6 +42,7 @@
 #include "lex_symbol.h"
 #include "item_create.h"
 #include <storage/myisam/myisam.h>
+#include <drizzled/drizzled_error_messages.h>
 
 int yylex(void *yylval, void *yythd);
 
@@ -364,7 +365,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
   Currently there are 100 shift/reduce conflicts.
   We should not introduce new conflicts any more.
 */
-%expect 100
+%expect 95
 
 /*
    Comments for TOKENS.
@@ -394,7 +395,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ALL                           /* SQL-2003-R */
 %token  ALTER                         /* SQL-2003-R */
 %token  ANALYZE_SYM
-%token  AND_AND_SYM                   /* OPERATOR */
 %token  AND_SYM                       /* SQL-2003-R */
 %token  ANY_SYM                       /* SQL-2003-R */
 %token  AS                            /* SQL-2003-R */
@@ -414,10 +414,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BINARY                        /* SQL-2003-R */
 %token  BINLOG_SYM
 %token  BIN_NUM
-%token  BIT_AND                       /* MYSQL-FUNC */
-%token  BIT_OR                        /* MYSQL-FUNC */
 %token  BIT_SYM                       /* MYSQL-FUNC */
-%token  BIT_XOR                       /* MYSQL-FUNC */
 %token  BLOB_SYM                      /* SQL-2003-R */
 %token  BLOCK_SYM
 %token  BOOLEAN_SYM                   /* SQL-2003-R */
@@ -439,11 +436,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CHAR_SYM                      /* SQL-2003-R */
 %token  CHECKSUM_SYM
 %token  CHECK_SYM                     /* SQL-2003-R */
-%token  CIPHER_SYM
-%token  CLIENT_SYM
 %token  CLOSE_SYM                     /* SQL-2003-R */
 %token  COALESCE                      /* SQL-2003-N */
-%token  CODE_SYM
 %token  COLLATE_SYM                   /* SQL-2003-R */
 %token  COLLATION_SYM                 /* SQL-2003-N */
 %token  COLUMNS
@@ -462,10 +456,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  CONTAINS_SYM                  /* SQL-2003-N */
 %token  CONTEXT_SYM
 %token  CONTINUE_SYM                  /* SQL-2003-R */
-%token  CONTRIBUTORS_SYM
 %token  CONVERT_SYM                   /* SQL-2003-N */
 %token  COUNT_SYM                     /* SQL-2003-N */
-%token  CPU_SYM
 %token  CREATE                        /* SQL-2003-R */
 %token  CROSS                         /* SQL-2003-R */
 %token  CUBE_SYM                      /* SQL-2003-R */
@@ -491,13 +483,11 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  DECIMAL_SYM                   /* SQL-2003-R */
 %token  DECLARE_SYM                   /* SQL-2003-R */
 %token  DEFAULT                       /* SQL-2003-R */
-%token  DEFINER_SYM
 %token  DELAYED_SYM
 %token  DELAY_KEY_WRITE_SYM
 %token  DELETE_SYM                    /* SQL-2003-R */
 %token  DESC                          /* SQL-2003-N */
 %token  DESCRIBE                      /* SQL-2003-R */
-%token  DES_KEY_FILE
 %token  DETERMINISTIC_SYM             /* SQL-2003-R */
 %token  DIRECTORY_SYM
 %token  DISABLE_SYM
@@ -517,7 +507,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  END                           /* SQL-2003-R */
 %token  ENDS_SYM
 %token  END_OF_INPUT                  /* INTERNAL */
-%token  ENGINES_SYM
 %token  ENGINE_SYM
 %token  ENUM
 %token  EQ                            /* OPERATOR */
@@ -526,7 +515,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  ESCAPED
 %token  ESCAPE_SYM                    /* SQL-2003-R */
 %token  EVENTS_SYM
-%token  EVERY_SYM                     /* SQL-2003-N */
 %token  EXCLUSIVE_SYM
 %token  EXISTS                        /* SQL-2003-R */
 %token  EXIT_SYM
@@ -587,11 +575,8 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  INTO                          /* SQL-2003-R */
 %token  INT_SYM                       /* SQL-2003-R */
 %token  IN_SYM                        /* SQL-2003-R */
-%token  IO_SYM
-%token  IPC_SYM
 %token  IS                            /* SQL-2003-R */
 %token  ISOLATION                     /* SQL-2003-R */
-%token  ISSUER_SYM
 %token  ITERATE_SYM
 %token  JOIN_SYM                      /* SQL-2003-R */
 %token  KEYS
@@ -696,7 +681,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PAGE_CHECKSUM_SYM
 %token  PARAM_MARKER
 %token  PARTIAL                       /* SQL-2003-N */
-%token  PASSWORD
 %token  PHASE_SYM
 %token  PLUGINS_SYM
 %token  PLUGIN_SYM
@@ -708,7 +692,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  PRIMARY_SYM                   /* SQL-2003-R */
 %token  PROCESS
 %token  PROCESSLIST_SYM
-%token  PROFILES_SYM
 %token  PURGE
 %token  QUARTER_SYM
 %token  QUERY_SYM
@@ -769,8 +752,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  SET                           /* SQL-2003-R */
 %token  SET_VAR
 %token  SHARE_SYM
-%token  SHIFT_LEFT                    /* OPERATOR */
-%token  SHIFT_RIGHT                   /* OPERATOR */
 %token  SHOW
 %token  SHUTDOWN
 %token  SIGNED_SYM
@@ -891,16 +872,12 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %left   SET_VAR
 %left   OR_SYM
 %left   XOR
-%left   AND_SYM AND_AND_SYM
+%left   AND_SYM
 %left   BETWEEN_SYM CASE_SYM WHEN_SYM THEN_SYM ELSE
 %left   EQ EQUAL_SYM GE GT_SYM LE LT NE IS LIKE IN_SYM
-%left   '|'
-%left   '&'
-%left   SHIFT_LEFT SHIFT_RIGHT
 %left   '-' '+'
 %left   '*' '/' '%' DIV_SYM MOD_SYM
-%left   '^'
-%left   NEG '~'
+%left   NEG
 %right  NOT_SYM
 %right  BINARY COLLATE_SYM
 %left  INTERVAL_SYM
@@ -1080,8 +1057,8 @@ END_OF_INPUT
 
 %type <NONE>
         '-' '+' '*' '/' '%' '(' ')'
-        ',' '!' '{' '}' '&' '|' AND_SYM OR_SYM BETWEEN_SYM CASE_SYM
-        THEN_SYM WHEN_SYM DIV_SYM MOD_SYM AND_AND_SYM DELETE_SYM
+        ',' '!' '{' '}' AND_SYM OR_SYM BETWEEN_SYM CASE_SYM
+        THEN_SYM WHEN_SYM DIV_SYM MOD_SYM DELETE_SYM
 %%
 
 /*
@@ -2444,12 +2421,6 @@ alter:
                 lex->copy_db_to(&lex->name.str, &lex->name.length))
               MYSQL_YYABORT;
           }
-        | ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM
-          {
-            LEX *lex= Lex;
-            lex->sql_command= SQLCOM_ALTER_DB_UPGRADE;
-            lex->name= $3;
-          }
         ;
 
 ident_or_empty:
@@ -3346,15 +3317,7 @@ predicate:
         ;
 
 bit_expr:
-          bit_expr '|' bit_expr %prec '|'
-          { $$= new Item_func_bit_or($1,$3); }
-        | bit_expr '&' bit_expr %prec '&'
-          { $$= new Item_func_bit_and($1,$3); }
-        | bit_expr SHIFT_LEFT bit_expr %prec SHIFT_LEFT
-          { $$= new Item_func_shift_left($1,$3); }
-        | bit_expr SHIFT_RIGHT bit_expr %prec SHIFT_RIGHT
-          { $$= new Item_func_shift_right($1,$3); }
-        | bit_expr '+' bit_expr %prec '+'
+          bit_expr '+' bit_expr %prec '+'
           { $$= new Item_func_plus($1,$3); }
         | bit_expr '-' bit_expr %prec '-'
           { $$= new Item_func_minus($1,$3); }
@@ -3372,8 +3335,6 @@ bit_expr:
           { $$= new Item_func_int_div($1,$3); }
         | bit_expr MOD_SYM bit_expr %prec MOD_SYM
           { $$= new Item_func_mod($1,$3); }
-        | bit_expr '^' bit_expr
-          { $$= new Item_func_bit_xor($1,$3); }
         | simple_expr
         ;
 
@@ -3383,7 +3344,6 @@ or:
 
 and:
           AND_SYM
-       | AND_AND_SYM
        ;
 
 not:
@@ -3424,8 +3384,6 @@ simple_expr:
         | '+' simple_expr %prec NEG { $$= $2; }
         | '-' simple_expr %prec NEG
           { $$= new (YYTHD->mem_root) Item_func_neg($2); }
-        | '~' simple_expr %prec NEG
-          { $$= new (YYTHD->mem_root) Item_func_bit_neg($2); }
         | '(' subselect ')'
           { 
             $$= new (YYTHD->mem_root) Item_singlerow_subselect($2);
@@ -3688,13 +3646,6 @@ function_call_conflict:
           { $$= new (YYTHD->mem_root) Item_func_microsecond($3); }
         | MOD_SYM '(' expr ',' expr ')'
           { $$ = new (YYTHD->mem_root) Item_func_mod( $3, $5); }
-        | PASSWORD '(' expr ')'
-          {
-            THD *thd= YYTHD;
-            Item* i1;
-	    i1= new (thd->mem_root) Item_func_password($3);
-            $$= i1;
-          }
         | QUARTER_SYM '(' expr ')'
           { $$ = new (YYTHD->mem_root) Item_func_quarter($3); }
         | REPEAT_SYM '(' expr ',' expr ')'
@@ -3790,6 +3741,9 @@ function_call_generic:
                 }
 
                 item= Create_udf_func::s_singleton.create(thd, udf, $4);
+	      } else {
+                /* fix for bug 250065, from Andrew Garner <muzazzi@gmail.com> */
+                my_error(ER_SP_DOES_NOT_EXIST, MYF(0), "FUNCTION", $1.str);
               }
             }
 
@@ -3843,12 +3797,6 @@ sum_expr:
           { $$=new Item_sum_avg($3); }
         | AVG_SYM '(' DISTINCT in_sum_expr ')'
           { $$=new Item_sum_avg_distinct($4); }
-        | BIT_AND  '(' in_sum_expr ')'
-          { $$=new Item_sum_and($3); }
-        | BIT_OR  '(' in_sum_expr ')'
-          { $$=new Item_sum_or($3); }
-        | BIT_XOR  '(' in_sum_expr ')'
-          { $$=new Item_sum_xor($3); }
         | COUNT_SYM '(' opt_all '*' ')'
           { $$=new Item_sum_count(new Item_int((int32_t) 0L,1)); }
         | COUNT_SYM '(' in_sum_expr ')'
@@ -5648,8 +5596,6 @@ flush_option:
           { Lex->type|= REFRESH_SLAVE; }
         | MASTER_SYM
           { Lex->type|= REFRESH_MASTER; }
-        | DES_KEY_FILE
-          { Lex->type|= REFRESH_DES_KEY_FILE; }
         | RESOURCES
           { Lex->type|= REFRESH_USER_RESOURCES; }
         ;
@@ -6402,10 +6348,7 @@ keyword_sp:
         | CASCADED                 {}
         | CHAIN_SYM                {}
         | CHANGED                  {}
-        | CIPHER_SYM               {}
-        | CLIENT_SYM               {}
         | COALESCE                 {}
-        | CODE_SYM                 {}
         | COLLATION_SYM            {}
         | COLUMN_FORMAT_SYM        {}
         | COLUMNS                  {}
@@ -6417,17 +6360,13 @@ keyword_sp:
         | CONNECTION_SYM           {}
         | CONSISTENT_SYM           {}
         | CONTEXT_SYM              {}
-        | CONTRIBUTORS_SYM         {}
-        | CPU_SYM                  {}
         | CUBE_SYM                 {}
         | DATA_SYM                 {}
         | DATAFILE_SYM             {}
         | DATETIME                 {}
         | DATE_SYM                 {}
         | DAY_SYM                  {}
-        | DEFINER_SYM              {}
         | DELAY_KEY_WRITE_SYM      {}
-        | DES_KEY_FILE             {}
         | DIRECTORY_SYM            {}
         | DISABLE_SYM              {}
         | DISCARD                  {}
@@ -6437,11 +6376,9 @@ keyword_sp:
         | ENDS_SYM                 {}
         | ENUM                     {}
         | ENGINE_SYM               {}
-        | ENGINES_SYM              {}
         | ERRORS                   {}
         | ESCAPE_SYM               {}
         | EVENTS_SYM               {}
-        | EVERY_SYM                {}
         | EXCLUSIVE_SYM            {}
         | EXTENDED_SYM             {}
         | EXTENT_SIZE_SYM          {}
@@ -6463,10 +6400,7 @@ keyword_sp:
         | IMPORT                   {}
         | INDEXES                  {}
         | INITIAL_SIZE_SYM         {}
-        | IO_SYM                   {}
-        | IPC_SYM                  {}
         | ISOLATION                {}
-        | ISSUER_SYM               {}
         | INSERT_METHOD            {}
         | KEY_BLOCK_SIZE           {}
         | LAST_SYM                 {}
@@ -6521,7 +6455,6 @@ keyword_sp:
         | PAGE_SYM                 {}
         | PAGE_CHECKSUM_SYM	   {}
         | PARTIAL                  {}
-        | PASSWORD                 {}
         | PHASE_SYM                {}
         | PLUGIN_SYM               {}
         | PLUGINS_SYM              {}

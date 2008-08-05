@@ -1554,8 +1554,8 @@ violinist	4181
 select t2.fld3,count(*) from t2,t3 where t2.fld1=158402 and t3.name=t2.fld3 group by t3.name;
 fld3	count(*)
 spates	4181
-select companynr|0,companyname from t4 group by 1;
-companynr|0	companyname
+select companynr,companyname from t4 group by 1;
+companynr	companyname
 0	Unknown
 29	company 1
 34	company 2

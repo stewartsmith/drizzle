@@ -522,32 +522,6 @@ protected:
 };
 
 
-class Create_func_encode : public Create_func_arg2
-{
-public:
-  virtual Item *create(THD *thd, Item *arg1, Item *arg2);
-
-  static Create_func_encode s_singleton;
-
-protected:
-  Create_func_encode() {}
-  virtual ~Create_func_encode() {}
-};
-
-
-class Create_func_encrypt : public Create_native_func
-{
-public:
-  virtual Item *create_native(THD *thd, LEX_STRING name, List<Item> *item_list);
-
-  static Create_func_encrypt s_singleton;
-
-protected:
-  Create_func_encrypt() {}
-  virtual ~Create_func_encrypt() {}
-};
-
-
 class Create_func_exp : public Create_func_arg1
 {
 public:
@@ -1971,15 +1945,6 @@ Create_func_dayofyear::create(THD *thd, Item *arg1)
 }
 
 
-Create_func_decode Create_func_decode::s_singleton;
-
-Item*
-Create_func_decode::create(THD *thd, Item *arg1, Item *arg2)
-{
-  return new (thd->mem_root) Item_func_decode(arg1, arg2);
-}
-
-
 Create_func_degrees Create_func_degrees::s_singleton;
 
 Item*
@@ -2008,52 +1973,6 @@ Create_func_elt::create_native(THD *thd, LEX_STRING name,
   }
 
   return new (thd->mem_root) Item_func_elt(*item_list);
-}
-
-
-Create_func_encode Create_func_encode::s_singleton;
-
-Item*
-Create_func_encode::create(THD *thd, Item *arg1, Item *arg2)
-{
-  return new (thd->mem_root) Item_func_encode(arg1, arg2);
-}
-
-
-Create_func_encrypt Create_func_encrypt::s_singleton;
-
-Item*
-Create_func_encrypt::create_native(THD *thd, LEX_STRING name,
-                                   List<Item> *item_list)
-{
-  Item *func= NULL;
-  int arg_count= 0;
-
-  if (item_list != NULL)
-    arg_count= item_list->elements;
-
-  switch (arg_count) {
-  case 1:
-  {
-    Item *param_1= item_list->pop();
-    func= new (thd->mem_root) Item_func_encrypt(param_1);
-    break;
-  }
-  case 2:
-  {
-    Item *param_1= item_list->pop();
-    Item *param_2= item_list->pop();
-    func= new (thd->mem_root) Item_func_encrypt(param_1, param_2);
-    break;
-  }
-  default:
-  {
-    my_error(ER_WRONG_PARAMCOUNT_TO_NATIVE_FCT, MYF(0), name.str);
-    break;
-  }
-  }
-
-  return func;
 }
 
 
@@ -3092,11 +3011,8 @@ static Native_func_registry func_array[] =
   { { C_STRING_WITH_LEN("DAYOFMONTH") }, BUILDER(Create_func_dayofmonth)},
   { { C_STRING_WITH_LEN("DAYOFWEEK") }, BUILDER(Create_func_dayofweek)},
   { { C_STRING_WITH_LEN("DAYOFYEAR") }, BUILDER(Create_func_dayofyear)},
-  { { C_STRING_WITH_LEN("DECODE") }, BUILDER(Create_func_decode)},
   { { C_STRING_WITH_LEN("DEGREES") }, BUILDER(Create_func_degrees)},
   { { C_STRING_WITH_LEN("ELT") }, BUILDER(Create_func_elt)},
-  { { C_STRING_WITH_LEN("ENCODE") }, BUILDER(Create_func_encode)},
-  { { C_STRING_WITH_LEN("ENCRYPT") }, BUILDER(Create_func_encrypt)},
   { { C_STRING_WITH_LEN("EXP") }, BUILDER(Create_func_exp)},
   { { C_STRING_WITH_LEN("EXPORT_SET") }, BUILDER(Create_func_export_set)},
   { { C_STRING_WITH_LEN("FIELD") }, BUILDER(Create_func_field)},

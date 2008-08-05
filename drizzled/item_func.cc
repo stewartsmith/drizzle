@@ -31,6 +31,7 @@
 #include <mysys/hash.h>
 #include <time.h>
 #include <mysys/my_bit.h>
+#include <drizzled/drizzled_error_messages.h>
 
 bool check_reserved_words(LEX_STRING *name)
 {

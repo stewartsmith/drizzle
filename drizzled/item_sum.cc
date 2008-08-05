@@ -27,6 +27,7 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   Prepare an aggregate function item for checking context conditions.

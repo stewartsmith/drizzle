@@ -15,27 +15,14 @@
 
 ## Process this file with automake to create Makefile.in
 
-EXTRA_DIST= errmsg.txt
-
 dist-hook:
-	for dir in charsets @AVAILABLE_LANGUAGES@; do \
-	  test -d $(distdir)/$$dir || mkdir $(distdir)/$$dir; \
-	  $(INSTALL_DATA) $(srcdir)/$$dir/*.* $(distdir)/$$dir; \
-	done; \
-	sleep 1 ; touch $(srcdir)/*/errmsg.sys
+	test -d $(distdir)/charsets || mkdir $(distdir)/charsets
+	$(INSTALL_DATA) $(srcdir)/charsets/*.* $(distdir)/charsets
 	$(INSTALL_DATA) $(srcdir)/charsets/README $(distdir)/charsets
 	$(INSTALL_DATA) $(srcdir)/charsets/Index.xml $(distdir)/charsets
 
 install-data-local:
-	for lang in @AVAILABLE_LANGUAGES@; \
-	do \
-		$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)/$$lang; \
-		$(INSTALL_DATA) $(srcdir)/$$lang/errmsg.sys \
-			        $(DESTDIR)$(pkgdatadir)/$$lang/errmsg.sys; \
-	done
 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)/charsets
-		$(INSTALL_DATA) $(srcdir)/errmsg.txt \
-	        $(DESTDIR)$(pkgdatadir)/errmsg.txt; \
 	$(INSTALL_DATA) $(srcdir)/charsets/README $(DESTDIR)$(pkgdatadir)/charsets/README
 	$(INSTALL_DATA) $(srcdir)/charsets/*.xml $(DESTDIR)$(pkgdatadir)/charsets
 

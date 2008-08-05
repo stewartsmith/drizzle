@@ -113,7 +113,7 @@ enum Derivation
   DERIVATION_EXPLICIT= 0
 };
 
-#include <drizzled/locale.h>
+#include <drizzled/sql_locale.h>
 #include <drizzled/object_creation_ctx.h>
 /**
   Opening modes for open_temporary_table and open_table_from_share
@@ -644,7 +644,6 @@ void end_connection(THD *thd);
 int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create, bool silent);
 bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create);
 bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
-bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db);
 void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
 void mysql_client_binlog_statement(THD *thd);
 bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists,
@@ -1300,7 +1299,6 @@ extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
 extern MY_TMPDIR mysql_tmpdir_list;
 extern const LEX_STRING command_name[];
 extern const char *first_keyword, *my_localhost, *delayed_user, *binary_keyword;
-extern const char **errmesg;			/* Error messages */
 extern const char *myisam_recover_options_str;
 extern const char *in_left_expr_name, *in_additional_cond, *in_having_cond;
 extern const char * const TRG_EXT;
@@ -1375,7 +1373,6 @@ extern bool opt_log;
 extern bool opt_slow_log;
 extern ulong log_output_options;
 extern bool opt_log_queries_not_using_indexes;
-extern bool opt_disable_networking, opt_skip_show_db;
 extern bool opt_character_set_client_handshake;
 extern bool volatile abort_loop, shutdown_in_progress;
 extern uint volatile thread_count, thread_running, global_read_lock;
@@ -1458,7 +1455,6 @@ extern handlerton *myisam_hton;
 extern handlerton *heap_hton;
 
 extern SHOW_COMP_OPTION have_symlink;
-extern SHOW_COMP_OPTION have_crypt;
 extern SHOW_COMP_OPTION have_compress;
 
 
@@ -1706,11 +1702,10 @@ inline const char *table_case_name(HA_CREATE_INFO *info, const char *name)
   return ((lower_case_table_names == 2 && info->alias) ? info->alias : name);
 }
 
-inline ulong sql_rnd_with_mutex()
+inline ulong sql_rnd()
 {
-  pthread_mutex_lock(&LOCK_thread_count);
-  ulong tmp=(ulong) (my_rnd(&sql_rand) * 0xffffffff); /* make all bits random */
-  pthread_mutex_unlock(&LOCK_thread_count);
+  ulong tmp= (ulong) (rand() * 0xffffffff); /* make all bits random */
+
   return tmp;
 }
 

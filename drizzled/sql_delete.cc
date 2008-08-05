@@ -21,6 +21,7 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   Implement DELETE SQL word.

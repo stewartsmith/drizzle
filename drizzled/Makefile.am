@@ -25,7 +25,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = field . share
+SUBDIRS = field  . share
 
 sbin_PROGRAMS =drizzled
 
@@ -52,6 +52,7 @@ DTRACEFILES = handler.o \
 drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
+				plugin_authentication.h \
 				plugin_audit.h
 
 noinst_LTLIBRARIES = libhandler.la
@@ -72,6 +73,7 @@ drizzled_LDADD = libhandler.la \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
 
 noinst_HEADERS = item.h \
+		 authentication.h \
 		 item_func.h \
 		 item_sum.h \
 		 item_cmpfunc.h \
@@ -85,6 +87,7 @@ noinst_HEADERS = item.h \
 		 sql_class.h \
 		 sql_lex.h \
 		 sql_list.h \
+		 sql_locale.h \
 		 sql_map.h \
 		 sql_state.h \
 		 sql_string.h \
@@ -109,7 +112,6 @@ noinst_HEADERS = item.h \
 		 sql_udf.h \
 		 lex.h \
 		 lex_symbol.h \
-		 sql_crypt.h  \
 		 sql_repl.h \
 		 slave.h \
 		 rpl_filter.h \
@@ -130,6 +132,7 @@ noinst_HEADERS = item.h \
 		 probes.h
 
 drizzled_SOURCES = sql_lex.cc \
+		   authentication.cc \
 		   sql_handler.cc \
 		   item.cc \
 		   item_sum.cc \
@@ -182,7 +185,6 @@ drizzled_SOURCES = sql_lex.cc \
 		   sql_db.cc \
 		   sql_table.cc \
 		   sql_rename.cc \
-		   sql_crypt.cc \
 		   sql_load.cc \
 		   mf_iocache.cc \
 		   field_conv.cc \
@@ -224,6 +226,7 @@ DEFS =-DMYSQL_SERVER \
       -DDATADIR="\"$(MYSQLDATAdir)\"" \
       -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
       -DPLUGINDIR="\"$(pkgplugindir)\"" \
+      -DLOCALEDIR=\"$(localedir)\" \
       @DEFS@
 
 BUILT_MAINT_SRC = sql_yacc.cc \

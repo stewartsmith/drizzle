@@ -56,7 +56,7 @@ _hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
                                growth_size))
   {
     hash->free=0;				/* Allow call to hash_free */
-    return(1);
+    return true;
   }
   hash->key_offset=key_offset;
   hash->key_length=key_length;
@@ -65,7 +65,7 @@ _hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
   hash->free=free_element;
   hash->flags=flags;
   hash->charset=charset;
-  return(0);
+  return false;
 }
 
 

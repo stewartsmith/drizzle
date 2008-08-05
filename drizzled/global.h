@@ -993,4 +993,6 @@ do { doubleget_union _tmp; \
 #define NEED_EXPLICIT_SYNC_DIR 1
 #endif
 
+#include <libdrizzle/gettext.h>
+
 #endif /* my_global_h */

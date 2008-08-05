@@ -23,6 +23,7 @@
 
 #include "mysql_priv.h"
 #include "sql_sort.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /// How to write record_ref.
 #define WRITE_REF(file,from) \

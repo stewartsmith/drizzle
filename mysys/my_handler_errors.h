@@ -1,3 +1,4 @@
+#include <libdrizzle/gettext.h>
 
 /*
   Errors a handler can give you
@@ -6,126 +7,126 @@
 static const char *handler_error_messages[]=
 {
   /* HA_ERR_KEY_NOT_FOUND */
-  "Didn't find key on read or update",
+  gettext_noop("Didn't find key on read or update"),
   /* HA_ERR_FOUND_DUPP_KEY */
-  "Duplicate key on write or update",
+  gettext_noop("Duplicate key on write or update"),
   /* HA_ERR_INTERNAL_ERROR */
-  "Internal (unspecified) error in handler",
+  gettext_noop("Internal (unspecified) error in handler"),
   /* HA_ERR_RECORD_CHANGED */
-  "Someone has changed the row since it was read (while the table was locked to prevent it)",
+  gettext_noop("Someone has changed the row since it was read (while the table was locked to prevent it)"),
   /* HA_ERR_WRONG_INDEX */
-  "Wrong index given to function",
+  gettext_noop("Wrong index given to function"),
   /* empty */
-  "Undefined handler error 125",
+  gettext_noop("Undefined handler error 125"),
   /* HA_ERR_CRASHED */
-  "Index file is crashed",
+  gettext_noop("Index file is crashed"),
   /* HA_ERR_WRONG_IN_RECORD */
-  "Record file is crashed",
+  gettext_noop("Record file is crashed"),
   /* HA_ERR_OUT_OF_MEM */
-  "Out of memory in engine",
+  gettext_noop("Out of memory in engine"),
   /* empty */
-  "Undefined handler error 129",
+  gettext_noop("Undefined handler error 129"),
   /* HA_ERR_NOT_A_TABLE */
-  "Incorrect file format",
+  gettext_noop("Incorrect file format"),
   /* HA_ERR_WRONG_COMMAND */
-  "Command not supported by database",
+  gettext_noop("Command not supported by database"),
   /* HA_ERR_OLD_FILE */
-  "Old database file",
+  gettext_noop("Old database file"),
   /* HA_ERR_NO_ACTIVE_RECORD */
-  "No record read before update",
+  gettext_noop("No record read before update"),
   /* HA_ERR_RECORD_DELETED */
-  "Record was already deleted (or record file crashed)",
+  gettext_noop("Record was already deleted (or record file crashed)"),
   /* HA_ERR_RECORD_FILE_FULL */
-  "No more room in record file",
+  gettext_noop("No more room in record file"),
   /* HA_ERR_INDEX_FILE_FULL */
-  "No more room in index file",
+  gettext_noop("No more room in index file"),
   /* HA_ERR_END_OF_FILE */
-  "No more records (read after end of file)",
+  gettext_noop("No more records (read after end of file)"),
   /* HA_ERR_UNSUPPORTED */
-  "Unsupported extension used for table",
+  gettext_noop("Unsupported extension used for table"),
   /* HA_ERR_TO_BIG_ROW */
-  "Too big row",
+  gettext_noop("Too big row"),
   /* HA_WRONG_CREATE_OPTION */
-  "Wrong create options",
+  gettext_noop("Wrong create options"),
   /* HA_ERR_FOUND_DUPP_UNIQUE */
-  "Duplicate unique key or constraint on write or update",
+  gettext_noop("Duplicate unique key or constraint on write or update"),
   /* HA_ERR_UNKNOWN_CHARSET */
-  "Unknown character set used in table",
+  gettext_noop("Unknown character set used in table"),
   /* HA_ERR_WRONG_MRG_TABLE_DEF */
-  "Conflicting table definitions in sub-tables of MERGE table",
+  gettext_noop("Conflicting table definitions in sub-tables of MERGE table"),
   /* HA_ERR_CRASHED_ON_REPAIR */
-  "Table is crashed and last repair failed",
+  gettext_noop("Table is crashed and last repair failed"),
   /* HA_ERR_CRASHED_ON_USAGE */
-  "Table was marked as crashed and should be repaired",
+  gettext_noop("Table was marked as crashed and should be repaired"),
   /* HA_ERR_LOCK_WAIT_TIMEOUT */
-  "Lock timed out; Retry transaction",
+  gettext_noop("Lock timed out; Retry transaction"),
   /* HA_ERR_LOCK_TABLE_FULL */
-  "Lock table is full;  Restart program with a larger locktable",
+  gettext_noop("Lock table is full;  Restart program with a larger locktable"),
   /* HA_ERR_READ_ONLY_TRANSACTION */
-  "Updates are not allowed under a read only transactions",
+  gettext_noop("Updates are not allowed under a read only transactions"),
   /* HA_ERR_LOCK_DEADLOCK */
-  "Lock deadlock; Retry transaction",
+  gettext_noop("Lock deadlock; Retry transaction"),
   /* HA_ERR_CANNOT_ADD_FOREIGN */
-  "Foreign key constraint is incorrectly formed",
+  gettext_noop("Foreign key constraint is incorrectly formed"),
   /* HA_ERR_NO_REFERENCED_ROW */
-  "Cannot add a child row",
+  gettext_noop("Cannot add a child row"),
   /* HA_ERR_ROW_IS_REFERENCED */
-  "Cannot delete a parent row",
+  gettext_noop("Cannot delete a parent row"),
   /* HA_ERR_NO_SAVEPOINT */
-  "No savepoint with that name",
+  gettext_noop("No savepoint with that name"),
   /* HA_ERR_NON_UNIQUE_BLOCK_SIZE */
-  "Non unique key block size",
+  gettext_noop("Non unique key block size"),
   /* HA_ERR_NO_SUCH_TABLE */
-  "The table does not exist in engine",
+  gettext_noop("The table does not exist in engine"),
   /* HA_ERR_TABLE_EXIST */
-  "The table already existed in storage engine",
+  gettext_noop("The table already existed in storage engine"),
   /* HA_ERR_NO_CONNECTION */
-  "Could not connect to storage engine",
+  gettext_noop("Could not connect to storage engine"),
   /* HA_ERR_NULL_IN_SPATIAL */
-  "Unexpected null pointer found when using spatial index",
+  gettext_noop("Unexpected null pointer found when using spatial index"),
   /* HA_ERR_TABLE_DEF_CHANGED */
-  "The table changed in storage engine",
+  gettext_noop("The table changed in storage engine"),
   /* HA_ERR_NO_PARTITION_FOUND */
-  "There's no partition in table for the given value",
+  gettext_noop("There's no partition in table for the given value"),
   /* HA_ERR_RBR_LOGGING_FAILED */
-  "Row-based binlogging of row failed",
+  gettext_noop("Row-based binlogging of row failed"),
   /* HA_ERR_DROP_INDEX_FK */
-  "Index needed in foreign key constraint",
+  gettext_noop("Index needed in foreign key constraint"),
   /* HA_ERR_FOREIGN_DUPLICATE_KEY */
-  "Upholding foreign key constraints would lead to a duplicate key error in "
+  gettext_noop("Upholding foreign key constraints would lead to a duplicate key error"),
   /* HA_ERR_TABLE_NEEDS_UPGRADE */
-  "Table needs to be upgraded before it can be used",
+  gettext_noop("Table needs to be upgraded before it can be used"),
   /* HA_ERR_TABLE_READONLY */
-  "Table is read only",
+  gettext_noop("Table is read only"),
   /* HA_ERR_AUTOINC_READ_FAILED */
-  "Failed to get next auto increment value",
+  gettext_noop("Failed to get next auto increment value"),
   /* HA_ERR_AUTOINC_ERANGE */
-  "Failed to set row auto increment value",
+  gettext_noop("Failed to set row auto increment value"),
   /* HA_ERR_GENERIC */
-  "Unknown (generic) error from engine",
+  gettext_noop("Unknown (generic) error from engine"),
   /* HA_ERR_RECORD_IS_THE_SAME */
-  "Record is the same",
+  gettext_noop("Record is the same"),
   /* HA_ERR_LOGGING_IMPOSSIBLE */
-  "It is not possible to log this statement",
+  gettext_noop("It is not possible to log this statement"),
   /* HA_ERR_TABLESPACE_EXIST */
-  "Tablespace exists",
+  gettext_noop("Tablespace exists"),
   /* HA_ERR_CORRUPT_EVENT */
-  "The event was corrupt, leading to illegal data being read",
+  gettext_noop("The event was corrupt, leading to illegal data being read"),
   /* HA_ERR_NEW_FILE */
-  "The table is of a new format not supported by this version",
+  gettext_noop("The table is of a new format not supported by this version"),
   /* HA_ERR_ROWS_EVENT_APPLY */
-  "The event could not be processed no other hanlder error happened",
+  gettext_noop("The event could not be processed no other hanlder error happened"),
   /* HA_ERR_INITIALIZATION */
-  "Got a fatal error during initialzaction of handler",
+  gettext_noop("Got a fatal error during initialzaction of handler"),
   /* HA_ERR_FILE_TOO_SHORT */
-  "File to short; Expected more data in file",
+  gettext_noop("File to short; Expected more data in file"),
   /* HA_ERR_WRONG_CRC */
-  "Read page with wrong checksum",
+  gettext_noop("Read page with wrong checksum"),
   /* HA_ERR_LOCK_OR_ACTIVE_TRANSACTION */
-  "Lock or active transaction", /* TODO: get a better message */
+  gettext_noop("Lock or active transaction"), /* TODO: get a better message */
   /* HA_ERR_NO_SUCH_TABLESPACE */
-  "No such table space", /* TODO: get a better message */
+  gettext_noop("No such table space"), /* TODO: get a better message */
   /* HA_ERR_TABLESPACE_NOT_EMPTY */
-  "Tablespace not empty" /* TODO: get a better message */
+  gettext_noop("Tablespace not empty") /* TODO: get a better message */
 };
 
