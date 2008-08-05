@@ -78,14 +78,20 @@
 #include <drizzled/sql_alloc.h>
 /* Virtual I/O wrapper library */
 #include <vio/violite.h>
+/* Definition of the MY_LOCALE struct and some convenience functions */
+#include <drizzled/sql_locale.h>
+/* 
+ * Declarations of Object_creation_ctx and Default_creation_ctx, 
+ * needed by parser.  Object_creation_ctx depends on THD, but THD
+ * is forward-declared in scheduler.h, so we're good to put this
+ * here 
+ */
+#include <drizzled/object_creation_ctx.h>
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
 #endif
 #include "probes.h"
-
-
-/* #include "unireg.h" */
 
 /**
   Query type constants.
@@ -171,9 +177,6 @@ extern query_id_t global_query_id;
 /* increment query_id and return it.  */
 inline query_id_t next_query_id() { return global_query_id++; }
 
-#define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
-#define all_bits_set(A,B) ((A) & (B) != (B))
-
 extern CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern CHARSET_INFO *national_charset_info, *table_alias_charset;
 
@@ -198,11 +201,6 @@ enum Derivation
   DERIVATION_NONE= 1,
   DERIVATION_EXPLICIT= 0
 };
-
-/* Definition of the MY_LOCALE struct and some convenience functions */
-#include <drizzled/sql_locale.h>
-/* Declarations of Object_creation_ctx and Default_creation_ctx, needed by parser */
-#include <drizzled/object_creation_ctx.h>
 
 /**
  * Opening modes for open_temporary_table and open_table_from_share
@@ -245,6 +243,12 @@ enum open_table_mode
 
 #define STACK_MIN_SIZE_FOR_OPEN 1024*80
 #define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
+
+/** 
+ * @TODO Move into a drizzled.h since it's only used in drizzled.cc
+ *
+ * @TODO Rename to DRIZZLED_NET_RETRY_COUNT
+ */
 #ifndef MYSQLD_NET_RETRY_COUNT
 #define MYSQLD_NET_RETRY_COUNT  10	///< Abort read after this many int.
 #endif
@@ -344,8 +348,7 @@ enum open_table_mode
 #define TEST_CORE_ON_SIGNAL	256	/**< Give core if signal */
 #define TEST_NO_STACKTRACE	512
 #define TEST_SIGINT		1024	/**< Allow sigint on threads */
-#define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in
-                                           some places */
+#define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in some places */
 #endif
 
 /*
