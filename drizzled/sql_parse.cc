@@ -1221,7 +1221,7 @@ mysql_execute_command(THD *thd)
     Don't reset warnings when executing a stored routine.
   */
   if (all_tables || !lex->is_single_level_stmt())
-    mysql_reset_errors(thd, 0);
+    drizzle_reset_errors(thd, 0);
 
   if (unlikely(thd->slave_thread))
   {
@@ -1350,16 +1350,16 @@ mysql_execute_command(THD *thd)
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      ((1L << (uint) MYSQL_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR)
+			      ((1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
 			       ));
     break;
   }
   case SQLCOM_SHOW_ERRORS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR));
+			      (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
   case SQLCOM_SHOW_SLAVE_HOSTS:
@@ -1395,7 +1395,7 @@ mysql_execute_command(THD *thd)
     }
     else
     {
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                    "the master info structure does not exist");
       my_ok(thd);
     }
@@ -1708,10 +1708,10 @@ end_with_restore_list:
 
       /* Don't yet allow changing of symlinks with ALTER TABLE */
       if (create_info.data_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "DATA DIRECTORY option ignored");
       if (create_info.index_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "INDEX DIRECTORY option ignored");
       create_info.data_file_name= create_info.index_file_name= NULL;
       /* ALTER TABLE ends previous transaction */
@@ -2498,7 +2498,7 @@ end_with_restore_list:
         if (((thd->options & OPTION_KEEP_LOG) || 
              thd->transaction.all.modified_non_trans_table) &&
             !thd->slave_thread)
-          push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+          push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                        ER_WARNING_NOT_COMPLETE_ROLLBACK,
                        ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
         my_ok(thd);
@@ -2637,7 +2637,7 @@ bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
         str.length(0);
         thd->lex->unit.print(&str, QT_ORDINARY);
         str.append('\0');
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                      ER_YES, str.ptr());
       }
       if (res)

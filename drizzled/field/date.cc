@@ -77,8 +77,8 @@ int Field_newdate::store(const char *from,
   }
 
   if (error)
-    set_datetime_warning(error == 3 ? MYSQL_ERROR::WARN_LEVEL_NOTE :
-                         MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(error == 3 ? DRIZZLE_ERROR::WARN_LEVEL_NOTE :
+                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_TRUNCATED,
                          from, len, DRIZZLE_TIMESTAMP_DATE, 1);
 
@@ -92,7 +92,7 @@ int Field_newdate::store(double nr)
   if (nr < 0.0 || nr > 99991231235959.0)
   {
     int3store(ptr,(int32_t) 0);
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_TRUNCATED, nr, DRIZZLE_TIMESTAMP_DATE);
     return 1;
   }
@@ -125,8 +125,8 @@ int Field_newdate::store(int64_t nr,
     error= 3;
 
   if (error)
-    set_datetime_warning(error == 3 ? MYSQL_ERROR::WARN_LEVEL_NOTE :
-                         MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(error == 3 ? DRIZZLE_ERROR::WARN_LEVEL_NOTE :
+                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          error == 2 ? 
                          ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED,
                          nr,DRIZZLE_TIMESTAMP_DATE, 1);
@@ -153,7 +153,7 @@ int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_date((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATE, 1);
     }
     if (!error && ltime->time_type != DRIZZLE_TIMESTAMP_DATE &&
@@ -162,7 +162,7 @@ int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_NOTE,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                            ER_WARN_DATA_TRUNCATED,
                            str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATE, 1);
       error= 3;
@@ -172,7 +172,7 @@ int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
   {
     tmp=0;
     error= 1;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   int3store(ptr,tmp);
   return error;

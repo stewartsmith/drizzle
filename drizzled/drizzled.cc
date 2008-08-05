@@ -1805,7 +1805,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       this could be improved by having a common stack of handlers.
     */
     if (thd->handle_error(error, str,
-                          MYSQL_ERROR::WARN_LEVEL_ERROR))
+                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;;
 
     thd->is_slave_error=  1; // needed to catch query errors during replication
@@ -1834,7 +1834,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
         inside push_warning.
       */
       thd->no_warnings_for_error= true;
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, error, str);
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
       thd->no_warnings_for_error= false;
     }
   }

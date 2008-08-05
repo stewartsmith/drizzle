@@ -849,7 +849,7 @@ public:
   */
   virtual bool handle_error(uint sql_errno,
                             const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
+                            DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd) = 0;
 };
 
@@ -927,7 +927,7 @@ public:
 
 private:
   /** Message buffer. Can be used by OK or ERROR status. */
-  char m_message[MYSQL_ERRMSG_SIZE];
+  char m_message[DRIZZLE_ERRMSG_SIZE];
   /**
     SQL error number. One of ER_ codes from share/errmsg.txt.
     Set by set_error_status.
@@ -1394,8 +1394,8 @@ public:
     class. With current implementation warnings produced in each prepared
     statement/cursor settle here.
   */
-  List	     <MYSQL_ERROR> warn_list;
-  uint	     warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_END];
+  List	     <DRIZZLE_ERROR> warn_list;
+  uint	     warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint	     total_warn_count;
   Diagnostics_area main_da;
 
@@ -1899,7 +1899,7 @@ public:
     @return true if the error is handled
   */
   virtual bool handle_error(uint sql_errno, const char *message,
-                            MYSQL_ERROR::enum_warning_level level);
+                            DRIZZLE_ERROR::enum_warning_level level);
 
   /**
     Remove the error handler last pushed.

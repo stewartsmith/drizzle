@@ -1558,7 +1558,7 @@ timestamp_type str_to_datetime_with_warn(const char *str, uint length,
 void localtime_to_TIME(DRIZZLE_TIME *to, struct tm *from);
 void calc_time_from_sec(DRIZZLE_TIME *to, long seconds, long microseconds);
 
-void make_truncated_value_warning(THD *thd, MYSQL_ERROR::enum_warning_level level,
+void make_truncated_value_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
                                   const char *str_val,
 				  uint str_length, timestamp_type time_type,
                                   const char *field_name);

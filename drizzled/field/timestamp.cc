@@ -158,7 +158,7 @@ int Field_timestamp::store(const char *from,
   if (error || !have_smth_to_conv)
   {
     error= 1;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
                          from, len, DRIZZLE_TIMESTAMP_DATETIME, 1);
   }
 
@@ -167,14 +167,14 @@ int Field_timestamp::store(const char *from,
   {
     if (!(tmp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
                            from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
       error= 1;
     }
     else if (in_dst_time_gap)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_INVALID_TIMESTAMP,
                            from, len, DRIZZLE_TIMESTAMP_DATETIME, !error);
       error= 1;
@@ -190,7 +190,7 @@ int Field_timestamp::store(double nr)
   int error= 0;
   if (nr < 0 || nr > 99991231235959.0)
   {
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
                          nr, DRIZZLE_TIMESTAMP_DATETIME);
     nr= 0;					// Avoid overflow on buff
@@ -223,20 +223,20 @@ int Field_timestamp::store(int64_t nr,
   {
     if (!(timestamp= TIME_to_timestamp(thd, &l_time, &in_dst_time_gap)))
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_DATA_OUT_OF_RANGE,
                            nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
       error= 1;
     }
     if (in_dst_time_gap)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                            ER_WARN_INVALID_TIMESTAMP,
                            nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
       error= 1;
     }
   } else if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_TRUNCATED,
                          nr, DRIZZLE_TIMESTAMP_DATETIME, 1);
 

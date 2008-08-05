@@ -22,7 +22,7 @@ bool udf_init_hello_world(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
   /* this is how to fail */
   if (args->arg_count != 0)  {
-    strncpy(message, "Too many arguments", MYSQL_ERRMSG_SIZE);
+    strncpy(message, "Too many arguments", DRIZZLE_ERRMSG_SIZE);
     return 1;
   }
 

@@ -984,7 +984,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
                       "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
                       share->fieldnames.type_names[i], share->table_name.str,
                       share->table_name.str);
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_CRASHED_ON_USAGE,
                           _("Found incompatible DECIMAL field '%s' in %s; "
                           "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
@@ -1162,7 +1162,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
                             "Please do \"ALTER TABLE '%s' FORCE \" to fix it!"),
                             share->table_name.str,
                             share->table_name.str);
-            push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+            push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                                 ER_CRASHED_ON_USAGE,
                                 _("Found wrong key definition in %s; "
                                 "Please do \"ALTER TABLE '%s' FORCE\" to fix "

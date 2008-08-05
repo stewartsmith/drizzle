@@ -1027,7 +1027,7 @@ bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
     else
       llstr(val, buf);
 
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), name, buf);
   }
@@ -2005,7 +2005,7 @@ bool sys_var_key_buffer_size::update(THD *thd, set_var *var)
   {
     if (key_cache == dflt_key_cache)
     {
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WARN_CANT_DROP_DEFAULT_KEYCACHE,
                           ER(ER_WARN_CANT_DROP_DEFAULT_KEYCACHE));
       goto end;					// Ignore default key cache
@@ -2753,12 +2753,12 @@ static bool set_log_update(THD *thd __attribute__((unused)),
 
   if (opt_sql_bin_update)
   {
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                  ER_UPDATE_LOG_DEPRECATED_TRANSLATED,
                  ER(ER_UPDATE_LOG_DEPRECATED_TRANSLATED));
   }
   else
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                  ER_UPDATE_LOG_DEPRECATED_IGNORED,
                  ER(ER_UPDATE_LOG_DEPRECATED_IGNORED));
   set_option_bit(thd, var);
@@ -2776,16 +2776,16 @@ static int check_pseudo_thread_id(THD *thd __attribute__((unused)),
 static uchar *get_warning_count(THD *thd)
 {
   thd->sys_var_tmp.long_value=
-    (thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_NOTE] +
-     thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_ERROR] +
-     thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_WARN]);
+    (thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
+     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
+     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
   return (uchar*) &thd->sys_var_tmp.long_value;
 }
 
 static uchar *get_error_count(THD *thd)
 {
   thd->sys_var_tmp.long_value= 
-    thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_ERROR];
+    thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
   return (uchar*) &thd->sys_var_tmp.long_value;
 }
 

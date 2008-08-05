@@ -316,7 +316,7 @@ mysqld_show_create(THD *thd, TABLE_LIST *table_list)
       issue a warning with 'warning' level status in 
       case of invalid view and last error is ER_VIEW_INVALID
     */
-    mysql_reset_errors(thd, true);
+    drizzle_reset_errors(thd, true);
     thd->clear_error();
   }
 
@@ -3095,7 +3095,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
         rather than in SHOW COLUMNS
       */ 
       if (thd->is_error())
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      thd->main_da.sql_errno(), thd->main_da.message());
       thd->clear_error();
       res= 0;
@@ -3323,7 +3323,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
         rather than in SHOW KEYS
       */
       if (thd->is_error())
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      thd->main_da.sql_errno(), thd->main_da.message());
       thd->clear_error();
       res= 0;
@@ -3428,7 +3428,7 @@ static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);
@@ -3503,7 +3503,7 @@ static int get_schema_key_column_usage_record(THD *thd,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);
@@ -3700,7 +3700,7 @@ get_referential_constraints_record(THD *thd, TABLE_LIST *tables,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);

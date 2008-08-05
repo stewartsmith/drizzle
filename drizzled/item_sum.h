@@ -1092,12 +1092,12 @@ public:
   Item *copy_or_same(THD* thd);
 };
 
-class MYSQL_ERROR;
+class DRIZZLE_ERROR;
 
 class Item_func_group_concat : public Item_sum
 {
   TMP_TABLE_PARAM *tmp_table_param;
-  MYSQL_ERROR *warning;
+  DRIZZLE_ERROR *warning;
   String result;
   String *separator;
   TREE tree_base;
