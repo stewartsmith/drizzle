@@ -78,7 +78,7 @@
 void randominit(struct rand_struct *rand_st, uint32_t seed1, uint32_t seed2)
 {                                               /* For mysql 3.21.# */
 #ifdef HAVE_purify
-  memset((char*) rand_st, 0, sizeof(*rand_st));      /* Avoid UMC varnings */
+  memset(rand_st, 0, sizeof(*rand_st));      /* Avoid UMC varnings */
 #endif
   rand_st->max_value= 0x3FFFFFFFL;
   rand_st->max_value_dbl=(double) rand_st->max_value;
