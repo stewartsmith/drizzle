@@ -30,8 +30,8 @@ extern "C" {
 #endif
 
 extern CHARSET_INFO *default_client_charset_info;
-DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
-			   my_bool default_value, uint server_capabilities);
+DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc, uint fields,
+			                 my_bool default_value);
 void free_rows(DRIZZLE_DATA *cur);
 void free_old_query(DRIZZLE *drizzle);
 void end_server(DRIZZLE *drizzle);
@@ -48,7 +48,5 @@ void set_drizzle_error(DRIZZLE *drizzle, int errcode, const char *sqlstate);
 #ifdef	__cplusplus
 }
 #endif
-
-#define protocol_41(A) ((A)->server_capabilities & CLIENT_PROTOCOL_41)
 
 #endif

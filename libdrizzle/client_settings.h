@@ -23,7 +23,7 @@
 
 #define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |	  \
                              CLIENT_TRANSACTIONS | \
-			     CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION)
+			     			 CLIENT_SECURE_CONNECTION)
 
 sig_handler my_pipe_sig_handler(int sig);
 bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);

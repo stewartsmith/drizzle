@@ -177,21 +177,15 @@ net_send_ok(THD *thd,
   buff[0]=0;					// No fields
   pos=net_store_length(buff+1,affected_rows);
   pos=net_store_length(pos, id);
-  if (thd->client_capabilities & CLIENT_PROTOCOL_41)
-  {
-    int2store(pos, server_status);
-    pos+=2;
 
-    /* We can only return up to 65535 warnings in two bytes */
-    uint tmp= min(total_warn_count, 65535);
-    int2store(pos, tmp);
-    pos+= 2;
-  }
-  else if (net->return_status)			// For 4.0 protocol
-  {
-    int2store(pos, server_status);
-    pos+=2;
-  }
+  int2store(pos, server_status);
+  pos+=2;
+
+  /* We can only return up to 65535 warnings in two bytes */
+  uint tmp= min(total_warn_count, 65535);
+  int2store(pos, tmp);
+  pos+= 2;
+
   thd->main_da.can_overwrite_status= true;
 
   if (message && message[0])
@@ -204,14 +198,12 @@ net_send_ok(THD *thd,
   return;
 }
 
-static uchar eof_buff[1]= { (uchar) 254 };      /* Marker for end of fields */
-
 /**
   Send eof (= end of result set) to the client.
 
   The eof packet has the following structure:
 
-  - 254		: Marker (1 byte)
+  - 254	(DRIZZLE_PROTOCOL_NO_MORE_DATA)	: Marker (1 byte)
   - warning_count	: Stored in 2 bytes; New in 4.1 protocol
   - status_flag	: Stored in 2 bytes;
   For flags like SERVER_MORE_RESULTS_EXISTS.
@@ -250,28 +242,23 @@ static void write_eof_packet(THD *thd, NET *net,
                              uint server_status,
                              uint total_warn_count)
 {
-  if (thd->client_capabilities & CLIENT_PROTOCOL_41)
-  {
-    uchar buff[5];
-    /*
-      Don't send warn count during SP execution, as the warn_list
-      is cleared between substatements, and mysqltest gets confused
-    */
-    uint tmp= min(total_warn_count, 65535);
-    buff[0]= 254;
-    int2store(buff+1, tmp);
-    /*
-      The following test should never be true, but it's better to do it
-      because if 'is_fatal_error' is set the server is not going to execute
-      other queries (see the if test in dispatch_command / COM_QUERY)
-    */
-    if (thd->is_fatal_error)
-      server_status&= ~SERVER_MORE_RESULTS_EXISTS;
-    int2store(buff + 3, server_status);
-    VOID(my_net_write(net, buff, 5));
-  }
-  else
-    VOID(my_net_write(net, eof_buff, 1));
+  uchar buff[5];
+  /*
+    Don't send warn count during SP execution, as the warn_list
+    is cleared between substatements, and mysqltest gets confused
+  */
+  uint tmp= min(total_warn_count, 65535);
+  buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
+  int2store(buff+1, tmp);
+  /*
+    The following test should never be true, but it's better to do it
+    because if 'is_fatal_error' is set the server is not going to execute
+    other queries (see the if test in dispatch_command / COM_QUERY)
+  */
+  if (thd->is_fatal_error)
+    server_status&= ~SERVER_MORE_RESULTS_EXISTS;
+  int2store(buff + 3, server_status);
+  VOID(my_net_write(net, buff, 5));
 }
 
 void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
@@ -290,12 +277,11 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
 
   int2store(buff,sql_errno);
   pos= buff+2;
-  if (thd->client_capabilities & CLIENT_PROTOCOL_41)
-  {
-    /* The first # is to make the protocol backward compatible */
-    buff[2]= '#';
-    pos= (uchar*) strmov((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
-  }
+
+  /* The first # is to make the protocol backward compatible */
+  buff[2]= '#';
+  pos= (uchar*) strmov((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
+
   length= (uint) (strmake((char*) pos, err, DRIZZLE_ERRMSG_SIZE-1) -
                   (char*) buff);
   err= (char*) buff;
@@ -525,74 +511,55 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
 
     prot.prepare_for_resend();
 
-    if (thd->client_capabilities & CLIENT_PROTOCOL_41)
+
+    if (prot.store(STRING_WITH_LEN("def"), cs, thd_charset) ||
+        prot.store(field.db_name, (uint) strlen(field.db_name),
+                   cs, thd_charset) ||
+        prot.store(field.table_name, (uint) strlen(field.table_name),
+                   cs, thd_charset) ||
+        prot.store(field.org_table_name, (uint) strlen(field.org_table_name),
+                   cs, thd_charset) ||
+        prot.store(field.col_name, (uint) strlen(field.col_name),
+                   cs, thd_charset) ||
+        prot.store(field.org_col_name, (uint) strlen(field.org_col_name),
+                   cs, thd_charset) ||
+        local_packet->realloc(local_packet->length()+12))
+      goto err;
+
+    /* Store fixed length fields */
+    pos= (char*) local_packet->ptr()+local_packet->length();
+    *pos++= 12;				// Length of packed fields
+    if (item->collation.collation == &my_charset_bin || thd_charset == NULL)
     {
-      if (prot.store(STRING_WITH_LEN("def"), cs, thd_charset) ||
-	  prot.store(field.db_name, (uint) strlen(field.db_name),
-		     cs, thd_charset) ||
-	  prot.store(field.table_name, (uint) strlen(field.table_name),
-		     cs, thd_charset) ||
-	  prot.store(field.org_table_name, (uint) strlen(field.org_table_name),
-		     cs, thd_charset) ||
-	  prot.store(field.col_name, (uint) strlen(field.col_name),
-		     cs, thd_charset) ||
-	  prot.store(field.org_col_name, (uint) strlen(field.org_col_name),
-		     cs, thd_charset) ||
-	  local_packet->realloc(local_packet->length()+12))
-	goto err;
-      /* Store fixed length fields */
-      pos= (char*) local_packet->ptr()+local_packet->length();
-      *pos++= 12;				// Length of packed fields
-      if (item->collation.collation == &my_charset_bin || thd_charset == NULL)
-      {
-        /* No conversion */
-        int2store(pos, field.charsetnr);
-        int4store(pos+2, field.length);
-      }
-      else
-      {
-        /* With conversion */
-        uint max_char_len;
-        int2store(pos, thd_charset->number);
-        /*
-          For TEXT/BLOB columns, field_length describes the maximum data
-          length in bytes. There is no limit to the number of characters
-          that a TEXT column can store, as long as the data fits into
-          the designated space.
-          For the rest of textual columns, field_length is evaluated as
-          char_count * mbmaxlen, where character count is taken from the
-          definition of the column. In other words, the maximum number
-          of characters here is limited by the column definition.
-        */
-        max_char_len= field.length / item->collation.collation->mbmaxlen;
-        int4store(pos+2, max_char_len * thd_charset->mbmaxlen);
-      }
-      pos[6]= field.type;
-      int2store(pos+7,field.flags);
-      pos[9]= (char) field.decimals;
-      pos[10]= 0;				// For the future
-      pos[11]= 0;				// For the future
-      pos+= 12;
+      /* No conversion */
+      int2store(pos, field.charsetnr);
+      int4store(pos+2, field.length);
     }
     else
     {
-      if (prot.store(field.table_name, (uint) strlen(field.table_name),
-		     cs, thd_charset) ||
-	  prot.store(field.col_name, (uint) strlen(field.col_name),
-		     cs, thd_charset) ||
-	  local_packet->realloc(local_packet->length()+10))
-	goto err;
-      pos= (char*) local_packet->ptr()+local_packet->length();
-
-	pos[0]=3;
-	int3store(pos+1,field.length);
-	pos[4]=1;
-	pos[5]=field.type;
-	pos[6]=3;
-	int2store(pos+7,field.flags);
-	pos[9]= (char) field.decimals;
-	pos+= 10;
+      /* With conversion */
+      uint max_char_len;
+      int2store(pos, thd_charset->number);
+      /*
+        For TEXT/BLOB columns, field_length describes the maximum data
+        length in bytes. There is no limit to the number of characters
+        that a TEXT column can store, as long as the data fits into
+        the designated space.
+        For the rest of textual columns, field_length is evaluated as
+        char_count * mbmaxlen, where character count is taken from the
+        definition of the column. In other words, the maximum number
+        of characters here is limited by the column definition.
+      */
+      max_char_len= field.length / item->collation.collation->mbmaxlen;
+      int4store(pos+2, max_char_len * thd_charset->mbmaxlen);
     }
+    pos[6]= field.type;
+    int2store(pos+7,field.flags);
+    pos[9]= (char) field.decimals;
+    pos[10]= 0;				// For the future
+    pos[11]= 0;				// For the future
+    pos+= 12;
+
     local_packet->length((uint) (pos - local_packet->ptr()));
     if (flags & SEND_DEFAULTS)
       item->send(&prot, &tmp);			// Send default value

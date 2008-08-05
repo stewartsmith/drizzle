@@ -143,7 +143,7 @@ enum enum_server_command
 #define CLIENT_ODBC		64	/* Odbc client */
 #define CLIENT_LOCAL_FILES	128	/* Can use LOAD DATA LOCAL */
 #define CLIENT_IGNORE_SPACE	256	/* Ignore spaces before '(' */
-#define CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
+#define UNUSED_CLIENT_PROTOCOL_41	512	/* New 4.1 protocol */
 #define CLIENT_INTERACTIVE	1024	/* This is an interactive client */
 #define CLIENT_SSL              2048	/* Switch to SSL after handshake */
 #define CLIENT_IGNORE_SIGPIPE   4096    /* IGNORE sigpipes */
@@ -166,7 +166,6 @@ enum enum_server_command
                            CLIENT_ODBC | \
                            CLIENT_LOCAL_FILES | \
                            CLIENT_IGNORE_SPACE | \
-                           CLIENT_PROTOCOL_41 | \
                            CLIENT_INTERACTIVE | \
                            CLIENT_SSL | \
                            CLIENT_IGNORE_SIGPIPE | \
@@ -229,6 +228,9 @@ typedef struct st_vio Vio;
 #define MAX_BIGINT_WIDTH        20      /* Max width for a LONGLONG */
 #define MAX_CHAR_WIDTH		255	/* Max length for a CHAR colum */
 #define MAX_BLOB_WIDTH		16777216	/* Default width for blob */
+
+#define DRIZZLE_PROTOCOL_NO_MORE_DATA 0xFE
+
 
 typedef struct st_net {
   Vio *vio;
