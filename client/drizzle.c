@@ -1557,10 +1557,6 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     printf(_("WARNING: option deprecated; use --disable-pager instead.\n"));
     opt_nopager= 1;
     break;
-  case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
-    break;
   case OPT_SERVER_ARG:
     printf(_("WARNING: --server-arg option not supported in this configuration.\n"));
     break;
@@ -3918,8 +3914,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     drizzle_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
     drizzle_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
-  if (opt_protocol)
-    drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (safe_updates)
   {
     char init_command[100];

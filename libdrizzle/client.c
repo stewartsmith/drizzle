@@ -1607,6 +1607,8 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     {
       *end++= SCRAMBLE_LENGTH;
+      memset(end, 0, SCRAMBLE_LENGTH-1);
+      memcpy(end, passwd, strlen(passwd));
       end+= SCRAMBLE_LENGTH;
     }
   }
