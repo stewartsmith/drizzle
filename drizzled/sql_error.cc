@@ -74,7 +74,7 @@ void drizzle_reset_errors(THD *thd, bool force)
   {
     thd->warn_id= thd->query_id;
     free_root(&thd->warn_root,MYF(0));
-    memset((char*) thd->warn_count, 0, sizeof(thd->warn_count));
+    memset(thd->warn_count, 0, sizeof(thd->warn_count));
     if (force)
       thd->total_warn_count= 0;
     thd->warn_list.empty();

@@ -361,7 +361,7 @@ bool Field_timestamp::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
   {				      /* Zero time is "000000" */
     if (fuzzydate & TIME_NO_ZERO_DATE)
       return 1;
-    memset((char*) ltime, 0, sizeof(*ltime));
+    memset(ltime, 0, sizeof(*ltime));
   }
   else
   {

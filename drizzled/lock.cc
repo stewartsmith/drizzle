@@ -515,14 +515,13 @@ void mysql_lock_remove(THD *thd, MYSQL_LOCK *locked,TABLE *table,
         removed_locks= table->lock_count;
 
         /* Move down all table pointers above 'i'. */
-	memcpy((char*) (locked->table+i),
-               (char*) (locked->table+i+1),
+	memcpy((locked->table+i), (locked->table+i+1),
                (old_tables - i) * sizeof(TABLE*));
 
         lock_data_end= table->lock_data_start + table->lock_count;
         /* Move down all lock data pointers above 'table->lock_data_end-1' */
-        memcpy((char*) (locked->locks + table->lock_data_start),
-               (char*) (locked->locks + lock_data_end),
+        memcpy((locked->locks + table->lock_data_start),
+               (locked->locks + lock_data_end),
                (locked->lock_count - lock_data_end) *
                sizeof(THR_LOCK_DATA*));
 
@@ -637,7 +636,7 @@ MYSQL_LOCK *mysql_lock_merge(MYSQL_LOCK *a,MYSQL_LOCK *b)
 	 b->lock_count*sizeof(*b->locks));
   memcpy(sql_lock->table,a->table,a->table_count*sizeof(*a->table));
   memcpy(sql_lock->table+a->table_count,b->table,
-	 b->table_count*sizeof(*b->table));
+         b->table_count*sizeof(*b->table));
 
   /*
     Now adjust lock_position and lock_data_start for all objects that was

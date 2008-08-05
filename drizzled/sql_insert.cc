@@ -332,7 +332,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   /*
     Fill in the given fields and dump it to the table file
   */
-  memset((char*) &info, 0, sizeof(info));
+  memset(&info, 0, sizeof(info));
   info.ignore= ignore;
   info.handle_duplicates=duplic;
   info.update_fields= &update_fields;
@@ -1144,7 +1144,7 @@ select_insert::select_insert(TABLE_LIST *table_list_par, TABLE *table_par,
    autoinc_value_of_last_inserted_row(0),
    insert_into_view(table_list_par && 0 != 0)
 {
-  memset((char*) &info, 0, sizeof(info));
+  memset(&info, 0, sizeof(info));
   info.handle_duplicates= duplic;
   info.ignore= ignore_check_option_errors;
   info.update_fields= update_fields;

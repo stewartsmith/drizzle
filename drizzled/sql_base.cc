@@ -493,7 +493,7 @@ void close_handle_and_leave_table_as_lock(TABLE *table)
                        &key_buff, old_share->table_cache_key.length,
                        NULL))
   {
-    memset((char*) share, 0, sizeof(*share));
+    memset(share, 0, sizeof(*share));
     share->set_table_cache_key(key_buff, old_share->table_cache_key.str,
                                old_share->table_cache_key.length);
     share->tmp_table= INTERNAL_TMP_TABLE;       // for intern_close_table()
@@ -536,7 +536,7 @@ OPEN_TABLE_LIST *list_open_tables(THD *thd __attribute__((unused)),
   TABLE_LIST table_list;
 
   VOID(pthread_mutex_lock(&LOCK_open));
-  memset((char*) &table_list, 0, sizeof(table_list));
+  memset(&table_list, 0, sizeof(table_list));
   start_list= &open_list;
   open_list=0;
 
@@ -2472,7 +2472,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     uint length=(uint) strlen(alias)+1;
     table->alias= (char*) my_realloc((char*) table->alias, length,
                                      MYF(MY_WME));
-    memcpy((char*) table->alias, alias, length);
+    memcpy((void*) table->alias, alias, length);
   }
   /* These variables are also set in reopen_table() */
   table->tablenr=thd->current_tablenr++;
@@ -6365,15 +6365,14 @@ bool mysql_rm_tmp_tables(void)
                                    (file->name[1] == '.' &&  !file->name[2])))
         continue;
 
-      if (!memcmp((uchar*) file->name, (uchar*) tmp_file_prefix,
-                  tmp_file_prefix_length))
+      if (!memcmp(file->name, tmp_file_prefix, tmp_file_prefix_length))
       {
         char *ext= fn_ext(file->name);
         uint ext_len= strlen(ext);
         uint filePath_len= snprintf(filePath, sizeof(filePath),
                                     "%s%c%s", tmpdir, FN_LIBCHAR,
                                     file->name);
-        if (!memcmp((uchar*) reg_ext, (uchar*) ext, ext_len))
+        if (!memcmp(reg_ext, ext, ext_len))
         {
           handler *handler_file= 0;
           /* We should cut file extention before deleting of table */

@@ -6158,8 +6158,8 @@ void do_get_replace(struct st_command *command)
 
   free_replace();
 
-  memset((char*) &to_array, 0, sizeof(to_array));
-  memset((char*) &from_array, 0, sizeof(from_array));
+  memset(&to_array, 0, sizeof(to_array));
+  memset(&from_array, 0, sizeof(from_array));
   if (!*from)
     die("Missing argument in %s", command->query);
   start= buff= (char *)my_malloc(strlen(from)+1,MYF(MY_WME | MY_FAE));
@@ -6665,7 +6665,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     if (len > max_length)
       max_length=len;
   }
-  memset((char*) is_word_end, 0, sizeof(is_word_end));
+  memset(is_word_end, 0, sizeof(is_word_end));
   for (i=0 ; word_end_chars[i] ; i++)
     is_word_end[(uchar) word_end_chars[i]]=1;
 
@@ -6784,7 +6784,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
       or_bits(sets.set+used_sets,sets.set);  /* Can restart from start */
 
     /* Find all chars that follows current sets */
-    memset((char*) used_chars, 0, sizeof(used_chars));
+    memset(used_chars, 0, sizeof(used_chars));
     for (i= (uint) ~0; (i=get_next_bit(sets.set+used_sets,i)) ;)
     {
       used_chars[follow[i].chr]=1;
@@ -6893,8 +6893,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     for (i=1 ; i <= found_sets ; i++)
     {
       pos=from[found_set[i-1].table_offset];
-      rep_str[i].found= !memcmp((const uchar*) pos,
-                                (const uchar*) "\\^", 3) ? 2 : 1;
+      rep_str[i].found= !memcmp(pos, "\\^", 3) ? 2 : 1;
       rep_str[i].replace_string=to_array[found_set[i-1].table_offset];
       rep_str[i].to_offset=found_set[i-1].found_offset-start_at_word(pos);
       rep_str[i].from_offset=found_set[i-1].found_offset-replace_len(pos)+
@@ -6918,7 +6917,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 
 int init_sets(REP_SETS *sets,uint states)
 {
-  memset((char*) sets, 0, sizeof(*sets));
+  memset(sets, 0, sizeof(*sets));
   sets->size_of_bits=((states+7)/8);
   if (!(sets->set_buffer=(REP_SET*) my_malloc(sizeof(REP_SET)*SET_MALLOC_HUNC,
                 MYF(MY_WME))))
@@ -6949,8 +6948,8 @@ REP_SET *make_new_set(REP_SETS *sets)
   {
     sets->extra--;
     set=sets->set+ sets->count++;
-    memset((char*) set->bits, 0, sizeof(uint)*sets->size_of_bits);
-    memset((char*) &set->next[0], 0, sizeof(set->next[0])*LAST_CHAR_CODE);
+    memset(set->bits, 0, sizeof(uint)*sets->size_of_bits);
+    memset(&set->next[0], 0, sizeof(set->next[0])*LAST_CHAR_CODE);
     set->found_offset=0;
     set->found_len=0;
     set->table_offset= (uint) ~0;
@@ -7015,14 +7014,13 @@ void or_bits(REP_SET *to,REP_SET *from)
 
 void copy_bits(REP_SET *to,REP_SET *from)
 {
-  memcpy((uchar*) to->bits,(uchar*) from->bits,
+  memcpy(to->bits,from->bits,
    (size_t) (sizeof(uint) * to->size_of_bits));
 }
 
 int cmp_bits(REP_SET *set1,REP_SET *set2)
 {
-  return memcmp((uchar*) set1->bits,(uchar*) set2->bits,
-                sizeof(uint) * set1->size_of_bits);
+  return memcmp(set1->bits,set2->bits, sizeof(uint) * set1->size_of_bits);
 }
 
 
@@ -7091,17 +7089,15 @@ int find_found(FOUND_SET *found_set,uint table_offset, int found_offset)
 
 uint start_at_word(char * pos)
 {
-  return (((!memcmp((const uchar*) pos, (const uchar*) "\\b",2) && pos[2]) ||
-           !memcmp((const uchar*) pos, (const uchar*) "\\^", 2)) ? 1 : 0);
+  return (((!memcmp(pos, "\\b",2) && pos[2]) ||
+           !memcmp(pos, "\\^", 2)) ? 1 : 0);
 }
 
 uint end_of_word(char * pos)
 {
   char * end=strend(pos);
-  return ((end > pos+2 && !memcmp((const uchar*) end-2,
-                                  (const uchar*) "\\b", 2)) ||
-    (end >= pos+2 && !memcmp((const uchar*) end-2,
-                                (const uchar*) "\\$",2))) ? 1 : 0;
+  return ((end > pos+2 && !memcmp(end-2, "\\b", 2)) ||
+          (end >= pos+2 && !memcmp(end-2, "\\$",2))) ? 1 : 0;
 }
 
 /****************************************************************************
@@ -7170,8 +7166,8 @@ int insert_pointer_name(POINTER_ARRAY *pa,char * name)
     old_count=pa->max_count;
     pa->max_count=len/(sizeof(uchar*) + sizeof(*pa->flag));
     pa->flag= (int7*) (pa->typelib.type_names+pa->max_count);
-    memcpy((uchar*) pa->flag,(char *) (pa->typelib.type_names+old_count),
-     old_count*sizeof(*pa->flag));
+    memcpy(pa->flag, pa->typelib.type_names+old_count,
+           old_count*sizeof(*pa->flag));
   }
   pa->flag[pa->typelib.count]=0;      /* Reset flag */
   pa->typelib.type_names[pa->typelib.count++]= (char*) pa->str+pa->length;

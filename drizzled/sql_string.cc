@@ -234,7 +234,7 @@ bool String::copy_aligned(const char *str,uint32_t arg_length, uint32_t offset,
     If we add little-endian UCS-2 sometimes, this code
     will be more complicated. But it's OK for now.
   */
-  memset((char*) Ptr, 0, offset);
+  memset(Ptr, 0, offset);
   memcpy(Ptr + offset, str, arg_length);
   Ptr[aligned_length]=0;
   /* str_length is always >= 0 as arg_length is != 0 */

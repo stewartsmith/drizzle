@@ -238,7 +238,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
     }
     if (recpos != minpos)
     { // Reserved space (Null bits?)
-      memset((char*) recinfo_pos, 0, sizeof(*recinfo_pos));
+      memset(recinfo_pos, 0, sizeof(*recinfo_pos));
       recinfo_pos->type= (int) FIELD_NORMAL;
       recinfo_pos++->length= (uint16_t) (minpos - recpos);
     }
@@ -1513,8 +1513,8 @@ int ha_myisam::info(uint flag)
     share->keys_for_keyread.intersect(share->keys_in_use);
     share->db_record_offset= misam_info.record_offset;
     if (share->key_parts)
-      memcpy((char*) table->key_info[0].rec_per_key,
-	     (char*) misam_info.rec_per_key,
+      memcpy(table->key_info[0].rec_per_key,
+	     misam_info.rec_per_key,
 	     sizeof(table->key_info[0].rec_per_key)*share->key_parts);
     if (share->tmp_table == NO_TMP_TABLE)
       pthread_mutex_unlock(&share->mutex);
@@ -1626,7 +1626,7 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
   uint options= share->db_options_in_use;
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
     return(error); /* purecov: inspected */
-  memset((char*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   create_info.max_rows= share->max_rows;
   create_info.reloc_rows= share->min_rows;
   create_info.with_auto_increment= share->next_number_key_offset == 0;

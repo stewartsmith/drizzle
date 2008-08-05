@@ -626,11 +626,11 @@ DATE_TIME_FORMAT *date_time_format_copy(THD *thd, DATE_TIME_FORMAT *format)
   {
     /* Put format string after current pos */
     new_format->format.str= (char*) (new_format+1);
-    memcpy((char*) new_format->positions, (char*) format->positions,
+    memcpy(new_format->positions, format->positions,
 	   sizeof(format->positions));
     new_format->time_separator= format->time_separator;
     /* We make the string null terminated for easy printf in SHOW VARIABLES */
-    memcpy((char*) new_format->format.str, format->format.str,
+    memcpy(new_format->format.str, format->format.str,
 	   format->format.length);
     new_format->format.str[format->format.length]= 0;
     new_format->format.length= format->format.length;

@@ -131,7 +131,7 @@ void _myisam_log_record(enum myisam_log_commands command, MI_INFO *info,
 	 blob != end ;
 	 blob++)
     {
-      memcpy((uchar*) &pos, record+blob->offset+blob->pack_length, sizeof(char*));
+      memcpy(&pos, record+blob->offset+blob->pack_length, sizeof(char*));
       VOID(my_write(myisam_log_file,pos,blob->length,MYF(0)));
     }
   }

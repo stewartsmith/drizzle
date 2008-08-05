@@ -207,7 +207,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
       payload with a magic value to detect wrong buffer-sizes. We
       explicitly zero that segment again.
     */
-    memset((char*) forminfo+47 + forminfo[46], 0, 61 - forminfo[46]);
+    memset(forminfo+47 + forminfo[46], 0, 61 - forminfo[46]);
 #endif
   }
 
@@ -258,7 +258,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
     goto err;
 
   {
-    memset((uchar*) buff, 0, 6);
+    memset(buff, 0, 6);
     if (my_write(file, (uchar*) buff, 6, MYF_RW))
       goto err;
   }
@@ -695,7 +695,7 @@ static bool pack_header(uchar *forminfo,
     return(1);
   }
 
-  memset((char*)forminfo, 0, 288);
+  memset(forminfo, 0, 288);
   length=(info_length+create_fields.elements*FCOMP+288+n_length+int_length+
 	  com_length);
   int2store(forminfo,length);
@@ -900,8 +900,8 @@ static bool make_empty_rec(THD *thd, File file,
   
 
   /* We need a table to generate columns for default values */
-  memset((char*) &table, 0, sizeof(table));
-  memset((char*) &share, 0, sizeof(share));
+  memset(&table, 0, sizeof(table));
+  memset(&share, 0, sizeof(share));
   table.s= &share;
 
   if (!(buff=(uchar*) my_malloc((size_t) reclength,MYF(MY_WME | MY_ZEROFILL))))

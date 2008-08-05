@@ -1931,7 +1931,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
   */
 
   /* A 2nd variable part; this is common to all versions */ 
-  memcpy((char*) start, end, data_len);          // Copy db and query
+  memcpy(start, end, data_len);          // Copy db and query
   start[data_len]= '\0';              // End query with \0 (For safetly)
   db= (char *)start;
   query= (char *)(start + db_len + 1);
@@ -2046,7 +2046,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
 
   if (likely(charset_inited) &&
       (unlikely(!print_event_info->charset_inited ||
-                memcmp((uchar*) print_event_info->charset, (uchar*) charset, 6))))
+                memcmp(print_event_info->charset, charset, 6))))
   {
     CHARSET_INFO *cs_info= get_charset(uint2korr(charset), MYF(MY_WME));
     if (cs_info)
@@ -2069,8 +2069,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
   }
   if (time_zone_len)
   {
-    if (memcmp((uchar*) print_event_info->time_zone_str,
-               (uchar*) time_zone_str, time_zone_len+1))
+    if (memcmp(print_event_info->time_zone_str, time_zone_str, time_zone_len+1))
     {
       my_b_printf(file,"SET @@session.time_zone='%s'%s\n",
                   time_zone_str, print_event_info->delimiter);
@@ -2889,12 +2888,12 @@ bool Format_description_log_event::write(IO_CACHE* file)
   */
   uchar buff[FORMAT_DESCRIPTION_HEADER_LEN];
   int2store(buff + ST_BINLOG_VER_OFFSET,binlog_version);
-  memcpy((char*) buff + ST_SERVER_VER_OFFSET,server_version,ST_SERVER_VER_LEN);
+  memcpy(buff + ST_SERVER_VER_OFFSET,server_version,ST_SERVER_VER_LEN);
   if (!dont_set_created)
     created= when= get_time();
   int4store(buff + ST_CREATED_OFFSET,created);
   buff[ST_COMMON_HEADER_LEN_OFFSET]= LOG_EVENT_HEADER_LEN;
-  memcpy((char*) buff+ST_COMMON_HEADER_LEN_OFFSET+1, (uchar*) post_header_len,
+  memcpy(buff+ST_COMMON_HEADER_LEN_OFFSET+1, post_header_len,
          LOG_EVENT_TYPES);
   return (write_header(file, sizeof(buff)) ||
           my_b_safe_write(file, buff, sizeof(buff)));
@@ -3580,7 +3579,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     drizzle_reset_errors(thd, 0);
 
     TABLE_LIST tables;
-    memset((char*) &tables, 0, sizeof(tables));
+    memset(&tables, 0, sizeof(tables));
     tables.db= thd->strmake(thd->db, thd->db_length);
     tables.alias = tables.table_name = (char*) table_name;
     tables.lock_type = TL_WRITE;
@@ -4237,7 +4236,7 @@ Xid_log_event(const char* buf,
   :Log_event(buf, description_event)
 {
   buf+= description_event->common_header_len;
-  memcpy((char*) &xid, buf, sizeof(xid));
+  memcpy(&xid, buf, sizeof(xid));
 }
 
 
@@ -5082,7 +5081,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   IO_CACHE file;
   int error = 1;
 
-  memset((char*)&file, 0, sizeof(file));
+  memset(&file, 0, sizeof(file));
   fname_buf= strmov(proc_info, "Making temp file ");
   ext= slave_load_file_stem(fname_buf, file_id, server_id, ".info");
   thd_proc_info(thd, proc_info);

@@ -98,7 +98,7 @@ Item_func::Item_func(THD *thd, Item_func *item)
       if (!(args=(Item**) thd->alloc(sizeof(Item*)*arg_count)))
 	return;
     }
-    memcpy((char*) args, (char*) item->args, sizeof(Item*)*arg_count);
+    memcpy(args, item->args, sizeof(Item*)*arg_count);
   }
 }
 

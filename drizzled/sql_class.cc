@@ -699,11 +699,11 @@ void THD::init(void)
 			TL_WRITE);
   session_tx_isolation= (enum_tx_isolation) variables.tx_isolation;
   warn_list.empty();
-  memset((char*) warn_count, 0, sizeof(warn_count));
+  memset(warn_count, 0, sizeof(warn_count));
   total_warn_count= 0;
   update_charset();
   reset_current_stmt_binlog_row_based();
-  memset((char *) &status_var, 0, sizeof(status_var));
+  memset(&status_var, 0, sizeof(status_var));
 }
 
 
@@ -2300,7 +2300,7 @@ void THD::send_kill_message() const
 
 void THD::set_status_var_init()
 {
-  memset((char*) &status_var, 0, sizeof(status_var));
+  memset(&status_var, 0, sizeof(status_var));
 }
 
 

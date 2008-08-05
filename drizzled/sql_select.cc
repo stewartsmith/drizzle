@@ -3477,7 +3477,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
     table->quick_keys.clear_all();
     table->reginfo.join_tab=s;
     table->reginfo.not_exists_optimize=0;
-    memset((char*) table->const_key_parts, 0,
+    memset(table->const_key_parts, 0,
            sizeof(key_part_map)*table->s->keys);
     all_table_map|= table->map;
     s->join=join;
@@ -3839,8 +3839,8 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
   }
   else
   {
-    memcpy((uchar*) join->best_positions,(uchar*) join->positions,
-	   sizeof(POSITION)*join->const_tables);
+    memcpy(join->best_positions, join->positions,
+           sizeof(POSITION)*join->const_tables);
     join->best_read=1.0;
   }
   /* Generate an execution plan from the found optimal join order. */
@@ -4694,7 +4694,7 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
     my_qsort(keyuse->buffer,keyuse->elements,sizeof(KEYUSE),
 	  (qsort_cmp) sort_keyuse);
 
-    memset((char*) &key_end, 0, sizeof(key_end)); /* Add for easy testing */
+    memset(&key_end, 0, sizeof(key_end)); /* Add for easy testing */
     VOID(insert_dynamic(keyuse,(uchar*) &key_end));
 
     use=save_pos=dynamic_element(keyuse,0,KEYUSE*);
@@ -5774,8 +5774,7 @@ optimize_straight_join(JOIN *join, table_map join_tables)
   if (join->sort_by_table &&
       join->sort_by_table != join->positions[join->const_tables].table->table)
     read_time+= record_count;  // We have to make a temp table
-  memcpy((uchar*) join->best_positions, (uchar*) join->positions,
-         sizeof(POSITION)*idx);
+  memcpy(join->best_positions, join->positions, sizeof(POSITION)*idx);
   join->best_read= read_time;
 }
 
@@ -6149,7 +6148,7 @@ best_extension_by_limited_search(JOIN      *join,
           current_read_time+= current_record_count;
         if ((search_depth == 1) || (current_read_time < join->best_read))
         {
-          memcpy((uchar*) join->best_positions, (uchar*) join->positions,
+          memcpy(join->best_positions, join->positions,
                  sizeof(POSITION) * (idx + 1));
           join->best_read= current_read_time - 0.001;
         }
@@ -6187,8 +6186,7 @@ find_best(JOIN *join,table_map rest_tables,uint idx,double record_count,
       read_time+=record_count;			// We have to make a temp table
     if (read_time < join->best_read)
     {
-      memcpy((uchar*) join->best_positions,(uchar*) join->positions,
-	     sizeof(POSITION)*idx);
+      memcpy(join->best_positions, join->positions, sizeof(POSITION)*idx);
       join->best_read= read_time - 0.001;
     }
     return(false);
@@ -6699,7 +6697,7 @@ make_simple_join(JOIN *join,TABLE *tmp_table)
   join_tab->ref.key_parts= 0;
   join_tab->flush_weedout_table= join_tab->check_weed_out_table= NULL;
   join_tab->do_firstmatch= NULL;
-  memset((char*) &join_tab->read_record, 0, sizeof(join_tab->read_record));
+  memset(&join_tab->read_record, 0, sizeof(join_tab->read_record));
   tmp_table->status=0;
   tmp_table->null_row=0;
   return(false);
@@ -11068,10 +11066,10 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   strmov(tmpname,path);
   /* make table according to fields */
 
-  memset((char*) table, 0, sizeof(*table));
-  memset((char*) reg_field, 0, sizeof(Field*)*(field_count+1));
-  memset((char*) default_field, 0, sizeof(Field*) * (field_count));
-  memset((char*) from_field, 0, sizeof(Field*)*field_count);
+  memset(table, 0, sizeof(*table));
+  memset(reg_field, 0, sizeof(Field*)*(field_count+1));
+  memset(default_field, 0, sizeof(Field*) * (field_count));
+  memset(from_field, 0, sizeof(Field*)*field_count);
 
   table->mem_root= own_root;
   mem_root_save= thd->mem_root;
@@ -11321,7 +11319,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   pos=table->record[0]+ null_pack_length;
   if (null_pack_length)
   {
-    memset((uchar*) recinfo, 0, sizeof(*recinfo));
+    memset(recinfo, 0, sizeof(*recinfo));
     recinfo->type=FIELD_NORMAL;
     recinfo->length=null_pack_length;
     recinfo++;
@@ -11337,7 +11335,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   {
     Field *field= *reg_field;
     uint length;
-    memset((uchar*) recinfo, 0, sizeof(*recinfo));
+    memset(recinfo, 0, sizeof(*recinfo));
 
     if (!(field->flags & NOT_NULL_FLAG))
     {
@@ -11351,7 +11349,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 	recinfo->length=1;
 	recinfo->type=FIELD_NORMAL;
 	recinfo++;
-	memset((uchar*) recinfo, 0, sizeof(*recinfo));
+	memset(recinfo, 0, sizeof(*recinfo));
       }
       else
       {
@@ -11721,8 +11719,8 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   
 
   /* STEP 4: Create TABLE description */
-  memset((char*) table, 0, sizeof(*table));
-  memset((char*) reg_field, 0, sizeof(Field*)*2);
+  memset(table, 0, sizeof(*table));
+  memset(reg_field, 0, sizeof(Field*)*2);
 
   table->mem_root= own_root;
   mem_root_save= thd->mem_root;
@@ -11820,7 +11818,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   pos=table->record[0]+ null_pack_length;
   if (null_pack_length)
   {
-    memset((uchar*) recinfo, 0, sizeof(*recinfo));
+    memset(recinfo, 0, sizeof(*recinfo));
     recinfo->type=FIELD_NORMAL;
     recinfo->length=null_pack_length;
     recinfo++;
@@ -11835,7 +11833,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   {
     //Field *field= *reg_field;
     uint length;
-    memset((uchar*) recinfo, 0, sizeof(*recinfo));
+    memset(recinfo, 0, sizeof(*recinfo));
     field->move_field(pos,(uchar*) 0,0);
 
     field->reset();
@@ -12131,13 +12129,13 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
       share->keys=    0;
       share->uniques= 1;
       using_unique_constraint=1;
-      memset((char*) &uniquedef, 0, sizeof(uniquedef));
+      memset(&uniquedef, 0, sizeof(uniquedef));
       uniquedef.keysegs=keyinfo->key_parts;
       uniquedef.seg=seg;
       uniquedef.null_are_equal=1;
 
       /* Create extra column for hash value */
-      memset((uchar*) *recinfo, 0, sizeof(**recinfo));
+      memset(*recinfo, 0, sizeof(**recinfo));
       (*recinfo)->type= FIELD_CHECK;
       (*recinfo)->length=MI_UNIQUE_HASH_LENGTH;
       (*recinfo)++;
@@ -12146,7 +12144,7 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
     else
     {
       /* Create an unique key */
-      memset((char*) &keydef, 0, sizeof(keydef));
+      memset(&keydef, 0, sizeof(keydef));
       keydef.flag=HA_NOSAME | HA_BINARY_PACK_KEY | HA_PACK_KEY;
       keydef.keysegs=  keyinfo->key_parts;
       keydef.seg= seg;
@@ -12186,7 +12184,7 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
     }
   }
   MI_CREATE_INFO create_info;
-  memset((char*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
 
   if ((options & (OPTION_BIG_TABLES | SELECT_SMALL_RESULT)) ==
       OPTION_BIG_TABLES)
@@ -17533,8 +17531,7 @@ int JOIN::rollup_send_data(uint idx)
   for (i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
-    memcpy((char*) ref_pointer_array,
-	   (char*) rollup.ref_pointer_arrays[i],
+    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
 	   ref_pointer_array_size);
     if ((!having || having->val_int()))
     {
@@ -17575,8 +17572,7 @@ int JOIN::rollup_write_data(uint idx, TABLE *table_arg)
   for (i= send_group_parts ; i-- > idx ; )
   {
     /* Get reference pointers to sum functions in place */
-    memcpy((char*) ref_pointer_array,
-	   (char*) rollup.ref_pointer_arrays[i],
+    memcpy(ref_pointer_array, rollup.ref_pointer_arrays[i],
 	   ref_pointer_array_size);
     if ((!having || having->val_int()))
     {

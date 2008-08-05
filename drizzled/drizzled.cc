@@ -4190,8 +4190,8 @@ static void mysql_init_variables(void)
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
-  memset((uchar*) &mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
-  memset((char *) &global_status_var, 0, sizeof(global_status_var));
+  memset(&mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
+  memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
 
   /* Character sets */
@@ -4966,7 +4966,7 @@ void refresh_status(THD *thd)
   add_to_status(&global_status_var, &thd->status_var);
 
   /* Reset thread's status variables */
-  memset((uchar*) &thd->status_var, 0, sizeof(thd->status_var));
+  memset(&thd->status_var, 0, sizeof(thd->status_var));
 
   /* Reset some global variables */
   reset_status_vars();

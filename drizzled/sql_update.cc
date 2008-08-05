@@ -1293,7 +1293,7 @@ multi_update::initialize_tables(JOIN *join)
     temp_fields.concat(fields_for_table[cnt]);
 
     /* Make an unique key over the first field to avoid duplicated updates */
-    memset((char*) &group, 0, sizeof(group));
+    memset(&group, 0, sizeof(group));
     group.asc= 1;
     group.item= (Item**) temp_fields.head_ref();
 
@@ -1453,8 +1453,8 @@ bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused))
       do
       {
         tbl->file->position(tbl->record[0]);
-        memcpy((char*) tmp_table->field[field_num]->ptr,
-               (char*) tbl->file->ref, tbl->file->ref_length);
+        memcpy(tmp_table->field[field_num]->ptr,
+               tbl->file->ref, tbl->file->ref_length);
         field_num++;
       } while ((tbl= tbl_it++));
 

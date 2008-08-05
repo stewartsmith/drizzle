@@ -1103,7 +1103,7 @@ int main(int argc,char *argv[])
   }
   completion_hash_init(&ht, 128);
   init_alloc_root(&hash_mem_root, 16384, 0);
-  memset((char*) &drizzle, 0, sizeof(drizzle));
+  memset(&drizzle, 0, sizeof(drizzle));
   if (sql_connect(current_host,current_db,current_user,opt_password,
                   opt_silent))
   {
@@ -3695,7 +3695,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line
 
   /* Save old status */
   old_status=status;
-  memset((char*) &status, 0, sizeof(status));
+  memset(&status, 0, sizeof(status));
 
   // Run in batch mode
   status.batch=old_status.batch;

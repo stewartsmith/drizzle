@@ -738,9 +738,9 @@ do { doubleget_union _tmp; \
                          } while (0)
 #define float4get(V,M)   do { *((float *) &(V)) = *((float*) (M)); } while(0)
 #define float8get(V,M)   doubleget((V),(M))
-#define float4store(V,M) memcpy((uchar*) V,(uchar*) (&M),sizeof(float))
-#define floatstore(T,V)  memcpy((uchar*)(T), (uchar*)(&V),sizeof(float))
-#define floatget(V,M)    memcpy((uchar*) &V,(uchar*) (M),sizeof(float))
+#define float4store(V,M) memcpy(V, (&M), sizeof(float))
+#define floatstore(T,V)  memcpy((T), (&V), sizeof(float))
+#define floatget(V,M)    memcpy(&V, (M), sizeof(float))
 #define float8store(V,M) doublestore((V),(M))
 #else
 
@@ -853,8 +853,8 @@ do { doubleget_union _tmp; \
                               ((uchar*) &def_temp)[7]=(M)[0];\
                               (V) = def_temp; } while(0)
 #else
-#define float4get(V,M)   memcpy((uchar*) &V,(uchar*) (M),sizeof(float))
-#define float4store(V,M) memcpy((uchar*) V,(uchar*) (&M),sizeof(float))
+#define float4get(V,M)   memcpy(&V, (M), sizeof(float))
+#define float4store(V,M) memcpy(V, (&M), sizeof(float))
 
 #if defined(__FLOAT_WORD_ORDER) && (__FLOAT_WORD_ORDER == __BIG_ENDIAN)
 #define doublestore(T,V) do { *(((char*)T)+0)=(char) ((uchar *) &V)[4];\
@@ -924,12 +924,12 @@ do { doubleget_union _tmp; \
                              *(((char*)T)+1)=(((A) >> 16));\
                              *(((char*)T)+0)=(((A) >> 24)); } while(0)
 
-#define floatget(V,M)     memcpy((uchar*) &V,(uchar*) (M), sizeof(float))
-#define floatstore(T,V)   memcpy((uchar*) (T),(uchar*)(&V), sizeof(float))
-#define doubleget(V,M)	  memcpy((uchar*) &V,(uchar*) (M), sizeof(double))
-#define doublestore(T,V)  memcpy((uchar*) (T),(uchar*) &V, sizeof(double))
-#define int64_tget(V,M)   memcpy((uchar*) &V,(uchar*) (M), sizeof(uint64_t))
-#define int64_tstore(T,V) memcpy((uchar*) (T),(uchar*) &V, sizeof(uint64_t))
+#define floatget(V,M)     memcpy(&V, (M), sizeof(float))
+#define floatstore(T, V)   memcpy((T), (&V), sizeof(float))
+#define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
+#define doublestore(T, V)  memcpy((T), &V, sizeof(double))
+#define int64_tget(V, M)   memcpy(&V, (M), sizeof(uint64_t))
+#define int64_tstore(T, V) memcpy((T), &V, sizeof(uint64_t))
 
 #else
 
@@ -940,15 +940,15 @@ do { doubleget_union _tmp; \
 #define shortstore(T,V) int2store(T,V)
 #define longstore(T,V)	int4store(T,V)
 #ifndef floatstore
-#define floatstore(T,V)   memcpy((uchar*) (T),(uchar*) (&V),sizeof(float))
-#define floatget(V,M)     memcpy((uchar*) &V, (uchar*) (M), sizeof(float))
+#define floatstore(T,V)   memcpy((T), (&V), sizeof(float))
+#define floatget(V,M)     memcpy(&V, (M), sizeof(float))
 #endif
 #ifndef doubleget
-#define doubleget(V,M)	  memcpy((uchar*) &V,(uchar*) (M),sizeof(double))
-#define doublestore(T,V)  memcpy((uchar*) (T),(uchar*) &V,sizeof(double))
+#define doubleget(V, M)	  memcpy(&V, (M), sizeof(double))
+#define doublestore(T,V)  memcpy((T), &V, sizeof(double))
 #endif /* doubleget */
-#define int64_tget(V,M)   memcpy((uchar*) &V,(uchar*) (M),sizeof(uint64_t))
-#define int64_tstore(T,V) memcpy((uchar*) (T),(uchar*) &V,sizeof(uint64_t))
+#define int64_tget(V,M)   memcpy(&V, (M), sizeof(uint64_t))
+#define int64_tstore(T,V) memcpy((T), &V, sizeof(uint64_t))
 
 #endif /* WORDS_BIGENDIAN */
 
