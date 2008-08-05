@@ -16,7 +16,7 @@
 MYSQLDATAdir =		$(localstatedir)
 MYSQLSHAREdir =		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
-LDADD =			$(top_builddir)/mysys/libmysyslt.la \
+LDADD =			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystrings.la
 
 DEFS =			-DMAIN \

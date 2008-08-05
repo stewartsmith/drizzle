@@ -13,7 +13,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-LDADD =		$(top_builddir)/mysys/libmysyslt.la \
+LDADD =		$(top_builddir)/mysys/libmysys.la \
             	$(top_builddir)/mystrings/libmystringslt.la
 	
 

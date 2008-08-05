@@ -59,7 +59,7 @@ noinst_LTLIBRARIES = libhandler.la
 
 LDADD = $(top_builddir)/vio/libviolt.la \
 	$(top_builddir)/libdrizzle/libsqlcommon.la \
-	$(top_builddir)/mysys/libmysyslt.la \
+	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystringslt.la \
 	$(ZLIB_LIBS)
 

@@ -17,17 +17,7 @@ MYSQLDATAdir =		$(localstatedir)
 MYSQLSHAREdir =		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
 
-pkglib_LTLIBRARIES =	libmysys.la
-libmysys_la_LDFLAGS =   -static
-libmysys_la_SOURCES = 
-# This can't be listed here as $(top_builddir)/mysys/libmysyslt.la
-# # or it breaks make's dependency track for -j builds
-libmysys_la_LIBADD = libmysyslt.la
-# Force C++ linking - dummy.cxx doesn't have to exist with EXTRA in the name
-nodist_EXTRA_libmysys_la_SOURCES = dummy.cxx
-
-# Trick to get things compiled like they are shared, but linked directly in.
-noinst_LTLIBRARIES = libmysyslt.la
+noinst_LTLIBRARIES =	libmysys.la
 
 mysysincludedir = ${includedir}/mysys
 dist_mysysinclude_HEADERS = 	my_alloc.h \
@@ -61,7 +51,7 @@ if BUILD_THR_RWLOCK
 thr_rwlock_source=thr_rwlock.c
 endif
 
-libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
+libmysys_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_path.c mf_loadpath.c my_file.c \
 			my_open.c my_create.c my_dup.c my_seek.c my_read.c \
 			my_write.c \
@@ -92,6 +82,7 @@ libmysyslt_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			my_access.c base64.c \
 			thr_alarm.c thr_lock.c my_thr_init.c \
                         ${thr_mutex_source} ${thr_rwlock_source}
+
 DEFS =			-DDEFAULT_BASEDIR=\"$(prefix)\" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
 			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \

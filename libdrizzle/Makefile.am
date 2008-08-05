@@ -34,7 +34,7 @@ dist_libdrizzleinclude_HEADERS =	drizzle.h \
 pkglib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = libdrizzle.c client.c local_infile.c net_serv.c get_password.c
 libdrizzle_la_LIBADD =	${sql_cmn_objects} ${sqlobjects} \
-			${top_builddir}/mysys/libmysyslt.la \
+			${top_builddir}/mysys/libmysys.la \
 			${top_builddir}/mystrings/libmystringslt.la \
 			libsqlcommon.la \
 			${top_builddir}/vio/libviolt.la 

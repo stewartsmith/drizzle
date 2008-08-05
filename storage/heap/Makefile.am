@@ -19,7 +19,7 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 
 LDADD =			libheap.la \
-			$(top_builddir)/mysys/libmysyslt.la \
+			$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/strings/libmystringslt.la
 
 DEFS =                  @DEFS@
