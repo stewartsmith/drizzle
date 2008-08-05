@@ -19,9 +19,10 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 
-AM_CPPFLAGS = 		${GLOBAL_CPPFLAGS} -I${top_srcdir}/drizzled
+if BUILD_AUTH_PAM
 EXTRA_LTLIBRARIES =	libauth_pam.la
 pkgplugin_LTLIBRARIES =	@plugin_auth_pam_shared_target@
 libauth_pam_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lpam -lpam_misc
-libauth_pam_la_CPPFLAGS=	$(AM_CPPFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+libauth_pam_la_CPPFLAGS=	$(GLOBAL_CPPFLAGS) -DMYSQL_DYNAMIC_PLUGIN
 libauth_pam_la_SOURCES =	auth_pam.cc
+endif

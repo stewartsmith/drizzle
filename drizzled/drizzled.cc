@@ -1805,7 +1805,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       this could be improved by having a common stack of handlers.
     */
     if (thd->handle_error(error, str,
-                          MYSQL_ERROR::WARN_LEVEL_ERROR))
+                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;;
 
     thd->is_slave_error=  1; // needed to catch query errors during replication
@@ -1834,7 +1834,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
         inside push_warning.
       */
       thd->no_warnings_for_error= true;
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, error, str);
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
       thd->no_warnings_for_error= false;
     }
   }
@@ -4190,8 +4190,8 @@ static void mysql_init_variables(void)
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
-  memset((uchar*) &mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
-  memset((char *) &global_status_var, 0, sizeof(global_status_var));
+  memset(&mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
+  memset(&global_status_var, 0, sizeof(global_status_var));
   key_map_full.set_all();
 
   /* Character sets */
@@ -4966,7 +4966,7 @@ void refresh_status(THD *thd)
   add_to_status(&global_status_var, &thd->status_var);
 
   /* Reset thread's status variables */
-  memset((uchar*) &thd->status_var, 0, sizeof(thd->status_var));
+  memset(&thd->status_var, 0, sizeof(thd->status_var));
 
   /* Reset some global variables */
   reset_status_vars();

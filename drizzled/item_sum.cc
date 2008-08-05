@@ -3143,7 +3143,7 @@ void Item_func_group_concat::cleanup()
   /* Adjust warning message to include total number of cut values */
   if (warning)
   {
-    char warn_buff[MYSQL_ERRMSG_SIZE];
+    char warn_buff[DRIZZLE_ERRMSG_SIZE];
     sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
     warning->set_msg(current_thd, warn_buff);
     warning= 0;
@@ -3174,7 +3174,7 @@ void Item_func_group_concat::cleanup()
       }
       if (warning)
       {
-        char warn_buff[MYSQL_ERRMSG_SIZE];
+        char warn_buff[DRIZZLE_ERRMSG_SIZE];
         sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
         warning->set_msg(thd, warn_buff);
         warning= 0;
@@ -3453,7 +3453,7 @@ String* Item_func_group_concat::val_str(String* str __attribute__((unused)))
       Item_func_group_concat::cleanup().
     */
     assert(table);
-    warning= push_warning(table->in_use, MYSQL_ERROR::WARN_LEVEL_WARN,
+    warning= push_warning(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_CUT_VALUE_GROUP_CONCAT,
                           ER(ER_CUT_VALUE_GROUP_CONCAT));
   }

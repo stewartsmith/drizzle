@@ -610,7 +610,7 @@ public:
 
     all_fields= fields_arg;
     fields_list= fields_arg;
-    memset((char*) &keyuse, 0, sizeof(keyuse));
+    memset(&keyuse, 0, sizeof(keyuse));
     tmp_table_param.init();
     tmp_table_param.end_write_records= HA_POS_ERROR;
     rollup.state= ROLLUP::STATE_NONE;
@@ -636,7 +636,7 @@ public:
 
   inline void set_items_ref_array(Item **ptr)
   {
-    memcpy((char*) ref_pointer_array, (char*) ptr, ref_pointer_array_size);
+    memcpy(ref_pointer_array, ptr, ref_pointer_array_size);
     current_ref_pointer_array= ptr;
   }
   inline void init_items_ref_array()

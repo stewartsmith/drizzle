@@ -500,9 +500,9 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
     have_to_be_excluded= 1;
     if (thd->lex->describe)
     {
-      char warn_buff[MYSQL_ERRMSG_SIZE];
+      char warn_buff[DRIZZLE_ERRMSG_SIZE];
       sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		   ER_SELECT_REDUCED, warn_buff);
     }
     substitution= select_lex->item_list.head();
@@ -1290,9 +1290,9 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, Comp_creat
 	have_to_be_excluded= 1;
 	if (thd->lex->describe)
 	{
-	  char warn_buff[MYSQL_ERRMSG_SIZE];
+	  char warn_buff[DRIZZLE_ERRMSG_SIZE];
 	  sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
-	  push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+	  push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		       ER_SELECT_REDUCED, warn_buff);
 	}
 	return(RES_REDUCE);

@@ -316,7 +316,7 @@ mysqld_show_create(THD *thd, TABLE_LIST *table_list)
       issue a warning with 'warning' level status in 
       case of invalid view and last error is ER_VIEW_INVALID
     */
-    mysql_reset_errors(thd, true);
+    drizzle_reset_errors(thd, true);
     thd->clear_error();
   }
 
@@ -779,7 +779,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
   }
 
   key_info= table->key_info;
-  memset((char*) &create_info, 0, sizeof(create_info));
+  memset(&create_info, 0, sizeof(create_info));
   /* Allow update_create_info to update row type */
   create_info.row_type= share->row_type;
   file->update_create_info(&create_info);
@@ -957,6 +957,13 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
       char *end;
       packet->append(STRING_WITH_LEN(" KEY_BLOCK_SIZE="));
       end= int64_t10_to_str(table->s->key_block_size, buff, 10);
+      packet->append(buff, (uint) (end - buff));
+    }
+    if (share->block_size)
+    {
+      char *end;
+      packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
+      end= int64_t10_to_str(share->block_size, buff,10);
       packet->append(buff, (uint) (end - buff));
     }
     table->file->append_create_info(packet);
@@ -1963,7 +1970,7 @@ bool get_lookup_field_values(THD *thd, COND *cond, TABLE_LIST *tables,
 {
   LEX *lex= thd->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
-  memset((char*) lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
+  memset(lookup_field_values, 0, sizeof(LOOKUP_FIELD_VALUES));
   switch (lex->sql_command) {
   case SQLCOM_SHOW_DATABASES:
     if (wild)
@@ -2434,8 +2441,8 @@ static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
   char key[MAX_DBKEY_LENGTH];
   uint key_length;
 
-  memset((char*) &table_list, 0, sizeof(TABLE_LIST));
-  memset((char*) &tbl, 0, sizeof(TABLE));
+  memset(&table_list, 0, sizeof(TABLE_LIST));
+  memset(&tbl, 0, sizeof(TABLE));
 
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;
@@ -2814,7 +2821,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
   }
   else
   {
-    char option_buff[350],*ptr;
+    char option_buff[400],*ptr;
     TABLE *show_table= tables->table;
     TABLE_SHARE *share= show_table->s;
     handler *file= show_table->file;
@@ -2868,6 +2875,12 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       ptr=strxmov(ptr, " row_format=", 
                   ha_row_type[(uint) share->row_type],
                   NullS);
+    if (share->block_size)
+    {
+      ptr= strmov(ptr, " block_size=");
+      ptr= int64_t10_to_str(share->block_size, ptr, 10);
+    }
+    
     if (share->transactional != HA_CHOICE_UNDEF)
     {
       ptr= strxmov(ptr, " TRANSACTIONAL=",
@@ -3095,7 +3108,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
         rather than in SHOW COLUMNS
       */ 
       if (thd->is_error())
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      thd->main_da.sql_errno(), thd->main_da.message());
       thd->clear_error();
       res= 0;
@@ -3323,7 +3336,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
         rather than in SHOW KEYS
       */
       if (thd->is_error())
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      thd->main_da.sql_errno(), thd->main_da.message());
       thd->clear_error();
       res= 0;
@@ -3428,7 +3441,7 @@ static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);
@@ -3503,7 +3516,7 @@ static int get_schema_key_column_usage_record(THD *thd,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);
@@ -3700,7 +3713,7 @@ get_referential_constraints_record(THD *thd, TABLE_LIST *tables,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);

@@ -124,7 +124,7 @@ enum drizzle_option
   DRIZZLE_SET_CHARSET_DIR, DRIZZLE_SET_CHARSET_NAME, DRIZZLE_OPT_LOCAL_INFILE,
   DRIZZLE_OPT_PROTOCOL, DRIZZLE_SHARED_MEMORY_BASE_NAME, DRIZZLE_OPT_READ_TIMEOUT,
   DRIZZLE_OPT_WRITE_TIMEOUT, DRIZZLE_OPT_USE_RESULT,
-  DRIZZLE_OPT_USE_REMOTE_CONNECTION, DRIZZLE_OPT_USE_EMBEDDED_CONNECTION,
+  DRIZZLE_OPT_USE_REMOTE_CONNECTION,
   DRIZZLE_OPT_GUESS_CONNECTION, DRIZZLE_SET_CLIENT_IP, DRIZZLE_SECURE_AUTH,
   DRIZZLE_REPORT_DATA_TRUNCATION, DRIZZLE_OPT_RECONNECT,
   DRIZZLE_OPT_SSL_VERIFY_SERVER_CERT
@@ -173,8 +173,7 @@ enum drizzle_status
 
 enum drizzle_protocol_type
 {
-  DRIZZLE_PROTOCOL_DEFAULT, DRIZZLE_PROTOCOL_TCP, DRIZZLE_PROTOCOL_SOCKET,
-  DRIZZLE_PROTOCOL_PIPE, DRIZZLE_PROTOCOL_MEMORY
+  DRIZZLE_PROTOCOL_TCP
 };
 
 typedef struct character_set
@@ -375,7 +374,6 @@ uint32_t  STDCALL drizzle_get_client_version(void);
 const char *  STDCALL drizzle_get_host_info(const DRIZZLE *drizzle);
 uint32_t  STDCALL drizzle_get_server_version(const DRIZZLE *drizzle);
 uint32_t  STDCALL drizzle_get_proto_info(const DRIZZLE *drizzle);
-DRIZZLE_RES *  STDCALL drizzle_list_dbs(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  STDCALL drizzle_list_tables(DRIZZLE *drizzle,const char *wild);
 DRIZZLE_RES *  STDCALL drizzle_list_processes(DRIZZLE *drizzle);
 int32_t    STDCALL drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg);

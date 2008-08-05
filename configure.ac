@@ -3,12 +3,12 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
-AC_INIT
+AC_INIT(drizzle, [7.0.0], [http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
+AM_INIT_AUTOMAKE(-Wall -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -285,10 +285,9 @@ fi
 
 MYSQL_PROG_AR
 
-# libmysqlclient versioning when linked with GNU ld.
+# libdrizzle versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
   LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libdrizzle/libdrizzle.ver"
-  AC_CONFIG_FILES(libdrizzle/libdrizzle.ver)
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 

@@ -454,15 +454,15 @@ public:
   { return DERIVATION_IMPLICIT; }
   virtual void set_derivation(enum Derivation derivation_arg __attribute__((unused)))
   { }
-  bool set_warning(MYSQL_ERROR::enum_warning_level, unsigned int code,
+  bool set_warning(DRIZZLE_ERROR::enum_warning_level, unsigned int code,
                    int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
                             const char *str, uint str_len,
                             timestamp_type ts_type, int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
                             int64_t nr, timestamp_type ts_type,
                             int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, const uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, const uint code, 
                             double nr, timestamp_type ts_type);
   inline bool check_overflow(int op_result)
   {

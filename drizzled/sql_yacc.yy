@@ -416,6 +416,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BIN_NUM
 %token  BIT_SYM                       /* MYSQL-FUNC */
 %token  BLOB_SYM                      /* SQL-2003-R */
+%token  BLOCK_SIZE_SYM
 %token  BLOCK_SYM
 %token  BOOLEAN_SYM                   /* SQL-2003-R */
 %token  BOOL_SYM
@@ -1152,7 +1153,7 @@ change:
           {
             LEX *lex = Lex;
             lex->sql_command = SQLCOM_CHANGE_MASTER;
-            memset((char*) &lex->mi, 0, sizeof(lex->mi));
+            memset(&lex->mi, 0, sizeof(lex->mi));
           }
           master_defs
           {}
@@ -1200,7 +1201,7 @@ master_def:
             }
             if (Lex->mi.heartbeat_period > slave_net_timeout)
             {
-              push_warning_printf(YYTHD, MYSQL_ERROR::WARN_LEVEL_WARN,
+              push_warning_printf(YYTHD, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
                                   ER(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE),
                                   " exceeds the value of `slave_net_timeout' sec.",
@@ -1211,7 +1212,7 @@ master_def:
             {
               if (Lex->mi.heartbeat_period != 0.0)
               {
-                push_warning_printf(YYTHD, MYSQL_ERROR::WARN_LEVEL_WARN,
+                push_warning_printf(YYTHD, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                     ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE,
                                     ER(ER_SLAVE_HEARTBEAT_VALUE_OUT_OF_RANGE),
                                     " is less than 1 msec.",
@@ -1275,7 +1276,7 @@ create:
             lex->alter_info.reset();
             lex->col_list.empty();
             lex->change=NullS;
-            memset((char*) &lex->create_info, 0, sizeof(lex->create_info));
+            memset(&lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.options=$2 | $4;
             lex->create_info.db_type= ha_default_handlerton(thd);
             lex->create_info.default_table_charset= NULL;
@@ -1289,7 +1290,7 @@ create:
             if (!lex->create_info.db_type)
             {
               lex->create_info.db_type= ha_default_handlerton(YYTHD);
-              push_warning_printf(YYTHD, MYSQL_ERROR::WARN_LEVEL_WARN,
+              push_warning_printf(YYTHD, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                   ER_WARN_USING_OTHER_HANDLER,
                                   ER(ER_WARN_USING_OTHER_HANDLER),
                                   ha_resolve_storage_engine_name(lex->create_info.db_type),
@@ -1482,6 +1483,11 @@ create_table_option:
           {
             Lex->create_info.avg_row_length=$3;
             Lex->create_info.used_fields|= HA_CREATE_USED_AVG_ROW_LENGTH;
+          }
+        | BLOCK_SIZE_SYM opt_equal ulong_num    
+          { 
+            Lex->create_info.block_size= $3; 
+            Lex->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
@@ -2397,7 +2403,7 @@ alter:
             lex->select_lex.init_order();
             lex->select_lex.db=
               ((TABLE_LIST*) lex->select_lex.table_list.first)->db;
-            memset((char*) &lex->create_info, 0, sizeof(lex->create_info));
+            memset(&lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.db_type= 0;
             lex->create_info.default_table_charset= NULL;
             lex->create_info.row_type= ROW_TYPE_NOT_USED;
@@ -2651,7 +2657,7 @@ slave:
             lex->sql_command = SQLCOM_SLAVE_START;
             lex->type = 0;
             /* We'll use mi structure for UNTIL options */
-            memset((char*) &lex->mi, 0, sizeof(lex->mi));
+            memset(&lex->mi, 0, sizeof(lex->mi));
             /* If you change this code don't forget to update SLAVE START too */
           }
           slave_until
@@ -2669,7 +2675,7 @@ slave:
             lex->sql_command = SQLCOM_SLAVE_START;
             lex->type = 0;
             /* We'll use mi structure for UNTIL options */
-            memset((char*) &lex->mi, 0, sizeof(lex->mi));
+            memset(&lex->mi, 0, sizeof(lex->mi));
           }
           slave_until
           {}
@@ -5332,7 +5338,7 @@ show:
             lex->lock_option= TL_READ;
             mysql_init_select(lex);
             lex->current_select->parsing_place= SELECT_LIST;
-            memset((char*) &lex->create_info, 0, sizeof(lex->create_info));
+            memset(&lex->create_info, 0, sizeof(lex->create_info));
           }
           show_param
           {}
@@ -6341,6 +6347,7 @@ keyword_sp:
         | AVG_SYM                  {}
         | BINLOG_SYM               {}
         | BIT_SYM                  {}
+        | BLOCK_SIZE_SYM           {}
         | BLOCK_SYM                {}
         | BOOL_SYM                 {}
         | BOOLEAN_SYM              {}

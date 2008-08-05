@@ -179,7 +179,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
                        &path_buff, path_length + 1,
                        NULL))
   {
-    memset((char*) share, 0, sizeof(*share));
+    memset(share, 0, sizeof(*share));
 
     share->set_table_cache_key(key_buff, key, key_length);
 
@@ -208,7 +208,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
     share->table_map_id= ~0UL;
     share->cached_row_logging_check= -1;
 
-    memcpy((char*) &share->mem_root, (char*) &mem_root, sizeof(mem_root));
+    memcpy(&share->mem_root, &mem_root, sizeof(mem_root));
     pthread_mutex_init(&share->mutex, MY_MUTEX_INIT_FAST);
     pthread_cond_init(&share->cond, NULL);
   }
@@ -244,7 +244,7 @@ void init_tmp_table_share(THD *thd, TABLE_SHARE *share, const char *key,
                           const char *path)
 {
 
-  memset((char*) share, 0, sizeof(*share));
+  memset(share, 0, sizeof(*share));
   init_sql_alloc(&share->mem_root, TABLE_ALLOC_BLOCK_SIZE, 0);
   share->table_category=         TABLE_CATEGORY_TEMPORARY;
   share->tmp_table=              INTERNAL_TMP_TABLE;
@@ -314,7 +314,7 @@ void free_table_share(TABLE_SHARE *share)
   share->db_plugin= NULL;
 
   /* We must copy mem_root from share because share is allocated through it */
-  memcpy((char*) &mem_root, (char*) &share->mem_root, sizeof(mem_root));
+  memcpy(&mem_root, &share->mem_root, sizeof(mem_root));
   free_root(&mem_root, MYF(0));                 // Free's share
   return;
 }
@@ -534,6 +534,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     share->transactional= (ha_choice) (head[39] & 3);
     share->page_checksum= (ha_choice) ((head[39] >> 2) & 3);
     share->row_type= (row_type) head[40];
+    share->block_size= uint4korr(head+43);
     share->table_charset= get_charset((uint) head[38],MYF(0));
     share->null_field_first= 1;
   }
@@ -543,9 +544,9 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     if (use_mb(default_charset_info))
     {
       /* Warn that we may be changing the size of character columns */
-      sql_print_warning("'%s' had no or invalid character set, "
+      sql_print_warning(_("'%s' had no or invalid character set, "
                         "and default character set is multi-byte, "
-                        "so character column sizes may have changed",
+                        "so character column sizes may have changed"),
                         share->path.str);
     }
     share->table_charset= default_charset_info;
@@ -581,7 +582,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   if (!(keyinfo = (KEY*) alloc_root(&share->mem_root,
 				    n_length + uint2korr(disk_buff+4))))
     goto err;                                   /* purecov: inspected */
-  memset((char*) keyinfo, 0, n_length);
+  memset(keyinfo, 0, n_length);
   share->key_info= keyinfo;
   key_part= my_reinterpret_cast(KEY_PART_INFO*) (keyinfo+keys);
   strpos=disk_buff+6;
@@ -821,7 +822,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   names= (char*) (interval_array+share->fields+interval_parts+keys+3);
   if (!interval_count)
     share->intervals= 0;			// For better debugging
-  memcpy((char*) names, strpos+(share->fields*field_pack_length),
+  memcpy(names, strpos+(share->fields*field_pack_length),
 	 (uint) (n_length+int_length));
   comment_pos= names+(n_length+int_length);
   memcpy(comment_pos, disk_buff+read_length-com_length, com_length);
@@ -958,7 +959,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       }
       else
         charset= share->table_charset;
-      memset((char*) &comment, 0, sizeof(comment));
+      memset(&comment, 0, sizeof(comment));
     }
 
     if (interval_nr && charset->mbminlen > 1)
@@ -980,14 +981,14 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       field_length= my_decimal_precision_to_length(field_length,
                                                    decimals,
                                                    f_is_dec(pack_flag) == 0);
-      sql_print_error("Found incompatible DECIMAL field '%s' in %s; "
-                      "Please do \"ALTER TABLE '%s' FORCE\" to fix it!",
+      sql_print_error(_("Found incompatible DECIMAL field '%s' in %s; "
+                      "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
                       share->fieldnames.type_names[i], share->table_name.str,
                       share->table_name.str);
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                           ER_CRASHED_ON_USAGE,
-                          "Found incompatible DECIMAL field '%s' in %s; "
-                          "Please do \"ALTER TABLE '%s' FORCE\" to fix it!",
+                          _("Found incompatible DECIMAL field '%s' in %s; "
+                          "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
                           share->fieldnames.type_names[i],
                           share->table_name.str,
                           share->table_name.str);
@@ -1158,15 +1159,15 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
             key_part->store_length-= (uint16_t)(key_part->length -
                                               field->key_length());
             key_part->length= (uint16_t)field->key_length();
-            sql_print_error("Found wrong key definition in %s; "
-                            "Please do \"ALTER TABLE '%s' FORCE \" to fix it!",
+            sql_print_error(_("Found wrong key definition in %s; "
+                            "Please do \"ALTER TABLE '%s' FORCE \" to fix it!"),
                             share->table_name.str,
                             share->table_name.str);
-            push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+            push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                                 ER_CRASHED_ON_USAGE,
-                                "Found wrong key definition in %s; "
+                                _("Found wrong key definition in %s; "
                                 "Please do \"ALTER TABLE '%s' FORCE\" to fix "
-                                "it!",
+                                "it!"),
                                 share->table_name.str,
                                 share->table_name.str);
             share->crashed= 1;                // Marker for CHECK TABLE
@@ -1336,7 +1337,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   assert(thd->lex->is_lex_started);
 
   error= 1;
-  memset((char*) outparam, 0, sizeof(*outparam));
+  memset(outparam, 0, sizeof(*outparam));
   outparam->in_use= thd;
   outparam->s= share;
   outparam->db_stat= db_stat;
@@ -1544,7 +1545,7 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
   }
 
 #if defined(HAVE_purify) 
-  memset((char*) bitmaps, 0, bitmap_size*3);
+  memset(bitmaps, 0, bitmap_size*3);
 #endif
 
   outparam->no_replicate= outparam->file &&
@@ -1653,7 +1654,7 @@ ulong get_form_pos(File file, uchar *head, TYPELIB *save_names)
       my_free((uchar*) buf,MYF(0));
   }
   else if (!names)
-    memset((char*) save_names, 0, sizeof(save_names));
+    memset(save_names, 0, sizeof(save_names));
   else
   {
     char *str;
@@ -1807,15 +1808,15 @@ void open_table_error(TABLE_SHARE *share, int error, int db_errno, int errarg)
       csname= tmp;
     }
     my_printf_error(ER_UNKNOWN_COLLATION,
-                    "Unknown collation '%s' in table '%-.64s' definition", 
+                    _("Unknown collation '%s' in table '%-.64s' definition"), 
                     MYF(0), csname, share->table_name.str);
     break;
   }
   case 6:
     strxmov(buff, share->normalized_path.str, reg_ext, NullS);
     my_printf_error(ER_NOT_FORM_FILE,
-                    "Table '%-.64s' was created with a different version "
-                    "of MySQL and cannot be read", 
+                    _("Table '%-.64s' was created with a different version "
+                    "of MySQL and cannot be read"), 
                     MYF(0), buff);
     break;
   case 8:
@@ -2038,7 +2039,7 @@ File create_frm(THD *thd, const char *name, const char *db,
   {
     uint key_length, tmp_key_length;
     uint tmp;
-    memset((char*) fileinfo, 0, 64);
+    memset(fileinfo, 0, 64);
     /* header */
     fileinfo[0]=(uchar) 254;
     fileinfo[1]= 1;
@@ -2094,7 +2095,8 @@ File create_frm(THD *thd, const char *name, const char *db,
     /* Next few bytes where for RAID support */
     fileinfo[41]= 0;
     fileinfo[42]= 0;
-    fileinfo[43]= 0;
+    int4store(fileinfo+43,create_info->block_size);
+ 
     fileinfo[44]= 0;
     fileinfo[45]= 0;
     fileinfo[46]= 0;
@@ -2137,6 +2139,7 @@ void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
   create_info->min_rows= share->min_rows;
   create_info->table_options= share->db_create_options;
   create_info->avg_row_length= share->avg_row_length;
+  create_info->block_size= share->block_size;
   create_info->row_type= share->row_type;
   create_info->default_table_charset= share->table_charset;
   create_info->table_charset= 0;
@@ -2403,8 +2406,8 @@ table_check_intact(TABLE *table, const uint table_f_count,
           Still this can be a sign of a tampered table, output an error
           to the error log.
         */
-        sql_print_error("Incorrect definition of table %s.%s: "
-                        "expected column '%s' at position %d, found '%s'.",
+        sql_print_error(_("Incorrect definition of table %s.%s: "
+                        "expected column '%s' at position %d, found '%s'."),
                         table->s->db.str, table->alias, table_def->name.str, i,
                         field->field_name);
       }
@@ -2429,29 +2432,29 @@ table_check_intact(TABLE *table, const uint table_f_count,
       if (strncmp(sql_type.c_ptr_safe(), table_def->type.str,
                   table_def->type.length - 1))
       {
-        sql_print_error("Incorrect definition of table %s.%s: "
+        sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d to have type "
-                        "%s, found type %s.", table->s->db.str, table->alias,
+                        "%s, found type %s."), table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->type.str,
                         sql_type.c_ptr_safe());
         error= true;
       }
       else if (table_def->cset.str && !field->has_charset())
       {
-        sql_print_error("Incorrect definition of table %s.%s: "
+        sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but the type has no "
-                        "character set.", table->s->db.str, table->alias,
+                        "character set."), table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->cset.str);
         error= true;
       }
       else if (table_def->cset.str &&
                strcmp(field->charset()->csname, table_def->cset.str))
       {
-        sql_print_error("Incorrect definition of table %s.%s: "
+        sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but found "
-                        "character set '%s'.", table->s->db.str, table->alias,
+                        "character set '%s'."), table->s->db.str, table->alias,
                         table_def->name.str, i, table_def->cset.str,
                         field->charset()->csname);
         error= true;
@@ -2459,9 +2462,9 @@ table_check_intact(TABLE *table, const uint table_f_count,
     }
     else
     {
-      sql_print_error("Incorrect definition of table %s.%s: "
+      sql_print_error(_("Incorrect definition of table %s.%s: "
                       "expected column '%s' at position %d to have type %s "
-                      " but the column is not found.",
+                      " but the column is not found."),
                       table->s->db.str, table->alias,
                       table_def->name.str, i, table_def->type.str);
       error= true;
@@ -3177,7 +3180,7 @@ void st_table::clear_column_bitmaps()
     bitmap_clear_all(&table->def_read_set);
     bitmap_clear_all(&table->def_write_set);
   */
-  memset((char*) def_read_set.bitmap, 0, s->column_bitmap_size*2);
+  memset(def_read_set.bitmap, 0, s->column_bitmap_size*2);
   column_bitmaps_set(&def_read_set, &def_write_set);
 }
 

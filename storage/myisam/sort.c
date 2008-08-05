@@ -120,7 +120,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,my_bool no_messages,
 
   my_b_clear(&tempfile);
   my_b_clear(&tempfile_for_exceptions);
-  memset((char*) &buffpek, 0, sizeof(buffpek));
+  memset(&buffpek, 0, sizeof(buffpek));
   sort_keys= (uchar **) NULL; error= 1;
   maxbuffer=1;
 
@@ -329,8 +329,8 @@ pthread_handler_t thr_find_all_keys(void *arg)
 
     my_b_clear(&sort_param->tempfile);
     my_b_clear(&sort_param->tempfile_for_exceptions);
-    memset((char*) &sort_param->buffpek, 0, sizeof(sort_param->buffpek));
-    memset((char*) &sort_param->unique, 0,  sizeof(sort_param->unique));
+    memset(&sort_param->buffpek, 0, sizeof(sort_param->buffpek));
+    memset(&sort_param->unique, 0,  sizeof(sort_param->unique));
     sort_keys= (uchar **) NULL;
 
     memavl=       max(sort_param->sortbuff_size, MIN_SORT_MEMORY);

@@ -34,7 +34,7 @@ int heap_rlast(HP_INFO *info, uchar *record, int inx)
       memcpy(&pos, pos + (*keyinfo->get_key_length)(keyinfo, pos), 
 	     sizeof(uchar*));
       info->current_ptr = pos;
-      memcpy(record, pos, (size_t)share->reclength);
+      hp_extract_record(share, record, pos);
       info->update = HA_STATE_AKTIV;
     }
     else

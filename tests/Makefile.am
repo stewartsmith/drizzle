@@ -141,6 +141,9 @@ test-drizzle:
 	  join_outer \
 	  distinct \
 	  type_newdecimal \
+	  heap_auto_increment \
+	  heap_btree \
+	  heap_var \
 	  join \
 	  subselect \
 	  subselect3 \
@@ -151,4 +154,5 @@ test-drizzle:
 	  information_schema \
 	  mysqlslap \
 	  lock \
-	  lock_tables_lost_commit
+	  lock_tables_lost_commit \
+	  heap_var
