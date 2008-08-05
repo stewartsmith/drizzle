@@ -229,6 +229,7 @@ typedef struct st_table_share
   key_map keys_for_keyread;
   ha_rows min_rows, max_rows;		/* create information */
   ulong   avg_row_length;		/* create information */
+  ulong   block_size;                   /* create information */
   ulong   version, mysql_version;
   ulong   timestamp_offset;		/* Set to offset+1 of record */
   ulong   reclength;			/* Recordlength */

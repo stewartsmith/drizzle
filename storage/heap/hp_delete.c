@@ -22,12 +22,15 @@ int heap_delete(HP_INFO *info, const uchar *record)
   uchar *pos;
   HP_SHARE *share=info->s;
   HP_KEYDEF *keydef, *end, *p_lastinx;
+  uint rec_length, chunk_count;
 
   test_active(info);
 
   if (info->opt_flag & READ_CHECK_USED)
     return(my_errno);			/* Record changed */
   share->changed=1;
+
+  rec_length = hp_get_encoded_data_length(share, record, &chunk_count);
 
   if ( --(share->records) < share->blength >> 1) share->blength>>=1;
   pos=info->current_ptr;
@@ -41,10 +44,7 @@ int heap_delete(HP_INFO *info, const uchar *record)
   }
 
   info->update=HA_STATE_DELETED;
-  *((uchar**) pos)=share->del_link;
-  share->del_link=pos;
-  pos[share->reclength]=0;		/* Record deleted */
-  share->deleted++;
+  hp_free_chunks(&share->recordspace, pos);
   info->current_hash_ptr=0;
 
   return(0);
@@ -106,6 +106,9 @@ int hp_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
   blength=share->blength;
   if (share->records+1 == blength)
     blength+= blength;
+
+  /* find the very last HASH_INFO pointer in the index */
+  /* note that records has already been decremented */
   lastpos=hp_find_hash(&keyinfo->block,share->records);
   last_ptr=0;
 
@@ -135,16 +138,24 @@ int hp_delete_key(HP_INFO *info, register HP_KEYDEF *keyinfo,
     info->current_ptr = last_ptr ? last_ptr->ptr_to_rec : 0;
   }
   empty=pos;
-  if (gpos)
-    gpos->next_key=pos->next_key;	/* unlink current ptr */
+  if (gpos) {
+    /* gpos says we have previous HASH_INFO, change previous to point to next, this way unlinking "empty" */
+    gpos->next_key=pos->next_key;
+  }
   else if (pos->next_key)
   {
+    /* no previous gpos, this pos is the first in the list and it has pointer to "next" */
+    /* move next HASH_INFO data to our pos, to free up space at the next position */
+    /* remember next pos as "empty", nobody refers to "empty" at this point */
     empty=pos->next_key;
     pos->ptr_to_rec=empty->ptr_to_rec;
     pos->next_key=empty->next_key;
   }
   else
+  {
+    /* this was the only HASH_INFO at this position */
     keyinfo->hash_buckets--;
+  }
 
   if (empty == lastpos)			/* deleted last hash key */
     return (0);

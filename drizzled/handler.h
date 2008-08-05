@@ -363,6 +363,7 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
 #define HA_CREATE_USED_TRANSACTIONAL    (1L << 20)
 #define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
+#define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
 typedef uint64_t my_xid; // this line is the same as in log_event.h
 #define MYSQL_XID_PREFIX "MySQLXid"
@@ -763,6 +764,7 @@ typedef struct st_ha_create_information
   uint32_t avg_row_length;
   uint32_t used_fields;
   uint32_t key_block_size;
+  uint32_t block_size;
   SQL_LIST merge_list;
   handlerton *db_type;
   enum row_type row_type;

@@ -959,6 +959,13 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
       end= int64_t10_to_str(table->s->key_block_size, buff, 10);
       packet->append(buff, (uint) (end - buff));
     }
+    if (share->block_size)
+    {
+      char *end;
+      packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
+      end= int64_t10_to_str(share->block_size, buff,10);
+      packet->append(buff, (uint) (end - buff));
+    }
     table->file->append_create_info(packet);
     if (share->comment.length)
     {
@@ -2814,7 +2821,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
   }
   else
   {
-    char option_buff[350],*ptr;
+    char option_buff[400],*ptr;
     TABLE *show_table= tables->table;
     TABLE_SHARE *share= show_table->s;
     handler *file= show_table->file;
@@ -2868,6 +2875,12 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       ptr=strxmov(ptr, " row_format=", 
                   ha_row_type[(uint) share->row_type],
                   NullS);
+    if (share->block_size)
+    {
+      ptr= strmov(ptr, " block_size=");
+      ptr= int64_t10_to_str(share->block_size, ptr, 10);
+    }
+    
     if (share->transactional != HA_CHOICE_UNDEF)
     {
       ptr= strxmov(ptr, " TRANSACTIONAL=",

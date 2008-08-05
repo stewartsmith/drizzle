@@ -62,7 +62,6 @@ distclean-local:
     test-ext-jp \
     test-ext-stress \
     test-ext \
-    test-embedded \
     test-fast \
     test-fast-cursor \
     test-fast-view \
