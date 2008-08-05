@@ -72,8 +72,6 @@ uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 #define MAX_LONG_DATA_LENGTH 8192
 #define unsigned_field(A) ((A)->flags & UNSIGNED_FLAG)
 
-static void append_wild(char *to,char *end,const char *wild);
-
 
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 {&max_allowed_packet, &net_buffer_length, 0};
