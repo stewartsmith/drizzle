@@ -2236,9 +2236,6 @@ int STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
   {
     char buff[MY_CS_NAME_SIZE + 10];
     charsets_dir= save_csdir;
-    /* Skip execution of "SET NAMES" for pre-4.1 servers */
-    if (drizzle_get_server_version(drizzle) < 40100)
-      return 0;
     sprintf(buff, "SET NAMES %s", cs_name);
     if (!drizzle_real_query(drizzle, buff, strlen(buff)))
     {
