@@ -14,6 +14,8 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* This file is included in all heap-files */
+#ifndef HEAPDEF_H
+#define HEAPDEF_H
 
 #include <drizzled/base.h>		/* This includes global */
 C_MODE_START
@@ -125,3 +127,5 @@ extern uint hp_process_record_data_to_chunkset(HP_SHARE *info, const uchar *reco
 
 extern pthread_mutex_t THR_LOCK_heap;
 C_MODE_END
+
+#endif /* HEAPDEF_H */

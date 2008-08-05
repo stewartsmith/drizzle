@@ -352,7 +352,9 @@ bool	net_write_command(NET *net,unsigned char command,
 int32_t	net_real_write(NET *net,const unsigned char *packet, size_t len);
 uint32_t my_net_read(NET *net);
 
-#ifdef _global_h
+
+/** @TODO global.h is actually not needed here... only stdint and protocol.h */
+#ifdef DRIZZLE_SERVER_GLOBAL_H
 void my_net_set_write_timeout(NET *net, uint timeout);
 void my_net_set_read_timeout(NET *net, uint timeout);
 #endif
@@ -437,8 +439,8 @@ char *octet2hex(char *to, const char *str, unsigned int len);
 char *get_tty_password(const char *opt_message);
 const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
 
-
-#ifdef _global_h
+/** @TODO Is it necessary to include all of drizzled/global.h here? */
+#ifdef DRIZZLE_SERVER_GLOBAL_H
 ulong STDCALL net_field_length(uchar **packet);
 uint64_t net_field_length_ll(uchar **packet);
 uchar *net_store_length(uchar *pkg, uint64_t length);

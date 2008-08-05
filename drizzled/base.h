@@ -15,8 +15,15 @@
 
 /* This file includes constants used with all databases */
 
-#ifndef _my_base_h
-#define _my_base_h
+/** 
+ * @TODO Name this file something better and split it out if necessary.  
+ * base.h isn't descriptive, especially compared to global.h 
+ *
+ * @TODO Convert HA_XXX defines into enums and/or bitmaps
+ */
+
+#ifndef DRIZZLE_SERVER_BASE_H
+#define DRIZZLE_SERVER_BASE_H
 
 #ifndef stdin				/* Included first in handler */
 #define CHSIZE_USED
@@ -555,4 +562,4 @@ typedef uint64_t	ha_rows;
 /* invalidator function reference for Query Cache */
 typedef void (* invalidator_by_filename)(const char * filename);
 
-#endif /* _my_base_h */
+#endif /* DRIZZLE_SERVER_BASE_H */

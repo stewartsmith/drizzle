@@ -34,7 +34,12 @@
 extern "C" {
 #endif
 
-#ifndef _global_h        /* If not standard header */
+/** 
+ * @TODO cleanup global.h and include only the necessary stuff here... 
+ * 
+ * Also, my_bool and my_socket should go bye-bye...
+ */
+#ifndef DRIZZLE_SERVER_GLOBAL_H   /* If not standard header */
 #include <sys/types.h>
 typedef char my_bool;
 #define STDCALL
@@ -42,7 +47,7 @@ typedef char my_bool;
 #ifndef my_socket_defined
 typedef int my_socket;
 #endif /* my_socket_defined */
-#endif /* _global_h */
+#endif /* DRIZZLE_SERVER_GLOBAL_H */
 
 #include <drizzled/version.h>
 #include "drizzle_com.h"

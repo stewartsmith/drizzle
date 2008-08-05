@@ -13,15 +13,16 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef DRIZZLE_SERVER_SCHEDULER_H
+#define DRIZZLE_SERVER_SCHEDULER_H
+
 /*
   Classes for the thread scheduler
 */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface
-#endif
-
+/* Forward declarations */
 class THD;
+struct event;
 
 /* Functions used when manipulating threads */
 
@@ -50,8 +51,6 @@ void one_thread_scheduler(scheduler_functions* func);
 
 #define HAVE_POOL_OF_THREADS 1
 
-struct event;
-
 class thd_scheduler
 {
 public:
@@ -71,3 +70,5 @@ public:
 };
 
 void pool_of_threads_scheduler(scheduler_functions* func);
+
+#endif /* DRIZZLE_SERVER_SCHEDULER_H */

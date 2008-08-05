@@ -21,6 +21,10 @@
   mysqlbinlog too (definition of SELECT_DISTINCT and others).
   The consequence is that 90% of the file is wrapped in \#ifndef MYSQL_CLIENT,
   except the part which must be in the server and in the client.
+
+  @TODO Name this file better. "priv" could mean private, privileged, privileges.
+
+  @TODO Get rid of the MYSQL_CLIENT and MYSQL_SERVER conditionals
 */
 
 #ifndef DRIZZLE_SERVER_MYSQL_PRIV_H
@@ -28,28 +32,45 @@
 
 #ifndef MYSQL_CLIENT
 
-#include <drizzled/global.h>
-#include <drizzled/version.h>
-#include <mysys/my_sys.h>
+/* Cross-platform portability code and standard includes */
+#include <drizzled/global.h>                    
+/* Server versioning information and defines */
+#include <drizzled/version.h>                   
+/* Lots of system-wide struct definitions like IO_CACHE, DYNAMIC_STRING, prototypes for all my_* functions */
+#include <mysys/my_sys.h>                       
+/* Convenience functions for working with times */
 #include <libdrizzle/my_time.h>
+/* Custom C string functions */
 #include <mystrings/m_string.h>
+/* Custom HASH API */
 #include <mysys/hash.h>
+/* Standard signals API */
 #include <signal.h>
+/* Deadlock-free table-list lock API */
 #include <mysys/thr_lock.h>
+/* Custom error API */
 #include <drizzled/error.h>
+/* Defines for the storage engine handler -- i.e. HA_XXX defines */
 #include <drizzled/base.h>			                /* Needed by field.h */
+/* Custom queue API */
 #include <mysys/queues.h>
-#include <drizzled/sql_bitmap.h>                /* Custom bitmap API */
+/* Custom Bitmap API */
+#include <drizzled/sql_bitmap.h>
+/* Custom templatized, type-safe Dynamic_Array API */
 #include "sql_array.h"
+/* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
 #include "sql_plugin.h"
+/* The <strong>connection</strong> thread scheduler API */
 #include "scheduler.h"
+/* Network database operations (hostent, netent, servent, etc...*/
+#include <netdb.h>
+/* Communication API between a client and the server */
+#include <libdrizzle/drizzle_com.h>
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
 #endif
 #include "probes.h"
-
-#include <netdb.h>
 
 /**
   Query type constants.
@@ -57,6 +78,20 @@
   QT_ORDINARY -- ordinary SQL query.
   QT_IS -- SQL query to be shown in INFORMATION_SCHEMA (in utf8 and without
   character set introducers).
+
+  @TODO
+
+  Move this out of here once Stew's done with UDF breakout.  The following headers need it:
+
+    sql_lex.h --> included by sql_class.h
+    item.h
+    table.h
+    item_func.h
+    item_subselect.h
+    item_timefunc.h
+    item_sum.h
+    item_cmpfunc.h
+    item_strfunc.h
 */
 enum enum_query_type
 {
@@ -64,7 +99,30 @@ enum enum_query_type
   QT_IS
 };
 
-/* TODO convert all these three maps to Bitmap classes */
+/** 
+ * @TODO convert all these three maps to Bitmap classes 
+ *
+ * @TODO Move these to a more appropriate header file (maps.h?).  The following files use them:
+ *
+ *    item_sum.h
+ *    item_compfunc.h
+ *    item.h
+ *    table.h
+ *    item_subselect.h
+ *    sql_bitmap.h
+ *    unireg.h (going bye bye?)
+ *    sql_udf.h
+ *    item_row.h
+ *    handler.cc
+ *    sql_insert.cc
+ *    opt_range.h
+ *    opt_sum.cc
+ *    item_strfunc.h
+ *    sql_delete.cc
+ *    sql_select.h
+ *
+ *    Since most of these include table.h, I think that would appropriate...
+ */
 typedef uint64_t table_map;          /* Used for table bits in join */
 #if MAX_INDEXES <= 64
 typedef Bitmap<64>  key_map;          /* Used for finding keys */
@@ -72,30 +130,37 @@ typedef Bitmap<64>  key_map;          /* Used for finding keys */
 typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
 #endif
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
+
+#include "unireg.h"
+
 /*
   Used to identify NESTED_JOIN structures within a join (applicable only to
   structures that have not been simplified away and embed more the one
   element)
 */
-typedef uint64_t nested_join_map;
+typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
 
-/* query_id */
+/* useful constants */#
+extern const key_map key_map_empty;
+extern key_map key_map_full;          /* Should be threaded as const */
+extern const char *primary_key_name;
+
+#include <vio/violite.h>
+
+#include <drizzled/sql_alloc.h>
+
+/**
+ * @TODO Move the following into a drizzled.h header?
+ *
+ * I feel that global variables and functions referencing them directly
+ * and that are used only in the server should be separated out into 
+ * a drizzled.h header file -- JRP
+ */
 typedef uint64_t query_id_t;
 extern query_id_t global_query_id;
 
 /* increment query_id and return it.  */
 inline query_id_t next_query_id() { return global_query_id++; }
-
-/* useful constants */
-extern const key_map key_map_empty;
-extern key_map key_map_full;          /* Should be threaded as const */
-extern const char *primary_key_name;
-
-#include <libdrizzle/drizzle_com.h>
-#include <vio/violite.h>
-#include "unireg.h"
-
-#include <drizzled/sql_alloc.h>
 
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 #define all_bits_set(A,B) ((A) & (B) != (B))
