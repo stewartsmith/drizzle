@@ -66,11 +66,26 @@
 #include <netdb.h>
 /* Communication API between a client and the server */
 #include <libdrizzle/drizzle_com.h>
+/* gettext() convenience wrappers */
+#include <libdrizzle/gettext.h>
+/* Contains system-wide constants and #defines */
+#include <drizzled/definitions.h>
+/* System-wide common data structures */
+#include <drizzled/structs.h>
+/* Custom error definitions */
+#include <drizzled/error.h>
+/* Custom continguous-section memory allocator */
+#include <drizzled/sql_alloc.h>
+/* Virtual I/O wrapper library */
+#include <vio/violite.h>
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
 #endif
 #include "probes.h"
+
+
+/* #include "unireg.h" */
 
 /**
   Query type constants.
@@ -131,8 +146,6 @@ typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
 #endif
 typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
 
-#include "unireg.h"
-
 /*
   Used to identify NESTED_JOIN structures within a join (applicable only to
   structures that have not been simplified away and embed more the one
@@ -144,10 +157,6 @@ typedef uint64_t nested_join_map; /* Needed by sql_select.h and table.h */
 extern const key_map key_map_empty;
 extern key_map key_map_full;          /* Should be threaded as const */
 extern const char *primary_key_name;
-
-#include <vio/violite.h>
-
-#include <drizzled/sql_alloc.h>
 
 /**
  * @TODO Move the following into a drizzled.h header?
@@ -168,6 +177,18 @@ inline query_id_t next_query_id() { return global_query_id++; }
 extern CHARSET_INFO *system_charset_info, *files_charset_info ;
 extern CHARSET_INFO *national_charset_info, *table_alias_charset;
 
+/**
+ * @TODO Move to a separate header?
+ *
+ * It's needed by item.h and field.h, which are both inter-dependent
+ * and contain forward declarations of many structs/classes in the
+ * other header file.
+ *
+ * What is needed is a separate header file that is included
+ * by *both* item.h and field.h to resolve inter-dependencies
+ *
+ * But, probably want to hold off on this until Stew finished the UDF cleanup
+ */
 enum Derivation
 {
   DERIVATION_IGNORABLE= 5,
@@ -178,12 +199,19 @@ enum Derivation
   DERIVATION_EXPLICIT= 0
 };
 
+/* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
+/* Declarations of Object_creation_ctx and Default_creation_ctx, needed by parser */
 #include <drizzled/object_creation_ctx.h>
-/**
-  Opening modes for open_temporary_table and open_table_from_share
-*/
 
+/**
+ * Opening modes for open_temporary_table and open_table_from_share
+ *
+ * @TODO Put this into an appropriate header. It is only needed in:
+ *
+ *    table.cc
+ *    sql_base.cc
+ */
 enum open_table_mode
 {
   OTM_OPEN= 0,

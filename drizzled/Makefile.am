@@ -91,7 +91,6 @@ noinst_HEADERS = item.h \
 		 sql_map.h \
 		 sql_state.h \
 		 sql_string.h \
-		 unireg.h \
 		 sql_error.h \
 		 field.h \
 		 handler.h \
