@@ -177,11 +177,11 @@ static uchar hex_val(char c)
   return (uchar)10 + ((uchar)c - (uchar)'a');
 }
 
-static uint64_t read_addr(char** buf)
+static unsigned long read_addr(char** buf)
 {
   uchar c;
   char* p = *buf;
-  uint64_t addr = 0;
+  unsigned long addr = 0;
 
   while((c = hex_val(*p++)) != HEX_INVALID)
       addr = (addr << 4) + c;
