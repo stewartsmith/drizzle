@@ -550,7 +550,6 @@ void end_server(DRIZZLE *drizzle)
   net_end(&drizzle->net);
   free_old_query(drizzle);
   errno= save_errno;
-  return;
 }
 
 
@@ -579,7 +578,6 @@ drizzle_free_result(DRIZZLE_RES *result)
       my_free((uchar*) result->row,MYF(0));
     my_free((uchar*) result,MYF(0));
   }
-  return;
 }
 
 /****************************************************************************
