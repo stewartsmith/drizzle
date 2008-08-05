@@ -151,4 +151,5 @@ test-drizzle:
 	  information_schema \
 	  mysqlslap \
 	  lock \
-	  lock_tables_lost_commit
+	  lock_tables_lost_commit \
+	  heap_var

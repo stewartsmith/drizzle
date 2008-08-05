@@ -28,16 +28,11 @@ void heap_clear(HP_INFO *info)
 
 void hp_clear(HP_SHARE *info)
 {
-  if (info->block.levels)
-    VOID(hp_free_level(&info->block,info->block.levels,info->block.root,
-			(uchar*) 0));
-  info->block.levels=0;
+  hp_clear_dataspace(&info->recordspace);
   hp_clear_keys(info);
-  info->records= info->deleted= 0;
-  info->data_length= 0;
+  info->records= 0;
   info->blength=1;
   info->changed=0;
-  info->del_link=0;
   return;
 }
 
@@ -154,7 +149,7 @@ int heap_enable_indexes(HP_INFO *info)
   int error= 0;
   HP_SHARE *share= info->s;
 
-  if (share->data_length || share->index_length)
+  if (share->recordspace.total_data_length || share->index_length)
     error= HA_ERR_CRASHED;
   else
     if (share->currently_disabled_keys)
@@ -188,4 +183,3 @@ int heap_indexes_are_disabled(HP_INFO *info)
 
   return (! share->keys && share->currently_disabled_keys);
 }
-

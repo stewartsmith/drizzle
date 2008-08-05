@@ -419,6 +419,7 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  BIT_SYM                       /* MYSQL-FUNC */
 %token  BIT_XOR                       /* MYSQL-FUNC */
 %token  BLOB_SYM                      /* SQL-2003-R */
+%token  BLOCK_SIZE_SYM
 %token  BLOCK_SYM
 %token  BOOLEAN_SYM                   /* SQL-2003-R */
 %token  BOOL_SYM
@@ -1505,6 +1506,11 @@ create_table_option:
           {
             Lex->create_info.avg_row_length=$3;
             Lex->create_info.used_fields|= HA_CREATE_USED_AVG_ROW_LENGTH;
+          }
+        | BLOCK_SIZE_SYM opt_equal ulong_num    
+          { 
+            Lex->create_info.block_size= $3; 
+            Lex->create_info.used_fields|= HA_CREATE_USED_BLOCK_SIZE;
           }
         | COMMENT_SYM opt_equal TEXT_STRING_sys
           {
@@ -6395,6 +6401,7 @@ keyword_sp:
         | AVG_SYM                  {}
         | BINLOG_SYM               {}
         | BIT_SYM                  {}
+        | BLOCK_SIZE_SYM           {}
         | BLOCK_SYM                {}
         | BOOL_SYM                 {}
         | BOOLEAN_SYM              {}

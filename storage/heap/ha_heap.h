@@ -45,8 +45,7 @@ public:
     return ((table_share->key_info[inx].algorithm == HA_KEY_ALG_BTREE) ?
             "BTREE" : "HASH");
   }
-  /* Rows also use a fixed-size format */
-  enum row_type get_row_type() const { return ROW_TYPE_FIXED; }
+  enum row_type get_row_type() const;
   const char **bas_ext() const;
   uint64_t table_flags() const
   {

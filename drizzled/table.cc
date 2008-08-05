@@ -534,6 +534,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     share->transactional= (ha_choice) (head[39] & 3);
     share->page_checksum= (ha_choice) ((head[39] >> 2) & 3);
     share->row_type= (row_type) head[40];
+    share->block_size= uint4korr(head+43);
     share->table_charset= get_charset((uint) head[38],MYF(0));
     share->null_field_first= 1;
   }
@@ -2095,7 +2096,8 @@ File create_frm(THD *thd, const char *name, const char *db,
     /* Next few bytes where for RAID support */
     fileinfo[41]= 0;
     fileinfo[42]= 0;
-    fileinfo[43]= 0;
+    int4store(fileinfo+43,create_info->block_size);
+ 
     fileinfo[44]= 0;
     fileinfo[45]= 0;
     fileinfo[46]= 0;
@@ -2138,6 +2140,7 @@ void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
   create_info->min_rows= share->min_rows;
   create_info->table_options= share->db_create_options;
   create_info->avg_row_length= share->avg_row_length;
+  create_info->block_size= share->block_size;
   create_info->row_type= share->row_type;
   create_info->default_table_charset= share->table_charset;
   create_info->table_charset= 0;

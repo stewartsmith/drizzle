@@ -81,6 +81,7 @@ static SYMBOL symbols[] = {
   { "BIT",		SYM(BIT_SYM)},
   { "BLOB",		SYM(BLOB_SYM)},
   { "BLOCK",  SYM(BLOCK_SYM)},
+  { "BLOCK_SIZE", SYM(BLOCK_SIZE_SYM)},
   { "BOOL",		SYM(BOOL_SYM)},
   { "BOOLEAN",		SYM(BOOLEAN_SYM)},
   { "BOTH",		SYM(BOTH)},
