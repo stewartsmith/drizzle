@@ -40,104 +40,15 @@ typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
  * the server and the plugin infrastructure, and not the client 
  */
 #include <drizzled/common_includes.h>       
-
-#include "opt_range.h"
-
-/*
-  Error injector Macros to enable easy testing of recovery after failures
-  in various error cases.
-*/
-#ifndef ERROR_INJECT_SUPPORT
-
-#define ERROR_INJECT(x) 0
-#define ERROR_INJECT_ACTION(x,action) 0
-#define ERROR_INJECT_CRASH(x) 0
-#define ERROR_INJECT_VALUE(x) 0
-#define ERROR_INJECT_VALUE_ACTION(x,action) 0
-#define ERROR_INJECT_VALUE_CRASH(x) 0
-#define SET_ERROR_INJECT_VALUE(x)
-
-#else
-
-inline bool check_and_unset_keyword(const char *dbug_str)
-{
-  const char *extra_str= "-d,";
-  char total_str[200];
-  if (_db_strict_keyword_ (dbug_str))
-  {
-    strxmov(total_str, extra_str, dbug_str, NullS);
-    return 1;
-  }
-  return 0;
-}
-
-
-inline bool
-check_and_unset_inject_value(int value)
-{
-  THD *thd= current_thd;
-  if (thd->error_inject_value == (uint)value)
-  {
-    thd->error_inject_value= 0;
-    return 1;
-  }
-  return 0;
-}
-
-/*
-  ERROR INJECT MODULE:
-  --------------------
-  These macros are used to insert macros from the application code.
-  The event that activates those error injections can be activated
-  from SQL by using:
-  SET SESSION dbug=+d,code;
-
-  After the error has been injected, the macros will automatically
-  remove the debug code, thus similar to using:
-  SET SESSION dbug=-d,code
-  from SQL.
-
-  ERROR_INJECT_CRASH will inject a crash of the MySQL Server if code
-  is set when macro is called. ERROR_INJECT_CRASH can be used in
-  if-statements, it will always return false unless of course it
-  crashes in which case it doesn't return at all.
-
-  ERROR_INJECT_ACTION will inject the action specified in the action
-  parameter of the macro, before performing the action the code will
-  be removed such that no more events occur. ERROR_INJECT_ACTION
-  can also be used in if-statements and always returns FALSE.
-  ERROR_INJECT can be used in a normal if-statement, where the action
-  part is performed in the if-block. The macro returns TRUE if the
-  error was activated and otherwise returns FALSE. If activated the
-  code is removed.
-
-  Sometimes it is necessary to perform error inject actions as a serie
-  of events. In this case one can use one variable on the THD object.
-  Thus one sets this value by using e.g. SET_ERROR_INJECT_VALUE(100).
-  Then one can later test for it by using ERROR_INJECT_CRASH_VALUE,
-  ERROR_INJECT_ACTION_VALUE and ERROR_INJECT_VALUE. This have the same
-  behaviour as the above described macros except that they use the
-  error inject value instead of a code used by debug macros.
-*/
-#define SET_ERROR_INJECT_VALUE(x) \
-  current_thd->error_inject_value= (x)
-#define ERROR_INJECT_ACTION(code, action) \
-  (check_and_unset_keyword(code) ? ((action), 0) : 0)
-#define ERROR_INJECT(code) \
-  check_and_unset_keyword(code)
-#define ERROR_INJECT_VALUE(value) \
-  check_and_unset_inject_value(value)
-#define ERROR_INJECT_VALUE_ACTION(value,action) \
-  (check_and_unset_inject_value(value) ? (action) : 0)
-#define ERROR_INJECT_VALUE_CRASH(value) \
-  ERROR_INJECT_VALUE_ACTION(value, (abort(), 0))
-
-#endif
+/* Range optimization API/library */
+#include <drizzled/opt_range.h>
+/* Simple error injection (crash) module */
+#include <drizzled/error_injection.h>
+/* API for connecting, logging in to a drizzled server */
+#include <drizzled/connect.h>
 
 void write_bin_log(THD *thd, bool clear_error,
                    char const *query, ulong query_length);
-
-#include <drizzled/connect.h>
 
 int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create, bool silent);
 bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create);
@@ -422,19 +333,6 @@ enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
 
 #define is_schema_db(X) \
   !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
-
-/* sql_prepare.cc */
-
-void mysql_stmt_prepare(THD *thd, const char *packet, uint packet_length);
-void mysql_stmt_execute(THD *thd, char *packet, uint packet_length);
-void mysql_stmt_close(THD *thd, char *packet);
-void mysql_sql_stmt_prepare(THD *thd);
-void mysql_sql_stmt_execute(THD *thd);
-void mysql_sql_stmt_close(THD *thd);
-void mysql_stmt_fetch(THD *thd, char *packet, uint packet_length);
-void mysql_stmt_reset(THD *thd, char *packet);
-void mysql_stmt_get_longdata(THD *thd, char *pos, ulong packet_length);
-void reinit_stmt_before_use(THD *thd, LEX *lex);
 
 /* sql_handler.cc */
 bool mysql_ha_open(THD *thd, TABLE_LIST *tables, bool reopen);
@@ -770,7 +668,6 @@ extern ulong slave_net_timeout, slave_trans_retries;
 extern uint max_user_connections;
 extern ulong what_to_log,flush_time;
 extern ulong query_buff_size;
-extern ulong max_prepared_stmt_count, prepared_stmt_count;
 extern ulong binlog_cache_size, max_binlog_cache_size, open_files_limit;
 extern ulong max_binlog_size, max_relay_log_size;
 extern ulong opt_binlog_rows_event_max_size;

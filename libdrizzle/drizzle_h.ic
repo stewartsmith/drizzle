@@ -19,7 +19,6 @@ struct st_drizzle_plugin;
 struct st_drizzle_res;
 struct st_DRIZZLE_ROWs;
 struct st_drizzle_show_var;
-struct st_drizzle_stmt;
 struct st_drizzle_storage_engine;
 struct st_drizzle_time;
 struct st_drizzle_value;
@@ -36,10 +35,8 @@ enum enum_ft_token_type;
 enum enum_ftparser_mode;
 enum enum_drizzle_set_option;
 enum enum_mysql_show_type;
-enum enum_mysql_stmt_state;
 enum enum_mysql_timestamp_type;
 enum enum_server_command;
-enum enum_stmt_attr_type;
 enum drizzle_enum_shutdown_level;
 enum drizzle_option;
 enum drizzle_protocol_type;
@@ -68,8 +65,6 @@ typedef struct st_drizzle_res DRIZZLE_RES;
 typedef char * * DRIZZLE_ROW;
 # 145 "drizzle.h"
 typedef DRIZZLE_ROWS * DRIZZLE_ROW_OFFSET;
-# 571 "drizzle.h"
-typedef struct st_drizzle_stmt MYSQL_STMT;
 # 52 "mysql/plugin.h"
 typedef struct st_drizzle_xid MYSQL_XID;
 # 220 "drizzle.h"
@@ -192,7 +187,6 @@ struct __attribute__((aligned(__alignof__(void *)), aligned(__alignof__(unsigned
     void * unused3;
     void * unused4;
     void * unused5;
-    LIST * stmts;
     struct st_drizzle_methods const * methods;
     void * thd;
     my_bool * unbuffered_fetch_owner;
@@ -309,21 +303,17 @@ struct __attribute__((aligned(__alignof__(void *)), aligned(__alignof__(unsigned
 struct __attribute__((aligned(__alignof__(void *)))) st_drizzle_methods
   {
     my_bool (* read_query_result)(DRIZZLE * mysql);
-    my_bool (* advanced_command)(DRIZZLE * mysql, enum enum_server_command, unsigned char const * header, unsigned long int, unsigned char const * arg, unsigned long int, my_bool, MYSQL_STMT * stmt);
+    my_bool (* advanced_command)(DRIZZLE * mysql, enum enum_server_command, unsigned char const * header, unsigned long int, unsigned char const * arg, unsigned long int, my_bool);
     DRIZZLE_DATA * (* read_rows)(DRIZZLE * mysql, DRIZZLE_FIELD * DRIZZLE_FIELDs, unsigned int);
     DRIZZLE_RES * (* use_result)(DRIZZLE * mysql);
     void (* fetch_lengths)(unsigned long int * to, DRIZZLE_ROW, unsigned int);
     void (* flush_use_result)(DRIZZLE * mysql);
     DRIZZLE_FIELD * (* list_fields)(DRIZZLE * mysql);
-    my_bool (* read_prepare_result)(DRIZZLE * mysql, MYSQL_STMT * stmt);
-    int (* stmt_execute)(MYSQL_STMT * stmt);
-    int (* read_binary_rows)(MYSQL_STMT * stmt);
     int (* unbuffered_fetch)(DRIZZLE * mysql, char * * row);
     void (* free_embedded_thd)(DRIZZLE * mysql);
     char const * (* read_statistics)(DRIZZLE * mysql);
     my_bool (* next_result)(DRIZZLE * mysql);
     int (* read_change_user_result)(DRIZZLE * mysql, char * buff, char const * passwd);
-    int (* read_rows_from_cursor)(MYSQL_STMT * stmt);
   };
 # 173 "drizzle.h"
 struct __attribute__((aligned(__alignof__(unsigned long int)), aligned(__alignof__(void *)))) st_drizzle_options
@@ -424,37 +414,6 @@ struct __attribute__((aligned(__alignof__(void *)))) st_drizzle_show_var
     char const * name;
     char * value;
     enum enum_mysql_show_type type;
-  };
-# 571 "drizzle.h"
-struct __attribute__((aligned(__alignof__(void *)), aligned(__alignof__(unsigned long long int)))) st_drizzle_stmt
-  {
-    MEM_ROOT mem_root;
-    LIST list;
-    DRIZZLE * mysql;
-    MYSQL_BIND * params;
-    MYSQL_BIND * bind;
-    DRIZZLE_FIELD * fields;
-    DRIZZLE_DATA result;
-    DRIZZLE_ROWS * data_cursor;
-    int (* read_row_func)(struct st_drizzle_stmt * stmt, unsigned char * * row);
-    my_ulonglong affected_rows;
-    my_ulonglong insert_id;
-    unsigned long int stmt_id;
-    unsigned long int flags;
-    unsigned long int prefetch_rows;
-    unsigned int server_status;
-    unsigned int last_errno;
-    unsigned int param_count;
-    unsigned int field_count;
-    enum enum_mysql_stmt_state state;
-    char last_error[512];
-    char sqlstate[(5 + 1)];
-    my_bool send_types_to_server;
-    my_bool bind_param_done;
-    unsigned char bind_result_done;
-    my_bool unbuffered_fetch_cancelled;
-    my_bool update_max_length;
-    void * extension;
   };
 # 616 "mysql/plugin.h"
 struct __attribute__((aligned(__alignof__(int)))) st_drizzle_storage_engine
@@ -647,14 +606,6 @@ enum enum_mysql_show_type
     SHOW_FUNC = 8,
     SHOW_DOUBLE = 9,
   };
-# 472 "drizzle.h"
-enum enum_mysql_stmt_state
-  {
-    MYSQL_STMT_INIT_DONE = 1,
-    MYSQL_STMT_PREPARE_DONE = 2,
-    MYSQL_STMT_EXECUTE_DONE = 3,
-    MYSQL_STMT_FETCH_DONE = 4,
-  };
 # 28 "mysql_time.h"
 enum enum_mysql_timestamp_type
   {
@@ -698,13 +649,6 @@ enum enum_server_command
     COM_STMT_FETCH = 28,
     COM_DAEMON = 29,
     COM_END = 30,
-  };
-# 618 "drizzle.h"
-enum enum_stmt_attr_type
-  {
-    STMT_ATTR_UPDATE_MAX_LENGTH = 0,
-    STMT_ATTR_CURSOR_TYPE = 1,
-    STMT_ATTR_PREFETCH_ROWS = 2,
   };
 # 311 "drizzle_com.h"
 enum drizzle_enum_shutdown_level
@@ -963,60 +907,6 @@ extern char const * drizzle_sqlstate(DRIZZLE * mysql);
 extern my_bool drizzle_ssl_set(DRIZZLE * mysql, char const * key, char const * cert, char const * ca, char const * capath, char const * cipher);
 # 428 "drizzle.h"
 extern char const * drizzle_stat(DRIZZLE * mysql);
-# 708 "drizzle.h"
-extern my_ulonglong mysql_stmt_affected_rows(MYSQL_STMT * stmt);
-# 686 "drizzle.h"
-extern my_bool mysql_stmt_attr_get(MYSQL_STMT * stmt, enum enum_stmt_attr_type, void * attr);
-# 683 "drizzle.h"
-extern my_bool mysql_stmt_attr_set(MYSQL_STMT * stmt, enum enum_stmt_attr_type, void const * attr);
-# 689 "drizzle.h"
-extern my_bool mysql_stmt_bind_param(MYSQL_STMT * stmt, MYSQL_BIND * bnd);
-# 690 "drizzle.h"
-extern my_bool mysql_stmt_bind_result(MYSQL_STMT * stmt, MYSQL_BIND * bnd);
-# 691 "drizzle.h"
-extern my_bool mysql_stmt_close(MYSQL_STMT * stmt);
-# 706 "drizzle.h"
-extern void mysql_stmt_data_seek(MYSQL_STMT * stmt, my_ulonglong);
-# 700 "drizzle.h"
-extern unsigned int mysql_stmt_errno(MYSQL_STMT * stmt);
-# 701 "drizzle.h"
-extern char const * mysql_stmt_error(MYSQL_STMT * stmt);
-# 676 "drizzle.h"
-extern int mysql_stmt_execute(MYSQL_STMT * stmt);
-# 677 "drizzle.h"
-extern int mysql_stmt_fetch(MYSQL_STMT * stmt);
-# 678 "drizzle.h"
-extern int mysql_stmt_fetch_column(MYSQL_STMT * stmt, MYSQL_BIND * bind_arg, unsigned int, unsigned long int);
-# 710 "drizzle.h"
-extern unsigned int mysql_stmt_field_count(MYSQL_STMT * stmt);
-# 693 "drizzle.h"
-extern my_bool mysql_stmt_free_result(MYSQL_STMT * stmt);
-# 673 "drizzle.h"
-extern MYSQL_STMT * mysql_stmt_init(DRIZZLE * mysql);
-# 709 "drizzle.h"
-extern my_ulonglong mysql_stmt_insert_id(MYSQL_STMT * stmt);
-# 707 "drizzle.h"
-extern my_ulonglong mysql_stmt_num_rows(MYSQL_STMT * stmt);
-# 682 "drizzle.h"
-extern unsigned long int mysql_stmt_param_count(MYSQL_STMT * stmt);
-# 699 "drizzle.h"
-extern DRIZZLE_RES * mysql_stmt_param_metadata(MYSQL_STMT * stmt);
-# 674 "drizzle.h"
-extern int mysql_stmt_prepare(MYSQL_STMT * stmt, char const * query, unsigned long int);
-# 692 "drizzle.h"
-extern my_bool mysql_stmt_reset(MYSQL_STMT * stmt);
-# 698 "drizzle.h"
-extern DRIZZLE_RES * mysql_stmt_result_metadata(MYSQL_STMT * stmt);
-# 703 "drizzle.h"
-extern DRIZZLE_ROW_OFFSET mysql_stmt_row_seek(MYSQL_STMT * stmt, DRIZZLE_ROW_OFFSET);
-# 705 "drizzle.h"
-extern DRIZZLE_ROW_OFFSET mysql_stmt_row_tell(MYSQL_STMT * stmt);
-# 694 "drizzle.h"
-extern my_bool mysql_stmt_send_long_data(MYSQL_STMT * stmt, unsigned int, char const * data, unsigned long int);
-# 702 "drizzle.h"
-extern char const * mysql_stmt_sqlstate(MYSQL_STMT * stmt);
-# 681 "drizzle.h"
-extern int mysql_stmt_store_result(MYSQL_STMT * stmt);
 # 393 "drizzle.h"
 extern DRIZZLE_RES * drizzle_store_result(DRIZZLE * mysql);
 # 345 "drizzle.h"
