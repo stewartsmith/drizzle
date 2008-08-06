@@ -58,7 +58,7 @@ noinst_HEADERS =	my_uctype.h
 # ASRCS and CSRCS can be smaller
 # LIBOBJS contains strstr strtoll strtoull strmov IFF the don't exist on
 # the target system. This helps prevent empty object file problems.
-libmystringslt_la_LIBADD = $(LIBOBJS)
+libmystringslt_la_LIBADD = $(LTLIBOBJS)
 libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove512.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
                                 llstr.c strnlen.c \
