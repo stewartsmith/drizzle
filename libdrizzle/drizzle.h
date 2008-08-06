@@ -49,9 +49,8 @@ typedef int my_socket;
 #endif /* my_socket_defined */
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
 
-#include <drizzled/version.h>
-#include "drizzle_com.h"
-#include "drizzle_time.h"
+#include <libdrizzle/drizzle_com.h>
+#include <libdrizzle/drizzle_time.h>
 
 #include <mysys/my_list.h> /* for LISTs used in 'MYSQL' */
 

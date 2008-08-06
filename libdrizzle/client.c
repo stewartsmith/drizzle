@@ -84,6 +84,7 @@
 #define CONNECT_TIMEOUT 0
 
 #include "client_settings.h"
+#include <drizzled/version.h>
 #include <libdrizzle/sql_common.h>
 
 uint    drizzle_port=0;

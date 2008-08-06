@@ -55,6 +55,7 @@
 
 #include <sql_common.h>
 #include "client_settings.h"
+#include <drizzled/version.h>
 
 #undef net_buffer_length
 #undef max_allowed_packet
