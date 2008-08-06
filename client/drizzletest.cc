@@ -121,7 +121,7 @@ static struct st_test_file* cur_file;
 static struct st_test_file* file_stack_end;
 
 
-static CHARSET_INFO *charset_info= &my_charset_latin1; /* Default charset */
+static const CHARSET_INFO *charset_info= &my_charset_latin1; /* Default charset */
 
 static int embedded_server_arg_count=0;
 static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];

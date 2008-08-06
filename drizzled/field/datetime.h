@@ -27,19 +27,19 @@ class Field_datetime :public Field_str {
 public:
   Field_datetime(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 		 enum utype unireg_check_arg, const char *field_name_arg,
-		 CHARSET_INFO *cs)
+		 const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, 19, null_ptr_arg, null_bit_arg,
 	       unireg_check_arg, field_name_arg, cs)
     {}
   Field_datetime(bool maybe_null_arg, const char *field_name_arg,
-		 CHARSET_INFO *cs)
+		 const CHARSET_INFO * const cs)
     :Field_str((uchar*) 0,19, maybe_null_arg ? (uchar*) "": 0,0,
 	       NONE, field_name_arg, cs) {}
   enum_field_types type() const { return DRIZZLE_TYPE_DATETIME;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONGLONG; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   uint decimals() const { return DATETIME_DEC; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int store_time(DRIZZLE_TIME *ltime, timestamp_type type);

@@ -60,7 +60,7 @@ uint _mi_make_key(register MI_INFO *info, uint keynr, uchar *key,
     enum ha_base_keytype type=(enum ha_base_keytype) keyseg->type;
     uint length=keyseg->length;
     uint char_length;
-    CHARSET_INFO *cs=keyseg->charset;
+    const CHARSET_INFO * const cs=keyseg->charset;
 
     if (keyseg->null_bit)
     {
@@ -211,7 +211,7 @@ uint _mi_pack_key(register MI_INFO *info, uint keynr, uchar *key, uchar *old,
     uint length= keyseg->length;
     uint char_length;
     uchar *pos;
-    CHARSET_INFO *cs=keyseg->charset;
+    const CHARSET_INFO * const cs=keyseg->charset;
     keypart_map>>= 1;
     if (keyseg->null_bit)
     {

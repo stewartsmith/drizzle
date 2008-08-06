@@ -34,7 +34,7 @@
 ****************************************************************************/
 
 /* Copy a string and fill with space */
-int Field_string::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_string::store(const char *from,uint length, const CHARSET_INFO * const cs)
 {
   uint copy_length;
   const char *well_formed_error_pos;
@@ -70,7 +70,7 @@ int Field_string::store(int64_t nr, bool unsigned_val)
 {
   char buff[64];
   int  l;
-  CHARSET_INFO *cs=charset();
+  const CHARSET_INFO * const cs= charset();
   l= (cs->cset->int64_t10_to_str)(cs,buff,sizeof(buff),
                                    unsigned_val ? 10 : -10, nr);
   return Field_string::store(buff,(uint)l,cs);
@@ -81,7 +81,7 @@ double Field_string::val_real(void)
 {
   int error;
   char *end;
-  CHARSET_INFO *cs= charset();
+  const CHARSET_INFO * const cs= charset();
   double result;
   
   result=  my_strntod(cs,(char*) ptr,field_length,&end,&error);
@@ -106,7 +106,7 @@ int64_t Field_string::val_int(void)
 {
   int error;
   char *end;
-  CHARSET_INFO *cs= charset();
+  const CHARSET_INFO * const cs= charset();
   int64_t result;
 
   result= my_strntoll(cs, (char*) ptr,field_length,10,&end,&error);
@@ -151,7 +151,7 @@ my_decimal *Field_string::val_decimal(my_decimal *decimal_value)
   if (!table->in_use->no_errors && err)
   {
     char buf[DECIMAL_TO_STRING_CONVERSION_BUFFER_SIZE];
-    CHARSET_INFO *cs= charset();
+    const CHARSET_INFO * const cs= charset();
     String tmp(buf, sizeof(buf), cs);
     tmp.copy((char*) ptr, field_length, cs);
     push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
@@ -199,7 +199,7 @@ void Field_string::sort_string(uchar *to,uint length)
 void Field_string::sql_type(String &res) const
 {
   THD *thd= table->in_use;
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs= res.charset();
   ulong length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),

@@ -50,7 +50,7 @@ public:
   int  reset(void);
   bool store_value(const my_decimal *decimal_value);
   void set_value_on_overflow(my_decimal *decimal_value, bool sign);
-  int  store(const char *to, uint length, CHARSET_INFO *charset);
+  int  store(const char *to, uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int store_time(DRIZZLE_TIME *ltime, timestamp_type t_type);

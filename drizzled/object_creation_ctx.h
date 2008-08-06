@@ -50,12 +50,12 @@ public:
 class Default_object_creation_ctx : public Object_creation_ctx
 {
 public:
-  CHARSET_INFO *get_client_cs()
+  const CHARSET_INFO *get_client_cs()
   {
     return m_client_cs;
   }
 
-  CHARSET_INFO *get_connection_cl()
+  const CHARSET_INFO *get_connection_cl()
   {
     return m_connection_cl;
   }
@@ -63,8 +63,8 @@ public:
 protected:
   Default_object_creation_ctx(THD *thd);
 
-  Default_object_creation_ctx(CHARSET_INFO *client_cs,
-                              CHARSET_INFO *connection_cl);
+  Default_object_creation_ctx(const CHARSET_INFO * const client_cs,
+                              const CHARSET_INFO * const connection_cl);
 
 protected:
   virtual Object_creation_ctx *create_backup_ctx(THD *thd) const;
@@ -81,7 +81,7 @@ protected:
     in order to parse the query properly we have to switch client character
     set on parsing.
   */
-  CHARSET_INFO *m_client_cs;
+  const CHARSET_INFO *m_client_cs;
 
   /**
     connection_cl stores the value of collation_connection session
@@ -91,7 +91,7 @@ protected:
     the character set and collation of text literals in internal
     representation of query (item-objects).
   */
-  CHARSET_INFO *m_connection_cl;
+  const CHARSET_INFO *m_connection_cl;
 };
 
 #endif /* DRIZZLE_SERVER_OBJECT_CREATION_CTX_H */

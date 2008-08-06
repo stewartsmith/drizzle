@@ -57,7 +57,7 @@ static bool make_datetime(date_time_format_types format, DRIZZLE_TIME *ltime,
 			  String *str)
 {
   char *buff;
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length= MAX_DATE_STRING_REP_LENGTH;
 
   if (str->alloc(length))
@@ -285,7 +285,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
   const char *val_end= val + length;
   const char *ptr= format->format.str;
   const char *end= ptr + format->format.length;
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
 
   if (!sub_pattern_end)
     memset(l_time, 0, sizeof(*l_time));
@@ -855,7 +855,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
                          For example, '1.1' -> '1.100000'
 */
 
-static bool get_interval_info(const char *str,uint length,CHARSET_INFO *cs,
+static bool get_interval_info(const char *str,uint length, const CHARSET_INFO * const cs,
                               uint count, uint64_t *values,
                               bool transform_msec)
 {
@@ -1297,7 +1297,7 @@ bool get_interval_value(Item *args,interval_type int_type,
   int64_t value= 0;
   const char *str= NULL;
   size_t length= 0;
-  CHARSET_INFO *cs=str_value->charset();
+  const CHARSET_INFO * const cs= str_value->charset();
 
   memset(interval, 0, sizeof(*interval));
   if ((int) int_type <= INTERVAL_MICROSECOND)
@@ -1765,7 +1765,7 @@ void Item_func_date_format::fix_length_and_dec()
   Item *arg1= args[1]->this_item();
 
   decimals=0;
-  CHARSET_INFO *cs= thd->variables.collation_connection;
+  const CHARSET_INFO * const cs= thd->variables.collation_connection;
   uint32_t repertoire= arg1->collation.repertoire;
   if (!thd->variables.lc_time_names->is_ascii)
     repertoire|= MY_REPERTOIRE_EXTENDED;

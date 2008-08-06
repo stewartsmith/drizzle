@@ -1254,7 +1254,7 @@ void close_temporary_tables(THD *thd)
         close_temporary(table, 1, 1);
       }
       thd->clear_error();
-      CHARSET_INFO *cs_save= thd->variables.character_set_client;
+      const CHARSET_INFO * const cs_save= thd->variables.character_set_client;
       thd->variables.character_set_client= system_charset_info;
       Query_log_event qinfo(thd, s_query.ptr(),
                             s_query.length() - 1 /* to remove trailing ',' */,

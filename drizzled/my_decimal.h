@@ -286,7 +286,7 @@ int str2my_decimal(uint mask, const char *str, my_decimal *d, char **end)
 
 
 int str2my_decimal(uint mask, const char *from, uint length,
-                   CHARSET_INFO *charset, my_decimal *decimal_value);
+                   const CHARSET_INFO * charset, my_decimal *decimal_value);
 
 #if defined(MYSQL_SERVER)
 inline

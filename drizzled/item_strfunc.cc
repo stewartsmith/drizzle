@@ -1252,7 +1252,7 @@ void Item_func_trim::print(String *str, enum_query_type query_type)
 }
 
 
-Item *Item_func_sysconst::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_func_sysconst::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
   uint conv_errors;
@@ -1298,7 +1298,7 @@ bool Item_func_user::init(const char *user, const char *host)
   // For system threads (e.g. replication SQL thread) user may be empty
   if (user)
   {
-    CHARSET_INFO *cs= str_value.charset();
+    const CHARSET_INFO * const cs= str_value.charset();
     uint res_length= (strlen(user)+strlen(host)+2) * cs->mbmaxlen;
 
     if (str_value.alloc(res_length))
@@ -2040,7 +2040,7 @@ String *Item_func_set_collation::val_str(String *str)
 
 void Item_func_set_collation::fix_length_and_dec()
 {
-  CHARSET_INFO *set_collation;
+  const CHARSET_INFO *set_collation;
   const char *colname;
   String tmp, *str= args[1]->val_str(&tmp);
   colname= str->c_ptr();
@@ -2106,7 +2106,7 @@ String *Item_func_charset::val_str(String *str)
   assert(fixed == 1);
   uint dummy_errors;
 
-  CHARSET_INFO *cs= args[0]->collation.collation; 
+  const CHARSET_INFO * const cs= args[0]->collation.collation; 
   null_value= 0;
   str->copy(cs->csname, strlen(cs->csname),
 	    &my_charset_latin1, collation.collation, &dummy_errors);
@@ -2117,7 +2117,7 @@ String *Item_func_collation::val_str(String *str)
 {
   assert(fixed == 1);
   uint dummy_errors;
-  CHARSET_INFO *cs= args[0]->collation.collation; 
+  const CHARSET_INFO * const cs= args[0]->collation.collation; 
 
   null_value= 0;
   str->copy(cs->name, strlen(cs->name),
@@ -2128,7 +2128,7 @@ String *Item_func_collation::val_str(String *str)
 
 void Item_func_weight_string::fix_length_and_dec()
 {
-  CHARSET_INFO *cs= args[0]->collation.collation;
+  const CHARSET_INFO * const cs= args[0]->collation.collation;
   collation.set(&my_charset_bin, args[0]->collation.derivation);
   flags= my_strxfrm_flag_normalize(flags, cs->levels_for_order);
   max_length= cs->mbmaxlen * max(args[0]->max_length, nweights);
@@ -2140,7 +2140,7 @@ void Item_func_weight_string::fix_length_and_dec()
 String *Item_func_weight_string::val_str(String *str)
 {
   String *res;
-  CHARSET_INFO *cs= args[0]->collation.collation;
+  const CHARSET_INFO * const cs= args[0]->collation.collation;
   uint tmp_length, frm_length;
   assert(fixed == 1);
 

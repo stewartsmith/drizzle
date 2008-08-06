@@ -147,7 +147,7 @@ static void dynstr_realloc_checked(DYNAMIC_STRING *str, ulong additional_size);
 static const char *drizzle_universal_client_charset=
   MYSQL_UNIVERSAL_CLIENT_CHARSET;
 static char *default_charset;
-static CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_latin1;
 const char *default_dbug_option="d:t:o,/tmp/drizzledump.trace";
 /* have we seen any VIEWs during table scanning? */
 bool seen_views= 0;

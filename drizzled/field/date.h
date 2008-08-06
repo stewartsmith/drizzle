@@ -27,19 +27,19 @@ class Field_newdate :public Field_str {
 public:
   Field_newdate(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 		enum utype unireg_check_arg, const char *field_name_arg,
-		CHARSET_INFO *cs)
+		const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, 10, null_ptr_arg, null_bit_arg,
 	       unireg_check_arg, field_name_arg, cs)
     {}
   Field_newdate(bool maybe_null_arg, const char *field_name_arg,
-                CHARSET_INFO *cs)
+                const CHARSET_INFO * const cs)
     :Field_str((uchar*) 0,10, maybe_null_arg ? (uchar*) "": 0,0,
                NONE, field_name_arg, cs) {}
   enum_field_types type() const { return DRIZZLE_TYPE_NEWDATE;}
   enum_field_types real_type() const { return DRIZZLE_TYPE_NEWDATE; }
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_UINT24; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int store_time(DRIZZLE_TIME *ltime, timestamp_type type);

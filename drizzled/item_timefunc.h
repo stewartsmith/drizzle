@@ -742,11 +742,11 @@ public:
 class Item_char_typecast :public Item_typecast
 {
   int cast_length;
-  CHARSET_INFO *cast_cs, *from_cs;
+  const CHARSET_INFO *cast_cs, *from_cs;
   bool charset_conversion;
   String tmp_value;
 public:
-  Item_char_typecast(Item *a, int length_arg, CHARSET_INFO *cs_arg)
+  Item_char_typecast(Item *a, int length_arg, const CHARSET_INFO * const cs_arg)
     :Item_typecast(a), cast_length(length_arg), cast_cs(cs_arg) {}
   enum Functype functype() const { return CHAR_TYPECAST_FUNC; }
   bool eq(const Item *item, bool binary_cmp) const;

@@ -66,7 +66,8 @@ bool Protocol::net_store_data(const uchar *from, size_t length)
 */
 
 bool Protocol::net_store_data(const uchar *from, size_t length,
-                              CHARSET_INFO *from_cs, CHARSET_INFO *to_cs)
+                              const CHARSET_INFO * const from_cs,
+							  const CHARSET_INFO * const to_cs)
 {
   uint dummy_errors;
   /* Calculate maxumum possible result length */
@@ -489,7 +490,7 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
   String tmp((char*) buff,sizeof(buff),&my_charset_bin);
   Protocol_text prot(thd);
   String *local_packet= prot.storage_packet();
-  CHARSET_INFO *thd_charset= thd->variables.character_set_results;
+  const CHARSET_INFO * const thd_charset= thd->variables.character_set_results;
 
   if (flags & SEND_NUM_ROWS)
   {				// Packet with number of elements
@@ -500,7 +501,7 @@ bool Protocol::send_fields(List<Item> *list, uint flags)
   while ((item=it++))
   {
     char *pos;
-    CHARSET_INFO *cs= system_charset_info;
+    const CHARSET_INFO * const cs= system_charset_info;
     Send_field field;
     item->make_field(&field);
 
@@ -601,7 +602,7 @@ bool Protocol::write()
     1		error
 */
 
-bool Protocol::store(const char *from, CHARSET_INFO *cs)
+bool Protocol::store(const char *from, const CHARSET_INFO * const cs)
 {
   if (!from)
     return store_null();
@@ -661,7 +662,8 @@ bool Protocol_text::store_null()
 */
 
 bool Protocol::store_string_aux(const char *from, size_t length,
-                                CHARSET_INFO *fromcs, CHARSET_INFO *tocs)
+                                const CHARSET_INFO * const fromcs,
+								const CHARSET_INFO * const tocs)
 {
   /* 'tocs' is set 0 when client issues SET character_set_results=NULL */
   if (tocs && !my_charset_same(fromcs, tocs) &&
@@ -677,16 +679,17 @@ bool Protocol::store_string_aux(const char *from, size_t length,
 
 
 bool Protocol_text::store(const char *from, size_t length,
-                          CHARSET_INFO *fromcs, CHARSET_INFO *tocs)
+                          const CHARSET_INFO * const fromcs,
+						  const CHARSET_INFO * const tocs)
 {
   return store_string_aux(from, length, fromcs, tocs);
 }
 
 
 bool Protocol_text::store(const char *from, size_t length,
-                          CHARSET_INFO *fromcs)
+                          const CHARSET_INFO * const fromcs)
 {
-  CHARSET_INFO *tocs= this->thd->variables.character_set_results;
+  const CHARSET_INFO * const tocs= this->thd->variables.character_set_results;
   return store_string_aux(from, length, fromcs, tocs);
 }
 
@@ -756,7 +759,7 @@ bool Protocol_text::store(Field *field)
     return store_null();
   char buff[MAX_FIELD_WIDTH];
   String str(buff,sizeof(buff), &my_charset_bin);
-  CHARSET_INFO *tocs= this->thd->variables.character_set_results;
+  const CHARSET_INFO * const tocs= this->thd->variables.character_set_results;
 
   field->val_str(&str);
 

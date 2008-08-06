@@ -3742,7 +3742,7 @@ private:
   LEX_STRING m_message;
 };
 
-int append_query_string(CHARSET_INFO *csinfo,
+int append_query_string(const CHARSET_INFO * const csinfo,
                         String const *from, String *to);
 
 static inline bool copy_event_cache_to_file_and_reinit(IO_CACHE *cache,

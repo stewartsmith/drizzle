@@ -54,7 +54,7 @@ static char  *opt_password=0, *current_user=0,
 static uint     opt_drizzle_port= 0, opt_protocol= 0;
 static char * opt_drizzle_unix_port=0;
 static int64_t opt_ignore_lines= -1;
-static CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
 static struct my_option my_long_options[] =
 {

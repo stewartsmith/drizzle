@@ -42,7 +42,7 @@ static char *opt_password = 0, *current_user = 0,
 static int first_error = 0;
 DYNAMIC_ARRAY tables4repair;
 static uint opt_protocol=0;
-static CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
 enum operations { DO_CHECK, DO_REPAIR, DO_ANALYZE, DO_OPTIMIZE, DO_UPGRADE };
 

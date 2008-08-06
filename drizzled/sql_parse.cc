@@ -3046,7 +3046,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum_field_types type,
 		       Item *default_value, Item *on_update_value,
                        LEX_STRING *comment,
 		       char *change,
-                       List<String> *interval_list, CHARSET_INFO *cs)
+                       List<String> *interval_list, const CHARSET_INFO * const cs)
 {
   register Create_field *new_field;
   LEX  *lex= thd->lex;
@@ -4401,7 +4401,7 @@ bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
 
 
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, CHARSET_INFO *cs,
+                              uint max_char_length, const CHARSET_INFO * const cs,
                               bool no_error)
 {
   int well_formed_error;
@@ -4426,9 +4426,9 @@ bool check_identifier_name(LEX_STRING *str, uint max_char_length,
     so they should be prohibited until such support is done.
     This is why we use the 3-byte utf8 to check well-formedness here.
   */
-  CHARSET_INFO *cs= &my_charset_utf8mb3_general_ci;
+  const CHARSET_INFO * const cs= &my_charset_utf8mb3_general_ci;
 #else
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
 #endif
   int well_formed_error;
   uint res= cs->cset->well_formed_len(cs, str->str, str->str + str->length,

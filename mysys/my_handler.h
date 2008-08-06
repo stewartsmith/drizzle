@@ -47,7 +47,7 @@ extern "C" {
 
 typedef struct st_HA_KEYSEG		/* Key-portion */
 {
-  CHARSET_INFO *charset;
+  const CHARSET_INFO *charset;
   uint32_t start;				/* Start of key in record */
   uint32_t null_pos;			/* position to NULL indicator */
   uint16_t bit_pos;                       /* Position to bit part */
@@ -106,7 +106,7 @@ typedef struct st_HA_KEYSEG		/* Key-portion */
 #define clr_rec_bits(bit_ptr, bit_ofs, bit_len) \
   set_rec_bits(0, bit_ptr, bit_ofs, bit_len)
 
-extern int ha_compare_text(CHARSET_INFO *, uchar *, uint, uchar *, uint, bool, bool);
+extern int ha_compare_text(const CHARSET_INFO * const, uchar *, uint, uchar *, uint, bool, bool);
 
 extern HA_KEYSEG *ha_find_null(HA_KEYSEG *keyseg, uchar *a);
 extern void my_handler_error_register(void);

@@ -43,7 +43,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_LONGLONG;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_ULONGLONG : HA_KEYTYPE_LONGLONG; }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
+  int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void)

@@ -451,7 +451,7 @@ char *str_to_hex(char *to, const char *from, uint len)
 */
 
 int
-append_query_string(CHARSET_INFO *csinfo,
+append_query_string(const CHARSET_INFO * const csinfo,
                     String const *from, String *to)
 {
   char *beg, *ptr;
@@ -2048,7 +2048,7 @@ void Query_log_event::print_query_header(IO_CACHE* file,
       (unlikely(!print_event_info->charset_inited ||
                 memcmp(print_event_info->charset, charset, 6))))
   {
-    CHARSET_INFO *cs_info= get_charset(uint2korr(charset), MYF(MY_WME));
+    const CHARSET_INFO * const cs_info= get_charset(uint2korr(charset), MYF(MY_WME));
     if (cs_info)
     {
       /* for mysql client */
@@ -2252,7 +2252,7 @@ int Query_log_event::do_apply_event(Relay_log_info const *rli,
         thd->variables.lc_time_names= &my_locale_en_US;
       if (charset_database_number)
       {
-        CHARSET_INFO *cs;
+        const CHARSET_INFO *cs;
         if (!(cs= get_charset(charset_database_number, MYF(0))))
         {
           char buf[20];
@@ -4341,7 +4341,7 @@ void User_var_log_event::pack_info(Protocol* protocol)
       /* 15 is for 'COLLATE' and other chars */
       buf= (char*) my_malloc(event_len+val_len*2+1+2*MY_CS_NAME_SIZE+15,
                              MYF(MY_WME));
-      CHARSET_INFO *cs;
+      const CHARSET_INFO *cs;
       if (!buf)
         return;
       if (!(cs= get_charset(charset_number, MYF(0))))
@@ -4539,7 +4539,7 @@ void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
         > according to UCS2.
       */
       char *hex_str;
-      CHARSET_INFO *cs;
+      const CHARSET_INFO *cs;
 
       if (!(hex_str= (char *)my_alloca(2*val_len+1+2))) // 2 hex digits / byte
         break; // no error, as we are 'void'
@@ -4581,7 +4581,7 @@ void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 int User_var_log_event::do_apply_event(Relay_log_info const *rli)
 {
   Item *it= 0;
-  CHARSET_INFO *charset;
+  const CHARSET_INFO *charset;
   if (!(charset= get_charset(charset_number, MYF(MY_WME))))
     return 1;
   LEX_STRING user_var_name;

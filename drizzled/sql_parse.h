@@ -53,7 +53,7 @@ inline bool check_identifier_name(LEX_STRING *str)
 bool check_string_byte_length(LEX_STRING *str, const char *err_msg,
                               uint max_byte_length);
 bool check_string_char_length(LEX_STRING *str, const char *err_msg,
-                              uint max_char_length, CHARSET_INFO *cs,
+                              uint max_char_length, const CHARSET_INFO * const cs,
                               bool no_error);
 
 #endif /* DRIZZLE_SERVER_SQL_PARSE_H */

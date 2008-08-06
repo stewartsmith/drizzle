@@ -1217,7 +1217,7 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
                                          MY_CS_PRIMARY, MYF(MY_WME));
     if (drizzle->charset && default_collation_name)
     {
-      CHARSET_INFO *collation;
+      const CHARSET_INFO *collation;
       if ((collation=
            get_charset_by_name(default_collation_name, MYF(MY_WME))))
       {
@@ -2161,14 +2161,14 @@ drizzle_get_server_version(const DRIZZLE *drizzle)
 */
 int STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
 {
-  struct charset_info_st *cs;
+  const CHARSET_INFO *cs;
   const char *save_csdir= charsets_dir;
 
   if (drizzle->options.charset_dir)
     charsets_dir= drizzle->options.charset_dir;
 
   if (strlen(cs_name) < MY_CS_NAME_SIZE &&
-     (cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0))))
+      (cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0))))
   {
     char buff[MY_CS_NAME_SIZE + 10];
     charsets_dir= save_csdir;

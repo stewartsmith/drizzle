@@ -28,7 +28,7 @@
  Field type short int (2 byte)
 ****************************************************************************/
 
-int Field_short::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_short::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   int store_tmp;
   int error;
@@ -181,7 +181,7 @@ int64_t Field_short::val_int(void)
 String *Field_short::val_str(String *val_buffer,
 			     String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,7*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -257,7 +257,7 @@ void Field_short::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_short::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs= res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "smallint"));
   add_unsigned(res);
 }

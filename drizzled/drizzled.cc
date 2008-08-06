@@ -417,9 +417,9 @@ struct system_status_var global_status_var;
 MY_TMPDIR mysql_tmpdir_list;
 MY_BITMAP temp_pool;
 
-CHARSET_INFO *system_charset_info, *files_charset_info ;
-CHARSET_INFO *national_charset_info, *table_alias_charset;
-CHARSET_INFO *character_set_filesystem;
+const CHARSET_INFO *system_charset_info, *files_charset_info ;
+const CHARSET_INFO *national_charset_info, *table_alias_charset;
+const CHARSET_INFO *character_set_filesystem;
 
 MY_LOCALE *my_default_lc_time_names;
 
@@ -2139,8 +2139,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
 
   if (default_collation_name)
   {
-    CHARSET_INFO *default_collation;
-    default_collation= get_charset_by_name(default_collation_name, MYF(0));
+    const CHARSET_INFO * const default_collation=
+	   get_charset_by_name(default_collation_name, MYF(0));
     if (!default_collation)
     {
       sql_print_error(ER(ER_UNKNOWN_COLLATION), default_collation_name);

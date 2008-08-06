@@ -28,13 +28,13 @@ public:
   Field_timestamp(uchar *ptr_arg, uint32_t len_arg,
                   uchar *null_ptr_arg, uchar null_bit_arg,
 		  enum utype unireg_check_arg, const char *field_name_arg,
-		  TABLE_SHARE *share, CHARSET_INFO *cs);
+		  TABLE_SHARE *share, const CHARSET_INFO * const cs);
   Field_timestamp(bool maybe_null_arg, const char *field_name_arg,
-		  CHARSET_INFO *cs);
+		  const CHARSET_INFO * const cs);
   enum_field_types type() const { return DRIZZLE_TYPE_TIMESTAMP;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_ULONG_INT; }
   enum Item_result cmp_type () const { return INT_RESULT; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int  reset(void) { ptr[0]=ptr[1]=ptr[2]=ptr[3]=0; return 0; }

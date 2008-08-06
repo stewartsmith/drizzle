@@ -680,7 +680,7 @@ bool Item::check_cols(uint c)
 }
 
 
-void Item::set_name(const char *str, uint length, CHARSET_INFO *cs)
+void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
 {
   if (!length)
   {
@@ -744,7 +744,7 @@ bool Item::eq(const Item *item, bool binary_cmp __attribute__((unused))) const
 }
 
 
-Item *Item::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_func_conv_charset *conv= new Item_func_conv_charset(this, tocs, 1);
   return conv->safe ? conv : NULL;
@@ -762,7 +762,7 @@ Item *Item::safe_charset_converter(CHARSET_INFO *tocs)
   the latter returns a non-fixed Item, so val_str() crashes afterwards.
   Override Item_num method, to return a fixed item.
 */
-Item *Item_num::safe_charset_converter(CHARSET_INFO *tocs __attribute__((unused)))
+Item *Item_num::safe_charset_converter(const CHARSET_INFO * const tocs __attribute__((unused)))
 {
   Item_string *conv;
   char buf[64];
@@ -777,7 +777,7 @@ Item *Item_num::safe_charset_converter(CHARSET_INFO *tocs __attribute__((unused)
 }
 
 
-Item *Item_static_float_func::safe_charset_converter(CHARSET_INFO *tocs __attribute__((unused)))
+Item *Item_static_float_func::safe_charset_converter(const CHARSET_INFO * const tocs __attribute__((unused)))
 {
   Item_string *conv;
   char buf[64];
@@ -793,7 +793,7 @@ Item *Item_static_float_func::safe_charset_converter(CHARSET_INFO *tocs __attrib
 }
 
 
-Item *Item_string::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
   uint conv_errors;
@@ -821,7 +821,7 @@ Item *Item_string::safe_charset_converter(CHARSET_INFO *tocs)
 }
 
 
-Item *Item_param::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_param::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   if (const_item())
   {
@@ -839,7 +839,7 @@ Item *Item_param::safe_charset_converter(CHARSET_INFO *tocs)
 }
 
 
-Item *Item_static_string_func::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_static_string_func::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
   uint conv_errors;
@@ -935,7 +935,7 @@ bool Item::get_time(DRIZZLE_TIME *ltime)
   return 0;
 }
 
-CHARSET_INFO *Item::default_charset()
+const CHARSET_INFO *Item::default_charset()
 {
   return current_thd->variables.collation_connection;
 }
@@ -1197,8 +1197,8 @@ bool DTCollation::aggregate(DTCollation &dt, uint flags)
         set(dt);
         return 0;
       }
-      CHARSET_INFO *bin= get_charset_by_csname(collation->csname, 
-                                               MY_CS_BINSORT,MYF(0));
+      const CHARSET_INFO * const bin= get_charset_by_csname(collation->csname, 
+                                                            MY_CS_BINSORT,MYF(0));
       set(bin, DERIVATION_NONE);
     }
   }
@@ -1840,7 +1840,7 @@ void Item_uint::print(String *str,
 
 
 Item_decimal::Item_decimal(const char *str_arg, uint length,
-                           CHARSET_INFO *charset)
+                           const CHARSET_INFO * const charset)
 {
   str2my_decimal(E_DEC_FATAL_ERROR, str_arg, length, charset, &decimal_value);
   name= (char*) str_arg;
@@ -2023,7 +2023,7 @@ double Item_string::val_real()
   int error;
   char *end, *org_end;
   double tmp;
-  CHARSET_INFO *cs= str_value.charset();
+  const CHARSET_INFO * const cs= str_value.charset();
 
   org_end= (char*) str_value.ptr() + str_value.length();
   tmp= my_strntod(cs, (char*) str_value.ptr(), str_value.length(), &end,
@@ -2054,7 +2054,7 @@ int64_t Item_string::val_int()
   int64_t tmp;
   char *end= (char*) str_value.ptr()+ str_value.length();
   char *org_end= end;
-  CHARSET_INFO *cs= str_value.charset();
+  const CHARSET_INFO * const cs= str_value.charset();
 
   tmp= (*(cs->cset->strtoll10))(cs, str_value.ptr(), &end, &err);
   /*
@@ -2113,7 +2113,7 @@ my_decimal *Item_null::val_decimal(my_decimal *decimal_value __attribute__((unus
 }
 
 
-Item *Item_null::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_null::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   collation.set(tocs);
   return this;
@@ -2335,8 +2335,8 @@ bool Item_param::set_from_user_var(THD *thd, const user_var_entry *entry)
       break;
     case STRING_RESULT:
     {
-      CHARSET_INFO *fromcs= entry->collation.collation;
-      CHARSET_INFO *tocs= thd->variables.collation_connection;
+      const CHARSET_INFO * const fromcs= entry->collation.collation;
+      const CHARSET_INFO * const tocs= thd->variables.collation_connection;
       uint32_t dummy_offset;
 
       value.cs_info.character_set_of_placeholder= 
@@ -3689,7 +3689,7 @@ error:
   return true;
 }
 
-Item *Item_field::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_field::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   no_const_subst= 1;
   return Item::safe_charset_converter(tocs);
@@ -3968,7 +3968,7 @@ bool Item::is_datetime()
 String *Item::check_well_formed_result(String *str, bool send_error)
 {
   /* Check whether we got a well-formed string */
-  CHARSET_INFO *cs= str->charset();
+  const CHARSET_INFO * const cs= str->charset();
   int well_formed_error;
   uint wlen= cs->cset->well_formed_len(cs,
                                        str->ptr(), str->ptr() + str->length(),
@@ -4019,10 +4019,10 @@ String *Item::check_well_formed_result(String *str, bool send_error)
     0    otherwise
 */
 
-bool Item::eq_by_collation(Item *item, bool binary_cmp, CHARSET_INFO *cs)
+bool Item::eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * const cs)
 {
-  CHARSET_INFO *save_cs= 0;
-  CHARSET_INFO *save_item_cs= 0;
+  const CHARSET_INFO *save_cs= 0;
+  const CHARSET_INFO *save_item_cs= 0;
   if (collation.collation != cs)
   {
     save_cs= collation.collation;
@@ -4253,7 +4253,7 @@ int Item::save_in_field(Field *field, bool no_conversions)
   if (result_type() == STRING_RESULT)
   {
     String *result;
-    CHARSET_INFO *cs= collation.collation;
+    const CHARSET_INFO * const cs= collation.collation;
     char buff[MAX_FIELD_WIDTH];		// Alloc buffer for small columns
     str_value.set_quick(buff, sizeof(buff), cs);
     result=val_str(&str_value);
@@ -4587,7 +4587,7 @@ bool Item_hex_string::eq(const Item *arg, bool binary_cmp) const
 }
 
 
-Item *Item_hex_string::safe_charset_converter(CHARSET_INFO *tocs)
+Item *Item_hex_string::safe_charset_converter(const CHARSET_INFO * const tocs)
 {
   Item_string *conv;
   String tmp, *str= val_str(&tmp);

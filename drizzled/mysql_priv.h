@@ -100,8 +100,8 @@ extern const char *primary_key_name;
 #define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
 #define all_bits_set(A,B) ((A) & (B) != (B))
 
-extern CHARSET_INFO *system_charset_info, *files_charset_info ;
-extern CHARSET_INFO *national_charset_info, *table_alias_charset;
+extern const CHARSET_INFO *system_charset_info, *files_charset_info ;
+extern const CHARSET_INFO *national_charset_info, *table_alias_charset;
 
 enum Derivation
 {
@@ -1000,7 +1000,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types t
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,
 		       char *change, List<String> *interval_list,
-		       CHARSET_INFO *cs);
+		       const CHARSET_INFO * const cs);
 Create_field * new_create_field(THD *thd, char *field_name, enum_field_types type,
 				char *length, char *decimals,
 				uint type_modifier, 
@@ -1252,17 +1252,17 @@ extern bool check_reserved_words(LEX_STRING *name);
 extern enum_field_types agg_field_type(Item **items, uint nitems);
 
 /* strfunc.cc */
-uint64_t find_set(TYPELIB *lib, const char *x, uint length, CHARSET_INFO *cs,
+uint64_t find_set(TYPELIB *lib, const char *x, uint length, const CHARSET_INFO * const cs,
 		   char **err_pos, uint *err_len, bool *set_warning);
 uint find_type(const TYPELIB *lib, const char *find, uint length,
                bool part_match);
 uint find_type2(const TYPELIB *lib, const char *find, uint length,
-                CHARSET_INFO *cs);
+                const CHARSET_INFO *cs);
 void unhex_type2(TYPELIB *lib);
 uint check_word(TYPELIB *lib, const char *val, const char *end,
 		const char **end_of_word);
 int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
-                         CHARSET_INFO * const cs);
+                         const CHARSET_INFO * const cs);
 
 
 bool is_keyword(const char *name, uint len);
@@ -1274,7 +1274,7 @@ bool check_db_dir_existence(const char *db_name);
 bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create);
 bool load_db_opt_by_name(THD *thd, const char *db_name,
                          HA_CREATE_INFO *db_create_info);
-CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name);
+const CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name);
 bool my_dbopt_init(void);
 void my_dbopt_cleanup(void);
 extern int creating_database; // How many database locks are made
@@ -1290,7 +1290,7 @@ extern time_t server_start_time, flush_status_time;
 extern uint mysql_data_home_len;
 extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
             mysql_real_data_home[], mysql_unpacked_real_data_home[];
-extern CHARSET_INFO *character_set_filesystem;
+extern const CHARSET_INFO *character_set_filesystem;
 #endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
 #ifdef MYSQL_SERVER
 extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
@@ -1631,8 +1631,8 @@ char *fn_rext(char *name);
 /* Conversion functions */
 #endif /* MYSQL_SERVER */
 #if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-uint strconvert(CHARSET_INFO *from_cs, const char *from,
-                CHARSET_INFO *to_cs, char *to, uint to_length, uint *errors);
+uint strconvert(const CHARSET_INFO * const from_cs, const char *from,
+                const CHARSET_INFO * const to_cs, char *to, uint to_length, uint *errors);
 uint filename_to_tablename(const char *from, char *to, uint to_length);
 uint tablename_to_filename(const char *from, char *to, uint to_length);
 #endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */

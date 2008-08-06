@@ -176,7 +176,7 @@ int my_decimal2binary(uint mask, const my_decimal *d, uchar *bin, int prec,
 */
 
 int str2my_decimal(uint mask, const char *from, uint length,
-                   CHARSET_INFO *charset, my_decimal *decimal_value)
+                   const CHARSET_INFO * charset, my_decimal *decimal_value)
 {
   char *end, *from_end;
   int err;

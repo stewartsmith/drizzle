@@ -28,7 +28,7 @@
 ** long int
 ****************************************************************************/
 
-int Field_long::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_long::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   long store_tmp;
   int error;
@@ -180,7 +180,7 @@ int64_t Field_long::val_int(void)
 String *Field_long::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,12*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -257,7 +257,7 @@ void Field_long::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_long::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "int"));
   add_unsigned(res);
 }
