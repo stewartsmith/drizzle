@@ -92,3 +92,6 @@ test: test-drizzle
 test-drizzle:
 	cd tests ; \
 	$(MAKE) $(AM_MAKEFLAGS) test 
+
+doxygen:
+	doxygen Doxyfile
