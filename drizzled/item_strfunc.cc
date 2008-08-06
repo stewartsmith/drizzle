@@ -25,12 +25,7 @@
     (This shouldn't be needed)
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <mysys/sha1.h>
 #include <zlib.h>
 C_MODE_START

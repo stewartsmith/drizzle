@@ -13,15 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
 /*
   UNION  of select's
   UNION's  were introduced by Monty and Sinisa <sinisa@mysql.com>
 */
-
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 #include <drizzled/drizzled_error_messages.h>
 
 bool mysql_union(THD *thd,

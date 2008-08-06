@@ -21,15 +21,8 @@
   This file defines all numerical functions
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "slave.h"				// for wait_for_master_pos
+#include <drizzled/server_includes.h>
 #include "rpl_mi.h"
-#include <mysys/hash.h>
-#include <time.h>
 #include <mysys/my_bit.h>
 #include <drizzled/drizzled_error_messages.h>
 

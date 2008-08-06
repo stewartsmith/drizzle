@@ -27,8 +27,8 @@
   @TODO Get rid of the MYSQL_CLIENT and MYSQL_SERVER conditionals
 */
 
-#ifndef DRIZZLE_SERVER_MYSQL_PRIV_H
-#define DRIZZLE_SERVER_MYSQL_PRIV_H
+#ifndef DRIZZLE_SERVER_SERVER_INCLUDES_H
+#define DRIZZLE_SERVER_SERVER_INCLUDES_H
 
 /* Some forward declarations just for the server */
 
@@ -40,173 +40,86 @@ typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
  * the server and the plugin infrastructure, and not the client 
  */
 #include <drizzled/common_includes.h>       
-
-#include "opt_range.h"
-
-/*
-  Error injector Macros to enable easy testing of recovery after failures
-  in various error cases.
-*/
-#ifndef ERROR_INJECT_SUPPORT
-
-#define ERROR_INJECT(x) 0
-#define ERROR_INJECT_ACTION(x,action) 0
-#define ERROR_INJECT_CRASH(x) 0
-#define ERROR_INJECT_VALUE(x) 0
-#define ERROR_INJECT_VALUE_ACTION(x,action) 0
-#define ERROR_INJECT_VALUE_CRASH(x) 0
-#define SET_ERROR_INJECT_VALUE(x)
-
-#else
-
-inline bool check_and_unset_keyword(const char *dbug_str)
-{
-  const char *extra_str= "-d,";
-  char total_str[200];
-  if (_db_strict_keyword_ (dbug_str))
-  {
-    strxmov(total_str, extra_str, dbug_str, NullS);
-    return 1;
-  }
-  return 0;
-}
-
-
-inline bool
-check_and_unset_inject_value(int value)
-{
-  THD *thd= current_thd;
-  if (thd->error_inject_value == (uint)value)
-  {
-    thd->error_inject_value= 0;
-    return 1;
-  }
-  return 0;
-}
-
-/*
-  ERROR INJECT MODULE:
-  --------------------
-  These macros are used to insert macros from the application code.
-  The event that activates those error injections can be activated
-  from SQL by using:
-  SET SESSION dbug=+d,code;
-
-  After the error has been injected, the macros will automatically
-  remove the debug code, thus similar to using:
-  SET SESSION dbug=-d,code
-  from SQL.
-
-  ERROR_INJECT_CRASH will inject a crash of the MySQL Server if code
-  is set when macro is called. ERROR_INJECT_CRASH can be used in
-  if-statements, it will always return false unless of course it
-  crashes in which case it doesn't return at all.
-
-  ERROR_INJECT_ACTION will inject the action specified in the action
-  parameter of the macro, before performing the action the code will
-  be removed such that no more events occur. ERROR_INJECT_ACTION
-  can also be used in if-statements and always returns FALSE.
-  ERROR_INJECT can be used in a normal if-statement, where the action
-  part is performed in the if-block. The macro returns TRUE if the
-  error was activated and otherwise returns FALSE. If activated the
-  code is removed.
-
-  Sometimes it is necessary to perform error inject actions as a serie
-  of events. In this case one can use one variable on the THD object.
-  Thus one sets this value by using e.g. SET_ERROR_INJECT_VALUE(100).
-  Then one can later test for it by using ERROR_INJECT_CRASH_VALUE,
-  ERROR_INJECT_ACTION_VALUE and ERROR_INJECT_VALUE. This have the same
-  behaviour as the above described macros except that they use the
-  error inject value instead of a code used by debug macros.
-*/
-#define SET_ERROR_INJECT_VALUE(x) \
-  current_thd->error_inject_value= (x)
-#define ERROR_INJECT_ACTION(code, action) \
-  (check_and_unset_keyword(code) ? ((action), 0) : 0)
-#define ERROR_INJECT(code) \
-  check_and_unset_keyword(code)
-#define ERROR_INJECT_VALUE(value) \
-  check_and_unset_inject_value(value)
-#define ERROR_INJECT_VALUE_ACTION(value,action) \
-  (check_and_unset_inject_value(value) ? (action) : 0)
-#define ERROR_INJECT_VALUE_CRASH(value) \
-  ERROR_INJECT_VALUE_ACTION(value, (abort(), 0))
-
-#endif
-
-void write_bin_log(THD *thd, bool clear_error,
-                   char const *query, ulong query_length);
-
+/* Range optimization API/library */
+#include <drizzled/opt_range.h>
+/* Simple error injection (crash) module */
+#include <drizzled/error_injection.h>
+/* API for connecting, logging in to a drizzled server */
 #include <drizzled/connect.h>
+/* Routines for dropping, repairing, checking schema tables */
+#include <drizzled/sql_table.h>
 
+/* sql_db.cc */
 int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create, bool silent);
 bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create);
 bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
-void mysql_client_binlog_statement(THD *thd);
-bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists,
-                    bool drop_temporary);
-int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
-                         bool drop_temporary, bool drop_view, bool log_query);
-bool quick_rm_table(handlerton *base,const char *db,
-                    const char *table_name, uint flags);
-void close_cached_table(THD *thd, TABLE *table);
-bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent);
-bool do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db,
-                      char *new_table_name, char *new_table_alias,
-                      bool skip_error);
-
 bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name,
                      bool force_switch);
-
 bool mysql_opt_change_db(THD *thd,
                          const LEX_STRING *new_db_name,
                          LEX_STRING *saved_db_name,
                          bool force_switch,
                          bool *cur_db_changed);
 
+/* sql_repl.cc */
+void write_bin_log(THD *thd, bool clear_error,
+                   char const *query, ulong query_length);
+void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
+void mysql_client_binlog_statement(THD *thd);
+
+/* sql_rename.cc */
+bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent);
+bool do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db,
+                      char *new_table_name, char *new_table_alias,
+                      bool skip_error);
+
+/* sql_parse.cc */
 void mysql_parse(THD *thd, const char *inBuf, uint length,
                  const char ** semicolon);
 
 bool mysql_test_parse_for_slave(THD *thd,char *inBuf,uint length);
+
+
 bool is_update_query(enum enum_sql_command command);
+
 bool alloc_query(THD *thd, const char *packet, uint packet_length);
-void mysql_init_select(LEX *lex);
+
 void mysql_reset_thd_for_next_command(THD *thd);
-bool mysql_new_select(LEX *lex, bool move_down);
+
 void create_select_for_variable(const char *var_name);
+
 void mysql_init_multi_delete(LEX *lex);
+
 bool multi_delete_set_locks_and_link_aux_tables(LEX *lex);
-void init_max_user_conn(void);
+
 void init_update_queries(void);
+
+bool do_command(THD *thd);
+
+bool dispatch_command(enum enum_server_command command, THD *thd,
+		      char* packet, uint packet_length);
+
+void log_slow_statement(THD *thd);
+
+bool append_file_to_dir(THD *thd, const char **filename_ptr, 
+                        const char *table_name);
+
+bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables, bool *write_to_binlog);
+
+bool check_simple_select();
+
+/* @TODO <UNUSED> */
+void mysql_init_select(LEX *lex);
+bool mysql_new_select(LEX *lex, bool move_down);
+void init_max_user_conn(void);
 void free_max_user_conn(void);
 pthread_handler_t handle_bootstrap(void *arg);
 int mysql_execute_command(THD *thd);
-bool do_command(THD *thd);
-bool dispatch_command(enum enum_server_command command, THD *thd,
-		      char* packet, uint packet_length);
-void log_slow_statement(THD *thd);
 bool check_dup(const char *db, const char *name, TABLE_LIST *tables);
-bool compare_record(TABLE *table);
-bool append_file_to_dir(THD *thd, const char **filename_ptr, 
-                        const char *table_name);
-void wait_while_table_is_used(THD *thd, TABLE *table,
-                              enum ha_extra_function function);
-bool table_cache_init(void);
-void table_cache_free(void);
-bool table_def_init(void);
-void table_def_free(void);
-void assign_new_table_id(TABLE_SHARE *share);
-uint cached_open_tables(void);
-uint cached_table_definitions(void);
-void kill_mysql(void);
-void close_connection(THD *thd, uint errcode, bool lock);
-bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables, bool *write_to_binlog);
 bool check_table_access(THD *thd, ulong want_access, TABLE_LIST *tables,
                         bool no_errors,
                         bool any_combination_of_privileges_will_do,
                         uint number);
-
 /*
   General routine to change field->ptr of a NULL-terminated array of Field
   objects. Useful when needed to call val_int, val_str or similar and the
@@ -217,27 +130,29 @@ bool check_table_access(THD *thd, ulong want_access, TABLE_LIST *tables,
 void set_field_ptr(Field **ptr, const uchar *new_buf, const uchar *old_buf);
 void set_key_field_ptr(KEY *key_info, const uchar *new_buf,
                        const uchar *old_buf);
+/* </UNUSED> */
 
-bool mysql_checksum_table(THD* thd, TABLE_LIST* table_list,
-                          HA_CHECK_OPT* check_opt);
-bool mysql_check_table(THD* thd, TABLE_LIST* table_list,
-                       HA_CHECK_OPT* check_opt);
-bool mysql_repair_table(THD* thd, TABLE_LIST* table_list,
-                        HA_CHECK_OPT* check_opt);
-bool mysql_analyze_table(THD* thd, TABLE_LIST* table_list,
-                         HA_CHECK_OPT* check_opt);
-bool mysql_optimize_table(THD* thd, TABLE_LIST* table_list,
-                          HA_CHECK_OPT* check_opt);
-bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* table_list,
-                              LEX_STRING *key_cache_name);
-bool mysql_preload_keys(THD* thd, TABLE_LIST* table_list);
-int reassign_keycache_tables(THD* thd, KEY_CACHE *src_cache,
-                             KEY_CACHE *dst_cache);
+/* sql_update.cc */
+bool compare_record(TABLE *table);
+
+/* sql_base.cc */
+void table_cache_free(void);
+bool table_cache_init(void);
+bool table_def_init(void);
+void table_def_free(void);
+void assign_new_table_id(TABLE_SHARE *share);
+uint cached_open_tables(void);
+uint cached_table_definitions(void);
+
+/* drizzled.cc */
+void kill_mysql(void);
+void close_connection(THD *thd, uint errcode, bool lock);
+
+/* sql_select.cc */
 TABLE *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
 
+/* handler.cc */
 bool mysql_xa_recover(THD *thd);
-
-bool check_simple_select();
 
 SORT_FIELD * make_unireg_sortorder(ORDER *order, uint *length,
                                   SORT_FIELD *sortorder);
@@ -422,19 +337,6 @@ enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
 
 #define is_schema_db(X) \
   !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
-
-/* sql_prepare.cc */
-
-void mysql_stmt_prepare(THD *thd, const char *packet, uint packet_length);
-void mysql_stmt_execute(THD *thd, char *packet, uint packet_length);
-void mysql_stmt_close(THD *thd, char *packet);
-void mysql_sql_stmt_prepare(THD *thd);
-void mysql_sql_stmt_execute(THD *thd);
-void mysql_sql_stmt_close(THD *thd);
-void mysql_stmt_fetch(THD *thd, char *packet, uint packet_length);
-void mysql_stmt_reset(THD *thd, char *packet);
-void mysql_stmt_get_longdata(THD *thd, char *pos, ulong packet_length);
-void reinit_stmt_before_use(THD *thd, LEX *lex);
 
 /* sql_handler.cc */
 bool mysql_ha_open(THD *thd, TABLE_LIST *tables, bool reopen);
@@ -770,7 +672,6 @@ extern ulong slave_net_timeout, slave_trans_retries;
 extern uint max_user_connections;
 extern ulong what_to_log,flush_time;
 extern ulong query_buff_size;
-extern ulong max_prepared_stmt_count, prepared_stmt_count;
 extern ulong binlog_cache_size, max_binlog_cache_size, open_files_limit;
 extern ulong max_binlog_size, max_relay_log_size;
 extern ulong opt_binlog_rows_event_max_size;
@@ -1246,4 +1147,4 @@ bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
 #define IS_FILES_STATUS              36
 #define IS_FILES_EXTRA               37
 
-#endif /* DRIZZLE_SERVER_MYSQL_PRIV_H */
+#endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

@@ -16,12 +16,7 @@
 
 #ifndef MYSQL_CLIENT
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
 #include "rpl_rli.h"
 #include "rpl_mi.h"
 #include "rpl_filter.h"

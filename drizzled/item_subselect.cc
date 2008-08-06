@@ -23,13 +23,8 @@
     - add function from mysql_select that use JOIN* as parameter to JOIN
     methods (sql_select.h/sql_select.cc)
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 #include <drizzled/drizzled_error_messages.h>
 
 inline Item * and_items(Item* cond, Item *item)

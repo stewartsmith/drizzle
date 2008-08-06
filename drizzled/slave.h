@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef SLAVE_H
-#define SLAVE_H
+#ifndef DRIZZLE_SERVER_SLAVE_H
+#define DRIZZLE_SERVER_SLAVE_H
 
 /**
   @defgroup Replication Replication
@@ -233,4 +233,4 @@ extern I_List<THD> threads;
   @} (end of group Replication)
 */
 
-#endif
+#endif /* DRIZZLE_SERVER_SLAVE_H */

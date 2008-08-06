@@ -19,13 +19,7 @@
   Low level functions for storing data to be send to the MySQL client.
   The actual communction is handled by the net_xxx functions in net_serv.cc
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include <stdarg.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;

@@ -15,10 +15,9 @@
 
 
 /* Function with list databases, tables or fields */
-
-#include "mysql_priv.h"
-#include "sql_select.h"                         // For select_describe
-#include "sql_show.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/sql_show.h>
 #include "repl_failsafe.h"
 #include <mysys/my_dir.h>
 

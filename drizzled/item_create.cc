@@ -20,8 +20,7 @@
   Functions to create an item. Used by sql_yac.yy
 */
 
-#include "mysql_priv.h"
-#include "item_create.h"
+#include <drizzled/server_includes.h>
 
 /*
 =============================================================================

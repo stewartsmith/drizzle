@@ -17,7 +17,7 @@
   Implementation for the thread scheduler
 */
 
-#include <drizzled/mysql_priv.h>
+#include <drizzled/server_includes.h>
 #include "event.h"
 
 

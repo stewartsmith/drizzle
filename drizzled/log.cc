@@ -24,7 +24,7 @@
     Abort logging when we get an error in reading or writing log files
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "rpl_rli.h"

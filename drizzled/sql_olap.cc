@@ -26,13 +26,8 @@
 */
 
 #ifdef DISABLED_UNTIL_REWRITTEN_IN_4_1
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 
 /****************************************************************************

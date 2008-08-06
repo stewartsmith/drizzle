@@ -23,16 +23,10 @@
   @defgroup Query_Optimizer  Query Optimizer
   @{
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 #include <mysys/my_bit.h>
-#include <mysys/hash.h>
 #include <drizzled/drizzled_error_messages.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",

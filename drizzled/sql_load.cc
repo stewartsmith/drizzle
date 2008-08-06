@@ -17,7 +17,7 @@
 /* Copy data from a textfile to table */
 /* 2006-12 Erik Wetterberg : LOAD XML added */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include <drizzled/drizzled_error_messages.h>
 

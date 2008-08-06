@@ -15,11 +15,9 @@
 
 
 /* Basic functions needed by many modules */
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 #include <mysys/my_dir.h>
-#include <mysys/hash.h>
 #include <drizzled/drizzled_error_messages.h>
 
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")

@@ -21,7 +21,7 @@
   Read language depeneded messagefile
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
 #include <drizzled/drizzled_error_messages.h>
 

@@ -22,13 +22,12 @@
   it. The used functions (to handle LOAD DATA FROM MASTER, plus some small
   functions like register_slave()) are working.
 */
+#include <drizzled/server_includes.h>
 
-#include "mysql_priv.h"
 #ifdef HAVE_REPLICATION
 
 #include "repl_failsafe.h"
 #include "sql_repl.h"
-#include "slave.h"
 #include "rpl_mi.h"
 #include "rpl_filter.h"
 #include "log_event.h"

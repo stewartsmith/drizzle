@@ -37,10 +37,8 @@
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYTHD->lex)
 #define Select Lex->current_select
-#include "mysql_priv.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
 #include "lex_symbol.h"
-#include "item_create.h"
 #include <storage/myisam/myisam.h>
 #include <drizzled/drizzled_error_messages.h>
 

@@ -14,8 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* Some useful string utility functions used by the MySQL server */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 /*
   Return bitmap for strings used in a set

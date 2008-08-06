@@ -20,12 +20,7 @@
   @brief
   This file implements classes defined in field.h
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_select.h"
 #include <errno.h>
 #include <drizzled/drizzled_error_messages.h>

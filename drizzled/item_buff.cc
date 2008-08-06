@@ -21,7 +21,7 @@
   Buffers to save and compare item values
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 /**
   Create right type of Cached_item for an item.
