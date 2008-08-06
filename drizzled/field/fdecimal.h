@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_NEW_DECIMAL
 #define DRIZZLE_SERVER_FIELD_NEW_DECIMAL
 
-#include <drizzled/mysql_priv.h>
-
 /* New decimal/numeric field which use fixed point arithmetic */
 class Field_new_decimal :public Field_num {
 private:

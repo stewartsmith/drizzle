@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_SHORT
 #define DRIZZLE_SERVER_FIELD_SHORT
 
-#include <drizzled/mysql_priv.h>
-
 class Field_short :public Field_num {
 public:
   Field_short(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,

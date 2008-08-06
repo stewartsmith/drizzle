@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_NULL
 #define DRIZZLE_SERVER_FIELD_NULL
 
-#include <drizzled/mysql_priv.h>
-
 /* 
   Everything saved in this will disappear. It will always return NULL 
  */

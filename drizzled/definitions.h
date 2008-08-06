@@ -223,4 +223,244 @@
 #define COLUMN_FORMAT_MASK 7
 #define COLUMN_FORMAT_SHIFT 3
 
+/* Below are #defines that used to be in mysql_priv.h */
+/***************************************************************************
+  Configuration parameters
+****************************************************************************/
+#define ACL_CACHE_SIZE		256
+#define MAX_PASSWORD_LENGTH	32
+#define HOST_CACHE_SIZE		128
+#define MAX_ACCEPT_RETRY	10	// Test accept this many times
+#define MAX_FIELDS_BEFORE_HASH	32
+#define USER_VARS_HASH_SIZE     16
+#define TABLE_OPEN_CACHE_MIN    64
+#define TABLE_OPEN_CACHE_DEFAULT 64
+
+/* 
+ Value of 9236 discovered through binary search 2006-09-26 on Ubuntu Dapper
+ Drake, libc6 2.3.6-0ubuntu2, Linux kernel 2.6.15-27-686, on x86.  (Added 
+ 100 bytes as reasonable buffer against growth and other environments'
+ requirements.)
+
+ Feel free to raise this by the smallest amount you can to get the
+ "execution_constants" test to pass.
+ */
+#define STACK_MIN_SIZE          12000   ///< Abort if less stack during eval.
+
+#define STACK_MIN_SIZE_FOR_OPEN 1024*80
+#define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
+
+/** 
+ * @TODO Move into a drizzled.h since it's only used in drizzled.cc
+ *
+ * @TODO Rename to DRIZZLED_NET_RETRY_COUNT
+ */
+#ifndef MYSQLD_NET_RETRY_COUNT
+#define MYSQLD_NET_RETRY_COUNT  10	///< Abort read after this many int.
+#endif
+#define TEMP_POOL_SIZE          128
+
+#define QUERY_ALLOC_BLOCK_SIZE		8192
+#define QUERY_ALLOC_PREALLOC_SIZE   	8192
+#define TRANS_ALLOC_BLOCK_SIZE		4096
+#define TRANS_ALLOC_PREALLOC_SIZE	4096
+#define RANGE_ALLOC_BLOCK_SIZE		4096
+#define ACL_ALLOC_BLOCK_SIZE		1024
+#define UDF_ALLOC_BLOCK_SIZE		1024
+#define TABLE_ALLOC_BLOCK_SIZE		1024
+#define BDB_LOG_ALLOC_BLOCK_SIZE	1024
+#define WARN_ALLOC_BLOCK_SIZE		2048
+#define WARN_ALLOC_PREALLOC_SIZE	1024
+#define PROFILE_ALLOC_BLOCK_SIZE  2048
+#define PROFILE_ALLOC_PREALLOC_SIZE 1024
+
+/*
+  The following parameters is to decide when to use an extra cache to
+  optimise seeks when reading a big table in sorted order
+*/
+#define MIN_FILE_LENGTH_TO_USE_ROW_CACHE (10L*1024*1024)
+#define MIN_ROWS_TO_USE_TABLE_CACHE	 100
+#define MIN_ROWS_TO_USE_BULK_INSERT	 100
+
+/**
+  The following is used to decide if MySQL should use table scanning
+  instead of reading with keys.  The number says how many evaluation of the
+  WHERE clause is comparable to reading one extra row from a table.
+*/
+#define TIME_FOR_COMPARE   5	// 5 compares == one read
+
+/**
+  Number of comparisons of table rowids equivalent to reading one row from a 
+  table.
+*/
+#define TIME_FOR_COMPARE_ROWID  (TIME_FOR_COMPARE*2)
+
+/*
+  For sequential disk seeks the cost formula is:
+    DISK_SEEK_BASE_COST + DISK_SEEK_PROP_COST * #blocks_to_skip  
+  
+  The cost of average seek 
+    DISK_SEEK_BASE_COST + DISK_SEEK_PROP_COST*BLOCKS_IN_AVG_SEEK =1.0.
+*/
+#define DISK_SEEK_BASE_COST ((double)0.9)
+
+#define BLOCKS_IN_AVG_SEEK  128
+
+#define DISK_SEEK_PROP_COST ((double)0.1/BLOCKS_IN_AVG_SEEK)
+
+
+/**
+  Number of rows in a reference table when refereed through a not unique key.
+  This value is only used when we don't know anything about the key
+  distribution.
+*/
+#define MATCHING_ROWS_IN_OTHER_TABLE 10
+
+/** Don't pack string keys shorter than this (if PACK_KEYS=1 isn't used). */
+#define KEY_DEFAULT_PACK_LENGTH 8
+
+/** Characters shown for the command in 'show processlist'. */
+#define PROCESS_LIST_WIDTH 100
+/* Characters shown for the command in 'information_schema.processlist' */
+#define PROCESS_LIST_INFO_WIDTH 65535
+
+#define PRECISION_FOR_DOUBLE 53
+#define PRECISION_FOR_FLOAT  24
+
+/*
+  Default time to wait before aborting a new client connection
+  that does not respond to "initial server greeting" timely
+*/
+#define CONNECT_TIMEOUT		10
+
+/* The following can also be changed from the command line */
+#define DEFAULT_CONCURRENCY	10
+#define FLUSH_TIME		0		/**< Don't flush tables */
+#define MAX_CONNECT_ERRORS	10		///< errors before disabling host
+
+#define INTERRUPT_PRIOR 10
+#define CONNECT_PRIOR	9
+#define WAIT_PRIOR	8
+#define QUERY_PRIOR	6
+
+	/* Bits from testflag */
+#define TEST_PRINT_CACHED_TABLES 1
+#define TEST_NO_KEY_GROUP	 2
+#define TEST_MIT_THREAD		4
+#define TEST_BLOCKING		8
+#define TEST_KEEP_TMP_TABLES	16
+#define TEST_READCHECK		64	/**< Force use of readcheck */
+#define TEST_NO_EXTRA		128
+#define TEST_CORE_ON_SIGNAL	256	/**< Give core if signal */
+#define TEST_NO_STACKTRACE	512
+#define TEST_SIGINT		1024	/**< Allow sigint on threads */
+#define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in some places */
+#endif /* End ifndef MYSQL_CLIENT */
+
+/* The rest of the file is included in the server only */
+#ifndef MYSQL_CLIENT
+
+/* Bits for different SQL modes modes (including ANSI mode) */
+#define MODE_REAL_AS_FLOAT              1
+#define MODE_PIPES_AS_CONCAT            2
+#define MODE_ANSI_QUOTES                4
+#define MODE_IGNORE_SPACE		8
+#define MODE_NOT_USED			16
+#define MODE_ONLY_FULL_GROUP_BY		32
+#define MODE_NO_UNSIGNED_SUBTRACTION	64
+#define MODE_NO_DIR_IN_CREATE		128
+#define MODE_POSTGRESQL			256
+#define MODE_ORACLE			512
+#define MODE_MSSQL			1024
+#define MODE_DB2			2048
+#define MODE_MAXDB			4096
+#define MODE_NO_KEY_OPTIONS             8192
+#define MODE_NO_TABLE_OPTIONS           16384
+#define MODE_NO_FIELD_OPTIONS           32768
+#define MODE_MYSQL323                   65536L
+#define MODE_MYSQL40                    (MODE_MYSQL323*2)
+#define MODE_ANSI	                (MODE_MYSQL40*2)
+#define MODE_NO_AUTO_VALUE_ON_ZERO      (MODE_ANSI*2)
+#define MODE_NO_BACKSLASH_ESCAPES       (MODE_NO_AUTO_VALUE_ON_ZERO*2)
+#define MODE_STRICT_TRANS_TABLES	(MODE_NO_BACKSLASH_ESCAPES*2)
+#define MODE_STRICT_ALL_TABLES		(MODE_STRICT_TRANS_TABLES*2)
+#define MODE_NO_ZERO_IN_DATE		(MODE_STRICT_ALL_TABLES*2)
+#define MODE_NO_ZERO_DATE		(MODE_NO_ZERO_IN_DATE*2)
+#define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
+#define MODE_ERROR_FOR_DIVISION_BY_ZERO (MODE_INVALID_DATES*2)
+#define MODE_TRADITIONAL		(MODE_ERROR_FOR_DIVISION_BY_ZERO*2)
+#define MODE_NO_AUTO_CREATE_USER	(MODE_TRADITIONAL*2)
+#define MODE_HIGH_NOT_PRECEDENCE	(MODE_NO_AUTO_CREATE_USER*2)
+#define MODE_NO_ENGINE_SUBSTITUTION     (MODE_HIGH_NOT_PRECEDENCE*2)
+#define MODE_PAD_CHAR_TO_FULL_LENGTH    (1ULL << 31)
+
+/* @@optimizer_switch flags */
+#define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
+#define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
+
+/*
+  Replication uses 8 bytes to store SQL_MODE in the binary log. The day you
+  use strictly more than 64 bits by adding one more define above, you should
+  contact the replication team because the replication code should then be
+  updated (to store more bytes on disk).
+
+  NOTE: When adding new SQL_MODE types, make sure to also add them to
+  the scripts used for creating the MySQL system tables
+  in scripts/mysql_system_tables.sql and scripts/mysql_system_tables_fix.sql
+
+*/
+#define RAID_BLOCK_SIZE 1024
+
+#define MY_CHARSET_BIN_MB_MAXLEN 1
+
+// uncachable cause
+#define UNCACHEABLE_DEPENDENT   1
+#define UNCACHEABLE_RAND        2
+#define UNCACHEABLE_SIDEEFFECT	4
+/// forcing to save JOIN for explain
+#define UNCACHEABLE_EXPLAIN     8
+/** Don't evaluate subqueries in prepare even if they're not correlated */
+#define UNCACHEABLE_PREPARE    16
+/* For uncorrelated SELECT in an UNION with some correlated SELECTs */
+#define UNCACHEABLE_UNITED     32
+
+/* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
+#define UNDEF_POS (-1)
+
+/* BINLOG_DUMP options */
+
+#define BINLOG_DUMP_NON_BLOCK   1
+
+/* sql_show.cc:show_log_files() */
+#define SHOW_LOG_STATUS_FREE "FREE"
+#define SHOW_LOG_STATUS_INUSE "IN USE"
+
+/* Options to add_table_to_list() */
+#define TL_OPTION_UPDATING	1
+#define TL_OPTION_FORCE_INDEX	2
+#define TL_OPTION_IGNORE_LEAVES 4
+#define TL_OPTION_ALIAS         8
+
+/* Some portable defines */
+
+#define portable_sizeof_char_ptr 8
+
+#define tmp_file_prefix "#sql"			/**< Prefix for tmp tables */
+#define tmp_file_prefix_length 4
+
+/* Flags for calc_week() function.  */
+#define WEEK_MONDAY_FIRST    1
+#define WEEK_YEAR            2
+#define WEEK_FIRST_WEEKDAY   4
+
+#define STRING_BUFFER_USUAL_SIZE 80
+
+/*
+  Some defines for exit codes for ::is_equal class functions.
+*/
+#define IS_EQUAL_NO 0
+#define IS_EQUAL_YES 1
+#define IS_EQUAL_PACK_LENGTH 2
+
+
 #endif /* DRIZZLE_SERVER_DEFINITIONS_H */

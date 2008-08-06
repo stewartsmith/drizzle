@@ -29,13 +29,8 @@ have disabled the InnoDB inlining in this file. */
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include <drizzled/mysql_priv.h>
-#include <drizzled/error.h>
-
-#include <mystrings/m_ctype.h>
-#include <mysys/hash.h>
+#include <drizzled/common_includes.h>
 #include <mysys/mysys_err.h>
-#include <mysys/my_sys.h>
 #include "ha_innodb.h"
 
 #ifndef MYSQL_SERVER

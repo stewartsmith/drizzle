@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_LONG
 #define DRIZZLE_SERVER_FIELD_LONG
 
-#include <drizzled/mysql_priv.h>
-
 class Field_long :public Field_num {
 public:
   Field_long(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,

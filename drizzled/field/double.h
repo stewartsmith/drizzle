@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_DOUBLE
 #define DRIZZLE_SERVER_FIELD_DOUBLE
 
-#include <drizzled/mysql_priv.h>
-
 class Field_double :public Field_real {
 public:
   Field_double(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,

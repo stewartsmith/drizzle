@@ -38,7 +38,6 @@
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
-#include <drizzled/mysql_priv.h>
 #include <drizzled/log_event.h>
 #include <libdrizzle/sql_common.h>
 
@@ -1112,6 +1111,7 @@ static void error(const char *format,...)
   @param format Printf-style format string, followed by printf
   varargs.
 */
+static void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
 static void sql_print_error(const char *format,...)
 {
   va_list args;
