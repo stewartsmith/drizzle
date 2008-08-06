@@ -24,7 +24,7 @@
     gives much more speed.
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 static void do_field_eq(Copy_field *copy)
 {

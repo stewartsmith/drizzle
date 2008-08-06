@@ -21,7 +21,7 @@
   Init and dummy functions for interface with unireg
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 void unireg_init(ulong options)
 {

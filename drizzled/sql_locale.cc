@@ -19,9 +19,7 @@
 
   !! This file is built from my_locale.pl !!
 */
-
-#include "mysql_priv.h"
-
+#include <drizzled/server_includes.h>
 
 /***** LOCALE BEGIN ar_AE: Arabic - United Arab Emirates *****/
 static const char *my_locale_month_names_ar_AE[13] = 

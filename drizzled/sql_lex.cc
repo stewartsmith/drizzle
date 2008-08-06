@@ -17,9 +17,7 @@
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
 #define MYSQL_LEX 1
-#include "mysql_priv.h"
-#include "item_create.h"
-#include <mysys/hash.h>
+#include <drizzled/server_includes.h>
 
 static int lex_one_token(void *arg, void *yythd);
 

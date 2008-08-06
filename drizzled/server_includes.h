@@ -27,8 +27,8 @@
   @TODO Get rid of the MYSQL_CLIENT and MYSQL_SERVER conditionals
 */
 
-#ifndef DRIZZLE_SERVER_MYSQL_PRIV_H
-#define DRIZZLE_SERVER_MYSQL_PRIV_H
+#ifndef DRIZZLE_SERVER_SERVER_INCLUDES_H
+#define DRIZZLE_SERVER_SERVER_INCLUDES_H
 
 /* Some forward declarations just for the server */
 
@@ -46,78 +46,80 @@ typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
 #include <drizzled/error_injection.h>
 /* API for connecting, logging in to a drizzled server */
 #include <drizzled/connect.h>
+/* Routines for dropping, repairing, checking schema tables */
+#include <drizzled/sql_table.h>
 
-void write_bin_log(THD *thd, bool clear_error,
-                   char const *query, ulong query_length);
-
+/* sql_db.cc */
 int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create, bool silent);
 bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create);
 bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
-void mysql_client_binlog_statement(THD *thd);
-bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists,
-                    bool drop_temporary);
-int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
-                         bool drop_temporary, bool drop_view, bool log_query);
-bool quick_rm_table(handlerton *base,const char *db,
-                    const char *table_name, uint flags);
-void close_cached_table(THD *thd, TABLE *table);
-bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent);
-bool do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db,
-                      char *new_table_name, char *new_table_alias,
-                      bool skip_error);
-
 bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name,
                      bool force_switch);
-
 bool mysql_opt_change_db(THD *thd,
                          const LEX_STRING *new_db_name,
                          LEX_STRING *saved_db_name,
                          bool force_switch,
                          bool *cur_db_changed);
 
+/* sql_repl.cc */
+void write_bin_log(THD *thd, bool clear_error,
+                   char const *query, ulong query_length);
+void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
+void mysql_client_binlog_statement(THD *thd);
+
+/* sql_rename.cc */
+bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent);
+bool do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db,
+                      char *new_table_name, char *new_table_alias,
+                      bool skip_error);
+
+/* sql_parse.cc */
 void mysql_parse(THD *thd, const char *inBuf, uint length,
                  const char ** semicolon);
 
 bool mysql_test_parse_for_slave(THD *thd,char *inBuf,uint length);
+
+
 bool is_update_query(enum enum_sql_command command);
+
 bool alloc_query(THD *thd, const char *packet, uint packet_length);
-void mysql_init_select(LEX *lex);
+
 void mysql_reset_thd_for_next_command(THD *thd);
-bool mysql_new_select(LEX *lex, bool move_down);
+
 void create_select_for_variable(const char *var_name);
+
 void mysql_init_multi_delete(LEX *lex);
+
 bool multi_delete_set_locks_and_link_aux_tables(LEX *lex);
-void init_max_user_conn(void);
+
 void init_update_queries(void);
+
+bool do_command(THD *thd);
+
+bool dispatch_command(enum enum_server_command command, THD *thd,
+		      char* packet, uint packet_length);
+
+void log_slow_statement(THD *thd);
+
+bool append_file_to_dir(THD *thd, const char **filename_ptr, 
+                        const char *table_name);
+
+bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables, bool *write_to_binlog);
+
+bool check_simple_select();
+
+/* @TODO <UNUSED> */
+void mysql_init_select(LEX *lex);
+bool mysql_new_select(LEX *lex, bool move_down);
+void init_max_user_conn(void);
 void free_max_user_conn(void);
 pthread_handler_t handle_bootstrap(void *arg);
 int mysql_execute_command(THD *thd);
-bool do_command(THD *thd);
-bool dispatch_command(enum enum_server_command command, THD *thd,
-		      char* packet, uint packet_length);
-void log_slow_statement(THD *thd);
 bool check_dup(const char *db, const char *name, TABLE_LIST *tables);
-bool compare_record(TABLE *table);
-bool append_file_to_dir(THD *thd, const char **filename_ptr, 
-                        const char *table_name);
-void wait_while_table_is_used(THD *thd, TABLE *table,
-                              enum ha_extra_function function);
-bool table_cache_init(void);
-void table_cache_free(void);
-bool table_def_init(void);
-void table_def_free(void);
-void assign_new_table_id(TABLE_SHARE *share);
-uint cached_open_tables(void);
-uint cached_table_definitions(void);
-void kill_mysql(void);
-void close_connection(THD *thd, uint errcode, bool lock);
-bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables, bool *write_to_binlog);
 bool check_table_access(THD *thd, ulong want_access, TABLE_LIST *tables,
                         bool no_errors,
                         bool any_combination_of_privileges_will_do,
                         uint number);
-
 /*
   General routine to change field->ptr of a NULL-terminated array of Field
   objects. Useful when needed to call val_int, val_str or similar and the
@@ -128,27 +130,29 @@ bool check_table_access(THD *thd, ulong want_access, TABLE_LIST *tables,
 void set_field_ptr(Field **ptr, const uchar *new_buf, const uchar *old_buf);
 void set_key_field_ptr(KEY *key_info, const uchar *new_buf,
                        const uchar *old_buf);
+/* </UNUSED> */
 
-bool mysql_checksum_table(THD* thd, TABLE_LIST* table_list,
-                          HA_CHECK_OPT* check_opt);
-bool mysql_check_table(THD* thd, TABLE_LIST* table_list,
-                       HA_CHECK_OPT* check_opt);
-bool mysql_repair_table(THD* thd, TABLE_LIST* table_list,
-                        HA_CHECK_OPT* check_opt);
-bool mysql_analyze_table(THD* thd, TABLE_LIST* table_list,
-                         HA_CHECK_OPT* check_opt);
-bool mysql_optimize_table(THD* thd, TABLE_LIST* table_list,
-                          HA_CHECK_OPT* check_opt);
-bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* table_list,
-                              LEX_STRING *key_cache_name);
-bool mysql_preload_keys(THD* thd, TABLE_LIST* table_list);
-int reassign_keycache_tables(THD* thd, KEY_CACHE *src_cache,
-                             KEY_CACHE *dst_cache);
+/* sql_update.cc */
+bool compare_record(TABLE *table);
+
+/* sql_base.cc */
+void table_cache_free(void);
+bool table_cache_init(void);
+bool table_def_init(void);
+void table_def_free(void);
+void assign_new_table_id(TABLE_SHARE *share);
+uint cached_open_tables(void);
+uint cached_table_definitions(void);
+
+/* drizzled.cc */
+void kill_mysql(void);
+void close_connection(THD *thd, uint errcode, bool lock);
+
+/* sql_select.cc */
 TABLE *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
 
+/* handler.cc */
 bool mysql_xa_recover(THD *thd);
-
-bool check_simple_select();
 
 SORT_FIELD * make_unireg_sortorder(ORDER *order, uint *length,
                                   SORT_FIELD *sortorder);
@@ -1143,4 +1147,4 @@ bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
 #define IS_FILES_STATUS              36
 #define IS_FILES_EXTRA               37
 
-#endif /* DRIZZLE_SERVER_MYSQL_PRIV_H */
+#endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

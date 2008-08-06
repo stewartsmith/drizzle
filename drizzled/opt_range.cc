@@ -103,12 +103,8 @@
            subject and may omit some details.
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 #ifndef EXTRA_DEBUG
 #define test_rb_tree(A,B) {}

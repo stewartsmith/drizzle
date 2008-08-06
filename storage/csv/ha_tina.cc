@@ -40,11 +40,6 @@ TODO:
 
  -Brian
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation        // gcc: Class implementation
-#endif
-
 #include <drizzled/common_includes.h>
 #include "ha_tina.h"
 

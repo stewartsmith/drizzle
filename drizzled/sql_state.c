@@ -14,8 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* Functions to map mysqld errno to sql_state */
-
-#include "global.h"
+#include <drizzled/global.h>
 #include <drizzled/error.h>
 #include <libdrizzle/drizzle.h>
 #include "sql_state.h"

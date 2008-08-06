@@ -16,7 +16,7 @@
 
 /* Some general useful functions */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
 /* INFORMATION_SCHEMA name */

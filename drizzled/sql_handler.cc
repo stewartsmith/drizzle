@@ -56,9 +56,8 @@
   second container. When the table is flushed, the pointer is cleared.
 */
 
-#include "mysql_priv.h"
-#include "sql_select.h"
-#include <assert.h>
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 #define HANDLER_TABLES_HASH_SIZE 120
 

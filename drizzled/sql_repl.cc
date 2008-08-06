@@ -13,15 +13,14 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
-#ifdef HAVE_REPLICATION
+#include <drizzled/server_includes.h>
 
+#ifdef HAVE_REPLICATION
 #include "rpl_mi.h"
 #include "sql_repl.h"
 #include "log_event.h"
 #include "rpl_filter.h"
 #include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
 
 int max_binlog_dump_events = 0; // unlimited
 
@@ -1851,5 +1850,3 @@ int init_replication_sys_vars()
 }
 
 #endif /* HAVE_REPLICATION */
-
-

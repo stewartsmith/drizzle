@@ -16,7 +16,7 @@
 
 /* Functions to handle date and time */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
 

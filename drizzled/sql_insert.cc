@@ -22,11 +22,9 @@
   Drizzle has a different form of DELAYED then MySQL. DELAYED is just
   a hint to the the sorage engine (which can then do whatever it likes.
 */
-
-#include "mysql_priv.h"
-#include "sql_select.h"
-#include "sql_show.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
+#include <drizzled/sql_show.h>
 #include "rpl_mi.h"
 #include <drizzled/drizzled_error_messages.h>
 

@@ -20,15 +20,9 @@
 ** Especially the classes to handle a result from a select
 **
 *****************************************************************************/
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_rli.h"
 #include "rpl_record.h"
-#include "slave.h"
 #include "log_event.h"
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>

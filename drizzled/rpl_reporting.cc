@@ -1,7 +1,5 @@
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_reporting.h"
-#include <libdrizzle/gettext.h>
 
 void
 Slave_reporting_capability::report(loglevel level, int err_code,

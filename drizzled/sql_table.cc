@@ -15,10 +15,9 @@
 
 /* drop and alter of tables */
 
-#include "mysql_priv.h"
-#include <mysys/hash.h>
+#include <drizzled/server_includes.h>
 #include <storage/myisam/myisam.h>
-#include "sql_show.h"
+#include <drizzled/sql_show.h>
 #include <drizzled/drizzled_error_messages.h>
 
 int creating_table= 0;        // How many mysql_create_table are running

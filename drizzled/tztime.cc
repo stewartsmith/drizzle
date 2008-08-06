@@ -17,11 +17,8 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
-#include <libdrizzle/my_time.h>
-
+#include <drizzled/server_includes.h>
 #include "tzfile.h"
-#include <libdrizzle/gettext.h>
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo

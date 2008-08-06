@@ -15,8 +15,7 @@
 
 
 /* create and drop of databases */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
 #include "log.h"

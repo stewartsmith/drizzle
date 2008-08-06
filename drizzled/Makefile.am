@@ -82,7 +82,7 @@ noinst_HEADERS = item.h \
 		 item_create.h \
 		 item_subselect.h \
 		 item_row.h \
-		 mysql_priv.h \
+		 server_includes.h \
 		 sql_bitmap.h \
 		 sql_class.h \
 		 sql_lex.h \

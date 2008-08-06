@@ -15,11 +15,6 @@
 
 
 /* Classes in mysql */
-
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
-
 #include <drizzled/plugin_audit.h>
 #include "log.h"
 #include "rpl_tblmap.h"

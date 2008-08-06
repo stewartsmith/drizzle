@@ -21,12 +21,8 @@
   This file defines all compare functions
 */
 
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 static bool convert_constant_item(THD *, Item_field *, Item **);
 

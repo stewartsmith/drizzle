@@ -21,7 +21,7 @@
   Sorts a database
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_sort.h"
 #include <drizzled/drizzled_error_messages.h>
 

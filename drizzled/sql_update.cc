@@ -18,9 +18,8 @@
   Single table and multi table updates of tables.
   Multi-table updates were introduced by Sinisa & Monty
 */
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 #include <drizzled/drizzled_error_messages.h>
 
 /* Return 0 if row hasn't changed */

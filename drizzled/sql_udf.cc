@@ -14,24 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* This implements 'user defined functions' */
-
-/*
-   Known bugs:
-  
-*/
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include <mysys/my_pthread.h>
-
-extern "C"
-{
-#include <stdarg.h>
-#include <mysys/hash.h>
-}
+#include <drizzled/server_includes.h>
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
 static MEM_ROOT mem;

@@ -22,7 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include <drizzled/mysql_priv.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/field/date.h>
 
 /****************************************************************************

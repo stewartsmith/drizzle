@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
@@ -40,7 +40,6 @@
 #include <mysys/thr_alarm.h>
 #include <libdrizzle/errmsg.h>
 #include <locale.h>
-#include <libdrizzle/gettext.h>
 
 #define mysqld_charset &my_charset_latin1
 

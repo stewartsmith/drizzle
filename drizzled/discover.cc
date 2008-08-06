@@ -13,15 +13,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
 /**
   @file
 
   @brief
   Functions for discover of frm file from handler
 */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 /**
   Read the contents of a .frm file.
@@ -41,7 +39,6 @@
   @retval
     3    Could not allocate data for read.  Could not read file
 */
-
 int readfrm(const char *name, uchar **frmdata, size_t *len)
 {
   int    error;
@@ -99,7 +96,6 @@ int readfrm(const char *name, uchar **frmdata, size_t *len)
   @retval
     2    Could not write file
 */
-
 int writefrm(const char *name, const uchar *frmdata, size_t len)
 {
   File file;
@@ -117,8 +113,3 @@ int writefrm(const char *name, const uchar *frmdata, size_t len)
   }
   return(error);
 } /* writefrm */
-
-
-
-
-

@@ -23,9 +23,8 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_filter.h"
-#include <errno.h>
 #include <drizzled/drizzled_error_messages.h>
 
 /*

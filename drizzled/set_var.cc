@@ -46,13 +46,7 @@
     them you must first assign a value to them (in specific ::check() for
     example).
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>

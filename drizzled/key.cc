@@ -16,7 +16,7 @@
 
 /* Functions to handle keys and fields in forms */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 /*
   Search after a key that starts with 'field'
