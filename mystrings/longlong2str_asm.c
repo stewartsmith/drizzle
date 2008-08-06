@@ -20,7 +20,7 @@
   _dig_vector in a portable manner.
 */
 
-#include <my_global.h>
+#include <drizzled/global.h>
 #include "m_string.h"
 
 extern char *int64_t2str_with_dig_vector(int64_t val,char *dst,int radix,
