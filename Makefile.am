@@ -28,8 +28,7 @@ SUBDIRS = po . vio \
 	  support-files
 
 DIST_SUBDIRS = $(SUBDIRS) \
-	       mysys/tests \
-	       mystrings/tests
+	       mysys/tests
 
 EXTRA_DIST = config/config.rpath
 DISTCLEANFILES = ac_available_languages_fragment

@@ -1396,7 +1396,7 @@ esac
 AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
- mystrings/Makefile mystrings/tests/Makefile storage/Makefile dnl
+ mystrings/Makefile storage/Makefile dnl
  vio/Makefile po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
