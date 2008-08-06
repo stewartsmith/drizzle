@@ -22,7 +22,7 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 
-LDADD =
+LDADD = $(LIBINTL)
 AM_CFLAGS = -DHAVE_MYSQL_CONFIG_H
 
 DEFS =                  @DEFS@
