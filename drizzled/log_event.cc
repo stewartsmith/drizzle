@@ -14,11 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifdef MYSQL_CLIENT
-
-#include "mysql_priv.h"
-
-#else
+#ifndef MYSQL_CLIENT
 
 #ifdef USE_PRAGMA_IMPLEMENTATION
 #pragma implementation				// gcc: Class implementation
@@ -34,7 +30,7 @@
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
 
-#endif /* MYSQL_CLIENT */
+#endif /* !MYSQL_CLIENT */
 
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>

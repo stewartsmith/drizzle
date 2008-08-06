@@ -13,11 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA */
 
-#include <stdlib.h>
-#include <ctype.h>
-
-#include <drizzled/mysql_priv.h>
-#include <drizzled/plugin.h>
+#include <drizzled/common_includes.h>
 #include <openssl/md5.h>
 
 bool udf_init_md5udf(UDF_INIT *initid, UDF_ARGS *args, char *message)

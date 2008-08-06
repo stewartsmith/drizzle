@@ -18,7 +18,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include <drizzled/mysql_priv.h>
+#include <drizzled/common_includes.h>
 #include "ha_blackhole.h"
 
 /* Static declarations for handlerton */

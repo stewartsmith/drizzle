@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_SET
 #define DRIZZLE_SERVER_FIELD_SET
 
-#include <drizzled/mysql_priv.h>
-
 class Field_set :public Field_enum {
 public:
   Field_set(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,

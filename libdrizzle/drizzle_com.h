@@ -25,6 +25,82 @@
 #ifndef _libdrizzle_drizzle_com_h
 #define _libdrizzle_drizzle_com_h
 
+/*
+   This is included in the server and in the client.
+   Options for select set by the yacc parser (stored in lex->options).
+
+   XXX:
+   log_event.h defines OPTIONS_WRITTEN_TO_BIN_LOG to specify what THD
+   options list are written into binlog. These options can NOT change their
+   values, or it will break replication between version.
+
+   context is encoded as following:
+   SELECT - SELECT_LEX_NODE::options
+   THD    - THD::options
+   intern - neither. used only as
+            func(..., select_node->options | thd->options | OPTION_XXX, ...)
+
+   TODO: separate three contexts above, move them to separate bitfields.
+*/
+
+#define SELECT_DISTINCT         (1ULL << 0)     // SELECT, user
+#define SELECT_STRAIGHT_JOIN    (1ULL << 1)     // SELECT, user
+#define SELECT_DESCRIBE         (1ULL << 2)     // SELECT, user
+#define SELECT_SMALL_RESULT     (1ULL << 3)     // SELECT, user
+#define SELECT_BIG_RESULT       (1ULL << 4)     // SELECT, user
+#define OPTION_FOUND_ROWS       (1ULL << 5)     // SELECT, user
+#define SELECT_NO_JOIN_CACHE    (1ULL << 7)     // intern
+#define OPTION_BIG_TABLES       (1ULL << 8)     // THD, user
+#define OPTION_BIG_SELECTS      (1ULL << 9)     // THD, user
+#define OPTION_LOG_OFF          (1ULL << 10)    // THD, user
+#define OPTION_QUOTE_SHOW_CREATE (1ULL << 11)   // THD, user, unused
+#define TMP_TABLE_ALL_COLUMNS   (1ULL << 12)    // SELECT, intern
+#define OPTION_WARNINGS         (1ULL << 13)    // THD, user
+#define OPTION_AUTO_IS_NULL     (1ULL << 14)    // THD, user, binlog
+#define OPTION_FOUND_COMMENT    (1ULL << 15)    // SELECT, intern, parser
+#define OPTION_SAFE_UPDATES     (1ULL << 16)    // THD, user
+#define OPTION_BUFFER_RESULT    (1ULL << 17)    // SELECT, user
+#define OPTION_BIN_LOG          (1ULL << 18)    // THD, user
+#define OPTION_NOT_AUTOCOMMIT   (1ULL << 19)    // THD, user
+#define OPTION_BEGIN            (1ULL << 20)    // THD, intern
+#define OPTION_TABLE_LOCK       (1ULL << 21)    // THD, intern
+#define OPTION_QUICK            (1ULL << 22)    // SELECT (for DELETE)
+#define OPTION_KEEP_LOG         (1ULL << 23)    // THD, user
+
+/* The following is used to detect a conflict with DISTINCT */
+#define SELECT_ALL              (1ULL << 24)    // SELECT, user, parser
+
+/** The following can be set when importing tables in a 'wrong order'
+   to suppress foreign key checks */
+#define OPTION_NO_FOREIGN_KEY_CHECKS    (1ULL << 26) // THD, user, binlog
+/** The following speeds up inserts to InnoDB tables by suppressing unique
+   key checks in some cases */
+#define OPTION_RELAXED_UNIQUE_CHECKS    (1ULL << 27) // THD, user, binlog
+#define SELECT_NO_UNLOCK                (1ULL << 28) // SELECT, intern
+#define OPTION_SCHEMA_TABLE             (1ULL << 29) // SELECT, intern
+/** Flag set if setup_tables already done */
+#define OPTION_SETUP_TABLES_DONE        (1ULL << 30) // intern
+/** If not set then the thread will ignore all warnings with level notes. */
+#define OPTION_SQL_NOTES                (1ULL << 31) // THD, user
+/**
+  Force the used temporary table to be a MyISAM table (because we will use
+  fulltext functions when reading from it.
+*/
+#define TMP_TABLE_FORCE_MYISAM          (1ULL << 32)
+#define OPTION_PROFILING                (1ULL << 33)
+
+/*
+  Dont report errors for individual rows,
+  But just report error on commit (or read ofcourse)
+*/
+#define OPTION_ALLOW_BATCH              (1ULL << 33) // THD, intern (slave)
+
+/**
+  Maximum length of time zone name that we support
+  (Time zone name is char(64) in db). mysqlbinlog needs it.
+*/
+#define MAX_TIME_ZONE_NAME_LENGTH       (NAME_LEN + 1)
+
 #define HOSTNAME_LENGTH 60
 #define SYSTEM_CHARSET_MBMAXLEN 4
 #define NAME_CHAR_LEN	64              /* Field/table name length */
@@ -354,7 +430,9 @@ bool	net_write_command(NET *net,unsigned char command,
 int32_t	net_real_write(NET *net,const unsigned char *packet, size_t len);
 uint32_t my_net_read(NET *net);
 
-#ifdef _global_h
+
+/** @TODO global.h is actually not needed here... only stdint and protocol.h */
+#ifdef DRIZZLE_SERVER_GLOBAL_H
 void my_net_set_write_timeout(NET *net, uint timeout);
 void my_net_set_read_timeout(NET *net, uint timeout);
 #endif
@@ -439,8 +517,8 @@ char *octet2hex(char *to, const char *str, unsigned int len);
 char *get_tty_password(const char *opt_message);
 const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
 
-
-#ifdef _global_h
+/** @TODO Is it necessary to include all of drizzled/global.h here? */
+#ifdef DRIZZLE_SERVER_GLOBAL_H
 ulong STDCALL net_field_length(uchar **packet);
 uint64_t net_field_length_ll(uchar **packet);
 uchar *net_store_length(uchar *pkg, uint64_t length);

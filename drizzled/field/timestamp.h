@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_TIMESTAMP
 #define DRIZZLE_SERVER_FIELD_TIMESTAMP
 
-#include <drizzled/mysql_priv.h>
-
 class Field_timestamp :public Field_str {
 public:
   Field_timestamp(uchar *ptr_arg, uint32_t len_arg,

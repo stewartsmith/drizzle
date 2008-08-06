@@ -13,8 +13,24 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef _sql_plugin_h
-#define _sql_plugin_h
+/** 
+ * @TODO There is plugin.h and also sql_plugin.h.  Ostensibly,  
+ * it seems that the two files exist so that plugin.h can provide an
+ * external API for plugin developers and sql_plugin.h will provide
+ * and internal server API for dealing with those plugins.
+ *
+ * However, there are parts of plugin.h marked "INTERNAL USE ONLY" which
+ * seems to contradict the above...
+ *
+ * Let's figure out a better way of dividing the public and internal API
+ * and name the files more appropriately.
+ *
+ * Also, less #defines, more enums and bitmaps...
+ *
+ */
+
+#ifndef DRIZZLE_SERVER_PLUGIN_H
+#define DRIZZLE_SERVER_PLUGIN_H
 
 class sys_var;
 
@@ -125,4 +141,4 @@ typedef bool (plugin_foreach_func)(THD *thd,
 #define plugin_foreach(A,B,C,D) plugin_foreach_with_mask(A,B,C,PLUGIN_IS_READY,D)
 extern bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
                                      int type, uint state_mask, void *arg);
-#endif
+#endif /* DRIZZLE_SERVER_PLUGIN_H */

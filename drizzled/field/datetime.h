@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_DATETIME
 #define DRIZZLE_SERVER_FIELD_DATETIME
 
-#include <drizzled/mysql_priv.h>
-
 class Field_datetime :public Field_str {
 public:
   Field_datetime(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,

@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_BLOB
 #define DRIZZLE_SERVER_FIELD_BLOB
 
-#include <drizzled/mysql_priv.h>
-
 class Field_blob :public Field_longstr {
 protected:
   uint packlength;

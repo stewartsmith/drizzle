@@ -18,7 +18,7 @@
   Functions to autenticate and handle reqests for a connection
 */
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include <drizzled/authentication.h>
 #include <drizzled/drizzled_error_messages.h>
 

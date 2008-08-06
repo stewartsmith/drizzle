@@ -21,9 +21,7 @@
 extern "C" {
 #endif
 
-#ifndef _my_base_h
-#include <my_base.h>
-#endif
+#include <drizzled/base.h>
 #ifndef _myisam_h
 #include <myisam.h>
 #endif

@@ -1649,6 +1649,6 @@ msgstr ""
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr ""
 
-#: drizzled/unireg.h:45
+#: drizzled/definitions.h:44
 msgid "Invalid error code"
 msgstr ""

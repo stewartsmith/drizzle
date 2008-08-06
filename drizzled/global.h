@@ -15,8 +15,8 @@
 
 /* This is the include file that should be included 'first' in every C file. */
 
-#ifndef _global_h
-#define _global_h
+#ifndef DRIZZLE_SERVER_GLOBAL_H
+#define DRIZZLE_SERVER_GLOBAL_H
 
 #define HAVE_REPLICATION
 #define HAVE_EXTERNAL_CLIENT
@@ -51,9 +51,6 @@
 #endif
 
 #include "config.h"
-#if defined(__cplusplus) && defined(inline)
-#undef inline				/* fix configure problem */
-#endif
 
 /* Make it easier to add conditionl code for windows */
 #define IF_WIN(A,B) (B)
@@ -999,4 +996,4 @@ do { doubleget_union _tmp; \
 
 #include <libdrizzle/gettext.h>
 
-#endif /* my_global_h */
+#endif /* DRIZZLE_SERVER_GLOBAL_H */

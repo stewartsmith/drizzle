@@ -1,16 +1,10 @@
 /*
   Sections of this where taken/modified from mod_auth_path for Apache 
 */
-
-#define MYSQL_SERVER 1
-#include <drizzled/mysql_priv.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <drizzled/plugin.h>
+#include <drizzled/common_includes.h>
 #include <drizzled/plugin_authentication.h>
 #include <security/pam_appl.h>
 #include <security/pam_misc.h>
-
 
 typedef struct {
     const char *name;

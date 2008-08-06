@@ -13,4 +13,4 @@ drizzled/sql_repl.cc
 drizzled/table.cc
 drizzled/thr_malloc.cc
 drizzled/tztime.cc
-drizzled/unireg.h
+drizzled/definitions.h
