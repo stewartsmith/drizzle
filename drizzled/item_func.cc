@@ -828,7 +828,7 @@ int64_t Item_func_numhybrid::val_int()
       return 0;
 
     char *end= (char*) res->ptr() + res->length();
-    CHARSET_INFO *cs= str_value.charset();
+    const CHARSET_INFO * const cs= str_value.charset();
     return (*(cs->cset->strtoll10))(cs, res->ptr(), &end, &err_not_used);
   }
   default:
@@ -2691,7 +2691,7 @@ int64_t Item_func_find_in_set::val_int()
   if ((diff=buffer->length() - find->length()) >= 0)
   {
     my_wc_t wc;
-    CHARSET_INFO *cs= cmp_collation.collation;
+    const CHARSET_INFO * const cs= cmp_collation.collation;
     const char *str_begin= buffer->ptr();
     const char *str_end= buffer->ptr();
     const char *real_end= str_end+buffer->length();
@@ -3250,7 +3250,7 @@ static bool item_user_lock_inited= 0;
 void item_user_lock_init(void)
 {
   pthread_mutex_init(&LOCK_user_locks,MY_MUTEX_INIT_SLOW);
-  hash_init(&hash_user_locks,system_charset_info,
+  hash_init(&hash_user_locks, system_charset_info,
 	    16,0,0,(hash_get_key) ull_get_key,NULL,0);
   item_user_lock_inited= 1;
 }
@@ -3547,7 +3547,7 @@ bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
 
 static bool
 update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
-            Item_result type, CHARSET_INFO *cs, Derivation dv,
+            Item_result type, const CHARSET_INFO * const cs, Derivation dv,
             bool unsigned_arg)
 {
   if (set_null)
@@ -3608,7 +3608,7 @@ update_hash(user_var_entry *entry, bool set_null, void *ptr, uint length,
 bool
 Item_func_set_user_var::update_hash(void *ptr, uint length,
                                     Item_result res_type,
-                                    CHARSET_INFO *cs, Derivation dv,
+                                    const CHARSET_INFO * const cs, Derivation dv,
                                     bool unsigned_arg)
 {
   /*
@@ -4035,7 +4035,7 @@ int Item_func_set_user_var::save_in_field(Field *field, bool no_conversions,
       (result_type() == REAL_RESULT && field->result_type() == STRING_RESULT))
   {
     String *result;
-    CHARSET_INFO *cs= collation.collation;
+    const CHARSET_INFO * const cs= collation.collation;
     char buff[MAX_FIELD_WIDTH];		// Alloc buffer for small columns
     str_value.set_quick(buff, sizeof(buff), cs);
     result= entry->val_str(&null_value, &str_value, decimals);
@@ -4362,7 +4362,7 @@ bool Item_user_var_as_out_param::fix_fields(THD *thd, Item **ref)
 }
 
 
-void Item_user_var_as_out_param::set_null_value(CHARSET_INFO* cs)
+void Item_user_var_as_out_param::set_null_value(const CHARSET_INFO * const cs)
 {
   ::update_hash(entry, true, 0, 0, STRING_RESULT, cs,
                 DERIVATION_IMPLICIT, 0 /* unsigned_arg */);
@@ -4370,7 +4370,7 @@ void Item_user_var_as_out_param::set_null_value(CHARSET_INFO* cs)
 
 
 void Item_user_var_as_out_param::set_value(const char *str, uint length,
-                                           CHARSET_INFO* cs)
+                                           const CHARSET_INFO * const cs)
 {
   ::update_hash(entry, false, (void*)str, length, STRING_RESULT, cs,
                 DERIVATION_IMPLICIT, 0 /* unsigned_arg */);

@@ -197,7 +197,7 @@ static uint delimiter_length= 1;
 unsigned short terminal_width= 80;
 
 static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
-static CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
 const char *default_dbug_option="d:t:o,/tmp/drizzle.trace";
 int drizzle_real_query_for_lazy(const char *buf, int length);
@@ -2662,7 +2662,7 @@ static int
 com_charset(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
 {
   char buff[256], *param;
-  CHARSET_INFO * new_cs;
+  const CHARSET_INFO * new_cs;
   strmake(buff, line, sizeof(buff) - 1);
   param= get_arg(buff, 0);
   if (!param || !*param)

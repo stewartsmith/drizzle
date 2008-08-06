@@ -30,9 +30,9 @@ protected:
 public:
   Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
-	     TABLE_SHARE *share, uint blob_pack_length, CHARSET_INFO *cs);
+	     TABLE_SHARE *share, uint blob_pack_length, const CHARSET_INFO * const cs);
   Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
-             CHARSET_INFO *cs)
+             const CHARSET_INFO * const cs)
     :Field_longstr((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs),
     packlength(4)
@@ -40,7 +40,7 @@ public:
     flags|= BLOB_FLAG;
   }
   Field_blob(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
-	     CHARSET_INFO *cs, bool set_packlength)
+	     const CHARSET_INFO * const cs, bool set_packlength)
     :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs)
   {
@@ -60,7 +60,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_BLOB;}
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_VARBINARY2 : HA_KEYTYPE_VARTEXT2; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void);

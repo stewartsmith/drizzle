@@ -46,7 +46,7 @@ static uint calc_hash(const HASH *hash, const uchar *key, size_t length)
 }
 
 bool
-_hash_init(HASH *hash,uint growth_size, CHARSET_INFO *charset,
+_hash_init(HASH *hash,uint growth_size, const CHARSET_INFO * const charset,
 	   ulong size, size_t key_offset, size_t key_length,
 	   hash_get_key get_key,
 	   void (*free_element)(void*),uint flags CALLER_INFO_PROTO)

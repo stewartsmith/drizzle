@@ -406,7 +406,7 @@ public:
                            uint user_host_len, int thread_id,
                            const char *command_type, uint command_type_len,
                            const char *sql_text, uint sql_text_len,
-                           CHARSET_INFO *client_cs)= 0;
+                           const CHARSET_INFO * const client_cs)= 0;
   virtual ~Log_event_handler() {}
 };
 
@@ -437,7 +437,7 @@ public:
                            uint user_host_len, int thread_id,
                            const char *command_type, uint command_type_len,
                            const char *sql_text, uint sql_text_len,
-                           CHARSET_INFO *client_cs);
+                           const CHARSET_INFO * const client_cs);
   void flush();
   void init_pthread_objects();
   MYSQL_QUERY_LOG *get_mysql_slow_log() { return &mysql_slow_log; }

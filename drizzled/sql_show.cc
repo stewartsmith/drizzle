@@ -32,7 +32,7 @@ static void store_key_options(THD *thd, String *packet, TABLE *table,
 
 
 
-int wild_case_compare(CHARSET_INFO *cs, const char *str,const char *wildstr)
+int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char *wildstr)
 {
   register int flag;
   while (*wildstr)
@@ -88,7 +88,7 @@ static bool show_plugins(THD *thd, plugin_ref plugin,
   TABLE *table= (TABLE*) arg;
   struct st_mysql_plugin *plug= plugin_decl(plugin);
   struct st_plugin_dl *plugin_dl= plugin_dlib(plugin);
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
 
   restore_record(table, s->default_values);
 
@@ -1219,7 +1219,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
                             COND* cond __attribute__((unused)))
 {
   TABLE *table= tables->table;
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   char *user;
   time_t now= my_time(0);
 
@@ -1751,7 +1751,7 @@ bool get_lookup_value(THD *thd, Item_func *item_func,
     char tmp[MAX_FIELD_WIDTH];
     String *tmp_str, str_buff(tmp, sizeof(tmp), system_charset_info);
     Item_field *item_field;
-    CHARSET_INFO *cs= system_charset_info;
+    const CHARSET_INFO * const cs= system_charset_info;
 
     if (item_func->arguments()[0]->type() == Item::FIELD_ITEM &&
         item_func->arguments()[1]->const_item())
@@ -1865,7 +1865,7 @@ bool uses_only_table_name_fields(Item *item, TABLE_LIST *table)
   else if (item->type() == Item::FIELD_ITEM)
   {
     Item_field *item_field= (Item_field*)item;
-    CHARSET_INFO *cs= system_charset_info;
+    const CHARSET_INFO * const cs= system_charset_info;
     ST_SCHEMA_TABLE *schema_table= table->schema_table;
     ST_FIELD_INFO *field_info= schema_table->fields_info;
     const char *field_name1= schema_table->idx_field1 >= 0 ?
@@ -2724,7 +2724,7 @@ err:
 
 
 bool store_schema_shemata(THD* thd, TABLE *table, LEX_STRING *db_name,
-                          CHARSET_INFO *cs)
+                          const CHARSET_INFO * const cs)
 {
   restore_record(table, s->default_values);
   table->field[1]->store(db_name->str, db_name->length, system_charset_info);
@@ -2801,7 +2801,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
 {
   const char *tmp_buff;
   DRIZZLE_TIME time;
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
 
   restore_record(table, s->default_values);
   table->field[1]->store(db_name->str, db_name->length, cs);
@@ -2998,7 +2998,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
   @return         void
 */
 
-void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
+void store_column_type(TABLE *table, Field *field, const CHARSET_INFO * const cs,
                        uint offset)
 {
   bool is_blob;
@@ -3093,7 +3093,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
 {
   LEX *lex= thd->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   TABLE *show_table;
   TABLE_SHARE *show_table_share;
   Field **ptr, *field, *timestamp_field;
@@ -3224,16 +3224,16 @@ int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__(
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
   TABLE *table= tables->table;
-  CHARSET_INFO *scs= system_charset_info;
+  const CHARSET_INFO * const scs= system_charset_info;
 
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++)
   {
-    CHARSET_INFO *tmp_cs= cs[0];
+    const CHARSET_INFO * const tmp_cs= cs[0];
     if (tmp_cs && (tmp_cs->state & MY_CS_PRIMARY) && 
         (tmp_cs->state & MY_CS_AVAILABLE) &&
         !(tmp_cs->state & MY_CS_HIDDEN) &&
         !(wild && wild[0] &&
-	  wild_case_compare(scs, tmp_cs->csname,wild)))
+          wild_case_compare(scs, tmp_cs->csname,wild)))
     {
       const char *comment;
       restore_record(table, s->default_values);
@@ -3255,33 +3255,33 @@ int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
   TABLE *table= tables->table;
-  CHARSET_INFO *scs= system_charset_info;
+  const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
     CHARSET_INFO **cl;
-    CHARSET_INFO *tmp_cs= cs[0];
+    const CHARSET_INFO *tmp_cs= cs[0];
     if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) ||
          (tmp_cs->state & MY_CS_HIDDEN) ||
         !(tmp_cs->state & MY_CS_PRIMARY))
       continue;
     for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
     {
-      CHARSET_INFO *tmp_cl= cl[0];
+      const CHARSET_INFO *tmp_cl= cl[0];
       if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) || 
           !my_charset_same(tmp_cs, tmp_cl))
-	continue;
+        continue;
       if (!(wild && wild[0] &&
-	  wild_case_compare(scs, tmp_cl->name,wild)))
+          wild_case_compare(scs, tmp_cl->name,wild)))
       {
-	const char *tmp_buff;
-	restore_record(table, s->default_values);
-	table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
+        const char *tmp_buff;
+        restore_record(table, s->default_values);
+        table->field[0]->store(tmp_cl->name, strlen(tmp_cl->name), scs);
         table->field[1]->store(tmp_cl->csname , strlen(tmp_cl->csname), scs);
         table->field[2]->store((int64_t) tmp_cl->number, true);
         tmp_buff= (tmp_cl->state & MY_CS_PRIMARY) ? "Yes" : "";
-	table->field[3]->store(tmp_buff, strlen(tmp_buff), scs);
+        table->field[3]->store(tmp_buff, strlen(tmp_buff), scs);
         tmp_buff= (tmp_cl->state & MY_CS_COMPILED)? "Yes" : "";
-	table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
+        table->field[4]->store(tmp_buff, strlen(tmp_buff), scs);
         table->field[5]->store((int64_t) tmp_cl->strxfrm_multiply, true);
         if (schema_table_store_record(thd, table))
           return 1;
@@ -3296,17 +3296,17 @@ int fill_schema_coll_charset_app(THD *thd, TABLE_LIST *tables, COND *cond __attr
 {
   CHARSET_INFO **cs;
   TABLE *table= tables->table;
-  CHARSET_INFO *scs= system_charset_info;
+  const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
     CHARSET_INFO **cl;
-    CHARSET_INFO *tmp_cs= cs[0];
+    const CHARSET_INFO *tmp_cs= cs[0];
     if (!tmp_cs || !(tmp_cs->state & MY_CS_AVAILABLE) || 
         !(tmp_cs->state & MY_CS_PRIMARY))
       continue;
     for (cl= all_charsets; cl < all_charsets+255 ;cl ++)
     {
-      CHARSET_INFO *tmp_cl= cl[0];
+      const CHARSET_INFO *tmp_cl= cl[0];
       if (!tmp_cl || !(tmp_cl->state & MY_CS_AVAILABLE) || 
           !my_charset_same(tmp_cs,tmp_cl))
 	continue;
@@ -3326,7 +3326,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
 				  LEX_STRING *db_name,
 				  LEX_STRING *table_name)
 {
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   if (res)
   {
     if (thd->lex->sql_command != SQLCOM_SHOW_KEYS)
@@ -3422,7 +3422,7 @@ bool store_constraints(THD *thd, TABLE *table, LEX_STRING *db_name,
                        LEX_STRING *table_name, const char *key_name,
                        uint key_len, const char *con_type, uint con_len)
 {
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   restore_record(table, s->default_values);
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(key_name, key_len, cs);
@@ -3497,7 +3497,7 @@ void store_key_column_usage(TABLE *table, LEX_STRING *db_name,
                             uint key_len, const char *con_type, uint con_len,
                             int64_t idx)
 {
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   table->field[1]->store(db_name->str, db_name->length, cs);
   table->field[2]->store(key_name, key_len, cs);
   table->field[4]->store(db_name->str, db_name->length, cs);
@@ -3600,7 +3600,7 @@ int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unu
 {
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
   TABLE *table= tables->table;
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   OPEN_TABLE_LIST *open_list;
   if (!(open_list=list_open_tables(thd,thd->lex->select_lex.db, wild))
             && thd->is_fatal_error)
@@ -3708,7 +3708,7 @@ get_referential_constraints_record(THD *thd, TABLE_LIST *tables,
                                    TABLE *table, bool res,
                                    LEX_STRING *db_name, LEX_STRING *table_name)
 {
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
 
   if (res)
   {
@@ -3864,7 +3864,7 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
   List<Item> field_list;
   ST_SCHEMA_TABLE *schema_table= table_list->schema_table;
   ST_FIELD_INFO *fields_info= schema_table->fields_info;
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
 
   for (; fields_info->field_name; fields_info++)
   {

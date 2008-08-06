@@ -459,7 +459,7 @@ static struct wordvalue doubles[]=
 
 #define IS_END(p, src, len)	(((char *)p - (char *)src) >= (len))
 
-static int my_strnncoll_win1250ch(const CHARSET_INFO *cs __attribute__((unused)), 
+static int my_strnncoll_win1250ch(const CHARSET_INFO * const cs __attribute__((unused)), 
 				  const uchar *s1, size_t len1,
                                   const uchar *s2, size_t len2,
                                   my_bool s2_is_prefix)
@@ -490,7 +490,7 @@ static int my_strnncoll_win1250ch(const CHARSET_INFO *cs __attribute__((unused))
 */
 
 static int
-my_strnncollsp_win1250ch(const CHARSET_INFO * cs __attribute__((unused)),
+my_strnncollsp_win1250ch(const CHARSET_INFO * const  cs __attribute__((unused)),
                          const uchar *s, size_t slen,
                          const uchar *t, size_t tlen,
                          my_bool diff_if_only_endspace_difference
@@ -540,7 +540,7 @@ my_strnncollsp_win1250ch(const CHARSET_INFO * cs __attribute__((unused)),
 
 
 static size_t
-my_strnxfrm_win1250ch(const CHARSET_INFO * cs  __attribute__((unused)),
+my_strnxfrm_win1250ch(const CHARSET_INFO * const  cs  __attribute__((unused)),
                       uchar *dst, size_t dstlen, uint nweights_arg,
                       const uchar *src, size_t srclen, uint flags)
 {
@@ -686,7 +686,7 @@ static uchar like_range_prefix_max_win1250ch[]=
 */
 
 static my_bool
-my_like_range_win1250ch(const CHARSET_INFO *cs __attribute__((unused)),
+my_like_range_win1250ch(const CHARSET_INFO * const cs __attribute__((unused)),
 			const char *ptr, size_t ptr_length,
 			char escape, char w_one, char w_many,
 			size_t res_length,

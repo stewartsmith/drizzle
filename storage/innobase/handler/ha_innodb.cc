@@ -2507,7 +2507,7 @@ innobase_mysql_cmp(
 	unsigned int	b_length)	/* in: data field length,
 					not UNIV_SQL_NULL */
 {
-	CHARSET_INFO*		charset;
+	const CHARSET_INFO*	charset;
 	enum_field_types	mysql_tp;
 	int			ret;
 
@@ -2741,7 +2741,7 @@ ha_innobase::store_key_val_for_row(
 			byte*	data;
 			ulint	key_len;
 			ulint	true_len;
-			CHARSET_INFO*	cs;
+			const CHARSET_INFO*	cs;
 			int	error=0;
 
 			key_len = key_part->length;
@@ -2800,7 +2800,7 @@ ha_innobase::store_key_val_for_row(
 
 		} else if (mysql_type == DRIZZLE_TYPE_BLOB) {
 
-			CHARSET_INFO*	cs;
+			const CHARSET_INFO*	cs;
 			ulint		key_len;
 			ulint		true_len;
 			int		error=0;
@@ -7458,7 +7458,7 @@ innobase_get_at_most_n_mbchars(
 {
 	ulint char_length;	/* character length in bytes */
 	ulint n_chars;		/* number of characters in prefix */
-	CHARSET_INFO* charset;	/* charset used in the field */
+	const CHARSET_INFO* charset;	/* charset used in the field */
 
 	charset = get_charset((uint) charset_id, MYF(MY_WME));
 

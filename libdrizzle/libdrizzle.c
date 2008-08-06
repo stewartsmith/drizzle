@@ -72,8 +72,6 @@ uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 #define MAX_LONG_DATA_LENGTH 8192
 #define unsigned_field(A) ((A)->flags & UNSIGNED_FLAG)
 
-static void append_wild(char *to,char *end,const char *wild);
-
 
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 {&max_allowed_packet, &net_buffer_length, 0};
@@ -317,13 +315,11 @@ drizzle_list_tables(DRIZZLE *drizzle, const char *wild)
 DRIZZLE_FIELD *cli_list_fields(DRIZZLE *drizzle)
 {
   DRIZZLE_DATA *query;
-  if (!(query= cli_read_rows(drizzle,(DRIZZLE_FIELD*) 0, 
-           protocol_41(drizzle) ? 8 : 6)))
+  if (!(query= cli_read_rows(drizzle,(DRIZZLE_FIELD*) 0, 8)))
     return NULL;
 
   drizzle->field_count= (uint) query->rows;
-  return unpack_fields(query,&drizzle->field_alloc,
-           drizzle->field_count, 1, drizzle->server_capabilities);
+  return unpack_fields(query,&drizzle->field_alloc, drizzle->field_count, 1);
 }
 
 
@@ -376,11 +372,9 @@ drizzle_list_processes(DRIZZLE *drizzle)
   free_old_query(drizzle);
   pos=(uchar*) drizzle->net.read_pos;
   field_count=(uint) net_field_length(&pos);
-  if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0,
-                protocol_41(drizzle) ? 7 : 5)))
+  if (!(fields = (*drizzle->methods->read_rows)(drizzle,(DRIZZLE_FIELD*) 0, 7)))
     return(NULL);
-  if (!(drizzle->fields=unpack_fields(fields,&drizzle->field_alloc,field_count,0,
-            drizzle->server_capabilities)))
+  if (!(drizzle->fields=unpack_fields(fields,&drizzle->field_alloc,field_count,0)))
     return(0);
   drizzle->status=DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count=field_count;
@@ -606,7 +600,7 @@ void my_net_local_init(NET *net)
   This function is used to create HEX string that you
   can use in a SQL statement in of the either ways:
     INSERT INTO blob_column VALUES (0xAABBCC);  (any DRIZZLE version)
-    INSERT INTO blob_column VALUES (X'AABBCC'); (4.1 and higher)
+    INSERT INTO blob_column VALUES (X'AABBCC'); 
   
   The string in "from" is encoded to a HEX string.
   The result is placed in "to" and a terminating null byte is appended.

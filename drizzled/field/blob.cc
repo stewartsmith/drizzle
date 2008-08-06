@@ -36,7 +36,7 @@
 Field_blob::Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 		       enum utype unireg_check_arg, const char *field_name_arg,
                        TABLE_SHARE *share, uint blob_pack_length,
-		       CHARSET_INFO *cs)
+		       const CHARSET_INFO * const cs)
   :Field_longstr(ptr_arg, BLOB_PACK_LENGTH_TO_MAX_LENGH(blob_pack_length),
                  null_ptr_arg, null_bit_arg, unireg_check_arg, field_name_arg,
                  cs),
@@ -149,7 +149,7 @@ void Field_blob::put_length(uchar *pos, uint32_t length)
 }
 
 
-int Field_blob::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_blob::store(const char *from,uint length, const CHARSET_INFO * const cs)
 {
   uint copy_length, new_length;
   const char *well_formed_error_pos;
@@ -225,7 +225,7 @@ oom_error:
 
 int Field_blob::store(double nr)
 {
-  CHARSET_INFO *cs=charset();
+  const CHARSET_INFO * const cs=charset();
   value.set_real(nr, NOT_FIXED_DEC, cs);
   return Field_blob::store(value.ptr(),(uint) value.length(), cs);
 }
@@ -233,7 +233,7 @@ int Field_blob::store(double nr)
 
 int Field_blob::store(int64_t nr, bool unsigned_val)
 {
-  CHARSET_INFO *cs=charset();
+  const CHARSET_INFO * const cs=charset();
   value.set_int(nr, unsigned_val, cs);
   return Field_blob::store(value.ptr(), (uint) value.length(), cs);
 }
@@ -244,7 +244,7 @@ double Field_blob::val_real(void)
   int not_used;
   char *end_not_used, *blob;
   uint32_t length;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
 
   memcpy(&blob,ptr+packlength,sizeof(char*));
   if (!blob)
@@ -382,7 +382,7 @@ int Field_blob::key_cmp(const uchar *key_ptr, uint max_key_length)
   uchar *blob1;
   uint blob_length=get_length(ptr);
   memcpy(&blob1,ptr+packlength,sizeof(char*));
-  CHARSET_INFO *cs= charset();
+  const CHARSET_INFO * const cs= charset();
   uint local_char_length= max_key_length / cs->mbmaxlen;
   local_char_length= my_charpos(cs, blob1, blob1+blob_length,
                                 local_char_length);

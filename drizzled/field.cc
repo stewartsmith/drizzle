@@ -554,7 +554,8 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
 */
 
 static bool
-test_if_important_data(CHARSET_INFO *cs, const char *str, const char *strend)
+test_if_important_data(const CHARSET_INFO * const cs, const char *str,
+                       const char *strend)
 {
   if (cs != &my_charset_bin)
     str+= cs->cset->scan(cs, str, strend, MY_SEQ_SPACES);
@@ -647,7 +648,7 @@ Field_num::Field_num(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
     2   error: garbage at the end of string.
 */
 
-int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length, 
+int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int length, 
                          const char *int_end, int error)
 {
   /* Test if we get an empty string or wrong integer */
@@ -696,7 +697,7 @@ int Field_num::check_int(CHARSET_INFO *cs, const char *str, int length,
     1   error
 */
 
-bool Field_num::get_int(CHARSET_INFO *cs, const char *from, uint len,
+bool Field_num::get_int(const CHARSET_INFO * const cs, const char *from, uint len,
                         int64_t *rnd, uint64_t unsigned_max, 
                         int64_t signed_min, int64_t signed_max)
 {
@@ -767,7 +768,7 @@ int Field::warn_if_overflow(int op_result)
 
 
 #ifdef NOT_USED
-static bool test_if_real(const char *str,int length, CHARSET_INFO *cs)
+static bool test_if_real(const char *str,int length, const CHARSET_INFO * const cs)
 {
   cs= system_charset_info; // QQ move test_if_real into CHARSET_INFO struct
 
@@ -829,7 +830,7 @@ static bool test_if_real(const char *str,int length, CHARSET_INFO *cs)
 
 String *Field::val_int_as_str(String *val_buffer, my_bool unsigned_val)
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   int64_t value= val_int();
 
@@ -872,7 +873,7 @@ void Field::hash(ulong *nr, ulong *nr2)
   else
   {
     uint len= pack_length();
-    CHARSET_INFO *cs= charset();
+    const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr, len, nr, nr2);
   }
 }
@@ -927,7 +928,7 @@ int Field::compatible_field_size(uint field_metadata)
 }
 
 
-int Field::store(const char *to, uint length, CHARSET_INFO *cs,
+int Field::store(const char *to, uint length, const CHARSET_INFO * const cs,
                  enum_check_fields check_level)
 {
   int res;
@@ -1180,7 +1181,7 @@ my_decimal* Field_num::val_decimal(my_decimal *decimal_value)
 
 Field_str::Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
                      uchar null_bit_arg, utype unireg_check_arg,
-                     const char *field_name_arg, CHARSET_INFO *charset_arg)
+                     const char *field_name_arg, const CHARSET_INFO * const charset_arg)
   :Field(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
          unireg_check_arg, field_name_arg)
 {
@@ -1354,7 +1355,7 @@ Field *Field::clone(MEM_ROOT *root, struct st_table *new_table)
 ** tiny int
 ****************************************************************************/
 
-int Field_tiny::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_tiny::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   int error;
   int64_t rnd;
@@ -1470,7 +1471,7 @@ int64_t Field_tiny::val_int(void)
 String *Field_tiny::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,5*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -1512,7 +1513,7 @@ void Field_tiny::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_tiny::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(),
 			  "tinyint(%d)",(int) field_length));
   add_unsigned(res);
@@ -1550,7 +1551,7 @@ check_string_copy_error(Field_str *field,
                         const char *well_formed_error_pos,
                         const char *cannot_convert_error_pos,
                         const char *end,
-                        CHARSET_INFO *cs)
+                        const CHARSET_INFO * const cs)
 {
   const char *pos, *end_orig;
   char tmp[64], *t;
@@ -1774,7 +1775,7 @@ void Field_enum::store_type(uint64_t value)
     (if there isn't a empty value in the enum)
 */
 
-int Field_enum::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_enum::store(const char *from, uint length, const CHARSET_INFO * const cs)
 {
   int err= 0;
   uint32_t not_used;
@@ -2130,7 +2131,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
                         uint fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
                         char *fld_change, List<String> *fld_interval_list,
-                        CHARSET_INFO *fld_charset,
+                        const CHARSET_INFO * const fld_charset,
                         uint fld_geom_type __attribute__((unused)),
                         enum column_format_type column_format)
 {
@@ -2446,7 +2447,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  uchar *null_pos, uchar null_bit,
 		  uint pack_flag,
 		  enum_field_types field_type,
-		  CHARSET_INFO *field_charset,
+		  const CHARSET_INFO * field_charset,
 		  Field::utype unireg_check,
 		  TYPELIB *interval,
 		  const char *field_name)

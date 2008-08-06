@@ -42,7 +42,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_SHORT;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_USHORT_INT : HA_KEYTYPE_SHORT_INT;}
-  int store(const char *to,uint length,CHARSET_INFO *charset);
+  int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=ptr[1]=0; return 0; }

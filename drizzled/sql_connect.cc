@@ -330,19 +330,14 @@ static int check_connection(THD *thd)
     return 1; /* The error is set by alloc(). */
 
   thd->client_capabilities= uint2korr(net->read_pos);
-  if (thd->client_capabilities & CLIENT_PROTOCOL_41)
-  {
-    thd->client_capabilities|= ((ulong) uint2korr(net->read_pos+2)) << 16;
-    thd->max_client_packet_length= uint4korr(net->read_pos+4);
-    thd_init_client_charset(thd, (uint) net->read_pos[8]);
-    thd->update_charset();
-    end= (char*) net->read_pos+32;
-  }
-  else
-  {
-    thd->max_client_packet_length= uint3korr(net->read_pos+2);
-    end= (char*) net->read_pos+5;
-  }
+
+
+  thd->client_capabilities|= ((ulong) uint2korr(net->read_pos+2)) << 16;
+  thd->max_client_packet_length= uint4korr(net->read_pos+4);
+  thd_init_client_charset(thd, (uint) net->read_pos[8]);
+  thd->update_charset();
+  end= (char*) net->read_pos+32;
+
   /*
     Disable those bits which are not supported by the server.
     This is a precautionary measure, if the client lies. See Bug#27944.

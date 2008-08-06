@@ -33,9 +33,9 @@ protected:
   uint field_count;
   bool net_store_data(const uchar *from, size_t length);
   bool net_store_data(const uchar *from, size_t length,
-                      CHARSET_INFO *fromcs, CHARSET_INFO *tocs);
+                      const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
   bool store_string_aux(const char *from, size_t length,
-                        CHARSET_INFO *fromcs, CHARSET_INFO *tocs);
+                        const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs);
 public:
   Protocol() {}
   Protocol(THD *thd_arg) { init(thd_arg); }
@@ -46,7 +46,7 @@ public:
   virtual bool send_fields(List<Item> *list, uint flags);
 
   bool store(I_List<i_string> *str_list);
-  bool store(const char *from, CHARSET_INFO *cs);
+  bool store(const char *from, const CHARSET_INFO * const cs);
   String *storage_packet() { return packet; }
   inline void free() { packet->free(); }
   virtual bool write();
@@ -76,9 +76,9 @@ public:
   virtual bool store_long(int64_t from)=0;
   virtual bool store_int64_t(int64_t from, bool unsigned_flag)=0;
   virtual bool store_decimal(const my_decimal *)=0;
-  virtual bool store(const char *from, size_t length, CHARSET_INFO *cs)=0;
+  virtual bool store(const char *from, size_t length, const CHARSET_INFO * const cs)=0;
   virtual bool store(const char *from, size_t length, 
-  		     CHARSET_INFO *fromcs, CHARSET_INFO *tocs)=0;
+                     const CHARSET_INFO * const fromcs, const CHARSET_INFO * const tocs)=0;
   virtual bool store(float from, uint32_t decimals, String *buffer)=0;
   virtual bool store(double from, uint32_t decimals, String *buffer)=0;
   virtual bool store(DRIZZLE_TIME *time)=0;
@@ -112,9 +112,9 @@ public:
   virtual bool store_long(int64_t from);
   virtual bool store_int64_t(int64_t from, bool unsigned_flag);
   virtual bool store_decimal(const my_decimal *);
-  virtual bool store(const char *from, size_t length, CHARSET_INFO *cs);
+  virtual bool store(const char *from, size_t length, const CHARSET_INFO * const cs);
   virtual bool store(const char *from, size_t length,
-  		     CHARSET_INFO *fromcs, CHARSET_INFO *tocs);
+                     const CHARSET_INFO * const fromcs,  const CHARSET_INFO * const tocs);
   virtual bool store(DRIZZLE_TIME *time);
   virtual bool store_date(DRIZZLE_TIME *time);
   virtual bool store_time(DRIZZLE_TIME *time);

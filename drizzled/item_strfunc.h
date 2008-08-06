@@ -213,7 +213,7 @@ class Item_func_sysconst :public Item_str_func
 public:
   Item_func_sysconst()
   { collation.set(system_charset_info,DERIVATION_SYSCONST); }
-  Item *safe_charset_converter(CHARSET_INFO *tocs);
+  Item *safe_charset_converter(const CHARSET_INFO * const tocs);
   /*
     Used to create correct Item name in new converted item in
     safe_charset_converter, return string representation of this function
@@ -352,7 +352,7 @@ class Item_func_char :public Item_str_func
 public:
   Item_func_char(List<Item> &list) :Item_str_func(list)
   { collation.set(&my_charset_bin); }
-  Item_func_char(List<Item> &list, CHARSET_INFO *cs) :Item_str_func(list)
+  Item_func_char(List<Item> &list, const CHARSET_INFO * const cs) :Item_str_func(list)
   { collation.set(cs); }  
   String *val_str(String *);
   void fix_length_and_dec() 
@@ -517,10 +517,10 @@ class Item_func_conv_charset :public Item_str_func
   bool use_cached_value;
 public:
   bool safe;
-  CHARSET_INFO *conv_charset; // keep it public
-  Item_func_conv_charset(Item *a, CHARSET_INFO *cs) :Item_str_func(a) 
+  const CHARSET_INFO *conv_charset; // keep it public
+  Item_func_conv_charset(Item *a, const CHARSET_INFO * const cs) :Item_str_func(a) 
   { conv_charset= cs; use_cached_value= 0; safe= 0; }
-  Item_func_conv_charset(Item *a, CHARSET_INFO *cs, bool cache_if_const) 
+  Item_func_conv_charset(Item *a, const CHARSET_INFO * const cs, bool cache_if_const) 
     :Item_str_func(a) 
   {
     assert(args[0]->fixed);

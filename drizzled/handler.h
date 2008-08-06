@@ -753,7 +753,7 @@ enum ha_choice { HA_CHOICE_UNDEF, HA_CHOICE_NO, HA_CHOICE_YES };
 
 typedef struct st_ha_create_information
 {
-  CHARSET_INFO *table_charset, *default_table_charset;
+  const CHARSET_INFO *table_charset, *default_table_charset;
   LEX_STRING connect_string;
   LEX_STRING comment;
   const char *data_file_name, *index_file_name;

@@ -245,7 +245,7 @@ void Lex_input_stream::body_utf8_append(const char *ptr)
 
 void Lex_input_stream::body_utf8_append_literal(THD *thd,
                                                 const LEX_STRING *txt,
-                                                CHARSET_INFO *txt_cs,
+                                                const CHARSET_INFO * const txt_cs,
                                                 const char *end_ptr)
 {
   if (!m_cpp_utf8_processed_ptr)
@@ -479,7 +479,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 {
   register uchar c,sep;
   uint found_escape=0;
-  CHARSET_INFO *cs= lip->m_thd->charset();
+  const CHARSET_INFO * const cs= lip->m_thd->charset();
 
   lip->tok_bitmap= 0;
   sep= lip->yyGetLast();                        // String should end with this
@@ -765,7 +765,7 @@ int lex_one_token(void *arg, void *yythd)
   Lex_input_stream *lip= thd->m_lip;
   LEX *lex= thd->lex;
   YYSTYPE *yylval=(YYSTYPE*) arg;
-  CHARSET_INFO *cs= thd->charset();
+  const CHARSET_INFO * const cs= thd->charset();
   uchar *state_map= cs->state_map;
   uchar *ident_map= cs->ident_map;
 
@@ -911,8 +911,8 @@ int lex_one_token(void *arg, void *yythd)
 
       if (yylval->lex_str.str[0] == '_')
       {
-        CHARSET_INFO *cs= get_charset_by_csname(yylval->lex_str.str + 1,
-                                                MY_CS_PRIMARY, MYF(0));
+        const CHARSET_INFO * const cs= get_charset_by_csname(yylval->lex_str.str + 1,
+                                                             MY_CS_PRIMARY, MYF(0));
         if (cs)
         {
           yylval->charset= cs;
@@ -1475,7 +1475,7 @@ Alter_info::Alter_info(const Alter_info &rhs, MEM_ROOT *mem_root)
 }
 
 
-void trim_whitespace(CHARSET_INFO *cs, LEX_STRING *str)
+void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str)
 {
   /*
     TODO:

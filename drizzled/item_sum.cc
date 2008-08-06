@@ -3026,7 +3026,7 @@ int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
   if (result->length() > item->max_length)
   {
     int well_formed_error;
-    CHARSET_INFO *cs= item->collation.collation;
+    const CHARSET_INFO * const cs= item->collation.collation;
     const char *ptr= result->ptr();
     uint add_length;
     /*

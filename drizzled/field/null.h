@@ -32,14 +32,14 @@ class Field_null :public Field_str {
 public:
   Field_null(uchar *ptr_arg, uint32_t len_arg,
 	     enum utype unireg_check_arg, const char *field_name_arg,
-	     CHARSET_INFO *cs)
+	     const CHARSET_INFO * const cs)
     :Field_str(ptr_arg, len_arg, null, 1,
 	       unireg_check_arg, field_name_arg, cs)
     {}
   enum_field_types type() const { return DRIZZLE_TYPE_NULL;}
   int  store(const char *to __attribute__((unused)),
              uint length __attribute__((unused)),
-             CHARSET_INFO *cs __attribute__((unused)))
+             const CHARSET_INFO * const cs __attribute__((unused)))
   { null[0]=1; return 0; }
   int store(double nr __attribute__((unused)))
   { null[0]=1; return 0; }
