@@ -989,9 +989,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &port, (char**) &port, 0, GET_INT, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},

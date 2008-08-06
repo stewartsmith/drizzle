@@ -642,7 +642,7 @@ static struct my_option my_long_options[] =
     "Password to use when connecting to server. If password is not given it's "
       "asked from the tty.", 0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection.", (char**) &opt_drizzle_port,
-    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, MYSQL_PORT, 0, 0, 0, 0,
+    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
     0},
   {"post-query", OPT_SLAP_POST_QUERY,
     "Query to run or file containing query to execute after tests have completed.",
@@ -702,7 +702,7 @@ static struct my_option my_long_options[] =
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname, SLAP_VERSION,
-         MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+         drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 

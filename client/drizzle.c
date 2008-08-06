@@ -1381,9 +1381,6 @@ static struct my_option my_long_options[] =
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, my.cnf, $MYSQL_TCP_PORT, ")
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
    N_("built-in default") " (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &opt_drizzle_port,
    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
@@ -1468,7 +1465,8 @@ static void usage(int version)
   const char* readline= "readline";
 
   printf(_("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"),
-         my_progname, VER, MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE,
+         my_progname, VER, drizzle_get_client_info(),
+         SYSTEM_TYPE, MACHINE_TYPE,
          readline, rl_library_version);
 
   if (version)
