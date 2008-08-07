@@ -16,7 +16,7 @@
 
 /* Some general useful functions */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
 /* INFORMATION_SCHEMA name */
@@ -69,7 +69,7 @@ Default_object_creation_ctx::Default_object_creation_ctx(THD *thd)
 { }
 
 Default_object_creation_ctx::Default_object_creation_ctx(
-  CHARSET_INFO *client_cs, CHARSET_INFO *connection_cl)
+  const CHARSET_INFO * const client_cs, const CHARSET_INFO * const connection_cl)
   : m_client_cs(client_cs),
     m_connection_cl(connection_cl)
 { }
@@ -886,7 +886,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
     uint pack_flag, interval_nr, unireg_type, recpos, field_length;
     enum_field_types field_type;
     enum column_format_type column_format= COLUMN_FORMAT_TYPE_DEFAULT;
-    CHARSET_INFO *charset=NULL;
+    const CHARSET_INFO *charset= NULL;
     LEX_STRING comment;
 
     if (field_extra_info)

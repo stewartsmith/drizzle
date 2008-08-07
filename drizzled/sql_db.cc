@@ -15,8 +15,7 @@
 
 
 /* create and drop of databases */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
 #include "log.h"
@@ -35,7 +34,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(THD *thd,
                                  LEX_STRING *new_db_name,
-                                 CHARSET_INFO *new_db_charset);
+                                 const CHARSET_INFO * const new_db_charset);
 
 
 /* Database lock hash */
@@ -102,7 +101,7 @@ typedef struct my_dbopt_st
 {
   char *name;			/* Database name                  */
   uint name_length;		/* Database length name           */
-  CHARSET_INFO *charset;	/* Database default character set */
+  const CHARSET_INFO *charset;	/* Database default character set */
 } my_dbopt_t;
 
 
@@ -506,7 +505,7 @@ bool load_db_opt_by_name(THD *thd, const char *db_name,
     set, even if the database does not exist.
 */
 
-CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
+const CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
 {
   HA_CREATE_INFO db_info;
 
@@ -1129,7 +1128,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
 
 static void mysql_change_db_impl(THD *thd,
                                  LEX_STRING *new_db_name,
-                                 CHARSET_INFO *new_db_charset)
+                                 const CHARSET_INFO * const new_db_charset)
 {
   /* 1. Change current database in THD. */
 
@@ -1294,7 +1293,7 @@ cmp_db_names(const char *db1_name,
 bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
 {
   LEX_STRING new_db_file_name;
-  CHARSET_INFO *db_default_cl;
+  const CHARSET_INFO *db_default_cl;
 
   if (new_db_name == NULL ||
       new_db_name->length == 0)

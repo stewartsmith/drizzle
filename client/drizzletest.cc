@@ -121,7 +121,7 @@ static struct st_test_file* cur_file;
 static struct st_test_file* file_stack_end;
 
 
-static CHARSET_INFO *charset_info= &my_charset_latin1; /* Default charset */
+static const CHARSET_INFO *charset_info= &my_charset_latin1; /* Default charset */
 
 static int embedded_server_arg_count=0;
 static char *embedded_server_args[MAX_EMBEDDED_SERVER_ARGS];
@@ -4572,9 +4572,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &opt_port,
    (char**) &opt_port, 0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -4617,7 +4614,7 @@ static struct my_option my_long_options[] =
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,MTEST_VERSION,
-   MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+   drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 static void usage(void)
@@ -5611,7 +5608,7 @@ int main(int argc, char **argv)
                 1024, 0, 0, get_var_key, var_free, MYF(0)))
     die("Variable hash initialization failed");
 
-  var_set_string("$MYSQL_SERVER_VERSION", MYSQL_SERVER_VERSION);
+  var_set_string("$MYSQL_SERVER_VERSION", drizzle_get_client_info());
 
   memset(&master_pos, 0, sizeof(master_pos));
 

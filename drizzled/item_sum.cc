@@ -20,13 +20,8 @@
   @brief
   Sum functions (COUNT, MIN...)
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 #include <drizzled/drizzled_error_messages.h>
 
 /**
@@ -3026,7 +3021,7 @@ int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
   if (result->length() > item->max_length)
   {
     int well_formed_error;
-    CHARSET_INFO *cs= item->collation.collation;
+    const CHARSET_INFO * const cs= item->collation.collation;
     const char *ptr= result->ptr();
     uint add_length;
     /*

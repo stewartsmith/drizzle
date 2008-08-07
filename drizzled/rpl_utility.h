@@ -20,7 +20,7 @@
 #error "Don't include this C++ header file from a non-C++ file!"
 #endif
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 class Relay_log_info;
 

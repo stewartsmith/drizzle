@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/double.h>
 #include <drizzled/drizzled_error_messages.h>
 
@@ -29,7 +30,7 @@
   double precision floating point numbers
 ****************************************************************************/
 
-int Field_double::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_double::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   int error;
   char *end;
@@ -287,7 +288,7 @@ int Field_double::do_save_field_metadata(uchar *metadata_ptr)
 
 void Field_double::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   if (dec == NOT_FIXED_DEC)
   {
     res.set_ascii(STRING_WITH_LEN("double"));

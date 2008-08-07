@@ -429,7 +429,7 @@ int load_defaults(const char *conf_file, const char **groups,
 
   /* copy name + found arguments + command line arguments to new array */
   res[0]= argv[0][0];  /* Name MUST be set, even by embedded library */
-  memcpy((uchar*) (res+1), args.buffer, args.elements*sizeof(char*));
+  memcpy(res+1, args.buffer, args.elements*sizeof(char*));
   /* Skip --defaults-xxx options */
   (*argc)-= args_used;
   (*argv)+= args_used;
@@ -445,8 +445,7 @@ int load_defaults(const char *conf_file, const char **groups,
   }
 
   if (*argc)
-    memcpy((uchar*) (res+1+args.elements), (char*) ((*argv)+1),
-	   (*argc-1)*sizeof(char*));
+    memcpy(res+1+args.elements, *argv + 1, (*argc-1)*sizeof(char*));
   res[args.elements+ *argc]=0;			/* last null */
 
   (*argc)+=args.elements;
@@ -475,7 +474,7 @@ int load_defaults(const char *conf_file, const char **groups,
 void free_defaults(char **argv)
 {
   MEM_ROOT ptr;
-  memcpy((char*) &ptr,(char *) argv - sizeof(ptr), sizeof(ptr));
+  memcpy(&ptr, (char*) argv - sizeof(ptr), sizeof(ptr));
   free_root(&ptr,MYF(0));
 }
 
@@ -949,7 +948,7 @@ void print_defaults(const char *conf_file, const char **groups)
 
 static void init_default_directories(void)
 {
-  memset((char *) default_directories, 0, sizeof(default_directories));
+  memset(default_directories, 0, sizeof(default_directories));
   ADD_DIRECTORY("/etc/");
   ADD_DIRECTORY("/etc/mysql/");
 #if defined(DEFAULT_SYSCONFDIR)

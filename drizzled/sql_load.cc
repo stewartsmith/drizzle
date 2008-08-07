@@ -17,7 +17,7 @@
 /* Copy data from a textfile to table */
 /* 2006-12 Erik Wetterberg : LOAD XML added */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include <drizzled/drizzled_error_messages.h>
 
@@ -58,9 +58,9 @@ public:
   bool error,line_cuted,found_null,enclosed;
   uchar	*row_start,			/* Found row starts here */
 	*row_end;			/* Found row ends here */
-  CHARSET_INFO *read_charset;
+  const CHARSET_INFO *read_charset;
 
-  READ_INFO(File file,uint tot_length,CHARSET_INFO *cs,
+  READ_INFO(File file,uint tot_length, const CHARSET_INFO * const cs,
 	    String &field_term,String &line_start,String &line_term,
 	    String &enclosed,int escape,bool get_it_from_net, bool is_fifo);
   ~READ_INFO();
@@ -846,7 +846,7 @@ read_xml_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
   Item *item;
   TABLE *table= table_list->table;
   bool no_trans_update_stmt;
-  CHARSET_INFO *cs= read_info.read_charset;
+  const CHARSET_INFO * const cs= read_info.read_charset;
 
   no_trans_update_stmt= !table->file->has_transactions();
 
@@ -1000,7 +1000,7 @@ READ_INFO::unescape(char chr)
 */
 
 
-READ_INFO::READ_INFO(File file_par, uint tot_length, CHARSET_INFO *cs,
+READ_INFO::READ_INFO(File file_par, uint tot_length, const CHARSET_INFO * const cs,
 		     String &field_term, String &line_start, String &line_term,
 		     String &enclosed_par, int escape, bool get_it_from_net,
 		     bool is_fifo)

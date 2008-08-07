@@ -23,16 +23,10 @@
   @defgroup Query_Optimizer  Query Optimizer
   @{
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 #include <mysys/my_bit.h>
-#include <mysys/hash.h>
 #include <drizzled/drizzled_error_messages.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
@@ -8663,7 +8657,7 @@ static bool check_simple_equality(Item *left_item, Item *right_item,
 
       if (field_item->result_type() == STRING_RESULT)
       {
-        CHARSET_INFO *cs= ((Field_str*) field_item->field)->charset();
+        const CHARSET_INFO * const cs= ((Field_str*) field_item->field)->charset();
         if (!item)
         {
           Item_func_eq *eq_item;
@@ -17632,7 +17626,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
   THD *thd=join->thd;
   select_result *result=join->result;
   Item *item_null= new Item_null();
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   int quick_type;
   /* Don't log this into the slow query log */
   thd->server_status&= ~(SERVER_QUERY_NO_INDEX_USED | SERVER_QUERY_NO_GOOD_INDEX_USED);

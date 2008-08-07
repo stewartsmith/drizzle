@@ -1059,7 +1059,7 @@ public:
     int err_not_used;
     char *end;
     String *res;
-    CHARSET_INFO *cs;
+    const CHARSET_INFO *cs;
 
     if (!(res= val_str(&str_value)))
       return 0;                                 /* Null value */

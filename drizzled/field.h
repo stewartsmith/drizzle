@@ -103,12 +103,12 @@ public:
         const char *field_name_arg);
   virtual ~Field() {}
   /* Store functions returns 1 on overflow and -1 on fatal error */
-  virtual int  store(const char *to, uint length,CHARSET_INFO *cs)=0;
+  virtual int  store(const char *to, uint length, const CHARSET_INFO * const cs)=0;
   virtual int  store(double nr)=0;
   virtual int  store(int64_t nr, bool unsigned_val)=0;
   virtual int  store_decimal(const my_decimal *d)=0;
   virtual int store_time(DRIZZLE_TIME *ltime, timestamp_type t_type);
-  int store(const char *to, uint length, CHARSET_INFO *cs,
+  int store(const char *to, uint length, const CHARSET_INFO * const cs,
             enum_check_fields check_level);
   virtual double val_real(void)=0;
   virtual int64_t val_int(void)=0;
@@ -319,10 +319,10 @@ public:
       null_ptr=ADD_TO_PTR(null_ptr,ptr_diff,uchar*);
   }
   virtual void get_image(uchar *buff, uint length,
-                         CHARSET_INFO *cs __attribute__((unused)))
+                         const CHARSET_INFO * const cs __attribute__((unused)))
     { memcpy(buff,ptr,length); }
   virtual void set_image(const uchar *buff,uint length,
-                         CHARSET_INFO *cs __attribute__((unused)))
+                         const CHARSET_INFO * const cs __attribute__((unused)))
     { memcpy(ptr,buff,length); }
 
 
@@ -445,10 +445,10 @@ public:
   uint fill_cache_field(struct st_cache_field *copy);
   virtual bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
   virtual bool get_time(DRIZZLE_TIME *ltime);
-  virtual CHARSET_INFO *charset(void) const { return &my_charset_bin; }
-  virtual CHARSET_INFO *sort_charset(void) const { return charset(); }
+  virtual const CHARSET_INFO *charset(void) const { return &my_charset_bin; }
+  virtual const CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
-  virtual void set_charset(CHARSET_INFO *charset_arg __attribute__((unused)))
+  virtual void set_charset(const CHARSET_INFO * const charset_arg __attribute__((unused)))
   { }
   virtual enum Derivation derivation(void) const
   { return DERIVATION_IMPLICIT; }
@@ -560,9 +560,9 @@ public:
   int store_decimal(const my_decimal *);
   my_decimal *val_decimal(my_decimal *);
   uint is_equal(Create_field *new_field);
-  int check_int(CHARSET_INFO *cs, const char *str, int length,
+  int check_int(const CHARSET_INFO * const cs, const char *str, int length,
                 const char *int_end, int error);
-  bool get_int(CHARSET_INFO *cs, const char *from, uint len, 
+  bool get_int(const CHARSET_INFO * const cs, const char *from, uint len, 
                int64_t *rnd, uint64_t unsigned_max, 
                int64_t signed_min, int64_t signed_max);
 };
@@ -571,21 +571,21 @@ public:
 
 class Field_str :public Field {
 protected:
-  CHARSET_INFO *field_charset;
+  const CHARSET_INFO *field_charset;
   enum Derivation field_derivation;
 public:
   Field_str(uchar *ptr_arg,uint32_t len_arg, uchar *null_ptr_arg,
 	    uchar null_bit_arg, utype unireg_check_arg,
-	    const char *field_name_arg, CHARSET_INFO *charset);
+	    const char *field_name_arg, const CHARSET_INFO * const charset);
   Item_result result_type () const { return STRING_RESULT; }
   uint decimals() const { return NOT_FIXED_DEC; }
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val)=0;
   int  store_decimal(const my_decimal *);
-  int  store(const char *to,uint length,CHARSET_INFO *cs)=0;
+  int  store(const char *to,uint length, const CHARSET_INFO * const cs)=0;
   uint size_of() const { return sizeof(*this); }
-  CHARSET_INFO *charset(void) const { return field_charset; }
-  void set_charset(CHARSET_INFO *charset_arg) { field_charset= charset_arg; }
+  const CHARSET_INFO *charset(void) const { return field_charset; }
+  void set_charset(const CHARSET_INFO * const charset_arg) { field_charset= charset_arg; }
   enum Derivation derivation(void) const { return field_derivation; }
   virtual void set_derivation(enum Derivation derivation_arg)
   { field_derivation= derivation_arg; }
@@ -608,7 +608,7 @@ protected:
 public:
   Field_longstr(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
                 uchar null_bit_arg, utype unireg_check_arg,
-                const char *field_name_arg, CHARSET_INFO *charset_arg)
+                const char *field_name_arg, const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg, unireg_check_arg,
                field_name_arg, charset_arg)
     {}
@@ -656,7 +656,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_TINY;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_BINARY : HA_KEYTYPE_INT8; }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
+  int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void) { ptr[0]=0; return 0; }
@@ -698,7 +698,7 @@ public:
              enum utype unireg_check_arg, const char *field_name_arg,
              uint packlength_arg,
              TYPELIB *typelib_arg,
-             CHARSET_INFO *charset_arg)
+             const CHARSET_INFO * const charset_arg)
     :Field_str(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
 	       unireg_check_arg, field_name_arg, charset_arg),
     packlength(packlength_arg),typelib(typelib_arg)
@@ -710,7 +710,7 @@ public:
   enum Item_result cmp_type () const { return INT_RESULT; }
   enum Item_result cast_to_int_type () const { return INT_RESULT; }
   enum ha_base_keytype key_type() const;
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   double val_real(void);
@@ -733,7 +733,7 @@ public:
   bool eq_def(Field *field);
   bool has_charset(void) const { return true; }
   /* enum and set are sorted as integers */
-  CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
+  const CHARSET_INFO *sort_charset(void) const { return &my_charset_bin; }
 private:
   int do_save_field_metadata(uchar *first_byte);
 };
@@ -767,7 +767,7 @@ public:
   TYPELIB *save_interval;               // Temporary copy for the above
                                         // Used only for UCS2 intervals
   List<String> interval_list;
-  CHARSET_INFO *charset;
+  const CHARSET_INFO *charset;
   Field *field;				// For alter table
 
   uint8_t row,col,sc_length,interval_id;	// For rea_create_table
@@ -793,7 +793,7 @@ public:
   bool init(THD *thd, char *field_name, enum_field_types type, char *length,
             char *decimals, uint type_modifier, Item *default_value,
             Item *on_update_value, LEX_STRING *comment, char *change,
-            List<String> *interval_list, CHARSET_INFO *cs,
+            List<String> *interval_list, const CHARSET_INFO * const cs,
             uint uint_geom_type,
             enum column_format_type column_format);
 };
@@ -847,7 +847,7 @@ public:
 Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  uchar *null_pos, uchar null_bit,
 		  uint pack_flag, enum_field_types field_type,
-		  CHARSET_INFO *cs,
+		  const CHARSET_INFO * cs,
 		  Field::utype unireg_check,
 		  TYPELIB *interval, const char *field_name);
 uint pack_length_to_packflag(uint type);
@@ -861,7 +861,7 @@ check_string_copy_error(Field_str *field,
                         const char *well_formed_error_pos,
                         const char *cannot_convert_error_pos,
                         const char *end,
-                        CHARSET_INFO *cs);
+                        const CHARSET_INFO * const cs);
 
 /*
   Field subclasses

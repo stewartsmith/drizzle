@@ -14,8 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /* Some useful string utility functions used by the MySQL server */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 /*
   Return bitmap for strings used in a set
@@ -38,10 +37,11 @@
 
 static const char field_separator=',';
 
-uint64_t find_set(TYPELIB *lib, const char *str, uint length, CHARSET_INFO *cs,
-                   char **err_pos, uint *err_len, bool *set_warning)
+uint64_t find_set(TYPELIB *lib, const char *str, uint length,
+                  const CHARSET_INFO * const cs,
+                  char **err_pos, uint *err_len, bool *set_warning)
 {
-  CHARSET_INFO *strip= cs ? cs : &my_charset_latin1;
+  const CHARSET_INFO * const strip= cs ? cs : &my_charset_latin1;
   const char *end= str + strip->cset->lengthsp(strip, str, length);
   uint64_t found= 0;
   *err_pos= 0;                  // No error yet
@@ -146,7 +146,7 @@ uint find_type(const TYPELIB *lib, const char *find, uint length,
 */
 
 uint find_type2(const TYPELIB *typelib, const char *x, uint length,
-                CHARSET_INFO *cs)
+                const CHARSET_INFO * const cs)
 {
   int pos;
   const char *j;
@@ -254,8 +254,8 @@ uint check_word(TYPELIB *lib, const char *val, const char *end,
 */
 
 
-uint strconvert(CHARSET_INFO *from_cs, const char *from,
-                CHARSET_INFO *to_cs, char *to, uint to_length, uint *errors)
+uint strconvert(const CHARSET_INFO * const from_cs, const char *from,
+                const CHARSET_INFO * const to_cs, char *to, uint to_length, uint *errors)
 {
   int cnvres;
   my_wc_t wc;
@@ -326,7 +326,7 @@ outp:
 */
 
 int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
-                         CHARSET_INFO * const cs)
+                         const CHARSET_INFO * const cs)
 {
   const LEX_STRING *pos;
   for (pos= haystack; pos->str; pos++)

@@ -16,9 +16,8 @@
 
 /* Mallocs for used in threads */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
-#include <libdrizzle/gettext.h>
 
 extern "C" {
   void sql_alloc_error_handler(void)
@@ -86,9 +85,9 @@ void sql_element_free(void *ptr __attribute__((unused)))
 
 
 char *sql_strmake_with_convert(const char *str, size_t arg_length,
-			       CHARSET_INFO *from_cs,
+			       const CHARSET_INFO * const from_cs,
 			       size_t max_res_length,
-			       CHARSET_INFO *to_cs, size_t *result_length)
+			       const CHARSET_INFO * const to_cs, size_t *result_length)
 {
   char *pos;
   size_t new_length= to_cs->mbmaxlen*arg_length;

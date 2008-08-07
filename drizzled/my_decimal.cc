@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <time.h>
 #include <drizzled/drizzled_error_messages.h>
 
@@ -176,7 +176,7 @@ int my_decimal2binary(uint mask, const my_decimal *d, uchar *bin, int prec,
 */
 
 int str2my_decimal(uint mask, const char *from, uint length,
-                   CHARSET_INFO *charset, my_decimal *decimal_value)
+                   const CHARSET_INFO * charset, my_decimal *decimal_value)
 {
   char *end, *from_end;
   int err;

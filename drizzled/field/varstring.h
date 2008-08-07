@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_VARSTRING
 #define DRIZZLE_SERVER_FIELD_VARSTRING
 
-#include <drizzled/mysql_priv.h>
-
 class Field_varstring :public Field_longstr {
 public:
   /*
@@ -36,7 +34,7 @@ public:
                   uint32_t len_arg, uint length_bytes_arg,
                   uchar *null_ptr_arg, uchar null_bit_arg,
 		  enum utype unireg_check_arg, const char *field_name_arg,
-		  TABLE_SHARE *share, CHARSET_INFO *cs)
+		  TABLE_SHARE *share, const CHARSET_INFO * const cs)
     :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
                    unireg_check_arg, field_name_arg, cs),
      length_bytes(length_bytes_arg)
@@ -45,7 +43,7 @@ public:
   }
   Field_varstring(uint32_t len_arg,bool maybe_null_arg,
                   const char *field_name_arg,
-                  TABLE_SHARE *share, CHARSET_INFO *cs)
+                  TABLE_SHARE *share, const CHARSET_INFO * const cs)
     :Field_longstr((uchar*) 0,len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs),
      length_bytes(len_arg < 256 ? 1 :2)
@@ -65,7 +63,7 @@ public:
     return (uint32_t) field_length + (field_charset == &my_charset_bin ?
                                     length_bytes : 0);
   }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(int64_t nr, bool unsigned_val);
   int  store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);

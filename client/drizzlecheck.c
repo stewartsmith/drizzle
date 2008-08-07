@@ -42,7 +42,7 @@ static char *opt_password = 0, *current_user = 0,
 static int first_error = 0;
 DYNAMIC_ARRAY tables4repair;
 static uint opt_protocol=0;
-static CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
 enum operations { DO_CHECK, DO_REPAIR, DO_ANALYZE, DO_OPTIMIZE, DO_UPGRADE };
 
@@ -123,9 +123,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &opt_mysql_port,
    (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
@@ -186,7 +183,7 @@ int what_to_do = 0;
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n", my_progname, CHECK_VERSION,
-   MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
+   drizzle_get_client_info(), SYSTEM_TYPE, MACHINE_TYPE);
 } /* print_version */
 
 static void usage(void)

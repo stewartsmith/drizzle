@@ -16,8 +16,7 @@
 /*
   Atomic rename of table;  RENAME TABLE t1 to t2, tmp to t1 [,...]
 */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
 static TABLE_LIST *rename_tables(THD *thd, TABLE_LIST *table_list,

@@ -18,9 +18,7 @@
   a shared library
 */
 
-#ifndef _global_h
 #include "myisamdef.h"
-#endif
 
 LIST	*myisam_open_list=0;
 uchar	 myisam_file_magic[]=

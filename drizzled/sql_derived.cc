@@ -13,14 +13,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-
 /*
   Derived tables
   These were introduced by Sinisa <sinisa@mysql.com>
 */
-
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 /*
   Call given derived table processor (preparing or filling tables)

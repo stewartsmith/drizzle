@@ -35,8 +35,8 @@
 */
 
 
-#if !defined(_global_h) || !defined(_m_string_h)
-#  error  Calling file must include 'my_global.h' and 'm_string.h'
+#if !defined(DRIZZLE_SERVER_GLOBAL_H) || !defined(_m_string_h)
+#  error  Calling file must include 'drizzled/global.h' and 'mystrings/m_string.h'
    /* see 'strtoll.c' and 'strtoull.c' for the reasons */
 #endif
 

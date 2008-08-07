@@ -1244,7 +1244,7 @@ public:
   void body_utf8_append(const char *ptr, const char *end_ptr);
   void body_utf8_append_literal(THD *thd,
                                 const LEX_STRING *txt,
-                                CHARSET_INFO *txt_cs,
+                                const CHARSET_INFO * const txt_cs,
                                 const char *end_ptr);
 
   /** Current thread. */
@@ -1367,7 +1367,7 @@ public:
 
     NOTE: this member must be used within MYSQLlex() function only.
   */
-  CHARSET_INFO *m_underscore_cs;
+  const CHARSET_INFO *m_underscore_cs;
 };
 
 
@@ -1400,7 +1400,7 @@ typedef struct st_lex : public Query_tables_list
   DYNAMIC_ARRAY plugins;
   plugin_ref plugins_static_buffer[INITIAL_LEX_PLUGIN_LIST_SIZE];
 
-  CHARSET_INFO *charset;
+  const CHARSET_INFO *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
   TABLE_LIST *leaf_tables_insert;
@@ -1616,7 +1616,7 @@ extern void lex_free(void);
 extern void lex_start(THD *thd);
 extern void lex_end(LEX *lex);
 
-extern void trim_whitespace(CHARSET_INFO *cs, LEX_STRING *str);
+extern void trim_whitespace(const CHARSET_INFO * const cs, LEX_STRING *str);
 
 extern bool is_lex_native_function(const LEX_STRING *name);
 

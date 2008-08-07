@@ -47,8 +47,8 @@
   (assuming a index for column d of table t2 is defined)
 */
 
-#include "mysql_priv.h"
-#include "sql_select.h"
+#include <drizzled/server_includes.h>
+#include <drizzled/sql_select.h>
 
 static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref, Field* field,
                                 COND *cond, uint *range_fl,

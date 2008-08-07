@@ -46,20 +46,14 @@
     them you must first assign a value to them (in specific ::check() for
     example).
 */
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
 #include "rpl_mi.h"
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
 #include <drizzled/drizzled_error_messages.h>
 
-extern CHARSET_INFO *character_set_filesystem;
+extern const CHARSET_INFO *character_set_filesystem;
 
 
 static DYNAMIC_ARRAY fixed_show_vars;
@@ -1748,7 +1742,7 @@ static my_old_conv old_conv[]=
   {	NULL			,	NULL		}
 };
 
-CHARSET_INFO *get_old_charset_by_name(const char *name)
+const CHARSET_INFO *get_old_charset_by_name(const char *name)
 {
   my_old_conv *conv;
  
@@ -1764,7 +1758,7 @@ CHARSET_INFO *get_old_charset_by_name(const char *name)
 bool sys_var_collation::check(THD *thd __attribute__((unused)),
                               set_var *var)
 {
-  CHARSET_INFO *tmp;
+  const CHARSET_INFO *tmp;
 
   if (var->value->result_type() == STRING_RESULT)
   {
@@ -1799,7 +1793,7 @@ bool sys_var_collation::check(THD *thd __attribute__((unused)),
 bool sys_var_character_set::check(THD *thd __attribute__((unused)),
                                   set_var *var)
 {
-  CHARSET_INFO *tmp;
+  const CHARSET_INFO *tmp;
 
   if (var->value->result_type() == STRING_RESULT)
   {
@@ -1847,7 +1841,7 @@ bool sys_var_character_set::update(THD *thd, set_var *var)
 uchar *sys_var_character_set::value_ptr(THD *thd, enum_var_type type,
                                         LEX_STRING *base __attribute__((unused)))
 {
-  CHARSET_INFO *cs= ci_ptr(thd,type)[0];
+  const CHARSET_INFO * const cs= ci_ptr(thd,type)[0];
   return cs ? (uchar*) cs->csname : (uchar*) NULL;
 }
 
@@ -1862,7 +1856,7 @@ void sys_var_character_set_sv::set_default(THD *thd, enum_var_type type)
     thd->update_charset();
   }
 }
-CHARSET_INFO **sys_var_character_set_sv::ci_ptr(THD *thd, enum_var_type type)
+const CHARSET_INFO **sys_var_character_set_sv::ci_ptr(THD *thd, enum_var_type type)
 {
   if (type == OPT_GLOBAL)
     return &(global_system_variables.*offset);
@@ -1886,7 +1880,7 @@ bool sys_var_character_set_client::check(THD *thd, set_var *var)
 }
 
 
-CHARSET_INFO ** sys_var_character_set_database::ci_ptr(THD *thd,
+const CHARSET_INFO ** sys_var_character_set_database::ci_ptr(THD *thd,
 						       enum_var_type type)
 {
   if (type == OPT_GLOBAL)
@@ -1936,7 +1930,7 @@ void sys_var_collation_sv::set_default(THD *thd, enum_var_type type)
 uchar *sys_var_collation_sv::value_ptr(THD *thd, enum_var_type type,
                                        LEX_STRING *base __attribute__((unused)))
 {
-  CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
+  const CHARSET_INFO *cs= ((type == OPT_GLOBAL) ?
 		     global_system_variables.*offset : thd->variables.*offset);
   return cs ? (uchar*) cs->name : (uchar*) "NULL";
 }

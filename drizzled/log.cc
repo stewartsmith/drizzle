@@ -24,7 +24,7 @@
     Abort logging when we get an error in reading or writing log files
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "rpl_rli.h"
@@ -254,7 +254,7 @@ bool Log_to_file_event_handler::
               uint user_host_len, int thread_id,
               const char *command_type, uint command_type_len,
               const char *sql_text, uint sql_text_len,
-              CHARSET_INFO *client_cs __attribute__((unused)))
+              const CHARSET_INFO * const client_cs __attribute__((unused)))
 {
   return mysql_log.write(event_time, user_host, user_host_len,
                          thread_id, command_type, command_type_len,

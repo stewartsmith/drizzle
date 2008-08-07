@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/timetype.h>
 #include <drizzled/drizzled_error_messages.h>
 
@@ -34,7 +35,7 @@
 
 int Field_time::store(const char *from,
                       uint len,
-                      CHARSET_INFO *cs __attribute__((unused)))
+                      const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME ltime;
   long tmp;

@@ -438,7 +438,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
                                        DRIZZLE_TIMESTAMP_DATETIME));
 
 err:
-  memset((char*) l_time, 0, sizeof(*l_time));
+  memset(l_time, 0, sizeof(*l_time));
   return(DRIZZLE_TIMESTAMP_ERROR);
 }
 
@@ -561,10 +561,10 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
     {
       bmove_upp((uchar*) (date+4), (uchar*) (date+state),
                 sizeof(long)*(state-1));
-      memset((uchar*) date, 0, sizeof(long)*(4-state));
+      memset(date, 0, sizeof(long)*(4-state));
     }
     else
-      memset((uchar*) (date+state), 0, sizeof(long)*(4-state));
+      memset(date+state, 0, sizeof(long)*(4-state));
   }
 
 fractional:
@@ -984,7 +984,7 @@ my_system_gmt_sec(const DRIZZLE_TIME *t_src, long *my_timezone,
 
 void set_zero_time(DRIZZLE_TIME *tm, enum enum_drizzle_timestamp_type time_type)
 {
-  memset((void*) tm, 0, sizeof(*tm));
+  memset(tm, 0, sizeof(*tm));
   tm->time_type= time_type;
 }
 
@@ -1095,7 +1095,7 @@ int64_t number_to_datetime(int64_t nr, DRIZZLE_TIME *time_res,
   long part1,part2;
 
   *was_cut= 0;
-  memset((char*) time_res, 0, sizeof(*time_res));
+  memset(time_res, 0, sizeof(*time_res));
   time_res->time_type=DRIZZLE_TIMESTAMP_DATE;
 
   if (nr == 0LL || nr >= 10000101000000LL)

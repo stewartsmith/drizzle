@@ -21,20 +21,18 @@
 #ifndef DRIZZLE_SERVER_FIELD_STRING
 #define DRIZZLE_SERVER_FIELD_STRING
 
-#include <drizzled/mysql_priv.h>
-
 class Field_string :public Field_longstr {
 public:
   bool can_alter_field_type;
   Field_string(uchar *ptr_arg, uint32_t len_arg,uchar *null_ptr_arg,
 	       uchar null_bit_arg,
 	       enum utype unireg_check_arg, const char *field_name_arg,
-	       CHARSET_INFO *cs)
+	       const CHARSET_INFO * const cs)
     :Field_longstr(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
                    unireg_check_arg, field_name_arg, cs),
      can_alter_field_type(1) {};
   Field_string(uint32_t len_arg,bool maybe_null_arg, const char *field_name_arg,
-               CHARSET_INFO *cs)
+               const CHARSET_INFO * const cs)
     :Field_longstr((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "": 0, 0,
                    NONE, field_name_arg, cs),
      can_alter_field_type(1) {};
@@ -52,7 +50,7 @@ public:
                           (has_charset() ? ' ' : 0));
     return 0;
   }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
+  int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(int64_t nr, bool unsigned_val);
   int store(double nr) { return Field_str::store(nr); } /* QQ: To be deleted */
   double val_real(void);

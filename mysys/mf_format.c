@@ -84,7 +84,7 @@ char * fn_format(char * to, const char *name, const char *dir,
   {
     if (to == startpos)
     {
-      memcpy(buff, (uchar*) name, length); /* Save name for last copy */
+      memcpy(buff, name, length); /* Save name for last copy */
       name=buff;
     }
     pos=strmake(strmov(to,dev),name,length);

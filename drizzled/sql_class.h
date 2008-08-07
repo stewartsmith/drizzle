@@ -15,11 +15,6 @@
 
 
 /* Classes in mysql */
-
-#ifdef USE_PRAGMA_INTERFACE
-#pragma interface			/* gcc class implementation */
-#endif
-
 #include <drizzled/plugin_audit.h>
 #include "log.h"
 #include "rpl_tblmap.h"
@@ -338,14 +333,14 @@ struct system_variables
   plugin_ref table_plugin;
 
   /* Only charset part of these variables is sensible */
-  CHARSET_INFO  *character_set_filesystem;
-  CHARSET_INFO  *character_set_client;
-  CHARSET_INFO  *character_set_results;
+  const CHARSET_INFO  *character_set_filesystem;
+  const CHARSET_INFO  *character_set_client;
+  const CHARSET_INFO  *character_set_results;
 
   /* Both charset and collation parts of these variables are important */
-  CHARSET_INFO	*collation_server;
-  CHARSET_INFO	*collation_database;
-  CHARSET_INFO  *collation_connection;
+  const CHARSET_INFO	*collation_server;
+  const CHARSET_INFO	*collation_database;
+  const CHARSET_INFO  *collation_connection;
 
   /* Locale Support */
   MY_LOCALE *lc_time_names;
@@ -1383,7 +1378,7 @@ public:
   */
   table_map  used_tables;
   USER_CONN *user_connect;
-  CHARSET_INFO *db_charset;
+  const CHARSET_INFO *db_charset;
   /*
     FIXME: this, and some other variables like 'count_cuted_fields'
     maybe should be statement/cursor local, that is, moved to Statement
@@ -1682,11 +1677,11 @@ public:
                               const char* str, uint length,
                               bool allocate_lex_string);
 
-  bool convert_string(LEX_STRING *to, CHARSET_INFO *to_cs,
+  bool convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
 		      const char *from, uint from_length,
-		      CHARSET_INFO *from_cs);
+		      const CHARSET_INFO * const from_cs);
 
-  bool convert_string(String *s, CHARSET_INFO *from_cs, CHARSET_INFO *to_cs);
+  bool convert_string(String *s, const CHARSET_INFO * const from_cs, const CHARSET_INFO * const to_cs);
 
   void add_changed_table(TABLE *table);
   void add_changed_table(const char *key, long key_length);
@@ -1733,7 +1728,7 @@ public:
     To raise this flag, use my_error().
   */
   inline bool is_error() const { return main_da.is_error(); }
-  inline CHARSET_INFO *charset() { return variables.character_set_client; }
+  inline const CHARSET_INFO *charset() { return variables.character_set_client; }
   void update_charset();
 
   void change_item_tree(Item **place, Item *new_value)
@@ -1964,7 +1959,7 @@ public:
   bool opt_enclosed;
   bool dumpfile;
   ulong skip_lines;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
   sql_exchange(char *name, bool dumpfile_flag,
                enum_filetype filetype_arg= FILETYPE_CSV);
 };
@@ -2221,7 +2216,7 @@ public:
   bool  using_indirect_summary_function;
   /* If >0 convert all blob fields to varchar(convert_blob_length) */
   uint  convert_blob_length; 
-  CHARSET_INFO *table_charset; 
+  const CHARSET_INFO *table_charset; 
   bool schema_table;
   /*
     True if GROUP BY and its aggregate functions are already computed

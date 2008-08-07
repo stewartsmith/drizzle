@@ -22,13 +22,14 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/int64_t.h>
 
 /****************************************************************************
  Field type int64_t int (8 bytes)
 ****************************************************************************/
 
-int Field_int64_t::store(const char *from,uint len,CHARSET_INFO *cs)
+int Field_int64_t::store(const char *from,uint len, const CHARSET_INFO * const cs)
 {
   int error= 0;
   char *end;
@@ -175,7 +176,7 @@ int64_t Field_int64_t::val_int(void)
 String *Field_int64_t::val_str(String *val_buffer,
 				String *val_ptr __attribute__((unused)))
 {
-  CHARSET_INFO *cs= &my_charset_bin;
+  const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;
   uint mlength=max(field_length+1,22*cs->mbmaxlen);
   val_buffer->alloc(mlength);
@@ -260,7 +261,7 @@ void Field_int64_t::sort_string(uchar *to,uint length __attribute__((unused)))
 
 void Field_int64_t::sql_type(String &res) const
 {
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   res.length(cs->cset->snprintf(cs,(char*) res.ptr(),res.alloced_length(), "bigint"));
   add_unsigned(res);
 }

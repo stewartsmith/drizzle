@@ -19,12 +19,11 @@
 #endif
 
 #define MYSQL_SERVER 1
-#include <drizzled/mysql_priv.h>
-#include <mystrings/m_ctype.h>
+
+#include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
 #include <myisampack.h>
 #include "ha_myisam.h"
-#include <stdarg.h>
 #include "myisamdef.h"
 #include <drizzled/drizzled_error_messages.h>
 

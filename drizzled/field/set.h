@@ -21,15 +21,13 @@
 #ifndef DRIZZLE_SERVER_FIELD_SET
 #define DRIZZLE_SERVER_FIELD_SET
 
-#include <drizzled/mysql_priv.h>
-
 class Field_set :public Field_enum {
 public:
   Field_set(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
 	    uchar null_bit_arg,
 	    enum utype unireg_check_arg, const char *field_name_arg,
 	    uint32_t packlength_arg,
-	    TYPELIB *typelib_arg, CHARSET_INFO *charset_arg)
+	    TYPELIB *typelib_arg, const CHARSET_INFO * const charset_arg)
     :Field_enum(ptr_arg, len_arg, null_ptr_arg, null_bit_arg,
 		    unireg_check_arg, field_name_arg,
                 packlength_arg,
@@ -37,7 +35,7 @@ public:
     {
       flags=(flags & ~ENUM_FLAG) | SET_FLAG;
     }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr) { return Field_set::store((int64_t) nr, false); }
   int  store(int64_t nr, bool unsigned_val);
 

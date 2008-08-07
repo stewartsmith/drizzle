@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/date.h>
 
 /****************************************************************************
@@ -51,7 +52,7 @@
 
 int Field_newdate::store(const char *from,
                          uint len,
-                         CHARSET_INFO *cs __attribute__((unused)))
+                         const CHARSET_INFO * const cs __attribute__((unused)))
 {
   long tmp;
   DRIZZLE_TIME l_time;

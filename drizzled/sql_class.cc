@@ -20,15 +20,9 @@
 ** Especially the classes to handle a result from a select
 **
 *****************************************************************************/
-
-#ifdef USE_PRAGMA_IMPLEMENTATION
-#pragma implementation				// gcc: Class implementation
-#endif
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "rpl_rli.h"
 #include "rpl_record.h"
-#include "slave.h"
 #include "log_event.h"
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
@@ -978,9 +972,9 @@ LEX_STRING *THD::make_lex_string(LEX_STRING *lex_str,
         In this case to->str will point to 0 and to->length will be 0.
 */
 
-bool THD::convert_string(LEX_STRING *to, CHARSET_INFO *to_cs,
+bool THD::convert_string(LEX_STRING *to, const CHARSET_INFO * const to_cs,
 			 const char *from, uint from_length,
-			 CHARSET_INFO *from_cs)
+			 const CHARSET_INFO * const from_cs)
 {
   size_t new_length= to_cs->mbmaxlen * from_length;
   uint dummy_errors;
@@ -1011,7 +1005,8 @@ bool THD::convert_string(LEX_STRING *to, CHARSET_INFO *to_cs,
    !0   out of memory
 */
 
-bool THD::convert_string(String *s, CHARSET_INFO *from_cs, CHARSET_INFO *to_cs)
+bool THD::convert_string(String *s, const CHARSET_INFO * const from_cs,
+                         const CHARSET_INFO * const to_cs)
 {
   uint dummy_errors;
   if (convert_buffer.copy(s->ptr(), s->length(), from_cs, to_cs, &dummy_errors))
@@ -1128,7 +1123,7 @@ int THD::send_explain_fields(select_result *result)
 {
   List<Item> field_list;
   Item *item;
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
   field_list.push_back(new Item_return_int("id",3, DRIZZLE_TYPE_LONGLONG));
   field_list.push_back(new Item_empty_string("select_type", 19, cs));
   field_list.push_back(item= new Item_empty_string("table", NAME_CHAR_LEN, cs));
@@ -1659,9 +1654,9 @@ bool select_export::send_data(List<Item> &items)
            escape_char != -1)
       {
         char *pos, *start, *end;
-        CHARSET_INFO *res_charset= res->charset();
-        CHARSET_INFO *character_set_client= thd->variables.
-                                            character_set_client;
+        const CHARSET_INFO * const res_charset= res->charset();
+        const CHARSET_INFO * const character_set_client= thd->variables.
+                                                            character_set_client;
         bool check_second_byte= (res_charset == &my_charset_bin) &&
                                  character_set_client->
                                  escape_with_backslash_is_dangerous;
@@ -2310,7 +2305,7 @@ extern "C" unsigned long thd_get_thread_id(const MYSQL_THD thd)
 
 
 #ifdef INNODB_COMPATIBILITY_HOOKS
-extern "C" struct charset_info_st *thd_charset(MYSQL_THD thd)
+extern "C" const struct charset_info_st *thd_charset(MYSQL_THD thd)
 {
   return(thd->charset());
 }

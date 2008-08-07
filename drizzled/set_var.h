@@ -710,24 +710,24 @@ public:
   bool update(THD *thd, set_var *var);
   uchar *value_ptr(THD *thd, enum_var_type type, LEX_STRING *base);
   virtual void set_default(THD *thd, enum_var_type type)= 0;
-  virtual CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type)= 0;
+  virtual const CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type)= 0;
 };
 
 class sys_var_character_set_sv :public sys_var_character_set
 {
-  CHARSET_INFO *SV::*offset;
-  CHARSET_INFO **global_default;
+  const CHARSET_INFO *SV::*offset;
+  const CHARSET_INFO **global_default;
 public:
   sys_var_character_set_sv(sys_var_chain *chain, const char *name_arg,
-			   CHARSET_INFO *SV::*offset_arg,
-			   CHARSET_INFO **global_default_arg,
+			   const CHARSET_INFO *SV::*offset_arg,
+			   const CHARSET_INFO **global_default_arg,
                            bool is_nullable= 0,
                            Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     : sys_var_character_set(name_arg, is_nullable, binlog_status_arg),
     offset(offset_arg), global_default(global_default_arg)
   { chain_sys_var(chain); }
   void set_default(THD *thd, enum_var_type type);
-  CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type);
+  const CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type);
 };
 
 
@@ -735,8 +735,8 @@ class sys_var_character_set_client: public sys_var_character_set_sv
 {
 public:
   sys_var_character_set_client(sys_var_chain *chain, const char *name_arg,
-                               CHARSET_INFO *SV::*offset_arg,
-                               CHARSET_INFO **global_default_arg,
+                               const CHARSET_INFO *SV::*offset_arg,
+                               const CHARSET_INFO **global_default_arg,
                                Binlog_status_enum binlog_status_arg)
     : sys_var_character_set_sv(chain, name_arg, offset_arg, global_default_arg,
                                0, binlog_status_arg)
@@ -754,17 +754,17 @@ public:
     : sys_var_character_set(name_arg, 0, binlog_status_arg)
   { chain_sys_var(chain); }
   void set_default(THD *thd, enum_var_type type);
-  CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type);
+  const CHARSET_INFO **ci_ptr(THD *thd, enum_var_type type);
 };
 
 class sys_var_collation_sv :public sys_var_collation
 {
-  CHARSET_INFO *SV::*offset;
-  CHARSET_INFO **global_default;
+  const CHARSET_INFO *SV::*offset;
+  const CHARSET_INFO **global_default;
 public:
   sys_var_collation_sv(sys_var_chain *chain, const char *name_arg,
-		       CHARSET_INFO *SV::*offset_arg,
-                       CHARSET_INFO **global_default_arg,
+		       const CHARSET_INFO *SV::*offset_arg,
+                       const CHARSET_INFO **global_default_arg,
                        Binlog_status_enum binlog_status_arg= NOT_IN_BINLOG)
     :sys_var_collation(name_arg, binlog_status_arg),
     offset(offset_arg), global_default(global_default_arg)
@@ -1151,7 +1151,7 @@ public:
   enum_var_type type;
   union
   {
-    CHARSET_INFO *charset;
+    const CHARSET_INFO *charset;
     ulong ulong_value;
     uint64_t uint64_t_value;
     plugin_ref plugin;
@@ -1203,13 +1203,13 @@ public:
 
 class set_var_collation_client: public set_var_base
 {
-  CHARSET_INFO *character_set_client;
-  CHARSET_INFO *character_set_results;
-  CHARSET_INFO *collation_connection;
+  const CHARSET_INFO *character_set_client;
+  const CHARSET_INFO *character_set_results;
+  const CHARSET_INFO *collation_connection;
 public:
-  set_var_collation_client(CHARSET_INFO *client_coll_arg,
-  			   CHARSET_INFO *connection_coll_arg,
-  			   CHARSET_INFO *result_coll_arg)
+  set_var_collation_client(const CHARSET_INFO * const client_coll_arg,
+  			   const CHARSET_INFO * const connection_coll_arg,
+  			   const CHARSET_INFO * const result_coll_arg)
     :character_set_client(client_coll_arg),
      character_set_results(result_coll_arg),
      collation_connection(connection_coll_arg)
@@ -1286,7 +1286,7 @@ extern sys_var_str sys_init_connect;
 extern sys_var_str sys_init_slave;
 extern sys_var_thd_time_zone sys_time_zone;
 extern sys_var_thd_bit sys_autocommit;
-CHARSET_INFO *get_old_charset_by_name(const char *old_name);
+const CHARSET_INFO *get_old_charset_by_name(const char *old_name);
 uchar* find_named(I_List<NAMED_LIST> *list, const char *name, uint length,
 		NAMED_LIST **found);
 

@@ -147,7 +147,7 @@ static void dynstr_realloc_checked(DYNAMIC_STRING *str, ulong additional_size);
 static const char *drizzle_universal_client_charset=
   MYSQL_UNIVERSAL_CLIENT_CHARSET;
 static char *default_charset;
-static CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_latin1;
 const char *default_dbug_option="d:t:o,/tmp/drizzledump.trace";
 /* have we seen any VIEWs during table scanning? */
 bool seen_views= 0;
@@ -515,7 +515,7 @@ static void check_io(FILE *file)
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n",my_progname,DUMP_VERSION,
-         MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+         drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 } /* print_version */
 
 
@@ -568,7 +568,8 @@ static void write_header(FILE *sql_file, char *db_name)
     {
       fprintf(sql_file,
               "-- DRIZZLE dump %s  Distrib %s, for %s (%s)\n--\n",
-              DUMP_VERSION, MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
+              DUMP_VERSION, drizzle_get_client_info(),
+              SYSTEM_TYPE, MACHINE_TYPE);
       fprintf(sql_file, "-- Host: %s    Database: %s\n",
               current_host ? current_host : "localhost", db_name ? db_name :
               "");

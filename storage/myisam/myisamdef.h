@@ -15,7 +15,7 @@
 
 /* This file is included by all internal myisam files */
 
-#if !defined(MYISAMDEF_H)
+#ifndef MYISAMDEF_H
 #define MYISAMDEF_H
 
 #include "myisam.h"			/* Structs & some defines */
@@ -781,4 +781,4 @@ void _mi_report_crashed(MI_INFO *file __attribute__((unused)),
 #endif
 
 
-#endif
+#endif /* MYISAMDEF_H */

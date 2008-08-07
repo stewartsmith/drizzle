@@ -20,8 +20,7 @@
   Functions to create an item. Used by sql_yac.yy
 */
 
-#include "mysql_priv.h"
-#include "item_create.h"
+#include <drizzled/server_includes.h>
 
 /*
 =============================================================================
@@ -2726,7 +2725,7 @@ Create_func_space::create(THD *thd, Item *arg1)
     The parsed item tree should not depend on
     <code>thd->variables.collation_connection</code>.
   */
-  CHARSET_INFO *cs= thd->variables.collation_connection;
+  const CHARSET_INFO * const cs= thd->variables.collation_connection;
   Item *sp;
 
   if (cs->mbminlen > 1)
@@ -3163,9 +3162,9 @@ find_native_function_builder(THD *thd __attribute__((unused)),
 
 
 Item*
-create_func_char_cast(THD *thd, Item *a, int len, CHARSET_INFO *cs)
+create_func_char_cast(THD *thd, Item *a, int len, const CHARSET_INFO * const cs)
 {
-  CHARSET_INFO *real_cs= (cs ? cs : thd->variables.collation_connection);
+  const CHARSET_INFO * const real_cs= (cs ? cs : thd->variables.collation_connection);
   return new (thd->mem_root) Item_char_typecast(a, len, real_cs);
 }
 
@@ -3173,7 +3172,7 @@ create_func_char_cast(THD *thd, Item *a, int len, CHARSET_INFO *cs)
 Item *
 create_func_cast(THD *thd, Item *a, Cast_target cast_type,
                  const char *c_len, const char *c_dec,
-                 CHARSET_INFO *cs)
+                 const CHARSET_INFO * const cs)
 {
   Item *res;
   ulong len;

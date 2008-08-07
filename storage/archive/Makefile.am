@@ -22,7 +22,7 @@ MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 
-LDADD =
+LDADD = $(LIBINTL)
 AM_CFLAGS = -DHAVE_MYSQL_CONFIG_H
 
 DEFS =                  @DEFS@
@@ -46,7 +46,7 @@ libarchive_a_SOURCES =	ha_archive.cc azio.c
 
 archive_performance_SOURCES =	archive_performance.c azio.c
 archive_performance_CFLAGS =	$(AM_CFLAGS) 
-archive_performance_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+archive_performance_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystringslt.la \
 			$(LDADD) \
 			-lz
@@ -54,7 +54,7 @@ archive_performance_LDFLAGS =
 
 archive_test_SOURCES =	archive_test.c azio.c
 archive_test_CFLAGS =	$(AM_CFLAGS) 
-archive_test_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+archive_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystringslt.la \
 			$(LDADD) \
 			-lz
@@ -62,7 +62,7 @@ archive_test_LDFLAGS =
 
 archive_reader_SOURCES = archive_reader.c azio.c
 archive_reader_CFLAGS =	$(AM_CFLAGS) 
-archive_reader_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+archive_reader_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystringslt.la \
 			$(LDADD) \
 			-lz
@@ -70,7 +70,7 @@ archive_reader_LDFLAGS =
 
 concurrency_test_SOURCES = concurrency_test.c azio.c
 concurrency_test_CFLAGS =	$(AM_CFLAGS) 
-concurrency_test_LDADD =	$(top_builddir)/mysys/libmysyslt.la \
+concurrency_test_LDADD =	$(top_builddir)/mysys/libmysys.la \
 			$(top_builddir)/mystrings/libmystringslt.la \
 			$(top_builddir)/libdrizzle/libdrizzle.la \
 			$(LDADD) \

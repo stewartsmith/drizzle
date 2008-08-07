@@ -183,7 +183,7 @@ static uchar sort_order_ujis[]=
 #define isujis_ss3(c) (((c)&0xff) == 0x8f)
 
 
-static uint ismbchar_ujis(const CHARSET_INFO *cs __attribute__((unused)),
+static uint ismbchar_ujis(const CHARSET_INFO * const cs __attribute__((unused)),
 		  const char* p, const char *e)
 {
   return ((*(uchar*)(p)<0x80)? 0:\
@@ -193,7 +193,7 @@ static uint ismbchar_ujis(const CHARSET_INFO *cs __attribute__((unused)),
     0);
 }
 
-static uint mbcharlen_ujis(const CHARSET_INFO *cs __attribute__((unused)),uint c)
+static uint mbcharlen_ujis(const CHARSET_INFO * const cs __attribute__((unused)),uint c)
 {
   return (isujis(c)? 2: isujis_ss2(c)? 2: isujis_ss3(c)? 3: 1);
 }
@@ -236,7 +236,7 @@ static uint16_t tab_jisx0201_uni[256]={
 
 
 static int 
-my_mb_wc_jisx0201(const CHARSET_INFO *cs  __attribute__((unused)),
+my_mb_wc_jisx0201(const CHARSET_INFO * const cs  __attribute__((unused)),
 		  my_wc_t *wc,const uchar *s,
 		  const uchar *e __attribute__((unused)))
 {
@@ -246,7 +246,7 @@ my_mb_wc_jisx0201(const CHARSET_INFO *cs  __attribute__((unused)),
 
 
 static int
-my_wc_mb_jisx0201(const CHARSET_INFO *cs __attribute__((unused)),
+my_wc_mb_jisx0201(const CHARSET_INFO * const cs __attribute__((unused)),
 		  my_wc_t wc, uchar *s, 
 		  uchar *e __attribute__((unused)))
 {
@@ -8239,7 +8239,7 @@ my_jisx0212_uni_onechar(int code){
 */
 
 static
-size_t my_well_formed_len_ujis(const CHARSET_INFO *cs __attribute__((unused)),
+size_t my_well_formed_len_ujis(const CHARSET_INFO * const cs __attribute__((unused)),
                                const char *beg, const char *end,
                                size_t pos, int *error)
 {
@@ -8289,7 +8289,7 @@ size_t my_well_formed_len_ujis(const CHARSET_INFO *cs __attribute__((unused)),
 
 
 static
-size_t my_numcells_eucjp(const CHARSET_INFO *cs __attribute__((unused)),
+size_t my_numcells_eucjp(const CHARSET_INFO * const cs __attribute__((unused)),
                        const char *str, const char *str_end)
 {
   size_t clen;
@@ -8324,7 +8324,7 @@ size_t my_numcells_eucjp(const CHARSET_INFO *cs __attribute__((unused)),
 
 
 static int
-my_mb_wc_euc_jp(const CHARSET_INFO *cs,my_wc_t *pwc, const uchar *s, const uchar *e)
+my_mb_wc_euc_jp(const CHARSET_INFO * const cs,my_wc_t *pwc, const uchar *s, const uchar *e)
 {
   int c1,c2,c3;
   
@@ -8412,7 +8412,7 @@ my_mb_wc_euc_jp(const CHARSET_INFO *cs,my_wc_t *pwc, const uchar *s, const uchar
 
 
 static int
-my_wc_mb_euc_jp(const CHARSET_INFO *c,my_wc_t wc, uchar *s, uchar *e)
+my_wc_mb_euc_jp(const CHARSET_INFO * const c,my_wc_t wc, uchar *s, uchar *e)
 {
   uchar c1;
   int jp;

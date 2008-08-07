@@ -178,7 +178,7 @@ extern uint my_file_limit;
 extern ulong my_thread_stack_size;
 
 /* charsets */
-extern CHARSET_INFO *default_charset_info;
+extern const CHARSET_INFO *default_charset_info;
 extern CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
 
@@ -814,17 +814,17 @@ extern uint get_charset_number(const char *cs_name, uint cs_flags);
 extern uint get_collation_number(const char *name);
 extern const char *get_charset_name(uint cs_number);
 
-extern CHARSET_INFO *get_charset(uint cs_number, myf flags);
-extern CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags);
-extern CHARSET_INFO *get_charset_by_csname(const char *cs_name,
-					   uint cs_flags, myf my_flags);
+extern const CHARSET_INFO *get_charset(uint cs_number, myf flags);
+extern const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags);
+extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
+					                             uint cs_flags, myf my_flags);
 
 extern bool resolve_charset(const char *cs_name,
-                               CHARSET_INFO *default_cs,
-                               CHARSET_INFO **cs);
+                            const CHARSET_INFO *default_cs,
+                            const CHARSET_INFO **cs);
 extern bool resolve_collation(const char *cl_name,
-                                 CHARSET_INFO *default_cl,
-                                 CHARSET_INFO **cl);
+                             const CHARSET_INFO *default_cl,
+                             const CHARSET_INFO **cl);
 
 extern void free_charsets(void);
 extern char *get_charsets_dir(char *buf);

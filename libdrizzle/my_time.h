@@ -26,7 +26,7 @@
 #ifndef _libdrizzle_my_time_h_
 #define _libdrizzle_my_time_h_
 
-#include "drizzled/global.h"
+#include <drizzled/global.h>
 #include "drizzle_time.h"
 
 C_MODE_START

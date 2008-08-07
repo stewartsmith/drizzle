@@ -21,700 +21,105 @@
   mysqlbinlog too (definition of SELECT_DISTINCT and others).
   The consequence is that 90% of the file is wrapped in \#ifndef MYSQL_CLIENT,
   except the part which must be in the server and in the client.
+
+  @TODO Name this file better. "priv" could mean private, privileged, privileges.
+
+  @TODO Get rid of the MYSQL_CLIENT and MYSQL_SERVER conditionals
 */
 
-#ifndef DRIZZLE_SERVER_MYSQL_PRIV_H
-#define DRIZZLE_SERVER_MYSQL_PRIV_H
+#ifndef DRIZZLE_SERVER_SERVER_INCLUDES_H
+#define DRIZZLE_SERVER_SERVER_INCLUDES_H
 
-#ifndef MYSQL_CLIENT
+/* Some forward declarations just for the server */
 
-#include <drizzled/global.h>
-#include <drizzled/version.h>
-#include <mysys/my_sys.h>
-#include <libdrizzle/my_time.h>
-#include <mystrings/m_string.h>
-#include <mysys/hash.h>
-#include <signal.h>
-#include <mysys/thr_lock.h>
-#include <drizzled/error.h>
-#include <drizzled/base.h>			                /* Needed by field.h */
-#include <mysys/queues.h>
-#include <drizzled/sql_bitmap.h>                /* Custom bitmap API */
-#include "sql_array.h"
-#include "sql_plugin.h"
-#include "scheduler.h"
-
-#ifdef HAVE_DTRACE
-#define _DTRACE_VERSION 1
-#endif
-#include "probes.h"
-
-#include <netdb.h>
-
-/**
-  Query type constants.
-
-  QT_ORDINARY -- ordinary SQL query.
-  QT_IS -- SQL query to be shown in INFORMATION_SCHEMA (in utf8 and without
-  character set introducers).
-*/
-enum enum_query_type
-{
-  QT_ORDINARY,
-  QT_IS
-};
-
-/* TODO convert all these three maps to Bitmap classes */
-typedef uint64_t table_map;          /* Used for table bits in join */
-#if MAX_INDEXES <= 64
-typedef Bitmap<64>  key_map;          /* Used for finding keys */
-#else
-typedef Bitmap<((MAX_INDEXES+7)/8*8)> key_map; /* Used for finding keys */
-#endif
-typedef uint32_t nesting_map;  /* Used for flags of nesting constructs */
-/*
-  Used to identify NESTED_JOIN structures within a join (applicable only to
-  structures that have not been simplified away and embed more the one
-  element)
-*/
-typedef uint64_t nested_join_map;
-
-/* query_id */
-typedef uint64_t query_id_t;
-extern query_id_t global_query_id;
-
-/* increment query_id and return it.  */
-inline query_id_t next_query_id() { return global_query_id++; }
-
-/* useful constants */
-extern const key_map key_map_empty;
-extern key_map key_map_full;          /* Should be threaded as const */
-extern const char *primary_key_name;
-
-#include <libdrizzle/drizzle_com.h>
-#include <vio/violite.h>
-#include "unireg.h"
-
-#include <drizzled/sql_alloc.h>
-
-#define PREV_BITS(type,A)	((type) (((type) 1 << (A)) -1))
-#define all_bits_set(A,B) ((A) & (B) != (B))
-
-extern CHARSET_INFO *system_charset_info, *files_charset_info ;
-extern CHARSET_INFO *national_charset_info, *table_alias_charset;
-
-enum Derivation
-{
-  DERIVATION_IGNORABLE= 5,
-  DERIVATION_COERCIBLE= 4,
-  DERIVATION_SYSCONST= 3,
-  DERIVATION_IMPLICIT= 2,
-  DERIVATION_NONE= 1,
-  DERIVATION_EXPLICIT= 0
-};
-
-#include <drizzled/sql_locale.h>
-#include <drizzled/object_creation_ctx.h>
-/**
-  Opening modes for open_temporary_table and open_table_from_share
-*/
-
-enum open_table_mode
-{
-  OTM_OPEN= 0,
-  OTM_CREATE= 1,
-  OTM_ALTER= 2
-};
-
-/***************************************************************************
-  Configuration parameters
-****************************************************************************/
-
-#define ACL_CACHE_SIZE		256
-#define MAX_PASSWORD_LENGTH	32
-#define HOST_CACHE_SIZE		128
-#define MAX_ACCEPT_RETRY	10	// Test accept this many times
-#define MAX_FIELDS_BEFORE_HASH	32
-#define USER_VARS_HASH_SIZE     16
-#define TABLE_OPEN_CACHE_MIN    64
-#define TABLE_OPEN_CACHE_DEFAULT 64
-
-/* 
- Value of 9236 discovered through binary search 2006-09-26 on Ubuntu Dapper
- Drake, libc6 2.3.6-0ubuntu2, Linux kernel 2.6.15-27-686, on x86.  (Added 
- 100 bytes as reasonable buffer against growth and other environments'
- requirements.)
-
- Feel free to raise this by the smallest amount you can to get the
- "execution_constants" test to pass.
- */
-#define STACK_MIN_SIZE          12000   ///< Abort if less stack during eval.
-
-#define STACK_MIN_SIZE_FOR_OPEN 1024*80
-#define STACK_BUFF_ALLOC        352     ///< For stack overrun checks
-#ifndef MYSQLD_NET_RETRY_COUNT
-#define MYSQLD_NET_RETRY_COUNT  10	///< Abort read after this many int.
-#endif
-#define TEMP_POOL_SIZE          128
-
-#define QUERY_ALLOC_BLOCK_SIZE		8192
-#define QUERY_ALLOC_PREALLOC_SIZE   	8192
-#define TRANS_ALLOC_BLOCK_SIZE		4096
-#define TRANS_ALLOC_PREALLOC_SIZE	4096
-#define RANGE_ALLOC_BLOCK_SIZE		4096
-#define ACL_ALLOC_BLOCK_SIZE		1024
-#define UDF_ALLOC_BLOCK_SIZE		1024
-#define TABLE_ALLOC_BLOCK_SIZE		1024
-#define BDB_LOG_ALLOC_BLOCK_SIZE	1024
-#define WARN_ALLOC_BLOCK_SIZE		2048
-#define WARN_ALLOC_PREALLOC_SIZE	1024
-#define PROFILE_ALLOC_BLOCK_SIZE  2048
-#define PROFILE_ALLOC_PREALLOC_SIZE 1024
-
-/*
-  The following parameters is to decide when to use an extra cache to
-  optimise seeks when reading a big table in sorted order
-*/
-#define MIN_FILE_LENGTH_TO_USE_ROW_CACHE (10L*1024*1024)
-#define MIN_ROWS_TO_USE_TABLE_CACHE	 100
-#define MIN_ROWS_TO_USE_BULK_INSERT	 100
-
-/**
-  The following is used to decide if MySQL should use table scanning
-  instead of reading with keys.  The number says how many evaluation of the
-  WHERE clause is comparable to reading one extra row from a table.
-*/
-#define TIME_FOR_COMPARE   5	// 5 compares == one read
-
-/**
-  Number of comparisons of table rowids equivalent to reading one row from a 
-  table.
-*/
-#define TIME_FOR_COMPARE_ROWID  (TIME_FOR_COMPARE*2)
-
-/*
-  For sequential disk seeks the cost formula is:
-    DISK_SEEK_BASE_COST + DISK_SEEK_PROP_COST * #blocks_to_skip  
-  
-  The cost of average seek 
-    DISK_SEEK_BASE_COST + DISK_SEEK_PROP_COST*BLOCKS_IN_AVG_SEEK =1.0.
-*/
-#define DISK_SEEK_BASE_COST ((double)0.9)
-
-#define BLOCKS_IN_AVG_SEEK  128
-
-#define DISK_SEEK_PROP_COST ((double)0.1/BLOCKS_IN_AVG_SEEK)
-
-
-/**
-  Number of rows in a reference table when refereed through a not unique key.
-  This value is only used when we don't know anything about the key
-  distribution.
-*/
-#define MATCHING_ROWS_IN_OTHER_TABLE 10
-
-/** Don't pack string keys shorter than this (if PACK_KEYS=1 isn't used). */
-#define KEY_DEFAULT_PACK_LENGTH 8
-
-/** Characters shown for the command in 'show processlist'. */
-#define PROCESS_LIST_WIDTH 100
-/* Characters shown for the command in 'information_schema.processlist' */
-#define PROCESS_LIST_INFO_WIDTH 65535
-
-#define PRECISION_FOR_DOUBLE 53
-#define PRECISION_FOR_FLOAT  24
-
-/*
-  Default time to wait before aborting a new client connection
-  that does not respond to "initial server greeting" timely
-*/
-#define CONNECT_TIMEOUT		10
-
-/* The following can also be changed from the command line */
-#define DEFAULT_CONCURRENCY	10
-#define FLUSH_TIME		0		/**< Don't flush tables */
-#define MAX_CONNECT_ERRORS	10		///< errors before disabling host
-
-#define INTERRUPT_PRIOR 10
-#define CONNECT_PRIOR	9
-#define WAIT_PRIOR	8
-#define QUERY_PRIOR	6
-
-	/* Bits from testflag */
-#define TEST_PRINT_CACHED_TABLES 1
-#define TEST_NO_KEY_GROUP	 2
-#define TEST_MIT_THREAD		4
-#define TEST_BLOCKING		8
-#define TEST_KEEP_TMP_TABLES	16
-#define TEST_READCHECK		64	/**< Force use of readcheck */
-#define TEST_NO_EXTRA		128
-#define TEST_CORE_ON_SIGNAL	256	/**< Give core if signal */
-#define TEST_NO_STACKTRACE	512
-#define TEST_SIGINT		1024	/**< Allow sigint on threads */
-#define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in
-                                           some places */
-#endif
-
-/*
-   This is included in the server and in the client.
-   Options for select set by the yacc parser (stored in lex->options).
-
-   XXX:
-   log_event.h defines OPTIONS_WRITTEN_TO_BIN_LOG to specify what THD
-   options list are written into binlog. These options can NOT change their
-   values, or it will break replication between version.
-
-   context is encoded as following:
-   SELECT - SELECT_LEX_NODE::options
-   THD    - THD::options
-   intern - neither. used only as
-            func(..., select_node->options | thd->options | OPTION_XXX, ...)
-
-   TODO: separate three contexts above, move them to separate bitfields.
-*/
-
-#define SELECT_DISTINCT         (1ULL << 0)     // SELECT, user
-#define SELECT_STRAIGHT_JOIN    (1ULL << 1)     // SELECT, user
-#define SELECT_DESCRIBE         (1ULL << 2)     // SELECT, user
-#define SELECT_SMALL_RESULT     (1ULL << 3)     // SELECT, user
-#define SELECT_BIG_RESULT       (1ULL << 4)     // SELECT, user
-#define OPTION_FOUND_ROWS       (1ULL << 5)     // SELECT, user
-#define SELECT_NO_JOIN_CACHE    (1ULL << 7)     // intern
-#define OPTION_BIG_TABLES       (1ULL << 8)     // THD, user
-#define OPTION_BIG_SELECTS      (1ULL << 9)     // THD, user
-#define OPTION_LOG_OFF          (1ULL << 10)    // THD, user
-#define OPTION_QUOTE_SHOW_CREATE (1ULL << 11)   // THD, user, unused
-#define TMP_TABLE_ALL_COLUMNS   (1ULL << 12)    // SELECT, intern
-#define OPTION_WARNINGS         (1ULL << 13)    // THD, user
-#define OPTION_AUTO_IS_NULL     (1ULL << 14)    // THD, user, binlog
-#define OPTION_FOUND_COMMENT    (1ULL << 15)    // SELECT, intern, parser
-#define OPTION_SAFE_UPDATES     (1ULL << 16)    // THD, user
-#define OPTION_BUFFER_RESULT    (1ULL << 17)    // SELECT, user
-#define OPTION_BIN_LOG          (1ULL << 18)    // THD, user
-#define OPTION_NOT_AUTOCOMMIT   (1ULL << 19)    // THD, user
-#define OPTION_BEGIN            (1ULL << 20)    // THD, intern
-#define OPTION_TABLE_LOCK       (1ULL << 21)    // THD, intern
-#define OPTION_QUICK            (1ULL << 22)    // SELECT (for DELETE)
-#define OPTION_KEEP_LOG         (1ULL << 23)    // THD, user
-
-/* The following is used to detect a conflict with DISTINCT */
-#define SELECT_ALL              (1ULL << 24)    // SELECT, user, parser
-
-/** The following can be set when importing tables in a 'wrong order'
-   to suppress foreign key checks */
-#define OPTION_NO_FOREIGN_KEY_CHECKS    (1ULL << 26) // THD, user, binlog
-/** The following speeds up inserts to InnoDB tables by suppressing unique
-   key checks in some cases */
-#define OPTION_RELAXED_UNIQUE_CHECKS    (1ULL << 27) // THD, user, binlog
-#define SELECT_NO_UNLOCK                (1ULL << 28) // SELECT, intern
-#define OPTION_SCHEMA_TABLE             (1ULL << 29) // SELECT, intern
-/** Flag set if setup_tables already done */
-#define OPTION_SETUP_TABLES_DONE        (1ULL << 30) // intern
-/** If not set then the thread will ignore all warnings with level notes. */
-#define OPTION_SQL_NOTES                (1ULL << 31) // THD, user
-/**
-  Force the used temporary table to be a MyISAM table (because we will use
-  fulltext functions when reading from it.
-*/
-#define TMP_TABLE_FORCE_MYISAM          (1ULL << 32)
-#define OPTION_PROFILING                (1ULL << 33)
-
-/*
-  Dont report errors for individual rows,
-  But just report error on commit (or read ofcourse)
-*/
-#define OPTION_ALLOW_BATCH              (1ULL << 33) // THD, intern (slave)
-
-/**
-  Maximum length of time zone name that we support
-  (Time zone name is char(64) in db). mysqlbinlog needs it.
-*/
-#define MAX_TIME_ZONE_NAME_LENGTH       (NAME_LEN + 1)
-
-/* The rest of the file is included in the server only */
-#ifndef MYSQL_CLIENT
-
-/* Bits for different SQL modes modes (including ANSI mode) */
-#define MODE_REAL_AS_FLOAT              1
-#define MODE_PIPES_AS_CONCAT            2
-#define MODE_ANSI_QUOTES                4
-#define MODE_IGNORE_SPACE		8
-#define MODE_NOT_USED			16
-#define MODE_ONLY_FULL_GROUP_BY		32
-#define MODE_NO_UNSIGNED_SUBTRACTION	64
-#define MODE_NO_DIR_IN_CREATE		128
-#define MODE_POSTGRESQL			256
-#define MODE_ORACLE			512
-#define MODE_MSSQL			1024
-#define MODE_DB2			2048
-#define MODE_MAXDB			4096
-#define MODE_NO_KEY_OPTIONS             8192
-#define MODE_NO_TABLE_OPTIONS           16384
-#define MODE_NO_FIELD_OPTIONS           32768
-#define MODE_MYSQL323                   65536L
-#define MODE_MYSQL40                    (MODE_MYSQL323*2)
-#define MODE_ANSI	                (MODE_MYSQL40*2)
-#define MODE_NO_AUTO_VALUE_ON_ZERO      (MODE_ANSI*2)
-#define MODE_NO_BACKSLASH_ESCAPES       (MODE_NO_AUTO_VALUE_ON_ZERO*2)
-#define MODE_STRICT_TRANS_TABLES	(MODE_NO_BACKSLASH_ESCAPES*2)
-#define MODE_STRICT_ALL_TABLES		(MODE_STRICT_TRANS_TABLES*2)
-#define MODE_NO_ZERO_IN_DATE		(MODE_STRICT_ALL_TABLES*2)
-#define MODE_NO_ZERO_DATE		(MODE_NO_ZERO_IN_DATE*2)
-#define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
-#define MODE_ERROR_FOR_DIVISION_BY_ZERO (MODE_INVALID_DATES*2)
-#define MODE_TRADITIONAL		(MODE_ERROR_FOR_DIVISION_BY_ZERO*2)
-#define MODE_NO_AUTO_CREATE_USER	(MODE_TRADITIONAL*2)
-#define MODE_HIGH_NOT_PRECEDENCE	(MODE_NO_AUTO_CREATE_USER*2)
-#define MODE_NO_ENGINE_SUBSTITUTION     (MODE_HIGH_NOT_PRECEDENCE*2)
-#define MODE_PAD_CHAR_TO_FULL_LENGTH    (1ULL << 31)
-
-/* @@optimizer_switch flags */
-#define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
-#define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
-
-/*
-  Replication uses 8 bytes to store SQL_MODE in the binary log. The day you
-  use strictly more than 64 bits by adding one more define above, you should
-  contact the replication team because the replication code should then be
-  updated (to store more bytes on disk).
-
-  NOTE: When adding new SQL_MODE types, make sure to also add them to
-  the scripts used for creating the MySQL system tables
-  in scripts/mysql_system_tables.sql and scripts/mysql_system_tables_fix.sql
-
-*/
-#define RAID_BLOCK_SIZE 1024
-
-#define MY_CHARSET_BIN_MB_MAXLEN 1
-
-// uncachable cause
-#define UNCACHEABLE_DEPENDENT   1
-#define UNCACHEABLE_RAND        2
-#define UNCACHEABLE_SIDEEFFECT	4
-/// forcing to save JOIN for explain
-#define UNCACHEABLE_EXPLAIN     8
-/** Don't evaluate subqueries in prepare even if they're not correlated */
-#define UNCACHEABLE_PREPARE    16
-/* For uncorrelated SELECT in an UNION with some correlated SELECTs */
-#define UNCACHEABLE_UNITED     32
-
-/* Used to check GROUP BY list in the MODE_ONLY_FULL_GROUP_BY mode */
-#define UNDEF_POS (-1)
-
-/* BINLOG_DUMP options */
-
-#define BINLOG_DUMP_NON_BLOCK   1
-
-/* sql_show.cc:show_log_files() */
-#define SHOW_LOG_STATUS_FREE "FREE"
-#define SHOW_LOG_STATUS_INUSE "IN USE"
-
-/* Options to add_table_to_list() */
-#define TL_OPTION_UPDATING	1
-#define TL_OPTION_FORCE_INDEX	2
-#define TL_OPTION_IGNORE_LEAVES 4
-#define TL_OPTION_ALIAS         8
-
-/* Some portable defines */
-
-#define portable_sizeof_char_ptr 8
-
-#define tmp_file_prefix "#sql"			/**< Prefix for tmp tables */
-#define tmp_file_prefix_length 4
-
-/* Flags for calc_week() function.  */
-#define WEEK_MONDAY_FIRST    1
-#define WEEK_YEAR            2
-#define WEEK_FIRST_WEEKDAY   4
-
-#define STRING_BUFFER_USUAL_SIZE 80
-
-/*
-  Some defines for exit codes for ::is_equal class functions.
-*/
-#define IS_EQUAL_NO 0
-#define IS_EQUAL_YES 1
-#define IS_EQUAL_PACK_LENGTH 2
-
-enum enum_parsing_place
-{
-  NO_MATTER
-  , IN_HAVING
-  , SELECT_LIST
-  , IN_WHERE
-  , IN_ON
-};
-
-enum enum_mysql_completiontype {
-  ROLLBACK_RELEASE= -2
-  , ROLLBACK= 1
-  , ROLLBACK_AND_CHAIN= 7
-  , COMMIT_RELEASE= -1
-  , COMMIT= 0
-  , COMMIT_AND_CHAIN= 6
-};
-
-enum enum_check_fields
-{
-  CHECK_FIELD_IGNORE
-  , CHECK_FIELD_WARN
-  , CHECK_FIELD_ERROR_FOR_NULL
-};
-
-enum enum_var_type
-{
-  OPT_DEFAULT= 0
-  , OPT_SESSION
-  , OPT_GLOBAL
-};
-
-/* Forward declarations */
-
-struct TABLE_LIST;
-class String;
-struct st_table;
-class THD;
-class user_var_entry;
-class Security_context;
-
-#ifdef MYSQL_SERVER
 class Comp_creator;
 typedef Comp_creator* (*chooser_compare_func_creator)(bool invert);
-#endif
 
-#define thd_proc_info(thd, msg)  set_thd_proc_info(thd, msg, __func__, __FILE__, __LINE__)
+/**
+ * Contains all headers, definitions, and declarations common to 
+ * the server and the plugin infrastructure, and not the client 
+ */
+#include <drizzled/common_includes.h>       
+/* Range optimization API/library */
+#include <drizzled/opt_range.h>
+/* Simple error injection (crash) module */
+#include <drizzled/error_injection.h>
+/* API for connecting, logging in to a drizzled server */
+#include <drizzled/connect.h>
+/* Routines for dropping, repairing, checking schema tables */
+#include <drizzled/sql_table.h>
 
-extern pthread_key(THD*, THR_THD);
-inline THD *_current_thd(void)
-{
-  return (THD *)pthread_getspecific(THR_THD);
-}
-#define current_thd _current_thd()
-
-/** 
-  The meat of thd_proc_info(THD*, char*), a macro that packs the last
-  three calling-info parameters. 
-*/
-extern "C"
-const char *set_thd_proc_info(THD *thd, const char *info, 
-                              const char *calling_func, 
-                              const char *calling_file, 
-                              const unsigned int calling_line);
-
-/*
-  External variables
-*/
-extern ulong server_id;
-
-#include <drizzled/sql_string.h>
-#include "sql_list.h"
-#include "sql_map.h"
-#include "my_decimal.h"
-#include "handler.h"
-#include "table.h"
-#include "sql_error.h"
-#include "field.h"
-#include "protocol.h"
-#include "sql_udf.h"
-#include "item.h"
-
-extern my_decimal decimal_zero;
-
-/** @TODO Find a good header to put this guy... */
-void close_thread_tables(THD *thd);
-
-#include <drizzled/sql_parse.h>
-
-#include "sql_class.h"
-#include "slave.h" // for tables_ok(), rpl_filter
-#include "tztime.h"
-#ifdef MYSQL_SERVER
-#include "opt_range.h"
-
-
-/*
-  Error injector Macros to enable easy testing of recovery after failures
-  in various error cases.
-*/
-#ifndef ERROR_INJECT_SUPPORT
-
-#define ERROR_INJECT(x) 0
-#define ERROR_INJECT_ACTION(x,action) 0
-#define ERROR_INJECT_CRASH(x) 0
-#define ERROR_INJECT_VALUE(x) 0
-#define ERROR_INJECT_VALUE_ACTION(x,action) 0
-#define ERROR_INJECT_VALUE_CRASH(x) 0
-#define SET_ERROR_INJECT_VALUE(x)
-
-#else
-
-inline bool check_and_unset_keyword(const char *dbug_str)
-{
-  const char *extra_str= "-d,";
-  char total_str[200];
-  if (_db_strict_keyword_ (dbug_str))
-  {
-    strxmov(total_str, extra_str, dbug_str, NullS);
-    return 1;
-  }
-  return 0;
-}
-
-
-inline bool
-check_and_unset_inject_value(int value)
-{
-  THD *thd= current_thd;
-  if (thd->error_inject_value == (uint)value)
-  {
-    thd->error_inject_value= 0;
-    return 1;
-  }
-  return 0;
-}
-
-/*
-  ERROR INJECT MODULE:
-  --------------------
-  These macros are used to insert macros from the application code.
-  The event that activates those error injections can be activated
-  from SQL by using:
-  SET SESSION dbug=+d,code;
-
-  After the error has been injected, the macros will automatically
-  remove the debug code, thus similar to using:
-  SET SESSION dbug=-d,code
-  from SQL.
-
-  ERROR_INJECT_CRASH will inject a crash of the MySQL Server if code
-  is set when macro is called. ERROR_INJECT_CRASH can be used in
-  if-statements, it will always return false unless of course it
-  crashes in which case it doesn't return at all.
-
-  ERROR_INJECT_ACTION will inject the action specified in the action
-  parameter of the macro, before performing the action the code will
-  be removed such that no more events occur. ERROR_INJECT_ACTION
-  can also be used in if-statements and always returns FALSE.
-  ERROR_INJECT can be used in a normal if-statement, where the action
-  part is performed in the if-block. The macro returns TRUE if the
-  error was activated and otherwise returns FALSE. If activated the
-  code is removed.
-
-  Sometimes it is necessary to perform error inject actions as a serie
-  of events. In this case one can use one variable on the THD object.
-  Thus one sets this value by using e.g. SET_ERROR_INJECT_VALUE(100).
-  Then one can later test for it by using ERROR_INJECT_CRASH_VALUE,
-  ERROR_INJECT_ACTION_VALUE and ERROR_INJECT_VALUE. This have the same
-  behaviour as the above described macros except that they use the
-  error inject value instead of a code used by debug macros.
-*/
-#define SET_ERROR_INJECT_VALUE(x) \
-  current_thd->error_inject_value= (x)
-#define ERROR_INJECT_ACTION(code, action) \
-  (check_and_unset_keyword(code) ? ((action), 0) : 0)
-#define ERROR_INJECT(code) \
-  check_and_unset_keyword(code)
-#define ERROR_INJECT_VALUE(value) \
-  check_and_unset_inject_value(value)
-#define ERROR_INJECT_VALUE_ACTION(value,action) \
-  (check_and_unset_inject_value(value) ? (action) : 0)
-#define ERROR_INJECT_VALUE_CRASH(value) \
-  ERROR_INJECT_VALUE_ACTION(value, (abort(), 0))
-
-#endif
-
-void write_bin_log(THD *thd, bool clear_error,
-                   char const *query, ulong query_length);
-
-/* sql_connect.cc */
-int check_user(THD *thd, enum enum_server_command command, 
-	       const char *passwd, uint passwd_len, const char *db,
-	       bool check_count);
-pthread_handler_t handle_one_connection(void *arg);
-bool init_new_connection_handler_thread();
-void time_out_user_resource_limits(THD *thd, USER_CONN *uc);
-void decrease_user_connections(USER_CONN *uc);
-void thd_init_client_charset(THD *thd, uint cs_number);
-bool setup_connection_thread_globals(THD *thd);
-bool login_connection(THD *thd);
-void prepare_new_connection_state(THD* thd);
-void end_connection(THD *thd);
-
-
+/* sql_db.cc */
 int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create, bool silent);
 bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create);
 bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent);
-void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
-void mysql_client_binlog_statement(THD *thd);
-bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists,
-                    bool drop_temporary);
-int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
-                         bool drop_temporary, bool drop_view, bool log_query);
-bool quick_rm_table(handlerton *base,const char *db,
-                    const char *table_name, uint flags);
-void close_cached_table(THD *thd, TABLE *table);
-bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent);
-bool do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db,
-                      char *new_table_name, char *new_table_alias,
-                      bool skip_error);
-
 bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name,
                      bool force_switch);
-
 bool mysql_opt_change_db(THD *thd,
                          const LEX_STRING *new_db_name,
                          LEX_STRING *saved_db_name,
                          bool force_switch,
                          bool *cur_db_changed);
 
+/* sql_repl.cc */
+void write_bin_log(THD *thd, bool clear_error,
+                   char const *query, ulong query_length);
+void mysql_binlog_send(THD* thd, char* log_ident, my_off_t pos, ushort flags);
+void mysql_client_binlog_statement(THD *thd);
+
+/* sql_rename.cc */
+bool mysql_rename_tables(THD *thd, TABLE_LIST *table_list, bool silent);
+bool do_rename(THD *thd, TABLE_LIST *ren_table, char *new_db,
+                      char *new_table_name, char *new_table_alias,
+                      bool skip_error);
+
+/* sql_parse.cc */
 void mysql_parse(THD *thd, const char *inBuf, uint length,
                  const char ** semicolon);
 
 bool mysql_test_parse_for_slave(THD *thd,char *inBuf,uint length);
+
+
 bool is_update_query(enum enum_sql_command command);
+
 bool alloc_query(THD *thd, const char *packet, uint packet_length);
-void mysql_init_select(LEX *lex);
+
 void mysql_reset_thd_for_next_command(THD *thd);
-bool mysql_new_select(LEX *lex, bool move_down);
+
 void create_select_for_variable(const char *var_name);
+
 void mysql_init_multi_delete(LEX *lex);
+
 bool multi_delete_set_locks_and_link_aux_tables(LEX *lex);
-void init_max_user_conn(void);
+
 void init_update_queries(void);
+
+bool do_command(THD *thd);
+
+bool dispatch_command(enum enum_server_command command, THD *thd,
+		      char* packet, uint packet_length);
+
+void log_slow_statement(THD *thd);
+
+bool append_file_to_dir(THD *thd, const char **filename_ptr, 
+                        const char *table_name);
+
+bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables, bool *write_to_binlog);
+
+bool check_simple_select();
+
+/* @TODO <UNUSED> */
+void mysql_init_select(LEX *lex);
+bool mysql_new_select(LEX *lex, bool move_down);
+void init_max_user_conn(void);
 void free_max_user_conn(void);
 pthread_handler_t handle_bootstrap(void *arg);
 int mysql_execute_command(THD *thd);
-bool do_command(THD *thd);
-bool dispatch_command(enum enum_server_command command, THD *thd,
-		      char* packet, uint packet_length);
-void log_slow_statement(THD *thd);
 bool check_dup(const char *db, const char *name, TABLE_LIST *tables);
-bool compare_record(TABLE *table);
-bool append_file_to_dir(THD *thd, const char **filename_ptr, 
-                        const char *table_name);
-void wait_while_table_is_used(THD *thd, TABLE *table,
-                              enum ha_extra_function function);
-bool table_cache_init(void);
-void table_cache_free(void);
-bool table_def_init(void);
-void table_def_free(void);
-void assign_new_table_id(TABLE_SHARE *share);
-uint cached_open_tables(void);
-uint cached_table_definitions(void);
-void kill_mysql(void);
-void close_connection(THD *thd, uint errcode, bool lock);
-bool reload_cache(THD *thd, ulong options, TABLE_LIST *tables, bool *write_to_binlog);
 bool check_table_access(THD *thd, ulong want_access, TABLE_LIST *tables,
                         bool no_errors,
                         bool any_combination_of_privileges_will_do,
                         uint number);
-
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-bool check_global_access(THD *thd, ulong want_access);
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
-
 /*
   General routine to change field->ptr of a NULL-terminated array of Field
   objects. Useful when needed to call val_int, val_str or similar and the
@@ -722,31 +127,32 @@ bool check_global_access(THD *thd, ulong want_access);
   set_key_field_ptr changes all fields of an index using a key_info object.
   All methods presume that there is at least one field to change.
 */
-
 void set_field_ptr(Field **ptr, const uchar *new_buf, const uchar *old_buf);
 void set_key_field_ptr(KEY *key_info, const uchar *new_buf,
                        const uchar *old_buf);
+/* </UNUSED> */
 
-bool mysql_checksum_table(THD* thd, TABLE_LIST* table_list,
-                          HA_CHECK_OPT* check_opt);
-bool mysql_check_table(THD* thd, TABLE_LIST* table_list,
-                       HA_CHECK_OPT* check_opt);
-bool mysql_repair_table(THD* thd, TABLE_LIST* table_list,
-                        HA_CHECK_OPT* check_opt);
-bool mysql_analyze_table(THD* thd, TABLE_LIST* table_list,
-                         HA_CHECK_OPT* check_opt);
-bool mysql_optimize_table(THD* thd, TABLE_LIST* table_list,
-                          HA_CHECK_OPT* check_opt);
-bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* table_list,
-                              LEX_STRING *key_cache_name);
-bool mysql_preload_keys(THD* thd, TABLE_LIST* table_list);
-int reassign_keycache_tables(THD* thd, KEY_CACHE *src_cache,
-                             KEY_CACHE *dst_cache);
+/* sql_update.cc */
+bool compare_record(TABLE *table);
+
+/* sql_base.cc */
+void table_cache_free(void);
+bool table_cache_init(void);
+bool table_def_init(void);
+void table_def_free(void);
+void assign_new_table_id(TABLE_SHARE *share);
+uint cached_open_tables(void);
+uint cached_table_definitions(void);
+
+/* drizzled.cc */
+void kill_mysql(void);
+void close_connection(THD *thd, uint errcode, bool lock);
+
+/* sql_select.cc */
 TABLE *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
 
+/* handler.cc */
 bool mysql_xa_recover(THD *thd);
-
-bool check_simple_select();
 
 SORT_FIELD * make_unireg_sortorder(ORDER *order, uint *length,
                                   SORT_FIELD *sortorder);
@@ -902,49 +308,13 @@ find_field_in_table(THD *thd, TABLE *table, const char *name, uint length,
 Field *
 find_field_in_table_sef(TABLE *table, const char *name);
 
-#endif /* MYSQL_SERVER */
-
-#ifdef MYSQL_SERVER
 /* sql_do.cc */
 bool mysql_do(THD *thd, List<Item> &values);
 
 /* sql_analyse.h */
 bool append_escaped(String *to_str, String *from_str);
 
-/* sql_show.cc */
-bool mysqld_show_open_tables(THD *thd,const char *wild);
-bool mysqld_show_logs(THD *thd);
-void append_identifier(THD *thd, String *packet, const char *name,
-		       uint length);
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-int get_quote_char_for_identifier(THD *thd, const char *name, uint length);
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
-void mysqld_list_fields(THD *thd,TABLE_LIST *table, const char *wild);
-int mysqld_dump_create_info(THD *thd, TABLE_LIST *table_list, int fd);
-bool mysqld_show_create(THD *thd, TABLE_LIST *table_list);
-bool mysqld_show_create_db(THD *thd, char *dbname, HA_CREATE_INFO *create);
-
-void mysqld_list_processes(THD *thd,const char *user,bool verbose);
-int mysqld_show_status(THD *thd);
-int mysqld_show_variables(THD *thd,const char *wild);
-bool mysqld_show_storage_engines(THD *thd);
-bool mysqld_show_authors(THD *thd);
-bool mysqld_show_contributors(THD *thd);
-bool mysqld_show_privileges(THD *thd);
-bool mysqld_show_column_types(THD *thd);
-bool mysqld_help (THD *thd, const char *text);
-void calc_sum_of_all_status(STATUS_VAR *to);
-
-void append_definer(THD *thd, String *buffer, const LEX_STRING *definer_user,
-                    const LEX_STRING *definer_host);
-
-int add_status_vars(SHOW_VAR *list);
-void remove_status_vars(SHOW_VAR *list);
-void init_status_vars();
-void free_status_vars();
-void reset_status_vars();
+#include <drizzled/show.h>
 
 /* information schema */
 extern LEX_STRING INFORMATION_SCHEMA_NAME;
@@ -968,19 +338,6 @@ enum enum_schema_tables get_schema_table_idx(ST_SCHEMA_TABLE *schema_table);
 #define is_schema_db(X) \
   !my_strcasecmp(system_charset_info, INFORMATION_SCHEMA_NAME.str, (X))
 
-/* sql_prepare.cc */
-
-void mysql_stmt_prepare(THD *thd, const char *packet, uint packet_length);
-void mysql_stmt_execute(THD *thd, char *packet, uint packet_length);
-void mysql_stmt_close(THD *thd, char *packet);
-void mysql_sql_stmt_prepare(THD *thd);
-void mysql_sql_stmt_execute(THD *thd);
-void mysql_sql_stmt_close(THD *thd);
-void mysql_stmt_fetch(THD *thd, char *packet, uint packet_length);
-void mysql_stmt_reset(THD *thd, char *packet);
-void mysql_stmt_get_longdata(THD *thd, char *pos, ulong packet_length);
-void reinit_stmt_before_use(THD *thd, LEX *lex);
-
 /* sql_handler.cc */
 bool mysql_ha_open(THD *thd, TABLE_LIST *tables, bool reopen);
 bool mysql_ha_close(THD *thd, TABLE_LIST *tables);
@@ -1000,7 +357,7 @@ bool add_field_to_list(THD *thd, LEX_STRING *field_name, enum enum_field_types t
 		       Item *default_value, Item *on_update_value,
 		       LEX_STRING *comment,
 		       char *change, List<String> *interval_list,
-		       CHARSET_INFO *cs);
+		       const CHARSET_INFO * const cs);
 Create_field * new_create_field(THD *thd, char *field_name, enum_field_types type,
 				char *length, char *decimals,
 				uint type_modifier, 
@@ -1228,12 +585,6 @@ int key_cmp(KEY_PART_INFO *key_part, const uchar *key, uint key_length);
 extern "C" int key_rec_cmp(void *key_info, uchar *a, uchar *b);
 
 bool init_errmessage(void);
-#endif /* MYSQL_SERVER */
-void sql_perror(const char *message);
-
-bool fn_format_relative_to_data_home(char * to, const char *name,
-				     const char *dir, const char *extension);
-#ifdef MYSQL_SERVER
 File open_binlog(IO_CACHE *log, const char *log_file_name,
                  const char **errmsg);
 
@@ -1252,17 +603,17 @@ extern bool check_reserved_words(LEX_STRING *name);
 extern enum_field_types agg_field_type(Item **items, uint nitems);
 
 /* strfunc.cc */
-uint64_t find_set(TYPELIB *lib, const char *x, uint length, CHARSET_INFO *cs,
+uint64_t find_set(TYPELIB *lib, const char *x, uint length, const CHARSET_INFO * const cs,
 		   char **err_pos, uint *err_len, bool *set_warning);
 uint find_type(const TYPELIB *lib, const char *find, uint length,
                bool part_match);
 uint find_type2(const TYPELIB *lib, const char *find, uint length,
-                CHARSET_INFO *cs);
+                const CHARSET_INFO *cs);
 void unhex_type2(TYPELIB *lib);
 uint check_word(TYPELIB *lib, const char *val, const char *end,
 		const char **end_of_word);
 int find_string_in_array(LEX_STRING * const haystack, LEX_STRING * const needle,
-                         CHARSET_INFO * const cs);
+                         const CHARSET_INFO * const cs);
 
 
 bool is_keyword(const char *name, uint len);
@@ -1274,7 +625,7 @@ bool check_db_dir_existence(const char *db_name);
 bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create);
 bool load_db_opt_by_name(THD *thd, const char *db_name,
                          HA_CREATE_INFO *db_create_info);
-CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name);
+const CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name);
 bool my_dbopt_init(void);
 void my_dbopt_cleanup(void);
 extern int creating_database; // How many database locks are made
@@ -1285,14 +636,6 @@ extern int creating_table;    // How many mysql_create_table() are running
 */
 
 extern time_t server_start_time, flush_status_time;
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-extern uint mysql_data_home_len;
-extern char *mysql_data_home,server_version[SERVER_VERSION_LENGTH],
-            mysql_real_data_home[], mysql_unpacked_real_data_home[];
-extern CHARSET_INFO *character_set_filesystem;
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
 extern char *opt_mysql_tmpdir, mysql_charsets_dir[];
             
 #define mysql_tmpdir (my_tmpdir(&mysql_tmpdir_list))
@@ -1310,12 +653,6 @@ extern Lt_creator lt_creator;
 extern Ge_creator ge_creator;
 extern Le_creator le_creator;
 extern char language[FN_REFLEN];
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-extern char reg_ext[FN_EXTLEN];
-extern uint reg_ext_length;
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
 extern char glob_hostname[FN_REFLEN], mysql_home[FN_REFLEN];
 extern char pidfile_name[FN_REFLEN], system_time_zone[30], *opt_init_file;
 extern char log_error_file[FN_REFLEN], *opt_tc_log_file;
@@ -1335,17 +672,11 @@ extern ulong slave_net_timeout, slave_trans_retries;
 extern uint max_user_connections;
 extern ulong what_to_log,flush_time;
 extern ulong query_buff_size;
-extern ulong max_prepared_stmt_count, prepared_stmt_count;
 extern ulong binlog_cache_size, max_binlog_cache_size, open_files_limit;
 extern ulong max_binlog_size, max_relay_log_size;
 extern ulong opt_binlog_rows_event_max_size;
 extern ulong rpl_recovery_rank, thread_cache_size, thread_pool_size;
 extern ulong back_log;
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-extern ulong specialflag;
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
 extern ulong current_pid;
 extern ulong expire_logs_days, sync_binlog_period, sync_binlog_counter;
 extern ulong opt_tc_log_size, tc_log_max_pages_used, tc_log_page_size;
@@ -1355,18 +686,9 @@ extern bool opt_innodb_safe_binlog, opt_innodb;
 extern uint test_flags,select_errors,ha_open_options;
 extern uint protocol_version, mysqld_port, dropping_tables;
 extern uint delay_key_write_options;
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-extern uint lower_case_table_names;
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
 extern bool opt_endinfo, using_udf_functions;
 extern bool locked_in_memory;
 extern bool opt_using_transactions;
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
 extern bool using_update_log, server_id_supplied;
 extern bool opt_update_log, opt_bin_log, opt_error_log;
 extern bool opt_log; 
@@ -1395,8 +717,6 @@ extern bool opt_noacl;
 extern bool opt_old_style_user_limits;
 extern uint opt_crash_binlog_innodb;
 extern char *default_tz_name;
-#endif /* MYSQL_SERVER */
-#ifdef MYSQL_SERVER
 extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;
 
@@ -1424,11 +744,6 @@ extern MY_BITMAP temp_pool;
 extern String my_empty_string;
 extern const String my_null_string;
 extern SHOW_VAR status_vars[];
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-extern struct system_variables global_system_variables;
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
 extern struct system_variables max_system_variables;
 extern struct system_status_var global_status_var;
 extern struct rand_struct sql_rand;
@@ -1629,14 +944,6 @@ bool get_field(MEM_ROOT *mem, Field *field, class String *res);
 char *fn_rext(char *name);
 
 /* Conversion functions */
-#endif /* MYSQL_SERVER */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
-uint strconvert(CHARSET_INFO *from_cs, const char *from,
-                CHARSET_INFO *to_cs, char *to, uint to_length, uint *errors);
-uint filename_to_tablename(const char *from, char *to, uint to_length);
-uint tablename_to_filename(const char *from, char *to, uint to_length);
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
-#ifdef MYSQL_SERVER
 uint build_table_filename(char *buff, size_t bufflen, const char *db,
                           const char *table, const char *ext, uint flags);
 
@@ -1795,7 +1102,12 @@ extern "C" void unireg_abort(int exit_code) __attribute__((noreturn));
 void kill_delayed_threads(void);
 bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
 
-/* Used by handlers to store things in schema tables */
+/** 
+ * Used by handlers to store things in schema tables 
+ *
+ * @TODO These should be placed in an information_schema.h header
+ * file once the new information schema design is finalized.
+ */
 #define IS_FILES_FILE_ID              0
 #define IS_FILES_FILE_NAME            1
 #define IS_FILES_FILE_TYPE            2
@@ -1835,7 +1147,4 @@ bool check_stack_overrun(THD *thd, long margin, uchar *dummy);
 #define IS_FILES_STATUS              36
 #define IS_FILES_EXTRA               37
 
-#endif /* MYSQL_SERVER */
-#endif /* MYSQL_CLIENT */
-
-#endif /* DRIZZLE_SERVER_MYSQL_PRIV_H */
+#endif /* DRIZZLE_SERVER_SERVER_INCLUDES_H */

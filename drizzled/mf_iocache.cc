@@ -31,8 +31,7 @@
   only be created if a write exeeds the file buffer or if one calls
   flush_io_cache().  
 */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #ifdef HAVE_REPLICATION
 
 extern "C" {

@@ -23,11 +23,9 @@
   @brief Code to run the io thread and the sql thread on the
   replication slave.
 */
-
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 #include <storage/myisam/myisam.h>
-#include "slave.h"
 #include "rpl_mi.h"
 #include "rpl_rli.h"
 #include "sql_repl.h"

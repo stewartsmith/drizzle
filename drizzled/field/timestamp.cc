@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/timestamp.h>
 
 /**
@@ -74,7 +75,7 @@ Field_timestamp::Field_timestamp(uchar *ptr_arg,
                                  enum utype unireg_check_arg,
                                  const char *field_name_arg,
                                  TABLE_SHARE *share,
-                                 CHARSET_INFO *cs)
+                                 const CHARSET_INFO * const cs)
   :Field_str(ptr_arg, MAX_DATETIME_WIDTH, null_ptr_arg, null_bit_arg,
 	     unireg_check_arg, field_name_arg, cs)
 {
@@ -93,7 +94,7 @@ Field_timestamp::Field_timestamp(uchar *ptr_arg,
 
 Field_timestamp::Field_timestamp(bool maybe_null_arg,
                                  const char *field_name_arg,
-                                 CHARSET_INFO *cs)
+                                 const CHARSET_INFO * const cs)
   :Field_str((uchar*) 0, MAX_DATETIME_WIDTH,
              maybe_null_arg ? (uchar*) "": 0, 0,
 	     NONE, field_name_arg, cs)
@@ -142,7 +143,7 @@ timestamp_auto_set_type Field_timestamp::get_auto_set_type() const
 
 int Field_timestamp::store(const char *from,
                            uint len,
-                           CHARSET_INFO *cs __attribute__((unused)))
+                           const CHARSET_INFO * const cs __attribute__((unused)))
 {
   DRIZZLE_TIME l_time;
   my_time_t tmp= 0;

@@ -41,7 +41,7 @@ typedef struct st_hash {
   DYNAMIC_ARRAY array;				/* Place for hash_keys */
   hash_get_key get_key;
   void (*free)(void *);
-  CHARSET_INFO *charset;
+  const CHARSET_INFO *charset;
 } HASH;
 
 /* A search iterator state */
@@ -49,7 +49,7 @@ typedef uint HASH_SEARCH_STATE;
 
 #define hash_init(A,B,C,D,E,F,G,H) _hash_init(A,0,B,C,D,E,F,G,H CALLER_INFO)
 #define hash_init2(A,B,C,D,E,F,G,H,I) _hash_init(A,B,C,D,E,F,G,H,I CALLER_INFO)
-bool _hash_init(HASH *hash, uint growth_size,CHARSET_INFO *charset,
+bool _hash_init(HASH *hash, uint growth_size, const CHARSET_INFO * const charset,
 		   ulong default_array_elements, size_t key_offset,
 		   size_t key_length, hash_get_key get_key,
 		   void (*free_element)(void*), uint flags CALLER_INFO_PROTO);
@@ -66,7 +66,7 @@ bool hash_delete(HASH *hash,uchar *record);
 bool hash_update(HASH *hash,uchar *record,uchar *old_key,size_t old_key_length);
 void hash_replace(HASH *hash, HASH_SEARCH_STATE *state, uchar *new_row);
 
-#define hash_clear(H) memset((char*) (H), 0, sizeof(*(H)))
+#define hash_clear(H) memset((H), 0, sizeof(*(H)))
 #define hash_inited(H) ((H)->array.buffer != 0)
 #define hash_init_opt(A,B,C,D,E,F,G,H) \
           (!hash_inited(A) && _hash_init(A,0,B,C,D,E,F,G, H CALLER_INFO))

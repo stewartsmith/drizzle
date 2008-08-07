@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/varstring.h>
 
 /****************************************************************************
@@ -61,7 +62,7 @@ int Field_varstring::do_save_field_metadata(uchar *metadata_ptr)
   return 2;
 }
 
-int Field_varstring::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_varstring::store(const char *from,uint length, const CHARSET_INFO * const cs)
 {
   uint copy_length;
   const char *well_formed_error_pos;
@@ -247,7 +248,7 @@ enum ha_base_keytype Field_varstring::key_type() const
 void Field_varstring::sql_type(String &res) const
 {
   THD *thd= table->in_use;
-  CHARSET_INFO *cs=res.charset();
+  const CHARSET_INFO * const cs=res.charset();
   ulong length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
@@ -601,7 +602,7 @@ void Field_varstring::hash(ulong *nr, ulong *nr2)
   else
   {
     uint len=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
-    CHARSET_INFO *cs= charset();
+    const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr + length_bytes, len, nr, nr2);
   }
 }

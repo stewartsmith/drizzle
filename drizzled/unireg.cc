@@ -23,8 +23,7 @@
     str is a (long) to record position where 0 is the first position.
 */
 
-#include "mysql_priv.h"
-#include <assert.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/drizzled_error_messages.h>
 
 #define FCOMP			17		/* Bytes for a packed field */

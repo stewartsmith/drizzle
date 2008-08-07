@@ -84,6 +84,7 @@
 #define CONNECT_TIMEOUT 0
 
 #include "client_settings.h"
+#include <drizzled/version.h>
 #include <libdrizzle/sql_common.h>
 
 uint    drizzle_port=0;
@@ -386,7 +387,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
       net->last_errno=uint2korr(pos);
       pos+=2;
       len-=2;
-      if (protocol_41(drizzle) && pos[0] == '#')
+      if (pos[0] == '#')
       {
         strncpy(net->sqlstate, pos+1, SQLSTATE_LENGTH);
         pos+= SQLSTATE_LENGTH+1;
@@ -517,14 +518,12 @@ static void cli_flush_use_result(DRIZZLE *drizzle)
     ulong pkt_len;
     if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
       break;
-    if (pkt_len <= 8 && drizzle->net.read_pos[0] == 254)
+    if (pkt_len <= 8 && drizzle->net.read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA)
     {
-      if (protocol_41(drizzle))
-      {
-        char *pos= (char*) drizzle->net.read_pos + 1;
-        drizzle->warning_count=uint2korr(pos); pos+=2;
-        drizzle->server_status=uint2korr(pos); pos+=2;
-      }
+      char *pos= (char*) drizzle->net.read_pos + 1;
+      drizzle->warning_count=uint2korr(pos); pos+=2;
+      drizzle->server_status=uint2korr(pos); pos+=2;
+
       break;                            /* End of data */
     }
   }
@@ -550,7 +549,6 @@ void end_server(DRIZZLE *drizzle)
   net_end(&drizzle->net);
   free_old_query(drizzle);
   errno= save_errno;
-  return;
 }
 
 
@@ -579,7 +577,6 @@ drizzle_free_result(DRIZZLE_RES *result)
       my_free((uchar*) result->row,MYF(0));
     my_free((uchar*) result,MYF(0));
   }
-  return;
 }
 
 /****************************************************************************
@@ -805,8 +802,8 @@ static void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column, uint32_t field_c
 ***************************************************************************/
 
 DRIZZLE_FIELD *
-unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
-        my_bool default_value, uint server_capabilities)
+unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc,uint fields,
+              my_bool default_value)
 {
   DRIZZLE_ROWS  *row;
   DRIZZLE_FIELD  *field,*result;
@@ -820,91 +817,47 @@ unpack_fields(DRIZZLE_DATA *data,MEM_ROOT *alloc,uint fields,
     return(0);
   }
   memset((char*) field, 0, (uint) sizeof(DRIZZLE_FIELD)*fields);
-  if (server_capabilities & CLIENT_PROTOCOL_41)
+
+  for (row= data->data; row ; row = row->next,field++)
   {
-    /* server is 4.1, and returns the new field result format */
-    for (row=data->data; row ; row = row->next,field++)
+    uchar *pos;
+    /* fields count may be wrong */
+    assert((uint) (field - result) < fields);
+    cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
+    field->catalog=   strmake_root(alloc,(char*) row->data[0], lengths[0]);
+    field->db=        strmake_root(alloc,(char*) row->data[1], lengths[1]);
+    field->table=     strmake_root(alloc,(char*) row->data[2], lengths[2]);
+    field->org_table= strmake_root(alloc,(char*) row->data[3], lengths[3]);
+    field->name=      strmake_root(alloc,(char*) row->data[4], lengths[4]);
+    field->org_name=  strmake_root(alloc,(char*) row->data[5], lengths[5]);
+
+    field->catalog_length=  lengths[0];
+    field->db_length=    lengths[1];
+    field->table_length=  lengths[2];
+    field->org_table_length=  lengths[3];
+    field->name_length=  lengths[4];
+    field->org_name_length=  lengths[5];
+
+    /* Unpack fixed length parts */
+    pos= (uchar*) row->data[6];
+    field->charsetnr= uint2korr(pos);
+    field->length=  (uint) uint4korr(pos+2);
+    field->type=  (enum enum_field_types) pos[6];
+    field->flags=  uint2korr(pos+7);
+    field->decimals=  (uint) pos[9];
+
+    if (INTERNAL_NUM_FIELD(field))
+      field->flags|= NUM_FLAG;
+    if (default_value && row->data[7])
     {
-      uchar *pos;
-      /* fields count may be wrong */
-      assert((uint) (field - result) < fields);
-      cli_fetch_lengths(&lengths[0], row->data, default_value ? 8 : 7);
-      field->catalog=   strmake_root(alloc,(char*) row->data[0], lengths[0]);
-      field->db=        strmake_root(alloc,(char*) row->data[1], lengths[1]);
-      field->table=     strmake_root(alloc,(char*) row->data[2], lengths[2]);
-      field->org_table= strmake_root(alloc,(char*) row->data[3], lengths[3]);
-      field->name=      strmake_root(alloc,(char*) row->data[4], lengths[4]);
-      field->org_name=  strmake_root(alloc,(char*) row->data[5], lengths[5]);
-
-      field->catalog_length=  lengths[0];
-      field->db_length=    lengths[1];
-      field->table_length=  lengths[2];
-      field->org_table_length=  lengths[3];
-      field->name_length=  lengths[4];
-      field->org_name_length=  lengths[5];
-
-      /* Unpack fixed length parts */
-      pos= (uchar*) row->data[6];
-      field->charsetnr= uint2korr(pos);
-      field->length=  (uint) uint4korr(pos+2);
-      field->type=  (enum enum_field_types) pos[6];
-      field->flags=  uint2korr(pos+7);
-      field->decimals=  (uint) pos[9];
-
-      if (INTERNAL_NUM_FIELD(field))
-        field->flags|= NUM_FLAG;
-      if (default_value && row->data[7])
-      {
-        field->def=strmake_root(alloc,(char*) row->data[7], lengths[7]);
-  field->def_length= lengths[7];
-      }
-      else
-        field->def=0;
-      field->max_length= 0;
+      field->def=strmake_root(alloc,(char*) row->data[7], lengths[7]);
+      field->def_length= lengths[7];
     }
+    else
+      field->def=0;
+    field->max_length= 0;
   }
-#ifndef DELETE_SUPPORT_OF_4_0_PROTOCOL
-  else
-  {
-    /* old protocol, for backward compatibility */
-    for (row=data->data; row ; row = row->next,field++)
-    {
-      cli_fetch_lengths(&lengths[0], row->data, default_value ? 6 : 5);
-      field->org_table= field->table=  strdup_root(alloc,(char*) row->data[0]);
-      field->name=   strdup_root(alloc,(char*) row->data[1]);
-      field->length= (uint) uint3korr(row->data[2]);
-      field->type=   (enum enum_field_types) (uchar) row->data[3][0];
 
-      field->catalog=(char*)  "";
-      field->db=     (char*)  "";
-      field->catalog_length= 0;
-      field->db_length= 0;
-      field->org_table_length=  field->table_length=  lengths[0];
-      field->name_length=  lengths[1];
-
-      if (server_capabilities & CLIENT_LONG_FLAG)
-      {
-        field->flags=   uint2korr(row->data[4]);
-        field->decimals=(uint) (uchar) row->data[4][2];
-      }
-      else
-      {
-        field->flags=   (uint) (uchar) row->data[4][0];
-        field->decimals=(uint) (uchar) row->data[4][1];
-      }
-      if (INTERNAL_NUM_FIELD(field))
-        field->flags|= NUM_FLAG;
-      if (default_value && row->data[5])
-      {
-        field->def=strdup_root(alloc,(char*) row->data[5]);
-  field->def_length= lengths[5];
-      }
-      else
-        field->def=0;
-      field->max_length= 0;
-    }
-  }
-#endif /* DELETE_SUPPORT_OF_4_0_PROTOCOL */
   free_rows(data);        /* Free old data */
   return(result);
 }
@@ -938,14 +891,13 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
   result->fields=fields;
 
   /*
-    The last EOF packet is either a single 254 character or (in DRIZZLE 4.1)
-    254 followed by 1-7 status bytes.
+    The last EOF packet is either a 254 (0xFE) character followed by 1-7 status bytes.
 
     This doesn't conflict with normal usage of 254 which stands for a
     string where the length of the string is 8 bytes. (see net_field_length())
   */
 
-  while (*(cp=net->read_pos) != 254 || pkt_len >= 8)
+  while (*(cp=net->read_pos) != DRIZZLE_PROTOCOL_NO_MORE_DATA || pkt_len >= 8)
   {
     result->rows++;
     if (!(cur= (DRIZZLE_ROWS*) alloc_root(&result->alloc,
@@ -977,7 +929,8 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
           set_drizzle_error(drizzle, CR_MALFORMED_PACKET, unknown_sqlstate);
           return(0);
         }
-  memcpy(to,(char*) cp,len); to[len]=0;
+  memcpy(to, cp, len);
+  to[len]=0;
   to+=len+1;
   cp+=len;
   if (DRIZZLE_FIELDs)
@@ -1019,7 +972,7 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
 
   if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
     return -1;
-  if (pkt_len <= 8 && net->read_pos[0] == 254)
+  if (pkt_len <= 8 && net->read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA)
   {
     if (pkt_len > 1)        /* DRIZZLE 4.1 protocol */
     {
@@ -1266,7 +1219,7 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
                                          MY_CS_PRIMARY, MYF(MY_WME));
     if (drizzle->charset && default_collation_name)
     {
-      CHARSET_INFO *collation;
+      const CHARSET_INFO *collation;
       if ((collation=
            get_charset_by_name(default_collation_name, MYF(MY_WME))))
       {
@@ -1574,25 +1527,16 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
   /* Remove options that server doesn't support */
   client_flag= ((client_flag &
-     ~(CLIENT_COMPRESS | CLIENT_SSL | CLIENT_PROTOCOL_41)) |
+     ~(CLIENT_COMPRESS | CLIENT_SSL)) |
     (client_flag & drizzle->server_capabilities));
   client_flag&= ~CLIENT_COMPRESS;
 
-  if (client_flag & CLIENT_PROTOCOL_41)
-  {
-    /* 4.1 server and 4.1 client has a 32 byte option flag */
-    int4store(buff,client_flag);
-    int4store(buff+4, net->max_packet_size);
-    buff[8]= (char) drizzle->charset->number;
-    memset(buff+9, 0, 32-9);
-    end= buff+32;
-  }
-  else
-  {
-    int2store(buff,client_flag);
-    int3store(buff+2,net->max_packet_size);
-    end= buff+5;
-  }
+  int4store(buff, client_flag);
+  int4store(buff+4, net->max_packet_size);
+  buff[8]= (char) drizzle->charset->number;
+  memset(buff+9, 0, 32-9);
+  end= buff+32;
+
   drizzle->client_flag=client_flag;
 
   /* This needs to be changed as it's not useful with big packets */
@@ -1729,7 +1673,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   }
   if (drizzle_set_character_set(&tmp_drizzle, drizzle->charset->csname))
   {
-    memset((char*) &tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
+    memset(&tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
     drizzle_close(&tmp_drizzle);
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
     strcpy(drizzle->net.last_error, tmp_drizzle.net.last_error);
@@ -1741,7 +1685,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   tmp_drizzle.free_me= drizzle->free_me;
 
   /* Don't free options as these are now used in tmp_drizzle */
-  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
+  memset(&drizzle->options, 0, sizeof(drizzle->options));
   drizzle->free_me=0;
   drizzle_close(drizzle);
   *drizzle=tmp_drizzle;
@@ -1796,7 +1740,7 @@ static void drizzle_close_free_options(DRIZZLE *drizzle)
     delete_dynamic(init_commands);
     my_free((char*)init_commands,MYF(MY_WME));
   }
-  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
+  memset(&drizzle->options, 0, sizeof(drizzle->options));
   return;
 }
 
@@ -1855,17 +1799,10 @@ get_info:
   {
     drizzle->affected_rows= net_field_length_ll(&pos);
     drizzle->insert_id=    net_field_length_ll(&pos);
-    if (protocol_41(drizzle))
-    {
-      drizzle->server_status=uint2korr(pos); pos+=2;
-      drizzle->warning_count=uint2korr(pos); pos+=2;
-    }
-    else if (drizzle->server_capabilities & CLIENT_TRANSACTIONS)
-    {
-      /* DRIZZLE 4.0 protocol */
-      drizzle->server_status=uint2korr(pos); pos+=2;
-      drizzle->warning_count= 0;
-    }
+
+    drizzle->server_status= uint2korr(pos); pos+=2;
+    drizzle->warning_count= uint2korr(pos); pos+=2;
+
     if (pos < drizzle->net.read_pos+length && net_field_length(&pos))
       drizzle->info=(char*) pos;
     return(0);
@@ -1890,11 +1827,10 @@ get_info:
   if (!(drizzle->server_status & SERVER_STATUS_AUTOCOMMIT))
     drizzle->server_status|= SERVER_STATUS_IN_TRANS;
 
-  if (!(fields=cli_read_rows(drizzle,(DRIZZLE_FIELD*)0, protocol_41(drizzle) ? 7:5)))
+  if (!(fields=cli_read_rows(drizzle,(DRIZZLE_FIELD*)0, 7)))
     return(1);
-  if (!(drizzle->fields=unpack_fields(fields,&drizzle->field_alloc,
-            (uint) field_count,0,
-            drizzle->server_capabilities)))
+  if (!(drizzle->fields= unpack_fields(fields,&drizzle->field_alloc,
+            (uint) field_count, 0)))
     return(1);
   drizzle->status= DRIZZLE_STATUS_GET_RESULT;
   drizzle->field_count= (uint) field_count;
@@ -2227,20 +2163,17 @@ drizzle_get_server_version(const DRIZZLE *drizzle)
 */
 int STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
 {
-  struct charset_info_st *cs;
+  const CHARSET_INFO *cs;
   const char *save_csdir= charsets_dir;
 
   if (drizzle->options.charset_dir)
     charsets_dir= drizzle->options.charset_dir;
 
   if (strlen(cs_name) < MY_CS_NAME_SIZE &&
-     (cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0))))
+      (cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0))))
   {
     char buff[MY_CS_NAME_SIZE + 10];
     charsets_dir= save_csdir;
-    /* Skip execution of "SET NAMES" for pre-4.1 servers */
-    if (drizzle_get_server_version(drizzle) < 40100)
-      return 0;
     sprintf(buff, "SET NAMES %s", cs_name);
     if (!drizzle_real_query(drizzle, buff, strlen(buff)))
     {

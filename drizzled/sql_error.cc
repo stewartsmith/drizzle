@@ -41,7 +41,7 @@ This file contains the implementation of error and warnings related
 
 ***********************************************************************/
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 
 /*
   Store a new message in an error object

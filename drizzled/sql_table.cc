@@ -15,10 +15,9 @@
 
 /* drop and alter of tables */
 
-#include "mysql_priv.h"
-#include <mysys/hash.h>
+#include <drizzled/server_includes.h>
 #include <storage/myisam/myisam.h>
-#include "sql_show.h"
+#include <drizzled/sql_show.h>
 #include <drizzled/drizzled_error_messages.h>
 
 int creating_table= 0;        // How many mysql_create_table are running
@@ -690,7 +689,7 @@ static int sort_keys(KEY *a, KEY *b)
 
 bool check_duplicates_in_interval(const char *set_or_name,
                                   const char *name, TYPELIB *typelib,
-                                  CHARSET_INFO *cs, unsigned int *dup_val_count)
+                                  const CHARSET_INFO * const cs, unsigned int *dup_val_count)
 {
   TYPELIB tmp= *typelib;
   const char **cur_value= typelib->type_names;
@@ -731,7 +730,7 @@ bool check_duplicates_in_interval(const char *set_or_name,
   RETURN VALUES
     void
 */
-void calculate_interval_lengths(CHARSET_INFO *cs, TYPELIB *interval,
+void calculate_interval_lengths(const CHARSET_INFO * const cs, TYPELIB *interval,
                                 uint32_t *max_length, uint32_t *tot_length)
 {
   const char **pos;
@@ -922,7 +921,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
 
   for (field_no=0; (sql_field=it++) ; field_no++)
   {
-    CHARSET_INFO *save_cs;
+    const CHARSET_INFO *save_cs;
 
     /*
       Initialize length from its original value (number of characters),
@@ -986,7 +985,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
         sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
       uint32_t dummy;
-      CHARSET_INFO *cs= sql_field->charset;
+      const CHARSET_INFO * const cs= sql_field->charset;
       TYPELIB *interval= sql_field->interval;
 
       /*
@@ -2454,7 +2453,7 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
   Protocol *protocol= thd->protocol;
   LEX *lex= thd->lex;
   int result_code= 0;
-  CHARSET_INFO *cs= system_charset_info;
+  const CHARSET_INFO * const cs= system_charset_info;
 
   if (end_active_trans(thd))
     return(1);

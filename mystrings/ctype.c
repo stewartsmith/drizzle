@@ -310,7 +310,7 @@ my_bool my_parse_charset_xml(const char *buf, size_t len,
   Check repertoire: detect pure ascii strings
 */
 uint
-my_string_repertoire(CHARSET_INFO *cs, const char *str, ulong length)
+my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong length)
 {
   const char *strend= str + length;
   if (cs->mbminlen == 1)
@@ -362,7 +362,7 @@ my_string_repertoire(CHARSET_INFO *cs, const char *str, ulong length)
   to introduce new tricky character sets between 5.0 and 5.2.
 */
 my_bool
-my_charset_is_ascii_based(CHARSET_INFO *cs)
+my_charset_is_ascii_based(const CHARSET_INFO * const cs)
 {
   return 
     (cs->mbmaxlen == 1 && cs->tab_to_uni && cs->tab_to_uni['{'] == '{') ||
@@ -378,7 +378,7 @@ my_charset_is_ascii_based(CHARSET_INFO *cs)
   and dynamic charsets loader in "mysqld".
 */
 my_bool
-my_charset_is_8bit_pure_ascii(CHARSET_INFO *cs)
+my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs)
 {
   size_t code;
   if (!cs->tab_to_uni)
@@ -398,7 +398,7 @@ my_charset_is_8bit_pure_ascii(CHARSET_INFO *cs)
   ascii on the range 0x00..0x7F.
 */
 my_bool
-my_charset_is_ascii_compatible(CHARSET_INFO *cs)
+my_charset_is_ascii_compatible(const CHARSET_INFO * const cs)
 {
   uint i;
   if (!cs->tab_to_uni)

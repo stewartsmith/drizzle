@@ -22,6 +22,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
+#include <drizzled/server_includes.h>
 #include <drizzled/field/set.h>
 
 /*
@@ -35,7 +36,7 @@
 
 const char field_separator=',';
 
-int Field_set::store(const char *from,uint length,CHARSET_INFO *cs)
+int Field_set::store(const char *from,uint length, const CHARSET_INFO * const cs)
 {
   bool got_warning= 0;
   int err= 0;

@@ -74,7 +74,7 @@ my_coll_init_8bit_bin(CHARSET_INFO *cs,
   return false;
 }
 
-static int my_strnncoll_binary(const CHARSET_INFO * cs __attribute__((unused)),
+static int my_strnncoll_binary(const CHARSET_INFO * const  cs __attribute__((unused)),
                                const uchar *s, size_t slen,
                                const uchar *t, size_t tlen,
                                my_bool t_is_prefix)
@@ -85,7 +85,7 @@ static int my_strnncoll_binary(const CHARSET_INFO * cs __attribute__((unused)),
 }
 
 
-static size_t my_lengthsp_binary(const CHARSET_INFO *cs __attribute__((unused)),
+static size_t my_lengthsp_binary(const CHARSET_INFO * const cs __attribute__((unused)),
                                  const char *ptr __attribute__((unused)),
                                  size_t length)
 {
@@ -115,7 +115,7 @@ static size_t my_lengthsp_binary(const CHARSET_INFO *cs __attribute__((unused)),
   > 0	s > t
 */
 
-static int my_strnncollsp_binary(const CHARSET_INFO * cs __attribute__((unused)),
+static int my_strnncollsp_binary(const CHARSET_INFO * const  cs __attribute__((unused)),
                                  const uchar *s, size_t slen,
                                  const uchar *t, size_t tlen,
                                  my_bool diff_if_only_endspace_difference
@@ -125,7 +125,7 @@ static int my_strnncollsp_binary(const CHARSET_INFO * cs __attribute__((unused))
 }
 
 
-static int my_strnncoll_8bit_bin(const CHARSET_INFO * cs __attribute__((unused)),
+static int my_strnncoll_8bit_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
                                  const uchar *s, size_t slen,
                                  const uchar *t, size_t tlen,
                                  my_bool t_is_prefix)
@@ -161,7 +161,7 @@ static int my_strnncoll_8bit_bin(const CHARSET_INFO * cs __attribute__((unused))
   > 0	s > t
 */
 
-static int my_strnncollsp_8bit_bin(const CHARSET_INFO * cs __attribute__((unused)),
+static int my_strnncollsp_8bit_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
                                    const uchar *a, size_t a_length, 
                                    const uchar *b, size_t b_length,
                                    my_bool diff_if_only_endspace_difference)
@@ -210,14 +210,14 @@ static int my_strnncollsp_8bit_bin(const CHARSET_INFO * cs __attribute__((unused
 
 /* This function is used for all conversion functions */
 
-static size_t my_case_str_bin(const CHARSET_INFO *cs __attribute__((unused)),
+static size_t my_case_str_bin(const CHARSET_INFO * const cs __attribute__((unused)),
                               char *str __attribute__((unused)))
 {
   return 0;
 }
 
 
-static size_t my_case_bin(const CHARSET_INFO *cs __attribute__((unused)),
+static size_t my_case_bin(const CHARSET_INFO * const cs __attribute__((unused)),
                           char *src __attribute__((unused)),
                           size_t srclen,
                           char *dst __attribute__((unused)),
@@ -227,21 +227,21 @@ static size_t my_case_bin(const CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static int my_strcasecmp_bin(const CHARSET_INFO * cs __attribute__((unused)),
+static int my_strcasecmp_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
 			     const char *s, const char *t)
 {
   return strcmp(s,t);
 }
 
 
-uint my_mbcharlen_8bit(const CHARSET_INFO *cs __attribute__((unused)),
+uint my_mbcharlen_8bit(const CHARSET_INFO * const cs __attribute__((unused)),
                       uint c __attribute__((unused)))
 {
   return 1;
 }
 
 
-static int my_mb_wc_bin(const CHARSET_INFO *cs __attribute__((unused)),
+static int my_mb_wc_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 			my_wc_t *wc,
 			const uchar *str,
 			const uchar *end __attribute__((unused)))
@@ -254,7 +254,7 @@ static int my_mb_wc_bin(const CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static int my_wc_mb_bin(const CHARSET_INFO *cs __attribute__((unused)),
+static int my_wc_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 			my_wc_t wc,
 			uchar *s,
 			uchar *e __attribute__((unused)))
@@ -271,7 +271,7 @@ static int my_wc_mb_bin(const CHARSET_INFO *cs __attribute__((unused)),
 }
 
 
-static void my_hash_sort_8bit_bin(const CHARSET_INFO *cs __attribute__((unused)),
+static void my_hash_sort_8bit_bin(const CHARSET_INFO * const cs __attribute__((unused)),
                                   const uchar *key, size_t len,
                                   ulong *nr1, ulong *nr2)
 {
@@ -292,7 +292,7 @@ static void my_hash_sort_8bit_bin(const CHARSET_INFO *cs __attribute__((unused))
 }
 
 
-static void my_hash_sort_bin(const CHARSET_INFO *cs __attribute__((unused)),
+static void my_hash_sort_bin(const CHARSET_INFO * const cs __attribute__((unused)),
                              const uchar *key, size_t len,
                              ulong *nr1, ulong *nr2)
 {
@@ -318,7 +318,7 @@ static void my_hash_sort_bin(const CHARSET_INFO *cs __attribute__((unused)),
 #define INC_PTR(cs,A,B) (A)++
 
 
-int my_wildcmp_bin(const CHARSET_INFO *cs,
+int my_wildcmp_bin(const CHARSET_INFO * const cs,
                    const char *str,const char *str_end,
                    const char *wildstr,const char *wildend,
                    int escape, int w_one, int w_many)
@@ -397,7 +397,7 @@ int my_wildcmp_bin(const CHARSET_INFO *cs,
 
 
 static size_t
-my_strnxfrm_8bit_bin(const CHARSET_INFO *cs,
+my_strnxfrm_8bit_bin(const CHARSET_INFO * const cs,
                      uchar * dst, size_t dstlen, uint nweights,
                      const uchar *src, size_t srclen, uint flags)
 {
@@ -411,7 +411,7 @@ my_strnxfrm_8bit_bin(const CHARSET_INFO *cs,
 
 
 static
-uint my_instr_bin(const CHARSET_INFO *cs __attribute__((unused)),
+uint my_instr_bin(const CHARSET_INFO * const cs __attribute__((unused)),
 		  const char *b, size_t b_length,
 		  const char *s, size_t s_length,
 		  my_match_t *match, uint nmatch)

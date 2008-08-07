@@ -147,7 +147,7 @@ protected:
 };
 
 Item*
-create_func_char_cast(THD *thd, Item *a, int len, CHARSET_INFO *cs);
+create_func_char_cast(THD *thd, Item *a, int len, const CHARSET_INFO * const cs);
 
 /**
   Builder for cast expressions.
@@ -161,7 +161,7 @@ create_func_char_cast(THD *thd, Item *a, int len, CHARSET_INFO *cs);
 Item *
 create_func_cast(THD *thd, Item *a, Cast_target cast_type,
                  const char *len, const char *dec,
-                 CHARSET_INFO *cs);
+                 const CHARSET_INFO * const cs);
 
 int item_create_init();
 void item_create_cleanup();

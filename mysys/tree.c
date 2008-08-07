@@ -81,7 +81,7 @@ void init_tree(TREE *tree, ulong default_alloc_size, ulong memory_limit,
   if (default_alloc_size < DEFAULT_ALLOC_SIZE)
     default_alloc_size= DEFAULT_ALLOC_SIZE;
   default_alloc_size= MY_ALIGN(default_alloc_size, DEFAULT_ALIGN_SIZE);
-  memset((uchar*) &tree->null_element, 0, sizeof(tree->null_element));
+  memset(&tree->null_element, 0, sizeof(tree->null_element));
   tree->root= &tree->null_element;
   tree->compare=compare;
   tree->size_of_element=size > 0 ? (uint) size : 0;
@@ -232,12 +232,11 @@ TREE_ELEMENT *tree_insert(TREE *tree, void *key, uint key_size,
       else
       {
 	*((void**) (element+1))= (void*) ((void **) (element+1)+1);
-	memcpy((uchar*) *((void **) (element+1)),key,
-	       (size_t) (key_size-sizeof(void*)));
+	memcpy(*((void **) (element+1)),key, key_size - sizeof(void*));
       }
     }
     else
-      memcpy((uchar*) element+tree->offset_to_key,key,(size_t) key_size);
+      memcpy((uchar*) element + tree->offset_to_key, key, key_size);
     element->count=1;			/* May give warning in purify */
     tree->elements_in_tree++;
     rb_insert(tree,parent,element);	/* rebalance tree */

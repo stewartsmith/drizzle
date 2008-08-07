@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_DOUBLE
 #define DRIZZLE_SERVER_FIELD_DOUBLE
 
-#include <drizzled/mysql_priv.h>
-
 class Field_double :public Field_real {
 public:
   Field_double(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
@@ -45,7 +43,7 @@ public:
     {not_fixed= not_fixed_arg; }
   enum_field_types type() const { return DRIZZLE_TYPE_DOUBLE;}
   enum ha_base_keytype key_type() const { return HA_KEYTYPE_DOUBLE; }
-  int  store(const char *to,uint length,CHARSET_INFO *charset);
+  int  store(const char *to,uint length, const CHARSET_INFO * const charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
   int reset(void) { memset(ptr, 0, sizeof(double)); return 0; }

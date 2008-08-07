@@ -18,7 +18,7 @@
 
 #define CLIENT_CAPABILITIES (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG |	  \
                              CLIENT_SECURE_CONNECTION | CLIENT_TRANSACTIONS | \
-			     CLIENT_PROTOCOL_41 | CLIENT_SECURE_CONNECTION)
+			                 CLIENT_SECURE_CONNECTION)
 
 #define init_sigpipe_variables
 #define set_sigpipe(mysql)

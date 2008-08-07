@@ -59,9 +59,9 @@ noinst_LTLIBRARIES = libhandler.la
 
 LDADD = $(top_builddir)/vio/libviolt.la \
 	$(top_builddir)/libdrizzle/libsqlcommon.la \
-	$(top_builddir)/mysys/libmysyslt.la \
+	$(top_builddir)/mysys/libmysys.la \
 	$(top_builddir)/mystrings/libmystringslt.la \
-	$(ZLIB_LIBS)
+	$(ZLIB_LIBS) $(LIBINTL)
 
 drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
@@ -82,7 +82,7 @@ noinst_HEADERS = item.h \
 		 item_create.h \
 		 item_subselect.h \
 		 item_row.h \
-		 mysql_priv.h \
+		 server_includes.h \
 		 sql_bitmap.h \
 		 sql_class.h \
 		 sql_lex.h \
@@ -91,7 +91,6 @@ noinst_HEADERS = item.h \
 		 sql_map.h \
 		 sql_state.h \
 		 sql_string.h \
-		 unireg.h \
 		 sql_error.h \
 		 field.h \
 		 handler.h \

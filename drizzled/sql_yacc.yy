@@ -37,10 +37,8 @@
 #define YYMAXDEPTH 3200                        /* Because of 64K stack */
 #define Lex (YYTHD->lex)
 #define Select Lex->current_select
-#include "mysql_priv.h"
-#include "slave.h"
+#include <drizzled/server_includes.h>
 #include "lex_symbol.h"
-#include "item_create.h"
 #include <storage/myisam/myisam.h>
 #include <drizzled/drizzled_error_messages.h>
 
@@ -339,7 +337,7 @@ bool setup_select_in_parentheses(LEX *lex)
   enum enum_tx_isolation tx_isolation;
   enum Cast_target cast_type;
   enum ha_choice choice;
-  CHARSET_INFO *charset;
+  const CHARSET_INFO *charset;
   thr_lock_type lock_type;
   struct st_table_lock_info table_lock_info;
   interval_type interval, interval_time_st;
@@ -5870,8 +5868,8 @@ text_literal:
           {
             LEX_STRING tmp;
             THD *thd= YYTHD;
-            CHARSET_INFO *cs_con= thd->variables.collation_connection;
-            CHARSET_INFO *cs_cli= thd->variables.character_set_client;
+            const CHARSET_INFO * const cs_con= thd->variables.collation_connection;
+            const CHARSET_INFO * const cs_cli= thd->variables.character_set_client;
             uint repertoire= thd->lex->text_string_is_7bit &&
                              my_charset_is_ascii_based(cs_cli) ?
                              MY_REPERTOIRE_ASCII : MY_REPERTOIRE_UNICODE30;
@@ -5902,7 +5900,7 @@ text_literal:
                  If the string has been pure ASCII so far,
                  check the new part.
               */
-              CHARSET_INFO *cs= YYTHD->variables.collation_connection;
+              const CHARSET_INFO * const cs= YYTHD->variables.collation_connection;
               item->collation.repertoire|= my_string_repertoire(cs,
                                                                 $2.str,
                                                                 $2.length);
@@ -6209,7 +6207,7 @@ IDENT_sys:
 
             if (thd->charset_is_system_charset)
             {
-              CHARSET_INFO *cs= system_charset_info;
+              const CHARSET_INFO * const cs= system_charset_info;
               int dummy_error;
               uint wlen= cs->cset->well_formed_len(cs, $1.str,
                                                    $1.str+$1.length,

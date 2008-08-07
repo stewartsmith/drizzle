@@ -38,7 +38,6 @@
 #include <libdrizzle/errmsg.h>
 #include <mysys/my_getopt.h>
 /* That one is necessary for defines of OPTION_NO_FOREIGN_KEY_CHECKS etc */
-#include <drizzled/mysql_priv.h>
 #include <drizzled/log_event.h>
 #include <libdrizzle/sql_common.h>
 
@@ -990,9 +989,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &port, (char**) &port, 0, GET_INT, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
@@ -1112,6 +1108,7 @@ static void error(const char *format,...)
   @param format Printf-style format string, followed by printf
   varargs.
 */
+static void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
 static void sql_print_error(const char *format,...)
 {
   va_list args;

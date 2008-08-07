@@ -54,7 +54,7 @@ static char  *opt_password=0, *current_user=0,
 static uint     opt_drizzle_port= 0, opt_protocol= 0;
 static char * opt_drizzle_unix_port=0;
 static int64_t opt_ignore_lines= -1;
-static CHARSET_INFO *charset_info= &my_charset_latin1;
+static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
 static struct my_option my_long_options[] =
 {
@@ -121,9 +121,6 @@ static struct my_option my_long_options[] =
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
    "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
-   "/etc/services, "
-#endif
    "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &opt_drizzle_port,
    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
@@ -159,7 +156,7 @@ static const char *load_default_groups[]= { "drizzleimport","client",0 };
 static void print_version(void)
 {
   printf("%s  Ver %s Distrib %s, for %s (%s)\n" ,my_progname,
-    IMPORT_VERSION, MYSQL_SERVER_VERSION,SYSTEM_TYPE,MACHINE_TYPE);
+    IMPORT_VERSION, drizzle_get_client_info(),SYSTEM_TYPE,MACHINE_TYPE);
 }
 
 

@@ -21,7 +21,7 @@
   Sorts a database
 */
 
-#include "mysql_priv.h"
+#include <drizzled/server_includes.h>
 #include "sql_sort.h"
 #include <drizzled/drizzled_error_messages.h>
 
@@ -709,7 +709,7 @@ static void make_sortkey(register SORTPARAM *param,
       switch (sort_field->result_type) {
       case STRING_RESULT:
       {
-        CHARSET_INFO *cs=item->collation.collation;
+        const CHARSET_INFO * const cs=item->collation.collation;
         char fill_char= ((cs->state & MY_CS_BINSORT) ? (char) 0 : ' ');
         int diff;
         uint sort_field_length;
@@ -1362,7 +1362,7 @@ sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
            bool *multi_byte_charset)
 {
   register uint length;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
   *multi_byte_charset= 0;
 
   length=0;

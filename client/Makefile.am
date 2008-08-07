@@ -15,7 +15,8 @@
 
 # This file is public domain and comes with NO WARRANTY of any kind
 
-LDADD=				$(top_builddir)/libdrizzle/libdrizzle.la -lz
+LDADD=			$(top_builddir)/libdrizzle/libdrizzle.la \
+			$(LIBINTL) -lz
 
 
 noinst_HEADERS =	completion_hash.h \

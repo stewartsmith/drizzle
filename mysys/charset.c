@@ -224,7 +224,7 @@ static int add_collation(CHARSET_INFO *cs)
       if (!(all_charsets[cs->number]=
          (CHARSET_INFO*) my_once_alloc(sizeof(CHARSET_INFO),MYF(0))))
         return MY_XML_ERROR;
-      memset((void*)all_charsets[cs->number], 0, sizeof(CHARSET_INFO));
+      memset(all_charsets[cs->number], 0, sizeof(CHARSET_INFO));
     }
     
     if (cs->primary_number == cs->number)
@@ -408,9 +408,9 @@ char *get_charsets_dir(char *buf)
 }
 
 CHARSET_INFO *all_charsets[256];
-CHARSET_INFO *default_charset_info = &my_charset_latin1;
+const CHARSET_INFO *default_charset_info = &my_charset_latin1;
 
-void add_compiled_collation(CHARSET_INFO *cs)
+void add_compiled_collation(CHARSET_INFO * cs)
 {
   all_charsets[cs->number]= cs;
   cs->state|= MY_CS_AVAILABLE;
@@ -498,7 +498,7 @@ uint get_charset_number(const char *charset_name, uint cs_flags)
 
 const char *get_charset_name(uint charset_number)
 {
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
   init_available_charsets(MYF(0));
 
   cs=all_charsets[charset_number];
@@ -509,7 +509,7 @@ const char *get_charset_name(uint charset_number)
 }
 
 
-static CHARSET_INFO *get_internal_charset(uint cs_number, myf flags)
+static const CHARSET_INFO *get_internal_charset(uint cs_number, myf flags)
 {
   char  buf[FN_REFLEN];
   CHARSET_INFO *cs;
@@ -540,9 +540,9 @@ static CHARSET_INFO *get_internal_charset(uint cs_number, myf flags)
 }
 
 
-CHARSET_INFO *get_charset(uint cs_number, myf flags)
+const const CHARSET_INFO *get_charset(uint cs_number, myf flags)
 {
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
   if (cs_number == default_charset_info->number)
     return default_charset_info;
 
@@ -564,10 +564,10 @@ CHARSET_INFO *get_charset(uint cs_number, myf flags)
   return cs;
 }
 
-CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
+const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
 {
   uint cs_number;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
   cs_number=get_collation_number(cs_name);
@@ -584,12 +584,12 @@ CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
 }
 
 
-CHARSET_INFO *get_charset_by_csname(const char *cs_name,
+const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
 				    uint cs_flags,
 				    myf flags)
 {
   uint cs_number;
-  CHARSET_INFO *cs;
+  const CHARSET_INFO *cs;
 
   (void) init_available_charsets(MYF(0));	/* If it isn't initialized */
 
@@ -624,8 +624,8 @@ CHARSET_INFO *get_charset_by_csname(const char *cs_name,
 */
 
 bool resolve_charset(const char *cs_name,
-                        CHARSET_INFO *default_cs,
-                        CHARSET_INFO **cs)
+                     const CHARSET_INFO *default_cs,
+                     const CHARSET_INFO **cs)
 {
   *cs= get_charset_by_csname(cs_name, MY_CS_PRIMARY, MYF(0));
 
@@ -656,8 +656,8 @@ bool resolve_charset(const char *cs_name,
 */
 
 bool resolve_collation(const char *cl_name,
-                          CHARSET_INFO *default_cl,
-                          CHARSET_INFO **cl)
+                       const CHARSET_INFO *default_cl,
+                       const CHARSET_INFO **cl)
 {
   *cl= get_charset_by_name(cl_name, MYF(0));
 

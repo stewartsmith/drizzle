@@ -21,8 +21,6 @@
 #ifndef DRIZZLE_SERVER_FIELD_INT_64_T
 #define DRIZZLE_SERVER_FIELD_INT_64_T
 
-#include <drizzled/mysql_priv.h>
-
 class Field_int64_t :public Field_num {
 public:
   Field_int64_t(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
@@ -43,7 +41,7 @@ public:
   enum_field_types type() const { return DRIZZLE_TYPE_LONGLONG;}
   enum ha_base_keytype key_type() const
     { return unsigned_flag ? HA_KEYTYPE_ULONGLONG : HA_KEYTYPE_LONGLONG; }
-  int store(const char *to,uint length,CHARSET_INFO *charset);
+  int store(const char *to,uint length, const CHARSET_INFO * const charset);
   int store(double nr);
   int store(int64_t nr, bool unsigned_val);
   int reset(void)

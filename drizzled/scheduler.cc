@@ -17,11 +17,7 @@
   Implementation for the thread scheduler
 */
 
-#ifdef USE_PRAGMA_INTERFACE
-#pragma implementation
-#endif
-
-#include <mysql_priv.h>
+#include <drizzled/server_includes.h>
 #include "event.h"
 
 

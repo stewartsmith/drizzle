@@ -1,3 +1,4 @@
+#include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
 
 static bool are_plugins_loaded= false;

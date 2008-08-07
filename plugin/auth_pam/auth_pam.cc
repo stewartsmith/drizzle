@@ -3,14 +3,10 @@
 */
 
 #define MYSQL_SERVER 1
-#include <drizzled/mysql_priv.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <drizzled/plugin.h>
+#include <drizzled/server_includes.h>
 #include <drizzled/plugin_authentication.h>
 #include <security/pam_appl.h>
 #include <security/pam_misc.h>
-
 
 typedef struct {
     const char *name;
