@@ -1,7 +1,9 @@
 /*
   Sections of this where taken/modified from mod_auth_path for Apache 
 */
-#include <drizzled/common_includes.h>
+
+#define MYSQL_SERVER 1
+#include <drizzled/server_includes.h>
 #include <drizzled/plugin_authentication.h>
 #include <security/pam_appl.h>
 #include <security/pam_misc.h>
