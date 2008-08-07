@@ -1,5 +1,6 @@
 # List of source files which contain translatable strings.
 client/drizzle.c
+client/drizzleadmin.cc
 mysys/errors.c
 mysys/my_error.c
 mysys/my_getopt.c
