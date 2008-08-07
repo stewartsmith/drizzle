@@ -66,7 +66,7 @@ bool hash_delete(HASH *hash,uchar *record);
 bool hash_update(HASH *hash,uchar *record,uchar *old_key,size_t old_key_length);
 void hash_replace(HASH *hash, HASH_SEARCH_STATE *state, uchar *new_row);
 
-#define hash_clear(H) memset((char*) (H), 0, sizeof(*(H)))
+#define hash_clear(H) memset((H), 0, sizeof(*(H)))
 #define hash_inited(H) ((H)->array.buffer != 0)
 #define hash_init_opt(A,B,C,D,E,F,G,H) \
           (!hash_inited(A) && _hash_init(A,0,B,C,D,E,F,G, H CALLER_INFO))

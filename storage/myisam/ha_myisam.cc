@@ -444,7 +444,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 {
   THD *cur_thd;
   LIST *element;
-  char buf[1024];
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_thd= (THD*) file->in_use.data))
     sql_print_error("Got an error from thread_id=%lu, %s:%d", cur_thd->thread_id,
@@ -455,9 +454,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
     sql_print_error("%s", message);
   for (element= file->s->in_use; element; element= list_rest(element))
   {
-    THD *thd= (THD*) element->data;
-    sql_print_error("%s", thd ? thd_security_context(thd, buf, sizeof(buf), 0)
-                              : "Unknown thread accessing table");
+    sql_print_error("%s", "Unknown thread accessing table");
   }
   pthread_mutex_unlock(&file->s->intern_lock);
 }

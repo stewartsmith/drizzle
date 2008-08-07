@@ -359,7 +359,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
     if (net->write_pos != net->buff)
     {
       /* Fill up already used packet and write it */
-      memcpy((char*) net->write_pos,packet,left_length);
+      memcpy(net->write_pos,packet,left_length);
       if (net_real_write(net, net->buff, 
 			 (size_t) (net->write_pos - net->buff) + left_length))
 	return 1;
@@ -386,7 +386,7 @@ net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
       return net_real_write(net, packet, len) ? 1 : 0;
     /* Send out rest of the blocks as full sized blocks */
   }
-  memcpy((char*) net->write_pos,packet,len);
+  memcpy(net->write_pos,packet,len);
   net->write_pos+= len;
   return 0;
 }

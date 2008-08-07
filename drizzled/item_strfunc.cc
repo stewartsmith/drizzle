@@ -1315,7 +1315,7 @@ bool Item_func_user::fix_fields(THD *thd, Item **ref)
 {
   return (Item_func_sysconst::fix_fields(thd, ref) ||
           init(thd->main_security_ctx.user,
-               thd->main_security_ctx.host_or_ip));
+               thd->main_security_ctx.ip));
 }
 
 
@@ -1326,7 +1326,7 @@ bool Item_func_current_user::fix_fields(THD *thd, Item **ref)
 
   Security_context *ctx=
                          thd->security_ctx;
-  return init(ctx->priv_user, ctx->priv_host);
+  return init(ctx->user, ctx->ip);
 }
 
 

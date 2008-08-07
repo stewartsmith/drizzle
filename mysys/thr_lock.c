@@ -299,7 +299,7 @@ static void check_locks(THR_LOCK *lock, const char *where,
 
 void thr_lock_init(THR_LOCK *lock)
 {
-  memset((char*) lock, 0, sizeof(*lock));
+  memset(lock, 0, sizeof(*lock));
   VOID(pthread_mutex_init(&lock->mutex,MY_MUTEX_INIT_FAST));
   lock->read.last= &lock->read.data;
   lock->read_wait.last= &lock->read_wait.data;

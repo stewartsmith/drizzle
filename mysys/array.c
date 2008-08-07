@@ -202,8 +202,8 @@ bool set_dynamic(DYNAMIC_ARRAY *array, uchar* element, uint idx)
   {
     if (idx >= array->max_element && allocate_dynamic(array, idx))
       return true;
-    memset((uchar*) (array->buffer+array->elements*array->size_of_element), 0,
-	  (idx - array->elements)*array->size_of_element);
+    memset(array->buffer+array->elements*array->size_of_element, 0,
+           (idx - array->elements)*array->size_of_element);
     array->elements=idx+1;
   }
   memcpy(array->buffer+(idx * array->size_of_element),element,

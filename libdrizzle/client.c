@@ -929,7 +929,8 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
           set_drizzle_error(drizzle, CR_MALFORMED_PACKET, unknown_sqlstate);
           return(0);
         }
-  memcpy(to,(char*) cp,len); to[len]=0;
+  memcpy(to, cp, len);
+  to[len]=0;
   to+=len+1;
   cp+=len;
   if (DRIZZLE_FIELDs)
@@ -1672,7 +1673,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   }
   if (drizzle_set_character_set(&tmp_drizzle, drizzle->charset->csname))
   {
-    memset((char*) &tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
+    memset(&tmp_drizzle.options, 0, sizeof(tmp_drizzle.options));
     drizzle_close(&tmp_drizzle);
     drizzle->net.last_errno= tmp_drizzle.net.last_errno;
     strcpy(drizzle->net.last_error, tmp_drizzle.net.last_error);
@@ -1684,7 +1685,7 @@ my_bool drizzle_reconnect(DRIZZLE *drizzle)
   tmp_drizzle.free_me= drizzle->free_me;
 
   /* Don't free options as these are now used in tmp_drizzle */
-  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
+  memset(&drizzle->options, 0, sizeof(drizzle->options));
   drizzle->free_me=0;
   drizzle_close(drizzle);
   *drizzle=tmp_drizzle;
@@ -1739,7 +1740,7 @@ static void drizzle_close_free_options(DRIZZLE *drizzle)
     delete_dynamic(init_commands);
     my_free((char*)init_commands,MYF(MY_WME));
   }
-  memset((char*) &drizzle->options, 0, sizeof(drizzle->options));
+  memset(&drizzle->options, 0, sizeof(drizzle->options));
   return;
 }
 

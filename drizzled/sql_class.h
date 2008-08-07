@@ -649,19 +649,15 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  char   *host, *user, *priv_user, *ip;
-  /* The host privilege we are using */
-  char   priv_host[MAX_HOSTNAME];
-  /* points to host if host is available, otherwise points to ip */
-  const char *host_or_ip;
-  ulong db_access;                     /* Privileges for current db */
+  char *user; 
+  char *ip;
 
   void init();
   void destroy();
   void skip_grants();
   inline char *priv_host_name()
   {
-    return (*priv_host ? priv_host : (char *)"%");
+    return (ip ? ip : (char *)"%");
   }
 };
 
