@@ -30,7 +30,8 @@ CLEANFILES = 		$(GENSCRIPTS) mtr
 noinst_PROGRAMS = 	resolve_stack_dump
 
 LDADD=			$(top_builddir)/mysys/libmysys.la \
-                        $(top_builddir)/mystrings/libmystringslt.la 
+                        $(top_builddir)/mystrings/libmystringslt.la \
+			$(LIBINTL)
 
 
 
