@@ -131,13 +131,17 @@ vio_is_blocking(Vio * vio)
 int vio_fastsend(Vio * vio __attribute__((unused)))
 {
   int nodelay = 1;
-  int r;
+  int error;
 
-  r= setsockopt(vio->sd, IPPROTO_TCP, TCP_NODELAY,
-                &nodelay, sizeof(nodelay));
-  assert(r == 0);
+  error= setsockopt(vio->sd, IPPROTO_TCP, TCP_NODELAY,
+                    &nodelay, sizeof(nodelay));
+  if (error != 0)
+  {
+    perror("setsockopt");
+    assert(error == 0);
+  }
 
-  return r;
+  return error;
 }
 
 int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
@@ -149,6 +153,11 @@ int32_t vio_keepalive(Vio* vio, bool set_keep_alive)
     opt= 1;
 
   r= setsockopt(vio->sd, SOL_SOCKET, SO_KEEPALIVE, (char *) &opt, sizeof(opt));
+  if (r != 0)
+  {
+    perror("setsockopt");
+    assert(r == 0);
+  }
 
   return r;
 }
@@ -273,5 +282,9 @@ void vio_timeout(Vio *vio, uint which, uint timeout)
   r= setsockopt(vio->sd, SOL_SOCKET, which ? SO_SNDTIMEO : SO_RCVTIMEO,
                 IF_WIN(const char*, const void*)&wait_timeout,
                 sizeof(wait_timeout));
-  assert(r == 0);
+  if (r != 0)
+  {
+    perror("setsockopt");
+    assert(r == 0);
+  }
 }
