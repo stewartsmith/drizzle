@@ -21,6 +21,7 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /* Return 0 if row hasn't changed */
 
@@ -1270,6 +1271,10 @@ multi_update::initialize_tables(JOIN *join)
     {
       Field_string *field= new Field_string(tbl->file->ref_length, 0,
                                             tbl->alias, &my_charset_bin);
+#ifdef OLD
+      Field_varstring *field= new Field_varstring(tbl->file->ref_length, 0,
+                                                  tbl->alias, tbl->s, &my_charset_bin);
+#endif
       if (!field)
         return(1);
       field->init(tbl);
@@ -1277,7 +1282,6 @@ multi_update::initialize_tables(JOIN *join)
         The field will be converted to varstring when creating tmp table if
         table to be updated was created by mysql 4.1. Deny this.
       */
-      field->can_alter_field_type= 0;
       Item_field *ifield= new Item_field((Field *) field);
       if (!ifield)
          return(1);

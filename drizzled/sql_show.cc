@@ -20,7 +20,7 @@
 #include "sql_select.h"                         // For select_describe
 #include "sql_show.h"
 #include "repl_failsafe.h"
-#include <my_dir.h>
+#include <mysys/my_dir.h>
 
 #define STR_OR_NIL(S) ((S) ? (S) : "<nil>")
 
@@ -252,7 +252,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
                continue;
        }
 #endif
-      if (!MY_S_ISDIR(file->mystat->st_mode))
+      if (!S_ISDIR(file->mystat->st_mode))
         continue;
 
       file_name_len= filename_to_tablename(file->name, uname, sizeof(uname));
@@ -316,7 +316,7 @@ mysqld_show_create(THD *thd, TABLE_LIST *table_list)
       issue a warning with 'warning' level status in 
       case of invalid view and last error is ER_VIEW_INVALID
     */
-    mysql_reset_errors(thd, true);
+    drizzle_reset_errors(thd, true);
     thd->clear_error();
   }
 
@@ -959,6 +959,13 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
       end= int64_t10_to_str(table->s->key_block_size, buff, 10);
       packet->append(buff, (uint) (end - buff));
     }
+    if (share->block_size)
+    {
+      char *end;
+      packet->append(STRING_WITH_LEN(" BLOCK_SIZE="));
+      end= int64_t10_to_str(share->block_size, buff,10);
+      packet->append(buff, (uint) (end - buff));
+    }
     table->file->append_create_info(packet);
     if (share->comment.length)
     {
@@ -1143,9 +1150,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
         thd_info->user= thd->strdup(tmp_sctx->user ? tmp_sctx->user :
                                     (tmp->system_thread ?
                                      "system user" : "unauthenticated user"));
-        thd_info->host= thd->strdup(tmp_sctx->host_or_ip[0] ? 
-                                    tmp_sctx->host_or_ip : 
-                                    tmp_sctx->host ? tmp_sctx->host : "");
+        thd_info->host= thd->strdup(tmp_sctx->ip);
         if ((thd_info->db=tmp->db))             // Safe test
           thd_info->db=thd->strdup(thd_info->db);
         thd_info->command=(int) tmp->command;
@@ -1242,8 +1247,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
             (tmp->system_thread ? "system user" : "unauthenticated user");
       table->field[1]->store(val, strlen(val), cs);
       /* HOST */
-      table->field[2]->store(tmp_sctx->host_or_ip,
-                             strlen(tmp_sctx->host_or_ip), cs);
+      table->field[2]->store(tmp_sctx->ip, strlen(tmp_sctx->ip), cs);
       /* DB */
       if (tmp->db)
       {
@@ -1259,7 +1263,7 @@ int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
       else
         table->field[4]->store(command_name[tmp->command].str,
                                command_name[tmp->command].length, cs);
-      /* MYSQL_TIME */
+      /* DRIZZLE_TIME */
       table->field[5]->store((uint32_t)(tmp->start_time ?
                                       now - tmp->start_time : 0), true);
       /* STATE */
@@ -2153,7 +2157,7 @@ int schema_tables_add(THD *thd, List<LEX_STRING> *files, const char *wild)
   add_data.wild= wild;
   if (plugin_foreach(thd, add_schema_table,
                      MYSQL_INFORMATION_SCHEMA_PLUGIN, &add_data))
-      return(1);
+    return(1);
 
   return(0);
 }
@@ -2793,7 +2797,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
 				    LEX_STRING *table_name)
 {
   const char *tmp_buff;
-  MYSQL_TIME time;
+  DRIZZLE_TIME time;
   CHARSET_INFO *cs= system_charset_info;
 
   restore_record(table, s->default_values);
@@ -2814,7 +2818,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
   }
   else
   {
-    char option_buff[350],*ptr;
+    char option_buff[400],*ptr;
     TABLE *show_table= tables->table;
     TABLE_SHARE *share= show_table->s;
     handler *file= show_table->file;
@@ -2868,6 +2872,12 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       ptr=strxmov(ptr, " row_format=", 
                   ha_row_type[(uint) share->row_type],
                   NullS);
+    if (share->block_size)
+    {
+      ptr= strmov(ptr, " block_size=");
+      ptr= int64_t10_to_str(share->block_size, ptr, 10);
+    }
+    
     if (share->transactional != HA_CHOICE_UNDEF)
     {
       ptr= strxmov(ptr, " TRANSACTIONAL=",
@@ -2945,21 +2955,21 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
       {
         thd->variables.time_zone->gmt_sec_to_TIME(&time,
                                                   (my_time_t) file->stats.create_time);
-        table->field[14]->store_time(&time, MYSQL_TIMESTAMP_DATETIME);
+        table->field[14]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[14]->set_notnull();
       }
       if (file->stats.update_time)
       {
         thd->variables.time_zone->gmt_sec_to_TIME(&time,
                                                   (my_time_t) file->stats.update_time);
-        table->field[15]->store_time(&time, MYSQL_TIMESTAMP_DATETIME);
+        table->field[15]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[15]->set_notnull();
       }
       if (file->stats.check_time)
       {
         thd->variables.time_zone->gmt_sec_to_TIME(&time,
                                                   (my_time_t) file->stats.check_time);
-        table->field[16]->store_time(&time, MYSQL_TIMESTAMP_DATETIME);
+        table->field[16]->store_time(&time, DRIZZLE_TIMESTAMP_DATETIME);
         table->field[16]->set_notnull();
       }
       if (file->ha_table_flags() & (ulong) HA_HAS_CHECKSUM)
@@ -3005,8 +3015,7 @@ void store_column_type(TABLE *table, Field *field, CHARSET_INFO *cs,
                           column_type.length()), cs);
   is_blob= (field->type() == DRIZZLE_TYPE_BLOB);
   if (field->has_charset() || is_blob ||
-      field->real_type() == DRIZZLE_TYPE_VARCHAR ||  // For varbinary type
-      field->real_type() == DRIZZLE_TYPE_STRING)     // For binary type
+      field->real_type() == DRIZZLE_TYPE_VARCHAR)  // For varbinary type
   {
     uint32_t octet_max_length= field->max_display_length();
     if (is_blob && octet_max_length != (uint32_t) 4294967295U)
@@ -3096,7 +3105,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
         rather than in SHOW COLUMNS
       */ 
       if (thd->is_error())
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      thd->main_da.sql_errno(), thd->main_da.message());
       thd->clear_error();
       res= 0;
@@ -3324,7 +3333,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
         rather than in SHOW KEYS
       */
       if (thd->is_error())
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                      thd->main_da.sql_errno(), thd->main_da.message());
       thd->clear_error();
       res= 0;
@@ -3429,7 +3438,7 @@ static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);
@@ -3504,7 +3513,7 @@ static int get_schema_key_column_usage_record(THD *thd,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);
@@ -3701,7 +3710,7 @@ get_referential_constraints_record(THD *thd, TABLE_LIST *tables,
   if (res)
   {
     if (thd->is_error())
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                    thd->main_da.sql_errno(), thd->main_da.message());
     thd->clear_error();
     return(0);
@@ -3908,9 +3917,6 @@ TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
       }
       break;
     default:
-      /* Don't let unimplemented types pass through. Could be a grave error. */
-      assert(fields_info->field_type == DRIZZLE_TYPE_STRING);
-
       if (!(item= new Item_empty_string("", fields_info->field_length, cs)))
       {
         return(0);
@@ -4310,28 +4316,28 @@ bool get_schema_tables_result(JOIN *join,
 
 ST_FIELD_INFO schema_fields_info[]=
 {
-  {"CATALOG_NAME", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"SCHEMA_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Database",
+  {"CATALOG_NAME", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
+  {"SCHEMA_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Database",
    SKIP_OPEN_TABLE},
-  {"DEFAULT_CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"DEFAULT_CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    SKIP_OPEN_TABLE},
-  {"DEFAULT_COLLATION_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"SQL_PATH", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {"DEFAULT_COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
+  {"SQL_PATH", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO tables_fields_info[]=
 {
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Name",
+  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
+  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
+  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Name",
    SKIP_OPEN_TABLE},
-  {"TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FRM_ONLY},
-  {"ENGINE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, "Engine", OPEN_FRM_ONLY},
+  {"TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY},
+  {"ENGINE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "Engine", OPEN_FRM_ONLY},
   {"VERSION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Version", OPEN_FRM_ONLY},
-  {"ROW_FORMAT", 10, DRIZZLE_TYPE_STRING, 0, 1, "Row_format", OPEN_FULL_TABLE},
+  {"ROW_FORMAT", 10, DRIZZLE_TYPE_VARCHAR, 0, 1, "Row_format", OPEN_FULL_TABLE},
   {"TABLE_ROWS", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Rows", OPEN_FULL_TABLE},
   {"AVG_ROW_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 
@@ -4349,29 +4355,29 @@ ST_FIELD_INFO tables_fields_info[]=
   {"CREATE_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Create_time", OPEN_FULL_TABLE},
   {"UPDATE_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Update_time", OPEN_FULL_TABLE},
   {"CHECK_TIME", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Check_time", OPEN_FULL_TABLE},
-  {"TABLE_COLLATION", 64, DRIZZLE_TYPE_STRING, 0, 1, "Collation", OPEN_FRM_ONLY},
+  {"TABLE_COLLATION", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY},
   {"CHECKSUM", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), "Checksum", OPEN_FULL_TABLE},
-  {"CREATE_OPTIONS", 255, DRIZZLE_TYPE_STRING, 0, 1, "Create_options",
+  {"CREATE_OPTIONS", 255, DRIZZLE_TYPE_VARCHAR, 0, 1, "Create_options",
    OPEN_FRM_ONLY},
-  {"TABLE_COMMENT", TABLE_COMMENT_MAXLEN, DRIZZLE_TYPE_STRING, 0, 0, "Comment", OPEN_FRM_ONLY},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {"TABLE_COMMENT", TABLE_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Comment", OPEN_FRM_ONLY},
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO columns_fields_info[]=
 {
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FRM_ONLY},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FRM_ONLY},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FRM_ONLY},
-  {"COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Field",
+  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY},
+  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY},
+  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY},
+  {"COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Field",
    OPEN_FRM_ONLY},
   {"ORDINAL_POSITION", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0,
    MY_I_S_UNSIGNED, 0, OPEN_FRM_ONLY},
-  {"COLUMN_DEFAULT", MAX_FIELD_VARCHARLENGTH, DRIZZLE_TYPE_STRING, 0,
+  {"COLUMN_DEFAULT", MAX_FIELD_VARCHARLENGTH, DRIZZLE_TYPE_VARCHAR, 0,
    1, "Default", OPEN_FRM_ONLY},
-  {"IS_NULLABLE", 3, DRIZZLE_TYPE_STRING, 0, 0, "Null", OPEN_FRM_ONLY},
-  {"DATA_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FRM_ONLY},
+  {"IS_NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY},
+  {"DATA_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY},
   {"CHARACTER_MAXIMUM_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG,
    0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY},
   {"CHARACTER_OCTET_LENGTH", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
@@ -4380,306 +4386,202 @@ ST_FIELD_INFO columns_fields_info[]=
    0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY},
   {"NUMERIC_SCALE", MY_INT64_NUM_DECIMAL_DIGITS , DRIZZLE_TYPE_LONGLONG,
    0, (MY_I_S_MAYBE_NULL | MY_I_S_UNSIGNED), 0, OPEN_FRM_ONLY},
-  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FRM_ONLY},
-  {"COLLATION_NAME", 64, DRIZZLE_TYPE_STRING, 0, 1, "Collation", OPEN_FRM_ONLY},
-  {"COLUMN_TYPE", 65535, DRIZZLE_TYPE_STRING, 0, 0, "Type", OPEN_FRM_ONLY},
-  {"COLUMN_KEY", 3, DRIZZLE_TYPE_STRING, 0, 0, "Key", OPEN_FRM_ONLY},
-  {"EXTRA", 27, DRIZZLE_TYPE_STRING, 0, 0, "Extra", OPEN_FRM_ONLY},
-  {"PRIVILEGES", 80, DRIZZLE_TYPE_STRING, 0, 0, "Privileges", OPEN_FRM_ONLY},
-  {"COLUMN_COMMENT", COLUMN_COMMENT_MAXLEN, DRIZZLE_TYPE_STRING, 0, 0, "Comment", OPEN_FRM_ONLY},
-  {"STORAGE", 8, DRIZZLE_TYPE_STRING, 0, 0, "Storage", OPEN_FRM_ONLY},
-  {"FORMAT", 8, DRIZZLE_TYPE_STRING, 0, 0, "Format", OPEN_FRM_ONLY},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY},
+  {"COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY},
+  {"COLUMN_TYPE", 65535, DRIZZLE_TYPE_VARCHAR, 0, 0, "Type", OPEN_FRM_ONLY},
+  {"COLUMN_KEY", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key", OPEN_FRM_ONLY},
+  {"EXTRA", 27, DRIZZLE_TYPE_VARCHAR, 0, 0, "Extra", OPEN_FRM_ONLY},
+  {"PRIVILEGES", 80, DRIZZLE_TYPE_VARCHAR, 0, 0, "Privileges", OPEN_FRM_ONLY},
+  {"COLUMN_COMMENT", COLUMN_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Comment", OPEN_FRM_ONLY},
+  {"STORAGE", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Storage", OPEN_FRM_ONLY},
+  {"FORMAT", 8, DRIZZLE_TYPE_VARCHAR, 0, 0, "Format", OPEN_FRM_ONLY},
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO charsets_fields_info[]=
 {
-  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, "Charset",
+  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
    SKIP_OPEN_TABLE},
-  {"DEFAULT_COLLATE_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, "Default collation",
+  {"DEFAULT_COLLATE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default collation",
    SKIP_OPEN_TABLE},
-  {"DESCRIPTION", 60, DRIZZLE_TYPE_STRING, 0, 0, "Description",
+  {"DESCRIPTION", 60, DRIZZLE_TYPE_VARCHAR, 0, 0, "Description",
    SKIP_OPEN_TABLE},
   {"MAXLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Maxlen", SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO collation_fields_info[]=
 {
-  {"COLLATION_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, "Collation", SKIP_OPEN_TABLE},
-  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, "Charset",
+  {"COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Collation", SKIP_OPEN_TABLE},
+  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Charset",
    SKIP_OPEN_TABLE},
   {"ID", MY_INT32_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 0, "Id",
    SKIP_OPEN_TABLE},
-  {"IS_DEFAULT", 3, DRIZZLE_TYPE_STRING, 0, 0, "Default", SKIP_OPEN_TABLE},
-  {"IS_COMPILED", 3, DRIZZLE_TYPE_STRING, 0, 0, "Compiled", SKIP_OPEN_TABLE},
+  {"IS_DEFAULT", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Default", SKIP_OPEN_TABLE},
+  {"IS_COMPILED", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Compiled", SKIP_OPEN_TABLE},
   {"SORTLEN", 3, DRIZZLE_TYPE_LONGLONG, 0, 0, "Sortlen", SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
-};
-
-
-ST_FIELD_INFO events_fields_info[]=
-{
-  {"EVENT_CATALOG", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"EVENT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Db",
-   SKIP_OPEN_TABLE},
-  {"EVENT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Name",
-   SKIP_OPEN_TABLE},
-  {"DEFINER", 77, DRIZZLE_TYPE_STRING, 0, 0, "Definer", SKIP_OPEN_TABLE},
-  {"TIME_ZONE", 64, DRIZZLE_TYPE_STRING, 0, 0, "Time zone", SKIP_OPEN_TABLE},
-  {"EVENT_BODY", 8, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"EVENT_DEFINITION", 65535, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"EVENT_TYPE", 9, DRIZZLE_TYPE_STRING, 0, 0, "Type", SKIP_OPEN_TABLE},
-  {"EXECUTE_AT", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Execute at", SKIP_OPEN_TABLE},
-  {"INTERVAL_VALUE", 256, DRIZZLE_TYPE_STRING, 0, 1, "Interval value",
-   SKIP_OPEN_TABLE},
-  {"INTERVAL_FIELD", 18, DRIZZLE_TYPE_STRING, 0, 1, "Interval field",
-   SKIP_OPEN_TABLE},
-  {"SQL_MODE", 65535, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"STARTS", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Starts", SKIP_OPEN_TABLE},
-  {"ENDS", 0, DRIZZLE_TYPE_DATETIME, 0, 1, "Ends", SKIP_OPEN_TABLE},
-  {"STATUS", 18, DRIZZLE_TYPE_STRING, 0, 0, "Status", SKIP_OPEN_TABLE},
-  {"ON_COMPLETION", 12, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"CREATED", 0, DRIZZLE_TYPE_DATETIME, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"LAST_ALTERED", 0, DRIZZLE_TYPE_DATETIME, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"LAST_EXECUTED", 0, DRIZZLE_TYPE_DATETIME, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"EVENT_COMMENT", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"ORIGINATOR", 10, DRIZZLE_TYPE_LONGLONG, 0, 0, "Originator", SKIP_OPEN_TABLE},
-  {"CHARACTER_SET_CLIENT", MY_CS_NAME_SIZE, DRIZZLE_TYPE_STRING, 0, 0,
-   "character_set_client", SKIP_OPEN_TABLE},
-  {"COLLATION_CONNECTION", MY_CS_NAME_SIZE, DRIZZLE_TYPE_STRING, 0, 0,
-   "collation_connection", SKIP_OPEN_TABLE},
-  {"DATABASE_COLLATION", MY_CS_NAME_SIZE, DRIZZLE_TYPE_STRING, 0, 0,
-   "Database Collation", SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 
 ST_FIELD_INFO coll_charset_app_fields_info[]=
 {
-  {"COLLATION_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {"COLLATION_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
+  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO stat_fields_info[]=
 {
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FRM_ONLY},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FRM_ONLY},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Table", OPEN_FRM_ONLY},
+  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FRM_ONLY},
+  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY},
+  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", OPEN_FRM_ONLY},
   {"NON_UNIQUE", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "Non_unique", OPEN_FRM_ONLY},
-  {"INDEX_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FRM_ONLY},
-  {"INDEX_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Key_name",
+  {"INDEX_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FRM_ONLY},
+  {"INDEX_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Key_name",
    OPEN_FRM_ONLY},
   {"SEQ_IN_INDEX", 2, DRIZZLE_TYPE_LONGLONG, 0, 0, "Seq_in_index", OPEN_FRM_ONLY},
-  {"COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Column_name",
+  {"COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Column_name",
    OPEN_FRM_ONLY},
-  {"COLLATION", 1, DRIZZLE_TYPE_STRING, 0, 1, "Collation", OPEN_FRM_ONLY},
+  {"COLLATION", 1, DRIZZLE_TYPE_VARCHAR, 0, 1, "Collation", OPEN_FRM_ONLY},
   {"CARDINALITY", MY_INT64_NUM_DECIMAL_DIGITS, DRIZZLE_TYPE_LONGLONG, 0, 1,
    "Cardinality", OPEN_FULL_TABLE},
   {"SUB_PART", 3, DRIZZLE_TYPE_LONGLONG, 0, 1, "Sub_part", OPEN_FRM_ONLY},
-  {"PACKED", 10, DRIZZLE_TYPE_STRING, 0, 1, "Packed", OPEN_FRM_ONLY},
-  {"NULLABLE", 3, DRIZZLE_TYPE_STRING, 0, 0, "Null", OPEN_FRM_ONLY},
-  {"INDEX_TYPE", 16, DRIZZLE_TYPE_STRING, 0, 0, "Index_type", OPEN_FULL_TABLE},
-  {"COMMENT", 16, DRIZZLE_TYPE_STRING, 0, 1, "Comment", OPEN_FRM_ONLY},
-  {"INDEX_COMMENT", INDEX_COMMENT_MAXLEN, DRIZZLE_TYPE_STRING, 0, 0, "Index_Comment", OPEN_FRM_ONLY},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
-};
-
-
-ST_FIELD_INFO user_privileges_fields_info[]=
-{
-  {"GRANTEE", 81, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"PRIVILEGE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"IS_GRANTABLE", 3, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
-};
-
-
-ST_FIELD_INFO schema_privileges_fields_info[]=
-{
-  {"GRANTEE", 81, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"PRIVILEGE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"IS_GRANTABLE", 3, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
-};
-
-
-ST_FIELD_INFO table_privileges_fields_info[]=
-{
-  {"GRANTEE", 81, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"PRIVILEGE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"IS_GRANTABLE", 3, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
-};
-
-
-ST_FIELD_INFO column_privileges_fields_info[]=
-{
-  {"GRANTEE", 81, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"PRIVILEGE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"IS_GRANTABLE", 3, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {"PACKED", 10, DRIZZLE_TYPE_VARCHAR, 0, 1, "Packed", OPEN_FRM_ONLY},
+  {"NULLABLE", 3, DRIZZLE_TYPE_VARCHAR, 0, 0, "Null", OPEN_FRM_ONLY},
+  {"INDEX_TYPE", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_type", OPEN_FULL_TABLE},
+  {"COMMENT", 16, DRIZZLE_TYPE_VARCHAR, 0, 1, "Comment", OPEN_FRM_ONLY},
+  {"INDEX_COMMENT", INDEX_COMMENT_MAXLEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Index_Comment", OPEN_FRM_ONLY},
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO table_constraints_fields_info[]=
 {
-  {"CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE},
+  {"CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {"CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"CONSTRAINT_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"CONSTRAINT_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO key_column_usage_fields_info[]=
 {
-  {"CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE},
+  {"CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {"CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
+  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE},
+  {"TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
   {"ORDINAL_POSITION", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 0, 0, OPEN_FULL_TABLE},
   {"POSITION_IN_UNIQUE_CONSTRAINT", 10 ,DRIZZLE_TYPE_LONGLONG, 0, 1, 0,
    OPEN_FULL_TABLE},
-  {"REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, 0,
+  {"REFERENCED_TABLE_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE},
-  {"REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, 0,
+  {"REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE},
-  {"REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, 0,
+  {"REFERENCED_COLUMN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO table_names_fields_info[]=
 {
-  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"TABLE_SCHEMA",NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Tables_in_",
+  {"TABLE_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
+  {"TABLE_SCHEMA",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
+  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Tables_in_",
    SKIP_OPEN_TABLE},
-  {"TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Table_type",
+  {"TABLE_TYPE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table_type",
    OPEN_FRM_ONLY},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO open_tables_fields_info[]=
 {
-  {"Database", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Database",
+  {"Database", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Database",
    SKIP_OPEN_TABLE},
-  {"Table",NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Table", SKIP_OPEN_TABLE},
+  {"Table",NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Table", SKIP_OPEN_TABLE},
   {"In_use", 1, DRIZZLE_TYPE_LONGLONG, 0, 0, "In_use", SKIP_OPEN_TABLE},
   {"Name_locked", 4, DRIZZLE_TYPE_LONGLONG, 0, 0, "Name_locked", SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO variables_fields_info[]=
 {
-  {"VARIABLE_NAME", 64, DRIZZLE_TYPE_STRING, 0, 0, "Variable_name",
+  {"VARIABLE_NAME", 64, DRIZZLE_TYPE_VARCHAR, 0, 0, "Variable_name",
    SKIP_OPEN_TABLE},
-  {"VARIABLE_VALUE", 16300, DRIZZLE_TYPE_STRING, 0, 1, "Value", SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {"VARIABLE_VALUE", 16300, DRIZZLE_TYPE_VARCHAR, 0, 1, "Value", SKIP_OPEN_TABLE},
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO processlist_fields_info[]=
 {
   {"ID", 4, DRIZZLE_TYPE_LONGLONG, 0, 0, "Id", SKIP_OPEN_TABLE},
-  {"USER", 16, DRIZZLE_TYPE_STRING, 0, 0, "User", SKIP_OPEN_TABLE},
-  {"HOST", LIST_PROCESS_HOST_LEN,  DRIZZLE_TYPE_STRING, 0, 0, "Host",
+  {"USER", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "User", SKIP_OPEN_TABLE},
+  {"HOST", LIST_PROCESS_HOST_LEN,  DRIZZLE_TYPE_VARCHAR, 0, 0, "Host",
    SKIP_OPEN_TABLE},
-  {"DB", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, "Db", SKIP_OPEN_TABLE},
-  {"COMMAND", 16, DRIZZLE_TYPE_STRING, 0, 0, "Command", SKIP_OPEN_TABLE},
+  {"DB", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "Db", SKIP_OPEN_TABLE},
+  {"COMMAND", 16, DRIZZLE_TYPE_VARCHAR, 0, 0, "Command", SKIP_OPEN_TABLE},
   {"TIME", 7, DRIZZLE_TYPE_LONGLONG, 0, 0, "Time", SKIP_OPEN_TABLE},
-  {"STATE", 64, DRIZZLE_TYPE_STRING, 0, 1, "State", SKIP_OPEN_TABLE},
-  {"INFO", PROCESS_LIST_INFO_WIDTH, DRIZZLE_TYPE_STRING, 0, 1, "Info",
+  {"STATE", 64, DRIZZLE_TYPE_VARCHAR, 0, 1, "State", SKIP_OPEN_TABLE},
+  {"INFO", PROCESS_LIST_INFO_WIDTH, DRIZZLE_TYPE_VARCHAR, 0, 1, "Info",
    SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 
 ST_FIELD_INFO plugin_fields_info[]=
 {
-  {"PLUGIN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, "Name", 
+  {"PLUGIN_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, "Name", 
    SKIP_OPEN_TABLE},
-  {"PLUGIN_VERSION", 20, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE},
-  {"PLUGIN_STATUS", 10, DRIZZLE_TYPE_STRING, 0, 0, "Status", SKIP_OPEN_TABLE},
-  {"PLUGIN_TYPE", 80, DRIZZLE_TYPE_STRING, 0, 0, "Type", SKIP_OPEN_TABLE},
-  {"PLUGIN_LIBRARY", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, "Library",
+  {"PLUGIN_VERSION", 20, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE},
+  {"PLUGIN_STATUS", 10, DRIZZLE_TYPE_VARCHAR, 0, 0, "Status", SKIP_OPEN_TABLE},
+  {"PLUGIN_TYPE", 80, DRIZZLE_TYPE_VARCHAR, 0, 0, "Type", SKIP_OPEN_TABLE},
+  {"PLUGIN_LIBRARY", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, "Library",
    SKIP_OPEN_TABLE},
-  {"PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_STRING, 0, 1, 0, SKIP_OPEN_TABLE},
-  {"PLUGIN_LICENSE", 80, DRIZZLE_TYPE_STRING, 0, 1, "License", SKIP_OPEN_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
+  {"PLUGIN_AUTHOR", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
+  {"PLUGIN_DESCRIPTION", 65535, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, SKIP_OPEN_TABLE},
+  {"PLUGIN_LICENSE", 80, DRIZZLE_TYPE_VARCHAR, 0, 1, "License", SKIP_OPEN_TABLE},
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 ST_FIELD_INFO referential_constraints_fields_info[]=
 {
-  {"CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0, OPEN_FULL_TABLE},
+  {"CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {"CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {"UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0,
+  {"UNIQUE_CONSTRAINT_CATALOG", FN_REFLEN, DRIZZLE_TYPE_VARCHAR, 0, 1, 0,
    OPEN_FULL_TABLE},
-  {"UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"UNIQUE_CONSTRAINT_SCHEMA", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {"UNIQUE_CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0,
+  {"UNIQUE_CONSTRAINT_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0,
    MY_I_S_MAYBE_NULL, 0, OPEN_FULL_TABLE},
-  {"MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0,
+  {"MATCH_OPTION", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"UPDATE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"DELETE_RULE", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, OPEN_FULL_TABLE},
+  {"REFERENCED_TABLE_NAME", NAME_CHAR_LEN, DRIZZLE_TYPE_VARCHAR, 0, 0, 0,
    OPEN_FULL_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, SKIP_OPEN_TABLE}
-};
-
-
-ST_FIELD_INFO parameters_fields_info[]=
-{
-  {"SPECIFIC_CATALOG", FN_REFLEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"SPECIFIC_SCHEMA", NAME_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"SPECIFIC_NAME", NAME_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"ORDINAL_POSITION", 21 , DRIZZLE_TYPE_LONG, 0, 0, 0, OPEN_FULL_TABLE},
-  {"PARAMETER_MODE", 5, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"PARAMETER_NAME", NAME_LEN, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"DATA_TYPE", NAME_LEN, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"CHARACTER_MAXIMUM_LENGTH", 21 , DRIZZLE_TYPE_LONG, 0, 1, 0, OPEN_FULL_TABLE},
-  {"CHARACTER_OCTET_LENGTH", 21 , DRIZZLE_TYPE_LONG, 0, 1, 0, OPEN_FULL_TABLE},
-  {"NUMERIC_PRECISION", 21 , DRIZZLE_TYPE_LONG, 0, 1, 0, OPEN_FULL_TABLE},
-  {"NUMERIC_SCALE", 21 , DRIZZLE_TYPE_LONG, 0, 1, 0, OPEN_FULL_TABLE},
-  {"CHARACTER_SET_NAME", 64, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"COLLATION_NAME", 64, DRIZZLE_TYPE_STRING, 0, 1, 0, OPEN_FULL_TABLE},
-  {"DTD_IDENTIFIER", 65535, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {"ROUTINE_TYPE", 9, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE},
-  {0, 0, DRIZZLE_TYPE_STRING, 0, 0, 0, OPEN_FULL_TABLE}
+  {0, 0, DRIZZLE_TYPE_VARCHAR, 0, 0, 0, SKIP_OPEN_TABLE}
 };
 
 

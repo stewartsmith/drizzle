@@ -19,13 +19,14 @@
 #endif
 
 #define MYSQL_SERVER 1
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include <mystrings/m_ctype.h>
 #include <mysys/my_bit.h>
 #include <myisampack.h>
 #include "ha_myisam.h"
 #include <stdarg.h>
 #include "myisamdef.h"
+#include <drizzled/drizzled_error_messages.h>
 
 ulong myisam_recover_options= HA_RECOVER_NONE;
 
@@ -149,8 +150,8 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
   pos= table_arg->key_info;
   for (i= 0; i < share->keys; i++, pos++)
   {
-    keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME | HA_FULLTEXT ));
-    keydef[i].key_alg= pos->algorithm == HA_KEY_ALG_UNDEF ?  (HA_KEY_ALG_BTREE) : pos->algorithm;
+    keydef[i].flag= ((uint16_t) pos->flags & (HA_NOSAME));
+    keydef[i].key_alg= HA_KEY_ALG_BTREE;
     keydef[i].block_length= pos->block_size;
     keydef[i].seg= keyseg;
     keydef[i].keysegs= pos->key_parts;
@@ -172,9 +173,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
           /* No blobs here */
           if (j == 0)
             keydef[i].flag|= HA_PACK_KEY;
-          if ((field->type() == DRIZZLE_TYPE_STRING ||
-               field->type() == DRIZZLE_TYPE_VAR_STRING ||
-               ((int) (pos->key_part[j].length - field->decimals())) >= 4))
+          if ((((int) (pos->key_part[j].length - field->decimals())) >= 4))
             keydef[i].seg[j].flag|= HA_SPACE_PACK;
         }
         else if (j == 0 && (!(pos->flags & HA_NOSAME) || pos->key_length > 16))
@@ -255,10 +254,7 @@ int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
     else if (found->zero_pack())
       recinfo_pos->type= (int) FIELD_SKIP_ZERO;
     else
-      recinfo_pos->type= (int) ((length <= 3) ?  FIELD_NORMAL : found->type() == DRIZZLE_TYPE_STRING ||
-                                  found->type() == DRIZZLE_TYPE_VAR_STRING ?
-                                  FIELD_SKIP_ENDSPACE :
-                                  FIELD_SKIP_PRESPACE);
+      recinfo_pos->type= (int) ((length <= 3) ?  FIELD_NORMAL : FIELD_SKIP_PRESPACE);
     if (found->null_ptr)
     {
       recinfo_pos->null_bit= found->null_bit;
@@ -336,20 +332,6 @@ int check_definition(MI_KEYDEF *t1_keyinfo, MI_COLUMNDEF *t1_recinfo,
   {
     HA_KEYSEG *t1_keysegs= t1_keyinfo[i].seg;
     HA_KEYSEG *t2_keysegs= t2_keyinfo[i].seg;
-    if (t1_keyinfo[i].flag & HA_FULLTEXT && t2_keyinfo[i].flag & HA_FULLTEXT)
-      continue;
-    else if (t1_keyinfo[i].flag & HA_FULLTEXT ||
-             t2_keyinfo[i].flag & HA_FULLTEXT)
-    {
-       return(1);
-    }
-    if (t1_keyinfo[i].flag & HA_SPATIAL && t2_keyinfo[i].flag & HA_SPATIAL)
-      continue;
-    else if (t1_keyinfo[i].flag & HA_SPATIAL ||
-             t2_keyinfo[i].flag & HA_SPATIAL)
-    {
-       return(1);
-    }
     if (t1_keyinfo[i].keysegs != t2_keyinfo[i].keysegs ||
         t1_keyinfo[i].key_alg != t2_keyinfo[i].key_alg)
     {
@@ -463,7 +445,6 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
 {
   THD *cur_thd;
   LIST *element;
-  char buf[1024];
   pthread_mutex_lock(&file->s->intern_lock);
   if ((cur_thd= (THD*) file->in_use.data))
     sql_print_error("Got an error from thread_id=%lu, %s:%d", cur_thd->thread_id,
@@ -474,9 +455,7 @@ void _mi_report_crashed(MI_INFO *file, const char *message,
     sql_print_error("%s", message);
   for (element= file->s->in_use; element; element= list_rest(element))
   {
-    THD *thd= (THD*) element->data;
-    sql_print_error("%s", thd ? thd_security_context(thd, buf, sizeof(buf), 0)
-                              : "Unknown thread accessing table");
+    sql_print_error("%s", "Unknown thread accessing table");
   }
   pthread_mutex_unlock(&file->s->intern_lock);
 }
@@ -1635,21 +1614,13 @@ int ha_myisam::create(const char *name, register TABLE *table_arg,
 		      HA_CREATE_INFO *ha_create_info)
 {
   int error;
-  uint create_flags= 0, records, i;
+  uint create_flags= 0, records;
   char buff[FN_REFLEN];
   MI_KEYDEF *keydef;
   MI_COLUMNDEF *recinfo;
   MI_CREATE_INFO create_info;
   TABLE_SHARE *share= table_arg->s;
   uint options= share->db_options_in_use;
-  for (i= 0; i < share->keys; i++)
-  {
-    if (table_arg->key_info[i].flags & HA_USES_PARSER)
-    {
-      create_flags|= HA_CREATE_RELIES_ON_SQL_LAYER;
-      break;
-    }
-  }
   if ((error= table2myisam(table_arg, &keydef, &recinfo, &records)))
     return(error); /* purecov: inspected */
   memset(&create_info, 0, sizeof(create_info));

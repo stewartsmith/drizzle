@@ -30,10 +30,10 @@
 #include "rpl_record.h"
 #include "slave.h"
 #include "log_event.h"
-#include <m_ctype.h>
 #include <sys/stat.h>
 #include <mysys/thr_alarm.h>
 #include <mysys/mysys_err.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /*
   The following is used to initialise Table_ident with a internal
@@ -277,73 +277,6 @@ void thd_inc_row_count(THD *thd)
   thd->row_count++;
 }
 
-/*
-  Dumps a text description of a thread, its security context
-  (user, host) and the current query.
-
-  SYNOPSIS
-    thd_security_context()
-    thd                 current thread context
-    buffer              pointer to preferred result buffer
-    length              length of buffer
-    max_query_len       how many chars of query to copy (0 for all)
-
-  RETURN VALUES
-    pointer to string
-*/
-extern "C"
-char *thd_security_context(THD *thd, char *buffer, unsigned int length,
-                           unsigned int max_query_len)
-{
-  String str(buffer, length, &my_charset_latin1);
-  const Security_context *sctx= &thd->main_security_ctx;
-  char header[64];
-  int len;
-
-  len= snprintf(header, sizeof(header),
-                "MySQL thread id %lu, query id %lu",
-                thd->thread_id, (ulong) thd->query_id);
-  str.length(0);
-  str.append(header, len);
-
-  if (sctx->host)
-  {
-    str.append(' ');
-    str.append(sctx->host);
-  }
-
-  if (sctx->ip)
-  {
-    str.append(' ');
-    str.append(sctx->ip);
-  }
-
-  if (sctx->user)
-  {
-    str.append(' ');
-    str.append(sctx->user);
-  }
-
-  if (thd->proc_info)
-  {
-    str.append(' ');
-    str.append(thd->proc_info);
-  }
-
-  if (thd->query)
-  {
-    if (max_query_len < 1)
-      len= thd->query_length;
-    else
-      len= min(thd->query_length, max_query_len);
-    str.append('\n');
-    str.append(thd->query, len);
-  }
-  if (str.c_ptr_safe() == buffer)
-    return buffer;
-  return thd->strmake(str.ptr(), str.length());
-}
-
 /**
   Clear this diagnostics area. 
 
@@ -579,7 +512,7 @@ THD::THD()
   protocol_text.init(this);
 
   tablespace_op= false;
-  tmp= sql_rnd_with_mutex();
+  tmp= sql_rnd();
   randominit(&rand, tmp + (ulong) &rand, tmp + (ulong) ::global_query_id);
   substitute_null_with_insert_id = false;
   thr_lock_info_init(&lock_info); /* safety: will be reset after start */
@@ -601,7 +534,7 @@ void THD::push_internal_handler(Internal_error_handler *handler)
 
 
 bool THD::handle_error(uint sql_errno, const char *message,
-                       MYSQL_ERROR::enum_warning_level level)
+                       DRIZZLE_ERROR::enum_warning_level level)
 {
   if (m_internal_handler)
   {
@@ -1648,7 +1581,7 @@ select_export::prepare(List<Item> &list, SELECT_LEX_UNIT *u)
       (exchange->opt_enclosed && non_string_results &&
        field_term_length && strchr(NUMERIC_CHARS, field_term_char)))
   {
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_AMBIGUOUS_FIELD_TERM, ER(ER_AMBIGUOUS_FIELD_TERM));
     is_ambiguous_field_term= true;
   }
@@ -2196,6 +2129,20 @@ void THD::restore_active_arena(Query_arena *set, Query_arena *backup)
   return;
 }
 
+
+bool THD::copy_db_to(char **p_db, size_t *p_db_length)
+{
+  if (db == NULL)
+  {
+    my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
+    return true;
+  }
+  *p_db= strmake(db, db_length);
+  *p_db_length= db_length;
+  return false;
+}
+
+
 bool select_dumpvar::send_data(List<Item> &items)
 {
   List_iterator_fast<my_var> var_li(var_list);
@@ -2229,7 +2176,7 @@ bool select_dumpvar::send_data(List<Item> &items)
 bool select_dumpvar::send_eof()
 {
   if (! row_count)
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_SP_FETCH_NO_DATA, ER(ER_SP_FETCH_NO_DATA));
   /*
     In order to remember the value of affected rows for ROW_COUNT()
@@ -2277,6 +2224,12 @@ void thd_increment_net_big_packet_count(ulong length)
   current_thd->status_var.net_big_packet_count+= length;
 }
 
+void THD::send_kill_message() const
+{
+  int err= killed_errno();
+  if (err)
+    my_message(err, ER(err), MYF(0));
+}
 
 void THD::set_status_var_init()
 {
@@ -2286,17 +2239,13 @@ void THD::set_status_var_init()
 
 void Security_context::init()
 {
-  host= user= priv_user= ip= 0;
-  host_or_ip= "connecting host";
-  priv_host[0]= '\0';
+  user= ip= 0;
 }
 
 
 void Security_context::destroy()
 {
   // If not pointer to constant
-  if (host != my_localhost)
-    safeFree(host);
   safeFree(user);
   safeFree(ip);
 }
@@ -2305,9 +2254,6 @@ void Security_context::destroy()
 void Security_context::skip_grants()
 {
   /* privileges for the user are unknown everything is allowed */
-  host_or_ip= (char *)"";
-  priv_user= (char *)"";
-  *priv_host= '\0';
 }
 
 
@@ -2890,13 +2836,13 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
       variables.binlog_format == BINLOG_FORMAT_STMT)
   {
     assert(this->query != NULL);
-    push_warning(this, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(this, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_BINLOG_UNSAFE_STATEMENT,
                  ER(ER_BINLOG_UNSAFE_STATEMENT));
     if (!(binlog_flags & BINLOG_FLAG_UNSAFE_STMT_PRINTED))
     {
-      char warn_buf[MYSQL_ERRMSG_SIZE];
-      snprintf(warn_buf, MYSQL_ERRMSG_SIZE, "%s Statement: %s",
+      char warn_buf[DRIZZLE_ERRMSG_SIZE];
+      snprintf(warn_buf, DRIZZLE_ERRMSG_SIZE, "%s Statement: %s",
                ER(ER_BINLOG_UNSAFE_STATEMENT), this->query);
       sql_print_warning(warn_buf);
       binlog_flags|= BINLOG_FLAG_UNSAFE_STMT_PRINTED;

@@ -60,7 +60,6 @@
  * .configure. strxfrm_multiply_czech=4
  */
 
-#include <my_global.h>
 #include "m_string.h"
 #include "m_ctype.h"
 
@@ -155,7 +154,7 @@ static const uchar *CZ_SORT_TABLE[]=
 
 struct wordvalue
 {
-  const uchar *word;
+  const char *word;
   const uchar *outvalue;
 };
 
@@ -176,7 +175,7 @@ static struct wordvalue doubles[]=
   "Auto" space character is lower than a real space
   character on the third level.
 */
-static const uchar *virtual_space= "\x47\x20\x02\x20";
+static const uchar *virtual_space= (const uchar*)"\x47\x20\x02\x20";
 
 /*
         Original comments from the contributor:
@@ -341,7 +340,7 @@ while (1)						\
   the length of the strings being specified
 */
 
-static int my_strnncoll_czech(CHARSET_INFO *cs __attribute__((unused)),
+static int my_strnncoll_czech(const CHARSET_INFO *cs __attribute__((unused)),
 			      const uchar *s1, size_t len1, 
 			      const uchar *s2, size_t len2,
                               my_bool s2_is_prefix)
@@ -375,7 +374,7 @@ static int my_strnncoll_czech(CHARSET_INFO *cs __attribute__((unused)),
 */
 
 static int
-my_strnncollsp_czech(CHARSET_INFO * cs __attribute__((unused)),
+my_strnncollsp_czech(const CHARSET_INFO * cs __attribute__((unused)),
                      const uchar *s, size_t slen,
                      const uchar *t, size_t tlen,
                      my_bool diff_if_only_endspace_difference
@@ -428,7 +427,7 @@ my_strnncollsp_czech(CHARSET_INFO * cs __attribute__((unused)),
   Returns the number of bytes required for strnxfrm().
 */
 static size_t
-my_strnxfrmlen_czech(CHARSET_INFO *cs __attribute__((unused)), size_t len)
+my_strnxfrmlen_czech(const CHARSET_INFO *cs __attribute__((unused)), size_t len)
 {
   return len * 4 + 4;
 }
@@ -439,7 +438,7 @@ my_strnxfrmlen_czech(CHARSET_INFO *cs __attribute__((unused)), size_t len)
   the length of the strings being specified
 */
 static size_t
-my_strnxfrm_czech(CHARSET_INFO * cs  __attribute__((unused)),
+my_strnxfrm_czech(const CHARSET_INFO * cs  __attribute__((unused)),
                   uchar *dst, size_t dstlen, uint nweights_arg,
                   const uchar *src, size_t srclen, uint flags)
 {
@@ -516,9 +515,9 @@ my_strnxfrm_czech(CHARSET_INFO * cs  __attribute__((unused)),
 #define max_sort_char 0xAE
 
 
-static my_bool my_like_range_czech(CHARSET_INFO *cs __attribute__((unused)),
+static my_bool my_like_range_czech(const CHARSET_INFO *cs __attribute__((unused)),
 				   const char *ptr,size_t ptr_length,
-				   pbool escape, pbool w_one, pbool w_many,
+				   char escape, char w_one, char w_many,
 				   size_t res_length, char *min_str,
 				   char *max_str,
 				   size_t *min_length,size_t *max_length)
@@ -563,7 +562,7 @@ static my_bool my_like_range_czech(CHARSET_INFO *cs __attribute__((unused)),
   while (min_str != min_end)
   {
     *min_str++ = min_sort_char;	/* Because of key compression */
-    *max_str++ = max_sort_char;
+    *max_str++ = (char) max_sort_char;
   }
   return 0;
 }
@@ -653,7 +652,7 @@ static uchar sort_order_czech[] = {
 255, 98, 99,101,102,103,104,255,109,119,118,120,121,126,116,255,
 };
 
-static uint16 tab_8859_2_uni[256]={
+static uint16_t tab_8859_2_uni[256]={
      0,0x0001,0x0002,0x0003,0x0004,0x0005,0x0006,0x0007,
 0x0008,0x0009,0x000A,0x000B,0x000C,0x000D,0x000E,0x000F,
 0x0010,0x0011,0x0012,0x0013,0x0014,0x0015,0x0016,0x0017,

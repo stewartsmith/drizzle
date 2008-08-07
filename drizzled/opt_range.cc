@@ -108,7 +108,6 @@
 #endif
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include "sql_select.h"
 
 #ifndef EXTRA_DEBUG
@@ -8204,9 +8203,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
 
   /* Check (SA3) for the where clause. */
   if (join->conds && min_max_arg_item &&
-      !check_group_min_max_predicates(join->conds, min_max_arg_item,
-                                      (index_info->flags & HA_SPATIAL) ?
-                                      Field::itMBR : Field::itRAW))
+      !check_group_min_max_predicates(join->conds, min_max_arg_item, Field::itRAW))
     return(NULL);
 
   /* The query passes all tests, so construct a new TRP object. */

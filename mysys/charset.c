@@ -31,7 +31,7 @@
     - Setting server default character set
 */
 
-bool my_charset_same(CHARSET_INFO *cs1, CHARSET_INFO *cs2)
+bool my_charset_same(const CHARSET_INFO *cs1, const CHARSET_INFO *cs2)
 {
   return ((cs1 == cs2) || !strcmp(cs1->csname,cs2->csname));
 }
@@ -675,7 +675,7 @@ bool resolve_collation(const char *cl_name,
   Escape string with backslashes (\)
 
   SYNOPSIS
-    escape_string_for_mysql()
+    escape_string_for_drizzle()
     charset_info        Charset of the strings
     to                  Buffer for escaped string
     to_length           Length of destination buffer, or 0
@@ -696,9 +696,9 @@ bool resolve_collation(const char *cl_name,
     #           The length of the escaped string
 */
 
-size_t escape_string_for_mysql(CHARSET_INFO *charset_info,
-                               char *to, size_t to_length,
-                               const char *from, size_t length)
+size_t escape_string_for_drizzle(const CHARSET_INFO *charset_info,
+                                 char *to, size_t to_length,
+                                 const char *from, size_t length)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
@@ -815,7 +815,7 @@ CHARSET_INFO *fs_character_set()
   Escape apostrophes by doubling them up
 
   SYNOPSIS
-    escape_quotes_for_mysql()
+    escape_quotes_for_drizzle()
     charset_info        Charset of the strings
     to                  Buffer for escaped string
     to_length           Length of destination buffer, or 0
@@ -836,9 +836,9 @@ CHARSET_INFO *fs_character_set()
     >=0         The length of the escaped string
 */
 
-size_t escape_quotes_for_mysql(CHARSET_INFO *charset_info,
-                               char *to, size_t to_length,
-                               const char *from, size_t length)
+size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
+                                 char *to, size_t to_length,
+                                 const char *from, size_t length)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);

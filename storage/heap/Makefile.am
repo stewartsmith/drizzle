@@ -17,10 +17,6 @@ MYSQLDATAdir =          $(localstatedir)
 MYSQLSHAREdir =         $(pkgdatadir)
 MYSQLBASEdir=           $(prefix)
 MYSQLLIBdir=            $(pkglibdir)
-AM_CPPFLAGS =           ${GLOBAL_INCLUDES} \
-			-I$(top_builddir) \
-			-I$(top_srcdir)/drizzled 
-WRAPLIBS=
 
 LDADD =			libheap.la \
 			$(top_builddir)/mysys/libmysyslt.la \
@@ -33,7 +29,9 @@ libheap_la_SOURCES =	hp_open.c hp_extra.c hp_close.c hp_panic.c hp_info.c \
 			hp_rrnd.c hp_scan.c hp_update.c hp_write.c hp_delete.c \
 			hp_rsame.c hp_create.c hp_rename.c hp_rfirst.c \
 			hp_rnext.c hp_rlast.c hp_rprev.c hp_clear.c \
+			hp_dspace.c hp_record.c \
 			hp_rkey.c hp_block.c \
+			hp_rectest.c \
 			ha_heap.cc \
 			hp_hash.c hp_static.c
 

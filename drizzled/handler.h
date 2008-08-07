@@ -45,7 +45,7 @@
 #define HA_ADMIN_NEEDS_CHECK    -12
 
 /* Bits to show what an alter table will do */
-#include <sql_bitmap.h>
+#include <drizzled/sql_bitmap.h>
 
 #define HA_MAX_ALTER_FLAGS 39
 typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
@@ -363,6 +363,7 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
 #define HA_CREATE_USED_TRANSACTIONAL    (1L << 20)
 #define HA_CREATE_USED_PAGE_CHECKSUM    (1L << 21)
+#define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
 typedef uint64_t my_xid; // this line is the same as in log_event.h
 #define MYSQL_XID_PREFIX "MySQLXid"
@@ -376,6 +377,10 @@ typedef uint64_t my_xid; // this line is the same as in log_event.h
 
 #define COMPATIBLE_DATA_YES 0
 #define COMPATIBLE_DATA_NO  1
+
+typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
+                                      uint key_length,
+                                      uint64_t *engine_data);
 
 /**
   struct xid_t is binary compatible with the XID structure as
@@ -759,6 +764,7 @@ typedef struct st_ha_create_information
   uint32_t avg_row_length;
   uint32_t used_fields;
   uint32_t key_block_size;
+  uint32_t block_size;
   SQL_LIST merge_list;
   handlerton *db_type;
   enum row_type row_type;

@@ -3,12 +3,12 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)dnl		Minimum Autoconf version required.
 
-AC_INIT
+AC_INIT(drizzle, [7.0.0], [http://bugs.launchpad.net/drizzle])
 AC_CONFIG_SRCDIR([drizzled/drizzled.cc])
 AC_CONFIG_AUX_DIR(config)
-AC_CONFIG_HEADERS([include/config.h:config.h.in])
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(drizzle, 7.0.0, no-define)
+AM_INIT_AUTOMAKE(-Wall -Werror)
 
 PROTOCOL_VERSION=10
 DOT_FRM_VERSION=6
@@ -38,26 +38,28 @@ MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
 MYSQL_TCP_PORT_DEFAULT=4427
 
 dnl Include m4 
-sinclude(config/ac-macros/alloca.m4)
-sinclude(config/ac-macros/check_cpu.m4)
-sinclude(config/ac-macros/character_sets.m4)
-sinclude(config/ac-macros/compiler_flag.m4)
-sinclude(config/ac-macros/dtrace.m4)
-sinclude(config/ac-macros/plugins.m4)
-sinclude(config/ac-macros/large_file.m4)
-sinclude(config/ac-macros/misc.m4)
-sinclude(config/ac-macros/readline.m4)
-sinclude(config/ac-macros/ssl.m4)
-sinclude(config/ac-macros/pkg.m4)
+sinclude(m4/alloca.m4)
+sinclude(m4/check_cpu.m4)
+sinclude(m4/character_sets.m4)
+sinclude(m4/compiler_flag.m4)
+sinclude(m4/dtrace.m4)
+sinclude(m4/plugins.m4)
+sinclude(m4/large_file.m4)
+sinclude(m4/misc.m4)
+sinclude(m4/readline.m4)
+sinclude(m4/ssl.m4)
+sinclude(m4/pkg.m4)
+sinclude(m4/lib-link.m4)
+sinclude(m4/lib-prefix.m4)
+sinclude(m4/gettext.m4)
+sinclude(m4/progtest.m4)
+sinclude(m4/po.m4)
+sinclude(m4/nls.m4)
+sinclude(m4/iconv.m4)
+sinclude(m4/lib-ld.m4)
+sinclude(m4/ac_cxx_header_stdcxx_98.m4)
 
-# Remember to add a directory drizzled/share/LANGUAGE
-AVAILABLE_LANGUAGES="\
-czech danish dutch english estonian french german greek hungarian \
-italian japanese korean norwegian norwegian-ny polish portuguese \
-romanian russian serbian slovak spanish swedish ukrainian"
-
-#####
-#####
+AM_GNU_GETTEXT([external])
 
 AC_SUBST(MYSQL_NO_DASH_VERSION)
 AC_SUBST(MYSQL_BASE_VERSION)
@@ -156,9 +158,13 @@ CXXFLAGS="$CXXFLAGS $C_EXTRA_FLAGS "
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
+ifdef([AC_PROG_CC_C99],[
+  AC_PROG_CC_C99([],[AC_MSG_ERROR([C99 support required for compiling Drizzle])])
+  C99_SUPPORT_HACK=""
+],[C99_SUPPORT_HACK="-std=gnu99"])
 AC_PROG_CXX
-if test "x$ac_ct_CXX" = "x"
+AC_CXX_HEADER_STDCXX_98
+if test "$ac_cv_cxx_stdcxx_98" = "no"
 then
   AC_MSG_ERROR([C++ Compiler required to compile Drizzle])
 fi
@@ -279,10 +285,9 @@ fi
 
 MYSQL_PROG_AR
 
-# libmysqlclient versioning when linked with GNU ld.
+# libdrizzle versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
   LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libdrizzle/libdrizzle.ver"
-  AC_CONFIG_FILES(libdrizzle/libdrizzle.ver)
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
@@ -291,17 +296,67 @@ AC_SUBST(LD_VERSION_SCRIPT)
 # Check for libevent
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS(event.h)
-if test "x$ac_cv_header_event_h" != "xyes"
+AC_MSG_CHECKING(for libevent)
+AC_ARG_WITH(libevent,
+  [AS_HELP_STRING([--with-libevent],
+       [Use libevent build directory])],
+  [ with_libevent=$withval ],
+  [ with_libevent=yes ])
+
+if test "$with_libevent" = "yes"
 then
-  AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+    AC_CHECK_HEADERS(event.h)
+    if test "x$ac_cv_header_event_h" != "xyes"
+    then
+      AC_MSG_ERROR([Couldn't find event.h. Try installing libevent development packages])
+    fi
+    my_save_LIBS="$LIBS"
+    LIBS=""
+    AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
+    LIBEVENT_LIBS="${LIBS}"
+    LIBS="${my_save_LIBS}"
+    LIBEVENT_CFLAGS=""
+else
+    AC_MSG_RESULT($withval)
+    if test -f $withval/event.h -a -f $withval/libevent.a; then
+       owd=`pwd`
+       if cd $withval; then withval=`pwd`; cd $owd; fi
+       LIBEVENT_CFLAGS="-I$withval"
+       LIBEVENT_LIBS="-L$withval -levent"
+    elif test -f $withval/include/event.h -a -f $withval/lib/libevent.a; then
+       owd=`pwd`
+       if cd $withval; then withval=`pwd`; cd $owd; fi
+       LIBEVENT_CFLAGS="-I$withval/include"
+       LIBEVENT_LIBS="-L$withval/lib -levent"
+    else
+       AC_MSG_ERROR([event.h or libevent.a not found in $withval])
+    fi
 fi
-my_save_LIBS="$LIBS"
-LIBS=""
-AC_CHECK_LIB(event, event_loop, [], [AC_MSG_ERROR(could not find libevent)])
-LIBEVENT_LIBS="${LIBS}"
-LIBS="${my_save_LIBS}"
+
+AC_SUBST(LIBEVENT_CFLAGS)
 AC_SUBST(LIBEVENT_LIBS)
+
+AC_CACHE_CHECK([for bufferevent in libevent], ac_libevent_works, [
+  save_CFLAGS="$CFLAGS"
+  save_LIBS="$LIBS"
+  CFLAGS="$LIBEVENT_CFLAGS"
+  LIBS="$LIBEVENT_LIBS"
+  AC_TRY_LINK([
+#include <sys/types.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <event.h>],[
+	struct bufferevent bev;
+	bufferevent_settimeout(&bev, 1, 1);
+  ], ac_libevent_works=yes, [
+        AC_ERROR([you need to install a more recent version of libevent,
+	check http://www.monkey.org/~provos/libevent/])
+  ])
+
+  CFLAGS="$save_CFLAGS"
+  LIBS="$save_LIBS"
+])
+
 
 #--------------------------------------------------------------------
 # Check for libpthread
@@ -321,10 +376,10 @@ AC_CHECK_LIB(pthread, pthread_create, [], [AC_MSG_ERROR(could not find libpthrea
 AC_ARG_ENABLE([tcmalloc],
     [AS_HELP_STRING([--enable-tcmalloc],
        [Enable linking with tcmalloc @<:@default=off@:>@])],
-    [ac_warn_strict_aliasing="$enableval"],
-    [ac_warn_strict_aliasing="no"])
+    [ac_enable_tcmalloc="$enableval"],
+    [ac_enable_tcmalloc="no"])
 
-if test "x$ac_warn_strict_aliasing" = "xyes"
+if test "x$ac_enable_tcmalloc" = "xyes"
 then
   AC_CHECK_LIB(tcmalloc,malloc,[],[])
 fi
@@ -350,11 +405,23 @@ AC_SUBST(ZLIB_LIBS)
 # Check for libreadline or compatible (libedit on Mac OS X)
 #--------------------------------------------------------------------
 
-AC_CHECK_HEADERS([readline/readline.h])
+AC_CHECK_HEADERS(readline/history.h readline/readline.h)
 if test "x$ac_cv_header_readline_readline_h" != "xyes"
 then
   AC_MSG_ERROR([Couldn't find readline/readline.h. Try installing readline development packages.])
 fi
+AC_CHECK_TYPES([HIST_ENTRY], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
+AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
+#include <readline/readline.h>
+]])
 
 MYSQL_CHECK_NEW_RL_INTERFACE
 
@@ -368,29 +435,38 @@ READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
 
-
 #--------------------------------------------------------------------
 # Check for libpcre
 #--------------------------------------------------------------------
 
 AC_LANG_PUSH([C++])
 AC_PATH_PROG(PKG_CONFIG, pkg-config, AC_MSG_ERROR([pkg-config wasn't found.]))
-PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[
+PKG_CHECK_MODULES(PCRE, [libpcrecpp >= 3], [found_pcre="yes"],[found_pcre="no"])
+
+if test "$found_pcre" = "no"
+then
   dnl Only check the header here, because autoconf can't handle
   dnl checking for C++ methods without C linkages
   AC_CHECK_HEADERS(pcrecpp.h)
   if test "x$ac_cv_header_pcrecpp_h" != "xyes" 
   then
-    found_pcre="no"
-  else
-    found_pcre="yes"
-    # We can't search for these well, but we sure do need them!
-    PCRE_LIBS="-lpcrecpp -lpcre"
-  fi
-  ])
-if test "x$found_pcre" != "xyes"
-then
     AC_MSG_ERROR([Couldn't find pcrecpp.h. Try installing the development package associated with libpcre on your system.])
+  else
+    # Found headers, now see if we can link
+    AC_MSG_CHECKING(for libpcrecpp)
+    save_LDFLAGS="$LDFLAGS"
+    LDFLAGS="-lpcrecpp -lpcre"
+    AC_TRY_LINK([
+#include <pcrecpp.h>
+    ],
+    [pcrecpp::RE_Options opt;],
+    [found_pcre="yes"],
+    [AC_MSG_ERROR([Couldn't link libpcrecpp])])
+
+    PCRE_LIBS="$LDFLAGS"
+    LDFLAGS="$save_LDFLAGS"
+    AC_MSG_RESULT([yes])
+  fi
 fi
 AC_LANG_POP([])
 AC_SUBST(PCRE_LIBS)
@@ -486,6 +562,7 @@ else
       ;;
     *)
       AC_MSG_ERROR([Could not find the right ps switches. Which OS is this ?. See the Installation chapter in the Reference Manual.])
+      ;;
   esac
 fi
 AC_SUBST(FIND_PROC)
@@ -658,12 +735,12 @@ AC_CHECK_HEADERS([xfs/xfs.h])
 AC_CHECK_LIB(m, floor, [], AC_CHECK_LIB(m, __infinity))
 AC_CHECK_FUNCS(log2)
 
-AC_CHECK_FUNC(setsockopt, , AC_CHECK_LIB(socket, setsockopt))
-AC_CHECK_FUNC(yp_get_default_domain, ,
-  AC_CHECK_LIB(nsl, yp_get_default_domain))
-AC_CHECK_FUNC(p2open, , AC_CHECK_LIB(gen, p2open))
+AC_CHECK_FUNC(setsockopt, [], [AC_CHECK_LIB(socket, setsockopt)])
+AC_CHECK_FUNC(yp_get_default_domain, [],
+  [AC_CHECK_LIB(nsl, yp_get_default_domain)])
+AC_CHECK_FUNC(p2open, [], [AC_CHECK_LIB(gen, p2open)])
 # This may get things to compile even if bind-8 is installed
-AC_CHECK_FUNC(bind, , AC_CHECK_LIB(bind, bind))
+AC_CHECK_FUNC(bind, [], [AC_CHECK_LIB(bind, bind)])
 # Check if crypt() exists in libc or libcrypt, sets LIBS if needed
 AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
 
@@ -671,12 +748,13 @@ AC_SEARCH_LIBS(crypt, crypt, AC_DEFINE(HAVE_CRYPT, 1, [crypt]))
 AC_CHECK_LIB(rt, aio_read)
 
 # For the sched_yield() function on Solaris
-AC_CHECK_FUNC(sched_yield, , AC_CHECK_LIB(posix4, sched_yield,
-[AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"]))
+AC_CHECK_FUNC(sched_yield, [],
+  [AC_CHECK_LIB(posix4, [sched_yield],
+    [AC_DEFINE(HAVE_SCHED_YIELD) LIBS="$LIBS -lposix4"])])
 
 if test "$ac_cv_header_termio_h" = "no" -a "$ac_cv_header_termios_h" = "no"
 then
-  AC_CHECK_FUNC(gtty, , AC_CHECK_LIB(compat, gtty))
+  AC_CHECK_FUNC(gtty, [], [AC_CHECK_LIB(compat, gtty)])
 fi
 
 AC_CHECK_TYPES([int8, uint8, int16, uint16, int32, uint32, int64, uint64,
@@ -742,7 +820,7 @@ dnl TODO: Remove this define once we are using 2.61 across the board.
 # AC_HEADER_ASSERT
 # ----------------
 # Check whether to enable assertions.
-ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
+ifdef([AC_HEADER_ASSERT], [], [AC_DEFUN([AC_HEADER_ASSERT],
 [
   AC_MSG_CHECKING([whether to enable assertions])
   AC_ARG_ENABLE([assert],
@@ -750,7 +828,7 @@ ifdef([AC_HEADER_ASSERT],[],AC_DEFUN([AC_HEADER_ASSERT],
     [AC_MSG_RESULT([no])
      AC_DEFINE(NDEBUG, 1, [Define to 1 if assertions should be disabled.])],
     [AC_MSG_RESULT(yes)])
-]))
+])])
 
 AC_HEADER_ASSERT
 
@@ -786,6 +864,8 @@ then
 			[Define to 1 if you want to use fast mutexes])
 fi
 
+AM_CONDITIONAL(BUILD_FAST_MUTEX,[test "$with_fast_mutexes" != "no"])
+
 AC_ARG_WITH([comment],
     [AS_HELP_STRING([--with-comment],
             [Comment about compilation environment. @<:@default=off@:>@])],
@@ -813,7 +893,6 @@ AC_C_INLINE
 AC_TYPE_OFF_T
 AC_HEADER_TIME
 AC_STRUCT_TM
-MYSQL_NEEDS_MYSYS_NEW
 # AC_CHECK_SIZEOF return 0 when it does not find the size of a
 # type. We want a error instead.
 AC_CHECK_SIZEOF(char, 1)
@@ -876,7 +955,7 @@ MYSQL_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
 MYSQL_FUNC_ALLOCA
 # Do struct timespec have members tv_sec or ts_sec
-MYSQL_TIMESPEC_TS
+DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
 MYSQL_TZNAME
 # Do the c++ compiler have a bool type
@@ -887,9 +966,6 @@ AC_CHECK_TYPES([u_int32_t])
 
 MYSQL_PTHREAD_YIELD
 
-######################################################################
-# For readline/libedit (We simply move the mimimum amount of stuff from
-# the readline/libedit configure.in here)
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(malloc.h sys/cdefs.h)
@@ -983,6 +1059,9 @@ then
   AC_MSG_ERROR("Drizzle requires fcntl.")
 fi
 
+AC_CONFIG_LIBOBJ_DIR([mystrings])
+AC_REPLACE_FUNCS([strtoll strstr strtoull strmov getpagesize])
+
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
   fdatasync finite fpresetsticky fpsetmask fsync ftruncate \
@@ -991,7 +1070,7 @@ AC_CHECK_FUNCS(bsearch \
   localtime_r gethrtime gmtime_r \
   locking longjmp lrand48 madvise mallinfo \
   memmove \
-  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 getpagesize \
+  mkstemp mlockall perror poll pread pthread_attr_create mmap mmap64 \
   pthread_attr_getstacksize pthread_attr_setprio pthread_attr_setschedparam \
   pthread_attr_setstacksize pthread_condattr_create pthread_getsequence_np \
   pthread_key_delete pthread_rwlock_rdlock pthread_setprio \
@@ -999,9 +1078,11 @@ AC_CHECK_FUNCS(bsearch \
   realpath rename rint rwlock_init setupterm \
   shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
   sighold sigset sigthreadmask port_create sleep \
-  snprintf socket stpcpy strcasecmp strerror strsignal strnlen strpbrk strstr \
-  strtol strtoll strtoul strtoull tell tempnam vidattr \
+  snprintf socket stpcpy strcasecmp strerror strsignal strnlen strpbrk \
+  tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
+
+AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
 
 # Check that isinf() is available in math.h and can be used in both C and C++
 # code
@@ -1041,13 +1122,15 @@ fi]
 )
 
 # Check definition of pthread_getspecific
-AC_CACHE_CHECK("args to pthread_getspecific", mysql_cv_getspecific_args,
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
+AC_CACHE_CHECK([args to pthread_getspecific], [mysql_cv_getspecific_args],
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#if !defined(_REENTRANT)
 #define _REENTRANT
 #endif
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h> ]], [[ void *pthread_getspecific(pthread_key_t key);
-pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX],[mysql_cv_getspecific_args=other]))
+pthread_getspecific((pthread_key_t) NULL); ]])],
+    [mysql_cv_getspecific_args=POSIX],
+    [mysql_cv_getspecific_args=other])])
   if test "$mysql_cv_getspecific_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_GETSPECIFIC], [1],
@@ -1055,13 +1138,15 @@ pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX
   fi
 
   # Check definition of pthread_mutex_init
-  AC_CACHE_CHECK("args to pthread_mutex_init", mysql_cv_mutex_init_args,
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+  AC_CACHE_CHECK([args to pthread_mutex_init], [mysql_cv_mutex_init_args],
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h> ]], [[ 
   pthread_mutexattr_t attr;
   pthread_mutex_t mp;
-  pthread_mutex_init(&mp,&attr); ]])],[mysql_cv_mutex_init_args=POSIX],[mysql_cv_mutex_init_args=other]))
+  pthread_mutex_init(&mp,&attr); ]])],
+      [mysql_cv_mutex_init_args=POSIX],
+      [mysql_cv_mutex_init_args=other])])
   if test "$mysql_cv_mutex_init_args" = "other"
   then
     AC_DEFINE([HAVE_NONPOSIX_PTHREAD_MUTEX_INIT], [1],
@@ -1071,27 +1156,35 @@ pthread_getspecific((pthread_key_t) NULL); ]])],[mysql_cv_getspecific_args=POSIX
 
 #---START: Used in for client configure
 # Check definition of readdir_r
-AC_CACHE_CHECK("args to readdir_r", mysql_cv_readdir_r,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([args to readdir_r], [mysql_cv_readdir_r],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
 #include <dirent.h>]], [[ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
-readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],[mysql_cv_readdir_r=POSIX],[mysql_cv_readdir_r=other]))
+readdir_r((DIR *) NULL, (struct dirent *) NULL, (struct dirent **) NULL); ]])],
+    [mysql_cv_readdir_r=POSIX],
+    [mysql_cv_readdir_r=other])])
 if test "$mysql_cv_readdir_r" = "POSIX"
 then
   AC_DEFINE([HAVE_READDIR_R], [1], [POSIX readdir_r])
 fi
 
 # Check definition of posix sigwait()
-AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>]], [[#ifndef _AIX
+#include <signal.h>
+      ]], [[
+#ifndef _AIX
 sigset_t set;
 int sig;
 sigwait(&set,&sig);
-#endif]])],[mysql_cv_sigwait=POSIX],[mysql_cv_sigwait=other]))
+#endif
+      ]])],
+    [mysql_cv_sigwait=POSIX],
+    [mysql_cv_sigwait=other])])
 if test "$mysql_cv_sigwait" = "POSIX"
 then
   AC_DEFINE([HAVE_SIGWAIT], [1], [POSIX sigwait])
@@ -1101,13 +1194,19 @@ if test "$mysql_cv_sigwait" != "POSIX"
 then
 unset mysql_cv_sigwait
 # Check definition of posix sigwait()
-AC_CACHE_CHECK("style of sigwait", mysql_cv_sigwait,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([style of sigwait], [mysql_cv_sigwait],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
 #include <pthread.h>
-#include <signal.h>]], [[sigset_t set;
+#include <signal.h>
+      ]], [[
+sigset_t set;
 int sig;
-sigwait(&set);]])],[mysql_cv_sigwait=NONPOSIX],[mysql_cv_sigwait=other]))
+sigwait(&set);
+      ]])],
+    [mysql_cv_sigwait=NONPOSIX],
+    [mysql_cv_sigwait=other])])
 if test "$mysql_cv_sigwait" = "NONPOSIX"
 then
   AC_DEFINE([HAVE_NONPOSIX_SIGWAIT], [1], [sigwait with one argument])
@@ -1116,11 +1215,17 @@ fi
 #---END:
 
 # Check if pthread_attr_setscope() exists
-AC_CACHE_CHECK("for pthread_attr_setscope", mysql_cv_pthread_attr_setscope,
-AC_LINK_IFELSE([AC_LANG_PROGRAM([[#define _REENTRANT
+AC_CACHE_CHECK([for pthread_attr_setscope], [mysql_cv_pthread_attr_setscope],
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#define _REENTRANT
 #define _POSIX_PTHREAD_SEMANTICS 
-#include <pthread.h>]], [[pthread_attr_t thr_attr;
-pthread_attr_setscope(&thr_attr,0);]])],[mysql_cv_pthread_attr_setscope=yes],[mysql_cv_pthread_attr_setscope=no]))
+#include <pthread.h>
+      ]], [[
+pthread_attr_t thr_attr;
+pthread_attr_setscope(&thr_attr,0);
+      ]])],
+    [mysql_cv_pthread_attr_setscope=yes],
+    [mysql_cv_pthread_attr_setscope=no])])
 if test "$mysql_cv_pthread_attr_setscope" = "yes"
 then
   AC_DEFINE([HAVE_PTHREAD_ATTR_SETSCOPE], [1], [pthread_attr_setscope])
@@ -1265,14 +1370,14 @@ then
   fi
 
   BASE_WARNINGS="-W -Wall -Wextra"
-  GCC_WARNINGS="${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
+  GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
   GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
   CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
   CFLAGS="$CFLAGS ${GCC_WARNINGS} "
 fi
 
-AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)/include -I$(top_srcdir)/include'])
+AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
 
 # Some usefull subst
@@ -1292,13 +1397,12 @@ AC_SUBST(MAKE_BINARY_DISTRIBUTION_OPTIONS)
 
 AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile mysys/tests/Makefile dnl
  mystrings/Makefile mystrings/tests/Makefile storage/Makefile dnl
- vio/Makefile dnl
+ vio/Makefile po/Makefile.in dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
- drizzled/share/Makefile dnl
  drizzled/sql_builtin.cc dnl
- include/Makefile dnl
+ drizzled/share/Makefile dnl
  support-files/Makefile dnl
  tests/Makefile tests/install_test_db dnl
  drizzled/version.h plugin/Makefile dnl

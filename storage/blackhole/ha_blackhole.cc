@@ -18,7 +18,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 #include "ha_blackhole.h"
 
 /* Static declarations for handlerton */
@@ -81,14 +81,9 @@ int ha_blackhole::create(const char *name __attribute__((unused)),
   return(0);
 }
 
-const char *ha_blackhole::index_type(uint key_number)
+const char *ha_blackhole::index_type(uint key_number __attribute__((unused)))
 {
-  return((table_share->key_info[key_number].flags & HA_FULLTEXT) ? 
-              "FULLTEXT" :
-              (table_share->key_info[key_number].flags & HA_SPATIAL) ?
-              "SPATIAL" :
-              (table_share->key_info[key_number].algorithm ==
-               HA_KEY_ALG_RTREE) ? "RTREE" : "BTREE");
+  return("BTREE");
 }
 
 int ha_blackhole::write_row(uchar * buf __attribute__((unused)))

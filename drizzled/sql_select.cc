@@ -31,9 +31,9 @@
 #include "mysql_priv.h"
 #include "sql_select.h"
 
-#include <m_ctype.h>
 #include <mysys/my_bit.h>
 #include <mysys/hash.h>
+#include <drizzled/drizzled_error_messages.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",
@@ -10584,8 +10584,7 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
     new_field->flags|= (org_field->flags & NO_DEFAULT_VALUE_FLAG);
     if (org_field->maybe_null() || (item && item->maybe_null))
       new_field->flags&= ~NOT_NULL_FLAG;	// Because of outer join
-    if (org_field->type() == DRIZZLE_TYPE_VAR_STRING ||
-        org_field->type() == DRIZZLE_TYPE_VARCHAR)
+    if (org_field->type() == DRIZZLE_TYPE_VARCHAR)
       table->s->db_create_options|= HA_OPTION_PACK_RECORD;
     else if (org_field->type() == DRIZZLE_TYPE_DOUBLE)
       ((Field_double *) new_field)->not_fixed= true;
@@ -11156,8 +11155,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 	    blob_count++;
 	  }
 	  *(reg_field++)= new_field;
-          if (new_field->real_type() == DRIZZLE_TYPE_STRING ||
-              new_field->real_type() == DRIZZLE_TYPE_VARCHAR)
+          if (new_field->real_type() == DRIZZLE_TYPE_VARCHAR)
           {
             string_count++;
             string_total_length+= new_field->pack_length();
@@ -11405,10 +11403,6 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     recinfo->length=length;
     if (field->flags & BLOB_FLAG)
       recinfo->type= (int) FIELD_BLOB;
-    else if (use_packed_rows &&
-             field->real_type() == DRIZZLE_TYPE_STRING &&
-	     length >= MIN_STRING_LENGTH_TO_PACK_ROWS)
-      recinfo->type=FIELD_SKIP_ENDSPACE;
     else
       recinfo->type=FIELD_NORMAL;
     if (!--hidden_field_count)
@@ -11546,12 +11540,15 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
       key_part_info->null_bit=0;
       key_part_info->offset=hidden_null_pack_length;
       key_part_info->length=null_pack_length;
-      key_part_info->field= new Field_string(table->record[0],
-                                             (uint32_t) key_part_info->length,
-                                             (uchar*) 0,
-                                             (uint) 0,
-                                             Field::NONE,
-                                             NullS, &my_charset_bin);
+      key_part_info->field= new Field_varstring(table->record[0],
+                                                (uint32_t) key_part_info->length,
+                                                0,
+                                                (uchar*) 0,
+                                                (uint) 0,
+                                                Field::NONE,
+                                                NullS, 
+                                                table->s,
+                                                &my_charset_bin);
       if (!key_part_info->field)
         goto err;
       key_part_info->field->init(table);
@@ -11670,7 +11667,6 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   uint *blob_field;
   MI_COLUMNDEF *recinfo, *start_recinfo;
   bool using_unique_constraint=false;
-  bool use_packed_rows= false;
   Field *field, *key_field;
   uint blob_count, null_pack_length, null_count;
   uchar *null_flags;
@@ -11757,8 +11753,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   /* Create the field */
   {
     /*
-      For the sake of uniformity, always use Field_varstring (altough we could
-      use Field_string for shorter keys)
+      For the sake of uniformity, always use Field_varstring.
     */
     field= new Field_varstring(uniq_tuple_length_arg, false, "rowids", share,
                                &my_charset_bin);
@@ -11856,10 +11851,6 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
     recinfo->length=length;
     if (field->flags & BLOB_FLAG)
       recinfo->type= (int) FIELD_BLOB;
-    else if (use_packed_rows &&
-             field->real_type() == DRIZZLE_TYPE_STRING &&
-	     length >= MIN_STRING_LENGTH_TO_PACK_ROWS)
-      recinfo->type=FIELD_SKIP_ENDSPACE;
     else
       recinfo->type=FIELD_NORMAL;
 
@@ -12177,10 +12168,6 @@ static bool create_myisam_tmp_table(TABLE *table, KEY *keyinfo,
       else
       {
 	seg->type= keyinfo->key_part[i].type;
-        /* Tell handler if it can do suffic space compression */
-	if (field->real_type() == DRIZZLE_TYPE_STRING &&
-	    keyinfo->key_part[i].length > 4)
-	  seg->flag|= HA_SPACE_PACK;
       }
       if (!(field->flags & NOT_NULL_FLAG))
       {
@@ -14221,7 +14208,6 @@ static bool test_if_ref(Item_field *left_item,Item *right_item)
           frequent case?
 	*/
 	if (field->binary() &&
-	    field->real_type() != DRIZZLE_TYPE_STRING &&
 	    field->real_type() != DRIZZLE_TYPE_VARCHAR &&
 	    field->decimals() == 0)
 	{
@@ -16123,7 +16109,7 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
         warning so the user knows that the field from the FROM clause
         overshadows the column reference from the SELECT list.
       */
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_NON_UNIQ_ERROR,
                           ER(ER_NON_UNIQ_ERROR),
                           ((Item_ident*) order_item)->field_name,
                           current_thd->where);
@@ -16489,7 +16475,7 @@ calc_group_buffer(JOIN *join,ORDER *group)
       enum_field_types type;
       if ((type= field->type()) == DRIZZLE_TYPE_BLOB)
 	key_length+=MAX_BLOB_WIDTH;		// Can't be used as a key
-      else if (type == DRIZZLE_TYPE_VARCHAR || type == DRIZZLE_TYPE_VAR_STRING)
+      else if (type == DRIZZLE_TYPE_VARCHAR)
         key_length+= field->field_length + HA_KEY_BLOB_LENGTH;
       else
 	key_length+= field->pack_length();
@@ -16727,7 +16713,7 @@ setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
         /*
           We need to allocate one extra byte for null handling and
           another extra byte to not get warnings from purify in
-          Field_string::val_int
+          Field_varstring::val_int
         */
 	if (!(tmp= (uchar*) sql_alloc(field->pack_length()+2)))
 	  goto err;

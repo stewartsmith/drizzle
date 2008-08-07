@@ -35,10 +35,10 @@ int Field_datetime::store(const char *from,
                           uint len,
                           CHARSET_INFO *cs __attribute__((unused)))
 {
-  MYSQL_TIME time_tmp;
+  DRIZZLE_TIME time_tmp;
   int error;
   uint64_t tmp= 0;
-  enum enum_mysql_timestamp_type func_res;
+  enum enum_drizzle_timestamp_type func_res;
   THD *thd= table ? table->in_use : current_thd;
 
   func_res= str_to_datetime(from, len, &time_tmp,
@@ -47,15 +47,15 @@ int Field_datetime::store(const char *from,
                               (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
                                MODE_INVALID_DATES))),
                             &error);
-  if ((int) func_res > (int) MYSQL_TIMESTAMP_ERROR)
+  if ((int) func_res > (int) DRIZZLE_TIMESTAMP_ERROR)
     tmp= TIME_to_uint64_t_datetime(&time_tmp);
   else
     error= 1;                                 // Fix if invalid zero date
 
   if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          ER_WARN_DATA_OUT_OF_RANGE,
-                         from, len, MYSQL_TIMESTAMP_DATETIME, 1);
+                         from, len, DRIZZLE_TIMESTAMP_DATETIME, 1);
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
@@ -74,9 +74,9 @@ int Field_datetime::store(double nr)
   int error= 0;
   if (nr < 0.0 || nr > 99991231235959.0)
   {
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                          ER_WARN_DATA_OUT_OF_RANGE,
-                         nr, MYSQL_TIMESTAMP_DATETIME);
+                         nr, DRIZZLE_TIMESTAMP_DATETIME);
     nr= 0.0;
     error= 1;
   }
@@ -88,7 +88,7 @@ int Field_datetime::store(double nr)
 int Field_datetime::store(int64_t nr,
                           bool unsigned_val __attribute__((unused)))
 {
-  MYSQL_TIME not_used;
+  DRIZZLE_TIME not_used;
   int error;
   int64_t initial_nr= nr;
   THD *thd= table ? table->in_use : current_thd;
@@ -106,10 +106,10 @@ int Field_datetime::store(int64_t nr,
   }
 
   if (error)
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          error == 2 ? ER_WARN_DATA_OUT_OF_RANGE :
-                         WARN_DATA_TRUNCATED, initial_nr,
-                         MYSQL_TIMESTAMP_DATETIME, 1);
+                         ER_WARN_DATA_TRUNCATED, initial_nr,
+                         DRIZZLE_TIMESTAMP_DATETIME, 1);
 
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
@@ -123,7 +123,7 @@ int Field_datetime::store(int64_t nr,
 }
 
 
-int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
+int Field_datetime::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
 {
   int64_t tmp;
   int error= 0;
@@ -131,8 +131,8 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
     We don't perform range checking here since values stored in TIME
     structure always fit into DATETIME range.
   */
-  if (time_type == MYSQL_TIMESTAMP_DATE ||
-      time_type == MYSQL_TIMESTAMP_DATETIME)
+  if (time_type == DRIZZLE_TIMESTAMP_DATE ||
+      time_type == DRIZZLE_TIMESTAMP_DATETIME)
   {
     tmp=((ltime->year*10000L+ltime->month*100+ltime->day)*1000000LL+
 	 (ltime->hour*10000L+ltime->minute*100+ltime->second));
@@ -145,15 +145,15 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
-                           str.ptr(), str.length(), MYSQL_TIMESTAMP_DATETIME,1);
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+                           str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATETIME,1);
     }
   }
   else
   {
     tmp=0;
     error= 1;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
 #ifdef WORDS_BIGENDIAN
   if (table && table->s->db_low_byte_first)
@@ -168,7 +168,7 @@ int Field_datetime::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
 
 bool Field_datetime::send_binary(Protocol *protocol)
 {
-  MYSQL_TIME tm;
+  DRIZZLE_TIME tm;
   Field_datetime::get_date(&tm, TIME_FUZZY_DATE);
   return protocol->store(&tm);
 }
@@ -240,14 +240,14 @@ String *Field_datetime::val_str(String *val_buffer,
   return val_buffer;
 }
 
-bool Field_datetime::get_date(MYSQL_TIME *ltime, uint fuzzydate)
+bool Field_datetime::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
 {
   int64_t tmp=Field_datetime::val_int();
   uint32_t part1,part2;
   part1=(uint32_t) (tmp/1000000LL);
   part2=(uint32_t) (tmp - (uint64_t) part1*1000000LL);
 
-  ltime->time_type=	MYSQL_TIMESTAMP_DATETIME;
+  ltime->time_type=	DRIZZLE_TIMESTAMP_DATETIME;
   ltime->neg=		0;
   ltime->second_part=	0;
   ltime->second=	(int) (part2%100);
@@ -259,7 +259,7 @@ bool Field_datetime::get_date(MYSQL_TIME *ltime, uint fuzzydate)
   return (!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ? 1 : 0;
 }
 
-bool Field_datetime::get_time(MYSQL_TIME *ltime)
+bool Field_datetime::get_time(DRIZZLE_TIME *ltime)
 {
   return Field_datetime::get_date(ltime,0);
 }

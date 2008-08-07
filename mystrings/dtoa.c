@@ -35,8 +35,6 @@
 
  ***************************************************************/
 
-#include <my_base.h> /* for EOVERFLOW on Windows */
-#include <my_global.h>
 #include <m_string.h>  /* for memcpy and NOT_FIXED_DEC */
 
 /**
@@ -85,7 +83,7 @@ static void dtoa_free(char *, char *, size_t);
    @return            number of written characters (excluding terminating '\0')
 */
 
-size_t my_fcvt(double x, int precision, char *to, my_bool *error)
+size_t my_fcvt(double x, int precision, char *to, bool *error)
 {
   int decpt, sign, len, i;
   char *res, *src, *end, *dst= to;
@@ -209,7 +207,7 @@ size_t my_fcvt(double x, int precision, char *to, my_bool *error)
 */
 
 size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
-               my_bool *error)
+               bool *error)
 {
   int decpt, sign, len, exp_len;
   char *res, *src, *end, *dst= to, *dend= dst + width;
@@ -1329,7 +1327,7 @@ static double my_strtod_int(const char *s00, char **se, int *error, char *buf, s
   double aadj, aadj1, adj, rv, rv0;
   Long L;
   ULong y, z;
-  Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
+  Bigint *bb= NULL, *bb1= NULL, *bd= NULL, *bd0= NULL, *bs= NULL, *delta= NULL;
 #ifdef SET_INEXACT
   int inexact, oldinexact;
 #endif
@@ -2166,7 +2164,7 @@ static char *dtoa(double d, int mode, int ndigits, int *decpt, int *sign,
   Long L;
   int denorm;
   ULong x;
-  Bigint *b, *b1, *delta, *mlo, *mhi, *S;
+  Bigint *b, *b1, *delta, *mlo = NULL, *mhi, *S;
   double d2, ds, eps;
   char *s, *s0;
 #ifdef Honor_FLT_ROUNDS

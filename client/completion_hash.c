@@ -20,7 +20,7 @@
  * Small portability changes by Monty. Changed also to use my_malloc/my_free
  */
 
-#include <my_global.h>
+#include "client_priv.h"
 #include <mystrings/m_string.h>
 #undef SAFEMALLOC				// Speed things up
 #include "completion_hash.h"

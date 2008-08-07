@@ -13,6 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#ifndef DRIZZLED_SERVER_ITEM_FUNC_H
+#define DRIZZLED_SERVER_ITEM_FUNC_H
 
 /* Function items used by mysql */
 
@@ -144,11 +146,11 @@ public:
   void count_only_length();
   void count_real_length();
   void count_decimal_length();
-  inline bool get_arg0_date(MYSQL_TIME *ltime, uint fuzzy_date)
+  inline bool get_arg0_date(DRIZZLE_TIME *ltime, uint fuzzy_date)
   {
     return (null_value=args[0]->get_date(ltime, fuzzy_date));
   }
-  inline bool get_arg0_time(MYSQL_TIME *ltime)
+  inline bool get_arg0_time(DRIZZLE_TIME *ltime)
   {
     return (null_value=args[0]->get_time(ltime));
   }
@@ -1390,3 +1392,5 @@ public:
   const char *func_name() const { return "found_rows"; }
   void fix_length_and_dec() { decimals= 0; maybe_null=0; }
 };
+
+#endif /* DRIZZLE_SERVER_ITEM_FUNC_H */

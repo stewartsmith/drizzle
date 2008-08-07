@@ -24,7 +24,6 @@
 
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 char * strcont(register const char *str, register const char *set)
@@ -40,5 +39,5 @@ char * strcont(register const char *str, register const char *set)
     }
     set=start; str++;
   }
-  return (NullS);
+  return ((char *)0);
 } /* strcont */

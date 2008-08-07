@@ -47,8 +47,6 @@
  * .configure. strxfrm_multiply_tis620=4
  */
 
-#include <my_global.h>
-#include <mysys/my_sys.h>
 #include "m_string.h"
 #include "m_ctype.h"
 #include "t_ctype.h"
@@ -526,7 +524,7 @@ static size_t thai2sortable(uchar *tstr, size_t len)
 */
 
 static
-int my_strnncoll_tis620(CHARSET_INFO *cs __attribute__((unused)),
+int my_strnncoll_tis620(const CHARSET_INFO *cs __attribute__((unused)),
                         const uchar *s1, size_t len1, 
                         const uchar *s2, size_t len2,
                         my_bool s2_is_prefix)
@@ -556,7 +554,7 @@ int my_strnncoll_tis620(CHARSET_INFO *cs __attribute__((unused)),
 
 
 static
-int my_strnncollsp_tis620(CHARSET_INFO * cs __attribute__((unused)),
+int my_strnncollsp_tis620(const CHARSET_INFO * cs __attribute__((unused)),
 			  const uchar *a0, size_t a_length, 
 			  const uchar *b0, size_t b_length,
                           my_bool diff_if_only_endspace_difference)
@@ -633,7 +631,7 @@ ret:
 */
 
 static
-size_t my_strnxfrm_tis620(CHARSET_INFO *cs,
+size_t my_strnxfrm_tis620(const CHARSET_INFO *cs,
                        uchar *dst, size_t dstlen, uint nweights,
                        const uchar *src, size_t srclen, uint flags)
 {
@@ -821,7 +819,7 @@ NULL,NULL,NULL,NULL,NULL,NULL,NULL,plFF
 
 
 static
-int my_mb_wc_tis620(CHARSET_INFO *cs  __attribute__((unused)),
+int my_mb_wc_tis620(const CHARSET_INFO *cs  __attribute__((unused)),
 		  my_wc_t *wc,
 		  const uchar *str,
 		  const uchar *end __attribute__((unused)))
@@ -834,7 +832,7 @@ int my_mb_wc_tis620(CHARSET_INFO *cs  __attribute__((unused)),
 }
 
 static
-int my_wc_mb_tis620(CHARSET_INFO *cs  __attribute__((unused)),
+int my_wc_mb_tis620(const CHARSET_INFO *cs  __attribute__((unused)),
 		  my_wc_t wc,
 		  uchar *str,
 		  uchar *end __attribute__((unused)))

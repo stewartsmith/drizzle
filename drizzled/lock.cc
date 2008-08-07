@@ -76,6 +76,7 @@
 #include "mysql_priv.h"
 #include <mysys/hash.h>
 #include <assert.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   @defgroup Locking Locking
@@ -1633,7 +1634,7 @@ int check_transactional_lock(THD *thd, TABLE_LIST *table_list)
 {
   TABLE_LIST    *tlist;
   int           result= 0;
-  char          warn_buff[MYSQL_ERRMSG_SIZE];
+  char          warn_buff[DRIZZLE_ERRMSG_SIZE];
 
   for (tlist= table_list; tlist; tlist= tlist->next_global)
   {
@@ -1669,7 +1670,7 @@ int check_transactional_lock(THD *thd, TABLE_LIST *table_list)
     /* Warn about the conversion. */
     snprintf(warn_buff, sizeof(warn_buff), ER(ER_WARN_AUTO_CONVERT_LOCK),
              tlist->alias ? tlist->alias : tlist->table_name);
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                  ER_WARN_AUTO_CONVERT_LOCK, warn_buff);
   }
 

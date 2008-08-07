@@ -22,7 +22,6 @@
     "src-len" to the destination "dst-len" counting downwards.
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 #if defined(MC68000) && defined(DS90)
@@ -41,7 +40,7 @@ asm(".L5:				");
 }
 #else
 
-void bmove_upp(register uchar *dst, register const uchar *src,
+void bmove_upp(register unsigned char *dst, register const unsigned char *src,
                register size_t len)
 {
   while (len-- != 0) *--dst = *--src;

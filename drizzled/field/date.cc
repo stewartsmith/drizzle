@@ -54,16 +54,16 @@ int Field_newdate::store(const char *from,
                          CHARSET_INFO *cs __attribute__((unused)))
 {
   long tmp;
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   int error;
   THD *thd= table ? table->in_use : current_thd;
-  enum enum_mysql_timestamp_type ret;
+  enum enum_drizzle_timestamp_type ret;
   if ((ret= str_to_datetime(from, len, &l_time,
                             (TIME_FUZZY_DATE |
                              (thd->variables.sql_mode &
                               (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
                                MODE_INVALID_DATES))),
-                            &error)) <= MYSQL_TIMESTAMP_ERROR)
+                            &error)) <= DRIZZLE_TIMESTAMP_ERROR)
   {
     tmp= 0;
     error= 2;
@@ -71,16 +71,16 @@ int Field_newdate::store(const char *from,
   else
   {
     tmp= l_time.day + l_time.month*32 + l_time.year*16*32;
-    if (!error && (ret != MYSQL_TIMESTAMP_DATE) &&
+    if (!error && (ret != DRIZZLE_TIMESTAMP_DATE) &&
         (l_time.hour || l_time.minute || l_time.second || l_time.second_part))
       error= 3;                                 // Datetime was cut (note)
   }
 
   if (error)
-    set_datetime_warning(error == 3 ? MYSQL_ERROR::WARN_LEVEL_NOTE :
-                         MYSQL_ERROR::WARN_LEVEL_WARN,
-                         WARN_DATA_TRUNCATED,
-                         from, len, MYSQL_TIMESTAMP_DATE, 1);
+    set_datetime_warning(error == 3 ? DRIZZLE_ERROR::WARN_LEVEL_NOTE :
+                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                         ER_WARN_DATA_TRUNCATED,
+                         from, len, DRIZZLE_TIMESTAMP_DATE, 1);
 
   int3store(ptr, tmp);
   return error;
@@ -92,8 +92,8 @@ int Field_newdate::store(double nr)
   if (nr < 0.0 || nr > 99991231235959.0)
   {
     int3store(ptr,(int32_t) 0);
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         WARN_DATA_TRUNCATED, nr, MYSQL_TIMESTAMP_DATE);
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                         ER_WARN_DATA_TRUNCATED, nr, DRIZZLE_TIMESTAMP_DATE);
     return 1;
   }
   return Field_newdate::store((int64_t) rint(nr), false);
@@ -103,7 +103,7 @@ int Field_newdate::store(double nr)
 int Field_newdate::store(int64_t nr,
                          bool unsigned_val __attribute__((unused)))
 {
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   int64_t tmp;
   int error;
   THD *thd= table ? table->in_use : current_thd;
@@ -120,28 +120,28 @@ int Field_newdate::store(int64_t nr,
   else
     tmp= l_time.day + l_time.month*32 + l_time.year*16*32;
 
-  if (!error && l_time.time_type != MYSQL_TIMESTAMP_DATE &&
+  if (!error && l_time.time_type != DRIZZLE_TIMESTAMP_DATE &&
       (l_time.hour || l_time.minute || l_time.second || l_time.second_part))
     error= 3;
 
   if (error)
-    set_datetime_warning(error == 3 ? MYSQL_ERROR::WARN_LEVEL_NOTE :
-                         MYSQL_ERROR::WARN_LEVEL_WARN,
+    set_datetime_warning(error == 3 ? DRIZZLE_ERROR::WARN_LEVEL_NOTE :
+                         DRIZZLE_ERROR::WARN_LEVEL_WARN,
                          error == 2 ? 
-                         ER_WARN_DATA_OUT_OF_RANGE : WARN_DATA_TRUNCATED,
-                         nr,MYSQL_TIMESTAMP_DATE, 1);
+                         ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED,
+                         nr,DRIZZLE_TIMESTAMP_DATE, 1);
 
   int3store(ptr,tmp);
   return error;
 }
 
 
-int Field_newdate::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
+int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
 {
   long tmp;
   int error= 0;
-  if (time_type == MYSQL_TIMESTAMP_DATE ||
-      time_type == MYSQL_TIMESTAMP_DATETIME)
+  if (time_type == DRIZZLE_TIMESTAMP_DATE ||
+      time_type == DRIZZLE_TIMESTAMP_DATETIME)
   {
     tmp=ltime->year*16*32+ltime->month*32+ltime->day;
     if (check_date(ltime, tmp != 0,
@@ -153,18 +153,18 @@ int Field_newdate::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_date((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
-                           str.ptr(), str.length(), MYSQL_TIMESTAMP_DATE, 1);
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+                           str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATE, 1);
     }
-    if (!error && ltime->time_type != MYSQL_TIMESTAMP_DATE &&
+    if (!error && ltime->time_type != DRIZZLE_TIMESTAMP_DATE &&
         (ltime->hour || ltime->minute || ltime->second || ltime->second_part))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);
       make_datetime((DATE_TIME_FORMAT *) 0, ltime, &str);
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_NOTE,
-                           WARN_DATA_TRUNCATED,
-                           str.ptr(), str.length(), MYSQL_TIMESTAMP_DATE, 1);
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_NOTE,
+                           ER_WARN_DATA_TRUNCATED,
+                           str.ptr(), str.length(), DRIZZLE_TIMESTAMP_DATE, 1);
       error= 3;
     }
   }
@@ -172,7 +172,7 @@ int Field_newdate::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
   {
     tmp=0;
     error= 1;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
   }
   int3store(ptr,tmp);
   return error;
@@ -181,7 +181,7 @@ int Field_newdate::store_time(MYSQL_TIME *ltime,timestamp_type time_type)
 
 bool Field_newdate::send_binary(Protocol *protocol)
 {
-  MYSQL_TIME tm;
+  DRIZZLE_TIME tm;
   Field_newdate::get_date(&tm,0);
   return protocol->store_date(&tm);
 }
@@ -229,20 +229,20 @@ String *Field_newdate::val_str(String *val_buffer,
 }
 
 
-bool Field_newdate::get_date(MYSQL_TIME *ltime,uint fuzzydate)
+bool Field_newdate::get_date(DRIZZLE_TIME *ltime,uint fuzzydate)
 {
   uint32_t tmp=(uint32_t) uint3korr(ptr);
   ltime->day=   tmp & 31;
   ltime->month= (tmp >> 5) & 15;
   ltime->year=  (tmp >> 9);
-  ltime->time_type= MYSQL_TIMESTAMP_DATE;
+  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= ltime->neg= 0;
   return ((!(fuzzydate & TIME_FUZZY_DATE) && (!ltime->month || !ltime->day)) ?
           1 : 0);
 }
 
 
-bool Field_newdate::get_time(MYSQL_TIME *ltime)
+bool Field_newdate::get_time(DRIZZLE_TIME *ltime)
 {
   return Field_newdate::get_date(ltime,0);
 }

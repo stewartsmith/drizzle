@@ -107,7 +107,7 @@ public:
   virtual int  store(double nr)=0;
   virtual int  store(int64_t nr, bool unsigned_val)=0;
   virtual int  store_decimal(const my_decimal *d)=0;
-  virtual int store_time(MYSQL_TIME *ltime, timestamp_type t_type);
+  virtual int store_time(DRIZZLE_TIME *ltime, timestamp_type t_type);
   int store(const char *to, uint length, CHARSET_INFO *cs,
             enum_check_fields check_level);
   virtual double val_real(void)=0;
@@ -119,7 +119,7 @@ public:
      if it needs a temp buffer to convert result to string - use buf1
        example Field_tiny::val_str()
      if the value exists as a string already - use buf2
-       example Field_string::val_str()
+       example Field_varstring::val_str() (???)
      consequently, buf2 may be created as 'String buf;' - no memory
      will be allocated for it. buf1 will be allocated to hold a
      value if it's too small. Using allocated buffer for buf2 may result in
@@ -171,7 +171,7 @@ public:
     metadata is 0. Thus, 0 == 0 means the fields are compatible in size.
 
     Note: While most classes that override this method return pack_length(),
-    the classes Field_string, Field_varstring, and Field_blob return 
+    the classes Field_varstring, and Field_blob return 
     field_length + 1, field_length, and pack_length_no_ptr() respectfully.
   */
   virtual uint row_pack_length() { return 0; }
@@ -443,8 +443,8 @@ public:
   }
   void copy_from_tmp(int offset);
   uint fill_cache_field(struct st_cache_field *copy);
-  virtual bool get_date(MYSQL_TIME *ltime,uint fuzzydate);
-  virtual bool get_time(MYSQL_TIME *ltime);
+  virtual bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
+  virtual bool get_time(DRIZZLE_TIME *ltime);
   virtual CHARSET_INFO *charset(void) const { return &my_charset_bin; }
   virtual CHARSET_INFO *sort_charset(void) const { return charset(); }
   virtual bool has_charset(void) const { return false; }
@@ -454,15 +454,15 @@ public:
   { return DERIVATION_IMPLICIT; }
   virtual void set_derivation(enum Derivation derivation_arg __attribute__((unused)))
   { }
-  bool set_warning(MYSQL_ERROR::enum_warning_level, unsigned int code,
+  bool set_warning(DRIZZLE_ERROR::enum_warning_level, unsigned int code,
                    int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
                             const char *str, uint str_len,
                             timestamp_type ts_type, int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, uint code, 
                             int64_t nr, timestamp_type ts_type,
                             int cuted_increment);
-  void set_datetime_warning(MYSQL_ERROR::enum_warning_level, const uint code, 
+  void set_datetime_warning(DRIZZLE_ERROR::enum_warning_level, const uint code, 
                             double nr, timestamp_type ts_type);
   inline bool check_overflow(int op_result)
   {
@@ -599,7 +599,7 @@ public:
 };
 
 
-/* base class for Field_string, Field_varstring and Field_blob */
+/* base class for Field_varstring and Field_blob */
 
 class Field_longstr :public Field_str
 {
@@ -706,7 +706,7 @@ public:
       flags|=ENUM_FLAG;
   }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
-  enum_field_types type() const { return DRIZZLE_TYPE_STRING; }
+  enum_field_types type() const { return DRIZZLE_TYPE_ENUM; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   enum Item_result cast_to_int_type () const { return INT_RESULT; }
   enum ha_base_keytype key_type() const;

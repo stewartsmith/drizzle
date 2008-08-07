@@ -18,8 +18,12 @@
 
 /*  This is needed for the definitions of strchr... on solaris */
 
+
 #ifndef _m_string_h
 #define _m_string_h
+
+#include <drizzled/global.h>
+
 #ifndef __USE_GNU
 #define __USE_GNU				/* We want to use stpcpy */
 #endif
@@ -30,9 +34,12 @@
 #include <string.h>
 #endif
 
-#ifdef _AIX
-#undef HAVE_BCMP
-#endif
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <assert.h>
+#include <limits.h>
 
 /*  This is needed for the definitions of memcpy... on solaris */
 #if defined(HAVE_MEMORY_H) && !defined(__cplusplus)
@@ -54,10 +61,6 @@ extern void (*my_str_free)(void *);
 #define strmov(A,B) stpcpy((A),(B))
 #endif
 
-/* Declared in int2str() */
-extern char _dig_vec_upper[];
-extern char _dig_vec_lower[];
-
 #ifdef BAD_STRING_COMPILER
 #define strmov(A,B)  (memccpy(A,B,0,INT_MAX)-1)
 #else
@@ -70,13 +73,13 @@ extern char _dig_vec_lower[];
 #endif
 
 	/* Prototypes for string functions */
-
 #ifndef bmove512
-extern	void bmove512(uchar *dst,const uchar *src,size_t len);
+extern void bmove512(unsigned char *dst,const unsigned char *src,size_t len);
 #endif
 
-extern	void bmove_upp(uchar *dst,const uchar *src,size_t len);
-extern	void bchange(uchar *dst,size_t old_len,const uchar *src,
+extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
+
+extern	void bchange(unsigned char *dst,size_t old_len,const unsigned char *src,
 		     size_t new_len,size_t tot_len);
 extern	void strappend(char *s,size_t len,char fill);
 extern	char *strend(const char *s);
@@ -96,12 +99,12 @@ extern	char *strmov(char *dst,const char *src);
 extern	char *strnmov(char *dst,const char *src,size_t n);
 extern	char *strsuff(const char *src,const char *suffix);
 extern	char *strcont(const char *src,const char *set);
-extern	char *strxcat _VARARGS((char *dst,const char *src, ...));
-extern	char *strxmov _VARARGS((char *dst,const char *src, ...));
-extern	char *strxcpy _VARARGS((char *dst,const char *src, ...));
-extern	char *strxncat _VARARGS((char *dst,size_t len, const char *src, ...));
-extern	char *strxnmov _VARARGS((char *dst,size_t len, const char *src, ...));
-extern	char *strxncpy _VARARGS((char *dst,size_t len, const char *src, ...));
+extern	char *strxcat(char *dst,const char *src, ...);
+extern	char *strxmov(char *dst,const char *src, ...);
+extern	char *strxcpy(char *dst,const char *src, ...);
+extern	char *strxncat(char *dst,size_t len, const char *src, ...);
+extern	char *strxnmov(char *dst,size_t len, const char *src, ...);
+extern	char *strxncpy(char *dst,size_t len, const char *src, ...);
 
 /* Prototypes of normal stringfunctions (with may ours) */
 
@@ -137,9 +140,9 @@ typedef enum {
 
 double my_strtod(const char *str, char **end, int *error);
 double my_atof(const char *nptr);
-size_t my_fcvt(double x, int precision, char *to, my_bool *error);
+size_t my_fcvt(double x, int precision, char *to, bool *error);
 size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
-               my_bool *error);
+               bool *error);
 
 #define NOT_FIXED_DEC 31
 
@@ -170,10 +173,6 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
 
 extern char *llstr(int64_t value,char *buff);
 extern char *ullstr(int64_t value,char *buff);
-#ifndef HAVE_STRTOUL
-extern long strtol(const char *str, char **ptr, int base);
-extern ulong strtoul(const char *str, char **ptr, int base);
-#endif
 
 extern char *int2str(long val, char *dst, int radix, int upcase);
 extern char *int10_to_str(long val,char *dst,int radix);
@@ -221,7 +220,7 @@ struct st_mysql_lex_string
 typedef struct st_mysql_lex_string LEX_STRING;
 
 #define STRING_WITH_LEN(X) (X), ((size_t) (sizeof(X) - 1))
-#define USTRING_WITH_LEN(X) ((uchar*) X), ((size_t) (sizeof(X) - 1))
+#define USTRING_WITH_LEN(X) ((unsigned char*) X), ((size_t) (sizeof(X) - 1))
 #define C_STRING_WITH_LEN(X) ((char *) (X)), ((size_t) (sizeof(X) - 1))
 
 /* SPACE_INT is a word that contains only spaces */
@@ -267,15 +266,15 @@ typedef struct st_mysql_lex_string LEX_STRING;
    @return          the last non-space character
 */
 
-static inline const uchar *skip_trailing_space(const uchar *ptr,size_t len)
+static inline const unsigned char *skip_trailing_space(const unsigned char *ptr,size_t len)
 {
-  const uchar *end= ptr + len;
+  const unsigned char *end= ptr + len;
 
   if (len > 20)
   {
-    const uchar *end_words= (const uchar *)(intptr_t)
+    const unsigned char *end_words= (const unsigned char *)(intptr_t)
       (((uint64_t)(intptr_t)end) / SIZEOF_INT * SIZEOF_INT);
-    const uchar *start_words= (const uchar *)(intptr_t)
+    const unsigned char *start_words= (const unsigned char *)(intptr_t)
        ((((uint64_t)(intptr_t)ptr) + SIZEOF_INT - 1) / SIZEOF_INT * SIZEOF_INT);
 
     assert(((uint64_t)(intptr_t)ptr) >= SIZEOF_INT);

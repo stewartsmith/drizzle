@@ -13,9 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
-#include <mysys/my_sys.h>            /* Needed for MY_ERRNO_ERANGE */
 #include <m_string.h>
+#include <errno.h>
 
 #undef  ULONGLONG_MAX
 #define ULONGLONG_MAX		(~(uint64_t) 0)
@@ -77,11 +76,11 @@ int64_t my_strtoll10(const char *nptr, char **endptr, int *error)
 {
   const char *s, *end, *start, *n_end, *true_end;
   char *dummy;
-  uchar c;
+  unsigned char c;
   unsigned long i, j, k;
   uint64_t li;
   int negative;
-  ulong cutoff, cutoff2, cutoff3;
+  unsigned long cutoff, cutoff2, cutoff3;
 
   s= nptr;
   /* If fixed length string */
@@ -202,7 +201,7 @@ int64_t my_strtoll10(const char *nptr, char **endptr, int *error)
   return (int64_t) li;
 
 overflow:					/* *endptr is set here */
-  *error= MY_ERRNO_ERANGE;
+  *error= ERANGE;
   return negative ? INT64_MIN: (int64_t) ULONGLONG_MAX;
 
 end_i:
@@ -210,7 +209,7 @@ end_i:
   return (negative ? ((int64_t) -(long) i) : (int64_t) i);
 
 end_i_and_j:
-  li= (uint64_t) i * lfactor[(uint) (s-start)] + j;
+  li= (uint64_t) i * lfactor[(unsigned int) (s-start)] + j;
   *endptr= (char*) s;
   return (negative ? -((int64_t) li) : (int64_t) li);
 
@@ -232,7 +231,7 @@ end4:
 
 no_conv:
   /* There was no number to convert.  */
-  *error= MY_ERRNO_EDOM;
+  *error= EDOM;
   *endptr= (char *) nptr;
   return 0;
 }

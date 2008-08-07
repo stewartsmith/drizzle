@@ -29,8 +29,8 @@
 #endif
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include <time.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /** Day number for Dec 31st, 9999. */
 #define MAX_DAY_NUMBER 3652424L
@@ -53,7 +53,7 @@
   the microseconds twice.
 */
 
-static bool make_datetime(date_time_format_types format, MYSQL_TIME *ltime,
+static bool make_datetime(date_time_format_types format, DRIZZLE_TIME *ltime,
 			  String *str)
 {
   char *buff;
@@ -102,7 +102,7 @@ static bool make_datetime(date_time_format_types format, MYSQL_TIME *ltime,
 
 
 /*
-  Wrapper over make_datetime() with validation of the input MYSQL_TIME value
+  Wrapper over make_datetime() with validation of the input DRIZZLE_TIME value
 
   NOTE
     see make_datetime() for more information
@@ -112,7 +112,7 @@ static bool make_datetime(date_time_format_types format, MYSQL_TIME *ltime,
     0    otherwise
 */
 
-static bool make_datetime_with_warn(date_time_format_types format, MYSQL_TIME *ltime,
+static bool make_datetime_with_warn(date_time_format_types format, DRIZZLE_TIME *ltime,
                                     String *str)
 {
   int warning= 0;
@@ -124,15 +124,15 @@ static bool make_datetime_with_warn(date_time_format_types format, MYSQL_TIME *l
   if (!warning)
     return 0;
 
-  make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+  make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                str->ptr(), str->length(),
-                               MYSQL_TIMESTAMP_TIME, NullS);
+                               DRIZZLE_TIMESTAMP_TIME, NullS);
   return make_datetime(format, ltime, str);
 }
 
 
 /*
-  Wrapper over make_time() with validation of the input MYSQL_TIME value
+  Wrapper over make_time() with validation of the input DRIZZLE_TIME value
 
   NOTE
     see make_time() for more info
@@ -143,7 +143,7 @@ static bool make_datetime_with_warn(date_time_format_types format, MYSQL_TIME *l
 */
 
 static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
-                                MYSQL_TIME *l_time, String *str)
+                                DRIZZLE_TIME *l_time, String *str)
 {
   int warning= 0;
   make_time(format, l_time, str);
@@ -151,9 +151,9 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
     return 1;
   if (warning)
   {
-    make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                  str->ptr(), str->length(),
-                                 MYSQL_TIMESTAMP_TIME, NullS);
+                                 DRIZZLE_TIMESTAMP_TIME, NullS);
     make_time(format, l_time, str);
   }
 
@@ -162,16 +162,16 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
 
 
 /*
-  Convert seconds to MYSQL_TIME value with overflow checking
+  Convert seconds to DRIZZLE_TIME value with overflow checking
 
   SYNOPSIS:
     sec_to_time()
     seconds          number of seconds
     unsigned_flag    1, if 'seconds' is unsigned, 0, otherwise
-    ltime            output MYSQL_TIME value
+    ltime            output DRIZZLE_TIME value
 
   DESCRIPTION
-    If the 'seconds' argument is inside MYSQL_TIME data range, convert it to a
+    If the 'seconds' argument is inside DRIZZLE_TIME data range, convert it to a
     corresponding value.
     Otherwise, truncate the resulting value to the nearest endpoint, and
     produce a warning message.
@@ -181,7 +181,7 @@ static bool make_time_with_warn(const DATE_TIME_FORMAT *format,
     0                otherwise
 */
   
-static bool sec_to_time(int64_t seconds, bool unsigned_flag, MYSQL_TIME *ltime)
+static bool sec_to_time(int64_t seconds, bool unsigned_flag, DRIZZLE_TIME *ltime)
 {
   uint sec;
 
@@ -214,8 +214,8 @@ overflow:
   char buf[22];
   int len= (int)(int64_t10_to_str(seconds, buf, unsigned_flag ? 10 : -10)
                  - buf);
-  make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
-                               buf, len, MYSQL_TIMESTAMP_TIME,
+  make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                               buf, len, DRIZZLE_TIMESTAMP_TIME,
                                NullS);
   
   return 1;
@@ -234,7 +234,7 @@ static DATE_TIME_FORMAT time_24hrs_format= {{0}, '\0', 0,
                                             {(char *)"%H:%i:%S", 8}};
 
 /**
-  Extract datetime value to MYSQL_TIME struct from string value
+  Extract datetime value to DRIZZLE_TIME struct from string value
   according to format string.
 
   @param format		date/time format specification
@@ -267,7 +267,7 @@ static DATE_TIME_FORMAT time_24hrs_format= {{0}, '\0', 0,
 */
 
 static bool extract_date_time(DATE_TIME_FORMAT *format,
-			      const char *val, uint length, MYSQL_TIME *l_time,
+			      const char *val, uint length, DRIZZLE_TIME *l_time,
                               timestamp_type cached_timestamp_type,
                               const char **sub_pattern_end,
                               const char *date_time_type)
@@ -582,7 +582,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
     {
       if (!my_isspace(&my_charset_latin1,*val))
       {
-	make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+	make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                                      val_begin, length,
 				     cached_timestamp_type, NullS);
 	break;
@@ -595,7 +595,7 @@ err:
   {
     char buff[128];
     strmake(buff, val_begin, min(length, sizeof(buff)-1));
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_ERROR,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                         date_time_type, buff, "str_to_date");
   }
@@ -607,7 +607,7 @@ err:
   Create a formated date/time value in a string.
 */
 
-bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
+bool make_date_time(DATE_TIME_FORMAT *format, DRIZZLE_TIME *l_time,
 		    timestamp_type type, String *str)
 {
   char intbuff[15];
@@ -646,7 +646,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
                     system_charset_info);
         break;
       case 'W':
-        if (type == MYSQL_TIMESTAMP_TIME)
+        if (type == DRIZZLE_TIMESTAMP_TIME)
           return 1;
         weekday= calc_weekday(calc_daynr(l_time->year,l_time->month,
                               l_time->day),0);
@@ -655,7 +655,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
                     system_charset_info);
         break;
       case 'a':
-        if (type == MYSQL_TIMESTAMP_TIME)
+        if (type == DRIZZLE_TIMESTAMP_TIME)
           return 1;
         weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
                              l_time->day),0);
@@ -664,7 +664,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
                     system_charset_info);
         break;
       case 'D':
-	if (type == MYSQL_TIMESTAMP_TIME)
+	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= int10_to_str(l_time->day, intbuff, 10) - intbuff;
 	str->append_with_prefill(intbuff, length, 1, '0');
@@ -731,7 +731,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
 	str->append_with_prefill(intbuff, length, 2, '0');
 	break;
       case 'j':
-	if (type == MYSQL_TIMESTAMP_TIME)
+	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= int10_to_str(calc_daynr(l_time->year,l_time->month,
 					l_time->day) - 
@@ -777,7 +777,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
       case 'u':
       {
 	uint year;
-	if (type == MYSQL_TIMESTAMP_TIME)
+	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= int10_to_str(calc_week(l_time,
 				       (*ptr) == 'U' ?
@@ -791,7 +791,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
       case 'V':
       {
 	uint year;
-	if (type == MYSQL_TIMESTAMP_TIME)
+	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	length= int10_to_str(calc_week(l_time,
 				       ((*ptr) == 'V' ?
@@ -806,7 +806,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
       case 'X':
       {
 	uint year;
-	if (type == MYSQL_TIMESTAMP_TIME)
+	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	(void) calc_week(l_time,
 			 ((*ptr) == 'X' ?
@@ -818,7 +818,7 @@ bool make_date_time(DATE_TIME_FORMAT *format, MYSQL_TIME *l_time,
       }
       break;
       case 'w':
-	if (type == MYSQL_TIMESTAMP_TIME)
+	if (type == DRIZZLE_TIMESTAMP_TIME)
 	  return 1;
 	weekday=calc_weekday(calc_daynr(l_time->year,l_time->month,
 					l_time->day),1);
@@ -925,7 +925,7 @@ int64_t Item_func_period_diff::val_int()
 int64_t Item_func_to_days::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
   return (int64_t) calc_daynr(ltime.year,ltime.month,ltime.day);
@@ -962,7 +962,7 @@ enum_monotonicity_info Item_func_to_days::get_monotonicity_info() const
 int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   int64_t res;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
   {
@@ -1000,7 +1000,7 @@ int64_t Item_func_to_days::val_int_endpoint(bool left_endp, bool *incl_endp)
 int64_t Item_func_dayofyear::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime,TIME_NO_ZERO_DATE))
     return 0;
   return (int64_t) calc_daynr(ltime.year,ltime.month,ltime.day) -
@@ -1010,7 +1010,7 @@ int64_t Item_func_dayofyear::val_int()
 int64_t Item_func_dayofmonth::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   (void) get_arg0_date(&ltime, TIME_FUZZY_DATE);
   return (int64_t) ltime.day;
 }
@@ -1018,7 +1018,7 @@ int64_t Item_func_dayofmonth::val_int()
 int64_t Item_func_month::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   (void) get_arg0_date(&ltime, TIME_FUZZY_DATE);
   return (int64_t) ltime.month;
 }
@@ -1050,7 +1050,7 @@ String* Item_func_monthname::val_str(String* str)
 int64_t Item_func_quarter::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime, TIME_FUZZY_DATE))
     return 0;
   return (int64_t) ((ltime.month+2)/3);
@@ -1059,7 +1059,7 @@ int64_t Item_func_quarter::val_int()
 int64_t Item_func_hour::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   (void) get_arg0_time(&ltime);
   return ltime.hour;
 }
@@ -1067,7 +1067,7 @@ int64_t Item_func_hour::val_int()
 int64_t Item_func_minute::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   (void) get_arg0_time(&ltime);
   return ltime.minute;
 }
@@ -1078,7 +1078,7 @@ int64_t Item_func_minute::val_int()
 int64_t Item_func_second::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   (void) get_arg0_time(&ltime);
   return ltime.second;
 }
@@ -1127,7 +1127,7 @@ int64_t Item_func_week::val_int()
 {
   assert(fixed == 1);
   uint year;
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
   return (int64_t) calc_week(&ltime,
@@ -1140,7 +1140,7 @@ int64_t Item_func_yearweek::val_int()
 {
   assert(fixed == 1);
   uint year,week;
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
   week= calc_week(&ltime, 
@@ -1153,7 +1153,7 @@ int64_t Item_func_yearweek::val_int()
 int64_t Item_func_weekday::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   
   if (get_arg0_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
@@ -1183,7 +1183,7 @@ String* Item_func_dayname::val_str(String* str)
 int64_t Item_func_year::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   (void) get_arg0_date(&ltime, TIME_FUZZY_DATE);
   return (int64_t) ltime.year;
 }
@@ -1216,7 +1216,7 @@ enum_monotonicity_info Item_func_year::get_monotonicity_info() const
 int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime, TIME_FUZZY_DATE))
   {
     /* got NULL, leave the incl_endp intact */
@@ -1245,7 +1245,7 @@ int64_t Item_func_year::val_int_endpoint(bool left_endp, bool *incl_endp)
 
 int64_t Item_func_unix_timestamp::val_int()
 {
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   bool not_used;
   
   assert(fixed == 1);
@@ -1276,7 +1276,7 @@ int64_t Item_func_unix_timestamp::val_int()
 int64_t Item_func_time_to_sec::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   int64_t seconds;
   (void) get_arg0_time(&ltime);
   seconds=ltime.hour*3600L+ltime.minute*60+ltime.second;
@@ -1445,7 +1445,7 @@ bool get_interval_value(Item *args,interval_type int_type,
 String *Item_date::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return (String *) 0;
   if (str->alloc(MAX_DATE_STRING_REP_LENGTH))
@@ -1461,21 +1461,21 @@ String *Item_date::val_str(String *str)
 int64_t Item_date::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_date(&ltime, TIME_FUZZY_DATE))
     return 0;
   return (int64_t) (ltime.year*10000L+ltime.month*100+ltime.day);
 }
 
 
-bool Item_func_from_days::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((unused)))
+bool Item_func_from_days::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date __attribute__((unused)))
 {
   int64_t value=args[0]->val_int();
   if ((null_value=args[0]->null_value))
     return 1;
-  memset(ltime, 0, sizeof(MYSQL_TIME));
+  memset(ltime, 0, sizeof(DRIZZLE_TIME));
   get_date_from_daynr((long) value, &ltime->year, &ltime->month, &ltime->day);
-  ltime->time_type= MYSQL_TIMESTAMP_DATE;
+  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
   return 0;
 }
 
@@ -1490,7 +1490,7 @@ void Item_func_curdate::fix_length_and_dec()
   
   /* We don't need to set second_part and neg because they already 0 */
   ltime.hour= ltime.minute= ltime.second= 0;
-  ltime.time_type= MYSQL_TIMESTAMP_DATE;
+  ltime.time_type= DRIZZLE_TIMESTAMP_DATE;
   value= (int64_t) TIME_to_uint64_t_date(&ltime);
 }
 
@@ -1507,10 +1507,10 @@ String *Item_func_curdate::val_str(String *str)
 }
 
 /**
-    Converts current time in my_time_t to MYSQL_TIME represenatation for local
+    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole CURDATE function.
 */
-void Item_func_curdate_local::store_now_in_TIME(MYSQL_TIME *now_time)
+void Item_func_curdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   THD *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
@@ -1520,10 +1520,10 @@ void Item_func_curdate_local::store_now_in_TIME(MYSQL_TIME *now_time)
 
 
 /**
-    Converts current time in my_time_t to MYSQL_TIME represenatation for UTC
+    Converts current time in my_time_t to DRIZZLE_TIME represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_DATE function.
 */
-void Item_func_curdate_utc::store_now_in_TIME(MYSQL_TIME *now_time)
+void Item_func_curdate_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time, 
                              (my_time_t)(current_thd->query_start()));
@@ -1534,7 +1534,7 @@ void Item_func_curdate_utc::store_now_in_TIME(MYSQL_TIME *now_time)
 }
 
 
-bool Item_func_curdate::get_date(MYSQL_TIME *res,
+bool Item_func_curdate::get_date(DRIZZLE_TIME *res,
 				 uint fuzzy_date __attribute__((unused)))
 {
   *res=ltime;
@@ -1552,7 +1552,7 @@ String *Item_func_curtime::val_str(String *str __attribute__((unused)))
 
 void Item_func_curtime::fix_length_and_dec()
 {
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
 
   decimals= DATETIME_DEC;
   collation.set(&my_charset_bin);
@@ -1564,10 +1564,10 @@ void Item_func_curtime::fix_length_and_dec()
 
 
 /**
-    Converts current time in my_time_t to MYSQL_TIME represenatation for local
+    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole CURTIME function.
 */
-void Item_func_curtime_local::store_now_in_TIME(MYSQL_TIME *now_time)
+void Item_func_curtime_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   THD *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
@@ -1577,10 +1577,10 @@ void Item_func_curtime_local::store_now_in_TIME(MYSQL_TIME *now_time)
 
 
 /**
-    Converts current time in my_time_t to MYSQL_TIME represenatation for UTC
+    Converts current time in my_time_t to DRIZZLE_TIME represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_TIME function.
 */
-void Item_func_curtime_utc::store_now_in_TIME(MYSQL_TIME *now_time)
+void Item_func_curtime_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time, 
                              (my_time_t)(current_thd->query_start()));
@@ -1613,10 +1613,10 @@ void Item_func_now::fix_length_and_dec()
 
 
 /**
-    Converts current time in my_time_t to MYSQL_TIME represenatation for local
+    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole NOW function.
 */
-void Item_func_now_local::store_now_in_TIME(MYSQL_TIME *now_time)
+void Item_func_now_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   THD *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, 
@@ -1626,10 +1626,10 @@ void Item_func_now_local::store_now_in_TIME(MYSQL_TIME *now_time)
 
 
 /**
-    Converts current time in my_time_t to MYSQL_TIME represenatation for UTC
+    Converts current time in my_time_t to DRIZZLE_TIME represenatation for UTC
     time zone. Defines time zone (UTC) used for whole UTC_TIMESTAMP function.
 */
-void Item_func_now_utc::store_now_in_TIME(MYSQL_TIME *now_time)
+void Item_func_now_utc::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   my_tz_UTC->gmt_sec_to_TIME(now_time, 
                              (my_time_t)(current_thd->query_start()));
@@ -1640,7 +1640,7 @@ void Item_func_now_utc::store_now_in_TIME(MYSQL_TIME *now_time)
 }
 
 
-bool Item_func_now::get_date(MYSQL_TIME *res,
+bool Item_func_now::get_date(DRIZZLE_TIME *res,
                              uint fuzzy_date __attribute__((unused)))
 {
   *res= ltime;
@@ -1651,15 +1651,15 @@ bool Item_func_now::get_date(MYSQL_TIME *res,
 int Item_func_now::save_in_field(Field *to, bool no_conversions __attribute__((unused)))
 {
   to->set_notnull();
-  return to->store_time(&ltime, MYSQL_TIMESTAMP_DATETIME);
+  return to->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
 }
 
 
 /**
-    Converts current time in my_time_t to MYSQL_TIME represenatation for local
+    Converts current time in my_time_t to DRIZZLE_TIME represenatation for local
     time zone. Defines time zone (local) used for whole SYSDATE function.
 */
-void Item_func_sysdate_local::store_now_in_TIME(MYSQL_TIME *now_time)
+void Item_func_sysdate_local::store_now_in_TIME(DRIZZLE_TIME *now_time)
 {
   THD *thd= current_thd;
   thd->variables.time_zone->gmt_sec_to_TIME(now_time, (my_time_t) my_time(0));
@@ -1701,7 +1701,7 @@ void Item_func_sysdate_local::fix_length_and_dec()
 }
 
 
-bool Item_func_sysdate_local::get_date(MYSQL_TIME *res,
+bool Item_func_sysdate_local::get_date(DRIZZLE_TIME *res,
                                        uint fuzzy_date __attribute__((unused)))
 {
   store_now_in_TIME(&ltime);
@@ -1714,7 +1714,7 @@ int Item_func_sysdate_local::save_in_field(Field *to, bool no_conversions __attr
 {
   store_now_in_TIME(&ltime);
   to->set_notnull();
-  to->store_time(&ltime, MYSQL_TIMESTAMP_DATETIME);
+  to->store_time(&ltime, DRIZZLE_TIMESTAMP_DATETIME);
   return 0;
 }
 
@@ -1722,7 +1722,7 @@ int Item_func_sysdate_local::save_in_field(Field *to, bool no_conversions __attr
 String *Item_func_sec_to_time::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   int64_t arg_val= args[0]->val_int(); 
 
   if ((null_value=args[0]->null_value) ||
@@ -1742,7 +1742,7 @@ String *Item_func_sec_to_time::val_str(String *str)
 int64_t Item_func_sec_to_time::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   int64_t arg_val= args[0]->val_int(); 
   
   if ((null_value=args[0]->null_value))
@@ -1888,7 +1888,7 @@ uint Item_func_date_format::format_length(const String *format)
 String *Item_func_date_format::val_str(String *str)
 {
   String *format;
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   uint size;
   assert(fixed == 1);
 
@@ -1931,8 +1931,8 @@ String *Item_func_date_format::val_str(String *str)
   /* Create the result string */
   str->set_charset(collation.collation);
   if (!make_date_time(&date_time_format, &l_time,
-                      is_time_format ? MYSQL_TIMESTAMP_TIME :
-                                       MYSQL_TIMESTAMP_DATE,
+                      is_time_format ? DRIZZLE_TIMESTAMP_TIME :
+                                       DRIZZLE_TIMESTAMP_DATE,
                       str))
     return str;
 
@@ -1955,7 +1955,7 @@ void Item_func_from_unixtime::fix_length_and_dec()
 
 String *Item_func_from_unixtime::val_str(String *str)
 {
-  MYSQL_TIME time_tmp;
+  DRIZZLE_TIME time_tmp;
 
   assert(fixed == 1);
 
@@ -1976,7 +1976,7 @@ String *Item_func_from_unixtime::val_str(String *str)
 
 int64_t Item_func_from_unixtime::val_int()
 {
-  MYSQL_TIME time_tmp;
+  DRIZZLE_TIME time_tmp;
 
   assert(fixed == 1);
 
@@ -1986,7 +1986,7 @@ int64_t Item_func_from_unixtime::val_int()
   return (int64_t) TIME_to_uint64_t_datetime(&time_tmp);
 }
 
-bool Item_func_from_unixtime::get_date(MYSQL_TIME *ltime,
+bool Item_func_from_unixtime::get_date(DRIZZLE_TIME *ltime,
 				       uint fuzzy_date __attribute__((unused)))
 {
   uint64_t tmp= (uint64_t)(args[0]->val_int());
@@ -2019,11 +2019,11 @@ void Item_date_add_interval::fix_length_and_dec()
     - If first arg is a DRIZZLE_TYPE_DATETIME result is DRIZZLE_TYPE_DATETIME
     - If first arg is a DRIZZLE_TYPE_NEWDATE and the interval type uses hours,
       minutes or seconds then type is DRIZZLE_TYPE_DATETIME.
-    - Otherwise the result is DRIZZLE_TYPE_STRING
+    - Otherwise the result is DRIZZLE_TYPE_VARCHAR
       (This is because you can't know if the string contains a DATE, MYSQL_TIME or
       DATETIME argument)
   */
-  cached_field_type= DRIZZLE_TYPE_STRING;
+  cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
   if (arg0_field_type == DRIZZLE_TYPE_DATETIME ||
       arg0_field_type == DRIZZLE_TYPE_TIMESTAMP)
@@ -2040,7 +2040,7 @@ void Item_date_add_interval::fix_length_and_dec()
 
 /* Here arg[1] is a Item_interval object */
 
-bool Item_date_add_interval::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((unused)))
+bool Item_date_add_interval::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date __attribute__((unused)))
 {
   INTERVAL interval;
 
@@ -2060,13 +2060,13 @@ bool Item_date_add_interval::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attri
 String *Item_date_add_interval::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   enum date_time_format_types format;
 
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return 0;
 
-  if (ltime.time_type == MYSQL_TIMESTAMP_DATE)
+  if (ltime.time_type == DRIZZLE_TIMESTAMP_DATE)
     format= DATE_ONLY;
   else if (ltime.second_part)
     format= DATE_TIME_MICROSECOND;
@@ -2084,12 +2084,12 @@ String *Item_date_add_interval::val_str(String *str)
 int64_t Item_date_add_interval::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   int64_t date;
   if (Item_date_add_interval::get_date(&ltime, TIME_NO_ZERO_DATE))
     return (int64_t) 0;
   date = (ltime.year*100L + ltime.month)*100L + ltime.day;
-  return ltime.time_type == MYSQL_TIMESTAMP_DATE ? date :
+  return ltime.time_type == DRIZZLE_TIMESTAMP_DATE ? date :
     ((date*100L + ltime.hour)*100L+ ltime.minute)*100L + ltime.second;
 }
 
@@ -2174,7 +2174,7 @@ void Item_extract::fix_length_and_dec()
 int64_t Item_extract::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   uint year;
   ulong week_format;
   long neg;
@@ -2359,7 +2359,7 @@ String *Item_char_typecast::val_str(String *str)
         str_value= *res;                        // Not malloced string
         res= &str_value;
       }
-      push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_TRUNCATED_WRONG_VALUE,
                           ER(ER_TRUNCATED_WRONG_VALUE), char_type,
                           res->c_ptr_safe());
@@ -2425,7 +2425,7 @@ void Item_char_typecast::fix_length_and_dec()
 String *Item_datetime_typecast::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
 
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
       !make_datetime(ltime.second_part ? DATE_TIME_MICROSECOND : DATE_TIME, 
@@ -2440,7 +2440,7 @@ String *Item_datetime_typecast::val_str(String *str)
 int64_t Item_datetime_typecast::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_arg0_date(&ltime,1))
   {
     null_value= 1;
@@ -2451,23 +2451,23 @@ int64_t Item_datetime_typecast::val_int()
 }
 
 
-bool Item_time_typecast::get_time(MYSQL_TIME *ltime)
+bool Item_time_typecast::get_time(DRIZZLE_TIME *ltime)
 {
   bool res= get_arg0_time(ltime);
   /*
-    For MYSQL_TIMESTAMP_TIME value we can have non-zero day part,
+    For DRIZZLE_TIMESTAMP_TIME value we can have non-zero day part,
     which we should not lose.
   */
-  if (ltime->time_type == MYSQL_TIMESTAMP_DATETIME)
+  if (ltime->time_type == DRIZZLE_TIMESTAMP_DATETIME)
     ltime->year= ltime->month= ltime->day= 0;
-  ltime->time_type= MYSQL_TIMESTAMP_TIME;
+  ltime->time_type= DRIZZLE_TIMESTAMP_TIME;
   return res;
 }
 
 
 int64_t Item_time_typecast::val_int()
 {
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (get_time(&ltime))
   {
     null_value= 1;
@@ -2479,7 +2479,7 @@ int64_t Item_time_typecast::val_int()
 String *Item_time_typecast::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
 
   if (!get_arg0_time(&ltime) &&
       !make_datetime(ltime.second_part ? TIME_MICROSECOND : TIME_ONLY,
@@ -2491,18 +2491,18 @@ String *Item_time_typecast::val_str(String *str)
 }
 
 
-bool Item_date_typecast::get_date(MYSQL_TIME *ltime, uint fuzzy_date __attribute__((unused)))
+bool Item_date_typecast::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date __attribute__((unused)))
 {
   bool res= get_arg0_date(ltime, TIME_FUZZY_DATE);
   ltime->hour= ltime->minute= ltime->second= ltime->second_part= 0;
-  ltime->time_type= MYSQL_TIMESTAMP_DATE;
+  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
   return res;
 }
 
 
-bool Item_date_typecast::get_time(MYSQL_TIME *ltime)
+bool Item_date_typecast::get_time(DRIZZLE_TIME *ltime)
 {
-  memset(ltime, 0, sizeof(MYSQL_TIME));
+  memset(ltime, 0, sizeof(DRIZZLE_TIME));
   return args[0]->null_value;
 }
 
@@ -2510,7 +2510,7 @@ bool Item_date_typecast::get_time(MYSQL_TIME *ltime)
 String *Item_date_typecast::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
 
   if (!get_arg0_date(&ltime, TIME_FUZZY_DATE) &&
       !str->alloc(MAX_DATE_STRING_REP_LENGTH))
@@ -2526,7 +2526,7 @@ String *Item_date_typecast::val_str(String *str)
 int64_t Item_date_typecast::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if ((null_value= args[0]->get_date(&ltime, TIME_FUZZY_DATE)))
     return 0;
   return (int64_t) (ltime.year * 10000L + ltime.month * 100 + ltime.day);
@@ -2545,7 +2545,7 @@ int64_t Item_date_typecast::val_int()
 String *Item_func_makedate::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   long daynr=  (long) args[1]->val_int();
   long year= (long) args[0]->val_int();
   long days;
@@ -2588,7 +2588,7 @@ err:
 int64_t Item_func_makedate::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME l_time;
+  DRIZZLE_TIME l_time;
   long daynr=  (long) args[1]->val_int();
   long year= (long) args[0]->val_int();
   long days;
@@ -2629,10 +2629,10 @@ void Item_func_add_time::fix_length_and_dec()
     - If first arg is a DRIZZLE_TYPE_DATETIME or DRIZZLE_TYPE_TIMESTAMP 
       result is DRIZZLE_TYPE_DATETIME
     - If first arg is a DRIZZLE_TYPE_TIME result is DRIZZLE_TYPE_TIME
-    - Otherwise the result is DRIZZLE_TYPE_STRING
+    - Otherwise the result is DRIZZLE_TYPE_VARCHAR
   */
 
-  cached_field_type= DRIZZLE_TYPE_STRING;
+  cached_field_type= DRIZZLE_TYPE_VARCHAR;
   arg0_field_type= args[0]->field_type();
   if (arg0_field_type == DRIZZLE_TYPE_NEWDATE ||
       arg0_field_type == DRIZZLE_TYPE_DATETIME ||
@@ -2655,7 +2655,7 @@ void Item_func_add_time::fix_length_and_dec()
 String *Item_func_add_time::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME l_time1, l_time2, l_time3;
+  DRIZZLE_TIME l_time1, l_time2, l_time3;
   bool is_time= 0;
   long days, microseconds;
   int64_t seconds;
@@ -2666,17 +2666,17 @@ String *Item_func_add_time::val_str(String *str)
   {
     if (get_arg0_date(&l_time1, TIME_FUZZY_DATE) || 
         args[1]->get_time(&l_time2) ||
-        l_time1.time_type == MYSQL_TIMESTAMP_TIME || 
-        l_time2.time_type != MYSQL_TIMESTAMP_TIME)
+        l_time1.time_type == DRIZZLE_TIMESTAMP_TIME || 
+        l_time2.time_type != DRIZZLE_TIMESTAMP_TIME)
       goto null_date;
   }
   else                                // ADDTIME function
   {
     if (args[0]->get_time(&l_time1) || 
         args[1]->get_time(&l_time2) ||
-        l_time2.time_type == MYSQL_TIMESTAMP_DATETIME)
+        l_time2.time_type == DRIZZLE_TIMESTAMP_DATETIME)
       goto null_date;
-    is_time= (l_time1.time_type == MYSQL_TIMESTAMP_TIME);
+    is_time= (l_time1.time_type == DRIZZLE_TIMESTAMP_TIME);
   }
   if (l_time1.neg != l_time2.neg)
     l_sign= -l_sign;
@@ -2758,7 +2758,7 @@ String *Item_func_timediff::val_str(String *str)
   int64_t seconds;
   long microseconds;
   int l_sign= 1;
-  MYSQL_TIME l_time1 ,l_time2, l_time3;
+  DRIZZLE_TIME l_time1 ,l_time2, l_time3;
 
   null_value= 0;  
   if (args[0]->get_time(&l_time1) ||
@@ -2775,7 +2775,7 @@ String *Item_func_timediff::val_str(String *str)
 			      &seconds, &microseconds);
 
   /*
-    For MYSQL_TIMESTAMP_TIME only:
+    For DRIZZLE_TIMESTAMP_TIME only:
       If first argument was negative and diff between arguments
       is non-zero we need to swap sign to get proper result.
   */
@@ -2803,7 +2803,7 @@ null_date:
 String *Item_func_maketime::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   bool overflow= 0;
 
   int64_t hour=   args[0]->val_int();
@@ -2847,8 +2847,8 @@ String *Item_func_maketime::val_str(String *str)
     char *ptr= int64_t10_to_str(hour, buf, args[0]->unsigned_flag ? 10 : -10);
     int len = (int)(ptr - buf) +
       sprintf(ptr, ":%02u:%02u", (uint)minute, (uint)second);
-    make_truncated_value_warning(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
-                                 buf, len, MYSQL_TIMESTAMP_TIME,
+    make_truncated_value_warning(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                 buf, len, DRIZZLE_TIMESTAMP_TIME,
                                  NullS);
   }
   
@@ -2872,7 +2872,7 @@ String *Item_func_maketime::val_str(String *str)
 int64_t Item_func_microsecond::val_int()
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   if (!get_arg0_time(&ltime))
     return ltime.second_part;
   return 0;
@@ -2881,7 +2881,7 @@ int64_t Item_func_microsecond::val_int()
 
 int64_t Item_func_timestamp_diff::val_int()
 {
-  MYSQL_TIME ltime1, ltime2;
+  DRIZZLE_TIME ltime1, ltime2;
   int64_t seconds;
   long microseconds;
   long months= 0;
@@ -3070,13 +3070,13 @@ void Item_func_get_format::print(String *str, enum_query_type query_type)
   str->append('(');
 
   switch (type) {
-  case MYSQL_TIMESTAMP_DATE:
+  case DRIZZLE_TIMESTAMP_DATE:
     str->append(STRING_WITH_LEN("DATE, "));
     break;
-  case MYSQL_TIMESTAMP_DATETIME:
+  case DRIZZLE_TIMESTAMP_DATETIME:
     str->append(STRING_WITH_LEN("DATETIME, "));
     break;
-  case MYSQL_TIMESTAMP_TIME:
+  case DRIZZLE_TIMESTAMP_TIME:
     str->append(STRING_WITH_LEN("TIME, "));
     break;
   default:
@@ -3162,7 +3162,7 @@ void Item_func_str_to_date::fix_length_and_dec()
   decimals=0;
   cached_field_type= DRIZZLE_TYPE_DATETIME;
   max_length= MAX_DATETIME_FULL_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
-  cached_timestamp_type= MYSQL_TIMESTAMP_NONE;
+  cached_timestamp_type= DRIZZLE_TIMESTAMP_NONE;
   if ((const_item= args[1]->const_item()))
   {
     char format_buff[64];
@@ -3174,18 +3174,18 @@ void Item_func_str_to_date::fix_length_and_dec()
                                                     format->length());
       switch (cached_format_type) {
       case DATE_ONLY:
-        cached_timestamp_type= MYSQL_TIMESTAMP_DATE;
+        cached_timestamp_type= DRIZZLE_TIMESTAMP_DATE;
         cached_field_type= DRIZZLE_TYPE_NEWDATE; 
         max_length= MAX_DATE_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       case TIME_ONLY:
       case TIME_MICROSECOND:
-        cached_timestamp_type= MYSQL_TIMESTAMP_TIME;
+        cached_timestamp_type= DRIZZLE_TIMESTAMP_TIME;
         cached_field_type= DRIZZLE_TYPE_TIME; 
         max_length= MAX_TIME_WIDTH * MY_CHARSET_BIN_MB_MAXLEN;
         break;
       default:
-        cached_timestamp_type= MYSQL_TIMESTAMP_DATETIME;
+        cached_timestamp_type= DRIZZLE_TIMESTAMP_DATETIME;
         cached_field_type= DRIZZLE_TYPE_DATETIME; 
         break;
       }
@@ -3194,7 +3194,7 @@ void Item_func_str_to_date::fix_length_and_dec()
 }
 
 
-bool Item_func_str_to_date::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_func_str_to_date::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date)
 {
   DATE_TIME_FORMAT date_time_format;
   char val_buff[64], format_buff[64];
@@ -3215,7 +3215,7 @@ bool Item_func_str_to_date::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
       ((fuzzy_date & TIME_NO_ZERO_DATE) &&
        (ltime->year == 0 || ltime->month == 0 || ltime->day == 0)))
     goto null_date;
-  if (cached_timestamp_type == MYSQL_TIMESTAMP_TIME && ltime->day)
+  if (cached_timestamp_type == DRIZZLE_TIMESTAMP_TIME && ltime->day)
   {
     /*
       Day part for time type can be nonzero value and so 
@@ -3235,7 +3235,7 @@ null_date:
 String *Item_func_str_to_date::val_str(String *str)
 {
   assert(fixed == 1);
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
 
   if (Item_func_str_to_date::get_date(&ltime, TIME_FUZZY_DATE))
     return 0;
@@ -3248,7 +3248,7 @@ String *Item_func_str_to_date::val_str(String *str)
 }
 
 
-bool Item_func_last_day::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
+bool Item_func_last_day::get_date(DRIZZLE_TIME *ltime, uint fuzzy_date)
 {
   if (get_arg0_date(ltime, fuzzy_date & ~TIME_FUZZY_DATE) ||
       (ltime->month == 0))
@@ -3263,6 +3263,6 @@ bool Item_func_last_day::get_date(MYSQL_TIME *ltime, uint fuzzy_date)
     ltime->day= 29;
   ltime->hour= ltime->minute= ltime->second= 0;
   ltime->second_part= 0;
-  ltime->time_type= MYSQL_TIMESTAMP_DATE;
+  ltime->time_type= DRIZZLE_TIMESTAMP_DATE;
   return 0;
 }

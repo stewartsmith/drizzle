@@ -27,7 +27,6 @@
 
 */
 
-#include <my_global.h>
 #include "m_string.h"
 
 #ifndef HAVE_STRSTR

@@ -16,9 +16,6 @@
 MYSQLDATAdir =		$(localstatedir)
 MYSQLSHAREdir =		$(pkgdatadir)
 MYSQLBASEdir=		$(prefix)
-AM_CPPFLAGS =		-I$(top_builddir)/include \
-			-I$(top_srcdir)/include -I$(srcdir)  \
-                        -I$(top_srcdir)/mysys
 LDADD =			$(top_builddir)/mysys/libmysyslt.la \
 			$(top_builddir)/mystrings/libmystrings.la
 
@@ -35,12 +32,11 @@ DEFS =			-DMAIN \
 # I hope this always does the right thing. Otherwise this is only test programs
 FLAGS=$(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) @NOINST_LDFLAGS@
 
-noinst_PROGRAMS = test_bitmap test_priority_queue test_thr_alarm test_thr_lock test_vsnprintf test_io_cache testhash test_gethwaddr test_base64 #test_charset
+noinst_PROGRAMS = test_bitmap test_priority_queue test_thr_alarm test_thr_lock test_io_cache testhash test_gethwaddr test_base64 #test_charset
 test_bitmap_SOURCES = $(top_srcdir)/mysys/my_bitmap.c
 test_thr_alarm_SOURCES = $(top_srcdir)/mysys/thr_alarm.c
 test_priority_queue_SOURCES = $(top_srcdir)/mysys/queues.c
 test_thr_lock_SOURCES = $(top_srcdir)/mysys/thr_lock.c
-test_vsnprintf_SOURCES = $(top_srcdir)/strings/my_vsnprintf.c
 test_io_cache_SOURCES = $(top_srcdir)/mysys/mf_iocache.c 
 #test_dir_SOURCES = test_dir.c
 #test_charset_SOURCES = test_charset.c

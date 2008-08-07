@@ -23,6 +23,7 @@
 #endif
 
 #include <drizzled/field/timetype.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /****************************************************************************
 ** time type
@@ -35,7 +36,7 @@ int Field_time::store(const char *from,
                       uint len,
                       CHARSET_INFO *cs __attribute__((unused)))
 {
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   long tmp;
   int error= 0;
   int warning;
@@ -44,23 +45,23 @@ int Field_time::store(const char *from,
   {
     tmp=0L;
     error= 2;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED,
-                         from, len, MYSQL_TIMESTAMP_TIME, 1);
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED,
+                         from, len, DRIZZLE_TIMESTAMP_TIME, 1);
   }
   else
   {
-    if (warning & MYSQL_TIME_WARN_TRUNCATED)
+    if (warning & DRIZZLE_TIME_WARN_TRUNCATED)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                           WARN_DATA_TRUNCATED,
-                           from, len, MYSQL_TIMESTAMP_TIME, 1);
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                           ER_WARN_DATA_TRUNCATED,
+                           from, len, DRIZZLE_TIMESTAMP_TIME, 1);
       error= 1;
     }
-    if (warning & MYSQL_TIME_WARN_OUT_OF_RANGE)
+    if (warning & DRIZZLE_TIME_WARN_OUT_OF_RANGE)
     {
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                            ER_WARN_DATA_OUT_OF_RANGE,
-                           from, len, MYSQL_TIMESTAMP_TIME, !error);
+                           from, len, DRIZZLE_TIMESTAMP_TIME, !error);
       error= 1;
     }
     if (ltime.month)
@@ -75,7 +76,7 @@ int Field_time::store(const char *from,
 }
 
 
-int Field_time::store_time(MYSQL_TIME *ltime,
+int Field_time::store_time(DRIZZLE_TIME *ltime,
                            timestamp_type time_type __attribute__((unused)))
 {
   long tmp= ((ltime->month ? 0 : ltime->day * 24L) + ltime->hour) * 10000L +
@@ -93,15 +94,15 @@ int Field_time::store(double nr)
   if (nr > (double)TIME_MAX_VALUE)
   {
     tmp= TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                         ER_WARN_DATA_OUT_OF_RANGE, nr, MYSQL_TIMESTAMP_TIME);
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                         ER_WARN_DATA_OUT_OF_RANGE, nr, DRIZZLE_TIMESTAMP_TIME);
     error= 1;
   }
   else if (nr < (double)-TIME_MAX_VALUE)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
-                         ER_WARN_DATA_OUT_OF_RANGE, nr, MYSQL_TIMESTAMP_TIME);
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
+                         ER_WARN_DATA_OUT_OF_RANGE, nr, DRIZZLE_TIMESTAMP_TIME);
     error= 1;
   }
   else
@@ -112,9 +113,9 @@ int Field_time::store(double nr)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
-                           MYSQL_TIMESTAMP_TIME);
+                           DRIZZLE_TIMESTAMP_TIME);
       error= 1;
     }
   }
@@ -130,17 +131,17 @@ int Field_time::store(int64_t nr, bool unsigned_val)
   if (nr < (int64_t) -TIME_MAX_VALUE && !unsigned_val)
   {
     tmp= -TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
-                         MYSQL_TIMESTAMP_TIME, 1);
+                         DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
   }
   else if (nr > (int64_t) TIME_MAX_VALUE || (nr < 0 && unsigned_val))
   {
     tmp= TIME_MAX_VALUE;
-    set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+    set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                          ER_WARN_DATA_OUT_OF_RANGE, nr,
-                         MYSQL_TIMESTAMP_TIME, 1);
+                         DRIZZLE_TIMESTAMP_TIME, 1);
     error= 1;
   }
   else
@@ -149,9 +150,9 @@ int Field_time::store(int64_t nr, bool unsigned_val)
     if (tmp % 100 > 59 || tmp/100 % 100 > 59)
     {
       tmp=0;
-      set_datetime_warning(MYSQL_ERROR::WARN_LEVEL_WARN, 
+      set_datetime_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, 
                            ER_WARN_DATA_OUT_OF_RANGE, nr,
-                           MYSQL_TIMESTAMP_TIME, 1);
+                           DRIZZLE_TIMESTAMP_TIME, 1);
       error= 1;
     }
   }
@@ -181,7 +182,7 @@ int64_t Field_time::val_int(void)
 String *Field_time::val_str(String *val_buffer,
 			    String *val_ptr __attribute__((unused)))
 {
-  MYSQL_TIME ltime;
+  DRIZZLE_TIME ltime;
   val_buffer->alloc(MAX_DATE_STRING_REP_LENGTH);
   long tmp=(long) sint3korr(ptr);
   ltime.neg= 0;
@@ -206,13 +207,13 @@ String *Field_time::val_str(String *val_buffer,
   DATE_FORMAT(time, "%l.%i %p")
 */
  
-bool Field_time::get_date(MYSQL_TIME *ltime, uint fuzzydate)
+bool Field_time::get_date(DRIZZLE_TIME *ltime, uint fuzzydate)
 {
   long tmp;
   THD *thd= table ? table->in_use : current_thd;
   if (!(fuzzydate & TIME_FUZZY_DATE))
   {
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_WARN_DATA_OUT_OF_RANGE,
                         ER(ER_WARN_DATA_OUT_OF_RANGE), field_name,
                         thd->row_count);
@@ -234,7 +235,7 @@ bool Field_time::get_date(MYSQL_TIME *ltime, uint fuzzydate)
 }
 
 
-bool Field_time::get_time(MYSQL_TIME *ltime)
+bool Field_time::get_time(DRIZZLE_TIME *ltime)
 {
   long tmp=(long) sint3korr(ptr);
   ltime->neg=0;
@@ -249,14 +250,14 @@ bool Field_time::get_time(MYSQL_TIME *ltime)
   ltime->minute= (int) tmp/100;
   ltime->second= (int) tmp % 100;
   ltime->second_part=0;
-  ltime->time_type= MYSQL_TIMESTAMP_TIME;
+  ltime->time_type= DRIZZLE_TIMESTAMP_TIME;
   return 0;
 }
 
 
 bool Field_time::send_binary(Protocol *protocol)
 {
-  MYSQL_TIME tm;
+  DRIZZLE_TIME tm;
   Field_time::get_time(&tm);
   tm.day= tm.hour/24;				// Move hours to days
   tm.hour-= tm.day*24;

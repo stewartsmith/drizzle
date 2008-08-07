@@ -26,6 +26,7 @@
 
 #include "mysql_priv.h"
 #include <stdarg.h>
+#include <drizzled/drizzled_error_messages.h>
 
 static const unsigned int PACKET_BUFFER_EXTRA_ALLOC= 1024;
 /* Declared non-static only because of the embedded library. */
@@ -166,7 +167,7 @@ net_send_ok(THD *thd,
             ha_rows affected_rows, uint64_t id, const char *message)
 {
   NET *net= &thd->net;
-  uchar buff[MYSQL_ERRMSG_SIZE+10],*pos;
+  uchar buff[DRIZZLE_ERRMSG_SIZE+10],*pos;
 
   if (! net->vio)	// hack for re-parsing queries
   {
@@ -278,9 +279,9 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
   NET *net= &thd->net;
   uint length;
   /*
-    buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + MYSQL_ERRMSG_SIZE:512
+    buff[]: sql_errno:2 + ('#':1 + SQLSTATE_LENGTH:5) + DRIZZLE_ERRMSG_SIZE:512
   */
-  uchar buff[2+1+SQLSTATE_LENGTH+MYSQL_ERRMSG_SIZE], *pos;
+  uchar buff[2+1+SQLSTATE_LENGTH+DRIZZLE_ERRMSG_SIZE], *pos;
 
   if (net->vio == 0)
   {
@@ -293,9 +294,9 @@ void net_send_error_packet(THD *thd, uint sql_errno, const char *err)
   {
     /* The first # is to make the protocol backward compatible */
     buff[2]= '#';
-    pos= (uchar*) strmov((char*) buff+3, mysql_errno_to_sqlstate(sql_errno));
+    pos= (uchar*) strmov((char*) buff+3, drizzle_errno_to_sqlstate(sql_errno));
   }
-  length= (uint) (strmake((char*) pos, err, MYSQL_ERRMSG_SIZE-1) -
+  length= (uint) (strmake((char*) pos, err, DRIZZLE_ERRMSG_SIZE-1) -
                   (char*) buff);
   err= (char*) buff;
 
@@ -807,7 +808,7 @@ bool Protocol_text::store(Field *field)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_text::store(MYSQL_TIME *tm)
+bool Protocol_text::store(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint length;
@@ -825,7 +826,7 @@ bool Protocol_text::store(MYSQL_TIME *tm)
 }
 
 
-bool Protocol_text::store_date(MYSQL_TIME *tm)
+bool Protocol_text::store_date(DRIZZLE_TIME *tm)
 {
   char buff[MAX_DATE_STRING_REP_LENGTH];
   size_t length= my_date_to_str(tm, buff);
@@ -839,7 +840,7 @@ bool Protocol_text::store_date(MYSQL_TIME *tm)
     we support 0-6 decimals for time.
 */
 
-bool Protocol_text::store_time(MYSQL_TIME *tm)
+bool Protocol_text::store_time(DRIZZLE_TIME *tm)
 {
   char buff[40];
   uint length;

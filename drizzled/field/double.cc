@@ -23,6 +23,7 @@
 #endif
 
 #include <drizzled/field/double.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /****************************************************************************
   double precision floating point numbers
@@ -35,8 +36,8 @@ int Field_double::store(const char *from,uint len,CHARSET_INFO *cs)
   double nr= my_strntod(cs,(char*) from, len, &end, &error);
   if (error || (!len || (((uint) (end-from) != len) && table->in_use->count_cuted_fields)))
   {
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                (error ? ER_WARN_DATA_OUT_OF_RANGE : WARN_DATA_TRUNCATED), 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                (error ? ER_WARN_DATA_OUT_OF_RANGE : ER_WARN_DATA_TRUNCATED), 1);
     error= error ? 1 : 2;
   }
   Field_double::store(nr);
@@ -81,13 +82,13 @@ int Field_real::truncate(double *nr, double max_value)
   {
     res= 0;
     set_null();
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     goto end;
   }
   else if (unsigned_flag && res < 0)
   {
     res= 0;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
     goto end;
   }
 
@@ -112,12 +113,12 @@ int Field_real::truncate(double *nr, double max_value)
   if (res < -max_value)
   {
    res= -max_value;
-   set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+   set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
   }
   else if (res > max_value)
   {
     res= max_value;
-    set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
+    set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_OUT_OF_RANGE, 1);
   }
   else
     error= 0;
@@ -179,7 +180,7 @@ warn:
     char buf[DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE];
     String tmp(buf, sizeof(buf), &my_charset_latin1), *str;
     str= val_str(&tmp, 0);
-    push_warning_printf(current_thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), "INTEGER",
                         str->c_ptr());

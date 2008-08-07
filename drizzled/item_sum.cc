@@ -27,6 +27,7 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   Prepare an aggregate function item for checking context conditions.
@@ -1224,9 +1225,9 @@ Field *Item_sum_avg::create_tmp_field(bool group, TABLE *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_string(((hybrid_type == DECIMAL_RESULT) ?
-                             dec_bin_size : sizeof(double)) + sizeof(int64_t),
-                            0, name, &my_charset_bin);
+    field= new Field_varstring(((hybrid_type == DECIMAL_RESULT) ?
+                                dec_bin_size : sizeof(double)) + sizeof(int64_t),
+                               0, name, table->s, &my_charset_bin);
   }
   else if (hybrid_type == DECIMAL_RESULT)
     field= new Field_new_decimal(max_length, maybe_null, name,
@@ -1434,7 +1435,7 @@ Field *Item_sum_variance::create_tmp_field(bool group, TABLE *table,
       The easiest way is to do this is to store both value in a string
       and unpack on access.
     */
-    field= new Field_string(sizeof(double)*2 + sizeof(int64_t), 0, name, &my_charset_bin);
+    field= new Field_varstring(sizeof(double)*2 + sizeof(int64_t), 0, name, table->s, &my_charset_bin);
   }
   else
     field= new Field_double(max_length, maybe_null, name, decimals, true);
@@ -2582,7 +2583,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
       Field *f= *field;
       enum enum_field_types f_type= f->type();
       tree_key_length+= f->pack_length();
-      if ((f_type == DRIZZLE_TYPE_VARCHAR) || (!f->binary() && (f_type == DRIZZLE_TYPE_STRING)))
+      if (f_type == DRIZZLE_TYPE_VARCHAR)
       {
         all_binary= false;
         break;
@@ -3142,7 +3143,7 @@ void Item_func_group_concat::cleanup()
   /* Adjust warning message to include total number of cut values */
   if (warning)
   {
-    char warn_buff[MYSQL_ERRMSG_SIZE];
+    char warn_buff[DRIZZLE_ERRMSG_SIZE];
     sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
     warning->set_msg(current_thd, warn_buff);
     warning= 0;
@@ -3173,7 +3174,7 @@ void Item_func_group_concat::cleanup()
       }
       if (warning)
       {
-        char warn_buff[MYSQL_ERRMSG_SIZE];
+        char warn_buff[DRIZZLE_ERRMSG_SIZE];
         sprintf(warn_buff, ER(ER_CUT_VALUE_GROUP_CONCAT), count_cut_values);
         warning->set_msg(thd, warn_buff);
         warning= 0;
@@ -3452,7 +3453,7 @@ String* Item_func_group_concat::val_str(String* str __attribute__((unused)))
       Item_func_group_concat::cleanup().
     */
     assert(table);
-    warning= push_warning(table->in_use, MYSQL_ERROR::WARN_LEVEL_WARN,
+    warning= push_warning(table->in_use, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_CUT_VALUE_GROUP_CONCAT,
                           ER(ER_CUT_VALUE_GROUP_CONCAT));
   }

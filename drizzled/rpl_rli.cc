@@ -17,7 +17,6 @@
 
 #include "rpl_mi.h"
 #include "rpl_rli.h"
-#include <my_dir.h>
 #include "sql_repl.h"  // For check_binlog_magic
 #include "rpl_utility.h"
 

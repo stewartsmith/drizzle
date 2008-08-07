@@ -113,3 +113,4 @@ support-files/drizzle-log-rotate
 support-files/drizzle.server
 support-files/libdrizzle.pc
 tests/install_test_db
+drizzled/sql_builtin.cc

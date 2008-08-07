@@ -13,8 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef LOG_H
-#define LOG_H
+#ifndef DRIZZLE_SERVER_LOG_H
+#define DRIZZLE_SERVER_LOG_H
 
 class Relay_log_info;
 
@@ -530,4 +530,25 @@ enum enum_binlog_format {
 };
 extern TYPELIB binlog_format_typelib;
 
-#endif /* LOG_H */
+int vprint_msg_to_log(enum loglevel level, const char *format, va_list args);
+void sql_print_error(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void sql_print_warning(const char *format, ...) __attribute__((format(printf, 1, 2)));
+void sql_print_information(const char *format, ...)
+  __attribute__((format(printf, 1, 2)));
+typedef void (*sql_print_message_func)(const char *format, ...)
+  __attribute__((format(printf, 1, 2)));
+extern sql_print_message_func sql_print_message_handlers[];
+
+int error_log_print(enum loglevel level, const char *format,
+                    va_list args);
+
+bool slow_log_print(THD *thd, const char *query, uint query_length,
+                    uint64_t current_utime);
+
+bool general_log_print(THD *thd, enum enum_server_command command,
+                       const char *format,...);
+
+bool general_log_write(THD *thd, enum enum_server_command command,
+                       const char *query, uint query_length);
+
+#endif /* DRIZZLE_SERVER_LOG_H */

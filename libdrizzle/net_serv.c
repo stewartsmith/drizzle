@@ -17,12 +17,12 @@
   HFTODO this must be hidden if we don't want client capabilities in 
   embedded library
  */
-#include <my_global.h>
+#include <drizzled/global.h>
 #include <drizzle.h>
-#include <drizzled_error.h>
-#include <my_sys.h>
+#include <drizzled/error.h>
+#include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
-#include <violite.h>
+#include <vio/violite.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/poll.h>
@@ -39,7 +39,7 @@
 
 #define DONT_USE_THR_ALARM
 
-#include "thr_alarm.h"
+#include <mysys/thr_alarm.h>
 
 
 #define update_statistics(A)
@@ -545,7 +545,7 @@ my_real_read(NET *net, size_t *complen)
                   NET_HEADER_SIZE);
   /* Backup of the original SO_RCVTIMEO timeout */
   struct timeval backtime;
-  int error;
+  int error= 0;
 
   *complen = 0;
 

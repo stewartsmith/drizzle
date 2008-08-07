@@ -73,17 +73,17 @@ use warnings;
 select(STDOUT);
 $| = 1; # Automatically flush STDOUT
 
-require "lib/mtr_cases.pl";
-require "lib/mtr_process.pl";
-require "lib/mtr_timer.pl";
-require "lib/mtr_io.pl";
-require "lib/mtr_gcov.pl";
-require "lib/mtr_gprof.pl";
-require "lib/mtr_report.pl";
-require "lib/mtr_match.pl";
-require "lib/mtr_misc.pl";
-require "lib/mtr_stress.pl";
-require "lib/mtr_unique.pl";
+require "mtr_cases.pl";
+require "mtr_process.pl";
+require "mtr_timer.pl";
+require "mtr_io.pl";
+require "mtr_gcov.pl";
+require "mtr_gprof.pl";
+require "mtr_report.pl";
+require "mtr_match.pl";
+require "mtr_misc.pl";
+require "mtr_stress.pl";
+require "mtr_unique.pl";
 
 $Devel::Trace::TRACE= 1;
 
@@ -106,7 +106,6 @@ our $glob_basedir;
 our $path_charsetsdir;
 our $path_client_bindir;
 our $path_share;
-our $path_language;
 our $path_timefile;
 our $path_snapshot;
 our $path_drizzletest_log;
@@ -636,13 +635,13 @@ sub command_line_setup () {
   $path_client_bindir= mtr_path_exists("$glob_basedir/client",
 				       "$glob_basedir/bin");
 
-  # Look for language files and charsetsdir, use same share
+  # Look for charsetsdir, use same share
   $path_share=      mtr_path_exists("$glob_basedir/share/mysql",
                                     "$glob_basedir/drizzled/share",
                                     "$glob_basedir/share");
 
-  $path_language=      mtr_path_exists("$path_share/english");
   $path_charsetsdir=   mtr_path_exists("$path_share/charsets");
+
 
 
   if (!$opt_extern)
@@ -1119,7 +1118,7 @@ sub collect_mysqld_features () {
   #
   # --datadir must exist, mysqld will chdir into it
   #
-  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --language=$path_language --skip-grant-tables --verbose --help`;
+  my $list= `$exe_drizzled --no-defaults --datadir=$tmpdir --skip-grant-tables --verbose --help`;
 
   foreach my $line (split('\n', $list))
   {
@@ -2504,7 +2503,6 @@ sub mysqld_arguments ($$$$) {
   }
 
   mtr_add_arg($args, "%s--default-character-set=latin1", $prefix);
-  mtr_add_arg($args, "%s--language=%s", $prefix, $path_language);
   mtr_add_arg($args, "%s--tmpdir=$opt_tmpdir", $prefix);
 
   # Increase default connect_timeout to avoid intermittent

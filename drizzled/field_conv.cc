@@ -25,7 +25,6 @@
 */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 
 static void do_field_eq(Copy_field *copy)
 {
@@ -124,7 +123,7 @@ set_field_to_null(Field *field)
   field->reset();
   if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
-    field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, WARN_DATA_TRUNCATED, 1);
+    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_WARN_DATA_TRUNCATED, 1);
     return 0;
   }
   if (!field->table->in_use->no_errors)
@@ -180,7 +179,7 @@ set_field_to_null_with_conversions(Field *field, bool no_conversions)
   }
   if (field->table->in_use->count_cuted_fields == CHECK_FIELD_WARN)
   {
-    field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
+    field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_BAD_NULL_ERROR, 1);
     return 0;
   }
   if (!field->table->in_use->no_errors)
@@ -229,8 +228,8 @@ static void do_copy_not_null(Copy_field *copy)
 {
   if (*copy->from_null_ptr & copy->from_bit)
   {
-    copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                WARN_DATA_TRUNCATED, 1);
+    copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                ER_WARN_DATA_TRUNCATED, 1);
     copy->to_field->reset();
   }
   else
@@ -319,21 +318,6 @@ static void do_field_enum(Copy_field *copy)
 }
 
 
-static void do_field_varbinary_pre50(Copy_field *copy)
-{
-  char buff[MAX_FIELD_WIDTH];
-  copy->tmp.set_quick(buff,sizeof(buff),copy->tmp.charset());
-  copy->from_field->val_str(&copy->tmp);
-
-  /* Use the same function as in 4.1 to trim trailing spaces */
-  uint length= my_lengthsp_8bit(&my_charset_bin, copy->tmp.c_ptr_quick(),
-                                copy->from_field->field_length);
-
-  copy->to_field->store(copy->tmp.c_ptr_quick(), length,
-                        copy->tmp.charset());
-}
-
-
 static void do_field_int(Copy_field *copy)
 {
   int64_t value= copy->from_field->val_int();
@@ -371,8 +355,8 @@ static void do_cut_string(Copy_field *copy)
                      (char*) copy->from_ptr + copy->from_length,
                      MY_SEQ_SPACES) < copy->from_length - copy->to_length)
   {
-    copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                WARN_DATA_TRUNCATED, 1);
+    copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                ER_WARN_DATA_TRUNCATED, 1);
   }
 }
 
@@ -402,8 +386,8 @@ static void do_cut_string_complex(Copy_field *copy)
                      (char*) from_end,
                      MY_SEQ_SPACES) < (copy->from_length - copy_length))
   {
-    copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                WARN_DATA_TRUNCATED, 1);
+    copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                ER_WARN_DATA_TRUNCATED, 1);
   }
 
   if (copy_length < copy->to_length)
@@ -440,8 +424,8 @@ static void do_varstring1(Copy_field *copy)
   {
     length=copy->to_length - 1;
     if (copy->from_field->table->in_use->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                  WARN_DATA_TRUNCATED, 1);
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                  ER_WARN_DATA_TRUNCATED, 1);
   }
   *(uchar*) copy->to_ptr= (uchar) length;
   memcpy(copy->to_ptr+1, copy->from_ptr + 1, length);
@@ -461,8 +445,8 @@ static void do_varstring1_mb(Copy_field *copy)
   if (length < from_length)
   {
     if (current_thd->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                  WARN_DATA_TRUNCATED, 1);
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                  ER_WARN_DATA_TRUNCATED, 1);
   }
   *copy->to_ptr= (uchar) length;
   memcpy(copy->to_ptr + 1, from_ptr, length);
@@ -476,8 +460,8 @@ static void do_varstring2(Copy_field *copy)
   {
     length=copy->to_length-HA_KEY_BLOB_LENGTH;
     if (copy->from_field->table->in_use->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                  WARN_DATA_TRUNCATED, 1);
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                  ER_WARN_DATA_TRUNCATED, 1);
   }
   int2store(copy->to_ptr,length);
   memcpy(copy->to_ptr+HA_KEY_BLOB_LENGTH, copy->from_ptr + HA_KEY_BLOB_LENGTH,
@@ -498,8 +482,8 @@ static void do_varstring2_mb(Copy_field *copy)
   if (length < from_length)
   {
     if (current_thd->count_cuted_fields)
-      copy->to_field->set_warning(MYSQL_ERROR::WARN_LEVEL_WARN,
-                                  WARN_DATA_TRUNCATED, 1);
+      copy->to_field->set_warning(DRIZZLE_ERROR::WARN_LEVEL_WARN,
+                                  ER_WARN_DATA_TRUNCATED, 1);
   }  
   int2store(copy->to_ptr, length);
   memcpy(copy->to_ptr+HA_KEY_BLOB_LENGTH, from_beg, length);
@@ -648,15 +632,6 @@ Copy_field::get_copy_func(Field *to,Field *from)
     if (from->result_type() == STRING_RESULT)
     {
       /*
-        Detect copy from pre 5.0 varbinary to varbinary as of 5.0 and
-        use special copy function that removes trailing spaces and thus
-        repairs data.
-      */
-      if (from->type() == DRIZZLE_TYPE_VAR_STRING && !from->has_charset() &&
-          to->type() == DRIZZLE_TYPE_VARCHAR && !to->has_charset())
-        return do_field_varbinary_pre50;
-
-      /*
         If we are copying date or datetime's we have to check the dates
         if we don't allow 'all' dates.
       */
@@ -778,7 +753,6 @@ int field_conv(Field *to,Field *from)
     */
     if (to->table->copy_blobs ||
         (!blob->value.is_alloced() &&
-         from->real_type() != DRIZZLE_TYPE_STRING &&
          from->real_type() != DRIZZLE_TYPE_VARCHAR))
       blob->value.copy();
     return blob->store(blob->value.ptr(),blob->value.length(),from->charset());

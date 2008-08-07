@@ -155,7 +155,7 @@ DROP TABLE t1;
 # Bug#4411 Server hangs when trying to SELECT MAX(id) from an empty HEAP table
 #
 CREATE TABLE `job_titles` (
-  `job_title_id` int(6) unsigned NOT NULL default '0',
+  `job_title_id` int unsigned NOT NULL default '0',
   `job_title` char(18) NOT NULL default '',
   PRIMARY KEY  (`job_title_id`),
   UNIQUE KEY `job_title_id` (`job_title_id`,`job_title`)
@@ -179,7 +179,7 @@ DROP TABLE t1;
 # Bug #6748
 # heap_rfirst() doesn't work (and never did!)
 #
-CREATE TABLE t1 (pseudo char(35) PRIMARY KEY, date int(10) unsigned NOT NULL) ENGINE=HEAP;
+CREATE TABLE t1 (pseudo char(35) PRIMARY KEY, date int unsigned NOT NULL) ENGINE=HEAP;
 INSERT INTO t1 VALUES ('massecot',1101106491),('altec',1101106492),('stitch+',1101106304),('Seb Corgan',1101106305),('beerfilou',1101106263),('flaker',1101106529),('joce8',5),('M4vrick',1101106418),('gabay008',1101106525),('Vamp irX',1101106291),('ZoomZip',1101106546),('rip666',1101106502),('CBP ',1101106397),('guezpard',1101106496);
 DELETE FROM t1 WHERE date<1101106546;
 SELECT * FROM t1;
@@ -224,7 +224,7 @@ alter table t1 modify c varchar(10);
 show create table t1;
 alter table t1 modify v char(10);
 show create table t1;
-alter table t1 modify t varchar(10);
+alter table t1 modify t varchar(50);
 show create table t1;
 select concat('*',v,'*',c,'*',t,'*') from t1;
 drop table t1,t2,t3;

@@ -446,8 +446,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
 
     if ((!(param->testflag & T_SILENT)))
       printf ("- check data record references index: %d\n",key+1);
-    if (share->state.key_root[key] == HA_OFFSET_ERROR &&
-	(info->state->records == 0 || keyinfo->flag & HA_FULLTEXT))
+    if (share->state.key_root[key] == HA_OFFSET_ERROR && (info->state->records == 0))
       goto do_stat;
     if (!_mi_fetch_keypage(info,keyinfo,share->state.key_root[key],
                            DFLT_INIT_HITS,info->buff,0))
@@ -467,7 +466,7 @@ int chk_key(MI_CHECK *param, register MI_INFO *info)
     if (chk_index(param,info,keyinfo,share->state.key_root[key],info->buff,
 		  &keys, param->key_crc+key,1))
       return(-1);
-    if(!(keyinfo->flag & (HA_FULLTEXT | HA_SPATIAL)))
+    if(!(0))
     {
       if (keys != info->state->records)
       {
@@ -1169,7 +1168,6 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
       {
         if (mi_is_key_active(info->s->state.key_map, key))
 	{
-          if(!(keyinfo->flag & HA_FULLTEXT))
 	  {
 	    uint key_length=_mi_make_key(info,key,info->lastkey,record,
 					 start_recpos);
@@ -1234,8 +1232,7 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
   {
     for (key=0 ; key < info->s->base.keys;  key++)
     {
-      if (key_checksum[key] != param->key_crc[key] &&
-          !(info->s->keyinfo[key].flag & (HA_FULLTEXT | HA_SPATIAL)))
+      if (key_checksum[key] != param->key_crc[key])
       {
 	mi_check_print_error(param,"Checksum for key: %2d doesn't match checksum for records",
 		    key+1);
@@ -1940,7 +1937,7 @@ static int sort_one_index(MI_CHECK *param, MI_INFO *info, MI_KEYDEF *keyinfo,
 		llstr(pagepos,llbuff));
     goto err;
   }
-  if ((nod_flag=mi_test_if_nod(buff)) || keyinfo->flag & HA_FULLTEXT)
+  if ((nod_flag=mi_test_if_nod(buff)))
   {
     used_length=mi_getint(buff);
     keypos=buff+2+nod_flag;
@@ -4212,7 +4209,7 @@ static ha_checksum mi_byte_checksum(const uchar *buf, uint length)
 static my_bool mi_too_big_key_for_sort(MI_KEYDEF *key, ha_rows rows)
 {
   uint key_maxlength=key->maxlength;
-  return (key->flag & (HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY | HA_FULLTEXT) &&
+  return (key->flag & (HA_BINARY_PACK_KEY | HA_VAR_LENGTH_KEY) &&
 	  ((uint64_t) rows * key_maxlength >
 	   (uint64_t) myisam_max_temp_length));
 }
@@ -4236,7 +4233,7 @@ void mi_disable_non_unique_index(MI_INFO *info, ha_rows rows)
               (!rows || rows >= MI_MIN_ROWS_TO_DISABLE_INDEXES));
   for (i=0 ; i < share->base.keys ; i++,key++)
   {
-    if (!(key->flag & (HA_NOSAME | HA_SPATIAL | HA_AUTO_KEY)) &&
+    if (!(key->flag & (HA_NOSAME | HA_AUTO_KEY)) &&
         ! mi_too_big_key_for_sort(key,rows) && info->s->base.auto_key != i+1)
     {
       mi_clear_key_active(share->state.key_map, i);

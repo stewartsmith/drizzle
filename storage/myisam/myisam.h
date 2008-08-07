@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 #ifndef _my_base_h
-#include <my_base.h>
+#include <drizzled/base.h>
 #endif
 #ifndef _m_ctype_h
 #include <m_ctype.h>

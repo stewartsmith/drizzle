@@ -352,7 +352,7 @@ struct system_variables
 
   Time_zone *time_zone;
 
-  /* DATE, DATETIME and MYSQL_TIME formats */
+  /* DATE, DATETIME and DRIZZLE_TIME formats */
   DATE_TIME_FORMAT *date_format;
   DATE_TIME_FORMAT *datetime_format;
   DATE_TIME_FORMAT *time_format;
@@ -468,17 +468,11 @@ public:
   */
   enum enum_state
   {
-    INITIALIZED= 0, INITIALIZED_FOR_SP= 1, PREPARED= 2,
+    INITIALIZED= 0,
     CONVENTIONAL_EXECUTION= 3, EXECUTED= 4, ERROR= -1
   };
 
   enum_state state;
-
-  /* We build without RTTI, so dynamic_cast can't be used. */
-  enum Type
-  {
-    STATEMENT, PREPARED_STATEMENT, STORED_PROCEDURE
-  };
 
   Query_arena(MEM_ROOT *mem_root_arg, enum enum_state state_arg) :
     free_list(0), mem_root(mem_root_arg), state(state_arg)
@@ -660,19 +654,15 @@ public:
     priv_user - The user privilege we are using. May be "" for anonymous user.
     ip - client IP
   */
-  char   *host, *user, *priv_user, *ip;
-  /* The host privilege we are using */
-  char   priv_host[MAX_HOSTNAME];
-  /* points to host if host is available, otherwise points to ip */
-  const char *host_or_ip;
-  ulong db_access;                     /* Privileges for current db */
+  char *user; 
+  char *ip;
 
   void init();
   void destroy();
   void skip_grants();
   inline char *priv_host_name()
   {
-    return (*priv_host ? priv_host : (char *)"%");
+    return (ip ? ip : (char *)"%");
   }
 };
 
@@ -855,7 +845,7 @@ public:
   */
   virtual bool handle_error(uint sql_errno,
                             const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
+                            DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd) = 0;
 };
 
@@ -933,7 +923,7 @@ public:
 
 private:
   /** Message buffer. Can be used by OK or ERROR status. */
-  char m_message[MYSQL_ERRMSG_SIZE];
+  char m_message[DRIZZLE_ERRMSG_SIZE];
   /**
     SQL error number. One of ER_ codes from share/errmsg.txt.
     Set by set_error_status.
@@ -1400,8 +1390,8 @@ public:
     class. With current implementation warnings produced in each prepared
     statement/cursor settle here.
   */
-  List	     <MYSQL_ERROR> warn_list;
-  uint	     warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_END];
+  List	     <DRIZZLE_ERROR> warn_list;
+  uint	     warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_END];
   uint	     total_warn_count;
   Diagnostics_area main_da;
 
@@ -1767,12 +1757,7 @@ public:
     killed_state killed_val; /* to cache the volatile 'killed' */
     return (killed_val= killed) != KILL_BAD_DATA ? killed_val : 0;
   }
-  inline void send_kill_message() const
-  {
-    int err= killed_errno();
-    if (err)
-      my_message(err, ER(err), MYF(0));
-  }
+  void send_kill_message() const;
   /* return true if we will abort query if we make a warning now */
   inline bool really_abort_on_warning()
   {
@@ -1893,17 +1878,7 @@ public:
     allocate memory for a deep copy: current database may be freed after
     a statement is parsed but before it's executed.
   */
-  bool copy_db_to(char **p_db, size_t *p_db_length)
-  {
-    if (db == NULL)
-    {
-      my_message(ER_NO_DB_ERROR, ER(ER_NO_DB_ERROR), MYF(0));
-      return true;
-    }
-    *p_db= strmake(db, db_length);
-    *p_db_length= db_length;
-    return false;
-  }
+  bool copy_db_to(char **p_db, size_t *p_db_length);
   thd_scheduler scheduler;
 
 public:
@@ -1920,7 +1895,7 @@ public:
     @return true if the error is handled
   */
   virtual bool handle_error(uint sql_errno, const char *message,
-                            MYSQL_ERROR::enum_warning_level level);
+                            DRIZZLE_ERROR::enum_warning_level level);
 
   /**
     Remove the error handler last pushed.

@@ -31,7 +31,8 @@
 #include "rpl_filter.h"
 #include "rpl_utility.h"
 #include "rpl_record.h"
-#include <my_dir.h>
+#include <mysys/my_dir.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #endif /* MYSQL_CLIENT */
 
@@ -132,8 +133,8 @@ static void inline slave_rows_error_report(enum loglevel level, int ha_error,
   char buff[MAX_SLAVE_ERRMSG], *slider;
   const char *buff_end= buff + sizeof(buff);
   uint len;
-  List_iterator_fast<MYSQL_ERROR> it(thd->warn_list);
-  MYSQL_ERROR *err;
+  List_iterator_fast<DRIZZLE_ERROR> it(thd->warn_list);
+  DRIZZLE_ERROR *err;
   buff[0]= 0;
 
   for (err= it++, slider= buff; err && slider < buff_end - 1;
@@ -465,8 +466,8 @@ append_query_string(CHARSET_INFO *csinfo,
   else
   {
     *ptr++= '\'';
-    ptr+= escape_string_for_mysql(csinfo, ptr, 0,
-                                  from->ptr(), from->length());
+    ptr+= escape_string_for_drizzle(csinfo, ptr, 0,
+                                    from->ptr(), from->length());
     *ptr++='\'';
   }
   to->length(orig_len + ptr - beg);
@@ -3575,7 +3576,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       "data truncated" warning but which is absorbed and never gets to the
       error log); still we init it to avoid a Valgrind message.
     */
-    mysql_reset_errors(thd, 0);
+    drizzle_reset_errors(thd, 0);
 
     TABLE_LIST tables;
     memset(&tables, 0, sizeof(tables));
@@ -7399,8 +7400,7 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
      values filled in and one flag to handle the case that the default
      values should be checked. Maybe these two flags can be combined.
   */
-  if ((error= prepare_record(table, &m_cols, m_width,
-                             table->file->ht->db_type != DB_TYPE_NDBCLUSTER)))
+  if ((error= prepare_record(table, &m_cols, m_width, true)))
     return(error);
   
   /* unpack row into table->record[0] */

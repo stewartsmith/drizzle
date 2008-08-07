@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_NEW_DECIMAL
 #define DRIZZLE_SERVER_FIELD_NEW_DECIMAL
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 /* New decimal/numeric field which use fixed point arithmetic */
 class Field_new_decimal :public Field_num {
@@ -53,7 +53,7 @@ public:
   int  store(const char *to, uint length, CHARSET_INFO *charset);
   int  store(double nr);
   int  store(int64_t nr, bool unsigned_val);
-  int store_time(MYSQL_TIME *ltime, timestamp_type t_type);
+  int store_time(DRIZZLE_TIME *ltime, timestamp_type t_type);
   int  store_decimal(const my_decimal *);
   double val_real(void);
   int64_t val_int(void);

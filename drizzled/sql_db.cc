@@ -18,9 +18,9 @@
 
 #include "mysql_priv.h"
 #include <mysys/mysys_err.h>
-#include <my_dir.h>
-#include <m_ctype.h>
+#include <mysys/my_dir.h>
 #include "log.h"
+#include <drizzled/drizzled_error_messages.h>
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 
@@ -32,8 +32,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
 				 const char *db, const char *path, uint level, 
                                  TABLE_LIST **dropped_tables);
          
-static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp, const char *org_path);
-static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error);
+static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(THD *thd,
                                  LEX_STRING *new_db_name,
                                  CHARSET_INFO *new_db_charset);
@@ -57,10 +56,10 @@ typedef struct my_dblock_st
   lock_db key.
 */
 
-extern "C" uchar* lock_db_get_key(my_dblock_t *, size_t *, my_bool not_used);
+extern "C" uchar* lock_db_get_key(my_dblock_t *, size_t *, bool not_used);
 
 uchar* lock_db_get_key(my_dblock_t *ptr, size_t *length,
-                       my_bool not_used __attribute__((unused)))
+                       bool not_used __attribute__((unused)))
 {
   *length= ptr->name_length;
   return (uchar*) ptr->name;
@@ -80,51 +79,6 @@ void lock_db_free_element(void *ptr)
 
 
 /*
-  Put a database lock entry into the hash.
-  
-  DESCRIPTION
-    Insert a database lock entry into hash.
-    LOCK_db_lock must be previously locked.
-  
-  RETURN VALUES
-    0 on success.
-    1 on error.
-*/
-
-static my_bool lock_db_insert(const char *dbname, uint length)
-{
-  my_dblock_t *opt;
-  my_bool error= 0;
-  
-  safe_mutex_assert_owner(&LOCK_lock_db);
-
-  if (!(opt= (my_dblock_t*) hash_search(&lock_db_cache,
-                                        (uchar*) dbname, length)))
-  { 
-    /* Db is not in the hash, insert it */
-    char *tmp_name;
-    if (!my_multi_malloc(MYF(MY_WME | MY_ZEROFILL),
-                         &opt, (uint) sizeof(*opt), &tmp_name, (uint) length+1,
-                         NullS))
-    {
-      error= 1;
-      goto end;
-    }
-    
-    opt->name= tmp_name;
-    strmov(opt->name, dbname);
-    opt->name_length= length;
-    
-    if ((error= my_hash_insert(&lock_db_cache, (uchar*) opt)))
-      my_free(opt, MYF(0));
-  }
-
-end:
-  return(error);
-}
-
-
-/*
   Delete a database lock entry from hash.
 */
 
@@ -140,7 +94,7 @@ void lock_db_delete(const char *name, uint length)
 
 /* Database options hash */
 static HASH dboptions;
-static my_bool dboptions_init= 0;
+static bool dboptions_init= 0;
 static rw_lock_t LOCK_dboptions;
 
 /* Structure for database options */
@@ -157,10 +111,10 @@ typedef struct my_dbopt_st
 */
 
 extern "C" uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
-                                    my_bool not_used);
+                                    bool not_used);
 
 uchar* dboptions_get_key(my_dbopt_t *opt, size_t *length,
-                         my_bool not_used __attribute__((unused)))
+                         bool not_used __attribute__((unused)))
 {
   *length= opt->name_length;
   return (uchar*) opt->name;
@@ -210,7 +164,7 @@ void free_dbopt(void *dbopt)
 
 bool my_database_names_init(void)
 {
-  bool error= 0;
+  bool error= false;
   (void) my_rwlock_init(&LOCK_dboptions, NULL);
   if (!dboptions_init)
   {
@@ -274,11 +228,11 @@ void my_dbopt_cleanup(void)
     1 on error.
 */
 
-static my_bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
+static bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
   uint length;
-  my_bool error= 1;
+  bool error= true;
   
   length= (uint) strlen(dbname);
   
@@ -286,7 +240,7 @@ static my_bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
   if ((opt= (my_dbopt_t*) hash_search(&dboptions, (uchar*) dbname, length)))
   {
     create->default_table_charset= opt->charset;
-    error= 0;
+    error= true;
   }
   rw_unlock(&LOCK_dboptions);
   return error;
@@ -305,11 +259,11 @@ static my_bool get_dbopt(const char *dbname, HA_CREATE_INFO *create)
     1 on error.
 */
 
-static my_bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
+static bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
 {
   my_dbopt_t *opt;
   uint length;
-  my_bool error= 0;
+  bool error= false;
 
   length= (uint) strlen(dbname);
   
@@ -322,7 +276,7 @@ static my_bool put_dbopt(const char *dbname, HA_CREATE_INFO *create)
                          &opt, (uint) sizeof(*opt), &tmp_name, (uint) length+1,
                          NullS))
     {
-      error= 1;
+      error= true;
       goto end;
     }
     
@@ -376,7 +330,7 @@ static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 {
   register File file;
   char buf[256]; // Should be enough for one option
-  bool error=1;
+  bool error= true;
 
   if (!create->default_table_charset)
     create->default_table_charset= thd->variables.collation_server;
@@ -395,7 +349,7 @@ static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 
     /* Error is written by my_write */
     if (!my_write(file,(uchar*) buf, length, MYF(MY_NABP+MY_WME)))
-      error=0;
+      error= false;
     my_close(file,MYF(0));
   }
   return error;
@@ -597,8 +551,7 @@ CHARSET_INFO *get_default_db_collation(THD *thd, const char *db_name)
 
 */
 
-int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
-                     bool silent)
+int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info, bool silent)
 {
   char	 path[FN_REFLEN+16];
   char	 tmp_query[FN_REFLEN+16];
@@ -647,7 +600,7 @@ int mysql_create_db(THD *thd, char *db, HA_CREATE_INFO *create_info,
       error= -1;
       goto exit;
     }
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			ER_DB_CREATE_EXISTS, ER(ER_DB_CREATE_EXISTS), db);
     if (!silent)
       my_ok(thd);
@@ -756,7 +709,7 @@ bool mysql_alter_db(THD *thd, const char *db, HA_CREATE_INFO *create_info)
 {
   char path[FN_REFLEN+16];
   long result=1;
-  int error= 0;
+  int error= false;
 
   /*
     Do not alter database if another thread is holding read lock.
@@ -845,7 +798,7 @@ exit2:
 bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
 {
   long deleted=0;
-  int error= 0;
+  int error= false;
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
   uint length;
@@ -899,7 +852,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
       goto exit;
     }
     else
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 			  ER_DB_DROP_EXISTS, ER(ER_DB_DROP_EXISTS), db);
   }
   else
@@ -1008,8 +961,7 @@ exit2:
 }
 
 /*
-  Removes files with known extensions plus all found subdirectories that
-  are 2 hex digits (raid directories).
+  Removes files with known extensions plus.
   thd MUST be set when calling this function!
 */
 
@@ -1021,7 +973,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
   ulong found_other_files=0;
   char filePath[FN_REFLEN];
   TABLE_LIST *tot_list=0, **tot_list_next;
-  List<String> raid_dirs;
 
   tot_list_next= &tot_list;
 
@@ -1037,51 +988,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
        (file->name[1] == '.' &&  !file->name[2])))
       continue;
 
-    /* Check if file is a raid directory */
-    if ((my_isdigit(system_charset_info, file->name[0]) ||
-	 (file->name[0] >= 'a' && file->name[0] <= 'f')) &&
-	(my_isdigit(system_charset_info, file->name[1]) ||
-	 (file->name[1] >= 'a' && file->name[1] <= 'f')) &&
-	!file->name[2] && !level)
-    {
-      char newpath[FN_REFLEN], *copy_of_path;
-      MY_DIR *new_dirp;
-      String *dir;
-      uint length;
-
-      strxmov(newpath,org_path,"/",file->name,NullS);
-      length= unpack_filename(newpath,newpath);
-      if ((new_dirp = my_dir(newpath,MYF(MY_DONT_SORT))))
-      {
-	if ((mysql_rm_known_files(thd, new_dirp, NullS, newpath,1,0)) < 0)
-	  goto err;
-	if (!(copy_of_path= (char*) thd->memdup(newpath, length+1)) ||
-	    !(dir= new (thd->mem_root) String(copy_of_path, length,
-					       &my_charset_bin)) ||
-	    raid_dirs.push_back(dir))
-	  goto err;
-	continue;
-      }
-      found_other_files++;
-      continue;
-    }
-    else if (file->name[0] == 'a' && file->name[1] == 'r' &&
-             file->name[2] == 'c' && file->name[3] == '\0')
-    {
-      /* .frm archive */
-      char newpath[FN_REFLEN];
-      MY_DIR *new_dirp;
-      strxmov(newpath, org_path, "/", "arc", NullS);
-      (void) unpack_filename(newpath, newpath);
-      if ((new_dirp = my_dir(newpath, MYF(MY_DONT_SORT))))
-      {
-	if ((mysql_rm_arc_files(thd, new_dirp, newpath)) < 0)
-	  goto err;
-	continue;
-      }
-      found_other_files++;
-      continue;
-    }
     if (!(extension= strrchr(file->name, '.')))
       extension= strend(file->name);
     if (find_type(extension, &deletable_extentions,1+2) <= 0)
@@ -1129,14 +1035,6 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       (tot_list && mysql_rm_table_part2(thd, tot_list, 1, 0, 1, 1)))
     goto err;
 
-  /* Remove RAID directories */
-  {
-    List_iterator<String> it(raid_dirs);
-    String *dir;
-    while ((dir= it++))
-      if (rmdir(dir->c_ptr()) < 0)
-	found_other_files++;
-  }
   my_dirend(dirp);  
   
   if (dropped_tables)
@@ -1178,7 +1076,7 @@ err:
     1 ERROR
 */
 
-static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error)
+static bool rm_dir_w_symlink(const char *org_path, bool send_error)
 {
   char tmp_path[FN_REFLEN], *pos;
   char *path= tmp_path;
@@ -1215,80 +1113,6 @@ static my_bool rm_dir_w_symlink(const char *org_path, my_bool send_error)
     return(1);
   }
   return(0);
-}
-
-
-/*
-  Remove .frm archives from directory
-
-  SYNOPSIS
-    thd       thread handler
-    dirp      list of files in archive directory
-    db        data base name
-    org_path  path of archive directory
-
-  RETURN
-    > 0 number of removed files
-    -1  error
-*/
-static long mysql_rm_arc_files(THD *thd, MY_DIR *dirp,
-				 const char *org_path)
-{
-  long deleted= 0;
-  ulong found_other_files= 0;
-  char filePath[FN_REFLEN];
-
-  for (uint idx=0 ;
-       idx < (uint) dirp->number_off_files && !thd->killed ;
-       idx++)
-  {
-    FILEINFO *file=dirp->dir_entry+idx;
-    char *extension, *revision;
-
-    /* skiping . and .. */
-    if (file->name[0] == '.' && (!file->name[1] ||
-       (file->name[1] == '.' &&  !file->name[2])))
-      continue;
-
-    extension= fn_ext(file->name);
-    if (extension[0] != '.' ||
-        extension[1] != 'f' || extension[2] != 'r' ||
-        extension[3] != 'm' || extension[4] != '-')
-    {
-      found_other_files++;
-      continue;
-    }
-    revision= extension+5;
-    while (*revision && my_isdigit(system_charset_info, *revision))
-      revision++;
-    if (*revision)
-    {
-      found_other_files++;
-      continue;
-    }
-    strxmov(filePath, org_path, "/", file->name, NullS);
-    if (my_delete_with_symlink(filePath,MYF(MY_WME)))
-    {
-      goto err;
-    }
-  }
-  if (thd->killed)
-    goto err;
-
-  my_dirend(dirp);
-
-  /*
-    If the directory is a symbolic link, remove the link first, then
-    remove the directory the symbolic link pointed at
-  */
-  if (!found_other_files &&
-      rm_dir_w_symlink(org_path, 0))
-    return(-1);
-  return(deleted);
-
-err:
-  my_dirend(dirp);
-  return(-1);
 }
 
 
@@ -1549,7 +1373,7 @@ bool mysql_change_db(THD *thd, const LEX_STRING *new_db_name, bool force_switch)
     {
       /* Throw a warning and free new_db_file_name. */
 
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_BAD_DB_ERROR, ER(ER_BAD_DB_ERROR),
                           new_db_file_name.str);
 
@@ -1624,250 +1448,6 @@ bool mysql_opt_change_db(THD *thd,
 
   return mysql_change_db(thd, new_db_name, force_switch);
 }
-
-
-static int
-lock_databases(THD *thd, const char *db1, uint length1,
-                         const char *db2, uint length2)
-{
-  pthread_mutex_lock(&LOCK_lock_db);
-  while (!thd->killed &&
-         (hash_search(&lock_db_cache,(uchar*) db1, length1) ||
-          hash_search(&lock_db_cache,(uchar*) db2, length2)))
-  {
-    wait_for_condition(thd, &LOCK_lock_db, &COND_refresh);
-    pthread_mutex_lock(&LOCK_lock_db);
-  }
-
-  if (thd->killed)
-  {
-    pthread_mutex_unlock(&LOCK_lock_db);
-    return 1;
-  }
-
-  lock_db_insert(db1, length1);
-  lock_db_insert(db2, length2);
-  creating_database++;
-
-  /*
-    Wait if a concurent thread is creating a table at the same time.
-    The assumption here is that it will not take too long until
-    there is a point in time when a table is not created.
-  */
-
-  while (!thd->killed && creating_table)
-  {
-    wait_for_condition(thd, &LOCK_lock_db, &COND_refresh);
-    pthread_mutex_lock(&LOCK_lock_db);
-  }
-
-  if (thd->killed)
-  {
-    lock_db_delete(db1, length1);
-    lock_db_delete(db2, length2);
-    creating_database--;
-    pthread_mutex_unlock(&LOCK_lock_db);
-    pthread_cond_signal(&COND_refresh);
-    return(1);
-  }
-
-  /*
-    We can unlock now as the hash will protect against anyone creating a table
-    in the databases we are using
-  */
-  pthread_mutex_unlock(&LOCK_lock_db);
-  return 0;
-}
-
-
-/**
-  Upgrade a 5.0 database.
-  This function is invoked whenever an ALTER DATABASE UPGRADE query is executed:
-    ALTER DATABASE 'olddb' UPGRADE DATA DIRECTORY NAME.
-
-  If we have managed to rename (move) tables to the new database
-  but something failed on a later step, then we store the
-  RENAME DATABASE event in the log. mysql_rename_db() is atomic in
-  the sense that it will rename all or none of the tables.
-
-  @param thd Current thread
-  @param old_db 5.0 database name, in #mysql50#name format
-  @return 0 on success, 1 on error
-*/
-bool mysql_upgrade_db(THD *thd, LEX_STRING *old_db)
-{
-  int error= 0, change_to_newdb= 0;
-  char path[FN_REFLEN+16];
-  uint length;
-  HA_CREATE_INFO create_info;
-  MY_DIR *dirp;
-  TABLE_LIST *table_list;
-  SELECT_LEX *sl= thd->lex->current_select;
-  LEX_STRING new_db;
-
-  if ((old_db->length <= MYSQL50_TABLE_NAME_PREFIX_LENGTH) ||
-      (strncmp(old_db->str,
-              MYSQL50_TABLE_NAME_PREFIX,
-              MYSQL50_TABLE_NAME_PREFIX_LENGTH) != 0))
-  {
-    my_error(ER_WRONG_USAGE, MYF(0),
-             "ALTER DATABASE UPGRADE DATA DIRECTORY NAME",
-             "name");
-    return(1);
-  }
-
-  /* `#mysql50#<name>` converted to encoded `<name>` */
-  new_db.str= old_db->str + MYSQL50_TABLE_NAME_PREFIX_LENGTH;
-  new_db.length= old_db->length - MYSQL50_TABLE_NAME_PREFIX_LENGTH;
-
-  if (lock_databases(thd, old_db->str, old_db->length,
-                          new_db.str, new_db.length))
-    return(1);
-
-  /*
-    Let's remember if we should do "USE newdb" afterwards.
-    thd->db will be cleared in mysql_rename_db()
-  */
-  if (thd->db && !strcmp(thd->db, old_db->str))
-    change_to_newdb= 1;
-
-  build_table_filename(path, sizeof(path)-1,
-                       old_db->str, "", MY_DB_OPT_FILE, 0);
-  if ((load_db_opt(thd, path, &create_info)))
-    create_info.default_table_charset= thd->variables.collation_server;
-
-  length= build_table_filename(path, sizeof(path)-1, old_db->str, "", "", 0);
-  if (length && path[length-1] == FN_LIBCHAR)
-    path[length-1]=0;                            // remove ending '\'
-  if ((error= my_access(path,F_OK)))
-  {
-    my_error(ER_BAD_DB_ERROR, MYF(0), old_db->str);
-    goto exit;
-  }
-
-  /* Step1: Create the new database */
-  if ((error= mysql_create_db(thd, new_db.str, &create_info, 1)))
-    goto exit;
-
-  /* Step2: Move tables to the new database */
-  if ((dirp = my_dir(path,MYF(MY_DONT_SORT))))
-  {
-    uint nfiles= (uint) dirp->number_off_files;
-    for (uint idx=0 ; idx < nfiles && !thd->killed ; idx++)
-    {
-      FILEINFO *file= dirp->dir_entry + idx;
-      char *extension, tname[FN_REFLEN];
-      LEX_STRING table_str;
-
-      /* skiping non-FRM files */
-      if (my_strcasecmp(files_charset_info,
-                        (extension= fn_rext(file->name)), reg_ext))
-        continue;
-
-      /* A frm file found, add the table info rename list */
-      *extension= '\0';
-
-      table_str.length= filename_to_tablename(file->name,
-                                              tname, sizeof(tname)-1);
-      table_str.str= (char*) sql_memdup(tname, table_str.length + 1);
-      Table_ident *old_ident= new Table_ident(thd, *old_db, table_str, 0);
-      Table_ident *new_ident= new Table_ident(thd, new_db, table_str, 0);
-      if (!old_ident || !new_ident ||
-          !sl->add_table_to_list(thd, old_ident, NULL,
-                                 TL_OPTION_UPDATING, TL_IGNORE) ||
-          !sl->add_table_to_list(thd, new_ident, NULL,
-                                 TL_OPTION_UPDATING, TL_IGNORE))
-      {
-        error= 1;
-        my_dirend(dirp);
-        goto exit;
-      }
-    }
-    my_dirend(dirp);  
-  }
-
-  if ((table_list= thd->lex->query_tables) &&
-      (error= mysql_rename_tables(thd, table_list, 1)))
-  {
-    /*
-      Failed to move all tables from the old database to the new one.
-      In the best case mysql_rename_tables() moved all tables back to the old
-      database. In the worst case mysql_rename_tables() moved some tables
-      to the new database, then failed, then started to move the tables back,
-      and then failed again. In this situation we have some tables in the
-      old database and some tables in the new database.
-      Let's delete the option file, and then the new database directory.
-      If some tables were left in the new directory, rmdir() will fail.
-      It garantees we never loose any tables.
-    */
-    build_table_filename(path, sizeof(path)-1,
-                         new_db.str,"",MY_DB_OPT_FILE, 0);
-    my_delete(path, MYF(MY_WME));
-    length= build_table_filename(path, sizeof(path)-1, new_db.str, "", "", 0);
-    if (length && path[length-1] == FN_LIBCHAR)
-      path[length-1]=0;                            // remove ending '\'
-    rmdir(path);
-    goto exit;
-  }
-
-
-  if ((dirp = my_dir(path,MYF(MY_DONT_SORT))))
-  {
-    uint nfiles= (uint) dirp->number_off_files;
-    for (uint idx=0 ; idx < nfiles ; idx++)
-    {
-      FILEINFO *file= dirp->dir_entry + idx;
-      char oldname[FN_REFLEN], newname[FN_REFLEN];
-
-      /* skiping . and .. and MY_DB_OPT_FILE */
-      if ((file->name[0] == '.' &&
-           (!file->name[1] || (file->name[1] == '.' && !file->name[2]))) ||
-          !my_strcasecmp(files_charset_info, file->name, MY_DB_OPT_FILE))
-        continue;
-
-      /* pass empty file name, and file->name as extension to avoid encoding */
-      build_table_filename(oldname, sizeof(oldname)-1,
-                           old_db->str, "", file->name, 0);
-      build_table_filename(newname, sizeof(newname)-1,
-                           new_db.str, "", file->name, 0);
-      my_rename(oldname, newname, MYF(MY_WME));
-    }
-    my_dirend(dirp);
-  }
-
-  /*
-    Step7: drop the old database.
-    remove_db_from_cache(olddb) and query_cache_invalidate(olddb)
-    are done inside mysql_rm_db(), no needs to execute them again.
-    mysql_rm_db() also "unuses" if we drop the current database.
-  */
-  error= mysql_rm_db(thd, old_db->str, 0, 1);
-
-  /* Step8: logging */
-  if (mysql_bin_log.is_open())
-  {
-    Query_log_event qinfo(thd, thd->query, thd->query_length, 0, true);
-    thd->clear_error();
-    mysql_bin_log.write(&qinfo);
-  }
-
-  /* Step9: Let's do "use newdb" if we renamed the current database */
-  if (change_to_newdb)
-    error|= mysql_change_db(thd, & new_db, false);
-
-exit:
-  pthread_mutex_lock(&LOCK_lock_db);
-  /* Remove the databases from db lock cache */
-  lock_db_delete(old_db->str, old_db->length);
-  lock_db_delete(new_db.str, new_db.length);
-  creating_database--;
-  /* Signal waiting CREATE TABLE's to continue */
-  pthread_cond_signal(&COND_refresh);
-  pthread_mutex_unlock(&LOCK_lock_db);
-
-  return(error);
-}
-
 
 
 /*

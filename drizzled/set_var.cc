@@ -57,7 +57,7 @@
 #include <mysys/my_getopt.h>
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
-#include <my_dir.h>
+#include <drizzled/drizzled_error_messages.h>
 
 extern CHARSET_INFO *character_set_filesystem;
 
@@ -430,13 +430,13 @@ sys_engine_condition_pushdown(&vars, "engine_condition_pushdown",
 
 static sys_var_thd_date_time_format sys_time_format(&vars, "time_format",
 					     &SV::time_format,
-					     MYSQL_TIMESTAMP_TIME);
+					     DRIZZLE_TIMESTAMP_TIME);
 static sys_var_thd_date_time_format sys_date_format(&vars, "date_format",
 					     &SV::date_format,
-					     MYSQL_TIMESTAMP_DATE);
+					     DRIZZLE_TIMESTAMP_DATE);
 static sys_var_thd_date_time_format sys_datetime_format(&vars, "datetime_format",
 						 &SV::datetime_format,
-						 MYSQL_TIMESTAMP_DATETIME);
+						 DRIZZLE_TIMESTAMP_DATETIME);
 
 /* Variables that are bits in THD */
 
@@ -577,10 +577,7 @@ sys_var_thd_bool  sys_keep_files_on_create(&vars, "keep_files_on_create",
 /* Read only variables */
 
 static sys_var_have_variable sys_have_compress(&vars, "have_compress", &have_compress);
-static sys_var_have_variable sys_have_crypt(&vars, "have_crypt", &have_crypt);
 static sys_var_have_variable sys_have_symlink(&vars, "have_symlink", &have_symlink);
-/* Global read-only variable describing server license */
-static sys_var_const_str	sys_license(&vars, "license", STRINGIFY_ARG(LICENSE));
 /* Global variables which enable|disable logging */
 static sys_var_log_state sys_var_general_log(&vars, "general_log", &opt_log,
                                       QUERY_LOG_GENERAL);
@@ -1030,7 +1027,7 @@ bool throw_bounds_warning(THD *thd, bool fixed, bool unsignd,
     else
       llstr(val, buf);
 
-    push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+    push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                         ER_TRUNCATED_WRONG_VALUE,
                         ER(ER_TRUNCATED_WRONG_VALUE), name, buf);
   }
@@ -2008,7 +2005,7 @@ bool sys_var_key_buffer_size::update(THD *thd, set_var *var)
   {
     if (key_cache == dflt_key_cache)
     {
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_WARN_CANT_DROP_DEFAULT_KEYCACHE,
                           ER(ER_WARN_CANT_DROP_DEFAULT_KEYCACHE));
       goto end;					// Ignore default key cache
@@ -2167,8 +2164,8 @@ static int  sys_check_log_path(THD *thd __attribute__((unused)),
       'write' permission.
     */
 
-    if (!MY_S_ISREG(f_stat.st_mode) ||
-        !(f_stat.st_mode & MY_S_IWRITE))
+    if (!S_ISREG(f_stat.st_mode) ||
+        !(f_stat.st_mode & S_IWRITE))
       goto err;
 
     return 0;
@@ -2756,12 +2753,12 @@ static bool set_log_update(THD *thd __attribute__((unused)),
 
   if (opt_sql_bin_update)
   {
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                  ER_UPDATE_LOG_DEPRECATED_TRANSLATED,
                  ER(ER_UPDATE_LOG_DEPRECATED_TRANSLATED));
   }
   else
-    push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                  ER_UPDATE_LOG_DEPRECATED_IGNORED,
                  ER(ER_UPDATE_LOG_DEPRECATED_IGNORED));
   set_option_bit(thd, var);
@@ -2779,16 +2776,16 @@ static int check_pseudo_thread_id(THD *thd __attribute__((unused)),
 static uchar *get_warning_count(THD *thd)
 {
   thd->sys_var_tmp.long_value=
-    (thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_NOTE] +
-     thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_ERROR] +
-     thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_WARN]);
+    (thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE] +
+     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR] +
+     thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_WARN]);
   return (uchar*) &thd->sys_var_tmp.long_value;
 }
 
 static uchar *get_error_count(THD *thd)
 {
   thd->sys_var_tmp.long_value= 
-    thd->warn_count[(uint) MYSQL_ERROR::WARN_LEVEL_ERROR];
+    thd->warn_count[(uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR];
   return (uchar*) &thd->sys_var_tmp.long_value;
 }
 

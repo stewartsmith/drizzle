@@ -21,7 +21,7 @@
 #ifndef DRIZZLE_SERVER_FIELD_STRING
 #define DRIZZLE_SERVER_FIELD_STRING
 
-#include "mysql_priv.h"
+#include <drizzled/mysql_priv.h>
 
 class Field_string :public Field_longstr {
 public:
@@ -41,7 +41,7 @@ public:
 
   enum_field_types type() const
   {
-    return  DRIZZLE_TYPE_STRING;
+    return  DRIZZLE_TYPE_VARCHAR;
   }
   enum ha_base_keytype key_type() const
     { return binary() ? HA_KEYTYPE_BINARY : HA_KEYTYPE_TEXT; }
@@ -75,7 +75,7 @@ public:
   uint packed_col_length(const uchar *to, uint length);
   uint max_packed_col_length(uint max_length);
   uint size_of() const { return sizeof(*this); }
-  enum_field_types real_type() const { return DRIZZLE_TYPE_STRING; }
+  enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
   Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);

@@ -15,7 +15,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <my_dir.h>
 #include "transparent_file.h"
 
 #define DEFAULT_CHAIN_LENGTH 512

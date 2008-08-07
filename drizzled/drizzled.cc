@@ -14,8 +14,6 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
-#include <my_dir.h>
 #include <mysys/my_bit.h>
 #include "slave.h"
 #include "rpl_mi.h"
@@ -27,6 +25,7 @@
 #include <mysys/mysys_err.h>
 #include <sys/poll.h>
 #include <netinet/tcp.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #include <storage/myisam/ha_myisam.h>
 
@@ -39,7 +38,9 @@
 #endif
 
 #include <mysys/thr_alarm.h>
-#include <errmsg.h>
+#include <libdrizzle/errmsg.h>
+#include <locale.h>
+#include <libdrizzle/gettext.h>
 
 #define mysqld_charset &my_charset_latin1
 
@@ -95,7 +96,7 @@ extern "C" {					// Because of SCO 3.2V4.2
 #endif
 
 #define SIGNAL_FMT "signal %d"
-  
+
 
 #if defined(__FreeBSD__) && defined(HAVE_IEEEFP_H)
 #include <ieeefp.h>
@@ -200,7 +201,7 @@ const char *my_localhost= "localhost";
 /*
   Used with --help for detailed option
 */
-static bool opt_help= 0, opt_verbose= 0;
+static bool opt_help= false;
 
 arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 {{&Arg_comparator::compare_string,     &Arg_comparator::compare_e_string},
@@ -212,7 +213,7 @@ arg_cmp_func Arg_comparator::comparator_matrix[5][2] =
 const char *log_output_names[] = { "NONE", "FILE", NullS};
 static const unsigned int log_output_names_len[]= { 4, 4, 0 };
 TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
-                             log_output_names, 
+                             log_output_names,
                              (unsigned int *) log_output_names_len};
 
 /* static variables */
@@ -232,7 +233,7 @@ static char *default_character_set_name;
 static char *character_set_filesystem_name;
 static char *lc_time_names_name;
 static char *my_bind_addr_str;
-static char *default_collation_name; 
+static char *default_collation_name;
 static char *default_storage_engine_str;
 static char compiled_default_collation_name[]= MYSQL_DEFAULT_COLLATION_NAME;
 static I_List<THD> thread_cache;
@@ -243,7 +244,7 @@ static pthread_cond_t COND_thread_cache, COND_flush_thread_cache;
 /* Global variables */
 
 bool opt_bin_log;
-bool opt_log; 
+bool opt_log;
 bool opt_slow_log;
 ulong log_output_options;
 bool opt_log_queries_not_using_indexes= false;
@@ -384,7 +385,6 @@ uint mysql_data_home_len;
 char mysql_data_home_buff[2], *mysql_data_home=mysql_real_data_home;
 char server_version[SERVER_VERSION_LENGTH];
 char *opt_mysql_tmpdir;
-const char **errmesg;			/**< Error messages */
 const char *myisam_recover_options_str="OFF";
 const char *myisam_stats_method_str="nulls_unequal";
 
@@ -424,7 +424,6 @@ CHARSET_INFO *character_set_filesystem;
 MY_LOCALE *my_default_lc_time_names;
 
 SHOW_COMP_OPTION have_symlink;
-SHOW_COMP_OPTION have_crypt;
 SHOW_COMP_OPTION have_compress;
 
 /* Thread specific variables */
@@ -434,7 +433,6 @@ pthread_key(THD*, THR_THD);
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
 		LOCK_mapped_file, LOCK_status, LOCK_global_read_lock,
 		LOCK_error_log, LOCK_uuid_generator,
-		LOCK_crypt,
 	        LOCK_global_system_variables,
 		LOCK_user_conn, LOCK_slave_list, LOCK_active_mi,
                 LOCK_connection_count;
@@ -560,7 +558,7 @@ static void close_connections(void)
   /* Abort listening to new connections */
   {
     int x;
-    
+
     for (x= 0; x < pollfd_count; x++)
     {
       if (fds[x].fd != INVALID_SOCKET)
@@ -654,7 +652,7 @@ static void close_server_sock()
 #ifdef HAVE_CLOSE_SERVER_SOCK
   {
     int x;
-    
+
     for (x= 0; x < pollfd_count; x++)
     {
       if (fds[x].fd != INVALID_SOCKET)
@@ -722,7 +720,7 @@ static void *kill_server(void *sig_ptr)
     sql_print_information(ER(ER_NORMAL_SHUTDOWN),my_progname);
   else
     sql_print_error(ER(ER_GOT_SIGNAL),my_progname,sig); /* purecov: inspected */
-  
+
   close_connections();
   if (sig != MYSQL_KILL_SIGNAL &&
       sig != 0)
@@ -868,12 +866,16 @@ void clean_up(bool print_message)
 
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
-  if (print_message && errmesg && server_start_time)
+  if (print_message && server_start_time)
     sql_print_information(ER(ER_SHUTDOWN_COMPLETE),my_progname);
   thread_scheduler.end();
   finish_client_errs();
-  my_free((uchar*) my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST),
-          MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));
+  /* Returns NULL on globerrs, we don't want to try to free that */
+  //void *freeme=
+  (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
+  // TODO!!!! EPIC FAIL!!!! This sefaults if uncommented.
+/*  if (freeme != NULL)
+    my_free(freeme, MYF(MY_WME | MY_FAE | MY_ALLOW_ZERO_PTR));  */
   /* Tell main we are ready */
   logger.cleanup_end();
   (void) pthread_mutex_lock(&LOCK_thread_count);
@@ -918,7 +920,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_mapped_file);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_error_log);
-  (void) pthread_mutex_destroy(&LOCK_crypt);
   (void) pthread_mutex_destroy(&LOCK_user_conn);
   (void) pthread_mutex_destroy(&LOCK_connection_count);
   (void) pthread_mutex_destroy(&LOCK_rpl_status);
@@ -1439,7 +1440,7 @@ bytes of memory\n", ((ulong) dflt_key_cache->key_cache_mem_size +
     fprintf(stderr,"\
 Attempting backtrace. You can use the following information to find out\n\
 where mysqld died. If you see no messages after this, something went\n\
-terribly wrong...\n");  
+terribly wrong...\n");
     print_stacktrace(thd ? (uchar*) thd->thread_stack : (uchar*) 0,
                      my_thread_stack_size);
   }
@@ -1493,7 +1494,7 @@ This can result in crashes on some distributions due to LT/NPTL conflicts.\n\
 You should either build a dynamically-linked binary, or force LinuxThreads\n\
 to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n\
 the documentation for your distribution on how to do that.\n");
-  
+
   if (locked_in_memory)
   {
     fprintf(stderr, "\n\
@@ -1804,7 +1805,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       this could be improved by having a common stack of handlers.
     */
     if (thd->handle_error(error, str,
-                          MYSQL_ERROR::WARN_LEVEL_ERROR))
+                          DRIZZLE_ERROR::WARN_LEVEL_ERROR))
       return;;
 
     thd->is_slave_error=  1; // needed to catch query errors during replication
@@ -1833,7 +1834,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
         inside push_warning.
       */
       thd->no_warnings_for_error= true;
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_ERROR, error, str);
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, error, str);
       thd->no_warnings_for_error= false;
     }
   }
@@ -1906,7 +1907,6 @@ SHOW_VAR com_status_vars[]= {
   {"admin_commands",       (char*) offsetof(STATUS_VAR, com_other), SHOW_LONG_STATUS},
   {"assign_to_keycache",   (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ASSIGN_TO_KEYCACHE]), SHOW_LONG_STATUS},
   {"alter_db",             (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_DB]), SHOW_LONG_STATUS},
-  {"alter_db_upgrade",     (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_DB_UPGRADE]), SHOW_LONG_STATUS},
   {"alter_table",          (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ALTER_TABLE]), SHOW_LONG_STATUS},
   {"analyze",              (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_ANALYZE]), SHOW_LONG_STATUS},
   {"begin",                (char*) offsetof(STATUS_VAR, com_stat[(uint) SQLCOM_BEGIN]), SHOW_LONG_STATUS},
@@ -1988,7 +1988,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   server_start_time= flush_status_time= my_time(0);
   rpl_filter= new Rpl_filter;
   binlog_filter= new Rpl_filter;
-  if (!rpl_filter || !binlog_filter) 
+  if (!rpl_filter || !binlog_filter)
   {
     sql_perror("Could not allocate replication and binlog filters");
     exit(1);
@@ -2165,7 +2165,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.optimizer_use_mrr= 1;
   global_system_variables.optimizer_switch= 0;
 
-  if (!(character_set_filesystem= 
+  if (!(character_set_filesystem=
         get_charset_by_csname(character_set_filesystem_name,
                               MY_CS_PRIMARY, MYF(MY_WME))))
     return 1;
@@ -2178,7 +2178,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
-  
+
   sys_init_connect.value_length= 0;
   if ((sys_init_connect.value= opt_init_connect))
     sys_init_connect.value_length= strlen(opt_init_connect);
@@ -2235,7 +2235,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_mapped_file,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_crypt,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_user_conn, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_active_mi, MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_global_system_variables, MY_MUTEX_INIT_FAST);
@@ -2336,7 +2335,7 @@ static int init_server_components()
     if (opt_binlog_format_id == BINLOG_FORMAT_UNSPEC)
       global_system_variables.binlog_format= BINLOG_FORMAT_MIXED;
     else
-    { 
+    {
       assert(global_system_variables.binlog_format != BINLOG_FORMAT_UNSPEC);
     }
 
@@ -2438,10 +2437,6 @@ server.");
     }
   }
 
-  /* if the errmsg.sys is not loaded, terminate to maintain behaviour */
-  if (!errmesg[0][0])
-    unireg_abort(1);
-
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
@@ -2461,9 +2456,11 @@ server.");
                        strlen(default_storage_engine_str) };
     plugin_ref plugin;
     handlerton *hton;
-    
+
     if ((plugin= ha_resolve_by_name(0, &name)))
-      hton= plugin_data(plugin, handlerton*);
+    {
+      hton= plugin_data(plugin,handlerton *);
+    }
     else
     {
       sql_print_error("Unknown/unsupported table type: %s",
@@ -2480,7 +2477,7 @@ server.");
     else
     {
       /*
-        Need to unlock as global_system_variables.table_plugin 
+        Need to unlock as global_system_variables.table_plugin
         was acquired during plugin_init()
       */
       plugin_unlock(0, global_system_variables.table_plugin);
@@ -2546,6 +2543,15 @@ server.");
 
 int main(int argc, char **argv)
 {
+
+#if defined(ENABLE_NLS)
+# if defined(HAVE_LOCALE_H)
+  setlocale(LC_ALL, "");
+# endif
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
+#endif
+
   MY_INIT(argv[0]);		// init my_sys library & pthreads
   /* nothing should come before this line ^^^ */
 
@@ -2677,7 +2683,7 @@ int main(int argc, char **argv)
   handle_connections_sockets();
 
   /* (void) pthread_attr_destroy(&connection_attrib); */
-  
+
 
 #ifdef EXTRA_DEBUG2
   sql_print_error("Before Lock_thread_count");
@@ -2803,7 +2809,7 @@ void handle_connections_sockets()
     }
     if (number_of == 0)
       continue;
-    
+
 #ifdef FIXME_IF_WE_WERE_KEEPING_THIS
     assert(number_of > 1); /* Not handling this at the moment */
 #endif
@@ -2848,7 +2854,7 @@ void handle_connections_sockets()
       size_socket dummyLen;
       struct sockaddr_storage dummy;
       dummyLen = sizeof(dummy);
-      if (  getsockname(new_sock,(struct sockaddr *)&dummy, 
+      if (  getsockname(new_sock,(struct sockaddr *)&dummy,
                   (socklen_t *)&dummyLen) < 0  )
       {
 	sql_perror("Error on new connection socket");
@@ -2898,19 +2904,18 @@ void handle_connections_sockets()
 
 enum options_mysqld
 {
-  OPT_ISAM_LOG=256,            OPT_SKIP_NEW, 
-  OPT_SKIP_GRANT,              
+  OPT_ISAM_LOG=256,            OPT_SKIP_NEW,
+  OPT_SKIP_GRANT,
   OPT_ENABLE_LOCK,             OPT_USE_LOCKING,
   OPT_SOCKET,                  OPT_UPDATE_LOG,
-  OPT_BIN_LOG,                 
+  OPT_BIN_LOG,
   OPT_BIN_LOG_INDEX,
   OPT_BIND_ADDRESS,            OPT_PID_FILE,
-  OPT_SKIP_PRIOR,              OPT_BIG_TABLES,
+  OPT_SKIP_PRIOR,
   OPT_STANDALONE,
   OPT_CONSOLE,                 OPT_LOW_PRIORITY_UPDATES,
   OPT_SHORT_LOG_FORMAT,
   OPT_FLUSH,                   OPT_SAFE,
-  OPT_BOOTSTRAP,               OPT_SKIP_SHOW_DB,
   OPT_STORAGE_ENGINE,          OPT_INIT_FILE,
   OPT_DELAY_KEY_WRITE_ALL,     OPT_SLOW_QUERY_LOG,
   OPT_DELAY_KEY_WRITE,	       OPT_CHARSETS_DIR,
@@ -2920,7 +2925,7 @@ enum options_mysqld
   OPT_REPLICATE_IGNORE_DB,     OPT_LOG_SLAVE_UPDATES,
   OPT_BINLOG_DO_DB,            OPT_BINLOG_IGNORE_DB,
   OPT_BINLOG_FORMAT,
-  OPT_BINLOG_ROWS_EVENT_MAX_SIZE, 
+  OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
   OPT_WANT_CORE,
   OPT_MEMLOCK,                 OPT_MYISAM_RECOVER,
   OPT_REPLICATE_REWRITE_DB,    OPT_SERVER_ID,
@@ -2931,7 +2936,7 @@ enum options_mysqld
   OPT_DISCONNECT_SLAVE_EVENT_COUNT, OPT_TC_HEURISTIC_RECOVER,
   OPT_ABORT_SLAVE_EVENT_COUNT,
   OPT_LOG_BIN_TRUST_FUNCTION_CREATORS,
-  OPT_ENGINE_CONDITION_PUSHDOWN, 
+  OPT_ENGINE_CONDITION_PUSHDOWN,
   OPT_TEMP_POOL, OPT_TX_ISOLATION, OPT_COMPLETION_TYPE,
   OPT_SKIP_STACK_TRACE, OPT_SKIP_SYMLINKS,
   OPT_MAX_BINLOG_DUMP_EVENTS, OPT_SPORADIC_BINLOG_DUMP_FAIL,
@@ -2956,7 +2961,7 @@ enum options_mysqld
   OPT_MAX_BINLOG_CACHE_SIZE, OPT_MAX_BINLOG_SIZE,
   OPT_MAX_CONNECTIONS, OPT_MAX_CONNECT_ERRORS,
   OPT_MAX_HEP_TABLE_SIZE,
-  OPT_MAX_JOIN_SIZE, OPT_MAX_PREPARED_STMT_COUNT,
+  OPT_MAX_JOIN_SIZE,
   OPT_MAX_RELAY_LOG_SIZE, OPT_MAX_SORT_LENGTH,
   OPT_MAX_SEEKS_FOR_KEY, OPT_MAX_TMP_TABLES, OPT_MAX_USER_CONNECTIONS,
   OPT_MAX_LENGTH_FOR_SORT_DATA,
@@ -2970,8 +2975,7 @@ enum options_mysqld
   OPT_NET_READ_TIMEOUT, OPT_NET_WRITE_TIMEOUT,
   OPT_OPEN_FILES_LIMIT,
   OPT_PRELOAD_BUFFER_SIZE,
-  OPT_QUERY_CACHE_LIMIT, OPT_QUERY_CACHE_MIN_RES_UNIT, OPT_QUERY_CACHE_SIZE,
-  OPT_QUERY_CACHE_TYPE, OPT_QUERY_CACHE_WLOCK_INVALIDATE, OPT_RECORD_BUFFER,
+  OPT_RECORD_BUFFER,
   OPT_RECORD_RND_BUFFER, OPT_DIV_PRECINCREMENT, OPT_RELAY_LOG_SPACE_LIMIT,
   OPT_RELAY_LOG_PURGE,
   OPT_SLAVE_NET_TIMEOUT, OPT_SLAVE_COMPRESSED_PROTOCOL, OPT_SLOW_LAUNCH_TIME,
@@ -3039,15 +3043,13 @@ enum options_mysqld
 
 struct my_option my_long_options[] =
 {
-  {"help", '?', "Display this help and exit.", 
+  {"help", '?', "Display this help and exit.",
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"abort-slave-event-count", OPT_ABORT_SLAVE_EVENT_COUNT,
    "Option used by mysql-test for debugging and testing of replication.",
    (char**) &abort_slave_event_count,  (char**) &abort_slave_event_count,
    0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"ansi", 'a', "Use ANSI SQL syntax instead of MySQL syntax. This mode will also set transaction isolation level 'serializable'.", 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
    "Auto-increment columns are incremented by this",
    (char**) &global_system_variables.auto_increment_increment,
@@ -3062,9 +3064,6 @@ struct my_option my_long_options[] =
    "Path to installation directory. All paths are usually resolved relative to this.",
    (char**) &mysql_home_ptr, (char**) &mysql_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"big-tables", OPT_BIG_TABLES,
-   "Allow big result sets by saving all temporary sets on file (Solves most 'table full' errors).",
-   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"bind-address", OPT_BIND_ADDRESS, "IP address to bind to.",
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -3088,17 +3087,13 @@ struct my_option my_long_options[] =
    "The maximum size of a row-based binary log event in bytes. Rows will be "
    "grouped into events smaller than this size if possible. "
    "The value has to be a multiple of 256.",
-   (char**) &opt_binlog_rows_event_max_size, 
-   (char**) &opt_binlog_rows_event_max_size, 0, 
-   GET_ULONG, REQUIRED_ARG, 
-   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX, 
-   /* sub_size */     0, /* block_size */ 256, 
+   (char**) &opt_binlog_rows_event_max_size,
+   (char**) &opt_binlog_rows_event_max_size, 0,
+   GET_ULONG, REQUIRED_ARG,
+   /* def_value */ 1024, /* min_value */  256, /* max_value */ ULONG_MAX,
+   /* sub_size */     0, /* block_size */ 256,
    /* app_type */ 0
   },
-#ifndef DISABLE_GRANT_OPTIONS
-  {"bootstrap", OPT_BOOTSTRAP, "Used by mysql installation scripts.", 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-#endif
   {"character-set-client-handshake", OPT_CHARACTER_SET_CLIENT_HANDSHAKE,
    "Don't ignore client side character set value sent during handshake.",
    (char**) &opt_character_set_client_handshake,
@@ -3190,7 +3185,7 @@ struct my_option my_long_options[] =
    (char**) &opt_init_slave, (char**) &opt_init_slave, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"language", 'L',
-   "Client error messages in given language. May be given as a full path.",
+   "Client error messages in given language. May be given as a full path. (IGNORED)",
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
@@ -3235,7 +3230,7 @@ struct my_option my_long_options[] =
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-long-format", '0',
-   "Log some extra information to update log. Please note that this option is deprecated; see --log-short-format option.", 
+   "Log some extra information to update log. Please note that this option is deprecated; see --log-short-format option.",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef WITH_CSV_STORAGE_ENGINE
   {"log-output", OPT_LOG_OUTPUT,
@@ -3457,7 +3452,7 @@ log and this option does nothing anymore.",
    0, 0, 0, 0, 0},
   {"timed_mutexes", OPT_TIMED_MUTEXES,
    "Specify whether to time mutexes (only InnoDB mutexes are currently supported)",
-   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0, 
+   (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"tmpdir", 't',
    "Path for temporary files. Several paths may be specified, separated by a "
@@ -3473,9 +3468,6 @@ log and this option does nothing anymore.",
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
   {"user", 'u', "Run mysqld daemon as user.", 0, 0, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"verbose", 'v', "Used with --help option for detailed help",
-   (char**) &opt_verbose, (char**) &opt_verbose, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
-   0, 0},
   {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"warnings", 'W', "Deprecated; use --log-warnings instead.",
@@ -3501,13 +3493,13 @@ log and this option does nothing anymore.",
    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
     "The DATE format (For future).",
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATE],
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATE],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "datetime_format", OPT_DATETIME_FORMAT,
     "The DATETIME/TIMESTAMP format (for future).",
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATETIME],
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_DATETIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "default_week_format", OPT_DEFAULT_WEEK_FORMAT,
     "The default week format used by WEEK() functions.",
@@ -3557,7 +3549,7 @@ log and this option does nothing anymore.",
    "This characterizes the number of hits a hot block has to be untouched until it is considered aged enough to be downgraded to a warm block. This specifies the percentage ratio of that number of hits to the total number of blocks in key cache",
    (char**) &dflt_key_cache_var.param_age_threshold,
    (char**) 0,
-   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG, 
+   0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
    300, 100, ULONG_MAX, 0, 100, 0},
   {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
    "The default size of key cache blocks",
@@ -3709,9 +3701,9 @@ The minimum value for this variable is 4096.",
    (char**) &global_system_variables.net_write_timeout,
    (char**) &max_system_variables.net_write_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  { "old", OPT_OLD_MODE, "Use compatible behavior.", 
+  { "old", OPT_OLD_MODE, "Use compatible behavior.",
     (char**) &global_system_variables.old_mode,
-    (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG, 
+    (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"open_files_limit", OPT_OPEN_FILES_LIMIT,
    "If this is not 0, then mysqld will use this value to reserve file descriptors to use with setrlimit(). If this value is 0 then mysqld will reserve max_connections*5 or max_connections + table_cache*2 (whichever is larger) number of files.",
@@ -3858,8 +3850,8 @@ The minimum value for this variable is 4096.",
    1024L*128L, ULONG_MAX, 0, 1024, 0},
   { "time_format", OPT_TIME_FORMAT,
     "The TIME format (for future).",
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_TIME],
-    (char**) &opt_date_time_formats[MYSQL_TIMESTAMP_TIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
+    (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
    "If an internal in-memory temporary table exceeds this size, MySQL will"
@@ -4129,23 +4121,22 @@ static void usage(void)
 Copyright (C) 2000 MySQL AB, by Monty and others\n\
 This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
 and you are welcome to modify and redistribute it under the GPL license\n\n\
-Starts the MySQL database server\n");
+Starts the Drizzle database server\n");
 
   printf("Usage: %s [OPTIONS]\n", my_progname);
-  if (!opt_verbose)
-    puts("\nFor more help options (several pages), use mysqld --verbose --help");
-  else
   {
+#ifdef FOO
   print_defaults(MYSQL_CONFIG_NAME,load_default_groups);
   puts("");
   set_ports();
+#endif
 
   /* Print out all the options including plugin supplied options */
   my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
 
   puts("\n\
-To see what values a running MySQL server is using, type\n\
-'mysqladmin variables' instead of 'mysqld --verbose --help'.");
+To see what values a running DrizzleD server is using, type\n\
+'drizzleadmin variables' instead of 'drizzled --help'.");
   }
 }
 
@@ -4198,7 +4189,6 @@ static void mysql_init_variables(void)
   binlog_cache_use=  binlog_cache_disk_use= 0;
   max_used_connections= slow_launch_threads = 0;
   mysqld_user= mysqld_chroot= opt_init_file= opt_bin_logname = 0;
-  errmesg= 0;
   opt_mysql_tmpdir= my_bind_addr_str= NullS;
   memset(&mysql_tmpdir_list, 0, sizeof(mysql_tmpdir_list));
   memset(&global_status_var, 0, sizeof(global_status_var));
@@ -4286,11 +4276,6 @@ static void mysql_init_variables(void)
 #else
   have_symlink=SHOW_OPTION_YES;
 #endif
-#ifdef HAVE_CRYPT
-  have_crypt=SHOW_OPTION_YES;
-#else
-  have_crypt=SHOW_OPTION_NO;
-#endif
 #ifdef HAVE_COMPRESS
   have_compress= SHOW_OPTION_YES;
 #else
@@ -4362,9 +4347,6 @@ mysqld_get_one_option(int optid,
   case 'T':
     test_flags= argument ? (uint) atoi(argument) : 0;
     opt_endinfo=1;
-    break;
-  case (int) OPT_BIG_TABLES:
-    thd_startup_options|=OPTION_BIG_TABLES;
     break;
   case (int) OPT_ISAM_LOG:
     opt_myisam_log=1;
@@ -4492,26 +4474,8 @@ mysqld_get_one_option(int optid,
       break;
     }
 #endif
-  case (int) OPT_SKIP_NEW:
-    opt_specialflag|= SPECIAL_NO_NEW_FUNC;
-    delay_key_write_options= (uint) DELAY_KEY_WRITE_NONE;
-    myisam_concurrent_insert=0;
-    myisam_recover_options= HA_RECOVER_NONE;
-    my_use_symdir=0;
-    ha_open_options&= ~(HA_OPEN_ABORT_IF_CRASHED | HA_OPEN_DELAY_KEY_WRITE);
-    break;
-  case (int) OPT_SAFE:
-    opt_specialflag|= SPECIAL_SAFE_MODE;
-    delay_key_write_options= (uint) DELAY_KEY_WRITE_NONE;
-    myisam_recover_options= HA_RECOVER_DEFAULT;
-    ha_open_options&= ~(HA_OPEN_DELAY_KEY_WRITE);
-    break;
   case (int) OPT_SKIP_PRIOR:
     opt_specialflag|= SPECIAL_NO_PRIOR;
-    break;
-  case (int) OPT_SKIP_SHOW_DB:
-    opt_skip_show_db=1;
-    opt_specialflag|=SPECIAL_SKIP_SHOW_DB;
     break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
@@ -4524,13 +4488,13 @@ mysqld_get_one_option(int optid,
     break;
   case (int) OPT_BIND_ADDRESS:
     {
-      struct addrinfo *res_lst, hints;    
+      struct addrinfo *res_lst, hints;
 
       memset(&hints, 0, sizeof(struct addrinfo));
       hints.ai_socktype= SOCK_STREAM;
       hints.ai_protocol= IPPROTO_TCP;
 
-      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0) 
+      if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
       {
         sql_print_error("Can't start server: cannot resolve hostname!");
         exit(1);
@@ -4758,11 +4722,11 @@ static void get_options(int *argc,char **argv)
   if (opt_short_log_format)
     opt_specialflag|= SPECIAL_SHORT_LOG_FORMAT;
 
-  if (init_global_datetime_format(MYSQL_TIMESTAMP_DATE,
+  if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||
-      init_global_datetime_format(MYSQL_TIMESTAMP_TIME,
+      init_global_datetime_format(DRIZZLE_TIMESTAMP_TIME,
 				  &global_system_variables.time_format) ||
-      init_global_datetime_format(MYSQL_TIMESTAMP_DATETIME,
+      init_global_datetime_format(DRIZZLE_TIMESTAMP_DATETIME,
 				  &global_system_variables.datetime_format))
     exit(1);
 
@@ -4892,7 +4856,7 @@ static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
   ulong res;
 
   const char **ptr;
-  
+
   if ((res= find_bit_type(x, bit_lib)) == ~(ulong) 0)
   {
     ptr= bit_lib->type_names;

@@ -28,6 +28,7 @@
 #include "sql_show.h"
 #include "slave.h"
 #include "rpl_mi.h"
+#include <drizzled/drizzled_error_messages.h>
 
 /* Define to force use of my_malloc() if the allocated memory block is big */
 
@@ -1054,7 +1055,7 @@ int check_that_all_fields_are_given_values(THD *thd, TABLE *entry,
         view= test(0);
       }
       {
-        push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_NO_DEFAULT_FOR_FIELD,
                             ER(ER_NO_DEFAULT_FOR_FIELD),
                             (*field)->field_name);
@@ -1593,7 +1594,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     if (create_info->options & HA_LEX_CREATE_IF_NOT_EXISTS)
     {
       create_info->table_existed= 1;		// Mark that table existed
-      push_warning_printf(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                           ER_TABLE_EXISTS_ERROR, ER(ER_TABLE_EXISTS_ERROR),
                           create_table->table_name);
       return(create_table->table);

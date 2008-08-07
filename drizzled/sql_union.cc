@@ -22,6 +22,7 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 bool mysql_union(THD *thd,
                  LEX *lex __attribute__((unused)),

@@ -18,6 +18,7 @@
 */
 
 #include "mysql_priv.h"
+#include <drizzled/drizzled_error_messages.h>
 
 static TABLE_LIST *rename_tables(THD *thd, TABLE_LIST *table_list,
 				 bool skip_error);

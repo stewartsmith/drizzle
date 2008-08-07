@@ -30,6 +30,7 @@
 
 #include "mysql_priv.h"
 #include "sql_select.h"
+#include <drizzled/drizzled_error_messages.h>
 
 inline Item * and_items(Item* cond, Item *item)
 {
@@ -499,9 +500,9 @@ Item_singlerow_subselect::select_transformer(JOIN *join)
     have_to_be_excluded= 1;
     if (thd->lex->describe)
     {
-      char warn_buff[MYSQL_ERRMSG_SIZE];
+      char warn_buff[DRIZZLE_ERRMSG_SIZE];
       sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		   ER_SELECT_REDUCED, warn_buff);
     }
     substitution= select_lex->item_list.head();
@@ -1289,9 +1290,9 @@ Item_in_subselect::single_value_in_to_exists_transformer(JOIN * join, Comp_creat
 	have_to_be_excluded= 1;
 	if (thd->lex->describe)
 	{
-	  char warn_buff[MYSQL_ERRMSG_SIZE];
+	  char warn_buff[DRIZZLE_ERRMSG_SIZE];
 	  sprintf(warn_buff, ER(ER_SELECT_REDUCED), select_lex->select_number);
-	  push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+	  push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
 		       ER_SELECT_REDUCED, warn_buff);
 	}
 	return(RES_REDUCE);
@@ -2067,7 +2068,7 @@ void subselect_engine::set_row(List<Item> &item_list, Item_cache **row)
   Item *sel_item;
   List_iterator_fast<Item> li(item_list);
   res_type= STRING_RESULT;
-  res_field_type= DRIZZLE_TYPE_STRING;
+  res_field_type= DRIZZLE_TYPE_VARCHAR;
   for (uint i= 0; (sel_item= li++); i++)
   {
     item->max_length= sel_item->max_length;

@@ -18,16 +18,13 @@
 #include "sql_repl.h"
 #include "rpl_filter.h"
 #include "repl_failsafe.h"
-#include <m_ctype.h>
-#include <storage/myisam/myisam.h>
-#include <my_dir.h>
+#include <drizzled/drizzled_error_messages.h>
 
 /**
   @defgroup Runtime_Environment Runtime Environment
   @{
 */
 
-static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables);
 
 const char *any_db="*any*";	// Special symbol for check_access
 
@@ -571,6 +568,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     /* Safe because there is always a trailing \0 at the end of the packet */
     char *passwd= strend(user)+1;
 
+
     thd->clear_error();                         // if errors from rollback
 
     /*
@@ -646,7 +644,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
     /* Clear variables that are allocated */
     thd->user_connect= 0;
-    thd->security_ctx->priv_user= thd->security_ctx->user;
     res= check_user(thd, COM_CHANGE_USER, passwd, passwd_len, db, false);
 
     if (res)
@@ -858,8 +855,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
                      cached_open_tables(),
                      (uint) (queries_per_second1000 / 1000),
                      (uint) (queries_per_second1000 % 1000));
-    /* Store the buffer in permanent memory */
-    my_ok(thd, 0, 0, buff);
     VOID(my_net_write(net, (uchar*) buff, length));
     VOID(net_flush(net));
     thd->main_da.disable_status();
@@ -1225,7 +1220,7 @@ mysql_execute_command(THD *thd)
     Don't reset warnings when executing a stored routine.
   */
   if (all_tables || !lex->is_single_level_stmt())
-    mysql_reset_errors(thd, 0);
+    drizzle_reset_errors(thd, 0);
 
   if (unlikely(thd->slave_thread))
   {
@@ -1354,16 +1349,16 @@ mysql_execute_command(THD *thd)
   case SQLCOM_SHOW_WARNS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      ((1L << (uint) MYSQL_ERROR::WARN_LEVEL_NOTE) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_WARN) |
-			       (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR)
+			      ((1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
+			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
 			       ));
     break;
   }
   case SQLCOM_SHOW_ERRORS:
   {
     res= mysqld_show_warnings(thd, (ulong)
-			      (1L << (uint) MYSQL_ERROR::WARN_LEVEL_ERROR));
+			      (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
   case SQLCOM_SHOW_SLAVE_HOSTS:
@@ -1399,7 +1394,7 @@ mysql_execute_command(THD *thd)
     }
     else
     {
-      push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+      push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                    "the master info structure does not exist");
       my_ok(thd);
     }
@@ -1712,10 +1707,10 @@ end_with_restore_list:
 
       /* Don't yet allow changing of symlinks with ALTER TABLE */
       if (create_info.data_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "DATA DIRECTORY option ignored");
       if (create_info.index_file_name)
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN, 0,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, 0,
                      "INDEX DIRECTORY option ignored");
       create_info.data_file_name= create_info.index_file_name= NULL;
       /* ALTER TABLE ends previous transaction */
@@ -2341,40 +2336,6 @@ end_with_restore_list:
     res= mysql_rm_db(thd, lex->name.str, lex->drop_if_exists, 0);
     break;
   }
-  case SQLCOM_ALTER_DB_UPGRADE:
-  {
-    LEX_STRING *db= & lex->name;
-    if (end_active_trans(thd))
-    {
-      res= 1;
-      break;
-    }
-    if (thd->slave_thread && 
-       (!rpl_filter->db_ok(db->str) ||
-        !rpl_filter->db_ok_with_wild_table(db->str)))
-    {
-      res= 1;
-      my_message(ER_SLAVE_IGNORED_TABLE, ER(ER_SLAVE_IGNORED_TABLE), MYF(0));
-      break;
-    }
-    if (check_db_name(db))
-    {
-      my_error(ER_WRONG_DB_NAME, MYF(0), db->str);
-      break;
-    }
-    if (thd->locked_tables || thd->active_transaction())
-    {
-      res= 1;
-      my_message(ER_LOCK_OR_ACTIVE_TRANSACTION,
-                 ER(ER_LOCK_OR_ACTIVE_TRANSACTION), MYF(0));
-      goto error;
-    }
-
-    res= mysql_upgrade_db(thd, db);
-    if (!res)
-      my_ok(thd);
-    break;
-  }
   case SQLCOM_ALTER_DB:
   {
     LEX_STRING *db= &lex->name;
@@ -2536,7 +2497,7 @@ end_with_restore_list:
         if (((thd->options & OPTION_KEEP_LOG) || 
              thd->transaction.all.modified_non_trans_table) &&
             !thd->slave_thread)
-          push_warning(thd, MYSQL_ERROR::WARN_LEVEL_WARN,
+          push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                        ER_WARNING_NOT_COMPLETE_ROLLBACK,
                        ER(ER_WARNING_NOT_COMPLETE_ROLLBACK));
         my_ok(thd);
@@ -2642,8 +2603,7 @@ finish:
   return(res || thd->is_error());
 }
 
-
-static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
+bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
 {
   LEX	*lex= thd->lex;
   select_result *result=lex->result;
@@ -2676,7 +2636,7 @@ static bool execute_sqlcom_select(THD *thd, TABLE_LIST *all_tables)
         str.length(0);
         thd->lex->unit.print(&str, QT_ORDINARY);
         str.append('\0');
-        push_warning(thd, MYSQL_ERROR::WARN_LEVEL_NOTE,
+        push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_NOTE,
                      ER_YES, str.ptr());
       }
       if (res)

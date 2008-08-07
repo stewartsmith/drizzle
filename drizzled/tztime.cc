@@ -17,12 +17,11 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#include <my_global.h>
 #include "mysql_priv.h"
 #include <libdrizzle/my_time.h>
 
 #include "tzfile.h"
-#include <m_string.h>
+#include <libdrizzle/gettext.h>
 
 /* Structure describing local time type (e.g. Moscow summer time (MSD)) */
 typedef struct ttinfo
@@ -45,7 +44,7 @@ typedef struct lsinfo
 
 /*
   Structure with information describing ranges of my_time_t shifted to local
-  time (my_time_t + offset). Used for local MYSQL_TIME -> my_time_t conversion.
+  time (my_time_t + offset). Used for local DRIZZLE_TIME -> my_time_t conversion.
   See comments for TIME_to_gmt_sec() for more info.
 */
 typedef struct revtinfo
@@ -132,14 +131,14 @@ static const uint year_lengths[2]=
       offset - local time zone offset
 
   DESCRIPTION
-    Convert my_time_t with offset to MYSQL_TIME struct. Differs from timesub
+    Convert my_time_t with offset to DRIZZLE_TIME struct. Differs from timesub
     (from elsie code) because doesn't contain any leap correction and
     TM_GMTOFF and is_dst setting and contains some MySQL specific
     initialization. Funny but with removing of these we almost have
     glibc's offtime function.
 */
 static void
-sec_to_TIME(MYSQL_TIME * tmp, my_time_t t, long offset)
+sec_to_TIME(DRIZZLE_TIME * tmp, my_time_t t, long offset)
 {
   long days;
   long rem;
@@ -195,9 +194,9 @@ sec_to_TIME(MYSQL_TIME * tmp, my_time_t t, long offset)
   tmp->month++;
   tmp->day= (uint)(days + 1);
 
-  /* filling MySQL specific MYSQL_TIME members */
+  /* filling MySQL specific DRIZZLE_TIME members */
   tmp->neg= 0; tmp->second_part= 0;
-  tmp->time_type= MYSQL_TIMESTAMP_DATETIME;
+  tmp->time_type= DRIZZLE_TIMESTAMP_DATETIME;
 }
 
 
@@ -287,7 +286,7 @@ find_transition_type(my_time_t t, const TIME_ZONE_INFO *sp)
 
 /*
   Converts time in my_time_t representation (seconds in UTC since Epoch) to
-  broken down MYSQL_TIME representation in local time zone.
+  broken down DRIZZLE_TIME representation in local time zone.
 
   SYNOPSIS
     gmt_sec_to_TIME()
@@ -302,12 +301,12 @@ find_transition_type(my_time_t t, const TIME_ZONE_INFO *sp)
     (60th and 61st second, look how we calculate them as "hit" in this
     function).
     Under realistic assumptions about frequency of transitions the same array
-    can be used fot MYSQL_TIME -> my_time_t conversion. For this we need to
+    can be used fot DRIZZLE_TIME -> my_time_t conversion. For this we need to
     implement tweaked binary search which will take into account that some
-    MYSQL_TIME has two matching my_time_t ranges and some of them have none.
+    DRIZZLE_TIME has two matching my_time_t ranges and some of them have none.
 */
 static void
-gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t sec_in_utc, const TIME_ZONE_INFO *sp)
+gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t sec_in_utc, const TIME_ZONE_INFO *sp)
 {
   const TRAN_TYPE_INFO *ttisp;
   const LS_INFO *lp;
@@ -409,7 +408,7 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 }
 
 /*
-  Converts local time in broken down MYSQL_TIME representation to my_time_t
+  Converts local time in broken down DRIZZLE_TIME representation to my_time_t
   representation.
 
   SYNOPSIS
@@ -451,7 +450,7 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
 
     We use completely different approach. It is better since it is both
     faster than iterative implementations and fully determenistic. If you
-    look at my_time_t to MYSQL_TIME conversion then you'll find that it consist
+    look at my_time_t to DRIZZLE_TIME conversion then you'll find that it consist
     of two steps:
     The first is calculating shifted my_time_t value and the second - TIME
     calculation from shifted my_time_t value (well it is a bit simplified
@@ -481,7 +480,7 @@ sec_since_epoch(int year, int mon, int mday, int hour, int min ,int sec)
     0 in case of error.
 */
 static my_time_t
-TIME_to_gmt_sec(const MYSQL_TIME *t, const TIME_ZONE_INFO *sp,
+TIME_to_gmt_sec(const DRIZZLE_TIME *t, const TIME_ZONE_INFO *sp,
                 bool *in_dst_time_gap)
 {
   my_time_t local_t;
@@ -604,20 +603,20 @@ class Time_zone_system : public Time_zone
 {
 public:
   Time_zone_system() {}                       /* Remove gcc warning */
-  virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
+  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
+  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
 };
 
 
 /*
-  Converts local time in system time zone in MYSQL_TIME representation
+  Converts local time in system time zone in DRIZZLE_TIME representation
   to its my_time_t representation.
 
   SYNOPSIS
     TIME_to_gmt_sec()
-      t               - pointer to MYSQL_TIME structure with local time in
+      t               - pointer to DRIZZLE_TIME structure with local time in
                         broken-down representation.
       in_dst_time_gap - pointer to bool which is set to true if datetime
                         value passed doesn't really exist (i.e. falls into
@@ -625,7 +624,7 @@ public:
 
   DESCRIPTION
     This method uses system function (localtime_r()) for conversion
-    local time in system time zone in MYSQL_TIME structure to its my_time_t
+    local time in system time zone in DRIZZLE_TIME structure to its my_time_t
     representation. Unlike the same function for Time_zone_db class
     it it won't handle unnormalized input properly. Still it will
     return lowest possible my_time_t in case of ambiguity or if we
@@ -637,7 +636,7 @@ public:
     Corresponding my_time_t value or 0 in case of error
 */
 my_time_t
-Time_zone_system::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) const
+Time_zone_system::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
   long not_used;
   return my_system_gmt_sec(t, &not_used, in_dst_time_gap);
@@ -650,7 +649,7 @@ Time_zone_system::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) co
 
   SYNOPSIS
     gmt_sec_to_TIME()
-      tmp - pointer to MYSQL_TIME structure to fill-in
+      tmp - pointer to DRIZZLE_TIME structure to fill-in
       t   - my_time_t value to be converted
 
   NOTE
@@ -661,14 +660,14 @@ Time_zone_system::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) co
     the 1902 easily.
 */
 void
-Time_zone_system::gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const
+Time_zone_system::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
 {
   struct tm tmp_tm;
   time_t tmp_t= (time_t)t;
 
   localtime_r(&tmp_t, &tmp_tm);
   localtime_to_TIME(tmp, &tmp_tm);
-  tmp->time_type= MYSQL_TIMESTAMP_DATETIME;
+  tmp->time_type= DRIZZLE_TIMESTAMP_DATETIME;
 }
 
 
@@ -691,26 +690,26 @@ Time_zone_system::get_name() const
 /*
   Instance of this class represents UTC time zone. It uses system gmtime_r
   function for conversions and is always available. It is used only for
-  my_time_t -> MYSQL_TIME conversions in various UTC_...  functions, it is not
-  intended for MYSQL_TIME -> my_time_t conversions and shouldn't be exposed to user.
+  my_time_t -> DRIZZLE_TIME conversions in various UTC_...  functions, it is not
+  intended for DRIZZLE_TIME -> my_time_t conversions and shouldn't be exposed to user.
 */
 class Time_zone_utc : public Time_zone
 {
 public:
   Time_zone_utc() {}                          /* Remove gcc warning */
-  virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
+  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
+  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
 };
 
 
 /*
-  Convert UTC time from MYSQL_TIME representation to its my_time_t representation.
+  Convert UTC time from DRIZZLE_TIME representation to its my_time_t representation.
 
   SYNOPSIS
     TIME_to_gmt_sec()
-      t               - pointer to MYSQL_TIME structure with local time
+      t               - pointer to DRIZZLE_TIME structure with local time
                         in broken-down representation.
       in_dst_time_gap - pointer to bool which is set to true if datetime
                         value passed doesn't really exist (i.e. falls into
@@ -725,7 +724,7 @@ public:
     0
 */
 my_time_t
-Time_zone_utc::TIME_to_gmt_sec(const MYSQL_TIME *t __attribute__((unused)),
+Time_zone_utc::TIME_to_gmt_sec(const DRIZZLE_TIME *t __attribute__((unused)),
                                bool *in_dst_time_gap __attribute__((unused))) const
 {
   /* Should be never called */
@@ -740,20 +739,20 @@ Time_zone_utc::TIME_to_gmt_sec(const MYSQL_TIME *t __attribute__((unused)),
 
   SYNOPSIS
     gmt_sec_to_TIME()
-      tmp - pointer to MYSQL_TIME structure to fill-in
+      tmp - pointer to DRIZZLE_TIME structure to fill-in
       t   - my_time_t value to be converted
 
   NOTE
     See note for apropriate Time_zone_system method.
 */
 void
-Time_zone_utc::gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const
+Time_zone_utc::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
 {
   struct tm tmp_tm;
   time_t tmp_t= (time_t)t;
   gmtime_r(&tmp_t, &tmp_tm);
   localtime_to_TIME(tmp, &tmp_tm);
-  tmp->time_type= MYSQL_TIMESTAMP_DATETIME;
+  tmp->time_type= DRIZZLE_TIMESTAMP_DATETIME;
 }
 
 
@@ -788,9 +787,9 @@ class Time_zone_db : public Time_zone
 {
 public:
   Time_zone_db(TIME_ZONE_INFO *tz_info_arg, const String * tz_name_arg);
-  virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
+  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
+  virtual void gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
 private:
   TIME_ZONE_INFO *tz_info;
@@ -824,7 +823,7 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
 
   SYNOPSIS
     TIME_to_gmt_sec()
-      t               - pointer to MYSQL_TIME structure with local time
+      t               - pointer to DRIZZLE_TIME structure with local time
                         in broken-down representation.
       in_dst_time_gap - pointer to bool which is set to true if datetime
                         value passed doesn't really exist (i.e. falls into
@@ -838,7 +837,7 @@ Time_zone_db::Time_zone_db(TIME_ZONE_INFO *tz_info_arg,
     Corresponding my_time_t value or 0 in case of error
 */
 my_time_t
-Time_zone_db::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) const
+Time_zone_db::TIME_to_gmt_sec(const DRIZZLE_TIME *t, bool *in_dst_time_gap) const
 {
   return ::TIME_to_gmt_sec(t, tz_info, in_dst_time_gap);
 }
@@ -850,11 +849,11 @@ Time_zone_db::TIME_to_gmt_sec(const MYSQL_TIME *t, bool *in_dst_time_gap) const
 
   SYNOPSIS
     gmt_sec_to_TIME()
-      tmp - pointer to MYSQL_TIME structure to fill-in
+      tmp - pointer to DRIZZLE_TIME structure to fill-in
       t   - my_time_t value to be converted
 */
 void
-Time_zone_db::gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const
+Time_zone_db::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
 {
   ::gmt_sec_to_TIME(tmp, t, tz_info);
 }
@@ -884,9 +883,9 @@ class Time_zone_offset : public Time_zone
 {
 public:
   Time_zone_offset(long tz_offset_arg);
-  virtual my_time_t TIME_to_gmt_sec(const MYSQL_TIME *t,
+  virtual my_time_t TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                     bool *in_dst_time_gap) const;
-  virtual void   gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const;
+  virtual void   gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const;
   virtual const String * get_name() const;
   /*
     This have to be public because we want to be able to access it from
@@ -921,11 +920,11 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
 
 /*
   Converts local time in time zone described as offset from UTC
-  from MYSQL_TIME representation to its my_time_t representation.
+  from DRIZZLE_TIME representation to its my_time_t representation.
 
   SYNOPSIS
     TIME_to_gmt_sec()
-      t               - pointer to MYSQL_TIME structure with local time
+      t               - pointer to DRIZZLE_TIME structure with local time
                         in broken-down representation.
       in_dst_time_gap - pointer to bool which should be set to true if
                         datetime  value passed doesn't really exist
@@ -937,7 +936,7 @@ Time_zone_offset::Time_zone_offset(long tz_offset_arg):
     Corresponding my_time_t value or 0 in case of error
 */
 my_time_t
-Time_zone_offset::TIME_to_gmt_sec(const MYSQL_TIME *t,
+Time_zone_offset::TIME_to_gmt_sec(const DRIZZLE_TIME *t,
                                   bool *in_dst_time_gap __attribute__((unused))) const
 {
   my_time_t local_t;
@@ -983,11 +982,11 @@ Time_zone_offset::TIME_to_gmt_sec(const MYSQL_TIME *t,
 
   SYNOPSIS
     gmt_sec_to_TIME()
-      tmp - pointer to MYSQL_TIME structure to fill-in
+      tmp - pointer to DRIZZLE_TIME structure to fill-in
       t   - my_time_t value to be converted
 */
 void
-Time_zone_offset::gmt_sec_to_TIME(MYSQL_TIME *tmp, my_time_t t) const
+Time_zone_offset::gmt_sec_to_TIME(DRIZZLE_TIME *tmp, my_time_t t) const
 {
   sec_to_TIME(tmp, t, offset);
 }
@@ -1064,7 +1063,7 @@ my_tz_init(THD *thd, const char *default_tzname,
     */
     if (!(global_system_variables.time_zone= my_tz_find(thd, &tmp_tzname2)))
     {
-      sql_print_error("Fatal error: Illegal or unknown default time zone '%s'",
+      sql_print_error(_("Fatal error: Illegal or unknown default time zone '%s'"),
                       default_tzname);
       return true;
     }

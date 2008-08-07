@@ -36,7 +36,6 @@
 #include "client_priv.h"
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
-#include <my_dir.h>
 #ifndef __GNU_LIBRARY__
 #define __GNU_LIBRARY__          // Skip warnings in getopt.h
 #endif
@@ -47,9 +46,11 @@
 #include <sys/ioctl.h>
 
 
-#if defined(USE_LIBEDIT_INTERFACE) && defined(HAVE_LOCALE_H)
+#if defined(HAVE_LOCALE_H)
 #include <locale.h>
 #endif
+
+#include <libdrizzle/gettext.h>
 
 const char *VER= "14.14";
 
@@ -91,6 +92,11 @@ void sql_element_free(void *ptr);
 #endif
 #endif
 
+#undef bcmp				// Fix problem with new readline
+
+#ifdef HAVE_READLINE_HISTORY_H
+#include <readline/history.h>
+#endif
 #include <readline/readline.h>
 
 /**
@@ -177,6 +183,7 @@ static const char *xmlmeta[] = {
   "\"", "&quot;",
   0, 0
 };
+// TODO: Need to i18n these
 static const char *day_names[]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]={"Jan","Feb","Mar","Apr","May","Jun","Jul",
                                   "Aug","Sep","Oct","Nov","Dec"};
@@ -250,38 +257,38 @@ typedef struct {
 
 
 static COMMANDS commands[] = {
-  { "?",      '?', com_help,   1, "Synonym for `help'." },
-  { "clear",  'c', com_clear,  0, "Clear command."},
+  { "?",      '?', com_help,   1, N_("Synonym for `help'.") },
+  { "clear",  'c', com_clear,  0, N_("Clear command.")},
   { "connect",'r', com_connect,1,
-    "Reconnect to the server. Optional arguments are db and host." },
+    N_("Reconnect to the server. Optional arguments are db and host." }),
   { "delimiter", 'd', com_delimiter,    1,
-    "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter." },
+    N_("Set statement delimiter. NOTE: Takes the rest of the line as new delimiter.") },
   { "ego",    'G', com_ego,    0,
-    "Send command to drizzle server, display result vertically."},
-  { "exit",   'q', com_quit,   0, "Exit drizzle. Same as quit."},
-  { "go",     'g', com_go,     0, "Send command to drizzle server." },
-  { "help",   'h', com_help,   1, "Display this help." },
-  { "nopager",'n', com_nopager,0, "Disable pager, print to stdout." },
-  { "notee",  't', com_notee,  0, "Don't write into outfile." },
+    N_("Send command to drizzle server, display result vertically.")},
+  { "exit",   'q', com_quit,   0, N_("Exit drizzle. Same as quit.")},
+  { "go",     'g', com_go,     0, N_("Send command to drizzle server.") },
+  { "help",   'h', com_help,   1, N_("Display this help.") },
+  { "nopager",'n', com_nopager,0, N_("Disable pager, print to stdout.") },
+  { "notee",  't', com_notee,  0, N_("Don't write into outfile.") },
   { "pager",  'P', com_pager,  1,
-    "Set PAGER [to_pager]. Print the query results via PAGER." },
-  { "print",  'p', com_print,  0, "Print current command." },
-  { "prompt", 'R', com_prompt, 1, "Change your drizzle prompt."},
-  { "quit",   'q', com_quit,   0, "Quit drizzle." },
-  { "rehash", '#', com_rehash, 0, "Rebuild completion hash." },
+    N_("Set PAGER [to_pager]. Print the query results via PAGER.") },
+  { "print",  'p', com_print,  0, N_("Print current command.") },
+  { "prompt", 'R', com_prompt, 1, N_("Change your drizzle prompt.")},
+  { "quit",   'q', com_quit,   0, N_("Quit drizzle.") },
+  { "rehash", '#', com_rehash, 0, N_("Rebuild completion hash.") },
   { "source", '.', com_source, 1,
-    "Execute an SQL script file. Takes a file name as an argument."},
-  { "status", 's', com_status, 0, "Get status information from the server."},
+    N_("Execute an SQL script file. Takes a file name as an argument.")},
+  { "status", 's', com_status, 0, N_("Get status information from the server.")},
   { "tee",    'T', com_tee,    1,
-    "Set outfile [to_outfile]. Append everything into given outfile." },
+    N_("Set outfile [to_outfile]. Append everything into given outfile.") },
   { "use",    'u', com_use,    1,
-    "Use another database. Takes database name as argument." },
+    N_("Use another database. Takes database name as argument.") },
   { "charset",    'C', com_charset,    1,
-    "Switch to another charset. Might be needed for processing binlog with multi-byte charsets." },
+    N_("Switch to another charset. Might be needed for processing binlog with multi-byte charsets.") },
   { "warnings", 'W', com_warnings,  0,
-    "Show warnings after every statement." },
+    N_("Show warnings after every statement.") },
   { "nowarning", 'w', com_nowarnings, 0,
-    "Don't show warnings after every statement." },
+    N_("Don't show warnings after every statement.") },
   /* Get bash-like expansion for some commands */
   { "create table",     0, 0, 0, ""},
   { "create database",  0, 0, 0, ""},
@@ -1026,6 +1033,14 @@ int main(int argc,char *argv[])
 {
   char buff[80];
 
+#if defined(ENABLE_NLS)
+# if defined(HAVE_LOCALE_H)
+  setlocale(LC_ALL, "");
+# endif
+  bindtextdomain("drizzle", LOCALEDIR);
+  textdomain("drizzle");
+#endif
+
   MY_INIT(argv[0]);
   delimiter_str= delimiter;
   default_prompt= my_strdup(getenv("DRIZZLE_PS1") ?
@@ -1112,7 +1127,7 @@ int main(int argc,char *argv[])
   window_resize(0);
 #endif
 
-  put_info("Welcome to the Drizzle client..  Commands end with ; or \\g.",
+  put_info(_("Welcome to the Drizzle client..  Commands end with ; or \\g."),
            INFO_INFO,0,0);
 
   glob_buffer= (DYNAMIC_STRING *)my_malloc(sizeof(DYNAMIC_STRING), MYF(0));
@@ -1120,7 +1135,7 @@ int main(int argc,char *argv[])
 
   /* this is a slight abuse of the DYNAMIC_STRING interface. deal. */
   sprintf(glob_buffer->str,
-          "Your Drizzle connection id is %u\nServer version: %s\n",
+          _("Your Drizzle connection id is %u\nServer version: %s\n"),
           drizzle_thread_id(&drizzle), server_version_string(&drizzle));
   put_info(glob_buffer->str, INFO_INFO, 0, 0);
   dynstr_set(glob_buffer, NULL);
@@ -1150,19 +1165,19 @@ int main(int argc,char *argv[])
     if (histfile)
     {
       if (verbose)
-        tee_fprintf(stdout, "Reading history-file %s\n",histfile);
+        tee_fprintf(stdout, _("Reading history-file %s\n"),histfile);
       read_history(histfile);
       if (!(histfile_tmp= (char*) my_malloc((uint) strlen(histfile) + 5,
                                             MYF(MY_WME))))
       {
-        fprintf(stderr, "Couldn't allocate memory for temp histfile!\n");
+        fprintf(stderr, _("Couldn't allocate memory for temp histfile!\n"));
         exit(1);
       }
       sprintf(histfile_tmp, "%s.TMP", histfile);
     }
   }
   sprintf(buff, "%s",
-          "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n");
+          _("Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"));
 
   put_info(buff,INFO_INFO,0,0);
   status.exit_status= read_and_execute(!status.batch);
@@ -1181,7 +1196,7 @@ sig_handler drizzle_end(int sig)
   {
     /* write-history */
     if (verbose)
-      tee_fprintf(stdout, "Writing history-file %s\n",histfile);
+      tee_fprintf(stdout, _("Writing history-file %s\n"),histfile);
     if (!write_history(histfile_tmp))
       my_rename(histfile_tmp, histfile, MYF(MY_WME));
   }
@@ -1190,7 +1205,7 @@ sig_handler drizzle_end(int sig)
   free_root(&hash_mem_root,MYF(0));
 
   if (sig >= 0)
-    put_info(sig ? "Aborted" : "Bye", INFO_RESULT,0,0);
+    put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
   if (glob_buffer)
     dynstr_free(glob_buffer);
   my_free(glob_buffer, MYF(MY_ALLOW_ZERO_PTR));
@@ -1243,7 +1258,7 @@ sig_handler handle_sigint(int sig)
   sprintf(kill_buffer, "KILL /*!50000 QUERY */ %u", drizzle_thread_id(&drizzle));
   drizzle_real_query(kill_drizzle, kill_buffer, strlen(kill_buffer));
   drizzle_close(kill_drizzle);
-  tee_fprintf(stdout, "Query aborted by Ctrl+C\n");
+  tee_fprintf(stdout, _("Query aborted by Ctrl+C\n"));
 
   interrupted_query= 1;
 
@@ -1266,185 +1281,182 @@ sig_handler window_resize(int sig __attribute__((unused)))
 
 static struct my_option my_long_options[] =
 {
-  {"help", '?', "Display this help and exit.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
+  {"help", '?', N_("Display this help and exit."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
    0, 0, 0, 0, 0},
-  {"help", 'I', "Synonym for -?", 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
+  {"help", 'I', N_("Synonym for -?"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0,
    0, 0, 0, 0, 0},
   {"auto-rehash", OPT_AUTO_REHASH,
-   "Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash.",
+   N_("Enable automatic rehashing. One doesn't need to use 'rehash' to get table and field completion, but startup and reconnecting may take a longer time. Disable with --disable-auto-rehash."),
    (char**) &opt_rehash, (char**) &opt_rehash, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0,
    0, 0},
   {"no-auto-rehash", 'A',
-   "No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of DRIZZLE and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead.",
+   N_("No automatic rehashing. One has to use 'rehash' to get table and field completion. This gives a quicker start of DRIZZLE and disables rehashing on reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-vertical-output", OPT_AUTO_VERTICAL_OUTPUT,
-   "Automatically switch to vertical output mode if the result is wider than the terminal width.",
+   N_("Automatically switch to vertical output mode if the result is wider than the terminal width."),
    (char**) &auto_vertical_output, (char**) &auto_vertical_output, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"batch", 'B',
-   "Don't use history file. Disable interactive behavior. (Enables --silent)", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Don't use history file. Disable interactive behavior. (Enables --silent)"), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (char**) &charsets_dir,
+   N_("Directory where character sets are."), (char**) &charsets_dir,
    (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"column-type-info", OPT_COLUMN_TYPES, "Display column type information.",
+  {"column-type-info", OPT_COLUMN_TYPES, N_("Display column type information."),
    (char**) &column_types_flag, (char**) &column_types_flag,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"comments", 'c', "Preserve comments. Send comments to the server."
-   " The default is --skip-comments (discard comments), enable with --comments",
+  {"comments", 'c', N_("Preserve comments. Send comments to the server. The default is --skip-comments (discard comments), enable with --comments"),
    (char**) &preserve_comments, (char**) &preserve_comments,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"compress", 'C', "Use compression in server/client protocol.",
+  {"compress", 'C', N_("Use compression in server/client protocol."),
    (char**) &opt_compress, (char**) &opt_compress, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"debug-check", OPT_DEBUG_CHECK, "Check memory and open file usage at exit .",
+  {"debug-check", OPT_DEBUG_CHECK, N_("Check memory and open file usage at exit ."),
    (char**) &debug_check_flag, (char**) &debug_check_flag, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"debug-info", 'T', "Print some debug info at exit.", (char**) &debug_info_flag,
+  {"debug-info", 'T', N_("Print some debug info at exit."), (char**) &debug_info_flag,
    (char**) &debug_info_flag, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"database", 'D', "Database to use.", (char**) &current_db,
+  {"database", 'D', N_("Database to use."), (char**) &current_db,
    (char**) &current_db, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"default-character-set", OPT_DEFAULT_CHARSET,
-   "Set the default character set.", (char**) &default_charset,
+   N_("Set the default character set."), (char**) &default_charset,
    (char**) &default_charset, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"delimiter", OPT_DELIMITER, "Delimiter to be used.", (char**) &delimiter_str,
+  {"delimiter", OPT_DELIMITER, N_("Delimiter to be used."), (char**) &delimiter_str,
    (char**) &delimiter_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"execute", 'e', "Execute command and quit. (Disables --force and history file)", 0,
+  {"execute", 'e', N_("Execute command and quit. (Disables --force and history file)"), 0,
    0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"vertical", 'E', "Print the output of a query (rows) vertically.",
+  {"vertical", 'E', N_("Print the output of a query (rows) vertically."),
    (char**) &vertical, (char**) &vertical, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0,
    0},
-  {"force", 'f', "Continue even if we get an sql error.",
+  {"force", 'f', N_("Continue even if we get an sql error."),
    (char**) &ignore_errors, (char**) &ignore_errors, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
   {"named-commands", 'G',
-   "Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default.",
+   N_("Enable named commands. Named commands mean this program's internal commands; see drizzle> help . When enabled, the named commands can be used from any line of the query, otherwise only from the first line, before an enter. Disable with --disable-named-commands. This option is disabled by default."),
    (char**) &named_cmds, (char**) &named_cmds, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"no-named-commands", 'g',
-   "Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead.",
+   N_("Named commands are disabled. Use \\* form only, or use named commands only in the beginning of a line ending with a semicolon (;) Since version 10.9 the client now starts with this option ENABLED by default! Disable with '-G'. Long format commands still work from the first line. WARNING: option deprecated; use --disable-named-commands instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"ignore-spaces", 'i', "Ignore space after function names.", 0, 0, 0,
+  {"ignore-spaces", 'i', N_("Ignore space after function names."), 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"local-infile", OPT_LOCAL_INFILE, "Enable/disable LOAD DATA LOCAL INFILE.",
+  {"local-infile", OPT_LOCAL_INFILE, N_("Enable/disable LOAD DATA LOCAL INFILE."),
    (char**) &opt_local_infile,
    (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"no-beep", 'b', "Turn off beep on error.", (char**) &opt_nobeep,
+  {"no-beep", 'b', N_("Turn off beep on error."), (char**) &opt_nobeep,
    (char**) &opt_nobeep, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"host", 'h', "Connect to host.", (char**) &current_host,
+  {"host", 'h', N_("Connect to host."), (char**) &current_host,
    (char**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"html", 'H', "Produce HTML output.", (char**) &opt_html, (char**) &opt_html,
+  {"html", 'H', N_("Produce HTML output."), (char**) &opt_html, (char**) &opt_html,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"xml", 'X', "Produce XML output", (char**) &opt_xml, (char**) &opt_xml, 0,
+  {"xml", 'X', N_("Produce XML output"), (char**) &opt_xml, (char**) &opt_xml, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"line-numbers", OPT_LINE_NUMBERS, "Write line numbers for errors.",
+  {"line-numbers", OPT_LINE_NUMBERS, N_("Write line numbers for errors."),
    (char**) &line_numbers, (char**) &line_numbers, 0, GET_BOOL,
    NO_ARG, 1, 0, 0, 0, 0, 0},
-  {"skip-line-numbers", 'L', "Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead.", 0, 0, 0, GET_NO_ARG,
+  {"skip-line-numbers", 'L', N_("Don't write line number for errors. WARNING: -L is deprecated, use long version of this option instead."), 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"unbuffered", 'n', "Flush buffer after each query.", (char**) &unbuffered,
+  {"unbuffered", 'n', N_("Flush buffer after each query."), (char**) &unbuffered,
    (char**) &unbuffered, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"column-names", OPT_COLUMN_NAMES, "Write column names in results.",
+  {"column-names", OPT_COLUMN_NAMES, N_("Write column names in results."),
    (char**) &column_names, (char**) &column_names, 0, GET_BOOL,
    NO_ARG, 1, 0, 0, 0, 0, 0},
   {"skip-column-names", 'N',
-   "Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead.",
+   N_("Don't write column names in results. WARNING: -N is deprecated, use long version of this options instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"set-variable", 'O',
-   "Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value.",
+   N_("Change the value of a variable. Please note that this option is deprecated; you can set variables directly with --variable-name=value."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"sigint-ignore", OPT_SIGINT_IGNORE, "Ignore SIGINT (CTRL-C)",
+  {"sigint-ignore", OPT_SIGINT_IGNORE, N_("Ignore SIGINT (CTRL-C)"),
    (char**) &opt_sigint_ignore,  (char**) &opt_sigint_ignore, 0, GET_BOOL,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"one-database", 'o',
-   "Only update the default database. This is useful for skipping updates to other database in the update log.",
+   N_("Only update the default database. This is useful for skipping updates to other database in the update log."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"pager", OPT_PAGER,
-   "Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default.",
+   N_("Pager to use to display results. If you don't supply an option the default pager is taken from your ENV variable PAGER. Valid pagers are less, more, cat [> filename], etc. See interactive help (\\h) also. This option does not work in batch mode. Disable with --disable-pager. This option is disabled by default."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"no-pager", OPT_NOPAGER,
-   "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead.",
+   N_("Disable pager and print to stdout. See interactive help (\\h) also. WARNING: option deprecated; use --disable-pager instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"password", 'p',
-   "Password to use when connecting to server. If password is not given it's asked from the tty.",
+   N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $MYSQL_TCP_PORT, "
+  {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, my.cnf, $MYSQL_TCP_PORT, ")
 #if MYSQL_PORT_DEFAULT == 0
    "/etc/services, "
 #endif
-   "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
+   N_("built-in default") " (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &opt_drizzle_port,
    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
-  {"prompt", OPT_PROMPT, "Set the drizzle prompt to this value.",
+  {"prompt", OPT_PROMPT, N_("Set the drizzle prompt to this value."),
    (char**) &current_prompt, (char**) &current_prompt, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
+  {"protocol", OPT_DRIZZLE_PROTOCOL, N_("The protocol of connection (tcp,socket,pipe,memory)."),
    0, 0, 0, GET_STR,  REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"quick", 'q',
-   "Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file.",
+   N_("Don't cache result, print it row by row. This may slow down the server if the output is suspended. Doesn't use history file."),
    (char**) &quick, (char**) &quick, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"raw", 'r', "Write fields without conversion. Used with --batch.",
+  {"raw", 'r', N_("Write fields without conversion. Used with --batch."),
    (char**) &opt_raw_data, (char**) &opt_raw_data, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"reconnect", OPT_RECONNECT, "Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default.",
+  {"reconnect", OPT_RECONNECT, N_("Reconnect if the connection is lost. Disable with --disable-reconnect. This option is enabled by default."),
    (char**) &opt_reconnect, (char**) &opt_reconnect, 0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
-  {"silent", 's', "Be more silent. Print results with a tab as separator, each row on new line.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
+  {"silent", 's', N_("Be more silent. Print results with a tab as separator, each row on new line."), 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0,
    0, 0},
-  {"socket", 'S', "Socket file to use for connection.",
+  {"socket", 'S', N_("Socket file to use for connection."),
    (char**) &opt_drizzle_unix_port, (char**) &opt_drizzle_unix_port, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"table", 't', "Output in table format.", (char**) &output_tables,
+  {"table", 't', N_("Output in table format."), (char**) &output_tables,
    (char**) &output_tables, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"tee", OPT_TEE,
-   "Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default.",
+   N_("Append everything into outfile. See interactive help (\\h) also. Does not work in batch mode. Disable with --disable-tee. This option is disabled by default."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"no-tee", OPT_NOTEE, "Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead", 0, 0, 0, GET_NO_ARG,
+  {"no-tee", OPT_NOTEE, N_("Disable outfile. See interactive help (\\h) also. WARNING: option deprecated; use --disable-tee instead"), 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifndef DONT_ALLOW_USER_CHANGE
-  {"user", 'u', "User for login if not current user.", (char**) &current_user,
+  {"user", 'u', N_("User for login if not current user."), (char**) &current_user,
    (char**) &current_user, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #endif
-  {"safe-updates", 'U', "Only allow UPDATE and DELETE that uses keys.",
+  {"safe-updates", 'U', N_("Only allow UPDATE and DELETE that uses keys."),
    (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"i-am-a-dummy", 'U', "Synonym for option --safe-updates, -U.",
+  {"i-am-a-dummy", 'U', N_("Synonym for option --safe-updates, -U."),
    (char**) &safe_updates, (char**) &safe_updates, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"verbose", 'v', "Write more. (-v -v -v gives the table output format).", 0,
+  {"verbose", 'v', N_("Write more. (-v -v -v gives the table output format)."), 0,
    0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"version", 'V', "Output version information and exit.", 0, 0, 0,
+  {"version", 'V', N_("Output version information and exit."), 0, 0, 0,
    GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"wait", 'w', "Wait and retry if connection is down.", 0, 0, 0, GET_NO_ARG,
+  {"wait", 'w', N_("Wait and retry if connection is down."), 0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"connect_timeout", OPT_CONNECT_TIMEOUT,
-   "Number of seconds before connection timeout.",
+   N_("Number of seconds before connection timeout."),
    (char**) &opt_connect_timeout,
    (char**) &opt_connect_timeout, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 3600*12, 0,
    0, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
-   "Max packet length to send to, or receive from server",
+   N_("Max packet length to send to, or receive from server"),
    (char**) &opt_max_allowed_packet, (char**) &opt_max_allowed_packet, 0,
    GET_ULONG, REQUIRED_ARG, 16 *1024L*1024L, 4096,
    (int64_t) 2*1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
-   "Buffer for TCP/IP and socket communication",
+   N_("Buffer for TCP/IP and socket communication"),
    (char**) &opt_net_buffer_length, (char**) &opt_net_buffer_length, 0, GET_ULONG,
    REQUIRED_ARG, 16384, 1024, 512*1024*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"select_limit", OPT_SELECT_LIMIT,
-   "Automatic limit for SELECT when using --safe-updates",
+   N_("Automatic limit for SELECT when using --safe-updates"),
    (char**) &select_limit,
    (char**) &select_limit, 0, GET_ULONG, REQUIRED_ARG, 1000L, 1, ULONG_MAX,
    0, 1, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
-   "Automatic limit for rows in a join when using --safe-updates",
+   N_("Automatic limit for rows in a join when using --safe-updates"),
    (char**) &max_join_size,
    (char**) &max_join_size, 0, GET_ULONG, REQUIRED_ARG, 1000000L, 1, ULONG_MAX,
    0, 1, 0},
-  {"secure-auth", OPT_SECURE_AUTH, "Refuse client connecting to server if it"
-   " uses old (pre-4.1.1) protocol", (char**) &opt_secure_auth,
+  {"secure-auth", OPT_SECURE_AUTH, N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"), (char**) &opt_secure_auth,
    (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-arg", OPT_SERVER_ARG, "Send embedded server this as a parameter.",
+  {"server-arg", OPT_SERVER_ARG, N_("Send embedded server this as a parameter."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"show-warnings", OPT_SHOW_WARNINGS, "Show warnings after every statement.",
+  {"show-warnings", OPT_SHOW_WARNINGS, N_("Show warnings after every statement."),
    (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
   { 0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
@@ -1455,17 +1467,17 @@ static void usage(int version)
 {
   const char* readline= "readline";
 
-  printf("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n",
+  printf(_("%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"),
          my_progname, VER, MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE,
          readline, rl_library_version);
 
   if (version)
     return;
-  printf("\
-Copyright (C) 2000-2008 Drizzle AB\n                                      \
+  printf(_("\
+Copyright (C) 2000-2008 MySQL AB\n                                      \
 This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n \
-and you are welcome to modify and redistribute it under the GPL license\n");
-  printf("Usage: %s [OPTIONS] [database]\n", my_progname);
+and you are welcome to modify and redistribute it under the GPL license\n"));
+  printf(_("Usage: %s [OPTIONS] [database]\n"), my_progname);
   my_print_help(my_long_options);
   print_defaults("my", load_default_groups);
   my_print_variables(my_long_options);
@@ -1498,7 +1510,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       }
       else
       {
-        put_info("DELIMITER cannot contain a backslash character",
+        put_info(_("DELIMITER cannot contain a backslash character"),
                  INFO_ERROR,0,0);
         return 0;
       }
@@ -1519,7 +1531,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       init_tee(argument);
     break;
   case OPT_NOTEE:
-    printf("WARNING: option deprecated; use --disable-tee instead.\n");
+    printf(_("WARNING: option deprecated; use --disable-tee instead.\n"));
     if (opt_outfile)
       end_tee();
     break;
@@ -1542,15 +1554,11 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     }
     break;
   case OPT_NOPAGER:
-    printf("WARNING: option deprecated; use --disable-pager instead.\n");
+    printf(_("WARNING: option deprecated; use --disable-pager instead.\n"));
     opt_nopager= 1;
     break;
-  case OPT_DRIZZLE_PROTOCOL:
-    opt_protocol= find_type_or_exit(argument, &sql_protocol_typelib,
-                                    opt->name);
-    break;
   case OPT_SERVER_ARG:
-    printf("WARNING: --server-arg option not supported in this configuration.\n");
+    printf(_("WARNING: --server-arg option not supported in this configuration.\n"));
     break;
   case 'A':
     opt_rehash= 0;
@@ -1622,7 +1630,7 @@ static int get_options(int argc, char **argv)
 {
   char *tmp, *pagpoint;
   int ho_error;
-  DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
+  const DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
 
   tmp= (char *) getenv("MYSQL_HOST");
   if (tmp)
@@ -1921,7 +1929,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
       }
       else
       {
-        sprintf(buff,"Unknown command '\\%c'.",inchar);
+        sprintf(buff,_("Unknown command '\\%c'."),inchar);
         if (put_info(buff,INFO_ERROR,0,0) > 0)
           return(1);
         *out++='\\';
@@ -2351,9 +2359,9 @@ static void build_completion_hash(bool rehash, bool write_info)
     {
       if (drizzle_num_rows(tables) > 0 && !opt_silent && write_info)
       {
-        tee_fprintf(stdout, "\
+        tee_fprintf(stdout, _("\
 Reading table information for completion of table and column names\n    \
-You can turn off this feature to get a quicker startup with -A\n\n");
+You can turn off this feature to get a quicker startup with -A\n\n"));
       }
       while ((table_row=drizzle_fetch_row(tables)))
       {
@@ -2448,13 +2456,13 @@ static int reconnect(void)
   /* purecov: begin tested */
   if (opt_reconnect)
   {
-    put_info("No connection. Trying to reconnect...",INFO_INFO,0,0);
+    put_info(_("No connection. Trying to reconnect..."),INFO_INFO,0,0);
     (void) com_connect((DYNAMIC_STRING *) 0, 0);
     if (opt_rehash)
       com_rehash(NULL, NULL);
   }
   if (!connected)
-    return put_info("Can't connect to the server\n",INFO_ERROR,0,0);
+    return put_info(_("Can't connect to the server\n"),INFO_ERROR,0,0);
   /* purecov: end */
   return 0;
 }
@@ -2511,7 +2519,7 @@ static void print_help_item(DRIZZLE_ROW *cur, int num_name, int num_cat, char *l
   char ccat= (*cur)[num_cat][0];
   if (*last_char != ccat)
   {
-    put_info(ccat == 'Y' ? "categories:" : "topics:", INFO_INFO,0,0);
+    put_info(ccat == 'Y' ? _("categories:") : _("topics:"), INFO_INFO,0,0);
     *last_char= ccat;
   }
   tee_fprintf(PAGER, "   %s\n", (*cur)[num_name]);
@@ -2562,10 +2570,10 @@ static int com_server_help(DYNAMIC_STRING *buffer,
       }
 
       init_pager();
-      tee_fprintf(PAGER,   "Name: \'%s\'\n", cur[0]);
-      tee_fprintf(PAGER,   "Description:\n%s", cur[1]);
+      tee_fprintf(PAGER,   _("Name: \'%s\'\n"), cur[0]);
+      tee_fprintf(PAGER,   _("Description:\n%s"), cur[1]);
       if (cur[2] && *((char*)cur[2]))
-        tee_fprintf(PAGER, "Examples:\n%s", cur[2]);
+        tee_fprintf(PAGER, _("Examples:\n%s"), cur[2]);
       tee_fprintf(PAGER,   "\n");
       end_pager();
     }
@@ -2578,15 +2586,15 @@ static int com_server_help(DYNAMIC_STRING *buffer,
 
       if (num_fields == 2)
       {
-        put_info("Many help items for your request exist.", INFO_INFO,0,0);
-        put_info("To make a more specific request, please type 'help <item>',\nwhere <item> is one of the following", INFO_INFO,0,0);
+        put_info(_("Many help items for your request exist."), INFO_INFO,0,0);
+        put_info(_("To make a more specific request, please type 'help <item>',\nwhere <item> is one of the following"), INFO_INFO,0,0);
         num_name= 0;
         num_cat= 1;
       }
       else if ((cur= drizzle_fetch_row(result)))
       {
-        tee_fprintf(PAGER, "You asked for help about help category: \"%s\"\n", cur[0]);
-        put_info("For more information, type 'help <item>', where <item> is one of the following", INFO_INFO,0,0);
+        tee_fprintf(PAGER, _("You asked for help about help category: '%s'\n"), cur[0]);
+        put_info(_("For more information, type 'help <item>', where <item> is one of the following"), INFO_INFO,0,0);
         num_name= 1;
         num_cat= 2;
         print_help_item(&cur,1,2,&last_char);
@@ -2599,8 +2607,8 @@ static int com_server_help(DYNAMIC_STRING *buffer,
     }
     else
     {
-      put_info("\nNothing found", INFO_INFO,0,0);
-      put_info("Please try to run 'help contents' for a list of all accessible topics\n", INFO_INFO,0,0);
+      put_info(_("\nNothing found"), INFO_INFO,0,0);
+      put_info(_("Please try to run 'help contents' for a list of all accessible topics\n"), INFO_INFO,0,0);
     }
   }
 
@@ -2623,9 +2631,9 @@ com_help(DYNAMIC_STRING *buffer __attribute__((unused)),
       return com_server_help(buffer,line,help_arg);
   }
 
-  put_info("List of all Drizzle commands:", INFO_INFO,0,0);
+  put_info(_("List of all Drizzle commands:"), INFO_INFO,0,0);
   if (!named_cmds)
-    put_info("Note that all text commands must be first on line and end with ';'",INFO_INFO,0,0);
+    put_info(_("Note that all text commands must be first on line and end with ';'"),INFO_INFO,0,0);
   for (i = 0; commands[i].name; i++)
   {
     end= strmov(buff, commands[i].name);
@@ -2633,10 +2641,10 @@ com_help(DYNAMIC_STRING *buffer __attribute__((unused)),
       end= strmov(end, " ");
     if (commands[i].func)
       tee_fprintf(stdout, "%s(\\%c) %s\n", buff,
-                  commands[i].cmd_char, commands[i].doc);
+                  commands[i].cmd_char, _(commands[i].doc));
   }
   if (connected && drizzle_get_server_version(&drizzle) >= 40100)
-    put_info("\nFor server side help, type 'help contents'\n", INFO_INFO,0,0);
+    put_info(_("\nFor server side help, type 'help contents'\n"), INFO_INFO,0,0);
   return 0;
 }
 
@@ -2659,7 +2667,7 @@ com_charset(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
   param= get_arg(buff, 0);
   if (!param || !*param)
   {
-    return put_info("Usage: \\C char_setname | charset charset_name",
+    return put_info(_("Usage: \\C char_setname | charset charset_name"),
                     INFO_ERROR, 0, 0);
   }
   new_cs= get_charset_by_csname(param, MY_CS_PRIMARY, MYF(MY_WME));
@@ -2669,9 +2677,9 @@ com_charset(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
     drizzle_set_character_set(&drizzle, charset_info->csname);
     default_charset= (char *)charset_info->csname;
     default_charset_used= 1;
-    put_info("Charset changed", INFO_INFO,0,0);
+    put_info(_("Charset changed"), INFO_INFO,0,0);
   }
-  else put_info("Charset is not found", INFO_INFO,0,0);
+  else put_info(_("Charset is not found"), INFO_INFO,0,0);
   return 0;
 }
 
@@ -2702,7 +2710,7 @@ com_go(DYNAMIC_STRING *buffer,
     // Ignore empty quries
     if (status.batch)
       return 0;
-    return put_info("No query specified\n",INFO_ERROR,0,0);
+    return put_info(_("No query specified\n"),INFO_ERROR,0,0);
 
   }
   if (!connected && reconnect())
@@ -2717,7 +2725,7 @@ com_go(DYNAMIC_STRING *buffer,
   if (skip_updates &&
       ((buffer->length < 4) || !strncmp(buffer->str, "SET ", 4)))
   {
-    (void) put_info("Ignoring query to other database",INFO_INFO,0,0);
+    (void) put_info(_("Ignoring query to other database"),INFO_INFO,0,0);
     return 0;
   }
 
@@ -2766,7 +2774,7 @@ com_go(DYNAMIC_STRING *buffer,
     {
       if (!drizzle_num_rows(result) && ! quick && !column_types_flag)
       {
-        strmov(buff, "Empty set");
+        strmov(buff, _("Empty set"));
         if (opt_xml)
         {
           /*
@@ -2792,20 +2800,22 @@ com_go(DYNAMIC_STRING *buffer,
           print_tab_data(result);
         else
           print_table_data(result);
-        sprintf(buff,"%ld %s in set",
-                (long) drizzle_num_rows(result),
-                (long) drizzle_num_rows(result) == 1 ? "row" : "rows");
+        sprintf(buff,
+                ngettext("%ld row in set","%ld rows in set",
+                         (long) drizzle_num_rows(result)),
+                (long) drizzle_num_rows(result));
         end_pager();
         if (drizzle_errno(&drizzle))
           error= put_error(&drizzle);
       }
     }
     else if (drizzle_affected_rows(&drizzle) == ~(uint64_t) 0)
-      strmov(buff,"Query OK");
+      strmov(buff,_("Query OK"));
     else
-      sprintf(buff,"Query OK, %ld %s affected",
-              (long) drizzle_affected_rows(&drizzle),
-              (long) drizzle_affected_rows(&drizzle) == 1 ? "row" : "rows");
+      sprintf(buff, ngettext("Query OK, %ld row affected",
+                             "Query OK, %ld rows affected",
+                             (long) drizzle_affected_rows(&drizzle)),
+              (long) drizzle_affected_rows(&drizzle));
 
     pos=strend(buff);
     if ((warnings= drizzle_warning_count(&drizzle)))
@@ -2921,11 +2931,9 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_NULL:        return "NULL";
     case DRIZZLE_TYPE_SET:         return "SET";
     case DRIZZLE_TYPE_SHORT:       return "SHORT";
-    case DRIZZLE_TYPE_STRING:      return "STRING";
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";
     case DRIZZLE_TYPE_TINY:        return "TINY";
-    case DRIZZLE_TYPE_VAR_STRING:  return "VAR_STRING";
     default:                     return "?-unknown-?";
   }
 }
@@ -3232,7 +3240,7 @@ static void
 print_table_data_xml(DRIZZLE_RES *result)
 {
   DRIZZLE_ROW   cur;
-  DRIZZLE_FIELD *fields;
+  const DRIZZLE_FIELD *fields;
 
   drizzle_field_seek(result,0);
 
@@ -3906,8 +3914,7 @@ sql_connect(char *host,char *database,char *user,char *password,
     drizzle_options(&drizzle, DRIZZLE_SECURE_AUTH, (char *) &opt_secure_auth);
   if (using_opt_local_infile)
     drizzle_options(&drizzle,DRIZZLE_OPT_LOCAL_INFILE, (char*) &opt_local_infile);
-  if (opt_protocol)
-    drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
+  drizzle_options(&drizzle,DRIZZLE_OPT_PROTOCOL,(char*)&opt_protocol);
   if (safe_updates)
   {
     char init_command[100];
@@ -4172,7 +4179,7 @@ static void remove_cntrl(DYNAMIC_STRING *buffer)
   char *end= start + (buffer->length);
   while (start < end && !my_isgraph(charset_info,end[-1]))
     end--;
-  uint chars_to_truncate = end-start;
+  uint chars_to_truncate = (buffer->length) - (end-start);
   if (buffer->length > chars_to_truncate)
     dynstr_trunc(buffer, chars_to_truncate);
 }

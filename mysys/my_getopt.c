@@ -13,7 +13,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include <my_global.h>
+#include "mysys_priv.h"
+
 #include <mystrings/m_string.h>
 #include <stdlib.h>
 #include <my_sys.h>
@@ -1140,7 +1141,7 @@ void my_print_help(const struct my_option *options)
       putchar(' ');
     if (optp->comment && *optp->comment)
     {
-      const char *comment= optp->comment, *end= strend(comment);
+      const char *comment= gettext(optp->comment), *end= strend(comment);
 
       while ((uint) (end - comment) > comment_space)
       {
@@ -1160,7 +1161,7 @@ void my_print_help(const struct my_option *options)
     {
       if (optp->def_value != 0)
       {
-        printf("%*s(Defaults to on; use --skip-%s to disable.)\n", name_space, "", optp->name);
+        printf(gettext("%*s(Defaults to on; use --skip-%s to disable.)\n"), name_space, "", optp->name);
       }
     }
   }

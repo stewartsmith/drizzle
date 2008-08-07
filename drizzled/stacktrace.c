@@ -16,12 +16,11 @@
 /* Workaround for Bug#32082: VOID redefinition on Win results in compile errors*/
 #define DONT_DEFINE_VOID 1
 
-#include <my_global.h>
 #include "stacktrace.h"
 
 #include <signal.h>
 #include <mysys/my_pthread.h>
-#include <m_string.h>
+#include <mystrings/m_string.h>
 #ifdef HAVE_STACKTRACE
 #include <unistd.h>
 #include <strings.h>

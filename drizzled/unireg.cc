@@ -24,8 +24,8 @@
 */
 
 #include "mysql_priv.h"
-#include <m_ctype.h>
 #include <assert.h>
+#include <drizzled/drizzled_error_messages.h>
 
 #define FCOMP			17		/* Bytes for a packed field */
 
@@ -58,7 +58,7 @@ struct Pack_header_error_handler: public Internal_error_handler
 {
   virtual bool handle_error(uint sql_errno,
                             const char *message,
-                            MYSQL_ERROR::enum_warning_level level,
+                            DRIZZLE_ERROR::enum_warning_level level,
                             THD *thd);
   bool is_handled;
   Pack_header_error_handler() :is_handled(false) {}
@@ -69,7 +69,7 @@ bool
 Pack_header_error_handler::
 handle_error(uint sql_errno,
              const char * /* message */,
-             MYSQL_ERROR::enum_warning_level /* level */,
+             DRIZZLE_ERROR::enum_warning_level /* level */,
              THD * /* thd */)
 {
   is_handled= (sql_errno == ER_TOO_MANY_FIELDS);

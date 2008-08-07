@@ -15,7 +15,7 @@
 
 /* readline for batch mode */
 
-#include <my_global.h>
+#include "client_priv.h"
 #include <mysys/my_sys.h>
 #include <mystrings/m_string.h>
 #include "my_readline.h"

@@ -35,7 +35,6 @@
       if total-string-length >= length then dst[length] will be set to \0
 */
 
-#include <my_global.h>
 #include "m_string.h"
 #include <stdarg.h>
 
@@ -45,7 +44,7 @@ char *strxnmov(char *dst, size_t len, const char *src, ...)
   char *end_of_dst=dst+len;
 
   va_start(pvar,src);
-  while (src != NullS)
+  while (src != (char *)0)
   {
     do
     {

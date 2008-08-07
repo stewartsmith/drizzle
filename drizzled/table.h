@@ -229,6 +229,7 @@ typedef struct st_table_share
   key_map keys_for_keyread;
   ha_rows min_rows, max_rows;		/* create information */
   ulong   avg_row_length;		/* create information */
+  ulong   block_size;                   /* create information */
   ulong   version, mysql_version;
   ulong   timestamp_offset;		/* Set to offset+1 of record */
   ulong   reclength;			/* Recordlength */
@@ -261,7 +262,6 @@ typedef struct st_table_share
   uint db_create_options;		/* Create options from database */
   uint db_options_in_use;		/* Options in use */
   uint db_record_offset;		/* if HA_REC_IN_SEQ */
-  uint raid_type, raid_chunks;
   uint rowid_field_offset;		/* Field_nr +1 to rowid field */
   /* Index of auto-updated TIMESTAMP field in field array */
   uint primary_key;
@@ -273,7 +273,6 @@ typedef struct st_table_share
   uchar frm_version;
   bool null_field_first;
   bool system;                          /* Set if system table (one record) */
-  bool crypted;                         /* If .frm file is crypted */
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
   bool name_lock, replace_with_name_lock;
