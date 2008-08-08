@@ -147,8 +147,8 @@ static bool ignore_errors=0,quick=0,
   connected=0,opt_raw_data=0,unbuffered=0,output_tables=0,
   opt_rehash=1,skip_updates=0,safe_updates=0,one_database=0,
   opt_compress=0, using_opt_local_infile=0,
-  vertical=0, line_numbers=1, column_names=1,opt_html=0,
-  opt_xml=0,opt_nopager=1, opt_outfile=0, named_cmds= 0,
+  vertical=0, line_numbers=1, column_names=1,
+  opt_nopager=1, opt_outfile=0, named_cmds= 0,
   tty_password= 0, opt_nobeep=0, opt_reconnect=1,
   default_charset_used= 0, opt_secure_auth= 0,
   default_pager_set= 0, opt_sigint_ignore= 0,
@@ -176,13 +176,6 @@ static uint32_t select_limit;
 static uint32_t max_join_size;
 static ulong opt_connect_timeout= 0;
 static char drizzle_charsets_dir[FN_REFLEN+1];
-static const char *xmlmeta[] = {
-  "&", "&amp;",
-  "<", "&lt;",
-  ">", "&gt;",
-  "\"", "&quot;",
-  0, 0
-};
 // TODO: Need to i18n these
 static const char *day_names[]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 static const char *month_names[]={"Jan","Feb","Mar","Apr","May","Jun","Jul",
@@ -233,7 +226,6 @@ static int put_info(const char *str,INFO_TYPE info,uint error,
                     const char *sql_state);
 static int put_error(DRIZZLE *drizzle);
 static void safe_put_field(const char *pos,ulong length);
-static void xmlencode_print(const char *src, uint length);
 static void init_pager(void);
 static void end_pager(void);
 static void init_tee(const char *);
@@ -1014,8 +1006,6 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
                      bool *ml_comment);
 static void remove_cntrl(DYNAMIC_STRING *buffer);
 static void print_table_data(DRIZZLE_RES *result);
-static void print_table_data_html(DRIZZLE_RES *result);
-static void print_table_data_xml(DRIZZLE_RES *result);
 static void print_tab_data(DRIZZLE_RES *result);
 static void print_table_data_vertically(DRIZZLE_RES *result);
 static void print_warnings(void);
@@ -1141,7 +1131,7 @@ int main(int argc,char *argv[])
   dynstr_set(glob_buffer, NULL);
 
   initialize_readline(my_progname);
-  if (!status.batch && !quick && !opt_html && !opt_xml)
+  if (!status.batch && !quick)
   {
     /* read-history from file, default ~/.drizzle_history*/
     if (getenv("MYSQL_HISTFILE"))
@@ -1192,7 +1182,7 @@ int main(int argc,char *argv[])
 sig_handler drizzle_end(int sig)
 {
   drizzle_close(&drizzle);
-  if (!status.batch && !quick && !opt_html && !opt_xml && histfile)
+  if (!status.batch && !quick && histfile)
   {
     /* write-history */
     if (verbose)
@@ -1345,10 +1335,6 @@ static struct my_option my_long_options[] =
    (char**) &opt_nobeep, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"host", 'h', N_("Connect to host."), (char**) &current_host,
    (char**) &current_host, 0, GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"html", 'H', N_("Produce HTML output."), (char**) &opt_html, (char**) &opt_html,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"xml", 'X', N_("Produce XML output"), (char**) &opt_xml, (char**) &opt_xml, 0,
-   GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"line-numbers", OPT_LINE_NUMBERS, N_("Write line numbers for errors."),
    (char**) &line_numbers, (char**) &line_numbers, 0, GET_BOOL,
    NO_ARG, 1, 0, 0, 0, 0, 0},
@@ -2773,26 +2759,12 @@ com_go(DYNAMIC_STRING *buffer,
       if (!drizzle_num_rows(result) && ! quick && !column_types_flag)
       {
         strmov(buff, _("Empty set"));
-        if (opt_xml)
-        {
-          /*
-            We must print XML header and footer
-            to produce a well-formed XML even if
-            the result set is empty (Bug#27608).
-          */
-          init_pager();
-          print_table_data_xml(result);
-          end_pager();
-        }
       }
       else
       {
         init_pager();
-        if (opt_html)
-          print_table_data_html(result);
-        else if (opt_xml)
-          print_table_data_xml(result);
-        else if (vertical || (auto_vertical_output && (terminal_width < get_result_width(result))))
+        if (vertical || (auto_vertical_output &&
+                         (terminal_width < get_result_width(result))))
           print_table_data_vertically(result);
         else if (opt_silent && verbose <= 2 && !output_tables)
           print_tab_data(result);
@@ -3199,81 +3171,6 @@ tee_print_sized_data(const char *data, unsigned int data_length, unsigned int to
 
 
 static void
-print_table_data_html(DRIZZLE_RES *result)
-{
-  DRIZZLE_ROW  cur;
-  DRIZZLE_FIELD  *field;
-
-  drizzle_field_seek(result,0);
-  (void) tee_fputs("<TABLE BORDER=1><TR>", PAGER);
-  if (column_names)
-  {
-    while((field = drizzle_fetch_field(result)))
-    {
-      tee_fprintf(PAGER, "<TH>%s</TH>", (field->name ?
-                                         (field->name[0] ? field->name :
-                                          " &nbsp; ") : "NULL"));
-    }
-    (void) tee_fputs("</TR>", PAGER);
-  }
-  while ((cur = drizzle_fetch_row(result)))
-  {
-    if (interrupted_query)
-      break;
-    uint32_t *lengths=drizzle_fetch_lengths(result);
-    (void) tee_fputs("<TR>", PAGER);
-    for (uint32_t i= 0; i < drizzle_num_fields(result); i++)
-    {
-      (void) tee_fputs("<TD>", PAGER);
-      safe_put_field(cur[i],lengths[i]);
-      (void) tee_fputs("</TD>", PAGER);
-    }
-    (void) tee_fputs("</TR>", PAGER);
-  }
-  (void) tee_fputs("</TABLE>", PAGER);
-}
-
-
-static void
-print_table_data_xml(DRIZZLE_RES *result)
-{
-  DRIZZLE_ROW   cur;
-  const DRIZZLE_FIELD *fields;
-
-  drizzle_field_seek(result,0);
-
-  tee_fputs("<?xml version=\"1.0\"?>\n\n<resultset statement=\"", PAGER);
-  xmlencode_print(glob_buffer->str, glob_buffer->length);
-  tee_fputs("\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
-            PAGER);
-
-  fields = drizzle_fetch_fields(result);
-  while ((cur = drizzle_fetch_row(result)))
-  {
-    if (interrupted_query)
-      break;
-    uint32_t *lengths=drizzle_fetch_lengths(result);
-    (void) tee_fputs("\n  <row>\n", PAGER);
-    for (uint i=0; i < drizzle_num_fields(result); i++)
-    {
-      tee_fprintf(PAGER, "\t<field name=\"");
-      xmlencode_print(fields[i].name, (uint) strlen(fields[i].name));
-      if (cur[i])
-      {
-        tee_fprintf(PAGER, "\">");
-        xmlencode_print(cur[i], lengths[i]);
-        tee_fprintf(PAGER, "</field>\n");
-      }
-      else
-        tee_fprintf(PAGER, "\" xsi:nil=\"true\" />\n");
-    }
-    (void) tee_fputs("  </row>\n", PAGER);
-  }
-  (void) tee_fputs("</resultset>\n", PAGER);
-}
-
-
-static void
 print_table_data_vertically(DRIZZLE_RES *result)
 {
   DRIZZLE_ROW  cur;
@@ -3348,34 +3245,6 @@ static void print_warnings()
 
 end:
   drizzle_free_result(result);
-}
-
-
-static const char *array_value(const char **array, char key)
-{
-  for (; *array; array+= 2)
-    if (**array == key)
-      return array[1];
-  return 0;
-}
-
-
-static void
-xmlencode_print(const char *src, uint length)
-{
-  if (!src)
-    tee_fputs("NULL", PAGER);
-  else
-  {
-    for (const char *p = src; *p && length; length--)
-    {
-      const char *t;
-      if ((t = array_value(xmlmeta, *p++)))
-        tee_fputs(t, PAGER);
-      else
-        tee_putc(*p, PAGER);
-    }
-  }
 }
 
 
