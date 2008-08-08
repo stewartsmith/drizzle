@@ -169,7 +169,7 @@ static int wait_for_data(int fd, int32_t timeout)
     errno= EINTR;
     return -1;
   }
-  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)))
+  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)) || (ufds.revents & POLLHUP))
     return -1;
   return 0;
 }
@@ -1270,6 +1270,11 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype= SOCK_STREAM;
+    /* OSX 10.5 was failing unless defined only as support IPV4 */
+#ifdef TARGET_OS_OSX
+    hints.ai_family= AF_INET;
+#endif
+
 
     snprintf(port_buf, NI_MAXSERV, "%d", port);
     gai_errno= getaddrinfo(host, port_buf, &hints, &res_lst);
