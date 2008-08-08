@@ -437,10 +437,6 @@ void my_net_set_write_timeout(NET *net, uint timeout);
 void my_net_set_read_timeout(NET *net, uint timeout);
 #endif
 
-struct sockaddr;
-int my_connect(int s, const struct sockaddr *name, unsigned int namelen,
-               unsigned int timeout);
-
 struct rand_struct {
   unsigned long seed1,seed2,max_value;
   double max_value_dbl;
