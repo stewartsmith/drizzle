@@ -136,7 +136,7 @@ bool net_realloc(NET *net, size_t length)
     -1   Don't know if data is ready or not
 */
 
-static int net_data_is_ready(my_socket sd)
+static int net_data_is_ready(int sd)
 {
   struct pollfd ufds;
   int res;

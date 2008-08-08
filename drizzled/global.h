@@ -388,10 +388,6 @@ extern char _dig_vec_lower[];
 /* Some types that is different between systems */
 
 typedef int	File;		/* File descriptor */
-#ifndef Socket_defined
-typedef int	my_socket;	/* File descriptor for sockets */
-#define INVALID_SOCKET -1
-#endif
 /* Type for fuctions that handles signals */
 #define sig_handler RETSIGTYPE
 C_MODE_START

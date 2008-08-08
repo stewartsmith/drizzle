@@ -21,6 +21,7 @@
 */
 
 #include "vio_priv.h"
+#include <sys/socket.h>
 
 int vio_errno(Vio *vio __attribute__((unused)))
 {
@@ -209,7 +210,7 @@ enum enum_vio_type vio_type(Vio* vio)
   return vio->type;
 }
 
-my_socket vio_fd(Vio* vio)
+int vio_fd(Vio* vio)
 {
   return vio->sd;
 }
@@ -243,7 +244,7 @@ bool vio_peer_addr(Vio *vio, char *buf, uint16_t *port, size_t buflen)
 
 /* Return 0 if there is data to be read */
 
-bool vio_poll_read(Vio *vio,uint timeout)
+bool vio_poll_read(Vio *vio, int32_t timeout)
 {
   struct pollfd fds;
   int res;
@@ -270,21 +271,23 @@ bool vio_peek_read(Vio *vio, uint32_t *bytes)
   return false;
 }
 
-void vio_timeout(Vio *vio, uint which, uint timeout)
+void vio_timeout(Vio *vio, bool is_sndtimeo, int32_t timeout)
 {
-  int r;
+  int error;
 
   /* POSIX specifies time as struct timeval. */
   struct timeval wait_timeout;
   wait_timeout.tv_sec= timeout;
   wait_timeout.tv_usec= 0;
 
-  r= setsockopt(vio->sd, SOL_SOCKET, which ? SO_SNDTIMEO : SO_RCVTIMEO,
-                IF_WIN(const char*, const void*)&wait_timeout,
-                sizeof(wait_timeout));
-  if (r != 0)
+  assert(timeout >= 0 && timeout <= INT32_MAX);
+  assert(vio->sd != -1);
+  error= setsockopt(vio->sd, SOL_SOCKET, is_sndtimeo ? SO_SNDTIMEO : SO_RCVTIMEO,
+                    &wait_timeout,
+                    (socklen_t)sizeof(struct timeval));
+  if (error != 0)
   {
     perror("setsockopt");
-    assert(r == 0);
+    assert(error == 0);
   }
 }

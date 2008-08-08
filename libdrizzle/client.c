@@ -99,7 +99,7 @@ static bool org_my_init_done= false;
 static void drizzle_close_free_options(DRIZZLE *drizzle);
 static void drizzle_close_free(DRIZZLE *drizzle);
 
-static int wait_for_data(my_socket fd, uint timeout);
+static int wait_for_data(int fd, uint timeout);
 
 CHARSET_INFO *default_client_charset_info = &my_charset_latin1;
 
@@ -116,7 +116,7 @@ char drizzle_server_last_error[DRIZZLE_ERRMSG_SIZE];
   Base version coded by Steve Bernacki, Jr. <steve@navinet.net>
 *****************************************************************************/
 
-int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
+int my_connect(int fd, const struct sockaddr *name, uint namelen,
          uint timeout)
 {
   int flags, res, s_err;
@@ -155,7 +155,7 @@ int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
   If not, we will use select()
 */
 
-static int wait_for_data(my_socket fd, uint timeout)
+static int wait_for_data(int fd, uint timeout)
 {
 #ifdef HAVE_POLL
   struct pollfd ufds;
@@ -1342,7 +1342,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype= SOCK_STREAM;
     hints.ai_protocol= IPPROTO_TCP;
-    hints.ai_family= AF_UNSPEC;
+    //hints.ai_family= AF_INET;
 
     snprintf(port_buf, NI_MAXSERV, "%d", port);
     gai_errno= getaddrinfo(host, port_buf, &hints, &res_lst);
@@ -1358,7 +1358,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     /* We only look at the first item (something to think about changing in the future) */
     t_res= res_lst;
     {
-      my_socket sock= socket(t_res->ai_family, t_res->ai_socktype,
+      int sock= socket(t_res->ai_family, t_res->ai_socktype,
                              t_res->ai_protocol);
       if (sock == SOCKET_ERROR)
       {
