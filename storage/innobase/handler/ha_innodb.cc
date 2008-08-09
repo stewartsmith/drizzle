@@ -120,7 +120,7 @@ values */
 
 static ulong	innobase_fast_shutdown			= 1;
 #ifdef UNIV_LOG_ARCHIVE
-static my_bool	innobase_log_archive			= FALSE;
+static bool	innobase_log_archive			= FALSE;
 static char*	innobase_log_arch_dir			= NULL;
 #endif /* UNIV_LOG_ARCHIVE */
 static bool	innobase_use_doublewrite		= TRUE;
@@ -145,7 +145,7 @@ static ulong	innobase_active_counter	= 0;
 static HASH	innobase_open_tables;
 
 static uchar* innobase_get_key(INNOBASE_SHARE *share, size_t *length,
-	my_bool not_used __attribute__((unused)));
+                               bool not_used __attribute__((unused)));
 static INNOBASE_SHARE *get_share(const char *table_name);
 static void free_share(INNOBASE_SHARE *share);
 static int innobase_close_connection(handlerton *hton, THD* thd);
@@ -4988,8 +4988,8 @@ Discards or imports an InnoDB tablespace. */
 int
 ha_innobase::discard_or_import_tablespace(
 /*======================================*/
-				/* out: 0 == success, -1 == error */
-	my_bool discard)	/* in: TRUE if discard, else import */
+                                          /* out: 0 == success, -1 == error */
+                                          bool discard)	/* in: TRUE if discard, else import */
 {
 	dict_table_t*	dict_table;
 	trx_t*		trx;
@@ -6762,7 +6762,7 @@ bool innobase_show_status(handlerton *hton, THD* thd,
 ****************************************************************************/
 
 static uchar* innobase_get_key(INNOBASE_SHARE* share, size_t *length,
-	my_bool not_used __attribute__((unused)))
+                               bool not_used __attribute__((unused)))
 {
 	*length=share->table_name_length;
 
