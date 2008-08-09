@@ -524,11 +524,9 @@ extern my_off_t my_seek(File fd,my_off_t pos,int whence,myf MyFlags);
 extern my_off_t my_tell(File fd,myf MyFlags);
 extern size_t my_write(File Filedes,const uchar *Buffer,size_t Count,
 		     myf MyFlags);
-extern size_t my_fread(FILE *stream,uchar *Buffer,size_t Count,myf MyFlags);
 extern size_t my_fwrite(FILE *stream,const uchar *Buffer,size_t Count,
 		      myf MyFlags);
 extern my_off_t my_fseek(FILE *stream,my_off_t pos,int whence,myf MyFlags);
-extern my_off_t my_ftell(FILE *stream,myf MyFlags);
 extern void *_mymalloc(size_t uSize,const char *sFile,
                        uint uLine, myf MyFlag);
 extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
@@ -555,7 +553,6 @@ extern void TERMINATE(FILE *file, uint flag);
 #endif
 extern void init_glob_errs(void);
 extern FILE *my_fopen(const char *FileName,int Flags,myf MyFlags);
-extern FILE *my_fdopen(File Filedes,const char *name, int Flags,myf MyFlags);
 extern int my_fclose(FILE *fd,myf MyFlags);
 extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
