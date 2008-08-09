@@ -136,7 +136,7 @@ bool net_realloc(NET *net, size_t length)
     -1   Don't know if data is ready or not
 */
 
-static int net_data_is_ready(int sd)
+static bool net_data_is_ready(int sd)
 {
   struct pollfd ufds;
   int res;
@@ -170,16 +170,13 @@ static int net_data_is_ready(int sd)
 
 void net_clear(NET *net, bool clear_buffer)
 {
-  size_t count;
-  int32_t ready;
-
   if (clear_buffer)
   {
-    while ((ready= net_data_is_ready(net->vio->sd)) > 0)
+    while (net_data_is_ready(net->vio->sd) > 0)
     {
       /* The socket is ready */
-      if ((long) (count= vio_read(net->vio, net->buff,
-                                  (size_t) net->max_packet)) <= 0)
+      if (vio_read(net->vio, net->buff,
+                                  (size_t) net->max_packet) <= 0)
       {
         net->error= 2;
         break;
@@ -423,7 +420,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   {
     size_t complen;
     uchar *b;
-    uint header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
+    const uint header_length=NET_HEADER_SIZE+COMP_HEADER_SIZE;
     if (!(b= (uchar*) my_malloc(len + NET_HEADER_SIZE +
                                 COMP_HEADER_SIZE, MYF(MY_WME))))
     {
@@ -473,7 +470,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   {
     if ((long) (length= vio_write(net->vio,pos,(size_t) (end-pos))) <= 0)
     {
-      bool interrupted= vio_should_retry(net->vio);
+      const bool interrupted= vio_should_retry(net->vio);
       /* 
         If we read 0, or we were interrupted this means that 
         we need to switch to blocking mode and wait until the timeout 
@@ -585,7 +582,7 @@ my_real_read(NET *net, size_t *complen)
       /* First read is done with non blocking mode */
       if ((long) (length= vio_read(net->vio, pos, remain)) <= 0L)
       {
-        bool interrupted = vio_should_retry(net->vio);
+        const bool interrupted = vio_should_retry(net->vio);
 
         if (interrupted)
         {					/* Probably in MIT threads */

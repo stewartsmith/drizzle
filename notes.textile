@@ -2,3 +2,10 @@ h1. Andy's notes
 
 All the functions in mystrings/ do this little "increment in the
 loop and then decrement on the way out."  That's just silly.
+
+Move my_compress() into libdrizzle/net_serv.c and throw away my_uncompress.
+
+The const uchar *packet into net_real_write() is wrong.  We free
+the packet, so it is not const.
+
+Work on getting ccache running.
