@@ -1038,7 +1038,7 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([strtoll strstr strtoull stpcpy stpncpy getpagesize strnlen])
+AC_REPLACE_FUNCS([strtoll strstr strtoull stpcpy stpncpy getpagesize])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
