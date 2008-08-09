@@ -1041,13 +1041,13 @@ int main(int argc,char *argv[])
   prompt_counter=0;
 
   outfile[0]=0;      // no (default) outfile
-  strmov(pager, "stdout");  // the default, if --pager wasn't given
+  stpcpy(pager, "stdout");  // the default, if --pager wasn't given
   {
     char *tmp=getenv("PAGER");
     if (tmp && strlen(tmp))
     {
       default_pager_set= 1;
-      strmov(default_pager, tmp);
+      stpcpy(default_pager, tmp);
     }
   }
   if (!isatty(0) || !isatty(1))
@@ -1476,7 +1476,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
   case OPT_DELIMITER:
     if (argument == disabled_my_option)
     {
-      strmov(delimiter, DEFAULT_DELIMITER);
+      stpcpy(delimiter, DEFAULT_DELIMITER);
     }
     else
     {
@@ -1522,10 +1522,10 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       {
         default_pager_set= 1;
         strmake(pager, argument, sizeof(pager) - 1);
-        strmov(default_pager, pager);
+        stpcpy(default_pager, pager);
       }
       else if (default_pager_set)
-        strmov(pager, default_pager);
+        stpcpy(pager, default_pager);
       else
         opt_nopager= 1;
     }
@@ -1616,12 +1616,12 @@ static int get_options(int argc, char **argv)
   pagpoint= getenv("PAGER");
   if (!((char*) (pagpoint)))
   {
-    strmov(pager, "stdout");
+    stpcpy(pager, "stdout");
     opt_nopager= 1;
   }
   else
-    strmov(pager, pagpoint);
-  strmov(default_pager, pager);
+    stpcpy(pager, pagpoint);
+  stpcpy(default_pager, pager);
 
   opt_max_allowed_packet= *drizzle_params->p_max_allowed_packet;
   opt_net_buffer_length= *drizzle_params->p_net_buffer_length;
@@ -1634,8 +1634,8 @@ static int get_options(int argc, char **argv)
 
   if (status.batch) /* disable pager and outfile in this case */
   {
-    strmov(default_pager, "stdout");
-    strmov(pager, "stdout");
+    stpcpy(default_pager, "stdout");
+    stpcpy(pager, "stdout");
     opt_nopager= 1;
     default_pager_set= 0;
     opt_outfile= 0;
@@ -2613,9 +2613,9 @@ com_help(DYNAMIC_STRING *buffer __attribute__((unused)),
     put_info(_("Note that all text commands must be first on line and end with ';'"),INFO_INFO,0,0);
   for (i = 0; commands[i].name; i++)
   {
-    end= strmov(buff, commands[i].name);
+    end= stpcpy(buff, commands[i].name);
     for (j= (int)strlen(commands[i].name); j < 10; j++)
-      end= strmov(end, " ");
+      end= stpcpy(end, " ");
     if (commands[i].func)
       tee_fprintf(stdout, "%s(\\%c) %s\n", buff,
                   commands[i].cmd_char, _(commands[i].doc));
@@ -2751,7 +2751,7 @@ com_go(DYNAMIC_STRING *buffer,
     {
       if (!drizzle_num_rows(result) && ! quick && !column_types_flag)
       {
-        strmov(buff, _("Empty set"));
+        stpcpy(buff, _("Empty set"));
       }
       else
       {
@@ -2773,7 +2773,7 @@ com_go(DYNAMIC_STRING *buffer,
       }
     }
     else if (drizzle_affected_rows(&drizzle) == ~(uint64_t) 0)
-      strmov(buff,_("Query OK"));
+      stpcpy(buff,_("Query OK"));
     else
       sprintf(buff, ngettext("Query OK, %ld row affected",
                              "Query OK, %ld rows affected",
@@ -2786,11 +2786,11 @@ com_go(DYNAMIC_STRING *buffer,
       *pos++= ',';
       *pos++= ' ';
       pos=int10_to_str(warnings, pos, 10);
-      pos=strmov(pos, " warning");
+      pos=stpcpy(pos, " warning");
       if (warnings != 1)
         *pos++= 's';
     }
-    strmov(pos, time_buff);
+    stpcpy(pos, time_buff);
     put_info(buff,INFO_RESULT,0,0);
     if (drizzle_info(&drizzle))
       put_info(drizzle_info(&drizzle),INFO_RESULT,0,0);
@@ -2906,7 +2906,7 @@ static char *fieldflags2str(uint f) {
   char *s=buf;
   *s=0;
 #define ff2s_check_flag(X)                                              \
-  if (f & X ## _FLAG) { s=strmov(s, # X " "); f &= ~ X ## _FLAG; }
+  if (f & X ## _FLAG) { s=stpcpy(s, # X " "); f &= ~ X ## _FLAG; }
   ff2s_check_flag(NOT_NULL);
   ff2s_check_flag(PRI_KEY);
   ff2s_check_flag(UNIQUE_KEY);
@@ -3389,11 +3389,11 @@ com_pager(DYNAMIC_STRING *buffer __attribute__((unused)),
     {
       tee_fprintf(stdout, "Default pager wasn't set, using stdout.\n");
       opt_nopager=1;
-      strmov(pager, "stdout");
+      stpcpy(pager, "stdout");
       PAGER= stdout;
       return 0;
     }
-    strmov(pager, default_pager);
+    stpcpy(pager, default_pager);
   }
   else
   {
@@ -3402,8 +3402,8 @@ com_pager(DYNAMIC_STRING *buffer __attribute__((unused)),
                                 my_iscntrl(charset_info,end[-1])))
       end--;
     end[0]=0;
-    strmov(pager, pager_name);
-    strmov(default_pager, pager_name);
+    stpcpy(pager, pager_name);
+    stpcpy(default_pager, pager_name);
   }
   opt_nopager=0;
   tee_fprintf(stdout, "PAGER set to '%s'\n", pager);
@@ -3415,7 +3415,7 @@ static int
 com_nopager(DYNAMIC_STRING *buffer __attribute__((unused)),
             char *line __attribute__((unused)))
 {
-  strmov(pager, "stdout");
+  stpcpy(pager, "stdout");
   opt_nopager=1;
   PAGER= stdout;
   tee_fprintf(stdout, "PAGER set to stdout\n");
@@ -3739,7 +3739,7 @@ char *get_arg(char *line, bool get_next_arg)
     if (*ptr == '\\' && ptr[1]) // escaped character
     {
       // Remove the backslash
-      strmov(ptr, ptr+1);
+      stpcpy(ptr, ptr+1);
     }
     else if ((!quoted && *ptr == ' ') || (quoted && *ptr == qtype))
     {
@@ -3931,7 +3931,7 @@ server_version_string(DRIZZLE *con)
     char *bufp = buf;
     DRIZZLE_RES *result;
 
-    bufp= strnmov(buf, drizzle_get_server_info(con), sizeof buf);
+    bufp= stpncpy(buf, drizzle_get_server_info(con), sizeof buf);
 
     /* "limit 1" is protection against SQL_SELECT_LIMIT=0 */
     if (!drizzle_query(con, "select @@version_comment limit 1") &&
@@ -4115,21 +4115,21 @@ static void nice_time(double sec,char *buff,bool part_second)
     tmp=(ulong) floor(sec/(3600.0*24));
     sec-=3600.0*24*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
-    buff=strmov(buff,tmp > 1 ? " days " : " day ");
+    buff=stpcpy(buff,tmp > 1 ? " days " : " day ");
   }
   if (sec >= 3600.0)
   {
     tmp=(ulong) floor(sec/3600.0);
     sec-=3600.0*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
-    buff=strmov(buff,tmp > 1 ? " hours " : " hour ");
+    buff=stpcpy(buff,tmp > 1 ? " hours " : " hour ");
   }
   if (sec >= 60.0)
   {
     tmp=(ulong) floor(sec/60.0);
     sec-=60.0*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
-    buff=strmov(buff," min ");
+    buff=stpcpy(buff," min ");
   }
   if (part_second)
     sprintf(buff,"%.2f sec",sec);
@@ -4150,7 +4150,7 @@ static void drizzle_end_timer(ulong start_time,char *buff)
   buff[0]=' ';
   buff[1]='(';
   end_timer(start_time,buff+2);
-  strmov(strend(buff),")");
+  stpcpy(strend(buff),")");
 }
 
 static const char * construct_prompt()

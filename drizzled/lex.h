@@ -509,7 +509,6 @@ static SYMBOL symbols[] = {
   { "WRAPPER",		SYM(WRAPPER_SYM)},
   { "WRITE",		SYM(WRITE_SYM)},
   { "XOR",		SYM(XOR)},
-  { "XML",              SYM(XML_SYM)}, /* LOAD XML Arnold/Erik */
   { "YEAR",		SYM(YEAR_SYM)},
   { "YEAR_MONTH",	SYM(YEAR_MONTH_SYM)},
 };

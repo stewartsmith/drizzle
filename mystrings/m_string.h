@@ -57,20 +57,8 @@ extern "C" {
 extern void *(*my_str_malloc)(size_t);
 extern void (*my_str_free)(void *);
 
-#define strmov(A,B) stpcpy((A),(B))
-#define strnmov(A,B,C) stpncpy((A),(B),(C))
-
 #define strmov_overlapp(A,B) stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
-
-#if (!defined(USE_BMOVE512) || defined(HAVE_purify)) && !defined(bmove512)
-#define bmove512(A,B,C) memcpy(A,B,C)
-#endif
-
-	/* Prototypes for string functions */
-#ifndef bmove512
-extern void bmove512(unsigned char *dst,const unsigned char *src,size_t len);
-#endif
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 

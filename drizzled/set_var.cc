@@ -1395,7 +1395,7 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
   {
     if (!(res= var->value->val_str(&str)))
     {
-      strmov(buff, "NULL");
+      stpcpy(buff, "NULL");
       goto err;
     }
 

@@ -2052,7 +2052,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   }
   else
   strmake(pidfile_name, glob_hostname, sizeof(pidfile_name)-5);
-  strmov(fn_ext(pidfile_name),".pid");		// Add proper extension
+  stpcpy(fn_ext(pidfile_name),".pid");		// Add proper extension
 
   /*
     Add server status variables to the dynamic list of
@@ -4240,7 +4240,7 @@ static void mysql_init_variables(void)
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   global_query_id= thread_id= 1L;
-  strmov(server_version, MYSQL_SERVER_VERSION);
+  stpcpy(server_version, MYSQL_SERVER_VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   threads.empty();
@@ -4766,7 +4766,7 @@ static void set_server_version(void)
   char *end= strxmov(server_version, MYSQL_SERVER_VERSION,
                      MYSQL_SERVER_SUFFIX_STR, NullS);
   if (opt_log || opt_slow_log || opt_bin_log)
-    strmov(end, "-log");                        // This may slow down system
+    stpcpy(end, "-log");                        // This may slow down system
 }
 
 

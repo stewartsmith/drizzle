@@ -599,18 +599,18 @@ static int handle_request_for_tables(char *tables, uint length)
   switch (what_to_do) {
   case DO_CHECK:
     op = "CHECK";
-    if (opt_quick)              end = strmov(end, " QUICK");
-    if (opt_fast)               end = strmov(end, " FAST");
-    if (opt_medium_check)       end = strmov(end, " MEDIUM"); /* Default */
-    if (opt_extended)           end = strmov(end, " EXTENDED");
-    if (opt_check_only_changed) end = strmov(end, " CHANGED");
-    if (opt_upgrade)            end = strmov(end, " FOR UPGRADE");
+    if (opt_quick)              end = stpcpy(end, " QUICK");
+    if (opt_fast)               end = stpcpy(end, " FAST");
+    if (opt_medium_check)       end = stpcpy(end, " MEDIUM"); /* Default */
+    if (opt_extended)           end = stpcpy(end, " EXTENDED");
+    if (opt_check_only_changed) end = stpcpy(end, " CHANGED");
+    if (opt_upgrade)            end = stpcpy(end, " FOR UPGRADE");
     break;
   case DO_REPAIR:
     op= (opt_write_binlog) ? "REPAIR" : "REPAIR NO_WRITE_TO_BINLOG";
-    if (opt_quick)              end = strmov(end, " QUICK");
-    if (opt_extended)           end = strmov(end, " EXTENDED");
-    if (opt_frm)                end = strmov(end, " USE_FRM");
+    if (opt_quick)              end = stpcpy(end, " QUICK");
+    if (opt_extended)           end = stpcpy(end, " EXTENDED");
+    if (opt_frm)                end = stpcpy(end, " USE_FRM");
     break;
   case DO_ANALYZE:
     op= (opt_write_binlog) ? "ANALYZE" : "ANALYZE NO_WRITE_TO_BINLOG";
@@ -633,7 +633,7 @@ static int handle_request_for_tables(char *tables, uint length)
   {
     char *ptr;
 
-    ptr= strmov(strmov(query, op), " TABLE ");
+    ptr= stpcpy(stpcpy(query, op), " TABLE ");
     ptr= fix_table_name(ptr, tables);
     ptr= strxmov(ptr, " ", options, NullS);
     query_length= (uint) (ptr - query);
@@ -690,7 +690,7 @@ static void print_result()
     }
     else
       printf("%-9s: %s", row[2], row[3]);
-    strmov(prev, row[0]);
+    stpcpy(prev, row[0]);
     putchar('\n');
   }
   /* add the last table to be repaired to the list */
