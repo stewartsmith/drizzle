@@ -115,7 +115,7 @@ int archive_discover(handlerton *hton, THD* thd, const char *db,
                      uchar **frmblob, 
                      size_t *frmlen);
 
-static my_bool archive_use_aio= false;
+static bool archive_use_aio= false;
 
 /*
   Number of rows that will force a bulk insert.

@@ -269,7 +269,7 @@ typedef void (*mysql_var_update_func)(MYSQL_THD thd,
 */
 
 #define MYSQL_SYSVAR_BOOL(name, varname, opt, comment, check, update, def) \
-DECLARE_MYSQL_SYSVAR_BASIC(name, char) = { \
+DECLARE_MYSQL_SYSVAR_BASIC(name, bool) = { \
   PLUGIN_VAR_BOOL | ((opt) & PLUGIN_VAR_MASK), \
   #name, comment, check, update, &varname, def}
 
