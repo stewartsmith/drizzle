@@ -3020,7 +3020,7 @@ String *udf_handler::val_str(String *str,String *save_str)
   For the moment, UDF functions are returning DECIMAL values as strings
 */
 
-my_decimal *udf_handler::val_decimal(my_bool *null_value, my_decimal *dec_buf)
+my_decimal *udf_handler::val_decimal(bool *null_value, my_decimal *dec_buf)
 {
   char buf[DECIMAL_MAX_STR_LENGTH+1], *end;
   ulong res_length= DECIMAL_MAX_STR_LENGTH;
@@ -3227,11 +3227,11 @@ public:
   inline bool initialized() { return key != 0; }
   friend void item_user_lock_release(User_level_lock *ull);
   friend uchar *ull_get_key(const User_level_lock *ull, size_t *length,
-                            my_bool not_used);
+                            bool not_used);
 };
 
 uchar *ull_get_key(const User_level_lock *ull, size_t *length,
-                   my_bool not_used __attribute__((unused)))
+                   bool not_used __attribute__((unused)))
 {
   *length= ull->key_length;
   return ull->key;
@@ -3622,7 +3622,7 @@ Item_func_set_user_var::update_hash(void *ptr, uint length,
 
 /** Get the value of a variable as a double. */
 
-double user_var_entry::val_real(my_bool *null_value)
+double user_var_entry::val_real(bool *null_value)
 {
   if ((*null_value= (value == 0)))
     return 0.0;
@@ -3650,7 +3650,7 @@ double user_var_entry::val_real(my_bool *null_value)
 
 /** Get the value of a variable as an integer. */
 
-int64_t user_var_entry::val_int(my_bool *null_value) const
+int64_t user_var_entry::val_int(bool *null_value) const
 {
   if ((*null_value= (value == 0)))
     return 0LL;
@@ -3681,7 +3681,7 @@ int64_t user_var_entry::val_int(my_bool *null_value) const
 
 /** Get the value of a variable as a string. */
 
-String *user_var_entry::val_str(my_bool *null_value, String *str,
+String *user_var_entry::val_str(bool *null_value, String *str,
 				uint decimals)
 {
   if ((*null_value= (value == 0)))
@@ -3712,7 +3712,7 @@ String *user_var_entry::val_str(my_bool *null_value, String *str,
 
 /** Get the value of a variable as a decimal. */
 
-my_decimal *user_var_entry::val_decimal(my_bool *null_value, my_decimal *val)
+my_decimal *user_var_entry::val_decimal(bool *null_value, my_decimal *val)
 {
   if ((*null_value= (value == 0)))
     return 0;

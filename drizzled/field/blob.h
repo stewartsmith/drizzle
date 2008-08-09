@@ -175,8 +175,8 @@ public:
   const uchar *unpack_key(uchar* to, const uchar *from,
                           uint max_length, bool low_byte_first);
   int pack_cmp(const uchar *a, const uchar *b, uint key_length,
-               my_bool insert_or_update);
-  int pack_cmp(const uchar *b, uint key_length,my_bool insert_or_update);
+               bool insert_or_update);
+  int pack_cmp(const uchar *b, uint key_length,bool insert_or_update);
   uint packed_col_length(const uchar *col_ptr, uint length);
   uint max_packed_col_length(uint max_length);
   void free() { value.free(); }

@@ -2613,7 +2613,7 @@ static int my_strnncoll_gbk_internal(const uchar **a_res, const uchar **b_res,
 static int my_strnncoll_gbk(const CHARSET_INFO * const cs __attribute__((unused)),
 		     const uchar *a, size_t a_length,
                      const uchar *b, size_t b_length,
-                     my_bool b_is_prefix)
+                     bool b_is_prefix)
 {
   size_t length= min(a_length, b_length);
   int res= my_strnncoll_gbk_internal(&a, &b, length);
@@ -2624,7 +2624,7 @@ static int my_strnncoll_gbk(const CHARSET_INFO * const cs __attribute__((unused)
 static int my_strnncollsp_gbk(const CHARSET_INFO * const  cs __attribute__((unused)),
 			      const uchar *a, size_t a_length, 
 			      const uchar *b, size_t b_length,
-                              my_bool diff_if_only_endspace_difference)
+                              bool diff_if_only_endspace_difference)
 {
   size_t length= min(a_length, b_length);
   int res= my_strnncoll_gbk_internal(&a, &b, length);
@@ -2712,7 +2712,7 @@ my_strnxfrm_gbk(const CHARSET_INFO * const cs,
 
 #define max_sort_char ((uchar) 255)
 
-static my_bool my_like_range_gbk(const CHARSET_INFO * const cs __attribute__((unused)),
+static bool my_like_range_gbk(const CHARSET_INFO * const cs __attribute__((unused)),
                                  const char *ptr,size_t ptr_length,
                                  char escape, char w_one, char w_many,
                                  size_t res_length,

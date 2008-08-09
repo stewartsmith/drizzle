@@ -536,7 +536,7 @@ const uchar *Field_blob::unpack(uchar *to __attribute__((unused)),
 /* Keys for blobs are like keys on varchars */
 
 int Field_blob::pack_cmp(const uchar *a, const uchar *b, uint key_length_arg,
-                         my_bool insert_or_update)
+                         bool insert_or_update)
 {
   uint a_length, b_length;
   if (key_length_arg > 255)
@@ -557,7 +557,7 @@ int Field_blob::pack_cmp(const uchar *a, const uchar *b, uint key_length_arg,
 
 
 int Field_blob::pack_cmp(const uchar *b, uint key_length_arg,
-                         my_bool insert_or_update)
+                         bool insert_or_update)
 {
   uchar *a;
   uint a_length, b_length;

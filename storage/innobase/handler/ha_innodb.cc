@@ -123,14 +123,14 @@ static ulong	innobase_fast_shutdown			= 1;
 static my_bool	innobase_log_archive			= FALSE;
 static char*	innobase_log_arch_dir			= NULL;
 #endif /* UNIV_LOG_ARCHIVE */
-static my_bool	innobase_use_doublewrite		= TRUE;
-static my_bool	innobase_use_checksums			= TRUE;
-static my_bool	innobase_file_per_table			= FALSE;
-static my_bool	innobase_locks_unsafe_for_binlog	= FALSE;
-static my_bool	innobase_rollback_on_timeout		= FALSE;
-static my_bool	innobase_create_status_file		= FALSE;
-static my_bool innobase_stats_on_metadata		= TRUE;
-static my_bool	innobase_use_adaptive_hash_indexes	= TRUE;
+static bool	innobase_use_doublewrite		= TRUE;
+static bool	innobase_use_checksums			= TRUE;
+static bool	innobase_file_per_table			= FALSE;
+static bool	innobase_locks_unsafe_for_binlog	= FALSE;
+static bool	innobase_rollback_on_timeout		= FALSE;
+static bool	innobase_create_status_file		= FALSE;
+static bool innobase_stats_on_metadata		= TRUE;
+static bool	innobase_use_adaptive_hash_indexes	= TRUE;
 
 static char*	internal_innobase_data_file_path	= NULL;
 

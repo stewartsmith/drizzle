@@ -1224,7 +1224,7 @@ static int
 my_strnncoll_utf16(const CHARSET_INFO * const cs, 
                    const uchar *s, size_t slen, 
                    const uchar *t, size_t tlen,
-                   my_bool t_is_prefix)
+                   bool t_is_prefix)
 {
   int s_res, t_res;
   my_wc_t s_wc= 0,t_wc= 0;
@@ -1288,7 +1288,7 @@ static int
 my_strnncollsp_utf16(const CHARSET_INFO * const cs,
                      const uchar *s, size_t slen,
                      const uchar *t, size_t tlen,
-                     my_bool diff_if_only_endspace_difference)
+                     bool diff_if_only_endspace_difference)
 {
   int res;
   my_wc_t s_wc= 0, t_wc= 0;
@@ -1499,7 +1499,7 @@ static int
 my_strnncoll_utf16_bin(const CHARSET_INFO * const cs, 
                        const uchar *s, size_t slen,
                        const uchar *t, size_t tlen,
-                       my_bool t_is_prefix)
+                       bool t_is_prefix)
 {
   int s_res,t_res;
   my_wc_t s_wc= 0,t_wc= 0;
@@ -1532,7 +1532,7 @@ static int
 my_strnncollsp_utf16_bin(const CHARSET_INFO * const cs,
                          const uchar *s, size_t slen,
                          const uchar *t, size_t tlen,
-                         my_bool diff_if_only_endspace_difference)
+                         bool diff_if_only_endspace_difference)
 {
   int res;
   my_wc_t s_wc= 0, t_wc= 0;
@@ -1653,7 +1653,7 @@ my_hash_sort_utf16_bin(const CHARSET_INFO * const cs __attribute__((unused)),
      @rerval TRUE if LIKE can't be optimized.
 */
 
-my_bool
+bool
 my_like_range_utf16(const CHARSET_INFO * const cs,
                     const char *ptr, size_t ptr_length,
                     char escape, char w_one, char w_many,
@@ -2006,7 +2006,7 @@ static int
 my_strnncoll_utf32(const CHARSET_INFO * const cs, 
                    const uchar *s, size_t slen, 
                    const uchar *t, size_t tlen,
-                   my_bool t_is_prefix)
+                   bool t_is_prefix)
 {
   my_wc_t s_wc= 0,t_wc= 0;
   const uchar *se= s + slen;
@@ -2070,7 +2070,7 @@ static int
 my_strnncollsp_utf32(const CHARSET_INFO * const cs,
                      const uchar *s, size_t slen,
                      const uchar *t, size_t tlen,
-                     my_bool diff_if_only_endspace_difference)
+                     bool diff_if_only_endspace_difference)
 {
   int res;
   my_wc_t s_wc= 0, t_wc= 0;
@@ -2603,7 +2603,7 @@ static int
 my_strnncoll_utf32_bin(const CHARSET_INFO * const cs, 
                        const uchar *s, size_t slen,
                        const uchar *t, size_t tlen,
-                       my_bool t_is_prefix)
+                       bool t_is_prefix)
 {
   my_wc_t s_wc= 0, t_wc= 0;
   const uchar *se= s + slen;
@@ -2646,7 +2646,7 @@ static int
 my_strnncollsp_utf32_bin(const CHARSET_INFO * const cs __attribute__((unused)), 
                          const uchar *s, size_t slen, 
                          const uchar *t, size_t tlen,
-                         my_bool diff_if_only_endspace_difference
+                         bool diff_if_only_endspace_difference
                          __attribute__((unused)))
 {
   const uchar *se, *te;
@@ -2709,7 +2709,7 @@ my_strnncollsp_utf32_bin(const CHARSET_INFO * const cs __attribute__((unused)),
      @rerval TRUE if LIKE can't be optimized.
 */
 
-my_bool
+bool
 my_like_range_utf32(const CHARSET_INFO * const cs,
                     const char *ptr, size_t ptr_length,
                     char escape, char w_one, char w_many,
@@ -3114,7 +3114,7 @@ static size_t my_casedn_ucs2(const CHARSET_INFO * const cs, char *src, size_t sr
 static int my_strnncoll_ucs2(const CHARSET_INFO * const cs, 
 			     const uchar *s, size_t slen, 
                              const uchar *t, size_t tlen,
-                             my_bool t_is_prefix)
+                             bool t_is_prefix)
 {
   int s_res,t_res;
   my_wc_t s_wc= 0,t_wc= 0;
@@ -3179,7 +3179,7 @@ static int my_strnncoll_ucs2(const CHARSET_INFO * const cs,
 static int my_strnncollsp_ucs2(const CHARSET_INFO * const cs __attribute__((unused)),
                                const uchar *s, size_t slen,
                                const uchar *t, size_t tlen,
-                               my_bool diff_if_only_endspace_difference
+                               bool diff_if_only_endspace_difference
 			       __attribute__((unused)))
 {
   const uchar *se, *te;
@@ -3334,7 +3334,7 @@ static
 int my_strnncoll_ucs2_bin(const CHARSET_INFO * const cs, 
                           const uchar *s, size_t slen,
                           const uchar *t, size_t tlen,
-                          my_bool t_is_prefix)
+                          bool t_is_prefix)
 {
   int s_res,t_res;
   my_wc_t s_wc= 0,t_wc= 0;
@@ -3365,7 +3365,7 @@ int my_strnncoll_ucs2_bin(const CHARSET_INFO * const cs,
 static int my_strnncollsp_ucs2_bin(const CHARSET_INFO * const cs __attribute__((unused)), 
                                    const uchar *s, size_t slen, 
                                    const uchar *t, size_t tlen,
-                                   my_bool diff_if_only_endspace_difference
+                                   bool diff_if_only_endspace_difference
                                    __attribute__((unused)))
 {
   const uchar *se, *te;
@@ -3463,7 +3463,7 @@ void my_hash_sort_ucs2_bin(const CHARSET_INFO * const cs __attribute__((unused))
      @rerval TRUE if LIKE can't be optimized.
 */
 
-my_bool my_like_range_ucs2(const CHARSET_INFO * const cs,
+bool my_like_range_ucs2(const CHARSET_INFO * const cs,
 			   const char *ptr, size_t ptr_length,
 			   char escape, char w_one, char w_many,
 			   size_t res_length,

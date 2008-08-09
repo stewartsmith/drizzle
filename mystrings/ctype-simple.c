@@ -97,7 +97,7 @@ size_t my_strnxfrm_simple(const CHARSET_INFO * const  cs,
 
 int my_strnncoll_simple(const CHARSET_INFO * const  cs, const uchar *s, size_t slen, 
                         const uchar *t, size_t tlen,
-                        my_bool t_is_prefix)
+                        bool t_is_prefix)
 {
   size_t len = ( slen > tlen ) ? tlen : slen;
   uchar *map= cs->sort_order;
@@ -148,7 +148,7 @@ int my_strnncoll_simple(const CHARSET_INFO * const  cs, const uchar *s, size_t s
 
 int my_strnncollsp_simple(const CHARSET_INFO * const  cs, const uchar *a, size_t a_length, 
 			  const uchar *b, size_t b_length,
-                          my_bool diff_if_only_endspace_difference)
+                          bool diff_if_only_endspace_difference)
 {
   const uchar *map= cs->sort_order, *end;
   size_t length;
@@ -1045,7 +1045,7 @@ int my_wildcmp_8bit(const CHARSET_INFO * const cs,
 ** optimized !
 */
 
-my_bool my_like_range_simple(const CHARSET_INFO * const cs,
+bool my_like_range_simple(const CHARSET_INFO * const cs,
                              const char *ptr, size_t ptr_length,
                              char escape, char w_one, char w_many,
                              size_t res_length,
@@ -1251,7 +1251,7 @@ static int pcmp(const void * f, const void * s)
   return res;
 }
 
-static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
+static bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
 {
   uni_idx	idx[PLANE_NUM];
   int		i,n;
@@ -1330,7 +1330,7 @@ static my_bool create_fromuni(CHARSET_INFO *cs, void *(*alloc)(size_t))
   return false;
 }
 
-static my_bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
+static bool my_cset_init_8bit(CHARSET_INFO *cs, void *(*alloc)(size_t))
 {
   cs->caseup_multiply= 1;
   cs->casedn_multiply= 1;
@@ -1357,7 +1357,7 @@ static void set_max_sort_char(CHARSET_INFO *cs)
   }
 }
 
-static my_bool my_coll_init_simple(CHARSET_INFO *cs,
+static bool my_coll_init_simple(CHARSET_INFO *cs,
                                    void *(*alloc)(size_t) __attribute__((unused)))
 {
   set_max_sort_char(cs);
@@ -1752,7 +1752,7 @@ ret_too_big:
 
 
 
-my_bool my_propagate_simple(const CHARSET_INFO * const cs __attribute__((unused)),
+bool my_propagate_simple(const CHARSET_INFO * const cs __attribute__((unused)),
                             const uchar *str __attribute__((unused)),
                             size_t length __attribute__((unused)))
 {
@@ -1760,7 +1760,7 @@ my_bool my_propagate_simple(const CHARSET_INFO * const cs __attribute__((unused)
 }
 
 
-my_bool my_propagate_complex(const CHARSET_INFO * const cs __attribute__((unused)),
+bool my_propagate_complex(const CHARSET_INFO * const cs __attribute__((unused)),
                              const uchar *str __attribute__((unused)),
                              size_t length __attribute__((unused)))
 {

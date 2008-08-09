@@ -1754,7 +1754,7 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
   {
     while (1)
     {
-      my_bool escaped= 0;
+      bool escaped= 0;
       if ((scan= mb_wc(cs, &w_wc, (const uchar*)wildstr,
                        (const uchar*)wildend)) <= 0)
         return 1;
@@ -2360,7 +2360,7 @@ static int
 my_strnncoll_utf8mb4(const CHARSET_INFO * const cs,
                      const uchar *s, size_t slen,
                      const uchar *t, size_t tlen,
-                     my_bool t_is_prefix)
+                     bool t_is_prefix)
 {
   my_wc_t s_wc=0, t_wc;
   const uchar *se= s + slen;
@@ -2424,7 +2424,7 @@ static int
 my_strnncollsp_utf8mb4(const CHARSET_INFO * const cs,
                        const uchar *s, size_t slen,
                        const uchar *t, size_t tlen,
-                       my_bool diff_if_only_endspace_difference)
+                       bool diff_if_only_endspace_difference)
 {
   int res;
   my_wc_t s_wc=0, t_wc;
@@ -3250,7 +3250,7 @@ static int
 my_strnncoll_utf8mb3(const CHARSET_INFO * const cs,
                      const uchar *s, size_t slen,
                      const uchar *t, size_t tlen,
-                     my_bool t_is_prefix)
+                     bool t_is_prefix)
 {
   int s_res,t_res;
   my_wc_t s_wc=0,t_wc;
@@ -3317,7 +3317,7 @@ static int
 my_strnncollsp_utf8mb3(const CHARSET_INFO * const cs,
                        const uchar *s, size_t slen,
                        const uchar *t, size_t tlen,
-                       my_bool diff_if_only_endspace_difference)
+                       bool diff_if_only_endspace_difference)
 {
   int s_res, t_res, res;
   my_wc_t s_wc=0, t_wc=0;
@@ -3772,7 +3772,7 @@ static int
 my_strnncoll_utf8mb3_cs(CHARSET_INFO *cs, 
                         const uchar *s, size_t slen,
                         const uchar *t, size_t tlen,
-                        my_bool t_is_prefix)
+                        bool t_is_prefix)
 {
   int s_res,t_res;
   my_wc_t s_wc,t_wc;
@@ -3819,7 +3819,7 @@ static int
 my_strnncollsp_utf8mb3_cs(CHARSET_INFO *cs, 
                           const uchar *s, size_t slen,
                           const uchar *t, size_t tlen,
-                          my_bool diff_if_only_endspace_difference)
+                          bool diff_if_only_endspace_difference)
 {
   int s_res, t_res, res;
   my_wc_t s_wc, t_wc;

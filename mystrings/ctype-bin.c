@@ -66,7 +66,7 @@ static uchar bin_char_array[] =
 };
 
 
-static my_bool 
+static bool 
 my_coll_init_8bit_bin(CHARSET_INFO *cs,
                       void *(*alloc)(size_t) __attribute__((unused)))
 {
@@ -77,7 +77,7 @@ my_coll_init_8bit_bin(CHARSET_INFO *cs,
 static int my_strnncoll_binary(const CHARSET_INFO * const  cs __attribute__((unused)),
                                const uchar *s, size_t slen,
                                const uchar *t, size_t tlen,
-                               my_bool t_is_prefix)
+                               bool t_is_prefix)
 {
   size_t len=min(slen,tlen);
   int cmp= memcmp(s,t,len);
@@ -118,7 +118,7 @@ static size_t my_lengthsp_binary(const CHARSET_INFO * const cs __attribute__((un
 static int my_strnncollsp_binary(const CHARSET_INFO * const  cs __attribute__((unused)),
                                  const uchar *s, size_t slen,
                                  const uchar *t, size_t tlen,
-                                 my_bool diff_if_only_endspace_difference
+                                 bool diff_if_only_endspace_difference
                                  __attribute__((unused)))
 {
   return my_strnncoll_binary(cs,s,slen,t,tlen,0);
@@ -128,7 +128,7 @@ static int my_strnncollsp_binary(const CHARSET_INFO * const  cs __attribute__((u
 static int my_strnncoll_8bit_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
                                  const uchar *s, size_t slen,
                                  const uchar *t, size_t tlen,
-                                 my_bool t_is_prefix)
+                                 bool t_is_prefix)
 {
   size_t len=min(slen,tlen);
   int cmp= memcmp(s,t,len);
@@ -164,7 +164,7 @@ static int my_strnncoll_8bit_bin(const CHARSET_INFO * const  cs __attribute__((u
 static int my_strnncollsp_8bit_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
                                    const uchar *a, size_t a_length, 
                                    const uchar *b, size_t b_length,
-                                   my_bool diff_if_only_endspace_difference)
+                                   bool diff_if_only_endspace_difference)
 {
   const uchar *end;
   size_t length;

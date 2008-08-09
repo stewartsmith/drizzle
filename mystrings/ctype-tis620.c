@@ -527,7 +527,7 @@ static
 int my_strnncoll_tis620(const CHARSET_INFO * const cs __attribute__((unused)),
                         const uchar *s1, size_t len1, 
                         const uchar *s2, size_t len2,
-                        my_bool s2_is_prefix)
+                        bool s2_is_prefix)
 {
   uchar	buf[80] ;
   uchar *tc1, *tc2;
@@ -557,7 +557,7 @@ static
 int my_strnncollsp_tis620(const CHARSET_INFO * const  cs __attribute__((unused)),
 			  const uchar *a0, size_t a_length, 
 			  const uchar *b0, size_t b_length,
-                          my_bool diff_if_only_endspace_difference)
+                          bool diff_if_only_endspace_difference)
 {
   uchar	buf[80], *end, *a, *b, *alloced= NULL;
   size_t length;

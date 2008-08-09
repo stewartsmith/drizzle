@@ -27,7 +27,7 @@
 static bool convert_constant_item(THD *, Item_field *, Item **);
 
 static Item_result item_store_type(Item_result a, Item *item,
-                                   my_bool unsigned_flag)
+                                   bool unsigned_flag)
 {
   Item_result b= item->result_type();
 
@@ -45,7 +45,7 @@ static Item_result item_store_type(Item_result a, Item *item,
 static void agg_result_type(Item_result *type, Item **items, uint nitems)
 {
   Item **item, **item_end;
-  my_bool unsigned_flag= 0;
+  bool unsigned_flag= 0;
 
   *type= STRING_RESULT;
   /* Skip beginning NULL items */
@@ -1883,7 +1883,7 @@ int64_t Item_func_interval::val_int()
     {
       uint mid= (start + end + 1) / 2;
       interval_range *range= intervals + mid;
-      my_bool cmp_result;
+      bool cmp_result;
       /*
         The values in the range intervall may have different types,
         Only do a decimal comparision of the first argument is a decimal

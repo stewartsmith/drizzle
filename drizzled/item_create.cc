@@ -3092,7 +3092,7 @@ static HASH native_functions_hash;
 
 extern "C" uchar*
 get_native_fct_hash_key(const uchar *buff, size_t *length,
-                        my_bool /* unused */)
+                        bool /* unused */)
 {
   Native_func_registry *func= (Native_func_registry*) buff;
   *length= func->name.length;

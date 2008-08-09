@@ -3811,7 +3811,6 @@ static int
 com_status(DYNAMIC_STRING *buffer __attribute__((unused)),
            char *line __attribute__((unused)))
 {
-  const char *status_str;
   char buff[40];
   uint64_t id;
   DRIZZLE_RES *result;
@@ -3888,22 +3887,6 @@ com_status(DYNAMIC_STRING *buffer __attribute__((unused)),
   if (drizzle.net.compress)
     tee_fprintf(stdout, "Protocol:\t\tCompressed\n");
 
-  if ((status_str= drizzle_stat(&drizzle)) && !drizzle_error(&drizzle)[0])
-  {
-    ulong sec;
-    const char *pos= strchr(status_str,' ');
-    /* print label */
-    tee_fprintf(stdout, "%.*s\t\t\t", (int) (pos-status_str), status_str);
-    if ((status_str= str2int(pos,10,0,LONG_MAX,(long*) &sec)))
-    {
-      nice_time((double) sec,buff,0);
-      tee_puts(buff, stdout);      /* print nice time */
-      while (*status_str == ' ')
-        status_str++;  /* to next info */
-      tee_putc('\n', stdout);
-      tee_puts(status_str, stdout);
-    }
-  }
   if (safe_updates)
   {
     vidattr(A_BOLD);

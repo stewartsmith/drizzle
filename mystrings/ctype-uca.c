@@ -7093,7 +7093,7 @@ static int my_strnncoll_uca(const CHARSET_INFO * const cs,
                             my_uca_scanner_handler *scanner_handler,
 			    const uchar *s, size_t slen,
                             const uchar *t, size_t tlen,
-                            my_bool t_is_prefix)
+                            bool t_is_prefix)
 {
   my_uca_scanner sscanner;
   my_uca_scanner tscanner;
@@ -7164,7 +7164,7 @@ static int my_strnncollsp_uca(const CHARSET_INFO * const cs,
                               my_uca_scanner_handler *scanner_handler,
                               const uchar *s, size_t slen,
                               const uchar *t, size_t tlen,
-                              my_bool diff_if_only_endspace_difference)
+                              bool diff_if_only_endspace_difference)
 {
   my_uca_scanner sscanner, tscanner;
   int s_res, t_res;
@@ -7377,7 +7377,7 @@ int my_wildcmp_uca(const CHARSET_INFO * const cs,
   {
     while (1)
     {
-      my_bool escaped= 0;
+      bool escaped= 0;
       if ((scan= mb_wc(cs, &w_wc, (const uchar*)wildstr,
 		       (const uchar*)wildend)) <= 0)
 	return 1;
@@ -7866,7 +7866,7 @@ static int my_coll_rule_parse(MY_COLL_RULE *rule, size_t mitems,
   default weights.
 */
 
-static my_bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
+static bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
 {
   MY_COLL_RULE rule[MY_MAX_COLL_RULE];
   char errstr[128];
@@ -8024,7 +8024,7 @@ static my_bool create_tailoring(CHARSET_INFO *cs, void *(*alloc)(size_t))
   Should work for any character set.
 */
 
-static my_bool my_coll_init_uca(CHARSET_INFO *cs, void *(*alloc)(size_t))
+static bool my_coll_init_uca(CHARSET_INFO *cs, void *(*alloc)(size_t))
 {
   cs->pad_char= ' ';
   return create_tailoring(cs, alloc);
@@ -8033,7 +8033,7 @@ static my_bool my_coll_init_uca(CHARSET_INFO *cs, void *(*alloc)(size_t))
 static int my_strnncoll_any_uca(const CHARSET_INFO * const cs,
                                 const uchar *s, size_t slen,
                                 const uchar *t, size_t tlen,
-                                my_bool t_is_prefix)
+                                bool t_is_prefix)
 {
   return my_strnncoll_uca(cs, &my_any_uca_scanner_handler,
                           s, slen, t, tlen, t_is_prefix);
@@ -8042,7 +8042,7 @@ static int my_strnncoll_any_uca(const CHARSET_INFO * const cs,
 static int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
                                   const uchar *s, size_t slen,
                                   const uchar *t, size_t tlen,
-                                  my_bool diff_if_only_endspace_difference)
+                                  bool diff_if_only_endspace_difference)
 {
   return my_strnncollsp_uca(cs, &my_any_uca_scanner_handler,
                             s, slen, t, tlen,
@@ -8072,7 +8072,7 @@ static size_t my_strnxfrm_any_uca(const CHARSET_INFO * const cs,
 static int my_strnncoll_ucs2_uca(const CHARSET_INFO * const cs,
                                  const uchar *s, size_t slen,
                                  const uchar *t, size_t tlen,
-                                 my_bool t_is_prefix)
+                                 bool t_is_prefix)
 {
   return my_strnncoll_uca(cs, &my_ucs2_uca_scanner_handler,
                           s, slen, t, tlen, t_is_prefix);
@@ -8081,7 +8081,7 @@ static int my_strnncoll_ucs2_uca(const CHARSET_INFO * const cs,
 static int my_strnncollsp_ucs2_uca(const CHARSET_INFO * const cs,
                                    const uchar *s, size_t slen,
                                    const uchar *t, size_t tlen,
-                                   my_bool diff_if_only_endspace_difference)
+                                   bool diff_if_only_endspace_difference)
 {
   return my_strnncollsp_uca(cs, &my_ucs2_uca_scanner_handler,
                             s, slen, t, tlen,

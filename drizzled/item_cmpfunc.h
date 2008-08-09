@@ -198,7 +198,7 @@ public:
 
 
 class Item_cache;
-#define UNKNOWN ((my_bool)-1)
+#define UNKNOWN ((bool)-1)
 
 
 /*
@@ -227,7 +227,7 @@ protected:
       FALSE   - result is FALSE
       TRUE    - result is NULL
   */
-  my_bool result_for_null_param;
+  bool result_for_null_param;
 public:
   Item_in_optimizer(Item *a, Item_in_subselect *b):
     Item_bool_func(a, my_reinterpret_cast(Item *)(b)), cache(0),
@@ -636,7 +636,7 @@ struct interval_range
 class Item_func_interval :public Item_int_func
 {
   Item_row *row;
-  my_bool use_decimal_comparison;
+  bool use_decimal_comparison;
   interval_range *intervals;
 public:
   Item_func_interval(Item_row *a)
@@ -845,7 +845,7 @@ public:
   void value_to_item(uint pos, Item *item)
   {
     ((Item_int*) item)->value= ((packed_int64_t*) base)[pos].val;
-    ((Item_int*) item)->unsigned_flag= (my_bool)
+    ((Item_int*) item)->unsigned_flag= (bool)
       ((packed_int64_t*) base)[pos].unsigned_flag;
   }
   Item_result result_type() { return INT_RESULT; }

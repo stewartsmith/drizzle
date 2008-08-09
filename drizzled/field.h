@@ -127,7 +127,7 @@ public:
      This trickery is used to decrease a number of malloc calls.
   */
   virtual String *val_str(String*,String *)=0;
-  String *val_int_as_str(String *val_buffer, my_bool unsigned_flag);
+  String *val_int_as_str(String *val_buffer, bool unsigned_flag);
   /*
    str_needs_quotes() returns true if the value returned by val_str() needs
    to be quoted when used in constructing an SQL query.
@@ -431,11 +431,11 @@ public:
 
   virtual int pack_cmp(const uchar *a,const uchar *b,
                        uint key_length_arg __attribute__((unused)),
-                       my_bool insert_or_update __attribute__((unused)))
+                       bool insert_or_update __attribute__((unused)))
   { return cmp(a,b); }
   virtual int pack_cmp(const uchar *b,
                        uint key_length_arg __attribute__((unused)),
-                       my_bool insert_or_update __attribute__((unused)))
+                       bool insert_or_update __attribute__((unused)))
   { return cmp(ptr,b); }
   uint offset(uchar *record)
   {
@@ -620,7 +620,7 @@ public:
 /* base class for float and double and decimal (old one) */
 class Field_real :public Field_num {
 public:
-  my_bool not_fixed;
+  bool not_fixed;
 
   Field_real(uchar *ptr_arg, uint32_t len_arg, uchar *null_ptr_arg,
              uchar null_bit_arg, utype unireg_check_arg,
@@ -829,7 +829,7 @@ class Copy_field :public Sql_alloc {
 public:
   uchar *from_ptr,*to_ptr;
   uchar *from_null_ptr,*to_null_ptr;
-  my_bool *null_row;
+  bool *null_row;
   uint	from_bit,to_bit;
   uint from_length,to_length;
   Field *from_field,*to_field;

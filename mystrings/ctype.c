@@ -287,12 +287,12 @@ static int cs_value(MY_XML_PARSER *st,const char *attr, size_t len)
 }
 
 
-my_bool my_parse_charset_xml(const char *buf, size_t len,
+bool my_parse_charset_xml(const char *buf, size_t len,
                              int (*add_collation)(CHARSET_INFO *cs))
 {
   MY_XML_PARSER p;
   struct my_cs_file_info i;
-  my_bool rc;
+  bool rc;
   
   my_xml_parser_create(&p);
   my_xml_set_enter_handler(&p,cs_enter);
@@ -361,7 +361,7 @@ my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong lengt
   This function is Ok for 5.0 and 5.1, because we're not going
   to introduce new tricky character sets between 5.0 and 5.2.
 */
-my_bool
+bool
 my_charset_is_ascii_based(const CHARSET_INFO * const cs)
 {
   return 
@@ -377,7 +377,7 @@ my_charset_is_ascii_based(const CHARSET_INFO * const cs)
   This functions is shared between "conf_to_src"
   and dynamic charsets loader in "mysqld".
 */
-my_bool
+bool
 my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs)
 {
   size_t code;
@@ -397,7 +397,7 @@ my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs)
   Check if a 8bit character set is compatible with
   ascii on the range 0x00..0x7F.
 */
-my_bool
+bool
 my_charset_is_ascii_compatible(const CHARSET_INFO * const cs)
 {
   uint i;

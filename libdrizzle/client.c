@@ -367,9 +367,9 @@ cli_advanced_command(DRIZZLE *drizzle, enum enum_server_command command,
          const unsigned char *arg, uint32_t arg_length, bool skip_check)
 {
   NET *net= &drizzle->net;
-  my_bool result= 1;
+  bool result= 1;
   init_sigpipe_variables
-  my_bool stmt_skip= false;
+  bool stmt_skip= false;
 
   /* Don't give sigpipe errors if the client doesn't want them */
   set_sigpipe(drizzle);
@@ -732,7 +732,7 @@ static void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column, uint32_t field_c
 
 DRIZZLE_FIELD *
 unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc,uint fields,
-              my_bool default_value)
+              bool default_value)
 {
   DRIZZLE_ROWS  *row;
   DRIZZLE_FIELD  *field,*result;
@@ -1542,7 +1542,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     char **ptr= (char**)init_commands->buffer;
     char **end_command= ptr + init_commands->elements;
 
-    my_bool reconnect=drizzle->reconnect;
+    bool reconnect=drizzle->reconnect;
     drizzle->reconnect=0;
 
     for (; ptr < end_command; ptr++)
@@ -1576,7 +1576,7 @@ error:
 }
 
 
-my_bool drizzle_reconnect(DRIZZLE *drizzle)
+bool drizzle_reconnect(DRIZZLE *drizzle)
 {
   DRIZZLE tmp_drizzle;
   assert(drizzle);
@@ -2008,16 +2008,16 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
     drizzle->options.client_ip= my_strdup(arg, MYF(MY_WME));
     break;
   case DRIZZLE_SECURE_AUTH:
-    drizzle->options.secure_auth= *(my_bool *) arg;
+    drizzle->options.secure_auth= *(bool *) arg;
     break;
   case DRIZZLE_REPORT_DATA_TRUNCATION:
-    drizzle->options.report_data_truncation= test(*(my_bool *) arg);
+    drizzle->options.report_data_truncation= test(*(bool *) arg);
     break;
   case DRIZZLE_OPT_RECONNECT:
-    drizzle->reconnect= *(my_bool *) arg;
+    drizzle->reconnect= *(bool *) arg;
     break;
   case DRIZZLE_OPT_SSL_VERIFY_SERVER_CERT:
-    if (*(my_bool*) arg)
+    if (*(bool*) arg)
       drizzle->options.client_flag|= CLIENT_SSL_VERIFY_SERVER_CERT;
     else
       drizzle->options.client_flag&= ~CLIENT_SSL_VERIFY_SERVER_CERT;

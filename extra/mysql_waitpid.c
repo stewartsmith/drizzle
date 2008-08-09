@@ -23,7 +23,7 @@
 
 static const char *VER= "1.1";
 static char *progname;
-static my_bool verbose;
+static bool verbose;
 
 void usage(void);
 

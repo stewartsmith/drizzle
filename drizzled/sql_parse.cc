@@ -38,7 +38,6 @@ const LEX_STRING command_name[COM_END+1]={
   { C_STRING_WITH_LEN("Drop DB") },
   { C_STRING_WITH_LEN("Refresh") },
   { C_STRING_WITH_LEN("Shutdown") },
-  { C_STRING_WITH_LEN("Statistics") },
   { C_STRING_WITH_LEN("Processlist") },
   { C_STRING_WITH_LEN("Connect") },
   { C_STRING_WITH_LEN("Kill") },
@@ -526,7 +525,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
   switch( command ) {
   /* Ignore these statements. */
-  case COM_STATISTICS:
   case COM_PING:
     break;
   /* Increase id and count all other statements. */
@@ -824,40 +822,6 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     close_thread_tables(thd);			// Free before kill
     kill_mysql();
     error=true;
-    break;
-  }
-  case COM_STATISTICS:
-  {
-    STATUS_VAR current_global_status_var;
-    ulong uptime;
-    uint length;
-    uint64_t queries_per_second1000;
-    char buff[250];
-    uint buff_len= sizeof(buff);
-
-    general_log_print(thd, command, NullS);
-    status_var_increment(thd->status_var.com_stat[SQLCOM_SHOW_STATUS]);
-    calc_sum_of_all_status(&current_global_status_var);
-    if (!(uptime= (ulong) (thd->start_time - server_start_time)))
-      queries_per_second1000= 0;
-    else
-      queries_per_second1000= thd->query_id * 1000LL / uptime;
-
-    length= snprintf((char*) buff, buff_len - 1,
-                     "Uptime: %lu  Threads: %d  Questions: %lu  "
-                     "Slow queries: %lu  Opens: %lu  Flush tables: %lu  "
-                     "Open tables: %u  Queries per second avg: %u.%u",
-                     uptime,
-                     (int) thread_count, (ulong) thd->query_id,
-                     current_global_status_var.long_query_count,
-                     current_global_status_var.opened_tables,
-                     refresh_version,
-                     cached_open_tables(),
-                     (uint) (queries_per_second1000 / 1000),
-                     (uint) (queries_per_second1000 % 1000));
-    VOID(my_net_write(net, (uchar*) buff, length));
-    VOID(net_flush(net));
-    thd->main_da.disable_status();
     break;
   }
   case COM_PING:
