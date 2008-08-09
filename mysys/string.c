@@ -149,7 +149,7 @@ bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append, ...)
     const char *next_pos= cur_pos;
 
     /* Search for quote in each string and replace with escaped quote */
-    while(*(next_pos= strcend(cur_pos, quote_str[0])) != '\0')
+    while((next_pos= strrchr(cur_pos, quote_str[0])) != NULL)
     {
       ret&= dynstr_append_mem(str, cur_pos, next_pos - cur_pos);
       ret&= dynstr_append_mem(str ,"\\", 1);

@@ -4916,7 +4916,7 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
   found_end= *pos == 0;
   while (!found_end)
   {
-    if (!*(end=strcend(pos,',')))		/* Let end point at fieldend */
+    if ((end=strrchr(pos,',')) != NULL)		/* Let end point at fieldend */
     {
       while (end > pos && end[-1] == ' ')
 	end--;					/* Skip end-space */

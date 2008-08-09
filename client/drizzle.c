@@ -4199,8 +4199,9 @@ static const char * construct_prompt()
           dynstr_append(processed_prompt, "localhost");
         else
         {
-          const char *end=strcend(prompt,' ');
-          dynstr_append_mem(processed_prompt, prompt, (end-prompt));
+          const char *end=strrchr(prompt,' ');
+          if (end != NULL)
+            dynstr_append_mem(processed_prompt, prompt, (end-prompt));
         }
         break;
       }

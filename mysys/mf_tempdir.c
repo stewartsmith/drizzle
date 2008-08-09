@@ -33,10 +33,9 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
     if (!pathlist || !pathlist[0])
       pathlist=(char*) P_tmpdir;
   }
-  do
+  while((end= strrchr(pathlist, DELIM)) != NULL)
   {
     uint length;
-    end=strcend(pathlist, DELIM);
     strmake(buff, pathlist, (uint) (end-pathlist));
     length= cleanup_dirname(buff, buff);
     if (!(copy= my_strndup(buff, length, MYF(MY_WME))) ||
@@ -44,7 +43,6 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
       return(true);
     pathlist=end+1;
   }
-  while (*end);
   freeze_size(&tmpdir->full_list);
   tmpdir->list=(char **)tmpdir->full_list.buffer;
   tmpdir->max=tmpdir->full_list.elements-1;

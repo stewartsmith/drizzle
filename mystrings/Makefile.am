@@ -30,7 +30,7 @@ noinst_HEADERS =	my_uctype.h
 # the target system. This helps prevent empty object file problems.
 libmystrings_la_LIBADD = $(LTLIBOBJS)
 libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c strappend.c strcont.c \
-				strend.c strfill.c strcend.c is_prefix.c \
+				strend.c strfill.c is_prefix.c \
 				strmake.c strnmov.c longlong2str.c \
 				my_strtoll10.c bmove512.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
