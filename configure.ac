@@ -617,28 +617,6 @@ AC_ARG_WITH([named-curses-libs],
     [ with_named_curses=no ]
     )
 
-# compile with strings functions in assembler
-AC_ARG_ENABLE([assembler],
-    [AS_HELP_STRING([--enable-assembler],
-	    [Use assembler versions of some string functions if available.])],
-    [ ENABLE_ASSEMBLER=$enableval ],
-    [ ENABLE_ASSEMBLER=no ]
-    )
-
-AC_MSG_CHECKING(if we should use assembler functions)
-# For now we only support assembler on i386 and sparc systems
-AM_CONDITIONAL(ASSEMBLER_x86, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "i386" && $AS mystrings/strings-x86.s -o checkassembler >/dev/null 2>&1 && test -f checkassembler && (rm -f checkassembler; exit 0;))
-AM_CONDITIONAL(ASSEMBLER_sparc32, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparc")
-AM_CONDITIONAL(ASSEMBLER_sparc64, test "$ENABLE_ASSEMBLER" = "yes" -a "$BASE_MACHINE_TYPE" = "sparcv9")
-AM_CONDITIONAL(ASSEMBLER, test "$ASSEMBLER_x86_TRUE" = "" -o "$ASSEMBLER_sparc32_TRUE" = "")
-
-if test "$ASSEMBLER_TRUE" = ""
-then
-  AC_MSG_RESULT([yes])
-else
-  AC_MSG_RESULT([no])
-fi
-
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
             [Which port to use for Drizzle services @<:@default=4427@:>@])],
@@ -1060,7 +1038,7 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([strtoll strstr strtoull strmov getpagesize])
+AC_REPLACE_FUNCS([strtoll strstr strtoull stpcpy getpagesize])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \

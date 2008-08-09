@@ -350,6 +350,8 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
   if (!(result = (DRIZZLE_RES *) malloc(sizeof(DRIZZLE_RES))))
     return(NULL);
 
+  memset(result, 0, sizeof(DRIZZLE_RES));
+
   result->methods= drizzle->methods;
   result->field_alloc=drizzle->field_alloc;
   drizzle->fields=0;

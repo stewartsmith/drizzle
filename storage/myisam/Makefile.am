@@ -21,7 +21,7 @@ MYSQLLIBdir =           $(pkglibdir)
 LDADD=			libmyisamutil.la \
 			libmyisamnone.la \
 			$(top_builddir)/mysys/libmysys.la \
-			$(top_builddir)/mystrings/libmystringslt.la -lz \
+			$(top_builddir)/mystrings/libmystrings.la -lz \
 			$(LIBINTL)
 
 DEFS =                  @DEFS@
