@@ -1038,7 +1038,7 @@ then
 fi
 
 AC_CONFIG_LIBOBJ_DIR([mystrings])
-AC_REPLACE_FUNCS([strtoll strstr strtoull stpcpy getpagesize])
+AC_REPLACE_FUNCS([strtoll strstr strtoull stpcpy getpagesize strnlen])
 
 AC_CHECK_FUNCS(bsearch \
   cuserid fchmod \
@@ -1056,7 +1056,7 @@ AC_CHECK_FUNCS(bsearch \
   realpath rename rint rwlock_init setupterm \
   shmget shmat shmdt shmctl sigaction sigemptyset sigaddset \
   sighold sigset sigthreadmask port_create sleep \
-  snprintf socket stpcpy strcasecmp strerror strsignal strnlen strpbrk \
+  snprintf socket stpcpy strcasecmp strerror strsignal strpbrk \
   tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
 
