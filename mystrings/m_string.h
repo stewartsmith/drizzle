@@ -58,6 +58,7 @@ extern void *(*my_str_malloc)(size_t);
 extern void (*my_str_free)(void *);
 
 #define strmov(A,B) stpcpy((A),(B))
+#define strnmov(A,B) stpncpy((A),(B))
 
 #define strmov_overlapp(A,B) stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
@@ -87,7 +88,6 @@ extern	char *strmake(char *dst,const char *src,size_t length);
 extern	char *strmake_overlapp(char *dst,const char *src, size_t length);
 #endif
 
-extern	char *strnmov(char *dst,const char *src,size_t n);
 extern	char *strsuff(const char *src,const char *suffix);
 extern	char *strcont(const char *src,const char *set);
 extern	char *strxcat(char *dst,const char *src, ...);
