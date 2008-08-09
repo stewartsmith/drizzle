@@ -431,15 +431,6 @@ const char *cli_read_statistics(DRIZZLE *drizzle)
 }
 
 
-const char * STDCALL
-drizzle_stat(DRIZZLE *drizzle)
-{
-  if (simple_command(drizzle,COM_STATISTICS,0,0,0))
-    return(drizzle->net.last_error);
-  return((*drizzle->methods->read_statistics)(drizzle));
-}
-
-
 int STDCALL
 drizzle_ping(DRIZZLE *drizzle)
 {
