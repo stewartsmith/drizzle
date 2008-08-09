@@ -1764,7 +1764,7 @@ static int read_and_execute(bool interactive)
 static COMMANDS *find_command(char *name,char cmd_char)
 {
   uint len;
-  char *end;
+  const char *end;
 
   if (!name)
   {
