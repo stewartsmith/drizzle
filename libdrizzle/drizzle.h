@@ -37,11 +37,9 @@ extern "C" {
 /** 
  * @TODO cleanup global.h and include only the necessary stuff here... 
  * 
- * Also, my_bool should go bye-bye...
  */
 #ifndef DRIZZLE_SERVER_GLOBAL_H   /* If not standard header */
 #include <sys/types.h>
-typedef char my_bool;
 #define STDCALL
 
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
