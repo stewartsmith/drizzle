@@ -32,7 +32,7 @@ libmystrings_la_LIBADD = $(LTLIBOBJS)
 libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c strappend.c \
 				strend.c strfill.c is_prefix.c \
 				strmake.c longlong2str.c \
-				my_strtoll10.c bmove512.c \
+				my_strtoll10.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
                                 llstr.c \
                                 ctype.c ctype-simple.c ctype-mb.c \
