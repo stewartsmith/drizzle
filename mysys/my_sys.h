@@ -544,11 +544,6 @@ extern char *_my_strndup(const char *from, size_t length,
                          const char *sFile, uint uLine,
                          myf MyFlag);
 
-/* implemented in my_memmem.c */
-extern void *my_memmem(const void *haystack, size_t haystacklen,
-                       const void *needle, size_t needlelen);
-
-
 #define my_access access
 extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
@@ -632,7 +627,6 @@ extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
 			      const uchar *record,size_t length);
 extern int flush_write_cache(RECORD_CACHE *info);
-extern long my_clock(void);
 extern sig_handler sigtstp_handler(int signal_number);
 extern void handle_recived_signals(void);
 
@@ -772,7 +766,6 @@ extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
 time_t my_time_possible_from_micro(uint64_t microtime);
 extern bool my_gethwaddr(uchar *to);
-extern int my_getncpus(void);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>

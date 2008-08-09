@@ -66,11 +66,10 @@ libmysys_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			mf_pack.c mf_unixpath.c mf_arr_appstr.c \
 			mf_wcomp.c mf_wfile.c my_gethwaddr.c \
 			mf_qsort.c mf_qsort2.c mf_sort.c \
-			ptr_cmp.c mf_radix.c queues.c my_getncpus.c \
+			ptr_cmp.c mf_radix.c queues.c \
 			tree.c list.c hash.c array.c string.c typelib.c \
 			my_copy.c my_lib.c \
 			my_delete.c my_rename.c my_redel.c \
-			my_clock.c \
 			my_quick.c my_static.c \
 			my_sync.c my_getopt.c my_mkdir.c \
 			default_modify.c default.c \
@@ -78,7 +77,6 @@ libmysys_la_SOURCES = my_init.c my_getwd.c mf_getdate.c \
 			my_sleep.c \
 			charset.c charset-def.c my_bitmap.c my_bit.c \
 			sha1.c \
-			my_memmem.c \
 			my_access.c base64.c \
 			thr_alarm.c thr_lock.c my_thr_init.c \
                         ${thr_mutex_source} ${thr_rwlock_source}
