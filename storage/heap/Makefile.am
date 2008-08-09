@@ -20,7 +20,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 LDADD =			libheap.la \
 			$(top_builddir)/mysys/libmysys.la \
-			$(top_builddir)/strings/libmystringslt.la
+			$(top_builddir)/strings/libmystrings.la
 
 DEFS =                  @DEFS@
 noinst_LTLIBRARIES  =	libheap.la
