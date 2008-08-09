@@ -91,6 +91,10 @@ extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
 #endif
 
+#ifndef HAVE_STPNCPY
+char *stpncpy(register char *dst, register const char *src, size_t n);
+#endif
+
 #if !defined(__cplusplus)
 #ifndef HAVE_STRPBRK
 extern char *strpbrk(const char *, const char *);
