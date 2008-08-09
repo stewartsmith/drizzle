@@ -14,7 +14,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 LDADD =		$(top_builddir)/mysys/libmysys.la \
-            	$(top_builddir)/mystrings/libmystringslt.la \
+            	$(top_builddir)/mystrings/libmystrings.la \
 		$(LIBINTL)
 	
 

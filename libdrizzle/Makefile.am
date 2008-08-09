@@ -35,7 +35,7 @@ lib_LTLIBRARIES = libdrizzle.la
 libdrizzle_la_SOURCES = libdrizzle.c client.c local_infile.c net_serv.c get_password.c
 libdrizzle_la_LIBADD =	${sql_cmn_objects} ${sqlobjects} \
 			${top_builddir}/mysys/libmysys.la \
-			${top_builddir}/mystrings/libmystringslt.la \
+			${top_builddir}/mystrings/libmystrings.la \
 			libsqlcommon.la \
 			${top_builddir}/vio/libviolt.la 
 libdrizzle_la_LDFLAGS = -version-info @SHARED_LIB_VERSION@ @LD_VERSION_SCRIPT@ 
