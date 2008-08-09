@@ -94,9 +94,6 @@ extern int strcmp(const char *, const char *);
 extern size_t strlen(const char *);
 #endif
 #endif
-#ifndef HAVE_STRNLEN
-extern size_t strnlen(const char *s, size_t n);
-#endif
 
 #if !defined(__cplusplus)
 #ifndef HAVE_STRPBRK

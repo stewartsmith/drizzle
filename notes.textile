@@ -1,0 +1,6 @@
+h1. Andy's notes
+
+We can assume that strcmp() is in any modern compiler.
+
+All the functions in mystrings/ do this little "increment in the
+loop and then decrement on the way out."  That's just silly.
