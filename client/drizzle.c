@@ -192,7 +192,6 @@ unsigned short terminal_width= 80;
 static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
-const char *default_dbug_option="d:t:o,/tmp/drizzle.trace";
 int drizzle_real_query_for_lazy(const char *buf, int length);
 int drizzle_store_result_for_lazy(DRIZZLE_RES **result);
 
@@ -993,9 +992,6 @@ static COMMANDS commands[] = {
 
 static const char *load_default_groups[]= { "drizzle","client",0 };
 
-static int         embedded_server_arg_count= 0;
-static char       *embedded_server_args[MAX_SERVER_ARGS];
-
 int history_length;
 static int not_in_history(const char *line);
 static void initialize_readline (const char *name);
@@ -1213,8 +1209,6 @@ sig_handler drizzle_end(int sig)
   my_free(part_username,MYF(MY_ALLOW_ZERO_PTR));
   my_free(default_prompt,MYF(MY_ALLOW_ZERO_PTR));
   my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
-  while (embedded_server_arg_count > 1)
-    my_free(embedded_server_args[--embedded_server_arg_count],MYF(0));
   drizzle_server_end();
   free_defaults(defaults_argv);
   my_end(my_end_arg);
@@ -1437,8 +1431,6 @@ static struct my_option my_long_options[] =
    0, 1, 0},
   {"secure-auth", OPT_SECURE_AUTH, N_("Refuse client connecting to server if it uses old (pre-4.1.1) protocol"), (char**) &opt_secure_auth,
    (char**) &opt_secure_auth, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"server-arg", OPT_SERVER_ARG, N_("Send embedded server this as a parameter."),
-   0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"show-warnings", OPT_SHOW_WARNINGS, N_("Show warnings after every statement."),
    (char**) &show_warnings, (char**) &show_warnings, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
