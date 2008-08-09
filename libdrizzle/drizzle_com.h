@@ -311,7 +311,7 @@ typedef struct st_vio Vio;
 typedef struct st_net {
   Vio *vio;
   unsigned char *buff,*buff_end,*write_pos,*read_pos;
-  my_socket fd;					/* For Perl DBI/dbd */
+  int fd;					/* For Perl DBI/dbd */
   /*
     The following variable is set if we are doing several queries in one
     command ( as in LOAD TABLE ... FROM MASTER ),
@@ -436,10 +436,6 @@ uint32_t my_net_read(NET *net);
 void my_net_set_write_timeout(NET *net, uint timeout);
 void my_net_set_read_timeout(NET *net, uint timeout);
 #endif
-
-struct sockaddr;
-int my_connect(my_socket s, const struct sockaddr *name, unsigned int namelen,
-	       unsigned int timeout);
 
 struct rand_struct {
   unsigned long seed1,seed2,max_value;

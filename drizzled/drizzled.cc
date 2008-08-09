@@ -560,11 +560,11 @@ static void close_connections(void)
 
     for (x= 0; x < pollfd_count; x++)
     {
-      if (fds[x].fd != INVALID_SOCKET)
+      if (fds[x].fd != -1)
       {
         (void) shutdown(fds[x].fd, SHUT_RDWR);
         (void) closesocket(fds[x].fd);
-        fds[x].fd= INVALID_SOCKET;
+        fds[x].fd= -1;
       }
     }
   }
@@ -654,11 +654,11 @@ static void close_server_sock()
 
     for (x= 0; x < pollfd_count; x++)
     {
-      if (fds[x].fd != INVALID_SOCKET)
+      if (fds[x].fd != -1)
       {
         (void) shutdown(fds[x].fd, SHUT_RDWR);
         (void) closesocket(fds[x].fd);
-        fds[x].fd= INVALID_SOCKET;
+        fds[x].fd= -1;
       }
     }
   }
@@ -1127,7 +1127,7 @@ static void network_init(void)
 
     ip_sock= socket(next->ai_family, next->ai_socktype, next->ai_protocol);
 
-    if (ip_sock == INVALID_SOCKET)
+    if (ip_sock == -1)
     {
       sql_perror(ER(ER_IPSOCK_ERROR));		/* purecov: tested */
       unireg_abort(1);				/* purecov: tested */
@@ -1138,13 +1138,34 @@ static void network_init(void)
 
     /* Add options for our listening socket */
     {
+      int error;
       struct linger ling = {0, 0};
       int flags =1;
 
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags));
-      (void) setsockopt(ip_sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(ling));
-      (void) setsockopt(ip_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
+      error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
+      error= setsockopt(ip_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags, sizeof(flags));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
+      error= setsockopt(ip_sock, SOL_SOCKET, SO_LINGER, (void *)&ling, sizeof(ling));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
+      error= setsockopt(ip_sock, IPPROTO_TCP, TCP_NODELAY, (void *)&flags, sizeof(flags));
+      if (error != 0)
+      {
+        perror("setsockopt");
+        assert(error == 0);
+      }
     }
 
 
@@ -2768,7 +2789,7 @@ static void create_new_thread(THD *thd)
 inline void kill_broken_server()
 {
   /* hack to get around signals ignored in syscalls for problem OS's */
-  if ((ip_sock == INVALID_SOCKET))
+  if ((ip_sock == -1))
   {
     select_thread_in_use = 0;
     /* The following call will never return */
@@ -2785,7 +2806,7 @@ inline void kill_broken_server()
 void handle_connections_sockets()
 {
   int x;
-  my_socket sock,new_sock;
+  int sock,new_sock;
   uint error_count=0;
   THD *thd;
   struct sockaddr_storage cAddr;
@@ -2834,12 +2855,12 @@ void handle_connections_sockets()
       size_socket length= sizeof(struct sockaddr_storage);
       new_sock= accept(sock, (struct sockaddr *)(&cAddr),
                        &length);
-      if (new_sock != INVALID_SOCKET || (socket_errno != SOCKET_EINTR && socket_errno != SOCKET_EAGAIN))
+      if (new_sock != -1 || (socket_errno != SOCKET_EINTR && socket_errno != SOCKET_EAGAIN))
 	break;
     }
 
 
-    if (new_sock == INVALID_SOCKET)
+    if (new_sock == -1)
     {
       if ((error_count++ & 255) == 0)		// This can happen often
 	sql_perror("Error in accept");

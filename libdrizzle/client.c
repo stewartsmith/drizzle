@@ -99,7 +99,8 @@ static bool org_my_init_done= false;
 static void drizzle_close_free_options(DRIZZLE *drizzle);
 static void drizzle_close_free(DRIZZLE *drizzle);
 
-static int wait_for_data(my_socket fd, uint timeout);
+static int wait_for_data(int fd, int32_t timeout);
+int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout);
 
 CHARSET_INFO *default_client_charset_info = &my_charset_latin1;
 
@@ -108,16 +109,16 @@ unsigned int drizzle_server_last_errno;
 char drizzle_server_last_error[DRIZZLE_ERRMSG_SIZE];
 
 /****************************************************************************
-  A modified version of connect().  my_connect() allows you to specify
+  A modified version of connect().  connect_with_timeout() allows you to specify
   a timeout value, in seconds, that we should wait until we
   derermine we can't connect to a particular host.  If timeout is 0,
-  my_connect() will behave exactly like connect().
+  connect_with_timeout() will behave exactly like connect().
 
   Base version coded by Steve Bernacki, Jr. <steve@navinet.net>
 *****************************************************************************/
 
-int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
-         uint timeout)
+
+int connect_with_timeout(int fd, const struct sockaddr *name, uint namelen, int32_t timeout)
 {
   int flags, res, s_err;
 
@@ -144,6 +145,7 @@ int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
   }
   if (res == 0)        /* Connected quickly! */
     return(0);
+
   return wait_for_data(fd, timeout);
 }
 
@@ -155,9 +157,8 @@ int my_connect(my_socket fd, const struct sockaddr *name, uint namelen,
   If not, we will use select()
 */
 
-static int wait_for_data(my_socket fd, uint timeout)
+static int wait_for_data(int fd, int32_t timeout)
 {
-#ifdef HAVE_POLL
   struct pollfd ufds;
   int res;
 
@@ -168,81 +169,9 @@ static int wait_for_data(my_socket fd, uint timeout)
     errno= EINTR;
     return -1;
   }
-  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)))
+  if (res < 0 || !(ufds.revents & (POLLIN | POLLPRI)) || (ufds.revents & POLLHUP))
     return -1;
   return 0;
-#else
-  SOCKOPT_OPTLEN_TYPE s_err_size = sizeof(uint);
-  fd_set sfds;
-  struct timeval tv;
-  time_t start_time, now_time;
-  int res, s_err;
-
-  if (fd >= FD_SETSIZE)        /* Check if wrong error */
-    return 0;          /* Can't use timeout */
-
-  /*
-    Our connection is "in progress."  We can use the select() call to wait
-    up to a specified period of time for the connection to suceed.
-    If select() returns 0 (after waiting howevermany seconds), our socket
-    never became writable (host is probably unreachable.)  Otherwise, if
-    select() returns 1, then one of two conditions exist:
-  
-    1. An error occured.  We use getsockopt() to check for this.
-    2. The connection was set up sucessfully: getsockopt() will
-    return 0 as an error.
-  
-    Thanks goes to Andrew Gierth <andrew@erlenstar.demon.co.uk>
-    who posted this method of timing out a connect() in
-    comp.unix.programmer on August 15th, 1997.
-  */
-
-  FD_ZERO(&sfds);
-  FD_SET(fd, &sfds);
-  /*
-    select could be interrupted by a signal, and if it is,
-    the timeout should be adjusted and the select restarted
-    to work around OSes that don't restart select and
-    implementations of select that don't adjust tv upon
-    failure to reflect the time remaining
-   */
-  start_time= my_time(0);
-  for (;;)
-  {
-    tv.tv_sec = (long) timeout;
-    tv.tv_usec = 0;
-#if defined(HPUX10)
-    if ((res = select(fd+1, NULL, (int*) &sfds, NULL, &tv)) > 0)
-      break;
-#else
-    if ((res = select(fd+1, NULL, &sfds, NULL, &tv)) > 0)
-      break;
-#endif
-    if (res == 0)          /* timeout */
-      return -1;
-    now_time= my_time(0);
-    timeout-= (uint) (now_time - start_time);
-    if (errno != EINTR || (int) timeout <= 0)
-      return -1;
-  }
-
-  /*
-    select() returned something more interesting than zero, let's
-    see if we have any errors.  If the next two statements pass,
-    we've got an open socket!
-  */
-
-  s_err=0;
-  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*) &s_err, &s_err_size) != 0)
-    return(-1);
-
-  if (s_err)
-  {            /* getsockopt could succeed */
-    errno = s_err;
-    return(-1);          /* but return an error... */
-  }
-  return (0);          /* ok */
-#endif /* HAVE_POLL */
 }
 
 
@@ -1341,8 +1270,11 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype= SOCK_STREAM;
-    hints.ai_protocol= IPPROTO_TCP;
-    hints.ai_family= AF_UNSPEC;
+    /* OSX 10.5 was failing unless defined only as support IPV4 */
+#ifdef TARGET_OS_OSX
+    hints.ai_family= AF_INET;
+#endif
+
 
     snprintf(port_buf, NI_MAXSERV, "%d", port);
     gai_errno= getaddrinfo(host, port_buf, &hints, &res_lst);
@@ -1358,7 +1290,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     /* We only look at the first item (something to think about changing in the future) */
     t_res= res_lst;
     {
-      my_socket sock= socket(t_res->ai_family, t_res->ai_socktype,
+      int sock= socket(t_res->ai_family, t_res->ai_socktype,
                              t_res->ai_protocol);
       if (sock == SOCKET_ERROR)
       {
@@ -1377,8 +1309,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
         goto error;
       }
 
-      if (my_connect(sock, t_res->ai_addr, t_res->ai_addrlen,
-                     drizzle->options.connect_timeout))
+      if (connect_with_timeout(sock, t_res->ai_addr, t_res->ai_addrlen, drizzle->options.connect_timeout))
       {
         set_drizzle_extended_error(drizzle, CR_CONN_HOST_ERROR, unknown_sqlstate,
                                  ER(CR_CONN_HOST_ERROR), host, socket_errno);

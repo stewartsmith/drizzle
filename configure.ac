@@ -173,8 +173,8 @@ AM_PROG_CC_C_O
 
 # Print version of CC and CXX compiler (if they support --version)
 case $SYSTEM_TYPE in
-  *netware*)
-CC_VERSION=`$CC -version | grep -i version`
+  *apple-darwin*)
+    AC_DEFINE([TARGET_OS_OSX], [1], [Whether we build for OSX])
     ;;
   *)
 CC_VERSION=`$CC --version | sed 1q`
