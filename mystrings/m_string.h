@@ -273,7 +273,7 @@ static inline const unsigned char *skip_trailing_space(const unsigned char *ptr,
       while (end > end_words && end[-1] == 0x20)
         end--;
       if (end[-1] == 0x20 && start_words < end_words)
-        while (end > start_words && ((unsigned *)end)[-1] == SPACE_INT)
+        while (end > start_words && ((const unsigned *)end)[-1] == SPACE_INT)
           end -= SIZEOF_INT;
     }
   }

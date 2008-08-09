@@ -31,7 +31,7 @@ char *my_strchr(const CHARSET_INFO * const cs, const char *str, const char *end,
   uint mbl;
   while (str < end)
   {
-    mbl= my_mbcharlen(cs, *(uchar *)str);
+    mbl= my_mbcharlen(cs, *(const uchar *)str);
     if (mbl < 2)
     {
       if (*str == c)

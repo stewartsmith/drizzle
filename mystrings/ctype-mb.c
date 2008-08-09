@@ -293,7 +293,7 @@ size_t my_well_formed_len_mb(const CHARSET_INFO * const cs, const char *b, const
     my_wc_t wc;
     int mb_len;
 
-    if ((mb_len= cs->cset->mb_wc(cs, &wc, (uchar*) b, (uchar*) e)) <= 0)
+    if ((mb_len= cs->cset->mb_wc(cs, &wc, (const uchar*) b, (const uchar*) e)) <= 0)
     {
       *error= b < e ? 1 : 0;
       break;
@@ -333,8 +333,8 @@ uint my_instr_mb(const CHARSET_INFO * const cs,
     {
       int mb_len;
       
-      if (!cs->coll->strnncoll(cs, (uchar*) b,   s_length, 
-      				   (uchar*) s, s_length, 0))
+      if (!cs->coll->strnncoll(cs, (const uchar*) b, s_length, 
+                                   (const uchar*) s, s_length, 0))
       {
         if (nmatch)
         {
@@ -570,7 +570,7 @@ void my_hash_sort_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
   */
   key= skip_trailing_space(key, len);
   
-  for (; pos < (uchar*) key ; pos++)
+  for (; pos < (const uchar*) key ; pos++)
   {
     nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) * 
 	     ((uint)*pos)) + (nr1[0] << 8);
