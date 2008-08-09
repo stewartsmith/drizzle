@@ -46,9 +46,9 @@ drizzlebinlog_SOURCES =     drizzlebinlog.cc \
                 $(top_srcdir)/mysys/my_bitmap.c \
                 $(top_srcdir)/mysys/base64.c
 
-drizzledump_SOURCES=            drizzledump.c 
+drizzledump_SOURCES=            drizzledump.cc 
 
-drizzleimport_SOURCES=		drizzleimport.c
+drizzleimport_SOURCES=		drizzleimport.cc
 
 mysqlslap_SOURCES=		mysqlslap.c
 mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK

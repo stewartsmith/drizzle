@@ -27,7 +27,7 @@
 #define IMPORT_VERSION "3.7"
 
 #include "client_priv.h"
-#include <mysys/my_pthread.h>
+#include <pthread.h>
 
 
 /* Global Thread counter */
@@ -473,7 +473,7 @@ static char *field_escape(char *to,const char *from,uint length)
 
 int exitcode= 0;
 
-static pthread_handler_t worker_thread(void *arg)
+static void * worker_thread(void *arg)
 {
   int error;
   char *raw_table_name= (char *)arg;

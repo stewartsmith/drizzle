@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* drizzledump.c  - Dump a tables contents and format to an ASCII file
+/* drizzledump.cc  - Dump a tables contents and format to an ASCII file
 **
 ** The author's original notes follow :-
 **
@@ -3347,7 +3347,7 @@ static char *primary_key_fields(const char *table_name)
   {
     char *end;
     /* result (terminating \0 is already in result_length) */
-    result= my_malloc(result_length + 10, MYF(MY_WME));
+    result= (char *)my_malloc(result_length + 10, MYF(MY_WME));
     if (!result)
     {
       fprintf(stderr, "Error: Not enough memory to store ORDER BY clause\n");
