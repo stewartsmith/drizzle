@@ -2106,7 +2106,6 @@ static void fix_history(string *final_command)
   char str_char = '\0';  /* Character if we are in a string or not */
 
   /* Converted buffer */
-  //TODO: FIXME
   string fixed_buffer;
 
   /* find out how many lines we have and remove newlines */
