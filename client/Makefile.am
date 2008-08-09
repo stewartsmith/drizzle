@@ -35,8 +35,8 @@ bin_PROGRAMS =	drizzle \
 				drizzletest \
 				mysqlslap 
 
-drizzle_SOURCES =		drizzle.c readline.c completion_hash.c
-drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) $(GLIB_LIBS) \
+drizzle_SOURCES =		drizzle.cc readline.c completion_hash.c
+drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
