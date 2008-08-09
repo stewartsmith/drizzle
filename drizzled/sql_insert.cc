@@ -1612,7 +1612,8 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   tmp_table.s->db_low_byte_first= 
         test(create_info->db_type == myisam_hton ||
              create_info->db_type == heap_hton);
-  tmp_table.null_row=tmp_table.maybe_null=0;
+  tmp_table.null_row= false;
+  tmp_table.maybe_null= false;
 
   while ((item=it++))
   {

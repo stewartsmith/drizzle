@@ -1871,9 +1871,11 @@ bool reopen_name_locked_table(THD* thd, TABLE_LIST* table_list, bool link_in)
   table->tablenr=thd->current_tablenr++;
   table->used_fields=0;
   table->const_table=0;
-  table->null_row= table->maybe_null= table->force_index= 0;
+  table->null_row= false;
+  table->maybe_null= false;
+  table->force_index= false;
   table->status=STATUS_NO_RECORD;
-  return(false);
+  return false;
 }
 
 
@@ -2476,7 +2478,9 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
   table->tablenr=thd->current_tablenr++;
   table->used_fields=0;
   table->const_table=0;
-  table->null_row= table->maybe_null= table->force_index= 0;
+  table->null_row= false;
+  table->maybe_null= false;
+  table->force_index= false;
   table->status=STATUS_NO_RECORD;
   table->insert_values= 0;
   /* Catch wrong handling of the auto_increment_field_not_null. */
