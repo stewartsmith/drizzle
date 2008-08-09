@@ -66,9 +66,9 @@ typedef struct st_myrg_info
   ulong  cache_size;
   uint	 merge_insert_method;
   uint	 tables,options,reclength,keys;
-  my_bool cache_in_use;
+  bool cache_in_use;
   /* If MERGE children attached to parent. See top comment in ha_myisammrg.cc */
-  my_bool children_attached;
+  bool children_attached;
   LIST	 open_list;
   QUEUE  by_key;
   ulong *rec_per_key_part;			/* for sql optimizing */
@@ -103,7 +103,7 @@ extern int myrg_write(MYRG_INFO *info,uchar *rec);
 extern int myrg_status(MYRG_INFO *file,MYMERGE_INFO *x,int flag);
 extern int myrg_lock_database(MYRG_INFO *file,int lock_type);
 extern int myrg_create(const char *name, const char **table_names,
-                       uint insert_method, my_bool fix_names);
+                       uint insert_method, bool fix_names);
 extern int myrg_extra(MYRG_INFO *file,enum ha_extra_function function,
 		      void *extra_arg);
 extern int myrg_reset(MYRG_INFO *info);

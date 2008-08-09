@@ -38,7 +38,7 @@
     of the table will be preloaded.
 */
 
-int mi_preload(MI_INFO *info, uint64_t key_map, my_bool ignore_leaves)
+int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves)
 {
   uint i;
   ulong length, block_length= 0;

@@ -18,7 +18,7 @@
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
 
-my_bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
+bool mi_check_unique(MI_INFO *info, MI_UNIQUEDEF *def, uchar *record,
 			ha_checksum unique_hash, my_off_t disk_pos)
 {
   my_off_t lastpos=info->lastpos;
@@ -144,7 +144,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
 */
 
 int mi_unique_comp(MI_UNIQUEDEF *def, const uchar *a, const uchar *b,
-		   my_bool null_are_equal)
+		   bool null_are_equal)
 {
   const uchar *pos_a, *pos_b, *end;
   HA_KEYSEG *keyseg;

@@ -113,14 +113,14 @@ typedef struct st_isam_mrg {
   uint	max_blob_length;
   my_off_t records;
   /* true if at least one source file has at least one disabled index */
-  my_bool src_file_has_indexes_disabled;
+  bool src_file_has_indexes_disabled;
 } PACK_MRG_INFO;
 
 
 extern int main(int argc,char * *argv);
 static void get_options(int *argc,char ***argv);
 static MI_INFO *open_isam_file(char *name,int mode);
-static my_bool open_isam_files(PACK_MRG_INFO *mrg,char **names,uint count);
+static bool open_isam_files(PACK_MRG_INFO *mrg,char **names,uint count);
 static int compress(PACK_MRG_INFO *file,char *join_name);
 static HUFF_COUNTS *init_huff_count(MI_INFO *info,my_off_t records);
 static void free_counts_and_tree_and_queue(HUFF_TREE *huff_trees,
@@ -174,7 +174,7 @@ static void mrg_reset(PACK_MRG_INFO *mrg);
 static int error_on_write=0,test_only=0,verbose=0,silent=0,
 	   write_loop=0,force_pack=0, isamchk_neaded=0;
 static int tmpfile_createflag=O_RDWR | O_TRUNC | O_EXCL;
-static my_bool backup, opt_wait;
+static bool backup, opt_wait;
 /*
   tree_buff_length is somewhat arbitrary. The bigger it is the better
   the chance to win in terms of compression factor. On the other hand,
@@ -415,7 +415,7 @@ static MI_INFO *open_isam_file(char *name,int mode)
 }
 
 
-static my_bool open_isam_files(PACK_MRG_INFO *mrg, char **names, uint count)
+static bool open_isam_files(PACK_MRG_INFO *mrg, char **names, uint count)
 {
   uint i,j;
   mrg->count=0;
@@ -811,7 +811,7 @@ static int get_statistic(PACK_MRG_INFO *mrg,HUFF_COUNTS *huff_counts)
   ulong reclength,max_blob_length;
   uchar *record,*pos,*next_pos,*end_pos,*start_pos;
   ha_rows record_count;
-  my_bool static_row_size;
+  bool static_row_size;
   HUFF_COUNTS *count,*end_count;
   TREE_ELEMENT *element;
 

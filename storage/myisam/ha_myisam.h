@@ -33,7 +33,7 @@ extern TYPELIB myisam_recover_typelib;
 extern ulong myisam_recover_options;
 
 C_MODE_START
-my_bool index_cond_func_myisam(void *arg);
+bool index_cond_func_myisam(void *arg);
 C_MODE_END
 
 class ha_myisam: public handler
@@ -120,7 +120,7 @@ class ha_myisam: public handler
   int assign_to_keycache(THD* thd, HA_CHECK_OPT* check_opt);
   bool check_if_incompatible_data(HA_CREATE_INFO *info, uint table_changes);
 #ifdef HAVE_QUERY_CACHE
-  my_bool register_query_cache_table(THD *thd, char *table_key,
+  bool register_query_cache_table(THD *thd, char *table_key,
                                      uint key_length,
                                      qc_engine_callback
                                      *engine_callback,
@@ -152,6 +152,6 @@ public:
 private:
   DsMrr_impl ds_mrr;
   key_map keys_with_parts;
-  friend my_bool index_cond_func_myisam(void *arg);
+  friend bool index_cond_func_myisam(void *arg);
 };
 

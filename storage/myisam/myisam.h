@@ -162,7 +162,7 @@ typedef struct st_mi_create_info
   uint64_t key_file_length;
   uint old_options;
   uint8_t language;
-  my_bool with_auto_increment;
+  bool with_auto_increment;
 } MI_CREATE_INFO;
 
 struct st_myisam_info;			/* For referense */
@@ -190,7 +190,7 @@ typedef struct st_mi_keydef		/* Key definition with open & info */
   int (*bin_search)(struct st_myisam_info *info,struct st_mi_keydef *keyinfo,
 		    uchar *page,uchar *key,
 		    uint key_len,uint comp_flag,uchar * *ret_pos,
-		    uchar *buff, my_bool *was_last_key);
+		    uchar *buff, bool *was_last_key);
   uint (*get_key)(struct st_mi_keydef *keyinfo,uint nod_flag,uchar * *page,
 		  uchar *key);
   int (*pack_key)(struct st_mi_keydef *keyinfo,uint nod_flag,uchar *next_key,
@@ -404,8 +404,8 @@ typedef struct st_mi_check_param
   uint opt_sort_key,total_files,max_level;
   uint testflag, key_cache_block_size;
   uint8_t language;
-  my_bool using_global_keycache, opt_lock_memory, opt_follow_links;
-  my_bool retry_repair, force_sort;
+  bool using_global_keycache, opt_lock_memory, opt_follow_links;
+  bool retry_repair, force_sort;
   char temp_filename[FN_REFLEN],*isam_file_name;
   MY_TMPDIR *tmpdir;
   int tmpfile_createflag;
@@ -463,7 +463,7 @@ int change_to_newfile(const char * filename, const char * old_ext,
 		      myf myflags);
 void lock_memory(MI_CHECK *param);
 void update_auto_increment_key(MI_CHECK *param, MI_INFO *info,
-			       my_bool repair);
+			       bool repair);
 int update_state_info(MI_CHECK *param, MI_INFO *info,uint update);
 void update_key_parts(MI_KEYDEF *keyinfo, ulong *rec_per_key_part,
                       uint64_t *unique, uint64_t *notnull, 
@@ -472,11 +472,11 @@ int filecopy(MI_CHECK *param, File to,File from,my_off_t start,
 	     my_off_t length, const char *type);
 int movepoint(MI_INFO *info,uchar *record,my_off_t oldpos,
 	      my_off_t newpos, uint prot_key);
-int write_data_suffix(SORT_INFO *sort_info, my_bool fix_datafile);
+int write_data_suffix(SORT_INFO *sort_info, bool fix_datafile);
 int test_if_almost_full(MI_INFO *info);
 int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename);
-my_bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
-			    my_bool force);
+bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
+			    bool force);
 
 int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint inx);
@@ -485,7 +485,7 @@ int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map,
 			   KEY_CACHE *key_cache);
 void mi_change_key_cache(KEY_CACHE *old_key_cache,
 			 KEY_CACHE *new_key_cache);
-int mi_preload(MI_INFO *info, uint64_t key_map, my_bool ignore_leaves);
+int mi_preload(MI_INFO *info, uint64_t key_map, bool ignore_leaves);
 
 #ifdef	__cplusplus
 }

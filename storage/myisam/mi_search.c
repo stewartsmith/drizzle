@@ -18,7 +18,7 @@
 #include "myisamdef.h"
 #include <mystrings/m_ctype.h>
 
-static my_bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
+static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
                                 uchar *key, uchar *keypos,
                                 uint *return_key_length);
 
@@ -56,7 +56,7 @@ int _mi_check_index(MI_INFO *info, int inx)
 int _mi_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
                uchar *key, uint key_len, uint nextflag, register my_off_t pos)
 {
-  my_bool last_key;
+  bool last_key;
   int error,flag;
   uint nod_flag;
   uchar *keypos,*maxpos;
@@ -167,7 +167,7 @@ err:
 
 int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
                    uchar *key, uint key_len, uint comp_flag, uchar **ret_pos,
-                   uchar *buff __attribute__((unused)), my_bool *last_key)
+                   uchar *buff __attribute__((unused)), bool *last_key)
 {
   register int start,mid,end,save_end;
   int flag;
@@ -227,7 +227,7 @@ int _mi_bin_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
 
 int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
                    uchar *key, uint key_len, uint comp_flag, uchar **ret_pos,
-                   uchar *buff, my_bool *last_key)
+                   uchar *buff, bool *last_key)
 {
   int flag=0;
   uint nod_flag,length=0,not_used[2];
@@ -262,7 +262,7 @@ int _mi_seq_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
 
 int _mi_prefix_search(MI_INFO *info, register MI_KEYDEF *keyinfo, uchar *page,
                       uchar *key, uint key_len, uint nextflag, uchar **ret_pos,
-                      uchar *buff, my_bool *last_key)
+                      uchar *buff, bool *last_key)
 {
   /*
     my_flag is raw comparison result to be changed according to
@@ -1027,7 +1027,7 @@ uchar *_mi_get_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
         /* Get key at position without knowledge of previous key */
         /* Returns 0 if ok */
 
-static my_bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
+static bool _mi_get_prev_key(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *page,
                                 uchar *key, uchar *keypos,
                                 uint *return_key_length)
 {
@@ -1396,7 +1396,7 @@ _mi_calc_var_pack_key_length(MI_KEYDEF *keyinfo,uint nod_flag,uchar *next_key,
   uint key_length,ref_length,org_key_length=0,
        length_pack,new_key_length,diff_flag,pack_marker;
   uchar *start,*end,*key_end,*sort_order;
-  my_bool same_length;
+  bool same_length;
 
   length_pack=s_temp->ref_length=s_temp->n_ref_length=s_temp->n_length=0;
   same_length=0; keyseg=keyinfo->seg;

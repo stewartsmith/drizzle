@@ -73,11 +73,11 @@ static int myisamchk(MI_CHECK *param, char *filename);
 static void descript(MI_CHECK *param, register MI_INFO *info, char * name);
 static int mi_sort_records(MI_CHECK *param, register MI_INFO *info,
                            char * name, uint sort_key,
-			   my_bool write_info, my_bool update_index);
+			   bool write_info, bool update_index);
 static int sort_record_index(MI_SORT_PARAM *sort_param, MI_INFO *info,
                              MI_KEYDEF *keyinfo,
 			     my_off_t page,uchar *buff,uint sortkey,
-			     File new_file, my_bool update_index);
+			     File new_file, bool update_index);
 
 MI_CHECK check_param;
 
@@ -758,7 +758,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
   MI_INFO *info;
   File datafile;
   char llbuff[22],llbuff2[22];
-  my_bool state_updated=0;
+  bool state_updated=0;
   MYISAM_SHARE *share;
 
   param->out_flag=error=param->warning_printed=param->error_printed=
@@ -824,7 +824,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
   */
   if (param->testflag & (T_FAST | T_CHECK_ONLY_CHANGED))
   {
-    my_bool need_to_check= mi_is_crashed(info) || share->state.open_count != 0;
+    bool need_to_check= mi_is_crashed(info) || share->state.open_count != 0;
 
     if ((param->testflag & (T_REP_ANY | T_SORT_RECORDS)) &&
 	((share->state.changed & (STATE_CHANGED | STATE_CRASHED |
@@ -979,14 +979,14 @@ static int myisamchk(MI_CHECK *param, char * filename)
 	  We can't update the index in mi_sort_records if we have a
 	  prefix compressed or fulltext index
 	*/
-	my_bool update_index=1;
+	bool update_index=1;
 	for (key=0 ; key < share->base.keys; key++)
 	  if (share->keyinfo[key].flag & (HA_BINARY_PACK_KEY))
 	    update_index=0;
 
 	error=mi_sort_records(param,info,filename,param->opt_sort_key,
                            /* what is the following parameter for ? */
-	   		      (my_bool) !(param->testflag & T_REP),
+	   		      (bool) !(param->testflag & T_REP),
 			      update_index);
 	datafile=info->dfile;	/* This is now locked */
 	if (!error && !update_index)
@@ -1069,7 +1069,7 @@ static int myisamchk(MI_CHECK *param, char * filename)
   if ((param->testflag & T_AUTO_INC) ||
       ((param->testflag & T_REP_ANY) && info->s->base.auto_key))
     update_auto_increment_key(param, info,
-			      (my_bool) !test(param->testflag & T_AUTO_INC));
+			      (bool) !test(param->testflag & T_AUTO_INC));
 
   if (!(param->testflag & T_DESCRIPT))
   {
@@ -1318,7 +1318,7 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
     for (key=0,uniqueinfo= &share->uniqueinfo[0] ;
 	 key < share->state.header.uniques; key++, uniqueinfo++)
     {
-      my_bool new_row=0;
+      bool new_row=0;
       char null_bit[8],null_pos[8];
       printf("%-8d%-5d",key+1,uniqueinfo->key+1);
       for (keyseg=uniqueinfo->seg ; keyseg->type != HA_KEYTYPE_END ; keyseg++)
@@ -1397,8 +1397,8 @@ static void descript(MI_CHECK *param, register MI_INFO *info, char * name)
 static int mi_sort_records(MI_CHECK *param,
 			   register MI_INFO *info, char * name,
 			   uint sort_key,
-			   my_bool write_info,
-			   my_bool update_index)
+			   bool write_info,
+			   bool update_index)
 {
   int got_error;
   uint key;
@@ -1571,7 +1571,7 @@ err:
 static int sort_record_index(MI_SORT_PARAM *sort_param,MI_INFO *info,
                              MI_KEYDEF *keyinfo,
 			     my_off_t page, uchar *buff, uint sort_key,
-			     File new_file,my_bool update_index)
+			     File new_file,bool update_index)
 {
   uint	nod_flag,used_length,key_length;
   uchar *temp_buff,*keypos,*endpos;

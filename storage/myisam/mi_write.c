@@ -25,7 +25,7 @@ static int w_search(MI_INFO *info,MI_KEYDEF *keyinfo,
 		    uint comp_flag, uchar *key,
 		    uint key_length, my_off_t pos, uchar *father_buff,
 		    uchar *father_keypos, my_off_t father_page,
-		    my_bool insert_last);
+		    bool insert_last);
 static int _mi_balance_page(MI_INFO *info,MI_KEYDEF *keyinfo,uchar *key,
 			    uchar *curr_buff,uchar *father_buff,
 			    uchar *father_keypos,my_off_t father_page);
@@ -46,7 +46,7 @@ int mi_write(MI_INFO *info, uchar *record)
   int save_errno;
   my_off_t filepos;
   uchar *buff;
-  my_bool lock_tree= share->concurrent_insert;
+  bool lock_tree= share->concurrent_insert;
 
   if (share->options & HA_OPTION_READ_ONLY_DATA)
   {
@@ -90,7 +90,7 @@ int mi_write(MI_INFO *info, uchar *record)
   {
     if (mi_is_key_active(share->state.key_map, i))
     {
-      my_bool local_lock_tree= (lock_tree &&
+      bool local_lock_tree= (lock_tree &&
                                 !(info->bulk_insert &&
                                   is_tree_inited(&info->bulk_insert[i])));
       if (local_lock_tree)
@@ -167,7 +167,7 @@ err:
     {
       if (mi_is_key_active(share->state.key_map, i))
       {
-	my_bool local_lock_tree= (lock_tree &&
+	bool local_lock_tree= (lock_tree &&
                                   !(info->bulk_insert &&
                                     is_tree_inited(&info->bulk_insert[i])));
 	if (local_lock_tree)
@@ -291,13 +291,13 @@ int _mi_enlarge_root(MI_INFO *info, MI_KEYDEF *keyinfo, uchar *key,
 static int w_search(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 		    uint comp_flag, uchar *key, uint key_length, my_off_t page,
 		    uchar *father_buff, uchar *father_keypos,
-		    my_off_t father_page, my_bool insert_last)
+		    my_off_t father_page, bool insert_last)
 {
   int error,flag;
   uint nod_flag, search_key_length;
   uchar *temp_buff,*keypos;
   uchar keybuff[MI_MAX_KEY_BUFF];
-  my_bool was_last_key;
+  bool was_last_key;
   my_off_t next_page, dupp_key_pos;
 
   search_key_length= (comp_flag & SEARCH_FIND) ? key_length : USE_WHOLE_KEY;
@@ -377,7 +377,7 @@ err:
 int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 	       uchar *key, uchar *anc_buff, uchar *key_pos, uchar *key_buff,
                uchar *father_buff, uchar *father_key_pos, my_off_t father_page,
-	       my_bool insert_last)
+	       bool insert_last)
 {
   uint a_length,nod_flag;
   int t_length;
@@ -435,7 +435,7 @@ int _mi_insert(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 
 int _mi_split_page(register MI_INFO *info, register MI_KEYDEF *keyinfo,
 		   uchar *key, uchar *buff, uchar *key_buff,
-		   my_bool insert_last_key)
+		   bool insert_last_key)
 {
   uint length,a_length,key_ref_length,t_length,nod_flag,key_length;
   uchar *key_pos,*pos, *after_key= NULL;
@@ -595,7 +595,7 @@ static int _mi_balance_page(register MI_INFO *info, MI_KEYDEF *keyinfo,
 			    uchar *key, uchar *curr_buff, uchar *father_buff,
 			    uchar *father_key_pos, my_off_t father_page)
 {
-  my_bool right;
+  bool right;
   uint k_length,father_length,father_keylength,nod_flag,curr_keylength,
        right_length,left_length,new_right_length,new_left_length,extra_length,
        length,keys;
