@@ -361,7 +361,7 @@ static char * expand_tilde(char * *path)
     }
   }
 #endif
-  return (char *) 0;
+  return NULL;
 }
 
 

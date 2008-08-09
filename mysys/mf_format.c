@@ -26,13 +26,14 @@
 char * fn_format(char * to, const char *name, const char *dir,
 		    const char *extension, uint flag)
 {
-  char dev[FN_REFLEN], buff[FN_REFLEN], *pos, *startpos;
+  char dev[FN_REFLEN], buff[FN_REFLEN], *pos;
+  const char *startpos = name;
   const char *ext;
   register size_t length;
   size_t dev_length;
 
   /* Copy and skip directory */
-  name+=(length=dirname_part(dev, (startpos=(char *) name), &dev_length));
+  name+=(length=dirname_part(dev, startpos, &dev_length));
   if (length == 0 || (flag & MY_REPLACE_DIR))
   {
     /* Use given directory */

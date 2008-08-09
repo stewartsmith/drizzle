@@ -111,43 +111,6 @@ int my_fclose(FILE *fd, myf MyFlags)
 } /* my_fclose */
 
 
-	/* Make a stream out of a file handle */
-	/* Name may be 0 */
-
-FILE *my_fdopen(File Filedes, const char *name, int Flags, myf MyFlags)
-{
-  FILE *fd;
-  char type[5];
-
-  make_ftype(type,Flags);
-  if ((fd = fdopen(Filedes, type)) == 0)
-  {
-    my_errno=errno;
-    if (MyFlags & (MY_FAE | MY_WME))
-      my_error(EE_CANT_OPEN_STREAM, MYF(ME_BELL+ME_WAITTANG),errno);
-  }
-  else
-  {
-    pthread_mutex_lock(&THR_LOCK_open);
-    my_stream_opened++;
-    if ((uint) Filedes < (uint) my_file_limit)
-    {
-      if (my_file_info[Filedes].type != UNOPEN)
-      {
-        my_file_opened--;		/* File is opened with my_open ! */
-      }
-      else
-      {
-        my_file_info[Filedes].name=  my_strdup(name,MyFlags);
-      }
-      my_file_info[Filedes].type = STREAM_BY_FDOPEN;
-    }
-    pthread_mutex_unlock(&THR_LOCK_open);
-  }
-
-  return(fd);
-} /* my_fdopen */
-
 
 /*   
   Make a fopen() typestring from a open() type bitmap

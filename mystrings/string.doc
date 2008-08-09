@@ -60,10 +60,6 @@ Speciella användbara nya string-rutiner:
   strcend(s, c) returns a pointer to the  first  place  in  s	where  c
   occurs,  or a pointer to the end-null of s if c does not occur in s.
 
-  strcont(str, set) if str contanies any character in the string set.
-  The result is the position of the first found character in str, or NullS
-  if there isn't anything found.
-
   strend(s) returns a character pointer to the NUL which ends s.  That
   is,  strend(s)-s  ==  strlen(s). This is useful for adding things at
   the end of strings.  It is redundant, because  strchr(s,'\0')  could
