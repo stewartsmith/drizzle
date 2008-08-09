@@ -26,9 +26,12 @@
 */
 #define IMPORT_VERSION "3.7"
 
+#include <string>
+
 #include "client_priv.h"
 #include <pthread.h>
 
+using namespace std;
 
 /* Global Thread counter */
 uint counter;
@@ -42,8 +45,8 @@ static char *add_load_option(char *ptr,const char *object,
            const char *statement);
 
 static bool  verbose=0,lock_tables=0,ignore_errors=0,opt_delete=0,
-    replace=0,silent=0,ignore=0,opt_compress=0,
-                opt_low_priority= 0, tty_password= 0;
+  opt_replace=0,silent=0,ignore=0,opt_compress=0,
+  opt_low_priority= 0, tty_password= 0;
 static bool debug_info_flag= 0, debug_check_flag= 0;
 static uint opt_use_threads=0, opt_local_file=0, my_end_arg= 0;
 static char  *opt_password=0, *current_user=0,
@@ -128,7 +131,7 @@ static struct my_option my_long_options[] =
   {"protocol", OPT_DRIZZLE_PROTOCOL, "The protocol of connection (tcp,socket,pipe,memory).",
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replace", 'r', "If duplicate unique key was found, replace old row.",
-   (char**) &replace, (char**) &replace, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
+   (char**) &opt_replace, (char**) &opt_replace, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', "Be more silent.", (char**) &silent, (char**) &silent, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"socket", 'S', "Socket file to use for connection.",
@@ -227,7 +230,7 @@ static int get_options(int *argc, char ***argv)
     fprintf(stderr, "You can't use ..enclosed.. and ..optionally-enclosed.. at the same time.\n");
     return(1);
   }
-  if (replace && ignore)
+  if (opt_replace && ignore)
   {
     fprintf(stderr, "You can't use --ignore (-i) and --replace (-r) at the same time.\n");
     return(1);
@@ -290,7 +293,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
     opt_low_priority ? "LOW_PRIORITY" : "",
     opt_local_file ? "LOCAL" : "", hard_path);
   end= strend(sql_statement);
-  if (replace)
+  if (opt_replace)
     end= stpcpy(end, " REPLACE");
   if (ignore)
     end= stpcpy(end, " IGNORE");
@@ -331,20 +334,20 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
 
 static void lock_table(DRIZZLE *drizzle, int tablecount, char **raw_tablename)
 {
-  DYNAMIC_STRING query;
+  string query;
   int i;
   char tablename[FN_REFLEN];
 
   if (verbose)
     fprintf(stdout, "Locking tables for write\n");
-  init_dynamic_string(&query, "LOCK TABLES ", 256, 1024);
+  query.append("LOCK TABLES ");
   for (i=0 ; i < tablecount ; i++)
   {
     fn_format(tablename, raw_tablename[i], "", "", 1 | 2);
-    dynstr_append(&query, tablename);
-    dynstr_append(&query, " WRITE,");
+    query.append(tablename);
+    query.append(" WRITE,");
   }
-  if (drizzle_real_query(drizzle, query.str, query.length-1))
+  if (drizzle_real_query(drizzle, query.c_str(), query.length()-1))
     db_error(drizzle); /* We shall countinue here, if --force was given */
 }
 
