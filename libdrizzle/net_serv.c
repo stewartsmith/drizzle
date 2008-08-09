@@ -601,6 +601,7 @@ my_real_read(NET *net, size_t *complen)
         net->last_errno= (vio_was_interrupted(net->vio) ?
                           ER_NET_READ_INTERRUPTED :
                           ER_NET_READ_ERROR);
+        my_error(net->last_errno, MYF(0));
         goto end;
       }
       remain -= (uint32_t) length;
