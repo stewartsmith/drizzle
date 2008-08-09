@@ -1120,7 +1120,7 @@ innobase_query_caching_of_table_permitted(
 		/* In the SERIALIZABLE mode we add LOCK IN SHARE MODE to every
 		plain SELECT if AUTOCOMMIT is not on. */
 
-		return((my_bool)FALSE);
+		return false;
 	}
 
 	if (trx->has_search_latch) {
@@ -1162,7 +1162,7 @@ innobase_query_caching_of_table_permitted(
 		then trx2 would have already invalidated the cache. Thus we
 		can trust the result in the cache is ok for this query. */
 
-		return((my_bool)TRUE);
+          return true;
 	}
 
 	/* Normalize the table name to InnoDB format */
@@ -1188,12 +1188,12 @@ innobase_query_caching_of_table_permitted(
 
 		/* printf("Query cache for %s permitted\n", norm_name); */
 
-		return((my_bool)TRUE);
+          return true;
 	}
 
 	/* printf("Query cache for %s NOT permitted\n", norm_name); */
 
-	return((my_bool)FALSE);
+        return false;
 }
 
 /*********************************************************************
