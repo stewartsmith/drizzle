@@ -17,13 +17,13 @@
 #include <drizzle.h>
 
 /* Get the length of next field. Change parameter to point at fieldstart */
-uint32_t net_field_length(uchar **packet)
+int64_t net_field_length(uchar **packet)
 {
   register uchar *pos= (uchar *)*packet;
   if (*pos < 251)
   {
     (*packet)++;
-    return (uint32_t) *pos;
+    return (int64_t) *pos;
   }
   if (*pos == 251)
   {
@@ -33,15 +33,15 @@ uint32_t net_field_length(uchar **packet)
   if (*pos == 252)
   {
     (*packet)+=3;
-    return (uint32_t) uint2korr(pos+1);
+    return (int64_t) uint2korr(pos+1);
   }
   if (*pos == 253)
   {
     (*packet)+=4;
-    return (uint32_t) uint3korr(pos+1);
+    return (int64_t) uint3korr(pos+1);
   }
   (*packet)+=9;          /* Must be 254 when here */
-  return (uint32_t) uint4korr(pos+1);
+  return (int64_t) uint4korr(pos+1);
 }
 
 /* The same as above but returns int64_t */

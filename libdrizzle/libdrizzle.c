@@ -77,7 +77,7 @@ uint32_t    max_allowed_packet= 1024L*1024L*1024L;
 static DRIZZLE_PARAMETERS drizzle_internal_parameters=
 {&max_allowed_packet, &net_buffer_length, 0};
 
-const DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void)
+const DRIZZLE_PARAMETERS * drizzle_get_parameters(void)
 {
   return &drizzle_internal_parameters;
 }
@@ -517,7 +517,7 @@ uint64_t drizzle_insert_id(const DRIZZLE *drizzle)
   return drizzle->insert_id;
 }
 
-const char *STDCALL drizzle_sqlstate(const DRIZZLE *drizzle)
+const char * drizzle_sqlstate(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.sqlstate : cant_connect_sqlstate;
 }
@@ -527,7 +527,7 @@ uint32_t drizzle_warning_count(const DRIZZLE *drizzle)
   return drizzle->warning_count;
 }
 
-const char *STDCALL drizzle_info(const DRIZZLE *drizzle)
+const char * drizzle_info(const DRIZZLE *drizzle)
 {
   return drizzle->info;
 }
