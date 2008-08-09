@@ -88,7 +88,6 @@ extern	char *strmake_overlapp(char *dst,const char *src, size_t length);
 #endif
 
 extern	char *strsuff(const char *src,const char *suffix);
-extern	char *strcont(const char *src,const char *set);
 extern	char *strxcat(char *dst,const char *src, ...);
 extern	char *strxmov(char *dst,const char *src, ...);
 extern	char *strxcpy(char *dst,const char *src, ...);

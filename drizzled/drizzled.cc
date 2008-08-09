@@ -4922,6 +4922,11 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
 	end--;					/* Skip end-space */
       found_end=1;
     }
+    else
+    {
+        end=pos+strlen(pos);
+        found_end=1;
+    }
     found_int=0; found_count=0;
     for (array=bit_lib->type_names, bit=1 ; (i= *array++) ; bit<<=1)
     {

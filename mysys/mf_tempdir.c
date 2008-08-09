@@ -20,7 +20,8 @@
 
 bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
 {
-  char *end, *copy;
+  const char *end;
+  char *copy;
   char buff[FN_REFLEN];
 
   pthread_mutex_init(&tmpdir->mutex, MY_MUTEX_INIT_FAST);
@@ -33,16 +34,18 @@ bool init_tmpdir(MY_TMPDIR *tmpdir, const char *pathlist)
     if (!pathlist || !pathlist[0])
       pathlist=(char*) P_tmpdir;
   }
-  while((end= strrchr(pathlist, DELIM)) != NULL)
-  {
+  do {
     uint length;
+    end= strrchr(pathlist, DELIM);
+    if (end == NULL)
+      end= pathlist+strlen(pathlist);
     strmake(buff, pathlist, (uint) (end-pathlist));
     length= cleanup_dirname(buff, buff);
     if (!(copy= my_strndup(buff, length, MYF(MY_WME))) ||
         insert_dynamic(&tmpdir->full_list, (uchar*) &copy))
       return(true);
     pathlist=end+1;
-  }
+  } while (*end != '\0');
   freeze_size(&tmpdir->full_list);
   tmpdir->list=(char **)tmpdir->full_list.buffer;
   tmpdir->max=tmpdir->full_list.elements-1;

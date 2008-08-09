@@ -235,6 +235,7 @@ static void init_username(void);
 static void add_int_to_prompt(int toadd);
 static int get_result_width(DRIZZLE_RES *res);
 static int get_field_disp_length(DRIZZLE_FIELD * field);
+static const char * strcont(register const char *str, register const char *set);
 
 /* A structure which contains information on the commands this program
    can understand. */
@@ -4368,3 +4369,25 @@ static int com_prompt(DYNAMIC_STRING *buffer __attribute__((unused)),
     tee_fprintf(stdout, "PROMPT set to '%s'\n", current_prompt);
   return 0;
 }
+
+/*
+    strcont(str, set) if str contanies any character in the string set.
+    The result is the position of the first found character in str, or NullS
+    if there isn't anything found.
+*/
+
+static const char * strcont(register const char *str, register const char *set)
+{
+  register const char * start = (const char *) set;
+
+  while (*str)
+  {
+    while (*set)
+    {
+      if (*set++ == *str)
+        return ((const char*) str);
+    }
+    set=start; str++;
+  }
+  return NULL;
+} /* strcont */
