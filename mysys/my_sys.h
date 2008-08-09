@@ -494,7 +494,6 @@ typedef int (*Process_option_func)(void *ctx, const char *group_name,
 	/* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
-extern int my_append(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
 extern int my_getwd(char * buf,size_t size,myf MyFlags);
 extern int my_setwd(const char *dir,myf MyFlags);
