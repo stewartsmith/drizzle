@@ -25,7 +25,7 @@ dist_mystringsinclude_HEADERS = 	decimal.h \
 noinst_HEADERS =	my_uctype.h
 
 
-# LTLIBOBJS contains strstr strtoll strtoull stpcpy strnlen 
+# LTLIBOBJS contains strstr strtoll strtoull stpcpy strnlen getpagesize
 # IFF the don't exist on
 # the target system. This helps prevent empty object file problems.
 libmystrings_la_LIBADD = $(LTLIBOBJS)
