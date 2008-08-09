@@ -156,7 +156,6 @@ static TINA_SHARE *get_share(const char *table_name,
     }
 
     share->use_count= 0;
-    share->is_log_table= false;
     share->table_name_length= length;
     share->table_name= tmp_name;
     share->crashed= false;
@@ -751,17 +750,6 @@ bool tina_check_status(void* param __attribute__((unused)))
 
 void ha_tina::get_status()
 {
-  if (share->is_log_table)
-  {
-    /*
-      We have to use mutex to follow pthreads memory visibility
-      rules for share->saved_data_file_length
-    */
-    pthread_mutex_lock(&share->mutex);
-    local_saved_data_file_length= share->saved_data_file_length;
-    pthread_mutex_unlock(&share->mutex);
-    return;
-  }
   local_saved_data_file_length= share->saved_data_file_length;
 }
 
@@ -783,8 +771,7 @@ void ha_tina::get_status()
     For log tables concurrent insert works different. The reason is that
     log tables are always opened and locked. And as they do not unlock
     tables, the file length after writes should be updated in a different
-    way. For this purpose we need is_log_table flag. When this flag is set
-    we call update_status() explicitly after each row write.
+    way. 
 */
 
 void ha_tina::update_status()
@@ -877,8 +864,6 @@ int ha_tina::write_row(uchar * buf)
   pthread_mutex_lock(&share->mutex);
   share->rows_recorded++;
   /* update status for the log tables */
-  if (share->is_log_table)
-    update_status();
   pthread_mutex_unlock(&share->mutex);
 
   stats.records++;
@@ -944,9 +929,6 @@ int ha_tina::update_row(const uchar * old_data __attribute__((unused)),
   temp_file_length+= size;
   rc= 0;
 
-  /* UPDATE should never happen on the log tables */
-  assert(!share->is_log_table);
-
 err:
   return(rc);
 }
@@ -974,9 +956,6 @@ int ha_tina::delete_row(const uchar * buf __attribute__((unused)))
   pthread_mutex_lock(&share->mutex);
   share->rows_recorded--;
   pthread_mutex_unlock(&share->mutex);
-
-  /* DELETE should never happen on the log table */
-  assert(!share->is_log_table);
 
   return(0);
 }
