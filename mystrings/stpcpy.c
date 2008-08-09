@@ -14,25 +14,20 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*
-  strmov(dst, src) moves all the  characters  of  src  (including  the
+  stpcpy(dst, src) moves all the  characters  of  src  (including  the
   closing NUL) to dst, and returns a pointer to the new closing NUL in
   dst.	 The similar UNIX routine strcpy returns the old value of dst,
-  which I have never found useful.  strmov(strmov(dst,a),b) moves a//b
+  which I have never found useful.  stpcpy(stpcpy(dst,a),b) moves a//b
   into dst, which seems useful.
 */
 
 #include "m_string.h"
 
-#ifdef BAD_STRING_COMPILER
-#undef strmov
-#define strmov strmov_overlapp
-#endif
-
-#ifndef strmov
+#ifndef stpcpy
 
 #if !defined(MC68000) && !defined(DS90)
 
-char *strmov(register char *dst, register const char *src)
+char *stpcpy(register char *dst, register const char *src)
 {
   while ((*dst++ = *src++)) ;
   return dst-1;
@@ -40,7 +35,7 @@ char *strmov(register char *dst, register const char *src)
 
 #else
 
-char *strmov(dst, src)
+char *stpcpy(dst, src)
      char *dst, *src;
 {
   asm("		movl	4(a7),a1	");
@@ -53,4 +48,4 @@ char *strmov(dst, src)
 
 #endif
 
-#endif /* strmov */
+#endif /* stpcpy */

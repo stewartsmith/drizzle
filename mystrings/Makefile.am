@@ -56,7 +56,7 @@ noinst_HEADERS =	my_uctype.h
 
 # C files common to all three cases are included directly below, so that
 # ASRCS and CSRCS can be smaller
-# LTLIBOBJS contains strstr strtoll strtoull strmov IFF the don't exist on
+# LTLIBOBJS contains strstr strtoll strtoull stpcpy IFF the don't exist on
 # the target system. This helps prevent empty object file problems.
 libmystringslt_la_LIBADD = $(LTLIBOBJS)
 libmystringslt_la_SOURCES = 	$(ASRCS) $(CSRCS) bmove512.c \

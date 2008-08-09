@@ -57,16 +57,10 @@ extern "C" {
 extern void *(*my_str_malloc)(size_t);
 extern void (*my_str_free)(void *);
 
-#if defined(HAVE_STPCPY)
 #define strmov(A,B) stpcpy((A),(B))
-#endif
 
-#ifdef BAD_STRING_COMPILER
-#define strmov(A,B)  (memccpy(A,B,0,INT_MAX)-1)
-#else
-#define strmov_overlapp(A,B) strmov(A,B)
+#define strmov_overlapp(A,B) stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
-#endif
 
 #if (!defined(USE_BMOVE512) || defined(HAVE_purify)) && !defined(bmove512)
 #define bmove512(A,B,C) memcpy(A,B,C)
@@ -93,9 +87,6 @@ extern	char *strmake(char *dst,const char *src,size_t length);
 extern	char *strmake_overlapp(char *dst,const char *src, size_t length);
 #endif
 
-#ifndef strmov
-extern	char *strmov(char *dst,const char *src);
-#endif
 extern	char *strnmov(char *dst,const char *src,size_t n);
 extern	char *strsuff(const char *src,const char *suffix);
 extern	char *strcont(const char *src,const char *set);

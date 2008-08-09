@@ -14,8 +14,6 @@
  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <my_time.h>
-#include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
 #include <mysys/my_pthread.h>
 
