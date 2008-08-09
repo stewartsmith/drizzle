@@ -1130,8 +1130,8 @@ int main(int argc,char *argv[])
   if (!status.batch && !quick)
   {
     /* read-history from file, default ~/.drizzle_history*/
-    if (getenv("MYSQL_HISTFILE"))
-      histfile= strdup(getenv("MYSQL_HISTFILE"));
+    if (getenv("DRIZZLE_HISTFILE"))
+      histfile= strdup(getenv("DRIZZLE_HISTFILE"));
     else if (getenv("HOME"))
     {
       histfile=(char*) my_malloc((uint) strlen(getenv("HOME"))
@@ -1360,7 +1360,7 @@ static struct my_option my_long_options[] =
   {"password", 'p',
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, my.cnf, $MYSQL_TCP_PORT, ")
+  {"port", 'P', N_("Port number to use for connection or 0 for default to, in order of preference, my.cnf, $DRIZZLE_TCP_PORT, ")
    N_("built-in default") " (" STRINGIFY_ARG(MYSQL_PORT) ").",
    (char**) &opt_drizzle_port,
    (char**) &opt_drizzle_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,  0},
@@ -1608,7 +1608,7 @@ static int get_options(int argc, char **argv)
   int ho_error;
   const DRIZZLE_PARAMETERS *drizzle_params= drizzle_get_parameters();
 
-  tmp= (char *) getenv("MYSQL_HOST");
+  tmp= (char *) getenv("DRIZZLE_HOST");
   if (tmp)
     current_host= strdup(tmp);
 
