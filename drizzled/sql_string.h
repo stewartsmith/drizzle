@@ -280,7 +280,6 @@ public:
     return 0;
   }
   bool fill(uint32_t max_length,char fill);
-  void strip_sp();
   friend int sortcmp(const String *a,const String *b, const CHARSET_INFO * const cs);
   friend int stringcmp(const String *a,const String *b);
   friend String *copy_if_not_alloced(String *a,String *b,uint32_t arg_length);
