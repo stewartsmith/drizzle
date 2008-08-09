@@ -289,7 +289,7 @@ void drizzle_server_end(void);
 */
 #define drizzle_library_end drizzle_server_end
 
-const DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void);
+const DRIZZLE_PARAMETERS * drizzle_get_parameters(void);
 
 /*
   Set up and bring down a thread; these function should be called
@@ -308,7 +308,7 @@ void drizzle_thread_end(void);
 uint64_t drizzle_num_rows(const DRIZZLE_RES *res);
 unsigned int drizzle_num_fields(const DRIZZLE_RES *res);
 bool drizzle_eof(const DRIZZLE_RES *res);
-const DRIZZLE_FIELD *STDCALL drizzle_fetch_field_direct(const DRIZZLE_RES *res,
+const DRIZZLE_FIELD * drizzle_fetch_field_direct(const DRIZZLE_RES *res,
                 unsigned int fieldnr);
 const DRIZZLE_FIELD * drizzle_fetch_fields(const DRIZZLE_RES *res);
 DRIZZLE_ROW_OFFSET drizzle_row_tell(const DRIZZLE_RES *res);
@@ -319,7 +319,7 @@ uint64_t drizzle_affected_rows(const DRIZZLE *drizzle);
 uint64_t drizzle_insert_id(const DRIZZLE *drizzle);
 uint32_t drizzle_errno(const DRIZZLE *drizzle);
 const char * drizzle_error(const DRIZZLE *drizzle);
-const char *STDCALL drizzle_sqlstate(const DRIZZLE *drizzle);
+const char * drizzle_sqlstate(const DRIZZLE *drizzle);
 uint32_t drizzle_warning_count(const DRIZZLE *drizzle);
 const char * drizzle_info(const DRIZZLE *drizzle);
 uint32_t drizzle_thread_id(const DRIZZLE *drizzle);
