@@ -56,7 +56,7 @@ static bool innodb_inited = 0;
 static handlerton *innodb_hton_ptr;
 
 C_MODE_START
-static my_bool index_cond_func_innodb(void *arg);
+static int64_t index_cond_func_innodb(void *arg);
 C_MODE_END
 
 
@@ -8056,7 +8056,7 @@ C_MODE_START
 
 /* Index condition check function to be called from within Innobase */
 
-static my_bool index_cond_func_innodb(void *arg)
+static int64_t index_cond_func_innodb(void *arg)
 {
   ha_innobase *h= (ha_innobase*)arg;
   if (h->end_range) //was: h->in_range_read
@@ -8064,7 +8064,7 @@ static my_bool index_cond_func_innodb(void *arg)
     if (h->compare_key2(h->end_range) > 0)
       return 2; /* caller should return HA_ERR_END_OF_FILE already */
   }
-  return (my_bool)h->pushed_idx_cond->val_int();
+  return h->pushed_idx_cond->val_int();
 }
 
 C_MODE_END

@@ -514,7 +514,7 @@ struct mysql_row_templ_struct {
 #define ROW_PREBUILT_ALLOCATED	78540783
 #define ROW_PREBUILT_FREED	26423527
 
-typedef my_bool (*index_cond_func_t)(void *param);
+typedef int64_t (*index_cond_func_t)(void *param);
 
 /* A struct for (sometimes lazily) prebuilt structures in an Innobase table
 handle used within MySQL; these are used to save CPU time. */
