@@ -598,8 +598,6 @@ typedef int64_t 	my_ptrdiff_t;
 
 #define NullS		(char *) 0
 
-#define STDCALL
-
 /* Typdefs for easyier portability */
 
 #ifndef HAVE_UCHAR

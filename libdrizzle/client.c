@@ -47,7 +47,7 @@
 #undef max_allowed_packet
 #undef net_buffer_length
 
-#define CLI_DRIZZLE_CONNECT STDCALL drizzle_connect
+#define CLI_DRIZZLE_CONNECT drizzle_connect
 
 #include <mysys/my_sys.h>
 #include <mysys/mysys_err.h>
@@ -481,7 +481,7 @@ void end_server(DRIZZLE *drizzle)
 }
 
 
-void STDCALL
+void
 drizzle_free_result(DRIZZLE_RES *result)
 {
   if (result)
@@ -1060,7 +1060,7 @@ drizzle_create(DRIZZLE *ptr)
 */
 
 
-void STDCALL drizzle_server_end()
+void drizzle_server_end()
 {
   if (!drizzle_client_init)
     return;
@@ -1194,7 +1194,7 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
 C_MODE_END
 
 
-DRIZZLE * STDCALL
+DRIZZLE *
 CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
                        const char *passwd, const char *db,
                        uint32_t port, const char *unix_socket, uint32_t client_flag)
@@ -1630,7 +1630,7 @@ bool drizzle_reconnect(DRIZZLE *drizzle)
   Set current database
 **************************************************************************/
 
-int STDCALL
+int
 drizzle_select_db(DRIZZLE *drizzle, const char *db)
 {
   int error;
@@ -1690,7 +1690,7 @@ static void drizzle_close_free(DRIZZLE *drizzle)
 }
 
 
-void STDCALL drizzle_close(DRIZZLE *drizzle)
+void drizzle_close(DRIZZLE *drizzle)
 {
   if (drizzle)          /* Some simple safety */
   {
@@ -1775,14 +1775,14 @@ get_info:
   finish processing it.
 */
 
-int32_t STDCALL
+int32_t
 drizzle_send_query(DRIZZLE *drizzle, const char* query, uint32_t length)
 {
   return(simple_command(drizzle, COM_QUERY, (uchar*) query, length, 1));
 }
 
 
-int32_t STDCALL
+int32_t
 drizzle_real_query(DRIZZLE *drizzle, const char *query, uint32_t length)
 {
   if (drizzle_send_query(drizzle,query,length))
@@ -1796,7 +1796,7 @@ drizzle_real_query(DRIZZLE *drizzle, const char *query, uint32_t length)
   drizzle_data_seek may be used.
 **************************************************************************/
 
-DRIZZLE_RES * STDCALL drizzle_store_result(DRIZZLE *drizzle)
+DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle)
 {
   DRIZZLE_RES *result;
 
@@ -1890,7 +1890,7 @@ static DRIZZLE_RES * cli_use_result(DRIZZLE *drizzle)
   Return next row of the query results
 **************************************************************************/
 
-DRIZZLE_ROW STDCALL
+DRIZZLE_ROW
 drizzle_fetch_row(DRIZZLE_RES *res)
 {
   if (!res->data)
@@ -1942,7 +1942,7 @@ drizzle_fetch_row(DRIZZLE_RES *res)
   else the lengths are calculated from the offset between pointers.
 **************************************************************************/
 
-uint32_t * STDCALL
+uint32_t *
 drizzle_fetch_lengths(DRIZZLE_RES *res)
 {
   DRIZZLE_ROW column;
@@ -1955,7 +1955,7 @@ drizzle_fetch_lengths(DRIZZLE_RES *res)
 }
 
 
-int STDCALL
+int
 drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 {
   switch (option) {
@@ -2035,23 +2035,23 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
 ****************************************************************************/
 
 /* DRIZZLE_RES */
-uint64_t STDCALL drizzle_num_rows(const DRIZZLE_RES *res)
+uint64_t drizzle_num_rows(const DRIZZLE_RES *res)
 {
   return res->row_count;
 }
 
-unsigned int STDCALL drizzle_num_fields(const DRIZZLE_RES *res)
+unsigned int drizzle_num_fields(const DRIZZLE_RES *res)
 {
   return res->field_count;
 }
 
-uint STDCALL drizzle_errno(const DRIZZLE *drizzle)
+uint drizzle_errno(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.last_errno : drizzle_server_last_errno;
 }
 
 
-const char * STDCALL drizzle_error(const DRIZZLE *drizzle)
+const char * drizzle_error(const DRIZZLE *drizzle)
 {
   return drizzle ? drizzle->net.last_error : drizzle_server_last_error;
 }
@@ -2074,7 +2074,7 @@ const char * STDCALL drizzle_error(const DRIZZLE *drizzle)
    Signed number > 323000
 */
 
-uint32_t STDCALL
+uint32_t
 drizzle_get_server_version(const DRIZZLE *drizzle)
 {
   uint major, minor, version;
@@ -2092,7 +2092,7 @@ drizzle_get_server_version(const DRIZZLE *drizzle)
    and character_set_connection) and updates drizzle->charset so other
    functions like drizzle_real_escape will work correctly.
 */
-int STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
+int drizzle_set_character_set(DRIZZLE *drizzle, const char *cs_name)
 {
   const CHARSET_INFO *cs;
   const char *save_csdir= charsets_dir;

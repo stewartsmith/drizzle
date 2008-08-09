@@ -17,7 +17,7 @@
 #include <drizzle.h>
 
 /* Get the length of next field. Change parameter to point at fieldstart */
-ulong STDCALL net_field_length(uchar **packet)
+ulong net_field_length(uchar **packet)
 {
   register uchar *pos= (uchar *)*packet;
   if (*pos < 251)
