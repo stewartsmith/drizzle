@@ -40,7 +40,7 @@ pthread_cond_t count_threshhold;
 unsigned int master_wakeup;
 pthread_mutex_t sleeper_mutex;
 pthread_cond_t sleep_threshhold;
-static my_bool timer_alarm= false;
+static bool timer_alarm= false;
 pthread_mutex_t timer_alarm_mutex;
 pthread_cond_t timer_alarm_threshold;
 

@@ -265,7 +265,7 @@ static void blackhole_free_key(st_blackhole_share *share)
 }
 
 static uchar* blackhole_get_key(st_blackhole_share *share, size_t *length,
-                                my_bool not_used __attribute__((unused)))
+                                bool not_used __attribute__((unused)))
 {
   *length= share->table_name_length;
   return (uchar*) share->table_name;

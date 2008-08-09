@@ -138,7 +138,7 @@ static handler *archive_create_handler(handlerton *hton,
   Used for hash table that tracks open tables.
 */
 static uchar* archive_get_key(ARCHIVE_SHARE *share, size_t *length,
-                             my_bool not_used __attribute__((unused)))
+                             bool not_used __attribute__((unused)))
 {
   *length=share->table_name_length;
   return (uchar*) share->table_name;
