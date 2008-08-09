@@ -427,7 +427,7 @@ Field_varstring::unpack(uchar *to, const uchar *from,
 
 int Field_varstring::pack_cmp(const uchar *a, const uchar *b,
                               uint key_length_arg,
-                              my_bool insert_or_update)
+                              bool insert_or_update)
 {
   uint a_length, b_length;
   if (key_length_arg > 255)
@@ -448,7 +448,7 @@ int Field_varstring::pack_cmp(const uchar *a, const uchar *b,
 
 
 int Field_varstring::pack_cmp(const uchar *b, uint key_length_arg,
-                              my_bool insert_or_update)
+                              bool insert_or_update)
 {
   uchar *a= ptr+ length_bytes;
   uint a_length=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);

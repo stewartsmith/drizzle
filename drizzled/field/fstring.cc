@@ -315,7 +315,7 @@ int Field_string::do_save_field_metadata(uchar *metadata_ptr)
 */
 
 int Field_string::pack_cmp(const uchar *a, const uchar *b, uint length,
-                           my_bool insert_or_update)
+                           bool insert_or_update)
 {
   uint a_length, b_length;
   if (length > 255)
@@ -353,7 +353,7 @@ int Field_string::pack_cmp(const uchar *a, const uchar *b, uint length,
 */
 
 int Field_string::pack_cmp(const uchar *key, uint length,
-                           my_bool insert_or_update)
+                           bool insert_or_update)
 {
   uint row_length, local_key_length;
   uchar *end;

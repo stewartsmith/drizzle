@@ -823,7 +823,7 @@ static bool test_if_real(const char *str,int length, const CHARSET_INFO * const 
   This is used for printing bit_fields as numbers while debugging.
 */
 
-String *Field::val_int_as_str(String *val_buffer, my_bool unsigned_val)
+String *Field::val_int_as_str(String *val_buffer, bool unsigned_val)
 {
   const CHARSET_INFO * const cs= &my_charset_bin;
   uint length;

@@ -372,8 +372,12 @@ Item::Item():
   collation(&my_charset_bin, DERIVATION_COERCIBLE)
 {
   marker= 0;
-  maybe_null=null_value=with_sum_func=unsigned_flag=0;
-  decimals= 0; max_length= 0;
+  maybe_null= false;
+  null_value= false;
+  with_sum_func= false;
+  unsigned_flag= false;
+  decimals= 0; 
+  max_length= 0;
   with_subselect= 0;
   cmp_context= (Item_result)-1;
 
@@ -2316,7 +2320,7 @@ bool Item_param::set_from_user_var(THD *thd, const user_var_entry *entry)
     unsigned_flag= entry->unsigned_flag;
     if (limit_clause_param)
     {
-      my_bool unused;
+      bool unused;
       set_int(entry->val_int(&unused), MY_INT64_NUM_DECIMAL_DIGITS);
       item_type= Item::INT_ITEM;
       return(!unsigned_flag && value.integer < 0 ? 1 : 0);

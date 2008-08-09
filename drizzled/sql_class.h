@@ -2395,10 +2395,10 @@ class user_var_entry
   Item_result type;
   bool unsigned_flag;
 
-  double val_real(my_bool *null_value);
-  int64_t val_int(my_bool *null_value) const;
-  String *val_str(my_bool *null_value, String *str, uint decimals);
-  my_decimal *val_decimal(my_bool *null_value, my_decimal *result);
+  double val_real(bool *null_value);
+  int64_t val_int(bool *null_value) const;
+  String *val_str(bool *null_value, String *str, uint decimals);
+  my_decimal *val_decimal(bool *null_value, my_decimal *result);
   DTCollation collation;
 };
 

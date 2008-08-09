@@ -68,8 +68,8 @@ public:
   { return (field_metadata & 0x00ff); }
   uint row_pack_length() { return (field_length + 1); }
   int pack_cmp(const uchar *a,const uchar *b,uint key_length,
-               my_bool insert_or_update);
-  int pack_cmp(const uchar *b,uint key_length,my_bool insert_or_update);
+               bool insert_or_update);
+  int pack_cmp(const uchar *b,uint key_length,bool insert_or_update);
   uint packed_col_length(const uchar *to, uint length);
   uint max_packed_col_length(uint max_length);
   uint size_of() const { return sizeof(*this); }

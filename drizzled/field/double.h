@@ -37,7 +37,7 @@ public:
                 NONE, field_name_arg, dec_arg, 0, 0)
     {}
   Field_double(uint32_t len_arg, bool maybe_null_arg, const char *field_name_arg,
-	       uint8_t dec_arg, my_bool not_fixed_arg)
+	       uint8_t dec_arg, bool not_fixed_arg)
     :Field_real((uchar*) 0, len_arg, maybe_null_arg ? (uchar*) "" : 0, (uint) 0,
                 NONE, field_name_arg, dec_arg, 0, 0)
     {not_fixed= not_fixed_arg; }

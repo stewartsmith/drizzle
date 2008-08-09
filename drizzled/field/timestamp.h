@@ -56,7 +56,7 @@ public:
       Field::set_default();
   }
   /* Get TIMESTAMP field value as seconds since begging of Unix Epoch */
-  inline long get_timestamp(my_bool *null_value)
+  inline long get_timestamp(bool *null_value)
   {
     if ((*null_value= is_null()))
       return 0;

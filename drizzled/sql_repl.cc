@@ -316,7 +316,7 @@ Increase max_allowed_packet on master";
 */ 
 static uint64_t get_heartbeat_period(THD * thd)
 {
-  my_bool null_value;
+  bool null_value;
   LEX_STRING name=  { C_STRING_WITH_LEN("master_heartbeat_period")};
   user_var_entry *entry= 
     (user_var_entry*) hash_search(&thd->user_vars, (uchar*) name.str,
