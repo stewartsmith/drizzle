@@ -11057,7 +11057,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     return(NULL);				/* purecov: inspected */
   }
   param->items_to_copy= copy_func;
-  strmov(tmpname,path);
+  stpcpy(tmpname,path);
   /* make table according to fields */
 
   memset(table, 0, sizeof(*table));
@@ -11709,7 +11709,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
       bitmap_lock_clear_bit(&temp_pool, temp_pool_slot);
     return(NULL);
   }
-  strmov(tmpname,path);
+  stpcpy(tmpname,path);
   
 
   /* STEP 4: Create TABLE description */
@@ -18321,7 +18321,7 @@ void TABLE_LIST::print(THD *thd, String *str, enum_query_type query_type)
       {
         if (alias && alias[0])
         {
-          strmov(t_alias_buff, alias);
+          stpcpy(t_alias_buff, alias);
           my_casedn_str(files_charset_info, t_alias_buff);
           t_alias= t_alias_buff;
         }

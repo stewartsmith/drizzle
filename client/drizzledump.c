@@ -773,8 +773,8 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       {
         if (mode & 1)
         {
-          end= strmov(end, compatible_mode_names[i]);
-          end= strmov(end, ",");
+          end= stpcpy(end, compatible_mode_names[i]);
+          end= stpcpy(end, ",");
         }
       }
       if (end!=compatible_mode_normal_str)
@@ -2679,7 +2679,7 @@ static int dump_all_tables_in_db(char *database)
   int using_mysql_db= my_strcasecmp(&my_charset_latin1, database, "mysql");
 
 
-  afterdot= strmov(hash_key, database);
+  afterdot= stpcpy(hash_key, database);
   *afterdot++= '.';
 
   if (init_dumping(database, init_dumping_tables))
@@ -2692,7 +2692,7 @@ static int dump_all_tables_in_db(char *database)
     init_dynamic_string_checked(&query, "LOCK TABLES ", 256, 1024);
     for (numrows= 0 ; (table= getTableName(1)) ; )
     {
-      char *end= strmov(afterdot, table);
+      char *end= stpcpy(afterdot, table);
       if (include_table((uchar*) hash_key,end - hash_key))
       {
         numrows++;
@@ -2713,7 +2713,7 @@ static int dump_all_tables_in_db(char *database)
   }
   while ((table= getTableName(0)))
   {
-    char *end= strmov(afterdot, table);
+    char *end= stpcpy(afterdot, table);
     if (include_table((uchar*) hash_key, end - hash_key))
     {
       dump_table(table,database);
@@ -3356,7 +3356,7 @@ static char *primary_key_fields(const char *table_name)
     drizzle_data_seek(res, 0);
     row= drizzle_fetch_row(res);
     quoted_field= quote_name(row[4], buff, 0);
-    end= strmov(result, quoted_field);
+    end= stpcpy(result, quoted_field);
     while ((row= drizzle_fetch_row(res)) && atoi(row[3]) > 1)
     {
       quoted_field= quote_name(row[4], buff, 0);

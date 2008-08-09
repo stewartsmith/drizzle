@@ -111,7 +111,7 @@ int find_type(char *x, const TYPELIB *typelib, uint full_name)
     return(-1);
   }
   if (!(full_name & 2))
-    (void) strmov(x,typelib->type_names[findpos]);
+    (void) stpcpy(x,typelib->type_names[findpos]);
   return(findpos+1);
 } /* find_type */
 
@@ -125,7 +125,7 @@ void make_type(register char * to, register uint nr,
   if (!nr)
     to[0]=0;
   else
-    (void) strmov(to,get_type(typelib,nr-1));
+    (void) stpcpy(to,get_type(typelib,nr-1));
   return;
 } /* make_type */
 

@@ -399,7 +399,7 @@ static int examine_log(char * file_name, char **table_names)
 	to=isam_file_name;
 	if (filepath)
 	  to=convert_dirname(isam_file_name,filepath,NullS);
-	strmov(to,pos);
+	stpcpy(to,pos);
 	fn_ext(isam_file_name)[0]=0;	/* Remove extension */
       }
       open_param.name=file_info.name;
@@ -780,7 +780,7 @@ static int reopen_closed_file(TREE *tree, struct file_info *fileinfo)
   char name[FN_REFLEN];
   if (close_some_file(tree))
     return 1;				/* No file to close */
-  strmov(name,fileinfo->show_name);
+  stpcpy(name,fileinfo->show_name);
   if (fileinfo->id > 1)
     *strrchr(name,'<')='\0';		/* Remove "<id>" */
 

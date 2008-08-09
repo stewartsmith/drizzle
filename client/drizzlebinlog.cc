@@ -1323,14 +1323,14 @@ static Exit_status dump_log_entries(const char* logname)
      like CREATE PROCEDURE safely
   */
   fprintf(result_file, "DELIMITER /*!*/;\n");
-  strmov(print_event_info.delimiter, "/*!*/;");
+  stpcpy(print_event_info.delimiter, "/*!*/;");
 
   rc= (remote_opt ? dump_remote_log_entries(&print_event_info, logname) :
        dump_local_log_entries(&print_event_info, logname));
 
   /* Set delimiter back to semicolon */
   fprintf(result_file, "DELIMITER ;\n");
-  strmov(print_event_info.delimiter, ";");
+  stpcpy(print_event_info.delimiter, ";");
   return rc;
 }
 

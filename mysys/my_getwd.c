@@ -98,7 +98,7 @@ int my_setwd(const char *dir, myf MyFlags)
     dir=FN_ROOTDIR;
 #ifdef VMS
   {
-    pos=strmov(buff,dir);
+    pos=stpcpy(buff,dir);
     if (pos[-1] != FN_LIBCHAR)
     {
       pos[0]=FN_LIBCHAR;		/* Mark as directory */

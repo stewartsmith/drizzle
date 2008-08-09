@@ -34,7 +34,7 @@ void unireg_init(ulong options)
   init_time();				/* Init time-functions (read zone) */
   my_abort_hook=unireg_abort;		/* Abort with close of databases */
 
-  VOID(strmov(reg_ext,".frm"));
+  VOID(stpcpy(reg_ext,".frm"));
   reg_ext_length= 4;
   specialflag=SPECIAL_SAME_DB_NAME | options;  /* Set options from argv */
   return;

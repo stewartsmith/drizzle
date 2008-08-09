@@ -327,7 +327,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       verbose= 1;
     break;
   case 'T':
-    length= (uint) (strmov(tmp_dir, argument) - tmp_dir);
+    length= (uint) (stpcpy(tmp_dir, argument) - tmp_dir);
     if (length != dirname_length(tmp_dir))
     {
       tmp_dir[length]=FN_LIBCHAR;
@@ -492,7 +492,7 @@ static int compress(PACK_MRG_INFO *mrg,char *result_table)
     /* Make a new indexfile based on first file in list */
     uint length;
     uchar *buff;
-    strmov(org_name,result_table);		/* Fix error messages */
+    stpcpy(org_name,result_table);		/* Fix error messages */
     VOID(fn_format(new_name,result_table,"",MI_NAME_IEXT,2));
     if ((join_isam_file=my_create(new_name,0,tmpfile_createflag,MYF(MY_WME)))
 	< 0)

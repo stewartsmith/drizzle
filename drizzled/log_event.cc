@@ -337,7 +337,7 @@ static char *slave_load_file_stem(char *buf, uint file_id,
   buf = int10_to_str(event_server_id, buf, 10);
   *buf++ = '-';
   res= int10_to_str(file_id, buf, 10);
-  strmov(res, ext);                             // Add extension last
+  stpcpy(res, ext);                             // Add extension last
   return res;                                   // Pointer to extension
 }
 #endif
@@ -429,7 +429,7 @@ char *str_to_hex(char *to, const char *from, uint len)
     to= octet2hex(to, from, len);
   }
   else
-    to= strmov(to, "\"\"");
+    to= stpcpy(to, "\"\"");
   return to;                               // pointer to end 0 of 'to'
 }
 
@@ -1362,9 +1362,9 @@ void Query_log_event::pack_info(Protocol *protocol)
   if (!(flags & LOG_EVENT_SUPPRESS_USE_F)
       && db && db_len)
   {
-    pos= strmov(buf, "use `");
+    pos= stpcpy(buf, "use `");
     memcpy(pos, db, db_len);
-    pos= strmov(pos+db_len, "`; ");
+    pos= stpcpy(pos+db_len, "`; ");
   }
   if (query && q_len)
   {
@@ -1962,8 +1962,8 @@ void Query_log_event::print_query_header(IO_CACHE* file,
       my_b_printf(file, "use %s%s\n", db, print_event_info->delimiter);
   }
 
-  end=int10_to_str((long) when, strmov(buff,"SET TIMESTAMP="),10);
-  end= strmov(end, print_event_info->delimiter);
+  end=int10_to_str((long) when, stpcpy(buff,"SET TIMESTAMP="),10);
+  end= stpcpy(end, print_event_info->delimiter);
   *end++='\n';
   my_b_write(file, (uchar*) buff, (uint) (end-buff));
   if ((!print_event_info->thread_id_printed ||
@@ -2454,9 +2454,9 @@ Start_log_event_v3::Start_log_event_v3()
 void Start_log_event_v3::pack_info(Protocol *protocol)
 {
   char buf[12 + ST_SERVER_VER_LEN + 14 + 22], *pos;
-  pos= strmov(buf, "Server ver: ");
-  pos= strmov(pos, server_version);
-  pos= strmov(pos, ", Binlog ver: ");
+  pos= stpcpy(buf, "Server ver: ");
+  pos= stpcpy(pos, server_version);
+  pos= stpcpy(pos, ", Binlog ver: ");
   pos= int10_to_str(binlog_version, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
@@ -2688,9 +2688,9 @@ Format_description_log_event(uint8_t binlog_ver, const char* server_ver)
       describes what those old master versions send.
     */
     if (binlog_ver==1)
-      strmov(server_version, server_ver ? server_ver : "3.23");
+      stpcpy(server_version, server_ver ? server_ver : "3.23");
     else
-      strmov(server_version, server_ver ? server_ver : "4.0");
+      stpcpy(server_version, server_ver ? server_ver : "4.0");
     common_header_len= binlog_ver==1 ? OLD_HEADER_LEN :
       LOG_EVENT_MINIMAL_HEADER_LEN;
     /*
@@ -3048,67 +3048,67 @@ void Load_log_event::print_query(bool need_db, char *buf,
 
   if (need_db && db && db_len)
   {
-    pos= strmov(pos, "use `");
+    pos= stpcpy(pos, "use `");
     memcpy(pos, db, db_len);
-    pos= strmov(pos+db_len, "`; ");
+    pos= stpcpy(pos+db_len, "`; ");
   }
 
-  pos= strmov(pos, "LOAD DATA ");
+  pos= stpcpy(pos, "LOAD DATA ");
 
   if (fn_start)
     *fn_start= pos;
 
   if (check_fname_outside_temp_buf())
-    pos= strmov(pos, "LOCAL ");
-  pos= strmov(pos, "INFILE '");
+    pos= stpcpy(pos, "LOCAL ");
+  pos= stpcpy(pos, "INFILE '");
   memcpy(pos, fname, fname_len);
-  pos= strmov(pos+fname_len, "' ");
+  pos= stpcpy(pos+fname_len, "' ");
 
   if (sql_ex.opt_flags & REPLACE_FLAG)
-    pos= strmov(pos, " REPLACE ");
+    pos= stpcpy(pos, " REPLACE ");
   else if (sql_ex.opt_flags & IGNORE_FLAG)
-    pos= strmov(pos, " IGNORE ");
+    pos= stpcpy(pos, " IGNORE ");
 
-  pos= strmov(pos ,"INTO");
+  pos= stpcpy(pos ,"INTO");
 
   if (fn_end)
     *fn_end= pos;
 
-  pos= strmov(pos ," TABLE `");
+  pos= stpcpy(pos ," TABLE `");
   memcpy(pos, table_name, table_name_len);
   pos+= table_name_len;
 
   /* We have to create all optinal fields as the default is not empty */
-  pos= strmov(pos, "` FIELDS TERMINATED BY ");
+  pos= stpcpy(pos, "` FIELDS TERMINATED BY ");
   pos= pretty_print_str(pos, sql_ex.field_term, sql_ex.field_term_len);
   if (sql_ex.opt_flags & OPT_ENCLOSED_FLAG)
-    pos= strmov(pos, " OPTIONALLY ");
-  pos= strmov(pos, " ENCLOSED BY ");
+    pos= stpcpy(pos, " OPTIONALLY ");
+  pos= stpcpy(pos, " ENCLOSED BY ");
   pos= pretty_print_str(pos, sql_ex.enclosed, sql_ex.enclosed_len);
 
-  pos= strmov(pos, " ESCAPED BY ");
+  pos= stpcpy(pos, " ESCAPED BY ");
   pos= pretty_print_str(pos, sql_ex.escaped, sql_ex.escaped_len);
 
-  pos= strmov(pos, " LINES TERMINATED BY ");
+  pos= stpcpy(pos, " LINES TERMINATED BY ");
   pos= pretty_print_str(pos, sql_ex.line_term, sql_ex.line_term_len);
   if (sql_ex.line_start_len)
   {
-    pos= strmov(pos, " STARTING BY ");
+    pos= stpcpy(pos, " STARTING BY ");
     pos= pretty_print_str(pos, sql_ex.line_start, sql_ex.line_start_len);
   }
 
   if ((long) skip_lines > 0)
   {
-    pos= strmov(pos, " IGNORE ");
+    pos= stpcpy(pos, " IGNORE ");
     pos= int64_t10_to_str((int64_t) skip_lines, pos, 10);
-    pos= strmov(pos," LINES ");    
+    pos= stpcpy(pos," LINES ");    
   }
 
   if (num_fields)
   {
     uint i;
     const char *field= fields;
-    pos= strmov(pos, " (");
+    pos= stpcpy(pos, " (");
     for (i = 0; i < num_fields; i++)
     {
       if (i)
@@ -4109,9 +4109,9 @@ Intvar_log_event::do_shall_skip(Relay_log_info *rli)
 void Rand_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], *pos;
-  pos= strmov(buf1,"rand_seed1=");
+  pos= stpcpy(buf1,"rand_seed1=");
   pos= int10_to_str((long) seed1, pos, 10);
-  pos= strmov(pos, ",rand_seed2=");
+  pos= stpcpy(pos, ",rand_seed2=");
   pos= int10_to_str((long) seed2, pos, 10);
   protocol->store(buf1, (uint) (pos-buf1), &my_charset_bin);
 }
@@ -4205,9 +4205,9 @@ Rand_log_event::do_shall_skip(Relay_log_info *rli)
 void Xid_log_event::pack_info(Protocol *protocol)
 {
   char buf[128], *pos;
-  pos= strmov(buf, "COMMIT /* xid=");
+  pos= stpcpy(buf, "COMMIT /* xid=");
   pos= int64_t10_to_str(xid, pos, 10);
-  pos= strmov(pos, " */");
+  pos= stpcpy(pos, " */");
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
 #endif
@@ -4295,7 +4295,7 @@ void User_var_log_event::pack_info(Protocol* protocol)
   {
     if (!(buf= (char*) my_malloc(val_offset + 5, MYF(MY_WME))))
       return;
-    strmov(buf + val_offset, "NULL");
+    stpcpy(buf + val_offset, "NULL");
     event_len= val_offset + 4;
   }
   else
@@ -4337,7 +4337,7 @@ void User_var_log_event::pack_info(Protocol* protocol)
         return;
       if (!(cs= get_charset(charset_number, MYF(0))))
       {
-        strmov(buf+val_offset, "???");
+        stpcpy(buf+val_offset, "???");
         event_len+= 3;
       }
       else
@@ -4683,13 +4683,13 @@ void Unknown_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info
 void Slave_log_event::pack_info(Protocol *protocol)
 {
   char buf[256+HOSTNAME_LENGTH], *pos;
-  pos= strmov(buf, "host=");
-  pos= strnmov(pos, master_host, HOSTNAME_LENGTH);
-  pos= strmov(pos, ",port=");
+  pos= stpcpy(buf, "host=");
+  pos= stpncpy(pos, master_host, HOSTNAME_LENGTH);
+  pos= stpcpy(pos, ",port=");
   pos= int10_to_str((long) master_port, pos, 10);
-  pos= strmov(pos, ",log=");
-  pos= strmov(pos, master_log);
-  pos= strmov(pos, ",pos=");
+  pos= stpcpy(pos, ",log=");
+  pos= stpcpy(pos, master_log);
+  pos= stpcpy(pos, ",pos=");
   pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
 }
@@ -5046,13 +5046,13 @@ void Create_file_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info
 void Create_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[NAME_LEN*2 + 30 + 21*2], *pos;
-  pos= strmov(buf, "db=");
+  pos= stpcpy(buf, "db=");
   memcpy(pos, db, db_len);
-  pos= strmov(pos + db_len, ";table=");
+  pos= stpcpy(pos + db_len, ";table=");
   memcpy(pos, table_name, table_name_len);
-  pos= strmov(pos + table_name_len, ";file_id=");
+  pos= stpcpy(pos + table_name_len, ";file_id=");
   pos= int10_to_str((long) file_id, pos, 10);
-  pos= strmov(pos, ";block_len=");
+  pos= stpcpy(pos, ";block_len=");
   pos= int10_to_str((long) block_len, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
@@ -5073,7 +5073,7 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   int error = 1;
 
   memset(&file, 0, sizeof(file));
-  fname_buf= strmov(proc_info, "Making temp file ");
+  fname_buf= stpcpy(proc_info, "Making temp file ");
   ext= slave_load_file_stem(fname_buf, file_id, server_id, ".info");
   thd_proc_info(thd, proc_info);
   my_delete(fname_buf, MYF(0)); // old copy may exist already
@@ -5091,10 +5091,10 @@ int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
   
   // a trick to avoid allocating another buffer
   fname= fname_buf;
-  fname_len= (uint) (strmov(ext, ".data") - fname);
+  fname_len= (uint) (stpcpy(ext, ".data") - fname);
   if (write_base(&file))
   {
-    strmov(ext, ".info"); // to have it right in the error message
+    stpcpy(ext, ".info"); // to have it right in the error message
     rli->report(ERROR_LEVEL, my_errno,
                 "Error in Create_file event: could not write to file '%s'",
                 fname_buf);
@@ -5245,7 +5245,7 @@ int Append_block_log_event::do_apply_event(Relay_log_info const *rli)
   int fd;
   int error = 1;
 
-  fname= strmov(proc_info, "Making temp file ");
+  fname= stpcpy(proc_info, "Making temp file ");
   slave_load_file_stem(fname, file_id, server_id, ".data");
   thd_proc_info(thd, proc_info);
   if (get_create_or_append())
@@ -5375,7 +5375,7 @@ int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute_
   char fname[FN_REFLEN+10];
   char *ext= slave_load_file_stem(fname, file_id, server_id, ".data");
   (void) my_delete(fname, MYF(MY_WME));
-  strmov(ext, ".info");
+  stpcpy(ext, ".info");
   (void) my_delete(fname, MYF(MY_WME));
   return 0;
 }
@@ -5715,16 +5715,16 @@ void Execute_load_query_log_event::pack_info(Protocol *protocol)
   pos= buf;
   if (db && db_len)
   {
-    pos= strmov(buf, "use `");
+    pos= stpcpy(buf, "use `");
     memcpy(pos, db, db_len);
-    pos= strmov(pos+db_len, "`; ");
+    pos= stpcpy(pos+db_len, "`; ");
   }
   if (query && q_len)
   {
     memcpy(pos, query, q_len);
     pos+= q_len;
   }
-  pos= strmov(pos, " ;file_id=");
+  pos= stpcpy(pos, " ;file_id=");
   pos= int10_to_str((long) file_id, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
   my_free(buf, MYF(MY_ALLOW_ZERO_PTR));
@@ -6982,8 +6982,8 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   table_list->next_global= table_list->next_local= 0;
   table_list->table_id= m_table_id;
   table_list->updating= 1;
-  strmov(table_list->db, rpl_filter->get_rewrite_db(m_dbnam, &dummy_len));
-  strmov(table_list->table_name, m_tblnam);
+  stpcpy(table_list->db, rpl_filter->get_rewrite_db(m_dbnam, &dummy_len));
+  stpcpy(table_list->table_name, m_tblnam);
 
   int error= 0;
 
