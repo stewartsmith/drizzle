@@ -9,7 +9,7 @@ Speciella användbara nya string-rutiner:
 
   bmove(dst, src, len) moves exactly "len" bytes from the source "src"
   to the destination "dst".  It does not check for NUL characters as
-  strncpy() and strnmov() do.
+  strncpy() and stpncpy() do.
 
   bmove_upp(dst, src, len) moves exactly "len" bytes from the source
  "src-len" to the destination "dst-len" counting downwards.
@@ -51,7 +51,7 @@ Speciella användbara nya string-rutiner:
   enough  room  in  the  space s points to; strcat has no way to tell.
   Note that strcat has to search for the end of s, so if you are doing
   a lot of concatenating it may be better to use strmov, e.g.
-	strmov(strmov(strmov(strmov(s,a),b),c),d)
+	stpcpy(stpcpy(stpcpy(stpcpy(s,a),b),c),d)
     rather than
 	strcat(strcat(strcat(strcpy(s,a),b),c),d).
     strcat returns the old value of s.
@@ -59,10 +59,6 @@ Speciella användbara nya string-rutiner:
 
   strcend(s, c) returns a pointer to the  first  place  in  s	where  c
   occurs,  or a pointer to the end-null of s if c does not occur in s.
-
-  strcont(str, set) if str contanies any character in the string set.
-  The result is the position of the first found character in str, or NullS
-  if there isn't anything found.
 
   strend(s) returns a character pointer to the NUL which ends s.  That
   is,  strend(s)-s  ==  strlen(s). This is useful for adding things at
@@ -81,13 +77,13 @@ Speciella användbara nya string-rutiner:
   dst and appends a closing NUL to dst.
   strmake() returns pointer to closing null;
 
-  strmov(dst, src) moves all the  characters  of  src  (including  the
+  stpcpy(dst, src) moves all the  characters  of  src  (including  the
   closing NUL) to dst, and returns a pointer to the new closing NUL in
   dst.	 The similar UNIX routine strcpy returns the old value of dst,
-  which I have never found useful.  strmov(strmov(dst,a),b) moves a//b
+  which I have never found useful.  stpcpy(stpcpy(dst,a),b) moves a//b
   into dst, which seems useful.
 
-  strnmov(dst,src,length) moves length characters, or until end, of src to
+  stpncpy(dst,src,length) moves length characters, or until end, of src to
   dst and appends a closing NUL to dst if src is shorter than length.
   The result is a pointer to the first NUL in dst, or is dst+n if dst was
   truncated.
@@ -111,14 +107,14 @@ Speciella användbara nya string-rutiner:
  to dst.  If there aren't that many characters, a NUL character will
  be added to the end of dst to terminate it properly.  This gives the
  same effect as calling strxcpy(buff, src1, ..., srcn, NullS) with a
- large enough buffer, and then calling strnmov(dst, buff, len).
- It is just like strnmov except that it concatenates multiple sources.
+ large enough buffer, and then calling stpncpy(dst, buff, len).
+ It is just like stpncpy except that it concatenates multiple sources.
  Beware: the last argument should be the null character pointer.
  Take VERY great care not to omit it!  Also be careful to use NullS
  and NOT to use 0, as on some machines 0 is not the same size as a
  character pointer, or not the same bit pattern as NullS.
 
- Note: strxnmov is like strnmov in that it always moves EXACTLY len
+ Note: strxnmov is like stpncpy in that it always moves EXACTLY len
  characters; dst will be padded on the right with NUL characters as
  needed.  strxncpy does the same.  strxncat, like strncat, does NOT.
 

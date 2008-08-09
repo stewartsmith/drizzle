@@ -135,7 +135,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
     /* Don't call realpath() if the name can't be a link */
     if (!strcmp(name_buff, org_name) ||
         my_readlink(index_name, org_name, MYF(0)) == -1)
-      (void) strmov(index_name, org_name);
+      (void) stpcpy(index_name, org_name);
     *strrchr(org_name, '.')= '\0';
     (void) fn_format(data_name,org_name,"",MI_NAME_DEXT,
                      MY_APPEND_EXT|MY_UNPACK_FILENAME|MY_RESOLVE_SYMLINKS);
@@ -250,10 +250,10 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
            sizeof(my_off_t)*keys);
     memcpy(share->state.key_del, key_del,
            sizeof(my_off_t) * share->state.header.max_block_size_index);
-    strmov(share->unique_file_name, name_buff);
+    stpcpy(share->unique_file_name, name_buff);
     share->unique_name_length= strlen(name_buff);
-    strmov(share->index_file_name,  index_name);
-    strmov(share->data_file_name,   data_name);
+    stpcpy(share->index_file_name,  index_name);
+    stpcpy(share->data_file_name,   data_name);
 
     share->blocksize=min(IO_SIZE,myisam_block_size);
     {
@@ -459,7 +459,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   if (!have_rtree)
     info.rtree_recursion_state= NULL;
 
-  strmov(info.filename,name);
+  stpcpy(info.filename,name);
   memcpy(info.blobs,share->blobs,sizeof(MI_BLOB)*share->base.blobs);
   info.lastkey2=info.lastkey+share->base.max_key_length;
 

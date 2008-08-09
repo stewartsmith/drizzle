@@ -41,7 +41,7 @@ static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
 static uint calc_hash(const HASH *hash, const uchar *key, size_t length)
 {
   ulong nr1=1, nr2=4;
-  hash->charset->coll->hash_sort(hash->charset,(uchar*) key,length,&nr1,&nr2);
+  hash->charset->coll->hash_sort(hash->charset,(const uchar*) key,length,&nr1,&nr2);
   return nr1;
 }
 
@@ -288,8 +288,8 @@ static int hashcmp(const HASH *hash, HASH_LINK *pos, const uchar *key,
   size_t rec_keylength;
   uchar *rec_key= (uchar*) hash_key(hash,pos->data,&rec_keylength,1);
   return ((length && length != rec_keylength) ||
-	  my_strnncoll(hash->charset, (uchar*) rec_key, rec_keylength,
-		       (uchar*) key, rec_keylength));
+	  my_strnncoll(hash->charset, (const uchar*) rec_key, rec_keylength,
+		       (const uchar*) key, rec_keylength));
 }
 
 

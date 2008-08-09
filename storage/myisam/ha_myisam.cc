@@ -843,7 +843,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   param.thd= thd;
   param.tmpdir= &mysql_tmpdir_list;
   param.out_flag= 0;
-  strmov(fixed_name,file->filename);
+  stpcpy(fixed_name,file->filename);
 
   // Don't lock tables if we have used LOCK TABLE
   if (!thd->locked_tables && 

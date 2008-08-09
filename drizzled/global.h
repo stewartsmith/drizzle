@@ -314,8 +314,6 @@ extern "C" int madvise(void *addr, size_t len, int behav);
 #define MASTER 1		/* Compile without unireg */
 #define ENGLISH 1		/* Messages in English */
 #define POSIX_MISTAKE 1		/* regexp: Fix stupid spec error */
-/* Do not define for ultra sparcs */
-#define USE_BMOVE512 1		/* Use this unless system bmove is faster */
 
 #define QUOTE_ARG(x)		#x	/* Quote argument (before cpp) */
 #define STRINGIFY_ARG(x) QUOTE_ARG(x)	/* Quote argument, after cpp */

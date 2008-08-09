@@ -13,12 +13,21 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "mysys_priv.h"
-#include <sys/times.h>
+/*
+    stpncpy(dst,src,length) moves length characters, or until end, of src to
+    dst and appends a closing NUL to dst if src is shorter than length.
+    The result is a pointer to the first NUL in dst, or is dst+n if dst was
+    truncated.
+*/
 
-long my_clock(void)
+#include "m_string.h"
+
+char *stpncpy(register char *dst, register const char *src, size_t n)
 {
-  struct tms tmsbuf;
-  VOID(times(&tmsbuf));
-  return (tmsbuf.tms_utime + tmsbuf.tms_stime);
+  while (n-- != 0) {
+    if (!(*dst++ = *src++)) {
+      return (char*) dst-1;
+    }
+  }
+  return dst;
 }

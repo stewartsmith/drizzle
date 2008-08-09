@@ -572,125 +572,125 @@ void drizzle_read_default_options(struct st_drizzle_options *options,
     {
       if (option[0][0] == '-' && option[0][1] == '-')
       {
-  char *end=strcend(*option,'=');
-  char *opt_arg=0;
-  if (*end)
-  {
-    opt_arg=end+1;
-    *end=0;        /* Remove '=' */
-  }
-  /* Change all '_' in variable name to '-' */
-  for (end= *option ; *(end= strcend(end,'_')) ; )
-    *end= '-';
-  switch (find_type(*option+2,&option_types,2)) {
-  case 1:        /* port */
-    if (opt_arg)
-      options->port=atoi(opt_arg);
-    break;
-  case 2:        /* socket */
-    if (opt_arg)
-    {
-      my_free(options->unix_socket,MYF(MY_ALLOW_ZERO_PTR));
-      options->unix_socket=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 3:        /* compress */
-    options->compress=1;
-    options->client_flag|= CLIENT_COMPRESS;
-    break;
-  case 4:        /* password */
-    if (opt_arg)
-    {
-      my_free(options->password,MYF(MY_ALLOW_ZERO_PTR));
-      options->password=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 20:      /* connect_timeout */
-  case 6:        /* timeout */
-    if (opt_arg)
-      options->connect_timeout=atoi(opt_arg);
-    break;
-  case 7:        /* user */
-    if (opt_arg)
-    {
-      my_free(options->user,MYF(MY_ALLOW_ZERO_PTR));
-      options->user=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 8:        /* init-command */
-    add_init_command(options,opt_arg);
-    break;
-  case 9:        /* host */
-    if (opt_arg)
-    {
-      my_free(options->host,MYF(MY_ALLOW_ZERO_PTR));
-      options->host=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 10:      /* database */
-    if (opt_arg)
-    {
-      my_free(options->db,MYF(MY_ALLOW_ZERO_PTR));
-      options->db=my_strdup(opt_arg,MYF(MY_WME));
-    }
-    break;
-  case 12:      /* return-found-rows */
-    options->client_flag|=CLIENT_FOUND_ROWS;
-    break;
-  case 13:        /* Ignore SSL options */
-  case 14:
-  case 15:
-  case 16:
-        case 23:
-    break;
-  case 17:      /* charset-lib */
-    my_free(options->charset_dir,MYF(MY_ALLOW_ZERO_PTR));
-          options->charset_dir = my_strdup(opt_arg, MYF(MY_WME));
-    break;
-  case 18:
-    my_free(options->charset_name,MYF(MY_ALLOW_ZERO_PTR));
-          options->charset_name = my_strdup(opt_arg, MYF(MY_WME));
-    break;
-  case 19:        /* Interactive-timeout */
-    options->client_flag|= CLIENT_INTERACTIVE;
-    break;
-  case 21:
-    if (!opt_arg || atoi(opt_arg) != 0)
-      options->client_flag|= CLIENT_LOCAL_FILES;
-    else
-      options->client_flag&= ~CLIENT_LOCAL_FILES;
-    break;
-  case 22:
-    options->client_flag&= ~CLIENT_LOCAL_FILES;
-          break;
-  case 24: /* max-allowed-packet */
+        char *end=strrchr(*option,'=');
+        char *opt_arg=0;
+        if (end != NULL)
+        {
+          opt_arg=end+1;
+          *end=0;        /* Remove '=' */
+        }
+        /* Change all '_' in variable name to '-' */
+        for (end= *option ; *(end= strrchr(end,'_')) ; )
+          *end= '-';
+        switch (find_type(*option+2,&option_types,2)) {
+        case 1:        /* port */
           if (opt_arg)
-      options->max_allowed_packet= atoi(opt_arg);
-    break;
+            options->port=atoi(opt_arg);
+          break;
+        case 2:        /* socket */
+          if (opt_arg)
+          {
+            my_free(options->unix_socket,MYF(MY_ALLOW_ZERO_PTR));
+            options->unix_socket=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 3:        /* compress */
+          options->compress=1;
+          options->client_flag|= CLIENT_COMPRESS;
+          break;
+        case 4:        /* password */
+          if (opt_arg)
+          {
+            my_free(options->password,MYF(MY_ALLOW_ZERO_PTR));
+            options->password=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 20:      /* connect_timeout */
+        case 6:        /* timeout */
+          if (opt_arg)
+            options->connect_timeout=atoi(opt_arg);
+          break;
+        case 7:        /* user */
+          if (opt_arg)
+          {
+            my_free(options->user,MYF(MY_ALLOW_ZERO_PTR));
+            options->user=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 8:        /* init-command */
+          add_init_command(options,opt_arg);
+          break;
+        case 9:        /* host */
+          if (opt_arg)
+          {
+            my_free(options->host,MYF(MY_ALLOW_ZERO_PTR));
+            options->host=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 10:      /* database */
+          if (opt_arg)
+          {
+            my_free(options->db,MYF(MY_ALLOW_ZERO_PTR));
+            options->db=my_strdup(opt_arg,MYF(MY_WME));
+          }
+          break;
+        case 12:      /* return-found-rows */
+          options->client_flag|=CLIENT_FOUND_ROWS;
+          break;
+        case 13:        /* Ignore SSL options */
+        case 14:
+        case 15:
+        case 16:
+        case 23:
+          break;
+        case 17:      /* charset-lib */
+          my_free(options->charset_dir,MYF(MY_ALLOW_ZERO_PTR));
+          options->charset_dir = my_strdup(opt_arg, MYF(MY_WME));
+          break;
+        case 18:
+          my_free(options->charset_name,MYF(MY_ALLOW_ZERO_PTR));
+          options->charset_name = my_strdup(opt_arg, MYF(MY_WME));
+          break;
+        case 19:        /* Interactive-timeout */
+          options->client_flag|= CLIENT_INTERACTIVE;
+          break;
+        case 21:
+          if (!opt_arg || atoi(opt_arg) != 0)
+            options->client_flag|= CLIENT_LOCAL_FILES;
+          else
+            options->client_flag&= ~CLIENT_LOCAL_FILES;
+          break;
+        case 22:
+          options->client_flag&= ~CLIENT_LOCAL_FILES;
+          break;
+        case 24: /* max-allowed-packet */
+          if (opt_arg)
+            options->max_allowed_packet= atoi(opt_arg);
+          break;
         case 25: /* protocol */
           if ((options->protocol= find_type(opt_arg,
-              &sql_protocol_typelib,0)) <= 0)
+                                            &sql_protocol_typelib,0)) <= 0)
           {
             fprintf(stderr, "Unknown option to protocol: %s\n", opt_arg);
             exit(1);
           }
           break;
-  case 27: /* multi-results */
-    options->client_flag|= CLIENT_MULTI_RESULTS;
-    break;
-  case 28: /* multi-statements */
-  case 29: /* multi-queries */
-    options->client_flag|= CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS;
-    break;
+        case 27: /* multi-results */
+          options->client_flag|= CLIENT_MULTI_RESULTS;
+          break;
+        case 28: /* multi-statements */
+        case 29: /* multi-queries */
+          options->client_flag|= CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS;
+          break;
         case 30: /* secure-auth */
           options->secure_auth= true;
           break;
         case 31: /* report-data-truncation */
           options->report_data_truncation= opt_arg ? test(atoi(opt_arg)) : 1;
           break;
-  default:
+        default:
           break;
-  }
+        }
       }
     }
   }

@@ -1769,7 +1769,7 @@ static int show_slave_skip_errors(THD *thd __attribute__((unused)),
     if (var->value != buff)
       buff--;				// Remove last ','
     if (i < MAX_SLAVE_ERROR)
-      buff= strmov(buff, "...");  // Couldn't show all errors
+      buff= stpcpy(buff, "...");  // Couldn't show all errors
     *buff=0;
   }
   return 0;

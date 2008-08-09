@@ -328,12 +328,6 @@ bool String::fill(uint32_t max_length,char fill_char)
   return false;
 }
 
-void String::strip_sp()
-{
-   while (str_length && my_isspace(str_charset,Ptr[str_length-1]))
-    str_length--;
-}
-
 bool String::append(const String &s)
 {
   if (s.length())
