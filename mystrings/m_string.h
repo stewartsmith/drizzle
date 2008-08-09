@@ -89,13 +89,10 @@ extern char *strcat(char *, const char *);
 extern char *strchr(const char *, char);
 extern char *strrchr(const char *, char);
 extern char *strcpy(char *, const char *);
-extern int strcmp(const char *, const char *);
-#ifndef __GNUC__
-extern size_t strlen(const char *);
 #endif
-#endif
-#ifndef HAVE_STRNLEN
-extern size_t strnlen(const char *s, size_t n);
+
+#ifndef HAVE_STPNCPY
+char *stpncpy(register char *dst, register const char *src, size_t n);
 #endif
 
 #if !defined(__cplusplus)
