@@ -68,9 +68,9 @@ void list_free(LIST *root, uint free_data)
 
 LIST *list_cons(void *data, LIST *list)
 {
-  LIST *new_charset=(LIST*) my_malloc(sizeof(LIST),MYF(MY_FAE));
+  LIST * const new_charset=(LIST*) my_malloc(sizeof(LIST),MYF(MY_FAE));
   if (!new_charset)
-    return 0;
+    return NULL;
   new_charset->data=data;
   return list_add(list,new_charset);
 }
@@ -91,19 +91,11 @@ LIST *list_reverse(LIST *root)
   return last;
 }
 
-uint list_length(LIST *list)
-{
-  uint count;
-  for (count=0 ; list ; list=list->next, count++) ;
-  return count;
-}
-
-
 int list_walk(LIST *list, list_walk_action action, uchar* argument)
 {
-  int error=0;
   while (list)
   {
+    int error;
     if ((error = (*action)(list->data,argument)))
       return error;
     list=list_rest(list);

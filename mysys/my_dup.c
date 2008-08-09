@@ -28,4 +28,4 @@ File my_dup(File file, myf MyFlags)
 	     my_file_info[(int) file].name : "Unknown");
   return(my_register_filename(fd, filename, FILE_BY_DUP,
 				   EE_FILENOTFOUND, MyFlags));
-} /* my_open */
+}

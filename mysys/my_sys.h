@@ -494,7 +494,6 @@ typedef int (*Process_option_func)(void *ctx, const char *group_name,
 	/* Prototypes for mysys and my_func functions */
 
 extern int my_copy(const char *from,const char *to,myf MyFlags);
-extern int my_append(const char *from,const char *to,myf MyFlags);
 extern int my_delete(const char *name,myf MyFlags);
 extern int my_getwd(char * buf,size_t size,myf MyFlags);
 extern int my_setwd(const char *dir,myf MyFlags);
@@ -525,11 +524,9 @@ extern my_off_t my_seek(File fd,my_off_t pos,int whence,myf MyFlags);
 extern my_off_t my_tell(File fd,myf MyFlags);
 extern size_t my_write(File Filedes,const uchar *Buffer,size_t Count,
 		     myf MyFlags);
-extern size_t my_fread(FILE *stream,uchar *Buffer,size_t Count,myf MyFlags);
 extern size_t my_fwrite(FILE *stream,const uchar *Buffer,size_t Count,
 		      myf MyFlags);
 extern my_off_t my_fseek(FILE *stream,my_off_t pos,int whence,myf MyFlags);
-extern my_off_t my_ftell(FILE *stream,myf MyFlags);
 extern void *_mymalloc(size_t uSize,const char *sFile,
                        uint uLine, myf MyFlag);
 extern void *_myrealloc(void *pPtr,size_t uSize,const char *sFile,
@@ -545,11 +542,6 @@ extern char *_my_strndup(const char *from, size_t length,
                          const char *sFile, uint uLine,
                          myf MyFlag);
 
-/* implemented in my_memmem.c */
-extern void *my_memmem(const void *haystack, size_t haystacklen,
-                       const void *needle, size_t needlelen);
-
-
 #define my_access access
 extern int check_if_legal_filename(const char *path);
 extern int check_if_legal_tablename(const char *path);
@@ -561,7 +553,6 @@ extern void TERMINATE(FILE *file, uint flag);
 #endif
 extern void init_glob_errs(void);
 extern FILE *my_fopen(const char *FileName,int Flags,myf MyFlags);
-extern FILE *my_fdopen(File Filedes,const char *name, int Flags,myf MyFlags);
 extern int my_fclose(FILE *fd,myf MyFlags);
 extern int my_sync(File fd, myf my_flags);
 extern int my_sync_dir(const char *dir_name, myf my_flags);
@@ -620,7 +611,6 @@ extern int wild_compare(const char *str,const char *wildstr,
 extern WF_PACK *wf_comp(char * str);
 extern int wf_test(struct wild_file_pack *wf_pack,const char *name);
 extern void wf_end(struct wild_file_pack *buffer);
-extern size_t strip_sp(char * str);
 extern bool array_append_string_unique(const char *str,
                                           const char **array, size_t size);
 extern void get_date(char * to,int timeflag,time_t use_time);
@@ -634,7 +624,6 @@ extern int end_record_cache(RECORD_CACHE *info);
 extern int write_cache_record(RECORD_CACHE *info,my_off_t filepos,
 			      const uchar *record,size_t length);
 extern int flush_write_cache(RECORD_CACHE *info);
-extern long my_clock(void);
 extern sig_handler sigtstp_handler(int signal_number);
 extern void handle_recived_signals(void);
 
@@ -774,7 +763,6 @@ extern uint64_t my_micro_time(void);
 extern uint64_t my_micro_time_and_time(time_t *time_arg);
 time_t my_time_possible_from_micro(uint64_t microtime);
 extern bool my_gethwaddr(uchar *to);
-extern int my_getncpus(void);
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>

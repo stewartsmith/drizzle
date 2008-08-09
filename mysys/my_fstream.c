@@ -27,46 +27,6 @@
 #define fseek(A,B,C) fseeko((A),(B),(C))
 #endif
 
-/*
-  Read a chunk of bytes from a FILE
-
-  SYNOPSIS
-   my_fread()
-   stream	File descriptor
-   Buffer	Buffer to read to
-   Count	Number of bytes to read
-   MyFlags	Flags on what to do on error
-
-  RETURN
-    (size_t) -1 Error
-    #		Number of bytes read
- */
-
-size_t my_fread(FILE *stream, uchar *Buffer, size_t Count, myf MyFlags)
-{
-  size_t readbytes;
-
-  if ((readbytes= fread(Buffer, sizeof(char), Count, stream)) != Count)
-  {
-    if (MyFlags & (MY_WME | MY_FAE | MY_FNABP))
-    {
-      if (ferror(stream))
-	my_error(EE_READ, MYF(ME_BELL+ME_WAITTANG),
-		 my_filename(fileno(stream)),errno);
-      else
-      if (MyFlags & (MY_NABP | MY_FNABP))
-	my_error(EE_EOFERR, MYF(ME_BELL+ME_WAITTANG),
-		 my_filename(fileno(stream)),errno);
-    }
-    my_errno=errno ? errno : -1;
-    if (ferror(stream) || MyFlags & (MY_NABP | MY_FNABP))
-      return((size_t) -1);			/* Return with error */
-  }
-  if (MyFlags & (MY_NABP | MY_FNABP))
-    return(0);				/* Read ok */
-  return(readbytes);
-} /* my_fread */
-
 
 /*
   Write a chunk of bytes to a stream
@@ -158,13 +118,3 @@ my_off_t my_fseek(FILE *stream, my_off_t pos, int whence,
   return(fseek(stream, (off_t) pos, whence) ?
 	      MY_FILEPOS_ERROR : (my_off_t) ftell(stream));
 } /* my_seek */
-
-
-/* Tell current position of file */
-
-my_off_t my_ftell(FILE *stream, myf MyFlags __attribute__((unused)))
-{
-  off_t pos;
-  pos=ftell(stream);
-  return((my_off_t) pos);
-} /* my_ftell */
