@@ -13,26 +13,21 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/*  File   : strappend.c
-    Author : Monty
-    Updated: 1987.02.07
-    Defines: strappend()
-
-    strappend(dest, len, fill) appends fill-characters to a string so that
-    the result length == len. If the string is longer than len it's
-    trunked. The des+len character is allways set to NULL.
+/*
+    stpncpy(dst,src,length) moves length characters, or until end, of src to
+    dst and appends a closing NUL to dst if src is shorter than length.
+    The result is a pointer to the first NUL in dst, or is dst+n if dst was
+    truncated.
 */
 
 #include "m_string.h"
 
-
-void strappend(register char *s, size_t len, char fill)
+char *stpncpy(register char *dst, register const char *src, size_t n)
 {
-  register char *endpos;
-
-  endpos = s+len;
-  while (*s++);
-  s--;
-  while (s<endpos) *(s++) = fill;
-  *(endpos) = '\0';
-} /* strappend */
+  while (n-- != 0) {
+    if (!(*dst++ = *src++)) {
+      return (char*) dst-1;
+    }
+  }
+  return dst;
+}

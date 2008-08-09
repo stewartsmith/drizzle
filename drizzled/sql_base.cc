@@ -102,7 +102,7 @@ uint cached_open_tables(void)
 uint create_table_def_key(THD *thd, char *key, TABLE_LIST *table_list,
                           bool tmp_table)
 {
-  uint key_length= (uint) (strmov(strmov(key, table_list->db)+1,
+  uint key_length= (uint) (stpcpy(stpcpy(key, table_list->db)+1,
                                   table_list->table_name)-key)+1;
   if (tmp_table)
   {
@@ -574,8 +574,8 @@ OPEN_TABLE_LIST *list_open_tables(THD *thd __attribute__((unused)),
       open_list=0;				// Out of memory
       break;
     }
-    strmov((*start_list)->table=
-	   strmov(((*start_list)->db= (char*) ((*start_list)+1)),
+    stpcpy((*start_list)->table=
+	   stpcpy(((*start_list)->db= (char*) ((*start_list)+1)),
 		  share->db.str)+1,
 	   share->table_name.str);
     (*start_list)->in_use= entry->in_use ? 1 : 0;
@@ -1957,7 +1957,7 @@ bool lock_table_name_if_not_cached(THD *thd, const char *db,
   char key[MAX_DBKEY_LENGTH];
   uint key_length;
 
-  key_length= (uint)(strmov(strmov(key, db) + 1, table_name) - key) + 1;
+  key_length= (uint)(stpcpy(stpcpy(key, db) + 1, table_name) - key) + 1;
   VOID(pthread_mutex_lock(&LOCK_open));
 
   if (hash_search(&open_cache, (uchar *)key, key_length))
@@ -2498,7 +2498,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
 TABLE *find_locked_table(THD *thd, const char *db,const char *table_name)
 {
   char	key[MAX_DBKEY_LENGTH];
-  uint key_length=(uint) (strmov(strmov(key,db)+1,table_name)-key)+1;
+  uint key_length=(uint) (stpcpy(stpcpy(key,db)+1,table_name)-key)+1;
 
   for (TABLE *table=thd->open_tables; table ; table=table->next)
   {
@@ -3229,7 +3229,7 @@ retry:
       if ((query= (char*) my_malloc(query_buf_size,MYF(MY_WME))))
       {
         /* this DELETE FROM is needed even with row-based binlogging */
-        end = strxmov(strmov(query, "DELETE FROM `"),
+        end = strxmov(stpcpy(query, "DELETE FROM `"),
                       share->db.str,"`.`",share->table_name.str,"`", NullS);
         thd->binlog_query(THD::STMT_QUERY_TYPE,
                           query, (ulong)(end-query), false, false);
@@ -3912,7 +3912,7 @@ TABLE *open_temporary_table(THD *thd, const char *path, const char *db,
 
   share= (TABLE_SHARE*) (tmp_table+1);
   tmp_path= (char*) (share+1);
-  saved_cache_key= strmov(tmp_path, path)+1;
+  saved_cache_key= stpcpy(tmp_path, path)+1;
   memcpy(saved_cache_key, cache_key, key_length);
 
   init_tmp_table_share(thd, share, saved_cache_key, key_length,
@@ -3971,7 +3971,7 @@ bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
   handler *file;
   char *ext;
 
-  strmov(ext= strend(path), reg_ext);
+  stpcpy(ext= strend(path), reg_ext);
   if (my_delete(path,MYF(0)))
     error=1; /* purecov: inspected */
   *ext= 0;				// remove extension
@@ -6482,7 +6482,7 @@ bool remove_table_from_cache(THD *thd, const char *db, const char *table_name,
   TABLE_SHARE *share;
   bool result= 0, signalled= 0;
 
-  key_length=(uint) (strmov(strmov(key,db)+1,table_name)-key)+1;
+  key_length=(uint) (stpcpy(stpcpy(key,db)+1,table_name)-key)+1;
   for (;;)
   {
     HASH_SEARCH_STATE state;

@@ -203,12 +203,17 @@ int handle_options(int *argc, char ***argv,
 	  }
 	}
 	opt_str= check_struct_option(cur_arg, key_name);
-	optend= strcend(opt_str, '=');
-	length= (uint) (optend - opt_str);
-	if (*optend == '=')
+	optend= strrchr(opt_str, '=');
+	if (optend != NULL)
+        {
+	  length= (uint) (optend - opt_str);
 	  optend++;
+        }
 	else
+        {
+          length= strlen(opt_str);
 	  optend= 0;
+        }
 
 	/*
 	  Find first the right option. Return error in case of an ambiguous,
@@ -557,8 +562,8 @@ static char *check_struct_option(char *cur_arg, char *key_name)
 {
   char *ptr, *end;
 
-  ptr= strcend(cur_arg + 1, '.'); /* Skip the first character */
-  end= strcend(cur_arg, '=');
+  ptr= strrchr(cur_arg + 1, '.'); /* Skip the first character */
+  end= strrchr(cur_arg, '=');
 
   /* 
      If the first dot is after an equal sign, then it is part
@@ -567,7 +572,7 @@ static char *check_struct_option(char *cur_arg, char *key_name)
      NULL, or the character right before equal sign is the first
      dot found, the option is not a struct option.
   */
-  if (end - ptr > 1)
+  if ((ptr != NULL) && (end != NULL) && (end - ptr > 1))
   {
     uint len= (uint) (ptr - cur_arg);
     set_if_smaller(len, FN_REFLEN-1);

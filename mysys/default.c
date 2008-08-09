@@ -276,7 +276,7 @@ static int handle_default_option(void *in_ctx, const char *group_name,
       return 1;
     if (insert_dynamic(ctx->args, (uchar*) &tmp))
       return 1;
-    strmov(tmp, option);
+    stpcpy(tmp, option);
   }
 
   return 0;
@@ -603,7 +603,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
   }
   else
   {
-    strmov(name,config_file);
+    stpcpy(name,config_file);
   }
   fn_format(name,name,"","",4);
   {
@@ -744,7 +744,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
     for ( ; my_isspace(&my_charset_latin1,end[-1]) ; end--) ;
     if (!value)
     {
-      strmake(strmov(option,"--"),ptr, (size_t) (end-ptr));
+      strmake(stpcpy(option,"--"),ptr, (size_t) (end-ptr));
       if (opt_handler(handler_ctx, curr_gr, option))
         goto err;
     }
@@ -770,7 +770,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
 	value++;
 	value_end--;
       }
-      ptr=strnmov(strmov(option,"--"),ptr,(size_t) (end-ptr));
+      ptr=stpncpy(stpcpy(option,"--"),ptr,(size_t) (end-ptr));
       *ptr++= '=';
 
       for ( ; value != value_end; value++)

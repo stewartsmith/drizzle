@@ -67,7 +67,7 @@ uint filename_to_tablename(const char *from, char *to, uint to_length)
   if (!memcmp(from, tmp_file_prefix, tmp_file_prefix_length))
   {
     /* Temporary table name. */
-    res= (strnmov(to, from, to_length) - to);
+    res= (stpncpy(to, from, to_length) - to);
   }
   else
   {
@@ -163,7 +163,7 @@ uint build_table_filename(char *buff, size_t bufflen, const char *db,
   char tbbuff[FN_REFLEN];
 
   if (flags & FN_IS_TMP) // FN_FROM_IS_TMP | FN_TO_IS_TMP
-    strnmov(tbbuff, table_name, sizeof(tbbuff));
+    stpncpy(tbbuff, table_name, sizeof(tbbuff));
   else
     VOID(tablename_to_filename(table_name, tbbuff, sizeof(tbbuff)));
 
@@ -171,11 +171,11 @@ uint build_table_filename(char *buff, size_t bufflen, const char *db,
 
   char *end = buff + bufflen;
   /* Don't add FN_ROOTDIR if mysql_data_home already includes it */
-  char *pos = strnmov(buff, mysql_data_home, bufflen);
+  char *pos = stpncpy(buff, mysql_data_home, bufflen);
   int rootdir_len= strlen(FN_ROOTDIR);
   if (pos - rootdir_len >= buff &&
       memcmp(pos - rootdir_len, FN_ROOTDIR, rootdir_len) != 0)
-    pos= strnmov(pos, FN_ROOTDIR, end - pos);
+    pos= stpncpy(pos, FN_ROOTDIR, end - pos);
   pos= strxnmov(pos, end - pos, dbbuff, FN_ROOTDIR, NullS);
 #ifdef USE_SYMDIR
   unpack_dirname(buff, buff);
@@ -208,7 +208,7 @@ uint build_table_filename(char *buff, size_t bufflen, const char *db,
 uint build_tmptable_filename(THD* thd, char *buff, size_t bufflen)
 {
 
-  char *p= strnmov(buff, mysql_tmpdir, bufflen);
+  char *p= stpncpy(buff, mysql_tmpdir, bufflen);
   snprintf(p, bufflen - (p - buff), "/%s%lx_%lx_%x%s",
 	      tmp_file_prefix, current_pid,
               thd->thread_id, thd->tmp_table++, reg_ext);
@@ -502,7 +502,7 @@ int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
       {
         int new_error;
         /* Delete the table definition file */
-        strmov(end,reg_ext);
+        stpcpy(end,reg_ext);
         if (!(new_error=my_delete(path,MYF(MY_WME))))
         {
           some_tables_deleted=1;
@@ -2167,13 +2167,13 @@ mysql_rename_table(handlerton *base, const char *old_db,
   if (lower_case_table_names == 2 && file &&
       !(file->ha_table_flags() & HA_FILE_BASED))
   {
-    strmov(tmp_name, old_name);
+    stpcpy(tmp_name, old_name);
     my_casedn_str(files_charset_info, tmp_name);
     build_table_filename(lc_from, sizeof(lc_from), old_db, tmp_name, "",
                          flags & FN_FROM_IS_TMP);
     from_base= lc_from;
 
-    strmov(tmp_name, new_name);
+    stpcpy(tmp_name, new_name);
     my_casedn_str(files_charset_info, tmp_name);
     build_table_filename(lc_to, sizeof(lc_to), new_db, tmp_name, "",
                          flags & FN_TO_IS_TMP);
@@ -3770,7 +3770,7 @@ int create_temporary_table(THD *thd,
     if (create_info->index_file_name)
     {
       /* Fix index_file_name to have 'tmp_name' as basename */
-      strmov(index_file, tmp_name);
+      stpcpy(index_file, tmp_name);
       create_info->index_file_name=fn_same(index_file,
                                            create_info->index_file_name,
                                            1);
@@ -3778,7 +3778,7 @@ int create_temporary_table(THD *thd,
     if (create_info->data_file_name)
     {
       /* Fix data_file_name to have 'tmp_name' as basename */
-      strmov(data_file, tmp_name);
+      stpcpy(data_file, tmp_name);
       create_info->data_file_name=fn_same(data_file,
                                           create_info->data_file_name,
                                           1);
@@ -4523,8 +4523,8 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   /* Check that we are not trying to rename to an existing table */
   if (new_name)
   {
-    strmov(new_name_buff,new_name);
-    strmov(new_alias= new_alias_buff, new_name);
+    stpcpy(new_name_buff,new_name);
+    stpcpy(new_alias= new_alias_buff, new_name);
     if (lower_case_table_names)
     {
       if (lower_case_table_names != 2)

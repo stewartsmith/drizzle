@@ -2248,7 +2248,7 @@ my_hash_sort_utf8mb4(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
   while (e > s && e[-1] == ' ')
     e--;
 
-  while ((res= my_mb_wc_utf8mb4(cs, &wc, (uchar*) s, (uchar*) e)) > 0)
+  while ((res= my_mb_wc_utf8mb4(cs, &wc, (const uchar*) s, (const uchar*) e)) > 0)
   {
     my_tosort_utf8mb4(uni_plane, &wc);
     my_hash_add(n1, n2, (uint) (wc & 0xFF));
@@ -3144,9 +3144,9 @@ my_hash_sort_utf8mb3(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
     e--;
 
   while ((s < e) && (res= my_mb_wc_utf8mb3(cs, &wc,
-                                           (uchar *)s, (uchar*)e)) > 0)
+                                    (const uchar *)s, (const uchar*)e)) > 0)
   {
-    int plane = (wc>>8) & 0xFF;
+    const int plane = (wc>>8) & 0xFF;
     wc = uni_plane[plane] ? uni_plane[plane][wc & 0xFF].sort : wc;
     n1[0]^= (((n1[0] & 63)+n2[0])*(wc & 0xFF))+ (n1[0] << 8);
     n2[0]+=3;
@@ -3169,7 +3169,7 @@ my_caseup_str_utf8mb3(const CHARSET_INFO * const cs, char *src)
   while (*src &&
          (srcres= my_mb_wc_utf8mb3_no_range(cs, &wc, (uchar *) src)) > 0)
   {
-    int plane= (wc>>8) & 0xFF;
+    const int plane= (wc>>8) & 0xFF;
     wc= uni_plane[plane] ? uni_plane[plane][wc & 0xFF].toupper : wc;
     if ((dstres= my_wc_mb_utf8mb3_no_range(cs, wc, (uchar*) dst)) <= 0)
       break;

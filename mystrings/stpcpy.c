@@ -25,27 +25,10 @@
 
 #ifndef stpcpy
 
-#if !defined(MC68000) && !defined(DS90)
-
 char *stpcpy(register char *dst, register const char *src)
 {
   while ((*dst++ = *src++)) ;
   return dst-1;
 }
-
-#else
-
-char *stpcpy(dst, src)
-     char *dst, *src;
-{
-  asm("		movl	4(a7),a1	");
-  asm("		movl	8(a7),a0	");
-  asm(".L4:	movb	(a0)+,(a1)+	");
-  asm("		jne	.L4		");
-  asm("		movl	a1,d0		");
-  asm("		subql	#1,d0		");
-}
-
-#endif
 
 #endif /* stpcpy */

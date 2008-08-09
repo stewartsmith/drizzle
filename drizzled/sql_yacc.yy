@@ -860,7 +860,6 @@ bool my_yyoverflow(short **a, YYSTYPE **b, ulong *yystacksize);
 %token  WORK_SYM                      /* SQL-2003-N */
 %token  WRAPPER_SYM
 %token  WRITE_SYM                     /* SQL-2003-N */
-%token  XML_SYM
 %token  XOR
 %token  YEAR_MONTH_SYM
 %token  YEAR_SYM                      /* SQL-2003-R */
@@ -1052,7 +1051,7 @@ END_OF_INPUT
 
 %type <index_hint> index_hint_type
 %type <num> index_hint_clause
-%type <filetype> data_or_xml
+%type <filetype> data_file
 
 %type <NONE>
         '-' '+' '*' '/' '%' '(' ')'
@@ -5691,7 +5690,7 @@ use:
 /* import, export of files */
 
 load:
-          LOAD data_or_xml
+          LOAD data_file
           {
             THD *thd= YYTHD;
             LEX *lex= thd->lex;
@@ -5729,16 +5728,13 @@ load:
           }
           opt_load_data_charset
           { Lex->exchange->cs= $15; }
-          opt_xml_rows_identified_by
           opt_field_term opt_line_term opt_ignore_lines opt_field_or_var_spec
           opt_load_data_set_spec
           {}
         ;
 
-data_or_xml:
-        DATA_SYM  { $$= FILETYPE_CSV; }
-        | XML_SYM { $$= FILETYPE_XML; }
-        ;
+data_file:
+        DATA_SYM  { $$= FILETYPE_CSV; };
 
 opt_local:
           /* empty */ { $$=0;}
@@ -5817,11 +5813,6 @@ line_term:
             Lex->exchange->line_start= $3;
           }
         ;
-
-opt_xml_rows_identified_by:
-        /* empty */ { }
-        | ROWS_SYM IDENTIFIED_SYM BY text_string
-          { Lex->exchange->line_term = $4; };
 
 opt_ignore_lines:
           /* empty */
@@ -6542,7 +6533,6 @@ keyword_sp:
         | WEEK_SYM                 {}
         | WEIGHT_STRING_SYM        {}
         | WORK_SYM                 {}
-        | XML_SYM                  {}
         | YEAR_SYM                 {}
         ;
 

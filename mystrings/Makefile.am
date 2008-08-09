@@ -25,15 +25,16 @@ dist_mystringsinclude_HEADERS = 	decimal.h \
 noinst_HEADERS =	my_uctype.h
 
 
-# LTLIBOBJS contains strstr strtoll strtoull stpcpy IFF the don't exist on
+# LTLIBOBJS contains strstr strtoll strtoull stpcpy stpncpy strnlen getpagesize
+# IFF the don't exist on
 # the target system. This helps prevent empty object file problems.
 libmystrings_la_LIBADD = $(LTLIBOBJS)
-libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c strappend.c strcont.c \
-				strend.c strfill.c strcend.c is_prefix.c \
-				strmake.c strnmov.c longlong2str.c \
-				my_strtoll10.c bmove512.c \
+libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c \
+				strend.c strfill.c is_prefix.c \
+				strmake.c longlong2str.c \
+				my_strtoll10.c \
 				bchange.c strxnmov.c int2str.c str2int.c \
-                                llstr.c strnlen.c \
+                                llstr.c \
                                 ctype.c ctype-simple.c ctype-mb.c \
                                 ctype-big5.c ctype-cp932.c ctype-czech.c \
                                 ctype-eucjpms.c ctype-euc_kr.c ctype-gb2312.c \
@@ -42,5 +43,5 @@ libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c strappend.c strcont.c \
                                 ctype-uca.c ctype-win1250ch.c ctype-bin.c \
                                 ctype-latin1.c xml.c \
                                 decimal.c ctype-extra.c str_alloc.c \
-                                dtoa.c my_strchr.c
+                                dtoa.c 
 

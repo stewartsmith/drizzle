@@ -266,7 +266,7 @@ static int check_connection(THD *thd)
     server_capabilites|= CLIENT_COMPRESS;
 #endif /* HAVE_COMPRESS */
 
-    end= strnmov(buff, server_version, SERVER_VERSION_LENGTH) + 1;
+    end= stpncpy(buff, server_version, SERVER_VERSION_LENGTH) + 1;
     int4store((uchar*) end, thd->thread_id);
     end+= 4;
     /*

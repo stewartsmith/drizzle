@@ -57,27 +57,14 @@ extern "C" {
 extern void *(*my_str_malloc)(size_t);
 extern void (*my_str_free)(void *);
 
-#define strmov(A,B) stpcpy((A),(B))
-
 #define strmov_overlapp(A,B) stpcpy(A,B)
 #define strmake_overlapp(A,B,C) strmake(A,B,C)
-
-#if (!defined(USE_BMOVE512) || defined(HAVE_purify)) && !defined(bmove512)
-#define bmove512(A,B,C) memcpy(A,B,C)
-#endif
-
-	/* Prototypes for string functions */
-#ifndef bmove512
-extern void bmove512(unsigned char *dst,const unsigned char *src,size_t len);
-#endif
 
 extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 
 extern	void bchange(unsigned char *dst,size_t old_len,const unsigned char *src,
 		     size_t new_len,size_t tot_len);
-extern	void strappend(char *s,size_t len,char fill);
 extern	char *strend(const char *s);
-extern  char *strcend(const char *, char);
 extern	char *strfield(char *src,int fields,int chars,int blanks,
 			   int tabch);
 extern	char *strfill(char * s,size_t len,char fill);
@@ -87,9 +74,7 @@ extern	char *strmake(char *dst,const char *src,size_t length);
 extern	char *strmake_overlapp(char *dst,const char *src, size_t length);
 #endif
 
-extern	char *strnmov(char *dst,const char *src,size_t n);
 extern	char *strsuff(const char *src,const char *suffix);
-extern	char *strcont(const char *src,const char *set);
 extern	char *strxcat(char *dst,const char *src, ...);
 extern	char *strxmov(char *dst,const char *src, ...);
 extern	char *strxcpy(char *dst,const char *src, ...);
@@ -274,7 +259,7 @@ static inline const unsigned char *skip_trailing_space(const unsigned char *ptr,
       while (end > end_words && end[-1] == 0x20)
         end--;
       if (end[-1] == 0x20 && start_words < end_words)
-        while (end > start_words && ((unsigned *)end)[-1] == SPACE_INT)
+        while (end > start_words && ((const unsigned *)end)[-1] == SPACE_INT)
           end -= SIZEOF_INT;
     }
   }

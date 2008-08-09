@@ -1145,7 +1145,7 @@ static int find_uniq_filename(char *name)
 
   if (!(dir_info = my_dir(buff,MYF(MY_DONT_SORT))))
   {						// This shouldn't happen
-    strmov(end,".1");				// use name+1
+    stpcpy(end,".1");				// use name+1
     return(0);
   }
   file_info= dir_info->dir_entry;
@@ -1213,7 +1213,7 @@ bool MYSQL_LOG::open(const char *log_name, enum_log_type log_type_arg,
   }
 
   if (new_name)
-    strmov(log_file_name, new_name);
+    stpcpy(log_file_name, new_name);
   else if (generate_new_name(log_file_name, name))
     goto err;
 
@@ -1240,7 +1240,7 @@ bool MYSQL_LOG::open(const char *log_name, enum_log_type log_type_arg,
                      my_progname, server_version, MYSQL_COMPILATION_COMMENT,
                      mysqld_port, ""
                      );
-    end= strnmov(buff + len, "Time                 Id Command    Argument\n",
+    end= stpncpy(buff + len, "Time                 Id Command    Argument\n",
                  sizeof(buff) - len);
     if (my_b_write(&log_file, (uchar*) buff, (uint) (end-buff)) ||
 	flush_io_cache(&log_file))
@@ -1585,11 +1585,11 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
     {						// Database changed
       if (my_b_printf(&log_file,"use %s;\n",thd->db) == (uint) -1)
         tmp_errno= errno;
-      strmov(db,thd->db);
+      stpcpy(db,thd->db);
     }
     if (thd->stmt_depends_on_first_successful_insert_id_in_prev_stmt)
     {
-      end=strmov(end, ",last_insert_id=");
+      end=stpcpy(end, ",last_insert_id=");
       end=int64_t10_to_str((int64_t)
                             thd->first_successful_insert_id_in_prev_stmt_for_binlog,
                             end, -10);
@@ -1599,7 +1599,7 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
     {
       if (!(specialflag & SPECIAL_SHORT_LOG_FORMAT))
       {
-        end=strmov(end,",insert_id=");
+        end=stpcpy(end,",insert_id=");
         end=int64_t10_to_str((int64_t)
                               thd->auto_inc_intervals_in_cur_stmt_for_binlog.minimum(),
                               end, -10);
@@ -1611,7 +1611,7 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
       checked the query start time or not. now we always write current
       timestamp to the slow log
     */
-    end= strmov(end, ",timestamp=");
+    end= stpcpy(end, ",timestamp=");
     end= int10_to_str((long) current_time, end, 10);
 
     if (end != buff)
@@ -2623,7 +2623,7 @@ void MYSQL_BIN_LOG::make_log_name(char* buf, const char* log_ident)
   uint dir_len = dirname_length(log_file_name); 
   if (dir_len >= FN_REFLEN)
     dir_len=FN_REFLEN-1;
-  strnmov(buf, log_file_name, dir_len);
+  stpncpy(buf, log_file_name, dir_len);
   strmake(buf+dir_len, log_ident, FN_REFLEN - dir_len -1);
 }
 
@@ -3827,7 +3827,7 @@ bool flush_error_log()
   {
     char err_renamed[FN_REFLEN], *end;
     end= strmake(err_renamed,log_error_file,FN_REFLEN-4);
-    strmov(end, "-old");
+    stpcpy(end, "-old");
     VOID(pthread_mutex_lock(&LOCK_error_log));
     char err_temp[FN_REFLEN+4];
     /*

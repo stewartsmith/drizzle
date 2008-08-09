@@ -1503,14 +1503,14 @@ static bool show_status_array(THD *thd, const char *wild,
   null_lex_str.str= 0;				// For sys_var->value_ptr()
   null_lex_str.length= 0;
 
-  prefix_end=strnmov(name_buffer, prefix, sizeof(name_buffer)-1);
+  prefix_end=stpncpy(name_buffer, prefix, sizeof(name_buffer)-1);
   if (*prefix)
     *prefix_end++= '_';
   len=name_buffer + sizeof(name_buffer) - prefix_end;
 
   for (; variables->name; variables++)
   {
-    strnmov(prefix_end, variables->name, len);
+    stpncpy(prefix_end, variables->name, len);
     name_buffer[sizeof(name_buffer)-1]=0;       /* Safety */
     if (ucase_names)
       make_upper(name_buffer);
@@ -1575,10 +1575,10 @@ static bool show_status_array(THD *thd, const char *wild,
           end= int64_t10_to_str((int64_t) *(ha_rows*) value, buff, 10);
           break;
         case SHOW_BOOL:
-          end= strmov(buff, *(bool*) value ? "ON" : "OFF");
+          end= stpcpy(buff, *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_MY_BOOL:
-          end= strmov(buff, *(bool*) value ? "ON" : "OFF");
+          end= stpcpy(buff, *(bool*) value ? "ON" : "OFF");
           break;
         case SHOW_INT:
           end= int10_to_str((long) *(uint32_t*) value, buff, 10);
@@ -2842,38 +2842,38 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
     ptr=option_buff;
     if (share->min_rows)
     {
-      ptr=strmov(ptr," min_rows=");
+      ptr=stpcpy(ptr," min_rows=");
       ptr=int64_t10_to_str(share->min_rows,ptr,10);
     }
     if (share->max_rows)
     {
-      ptr=strmov(ptr," max_rows=");
+      ptr=stpcpy(ptr," max_rows=");
       ptr=int64_t10_to_str(share->max_rows,ptr,10);
     }
     if (share->avg_row_length)
     {
-      ptr=strmov(ptr," avg_row_length=");
+      ptr=stpcpy(ptr," avg_row_length=");
       ptr=int64_t10_to_str(share->avg_row_length,ptr,10);
     }
     if (share->db_create_options & HA_OPTION_PACK_KEYS)
-      ptr=strmov(ptr," pack_keys=1");
+      ptr=stpcpy(ptr," pack_keys=1");
     if (share->db_create_options & HA_OPTION_NO_PACK_KEYS)
-      ptr=strmov(ptr," pack_keys=0");
+      ptr=stpcpy(ptr," pack_keys=0");
     /* We use CHECKSUM, instead of TABLE_CHECKSUM, for backward compability */
     if (share->db_create_options & HA_OPTION_CHECKSUM)
-      ptr=strmov(ptr," checksum=1");
+      ptr=stpcpy(ptr," checksum=1");
     if (share->page_checksum != HA_CHOICE_UNDEF)
       ptr= strxmov(ptr, " page_checksum=",
                    ha_choice_values[(uint) share->page_checksum], NullS);
     if (share->db_create_options & HA_OPTION_DELAY_KEY_WRITE)
-      ptr=strmov(ptr," delay_key_write=1");
+      ptr=stpcpy(ptr," delay_key_write=1");
     if (share->row_type != ROW_TYPE_DEFAULT)
       ptr=strxmov(ptr, " row_format=", 
                   ha_row_type[(uint) share->row_type],
                   NullS);
     if (share->block_size)
     {
-      ptr= strmov(ptr, " block_size=");
+      ptr= stpcpy(ptr, " block_size=");
       ptr= int64_t10_to_str(share->block_size, ptr, 10);
     }
     
