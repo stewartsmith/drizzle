@@ -173,7 +173,7 @@ typedef struct st_heap_share
   char * name;			/* Name of "memory-file" */
   THR_LOCK lock;
   pthread_mutex_t intern_lock;		/* Locking for use with _locking */
-  my_bool delete_on_close;
+  bool delete_on_close;
   LIST open_list;
   uint auto_key;
   uint auto_key_type;			/* real type of the auto key segment */
@@ -197,7 +197,7 @@ typedef struct st_heap_info
   TREE_ELEMENT *parents[MAX_TREE_HEIGHT+1];
   TREE_ELEMENT **last_pos;
   uint lastkey_len;
-  my_bool implicit_emptied;
+  bool implicit_emptied;
   THR_LOCK_DATA lock;
   LIST open_list;
 } HP_INFO;
@@ -211,8 +211,8 @@ typedef struct st_heap_create_info
   uint is_dynamic;  
   uint64_t max_table_size;
   uint64_t auto_increment;
-  my_bool with_auto_increment;
-  my_bool internal_table;
+  bool with_auto_increment;
+  bool internal_table;
 } HP_CREATE_INFO;
 
 	/* Prototypes for heap-functions */
@@ -258,7 +258,7 @@ int hp_panic(enum ha_panic_function flag);
 int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
               key_part_map keypart_map, enum ha_rkey_function find_flag);
 extern uchar * heap_find(HP_INFO *info,int inx,const uchar *key);
-extern int heap_check_heap(HP_INFO *info, my_bool print_status);
+extern int heap_check_heap(HP_INFO *info, bool print_status);
 extern uchar *heap_position(HP_INFO *info);
 
 /* The following is for programs that uses the old HEAP interface where

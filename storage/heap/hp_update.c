@@ -21,7 +21,7 @@ int heap_update(HP_INFO *info, const uchar *old_record, const uchar *new_record)
 {
   HP_KEYDEF *keydef, *end, *p_lastinx;
   uchar *pos;
-  my_bool auto_key_changed= 0;
+  bool auto_key_changed= 0;
   HP_SHARE *share= info->s;
   uint old_length, new_length;
   uint old_chunk_count, new_chunk_count;

@@ -487,7 +487,7 @@ ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
 */
 
 int hp_rec_key_cmp(HP_KEYDEF *keydef, const uchar *rec1, const uchar *rec2,
-                   my_bool diff_if_only_endspace_difference)
+                   bool diff_if_only_endspace_difference)
 {
   HA_KEYSEG *seg,*endseg;
 
@@ -888,7 +888,7 @@ uint hp_rb_var_key_length(HP_KEYDEF *keydef, const uchar *key)
     0 otherwise
 */
 
-my_bool hp_if_null_in_key(HP_KEYDEF *keydef, const uchar *record)
+bool hp_if_null_in_key(HP_KEYDEF *keydef, const uchar *record)
 {
   HA_KEYSEG *seg,*endseg;
   for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
