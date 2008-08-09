@@ -162,18 +162,18 @@ struct charset_info_st;
 /* See strings/CHARSET_INFO.txt for information about this structure  */
 typedef struct my_collation_handler_st
 {
-  my_bool (*init)(struct charset_info_st *, void *(*alloc)(size_t));
+  bool (*init)(struct charset_info_st *, void *(*alloc)(size_t));
   /* Collation routines */
   int     (*strnncoll)(const struct charset_info_st * const,
-		       const uchar *, size_t, const uchar *, size_t, my_bool);
+		       const uchar *, size_t, const uchar *, size_t, bool);
   int     (*strnncollsp)(const struct charset_info_st * const,
                          const uchar *, size_t, const uchar *, size_t,
-                         my_bool diff_if_only_endspace_difference);
+                         bool diff_if_only_endspace_difference);
   size_t  (*strnxfrm)(const struct charset_info_st * const,
                       uchar *dst, size_t dstlen, uint nweights,
                       const uchar *src, size_t srclen, uint flags);
   size_t    (*strnxfrmlen)(const struct charset_info_st * const, size_t);
-  my_bool (*like_range)(const struct charset_info_st * const,
+  bool (*like_range)(const struct charset_info_st * const,
                         const char *s, size_t s_length,
                         char escape, char w_one, char w_many,
                         size_t res_length,
@@ -194,7 +194,7 @@ typedef struct my_collation_handler_st
   /* Hash calculation */
   void (*hash_sort)(const struct charset_info_st *cs, const uchar *key, size_t len,
 		    ulong *nr1, ulong *nr2); 
-  my_bool (*propagate)(const struct charset_info_st *cs, const uchar *str, size_t len);
+  bool (*propagate)(const struct charset_info_st *cs, const uchar *str, size_t len);
 } MY_COLLATION_HANDLER;
 
 extern MY_COLLATION_HANDLER my_collation_mb_bin_handler;
@@ -214,7 +214,7 @@ typedef size_t (*my_charset_conv_case)(const struct charset_info_st * const,
 /* See strings/CHARSET_INFO.txt about information on this structure  */
 typedef struct my_charset_handler_st
 {
-  my_bool (*init)(struct charset_info_st *, void *(*alloc)(size_t));
+  bool (*init)(struct charset_info_st *, void *(*alloc)(size_t));
   /* Multibyte routines */
   uint    (*ismbchar)(const struct charset_info_st * const, const char *, const char *);
   uint    (*mbcharlen)(const struct charset_info_st * const, uint c);
@@ -308,7 +308,7 @@ typedef struct charset_info_st
   uint16_t    min_sort_char;
   uint16_t    max_sort_char; /* For LIKE optimization */
   uchar     pad_char;
-  my_bool   escape_with_backslash_is_dangerous;
+  bool   escape_with_backslash_is_dangerous;
   uchar     levels_for_compare;
   uchar     levels_for_order;
   
@@ -372,11 +372,11 @@ extern size_t my_strnxfrm_simple(const CHARSET_INFO * const,
                                  const uchar *src, size_t srclen, uint flags);
 size_t my_strnxfrmlen_simple(const CHARSET_INFO * const, size_t);
 extern int  my_strnncoll_simple(const CHARSET_INFO * const, const uchar *, size_t,
-				const uchar *, size_t, my_bool);
+				const uchar *, size_t, bool);
 
 extern int  my_strnncollsp_simple(const CHARSET_INFO * const, const uchar *, size_t,
                                   const uchar *, size_t,
-                                  my_bool diff_if_only_endspace_difference);
+                                  bool diff_if_only_endspace_difference);
 
 extern void my_hash_sort_simple(const CHARSET_INFO * const cs,
 				const uchar *key, size_t len,
@@ -441,35 +441,35 @@ uint64_t my_strntoull10rnd_ucs2(CHARSET_INFO *cs,
 
 void my_fill_8bit(const CHARSET_INFO * const cs, char* to, size_t l, int fill);
 
-my_bool  my_like_range_simple(const CHARSET_INFO * const cs,
+bool  my_like_range_simple(const CHARSET_INFO * const cs,
 			      const char *ptr, size_t ptr_length,
 			      char escape, char w_one, char w_many,
 			      size_t res_length,
 			      char *min_str, char *max_str,
 			      size_t *min_length, size_t *max_length);
 
-my_bool  my_like_range_mb(const CHARSET_INFO * const cs,
+bool  my_like_range_mb(const CHARSET_INFO * const cs,
 			  const char *ptr, size_t ptr_length,
 			  char escape, char w_one, char w_many,
 			  size_t res_length,
 			  char *min_str, char *max_str,
 			  size_t *min_length, size_t *max_length);
 
-my_bool  my_like_range_ucs2(const CHARSET_INFO * const cs,
+bool  my_like_range_ucs2(const CHARSET_INFO * const cs,
 			    const char *ptr, size_t ptr_length,
 			    char escape, char w_one, char w_many,
 			    size_t res_length,
 			    char *min_str, char *max_str,
 			    size_t *min_length, size_t *max_length);
 
-my_bool  my_like_range_utf16(const CHARSET_INFO * const cs,
+bool  my_like_range_utf16(const CHARSET_INFO * const cs,
 			     const char *ptr, size_t ptr_length,
 			     char escape, char w_one, char w_many,
 			     size_t res_length,
 			     char *min_str, char *max_str,
 			     size_t *min_length, size_t *max_length);
 
-my_bool  my_like_range_utf32(const CHARSET_INFO * const cs,
+bool  my_like_range_utf32(const CHARSET_INFO * const cs,
 			     const char *ptr, size_t ptr_length,
 			     char escape, char w_one, char w_many,
 			     size_t res_length,
@@ -521,12 +521,12 @@ uint my_instr_mb(const CHARSET_INFO * const,
 int my_strnncoll_mb_bin(const CHARSET_INFO * const  cs,
                         const uchar *s, size_t slen,
                         const uchar *t, size_t tlen,
-                        my_bool t_is_prefix);
+                        bool t_is_prefix);
 
 int my_strnncollsp_mb_bin(const CHARSET_INFO * const cs,
                           const uchar *a, size_t a_length,
                           const uchar *b, size_t b_length,
-                          my_bool diff_if_only_endspace_difference);
+                          bool diff_if_only_endspace_difference);
 
 int my_wildcmp_mb_bin(const CHARSET_INFO * const cs,
                       const char *str,const char *str_end,
@@ -549,18 +549,18 @@ int my_wildcmp_unicode(const CHARSET_INFO * const cs,
                        int escape, int w_one, int w_many,
                        MY_UNICASE_INFO **weights);
 
-extern my_bool my_parse_charset_xml(const char *bug, size_t len,
+extern bool my_parse_charset_xml(const char *bug, size_t len,
 				    int (*add)(CHARSET_INFO *cs));
 extern char *my_strchr(const CHARSET_INFO * const cs, const char *str, const char *end,
                        char c);
 
-my_bool my_propagate_simple(const CHARSET_INFO * const cs, const uchar *str, size_t len);
-my_bool my_propagate_complex(const CHARSET_INFO * const cs, const uchar *str, size_t len);
+bool my_propagate_simple(const CHARSET_INFO * const cs, const uchar *str, size_t len);
+bool my_propagate_complex(const CHARSET_INFO * const cs, const uchar *str, size_t len);
 
 
 uint my_string_repertoire(const CHARSET_INFO * const cs, const char *str, ulong len);
-my_bool my_charset_is_ascii_based(const CHARSET_INFO * const cs);
-my_bool my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs);
+bool my_charset_is_ascii_based(const CHARSET_INFO * const cs);
+bool my_charset_is_8bit_pure_ascii(const CHARSET_INFO * const cs);
 
 
 uint my_strxfrm_flag_normalize(uint flags, uint nlevels);
@@ -570,7 +570,7 @@ size_t my_strxfrm_pad_desc_and_reverse(const CHARSET_INFO * const cs,
                                        uchar *str, uchar *frmend, uchar *strend,
                                        uint nweights, uint flags, uint level);
 
-my_bool my_charset_is_ascii_compatible(const CHARSET_INFO * const cs);
+bool my_charset_is_ascii_compatible(const CHARSET_INFO * const cs);
 
 #define	_MY_U	01	/* Upper case */
 #define	_MY_L	02	/* Lower case */

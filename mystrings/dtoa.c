@@ -212,7 +212,7 @@ size_t my_gcvt(double x, my_gcvt_arg_type type, int width, char *to,
   int decpt, sign, len, exp_len;
   char *res, *src, *end, *dst= to, *dend= dst + width;
   char buf[DTOA_BUFF_SIZE];
-  my_bool have_space, force_e_format;
+  bool have_space, force_e_format;
   assert(width > 0 && to != NULL);
   
   /* We want to remove '-' from equations early */

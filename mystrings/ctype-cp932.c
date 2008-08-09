@@ -231,7 +231,7 @@ static int my_strnncoll_cp932_internal(const CHARSET_INFO * const cs,
 static int my_strnncoll_cp932(const CHARSET_INFO * const cs __attribute__((unused)),
 			      const uchar *a, size_t a_length, 
 			      const uchar *b, size_t b_length,
-                              my_bool b_is_prefix)
+                              bool b_is_prefix)
 {
   int res= my_strnncoll_cp932_internal(cs, &a, a_length, &b, b_length);
   if (b_is_prefix && a_length > b_length)
@@ -243,7 +243,7 @@ static int my_strnncoll_cp932(const CHARSET_INFO * const cs __attribute__((unuse
 static int my_strnncollsp_cp932(const CHARSET_INFO * const cs __attribute__((unused)),
                                 const uchar *a, size_t a_length, 
                                 const uchar *b, size_t b_length,
-                                my_bool diff_if_only_endspace_difference
+                                bool diff_if_only_endspace_difference
                                 __attribute__((unused)))
 {
   const uchar *a_end= a + a_length;
@@ -300,7 +300,7 @@ static int my_strnncollsp_cp932(const CHARSET_INFO * const cs __attribute__((unu
 
 #define max_sort_char ((char) 255)
 
-static my_bool my_like_range_cp932(const CHARSET_INFO * const cs __attribute__((unused)),
+static bool my_like_range_cp932(const CHARSET_INFO * const cs __attribute__((unused)),
                                    const char *ptr,size_t ptr_length,
                                    char escape, char w_one, char w_many,
                                    size_t res_length,

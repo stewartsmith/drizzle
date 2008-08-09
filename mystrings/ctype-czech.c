@@ -343,7 +343,7 @@ while (1)						\
 static int my_strnncoll_czech(const CHARSET_INFO * const cs __attribute__((unused)),
 			      const uchar *s1, size_t len1, 
 			      const uchar *s2, size_t len2,
-                              my_bool s2_is_prefix)
+                              bool s2_is_prefix)
 {
   int v1, v2;
   const uchar * p1, * p2;
@@ -377,7 +377,7 @@ static int
 my_strnncollsp_czech(const CHARSET_INFO * const  cs __attribute__((unused)),
                      const uchar *s, size_t slen,
                      const uchar *t, size_t tlen,
-                     my_bool diff_if_only_endspace_difference
+                     bool diff_if_only_endspace_difference
                      __attribute__((unused)))
 {
   int level;
@@ -515,7 +515,7 @@ my_strnxfrm_czech(const CHARSET_INFO * const  cs  __attribute__((unused)),
 #define max_sort_char 0xAE
 
 
-static my_bool my_like_range_czech(const CHARSET_INFO * const cs __attribute__((unused)),
+static bool my_like_range_czech(const CHARSET_INFO * const cs __attribute__((unused)),
 				   const char *ptr,size_t ptr_length,
 				   char escape, char w_one, char w_many,
 				   size_t res_length, char *min_str,

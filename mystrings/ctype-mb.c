@@ -365,7 +365,7 @@ uint my_instr_mb(const CHARSET_INFO * const cs,
 int my_strnncoll_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
                         const uchar *s, size_t slen,
                         const uchar *t, size_t tlen,
-                        my_bool t_is_prefix)
+                        bool t_is_prefix)
 {
   size_t len=min(slen,tlen);
   int cmp= memcmp(s,t,len);
@@ -401,7 +401,7 @@ int my_strnncoll_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
 int my_strnncollsp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
                           const uchar *a, size_t a_length,
                           const uchar *b, size_t b_length,
-                          my_bool diff_if_only_endspace_difference)
+                          bool diff_if_only_endspace_difference)
 {
   const uchar *end;
   size_t length;
@@ -649,7 +649,7 @@ static void pad_max_char(const CHARSET_INFO * const cs, char *str, char *end)
 ** optimized !
 */
 
-my_bool my_like_range_mb(const CHARSET_INFO * const cs,
+bool my_like_range_mb(const CHARSET_INFO * const cs,
                          const char *ptr,size_t ptr_length,
                          char escape, char w_one, char w_many,
                          size_t res_length,

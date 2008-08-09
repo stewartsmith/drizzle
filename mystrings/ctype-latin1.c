@@ -546,7 +546,7 @@ uchar combo2map[]={
 static int my_strnncoll_latin1_de(const CHARSET_INFO * const cs __attribute__((unused)),
 				  const uchar *a, size_t a_length,
 				  const uchar *b, size_t b_length,
-                                  my_bool b_is_prefix)
+                                  bool b_is_prefix)
 {
   const uchar *a_end= a + a_length;
   const uchar *b_end= b + b_length;
@@ -587,7 +587,7 @@ static int my_strnncoll_latin1_de(const CHARSET_INFO * const cs __attribute__((u
 static int my_strnncollsp_latin1_de(const CHARSET_INFO * const cs __attribute__((unused)),
 				    const uchar *a, size_t a_length,
 				    const uchar *b, size_t b_length,
-                                    my_bool diff_if_only_endspace_difference)
+                                    bool diff_if_only_endspace_difference)
 {
   const uchar *a_end= a + a_length, *b_end= b + b_length;
   uchar a_char, a_extend= 0, b_char, b_extend= 0;
