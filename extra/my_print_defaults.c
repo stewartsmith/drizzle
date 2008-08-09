@@ -74,7 +74,7 @@ static struct my_option my_long_options[] =
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
 
-static void usage(my_bool version)
+static void usage(bool version)
 {
   printf("%s  Ver 1.6 for %s at %s\n",my_progname,SYSTEM_TYPE,
 	 MACHINE_TYPE);

@@ -196,7 +196,7 @@ void net_clear(NET *net, bool clear_buffer)
 
 bool net_flush(NET *net)
 {
-  my_bool error= 0;
+  bool error= 0;
   if (net->buff != net->write_pos)
   {
     error=test(net_real_write(net, net->buff,
@@ -473,7 +473,7 @@ net_real_write(NET *net,const uchar *packet, size_t len)
   {
     if ((long) (length= vio_write(net->vio,pos,(size_t) (end-pos))) <= 0)
     {
-      my_bool interrupted= vio_should_retry(net->vio);
+      bool interrupted= vio_should_retry(net->vio);
       /* 
         If we read 0, or we were interrupted this means that 
         we need to switch to blocking mode and wait until the timeout 

@@ -31,11 +31,11 @@ extern "C" {
 
 extern CHARSET_INFO *default_client_charset_info;
 DRIZZLE_FIELD *unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc, uint fields,
-			                 my_bool default_value);
+			                 bool default_value);
 void free_rows(DRIZZLE_DATA *cur);
 void free_old_query(DRIZZLE *drizzle);
 void end_server(DRIZZLE *drizzle);
-my_bool drizzle_reconnect(DRIZZLE *drizzle);
+bool drizzle_reconnect(DRIZZLE *drizzle);
 void drizzle_read_default_options(struct st_drizzle_options *options,
 				const char *filename,const char *group);
 bool

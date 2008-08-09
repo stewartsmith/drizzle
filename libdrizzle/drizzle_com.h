@@ -327,7 +327,7 @@ typedef struct st_net {
   unsigned int *return_status;
   unsigned char reading_or_writing;
   char save_char;
-  my_bool compress;
+  bool compress;
   /*
     Pointer to query object in query cache, do not equal NULL (0) for
     queries in cache that have not stored its results yet
@@ -467,11 +467,11 @@ typedef struct st_udf_args
 
 typedef struct st_udf_init
 {
-  my_bool maybe_null;          /* 1 if function can return NULL */
+  bool maybe_null;          /* 1 if function can return NULL */
   unsigned int decimals;       /* for real functions */
   unsigned long max_length;    /* For string functions */
   char *ptr;                   /* free pointer for function data */
-  my_bool const_item;          /* 1 if function always returns the same value */
+  bool const_item;          /* 1 if function always returns the same value */
   void *extension;
 } UDF_INIT;
 /* 
@@ -502,7 +502,7 @@ void hash_password(uint32_t *to, const char *password, uint32_t password_len);
 
 void make_scrambled_password(char *to, const char *password);
 void scramble(char *to, const char *message, const char *password);
-my_bool check_scramble(const char *reply, const char *message,
+bool check_scramble(const char *reply, const char *message,
                        const unsigned char *hash_stage2);
 void get_salt_from_password(unsigned char *res, const char *password);
 void make_password_from_salt(char *to, const unsigned char *hash_stage2);

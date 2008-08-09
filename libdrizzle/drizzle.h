@@ -37,11 +37,11 @@ extern "C" {
 /** 
  * @TODO cleanup global.h and include only the necessary stuff here... 
  * 
- * Also, my_bool should go bye-bye...
+ * Also, bool should go bye-bye...
  */
 #ifndef DRIZZLE_SERVER_GLOBAL_H   /* If not standard header */
 #include <sys/types.h>
-typedef char my_bool;
+typedef char bool;
 #define STDCALL
 
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
@@ -145,18 +145,18 @@ struct st_drizzle_options {
   char *ssl_cipher;        /* cipher to use */
   char *shared_memory_base_name;
   unsigned long max_allowed_packet;
-  my_bool use_ssl;        /* if to use SSL or not */
-  my_bool compress,named_pipe;
-  my_bool unused1;
-  my_bool unused2;
-  my_bool unused3;
-  my_bool unused4;
+  bool use_ssl;        /* if to use SSL or not */
+  bool compress,named_pipe;
+  bool unused1;
+  bool unused2;
+  bool unused3;
+  bool unused4;
   enum drizzle_option methods_to_use;
   char *client_ip;
   /* Refuse client connecting to server if it uses old (pre-4.1.1) protocol */
-  my_bool secure_auth;
+  bool secure_auth;
   /* 0 - never report, 1 - always report (default) */
-  my_bool report_data_truncation;
+  bool report_data_truncation;
 
   /* function pointers for local infile support */
   int (*local_infile_init)(void **, const char *, void *);
