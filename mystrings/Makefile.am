@@ -43,5 +43,5 @@ libmystrings_la_SOURCES = 	strxmov.c bmove_upp.c \
                                 ctype-uca.c ctype-win1250ch.c ctype-bin.c \
                                 ctype-latin1.c xml.c \
                                 decimal.c ctype-extra.c str_alloc.c \
-                                dtoa.c my_strchr.c
+                                dtoa.c 
 

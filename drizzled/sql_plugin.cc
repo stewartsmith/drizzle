@@ -318,7 +318,7 @@ static st_plugin_dl *plugin_dl_add(const LEX_STRING *dl, int report)
     This is done to ensure that only approved libraries from the
     plugin directory are used (to make this even remotely secure).
   */
-  if (my_strchr(files_charset_info, dl->str, dl->str + dl->length, FN_LIBCHAR) ||
+  if (strchr(dl->str, FN_LIBCHAR) ||
       check_string_char_length((LEX_STRING *) dl, "", NAME_CHAR_LEN,
                                system_charset_info, 1) ||
       plugin_dir_len + dl->length + 1 >= FN_REFLEN)
