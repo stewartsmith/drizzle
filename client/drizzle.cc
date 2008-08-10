@@ -1698,14 +1698,14 @@ static int read_and_execute(bool interactive)
     }
     else
     {
-      char *prompt= (char*) (ml_comment ? "   /*> " :
-                             (glob_buffer->empty())
-                             ?  construct_prompt()
-                             : !in_string ? "    -> " :
-                             in_string == '\'' ?
-                             "    '> " : (in_string == '`' ?
-                                          "    `> " :
-                                          "    \"> "));
+      const char *prompt= (const char*) (ml_comment ? "   /*> " :
+                                         (glob_buffer->empty())
+                                         ?  construct_prompt()
+                                         : !in_string ? "    -> " :
+                                         in_string == '\'' ?
+                                         "    '> " : (in_string == '`' ?
+                                                      "    `> " :
+                                                      "    \"> "));
       if (opt_outfile && glob_buffer->empty())
         fflush(OUTFILE);
 
@@ -1803,7 +1803,7 @@ static COMMANDS *find_command(const char *name,char cmd_char)
   for (uint i= 0; commands[i].name; i++)
   {
     if (commands[i].func &&
-        ((name && !my_strnncoll(charset_info,(uchar*)name,len, (uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
+        ((name && !my_strnncoll(charset_info,(const uchar*)name,len, (const uchar*)commands[i].name,len) && !commands[i].name[len] && (!end || (end && commands[i].takes_params))) || (!name && commands[i].cmd_char == cmd_char)))
     {
       return(&commands[i]);
     }
@@ -2171,7 +2171,7 @@ static int not_in_history(const char *line)
 static void initialize_readline (const char *name)
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
-  rl_readline_name= (char *)name;
+  rl_readline_name= (const char *)name;
 
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;

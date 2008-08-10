@@ -24,58 +24,58 @@
 #define mi_sint1korr(A) ((int8_t)(*A))
 #define mi_uint1korr(A) ((uint8_t)(*A))
 
-#define mi_sint2korr(A) ((int16_t) (((int16_t) (((uchar*) (A))[1])) +\
-                                  ((int16_t) ((int16_t) ((char*) (A))[0]) << 8)))
-#define mi_sint3korr(A) ((int32_t) (((((uchar*) (A))[0]) & 128) ? \
+#define mi_sint2korr(A) ((int16_t) (((int16_t) (((const uchar*) (A))[1])) +\
+                                  ((int16_t) ((int16_t) ((const char*) (A))[0]) << 8)))
+#define mi_sint3korr(A) ((int32_t) (((((const uchar*) (A))[0]) & 128) ? \
                                   (((uint32_t) 255L << 24) | \
-                                   (((uint32_t) ((uchar*) (A))[0]) << 16) |\
-                                   (((uint32_t) ((uchar*) (A))[1]) << 8) | \
-                                   ((uint32_t) ((uchar*) (A))[2])) : \
-                                  (((uint32_t) ((uchar*) (A))[0]) << 16) |\
-                                  (((uint32_t) ((uchar*) (A))[1]) << 8) | \
-                                  ((uint32_t) ((uchar*) (A))[2])))
-#define mi_sint4korr(A) ((int32_t) (((int32_t) (((uchar*) (A))[3])) +\
-                                  ((int32_t) (((uchar*) (A))[2]) << 8) +\
-                                  ((int32_t) (((uchar*) (A))[1]) << 16) +\
-                                  ((int32_t) ((int16_t) ((char*) (A))[0]) << 24)))
+                                   (((uint32_t) ((const uchar*) (A))[0]) << 16) |\
+                                   (((uint32_t) ((const uchar*) (A))[1]) << 8) | \
+                                   ((uint32_t) ((const uchar*) (A))[2])) : \
+                                  (((uint32_t) ((const uchar*) (A))[0]) << 16) |\
+                                  (((uint32_t) ((const uchar*) (A))[1]) << 8) | \
+                                  ((uint32_t) ((const uchar*) (A))[2])))
+#define mi_sint4korr(A) ((int32_t) (((int32_t) (((const uchar*) (A))[3])) +\
+                                  ((int32_t) (((const uchar*) (A))[2]) << 8) +\
+                                  ((int32_t) (((const uchar*) (A))[1]) << 16) +\
+                                  ((int32_t) ((int16_t) ((const char*) (A))[0]) << 24)))
 #define mi_sint8korr(A) ((int64_t) mi_uint8korr(A))
-#define mi_uint2korr(A) ((uint16_t) (((uint16_t) (((uchar*) (A))[1])) +\
-                                   ((uint16_t) (((uchar*) (A))[0]) << 8)))
-#define mi_uint3korr(A) ((uint32_t) (((uint32_t) (((uchar*) (A))[2])) +\
-                                   (((uint32_t) (((uchar*) (A))[1])) << 8) +\
-                                   (((uint32_t) (((uchar*) (A))[0])) << 16)))
-#define mi_uint4korr(A) ((uint32_t) (((uint32_t) (((uchar*) (A))[3])) +\
-                                   (((uint32_t) (((uchar*) (A))[2])) << 8) +\
-                                   (((uint32_t) (((uchar*) (A))[1])) << 16) +\
-                                   (((uint32_t) (((uchar*) (A))[0])) << 24)))
-#define mi_uint5korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[4])) +\
-                                    (((uint32_t) (((uchar*) (A))[3])) << 8) +\
-                                    (((uint32_t) (((uchar*) (A))[2])) << 16) +\
-                                    (((uint32_t) (((uchar*) (A))[1])) << 24)) +\
-                                    (((uint64_t) (((uchar*) (A))[0])) << 32))
-#define mi_uint6korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[5])) +\
-                                    (((uint32_t) (((uchar*) (A))[4])) << 8) +\
-                                    (((uint32_t) (((uchar*) (A))[3])) << 16) +\
-                                    (((uint32_t) (((uchar*) (A))[2])) << 24)) +\
-                        (((uint64_t) (((uint32_t) (((uchar*) (A))[1])) +\
-                                    (((uint32_t) (((uchar*) (A))[0]) << 8)))) <<\
+#define mi_uint2korr(A) ((uint16_t) (((uint16_t) (((const uchar*) (A))[1])) +\
+                                   ((uint16_t) (((const uchar*) (A))[0]) << 8)))
+#define mi_uint3korr(A) ((uint32_t) (((uint32_t) (((const uchar*) (A))[2])) +\
+                                   (((uint32_t) (((const uchar*) (A))[1])) << 8) +\
+                                   (((uint32_t) (((const uchar*) (A))[0])) << 16)))
+#define mi_uint4korr(A) ((uint32_t) (((uint32_t) (((const uchar*) (A))[3])) +\
+                                   (((uint32_t) (((const uchar*) (A))[2])) << 8) +\
+                                   (((uint32_t) (((const uchar*) (A))[1])) << 16) +\
+                                   (((uint32_t) (((const uchar*) (A))[0])) << 24)))
+#define mi_uint5korr(A) ((uint64_t)(((uint32_t) (((const uchar*) (A))[4])) +\
+                                    (((uint32_t) (((const uchar*) (A))[3])) << 8) +\
+                                    (((uint32_t) (((const uchar*) (A))[2])) << 16) +\
+                                    (((uint32_t) (((const uchar*) (A))[1])) << 24)) +\
+                                    (((uint64_t) (((const uchar*) (A))[0])) << 32))
+#define mi_uint6korr(A) ((uint64_t)(((uint32_t) (((const uchar*) (A))[5])) +\
+                                    (((uint32_t) (((const uchar*) (A))[4])) << 8) +\
+                                    (((uint32_t) (((const uchar*) (A))[3])) << 16) +\
+                                    (((uint32_t) (((const uchar*) (A))[2])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((const uchar*) (A))[1])) +\
+                                    (((uint32_t) (((const uchar*) (A))[0]) << 8)))) <<\
                                      32))
-#define mi_uint7korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[6])) +\
-                                    (((uint32_t) (((uchar*) (A))[5])) << 8) +\
-                                    (((uint32_t) (((uchar*) (A))[4])) << 16) +\
-                                    (((uint32_t) (((uchar*) (A))[3])) << 24)) +\
-                        (((uint64_t) (((uint32_t) (((uchar*) (A))[2])) +\
-                                    (((uint32_t) (((uchar*) (A))[1])) << 8) +\
-                                    (((uint32_t) (((uchar*) (A))[0])) << 16))) <<\
+#define mi_uint7korr(A) ((uint64_t)(((uint32_t) (((const uchar*) (A))[6])) +\
+                                    (((uint32_t) (((const uchar*) (A))[5])) << 8) +\
+                                    (((uint32_t) (((const uchar*) (A))[4])) << 16) +\
+                                    (((uint32_t) (((const uchar*) (A))[3])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((const uchar*) (A))[2])) +\
+                                    (((uint32_t) (((const uchar*) (A))[1])) << 8) +\
+                                    (((uint32_t) (((const uchar*) (A))[0])) << 16))) <<\
                                      32))
-#define mi_uint8korr(A) ((uint64_t)(((uint32_t) (((uchar*) (A))[7])) +\
-                                    (((uint32_t) (((uchar*) (A))[6])) << 8) +\
-                                    (((uint32_t) (((uchar*) (A))[5])) << 16) +\
-                                    (((uint32_t) (((uchar*) (A))[4])) << 24)) +\
-                        (((uint64_t) (((uint32_t) (((uchar*) (A))[3])) +\
-                                    (((uint32_t) (((uchar*) (A))[2])) << 8) +\
-                                    (((uint32_t) (((uchar*) (A))[1])) << 16) +\
-                                    (((uint32_t) (((uchar*) (A))[0])) << 24))) <<\
+#define mi_uint8korr(A) ((uint64_t)(((uint32_t) (((const uchar*) (A))[7])) +\
+                                    (((uint32_t) (((const uchar*) (A))[6])) << 8) +\
+                                    (((uint32_t) (((const uchar*) (A))[5])) << 16) +\
+                                    (((uint32_t) (((const uchar*) (A))[4])) << 24)) +\
+                        (((uint64_t) (((uint32_t) (((const uchar*) (A))[3])) +\
+                                    (((uint32_t) (((const uchar*) (A))[2])) << 8) +\
+                                    (((uint32_t) (((const uchar*) (A))[1])) << 16) +\
+                                    (((uint32_t) (((const uchar*) (A))[0])) << 24))) <<\
                                     32))
 
 /* This one is for uniformity */
@@ -126,16 +126,16 @@
 
 #ifdef WORDS_BIGENDIAN
 
-#define mi_float4store(T,A) { ((uchar*) (T))[0]= ((uchar*) &A)[0];\
-                              ((uchar*) (T))[1]= ((uchar*) &A)[1];\
-                              ((uchar*) (T))[2]= ((uchar*) &A)[2];\
-                              ((uchar*) (T))[3]= ((uchar*) &A)[3]; }
+#define mi_float4store(T,A) { ((uchar*) (T))[0]= ((const uchar*) &A)[0];\
+                              ((uchar*) (T))[1]= ((const uchar*) &A)[1];\
+                              ((uchar*) (T))[2]= ((const uchar*) &A)[2];\
+                              ((uchar*) (T))[3]= ((const uchar*) &A)[3]; }
 
 #define mi_float4get(V,M)   { float def_temp;\
-                              ((uchar*) &def_temp)[0]= ((uchar*) (M))[0];\
-                              ((uchar*) &def_temp)[1]= ((uchar*) (M))[1];\
-                              ((uchar*) &def_temp)[2]= ((uchar*) (M))[2];\
-                              ((uchar*) &def_temp)[3]= ((uchar*) (M))[3];\
+                              ((uchar*) &def_temp)[0]= ((const uchar*) (M))[0];\
+                              ((uchar*) &def_temp)[1]= ((const uchar*) (M))[1];\
+                              ((uchar*) &def_temp)[2]= ((const uchar*) (M))[2];\
+                              ((uchar*) &def_temp)[3]= ((const uchar*) (M))[3];\
                               (V)= def_temp; }
 
 #define mi_float8store(T,V) { ((uchar*) (T))[0]= ((uchar*) &V)[0];\

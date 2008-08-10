@@ -1998,7 +1998,7 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
     drizzle->options.charset_name=my_strdup(arg,MYF(MY_WME));
     break;
   case DRIZZLE_OPT_PROTOCOL:
-    drizzle->options.protocol= *(uint*) arg;
+    drizzle->options.protocol= *(const uint*) arg;
     break;
   case DRIZZLE_OPT_USE_REMOTE_CONNECTION:
   case DRIZZLE_OPT_GUESS_CONNECTION:
@@ -2008,16 +2008,16 @@ drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg)
     drizzle->options.client_ip= my_strdup(arg, MYF(MY_WME));
     break;
   case DRIZZLE_SECURE_AUTH:
-    drizzle->options.secure_auth= *(bool *) arg;
+    drizzle->options.secure_auth= *(const bool *) arg;
     break;
   case DRIZZLE_REPORT_DATA_TRUNCATION:
-    drizzle->options.report_data_truncation= test(*(bool *) arg);
+    drizzle->options.report_data_truncation= test(*(const bool *) arg);
     break;
   case DRIZZLE_OPT_RECONNECT:
-    drizzle->reconnect= *(bool *) arg;
+    drizzle->reconnect= *(const bool *) arg;
     break;
   case DRIZZLE_OPT_SSL_VERIFY_SERVER_CERT:
-    if (*(bool*) arg)
+    if (*(const bool*) arg)
       drizzle->options.client_flag|= CLIENT_SSL_VERIFY_SERVER_CERT;
     else
       drizzle->options.client_flag&= ~CLIENT_SSL_VERIFY_SERVER_CERT;

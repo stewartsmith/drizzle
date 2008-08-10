@@ -88,12 +88,13 @@ int my_setwd(const char *dir, myf MyFlags)
 {
   int res;
   size_t length;
-  char *start, *pos;
+  const char *start;
+  char *pos;
 #if defined(VMS)
   char buff[FN_REFLEN];
 #endif
 
-  start=(char *) dir;
+  start= dir;
   if (! dir[0] || (dir[0] == FN_LIBCHAR && dir[1] == 0))
     dir=FN_ROOTDIR;
 #ifdef VMS
@@ -108,7 +109,7 @@ int my_setwd(const char *dir, myf MyFlags)
     dir=buff;
   }
 #endif /* VMS */
-  if ((res=chdir((char*) dir)) != 0)
+  if ((res=chdir(dir)) != 0)
   {
     my_errno=errno;
     if (MyFlags & MY_WME)
