@@ -33,6 +33,8 @@
  *
  **/
 
+#include <string>
+
 #include "client_priv.h"
 #include <mystrings/m_ctype.h>
 #include <stdarg.h>
@@ -123,6 +125,8 @@ typedef Function rl_compentry_func_t;
 
 #include "completion_hash.h"
 
+using namespace std;
+
 #define PROMPT_CHAR '\\'
 #define DEFAULT_DELIMITER ";"
 
@@ -167,8 +171,8 @@ static char *current_host,*current_db,*current_user=0,*opt_password=0,
   *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
 static char *histfile;
 static char *histfile_tmp;
-static DYNAMIC_STRING *glob_buffer;
-static DYNAMIC_STRING *processed_prompt= NULL;
+static string *glob_buffer;
+static string *processed_prompt= NULL;
 static char *default_prompt= NULL;
 static char *full_username=0,*part_username=0;
 static STATUS status;
@@ -205,17 +209,17 @@ static void tee_print_sized_data(const char *, unsigned int, unsigned int, bool)
 static int get_options(int argc,char **argv);
 bool get_one_option(int optid, const struct my_option *opt,
                     char *argument);
-static int com_quit(DYNAMIC_STRING *str,char*),
-  com_go(DYNAMIC_STRING *str,char*), com_ego(DYNAMIC_STRING *str,char*),
-  com_print(DYNAMIC_STRING *str,char*),
-  com_help(DYNAMIC_STRING *str,char*), com_clear(DYNAMIC_STRING *str,char*),
-  com_connect(DYNAMIC_STRING *str,char*), com_status(DYNAMIC_STRING *str,char*),
-  com_use(DYNAMIC_STRING *str,char*), com_source(DYNAMIC_STRING *str, char*),
-  com_rehash(DYNAMIC_STRING *str, char*), com_tee(DYNAMIC_STRING *str, char*),
-  com_notee(DYNAMIC_STRING *str, char*), com_charset(DYNAMIC_STRING *str,char*),
-  com_prompt(DYNAMIC_STRING *str, char*), com_delimiter(DYNAMIC_STRING *str, char*),
-  com_warnings(DYNAMIC_STRING *str, char*), com_nowarnings(DYNAMIC_STRING *str, char*),
-  com_nopager(DYNAMIC_STRING *str, char*), com_pager(DYNAMIC_STRING *str, char*);
+static int com_quit(string *str,const char*),
+  com_go(string *str,const char*), com_ego(string *str,const char*),
+  com_print(string *str,const char*),
+  com_help(string *str,const char*), com_clear(string *str,const char*),
+  com_connect(string *str,const char*), com_status(string *str,const char*),
+  com_use(string *str,const char*), com_source(string *str, const char*),
+  com_rehash(string *str, const char*), com_tee(string *str, const char*),
+  com_notee(string *str, const char*), com_charset(string *str,const char*),
+  com_prompt(string *str, const char*), com_delimiter(string *str, const char*),
+  com_warnings(string *str, const char*), com_nowarnings(string *str, const char*),
+  com_nopager(string *str, const char*), com_pager(string *str, const char*);
 
 static int read_and_execute(bool interactive);
 static int sql_connect(char *host,char *database,char *user,char *password,
@@ -242,7 +246,7 @@ static const char * strcont(register const char *str, register const char *set);
 typedef struct {
   const char *name;        /* User printable name of the function. */
   char cmd_char;        /* msql command character */
-  int (*func)(DYNAMIC_STRING *str,char *); /* Function to call to do the job. */
+  int (*func)(string *str,const char *); /* Function to call to do the job. */
   bool takes_params;        /* Max parameters for command */
   const char *doc;        /* Documentation for this function.  */
 } COMMANDS;
@@ -996,12 +1000,12 @@ static const char *load_default_groups[]= { "drizzle","client",0 };
 int history_length;
 static int not_in_history(const char *line);
 static void initialize_readline (const char *name);
-static void fix_history(DYNAMIC_STRING *final_command);
+static void fix_history(string *final_command);
 
-static COMMANDS *find_command(char *name,char cmd_name);
-static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
+static COMMANDS *find_command(const char *name,char cmd_name);
+static bool add_line(string *buffer,char *line,char *in_string,
                      bool *ml_comment);
-static void remove_cntrl(DYNAMIC_STRING *buffer);
+static void remove_cntrl(string *buffer);
 static void print_table_data(DRIZZLE_RES *result);
 static void print_tab_data(DRIZZLE_RES *result);
 static void print_table_data_vertically(DRIZZLE_RES *result);
@@ -1034,9 +1038,7 @@ int main(int argc,char *argv[])
                             getenv("DRIZZLE_PS1") :
                             "drizzle>> ", MYF(0));
   current_prompt= my_strdup(default_prompt, MYF(0));
-
-  processed_prompt= (DYNAMIC_STRING *)my_malloc(sizeof(DYNAMIC_STRING), MYF(0));
-  init_dynamic_string(processed_prompt, "", 32, 32);
+  processed_prompt= new string();
 
   prompt_counter=0;
 
@@ -1117,15 +1119,15 @@ int main(int argc,char *argv[])
   put_info(_("Welcome to the Drizzle client..  Commands end with ; or \\g."),
            INFO_INFO,0,0);
 
-  glob_buffer= (DYNAMIC_STRING *)my_malloc(sizeof(DYNAMIC_STRING), MYF(0));
-  init_dynamic_string(glob_buffer, "", 512, 512);
+  glob_buffer= new string();
+  char * output_buff= (char *)malloc(512);
+  memset(output_buff, '\0', 512);
 
-  /* this is a slight abuse of the DYNAMIC_STRING interface. deal. */
-  sprintf(glob_buffer->str,
+  sprintf(output_buff,
           _("Your Drizzle connection id is %u\nServer version: %s\n"),
-          drizzle_thread_id(&drizzle), server_version_string(&drizzle));
-  put_info(glob_buffer->str, INFO_INFO, 0, 0);
-  dynstr_set(glob_buffer, NULL);
+          drizzle_thread_id(&drizzle),
+          server_version_string(&drizzle));
+  put_info(output_buff, INFO_INFO, 0, 0);
 
   initialize_readline(my_progname);
   if (!status.batch && !quick)
@@ -1194,11 +1196,9 @@ sig_handler drizzle_end(int sig)
   if (sig >= 0)
     put_info(sig ? _("Aborted") : _("Bye"), INFO_RESULT,0,0);
   if (glob_buffer)
-    dynstr_free(glob_buffer);
-  my_free(glob_buffer, MYF(MY_ALLOW_ZERO_PTR));
+    delete glob_buffer;
   if (processed_prompt)
-    dynstr_free(processed_prompt);
-  my_free(processed_prompt,MYF(MY_ALLOW_ZERO_PTR));
+    delete processed_prompt;
   my_free(opt_password,MYF(MY_ALLOW_ZERO_PTR));
   my_free(opt_drizzle_unix_port,MYF(MY_ALLOW_ZERO_PTR));
   my_free(histfile,MYF(MY_ALLOW_ZERO_PTR));
@@ -1693,19 +1693,20 @@ static int read_and_execute(bool interactive)
           (uchar) line[2] == 0xBF)
         line+= 3;
       line_number++;
-      if (glob_buffer->length!=0)
+      if (!glob_buffer->empty())
         status.query_start_line=line_number;
     }
     else
     {
       char *prompt= (char*) (ml_comment ? "   /*> " :
-                             (glob_buffer->length == 0) ?  construct_prompt() :
-                             !in_string ? "    -> " :
+                             (glob_buffer->empty())
+                             ?  construct_prompt()
+                             : !in_string ? "    -> " :
                              in_string == '\'' ?
                              "    '> " : (in_string == '`' ?
                                           "    `> " :
                                           "    \"> "));
-      if (opt_outfile && (glob_buffer->length==0))
+      if (opt_outfile && glob_buffer->empty())
         fflush(OUTFILE);
 
       if (opt_outfile)
@@ -1729,13 +1730,13 @@ static int read_and_execute(bool interactive)
       Check if line is a drizzle command line
       (We want to allow help, print and clear anywhere at line start
     */
-    if ((named_cmds || (glob_buffer->length==0))
+    if ((named_cmds || (glob_buffer->empty()))
         && !ml_comment && !in_string && (com=find_command(line,0)))
     {
       if ((*com->func)(glob_buffer,line) > 0)
         break;
       // If buffer was emptied
-      if (glob_buffer->length==0)
+      if (glob_buffer->empty())
         in_string=0;
       if (interactive && status.add_to_history && not_in_history(line))
         add_history(line);
@@ -1749,7 +1750,7 @@ static int read_and_execute(bool interactive)
   if (!interactive && !status.exit_status)
   {
     remove_cntrl(glob_buffer);
-    if (glob_buffer->length != 0)
+    if (!glob_buffer->empty())
     {
       status.exit_status=1;
       if (com_go(glob_buffer,line) <= 0)
@@ -1761,7 +1762,7 @@ static int read_and_execute(bool interactive)
 }
 
 
-static COMMANDS *find_command(char *name,char cmd_char)
+static COMMANDS *find_command(const char *name,char cmd_char)
 {
   uint len;
   const char *end;
@@ -1811,7 +1812,7 @@ static COMMANDS *find_command(char *name,char cmd_char)
 }
 
 
-static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
+static bool add_line(string *buffer, char *line, char *in_string,
                         bool *ml_comment)
 {
   uchar inchar;
@@ -1821,7 +1822,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
   bool ss_comment= 0;
 
 
-  if (!line[0] && (buffer->length==0))
+  if (!line[0] && (buffer->empty()))
     return(0);
   if (status.add_to_history && line[0] && not_in_history(line))
     add_history(line);
@@ -1833,7 +1834,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
     {
       // Skip spaces at the beggining of a statement
       if (my_isspace(charset_info,inchar) && (out == line) &&
-          (buffer->length==0))
+          (buffer->empty()))
         continue;
     }
 
@@ -1872,7 +1873,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
         // Flush previously accepted characters
         if (out != line)
         {
-          dynstr_append_mem(buffer, line, (out-line));
+          buffer->append(line, (out-line));
           out= line;
         }
 
@@ -1922,28 +1923,28 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
       // Flush previously accepted characters
       if (out != line)
       {
-        dynstr_append_mem(buffer, line, (out - line));
+        buffer->append(line, (out - line));
         out= line;
       }
 
       // Flush possible comments in the buffer
-      if (buffer->length != 0)
+      if (!buffer->empty())
       {
         if (com_go(buffer, 0) > 0) // < 0 is not fatal
           return(1);
         assert(buffer!=NULL);
-        dynstr_set(buffer, NULL);
+        buffer->clear();
       }
 
       /*
         Delimiter wants the get rest of the given line as argument to
         allow one to change ';' to ';;' and back
       */
-      dynstr_append(buffer,pos);
+      buffer->append(pos);
       if (com_delimiter(buffer, pos) > 0)
         return(1);
 
-      dynstr_set(buffer, NULL);
+      buffer->clear();
       break;
     }
     else if (!*ml_comment && !*in_string && is_prefix(pos, delimiter))
@@ -1959,7 +1960,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
       // Flush previously accepted characters
       if (out != line)
       {
-        dynstr_append_mem(buffer, line, (out-line));
+        buffer->append(line, (out-line));
         out= line;
       }
 
@@ -1969,16 +1970,16 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
                                  my_isspace(charset_info, pos[2]))))
       {
         // Add trailing single line comments to this statement
-        dynstr_append(buffer, pos);
+        buffer->append(pos);
         pos+= strlen(pos);
       }
 
       pos--;
 
-      if ((com= find_command(buffer->str, 0)))
+      if ((com= find_command(buffer->c_str(), 0)))
       {
 
-        if ((*com->func)(buffer, buffer->str) > 0)
+        if ((*com->func)(buffer, buffer->c_str()) > 0)
           return(1);                       // Quit
       }
       else
@@ -1986,7 +1987,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
         if (com_go(buffer, 0) > 0)             // < 0 is not fatal
           return(1);
       }
-      dynstr_set(buffer, NULL);
+      buffer->clear();
     }
     else if (!*ml_comment
              && (!*in_string
@@ -1998,13 +1999,13 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
       // Flush previously accepted characters
       if (out != line)
       {
-        dynstr_append_mem(buffer, line, (out - line));
+        buffer->append(line, (out - line));
         out= line;
       }
 
       // comment to end of line
       if (preserve_comments)
-        dynstr_append(buffer,pos);
+        buffer->append(pos);
 
       break;
     }
@@ -2021,7 +2022,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
       *ml_comment= 1;
       if (out != line)
       {
-        dynstr_append_mem(buffer, line, (out-line));
+        buffer->append(line, (out-line));
         out=line;
       }
     }
@@ -2037,7 +2038,7 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
       *ml_comment= 0;
       if (out != line)
       {
-        dynstr_append_mem(buffer, line, (out - line));
+        buffer->append(line, (out - line));
         out= line;
       }
       // Consumed a 2 chars or more, and will add 1 at most,
@@ -2066,13 +2067,12 @@ static bool add_line(DYNAMIC_STRING *buffer,char *line,char *in_string,
       }
     }
   }
-  if (out != line || (buffer->length > 0))
+  if (out != line || (buffer->length() > 0))
   {
     *out++='\n';
     uint length=(uint) (out-line);
-    if ((!*ml_comment || preserve_comments)
-        && dynstr_append_mem(buffer, line, length))
-      return(1);
+    if ((!*ml_comment || preserve_comments))
+      buffer->append(line, length);
   }
   return(0);
 }
@@ -2099,17 +2099,14 @@ static char *no_completion(const char * a __attribute__((unused)),
 
 
 /* glues pieces of history back together if in pieces   */
-static void fix_history(DYNAMIC_STRING *final_command)
+static void fix_history(string *final_command)
 {
   int total_lines = 1;
-  const char *ptr = final_command->str;
+  const char *ptr = final_command->c_str();
   char str_char = '\0';  /* Character if we are in a string or not */
 
   /* Converted buffer */
-  DYNAMIC_STRING *fixed_buffer=
-    (DYNAMIC_STRING *)my_malloc(sizeof(DYNAMIC_STRING), MYF(0));
-
-  init_dynamic_string(fixed_buffer, "", 512, 512);
+  string fixed_buffer;
 
   /* find out how many lines we have and remove newlines */
   while (*ptr != '\0')
@@ -2124,36 +2121,36 @@ static void fix_history(DYNAMIC_STRING *final_command)
         str_char = *ptr;
       else if (str_char == *ptr)   /* close string */
         str_char = '\0';
-      dynstr_append_mem(fixed_buffer, ptr, 1);
+      fixed_buffer.append(ptr, 1);
       break;
     case '\n':
       /*
         not in string, change to space
         if in string, leave it alone
       */
-      dynstr_append(fixed_buffer,(str_char == '\0') ? " " : "\n");
+      fixed_buffer.append((str_char == '\0') ? " " : "\n");
       total_lines++;
       break;
     case '\\':
-      dynstr_append(fixed_buffer, "\\");
+      fixed_buffer.append("\\");
       /* need to see if the backslash is escaping anything */
       if (str_char)
       {
         ptr++;
         /* special characters that need escaping */
         if (*ptr == '\'' || *ptr == '"' || *ptr == '\\')
-          dynstr_append_mem(fixed_buffer, ptr, 1);
+          fixed_buffer.append(ptr, 1);
         else
           ptr--;
       }
       break;
     default:
-      dynstr_append_mem(fixed_buffer, ptr, 1);
+      fixed_buffer.append(ptr, 1);
     }
     ptr++;
   }
   if (total_lines > 1)
-    add_history(fixed_buffer->str);
+    add_history(fixed_buffer.c_str());
 }
 
 /*
@@ -2434,7 +2431,7 @@ static int reconnect(void)
   if (opt_reconnect)
   {
     put_info(_("No connection. Trying to reconnect..."),INFO_INFO,0,0);
-    (void) com_connect((DYNAMIC_STRING *) 0, 0);
+    (void) com_connect((string *)0, 0);
     if (opt_rehash)
       com_rehash(NULL, NULL);
   }
@@ -2503,12 +2500,12 @@ static void print_help_item(DRIZZLE_ROW *cur, int num_name, int num_cat, char *l
 }
 
 
-static int com_server_help(DYNAMIC_STRING *buffer,
-                           char *line __attribute__((unused)),
+static int com_server_help(string *buffer,
+                           const char *line __attribute__((unused)),
                            char *help_arg)
 {
   DRIZZLE_ROW cur;
-  const char *server_cmd= buffer->str;
+  const char *server_cmd= buffer->c_str();
   char cmd_buf[100];
   DRIZZLE_RES *result;
   int error;
@@ -2595,8 +2592,8 @@ err:
 }
 
 static int
-com_help(DYNAMIC_STRING *buffer __attribute__((unused)),
-         char *line __attribute__((unused)))
+com_help(string *buffer __attribute__((unused)),
+         const char *line __attribute__((unused)))
 {
   register int i, j;
   char * help_arg= strchr(line,' '), buff[32], *end;
@@ -2604,8 +2601,7 @@ com_help(DYNAMIC_STRING *buffer __attribute__((unused)),
   {
     while (my_isspace(charset_info,*help_arg))
       help_arg++;
-    if (*help_arg)
-      return com_server_help(buffer,line,help_arg);
+    if (*help_arg) return com_server_help(buffer,line,help_arg);
   }
 
   put_info(_("List of all Drizzle commands:"), INFO_INFO,0,0);
@@ -2627,16 +2623,18 @@ com_help(DYNAMIC_STRING *buffer __attribute__((unused)),
 
 
 static int
-com_clear(DYNAMIC_STRING *buffer,char *line __attribute__((unused)))
+com_clear(string *buffer,
+          const char *line __attribute__((unused)))
 {
   if (status.add_to_history)
     fix_history(buffer);
-  dynstr_set(buffer, NULL);
+  buffer->clear();
   return 0;
 }
 
 static int
-com_charset(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
+com_charset(string *buffer __attribute__((unused)),
+            const char *line)
 {
   char buff[256], *param;
   const CHARSET_INFO * new_cs;
@@ -2667,8 +2665,8 @@ com_charset(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
   1  if fatal error
 */
 static int
-com_go(DYNAMIC_STRING *buffer,
-       char *line __attribute__((unused)))
+com_go(string *buffer,
+       const char *line __attribute__((unused)))
 {
   char          buff[200]; /* about 110 chars used so far */
   char          time_buff[52+3+1]; /* time max + space&parens + NUL */
@@ -2682,7 +2680,7 @@ com_go(DYNAMIC_STRING *buffer,
   /* Remove garbage for nicer messages */
   remove_cntrl(buffer);
 
-  if (buffer->length == 0)
+  if (buffer->length() == 0)
   {
     // Ignore empty quries
     if (status.batch)
@@ -2693,14 +2691,14 @@ com_go(DYNAMIC_STRING *buffer,
   if (!connected && reconnect())
   {
     // Remove query on error
-    dynstr_set(buffer, NULL);
+    buffer->clear();
     return opt_reconnect ? -1 : 1;          // Fatal error
   }
   if (verbose)
     (void) com_print(buffer, 0);
 
   if (skip_updates &&
-      ((buffer->length < 4) || !strncmp(buffer->str, "SET ", 4)))
+      ((buffer->length() < 4) || (buffer->find( "SET ") != 0)))
   {
     (void) put_info(_("Ignoring query to other database"),INFO_INFO,0,0);
     return 0;
@@ -2708,16 +2706,16 @@ com_go(DYNAMIC_STRING *buffer,
 
   timer=start_timer();
   executing_query= 1;
-  error= drizzle_real_query_for_lazy(buffer->str,buffer->length);
+  error= drizzle_real_query_for_lazy(buffer->c_str(),buffer->length());
 
   if (status.add_to_history)
   {
-    dynstr_append(buffer, vertical ? "\\G" : delimiter);
+    buffer->append(vertical ? "\\G" : delimiter);
     /* Append final command onto history */
     fix_history(buffer);
   }
 
-  dynstr_set(buffer, NULL);
+  buffer->clear();
 
   if (error)
     goto end;
@@ -2869,7 +2867,7 @@ static void end_tee()
 
 
 static int
-com_ego(DYNAMIC_STRING *buffer,char *line)
+com_ego(string *buffer,const char *line)
 {
   int result;
   bool oldvertical=vertical;
@@ -2967,9 +2965,7 @@ print_table_data(DRIZZLE_RES *result)
   DRIZZLE_ROW     cur;
   DRIZZLE_FIELD   *field;
   bool          *num_flag;
-  DYNAMIC_STRING *separator=
-    (DYNAMIC_STRING *)my_malloc(sizeof(DYNAMIC_STRING), MYF(0));
-  init_dynamic_string(separator, "", 256, 256);
+  string separator;
 
   num_flag=(bool*) my_malloc(sizeof(bool)*drizzle_num_fields(result),
                              MYF(MY_WME));
@@ -2980,7 +2976,7 @@ print_table_data(DRIZZLE_RES *result)
       return;
     drizzle_field_seek(result,0);
   }
-  dynstr_append(separator, "+");
+  separator.append("+");
   while ((field = drizzle_fetch_field(result)))
   {
     uint length= column_names ? field->name_length : 0;
@@ -2994,11 +2990,11 @@ print_table_data(DRIZZLE_RES *result)
     field->max_length=length;
     uint x;
     for (x=0; x< (length+2); x++)
-      dynstr_append(separator, "-");
-    dynstr_append(separator, "+");
+      separator.append("-");
+    separator.append("+");
   }
 
-  tee_puts((char*) separator->str, PAGER);
+  tee_puts((char*) separator.c_str(), PAGER);
   if (column_names)
   {
     drizzle_field_seek(result,0);
@@ -3016,7 +3012,7 @@ print_table_data(DRIZZLE_RES *result)
       num_flag[off]= IS_NUM(field->type);
     }
     (void) tee_fputs("\n", PAGER);
-    tee_puts((char*) separator->str, PAGER);
+    tee_puts((char*) separator.c_str(), PAGER);
   }
 
   while ((cur= drizzle_fetch_row(result)))
@@ -3073,7 +3069,7 @@ print_table_data(DRIZZLE_RES *result)
     }
     (void) tee_fputs("\n", PAGER);
   }
-  tee_puts(separator->str, PAGER);
+  tee_puts(separator.c_str(), PAGER);
   my_free(num_flag, MYF(MY_ALLOW_ZERO_PTR));
 }
 
@@ -3310,7 +3306,7 @@ print_tab_data(DRIZZLE_RES *result)
 }
 
 static int
-com_tee(DYNAMIC_STRING *buffer __attribute__((unused)), char *line )
+com_tee(string *buffer __attribute__((unused)), const char *line )
 {
   char file_name[FN_REFLEN], *end, *param;
 
@@ -3354,8 +3350,8 @@ com_tee(DYNAMIC_STRING *buffer __attribute__((unused)), char *line )
 
 
 static int
-com_notee(DYNAMIC_STRING *buffer __attribute__((unused)),
-          char *line __attribute__((unused)))
+com_notee(string *buffer __attribute__((unused)),
+          const char *line __attribute__((unused)))
 {
   if (opt_outfile)
     end_tee();
@@ -3368,8 +3364,8 @@ com_notee(DYNAMIC_STRING *buffer __attribute__((unused)),
 */
 
 static int
-com_pager(DYNAMIC_STRING *buffer __attribute__((unused)),
-          char *line __attribute__((unused)))
+com_pager(string *buffer __attribute__((unused)),
+          const char *line __attribute__((unused)))
 {
   char pager_name[FN_REFLEN], *end, *param;
 
@@ -3412,8 +3408,8 @@ com_pager(DYNAMIC_STRING *buffer __attribute__((unused)),
 
 
 static int
-com_nopager(DYNAMIC_STRING *buffer __attribute__((unused)),
-            char *line __attribute__((unused)))
+com_nopager(string *buffer __attribute__((unused)),
+            const char *line __attribute__((unused)))
 {
   stpcpy(pager, "stdout");
   opt_nopager=1;
@@ -3425,8 +3421,8 @@ com_nopager(DYNAMIC_STRING *buffer __attribute__((unused)),
 /* If arg is given, exit without errors. This happens on command 'quit' */
 
 static int
-com_quit(DYNAMIC_STRING *buffer __attribute__((unused)),
-         char *line __attribute__((unused)))
+com_quit(string *buffer __attribute__((unused)),
+         const char *line __attribute__((unused)))
 {
   /* let the screen auto close on a normal shutdown */
   status.exit_status=0;
@@ -3434,8 +3430,8 @@ com_quit(DYNAMIC_STRING *buffer __attribute__((unused)),
 }
 
 static int
-com_rehash(DYNAMIC_STRING *buffer __attribute__((unused)),
-           char *line __attribute__((unused)))
+com_rehash(string *buffer __attribute__((unused)),
+           const char *line __attribute__((unused)))
 {
   build_completion_hash(1, 0);
   return 0;
@@ -3444,12 +3440,12 @@ com_rehash(DYNAMIC_STRING *buffer __attribute__((unused)),
 
 
 static int
-com_print(DYNAMIC_STRING *buffer,char *line __attribute__((unused)))
+com_print(string *buffer,const char *line __attribute__((unused)))
 {
   tee_puts("--------------", stdout);
-  (void) tee_fputs(buffer->str, stdout);
-  if ( (buffer->length == 0)
-       || (buffer->str)[(buffer->length)-1] != '\n')
+  (void) tee_fputs(buffer->c_str(), stdout);
+  if ( (buffer->length() == 0)
+       || (buffer->c_str())[(buffer->length())-1] != '\n')
     tee_putc('\n', stdout);
   tee_puts("--------------\n", stdout);
   /* If empty buffer */
@@ -3458,7 +3454,7 @@ com_print(DYNAMIC_STRING *buffer,char *line __attribute__((unused)))
 
 /* ARGSUSED */
 static int
-com_connect(DYNAMIC_STRING *buffer, char *line)
+com_connect(string *buffer, const char *line)
 {
   char *tmp, buff[256];
   bool save_rehash= opt_rehash;
@@ -3494,7 +3490,7 @@ com_connect(DYNAMIC_STRING *buffer, char *line)
     }
     // command used
     assert(buffer!=NULL);
-    dynstr_set(buffer, NULL);
+    buffer->clear();
   }
   else
     opt_rehash= 0;
@@ -3513,7 +3509,7 @@ com_connect(DYNAMIC_STRING *buffer, char *line)
 }
 
 
-static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
+static int com_source(string *buffer __attribute__((unused)), const char *line)
 {
   char source_name[FN_REFLEN], *end, *param;
   LINE_BUFFER *line_buff;
@@ -3559,7 +3555,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line
   status.file_name=source_name;
   // Empty command buffer
   assert(glob_buffer!=NULL);
-  dynstr_set(glob_buffer, NULL);
+  glob_buffer->clear();
   error= read_and_execute(false);
   // Continue as before
   status=old_status;
@@ -3571,7 +3567,7 @@ static int com_source(DYNAMIC_STRING *buffer __attribute__((unused)), char *line
 
 /* ARGSUSED */
 static int
-com_delimiter(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
+com_delimiter(string *buffer __attribute__((unused)), const char *line)
 {
   char buff[256], *tmp;
 
@@ -3601,7 +3597,7 @@ com_delimiter(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
 
 /* ARGSUSED */
 static int
-com_use(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
+com_use(string *buffer __attribute__((unused)), const char *line)
 {
   char *tmp, buff[FN_REFLEN + 1];
   int select_db;
@@ -3673,8 +3669,8 @@ com_use(DYNAMIC_STRING *buffer __attribute__((unused)), char *line)
 }
 
 static int
-com_warnings(DYNAMIC_STRING *buffer __attribute__((unused)),
-             char *line __attribute__((unused)))
+com_warnings(string *buffer __attribute__((unused)),
+             const char *line __attribute__((unused)))
 {
   show_warnings = 1;
   put_info("Show warnings enabled.",INFO_INFO, 0, 0);
@@ -3682,8 +3678,8 @@ com_warnings(DYNAMIC_STRING *buffer __attribute__((unused)),
 }
 
 static int
-com_nowarnings(DYNAMIC_STRING *buffer __attribute__((unused)),
-               char *line __attribute__((unused)))
+com_nowarnings(string *buffer __attribute__((unused)),
+               const char *line __attribute__((unused)))
 {
   show_warnings = 0;
   put_info("Show warnings disabled.",INFO_INFO, 0, 0);
@@ -3808,8 +3804,8 @@ sql_connect(char *host,char *database,char *user,char *password,
 
 
 static int
-com_status(DYNAMIC_STRING *buffer __attribute__((unused)),
-           char *line __attribute__((unused)))
+com_status(string *buffer __attribute__((unused)),
+           const char *line __attribute__((unused)))
 {
   char buff[40];
   uint64_t id;
@@ -4016,15 +4012,15 @@ put_error(DRIZZLE *con)
 }
 
 
-static void remove_cntrl(DYNAMIC_STRING *buffer)
+static void remove_cntrl(string *buffer)
 {
-  char *start=  buffer->str;
-  char *end= start + (buffer->length);
+  const char *start=  buffer->c_str();
+  const char *end= start + (buffer->length());
   while (start < end && !my_isgraph(charset_info,end[-1]))
     end--;
-  uint chars_to_truncate = (buffer->length) - (end-start);
-  if (buffer->length > chars_to_truncate)
-    dynstr_trunc(buffer, chars_to_truncate);
+  uint chars_to_truncate = (buffer->length()) - (end-start);
+  if (buffer->length() > chars_to_truncate)
+    buffer->erase(chars_to_truncate);
 }
 
 
@@ -4140,7 +4136,7 @@ static const char * construct_prompt()
 {
   // Erase the old prompt
   assert(processed_prompt!=NULL);
-  dynstr_set(processed_prompt, NULL);
+  processed_prompt->clear();
 
   // Get the date struct
   time_t  lclock = time(NULL);
@@ -4151,7 +4147,7 @@ static const char * construct_prompt()
   {
     if (*c != PROMPT_CHAR)
     {
-      dynstr_append_mem(processed_prompt, c, 1);
+      processed_prompt->append(c, 1);
     }
     else
     {
@@ -4168,24 +4164,24 @@ static const char * construct_prompt()
         break;
       case 'v':
         if (connected)
-          dynstr_append(processed_prompt, drizzle_get_server_info(&drizzle));
+          processed_prompt->append(drizzle_get_server_info(&drizzle));
         else
-          dynstr_append(processed_prompt, "not_connected");
+          processed_prompt->append("not_connected");
         break;
       case 'd':
-        dynstr_append(processed_prompt, current_db ? current_db : "(none)");
+        processed_prompt->append(current_db ? current_db : "(none)");
         break;
       case 'h':
       {
         const char *prompt;
         prompt= connected ? drizzle_get_host_info(&drizzle) : "not_connected";
         if (strstr(prompt, "Localhost"))
-          dynstr_append(processed_prompt, "localhost");
+          processed_prompt->append("localhost");
         else
         {
           const char *end=strrchr(prompt,' ');
           if (end != NULL)
-            dynstr_append_mem(processed_prompt, prompt, (end-prompt));
+            processed_prompt->append(prompt, (end-prompt));
         }
         break;
       }
@@ -4193,14 +4189,14 @@ static const char * construct_prompt()
       {
         if (!connected)
         {
-          dynstr_append(processed_prompt, "not_connected");
+          processed_prompt->append("not_connected");
           break;
         }
 
         const char *host_info = drizzle_get_host_info(&drizzle);
         if (strstr(host_info, "memory"))
         {
-          dynstr_append(processed_prompt, drizzle.host);
+          processed_prompt->append(drizzle.host);
         }
         else if (strstr(host_info,"TCP/IP") ||
                  !drizzle.unix_socket)
@@ -4208,39 +4204,39 @@ static const char * construct_prompt()
         else
         {
           char *pos=strrchr(drizzle.unix_socket,'/');
-          dynstr_append(processed_prompt, pos ? pos+1 : drizzle.unix_socket);
+          processed_prompt->append(pos ? pos+1 : drizzle.unix_socket);
         }
       }
       break;
       case 'U':
         if (!full_username)
           init_username();
-        dynstr_append(processed_prompt, full_username ? full_username :
-                        (current_user ?  current_user : "(unknown)"));
+        processed_prompt->append(full_username ? full_username :
+                                 (current_user ?  current_user : "(unknown)"));
         break;
       case 'u':
         if (!full_username)
           init_username();
-        dynstr_append(processed_prompt, part_username ? part_username :
-                        (current_user ?  current_user : "(unknown)"));
+        processed_prompt->append(part_username ? part_username :
+                                 (current_user ?  current_user : "(unknown)"));
         break;
       case PROMPT_CHAR:
         {
           char c= PROMPT_CHAR;
-          dynstr_append_mem(processed_prompt, &c, 1);
+          processed_prompt->append(&c, 1);
         }
         break;
       case 'n':
         {
           char c= '\n';
-          dynstr_append_mem(processed_prompt, &c, 1);
+          processed_prompt->append(&c, 1);
         }
         break;
       case ' ':
       case '_':
         {
           char c= ' ';
-          dynstr_append_mem(processed_prompt, &c, 1);
+          processed_prompt->append(&c, 1);
         }
         break;
       case 'R':
@@ -4272,7 +4268,7 @@ static const char * construct_prompt()
         break;
       case 'D':
         dateTime = ctime(&lclock);
-        dynstr_append(processed_prompt, strtok(dateTime,"\n"));
+        processed_prompt->append(strtok(dateTime,"\n"));
         break;
       case 's':
         if (t->tm_sec < 10)
@@ -4280,38 +4276,38 @@ static const char * construct_prompt()
         add_int_to_prompt(t->tm_sec);
         break;
       case 'w':
-        dynstr_append(processed_prompt, (day_names[t->tm_wday]));
+        processed_prompt->append(day_names[t->tm_wday]);
         break;
       case 'P':
-        dynstr_append(processed_prompt, t->tm_hour < 12 ? "am" : "pm");
+        processed_prompt->append(t->tm_hour < 12 ? "am" : "pm");
         break;
       case 'o':
         add_int_to_prompt(t->tm_mon+1);
         break;
       case 'O':
-        dynstr_append(processed_prompt, month_names[t->tm_mon]);
+        processed_prompt->append(month_names[t->tm_mon]);
         break;
       case '\'':
-        dynstr_append(processed_prompt, "'");
+        processed_prompt->append("'");
         break;
       case '"':
-        dynstr_append(processed_prompt, "\"");
+        processed_prompt->append("\"");
         break;
       case 'S':
-        dynstr_append(processed_prompt, ";");
+        processed_prompt->append(";");
         break;
       case 't':
-        dynstr_append(processed_prompt, "\t");
+        processed_prompt->append("\t");
         break;
       case 'l':
-        dynstr_append(processed_prompt, delimiter_str);
+        processed_prompt->append(delimiter_str);
         break;
       default:
-        dynstr_append_mem(processed_prompt, c, 1);
+        processed_prompt->append(c, 1);
       }
     }
   }
-  return processed_prompt->str;
+  return processed_prompt->c_str();
 }
 
 
@@ -4319,7 +4315,7 @@ static void add_int_to_prompt(int toadd)
 {
   char buffer[16];
   int10_to_str(toadd, buffer, 10);
-  dynstr_append(processed_prompt, buffer);
+  processed_prompt->append(buffer);
 }
 
 static void init_username()
@@ -4338,8 +4334,8 @@ static void init_username()
   }
 }
 
-static int com_prompt(DYNAMIC_STRING *buffer __attribute__((unused)),
-                      char *line)
+static int com_prompt(string *buffer __attribute__((unused)),
+                      const char *line)
 {
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;
