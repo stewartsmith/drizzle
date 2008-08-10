@@ -34,7 +34,7 @@ File my_create(const char *FileName, int CreateFlags, int access_flags,
   int fd, rc;
 
 #if !defined(NO_OPEN_3)
-  fd = open((char *) FileName, access_flags | O_CREAT,
+  fd = open(FileName, access_flags | O_CREAT,
 	    CreateFlags ? CreateFlags : my_umask);
 #else
   fd = open(FileName, access_flags);
