@@ -26,7 +26,7 @@
 #define HIGHUSED 8
 
 static HASH_INFO *hp_find_free_hash(HP_SHARE *info, HP_BLOCK *block,
-				     ulong records);
+				     uint32_t records);
 
 int heap_write(HP_INFO *info, const uchar *record)
 {
@@ -153,7 +153,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 {
   HP_SHARE *share = info->s;
   int flag;
-  ulong halfbuff,hashnr,first_index;
+  uint32_t halfbuff,hashnr,first_index;
   uchar *ptr_to_rec= NULL,*ptr_to_rec2= NULL;
   HASH_INFO *empty, *gpos= NULL, *gpos2= NULL, *pos;
 
@@ -341,7 +341,7 @@ int hp_write_key(HP_INFO *info, HP_KEYDEF *keyinfo,
 	/* Returns ptr to block, and allocates block if neaded */
 
 static HASH_INFO *hp_find_free_hash(HP_SHARE *info,
-				     HP_BLOCK *block, ulong records)
+				     HP_BLOCK *block, uint32_t records)
 {
   uint block_pos;
   size_t length;

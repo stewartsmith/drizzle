@@ -27,7 +27,7 @@
 int heap_scan_init(register HP_INFO *info)
 {
   info->lastinx= -1;
-  info->current_record= (ulong) ~0L;		/* No current record */
+  info->current_record= (uint32_t) ~0L;		/* No current record */
   info->update=0;
   info->next_block=0;
   return(0);
@@ -36,7 +36,7 @@ int heap_scan_init(register HP_INFO *info)
 int heap_scan(register HP_INFO *info, uchar *record)
 {
   HP_SHARE *share=info->s;
-  ulong pos;
+  uint32_t pos;
 
   pos= ++info->current_record;
   if (pos < info->next_block)

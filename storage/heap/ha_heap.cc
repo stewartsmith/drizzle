@@ -766,7 +766,7 @@ int ha_heap::create(const char *name, TABLE *table_arg,
          column_count, columndef,
          max_key_fieldnr, key_part_size,
          share->reclength, mem_per_row_keys,
-         (ulong) share->max_rows, (ulong) share->min_rows,
+         (uint32_t) share->max_rows, (uint32_t) share->min_rows,
          &hp_create_info, &internal_share);
   
   my_free((uchar*) keydef, MYF(0));

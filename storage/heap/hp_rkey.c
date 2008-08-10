@@ -27,7 +27,7 @@ int heap_rkey(HP_INFO *info, uchar *record, int inx, const uchar *key,
     return(my_errno= HA_ERR_WRONG_INDEX);
   }
   info->lastinx= inx;
-  info->current_record= (ulong) ~0L;		/* For heap_rrnd() */
+  info->current_record= (uint32_t) ~0L;		/* For heap_rrnd() */
 
   if (keyinfo->algorithm == HA_KEY_ALG_BTREE)
   {

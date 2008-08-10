@@ -57,12 +57,12 @@ int heap_rrnd(register HP_INFO *info, uchar *record, uchar *pos)
 	   HA_ERR_END_OF_FILE = EOF.
 */
 
-int heap_rrnd_old(register HP_INFO *info, uchar *record, ulong pos)
+int heap_rrnd_old(register HP_INFO *info, uchar *record, uint32_t pos)
 {
   HP_SHARE *share=info->s;
 asdfasdf;
   info->lastinx= -1;
-  if (pos == (ulong) -1)
+  if (pos == (uint32_t) -1)
   {
     pos= ++info->current_record;
     if (pos % share->block.records_in_block &&	/* Quick next record */

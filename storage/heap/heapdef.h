@@ -70,7 +70,7 @@ typedef struct {
 
 extern HP_SHARE *hp_find_named_heap(const char *name);
 extern int hp_rectest(HP_INFO *info,const uchar *old);
-extern uchar *hp_find_block(HP_BLOCK *info,ulong pos);
+extern uchar *hp_find_block(HP_BLOCK *info,uint32_t pos);
 extern int hp_get_new_block(HP_BLOCK *info, size_t* alloc_length);
 extern void hp_free(HP_SHARE *info);
 extern uchar *hp_free_level(HP_BLOCK *block,uint level,HP_PTRS *pos,
@@ -83,14 +83,14 @@ extern int hp_rb_delete_key(HP_INFO *info,HP_KEYDEF *keyinfo,
 			    const uchar *record,uchar *recpos,int flag);
 extern int hp_delete_key(HP_INFO *info,HP_KEYDEF *keyinfo,
 			 const uchar *record,uchar *recpos,int flag);
-extern HASH_INFO *_heap_find_hash(HP_BLOCK *block,ulong pos);
+extern HASH_INFO *_heap_find_hash(HP_BLOCK *block,uint32_t pos);
 extern uchar *hp_search(HP_INFO *info,HP_KEYDEF *keyinfo,const uchar *key,
 		       uint nextflag);
 extern uchar *hp_search_next(HP_INFO *info, HP_KEYDEF *keyinfo,
 			    const uchar *key, HASH_INFO *pos);
-extern ulong hp_hashnr(HP_KEYDEF *keyinfo,const uchar *key);
-extern ulong hp_rec_hashnr(HP_KEYDEF *keyinfo,const uchar *rec);
-extern ulong hp_mask(ulong hashnr,ulong buffmax,ulong maxlength);
+extern uint32_t hp_hashnr(HP_KEYDEF *keyinfo,const uchar *key);
+extern uint32_t hp_rec_hashnr(HP_KEYDEF *keyinfo,const uchar *rec);
+extern uint32_t hp_mask(uint32_t hashnr,uint32_t buffmax,uint32_t maxlength);
 extern void hp_movelink(HASH_INFO *pos,HASH_INFO *next_link,
 			 HASH_INFO *newlink);
 extern int hp_rec_key_cmp(HP_KEYDEF *keydef,const uchar *rec1,

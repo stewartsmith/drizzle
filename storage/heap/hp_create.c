@@ -18,8 +18,8 @@
 #include "drizzled/error.h"
 
 static int keys_compare(heap_rb_param *param, uchar *key1, uchar *key2);
-static void init_block(HP_BLOCK *block,uint chunk_length, ulong min_records,
-                        ulong max_records);
+static void init_block(HP_BLOCK *block,uint chunk_length, uint32_t min_records,
+                        uint32_t max_records);
 
 #define FIXED_REC_OVERHEAD (sizeof(uchar))
 #define VARIABLE_REC_OVERHEAD (sizeof(uchar**) + sizeof(uchar))
@@ -35,11 +35,11 @@ int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
     uint columns, HP_COLUMNDEF *columndef,
     uint max_key_fieldnr, uint key_part_size,
     uint reclength, uint keys_memory_size,
-    ulong max_records, ulong min_records,
+    uint32_t max_records, uint32_t min_records,
     HP_CREATE_INFO *create_info, HP_SHARE **res)
 {
   uint i, j, key_segs, max_length, length;
-  ulong max_rows_for_stated_memory;
+  uint32_t max_rows_for_stated_memory;
   HP_SHARE *share= 0;
   HA_KEYSEG *keyseg;
 
@@ -371,8 +371,8 @@ static int keys_compare(heap_rb_param *param, uchar *key1, uchar *key2)
 		    param->search_flag, not_used);
 }
 
-static void init_block(HP_BLOCK *block, uint chunk_length, ulong min_records,
-		       ulong max_records)
+static void init_block(HP_BLOCK *block, uint chunk_length, uint32_t min_records,
+		       uint32_t max_records)
 {
   uint i,recbuffer,records_in_block;
 

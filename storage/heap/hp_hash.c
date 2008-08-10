@@ -199,7 +199,7 @@ uchar *hp_search_next(HP_INFO *info, HP_KEYDEF *keyinfo, const uchar *key,
     Array index, in [0..maxlength)
 */
 
-ulong hp_mask(ulong hashnr, ulong buffmax, ulong maxlength)
+uint32_t hp_mask(uint32_t hashnr, uint32_t buffmax, uint32_t maxlength)
 {
   if ((hashnr & (buffmax-1)) < maxlength) return (hashnr & (buffmax-1));
   return (hashnr & ((buffmax >> 1) -1));
@@ -229,7 +229,7 @@ void hp_movelink(HASH_INFO *pos, HASH_INFO *next_link, HASH_INFO *newlink)
 
 	/* Calc hashvalue for a key */
 
-ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
+uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
 {
   /*register*/ 
   uint32_t nr=1, nr2=4;
@@ -284,17 +284,17 @@ ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
     {
       for (; pos < (uchar*) key ; pos++)
       {
-	nr^=(ulong) ((((uint) nr & 63)+nr2)*((uint) *pos)) + (nr << 8);
+	nr^=(uint32_t) ((((uint) nr & 63)+nr2)*((uint) *pos)) + (nr << 8);
 	nr2+=3;
       }
     }
   }
-  return((ulong) nr);
+  return((uint32_t) nr);
 }
 
 	/* Calc hashvalue for a key in a record */
 
-ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
+uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
 {
   uint32_t nr=1, nr2=4;
   HA_KEYSEG *seg,*endseg;
@@ -341,7 +341,7 @@ ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
     {
       for (; pos < end ; pos++)
       {
-	nr^=(ulong) ((((uint) nr & 63)+nr2)*((uint) *pos))+ (nr << 8);
+	nr^=(uint32_t) ((((uint) nr & 63)+nr2)*((uint) *pos))+ (nr << 8);
 	nr2+=3;
       }
     }
@@ -366,7 +366,7 @@ ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
  * far, and works well on both numbers and strings.
  */
 
-ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
+uint32_t hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
 {
   /*
     Note, if a key consists of a combination of numeric and
@@ -374,7 +374,7 @@ ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
     Making text columns work with NEW_HASH_FUNCTION
     needs also changes in strings/ctype-xxx.c.
   */
-  ulong nr= 1, nr2= 4;
+  uint32_t nr= 1, nr2= 4;
   HA_KEYSEG *seg,*endseg;
 
   for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
@@ -421,9 +421,9 @@ ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
 
 	/* Calc hashvalue for a key in a record */
 
-ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
+uint32_t hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
 {
-  ulong nr= 1, nr2= 4;
+  uint32_t nr= 1, nr2= 4;
   HA_KEYSEG *seg,*endseg;
 
   for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
