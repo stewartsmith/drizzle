@@ -1142,16 +1142,16 @@ static void network_init(void)
       struct linger ling = {0, 0};
       int flags =1;
 
-      #ifdef IPV6_V6ONLY
+#ifdef IPV6_V6ONLY
       if(next->ai_family == AF_INET6) {
-           error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
+        error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
         if (error != 0)
         {
           perror("setsockopt");
           assert(error == 0);
         }
       }
-      #endif   
+#endif   
       error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
       if (error != 0)
       {

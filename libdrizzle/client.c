@@ -1287,26 +1287,26 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     for(t_res = res_lst;t_res != NULL;t_res = t_res->ai_next)
     {
       int sock= socket(t_res->ai_family, t_res->ai_socktype,
-                             t_res->ai_protocol);
+                       t_res->ai_protocol);
       if (sock == SOCKET_ERROR)
       {
-		continue;
+        continue;
       }
 
       net->vio= vio_new(sock, VIO_TYPE_TCPIP, VIO_BUFFERED_READ);
       if (! net->vio )
       {
         closesocket(sock);
-		continue;
+        continue;
       }
 
       if (connect_with_timeout(sock, t_res->ai_addr, t_res->ai_addrlen, drizzle->options.connect_timeout))
       {
         vio_delete(net->vio);
         net->vio = 0;
-		continue;
+        continue;
       }
-	  break;
+      break;
     }
 
     freeaddrinfo(res_lst);
@@ -1314,8 +1314,8 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
   if (!net->vio)
   {
-	set_drizzle_extended_error(drizzle, CR_CONN_HOST_ERROR, unknown_sqlstate,
-                                 ER(CR_CONN_HOST_ERROR), host, socket_errno);
+    set_drizzle_extended_error(drizzle, CR_CONN_HOST_ERROR, unknown_sqlstate,
+                               ER(CR_CONN_HOST_ERROR), host, socket_errno);
     goto error;
   }
 
