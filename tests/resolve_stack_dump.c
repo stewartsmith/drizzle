@@ -31,9 +31,6 @@
 #define DUMP_VERSION "1.4"
 #define HEX_INVALID  (uchar)255
 
-typedef ulong my_long_addr_t ; /* at some point, we need to fix configure
-				* to define this for us  
-				*/
 
 typedef struct sym_entry
 {
@@ -180,11 +177,11 @@ static uchar hex_val(char c)
   return (uchar)10 + ((uchar)c - (uchar)'a');
 }
 
-static my_long_addr_t read_addr(char** buf)
+static uint64_t read_addr(char** buf)
 {
   uchar c;
   char* p = *buf;
-  my_long_addr_t addr = 0;
+  uint64_t addr = 0;
 
   while((c = hex_val(*p++)) != HEX_INVALID)
       addr = (addr << 4) + c;
