@@ -1270,11 +1270,6 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype= SOCK_STREAM;
-    /* OSX 10.5 was failing unless defined only as support IPV4 */
-#ifdef TARGET_OS_OSX
-    hints.ai_family= AF_INET;
-#endif
-
 
     snprintf(port_buf, NI_MAXSERV, "%d", port);
     gai_errno= getaddrinfo(host, port_buf, &hints, &res_lst);
@@ -1287,37 +1282,27 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
       goto error;
     }
 
-    /* We only look at the first item (something to think about changing in the future) */
-    t_res= res_lst;
+    for (t_res= res_lst; t_res != NULL; t_res= t_res->ai_next)
     {
       int sock= socket(t_res->ai_family, t_res->ai_socktype,
-                             t_res->ai_protocol);
+                       t_res->ai_protocol);
       if (sock == SOCKET_ERROR)
-      {
-        set_drizzle_extended_error(drizzle, CR_IPSOCK_ERROR, unknown_sqlstate,
-                                 ER(CR_IPSOCK_ERROR), socket_errno);
-        freeaddrinfo(res_lst);
-        goto error;
-      }
+        continue;
 
       net->vio= vio_new(sock, VIO_TYPE_TCPIP, VIO_BUFFERED_READ);
       if (! net->vio )
       {
-        set_drizzle_error(drizzle, CR_CONN_UNKNOW_PROTOCOL, unknown_sqlstate);
-        closesocket(sock);
-        freeaddrinfo(res_lst);
-        goto error;
+        close(sock);
+        continue;
       }
 
       if (connect_with_timeout(sock, t_res->ai_addr, t_res->ai_addrlen, drizzle->options.connect_timeout))
       {
-        set_drizzle_extended_error(drizzle, CR_CONN_HOST_ERROR, unknown_sqlstate,
-                                 ER(CR_CONN_HOST_ERROR), host, socket_errno);
         vio_delete(net->vio);
         net->vio= 0;
-        freeaddrinfo(res_lst);
-        goto error;
+        continue;
       }
+      break;
     }
 
     freeaddrinfo(res_lst);
@@ -1325,7 +1310,8 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
 
   if (!net->vio)
   {
-    set_drizzle_error(drizzle, CR_CONN_UNKNOW_PROTOCOL, unknown_sqlstate);
+    set_drizzle_extended_error(drizzle, CR_CONN_HOST_ERROR, unknown_sqlstate,
+                               ER(CR_CONN_HOST_ERROR), host, socket_errno);
     goto error;
   }
 

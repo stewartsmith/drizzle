@@ -487,7 +487,6 @@ typedef SOCKET_SIZE_TYPE size_socket;
 /* Some defines of functions for portability */
 
 #undef remove		/* Crashes MySQL on SCO 5.0.0 */
-#define closesocket(A)	close(A)
 #ifndef uint64_t2double
 #define uint64_t2double(A) ((double) (uint64_t) (A))
 #define my_off_t2double(A)  ((double) (my_off_t) (A))
@@ -622,7 +621,6 @@ typedef unsigned long my_off_t;
 typedef off_t os_off_t;
 
 #define socket_errno	errno
-#define closesocket(A)	close(A)
 #define SOCKET_EINTR	EINTR
 #define SOCKET_EAGAIN	EAGAIN
 #define SOCKET_ETIMEDOUT SOCKET_EINTR

@@ -563,7 +563,7 @@ static void close_connections(void)
       if (fds[x].fd != -1)
       {
         (void) shutdown(fds[x].fd, SHUT_RDWR);
-        (void) closesocket(fds[x].fd);
+        (void) close(fds[x].fd);
         fds[x].fd= -1;
       }
     }
@@ -657,7 +657,7 @@ static void close_server_sock()
       if (fds[x].fd != -1)
       {
         (void) shutdown(fds[x].fd, SHUT_RDWR);
-        (void) closesocket(fds[x].fd);
+        (void) close(fds[x].fd);
         fds[x].fd= -1;
       }
     }
@@ -1110,8 +1110,6 @@ static void network_init(void)
   memset(&hints, 0, sizeof (hints));
   hints.ai_flags= AI_PASSIVE;
   hints.ai_socktype= SOCK_STREAM;
-  hints.ai_family= AF_INET;
-  hints.ai_protocol= IPPROTO_TCP;
 
   snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
   error= getaddrinfo(my_bind_addr_str, port_buf, &hints, &ai);
@@ -1142,6 +1140,17 @@ static void network_init(void)
       struct linger ling = {0, 0};
       int flags =1;
 
+#ifdef IPV6_V6ONLY
+      if (next->ai_family == AF_INET6) 
+      {
+        error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
+        if (error != 0)
+        {
+          perror("setsockopt");
+          assert(error == 0);
+        }
+      }
+#endif   
       error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
       if (error != 0)
       {
@@ -1187,7 +1196,6 @@ static void network_init(void)
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
-    freeaddrinfo(ai);
     if (ret < 0)
     {
       sql_perror("Can't start server: Bind on TCP/IP port");
@@ -1203,6 +1211,7 @@ static void network_init(void)
     }
   }
 
+  freeaddrinfo(ai);
   return;
 }
 
@@ -2879,7 +2888,7 @@ void handle_connections_sockets()
       {
         sql_perror("Error on new connection socket");
         (void) shutdown(new_sock, SHUT_RDWR);
-        (void) closesocket(new_sock);
+        (void) close(new_sock);
         continue;
       }
       dummyLen = sizeof(dummy);
@@ -2888,7 +2897,7 @@ void handle_connections_sockets()
       {
         sql_perror("Error on new connection socket");
         (void) shutdown(new_sock, SHUT_RDWR);
-        (void) closesocket(new_sock);
+        (void) close(new_sock);
          continue;
       }
     }
@@ -2900,7 +2909,7 @@ void handle_connections_sockets()
     if (!(thd= new THD))
     {
       (void) shutdown(new_sock, SHUT_RDWR);
-      VOID(closesocket(new_sock));
+      VOID(close(new_sock));
       continue;
     }
     if (!(vio_tmp=vio_new(new_sock, VIO_TYPE_TCPIP, sock == 0)) ||
@@ -2916,7 +2925,7 @@ void handle_connections_sockets()
       else
       {
 	(void) shutdown(new_sock, SHUT_RDWR);
-	(void) closesocket(new_sock);
+	(void) close(new_sock);
       }
       delete thd;
       continue;
