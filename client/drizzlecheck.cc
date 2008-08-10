@@ -13,13 +13,18 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* By Jani Tolonen, 2001-04-20, MySQL, DRIZZLE Development Team */
+/* By Jani Tolonen, 2001-04-20, MySQL, MYSQL Development Team */
 
 #define CHECK_VERSION "2.5.0"
 
+#include <vector>
+#include <string>
 #include "client_priv.h"
 #include <mystrings/m_ctype.h>
 
+template class std::vector<std::string>;
+
+using namespace std;
 /* Exit codes */
 
 #define EX_USAGE 1
@@ -40,7 +45,7 @@ static char *opt_password = 0, *current_user = 0,
       *default_charset = (char *)MYSQL_DEFAULT_CHARSET_NAME,
       *current_host = 0;
 static int first_error = 0;
-DYNAMIC_ARRAY tables4repair;
+vector<string *> tables4repair;
 static uint opt_protocol=0;
 static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
@@ -170,14 +175,14 @@ static int process_selected_tables(char *db, char **table_names, int tables);
 static int process_all_tables_in_db(char *database);
 static int process_one_db(char *database);
 static int use_db(char *database);
-static int handle_request_for_tables(char *tables, uint length);
+static int handle_request_for_tables(const char *tables, uint length);
 static int dbConnect(char *host, char *user,char *passwd);
 static void dbDisconnect(char *host);
 static void DBerror(DRIZZLE *drizzle, const char *when);
 static void safe_exit(int error);
 static void print_result(void);
 static uint fixed_name_length(const char *name);
-static char *fix_table_name(char *dest, char *src);
+static char *fix_table_name(char *dest, const char *src);
 int what_to_do = 0;
 
 static void print_version(void)
@@ -434,7 +439,7 @@ static uint fixed_name_length(const char *name)
 }
 
 
-static char *fix_table_name(char *dest, char *src)
+static char *fix_table_name(char *dest, const char *src)
 {
   *dest++= '`';
   for (; *src; src++)
@@ -588,7 +593,7 @@ static int use_db(char *database)
 } /* use_db */
 
 
-static int handle_request_for_tables(char *tables, uint length)
+static int handle_request_for_tables(const char *tables, uint length)
 {
   char *query, *end, options[100], message[100];
   uint query_length= 0;
@@ -674,8 +679,8 @@ static void print_result()
         list
       */
       if (found_error && opt_auto_repair && what_to_do != DO_REPAIR &&
-    strcmp(row[3],"OK"))
-  insert_dynamic(&tables4repair, (uchar*) prev);
+          strcmp(row[3],"OK"))
+        tables4repair.push_back(new string(prev));
       found_error=0;
       if (opt_silent)
   continue;
@@ -695,7 +700,7 @@ static void print_result()
   }
   /* add the last table to be repaired to the list */
   if (found_error && opt_auto_repair && what_to_do != DO_REPAIR)
-    insert_dynamic(&tables4repair, (uchar*) prev);
+    tables4repair.push_back(new string(prev));
   drizzle_free_result(res);
 }
 
@@ -766,12 +771,16 @@ int main(int argc, char **argv)
   if (dbConnect(current_host, current_user, opt_password))
     exit(EX_MYSQLERR);
 
-  if (opt_auto_repair &&
-      my_init_dynamic_array(&tables4repair, sizeof(char)*(NAME_LEN*2+2),16,64))
+  if (opt_auto_repair)
   {
-    first_error = 1;
-    goto end;
+    tables4repair.reserve(64);
+    if (tables4repair.capacity() == 0)
+    {
+      first_error = 1;
+      goto end;
+    }
   }
+
 
   if (opt_alldbs)
     process_all_databases();
@@ -783,21 +792,20 @@ int main(int argc, char **argv)
     process_databases(argv);
   if (opt_auto_repair)
   {
-    uint i;
 
-    if (!opt_silent && tables4repair.elements)
+    if (!opt_silent && (tables4repair.size() > 0))
       puts("\nRepairing tables");
     what_to_do = DO_REPAIR;
-    for (i = 0; i < tables4repair.elements ; i++)
+    vector<string *>::iterator i;
+    for ( i= tables4repair.begin() ; i < tables4repair.end() ; i++)
     {
-      char *name= (char*) dynamic_array_ptr(&tables4repair, i);
+      const char *name= (*i)->c_str();
       handle_request_for_tables(name, fixed_name_length(name));
+      free((void *)name);
     }
   }
  end:
   dbDisconnect(current_host);
-  if (opt_auto_repair)
-    delete_dynamic(&tables4repair);
   my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
   my_end(my_end_arg);
   return(first_error!=0);
