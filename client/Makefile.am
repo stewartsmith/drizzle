@@ -46,6 +46,7 @@ drizzlebinlog_SOURCES =     drizzlebinlog.cc \
                 $(top_srcdir)/mysys/my_bitmap.c \
                 $(top_srcdir)/mysys/base64.c
 
+drizzlecheck_SOURCES =		drizzlecheck.cc
 drizzledump_SOURCES=            drizzledump.cc 
 
 drizzleimport_SOURCES=		drizzleimport.cc
