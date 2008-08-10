@@ -6127,7 +6127,7 @@ walk_up_n_right:
     }
   }
   seq->param->range_count++;
-  seq->param->max_key_part=max(seq->param->max_key_part,key_tree->part);
+  seq->param->max_key_part=max(seq->param->max_key_part,(uint)key_tree->part);
   return 0;
 }
 
@@ -7249,13 +7249,13 @@ int QUICK_RANGE_SELECT::get_next_prefix(uint prefix_length,
     last_range= *(cur_range++);
 
     start_key.key=    (const uchar*) last_range->min_key;
-    start_key.length= min(last_range->min_length, prefix_length);
+    start_key.length= min(last_range->min_length, (uint16_t)prefix_length);
     start_key.keypart_map= last_range->min_keypart_map & keypart_map;
     start_key.flag=   ((last_range->flag & NEAR_MIN) ? HA_READ_AFTER_KEY :
 		       (last_range->flag & EQ_RANGE) ?
 		       HA_READ_KEY_EXACT : HA_READ_KEY_OR_NEXT);
     end_key.key=      (const uchar*) last_range->max_key;
-    end_key.length=   min(last_range->max_length, prefix_length);
+    end_key.length=   min(last_range->max_length, (uint16_t)prefix_length);
     end_key.keypart_map= last_range->max_keypart_map & keypart_map;
     /*
       We use READ_AFTER_KEY here because if we are reading on a key
@@ -8640,7 +8640,7 @@ void cost_group_min_max(TABLE* table, KEY *index_info, uint used_key_parts,
       p_overlap= (blocks_per_group * (keys_per_subgroup - 1)) / keys_per_group;
       p_overlap= min(p_overlap, 1.0);
     }
-    io_cost= (double) min(num_groups * (1 + p_overlap), num_blocks);
+    io_cost= (double) min(num_groups * (1 + p_overlap), (double)num_blocks);
   }
   else
     io_cost= (keys_per_group > keys_per_block) ?

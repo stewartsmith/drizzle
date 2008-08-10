@@ -106,7 +106,7 @@ int find_ref_key(KEY *key, uint key_count, uchar *record, Field *field,
 */
 
 void key_copy(uchar *to_key, uchar *from_record, KEY *key_info,
-              uint key_length)
+              unsigned int key_length)
 {
   uint length;
   KEY_PART_INFO *key_part;
@@ -125,13 +125,13 @@ void key_copy(uchar *to_key, uchar *from_record, KEY *key_info,
         key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       key_length-= HA_KEY_BLOB_LENGTH;
-      length= min(key_length, key_part->length);
+      length= min((uint16_t)key_length, key_part->length);
       key_part->field->get_key_image(to_key, length, Field::itRAW);
       to_key+= HA_KEY_BLOB_LENGTH;
     }
     else
     {
-      length= min(key_length, key_part->length);
+      length= min((uint16_t)key_length, key_part->length);
       Field *field= key_part->field;
       const CHARSET_INFO * const cs= field->charset();
       uint bytes= field->get_key_image(to_key, length, Field::itRAW);
@@ -174,7 +174,7 @@ void key_zero_nulls(uchar *tuple, KEY *key_info)
 */
 
 void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
-                 uint key_length)
+                 uint16_t key_length)
 {
   uint length;
   KEY_PART_INFO *key_part;
@@ -372,7 +372,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
       }
       
       if (key_part->length < field->pack_length())
-	tmp.length(min(tmp.length(),key_part->length));
+	tmp.length(min(tmp.length(),(uint32_t)key_part->length));
       to->append(tmp);
     }
     else

@@ -68,7 +68,7 @@ Hybrid_type_traits_decimal::fix_length_and_dec(Item *item, Item *arg) const
 {
   item->decimals= arg->decimals;
   item->max_length= min(arg->max_length + DECIMAL_LONGLONG_DIGITS,
-                        DECIMAL_MAX_STR_LENGTH);
+                        (unsigned int)DECIMAL_MAX_STR_LENGTH);
 }
 
 
@@ -435,8 +435,8 @@ uint Item::decimal_precision() const
 
   if ((restype == DECIMAL_RESULT) || (restype == INT_RESULT))
     return min(my_decimal_length_to_precision(max_length, decimals, unsigned_flag),
-               DECIMAL_MAX_PRECISION);
-  return min(max_length, DECIMAL_MAX_PRECISION);
+               (unsigned int)DECIMAL_MAX_PRECISION);
+  return min(max_length, (uint32_t)DECIMAL_MAX_PRECISION);
 }
 
 
@@ -722,7 +722,7 @@ void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
 				   &res_length);
   }
   else
-    name= sql_strmake(str, (name_length= min(length,MAX_ALIAS_NAME)));
+    name= sql_strmake(str, (name_length= min(length,(unsigned int)MAX_ALIAS_NAME)));
 }
 
 
@@ -4512,7 +4512,7 @@ int64_t Item_hex_string::val_int()
   // following assert is redundant, because fixed=1 assigned in constructor
   assert(fixed == 1);
   char *end=(char*) str_value.ptr()+str_value.length(),
-       *ptr=end-min(str_value.length(),sizeof(int64_t));
+       *ptr=end-min(str_value.length(),(uint32_t)sizeof(int64_t));
 
   uint64_t value=0;
   for (; ptr != end ; ptr++)
@@ -4566,7 +4566,7 @@ void Item_hex_string::print(String *str,
                             enum_query_type query_type __attribute__((unused)))
 {
   char *end= (char*) str_value.ptr() + str_value.length(),
-       *ptr= end - min(str_value.length(), sizeof(int64_t));
+       *ptr= end - min(str_value.length(), (uint32_t)sizeof(int64_t));
   str->append("0x");
   for (; ptr != end ; ptr++)
   {
@@ -6268,11 +6268,11 @@ bool Item_type_holder::join_types(THD *thd __attribute__((unused)),
     /* fix variable decimals which always is NOT_FIXED_DEC */
     if (Field::result_merge_type(fld_type) == INT_RESULT)
       item_decimals= 0;
-    decimals= max(decimals, item_decimals);
+    decimals= max((int)decimals, item_decimals);
   }
   if (Field::result_merge_type(fld_type) == DECIMAL_RESULT)
   {
-    decimals= min(max(decimals, item->decimals), DECIMAL_MAX_SCALE);
+    decimals= min((int)max(decimals, item->decimals), DECIMAL_MAX_SCALE);
     int precision= min(max(prev_decimal_int_part, item->decimal_int_part())
                        + decimals, DECIMAL_MAX_PRECISION);
     unsigned_flag&= item->unsigned_flag;

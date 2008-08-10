@@ -1414,7 +1414,7 @@ bool sys_var::check_set(THD *thd __attribute__((unused)),
 					    &not_used));
     if (error_len)
     {
-      strmake(buff, error, min(sizeof(buff) - 1, error_len));
+      strmake(buff, error, min(sizeof(buff) - 1, (ulong)error_len));
       goto err;
     }
   }

@@ -57,7 +57,7 @@
 const char *VER= "14.14";
 
 /* Don't try to make a nice table if the data is too big */
-#define MAX_COLUMN_LENGTH       1024
+#define MAX_COLUMN_LENGTH       (uint32_t)1024
 
 /* Buffer to hold 'version' and 'version_comment' */
 #define MAX_SERVER_VERSION_LENGTH     128
@@ -2979,7 +2979,7 @@ print_table_data(DRIZZLE_RES *result)
   separator.append("+");
   while ((field = drizzle_fetch_field(result)))
   {
-    uint length= column_names ? field->name_length : 0;
+    uint32_t length= column_names ? field->name_length : 0;
     if (quick)
       length=max(length,field->length);
     else
@@ -3005,7 +3005,7 @@ print_table_data(DRIZZLE_RES *result)
       uint numcells= charset_info->cset->numcells(charset_info,
                                                   field->name,
                                                   field->name + name_length);
-      uint display_length= field->max_length + name_length - numcells;
+      uint32_t display_length= field->max_length + name_length - numcells;
       tee_fprintf(PAGER, " %-*s |",(int) min(display_length,
                                              MAX_COLUMN_LENGTH),
                   field->name);

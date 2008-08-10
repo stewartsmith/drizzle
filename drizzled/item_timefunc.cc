@@ -589,7 +589,7 @@ static bool extract_date_time(DATE_TIME_FORMAT *format,
 err:
   {
     char buff[128];
-    strmake(buff, val_begin, min(length, sizeof(buff)-1));
+    strmake(buff, val_begin, min(length, (uint)sizeof(buff)-1));
     push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                         ER_WRONG_VALUE_FOR_TYPE, ER(ER_WRONG_VALUE_FOR_TYPE),
                         date_time_type, buff, "str_to_date");
@@ -1774,7 +1774,7 @@ void Item_func_date_format::fix_length_and_dec()
   else
   {
     fixed_length=0;
-    max_length=min(arg1->max_length, MAX_BLOB_WIDTH) * 10 *
+    max_length=min(arg1->max_length,(uint32_t) MAX_BLOB_WIDTH) * 10 *
                    collation.collation->mbmaxlen;
     set_if_smaller(max_length,MAX_BLOB_WIDTH);
   }

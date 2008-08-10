@@ -2086,7 +2086,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
       can't get max_connections*5 but still got no less than was
       requested (value of wanted_files).
     */
-    max_open_files= max(max(wanted_files, max_connections*5),
+    max_open_files= max(max((ulong)wanted_files, max_connections*5),
                         open_files_limit);
     files= my_set_max_open_files(max_open_files);
 
@@ -2098,7 +2098,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
           If we have requested too much file handles than we bring
           max_connections in supported bounds.
         */
-        max_connections= (ulong) min(files-10-TABLE_OPEN_CACHE_MIN*2,
+        max_connections= (ulong) min((ulong)files-10-TABLE_OPEN_CACHE_MIN*2,
                                      max_connections);
         /*
           Decrease table_cache_size according to max_connections, but
@@ -2107,7 +2107,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
           happen if max_connections is decreased above).
         */
         table_cache_size= (ulong) min(max((files-10-max_connections)/2,
-                                          TABLE_OPEN_CACHE_MIN),
+                                          (ulong)TABLE_OPEN_CACHE_MIN),
                                       table_cache_size);
 	if (global_system_variables.log_warnings)
 	  sql_print_warning("Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld",

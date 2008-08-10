@@ -960,6 +960,12 @@ do { doubleget_union _tmp; \
  */
 #ifdef __cplusplus
 #include <new>
+#include <string>
+#include <algorithm>
+using namespace std;
+#else
+#define max(a, b)       ((a) > (b) ? (a) : (b))
+#define min(a, b)       ((a) < (b) ? (a) : (b))
 #endif
 
 /* Length of decimal number represented by INT32. */
@@ -969,14 +975,8 @@ do { doubleget_union _tmp; \
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
 
 #ifdef _cplusplus
-#include <string>
 #endif
 
-/* Define some useful general macros (should be done after all headers). */
-#if !defined(max)
-#define max(a, b)	((a) > (b) ? (a) : (b))
-#define min(a, b)	((a) < (b) ? (a) : (b))
-#endif  
 /*
   Only Linux is known to need an explicit sync of the directory to make sure a
   file creation/deletion/renaming in(from,to) this directory durable.

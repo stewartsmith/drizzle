@@ -1186,7 +1186,7 @@ bool change_master(THD* thd, Master_info* mi)
   if (lex_mi->heartbeat_opt != LEX_MASTER_INFO::LEX_MI_UNCHANGED)
     mi->heartbeat_period = lex_mi->heartbeat_period;
   else
-    mi->heartbeat_period= (float) min(SLAVE_MAX_HEARTBEAT_PERIOD,
+    mi->heartbeat_period= (float) min((double)SLAVE_MAX_HEARTBEAT_PERIOD,
                                       (slave_net_timeout/2.0));
   mi->received_heartbeats= 0LL; // counter lives until master is CHANGEd
   if (lex_mi->ssl != LEX_MASTER_INFO::LEX_MI_UNCHANGED)
@@ -1252,8 +1252,9 @@ bool change_master(THD* thd, Master_info* mi)
        of replication is not 100% clear, so we guard against problems using
        max().
       */
-     mi->master_log_pos = max(BIN_LOG_HEADER_SIZE,
-			      mi->rli.group_master_log_pos);
+     mi->master_log_pos = ((BIN_LOG_HEADER_SIZE > mi->rli.group_master_log_pos)
+                           ? BIN_LOG_HEADER_SIZE
+			   : mi->rli.group_master_log_pos);
      strmake(mi->master_log_name, mi->rli.group_master_log_name,
              sizeof(mi->master_log_name)-1);
   }
@@ -1393,7 +1394,7 @@ bool mysql_show_binlog_events(THD* thd)
     LEX_MASTER_INFO *lex_mi= &thd->lex->mi;
     SELECT_LEX_UNIT *unit= &thd->lex->unit;
     ha_rows event_count, limit_start, limit_end;
-    my_off_t pos = max(BIN_LOG_HEADER_SIZE, lex_mi->pos); // user-friendly
+    my_off_t pos = max((uint64_t)BIN_LOG_HEADER_SIZE, lex_mi->pos); // user-friendly
     char search_file_name[FN_REFLEN], *name;
     const char *log_file_name = lex_mi->log_file_name;
     pthread_mutex_t *log_lock = mysql_bin_log.get_log_lock();

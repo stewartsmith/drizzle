@@ -40,8 +40,6 @@ extern "C" {
  */
 #ifndef DRIZZLE_SERVER_GLOBAL_H   /* If not standard header */
 #include <sys/types.h>
-#define
-
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
 
 #include <libdrizzle/drizzle_com.h>
@@ -72,8 +70,8 @@ typedef struct st_drizzle_field {
   char *db;                   /* Database for table */
   char *catalog;        /* Catalog for table */
   char *def;                  /* Default value (set by drizzle_list_fields) */
-  unsigned long length;       /* Width of column (create length) */
-  unsigned long max_length;   /* Max width for selected set */
+  uint32_t length;       /* Width of column (create length) */
+  uint32_t max_length;   /* Max width for selected set */
   unsigned int name_length;
   unsigned int org_name_length;
   unsigned int table_length;

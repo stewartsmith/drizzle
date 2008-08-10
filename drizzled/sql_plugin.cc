@@ -1509,7 +1509,7 @@ static int check_func_set(THD *thd __attribute__((unused)),
                      &error, &error_len, &not_used);
     if (error_len)
     {
-      strmake(buff, error, min(sizeof(buff), error_len));
+      strmake(buff, error, min(sizeof(buff), (unsigned long)error_len));
       strvalue= buff;
       goto err;
     }

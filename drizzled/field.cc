@@ -2277,7 +2277,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
         and 19 as length of 4.1 compatible representation.
       */
       length= ((length+1)/2)*2; /* purecov: inspected */
-      length= min(length, MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
+      length= min(length, (ulong)MAX_DATETIME_COMPRESSED_WIDTH); /* purecov: inspected */
     }
     flags|= UNSIGNED_FLAG;
     if (fld_default_value)
