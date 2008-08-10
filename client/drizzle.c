@@ -157,7 +157,7 @@ static bool ignore_errors=0,quick=0,
 static bool debug_info_flag, debug_check_flag;
 static bool column_types_flag;
 static bool preserve_comments= 0;
-static ulong opt_max_allowed_packet, opt_net_buffer_length;
+static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
 static int verbose=0,opt_silent=0,opt_drizzle_port=0, opt_local_infile=0;
 static uint my_end_arg;
 static char * opt_drizzle_unix_port=0;
@@ -174,7 +174,7 @@ static char *full_username=0,*part_username=0;
 static STATUS status;
 static uint32_t select_limit;
 static uint32_t max_join_size;
-static ulong opt_connect_timeout= 0;
+static uint32_t opt_connect_timeout= 0;
 static char drizzle_charsets_dir[FN_REFLEN+1];
 // TODO: Need to i18n these
 static const char *day_names[]={"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
@@ -224,7 +224,7 @@ static const char *server_version_string(DRIZZLE *drizzle);
 static int put_info(const char *str,INFO_TYPE info,uint error,
                     const char *sql_state);
 static int put_error(DRIZZLE *drizzle);
-static void safe_put_field(const char *pos,ulong length);
+static void safe_put_field(const char *pos,uint32_t length);
 static void init_pager(void);
 static void end_pager(void);
 static void init_tee(const char *);
@@ -1006,9 +1006,9 @@ static void print_table_data(DRIZZLE_RES *result);
 static void print_tab_data(DRIZZLE_RES *result);
 static void print_table_data_vertically(DRIZZLE_RES *result);
 static void print_warnings(void);
-static ulong start_timer(void);
-static void end_timer(ulong start_time,char *buff);
-static void drizzle_end_timer(ulong start_time,char *buff);
+static uint32_t start_timer(void);
+static void end_timer(uint32_t start_time,char *buff);
+static void drizzle_end_timer(uint32_t start_time,char *buff);
 static void nice_time(double sec,char *buff,bool part_second);
 extern sig_handler drizzle_end(int sig);
 extern sig_handler handle_sigint(int sig);
@@ -1671,7 +1671,7 @@ static int read_and_execute(bool interactive)
 {
   char *line;
   char in_string=0;
-  ulong line_number=0;
+  uint32_t line_number=0;
   bool ml_comment= 0;
   COMMANDS *com;
   status.exit_status=1;
@@ -2673,7 +2673,7 @@ com_go(DYNAMIC_STRING *buffer,
   char          buff[200]; /* about 110 chars used so far */
   char          time_buff[52+3+1]; /* time max + space&parens + NUL */
   DRIZZLE_RES     *result;
-  ulong         timer, warnings= 0;
+  uint32_t         timer, warnings= 0;
   uint          error= 0;
   int           err= 0;
 
@@ -3242,7 +3242,7 @@ end:
 
 
 static void
-safe_put_field(const char *pos,ulong length)
+safe_put_field(const char *pos,uint32_t length)
 {
   if (!pos)
     tee_fputs("NULL", PAGER);
@@ -4077,7 +4077,7 @@ void tee_putc(int c, FILE *file)
 #define CLOCKS_PER_SEC (sysconf(_SC_CLK_TCK))
 #endif
 
-static ulong start_timer(void)
+static uint32_t start_timer(void)
 {
   struct tms tms_tmp;
   return times(&tms_tmp);
@@ -4092,24 +4092,24 @@ static ulong start_timer(void)
 */
 static void nice_time(double sec,char *buff,bool part_second)
 {
-  ulong tmp;
+  uint32_t tmp;
   if (sec >= 3600.0*24)
   {
-    tmp=(ulong) floor(sec/(3600.0*24));
+    tmp=(uint32_t) floor(sec/(3600.0*24));
     sec-=3600.0*24*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
     buff=stpcpy(buff,tmp > 1 ? " days " : " day ");
   }
   if (sec >= 3600.0)
   {
-    tmp=(ulong) floor(sec/3600.0);
+    tmp=(uint32_t) floor(sec/3600.0);
     sec-=3600.0*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
     buff=stpcpy(buff,tmp > 1 ? " hours " : " hour ");
   }
   if (sec >= 60.0)
   {
-    tmp=(ulong) floor(sec/60.0);
+    tmp=(uint32_t) floor(sec/60.0);
     sec-=60.0*tmp;
     buff=int10_to_str((long) tmp, buff, 10);
     buff=stpcpy(buff," min ");
@@ -4121,14 +4121,14 @@ static void nice_time(double sec,char *buff,bool part_second)
 }
 
 
-static void end_timer(ulong start_time,char *buff)
+static void end_timer(uint32_t start_time,char *buff)
 {
   nice_time((double) (start_timer() - start_time) /
             CLOCKS_PER_SEC,buff,1);
 }
 
 
-static void drizzle_end_timer(ulong start_time,char *buff)
+static void drizzle_end_timer(uint32_t start_time,char *buff)
 {
   buff[0]=' ';
   buff[1]='(';
