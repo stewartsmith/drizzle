@@ -515,7 +515,7 @@ const char *drizzle_errno_to_sqlstate(unsigned int drizzle_errno);
 
 /** @TODO Is it necessary to include all of drizzled/global.h here? */
 #ifdef DRIZZLE_SERVER_GLOBAL_H
-ulong STDCALL net_field_length(uchar **packet);
+uint32_t STDCALL net_field_length(uchar **packet);
 uint64_t net_field_length_ll(uchar **packet);
 uchar *net_store_length(uchar *pkg, uint64_t length);
 #endif
@@ -524,7 +524,7 @@ uchar *net_store_length(uchar *pkg, uint64_t length);
 }
 #endif
 
-#define NULL_LENGTH ((unsigned long) ~0) /* For net_store_length */
+#define NULL_LENGTH UINT32_MAX /* For net_store_length */
 #define MYSQL_STMT_HEADER       4
 #define MYSQL_LONG_DATA_HEADER  6
 

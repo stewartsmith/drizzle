@@ -80,7 +80,7 @@ typedef long my_time_t;
                                 TIME_MAX_MINUTE * 60L + TIME_MAX_SECOND)
 
 bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
-                   ulong flags, int *was_cut);
+                   uint32_t flags, int *was_cut);
 enum enum_drizzle_timestamp_type
 str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
                 uint flags, int *was_cut);

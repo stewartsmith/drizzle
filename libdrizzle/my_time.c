@@ -36,7 +36,7 @@ static uchar internal_format_positions[]=
 
 static char time_separator=':';
 
-static ulong const days_at_timestart=719528;	/* daynr at 1970.01.01 */
+static uint32_t const days_at_timestart=719528;	/* daynr at 1970.01.01 */
 uchar days_in_month[]= {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
 
 /*
@@ -76,7 +76,7 @@ uint calc_days_in_year(uint year)
 */
 
 bool check_date(const DRIZZLE_TIME *ltime, bool not_zero_date,
-                   ulong flags, int *was_cut)
+                   uint32_t flags, int *was_cut)
 {
   if (not_zero_date)
   {
@@ -163,7 +163,7 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
   uint field_length, year_length=4, digits, i, number_of_fields;
   uint date[MAX_DATE_PARTS], date_len[MAX_DATE_PARTS];
   uint add_hours= 0, start_loop;
-  ulong not_zero_date, allow_space;
+  uint32_t not_zero_date, allow_space;
   bool is_internal_format;
   const char *pos, *last_field_pos=NULL;
   const char *end=str+length;
@@ -257,11 +257,11 @@ str_to_datetime(const char *str, uint length, DRIZZLE_TIME *l_time,
        i++)
   {
     const char *start= str;
-    ulong tmp_value= (uint) (uchar) (*str++ - '0');
+    uint32_t tmp_value= (uint) (uchar) (*str++ - '0');
     while (str != end && my_isdigit(&my_charset_latin1,str[0]) &&
            (!is_internal_format || --field_length))
     {
-      tmp_value=tmp_value*10 + (ulong) (uchar) (*str - '0');
+      tmp_value=tmp_value*10 + (uint32_t) (uchar) (*str - '0');
       str++;
     }
     date_len[i]= (uint) (str - start);
@@ -471,7 +471,7 @@ err:
 bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
                     int *warning)
 {
-  ulong date[5];
+  uint32_t date[5];
   uint64_t value;
   const char *end=str+length, *end_of_days;
   bool found_days,found_hours;
@@ -518,7 +518,7 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
   if ((uint) (end-str) > 1 && str != end_of_days &&
       my_isdigit(&my_charset_latin1, *str))
   {                                             /* Found days part */
-    date[0]= (ulong) value;
+    date[0]= (uint32_t) value;
     state= 1;                                   /* Assume next is hours */
     found_days= 1;
   }
@@ -526,7 +526,7 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
            my_isdigit(&my_charset_latin1, str[1]))
   {
     date[0]= 0;                                 /* Assume we found hours */
-    date[1]= (ulong) value;
+    date[1]= (uint32_t) value;
     state=2;
     found_hours=1;
     str++;                                      /* skip ':' */
@@ -535,9 +535,9 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
   {
     /* String given as one number; assume HHMMSS format */
     date[0]= 0;
-    date[1]= (ulong) (value/10000);
-    date[2]= (ulong) (value/100 % 100);
-    date[3]= (ulong) (value % 100);
+    date[1]= (uint32_t) (value/10000);
+    date[2]= (uint32_t) (value/100 % 100);
+    date[3]= (uint32_t) (value % 100);
     state=4;
     goto fractional;
   }
@@ -547,7 +547,7 @@ bool str_to_time(const char *str, uint length, DRIZZLE_TIME *l_time,
   {
     for (value=0; str != end && my_isdigit(&my_charset_latin1,*str) ; str++)
       value=value*10L + (long) (*str - '0');
-    date[state++]= (ulong) value;
+    date[state++]= (uint32_t) value;
     if (state == 4 || (end-str) < 2 || *str != time_separator ||
         !my_isdigit(&my_charset_latin1,str[1]))
       break;
@@ -582,7 +582,7 @@ fractional:
       value*= (long) log_10_int[field_length];
     else if (field_length < 0)
       *warning|= DRIZZLE_TIME_WARN_TRUNCATED;
-    date[4]= (ulong) value;
+    date[4]= (uint32_t) value;
   }
   else
     date[4]=0;
