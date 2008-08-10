@@ -388,8 +388,8 @@ bool reinit_io_cache(IO_CACHE *info, enum cache_type type,
 
 #ifdef HAVE_AIOWAIT
   if (use_async_io && ! my_disable_async_io &&
-      ((ulong) info->buffer_length <
-       (ulong) (info->end_of_file - seek_offset)))
+      ((uint32_t) info->buffer_length <
+       (uint32_t) (info->end_of_file - seek_offset)))
   {
     info->read_length=info->buffer_length/2;
     info->read_function=_my_b_async_read;

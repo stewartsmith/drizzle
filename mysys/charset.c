@@ -889,5 +889,5 @@ size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
     }
   }
   *to= 0;
-  return overflow ? (ulong)~0 : (ulong) (to - to_start);
+  return overflow ? (uint32_t)~0 : (uint32_t) (to - to_start);
 }

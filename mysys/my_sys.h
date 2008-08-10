@@ -175,7 +175,7 @@ extern void (*error_handler_hook)(uint my_err, const char *str,myf MyFlags);
 extern void (*fatal_error_handler_hook)(uint my_err, const char *str,
                                         myf MyFlags);
 extern uint my_file_limit;
-extern ulong my_thread_stack_size;
+extern uint32_t my_thread_stack_size;
 
 /* charsets */
 extern const CHARSET_INFO *default_charset_info;
@@ -183,8 +183,8 @@ extern CHARSET_INFO *all_charsets[256];
 extern CHARSET_INFO compiled_charsets[];
 
 /* statistics */
-extern ulong	my_file_opened,my_stream_opened, my_tmp_file_created;
-extern ulong    my_file_total_opened;
+extern uint32_t	my_file_opened,my_stream_opened, my_tmp_file_created;
+extern uint32_t    my_file_total_opened;
 extern uint	mysys_usage_id;
 extern bool	my_init_done;
 
@@ -200,9 +200,9 @@ extern int my_umask,		/* Default creation mask  */
 	   my_safe_to_handle_signal, /* Set when allowed to SIGTSTP */
 	   my_dont_interrupt;	/* call remember_intr when set */
 extern bool mysys_uses_curses, my_use_symdir;
-extern ulong sf_malloc_cur_memory, sf_malloc_max_memory;
+extern uint32_t sf_malloc_cur_memory, sf_malloc_max_memory;
 
-extern ulong	my_default_record_cache_size;
+extern uint32_t	my_default_record_cache_size;
 extern bool my_disable_async_io,
                my_disable_flush_key_blocks, my_disable_symlinks;
 extern char	wild_many, wild_one, wild_prefix;
@@ -395,7 +395,7 @@ typedef struct st_io_cache		/* Used when cacheing files */
     Counts the number of times, when we were forced to use disk. We use it to
     increase the binlog_cache_disk_use status variable.
   */
-  ulong disk_writes;
+  uint32_t disk_writes;
   void* arg;				/* for use by pre/post_read */
   char *file_name;			/* if used with 'open_cached_file' */
   char *dir,*prefix;
@@ -753,7 +753,7 @@ extern uchar *my_compress_alloc(const uchar *packet, size_t *len,
                                 size_t *complen);
 extern ha_checksum my_checksum(ha_checksum crc, const uchar *mem,
                                size_t count);
-extern void my_sleep(ulong m_seconds);
+extern void my_sleep(uint32_t m_seconds);
 extern uint my_set_max_open_files(uint files);
 void my_free_open_file_info(void);
 
@@ -826,9 +826,9 @@ extern size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
                                         char *to, size_t to_length,
                                         const char *from, size_t length);
 
-extern void thd_increment_bytes_sent(ulong length);
-extern void thd_increment_bytes_received(ulong length);
-extern void thd_increment_net_big_packet_count(ulong length);
+extern void thd_increment_bytes_sent(uint32_t length);
+extern void thd_increment_bytes_received(uint32_t length);
+extern void thd_increment_net_big_packet_count(uint32_t length);
 
 C_MODE_END
 #endif /* _my_sys_h */

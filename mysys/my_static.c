@@ -29,8 +29,8 @@ char *	home_dir=0;
 const char      *my_progname=0;
 char curr_dir[FN_REFLEN]= {0},
      home_dir_buff[FN_REFLEN]= {0};
-ulong		my_stream_opened=0,my_file_opened=0, my_tmp_file_created=0;
-ulong           my_file_total_opened= 0;
+uint32_t		my_stream_opened=0,my_file_opened=0, my_tmp_file_created=0;
+uint32_t           my_file_total_opened= 0;
 int my_umask=0664, my_umask_dir=0777;
 struct st_my_file_info my_file_info_default[MY_NFILE]= {{0,UNOPEN}};
 uint   my_file_limit= MY_NFILE;
@@ -43,7 +43,7 @@ struct st_remember _my_sig_remember[MAX_SIGNALS]={{0,0}};
 sigset_t my_signals;			/* signals blocked by mf_brkhant */
 
 	/* from mf_reccache.c */
-ulong my_default_record_cache_size=RECORD_CACHE_SIZE;
+uint32_t my_default_record_cache_size=RECORD_CACHE_SIZE;
 
 	/* from soundex.c */
 				/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
@@ -59,8 +59,8 @@ uint sf_malloc_prehunc=0,		/* If you have problem with core- */
      sf_malloc_endhunc=0,		/* dump when malloc-message.... */
 					/* set theese to 64 or 128  */
      sf_malloc_quick=0;			/* set if no calls to sanity */
-ulong sf_malloc_cur_memory= 0L;		/* Current memory usage */
-ulong sf_malloc_max_memory= 0L;		/* Maximum memory usage */
+uint32_t sf_malloc_cur_memory= 0L;		/* Current memory usage */
+uint32_t sf_malloc_max_memory= 0L;		/* Maximum memory usage */
 uint  sf_malloc_count= 0;		/* Number of times NEW() was called */
 uchar *sf_min_adress= (uchar*) ~(unsigned long) 0L,
      *sf_max_adress= (uchar*) 0L;
@@ -69,7 +69,7 @@ struct st_irem *sf_malloc_root = NULL;
 
 	/* from my_alarm */
 int volatile my_have_got_alarm=0;	/* declare variable to reset */
-ulong my_time_to_wait_for_lock=2;	/* In seconds */
+uint32_t my_time_to_wait_for_lock=2;	/* In seconds */
 
 	/* from errors.c */
 void (*my_abort_hook)(int) = (void(*)(int)) exit;

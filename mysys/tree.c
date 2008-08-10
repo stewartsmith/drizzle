@@ -74,7 +74,7 @@ static void rb_insert(TREE *tree,TREE_ELEMENT ***parent,
 static void rb_delete_fixup(TREE *tree,TREE_ELEMENT ***parent);
 
 
-void init_tree(TREE *tree, ulong default_alloc_size, ulong memory_limit,
+void init_tree(TREE *tree, uint32_t default_alloc_size, uint32_t memory_limit,
                int size, qsort_cmp2 compare, bool with_delete,
 	       tree_element_free free_element, void *custom_arg)
 {

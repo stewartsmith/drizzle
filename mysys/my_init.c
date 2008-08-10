@@ -22,9 +22,9 @@
 
 bool my_init_done= 0;
 uint	mysys_usage_id= 0;              /* Incremented for each my_init() */
-ulong   my_thread_stack_size= 65536;
+uint32_t   my_thread_stack_size= 65536;
 
-static ulong atoi_octal(const char *str)
+static uint32_t atoi_octal(const char *str)
 {
   long int tmp;
   while (*str && my_isspace(&my_charset_latin1, *str))
@@ -32,7 +32,7 @@ static ulong atoi_octal(const char *str)
   str2int(str,
 	  (*str == '0' ? 8 : 10),       /* Octalt or decimalt */
 	  0, INT_MAX, &tmp);
-  return (ulong) tmp;
+  return (uint32_t) tmp;
 }
 
 

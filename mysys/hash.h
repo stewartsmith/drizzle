@@ -36,7 +36,7 @@ typedef void (*hash_free_key)(void *);
 typedef struct st_hash {
   size_t key_offset,key_length;		/* Length of key if const length */
   size_t blength;
-  ulong records;
+  uint32_t records;
   uint flags;
   DYNAMIC_ARRAY array;				/* Place for hash_keys */
   hash_get_key get_key;
@@ -50,12 +50,12 @@ typedef uint HASH_SEARCH_STATE;
 #define hash_init(A,B,C,D,E,F,G,H) _hash_init(A,0,B,C,D,E,F,G,H CALLER_INFO)
 #define hash_init2(A,B,C,D,E,F,G,H,I) _hash_init(A,B,C,D,E,F,G,H,I CALLER_INFO)
 bool _hash_init(HASH *hash, uint growth_size, const CHARSET_INFO * const charset,
-		   ulong default_array_elements, size_t key_offset,
+		   uint32_t default_array_elements, size_t key_offset,
 		   size_t key_length, hash_get_key get_key,
 		   void (*free_element)(void*), uint flags CALLER_INFO_PROTO);
 void hash_free(HASH *tree);
 void my_hash_reset(HASH *hash);
-uchar *hash_element(HASH *hash,ulong idx);
+uchar *hash_element(HASH *hash,uint32_t idx);
 uchar *hash_search(const HASH *info, const uchar *key, size_t length);
 uchar *hash_first(const HASH *info, const uchar *key, size_t length,
                 HASH_SEARCH_STATE *state);

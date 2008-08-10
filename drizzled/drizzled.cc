@@ -2013,7 +2013,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   my_decimal_set_zero(&decimal_zero); // set decimal_zero constant;
   tzset();			// Set tzname
 
-  max_system_variables.pseudo_thread_id= (ulong)~0;
+  max_system_variables.pseudo_thread_id= UINT32_MAX;
   server_start_time= flush_status_time= my_time(0);
   rpl_filter= new Rpl_filter;
   binlog_filter= new Rpl_filter;
@@ -2622,8 +2622,12 @@ int main(int argc, char **argv)
     if (stack_size && stack_size < my_thread_stack_size)
     {
       if (global_system_variables.log_warnings)
-	sql_print_warning("Asked for %lu thread stack, but got %ld",
-			  my_thread_stack_size, (long) stack_size);
+      {
+        /* %zu is not yet in C++ */
+        unsigned long long size_tmp= (uint64_t)stack_size;
+	sql_print_warning("Asked for %u thread stack, but got %llu",
+                          my_thread_stack_size, size_tmp);
+      }
       my_thread_stack_size= stack_size;
     }
   }

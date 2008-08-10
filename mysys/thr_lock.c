@@ -77,7 +77,7 @@ multiple read locks.
 #include <errno.h>
 
 bool thr_lock_inited=0;
-ulong locks_immediate = 0L, locks_waited = 0L;
+uint32_t locks_immediate = 0L, locks_waited = 0L;
 ulong table_lock_wait_timeout;
 enum thr_lock_type thr_upgraded_concurrent_insert_lock = TL_WRITE;
 
@@ -1257,7 +1257,7 @@ int lock_counts[]= {sizeof(test_0)/sizeof(struct st_test),
 static pthread_cond_t COND_thread_count;
 static pthread_mutex_t LOCK_thread_count;
 static uint thread_count;
-static ulong sum=0;
+static uint32_t sum=0;
 
 #define MAX_LOCK_COUNT 8
 
@@ -1316,8 +1316,8 @@ static void *test_thread(void *arg)
 	sleep(2);
       else
       {
-	ulong k;
-	for (k=0 ; k < (ulong) (tmp-2)*100000L ; k++)
+	uint32_t k;
+	for (k=0 ; k < (uint32_t) (tmp-2)*100000L ; k++)
 	  sum+=k;
       }
     }

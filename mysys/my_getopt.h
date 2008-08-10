@@ -50,7 +50,7 @@ struct my_option
   char      **value;                   /* The variable value */
   char      **u_max_value;             /* The user def. max variable value */
   struct st_typelib *typelib;           /* Pointer to possible values */
-  ulong     var_type;
+  uint32_t     var_type;
   enum get_opt_arg_type arg_type;
   int64_t   def_value;                 /* Default value */
   int64_t   min_value;                 /* Min allowed value */
