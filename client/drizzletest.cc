@@ -147,7 +147,7 @@ parser_st parser;
 typedef struct
 {
   char file[FN_REFLEN];
-  ulong pos;
+  uint32_t pos;
 } master_pos_st;
 
 master_pos_st master_pos;
@@ -2157,8 +2157,8 @@ static void init_builtin_echo(void)
 */
 
 static int replace(DYNAMIC_STRING *ds_str,
-                   const char *search_str, ulong search_len,
-                   const char *replace_str, ulong replace_len)
+                   const char *search_str, uint32_t search_len,
+                   const char *replace_str, uint32_t replace_len)
 {
   DYNAMIC_STRING ds_tmp;
   const char *start= strstr(ds_str->str, search_str);
@@ -3284,7 +3284,7 @@ static int do_sleep(struct st_command *command, bool real_sleep)
     sleep_val= opt_sleep;
 
   if (sleep_val)
-    my_sleep((ulong) (sleep_val * 1000000L));
+    my_sleep((uint32_t) (sleep_val * 1000000L));
   command->last_argument= sleep_end;
   return 0;
 }
@@ -3655,7 +3655,7 @@ static void safe_connect(DRIZZLE *drizzle, const char *name, const char *host,
                   int port)
 {
   int failed_attempts= 0;
-  static ulong connection_retry_sleep= 100000; /* Microseconds */
+  static uint32_t connection_retry_sleep= 100000; /* Microseconds */
 
 
   while(!drizzle_connect(drizzle, host, user, pass, db, port, NULL,

@@ -22,18 +22,6 @@
 ** WARRANTY: None, expressed, impressed, implied
 **          or other
 ** STATUS: Public domain
-** Adapted and optimized for DRIZZLE by
-** Michael Widenius, Sinisa Milivojevic, Jani Tolonen
-** -w --where added 9/10/98 by Jim Faucette
-** slave code by David Saez Padros <david@ols.es>
-** master/autocommit code by Brian Aker <brian@tangent.org>
-** SSL by
-** Andrei Errapart <andreie@no.spam.ee>
-** TÃµnu Samuel  <tonu@please.do.not.remove.this.spam.ee>
-** XML by Gary Huntress <ghuntress@mediaone.net> 10/10/01, cleaned up
-** and adapted to drizzledump 05/11/01 by Jani Tolonen
-** Added --single-transaction option 06/06/2002 by Peter Zaitsev
-** 10 Jun 2003: SET NAMES and --no-set-names by Alexander Barkov
 */
 
 #define DUMP_VERSION "10.13"
@@ -742,19 +730,19 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
     {
       char buff[255];
       char *end= compatible_mode_normal_str;
-      int i;
+      uint32_t i;
       uint32_t mode;
-      uint err_len;
+      uint32_t error_len;
 
       opt_quoted= 1;
       opt_set_charset= 0;
       opt_compatible_mode_str= argument;
       opt_compatible_mode= find_set(&compatible_mode_typelib,
                                     argument, strlen(argument),
-                                    &err_ptr, &err_len);
-      if (err_len)
+                                    &err_ptr, &error_len);
+      if (error_len)
       {
-        strmake(buff, err_ptr, min(sizeof(buff), (ulong)err_len));
+        strmake(buff, err_ptr, min(sizeof(buff), error_len));
         fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
         exit(1);
       }
@@ -3115,11 +3103,11 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
     for (;;)
     {
       const char *pos= start;
-      uint var_len;
+      uint32_t var_len;
 
       for (; pos != end && *pos != ','; pos++) ;
-      var_len= (uint) (pos - start);
-      strmake(buff, start, min(sizeof(buff), (ulong)var_len));
+      var_len= (uint32_t) (pos - start);
+      strmake(buff, start, min(sizeof(buff), var_len));
       find= find_type(buff, lib, var_len);
       if (!find)
       {

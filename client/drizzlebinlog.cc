@@ -58,12 +58,12 @@ enum options_drizzlebinlog
 #define CLIENT_CAPABILITIES  (CLIENT_LONG_PASSWORD | CLIENT_LONG_FLAG | CLIENT_LOCAL_FILES)
 
 char server_version[SERVER_VERSION_LENGTH];
-ulong server_id = 0;
+uint32_t server_id = 0;
 
 // needed by net_serv.c
-ulong bytes_sent = 0L, bytes_received = 0L;
-ulong drizzled_net_retry_count = 10L;
-ulong open_files_limit;
+uint32_t bytes_sent = 0L, bytes_received = 0L;
+uint32_t drizzled_net_retry_count = 10L;
+uint32_t open_files_limit;
 uint test_flags = 0;
 static uint opt_protocol= 0;
 static FILE *result_file;
@@ -364,7 +364,7 @@ Exit_status Load_log_processor::load_old_format_file(NET* net,
 
   for (;;)
   {
-    ulong packet_len = my_net_read(net);
+    uint32_t packet_len = my_net_read(net);
     if (packet_len == 0)
     {
       if (my_net_write(net, (uchar*) "", 0) || net_flush(net))
@@ -1429,7 +1429,7 @@ static Exit_status dump_remote_log_entries(PRINT_EVENT_INFO *print_event_info,
 
 {
   uchar buf[128];
-  ulong len;
+  uint32_t len;
   uint logname_len;
   NET* net;
   my_off_t old_off= start_position_mot;
