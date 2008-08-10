@@ -75,7 +75,7 @@ ha_checksum mi_unique_hash(MI_UNIQUEDEF *def, const uchar *record)
 {
   const uchar *pos, *end;
   ha_checksum crc= 0;
-  ulong seed1=0, seed2= 4;
+  uint32_t seed1=0, seed2= 4;
   HA_KEYSEG *keyseg;
 
   for (keyseg=def->seg ; keyseg < def->end ; keyseg++)

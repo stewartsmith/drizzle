@@ -249,7 +249,7 @@ void Field_varstring::sql_type(String &res) const
 {
   THD *thd= table->in_use;
   const CHARSET_INFO * const cs=res.charset();
-  ulong length;
+  uint32_t length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
                              res.alloced_length(), "%s(%d)",
@@ -593,7 +593,7 @@ uint Field_varstring::is_equal(Create_field *new_field)
 }
 
 
-void Field_varstring::hash(ulong *nr, ulong *nr2)
+void Field_varstring::hash(uint32_t *nr, uint32_t *nr2)
 {
   if (is_null())
   {
@@ -601,7 +601,7 @@ void Field_varstring::hash(ulong *nr, ulong *nr2)
   }
   else
   {
-    uint len=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
+    uint32_t len=  length_bytes == 1 ? (uint) *ptr : uint2korr(ptr);
     const CHARSET_INFO * const cs= charset();
     cs->coll->hash_sort(cs, ptr + length_bytes, len, nr, nr2);
   }

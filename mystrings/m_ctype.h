@@ -193,7 +193,7 @@ typedef struct my_collation_handler_st
   
   /* Hash calculation */
   void (*hash_sort)(const struct charset_info_st *cs, const uchar *key, size_t len,
-		    ulong *nr1, ulong *nr2); 
+                    uint32_t *nr1, uint32_t *nr2); 
   bool (*propagate)(const struct charset_info_st *cs, const uchar *str, size_t len);
 } MY_COLLATION_HANDLER;
 
@@ -380,7 +380,7 @@ extern int  my_strnncollsp_simple(const CHARSET_INFO * const, const uchar *, siz
 
 extern void my_hash_sort_simple(const CHARSET_INFO * const cs,
 				const uchar *key, size_t len,
-				ulong *nr1, ulong *nr2); 
+				uint32_t *nr1, uint32_t *nr2); 
 
 extern size_t my_lengthsp_8bit(const CHARSET_INFO * const cs, const char *ptr, size_t length);
 
@@ -537,7 +537,7 @@ int my_strcasecmp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
                          const char *s, const char *t);
 
 void my_hash_sort_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
-                         const uchar *key, size_t len,ulong *nr1, ulong *nr2);
+                         const uchar *key, size_t len, uint32_t *nr1, uint32_t *nr2);
 
 size_t my_strnxfrm_mb(const CHARSET_INFO * const,
                       uchar *dst, size_t dstlen, uint nweights,

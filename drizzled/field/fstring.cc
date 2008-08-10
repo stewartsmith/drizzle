@@ -201,7 +201,7 @@ void Field_string::sql_type(String &res) const
 {
   THD *thd= table->in_use;
   const CHARSET_INFO * const cs= res.charset();
-  ulong length;
+  uint32_t length;
 
   length= cs->cset->snprintf(cs,(char*) res.ptr(),
                              res.alloced_length(), "%s(%d)",

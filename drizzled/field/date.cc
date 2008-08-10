@@ -196,7 +196,7 @@ double Field_newdate::val_real(void)
 
 int64_t Field_newdate::val_int(void)
 {
-  ulong j= uint3korr(ptr);
+  uint32_t j= uint3korr(ptr);
   j= (j % 32L)+(j / 32L % 16L)*100L + (j/(16L*32L))*10000L;
   return (int64_t) j;
 }

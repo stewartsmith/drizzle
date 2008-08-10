@@ -656,7 +656,7 @@ int Field_num::check_int(const CHARSET_INFO * const cs, const char *str, int len
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                         "integer", tmp.c_ptr(), field_name,
-                        (ulong) table->in_use->row_count);
+                        (uint32_t) table->in_use->row_count);
     return 1;
   }
   /* Test if we have garbage at the end of the given string. */
@@ -859,7 +859,7 @@ Field::Field(uchar *ptr_arg,uint32_t length_arg,uchar *null_ptr_arg,
 }
 
 
-void Field::hash(ulong *nr, ulong *nr2)
+void Field::hash(uint32_t *nr, uint32_t *nr2)
 {
   if (is_null())
   {
@@ -1597,7 +1597,7 @@ check_string_copy_error(Field_str *field,
                       ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, 
                       ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                       "string", tmp, field->field_name,
-                      (ulong) field->table->in_use->row_count);
+                      (uint32_t) field->table->in_use->row_count);
   return true;
 }
 
@@ -2131,7 +2131,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
                         enum column_format_type column_format)
 {
   uint sign_len, allowed_type_modifier= 0;
-  ulong max_field_charlength= MAX_FIELD_CHARLENGTH;
+  uint32_t max_field_charlength= MAX_FIELD_CHARLENGTH;
 
   field= 0;
   field_name= fld_name;
@@ -2385,7 +2385,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
 }
 
 
-enum_field_types get_blob_type_from_length(ulong length __attribute__((unused)))
+enum_field_types get_blob_type_from_length(uint32_t length __attribute__((unused)))
 {
   enum_field_types type;
 

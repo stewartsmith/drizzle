@@ -232,7 +232,7 @@ void hp_movelink(HASH_INFO *pos, HASH_INFO *next_link, HASH_INFO *newlink)
 ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
 {
   /*register*/ 
-  ulong nr=1, nr2=4;
+  uint32_t nr=1, nr2=4;
   HA_KEYSEG *seg,*endseg;
 
   for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)
@@ -296,7 +296,7 @@ ulong hp_hashnr(register HP_KEYDEF *keydef, register const uchar *key)
 
 ulong hp_rec_hashnr(register HP_KEYDEF *keydef, register const uchar *rec)
 {
-  ulong nr=1, nr2=4;
+  uint32_t nr=1, nr2=4;
   HA_KEYSEG *seg,*endseg;
 
   for (seg=keydef->seg,endseg=seg+keydef->keysegs ; seg < endseg ; seg++)

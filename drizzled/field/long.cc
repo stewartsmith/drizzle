@@ -68,7 +68,7 @@ int Field_long::store(double nr)
       error= 1;
     }
     else
-      res=(int32_t) (ulong) nr;
+      res=(int32_t) (uint32_t) nr;
   }
   else
   {
