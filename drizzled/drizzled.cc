@@ -1110,7 +1110,7 @@ static void network_init(void)
   memset(&hints, 0, sizeof (hints));
   hints.ai_flags= AI_PASSIVE;
   hints.ai_socktype= SOCK_STREAM;
-  hints.ai_family= AF_INET;
+  hints.ai_family= AF_UNSPEC;
   hints.ai_protocol= IPPROTO_TCP;
 
   snprintf(port_buf, NI_MAXSERV, "%d", mysqld_port);
@@ -1142,6 +1142,16 @@ static void network_init(void)
       struct linger ling = {0, 0};
       int flags =1;
 
+      #ifdef IPV6_V6ONLY
+      if(next->ai_family == AF_INET6) {
+           error= setsockopt(ip_sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *) &flags, sizeof(flags));
+        if (error != 0)
+        {
+          perror("setsockopt");
+          assert(error == 0);
+        }
+      }
+      #endif   
       error= setsockopt(ip_sock, SOL_SOCKET, SO_REUSEADDR, (char*)&flags, sizeof(flags));
       if (error != 0)
       {
@@ -1187,7 +1197,6 @@ static void network_init(void)
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
-    freeaddrinfo(ai);
     if (ret < 0)
     {
       sql_perror("Can't start server: Bind on TCP/IP port");
@@ -1203,6 +1212,7 @@ static void network_init(void)
     }
   }
 
+  freeaddrinfo(ai);
   return;
 }
 
