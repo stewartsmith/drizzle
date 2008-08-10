@@ -2877,10 +2877,19 @@ void handle_connections_sockets()
       if (  getsockname(new_sock,(struct sockaddr *)&dummy,
                   (socklen_t *)&dummyLen) < 0  )
       {
-	sql_perror("Error on new connection socket");
-	(void) shutdown(new_sock, SHUT_RDWR);
-	(void) closesocket(new_sock);
-	continue;
+	    sql_perror("Error on new connection socket");
+	    (void) shutdown(new_sock, SHUT_RDWR);
+	    (void) closesocket(new_sock);
+	    continue;
+      }
+	  dummyLen = sizeof(dummy);
+	  if ( getpeername(new_sock, (struct sockaddr *)&dummy,
+			(socklen_t *)&dummyLen) < 0)
+      {
+         sql_perror("Error on new connection socket");
+         (void) shutdown(new_sock, SHUT_RDWR);
+         (void) closesocket(new_sock);
+         continue;
       }
     }
 
