@@ -1200,65 +1200,6 @@ bool thr_reschedule_write_lock(THR_LOCK_DATA *data)
 
 #include <my_sys.h>
 
-static void thr_print_lock(const char* name,struct st_lock_list *list)
-{
-  THR_LOCK_DATA *data,**prev;
-  uint count=0;
-
-  if (list->data)
-  {
-    printf("%-10s: ",name);
-    prev= &list->data;
-    for (data=list->data; data && count++ < MAX_LOCKS ; data=data->next)
-    {
-      printf("0x%lx (%lu:%d); ", (ulong) data, data->owner->info->thread_id,
-             (int) data->type);
-      if (data->prev != prev)
-	printf("\nWarning: prev didn't point at previous lock\n");
-      prev= &data->next;
-    }
-    puts("");
-    if (prev != list->last)
-      printf("Warning: last didn't point at last lock\n");
-  }
-}
-
-void thr_print_locks(void)
-{
-  LIST *list;
-  uint count=0;
-
-  pthread_mutex_lock(&THR_LOCK_lock);
-  puts("Current locks:");
-  for (list= thr_lock_thread_list; list && count++ < MAX_THREADS;
-       list= list_rest(list))
-  {
-    THR_LOCK *lock=(THR_LOCK*) list->data;
-    VOID(pthread_mutex_lock(&lock->mutex));
-    printf("lock: 0x%lx:",(ulong) lock);
-    if ((lock->write_wait.data || lock->read_wait.data) &&
-	(! lock->read.data && ! lock->write.data))
-      printf(" WARNING: ");
-    if (lock->write.data)
-      printf(" write");
-    if (lock->write_wait.data)
-      printf(" write_wait");
-    if (lock->read.data)
-      printf(" read");
-    if (lock->read_wait.data)
-      printf(" read_wait");
-    puts("");
-    thr_print_lock("write",&lock->write);
-    thr_print_lock("write_wait",&lock->write_wait);
-    thr_print_lock("read",&lock->read);
-    thr_print_lock("read_wait",&lock->read_wait);
-    VOID(pthread_mutex_unlock(&lock->mutex));
-    puts("");
-  }
-  fflush(stdout);
-  pthread_mutex_unlock(&THR_LOCK_lock);
-}
-
 /*****************************************************************************
 ** Test of thread locks
 ****************************************************************************/
