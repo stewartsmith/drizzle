@@ -22,12 +22,12 @@
 
 static const char field_separator=',';
 
-int find_type_or_exit(const char *x, TYPELIB *typelib, const char *option)
+int find_type_or_exit(char *x, TYPELIB *typelib, const char *option)
 {
   int res;
   const char **ptr;
 
-  if ((res= find_type((const char *) x, typelib, 2)) <= 0)
+  if ((res= find_type(x, typelib, 2)) <= 0)
   {
     ptr= typelib->type_names;
     if (!*x)

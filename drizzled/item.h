@@ -1309,7 +1309,7 @@ public:
   void set_null();
   void set_int(int64_t i, uint32_t max_length_arg);
   void set_double(double i);
-  void set_decimal(const char *str, ulong length);
+  void set_decimal(char *str, ulong length);
   bool set_str(const char *str, ulong length);
   bool set_longdata(const char *str, ulong length);
   void set_time(DRIZZLE_TIME *tm, timestamp_type type, uint32_t max_length_arg);
