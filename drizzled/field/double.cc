@@ -210,7 +210,7 @@ String *Field_double::val_str(String *val_buffer,
 #endif
     doubleget(nr,ptr);
 
-  uint to_length=max(field_length, DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE);
+  uint to_length=max(field_length, (uint32_t)DOUBLE_TO_STRING_CONVERSION_BUFFER_SIZE);
   val_buffer->alloc(to_length);
   char *to=(char*) val_buffer->ptr();
   size_t len;

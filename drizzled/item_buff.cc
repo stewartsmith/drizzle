@@ -63,7 +63,7 @@ Cached_item::~Cached_item() {}
 */
 
 Cached_item_str::Cached_item_str(THD *thd, Item *arg)
-  :item(arg), value(min(arg->max_length, thd->variables.max_sort_length))
+  :item(arg), value(min(arg->max_length, (uint32_t)thd->variables.max_sort_length))
 {}
 
 bool Cached_item_str::cmp(void)

@@ -4589,7 +4589,7 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
   uint	and_level,i,found_eq_constant;
   KEY_FIELD *key_fields, *end, *field;
   uint sz;
-  uint m= max(select_lex->max_equal_elems,1);
+  uint m= max(select_lex->max_equal_elems,(uint32_t)1);
   
   /* 
     We use the same piece of memory to store both  KEY_FIELD 
@@ -4757,7 +4757,7 @@ static void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
       if (map == 1)			// Only one table
       {
 	TABLE *tmp_table=join->all_tables[tablenr];
-	keyuse->ref_table_rows= max(tmp_table->file->stats.records, 100);
+	keyuse->ref_table_rows= max(tmp_table->file->stats.records, (ha_rows)100);
       }
     }
     /*
@@ -6268,7 +6268,7 @@ static void calc_used_field_length(THD *thd __attribute__((unused)),
   {
     uint blob_length=(uint) (join_tab->table->file->stats.mean_rec_length-
 			     (join_tab->table->s->reclength- rec_length));
-    rec_length+=(uint) max(4,blob_length);
+    rec_length+=(uint) max((uint)4,blob_length);
   }
   join_tab->used_fields=fields;
   join_tab->used_fieldlength=rec_length;
@@ -10679,7 +10679,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
     {
       signed int overflow;
 
-      dec= min(dec, DECIMAL_MAX_SCALE);
+      dec= min(dec, (uint8_t)DECIMAL_MAX_SCALE);
 
       /*
         If the value still overflows the field with the corrected dec,
@@ -15750,7 +15750,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint table_count)
   cache->length=length+blobs*sizeof(char*);
   cache->blobs=blobs;
   *blob_ptr=0;					/* End sequentel */
-  size=max(thd->variables.join_buff_size, cache->length);
+  size=max(thd->variables.join_buff_size, (ulong)cache->length);
   if (!(cache->buff=(uchar*) my_malloc(size,MYF(0))))
     return(1);				/* Don't use cache */ /* purecov: inspected */
   cache->end=cache->buff+size;

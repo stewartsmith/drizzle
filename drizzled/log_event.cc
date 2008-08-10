@@ -1761,7 +1761,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
    auto_increment_increment(1), auto_increment_offset(1),
    time_zone_len(0), lc_time_names_number(0), charset_database_number(0)
 {
-  ulong data_len;
+  uint32_t data_len;
   uint32_t tmp;
   uint8_t common_header_len, post_header_len;
   Log_event::Byte *start;
@@ -1801,7 +1801,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
       be even bigger, but this will suffice to catch most corruption
       errors that can lead to a crash.
     */
-    if (status_vars_len > min(data_len, MAX_SIZE_LOG_EVENT_STATUS))
+    if (status_vars_len > min(data_len, (uint32_t)MAX_SIZE_LOG_EVENT_STATUS))
     {
       query= 0;
       return;
@@ -4400,7 +4400,7 @@ bool User_var_log_event::write(IO_CACHE* file)
   char buf[UV_NAME_LEN_SIZE];
   char buf1[UV_VAL_IS_NULL + UV_VAL_TYPE_SIZE + 
 	    UV_CHARSET_NUMBER_SIZE + UV_VAL_LEN_SIZE];
-  uchar buf2[max(8, DECIMAL_MAX_FIELD_SIZE + 2)], *pos= buf2;
+  uchar buf2[(8 > DECIMAL_MAX_FIELD_SIZE + 2) ? 8 : DECIMAL_MAX_FIELD_SIZE +2], *pos= buf2;
   uint buf1_length;
   ulong event_length;
 

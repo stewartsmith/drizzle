@@ -468,7 +468,7 @@ static uchar *pack_screens(List<Create_field> &create_fields,
     }
     cfield->row=(uint8_t) row;
     cfield->col=(uint8_t) (length+1);
-    cfield->sc_length=(uint8_t) min(cfield->length,cols-(length+2));
+    cfield->sc_length=(uint8_t) min(cfield->length,(uint32_t)cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
@@ -686,7 +686,7 @@ static bool pack_header(uchar *forminfo,
     return(1);
   }
   /* Hack to avoid bugs with small static rows in MySQL */
-  reclength=max(file->min_record_length(table_options),reclength);
+  reclength=max((ulong)file->min_record_length(table_options),reclength);
   if (info_length+(ulong) create_fields.elements*FCOMP+288+
       n_length+int_length+com_length > 65535L || int_count > 255)
   {

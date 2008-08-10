@@ -175,7 +175,7 @@ net_send_ok(THD *thd,
   pos+=2;
 
   /* We can only return up to 65535 warnings in two bytes */
-  uint tmp= min(total_warn_count, 65535);
+  uint tmp= min(total_warn_count, (uint)65535);
   int2store(pos, tmp);
   pos+= 2;
 
@@ -237,7 +237,7 @@ static void write_eof_packet(THD *thd, NET *net,
     Don't send warn count during SP execution, as the warn_list
     is cleared between substatements, and mysqltest gets confused
   */
-  uint tmp= min(total_warn_count, 65535);
+  uint tmp= min(total_warn_count, (uint)65535);
   buff[0]= DRIZZLE_PROTOCOL_NO_MORE_DATA;
   int2store(buff+1, tmp);
   /*

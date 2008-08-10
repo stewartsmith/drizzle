@@ -4699,10 +4699,10 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       register const int v = plm1 - i;
       turboShift = u - v;
       bcShift    = bmBc[(uint) (uchar) text[i + j]] - plm1 + i;
-      shift      = max(turboShift, bcShift);
-      shift      = max(shift, bmGs[i]);
+      shift      = (turboShift > bcShift) ? turboShift : bcShift;
+      shift      = (shift > bmGs[i]) ? shift : bmGs[i];
       if (shift == bmGs[i])
-	u = min(pattern_len - shift, v);
+	u = (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
 	if (turboShift < bcShift)
@@ -4730,10 +4730,10 @@ bool Item_func_like::turboBM_matches(const char* text, int text_len) const
       register const int v = plm1 - i;
       turboShift = u - v;
       bcShift    = bmBc[(uint) likeconv(cs, text[i + j])] - plm1 + i;
-      shift      = max(turboShift, bcShift);
+      shift      = (turboShift > bcShift) ? turboShift : bcShift;
       shift      = max(shift, bmGs[i]);
       if (shift == bmGs[i])
-	u = min(pattern_len - shift, v);
+	u = (pattern_len - shift < v) ? pattern_len - shift : v;
       else
       {
 	if (turboShift < bcShift)

@@ -211,7 +211,7 @@ struct sql_ex_info
    event's ID, LOG_EVENT_HEADER_LEN will be something like 26, but
    LOG_EVENT_MINIMAL_HEADER_LEN will remain 19.
 */
-#define LOG_EVENT_MINIMAL_HEADER_LEN 19
+#define LOG_EVENT_MINIMAL_HEADER_LEN (uint8_t)19
 
 /* event-specific post-header sizes */
 // where 3.23, 4.x and 5.0 agree

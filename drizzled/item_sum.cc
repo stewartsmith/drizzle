@@ -1127,7 +1127,7 @@ Item_sum_avg_distinct::fix_length_and_dec()
     AVG() will divide val by count. We need to reserve digits
     after decimal point as the result can be fractional.
   */
-  decimals= min(decimals + prec_increment, NOT_FIXED_DEC);
+  decimals= min(decimals + prec_increment, (unsigned int)NOT_FIXED_DEC);
 }
 
 
@@ -1189,7 +1189,7 @@ void Item_sum_avg::fix_length_and_dec()
   if (hybrid_type == DECIMAL_RESULT)
   {
     int precision= args[0]->decimal_precision() + prec_increment;
-    decimals= min(args[0]->decimals + prec_increment, DECIMAL_MAX_SCALE);
+    decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
     f_precision= min(precision+DECIMAL_LONGLONG_DIGITS, DECIMAL_MAX_PRECISION);
@@ -1197,7 +1197,7 @@ void Item_sum_avg::fix_length_and_dec()
     dec_bin_size= my_decimal_get_binary_size(f_precision, f_scale);
   }
   else {
-    decimals= min(args[0]->decimals + prec_increment, NOT_FIXED_DEC);
+    decimals= min(args[0]->decimals + prec_increment, (unsigned int) NOT_FIXED_DEC);
     max_length= args[0]->max_length + prec_increment;
   }
 }
@@ -1394,7 +1394,7 @@ void Item_sum_variance::fix_length_and_dec()
   case DECIMAL_RESULT:
   {
     int precision= args[0]->decimal_precision()*2 + prec_increment;
-    decimals= min(args[0]->decimals + prec_increment, DECIMAL_MAX_SCALE);
+    decimals= min(args[0]->decimals + prec_increment, (unsigned int) DECIMAL_MAX_SCALE);
     max_length= my_decimal_precision_to_length(precision, decimals,
                                                unsigned_flag);
 

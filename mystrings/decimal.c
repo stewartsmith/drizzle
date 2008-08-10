@@ -13,8 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#line 18 "decimal.c"
-
 /*
 =======================================================================
   NOTE: this library implements SQL standard "exact numeric" type
@@ -231,7 +229,7 @@ void max_decimal(int precision, int frac, decimal_t *to)
   to->sign= 0;
   if ((intpart= to->intg= (precision - frac)))
   {
-    int firstdigits= intpart % DIG_PER_DEC1;
+    const int firstdigits= intpart % DIG_PER_DEC1;
     if (firstdigits)
       *buf++= powers10[firstdigits] - 1; /* get 9 99 999 ... */
     for(intpart/= DIG_PER_DEC1; intpart; intpart--)
@@ -240,7 +238,7 @@ void max_decimal(int precision, int frac, decimal_t *to)
 
   if ((to->frac= frac))
   {
-    int lastdigits= frac % DIG_PER_DEC1;
+    const int lastdigits= frac % DIG_PER_DEC1;
     for(frac/= DIG_PER_DEC1; frac; frac--)
       *buf++= DIG_MAX;
     if (lastdigits)
@@ -783,9 +781,11 @@ static int decimal_shift(decimal_t *dec, int shift)
 */
 
 int
-internal_str2dec(const char *from, decimal_t *to, char **end, bool fixed)
+internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
 {
-  const char *s= from, *s1, *endp, *end_of_string= *end;
+  char *s= from, *s1;
+  char *end_of_string = *end;
+  char *endp;
   int i, intg, frac, error, intg1, frac1;
   dec1 x,*buf;
   sanity(to);
@@ -818,7 +818,7 @@ internal_str2dec(const char *from, decimal_t *to, char **end, bool fixed)
     endp= s;
   }
 
-  *end= (char*) endp;
+  *end= endp;
 
   if (frac+intg == 0)
     goto fatal_error;
@@ -896,7 +896,7 @@ internal_str2dec(const char *from, decimal_t *to, char **end, bool fixed)
   if (endp+1 < end_of_string && (*endp == 'e' || *endp == 'E'))
   {
     int str_error;
-    int64_t exponent= my_strtoll10(endp+1, (char**) &end_of_string,
+    const int64_t exponent= my_strtoll10(endp+1, (char**) &end_of_string,
                                     &str_error);
 
     if (end_of_string != endp +1)               /* If at least one digit */

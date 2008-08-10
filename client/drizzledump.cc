@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-/* drizzledump.c  - Dump a tables contents and format to an ASCII file
+/* drizzledump.cc  - Dump a tables contents and format to an ASCII file
 **
 ** The author's original notes follow :-
 **
@@ -38,6 +38,7 @@
 
 #define DUMP_VERSION "10.13"
 
+#include <string>
 #include "client_priv.h"
 
 #include <mysys/my_sys.h>
@@ -48,6 +49,7 @@
 
 #include <drizzled/error.h>
 
+using namespace std;
 /* Exit codes */
 
 #define EX_USAGE 1
@@ -73,12 +75,12 @@
 #define IGNORE_DATA 0x01 /* don't dump data for this table */
 #define IGNORE_INSERT_DELAYED 0x02 /* table doesn't support INSERT DELAYED */
 
-static void add_load_option(DYNAMIC_STRING *str, const char *option,
-                             const char *option_value);
+static void add_load_option(string &str, const char *option,
+                            const char *option_value);
 static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
                       char **err_pos, uint *err_len);
 
-static void field_escape(DYNAMIC_STRING* in, const char *from);
+static void field_escape(string &in, const char *from);
 static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 quick= 1, extended_insert= 1,
                 lock_tables=1,ignore_errors=0,flush_logs=0,flush_privileges=0,
@@ -97,10 +99,10 @@ static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 opt_include_master_host_port= 0,
                 opt_events= 0,
                 opt_alltspcs=0, opt_notspcs= 0;
-static bool insert_pat_inited= 0, debug_info_flag= 0, debug_check_flag= 0;
+static bool debug_info_flag= 0, debug_check_flag= 0;
 static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
 static DRIZZLE drizzle_connection,*drizzle=0;
-static DYNAMIC_STRING insert_pat;
+static string insert_pat;
 static char  *opt_password=0,*current_user=0,
              *current_host=0,*path=0,*fields_terminated=0,
              *lines_terminated=0, *enclosed=0, *opt_enclosed=0, *escaped=0,
@@ -121,24 +123,12 @@ static uint opt_drizzle_port= 0, opt_master_data;
 static uint opt_slave_data;
 static uint my_end_arg;
 static int   first_error=0;
-static DYNAMIC_STRING extended_row;
+static string extended_row;
 FILE *md_result_file= 0;
 FILE *stderror_file=0;
 
 static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
 
-/*
-Dynamic_string wrapper functions. In this file use these
-wrappers, they will terminate the process if there is
-an allocation failure.
-*/
-static void init_dynamic_string_checked(DYNAMIC_STRING *str, const char *init_str,
-			    uint init_alloc, uint alloc_increment);
-static void dynstr_append_checked(DYNAMIC_STRING* dest, const char* src);
-static void dynstr_set_checked(DYNAMIC_STRING *str, const char *init_str);
-static void dynstr_append_mem_checked(DYNAMIC_STRING *str, const char *append,
-			  uint length);
-static void dynstr_realloc_checked(DYNAMIC_STRING *str, uint32_t additional_size);
 /*
   Constant for detection of default value of default_charset.
   If default_charset is equal to drizzle_universal_client_charset, then
@@ -764,7 +754,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
                                     &err_ptr, &err_len);
       if (err_len)
       {
-        strmake(buff, err_ptr, min(sizeof(buff), err_len));
+        strmake(buff, err_ptr, min(sizeof(buff), (ulong)err_len));
         fprintf(stderr, "Invalid mode to --compatible: %s\n", buff);
         exit(1);
       }
@@ -1057,10 +1047,6 @@ static void free_resources(void)
   my_free(opt_password, MYF(MY_ALLOW_ZERO_PTR));
   if (hash_inited(&ignore_table))
     hash_free(&ignore_table);
-  if (extended_insert)
-    dynstr_free(&extended_row);
-  if (insert_pat_inited)
-    dynstr_free(&insert_pat);
   if (defaults_argv)
     free_defaults(defaults_argv);
   my_end(my_end_arg);
@@ -1490,13 +1476,7 @@ static uint get_table_structure(char *table, char *db, char *table_type,
   if ((write_data= !(*ignore_flag & IGNORE_DATA)))
   {
     complete_insert= opt_complete_insert;
-    if (!insert_pat_inited)
-    {
-      insert_pat_inited= 1;
-      init_dynamic_string_checked(&insert_pat, "", 1024, 1024);
-    }
-    else
-      dynstr_set_checked(&insert_pat, "");
+    insert_pat= "";
   }
 
   insert_option= ((delayed && opt_ignore) ? " DELAYED IGNORE " :
@@ -1690,21 +1670,21 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     if (write_data)
     {
       if (opt_replace_into)
-        dynstr_append_checked(&insert_pat, "REPLACE ");
+        insert_pat.append("REPLACE ");
       else
-        dynstr_append_checked(&insert_pat, "INSERT ");
-      dynstr_append_checked(&insert_pat, insert_option);
-      dynstr_append_checked(&insert_pat, "INTO ");
-      dynstr_append_checked(&insert_pat, opt_quoted_table);
+        insert_pat.append("INSERT ");
+      insert_pat.append(insert_option);
+      insert_pat.append("INTO ");
+      insert_pat.append(opt_quoted_table);
       if (complete_insert)
       {
-        dynstr_append_checked(&insert_pat, " (");
+        insert_pat.append(" (");
       }
       else
       {
-        dynstr_append_checked(&insert_pat, " VALUES ");
+        insert_pat.append(" VALUES ");
         if (!extended_insert)
-          dynstr_append_checked(&insert_pat, "(");
+          insert_pat.append("(");
       }
     }
 
@@ -1714,11 +1694,10 @@ static uint get_table_structure(char *table, char *db, char *table_type,
       {
         if (init)
         {
-          dynstr_append_checked(&insert_pat, ", ");
+          insert_pat.append(", ");
         }
         init=1;
-        dynstr_append_checked(&insert_pat,
-                      quote_name(row[SHOW_FIELDNAME], name_buff, 0));
+        insert_pat.append(quote_name(row[SHOW_FIELDNAME], name_buff, 0));
       }
     }
     num_fields= drizzle_num_rows(result);
@@ -1759,19 +1738,19 @@ static uint get_table_structure(char *table, char *db, char *table_type,
     if (write_data)
     {
       if (opt_replace_into)
-        dynstr_append_checked(&insert_pat, "REPLACE ");
+        insert_pat.append("REPLACE ");
       else
-        dynstr_append_checked(&insert_pat, "INSERT ");
-      dynstr_append_checked(&insert_pat, insert_option);
-      dynstr_append_checked(&insert_pat, "INTO ");
-      dynstr_append_checked(&insert_pat, result_table);
+        insert_pat.append("INSERT ");
+      insert_pat.append(insert_option);
+      insert_pat.append("INTO ");
+      insert_pat.append(result_table);
       if (complete_insert)
-        dynstr_append_checked(&insert_pat, " (");
+        insert_pat.append(" (");
       else
       {
-        dynstr_append_checked(&insert_pat, " VALUES ");
+        insert_pat.append(" VALUES ");
         if (!extended_insert)
-          dynstr_append_checked(&insert_pat, "(");
+          insert_pat.append("(");
       }
     }
 
@@ -1786,12 +1765,11 @@ static uint get_table_structure(char *table, char *db, char *table_type,
           check_io(sql_file);
         }
         if (complete_insert)
-          dynstr_append_checked(&insert_pat, ", ");
+          insert_pat.append(", ");
       }
       init=1;
       if (complete_insert)
-        dynstr_append_checked(&insert_pat,
-                      quote_name(row[SHOW_FIELDNAME], name_buff, 0));
+        insert_pat.append(quote_name(row[SHOW_FIELDNAME], name_buff, 0));
       if (!opt_no_create_info)
       {
         if (opt_xml)
@@ -1950,9 +1928,9 @@ continue_xml:
   }
   if (complete_insert)
   {
-    dynstr_append_checked(&insert_pat, ") VALUES ");
+    insert_pat.append(") VALUES ");
     if (!extended_insert)
-      dynstr_append_checked(&insert_pat, "(");
+      insert_pat.append("(");
   }
   if (sql_file != md_result_file)
   {
@@ -1963,8 +1941,8 @@ continue_xml:
   return((uint) num_fields);
 } /* get_table_structure */
 
-static void add_load_option(DYNAMIC_STRING *str, const char *option,
-                             const char *option_value)
+static void add_load_option(string &str, const char *option,
+                            const char *option_value)
 {
   if (!option_value)
   {
@@ -1972,12 +1950,12 @@ static void add_load_option(DYNAMIC_STRING *str, const char *option,
     return;
   }
 
-  dynstr_append_checked(str, option);
+  str.append(option);
   
   if (strncmp(option_value, "0x", sizeof("0x")-1) == 0)
   {
     /* It's a hex constant, don't escape */
-    dynstr_append_checked(str, option_value);
+    str.append(option_value);
   }
   else
   {
@@ -1994,15 +1972,15 @@ static void add_load_option(DYNAMIC_STRING *str, const char *option,
   syntax errors from the SQL parser.
 */
 
-static void field_escape(DYNAMIC_STRING* in, const char *from)
+static void field_escape(string &in, const char *from)
 {
   uint end_backslashes= 0; 
 
-  dynstr_append_checked(in, "'");
+  in.append("'");
 
   while (*from)
   {
-    dynstr_append_mem_checked(in, from, 1);
+    in.append(from, 1);
 
     if (*from == '\\')
       end_backslashes^=1;    /* find odd number of backslashes */
@@ -2011,7 +1989,7 @@ static void field_escape(DYNAMIC_STRING* in, const char *from)
       if (*from == '\'' && !end_backslashes)
       {
         /* We want a duplicate of "'" for DRIZZLE */
-        dynstr_append_checked(in, "\'");
+        in.append("\'");
       }
       end_backslashes=0;
     }
@@ -2019,9 +1997,9 @@ static void field_escape(DYNAMIC_STRING* in, const char *from)
   }
   /* Add missing backslashes if user has specified odd number of backs.*/
   if (end_backslashes)
-    dynstr_append_checked(in, "\\");
-  
-  dynstr_append_checked(in, "'");
+    in.append("\\");
+
+  in.append("'");
 }
 
 
@@ -2046,7 +2024,7 @@ static void dump_table(char *table, char *db)
 {
   char ignore_flag;
   char buf[200], table_buff[NAME_LEN+3];
-  DYNAMIC_STRING query_string;
+  string query_string;
   char table_type[NAME_LEN];
   char *result_table, table_buff2[NAME_LEN*2+3], *opt_quoted_table;
   int error= 0;
@@ -2112,7 +2090,8 @@ static void dump_table(char *table, char *db)
 
   verbose_msg("-- Sending SELECT query...\n");
 
-  init_dynamic_string_checked(&query_string, "", 1024, 1024);
+  query_string.clear();
+  query_string.reserve(1024);
 
   if (path)
   {
@@ -2134,38 +2113,37 @@ static void dump_table(char *table, char *db)
 
     /* now build the query string */
 
-    dynstr_append_checked(&query_string, "SELECT * INTO OUTFILE '");
-    dynstr_append_checked(&query_string, filename);
-    dynstr_append_checked(&query_string, "'");
+    query_string.append( "SELECT * INTO OUTFILE '");
+    query_string.append( filename);
+    query_string.append( "'");
 
     if (fields_terminated || enclosed || opt_enclosed || escaped)
-      dynstr_append_checked(&query_string, " FIELDS");
+      query_string.append( " FIELDS");
     
-    add_load_option(&query_string, " TERMINATED BY ", fields_terminated);
-    add_load_option(&query_string, " ENCLOSED BY ", enclosed);
-    add_load_option(&query_string, " OPTIONALLY ENCLOSED BY ", opt_enclosed);
-    add_load_option(&query_string, " ESCAPED BY ", escaped);
-    add_load_option(&query_string, " LINES TERMINATED BY ", lines_terminated);
+    add_load_option(query_string, " TERMINATED BY ", fields_terminated);
+    add_load_option(query_string, " ENCLOSED BY ", enclosed);
+    add_load_option(query_string, " OPTIONALLY ENCLOSED BY ", opt_enclosed);
+    add_load_option(query_string, " ESCAPED BY ", escaped);
+    add_load_option(query_string, " LINES TERMINATED BY ", lines_terminated);
 
-    dynstr_append_checked(&query_string, " FROM ");
-    dynstr_append_checked(&query_string, result_table);
+    query_string.append( " FROM ");
+    query_string.append( result_table);
 
     if (where)
     {
-      dynstr_append_checked(&query_string, " WHERE ");
-      dynstr_append_checked(&query_string, where);
+      query_string.append( " WHERE ");
+      query_string.append( where);
     }
 
     if (order_by)
     {
-      dynstr_append_checked(&query_string, " ORDER BY ");
-      dynstr_append_checked(&query_string, order_by);
+      query_string.append( " ORDER BY ");
+      query_string.append( order_by);
     }
 
-    if (drizzle_real_query(drizzle, query_string.str, query_string.length))
+    if (drizzle_real_query(drizzle, query_string.c_str(), query_string.length()))
     {
       DB_error(drizzle, "when executing 'SELECT INTO OUTFILE'");
-      dynstr_free(&query_string);
       return;
     }
   }
@@ -2178,8 +2156,8 @@ static void dump_table(char *table, char *db)
       check_io(md_result_file);
     }
     
-    dynstr_append_checked(&query_string, "SELECT * FROM ");
-    dynstr_append_checked(&query_string, result_table);
+    query_string.append( "SELECT * FROM ");
+    query_string.append( result_table);
 
     if (where)
     {
@@ -2189,8 +2167,8 @@ static void dump_table(char *table, char *db)
         check_io(md_result_file);
       }
       
-      dynstr_append_checked(&query_string, " WHERE ");
-      dynstr_append_checked(&query_string, where);
+      query_string.append( " WHERE ");
+      query_string.append( where);
     }
     if (order_by)
     {
@@ -2199,8 +2177,8 @@ static void dump_table(char *table, char *db)
         fprintf(md_result_file, "-- ORDER BY:  %s\n", order_by);
         check_io(md_result_file);
       }
-      dynstr_append_checked(&query_string, " ORDER BY ");
-      dynstr_append_checked(&query_string, order_by);
+      query_string.append( " ORDER BY ");
+      query_string.append( order_by);
     }
 
     if (!opt_xml && !opt_compact)
@@ -2208,7 +2186,7 @@ static void dump_table(char *table, char *db)
       fputs("\n", md_result_file);
       check_io(md_result_file);
     }
-    if (drizzle_query_with_error_report(drizzle, 0, query_string.str))
+    if (drizzle_query_with_error_report(drizzle, 0, query_string.c_str()))
     {
       DB_error(drizzle, "when retrieving data from server");
       goto err;
@@ -2248,7 +2226,7 @@ static void dump_table(char *table, char *db)
     total_length= opt_net_buffer_length;                /* Force row break */
     row_break=0;
     rownr=0;
-    init_length=(uint) insert_pat.length+4;
+    init_length=(uint) insert_pat.length()+4;
     if (opt_xml)
       print_xml_tag(md_result_file, "\t", "\n", "table_data", "name=", table,
               NullS);
@@ -2265,7 +2243,7 @@ static void dump_table(char *table, char *db)
       rownr++;
       if (!extended_insert && !opt_xml)
       {
-        fputs(insert_pat.str,md_result_file);
+        fputs(insert_pat.c_str(),md_result_file);
         check_io(md_result_file);
       }
       drizzle_field_seek(res,0);
@@ -2297,9 +2275,9 @@ static void dump_table(char *table, char *db)
         if (extended_insert && !opt_xml)
         {
           if (i == 0)
-            dynstr_set_checked(&extended_row,"(");
+            extended_row= "(";
           else
-            dynstr_append_checked(&extended_row,",");
+            extended_row.append(",");
 
           if (row[i])
           {
@@ -2315,27 +2293,24 @@ static void dump_table(char *table, char *db)
                   plus 2 bytes for leading and trailing '\'' characters.
                   Also we need to reserve 1 byte for terminating '\0'.
                 */
-                dynstr_realloc_checked(&extended_row,length * 2 + 2 + 1);
+                char * tmp_str= (char *)malloc(length * 2 + 2 + 1);
+                memset(tmp_str, '\0', length * 2 + 2 + 1);
                 if (opt_hex_blob && is_blob)
                 {
-                  dynstr_append_checked(&extended_row, "0x");
-                  extended_row.length+= drizzle_hex_string(extended_row.str +
-                                                         extended_row.length,
-                                                         row[i], length);
-                  assert(extended_row.length+1 <= extended_row.max_length);
-                  /* drizzle_hex_string() already terminated string by '\0' */
-                  assert(extended_row.str[extended_row.length] == '\0');
+                  extended_row.append("0x");
+                  drizzle_hex_string(tmp_str, row[i], length);
+                  extended_row.append(tmp_str);
                 }
                 else
                 {
-                  dynstr_append_checked(&extended_row,"'");
-                  extended_row.length +=
+                  extended_row.append("'");
                   drizzle_real_escape_string(&drizzle_connection,
-                                           &extended_row.str[extended_row.length],
-                                           row[i],length);
-                  extended_row.str[extended_row.length]='\0';
-                  dynstr_append_checked(&extended_row,"'");
+                                             tmp_str,
+                                             row[i],length);
+                  extended_row.append(tmp_str);
+                  extended_row.append("'");
                 }
+                free(tmp_str);
               }
               else
               {
@@ -2343,18 +2318,18 @@ static void dump_table(char *table, char *db)
                 char *ptr= row[i];
                 if (my_isalpha(charset_info, *ptr) || (*ptr == '-' &&
                     my_isalpha(charset_info, ptr[1])))
-                  dynstr_append_checked(&extended_row, "NULL");
+                  extended_row.append( "NULL");
                 else
                 {
-                  dynstr_append_checked(&extended_row, ptr);
+                  extended_row.append( ptr);
                 }
               }
             }
             else
-              dynstr_append_checked(&extended_row,"''");
+              extended_row.append("''");
           }
           else
-            dynstr_append_checked(&extended_row,"NULL");
+            extended_row.append("NULL");
         }
         else
         {
@@ -2433,13 +2408,13 @@ static void dump_table(char *table, char *db)
       if (extended_insert)
       {
         uint32_t row_length;
-        dynstr_append_checked(&extended_row,")");
-        row_length= 2 + extended_row.length;
+        extended_row.append(")");
+        row_length= 2 + extended_row.length();
         if (total_length + row_length < opt_net_buffer_length)
         {
           total_length+= row_length;
           fputc(',',md_result_file);            /* Always row break */
-          fputs(extended_row.str,md_result_file);
+          fputs(extended_row.c_str(),md_result_file);
         }
         else
         {
@@ -2447,8 +2422,8 @@ static void dump_table(char *table, char *db)
             fputs(";\n", md_result_file);
           row_break=1;                          /* This is first row */
 
-          fputs(insert_pat.str,md_result_file);
-          fputs(extended_row.str,md_result_file);
+          fputs(insert_pat.c_str(),md_result_file);
+          fputs(extended_row.c_str(),md_result_file);
           total_length= row_length+init_length;
         }
         check_io(md_result_file);
@@ -2500,11 +2475,9 @@ static void dump_table(char *table, char *db)
     }
     drizzle_free_result(res);
   }
-  dynstr_free(&query_string);
   return;
 
 err:
-  dynstr_free(&query_string);
   maybe_exit(error);
   return;
 } /* dump_table */
@@ -2656,7 +2629,7 @@ static int init_dumping(char *database, int init_func(char*))
     }
   }
   if (extended_insert)
-    init_dynamic_string_checked(&extended_row, "", 1024, 1024);
+    extended_row.clear();
   return 0;
 } /* init_dumping */
 
@@ -2688,22 +2661,22 @@ static int dump_all_tables_in_db(char *database)
     print_xml_tag(md_result_file, "", "\n", "database", "name=", database, NullS);
   if (lock_tables)
   {
-    DYNAMIC_STRING query;
-    init_dynamic_string_checked(&query, "LOCK TABLES ", 256, 1024);
+    string query;
+    query= "LOCK TABLES ";
     for (numrows= 0 ; (table= getTableName(1)) ; )
     {
       char *end= stpcpy(afterdot, table);
       if (include_table((uchar*) hash_key,end - hash_key))
       {
         numrows++;
-        dynstr_append_checked(&query, quote_name(table, table_buff, 1));
-        dynstr_append_checked(&query, " READ /*!32311 LOCAL */,");
+        query.append( quote_name(table, table_buff, 1));
+        query.append( " READ /*!32311 LOCAL */,");
       }
     }
-    if (numrows && drizzle_real_query(drizzle, query.str, query.length-1))
+    if (numrows && drizzle_real_query(drizzle, query.c_str(), query.length()-1))
       DB_error(drizzle, "when using LOCK TABLES");
             /* We shall continue here, if --force was given */
-    dynstr_free(&query);
+    query.clear();
   }
   if (flush_logs)
   {
@@ -2788,7 +2761,7 @@ static char *get_actual_table_name(const char *old_table_name, MEM_ROOT *root)
 static int dump_selected_tables(char *db, char **table_names, int tables)
 {
   char table_buff[NAME_LEN*2+3];
-  DYNAMIC_STRING lock_tables_query;
+  string lock_tables_query;
   MEM_ROOT root;
   char **dump_tables, **pos, **end;
 
@@ -2800,7 +2773,7 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
   if (!(dump_tables= pos= (char**) alloc_root(&root, tables * sizeof(char *))))
      die(EX_EOM, "alloc_root failure.");
 
-  init_dynamic_string_checked(&lock_tables_query, "LOCK TABLES ", 256, 1024);
+  lock_tables_query= "LOCK TABLES ";
   for (; tables > 0 ; tables-- , table_names++)
   {
     /* the table name passed on commandline may be wrong case */
@@ -2809,8 +2782,8 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
       /* Add found table name to lock_tables_query */
       if (lock_tables)
       {
-        dynstr_append_checked(&lock_tables_query, quote_name(*pos, table_buff, 1));
-        dynstr_append_checked(&lock_tables_query, " READ /*!32311 LOCAL */,");
+        lock_tables_query.append( quote_name(*pos, table_buff, 1));
+        lock_tables_query.append( " READ /*!32311 LOCAL */,");
       }
       pos++;
     }
@@ -2818,7 +2791,6 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
     {
       if (!ignore_errors)
       {
-        dynstr_free(&lock_tables_query);
         free_root(&root, MYF(0));
       }
       maybe_die(EX_ILLEGAL_TABLE, "Couldn't find table: \"%s\"", *table_names);
@@ -2829,19 +2801,17 @@ static int dump_selected_tables(char *db, char **table_names, int tables)
 
   if (lock_tables)
   {
-    if (drizzle_real_query(drizzle, lock_tables_query.str,
-                         lock_tables_query.length-1))
+    if (drizzle_real_query(drizzle, lock_tables_query.c_str(),
+                         lock_tables_query.length()-1))
     {
       if (!ignore_errors)
       {
-        dynstr_free(&lock_tables_query);
         free_root(&root, MYF(0));
       }
       DB_error(drizzle, "when doing LOCK TABLES");
        /* We shall countinue here, if --force was given */
     }
   }
-  dynstr_free(&lock_tables_query);
   if (flush_logs)
   {
     if (drizzle_refresh(drizzle, REFRESH_LOG))
@@ -3085,13 +3055,11 @@ static int get_bin_log_name(DRIZZLE *drizzle_con,
 
 static int purge_bin_logs_to(DRIZZLE *drizzle_con, char* log_name)
 {
-  DYNAMIC_STRING str;
   int err;
-  init_dynamic_string_checked(&str, "PURGE BINARY LOGS TO '", 1024, 1024);
-  dynstr_append_checked(&str, log_name);
-  dynstr_append_checked(&str, "'");
-  err = drizzle_query_with_error_report(drizzle_con, 0, str.str);
-  dynstr_free(&str);
+  string str= "PURGE BINARY LOGS TO '";
+  str.append(log_name);
+  str.append("'");
+  err = drizzle_query_with_error_report(drizzle_con, 0, str.c_str());
   return err;
 }
 
@@ -3151,7 +3119,7 @@ static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
 
       for (; pos != end && *pos != ','; pos++) ;
       var_len= (uint) (pos - start);
-      strmake(buff, start, min(sizeof(buff), var_len));
+      strmake(buff, start, min(sizeof(buff), (ulong)var_len));
       find= find_type(buff, lib, var_len);
       if (!find)
       {
@@ -3347,7 +3315,7 @@ static char *primary_key_fields(const char *table_name)
   {
     char *end;
     /* result (terminating \0 is already in result_length) */
-    result= my_malloc(result_length + 10, MYF(MY_WME));
+    result= (char *)my_malloc(result_length + 10, MYF(MY_WME));
     if (!result)
     {
       fprintf(stderr, "Error: Not enough memory to store ORDER BY clause\n");
@@ -3369,45 +3337,6 @@ cleanup:
     drizzle_free_result(res);
 
   return result;
-}
-
-/*
-  The following functions are wrappers for the dynamic string functions
-  and if they fail, the wrappers will terminate the current process.
-*/
-
-#define DYNAMIC_STR_ERROR_MSG "Couldn't perform DYNAMIC_STRING operation"
-
-static void init_dynamic_string_checked(DYNAMIC_STRING *str, const char *init_str,
-			    uint init_alloc, uint alloc_increment)
-{
-  if (init_dynamic_string(str, init_str, init_alloc, alloc_increment))
-    die(EX_DRIZZLEERR, DYNAMIC_STR_ERROR_MSG);
-}
-
-static void dynstr_append_checked(DYNAMIC_STRING* dest, const char* src)
-{
-  if (dynstr_append(dest, src))
-    die(EX_DRIZZLEERR, DYNAMIC_STR_ERROR_MSG);
-}
-
-static void dynstr_set_checked(DYNAMIC_STRING *str, const char *init_str)
-{
-  if (dynstr_set(str, init_str))
-    die(EX_DRIZZLEERR, DYNAMIC_STR_ERROR_MSG);
-}
-
-static void dynstr_append_mem_checked(DYNAMIC_STRING *str, const char *append,
-			  uint length)
-{
-  if (dynstr_append_mem(str, append, length))
-    die(EX_DRIZZLEERR, DYNAMIC_STR_ERROR_MSG);
-}
-
-static void dynstr_realloc_checked(DYNAMIC_STRING *str, uint32_t additional_size)
-{
-  if (dynstr_realloc(str, additional_size))
-    die(EX_DRIZZLEERR, DYNAMIC_STR_ERROR_MSG);
 }
 
 

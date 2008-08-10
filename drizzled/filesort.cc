@@ -203,7 +203,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
     goto err;
 
   memavl= thd->variables.sortbuff_size;
-  min_sort_memory= max(MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
+  min_sort_memory= max((uint)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
   while (memavl >= min_sort_memory)
   {
     ulong old_memavl;

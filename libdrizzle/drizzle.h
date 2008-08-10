@@ -37,13 +37,9 @@ extern "C" {
 /** 
  * @TODO cleanup global.h and include only the necessary stuff here... 
  * 
- * Also, my_bool should go bye-bye...
  */
 #ifndef DRIZZLE_SERVER_GLOBAL_H   /* If not standard header */
 #include <sys/types.h>
-typedef char my_bool;
-#define STDCALL
-
 #endif /* DRIZZLE_SERVER_GLOBAL_H */
 
 #include <libdrizzle/drizzle_com.h>
@@ -74,8 +70,8 @@ typedef struct st_drizzle_field {
   char *db;                   /* Database for table */
   char *catalog;        /* Catalog for table */
   char *def;                  /* Default value (set by drizzle_list_fields) */
-  unsigned long length;       /* Width of column (create length) */
-  unsigned long max_length;   /* Max width for selected set */
+  uint32_t length;       /* Width of column (create length) */
+  uint32_t max_length;   /* Max width for selected set */
   unsigned int name_length;
   unsigned int org_name_length;
   unsigned int table_length;
@@ -278,7 +274,7 @@ typedef struct st_drizzle_parameters
   work when linked against either the standard client library or the
   embedded server library, these functions should be called.
 */
-void STDCALL drizzle_server_end(void);
+void drizzle_server_end(void);
 
 /*
   drizzle_server_init/end need to be called when using libdrizzle or
@@ -291,7 +287,7 @@ void STDCALL drizzle_server_end(void);
 */
 #define drizzle_library_end drizzle_server_end
 
-const DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void);
+const DRIZZLE_PARAMETERS * drizzle_get_parameters(void);
 
 /*
   Set up and bring down a thread; these function should be called
@@ -299,53 +295,53 @@ const DRIZZLE_PARAMETERS *STDCALL drizzle_get_parameters(void);
   connection.  All uses of the connection(s) should be between these
   function calls.
 */
-bool STDCALL drizzle_thread_init(void);
-void STDCALL drizzle_thread_end(void);
+bool drizzle_thread_init(void);
+void drizzle_thread_end(void);
 
 /*
   Functions to get information from the DRIZZLE and DRIZZLE_RES structures
   Should definitely be used if one uses shared libraries.
 */
 
-uint64_t STDCALL drizzle_num_rows(const DRIZZLE_RES *res);
-unsigned int STDCALL drizzle_num_fields(const DRIZZLE_RES *res);
-bool STDCALL drizzle_eof(const DRIZZLE_RES *res);
-const DRIZZLE_FIELD *STDCALL drizzle_fetch_field_direct(const DRIZZLE_RES *res,
+uint64_t drizzle_num_rows(const DRIZZLE_RES *res);
+unsigned int drizzle_num_fields(const DRIZZLE_RES *res);
+bool drizzle_eof(const DRIZZLE_RES *res);
+const DRIZZLE_FIELD * drizzle_fetch_field_direct(const DRIZZLE_RES *res,
                 unsigned int fieldnr);
-const DRIZZLE_FIELD * STDCALL drizzle_fetch_fields(const DRIZZLE_RES *res);
-DRIZZLE_ROW_OFFSET STDCALL drizzle_row_tell(const DRIZZLE_RES *res);
-DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_tell(const DRIZZLE_RES *res);
+const DRIZZLE_FIELD * drizzle_fetch_fields(const DRIZZLE_RES *res);
+DRIZZLE_ROW_OFFSET drizzle_row_tell(const DRIZZLE_RES *res);
+DRIZZLE_FIELD_OFFSET drizzle_field_tell(const DRIZZLE_RES *res);
 
-uint32_t STDCALL drizzle_field_count(const DRIZZLE *drizzle);
-uint64_t STDCALL drizzle_affected_rows(const DRIZZLE *drizzle);
-uint64_t STDCALL drizzle_insert_id(const DRIZZLE *drizzle);
-uint32_t STDCALL drizzle_errno(const DRIZZLE *drizzle);
-const char * STDCALL drizzle_error(const DRIZZLE *drizzle);
-const char *STDCALL drizzle_sqlstate(const DRIZZLE *drizzle);
-uint32_t STDCALL drizzle_warning_count(const DRIZZLE *drizzle);
-const char * STDCALL drizzle_info(const DRIZZLE *drizzle);
-uint32_t STDCALL drizzle_thread_id(const DRIZZLE *drizzle);
-const char * STDCALL drizzle_character_set_name(const DRIZZLE *drizzle);
-int32_t          STDCALL drizzle_set_character_set(DRIZZLE *drizzle, const char *csname);
+uint32_t drizzle_field_count(const DRIZZLE *drizzle);
+uint64_t drizzle_affected_rows(const DRIZZLE *drizzle);
+uint64_t drizzle_insert_id(const DRIZZLE *drizzle);
+uint32_t drizzle_errno(const DRIZZLE *drizzle);
+const char * drizzle_error(const DRIZZLE *drizzle);
+const char * drizzle_sqlstate(const DRIZZLE *drizzle);
+uint32_t drizzle_warning_count(const DRIZZLE *drizzle);
+const char * drizzle_info(const DRIZZLE *drizzle);
+uint32_t drizzle_thread_id(const DRIZZLE *drizzle);
+const char * drizzle_character_set_name(const DRIZZLE *drizzle);
+int32_t          drizzle_set_character_set(DRIZZLE *drizzle, const char *csname);
 
-DRIZZLE * STDCALL drizzle_create(DRIZZLE *drizzle);
-bool   STDCALL drizzle_change_user(DRIZZLE *drizzle, const char *user,
+DRIZZLE * drizzle_create(DRIZZLE *drizzle);
+bool   drizzle_change_user(DRIZZLE *drizzle, const char *user,
             const char *passwd, const char *db);
-DRIZZLE * STDCALL drizzle_connect(DRIZZLE *drizzle, const char *host,
+DRIZZLE * drizzle_connect(DRIZZLE *drizzle, const char *host,
              const char *user,
              const char *passwd,
              const char *db,
              uint32_t port,
              const char *unix_socket,
              uint32_t clientflag);
-int32_t    STDCALL drizzle_select_db(DRIZZLE *drizzle, const char *db);
-int32_t    STDCALL drizzle_query(DRIZZLE *drizzle, const char *q);
-int32_t    STDCALL drizzle_send_query(DRIZZLE *drizzle, const char *q, uint32_t length);
-int32_t    STDCALL drizzle_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
-DRIZZLE_RES * STDCALL drizzle_store_result(DRIZZLE *drizzle);
-DRIZZLE_RES * STDCALL drizzle_use_result(DRIZZLE *drizzle);
+int32_t    drizzle_select_db(DRIZZLE *drizzle, const char *db);
+int32_t    drizzle_query(DRIZZLE *drizzle, const char *q);
+int32_t    drizzle_send_query(DRIZZLE *drizzle, const char *q, uint32_t length);
+int32_t    drizzle_real_query(DRIZZLE *drizzle, const char *q, uint32_t length);
+DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle);
+DRIZZLE_RES * drizzle_use_result(DRIZZLE *drizzle);
 
-void        STDCALL drizzle_get_character_set_info(const DRIZZLE *drizzle,
+void        drizzle_get_character_set_info(const DRIZZLE *drizzle,
                                                    MY_CHARSET_INFO *charset);
 
 /* local infile support */
@@ -362,37 +358,37 @@ drizzle_set_local_infile_handler(DRIZZLE *drizzle,
 void
 drizzle_set_local_infile_default(DRIZZLE *drizzle);
 
-int32_t    STDCALL drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level);
-int32_t    STDCALL drizzle_dump_debug_info(DRIZZLE *drizzle);
-int32_t    STDCALL drizzle_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
-int32_t    STDCALL drizzle_kill(DRIZZLE *drizzle, uint32_t pid);
-int32_t    STDCALL drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option);
-int32_t    STDCALL drizzle_ping(DRIZZLE *drizzle);
-const char *  STDCALL drizzle_stat(DRIZZLE *drizzle);
-const char *  STDCALL drizzle_get_server_info(const DRIZZLE *drizzle);
-const char *  STDCALL drizzle_get_client_info(void);
-uint32_t  STDCALL drizzle_get_client_version(void);
-const char *  STDCALL drizzle_get_host_info(const DRIZZLE *drizzle);
-uint32_t  STDCALL drizzle_get_server_version(const DRIZZLE *drizzle);
-uint32_t  STDCALL drizzle_get_proto_info(const DRIZZLE *drizzle);
-DRIZZLE_RES *  STDCALL drizzle_list_tables(DRIZZLE *drizzle,const char *wild);
-DRIZZLE_RES *  STDCALL drizzle_list_processes(DRIZZLE *drizzle);
-int32_t    STDCALL drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg);
-void    STDCALL drizzle_free_result(DRIZZLE_RES *result);
-void    STDCALL drizzle_data_seek(DRIZZLE_RES *result, uint64_t offset);
-DRIZZLE_ROW_OFFSET STDCALL drizzle_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET offset);
-DRIZZLE_FIELD_OFFSET STDCALL drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET offset);
-DRIZZLE_ROW  STDCALL drizzle_fetch_row(DRIZZLE_RES *result);
-uint32_t * STDCALL drizzle_fetch_lengths(DRIZZLE_RES *result);
-DRIZZLE_FIELD *  STDCALL drizzle_fetch_field(DRIZZLE_RES *result);
-DRIZZLE_RES *     STDCALL drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild);
-uint32_t  STDCALL drizzle_escape_string(char *to,const char *from, uint32_t from_length);
-uint32_t  STDCALL drizzle_hex_string(char *to,const char *from, uint32_t from_length);
-uint32_t        STDCALL drizzle_real_escape_string(DRIZZLE *drizzle, char *to, const char *from, uint32_t length);
-void    STDCALL myodbc_remove_escape(const DRIZZLE *drizzle, char *name);
-uint32_t  STDCALL drizzle_thread_safe(void);
-bool    STDCALL drizzle_embedded(void);
-bool         STDCALL drizzle_read_query_result(DRIZZLE *drizzle);
+int32_t    drizzle_shutdown(DRIZZLE *drizzle, enum drizzle_enum_shutdown_level shutdown_level);
+int32_t    drizzle_dump_debug_info(DRIZZLE *drizzle);
+int32_t    drizzle_refresh(DRIZZLE *drizzle, uint32_t refresh_options);
+int32_t    drizzle_kill(DRIZZLE *drizzle, uint32_t pid);
+int32_t    drizzle_set_server_option(DRIZZLE *drizzle, enum enum_drizzle_set_option option);
+int32_t    drizzle_ping(DRIZZLE *drizzle);
+const char *  drizzle_stat(DRIZZLE *drizzle);
+const char *  drizzle_get_server_info(const DRIZZLE *drizzle);
+const char *  drizzle_get_client_info(void);
+uint32_t  drizzle_get_client_version(void);
+const char *  drizzle_get_host_info(const DRIZZLE *drizzle);
+uint32_t  drizzle_get_server_version(const DRIZZLE *drizzle);
+uint32_t  drizzle_get_proto_info(const DRIZZLE *drizzle);
+DRIZZLE_RES *  drizzle_list_tables(DRIZZLE *drizzle,const char *wild);
+DRIZZLE_RES *  drizzle_list_processes(DRIZZLE *drizzle);
+int32_t    drizzle_options(DRIZZLE *drizzle,enum drizzle_option option, const void *arg);
+void    drizzle_free_result(DRIZZLE_RES *result);
+void    drizzle_data_seek(DRIZZLE_RES *result, uint64_t offset);
+DRIZZLE_ROW_OFFSET drizzle_row_seek(DRIZZLE_RES *result, DRIZZLE_ROW_OFFSET offset);
+DRIZZLE_FIELD_OFFSET drizzle_field_seek(DRIZZLE_RES *result, DRIZZLE_FIELD_OFFSET offset);
+DRIZZLE_ROW  drizzle_fetch_row(DRIZZLE_RES *result);
+uint32_t * drizzle_fetch_lengths(DRIZZLE_RES *result);
+DRIZZLE_FIELD *  drizzle_fetch_field(DRIZZLE_RES *result);
+DRIZZLE_RES *     drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild);
+uint32_t  drizzle_escape_string(char *to,const char *from, uint32_t from_length);
+uint32_t  drizzle_hex_string(char *to,const char *from, uint32_t from_length);
+uint32_t        drizzle_real_escape_string(DRIZZLE *drizzle, char *to, const char *from, uint32_t length);
+void    myodbc_remove_escape(const DRIZZLE *drizzle, char *name);
+uint32_t  drizzle_thread_safe(void);
+bool    drizzle_embedded(void);
+bool         drizzle_read_query_result(DRIZZLE *drizzle);
 
 
 
@@ -418,12 +414,12 @@ typedef struct st_drizzle_methods
 } DRIZZLE_METHODS;
 
 
-bool STDCALL drizzle_commit(DRIZZLE *drizzle);
-bool STDCALL drizzle_rollback(DRIZZLE *drizzle);
-bool STDCALL drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode);
-bool STDCALL drizzle_more_results(const DRIZZLE *drizzle);
-int STDCALL drizzle_next_result(DRIZZLE *drizzle);
-void STDCALL drizzle_close(DRIZZLE *sock);
+bool drizzle_commit(DRIZZLE *drizzle);
+bool drizzle_rollback(DRIZZLE *drizzle);
+bool drizzle_autocommit(DRIZZLE *drizzle, bool auto_mode);
+bool drizzle_more_results(const DRIZZLE *drizzle);
+int drizzle_next_result(DRIZZLE *drizzle);
+void drizzle_close(DRIZZLE *sock);
 
 
 /* status return codes */

@@ -128,7 +128,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 {
   register size_t length;
   register char * pos;
-  register char * from_ptr;
+  register const char * from_ptr;
   register char * start;
   char parent[5],				/* for "FN_PARENTDIR" */
        buff[FN_REFLEN+1],*end_parentdir;
@@ -137,7 +137,7 @@ size_t cleanup_dirname(register char *to, const char *from)
 #endif
 
   start=buff;
-  from_ptr=(char *) from;
+  from_ptr= from;
 #ifdef FN_DEVCHAR
   if ((pos=strrchr(from_ptr,FN_DEVCHAR)) != 0)
   {						/* Skip device part */

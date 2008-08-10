@@ -278,7 +278,7 @@ int my_decimal2double(uint mask __attribute__((unused)),
 
 
 inline
-int str2my_decimal(uint mask, const char *str, my_decimal *d, char **end)
+int str2my_decimal(uint mask, char *str, my_decimal *d, char **end)
 {
   return check_result_and_overflow(mask, string2decimal(str,(decimal_t*)d,end),
                                    d);

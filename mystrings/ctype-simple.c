@@ -311,7 +311,7 @@ void my_hash_sort_simple(const CHARSET_INFO * const cs,
   */
   end= skip_trailing_space(key, len);
   
-  for (; key < (uchar*) end ; key++)
+  for (; key < end ; key++)
   {
     nr1[0]^=(ulong) ((((uint) nr1[0] & 63)+nr2[0]) * 
 	     ((uint) sort_order[(uint) *key])) + (nr1[0] << 8);
