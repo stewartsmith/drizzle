@@ -53,7 +53,7 @@
 #define NAMES_START_SIZE   32768
 
 
-static int	comp_names(struct fileinfo *a,struct fileinfo *b);
+static int comp_names(const struct fileinfo *a, const struct fileinfo *b);
 
 
 	/* We need this because program don't know with malloc we used */
@@ -74,7 +74,7 @@ void my_dirend(MY_DIR *buffer)
 
 	/* Compare in sort of filenames */
 
-static int comp_names(struct fileinfo *a, struct fileinfo *b)
+static int comp_names(const struct fileinfo *a, const struct fileinfo *b)
 {
   return (strcmp(a->name,b->name));
 } /* comp_names */
