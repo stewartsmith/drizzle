@@ -38,9 +38,9 @@ extern "C" {
 
 typedef struct st_heapinfo		/* Struct from heap_info */
 {
-  ulong records;			/* Records in database */
-  ulong deleted;			/* Deleted records in database */
-  ulong max_records;
+  uint32_t records;			/* Records in database */
+  uint32_t deleted;			/* Deleted records in database */
+  uint32_t max_records;
   uint64_t data_length;
   uint64_t index_length;
   uint reclength;			/* Length of one record */
@@ -66,7 +66,7 @@ struct st_level_info
     of last_blocks array. For level 0 - 1, for level 1 - HP_PTRS_IN_NOD, for 
     level 2 - HP_PTRS_IN_NOD^2 and so forth.
   */
-  ulong records_under_level;
+  uint32_t records_under_level;
 
   /*
     Ptr to last allocated HP_PTRS (or records buffer for level 0) on this 
@@ -99,7 +99,7 @@ typedef struct st_heap_block
   uint levels;                          /* number of used levels */
   uint records_in_block;		/* Records in one heap-block */
   uint recbuffer;			/* Length of one saved record */
-  ulong last_allocated; /* number of records there is allocated space for */
+  uint32_t last_allocated; /* number of records there is allocated space for */
 } HP_BLOCK;
 
 struct st_heap_info;			/* For referense */
@@ -156,7 +156,7 @@ typedef struct st_heap_share
   HP_COLUMNDEF *column_defs;
   HP_DATASPACE recordspace;  /* Describes "block", which contains actual records */
 
-  ulong min_records,max_records;	/* Params to open */
+  uint32_t min_records,max_records;	/* Params to open */
   uint64_t index_length,max_table_size;
   uint key_stat_version;                /* version to indicate insert/delete */
   uint records;             /* Actual record (row) count */
@@ -187,7 +187,7 @@ typedef struct st_heap_info
   HP_SHARE *s;
   uchar *current_ptr;
   struct st_hp_hash_info *current_hash_ptr;
-  ulong current_record,next_block;
+  uint32_t current_record,next_block;
   int lastinx,errkey;
   int  mode;				/* Mode of file (READONLY..) */
   uint opt_flag,update;
@@ -232,7 +232,7 @@ extern int heap_create(const char *name, uint keys, HP_KEYDEF *keydef,
            uint columns, HP_COLUMNDEF *columndef,
            uint max_key_fieldnr, uint key_part_size,
            uint reclength, uint keys_memory_size,
-           ulong max_records, ulong min_records,
+           uint32_t max_records, uint32_t min_records,
            HP_CREATE_INFO *create_info, HP_SHARE **share);
 
 extern int heap_delete_table(const char *name);
@@ -266,11 +266,11 @@ extern uchar *heap_position(HP_INFO *info);
 */
 
 #if defined(WANT_OLD_HEAP_VERSION) || defined(OLD_HEAP_VERSION)
-extern int heap_rrnd_old(HP_INFO *info,uchar *buf,ulong pos);
-extern ulong heap_position_old(HP_INFO *info);
+extern int heap_rrnd_old(HP_INFO *info,uchar *buf,uint32_t pos);
+extern uint32_t heap_position_old(HP_INFO *info);
 #endif
 #ifdef OLD_HEAP_VERSION
-typedef ulong HEAP_PTR;
+typedef uint32_t HEAP_PTR;
 #define heap_position(A) heap_position_old(A)
 #define heap_rrnd(A,B,C) heap_rrnd_old(A,B,C)
 #else

@@ -560,7 +560,7 @@ int my_strcasecmp_mb_bin(const CHARSET_INFO * const  cs __attribute__((unused)),
 
 
 void my_hash_sort_mb_bin(const CHARSET_INFO * const cs __attribute__((unused)),
-                         const uchar *key, size_t len,ulong *nr1, ulong *nr2)
+                         const uchar *key, size_t len, uint32_t *nr1, uint32_t *nr2)
 {
   const uchar *pos = key;
   

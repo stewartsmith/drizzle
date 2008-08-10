@@ -680,7 +680,7 @@ my_strnxfrm_latin1_de(const CHARSET_INFO * const cs,
 
 static void my_hash_sort_latin1_de(const CHARSET_INFO * const cs __attribute__((unused)),
 			    const uchar *key, size_t len,
-			    ulong *nr1, ulong *nr2)
+			    uint32_t *nr1, uint32_t *nr2)
 {
   const uchar *end;
   /*

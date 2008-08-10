@@ -20,14 +20,14 @@
 #include <mystrings/m_string.h>
 #include "my_readline.h"
 
-static bool init_line_buffer(LINE_BUFFER *buffer,File file,ulong size,
-			    ulong max_size);
+static bool init_line_buffer(LINE_BUFFER *buffer,File file,uint32_t size,
+			    uint32_t max_size);
 static bool init_line_buffer_from_string(LINE_BUFFER *buffer,char * str);
 static size_t fill_buffer(LINE_BUFFER *buffer);
-static char *intern_read_line(LINE_BUFFER *buffer,ulong *out_length);
+static char *intern_read_line(LINE_BUFFER *buffer,uint32_t *out_length);
 
 
-LINE_BUFFER *batch_readline_init(ulong max_size,FILE *file)
+LINE_BUFFER *batch_readline_init(uint32_t max_size,FILE *file)
 {
   LINE_BUFFER *line_buff;
   if (!(line_buff=(LINE_BUFFER*)
@@ -45,7 +45,7 @@ LINE_BUFFER *batch_readline_init(ulong max_size,FILE *file)
 char *batch_readline(LINE_BUFFER *line_buff)
 {
   char *pos;
-  ulong out_length;
+  uint32_t out_length;
 
   if (!(pos=intern_read_line(line_buff,&out_length)))
     return 0;
@@ -88,7 +88,7 @@ LINE_BUFFER *batch_readline_command(LINE_BUFFER *line_buff, char * str)
 ******************************************************************************/
 
 static bool
-init_line_buffer(LINE_BUFFER *buffer,File file,ulong size,ulong max_buffer)
+init_line_buffer(LINE_BUFFER *buffer,File file,uint32_t size,uint32_t max_buffer)
 {
   buffer->file=file;
   buffer->bufread=size;
@@ -184,7 +184,7 @@ static size_t fill_buffer(LINE_BUFFER *buffer)
 
 
 
-char *intern_read_line(LINE_BUFFER *buffer,ulong *out_length)
+char *intern_read_line(LINE_BUFFER *buffer,uint32_t *out_length)
 {
   char *pos;
   size_t length;
@@ -207,7 +207,7 @@ char *intern_read_line(LINE_BUFFER *buffer,ulong *out_length)
       pos--;					/* break line here */
     }
     buffer->end_of_line=pos+1;
-    *out_length=(ulong) (pos + 1 - buffer->eof - buffer->start_of_line);
+    *out_length=(uint32_t) (pos + 1 - buffer->eof - buffer->start_of_line);
     return(buffer->start_of_line);
   }
 }

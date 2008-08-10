@@ -77,7 +77,7 @@ using namespace std;
 
 static void add_load_option(string &str, const char *option,
                             const char *option_value);
-static ulong find_set(TYPELIB *lib, const char *x, uint length,
+static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
                       char **err_pos, uint *err_len);
 
 static void field_escape(string &in, const char *from);
@@ -100,7 +100,7 @@ static bool  verbose= 0, opt_no_create_info= 0, opt_no_data= 0,
                 opt_events= 0,
                 opt_alltspcs=0, opt_notspcs= 0;
 static bool debug_info_flag= 0, debug_check_flag= 0;
-static ulong opt_max_allowed_packet, opt_net_buffer_length;
+static uint32_t opt_max_allowed_packet, opt_net_buffer_length;
 static DRIZZLE drizzle_connection,*drizzle=0;
 static string insert_pat;
 static char  *opt_password=0,*current_user=0,
@@ -114,7 +114,7 @@ static char **defaults_argv= 0;
 static char compatible_mode_normal_str[255];
 /* Server supports character_set_results session variable? */
 static bool server_supports_switching_charsets= true;
-static ulong opt_compatible_mode= 0;
+static uint32_t opt_compatible_mode= 0;
 #define DRIZZLE_OPT_MASTER_DATA_EFFECTIVE_SQL 1
 #define DRIZZLE_OPT_MASTER_DATA_COMMENTED_SQL 2
 #define DRIZZLE_OPT_SLAVE_DATA_EFFECTIVE_SQL 1
@@ -743,7 +743,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
       char buff[255];
       char *end= compatible_mode_normal_str;
       int i;
-      ulong mode;
+      uint32_t mode;
       uint err_len;
 
       opt_quoted= 1;
@@ -1241,7 +1241,7 @@ static char *quote_for_like(const char *name, char *buff)
     Quote '<' '>' '&' '\"' chars and print a string to the xml_file.
 */
 
-static void print_quoted_xml(FILE *xml_file, const char *str, ulong len)
+static void print_quoted_xml(FILE *xml_file, const char *str, uint32_t len)
 {
   const char *end;
 
@@ -1424,7 +1424,7 @@ static void print_xml_row(FILE *xml_file, const char *row_name,
     Print hex value for blob data.
 */
 
-static void print_blob_as_hex(FILE *output_file, const char *str, ulong len)
+static void print_blob_as_hex(FILE *output_file, const char *str, uint32_t len)
 {
     /* sakaik got the idea to to provide blob's in hex notation. */
     const char *ptr= str, *end= ptr + len;
@@ -2028,7 +2028,7 @@ static void dump_table(char *table, char *db)
   char table_type[NAME_LEN];
   char *result_table, table_buff2[NAME_LEN*2+3], *opt_quoted_table;
   int error= 0;
-  ulong         rownr, row_break, total_length, init_length;
+  uint32_t         rownr, row_break, total_length, init_length;
   uint num_fields;
   DRIZZLE_RES     *res;
   DRIZZLE_FIELD   *field;
@@ -2257,7 +2257,7 @@ static void dump_table(char *table, char *db)
       for (i= 0; i < drizzle_num_fields(res); i++)
       {
         int is_blob;
-        ulong length= lengths[i];
+        uint32_t length= lengths[i];
 
         if (!(field= drizzle_fetch_field(res)))
           die(EX_CONSCHECK,
@@ -2407,7 +2407,7 @@ static void dump_table(char *table, char *db)
 
       if (extended_insert)
       {
-        ulong row_length;
+        uint32_t row_length;
         extended_row.append(")");
         row_length= 2 + extended_row.length();
         if (total_length + row_length < opt_net_buffer_length)
@@ -2445,7 +2445,7 @@ static void dump_table(char *table, char *db)
     if (drizzle_errno(drizzle))
     {
       snprintf(buf, sizeof(buf),
-               "%s: Error %d: %s when dumping table %s at row: %ld\n",
+               "%s: Error %d: %s when dumping table %s at row: %d\n",
                my_progname,
                drizzle_errno(drizzle),
                drizzle_error(drizzle),
@@ -3096,11 +3096,11 @@ static int start_transaction(DRIZZLE *drizzle_con)
 }
 
 
-static ulong find_set(TYPELIB *lib, const char *x, uint length,
+static uint32_t find_set(TYPELIB *lib, const char *x, uint length,
                       char **err_pos, uint *err_len)
 {
   const char *end= x + length;
-  ulong found= 0;
+  uint32_t found= 0;
   uint find;
   char buff[255];
 

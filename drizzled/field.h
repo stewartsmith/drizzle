@@ -495,7 +495,7 @@ public:
   }
 
   /* Hash value */
-  virtual void hash(ulong *nr, ulong *nr2);
+  virtual void hash(uint32_t *nr, uint32_t *nr2);
   friend bool reopen_table(THD *,struct st_table *,bool);
   friend int cre_myisam(char * name, register TABLE *form, uint options,
 			uint64_t auto_increment_value);
@@ -755,7 +755,7 @@ public:
     At various stages in execution this can be length of field in bytes or
     max number of characters. 
   */
-  ulong length;
+  uint32_t length;
   /*
     The value of `length' as set by parser: is the number of characters
     for most of the types, or of bytes for BLOBs or numeric types.
@@ -808,7 +808,7 @@ class Send_field {
   const char *db_name;
   const char *table_name,*org_table_name;
   const char *col_name,*org_col_name;
-  ulong length;
+  uint32_t length;
   uint charsetnr, flags, decimals;
   enum_field_types type;
   Send_field() {}
@@ -851,7 +851,7 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 		  Field::utype unireg_check,
 		  TYPELIB *interval, const char *field_name);
 uint pack_length_to_packflag(uint type);
-enum_field_types get_blob_type_from_length(ulong length);
+enum_field_types get_blob_type_from_length(uint32_t length);
 uint32_t calc_pack_length(enum_field_types type,uint32_t length);
 int set_field_to_null(Field *field);
 int set_field_to_null_with_conversions(Field *field, bool no_conversions);

@@ -2481,7 +2481,7 @@ void
 slap_connect(DRIZZLE *drizzle, bool connect_to_schema)
 {
   /* Connect to server */
-  static ulong connection_retry_sleep= 100000; /* Microseconds */
+  static uint32_t connection_retry_sleep= 100000; /* Microseconds */
   int x, connect_error= 1;
 
   if (opt_only_print)

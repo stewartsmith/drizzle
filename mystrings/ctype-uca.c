@@ -7241,7 +7241,7 @@ static int my_strnncollsp_uca(const CHARSET_INFO * const cs,
 static void my_hash_sort_uca(const CHARSET_INFO * const cs,
                              my_uca_scanner_handler *scanner_handler,
 			     const uchar *s, size_t slen,
-			     ulong *n1, ulong *n2)
+			     uint32_t *n1, uint32_t *n2)
 {
   int   s_res;
   my_uca_scanner scanner;
@@ -8051,7 +8051,7 @@ static int my_strnncollsp_any_uca(const CHARSET_INFO * const cs,
 
 static void my_hash_sort_any_uca(const CHARSET_INFO * const cs,
                                  const uchar *s, size_t slen,
-                                 ulong *n1, ulong *n2)
+                                 uint32_t *n1, uint32_t *n2)
 {
   my_hash_sort_uca(cs, &my_any_uca_scanner_handler, s, slen, n1, n2); 
 }

@@ -2225,7 +2225,7 @@ my_caseup_utf8mb4(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
 
 static inline void
-my_hash_add(ulong *n1, ulong *n2, uint ch)
+my_hash_add(uint32_t *n1, uint32_t *n2, uint ch)
 {
   n1[0]^= (((n1[0] & 63) + n2[0]) * (ch)) + (n1[0] << 8);
   n2[0]+= 3;
@@ -2234,7 +2234,7 @@ my_hash_add(ulong *n1, ulong *n2, uint ch)
 
 static void
 my_hash_sort_utf8mb4(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
-                     ulong *n1, ulong *n2)
+                     uint32_t *n1, uint32_t *n2)
 {
   my_wc_t wc;
   int res;
@@ -3129,7 +3129,7 @@ my_caseup_utf8mb3(const CHARSET_INFO * const cs, char *src, size_t srclen,
 
 static void
 my_hash_sort_utf8mb3(const CHARSET_INFO * const cs, const uchar *s, size_t slen,
-                     ulong *n1, ulong *n2)
+                     uint32_t *n1, uint32_t *n2)
 {
   my_wc_t wc;
   int res;

@@ -26,7 +26,7 @@
 #include <drizzled/field/blob.h>
 
 #define BLOB_PACK_LENGTH_TO_MAX_LENGH(arg) \
-((ulong) ((1LL << min(arg, (uint)4) * 8) - 1LL))
+((uint32_t) ((1LL << min(arg, (uint)4) * 8) - 1LL))
 
 /****************************************************************************
 ** blob type

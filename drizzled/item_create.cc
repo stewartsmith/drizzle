@@ -3175,7 +3175,7 @@ create_func_cast(THD *thd, Item *a, Cast_target cast_type,
                  const CHARSET_INFO * const cs)
 {
   Item *res;
-  ulong len;
+  uint32_t len;
   uint dec;
 
   switch (cast_type) {

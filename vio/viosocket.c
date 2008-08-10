@@ -190,7 +190,7 @@ int vio_close(Vio * vio)
     assert(vio->sd >= 0);
     if (shutdown(vio->sd, SHUT_RDWR))
       r= -1;
-    if (closesocket(vio->sd))
+    if (close(vio->sd))
       r= -1;
   }
   vio->type= VIO_CLOSED;

@@ -154,7 +154,7 @@ int Field_new_decimal::store(const char *from, uint length,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                         "decimal", from_as_str.c_ptr(), field_name,
-                        (ulong) table->in_use->row_count);
+                        (uint32_t) table->in_use->row_count);
 
     return(err);
   }
@@ -177,7 +177,7 @@ int Field_new_decimal::store(const char *from, uint length,
                         ER_TRUNCATED_WRONG_VALUE_FOR_FIELD,
                         ER(ER_TRUNCATED_WRONG_VALUE_FOR_FIELD),
                           "decimal", from_as_str.c_ptr(), field_name,
-                        (ulong) table->in_use->row_count);
+                        (uint32_t) table->in_use->row_count);
     my_decimal_set_zero(&decimal_value);
 
     break;

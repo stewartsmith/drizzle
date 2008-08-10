@@ -107,7 +107,7 @@ public:
                        uchar *new_ptr, uchar *new_null_ptr,
                        uint new_null_bit);
   uint is_equal(Create_field *new_field);
-  void hash(ulong *nr, ulong *nr2);
+  void hash(uint32_t *nr, uint32_t *nr2);
 private:
   int do_save_field_metadata(uchar *first_byte);
 };

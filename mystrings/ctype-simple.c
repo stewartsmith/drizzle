@@ -300,7 +300,7 @@ size_t my_snprintf_8bit(const CHARSET_INFO * const cs  __attribute__((unused)),
 
 void my_hash_sort_simple(const CHARSET_INFO * const cs,
 			 const uchar *key, size_t len,
-			 ulong *nr1, ulong *nr2)
+			 uint32_t *nr1, uint32_t *nr2)
 {
   register uchar *sort_order=cs->sort_order;
   const uchar *end;
