@@ -468,7 +468,7 @@ static uchar *pack_screens(List<Create_field> &create_fields,
     }
     cfield->row=(uint8_t) row;
     cfield->col=(uint8_t) (length+1);
-    cfield->sc_length=(uint8_t) min(cfield->length,(ulong)cols-(length+2));
+    cfield->sc_length=(uint8_t) min(cfield->length,(uint32_t)cols-(length+2));
   }
   length=(uint) (pos-start_screen);
   int2store(start_screen,length);
