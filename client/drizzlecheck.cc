@@ -45,7 +45,7 @@ static char *opt_password = 0, *current_user = 0,
       *default_charset = (char *)MYSQL_DEFAULT_CHARSET_NAME,
       *current_host = 0;
 static int first_error = 0;
-vector<string> tables4repair;
+vector<string *> tables4repair;
 static uint opt_protocol=0;
 static const CHARSET_INFO *charset_info= &my_charset_latin1;
 
@@ -680,7 +680,7 @@ static void print_result()
       */
       if (found_error && opt_auto_repair && what_to_do != DO_REPAIR &&
           strcmp(row[3],"OK"))
-        tables4repair.push_back(string(prev));
+        tables4repair.push_back(new string(prev));
       found_error=0;
       if (opt_silent)
   continue;
@@ -700,7 +700,7 @@ static void print_result()
   }
   /* add the last table to be repaired to the list */
   if (found_error && opt_auto_repair && what_to_do != DO_REPAIR)
-    tables4repair.push_back(string(prev));
+    tables4repair.push_back(new string(prev));
   drizzle_free_result(res);
 }
 
@@ -796,11 +796,12 @@ int main(int argc, char **argv)
     if (!opt_silent && (tables4repair.size() > 0))
       puts("\nRepairing tables");
     what_to_do = DO_REPAIR;
-    vector<string>::iterator i;
+    vector<string *>::iterator i;
     for ( i= tables4repair.begin() ; i < tables4repair.end() ; i++)
     {
-      const char *name= (*i).c_str();
+      const char *name= (*i)->c_str();
       handle_request_for_tables(name, fixed_name_length(name));
+      free((void *)name);
     }
   }
  end:
