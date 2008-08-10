@@ -27,7 +27,7 @@ typedef struct st_decimal_t {
   decimal_digit_t *buf;
 } decimal_t;
 
-int internal_str2dec(const char *from, decimal_t *to, char **end,
+int internal_str2dec(char *from, decimal_t *to, char **end,
                      bool fixed);
 int decimal2string(decimal_t *from, char *to, int *to_len,
                    int fixed_precision, int fixed_decimals,

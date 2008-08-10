@@ -13,8 +13,6 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#line 18 "decimal.c"
-
 /*
 =======================================================================
   NOTE: this library implements SQL standard "exact numeric" type
@@ -783,9 +781,9 @@ static int decimal_shift(decimal_t *dec, int shift)
 */
 
 int
-internal_str2dec(const char *from, decimal_t *to, char **end, bool fixed)
+internal_str2dec(char *from, decimal_t *to, char **end, bool fixed)
 {
-  const char *s= from, *s1;
+  char *s= from, *s1;
   char *end_of_string = *end;
   char *endp;
   int i, intg, frac, error, intg1, frac1;
