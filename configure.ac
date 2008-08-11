@@ -273,10 +273,10 @@ export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
+  NO_EXCEPTIONS="-fno-exceptions"
+  AC_SUBST(NO_EXCEPTIONS)
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
-  AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
-    [1], [Defined by configure. Use explicit template instantiation.])
+  CXXFLAGS="$CXXFLAGS -fno-rtti"
 fi
 
 MYSQL_PROG_AR
@@ -1055,6 +1055,16 @@ AC_CHECK_FUNCS(bsearch \
   snprintf socket strcasecmp strerror strsignal strpbrk \
   tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
+
+AC_LANG_PUSH(C++)
+# Test whether madvise() is declared in C++ code -- it is not on some
+# systems, such as Solaris
+AC_CHECK_DECLS(madvise, [], [], [#if HAVE_SYS_MMAN_H
+#include <sys/types.h>
+#include <sys/mman.h>
+#endif])
+AC_LANG_POP()
+
 
 AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
 
