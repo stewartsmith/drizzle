@@ -273,10 +273,11 @@ export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
+  # (splitting this is for the future...)
   NO_EXCEPTIONS="-fno-exceptions"
   AC_SUBST(NO_EXCEPTIONS)
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="$CXXFLAGS -fno-rtti"
+  CXXFLAGS="$CXXFLAGS ${NO_EXCEPTIONS} -fno-rtti"
 fi
 
 MYSQL_PROG_AR
