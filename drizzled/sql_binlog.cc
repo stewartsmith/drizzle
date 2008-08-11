@@ -116,7 +116,7 @@ void mysql_client_binlog_statement(THD* thd)
       /*
         Checking that the first event in the buffer is not truncated.
       */
-      ulong event_len= uint4korr(bufptr + EVENT_LEN_OFFSET);
+      uint32_t event_len= uint4korr(bufptr + EVENT_LEN_OFFSET);
       if (bytes_decoded < EVENT_LEN_OFFSET || (uint) bytes_decoded < event_len)
       {
         my_error(ER_SYNTAX_ERROR, MYF(0));

@@ -74,12 +74,12 @@ public:
 static int read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
-			     ulong skip_lines,
+			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
 static int read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
-			  String &enclosed, ulong skip_lines,
+			  String &enclosed, uint32_t skip_lines,
 			  bool ignore_check_option_errors);
 
 static bool write_execute_load_query_log_event(THD *thd,
@@ -129,7 +129,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     loaded is located
   */
   char *tdb= thd->db ? thd->db : db;		// Result is never null
-  ulong skip_lines= ex->skip_lines;
+  uint32_t skip_lines= ex->skip_lines;
   bool transactional_table;
   THD::killed_state killed_status= THD::NOT_KILLED;
 
@@ -432,8 +432,8 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     error= -1;				// Error on read
     goto err;
   }
-  sprintf(name, ER(ER_LOAD_INFO), (ulong) info.records, (ulong) info.deleted,
-	  (ulong) (info.records - info.copied), (ulong) thd->cuted_fields);
+  sprintf(name, ER(ER_LOAD_INFO), (uint32_t) info.records, (uint32_t) info.deleted,
+	  (uint32_t) (info.records - info.copied), (uint32_t) thd->cuted_fields);
 
   if (thd->transaction.stmt.modified_non_trans_table)
     thd->transaction.all.modified_non_trans_table= true;
@@ -504,7 +504,7 @@ static int
 read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
-                  ulong skip_lines, bool ignore_check_option_errors)
+                  uint32_t skip_lines, bool ignore_check_option_errors)
 {
   List_iterator_fast<Item> it(fields_vars);
   Item_field *sql_field;
@@ -620,7 +620,7 @@ static int
 read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
-	       String &enclosed, ulong skip_lines,
+	       String &enclosed, uint32_t skip_lines,
 	       bool ignore_check_option_errors)
 {
   List_iterator_fast<Item> it(fields_vars);
