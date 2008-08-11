@@ -519,11 +519,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   myisam_open_list=list_add(myisam_open_list,&m_info->open_list);
 
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  if (myisam_log_file >= 0)
-  {
-    intern_filename(name_buff,share->index_file_name);
-    _myisam_log(MI_LOG_OPEN, m_info, (uchar*) name_buff, strlen(name_buff));
-  }
   return(m_info);
 
 err:

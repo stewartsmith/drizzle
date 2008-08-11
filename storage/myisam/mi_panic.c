@@ -100,10 +100,6 @@ int mi_panic(enum ha_panic_function flag)
       break;
     }
   }
-  if (flag == HA_PANIC_CLOSE)
-  {
-    VOID(mi_log(0));				/* Close log if neaded */
-  }
   pthread_mutex_unlock(&THR_LOCK_myisam);
   if (!error)
     return(0);

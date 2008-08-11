@@ -130,7 +130,6 @@ int mi_write(MI_INFO *info, uchar *record)
 		 HA_STATE_ROW_CHANGED);
   info->state->records++;
   info->lastpos=filepos;
-  myisam_log_record(MI_LOG_WRITE,info,record,filepos,0);
   VOID(_mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE));
   if (info->invalidator != 0)
   {
@@ -195,7 +194,6 @@ err:
   my_errno=save_errno;
 err2:
   save_errno=my_errno;
-  myisam_log_record(MI_LOG_WRITE,info,record,filepos,my_errno);
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
   return(my_errno=save_errno);
 } /* mi_write */

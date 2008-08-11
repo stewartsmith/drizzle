@@ -30,7 +30,7 @@ EXTRA_DIST =		plug.in
 
 noinst_LTLIBRARIES =	libmyisam.la libmyisamutil.la \
 			libmyisamha.la libmyisamnone.la
-bin_PROGRAMS =		myisamchk myisamlog myisampack
+bin_PROGRAMS =		myisamchk myisampack
 noinst_HEADERS =	myisamdef.h \
 			ha_myisam.h \
 			keycache.h \
@@ -49,7 +49,7 @@ libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mf_keycache.c mf_keycaches.c \
 			mi_rprev.c mi_rfirst.c mi_rlast.c mi_rsame.c \
 			mi_rsamepos.c mi_panic.c mi_close.c mi_create.c\
-			mi_range.c mi_checksum.c mi_log.c \
+			mi_range.c mi_checksum.c \
 			mi_changed.c mi_static.c mi_delete_all.c \
 			mi_delete_table.c mi_rename.c  mi_check.c \
 			mi_keycache.c mi_preload.c \

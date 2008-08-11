@@ -26,7 +26,7 @@
 	/* Activate logging if flag is 1 and reset logging if flag is 0 */
 
 static int log_type=0;
-ulong myisam_pid=0;
+uint32_t myisam_pid=0;
 
 int mi_log(int activate_log)
 {
@@ -37,7 +37,7 @@ int mi_log(int activate_log)
   if (activate_log)
   {
     if (!myisam_pid)
-      myisam_pid=(ulong) getpid();
+      myisam_pid=(uint32_t) getpid();
     if (myisam_log_file < 0)
     {
       if ((myisam_log_file = my_create(fn_format(buff,myisam_log_filename,
@@ -64,7 +64,7 @@ void _myisam_log(enum myisam_log_commands command, MI_INFO *info,
 {
   uchar buff[11];
   int old_errno;
-  ulong pid=(ulong) GETPID();
+  uint32_t pid=(uint32_t) GETPID();
   old_errno=my_errno;
   memset(buff, 0, sizeof(buff));
   buff[0]=(char) command;
@@ -85,7 +85,7 @@ void _myisam_log_command(enum myisam_log_commands command, MI_INFO *info,
 {
   uchar buff[9];
   int old_errno;
-  ulong pid=(ulong) GETPID();
+  uint32_t pid=(uint32_t) GETPID();
 
   old_errno=my_errno;
   buff[0]=(char) command;
@@ -107,7 +107,7 @@ void _myisam_log_record(enum myisam_log_commands command, MI_INFO *info,
   uchar buff[21],*pos;
   int old_errno;
   uint length;
-  ulong pid=(ulong) GETPID();
+  uint32_t pid=(uint32_t) GETPID();
 
   old_errno=my_errno;
   if (!info->s->base.blobs)

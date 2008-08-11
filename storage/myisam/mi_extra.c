@@ -28,7 +28,7 @@ static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
     mi_extra()
     info	open table
     function	operation
-    extra_arg	Pointer to extra argument (normally pointer to ulong)
+    extra_arg	Pointer to extra argument (normally pointer to uint32_t)
     		Used when function is one of:
 		HA_EXTRA_WRITE_CACHE
 		HA_EXTRA_CACHE
@@ -40,7 +40,7 @@ static void mi_extra_keyflag(MI_INFO *info, enum ha_extra_function function);
 int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
 {
   int error=0;
-  ulong cache_size;
+  uint32_t cache_size;
   MYISAM_SHARE *share=info->s;
 
   switch (function) {
@@ -94,7 +94,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     if (!(info->opt_flag &
 	  (READ_CACHE_USED | WRITE_CACHE_USED | MEMMAP_USED)))
     {
-      cache_size= (extra_arg ? *(ulong*) extra_arg :
+      cache_size= (extra_arg ? *(uint32_t*) extra_arg :
 		   my_default_record_cache_size);
       if (!(init_io_cache(&info->rec_cache,info->dfile,
 			 (uint) min(info->state->data_file_length+1,
@@ -127,7 +127,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       break;
     }
 
-    cache_size= (extra_arg ? *(ulong*) extra_arg :
+    cache_size= (extra_arg ? *(uint32_t*) extra_arg :
 		 my_default_record_cache_size);
     if (!(info->opt_flag &
 	  (READ_CACHE_USED | WRITE_CACHE_USED | OPT_NO_ROWS)) &&
@@ -339,7 +339,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
       info->opt_flag|= OPT_NO_ROWS;
     break;
   case HA_EXTRA_PRELOAD_BUFFER_SIZE:
-    info->preload_buff_size= *((ulong *) extra_arg); 
+    info->preload_buff_size= *((uint32_t *) extra_arg); 
     break;
   case HA_EXTRA_CHANGE_KEY_TO_UNIQUE:
   case HA_EXTRA_CHANGE_KEY_TO_DUP:
@@ -375,11 +375,7 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
   default:
     break;
   }
-  {
-    char tmp[1];
-    tmp[0]=function;
-    myisam_log_command(MI_LOG_EXTRA,info,(uchar*) tmp,1,error);
-  }
+
   return(error);
 } /* mi_extra */
 

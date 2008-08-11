@@ -457,7 +457,6 @@ static bool kill_in_progress, segfaulted;
 #ifdef HAVE_STACK_TRACE_ON_SEGV
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-static bool opt_myisam_log;
 static int cleanup_done;
 static ulong opt_specialflag, opt_myisam_block_size;
 static char *opt_binlog_index_name;
@@ -2541,9 +2540,6 @@ server.");
       mysql_bin_log.purge_logs_before_date(purge_time);
   }
 
-  if (opt_myisam_log)
-    (void) mi_log(1);
-
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
   if (locked_in_memory && !getuid())
   {
@@ -4212,7 +4208,6 @@ static void mysql_init_variables(void)
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_auth= 0;
   opt_secure_file_priv= 0;
-  opt_myisam_log= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
   defaults_argc= 0;
@@ -4389,9 +4384,6 @@ mysqld_get_one_option(int optid,
   case 'T':
     test_flags= argument ? (uint) atoi(argument) : 0;
     opt_endinfo=1;
-    break;
-  case (int) OPT_ISAM_LOG:
-    opt_myisam_log=1;
     break;
   case (int) OPT_BIN_LOG:
     opt_bin_log= test(argument != disabled_my_option);
