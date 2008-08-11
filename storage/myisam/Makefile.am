@@ -41,7 +41,7 @@ libmyisamutil_la_SOURCES = mi_open.c mi_extra.c mi_info.c mi_rkey.c \
 			mi_rnext.c mi_rnext_same.c \
 			mi_search.c mi_page.c mi_key.c mi_locking.c \
 			mi_rrnd.c mi_scan.c mi_cache.c \
-			mi_statrec.c mi_packrec.c mi_dynrec.c \
+			mi_statrec.c mi_dynrec.c \
 			mi_update.c mi_write.c mi_unique.c \
 			mi_delete.c \
 			my_pread.c \

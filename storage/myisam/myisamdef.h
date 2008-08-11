@@ -673,11 +673,6 @@ extern uint _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
                                     File file, my_off_t filepos);
 extern void _my_store_blob_length(uchar *pos,uint pack_length,uint length);
 extern void mi_report_error(int errcode, const char *file_name);
-extern bool _mi_memmap_file(MI_INFO *info);
-extern void _mi_unmap_file(MI_INFO *info);
-extern uint save_pack_length(uint version, uchar *block_buff, ulong length);
-extern uint read_pack_length(uint version, const uchar *buf, ulong *length);
-extern uint calc_pack_length(uint version, ulong length);
 extern size_t mi_mmap_pread(MI_INFO *info, uchar *Buffer,
                             size_t Count, my_off_t offset, myf MyFlags);
 extern size_t mi_mmap_pwrite(MI_INFO *info, const uchar *Buffer,

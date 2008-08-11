@@ -77,10 +77,6 @@ int mi_close(register MI_INFO *info)
       if (my_close(share->kfile,MYF(0)))
         error = my_errno;
     }
-#ifdef HAVE_MMAP
-    if (share->file_map)
-      _mi_unmap_file(info);
-#endif
     if (share->decode_trees)
     {
       my_free((uchar*) share->decode_trees,MYF(0));

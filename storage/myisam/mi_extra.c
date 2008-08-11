@@ -69,22 +69,6 @@ int mi_extra(MI_INFO *info, enum ha_extra_function function, void *extra_arg)
     }
     if (info->s->file_map) /* Don't use cache if mmap */
       break;
-#if defined(HAVE_MMAP) && defined(HAVE_MADVISE)
-    if ((share->options & HA_OPTION_COMPRESS_RECORD))
-    {
-      pthread_mutex_lock(&share->intern_lock);
-      if (_mi_memmap_file(info))
-      {
-	/* We don't nead MADV_SEQUENTIAL if small file */
-	madvise((char*) share->file_map, share->state.state.data_file_length,
-		share->state.state.data_file_length <= RECORD_CACHE_SIZE*16 ?
-		MADV_RANDOM : MADV_SEQUENTIAL);
-	pthread_mutex_unlock(&share->intern_lock);
-	break;
-      }
-      pthread_mutex_unlock(&share->intern_lock);
-    }
-#endif
     if (info->opt_flag & WRITE_CACHE_USED)
     {
       info->opt_flag&= ~WRITE_CACHE_USED;
