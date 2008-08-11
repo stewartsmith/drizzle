@@ -2680,7 +2680,7 @@ com_go(string *buffer,
   /* Remove garbage for nicer messages */
   remove_cntrl(buffer);
 
-  if (buffer->length() == 0)
+  if (buffer->empty())
   {
     // Ignore empty quries
     if (status.batch)
@@ -4018,9 +4018,9 @@ static void remove_cntrl(string *buffer)
   const char *end= start + (buffer->length());
   while (start < end && !my_isgraph(charset_info,end[-1]))
     end--;
-  uint chars_to_truncate = (buffer->length()) - (end-start);
-  if (buffer->length() > chars_to_truncate)
-    buffer->erase(chars_to_truncate);
+  uint pos_to_truncate= (end-start);
+  if (buffer->length() > pos_to_truncate)
+    buffer->erase(pos_to_truncate);
 }
 
 
