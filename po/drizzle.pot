@@ -338,7 +338,7 @@ msgstr ""
 #: client/drizzle.c:1383
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
-"preference, my.cnf, $MYSQL_TCP_PORT, "
+"preference, my.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
 
 #: client/drizzle.c:1384
@@ -622,7 +622,7 @@ msgstr[1] ""
 #: client/drizzleadmin.cc:76
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
-"preference, my.cnf, $MYSQL_TCP_PORT, built-in default ("
+"preference, my.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
 
 #: client/drizzleadmin.cc:81

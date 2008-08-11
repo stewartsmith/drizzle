@@ -961,7 +961,7 @@ drizzle_create(DRIZZLE *ptr)
 
     if (!drizzle_port)
     {
-      drizzle_port = MYSQL_PORT;
+      drizzle_port = DRIZZLE_PORT;
       {
         struct servent *serv_ptr;
         char *env;
@@ -972,11 +972,11 @@ drizzle_create(DRIZZLE *ptr)
           only if they didn't do we check /etc/services (and, failing
           on that, fall back to the factory default of 4427).
           either default can be overridden by the environment variable
-          MYSQL_TCP_PORT, which in turn can be overridden with command
+          DRIZZLE_TCP_PORT, which in turn can be overridden with command
           line options.
         */
 
-#if MYSQL_PORT_DEFAULT == 0
+#if DRIZZLE_PORT_DEFAULT == 0
         if ((serv_ptr = getservbyname("drizzle", "tcp")))
           drizzle_port = (uint) ntohs((ushort) serv_ptr->s_port);
 #endif

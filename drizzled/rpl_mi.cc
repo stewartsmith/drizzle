@@ -28,7 +28,7 @@ int init_floatvar_from_file(float* var, IO_CACHE* f, float default_val);
 
 Master_info::Master_info()
   :Slave_reporting_capability("I/O"),
-   ssl(0), ssl_verify_server_cert(0), fd(-1),  io_thd(0), port(MYSQL_PORT),
+   ssl(0), ssl_verify_server_cert(0), fd(-1),  io_thd(0), port(DRIZZLE_PORT),
    connect_retry(DEFAULT_CONNECT_RETRY), heartbeat_period(0),
    received_heartbeats(0), inited(0),
    abort_slave(0), slave_running(0), slave_run_id(0)
@@ -231,7 +231,7 @@ int init_master_info(Master_info* mi, const char* master_info_fname,
         init_strvar_from_file(mi->user, sizeof(mi->user), &mi->file, "test") ||
         init_strvar_from_file(mi->password, SCRAMBLED_PASSWORD_CHAR_LENGTH+1,
                               &mi->file, 0 ) ||
-        init_intvar_from_file(&port, &mi->file, MYSQL_PORT) ||
+        init_intvar_from_file(&port, &mi->file, DRIZZLE_PORT) ||
         init_intvar_from_file(&connect_retry, &mi->file, DEFAULT_CONNECT_RETRY))
       goto errwithmsg;
 
