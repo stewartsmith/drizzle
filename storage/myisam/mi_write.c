@@ -130,7 +130,6 @@ int mi_write(MI_INFO *info, uchar *record)
 		 HA_STATE_ROW_CHANGED);
   info->state->records++;
   info->lastpos=filepos;
-  myisam_log_record(MI_LOG_WRITE,info,record,filepos,0);
   VOID(_mi_writeinfo(info, WRITEINFO_UPDATE_KEYFILE));
   if (info->invalidator != 0)
   {
@@ -195,7 +194,6 @@ err:
   my_errno=save_errno;
 err2:
   save_errno=my_errno;
-  myisam_log_record(MI_LOG_WRITE,info,record,filepos,my_errno);
   VOID(_mi_writeinfo(info,WRITEINFO_UPDATE_KEYFILE));
   return(my_errno=save_errno);
 } /* mi_write */
@@ -785,7 +783,7 @@ static int keys_free(uchar *key, TREE_FREE mode, bulk_insert_param *param)
 }
 
 
-int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows)
+int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
 {
   MYISAM_SHARE *share=info->s;
   MI_KEYDEF *key=share->keyinfo;
@@ -813,7 +811,7 @@ int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows)
     return(0);
 
   if (rows && rows*total_keylength < cache_size)
-    cache_size= (ulong)rows;
+    cache_size= (uint32_t)rows;
   else
     cache_size/=total_keylength*16;
 

@@ -339,8 +339,8 @@ static bool write_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 
   if ((file=my_create(path, CREATE_MODE,O_RDWR | O_TRUNC,MYF(MY_WME))) >= 0)
   {
-    ulong length;
-    length= (ulong) (strxnmov(buf, sizeof(buf)-1, "default-character-set=",
+    uint32_t length;
+    length= (uint32_t) (strxnmov(buf, sizeof(buf)-1, "default-character-set=",
                               create->default_table_charset->csname,
                               "\ndefault-collation=",
                               create->default_table_charset->name,
@@ -872,7 +872,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   if (!silent && deleted>=0)
   {
     const char *query;
-    ulong query_length;
+    uint32_t query_length;
     if (!thd->query)
     {
       /* The client used the old obsolete mysql_drop_db() call */
@@ -903,7 +903,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
     }
     thd->clear_error();
     thd->server_status|= SERVER_STATUS_DB_DROPPED;
-    my_ok(thd, (ulong) deleted);
+    my_ok(thd, (uint32_t) deleted);
     thd->server_status&= ~SERVER_STATUS_DB_DROPPED;
   }
   else if (mysql_bin_log.is_open())
@@ -969,7 +969,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
                                  TABLE_LIST **dropped_tables)
 {
   long deleted=0;
-  ulong found_other_files=0;
+  uint32_t found_other_files=0;
   char filePath[FN_REFLEN];
   TABLE_LIST *tot_list=0, **tot_list_next;
 

@@ -248,11 +248,11 @@ typedef struct st_columndef		/* column information */
 
 
 extern char * myisam_log_filename;		/* Name of logfile */
-extern ulong myisam_block_size;
-extern ulong myisam_concurrent_insert;
+extern uint32_t myisam_block_size;
+extern uint32_t myisam_concurrent_insert;
 extern bool myisam_flush,myisam_delay_key_write,myisam_single_user;
 extern my_off_t myisam_max_temp_length;
-extern ulong myisam_bulk_insert_tree_size, myisam_data_pointer_size;
+extern uint32_t myisam_bulk_insert_tree_size, myisam_data_pointer_size;
 
 	/* Prototypes for myisam-functions */
 
@@ -478,7 +478,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename);
 bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 			    bool force);
 
-int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows);
+int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint inx);
 void mi_end_bulk_insert(MI_INFO *info);
 int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map, 

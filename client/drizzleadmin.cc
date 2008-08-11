@@ -74,8 +74,8 @@ static struct my_option my_long_options[] =
    N_("Password to use when connecting to server. If password is not given it's asked from the tty."),
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', N_("Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-   "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ")."),
+   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+   "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
    (char**) &tcp_port,
    (char**) &tcp_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"silent", 's', N_("Silently exit if one can't connect to server."),

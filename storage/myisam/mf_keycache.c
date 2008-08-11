@@ -216,8 +216,8 @@ static void release_whole_queue(KEYCACHE_WQUEUE *wqueue);
 static void free_block(KEY_CACHE *keycache, BLOCK_LINK *block);
 
 #define KEYCACHE_HASH(f, pos)                                                 \
-(((ulong) ((pos) / keycache->key_cache_block_size) +                          \
-                                     (ulong) (f)) & (keycache->hash_entries-1))
+(((uint32_t) ((pos) / keycache->key_cache_block_size) +                          \
+                                     (uint32_t) (f)) & (keycache->hash_entries-1))
 #define FILE_HASH(f)                 ((uint) (f) & (CHANGED_BLOCKS_HASH-1))
 
 #define BLOCK_NUMBER(b)                                                       \
@@ -271,7 +271,7 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
 		   size_t use_mem, uint division_limit,
 		   uint age_threshold)
 {
-  ulong blocks, hash_links;
+  uint32_t blocks, hash_links;
   size_t length;
   int error;
   assert(key_cache_block_size >= 512);
@@ -303,7 +303,7 @@ int init_key_cache(KEY_CACHE *keycache, uint key_cache_block_size,
   keycache->key_cache_mem_size= use_mem;
   keycache->key_cache_block_size= key_cache_block_size;
 
-  blocks= (ulong) (use_mem / (sizeof(BLOCK_LINK) + 2 * sizeof(HASH_LINK) +
+  blocks= (uint32_t) (use_mem / (sizeof(BLOCK_LINK) + 2 * sizeof(HASH_LINK) +
                               sizeof(HASH_LINK*) * 5/4 + key_cache_block_size));
   /* It doesn't make sense to have too few blocks (less than 8) */
   if (blocks >= 8)
@@ -1774,10 +1774,10 @@ restart:
         {
           /* There are some never used blocks, take first of them */
           assert(keycache->blocks_used <
-                      (ulong) keycache->disk_blocks);
+                      (uint32_t) keycache->disk_blocks);
           block= &keycache->block_root[keycache->blocks_used];
           block->buffer= ADD_TO_PTR(keycache->block_mem,
-                                    ((ulong) keycache->blocks_used*
+                                    ((uint32_t) keycache->blocks_used*
                                      keycache->key_cache_block_size),
                                     uchar*);
           keycache->blocks_used++;
@@ -3798,7 +3798,7 @@ static void keycache_dump(KEY_CACHE *keycache)
       page= (KEYCACHE_PAGE *) thread->opt_info;
       fprintf(keycache_dump_file,
               "thread:%u, (file,filepos)=(%u,%lu)\n",
-              thread->id,(uint) page->file,(ulong) page->filepos);
+              thread->id,(uint) page->file,(uint32_t) page->filepos);
       if (++i == MAX_QUEUE_LEN)
         break;
     }
@@ -3813,9 +3813,9 @@ static void keycache_dump(KEY_CACHE *keycache)
       thread=thread->next;
       hash_link= (HASH_LINK *) thread->opt_info;
       fprintf(keycache_dump_file,
-        "thread:%u hash_link:%u (file,filepos)=(%u,%lu)\n",
+        "thread:%u hash_link:%u (file,filepos)=(%u,%u)\n",
         thread->id, (uint) HASH_LINK_NUMBER(hash_link),
-        (uint) hash_link->file,(ulong) hash_link->diskpos);
+        (uint) hash_link->file,(uint32_t) hash_link->diskpos);
       if (++i == MAX_QUEUE_LEN)
         break;
     }

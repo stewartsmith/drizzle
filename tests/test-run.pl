@@ -1423,7 +1423,7 @@ sub environment_setup () {
   $ENV{'SLAVE_MYPORT'}=       $slave->[0]->{'port'};
   $ENV{'SLAVE_MYPORT1'}=      $slave->[1]->{'port'};
   $ENV{'SLAVE_MYPORT2'}=      $slave->[2]->{'port'};
-  $ENV{'MYSQL_TCP_PORT'}=     $mysqld_variables{'port'};
+  $ENV{'DRIZZLE_TCP_PORT'}=     $mysqld_variables{'port'};
 
   $ENV{MTR_BUILD_THREAD}=      $opt_mtr_build_thread;
 

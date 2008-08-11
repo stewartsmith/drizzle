@@ -444,7 +444,7 @@ pthread_attr_t connection_attrib;
 pthread_cond_t  COND_server_started;
 
 /* replication parameters, if master_host is not NULL, we are a slave */
-uint report_port= MYSQL_PORT;
+uint report_port= DRIZZLE_PORT;
 uint32_t master_retry_count= 0;
 char *master_info_file;
 char *relay_log_info_file, *report_user, *report_password, *report_host;
@@ -457,7 +457,6 @@ static bool kill_in_progress, segfaulted;
 #ifdef HAVE_STACK_TRACE_ON_SEGV
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
-static bool opt_myisam_log;
 static int cleanup_done;
 static ulong opt_specialflag, opt_myisam_block_size;
 static char *opt_binlog_index_name;
@@ -947,7 +946,7 @@ static void set_ports()
   char	*env;
   if (!mysqld_port)
   {					// Get port if not from commandline
-    mysqld_port= MYSQL_PORT;
+    mysqld_port= DRIZZLE_PORT;
 
     /*
       if builder specifically requested a default port, use that
@@ -955,15 +954,15 @@ static void set_ports()
       only if they didn't do we check /etc/services (and, failing
       on that, fall back to the factory default of 4427).
       either default can be overridden by the environment variable
-      MYSQL_TCP_PORT, which in turn can be overridden with command
+      DRIZZLE_TCP_PORT, which in turn can be overridden with command
       line options.
     */
 
     struct  servent *serv_ptr;
-    if ((serv_ptr= getservbyname("mysql", "tcp")))
+    if ((serv_ptr= getservbyname("drizzle", "tcp")))
       mysqld_port= ntohs((u_short) serv_ptr->s_port); /* purecov: inspected */
 
-    if ((env = getenv("MYSQL_TCP_PORT")))
+    if ((env = getenv("DRIZZLE_TCP_PORT")))
       mysqld_port= (uint) atoi(env);		/* purecov: inspected */
 
     assert(mysqld_port);
@@ -2541,9 +2540,6 @@ server.");
       mysql_bin_log.purge_logs_before_date(purge_time);
   }
 
-  if (opt_myisam_log)
-    (void) mi_log(1);
-
 #if defined(HAVE_MLOCKALL) && defined(MCL_CURRENT)
   if (locked_in_memory && !getuid())
   {
@@ -3363,11 +3359,11 @@ thread is in the master's binlogs.",
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-#if MYSQL_PORT_DEFAULT == 0
+   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+#if DRIZZLE_PORT_DEFAULT == 0
    "/etc/services, "
 #endif
-   "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
+   "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
    (char**) &mysqld_port,
    (char**) &mysqld_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
@@ -3427,7 +3423,7 @@ Can't be set to 1 if --log-slave-updates is used.",
   {"report-port", OPT_REPORT_PORT,
    "Port for connecting to slave reported to the master during slave registration. Set it only if the slave is listening on a non-default port or if you have a special tunnel from the master or other clients to the slave. If not sure, leave this option unset.",
    (char**) &report_port, (char**) &report_port, 0, GET_UINT, REQUIRED_ARG,
-   MYSQL_PORT, 0, 0, 0, 0, 0},
+   DRIZZLE_PORT, 0, 0, 0, 0, 0},
   {"safe-mode", OPT_SAFE, "Skip some optimize stages (for testing).",
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
@@ -4212,7 +4208,6 @@ static void mysql_init_variables(void)
   opt_tc_log_file= (char *)"tc.log";      // no hostname in tc_log file name !
   opt_secure_auth= 0;
   opt_secure_file_priv= 0;
-  opt_myisam_log= 0;
   segfaulted= kill_in_progress= 0;
   cleanup_done= 0;
   defaults_argc= 0;
@@ -4389,9 +4384,6 @@ mysqld_get_one_option(int optid,
   case 'T':
     test_flags= argument ? (uint) atoi(argument) : 0;
     opt_endinfo=1;
-    break;
-  case (int) OPT_ISAM_LOG:
-    opt_myisam_log=1;
     break;
   case (int) OPT_BIN_LOG:
     opt_bin_log= test(argument != disabled_my_option);

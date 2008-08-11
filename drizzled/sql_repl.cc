@@ -54,7 +54,7 @@ static int fake_rotate_event(NET* net, String* packet, char* log_file_name,
 
   char* p = log_file_name+dirname_length(log_file_name);
   uint ident_len = (uint) strlen(p);
-  ulong event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
+  uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN + ROTATE_HEADER_LEN;
   int4store(header + SERVER_ID_OFFSET, server_id);
   int4store(header + EVENT_LEN_OFFSET, event_len);
   int2store(header + FLAGS_OFFSET, 0);
@@ -353,7 +353,7 @@ static int send_heartbeat_event(NET* net, String* packet,
   char* p= coord->file_name + dirname_length(coord->file_name);
 
   uint ident_len = strlen(p);
-  ulong event_len = ident_len + LOG_EVENT_HEADER_LEN;
+  uint32_t event_len = ident_len + LOG_EVENT_HEADER_LEN;
   int4store(header + SERVER_ID_OFFSET, server_id);
   int4store(header + EVENT_LEN_OFFSET, event_len);
   int2store(header + FLAGS_OFFSET, 0);
@@ -540,7 +540,7 @@ impossible position";
            to avoid destroying temp tables.
           */
          int4store((char*) packet->ptr()+LOG_EVENT_MINIMAL_HEADER_LEN+
-                   ST_CREATED_OFFSET+1, (ulong) 0);
+                   ST_CREATED_OFFSET+1, (uint32_t) 0);
          /* send it */
          if (my_net_write(net, (uchar*) packet->ptr(), packet->length()))
          {
@@ -1833,7 +1833,7 @@ bool sys_var_slave_skip_counter::update(THD *thd __attribute__((unused)),
 bool sys_var_sync_binlog_period::update(THD *thd __attribute__((unused)),
                                         set_var *var)
 {
-  sync_binlog_period= (ulong) var->save_result.uint64_t_value;
+  sync_binlog_period= (uint32_t) var->save_result.uint64_t_value;
   return 0;
 }
 

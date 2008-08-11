@@ -127,8 +127,8 @@ static struct my_option my_long_options[] =
    "Password to use when connecting to server. If password is not given it's solicited on the tty.",
    0, 0, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $MYSQL_TCP_PORT, "
-   "built-in default (" STRINGIFY_ARG(MYSQL_PORT) ").",
+   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+   "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
    (char**) &opt_mysql_port,
    (char**) &opt_mysql_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0,
    0},

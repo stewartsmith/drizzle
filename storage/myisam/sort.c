@@ -96,7 +96,7 @@ my_var_write(MI_SORT_PARAM *info, IO_CACHE *to_file, uchar *bufs);
 */
 
 int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
-			  ulong sortbuff_size)
+			  uint32_t sortbuff_size)
 {
   int error,maxbuffer,skr;
   uint memavl,old_memavl,keys,sort_length;
@@ -182,7 +182,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
   if (maxbuffer == 0)
   {
     if (!no_messages)
-      printf("  - Dumping %lu keys\n", (ulong) records);
+      printf("  - Dumping %u keys\n", (uint32_t) records);
     if (write_index(info,sort_keys, (uint) records))
       goto err; /* purecov: inspected */
   }
@@ -192,7 +192,7 @@ int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages,
     if (maxbuffer >= MERGEBUFF2)
     {
       if (!no_messages)
-	printf("  - Merging %lu keys\n", (ulong) records); /* purecov: tested */
+	printf("  - Merging %u keys\n", (uint32_t) records); /* purecov: tested */
       if (merge_many_buff(info,keys,sort_keys,
                   dynamic_element(&buffpek,0,BUFFPEK *),&maxbuffer,&tempfile))
 	goto err;				/* purecov: inspected */
@@ -469,8 +469,8 @@ int thr_write_keys(MI_SORT_PARAM *sort_param)
 {
   SORT_INFO *sort_info= sort_param->sort_info;
   MI_CHECK *param= sort_info->param;
-  ulong length= 0, keys;
-  ulong *rec_per_key_part=param->rec_per_key_part;
+  uint32_t length= 0, keys;
+  ulong *rec_per_key_part= param->rec_per_key_part;
   int got_error=sort_info->got_error;
   uint i;
   MI_INFO *info=sort_info->info;

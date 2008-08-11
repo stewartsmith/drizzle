@@ -462,7 +462,6 @@ extern LIST *myisam_open_list;
 extern uchar  myisam_file_magic[], myisam_pack_file_magic[];
 extern uint  myisam_read_vec[], myisam_readnext_vec[];
 extern uint myisam_quick_table_bits;
-extern File myisam_log_file;
 extern ulong myisam_pid;
 
 	/* This is used by _mi_calc_xxx_key_length och _mi_store_key */
@@ -660,14 +659,6 @@ typedef struct st_mi_block_info {	/* Parameter to _mi_get_block_info */
 #define SORT_BUFFER_INIT	(2048L*1024L-MALLOC_OVERHEAD)
 #define MIN_SORT_BUFFER		(4096-MALLOC_OVERHEAD)
 
-enum myisam_log_commands {
-  MI_LOG_OPEN,MI_LOG_WRITE,MI_LOG_UPDATE,MI_LOG_DELETE,MI_LOG_CLOSE,MI_LOG_EXTRA,MI_LOG_LOCK,MI_LOG_DELETE_ALL
-};
-
-#define myisam_log(a,b,c,d) if (myisam_log_file >= 0) _myisam_log(a,b,c,d)
-#define myisam_log_command(a,b,c,d,e) if (myisam_log_file >= 0) _myisam_log_command(a,b,c,d,e)
-#define myisam_log_record(a,b,c,d,e) if (myisam_log_file >= 0) _myisam_log_record(a,b,c,d,e)
-
 #define fast_mi_writeinfo(INFO) if (!(INFO)->s->tot_locks) (void) _mi_writeinfo((INFO),0)
 #define fast_mi_readinfo(INFO) ((INFO)->lock_type == F_UNLCK) && _mi_readinfo((INFO),F_RDLCK,1)
 
@@ -681,20 +672,7 @@ extern uint _mi_pack_get_block_info(MI_INFO *myisam, MI_BIT_BUFF *bit_buff,
                                     MI_BLOCK_INFO *info, uchar **rec_buff_p,
                                     File file, my_off_t filepos);
 extern void _my_store_blob_length(uchar *pos,uint pack_length,uint length);
-extern void _myisam_log(enum myisam_log_commands command,MI_INFO *info,
-		       const uchar *buffert,uint length);
-extern void _myisam_log_command(enum myisam_log_commands command,
-			       MI_INFO *info, const uchar *buffert,
-			       uint length, int result);
-extern void _myisam_log_record(enum myisam_log_commands command,MI_INFO *info,
-			      const uchar *record,my_off_t filepos,
-			      int result);
 extern void mi_report_error(int errcode, const char *file_name);
-extern bool _mi_memmap_file(MI_INFO *info);
-extern void _mi_unmap_file(MI_INFO *info);
-extern uint save_pack_length(uint version, uchar *block_buff, ulong length);
-extern uint read_pack_length(uint version, const uchar *buf, ulong *length);
-extern uint calc_pack_length(uint version, ulong length);
 extern size_t mi_mmap_pread(MI_INFO *info, uchar *Buffer,
                             size_t Count, my_off_t offset, myf MyFlags);
 extern size_t mi_mmap_pwrite(MI_INFO *info, const uchar *Buffer,
@@ -759,7 +737,7 @@ pthread_handler_t thr_find_all_keys(void *arg);
 int flush_blocks(MI_CHECK *param, KEY_CACHE *key_cache, File file);
 
 int sort_write_record(MI_SORT_PARAM *sort_param);
-int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, ulong);
+int _create_index_by_sort(MI_SORT_PARAM *info,bool no_messages, uint32_t);
 
 extern void mi_set_index_cond_func(MI_INFO *info, index_cond_func_t func,
                                    void *func_arg);

@@ -49,7 +49,7 @@ static int merge_index(SORTPARAM *param,uchar *sort_buffer,
 		       IO_CACHE *outfile);
 static bool save_index(SORTPARAM *param,uchar **sort_keys, uint count, 
                        FILESORT_INFO *table_sort);
-static uint suffix_length(ulong string_length);
+static uint suffix_length(uint32_t string_length);
 static uint sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
 		       bool *multi_byte_charset);
 static SORT_ADDON_FIELD *get_addon_fields(THD *thd, Field **ptabfield,
@@ -97,7 +97,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
                  bool sort_positions, ha_rows *examined_rows)
 {
   int error;
-  ulong memavl, min_sort_memory;
+  uint32_t memavl, min_sort_memory;
   uint maxbuffer;
   BUFFPEK *buffpek;
   ha_rows records= HA_POS_ERROR;
@@ -206,8 +206,8 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   min_sort_memory= max((uint)MIN_SORT_MEMORY, param.sort_length*MERGEBUFF2);
   while (memavl >= min_sort_memory)
   {
-    ulong old_memavl;
-    ulong keys= memavl/(param.rec_length+sizeof(char*));
+    uint32_t old_memavl;
+    uint32_t keys= memavl/(param.rec_length+sizeof(char*));
     param.keys=(uint) min(records+1, keys);
     if ((table_sort.sort_keys=
 	 (uchar **) make_char_array((char **) table_sort.sort_keys,
@@ -314,7 +314,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
                MYF(ME_ERROR+ME_WAITTANG));
   else
     statistic_add(thd->status_var.filesort_rows,
-		  (ulong) records, &LOCK_status);
+		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(FILESORT_INFO));
   MYSQL_FILESORT_END();
@@ -377,7 +377,7 @@ static char **make_char_array(char **old_pos, register uint fields,
 static uchar *read_buffpek_from_file(IO_CACHE *buffpek_pointers, uint count,
                                      uchar *buf)
 {
-  ulong length= sizeof(BUFFPEK)*count;
+  uint32_t length= sizeof(BUFFPEK)*count;
   uchar *tmp= buf;
   if (count > UINT_MAX/sizeof(BUFFPEK))
     return 0; /* sizeof(BUFFPEK)*count will overflow */
@@ -1116,7 +1116,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   int error;
   uint rec_length,res_length,offset;
   size_t sort_length;
-  ulong maxcount;
+  uint32_t maxcount;
   ha_rows max_rows,org_max_rows;
   my_off_t to_start_filepos;
   uchar *strpos;
@@ -1139,7 +1139,7 @@ int merge_buffers(SORTPARAM *param, IO_CACHE *from_file,
   res_length= param->res_length;
   sort_length= param->sort_length;
   offset= rec_length-res_length;
-  maxcount= (ulong) (param->keys/((uint) (Tb-Fb) +1));
+  maxcount= (uint32_t) (param->keys/((uint) (Tb-Fb) +1));
   to_start_filepos= my_b_tell(to_file);
   strpos= (uchar*) sort_buffer;
   org_max_rows=max_rows= param->max_rows;
@@ -1326,7 +1326,7 @@ static int merge_index(SORTPARAM *param, uchar *sort_buffer,
 } /* merge_index */
 
 
-static uint suffix_length(ulong string_length)
+static uint suffix_length(uint32_t string_length)
 {
   if (string_length < 256)
     return 1;

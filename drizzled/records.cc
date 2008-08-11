@@ -513,11 +513,11 @@ static int init_rr_cache(THD *thd, READ_RECORD *info)
 static int rr_from_cache(READ_RECORD *info)
 {
   register uint i;
-  ulong length;
+  uint32_t length;
   my_off_t rest_of_file;
   int16_t error;
   uchar *position,*ref_position,*record_pos;
-  ulong record;
+  uint32_t record;
 
   for (;;)
   {
@@ -541,7 +541,7 @@ static int rr_from_cache(READ_RECORD *info)
     length=info->rec_cache_size;
     rest_of_file=info->io_cache->end_of_file - my_b_tell(info->io_cache);
     if ((my_off_t) length > rest_of_file)
-      length= (ulong) rest_of_file;
+      length= (uint32_t) rest_of_file;
     if (!length || my_b_read(info->io_cache,info->cache,length))
     {
       return -1;			/* End of file */

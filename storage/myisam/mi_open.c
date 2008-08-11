@@ -376,19 +376,7 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
 					 share->blocksize * keys : 0));
     share->blocksize=min(IO_SIZE,myisam_block_size);
     share->data_file_type=STATIC_RECORD;
-    if (share->options & HA_OPTION_COMPRESS_RECORD)
-    {
-      share->data_file_type = COMPRESSED_RECORD;
-      share->options|= HA_OPTION_READ_ONLY_DATA;
-      info.s=share;
-      if (_mi_read_pack_info(&info,
-			     (bool)
-			     test(!(share->options &
-				    (HA_OPTION_PACK_RECORD |
-				     HA_OPTION_TEMP_COMPRESS_RECORD)))))
-	goto err;
-    }
-    else if (share->options & HA_OPTION_PACK_RECORD)
+    if (share->options & HA_OPTION_PACK_RECORD)
       share->data_file_type = DYNAMIC_RECORD;
     my_afree(disk_cache);
     mi_setup_functions(share);
@@ -519,11 +507,6 @@ MI_INFO *mi_open(const char *name, int mode, uint open_flags)
   myisam_open_list=list_add(myisam_open_list,&m_info->open_list);
 
   pthread_mutex_unlock(&THR_LOCK_myisam);
-  if (myisam_log_file >= 0)
-  {
-    intern_filename(name_buff,share->index_file_name);
-    _myisam_log(MI_LOG_OPEN, m_info, (uchar*) name_buff, strlen(name_buff));
-  }
   return(m_info);
 
 err:
@@ -612,18 +595,7 @@ uint64_t mi_safe_mul(uint64_t a, uint64_t b)
 
 void mi_setup_functions(register MYISAM_SHARE *share)
 {
-  if (share->options & HA_OPTION_COMPRESS_RECORD)
-  {
-    share->read_record=_mi_read_pack_record;
-    share->read_rnd=_mi_read_rnd_pack_record;
-    if (!(share->options & HA_OPTION_TEMP_COMPRESS_RECORD))
-      share->calc_checksum=0;				/* No checksum */
-    else if (share->options & HA_OPTION_PACK_RECORD)
-      share->calc_checksum= mi_checksum;
-    else
-      share->calc_checksum= mi_static_checksum;
-  }
-  else if (share->options & HA_OPTION_PACK_RECORD)
+  if (share->options & HA_OPTION_PACK_RECORD)
   {
     share->read_record=_mi_read_dynamic_record;
     share->read_rnd=_mi_read_rnd_dynamic_record;

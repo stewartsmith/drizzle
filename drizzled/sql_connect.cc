@@ -233,7 +233,7 @@ bool init_new_connection_handler_thread()
 static int check_connection(THD *thd)
 {
   NET *net= &thd->net;
-  ulong pkt_len= 0;
+  uint32_t pkt_len= 0;
   char *end;
 
 #ifdef SIGNAL_WITH_VIO_CLOSE
@@ -254,7 +254,7 @@ static int check_connection(THD *thd)
   }
   vio_keepalive(net->vio, true);
   
-  ulong server_capabilites;
+  uint32_t server_capabilites;
   {
     /* buff[] needs to big enough to hold the server_version variable */
     char buff[SERVER_VERSION_LENGTH + SCRAMBLE_LENGTH + 64];
@@ -309,7 +309,7 @@ static int check_connection(THD *thd)
   thd->client_capabilities= uint2korr(net->read_pos);
 
 
-  thd->client_capabilities|= ((ulong) uint2korr(net->read_pos+2)) << 16;
+  thd->client_capabilities|= ((uint32_t) uint2korr(net->read_pos+2)) << 16;
   thd->max_client_packet_length= uint4korr(net->read_pos+4);
   thd_init_client_charset(thd, (uint) net->read_pos[8]);
   thd->update_charset();
@@ -565,7 +565,7 @@ void prepare_new_connection_state(THD* thd)
 pthread_handler_t handle_one_connection(void *arg)
 {
   THD *thd= (THD*) arg;
-  ulong launch_time= (ulong) ((thd->thr_create_utime= my_micro_time()) -
+  uint32_t launch_time= (uint32_t) ((thd->thr_create_utime= my_micro_time()) -
                               thd->connect_utime);
 
   if (thread_scheduler.init_new_connection_thread())

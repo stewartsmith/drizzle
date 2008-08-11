@@ -35,7 +35,7 @@ MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
     awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
 
 # The port should be constant for a LONG time
-MYSQL_TCP_PORT_DEFAULT=4427
+DRIZZLE_TCP_PORT_DEFAULT=4427
 
 dnl Include m4 
 sinclude(m4/alloca.m4)
@@ -617,16 +617,16 @@ AC_ARG_WITH([named-curses-libs],
 AC_ARG_WITH([tcp-port],
     [AS_HELP_STRING([--with-tcp-port=port-number],
             [Which port to use for Drizzle services @<:@default=4427@:>@])],
-    [ MYSQL_TCP_PORT=$withval ],
-    [ MYSQL_TCP_PORT=$MYSQL_TCP_PORT_DEFAULT
+    [ DRIZZLE_TCP_PORT=$withval ],
+    [ DRIZZLE_TCP_PORT=$DRIZZLE_TCP_PORT_DEFAULT
       # if we actually defaulted (as opposed to the pathological case of
-      # --with-tcp-port=<MYSQL_TCP_PORT_DEFAULT> which might in theory
+      # --with-tcp-port=<DRIZZLE_TCP_PORT_DEFAULT> which might in theory
       # happen if whole batch of servers was built from a script), set
       # the default to zero to indicate that; we don't lose information
       # that way, because 0 obviously indicates that we can get the
-      # default value from MYSQL_TCP_PORT. this seems really evil, but
-      # testing for MYSQL_TCP_PORT==MYSQL_TCP_PORT_DEFAULT would make a
-      # a port of MYSQL_TCP_PORT_DEFAULT magic even if the builder did not
+      # default value from DRIZZLE_TCP_PORT. this seems really evil, but
+      # testing for DRIZZLE_TCP_PORT==DRIZZLE_TCP_PORT_DEFAULT would make a
+      # a port of DRIZZLE_TCP_PORT_DEFAULT magic even if the builder did not
       # intend it to mean "use the default, in fact, look up a good default
       # from /etc/services if you can", but really, really meant 4427 when
       # they passed in 4427. When they pass in a specific value, let them
@@ -637,19 +637,19 @@ AC_ARG_WITH([tcp-port],
       # - if a port was set during build, use that as a default.
       #
       # - otherwise, try to look up a port in /etc/services; if that fails,
-      #   use MYSQL_TCP_PORT_DEFAULT (at the time of this writing 4427)
+      #   use DRIZZLE_TCP_PORT_DEFAULT (at the time of this writing 4427)
       #
-      # - allow the MYSQL_TCP_PORT environment variable to override that.
+      # - allow the DRIZZLE_TCP_PORT environment variable to override that.
       #
       # - allow command-line parameters to override all of the above.
       #
-      # the top-most MYSQL_TCP_PORT_DEFAULT is read from win/configure.js,
+      # the top-most DRIZZLE_TCP_PORT_DEFAULT is read from win/configure.js,
       # so don't mess with that.
-      MYSQL_TCP_PORT_DEFAULT=0 ]
+      DRIZZLE_TCP_PORT_DEFAULT=0 ]
     )
-AC_SUBST(MYSQL_TCP_PORT)
+AC_SUBST(DRIZZLE_TCP_PORT)
 # We might want to document the assigned port in the manual.
-AC_SUBST(MYSQL_TCP_PORT_DEFAULT)
+AC_SUBST(DRIZZLE_TCP_PORT_DEFAULT)
 
 # Use this to set the place used for unix socket used to local communication.
 AC_ARG_WITH([mysqld-user],

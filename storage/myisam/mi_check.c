@@ -1116,39 +1116,6 @@ int chk_data_link(MI_CHECK *param, MI_INFO *info,int extend)
 	pos=block_info.filepos+block_info.block_len;
       break;
     case COMPRESSED_RECORD:
-      if (_mi_read_cache(&param->read_cache,(uchar*) block_info.header, pos,
-			 info->s->pack.ref_length, READING_NEXT))
-	goto err;
-      start_recpos=pos;
-      splits++;
-      VOID(_mi_pack_get_block_info(info, &info->bit_buff, &block_info,
-                                   &info->rec_buff, -1, start_recpos));
-      pos=block_info.filepos+block_info.rec_len;
-      if (block_info.rec_len < (uint) info->s->min_pack_length ||
-	  block_info.rec_len > (uint) info->s->max_pack_length)
-      {
-	mi_check_print_error(param,
-			     "Found block with wrong recordlength: %d at %s",
-			     block_info.rec_len, llstr(start_recpos,llbuff));
-	got_error=1;
-	break;
-      }
-      if (_mi_read_cache(&param->read_cache,(uchar*) info->rec_buff,
-			block_info.filepos, block_info.rec_len, READING_NEXT))
-	goto err;
-      if (_mi_pack_rec_unpack(info, &info->bit_buff, record,
-                              info->rec_buff, block_info.rec_len))
-      {
-	mi_check_print_error(param,"Found wrong record at %s",
-			     llstr(start_recpos,llbuff));
-	got_error=1;
-      }
-      if (static_row_size)
-	param->glob_crc+= mi_static_checksum(info,record);
-      else
-	param->glob_crc+= mi_checksum(info,record);
-      link_used+= (block_info.filepos - start_recpos);
-      used+= (pos-start_recpos);
     case BLOCK_RECORD:
       assert(0);                                /* Impossible */
     } /* switch */
@@ -3301,67 +3268,6 @@ static int sort_get_next_record(MI_SORT_PARAM *sort_param)
       searching=1;
     }
   case COMPRESSED_RECORD:
-    for (searching=0 ;; searching=1, sort_param->pos++)
-    {
-      if (_mi_read_cache(&sort_param->read_cache,(uchar*) block_info.header,
-			 sort_param->pos,
-			 share->pack.ref_length,READING_NEXT))
-	return(-1);
-      if (searching && ! sort_param->fix_datafile)
-      {
-	param->error_printed=1;
-        param->retry_repair=1;
-        param->testflag|=T_RETRY_WITHOUT_QUICK;
-	return(1);		/* Something wrong with data */
-      }
-      sort_param->start_recpos=sort_param->pos;
-      if (_mi_pack_get_block_info(info, &sort_param->bit_buff, &block_info,
-                                  &sort_param->rec_buff, -1, sort_param->pos))
-	return(-1);
-      if (!block_info.rec_len &&
-	  sort_param->pos + MEMMAP_EXTRA_MARGIN ==
-	  sort_param->read_cache.end_of_file)
-	return(-1);
-      if (block_info.rec_len < (uint) share->min_pack_length ||
-	  block_info.rec_len > (uint) share->max_pack_length)
-      {
-	if (! searching)
-	  mi_check_print_info(param,"Found block with wrong recordlength: %d at %s\n",
-			      block_info.rec_len,
-			      llstr(sort_param->pos,llbuff));
-	continue;
-      }
-      if (_mi_read_cache(&sort_param->read_cache,(uchar*) sort_param->rec_buff,
-			 block_info.filepos, block_info.rec_len,
-			 READING_NEXT))
-      {
-	if (! searching)
-	  mi_check_print_info(param,"Couldn't read whole record from %s",
-			      llstr(sort_param->pos,llbuff));
-	continue;
-      }
-      if (_mi_pack_rec_unpack(info, &sort_param->bit_buff, sort_param->record,
-                              sort_param->rec_buff, block_info.rec_len))
-      {
-	if (! searching)
-	  mi_check_print_info(param,"Found wrong record at %s",
-			      llstr(sort_param->pos,llbuff));
-	continue;
-      }
-      if (!sort_param->fix_datafile)
-      {
-	sort_param->filepos=sort_param->pos;
-        if (sort_param->master)
-	  share->state.split++;
-      }
-      sort_param->max_pos=(sort_param->pos=block_info.filepos+
-			 block_info.rec_len);
-      info->packed_length=block_info.rec_len;
-      if (sort_param->calc_checksum)
-	param->glob_crc+= (info->checksum=
-                           mi_checksum(info, sort_param->record));
-      return(0);
-    }
   case BLOCK_RECORD:
     assert(0);                                  /* Impossible */
   }
@@ -3387,10 +3293,8 @@ static int sort_get_next_record(MI_SORT_PARAM *sort_param)
 int sort_write_record(MI_SORT_PARAM *sort_param)
 {
   int flag;
-  uint length;
   ulong block_length,reclength;
   uchar *from;
-  uchar block_buff[8];
   SORT_INFO *sort_info=sort_param->sort_info;
   MI_CHECK *param=sort_info->param;
   MI_INFO *info=sort_info->info;
@@ -3458,22 +3362,6 @@ int sort_write_record(MI_SORT_PARAM *sort_param)
       /* sort_info->param->glob_crc+=info->checksum; */
       break;
     case COMPRESSED_RECORD:
-      reclength=info->packed_length;
-      length= save_pack_length((uint) share->pack.version, block_buff,
-                               reclength);
-      if (info->s->base.blobs)
-	length+= save_pack_length((uint) share->pack.version,
-	                          block_buff + length, info->blob_length);
-      if (my_b_write(&info->rec_cache,block_buff,length) ||
-	  my_b_write(&info->rec_cache,(uchar*) sort_param->rec_buff,reclength))
-      {
-	mi_check_print_error(param,"%d when writing to datafile",my_errno);
-	return(1);
-      }
-      /* sort_info->param->glob_crc+=info->checksum; */
-      sort_param->filepos+=reclength+length;
-      info->s->state.split++;
-      break;
     case BLOCK_RECORD:
       assert(0);                                  /* Impossible */
     }
