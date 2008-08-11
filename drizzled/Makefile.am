@@ -52,8 +52,7 @@ DTRACEFILES = handler.o \
 drizzledincludedir = ${includedir}/drizzled
 dist_drizzledinclude_HEADERS =	error.h \
 				plugin.h \
-				plugin_authentication.h \
-				plugin_audit.h
+				plugin_authentication.h
 
 noinst_LTLIBRARIES = libhandler.la
 
