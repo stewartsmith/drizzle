@@ -190,8 +190,6 @@ static sys_var_collation_sv
 sys_collation_server(&vars, "collation_server", &SV::collation_server,
                      &default_charset_info,
                      sys_var::SESSION_VARIABLE_IN_BINLOG);
-static sys_var_long_ptr	sys_concurrent_insert(&vars, "concurrent_insert",
-                                              &myisam_concurrent_insert);
 static sys_var_long_ptr	sys_connect_timeout(&vars, "connect_timeout",
 					    &connect_timeout);
 static sys_var_const_str       sys_datadir(&vars, "datadir", mysql_real_data_home);
@@ -278,8 +276,6 @@ static sys_var_long_ptr	sys_max_write_lock_count(&vars, "max_write_lock_count",
 						 &max_write_lock_count);
 static sys_var_thd_ulong       sys_min_examined_row_limit(&vars, "min_examined_row_limit",
                                                           &SV::min_examined_row_limit);
-static sys_var_long_ptr	sys_myisam_data_pointer_size(&vars, "myisam_data_pointer_size",
-                                                    &myisam_data_pointer_size);
 static sys_var_thd_uint64_t	sys_myisam_max_sort_file_size(&vars, "myisam_max_sort_file_size", &SV::myisam_max_sort_file_size, fix_myisam_max_sort_file_size, 1);
 static sys_var_thd_ulong       sys_myisam_repair_threads(&vars, "myisam_repair_threads", &SV::myisam_repair_threads);
 static sys_var_thd_ulong	sys_myisam_sort_buffer_size(&vars, "myisam_sort_buffer_size", &SV::myisam_sort_buff_size);
