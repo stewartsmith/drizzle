@@ -478,7 +478,7 @@ int recreate_table(MI_CHECK *param, MI_INFO **org_info, char *filename);
 bool mi_test_if_sort_rep(MI_INFO *info, ha_rows rows, uint64_t key_map,
 			    bool force);
 
-int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows);
+int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows);
 void mi_flush_bulk_insert(MI_INFO *info, uint inx);
 void mi_end_bulk_insert(MI_INFO *info);
 int mi_assign_to_key_cache(MI_INFO *info, uint64_t key_map, 

@@ -785,7 +785,7 @@ static int keys_free(uchar *key, TREE_FREE mode, bulk_insert_param *param)
 }
 
 
-int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows)
+int mi_init_bulk_insert(MI_INFO *info, uint32_t cache_size, ha_rows rows)
 {
   MYISAM_SHARE *share=info->s;
   MI_KEYDEF *key=share->keyinfo;
@@ -813,7 +813,7 @@ int mi_init_bulk_insert(MI_INFO *info, ulong cache_size, ha_rows rows)
     return(0);
 
   if (rows && rows*total_keylength < cache_size)
-    cache_size= (ulong)rows;
+    cache_size= (uint32_t)rows;
   else
     cache_size/=total_keylength*16;
 
