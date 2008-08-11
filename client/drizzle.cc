@@ -1859,7 +1859,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     }
 #endif
         if (!*ml_comment && inchar == '\\' &&
-        !(drizzle.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES))
+            !(*in_string && (drizzle.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)))
     {
       // Found possbile one character command like \c
 
