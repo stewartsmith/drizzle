@@ -114,7 +114,7 @@ double my_rnd(struct rand_struct *rand_st)
 
 void hash_password(uint32_t *result, const char *password, uint32_t password_len)
 {
-  register ulong nr=1345345333L, add=7, nr2=0x12345671L;
+  register uint32_t nr=1345345333L, add=7, nr2=0x12345671L;
   uint32_t tmp;
   const char *password_end= password + password_len;
   for (; password < password_end; password++)

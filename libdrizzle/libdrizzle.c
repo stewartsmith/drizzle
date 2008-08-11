@@ -139,7 +139,7 @@ my_pipe_sig_handler(int sig __attribute__((unused)))
 
 int cli_read_change_user_result(DRIZZLE *drizzle)
 {
-  ulong pkt_length;
+  uint32_t pkt_length;
 
   pkt_length= cli_safe_read(drizzle);
   
@@ -197,7 +197,7 @@ bool drizzle_change_user(DRIZZLE *drizzle, const char *user,
   }
 
   /* Write authentication package */
-  (void)simple_command(drizzle,COM_CHANGE_USER, (uchar*) buff, (ulong) (end-buff), 1);
+  (void)simple_command(drizzle,COM_CHANGE_USER, (uchar*) buff, (uint32_t) (end-buff), 1);
 
   rc= (*drizzle->methods->read_change_user_result)(drizzle);
 
@@ -343,7 +343,7 @@ drizzle_list_fields(DRIZZLE *drizzle, const char *table, const char *wild)
 
   free_old_query(drizzle);
   if (simple_command(drizzle, COM_FIELD_LIST, (uchar*) buff,
-                     (ulong) (end-buff), 1) ||
+                     (uint32_t) (end-buff), 1) ||
       !(fields= (*drizzle->methods->list_fields)(drizzle)))
     return(NULL);
 

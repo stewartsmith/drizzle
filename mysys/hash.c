@@ -47,7 +47,7 @@ static uint calc_hash(const HASH *hash, const uchar *key, size_t length)
 
 bool
 _hash_init(HASH *hash,uint growth_size, const CHARSET_INFO * const charset,
-	   ulong size, size_t key_offset, size_t key_length,
+	   uint32_t size, size_t key_offset, size_t key_length,
 	   hash_get_key get_key,
 	   void (*free_element)(void*),uint flags CALLER_INFO_PROTO)
 {
@@ -618,7 +618,7 @@ bool hash_update(HASH *hash, uchar *record, uchar *old_key,
 }
 
 
-uchar *hash_element(HASH *hash,ulong idx)
+uchar *hash_element(HASH *hash,uint32_t idx)
 {
   if (idx < hash->records)
     return dynamic_element(&hash->array,idx,HASH_LINK*)->data;

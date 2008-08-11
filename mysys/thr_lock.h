@@ -25,7 +25,7 @@ extern "C" {
 #include <mysys/my_list.h>
 
 struct st_thr_lock;
-extern ulong locks_immediate,locks_waited ;
+extern uint32_t locks_immediate,locks_waited ;
 extern pthread_mutex_t THR_LOCK_lock;
 
 enum thr_lock_type { TL_IGNORE=-1,
@@ -85,7 +85,7 @@ typedef struct st_thr_lock_info
 {
   pthread_t thread;
   my_thread_id thread_id;
-  ulong n_cursors;
+  uint32_t n_cursors;
 } THR_LOCK_INFO;
 
 /*
@@ -121,7 +121,7 @@ typedef struct st_thr_lock {
   struct st_lock_list write_wait;
   struct st_lock_list write;
   /* write_lock_count is incremented for write locks and reset on read locks */
-  ulong write_lock_count;
+  uint32_t write_lock_count;
   uint read_no_write_count;
   void (*get_status)(void*, int);	/* When one gets a lock */
   void (*copy_status)(void*,void*);

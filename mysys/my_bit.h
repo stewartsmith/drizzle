@@ -12,7 +12,7 @@ extern const uchar _my_bits_reverse_table[256];
   This can be used to divide a number with value by doing a shift instead
 */
 
-static inline uint my_bit_log2(ulong value)
+static inline uint my_bit_log2(uint32_t value)
 {
   uint bit;
   for (bit=0 ; value > 1 ; value>>=1, bit++) ;
@@ -24,7 +24,7 @@ static inline uint my_count_bits(uint64_t v)
 #if SIZEOF_LONG_LONG > 4
   /* The following code is a bit faster on 16 bit machines than if we would
      only shift v */
-  ulong v2=(ulong) (v >> 32);
+  uint32_t v2=(uint32_t) (v >> 32);
   return (uint) (uchar) (_my_bits_nbits[(uchar)  v] +
                          _my_bits_nbits[(uchar) (v >> 8)] +
                          _my_bits_nbits[(uchar) (v >> 16)] +

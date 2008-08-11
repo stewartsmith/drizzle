@@ -288,7 +288,7 @@ static void set_drizzle_extended_error(DRIZZLE *drizzle, int errcode,
 uint32_t cli_safe_read(DRIZZLE *drizzle)
 {
   NET *net= &drizzle->net;
-  ulong len=0;
+  uint32_t len=0;
   init_sigpipe_variables
 
   /* Don't give sigpipe errors if the client doesn't want them */
@@ -444,7 +444,7 @@ static void cli_flush_use_result(DRIZZLE *drizzle)
   /* Clear the current execution status */
   for (;;)
   {
-    ulong pkt_len;
+    uint32_t pkt_len;
     if ((pkt_len=cli_safe_read(drizzle)) == packet_error)
       break;
     if (pkt_len <= 8 && drizzle->net.read_pos[0] == DRIZZLE_PROTOCOL_NO_MORE_DATA)
@@ -720,7 +720,7 @@ static void cli_fetch_lengths(uint32_t *to, DRIZZLE_ROW column, uint32_t field_c
       continue;
     }
     if (start)          /* Found end of prev string */
-      *prev_length= (ulong) (*column-start-1);
+      *prev_length= (uint32_t) (*column-start-1);
     start= *column;
     prev_length= to;
   }
@@ -793,13 +793,12 @@ unpack_fields(DRIZZLE_DATA *data, MEM_ROOT *alloc,uint fields,
 
 /* Read all rows (fields or data) from server */
 
-DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
-        unsigned int fields)
+DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle, DRIZZLE_FIELD *DRIZZLE_FIELDs, uint32_t fields)
 {
-  uint  field;
-  ulong pkt_len;
-  ulong len;
-  uchar *cp;
+  uint32_t  field;
+  uint32_t pkt_len;
+  uint32_t len;
+  unsigned char *cp;
   char  *to, *end_to;
   DRIZZLE_DATA *result;
   DRIZZLE_ROWS **prev_ptr,*cur;
@@ -845,28 +844,28 @@ DRIZZLE_DATA *cli_read_rows(DRIZZLE *drizzle,DRIZZLE_FIELD *DRIZZLE_FIELDs,
     end_to=to+pkt_len-1;
     for (field=0 ; field < fields ; field++)
     {
-      if ((len=(ulong) net_field_length(&cp)) == NULL_LENGTH)
+      if ((len= net_field_length(&cp)) == NULL_LENGTH)
       {            /* null field */
-  cur->data[field] = 0;
+        cur->data[field] = 0;
       }
       else
       {
-  cur->data[field] = to;
-        if (len > (ulong) (end_to - to))
+        cur->data[field] = to;
+        if (len > (uint32_t) (end_to - to))
         {
           free_rows(result);
           set_drizzle_error(drizzle, CR_MALFORMED_PACKET, unknown_sqlstate);
           return(0);
         }
-  memcpy(to, cp, len);
-  to[len]=0;
-  to+=len+1;
-  cp+=len;
-  if (DRIZZLE_FIELDs)
-  {
-    if (DRIZZLE_FIELDs[field].max_length < len)
-      DRIZZLE_FIELDs[field].max_length=len;
-  }
+        memcpy(to, cp, len);
+        to[len]=0;
+        to+=len+1;
+        cp+=len;
+        if (DRIZZLE_FIELDs)
+        {
+          if (DRIZZLE_FIELDs[field].max_length < len)
+            DRIZZLE_FIELDs[field].max_length=len;
+        }
       }
     }
     cur->data[field]=to;      /* End of last field */
@@ -895,7 +894,7 @@ static int32_t
 read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengths)
 {
   uint field;
-  ulong pkt_len,len;
+  uint32_t pkt_len,len;
   uchar *pos, *prev_pos, *end_pos;
   NET *net= &drizzle->net;
 
@@ -915,14 +914,14 @@ read_one_row(DRIZZLE *drizzle, uint32_t fields, DRIZZLE_ROW row, uint32_t *lengt
   end_pos=pos+pkt_len;
   for (field=0 ; field < fields ; field++)
   {
-    if ((len=(ulong) net_field_length(&pos)) == NULL_LENGTH)
+    if ((len= net_field_length(&pos)) == NULL_LENGTH)
     {            /* null field */
       row[field] = 0;
       *lengths++=0;
     }
     else
     {
-      if (len > (ulong) (end_pos - pos))
+      if (len > (uint32_t) (end_pos - pos))
       {
         set_drizzle_error(drizzle, CR_UNKNOWN_ERROR, unknown_sqlstate);
         return -1;
@@ -1534,7 +1533,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     for (; ptr < end_command; ptr++)
     {
       DRIZZLE_RES *res;
-      if (drizzle_real_query(drizzle,*ptr, (ulong) strlen(*ptr)))
+      if (drizzle_real_query(drizzle,*ptr, (uint32_t) strlen(*ptr)))
   goto error;
       if (drizzle->fields)
       {
@@ -1555,7 +1554,7 @@ error:
     /* Free alloced memory */
     end_server(drizzle);
     drizzle_close_free(drizzle);
-    if (!(((ulong) client_flag) & CLIENT_REMEMBER_OPTIONS))
+    if (!(((uint32_t) client_flag) & CLIENT_REMEMBER_OPTIONS))
       drizzle_close_free_options(drizzle);
   }
   return(0);
@@ -1622,7 +1621,7 @@ drizzle_select_db(DRIZZLE *drizzle, const char *db)
   int error;
 
   if ((error=simple_command(drizzle,COM_INIT_DB, (const uchar*) db,
-                            (ulong) strlen(db),0)))
+                            (uint32_t) strlen(db),0)))
     return(error);
   my_free(drizzle->db,MYF(MY_ALLOW_ZERO_PTR));
   drizzle->db=my_strdup(db,MYF(MY_WME));
@@ -1701,9 +1700,9 @@ void drizzle_close(DRIZZLE *drizzle)
 static bool cli_read_query_result(DRIZZLE *drizzle)
 {
   uchar *pos;
-  ulong field_count;
+  uint32_t field_count;
   DRIZZLE_DATA *fields;
-  ulong length;
+  uint32_t length;
 
   if ((length = cli_safe_read(drizzle)) == packet_error)
     return(1);
@@ -1795,7 +1794,7 @@ DRIZZLE_RES * drizzle_store_result(DRIZZLE *drizzle)
   }
   drizzle->status=DRIZZLE_STATUS_READY;    /* server is ready */
   if (!(result=(DRIZZLE_RES*) my_malloc((uint) (sizeof(DRIZZLE_RES)+
-                sizeof(ulong) *
+                sizeof(uint32_t) *
                 drizzle->field_count),
               MYF(MY_WME | MY_ZEROFILL))))
   {
@@ -1847,7 +1846,7 @@ static DRIZZLE_RES * cli_use_result(DRIZZLE *drizzle)
     return(0);
   }
   if (!(result=(DRIZZLE_RES*) my_malloc(sizeof(*result)+
-              sizeof(ulong)*drizzle->field_count,
+              sizeof(uint32_t)*drizzle->field_count,
               MYF(MY_WME | MY_ZEROFILL))))
     return(0);
   result->lengths=(uint32_t*) (result+1);
@@ -2068,7 +2067,7 @@ drizzle_get_server_version(const DRIZZLE *drizzle)
   major=   (uint) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
   minor=   (uint) strtoul(pos, &end_pos, 10);  pos=end_pos+1;
   version= (uint) strtoul(pos, &end_pos, 10);
-  return (ulong) major*10000L+(ulong) (minor*100+version);
+  return (uint32_t) major*10000L+(uint32_t) (minor*100+version);
 }
 
 

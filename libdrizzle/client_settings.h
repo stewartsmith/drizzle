@@ -38,7 +38,7 @@ void mysql_detach_stmt_list(LIST **stmt_list, const char *func_name);
 DRIZZLE *
 cli_drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
 		       const char *passwd, const char *db,
-		       uint port, const char *unix_socket,ulong client_flag);
+		       uint port, const char *unix_socket,uint32_t client_flag);
 
 void cli_drizzle_close(DRIZZLE *drizzle);
 

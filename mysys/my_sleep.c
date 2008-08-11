@@ -18,7 +18,7 @@
 #include "mysys_priv.h"
 #include <mystrings/m_string.h>
 
-void my_sleep(ulong m_seconds)
+void my_sleep(uint32_t m_seconds)
 {
 #if defined(HAVE_SELECT)
   struct timeval t;
@@ -27,7 +27,7 @@ void my_sleep(ulong m_seconds)
   select(0,0,0,0,&t); /* sleep */
 #else
   uint sec=    (uint) (m_seconds / 1000000L);
-  ulong start= (ulong) time((time_t*) 0);
-  while ((ulong) time((time_t*) 0) < start+sec);
+  uint32_t start= (uint32_t) time((time_t*) 0);
+  while ((uint32_t) time((time_t*) 0) < start+sec);
 #endif
 }

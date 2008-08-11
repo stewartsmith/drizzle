@@ -961,10 +961,9 @@ do { doubleget_union _tmp; \
 #include <string>
 #include <algorithm>
 using namespace std;
-#else
+#endif
 #define max(a, b)       ((a) > (b) ? (a) : (b))
 #define min(a, b)       ((a) < (b) ? (a) : (b))
-#endif
 
 /* Length of decimal number represented by INT32. */
 #define MY_INT32_NUM_DECIMAL_DIGITS 11

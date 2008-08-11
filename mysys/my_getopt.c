@@ -982,7 +982,7 @@ static void init_one_value(const struct my_option *option, char** variable,
     *((long*) variable)= (long) value;
     break;
   case GET_ULONG:
-    *((ulong*) variable)= (ulong) value;
+    *((uint32_t*) variable)= (uint32_t) value;
     break;
   case GET_LL:
     *((int64_t*) variable)= (int64_t) value;
@@ -1234,7 +1234,7 @@ void my_print_variables(const struct my_option *options)
 	printf("%ld\n", *((long*) value));
 	break;
       case GET_ULONG:
-	printf("%lu\n", *((ulong*) value));
+	printf("%u\n", *((uint32_t*) value));
 	break;
       case GET_LL:
 	printf("%s\n", llstr(*((int64_t*) value), buff));

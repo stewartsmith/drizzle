@@ -118,7 +118,7 @@ bool net_realloc(NET *net, size_t length)
     return(1);
   }
   net->buff=net->write_pos=buff;
-  net->buff_end=buff+(net->max_packet= (ulong) pkt_length);
+  net->buff_end=buff+(net->max_packet= (uint32_t) pkt_length);
   return(0);
 }
 
@@ -234,7 +234,7 @@ my_net_write(NET *net,const uchar *packet,size_t len)
   */
   while (len >= MAX_PACKET_LENGTH)
   {
-    const ulong z_size = MAX_PACKET_LENGTH;
+    const uint32_t z_size = MAX_PACKET_LENGTH;
     int3store(buff, z_size);
     buff[3]= (uchar) net->pkt_nr++;
     if (net_write_buff(net, buff, NET_HEADER_SIZE) ||
@@ -283,7 +283,7 @@ net_write_command(NET *net,uchar command,
 		  const uchar *header, size_t head_len,
 		  const uchar *packet, size_t len)
 {
-  ulong length=len+1+head_len;			/* 1 extra byte for command */
+  uint32_t length=len+1+head_len;			/* 1 extra byte for command */
   uchar buff[NET_HEADER_SIZE+1];
   uint header_size=NET_HEADER_SIZE+1;
 
@@ -345,11 +345,11 @@ net_write_command(NET *net,uchar command,
 static bool
 net_write_buff(NET *net, const unsigned char *packet, uint32_t len)
 {
-  ulong left_length;
+  uint32_t left_length;
   if (net->compress && net->max_packet > MAX_PACKET_LENGTH)
     left_length= MAX_PACKET_LENGTH - (net->write_pos - net->buff);
   else
-    left_length= (ulong) (net->buff_end - net->write_pos);
+    left_length= (uint32_t) (net->buff_end - net->write_pos);
 
   if (len > left_length)
   {
@@ -531,13 +531,13 @@ net_real_write(NET *net,const uchar *packet, size_t len)
     Returns length of packet.
 */
 
-static ulong
+static uint32_t
 my_real_read(NET *net, size_t *complen)
 {
   uchar *pos;
   size_t length;
   uint i,retry_count=0;
-  ulong len=packet_error;
+  uint32_t len=packet_error;
   uint32_t remain= (net->compress ? NET_HEADER_SIZE+COMP_HEADER_SIZE :
                   NET_HEADER_SIZE);
   /* Backup of the original SO_RCVTIMEO timeout */
@@ -607,7 +607,7 @@ my_real_read(NET *net, size_t *complen)
     }
     if (i == 0)
     {					/* First parts is packet length */
-      ulong helping;
+      uint32_t helping;
 
       if (net->buff[net->where_b + 3] != (uchar) net->pkt_nr)
       {
@@ -681,7 +681,7 @@ my_net_read(NET *net)
     if (len == MAX_PACKET_LENGTH)
     {
       /* First packet of a multi-packet.  Concatenate the packets */
-      ulong save_pos = net->where_b;
+      uint32_t save_pos = net->where_b;
       size_t total_length= 0;
       do
       {
@@ -702,9 +702,9 @@ my_net_read(NET *net)
   {
     /* We are using the compressed protocol */
 
-    ulong buf_length;
-    ulong start_of_packet;
-    ulong first_packet_offset;
+    uint32_t buf_length;
+    uint32_t start_of_packet;
+    uint32_t first_packet_offset;
     uint read_length, multi_byte_packet=0;
 
     if (net->remain_in_buf)
@@ -722,7 +722,7 @@ my_net_read(NET *net)
     }
     for (;;)
     {
-      ulong packet_len;
+      uint32_t packet_len;
 
       if (buf_length - start_of_packet >= NET_HEADER_SIZE)
       {
@@ -791,8 +791,8 @@ my_net_read(NET *net)
 
     net->read_pos=      net->buff+ first_packet_offset + NET_HEADER_SIZE;
     net->buf_length=    buf_length;
-    net->remain_in_buf= (ulong) (buf_length - start_of_packet);
-    len = ((ulong) (start_of_packet - first_packet_offset) - NET_HEADER_SIZE -
+    net->remain_in_buf= (uint32_t) (buf_length - start_of_packet);
+    len = ((uint32_t) (start_of_packet - first_packet_offset) - NET_HEADER_SIZE -
            multi_byte_packet);
     net->save_char= net->read_pos[len];	/* Must be saved */
     net->read_pos[len]=0;		/* Safeguard for drizzle_use_result */
