@@ -1280,7 +1280,6 @@ int sql_set_variables(THD *thd, List<set_var_base> *var_list);
 bool not_all_support_one_shot(List<set_var_base> *var_list);
 void fix_delay_key_write(THD *thd, enum_var_type type);
 void fix_slave_exec_mode(enum_var_type type);
-ulong fix_sql_mode(ulong sql_mode);
 extern sys_var_const_str sys_charset_system;
 extern sys_var_str sys_init_connect;
 extern sys_var_str sys_init_slave;
