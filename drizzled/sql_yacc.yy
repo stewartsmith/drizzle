@@ -1543,21 +1543,6 @@ create_table_option:
             Lex->create_info.used_fields|= HA_CREATE_USED_ROW_FORMAT;
             Lex->alter_info.flags|= ALTER_ROW_FORMAT;
           }
-        | UNION_SYM opt_equal '(' opt_table_list ')'
-          {
-            /* Move the union list to the merge_list */
-            LEX *lex=Lex;
-            TABLE_LIST *table_list= lex->select_lex.get_table_list();
-            lex->create_info.merge_list= lex->select_lex.table_list;
-            lex->create_info.merge_list.elements--;
-            lex->create_info.merge_list.first=
-              (uchar*) (table_list->next_local);
-            lex->select_lex.table_list.elements=1;
-            lex->select_lex.table_list.next=
-              (uchar**) &(table_list->next_local);
-            table_list->next_local= 0;
-            lex->create_info.used_fields|= HA_CREATE_USED_UNION;
-          }
         | default_charset
         | default_collation
         | DATA_SYM DIRECTORY_SYM opt_equal TEXT_STRING_sys

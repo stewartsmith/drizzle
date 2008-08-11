@@ -95,7 +95,6 @@ enum timestamp_auto_set_type
 
 class Field_timestamp;
 class Field_blob;
-class Table_triggers_list;
 
 /**
   Category of table found in the table share.
@@ -406,8 +405,6 @@ struct st_table {
   Field *found_next_number_field;	/* Set on open */
   Field_timestamp *timestamp_field;
 
-  /* Table's triggers, 0 if there are no of them */
-  Table_triggers_list *triggers;
   TABLE_LIST *pos_in_table_list;/* Element referring to this table */
   ORDER		*group;
   const char	*alias;            	  /* alias or table name */

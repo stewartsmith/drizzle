@@ -4506,20 +4506,6 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     return(true);
   table->use_all_columns();
 
-  /*
-    Prohibit changing of the UNION list of a non-temporary MERGE table
-    under LOCK tables. It would be quite difficult to reuse a shrinked
-    set of tables from the old table or to open a new TABLE object for
-    an extended list and verify that they belong to locked tables.
-  */
-  if (thd->locked_tables &&
-      (create_info->used_fields & HA_CREATE_USED_UNION) &&
-      (table->s->tmp_table == NO_TMP_TABLE))
-  {
-    my_error(ER_LOCK_OR_ACTIVE_TRANSACTION, MYF(0));
-    return(true);
-  }
-
   /* Check that we are not trying to rename to an existing table */
   if (new_name)
   {
