@@ -60,6 +60,8 @@ sinclude(m4/lib-ld.m4)
 sinclude(m4/ac_cxx_header_stdcxx_98.m4)
 
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.17)
+
 
 AC_SUBST(MYSQL_NO_DASH_VERSION)
 AC_SUBST(MYSQL_BASE_VERSION)
