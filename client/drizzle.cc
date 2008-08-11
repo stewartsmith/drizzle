@@ -1039,7 +1039,7 @@ int main(int argc,char *argv[])
                             "drizzle>> ", MYF(0));
   current_prompt= my_strdup(default_prompt, MYF(0));
   processed_prompt= new string();
-  processed_prompt-trreserve(32);
+  processed_prompt->reserve(32);
 
   prompt_counter=0;
 
