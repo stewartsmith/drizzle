@@ -52,9 +52,6 @@
 
 #include "config.h"
 
-/* Make it easier to add conditionl code for windows */
-#define IF_WIN(A,B) (B)
-
 /*
   The macros below are borrowed from include/linux/compiler.h in the
   Linux kernel. Use them to indicate the likelyhood of the truthfulness
