@@ -255,8 +255,8 @@ if test "$GCC" = "yes"
 then
   case "$host_cpu" in
     *ppc* | *powerpc*)
-      CFLAGS="$CFLAGS -mno-fused-madd"
-      CXXFLAGS="$CXXFLAGS -mno-fused-madd"
+      AM_CFLAGS="$CFLAGS -mno-fused-madd"
+      AM_CXXFLAGS="$CXXFLAGS -mno-fused-madd"
     ;;
   esac
 fi
@@ -275,11 +275,8 @@ export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
-  # (splitting this is for the future...)
-  NO_EXCEPTIONS="-fno-exceptions"
-  AC_SUBST(NO_EXCEPTIONS)
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="$CXXFLAGS ${NO_EXCEPTIONS} -fno-rtti"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions -fno-rtti"
 fi
 
 MYSQL_PROG_AR
@@ -290,6 +287,38 @@ if $LD --version 2>/dev/null|grep -q GNU; then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+#--------------------------------------------------------------------
+# Check for Google Proto Buffers
+#--------------------------------------------------------------------
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([google/protobuf/message.h])
+if test "x$ac_cv_header_google_protobuf_message_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find message.h. Try installing Google Protocol Buffer development packages])
+fi
+
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+CFLAGS=""
+LIBS="-lprotobuf"
+
+AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
+  AC_TRY_LINK([
+#include <google/protobuf/descriptor.pb.h>
+  ],[
+    google::protobuf::FileDescriptorProto testFdp;
+  ], ac_libprotobuf_works=yes, [
+        AC_ERROR([could not find Google's libprotobuf])
+  ])
+
+])
+
+PROTOBUF_LIBS="${LIBS}"
+AC_SUBST(PROTOBUF_LIBS)
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
+AC_LANG_POP()
 
 #--------------------------------------------------------------------
 # Check for libevent
@@ -433,6 +462,7 @@ AC_CHECK_LIB(readline, rl_initialize, [],
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
+
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -1360,8 +1390,8 @@ then
   GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
   GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
-  AM_CXXFLAGS="${GXX_WARNINGS}"
-  AM_CFLAGS="${GCC_WARNINGS} "
+  AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
+  AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
 fi
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
@@ -1402,6 +1432,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
 # Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
-AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS'")
+AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
 
 AC_OUTPUT

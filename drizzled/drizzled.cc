@@ -247,7 +247,7 @@ bool opt_log;
 bool opt_slow_log;
 ulong log_output_options;
 bool opt_log_queries_not_using_indexes= false;
-bool opt_error_log= IF_WIN(1,0);
+bool opt_error_log= 0;
 bool opt_skip_show_db= false;
 bool opt_character_set_client_handshake= 1;
 bool server_id_supplied = 0;
@@ -3911,7 +3911,7 @@ The minimum value for this variable is 4096.",
    "The number of seconds the server waits for activity on a connection before closing it.",
    (char**) &global_system_variables.net_wait_timeout,
    (char**) &max_system_variables.net_wait_timeout, 0, GET_ULONG,
-   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, IF_WIN(INT32_MAX/1000, LONG_TIMEOUT),
+   REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT,
    0, 1, 0},
   {0, 0, 0, 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0}
 };
@@ -4307,7 +4307,7 @@ static void mysql_init_variables(void)
   global_system_variables.myisam_stats_method= MI_STATS_METHOD_NULLS_NOT_EQUAL;
 
   /* Variables that depends on compile options */
-  opt_error_log= IF_WIN(1,0);
+  opt_error_log= 0;
 #ifdef HAVE_BROKEN_REALPATH
   have_symlink=SHOW_OPTION_NO;
 #else

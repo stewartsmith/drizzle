@@ -38,6 +38,7 @@ bin_PROGRAMS =	drizzle \
 drizzle_SOURCES =		drizzle.cc readline.cc completion_hash.cc
 drizzle_LDADD =			$(READLINE_LIBS) $(TERMCAP_LIBS) \
 				$(LDADD) $(CXXLDFLAGS)
+drizzle_CXXFLAGS =		${AM_CXXFLAGS} -fexceptions
 drizzleadmin_SOURCES =		drizzleadmin.cc
 
 drizzlebinlog_SOURCES =     drizzlebinlog.cc \
@@ -52,11 +53,10 @@ drizzledump_SOURCES=            drizzledump.cc
 drizzleimport_SOURCES=		drizzleimport.cc
 
 mysqlslap_SOURCES=		mysqlslap.c
-mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 
 drizzletest_SOURCES=		drizzletest.cc 
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
-drizzletest_CFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
+drizzletest_CXXFLAGS = 		${AM_CXXFLAGS} $(PCRE_CFLAGS)
 
 DEFS =	-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
 	-DDATADIR="\"$(localstatedir)\"" \
