@@ -94,15 +94,7 @@
 #include <sys/types.h>
 #endif
 
-#ifdef HAVE_THREADS_WITHOUT_SOCKETS
-/* MIT pthreads does not work with unix sockets */
-#undef HAVE_SYS_UN_H
-#endif
-
 #define __EXTENSIONS__ 1	/* We want some extension */
-#ifndef __STDC_EXT__
-#define __STDC_EXT__ 1          /* To get large file support on hpux */
-#endif
 
 /*
   Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
@@ -142,20 +134,10 @@
 
 #define _REENTRANT	1	/* Some thread libraries require this */
 
-#if !defined(_THREAD_SAFE) && !defined(_AIX)
-#define _THREAD_SAFE            /* Required for OSF1 */
-#endif
-
 #include <pthread.h>		/* AIX must have this included first */
 
 #define _REENTRANT	1	/* Threads requires reentrant code */
 
-/* Go around some bugs in different OS and compilers */
-
-#if defined(HAVE_BROKEN_INLINE) && !defined(__cplusplus)
-#undef inline
-#define inline
-#endif
 
 /* gcc/egcs issues */
 
