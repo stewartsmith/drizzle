@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
-"Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
-"POT-Creation-Date: 2008-08-11 11:00-0700\n"
+"Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
+"POT-Creation-Date: 2008-08-12 16:56-0700\n"
 "PO-Revision-Date: 2008-08-12 16:58+0000\n"
 "Last-Translator: vivo <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -39,8 +39,7 @@ msgstr ""
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
-"Invia il comando al server drizzle, mostra il risultato verticalmente."
+msgstr "Invia il comando al server drizzle, mostra il risultato verticalmente."
 
 #: client/drizzle.cc:264
 msgid "Exit drizzle. Same as quit."
@@ -108,7 +107,7 @@ msgstr ""
 "Passa ad un altro charset [insieme di caratteri]. Può essere necessario per "
 "processare binlog [log binari] con caratteri multi-byte."
 
-#: client/drizzle.cc:285 client/drizzle.cc:1438
+#: client/drizzle.cc:285 client/drizzle.cc:1437
 msgid "Show warnings after every statement."
 msgstr "Mostra le avvertenze dopo ogni istruzione."
 
@@ -137,8 +136,7 @@ msgstr "Sto leggendo il file di storicità dei comandi %s\n"
 #: client/drizzle.cc:1165
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
-"Non posso allocare la memoria per il file di storicità dei comandi!\n"
+msgstr "Non posso allocare la memoria per il file di storicità dei comandi!\n"
 
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
@@ -146,32 +144,32 @@ msgstr ""
 "Scrivi 'help;' oppure '\\h' per l'aiuto. Premi '\\c' per cancellare la "
 "storicità dei comandi.\n"
 
-#: client/drizzle.cc:1191
+#: client/drizzle.cc:1190
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr "Sto scrivendo il file di storicità dei comandi %s\n"
 
-#: client/drizzle.cc:1200
+#: client/drizzle.cc:1199
 msgid "Aborted"
 msgstr "Abortito"
 
-#: client/drizzle.cc:1200
+#: client/drizzle.cc:1199
 msgid "Bye"
 msgstr "Arrivederci"
 
-#: client/drizzle.cc:1249
+#: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
 msgstr "Interrogazione abortita da Ctrl+C\n"
 
-#: client/drizzle.cc:1272 client/drizzleadmin.cc:69
+#: client/drizzle.cc:1271 client/drizzleadmin.cc:69
 msgid "Display this help and exit."
 msgstr "Mostra questo help ed esce."
 
-#: client/drizzle.cc:1274
+#: client/drizzle.cc:1273
 msgid "Synonym for -?"
 msgstr "Sinonimo per -?"
 
-#: client/drizzle.cc:1277
+#: client/drizzle.cc:1276
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time. "
@@ -182,7 +180,7 @@ msgstr ""
 "campi, tuttavia partenza e riconnessione possono richiedere un tempo "
 "maggiore. Disabilitabile con --disable-auto-rehash."
 
-#: client/drizzle.cc:1281
+#: client/drizzle.cc:1280
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of DRIZZLE and disables rehashing on "
@@ -193,7 +191,7 @@ msgstr ""
 "connessione. ATTENZIONE: opzione deprecata; usare invece --disable-auto-"
 "rehash."
 
-#: client/drizzle.cc:1284
+#: client/drizzle.cc:1283
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
@@ -201,22 +199,22 @@ msgstr ""
 "Utilizza automaticamente la rappresentazione verticale dei dati se il "
 "risultato supera la larghezza dello schermo."
 
-#: client/drizzle.cc:1287
+#: client/drizzle.cc:1286
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 "Ignora il file di storico dei comandi. Disabilita l'interazione utente. "
 "(Abilita --silent)"
 
-#: client/drizzle.cc:1289
+#: client/drizzle.cc:1288
 msgid "Directory where character sets are."
 msgstr "Percorso degli insiemi di caratteri [character sets]."
 
-#: client/drizzle.cc:1291
+#: client/drizzle.cc:1290
 msgid "Display column type information."
 msgstr "Mostra informazioni sul tipo di colonna."
 
-#: client/drizzle.cc:1294
+#: client/drizzle.cc:1293
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
@@ -224,43 +222,43 @@ msgstr ""
 "Preserva i commenti. Invia i commenti al server. Il default è --skip-"
 "comments (ignora i commenti), abilitare con --comments"
 
-#: client/drizzle.cc:1297
+#: client/drizzle.cc:1296
 msgid "Use compression in server/client protocol."
 msgstr "Utilizza la compressione nel protocollo server/client."
 
-#: client/drizzle.cc:1300
+#: client/drizzle.cc:1299
 msgid "Check memory and open file usage at exit ."
 msgstr "Controlla stato della memoria e utilizzo dei file all'uscita."
 
-#: client/drizzle.cc:1303
+#: client/drizzle.cc:1302
 msgid "Print some debug info at exit."
 msgstr "Stampa alcune informazioni di debug all'uscita."
 
-#: client/drizzle.cc:1305
+#: client/drizzle.cc:1304
 msgid "Database to use."
 msgstr "Database da utilizzare."
 
-#: client/drizzle.cc:1308
+#: client/drizzle.cc:1307
 msgid "Set the default character set."
 msgstr "Imposta insieme di caratteri [character set]."
 
-#: client/drizzle.cc:1310
+#: client/drizzle.cc:1309
 msgid "Delimiter to be used."
 msgstr "Delimitatore da usare."
 
-#: client/drizzle.cc:1312
+#: client/drizzle.cc:1311
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr "Esegue il comando ed esce. (Disabilita --force e file di storico)"
 
-#: client/drizzle.cc:1314
+#: client/drizzle.cc:1313
 msgid "Print the output of a query (rows) vertically."
 msgstr "Stampa il risultato di un'interrogazione (righe) verticalmente."
 
-#: client/drizzle.cc:1317
+#: client/drizzle.cc:1316
 msgid "Continue even if we get an sql error."
 msgstr "Continua anche in presenza di errori SQL."
 
-#: client/drizzle.cc:1321
+#: client/drizzle.cc:1320
 #, fuzzy
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
@@ -275,7 +273,7 @@ msgstr ""
 "Disabilitare con --disable-named-commands. Questa opzione è disattivata di "
 "default."
 
-#: client/drizzle.cc:1325
+#: client/drizzle.cc:1324
 #, fuzzy
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
@@ -291,27 +289,27 @@ msgstr ""
 "lungo dei comandi funziona ancora dalla prima linea. ATTENZIONE: l'opzione è "
 "deprecata; usare --disable-named-commands instead."
 
-#: client/drizzle.cc:1327
+#: client/drizzle.cc:1326
 msgid "Ignore space after function names."
 msgstr "Ignora gli spazi dopo i nomi di fuzione."
 
-#: client/drizzle.cc:1329
+#: client/drizzle.cc:1328
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr "Abilita/Disabilita LOAD DATA LOCAL INFILE."
 
-#: client/drizzle.cc:1332
+#: client/drizzle.cc:1331
 msgid "Turn off beep on error."
 msgstr "Spegne il cicalino di errore."
 
-#: client/drizzle.cc:1334 client/drizzleadmin.cc:71
+#: client/drizzle.cc:1333 client/drizzleadmin.cc:71
 msgid "Connect to host."
 msgstr "Connette all'host"
 
-#: client/drizzle.cc:1336
+#: client/drizzle.cc:1335
 msgid "Write line numbers for errors."
 msgstr "Riporta i numeri di riga degli errori."
 
-#: client/drizzle.cc:1339
+#: client/drizzle.cc:1338
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
@@ -319,15 +317,15 @@ msgstr ""
 "Non riportare i numeri di riga per gli errori. ATTENZIONE -L è deprecata, "
 "usare la versione estesa di questa opzione."
 
-#: client/drizzle.cc:1341
+#: client/drizzle.cc:1340
 msgid "Flush buffer after each query."
 msgstr "Svuota il buffer dopo ogni interrogazione."
 
-#: client/drizzle.cc:1343
+#: client/drizzle.cc:1342
 msgid "Write column names in results."
 msgstr "Riporta i nomi delle colonne nei risultati."
 
-#: client/drizzle.cc:1347
+#: client/drizzle.cc:1346
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
@@ -335,7 +333,7 @@ msgstr ""
 "Non riportare i nomi di colonna nei risultati. ATTENZIONE: -N è deprecato "
 "usare la versione estesa."
 
-#: client/drizzle.cc:1350
+#: client/drizzle.cc:1349
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
@@ -343,11 +341,11 @@ msgstr ""
 "Cambia il valore di una variabile. Questa opzione è deprecata; si possono "
 "impostare direttamente le variabili con --nome-variabile=valore."
 
-#: client/drizzle.cc:1352
+#: client/drizzle.cc:1351
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr "Ignora SIGINT (CTRL-C)"
 
-#: client/drizzle.cc:1356
+#: client/drizzle.cc:1355
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
@@ -355,7 +353,7 @@ msgstr ""
 "Aggiorna solo il database predefinito. Utile per evitare aggiornamenti ad "
 "altri database nei registri degli aggiornamenti."
 
-#: client/drizzle.cc:1359
+#: client/drizzle.cc:1358
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
 "pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
@@ -370,7 +368,7 @@ msgstr ""
 "modalità batch. Disabilitabile con --disable-pager. Questa opzione è "
 "disabilitata di default."
 
-#: client/drizzle.cc:1362
+#: client/drizzle.cc:1361
 msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
 "option deprecated; use --disable-pager instead."
@@ -378,7 +376,7 @@ msgstr ""
 "Disabilita il paginatore e stampa su stdout. Vedi anche l'aiuto interattivo "
 "(\\h). ATTENZIONE: opzione deprecata; utilizzare --disable-pager invece."
 
-#: client/drizzle.cc:1365 client/drizzleadmin.cc:74
+#: client/drizzle.cc:1364 client/drizzleadmin.cc:74
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
@@ -386,7 +384,7 @@ msgstr ""
 "Password da utilizzare durante la connessione al server. Se non fornita "
 "viene richiesta dal terminale."
 
-#: client/drizzle.cc:1367
+#: client/drizzle.cc:1366
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, my.cnf, $DRIZZLE_TCP_PORT, "
@@ -394,20 +392,20 @@ msgstr ""
 "Numero porta da utilizzare per la connessione oppure 0 per il default, in "
 "ordine di preferenza, my.cnf, $DRIZZLE_TCP_PORT, "
 
-#: client/drizzle.cc:1368
+#: client/drizzle.cc:1367
 #, fuzzy
 msgid "built-in default"
 msgstr "default iniziale"
 
-#: client/drizzle.cc:1371
+#: client/drizzle.cc:1370
 msgid "Set the drizzle prompt to this value."
 msgstr "Imposta il prompt a questo valore."
 
-#: client/drizzle.cc:1374
+#: client/drizzle.cc:1373
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
 msgstr "Il protocollo della connessione (tcp,socket,pipe,memory)."
 
-#: client/drizzle.cc:1377
+#: client/drizzle.cc:1376
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
@@ -415,11 +413,11 @@ msgstr ""
 "Non precaricare i risultati, stampali riga per riga. Questo può rallentare "
 "il server se l'output è sospeso. Non utilizza il file di storico."
 
-#: client/drizzle.cc:1379
+#: client/drizzle.cc:1378
 msgid "Write fields without conversion. Used with --batch."
 msgstr "Scrivi i campi senza conversione. Usato con --batch."
 
-#: client/drizzle.cc:1382
+#: client/drizzle.cc:1381
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
@@ -427,22 +425,22 @@ msgstr ""
 "Riconnetti se la connessione viene perduta. Disabilitare con --disable-"
 "reconnect. Abilitata di default."
 
-#: client/drizzle.cc:1384
+#: client/drizzle.cc:1383
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
 "Sii più silenzioso. Stampa i risultati usando una tabulazione come "
 "separatore, ogni riga su una nuova linea."
 
-#: client/drizzle.cc:1386
+#: client/drizzle.cc:1385
 msgid "Socket file to use for connection."
 msgstr "Socket file da utilizzare per la connessione."
 
-#: client/drizzle.cc:1389
+#: client/drizzle.cc:1388
 msgid "Output in table format."
 msgstr "Output in formato tabellare."
 
-#: client/drizzle.cc:1392
+#: client/drizzle.cc:1391
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
@@ -452,7 +450,7 @@ msgstr ""
 "funziona in modalità batch. Disabilitabile con --disable-tee. Disabilitata "
 "di default."
 
-#: client/drizzle.cc:1394
+#: client/drizzle.cc:1393
 msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
@@ -460,65 +458,64 @@ msgstr ""
 "Disabilita file di output. Vedere anche l'aiuto interattivo (\\h). Opzione "
 "deprecata: utilizzare --disable-tee invece"
 
-#: client/drizzle.cc:1397 client/drizzleadmin.cc:84
+#: client/drizzle.cc:1396 client/drizzleadmin.cc:84
 msgid "User for login if not current user."
 msgstr "Utente per il login se diverso dal corrente."
 
-#: client/drizzle.cc:1400
+#: client/drizzle.cc:1399
 msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr "Concedere solo UPDATE e DELETE che utilizzino indici."
 
-#: client/drizzle.cc:1403
+#: client/drizzle.cc:1402
 msgid "Synonym for option --safe-updates, -U."
 msgstr "Sinonimo per l'opzione --safe-updates, -U."
 
-#: client/drizzle.cc:1406
+#: client/drizzle.cc:1405
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr "Scrivi di più. (-v -v -v utilizza il formato di output tabellare)."
 
-#: client/drizzle.cc:1408 client/drizzleadmin.cc:89
+#: client/drizzle.cc:1407 client/drizzleadmin.cc:89
 msgid "Output version information and exit."
 msgstr "Restituisce informazioni sulla versione ed esce."
 
-#: client/drizzle.cc:1410 client/drizzleadmin.cc:91
+#: client/drizzle.cc:1409 client/drizzleadmin.cc:91
 msgid "Wait and retry if connection is down."
 msgstr "Aspetta e riprova se la connessione non è disponibile."
 
-#: client/drizzle.cc:1413
+#: client/drizzle.cc:1412
 msgid "Number of seconds before connection timeout."
 msgstr "Numero di secondi prima della scadenza [timeout] della connessione."
 
-#: client/drizzle.cc:1418
+#: client/drizzle.cc:1417
 msgid "Max packet length to send to, or receive from server"
 msgstr "Dimensione massima dei pacchetti da spedire, o ricevere dal server."
 
-#: client/drizzle.cc:1423
+#: client/drizzle.cc:1422
 msgid "Buffer for TCP/IP and socket communication"
 msgstr "Buffer per le comunicazioni TCP/IP e socket."
 
-#: client/drizzle.cc:1427
+#: client/drizzle.cc:1426
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr "Limite automatico per le SELECT quando attivo --safe-updates"
 
-#: client/drizzle.cc:1432
+#: client/drizzle.cc:1431
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 "Limite automatico per il numero di righe in una join quando attivo --safe-"
 "updates"
 
-#: client/drizzle.cc:1436
-msgid ""
-"Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
+#: client/drizzle.cc:1435
+msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 "Rifiuta i clienti che si connettano al server con un protocollo obsoleto "
 "(pre 4.1.1)"
 
-#: client/drizzle.cc:1449
+#: client/drizzle.cc:1448
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr "%s  Ver %s Distrib %s, per %s (%s) con %s %s\n"
 
-#: client/drizzle.cc:1456
+#: client/drizzle.cc:1455
 #, fuzzy, c-format
 msgid ""
 "Copyright (C) 2000-2008 MySQL AB\n"
@@ -534,37 +531,36 @@ msgstr ""
 "ALCUNA GARANZIA. Questo è software libero,\n"
 " e tu sei incoraggiato a modificarlo e ridistribuirlo sotto la licenza GPL\n"
 
-#: client/drizzle.cc:1460
+#: client/drizzle.cc:1459
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
 msgstr "Utilizzo: %s [OPZIONI] [database]\n"
 
-#: client/drizzle.cc:1493
+#: client/drizzle.cc:1492
 msgid "DELIMITER cannot contain a backslash character"
 msgstr "DELIMITER non può contenere un barra rovesciata '\\'"
 
-#: client/drizzle.cc:1514
+#: client/drizzle.cc:1513
 #, c-format
 msgid "WARNING: option deprecated; use --disable-tee instead.\n"
 msgstr "ATTENZIONE: opzione deprecata; utilizzare --disable-tee invece.\n"
 
-#: client/drizzle.cc:1537
+#: client/drizzle.cc:1536
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
 msgstr "ATTENZIONE: opzione deprecata; utilizzare --disable-pager invece.\n"
 
-#: client/drizzle.cc:1541
+#: client/drizzle.cc:1540
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
-"ATTENZIONE: --server-arg non è supportata con questa configurazione.\n"
+msgstr "ATTENZIONE: --server-arg non è supportata con questa configurazione.\n"
 
-#: client/drizzle.cc:1913
+#: client/drizzle.cc:1912
 #, c-format
 msgid "Unknown command '\\%c'."
 msgstr "Comando sconosciuto '\\%c'."
 
-#: client/drizzle.cc:2340
+#: client/drizzle.cc:2339
 msgid ""
 "Reading table information for completion of table and column names\n"
 "    You can turn off this feature to get a quicker startup with -A\n"
@@ -576,28 +572,28 @@ msgstr ""
 "rapido.\n"
 "\n"
 
-#: client/drizzle.cc:2437
+#: client/drizzle.cc:2436
 msgid "No connection. Trying to reconnect..."
 msgstr "Nessuna connessione. Tentativo di riconnessione in corso..."
 
-#: client/drizzle.cc:2443
+#: client/drizzle.cc:2442
 msgid "Can't connect to the server\n"
 msgstr "Impossibile connettersi al server\n"
 
-#: client/drizzle.cc:2500
+#: client/drizzle.cc:2499
 msgid "categories:"
 msgstr "categorie:"
 
-#: client/drizzle.cc:2500
+#: client/drizzle.cc:2499
 msgid "topics:"
 msgstr "argomenti:"
 
-#: client/drizzle.cc:2551
+#: client/drizzle.cc:2550
 #, c-format
 msgid "Name: '%s'\n"
 msgstr "Nome '%s'\n"
 
-#: client/drizzle.cc:2552
+#: client/drizzle.cc:2551
 #, c-format
 msgid ""
 "Description:\n"
@@ -606,7 +602,7 @@ msgstr ""
 "Descrizione:\n"
 "%s"
 
-#: client/drizzle.cc:2554
+#: client/drizzle.cc:2553
 #, c-format
 msgid ""
 "Examples:\n"
@@ -615,11 +611,11 @@ msgstr ""
 "Esempi:\n"
 "%s"
 
-#: client/drizzle.cc:2567
+#: client/drizzle.cc:2566
 msgid "Many help items for your request exist."
 msgstr "Esistono risultati multipli per la tua ricerca."
 
-#: client/drizzle.cc:2568
+#: client/drizzle.cc:2567
 msgid ""
 "To make a more specific request, please type 'help <item>',\n"
 "where <item> is one of the following"
@@ -627,12 +623,12 @@ msgstr ""
 "Per una ricerca più specifica, digitare 'help <oggetto>',\n"
 "dove <oggetto> è uno dei seguenti"
 
-#: client/drizzle.cc:2574
+#: client/drizzle.cc:2573
 #, c-format
 msgid "You asked for help about help category: '%s'\n"
 msgstr "Hai richiesto aiuto circa la categoria: '%s'\n"
 
-#: client/drizzle.cc:2575
+#: client/drizzle.cc:2574
 msgid ""
 "For more information, type 'help <item>', where <item> is one of the "
 "following"
@@ -640,7 +636,7 @@ msgstr ""
 "Per maggiori informazioni, digitare 'help <oggetto>', dove <oggetto> è uno "
 "dei seguenti"
 
-#: client/drizzle.cc:2588
+#: client/drizzle.cc:2587
 msgid ""
 "\n"
 "Nothing found"
@@ -648,22 +644,21 @@ msgstr ""
 "\n"
 "Nulla è stato trovato"
 
-#: client/drizzle.cc:2589
-msgid ""
-"Please try to run 'help contents' for a list of all accessible topics\n"
+#: client/drizzle.cc:2588
+msgid "Please try to run 'help contents' for a list of all accessible topics\n"
 msgstr "Provare 'help contents' per una lista di oggetti accettabili.\n"
 
-#: client/drizzle.cc:2611
+#: client/drizzle.cc:2610
 msgid "List of all Drizzle commands:"
 msgstr "Lista di comandi Drizzle:"
 
-#: client/drizzle.cc:2613
+#: client/drizzle.cc:2612
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
 "Nota Bene, tutti i comandi debbono essere i primi sulla linea e terminare "
 "con ';'"
 
-#: client/drizzle.cc:2624
+#: client/drizzle.cc:2623
 msgid ""
 "\n"
 "For server side help, type 'help contents'\n"
@@ -671,43 +666,42 @@ msgstr ""
 "\n"
 "Per aiuto dal lato server, digitare 'help contents'\n"
 
-#: client/drizzle.cc:2649
+#: client/drizzle.cc:2648
 msgid "Usage: \\C char_setname | charset charset_name"
-msgstr ""
-"Utilizzo: \\C nome_insieme_caratteri | charset nome_insieme_caratteri"
+msgstr "Utilizzo: \\C nome_insieme_caratteri | charset nome_insieme_caratteri"
 
-#: client/drizzle.cc:2659
+#: client/drizzle.cc:2658
 msgid "Charset changed"
 msgstr "Insieme caratteri modificato"
 
-#: client/drizzle.cc:2661
+#: client/drizzle.cc:2660
 msgid "Charset is not found"
 msgstr "Insieme caratteri non trovato"
 
-#: client/drizzle.cc:2692
+#: client/drizzle.cc:2691
 msgid "No query specified\n"
 msgstr "Nessuna interrogazione specificata\n"
 
-#: client/drizzle.cc:2707
+#: client/drizzle.cc:2706
 msgid "Ignoring query to other database"
 msgstr "Ignoro interrogazioni ad altri database"
 
-#: client/drizzle.cc:2756
+#: client/drizzle.cc:2755
 msgid "Empty set"
 msgstr "Insieme vuoto"
 
-#: client/drizzle.cc:2769
+#: client/drizzle.cc:2768
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] "%ld riga nell'insieme"
 msgstr[1] "%ld righe nell'insieme"
 
-#: client/drizzle.cc:2778
+#: client/drizzle.cc:2777
 msgid "Query OK"
 msgstr "Interrogazione OK"
 
-#: client/drizzle.cc:2780
+#: client/drizzle.cc:2779
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
@@ -715,9 +709,10 @@ msgstr[0] "Interrogazione OK, %ld riga afflitta"
 msgstr[1] "Interrogazione OK, %ld righe afflitte"
 
 #: client/drizzleadmin.cc:76
+#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
-"preference, my.cnf, $MYSQL_TCP_PORT, built-in default ("
+"preference, my.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
 "Numero porta da utilizzare per la connessione oppure 0 per il predefinito, "
 "in ordine di preferenza, my.cnf, $MYSQL_TCP_PORT, built-in default ("
@@ -1244,8 +1239,7 @@ msgstr "Non c'è partizione nella tabella per il valore fornito"
 
 #: mysys/my_handler_errors.h:92
 msgid "Row-based binlogging of row failed"
-msgstr ""
-"Archiviazione di riga fallita nei log binari, archiviazione row-based"
+msgstr "Archiviazione di riga fallita nei log binari, archiviazione row-based"
 
 #: mysys/my_handler_errors.h:94
 msgid "Index needed in foreign key constraint"
@@ -1292,8 +1286,7 @@ msgstr "Lo spazio delle tabelle [tablespace] è già esistente"
 
 #: mysys/my_handler_errors.h:114
 msgid "The event was corrupt, leading to illegal data being read"
-msgstr ""
-"L'evento era corrotto, conseguentemente dati illegali sono stati letti"
+msgstr "L'evento era corrotto, conseguentemente dati illegali sono stati letti"
 
 #: mysys/my_handler_errors.h:116
 msgid "The table is of a new format not supported by this version"
@@ -1327,6 +1320,3360 @@ msgstr "Non esiste un tablespace simile"
 #: mysys/my_handler_errors.h:130
 msgid "Tablespace not empty"
 msgstr "Tablespace non vuoto"
+
+#: drizzled/drizzled_error_messages.h:32
+msgid "hashchk"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:34
+msgid "isamchk"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:36
+msgid "NO"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:38
+msgid "YES"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:40
+#, fuzzy, c-format
+msgid "Can't create file '%-.200s' (errno: %d)"
+msgstr "Impossibile creare/scrivere sul file '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:42
+#, fuzzy, c-format
+msgid "Can't create table '%-.200s' (errno: %d)"
+msgstr "Impossibile creare/scrivere sul file '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:44
+#, fuzzy, c-format
+msgid "Can't create database '%-.192s' (errno: %d)"
+msgstr "Impossibile creare il percorso '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:46
+#, c-format
+msgid "Can't create database '%-.192s'; database exists"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:48
+#, c-format
+msgid "Can't drop database '%-.192s'; database doesn't exist"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:50
+#, fuzzy, c-format
+msgid "Error dropping database (can't delete '%-.192s', errno: %d)"
+msgstr "Errore durante la cancellazione di '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:52
+#, c-format
+msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:54
+#, fuzzy, c-format
+msgid "Error on delete of '%-.192s' (errno: %d)"
+msgstr "Errore durante la cancellazione di '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:56
+msgid "Can't read record in system table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:58
+#, fuzzy, c-format
+msgid "Can't get status of '%-.200s' (errno: %d)"
+msgstr ""
+"Impossibile eseguire stat (informazioni sul file) di '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:60
+#, fuzzy, c-format
+msgid "Can't get working directory (errno: %d)"
+msgstr "Impossibile recuperare il percorso corrente [wd] (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:62
+#, fuzzy, c-format
+msgid "Can't lock file (errno: %d)"
+msgstr "Impossibile il lock del file (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:64
+#, fuzzy, c-format
+msgid "Can't open file: '%-.200s' (errno: %d)"
+msgstr "Impossibile sincronizzare il file '%s' sul disco (Errore: %d)"
+
+#: drizzled/drizzled_error_messages.h:66
+#, fuzzy, c-format
+msgid "Can't find file: '%-.200s' (errno: %d)"
+msgstr "Impossibile sincronizzare il file '%s' sul disco (Errore: %d)"
+
+#: drizzled/drizzled_error_messages.h:68
+#, fuzzy, c-format
+msgid "Can't read dir of '%-.192s' (errno: %d)"
+msgstr "Impossibile leggere la directory di '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:70
+#, fuzzy, c-format
+msgid "Can't change dir to '%-.192s' (errno: %d)"
+msgstr "Impossibile cambiare percorso a '%s' (Errcode: %d)1"
+
+#: drizzled/drizzled_error_messages.h:72
+#, c-format
+msgid "Record has changed since last read in table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:74
+#, fuzzy, c-format
+msgid "Disk full (%s); waiting for someone to free some space..."
+msgstr ""
+"Disco pieno durante la scrittura di '%s'. Aspetto che qualcuno liberi "
+"spazio..."
+
+#: drizzled/drizzled_error_messages.h:76
+#, c-format
+msgid "Can't write; duplicate key in table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:78
+#, fuzzy, c-format
+msgid "Error on close of '%-.192s' (errno: %d)"
+msgstr "Errore durante la chiusura del file '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:80
+#, fuzzy, c-format
+msgid "Error reading file '%-.200s' (errno: %d)"
+msgstr "Errore di lettura dal file '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:82
+#, fuzzy, c-format
+msgid "Error on rename of '%-.150s' to '%-.150s' (errno: %d)"
+msgstr "Errore nel tentativo di rinominare '%s' a '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:84
+#, fuzzy, c-format
+msgid "Error writing file '%-.200s' (errno: %d)"
+msgstr "Errore di scrittura sul file '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:86
+#, c-format
+msgid "'%-.192s' is locked against change"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:88
+#, fuzzy
+msgid "Sort aborted"
+msgstr "Abortito"
+
+#: drizzled/drizzled_error_messages.h:90
+#, c-format
+msgid "View '%-.192s' doesn't exist for '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:92
+#, fuzzy, c-format
+msgid "Got error %d from storage engine"
+msgstr "Impossibile connettersi al motore di memorizzazione"
+
+#: drizzled/drizzled_error_messages.h:94
+#, c-format
+msgid "Table storage engine for '%-.192s' doesn't have this option"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:96
+#, c-format
+msgid "Can't find record in '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:98
+#, c-format
+msgid "Incorrect information in file: '%-.200s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:100
+#, c-format
+msgid "Incorrect key file for table '%-.200s'; try to repair it"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:102
+#, c-format
+msgid "Old key file for table '%-.192s'; repair it!"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:104
+#, fuzzy, c-format
+msgid "Table '%-.192s' is read only"
+msgstr "La tabella è in sola lettura"
+
+#: drizzled/drizzled_error_messages.h:106
+#, fuzzy, c-format
+msgid "Out of memory; restart server and try again (needed %d bytes)"
+msgstr "Memoria esaurita (richiesti %u bytes)"
+
+#: drizzled/drizzled_error_messages.h:108
+msgid "Out of sort memory; increase server sort buffer size"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:110
+#, fuzzy, c-format
+msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
+msgstr ""
+"EOF (fine del file) inaspettato durante la lettura di '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:112
+#, fuzzy
+msgid "Too many connections"
+msgstr "connessione"
+
+#: drizzled/drizzled_error_messages.h:114
+msgid ""
+"Out of memory; check if mysqld or some other process uses all available "
+"memory; if not, you may have to use 'ulimit' to allow mysqld to use more "
+"memory or you can add more swap space"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:116
+msgid "Can't get hostname for your address"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:118
+msgid "Bad handshake"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:120
+#, c-format
+msgid "Access denied for user '%-.48s'@'%-.64s' to database '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:122
+#, c-format
+msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:124
+#, fuzzy
+msgid "No database selected"
+msgstr "File database obsoleto"
+
+#: drizzled/drizzled_error_messages.h:126
+#, fuzzy
+msgid "Unknown command"
+msgstr "Comando sconosciuto '\\%c'."
+
+#: drizzled/drizzled_error_messages.h:128
+#, c-format
+msgid "Column '%-.192s' cannot be null"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:130
+#, fuzzy, c-format
+msgid "Unknown database '%-.192s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:132
+#, fuzzy, c-format
+msgid "Table '%-.192s' already exists"
+msgstr "Lo spazio delle tabelle [tablespace] è già esistente"
+
+#: drizzled/drizzled_error_messages.h:134
+#, fuzzy, c-format
+msgid "Unknown table '%-.100s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:136
+#, c-format
+msgid "Column '%-.192s' in %-.192s is ambiguous"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:138
+msgid "Server shutdown in progress"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:140
+#, fuzzy, c-format
+msgid "Unknown column '%-.192s' in '%-.192s'"
+msgstr ""
+"Ordinamento (collation) sconosciuto '%s' nella definizione della tabella "
+"'%-.64s'"
+
+#: drizzled/drizzled_error_messages.h:142
+#, c-format
+msgid "'%-.192s' isn't in GROUP BY"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:144
+#, c-format
+msgid "Can't group on '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:146
+msgid "Statement has sum functions and columns in same statement"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:148
+msgid "Column count doesn't match value count"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:150
+#, c-format
+msgid "Identifier name '%-.100s' is too long"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:152
+#, c-format
+msgid "Duplicate column name '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:154
+#, c-format
+msgid "Duplicate key name '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:156
+#, c-format
+msgid "Duplicate entry '%-.192s' for key %d"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:158
+#, c-format
+msgid "Incorrect column specifier for column '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:160
+#, c-format
+msgid "%s near '%-.80s' at line %d"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:162
+msgid "Query was empty"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:164
+#, c-format
+msgid "Not unique table/alias: '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:166
+#, fuzzy, c-format
+msgid "Invalid default value for '%-.192s'"
+msgstr "%s: ERRORE: Valore decimale invalido per l'opzione '%s'\n"
+
+#: drizzled/drizzled_error_messages.h:168
+msgid "Multiple primary key defined"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:170
+#, c-format
+msgid "Too many keys specified; max %d keys allowed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:172
+#, c-format
+msgid "Too many key parts specified; max %d parts allowed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:174
+#, c-format
+msgid "Specified key was too long; max key length is %d bytes"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:176
+#, c-format
+msgid "Key column '%-.192s' doesn't exist in table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:178
+#, c-format
+msgid ""
+"BLOB column '%-.192s' can't be used in key specification with the used table "
+"type"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:180
+#, c-format
+msgid ""
+"Column length too big for column '%-.192s' (max = %d); use BLOB or TEXT "
+"instead"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:182
+msgid ""
+"Incorrect table definition; there can be only one auto column and it must be "
+"defined as a key"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:184
+#, c-format
+msgid ""
+"%s: ready for connections.\n"
+"Version: '%s'  socket: '%s'  port: %d"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:186
+#, c-format
+msgid "%s: Normal shutdown\n"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:188
+#, c-format
+msgid "%s: Got signal %d. Aborting!\n"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:190
+#, c-format
+msgid "%s: Shutdown complete\n"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:192
+#, c-format
+msgid "%s: Forcing close of thread %ld  user: '%-.48s'\n"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:194
+msgid "Can't create IP socket"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:196
+#, c-format
+msgid ""
+"Table '%-.192s' has no index like the one used in CREATE INDEX; recreate the "
+"table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:198
+msgid "Field separator argument is not what is expected; check the manual"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:200
+msgid ""
+"You can't use fixed rowlength with BLOBs; please use 'fields terminated by'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:202
+#, c-format
+msgid ""
+"The file '%-.128s' must be in the database directory or be readable by all"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:204
+#, c-format
+msgid "File '%-.200s' already exists"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:206
+#, c-format
+msgid "Records: %ld  Deleted: %ld  Skipped: %ld  Warnings: %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:208
+#, c-format
+msgid "Records: %ld  Duplicates: %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:210
+msgid ""
+"Incorrect prefix key; the used key part isn't a string, the used length is "
+"longer than the key part, or the storage engine doesn't support unique "
+"prefix keys"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:212
+msgid "You can't delete all columns with ALTER TABLE; use DROP TABLE instead"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:214
+#, c-format
+msgid "Can't DROP '%-.192s'; check that column/key exists"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:216
+#, c-format
+msgid "Records: %ld  Duplicates: %ld  Warnings: %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:218
+#, c-format
+msgid "You can't specify target table '%-.192s' for update in FROM clause"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:220
+#, c-format
+msgid "Unknown thread id: %lu"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:222
+#, c-format
+msgid "You are not owner of thread %lu"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:224
+#, fuzzy
+msgid "No tables used"
+msgstr "Non esiste un tablespace simile"
+
+#: drizzled/drizzled_error_messages.h:226
+#, c-format
+msgid "Too many strings for column %-.192s and SET"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:228
+#, c-format
+msgid "Can't generate a unique log-filename %-.200s.(1-999)\n"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:230
+#, fuzzy, c-format
+msgid "Table '%-.192s' was locked with a READ lock and can't be updated"
+msgstr ""
+"La tabella '%-.64s' è stata creata con una versione differente di Drizzle e "
+"non può essere letta"
+
+#: drizzled/drizzled_error_messages.h:232
+#, c-format
+msgid "Table '%-.192s' was not locked with LOCK TABLES"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:234
+#, c-format
+msgid "BLOB/TEXT column '%-.192s' can't have a default value"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:236
+#, c-format
+msgid "Incorrect database name '%-.100s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:238
+#, c-format
+msgid "Incorrect table name '%-.100s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:240
+msgid ""
+"The SELECT would examine more than MAX_JOIN_SIZE rows; check your WHERE and "
+"use SET SQL_BIG_SELECTS=1 or SET SQL_MAX_JOIN_SIZE=# if the SELECT is okay"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:242
+#, fuzzy
+msgid "Unknown error"
+msgstr "Errore sconosciuto %d"
+
+#: drizzled/drizzled_error_messages.h:244
+#, fuzzy, c-format
+msgid "Unknown procedure '%-.192s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:246
+#, c-format
+msgid "Incorrect parameter count to procedure '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:248
+#, c-format
+msgid "Incorrect parameters to procedure '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:250
+#, c-format
+msgid "Unknown table '%-.192s' in %-.32s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:252
+#, c-format
+msgid "Column '%-.192s' specified twice"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:254
+msgid "Invalid use of group function"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:256
+#, c-format
+msgid ""
+"Table '%-.192s' uses an extension that doesn't exist in this MySQL version"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:258
+msgid "A table must have at least 1 column"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:260
+#, c-format
+msgid "The table '%-.192s' is full"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:262
+#, fuzzy, c-format
+msgid "Unknown character set: '%-.64s'"
+msgstr "Insieme di caratteri [charset] sconosciuto utilizzato in tabella"
+
+#: drizzled/drizzled_error_messages.h:264
+#, c-format
+msgid "Too many tables; MySQL can only use %d tables in a join"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:266
+msgid "Too many columns"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:268
+#, c-format
+msgid ""
+"Row size too large. The maximum row size for the used table type, not "
+"counting BLOBs, is %ld. You have to change some columns to TEXT or BLOBs"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:270
+#, c-format
+msgid ""
+"Thread stack overrun:  Used: %ld of a %ld stack.  Use 'mysqld -O "
+"thread_stack=#' to specify a bigger stack if needed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:272
+msgid "Cross dependency found in OUTER JOIN; examine your ON conditions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:274
+#, c-format
+msgid ""
+"Table handler doesn't support NULL in given index. Please change column "
+"'%-.192s' to be NOT NULL or use another handler"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:276
+#, c-format
+msgid "Can't load function '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:278
+#, c-format
+msgid "Can't initialize function '%-.192s'; %-.80s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:280
+msgid "No paths allowed for shared library"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:282
+#, c-format
+msgid "Function '%-.192s' already exists"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:284
+#, fuzzy, c-format
+msgid "Can't open shared library '%-.192s' (errno: %d %-.128s)"
+msgstr "Impossibile creare il percorso '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:286
+#, c-format
+msgid "Can't find symbol '%-.128s' in library"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:288
+#, fuzzy, c-format
+msgid "Function '%-.192s' is not defined"
+msgstr "Il prossimo log '%s' è correntemente inattivo"
+
+#: drizzled/drizzled_error_messages.h:290
+#, c-format
+msgid ""
+"Host '%-.64s' is blocked because of many connection errors; unblock with "
+"'mysqladmin flush-hosts'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:292
+#, c-format
+msgid "Host '%-.64s' is not allowed to connect to this MySQL server"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:294
+msgid ""
+"You are using MySQL as an anonymous user and anonymous users are not allowed "
+"to change passwords"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:296
+msgid ""
+"You must have privileges to update tables in the mysql database to be able "
+"to change passwords for others"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:298
+msgid "Can't find any matching row in the user table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:300
+#, c-format
+msgid "Rows matched: %ld  Changed: %ld  Warnings: %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:302
+#, c-format
+msgid ""
+"Can't create a new thread (errno %d); if you are not out of available "
+"memory, you can consult the manual for a possible OS-dependent bug"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:304
+#, c-format
+msgid "Column count doesn't match value count at row %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:306
+#, c-format
+msgid "Can't reopen table: '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:308
+msgid "Invalid use of NULL value"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:310
+#, c-format
+msgid "Got error '%-.64s' from regexp"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:312
+msgid ""
+"Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is "
+"illegal if there is no GROUP BY clause"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:314
+#, c-format
+msgid "There is no such grant defined for user '%-.48s' on host '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:316
+#, c-format
+msgid "%-.16s command denied to user '%-.48s'@'%-.64s' for table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:318
+#, c-format
+msgid ""
+"%-.16s command denied to user '%-.48s'@'%-.64s' for column '%-.192s' in "
+"table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:320
+msgid ""
+"Illegal GRANT/REVOKE command; please consult the manual to see which "
+"privileges can be used"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:322
+msgid "The host or user argument to GRANT is too long"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:324
+#, c-format
+msgid "Table '%-.192s.%-.192s' doesn't exist"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:326
+#, c-format
+msgid ""
+"There is no such grant defined for user '%-.48s' on host '%-.64s' on table "
+"'%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:328
+msgid "The used command is not allowed with this MySQL version"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:330
+msgid ""
+"You have an error in your SQL syntax; check the manual that corresponds to "
+"your MySQL server version for the right syntax to use"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:332
+#, c-format
+msgid "Delayed insert thread couldn't get requested lock for table %-.192s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:334
+msgid "Too many delayed threads in use"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:336
+#, c-format
+msgid "Aborted connection %ld to db: '%-.192s' user: '%-.48s' (%-.64s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:338
+msgid "Got a packet bigger than 'max_allowed_packet' bytes"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:340
+msgid "Got a read error from the connection pipe"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:342
+msgid "Got an error from fcntl()"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:344
+msgid "Got packets out of order"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:346
+msgid "Couldn't uncompress communication packet"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:348
+msgid "Got an error reading communication packets"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:350
+msgid "Got timeout reading communication packets"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:352
+msgid "Got an error writing communication packets"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:354
+msgid "Got timeout writing communication packets"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:356
+msgid "Result string is longer than 'max_allowed_packet' bytes"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:358
+msgid "The used table type doesn't support BLOB/TEXT columns"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:360
+msgid "The used table type doesn't support AUTO_INCREMENT columns"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:362
+#, c-format
+msgid ""
+"INSERT DELAYED can't be used with table '%-.192s' because it is locked with "
+"LOCK TABLES"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:364
+#, c-format
+msgid "Incorrect column name '%-.100s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:366
+#, c-format
+msgid "The used storage engine can't index column '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:368
+msgid ""
+"Unable to open underlying table which is differently defined or of non-"
+"MyISAM type or doesn't exist"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:370
+#, c-format
+msgid "Can't write, because of unique constraint, to table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:372
+#, c-format
+msgid ""
+"BLOB/TEXT column '%-.192s' used in key specification without a key length"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:374
+msgid ""
+"All parts of a PRIMARY KEY must be NOT NULL; if you need NULL in a key, use "
+"UNIQUE instead"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:376
+msgid "Result consisted of more than one row"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:378
+msgid "This table type requires a primary key"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:380
+msgid "This version of MySQL is not compiled with RAID support"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:382
+msgid ""
+"You are using safe update mode and you tried to update a table without a "
+"WHERE that uses a KEY column"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:384
+#, c-format
+msgid "Key '%-.192s' doesn't exist in table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:386
+msgid "Can't open table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:388
+#, c-format
+msgid "The storage engine for the table doesn't support %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:390
+#, fuzzy
+msgid "You are not allowed to execute this command in a transaction"
+msgstr "Aggiornamenti impediti durante una transazione di sola lettura"
+
+#: drizzled/drizzled_error_messages.h:392
+#, c-format
+msgid "Got error %d during COMMIT"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:394
+#, c-format
+msgid "Got error %d during ROLLBACK"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:396
+#, c-format
+msgid "Got error %d during FLUSH_LOGS"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:398
+#, c-format
+msgid "Got error %d during CHECKPOINT"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:400
+#, c-format
+msgid ""
+"Aborted connection %ld to db: '%-.192s' user: '%-.48s' host: "
+"'%-.64s' (%-.64s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:402
+msgid "The storage engine for the table does not support binary table dump"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:404
+msgid "Binlog closed, cannot RESET MASTER"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:406
+#, c-format
+msgid "Failed rebuilding the index of  dumped table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:408
+#, c-format
+msgid "Error from master: '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:410
+#, fuzzy
+msgid "Net error reading from master"
+msgstr "Errore di rete durante il trasferimento di '%s' dal master"
+
+#: drizzled/drizzled_error_messages.h:412
+#, fuzzy
+msgid "Net error writing to master"
+msgstr "Errore di rete durante il trasferimento di '%s' dal master"
+
+#: drizzled/drizzled_error_messages.h:414
+msgid "Can't find FULLTEXT index matching the column list"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:416
+msgid ""
+"Can't execute the given command because you have active locked tables or an "
+"active transaction"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:418
+#, fuzzy, c-format
+msgid "Unknown system variable '%-.64s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:420
+#, fuzzy, c-format
+msgid "Table '%-.192s' is marked as crashed and should be repaired"
+msgstr "La tabella è segnalata come corrotta e dovrebbe essere riparata"
+
+#: drizzled/drizzled_error_messages.h:422
+#, fuzzy, c-format
+msgid ""
+"Table '%-.192s' is marked as crashed and last (automatic?) repair failed"
+msgstr "La tabella è corrotta e l'ultimo REPAIR è fallito"
+
+#: drizzled/drizzled_error_messages.h:424
+msgid "Some non-transactional changed tables couldn't be rolled back"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:426
+msgid ""
+"Multi-statement transaction required more than 'max_binlog_cache_size' bytes "
+"of storage; increase this mysqld variable and try again"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:428
+msgid ""
+"This operation cannot be performed with a running slave; run STOP SLAVE first"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:430
+msgid ""
+"This operation requires a running slave; configure slave and do START SLAVE"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:432
+msgid "The server is not configured as slave; fix with CHANGE MASTER TO"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:434
+msgid ""
+"Could not initialize master info structure; more error messages can be found "
+"in the MySQL error log"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:436
+#, fuzzy
+msgid "Could not create slave thread; check system resources"
+msgstr "Fallimento nel creare i processi slave"
+
+#: drizzled/drizzled_error_messages.h:438
+#, c-format
+msgid ""
+"User %-.64s already has more than 'max_user_connections' active connections"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:440
+msgid "You may only use constant expressions with SET"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:442
+#, fuzzy
+msgid "Lock wait timeout exceeded; try restarting transaction"
+msgstr "Lock fuori tempo massimo; Riprovare la transazione"
+
+#: drizzled/drizzled_error_messages.h:444
+msgid "The total number of locks exceeds the lock table size"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:446
+msgid "Update locks cannot be acquired during a READ UNCOMMITTED transaction"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:448
+msgid "DROP DATABASE not allowed while thread is holding global read lock"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:450
+msgid "CREATE DATABASE not allowed while thread is holding global read lock"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:452
+#, c-format
+msgid "Incorrect arguments to %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:454
+#, c-format
+msgid "'%-.48s'@'%-.64s' is not allowed to create new users"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:456
+msgid ""
+"Incorrect table definition; all MERGE tables must be in the same database"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:458
+msgid "Deadlock found when trying to get lock; try restarting transaction"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:460
+msgid "The used table type doesn't support FULLTEXT indexes"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:462
+#, fuzzy
+msgid "Cannot add foreign key constraint"
+msgstr "Indice necessario per vincolo di chiave esterna [foreign key]"
+
+#: drizzled/drizzled_error_messages.h:464
+msgid "Cannot add or update a child row: a foreign key constraint fails"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:466
+#, fuzzy
+msgid "Cannot delete or update a parent row: a foreign key constraint fails"
+msgstr "Indice necessario per vincolo di chiave esterna [foreign key]"
+
+#: drizzled/drizzled_error_messages.h:468
+#, c-format
+msgid "Error connecting to master: %-.128s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:470
+#, c-format
+msgid "Error running query on master: %-.128s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:472
+#, c-format
+msgid "Error when executing command %s: %-.128s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:474
+#, c-format
+msgid "Incorrect usage of %s and %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:476
+msgid "The used SELECT statements have a different number of columns"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:478
+msgid "Can't execute the query because you have a conflicting read lock"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:480
+msgid "Mixing of transactional and non-transactional tables is disabled"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:482
+#, fuzzy, c-format
+msgid "Option '%s' used twice in statement"
+msgstr "%s: %s: Opzione '%s' utilizzata, ma disabilitata\n"
+
+#: drizzled/drizzled_error_messages.h:484
+#, c-format
+msgid "User '%-.64s' has exceeded the '%s' resource (current value: %ld)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:486
+#, c-format
+msgid "Access denied; you need the %-.128s privilege for this operation"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:488
+#, c-format
+msgid ""
+"Variable '%-.64s' is a SESSION variable and can't be used with SET GLOBAL"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:490
+#, c-format
+msgid ""
+"Variable '%-.64s' is a GLOBAL variable and should be set with SET GLOBAL"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:492
+#, c-format
+msgid "Variable '%-.64s' doesn't have a default value"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:494
+#, c-format
+msgid "Variable '%-.64s' can't be set to the value of '%-.200s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:496
+#, c-format
+msgid "Incorrect argument type to variable '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:498
+#, c-format
+msgid "Variable '%-.64s' can only be set, not read"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:500
+#, c-format
+msgid "Incorrect usage/placement of '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:502
+#, c-format
+msgid "This version of MySQL doesn't yet support '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:504
+#, c-format
+msgid ""
+"Got fatal error %d: '%-.128s' from master when reading data from binary log"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:506
+msgid "Slave SQL thread ignored the query because of replicate-*-table rules"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:508
+#, c-format
+msgid "Variable '%-.192s' is a %s variable"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:510
+#, c-format
+msgid "Incorrect foreign key definition for '%-.192s': %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:512
+msgid "Key reference and table reference don't match"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:514
+#, c-format
+msgid "Operand should contain %d column(s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:516
+msgid "Subquery returns more than 1 row"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:518
+#, c-format
+msgid "Unknown prepared statement handler (%.*s) given to %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:520
+msgid "Help database is corrupt or does not exist"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:522
+msgid "Cyclic reference on subqueries"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:524
+#, c-format
+msgid "Converting column '%s' from %s to %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:526
+#, c-format
+msgid "Reference '%-.64s' not supported (%s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:528
+msgid "Every derived table must have its own alias"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:530
+#, c-format
+msgid "Select %u was reduced during optimization"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:532
+#, c-format
+msgid "Table '%-.192s' from one of the SELECTs cannot be used in %-.32s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:534
+msgid ""
+"Client does not support authentication protocol requested by server; "
+"consider upgrading MySQL client"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:536
+msgid "All parts of a SPATIAL index must be NOT NULL"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:538
+#, c-format
+msgid "COLLATION '%s' is not valid for CHARACTER SET '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:540
+msgid "Slave is already running"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:542
+msgid "Slave already has been stopped"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:544
+#, c-format
+msgid ""
+"Uncompressed data size too large; the maximum size is %d (probably, length "
+"of uncompressed data was corrupted)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:546
+msgid "ZLIB: Not enough memory"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:548
+msgid ""
+"ZLIB: Not enough room in the output buffer (probably, length of uncompressed "
+"data was corrupted)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:550
+msgid "ZLIB: Input data corrupted"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:552
+#, c-format
+msgid "%d line(s) were cut by GROUP_CONCAT()"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:554
+#, c-format
+msgid "Row %ld doesn't contain data for all columns"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:556
+#, c-format
+msgid ""
+"Row %ld was truncated; it contained more data than there were input columns"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:558
+#, c-format
+msgid ""
+"Column set to default value; NULL supplied to NOT NULL column '%s' at row %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:560
+#, fuzzy, c-format
+msgid "Out of range value for column '%s' at row %ld"
+msgstr ""
+"Impossibile leggere il valore del collegamento [symlink] '%s' (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:562
+#, c-format
+msgid "Data truncated for column '%s' at row %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:564
+#, fuzzy, c-format
+msgid "Using storage engine %s for table '%s'"
+msgstr "Estensione non supportate per la tabella"
+
+#: drizzled/drizzled_error_messages.h:566
+#, c-format
+msgid "Illegal mix of collations (%s,%s) and (%s,%s) for operation '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:568
+msgid "Cannot drop one or more of the requested users"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:570
+msgid "Can't revoke all privileges for one or more of the requested users"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:572
+#, c-format
+msgid "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:574
+#, c-format
+msgid "Illegal mix of collations for operation '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:576
+#, c-format
+msgid ""
+"Variable '%-.64s' is not a variable component (can't be used as XXXX."
+"variable_name)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:578
+#, fuzzy, c-format
+msgid "Unknown collation: '%-.64s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:580
+#, fuzzy
+msgid ""
+"SSL parameters in CHANGE MASTER are ignored because this MySQL slave was "
+"compiled without SSL support; they can be used later if MySQL slave with SSL "
+"is started"
+msgstr ""
+"Le informazioni SSL nel file di informazioni sul master (file '%s') verranno "
+"ignorate perchè questo slave è stato compilato senza il supporto a SSL."
+
+#: drizzled/drizzled_error_messages.h:582
+#, c-format
+msgid ""
+"Server is running in --secure-auth mode, but '%s'@'%s' has a password in the "
+"old format; please change the password to the new format"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:584
+#, c-format
+msgid ""
+"Field or reference '%-.192s%s%-.192s%s%-.192s' of SELECT #%d was resolved in "
+"SELECT #%d"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:586
+msgid "Incorrect parameter or combination of parameters for START SLAVE UNTIL"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:588
+msgid ""
+"It is recommended to use --skip-slave-start when doing step-by-step "
+"replication with START SLAVE UNTIL; otherwise, you will get problems if you "
+"get an unexpected slave's mysqld restart"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:590
+msgid "SQL thread is not to be started so UNTIL options are ignored"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:592
+#, c-format
+msgid "Incorrect index name '%-.100s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:594
+#, c-format
+msgid "Incorrect catalog name '%-.100s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:596
+#, c-format
+msgid "Query cache failed to set size %lu; new query cache size is %lu"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:598
+#, c-format
+msgid "Column '%-.192s' cannot be part of FULLTEXT index"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:600
+#, fuzzy, c-format
+msgid "Unknown key cache '%-.100s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:602
+msgid ""
+"MySQL is started in --skip-name-resolve mode; you must restart it without "
+"this switch for this grant to work"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:604
+#, fuzzy, c-format
+msgid "Unknown table engine '%s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:606
+#, fuzzy, c-format
+msgid "'%s' is deprecated; use '%s' instead"
+msgstr "ATTENZIONE: opzione deprecata; utilizzare --disable-tee invece.\n"
+
+#: drizzled/drizzled_error_messages.h:608
+#, c-format
+msgid "The target table %-.100s of the %s is not updatable"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:610
+#, c-format
+msgid ""
+"The '%s' feature is disabled; you need MySQL built with '%s' to have it "
+"working"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:612
+#, c-format
+msgid ""
+"The MySQL server is running with the %s option so it cannot execute this "
+"statement"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:614
+#, c-format
+msgid "Column '%-.100s' has duplicated value '%-.64s' in %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:616
+#, c-format
+msgid "Truncated incorrect %-.32s value: '%-.128s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:618
+msgid ""
+"Incorrect table definition; there can be only one TIMESTAMP column with "
+"CURRENT_TIMESTAMP in DEFAULT or ON UPDATE clause"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:620
+#, c-format
+msgid "Invalid ON UPDATE clause for '%-.192s' column"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:622
+msgid "This command is not supported in the prepared statement protocol yet"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:624
+#, c-format
+msgid "Got error %d '%-.100s' from %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:626
+#, c-format
+msgid "Got temporary error %d '%-.100s' from %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:628
+#, fuzzy, c-format
+msgid "Unknown or incorrect time zone: '%-.64s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:630
+#, c-format
+msgid "Invalid TIMESTAMP value in column '%s' at row %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:632
+#, c-format
+msgid "Invalid %s character string: '%.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:634
+#, c-format
+msgid "Result of %s() was larger than max_allowed_packet (%ld) - truncated"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:636
+#, c-format
+msgid "Conflicting declarations: '%s%s' and '%s%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:638
+#, c-format
+msgid "Can't create a %s from within another stored routine"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:640
+#, c-format
+msgid "%s %s already exists"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:642
+#, c-format
+msgid "%s %s does not exist"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:644
+#, c-format
+msgid "Failed to DROP %s %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:646
+#, c-format
+msgid "Failed to CREATE %s %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:648
+#, c-format
+msgid "%s with no matching label: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:650
+#, c-format
+msgid "Redefining label %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:652
+#, c-format
+msgid "End-label %s without match"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:654
+#, c-format
+msgid "Referring to uninitialized variable %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:656
+#, c-format
+msgid "PROCEDURE %s can't return a result set in the given context"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:658
+msgid "RETURN is only allowed in a FUNCTION"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:660
+#, c-format
+msgid "%s is not allowed in stored procedures"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:662
+msgid ""
+"The update log is deprecated and replaced by the binary log; SET "
+"SQL_LOG_UPDATE has been ignored"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:664
+msgid ""
+"The update log is deprecated and replaced by the binary log; SET "
+"SQL_LOG_UPDATE has been translated to SET SQL_LOG_BIN"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:666
+msgid "Query execution was interrupted"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:668
+#, c-format
+msgid "Incorrect number of arguments for %s %s; expected %u, got %u"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:670
+#, c-format
+msgid "Undefined CONDITION: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:672
+#, c-format
+msgid "No RETURN found in FUNCTION %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:674
+#, c-format
+msgid "FUNCTION %s ended without RETURN"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:676
+msgid "Cursor statement must be a SELECT"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:678
+msgid "Cursor SELECT must not have INTO"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:680
+#, c-format
+msgid "Undefined CURSOR: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:682
+msgid "Cursor is already open"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:684
+#, fuzzy
+msgid "Cursor is not open"
+msgstr "Insieme caratteri non trovato"
+
+#: drizzled/drizzled_error_messages.h:686
+#, c-format
+msgid "Undeclared variable: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:688
+msgid "Incorrect number of FETCH variables"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:690
+msgid "No data - zero rows fetched, selected, or processed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:692
+#, c-format
+msgid "Duplicate parameter: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:694
+#, c-format
+msgid "Duplicate variable: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:696
+#, c-format
+msgid "Duplicate condition: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:698
+#, c-format
+msgid "Duplicate cursor: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:700
+#, c-format
+msgid "Failed to ALTER %s %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:702
+msgid "Subquery value not supported"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:704
+#, c-format
+msgid "%s is not allowed in stored function or trigger"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:706
+msgid "Variable or condition declaration after cursor or handler declaration"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:708
+msgid "Cursor declaration after handler declaration"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:710
+msgid "Case not found for CASE statement"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:712
+#, c-format
+msgid "Configuration file '%-.192s' is too big"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:714
+#, c-format
+msgid "Malformed file type header in file '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:716
+#, c-format
+msgid "Unexpected end of file while parsing comment '%-.200s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:718
+#, c-format
+msgid "Error while parsing parameter '%-.192s' (line: '%-.192s')"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:720
+#, c-format
+msgid "Unexpected end of file while skipping unknown parameter '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:722
+msgid "EXPLAIN/SHOW can not be issued; lacking privileges for underlying table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:724
+#, c-format
+msgid "File '%-.192s' has unknown type '%-.64s' in its header"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:726
+#, c-format
+msgid "'%-.192s.%-.192s' is not %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:728
+#, c-format
+msgid "Column '%-.192s' is not updatable"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:730
+msgid "View's SELECT contains a subquery in the FROM clause"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:732
+#, c-format
+msgid "View's SELECT contains a '%s' clause"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:734
+msgid "View's SELECT contains a variable or parameter"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:736
+#, c-format
+msgid "View's SELECT refers to a temporary table '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:738
+msgid "View's SELECT and view's field list have different column counts"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:740
+msgid ""
+"View merge algorithm can't be used here for now (assumed undefined algorithm)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:742
+msgid "View being updated does not have complete key of underlying table in it"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:744
+#, c-format
+msgid ""
+"View '%-.192s.%-.192s' references invalid table(s) or column(s) or function"
+"(s) or definer/invoker of view lack rights to use them"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:746
+#, c-format
+msgid "Can't drop or alter a %s from within another stored routine"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:748
+msgid "GOTO is not allowed in a stored procedure handler"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:750
+#, fuzzy
+msgid "Trigger already exists"
+msgstr "Lo spazio delle tabelle [tablespace] è già esistente"
+
+#: drizzled/drizzled_error_messages.h:752
+#, fuzzy
+msgid "Trigger does not exist"
+msgstr "La tabella non esiste nel motore [engine]"
+
+#: drizzled/drizzled_error_messages.h:754
+#, c-format
+msgid "Trigger's '%-.192s' is view or temporary table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:756
+#, c-format
+msgid "Updating of %s row is not allowed in %strigger"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:758
+#, c-format
+msgid "There is no %s row in %s trigger"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:760
+#, c-format
+msgid "Field '%-.192s' doesn't have a default value"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:762
+msgid "Division by 0"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:764
+#, c-format
+msgid "Incorrect %-.32s value: '%-.128s' for column '%.192s' at row %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:766
+#, c-format
+msgid "Illegal %s '%-.192s' value found during parsing"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:768
+#, c-format
+msgid "CHECK OPTION on non-updatable view '%-.192s.%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:770
+#, c-format
+msgid "CHECK OPTION failed '%-.192s.%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:772
+#, c-format
+msgid "%-.16s command denied to user '%-.48s'@'%-.64s' for routine '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:774
+#, c-format
+msgid "Failed purging old relay logs: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:776
+#, c-format
+msgid "Password hash should be a %d-digit hexadecimal number"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:778
+msgid "Target log not found in binlog index"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:780
+#, fuzzy
+msgid "I/O error reading log index file"
+msgstr "Assenza di spazio nel file degli indici"
+
+#: drizzled/drizzled_error_messages.h:782
+msgid "Server configuration does not permit binlog purge"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:784
+#, fuzzy
+msgid "Failed on fseek()"
+msgstr "Errore nella funzione request_dump()"
+
+#: drizzled/drizzled_error_messages.h:786
+msgid "Fatal error during log purge"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:788
+msgid "A purgeable log is in use, will not purge"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:790
+#, fuzzy
+msgid "Unknown error during log purge"
+msgstr "Errore sconosciuto %d"
+
+#: drizzled/drizzled_error_messages.h:792
+#, fuzzy, c-format
+msgid "Failed initializing relay log position: %s"
+msgstr "Errore nella inizializzazione della posizione dei relay log: %s"
+
+#: drizzled/drizzled_error_messages.h:794
+msgid "You are not using binary logging"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:796
+#, c-format
+msgid ""
+"The '%-.64s' syntax is reserved for purposes internal to the MySQL server"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:798
+msgid "WSAStartup Failed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:800
+msgid "Can't handle procedures with different groups yet"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:802
+msgid "Select must have a group with this procedure"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:804
+msgid "Can't use ORDER clause with this procedure"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:806
+#, c-format
+msgid "Binary logging and replication forbid changing the global server %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:808
+#, fuzzy, c-format
+msgid "Can't map file: %-.200s, errno: %d"
+msgstr "Impossibile il lock del file (Errcode: %d)"
+
+#: drizzled/drizzled_error_messages.h:810
+#, c-format
+msgid "Wrong magic in %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:812
+msgid "Prepared statement contains too many placeholders"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:814
+#, c-format
+msgid "Key part '%-.192s' length cannot be 0"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:816
+msgid "View text checksum failed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:818
+#, c-format
+msgid ""
+"Can not modify more than one base table through a join view '%-.192s.%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:820
+#, c-format
+msgid "Can not insert into join view '%-.192s.%-.192s' without fields list"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:822
+#, c-format
+msgid "Can not delete from join view '%-.192s.%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:824
+#, c-format
+msgid "Operation %s failed for %.256s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:826
+msgid "XAER_NOTA: Unknown XID"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:828
+msgid "XAER_INVAL: Invalid arguments (or unsupported command)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:830
+#, c-format
+msgid ""
+"XAER_RMFAIL: The command cannot be executed when global transaction is in "
+"the  %.64s state"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:832
+msgid "XAER_OUTSIDE: Some work is done outside global transaction"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:834
+msgid ""
+"XAER_RMERR: Fatal error occurred in the transaction branch - check your data "
+"for consistency"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:836
+msgid "XA_RBROLLBACK: Transaction branch was rolled back"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:838
+#, c-format
+msgid ""
+"There is no such grant defined for user '%-.48s' on host '%-.64s' on routine "
+"'%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:840
+msgid "Failed to grant EXECUTE and ALTER ROUTINE privileges"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:842
+msgid "Failed to revoke all privileges to dropped routine"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:844
+#, c-format
+msgid "Data too long for column '%s' at row %ld"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:846
+#, c-format
+msgid "Bad SQLSTATE: '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:848
+#, c-format
+msgid ""
+"%s: ready for connections.\n"
+"Version: '%s'  socket: '%s'  port: %d  %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:850
+msgid "Can't load value from file with fixed size rows to variable"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:852
+msgid "You are not allowed to create a user with GRANT"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:854
+#, c-format
+msgid "Incorrect %-.32s value: '%-.128s' for function %-.32s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:856
+msgid "Table definition has changed, please retry transaction"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:858
+msgid "Duplicate handler declared in the same block"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:860
+#, c-format
+msgid ""
+"OUT or INOUT argument %d for routine %s is not a variable or NEW pseudo-"
+"variable in BEFORE trigger"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:862
+#, c-format
+msgid "Not allowed to return a result set from a %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:864
+msgid "Cannot get geometry object from data you send to the GEOMETRY field"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:866
+msgid ""
+"A routine failed and has neither NO SQL nor READS SQL DATA in its "
+"declaration and binary logging is enabled; if non-transactional tables were "
+"updated, the binary log will miss their changes"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:868
+msgid ""
+"This function has none of DETERMINISTIC, NO SQL, or READS SQL DATA in its "
+"declaration and binary logging is enabled (you *might* want to use the less "
+"safe log_bin_trust_function_creators variable)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:870
+msgid ""
+"You do not have the SUPER privilege and binary logging is enabled (you "
+"*might* want to use the less safe log_bin_trust_function_creators variable)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:872
+msgid ""
+"You can't execute a prepared statement which has an open cursor associated "
+"with it. Reset the statement to re-execute it."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:874
+#, c-format
+msgid "The statement (%lu) has no open cursor."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:876
+msgid ""
+"Explicit or implicit commit is not allowed in stored function or trigger."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:878
+#, c-format
+msgid ""
+"Field of view '%-.192s.%-.192s' underlying table doesn't have a default value"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:880
+msgid "Recursive stored functions and triggers are not allowed."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:882
+#, c-format
+msgid "Too big scale %d specified for column '%-.192s'. Maximum is %d."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:884
+#, c-format
+msgid "Too big precision %d specified for column '%-.192s'. Maximum is %d."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:886
+#, c-format
+msgid ""
+"For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column "
+"'%-.192s')."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:888
+msgid ""
+"You can't combine write-locking of system tables with other tables or lock "
+"types"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:890
+#, c-format
+msgid "Unable to connect to foreign data source: %.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:892
+#, c-format
+msgid ""
+"There was a problem processing the query on the foreign data source. Data "
+"source error: %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:894
+#, c-format
+msgid ""
+"The foreign data source you are trying to reference does not exist. Data "
+"source error:  %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:896
+#, c-format
+msgid ""
+"Can't create federated table. The data source connection string '%-.64s' is "
+"not in the correct format"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:898
+#, c-format
+msgid "The data source connection string '%-.64s' is not in the correct format"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:900
+#, c-format
+msgid "Can't create federated table. Foreign data src error:  %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:902
+msgid "Trigger in wrong schema"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:904
+#, c-format
+msgid ""
+"Thread stack overrun:  %ld bytes used of a %ld byte stack, and %ld bytes "
+"needed.  Use 'mysqld -O thread_stack=#' to specify a bigger stack."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:906
+#, c-format
+msgid "Routine body for '%-.100s' is too long"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:908
+msgid "Cannot drop default keycache"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:910
+#, c-format
+msgid "Display width out of range for column '%-.192s' (max = %d)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:912
+msgid "XAER_DUPID: The XID already exists"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:914
+#, c-format
+msgid "Datetime function: %-.32s field overflow"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:916
+#, c-format
+msgid ""
+"Can't update table '%-.192s' in stored function/trigger because it is "
+"already used by statement which invoked this stored function/trigger."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:918
+#, c-format
+msgid ""
+"The definition of table '%-.192s' prevents operation %.192s on table "
+"'%-.192s'."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:920
+msgid ""
+"The prepared statement contains a stored routine call that refers to that "
+"same statement. It's not allowed to execute a prepared statement in such a "
+"recursive manner"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:922
+msgid "Not allowed to set autocommit from a stored function or trigger"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:924
+msgid "Definer is not fully qualified"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:926
+#, c-format
+msgid ""
+"View '%-.192s'.'%-.192s' has no definer information (old table format). "
+"Current user is used as definer. Please recreate the view!"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:928
+#, c-format
+msgid ""
+"You need the SUPER privilege for creation view with '%-.192s'@'%-.192s' "
+"definer"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:930
+#, c-format
+msgid "The user specified as a definer ('%-.64s'@'%-.64s') does not exist"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:932
+#, c-format
+msgid "Changing schema from '%-.192s' to '%-.192s' is not allowed."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:934
+#, c-format
+msgid ""
+"Cannot delete or update a parent row: a foreign key constraint fails (%.192s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:936
+#, c-format
+msgid ""
+"Cannot add or update a child row: a foreign key constraint fails (%.192s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:938
+#, c-format
+msgid "Variable '%-.64s' must be quoted with `...`, or renamed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:940
+#, c-format
+msgid ""
+"No definer attribute for trigger '%-.192s'.'%-.192s'. The trigger will be "
+"activated under the authorization of the invoker, which may have "
+"insufficient privileges. Please recreate the trigger."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:942
+#, c-format
+msgid "'%-.192s' has an old format, you should re-create the '%s' object(s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:944
+#, c-format
+msgid ""
+"Recursive limit %d (as set by the max_sp_recursion_depth variable) was "
+"exceeded for routine %.192s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:946
+#, c-format
+msgid ""
+"Failed to load routine %-.192s. The table mysql.proc is missing, corrupt, or "
+"contains bad data (internal code %d)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:948
+#, c-format
+msgid "Incorrect routine name '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:950
+#, c-format
+msgid "Table upgrade required. Please do \"REPAIR TABLE `%-.32s`\" to fix it!"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:952
+msgid "AGGREGATE is not supported for stored functions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:954
+#, c-format
+msgid ""
+"Can't create more than max_prepared_stmt_count statements (current value: %"
+"lu)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:956
+#, c-format
+msgid "`%-.192s`.`%-.192s` contains view recursion"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:958
+#, c-format
+msgid "non-grouping field '%-.192s' is used in %-.64s clause"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:960
+msgid "The used table type doesn't support SPATIAL indexes"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:962
+msgid "Triggers can not be created on system tables"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:964
+#, c-format
+msgid "Leading spaces are removed from name '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:966
+#, fuzzy
+msgid "Failed to read auto-increment value from storage engine"
+msgstr ""
+"Fallita impostazione del valore automaticamente incrementato della riga"
+
+#: drizzled/drizzled_error_messages.h:968
+msgid "user name"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:970
+msgid "host name"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:972
+#, c-format
+msgid "String '%-.70s' is too long for %s (should be no longer than %d)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:974
+#, c-format
+msgid "The target table %-.100s of the %s is not insertable-into"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:976
+#, c-format
+msgid ""
+"Table '%-.64s' is differently defined or of non-MyISAM type or doesn't exist"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:978
+msgid "Too high level of nesting for select"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:980
+#, c-format
+msgid "Name '%-.64s' has become ''"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:982
+msgid ""
+"First character of the FIELDS TERMINATED string is ambiguous; please use non-"
+"optional and non-empty FIELDS ENCLOSED BY"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:984
+#, c-format
+msgid "The foreign server, %s, you are trying to create already exists."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:986
+#, c-format
+msgid ""
+"The foreign server name you are trying to reference does not exist. Data "
+"source error:  %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:988
+#, c-format
+msgid ""
+"Table storage engine '%-.64s' does not support the create option '%.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:990
+#, c-format
+msgid ""
+"Syntax error: %-.64s PARTITIONING requires definition of VALUES %-.64s for "
+"each partition"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:992
+#, c-format
+msgid "Only %-.64s PARTITIONING can use VALUES %-.64s in partition definition"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:994
+msgid "MAXVALUE can only be used in last partition definition"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:996
+msgid "Subpartitions can only be hash partitions and by key"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:998
+msgid "Must define subpartitions on all partitions if on one partition"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1000
+msgid "Wrong number of partitions defined, mismatch with previous setting"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1002
+msgid "Wrong number of subpartitions defined, mismatch with previous setting"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1004
+msgid "Constant/Random expression in (sub)partitioning function is not allowed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1006
+msgid "Expression in RANGE/LIST VALUES must be constant"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1008
+msgid "Field in list of fields for partition function not found in table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1010
+msgid "List of fields is only allowed in KEY partitions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1012
+msgid ""
+"The partition info in the frm file is not consistent with what can be "
+"written into the frm file"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1014
+#, c-format
+msgid "The %-.192s function returns the wrong type"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1016
+#, c-format
+msgid "For %-.64s partitions each partition must be defined"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1018
+msgid "VALUES LESS THAN value must be strictly increasing for each partition"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1020
+msgid "VALUES value must be of same type as partition function"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1022
+msgid "Multiple definition of same constant in list partitioning"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1024
+msgid "Partitioning can not be used stand-alone in query"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1026
+msgid ""
+"The mix of handlers in the partitions is not allowed in this version of MySQL"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1028
+#, c-format
+msgid "For the partitioned engine it is necessary to define all %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1030
+msgid "Too many partitions (including subpartitions) were defined"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1032
+msgid ""
+"It is only possible to mix RANGE/LIST partitioning with HASH/KEY "
+"partitioning for subpartitioning"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1034
+#, fuzzy
+msgid "Failed to create specific handler file"
+msgstr "Fallimento nel creare i processi slave"
+
+#: drizzled/drizzled_error_messages.h:1036
+msgid "A BLOB field is not allowed in partition function"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1038
+#, c-format
+msgid "A %-.192s must include all columns in the table's partitioning function"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1040
+#, c-format
+msgid "Number of %-.64s = 0 is not an allowed value"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1042
+msgid "Partition management on a not partitioned table is not possible"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1044
+msgid ""
+"Foreign key condition is not yet supported in conjunction with partitioning"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1046
+#, c-format
+msgid "Error in list of partitions to %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1048
+msgid "Cannot remove all partitions, use DROP TABLE instead"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1050
+msgid "COALESCE PARTITION can only be used on HASH/KEY partitions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1052
+msgid ""
+"REORGANISE PARTITION can only be used to reorganise partitions not to change "
+"their numbers"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1054
+msgid ""
+"REORGANISE PARTITION without parameters can only be used on auto-partitioned "
+"tables using HASH PARTITIONs"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1056
+#, c-format
+msgid "%-.64s PARTITION can only be used on RANGE/LIST partitions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1058
+msgid "Trying to Add partition(s) with wrong number of subpartitions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1060
+msgid "At least one partition must be added"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1062
+msgid "At least one partition must be coalesced"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1064
+msgid "More partitions to reorganise than there are partitions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1066
+#, c-format
+msgid "Duplicate partition name %-.192s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1068
+msgid "It is not allowed to shut off binlog on this command"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1070
+msgid "When reorganising a set of partitions they must be in consecutive order"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1072
+msgid ""
+"Reorganize of range partitions cannot change total ranges except for last "
+"partition where it can extend the range"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1074
+msgid "Partition function not supported in this version for this handler"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1076
+msgid "Partition state cannot be defined from CREATE/ALTER TABLE"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1078
+#, c-format
+msgid "The %-.64s handler only supports 32 bit integers in VALUES"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1080
+#, c-format
+msgid "Plugin '%-.192s' is not loaded"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1082
+#, c-format
+msgid "Incorrect %-.32s value: '%-.128s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1084
+#, c-format
+msgid "Table has no partition for value %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1086
+#, c-format
+msgid "It is not allowed to specify %s more than once"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1088
+#: drizzled/drizzled_error_messages.h:1224
+#, fuzzy, c-format
+msgid "Failed to create %s"
+msgstr "Fallimento nel creare i processi slave"
+
+#: drizzled/drizzled_error_messages.h:1090
+#: drizzled/drizzled_error_messages.h:1114
+#, c-format
+msgid "Failed to drop %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1092
+msgid "The handler doesn't support autoextend of tablespaces"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1094
+msgid ""
+"A size parameter was incorrectly specified, either number or on the form 10M"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1096
+msgid ""
+"The size number was correct but we don't allow the digit part to be more "
+"than 2 billion"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1098
+#, fuzzy, c-format
+msgid "Failed to alter: %s"
+msgstr "Fallimento nel creare i processi slave"
+
+#: drizzled/drizzled_error_messages.h:1100
+msgid "Writing one row to the row-based binary log failed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1102
+#, c-format
+msgid "Table definition on master and slave does not match: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1104
+msgid ""
+"Slave running with --log-slave-updates must use row-based binary logging to "
+"be able to replicate row-based binary log events"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1106
+#, c-format
+msgid "Event '%-.192s' already exists"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1108
+#, c-format
+msgid "Failed to store event %s. Error code %d from storage engine."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1110
+#, fuzzy, c-format
+msgid "Unknown event '%-.192s'"
+msgstr "Comando sconosciuto: '%-.60s'"
+
+#: drizzled/drizzled_error_messages.h:1112
+#, c-format
+msgid "Failed to alter event '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1116
+msgid "INTERVAL is either not positive or too big"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1118
+msgid "ENDS is either invalid or before STARTS"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1120
+msgid "Event execution time is in the past. Event has been disabled"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1122
+#, fuzzy
+msgid "Failed to open mysql.event"
+msgstr "Fallimento nel creare i processi slave"
+
+#: drizzled/drizzled_error_messages.h:1124
+msgid "No datetime expression provided"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1126
+#, c-format
+msgid ""
+"Column count of mysql.%s is wrong. Expected %d, found %d. The table is "
+"probably corrupted"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1128
+#, c-format
+msgid "Cannot load from mysql.%s. The table is probably corrupted"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1130
+msgid "Failed to delete the event from mysql.event"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1132
+#, fuzzy
+msgid "Error during compilation of event's body"
+msgstr "Errore nella lettura di un evento dal relay log: '%s'"
+
+#: drizzled/drizzled_error_messages.h:1134
+msgid "Same old and new event name"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1136
+#, c-format
+msgid "Data for column '%s' too long"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1138
+#, fuzzy, c-format
+msgid "Cannot drop index '%-.192s': needed in a foreign key constraint"
+msgstr "Indice necessario per vincolo di chiave esterna [foreign key]"
+
+#: drizzled/drizzled_error_messages.h:1140
+#, c-format
+msgid ""
+"The syntax '%s' is deprecated and will be removed in MySQL %s. Please use %s "
+"instead"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1142
+msgid "You can't write-lock a log table. Only read access is possible"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1144
+msgid "You can't use locks with log tables."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1146
+#, fuzzy, c-format
+msgid ""
+"Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
+"d would lead to a duplicate entry"
+msgstr ""
+"Rispettare i vincoli di chiave esterna [foreign key] porterebbe a un errore "
+"di chiave duplicata"
+
+#: drizzled/drizzled_error_messages.h:1148
+#, c-format
+msgid ""
+"Column count of mysql.%s is wrong. Expected %d, found %d. Created with MySQL "
+"%d, now running %d. Please use mysql_upgrade to fix this error."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1150
+msgid ""
+"Cannot switch out of the row-based binary log format when the session has "
+"open temporary tables"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1152
+msgid ""
+"Cannot change the binary logging format inside a stored function or trigger"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1154
+msgid ""
+"The NDB cluster engine does not support changing the binlog format on the "
+"fly yet"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1156
+msgid "Cannot create temporary table with partitions"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1158
+msgid "Partition constant is out of partition function domain"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1160
+msgid "This partition function is not allowed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1162
+msgid "Error in DDL log"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1164
+msgid "Not allowed to use NULL value in VALUES LESS THAN"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1166
+#, fuzzy
+msgid "Incorrect partition name"
+msgstr "Ignora gli spazi dopo i nomi di fuzione."
+
+#: drizzled/drizzled_error_messages.h:1168
+msgid ""
+"Transaction isolation level can't be changed while a transaction is in "
+"progress"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1170
+#, c-format
+msgid ""
+"ALTER TABLE causes auto_increment resequencing, resulting in duplicate entry "
+"'%-.192s' for key '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1172
+#, fuzzy, c-format
+msgid "Internal scheduler error %d"
+msgstr "Errore interno (non specificato) nel handler"
+
+#: drizzled/drizzled_error_messages.h:1174
+#, c-format
+msgid "Error during starting/stopping of the scheduler. Error code %u"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1176
+msgid "Engine cannot be used in partitioned tables"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1178
+#, c-format
+msgid "Cannot activate '%-.64s' log"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1180
+msgid "The server was not built with row-based replication"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1182
+msgid "Decoding of base64 string failed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1184
+msgid "Recursion of EVENT DDL statements is forbidden when body is present"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1186
+msgid ""
+"Cannot proceed because system tables used by Event Scheduler were found "
+"damaged at server start"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1188
+msgid "Only integers allowed as number here"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1190
+msgid "This storage engine cannot be used for log tables"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1192
+#, c-format
+msgid "You cannot '%s' a log table if logging is enabled"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1194
+#, c-format
+msgid ""
+"Cannot rename '%s'. When logging enabled, rename to/from log table must "
+"rename two tables: the log table to an archive table and another table back "
+"to '%s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1196
+#, c-format
+msgid "Incorrect parameter count in the call to native function '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1198
+#, c-format
+msgid "Incorrect parameters in the call to native function '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1200
+#, c-format
+msgid "Incorrect parameters in the call to stored function '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1202
+#, c-format
+msgid "This function '%-.192s' has the same name as a native function"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1204
+#, c-format
+msgid "Duplicate entry '%-.64s' for key '%-.192s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1206
+msgid "Too many files opened, please execute the command again"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1208
+#: drizzled/drizzled_error_messages.h:1210
+msgid ""
+"Event execution time is in the past and ON COMPLETION NOT PRESERVE is set. "
+"The event was dropped immediately after creation."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1212
+#, c-format
+msgid "The incident %s occured on the master. Message: %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1214
+#, fuzzy
+msgid "Table has no partition for some existing values"
+msgstr "Non c'è partizione nella tabella per il valore fornito"
+
+#: drizzled/drizzled_error_messages.h:1216
+#, fuzzy
+msgid "Statement is not safe to log in statement format."
+msgstr "Impossibile inserire nei log questo statement"
+
+#: drizzled/drizzled_error_messages.h:1218
+#, fuzzy, c-format
+msgid "Fatal error: %s"
+msgstr "Ricevuto errore: %s\n"
+
+#: drizzled/drizzled_error_messages.h:1220
+#, c-format
+msgid "Relay log read failure: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1222
+#, c-format
+msgid "Relay log write failure: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1226
+#, c-format
+msgid "Master command %s failed: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1228
+#, c-format
+msgid "Binary logging not possible. Message: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1230
+#, c-format
+msgid "View `%-.64s`.`%-.64s` has no creation context"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1232
+#, c-format
+msgid "Creation context of view `%-.64s`.`%-.64s' is invalid"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1234
+#, c-format
+msgid "Creation context of stored routine `%-.64s`.`%-.64s` is invalid"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1236
+#, c-format
+msgid "Corrupted TRG file for table `%-.64s`.`%-.64s`"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1238
+#, c-format
+msgid "Triggers for table `%-.64s`.`%-.64s` have no creation context"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1240
+#, c-format
+msgid "Trigger creation context of table `%-.64s`.`%-.64s` is invalid"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1242
+#, c-format
+msgid "Creation context of event `%-.64s`.`%-.64s` is invalid"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1244
+#, c-format
+msgid "Cannot open table for trigger `%-.64s`.`%-.64s`"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1246
+#, c-format
+msgid "Cannot create stored routine `%-.64s`. Check warnings"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1248
+#, c-format
+msgid "Ambiguous slave modes combination. %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1250
+#, c-format
+msgid ""
+"The BINLOG statement of type `%s` was not preceded by a format description "
+"BINLOG statement."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1252
+msgid "Corrupted replication event was detected"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1254
+#, c-format
+msgid "Invalid column reference (%-.64s) in LOAD DATA"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1256
+#, c-format
+msgid "Being purged log %s was not found"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1258
+#, c-format
+msgid "Converted to non-transactional lock on '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1260
+#, c-format
+msgid "Cannot convert to non-transactional lock in strict mode on '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1262
+#, c-format
+msgid ""
+"Cannot convert to non-transactional lock in an active transaction on '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1264
+#, c-format
+msgid "Can't access storage engine of table %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1266
+msgid "Starting backup process"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1268
+msgid "Backup completed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1270
+msgid "Starting restore process"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1272
+msgid "Restore completed"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1274
+#, fuzzy
+msgid "Nothing to backup"
+msgstr ""
+"\n"
+"Nulla è stato trovato"
+
+#: drizzled/drizzled_error_messages.h:1276
+#, c-format
+msgid "Database '%-.64s' cannot be included in a backup"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1278
+msgid ""
+"Error during backup operation - server's error log contains more information "
+"about the error"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1280
+msgid ""
+"Error during restore operation - server's error log contains more "
+"information about the error"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1282
+msgid ""
+"Can't execute this command because another BACKUP/RESTORE operation is in "
+"progress"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1284
+#, fuzzy
+msgid "Error when preparing for backup operation"
+msgstr "Errore durante la lettura del il file di informazioni sul master"
+
+#: drizzled/drizzled_error_messages.h:1286
+#, fuzzy
+msgid "Error when preparing for restore operation"
+msgstr "Errore durante la lettura del il file di informazioni sul master"
+
+#: drizzled/drizzled_error_messages.h:1288
+#, c-format
+msgid "Invalid backup location '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1290
+#, c-format
+msgid "Can't read backup location '%-.64s'"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1292
+#, c-format
+msgid "Can't write to backup location '%-.64s' (file already exists?)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1294
+msgid "Can't enumerate server databases"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1296
+msgid "Can't enumerate server tables"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1298
+#, c-format
+msgid "Can't enumerate tables in database %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1300
+#, c-format
+msgid "Skipping view %-.64s in database %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1302
+#, fuzzy, c-format
+msgid "Skipping table %-.64s since it has no valid storage engine"
+msgstr "La tabella è cambiata nel motore di memorizzazione"
+
+#: drizzled/drizzled_error_messages.h:1304
+#, c-format
+msgid "Can't open table %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1306
+msgid "Can't read backup archive preamble"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1308
+msgid "Can't write backup archive preamble"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1310
+#, c-format
+msgid "Can't find backup driver for table %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1312
+#, c-format
+msgid ""
+"%-.64s backup driver was selected for table %-.64s but it rejects to handle "
+"this table"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1314
+#, c-format
+msgid "Can't create %-.64s backup driver"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1316
+#, c-format
+msgid "Can't create %-.64s restore driver"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1318
+#, c-format
+msgid "Found %d images in backup archive but maximum %d are supported"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1320
+#, c-format
+msgid "Error when saving meta-data of %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1322
+msgid "Error when reading meta-data list"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1324
+#, c-format
+msgid "Can't create %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1326
+msgid "Can't allocate buffer for image data transfer"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1328
+#, c-format
+msgid "Error when writing %-.64s backup image data (for table #%d)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1330
+msgid "Error when reading data from backup stream"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1332
+msgid "Can't go to the next chunk in backup stream"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1334
+#, c-format
+msgid "Can't initialize %-.64s backup driver"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1336
+#, c-format
+msgid "Can't initialize %-.64s restore driver"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1338
+#, c-format
+msgid "Can't shut down %-.64s backup driver"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1340
+#, c-format
+msgid "Can't shut down %-.64s backup driver(s)"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1342
+#, c-format
+msgid "%-.64s backup driver can't prepare for synchronization"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1344
+#, c-format
+msgid "%-.64s backup driver can't create its image validity point"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1346
+#, c-format
+msgid "Can't unlock %-.64s backup driver after creating the validity point"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1348
+#, c-format
+msgid "%-.64s backup driver can't cancel its backup operation"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1350
+#, c-format
+msgid "%-.64s restore driver can't cancel its restore operation"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1352
+#, c-format
+msgid "Error when polling %-.64s backup driver for its image data"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1354
+#, c-format
+msgid "Error when sending image data (for table #%d) to %-.64s restore driver"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1356
+#, c-format
+msgid ""
+"After %d attempts %-.64s restore driver still can't accept next block of data"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1358
+#, c-format
+msgid "Open and lock tables failed in %-.64s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1360
+msgid "Backup driver's table locking thread can not be initialized."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1362
+msgid ""
+"Can't open the online backup progress tables. Check 'mysql.online_backup' "
+"and 'mysql.online_backup_progress'."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1364
+#, fuzzy, c-format
+msgid "Tablespace '%-.192s' already exists"
+msgstr "Lo spazio delle tabelle [tablespace] è già esistente"
+
+#: drizzled/drizzled_error_messages.h:1366
+#, fuzzy, c-format
+msgid "Tablespace '%-.192s' doesn't exist"
+msgstr "Lo spazio delle tabelle [tablespace] è già esistente"
+
+#: drizzled/drizzled_error_messages.h:1368
+#, c-format
+msgid "Unexpected master's heartbeat data: %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1370
+#, c-format
+msgid "The requested value for the heartbeat period %s %s"
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1372
+#, c-format
+msgid "Can't write to the online backup progress log %-.64s."
+msgstr ""
+
+#: drizzled/drizzled_error_messages.h:1374
+#, fuzzy, c-format
+msgid "Tablespace '%-.192s' not empty"
+msgstr "Tablespace non vuoto"
+
+#: drizzled/drizzled_error_messages.h:1376
+#, c-format
+msgid ""
+"Tablespace `%-.64s` needed by tables being restored has changed on the "
+"server. The original definition of the required tablespace is '%-.256s' "
+"while the same tablespace is defined on the server as '%-.256s'"
+msgstr ""
 
 #: drizzled/rpl_mi.cc:148
 #, c-format
@@ -1410,8 +4757,8 @@ msgid ""
 "failed registering on master, reconnecting to try again, log '%s' at postion "
 "%s"
 msgstr ""
-"fallita registrazione sul master, mi sto riconnettendo per riprovare, log "
-"'%s' alla posizione '%s'"
+"fallita registrazione sul master, mi sto riconnettendo per riprovare, log '%"
+"s' alla posizione '%s'"
 
 #: drizzled/slave.cc:96 drizzled/slave.cc:105
 msgid "Slave I/O thread killed during or after reconnect"
@@ -1433,8 +4780,7 @@ msgstr "Riconnessione dopo un tentativo fallito di dump dei log binari"
 
 #: drizzled/slave.cc:102
 #, c-format
-msgid ""
-"failed dump request, reconnecting to try again, log '%s' at postion %s"
+msgid "failed dump request, reconnecting to try again, log '%s' at postion %s"
 msgstr ""
 "Fallita richiesta di dump, riconnessione per nuovo tentativo, log '%s' alla "
 "posizione %s"
@@ -1445,8 +4791,7 @@ msgstr ""
 "In attesa di riconessione dopo un tentativo fallito di lettura dal master"
 
 #: drizzled/slave.cc:109
-msgid ""
-"Slave I/O thread killed while waiting to reconnect after a failed read"
+msgid "Slave I/O thread killed while waiting to reconnect after a failed read"
 msgstr ""
 "Processo slave di I/O terminato durante l'attesa di riconnessione dopo  una "
 "lettura fallita"
@@ -1479,8 +4824,7 @@ msgstr ""
 
 #: drizzled/slave.cc:236 drizzled/slave.cc:1820
 msgid "Failed to initialize the master info structure"
-msgstr ""
-"Fallita l'inizializzazione della struttura di informazioni del master"
+msgstr "Fallita l'inizializzazione della struttura di informazioni del master"
 
 #: drizzled/slave.cc:251
 msgid "Failed to create slave threads"
@@ -1584,15 +4928,14 @@ msgstr ""
 #: drizzled/slave.cc:1529
 #, c-format
 msgid "Error reading packet from server: %s ( server_errno=%d)"
-msgstr ""
-"Errore nella lettura di un pacchetto dal server: %s ( server_errno=%d)"
+msgstr "Errore nella lettura di un pacchetto dal server: %s ( server_errno=%d)"
 
 #: drizzled/slave.cc:1537
 #, c-format
 msgid "Slave: received end packet from server, apparent master shutdown: %s"
 msgstr ""
-"Slave: ricevuto pacchetto finale dal server, shutdown apparente del master: "
-"%s"
+"Slave: ricevuto pacchetto finale dal server, shutdown apparente del master: %"
+"s"
 
 #: drizzled/slave.cc:1691
 #, c-format
@@ -1677,8 +5020,7 @@ msgstr "Errore nella funzione request_dump()"
 
 #: drizzled/slave.cc:2074
 msgid "Slave I/O thread killed while requesting master dump"
-msgstr ""
-"Processo slave di I/O terminato durante la richiesta di dump al master"
+msgstr "Processo slave di I/O terminato durante la richiesta di dump al master"
 
 #: drizzled/slave.cc:2100
 msgid "Waiting for master to send event"
@@ -1715,8 +5057,7 @@ msgstr "Processo slave di I/O abortito in attesa di spazio per i relay log"
 #: drizzled/slave.cc:2181
 #, c-format
 msgid "Slave I/O thread exiting, read up to log '%s', position %s"
-msgstr ""
-"Processo slave di I/O in uscita, letto fino al log '%s', posizione %s"
+msgstr "Processo slave di I/O in uscita, letto fino al log '%s', posizione %s"
 
 #: drizzled/slave.cc:2205
 msgid "Waiting for slave mutex on exit"
@@ -1729,8 +5070,8 @@ msgstr "Fallimento durante l'inizializzazione del processo slave"
 #: drizzled/slave.cc:2337
 #, c-format
 msgid ""
-"Slave SQL thread initialized, starting replication in log '%s' at position "
-"%s, relay log '%s' position: %s"
+"Slave SQL thread initialized, starting replication in log '%s' at position %"
+"s, relay log '%s' position: %s"
 msgstr ""
 "Processo slave di SQL inizializzato, replicazione avviata al log '%s' in "
 "posizione %s, relay log '%s' posizione: %s"
@@ -1773,8 +5114,8 @@ msgid ""
 "the slave SQL thread with \"SLAVE START\". We stopped at log '%s' position %s"
 msgstr ""
 "Errore durante l'esecuzione di una query, processo sSQL slave interrotto. "
-"Risolvere il problema, e riavviare il processo SQL slave con \"SLAVE "
-"START\". Ci siamo fermati a log '%s' posizione %s"
+"Risolvere il problema, e riavviare il processo SQL slave con \"SLAVE START"
+"\". Ci siamo fermati a log '%s' posizione %s"
 
 #: drizzled/slave.cc:2442
 #, c-format
@@ -1929,7 +5270,7 @@ msgstr ""
 "Fallimento della funzione send_file() durante la negoziazione della chiusura "
 "del file"
 
-#: drizzled/table.cc:547
+#: drizzled/table.cc:494
 #, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
@@ -1939,41 +5280,14 @@ msgstr ""
 "non è valido, inoltre l'insieme di caratteri predefinito è multi-byte, "
 "quindi le dimensioni delle colonne di delle colonne possono essere variate"
 
-#: drizzled/table.cc:984 drizzled/table.cc:990
-#, c-format
-msgid ""
-"Found incompatible DECIMAL field '%s' in %s; Please do \"ALTER TABLE '%s' "
-"FORCE\" to fix it!"
-msgstr ""
-"Trovato campo DECIMAL incomptibile '%s' in %s; Si prega di eseguire un "
-"\"ALTER TABLE '%s' FORCE\" per correggerlo!"
-
-#: drizzled/table.cc:1162
-#, c-format
-msgid ""
-"Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE \" to "
-"fix it!"
-msgstr ""
-"Trovata definizione errate di indice in %s; Si prega di eseguire un \"ALTER "
-"TABLE '%s' FORCE\" per correggerlo!"
-
-#: drizzled/table.cc:1168
-#, c-format
-msgid ""
-"Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE\" to "
-"fix it!"
-msgstr ""
-"Trovata definizione errate di indice in %s; Si prega di eseguire un \"ALTER "
-"TABLE '%s' FORCE\" per correggerlo!"
-
-#: drizzled/table.cc:1811
+#: drizzled/table.cc:1702
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr ""
-"Ordinamento (collation) sconosciuto '%s' nella definizione della tabella '%-"
-".64s'"
+"Ordinamento (collation) sconosciuto '%s' nella definizione della tabella "
+"'%-.64s'"
 
-#: drizzled/table.cc:1818
+#: drizzled/table.cc:1709
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of MySQL and cannot be "
@@ -1982,7 +5296,7 @@ msgstr ""
 "La tabella '%-.64s' è stata creata con una versione differente di Drizzle e "
 "non può essere letta"
 
-#: drizzled/table.cc:2409
+#: drizzled/table.cc:2300
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
@@ -1991,7 +5305,7 @@ msgstr ""
 "Definizione incorretta della tabella %s.%s: attesa colonna '%s' in posizione "
 "%d, trovata '%s'."
 
-#: drizzled/table.cc:2435
+#: drizzled/table.cc:2326
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
@@ -2000,7 +5314,7 @@ msgstr ""
 "Definizione incorretta della tabella %s.%s: la colonna '%s' in posizione %d "
 "dovrebbe avere tipo %s, trovato tipo %s."
 
-#: drizzled/table.cc:2444
+#: drizzled/table.cc:2335
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -2010,7 +5324,7 @@ msgstr ""
 "dovrebbe avere insieme di caratteri '%s' ma il tipo non ha insieme di "
 "caratteri."
 
-#: drizzled/table.cc:2454
+#: drizzled/table.cc:2345
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -2020,7 +5334,7 @@ msgstr ""
 "dovrebbe avere insieme di caratteri '%s' ma è stato trovato l'insieme di "
 "caratteri '%s'."
 
-#: drizzled/table.cc:2465
+#: drizzled/table.cc:2356
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
@@ -2037,3 +5351,24 @@ msgstr "Errore fatale: time zone illegale o sconosciuta '%s'"
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
 msgstr "Codice di errore invalido"
+
+#~ msgid ""
+#~ "Found incompatible DECIMAL field '%s' in %s; Please do \"ALTER TABLE '%s' "
+#~ "FORCE\" to fix it!"
+#~ msgstr ""
+#~ "Trovato campo DECIMAL incomptibile '%s' in %s; Si prega di eseguire un "
+#~ "\"ALTER TABLE '%s' FORCE\" per correggerlo!"
+
+#~ msgid ""
+#~ "Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE \" "
+#~ "to fix it!"
+#~ msgstr ""
+#~ "Trovata definizione errate di indice in %s; Si prega di eseguire un "
+#~ "\"ALTER TABLE '%s' FORCE\" per correggerlo!"
+
+#~ msgid ""
+#~ "Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE\" to "
+#~ "fix it!"
+#~ msgstr ""
+#~ "Trovata definizione errate di indice in %s; Si prega di eseguire un "
+#~ "\"ALTER TABLE '%s' FORCE\" per correggerlo!"
