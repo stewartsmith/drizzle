@@ -16,6 +16,8 @@
 #ifndef _my_plugin_h
 #define _my_plugin_h
 
+#include <drizzled/global.h>
+
 #ifdef __cplusplus
 class THD;
 class Item;
@@ -24,7 +26,6 @@ class Item;
 #define MYSQL_THD void*
 #endif
 
-#include <stdint.h>
 
 #ifndef _m_string_h
 /* This definition must match the one given in m_string.h */

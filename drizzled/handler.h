@@ -342,8 +342,11 @@ enum enum_binlog_command {
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
+#ifdef DEAD_OPTIONS
 #define HA_CREATE_USED_RAID             (1L << 1) /* Historical, no longer supported */
 #define HA_CREATE_USED_UNION            (1L << 2)
+#define HA_CREATE_USED_PASSWORD         (1L << 17)
+#endif
 #define HA_CREATE_USED_INSERT_METHOD    (1L << 3)
 #define HA_CREATE_USED_MIN_ROWS         (1L << 4)
 #define HA_CREATE_USED_MAX_ROWS         (1L << 5)
@@ -358,7 +361,6 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_DELAY_KEY_WRITE  (1L << 14)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 #define HA_CREATE_USED_COMMENT          (1L << 16)
-#define HA_CREATE_USED_PASSWORD         (1L << 17)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
 #define HA_CREATE_USED_TRANSACTIONAL    (1L << 20)

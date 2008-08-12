@@ -25,7 +25,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = field  . share
+SUBDIRS = field serialize  . share
 
 sbin_PROGRAMS =drizzled
 
@@ -65,8 +65,10 @@ LDADD = $(top_builddir)/vio/libviolt.la \
 drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
+		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
+		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
@@ -129,7 +131,9 @@ noinst_HEADERS = item.h \
 		 base.h \
 		 probes.h
 
-drizzled_SOURCES = sql_lex.cc \
+drizzled_SOURCES = \
+		   sql_db.cc \
+		   sql_lex.cc \
 		   authentication.cc \
 		   sql_handler.cc \
 		   item.cc \
@@ -180,7 +184,6 @@ drizzled_SOURCES = sql_lex.cc \
 		   opt_sum.cc \
 		   records.cc \
 		   filesort.cc \
-		   sql_db.cc \
 		   sql_table.cc \
 		   sql_rename.cc \
 		   sql_load.cc \

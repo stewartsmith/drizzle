@@ -15,6 +15,7 @@
 
 
 /* Classes in mysql */
+#include <drizzled/global.h>
 #include "log.h"
 #include "rpl_tblmap.h"
 

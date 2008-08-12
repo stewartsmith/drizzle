@@ -167,7 +167,7 @@ static uint my_end_arg;
 static char * opt_drizzle_unix_port=0;
 static int connect_flag=CLIENT_INTERACTIVE;
 static char *current_host,*current_db,*current_user=0,*opt_password=0,
-  *delimiter_str= 0,*current_prompt=0,
+  *delimiter_str= 0,* current_prompt= 0,
   *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
 static char *histfile;
 static char *histfile_tmp;
@@ -999,7 +999,7 @@ static const char *load_default_groups[]= { "drizzle","client",0 };
 
 int history_length;
 static int not_in_history(const char *line);
-static void initialize_readline (const char *name);
+static void initialize_readline (char *name);
 static void fix_history(string *final_command);
 
 static COMMANDS *find_command(const char *name,char cmd_name);
@@ -1132,7 +1132,7 @@ int main(int argc,char *argv[])
           server_version_string(&drizzle));
   put_info(output_buff, INFO_INFO, 0, 0);
 
-  initialize_readline(my_progname);
+  initialize_readline(current_prompt);
   if (!status.batch && !quick)
   {
     /* read-history from file, default ~/.drizzle_history*/
@@ -1176,9 +1176,8 @@ int main(int argc,char *argv[])
   if (opt_outfile)
     end_tee();
   drizzle_end(0);
-#ifndef _lint
+
   return(0);        // Keep compiler happy
-#endif
 }
 
 sig_handler drizzle_end(int sig)
@@ -2172,10 +2171,10 @@ static int not_in_history(const char *line)
   return 1;
 }
 
-static void initialize_readline (const char *name)
+static void initialize_readline (char *name)
 {
   /* Allow conditional parsing of the ~/.inputrc file. */
-  rl_readline_name= (const char *)name;
+  rl_readline_name= name;
 
   /* Tell the completer that we want a crack first. */
   rl_attempted_completion_function= (rl_completion_func_t*)&mysql_completion;
@@ -4345,7 +4344,7 @@ static int com_prompt(string *buffer __attribute__((unused)),
 {
   char *ptr=strchr(line, ' ');
   prompt_counter = 0;
-  my_free(current_prompt,MYF(MY_ALLOW_ZERO_PTR));
+  my_free(current_prompt, MYF(MY_ALLOW_ZERO_PTR));
   current_prompt= strdup(ptr ? ptr+1 : default_prompt);
   if (!ptr)
     tee_fprintf(stdout, "Returning to default PROMPT of %s\n",
