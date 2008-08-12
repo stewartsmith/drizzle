@@ -433,7 +433,7 @@ pars_stored_procedure_call(
 /**********************************************************************
 Completes a query graph by adding query thread and fork nodes
 above it and prepares the graph for running. The fork created is of
-type QUE_FORK_MYSQL_INTERFACE. */
+type QUE_FORK_DRIZZLE_INTERFACE. */
 
 que_thr_t*
 pars_complete_graph_for_exec(

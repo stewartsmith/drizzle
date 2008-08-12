@@ -12,8 +12,8 @@ Created 1/16/1996 Heikki Tuuri
 #include "univ.i"
 
 extern ulint	data_mysql_default_charset_coll;
-#define DATA_MYSQL_LATIN1_SWEDISH_CHARSET_COLL 8
-#define DATA_MYSQL_BINARY_CHARSET_COLL 63
+#define DATA_DRIZZLE_LATIN1_SWEDISH_CHARSET_COLL 8
+#define DATA_DRIZZLE_BINARY_CHARSET_COLL 63
 
 /* SQL data type struct */
 typedef struct dtype_struct		dtype_t;
@@ -25,7 +25,7 @@ typedef struct dtype_struct		dtype_t;
 				that the MySQL format for this, DATA_BINARY,
 				DATA_VARMYSQL, is also affected by whether the
 				'precise type' contains
-				DATA_MYSQL_TRUE_VARCHAR */
+				DATA_DRIZZLE_TRUE_VARCHAR */
 #define DATA_CHAR	2	/* fixed length character of the
 				latin1_swedish_ci charset-collation */
 #define DATA_FIXBINARY	3	/* binary string of fixed length */
@@ -103,9 +103,9 @@ columns, and for them the precise type is usually not used at all.
 				for InnoDB's own system tables */
 #define DATA_ERROR	111	/* another relic from pre-MySQL time */
 
-#define DATA_MYSQL_TYPE_MASK 255 /* AND with this mask to extract the MySQL
+#define DATA_DRIZZLE_TYPE_MASK 255 /* AND with this mask to extract the MySQL
 				 type from the precise type */
-#define DATA_MYSQL_TRUE_VARCHAR 12 /* MySQL type code for the >= 5.0.3 format true VARCHAR */
+#define DATA_DRIZZLE_TRUE_VARCHAR 12 /* MySQL type code for the >= 5.0.3 format true VARCHAR */
 
 /* Precise data types for system columns and the length of those columns;
 NOTE: the values must run from 0 up in the order given! All codes must

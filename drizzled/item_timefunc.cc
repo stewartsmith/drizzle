@@ -2015,7 +2015,7 @@ void Item_date_add_interval::fix_length_and_dec()
     - If first arg is a DRIZZLE_TYPE_NEWDATE and the interval type uses hours,
       minutes or seconds then type is DRIZZLE_TYPE_DATETIME.
     - Otherwise the result is DRIZZLE_TYPE_VARCHAR
-      (This is because you can't know if the string contains a DATE, MYSQL_TIME or
+      (This is because you can't know if the string contains a DATE, DRIZZLE_TIME or
       DATETIME argument)
   */
   cached_field_type= DRIZZLE_TYPE_VARCHAR;

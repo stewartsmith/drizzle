@@ -281,7 +281,7 @@ typedef Bitmap<HA_MAX_ALTER_FLAGS> HA_ALTER_FLAGS;
 #define HA_CACHE_TBL_TRANSACT    4
 
 /* Options of START TRANSACTION statement (and later of SET TRANSACTION stmt) */
-#define MYSQL_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
+#define DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT 1
 
 /* Flags for method is_fatal_error */
 #define HA_CHECK_DUP_KEY 1
@@ -342,8 +342,11 @@ enum enum_binlog_command {
 
 /* Bits in used_fields */
 #define HA_CREATE_USED_AUTO             (1L << 0)
+#ifdef DEAD_OPTIONS
 #define HA_CREATE_USED_RAID             (1L << 1) /* Historical, no longer supported */
 #define HA_CREATE_USED_UNION            (1L << 2)
+#define HA_CREATE_USED_PASSWORD         (1L << 17)
+#endif
 #define HA_CREATE_USED_INSERT_METHOD    (1L << 3)
 #define HA_CREATE_USED_MIN_ROWS         (1L << 4)
 #define HA_CREATE_USED_MAX_ROWS         (1L << 5)
@@ -358,7 +361,6 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_DELAY_KEY_WRITE  (1L << 14)
 #define HA_CREATE_USED_ROW_FORMAT       (1L << 15)
 #define HA_CREATE_USED_COMMENT          (1L << 16)
-#define HA_CREATE_USED_PASSWORD         (1L << 17)
 #define HA_CREATE_USED_CONNECTION       (1L << 18)
 #define HA_CREATE_USED_KEY_BLOCK_SIZE   (1L << 19)
 #define HA_CREATE_USED_TRANSACTIONAL    (1L << 20)
@@ -366,12 +368,12 @@ enum enum_binlog_command {
 #define HA_CREATE_USED_BLOCK_SIZE       (1L << 22)
 
 typedef uint64_t my_xid; // this line is the same as in log_event.h
-#define MYSQL_XID_PREFIX "MySQLXid"
-#define MYSQL_XID_PREFIX_LEN 8 // must be a multiple of 8
-#define MYSQL_XID_OFFSET (MYSQL_XID_PREFIX_LEN+sizeof(server_id))
-#define MYSQL_XID_GTRID_LEN (MYSQL_XID_OFFSET+sizeof(my_xid))
+#define DRIZZLE_XID_PREFIX "MySQLXid"
+#define DRIZZLE_XID_PREFIX_LEN 8 // must be a multiple of 8
+#define DRIZZLE_XID_OFFSET (DRIZZLE_XID_PREFIX_LEN+sizeof(server_id))
+#define DRIZZLE_XID_GTRID_LEN (DRIZZLE_XID_OFFSET+sizeof(my_xid))
 
-#define XIDDATASIZE MYSQL_XIDDATASIZE
+#define XIDDATASIZE DRIZZLE_XIDDATASIZE
 #define MAXGTRIDSIZE 64
 #define MAXBQUALSIZE 64
 
@@ -388,7 +390,7 @@ typedef bool (*qc_engine_callback)(THD *thd, char *table_key,
   The XA Specification, X/Open Company Ltd., 1991.
   http://www.opengroup.org/bookstore/catalog/c193.htm
 
-  @see MYSQL_XID in mysql/plugin.h
+  @see DRIZZLE_XID in mysql/plugin.h
 */
 struct xid_t {
   long formatID;
@@ -413,11 +415,11 @@ struct xid_t {
   {
     my_xid tmp;
     formatID= 1;
-    set(MYSQL_XID_PREFIX_LEN, 0, MYSQL_XID_PREFIX);
-    memcpy(data+MYSQL_XID_PREFIX_LEN, &server_id, sizeof(server_id));
+    set(DRIZZLE_XID_PREFIX_LEN, 0, DRIZZLE_XID_PREFIX);
+    memcpy(data+DRIZZLE_XID_PREFIX_LEN, &server_id, sizeof(server_id));
     tmp= xid;
-    memcpy(data+MYSQL_XID_OFFSET, &tmp, sizeof(tmp));
-    gtrid_length=MYSQL_XID_GTRID_LEN;
+    memcpy(data+DRIZZLE_XID_OFFSET, &tmp, sizeof(tmp));
+    gtrid_length=DRIZZLE_XID_GTRID_LEN;
   }
   void set(long g, long b, const char *d)
   {
@@ -431,14 +433,14 @@ struct xid_t {
   my_xid quick_get_my_xid()
   {
     my_xid tmp;
-    memcpy(&tmp, data+MYSQL_XID_OFFSET, sizeof(tmp));
+    memcpy(&tmp, data+DRIZZLE_XID_OFFSET, sizeof(tmp));
     return tmp;
   }
   my_xid get_my_xid()
   {
-    return gtrid_length == MYSQL_XID_GTRID_LEN && bqual_length == 0 &&
-           !memcmp(data+MYSQL_XID_PREFIX_LEN, &server_id, sizeof(server_id)) &&
-           !memcmp(data, MYSQL_XID_PREFIX, MYSQL_XID_PREFIX_LEN) ?
+    return gtrid_length == DRIZZLE_XID_GTRID_LEN && bqual_length == 0 &&
+           !memcmp(data+DRIZZLE_XID_PREFIX_LEN, &server_id, sizeof(server_id)) &&
+           !memcmp(data, DRIZZLE_XID_PREFIX, DRIZZLE_XID_PREFIX_LEN) ?
            quick_get_my_xid() : 0;
   }
   uint length()

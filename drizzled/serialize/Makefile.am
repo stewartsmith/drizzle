@@ -15,37 +15,19 @@
 
 #called from the top level Makefile
 
-noinst_LTLIBRARIES = 	libfield.la
+libserialize_la_CXXFLAGS=${AM_CXXFLAGS} -Wno-error
 
-libfield_la_SOURCES = 	blob.cc \
-			date.cc \
-			datetime.cc \
-			fdecimal.cc \
-			double.cc \
-			int64_t.cc \
-			long.cc \
-			null.cc \
-			set.cc \
-			short.cc \
-			fstring.cc \
-			timestamp.cc \
-			timetype.cc \
-			varstring.cc
+noinst_LTLIBRARIES = 	libserialize.la
 
-noinst_HEADERS = blob.h \
-		 date.h \
-		 datetime.h \
-		 fdecimal.h \
-		 double.h \
-		 int64_t.h \
-		 long.h \
-		 null.h \
-		 set.h \
-		 short.h \
-		 fstring.h \
-		 timestamp.h \
-		 timetype.h \
-		 varstring.h
+libserialize_la_SOURCES = \
+			   schema.pb.cc 
+
+noinst_HEADERS = \
+		 schema.pb.h \
+		 serialize.h
+
+schema.pb.cc: schema.proto
+	protoc --cpp_out=. schema.proto
 	
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

@@ -25,7 +25,7 @@ if BUILD_MD5_UDF
 EXTRA_LTLIBRARIES =	libmd5udf.la
 pkgplugin_LTLIBRARIES =	@plugin_md5_shared_target@
 libmd5udf_la_LDFLAGS =	-module -rpath $(pkgplugindir) -lssl
-libmd5udf_la_CXXFLAGS=	-DMYSQL_DYNAMIC_PLUGIN
+libmd5udf_la_CXXFLAGS=	-DDRIZZLE_DYNAMIC_PLUGIN
 libmd5udf_la_SOURCES =	md5udf.cc
 
 

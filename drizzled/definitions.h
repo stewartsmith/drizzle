@@ -198,9 +198,9 @@
 #define MTYP_NOEMPTY_BIT 128
 
 #define FRM_VER_TRUE_VARCHAR (FRM_VER+4) /* 10 */
-#define MYSQL_VERSION_TABLESPACE_IN_FRM_CGE 50120
-#define MYSQL_VERSION_TABLESPACE_IN_FRM 50205
-#define MYSQL_VERSION_TABLESPACE_IN_FRM_STR "50205"
+#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE 50120
+#define DRIZZLE_VERSION_TABLESPACE_IN_FRM 50205
+#define DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR "50205"
 
 /*
   Minimum length pattern before Turbo Boyer-Moore is used
@@ -355,10 +355,10 @@
 #define TEST_NO_STACKTRACE	512
 #define TEST_SIGINT		1024	/**< Allow sigint on threads */
 #define TEST_SYNCHRONIZATION    2048    /**< get server to do sleep in some places */
-#endif /* End ifndef MYSQL_CLIENT */
+#endif /* End ifndef DRIZZLE_CLIENT */
 
 /* The rest of the file is included in the server only */
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 /* Bits for different SQL modes modes (including ANSI mode) */
 #define MODE_REAL_AS_FLOAT              1

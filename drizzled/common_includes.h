@@ -22,7 +22,7 @@
  * @details
  *
  * Previously, the mysql_priv.h file contained a number of conditional
- * #ifdef MYSQL_SERVER blocks which made it very difficult to determine
+ * #ifdef DRIZZLE_SERVER blocks which made it very difficult to determine
  * which headers and definitions were actually necessary for plugins to 
  * include.  The file, and NOT mysql_priv.h, should now be the main included
  * header for storage engine plugins, as it contains all definitions and 
@@ -79,13 +79,6 @@
 #include <vio/violite.h>
 /* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
-/* 
- * Declarations of Object_creation_ctx and Default_creation_ctx, 
- * needed by parser.  Object_creation_ctx depends on THD, but THD
- * is forward-declared in scheduler.h, so we're good to put this
- * here 
- */
-#include <drizzled/object_creation_ctx.h>
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1
@@ -320,7 +313,7 @@ bool fn_format_relative_to_data_home(char * to, const char *name,
  * is hackish.  Put these things into a separate header?  Or fix
  * InnoDB?  Or does the InnoDB plugin already fix this stuff?
  */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
+#if defined DRIZZLE_SERVER || defined INNODB_COMPATIBILITY_HOOKS
 bool check_global_access(THD *thd, ulong want_access);
 int get_quote_char_for_identifier(THD *thd, const char *name, uint length);
 extern struct system_variables global_system_variables;
@@ -337,6 +330,6 @@ uint strconvert(const CHARSET_INFO *from_cs, const char *from,
                 uint *errors);
 uint filename_to_tablename(const char *from, char *to, uint to_length);
 uint tablename_to_filename(const char *from, char *to, uint to_length);
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
+#endif /* DRIZZLE_SERVER || INNODB_COMPATIBILITY_HOOKS */
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

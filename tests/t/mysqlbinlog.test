@@ -44,7 +44,7 @@ select "--- Local --" as "";
 
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000001
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000001
 
 # this should not fail but shouldn't produce any working statements
 --disable_query_log
@@ -52,7 +52,7 @@ select "--- Broken LOAD DATA --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000002 2> /dev/null
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000002 2> /dev/null
 
 # this should show almost nothing
 --disable_query_log
@@ -60,7 +60,7 @@ select "--- --database --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --database=nottest $MYSQLTEST_VARDIR/log/master-bin.000001 2> /dev/null
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --database=nottest $MYSQLTEST_VARDIR/log/master-bin.000001 2> /dev/null
 
 # this test for position option
 --disable_query_log
@@ -68,7 +68,7 @@ select "--- --position --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --position=240 $MYSQLTEST_VARDIR/log/master-bin.000002
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --position=240 $MYSQLTEST_VARDIR/log/master-bin.000002
 
 # These are tests for remote binlog.
 # They should return the same as previous test.
@@ -80,7 +80,7 @@ select "--- Remote --" as "";
 # This is broken now
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001
 
 # This is broken too
 --disable_query_log
@@ -88,7 +88,7 @@ select "--- Broken LOAD DATA --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002 2> /dev/null
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002 2> /dev/null
 
 # And this too ! (altough it is documented)
 --disable_query_log
@@ -96,7 +96,7 @@ select "--- --database --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT --database=nottest master-bin.000001 2> /dev/null
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT --database=nottest master-bin.000001 2> /dev/null
 
 # Strangely but this works
 --disable_query_log
@@ -104,19 +104,19 @@ select "--- --position --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --position=240 --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --read-from-remote-server --position=240 --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002
 
 # Bug#7853 (mysqlbinlog does not accept input from stdin)
 --disable_query_log
 select "--- reading stdin --" as "";
 --enable_query_log
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form - < $MYSQL_TEST_DIR/std_data/trunc_binlog.000001
+--exec $DRIZZLE_BINLOG --short-form - < $DRIZZLE_TEST_DIR/std_data/trunc_binlog.000001
 
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --position=79 - < $MYSQL_TEST_DIR/std_data/trunc_binlog.000001
+--exec $DRIZZLE_BINLOG --short-form --position=79 - < $DRIZZLE_TEST_DIR/std_data/trunc_binlog.000001
 drop table t1,t2;
 
 #
@@ -137,7 +137,7 @@ EOF
 # must be digestable for both client and server. In 4.1 the client 
 # should use default-character-set same as the server.
 flush logs;
---exec $MYSQL_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000004 | $MYSQL
+--exec $DRIZZLE_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000004 | $MYSQL
 select * from t5  /* must be (1),(1) */;
 drop table t5;
 
@@ -156,7 +156,7 @@ insert into t5 values (3, date_format('2001-01-01','%W'));
 select * from t5 order by c1;
 flush logs;
 drop table t5;
---exec $MYSQL_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000006 | $MYSQL
+--exec $DRIZZLE_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000006 | $MYSQL
 select * from t5 order by c1;
 drop table t5;
 
@@ -180,8 +180,8 @@ drop procedure p1;
 --error 1305
 call p1();
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000008
---exec $MYSQL_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000008 | $MYSQL
+--exec $DRIZZLE_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000008
+--exec $DRIZZLE_BINLOG --short-form $MYSQLTEST_VARDIR/log/master-bin.000008 | $MYSQL
 call p1();
 drop procedure p1;
 
@@ -189,8 +189,8 @@ drop procedure p1;
 # Some coverage of not normally used parts
 #
 --disable_query_log
---exec $MYSQL_BINLOG --version 2>&1 > /dev/null
---exec $MYSQL_BINLOG --help 2>&1 > /dev/null
+--exec $DRIZZLE_BINLOG --version 2>&1 > /dev/null
+--exec $DRIZZLE_BINLOG --help 2>&1 > /dev/null
 --enable_query_log
 
 #
@@ -216,7 +216,7 @@ drop table t1;
 flush logs;
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --replace_regex /SQL_LOAD_MB-[0-9]-[0-9]/SQL_LOAD_MB-#-#/
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000010
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000010
 
 #
 # Bug#28293 missed '#' sign in the hex dump when the dump length
@@ -229,7 +229,7 @@ flush logs;
 INSERT INTO t1 VALUES ('0123456789');
 flush logs;
 DROP TABLE t1;
---exec $MYSQL_BINLOG --hexdump --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000012 | grep 'Query' | sed 's/[0-9]\{1,\}/REMOVED/g'
+--exec $DRIZZLE_BINLOG --hexdump --local-load=$MYSQLTEST_VARDIR/tmp/ $MYSQLTEST_VARDIR/log/master-bin.000012 | grep 'Query' | sed 's/[0-9]\{1,\}/REMOVED/g'
 
 #
 # Bug #29928: incorrect connection_id() restoring from mysqlbinlog out
@@ -239,7 +239,7 @@ create table t1(a int);
 insert into t1 values(connection_id()); 
 let $a= `select a from t1`;
 flush logs;
---exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000014 > $MYSQLTEST_VARDIR/tmp/bug29928.sql
+--exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000014 > $MYSQLTEST_VARDIR/tmp/bug29928.sql
 drop table t1;
 connect (con1, localhost, root, , test);                                            
 connection con1;
@@ -254,7 +254,7 @@ drop table t1;
 
 echo shell> mysqlbinlog std_data/corrupt-relay-bin.000624 > var/tmp/bug31793.sql;
 error 1;
-exec $MYSQL_BINLOG $MYSQL_TEST_DIR/std_data/corrupt-relay-bin.000624 > $MYSQLTEST_VARDIR/tmp/bug31793.sql;
+exec $DRIZZLE_BINLOG $DRIZZLE_TEST_DIR/std_data/corrupt-relay-bin.000624 > $MYSQLTEST_VARDIR/tmp/bug31793.sql;
 
 --echo End of 5.0 tests
 
@@ -263,8 +263,8 @@ exec $MYSQL_BINLOG $MYSQL_TEST_DIR/std_data/corrupt-relay-bin.000624 > $MYSQLTES
 #
 flush logs;
 --error 1
---exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000016 >/dev/null 2>/dev/null
---exec $MYSQL_BINLOG --force-if-open $MYSQLTEST_VARDIR/log/master-bin.000016 >/dev/null 2>/dev/null
+--exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000016 >/dev/null 2>/dev/null
+--exec $DRIZZLE_BINLOG --force-if-open $MYSQLTEST_VARDIR/log/master-bin.000016 >/dev/null 2>/dev/null
 
 --echo BUG#31611: Security risk with BINLOG statement
 
@@ -280,7 +280,7 @@ flush logs;
 INSERT INTO t1 VALUES (1,USER());
 flush logs;
 echo mysqlbinlog var/log/master-bin.000017 > var/tmp/bug31611.sql;
-exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000017 > $MYSQLTEST_VARDIR/tmp/bug31611.sql;
+exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000017 > $MYSQLTEST_VARDIR/tmp/bug31611.sql;
 connect (unsecure,localhost,untrusted,,mysqltest1);
 echo mysql mysqltest1 -uuntrusted < var/tmp/bug31611.sql;
 error 1;
@@ -313,7 +313,7 @@ query_vertical SELECT * FROM t1;
 DROP TABLE t1;
 
 echo >> mysqlbinlog var/log/master-bin.000019 > var/tmp/bug32580.sql;
-exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000019 > $MYSQLTEST_VARDIR/tmp/bug32580.sql;
+exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000019 > $MYSQLTEST_VARDIR/tmp/bug32580.sql;
 echo >> mysql test < var/tmp/bug32580.sql;
 exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/bug32580.sql;
 remove_file $MYSQLTEST_VARDIR/tmp/bug32580.sql;

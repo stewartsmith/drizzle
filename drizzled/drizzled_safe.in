@@ -22,6 +22,13 @@ user=@DRIZZLED_USER@
 pid_file=
 err_log=
 
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+sbindir=@sbindir@
+libdir=@libdir@
+includedir=@includedir@
+
+
 syslog_tag_drizzled=drizzled
 syslog_tag_drizzled_safe=drizzled_safe
 
@@ -42,7 +49,6 @@ Usage: $0 [OPTIONS]
   --no-defaults              Don't read the system defaults file
   --defaults-file=FILE       Use the specified defaults file
   --defaults-extra-file=FILE Also use defaults from the specified file
-  --ledir=DIRECTORY          Look for drizzled in the specified directory
   --open-files-limit=LIMIT   Limit the number of open files
   --core-file-size=LIMIT     Limit core files to the specified size
   --timezone=TZ              Set the system timezone
@@ -167,7 +173,6 @@ parse_arguments() {
 
       # drizzled_safe-specific options - must be set in my.cnf ([drizzled_safe])!
       --core-file-size=*) core_file_size="$val" ;;
-      --ledir=*) ledir="$val" ;;
       --drizzled=*) DRIZZLED="$val" ;;
       --drizzled-version=*)
         if test -n "$val"
@@ -199,7 +204,7 @@ parse_arguments() {
 
 
 #
-# First, try to find BASEDIR and ledir (where drizzled is)
+# First, try to find BASEDIR (where drizzled is)
 #
 
 if echo '@pkgdatadir@' | grep '^@prefix@' > /dev/null
@@ -211,20 +216,13 @@ else
 fi
 
 MY_PWD=`pwd`
-# Check for the directories we would expect from a binary release install
-if test -f "$relpkgdata"/english/errmsg.sys -a -x ./bin/drizzled
-then
-  MY_BASEDIR_VERSION=$MY_PWD		# Where bin, share and data are
-  ledir=$MY_BASEDIR_VERSION/bin		# Where drizzled is
 # Check for the directories we would expect from a source install
-elif test -f "$relpkgdata"/english/errmsg.sys -a -x ./libexec/drizzled
+if test -f "$prefix"/include/drizzled/error.h -a -x "${sbindir}"/drizzled
 then
   MY_BASEDIR_VERSION=$MY_PWD		# Where libexec, share and var are
-  ledir=$MY_BASEDIR_VERSION/libexec	# Where drizzled is
 # Since we didn't find anything, used the compiled-in defaults
 else
   MY_BASEDIR_VERSION=@prefix@
-  ledir=@libexecdir@
 fi
 
 
@@ -232,16 +230,7 @@ fi
 # Second, try to find the data directory
 #
 
-# Try where the binary installs put it
-if test -d $MY_BASEDIR_VERSION/data/mysql
-then
-  DATADIR=$MY_BASEDIR_VERSION/data
-  if test -z "$defaults" -a -r "$DATADIR/my.cnf"
-  then
-    defaults="--defaults-extra-file=$DATADIR/my.cnf"
-  fi
-# Next try where the source installs put it
-elif test -d $MY_BASEDIR_VERSION/var/mysql
+if test -d $MY_BASEDIR_VERSION/var
 then
   DATADIR=$MY_BASEDIR_VERSION/var
 # Or just give up and use our compiled-in default
@@ -249,7 +238,7 @@ else
   DATADIR=@localstatedir@
 fi
 
-if test -z "$MYSQL_HOME"
+if test -z "$DRIZZLE_HOME"
 then 
   if test -r "$MY_BASEDIR_VERSION/my.cnf" && test -r "$DATADIR/my.cnf"
   then
@@ -258,18 +247,18 @@ $MY_BASEDIR_VERSION/my.cnf and
 $DATADIR/my.cnf
 IGNORING $DATADIR/my.cnf"
 
-    MYSQL_HOME=$MY_BASEDIR_VERSION
+    DRIZZLE_HOME=$MY_BASEDIR_VERSION
   elif test -r "$DATADIR/my.cnf"
   then
     log_error "WARNING: Found $DATADIR/my.cnf
 The data directory is a deprecated location for my.cnf, please move it to
 $MY_BASEDIR_VERSION/my.cnf"
-    MYSQL_HOME=$DATADIR
+    DRIZZLE_HOME=$DATADIR
   else
-    MYSQL_HOME=$MY_BASEDIR_VERSION
+    DRIZZLE_HOME=$MY_BASEDIR_VERSION
   fi
 fi
-export MYSQL_HOME
+export DRIZZLE_HOME
 
 
 # Get first arguments from the my.cnf file, groups [drizzled] and [drizzled_safe]
@@ -383,7 +372,7 @@ then
   fi
 fi
 
-safe_mysql_unix_port=${mysql_unix_port:-${MYSQL_UNIX_PORT:-@MYSQL_UNIX_ADDR@}}
+safe_mysql_unix_port=${mysql_unix_port:-${DRIZZLE_UNIX_PORT:-@DRIZZLE_UNIX_ADDR@}}
 # Make sure that directory for $safe_mysql_unix_port exists
 mysql_unix_port_dir=`dirname $safe_mysql_unix_port`
 if [ ! -d $mysql_unix_port_dir ]
@@ -399,9 +388,9 @@ then
   DRIZZLED=drizzled
 fi
 
-if test ! -x $ledir/$DRIZZLED
+if test ! -x $sbindir/$DRIZZLED
 then
-  log_error "The file $ledir/$DRIZZLED
+  log_error "The file $sbindir/$DRIZZLED
 does not exist or is not executable. Please cd to the mysql installation
 directory and restart this script from there as follows:
 ./bin/drizzled_safe&
@@ -533,7 +522,7 @@ fi
 
 cmd="$NOHUP_NICENESS"
 
-for i in  "$ledir/$DRIZZLED" "$defaults" "--basedir=$MY_BASEDIR_VERSION" \
+for i in  "$sbindir/$DRIZZLED" "$defaults" "--basedir=$MY_BASEDIR_VERSION" \
   "--datadir=$DATADIR" "$USER_OPTION"
 do
   cmd="$cmd "`shell_quote_string "$i"`
@@ -561,13 +550,13 @@ do
     # but should work for the rest of the servers.
     # The only thing is ps x => redhat 5 gives warnings when using ps -x.
     # kill -9 is used or the process won't react on the kill.
-    numofproces=`ps xaww | grep -v "grep" | grep "$ledir/$DRIZZLED\>" | grep -c "pid-file=$pid_file"`
+    numofproces=`ps xaww | grep -v "grep" | grep "$sbindir/$DRIZZLED\>" | grep -c "pid-file=$pid_file"`
 
     log_notice "Number of processes running now: $numofproces"
     I=1
     while test "$I" -le "$numofproces"
     do 
-      PROC=`ps xaww | grep "$ledir/$DRIZZLED\>" | grep -v "grep" | grep "pid-file=$pid_file" | sed -n '$p'` 
+      PROC=`ps xaww | grep "$sbindir/$DRIZZLED\>" | grep -v "grep" | grep "pid-file=$pid_file" | sed -n '$p'` 
 
       for T in $PROC
       do

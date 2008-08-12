@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define MYSQL_LEX 1
+#define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include "rpl_filter.h"
@@ -118,7 +118,7 @@ bool begin_trans(THD *thd)
     LEX *lex= thd->lex;
     thd->options|= OPTION_BEGIN;
     thd->server_status|= SERVER_STATUS_IN_TRANS;
-    if (lex->start_transaction_opt & MYSQL_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
       error= ha_start_consistent_snapshot(thd);
   }
   return error;
@@ -846,11 +846,11 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     uint opt_command= uint2korr(packet);
 
     switch (opt_command) {
-    case (int) MYSQL_OPTION_MULTI_STATEMENTS_ON:
+    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_ON:
       thd->client_capabilities|= CLIENT_MULTI_STATEMENTS;
       my_eof(thd);
       break;
-    case (int) MYSQL_OPTION_MULTI_STATEMENTS_OFF:
+    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_OFF:
       thd->client_capabilities&= ~CLIENT_MULTI_STATEMENTS;
       my_eof(thd);
       break;
@@ -1467,19 +1467,6 @@ mysql_execute_command(THD *thd)
       select_lex->options|= SELECT_NO_UNLOCK;
       unit->set_limit(select_lex);
 
-      /*
-        Disable non-empty MERGE tables with CREATE...SELECT. Too
-        complicated. See Bug #26379. Empty MERGE tables are read-only
-        and don't allow CREATE...SELECT anyway.
-      */
-      if (create_info.used_fields & HA_CREATE_USED_UNION)
-      {
-        my_error(ER_WRONG_OBJECT, MYF(0), create_table->db,
-                 create_table->table_name, "BASE TABLE");
-        res= 1;
-        goto end_with_restore_list;
-      }
-
       if (!(create_info.options & HA_LEX_CREATE_TMP_TABLE))
       {
         lex->link_first_table_back(create_table, link_to_local);
@@ -1501,23 +1488,6 @@ mysql_execute_command(THD *thd)
             update_non_unique_table_error(create_table, "CREATE", duplicate);
             res= 1;
             goto end_with_restore_list;
-          }
-        }
-        /* If we create merge table, we have to test tables in merge, too */
-        if (create_info.used_fields & HA_CREATE_USED_UNION)
-        {
-          TABLE_LIST *tab;
-          for (tab= (TABLE_LIST*) create_info.merge_list.first;
-               tab;
-               tab= tab->next_local)
-          {
-            TABLE_LIST *duplicate;
-            if ((duplicate= unique_table(thd, tab, select_tables, 0)))
-            {
-              update_non_unique_table_error(tab, "CREATE", duplicate);
-              res= 1;
-              goto end_with_restore_list;
-            }
           }
         }
 
@@ -2925,7 +2895,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
 
     Lex_input_stream lip(thd, inBuf, length);
 
-    bool err= parse_sql(thd, &lip, NULL);
+    bool err= parse_sql(thd, &lip);
     *found_semicolon= lip.found_semicolon;
 
     if (!err)
@@ -2985,7 +2955,7 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
   lex_start(thd);
   mysql_reset_thd_for_next_command(thd);
 
-  if (!parse_sql(thd, &lip, NULL) &&
+  if (!parse_sql(thd, &lip) &&
       all_tables_not_ok(thd,(TABLE_LIST*) lex->select_lex.table_list.first))
     error= 1;                  /* Ignore question */
   thd->end_statement();
@@ -4470,25 +4440,15 @@ extern int MYSQLparse(void *thd); // from sql_yacc.cc
 
   @param thd Thread context.
   @param lip Lexer context.
-  @param creation_ctx Object creation context.
 
   @return Error status.
     @retval false on success.
     @retval true on parsing error.
 */
 
-bool parse_sql(THD *thd,
-               Lex_input_stream *lip,
-               Object_creation_ctx *creation_ctx)
+bool parse_sql(THD *thd, Lex_input_stream *lip)
 {
   assert(thd->m_lip == NULL);
-
-  /* Backup creation context. */
-
-  Object_creation_ctx *backup_ctx= NULL;
-
-  if (creation_ctx)
-    backup_ctx= creation_ctx->set_n_backup(thd);
 
   /* Set Lex_input_stream. */
 
@@ -4505,11 +4465,6 @@ bool parse_sql(THD *thd,
   /* Reset Lex_input_stream. */
 
   thd->m_lip= NULL;
-
-  /* Restore creation context. */
-
-  if (creation_ctx)
-    creation_ctx->restore_env(thd, backup_ctx);
 
   /* That's it. */
 

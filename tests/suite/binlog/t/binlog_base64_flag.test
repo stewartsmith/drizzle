@@ -22,7 +22,7 @@ enable_warnings;
 # The binlog contains row events equivalent to:
 # CREATE TABLE t1 (a int) engine = myisam
 # INSERT INTO t1 VALUES (1), (1)
-exec $MYSQL_BINLOG suite/binlog/std_data/bug32407.001 | $MYSQL;
+exec $DRIZZLE_BINLOG suite/binlog/std_data/bug32407.001 | $MYSQL;
 # The above line should succeed and t1 should contain two ones
 select * from t1;
 
@@ -75,7 +75,7 @@ select * from t1;
 # mysqlbinlog should fail
 --replace_regex /#[0-9][0-9][0-9][0-9][0-9][0-9] .*/<#>/   /SET \@\@session.pseudo_thread_id.*/<#>/
 error 1;
-exec $MYSQL_BINLOG --base64-output=never suite/binlog/std_data/bug32407.001;
+exec $DRIZZLE_BINLOG --base64-output=never suite/binlog/std_data/bug32407.001;
 # the above line should output the query log event and then stop
 
 

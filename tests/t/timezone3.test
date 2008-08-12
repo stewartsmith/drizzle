@@ -1,7 +1,7 @@
 #
 # Test of handling time zone with leap seconds.
 #
-# This test should be run with TZ=:$MYSQL_TEST_DIR/std_data/Moscow_leap
+# This test should be run with TZ=:$DRIZZLE_TEST_DIR/std_data/Moscow_leap
 # This implies that this test should be run only on systems that interpret 
 # characters after colon in TZ variable as path to zoneinfo file.
 #

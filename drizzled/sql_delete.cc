@@ -163,7 +163,7 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
     delete select;
     free_underlaid_joins(thd, select_lex);
     thd->row_count_func= 0;
-    MYSQL_DELETE_END();
+    DRIZZLE_DELETE_END();
     my_ok(thd, (ha_rows) thd->row_count_func);
     /*
       We don't need to call reset_auto_increment in this case, because
@@ -341,7 +341,7 @@ cleanup:
   assert(transactional_table || !deleted || thd->transaction.stmt.modified_non_trans_table);
   free_underlaid_joins(thd, select_lex);
 
-  MYSQL_DELETE_END();
+  DRIZZLE_DELETE_END();
   if (error < 0 || (thd->lex->ignore && !thd->is_fatal_error))
   {
     thd->row_count_func= deleted;
@@ -350,7 +350,7 @@ cleanup:
   return(error >= 0 || thd->is_error());
 
 err:
-  MYSQL_DELETE_END();
+  DRIZZLE_DELETE_END();
   return(true);
 }
 

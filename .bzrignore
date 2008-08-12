@@ -116,3 +116,5 @@ tests/install_test_db
 drizzled/sql_builtin.cc
 docs
 doxerr.log
+drizzled/schema.pb.cc
+drizzled/schema.pb.h

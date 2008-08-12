@@ -54,7 +54,7 @@ static void _print_csinfo(CHARSET_INFO *cs)
 
 
 int main(int argc, char **argv) {
-  const char *the_set = MYSQL_CHARSET;
+  const char *the_set = DRIZZLE_CHARSET;
   char *cs_list;
   int argcnt = 1;
   CHARSET_INFO *cs;

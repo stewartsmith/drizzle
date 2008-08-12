@@ -194,7 +194,7 @@ dtype_validate(
 	ut_a(type->mtype <= DATA_MYSQL);
 
 	if (type->mtype == DATA_SYS) {
-		ut_a((type->prtype & DATA_MYSQL_TYPE_MASK) < DATA_N_SYS_COLS);
+		ut_a((type->prtype & DATA_DRIZZLE_TYPE_MASK) < DATA_N_SYS_COLS);
 	}
 
 	ut_a(type->mbminlen <= type->mbmaxlen);

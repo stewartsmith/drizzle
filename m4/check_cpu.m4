@@ -1,4 +1,4 @@
-AC_DEFUN([MYSQL_CHECK_CPU],
+AC_DEFUN([DRIZZLE_CHECK_CPU],
 [AC_CACHE_CHECK([if compiler supports optimizations for current cpu],
 mysql_cv_cpu,[
 

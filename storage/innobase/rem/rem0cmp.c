@@ -260,7 +260,7 @@ cmp_whole_field(
 	case DATA_VARMYSQL:
 	case DATA_MYSQL:
 		return(innobase_mysql_cmp(
-			       (int)(prtype & DATA_MYSQL_TYPE_MASK),
+			       (int)(prtype & DATA_DRIZZLE_TYPE_MASK),
 			       (uint)dtype_get_charset_coll(prtype),
 			       a, a_length, b, b_length));
 	default:
@@ -318,7 +318,7 @@ cmp_data_data_slow(
 	    || (mtype == DATA_BLOB
 		&& 0 == (prtype & DATA_BINARY_TYPE)
 		&& dtype_get_charset_coll(prtype)
-		!= DATA_MYSQL_LATIN1_SWEDISH_CHARSET_COLL)) {
+		!= DATA_DRIZZLE_LATIN1_SWEDISH_CHARSET_COLL)) {
 
 		return(cmp_whole_field(mtype, prtype,
 				       data1, (unsigned) len1,
@@ -527,7 +527,7 @@ cmp_dtuple_rec_with_match(
 		    || (mtype == DATA_BLOB
 			&& 0 == (prtype & DATA_BINARY_TYPE)
 			&& dtype_get_charset_coll(prtype)
-			!= DATA_MYSQL_LATIN1_SWEDISH_CHARSET_COLL)) {
+			!= DATA_DRIZZLE_LATIN1_SWEDISH_CHARSET_COLL)) {
 
 			ret = cmp_whole_field(mtype, prtype,
 					      dfield_get_data(dtuple_field),
@@ -843,7 +843,7 @@ cmp_rec_rec_with_match(
 		    || (mtype == DATA_BLOB
 			&& 0 == (prtype & DATA_BINARY_TYPE)
 			&& dtype_get_charset_coll(prtype)
-			!= DATA_MYSQL_LATIN1_SWEDISH_CHARSET_COLL)) {
+			!= DATA_DRIZZLE_LATIN1_SWEDISH_CHARSET_COLL)) {
 
 			ret = cmp_whole_field(mtype, prtype,
 					      rec1_b_ptr,

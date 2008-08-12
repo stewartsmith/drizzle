@@ -22,8 +22,8 @@
 /* INFORMATION_SCHEMA name */
 LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};
 
-/* MYSQL_SCHEMA name */
-LEX_STRING MYSQL_SCHEMA_NAME= {C_STRING_WITH_LEN("mysql")};
+/* DRIZZLE_SCHEMA name */
+LEX_STRING DRIZZLE_SCHEMA_NAME= {C_STRING_WITH_LEN("mysql")};
 
 /* Functions defined in this file */
 
@@ -34,59 +34,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share,
 static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 			      uint types, char **names);
 static uint find_field(Field **fields, uchar *record, uint start, uint length);
-
-/**************************************************************************
-  Object_creation_ctx implementation.
-**************************************************************************/
-
-Object_creation_ctx *Object_creation_ctx::set_n_backup(THD *thd)
-{
-  Object_creation_ctx *backup_ctx;
-
-  backup_ctx= create_backup_ctx(thd);
-  change_env(thd);
-
-  return(backup_ctx);
-}
-
-void Object_creation_ctx::restore_env(THD *thd, Object_creation_ctx *backup_ctx)
-{
-  if (!backup_ctx)
-    return;
-
-  backup_ctx->change_env(thd);
-
-  delete backup_ctx;
-}
-
-/**************************************************************************
-  Default_object_creation_ctx implementation.
-**************************************************************************/
-
-Default_object_creation_ctx::Default_object_creation_ctx(THD *thd)
-  : m_client_cs(thd->variables.character_set_client),
-    m_connection_cl(thd->variables.collation_connection)
-{ }
-
-Default_object_creation_ctx::Default_object_creation_ctx(
-  const CHARSET_INFO * const client_cs, const CHARSET_INFO * const connection_cl)
-  : m_client_cs(client_cs),
-    m_connection_cl(connection_cl)
-{ }
-
-Object_creation_ctx *
-Default_object_creation_ctx::create_backup_ctx(THD *thd) const
-{
-  return new Default_object_creation_ctx(thd);
-}
-
-void Default_object_creation_ctx::change_env(THD *thd) const
-{
-  thd->variables.character_set_client= m_client_cs;
-  thd->variables.collation_connection= m_connection_cl;
-
-  thd->update_charset();
-}
 
 /*************************************************************************/
 
@@ -194,7 +141,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
     /*
       This constant is used to mark that no table map version has been
       assigned.  No arithmetic is done on the value: it will be
-      overwritten with a value taken from MYSQL_BIN_LOG.
+      overwritten with a value taken from DRIZZLE_BIN_LOG.
     */
     share->table_map_version= ~(uint64_t)0;
 
@@ -739,7 +686,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       next_chunk+= 2 + share->comment.length;
     }
     assert(next_chunk <= buff_end);
-    if (share->mysql_version >= MYSQL_VERSION_TABLESPACE_IN_FRM_CGE)
+    if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE)
     {
       /*
        New frm format in mysql_version 5.2.5 (originally in
@@ -750,7 +697,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       */
       if (next_chunk >= buff_end)
       {
-        if (share->mysql_version >= MYSQL_VERSION_TABLESPACE_IN_FRM)
+        if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM)
         {
           goto err;
         }
@@ -968,33 +915,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       TYPELIB *interval= share->intervals + interval_nr - 1;
       unhex_type2(interval);
     }
-    
-#ifndef TO_BE_DELETED_ON_PRODUCTION
-    if (field_type == DRIZZLE_TYPE_NEWDECIMAL && !share->mysql_version)
-    {
-      /*
-        Fix pack length of old decimal values from 5.0.3 -> 5.0.4
-        The difference is that in the old version we stored precision
-        in the .frm table while we now store the display_length
-      */
-      uint decimals= f_decimals(pack_flag);
-      field_length= my_decimal_precision_to_length(field_length,
-                                                   decimals,
-                                                   f_is_dec(pack_flag) == 0);
-      sql_print_error(_("Found incompatible DECIMAL field '%s' in %s; "
-                      "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
-                      share->fieldnames.type_names[i], share->table_name.str,
-                      share->table_name.str);
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                          ER_CRASHED_ON_USAGE,
-                          _("Found incompatible DECIMAL field '%s' in %s; "
-                          "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
-                          share->fieldnames.type_names[i],
-                          share->table_name.str,
-                          share->table_name.str);
-      share->crashed= 1;                        // Marker for CHECK TABLE
-    }
-#endif
 
     *field_ptr= reg_field=
       make_field(share, record+recpos,
@@ -1145,35 +1065,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         }
         if (field->key_length() != key_part->length)
         {
-#ifndef TO_BE_DELETED_ON_PRODUCTION
-          if (field->type() == DRIZZLE_TYPE_NEWDECIMAL)
-          {
-            /*
-              Fix a fatal error in decimal key handling that causes crashes
-              on Innodb. We fix it by reducing the key length so that
-              InnoDB never gets a too big key when searching.
-              This allows the end user to do an ALTER TABLE to fix the
-              error.
-            */
-            keyinfo->key_length-= (key_part->length - field->key_length());
-            key_part->store_length-= (uint16_t)(key_part->length -
-                                              field->key_length());
-            key_part->length= (uint16_t)field->key_length();
-            sql_print_error(_("Found wrong key definition in %s; "
-                            "Please do \"ALTER TABLE '%s' FORCE \" to fix it!"),
-                            share->table_name.str,
-                            share->table_name.str);
-            push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                                ER_CRASHED_ON_USAGE,
-                                _("Found wrong key definition in %s; "
-                                "Please do \"ALTER TABLE '%s' FORCE\" to fix "
-                                "it!"),
-                                share->table_name.str,
-                                share->table_name.str);
-            share->crashed= 1;                // Marker for CHECK TABLE
-            continue;
-          }
-#endif
           key_part->key_part_flag|= HA_PART_KEY_SEG;
         }
       }
@@ -2101,7 +1992,7 @@ File create_frm(THD *thd, const char *name, const char *db,
     fileinfo[45]= 0;
     fileinfo[46]= 0;
     int4store(fileinfo+47, key_length);
-    tmp= MYSQL_VERSION_ID;          // Store to avoid warning from int4store
+    tmp= DRIZZLE_VERSION_ID;          // Store to avoid warning from int4store
     int4store(fileinfo+51, tmp);
     int4store(fileinfo+55, create_info->extra_size);
     /*
@@ -2368,14 +2259,14 @@ table_check_intact(TABLE *table, const uint table_f_count,
   {
 
     /* previous MySQL version */
-    if (MYSQL_VERSION_ID > table->s->mysql_version)
+    if (DRIZZLE_VERSION_ID > table->s->mysql_version)
     {
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
                       table->alias, table_f_count, table->s->fields,
-                      table->s->mysql_version, MYSQL_VERSION_ID);
+                      table->s->mysql_version, DRIZZLE_VERSION_ID);
       return(true);
     }
-    else if (MYSQL_VERSION_ID == table->s->mysql_version)
+    else if (DRIZZLE_VERSION_ID == table->s->mysql_version)
     {
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), table->alias,
                       table_f_count, table->s->fields);

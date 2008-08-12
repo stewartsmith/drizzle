@@ -52,7 +52,7 @@
 
    @return The number of bytes written at @c row_data.
  */
-#if !defined(MYSQL_CLIENT)
+#if !defined(DRIZZLE_CLIENT)
 size_t
 pack_row(TABLE *table, MY_BITMAP const* cols,
          uchar *row_data, const uchar *record)
@@ -162,7 +162,7 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
    master does not have a default value (and isn't nullable)
 
  */
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int
 unpack_row(Relay_log_info const *rli,
            TABLE *table, uint const colcnt,

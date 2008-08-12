@@ -286,7 +286,7 @@ row_mysql_store_col_in_innobase_format(
 		    || type == DATA_VARMYSQL
 		    || type == DATA_BINARY)) {
 
-		if (dtype_get_mysql_type(dtype) == DATA_MYSQL_TRUE_VARCHAR) {
+		if (dtype_get_mysql_type(dtype) == DATA_DRIZZLE_TRUE_VARCHAR) {
 			/* The length of the actual data is stored to 1 or 2
 			bytes at the start of the field */
 
@@ -388,7 +388,7 @@ row_mysql_convert_row_to_innobase(
 					field type information is already
 					copied there! */
 	row_prebuilt_t*	prebuilt,	/* in: prebuilt struct where template
-					must be of type ROW_MYSQL_WHOLE_ROW */
+					must be of type ROW_DRIZZLE_WHOLE_ROW */
 	byte*		mysql_rec)	/* in: row in the MySQL format;
 					NOTE: do not discard as long as
 					row is used, as row may contain
@@ -398,7 +398,7 @@ row_mysql_convert_row_to_innobase(
 	dfield_t*		dfield;
 	ulint			i;
 
-	ut_ad(prebuilt->template_type == ROW_MYSQL_WHOLE_ROW);
+	ut_ad(prebuilt->template_type == ROW_DRIZZLE_WHOLE_ROW);
 	ut_ad(prebuilt->mysql_template);
 
 	for (i = 0; i < prebuilt->n_template; i++) {
@@ -645,7 +645,7 @@ row_create_prebuilt(
 
 	prebuilt->clust_ref = ref;
 
-	for (i = 0; i < MYSQL_FETCH_CACHE_SIZE; i++) {
+	for (i = 0; i < DRIZZLE_FETCH_CACHE_SIZE; i++) {
 		prebuilt->fetch_cache[i] = NULL;
 	}
 
@@ -716,7 +716,7 @@ row_prebuilt_free(
 		mem_heap_free(prebuilt->old_vers_heap);
 	}
 
-	for (i = 0; i < MYSQL_FETCH_CACHE_SIZE; i++) {
+	for (i = 0; i < DRIZZLE_FETCH_CACHE_SIZE; i++) {
 		if (prebuilt->fetch_cache[i] != NULL) {
 
 			if ((ROW_PREBUILT_FETCH_MAGIC_N != mach_read_from_4(
@@ -3851,7 +3851,7 @@ row_scan_and_check_index(
 
 	prebuilt->index = index;
 	prebuilt->sql_stat_start = TRUE;
-	prebuilt->template_type = ROW_MYSQL_DUMMY_TEMPLATE;
+	prebuilt->template_type = ROW_DRIZZLE_DUMMY_TEMPLATE;
 	prebuilt->n_template = 0;
 	prebuilt->need_to_access_clustered = FALSE;
 

@@ -78,7 +78,7 @@ changequote([, ])dnl
      AC_DEFINE_UNQUOTED([$1], [$]$2, [$3])
    fi])
 
-AC_DEFUN([MYSQL_SYS_LARGEFILE],
+AC_DEFUN([DRIZZLE_SYS_LARGEFILE],
   [AC_REQUIRE([AC_CANONICAL_HOST])
       AC_ARG_ENABLE([largefile],
 	  [AS_HELP_STRING([--disable-largefile],

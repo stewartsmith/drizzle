@@ -23,15 +23,15 @@ SHARED_LIB_VERSION=$SHARED_LIB_MAJOR_VERSION:0:0
 # We take some made up examples
 #
 #  VERSION                  5.1.40sp1-alpha     5.0.34a
-#  MYSQL_NO_DASH_VERSION    5.1.40sp1           5.0.34a
-#  MYSQL_NUMERIC_VERSION    5.1.40              5.0.34
-#  MYSQL_BASE_VERSION       5.1                 5.0
-#  MYSQL_VERSION_ID         50140               50034
+#  DRIZZLE_NO_DASH_VERSION    5.1.40sp1           5.0.34a
+#  DRIZZLE_NUMERIC_VERSION    5.1.40              5.0.34
+#  DRIZZLE_BASE_VERSION       5.1                 5.0
+#  DRIZZLE_VERSION_ID         50140               50034
 #
-MYSQL_NO_DASH_VERSION=`echo $VERSION | sed -e "s|-.*$||"`
-MYSQL_NUMERIC_VERSION=`echo $MYSQL_NO_DASH_VERSION | sed -e "s|[[a-z]][[a-z0-9]]*$||"`
-MYSQL_BASE_VERSION=`echo $MYSQL_NUMERIC_VERSION | sed -e "s|\.[[^.]]*$||"`
-MYSQL_VERSION_ID=`echo $MYSQL_NUMERIC_VERSION | \
+DRIZZLE_NO_DASH_VERSION=`echo $VERSION | sed -e "s|-.*$||"`
+DRIZZLE_NUMERIC_VERSION=`echo $DRIZZLE_NO_DASH_VERSION | sed -e "s|[[a-z]][[a-z0-9]]*$||"`
+DRIZZLE_BASE_VERSION=`echo $DRIZZLE_NUMERIC_VERSION | sed -e "s|\.[[^.]]*$||"`
+DRIZZLE_VERSION_ID=`echo $DRIZZLE_NUMERIC_VERSION | \
     awk -F. '{printf "%d%0.2d%0.2d", $1, $2, $3}'`
 
 # The port should be constant for a LONG time
@@ -63,10 +63,10 @@ AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.17)
 
 
-AC_SUBST(MYSQL_NO_DASH_VERSION)
-AC_SUBST(MYSQL_BASE_VERSION)
-AC_SUBST(MYSQL_VERSION_ID)
-AC_SUBST(MYSQL_PREVIOUS_BASE_VERSION)
+AC_SUBST(DRIZZLE_NO_DASH_VERSION)
+AC_SUBST(DRIZZLE_BASE_VERSION)
+AC_SUBST(DRIZZLE_VERSION_ID)
+AC_SUBST(DRIZZLE_PREVIOUS_BASE_VERSION)
 AC_SUBST(PROTOCOL_VERSION)
 AC_DEFINE_UNQUOTED([PROTOCOL_VERSION], [$PROTOCOL_VERSION],
                    [mysql client protocol version])
@@ -190,7 +190,7 @@ else
 CC_VERSION=""
 fi
 AC_SUBST(CC_VERSION)
-MYSQL_CHECK_CXX_VERSION
+DRIZZLE_CHECK_CXX_VERSION
 
 AC_PROG_AWK
 
@@ -279,7 +279,7 @@ then
   AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions -fno-rtti"
 fi
 
-MYSQL_PROG_AR
+DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
@@ -451,7 +451,7 @@ AC_CHECK_DECLS([completion_matches], [], [], [AC_INCLUDES_DEFAULT[
 #include <readline/readline.h>
 ]])
 
-MYSQL_CHECK_NEW_RL_INTERFACE
+DRIZZLE_CHECK_NEW_RL_INTERFACE
 
 my_save_LIBS="$LIBS"
 LIBS=""
@@ -632,10 +632,10 @@ fi
 AC_ARG_WITH([server-suffix],
     [AS_HELP_STRING([--with-server-suffix],
       [Append value to the version string.])],
-    [ MYSQL_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
-    [ MYSQL_SERVER_SUFFIX= ]
+    [ DRIZZLE_SERVER_SUFFIX=`echo "$withval" | sed -e  's/^\(...................................\)..*$/\1/'` ],
+    [ DRIZZLE_SERVER_SUFFIX= ]
     )
-AC_SUBST(MYSQL_SERVER_SUFFIX)
+AC_SUBST(DRIZZLE_SERVER_SUFFIX)
 
 # Force use of a curses libs
 AC_ARG_WITH([named-curses-libs],
@@ -709,7 +709,7 @@ else
   AC_MSG_RESULT([no])
 fi
 
-MYSQL_SYS_LARGEFILE
+DRIZZLE_SYS_LARGEFILE
 
 # Types that must be checked AFTER large file support is checked
 AC_TYPE_SIZE_T
@@ -935,7 +935,7 @@ dnl
 dnl check if time_t is unsigned
 dnl
 
-MYSQL_CHECK_TIME_T
+DRIZZLE_CHECK_TIME_T
 
 
 # do we need #pragma interface/#pragma implementation ?
@@ -953,25 +953,25 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 AC_C_BIGENDIAN
 #---START: Used in for client configure
 # Check base type of last arg to accept
-MYSQL_TYPE_ACCEPT
+DRIZZLE_TYPE_ACCEPT
 #---END:
 # Figure out what type of struct rlimit to use with setrlimit
-MYSQL_TYPE_STRUCT_RLIMIT
+DRIZZLE_TYPE_STRUCT_RLIMIT
 # Find where the stack goes
-MYSQL_STACK_DIRECTION
+DRIZZLE_STACK_DIRECTION
 # We want to skip alloca on irix unconditionally. It may work on some version..
-MYSQL_FUNC_ALLOCA
+DRIZZLE_FUNC_ALLOCA
 # Do struct timespec have members tv_sec or ts_sec
 DRIZZLE_TIMESPEC_TS
 # Do we have the tzname variable
-MYSQL_TZNAME
+DRIZZLE_TZNAME
 # Do the c++ compiler have a bool type
-MYSQL_CXX_BOOL
+DRIZZLE_CXX_BOOL
 AC_CHECK_TYPES([sigset_t, off_t], [], [], [#include <sys/types.h>])
 AC_CHECK_TYPES([size_t], [], [], [#include <stdio.h>])
 AC_CHECK_TYPES([u_int32_t])
 
-MYSQL_PTHREAD_YIELD
+DRIZZLE_PTHREAD_YIELD
 
 
 dnl Checks for header files.
@@ -1009,18 +1009,18 @@ paths.h semaphore.h)
 AC_CHECK_FUNCS(lstat putenv select setenv setlocale strcoll tcgetattr)
 
 AC_HEADER_STAT
-MYSQL_SIGNAL_CHECK
-MYSQL_CHECK_GETPW_FUNCS
-MYSQL_HAVE_TIOCGWINSZ
-MYSQL_HAVE_FIONREAD
-MYSQL_HAVE_TIOCSTAT
-MYSQL_STRUCT_DIRENT_D_INO
-MYSQL_STRUCT_DIRENT_D_NAMLEN
-MYSQL_TYPE_SIGHANDLER
-MYSQL_CHECK_MULTIBYTE
+DRIZZLE_SIGNAL_CHECK
+DRIZZLE_CHECK_GETPW_FUNCS
+DRIZZLE_HAVE_TIOCGWINSZ
+DRIZZLE_HAVE_FIONREAD
+DRIZZLE_HAVE_TIOCSTAT
+DRIZZLE_STRUCT_DIRENT_D_INO
+DRIZZLE_STRUCT_DIRENT_D_NAMLEN
+DRIZZLE_TYPE_SIGHANDLER
+DRIZZLE_CHECK_MULTIBYTE
 if test "$with_named_curses" = "no"
 then
-  MYSQL_CHECK_LIB_TERMCAP
+  DRIZZLE_CHECK_LIB_TERMCAP
 else
   TERMCAP_LIBS="$with_named_curses"
 fi
@@ -1056,7 +1056,7 @@ fi
 
 #AC_FUNC_MMAP
 AC_TYPE_SIGNAL
-MYSQL_TYPE_QSORT
+DRIZZLE_TYPE_QSORT
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 
@@ -1280,9 +1280,9 @@ fi
 # Check for requested features
 #--------------------------------------------------------------------
 
-MYSQL_CHECK_BIG_TABLES
-MYSQL_CHECK_MAX_INDEXES
-MYSQL_CHECK_VIO
+DRIZZLE_CHECK_BIG_TABLES
+DRIZZLE_CHECK_MAX_INDEXES
+DRIZZLE_CHECK_VIO
 
 #--------------------------------------------------------------------
 # Declare our plugin modules
@@ -1290,7 +1290,7 @@ MYSQL_CHECK_VIO
 # functions tested above
 #--------------------------------------------------------------------
 
-MYSQL_CONFIGURE_PLUGINS([none])
+DRIZZLE_CONFIGURE_PLUGINS([none])
 
 AC_SUBST(mysql_plugin_dirs)
 AC_SUBST(mysql_plugin_libs)
@@ -1420,6 +1420,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
+ drizzled/serialize/Makefile dnl
  drizzled/sql_builtin.cc dnl
  drizzled/share/Makefile dnl
  support-files/Makefile dnl

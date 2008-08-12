@@ -18,12 +18,12 @@
 
 #include <drizzled/rpl_reporting.h>
 
-#if !defined(MYSQL_CLIENT)
+#if !defined(DRIZZLE_CLIENT)
 size_t pack_row(TABLE* table, MY_BITMAP const* cols,
                 uchar *row_data, const uchar *data);
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int unpack_row(Relay_log_info const *rli,
                TABLE *table, uint const colcnt,
                uchar const *const row_data, MY_BITMAP const *cols,

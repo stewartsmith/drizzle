@@ -42,7 +42,7 @@ static uint verbose = 0, opt_mysql_port=0;
 static int my_end_arg;
 static char * opt_mysql_unix_port = 0;
 static char *opt_password = 0, *current_user = 0,
-      *default_charset = (char *)MYSQL_DEFAULT_CHARSET_NAME,
+      *default_charset = (char *)DRIZZLE_DEFAULT_CHARSET_NAME,
       *current_host = 0;
 static int first_error = 0;
 vector<string> tables4repair;

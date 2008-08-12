@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-12 08:55-0700\n"
+"POT-Creation-Date: 2008-08-12 13:00-0700\n"
 "PO-Revision-Date: 2008-08-11 22:30+0000\n"
 "Last-Translator: Mark Daems <Unknown>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -108,7 +108,7 @@ msgstr ""
 "Schakel naar een andere karakterset. Kan nodig zijn voor het verwerken van "
 "een binlog met multi-byte karaktersets."
 
-#: client/drizzle.cc:285 client/drizzle.cc:1438
+#: client/drizzle.cc:285 client/drizzle.cc:1437
 msgid "Show warnings after every statement."
 msgstr "Toon waarschuwingen na elk statement."
 
@@ -144,46 +144,46 @@ msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
 "Type 'help;' of '\\h' voor hulp. Type '\\c' om de buffer leeg te maken.\n"
 
-#: client/drizzle.cc:1191
+#: client/drizzle.cc:1190
 #, c-format
 msgid "Writing history-file %s\n"
 msgstr "Schrijft geschiedenisbestand %s\n"
 
-#: client/drizzle.cc:1200
+#: client/drizzle.cc:1199
 msgid "Aborted"
 msgstr "Afgebroken"
 
-#: client/drizzle.cc:1200
+#: client/drizzle.cc:1199
 msgid "Bye"
 msgstr "Tot ziens"
 
-#: client/drizzle.cc:1249
+#: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
 msgstr "Query afgebroken door Ctrl+C\n"
 
-#: client/drizzle.cc:1272 client/drizzleadmin.cc:69
+#: client/drizzle.cc:1271 client/drizzleadmin.cc:69
 msgid "Display this help and exit."
 msgstr "Toon deze hulp en sluit af."
 
-#: client/drizzle.cc:1274
+#: client/drizzle.cc:1273
 msgid "Synonym for -?"
 msgstr "Synoniem voor -?"
 
-#: client/drizzle.cc:1277
+#: client/drizzle.cc:1276
 msgid ""
 "Enable automatic rehashing. One doesn't need to use 'rehash' to get table "
 "and field completion, but startup and reconnecting may take a longer time. "
 "Disable with --disable-auto-rehash."
 msgstr ""
 
-#: client/drizzle.cc:1281
+#: client/drizzle.cc:1280
 msgid ""
 "No automatic rehashing. One has to use 'rehash' to get table and field "
 "completion. This gives a quicker start of DRIZZLE and disables rehashing on "
 "reconnect. WARNING: options deprecated; use --disable-auto-rehash instead."
 msgstr ""
 
-#: client/drizzle.cc:1284
+#: client/drizzle.cc:1283
 msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
@@ -191,22 +191,22 @@ msgstr ""
 "Schakel automatisch naar verticale uitvoer modus als het resultaat breder is "
 "dan de breedte van het uitvoervenster."
 
-#: client/drizzle.cc:1287
+#: client/drizzle.cc:1286
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 "Gebruik het geschiedenisbestand niet. Schakel interactief gedrag uit. "
 "(Activeert --silent)"
 
-#: client/drizzle.cc:1289
+#: client/drizzle.cc:1288
 msgid "Directory where character sets are."
 msgstr "Directory waar de karaktersets zich bevinden."
 
-#: client/drizzle.cc:1291
+#: client/drizzle.cc:1290
 msgid "Display column type information."
 msgstr "Toon kolomtype informatie."
 
-#: client/drizzle.cc:1294
+#: client/drizzle.cc:1293
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
@@ -214,45 +214,45 @@ msgstr ""
 "Bewaar commentaren. Stuur commentaren naar de server. De standaard is --skip-"
 "comments (commentaren weggooien), inschakelen met --comments"
 
-#: client/drizzle.cc:1297
+#: client/drizzle.cc:1296
 msgid "Use compression in server/client protocol."
 msgstr "Gebruik compressie in het server/client protocol."
 
-#: client/drizzle.cc:1300
+#: client/drizzle.cc:1299
 msgid "Check memory and open file usage at exit ."
 msgstr "Controleer het geheugen- en open bestandsgebruik bij afsluiten."
 
-#: client/drizzle.cc:1303
+#: client/drizzle.cc:1302
 msgid "Print some debug info at exit."
 msgstr "Druk wat debug infrmatie bij afsluiten"
 
-#: client/drizzle.cc:1305
+#: client/drizzle.cc:1304
 msgid "Database to use."
 msgstr "Te gebruiken databank"
 
-#: client/drizzle.cc:1308
+#: client/drizzle.cc:1307
 msgid "Set the default character set."
 msgstr "Stel de standaard karakterset in."
 
-#: client/drizzle.cc:1310
+#: client/drizzle.cc:1309
 msgid "Delimiter to be used."
 msgstr "Te gebruiken delimiter."
 
-#: client/drizzle.cc:1312
+#: client/drizzle.cc:1311
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
 "Voer de opdracht uit en sluit af. (Schakelt --force en geschiedenisbestand "
 "uit)"
 
-#: client/drizzle.cc:1314
+#: client/drizzle.cc:1313
 msgid "Print the output of a query (rows) vertically."
 msgstr "Drukt de uitvoer van een query (rijen) verticaal af."
 
-#: client/drizzle.cc:1317
+#: client/drizzle.cc:1316
 msgid "Continue even if we get an sql error."
 msgstr "Verdergaan, ook wanneer we een sql fout tegenkomen."
 
-#: client/drizzle.cc:1321
+#: client/drizzle.cc:1320
 msgid ""
 "Enable named commands. Named commands mean this program's internal commands; "
 "see drizzle> help . When enabled, the named commands can be used from any "
@@ -260,7 +260,7 @@ msgid ""
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
 
-#: client/drizzle.cc:1325
+#: client/drizzle.cc:1324
 msgid ""
 "Named commands are disabled. Use \\* form only, or use named commands only "
 "in the beginning of a line ending with a semicolon (;) Since version 10.9 "
@@ -269,27 +269,27 @@ msgid ""
 "deprecated; use --disable-named-commands instead."
 msgstr ""
 
-#: client/drizzle.cc:1327
+#: client/drizzle.cc:1326
 msgid "Ignore space after function names."
 msgstr "Negeer spaties na functienamen."
 
-#: client/drizzle.cc:1329
+#: client/drizzle.cc:1328
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
 msgstr "Schakel LOAD DATA LOCAL INFILE in/uit."
 
-#: client/drizzle.cc:1332
+#: client/drizzle.cc:1331
 msgid "Turn off beep on error."
 msgstr "Schakel piepen bij fout uit."
 
-#: client/drizzle.cc:1334 client/drizzleadmin.cc:71
+#: client/drizzle.cc:1333 client/drizzleadmin.cc:71
 msgid "Connect to host."
 msgstr "Verbind met host."
 
-#: client/drizzle.cc:1336
+#: client/drizzle.cc:1335
 msgid "Write line numbers for errors."
 msgstr "Schrijf lijnnummers bij fouten."
 
-#: client/drizzle.cc:1339
+#: client/drizzle.cc:1338
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
@@ -297,15 +297,15 @@ msgstr ""
 "Schrijf geen lijnnummers bij fouten. Waarschuwing: -L wordt afgeraden, "
 "gebruik de lange versie van deze optie."
 
-#: client/drizzle.cc:1341
+#: client/drizzle.cc:1340
 msgid "Flush buffer after each query."
 msgstr "Maak de buffer leeg na de query."
 
-#: client/drizzle.cc:1343
+#: client/drizzle.cc:1342
 msgid "Write column names in results."
 msgstr "Schrijf kolomnamen in de resultaten."
 
-#: client/drizzle.cc:1347
+#: client/drizzle.cc:1346
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
@@ -313,23 +313,23 @@ msgstr ""
 "Schrijf geen kolomnamen in de resultaten. Waarschuwing: -N wordt afgeraden, "
 "gebruik de lange versie van deze optie."
 
-#: client/drizzle.cc:1350
+#: client/drizzle.cc:1349
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
 
-#: client/drizzle.cc:1352
+#: client/drizzle.cc:1351
 msgid "Ignore SIGINT (CTRL-C)"
 msgstr ""
 
-#: client/drizzle.cc:1356
+#: client/drizzle.cc:1355
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
 
-#: client/drizzle.cc:1359
+#: client/drizzle.cc:1358
 msgid ""
 "Pager to use to display results. If you don't supply an option the default "
 "pager is taken from your ENV variable PAGER. Valid pagers are less, more, "
@@ -338,132 +338,132 @@ msgid ""
 "default."
 msgstr ""
 
-#: client/drizzle.cc:1362
+#: client/drizzle.cc:1361
 msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
 "option deprecated; use --disable-pager instead."
 msgstr ""
 
-#: client/drizzle.cc:1365 client/drizzleadmin.cc:74
+#: client/drizzle.cc:1364 client/drizzleadmin.cc:74
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
 
-#: client/drizzle.cc:1367
+#: client/drizzle.cc:1366
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, my.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
 
-#: client/drizzle.cc:1368
+#: client/drizzle.cc:1367
 msgid "built-in default"
 msgstr ""
 
-#: client/drizzle.cc:1371
+#: client/drizzle.cc:1370
 msgid "Set the drizzle prompt to this value."
 msgstr ""
 
-#: client/drizzle.cc:1374
+#: client/drizzle.cc:1373
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
 msgstr ""
 
-#: client/drizzle.cc:1377
+#: client/drizzle.cc:1376
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
 msgstr ""
 
-#: client/drizzle.cc:1379
+#: client/drizzle.cc:1378
 msgid "Write fields without conversion. Used with --batch."
 msgstr ""
 
-#: client/drizzle.cc:1382
+#: client/drizzle.cc:1381
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
 msgstr ""
 
-#: client/drizzle.cc:1384
+#: client/drizzle.cc:1383
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
 
-#: client/drizzle.cc:1386
+#: client/drizzle.cc:1385
 msgid "Socket file to use for connection."
 msgstr ""
 
-#: client/drizzle.cc:1389
+#: client/drizzle.cc:1388
 msgid "Output in table format."
 msgstr ""
 
-#: client/drizzle.cc:1392
+#: client/drizzle.cc:1391
 msgid ""
 "Append everything into outfile. See interactive help (\\h) also. Does not "
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
 "default."
 msgstr ""
 
-#: client/drizzle.cc:1394
+#: client/drizzle.cc:1393
 msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
 msgstr ""
 
-#: client/drizzle.cc:1397 client/drizzleadmin.cc:84
+#: client/drizzle.cc:1396 client/drizzleadmin.cc:84
 msgid "User for login if not current user."
 msgstr ""
 
-#: client/drizzle.cc:1400
+#: client/drizzle.cc:1399
 msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr ""
 
-#: client/drizzle.cc:1403
+#: client/drizzle.cc:1402
 msgid "Synonym for option --safe-updates, -U."
 msgstr ""
 
-#: client/drizzle.cc:1406
+#: client/drizzle.cc:1405
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
 
-#: client/drizzle.cc:1408 client/drizzleadmin.cc:89
+#: client/drizzle.cc:1407 client/drizzleadmin.cc:89
 msgid "Output version information and exit."
 msgstr ""
 
-#: client/drizzle.cc:1410 client/drizzleadmin.cc:91
+#: client/drizzle.cc:1409 client/drizzleadmin.cc:91
 msgid "Wait and retry if connection is down."
 msgstr ""
 
-#: client/drizzle.cc:1413
+#: client/drizzle.cc:1412
 msgid "Number of seconds before connection timeout."
 msgstr ""
 
-#: client/drizzle.cc:1418
+#: client/drizzle.cc:1417
 msgid "Max packet length to send to, or receive from server"
 msgstr ""
 
-#: client/drizzle.cc:1423
+#: client/drizzle.cc:1422
 msgid "Buffer for TCP/IP and socket communication"
 msgstr ""
 
-#: client/drizzle.cc:1427
+#: client/drizzle.cc:1426
 msgid "Automatic limit for SELECT when using --safe-updates"
 msgstr ""
 
-#: client/drizzle.cc:1432
+#: client/drizzle.cc:1431
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
 
-#: client/drizzle.cc:1436
+#: client/drizzle.cc:1435
 msgid "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
 
-#: client/drizzle.cc:1449
+#: client/drizzle.cc:1448
 #, c-format
 msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr ""
 
-#: client/drizzle.cc:1456
+#: client/drizzle.cc:1455
 #, c-format
 msgid ""
 "Copyright (C) 2000-2008 MySQL AB\n"
@@ -472,158 +472,158 @@ msgid ""
 " and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
 
-#: client/drizzle.cc:1460
+#: client/drizzle.cc:1459
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
 msgstr ""
 
-#: client/drizzle.cc:1493
+#: client/drizzle.cc:1492
 msgid "DELIMITER cannot contain a backslash character"
 msgstr ""
 
-#: client/drizzle.cc:1514
+#: client/drizzle.cc:1513
 #, c-format
 msgid "WARNING: option deprecated; use --disable-tee instead.\n"
 msgstr ""
 
-#: client/drizzle.cc:1537
+#: client/drizzle.cc:1536
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
 msgstr ""
 
-#: client/drizzle.cc:1541
+#: client/drizzle.cc:1540
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 
-#: client/drizzle.cc:1913
+#: client/drizzle.cc:1912
 #, c-format
 msgid "Unknown command '\\%c'."
 msgstr ""
 
-#: client/drizzle.cc:2340
+#: client/drizzle.cc:2339
 msgid ""
 "Reading table information for completion of table and column names\n"
 "    You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
 
-#: client/drizzle.cc:2437
+#: client/drizzle.cc:2436
 msgid "No connection. Trying to reconnect..."
 msgstr ""
 
-#: client/drizzle.cc:2443
+#: client/drizzle.cc:2442
 msgid "Can't connect to the server\n"
 msgstr ""
 
-#: client/drizzle.cc:2500
+#: client/drizzle.cc:2499
 msgid "categories:"
 msgstr ""
 
-#: client/drizzle.cc:2500
+#: client/drizzle.cc:2499
 msgid "topics:"
 msgstr ""
 
-#: client/drizzle.cc:2551
+#: client/drizzle.cc:2550
 #, c-format
 msgid "Name: '%s'\n"
 msgstr ""
 
-#: client/drizzle.cc:2552
+#: client/drizzle.cc:2551
 #, c-format
 msgid ""
 "Description:\n"
 "%s"
 msgstr ""
 
-#: client/drizzle.cc:2554
+#: client/drizzle.cc:2553
 #, c-format
 msgid ""
 "Examples:\n"
 "%s"
 msgstr ""
 
-#: client/drizzle.cc:2567
+#: client/drizzle.cc:2566
 msgid "Many help items for your request exist."
 msgstr ""
 
-#: client/drizzle.cc:2568
+#: client/drizzle.cc:2567
 msgid ""
 "To make a more specific request, please type 'help <item>',\n"
 "where <item> is one of the following"
 msgstr ""
 
-#: client/drizzle.cc:2574
+#: client/drizzle.cc:2573
 #, c-format
 msgid "You asked for help about help category: '%s'\n"
 msgstr ""
 
-#: client/drizzle.cc:2575
+#: client/drizzle.cc:2574
 msgid ""
 "For more information, type 'help <item>', where <item> is one of the "
 "following"
 msgstr ""
 
-#: client/drizzle.cc:2588
+#: client/drizzle.cc:2587
 msgid ""
 "\n"
 "Nothing found"
 msgstr ""
 
-#: client/drizzle.cc:2589
+#: client/drizzle.cc:2588
 msgid "Please try to run 'help contents' for a list of all accessible topics\n"
 msgstr ""
 
-#: client/drizzle.cc:2611
+#: client/drizzle.cc:2610
 msgid "List of all Drizzle commands:"
 msgstr ""
 
-#: client/drizzle.cc:2613
+#: client/drizzle.cc:2612
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
 
-#: client/drizzle.cc:2624
+#: client/drizzle.cc:2623
 msgid ""
 "\n"
 "For server side help, type 'help contents'\n"
 msgstr ""
 
-#: client/drizzle.cc:2649
+#: client/drizzle.cc:2648
 msgid "Usage: \\C char_setname | charset charset_name"
 msgstr ""
 
-#: client/drizzle.cc:2659
+#: client/drizzle.cc:2658
 msgid "Charset changed"
 msgstr ""
 
-#: client/drizzle.cc:2661
+#: client/drizzle.cc:2660
 msgid "Charset is not found"
 msgstr ""
 
-#: client/drizzle.cc:2692
+#: client/drizzle.cc:2691
 msgid "No query specified\n"
 msgstr ""
 
-#: client/drizzle.cc:2707
+#: client/drizzle.cc:2706
 msgid "Ignoring query to other database"
 msgstr ""
 
-#: client/drizzle.cc:2756
+#: client/drizzle.cc:2755
 msgid "Empty set"
 msgstr ""
 
-#: client/drizzle.cc:2769
+#: client/drizzle.cc:2768
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
 msgstr[0] ""
 msgstr[1] ""
 
-#: client/drizzle.cc:2778
+#: client/drizzle.cc:2777
 msgid "Query OK"
 msgstr ""
 
-#: client/drizzle.cc:2780
+#: client/drizzle.cc:2779
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
