@@ -68,51 +68,6 @@
 #define likely(x)	__builtin_expect((x),1)
 #define unlikely(x)	__builtin_expect((x),0)
 
-
-/*
-  The macros below are useful in optimising places where it has been
-  discovered that cache misses stall the process and where a prefetch
-  of the cache line can improve matters. This is available in GCC 3.1.1
-  and later versions.
-  PREFETCH_READ says that addr is going to be used for reading and that
-  it is to be kept in caches if possible for a while
-  PREFETCH_WRITE also says that the item to be cached is likely to be
-  updated.
-  The *LOCALITY scripts are also available for experimentation purposes
-  mostly and should only be used if they are verified to improve matters.
-  For more input see GCC manual (available in GCC 3.1.1 and later)
-*/
-
-#if (__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR > 10)
-#define PREFETCH_READ(addr) __builtin_prefetch(addr, 0, 3)
-#define PREFETCH_WRITE(addr) \
-  __builtin_prefetch(addr, 1, 3)
-#define PREFETCH_READ_LOCALITY(addr, locality) \
-  __builtin_prefetch(addr, 0, locality)
-#define PREFETCH_WRITE_LOCALITY(addr, locality) \
-  __builtin_prefetch(addr, 1, locality)
-#else
-#define PREFETCH_READ(addr)
-#define PREFETCH_READ_LOCALITY(addr, locality)
-#define PREFETCH_WRITE(addr)
-#define PREFETCH_WRITE_LOCALITY(addr, locality)
-#endif
-
-/*
-  The following macros are used to control inlining a bit more than
-  usual. These macros are used to ensure that inlining always or
-  never occurs (independent of compilation mode).
-  For more input see GCC manual (available in GCC 3.1.1 and later)
-*/
-
-#if (__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR > 10)
-#define ALWAYS_INLINE __attribute__ ((always_inline))
-#define NEVER_INLINE __attribute__ ((noinline))
-#else
-#define ALWAYS_INLINE
-#define NEVER_INLINE
-#endif
-
 /*
  *   Disable __attribute__ for non GNU compilers, since we're using them
  *     only to either generate or suppress warnings.
