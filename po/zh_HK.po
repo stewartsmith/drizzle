@@ -1,4 +1,4 @@
-# Welsh translation for drizzle
+# Chinese (Hong Kong) translation for drizzle
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
@@ -8,31 +8,27 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2008-08-11 11:00-0700\n"
-"PO-Revision-Date: 2008-08-11 21:10+0000\n"
-"Last-Translator: nhutchings <natalie@nuttycrafts.co.uk>\n"
-"Language-Team: Welsh <cy@li.org>\n"
+"PO-Revision-Date: 2008-08-12 14:58+0000\n"
+"Last-Translator: hsso <Unknown>\n"
+"Language-Team: Chinese (Hong Kong) <zh_HK@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=n==1 ? 0 : n==2 ? 1 : (n != 8 || n != 11) ? "
-"2 : 3;\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
-#, fuzzy
 msgid "Synonym for `help'."
-msgstr "Cyfystyr am 'help'"
+msgstr ""
 
 #: client/drizzle.cc:257
-#, fuzzy
 msgid "Clear command."
-msgstr "Carthu'r rheolaeth"
+msgstr ""
 
 #: client/drizzle.cc:259
-#, fuzzy
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "Ail cysylltu i'r gweinydd. Ymresymiad at ddewis yw 'db' a 'host'"
+msgstr "重新接駁伺服器.非必須的參數有db及host"
 
 #: client/drizzle.cc:261
 msgid ""
@@ -44,27 +40,24 @@ msgid "Send command to drizzle server, display result vertically."
 msgstr ""
 
 #: client/drizzle.cc:264
-#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr "Gadael drizzle.  Yr un fath a 'quit'."
+msgstr "離開drizzle.等如quit."
 
 #: client/drizzle.cc:265
 msgid "Send command to drizzle server."
-msgstr ""
+msgstr "傳送指令給drizzle伺服器"
 
 #: client/drizzle.cc:266
-#, fuzzy
 msgid "Display this help."
-msgstr "Dangos cymorth hyn"
+msgstr "顯示這個項目的幫助說明"
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
 msgstr ""
 
 #: client/drizzle.cc:268
-#, fuzzy
 msgid "Don't write into outfile."
-msgstr "Peidiwch ag ysgrifennu yn 'outfile'"
+msgstr ""
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -79,9 +72,8 @@ msgid "Change your drizzle prompt."
 msgstr ""
 
 #: client/drizzle.cc:273
-#, fuzzy
 msgid "Quit drizzle."
-msgstr "Gadael drizzle."
+msgstr "離開drizzle"
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
@@ -93,7 +85,7 @@ msgstr ""
 
 #: client/drizzle.cc:277
 msgid "Get status information from the server."
-msgstr ""
+msgstr "取得伺服器狀態資料"
 
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
@@ -110,14 +102,12 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:285 client/drizzle.cc:1438
-#, fuzzy
 msgid "Show warnings after every statement."
-msgstr "Dangos rhybudd ar ol bob datganiad"
+msgstr ""
 
 #: client/drizzle.cc:287
-#, fuzzy
 msgid "Don't show warnings after every statement."
-msgstr "Peidiwch a dangos rhybydd ar ol bob datganiad"
+msgstr ""
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -151,24 +141,23 @@ msgstr ""
 
 #: client/drizzle.cc:1200
 msgid "Aborted"
-msgstr "Terfynwyd"
+msgstr "已中止"
 
 #: client/drizzle.cc:1200
 msgid "Bye"
-msgstr "Hwyl Fawr"
+msgstr "再見"
 
 #: client/drizzle.cc:1249
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "查詢因Ctrl+C而終止\n"
 
 #: client/drizzle.cc:1272 client/drizzleadmin.cc:69
-#, fuzzy
 msgid "Display this help and exit."
-msgstr "Dangos cymorth yma a gadael"
+msgstr "顯示這個項目的說明並離開"
 
 #: client/drizzle.cc:1274
 msgid "Synonym for -?"
-msgstr "Cyfystyr am -?"
+msgstr ""
 
 #: client/drizzle.cc:1277
 msgid ""
@@ -200,9 +189,8 @@ msgid "Directory where character sets are."
 msgstr ""
 
 #: client/drizzle.cc:1291
-#, fuzzy
 msgid "Display column type information."
-msgstr "Dangos ymwybodaeth colofn math"
+msgstr ""
 
 #: client/drizzle.cc:1294
 msgid ""
@@ -212,7 +200,7 @@ msgstr ""
 
 #: client/drizzle.cc:1297
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "在伺服器及客戶端之間的協定使用壓縮"
 
 #: client/drizzle.cc:1300
 msgid "Check memory and open file usage at exit ."
@@ -224,7 +212,7 @@ msgstr ""
 
 #: client/drizzle.cc:1305
 msgid "Database to use."
-msgstr ""
+msgstr "使用的資料庫"
 
 #: client/drizzle.cc:1308
 msgid "Set the default character set."
@@ -243,9 +231,8 @@ msgid "Print the output of a query (rows) vertically."
 msgstr ""
 
 #: client/drizzle.cc:1317
-#, fuzzy
 msgid "Continue even if we get an sql error."
-msgstr "Dal ymlaen hyd yn oed mae na camgymeriad sql"
+msgstr ""
 
 #: client/drizzle.cc:1321
 msgid ""
@@ -270,7 +257,7 @@ msgstr ""
 
 #: client/drizzle.cc:1329
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "Galluogi / analluogi LOAD DATA LOCAL INFILE"
+msgstr ""
 
 #: client/drizzle.cc:1332
 msgid "Turn off beep on error."
@@ -296,7 +283,7 @@ msgstr ""
 
 #: client/drizzle.cc:1343
 msgid "Write column names in results."
-msgstr ""
+msgstr "在結果顯示欄名"
 
 #: client/drizzle.cc:1347
 msgid ""
@@ -312,7 +299,7 @@ msgstr ""
 
 #: client/drizzle.cc:1352
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr "Anwybyddu SIGINT (CTRL-C)"
+msgstr "忽略 SIGINT (CTRL-C)"
 
 #: client/drizzle.cc:1356
 msgid ""
@@ -336,13 +323,10 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:1365 client/drizzleadmin.cc:74
-#, fuzzy
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
-"Trwyddedair i defnyddio pan cysylltu i'r gweinydd.  Os nad ydych yn rhoi "
-"trwyddedair fydd y  'tty' yn gofyn am un"
 
 #: client/drizzle.cc:1367
 msgid ""
@@ -352,7 +336,7 @@ msgstr ""
 
 #: client/drizzle.cc:1368
 msgid "built-in default"
-msgstr ""
+msgstr "內建的預設值"
 
 #: client/drizzle.cc:1371
 msgid "Set the drizzle prompt to this value."
@@ -382,8 +366,6 @@ msgstr ""
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
-"Tawelwch.  Argraffu'r canlyniadau efo tafod fel gwahanwr, a bob rhes ar "
-"llinell newydd."
 
 #: client/drizzle.cc:1386
 msgid "Socket file to use for connection."
@@ -415,9 +397,8 @@ msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr ""
 
 #: client/drizzle.cc:1403
-#, fuzzy
 msgid "Synonym for option --safe-updates, -U."
-msgstr "cyfystir am dewisiad --safe-updates, -U."
+msgstr ""
 
 #: client/drizzle.cc:1406
 msgid "Write more. (-v -v -v gives the table output format)."
@@ -425,11 +406,11 @@ msgstr ""
 
 #: client/drizzle.cc:1408 client/drizzleadmin.cc:89
 msgid "Output version information and exit."
-msgstr ""
+msgstr "顯示版本資料並離開"
 
 #: client/drizzle.cc:1410 client/drizzleadmin.cc:91
 msgid "Wait and retry if connection is down."
-msgstr "Aros a trio eto os nad ysy'r cysylltiad yn gweithio"
+msgstr ""
 
 #: client/drizzle.cc:1413
 msgid "Number of seconds before connection timeout."
@@ -473,7 +454,7 @@ msgstr ""
 #: client/drizzle.cc:1460
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr ""
+msgstr "使用方式: %s [OPTIONS] [database]\n"
 
 #: client/drizzle.cc:1493
 msgid "DELIMITER cannot contain a backslash character"
@@ -495,9 +476,9 @@ msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 
 #: client/drizzle.cc:1913
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown command '\\%c'."
-msgstr "rheolaeth anadnabyddus '\\%c'"
+msgstr ""
 
 #: client/drizzle.cc:2340
 msgid ""
@@ -512,15 +493,15 @@ msgstr ""
 
 #: client/drizzle.cc:2443
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "不能連接伺服器\n"
 
 #: client/drizzle.cc:2500
 msgid "categories:"
-msgstr ""
+msgstr "分類:"
 
 #: client/drizzle.cc:2500
 msgid "topics:"
-msgstr ""
+msgstr "主題"
 
 #: client/drizzle.cc:2551
 #, c-format
@@ -533,6 +514,8 @@ msgid ""
 "Description:\n"
 "%s"
 msgstr ""
+"介紹:\n"
+"%s"
 
 #: client/drizzle.cc:2554
 #, c-format
@@ -540,6 +523,8 @@ msgid ""
 "Examples:\n"
 "%s"
 msgstr ""
+"例子:\n"
+"%s"
 
 #: client/drizzle.cc:2567
 msgid "Many help items for your request exist."
@@ -575,7 +560,7 @@ msgstr ""
 
 #: client/drizzle.cc:2611
 msgid "List of all Drizzle commands:"
-msgstr ""
+msgstr "所有Drizzle的指令:"
 
 #: client/drizzle.cc:2613
 msgid "Note that all text commands must be first on line and end with ';'"
@@ -620,14 +605,13 @@ msgstr[1] ""
 
 #: client/drizzle.cc:2778
 msgid "Query OK"
-msgstr ""
+msgstr "成功執行"
 
 #: client/drizzle.cc:2780
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "成功執行, %ld 筆記錄受到影響"
 
 #: client/drizzleadmin.cc:76
 msgid ""
@@ -672,12 +656,12 @@ msgstr ""
 
 #: client/drizzleadmin.cc:281
 msgid "Waiting for Drizzle server to answer"
-msgstr ""
+msgstr "正等候Drizzle伺服器回應"
 
 #: client/drizzleadmin.cc:314
 #, c-format
 msgid "shutting down drizzled...\n"
-msgstr ""
+msgstr "正在停止drizzled...\n"
 
 #: client/drizzleadmin.cc:318
 #, c-format
@@ -687,11 +671,11 @@ msgstr ""
 #: client/drizzleadmin.cc:325
 #, c-format
 msgid "done\n"
-msgstr ""
+msgstr "已完成\n"
 
 #: client/drizzleadmin.cc:335
 msgid "drizzled is alive"
-msgstr ""
+msgstr "drizzled 運行中"
 
 #: client/drizzleadmin.cc:343
 msgid "connection was down, but drizzled is now alive"
@@ -705,7 +689,7 @@ msgstr ""
 #: client/drizzleadmin.cc:356
 #, c-format
 msgid "Unknown command: '%-.60s'"
-msgstr ""
+msgstr "不明白的指令: '%-.60s'"
 
 #: client/drizzleadmin.cc:365
 #, c-format
@@ -714,7 +698,7 @@ msgstr ""
 
 #: client/drizzleadmin.cc:372
 msgid "Copyright (C) 2000-2008 MySQL AB"
-msgstr ""
+msgstr "版權所有(C) 2000-2008 MySQL AB"
 
 #: client/drizzleadmin.cc:373
 msgid ""
@@ -745,12 +729,12 @@ msgstr ""
 #: mysys/errors.c:26
 #, c-format
 msgid "Error reading file '%s' (Errcode: %d)"
-msgstr ""
+msgstr "讀取檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: mysys/errors.c:27
 #, c-format
 msgid "Error writing file '%s' (Errcode: %d)"
-msgstr ""
+msgstr "寫入檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: mysys/errors.c:28
 #, c-format
@@ -765,7 +749,7 @@ msgstr ""
 #: mysys/errors.c:30
 #, c-format
 msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: mysys/errors.c:31
 #, c-format
@@ -780,17 +764,17 @@ msgstr ""
 #: mysys/errors.c:33
 #, c-format
 msgid "Can't lock file (Errcode: %d)"
-msgstr ""
+msgstr "不能鎖定檔案(錯誤碼: %d)"
 
 #: mysys/errors.c:34
 #, c-format
 msgid "Can't unlock file (Errcode: %d)"
-msgstr ""
+msgstr "不能解除鎖定檔案(錯誤碼: %d)"
 
 #: mysys/errors.c:35
 #, c-format
 msgid "Can't read dir of '%s' (Errcode: %d)"
-msgstr ""
+msgstr "不能讀取資料夾'%s' (錯誤碼: %d)"
 
 #: mysys/errors.c:36
 #, c-format
@@ -835,7 +819,7 @@ msgstr ""
 #: mysys/errors.c:44
 #, c-format
 msgid "Can't create directory '%s' (Errcode: %d)"
-msgstr ""
+msgstr "不能建立資料夾'%s' (錯誤碼: %d)"
 
 #: mysys/errors.c:45
 #, c-format
@@ -879,7 +863,7 @@ msgstr ""
 #: mysys/errors.c:52
 #, c-format
 msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
+msgstr "找不到檔案 '%s' (錯誤碼: %d)"
 
 #: mysys/errors.c:53
 #, c-format
@@ -889,7 +873,7 @@ msgstr ""
 #: mysys/my_error.c:86
 #, c-format
 msgid "Unknown error %d"
-msgstr ""
+msgstr "不明的錯誤 %d"
 
 #: mysys/my_getopt.c:83
 msgid "Warning: "
@@ -906,11 +890,11 @@ msgstr ""
 
 #: mysys/my_getopt.c:351
 msgid "WARNING"
-msgstr ""
+msgstr "警告"
 
 #: mysys/my_getopt.c:351
 msgid "ERROR"
-msgstr ""
+msgstr "錯誤"
 
 #: mysys/my_getopt.c:454
 #, c-format
@@ -947,16 +931,16 @@ msgstr ""
 
 #: mysys/my_getopt.c:1225
 msgid "true"
-msgstr ""
+msgstr "true"
 
 #: mysys/my_getopt.c:1225
 msgid "false"
-msgstr ""
+msgstr "false"
 
 #: mysys/my_getopt.c:1250
 #, c-format
 msgid "(Disabled)\n"
-msgstr ""
+msgstr "(停用)\n"
 
 #: mysys/my_handler_errors.h:10
 msgid "Didn't find key on read or update"
@@ -1002,15 +986,15 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:30
 msgid "Incorrect file format"
-msgstr ""
+msgstr "檔案格式錯誤"
 
 #: mysys/my_handler_errors.h:32
 msgid "Command not supported by database"
-msgstr ""
+msgstr "這個指令資料庫不支援"
 
 #: mysys/my_handler_errors.h:34
 msgid "Old database file"
-msgstr ""
+msgstr "舊的資料庫檔案"
 
 #: mysys/my_handler_errors.h:36
 msgid "No record read before update"
@@ -1142,7 +1126,7 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:100
 msgid "Table is read only"
-msgstr ""
+msgstr "表格是唯讀"
 
 #: mysys/my_handler_errors.h:102
 msgid "Failed to get next auto increment value"
@@ -1162,7 +1146,7 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:110
 msgid "It is not possible to log this statement"
-msgstr ""
+msgstr "不可能記錄這句指示"
 
 #: mysys/my_handler_errors.h:112
 msgid "Tablespace exists"
@@ -1174,7 +1158,7 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:116
 msgid "The table is of a new format not supported by this version"
-msgstr ""
+msgstr "這個表格使用新的格式,目前的版本並不支援."
 
 #: mysys/my_handler_errors.h:118
 msgid "The event could not be processed no other hanlder error happened"
@@ -1611,11 +1595,11 @@ msgstr ""
 
 #: drizzled/slave.cc:3182
 msgid "reconnecting"
-msgstr ""
+msgstr "重新連接中"
 
 #: drizzled/slave.cc:3182
 msgid "connecting"
-msgstr ""
+msgstr "連接中"
 
 #: drizzled/slave.cc:3208
 #, c-format
@@ -1727,7 +1711,7 @@ msgstr ""
 msgid ""
 "Table '%-.64s' was created with a different version of MySQL and cannot be "
 "read"
-msgstr ""
+msgstr "不能讀取由不同版本的MySQL所建立的表格 '%-.64s'"
 
 #: drizzled/table.cc:2409
 #, c-format
@@ -1771,4 +1755,4 @@ msgstr ""
 
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
-msgstr ""
+msgstr "無效的錯誤碼"

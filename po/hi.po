@@ -1,4 +1,4 @@
-# Welsh translation for drizzle
+# Hindi translation for drizzle
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
@@ -8,120 +8,118 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: FULL NAME <EMAIL@ADDRESS>\n"
 "POT-Creation-Date: 2008-08-11 11:00-0700\n"
-"PO-Revision-Date: 2008-08-11 21:10+0000\n"
-"Last-Translator: nhutchings <natalie@nuttycrafts.co.uk>\n"
-"Language-Team: Welsh <cy@li.org>\n"
+"PO-Revision-Date: 2008-08-12 16:56+0000\n"
+"Last-Translator: Parvesh Garg <Unknown>\n"
+"Language-Team: Hindi <hi@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=n==1 ? 0 : n==2 ? 1 : (n != 8 || n != 11) ? "
-"2 : 3;\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 #, fuzzy
 msgid "Synonym for `help'."
-msgstr "Cyfystyr am 'help'"
+msgstr "'मदद' का परयाय्वाची"
 
 #: client/drizzle.cc:257
-#, fuzzy
 msgid "Clear command."
-msgstr "Carthu'r rheolaeth"
+msgstr "साफ़ करने की कमांड"
 
 #: client/drizzle.cc:259
 #, fuzzy
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "Ail cysylltu i'r gweinydd. Ymresymiad at ddewis yw 'db' a 'host'"
+msgstr "सर्वर को दुबारा कनेक्ट करें, डाटाबेस एवं होस्ट वैकल्पिक तर्क है"
 
 #: client/drizzle.cc:261
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"परिसीमक कथन में सेट करें. ध्यान दें : बाकी की रेखा को नए परिसीमक के रूप में "
+"लिया जाएगा."
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "कमांड डरीझल सर्वर को भेजे, परिणामों को लाम्बिक पर्दर्शित करें"
 
 #: client/drizzle.cc:264
-#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr "Gadael drizzle.  Yr un fath a 'quit'."
+msgstr "डरीझल से बाहर निकले. 'कुइट' कमांड के समान ही है."
 
 #: client/drizzle.cc:265
 msgid "Send command to drizzle server."
-msgstr ""
+msgstr "कमांड डरीझल सर्वर को भेजे"
 
 #: client/drizzle.cc:266
-#, fuzzy
 msgid "Display this help."
-msgstr "Dangos cymorth hyn"
+msgstr "ये सहायता पाठ पर्दर्शित करे"
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "पेजर को निष्क्रिये करे, stdout पे प्रिंट करें."
 
 #: client/drizzle.cc:268
-#, fuzzy
 msgid "Don't write into outfile."
-msgstr "Peidiwch ag ysgrifennu yn 'outfile'"
+msgstr "outfile में मत लिखो"
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
+msgstr "Set PAGER [to_pager]. परिणामों को पेजर के माध्यम से प्रिंट करे."
 
 #: client/drizzle.cc:271
 msgid "Print current command."
-msgstr ""
+msgstr "वर्तमान कमांड को प्रिंट करें."
 
 #: client/drizzle.cc:272
 msgid "Change your drizzle prompt."
-msgstr ""
+msgstr "अपने डरीझल प्रॉम्पट को बदले"
 
 #: client/drizzle.cc:273
-#, fuzzy
 msgid "Quit drizzle."
-msgstr "Gadael drizzle."
+msgstr "डरीझल को छोडें."
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "समापन हैश का पुनर्निमाण करें"
 
 #: client/drizzle.cc:276
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr ""
+msgstr "SQL स्क्रिप्ट फाइल को चलायें. तर्क के रूप में फाइल नेम लिया जाएगा."
 
 #: client/drizzle.cc:277
 msgid "Get status information from the server."
-msgstr ""
+msgstr "सर्वर से स्थिति की जानकारी प्राप्त करें ."
 
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Set outfile [to_outfile]. सब कुछ दिए गए outfile में संलग्न किया जाएगा."
 
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "कोई और डाटाबेस उपयोग करे. तर्क के रूप में डाटाबेस का नाम लिया जाएगा."
 
 #: client/drizzle.cc:283
 msgid ""
 "Switch to another charset. Might be needed for processing binlog with multi-"
 "byte charsets."
 msgstr ""
+"किसी और चारसेट का उपयोग करे. बहु-बाईट चारसेट वाले बिन्लोग के प्रसंस्करण के "
+"लिए ज़रूरी हो सकता है."
 
 #: client/drizzle.cc:285 client/drizzle.cc:1438
-#, fuzzy
 msgid "Show warnings after every statement."
-msgstr "Dangos rhybudd ar ol bob datganiad"
+msgstr "हर विवरण के बाद चेतावनी दिखाए"
 
 #: client/drizzle.cc:287
-#, fuzzy
 msgid "Don't show warnings after every statement."
-msgstr "Peidiwch a dangos rhybydd ar ol bob datganiad"
+msgstr "हर विवरण के बाद चेतावनी मत दिखाए"
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
+"डरीझल क्लाइंट में आपका स्वागत है. कमांड ';' या '\\g' से समाप्त होती है."
 
 #: client/drizzle.cc:1130
 #, c-format
@@ -129,46 +127,49 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"आपका डरीझल कनेक्शन आई डी %u है\n"
+"सर्वर संस्करण: %s\n"
 
 #: client/drizzle.cc:1160
-#, c-format
+#, fuzzy, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "इतिहासिक फ़ाइल %s पढ़ी जा रही है\n"
 
 #: client/drizzle.cc:1165
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
+msgstr "temp histfile के लिए मेमोरी आवंटित नही किया जा सका.\n"
 
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
+"सहायता के लिए 'help;' या '\\h' टाइप करें. बफ़र साफ़ करने के लिए '\\c' टाइप "
+"करें.\n"
 
 #: client/drizzle.cc:1191
-#, c-format
+#, fuzzy, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "इतिहासिक फाइल %s लिखी जा रही है.\n"
 
 #: client/drizzle.cc:1200
 msgid "Aborted"
-msgstr "Terfynwyd"
+msgstr "रद्द"
 
 #: client/drizzle.cc:1200
 msgid "Bye"
-msgstr "Hwyl Fawr"
+msgstr "बाय"
 
 #: client/drizzle.cc:1249
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "कुएरी Ctrl+C द्वारा रद्द की गई.\n"
 
 #: client/drizzle.cc:1272 client/drizzleadmin.cc:69
-#, fuzzy
 msgid "Display this help and exit."
-msgstr "Dangos cymorth yma a gadael"
+msgstr "इस सहायता को पर्दर्शित करे और बाहर निकले."
 
 #: client/drizzle.cc:1274
 msgid "Synonym for -?"
-msgstr "Cyfystyr am -?"
+msgstr "-? का परयाय."
 
 #: client/drizzle.cc:1277
 msgid ""
@@ -194,58 +195,61 @@ msgstr ""
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
+"इतिहासिक फाइल का उपयोग न करे. परस्पर व्यवहार को अक्षम करता है. (--silent को "
+"सक्षम करता है)"
 
 #: client/drizzle.cc:1289
 msgid "Directory where character sets are."
-msgstr ""
+msgstr "चारसेट वाली डाईरेकट्री."
 
 #: client/drizzle.cc:1291
-#, fuzzy
 msgid "Display column type information."
-msgstr "Dangos ymwybodaeth colofn math"
+msgstr "कालम टाइप की जानकारी पर्दर्शित करे."
 
 #: client/drizzle.cc:1294
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"टिप्पणियाँ संरक्षित करो. टिप्पणियाँ सर्वर को भेजो. --skip-comments डिफ़ॉल्ट "
+"होता है, सक्षम करने के लिए --comments का उपयोग करें."
 
 #: client/drizzle.cc:1297
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "सर्वर/क्लाइंट प्रोटोकॉल में संपीडन का प्रयोग करे."
 
 #: client/drizzle.cc:1300
 msgid "Check memory and open file usage at exit ."
-msgstr ""
+msgstr "बाहर निकलते समय मेमोरी एवं खुली हुई फाइलों की जांच करें."
 
 #: client/drizzle.cc:1303
 msgid "Print some debug info at exit."
-msgstr ""
+msgstr "बाहर निकलते समय कुछ डीबग जानकारी पर्दर्शित करे."
 
 #: client/drizzle.cc:1305
 msgid "Database to use."
-msgstr ""
+msgstr "प्रयोग किया जाने वाला डाटाबेस."
 
 #: client/drizzle.cc:1308
 msgid "Set the default character set."
-msgstr ""
+msgstr "डीफौल्ट चारसेट सेट करे."
 
 #: client/drizzle.cc:1310
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "उपयोग किया जाने वाला परिसीमक."
 
 #: client/drizzle.cc:1312
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
+"कमांड को चलाकर बाहर निकले. ( --force एवं इतिहासिक फाइल को निष्क्रिय करता है)"
 
 #: client/drizzle.cc:1314
 msgid "Print the output of a query (rows) vertically."
-msgstr ""
+msgstr "कुएरी के उत्पादन (पंक्तियाँ) को लाम्बिक मुद्रा में प्रिंट करे"
 
 #: client/drizzle.cc:1317
-#, fuzzy
 msgid "Continue even if we get an sql error."
-msgstr "Dal ymlaen hyd yn oed mae na camgymeriad sql"
+msgstr "SQL त्रुटी आने पर भी आगे बढे."
 
 #: client/drizzle.cc:1321
 msgid ""
@@ -254,6 +258,11 @@ msgid ""
 "line of the query, otherwise only from the first line, before an enter. "
 "Disable with --disable-named-commands. This option is disabled by default."
 msgstr ""
+"नामधारी कमांड्स को सक्षम करे. इस प्रोग्राम की अंदरूनी कमांड्स को नामधारी "
+"कमांड्स कहते है; drizzle> help देखे. सक्षम करने के बाद नामधारी कमांड्स को "
+"क्वैरी की किसी भी लाइन के इंटर से पहले उपयोग किया जा सकता है, अन्यथा केवल "
+"पहली लाइन पर. --disable-named-commands इसको अक्षम करता है. डिफ़ॉल्ट तौर पर "
+"ये अक्षम होता है."
 
 #: client/drizzle.cc:1325
 msgid ""
@@ -266,59 +275,67 @@ msgstr ""
 
 #: client/drizzle.cc:1327
 msgid "Ignore space after function names."
-msgstr ""
+msgstr "फंकशन के नाम के बाद के स्पेस पर ध्यान ना दे."
 
 #: client/drizzle.cc:1329
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "Galluogi / analluogi LOAD DATA LOCAL INFILE"
+msgstr "LOAD DATA LOCAL INFILE सक्षम/अक्षम करे."
 
 #: client/drizzle.cc:1332
 msgid "Turn off beep on error."
-msgstr ""
+msgstr "त्रुटी आने पर बीप न की जाए."
 
 #: client/drizzle.cc:1334 client/drizzleadmin.cc:71
 msgid "Connect to host."
-msgstr ""
+msgstr "होस्ट से कनेक्ट करने के लिए ."
 
 #: client/drizzle.cc:1336
 msgid "Write line numbers for errors."
-msgstr ""
+msgstr "त्रुटियों के लिए लाइन संख्या लिखें."
 
 #: client/drizzle.cc:1339
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
+"त्रुटियों के लिए लाइन संख्या मत लिखें. चेतावनी: -L पदावनत है, इसकी बजाये इस "
+"विकल्प के लंबे संस्करण का उपयोग करें."
 
 #: client/drizzle.cc:1341
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "हर एक कुएरी के बाद बफ़र फ्लश करे."
 
 #: client/drizzle.cc:1343
 msgid "Write column names in results."
-msgstr ""
+msgstr "स्तम्भ के नाम परिणाम में लिखें"
 
 #: client/drizzle.cc:1347
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
+"कालम के नाम परिणाम में मत लिखें. चेतावनी: -N पदावनत है, इसकी बजाये इस विकल्प "
+"के लंबे संस्करण का उपयोग करें."
 
 #: client/drizzle.cc:1350
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated; "
 "you can set variables directly with --variable-name=value."
 msgstr ""
+"चर के मूल्य को बदले. कृपया ध्यान दें कि ये विकल्प पदावनत है, चरों के मूल्य "
+"को आप सीधा --variable-name=value से सेट कर सकते है."
 
 #: client/drizzle.cc:1352
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr "Anwybyddu SIGINT (CTRL-C)"
+msgstr "SIGINT (CTRL-C) की ओर ध्यान ना दे."
 
 #: client/drizzle.cc:1356
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
+"केवल देफौल्ट डाटाबेस का ही अद्यतन करें. ये अद्यतन लॉग में दूसरे डाटाबेसस के "
+"अद्यतन को छोड़ने के काम आता है."
 
 #: client/drizzle.cc:1359
 msgid ""
@@ -334,15 +351,16 @@ msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
 "option deprecated; use --disable-pager instead."
 msgstr ""
+"पेजर को निष्क्रिय करके stdout पे प्रिंट करें. परस्पर सक्रिय सहायता (\\h) भी "
+"देखें. चेतावनी: विकल्प पदावनत है, इसकी बजाये --disable-pager का उपयोग करें."
 
 #: client/drizzle.cc:1365 client/drizzleadmin.cc:74
-#, fuzzy
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
-"Trwyddedair i defnyddio pan cysylltu i'r gweinydd.  Os nad ydych yn rhoi "
-"trwyddedair fydd y  'tty' yn gofyn am un"
+"सर्वर से कनेक्ट करने के लिए पासवर्ड का प्रयोग करें. यदि पासवर्ड नही दिया गया "
+"हो तो tty पर पुछा जाए."
 
 #: client/drizzle.cc:1367
 msgid ""
@@ -352,46 +370,50 @@ msgstr ""
 
 #: client/drizzle.cc:1368
 msgid "built-in default"
-msgstr ""
+msgstr "निर्मित डिफ़ॉल्ट"
 
 #: client/drizzle.cc:1371
 msgid "Set the drizzle prompt to this value."
-msgstr ""
+msgstr "डरीझल टत्पर को इस मूल्य पे सेट करो"
 
 #: client/drizzle.cc:1374
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
-msgstr ""
+msgstr "कनेक्शन का प्रोटोकॉल (tcp,सॉकेट,पाइप,मेमोरी)"
 
 #: client/drizzle.cc:1377
 msgid ""
 "Don't cache result, print it row by row. This may slow down the server if "
 "the output is suspended. Doesn't use history file."
 msgstr ""
+"परिणाम को कैश न करें. ये सर्वर को धीमा कर सकता है अगर परिणाम निलंबित हो. "
+"इतिहासिक फाइल का उपयोग नही होगा."
 
 #: client/drizzle.cc:1379
 msgid "Write fields without conversion. Used with --batch."
-msgstr ""
+msgstr "फ़िल्डस को बिना रूपांतरण के लिखे. --batch के साथ प्रयुक्त है"
 
 #: client/drizzle.cc:1382
 msgid ""
 "Reconnect if the connection is lost. Disable with --disable-reconnect. This "
 "option is enabled by default."
 msgstr ""
+"पुन: कनेक्ट करे अगर कनेक्शन टूट गया हो. --disable-reconnect से निष्क्रिय कर "
+"सकते है. यह विकल्प डिफ़ॉल्ट रूप से सक्षम है."
 
 #: client/drizzle.cc:1384
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
-"Tawelwch.  Argraffu'r canlyniadau efo tafod fel gwahanwr, a bob rhes ar "
-"llinell newydd."
+"अधिक मूक रहो. परिणाम प्रिंट करते समय टैब को विभाजक के रूप में उपयोग करे, "
+"प्रत्येक पंक्ति को नई लाइन पर रखते हुए."
 
 #: client/drizzle.cc:1386
 msgid "Socket file to use for connection."
-msgstr ""
+msgstr "कनेक्शन के लिए उपयोग की जाने वाली सोकेट फाइल."
 
 #: client/drizzle.cc:1389
 msgid "Output in table format."
-msgstr ""
+msgstr "तालिका प्रारूप में निर्गम किया जाए."
 
 #: client/drizzle.cc:1392
 msgid ""
@@ -399,49 +421,55 @@ msgid ""
 "work in batch mode. Disable with --disable-tee. This option is disabled by "
 "default."
 msgstr ""
+"सब कुछ outfile में संलग्न करे. परस्पर सहायता (\\h) भी देखें. ये बैच मोड में "
+"काम नहीं करता है. --disable-tee इसको निष्क्रिय करता है. यह विकल्प डिफ़ॉल्ट "
+"रूप से अक्षम है."
 
 #: client/drizzle.cc:1394
 msgid ""
 "Disable outfile. See interactive help (\\h) also. WARNING: option "
 "deprecated; use --disable-tee instead"
 msgstr ""
+"outfile को निष्क्रिय करे. परस्पर सहायता (\\h) भी देखें. चेतावनी: विकल्प "
+"पदावनत है; इसकी बजाये --disable-tee उपयोग करे"
 
 #: client/drizzle.cc:1397 client/drizzleadmin.cc:84
 msgid "User for login if not current user."
-msgstr ""
+msgstr "उपभोक्ता का नाम बताएं अगर आप वर्तमान उपभोक्ता नही है"
 
 #: client/drizzle.cc:1400
 msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr ""
+"केवल उन अद्यतन और मिटाने कि कमांड को अनुमति दें जो कुंजी का उपयोग करती हो"
 
 #: client/drizzle.cc:1403
-#, fuzzy
 msgid "Synonym for option --safe-updates, -U."
-msgstr "cyfystir am dewisiad --safe-updates, -U."
+msgstr "--safe-updates, -U विकल्प का पर्याय"
 
 #: client/drizzle.cc:1406
 msgid "Write more. (-v -v -v gives the table output format)."
-msgstr ""
+msgstr "अधिक लिखें . (-v -v -v तालिका उत्पादन प्रारूप देता है) ."
 
 #: client/drizzle.cc:1408 client/drizzleadmin.cc:89
 msgid "Output version information and exit."
-msgstr ""
+msgstr "संस्करण सूचना प्रिंट करे और बाहर निकले."
 
 #: client/drizzle.cc:1410 client/drizzleadmin.cc:91
 msgid "Wait and retry if connection is down."
-msgstr "Aros a trio eto os nad ysy'r cysylltiad yn gweithio"
+msgstr "यदि कनेक्शन टूट गया हो तो प्रतीक्षा के बाद पुन: प्रयास किया जाए."
 
 #: client/drizzle.cc:1413
 msgid "Number of seconds before connection timeout."
-msgstr ""
+msgstr "कनेक्शन की समयसमाप्ति से पहले सेकंड्स की संख्या."
 
 #: client/drizzle.cc:1418
 msgid "Max packet length to send to, or receive from server"
 msgstr ""
+"सर्वर से मिलने वाले या सर्वर को भेजे जाने वाले पैकेट की अधिकतम लम्बाई"
 
 #: client/drizzle.cc:1423
 msgid "Buffer for TCP/IP and socket communication"
-msgstr ""
+msgstr "TCP/IP एवं सॉकेट संचार का बफ़र"
 
 #: client/drizzle.cc:1427
 msgid "Automatic limit for SELECT when using --safe-updates"
@@ -450,11 +478,14 @@ msgstr ""
 #: client/drizzle.cc:1432
 msgid "Automatic limit for rows in a join when using --safe-updates"
 msgstr ""
+"--safe-updates का उपयोग करते समय ज्वाइन में स्वत: पंक्ति-गणना को सीमित करे."
 
 #: client/drizzle.cc:1436
 msgid ""
 "Refuse client connecting to server if it uses old (pre-4.1.1) protocol"
 msgstr ""
+"सर्वर क्लाइंट के कनेक्शन को इनकार करे यदि वह पुराने (पूर्व-4.1.1) प्रोटोकॉल "
+"का उपयोग कर रहा हो तो."
 
 #: client/drizzle.cc:1449
 #, c-format
@@ -462,42 +493,48 @@ msgid "%s  Ver %s Distrib %s, for %s (%s) using %s %s\n"
 msgstr ""
 
 #: client/drizzle.cc:1456
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Copyright (C) 2000-2008 MySQL AB\n"
 "                                      This software comes with ABSOLUTELY NO "
 "WARRANTY. This is free software,\n"
 " and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"कोप्य्रिघ्त (क) २०००-२००८ MySQL AB\n"
+"                                      ये सॉफ्टवेर कदापि वार्रंटी के साथ नही "
+"आता, यह एक फ्री सॉफ्टवेर है\n"
+" एवं आपको इसे GPL लाईसेन्स के अंतर्गत संशोधित और पुनर्वितरण करने की पूरी छूट "
+"है\n"
 
 #: client/drizzle.cc:1460
 #, c-format
 msgid "Usage: %s [OPTIONS] [database]\n"
-msgstr ""
+msgstr "उपयोग: %s [विकल्प] [डाटाबेस]\n"
 
 #: client/drizzle.cc:1493
 msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
+msgstr "परिसीमक में backslash नही हो सकता है"
 
 #: client/drizzle.cc:1514
 #, c-format
 msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr ""
+msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-tee का उपयोग करे.\n"
 
 #: client/drizzle.cc:1537
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
 msgstr ""
+"चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-pager का उपयोग करे.\n"
 
 #: client/drizzle.cc:1541
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
+msgstr "चेतावनी : --server-arg विकल्प इस विन्यास में समर्थित नहीं है .\n"
 
 #: client/drizzle.cc:1913
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown command '\\%c'."
-msgstr "rheolaeth anadnabyddus '\\%c'"
+msgstr "अज्ञात कमांड '\\%c'"
 
 #: client/drizzle.cc:2340
 msgid ""
@@ -508,24 +545,24 @@ msgstr ""
 
 #: client/drizzle.cc:2437
 msgid "No connection. Trying to reconnect..."
-msgstr ""
+msgstr "कोई कनेक्शन नही है. फिर से कनेक्ट करने की कोशिश की जा रही है"
 
 #: client/drizzle.cc:2443
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "सर्वर से कनेक्ट नही कर पा रहा है\n"
 
 #: client/drizzle.cc:2500
 msgid "categories:"
-msgstr ""
+msgstr "श्रेणियाँ:"
 
 #: client/drizzle.cc:2500
 msgid "topics:"
-msgstr ""
+msgstr "विषय:"
 
 #: client/drizzle.cc:2551
 #, c-format
 msgid "Name: '%s'\n"
-msgstr ""
+msgstr "नाम: '%s'\n"
 
 #: client/drizzle.cc:2552
 #, c-format
@@ -533,6 +570,8 @@ msgid ""
 "Description:\n"
 "%s"
 msgstr ""
+"वर्णन:\n"
+"%s"
 
 #: client/drizzle.cc:2554
 #, c-format
@@ -540,52 +579,64 @@ msgid ""
 "Examples:\n"
 "%s"
 msgstr ""
+"उदाहरण:\n"
+"%s"
 
 #: client/drizzle.cc:2567
 msgid "Many help items for your request exist."
-msgstr ""
+msgstr "आपके अनुरोध के लिए काफ़ी सहायता आइटम मौजूद है"
 
 #: client/drizzle.cc:2568
 msgid ""
 "To make a more specific request, please type 'help <item>',\n"
 "where <item> is one of the following"
 msgstr ""
+"अधिक विशिष्ट जानकारी के लिए कृपया 'help <item>' टाइप करे\n"
+"<item> निम्न में से एक है"
 
 #: client/drizzle.cc:2574
 #, c-format
 msgid "You asked for help about help category: '%s'\n"
-msgstr ""
+msgstr "आपने निम्न सहायता श्रेणी के लिए सहायता का अनुरोध किया है: '%s'\n"
 
 #: client/drizzle.cc:2575
 msgid ""
 "For more information, type 'help <item>', where <item> is one of the "
 "following"
 msgstr ""
+"ज़्यादा जानकारी के लिए 'help <item>' टाइप करे जिसमे <item> निम्न में से एक "
+"है."
 
 #: client/drizzle.cc:2588
 msgid ""
 "\n"
 "Nothing found"
 msgstr ""
+"\n"
+"कुछ नही मिला"
 
 #: client/drizzle.cc:2589
 msgid ""
 "Please try to run 'help contents' for a list of all accessible topics\n"
-msgstr ""
+msgstr "सभी सुलभ विषयों की सूची के लिए कृपया 'help contents' चलायें.\n"
 
 #: client/drizzle.cc:2611
 msgid "List of all Drizzle commands:"
-msgstr ""
+msgstr "सारी डरीझल कमांड्स की सूची:"
 
 #: client/drizzle.cc:2613
 msgid "Note that all text commands must be first on line and end with ';'"
 msgstr ""
+"ध्यान दे की सभी टेक्स्ट कमांड्स पहली लाइन पर होनी चाहिए एवं ';' के साथ "
+"समाप्त हो."
 
 #: client/drizzle.cc:2624
 msgid ""
 "\n"
 "For server side help, type 'help contents'\n"
 msgstr ""
+"\n"
+"सर्वर साइड में सहायता के लिए 'help contents' टाइप करे\n"
 
 #: client/drizzle.cc:2649
 msgid "Usage: \\C char_setname | charset charset_name"
@@ -593,41 +644,41 @@ msgstr ""
 
 #: client/drizzle.cc:2659
 msgid "Charset changed"
-msgstr ""
+msgstr "चारसेट बदल दिया गया है"
 
 #: client/drizzle.cc:2661
 msgid "Charset is not found"
-msgstr ""
+msgstr "चारसेट नही मिल रहा है"
 
 #: client/drizzle.cc:2692
 msgid "No query specified\n"
-msgstr ""
+msgstr "कुएरी निर्दिष्ट नही है\n"
 
 #: client/drizzle.cc:2707
 msgid "Ignoring query to other database"
-msgstr ""
+msgstr "अन्य डाटाबेस की क्वैरी को अनदेखा किया जा रहा है."
 
 #: client/drizzle.cc:2756
 msgid "Empty set"
-msgstr ""
+msgstr "रिक्त सेट"
 
 #: client/drizzle.cc:2769
 #, c-format
 msgid "%ld row in set"
 msgid_plural "%ld rows in set"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%ld पंक्ती सेट में"
+msgstr[1] "%ld पंक्तियाँ सेट में"
 
 #: client/drizzle.cc:2778
 msgid "Query OK"
-msgstr ""
+msgstr "कुएरी ठीक है"
 
 #: client/drizzle.cc:2780
 #, c-format
 msgid "Query OK, %ld row affected"
 msgid_plural "Query OK, %ld rows affected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "क्वैरी ओ.के, %ld पंक्ति प्रभावित"
+msgstr[1] "क्वैरी ओ.के, %ld पंक्तियाँ प्रभावित"
 
 #: client/drizzleadmin.cc:76
 msgid ""
@@ -638,10 +689,11 @@ msgstr ""
 #: client/drizzleadmin.cc:81
 msgid "Silently exit if one can't connect to server."
 msgstr ""
+"अगर कोई सर्वर को कनेक्ट नही कर पा रहा है तो खामोशी से बाहर निकल जायें"
 
 #: client/drizzleadmin.cc:87
 msgid "Write more information."
-msgstr ""
+msgstr "अधिक जानकारी लिखें"
 
 #: client/drizzleadmin.cc:254
 #, c-format
@@ -649,63 +701,65 @@ msgid ""
 "connect to server at '%s' failed\n"
 "error: '%s'"
 msgstr ""
+"'%s' पर सर्वर को कनेक्ट करना विफल हुआ\n"
+"त्रुटी: '%s'"
 
 #: client/drizzleadmin.cc:260
 #, c-format
 msgid "Check that drizzled is running on %s"
-msgstr ""
+msgstr "जांचे कि %s पर drizzled चल रहा है"
 
 #: client/drizzleadmin.cc:261
 #, c-format
 msgid " and that the port is %d.\n"
-msgstr ""
+msgstr " एवं कि पोर्ट %d है\n"
 
 #: client/drizzleadmin.cc:263
 #, c-format
 msgid "You can check this by doing 'telnet %s %d'\n"
-msgstr ""
+msgstr "आप इसको 'telnet %s %d' करके जांच सकते है\n"
 
 #: client/drizzleadmin.cc:274
 #, c-format
 msgid "Got error: %s\n"
-msgstr ""
+msgstr "ये त्रुटी मिली है: %s\n"
 
 #: client/drizzleadmin.cc:281
 msgid "Waiting for Drizzle server to answer"
-msgstr ""
+msgstr "उत्तर के लिए डरीझल सर्वर की प्रतीक्षा की जा रही है"
 
 #: client/drizzleadmin.cc:314
 #, c-format
 msgid "shutting down drizzled...\n"
-msgstr ""
+msgstr "drizzled को बंद किया जा रहा है\n"
 
 #: client/drizzleadmin.cc:318
 #, c-format
 msgid "shutdown failed; error: '%s'"
-msgstr ""
+msgstr "बंद करना विफल रहा; त्रुटी: '%s'"
 
 #: client/drizzleadmin.cc:325
 #, c-format
 msgid "done\n"
-msgstr ""
+msgstr "काम खत्म\n"
 
 #: client/drizzleadmin.cc:335
 msgid "drizzled is alive"
-msgstr ""
+msgstr "drizzled चल रहा है"
 
 #: client/drizzleadmin.cc:343
 msgid "connection was down, but drizzled is now alive"
-msgstr ""
+msgstr "कनेक्शन टूट गया था पर drizzled अब चल रहा है"
 
 #: client/drizzleadmin.cc:347
 #, c-format
 msgid "drizzled doesn't answer to ping, error: '%s'"
-msgstr ""
+msgstr "drizzled ने पिंग का उत्तर नही दिया, त्रुटि: '%s'"
 
 #: client/drizzleadmin.cc:356
 #, c-format
 msgid "Unknown command: '%-.60s'"
-msgstr ""
+msgstr "अज्ञात कमांड: '%-.60s'"
 
 #: client/drizzleadmin.cc:365
 #, c-format
@@ -714,22 +768,25 @@ msgstr ""
 
 #: client/drizzleadmin.cc:372
 msgid "Copyright (C) 2000-2008 MySQL AB"
-msgstr ""
+msgstr "कॉपीराइट (C) २०००-२००८ MySQL AB"
 
 #: client/drizzleadmin.cc:373
 msgid ""
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
 "and you are welcome to modify and redistribute it under the GPL license\n"
 msgstr ""
+"ये सॉफ्टवेर कदापि वार्रंटी के साथ नही आता, यह एक फ्री सॉफ्टवेर है\n"
+"एवं आपको इसे GPL लाईसेन्स के अंतर्गत संशोधित और पुनर्वितरण करने की पूरी छूट "
+"है\n"
 
 #: client/drizzleadmin.cc:374
 msgid "Administration program for the drizzled daemon."
-msgstr ""
+msgstr "drizzled daemon का प्रशासनिक प्रोग्राम"
 
 #: client/drizzleadmin.cc:375
 #, c-format
 msgid "Usage: %s [OPTIONS] command command....\n"
-msgstr ""
+msgstr "उपयोग: %s [विकल्प] कमांड कमांड ...\n"
 
 #: client/drizzleadmin.cc:377
 msgid ""
@@ -740,17 +797,17 @@ msgstr ""
 #: mysys/errors.c:25
 #, c-format
 msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
+msgstr "'%s' फाइल को बनाने/लिखने के समय विफल हुआ (त्रुटि कोड: %d)"
 
 #: mysys/errors.c:26
 #, c-format
 msgid "Error reading file '%s' (Errcode: %d)"
-msgstr ""
+msgstr "फ़ाइल '%s' पढ़ने में त्रुटि (त्रुटि कोड: %d)"
 
 #: mysys/errors.c:27
 #, c-format
 msgid "Error writing file '%s' (Errcode: %d)"
-msgstr ""
+msgstr "फ़ाइल '%s' लिखने में त्रुटि (त्रुटि कोड: %d)"
 
 #: mysys/errors.c:28
 #, c-format
@@ -760,32 +817,32 @@ msgstr ""
 #: mysys/errors.c:29
 #, c-format
 msgid "Out of memory (Needed %u bytes)"
-msgstr ""
+msgstr "मेमोरी समाप्त (%u बाईट्स की और ज़रूरत थी)"
 
 #: mysys/errors.c:30
 #, c-format
 msgid "Error on delete of '%s' (Errcode: %d)"
-msgstr ""
+msgstr "'%s' को मिटाने पर त्रुटी (त्रुटी कोड: %d)"
 
 #: mysys/errors.c:31
 #, c-format
 msgid "Error on rename of '%s' to '%s' (Errcode: %d)"
-msgstr ""
+msgstr "'%s' का नाम '%s' में बदलते हुए त्रुटी (त्रुटी कोड: %d)"
 
 #: mysys/errors.c:32
 #, c-format
 msgid "Unexpected eof found when reading file '%s' (Errcode: %d)"
-msgstr ""
+msgstr "'%s' फाइल को पढ़ते हुए अप्रत्याशित अंत (eof) मिला (त्रुटी कोड: %d)"
 
 #: mysys/errors.c:33
 #, c-format
 msgid "Can't lock file (Errcode: %d)"
-msgstr ""
+msgstr "फ़ाइल लॉक नहीं कर सकता (त्रुटी कोड: %d)"
 
 #: mysys/errors.c:34
 #, c-format
 msgid "Can't unlock file (Errcode: %d)"
-msgstr ""
+msgstr "फाइल अनलॉक नही कर पा रहा है (त्रुटि कोड: %d)"
 
 #: mysys/errors.c:35
 #, c-format
@@ -800,12 +857,12 @@ msgstr ""
 #: mysys/errors.c:37
 #, c-format
 msgid "Can't change size of file (Errcode: %d)"
-msgstr ""
+msgstr "फ़ाइल के आकार में परिवर्तन नहीं कर सकते (त्रुटि कोड: %d)"
 
 #: mysys/errors.c:38
 #, c-format
 msgid "Can't open stream from handle (Errcode: %d)"
-msgstr ""
+msgstr "हैण्डल से स्ट्रीम प्राप्त नही कर सकते (त्रुटि कोड: %d)"
 
 #: mysys/errors.c:39
 #, c-format
@@ -879,7 +936,7 @@ msgstr ""
 #: mysys/errors.c:52
 #, c-format
 msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
+msgstr "'%s' फाइल नही मिली (त्रुटी कोड: %d)"
 
 #: mysys/errors.c:53
 #, c-format
@@ -889,15 +946,15 @@ msgstr ""
 #: mysys/my_error.c:86
 #, c-format
 msgid "Unknown error %d"
-msgstr ""
+msgstr "अज्ञात त्रुटि %d"
 
 #: mysys/my_getopt.c:83
 msgid "Warning: "
-msgstr ""
+msgstr "चेतावनी: "
 
 #: mysys/my_getopt.c:85
 msgid "Info: "
-msgstr ""
+msgstr "जानकारी: "
 
 #: mysys/my_getopt.c:350
 #, c-format
@@ -906,21 +963,21 @@ msgstr ""
 
 #: mysys/my_getopt.c:351
 msgid "WARNING"
-msgstr ""
+msgstr "चेतावनी"
 
 #: mysys/my_getopt.c:351
 msgid "ERROR"
-msgstr ""
+msgstr "त्रुटि"
 
 #: mysys/my_getopt.c:454
 #, c-format
 msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
-msgstr ""
+msgstr "%s: त्रुटि: '-%c' विकल्प उपयोग किया गया है जो कि अक्षम है\n"
 
 #: mysys/my_getopt.c:767
 #, c-format
 msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
-msgstr ""
+msgstr "अज्ञात प्रत्यय '%c' का '%s' चर के लिए उपयोग किया गया (मूल्य '%s')\n"
 
 #: mysys/my_getopt.c:948
 #, c-format
@@ -947,16 +1004,16 @@ msgstr ""
 
 #: mysys/my_getopt.c:1225
 msgid "true"
-msgstr ""
+msgstr "सत्य"
 
 #: mysys/my_getopt.c:1225
 msgid "false"
-msgstr ""
+msgstr "मिथ्या"
 
 #: mysys/my_getopt.c:1250
 #, c-format
 msgid "(Disabled)\n"
-msgstr ""
+msgstr "(अक्षम)\n"
 
 #: mysys/my_handler_errors.h:10
 msgid "Didn't find key on read or update"
@@ -1002,15 +1059,15 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:30
 msgid "Incorrect file format"
-msgstr ""
+msgstr "गलत फाइल रचना"
 
 #: mysys/my_handler_errors.h:32
 msgid "Command not supported by database"
-msgstr ""
+msgstr "कमांड डाटाबेस द्वारा समर्थित नही है"
 
 #: mysys/my_handler_errors.h:34
 msgid "Old database file"
-msgstr ""
+msgstr "डाटाबेस पुराणी है"
 
 #: mysys/my_handler_errors.h:36
 msgid "No record read before update"
@@ -1022,27 +1079,27 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:40
 msgid "No more room in record file"
-msgstr ""
+msgstr "रिकॉर्ड फाइल में और जगह नही है"
 
 #: mysys/my_handler_errors.h:42
 msgid "No more room in index file"
-msgstr ""
+msgstr "इंडेक्स फाइल में और जगह नही है"
 
 #: mysys/my_handler_errors.h:44
 msgid "No more records (read after end of file)"
-msgstr ""
+msgstr "और रिकॉर्ड नही है (फाइल का अंत पढ़ा जा चुका है)"
 
 #: mysys/my_handler_errors.h:46
 msgid "Unsupported extension used for table"
-msgstr ""
+msgstr "तालिका के लिए असमर्थित विस्तार का उपयोग किया गया"
 
 #: mysys/my_handler_errors.h:48
 msgid "Too big row"
-msgstr ""
+msgstr "पंक्ति बहुत बड़ी है"
 
 #: mysys/my_handler_errors.h:50
 msgid "Wrong create options"
-msgstr ""
+msgstr "निरमाण के विकल्प ग़लत है"
 
 #: mysys/my_handler_errors.h:52
 msgid "Duplicate unique key or constraint on write or update"
@@ -1050,7 +1107,7 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:54
 msgid "Unknown character set used in table"
-msgstr ""
+msgstr "तालिका में अज्ञात चारसेट का उपयोग किया गया है"
 
 #: mysys/my_handler_errors.h:56
 msgid "Conflicting table definitions in sub-tables of MERGE table"
@@ -1066,7 +1123,7 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:62
 msgid "Lock timed out; Retry transaction"
-msgstr ""
+msgstr "लाक समयसमाप्त हो गया; क्रियकलप पुन: प्रयास करे"
 
 #: mysys/my_handler_errors.h:64
 msgid "Lock table is full;  Restart program with a larger locktable"
@@ -1126,7 +1183,7 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:92
 msgid "Row-based binlogging of row failed"
-msgstr ""
+msgstr "पंक्ति की पंक्ति आधारित binlogging विफल रही"
 
 #: mysys/my_handler_errors.h:94
 msgid "Index needed in foreign key constraint"
@@ -1142,11 +1199,11 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:100
 msgid "Table is read only"
-msgstr ""
+msgstr "तालिका को केवल पढा जा सकता है"
 
 #: mysys/my_handler_errors.h:102
 msgid "Failed to get next auto increment value"
-msgstr ""
+msgstr "अगली स्वत: वृद्धि मूल्य प्राप्ति विफल हुई"
 
 #: mysys/my_handler_errors.h:104
 msgid "Failed to set row auto increment value"
@@ -1162,11 +1219,11 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:110
 msgid "It is not possible to log this statement"
-msgstr ""
+msgstr "इस कथन को लॉग करना सम्भव नही है"
 
 #: mysys/my_handler_errors.h:112
 msgid "Tablespace exists"
-msgstr ""
+msgstr "तालिकास्थान मौजूद है"
 
 #: mysys/my_handler_errors.h:114
 msgid "The event was corrupt, leading to illegal data being read"
@@ -1198,11 +1255,11 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:128
 msgid "No such table space"
-msgstr ""
+msgstr "ऐसा कोई तालिकास्थान नही है"
 
 #: mysys/my_handler_errors.h:130
 msgid "Tablespace not empty"
-msgstr ""
+msgstr "तालिकास्थान खाली नही है"
 
 #: drizzled/rpl_mi.cc:148
 #, c-format
@@ -1237,7 +1294,7 @@ msgstr ""
 #: drizzled/rpl_reporting.cc:43
 #, c-format
 msgid "Slave %s: %s%s Error_code: %d"
-msgstr ""
+msgstr "दास %s: %s%s त्रुटी कोड: %d"
 
 #: drizzled/rpl_utility.cc:123
 #, c-format
@@ -1451,7 +1508,7 @@ msgstr ""
 
 #: drizzled/slave.cc:2002
 msgid "error in drizzle_create()"
-msgstr ""
+msgstr "drizzle_create() में त्रुटि"
 
 #: drizzled/slave.cc:2010
 #, c-format
@@ -1611,11 +1668,11 @@ msgstr ""
 
 #: drizzled/slave.cc:3182
 msgid "reconnecting"
-msgstr ""
+msgstr "फिर से कनेक्ट कर रहा है"
 
 #: drizzled/slave.cc:3182
 msgid "connecting"
-msgstr ""
+msgstr "कनेक्ट कर रहा है"
 
 #: drizzled/slave.cc:3208
 #, c-format
@@ -1767,8 +1824,8 @@ msgstr ""
 #: drizzled/tztime.cc:1063
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
-msgstr ""
+msgstr "गंभीर त्रुटि : अवैध या अज्ञात डिफ़ॉल्ट समय क्षेत्र '%s'"
 
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
-msgstr ""
+msgstr "त्रुटी कोड अवैध है"
