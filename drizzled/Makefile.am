@@ -131,7 +131,9 @@ noinst_HEADERS = item.h \
 		 base.h \
 		 probes.h
 
-drizzled_SOURCES = sql_lex.cc \
+drizzled_SOURCES = \
+		   sql_db.cc \
+		   sql_lex.cc \
 		   authentication.cc \
 		   sql_handler.cc \
 		   item.cc \
@@ -182,7 +184,6 @@ drizzled_SOURCES = sql_lex.cc \
 		   opt_sum.cc \
 		   records.cc \
 		   filesort.cc \
-		   sql_db.cc \
 		   sql_table.cc \
 		   sql_rename.cc \
 		   sql_load.cc \
