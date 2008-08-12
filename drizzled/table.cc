@@ -35,59 +35,6 @@ static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 			      uint types, char **names);
 static uint find_field(Field **fields, uchar *record, uint start, uint length);
 
-/**************************************************************************
-  Object_creation_ctx implementation.
-**************************************************************************/
-
-Object_creation_ctx *Object_creation_ctx::set_n_backup(THD *thd)
-{
-  Object_creation_ctx *backup_ctx;
-
-  backup_ctx= create_backup_ctx(thd);
-  change_env(thd);
-
-  return(backup_ctx);
-}
-
-void Object_creation_ctx::restore_env(THD *thd, Object_creation_ctx *backup_ctx)
-{
-  if (!backup_ctx)
-    return;
-
-  backup_ctx->change_env(thd);
-
-  delete backup_ctx;
-}
-
-/**************************************************************************
-  Default_object_creation_ctx implementation.
-**************************************************************************/
-
-Default_object_creation_ctx::Default_object_creation_ctx(THD *thd)
-  : m_client_cs(thd->variables.character_set_client),
-    m_connection_cl(thd->variables.collation_connection)
-{ }
-
-Default_object_creation_ctx::Default_object_creation_ctx(
-  const CHARSET_INFO * const client_cs, const CHARSET_INFO * const connection_cl)
-  : m_client_cs(client_cs),
-    m_connection_cl(connection_cl)
-{ }
-
-Object_creation_ctx *
-Default_object_creation_ctx::create_backup_ctx(THD *thd) const
-{
-  return new Default_object_creation_ctx(thd);
-}
-
-void Default_object_creation_ctx::change_env(THD *thd) const
-{
-  thd->variables.character_set_client= m_client_cs;
-  thd->variables.collation_connection= m_connection_cl;
-
-  thd->update_charset();
-}
-
 /*************************************************************************/
 
 /* Get column name from column hash */

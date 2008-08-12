@@ -2895,7 +2895,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
 
     Lex_input_stream lip(thd, inBuf, length);
 
-    bool err= parse_sql(thd, &lip, NULL);
+    bool err= parse_sql(thd, &lip);
     *found_semicolon= lip.found_semicolon;
 
     if (!err)
@@ -2955,7 +2955,7 @@ bool mysql_test_parse_for_slave(THD *thd, char *inBuf, uint length)
   lex_start(thd);
   mysql_reset_thd_for_next_command(thd);
 
-  if (!parse_sql(thd, &lip, NULL) &&
+  if (!parse_sql(thd, &lip) &&
       all_tables_not_ok(thd,(TABLE_LIST*) lex->select_lex.table_list.first))
     error= 1;                  /* Ignore question */
   thd->end_statement();
@@ -4440,25 +4440,15 @@ extern int MYSQLparse(void *thd); // from sql_yacc.cc
 
   @param thd Thread context.
   @param lip Lexer context.
-  @param creation_ctx Object creation context.
 
   @return Error status.
     @retval false on success.
     @retval true on parsing error.
 */
 
-bool parse_sql(THD *thd,
-               Lex_input_stream *lip,
-               Object_creation_ctx *creation_ctx)
+bool parse_sql(THD *thd, Lex_input_stream *lip)
 {
   assert(thd->m_lip == NULL);
-
-  /* Backup creation context. */
-
-  Object_creation_ctx *backup_ctx= NULL;
-
-  if (creation_ctx)
-    backup_ctx= creation_ctx->set_n_backup(thd);
 
   /* Set Lex_input_stream. */
 
@@ -4475,11 +4465,6 @@ bool parse_sql(THD *thd,
   /* Reset Lex_input_stream. */
 
   thd->m_lip= NULL;
-
-  /* Restore creation context. */
-
-  if (creation_ctx)
-    creation_ctx->restore_env(thd, backup_ctx);
 
   /* That's it. */
 

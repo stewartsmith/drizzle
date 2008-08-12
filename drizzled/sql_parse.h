@@ -31,9 +31,7 @@ bool delete_precheck(THD *thd, TABLE_LIST *tables);
 bool insert_precheck(THD *thd, TABLE_LIST *tables);
 bool create_table_precheck(THD *thd, TABLE_LIST *tables,
                            TABLE_LIST *create_table);
-bool parse_sql(THD *thd,
-               class Lex_input_stream *lip,
-               class Object_creation_ctx *creation_ctx);
+bool parse_sql(THD *thd, class Lex_input_stream *lip);
 
 Item *negate_expression(THD *thd, Item *expr);
 
