@@ -56,7 +56,7 @@ mysqlslap_CFLAGS=		-DTHREAD -UUNDEF_THREADS_HACK
 
 drizzletest_SOURCES=		drizzletest.cc 
 drizzletest_LDADD =		${LDADD} $(PCRE_LIBS)
-drizzletest_CFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
+drizzletest_CXXFLAGS = 		${AM_CPPFLAGS} $(PCRE_CFLAGS)
 
 DEFS =	-DDEFAULT_MYSQL_HOME="\"$(prefix)\"" \
 	-DDATADIR="\"$(localstatedir)\"" \
