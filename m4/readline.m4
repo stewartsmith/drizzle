@@ -1,4 +1,4 @@
-AC_DEFUN([MYSQL_CHECK_READLINE_DECLARES_HIST_ENTRY], [
+AC_DEFUN([DRIZZLE_CHECK_READLINE_DECLARES_HIST_ENTRY], [
     AC_CACHE_CHECK([HIST_ENTRY is declared in readline/readline.h], mysql_cv_hist_entry_declared,
 	AC_TRY_COMPILE(
 	    [
@@ -18,7 +18,7 @@ AC_DEFUN([MYSQL_CHECK_READLINE_DECLARES_HIST_ENTRY], [
     )
 ])
 
-AC_DEFUN([MYSQL_CHECK_NEW_RL_INTERFACE], [
+AC_DEFUN([DRIZZLE_CHECK_NEW_RL_INTERFACE], [
     AC_CACHE_CHECK([defined rl_compentry_func_t and rl_completion_func_t], mysql_cv_new_rl_interface,
 	AC_TRY_COMPILE(
 	    [
@@ -43,7 +43,7 @@ dnl
 dnl check for availability of multibyte characters and functions
 dnl (Based on BASH_CHECK_MULTIBYTE in aclocal.m4 of readline-5.0)
 dnl
-AC_DEFUN([MYSQL_CHECK_MULTIBYTE],
+AC_DEFUN([DRIZZLE_CHECK_MULTIBYTE],
 [
 AC_CHECK_HEADERS(wctype.h)
 AC_CHECK_HEADERS(wchar.h)

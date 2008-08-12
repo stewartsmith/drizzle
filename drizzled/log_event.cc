@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 #include <drizzled/server_includes.h>
 #include "rpl_rli.h"
@@ -25,7 +25,7 @@
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
 
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>
@@ -44,7 +44,7 @@
 #define FMT_G_BUFSIZE(PREC) (3 + (PREC) + 5 + 1)
 
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 static const char *HA_ERR(int i)
 {
   switch (i) {
@@ -231,7 +231,7 @@ uint debug_not_change_ts_if_art_event= 1; // bug#29309 simulation
   pretty_print_str()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 static void pretty_print_str(IO_CACHE* cache, const char* str, int len)
 {
   const char* end = str + len;
@@ -254,9 +254,9 @@ static void pretty_print_str(IO_CACHE* cache, const char* str, int len)
   }
   my_b_printf(cache, "\'");
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 static void clear_all_errors(THD *thd, Relay_log_info *rli)
 {
@@ -282,7 +282,7 @@ inline int ignored_error_code(int err_code)
   pretty_print_str()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 static char *pretty_print_str(char *packet, const char *str, int len)
 {
   const char *end= str + len;
@@ -307,10 +307,10 @@ static char *pretty_print_str(char *packet, const char *str, int len)
   *pos++= '\'';
   return pos;
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Creates a temporary name for load data infile:.
@@ -343,7 +343,7 @@ static char *slave_load_file_stem(char *buf, uint file_id,
 #endif
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Delete all temporary files used for SQL_LOAD.
@@ -433,7 +433,7 @@ char *str_to_hex(char *to, const char *from, uint len)
   return to;                               // pointer to end 0 of 'to'
 }
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 /**
   Append a version of the 'from' string suitable for use in a query to
@@ -472,7 +472,7 @@ append_query_string(const CHARSET_INFO * const csinfo,
   commands just before it prints a query.
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 
 static void print_set_option(IO_CACHE* file, uint32_t bits_changed,
                              uint32_t option, uint32_t flags, const char* name,
@@ -540,7 +540,7 @@ const char* Log_event::get_type_str()
   Log_event::Log_event()
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Log_event::Log_event(THD* thd_arg, uint16_t flags_arg, bool using_trans)
   :log_pos(0), temp_buf(0), exec_time(0), flags(flags_arg), thd(thd_arg)
 {
@@ -569,7 +569,7 @@ Log_event::Log_event()
   when=		0;
   log_pos=	0;
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 /*
@@ -580,7 +580,7 @@ Log_event::Log_event(const char* buf,
                      const Format_description_log_event* description_event)
   :temp_buf(0), cache_stmt(0)
 {
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   thd = 0;
 #endif
   when = uint4korr(buf);
@@ -643,7 +643,7 @@ Log_event::Log_event(const char* buf,
   /* otherwise, go on with reading the header from buf (nothing now) */
 }
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 #ifdef HAVE_REPLICATION
 
 int Log_event::do_update_pos(Relay_log_info *rli)
@@ -895,9 +895,9 @@ end:
     pthread_mutex_unlock(log_lock);
   return(result);
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 #define UNLOCK_MUTEX if (log_lock) pthread_mutex_unlock(log_lock);
 #define LOCK_MUTEX if (log_lock) pthread_mutex_lock(log_lock);
 #else
@@ -905,7 +905,7 @@ end:
 #define LOCK_MUTEX
 #endif
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 /**
   @note
     Allocates memory;  The caller is responsible for clean-up.
@@ -1139,7 +1139,7 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
   if (!ev || !ev->is_valid())
   {
     delete ev;
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
     if (!force_opt) /* then mysqlbinlog dies */
     {
       *error= "Found invalid event in binary log";
@@ -1154,7 +1154,7 @@ Log_event* Log_event::read_log_event(const char* buf, uint event_len,
   return(ev);  
 }
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 
 /*
   Log_event::print_header()
@@ -1307,7 +1307,7 @@ void Log_event::print_timestamp(IO_CACHE* file, time_t* ts)
   struct tm *res;
   if (!ts)
     ts = &when;
-#ifdef MYSQL_SERVER				// This is always false
+#ifdef DRIZZLE_SERVER				// This is always false
   struct tm tm_tmp;
   localtime_r(ts,(res= &tm_tmp));
 #else
@@ -1324,10 +1324,10 @@ void Log_event::print_timestamp(IO_CACHE* file, time_t* ts)
   return;
 }
 
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 inline Log_event::enum_skip_reason
 Log_event::continue_group(Relay_log_info *rli)
 {
@@ -1341,7 +1341,7 @@ Log_event::continue_group(Relay_log_info *rli)
 	Query_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   This (which is used only for SHOW BINLOG EVENTS) could be updated to
@@ -1376,7 +1376,7 @@ void Query_log_event::pack_info(Protocol *protocol)
 }
 #endif
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 /**
   Utility function for the next method (Query_log_event::write()) .
@@ -1671,7 +1671,7 @@ Query_log_event::Query_log_event(THD* thd_arg, const char* query_arg,
   else
     time_zone_len= 0;
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
 /* 2 utility functions for the next method */
@@ -1931,7 +1931,7 @@ Query_log_event::Query_log_event(const char* buf, uint event_len,
 }
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 /**
   Query_log_event::print().
 
@@ -2094,14 +2094,14 @@ void Query_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   my_b_write(&cache, (uchar*) query, q_len);
   my_b_printf(&cache, "\n%s\n", print_event_info->delimiter);
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
 /*
   Query_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 int Query_log_event::do_apply_event(Relay_log_info const *rli)
 {
@@ -2437,7 +2437,7 @@ Query_log_event::do_shall_skip(Relay_log_info *rli)
 	Start_log_event_v3 methods
 **************************************************************************/
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Start_log_event_v3::Start_log_event_v3()
   :Log_event(), created(0), binlog_version(BINLOG_VERSION),
    artificial_event(0), dont_set_created(0)
@@ -2450,7 +2450,7 @@ Start_log_event_v3::Start_log_event_v3()
   Start_log_event_v3::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Start_log_event_v3::pack_info(Protocol *protocol)
 {
   char buf[12 + ST_SERVER_VER_LEN + 14 + 22], *pos;
@@ -2467,7 +2467,7 @@ void Start_log_event_v3::pack_info(Protocol *protocol)
   Start_log_event_v3::print()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Start_log_event_v3::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   Write_on_release_cache cache(&print_event_info->head_cache, file,
@@ -2510,7 +2510,7 @@ void Start_log_event_v3::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   }
   return;
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 /*
   Start_log_event_v3::Start_log_event_v3()
@@ -2538,7 +2538,7 @@ Start_log_event_v3::Start_log_event_v3(const char* buf,
   Start_log_event_v3::write()
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Start_log_event_v3::write(IO_CACHE* file)
 {
   char buff[START_V3_HEADER_LEN];
@@ -2553,7 +2553,7 @@ bool Start_log_event_v3::write(IO_CACHE* file)
 #endif
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /**
   Start_log_event_v3::do_apply_event() .
@@ -2618,7 +2618,7 @@ int Start_log_event_v3::do_apply_event(Relay_log_info const *rli)
   }
   return(0);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT) */
+#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 /***************************************************************************
        Format_description_log_event methods
@@ -2870,7 +2870,7 @@ Format_description_log_event(const char* buf,
   return;
 }
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Format_description_log_event::write(IO_CACHE* file)
 {
   /*
@@ -2891,7 +2891,7 @@ bool Format_description_log_event::write(IO_CACHE* file)
 }
 #endif
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Format_description_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -3022,7 +3022,7 @@ void Format_description_log_event::calc_server_version_split()
   Load_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 uint Load_log_event::get_query_buffer_length()
 {
   return
@@ -3137,10 +3137,10 @@ void Load_log_event::pack_info(Protocol *protocol)
   protocol->store(buf, end-buf, &my_charset_bin);
   my_free(buf, MYF(0));
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT) */
+#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 /*
   Load_log_event::write_data_header()
@@ -3265,7 +3265,7 @@ Load_log_event::Load_log_event(THD *thd_arg, sql_exchange *ex,
   field_lens = (const uchar*)field_lens_buf.ptr();
   fields = fields_buf.ptr();
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 /**
@@ -3346,7 +3346,7 @@ int Load_log_event::copy_log_event(const char *buf, ulong event_len,
   Load_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Load_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   print(file, print_event_info, 0);
@@ -3442,9 +3442,9 @@ void Load_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info,
   my_b_printf(&cache, "%s\n", print_event_info->delimiter);
   return;
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 /**
   Load_log_event::set_fields()
@@ -3469,10 +3469,10 @@ void Load_log_event::set_fields(const char* affected_db,
     field+= field_lens[i]  + 1;
   }
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 /**
   Does the data loading job when executing a LOAD DATA on the slave.
 
@@ -3772,7 +3772,7 @@ Error '%s' running LOAD DATA INFILE on table '%s'. Default database: '%s'",
   Rotate_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Rotate_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], buf[22];
@@ -3790,7 +3790,7 @@ void Rotate_log_event::pack_info(Protocol *protocol)
   Rotate_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   char buf[22];
@@ -3805,7 +3805,7 @@ void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
     my_b_write(&cache, (uchar*) new_log_ident, (uint)ident_len);
   my_b_printf(&cache, "  pos: %s\n", llstr(pos, buf));
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
 
@@ -3814,7 +3814,7 @@ void Rotate_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 */
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Rotate_log_event::Rotate_log_event(const char* new_log_ident_arg,
                                    uint ident_len_arg, uint64_t pos_arg,
                                    uint flags_arg)
@@ -3854,7 +3854,7 @@ Rotate_log_event::Rotate_log_event(const char* buf, uint event_len,
   Rotate_log_event::write()
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Rotate_log_event::write(IO_CACHE* file)
 {
   char buf[ROTATE_HEADER_LEN];
@@ -3866,7 +3866,7 @@ bool Rotate_log_event::write(IO_CACHE* file)
 #endif
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /*
   Got a rotate log event from the master.
@@ -3959,7 +3959,7 @@ Rotate_log_event::do_shall_skip(Relay_log_info *rli)
   Intvar_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Intvar_log_event::pack_info(Protocol *protocol)
 {
   char buf[256], *pos;
@@ -4003,7 +4003,7 @@ const char* Intvar_log_event::get_var_type_name()
   Intvar_log_event::write()
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Intvar_log_event::write(IO_CACHE* file)
 {
   uchar buf[9];
@@ -4019,7 +4019,7 @@ bool Intvar_log_event::write(IO_CACHE* file)
   Intvar_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Intvar_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   char llbuff[22];
@@ -4056,7 +4056,7 @@ void Intvar_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   Intvar_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION)&& !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION)&& !defined(DRIZZLE_CLIENT)
 int Intvar_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -4105,7 +4105,7 @@ Intvar_log_event::do_shall_skip(Relay_log_info *rli)
   Rand_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Rand_log_event::pack_info(Protocol *protocol)
 {
   char buf1[256], *pos;
@@ -4128,7 +4128,7 @@ Rand_log_event::Rand_log_event(const char* buf,
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Rand_log_event::write(IO_CACHE* file)
 {
   uchar buf[16];
@@ -4140,7 +4140,7 @@ bool Rand_log_event::write(IO_CACHE* file)
 #endif
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Rand_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   Write_on_release_cache cache(&print_event_info->head_cache, file,
@@ -4156,10 +4156,10 @@ void Rand_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
               llstr(seed1, llbuff),llstr(seed2, llbuff2),
               print_event_info->delimiter);
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Rand_log_event::do_apply_event(Relay_log_info const *rli)
 {
   /*
@@ -4194,14 +4194,14 @@ Rand_log_event::do_shall_skip(Relay_log_info *rli)
   return continue_group(rli);
 }
 
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
   Xid_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Xid_log_event::pack_info(Protocol *protocol)
 {
   char buf[128], *pos;
@@ -4231,7 +4231,7 @@ Xid_log_event(const char* buf,
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Xid_log_event::write(IO_CACHE* file)
 {
   return write_header(file, sizeof(xid)) ||
@@ -4240,7 +4240,7 @@ bool Xid_log_event::write(IO_CACHE* file)
 #endif
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   Write_on_release_cache cache(&print_event_info->head_cache, file,
@@ -4256,10 +4256,10 @@ void Xid_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   }
   my_b_printf(&cache, "COMMIT%s\n", print_event_info->delimiter);
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Xid_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   /* For a slave Xid_log_event is COMMIT */
@@ -4277,14 +4277,14 @@ Xid_log_event::do_shall_skip(Relay_log_info *rli)
   }
   return(Log_event::do_shall_skip(rli));
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
   User_var_log_event methods
 **************************************************************************/
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void User_var_log_event::pack_info(Protocol* protocol)
 {
   char *buf= 0;
@@ -4362,7 +4362,7 @@ void User_var_log_event::pack_info(Protocol* protocol)
   protocol->store(buf, event_len, &my_charset_bin);
   my_free(buf, MYF(0));
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 User_var_log_event::
@@ -4394,7 +4394,7 @@ User_var_log_event(const char* buf,
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool User_var_log_event::write(IO_CACHE* file)
 {
   char buf[UV_NAME_LEN_SIZE];
@@ -4461,7 +4461,7 @@ bool User_var_log_event::write(IO_CACHE* file)
   User_var_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   Write_on_release_cache cache(&print_event_info->head_cache, file,
@@ -4568,7 +4568,7 @@ void User_var_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   User_var_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int User_var_log_event::do_apply_event(Relay_log_info const *rli)
 {
   Item *it= 0;
@@ -4659,7 +4659,7 @@ User_var_log_event::do_shall_skip(Relay_log_info *rli)
   */
   return continue_group(rli);
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
@@ -4667,7 +4667,7 @@ User_var_log_event::do_shall_skip(Relay_log_info *rli)
 **************************************************************************/
 
 #ifdef HAVE_REPLICATION
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Unknown_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info)
 {
   Write_on_release_cache cache(&print_event_info->head_cache, file_arg);
@@ -4679,7 +4679,7 @@ void Unknown_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info
 }
 #endif  
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 void Slave_log_event::pack_info(Protocol *protocol)
 {
   char buf[256+HOSTNAME_LENGTH], *pos;
@@ -4693,10 +4693,10 @@ void Slave_log_event::pack_info(Protocol *protocol)
   pos= int64_t10_to_str(master_pos, pos, 10);
   protocol->store(buf, pos-buf, &my_charset_bin);
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 /**
   @todo
   re-write this better without holding both locks at the same time
@@ -4731,7 +4731,7 @@ Slave_log_event::Slave_log_event(THD* thd_arg,
   pthread_mutex_unlock(&mi->data_lock);
   return;
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 Slave_log_event::~Slave_log_event()
@@ -4740,7 +4740,7 @@ Slave_log_event::~Slave_log_event()
 }
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Slave_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   Write_on_release_cache cache(&print_event_info->head_cache, file);
@@ -4753,7 +4753,7 @@ void Slave_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 Slave: master_host: '%s'  master_port: %d  master_log: '%s'  master_pos: %s\n",
 	  master_host, master_port, master_log, llstr(master_pos, llbuff));
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
 int Slave_log_event::get_data_size()
@@ -4762,7 +4762,7 @@ int Slave_log_event::get_data_size()
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Slave_log_event::write(IO_CACHE* file)
 {
   ulong event_length= get_data_size();
@@ -4808,14 +4808,14 @@ Slave_log_event::Slave_log_event(const char* buf, uint event_len)
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 int Slave_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   if (mysql_bin_log.is_open())
     mysql_bin_log.write(this);
   return 0;
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 /**************************************************************************
@@ -4826,7 +4826,7 @@ int Slave_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unu
   Stop_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Stop_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 {
   Write_on_release_cache cache(&print_event_info->head_cache, file,
@@ -4838,10 +4838,10 @@ void Stop_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
   print_header(&cache, print_event_info, false);
   my_b_printf(&cache, "\tStop\n");
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 /*
   The master stopped.  We used to clean up all temporary tables but
   this is useless as, as the master has shut down properly, it has
@@ -4872,7 +4872,7 @@ int Stop_log_event::do_update_pos(Relay_log_info *rli)
   return 0;
 }
 
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 #endif /* HAVE_REPLICATION */
 
 
@@ -4884,7 +4884,7 @@ int Stop_log_event::do_update_pos(Relay_log_info *rli)
   Create_file_log_event ctor
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Create_file_log_event::
 Create_file_log_event(THD* thd_arg, sql_exchange* ex,
 		      const char* db_arg, const char* table_name_arg,
@@ -4943,7 +4943,7 @@ bool Create_file_log_event::write_base(IO_CACHE* file)
   return res;
 }
 
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 /*
   Create_file_log_event ctor
@@ -5003,7 +5003,7 @@ Create_file_log_event::Create_file_log_event(const char* buf, uint len,
   Create_file_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Create_file_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info,
 				  bool enable_local)
 {
@@ -5035,14 +5035,14 @@ void Create_file_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info
 {
   print(file, print_event_info, 0);
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
 /*
   Create_file_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Create_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[NAME_LEN*2 + 30 + 21*2], *pos;
@@ -5056,14 +5056,14 @@ void Create_file_log_event::pack_info(Protocol *protocol)
   pos= int10_to_str((long) block_len, pos, 10);
   protocol->store(buf, (uint) (pos-buf), &my_charset_bin);
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT) */
+#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /*
   Create_file_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Create_file_log_event::do_apply_event(Relay_log_info const *rli)
 {
   char proc_info[17+FN_REFLEN+10], *fname_buf;
@@ -5131,7 +5131,7 @@ err:
   thd_proc_info(thd, 0);
   return error == 0;
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT) */
+#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /**************************************************************************
@@ -5142,7 +5142,7 @@ err:
   Append_block_log_event ctor
 */
 
-#ifndef MYSQL_CLIENT  
+#ifndef DRIZZLE_CLIENT  
 Append_block_log_event::Append_block_log_event(THD *thd_arg,
                                                const char *db_arg,
 					       uchar *block_arg,
@@ -5180,7 +5180,7 @@ Append_block_log_event::Append_block_log_event(const char* buf, uint len,
   Append_block_log_event::write()
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Append_block_log_event::write(IO_CACHE* file)
 {
   uchar buf[APPEND_BLOCK_HEADER_LEN];
@@ -5196,7 +5196,7 @@ bool Append_block_log_event::write(IO_CACHE* file)
   Append_block_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT  
+#ifdef DRIZZLE_CLIENT  
 void Append_block_log_event::print(FILE* file,
 				   PRINT_EVENT_INFO* print_event_info)
 {
@@ -5208,14 +5208,14 @@ void Append_block_log_event::print(FILE* file,
   my_b_printf(&cache, "\n#%s: file_id: %d  block_len: %d\n",
               get_type_str(), file_id, block_len);
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 
 /*
   Append_block_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Append_block_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -5295,7 +5295,7 @@ err:
   Delete_file_log_event ctor
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Delete_file_log_event::Delete_file_log_event(THD *thd_arg, const char* db_arg,
 					     bool using_trans)
   :Log_event(thd_arg, 0, using_trans), file_id(thd_arg->file_id), db(db_arg)
@@ -5323,7 +5323,7 @@ Delete_file_log_event::Delete_file_log_event(const char* buf, uint len,
   Delete_file_log_event::write()
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Delete_file_log_event::write(IO_CACHE* file)
 {
  uchar buf[DELETE_FILE_HEADER_LEN];
@@ -5338,7 +5338,7 @@ bool Delete_file_log_event::write(IO_CACHE* file)
   Delete_file_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT  
+#ifdef DRIZZLE_CLIENT  
 void Delete_file_log_event::print(FILE* file,
 				  PRINT_EVENT_INFO* print_event_info)
 {
@@ -5349,13 +5349,13 @@ void Delete_file_log_event::print(FILE* file,
   print_header(&cache, print_event_info, false);
   my_b_printf(&cache, "\n#Delete_file: file_id=%u\n", file_id);
 }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 /*
   Delete_file_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Delete_file_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
@@ -5369,7 +5369,7 @@ void Delete_file_log_event::pack_info(Protocol *protocol)
   Delete_file_log_event::do_apply_event()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute__((unused)))
 {
   char fname[FN_REFLEN+10];
@@ -5379,7 +5379,7 @@ int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute_
   (void) my_delete(fname, MYF(MY_WME));
   return 0;
 }
-#endif /* defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT) */
+#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /**************************************************************************
@@ -5390,7 +5390,7 @@ int Delete_file_log_event::do_apply_event(Relay_log_info const *rli __attribute_
   Execute_load_log_event ctor
 */
 
-#ifndef MYSQL_CLIENT  
+#ifndef DRIZZLE_CLIENT  
 Execute_load_log_event::Execute_load_log_event(THD *thd_arg,
                                                const char* db_arg,
 					       bool using_trans)
@@ -5420,7 +5420,7 @@ Execute_load_log_event::Execute_load_log_event(const char* buf, uint len,
   Execute_load_log_event::write()
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Execute_load_log_event::write(IO_CACHE* file)
 {
   uchar buf[EXEC_LOAD_HEADER_LEN];
@@ -5435,7 +5435,7 @@ bool Execute_load_log_event::write(IO_CACHE* file)
   Execute_load_log_event::print()
 */
 
-#ifdef MYSQL_CLIENT  
+#ifdef DRIZZLE_CLIENT  
 void Execute_load_log_event::print(FILE* file,
 				   PRINT_EVENT_INFO* print_event_info)
 {
@@ -5453,7 +5453,7 @@ void Execute_load_log_event::print(FILE* file,
   Execute_load_log_event::pack_info()
 */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Execute_load_log_event::pack_info(Protocol *protocol)
 {
   char buf[64];
@@ -5551,14 +5551,14 @@ err:
   return error;
 }
 
-#endif /* defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT) */
+#endif /* defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
 /**************************************************************************
 	Begin_load_query_log_event methods
 **************************************************************************/
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Begin_load_query_log_event::
 Begin_load_query_log_event(THD* thd_arg, const char* db_arg, uchar* block_arg,
                            uint block_len_arg, bool using_trans)
@@ -5578,15 +5578,15 @@ Begin_load_query_log_event(const char* buf, uint len,
 }
 
 
-#if defined( HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined( HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int Begin_load_query_log_event::get_create_or_append() const
 {
   return 1; /* create the file */
 }
-#endif /* defined( HAVE_REPLICATION) && !defined(MYSQL_CLIENT) */
+#endif /* defined( HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT) */
 
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 Log_event::enum_skip_reason
 Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
 {
@@ -5604,7 +5604,7 @@ Begin_load_query_log_event::do_shall_skip(Relay_log_info *rli)
 **************************************************************************/
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Execute_load_query_log_event::
 Execute_load_query_log_event(THD *thd_arg, const char* query_arg,
                              ulong query_length_arg, uint fn_pos_start_arg,
@@ -5618,7 +5618,7 @@ Execute_load_query_log_event(THD *thd_arg, const char* query_arg,
   fn_pos_end(fn_pos_end_arg), dup_handling(dup_handling_arg)
 {
 }
-#endif /* !MYSQL_CLIENT */
+#endif /* !DRIZZLE_CLIENT */
 
 
 Execute_load_query_log_event::
@@ -5650,7 +5650,7 @@ ulong Execute_load_query_log_event::get_post_header_size_for_derived()
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool
 Execute_load_query_log_event::write_post_header_for_derived(IO_CACHE* file)
 {
@@ -5664,7 +5664,7 @@ Execute_load_query_log_event::write_post_header_for_derived(IO_CACHE* file)
 #endif
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Execute_load_query_log_event::print(FILE* file,
                                          PRINT_EVENT_INFO* print_event_info)
 {
@@ -5706,7 +5706,7 @@ void Execute_load_query_log_event::print(FILE* file,
 #endif
 
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Execute_load_query_log_event::pack_info(Protocol *protocol)
 {
   char *buf, *pos;
@@ -5883,7 +5883,7 @@ const char *sql_ex_info::init(const char *buf, const char *buf_end,
 	Rows_log_event member functions
 **************************************************************************/
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Rows_log_event::Rows_log_event(THD *thd_arg, TABLE *tbl_arg, ulong tid,
                                MY_BITMAP const *cols, bool is_transactional)
   : Log_event(thd_arg, 0, is_transactional),
@@ -5935,11 +5935,11 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
                                *description_event)
   : Log_event(buf, description_event),
     m_row_count(0),
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
     m_table(NULL),
 #endif
     m_table_id(0), m_rows_buf(0), m_rows_cur(0), m_rows_end(0)
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
     , m_curr_row(NULL), m_curr_row_end(NULL), m_key(NULL)
 #endif
 {
@@ -6013,7 +6013,7 @@ Rows_log_event::Rows_log_event(const char *buf, uint event_len,
   m_rows_buf= (uchar*) my_malloc(data_size, MYF(MY_WME));
   if (likely((bool)m_rows_buf))
   {
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
     m_curr_row= m_rows_buf;
 #endif
     m_rows_end= m_rows_buf + data_size;
@@ -6053,7 +6053,7 @@ int Rows_log_event::get_data_size()
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
 {
   /*
@@ -6112,7 +6112,7 @@ int Rows_log_event::do_add_row_data(uchar *row_data, size_t length)
 }
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int Rows_log_event::do_apply_event(Relay_log_info const *rli)
 {
   int error= 0;
@@ -6604,9 +6604,9 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
   return(error);
 }
 
-#endif /* !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION) */
+#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Rows_log_event::write_data_header(IO_CACHE *file)
 {
   uchar buf[ROWS_HEADER_LEN];	// No need to init the buffer
@@ -6647,7 +6647,7 @@ bool Rows_log_event::write_data_body(IO_CACHE*file)
 }
 #endif
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Rows_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -6659,7 +6659,7 @@ void Rows_log_event::pack_info(Protocol *protocol)
 }
 #endif
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Rows_log_event::print_helper(FILE *file,
                                   PRINT_EVENT_INFO *print_event_info,
                                   char const *const name)
@@ -6720,7 +6720,7 @@ void Rows_log_event::print_helper(FILE *file,
   type used is uint32_t. 
 */
 
-#if !defined(MYSQL_CLIENT)
+#if !defined(DRIZZLE_CLIENT)
 /**
   Save the field metadata based on the real_type of the field.
   The metadata saved depends on the type of the field. Some fields
@@ -6752,14 +6752,14 @@ int Table_map_log_event::save_field_metadata()
     index+= m_table->s->field[i]->save_field_metadata(&m_field_metadata[index]);
   return(index);
 }
-#endif /* !defined(MYSQL_CLIENT) */
+#endif /* !defined(DRIZZLE_CLIENT) */
 
 /*
   Constructor used to build an event for writing to the binary log.
   Mats says tbl->s lives longer than this event so it's ok to copy pointers
   (tbl->s->db etc) and not pointer content.
  */
-#if !defined(MYSQL_CLIENT)
+#if !defined(DRIZZLE_CLIENT)
 Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
                                          bool is_transactional __attribute__((unused)),
                                          uint16_t flags)
@@ -6840,7 +6840,7 @@ Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
       m_null_bits[(i / 8)]+= 1 << (i % 8);
 
 }
-#endif /* !defined(MYSQL_CLIENT) */
+#endif /* !defined(DRIZZLE_CLIENT) */
 
 /*
   Constructor used by slave to read the event from the binary log.
@@ -6851,7 +6851,7 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
                                          *description_event)
 
   : Log_event(buf, description_event),
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
     m_table(NULL),
 #endif
     m_dbnam(NULL), m_dblen(0), m_tblnam(NULL), m_tbllen(0),
@@ -6954,7 +6954,7 @@ Table_map_log_event::~Table_map_log_event()
        4     Daisy-chaining RBR with SBR not possible
  */
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
 {
   RPL_TABLE_LIST *table_list;
@@ -7106,9 +7106,9 @@ int Table_map_log_event::do_update_pos(Relay_log_info *rli)
   return 0;
 }
 
-#endif /* !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION) */
+#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 bool Table_map_log_event::write_data_header(IO_CACHE *file)
 {
   assert(m_table_id != ~0UL);
@@ -7151,14 +7151,14 @@ bool Table_map_log_event::write_data_body(IO_CACHE *file)
  }
 #endif
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 
 /*
   Print some useful information for the SHOW BINARY LOG information
   field.
  */
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 void Table_map_log_event::pack_info(Protocol *protocol)
 {
     char buf[256];
@@ -7173,7 +7173,7 @@ void Table_map_log_event::pack_info(Protocol *protocol)
 #endif
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Table_map_log_event::print(FILE * /* unused */,
                                 PRINT_EVENT_INFO *print_event_info)
 {
@@ -7195,7 +7195,7 @@ void Table_map_log_event::print(FILE * /* unused */,
 /*
   Constructor used to build an event for writing to the binary log.
  */
-#if !defined(MYSQL_CLIENT)
+#if !defined(DRIZZLE_CLIENT)
 Write_rows_log_event::Write_rows_log_event(THD *thd_arg, TABLE *tbl_arg,
                                            ulong tid_arg,
                                            bool is_transactional)
@@ -7216,7 +7216,7 @@ Write_rows_log_event::Write_rows_log_event(const char *buf, uint event_len,
 }
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int 
 Write_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
 {
@@ -7294,7 +7294,7 @@ Write_rows_log_event::do_after_row_operations(const Slave_reporting_capability *
   return error? error : local_error;
 }
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 /*
   Check if there are more UNIQUE keys after the given key.
@@ -7562,9 +7562,9 @@ Write_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error; 
 }
 
-#endif /* !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION) */
+#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Write_rows_log_event::print(FILE *file, PRINT_EVENT_INFO* print_event_info)
 {
   Rows_log_event::print_helper(file, print_event_info, "Write_rows");
@@ -7575,7 +7575,7 @@ void Write_rows_log_event::print(FILE *file, PRINT_EVENT_INFO* print_event_info)
 	Delete_rows_log_event member functions
 **************************************************************************/
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 /*
   Compares table->record[0] and table->record[1]
 
@@ -7878,14 +7878,14 @@ err:
   Constructor used to build an event for writing to the binary log.
  */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 Delete_rows_log_event::Delete_rows_log_event(THD *thd_arg, TABLE *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid, tbl_arg->read_set, is_transactional)
 {
 }
-#endif /* #if !defined(MYSQL_CLIENT) */
+#endif /* #if !defined(DRIZZLE_CLIENT) */
 
 /*
   Constructor used by slave to read the event from the binary log.
@@ -7899,7 +7899,7 @@ Delete_rows_log_event::Delete_rows_log_event(const char *buf, uint event_len,
 }
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 int 
 Delete_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
@@ -7951,9 +7951,9 @@ int Delete_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error;
 }
 
-#endif /* !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION) */
+#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Delete_rows_log_event::print(FILE *file,
                                   PRINT_EVENT_INFO* print_event_info)
 {
@@ -7969,7 +7969,7 @@ void Delete_rows_log_event::print(FILE *file,
 /*
   Constructor used to build an event for writing to the binary log.
  */
-#if !defined(MYSQL_CLIENT)
+#if !defined(DRIZZLE_CLIENT)
 Update_rows_log_event::Update_rows_log_event(THD *thd_arg, TABLE *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
@@ -7994,7 +7994,7 @@ void Update_rows_log_event::init(MY_BITMAP const *cols)
     }
   }
 }
-#endif /* !defined(MYSQL_CLIENT) */
+#endif /* !defined(DRIZZLE_CLIENT) */
 
 
 Update_rows_log_event::~Update_rows_log_event()
@@ -8018,7 +8018,7 @@ Update_rows_log_event::Update_rows_log_event(const char *buf, uint event_len,
 }
 #endif
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 
 int 
 Update_rows_log_event::do_before_row_operations(const Slave_reporting_capability *const)
@@ -8097,9 +8097,9 @@ Update_rows_log_event::do_exec_row(const Relay_log_info *const rli)
   return error;
 }
 
-#endif /* !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION) */
+#endif /* !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION) */
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void Update_rows_log_event::print(FILE *file,
 				  PRINT_EVENT_INFO* print_event_info)
 {
@@ -8149,7 +8149,7 @@ Incident_log_event::description() const
 }
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 void Incident_log_event::pack_info(Protocol *protocol)
 {
   char buf[256];
@@ -8165,7 +8165,7 @@ void Incident_log_event::pack_info(Protocol *protocol)
 #endif
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 void
 Incident_log_event::print(FILE *file,
                           PRINT_EVENT_INFO *print_event_info)
@@ -8179,7 +8179,7 @@ Incident_log_event::print(FILE *file,
 }
 #endif
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 int
 Incident_log_event::do_apply_event(Relay_log_info const *rli)
 {
@@ -8205,7 +8205,7 @@ Incident_log_event::write_data_body(IO_CACHE *file)
   return(write_str(file, m_message.str, m_message.length));
 }
 
-#if defined(HAVE_REPLICATION) && !defined(MYSQL_CLIENT)
+#if defined(HAVE_REPLICATION) && !defined(DRIZZLE_CLIENT)
 Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
                     const Format_description_log_event* description_event)
   :Log_event(buf, description_event)
@@ -8218,7 +8218,7 @@ Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
 #endif
 
 
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
 /**
   The default values for these variables should be values that are
   *incorrect*, i.e., values that cannot occur in an event.  This way,

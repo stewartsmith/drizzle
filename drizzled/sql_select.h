@@ -470,7 +470,7 @@ public:
   uint64_t  select_options;
   select_result *result;
   TMP_TABLE_PARAM tmp_table_param;
-  MYSQL_LOCK *lock;
+  DRIZZLE_LOCK *lock;
   /// unit structure (with global parameters) for this select
   SELECT_LEX_UNIT *unit;
   /// select that processed

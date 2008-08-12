@@ -123,7 +123,7 @@ static uint opt_protocol= DRIZZLE_PROTOCOL_TCP;
   it is the default value which assigned at the very beginning of main().
 */
 static const char *drizzle_universal_client_charset=
-  MYSQL_UNIVERSAL_CLIENT_CHARSET;
+  DRIZZLE_UNIVERSAL_CLIENT_CHARSET;
 static char *default_charset;
 static const CHARSET_INFO *charset_info= &my_charset_latin1;
 const char *default_dbug_option="d:t:o,/tmp/drizzledump.trace";
@@ -762,7 +762,7 @@ get_one_option(int optid, const struct my_option *opt __attribute__((unused)),
         been reset yet by --default-character-set=xxx.
       */
       if (default_charset == drizzle_universal_client_charset)
-        default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+        default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
       break;
     }
   }

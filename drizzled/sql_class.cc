@@ -546,25 +546,25 @@ void THD::pop_internal_handler()
 }
 
 extern "C"
-void *thd_alloc(MYSQL_THD thd, unsigned int size)
+void *thd_alloc(DRIZZLE_THD thd, unsigned int size)
 {
   return thd->alloc(size);
 }
 
 extern "C"
-void *thd_calloc(MYSQL_THD thd, unsigned int size)
+void *thd_calloc(DRIZZLE_THD thd, unsigned int size)
 {
   return thd->calloc(size);
 }
 
 extern "C"
-char *thd_strdup(MYSQL_THD thd, const char *str)
+char *thd_strdup(DRIZZLE_THD thd, const char *str)
 {
   return thd->strdup(str);
 }
 
 extern "C"
-char *thd_strmake(MYSQL_THD thd, const char *str, unsigned int size)
+char *thd_strmake(DRIZZLE_THD thd, const char *str, unsigned int size)
 {
   return thd->strmake(str, size);
 }
@@ -579,15 +579,15 @@ LEX_STRING *thd_make_lex_string(THD *thd, LEX_STRING *lex_str,
 }
 
 extern "C"
-void *thd_memdup(MYSQL_THD thd, const void* str, unsigned int size)
+void *thd_memdup(DRIZZLE_THD thd, const void* str, unsigned int size)
 {
   return thd->memdup(str, size);
 }
 
 extern "C"
-void thd_get_xid(const MYSQL_THD thd, MYSQL_XID *xid)
+void thd_get_xid(const DRIZZLE_THD thd, DRIZZLE_XID *xid)
 {
-  *xid = *(MYSQL_XID *) &thd->transaction.xid_state.xid;
+  *xid = *(DRIZZLE_XID *) &thd->transaction.xid_state.xid;
 }
 
 /*
@@ -2286,7 +2286,7 @@ void THD::restore_backup_open_tables_state(Open_tables_state *backup)
   @retval 0 the user thread is active
   @retval 1 the user thread has been killed
 */
-extern "C" int thd_killed(const MYSQL_THD thd)
+extern "C" int thd_killed(const DRIZZLE_THD thd)
 {
   return(thd->killed);
 }
@@ -2296,39 +2296,39 @@ extern "C" int thd_killed(const MYSQL_THD thd)
   @param thd user thread
   @return thread id
 */
-extern "C" unsigned long thd_get_thread_id(const MYSQL_THD thd)
+extern "C" unsigned long thd_get_thread_id(const DRIZZLE_THD thd)
 {
   return((unsigned long)thd->thread_id);
 }
 
 
 #ifdef INNODB_COMPATIBILITY_HOOKS
-extern "C" const struct charset_info_st *thd_charset(MYSQL_THD thd)
+extern "C" const struct charset_info_st *thd_charset(DRIZZLE_THD thd)
 {
   return(thd->charset());
 }
 
-extern "C" char **thd_query(MYSQL_THD thd)
+extern "C" char **thd_query(DRIZZLE_THD thd)
 {
   return(&thd->query);
 }
 
-extern "C" int thd_slave_thread(const MYSQL_THD thd)
+extern "C" int thd_slave_thread(const DRIZZLE_THD thd)
 {
   return(thd->slave_thread);
 }
 
-extern "C" int thd_non_transactional_update(const MYSQL_THD thd)
+extern "C" int thd_non_transactional_update(const DRIZZLE_THD thd)
 {
   return(thd->transaction.all.modified_non_trans_table);
 }
 
-extern "C" int thd_binlog_format(const MYSQL_THD thd)
+extern "C" int thd_binlog_format(const DRIZZLE_THD thd)
 {
   return (int) thd->variables.binlog_format;
 }
 
-extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all)
+extern "C" void thd_mark_transaction_to_rollback(DRIZZLE_THD thd, bool all)
 {
   mark_transaction_to_rollback(thd, all);
 }
@@ -2443,7 +2443,7 @@ void xid_cache_delete(XID_STATE *xid_state)
   inserted/updated/deleted.
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 /*
   Template member function for ensuring that there is an rows log
@@ -2847,7 +2847,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
     if (current_stmt_binlog_row_based)
       return(0);
     /* Otherwise, we fall through */
-  case THD::MYSQL_QUERY_TYPE:
+  case THD::DRIZZLE_QUERY_TYPE:
     /*
       Using this query type is a conveniece hack, since we have been
       moving back and forth between using RBR for replication of
@@ -2858,7 +2858,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
     */
   case THD::STMT_QUERY_TYPE:
     /*
-      The MYSQL_LOG::write() function will set the STMT_END_F flag and
+      The DRIZZLE_LOG::write() function will set the STMT_END_F flag and
       flush the pending rows event if necessary.
      */
     {
@@ -2910,4 +2910,4 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   return(0);
 }
 
-#endif /* !defined(MYSQL_CLIENT) */
+#endif /* !defined(DRIZZLE_CLIENT) */

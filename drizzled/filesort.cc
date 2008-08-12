@@ -110,7 +110,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   TABLE_LIST *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  MYSQL_FILESORT_START();
+  DRIZZLE_FILESORT_START();
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before
@@ -317,7 +317,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
 		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
   memcpy(&table->sort, &table_sort, sizeof(FILESORT_INFO));
-  MYSQL_FILESORT_END();
+  DRIZZLE_FILESORT_END();
   return(error ? HA_POS_ERROR : records);
 } /* filesort */
 

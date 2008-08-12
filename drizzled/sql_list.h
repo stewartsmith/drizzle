@@ -1,5 +1,5 @@
-#ifndef INCLUDES_MYSQL_SQL_LIST_H
-#define INCLUDES_MYSQL_SQL_LIST_H
+#ifndef INCLUDES_DRIZZLE_SQL_LIST_H
+#define INCLUDES_DRIZZLE_SQL_LIST_H
 /* Copyright (C) 2000-2003 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
@@ -650,4 +650,4 @@ list_copy_and_replace_each_value(List<T> &list, MEM_ROOT *mem_root)
     it.replace(el->clone(mem_root));
 }
 
-#endif // INCLUDES_MYSQL_SQL_LIST_H
+#endif // INCLUDES_DRIZZLE_SQL_LIST_H

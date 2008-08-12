@@ -156,8 +156,8 @@ EXTRA_LTLIBRARIES =	ha_innodb.la
 pkglib_LTLIBRARIES =	@plugin_innobase_shared_target@
 
 ha_innodb_la_LDFLAGS =	-module -rpath $(pkgplugindir)
-ha_innodb_la_CXXFLAGS=	$(AM_CXXFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-ha_innodb_la_CFLAGS  =	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_innodb_la_CXXFLAGS=	$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
+ha_innodb_la_CFLAGS  =	$(AM_CFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 ha_innodb_la_SOURCES =	$(libinnobase_a_SOURCES)
 
 EXTRA_DIST =		plug.in \

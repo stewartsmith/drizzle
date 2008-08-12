@@ -91,9 +91,9 @@ use test;
 #
 # It should not be possible to write to a file outside of vardir
 create table t1(a int);
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 --error 1290
-eval select * into outfile "$MYSQL_TEST_DIR/outfile-test1" from t1;
+eval select * into outfile "$DRIZZLE_TEST_DIR/outfile-test1" from t1;
 drop table t1;
 
 #

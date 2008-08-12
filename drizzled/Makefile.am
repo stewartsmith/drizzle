@@ -222,8 +222,8 @@ gen_lex_hash_SOURCES =gen_lex_hash.cc
 
 gen_lex_hash_LDFLAGS =  
 
-DEFS =-DMYSQL_SERVER \
-      -DDEFAULT_MYSQL_HOME="\"$(MYSQLBASEdir)\"" \
+DEFS =-DDRIZZLE_SERVER \
+      -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
       -DDATADIR="\"$(MYSQLDATAdir)\"" \
       -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
       -DPLUGINDIR="\"$(pkgplugindir)\"" \

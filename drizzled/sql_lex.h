@@ -27,7 +27,7 @@ class Table_ident;
 class sql_exchange;
 class LEX_COLUMN;
 
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
 /*
   The following hack is needed because mysql_yacc.cc does not define
   YYSTYPE before including this file
@@ -35,10 +35,10 @@ class LEX_COLUMN;
 
 #include "set_var.h"
 
-#ifdef MYSQL_YACC
+#ifdef DRIZZLE_YACC
 #define LEX_YYSTYPE void *
 #else
-#if defined(MYSQL_LEX)
+#if defined(DRIZZLE_LEX)
 #include "lex_symbol.h"
 #include "sql_yacc.h"
 #define LEX_YYSTYPE YYSTYPE *
@@ -99,7 +99,7 @@ enum enum_sql_command {
 #define DESCRIBE_NORMAL		1
 #define DESCRIBE_EXTENDED	2
 
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
 
 #define DERIVED_NONE	0
 #define DERIVED_SUBQUERY	1
@@ -1624,5 +1624,5 @@ extern bool is_lex_native_function(const LEX_STRING *name);
   @} (End of group Semantic_Analysis)
 */
 
-#endif /* MYSQL_SERVER */
+#endif /* DRIZZLE_SERVER */
 #endif /* DRIZZLE_SERVER_SQL_LEX_H */

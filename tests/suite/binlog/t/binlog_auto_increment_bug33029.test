@@ -17,7 +17,7 @@
 
 source include/have_log_bin.inc;
 
-copy_file $MYSQL_TEST_DIR/std_data/bug33029-slave-relay-bin.000001 $MYSQLTEST_VARDIR/master-data/slave-relay-bin.000001;
+copy_file $DRIZZLE_TEST_DIR/std_data/bug33029-slave-relay-bin.000001 $MYSQLTEST_VARDIR/master-data/slave-relay-bin.000001;
 
 write_file $MYSQLTEST_VARDIR/master-data/slave-relay-bin.index;
 slave-relay-bin.000001

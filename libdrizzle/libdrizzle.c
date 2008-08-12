@@ -467,12 +467,12 @@ drizzle_get_proto_info(const DRIZZLE *drizzle)
 const char *
 drizzle_get_client_info(void)
 {
-  return (char*) MYSQL_SERVER_VERSION;
+  return (char*) DRIZZLE_SERVER_VERSION;
 }
 
 uint32_t drizzle_get_client_version(void)
 {
-  return MYSQL_VERSION_ID;
+  return DRIZZLE_VERSION_ID;
 }
 
 bool drizzle_eof(const DRIZZLE_RES *res)

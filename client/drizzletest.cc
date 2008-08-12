@@ -5608,7 +5608,7 @@ int main(int argc, char **argv)
                 1024, 0, 0, get_var_key, var_free, MYF(0)))
     die("Variable hash initialization failed");
 
-  var_set_string("$MYSQL_SERVER_VERSION", drizzle_get_client_info());
+  var_set_string("$DRIZZLE_SERVER_VERSION", drizzle_get_client_info());
 
   memset(&master_pos, 0, sizeof(master_pos));
 

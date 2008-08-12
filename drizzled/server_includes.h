@@ -19,12 +19,12 @@
   @details
   Mostly this file is used in the server. But a little part of it is used in
   mysqlbinlog too (definition of SELECT_DISTINCT and others).
-  The consequence is that 90% of the file is wrapped in \#ifndef MYSQL_CLIENT,
+  The consequence is that 90% of the file is wrapped in \#ifndef DRIZZLE_CLIENT,
   except the part which must be in the server and in the client.
 
   @TODO Name this file better. "priv" could mean private, privileged, privileges.
 
-  @TODO Get rid of the MYSQL_CLIENT and MYSQL_SERVER conditionals
+  @TODO Get rid of the DRIZZLE_CLIENT and DRIZZLE_SERVER conditionals
 */
 
 #ifndef DRIZZLE_SERVER_SERVER_INCLUDES_H
@@ -318,7 +318,7 @@ bool append_escaped(String *to_str, String *from_str);
 /* information schema */
 extern LEX_STRING INFORMATION_SCHEMA_NAME;
 /* log tables */
-extern LEX_STRING MYSQL_SCHEMA_NAME;
+extern LEX_STRING DRIZZLE_SCHEMA_NAME;
 extern LEX_STRING GENERAL_LOG_NAME;
 extern LEX_STRING SLOW_LOG_NAME;
 
@@ -719,7 +719,7 @@ extern char *default_tz_name;
 extern char *opt_logname, *opt_slow_logname;
 extern const char *log_output_str;
 
-extern MYSQL_BIN_LOG mysql_bin_log;
+extern DRIZZLE_BIN_LOG mysql_bin_log;
 extern LOGGER logger;
 extern TABLE_LIST general_log, slow_log;
 extern FILE *stderror_file;
@@ -774,26 +774,26 @@ extern SHOW_COMP_OPTION have_compress;
 
 extern pthread_t signal_thread;
 
-MYSQL_LOCK *mysql_lock_tables(THD *thd, TABLE **table, uint count,
+DRIZZLE_LOCK *mysql_lock_tables(THD *thd, TABLE **table, uint count,
                               uint flags, bool *need_reopen);
 /* mysql_lock_tables() and open_table() flags bits */
-#define MYSQL_LOCK_IGNORE_GLOBAL_READ_LOCK      0x0001
-#define MYSQL_LOCK_IGNORE_FLUSH                 0x0002
-#define MYSQL_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004
-#define MYSQL_OPEN_TEMPORARY_ONLY               0x0008
-#define MYSQL_LOCK_IGNORE_GLOBAL_READ_ONLY      0x0010
-#define MYSQL_LOCK_PERF_SCHEMA                  0x0020
+#define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      0x0001
+#define DRIZZLE_LOCK_IGNORE_FLUSH                 0x0002
+#define DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        0x0004
+#define DRIZZLE_OPEN_TEMPORARY_ONLY               0x0008
+#define DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY      0x0010
+#define DRIZZLE_LOCK_PERF_SCHEMA                  0x0020
 
-void mysql_unlock_tables(THD *thd, MYSQL_LOCK *sql_lock);
-void mysql_unlock_read_tables(THD *thd, MYSQL_LOCK *sql_lock);
+void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock);
+void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock);
 void mysql_unlock_some_tables(THD *thd, TABLE **table,uint count);
-void mysql_lock_remove(THD *thd, MYSQL_LOCK *locked,TABLE *table,
+void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,TABLE *table,
                        bool always_unlock);
 void mysql_lock_abort(THD *thd, TABLE *table, bool upgrade_lock);
 void mysql_lock_downgrade_write(THD *thd, TABLE *table,
                                 thr_lock_type new_lock_type);
 bool mysql_lock_abort_for_thread(THD *thd, TABLE *table);
-MYSQL_LOCK *mysql_lock_merge(MYSQL_LOCK *a,MYSQL_LOCK *b);
+DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b);
 TABLE_LIST *mysql_lock_have_duplicate(THD *thd, TABLE_LIST *needle,
                                       TABLE_LIST *haystack);
 bool lock_global_read_lock(THD *thd);

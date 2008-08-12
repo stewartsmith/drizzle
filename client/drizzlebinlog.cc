@@ -28,8 +28,8 @@
    Format_desc_of_slave, Rotate_of_master, Format_desc_of_master.
 */
 
-#define MYSQL_CLIENT
-#undef MYSQL_SERVER
+#define DRIZZLE_CLIENT
+#undef DRIZZLE_SERVER
 #include <libdrizzle/my_time.h>
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>

@@ -881,7 +881,7 @@ que_thr_dec_refer_count(
 		} else if (fork_type == QUE_FORK_RECOVERY) {
 
 			/* Do nothing */
-		} else if (fork_type == QUE_FORK_MYSQL_INTERFACE) {
+		} else if (fork_type == QUE_FORK_DRIZZLE_INTERFACE) {
 
 			/* Do nothing */
 		} else {
@@ -1431,7 +1431,7 @@ que_eval_sql(
 	graph->trx = trx;
 	trx->graph = NULL;
 
-	graph->fork_type = QUE_FORK_MYSQL_INTERFACE;
+	graph->fork_type = QUE_FORK_DRIZZLE_INTERFACE;
 
 	ut_a(thr = que_fork_start_command(graph));
 

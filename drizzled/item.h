@@ -2081,7 +2081,7 @@ public:
   virtual Item *real_item() { return ref; }
 };
 
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
 #include "item_sum.h"
 #include "item_func.h"
 #include "item_row.h"

@@ -1041,7 +1041,7 @@ void Relay_log_info::stmt_done(my_off_t event_master_log_pos,
   }
 }
 
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 void Relay_log_info::cleanup_context(THD *thd, bool error)
 {
   assert(sql_thd == thd);

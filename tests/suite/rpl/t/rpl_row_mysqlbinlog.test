@@ -97,9 +97,9 @@ select "--- Test 1 Dump binlog to file --" as "";
 #
 #  Prepare local temporary file to recreate what we have currently.
 
---exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/master.sql
+--exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/master.sql
 
---exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000002 >> $MYSQLTEST_VARDIR/tmp/master.sql
+--exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000002 >> $MYSQLTEST_VARDIR/tmp/master.sql
 
 # Now that we have our file, lets get rid of the current database.
 # Cleanup the master and the slave and try to recreate.
@@ -169,7 +169,7 @@ connection master;
 select "--- Test 2 position test --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --position=417 --stop-position=569 $MYSQLTEST_VARDIR/log/master-bin.000001
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --position=417 --stop-position=569 $MYSQLTEST_VARDIR/log/master-bin.000001
 
 # These are tests for remote binlog.
 # They should return the same as previous test.
@@ -180,16 +180,16 @@ select "--- Test 3 First Remote test --" as "";
 
 # This is broken now
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --stop-position=569 --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --stop-position=569 --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001
 
 # This part is disabled due to bug #17654
 
 --disable_query_log
 select "--- Test 4 Second Remote test --" as "";
 --enable_query_log
---exec $MYSQL_BINLOG --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001 > $MYSQLTEST_VARDIR/tmp/remote.sql
+--exec $DRIZZLE_BINLOG --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001 > $MYSQLTEST_VARDIR/tmp/remote.sql
 
---exec $MYSQL_BINLOG --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002 >> $MYSQLTEST_VARDIR/tmp/remote.sql
+--exec $DRIZZLE_BINLOG --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002 >> $MYSQLTEST_VARDIR/tmp/remote.sql
 
 # Now that we have our file, lets get rid of the current database.
 # Cleanup the master and the slave and try to recreate.
@@ -256,21 +256,21 @@ connection master;
 select "--- Test 5 LOAD DATA --" as "";
 --enable_query_log
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
---exec $MYSQL_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --stop-position=106 --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002
+--exec $DRIZZLE_BINLOG --short-form --local-load=$MYSQLTEST_VARDIR/tmp/ --stop-position=106 --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000002
 
 # Bug#7853 (mysqlbinlog does not accept input from stdin)
 
 --disable_query_log
 select "--- Test 6 reading stdin --" as "";
 --enable_query_log
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
---exec $MYSQL_BINLOG --short-form --stop-position=569 - < $MYSQLTEST_VARDIR/log/master-bin.000001
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
+--exec $DRIZZLE_BINLOG --short-form --stop-position=569 - < $MYSQLTEST_VARDIR/log/master-bin.000001
 
 --disable_query_log
 select "--- Test 7 reading stdin w/position --" as "";
 --enable_query_log
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
---exec $MYSQL_BINLOG --short-form --position=417 --stop-position=569 - < $MYSQLTEST_VARDIR/log/master-bin.000001
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
+--exec $DRIZZLE_BINLOG --short-form --position=417 --stop-position=569 - < $MYSQLTEST_VARDIR/log/master-bin.000001
 
 # Bug#16217 (mysql client did not know how not switch its internal charset)
 --disable_query_log
@@ -301,7 +301,7 @@ create table t5 (f text character set cp932);
 --exec $MYSQL --default-character-set=cp932 test -e "insert into t5 values(_cp932'ƒ\');"
 flush logs;
 rename table t4 to t04, t5 to t05;
---exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000001 | $MYSQL --default-character-set=utf8
+--exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000001 | $MYSQL --default-character-set=utf8
 # original and recovered data must be equal
 select HEX(f) from t04;
 select HEX(f) from t4;
@@ -339,8 +339,8 @@ SELECT * FROM t1;
 
 FLUSH LOGS;
 
---exec $MYSQL_BINLOG --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001 > $MYSQLTEST_VARDIR/tmp/remote.sql
---exec $MYSQL_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/local.sql
+--exec $DRIZZLE_BINLOG --read-from-remote-server --user=root --host=127.0.0.1 --port=$MASTER_MYPORT master-bin.000001 > $MYSQLTEST_VARDIR/tmp/remote.sql
+--exec $DRIZZLE_BINLOG $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/local.sql
 
 --diff_files $MYSQLTEST_VARDIR/tmp/local.sql $MYSQLTEST_VARDIR/tmp/remote.sql
 

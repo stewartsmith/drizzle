@@ -1,7 +1,7 @@
 # Local macros for automake & autoconf
 
 #---START: Used in for client configure
-AC_DEFUN([MYSQL_TYPE_ACCEPT],
+AC_DEFUN([DRIZZLE_TYPE_ACCEPT],
 [ac_save_CXXFLAGS="$CXXFLAGS"
 AC_CACHE_CHECK([base type of last arg to accept], mysql_cv_btype_last_arg_accept,
 AC_LANG_PUSH(C++)
@@ -42,7 +42,7 @@ CXXFLAGS="$ac_save_CXXFLAGS"
 #---END:
 
 dnl Find type of qsort
-AC_DEFUN([MYSQL_TYPE_QSORT],
+AC_DEFUN([DRIZZLE_TYPE_QSORT],
 [AC_CACHE_CHECK([return type of qsort], mysql_cv_type_qsort,
 [AC_TRY_COMPILE([#include <stdlib.h>
 #ifdef __cplusplus
@@ -61,7 +61,7 @@ fi
 ])
 
 #---START: Figure out whether to use 'struct rlimit' or 'struct rlimit64'
-AC_DEFUN([MYSQL_TYPE_STRUCT_RLIMIT],
+AC_DEFUN([DRIZZLE_TYPE_STRUCT_RLIMIT],
 [ac_save_CXXFLAGS="$CXXFLAGS"
 AC_CACHE_CHECK([struct type to use with setrlimit], mysql_cv_btype_struct_rlimit,
 AC_LANG_PUSH(C++)
@@ -108,7 +108,7 @@ then
 fi
 ])
 
-AC_DEFUN([MYSQL_TZNAME],
+AC_DEFUN([DRIZZLE_TZNAME],
 [AC_CACHE_CHECK([if we have tzname variable], mysql_cv_tzname,
 [AC_TRY_COMPILE([#include <time.h>
 #ifdef __cplusplus
@@ -125,7 +125,7 @@ fi
 ])
 
 
-AC_DEFUN([MYSQL_PTHREAD_YIELD],[
+AC_DEFUN([DRIZZLE_PTHREAD_YIELD],[
 # Some OSes like Mac OS X have that as a replacement for pthread_yield()
 AC_CHECK_FUNCS(pthread_yield_np, AC_DEFINE([HAVE_PTHREAD_YIELD_NP],[],[Define if you have pthread_yield_np]))
 AC_CACHE_CHECK([if pthread_yield takes zero arguments], ac_cv_pthread_yield_zero_arg,
@@ -227,7 +227,7 @@ esac
 
 # Orginal from bash-2.0 aclocal.m4, Changed to use termcap last by monty.
  
-AC_DEFUN([MYSQL_CHECK_LIB_TERMCAP],
+AC_DEFUN([DRIZZLE_CHECK_LIB_TERMCAP],
 [
 AC_CACHE_VAL(mysql_cv_termcap_lib,
 [AC_CHECK_LIB(ncurses, tgetent, mysql_cv_termcap_lib=libncurses,
@@ -251,7 +251,7 @@ AC_MSG_RESULT($TERMCAP_LIB)
 ])
 
 dnl Check type of signal routines (posix, 4.2bsd, 4.1bsd or v7)
-AC_DEFUN([MYSQL_SIGNAL_CHECK],
+AC_DEFUN([DRIZZLE_SIGNAL_CHECK],
 [AC_REQUIRE([AC_TYPE_SIGNAL])
 AC_MSG_CHECKING(for type of signal functions)
 AC_CACHE_VAL(mysql_cv_signal_vintage,
@@ -291,7 +291,7 @@ AC_DEFINE(HAVE_USG_SIGHOLD, [1], [sighold() is present and usable])
 fi
 ])
 
-AC_DEFUN([MYSQL_CHECK_GETPW_FUNCS],
+AC_DEFUN([DRIZZLE_CHECK_GETPW_FUNCS],
 [AC_MSG_CHECKING(whether programs are able to redeclare getpw functions)
 AC_CACHE_VAL(mysql_cv_can_redecl_getpw,
 [AC_TRY_COMPILE([#include <sys/types.h>
@@ -304,7 +304,7 @@ AC_DEFINE(HAVE_GETPW_DECLS, [1], [getpwent() declaration present])
 fi
 ])
 
-AC_DEFUN([MYSQL_HAVE_TIOCGWINSZ],
+AC_DEFUN([DRIZZLE_HAVE_TIOCGWINSZ],
 [AC_MSG_CHECKING(for TIOCGWINSZ in sys/ioctl.h)
 AC_CACHE_VAL(mysql_cv_tiocgwinsz_in_ioctl,
 [AC_TRY_COMPILE([#include <sys/types.h>
@@ -317,7 +317,7 @@ AC_DEFINE([GWINSZ_IN_SYS_IOCTL], [1],
 fi
 ])
 
-AC_DEFUN([MYSQL_HAVE_FIONREAD],
+AC_DEFUN([DRIZZLE_HAVE_FIONREAD],
 [AC_MSG_CHECKING(for FIONREAD in sys/ioctl.h)
 AC_CACHE_VAL(mysql_cv_fionread_in_ioctl,
 [AC_TRY_COMPILE([#include <sys/types.h>
@@ -329,7 +329,7 @@ AC_DEFINE([FIONREAD_IN_SYS_IOCTL], [1], [Do we have FIONREAD])
 fi
 ])
 
-AC_DEFUN([MYSQL_HAVE_TIOCSTAT],
+AC_DEFUN([DRIZZLE_HAVE_TIOCSTAT],
 [AC_MSG_CHECKING(for TIOCSTAT in sys/ioctl.h)
 AC_CACHE_VAL(mysql_cv_tiocstat_in_ioctl,
 [AC_TRY_COMPILE([#include <sys/types.h>
@@ -342,7 +342,7 @@ AC_DEFINE(TIOCSTAT_IN_SYS_IOCTL, [1],
 fi
 ])
 
-AC_DEFUN([MYSQL_STRUCT_DIRENT_D_INO],
+AC_DEFUN([DRIZZLE_STRUCT_DIRENT_D_INO],
 [AC_REQUIRE([AC_HEADER_DIRENT])
 AC_MSG_CHECKING(if struct dirent has a d_ino member)
 AC_CACHE_VAL(mysql_cv_dirent_has_dino,
@@ -376,7 +376,7 @@ AC_DEFINE(STRUCT_DIRENT_HAS_D_INO, [1],
 fi
 ])
 
-AC_DEFUN([MYSQL_STRUCT_DIRENT_D_NAMLEN],
+AC_DEFUN([DRIZZLE_STRUCT_DIRENT_D_NAMLEN],
 [AC_REQUIRE([AC_HEADER_DIRENT])
 AC_MSG_CHECKING(if struct dirent has a d_namlen member)
 AC_CACHE_VAL(mysql_cv_dirent_has_dnamlen,
@@ -411,7 +411,7 @@ fi
 ])
 
 
-AC_DEFUN([MYSQL_TYPE_SIGHANDLER],
+AC_DEFUN([DRIZZLE_TYPE_SIGHANDLER],
 [AC_MSG_CHECKING([whether signal handlers are of type void])
 AC_CACHE_VAL(mysql_cv_void_sighandler,
 [AC_TRY_COMPILE([#include <sys/types.h>
@@ -430,7 +430,7 @@ AC_DEFINE(VOID_SIGHANDLER, [1], [sighandler type is void (*signal ()) ();])
 fi
 ])
 
-AC_DEFUN([MYSQL_CXX_BOOL],
+AC_DEFUN([DRIZZLE_CXX_BOOL],
 [
 AC_REQUIRE([AC_PROG_CXX])
 AC_MSG_CHECKING(if ${CXX} supports bool types)
@@ -449,7 +449,7 @@ AC_DEFINE([HAVE_BOOL], [1], [bool is not defined by all C++ compilators])
 fi
 ])dnl
 
-AC_DEFUN([MYSQL_STACK_DIRECTION],
+AC_DEFUN([DRIZZLE_STACK_DIRECTION],
  [AC_CACHE_CHECK(stack direction for C alloca, ac_cv_c_stack_direction,
  [AC_TRY_RUN([#include <stdlib.h>
  int find_stack_direction ()
@@ -472,7 +472,7 @@ AC_DEFUN([MYSQL_STACK_DIRECTION],
  AC_DEFINE_UNQUOTED(STACK_DIRECTION, $ac_cv_c_stack_direction)
 ])dnl
 
-AC_DEFUN([MYSQL_CHECK_LONGLONG_TO_FLOAT],
+AC_DEFUN([DRIZZLE_CHECK_LONGLONG_TO_FLOAT],
 [
 AC_MSG_CHECKING(if conversion of longlong to float works)
 AC_CACHE_VAL(ac_cv_conv_longlong_to_float,
@@ -499,7 +499,7 @@ fi
 AC_MSG_RESULT($ac_cv_conv_longlong_to_float)
 ])
 
-AC_DEFUN([MYSQL_CHECK_VIO], [
+AC_DEFUN([DRIZZLE_CHECK_VIO], [
 dnl
 dnl we always use vio: no need for special defines 
 dnl
@@ -544,10 +544,10 @@ dnl ---------------------------------------------------------------------------
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_CHECK_BIG_TABLES
+dnl Macro: DRIZZLE_CHECK_BIG_TABLES
 dnl Sets BIG_TABLES if --with-big-tables is used
 dnl ---------------------------------------------------------------------------
-AC_DEFUN([MYSQL_CHECK_BIG_TABLES], [
+AC_DEFUN([DRIZZLE_CHECK_BIG_TABLES], [
   AC_ARG_WITH([big-tables],
   AS_HELP_STRING([--with-big-tables],
               [Support tables with more than 4 G rows even on 32 bit platforms]),
@@ -567,15 +567,15 @@ AC_DEFUN([MYSQL_CHECK_BIG_TABLES], [
 
 ])
 dnl ---------------------------------------------------------------------------
-dnl END OF MYSQL_CHECK_BIG_TABLES SECTION
+dnl END OF DRIZZLE_CHECK_BIG_TABLES SECTION
 dnl ---------------------------------------------------------------------------
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_CHECK_MAX_INDEXES
+dnl Macro: DRIZZLE_CHECK_MAX_INDEXES
 dnl Sets MAX_INDEXES
 dnl ---------------------------------------------------------------------------
-AC_DEFUN([MYSQL_CHECK_MAX_INDEXES], [
+AC_DEFUN([DRIZZLE_CHECK_MAX_INDEXES], [
   AC_ARG_WITH([max-indexes],
               AS_HELP_STRING([--with-max-indexes=N],
                              [Sets the maximum number of indexes per table, default 64]),
@@ -587,11 +587,11 @@ AC_DEFUN([MYSQL_CHECK_MAX_INDEXES], [
   AC_MSG_RESULT([$max_indexes])
 ])
 dnl ---------------------------------------------------------------------------
-dnl END OF MYSQL_CHECK_MAX_INDEXES SECTION
+dnl END OF DRIZZLE_CHECK_MAX_INDEXES SECTION
 dnl ---------------------------------------------------------------------------
 
 
-AC_DEFUN([MYSQL_CHECK_CXX_VERSION], [
+AC_DEFUN([DRIZZLE_CHECK_CXX_VERSION], [
 case $SYSTEM_TYPE in
   *netware*)
     CXX_VERSION=`$CXX -version | grep -i version`
@@ -619,7 +619,7 @@ fi
 AC_SUBST(CXX_VERSION)
 ])
 
-AC_DEFUN([MYSQL_PROG_AR], [
+AC_DEFUN([DRIZZLE_PROG_AR], [
 case $CXX_VERSION in
   MIPSpro*)
     AR=$CXX
@@ -650,7 +650,7 @@ dnl  array index must be greater than 0 => if time_t is signed,
 dnl  the code in the macros below won't compile.
 dnl
 
-AC_DEFUN([MYSQL_CHECK_TIME_T],[
+AC_DEFUN([DRIZZLE_CHECK_TIME_T],[
     AC_MSG_CHECKING(if time_t is unsigned)
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
         [[

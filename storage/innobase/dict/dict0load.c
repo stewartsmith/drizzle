@@ -404,7 +404,7 @@ dict_load_columns(
 
 				prtype = dtype_form_prtype(
 					prtype,
-					DATA_MYSQL_BINARY_CHARSET_COLL);
+					DATA_DRIZZLE_BINARY_CHARSET_COLL);
 			} else {
 				/* Use the default charset for
 				other than binary columns. */

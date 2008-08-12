@@ -53,7 +53,7 @@ static char  *opt_password=0, *current_user=0,
     *current_host=0, *current_db=0, *fields_terminated=0,
     *lines_terminated=0, *enclosed=0, *opt_enclosed=0,
     *escaped=0, *opt_columns=0,
-    *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+    *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
 static uint     opt_drizzle_port= 0, opt_protocol= 0;
 static char * opt_drizzle_unix_port=0;
 static int64_t opt_ignore_lines= -1;
