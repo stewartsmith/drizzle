@@ -287,6 +287,38 @@ if $LD --version 2>/dev/null|grep -q GNU; then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+#--------------------------------------------------------------------
+# Check for Google Proto Buffers
+#--------------------------------------------------------------------
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([google/protobuf/message.h])
+if test "x$ac_cv_header_google_protobuf_message_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find message.h. Try installing Google Protocol Buffer development packages])
+fi
+
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+CFLAGS=""
+LIBS="-lprotobuf"
+
+AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
+  AC_TRY_LINK([
+#include <google/protobuf/descriptor.pb.h>
+  ],[
+    google::protobuf::FileDescriptorProto testFdp;
+  ], ac_libprotobuf_works=yes, [
+        AC_ERROR([could not find Google's libprotobuf])
+  ])
+
+])
+
+PROTOBUF_LIBS="${LIBS}"
+AC_SUBST(PROTOBUF_LIBS)
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
+AC_LANG_POP()
 
 #--------------------------------------------------------------------
 # Check for libevent
@@ -430,6 +462,7 @@ AC_CHECK_LIB(readline, rl_initialize, [],
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
+
 
 #--------------------------------------------------------------------
 # Check for libpcre
