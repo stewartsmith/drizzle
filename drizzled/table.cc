@@ -915,33 +915,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       TYPELIB *interval= share->intervals + interval_nr - 1;
       unhex_type2(interval);
     }
-    
-#ifndef TO_BE_DELETED_ON_PRODUCTION
-    if (field_type == DRIZZLE_TYPE_NEWDECIMAL && !share->mysql_version)
-    {
-      /*
-        Fix pack length of old decimal values from 5.0.3 -> 5.0.4
-        The difference is that in the old version we stored precision
-        in the .frm table while we now store the display_length
-      */
-      uint decimals= f_decimals(pack_flag);
-      field_length= my_decimal_precision_to_length(field_length,
-                                                   decimals,
-                                                   f_is_dec(pack_flag) == 0);
-      sql_print_error(_("Found incompatible DECIMAL field '%s' in %s; "
-                      "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
-                      share->fieldnames.type_names[i], share->table_name.str,
-                      share->table_name.str);
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                          ER_CRASHED_ON_USAGE,
-                          _("Found incompatible DECIMAL field '%s' in %s; "
-                          "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
-                          share->fieldnames.type_names[i],
-                          share->table_name.str,
-                          share->table_name.str);
-      share->crashed= 1;                        // Marker for CHECK TABLE
-    }
-#endif
 
     *field_ptr= reg_field=
       make_field(share, record+recpos,
@@ -1092,35 +1065,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         }
         if (field->key_length() != key_part->length)
         {
-#ifndef TO_BE_DELETED_ON_PRODUCTION
-          if (field->type() == DRIZZLE_TYPE_NEWDECIMAL)
-          {
-            /*
-              Fix a fatal error in decimal key handling that causes crashes
-              on Innodb. We fix it by reducing the key length so that
-              InnoDB never gets a too big key when searching.
-              This allows the end user to do an ALTER TABLE to fix the
-              error.
-            */
-            keyinfo->key_length-= (key_part->length - field->key_length());
-            key_part->store_length-= (uint16_t)(key_part->length -
-                                              field->key_length());
-            key_part->length= (uint16_t)field->key_length();
-            sql_print_error(_("Found wrong key definition in %s; "
-                            "Please do \"ALTER TABLE '%s' FORCE \" to fix it!"),
-                            share->table_name.str,
-                            share->table_name.str);
-            push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                                ER_CRASHED_ON_USAGE,
-                                _("Found wrong key definition in %s; "
-                                "Please do \"ALTER TABLE '%s' FORCE\" to fix "
-                                "it!"),
-                                share->table_name.str,
-                                share->table_name.str);
-            share->crashed= 1;                // Marker for CHECK TABLE
-            continue;
-          }
-#endif
           key_part->key_part_flag|= HA_PART_KEY_SEG;
         }
       }
