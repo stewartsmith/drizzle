@@ -162,6 +162,20 @@
 #define __STDC_EXT__ 1          /* To get large file support on hpux */
 #endif
 
+#if defined(HAVE_STDINT_H)
+/* Need to include this _before_ stdlib, so that all defines are right */
+/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
+/* Enable some extra C99 extensions */
+#undef _STDINT_H
+#define __STDC_LIMIT_MACROS
+#define __STDC_FORMAT_MACROS
+#include <stdint.h>
+#include <inttypes.h>
+#else
+#error "You must have stdint!"
+#endif
+
+
 /*
   Solaris 9 include file <sys/feature_tests.h> refers to X/Open document
 
@@ -219,16 +233,6 @@
 
 #if defined(__GNUC) && defined(__EXCEPTIONS)
 #error "Please add -fno-exceptions to CXXFLAGS and reconfigure/recompile"
-#endif
-
-#if defined(HAVE_STDINT_H)
-/* Need to include this _before_ stdlib, so that all defines are right */
-/* We are mixing C and C++, so we wan the C limit macros in the C++ too */
-/* Enable some extra C99 extensions */
-#define __STDC_LIMIT_MACROS
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-#include <stdint.h>
 #endif
 
 #ifndef stdin
@@ -970,9 +974,6 @@ using namespace std;
 
 /* Length of decimal number represented by INT64. */
 #define MY_INT64_NUM_DECIMAL_DIGITS 21
-
-#ifdef _cplusplus
-#endif
 
 /*
   Only Linux is known to need an explicit sync of the directory to make sure a

@@ -16,6 +16,13 @@
 
 /* The old structures from unireg */
 
+
+#ifdef FOO
+#undef _STDINT_H
+#define __STDC_LIMIT_MACROS
+#include <stdint.h>
+#endif
+
 struct st_table;
 class Field;
 

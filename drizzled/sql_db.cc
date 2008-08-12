@@ -15,11 +15,13 @@
 
 
 /* create and drop of databases */
+#include <drizzled/serialize/serialize.h>
 #include <drizzled/server_includes.h>
 #include <mysys/mysys_err.h>
 #include <mysys/my_dir.h>
 #include "log.h"
 #include <drizzled/drizzled_error_messages.h>
+
 
 #define MAX_DROP_TABLE_Q_LEN      1024
 

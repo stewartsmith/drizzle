@@ -1390,6 +1390,7 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
  libdrizzle/Makefile client/Makefile dnl
  drizzled/Makefile dnl
  drizzled/field/Makefile dnl
+ drizzled/serialize/Makefile dnl
  drizzled/sql_builtin.cc dnl
  drizzled/share/Makefile dnl
  support-files/Makefile dnl

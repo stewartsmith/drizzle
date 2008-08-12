@@ -25,7 +25,7 @@ MYSQLLIBdir=            $(pkglibdir)
 
 pkgplugindir =$(pkglibdir)/plugin
 
-SUBDIRS = field  . share
+SUBDIRS = field serialize  . share
 
 sbin_PROGRAMS =drizzled
 
@@ -65,6 +65,7 @@ LDADD = $(top_builddir)/vio/libviolt.la \
 drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/libdrizzle/libdrizzle.la \
 		 $(top_builddir)/drizzled/field/libfield.la \
+		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
 		 $(LDADD) \
