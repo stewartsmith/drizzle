@@ -60,6 +60,8 @@ sinclude(m4/lib-ld.m4)
 sinclude(m4/ac_cxx_header_stdcxx_98.m4)
 
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.17)
+
 
 AC_SUBST(MYSQL_NO_DASH_VERSION)
 AC_SUBST(MYSQL_BASE_VERSION)
@@ -253,8 +255,8 @@ if test "$GCC" = "yes"
 then
   case "$host_cpu" in
     *ppc* | *powerpc*)
-      CFLAGS="$CFLAGS -mno-fused-madd"
-      CXXFLAGS="$CXXFLAGS -mno-fused-madd"
+      AM_CFLAGS="$CFLAGS -mno-fused-madd"
+      AM_CXXFLAGS="$CXXFLAGS -mno-fused-madd"
     ;;
   esac
 fi
@@ -274,9 +276,7 @@ if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
-  AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
-    [1], [Defined by configure. Use explicit template instantiation.])
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions -fno-rtti"
 fi
 
 MYSQL_PROG_AR
@@ -287,6 +287,38 @@ if $LD --version 2>/dev/null|grep -q GNU; then
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
+#--------------------------------------------------------------------
+# Check for Google Proto Buffers
+#--------------------------------------------------------------------
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS([google/protobuf/message.h])
+if test "x$ac_cv_header_google_protobuf_message_h" != "xyes"
+then
+  AC_MSG_ERROR([Couldn't find message.h. Try installing Google Protocol Buffer development packages])
+fi
+
+save_CFLAGS="$CFLAGS"
+save_LIBS="$LIBS"
+CFLAGS=""
+LIBS="-lprotobuf"
+
+AC_CACHE_CHECK([for Message in libprotobuf], ac_libprotobuf_works, [
+  AC_TRY_LINK([
+#include <google/protobuf/descriptor.pb.h>
+  ],[
+    google::protobuf::FileDescriptorProto testFdp;
+  ], ac_libprotobuf_works=yes, [
+        AC_ERROR([could not find Google's libprotobuf])
+  ])
+
+])
+
+PROTOBUF_LIBS="${LIBS}"
+AC_SUBST(PROTOBUF_LIBS)
+CFLAGS="$save_CFLAGS"
+LIBS="$save_LIBS"
+AC_LANG_POP()
 
 #--------------------------------------------------------------------
 # Check for libevent
@@ -430,6 +462,7 @@ AC_CHECK_LIB(readline, rl_initialize, [],
 READLINE_LIBS="$LIBS"
 LIBS="$my_save_LIBS"
 AC_SUBST(READLINE_LIBS)
+
 
 #--------------------------------------------------------------------
 # Check for libpcre
@@ -1056,6 +1089,16 @@ AC_CHECK_FUNCS(bsearch \
   tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
 
+AC_LANG_PUSH(C++)
+# Test whether madvise() is declared in C++ code -- it is not on some
+# systems, such as Solaris
+AC_CHECK_DECLS(madvise, [], [], [#if HAVE_SYS_MMAN_H
+#include <sys/types.h>
+#include <sys/mman.h>
+#endif])
+AC_LANG_POP()
+
+
 AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
 
 # Check that isinf() is available in math.h and can be used in both C and C++
@@ -1347,12 +1390,14 @@ then
   GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
   GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
-  CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
-  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+  AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
+  AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
 fi
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
+AC_SUBST([AM_CFLAGS])
+AC_SUBST([AM_CXXFLAGS])
 
 # Some usefull subst
 AC_SUBST(CC)
@@ -1386,6 +1431,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
 # Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
-AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS'")
+AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
 
 AC_OUTPUT

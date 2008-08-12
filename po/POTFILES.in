@@ -1,10 +1,11 @@
 # List of source files which contain translatable strings.
-client/drizzle.c
+client/drizzle.cc
 client/drizzleadmin.cc
 mysys/errors.c
 mysys/my_error.c
 mysys/my_getopt.c
 mysys/my_handler_errors.h
+drizzled/drizzled_error_messages.h
 drizzled/error.h
 drizzled/rpl_mi.cc
 drizzled/rpl_reporting.cc

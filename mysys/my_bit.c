@@ -15,13 +15,6 @@
 
 #include "mysys_priv.h"
 
-#ifndef HAVE_INLINE
-/* the following will cause all inline functions to be instantiated */
-#define HAVE_INLINE
-#undef STATIC_INLINE
-#define STATIC_INLINE extern
-#endif
-
 #include <mysys/my_bit.h>
 
 const char _my_bits_nbits[256] = {
