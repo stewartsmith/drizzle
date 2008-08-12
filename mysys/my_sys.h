@@ -804,8 +804,7 @@ extern const char *get_charset_name(uint cs_number);
 
 extern const CHARSET_INFO *get_charset(uint cs_number, myf flags);
 extern const CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags);
-extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name,
-					                             uint cs_flags, myf my_flags);
+extern const CHARSET_INFO *get_charset_by_csname(const char *cs_name, uint cs_flags, myf my_flags);
 
 extern bool resolve_charset(const char *cs_name,
                             const CHARSET_INFO *default_cs,

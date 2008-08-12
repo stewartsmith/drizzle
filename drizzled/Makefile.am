@@ -68,6 +68,7 @@ drizzled_LDADD = libhandler.la \
 		 $(top_builddir)/drizzled/serialize/libserialize.la \
 		 $(libevent_libs) \
 		 @mysql_plugin_libs@ \
+		 -lprotobuf \
 		 $(LDADD) \
 		 $(CXXLDFLAGS) \
 		 $(LIBDL_LIBS) $(LIBEVENT_LIBS)
