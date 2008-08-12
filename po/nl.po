@@ -1,21 +1,22 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Sun Microsystems
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Dutch translation for drizzle
+# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# This file is distributed under the same license as the drizzle package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: drizzle 7.0.0\n"
+"Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-12 13:00-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2008-08-11 22:30+0000\n"
+"Last-Translator: Mark Daems <Unknown>\n"
+"Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Launchpad-Export-Date: 2008-08-12 04:16+0000\n"
+"X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
@@ -27,52 +28,55 @@ msgstr ""
 
 #: client/drizzle.cc:259
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "Opnieuw verbinden met de server. Optionele argumenten zijn db en host."
 
 #: client/drizzle.cc:261
+#, fuzzy
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"Statement delimiter instellen. Opmerking : Dit gebruikt de rest van de lijn "
+"als nieuwe delimiter."
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "Verstuur opdracht naar de drizzle server, toon het resultaat verticaal"
 
 #: client/drizzle.cc:264
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Verlaat drizzle. Hetzelfde als quit"
 
 #: client/drizzle.cc:265
 msgid "Send command to drizzle server."
-msgstr ""
+msgstr "Verstuur opdracht naar de drizzle server."
 
 #: client/drizzle.cc:266
 msgid "Display this help."
-msgstr ""
+msgstr "Toon deze hulp."
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "Pager uitschakelen, afdrukken op standaarduitvoer."
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Niet naar uitvoerbestand schrijven."
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
-msgstr ""
+msgstr "PAGER [to_pager] instellen. Druk de query resultaten via PAGER."
 
 #: client/drizzle.cc:271
 msgid "Print current command."
-msgstr ""
+msgstr "Huidige opdracht afdrukken."
 
 #: client/drizzle.cc:272
 msgid "Change your drizzle prompt."
-msgstr ""
+msgstr "Wijzig je drizzle prompt."
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
-msgstr ""
+msgstr "Verlaat drizzle."
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
@@ -80,37 +84,41 @@ msgstr ""
 
 #: client/drizzle.cc:276
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr ""
+msgstr "Voer een SQL script bestand uit. Neemt een bestandsnaam als argument."
 
 #: client/drizzle.cc:277
 msgid "Get status information from the server."
-msgstr ""
+msgstr "Vraag status informatie aan de server."
 
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Uitvoerbestand [to_outfile] instellen. Voeg alles toe aan het opgegeven "
+"uitvoerbestand."
 
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "Gebruik een andere databank. Neemt een databank naam als argument."
 
 #: client/drizzle.cc:283
 msgid ""
 "Switch to another charset. Might be needed for processing binlog with multi-"
 "byte charsets."
 msgstr ""
+"Schakel naar een andere karakterset. Kan nodig zijn voor het verwerken van "
+"een binlog met multi-byte karaktersets."
 
 #: client/drizzle.cc:285 client/drizzle.cc:1437
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "Toon waarschuwingen na elk statement."
 
 #: client/drizzle.cc:287
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "Toon geen waarschuwingen na elk statement."
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr ""
+msgstr "Welkom bij de drizzle client. Opdrachten eindigen met ; of \\g"
 
 #: client/drizzle.cc:1130
 #, c-format
@@ -118,45 +126,48 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"Je Drizzle connection id is %u\n"
+"Server versie: %s\n"
 
 #: client/drizzle.cc:1160
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "Leest geschiedenis-bestand %s\n"
 
 #: client/drizzle.cc:1165
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
+msgstr "Kon geen geheugen toewijzen voor tijdelijk geschiedenisbestand !\n"
 
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
+"Type 'help;' of '\\h' voor hulp. Type '\\c' om de buffer leeg te maken.\n"
 
 #: client/drizzle.cc:1190
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "Schrijft geschiedenisbestand %s\n"
 
 #: client/drizzle.cc:1199
 msgid "Aborted"
-msgstr ""
+msgstr "Afgebroken"
 
 #: client/drizzle.cc:1199
 msgid "Bye"
-msgstr ""
+msgstr "Tot ziens"
 
 #: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "Query afgebroken door Ctrl+C\n"
 
 #: client/drizzle.cc:1271 client/drizzleadmin.cc:69
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Toon deze hulp en sluit af."
 
 #: client/drizzle.cc:1273
 msgid "Synonym for -?"
-msgstr ""
+msgstr "Synoniem voor -?"
 
 #: client/drizzle.cc:1276
 msgid ""
@@ -177,61 +188,69 @@ msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
+"Schakel automatisch naar verticale uitvoer modus als het resultaat breder is "
+"dan de breedte van het uitvoervenster."
 
 #: client/drizzle.cc:1286
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
+"Gebruik het geschiedenisbestand niet. Schakel interactief gedrag uit. "
+"(Activeert --silent)"
 
 #: client/drizzle.cc:1288
 msgid "Directory where character sets are."
-msgstr ""
+msgstr "Directory waar de karaktersets zich bevinden."
 
 #: client/drizzle.cc:1290
 msgid "Display column type information."
-msgstr ""
+msgstr "Toon kolomtype informatie."
 
 #: client/drizzle.cc:1293
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"Bewaar commentaren. Stuur commentaren naar de server. De standaard is --skip-"
+"comments (commentaren weggooien), inschakelen met --comments"
 
 #: client/drizzle.cc:1296
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "Gebruik compressie in het server/client protocol."
 
 #: client/drizzle.cc:1299
 msgid "Check memory and open file usage at exit ."
-msgstr ""
+msgstr "Controleer het geheugen- en open bestandsgebruik bij afsluiten."
 
 #: client/drizzle.cc:1302
 msgid "Print some debug info at exit."
-msgstr ""
+msgstr "Druk wat debug infrmatie bij afsluiten"
 
 #: client/drizzle.cc:1304
 msgid "Database to use."
-msgstr ""
+msgstr "Te gebruiken databank"
 
 #: client/drizzle.cc:1307
 msgid "Set the default character set."
-msgstr ""
+msgstr "Stel de standaard karakterset in."
 
 #: client/drizzle.cc:1309
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "Te gebruiken delimiter."
 
 #: client/drizzle.cc:1311
 msgid "Execute command and quit. (Disables --force and history file)"
 msgstr ""
+"Voer de opdracht uit en sluit af. (Schakelt --force en geschiedenisbestand "
+"uit)"
 
 #: client/drizzle.cc:1313
 msgid "Print the output of a query (rows) vertically."
-msgstr ""
+msgstr "Drukt de uitvoer van een query (rijen) verticaal af."
 
 #: client/drizzle.cc:1316
 msgid "Continue even if we get an sql error."
-msgstr ""
+msgstr "Verdergaan, ook wanneer we een sql fout tegenkomen."
 
 #: client/drizzle.cc:1320
 msgid ""
@@ -252,43 +271,47 @@ msgstr ""
 
 #: client/drizzle.cc:1326
 msgid "Ignore space after function names."
-msgstr ""
+msgstr "Negeer spaties na functienamen."
 
 #: client/drizzle.cc:1328
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
+msgstr "Schakel LOAD DATA LOCAL INFILE in/uit."
 
 #: client/drizzle.cc:1331
 msgid "Turn off beep on error."
-msgstr ""
+msgstr "Schakel piepen bij fout uit."
 
 #: client/drizzle.cc:1333 client/drizzleadmin.cc:71
 msgid "Connect to host."
-msgstr ""
+msgstr "Verbind met host."
 
 #: client/drizzle.cc:1335
 msgid "Write line numbers for errors."
-msgstr ""
+msgstr "Schrijf lijnnummers bij fouten."
 
 #: client/drizzle.cc:1338
 msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
+"Schrijf geen lijnnummers bij fouten. Waarschuwing: -L wordt afgeraden, "
+"gebruik de lange versie van deze optie."
 
 #: client/drizzle.cc:1340
 msgid "Flush buffer after each query."
-msgstr ""
+msgstr "Maak de buffer leeg na de query."
 
 #: client/drizzle.cc:1342
 msgid "Write column names in results."
-msgstr ""
+msgstr "Schrijf kolomnamen in de resultaten."
 
 #: client/drizzle.cc:1346
 msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
+"Schrijf geen kolomnamen in de resultaten. Waarschuwing: -N wordt afgeraden, "
+"gebruik de lange versie van deze optie."
 
 #: client/drizzle.cc:1349
 msgid ""
@@ -1318,8 +1341,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:88
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Afgebroken"
 
 #: drizzled/drizzled_error_messages.h:90
 #, c-format
@@ -3976,8 +4000,9 @@ msgid "Not allowed to use NULL value in VALUES LESS THAN"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1166
+#, fuzzy
 msgid "Incorrect partition name"
-msgstr ""
+msgstr "Negeer spaties na functienamen."
 
 #: drizzled/drizzled_error_messages.h:1168
 msgid ""

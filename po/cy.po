@@ -1,33 +1,38 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Sun Microsystems
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Welsh translation for drizzle
+# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# This file is distributed under the same license as the drizzle package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: drizzle 7.0.0\n"
+"Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-12 13:00-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2008-08-11 21:10+0000\n"
+"Last-Translator: nhutchings <natalie@nuttycrafts.co.uk>\n"
+"Language-Team: Welsh <cy@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=4; plural=n==1 ? 0 : n==2 ? 1 : (n != 8 || n != 11) ? "
+"2 : 3;\n"
+"X-Launchpad-Export-Date: 2008-08-12 04:16+0000\n"
+"X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
+#, fuzzy
 msgid "Synonym for `help'."
-msgstr ""
+msgstr "Cyfystyr am 'help'"
 
 #: client/drizzle.cc:257
+#, fuzzy
 msgid "Clear command."
-msgstr ""
+msgstr "Carthu'r rheolaeth"
 
 #: client/drizzle.cc:259
+#, fuzzy
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "Ail cysylltu i'r gweinydd. Ymresymiad at ddewis yw 'db' a 'host'"
 
 #: client/drizzle.cc:261
 msgid ""
@@ -39,24 +44,27 @@ msgid "Send command to drizzle server, display result vertically."
 msgstr ""
 
 #: client/drizzle.cc:264
+#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Gadael drizzle.  Yr un fath a 'quit'."
 
 #: client/drizzle.cc:265
 msgid "Send command to drizzle server."
 msgstr ""
 
 #: client/drizzle.cc:266
+#, fuzzy
 msgid "Display this help."
-msgstr ""
+msgstr "Dangos cymorth hyn"
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
 msgstr ""
 
 #: client/drizzle.cc:268
+#, fuzzy
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Peidiwch ag ysgrifennu yn 'outfile'"
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -71,8 +79,9 @@ msgid "Change your drizzle prompt."
 msgstr ""
 
 #: client/drizzle.cc:273
+#, fuzzy
 msgid "Quit drizzle."
-msgstr ""
+msgstr "Gadael drizzle."
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
@@ -101,12 +110,14 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:285 client/drizzle.cc:1437
+#, fuzzy
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "Dangos rhybudd ar ol bob datganiad"
 
 #: client/drizzle.cc:287
+#, fuzzy
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "Peidiwch a dangos rhybydd ar ol bob datganiad"
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
@@ -140,23 +151,24 @@ msgstr ""
 
 #: client/drizzle.cc:1199
 msgid "Aborted"
-msgstr ""
+msgstr "Terfynwyd"
 
 #: client/drizzle.cc:1199
 msgid "Bye"
-msgstr ""
+msgstr "Hwyl Fawr"
 
 #: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
 msgstr ""
 
 #: client/drizzle.cc:1271 client/drizzleadmin.cc:69
+#, fuzzy
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Dangos cymorth yma a gadael"
 
 #: client/drizzle.cc:1273
 msgid "Synonym for -?"
-msgstr ""
+msgstr "Cyfystyr am -?"
 
 #: client/drizzle.cc:1276
 msgid ""
@@ -188,8 +200,9 @@ msgid "Directory where character sets are."
 msgstr ""
 
 #: client/drizzle.cc:1290
+#, fuzzy
 msgid "Display column type information."
-msgstr ""
+msgstr "Dangos ymwybodaeth colofn math"
 
 #: client/drizzle.cc:1293
 msgid ""
@@ -230,8 +243,9 @@ msgid "Print the output of a query (rows) vertically."
 msgstr ""
 
 #: client/drizzle.cc:1316
+#, fuzzy
 msgid "Continue even if we get an sql error."
-msgstr ""
+msgstr "Dal ymlaen hyd yn oed mae na camgymeriad sql"
 
 #: client/drizzle.cc:1320
 msgid ""
@@ -256,7 +270,7 @@ msgstr ""
 
 #: client/drizzle.cc:1328
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
+msgstr "Galluogi / analluogi LOAD DATA LOCAL INFILE"
 
 #: client/drizzle.cc:1331
 msgid "Turn off beep on error."
@@ -298,7 +312,7 @@ msgstr ""
 
 #: client/drizzle.cc:1351
 msgid "Ignore SIGINT (CTRL-C)"
-msgstr ""
+msgstr "Anwybyddu SIGINT (CTRL-C)"
 
 #: client/drizzle.cc:1355
 msgid ""
@@ -322,10 +336,13 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:1364 client/drizzleadmin.cc:74
+#, fuzzy
 msgid ""
 "Password to use when connecting to server. If password is not given it's "
 "asked from the tty."
 msgstr ""
+"Trwyddedair i defnyddio pan cysylltu i'r gweinydd.  Os nad ydych yn rhoi "
+"trwyddedair fydd y  'tty' yn gofyn am un"
 
 #: client/drizzle.cc:1366
 msgid ""
@@ -365,6 +382,8 @@ msgstr ""
 msgid ""
 "Be more silent. Print results with a tab as separator, each row on new line."
 msgstr ""
+"Tawelwch.  Argraffu'r canlyniadau efo tafod fel gwahanwr, a bob rhes ar "
+"llinell newydd."
 
 #: client/drizzle.cc:1385
 msgid "Socket file to use for connection."
@@ -396,8 +415,9 @@ msgid "Only allow UPDATE and DELETE that uses keys."
 msgstr ""
 
 #: client/drizzle.cc:1402
+#, fuzzy
 msgid "Synonym for option --safe-updates, -U."
-msgstr ""
+msgstr "cyfystir am dewisiad --safe-updates, -U."
 
 #: client/drizzle.cc:1405
 msgid "Write more. (-v -v -v gives the table output format)."
@@ -409,7 +429,7 @@ msgstr ""
 
 #: client/drizzle.cc:1409 client/drizzleadmin.cc:91
 msgid "Wait and retry if connection is down."
-msgstr ""
+msgstr "Aros a trio eto os nad ysy'r cysylltiad yn gweithio"
 
 #: client/drizzle.cc:1412
 msgid "Number of seconds before connection timeout."
@@ -474,9 +494,9 @@ msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
 
 #: client/drizzle.cc:1912
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown command '\\%c'."
-msgstr ""
+msgstr "rheolaeth anadnabyddus '\\%c'"
 
 #: client/drizzle.cc:2339
 msgid ""
@@ -1318,8 +1338,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:88
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Terfynwyd"
 
 #: drizzled/drizzled_error_messages.h:90
 #, c-format
@@ -1409,8 +1430,9 @@ msgid "No database selected"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:126
+#, fuzzy
 msgid "Unknown command"
-msgstr ""
+msgstr "rheolaeth anadnabyddus '\\%c'"
 
 #: drizzled/drizzled_error_messages.h:128
 #, c-format
@@ -2523,9 +2545,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:578
-#, c-format
+#, fuzzy, c-format
 msgid "Unknown collation: '%-.64s'"
-msgstr ""
+msgstr "rheolaeth anadnabyddus '\\%c'"
 
 #: drizzled/drizzled_error_messages.h:580
 msgid ""
