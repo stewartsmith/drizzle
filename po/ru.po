@@ -1,90 +1,100 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Sun Microsystems
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Russian translation for drizzle
+# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# This file is distributed under the same license as the drizzle package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: drizzle 7.0.0\n"
+"Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-12 13:00-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2008-08-11 22:17+0000\n"
+"Last-Translator: Alexey Kovyrin <Unknown>\n"
+"Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Launchpad-Export-Date: 2008-08-12 04:16+0000\n"
+"X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
-msgstr ""
+msgstr "Синоним для `help'."
 
 #: client/drizzle.cc:257
+#, fuzzy
 msgid "Clear command."
-msgstr ""
+msgstr "Очистить командную строку."
 
 #: client/drizzle.cc:259
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr ""
+msgstr "Переподключиться к серверу. Опциональные аргументы: БД и хост."
 
 #: client/drizzle.cc:261
+#, fuzzy
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"Установить разделитель выражений. Примечание: остаток строки и будет "
+"являться разделителем."
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "Послать команду на сервер drizzle, отобразить результат вертикально."
 
 #: client/drizzle.cc:264
 msgid "Exit drizzle. Same as quit."
-msgstr ""
+msgstr "Выйти из drizzle. Команда аналогична команде quit."
 
 #: client/drizzle.cc:265
 msgid "Send command to drizzle server."
-msgstr ""
+msgstr "Послать команду на сервер drizzle."
 
 #: client/drizzle.cc:266
 msgid "Display this help."
-msgstr ""
+msgstr "Отобразить справку"
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "Выключить пейджер, выводить в поток стандартного вывода."
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Не сохранять результаты в файл"
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
+"Использовать [to_pager] в качестве программы-пейджера. Выводит результаты "
+"запросов, используя PAGER для разбивки на страницы."
 
 #: client/drizzle.cc:271
+#, fuzzy
 msgid "Print current command."
-msgstr ""
+msgstr "Напечатать текущую команду."
 
 #: client/drizzle.cc:272
+#, fuzzy
 msgid "Change your drizzle prompt."
-msgstr ""
+msgstr "Изменить вашу коммандную строку в drizzle."
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
-msgstr ""
+msgstr "Выйти из drizzle."
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Обновить список авто-дополнений."
 
 #: client/drizzle.cc:276
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr ""
+msgstr "Выполнить SQL-скрипт из файла. Получает имя файла как аргумент."
 
 #: client/drizzle.cc:277
 msgid "Get status information from the server."
-msgstr ""
+msgstr "Получить статусную информацию с сервера."
 
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
@@ -92,25 +102,28 @@ msgstr ""
 
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
-msgstr ""
+msgstr "Переключиться на другую базу данных. Получает имя базы как аргумент."
 
 #: client/drizzle.cc:283
 msgid ""
 "Switch to another charset. Might be needed for processing binlog with multi-"
 "byte charsets."
 msgstr ""
+"Переключиться на другую кодировку. Может требоваться при обработке бинарных "
+"логов в многобайтных кодировках."
 
 #: client/drizzle.cc:285 client/drizzle.cc:1437
 msgid "Show warnings after every statement."
-msgstr ""
+msgstr "Показывать предупреждения после каждой выполненной команды"
 
 #: client/drizzle.cc:287
 msgid "Don't show warnings after every statement."
-msgstr ""
+msgstr "Не показывать предупреждения после каждой выполненной команды"
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
 msgstr ""
+"Добро пожаловать в клиент Drizzle.. Разделителем команд служит ; или \\g."
 
 #: client/drizzle.cc:1130
 #, c-format
@@ -118,16 +131,18 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
+"Идентификатор вашего подключения к Drizzle: %u\n"
+"Версия сервера: %s\n"
 
 #: client/drizzle.cc:1160
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr ""
+msgstr "Чтение файла истории %s\n"
 
 #: client/drizzle.cc:1165
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr ""
+msgstr "Невозможно выделить мамять под временный файл истории!\n"
 
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
@@ -136,27 +151,27 @@ msgstr ""
 #: client/drizzle.cc:1190
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr ""
+msgstr "Запись файла истории %s\n"
 
 #: client/drizzle.cc:1199
 msgid "Aborted"
-msgstr ""
+msgstr "Отменено"
 
 #: client/drizzle.cc:1199
 msgid "Bye"
-msgstr ""
+msgstr "Пока!"
 
 #: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
-msgstr ""
+msgstr "Запрос прерван с помощью Ctrl+C\n"
 
 #: client/drizzle.cc:1271 client/drizzleadmin.cc:69
 msgid "Display this help and exit."
-msgstr ""
+msgstr "Показать справку и выйти."
 
 #: client/drizzle.cc:1273
 msgid "Synonym for -?"
-msgstr ""
+msgstr "Синоним для -?"
 
 #: client/drizzle.cc:1276
 msgid ""
@@ -177,6 +192,8 @@ msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
+"Автоматически переключаться на вертикальный формат вывода в случаях, когда "
+"ширина результатов больше ширины терминала."
 
 #: client/drizzle.cc:1286
 msgid ""
@@ -184,42 +201,46 @@ msgid ""
 msgstr ""
 
 #: client/drizzle.cc:1288
+#, fuzzy
 msgid "Directory where character sets are."
-msgstr ""
+msgstr "Каталог, в котором находятся файлы кодировок символов."
 
 #: client/drizzle.cc:1290
 msgid "Display column type information."
-msgstr ""
+msgstr "Отображать информацию о типах колонок."
 
 #: client/drizzle.cc:1293
+#, fuzzy
 msgid ""
 "Preserve comments. Send comments to the server. The default is --skip-"
 "comments (discard comments), enable with --comments"
 msgstr ""
+"Сохранить коментарии и передать их на сервер. По-умолчанию используется --"
+"skip-comments (пропускать коментарии), включается при помощи --comments"
 
 #: client/drizzle.cc:1296
 msgid "Use compression in server/client protocol."
-msgstr ""
+msgstr "Использовать сжатие в клиент-серверном протоколе."
 
 #: client/drizzle.cc:1299
 msgid "Check memory and open file usage at exit ."
-msgstr ""
+msgstr "Проверить использование памяти и открытых файлов при выходе."
 
 #: client/drizzle.cc:1302
 msgid "Print some debug info at exit."
-msgstr ""
+msgstr "Отобразить отладочную информацию при выходе."
 
 #: client/drizzle.cc:1304
 msgid "Database to use."
-msgstr ""
+msgstr "База данных для использования."
 
 #: client/drizzle.cc:1307
 msgid "Set the default character set."
-msgstr ""
+msgstr "Установить кодировку по-умолчанию."
 
 #: client/drizzle.cc:1309
 msgid "Delimiter to be used."
-msgstr ""
+msgstr "Используемый разделитель команд."
 
 #: client/drizzle.cc:1311
 msgid "Execute command and quit. (Disables --force and history file)"
@@ -227,7 +248,7 @@ msgstr ""
 
 #: client/drizzle.cc:1313
 msgid "Print the output of a query (rows) vertically."
-msgstr ""
+msgstr "Отобразить результаты запроса (строки) вертикально."
 
 #: client/drizzle.cc:1316
 msgid "Continue even if we get an sql error."
@@ -1318,8 +1339,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:88
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Отменено"
 
 #: drizzled/drizzled_error_messages.h:90
 #, c-format

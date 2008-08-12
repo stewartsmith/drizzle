@@ -79,13 +79,6 @@
 #include <vio/violite.h>
 /* Definition of the MY_LOCALE struct and some convenience functions */
 #include <drizzled/sql_locale.h>
-/* 
- * Declarations of Object_creation_ctx and Default_creation_ctx, 
- * needed by parser.  Object_creation_ctx depends on THD, but THD
- * is forward-declared in scheduler.h, so we're good to put this
- * here 
- */
-#include <drizzled/object_creation_ctx.h>
 
 #ifdef HAVE_DTRACE
 #define _DTRACE_VERSION 1

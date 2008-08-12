@@ -116,6 +116,7 @@
  */
 
 
+#if (!defined(INT16_MAX))
 /* 7.18.2.1 Limits of exact-width integer types */
 #define INT8_MAX         127
 #define INT16_MAX        32767
@@ -237,6 +238,7 @@
 
 #define SIG_ATOMIC_MIN	  INT32_MIN
 #define SIG_ATOMIC_MAX	  INT32_MAX
+#endif
 
 #else
 #error "You must have inttypes!"

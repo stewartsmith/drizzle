@@ -1,21 +1,22 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Sun Microsystems
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# English (United Kingdom) translation for drizzle
+# Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
+# This file is distributed under the same license as the drizzle package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: drizzle 7.0.0\n"
+"Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-12 13:00-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2008-08-11 18:57+0000\n"
+"Last-Translator: LinuxJedi <andrew@linuxjedi.co.uk>\n"
+"Language-Team: English (United Kingdom) <en_GB@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Launchpad-Export-Date: 2008-08-12 04:16+0000\n"
+"X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
@@ -140,11 +141,11 @@ msgstr ""
 
 #: client/drizzle.cc:1199
 msgid "Aborted"
-msgstr ""
+msgstr "Aborted"
 
 #: client/drizzle.cc:1199
 msgid "Bye"
-msgstr ""
+msgstr "Bye"
 
 #: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
@@ -1318,8 +1319,9 @@ msgid "'%-.192s' is locked against change"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:88
+#, fuzzy
 msgid "Sort aborted"
-msgstr ""
+msgstr "Aborted"
 
 #: drizzled/drizzled_error_messages.h:90
 #, c-format
@@ -4630,7 +4632,7 @@ msgstr ""
 
 #: drizzled/slave.cc:777 drizzled/slave.cc:792
 msgid "Master reported unrecognized DRIZZLE version"
-msgstr ""
+msgstr "Master reported unrecognised DRIZZLE version"
 
 #: drizzled/slave.cc:833
 msgid "default Format_description_log_event"

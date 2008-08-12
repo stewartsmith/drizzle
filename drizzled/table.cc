@@ -35,59 +35,6 @@ static void fix_type_pointers(const char ***array, TYPELIB *point_to_type,
 			      uint types, char **names);
 static uint find_field(Field **fields, uchar *record, uint start, uint length);
 
-/**************************************************************************
-  Object_creation_ctx implementation.
-**************************************************************************/
-
-Object_creation_ctx *Object_creation_ctx::set_n_backup(THD *thd)
-{
-  Object_creation_ctx *backup_ctx;
-
-  backup_ctx= create_backup_ctx(thd);
-  change_env(thd);
-
-  return(backup_ctx);
-}
-
-void Object_creation_ctx::restore_env(THD *thd, Object_creation_ctx *backup_ctx)
-{
-  if (!backup_ctx)
-    return;
-
-  backup_ctx->change_env(thd);
-
-  delete backup_ctx;
-}
-
-/**************************************************************************
-  Default_object_creation_ctx implementation.
-**************************************************************************/
-
-Default_object_creation_ctx::Default_object_creation_ctx(THD *thd)
-  : m_client_cs(thd->variables.character_set_client),
-    m_connection_cl(thd->variables.collation_connection)
-{ }
-
-Default_object_creation_ctx::Default_object_creation_ctx(
-  const CHARSET_INFO * const client_cs, const CHARSET_INFO * const connection_cl)
-  : m_client_cs(client_cs),
-    m_connection_cl(connection_cl)
-{ }
-
-Object_creation_ctx *
-Default_object_creation_ctx::create_backup_ctx(THD *thd) const
-{
-  return new Default_object_creation_ctx(thd);
-}
-
-void Default_object_creation_ctx::change_env(THD *thd) const
-{
-  thd->variables.character_set_client= m_client_cs;
-  thd->variables.collation_connection= m_connection_cl;
-
-  thd->update_charset();
-}
-
 /*************************************************************************/
 
 /* Get column name from column hash */
@@ -968,33 +915,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       TYPELIB *interval= share->intervals + interval_nr - 1;
       unhex_type2(interval);
     }
-    
-#ifndef TO_BE_DELETED_ON_PRODUCTION
-    if (field_type == DRIZZLE_TYPE_NEWDECIMAL && !share->mysql_version)
-    {
-      /*
-        Fix pack length of old decimal values from 5.0.3 -> 5.0.4
-        The difference is that in the old version we stored precision
-        in the .frm table while we now store the display_length
-      */
-      uint decimals= f_decimals(pack_flag);
-      field_length= my_decimal_precision_to_length(field_length,
-                                                   decimals,
-                                                   f_is_dec(pack_flag) == 0);
-      sql_print_error(_("Found incompatible DECIMAL field '%s' in %s; "
-                      "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
-                      share->fieldnames.type_names[i], share->table_name.str,
-                      share->table_name.str);
-      push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                          ER_CRASHED_ON_USAGE,
-                          _("Found incompatible DECIMAL field '%s' in %s; "
-                          "Please do \"ALTER TABLE '%s' FORCE\" to fix it!"),
-                          share->fieldnames.type_names[i],
-                          share->table_name.str,
-                          share->table_name.str);
-      share->crashed= 1;                        // Marker for CHECK TABLE
-    }
-#endif
 
     *field_ptr= reg_field=
       make_field(share, record+recpos,
@@ -1145,35 +1065,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
         }
         if (field->key_length() != key_part->length)
         {
-#ifndef TO_BE_DELETED_ON_PRODUCTION
-          if (field->type() == DRIZZLE_TYPE_NEWDECIMAL)
-          {
-            /*
-              Fix a fatal error in decimal key handling that causes crashes
-              on Innodb. We fix it by reducing the key length so that
-              InnoDB never gets a too big key when searching.
-              This allows the end user to do an ALTER TABLE to fix the
-              error.
-            */
-            keyinfo->key_length-= (key_part->length - field->key_length());
-            key_part->store_length-= (uint16_t)(key_part->length -
-                                              field->key_length());
-            key_part->length= (uint16_t)field->key_length();
-            sql_print_error(_("Found wrong key definition in %s; "
-                            "Please do \"ALTER TABLE '%s' FORCE \" to fix it!"),
-                            share->table_name.str,
-                            share->table_name.str);
-            push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
-                                ER_CRASHED_ON_USAGE,
-                                _("Found wrong key definition in %s; "
-                                "Please do \"ALTER TABLE '%s' FORCE\" to fix "
-                                "it!"),
-                                share->table_name.str,
-                                share->table_name.str);
-            share->crashed= 1;                // Marker for CHECK TABLE
-            continue;
-          }
-#endif
           key_part->key_part_flag|= HA_PART_KEY_SEG;
         }
       }
