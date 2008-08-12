@@ -23,9 +23,8 @@ MYSQLLIBdir=            $(pkglibdir)
 pkgplugindir =		$(pkglibdir)/plugin
 
 LDADD = $(LIBINTL)
-AM_CFLAGS = -DHAVE_MYSQL_CONFIG_H
 
-DEFS =                  @DEFS@
+DEFS =                  @DEFS@ -DHAVE_MYSQL_CONFIG_H
 
 noinst_HEADERS =	ha_archive.h azio.h
 noinst_PROGRAMS	=	archive_test archive_reader archive_performance concurrency_test
@@ -33,14 +32,14 @@ noinst_PROGRAMS	=	archive_test archive_reader archive_performance concurrency_te
 EXTRA_LTLIBRARIES =	ha_archive.la
 pkglib_LTLIBRARIES =	@plugin_archive_shared_target@
 ha_archive_la_LDFLAGS =	-module -rpath $(pkgplugindir) $(LDADD)
-ha_archive_la_CXXFLAGS=	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
-ha_archive_la_CFLAGS =	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_archive_la_CXXFLAGS=	$(AM_CXXFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_archive_la_CFLAGS =	$(AM_CFLAGS) -DMYSQL_DYNAMIC_PLUGIN 
 ha_archive_la_SOURCES =	ha_archive.cc azio.c
 
 
 EXTRA_LIBRARIES =	libarchive.a
 noinst_LIBRARIES =	@plugin_archive_static_target@
-libarchive_a_CXXFLAGS =	$(AM_CFLAGS) 
+libarchive_a_CXXFLAGS =	$(AM_CXXFLAGS) 
 libarchive_a_CFLAGS =	$(AM_CFLAGS) 
 libarchive_a_SOURCES =	ha_archive.cc azio.c
 
