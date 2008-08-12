@@ -255,8 +255,8 @@ if test "$GCC" = "yes"
 then
   case "$host_cpu" in
     *ppc* | *powerpc*)
-      CFLAGS="$CFLAGS -mno-fused-madd"
-      CXXFLAGS="$CXXFLAGS -mno-fused-madd"
+      AM_CFLAGS="$CFLAGS -mno-fused-madd"
+      AM_CXXFLAGS="$CXXFLAGS -mno-fused-madd"
     ;;
   esac
 fi
@@ -275,11 +275,8 @@ export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
-  # (splitting this is for the future...)
-  NO_EXCEPTIONS="-fno-exceptions"
-  AC_SUBST(NO_EXCEPTIONS)
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="$CXXFLAGS ${NO_EXCEPTIONS} -fno-rtti"
+  AM_CXXFLAGS="${AM_CXXFLAGS} -fno-exceptions -fno-rtti"
 fi
 
 MYSQL_PROG_AR
@@ -1360,8 +1357,8 @@ then
   GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
   GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
-  AM_CXXFLAGS="${GXX_WARNINGS}"
-  AM_CFLAGS="${GCC_WARNINGS} "
+  AM_CXXFLAGS="${GXX_WARNINGS} ${AM_CXXFLAGS}"
+  AM_CFLAGS="${GCC_WARNINGS} ${AM_CFLAGS}"
 fi
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
@@ -1401,6 +1398,6 @@ AC_CONFIG_FILES(Makefile extra/Makefile mysys/Makefile dnl
 AC_CONFIG_COMMANDS([default], , test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h)
 
 # Ensure that table handlers gets all modifications to CFLAGS/CXXFLAGS
-AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS'")
+AC_CONFIG_COMMANDS_POST(ac_configure_args="$ac_configure_args CFLAGS='$CFLAGS' CXXFLAGS='$CXXFLAGS' AM_CFLAGS='$AM_CFLAGS' AM_CXXFLAGS='$AM_CXXFLAGS'")
 
 AC_OUTPUT
