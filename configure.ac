@@ -60,6 +60,8 @@ sinclude(m4/lib-ld.m4)
 sinclude(m4/ac_cxx_header_stdcxx_98.m4)
 
 AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION(0.17)
+
 
 AC_SUBST(MYSQL_NO_DASH_VERSION)
 AC_SUBST(MYSQL_BASE_VERSION)
@@ -273,10 +275,11 @@ export CC CXX CFLAGS LD LDFLAGS AR ARFLAGS
 if test "$GCC" = "yes"
 then
   # Disable exceptions as they seams to create problems with gcc and threads.
+  # (splitting this is for the future...)
+  NO_EXCEPTIONS="-fno-exceptions"
+  AC_SUBST(NO_EXCEPTIONS)
   # drizzled doesn't use run-time-type-checking, so we disable it.
-  CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
-  AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],
-    [1], [Defined by configure. Use explicit template instantiation.])
+  CXXFLAGS="$CXXFLAGS ${NO_EXCEPTIONS} -fno-rtti"
 fi
 
 MYSQL_PROG_AR
@@ -1056,6 +1059,16 @@ AC_CHECK_FUNCS(bsearch \
   tell tempnam vidattr \
   posix_fallocate backtrace backtrace_symbols backtrace_symbols_fd)
 
+AC_LANG_PUSH(C++)
+# Test whether madvise() is declared in C++ code -- it is not on some
+# systems, such as Solaris
+AC_CHECK_DECLS(madvise, [], [], [#if HAVE_SYS_MMAN_H
+#include <sys/types.h>
+#include <sys/mman.h>
+#endif])
+AC_LANG_POP()
+
+
 AM_CONDITIONAL(BUILD_THR_RWLOCK,[test "$ac_cv_func_rwlock_init" -a "$ac_cv_funn_pthread_rwlock_rdlock"])
 
 # Check that isinf() is available in math.h and can be used in both C and C++
@@ -1347,12 +1360,14 @@ then
   GCC_WARNINGS="${C99_SUPPORT_HACK} ${BASE_WARNINGS} ${GCC_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
   GXX_WARNINGS="${BASE_WARNINGS} ${GXX_PEDANTIC} ${W_UNREACHABLE} ${W_FAIL} ${GPROF_PROFILING} ${GPROF_COVERAGE}"
 
-  CXXFLAGS="$CXXFLAGS ${GXX_WARNINGS}"
-  CFLAGS="$CFLAGS ${GCC_WARNINGS} "
+  AM_CXXFLAGS="${GXX_WARNINGS}"
+  AM_CFLAGS="${GCC_WARNINGS} "
 fi
 
 AC_SUBST([GLOBAL_CPPFLAGS],['-I$(top_srcdir) -I$(top_builddir)'])
 AC_SUBST([AM_CPPFLAGS],['${GLOBAL_CPPFLAGS}'])
+AC_SUBST([AM_CFLAGS])
+AC_SUBST([AM_CXXFLAGS])
 
 # Some usefull subst
 AC_SUBST(CC)

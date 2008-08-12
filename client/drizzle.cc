@@ -1039,6 +1039,7 @@ int main(int argc,char *argv[])
                             "drizzle>> ", MYF(0));
   current_prompt= my_strdup(default_prompt, MYF(0));
   processed_prompt= new string();
+  processed_prompt->reserve(32);
 
   prompt_counter=0;
 
@@ -1120,6 +1121,8 @@ int main(int argc,char *argv[])
            INFO_INFO,0,0);
 
   glob_buffer= new string();
+  glob_buffer->reserve(512);
+  
   char * output_buff= (char *)malloc(512);
   memset(output_buff, '\0', 512);
 
@@ -1856,7 +1859,7 @@ static bool add_line(string *buffer, char *line, char *in_string,
     }
 #endif
         if (!*ml_comment && inchar == '\\' &&
-        !(drizzle.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES))
+            !(*in_string && (drizzle.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)))
     {
       // Found possbile one character command like \c
 
@@ -2107,6 +2110,7 @@ static void fix_history(string *final_command)
 
   /* Converted buffer */
   string fixed_buffer;
+  fixed_buffer.reserve(512);
 
   /* find out how many lines we have and remove newlines */
   while (*ptr != '\0')
@@ -2966,6 +2970,8 @@ print_table_data(DRIZZLE_RES *result)
   DRIZZLE_FIELD   *field;
   bool          *num_flag;
   string separator;
+  
+  separator.reserve(256);
 
   num_flag=(bool*) my_malloc(sizeof(bool)*drizzle_num_fields(result),
                              MYF(MY_WME));
