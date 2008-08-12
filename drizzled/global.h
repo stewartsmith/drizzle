@@ -102,16 +102,6 @@
 #endif
 
 /*
-  now let's figure out if inline functions are supported
-  autoconf defines 'inline' to be empty, if not
-*/
-#if defined(inline)
-#define HAVE_INLINE
-#endif
-/* helper macro for "instantiating" inline functions */
-#define STATIC_INLINE static inline
-
-/*
   The following macros are used to control inlining a bit more than
   usual. These macros are used to ensure that inlining always or
   never occurs (independent of compilation mode).
