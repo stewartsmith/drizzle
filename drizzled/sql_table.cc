@@ -4882,7 +4882,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     tbl.table_name= tbl.alias= tmp_name;
     /* Table is in thd->temporary_tables */
     new_table= open_table(thd, &tbl, thd->mem_root, (bool*) 0,
-                          MYSQL_LOCK_IGNORE_FLUSH);
+                          DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {

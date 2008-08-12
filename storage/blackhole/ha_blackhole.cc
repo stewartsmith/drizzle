@@ -298,7 +298,7 @@ static int blackhole_fini(void *p __attribute__((unused)))
 
 mysql_declare_plugin(blackhole)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

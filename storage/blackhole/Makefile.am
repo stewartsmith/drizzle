@@ -30,7 +30,7 @@ noinst_HEADERS =	ha_blackhole.h
 EXTRA_LTLIBRARIES =	ha_blackhole.la
 pkgplugin_LTLIBRARIES =	@plugin_blackhole_shared_target@
 ha_blackhole_la_LDFLAGS=-module -rpath $(pkgplugindir)
-ha_blackhole_la_CXXFLAGS=$(AM_CXXFLAGS) -DMYSQL_DYNAMIC_PLUGIN
+ha_blackhole_la_CXXFLAGS=$(AM_CXXFLAGS) -DDRIZZLE_DYNAMIC_PLUGIN
 ha_blackhole_la_SOURCES=ha_blackhole.cc
 
 

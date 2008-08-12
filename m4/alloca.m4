@@ -1,4 +1,4 @@
-AC_DEFUN([MYSQL_FUNC_ALLOCA],
+AC_DEFUN([DRIZZLE_FUNC_ALLOCA],
 [
 # Since we have heard that alloca fails on IRIX never define it on a
 # SGI machine

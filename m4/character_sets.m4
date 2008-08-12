@@ -465,9 +465,9 @@ else
   ])
 fi
 
-AC_DEFINE_UNQUOTED([MYSQL_DEFAULT_CHARSET_NAME], ["$default_charset"],
+AC_DEFINE_UNQUOTED([DRIZZLE_DEFAULT_CHARSET_NAME], ["$default_charset"],
                    [Define the default charset name])
-AC_DEFINE_UNQUOTED([MYSQL_DEFAULT_COLLATION_NAME], ["$default_collation"],
+AC_DEFINE_UNQUOTED([DRIZZLE_DEFAULT_COLLATION_NAME], ["$default_collation"],
                    [Define the default charset name])
 
 # Shall we build the UCA-based Unicode collations

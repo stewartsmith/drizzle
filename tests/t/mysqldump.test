@@ -14,7 +14,7 @@ drop database if exists db2;
 
 CREATE TABLE t1(a int, key (a)) key_block_size=1024;
 INSERT INTO t1 VALUES (1), (2);
---exec $MYSQL_DUMP --skip-create --skip-comments -X test t1
+--exec $DRIZZLE_DUMP --skip-create --skip-comments -X test t1
 DROP TABLE t1;
 
 --echo #
@@ -24,7 +24,7 @@ DROP TABLE t1;
 CREATE TABLE t1 (a decimal(64, 20));
 INSERT INTO t1 VALUES ("1234567890123456789012345678901234567890"),
 ("0987654321098765432109876543210987654321");
---exec $MYSQL_DUMP --compact test t1
+--exec $DRIZZLE_DUMP --compact test t1
 DROP TABLE t1;
 
 --echo #
@@ -33,7 +33,7 @@ DROP TABLE t1;
 
 CREATE TABLE t1 (`a"b"` char(2));
 INSERT INTO t1 VALUES ("1\""), ("\"2");
---exec $MYSQL_DUMP --compact --skip-create -X test t1
+--exec $DRIZZLE_DUMP --compact --skip-create -X test t1
 DROP TABLE t1;
 
 --echo #
@@ -43,7 +43,7 @@ DROP TABLE t1;
 
 CREATE TABLE t1 (a  VARCHAR(255)) DEFAULT CHARSET koi8r;
 INSERT INTO t1  VALUES (_koi8r x'C1C2C3C4C5'), (NULL);
---exec $MYSQL_DUMP --skip-comments --skip-extended-insert test t1
+--exec $DRIZZLE_DUMP --skip-comments --skip-extended-insert test t1
 DROP TABLE t1;
 
 --echo #
@@ -52,8 +52,8 @@ DROP TABLE t1;
 
 CREATE TABLE t1 (a int) ENGINE=MYISAM;
 INSERT INTO t1 VALUES (1), (2);
---exec $MYSQL_DUMP --skip-comments --compatible=mysql40 test t1
---exec $MYSQL_DUMP --skip-comments --compatible=mysql323 test t1
+--exec $DRIZZLE_DUMP --skip-comments --compatible=mysql40 test t1
+--exec $DRIZZLE_DUMP --skip-comments --compatible=mysql323 test t1
 DROP TABLE t1;
 
 --echo #
@@ -61,7 +61,7 @@ DROP TABLE t1;
 --echo #
 
 create table ```a` (i int);
---exec $MYSQL_DUMP --compact test
+--exec $DRIZZLE_DUMP --compact test
 drop table ```a`;
 
 #--echo #
@@ -70,12 +70,12 @@ drop table ```a`;
 #
 #create table t1(a int);
 #insert into t1 values (1),(2),(3);
-#--exec $MYSQL_DUMP --skip-comments --tab=$MYSQLTEST_VARDIR/tmp/ test
+#--exec $DRIZZLE_DUMP --skip-comments --tab=$MYSQLTEST_VARDIR/tmp/ test
 #--cat_file $MYSQLTEST_VARDIR/tmp/t1.sql
 #--cat_file $MYSQLTEST_VARDIR/tmp/t1.txt
 #--remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
 #--remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
-#--exec $MYSQL_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
+#--exec $DRIZZLE_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
 #--remove_file $MYSQLTEST_VARDIR/tmp/t1.sql
 #--remove_file $MYSQLTEST_VARDIR/tmp/t1.txt
 #drop table t1;
@@ -84,10 +84,10 @@ drop table ```a`;
 --echo # Bug #6101: create database problem
 --echo #
 
---exec $MYSQL_DUMP --skip-comments --databases test
+--exec $DRIZZLE_DUMP --skip-comments --databases test
 
 create database mysqldump_test_db character set latin2 collate latin2_bin;
---exec $MYSQL_DUMP --skip-comments --databases mysqldump_test_db
+--exec $DRIZZLE_DUMP --skip-comments --databases mysqldump_test_db
 drop database mysqldump_test_db;
 
 --echo #
@@ -99,7 +99,7 @@ drop database mysqldump_test_db;
 
 CREATE TABLE t1 (a  CHAR(10));
 INSERT INTO t1  VALUES (_latin1 'ÄÖÜß');
---exec $MYSQL_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments test t1
+--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments test t1
 
 --echo #
 --echo # Bug#8063: make test mysqldump [ fail ]
@@ -109,10 +109,10 @@ INSERT INTO t1  VALUES (_latin1 'ÄÖÜß');
 --echo # checking that "mysqldump" is compiled with "latin1"
 --echo #
 
-#--exec $MYSQL_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --compatible=mysql323 test t1
---exec $MYSQL_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --compatible=mysql323 --default-character-set=cp850 test t1
---exec $MYSQL_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=cp850 --compatible=mysql323 test t1
---exec $MYSQL_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=utf8 --compatible=mysql323 test t1
+#--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --compatible=mysql323 test t1
+--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --compatible=mysql323 --default-character-set=cp850 test t1
+--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=cp850 --compatible=mysql323 test t1
+--exec $DRIZZLE_DUMP --character-sets-dir=$CHARSETSDIR --skip-comments --default-character-set=utf8 --compatible=mysql323 test t1
 DROP TABLE t1;
 
 --echo #
@@ -123,7 +123,7 @@ CREATE TABLE t1 (a int);
 CREATE TABLE t2 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t2 VALUES (4),(5),(6);
---exec $MYSQL_DUMP --skip-comments --ignore-table=test.t1 test
+--exec $DRIZZLE_DUMP --skip-comments --ignore-table=test.t1 test
 DROP TABLE t1;
 DROP TABLE t2;
 
@@ -133,7 +133,7 @@ DROP TABLE t2;
 
 CREATE TABLE t1 (`b` blob);
 INSERT INTO `t1` VALUES (0x602010000280100005E71A);
---exec $MYSQL_DUMP --skip-extended-insert --hex-blob test --skip-comments t1
+--exec $DRIZZLE_DUMP --skip-extended-insert --hex-blob test --skip-comments t1
 DROP TABLE t1;
 
 --echo #
@@ -143,8 +143,8 @@ DROP TABLE t1;
 CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
 INSERT INTO t1 VALUES (4),(5),(6);
---exec $MYSQL_DUMP --skip-comments --insert-ignore test t1
---exec $MYSQL_DUMP --skip-comments --insert-ignore --delayed-insert test t1
+--exec $DRIZZLE_DUMP --skip-comments --insert-ignore test t1
+--exec $DRIZZLE_DUMP --skip-comments --insert-ignore --delayed-insert test t1
 DROP TABLE t1;
 
 --echo #
@@ -483,7 +483,7 @@ create table t1 (
  F_6faa8040da20ef399b63a72d0e4ab575 int,
  F_fe73f687e5bc5280214e0486b273a5f9 int);
 insert into t1 (F_8d3bba7425e7c98c50f52ca1b52d3735) values (1);
---exec $MYSQL_DUMP --skip-comments -c test
+--exec $DRIZZLE_DUMP --skip-comments -c test
 drop table t1;
 
 --echo #
@@ -492,7 +492,7 @@ drop table t1;
 
 CREATE TABLE t1 (a int);
 INSERT INTO t1 VALUES (1),(2),(3);
---exec $MYSQL_DUMP --add-drop-database --skip-comments --databases test
+--exec $DRIZZLE_DUMP --add-drop-database --skip-comments --databases test
 DROP TABLE t1;
 
 --echo #
@@ -505,10 +505,10 @@ CREATE TABLE t1 ( a INT );
 CREATE TABLE t2 ( a INT );
 INSERT INTO t1 VALUES (1), (2);
 INSERT INTO t2 VALUES (1), (2);
---exec $MYSQL_DUMP --skip-comments --no-data mysqldump_test_db
---exec $MYSQL_DUMP --skip-comments --no-data mysqldump_test_db t1 t2
---exec $MYSQL_DUMP --skip-comments --skip-create --xml --no-data mysqldump_test_db
---exec $MYSQL_DUMP --skip-comments --skip-create --xml --no-data mysqldump_test_db t1 t2
+--exec $DRIZZLE_DUMP --skip-comments --no-data mysqldump_test_db
+--exec $DRIZZLE_DUMP --skip-comments --no-data mysqldump_test_db t1 t2
+--exec $DRIZZLE_DUMP --skip-comments --skip-create --xml --no-data mysqldump_test_db
+--exec $DRIZZLE_DUMP --skip-comments --skip-create --xml --no-data mysqldump_test_db t1 t2
 DROP TABLE t1, t2;
 DROP DATABASE mysqldump_test_db;
 
@@ -527,49 +527,49 @@ create table t3(a varchar(30) primary key, b int not null);
 select '------ Testing with illegal table names ------' as test_sequence ;
 --enable_query_log
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db "\d-2-1.sql" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "\d-2-1.sql" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db  "\t1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\t1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db  "\\t1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\\t1" 2>&1
  
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db  "\\\\t1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "\\\\t1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db  "t\1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "t\1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments  mysqldump_test_db  "t\\1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments  mysqldump_test_db  "t\\1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db  "t/1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db  "t/1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db "T%1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T%1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db "T'1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T'1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_1" 2>&1
 
 --error 6
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_db "T_" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_db "T_" 2>&1
 
 --disable_query_log
 select '------ Testing with illegal database names ------' as test_sequence ;
 --enable_query_log
 --error 2
---exec $MYSQL_DUMP --compact --skip-comments mysqldump_test_d 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments mysqldump_test_d 2>&1
 
 --error 2
---exec $MYSQL_DUMP --compact --skip-comments "mysqld\ump_test_db" 2>&1
+--exec $DRIZZLE_DUMP --compact --skip-comments "mysqld\ump_test_db" 2>&1
 
 drop table t1, t2, t3;
 drop database mysqldump_test_db;
@@ -585,7 +585,7 @@ create table t2 (pk int primary key auto_increment,
 a int(10), b varchar(30), c datetime, d blob, e text);
 insert into t1 values (NULL), (10), (20);
 insert into t2 (a, b) values (NULL, NULL),(10, NULL),(NULL, "twenty"),(30, "thirty");
---exec $MYSQL_DUMP  --skip-comments --xml --no-create-info test
+--exec $DRIZZLE_DUMP  --skip-comments --xml --no-create-info test
 drop table t1, t2;
 
 --echo #
@@ -595,9 +595,9 @@ drop table t1, t2;
 create table t1 (a text character set utf8, b text character set latin1);
 insert t1 values (0x4F736E616272C3BC636B, 0x4BF66C6E);
 select * from t1;
---exec $MYSQL_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
+--exec $DRIZZLE_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
 --exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/t1.sql
---exec $MYSQL_IMPORT test $MYSQLTEST_VARDIR/tmp/t1.txt
+--exec $DRIZZLE_IMPORT test $MYSQLTEST_VARDIR/tmp/t1.txt
 select * from t1;
 
 drop table t1;
@@ -606,7 +606,7 @@ drop table t1;
 --echo # BUG#15328 Segmentation fault occured if my.cnf is invalid for escape sequence
 --echo #
 
---exec $MYSQL_MY_PRINT_DEFAULTS --config-file=$MYSQL_TEST_DIR/std_data/bug15328.cnf mysqldump
+--exec $DRIZZLE_MY_PRINT_DEFAULTS --config-file=$DRIZZLE_TEST_DIR/std_data/bug15328.cnf mysqldump
 
 --echo #
 --echo # BUG #19025 mysqldump doesn't correctly dump "auto_increment = [int]"
@@ -627,7 +627,7 @@ select * from t1;
 
 show create table `t1`;
 
---exec $MYSQL_DUMP --skip-comments test t1 > $MYSQLTEST_VARDIR/tmp/bug19025.sql
+--exec $DRIZZLE_DUMP --skip-comments test t1 > $MYSQLTEST_VARDIR/tmp/bug19025.sql
 DROP TABLE `t1`;
 
 --exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/bug19025.sql
@@ -646,7 +646,7 @@ create table t1(a int);
 create table t2(a int);
 create table t3(a int);
 --error 6
---exec $MYSQL_DUMP --skip-comments --force --no-data test t3 t1 non_existing t2
+--exec $DRIZZLE_DUMP --skip-comments --force --no-data test t3 t1 non_existing t2
 drop table t1, t2, t3;
 
 --echo #
@@ -655,7 +655,7 @@ drop table t1, t2, t3;
 
 create table t1 (a int);
 --error 2
---exec $MYSQL_DUMP --skip-comments --force test t1 --where="xx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 2>&1
+--exec $DRIZZLE_DUMP --skip-comments --force test t1 --where="xx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 2>&1
 drop table t1;
 
 --echo #
@@ -672,8 +672,8 @@ CREATE TABLE `t1` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 insert into t1 values (0815, 4711, 2006);
 
---exec $MYSQL_DUMP --skip-comments --compatible=ansi --order-by-primary test t1
---exec $MYSQL_DUMP --skip-comments --order-by-primary test t1
+--exec $DRIZZLE_DUMP --skip-comments --compatible=ansi --order-by-primary test t1
+--exec $DRIZZLE_DUMP --skip-comments --order-by-primary test t1
 DROP TABLE `t1`;
 --enable_warnings
 
@@ -686,15 +686,15 @@ DROP TABLE `t1`;
 
 --echo # --skip-dump-date:
 --replace_regex /-- [^D][^u][^m][^p].*// /\/\*!.*//
---exec $MYSQL_DUMP --skip-dump-date test
+--exec $DRIZZLE_DUMP --skip-dump-date test
 
 --echo # --dump-date:
 --replace_regex /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/
---exec $MYSQL_DUMP --dump-date test
+--exec $DRIZZLE_DUMP --dump-date test
 
 --echo # --dump-date (default):
 --replace_regex /-- [^D][^u][^m][^p].*// /\/\*!.*// / on [0-9 :-]+/ on DATE/
---exec $MYSQL_DUMP test
+--exec $DRIZZLE_DUMP test
 
 --echo #
 --echo # End of 5.0 tests
@@ -710,7 +710,7 @@ CREATE TABLE t1(a int, b int);
 INSERT INTO t1 VALUES (1,1);
 INSERT INTO t1 VALUES (2,3);
 INSERT INTO t1 VALUES (3,4), (4,5);
---exec $MYSQL_DUMP --replace --skip-comments test t1
+--exec $DRIZZLE_DUMP --replace --skip-comments test t1
 DROP TABLE t1;
 
 #
@@ -728,19 +728,19 @@ insert t2 values ("We the people", "in order to perform");
 insert t2 values ("a more perfect", "union");
 select * from t1;
 select * from t2;
---exec $MYSQL_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
+--exec $DRIZZLE_DUMP --tab=$MYSQLTEST_VARDIR/tmp/ test
 --exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/t1.sql
 --exec $MYSQL test < $MYSQLTEST_VARDIR/tmp/t2.sql
 # The first load tests the pausing code
---exec $MYSQL_IMPORT --use-threads=1 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt
+--exec $DRIZZLE_IMPORT --use-threads=1 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt
 # Now we test with multiple threads!
---exec $MYSQL_IMPORT --silent --use-threads=5 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt
+--exec $DRIZZLE_IMPORT --silent --use-threads=5 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt
 select * from t1;
 select * from t2;
 # Now we test with multiple threads, but less threads than files.
 create table words(a varchar(255));
 create table words2(b varchar(255));
---exec $MYSQL_IMPORT --silent --use-threads=2 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt $MYSQLTEST_VARDIR/std_data_ln/words.dat $MYSQLTEST_VARDIR/std_data_ln/words2.dat
+--exec $DRIZZLE_IMPORT --silent --use-threads=2 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt $MYSQLTEST_VARDIR/std_data_ln/words.dat $MYSQLTEST_VARDIR/std_data_ln/words2.dat
 select * from t1;
 select * from t2;
 select * from words;
@@ -750,7 +750,7 @@ select * from words2;
 drop table words;
 --replace_regex /.*mysqlimport(\.exe)*/mysql-import/
 --error 1
---exec $MYSQL_IMPORT --silent --use-threads=2 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt $MYSQLTEST_VARDIR/std_data_ln/words.dat $MYSQLTEST_VARDIR/std_data_ln/words2.dat 2>&1
+--exec $DRIZZLE_IMPORT --silent --use-threads=2 test $MYSQLTEST_VARDIR/tmp/t1.txt $MYSQLTEST_VARDIR/tmp/t2.txt $MYSQLTEST_VARDIR/std_data_ln/words.dat $MYSQLTEST_VARDIR/std_data_ln/words2.dat 2>&1
 
 drop table t1;
 drop table t2;
@@ -765,7 +765,7 @@ drop table words2;
 create database `test-database`;
 use `test-database`;
 create table test (a int);
---exec $MYSQL_DUMP --compact --opt --quote-names test-database
+--exec $DRIZZLE_DUMP --compact --opt --quote-names test-database
 drop database `test-database`;
 use test;
 

@@ -1532,7 +1532,7 @@ bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *info __attribute__((unu
 
 mysql_declare_plugin(csv)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "CSV",
   "1.0",
   "Brian Aker, MySQL AB",

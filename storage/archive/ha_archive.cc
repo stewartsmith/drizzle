@@ -1448,19 +1448,19 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   return;
 }
 
-static MYSQL_SYSVAR_BOOL(aio, archive_use_aio,
+static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
   PLUGIN_VAR_NOCMDOPT,
   "Whether or not to use asynchronous IO.",
   NULL, NULL, true);
 
 static struct st_mysql_sys_var* archive_system_variables[]= {
-  MYSQL_SYSVAR(aio),
+  DRIZZLE_SYSVAR(aio),
   NULL
 };
 
 mysql_declare_plugin(archive)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "ARCHIVE",
   "3.5",
   "Brian Aker, MySQL AB",

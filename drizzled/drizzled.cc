@@ -144,7 +144,7 @@ inline void setup_fpu()
 
 } /* cplusplus */
 
-#define MYSQL_KILL_SIGNAL SIGTERM
+#define DRIZZLE_KILL_SIGNAL SIGTERM
 
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
 
@@ -234,7 +234,7 @@ static char *lc_time_names_name;
 static char *my_bind_addr_str;
 static char *default_collation_name;
 static char *default_storage_engine_str;
-static char compiled_default_collation_name[]= MYSQL_DEFAULT_COLLATION_NAME;
+static char compiled_default_collation_name[]= DRIZZLE_DEFAULT_COLLATION_NAME;
 static I_List<THD> thread_cache;
 static double long_query_time;
 
@@ -674,9 +674,9 @@ void kill_mysql(void)
 #endif
 
 #if defined(HAVE_PTHREAD_KILL)
-  pthread_kill(signal_thread, MYSQL_KILL_SIGNAL);
+  pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL);
 #elif !defined(SIGNALS_DONT_BREAK_READ)
-  kill(current_pid, MYSQL_KILL_SIGNAL);
+  kill(current_pid, DRIZZLE_KILL_SIGNAL);
 #endif
   shutdown_in_progress=1;			// Safety if kill didn't work
 #ifdef SIGNALS_DONT_BREAK_READ
@@ -714,13 +714,13 @@ static void *kill_server(void *sig_ptr)
   abort_loop=1;					// This should be set
   if (sig != 0) // 0 is not a valid signal number
     my_sigset(sig, SIG_IGN);                    /* purify inspected */
-  if (sig == MYSQL_KILL_SIGNAL || sig == 0)
+  if (sig == DRIZZLE_KILL_SIGNAL || sig == 0)
     sql_print_information(ER(ER_NORMAL_SHUTDOWN),my_progname);
   else
     sql_print_error(ER(ER_GOT_SIGNAL),my_progname,sig); /* purecov: inspected */
 
   close_connections();
-  if (sig != MYSQL_KILL_SIGNAL &&
+  if (sig != DRIZZLE_KILL_SIGNAL &&
       sig != 0)
     unireg_abort(1);				/* purecov: inspected */
   else
@@ -902,7 +902,7 @@ static void wait_for_signal_thread_to_end()
   */
   for (i= 0 ; i < 100 && signal_thread_in_use; i++)
   {
-    if (pthread_kill(signal_thread, MYSQL_KILL_SIGNAL) != ESRCH)
+    if (pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL) != ESRCH)
       break;
     my_sleep(100);				// Give it time to die
   }
@@ -1820,7 +1820,7 @@ void my_message_sql(uint error, const char *str, myf MyFlags)
       thd->is_fatal_error= 1;
 
 #ifdef BUG_36098_FIXED
-    mysql_audit_general(thd,MYSQL_AUDIT_GENERAL_ERROR,error,my_time(0),
+    mysql_audit_general(thd,DRIZZLE_AUDIT_GENERAL_ERROR,error,my_time(0),
                         0,0,str,str ? strlen(str) : 0,
                         thd->query,thd->query_length,
                         thd->variables.character_set_client,
@@ -1888,7 +1888,7 @@ void my_str_free_mysqld(void *ptr)
 
 
 static const char *load_default_groups[]= {
-"mysqld","server", MYSQL_BASE_VERSION, 0, 0};
+"mysqld","server", DRIZZLE_BASE_VERSION, 0, 0};
 
 
 /**
@@ -2044,9 +2044,9 @@ static int init_common_variables(const char *conf_file_name, int argc,
   global_system_variables.time_zone= my_tz_SYSTEM;
 
   /*
-    Init mutexes for the global MYSQL_BIN_LOG objects.
+    Init mutexes for the global DRIZZLE_BIN_LOG objects.
     As safe_mutex depends on what MY_INIT() does, we can't init the mutexes of
-    global MYSQL_BIN_LOGs in their constructors, because then they would be
+    global DRIZZLE_BIN_LOGs in their constructors, because then they would be
     inited before MY_INIT(). So we do it here.
   */
   mysql_bin_log.init_pthread_objects();
@@ -2601,7 +2601,7 @@ int main(int argc, char **argv)
   }
 #endif
 
-  if (init_common_variables(MYSQL_CONFIG_NAME,
+  if (init_common_variables(DRIZZLE_CONFIG_NAME,
 			    argc, argv, load_default_groups))
     unireg_abort(1);				// Will do exit
 
@@ -2686,7 +2686,7 @@ int main(int argc, char **argv)
   {
     abort_loop=1;
     select_thread_in_use=0;
-    (void) pthread_kill(signal_thread, MYSQL_KILL_SIGNAL);
+    (void) pthread_kill(signal_thread, DRIZZLE_KILL_SIGNAL);
 
     (void) my_delete(pidfile_name,MYF(MY_WME));	// Not needed anymore
 
@@ -2706,7 +2706,7 @@ int main(int argc, char **argv)
   }
 
   sql_print_information(ER(ER_STARTUP),my_progname,server_version,
-                        "", mysqld_port, MYSQL_COMPILATION_COMMENT);
+                        "", mysqld_port, DRIZZLE_COMPILATION_COMMENT);
 
 
   handle_connections_sockets();
@@ -2802,7 +2802,7 @@ inline void kill_broken_server()
   {
     select_thread_in_use = 0;
     /* The following call will never return */
-    kill_server((void*) MYSQL_KILL_SIGNAL);
+    kill_server((void*) DRIZZLE_KILL_SIGNAL);
   }
 }
 #define MAYBE_BROKEN_SYSCALL kill_broken_server();
@@ -4143,7 +4143,7 @@ static void print_version(void)
     version from the output of 'mysqld --version', so don't change it!
   */
   printf("%s  Ver %s for %s on %s (%s)\n",my_progname,
-	 server_version,SYSTEM_TYPE,MACHINE_TYPE, MYSQL_COMPILATION_COMMENT);
+	 server_version,SYSTEM_TYPE,MACHINE_TYPE, DRIZZLE_COMPILATION_COMMENT);
 }
 
 static void usage(void)
@@ -4164,7 +4164,7 @@ Starts the Drizzle database server\n");
   printf("Usage: %s [OPTIONS]\n", my_progname);
   {
 #ifdef FOO
-  print_defaults(MYSQL_CONFIG_NAME,load_default_groups);
+  print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
   puts("");
   set_ports();
 #endif
@@ -4257,7 +4257,7 @@ static void mysql_init_variables(void)
   what_to_log= ~ (1L << (uint) COM_TIME);
   refresh_version= 1L;	/* Increments on each reload */
   global_query_id= thread_id= 1L;
-  stpcpy(server_version, MYSQL_SERVER_VERSION);
+  stpcpy(server_version, DRIZZLE_SERVER_VERSION);
   myisam_recover_options_str= "OFF";
   myisam_stats_method_str= "nulls_unequal";
   threads.empty();
@@ -4285,7 +4285,7 @@ static void mysql_init_variables(void)
 
   /* Variables in libraries */
   charsets_dir= 0;
-  default_character_set_name= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+  default_character_set_name= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
   default_collation_name= compiled_default_collation_name;
   sys_charset_system.set((char*) system_charset_info->csname);
   character_set_filesystem_name= (char*) "binary";
@@ -4321,7 +4321,7 @@ static void mysql_init_variables(void)
 
   const char *tmpenv;
   if (!(tmpenv = getenv("MY_BASEDIR_VERSION")))
-    tmpenv = DEFAULT_MYSQL_HOME;
+    tmpenv = DEFAULT_DRIZZLE_HOME;
   (void) strmake(mysql_home, tmpenv, sizeof(mysql_home)-1);
 }
 
@@ -4772,13 +4772,13 @@ static void get_options(int *argc,char **argv)
   Create version name for running mysqld version
   We automaticly add suffixes -debug, -embedded and -log to the version
   name to make the version more descriptive.
-  (MYSQL_SERVER_SUFFIX is set by the compilation environment)
+  (DRIZZLE_SERVER_SUFFIX is set by the compilation environment)
 */
 
 static void set_server_version(void)
 {
-  char *end= strxmov(server_version, MYSQL_SERVER_VERSION,
-                     MYSQL_SERVER_SUFFIX_STR, NullS);
+  char *end= strxmov(server_version, DRIZZLE_SERVER_VERSION,
+                     DRIZZLE_SERVER_SUFFIX_STR, NullS);
   if (opt_log || opt_slow_log || opt_bin_log)
     stpcpy(end, "-log");                        // This may slow down system
 }
@@ -4787,10 +4787,10 @@ static void set_server_version(void)
 static char *get_relative_path(const char *path)
 {
   if (test_if_hard_path(path) &&
-      is_prefix(path,DEFAULT_MYSQL_HOME) &&
-      strcmp(DEFAULT_MYSQL_HOME,FN_ROOTDIR))
+      is_prefix(path,DEFAULT_DRIZZLE_HOME) &&
+      strcmp(DEFAULT_DRIZZLE_HOME,FN_ROOTDIR))
   {
-    path+=(uint) strlen(DEFAULT_MYSQL_HOME);
+    path+=(uint) strlen(DEFAULT_DRIZZLE_HOME);
     while (*path == FN_LIBCHAR)
       path++;
   }

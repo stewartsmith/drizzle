@@ -45,7 +45,7 @@
 
 LOGGER logger;
 
-MYSQL_BIN_LOG mysql_bin_log;
+DRIZZLE_BIN_LOG mysql_bin_log;
 ulong sync_binlog_counter= 0;
 
 static bool test_if_number(const char *str,
@@ -228,7 +228,7 @@ void Log_to_file_event_handler::init_pthread_objects()
 }
 
 
-/** Wrapper around MYSQL_LOG::write() for slow log. */
+/** Wrapper around DRIZZLE_LOG::write() for slow log. */
 
 bool Log_to_file_event_handler::
   log_slow(THD *thd, time_t current_time, time_t query_start_arg,
@@ -244,7 +244,7 @@ bool Log_to_file_event_handler::
 
 
 /**
-   Wrapper around MYSQL_LOG::write() for general log. We need it since we
+   Wrapper around DRIZZLE_LOG::write() for general log. We need it since we
    want all log event handlers to have the same signature.
 */
 
@@ -572,7 +572,7 @@ void LOGGER::init_general_log(uint general_log_printer)
 bool LOGGER::activate_log_handler(THD* thd __attribute__((unused)),
                                   uint log_type)
 {
-  MYSQL_QUERY_LOG *file_log;
+  DRIZZLE_QUERY_LOG *file_log;
   bool res= false;
   lock_exclusive();
   switch (log_type) {
@@ -608,7 +608,7 @@ void LOGGER::deactivate_log_handler(THD *thd __attribute__((unused)),
                                     uint log_type)
 {
   bool *tmp_opt= 0;
-  MYSQL_LOG *file_log;
+  DRIZZLE_LOG *file_log;
 
   switch (log_type) {
   case QUERY_LOG_SLOW:
@@ -709,7 +709,7 @@ binlog_trans_log_truncate(THD *thd, my_off_t pos)
 
 /*
   this function is mostly a placeholder.
-  conceptually, binlog initialization (now mostly done in MYSQL_BIN_LOG::open)
+  conceptually, binlog initialization (now mostly done in DRIZZLE_BIN_LOG::open)
   should be moved here.
 */
 
@@ -845,7 +845,7 @@ static int binlog_prepare(handlerton *hton __attribute__((unused)),
     do nothing.
     just pretend we can do 2pc, so that MySQL won't
     switch to 1pc.
-    real work will be done in MYSQL_BIN_LOG::log_xid()
+    real work will be done in DRIZZLE_BIN_LOG::log_xid()
   */
   return 0;
 }
@@ -873,7 +873,7 @@ static int binlog_commit(handlerton *hton __attribute__((unused)),
 
   if (trx_data->empty())
   {
-    // we're here because trans_log was flushed in MYSQL_BIN_LOG::log_xid()
+    // we're here because trans_log was flushed in DRIZZLE_BIN_LOG::log_xid()
     trx_data->reset();
     return(0);
   }
@@ -941,7 +941,7 @@ static int binlog_commit(handlerton *hton __attribute__((unused)),
   if ((in_transaction && (all || (!trx_data->at_least_one_stmt && thd->transaction.stmt.modified_non_trans_table))) || (!in_transaction && !all))
   {
     Query_log_event qev(thd, STRING_WITH_LEN("COMMIT"), true, false);
-    qev.error_code= 0; // see comment in MYSQL_LOG::write(THD, IO_CACHE)
+    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(THD, IO_CACHE)
     int error= binlog_end_trans(thd, trx_data, &qev, all);
     return(error);
   }
@@ -988,7 +988,7 @@ static int binlog_rollback(handlerton *hton __attribute__((unused)),
       rolled back on the slave.
     */
     Query_log_event qev(thd, STRING_WITH_LEN("ROLLBACK"), true, false);
-    qev.error_code= 0; // see comment in MYSQL_LOG::write(THD, IO_CACHE)
+    qev.error_code= 0; // see comment in DRIZZLE_LOG::write(THD, IO_CACHE)
     error= binlog_end_trans(thd, trx_data, &qev, all);
   }
   else if ((all && !thd->transaction.all.modified_non_trans_table) ||
@@ -1165,7 +1165,7 @@ static int find_uniq_filename(char *name)
 }
 
 
-void MYSQL_LOG::init(enum_log_type log_type_arg,
+void DRIZZLE_LOG::init(enum_log_type log_type_arg,
                      enum cache_type io_cache_type_arg)
 {
   log_type= log_type_arg;
@@ -1195,7 +1195,7 @@ void MYSQL_LOG::init(enum_log_type log_type_arg,
     1   error
 */
 
-bool MYSQL_LOG::open(const char *log_name, enum_log_type log_type_arg,
+bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
                      const char *new_name, enum cache_type io_cache_type_arg)
 {
   char buff[FN_REFLEN];
@@ -1237,7 +1237,7 @@ bool MYSQL_LOG::open(const char *log_name, enum_log_type log_type_arg,
     char *end;
     int len=snprintf(buff, sizeof(buff), "%s, Version: %s (%s). "
 		     "started with:\nTCP Port: %d, Named Pipe: %s\n",
-                     my_progname, server_version, MYSQL_COMPILATION_COMMENT,
+                     my_progname, server_version, DRIZZLE_COMPILATION_COMMENT,
                      mysqld_port, ""
                      );
     end= stpncpy(buff + len, "Time                 Id Command    Argument\n",
@@ -1263,7 +1263,7 @@ shutdown the MySQL server and restart it.", name, errno);
   return(1);
 }
 
-MYSQL_LOG::MYSQL_LOG()
+DRIZZLE_LOG::DRIZZLE_LOG()
   : name(0), write_error(false), inited(false), log_type(LOG_UNKNOWN),
     log_state(LOG_CLOSED)
 {
@@ -1276,7 +1276,7 @@ MYSQL_LOG::MYSQL_LOG()
   memset(&log_file, 0, sizeof(log_file));
 }
 
-void MYSQL_LOG::init_pthread_objects()
+void DRIZZLE_LOG::init_pthread_objects()
 {
   assert(inited == 0);
   inited= 1;
@@ -1297,7 +1297,7 @@ void MYSQL_LOG::init_pthread_objects()
     The internal structures are not freed until cleanup() is called
 */
 
-void MYSQL_LOG::close(uint exiting)
+void DRIZZLE_LOG::close(uint exiting)
 {					// One can't set log_type here!
   if (log_state == LOG_OPENED)
   {
@@ -1323,7 +1323,7 @@ void MYSQL_LOG::close(uint exiting)
 
 /** This is called only once. */
 
-void MYSQL_LOG::cleanup()
+void DRIZZLE_LOG::cleanup()
 {
   if (inited)
   {
@@ -1335,7 +1335,7 @@ void MYSQL_LOG::cleanup()
 }
 
 
-int MYSQL_LOG::generate_new_name(char *new_name, const char *log_name)
+int DRIZZLE_LOG::generate_new_name(char *new_name, const char *log_name)
 {
   fn_format(new_name, log_name, mysql_data_home, "", 4);
   if (log_type == LOG_BIN)
@@ -1365,7 +1365,7 @@ int MYSQL_LOG::generate_new_name(char *new_name, const char *log_name)
 */
 
 
-void MYSQL_QUERY_LOG::reopen_file()
+void DRIZZLE_QUERY_LOG::reopen_file()
 {
   char *save_name;
 
@@ -1418,7 +1418,7 @@ void MYSQL_QUERY_LOG::reopen_file()
     TRUE - error occured
 */
 
-bool MYSQL_QUERY_LOG::write(time_t event_time,
+bool DRIZZLE_QUERY_LOG::write(time_t event_time,
                             const char *user_host __attribute__((unused)),
                             uint user_host_len __attribute__((unused)),
                             int thread_id,
@@ -1520,7 +1520,7 @@ err:
     TRUE - error occured
 */
 
-bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
+bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
                             time_t query_start_arg __attribute__((unused)),
                             const char *user_host,
                             uint user_host_len, uint64_t query_utime,
@@ -1652,7 +1652,7 @@ bool MYSQL_QUERY_LOG::write(THD *thd, time_t current_time,
   The following should be using fn_format();  We just need to
   first change fn_format() to cut the file name if it's too long.
 */
-const char *MYSQL_LOG::generate_name(const char *log_name,
+const char *DRIZZLE_LOG::generate_name(const char *log_name,
                                       const char *suffix,
                                       bool strip_ext, char *buff)
 {
@@ -1675,7 +1675,7 @@ const char *MYSQL_LOG::generate_name(const char *log_name,
 
 
 
-MYSQL_BIN_LOG::MYSQL_BIN_LOG()
+DRIZZLE_BIN_LOG::DRIZZLE_BIN_LOG()
   :bytes_written(0), prepared_xids(0), file_id(1), open_count(1),
    need_start_event(true), m_table_map_version(0),
    description_event_for_exec(0), description_event_for_queue(0)
@@ -1692,7 +1692,7 @@ MYSQL_BIN_LOG::MYSQL_BIN_LOG()
 
 /* this is called only once */
 
-void MYSQL_BIN_LOG::cleanup()
+void DRIZZLE_BIN_LOG::cleanup()
 {
   if (inited)
   {
@@ -1709,7 +1709,7 @@ void MYSQL_BIN_LOG::cleanup()
 
 
 /* Init binlog-specific vars */
-void MYSQL_BIN_LOG::init(bool no_auto_events_arg, ulong max_size_arg)
+void DRIZZLE_BIN_LOG::init(bool no_auto_events_arg, ulong max_size_arg)
 {
   no_auto_events= no_auto_events_arg;
   max_size= max_size_arg;
@@ -1717,7 +1717,7 @@ void MYSQL_BIN_LOG::init(bool no_auto_events_arg, ulong max_size_arg)
 }
 
 
-void MYSQL_BIN_LOG::init_pthread_objects()
+void DRIZZLE_BIN_LOG::init_pthread_objects()
 {
   assert(inited == 0);
   inited= 1;
@@ -1727,7 +1727,7 @@ void MYSQL_BIN_LOG::init_pthread_objects()
 }
 
 
-bool MYSQL_BIN_LOG::open_index_file(const char *index_file_name_arg,
+bool DRIZZLE_BIN_LOG::open_index_file(const char *index_file_name_arg,
                                 const char *log_name)
 {
   File index_file_nr= -1;
@@ -1782,7 +1782,7 @@ bool MYSQL_BIN_LOG::open_index_file(const char *index_file_name_arg,
     1	error
 */
 
-bool MYSQL_BIN_LOG::open(const char *log_name,
+bool DRIZZLE_BIN_LOG::open(const char *log_name,
                          enum_log_type log_type_arg,
                          const char *new_name,
                          enum cache_type io_cache_type_arg,
@@ -1795,7 +1795,7 @@ bool MYSQL_BIN_LOG::open(const char *log_name,
   write_error=0;
 
   /* open the main log file */
-  if (MYSQL_LOG::open(log_name, log_type_arg, new_name, io_cache_type_arg))
+  if (DRIZZLE_LOG::open(log_name, log_type_arg, new_name, io_cache_type_arg))
     return(1);                            /* all warnings issued */
 
   init(no_auto_events_arg, max_size_arg);
@@ -1913,7 +1913,7 @@ shutdown the MySQL server and restart it.", name, errno);
 }
 
 
-int MYSQL_BIN_LOG::get_current_log(LOG_INFO* linfo)
+int DRIZZLE_BIN_LOG::get_current_log(LOG_INFO* linfo)
 {
   pthread_mutex_lock(&LOCK_log);
   int ret = raw_get_current_log(linfo);
@@ -1921,7 +1921,7 @@ int MYSQL_BIN_LOG::get_current_log(LOG_INFO* linfo)
   return ret;
 }
 
-int MYSQL_BIN_LOG::raw_get_current_log(LOG_INFO* linfo)
+int DRIZZLE_BIN_LOG::raw_get_current_log(LOG_INFO* linfo)
 {
   strmake(linfo->log_file_name, log_file_name, sizeof(linfo->log_file_name)-1);
   linfo->pos = my_b_tell(&log_file);
@@ -2002,7 +2002,7 @@ err:
     LOG_INFO_IO		Got IO error while reading file
 */
 
-int MYSQL_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
+int DRIZZLE_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
 			    bool need_lock)
 {
   int error= 0;
@@ -2075,7 +2075,7 @@ int MYSQL_BIN_LOG::find_log_pos(LOG_INFO *linfo, const char *log_name,
     LOG_INFO_IO		Got IO error while reading file
 */
 
-int MYSQL_BIN_LOG::find_next_log(LOG_INFO* linfo, bool need_lock)
+int DRIZZLE_BIN_LOG::find_next_log(LOG_INFO* linfo, bool need_lock)
 {
   int error= 0;
   uint length;
@@ -2122,7 +2122,7 @@ err:
     1   error
 */
 
-bool MYSQL_BIN_LOG::reset_logs(THD* thd)
+bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
 {
   LOG_INFO linfo;
   bool error=0;
@@ -2268,7 +2268,7 @@ err:
 
 #ifdef HAVE_REPLICATION
 
-int MYSQL_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
+int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
 {
   int error;
 
@@ -2343,7 +2343,7 @@ err:
   Update log index_file.
 */
 
-int MYSQL_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threads)
+int DRIZZLE_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threads)
 {
   if (copy_up_file_and_fill(&index_file, log_info->index_file_start_offset))
     return LOG_INFO_IO;
@@ -2378,7 +2378,7 @@ int MYSQL_BIN_LOG::update_log_index(LOG_INFO* log_info, bool need_update_threads
                                 stat() or my_delete()
 */
 
-int MYSQL_BIN_LOG::purge_logs(const char *to_log, 
+int DRIZZLE_BIN_LOG::purge_logs(const char *to_log, 
                           bool included,
                           bool need_mutex, 
                           bool need_update_threads, 
@@ -2512,7 +2512,7 @@ err:
                                 stat() or my_delete()
 */
 
-int MYSQL_BIN_LOG::purge_logs_before_date(time_t purge_time)
+int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
 {
   int error;
   LOG_INFO log_info;
@@ -2618,7 +2618,7 @@ err:
     If file name will be longer then FN_REFLEN it will be truncated
 */
 
-void MYSQL_BIN_LOG::make_log_name(char* buf, const char* log_ident)
+void DRIZZLE_BIN_LOG::make_log_name(char* buf, const char* log_ident)
 {
   uint dir_len = dirname_length(log_file_name); 
   if (dir_len >= FN_REFLEN)
@@ -2632,7 +2632,7 @@ void MYSQL_BIN_LOG::make_log_name(char* buf, const char* log_ident)
   Check if we are writing/reading to the given log file.
 */
 
-bool MYSQL_BIN_LOG::is_active(const char *log_file_name_arg)
+bool DRIZZLE_BIN_LOG::is_active(const char *log_file_name_arg)
 {
   return !strcmp(log_file_name, log_file_name_arg);
 }
@@ -2646,13 +2646,13 @@ bool MYSQL_BIN_LOG::is_active(const char *log_file_name_arg)
   method).
 */
 
-void MYSQL_BIN_LOG::new_file()
+void DRIZZLE_BIN_LOG::new_file()
 {
   new_file_impl(1);
 }
 
 
-void MYSQL_BIN_LOG::new_file_without_locking()
+void DRIZZLE_BIN_LOG::new_file_without_locking()
 {
   new_file_impl(0);
 }
@@ -2667,7 +2667,7 @@ void MYSQL_BIN_LOG::new_file_without_locking()
     The new file name is stored last in the index file
 */
 
-void MYSQL_BIN_LOG::new_file_impl(bool need_lock)
+void DRIZZLE_BIN_LOG::new_file_impl(bool need_lock)
 {
   char new_name[FN_REFLEN], *new_name_ptr, *old_name;
 
@@ -2764,7 +2764,7 @@ end:
 }
 
 
-bool MYSQL_BIN_LOG::append(Log_event* ev)
+bool DRIZZLE_BIN_LOG::append(Log_event* ev)
 {
   bool error = 0;
   pthread_mutex_lock(&LOCK_log);
@@ -2790,7 +2790,7 @@ err:
 }
 
 
-bool MYSQL_BIN_LOG::appendv(const char* buf, uint len,...)
+bool DRIZZLE_BIN_LOG::appendv(const char* buf, uint len,...)
 {
   bool error= 0;
   va_list(args);
@@ -2818,7 +2818,7 @@ err:
 }
 
 
-bool MYSQL_BIN_LOG::flush_and_sync()
+bool DRIZZLE_BIN_LOG::flush_and_sync()
 {
   int err=0, fd=log_file.file;
   safe_mutex_assert_owner(&LOCK_log);
@@ -2832,7 +2832,7 @@ bool MYSQL_BIN_LOG::flush_and_sync()
   return err;
 }
 
-void MYSQL_BIN_LOG::start_union_events(THD *thd, query_id_t query_id_param)
+void DRIZZLE_BIN_LOG::start_union_events(THD *thd, query_id_t query_id_param)
 {
   assert(!thd->binlog_evt_union.do_union);
   thd->binlog_evt_union.do_union= true;
@@ -2841,13 +2841,13 @@ void MYSQL_BIN_LOG::start_union_events(THD *thd, query_id_t query_id_param)
   thd->binlog_evt_union.first_query_id= query_id_param;
 }
 
-void MYSQL_BIN_LOG::stop_union_events(THD *thd)
+void DRIZZLE_BIN_LOG::stop_union_events(THD *thd)
 {
   assert(thd->binlog_evt_union.do_union);
   thd->binlog_evt_union.do_union= false;
 }
 
-bool MYSQL_BIN_LOG::is_query_in_union(THD *thd, query_id_t query_id_param)
+bool DRIZZLE_BIN_LOG::is_query_in_union(THD *thd, query_id_t query_id_param)
 {
   return (thd->binlog_evt_union.do_union && 
           query_id_param >= thd->binlog_evt_union.first_query_id);
@@ -3016,7 +3016,7 @@ THD::binlog_set_pending_rows_event(Rows_log_event* ev)
   event.
 */
 int
-MYSQL_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
+DRIZZLE_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
                                                 Rows_log_event* event)
 {
   assert(mysql_bin_log.is_open());
@@ -3098,7 +3098,7 @@ MYSQL_BIN_LOG::flush_and_set_pending_rows_event(THD *thd,
   Write an event to the binary log.
 */
 
-bool MYSQL_BIN_LOG::write(Log_event *event_info)
+bool DRIZZLE_BIN_LOG::write(Log_event *event_info)
 {
   THD *thd= event_info->thd;
   bool error= 1;
@@ -3342,7 +3342,7 @@ bool general_log_write(THD *thd, enum enum_server_command command,
   return false;
 }
 
-void MYSQL_BIN_LOG::rotate_and_purge(uint flags)
+void DRIZZLE_BIN_LOG::rotate_and_purge(uint flags)
 {
   if (!(flags & RP_LOCK_LOG_IS_ALREADY_LOCKED))
     pthread_mutex_lock(&LOCK_log);
@@ -3363,7 +3363,7 @@ void MYSQL_BIN_LOG::rotate_and_purge(uint flags)
     pthread_mutex_unlock(&LOCK_log);
 }
 
-uint MYSQL_BIN_LOG::next_file_id()
+uint DRIZZLE_BIN_LOG::next_file_id()
 {
   uint res;
   pthread_mutex_lock(&LOCK_log);
@@ -3387,7 +3387,7 @@ uint MYSQL_BIN_LOG::next_file_id()
     be reset as a READ_CACHE to be able to read the contents from it.
  */
 
-int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
+int DRIZZLE_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
 {
   Mutex_sentry sentry(lock_log ? &LOCK_log : NULL);
 
@@ -3535,7 +3535,7 @@ int MYSQL_BIN_LOG::write_cache(IO_CACHE *cache, bool lock_log, bool sync_log)
     'cache' needs to be reinitialized after this functions returns.
 */
 
-bool MYSQL_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
+bool DRIZZLE_BIN_LOG::write(THD *thd, IO_CACHE *cache, Log_event *commit_event)
 {
   VOID(pthread_mutex_lock(&LOCK_log));
 
@@ -3637,7 +3637,7 @@ err:
     It will be released at the end of the function.
 */
 
-void MYSQL_BIN_LOG::wait_for_update_relay_log(THD* thd)
+void DRIZZLE_BIN_LOG::wait_for_update_relay_log(THD* thd)
 {
   const char *old_msg;
   old_msg= thd->enter_cond(&update_cond, &LOCK_log,
@@ -3666,7 +3666,7 @@ void MYSQL_BIN_LOG::wait_for_update_relay_log(THD* thd)
     LOCK_log is released by the caller.
 */
 
-int MYSQL_BIN_LOG::wait_for_update_bin_log(THD* thd,
+int DRIZZLE_BIN_LOG::wait_for_update_bin_log(THD* thd,
                                            const struct timespec *timeout)
 {
   int ret= 0;
@@ -3697,7 +3697,7 @@ int MYSQL_BIN_LOG::wait_for_update_bin_log(THD* thd,
     The internal structures are not freed until cleanup() is called
 */
 
-void MYSQL_BIN_LOG::close(uint exiting)
+void DRIZZLE_BIN_LOG::close(uint exiting)
 {					// One can't set log_type here!
   if (log_state == LOG_OPENED)
   {
@@ -3721,7 +3721,7 @@ void MYSQL_BIN_LOG::close(uint exiting)
     }
 
     /* this will cleanup IO_CACHE, sync and close the file */
-    MYSQL_LOG::close(exiting);
+    DRIZZLE_LOG::close(exiting);
   }
 
   /*
@@ -3744,7 +3744,7 @@ void MYSQL_BIN_LOG::close(uint exiting)
 }
 
 
-void MYSQL_BIN_LOG::set_max_size(ulong max_size_arg)
+void DRIZZLE_BIN_LOG::set_max_size(ulong max_size_arg)
 {
   /*
     We need to take locks, otherwise this may happen:
@@ -3864,7 +3864,7 @@ bool flush_error_log()
    return result;
 }
 
-void MYSQL_BIN_LOG::signal_update()
+void DRIZZLE_BIN_LOG::signal_update()
 {
   pthread_cond_broadcast(&update_cond);
   return;
@@ -4204,7 +4204,7 @@ int TC_LOG_MMAP::overflow()
     threads waiting for a page, but then all these threads will be waiting
     for a fsync() anyway
 
-   If tc_log == MYSQL_LOG then tc_log writes transaction to binlog and
+   If tc_log == DRIZZLE_LOG then tc_log writes transaction to binlog and
    records XID in a special Xid_log_event.
    If tc_log = TC_LOG_MMAP then xid is written in a special memory-mapped
    log.
@@ -4464,7 +4464,7 @@ int TC_LOG::using_heuristic_recover()
 }
 
 /****** transaction coordinator log for 2pc - binlog() based solution ******/
-#define TC_LOG_BINLOG MYSQL_BIN_LOG
+#define TC_LOG_BINLOG DRIZZLE_BIN_LOG
 
 /**
   @todo
@@ -4672,7 +4672,7 @@ uint64_t mysql_bin_log_file_pos(void)
 
 mysql_declare_plugin(binlog)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "binlog",
   "1.0",
   "MySQL AB",

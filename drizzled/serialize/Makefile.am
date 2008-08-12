@@ -30,4 +30,4 @@ schema.pb.cc: schema.proto
 	protoc --cpp_out=. schema.proto
 	
 
-DEFS= -DMYSQL_SERVER @DEFS@
+DEFS= -DDRIZZLE_SERVER @DEFS@

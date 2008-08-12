@@ -42,7 +42,7 @@ file name and position here. We have successfully got the updates to InnoDB
 up to this position. If .._pos is -1, it means no crash recovery was needed,
 or there was no master log position info inside InnoDB. */
 
-char		trx_sys_mysql_master_log_name[TRX_SYS_MYSQL_LOG_NAME_LEN];
+char		trx_sys_mysql_master_log_name[TRX_SYS_DRIZZLE_LOG_NAME_LEN];
 ib_longlong	trx_sys_mysql_master_log_pos	= -1;
 
 /* If this MySQL server uses binary logging, after InnoDB has been inited
@@ -50,7 +50,7 @@ and if it has done a crash recovery, we store the binlog file name and position
 here. If .._pos is -1, it means there was no binlog position info inside
 InnoDB. */
 
-char		trx_sys_mysql_bin_log_name[TRX_SYS_MYSQL_LOG_NAME_LEN];
+char		trx_sys_mysql_bin_log_name[TRX_SYS_DRIZZLE_LOG_NAME_LEN];
 ib_longlong	trx_sys_mysql_bin_log_pos	= -1;
 
 
@@ -602,7 +602,7 @@ trx_sys_update_mysql_binlog_offset(
 {
 	trx_sysf_t*	sys_header;
 
-	if (ut_strlen(file_name) >= TRX_SYS_MYSQL_LOG_NAME_LEN) {
+	if (ut_strlen(file_name) >= TRX_SYS_DRIZZLE_LOG_NAME_LEN) {
 
 		/* We cannot fit the name to the 512 bytes we have reserved */
 
@@ -612,36 +612,36 @@ trx_sys_update_mysql_binlog_offset(
 	sys_header = trx_sysf_get(mtr);
 
 	if (mach_read_from_4(sys_header + field
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    != TRX_SYS_MYSQL_LOG_MAGIC_N) {
+			     + TRX_SYS_DRIZZLE_LOG_MAGIC_N_FLD)
+	    != TRX_SYS_DRIZZLE_LOG_MAGIC_N) {
 
 		mlog_write_ulint(sys_header + field
-				 + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD,
-				 TRX_SYS_MYSQL_LOG_MAGIC_N,
+				 + TRX_SYS_DRIZZLE_LOG_MAGIC_N_FLD,
+				 TRX_SYS_DRIZZLE_LOG_MAGIC_N,
 				 MLOG_4BYTES, mtr);
 	}
 
-	if (0 != strcmp((char*) (sys_header + field + TRX_SYS_MYSQL_LOG_NAME),
+	if (0 != strcmp((char*) (sys_header + field + TRX_SYS_DRIZZLE_LOG_NAME),
 			file_name)) {
 
 		mlog_write_string(sys_header + field
-				  + TRX_SYS_MYSQL_LOG_NAME,
+				  + TRX_SYS_DRIZZLE_LOG_NAME,
 				  (byte*) file_name, 1 + ut_strlen(file_name),
 				  mtr);
 	}
 
 	if (mach_read_from_4(sys_header + field
-			     + TRX_SYS_MYSQL_LOG_OFFSET_HIGH) > 0
+			     + TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH) > 0
 	    || (offset >> 32) > 0) {
 
 		mlog_write_ulint(sys_header + field
-				 + TRX_SYS_MYSQL_LOG_OFFSET_HIGH,
+				 + TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH,
 				 (ulint)(offset >> 32),
 				 MLOG_4BYTES, mtr);
 	}
 
 	mlog_write_ulint(sys_header + field
-			 + TRX_SYS_MYSQL_LOG_OFFSET_LOW,
+			 + TRX_SYS_DRIZZLE_LOG_OFFSET_LOW,
 			 (ulint)(offset & 0xFFFFFFFFUL),
 			 MLOG_4BYTES, mtr);
 }
@@ -661,21 +661,21 @@ trx_sys_print_mysql_binlog_offset_from_page(
 
 	sys_header = page + TRX_SYS;
 
-	if (mach_read_from_4(sys_header + TRX_SYS_MYSQL_LOG_INFO
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    == TRX_SYS_MYSQL_LOG_MAGIC_N) {
+	if (mach_read_from_4(sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+			     + TRX_SYS_DRIZZLE_LOG_MAGIC_N_FLD)
+	    == TRX_SYS_DRIZZLE_LOG_MAGIC_N) {
 
 		fprintf(stderr,
 			"ibbackup: Last MySQL binlog file position %lu %lu,"
 			" file name %s\n",
 			(ulong) mach_read_from_4(
-				sys_header + TRX_SYS_MYSQL_LOG_INFO
-				+ TRX_SYS_MYSQL_LOG_OFFSET_HIGH),
+				sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+				+ TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH),
 			(ulong) mach_read_from_4(
-				sys_header + TRX_SYS_MYSQL_LOG_INFO
-				+ TRX_SYS_MYSQL_LOG_OFFSET_LOW),
-			sys_header + TRX_SYS_MYSQL_LOG_INFO
-			+ TRX_SYS_MYSQL_LOG_NAME);
+				sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+				+ TRX_SYS_DRIZZLE_LOG_OFFSET_LOW),
+			sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+			+ TRX_SYS_DRIZZLE_LOG_NAME);
 	}
 }
 #endif /* UNIV_HOTBACKUP */
@@ -697,9 +697,9 @@ trx_sys_print_mysql_binlog_offset(void)
 
 	sys_header = trx_sysf_get(&mtr);
 
-	if (mach_read_from_4(sys_header + TRX_SYS_MYSQL_LOG_INFO
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    != TRX_SYS_MYSQL_LOG_MAGIC_N) {
+	if (mach_read_from_4(sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+			     + TRX_SYS_DRIZZLE_LOG_MAGIC_N_FLD)
+	    != TRX_SYS_DRIZZLE_LOG_MAGIC_N) {
 
 		mtr_commit(&mtr);
 
@@ -707,19 +707,19 @@ trx_sys_print_mysql_binlog_offset(void)
 	}
 
 	trx_sys_mysql_bin_log_pos_high = mach_read_from_4(
-		sys_header + TRX_SYS_MYSQL_LOG_INFO
-		+ TRX_SYS_MYSQL_LOG_OFFSET_HIGH);
+		sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+		+ TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH);
 	trx_sys_mysql_bin_log_pos_low = mach_read_from_4(
-		sys_header + TRX_SYS_MYSQL_LOG_INFO
-		+ TRX_SYS_MYSQL_LOG_OFFSET_LOW);
+		sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+		+ TRX_SYS_DRIZZLE_LOG_OFFSET_LOW);
 
 	trx_sys_mysql_bin_log_pos
 		= (((ib_longlong)trx_sys_mysql_bin_log_pos_high) << 32)
 		+ (ib_longlong)trx_sys_mysql_bin_log_pos_low;
 
 	ut_memcpy(trx_sys_mysql_bin_log_name,
-		  sys_header + TRX_SYS_MYSQL_LOG_INFO
-		  + TRX_SYS_MYSQL_LOG_NAME, TRX_SYS_MYSQL_LOG_NAME_LEN);
+		  sys_header + TRX_SYS_DRIZZLE_LOG_INFO
+		  + TRX_SYS_DRIZZLE_LOG_NAME, TRX_SYS_DRIZZLE_LOG_NAME_LEN);
 
 	fprintf(stderr,
 		"InnoDB: Last MySQL binlog file position %lu %lu,"
@@ -745,9 +745,9 @@ trx_sys_print_mysql_master_log_pos(void)
 
 	sys_header = trx_sysf_get(&mtr);
 
-	if (mach_read_from_4(sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-			     + TRX_SYS_MYSQL_LOG_MAGIC_N_FLD)
-	    != TRX_SYS_MYSQL_LOG_MAGIC_N) {
+	if (mach_read_from_4(sys_header + TRX_SYS_DRIZZLE_MASTER_LOG_INFO
+			     + TRX_SYS_DRIZZLE_LOG_MAGIC_N_FLD)
+	    != TRX_SYS_DRIZZLE_LOG_MAGIC_N) {
 
 		mtr_commit(&mtr);
 
@@ -759,28 +759,28 @@ trx_sys_print_mysql_master_log_pos(void)
 		" master binlog file\n"
 		"InnoDB: position %lu %lu, file name %s\n",
 		(ulong) mach_read_from_4(sys_header
-					 + TRX_SYS_MYSQL_MASTER_LOG_INFO
-					 + TRX_SYS_MYSQL_LOG_OFFSET_HIGH),
+					 + TRX_SYS_DRIZZLE_MASTER_LOG_INFO
+					 + TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH),
 		(ulong) mach_read_from_4(sys_header
-					 + TRX_SYS_MYSQL_MASTER_LOG_INFO
-					 + TRX_SYS_MYSQL_LOG_OFFSET_LOW),
-		sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-		+ TRX_SYS_MYSQL_LOG_NAME);
+					 + TRX_SYS_DRIZZLE_MASTER_LOG_INFO
+					 + TRX_SYS_DRIZZLE_LOG_OFFSET_LOW),
+		sys_header + TRX_SYS_DRIZZLE_MASTER_LOG_INFO
+		+ TRX_SYS_DRIZZLE_LOG_NAME);
 	/* Copy the master log position info to global variables we can
 	use in ha_innobase.cc to initialize glob_mi to right values */
 
 	ut_memcpy(trx_sys_mysql_master_log_name,
-		  sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-		  + TRX_SYS_MYSQL_LOG_NAME,
-		  TRX_SYS_MYSQL_LOG_NAME_LEN);
+		  sys_header + TRX_SYS_DRIZZLE_MASTER_LOG_INFO
+		  + TRX_SYS_DRIZZLE_LOG_NAME,
+		  TRX_SYS_DRIZZLE_LOG_NAME_LEN);
 
 	trx_sys_mysql_master_log_pos
 		= (((ib_longlong) mach_read_from_4(
-			    sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-			    + TRX_SYS_MYSQL_LOG_OFFSET_HIGH)) << 32)
+			    sys_header + TRX_SYS_DRIZZLE_MASTER_LOG_INFO
+			    + TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH)) << 32)
 		+ ((ib_longlong) mach_read_from_4(
-			   sys_header + TRX_SYS_MYSQL_MASTER_LOG_INFO
-			   + TRX_SYS_MYSQL_LOG_OFFSET_LOW));
+			   sys_header + TRX_SYS_DRIZZLE_MASTER_LOG_INFO
+			   + TRX_SYS_DRIZZLE_LOG_OFFSET_LOW));
 	mtr_commit(&mtr);
 }
 

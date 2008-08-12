@@ -56,7 +56,7 @@ class sys_var;
 typedef enum enum_mysql_show_type SHOW_TYPE;
 typedef struct st_mysql_show_var SHOW_VAR;
 
-#define MYSQL_ANY_PLUGIN         -1
+#define DRIZZLE_ANY_PLUGIN         -1
 
 /*
   different values of st_plugin_int::state

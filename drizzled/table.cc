@@ -22,8 +22,8 @@
 /* INFORMATION_SCHEMA name */
 LEX_STRING INFORMATION_SCHEMA_NAME= {C_STRING_WITH_LEN("information_schema")};
 
-/* MYSQL_SCHEMA name */
-LEX_STRING MYSQL_SCHEMA_NAME= {C_STRING_WITH_LEN("mysql")};
+/* DRIZZLE_SCHEMA name */
+LEX_STRING DRIZZLE_SCHEMA_NAME= {C_STRING_WITH_LEN("mysql")};
 
 /* Functions defined in this file */
 
@@ -194,7 +194,7 @@ TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
     /*
       This constant is used to mark that no table map version has been
       assigned.  No arithmetic is done on the value: it will be
-      overwritten with a value taken from MYSQL_BIN_LOG.
+      overwritten with a value taken from DRIZZLE_BIN_LOG.
     */
     share->table_map_version= ~(uint64_t)0;
 
@@ -739,7 +739,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       next_chunk+= 2 + share->comment.length;
     }
     assert(next_chunk <= buff_end);
-    if (share->mysql_version >= MYSQL_VERSION_TABLESPACE_IN_FRM_CGE)
+    if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM_CGE)
     {
       /*
        New frm format in mysql_version 5.2.5 (originally in
@@ -750,7 +750,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
       */
       if (next_chunk >= buff_end)
       {
-        if (share->mysql_version >= MYSQL_VERSION_TABLESPACE_IN_FRM)
+        if (share->mysql_version >= DRIZZLE_VERSION_TABLESPACE_IN_FRM)
         {
           goto err;
         }
@@ -2101,7 +2101,7 @@ File create_frm(THD *thd, const char *name, const char *db,
     fileinfo[45]= 0;
     fileinfo[46]= 0;
     int4store(fileinfo+47, key_length);
-    tmp= MYSQL_VERSION_ID;          // Store to avoid warning from int4store
+    tmp= DRIZZLE_VERSION_ID;          // Store to avoid warning from int4store
     int4store(fileinfo+51, tmp);
     int4store(fileinfo+55, create_info->extra_size);
     /*
@@ -2368,14 +2368,14 @@ table_check_intact(TABLE *table, const uint table_f_count,
   {
 
     /* previous MySQL version */
-    if (MYSQL_VERSION_ID > table->s->mysql_version)
+    if (DRIZZLE_VERSION_ID > table->s->mysql_version)
     {
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
                       table->alias, table_f_count, table->s->fields,
-                      table->s->mysql_version, MYSQL_VERSION_ID);
+                      table->s->mysql_version, DRIZZLE_VERSION_ID);
       return(true);
     }
-    else if (MYSQL_VERSION_ID == table->s->mysql_version)
+    else if (DRIZZLE_VERSION_ID == table->s->mysql_version)
     {
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), table->alias,
                       table_f_count, table->s->fields);

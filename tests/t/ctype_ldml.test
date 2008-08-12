@@ -12,7 +12,7 @@ drop table if exists t1;
 --echo with all Unicode character sets
 set names utf8;
 
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 show variables like 'character_sets_dir%';
 
 show collation like 'utf8_test_ci';

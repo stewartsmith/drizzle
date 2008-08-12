@@ -13,7 +13,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc., 59
 # Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-AC_DEFUN([_MYSQL_CONFIG],[
+AC_DEFUN([_DRIZZLE_CONFIG],[
   AC_ARG_WITH([mysql-config],
   AS_HELP_STRING([--with-mysql-config=PATH], [A path to mysql_config script]),
                  [mysql_config="$withval"], [mysql_config=mysql_config])
@@ -22,7 +22,7 @@ AC_DEFUN([_MYSQL_CONFIG],[
 dnl
 dnl Usage:
 dnl
-dnl  MYSQL_CLIENT([version], [client|thread-safe|embedded])
+dnl  DRIZZLE_CLIENT([version], [client|thread-safe|embedded])
 dnl
 dnl Two optional arguments:
 dnl   first: The minimal version of the MySQL to use
@@ -33,13 +33,13 @@ dnl   second: force the specified library flavor to be selected,
 dnl           if not specified, a user will be able to choose
 dnl           between client (non-thread-safe) and embedded
 dnl
-dnl On successful execution sets MYSQL_CLIENT_CFLAGS and
-dnl MYSQL_CLIENT_LIBS shell variables and makes substitutions
+dnl On successful execution sets DRIZZLE_CLIENT_CFLAGS and
+dnl DRIZZLE_CLIENT_LIBS shell variables and makes substitutions
 dnl out of them (calls AC_SUBST)
 dnl
 
-AC_DEFUN([MYSQL_CLIENT],[
-  AC_REQUIRE([_MYSQL_CONFIG])
+AC_DEFUN([DRIZZLE_CLIENT],[
+  AC_REQUIRE([_DRIZZLE_CONFIG])
   AC_MSG_CHECKING([for MySQL])
   ifelse([$2], [client],
                [mysql_libs=--libs mysql_cflags=--cflags],
@@ -59,7 +59,7 @@ AC_DEFUN([MYSQL_CLIENT],[
     esac
 ]
                    ],
-          [AC_FATAL([Bad second (library flavor) argument to MYSQL_CLIENT])])
+          [AC_FATAL([Bad second (library flavor) argument to DRIZZLE_CLIENT])])
 [
     mysql_version=`$mysql_config --version`
     if test -z "$mysql_version" ; then
@@ -68,7 +68,7 @@ AC_DEFUN([MYSQL_CLIENT],[
 ]
     ifelse([$1], [], [], [
       ifelse(regexp([$1], [^[0-9][0-9]?\.[0-9][0-9]?\.[0-9][0-9]?$]), -1,
-      [AC_FATAL([Bad first (version) argument to MYSQL_CLIENT])], [
+      [AC_FATAL([Bad first (version) argument to DRIZZLE_CLIENT])], [
 dnl
 dnl Transformation below works as follows:
 dnl   assume, we have a number 1.2.3-beta
@@ -96,10 +96,10 @@ dnl the same as sed transformation above, without suffix-stripping, in m4
     fi
     ])])
 
-    MYSQL_CLIENT_CFLAGS=`$mysql_config $mysql_cflags`
-    MYSQL_CLIENT_LIBS=`$mysql_config $mysql_libs`
-    AC_SUBST(MYSQL_CLIENT_CFLAGS)
-    AC_SUBST(MYSQL_CLIENT_LIBS)
+    DRIZZLE_CLIENT_CFLAGS=`$mysql_config $mysql_cflags`
+    DRIZZLE_CLIENT_LIBS=`$mysql_config $mysql_libs`
+    AC_SUBST(DRIZZLE_CLIENT_CFLAGS)
+    AC_SUBST(DRIZZLE_CLIENT_LIBS)
 
     # should we try to build a test program ?
 

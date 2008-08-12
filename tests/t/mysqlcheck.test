@@ -16,10 +16,10 @@ drop database if exists client_test_db;
 # Bug #13783  mysqlcheck tries to optimize and analyze information_schema
 #
 --replace_result 'Table is already up to date' OK
---exec $MYSQL_CHECK --all-databases --analyze --optimize
+--exec $DRIZZLE_CHECK --all-databases --analyze --optimize
 --replace_result 'Table is already up to date' OK
---exec $MYSQL_CHECK --analyze --optimize  --databases test information_schema mysql
---exec $MYSQL_CHECK --analyze --optimize information_schema schemata
+--exec $DRIZZLE_CHECK --analyze --optimize  --databases test information_schema mysql
+--exec $DRIZZLE_CHECK --analyze --optimize information_schema schemata
 
 #
 # Bug #16502: mysqlcheck tries to check views
@@ -27,9 +27,9 @@ drop database if exists client_test_db;
 create table t1 (a int);
 create view v1 as select * from t1;
 --replace_result 'Table is already up to date' OK
---exec $MYSQL_CHECK --analyze --optimize --databases test
+--exec $DRIZZLE_CHECK --analyze --optimize --databases test
 --replace_result 'Table is already up to date' OK
---exec $MYSQL_CHECK --all-in-1 --analyze --optimize --databases test
+--exec $DRIZZLE_CHECK --all-in-1 --analyze --optimize --databases test
 drop view v1;
 drop table t1;
 
@@ -39,7 +39,7 @@ drop table t1;
 create table `t``1`(a int);
 create table `t 1`(a int);
 --replace_result 'Table is already up to date' OK
---exec $MYSQL_CHECK --databases test
+--exec $DRIZZLE_CHECK --databases test
 drop table `t``1`, `t 1`;
 
 #
@@ -55,10 +55,10 @@ flush tables;
 --remove_file $MYSQLTEST_VARDIR/master-data/d_bug25347/t_bug25347.MYI
 --write_file $MYSQLTEST_VARDIR/master-data/d_bug25347/t_bug25347.MYI
 EOF
---exec $MYSQL_CHECK --repair --databases d_bug25347
+--exec $DRIZZLE_CHECK --repair --databases d_bug25347
 --error 130
 insert into t_bug25347 values (4),(5),(6);
---exec $MYSQL_CHECK --repair --use-frm --databases d_bug25347
+--exec $DRIZZLE_CHECK --repair --use-frm --databases d_bug25347
 insert into t_bug25347 values (7),(8),(9);
 select * from t_bug25347;
 select * from v_bug25347;
@@ -77,7 +77,7 @@ create view v1 as select * from t1;
 show tables;
 --copy_file $MYSQLTEST_VARDIR/master-data/test/v1.frm $MYSQLTEST_VARDIR/master-data/test/v-1.frm
 show tables;
---exec $MYSQL_CHECK --check-upgrade --fix-table-names --databases test
+--exec $DRIZZLE_CHECK --check-upgrade --fix-table-names --databases test
 show tables;
 drop view v1, `v-1`;
 drop table t1;

@@ -551,7 +551,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
     ::my_ok(thd, (ulong) thd->row_count_func, id, buff);
   }
   thd->abort_on_warning= 0;
-  MYSQL_INSERT_END();
+  DRIZZLE_INSERT_END();
   return(false);
 
 abort:
@@ -560,7 +560,7 @@ abort:
   if (!joins_freed)
     free_underlaid_joins(thd, &thd->lex->select_lex);
   thd->abort_on_warning= 0;
-  MYSQL_INSERT_END();
+  DRIZZLE_INSERT_END();
   return(true);
 }
 
@@ -1542,7 +1542,7 @@ void select_insert::abort() {
       items        in     List of items which should be used to produce rest
                           of fields for the table (corresponding fields will
                           be added to the end of alter_info->create_list)
-      lock         out    Pointer to the MYSQL_LOCK object for table created
+      lock         out    Pointer to the DRIZZLE_LOCK object for table created
                           (or open temporary table) will be returned in this
                           parameter. Since this table is not included in
                           THD::lock caller is responsible for explicitly
@@ -1572,7 +1572,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
                                       TABLE_LIST *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
-                                      MYSQL_LOCK **lock,
+                                      DRIZZLE_LOCK **lock,
                                       TABLEOP_HOOKS *hooks)
 {
   TABLE tmp_table;		// Used during 'Create_field()'
@@ -1689,7 +1689,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       else
       {
         if (!(table= open_table(thd, create_table, thd->mem_root, (bool*) 0,
-                                MYSQL_OPEN_TEMPORARY_ONLY)) &&
+                                DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {
           /*
@@ -1709,7 +1709,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
   table->reginfo.lock_type=TL_WRITE;
   hooks->prelock(&table, 1);                    // Call prelock hooks
   if (! ((*lock)= mysql_lock_tables(thd, &table, 1,
-                                    MYSQL_LOCK_IGNORE_FLUSH, &not_used)) ||
+                                    DRIZZLE_LOCK_IGNORE_FLUSH, &not_used)) ||
         hooks->postlock(&table, 1))
   {
     if (*lock)
@@ -1729,7 +1729,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
 int
 select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 {
-  MYSQL_LOCK *extra_lock= NULL;
+  DRIZZLE_LOCK *extra_lock= NULL;
   
 
   TABLEOP_HOOKS *hook_ptr= NULL;

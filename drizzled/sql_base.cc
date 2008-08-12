@@ -2054,10 +2054,10 @@ bool check_if_table_exists(THD *thd, TABLE_LIST *table, bool *exists)
                         If this is a NULL pointer, then the table is not
                         put in the thread-open-list.
     flags               Bitmap of flags to modify how open works:
-                          MYSQL_LOCK_IGNORE_FLUSH - Open table even if
+                          DRIZZLE_LOCK_IGNORE_FLUSH - Open table even if
                           someone has done a flush or namelock on it.
                           No version number checking is done.
-                          MYSQL_OPEN_TEMPORARY_ONLY - Open only temporary
+                          DRIZZLE_OPEN_TEMPORARY_ONLY - Open only temporary
                           table not the base table or view.
 
   IMPLEMENTATION
@@ -2134,7 +2134,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     }
   }
 
-  if (flags & MYSQL_OPEN_TEMPORARY_ONLY)
+  if (flags & DRIZZLE_OPEN_TEMPORARY_ONLY)
   {
     my_error(ER_NO_SUCH_TABLE, MYF(0), table_list->db, table_list->table_name);
     return(0);
@@ -2255,7 +2255,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
   if (!thd->open_tables)
     thd->version=refresh_version;
   else if ((thd->version != refresh_version) &&
-           ! (flags & MYSQL_LOCK_IGNORE_FLUSH))
+           ! (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
   {
     /* Someone did a refresh while thread was opening tables */
     if (refresh)
@@ -2310,7 +2310,7 @@ TABLE *open_table(THD *thd, TABLE_LIST *table_list, MEM_ROOT *mem_root,
     */
     if (table->needs_reopen_or_name_lock())
     {
-      if (flags & MYSQL_LOCK_IGNORE_FLUSH)
+      if (flags & DRIZZLE_LOCK_IGNORE_FLUSH)
       {
         /* Force close at once after usage */
         thd->version= table->s->version;
@@ -2689,9 +2689,9 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
   TABLE *table,*next,**prev;
   TABLE **tables,**tables_ptr;			// For locks
   bool error=0, not_used;
-  const uint flags= MYSQL_LOCK_NOTIFY_IF_NEED_REOPEN |
-                    MYSQL_LOCK_IGNORE_GLOBAL_READ_LOCK |
-                    MYSQL_LOCK_IGNORE_FLUSH;
+  const uint flags= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN |
+                    DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK |
+                    DRIZZLE_LOCK_IGNORE_FLUSH;
 
   if (!thd->open_tables)
     return(0);
@@ -2740,7 +2740,7 @@ bool reopen_tables(THD *thd, bool get_locks, bool mark_share_as_old)
   *prev=0;
   if (tables != tables_ptr)			// Should we get back old locks
   {
-    MYSQL_LOCK *lock;
+    DRIZZLE_LOCK *lock;
     /*
       We should always get these locks. Anyway, we must not go into
       wait_for_tables() as it tries to acquire LOCK_open, which is
@@ -3267,7 +3267,7 @@ err:
     start - list of tables in/out
     counter - number of opened tables will be return using this parameter
     flags   - bitmap of flags to modify how the tables will be open:
-              MYSQL_LOCK_IGNORE_FLUSH - open table even if someone has
+              DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
               done a flush or namelock on it.
 
   NOTE
@@ -3611,7 +3611,7 @@ int open_and_lock_tables_derived(THD *thd, TABLE_LIST *tables, bool derived)
     thd		- thread handler
     tables	- list of tables for open
     flags       - bitmap of flags to modify how the tables will be open:
-                  MYSQL_LOCK_IGNORE_FLUSH - open table even if someone has
+                  DRIZZLE_LOCK_IGNORE_FLUSH - open table even if someone has
                   done a flush or namelock on it.
 
   RETURN
@@ -3801,7 +3801,7 @@ int lock_tables(THD *thd, TABLE_LIST *tables, uint count, bool *need_reopen)
   {
     assert(thd->lock == 0);	// You must lock everything at once
     TABLE **start,**ptr;
-    uint lock_flag= MYSQL_LOCK_NOTIFY_IF_NEED_REOPEN;
+    uint lock_flag= DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN;
 
     if (!(ptr=start=(TABLE**) thd->alloc(sizeof(TABLE*)*count)))
       return(-1);
@@ -6628,7 +6628,7 @@ open_system_tables_for_read(THD *thd, TABLE_LIST *table_list,
   for (TABLE_LIST *tables= table_list; tables; tables= tables->next_global)
   {
     TABLE *table= open_table(thd, tables, thd->mem_root, &not_used,
-                             MYSQL_LOCK_IGNORE_FLUSH);
+                             DRIZZLE_LOCK_IGNORE_FLUSH);
     if (!table)
       goto error;
 
@@ -6647,7 +6647,7 @@ open_system_tables_for_read(THD *thd, TABLE_LIST *table_list,
       *(ptr++)= tables->table;
 
     thd->lock= mysql_lock_tables(thd, list, count,
-                                 MYSQL_LOCK_IGNORE_FLUSH, &not_used);
+                                 DRIZZLE_LOCK_IGNORE_FLUSH, &not_used);
   }
   if (thd->lock)
     return(false);

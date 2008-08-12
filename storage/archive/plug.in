@@ -1,4 +1,4 @@
-MYSQL_STORAGE_ENGINE(archive,no, [Archive Storage Engine],
+DRIZZLE_STORAGE_ENGINE(archive,no, [Archive Storage Engine],
         [Archive Storage Engine])
-MYSQL_PLUGIN_STATIC(archive,    [libarchive.a])
-MYSQL_PLUGIN_MANDATORY(archive)  dnl Default
+DRIZZLE_PLUGIN_STATIC(archive,    [libarchive.a])
+DRIZZLE_PLUGIN_MANDATORY(archive)  dnl Default

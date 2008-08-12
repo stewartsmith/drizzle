@@ -300,7 +300,7 @@ let $wait_condition= SELECT COUNT(*) = 19 FROM t2;
 # testable automatically as quite platform- and compiler-dependent),
 # you just need to set the variable below to 1, and to
 # "make udf_example.so" in sql/, and to copy sql/udf_example.so to
-# MYSQL_TEST_DIR/lib/mysql.
+# DRIZZLE_TEST_DIR/lib/mysql.
 let $you_want_to_test_UDF=0;
 if ($you_want_to_test_UDF)
 {
@@ -559,8 +559,8 @@ INSERT INTO t13 VALUES (my_current_user());
 sync_slave_with_master;
 
 # as we're using UUID we don't SELECT but use "diff" like in rpl_row_UUID
---exec $MYSQL_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_master.sql
---exec $MYSQL_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_slave.sql
+--exec $DRIZZLE_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_master.sql
+--exec $DRIZZLE_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_slave.sql
 
 # Let's compare. Note: If they match test will pass, if they do not match
 # the test will show that the diff statement failed and not reject file
@@ -586,10 +586,10 @@ connection master;
 
 if ($enable_when_11312_or_20929_fixed)
 {
---exec $MYSQL_BINLOG --base64-output $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mysqlbinlog_mixed.sql
+--exec $DRIZZLE_BINLOG --base64-output $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mysqlbinlog_mixed.sql
 drop database mysqltest1;
 --exec $MYSQL < $MYSQLTEST_VARDIR/tmp/mysqlbinlog_mixed.sql
---exec $MYSQL_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_master.sql
+--exec $DRIZZLE_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_master.sql
 # the old mysqldump output on slave is the same as what it was on
 # master before restoring on master.
 diff_files $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_master.sql $MYSQLTEST_VARDIR/tmp/rpl_switch_stm_row_mixed_slave.sql;

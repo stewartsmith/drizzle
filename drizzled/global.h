@@ -124,6 +124,7 @@
 
 #define INT8_MIN          -128
 #define INT16_MIN         -32768
+
    /*
       Note:  the literal "most negative int" cannot be written in C --
       the rules in the standard (section 6.4.4.1 in C99) will give it
@@ -1001,9 +1002,9 @@ do { doubleget_union _tmp; \
 /* my_sprintf  was here. RIP */
 
 #if defined(HAVE_CHARSET_utf8mb3) || defined(HAVE_CHARSET_utf8mb4)
-#define MYSQL_UNIVERSAL_CLIENT_CHARSET "utf8"
+#define DRIZZLE_UNIVERSAL_CLIENT_CHARSET "utf8"
 #else
-#define MYSQL_UNIVERSAL_CLIENT_CHARSET MYSQL_DEFAULT_CHARSET_NAME
+#define DRIZZLE_UNIVERSAL_CLIENT_CHARSET DRIZZLE_DEFAULT_CHARSET_NAME
 #endif
 
 #include <dlfcn.h>

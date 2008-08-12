@@ -93,7 +93,7 @@ class Master_info;
   run_lock protects all information about the run state: slave_running, thd
   and the existence of the I/O thread to stop/start it, you need this mutex).
   data_lock protects some moving members of the struct: counters (log name,
-  position) and relay log (MYSQL_BIN_LOG object).
+  position) and relay log (DRIZZLE_BIN_LOG object).
 
   In Relay_log_info: run_lock, data_lock
   see Master_info
@@ -101,7 +101,7 @@ class Master_info;
   Order of acquisition: if you want to have LOCK_active_mi and a run_lock, you
   must acquire LOCK_active_mi first.
 
-  In MYSQL_BIN_LOG: LOCK_log, LOCK_index of the binlog and the relay log
+  In DRIZZLE_BIN_LOG: LOCK_log, LOCK_index of the binlog and the relay log
   LOCK_log: when you write to it. LOCK_index: when you create/delete a binlog
   (so that you have to update the .index file).
 */
@@ -128,9 +128,9 @@ extern uint64_t relay_log_space_limit;
   I started with using an enum, but
   enum_variable=1; is not legal so would have required many line changes.
 */
-#define MYSQL_SLAVE_NOT_RUN         0
-#define MYSQL_SLAVE_RUN_NOT_CONNECT 1
-#define MYSQL_SLAVE_RUN_CONNECT     2
+#define DRIZZLE_SLAVE_NOT_RUN         0
+#define DRIZZLE_SLAVE_RUN_NOT_CONNECT 1
+#define DRIZZLE_SLAVE_RUN_CONNECT     2
 
 #define RPL_LOG_NAME (rli->group_master_log_name[0] ? rli->group_master_log_name :\
  "FIRST")

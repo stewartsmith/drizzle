@@ -217,7 +217,7 @@ typedef struct st_mysql_lock
   TABLE **table;
   uint table_count,lock_count;
   THR_LOCK_DATA **locks;
-} MYSQL_LOCK;
+} DRIZZLE_LOCK;
 
 
 class LEX_COLUMN : public Sql_alloc
@@ -439,7 +439,7 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(THD *thd, bool all);
 
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
 
 #define INIT_ARENA_DBUG_INFO is_backup_arena= 0
 
@@ -714,21 +714,21 @@ public:
     the 'LOCK_TABLES' chapter of the MySQL manual.
     See also lock_tables() for details.
   */
-  MYSQL_LOCK *lock;
+  DRIZZLE_LOCK *lock;
   /*
     Tables that were locked with explicit or implicit LOCK TABLES.
     (Implicit LOCK TABLES happens when we are prelocking tables for
      execution of statement which uses stored routines. See description
      THD::prelocked_mode for more info.)
   */
-  MYSQL_LOCK *locked_tables;
+  DRIZZLE_LOCK *locked_tables;
 
   /*
     CREATE-SELECT keeps an extra lock for the table being
     created. This field is used to keep the extra lock available for
     lower level routines, which would otherwise miss that lock.
    */
-  MYSQL_LOCK *extra_lock;
+  DRIZZLE_LOCK *extra_lock;
 
   ulong	version;
   uint current_tablenr;
@@ -1111,7 +1111,7 @@ public:
 
   /* Place to store various things */
   void *thd_marker;
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   int binlog_setup_trx_data();
 
   /*
@@ -1161,7 +1161,7 @@ public:
   void clear_binlog_table_maps() {
     binlog_table_maps= 0;
   }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 public:
 
@@ -1581,7 +1581,7 @@ public:
 #endif
   void awake(THD::killed_state state_to_set);
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   enum enum_binlog_query_type {
     /*
       The query can be logged row-based or statement-based
@@ -1597,7 +1597,7 @@ public:
       The query represents a change to a table in the "mysql"
       database and is currently mapped to ROW_QUERY_TYPE.
     */
-    MYSQL_QUERY_TYPE,
+    DRIZZLE_QUERY_TYPE,
     QUERY_TYPE_COUNT
   };
   
@@ -2153,9 +2153,9 @@ class select_create: public select_insert {
   Alter_info *alter_info;
   Field **field;
   /* lock data for tmp table */
-  MYSQL_LOCK *m_lock;
+  DRIZZLE_LOCK *m_lock;
   /* m_lock or thd->extra_lock */
-  MYSQL_LOCK **m_plock;
+  DRIZZLE_LOCK **m_plock;
 public:
   select_create (TABLE_LIST *table_arg,
 		 HA_CREATE_INFO *create_info_par,
@@ -2567,4 +2567,4 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
 
-#endif /* MYSQL_SERVER */
+#endif /* DRIZZLE_SERVER */

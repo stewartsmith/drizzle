@@ -343,7 +343,7 @@ void print_find_structs()
 static void usage(int version)
 {
   printf("%s  Ver 3.6 Distrib %s, for %s (%s)\n",
-	 my_progname, MYSQL_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
+	 my_progname, DRIZZLE_SERVER_VERSION, SYSTEM_TYPE, MACHINE_TYPE);
   if (version)
     return;
   puts("Copyright (C) 2001 MySQL AB, by VVA and Monty");

@@ -2,7 +2,7 @@
   Sections of this where taken/modified from mod_auth_path for Apache 
 */
 
-#define MYSQL_SERVER 1
+#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include <drizzled/plugin_authentication.h>
 #include <security/pam_appl.h>
@@ -102,7 +102,7 @@ static int finalize(void *p)
 
 mysql_declare_plugin(auth_pam)
 {
-  MYSQL_AUTH_PLUGIN,
+  DRIZZLE_AUTH_PLUGIN,
   "pam",
   "0.1",
   "Brian Aker",

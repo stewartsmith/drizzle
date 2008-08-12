@@ -27,7 +27,7 @@ bool authenticate_user(THD *thd, const char *password)
 
   printf("PASSWORD :%s:\n", password);
 
-  return plugin_foreach(thd, authenticate_by, MYSQL_AUTH_PLUGIN, (void *)password);
+  return plugin_foreach(thd, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
 }
 
 

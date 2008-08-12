@@ -117,7 +117,7 @@ redo:
                            (const uchar *)STRING_WITH_LEN("DEFAULT"), 0))
     return ha_default_plugin(thd);
 
-  if ((plugin= my_plugin_lock_by_name(thd, name, MYSQL_STORAGE_ENGINE_PLUGIN)))
+  if ((plugin= my_plugin_lock_by_name(thd, name, DRIZZLE_STORAGE_ENGINE_PLUGIN)))
   {
     handlerton *hton= plugin_data(plugin, handlerton *);
     if (!(hton->flags & HTON_NOT_USER_SELECTABLE))
@@ -475,7 +475,7 @@ static bool dropdb_handlerton(THD *unused1 __attribute__((unused)),
 
 void ha_drop_database(char* path)
 {
-  plugin_foreach(NULL, dropdb_handlerton, MYSQL_STORAGE_ENGINE_PLUGIN, path);
+  plugin_foreach(NULL, dropdb_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, path);
 }
 
 
@@ -500,7 +500,7 @@ static bool closecon_handlerton(THD *thd, plugin_ref plugin,
 */
 void ha_close_connection(THD* thd)
 {
-  plugin_foreach(thd, closecon_handlerton, MYSQL_STORAGE_ENGINE_PLUGIN, 0);
+  plugin_foreach(thd, closecon_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, 0);
 }
 
 /* ========================================================================
@@ -1234,7 +1234,7 @@ int ha_commit_or_rollback_by_xid(XID *xid, bool commit)
   xaop.result= 1;
 
   plugin_foreach(NULL, commit ? xacommit_handlerton : xarollback_handlerton,
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &xaop);
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &xaop);
 
   return xaop.result;
 }
@@ -1355,7 +1355,7 @@ int ha_recover(HASH *commit_list)
   }
 
   plugin_foreach(NULL, xarecover_handlerton, 
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &info);
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &info);
 
   my_free((uchar*)info.list, MYF(0));
   if (info.found_foreign_xids)
@@ -1457,7 +1457,7 @@ static bool release_temporary_latches(THD *thd, plugin_ref plugin,
 
 int ha_release_temporary_latches(THD *thd)
 {
-  plugin_foreach(thd, release_temporary_latches, MYSQL_STORAGE_ENGINE_PLUGIN, 
+  plugin_foreach(thd, release_temporary_latches, DRIZZLE_STORAGE_ENGINE_PLUGIN, 
                  NULL);
 
   return 0;
@@ -1590,7 +1590,7 @@ int ha_start_consistent_snapshot(THD *thd)
 {
   bool warn= true;
 
-  plugin_foreach(thd, snapshot_handlerton, MYSQL_STORAGE_ENGINE_PLUGIN, &warn);
+  plugin_foreach(thd, snapshot_handlerton, DRIZZLE_STORAGE_ENGINE_PLUGIN, &warn);
 
   /*
     Same idea as when one wants to CREATE TABLE in one engine which does not
@@ -1621,7 +1621,7 @@ bool ha_flush_logs(handlerton *db_type)
   if (db_type == NULL)
   {
     if (plugin_foreach(NULL, flush_handlerton,
-                          MYSQL_STORAGE_ENGINE_PLUGIN, 0))
+                          DRIZZLE_STORAGE_ENGINE_PLUGIN, 0))
       return true;
   }
   else
@@ -2567,7 +2567,7 @@ static bool update_frm_version(TABLE *table)
     update frm version for temporary tables as this code doesn't support
     temporary tables.
   */
-  if (table->s->mysql_version == MYSQL_VERSION_ID)
+  if (table->s->mysql_version == DRIZZLE_VERSION_ID)
     return(0);
 
   strxmov(path, table->s->normalized_path.str, reg_ext, NullS);
@@ -2580,7 +2580,7 @@ static bool update_frm_version(TABLE *table)
     TABLE *entry;
     HASH_SEARCH_STATE state;
 
-    int4store(version, MYSQL_VERSION_ID);
+    int4store(version, DRIZZLE_VERSION_ID);
 
     if (pwrite(file, (uchar*)version, 4, 51L) == 0)
     {
@@ -2591,7 +2591,7 @@ static bool update_frm_version(TABLE *table)
     for (entry=(TABLE*) hash_first(&open_cache,(uchar*) key,key_length, &state);
          entry;
          entry= (TABLE*) hash_next(&open_cache,(uchar*) key,key_length, &state))
-      entry->s->mysql_version= MYSQL_VERSION_ID;
+      entry->s->mysql_version= DRIZZLE_VERSION_ID;
   }
 err:
   if (file >= 0)
@@ -2695,11 +2695,11 @@ int handler::ha_check(THD *thd, HA_CHECK_OPT *check_opt)
 {
   int error;
 
-  if ((table->s->mysql_version >= MYSQL_VERSION_ID) &&
+  if ((table->s->mysql_version >= DRIZZLE_VERSION_ID) &&
       (check_opt->sql_flags & TT_FOR_UPGRADE))
     return 0;
 
-  if (table->s->mysql_version < MYSQL_VERSION_ID)
+  if (table->s->mysql_version < DRIZZLE_VERSION_ID)
   {
     if ((error= check_old_types()))
       return error;
@@ -3317,7 +3317,7 @@ int ha_discover(THD *thd, const char *db, const char *name,
     return(error);
 
   if (plugin_foreach(thd, discover_handlerton,
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &args))
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &args))
     error= 0;
 
   if (!error)
@@ -3378,7 +3378,7 @@ int ha_table_exists_in_engine(THD* thd, const char* db, const char* name)
 {
   st_table_exists_in_engine_args args= {db, name, HA_ERR_NO_SUCH_TABLE};
   plugin_foreach(thd, table_exists_in_engine_handlerton,
-                 MYSQL_STORAGE_ENGINE_PLUGIN, &args);
+                 DRIZZLE_STORAGE_ENGINE_PLUGIN, &args);
   return(args.err);
 }
 
@@ -4446,7 +4446,7 @@ TYPELIB *ha_known_exts(void)
     known_extensions_id= mysys_usage_id;
 
     plugin_foreach(NULL, exts_handlerton,
-                   MYSQL_STORAGE_ENGINE_PLUGIN, &found_exts);
+                   DRIZZLE_STORAGE_ENGINE_PLUGIN, &found_exts);
 
     ext= (const char **) my_once_alloc(sizeof(char *)*
                                        (found_exts.elements+1),
@@ -4556,13 +4556,13 @@ static int write_locked_table_maps(THD *thd)
 {
   if (thd->get_binlog_table_maps() == 0)
   {
-    MYSQL_LOCK *locks[3];
+    DRIZZLE_LOCK *locks[3];
     locks[0]= thd->extra_lock;
     locks[1]= thd->lock;
     locks[2]= thd->locked_tables;
     for (uint i= 0 ; i < sizeof(locks)/sizeof(*locks) ; ++i )
     {
-      MYSQL_LOCK const *const lock= locks[i];
+      DRIZZLE_LOCK const *const lock= locks[i];
       if (lock == NULL)
         continue;
 
@@ -4632,7 +4632,7 @@ int handler::ha_external_lock(THD *thd, int lock_type)
     We cache the table flags if the locking succeeded. Otherwise, we
     keep them as they were when they were fetched in ha_open().
   */
-  MYSQL_EXTERNAL_LOCK(lock_type);
+  DRIZZLE_EXTERNAL_LOCK(lock_type);
 
   int error= external_lock(thd, lock_type);
   if (error == 0)
@@ -4666,7 +4666,7 @@ int handler::ha_write_row(uchar *buf)
 {
   int error;
   Log_func *log_func= Write_rows_log_event::binlog_row_logging_function;
-  MYSQL_INSERT_ROW_START();
+  DRIZZLE_INSERT_ROW_START();
 
   mark_trx_read_write();
 
@@ -4674,7 +4674,7 @@ int handler::ha_write_row(uchar *buf)
     return(error);
   if (unlikely(error= binlog_log_row(table, 0, buf, log_func)))
     return(error); /* purecov: inspected */
-  MYSQL_INSERT_ROW_END();
+  DRIZZLE_INSERT_ROW_END();
   return(0);
 }
 

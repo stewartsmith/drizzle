@@ -2319,7 +2319,7 @@ row_sel_convert_mysql_key_to_innobase(
 		}
 
 		if (dtype_get_mysql_type(dfield_get_type(dfield))
-		    == DATA_MYSQL_TRUE_VARCHAR
+		    == DATA_DRIZZLE_TRUE_VARCHAR
 		    && dfield_get_type(dfield)->mtype != DATA_INT) {
 			/* In a MySQL key value format, a true VARCHAR is
 			always preceded by 2 bytes of a length field.
@@ -2478,7 +2478,7 @@ row_sel_field_store_in_mysql_format(
 
 		field_end = dest + templ->mysql_col_len;
 
-		if (templ->mysql_type == DATA_MYSQL_TRUE_VARCHAR) {
+		if (templ->mysql_type == DATA_DRIZZLE_TRUE_VARCHAR) {
 			/* This is a >= 5.0.3 type true VARCHAR. Store the
 			length of the data to the first byte or the first
 			two bytes of dest. */
@@ -2698,7 +2698,7 @@ row_sel_store_mysql_rec(
 			case DATA_BINARY:
 			case DATA_VARMYSQL:
 				if (templ->mysql_type
-				    == DATA_MYSQL_TRUE_VARCHAR) {
+				    == DATA_DRIZZLE_TRUE_VARCHAR) {
 					/* This is a >= 5.0.3 type
 					true VARCHAR.  Zero the field. */
 					pad_char = 0x00;
@@ -3091,14 +3091,14 @@ row_sel_push_cache_row_for_mysql(
 	byte*	buf;
 	ulint	i;
 
-	ut_ad(prebuilt->n_fetch_cached < MYSQL_FETCH_CACHE_SIZE);
+	ut_ad(prebuilt->n_fetch_cached < DRIZZLE_FETCH_CACHE_SIZE);
 	ut_ad(rec_offs_validate(rec, NULL, offsets));
 	ut_a(!prebuilt->templ_contains_blob);
 
 	if (prebuilt->fetch_cache[0] == NULL) {
 		/* Allocate memory for the fetch cache */
 
-		for (i = 0; i < MYSQL_FETCH_CACHE_SIZE; i++) {
+		for (i = 0; i < DRIZZLE_FETCH_CACHE_SIZE; i++) {
 
 			/* A user has reported memory corruption in these
 			buffers in Linux. Put magic numbers there to help
@@ -3422,7 +3422,7 @@ row_search_for_mysql(
 		}
 
 		if (prebuilt->fetch_cache_first > 0
-		    && prebuilt->fetch_cache_first < MYSQL_FETCH_CACHE_SIZE) {
+		    && prebuilt->fetch_cache_first < DRIZZLE_FETCH_CACHE_SIZE) {
 
 			/* The previous returned row was popped from the fetch
 			cache, but the cache was not full at the time of the
@@ -4186,7 +4186,7 @@ idx_cond_check:
         if (prebuilt->idx_cond_func)
         {
           int res;
-          ut_ad(prebuilt->template_type != ROW_MYSQL_DUMMY_TEMPLATE);
+          ut_ad(prebuilt->template_type != ROW_DRIZZLE_DUMMY_TEMPLATE);
           offsets = rec_get_offsets(rec, index, offsets, ULINT_UNDEFINED, &heap);
           row_sel_store_mysql_rec(buf, prebuilt, rec,
                                   offsets, 0, prebuilt->n_index_fields);
@@ -4278,13 +4278,13 @@ idx_cond_check:
 				offsets));
 
 	if ((match_mode == ROW_SEL_EXACT
-	     || prebuilt->n_rows_fetched >= MYSQL_FETCH_CACHE_THRESHOLD)
+	     || prebuilt->n_rows_fetched >= DRIZZLE_FETCH_CACHE_THRESHOLD)
 	    && prebuilt->select_lock_type == LOCK_NONE
 	    && !prebuilt->templ_contains_blob
 	    && !prebuilt->clust_index_was_generated
 	    && !prebuilt->used_in_HANDLER
 	    && prebuilt->template_type
-	    != ROW_MYSQL_DUMMY_TEMPLATE) {
+	    != ROW_DRIZZLE_DUMMY_TEMPLATE) {
 
 		/* Inside an update, for example, we do not cache rows,
 		since we may use the cursor position to do the actual
@@ -4302,14 +4302,14 @@ idx_cond_check:
                                                  some_fields_in_buffer? 
                                                  prebuilt->n_index_fields: 0,
                                                  buf);
-		if (prebuilt->n_fetch_cached == MYSQL_FETCH_CACHE_SIZE) {
+		if (prebuilt->n_fetch_cached == DRIZZLE_FETCH_CACHE_SIZE) {
 
 			goto got_row;
 		}
 
 		goto next_rec;
 	} else {
-		if (prebuilt->template_type == ROW_MYSQL_DUMMY_TEMPLATE) {
+		if (prebuilt->template_type == ROW_DRIZZLE_DUMMY_TEMPLATE) {
 			memcpy(buf + 4, result_rec
 			       - rec_offs_extra_size(offsets),
 			       rec_offs_size(offsets));

@@ -48,4 +48,4 @@ noinst_HEADERS = blob.h \
 		 varstring.h
 	
 
-DEFS= -DMYSQL_SERVER @DEFS@
+DEFS= -DDRIZZLE_SERVER @DEFS@
