@@ -3424,9 +3424,6 @@ struct my_option my_long_options[] =
   {"port", 'P',
    N_("Port number to use for connection or 0 for default to, in "
       "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
-#if DRIZZLE_PORT_DEFAULT == 0
-      "/etc/services, "
-#endif
       "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
    (char**) &mysqld_port,
    (char**) &mysqld_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
@@ -3456,7 +3453,7 @@ struct my_option my_long_options[] =
       "if you do not use cross-database queries such as UPDATE "
       "some_db.some_table SET foo='bar' while having selected a different or "
       "no database. If you need cross database updates to work, use "
-      "replicate-wild-do-table=db_name.%.",)
+      "replicate-wild-do-table=db_name.%."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-do-table", OPT_REPLICATE_DO_TABLE,
    N_("Tells the slave thread to restrict replication to the specified table. "
@@ -3717,7 +3714,7 @@ struct my_option my_long_options[] =
   {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
    N_("The size of the buffer used for index blocks for MyISAM tables. "
       "Increase this to get better index handling (for all reads and multiple "
-      "writes) to as much as you can afford;",
+      "writes) to as much as you can afford;"),
    (char**) &dflt_key_cache_var.param_buff_size,
    (char**) 0,
    0, (GET_ULL | GET_ASK_ADDR),
@@ -3770,7 +3767,7 @@ struct my_option my_long_options[] =
    N_("If there is more than this number of interrupted connections from a "
       "host this host will be blocked from further connections."),
    (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_ULONG,
-    REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
+   REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
   // Default max_connections of 151 is larger than Apache's default max
   // children, to avoid "too many connections" error in a common setup
   {"max_connections", OPT_MAX_CONNECTIONS,
@@ -3795,11 +3792,11 @@ struct my_option my_long_options[] =
    (char**) &global_system_variables.max_join_size,
    (char**) &max_system_variables.max_join_size, 0, GET_HA_ROWS, REQUIRED_ARG,
    ~0L, 1, ~0L, 0, 1, 0},
-   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
-    N_("Max number of bytes in sorted records."),
-    (char**) &global_system_variables.max_length_for_sort_data,
-    (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
-    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
+  {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
+   N_("Max number of bytes in sorted records."),
+   (char**) &global_system_variables.max_length_for_sort_data,
+   (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
+   REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
    N_("If non-zero: relay log will be rotated automatically when the size "
       "exceeds this value; if zero (the default): when the size exceeds "
@@ -3832,7 +3829,7 @@ struct my_option my_long_options[] =
    "Don't log queries which examine less than min_examined_row_limit rows to file.",
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULONG,
-  REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
+   REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
   {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
    "Block size to be used for MyISAM index pages.",
    (char**) &opt_myisam_block_size,
@@ -4316,7 +4313,7 @@ static void usage(void)
          "license\n\n"
          "Starts the Drizzle database server\n"));
 
-  printf("Usage: %s [OPTIONS]\n", my_progname);
+  printf(_("Usage: %s [OPTIONS]\n"), my_progname);
   {
 #ifdef FOO
   print_defaults(DRIZZLE_CONFIG_NAME,load_default_groups);
