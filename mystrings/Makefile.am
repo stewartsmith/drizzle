@@ -22,7 +22,8 @@ dist_mystringsinclude_HEADERS = 	decimal.h \
 					m_string.h \
 					my_xml.h
 
-noinst_HEADERS =	my_uctype.h
+noinst_HEADERS =	my_uctype.h \
+			t_ctype.h
 
 
 # LTLIBOBJS contains strstr strtoll strtoull stpcpy stpncpy getpagesize

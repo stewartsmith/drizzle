@@ -39,12 +39,12 @@ connection con2;
 reap;
 let $rows= `select count(*) from t2  /* must be 2 or 0 */`;
 
---exec $MYSQL_BINLOG --force-if-open --start-position=135 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/kill_query_calling_sp.binlog
+--exec $DRIZZLE_BINLOG --force-if-open --start-position=135 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/kill_query_calling_sp.binlog
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 eval select
 (@a:=load_file("$MYSQLTEST_VARDIR/tmp/kill_query_calling_sp.binlog"))
 is not null;
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 let $error_code= `select @a like "%#%error_code=0%" /* must return 1 or 0*/`;
 let $insert_binlogged= `select @a like "%insert into%" /* must return 1 or 0 */`;
 eval set @result= $rows- $error_code - $insert_binlogged;
@@ -250,12 +250,12 @@ source include/show_binlog_events.inc;
 
 # a proof the query is binlogged with an error
 
---exec $MYSQL_BINLOG --force-if-open --start-position=106 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/binlog_killed_bug27571.binlog
+--exec $DRIZZLE_BINLOG --force-if-open --start-position=106 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/binlog_killed_bug27571.binlog
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 eval select
 (@a:=load_file("$MYSQLTEST_VARDIR/tmp/binlog_killed_bug27571.binlog"))
 is not null;
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 let $error_code= `select @a like "%#%error_code=0%" /* must return 0*/`;
 eval select $error_code /* must return 0 to mean the killed query is in */;
 
@@ -296,12 +296,12 @@ source include/show_binlog_events.inc;
 
 # a proof the query is binlogged with an error
 
---exec $MYSQL_BINLOG --force-if-open --start-position=106 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/binlog_killed_bug27571.binlog
+--exec $DRIZZLE_BINLOG --force-if-open --start-position=106 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/binlog_killed_bug27571.binlog
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 eval select
 (@a:=load_file("$MYSQLTEST_VARDIR/tmp/binlog_killed_bug27571.binlog"))
 is not null;
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 let $error_code= `select @a like "%#%error_code=0%" /* must return 0*/`;
 eval select $error_code /* must return 0 to mean the killed query is in */;
 

@@ -36,12 +36,12 @@ noinst_HEADERS = \
 		 serialize.h
 
 schema.pb.cc: schema.proto
-	protoc --cpp_out=. schema.proto
+	protoc --cpp_out=${top_builddir}/drizzled/serialize schema.proto
 
 table.pb.cc: table.proto
-	protoc --cpp_out=. table.proto
+	protoc --cpp_out=${top_builddir}/drizzled/serialize table.proto
 	
-DEFS=
+DEFS= @DEFS@
 
 schema_reader_SOURCES =  schema_reader.cc
 
@@ -51,3 +51,5 @@ table_reader_CXXFLAGS = -Wno-all -Wno-error
 table_writer_SOURCES =  table_writer.cc
 table_writer_CXXFLAGS = -Wno-all -Wno-error
 
+EXTRA_DIST = schema.proto table.proto
+BUILT_SOURCES = schema.pb.cc table.pb.cc

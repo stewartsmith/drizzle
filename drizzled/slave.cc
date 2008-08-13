@@ -1236,7 +1236,7 @@ bool show_master_info(THD* thd, Master_info* mi)
                     &my_charset_bin);
     protocol->store((uint64_t) mi->rli.group_relay_log_pos);
     protocol->store(mi->rli.group_master_log_name, &my_charset_bin);
-    protocol->store(mi->slave_running == MYSQL_SLAVE_RUN_CONNECT ?
+    protocol->store(mi->slave_running == DRIZZLE_SLAVE_RUN_CONNECT ?
                     "Yes" : "No", &my_charset_bin);
     protocol->store(mi->rli.slave_running ? "Yes":"No", &my_charset_bin);
     protocol->store(rpl_filter->get_do_db());
@@ -1277,7 +1277,7 @@ bool show_master_info(THD* thd, Master_info* mi)
       Seconds_Behind_Master: if SQL thread is running and I/O thread is
       connected, we can compute it otherwise show NULL (i.e. unknown).
     */
-    if ((mi->slave_running == MYSQL_SLAVE_RUN_CONNECT) &&
+    if ((mi->slave_running == DRIZZLE_SLAVE_RUN_CONNECT) &&
         mi->rli.slave_running)
     {
       long time_diff= ((long)(time(0) - mi->rli.last_master_timestamp)
@@ -1904,7 +1904,7 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
                             uint32_t *retry_count, bool suppress_warnings,
                             const char *messages[SLAVE_RECON_MSG_MAX])
 {
-  mi->slave_running= MYSQL_SLAVE_RUN_NOT_CONNECT;
+  mi->slave_running= DRIZZLE_SLAVE_RUN_NOT_CONNECT;
   thd->proc_info= _(messages[SLAVE_RECON_MSG_WAIT]);
 #ifdef SIGNAL_WITH_VIO_CLOSE
   thd->clear_active_vio();
@@ -2028,7 +2028,7 @@ pthread_handler_t handle_slave_io(void *arg)
 connected:
 
   // TODO: the assignment below should be under mutex (5.0)
-  mi->slave_running= MYSQL_SLAVE_RUN_CONNECT;
+  mi->slave_running= DRIZZLE_SLAVE_RUN_CONNECT;
   thd->slave_net = &drizzle->net;
   thd_proc_info(thd, "Checking master version");
   if (get_master_version_and_clock(drizzle, mi))
@@ -3399,7 +3399,7 @@ static Log_event* next_event(Relay_log_info* rli)
       When the relay log is created when the I/O thread starts, easy: the
       master will send the description event and we will queue it.
       But if the relay log is created by new_file(): then the solution is:
-      MYSQL_BIN_LOG::open() will write the buffered description event.
+      DRIZZLE_BIN_LOG::open() will write the buffered description event.
     */
     if ((ev=Log_event::read_log_event(cur_log,0,
                                       rli->relay_log.description_event_for_exec)))
@@ -3668,7 +3668,7 @@ err:
   Rotate a relay log (this is used only by FLUSH LOGS; the automatic rotation
   because of size is simpler because when we do it we already have all relevant
   locks; here we don't, so this function is mainly taking locks).
-  Returns nothing as we cannot catch any error (MYSQL_BIN_LOG::new_file()
+  Returns nothing as we cannot catch any error (DRIZZLE_BIN_LOG::new_file()
   is void).
 */
 

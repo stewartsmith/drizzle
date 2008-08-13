@@ -86,7 +86,7 @@ extern HASH open_cache;
 #define GET_LOCK_UNLOCK         1
 #define GET_LOCK_STORE_LOCKS    2
 
-static MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table,uint count,
+static DRIZZLE_LOCK *get_lock_data(THD *thd, TABLE **table,uint count,
 				 uint flags, TABLE **write_locked);
 static int lock_external(THD *thd, TABLE **table,uint count);
 static int unlock_external(THD *thd, TABLE **table,uint count);
@@ -101,10 +101,10 @@ static void print_lock_error(int error, const char *);
     tables                      An array of pointers to the tables to lock.
     count                       The number of tables to lock.
     flags                       Options:
-      MYSQL_LOCK_IGNORE_GLOBAL_READ_LOCK      Ignore a global read lock
-      MYSQL_LOCK_IGNORE_GLOBAL_READ_ONLY      Ignore SET GLOBAL READ_ONLY
-      MYSQL_LOCK_IGNORE_FLUSH                 Ignore a flush tables.
-      MYSQL_LOCK_NOTIFY_IF_NEED_REOPEN        Instead of reopening altered
+      DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK      Ignore a global read lock
+      DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY      Ignore SET GLOBAL READ_ONLY
+      DRIZZLE_LOCK_IGNORE_FLUSH                 Ignore a flush tables.
+      DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN        Instead of reopening altered
                                               or dropped tables by itself,
                                               mysql_lock_tables() should
                                               notify upper level and rely
@@ -187,9 +187,9 @@ int mysql_lock_tables_check(THD *thd __attribute__((unused)),
         lock request will set its lock type properly.
 */
 
-static void reset_lock_data_and_free(MYSQL_LOCK **mysql_lock)
+static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
 {
-  MYSQL_LOCK *sql_lock= *mysql_lock;
+  DRIZZLE_LOCK *sql_lock= *mysql_lock;
   THR_LOCK_DATA **ldata, **ldata_end;
 
   /* Clear the lock type of all lock data to avoid reusage. */
@@ -205,10 +205,10 @@ static void reset_lock_data_and_free(MYSQL_LOCK **mysql_lock)
 }
 
 
-MYSQL_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
+DRIZZLE_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
                               uint flags, bool *need_reopen)
 {
-  MYSQL_LOCK *sql_lock;
+  DRIZZLE_LOCK *sql_lock;
   TABLE *write_lock_used;
   int rc;
 
@@ -224,7 +224,7 @@ MYSQL_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
       break;
 
     if (global_read_lock && write_lock_used &&
-        ! (flags & MYSQL_LOCK_IGNORE_GLOBAL_READ_LOCK))
+        ! (flags & DRIZZLE_LOCK_IGNORE_GLOBAL_READ_LOCK))
     {
       /*
 	Someone has issued LOCK ALL TABLES FOR READ and we want a write lock
@@ -244,7 +244,7 @@ MYSQL_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
       }
     }
 
-    if (!(flags & MYSQL_LOCK_IGNORE_GLOBAL_READ_ONLY) &&
+    if (!(flags & DRIZZLE_LOCK_IGNORE_GLOBAL_READ_ONLY) &&
         write_lock_used &&
         opt_readonly &&
         !thd->slave_thread)
@@ -289,7 +289,7 @@ MYSQL_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
       sql_lock->lock_count= 0;                  // Locks are already freed
       // Fall through: unlock, reset lock data, free and retry
     }
-    else if (!thd->some_tables_deleted || (flags & MYSQL_LOCK_IGNORE_FLUSH))
+    else if (!thd->some_tables_deleted || (flags & DRIZZLE_LOCK_IGNORE_FLUSH))
     {
       /*
         Thread was killed or lock aborted. Let upper level close all
@@ -319,7 +319,7 @@ MYSQL_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
     */
     reset_lock_data_and_free(&sql_lock);
 retry:
-    if (flags & MYSQL_LOCK_NOTIFY_IF_NEED_REOPEN)
+    if (flags & DRIZZLE_LOCK_NOTIFY_IF_NEED_REOPEN)
     {
       *need_reopen= true;
       break;
@@ -377,7 +377,7 @@ static int lock_external(THD *thd, TABLE **tables, uint count)
 }
 
 
-void mysql_unlock_tables(THD *thd, MYSQL_LOCK *sql_lock)
+void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
 {
   if (sql_lock->lock_count)
     thr_multi_unlock(sql_lock->locks,sql_lock->lock_count);
@@ -395,7 +395,7 @@ void mysql_unlock_tables(THD *thd, MYSQL_LOCK *sql_lock)
 
 void mysql_unlock_some_tables(THD *thd, TABLE **table,uint count)
 {
-  MYSQL_LOCK *sql_lock;
+  DRIZZLE_LOCK *sql_lock;
   TABLE *write_lock_used;
   if ((sql_lock= get_lock_data(thd, table, count, GET_LOCK_UNLOCK,
                                &write_lock_used)))
@@ -407,7 +407,7 @@ void mysql_unlock_some_tables(THD *thd, TABLE **table,uint count)
   unlock all tables locked for read.
 */
 
-void mysql_unlock_read_tables(THD *thd, MYSQL_LOCK *sql_lock)
+void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
 {
   uint i,found;
 
@@ -483,7 +483,7 @@ void mysql_unlock_read_tables(THD *thd, MYSQL_LOCK *sql_lock)
                           effect is desired.
 */
 
-void mysql_lock_remove(THD *thd, MYSQL_LOCK *locked,TABLE *table,
+void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,TABLE *table,
                        bool always_unlock)
 {
   if (always_unlock == true)
@@ -551,7 +551,7 @@ void mysql_lock_remove(THD *thd, MYSQL_LOCK *locked,TABLE *table,
 void mysql_lock_downgrade_write(THD *thd, TABLE *table,
                                 thr_lock_type new_lock_type)
 {
-  MYSQL_LOCK *locked;
+  DRIZZLE_LOCK *locked;
   TABLE *write_lock_used;
   if ((locked = get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
                               &write_lock_used)))
@@ -567,7 +567,7 @@ void mysql_lock_downgrade_write(THD *thd, TABLE *table,
 
 void mysql_lock_abort(THD *thd, TABLE *table, bool upgrade_lock)
 {
-  MYSQL_LOCK *locked;
+  DRIZZLE_LOCK *locked;
   TABLE *write_lock_used;
 
   if ((locked= get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
@@ -595,7 +595,7 @@ void mysql_lock_abort(THD *thd, TABLE *table, bool upgrade_lock)
 
 bool mysql_lock_abort_for_thread(THD *thd, TABLE *table)
 {
-  MYSQL_LOCK *locked;
+  DRIZZLE_LOCK *locked;
   TABLE *write_lock_used;
   bool result= false;
 
@@ -614,12 +614,12 @@ bool mysql_lock_abort_for_thread(THD *thd, TABLE *table)
 }
 
 
-MYSQL_LOCK *mysql_lock_merge(MYSQL_LOCK *a,MYSQL_LOCK *b)
+DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
 {
-  MYSQL_LOCK *sql_lock;
+  DRIZZLE_LOCK *sql_lock;
   TABLE **table, **end_table;
 
-  if (!(sql_lock= (MYSQL_LOCK*)
+  if (!(sql_lock= (DRIZZLE_LOCK*)
 	my_malloc(sizeof(*sql_lock)+
 		  sizeof(THR_LOCK_DATA*)*(a->lock_count+b->lock_count)+
 		  sizeof(TABLE*)*(a->table_count+b->table_count),MYF(MY_WME))))
@@ -681,7 +681,7 @@ MYSQL_LOCK *mysql_lock_merge(MYSQL_LOCK *a,MYSQL_LOCK *b)
 TABLE_LIST *mysql_lock_have_duplicate(THD *thd, TABLE_LIST *needle,
                                       TABLE_LIST *haystack)
 {
-  MYSQL_LOCK            *mylock;
+  DRIZZLE_LOCK            *mylock;
   TABLE                 **lock_tables;
   TABLE                 *table;
   TABLE                 *table2;
@@ -791,11 +791,11 @@ static int unlock_external(THD *thd, TABLE **table,uint count)
   @param write_lock_used   Store pointer to last table with WRITE_ALLOW_WRITE
 */
 
-static MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count,
+static DRIZZLE_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count,
 				 uint flags, TABLE **write_lock_used)
 {
   uint i,tables,lock_count;
-  MYSQL_LOCK *sql_lock;
+  DRIZZLE_LOCK *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
   TABLE **to, **table_buf;
 
@@ -819,7 +819,7 @@ static MYSQL_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count,
     update the table values. So the second part of the array is copied
     from the first part immediately before calling thr_multi_lock().
   */
-  if (!(sql_lock= (MYSQL_LOCK*)
+  if (!(sql_lock= (DRIZZLE_LOCK*)
 	my_malloc(sizeof(*sql_lock) +
 		  sizeof(THR_LOCK_DATA*) * tables * 2 +
                   sizeof(table_ptr) * lock_count,

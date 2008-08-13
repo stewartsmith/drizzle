@@ -16,7 +16,7 @@
 
 /* A lexical scanner on a temporary buffer with a yacc interface */
 
-#define MYSQL_LEX 1
+#define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 
 static int lex_one_token(void *arg, void *yythd);
@@ -1244,7 +1244,7 @@ int lex_one_token(void *arg, void *yythd)
           /* Accept 'M' 'm' 'm' 'd' 'd' */
           lip->yySkipn(5);
 
-          if (version <= MYSQL_VERSION_ID)
+          if (version <= DRIZZLE_VERSION_ID)
           {
             /* Expand the content of the special comment as real code */
             lip->set_echo(true);

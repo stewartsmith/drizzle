@@ -1,7 +1,7 @@
-MYSQL_PLUGIN(auth_pam,[PAM Authenication Plugin],
+DRIZZLE_PLUGIN(auth_pam,[PAM Authenication Plugin],
         [PAM based authenication.])
-MYSQL_PLUGIN_DYNAMIC(auth_pam,   [libauth_pam.la])
-MYSQL_PLUGIN_ACTIONS(auth_pam,  [
+DRIZZLE_PLUGIN_DYNAMIC(auth_pam,   [libauth_pam.la])
+DRIZZLE_PLUGIN_ACTIONS(auth_pam,  [
   AC_CHECK_HEADERS(security/pam_appl.h)
   AM_CONDITIONAL(BUILD_AUTH_PAM,[test "$ac_cv_header_security_pam_appl_h" = "yes"])
   AS_IF([test "$ac_cv_header_security_pam_appl_h" = "no"],

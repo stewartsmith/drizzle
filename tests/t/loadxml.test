@@ -23,7 +23,7 @@ select * from t1 order by a;
 
 
 --echo -- Check 'mysqldump --xml' + 'LOAD XML' round trip
---exec $MYSQL_DUMP --xml test t1 > "$MYSQLTEST_VARDIR/loadxml-dump.xml" 2>&1
+--exec $DRIZZLE_DUMP --xml test t1 > "$MYSQLTEST_VARDIR/loadxml-dump.xml" 2>&1
 delete from t1;
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 --eval load xml infile '$MYSQLTEST_VARDIR/loadxml-dump.xml' into table t1 rows identified by '<row>';

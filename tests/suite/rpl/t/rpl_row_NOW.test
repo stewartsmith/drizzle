@@ -50,8 +50,8 @@ sync_slave_with_master;
 
 connection master;
 
---exec $MYSQL_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/NOW_master.sql
---exec $MYSQL_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/NOW_slave.sql
+--exec $DRIZZLE_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/NOW_master.sql
+--exec $DRIZZLE_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info mysqltest1 > $MYSQLTEST_VARDIR/tmp/NOW_slave.sql
 
 # lets cleanup
 DROP TABLE IF EXISTS mysqltest1.t1;

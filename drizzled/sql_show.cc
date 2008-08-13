@@ -171,7 +171,7 @@ int fill_plugins(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)
 {
   TABLE *table= tables->table;
 
-  if (plugin_foreach_with_mask(thd, show_plugins, MYSQL_ANY_PLUGIN,
+  if (plugin_foreach_with_mask(thd, show_plugins, DRIZZLE_ANY_PLUGIN,
                                ~PLUGIN_IS_FREED, table))
     return(1);
 
@@ -749,7 +749,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
       if (column_format)
       {
         packet->append(STRING_WITH_LEN(" /*!"));
-        packet->append(STRING_WITH_LEN(MYSQL_VERSION_TABLESPACE_IN_FRM_STR));
+        packet->append(STRING_WITH_LEN(DRIZZLE_VERSION_TABLESPACE_IN_FRM_STR));
         packet->append(STRING_WITH_LEN(" COLUMN_FORMAT"));
         if (column_format == COLUMN_FORMAT_TYPE_FIXED)
           packet->append(STRING_WITH_LEN(" FIXED */"));
@@ -2155,7 +2155,7 @@ int schema_tables_add(THD *thd, List<LEX_STRING> *files, const char *wild)
   add_data.files= files;
   add_data.wild= wild;
   if (plugin_foreach(thd, add_schema_table,
-                     MYSQL_INFORMATION_SCHEMA_PLUGIN, &add_data))
+                     DRIZZLE_INFORMATION_SCHEMA_PLUGIN, &add_data))
     return(1);
 
   return(0);
@@ -2284,7 +2284,7 @@ fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
   */
   lex->sql_command= SQLCOM_SHOW_FIELDS;
   res= open_normal_and_derived_tables(thd, show_table_list,
-                                      MYSQL_LOCK_IGNORE_FLUSH);
+                                      DRIZZLE_LOCK_IGNORE_FLUSH);
   lex->sql_command= save_sql_command;
   /*
     get_all_tables() returns 1 on failure and 0 on success thus
@@ -2655,7 +2655,7 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
             show_table_list->i_s_requested_object=
               schema_table->i_s_requested_object;
             res= open_normal_and_derived_tables(thd, show_table_list,
-                                                MYSQL_LOCK_IGNORE_FLUSH);
+                                                DRIZZLE_LOCK_IGNORE_FLUSH);
             lex->sql_command= save_sql_command;
             /*
               XXX:  show_table_list has a flag i_is_requested,
@@ -3824,7 +3824,7 @@ ST_SCHEMA_TABLE *find_schema_table(THD *thd, const char* table_name)
 
   schema_table_a.table_name= table_name;
   if (plugin_foreach(thd, find_schema_table_in_plugin, 
-                     MYSQL_INFORMATION_SCHEMA_PLUGIN, &schema_table_a))
+                     DRIZZLE_INFORMATION_SCHEMA_PLUGIN, &schema_table_a))
     return(schema_table_a.schema_table);
 
   return(NULL);

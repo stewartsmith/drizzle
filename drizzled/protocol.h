@@ -20,8 +20,8 @@
 
 class i_string;
 class THD;
-typedef struct st_mysql_field MYSQL_FIELD;
-typedef struct st_mysql_rows MYSQL_ROWS;
+typedef struct st_drizzle_field DRIZZLE_FIELD;
+typedef struct st_drizzle_rows DRIZZLE_ROWS;
 
 class Protocol
 {

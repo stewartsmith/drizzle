@@ -299,7 +299,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 
   if (len == packet_error || len == 0)
   {
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
     if (net->vio && vio_was_interrupted(net->vio))
       return (packet_error);
 #endif /*DRIZZLE_SERVER*/
@@ -1112,7 +1112,7 @@ static DRIZZLE_METHODS client_methods=
   cli_use_result,                              /* use_result */
   cli_fetch_lengths,                           /* fetch_lengths */
   cli_flush_use_result,                         /* flush_use_result */
-#ifndef MYSQL_SERVER
+#ifndef DRIZZLE_SERVER
   cli_list_fields,                            /* list_fields */
   cli_unbuffered_fetch,                        /* unbuffered_fetch */
   cli_read_statistics,                         /* read_statistics */
@@ -1131,9 +1131,9 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
   /* Set character set */
   if (!drizzle->options.charset_name)
   {
-    default_collation_name= MYSQL_DEFAULT_COLLATION_NAME;
+    default_collation_name= DRIZZLE_DEFAULT_COLLATION_NAME;
     if (!(drizzle->options.charset_name=
-       my_strdup(MYSQL_DEFAULT_CHARSET_NAME,MYF(MY_WME))))
+       my_strdup(DRIZZLE_DEFAULT_CHARSET_NAME,MYF(MY_WME))))
     return 1;
   }
   else
@@ -1707,7 +1707,7 @@ static bool cli_read_query_result(DRIZZLE *drizzle)
   if ((length = cli_safe_read(drizzle)) == packet_error)
     return(1);
   free_old_query(drizzle);    /* Free old result */
-#ifdef MYSQL_CLIENT      /* Avoid warn of unused labels*/
+#ifdef DRIZZLE_CLIENT      /* Avoid warn of unused labels*/
 get_info:
 #endif
   pos=(uchar*) drizzle->net.read_pos;
@@ -1723,7 +1723,7 @@ get_info:
       drizzle->info=(char*) pos;
     return(0);
   }
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   if (field_count == NULL_LENGTH)    /* LOAD DATA LOCAL INFILE */
   {
     int error;
@@ -2038,7 +2038,7 @@ uint drizzle_errno(const DRIZZLE *drizzle)
 
 const char * drizzle_error(const DRIZZLE *drizzle)
 {
-  return drizzle ? drizzle->net.last_error : drizzle_server_last_error;
+  return drizzle ? _(drizzle->net.last_error) : _(drizzle_server_last_error);
 }
 
 

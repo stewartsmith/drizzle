@@ -82,7 +82,7 @@ static int crc32udf_plugin_deinit(void *p)
 
 mysql_declare_plugin(crc32)
 {
-  MYSQL_UDF_PLUGIN,
+  DRIZZLE_UDF_PLUGIN,
   "crc32",
   "1.0",
   "Stewart Smith",

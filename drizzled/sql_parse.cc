@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define MYSQL_LEX 1
+#define DRIZZLE_LEX 1
 #include <drizzled/server_includes.h>
 #include "sql_repl.h"
 #include "rpl_filter.h"
@@ -118,7 +118,7 @@ bool begin_trans(THD *thd)
     LEX *lex= thd->lex;
     thd->options|= OPTION_BEGIN;
     thd->server_status|= SERVER_STATUS_IN_TRANS;
-    if (lex->start_transaction_opt & MYSQL_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
+    if (lex->start_transaction_opt & DRIZZLE_START_TRANS_OPT_WITH_CONS_SNAPSHOT)
       error= ha_start_consistent_snapshot(thd);
   }
   return error;
@@ -846,11 +846,11 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     uint opt_command= uint2korr(packet);
 
     switch (opt_command) {
-    case (int) MYSQL_OPTION_MULTI_STATEMENTS_ON:
+    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_ON:
       thd->client_capabilities|= CLIENT_MULTI_STATEMENTS;
       my_eof(thd);
       break;
-    case (int) MYSQL_OPTION_MULTI_STATEMENTS_OFF:
+    case (int) DRIZZLE_OPTION_MULTI_STATEMENTS_OFF:
       thd->client_capabilities&= ~CLIENT_MULTI_STATEMENTS;
       my_eof(thd);
       break;

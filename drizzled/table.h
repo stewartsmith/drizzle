@@ -469,8 +469,8 @@ struct st_table {
   timestamp_auto_set_type timestamp_field_type;
   table_map	map;                    /* ID bit of table (1,2,4,8,16...) */
 
-  uint          lock_position;          /* Position in MYSQL_LOCK.table */
-  uint          lock_data_start;        /* Start pos. in MYSQL_LOCK.locks */
+  uint          lock_position;          /* Position in DRIZZLE_LOCK.table */
+  uint          lock_data_start;        /* Start pos. in DRIZZLE_LOCK.locks */
   uint          lock_count;             /* Number of locks */
   uint		tablenr,used_fields;
   uint          temp_pool_slot;		/* Used by intern temp tables */

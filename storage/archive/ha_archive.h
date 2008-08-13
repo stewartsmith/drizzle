@@ -17,6 +17,7 @@
 #pragma interface			/* gcc class implementation */
 #endif
 
+#include <inttypes.h>
 #include <zlib.h>
 #include "azio.h"
 

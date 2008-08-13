@@ -216,7 +216,7 @@ int mysql_update(THD *thd,
        mysql_handle_derived(thd->lex, &mysql_derived_filling)))
     return(1);
 
-  MYSQL_UPDATE_START();
+  DRIZZLE_UPDATE_START();
   thd_proc_info(thd, "init");
   table= table_list->table;
 
@@ -255,7 +255,7 @@ int mysql_update(THD *thd,
   if (select_lex->inner_refs_list.elements &&
     fix_inner_refs(thd, all_fields, select_lex, select_lex->ref_pointer_array))
   {
-    MYSQL_UPDATE_END();
+    DRIZZLE_UPDATE_END();
     return(-1);
   }
 
@@ -291,7 +291,7 @@ int mysql_update(THD *thd,
     free_underlaid_joins(thd, select_lex);
     if (error)
       goto abort;				// Error in where
-    MYSQL_UPDATE_END();
+    DRIZZLE_UPDATE_END();
     my_ok(thd);				// No matching records
     return(0);
   }
@@ -711,7 +711,7 @@ int mysql_update(THD *thd,
   id= thd->arg_of_last_insert_id_function ?
     thd->first_successful_insert_id_in_prev_stmt : 0;
 
-  MYSQL_UPDATE_END();
+  DRIZZLE_UPDATE_END();
   if (error < 0)
   {
     char buff[STRING_BUFFER_USUAL_SIZE];
@@ -736,7 +736,7 @@ err:
   thd->abort_on_warning= 0;
 
 abort:
-  MYSQL_UPDATE_END();
+  DRIZZLE_UPDATE_END();
   return(1);
 }
 

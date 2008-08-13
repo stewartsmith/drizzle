@@ -1222,7 +1222,7 @@ drop table t2;
 
 # Clean up filename -- embedded server reports whole path without .frm,
 # regular server reports relative path with .frm (argh!)
---replace_result \\ / $MYSQL_TEST_DIR . /var/master-data/ / t2.frm t2
+--replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t2.frm t2
 --error 1005
 eval create table t2 (id int(11) not null, id2 int(11) not null, constraint t1_id_fk foreign key (id2,id) references t1 (id)) engine = $engine_type;
 
@@ -1467,7 +1467,7 @@ source include/varchar.inc;
 
 # Clean up filename -- embedded server reports whole path without .frm,
 # regular server reports relative path with .frm (argh!)
---replace_result \\ / $MYSQL_TEST_DIR . /var/master-data/ / t1.frm t1
+--replace_result \\ / $DRIZZLE_TEST_DIR . /var/master-data/ / t1.frm t1
 create table t1 (v varchar(65530), key(v));
 drop table t1;
 create table t1 (v varchar(65536));

@@ -18,7 +18,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#define MYSQL_SERVER 1
+#define DRIZZLE_SERVER 1
 
 #include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
@@ -1848,7 +1848,7 @@ Item *ha_myisam::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
 
 mysql_declare_plugin(myisam)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MyISAM",
   "1.0",
   "MySQL AB",
