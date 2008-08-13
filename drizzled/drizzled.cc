@@ -148,6 +148,8 @@ inline void setup_fpu()
 
 #include <mysys/my_pthread.h>			// For thr_setconcurency()
 
+#include <libdrizzle/gettext.h>
+
 #ifdef SOLARIS
 extern "C" int gethostname(char *name, int namelen);
 #endif
@@ -3091,50 +3093,54 @@ enum options_mysqld
 
 struct my_option my_long_options[] =
 {
-  {"help", '?', "Display this help and exit.",
+  {"help", '?', N_("Display this help and exit."),
    (char**) &opt_help, (char**) &opt_help, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0,
    0, 0},
   {"abort-slave-event-count", OPT_ABORT_SLAVE_EVENT_COUNT,
-   "Option used by mysql-test for debugging and testing of replication.",
+   N_("Option used by mysql-test for debugging and testing of replication."),
    (char**) &abort_slave_event_count,  (char**) &abort_slave_event_count,
    0, GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"auto-increment-increment", OPT_AUTO_INCREMENT,
-   "Auto-increment columns are incremented by this",
+   N_("Auto-increment columns are incremented by this"),
    (char**) &global_system_variables.auto_increment_increment,
    (char**) &max_system_variables.auto_increment_increment, 0, GET_ULONG,
    OPT_ARG, 1, 1, 65535, 0, 1, 0 },
   {"auto-increment-offset", OPT_AUTO_INCREMENT_OFFSET,
-   "Offset added to Auto-increment columns. Used when auto-increment-increment != 1",
+   N_("Offset added to Auto-increment columns. Used when "
+      "auto-increment-increment != 1"),
    (char**) &global_system_variables.auto_increment_offset,
    (char**) &max_system_variables.auto_increment_offset, 0, GET_ULONG, OPT_ARG,
    1, 1, 65535, 0, 1, 0 },
   {"basedir", 'b',
-   "Path to installation directory. All paths are usually resolved relative to this.",
+   N_("Path to installation directory. All paths are usually resolved "
+      "relative to this."),
    (char**) &mysql_home_ptr, (char**) &mysql_home_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"bind-address", OPT_BIND_ADDRESS, "IP address to bind to.",
+  {"bind-address", OPT_BIND_ADDRESS, N_("IP address to bind to."),
    (char**) &my_bind_addr_str, (char**) &my_bind_addr_str, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog_format", OPT_BINLOG_FORMAT,
-   "Does not have any effect without '--log-bin'. "
-   "Tell the master the form of binary logging to use: either 'row' for "
-   "row-based binary logging, or 'statement' for statement-based binary "
-   "logging, or 'mixed'. 'mixed' is statement-based binary logging except "
-   "for those statements where only row-based is correct: those which "
-   "involve user-defined functions (i.e. UDFs) or the UUID() function; for "
-   "those, row-based binary logging is automatically used. "
+   N_("Does not have any effect without '--log-bin'. "
+      "Tell the master the form of binary logging to use: either 'row' for "
+      "row-based binary logging, or 'statement' for statement-based binary "
+      "logging, or 'mixed'. 'mixed' is statement-based binary logging except "
+      "for those statements where only row-based is correct: those which "
+      "involve user-defined functions (i.e. UDFs) or the UUID() function; for "
+      "those, row-based binary logging is automatically used. ")
    ,(char**) &opt_binlog_format, (char**) &opt_binlog_format,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-do-db", OPT_BINLOG_DO_DB,
-   "Tells the master it should log updates for the specified database, and exclude all others not explicitly mentioned.",
+   N_("Tells the master it should log updates for the specified database, and "
+      "exclude all others not explicitly mentioned."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-ignore-db", OPT_BINLOG_IGNORE_DB,
-   "Tells the master that updates to the given database should not be logged tothe binary log.",
+   N_("Tells the master that updates to the given database should not "
+      "be logged tothe binary log."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"binlog-row-event-max-size", OPT_BINLOG_ROWS_EVENT_MAX_SIZE,
-   "The maximum size of a row-based binary log event in bytes. Rows will be "
-   "grouped into events smaller than this size if possible. "
-   "The value has to be a multiple of 256.",
+   N_("The maximum size of a row-based binary log event in bytes. Rows will "
+      "be grouped into events smaller than this size if possible. "
+      "The value has to be a multiple of 256."),
    (char**) &opt_binlog_rows_event_max_size,
    (char**) &opt_binlog_rows_event_max_size, 0,
    GET_ULONG, REQUIRED_ARG,
@@ -3143,119 +3149,145 @@ struct my_option my_long_options[] =
    /* app_type */ 0
   },
   {"character-set-client-handshake", OPT_CHARACTER_SET_CLIENT_HANDSHAKE,
-   "Don't ignore client side character set value sent during handshake.",
+   N_("Don't ignore client side character set value sent during handshake."),
    (char**) &opt_character_set_client_handshake,
    (char**) &opt_character_set_client_handshake,
     0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   {"character-set-filesystem", OPT_CHARACTER_SET_FILESYSTEM,
-   "Set the filesystem character set.",
+   N_("Set the filesystem character set."),
    (char**) &character_set_filesystem_name,
    (char**) &character_set_filesystem_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"character-set-server", 'C', "Set the default character set.",
+  {"character-set-server", 'C',
+   N_("Set the default character set."),
    (char**) &default_character_set_name, (char**) &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"character-sets-dir", OPT_CHARSETS_DIR,
-   "Directory where character sets are.", (char**) &charsets_dir,
+   N_("Directory where character sets are."), (char**) &charsets_dir,
    (char**) &charsets_dir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"chroot", 'r', "Chroot mysqld daemon during startup.",
+  {"chroot", 'r',
+   N_("Chroot mysqld daemon during startup."),
    (char**) &mysqld_chroot, (char**) &mysqld_chroot, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"collation-server", OPT_DEFAULT_COLLATION, "Set the default collation.",
+  {"collation-server", OPT_DEFAULT_COLLATION,
+   N_("Set the default collation."),
    (char**) &default_collation_name, (char**) &default_collation_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"completion-type", OPT_COMPLETION_TYPE, "Default completion type.",
+  {"completion-type", OPT_COMPLETION_TYPE,
+   N_("Default completion type."),
    (char**) &global_system_variables.completion_type,
    (char**) &max_system_variables.completion_type, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 2, 0, 1, 0},
-  {"console", OPT_CONSOLE, "Write error output on screen; Don't remove the console window on windows.",
+  {"console", OPT_CONSOLE,
+   N_("Write error output on screen."),
    (char**) &opt_console, (char**) &opt_console, 0, GET_BOOL, NO_ARG, 0, 0, 0,
    0, 0, 0},
-  {"core-file", OPT_WANT_CORE, "Write core on errors.", 0, 0, 0, GET_NO_ARG,
+  {"core-file", OPT_WANT_CORE,
+   N_("Write core on errors."),
+   0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"datadir", 'h', "Path to the database root.", (char**) &mysql_data_home,
+  {"datadir", 'h',
+   N_("Path to the database root."),
+   (char**) &mysql_data_home,
    (char**) &mysql_data_home, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-character-set", 'C', "Set the default character set (deprecated option, use --character-set-server instead).",
+  {"default-character-set", 'C',
+   N_("Set the default character set (deprecated option, use "
+      "--character-set-server instead)."),
    (char**) &default_character_set_name, (char**) &default_character_set_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"default-collation", OPT_DEFAULT_COLLATION, "Set the default collation (deprecated option, use --collation-server instead).",
+  {"default-collation", OPT_DEFAULT_COLLATION,
+   N_("Set the default collation (deprecated option, use --collation-server "
+      "instead)."),
    (char**) &default_collation_name, (char**) &default_collation_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"default-storage-engine", OPT_STORAGE_ENGINE,
-   "Set the default storage engine (table type) for tables.",
+   N_("Set the default storage engine (table type) for tables."),
    (char**)&default_storage_engine_str, (char**)&default_storage_engine_str,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"default-time-zone", OPT_DEFAULT_TIME_ZONE, "Set the default time zone.",
+  {"default-time-zone", OPT_DEFAULT_TIME_ZONE,
+   N_("Set the default time zone."),
    (char**) &default_tz_name, (char**) &default_tz_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
-  {"delay-key-write", OPT_DELAY_KEY_WRITE, "Type of DELAY_KEY_WRITE.",
+  {"delay-key-write", OPT_DELAY_KEY_WRITE,
+   N_("Type of DELAY_KEY_WRITE."),
    0,0,0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"delay-key-write-for-all-tables", OPT_DELAY_KEY_WRITE_ALL,
-   "Don't flush key buffers between writes for any MyISAM table (Deprecated option, use --delay-key-write=all instead).",
+   N_("Don't flush key buffers between writes for any MyISAM table "
+      "(Deprecated option, use --delay-key-write=all instead)."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"disconnect-slave-event-count", OPT_DISCONNECT_SLAVE_EVENT_COUNT,
-   "Option used by mysql-test for debugging and testing of replication.",
+   N_("Option used by mysql-test for debugging and testing of replication."),
    (char**) &disconnect_slave_event_count,
    (char**) &disconnect_slave_event_count, 0, GET_INT, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
 #ifdef HAVE_STACK_TRACE_ON_SEGV
-  {"enable-pstack", OPT_DO_PSTACK, "Print a symbolic stack trace on failure.",
+  {"enable-pstack", OPT_DO_PSTACK,
+   N_("Print a symbolic stack trace on failure."),
    (char**) &opt_do_pstack, (char**) &opt_do_pstack, 0, GET_BOOL, NO_ARG, 0, 0,
    0, 0, 0, 0},
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
   {"engine-condition-pushdown",
    OPT_ENGINE_CONDITION_PUSHDOWN,
-   "Push supported query conditions to the storage engine.",
+   N_("Push supported query conditions to the storage engine."),
    (char**) &global_system_variables.engine_condition_pushdown,
    (char**) &global_system_variables.engine_condition_pushdown,
    0, GET_BOOL, NO_ARG, 1, 0, 0, 0, 0, 0},
   /* See how it's handled in get_one_option() */
-  {"exit-info", 'T', "Used for debugging;  Use at your own risk!", 0, 0, 0,
-   GET_LONG, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"flush", OPT_FLUSH, "Flush tables to disk between SQL commands.", 0, 0, 0,
-   GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
+  {"exit-info", 'T',
+   N_("Used for debugging;  Use at your own risk!"),
+   0, 0, 0, GET_LONG, OPT_ARG, 0, 0, 0, 0, 0, 0},
+  {"flush", OPT_FLUSH,
+   N_("Flush tables to disk between SQL commands."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   /* We must always support the next option to make scripts like mysqltest
      easier to do */
   {"gdb", OPT_DEBUGGING,
-   "Set up signals usable for debugging",
+   N_("Set up signals usable for debugging"),
    (char**) &opt_debugging, (char**) &opt_debugging,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"general-log", OPT_GENERAL_LOG,
-   "Enable|disable general log", (char**) &opt_log,
+   N_("Enable general query log"),
+   (char**) &opt_log,
    (char**) &opt_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"init-connect", OPT_INIT_CONNECT, "Command(s) that are executed for each new connection",
+  {"init-connect", OPT_INIT_CONNECT,
+   N_("Command(s) that are executed for each new connection"),
    (char**) &opt_init_connect, (char**) &opt_init_connect, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"init-file", OPT_INIT_FILE, "Read SQL commands from this file at startup.",
+  {"init-file", OPT_INIT_FILE,
+   N_("Read SQL commands from this file at startup."),
    (char**) &opt_init_file, (char**) &opt_init_file, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"init-slave", OPT_INIT_SLAVE, "Command(s) that are executed when a slave connects to this master",
+  {"init-slave", OPT_INIT_SLAVE,
+   N_("Command(s) that are executed when a slave connects to this master"),
    (char**) &opt_init_slave, (char**) &opt_init_slave, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"language", 'L',
-   "Client error messages in given language. May be given as a full path. (IGNORED)",
+   N_("(IGNORED)"),
    (char**) &language_ptr, (char**) &language_ptr, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
   {"lc-time-names", OPT_LC_TIME_NAMES,
-   "Set the language used for the month names and the days of the week.",
+   N_("Set the language used for the month names and the days of the week."),
    (char**) &lc_time_names_name,
    (char**) &lc_time_names_name,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0 },
   {"local-infile", OPT_LOCAL_INFILE,
-   "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0).",
+   N_("Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."),
    (char**) &opt_local_infile,
    (char**) &opt_local_infile, 0, GET_BOOL, OPT_ARG,
    1, 0, 0, 0, 0, 0},
-  {"log", 'l', "Log connections and queries to file.", (char**) &opt_logname,
+  {"log", 'l',
+   N_("Log connections and queries to file."),
+   (char**) &opt_logname,
    (char**) &opt_logname, 0, GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-bin", OPT_BIN_LOG,
-   "Log update queries in binary format. Optional (but strongly recommended "
-   "to avoid replication problems if server's hostname changes) argument "
-   "should be the chosen location for the binary log files.",
+   N_("Log update queries in binary format. Optional argument is the "
+      "location for the binary log files.(Strongly "
+      "recommended to avoid replication problems if server's hostname "
+      "changes)"),
    (char**) &opt_bin_logname, (char**) &opt_bin_logname, 0, GET_STR_ALLOC,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-bin-index", OPT_BIN_LOG_INDEX,
-   "File that holds the names for last binary log files.",
+   N_("File that holds the names for last binary log files."),
    (char**) &opt_binlog_index_name, (char**) &opt_binlog_index_name, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   /*
@@ -3263,222 +3295,298 @@ struct my_option my_long_options[] =
     binary logging.
   */
   {"log-bin-trust-function-creators", OPT_LOG_BIN_TRUST_FUNCTION_CREATORS,
-   "If equal to 0 (the default), then when --log-bin is used, creation of "
-   "a stored function (or trigger) is allowed only to users having the SUPER privilege "
-   "and only if this stored function (trigger) may not break binary logging."
-   "Note that if ALL connections to this server ALWAYS use row-based binary "
-   "logging, the security issues do not exist and the binary logging cannot "
-   "break, so you can safely set this to 1."
+   N_("If equal to 0 (the default), then when --log-bin is used, creation of "
+      "a stored function (or trigger) is allowed only to users having the "
+      "SUPER privilege and only if this stored function (trigger) may not "
+      "break binary logging. Note that if ALL connections to this server "
+      "ALWAYS use row-based binary logging, the security issues do not exist "
+      "and the binary logging cannot break, so you can safely set this to 1.")
    ,(char**) &trust_function_creators, (char**) &trust_function_creators, 0,
    GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-error", OPT_ERROR_LOG_FILE, "Error log file.",
+  {"log-error", OPT_ERROR_LOG_FILE,
+   N_("Error log file."),
    (char**) &log_error_file_ptr, (char**) &log_error_file_ptr, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-isam", OPT_ISAM_LOG, "Log all MyISAM changes to file.",
+  {"log-isam", OPT_ISAM_LOG,
+   N_("Log all MyISAM changes to file."),
    (char**) &myisam_log_filename, (char**) &myisam_log_filename, 0, GET_STR,
    OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"log-long-format", '0',
-   "Log some extra information to update log. Please note that this option is deprecated; see --log-short-format option.",
+   N_("Log some extra information to update log. Please note that this option "
+      "is deprecated; see --log-queries-not-using-indexes option."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef WITH_CSV_STORAGE_ENGINE
   {"log-output", OPT_LOG_OUTPUT,
-   "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
-   "FILE or NONE.",
+   N_("Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, "
+      "FILE or NONE."),
    (char**) &log_output_str, (char**) &log_output_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
 #endif
   {"log-queries-not-using-indexes", OPT_LOG_QUERIES_NOT_USING_INDEXES,
-   "Log queries that are executed without benefit of any index to the slow log if it is open.",
-   (char**) &opt_log_queries_not_using_indexes, (char**) &opt_log_queries_not_using_indexes,
+   N_("Log queries that are executed without benefit of any index to the "
+      "slow log if it is open."),
+   (char**) &opt_log_queries_not_using_indexes,
+   (char**) &opt_log_queries_not_using_indexes,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-short-format", OPT_SHORT_LOG_FORMAT,
-   "Don't log extra information to update and slow-query logs.",
+   N_("Don't log extra information to update and slow-query logs."),
    (char**) &opt_short_log_format, (char**) &opt_short_log_format,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slave-updates", OPT_LOG_SLAVE_UPDATES,
-   "Tells the slave to log the updates from the slave thread to the binary log. You will need to turn it on if you plan to daisy-chain the slaves.",
-   (char**) &opt_log_slave_updates, (char**) &opt_log_slave_updates, 0, GET_BOOL,
+   N_("Tells the slave to log the updates from the slave thread to the binary "
+      "log. You will need to turn it on if you plan to "
+      "daisy-chain the slaves."),
+   (char**) &opt_log_slave_updates, (char**) &opt_log_slave_updates,
+   0, GET_BOOL,
    NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slow-admin-statements", OPT_LOG_SLOW_ADMIN_STATEMENTS,
-   "Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements to the slow log if it is open.",
+   N_("Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements "
+      "to the slow log if it is open."),
    (char**) &opt_log_slow_admin_statements,
    (char**) &opt_log_slow_admin_statements,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
  {"log-slow-slave-statements", OPT_LOG_SLOW_SLAVE_STATEMENTS,
-  "Log slow statements executed by slave thread to the slow log if it is open.",
+  N_("Log slow statements executed by slave thread to the slow log if it is "
+     "open."),
   (char**) &opt_log_slow_slave_statements,
   (char**) &opt_log_slow_slave_statements,
   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slow-queries", OPT_SLOW_QUERY_LOG,
-    "Log slow queries to a table or log file. Defaults logging to table mysql.slow_log or hostname-slow.log if --log-output=file is used. Must be enabled to activate other slow log options.",
+   N_("Log slow queries to a table or log file. Defaults logging to table "
+      "mysql.slow_log or hostname-slow.log if --log-output=file is used. "
+      "Must be enabled to activate other slow log options."),
    (char**) &opt_slow_logname, (char**) &opt_slow_logname, 0, GET_STR, OPT_ARG,
    0, 0, 0, 0, 0, 0},
   {"log-tc", OPT_LOG_TC,
-   "Path to transaction coordinator log (used for transactions that affect "
-   "more than one storage engine, when binary log is disabled)",
+   N_("Path to transaction coordinator log (used for transactions that affect "
+      "more than one storage engine, when binary log is disabled)"),
    (char**) &opt_tc_log_file, (char**) &opt_tc_log_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
 #ifdef HAVE_MMAP
-  {"log-tc-size", OPT_LOG_TC_SIZE, "Size of transaction coordinator log.",
+  {"log-tc-size", OPT_LOG_TC_SIZE,
+   N_("Size of transaction coordinator log."),
    (char**) &opt_tc_log_size, (char**) &opt_tc_log_size, 0, GET_ULONG,
    REQUIRED_ARG, TC_LOG_MIN_SIZE, TC_LOG_MIN_SIZE, ULONG_MAX, 0,
    TC_LOG_PAGE_SIZE, 0},
 #endif
-  {"log-warnings", 'W', "Log some not critical warnings to the log file.",
+  {"log-warnings", 'W',
+   N_("Log some not critical warnings to the log file."),
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG, 1, 0, 0,
    0, 0, 0},
   {"low-priority-updates", OPT_LOW_PRIORITY_UPDATES,
-   "INSERT/DELETE/UPDATE has lower priority than selects.",
+   N_("INSERT/DELETE/UPDATE has lower priority than selects."),
    (char**) &global_system_variables.low_priority_updates,
    (char**) &max_system_variables.low_priority_updates,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"master-info-file", OPT_MASTER_INFO_FILE,
-   "The location and name of the file that remembers the master and where the I/O replication \
-thread is in the master's binlogs.",
+   N_("The location and name of the file that remembers the master and "
+      "where the I/O replication thread is in the master's binlogs."),
    (char**) &master_info_file, (char**) &master_info_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"master-retry-count", OPT_MASTER_RETRY_COUNT,
-   "The number of tries the slave will make to connect to the master before giving up.",
+   N_("The number of tries the slave will make to connect to the master "
+      "before giving up."),
    (char**) &master_retry_count, (char**) &master_retry_count, 0, GET_ULONG,
    REQUIRED_ARG, 3600*24, 0, 0, 0, 0, 0},
   {"max-binlog-dump-events", OPT_MAX_BINLOG_DUMP_EVENTS,
-   "Option used by mysql-test for debugging and testing of replication.",
+   N_("Option used by mysql-test for debugging and testing of replication."),
    (char**) &max_binlog_dump_events, (char**) &max_binlog_dump_events, 0,
    GET_INT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"memlock", OPT_MEMLOCK, "Lock mysqld in memory.", (char**) &locked_in_memory,
+  {"memlock", OPT_MEMLOCK,
+   N_("Lock mysqld in memory."),
+   (char**) &locked_in_memory,
    (char**) &locked_in_memory, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"myisam-recover", OPT_MYISAM_RECOVER,
-   "Syntax: myisam-recover[=option[,option...]], where option can be DEFAULT, BACKUP, FORCE or QUICK.",
+   N_("Syntax: myisam-recover[=option[,option...]], where option can be "
+      "DEFAULT, BACKUP, FORCE or QUICK."),
    (char**) &myisam_recover_options_str, (char**) &myisam_recover_options_str, 0,
    GET_STR, OPT_ARG, 0, 0, 0, 0, 0, 0},
-  {"new", 'n', "Use very new possible 'unsafe' functions.",
+  {"new", 'n',
+   N_("Use very new possible 'unsafe' functions."),
    (char**) &global_system_variables.new_mode,
    (char**) &max_system_variables.new_mode,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"old-alter-table", OPT_OLD_ALTER_TABLE,
-   "Use old, non-optimized alter table.",
+   N_("Use old, non-optimized alter table."),
    (char**) &global_system_variables.old_alter_table,
    (char**) &max_system_variables.old_alter_table, 0, GET_BOOL, NO_ARG,
    0, 0, 0, 0, 0, 0},
   {"old-style-user-limits", OPT_OLD_STYLE_USER_LIMITS,
-   "Enable old-style user limits (before 5.0.3 user resources were counted per each user+host vs. per account)",
+   N_("Enable old-style user limits (before 5.0.3 user resources were counted "
+      "per each user+host vs. per account)"),
    (char**) &opt_old_style_user_limits, (char**) &opt_old_style_user_limits,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"pid-file", OPT_PID_FILE, "Pid file used by safe_mysqld.",
+  {"pid-file", OPT_PID_FILE,
+   N_("Pid file used by safe_mysqld."),
    (char**) &pidfile_name_ptr, (char**) &pidfile_name_ptr, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"port", 'P', "Port number to use for connection or 0 for default to, in "
-   "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
+  {"port", 'P',
+   N_("Port number to use for connection or 0 for default to, in "
+      "order of preference, my.cnf, $DRIZZLE_TCP_PORT, "
 #if DRIZZLE_PORT_DEFAULT == 0
-   "/etc/services, "
+      "/etc/services, "
 #endif
-   "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ").",
+      "built-in default (" STRINGIFY_ARG(DRIZZLE_PORT) ")."),
    (char**) &mysqld_port,
    (char**) &mysqld_port, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"port-open-timeout", OPT_PORT_OPEN_TIMEOUT,
-   "Maximum time in seconds to wait for the port to become free. "
-   "(Default: no wait)", (char**) &mysqld_port_timeout,
+   N_("Maximum time in seconds to wait for the port to become free. "
+      "(Default: no wait)"),
+   (char**) &mysqld_port_timeout,
    (char**) &mysqld_port_timeout, 0, GET_UINT, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"relay-log", OPT_RELAY_LOG,
-   "The location and name to use for relay logs.",
+   N_("The location and name to use for relay logs."),
    (char**) &opt_relay_logname, (char**) &opt_relay_logname, 0,
    GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"relay-log-index", OPT_RELAY_LOG_INDEX,
-   "The location and name to use for the file that keeps a list of the last \
-relay logs.",
+   N_("The location and name to use for the file that keeps a list of the "
+      "last relay logs."),
    (char**) &opt_relaylog_index_name, (char**) &opt_relaylog_index_name, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"relay-log-info-file", OPT_RELAY_LOG_INFO_FILE,
-   "The location and name of the file that remembers where the SQL replication \
-thread is in the relay logs.",
+   N_("The location and name of the file that remembers where the SQL "
+      "replication thread is in the relay logs."),
    (char**) &relay_log_info_file, (char**) &relay_log_info_file, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-do-db", OPT_REPLICATE_DO_DB,
-   "Tells the slave thread to restrict replication to the specified database. To specify more than one database, use the directive multiple times, once for each database. Note that this will only work if you do not use cross-database queries such as UPDATE some_db.some_table SET foo='bar' while having selected a different or no database. If you need cross database updates to work, make sure you have 3.23.28 or later, and use replicate-wild-do-table=db_name.%.",
+   N_("Tells the slave thread to restrict replication to the specified "
+      "database. To specify more than one database, use the directive "
+      "multiple times, once for each database. Note that this will only work "
+      "if you do not use cross-database queries such as UPDATE "
+      "some_db.some_table SET foo='bar' while having selected a different or "
+      "no database. If you need cross database updates to work, use "
+      "replicate-wild-do-table=db_name.%.",)
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-do-table", OPT_REPLICATE_DO_TABLE,
-   "Tells the slave thread to restrict replication to the specified table. To specify more than one table, use the directive multiple times, once for each table. This will work for cross-database updates, in contrast to replicate-do-db.",
+   N_("Tells the slave thread to restrict replication to the specified table. "
+      "To specify more than one table, use the directive multiple times, once "
+      "for each table. This will work for cross-database updates, in contrast "
+      "to replicate-do-db."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-ignore-db", OPT_REPLICATE_IGNORE_DB,
-   "Tells the slave thread to not replicate to the specified database. To specify more than one database to ignore, use the directive multiple times, once for each database. This option will not work if you use cross database updates. If you need cross database updates to work, make sure you have 3.23.28 or later, and use replicate-wild-ignore-table=db_name.%. ",
+   N_("Tells the slave thread to not replicate to the specified database. To "
+      "specify more than one database to ignore, use the directive multiple "
+      "times, once for each database. This option will not work if you use "
+      "cross database updates. If you need cross database updates to work, "
+      "use replicate-wild-ignore-table=db_name.%. "),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-ignore-table", OPT_REPLICATE_IGNORE_TABLE,
-   "Tells the slave thread to not replicate to the specified table. To specify more than one table to ignore, use the directive multiple times, once for each table. This will work for cross-datbase updates, in contrast to replicate-ignore-db.",
+   N_("Tells the slave thread to not replicate to the specified table. To "
+      "specify more than one table to ignore, use the directive multiple "
+      "times, once for each table. This will work for cross-datbase updates, "
+      "in contrast to replicate-ignore-db."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-rewrite-db", OPT_REPLICATE_REWRITE_DB,
-   "Updates to a database with a different name than the original. Example: replicate-rewrite-db=master_db_name->slave_db_name.",
+   N_("Updates to a database with a different name than the original. "
+      "Example: replicate-rewrite-db=master_db_name->slave_db_name."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-same-server-id", OPT_REPLICATE_SAME_SERVER_ID,
-   "In replication, if set to 1, do not skip events having our server id. \
-Default value is 0 (to break infinite loops in circular replication). \
-Can't be set to 1 if --log-slave-updates is used.",
+   N_("In replication, if set to 1, do not skip events having our server id. "
+      "Default value is 0 (to break infinite loops in circular replication). "
+      "Can't be set to 1 if --log-slave-updates is used."),
    (char**) &replicate_same_server_id,
    (char**) &replicate_same_server_id,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-wild-do-table", OPT_REPLICATE_WILD_DO_TABLE,
-   "Tells the slave thread to restrict replication to the tables that match the specified wildcard pattern. To specify more than one table, use the directive multiple times, once for each table. This will work for cross-database updates. Example: replicate-wild-do-table=foo%.bar% will replicate only updates to tables in all databases that start with foo and whose table names start with bar.",
+   N_("Tells the slave thread to restrict replication to the tables that "
+      "match the specified wildcard pattern. To specify more than one table, "
+      "use the directive multiple times, once for each table. This will work "
+      "for cross-database updates. Example: replicate-wild-do-table=foo%.bar% "
+      "will replicate only updates to tables in all databases that start with "
+      "foo and whose table names start with bar."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"replicate-wild-ignore-table", OPT_REPLICATE_WILD_IGNORE_TABLE,
-   "Tells the slave thread to not replicate to the tables that match the given wildcard pattern. To specify more than one table to ignore, use the directive multiple times, once for each table. This will work for cross-database updates. Example: replicate-wild-ignore-table=foo%.bar% will not do updates to tables in databases that start with foo and whose table names start with bar.",
+   N_("Tells the slave thread to not replicate to the tables that match the "
+      "given wildcard pattern. To specify more than one table to ignore, use "
+      "the directive multiple times, once for each table. This will work for "
+      "cross-database updates. Example: replicate-wild-ignore-table=foo%.bar% "
+      "will not do updates to tables in databases that start with foo and "
+      "whose table names start with bar."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   // In replication, we may need to tell the other servers how to connect
   {"report-host", OPT_REPORT_HOST,
-   "Hostname or IP of the slave to be reported to to the master during slave registration. Will appear in the output of SHOW SLAVE HOSTS. Leave unset if you do not want the slave to register itself with the master. Note that it is not sufficient for the master to simply read the IP of the slave off the socket once the slave connects. Due to NAT and other routing issues, that IP may not be valid for connecting to the slave from the master or other hosts.",
+   N_("Hostname or IP of the slave to be reported to to the master during "
+      "slave registration. Will appear in the output of SHOW SLAVE HOSTS. "
+      "Leave unset if you do not want the slave to register itself with the "
+      "master. Note that it is not sufficient for the master to simply read "
+      "the IP of the slave off the socket once the slave connects. Due to NAT "
+      "and other routing issues, that IP may not be valid for connecting to "
+      "the slave from the master or other hosts."),
    (char**) &report_host, (char**) &report_host, 0, GET_STR, REQUIRED_ARG, 0, 0,
    0, 0, 0, 0},
   {"report-password", OPT_REPORT_PASSWORD, "Undocumented.",
    (char**) &report_password, (char**) &report_password, 0, GET_STR,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"report-port", OPT_REPORT_PORT,
-   "Port for connecting to slave reported to the master during slave registration. Set it only if the slave is listening on a non-default port or if you have a special tunnel from the master or other clients to the slave. If not sure, leave this option unset.",
+   N_("Port for connecting to slave reported to the master during slave "
+      "registration. Set it only if the slave is listening on a non-default "
+      "port or if you have a special tunnel from the master or other clients "
+      "to the slave. If not sure, leave this option unset."),
    (char**) &report_port, (char**) &report_port, 0, GET_UINT, REQUIRED_ARG,
    DRIZZLE_PORT, 0, 0, 0, 0, 0},
-  {"safe-mode", OPT_SAFE, "Skip some optimize stages (for testing).",
+  {"safe-mode", OPT_SAFE,
+   N_("Skip some optimize stages (for testing)."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"secure-file-priv", OPT_SECURE_FILE_PRIV,
-   "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within specified directory",
+   N_("Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files "
+      "within specified directory"),
    (char**) &opt_secure_file_priv, (char**) &opt_secure_file_priv, 0,
    GET_STR_ALLOC, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"server-id",	OPT_SERVER_ID,
-   "Uniquely identifies the server instance in the community of replication partners.",
+   N_("Uniquely identifies the server instance in the community of "
+      "replication partners."),
    (char**) &server_id, (char**) &server_id, 0, GET_ULONG, REQUIRED_ARG, 0, 0, 0,
    0, 0, 0},
   {"set-variable", 'O',
-   "Change the value of a variable. Please note that this option is deprecated;you can set variables directly with --variable-name=value.",
+   N_("Change the value of a variable. Please note that this option is "
+      "deprecated;you can set variables directly with --variable-name=value."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
-  {"skip-new", OPT_SKIP_NEW, "Don't use new, possible wrong routines.",
+  {"skip-new", OPT_SKIP_NEW,
+   N_("Don't use new, possible wrong routines."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-slave-start", OPT_SKIP_SLAVE_START,
-   "If set, slave is not autostarted.", (char**) &opt_skip_slave_start,
+   N_("If set, slave is not autostarted."),
+   (char**) &opt_skip_slave_start,
    (char**) &opt_skip_slave_start, 0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-stack-trace", OPT_SKIP_STACK_TRACE,
-   "Don't print a stack trace on failure.", 0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
+   N_("Don't print a stack trace on failure."),
+   0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0,
    0, 0, 0, 0},
-  {"skip-symlink", OPT_SKIP_SYMLINKS, "Don't allow symlinking of tables. Deprecated option.  Use --skip-symbolic-links instead.",
+  {"skip-symlink", OPT_SKIP_SYMLINKS,
+   N_("Don't allow symlinking of tables. Deprecated option.  Use "
+      "--skip-symbolic-links instead."),
    0, 0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"skip-thread-priority", OPT_SKIP_PRIOR,
-   "Don't give threads different priorities.", 0, 0, 0, GET_NO_ARG, NO_ARG,
+   N_("Don't give threads different priorities."),
+   0, 0, 0, GET_NO_ARG, NO_ARG,
    DEFAULT_SKIP_THREAD_PRIORITY, 0, 0, 0, 0, 0},
   {"slave-load-tmpdir", OPT_SLAVE_LOAD_TMPDIR,
-   "The location where the slave should put its temporary files when \
-replicating a LOAD DATA INFILE command.",
+   N_("The location where the slave should put its temporary files when "
+      "replicating a LOAD DATA INFILE command."),
    (char**) &slave_load_tmpdir, (char**) &slave_load_tmpdir, 0, GET_STR_ALLOC,
    REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"slave-skip-errors", OPT_SLAVE_SKIP_ERRORS,
-   "Tells the slave thread to continue replication when a query event returns an error from the provided list.",
+   N_("Tells the slave thread to continue replication when a query event "
+      "returns an error from the provided list."),
    0, 0, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"slave-exec-mode", OPT_SLAVE_EXEC_MODE,
-   "Modes for how replication events should be executed.  Legal values are STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will not stop for operations that are idempotent. In STRICT mode, replication will stop on any unexpected difference between the master and the slave.",
-   (char**) &slave_exec_mode_str, (char**) &slave_exec_mode_str, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
+   N_("Modes for how replication events should be executed.  Legal values are "
+      "STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will "
+      "not stop for operations that are idempotent. In STRICT mode, "
+      "replication will stop on any unexpected difference between the master "
+      "and the slave."),
+   (char**) &slave_exec_mode_str, (char**) &slave_exec_mode_str,
+   0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"slow-query-log", OPT_SLOW_LOG,
-   "Enable|disable slow query log", (char**) &opt_slow_log,
+   N_("Enable|disable slow query log"),
+   (char**) &opt_slow_log,
    (char**) &opt_slow_log, 0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"sql-bin-update-same", OPT_SQL_BIN_UPDATE_SAME,
-   "The update log is deprecated since version 5.0, is replaced by the binary \
-log and this option does nothing anymore.",
+   N_("(INGORED)"),
    0, 0, 0, GET_DISABLED, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"symbolic-links", 's', "Enable symbolic link support.",
+  {"symbolic-links", 's',
+   N_("Enable symbolic link support."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
    /*
      The system call realpath() produces warnings under valgrind and
@@ -3487,197 +3595,232 @@ log and this option does nothing anymore.",
    */
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
   {"sysdate-is-now", OPT_SYSDATE_IS_NOW,
-   "Non-default option to alias SYSDATE() to NOW() to make it safe-replicable. Since 5.0, SYSDATE() returns a `dynamic' value different for different invocations, even within the same statement.",
+   N_("Non-default option to alias SYSDATE() to NOW() to make it "
+      "safe-replicable."),
    (char**) &global_system_variables.sysdate_is_now,
    0, 0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"tc-heuristic-recover", OPT_TC_HEURISTIC_RECOVER,
-   "Decision to use in heuristic recover process. Possible values are COMMIT or ROLLBACK.",
+   N_("Decision to use in heuristic recover process. Possible values are "
+      "COMMIT or ROLLBACK."),
    (char**) &opt_tc_heuristic_recover, (char**) &opt_tc_heuristic_recover,
    0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"temp-pool", OPT_TEMP_POOL,
-   "Using this option will cause most temporary files created to use a small set of names, rather than a unique name for each new file.",
+   N_("Using this option will cause most temporary files created to use a "
+      "small set of names, rather than a unique name for each new file."),
    (char**) &use_temp_pool, (char**) &use_temp_pool, 0, GET_BOOL, NO_ARG, 1,
    0, 0, 0, 0, 0},
   {"timed_mutexes", OPT_TIMED_MUTEXES,
-   "Specify whether to time mutexes (only InnoDB mutexes are currently supported)",
+   N_("Specify whether to time mutexes (only InnoDB mutexes are currently "
+      "supported)"),
    (char**) &timed_mutexes, (char**) &timed_mutexes, 0, GET_BOOL, NO_ARG, 0,
     0, 0, 0, 0, 0},
   {"tmpdir", 't',
-   "Path for temporary files. Several paths may be specified, separated by a "
-   "colon (:)"
-   ", in this case they are used in a round-robin fashion.",
+   N_("Path for temporary files. Several paths may be specified, separated "
+      "by a colon (:)"
+      ", in this case they are used in a round-robin fashion."),
    (char**) &opt_mysql_tmpdir,
    (char**) &opt_mysql_tmpdir, 0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"transaction-isolation", OPT_TX_ISOLATION,
-   "Default transaction isolation level.", 0, 0, 0, GET_STR, REQUIRED_ARG, 0,
+   N_("Default transaction isolation level."),
+   0, 0, 0, GET_STR, REQUIRED_ARG, 0,
    0, 0, 0, 0, 0},
-  {"use-symbolic-links", 's', "Enable symbolic link support. Deprecated option; use --symbolic-links instead.",
+  {"use-symbolic-links", 's',
+   N_("Enable symbolic link support. Deprecated option; use --symbolic-links "
+      "instead."),
    (char**) &my_use_symdir, (char**) &my_use_symdir, 0, GET_BOOL, NO_ARG,
    IF_PURIFY(0,1), 0, 0, 0, 0, 0},
-  {"user", 'u', "Run mysqld daemon as user.", 0, 0, 0, GET_STR, REQUIRED_ARG,
+  {"user", 'u',
+   N_("Run mysqld daemon as user."),
+   0, 0, 0, GET_STR, REQUIRED_ARG,
    0, 0, 0, 0, 0, 0},
-  {"version", 'V', "Output version information and exit.", 0, 0, 0, GET_NO_ARG,
+  {"version", 'V',
+   N_("Output version information and exit."),
+   0, 0, 0, GET_NO_ARG,
    NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"warnings", 'W', "Deprecated; use --log-warnings instead.",
+  {"warnings", 'W',
+   N_("Deprecated; use --log-warnings instead."),
    (char**) &global_system_variables.log_warnings,
    (char**) &max_system_variables.log_warnings, 0, GET_ULONG, OPT_ARG,
    1, 0, ULONG_MAX, 0, 0, 0},
-  { "back_log", OPT_BACK_LOG,
-    "The number of outstanding connection requests MySQL can have. This comes into play when the main MySQL thread gets very many connection requests in a very short time.",
+  {"back_log", OPT_BACK_LOG,
+   N_("The number of outstanding connection requests MySQL can have. This "
+      "comes into play when the main MySQL thread gets very many connection "
+      "requests in a very short time."),
     (char**) &back_log, (char**) &back_log, 0, GET_ULONG,
     REQUIRED_ARG, 50, 1, 65535, 0, 1, 0 },
-  {"binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
-   "The size of the cache to hold the SQL statements for the binary log during a transaction. If you often use big, multi-statement transactions you can increase this to get more performance.",
-   (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULONG,
-   REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
-  {"bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
-   "Size of tree cache used in bulk insert optimisation. Note that this is a limit per thread!",
-   (char**) &global_system_variables.bulk_insert_buff_size,
-   (char**) &max_system_variables.bulk_insert_buff_size,
-   0, GET_ULONG, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
-  {"connect_timeout", OPT_CONNECT_TIMEOUT,
-   "The number of seconds the mysqld server is waiting for a connect packet before responding with 'Bad handshake'.",
+  { "binlog_cache_size", OPT_BINLOG_CACHE_SIZE,
+    N_("The size of the cache to hold the SQL statements for the binary log "
+       "during a transaction. If you often use big, multi-statement "
+       "transactions you can increase this to get more performance."),
+    (char**) &binlog_cache_size, (char**) &binlog_cache_size, 0, GET_ULONG,
+    REQUIRED_ARG, 32*1024L, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
+  { "bulk_insert_buffer_size", OPT_BULK_INSERT_BUFFER_SIZE,
+    N_("Size of tree cache used in bulk insert optimisation. Note that this is "
+       "a limit per thread!"),
+    (char**) &global_system_variables.bulk_insert_buff_size,
+    (char**) &max_system_variables.bulk_insert_buff_size,
+    0, GET_ULONG, REQUIRED_ARG, 8192*1024, 0, ULONG_MAX, 0, 1, 0},
+  { "connect_timeout", OPT_CONNECT_TIMEOUT,
+    N_("The number of seconds the mysqld server is waiting for a connect "
+       "packet before responding with 'Bad handshake'."),
     (char**) &connect_timeout, (char**) &connect_timeout,
-   0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
+    0, GET_ULONG, REQUIRED_ARG, CONNECT_TIMEOUT, 2, LONG_TIMEOUT, 0, 1, 0 },
   { "date_format", OPT_DATE_FORMAT,
-    "The DATE format (For future).",
+    N_("The DATE format (For future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATE],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "datetime_format", OPT_DATETIME_FORMAT,
-    "The DATETIME/TIMESTAMP format (for future).",
+    N_("The DATETIME/TIMESTAMP format (for future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_DATETIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   { "default_week_format", OPT_DEFAULT_WEEK_FORMAT,
-    "The default week format used by WEEK() functions.",
+    N_("The default week format used by WEEK() functions."),
     (char**) &global_system_variables.default_week_format,
     (char**) &max_system_variables.default_week_format,
     0, GET_ULONG, REQUIRED_ARG, 0, 0, 7L, 0, 1, 0},
-  {"div_precision_increment", OPT_DIV_PRECINCREMENT,
-   "Precision of the result of '/' operator will be increased on that value.",
+  { "div_precision_increment", OPT_DIV_PRECINCREMENT,
+   N_("Precision of the result of '/' operator will be increased on that "
+      "value."),
    (char**) &global_system_variables.div_precincrement,
    (char**) &max_system_variables.div_precincrement, 0, GET_ULONG,
    REQUIRED_ARG, 4, 0, DECIMAL_MAX_SCALE, 0, 0, 0},
-  {"expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
-   "If non-zero, binary logs will be purged after expire_logs_days "
-   "days; possible purges happen at startup and at binary log rotation.",
-   (char**) &expire_logs_days,
-   (char**) &expire_logs_days, 0, GET_ULONG,
-   REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
+  { "expire_logs_days", OPT_EXPIRE_LOGS_DAYS,
+    N_("If non-zero, binary logs will be purged after expire_logs_days "
+       "days; possible purges happen at startup and at binary log rotation."),
+    (char**) &expire_logs_days,
+    (char**) &expire_logs_days, 0, GET_ULONG,
+    REQUIRED_ARG, 0, 0, 99, 0, 1, 0},
   { "group_concat_max_len", OPT_GROUP_CONCAT_MAX_LEN,
-    "The maximum length of the result of function  group_concat.",
+    N_("The maximum length of the result of function  group_concat."),
     (char**) &global_system_variables.group_concat_max_len,
     (char**) &max_system_variables.group_concat_max_len, 0, GET_ULONG,
     REQUIRED_ARG, 1024, 4, ULONG_MAX, 0, 1, 0},
-  {"interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
-   "The number of seconds the server waits for activity on an interactive connection before closing it.",
+  { "interactive_timeout", OPT_INTERACTIVE_TIMEOUT,
+    N_("The number of seconds the server waits for activity on an interactive "
+       "connection before closing it."),
    (char**) &global_system_variables.net_interactive_timeout,
    (char**) &max_system_variables.net_interactive_timeout, 0,
    GET_ULONG, REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  {"join_buffer_size", OPT_JOIN_BUFF_SIZE,
-   "The size of the buffer that is used for full joins.",
+  { "join_buffer_size", OPT_JOIN_BUFF_SIZE,
+    N_("The size of the buffer that is used for full joins."),
    (char**) &global_system_variables.join_buff_size,
    (char**) &max_system_variables.join_buff_size, 0, GET_ULONG,
    REQUIRED_ARG, 128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, ULONG_MAX,
    MALLOC_OVERHEAD, IO_SIZE, 0},
   {"keep_files_on_create", OPT_KEEP_FILES_ON_CREATE,
-   "Don't overwrite stale .MYD and .MYI even if no directory is specified.",
+   N_("Don't overwrite stale .MYD and .MYI even if no directory is specified."),
    (char**) &global_system_variables.keep_files_on_create,
    (char**) &max_system_variables.keep_files_on_create,
    0, GET_BOOL, OPT_ARG, 0, 0, 0, 0, 0, 0},
   {"key_buffer_size", OPT_KEY_BUFFER_SIZE,
-   "The size of the buffer used for index blocks for MyISAM tables. Increase this to get better index handling (for all reads and multiple writes) to as much as you can afford; 64M on a 256M machine that mainly runs MySQL is quite common.",
+   N_("The size of the buffer used for index blocks for MyISAM tables. "
+      "Increase this to get better index handling (for all reads and multiple "
+      "writes) to as much as you can afford;",
    (char**) &dflt_key_cache_var.param_buff_size,
    (char**) 0,
    0, (GET_ULL | GET_ASK_ADDR),
    REQUIRED_ARG, KEY_CACHE_SIZE, MALLOC_OVERHEAD, SIZE_T_MAX, MALLOC_OVERHEAD,
    IO_SIZE, 0},
   {"key_cache_age_threshold", OPT_KEY_CACHE_AGE_THRESHOLD,
-   "This characterizes the number of hits a hot block has to be untouched until it is considered aged enough to be downgraded to a warm block. This specifies the percentage ratio of that number of hits to the total number of blocks in key cache",
+   N_("This characterizes the number of hits a hot block has to be untouched "
+      "until it is considered aged enough to be downgraded to a warm block. "
+      "This specifies the percentage ratio of that number of hits to the "
+      "total number of blocks in key cache"),
    (char**) &dflt_key_cache_var.param_age_threshold,
    (char**) 0,
    0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
    300, 100, ULONG_MAX, 0, 100, 0},
   {"key_cache_block_size", OPT_KEY_CACHE_BLOCK_SIZE,
-   "The default size of key cache blocks",
+   N_("The default size of key cache blocks"),
    (char**) &dflt_key_cache_var.param_block_size,
    (char**) 0,
    0, (GET_ULONG | GET_ASK_ADDR), REQUIRED_ARG,
    KEY_CACHE_BLOCK_SIZE, 512, 1024 * 16, 0, 512, 0},
   {"key_cache_division_limit", OPT_KEY_CACHE_DIVISION_LIMIT,
-   "The minimum percentage of warm blocks in key cache",
+   N_("The minimum percentage of warm blocks in key cache"),
    (char**) &dflt_key_cache_var.param_division_limit,
    (char**) 0,
    0, (GET_ULONG | GET_ASK_ADDR) , REQUIRED_ARG, 100,
    1, 100, 0, 1, 0},
   {"long_query_time", OPT_LONG_QUERY_TIME,
-   "Log all queries that have taken more than long_query_time seconds to execute to file. "
-   "The argument will be treated as a decimal value with microsecond precission.",
+   N_("Log all queries that have taken more than long_query_time seconds to "
+      "execute to file. The argument will be treated as a decimal value with "
+      "microsecond precission."),
    (char**) &long_query_time, (char**) &long_query_time, 0, GET_DOUBLE,
    REQUIRED_ARG, 10, 0, LONG_TIMEOUT, 0, 0, 0},
   {"max_allowed_packet", OPT_MAX_ALLOWED_PACKET,
-   "Max packetlength to send/receive from to server.",
+   N_("Max packetlength to send/receive from to server."),
    (char**) &global_system_variables.max_allowed_packet,
    (char**) &max_system_variables.max_allowed_packet, 0, GET_ULONG,
    REQUIRED_ARG, 1024*1024L, 1024, 1024L*1024L*1024L, MALLOC_OVERHEAD, 1024, 0},
   {"max_binlog_cache_size", OPT_MAX_BINLOG_CACHE_SIZE,
-   "Can be used to restrict the total size used to cache a multi-transaction query.",
+   N_("Can be used to restrict the total size used to cache a "
+      "multi-transaction query."),
    (char**) &max_binlog_cache_size, (char**) &max_binlog_cache_size, 0,
    GET_ULONG, REQUIRED_ARG, ULONG_MAX, IO_SIZE, ULONG_MAX, 0, IO_SIZE, 0},
   {"max_binlog_size", OPT_MAX_BINLOG_SIZE,
-   "Binary log will be rotated automatically when the size exceeds this \
-value. Will also apply to relay logs if max_relay_log_size is 0. \
-The minimum value for this variable is 4096.",
+   N_("Binary log will be rotated automatically when the size exceeds this "
+      "value. Will also apply to relay logs if max_relay_log_size is 0. "
+      "The minimum value for this variable is 4096."),
    (char**) &max_binlog_size, (char**) &max_binlog_size, 0, GET_ULONG,
    REQUIRED_ARG, 1024*1024L*1024L, IO_SIZE, 1024*1024L*1024L, 0, IO_SIZE, 0},
   {"max_connect_errors", OPT_MAX_CONNECT_ERRORS,
-   "If there is more than this number of interrupted connections from a host this host will be blocked from further connections.",
+   N_("If there is more than this number of interrupted connections from a "
+      "host this host will be blocked from further connections."),
    (char**) &max_connect_errors, (char**) &max_connect_errors, 0, GET_ULONG,
     REQUIRED_ARG, MAX_CONNECT_ERRORS, 1, ULONG_MAX, 0, 1, 0},
   // Default max_connections of 151 is larger than Apache's default max
   // children, to avoid "too many connections" error in a common setup
   {"max_connections", OPT_MAX_CONNECTIONS,
-   "The number of simultaneous clients allowed.", (char**) &max_connections,
+   N_("The number of simultaneous clients allowed."),
+   (char**) &max_connections,
    (char**) &max_connections, 0, GET_ULONG, REQUIRED_ARG, 151, 1, 100000, 0, 1,
    0},
   {"max_error_count", OPT_MAX_ERROR_COUNT,
-   "Max number of errors/warnings to store for a statement.",
+   N_("Max number of errors/warnings to store for a statement."),
    (char**) &global_system_variables.max_error_count,
    (char**) &max_system_variables.max_error_count,
    0, GET_ULONG, REQUIRED_ARG, DEFAULT_ERROR_COUNT, 0, 65535, 0, 1, 0},
   {"max_heap_table_size", OPT_MAX_HEP_TABLE_SIZE,
-   "Don't allow creation of heap tables bigger than this.",
+   N_("Don't allow creation of heap tables bigger than this."),
    (char**) &global_system_variables.max_heap_table_size,
    (char**) &max_system_variables.max_heap_table_size, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 16384, MAX_MEM_TABLE_SIZE,
    MALLOC_OVERHEAD, 1024, 0},
   {"max_join_size", OPT_MAX_JOIN_SIZE,
-   "Joins that are probably going to read more than max_join_size records return an error.",
+   N_("Joins that are probably going to read more than max_join_size records "
+      "return an error."),
    (char**) &global_system_variables.max_join_size,
    (char**) &max_system_variables.max_join_size, 0, GET_HA_ROWS, REQUIRED_ARG,
    ~0L, 1, ~0L, 0, 1, 0},
    {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
-    "Max number of bytes in sorted records.",
+    N_("Max number of bytes in sorted records."),
     (char**) &global_system_variables.max_length_for_sort_data,
     (char**) &max_system_variables.max_length_for_sort_data, 0, GET_ULONG,
     REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_relay_log_size", OPT_MAX_RELAY_LOG_SIZE,
-   "If non-zero: relay log will be rotated automatically when the size exceeds this value; if zero (the default): when the size exceeds max_binlog_size. 0 excepted, the minimum value for this variable is 4096.",
+   N_("If non-zero: relay log will be rotated automatically when the size "
+      "exceeds this value; if zero (the default): when the size exceeds "
+      "max_binlog_size. 0 excepted, the minimum value for this variable "
+      "is 4096."),
    (char**) &max_relay_log_size, (char**) &max_relay_log_size, 0, GET_ULONG,
    REQUIRED_ARG, 0L, 0L, 1024*1024L*1024L, 0, IO_SIZE, 0},
   { "max_seeks_for_key", OPT_MAX_SEEKS_FOR_KEY,
-    "Limit assumed max number of seeks when looking up rows based on a key",
+    N_("Limit assumed max number of seeks when looking up rows based on a key"),
     (char**) &global_system_variables.max_seeks_for_key,
     (char**) &max_system_variables.max_seeks_for_key, 0, GET_ULONG,
     REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0 },
   {"max_sort_length", OPT_MAX_SORT_LENGTH,
-   "The number of bytes to use when sorting BLOB or TEXT values (only the first max_sort_length bytes of each value are used; the rest are ignored).",
+   N_("The number of bytes to use when sorting BLOB or TEXT values "
+      "(only the first max_sort_length bytes of each value are used; the "
+      "rest are ignored)."),
    (char**) &global_system_variables.max_sort_length,
    (char**) &max_system_variables.max_sort_length, 0, GET_ULONG,
    REQUIRED_ARG, 1024, 4, 8192*1024L, 0, 1, 0},
   {"max_tmp_tables", OPT_MAX_TMP_TABLES,
-   "Maximum number of temporary tables a client can keep open at a time.",
+   N_("Maximum number of temporary tables a client can keep open at a time."),
    (char**) &global_system_variables.max_tmp_tables,
    (char**) &max_system_variables.max_tmp_tables, 0, GET_ULONG,
    REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
@@ -4166,11 +4309,12 @@ static void usage(void)
   if (!default_collation_name)
     default_collation_name= (char*) default_charset_info->name;
   print_version();
-  puts("\
-Copyright (C) 2000 MySQL AB, by Monty and others\n\
-This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
-and you are welcome to modify and redistribute it under the GPL license\n\n\
-Starts the Drizzle database server\n");
+  puts(_("Copyright (C) 2000 MySQL AB, by Monty and others\n"
+         "This software comes with ABSOLUTELY NO WARRANTY. "
+         "This is free software,\n"
+         "and you are welcome to modify and redistribute it under the GPL "
+         "license\n\n"
+         "Starts the Drizzle database server\n"));
 
   printf("Usage: %s [OPTIONS]\n", my_progname);
   {
@@ -4183,9 +4327,8 @@ Starts the Drizzle database server\n");
   /* Print out all the options including plugin supplied options */
   my_print_help_inc_plugins(my_long_options, sizeof(my_long_options)/sizeof(my_option));
 
-  puts("\n\
-To see what values a running DrizzleD server is using, type\n\
-'drizzleadmin variables' instead of 'drizzled --help'.");
+  puts(_("\nTo see what values a running Drizzle server is using, type\n"
+         "'drizzleadmin variables' instead of 'drizzled --help'."));
   }
 }
 
