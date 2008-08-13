@@ -129,7 +129,16 @@ noinst_HEADERS = item.h \
 		 sql_plugin.h \
 		 global.h \
 		 base.h \
-		 probes.h
+		 probes.h \
+		 definitions.h \
+		 sql_alloc.h \
+		 sql_parse.h \
+		 error_injection.h \
+		 connect.h \
+		 sql_table.h \
+		 show.h \
+		 drizzled_error_messages.h \
+		 common_includes.h 
 
 drizzled_SOURCES = \
 		   sql_db.cc \
@@ -238,6 +247,7 @@ BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		version.h
 
 EXTRA_DIST = $(BUILT_MAINT_SRC) \
+	     drizzledumpslow \
 	     message.mc \
 	     probes.d
 

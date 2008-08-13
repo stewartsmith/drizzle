@@ -27,7 +27,9 @@ noinst_HEADERS = \
 		 serialize.h
 
 schema.pb.cc: schema.proto
-	protoc --cpp_out=. schema.proto
+	protoc --cpp_out=${top_builddir}/drizzled/serialize schema.proto
 	
+EXTRA_DIST = schema.proto
+BUILT_SOURCES = schema.pb.cc
 
 DEFS= -DDRIZZLE_SERVER @DEFS@

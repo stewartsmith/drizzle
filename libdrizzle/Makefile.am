@@ -52,8 +52,10 @@ DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DUNDEF_THREADS_HACK
 
 noinst_HEADERS = 	client_settings.h \
-			my_time.h
+			my_time.h \
+			gettext.h
 
+EXTRA_DIST =		libdrizzle.ver
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 			$(target) $(BUILT_SOURCES)
 

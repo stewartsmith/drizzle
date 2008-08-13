@@ -284,7 +284,7 @@ DRIZZLE_PROG_AR
 
 # libdrizzle versioning when linked with GNU ld.
 if $LD --version 2>/dev/null|grep -q GNU; then
-  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_builddir)/libdrizzle/libdrizzle.ver"
+  LD_VERSION_SCRIPT="-Wl,--version-script=\$(top_srcdir)/libdrizzle/libdrizzle.ver"
 fi
 AC_SUBST(LD_VERSION_SCRIPT)
 
