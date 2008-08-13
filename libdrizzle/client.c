@@ -2038,7 +2038,7 @@ uint drizzle_errno(const DRIZZLE *drizzle)
 
 const char * drizzle_error(const DRIZZLE *drizzle)
 {
-  return drizzle ? drizzle->net.last_error : drizzle_server_last_error;
+  return drizzle ? _(drizzle->net.last_error) : _(drizzle_server_last_error);
 }
 
 
