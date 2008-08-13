@@ -546,7 +546,7 @@ static void close_connections(void)
     }
 #ifdef EXTRA_DEBUG
     if (error != 0 && !count++)
-      sql_print_error("Got error %d from pthread_cond_timedwait",error);
+      sql_print_error(_("Got error %d from pthread_cond_timedwait"),error);
 #endif
     close_server_sock();
   }
@@ -686,7 +686,7 @@ void kill_mysql(void)
     abort_loop=1;
     if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
 			   (void*) 0))
-      sql_print_error("Can't create thread to kill server");
+      sql_print_error(_("Can't create thread to kill server"));
   }
 #endif
   return;;
@@ -715,9 +715,9 @@ static void *kill_server(void *sig_ptr)
   if (sig != 0) // 0 is not a valid signal number
     my_sigset(sig, SIG_IGN);                    /* purify inspected */
   if (sig == DRIZZLE_KILL_SIGNAL || sig == 0)
-    sql_print_information(ER(ER_NORMAL_SHUTDOWN),my_progname);
+    sql_print_information(_(ER(ER_NORMAL_SHUTDOWN)),my_progname);
   else
-    sql_print_error(ER(ER_GOT_SIGNAL),my_progname,sig); /* purecov: inspected */
+    sql_print_error(_(ER(ER_GOT_SIGNAL)),my_progname,sig); /* purecov: inspected */
 
   close_connections();
   if (sig != DRIZZLE_KILL_SIGNAL &&
@@ -753,7 +753,7 @@ pthread_handler_t kill_server_thread(void *arg __attribute__((unused)))
 extern "C" sig_handler print_signal_warning(int sig)
 {
   if (global_system_variables.log_warnings)
-    sql_print_warning("Got signal %d from thread %ld", sig,my_thread_id());
+    sql_print_warning(_("Got signal %d from thread %ld"), sig,my_thread_id());
 #ifdef DONT_REMEMBER_SIGNAL
   my_sigset(sig,print_signal_warning);		/* int. thread system calls */
 #endif
@@ -787,7 +787,7 @@ extern "C" void unireg_abort(int exit_code)
 {
 
   if (exit_code)
-    sql_print_error("Aborting\n");
+    sql_print_error(_("Aborting\n"));
   else if (opt_help)
     usage();
   clean_up(!opt_help && (exit_code)); /* purecov: inspected */
@@ -865,7 +865,7 @@ void clean_up(bool print_message)
   (void) my_delete(pidfile_name,MYF(0));	// This may not always exist
 
   if (print_message && server_start_time)
-    sql_print_information(ER(ER_SHUTDOWN_COMPLETE),my_progname);
+    sql_print_information(_(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
   thread_scheduler.end();
   finish_client_errs();
   /* Returns NULL on globerrs, we don't want to try to free that */
@@ -985,16 +985,17 @@ static struct passwd *check_user(const char *user)
       /* purecov: begin tested */
       tmp_user_info= getpwnam(user);
       if ((!tmp_user_info || user_id != tmp_user_info->pw_uid) &&
-	  global_system_variables.log_warnings)
-        sql_print_warning(
-                    "One can only use the --user switch if running as root\n");
+          global_system_variables.log_warnings)
+        sql_print_warning(_("One can only use the --user switch "
+                            "if running as root\n"));
       /* purecov: end */
     }
     return NULL;
   }
   if (!user)
   {
-    sql_print_error("Fatal error: Please read \"Security\" section of the manual to find out how to run mysqld as root!\n");
+    sql_print_error(_("Fatal error: Please read \"Security\" section of "
+                      "the manual to find out how to run mysqld as root!\n"));
     unireg_abort(1);
 
     return NULL;
@@ -1017,7 +1018,8 @@ static struct passwd *check_user(const char *user)
   /* purecov: end */
 
 err:
-  sql_print_error("Fatal error: Can't change to run as user '%s' ;  Please check that the user exists!\n",user);
+  sql_print_error(_("Fatal error: Can't change to run as user '%s' ;  "
+                    "Please check that the user exists!\n"),user);
   unireg_abort(1);
 
 #ifdef PR_SET_DUMPABLE
@@ -1191,21 +1193,22 @@ static void network_init(void)
           (socket_errno != SOCKET_EADDRINUSE) ||
           (waited >= mysqld_port_timeout))
         break;
-      sql_print_information("Retrying bind on TCP/IP port %u", mysqld_port);
+      sql_print_information(_("Retrying bind on TCP/IP port %u"), mysqld_port);
       this_wait= retry * retry / 3 + 1;
       sleep(this_wait);
     }
     if (ret < 0)
     {
-      sql_perror("Can't start server: Bind on TCP/IP port");
-      sql_print_error("Do you already have another drizzled server running on port: %d ?",mysqld_port);
+      sql_perror(_("Can't start server: Bind on TCP/IP port"));
+      sql_print_error(_("Do you already have another drizzled server running "
+                        "on port: %d ?"),mysqld_port);
       unireg_abort(1);
     }
     if (listen(ip_sock,(int) back_log) < 0)
     {
-      sql_perror("Can't start server: listen() on TCP/IP port");
-      sql_print_error("listen() on TCP/IP failed with error %d",
-		      socket_errno);
+      sql_perror(_("Can't start server: listen() on TCP/IP port"));
+      sql_print_error(_("listen() on TCP/IP failed with error %d"),
+                      socket_errno);
       unireg_abort(1);
     }
   }
@@ -1584,7 +1587,9 @@ static void init_signals(void)
     STRUCT_RLIMIT rl;
     rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
     if (setrlimit(RLIMIT_CORE, &rl) && global_system_variables.log_warnings)
-      sql_print_warning("setrlimit could not change the size of core files to 'infinity';  We may not be able to generate a core file on signals");
+      sql_print_warning(_("setrlimit could not change the size of core files "
+                          "to 'infinity';  We may not be able to generate a "
+                          "core file on signals"));
   }
 #endif
   (void) sigemptyset(&set);
@@ -1651,8 +1656,8 @@ static void start_signal_handler(void)
   (void) pthread_mutex_lock(&LOCK_thread_count);
   if ((error=pthread_create(&signal_thread,&thr_attr,signal_hand,0)))
   {
-    sql_print_error("Can't create interrupt-thread (error %d, errno: %d)",
-		    error,errno);
+    sql_print_error(_("Can't create interrupt-thread (error %d, errno: %d)"),
+                    error,errno);
     exit(1);
   }
   (void) pthread_cond_wait(&COND_thread_count,&LOCK_thread_count);
@@ -1739,7 +1744,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
     case SIGQUIT:
     case SIGKILL:
 #ifdef EXTRA_DEBUG
-      sql_print_information("Got signal %d to shutdown mysqld",sig);
+      sql_print_information(_("Got signal %d to shutdown mysqld"),sig);
 #endif
       /* switch to the old log message processing */
       logger.set_handlers(LOG_FILE, opt_slow_log ? LOG_FILE:LOG_NONE,
@@ -1759,7 +1764,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
         }
 	if (pthread_create(&tmp,&connection_attrib, kill_server_thread,
 			   (void*) &sig))
-	  sql_print_error("Can't create thread to kill server");
+          sql_print_error(_("Can't create thread to kill server"));
 #else
 	kill_server((void*) sig);	// MIT THREAD has a alarm thread
 #endif
@@ -1786,7 +1791,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 #endif
     default:
 #ifdef EXTRA_DEBUG
-      sql_print_warning("Got signal: %d  error: %d",sig,error); /* purecov: tested */
+      sql_print_warning(_("Got signal: %d  error: %d"),sig,error); /* purecov: tested */
 #endif
       break;					/* purecov: tested */
     }
@@ -2054,7 +2059,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (gethostname(glob_hostname,sizeof(glob_hostname)) < 0)
   {
     strmake(glob_hostname, STRING_WITH_LEN("localhost"));
-    sql_print_warning("gethostname failed, using '%s' as hostname",
+    sql_print_warning(_("gethostname failed, using '%s' as hostname"),
                       glob_hostname);
     strmake(pidfile_name, STRING_WITH_LEN("mysql"));
   }
@@ -2117,12 +2122,15 @@ static int init_common_variables(const char *conf_file_name, int argc,
         table_cache_size= (ulong) min(max((files-10-max_connections)/2,
                                           (ulong)TABLE_OPEN_CACHE_MIN),
                                       table_cache_size);
-	if (global_system_variables.log_warnings)
-	  sql_print_warning("Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld",
-			files, max_connections, table_cache_size);
+        if (global_system_variables.log_warnings)
+          sql_print_warning(_("Changed limits: max_open_files: %u  "
+                              "max_connections: %ld  table_cache: %ld"),
+                            files, max_connections, table_cache_size);
       }
       else if (global_system_variables.log_warnings)
-	sql_print_warning("Could not increase number of max_open_files to more than %u (request: %u)", files, wanted_files);
+        sql_print_warning(_("Could not increase number of max_open_files "
+                            "to more than %u (request: %u)"),
+                          files, wanted_files);
     }
     open_files_limit= files;
   }
@@ -2168,17 +2176,17 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (default_collation_name)
   {
     const CHARSET_INFO * const default_collation=
-	   get_charset_by_name(default_collation_name, MYF(0));
+      get_charset_by_name(default_collation_name, MYF(0));
     if (!default_collation)
     {
-      sql_print_error(ER(ER_UNKNOWN_COLLATION), default_collation_name);
+      sql_print_error(_(ER(ER_UNKNOWN_COLLATION)), default_collation_name);
       return 1;
     }
     if (!my_charset_same(default_charset_info, default_collation))
     {
-      sql_print_error(ER(ER_COLLATION_CHARSET_MISMATCH),
-		      default_collation_name,
-		      default_charset_info->csname);
+      sql_print_error(_(ER(ER_COLLATION_CHARSET_MISMATCH)),
+                      default_collation_name,
+                      default_charset_info->csname);
       return 1;
     }
     default_charset_info= default_collation;
@@ -2202,7 +2210,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
   if (!(my_default_lc_time_names=
         my_locale_by_name(lc_time_names_name)))
   {
-    sql_print_error("Unknown locale: '%s'", lc_time_names_name);
+    sql_print_error(_("Unknown locale: '%s'"), lc_time_names_name);
     return 1;
   }
   global_system_variables.lc_time_names= my_default_lc_time_names;
@@ -2222,15 +2230,17 @@ static int init_common_variables(const char *conf_file_name, int argc,
   /* check log options and issue warnings if needed */
   if (opt_log && opt_logname && !(log_output_options & LOG_FILE) &&
       !(log_output_options & LOG_NONE))
-    sql_print_warning("Although a path was specified for the "
-                      "--log option, log tables are used. "
-                      "To enable logging to files use the --log-output option.");
+    sql_print_warning(_("Although a path was specified for the "
+                        "--log option, log tables are used. "
+                        "To enable logging to files use the "
+                        "--log-output option."));
 
   if (opt_slow_log && opt_slow_logname && !(log_output_options & LOG_FILE)
       && !(log_output_options & LOG_NONE))
-    sql_print_warning("Although a path was specified for the "
-                      "--log-slow-queries option, log tables are used. "
-                      "To enable logging to files use the --log-output=file option.");
+    sql_print_warning(_("Although a path was specified for the "
+                        "--log-slow-queries option, log tables are used. "
+                        "To enable logging to files use the "
+                        "--log-output=file option."));
 
   s= opt_logname ? opt_logname : make_default_log_name(buff, ".log");
   sys_var_general_log_path.value= my_strdup(s, MYF(0));
@@ -2297,7 +2307,7 @@ static int init_thread_environment()
   if (pthread_key_create(&THR_THD,NULL) ||
       pthread_key_create(&THR_MALLOC,NULL))
   {
-    sql_print_error("Can't create thread-keys");
+    sql_print_error(_("Can't create thread-keys"));
     return 1;
   }
   return 0;
@@ -2344,15 +2354,15 @@ static int init_server_components()
 
   if (xid_cache_init())
   {
-    sql_print_error("Out of memory");
+    sql_print_error(_("Out of memory"));
     unireg_abort(1);
   }
 
   if (!opt_bin_log)
     if (opt_binlog_format_id != BINLOG_FORMAT_UNSPEC)
     {
-      sql_print_error("You need to use --log-bin to make "
-                      "--binlog-format work.");
+      sql_print_error(_("You need to use --log-bin to make "
+                        "--binlog-format work."));
       unireg_abort(1);
     }
     else
@@ -2373,10 +2383,9 @@ static int init_server_components()
 
   if (opt_log_slave_updates && replicate_same_server_id)
   {
-    sql_print_error("\
-using --replicate-same-server-id in conjunction with \
---log-slave-updates is impossible, it would lead to infinite loops in this \
-server.");
+    sql_print_error(_("using --replicate-same-server-id in conjunction with "
+                      "--log-slave-updates is impossible, it would lead to "
+                      "infinite loops in this server."));
     unireg_abort(1);
   }
 
@@ -2394,11 +2403,11 @@ server.");
         require a name. But as we don't want to break many existing setups, we
         only give warning, not error.
       */
-      sql_print_warning("No argument was provided to --log-bin, and "
-                        "--log-bin-index was not used; so replication "
-                        "may break when this MySQL server acts as a "
-                        "master and has his hostname changed!! Please "
-                        "use '--log-bin=%s' to avoid this problem.", ln);
+      sql_print_warning(_("No argument was provided to --log-bin, and "
+                          "--log-bin-index was not used; so replication "
+                          "may break when this Drizzle server acts as a "
+                          "master and has his hostname changed!! Please "
+                          "use '--log-bin=%s' to avoid this problem."), ln);
     }
     if (ln == buf)
     {
@@ -2428,7 +2437,7 @@ server.");
                   (opt_noacl ? PLUGIN_INIT_SKIP_PLUGIN_TABLE : 0) |
                   (opt_help ? PLUGIN_INIT_SKIP_INITIALIZATION : 0)))
   {
-    sql_print_error("Failed to initialize plugins.");
+    sql_print_error(_("Failed to initialize plugins."));
     unireg_abort(1);
   }
 
@@ -2468,7 +2477,7 @@ server.");
   /* We have to initialize the storage engines before CSV logging */
   if (ha_init())
   {
-    sql_print_error("Can't init databases");
+    sql_print_error(_("Can't init databases"));
     unireg_abort(1);
   }
 
@@ -2491,13 +2500,13 @@ server.");
     }
     else
     {
-      sql_print_error("Unknown/unsupported table type: %s",
+      sql_print_error(_("Unknown/unsupported table type: %s"),
                       default_storage_engine_str);
       unireg_abort(1);
     }
     if (!ha_storage_engine_is_enabled(hton))
     {
-      sql_print_error("Default storage engine (%s) is not available",
+      sql_print_error(_("Default storage engine (%s) is not available"),
                       default_storage_engine_str);
       unireg_abort(1);
       assert(global_system_variables.table_plugin);
@@ -2520,7 +2529,7 @@ server.");
 
   if (tc_log->open(opt_bin_log ? opt_bin_logname : opt_tc_log_file))
   {
-    sql_print_error("Can't init tc log");
+    sql_print_error(_("Can't initialize tc_log"));
     unireg_abort(1);
   }
 
@@ -2551,7 +2560,7 @@ server.");
     if (mlockall(MCL_CURRENT))
     {
       if (global_system_variables.log_warnings)
-	sql_print_warning("Failed to lock memory. Errno: %d\n",errno);
+        sql_print_warning(_("Failed to lock memory. Errno: %d\n"),errno);
       locked_in_memory= 0;
     }
     if (user_info)
@@ -2621,7 +2630,7 @@ int main(int argc, char **argv)
       {
         /* %zu is not yet in C++ */
         unsigned long long size_tmp= (uint64_t)stack_size;
-	sql_print_warning("Asked for %u thread stack, but got %llu",
+        sql_print_warning(_("Asked for %u thread stack, but got %llu"),
                           my_thread_stack_size, size_tmp);
       }
       my_thread_stack_size= stack_size;
@@ -2657,10 +2666,10 @@ int main(int argc, char **argv)
   {
     server_id= 1;
 #ifdef EXTRA_DEBUG
-    sql_print_warning("You have enabled the binary log, but you haven't set "
-                      "server-id to a non-zero value: we force server id to 1; "
-                      "updates will be logged to the binary log, but "
-                      "connections from slaves will not be accepted.");
+    sql_print_warning(_("You have enabled the binary log, but you haven't set "
+                        "server-id to a non-zero value: we force server id to "
+                        "1; updates will be logged to the binary log, but "
+                        "connections from slaves will not be accepted."));
 #endif
   }
 
@@ -2705,7 +2714,7 @@ int main(int argc, char **argv)
     unireg_abort(1);
   }
 
-  sql_print_information(ER(ER_STARTUP),my_progname,server_version,
+  sql_print_information(_(ER(ER_STARTUP)),my_progname,server_version,
                         "", mysqld_port, DRIZZLE_COMPILATION_COMMENT);
 
 
@@ -2715,14 +2724,14 @@ int main(int argc, char **argv)
 
 
 #ifdef EXTRA_DEBUG2
-  sql_print_error("Before Lock_thread_count");
+  sql_print_error(_("Before Lock_thread_count"));
 #endif
   (void) pthread_mutex_lock(&LOCK_thread_count);
   select_thread_in_use=0;			// For close_connections
   (void) pthread_mutex_unlock(&LOCK_thread_count);
   (void) pthread_cond_broadcast(&COND_thread_count);
 #ifdef EXTRA_DEBUG2
-  sql_print_error("After lock_thread_count");
+  sql_print_error(_("After lock_thread_count"));
 #endif
 
   /* Wait until cleanup is done */
@@ -2830,8 +2839,9 @@ void handle_connections_sockets()
     {
       if (socket_errno != SOCKET_EINTR)
       {
-	if (!select_errors++ && !abort_loop)	/* purecov: inspected */
-	  sql_print_error("mysqld: Got error %d from select",socket_errno); /* purecov: inspected */
+        if (!select_errors++ && !abort_loop)	/* purecov: inspected */
+          sql_print_error(_("drizzled: Got error %d from select"),
+                          socket_errno); /* purecov: inspected */
       }
       MAYBE_BROKEN_SYSCALL
       continue;
@@ -4359,7 +4369,9 @@ mysqld_get_one_option(int optid,
     if (!mysqld_user || !strcmp(mysqld_user, argument))
       mysqld_user= argument;
     else
-      sql_print_warning("Ignoring user change to '%s' because the user was set to '%s' earlier on the command line\n", argument, mysqld_user);
+      sql_print_warning(_("Ignoring user change to '%s' because the user was "
+                          "set to '%s' earlier on the command line\n"),
+                        argument, mysqld_user);
     break;
   case 'L':
     strmake(language, argument, sizeof(language)-1);
@@ -4531,13 +4543,14 @@ mysqld_get_one_option(int optid,
 
       if (getaddrinfo(argument, NULL, &hints, &res_lst) != 0)
       {
-        sql_print_error("Can't start server: cannot resolve hostname!");
+        sql_print_error(_("Can't start server: cannot resolve hostname!"));
         exit(1);
       }
 
       if (res_lst->ai_next)
       {
-        sql_print_error("Can't start server: bind-address refers to multiple interfaces!");
+        sql_print_error(_("Can't start server: bind-address refers to "
+                          "multiple interfaces!"));
         exit(1);
       }
       freeaddrinfo(res_lst);
@@ -4711,7 +4724,10 @@ static void get_options(int *argc,char **argv)
   if ((opt_log_slow_admin_statements || opt_log_queries_not_using_indexes ||
        opt_log_slow_slave_statements) &&
       !opt_slow_log)
-    sql_print_warning("options --log-slow-admin-statements, --log-queries-not-using-indexes and --log-slow-slave-statements have no effect if --log-slow-queries is not set");
+    sql_print_warning(_("options --log-slow-admin-statements, "
+                        "--log-queries-not-using-indexes and "
+                        "--log-slow-slave-statements have no effect if "
+                        "--log-slow-queries is not set"));
 
 #if defined(HAVE_BROKEN_REALPATH)
   my_use_symdir=0;
