@@ -15,19 +15,39 @@
 
 #called from the top level Makefile
 
-libserialize_la_CXXFLAGS=${AM_CXXFLAGS} -Wno-error
+LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
 
-noinst_LTLIBRARIES = 	libserialize.la
+bin_PROGRAMS = \
+	       table_reader \
+	       table_writer \
+	       schema_reader
+
+libserialize_la_CXXFLAGS = -Wno-all -Wno-error
+
+noinst_LTLIBRARIES = libserialize.la
 
 libserialize_la_SOURCES = \
-			   schema.pb.cc 
+			  table.pb.cc \
+			  schema.pb.cc 
 
 noinst_HEADERS = \
+		 table.pb.h \
 		 schema.pb.h \
 		 serialize.h
 
 schema.pb.cc: schema.proto
 	protoc --cpp_out=. schema.proto
-	
 
-DEFS= -DMYSQL_SERVER @DEFS@
+table.pb.cc: table.proto
+	protoc --cpp_out=. table.proto
+	
+DEFS=
+
+schema_reader_SOURCES =  schema_reader.cc
+
+table_reader_SOURCES =  table_reader.cc
+table_reader_CXXFLAGS = -Wno-all -Wno-error
+
+table_writer_SOURCES =  table_writer.cc
+table_writer_CXXFLAGS = -Wno-all -Wno-error
+
