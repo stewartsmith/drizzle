@@ -121,51 +121,6 @@ static void print_lock_error(int error, const char *);
 static int thr_lock_errno_to_mysql[]=
 { 0, 1, ER_LOCK_WAIT_TIMEOUT, ER_LOCK_DEADLOCK };
 
-/**
-  Perform semantic checks for mysql_lock_tables.
-  @param thd The current thread
-  @param tables The tables to lock
-  @param count The number of tables to lock
-  @param flags Lock flags
-  @return 0 if all the check passed, non zero if a check failed.
-*/
-int mysql_lock_tables_check(THD *thd __attribute__((unused)),
-                            TABLE **tables, uint count,
-                            uint flags __attribute__((unused)))
-{
-  uint system_count;
-  uint i;
-
-  system_count= 0;
-
-  for (i=0 ; i<count; i++)
-  {
-    TABLE *t= tables[i];
-
-    /* Protect against 'fake' partially initialized TABLE_SHARE */
-    assert(t->s->table_category != TABLE_UNKNOWN_CATEGORY);
-
-    if ((t->s->table_category == TABLE_CATEGORY_SYSTEM) &&
-        (t->reginfo.lock_type >= TL_WRITE_ALLOW_WRITE))
-    {
-      system_count++;
-    }
-  }
-
-  /*
-    Locking of system tables is restricted:
-    locking a mix of system and non-system tables in the same lock
-    is prohibited, to prevent contention.
-  */
-  if ((system_count > 0) && (system_count < count))
-  {
-    my_error(ER_WRONG_LOCK_OF_SYSTEM_TABLE, MYF(0));
-    return(1);
-  }
-
-  return(0);
-}
-
 
 /**
   Reset lock type in lock data and free.
@@ -213,9 +168,6 @@ DRIZZLE_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
   int rc;
 
   *need_reopen= false;
-
-  if (mysql_lock_tables_check(thd, tables, count, flags))
-    return (NULL);
 
   for (;;)
   {

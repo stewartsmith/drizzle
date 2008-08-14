@@ -130,18 +130,6 @@ enum enum_table_category
   TABLE_CATEGORY_USER=2,
 
   /**
-    System table, maintained by the server.
-    These tables do honor:
-    - LOCK TABLE t FOR READ/WRITE
-    - FLUSH TABLES WITH READ LOCK
-    - SET GLOBAL READ_ONLY = ON
-    Typically, writes to system tables are performed by
-    the server implementation, not explicitly be a user.
-    System tables are cached in the table cache.
-  */
-  TABLE_CATEGORY_SYSTEM=3,
-
-  /**
     Information schema tables.
     These tables are an interface provided by the system
     to inspect the system metadata.
@@ -161,7 +149,7 @@ enum enum_table_category
     to I_S tables in the table cache, which should use
     this table type.
   */
-  TABLE_CATEGORY_INFORMATION=4
+  TABLE_CATEGORY_INFORMATION
 };
 typedef enum enum_table_category TABLE_CATEGORY;
 
@@ -341,8 +329,7 @@ typedef struct st_table_share
 
   inline bool honor_global_locks()
   {
-    return ((table_category == TABLE_CATEGORY_USER)
-            || (table_category == TABLE_CATEGORY_SYSTEM));
+    return (table_category == TABLE_CATEGORY_USER);
   }
 
   inline ulong get_table_def_version()

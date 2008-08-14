@@ -515,12 +515,6 @@ void mem_alloc_error(size_t size);
 #define WFRM_PACK_FRM 4
 #define WFRM_KEEP_SHARE 8
 
-/* Functions to work with system tables. */
-bool open_system_tables_for_read(THD *thd, TABLE_LIST *table_list,
-                                 Open_tables_state *backup);
-void close_system_tables(THD *thd, Open_tables_state *backup);
-TABLE *open_system_table_for_update(THD *thd, TABLE_LIST *one_table);
-
 bool close_cached_tables(THD *thd, TABLE_LIST *tables, bool have_lock,
                          bool wait_for_refresh, bool wait_for_placeholders);
 bool close_cached_connection_tables(THD *thd, bool wait_for_refresh,
