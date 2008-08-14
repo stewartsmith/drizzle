@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-13 17:25-0700\n"
+"POT-Creation-Date: 2008-08-14 10:35-0700\n"
 "PO-Revision-Date: 2008-08-13 21:41+0000\n"
 "Last-Translator: Pierre Hanselmann <pierre.hanselmann@sunrise.ch>\n"
 "Language-Team: French <fr@li.org>\n"
@@ -844,8 +844,8 @@ msgid "Error writing file '%s' (Errcode: %d)"
 msgstr "Erreur durant l'écriture du fichier '%s' (Errcode : %d)"
 
 #: mysys/errors.c:28
-#, c-format
-msgid "Error on close of '%'s (Errcode: %d)"
+#, fuzzy, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
 msgstr "Erreur durant la fermeture de '%s' (Errcode : %d)"
 
 #: mysys/errors.c:29

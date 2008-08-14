@@ -25,7 +25,7 @@ void init_glob_errs()
   EE(EE_CANTCREATEFILE) = N_("Can't create/write to file '%s' (Errcode: %d)");
   EE(EE_READ)		= N_("Error reading file '%s' (Errcode: %d)");
   EE(EE_WRITE)		= N_("Error writing file '%s' (Errcode: %d)");
-  EE(EE_BADCLOSE)	= N_("Error on close of '%'s (Errcode: %d)");
+  EE(EE_BADCLOSE)	= N_("Error on close of '%s' (Errcode: %d)");
   EE(EE_OUTOFMEMORY)	= N_("Out of memory (Needed %u bytes)");
   EE(EE_DELETE)		= N_("Error on delete of '%s' (Errcode: %d)");
   EE(EE_LINK)		= N_("Error on rename of '%s' to '%s' (Errcode: %d)");

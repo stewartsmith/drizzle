@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-13 17:25-0700\n"
+"POT-Creation-Date: 2008-08-14 10:35-0700\n"
 "PO-Revision-Date: 2008-08-13 03:31+0000\n"
 "Last-Translator: Monty Taylor <monty@inaugust.com>\n"
 "Language-Team: Chinese (Hong Kong) <zh_HK@li.org>\n"
@@ -735,9 +735,9 @@ msgid "Error writing file '%s' (Errcode: %d)"
 msgstr "寫入檔案'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: mysys/errors.c:28
-#, c-format
-msgid "Error on close of '%'s (Errcode: %d)"
-msgstr ""
+#, fuzzy, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
+msgstr "刪除'%s'時發生錯誤 (錯誤碼: %d)"
 
 #: mysys/errors.c:29
 #, c-format

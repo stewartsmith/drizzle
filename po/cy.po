@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-13 17:25-0700\n"
+"POT-Creation-Date: 2008-08-14 10:35-0700\n"
 "PO-Revision-Date: 2008-08-13 02:56+0000\n"
 "Last-Translator: nhutchings <natalie@nuttycrafts.co.uk>\n"
 "Language-Team: Welsh <cy@li.org>\n"
@@ -752,7 +752,7 @@ msgstr ""
 
 #: mysys/errors.c:28
 #, c-format
-msgid "Error on close of '%'s (Errcode: %d)"
+msgid "Error on close of '%s' (Errcode: %d)"
 msgstr ""
 
 #: mysys/errors.c:29

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-13 17:25-0700\n"
+"POT-Creation-Date: 2008-08-14 10:35-0700\n"
 "PO-Revision-Date: 2008-08-13 03:14+0000\n"
 "Last-Translator: Monty Taylor <monty@inaugust.com>\n"
 "Language-Team: Hindi <hi@li.org>\n"
@@ -791,9 +791,9 @@ msgid "Error writing file '%s' (Errcode: %d)"
 msgstr "फ़ाइल '%s' लिखने में त्रुटि (त्रुटि कोड: %d)"
 
 #: mysys/errors.c:28
-#, c-format
-msgid "Error on close of '%'s (Errcode: %d)"
-msgstr ""
+#, fuzzy, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
+msgstr "'%s' को मिटाने पर त्रुटी (त्रुटी कोड: %d)"
 
 #: mysys/errors.c:29
 #, c-format
