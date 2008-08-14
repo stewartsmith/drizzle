@@ -99,7 +99,6 @@ public:
           index++;
           break;
         }
-        case DRIZZLE_TYPE_SET:
         case DRIZZLE_TYPE_ENUM:
         {
           uint16_t x= field_metadata[index++] << 8U; // real_type

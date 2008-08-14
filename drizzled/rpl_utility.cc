@@ -43,7 +43,6 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
     both are mapped to type DRIZZLE_TYPE_STRING and their real types
     are encoded in the field metadata.
   */
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_ENUM:
   {
     length= m_field_metadata[col] & 0x00ff;

@@ -1590,12 +1590,10 @@ CREATE TABLE `t1` (
   `itemid` bigint unsigned NOT NULL auto_increment,
   `sessionid` bigint unsigned default NULL,
   `time` int unsigned NOT NULL default '0',
-  `type` set('A','D','E','F','G','I','L','N','U') collate latin1_general_ci NOT
-NULL default '',
   `data` text collate latin1_general_ci NOT NULL,
   PRIMARY KEY  (`itemid`)
 ) DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;
-INSERT INTO `t1` VALUES (1, 1, 1, 'D', '');
+INSERT INTO `t1` VALUES (1, 1, 1, '');
 CREATE TABLE `t2` (
   `sessionid` bigint unsigned NOT NULL auto_increment,
   `pid` int unsigned NOT NULL default '0',
@@ -1953,30 +1951,6 @@ SELECT c1,c2 FROM t1 LEFT JOIN t2 ON c1 = c2
   WHERE EXISTS (SELECT c3 FROM t3 WHERE c2 IS NULL );
 
 DROP TABLE t1,t2,t3;
-
-#
-# Item_int_with_ref check (BUG#10020)
-#
-CREATE TABLE `t1` (
-  `itemid` bigint unsigned NOT NULL auto_increment,
-  `sessionid` bigint unsigned default NULL,
-  `time` int unsigned NOT NULL default '0',
-  `type` set('A','D','E','F','G','I','L','N','U') collate latin1_general_ci NOT
-NULL default '',
-  `data` text collate latin1_general_ci NOT NULL,
-  PRIMARY KEY  (`itemid`)
-) DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;
-INSERT INTO `t1` VALUES (1, 1, 1, 'D', '');
-CREATE TABLE `t2` (
-  `sessionid` bigint unsigned NOT NULL auto_increment,
-  `pid` int unsigned NOT NULL default '0',
-  `date` int unsigned NOT NULL default '0',
-  `ip` varchar(15) collate latin1_general_ci NOT NULL default '',
-  PRIMARY KEY  (`sessionid`)
-) DEFAULT CHARSET=latin1 COLLATE=latin1_general_ci;
-INSERT INTO `t2` VALUES (1, 1, 1, '10.10.10.1');
-SELECT s.ip, count( e.itemid ) FROM `t1` e JOIN t2 s ON s.sessionid = e.sessionid WHERE e.sessionid = ( SELECT sessionid FROM t2 ORDER BY sessionid DESC LIMIT 1 ) GROUP BY s.ip HAVING count( e.itemid ) >0 LIMIT 0 , 30;
-drop tables t1,t2;
 
 #
 # Correct building of equal fields list (do not include outer

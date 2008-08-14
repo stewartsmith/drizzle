@@ -639,14 +639,12 @@ Copy_field::get_copy_func(Field *to,Field *from)
           !compatible_db_low_byte_first ||
           (((to->table->in_use->variables.sql_mode & (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE | MODE_INVALID_DATES)) && to->type() == DRIZZLE_TYPE_NEWDATE) || to->type() == DRIZZLE_TYPE_DATETIME))
       {
-	if (from->real_type() == DRIZZLE_TYPE_ENUM ||
-	    from->real_type() == DRIZZLE_TYPE_SET)
+	if (from->real_type() == DRIZZLE_TYPE_ENUM)
 	  if (to->result_type() != STRING_RESULT)
 	    return do_field_int;		// Convert SET to number
 	return do_field_string;
       }
-      if (to->real_type() == DRIZZLE_TYPE_ENUM ||
-	  to->real_type() == DRIZZLE_TYPE_SET)
+      if (to->real_type() == DRIZZLE_TYPE_ENUM)
       {
 	if (!to->eq_def(from))
         {
@@ -728,7 +726,6 @@ int field_conv(Field *to,Field *from)
     if (to->pack_length() == from->pack_length() && 
         !(to->flags & UNSIGNED_FLAG && !(from->flags & UNSIGNED_FLAG)) && 
         to->real_type() != DRIZZLE_TYPE_ENUM && 
-        to->real_type() != DRIZZLE_TYPE_SET &&
         (to->real_type() != DRIZZLE_TYPE_NEWDECIMAL || (to->field_length == from->field_length && (((Field_num*)to)->dec == ((Field_num*)from)->dec))) &&
         from->charset() == to->charset() &&
 	to->table->s->db_low_byte_first == from->table->s->db_low_byte_first &&
@@ -766,8 +763,7 @@ int field_conv(Field *to,Field *from)
   }
   else if ((from->result_type() == STRING_RESULT &&
             (to->result_type() == STRING_RESULT ||
-             (from->real_type() != DRIZZLE_TYPE_ENUM &&
-              from->real_type() != DRIZZLE_TYPE_SET))))
+             (from->real_type() != DRIZZLE_TYPE_ENUM))))
   {
     char buff[MAX_FIELD_WIDTH];
     String result(buff,sizeof(buff),from->charset());

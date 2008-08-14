@@ -2581,8 +2581,7 @@ get_innobase_type_from_mysql_type(
 		*unsigned_flag = 0;
 	}
 
-	if (field->real_type() == DRIZZLE_TYPE_ENUM
-		|| field->real_type() == DRIZZLE_TYPE_SET) {
+	if (field->real_type() == DRIZZLE_TYPE_ENUM) {
 
 		/* MySQL has field->type() a string type for these, but the
 		data is actually internally stored as an unsigned integer

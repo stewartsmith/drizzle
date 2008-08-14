@@ -1839,10 +1839,6 @@ type:
           {Lex->interval_list.empty();}
           '(' string_list ')' opt_binary
           { $$=DRIZZLE_TYPE_ENUM; }
-        | SET
-          { Lex->interval_list.empty();}
-          '(' string_list ')' opt_binary
-          { $$=DRIZZLE_TYPE_SET; }
         | SERIAL_SYM
           {
             $$=DRIZZLE_TYPE_LONGLONG;

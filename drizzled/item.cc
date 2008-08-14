@@ -4137,7 +4137,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length __a
     assert(0);
     /* Fall through to make_string_field() */
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
   case DRIZZLE_TYPE_BLOB:
@@ -4661,7 +4660,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   default:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
@@ -6364,7 +6362,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_TINY:
     return 4;
@@ -6413,15 +6410,6 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
     if (field)
       field->init(table);
     return field;
-  case DRIZZLE_TYPE_SET:
-    assert(enum_set_typelib);
-    field= new Field_set((uchar *) 0, max_length, null_ptr, 0,
-                         Field::NONE, name,
-                         get_set_pack_length(enum_set_typelib->count),
-                         enum_set_typelib, collation.collation);
-    if (field)
-      field->init(table);
-    return field;
   case DRIZZLE_TYPE_NULL:
     return make_string_field(table);
   default:
@@ -6439,8 +6427,7 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
 */
 void Item_type_holder::get_full_info(Item *item)
 {
-  if (fld_type == DRIZZLE_TYPE_ENUM ||
-      fld_type == DRIZZLE_TYPE_SET)
+  if (fld_type == DRIZZLE_TYPE_ENUM)
   {
     if (item->type() == Item::SUM_FUNC_ITEM &&
         (((Item_sum*)item)->sum_func() == Item_sum::MAX_FUNC ||
@@ -6454,8 +6441,7 @@ void Item_type_holder::get_full_info(Item *item)
                  get_real_type(item) == DRIZZLE_TYPE_NULL) ||
                 (!enum_set_typelib &&
                  item->type() == Item::FIELD_ITEM &&
-                 (get_real_type(item) == DRIZZLE_TYPE_ENUM ||
-                  get_real_type(item) == DRIZZLE_TYPE_SET) &&
+                 (get_real_type(item) == DRIZZLE_TYPE_ENUM) &&
                  ((Field_enum*)((Item_field *) item)->field)->typelib));
     if (!enum_set_typelib)
     {

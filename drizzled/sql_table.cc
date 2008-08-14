@@ -805,23 +805,6 @@ int prepare_create_field(Create_field *sql_field,
                                      sql_field->charset, &dup_val_count))
       return(1);
     break;
-  case DRIZZLE_TYPE_SET:
-    sql_field->pack_flag=pack_length_to_packflag(sql_field->pack_length) |
-      FIELDFLAG_BITFIELD;
-    if (sql_field->charset->state & MY_CS_BINSORT)
-      sql_field->pack_flag|=FIELDFLAG_BINARY;
-    sql_field->unireg_check=Field::BIT_FIELD;
-    if (check_duplicates_in_interval("SET",sql_field->field_name,
-                                 sql_field->interval,
-                                     sql_field->charset, &dup_val_count))
-      return(1);
-    /* Check that count of unique members is not more then 64 */
-    if (sql_field->interval->count -  dup_val_count > sizeof(int64_t)*8)
-    {
-       my_error(ER_TOO_BIG_SET, MYF(0), sql_field->field_name);
-       return(1);
-    }
-    break;
   case DRIZZLE_TYPE_NEWDATE:  // Rest of string types
   case DRIZZLE_TYPE_TIME:
   case DRIZZLE_TYPE_DATETIME:
@@ -958,8 +941,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
     */
     if (sql_field->def && 
         save_cs != sql_field->def->collation.collation &&
-        (sql_field->sql_type == DRIZZLE_TYPE_SET ||
-         sql_field->sql_type == DRIZZLE_TYPE_ENUM))
+        (sql_field->sql_type == DRIZZLE_TYPE_ENUM))
     {
       /*
         Starting from 5.1 we work here with a copy of Create_field
@@ -981,8 +963,7 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
       }
     }
 
-    if (sql_field->sql_type == DRIZZLE_TYPE_SET ||
-        sql_field->sql_type == DRIZZLE_TYPE_ENUM)
+    if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
     {
       uint32_t dummy;
       const CHARSET_INFO * const cs= sql_field->charset;
@@ -1027,57 +1008,11 @@ mysql_prepare_create_table(THD *thd, HA_CREATE_INFO *create_info,
                                        interval->type_lengths[i]);
           interval->type_lengths[i]= lengthsp;
           ((uchar *)interval->type_names[i])[lengthsp]= '\0';
-          if (sql_field->sql_type == DRIZZLE_TYPE_SET)
-          {
-            if (cs->coll->instr(cs, interval->type_names[i], 
-                                interval->type_lengths[i], 
-                                comma_buf, comma_length, NULL, 0))
-            {
-              my_error(ER_ILLEGAL_VALUE_FOR_TYPE, MYF(0), "set", tmp->ptr());
-              return(true);
-            }
-          }
         }
         sql_field->interval_list.empty(); // Don't need interval_list anymore
       }
 
-      if (sql_field->sql_type == DRIZZLE_TYPE_SET)
-      {
-        uint32_t field_length;
-        if (sql_field->def != NULL)
-        {
-          char *not_used;
-          uint not_used2;
-          bool not_found= 0;
-          String str, *def= sql_field->def->val_str(&str);
-          if (def == NULL) /* SQL "NULL" maps to NULL */
-          {
-            if ((sql_field->flags & NOT_NULL_FLAG) != 0)
-            {
-              my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-              return(true);
-            }
-
-            /* else, NULL is an allowed value */
-            (void) find_set(interval, NULL, 0,
-                            cs, &not_used, &not_used2, &not_found);
-          }
-          else /* not NULL */
-          {
-            (void) find_set(interval, def->ptr(), def->length(),
-                            cs, &not_used, &not_used2, &not_found);
-          }
-
-          if (not_found)
-          {
-            my_error(ER_INVALID_DEFAULT, MYF(0), sql_field->field_name);
-            return(true);
-          }
-        }
-        calculate_interval_lengths(cs, interval, &dummy, &field_length);
-        sql_field->length= field_length + (interval->count - 1);
-      }
-      else  /* DRIZZLE_TYPE_ENUM */
+      /* DRIZZLE_TYPE_ENUM */
       {
         uint32_t field_length;
         assert(sql_field->sql_type == DRIZZLE_TYPE_ENUM);
@@ -1723,19 +1658,10 @@ static bool prepare_blob_field(THD *thd __attribute__((unused)),
 
 void sp_prepare_create_field(THD *thd, Create_field *sql_field)
 {
-  if (sql_field->sql_type == DRIZZLE_TYPE_SET ||
-      sql_field->sql_type == DRIZZLE_TYPE_ENUM)
+  if (sql_field->sql_type == DRIZZLE_TYPE_ENUM)
   {
     uint32_t field_length, dummy;
-    if (sql_field->sql_type == DRIZZLE_TYPE_SET)
-    {
-      calculate_interval_lengths(sql_field->charset,
-                                 sql_field->interval, &dummy, 
-                                 &field_length);
-      sql_field->length= field_length + 
-                         (sql_field->interval->count - 1);
-    }
-    else /* DRIZZLE_TYPE_ENUM */
+    /* DRIZZLE_TYPE_ENUM */
     {
       calculate_interval_lengths(sql_field->charset,
                                  sql_field->interval,

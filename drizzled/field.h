@@ -879,7 +879,6 @@ check_string_copy_error(Field_str *field,
 #include <drizzled/field/datetime.h>
 #include <drizzled/field/fstring.h>
 #include <drizzled/field/varstring.h>
-#include <drizzled/field/set.h>
 
 /*
   The following are for the interface with the .frm file
