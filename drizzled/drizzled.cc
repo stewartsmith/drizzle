@@ -1427,7 +1427,7 @@ extern "C" sig_handler handle_segfault(int sig)
   */
   if (segfaulted)
   {
-    fprintf(stderr, "Fatal " SIGNAL_FMT " while backtracing\n", sig);
+    fprintf(stderr, _("Fatal " SIGNAL_FMT " while backtracing\n"), sig);
     exit(1);
   }
 
@@ -1436,18 +1436,19 @@ extern "C" sig_handler handle_segfault(int sig)
   curr_time= my_time(0);
   localtime_r(&curr_time, &tm);
 
-  fprintf(stderr,"\
-%02d%02d%02d %2d:%02d:%02d - mysqld got " SIGNAL_FMT " ;\n\
-This could be because you hit a bug. It is also possible that this binary\n\
-or one of the libraries it was linked against is corrupt, improperly built,\n\
-or misconfigured. This error can also be caused by malfunctioning hardware.\n",
+  fprintf(stderr,"%02d%02d%02d %2d:%02d:%02d - mysqld got "
+          SIGNAL_FMT " ;\n"
+          "This could be because you hit a bug. It is also possible that "
+          "this binary\n or one of the libraries it was linked against is "
+          "corrupt, improperly built,\n or misconfigured. This error can "
+          "also be caused by malfunctioning hardware.\n",
           tm.tm_year % 100, tm.tm_mon+1, tm.tm_mday,
           tm.tm_hour, tm.tm_min, tm.tm_sec,
-	  sig);
-  fprintf(stderr, "\
-We will try our best to scrape up some info that will hopefully help diagnose\n\
-the problem, but since we have already crashed, something is definitely wrong\n\
-and this may fail.\n\n");
+          sig);
+  fprintf(stderr, _("We will try our best to scrape up some info that "
+                    "will hopefully help diagnose\n"
+                    "the problem, but since we have already crashed, "
+                    "something is definitely wrong\nand this may fail.\n\n"));
   fprintf(stderr, "key_buffer_size=%lu\n",
           (ulong) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
@@ -1455,14 +1456,17 @@ and this may fail.\n\n");
   fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
   fprintf(stderr, "thread_count=%u\n", thread_count);
   fprintf(stderr, "connection_count=%u\n", connection_count);
-  fprintf(stderr, "It is possible that mysqld could use up to \n\
-key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %lu K\n\
-bytes of memory\n", ((ulong) dflt_key_cache->key_cache_mem_size +
-		     (global_system_variables.read_buff_size +
-		      global_system_variables.sortbuff_size) *
-		     thread_scheduler.max_threads +
+  fprintf(stderr, _("It is possible that mysqld could use up to \n"
+                    "key_buffer_size + (read_buffer_size + "
+                    "sort_buffer_size)*max_threads = %lu K\n"
+                    "bytes of memory\n"
+                    "Hope that's ok; if not, decrease some variables in the "
+                    "equation.\n\n"),
+                    ((ulong) dflt_key_cache->key_cache_mem_size +
+                     (global_system_variables.read_buff_size +
+                      global_system_variables.sortbuff_size) *
+                     thread_scheduler.max_threads +
                      max_connections * sizeof(THD)) / 1024);
-  fprintf(stderr, "Hope that's ok; if not, decrease some variables in the equation.\n\n");
 
 #ifdef HAVE_STACKTRACE
   THD *thd= current_thd;
@@ -1470,10 +1474,11 @@ bytes of memory\n", ((ulong) dflt_key_cache->key_cache_mem_size +
   if (!(test_flags & TEST_NO_STACKTRACE))
   {
     fprintf(stderr,"thd: 0x%lx\n",(long) thd);
-    fprintf(stderr,"\
-Attempting backtrace. You can use the following information to find out\n\
-where mysqld died. If you see no messages after this, something went\n\
-terribly wrong...\n");
+    fprintf(stderr,_("Attempting backtrace. You can use the following "
+                     "information to find out\n"
+                     "where mysqld died. If you see no messages after this, "
+                     "something went\n"
+                     "terribly wrong...\n"));
     print_stacktrace(thd ? (uchar*) thd->thread_stack : (uchar*) 0,
                      my_thread_stack_size);
   }
@@ -1497,52 +1502,62 @@ terribly wrong...\n");
       kreason= "KILLED_NO_VALUE";
       break;
     }
-    fprintf(stderr, "Trying to get some variables.\n\
-Some pointers may be invalid and cause the dump to abort...\n");
+    fprintf(stderr, _("Trying to get some variables.\n"
+                      "Some pointers may be invalid and cause the "
+                      "dump to abort...\n"));
     safe_print_str("thd->query", thd->query, 1024);
     fprintf(stderr, "thd->thread_id=%lu\n", (ulong) thd->thread_id);
     fprintf(stderr, "thd->killed=%s\n", kreason);
   }
-  fprintf(stderr, "\
-The manual page at http://dev.mysql.com/doc/mysql/en/crashing.html contains\n\
-information that should help you find out what is causing the crash.\n");
   fflush(stderr);
 #endif /* HAVE_STACKTRACE */
 
 #ifdef HAVE_INITGROUPS
   if (calling_initgroups)
-    fprintf(stderr, "\n\
-This crash occured while the server was calling initgroups(). This is\n\
-often due to the use of a mysqld that is statically linked against glibc\n\
-and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n\
-upgrade to a version of glibc that does not have this problem (2.3.4 or\n\
-later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n\
-mysqld that is not statically linked.\n");
+    fprintf(stderr, _("\nThis crash occured while the server was calling "
+                      "initgroups(). This is\n"
+                      "often due to the use of a drizzled that is statically "
+                      "linked against glibc\n"
+                      "and configured to use LDAP in /etc/nsswitch.conf. "
+                      "You will need to either\n"
+                      "upgrade to a version of glibc that does not have this "
+                      "problem (2.3.4 or\n"
+                      "later when used with nscd), disable LDAP in your "
+                      "nsswitch.conf, or use a\n"
+                      "drizzled that is not statically linked.\n"));
 #endif
 
   if (thd_lib_detected == THD_LIB_LT && !getenv("LD_ASSUME_KERNEL"))
-    fprintf(stderr,"\n\
-You are running a statically-linked LinuxThreads binary on an NPTL system.\n\
-This can result in crashes on some distributions due to LT/NPTL conflicts.\n\
-You should either build a dynamically-linked binary, or force LinuxThreads\n\
-to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n\
-the documentation for your distribution on how to do that.\n");
+    fprintf(stderr,
+            _("\nYou are running a statically-linked LinuxThreads binary "
+              "on an NPTL system.\n"
+              "This can result in crashes on some distributions due "
+              "to LT/NPTL conflicts.\n"
+              "You should either build a dynamically-linked binary, or force "
+              "LinuxThreads\n"
+              "to be used with the LD_ASSUME_KERNEL environment variable. "
+              "Please consult\n"
+              "the documentation for your distribution on how to do that.\n"));
 
   if (locked_in_memory)
   {
-    fprintf(stderr, "\n\
-The \"--memlock\" argument, which was enabled, uses system calls that are\n\
-unreliable and unstable on some operating systems and operating-system\n\
-versions (notably, some versions of Linux).  This crash could be due to use\n\
-of those buggy OS calls.  You should consider whether you really need the\n\
-\"--memlock\" parameter and/or consult the OS distributer about \"mlockall\"\n\
-bugs.\n");
+    fprintf(stderr,
+            _("\nThe '--memlock' argument, which was enabled, uses system "
+              "calls that are\n"
+              "unreliable and unstable on some operating systems and "
+              "operating-system\n"
+              "versions (notably, some versions of Linux).  "
+              "This crash could be due to use\n"
+              "of those buggy OS calls.  You should consider whether you "
+              "really need the\n"
+              "'--memlock' parameter and/or consult the OS "
+              "distributor about 'mlockall'\n bugs.\n"));
   }
 
 #ifdef HAVE_WRITE_CORE
   if (test_flags & TEST_CORE_ON_SIGNAL)
   {
-    fprintf(stderr, "Writing a core file\n");
+    fprintf(stderr, _("Writing a core file\n"));
     fflush(stderr);
     write_core(sig);
   }
@@ -1932,7 +1947,7 @@ static bool init_global_datetime_format(timestamp_type format_type,
   }
   if (!(*var_ptr= date_time_format_make(format_type, str, strlen(str))))
   {
-    fprintf(stderr, "Wrong date/time format specifier: %s\n", str);
+    fprintf(stderr, _("Wrong date/time format specifier: %s\n"), str);
     return 1;
   }
   return 0;
@@ -2469,8 +2484,9 @@ static int init_server_components()
 
     if (defaults_argc)
     {
-      fprintf(stderr, "%s: Too many arguments (first extra is '%s').\n"
-              "Use --verbose --help to get a list of available options\n",
+      fprintf(stderr,
+              _("%s: Too many arguments (first extra is '%s').\n"
+                "Use --verbose --help to get a list of available options\n"),
               my_progname, *tmp_argv);
       unireg_abort(1);
     }
@@ -3822,136 +3838,163 @@ struct my_option my_long_options[] =
    (char**) &max_system_variables.max_tmp_tables, 0, GET_ULONG,
    REQUIRED_ARG, 32, 1, ULONG_MAX, 0, 1, 0},
   {"max_write_lock_count", OPT_MAX_WRITE_LOCK_COUNT,
-   "After this many write locks, allow some read locks to run in between.",
+   N_("After this many write locks, allow some read locks to run in between."),
    (char**) &max_write_lock_count, (char**) &max_write_lock_count, 0, GET_ULONG,
    REQUIRED_ARG, ULONG_MAX, 1, ULONG_MAX, 0, 1, 0},
   {"min_examined_row_limit", OPT_MIN_EXAMINED_ROW_LIMIT,
-   "Don't log queries which examine less than min_examined_row_limit rows to file.",
+   N_("Don't log queries which examine less than min_examined_row_limit "
+      "rows to file."),
    (char**) &global_system_variables.min_examined_row_limit,
    (char**) &max_system_variables.min_examined_row_limit, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1L, 0},
   {"myisam_block_size", OPT_MYISAM_BLOCK_SIZE,
-   "Block size to be used for MyISAM index pages.",
+   N_("Block size to be used for MyISAM index pages."),
    (char**) &opt_myisam_block_size,
    (char**) &opt_myisam_block_size, 0, GET_ULONG, REQUIRED_ARG,
    MI_KEY_BLOCK_LENGTH, MI_MIN_KEY_BLOCK_LENGTH, MI_MAX_KEY_BLOCK_LENGTH,
    0, MI_MIN_KEY_BLOCK_LENGTH, 0},
   {"myisam_data_pointer_size", OPT_MYISAM_DATA_POINTER_SIZE,
-   "Default pointer size to be used for MyISAM tables.",
+   N_("Default pointer size to be used for MyISAM tables."),
    (char**) &myisam_data_pointer_size,
    (char**) &myisam_data_pointer_size, 0, GET_ULONG, REQUIRED_ARG,
    6, 2, 7, 0, 1, 0},
   {"myisam_max_extra_sort_file_size", OPT_MYISAM_MAX_EXTRA_SORT_FILE_SIZE,
-   "Deprecated option",
+   N_("(Deprecated option)"),
    (char**) &global_system_variables.myisam_max_extra_sort_file_size,
    (char**) &max_system_variables.myisam_max_extra_sort_file_size,
    0, GET_ULL, REQUIRED_ARG, (uint64_t) MI_MAX_TEMP_LENGTH,
    0, (uint64_t) MAX_FILE_SIZE, 0, 1, 0},
   {"myisam_max_sort_file_size", OPT_MYISAM_MAX_SORT_FILE_SIZE,
-   "Don't use the fast sort index method to created index if the temporary file would get bigger than this.",
+   N_("Don't use the fast sort index method to created index if the "
+      "temporary file would get bigger than this."),
    (char**) &global_system_variables.myisam_max_sort_file_size,
    (char**) &max_system_variables.myisam_max_sort_file_size, 0,
    GET_ULL, REQUIRED_ARG, (int64_t) LONG_MAX, 0, (uint64_t) MAX_FILE_SIZE,
    0, 1024*1024, 0},
   {"myisam_repair_threads", OPT_MYISAM_REPAIR_THREADS,
-   "Number of threads to use when repairing MyISAM tables. The value of 1 disables parallel repair.",
+   N_("Number of threads to use when repairing MyISAM tables. The value of "
+      "1 disables parallel repair."),
    (char**) &global_system_variables.myisam_repair_threads,
    (char**) &max_system_variables.myisam_repair_threads, 0,
    GET_ULONG, REQUIRED_ARG, 1, 1, ULONG_MAX, 0, 1, 0},
   {"myisam_sort_buffer_size", OPT_MYISAM_SORT_BUFFER_SIZE,
-   "The buffer that is allocated when sorting the index when doing a REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE.",
+   N_("The buffer that is allocated when sorting the index when doing a "
+      "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
    (char**) &global_system_variables.myisam_sort_buff_size,
    (char**) &max_system_variables.myisam_sort_buff_size, 0,
    GET_ULONG, REQUIRED_ARG, 8192*1024, 4, ~0L, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
-   "Specifies how MyISAM index statistics collection code should threat NULLs. "
-   "Possible values of name are \"nulls_unequal\" (default behavior for 4.1/5.0), "
-   "\"nulls_equal\" (emulate 4.0 behavior), and \"nulls_ignored\".",
+   N_("Specifies how MyISAM index statistics collection code should threat "
+      "NULLs. Possible values of name are 'nulls_unequal' "
+      "(default behavior), "
+      "'nulls_equal' (emulate MySQL 4.0 behavior), and 'nulls_ignored'."),
    (char**) &myisam_stats_method_str, (char**) &myisam_stats_method_str, 0,
     GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"net_buffer_length", OPT_NET_BUFFER_LENGTH,
-   "Buffer length for TCP/IP and socket communication.",
+   N_("Buffer length for TCP/IP and socket communication."),
    (char**) &global_system_variables.net_buffer_length,
    (char**) &max_system_variables.net_buffer_length, 0, GET_ULONG,
    REQUIRED_ARG, 16384, 1024, 1024*1024L, 0, 1024, 0},
   {"net_read_timeout", OPT_NET_READ_TIMEOUT,
-   "Number of seconds to wait for more data from a connection before aborting the read.",
+   N_("Number of seconds to wait for more data from a connection before "
+      "aborting the read."),
    (char**) &global_system_variables.net_read_timeout,
    (char**) &max_system_variables.net_read_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_READ_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"net_retry_count", OPT_NET_RETRY_COUNT,
-   "If a read on a communication port is interrupted, retry this many times before giving up.",
+   N_("If a read on a communication port is interrupted, retry this many "
+      "times before giving up."),
    (char**) &global_system_variables.net_retry_count,
    (char**) &max_system_variables.net_retry_count,0,
    GET_ULONG, REQUIRED_ARG, MYSQLD_NET_RETRY_COUNT, 1, ULONG_MAX, 0, 1, 0},
   {"net_write_timeout", OPT_NET_WRITE_TIMEOUT,
-   "Number of seconds to wait for a block to be written to a connection  before aborting the write.",
+   N_("Number of seconds to wait for a block to be written to a connection "
+      "before aborting the write."),
    (char**) &global_system_variables.net_write_timeout,
    (char**) &max_system_variables.net_write_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_WRITE_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
-  { "old", OPT_OLD_MODE, "Use compatible behavior.",
+  { "old", OPT_OLD_MODE,
+    N_("Use compatible behavior."),
     (char**) &global_system_variables.old_mode,
     (char**) &max_system_variables.old_mode, 0, GET_BOOL, NO_ARG,
     0, 0, 0, 0, 0, 0},
   {"open_files_limit", OPT_OPEN_FILES_LIMIT,
-   "If this is not 0, then mysqld will use this value to reserve file descriptors to use with setrlimit(). If this value is 0 then mysqld will reserve max_connections*5 or max_connections + table_cache*2 (whichever is larger) number of files.",
+   N_("If this is not 0, then mysqld will use this value to reserve file "
+      "descriptors to use with setrlimit(). If this value is 0 then mysqld "
+      "will reserve max_connections*5 or max_connections + table_cache*2 "
+      "(whichever is larger) number of files."),
    (char**) &open_files_limit, (char**) &open_files_limit, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, OS_FILE_LIMIT, 0, 1, 0},
   {"optimizer_prune_level", OPT_OPTIMIZER_PRUNE_LEVEL,
-   "Controls the heuristic(s) applied during query optimization to prune less-promising partial plans from the optimizer search space. Meaning: 0 - do not apply any heuristic, thus perform exhaustive search; 1 - prune plans based on number of retrieved rows.",
+   N_("Controls the heuristic(s) applied during query optimization to prune "
+      "less-promising partial plans from the optimizer search space. Meaning: "
+      "0 - do not apply any heuristic, thus perform exhaustive search; "
+      "1 - prune plans based on number of retrieved rows."),
    (char**) &global_system_variables.optimizer_prune_level,
    (char**) &max_system_variables.optimizer_prune_level,
    0, GET_ULONG, OPT_ARG, 1, 0, 1, 0, 1, 0},
   {"optimizer_search_depth", OPT_OPTIMIZER_SEARCH_DEPTH,
-   "Maximum depth of search performed by the query optimizer. Values larger than the number of relations in a query result in better query plans, but take longer to compile a query. Smaller values than the number of tables in a relation result in faster optimization, but may produce very bad query plans. If set to 0, the system will automatically pick a reasonable value; if set to MAX_TABLES+2, the optimizer will switch to the original find_best (used for testing/comparison).",
+   N_("Maximum depth of search performed by the query optimizer. Values "
+      "larger than the number of relations in a query result in better query "
+      "plans, but take longer to compile a query. Smaller values than the "
+      "number of tables in a relation result in faster optimization, but may "
+      "produce very bad query plans. If set to 0, the system will "
+      "automatically pick a reasonable value; if set to MAX_TABLES+2, the "
+      "optimizer will switch to the original find_best (used for "
+      "testing/comparison)."),
    (char**) &global_system_variables.optimizer_search_depth,
    (char**) &max_system_variables.optimizer_search_depth,
    0, GET_ULONG, OPT_ARG, MAX_TABLES+1, 0, MAX_TABLES+2, 0, 1, 0},
   {"plugin_dir", OPT_PLUGIN_DIR,
-   "Directory for plugins.",
+   N_("Directory for plugins."),
    (char**) &opt_plugin_dir_ptr, (char**) &opt_plugin_dir_ptr, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"plugin_load", OPT_PLUGIN_LOAD,
-   "Optional comma separated list of plugins to load, where each plugin is "
-   "identified by the name of the shared library. "
-   "[for example: --plugin_load=libmd5udf.so]",
+   N_("Optional comma separated list of plugins to load, where each plugin is "
+      "identified by the name of the shared library. "
+      "[for example: --plugin_load=libmd5udf.so]"),
    (char**) &opt_plugin_load, (char**) &opt_plugin_load, 0,
    GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"preload_buffer_size", OPT_PRELOAD_BUFFER_SIZE,
-   "The size of the buffer that is allocated when preloading indexes",
+   N_("The size of the buffer that is allocated when preloading indexes"),
    (char**) &global_system_variables.preload_buff_size,
    (char**) &max_system_variables.preload_buff_size, 0, GET_ULONG,
    REQUIRED_ARG, 32*1024L, 1024, 1024*1024*1024L, 0, 1, 0},
   {"query_alloc_block_size", OPT_QUERY_ALLOC_BLOCK_SIZE,
-   "Allocation block size for query parsing and execution",
+   N_("Allocation block size for query parsing and execution"),
    (char**) &global_system_variables.query_alloc_block_size,
    (char**) &max_system_variables.query_alloc_block_size, 0, GET_ULONG,
    REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"query_prealloc_size", OPT_QUERY_PREALLOC_SIZE,
-   "Persistent buffer for query parsing and execution",
+   N_("Persistent buffer for query parsing and execution"),
    (char**) &global_system_variables.query_prealloc_size,
    (char**) &max_system_variables.query_prealloc_size, 0, GET_ULONG,
    REQUIRED_ARG, QUERY_ALLOC_PREALLOC_SIZE, QUERY_ALLOC_PREALLOC_SIZE,
    ULONG_MAX, 0, 1024, 0},
   {"range_alloc_block_size", OPT_RANGE_ALLOC_BLOCK_SIZE,
-   "Allocation block size for storing ranges during optimization",
+   N_("Allocation block size for storing ranges during optimization"),
    (char**) &global_system_variables.range_alloc_block_size,
    (char**) &max_system_variables.range_alloc_block_size, 0, GET_ULONG,
    REQUIRED_ARG, RANGE_ALLOC_BLOCK_SIZE, RANGE_ALLOC_BLOCK_SIZE, ULONG_MAX,
    0, 1024, 0},
   {"read_buffer_size", OPT_RECORD_BUFFER,
-   "Each thread that does a sequential scan allocates a buffer of this size for each table it scans. If you do many sequential scans, you may want to increase this value.",
+   N_("Each thread that does a sequential scan allocates a buffer of this "
+      "size for each table it scans. If you do many sequential scans, you may "
+      "want to increase this value."),
    (char**) &global_system_variables.read_buff_size,
    (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
    128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE,
    0},
   {"read_only", OPT_READONLY,
-   "Make all non-temporary tables read-only, with the exception for replication (slave) threads and users with the SUPER privilege",
+   N_("Make all non-temporary tables read-only, with the exception for "
+      "replication (slave) threads and users with the SUPER privilege"),
    (char**) &opt_readonly,
    (char**) &opt_readonly,
    0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"read_rnd_buffer_size", OPT_RECORD_RND_BUFFER,
-   "When reading rows in sorted order after a sort, the rows are read through this buffer to avoid a disk seeks. If not set, then it's set to the value of record_buffer.",
+   N_("When reading rows in sorted order after a sort, the rows are read "
+      "through this buffer to avoid a disk seeks. If not set, then it's set "
+      "to the value of record_buffer."),
    (char**) &global_system_variables.read_rnd_buff_size,
    (char**) &max_system_variables.read_rnd_buff_size, 0,
    GET_ULONG, REQUIRED_ARG, 256*1024L, 64 /*IO_SIZE*2+MALLOC_OVERHEAD*/ ,
@@ -3960,106 +4003,115 @@ struct my_option my_long_options[] =
    "Alias for read_buffer_size",
    (char**) &global_system_variables.read_buff_size,
    (char**) &max_system_variables.read_buff_size,0, GET_ULONG, REQUIRED_ARG,
-   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD, INT32_MAX, MALLOC_OVERHEAD, IO_SIZE, 0},
+   128*1024L, IO_SIZE*2+MALLOC_OVERHEAD,
+   INT32_MAX, MALLOC_OVERHEAD, IO_SIZE, 0},
   {"relay_log_purge", OPT_RELAY_LOG_PURGE,
-   "0 = do not purge relay logs. 1 = purge them as soon as they are no more needed.",
+   N_("0 = do not purge relay logs. "
+      "1 = purge them as soon as they are no more needed."),
    (char**) &relay_log_purge,
    (char**) &relay_log_purge, 0, GET_BOOL, NO_ARG,
    1, 0, 1, 0, 1, 0},
   {"relay_log_space_limit", OPT_RELAY_LOG_SPACE_LIMIT,
-   "Maximum space to use for all relay logs.",
+   N_("Maximum space to use for all relay logs."),
    (char**) &relay_log_space_limit,
    (char**) &relay_log_space_limit, 0, GET_ULL, REQUIRED_ARG, 0L, 0L,
    (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave_compressed_protocol", OPT_SLAVE_COMPRESSED_PROTOCOL,
-   "Use compression on master/slave protocol.",
+   N_("Use compression on master/slave protocol."),
    (char**) &opt_slave_compressed_protocol,
    (char**) &opt_slave_compressed_protocol,
    0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"slave_net_timeout", OPT_SLAVE_NET_TIMEOUT,
-   "Number of seconds to wait for more data from a master/slave connection before aborting the read.",
+   N_("Number of seconds to wait for more data from a master/slave connection "
+      "before aborting the read."),
    (char**) &slave_net_timeout, (char**) &slave_net_timeout, 0,
    GET_ULONG, REQUIRED_ARG, SLAVE_NET_TIMEOUT, 1, LONG_TIMEOUT, 0, 1, 0},
   {"slave_transaction_retries", OPT_SLAVE_TRANS_RETRIES,
-   "Number of times the slave SQL thread will retry a transaction in case "
-   "it failed with a deadlock or elapsed lock wait timeout, "
-   "before giving up and stopping.",
+   N_("Number of times the slave SQL thread will retry a transaction in case "
+      "it failed with a deadlock or elapsed lock wait timeout, "
+      "before giving up and stopping."),
    (char**) &slave_trans_retries, (char**) &slave_trans_retries, 0,
    GET_ULONG, REQUIRED_ARG, 10L, 0L, (int64_t) ULONG_MAX, 0, 1, 0},
   {"slave-allow-batching", OPT_SLAVE_ALLOW_BATCHING,
-   "Allow slave to batch requests.",
+   N_("Allow slave to batch requests."),
    (char**) &slave_allow_batching, (char**) &slave_allow_batching,
    0, GET_BOOL, NO_ARG, 0, 0, 1, 0, 1, 0},
   {"slow_launch_time", OPT_SLOW_LAUNCH_TIME,
-   "If creating the thread takes longer than this value (in seconds), the Slow_launch_threads counter will be incremented.",
+   N_("If creating the thread takes longer than this value (in seconds), the "
+      "Slow_launch_threads counter will be incremented."),
    (char**) &slow_launch_time, (char**) &slow_launch_time, 0, GET_ULONG,
    REQUIRED_ARG, 2L, 0L, LONG_TIMEOUT, 0, 1, 0},
   {"sort_buffer_size", OPT_SORT_BUFFER,
-   "Each thread that needs to do a sort allocates a buffer of this size.",
+   N_("Each thread that needs to do a sort allocates a buffer of this size."),
    (char**) &global_system_variables.sortbuff_size,
    (char**) &max_system_variables.sortbuff_size, 0, GET_ULONG, REQUIRED_ARG,
    MAX_SORT_MEMORY, MIN_SORT_MEMORY+MALLOC_OVERHEAD*2, ULONG_MAX,
    MALLOC_OVERHEAD, 1, 0},
   {"sync-binlog", OPT_SYNC_BINLOG,
-   "Synchronously flush binary log to disk after every #th event. "
-   "Use 0 (default) to disable synchronous flushing.",
+   N_("Synchronously flush binary log to disk after every #th event. "
+      "Use 0 (default) to disable synchronous flushing."),
    (char**) &sync_binlog_period, (char**) &sync_binlog_period, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, ULONG_MAX, 0, 1, 0},
-  {"sync-frm", OPT_SYNC_FRM, "Sync .frm to disk on create. Enabled by default.",
+  {"sync-frm", OPT_SYNC_FRM,
+   N_("Sync .frm to disk on create. Enabled by default."),
    (char**) &opt_sync_frm, (char**) &opt_sync_frm, 0, GET_BOOL, NO_ARG, 1, 0,
    0, 0, 0, 0},
   {"table_cache", OPT_TABLE_OPEN_CACHE,
-   "Deprecated; use --table_open_cache instead.",
+   N_("Deprecated; use --table_open_cache instead."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
   {"table_definition_cache", OPT_TABLE_DEF_CACHE,
-   "The number of cached table definitions.",
+   N_("The number of cached table definitions."),
    (char**) &table_def_size, (char**) &table_def_size,
    0, GET_ULONG, REQUIRED_ARG, 128, 1, 512*1024L, 0, 1, 0},
   {"table_open_cache", OPT_TABLE_OPEN_CACHE,
-   "The number of cached open tables.",
+   N_("The number of cached open tables."),
    (char**) &table_cache_size, (char**) &table_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, TABLE_OPEN_CACHE_DEFAULT, 1, 512*1024L, 0, 1, 0},
   {"table_lock_wait_timeout", OPT_TABLE_LOCK_WAIT_TIMEOUT,
-   "Timeout in seconds to wait for a table level lock before returning an "
-   "error. Used only if the connection has active cursors.",
+   N_("Timeout in seconds to wait for a table level lock before returning an "
+      "error. Used only if the connection has active cursors."),
    (char**) &table_lock_wait_timeout, (char**) &table_lock_wait_timeout,
    0, GET_ULONG, REQUIRED_ARG, 50, 1, 1024 * 1024 * 1024, 0, 1, 0},
   {"thread_cache_size", OPT_THREAD_CACHE_SIZE,
-   "How many threads we should keep in a cache for reuse.",
+   N_("How many threads we should keep in a cache for reuse."),
    (char**) &thread_cache_size, (char**) &thread_cache_size, 0, GET_ULONG,
    REQUIRED_ARG, 0, 0, 16384, 0, 1, 0},
   {"thread_pool_size", OPT_THREAD_CACHE_SIZE,
-   "How many threads we should create to handle query requests in case of 'thread_handling=pool-of-threads'",
+   N_("How many threads we should create to handle query requests in case of "
+      "'thread_handling=pool-of-threads'"),
    (char**) &thread_pool_size, (char**) &thread_pool_size, 0, GET_ULONG,
    REQUIRED_ARG, 20, 1, 16384, 0, 1, 0},
   {"thread_stack", OPT_THREAD_STACK,
-   "The stack size for each thread.", (char**) &my_thread_stack_size,
-   (char**) &my_thread_stack_size, 0, GET_ULONG, REQUIRED_ARG,DEFAULT_THREAD_STACK,
+   N_("The stack size for each thread."),
+   (char**) &my_thread_stack_size,
+   (char**) &my_thread_stack_size, 0, GET_ULONG,
+   REQUIRED_ARG,DEFAULT_THREAD_STACK,
    1024L*128L, ULONG_MAX, 0, 1024, 0},
   { "time_format", OPT_TIME_FORMAT,
-    "The TIME format (for future).",
+    N_("The TIME format (for future)."),
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
     (char**) &opt_date_time_formats[DRIZZLE_TIMESTAMP_TIME],
     0, GET_STR, REQUIRED_ARG, 0, 0, 0, 0, 0, 0},
   {"tmp_table_size", OPT_TMP_TABLE_SIZE,
-   "If an internal in-memory temporary table exceeds this size, MySQL will"
-   " automatically convert it to an on-disk MyISAM table.",
+   N_("If an internal in-memory temporary table exceeds this size, MySQL will"
+      " automatically convert it to an on-disk MyISAM table."),
    (char**) &global_system_variables.tmp_table_size,
    (char**) &max_system_variables.tmp_table_size, 0, GET_ULL,
    REQUIRED_ARG, 16*1024*1024L, 1024, MAX_MEM_TABLE_SIZE, 0, 1, 0},
   {"transaction_alloc_block_size", OPT_TRANS_ALLOC_BLOCK_SIZE,
-   "Allocation block size for transactions to be stored in binary log",
+   N_("Allocation block size for transactions to be stored in binary log"),
    (char**) &global_system_variables.trans_alloc_block_size,
    (char**) &max_system_variables.trans_alloc_block_size, 0, GET_ULONG,
    REQUIRED_ARG, QUERY_ALLOC_BLOCK_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"transaction_prealloc_size", OPT_TRANS_PREALLOC_SIZE,
-   "Persistent buffer for transactions to be stored in binary log",
+   N_("Persistent buffer for transactions to be stored in binary log"),
    (char**) &global_system_variables.trans_prealloc_size,
    (char**) &max_system_variables.trans_prealloc_size, 0, GET_ULONG,
    REQUIRED_ARG, TRANS_ALLOC_PREALLOC_SIZE, 1024, ULONG_MAX, 0, 1024, 0},
   {"wait_timeout", OPT_WAIT_TIMEOUT,
-   "The number of seconds the server waits for activity on a connection before closing it.",
+   N_("The number of seconds the server waits for activity on a connection "
+      "before closing it."),
    (char**) &global_system_variables.net_wait_timeout,
    (char**) &max_system_variables.net_wait_timeout, 0, GET_ULONG,
    REQUIRED_ARG, NET_WAIT_TIMEOUT, 1, LONG_TIMEOUT,
@@ -4561,7 +4613,7 @@ mysqld_get_one_option(int optid,
       if (!(p= strstr(argument, "->")))
       {
         fprintf(stderr,
-                "Bad syntax in replicate-rewrite-db - missing '->'!\n");
+                _("Bad syntax in replicate-rewrite-db - missing '->'!\n"));
         exit(1);
       }
       val= p--;
@@ -4570,7 +4622,7 @@ mysqld_get_one_option(int optid,
       if (p == argument)
       {
         fprintf(stderr,
-                "Bad syntax in replicate-rewrite-db - empty FROM db!\n");
+                _("Bad syntax in replicate-rewrite-db - empty FROM db!\n"));
         exit(1);
       }
       *val= 0;
@@ -4580,7 +4632,7 @@ mysqld_get_one_option(int optid,
       if (!*val)
       {
         fprintf(stderr,
-                "Bad syntax in replicate-rewrite-db - empty TO db!\n");
+                _("Bad syntax in replicate-rewrite-db - empty TO db!\n"));
         exit(1);
       }
 
@@ -4609,7 +4661,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_do_table(argument))
       {
-        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -4618,7 +4670,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_wild_do_table(argument))
       {
-        fprintf(stderr, "Could not add do table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add do table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -4627,7 +4679,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_wild_ignore_table(argument))
       {
-        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -4636,7 +4688,7 @@ mysqld_get_one_option(int optid,
     {
       if (rpl_filter->add_ignore_table(argument))
       {
-        fprintf(stderr, "Could not add ignore table rule '%s'!\n", argument);
+        fprintf(stderr, _("Could not add ignore table rule '%s'!\n"), argument);
         exit(1);
       }
       break;
@@ -5052,10 +5104,11 @@ static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
   {
     ptr= bit_lib->type_names;
     if (!*x)
-      fprintf(stderr, "No option given to %s\n", option);
+      fprintf(stderr, _("No option given to %s\n"), option);
     else
-      fprintf(stderr, "Wrong option to %s. Option(s) given: %s\n", option, x);
-    fprintf(stderr, "Alternatives are: '%s'", *ptr);
+      fprintf(stderr, _("Wrong option to %s. Option(s) given: %s\n"),
+              option, x);
+    fprintf(stderr, _("Alternatives are: '%s'"), *ptr);
     while (*++ptr)
       fprintf(stderr, ",'%s'", *ptr);
     fprintf(stderr, "\n");
