@@ -333,7 +333,7 @@ void del_dbopt(const char *path)
 static bool write_db_opt(THD *thd, const char *path, const char *name, HA_CREATE_INFO *create)
 {
   bool error= true;
-  schema::Schema db;
+  drizzle::Schema db;
 
   assert(name);
 
@@ -373,7 +373,7 @@ static bool write_db_opt(THD *thd, const char *path, const char *name, HA_CREATE
 bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 {
   bool error=1;
-  schema::Schema db;
+  drizzle::Schema db;
   string buffer;
 
   memset(create, 0, sizeof(*create));

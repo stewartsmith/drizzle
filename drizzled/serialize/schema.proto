@@ -1,4 +1,4 @@
-package schema;
+package drizzle;
 
 message Schema {
   required string name = 1;
