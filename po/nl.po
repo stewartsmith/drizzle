@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-13 17:25-0700\n"
-"PO-Revision-Date: 2008-08-12 22:34+0000\n"
-"Last-Translator: Mark Daems <Unknown>\n"
+"PO-Revision-Date: 2008-08-13 03:19+0000\n"
+"Last-Translator: Monty Taylor <monty@inaugust.com>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
+"X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -693,7 +693,7 @@ msgid ""
 "preference, my.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
 "Poortnummer om te gebruiken wanneer verbonden wordt met de server. 0 voor "
-"standaardwaarde uit, in volgorde van voorkeur, my.cnf, $DRIZZLE_TCP_PORT, "
+"standaardwaarde uit, in volgorde van voorkeur, my.cnf, $DRIZZLE_TCP_PORT,"
 
 #: client/drizzleadmin.cc:81
 msgid "Silently exit if one can't connect to server."
@@ -1292,14 +1292,13 @@ msgid "Tablespace not empty"
 msgstr "Tablespace is niet leeg"
 
 #: drizzled/drizzled.cc:551
-#, fuzzy, c-format
+#, c-format
 msgid "Got error %d from pthread_cond_timedwait"
-msgstr "Kon niet verbinden met storage engine"
+msgstr ""
 
 #: drizzled/drizzled.cc:691 drizzled/drizzled.cc:1784
-#, fuzzy
 msgid "Can't create thread to kill server"
-msgstr "Kan niet verbinden met de server\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:758
 #, c-format
@@ -1307,9 +1306,8 @@ msgid "Got signal %d from thread %ld"
 msgstr ""
 
 #: drizzled/drizzled.cc:792
-#, fuzzy
 msgid "Aborting\n"
-msgstr "Afgebroken"
+msgstr ""
 
 #: drizzled/drizzled.cc:991
 msgid "One can only use the --user switch if running as root\n"
@@ -1439,9 +1437,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:1676
-#, fuzzy, c-format
+#, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
-msgstr "Kan bestand '%s' niet aanmaken/wijzigen (Foutcode: %d)"
+msgstr ""
 
 #: drizzled/drizzled.cc:1764
 #, c-format
@@ -1449,9 +1447,9 @@ msgid "Got signal %d to shutdown mysqld"
 msgstr ""
 
 #: drizzled/drizzled.cc:1811
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal: %d  error: %d"
-msgstr "Kreeg error: %s\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:1950
 #, c-format
@@ -1476,9 +1474,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:2230
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown locale: '%s'"
-msgstr "Onbekende opdracht: '%-.60s'"
+msgstr ""
 
 #: drizzled/drizzled.cc:2250
 msgid ""
@@ -1497,9 +1495,8 @@ msgid "Can't create thread-keys"
 msgstr ""
 
 #: drizzled/drizzled.cc:2374
-#, fuzzy
 msgid "Out of memory"
-msgstr "Geheugen tekort in engine"
+msgstr ""
 
 #: drizzled/drizzled.cc:2381
 msgid "You need to use --log-bin to make --binlog-format work."
@@ -1535,23 +1532,23 @@ msgid "Can't init databases"
 msgstr ""
 
 #: drizzled/drizzled.cc:2521
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported table type: %s"
-msgstr "Onbekende opdracht: '%-.60s'"
+msgstr ""
 
 #: drizzled/drizzled.cc:2527
-#, fuzzy, c-format
+#, c-format
 msgid "Default storage engine (%s) is not available"
-msgstr "Niet ondersteunde extensie gebruikt voor bestand"
+msgstr ""
 
 #: drizzled/drizzled.cc:2550
 msgid "Can't initialize tc_log"
 msgstr ""
 
 #: drizzled/drizzled.cc:2581
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to lock memory. Errno: %d\n"
-msgstr "Kan bestand niet vergrendelen (Foutcode: %d)"
+msgstr ""
 
 #: drizzled/drizzled.cc:2651
 #, c-format
@@ -1574,9 +1571,9 @@ msgid "After lock_thread_count"
 msgstr ""
 
 #: drizzled/drizzled.cc:2861
-#, fuzzy, c-format
+#, c-format
 msgid "drizzled: Got error %d from select"
-msgstr "Kon niet verbinden met storage engine"
+msgstr ""
 
 #: drizzled/drizzled.cc:3116 drizzled/drizzled.cc:3235
 #: drizzled/drizzled.cc:3409
@@ -1638,18 +1635,16 @@ msgid "Don't ignore client side character set value sent during handshake."
 msgstr ""
 
 #: drizzled/drizzled.cc:3173
-#, fuzzy
 msgid "Set the filesystem character set."
-msgstr "Stel de standaard karakterset in."
+msgstr ""
 
 #: drizzled/drizzled.cc:3185
 msgid "Chroot mysqld daemon during startup."
 msgstr ""
 
 #: drizzled/drizzled.cc:3189
-#, fuzzy
 msgid "Set the default collation."
-msgstr "Stel de standaard karakterset in."
+msgstr ""
 
 #: drizzled/drizzled.cc:3193
 msgid "Default completion type."
@@ -1660,9 +1655,8 @@ msgid "Write error output on screen."
 msgstr ""
 
 #: drizzled/drizzled.cc:3202
-#, fuzzy
 msgid "Write core on errors."
-msgstr "Schrijf lijnnummers bij fouten."
+msgstr ""
 
 #: drizzled/drizzled.cc:3206
 msgid "Path to the database root."
@@ -1685,9 +1679,8 @@ msgid "Set the default storage engine (table type) for tables."
 msgstr ""
 
 #: drizzled/drizzled.cc:3224
-#, fuzzy
 msgid "Set the default time zone."
-msgstr "Stel de standaard karakterset in."
+msgstr ""
 
 #: drizzled/drizzled.cc:3228
 msgid "Type of DELAY_KEY_WRITE."
@@ -1704,9 +1697,8 @@ msgid "Print a symbolic stack trace on failure."
 msgstr ""
 
 #: drizzled/drizzled.cc:3247
-#, fuzzy
 msgid "Push supported query conditions to the storage engine."
-msgstr "Kon niet verbinden met storage engine"
+msgstr ""
 
 #: drizzled/drizzled.cc:3253
 msgid "Used for debugging;  Use at your own risk!"
@@ -1745,9 +1737,8 @@ msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 
 #: drizzled/drizzled.cc:3290
-#, fuzzy
 msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
-msgstr "Schakel LOAD DATA LOCAL INFILE in/uit."
+msgstr ""
 
 #: drizzled/drizzled.cc:3295
 msgid "Log connections and queries to file."
@@ -2011,14 +2002,10 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3555
-#, fuzzy
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated;"
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"Wijzig de waarde van een variabele. Houd er rekening mee dat deze optie "
-"afgeraden wordt; je kan variabelen rechtstreeks wijzigen met --variable-"
-"name=waarde."
 
 #: drizzled/drizzled.cc:3559
 msgid "Don't use new, possible wrong routines."
@@ -2117,9 +2104,8 @@ msgid "Run mysqld daemon as user."
 msgstr ""
 
 #: drizzled/drizzled.cc:3654
-#, fuzzy
 msgid "Deprecated; use --log-warnings instead."
-msgstr "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-tee.\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:3659
 msgid ""
@@ -2219,10 +2205,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3767
-#, fuzzy
 msgid "Max packetlength to send/receive from to server."
 msgstr ""
-"Maximale pakketlengte om te verzenden naar of te ontvangen van de server."
 
 #: drizzled/drizzled.cc:3772
 msgid ""
@@ -2490,7 +2474,7 @@ msgstr ""
 #: drizzled/drizzled.cc:4060
 #, fuzzy
 msgid "Deprecated; use --table_open_cache instead."
-msgstr "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-tee.\n"
+msgstr "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-pager.\n"
 
 #: drizzled/drizzled.cc:4064
 msgid "The number of cached table definitions."
@@ -2545,7 +2529,6 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:4361
-#, fuzzy
 msgid ""
 "Copyright (C) 2000 MySQL AB, by Monty and others\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -2553,15 +2536,11 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
-"Copyright (C) 2000-2008 MySQL AB\n"
-"                                      Deze software  komt  ABSOLUUT ZONDER "
-"GARANTIE. Dit is gratis software,\n"
-" en het is toegestaan ze te wijzigen en te verdelen onder de GPL licentie\n"
 
 #: drizzled/drizzled.cc:4368
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr "Gebruik: %s [OPTIES] [databank]\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:4379
 msgid ""
@@ -2962,7 +2941,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:166
 #, fuzzy, c-format
 msgid "Invalid default value for '%-.192s'"
-msgstr "%s: FOUT: Ongeldige decimale waarde voor optie '%s'\n"
+msgstr "%s: FOUT: Ongeldige decimale waarde voor optie '%s'"
 
 #: drizzled/drizzled_error_messages.h:168
 msgid "Multiple primary key defined"
@@ -3750,7 +3729,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:482
 #, fuzzy, c-format
 msgid "Option '%s' used twice in statement"
-msgstr "%s: %s: Optie '%s' werd gebruikt, maar is uitgeschakeld\n"
+msgstr "%s: %s: Optie '%s' werd gebruikt, maar is uitgeschakeld"
 
 #: drizzled/drizzled_error_messages.h:484
 #, c-format
@@ -4065,7 +4044,7 @@ msgstr "Onbekende opdracht: '%-.60s'"
 #: drizzled/drizzled_error_messages.h:606
 #, fuzzy, c-format
 msgid "'%s' is deprecated; use '%s' instead"
-msgstr "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-tee.\n"
+msgstr "WAARSCHUWING: deze optie wordt afgeraden; gebruik --disable-tee."
 
 #: drizzled/drizzled_error_messages.h:608
 #, c-format
@@ -5575,7 +5554,7 @@ msgstr "Het is onmogelijk dit statement te loggen"
 #: drizzled/drizzled_error_messages.h:1218
 #, fuzzy, c-format
 msgid "Fatal error: %s"
-msgstr "Kreeg error: %s\n"
+msgstr "Kreeg error: %s"
 
 #: drizzled/drizzled_error_messages.h:1220
 #, c-format
@@ -5708,9 +5687,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:1274
 #, fuzzy
 msgid "Nothing to backup"
-msgstr ""
-"\n"
-"Niets gevonden"
+msgstr "Niets gevonden"
 
 #: drizzled/drizzled_error_messages.h:1276
 #, c-format
@@ -6520,11 +6497,3 @@ msgstr ""
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
 msgstr ""
-
-#, fuzzy
-#~ msgid ""
-#~ "Port number to use for connection or 0 for default to, in order of "
-#~ "preference, my.cnf, $DRIZZLE_TCP_PORT, /etc/services, built-in default ("
-#~ msgstr ""
-#~ "Poortnummer om te gebruiken wanneer verbonden wordt met de server. 0 voor "
-#~ "standaardwaarde uit, in volgorde van voorkeur, my.cnf, $DRIZZLE_TCP_PORT, "

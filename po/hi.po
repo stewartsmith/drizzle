@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-13 17:25-0700\n"
-"PO-Revision-Date: 2008-08-12 16:56+0000\n"
-"Last-Translator: Parvesh Garg <Unknown>\n"
+"PO-Revision-Date: 2008-08-13 03:14+0000\n"
+"Last-Translator: Monty Taylor <monty@inaugust.com>\n"
 "Language-Team: Hindi <hi@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
+"X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -1248,9 +1248,8 @@ msgid "Got error %d from pthread_cond_timedwait"
 msgstr ""
 
 #: drizzled/drizzled.cc:691 drizzled/drizzled.cc:1784
-#, fuzzy
 msgid "Can't create thread to kill server"
-msgstr "सर्वर से कनेक्ट नही कर पा रहा है\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:758
 #, c-format
@@ -1258,9 +1257,8 @@ msgid "Got signal %d from thread %ld"
 msgstr ""
 
 #: drizzled/drizzled.cc:792
-#, fuzzy
 msgid "Aborting\n"
-msgstr "रद्द"
+msgstr ""
 
 #: drizzled/drizzled.cc:991
 msgid "One can only use the --user switch if running as root\n"
@@ -1390,9 +1388,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:1676
-#, fuzzy, c-format
+#, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
-msgstr "'%s' फाइल को बनाने/लिखने के समय विफल हुआ (त्रुटि कोड: %d)"
+msgstr ""
 
 #: drizzled/drizzled.cc:1764
 #, c-format
@@ -1400,9 +1398,9 @@ msgid "Got signal %d to shutdown mysqld"
 msgstr ""
 
 #: drizzled/drizzled.cc:1811
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal: %d  error: %d"
-msgstr "ये त्रुटी मिली है: %s\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:1950
 #, c-format
@@ -1427,9 +1425,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:2230
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown locale: '%s'"
-msgstr "अज्ञात कमांड: '%-.60s'"
+msgstr ""
 
 #: drizzled/drizzled.cc:2250
 msgid ""
@@ -1485,23 +1483,23 @@ msgid "Can't init databases"
 msgstr ""
 
 #: drizzled/drizzled.cc:2521
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported table type: %s"
-msgstr "अज्ञात कमांड: '%-.60s'"
+msgstr ""
 
 #: drizzled/drizzled.cc:2527
-#, fuzzy, c-format
+#, c-format
 msgid "Default storage engine (%s) is not available"
-msgstr "तालिका के लिए असमर्थित विस्तार का उपयोग किया गया"
+msgstr ""
 
 #: drizzled/drizzled.cc:2550
 msgid "Can't initialize tc_log"
 msgstr ""
 
 #: drizzled/drizzled.cc:2581
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to lock memory. Errno: %d\n"
-msgstr "फ़ाइल लॉक नहीं कर सकता (त्रुटी कोड: %d)"
+msgstr ""
 
 #: drizzled/drizzled.cc:2651
 #, c-format
@@ -1588,32 +1586,28 @@ msgid "Don't ignore client side character set value sent during handshake."
 msgstr ""
 
 #: drizzled/drizzled.cc:3173
-#, fuzzy
 msgid "Set the filesystem character set."
-msgstr "डीफौल्ट चारसेट सेट करे."
+msgstr ""
 
 #: drizzled/drizzled.cc:3185
 msgid "Chroot mysqld daemon during startup."
 msgstr ""
 
 #: drizzled/drizzled.cc:3189
-#, fuzzy
 msgid "Set the default collation."
-msgstr "डीफौल्ट चारसेट सेट करे."
+msgstr ""
 
 #: drizzled/drizzled.cc:3193
-#, fuzzy
 msgid "Default completion type."
-msgstr "समापन हैश का पुनर्निमाण करें"
+msgstr ""
 
 #: drizzled/drizzled.cc:3198
 msgid "Write error output on screen."
 msgstr ""
 
 #: drizzled/drizzled.cc:3202
-#, fuzzy
 msgid "Write core on errors."
-msgstr "त्रुटियों के लिए लाइन संख्या लिखें."
+msgstr ""
 
 #: drizzled/drizzled.cc:3206
 msgid "Path to the database root."
@@ -1636,9 +1630,8 @@ msgid "Set the default storage engine (table type) for tables."
 msgstr ""
 
 #: drizzled/drizzled.cc:3224
-#, fuzzy
 msgid "Set the default time zone."
-msgstr "डीफौल्ट चारसेट सेट करे."
+msgstr ""
 
 #: drizzled/drizzled.cc:3228
 msgid "Type of DELAY_KEY_WRITE."
@@ -1695,9 +1688,8 @@ msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 
 #: drizzled/drizzled.cc:3290
-#, fuzzy
 msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
-msgstr "LOAD DATA LOCAL INFILE सक्षम/अक्षम करे."
+msgstr ""
 
 #: drizzled/drizzled.cc:3295
 msgid "Log connections and queries to file."
@@ -1961,13 +1953,10 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3555
-#, fuzzy
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated;"
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"चर के मूल्य को बदले. कृपया ध्यान दें कि ये विकल्प पदावनत है, चरों के मूल्य को आप सीधा --"
-"variable-name=value से सेट कर सकते है."
 
 #: drizzled/drizzled.cc:3559
 msgid "Don't use new, possible wrong routines."
@@ -2066,9 +2055,8 @@ msgid "Run mysqld daemon as user."
 msgstr ""
 
 #: drizzled/drizzled.cc:3654
-#, fuzzy
 msgid "Deprecated; use --log-warnings instead."
-msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-tee का उपयोग करे.\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:3659
 msgid ""
@@ -2168,9 +2156,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3767
-#, fuzzy
 msgid "Max packetlength to send/receive from to server."
-msgstr "सर्वर से मिलने वाले या सर्वर को भेजे जाने वाले पैकेट की अधिकतम लम्बाई"
+msgstr ""
 
 #: drizzled/drizzled.cc:3772
 msgid ""
@@ -2438,7 +2425,7 @@ msgstr ""
 #: drizzled/drizzled.cc:4060
 #, fuzzy
 msgid "Deprecated; use --table_open_cache instead."
-msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-tee का उपयोग करे.\n"
+msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-pager का उपयोग करे.\n"
 
 #: drizzled/drizzled.cc:4064
 msgid "The number of cached table definitions."
@@ -2493,7 +2480,6 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:4361
-#, fuzzy
 msgid ""
 "Copyright (C) 2000 MySQL AB, by Monty and others\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -2501,15 +2487,11 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
-"कोप्य्रिघ्त (क) २०००-२००८ MySQL AB\n"
-"                                      ये सॉफ्टवेर कदापि वार्रंटी के साथ नही आता, "
-"यह एक फ्री सॉफ्टवेर है\n"
-" एवं आपको इसे GPL लाईसेन्स के अंतर्गत संशोधित और पुनर्वितरण करने की पूरी छूट है\n"
 
 #: drizzled/drizzled.cc:4368
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr "उपयोग: %s [विकल्प] [डाटाबेस]\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:4379
 msgid ""
@@ -4006,7 +3988,7 @@ msgstr "अज्ञात कमांड: '%-.60s'"
 #: drizzled/drizzled_error_messages.h:606
 #, fuzzy, c-format
 msgid "'%s' is deprecated; use '%s' instead"
-msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-tee का उपयोग करे.\n"
+msgstr "चेतावनी : विकल्प पदावनत है; इसकी बजाये --disable-tee का उपयोग करे."
 
 #: drizzled/drizzled_error_messages.h:608
 #, c-format
@@ -5513,7 +5495,7 @@ msgstr "इस कथन को लॉग करना सम्भव नही
 #: drizzled/drizzled_error_messages.h:1218
 #, fuzzy, c-format
 msgid "Fatal error: %s"
-msgstr "ये त्रुटी मिली है: %s\n"
+msgstr "ये त्रुटी मिली है: %s"
 
 #: drizzled/drizzled_error_messages.h:1220
 #, c-format
@@ -5646,9 +5628,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:1274
 #, fuzzy
 msgid "Nothing to backup"
-msgstr ""
-"\n"
-"कुछ नही मिला"
+msgstr "कुछ नही मिला"
 
 #: drizzled/drizzled_error_messages.h:1276
 #, c-format

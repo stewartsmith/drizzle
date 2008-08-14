@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-13 17:25-0700\n"
-"PO-Revision-Date: 2008-08-11 21:10+0000\n"
+"PO-Revision-Date: 2008-08-13 02:56+0000\n"
 "Last-Translator: nhutchings <natalie@nuttycrafts.co.uk>\n"
 "Language-Team: Welsh <cy@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=n==1 ? 0 : n==2 ? 1 : (n != 8 || n != 11) ? "
 "2 : 3;\n"
-"X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
+"X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -1217,9 +1217,8 @@ msgid "Got signal %d from thread %ld"
 msgstr ""
 
 #: drizzled/drizzled.cc:792
-#, fuzzy
 msgid "Aborting\n"
-msgstr "Terfynwyd"
+msgstr ""
 
 #: drizzled/drizzled.cc:991
 msgid "One can only use the --user switch if running as root\n"
@@ -1386,9 +1385,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:2230
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown locale: '%s'"
-msgstr "rheolaeth anadnabyddus '\\%c'"
+msgstr ""
 
 #: drizzled/drizzled.cc:2250
 msgid ""
@@ -1649,9 +1648,8 @@ msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 
 #: drizzled/drizzled.cc:3290
-#, fuzzy
 msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
-msgstr "Galluogi / analluogi LOAD DATA LOCAL INFILE"
+msgstr ""
 
 #: drizzled/drizzled.cc:3295
 msgid "Log connections and queries to file."

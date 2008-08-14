@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-13 17:25-0700\n"
-"PO-Revision-Date: 2008-08-12 21:17+0000\n"
+"PO-Revision-Date: 2008-08-13 19:03+0000\n"
 "Last-Translator: matslindh <Unknown>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
+"X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -1311,14 +1311,13 @@ msgid "Tablespace not empty"
 msgstr "Tabellplassen er ikke tom"
 
 #: drizzled/drizzled.cc:551
-#, fuzzy, c-format
+#, c-format
 msgid "Got error %d from pthread_cond_timedwait"
-msgstr "Kunne ikke koble til lagringsmotoren"
+msgstr ""
 
 #: drizzled/drizzled.cc:691 drizzled/drizzled.cc:1784
-#, fuzzy
 msgid "Can't create thread to kill server"
-msgstr "Klarte ikke å koble til serveren\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:758
 #, c-format
@@ -1326,9 +1325,8 @@ msgid "Got signal %d from thread %ld"
 msgstr ""
 
 #: drizzled/drizzled.cc:792
-#, fuzzy
 msgid "Aborting\n"
-msgstr "Avbrutt"
+msgstr ""
 
 #: drizzled/drizzled.cc:991
 msgid "One can only use the --user switch if running as root\n"
@@ -1458,9 +1456,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:1676
-#, fuzzy, c-format
+#, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
-msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+msgstr ""
 
 #: drizzled/drizzled.cc:1764
 #, c-format
@@ -1468,9 +1466,9 @@ msgid "Got signal %d to shutdown mysqld"
 msgstr ""
 
 #: drizzled/drizzled.cc:1811
-#, fuzzy, c-format
+#, c-format
 msgid "Got signal: %d  error: %d"
-msgstr "Fikk feil: %s\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:1950
 #, c-format
@@ -1495,9 +1493,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:2230
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown locale: '%s'"
-msgstr "Ukjent kommando: '%-.60s'"
+msgstr ""
 
 #: drizzled/drizzled.cc:2250
 msgid ""
@@ -1512,14 +1510,12 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:2327
-#, fuzzy
 msgid "Can't create thread-keys"
-msgstr "Klarte ikke å lage slavetrådene"
+msgstr ""
 
 #: drizzled/drizzled.cc:2374
-#, fuzzy
 msgid "Out of memory"
-msgstr "Databasemotoren er tom for minne"
+msgstr ""
 
 #: drizzled/drizzled.cc:2381
 msgid "You need to use --log-bin to make --binlog-format work."
@@ -1540,9 +1536,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:2457
-#, fuzzy
 msgid "Failed to initialize plugins."
-msgstr "Klarte ikke å intialisere posisjonen i relay-loggen: %s"
+msgstr ""
 
 #: drizzled/drizzled.cc:2488
 #, c-format
@@ -1556,23 +1551,23 @@ msgid "Can't init databases"
 msgstr ""
 
 #: drizzled/drizzled.cc:2521
-#, fuzzy, c-format
+#, c-format
 msgid "Unknown/unsupported table type: %s"
-msgstr "Ukjent kommando: '%-.60s'"
+msgstr ""
 
 #: drizzled/drizzled.cc:2527
-#, fuzzy, c-format
+#, c-format
 msgid "Default storage engine (%s) is not available"
-msgstr "En utvidelse som ikke er støttet er brukt på tabellen"
+msgstr ""
 
 #: drizzled/drizzled.cc:2550
 msgid "Can't initialize tc_log"
 msgstr ""
 
 #: drizzled/drizzled.cc:2581
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to lock memory. Errno: %d\n"
-msgstr "Klarte ikke å lage slavetrådene"
+msgstr ""
 
 #: drizzled/drizzled.cc:2651
 #, c-format
@@ -1595,9 +1590,9 @@ msgid "After lock_thread_count"
 msgstr ""
 
 #: drizzled/drizzled.cc:2861
-#, fuzzy, c-format
+#, c-format
 msgid "drizzled: Got error %d from select"
-msgstr "Kunne ikke koble til lagringsmotoren"
+msgstr ""
 
 #: drizzled/drizzled.cc:3116 drizzled/drizzled.cc:3235
 #: drizzled/drizzled.cc:3409
@@ -1659,32 +1654,28 @@ msgid "Don't ignore client side character set value sent during handshake."
 msgstr ""
 
 #: drizzled/drizzled.cc:3173
-#, fuzzy
 msgid "Set the filesystem character set."
-msgstr "Setter standardtegnsett."
+msgstr ""
 
 #: drizzled/drizzled.cc:3185
 msgid "Chroot mysqld daemon during startup."
 msgstr ""
 
 #: drizzled/drizzled.cc:3189
-#, fuzzy
 msgid "Set the default collation."
-msgstr "Setter standardtegnsett."
+msgstr ""
 
 #: drizzled/drizzled.cc:3193
-#, fuzzy
 msgid "Default completion type."
-msgstr "Bygg filen for automatisk fullførelse av navn på nytt."
+msgstr ""
 
 #: drizzled/drizzled.cc:3198
 msgid "Write error output on screen."
 msgstr ""
 
 #: drizzled/drizzled.cc:3202
-#, fuzzy
 msgid "Write core on errors."
-msgstr "Skriv linjenummer for feilmeldinger"
+msgstr ""
 
 #: drizzled/drizzled.cc:3206
 msgid "Path to the database root."
@@ -1707,9 +1698,8 @@ msgid "Set the default storage engine (table type) for tables."
 msgstr ""
 
 #: drizzled/drizzled.cc:3224
-#, fuzzy
 msgid "Set the default time zone."
-msgstr "Setter standardtegnsett."
+msgstr ""
 
 #: drizzled/drizzled.cc:3228
 msgid "Type of DELAY_KEY_WRITE."
@@ -1726,9 +1716,8 @@ msgid "Print a symbolic stack trace on failure."
 msgstr ""
 
 #: drizzled/drizzled.cc:3247
-#, fuzzy
 msgid "Push supported query conditions to the storage engine."
-msgstr "Kunne ikke koble til lagringsmotoren"
+msgstr ""
 
 #: drizzled/drizzled.cc:3253
 msgid "Used for debugging;  Use at your own risk!"
@@ -1767,9 +1756,8 @@ msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 
 #: drizzled/drizzled.cc:3290
-#, fuzzy
 msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
-msgstr "Skru på/av LOAD DATA LOCAL INFILE."
+msgstr ""
 
 #: drizzled/drizzled.cc:3295
 msgid "Log connections and queries to file."
@@ -2033,13 +2021,10 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3555
-#, fuzzy
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated;"
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"Bytter verdien til en variabel. Denne egenskapen er utgått; du kan angi "
-"variabelverdier direkte med --variabelnavn=verdi."
 
 #: drizzled/drizzled.cc:3559
 msgid "Don't use new, possible wrong routines."
@@ -2138,9 +2123,8 @@ msgid "Run mysqld daemon as user."
 msgstr ""
 
 #: drizzled/drizzled.cc:3654
-#, fuzzy
 msgid "Deprecated; use --log-warnings instead."
-msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-tee i stedet.\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:3659
 msgid ""
@@ -2240,9 +2224,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3767
-#, fuzzy
 msgid "Max packetlength to send/receive from to server."
-msgstr "Maks pakkestørrelsen mellom server og klient."
+msgstr ""
 
 #: drizzled/drizzled.cc:3772
 msgid ""
@@ -2510,7 +2493,7 @@ msgstr ""
 #: drizzled/drizzled.cc:4060
 #, fuzzy
 msgid "Deprecated; use --table_open_cache instead."
-msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-tee i stedet.\n"
+msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-pager i stedet.\n"
 
 #: drizzled/drizzled.cc:4064
 msgid "The number of cached table definitions."
@@ -2565,7 +2548,6 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:4361
-#, fuzzy
 msgid ""
 "Copyright (C) 2000 MySQL AB, by Monty and others\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -2573,15 +2555,11 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
-"Copyright (C) 2000-2008 MySQL AB\n"
-"                                      This software comes with ABSOLUTELY NO "
-"WARRANTY. This is free software,\n"
-" and you are welcome to modify and redistribute it under the GPL license\n"
 
 #: drizzled/drizzled.cc:4368
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr "Bruk: %s [egenskaper] [databasenavn]\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:4379
 msgid ""
@@ -2653,19 +2631,19 @@ msgstr ""
 
 #: drizzled/drizzled_error_messages.h:32
 msgid "hashchk"
-msgstr ""
+msgstr "hashchk"
 
 #: drizzled/drizzled_error_messages.h:34
 msgid "isamchk"
-msgstr ""
+msgstr "isamchk"
 
 #: drizzled/drizzled_error_messages.h:36
 msgid "NO"
-msgstr ""
+msgstr "NEI"
 
 #: drizzled/drizzled_error_messages.h:38
 msgid "YES"
-msgstr ""
+msgstr "JA"
 
 #: drizzled/drizzled_error_messages.h:40
 #, fuzzy, c-format
@@ -2685,12 +2663,12 @@ msgstr "Kan ikke lage katalogen '%s' (Feilkode: %d)"
 #: drizzled/drizzled_error_messages.h:46
 #, c-format
 msgid "Can't create database '%-.192s'; database exists"
-msgstr ""
+msgstr "Kan ikke lage databasen '%-.192s'; databasen finnes allerede"
 
 #: drizzled/drizzled_error_messages.h:48
 #, c-format
 msgid "Can't drop database '%-.192s'; database doesn't exist"
-msgstr ""
+msgstr "Kan ikke fjerne databasen '%-.192s'; databasen finnes ikke"
 
 #: drizzled/drizzled_error_messages.h:50
 #, fuzzy, c-format
@@ -2701,6 +2679,8 @@ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
 #, c-format
 msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 msgstr ""
+"Feil ved fjerning av databasen (klarte ikke å kjøre rmdir '%-.192s', "
+"feilnummer: %d)"
 
 #: drizzled/drizzled_error_messages.h:54
 #, fuzzy, c-format
@@ -2709,7 +2689,7 @@ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
 
 #: drizzled/drizzled_error_messages.h:56
 msgid "Can't read record in system table"
-msgstr ""
+msgstr "Klarte ikke å lese raden fra systemtabellen"
 
 #: drizzled/drizzled_error_messages.h:58
 #, fuzzy, c-format
@@ -2749,7 +2729,7 @@ msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
 #: drizzled/drizzled_error_messages.h:72
 #, c-format
 msgid "Record has changed since last read in table '%-.192s'"
-msgstr ""
+msgstr "Raden har blitt endret siden den sist ble lest fra tabellen '%-192s'"
 
 #: drizzled/drizzled_error_messages.h:74
 #, fuzzy, c-format
@@ -2761,7 +2741,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:76
 #, c-format
 msgid "Can't write; duplicate key in table '%-.192s'"
-msgstr ""
+msgstr "Kunne ikke skrive; nøkkelen er ikke unik i tabellen '%-.192s'"
 
 #: drizzled/drizzled_error_messages.h:78
 #, fuzzy, c-format
@@ -2786,7 +2766,7 @@ msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
 #: drizzled/drizzled_error_messages.h:86
 #, c-format
 msgid "'%-.192s' is locked against change"
-msgstr ""
+msgstr "'%-192s' er låst for endringer"
 
 #: drizzled/drizzled_error_messages.h:88
 #, fuzzy
@@ -2796,7 +2776,7 @@ msgstr "Avbrutt"
 #: drizzled/drizzled_error_messages.h:90
 #, c-format
 msgid "View '%-.192s' doesn't exist for '%-.192s'"
-msgstr ""
+msgstr "View-et '%-.192s' eksisterer ikke i '%-.192s'"
 
 #: drizzled/drizzled_error_messages.h:92
 #, fuzzy, c-format
@@ -2806,27 +2786,27 @@ msgstr "Kunne ikke koble til lagringsmotoren"
 #: drizzled/drizzled_error_messages.h:94
 #, c-format
 msgid "Table storage engine for '%-.192s' doesn't have this option"
-msgstr ""
+msgstr "Tabellmotoren for '%-.192s' har ikke denne innstillingen"
 
 #: drizzled/drizzled_error_messages.h:96
 #, c-format
 msgid "Can't find record in '%-.192s'"
-msgstr ""
+msgstr "Klarte ikke å finne raden i '%-192s'"
 
 #: drizzled/drizzled_error_messages.h:98
 #, c-format
 msgid "Incorrect information in file: '%-.200s'"
-msgstr ""
+msgstr "Feil informasjon i filen '%-.200s'"
 
 #: drizzled/drizzled_error_messages.h:100
 #, c-format
 msgid "Incorrect key file for table '%-.200s'; try to repair it"
-msgstr ""
+msgstr "Feil nøkkelfil for tabellen '%-.200s'; prøv å reparere den"
 
 #: drizzled/drizzled_error_messages.h:102
 #, c-format
 msgid "Old key file for table '%-.192s'; repair it!"
-msgstr ""
+msgstr "Gammel nøkkelfil for tabellen '%-.192s'; reparer den!"
 
 #: drizzled/drizzled_error_messages.h:104
 #, fuzzy, c-format
@@ -2841,6 +2821,7 @@ msgstr "Tomt for minne (Trengte %u bytes)"
 #: drizzled/drizzled_error_messages.h:108
 msgid "Out of sort memory; increase server sort buffer size"
 msgstr ""
+"Tom for sorteringsminne; øk størrelsen på sorteringsbufferen på serveren"
 
 #: drizzled/drizzled_error_messages.h:110
 #, fuzzy, c-format
@@ -2981,7 +2962,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:166
 #, fuzzy, c-format
 msgid "Invalid default value for '%-.192s'"
-msgstr "%s: FEIL: Ugyldig desimalverdi for egenskapen '%s'\n"
+msgstr "%s: FEIL: Ugyldig desimalverdi for egenskapen '%s'"
 
 #: drizzled/drizzled_error_messages.h:168
 msgid "Multiple primary key defined"
@@ -3772,7 +3753,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:482
 #, fuzzy, c-format
 msgid "Option '%s' used twice in statement"
-msgstr "%s: %s: Valget '%s' ble brukt, men er ikke tilgjengelig\n"
+msgstr "%s: %s: Valget '%s' ble brukt, men er ikke tilgjengelig"
 
 #: drizzled/drizzled_error_messages.h:484
 #, c-format
@@ -4090,7 +4071,7 @@ msgstr "Ukjent kommando: '%-.60s'"
 #: drizzled/drizzled_error_messages.h:606
 #, fuzzy, c-format
 msgid "'%s' is deprecated; use '%s' instead"
-msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-tee i stedet.\n"
+msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-tee i stedet."
 
 #: drizzled/drizzled_error_messages.h:608
 #, c-format
@@ -5605,7 +5586,7 @@ msgstr "Det er ikke mulig å logge denne spørringen"
 #: drizzled/drizzled_error_messages.h:1218
 #, fuzzy, c-format
 msgid "Fatal error: %s"
-msgstr "Fikk feil: %s\n"
+msgstr "Fikk feil: %s"
 
 #: drizzled/drizzled_error_messages.h:1220
 #, c-format
@@ -5738,9 +5719,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:1274
 #, fuzzy
 msgid "Nothing to backup"
-msgstr ""
-"\n"
-"Ingenting ble funnet"
+msgstr "Ingenting ble funnet"
 
 #: drizzled/drizzled_error_messages.h:1276
 #, c-format
@@ -6652,15 +6631,6 @@ msgstr "Fatal feil: ugyldig eller ukjent standardtidssone '%s'."
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
 msgstr "Ugyldig feilkode"
-
-#, fuzzy
-#~ msgid ""
-#~ "Port number to use for connection or 0 for default to, in order of "
-#~ "preference, my.cnf, $DRIZZLE_TCP_PORT, /etc/services, built-in default ("
-#~ msgstr ""
-#~ "Portnummeret som skal brukes for tilkoblingen eller 0 for å bruke en "
-#~ "standardverdi fra my.cnf, $MYSQL_TCP_PORT eller dersom ingen av de er "
-#~ "satt, den innebygde standardverdien."
 
 #~ msgid ""
 #~ "Found incompatible DECIMAL field '%s' in %s; Please do \"ALTER TABLE '%s' "

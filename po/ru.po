@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-13 17:25-0700\n"
-"PO-Revision-Date: 2008-08-12 05:25+0000\n"
+"PO-Revision-Date: 2008-08-13 05:51+0000\n"
 "Last-Translator: Alexey Kovyrin <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
 "10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
+"X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -99,6 +99,8 @@ msgstr "Получить статусную информацию с сервер
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
+"Назначить файлом вывода [to_outfile]. Весь консоьный вывод клиента будет "
+"дописан в коней указанного файла."
 
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
@@ -213,6 +215,8 @@ msgstr ""
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
+"Не использовать файл истории команд. Отключает интерактивное поведение "
+"клиента. (Включает --silent)."
 
 #: client/drizzle.cc:1288 drizzled/drizzled.cc:3182
 #, fuzzy
@@ -258,7 +262,7 @@ msgstr "Используемый разделитель команд."
 
 #: client/drizzle.cc:1311
 msgid "Execute command and quit. (Disables --force and history file)"
-msgstr ""
+msgstr "Выполнить команду и выйти. (Отключает --force и файл истории команд)"
 
 #: client/drizzle.cc:1313
 msgid "Print the output of a query (rows) vertically."
@@ -291,7 +295,7 @@ msgstr "Игнорирование пробелов после имен функ
 
 #: client/drizzle.cc:1328
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr ""
+msgstr "Включить/выключить поддержку LOAD DATA LOCAL INFILE."
 
 #: client/drizzle.cc:1331
 msgid "Turn off beep on error."
@@ -310,6 +314,8 @@ msgid ""
 "Don't write line number for errors. WARNING: -L is deprecated, use long "
 "version of this option instead."
 msgstr ""
+"Не выводить номера строк для ошибок. Внимание: -L является устаревшим "
+"ключем, используйте длинную версию."
 
 #: client/drizzle.cc:1340
 msgid "Flush buffer after each query."
@@ -324,6 +330,8 @@ msgid ""
 "Don't write column names in results. WARNING: -N is deprecated, use long "
 "version of this options instead."
 msgstr ""
+"Не выводить имена колонок в результатах запроса. Внимание: -N является "
+"устаревшим ключем, используйте длинную версию."
 
 #: client/drizzle.cc:1349
 msgid ""
@@ -336,10 +344,13 @@ msgid "Ignore SIGINT (CTRL-C)"
 msgstr "Игнорирование SIGINT (CTRL+C)"
 
 #: client/drizzle.cc:1355
+#, fuzzy
 msgid ""
 "Only update the default database. This is useful for skipping updates to "
 "other database in the update log."
 msgstr ""
+"Обновлять только базу данных по-умолчанию. Эта опция может использоваться с "
+"целью пропустить обновления для других БД в update log'ах."
 
 #: client/drizzle.cc:1358
 msgid ""
@@ -442,19 +453,22 @@ msgstr ""
 
 #: client/drizzle.cc:1407 client/drizzleadmin.cc:89 drizzled/drizzled.cc:3650
 msgid "Output version information and exit."
-msgstr ""
+msgstr "Вывод информации о версии и выход из программы."
 
 #: client/drizzle.cc:1409 client/drizzleadmin.cc:91
 msgid "Wait and retry if connection is down."
 msgstr "Ожидать и повторять запрос если соединение с сервером разорвано."
 
 #: client/drizzle.cc:1412
+#, fuzzy
 msgid "Number of seconds before connection timeout."
-msgstr ""
+msgstr "Количество секунд перед закрытием соединения по timeout-у."
 
 #: client/drizzle.cc:1417
 msgid "Max packet length to send to, or receive from server"
 msgstr ""
+"Максимальная длина пакета для получения или отправки во время работы с "
+"сервером."
 
 #: client/drizzle.cc:1422
 msgid "Buffer for TCP/IP and socket communication"
@@ -1234,9 +1248,8 @@ msgid "Got signal %d from thread %ld"
 msgstr ""
 
 #: drizzled/drizzled.cc:792
-#, fuzzy
 msgid "Aborting\n"
-msgstr "Отменено"
+msgstr ""
 
 #: drizzled/drizzled.cc:991
 msgid "One can only use the --user switch if running as root\n"
@@ -1564,32 +1577,28 @@ msgid "Don't ignore client side character set value sent during handshake."
 msgstr ""
 
 #: drizzled/drizzled.cc:3173
-#, fuzzy
 msgid "Set the filesystem character set."
-msgstr "Установить кодировку по-умолчанию."
+msgstr ""
 
 #: drizzled/drizzled.cc:3185
 msgid "Chroot mysqld daemon during startup."
 msgstr ""
 
 #: drizzled/drizzled.cc:3189
-#, fuzzy
 msgid "Set the default collation."
-msgstr "Установить кодировку по-умолчанию."
+msgstr ""
 
 #: drizzled/drizzled.cc:3193
-#, fuzzy
 msgid "Default completion type."
-msgstr "Обновить список авто-дополнений."
+msgstr ""
 
 #: drizzled/drizzled.cc:3198
 msgid "Write error output on screen."
 msgstr ""
 
 #: drizzled/drizzled.cc:3202
-#, fuzzy
 msgid "Write core on errors."
-msgstr "Отоброжение номеров строк в случае ошибок."
+msgstr ""
 
 #: drizzled/drizzled.cc:3206
 msgid "Path to the database root."
@@ -1612,9 +1621,8 @@ msgid "Set the default storage engine (table type) for tables."
 msgstr ""
 
 #: drizzled/drizzled.cc:3224
-#, fuzzy
 msgid "Set the default time zone."
-msgstr "Установить кодировку по-умолчанию."
+msgstr ""
 
 #: drizzled/drizzled.cc:3228
 msgid "Type of DELAY_KEY_WRITE."
@@ -6392,7 +6400,9 @@ msgstr ""
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
 msgstr ""
+"Фатальная ошибка: неверное или неизвестное значение временной зоны по-"
+"умолчанию: '%s'"
 
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
-msgstr ""
+msgstr "Неверный код ошибки."

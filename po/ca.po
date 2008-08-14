@@ -1,4 +1,4 @@
-# Romanian translation for drizzle
+# Catalan translation for drizzle
 # Copyright (c) 2008 Rosetta Contributors and Canonical Ltd 2008
 # This file is distributed under the same license as the drizzle package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2008.
@@ -8,54 +8,48 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-13 17:25-0700\n"
-"PO-Revision-Date: 2008-08-13 11:30+0000\n"
-"Last-Translator: Alex Eftimie <alexeftimie@gmail.com>\n"
-"Language-Team: Romanian <ro@li.org>\n"
+"PO-Revision-Date: 2008-08-13 14:12+0000\n"
+"Last-Translator: el_libre <el.libre@gmail.com>\n"
+"Language-Team: Catalan <ca@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n == 1 ? 0: (((n % 100 > 19) || ((n % 100 "
-"== 0) && (n != 0))) ? 2: 1));\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
-msgstr "ajutor"
+msgstr ""
 
 #: client/drizzle.cc:257
-#, fuzzy
 msgid "Clear command."
-msgstr "Sterge comanda."
+msgstr ""
 
 #: client/drizzle.cc:259
 msgid "Reconnect to the server. Optional arguments are db and host."
-msgstr "Reconectare la server. Parametri optionali sunt db si host."
+msgstr ""
 
 #: client/drizzle.cc:261
-#, fuzzy
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
-"Seteaza delimitatorul de declaratie. Atentie: Restul linie este considerat "
-"noul delimitator."
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr "Trimite comanda serverului drizzle, afiseaza rezultatele vertical."
+msgstr ""
 
 #: client/drizzle.cc:264
-#, fuzzy
 msgid "Exit drizzle. Same as quit."
-msgstr "Inchide drizzle."
+msgstr ""
 
 #: client/drizzle.cc:265
 msgid "Send command to drizzle server."
-msgstr "Trimite comanda catre serverul drizzle."
+msgstr ""
 
 #: client/drizzle.cc:266
 msgid "Display this help."
-msgstr "Afiseaza acest mesaj de ajutor."
+msgstr "Mostra aquesta ajuda."
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
@@ -63,7 +57,7 @@ msgstr ""
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
-msgstr "Nu scrie in fisierul de iesire."
+msgstr ""
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
@@ -71,7 +65,7 @@ msgstr ""
 
 #: client/drizzle.cc:271
 msgid "Print current command."
-msgstr "Afiseaza comanda curenta."
+msgstr ""
 
 #: client/drizzle.cc:272
 msgid "Change your drizzle prompt."
@@ -79,7 +73,7 @@ msgstr ""
 
 #: client/drizzle.cc:273
 msgid "Quit drizzle."
-msgstr "Iesi din drizzle."
+msgstr "Surt de drizzle."
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
@@ -87,22 +81,19 @@ msgstr ""
 
 #: client/drizzle.cc:276
 msgid "Execute an SQL script file. Takes a file name as an argument."
-msgstr "Executa un fisier SQL. Primeste numele fisierului ca argument."
+msgstr ""
 
 #: client/drizzle.cc:277
 msgid "Get status information from the server."
-msgstr "Cere informatii de stare de la server."
+msgstr ""
 
 #: client/drizzle.cc:279
 msgid "Set outfile [to_outfile]. Append everything into given outfile."
 msgstr ""
-"Seteaza fisierul de iesire [to_outfile]. Adauga totul la sfarsitul "
-"fisierului specificat."
 
 #: client/drizzle.cc:281
 msgid "Use another database. Takes database name as argument."
 msgstr ""
-"Foloseste alta baza de date. Primeste numele bazei de date ca argument."
 
 #: client/drizzle.cc:283
 msgid ""
@@ -112,15 +103,15 @@ msgstr ""
 
 #: client/drizzle.cc:285 client/drizzle.cc:1437
 msgid "Show warnings after every statement."
-msgstr "Afiseaza avertismente dupa fiecare declaratie."
+msgstr ""
 
 #: client/drizzle.cc:287
 msgid "Don't show warnings after every statement."
-msgstr "Nu afisa avertismente dupa fiecare declaratie."
+msgstr ""
 
 #: client/drizzle.cc:1120
 msgid "Welcome to the Drizzle client..  Commands end with ; or \\g."
-msgstr "Bun venit la clientul Drizzle.. Comenzile se termina cu ; sau \\g."
+msgstr ""
 
 #: client/drizzle.cc:1130
 #, c-format
@@ -128,49 +119,45 @@ msgid ""
 "Your Drizzle connection id is %u\n"
 "Server version: %s\n"
 msgstr ""
-"Identificatorul conexiunii Drizzle este %u\n"
-"Versiunea serverului: %s\n"
 
 #: client/drizzle.cc:1160
 #, c-format
 msgid "Reading history-file %s\n"
-msgstr "Citesc fisierul istoric %s\n"
+msgstr ""
 
 #: client/drizzle.cc:1165
 #, c-format
 msgid "Couldn't allocate memory for temp histfile!\n"
-msgstr "Nu am putut aloca memorie pentru acest fisier de istoric temporar!\n"
+msgstr ""
 
 #: client/drizzle.cc:1172
 msgid "Type 'help;' or '\\h' for help. Type '\\c' to clear the buffer.\n"
 msgstr ""
-"Scrieti 'help;' sau '\\h' pentru ajutor. Scrieti '\\c' pentru a goli "
-"tamponul.\n"
 
 #: client/drizzle.cc:1190
 #, c-format
 msgid "Writing history-file %s\n"
-msgstr "Scrie fisierul de istoric %s\n"
+msgstr ""
 
 #: client/drizzle.cc:1199
 msgid "Aborted"
-msgstr "Anulat"
+msgstr "Avortat"
 
 #: client/drizzle.cc:1199
 msgid "Bye"
-msgstr "La revedere"
+msgstr "Adéu"
 
 #: client/drizzle.cc:1248
 msgid "Query aborted by Ctrl+C\n"
-msgstr "Cerere abandonata prin Ctrl+C\n"
+msgstr ""
 
 #: client/drizzle.cc:1271 client/drizzleadmin.cc:69 drizzled/drizzled.cc:3112
 msgid "Display this help and exit."
-msgstr "Afiseaza acest mesaj de ajutor si iesi."
+msgstr ""
 
 #: client/drizzle.cc:1273
 msgid "Synonym for -?"
-msgstr "Sinonim cu  -?"
+msgstr ""
 
 #: client/drizzle.cc:1276
 msgid ""
@@ -191,16 +178,11 @@ msgid ""
 "Automatically switch to vertical output mode if the result is wider than the "
 "terminal width."
 msgstr ""
-"Afiseaza datele vertical daca dimensiunea rezultatelor este mai mare decat "
-"dimensiunea terminalului."
 
 #: client/drizzle.cc:1286
-#, fuzzy
 msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
-"Nu utiliza un fisier de istoric. Dezactiveaza comportamentul interactiv. "
-"(Activeaza --silent)"
 
 #: client/drizzle.cc:1288 drizzled/drizzled.cc:3182
 msgid "Directory where character sets are."
@@ -208,7 +190,7 @@ msgstr ""
 
 #: client/drizzle.cc:1290
 msgid "Display column type information."
-msgstr "Afiseaza informatiile de tip legate de coloana."
+msgstr ""
 
 #: client/drizzle.cc:1293
 msgid ""
@@ -218,7 +200,7 @@ msgstr ""
 
 #: client/drizzle.cc:1296
 msgid "Use compression in server/client protocol."
-msgstr "Compreseaza datele in comunicatia server/client."
+msgstr ""
 
 #: client/drizzle.cc:1299
 msgid "Check memory and open file usage at exit ."
@@ -230,11 +212,11 @@ msgstr ""
 
 #: client/drizzle.cc:1304
 msgid "Database to use."
-msgstr "Baza de date pe care sa o folosesc."
+msgstr ""
 
 #: client/drizzle.cc:1307 drizzled/drizzled.cc:3178
 msgid "Set the default character set."
-msgstr "Stabileste setul de caractere implicit."
+msgstr ""
 
 #: client/drizzle.cc:1309
 msgid "Delimiter to be used."
@@ -246,11 +228,11 @@ msgstr ""
 
 #: client/drizzle.cc:1313
 msgid "Print the output of a query (rows) vertically."
-msgstr "Afiseaza rezultatul unei interogari (liniile) vertical."
+msgstr ""
 
 #: client/drizzle.cc:1316
 msgid "Continue even if we get an sql error."
-msgstr "Continua chiar daca avem o eroare sql."
+msgstr ""
 
 #: client/drizzle.cc:1320
 msgid ""
@@ -271,23 +253,23 @@ msgstr ""
 
 #: client/drizzle.cc:1326
 msgid "Ignore space after function names."
-msgstr "Ignora spatiile dupa numele de functii."
+msgstr ""
 
 #: client/drizzle.cc:1328
 msgid "Enable/disable LOAD DATA LOCAL INFILE."
-msgstr "Activeaza/dezactiveaza LOAD DATA LOCAL INFILE."
+msgstr ""
 
 #: client/drizzle.cc:1331
 msgid "Turn off beep on error."
-msgstr "Dezactiveaza sunetul in caz de eroare."
+msgstr ""
 
 #: client/drizzle.cc:1333 client/drizzleadmin.cc:71
 msgid "Connect to host."
-msgstr "Conectare la gazda."
+msgstr ""
 
 #: client/drizzle.cc:1335
 msgid "Write line numbers for errors."
-msgstr "Scrie numere de linii pentru erori."
+msgstr ""
 
 #: client/drizzle.cc:1338
 msgid ""
@@ -514,16 +496,16 @@ msgstr ""
 
 #: client/drizzle.cc:2499
 msgid "categories:"
-msgstr ""
+msgstr "categories:"
 
 #: client/drizzle.cc:2499
 msgid "topics:"
-msgstr ""
+msgstr "temes:"
 
 #: client/drizzle.cc:2550
 #, c-format
 msgid "Name: '%s'\n"
-msgstr ""
+msgstr "Nom: '%s'\n"
 
 #: client/drizzle.cc:2551
 #, c-format
@@ -531,6 +513,8 @@ msgid ""
 "Description:\n"
 "%s"
 msgstr ""
+"Descripció:\n"
+"%s"
 
 #: client/drizzle.cc:2553
 #, c-format
@@ -538,6 +522,8 @@ msgid ""
 "Examples:\n"
 "%s"
 msgstr ""
+"Exemples:\n"
+"%s"
 
 #: client/drizzle.cc:2566
 msgid "Many help items for your request exist."
@@ -617,7 +603,7 @@ msgstr[1] ""
 
 #: client/drizzle.cc:2777
 msgid "Query OK"
-msgstr ""
+msgstr "Petició Correcta"
 
 #: client/drizzle.cc:2779
 #, c-format
@@ -684,7 +670,7 @@ msgstr ""
 #: client/drizzleadmin.cc:325
 #, c-format
 msgid "done\n"
-msgstr ""
+msgstr "fet\n"
 
 #: client/drizzleadmin.cc:335
 msgid "drizzled is alive"
@@ -890,11 +876,11 @@ msgstr ""
 
 #: mysys/my_getopt.c:83
 msgid "Warning: "
-msgstr ""
+msgstr "Atenció: "
 
 #: mysys/my_getopt.c:85
 msgid "Info: "
-msgstr ""
+msgstr "Informació: "
 
 #: mysys/my_getopt.c:350
 #, c-format
@@ -903,11 +889,11 @@ msgstr ""
 
 #: mysys/my_getopt.c:351
 msgid "WARNING"
-msgstr ""
+msgstr "ATENCIÓ"
 
 #: mysys/my_getopt.c:351
 msgid "ERROR"
-msgstr ""
+msgstr "ERROR"
 
 #: mysys/my_getopt.c:454
 #, c-format
@@ -944,11 +930,11 @@ msgstr ""
 
 #: mysys/my_getopt.c:1225
 msgid "true"
-msgstr ""
+msgstr "sí"
 
 #: mysys/my_getopt.c:1225
 msgid "false"
-msgstr ""
+msgstr "no"
 
 #: mysys/my_getopt.c:1250
 #, c-format
@@ -999,7 +985,7 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:30
 msgid "Incorrect file format"
-msgstr ""
+msgstr "Format del fitxer incorrecte"
 
 #: mysys/my_handler_errors.h:32
 msgid "Command not supported by database"
@@ -1336,9 +1322,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:1560
-#, fuzzy, c-format
+#, c-format
 msgid "Writing a core file\n"
-msgstr "Scrie fisierul de istoric %s\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:1607
 msgid ""
@@ -2338,9 +2324,8 @@ msgid "Maximum space to use for all relay logs."
 msgstr ""
 
 #: drizzled/drizzled.cc:4020
-#, fuzzy
 msgid "Use compression on master/slave protocol."
-msgstr "Compreseaza datele in comunicatia server/client."
+msgstr ""
 
 #: drizzled/drizzled.cc:4025
 msgid ""
@@ -2527,11 +2512,11 @@ msgstr ""
 
 #: drizzled/drizzled_error_messages.h:36
 msgid "NO"
-msgstr ""
+msgstr "NO"
 
 #: drizzled/drizzled_error_messages.h:38
 msgid "YES"
-msgstr ""
+msgstr "SÍ"
 
 #: drizzled/drizzled_error_messages.h:40
 #, c-format
@@ -2745,7 +2730,7 @@ msgstr ""
 
 #: drizzled/drizzled_error_messages.h:126
 msgid "Unknown command"
-msgstr ""
+msgstr "Ordre desconeguda"
 
 #: drizzled/drizzled_error_messages.h:128
 #, c-format
@@ -3038,7 +3023,7 @@ msgstr ""
 
 #: drizzled/drizzled_error_messages.h:242
 msgid "Unknown error"
-msgstr ""
+msgstr "Error desconegut"
 
 #: drizzled/drizzled_error_messages.h:244
 #, c-format
@@ -6210,7 +6195,7 @@ msgstr ""
 
 #: drizzled/slave.cc:2702
 msgid "Memory allocation failed"
-msgstr ""
+msgstr "Ha fallat l'assignació de memòria"
 
 #: drizzled/slave.cc:2727 drizzled/slave.cc:2813
 #, c-format
@@ -6230,11 +6215,11 @@ msgstr ""
 
 #: drizzled/slave.cc:3182
 msgid "reconnecting"
-msgstr ""
+msgstr "reconnectant"
 
 #: drizzled/slave.cc:3182
 msgid "connecting"
-msgstr ""
+msgstr "s'està connectant"
 
 #: drizzled/slave.cc:3208
 #, c-format
@@ -6369,4 +6354,4 @@ msgstr ""
 
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
-msgstr "Cod de eroare invalid."
+msgstr ""

@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
 "POT-Creation-Date: 2008-08-13 17:25-0700\n"
-"PO-Revision-Date: 2008-08-12 22:37+0000\n"
-"Last-Translator: Jorge Bernal <koke@amedias.org>\n"
+"PO-Revision-Date: 2008-08-13 15:59+0000\n"
+"Last-Translator: Javier Infante <jabi@irontec.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-08-12 23:48+0000\n"
+"X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -534,27 +534,27 @@ msgstr "Uso: %s [OPCIONES] [base-de-datos]\n"
 
 #: client/drizzle.cc:1492
 msgid "DELIMITER cannot contain a backslash character"
-msgstr ""
+msgstr "El LIMITADOR no puede contener el caracter barra invertida."
 
 #: client/drizzle.cc:1513
 #, c-format
 msgid "WARNING: option deprecated; use --disable-tee instead.\n"
-msgstr ""
+msgstr "ADVERTENCIA: opción desfasada; utilizar mejor --disable-tee.\n"
 
 #: client/drizzle.cc:1536
 #, c-format
 msgid "WARNING: option deprecated; use --disable-pager instead.\n"
-msgstr ""
+msgstr "ADVERTENCIA: opción desfasada; utilizar mejor --disable-pager.\n"
 
 #: client/drizzle.cc:1540
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
-msgstr ""
+msgstr "ADVERTENCIA: opción --server-arg no soportada en esta configuración.\n"
 
 #: client/drizzle.cc:1912
 #, c-format
 msgid "Unknown command '\\%c'."
-msgstr ""
+msgstr "Comando desconocido '\\%c'."
 
 #: client/drizzle.cc:2339
 msgid ""
@@ -562,22 +562,25 @@ msgid ""
 "    You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
+"Leer información de la tabla para completar nombres de tablas y columnas\n"
+"    Puedes apagar esta funcionalidad para acelerar el arranque con -A\n"
+"\n"
 
 #: client/drizzle.cc:2436
 msgid "No connection. Trying to reconnect..."
-msgstr ""
+msgstr "Sin conexión. Intentado reconectar..."
 
 #: client/drizzle.cc:2442
 msgid "Can't connect to the server\n"
-msgstr ""
+msgstr "Imposible conectar al servidor\n"
 
 #: client/drizzle.cc:2499
 msgid "categories:"
-msgstr ""
+msgstr "categorias:"
 
 #: client/drizzle.cc:2499
 msgid "topics:"
-msgstr ""
+msgstr "temas:"
 
 #: client/drizzle.cc:2550
 #, c-format
@@ -692,7 +695,7 @@ msgid ""
 "preference, my.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
 "Puerto para la conexión o 0 por defecto, en orden de preferencia, my.cnf, "
-"$DRIZZLE_TCP_POST, "
+"$DRIZZLE_TCP_POST,"
 
 #: client/drizzleadmin.cc:81
 msgid "Silently exit if one can't connect to server."
@@ -1278,9 +1281,8 @@ msgid "Got signal %d from thread %ld"
 msgstr ""
 
 #: drizzled/drizzled.cc:792
-#, fuzzy
 msgid "Aborting\n"
-msgstr "Abortado"
+msgstr ""
 
 #: drizzled/drizzled.cc:991
 msgid "One can only use the --user switch if running as root\n"
@@ -1608,32 +1610,28 @@ msgid "Don't ignore client side character set value sent during handshake."
 msgstr ""
 
 #: drizzled/drizzled.cc:3173
-#, fuzzy
 msgid "Set the filesystem character set."
-msgstr "Ajustar el character set por defecto."
+msgstr ""
 
 #: drizzled/drizzled.cc:3185
 msgid "Chroot mysqld daemon during startup."
 msgstr ""
 
 #: drizzled/drizzled.cc:3189
-#, fuzzy
 msgid "Set the default collation."
-msgstr "Ajustar el character set por defecto."
+msgstr ""
 
 #: drizzled/drizzled.cc:3193
-#, fuzzy
 msgid "Default completion type."
-msgstr "Reconstruir el hash de terminación."
+msgstr ""
 
 #: drizzled/drizzled.cc:3198
 msgid "Write error output on screen."
 msgstr ""
 
 #: drizzled/drizzled.cc:3202
-#, fuzzy
 msgid "Write core on errors."
-msgstr "Escribir el número de línea para los errores."
+msgstr ""
 
 #: drizzled/drizzled.cc:3206
 msgid "Path to the database root."
@@ -1656,9 +1654,8 @@ msgid "Set the default storage engine (table type) for tables."
 msgstr ""
 
 #: drizzled/drizzled.cc:3224
-#, fuzzy
 msgid "Set the default time zone."
-msgstr "Ajustar el character set por defecto."
+msgstr ""
 
 #: drizzled/drizzled.cc:3228
 msgid "Type of DELAY_KEY_WRITE."
@@ -1715,9 +1712,8 @@ msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 
 #: drizzled/drizzled.cc:3290
-#, fuzzy
 msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
-msgstr "Habilitar/Deshabilitar LOAD DATA LOCAL INFILE."
+msgstr ""
 
 #: drizzled/drizzled.cc:3295
 msgid "Log connections and queries to file."
@@ -1981,13 +1977,10 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3555
-#, fuzzy
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated;"
 "you can set variables directly with --variable-name=value."
 msgstr ""
-"Cambiar el valor de una variable. Por favor, notar que esta opción está "
-"desfasada; Se puede asignar variables directamente con --variable-name=valor."
 
 #: drizzled/drizzled.cc:3559
 msgid "Don't use new, possible wrong routines."
@@ -2187,9 +2180,8 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:3767
-#, fuzzy
 msgid "Max packetlength to send/receive from to server."
-msgstr "Tamaño máximo de paquete para enviar o recibir desde el servidor."
+msgstr ""
 
 #: drizzled/drizzled.cc:3772
 msgid ""
@@ -2454,8 +2446,9 @@ msgid "Sync .frm to disk on create. Enabled by default."
 msgstr ""
 
 #: drizzled/drizzled.cc:4060
+#, fuzzy
 msgid "Deprecated; use --table_open_cache instead."
-msgstr ""
+msgstr "ADVERTENCIA: opción desfasada; utilizar mejor --disable-pager.\n"
 
 #: drizzled/drizzled.cc:4064
 msgid "The number of cached table definitions."
@@ -2510,7 +2503,6 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled.cc:4361
-#, fuzzy
 msgid ""
 "Copyright (C) 2000 MySQL AB, by Monty and others\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -2518,15 +2510,11 @@ msgid ""
 "\n"
 "Starts the Drizzle database server\n"
 msgstr ""
-"Copyright (C) 2000-2008 MySQL AB\n"
-"                                      Este software no garantiza "
-"ABSOLUTAMENTE NINGUNA GARANTÍA. Esto es softwre libre, y eres bienvenido "
-"para modificar y redistribuirlo bajo licencia GPL\n"
 
 #: drizzled/drizzled.cc:4368
-#, fuzzy, c-format
+#, c-format
 msgid "Usage: %s [OPTIONS]\n"
-msgstr "Uso: %s [OPCIONES] [base-de-datos]\n"
+msgstr ""
 
 #: drizzled/drizzled.cc:4379
 msgid ""
@@ -6467,11 +6455,3 @@ msgstr "Error fatal: Zona horaria por defecto '%s' ilegal o desconocida"
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
 msgstr "Código de error inválido"
-
-#, fuzzy
-#~ msgid ""
-#~ "Port number to use for connection or 0 for default to, in order of "
-#~ "preference, my.cnf, $DRIZZLE_TCP_PORT, /etc/services, built-in default ("
-#~ msgstr ""
-#~ "Puerto para la conexión o 0 por defecto, en orden de preferencia, my.cnf, "
-#~ "$DRIZZLE_TCP_POST, "
