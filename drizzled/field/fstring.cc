@@ -407,8 +407,7 @@ uint Field_string::get_key_image(uchar *buff,
 }
 
 
-Field *Field_string::new_field(MEM_ROOT *root, struct st_table *new_table,
-                               bool keep_type)
+Field *Field_string::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
 {
   Field *field;
   field= Field::new_field(root, new_table, keep_type);

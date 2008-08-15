@@ -259,7 +259,6 @@ typedef struct st_table_share
   uint column_bitmap_size;
   uchar frm_version;
   bool null_field_first;
-  bool system;                          /* Set if system table (one record) */
   bool db_low_byte_first;		/* Portable row format */
   bool crashed;
   bool name_lock, replace_with_name_lock;
@@ -350,12 +349,31 @@ enum index_hint_type
   INDEX_HINT_FORCE
 };
 
-struct st_table {
-  st_table() {}                               /* Remove gcc warning */
-
+class Table {
+public:
   TABLE_SHARE	*s;
+  Table() {}                               /* Remove gcc warning */
+
+  inline TABLE_SHARE *getShare() { return s; } /* Get rid of this long term */
+  inline void setShare(TABLE_SHARE *new_share) { s= new_share; } /* Get rid of this long term */
+  inline uint sizeKeys() { return s->keys; }
+  inline uint sizeFields() { return s->fields; }
+  inline uint getRecordLength() { return s->reclength; }
+  inline uint sizeBlobFields() { return s->blob_fields; }
+  inline uint *getBlobField() { return s->blob_field; }
+  inline uint getNullBytes() { return s->null_bytes; }
+  inline uint getNullFields() { return s->null_fields; }
+  inline unsigned char *getDefaultValues() { return s->default_values; }
+
+  inline bool isNullFieldFirst() { return s->null_field_first; }
+  inline bool isDatabaseLowByteFirst() { return s->db_low_byte_first; }		/* Portable row format */
+  inline bool isCrashed() { return s->crashed; }
+  inline bool isNameLock() { return s->name_lock; } 
+  inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
+  inline bool isWaitingOnCondition() { return s->waiting_on_cond; }                 /* Protection against free */
+
   handler	*file;
-  struct st_table *next, *prev;
+  Table *next, *prev;
 
   THD	*in_use;                        /* Which thread uses this */
   Field **field;			/* Pointer to fields */

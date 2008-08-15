@@ -3514,7 +3514,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
       while (embedding);
       continue;
     }
-    if ((table->s->system || table->file->stats.records <= 1) &&
+    if ((table->file->stats.records <= 1) &&
 	!s->dependent &&
 	(table->file->ha_table_flags() & HA_STATS_RECORDS_IS_EXACT) && !join->no_const_tables)
     {
@@ -4440,7 +4440,7 @@ add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
 
   if (key_field->eq_func && !(key_field->optimize & KEY_OPTIMIZE_EXISTS))
   {
-    for (uint key=0 ; key < form->s->keys ; key++)
+    for (uint key= 0 ; key < form->sizeKeys() ; key++)
     {
       if (!(form->keys_in_use_for_query.is_set(key)))
 	continue;
@@ -6261,13 +6261,13 @@ static void calc_used_field_length(THD *thd __attribute__((unused)),
     }
   }
   if (null_fields)
-    rec_length+=(join_tab->table->s->null_fields+7)/8;
+    rec_length+=(join_tab->table->getNullFields() + 7)/8;
   if (join_tab->table->maybe_null)
     rec_length+=sizeof(bool);
   if (blobs)
   {
     uint blob_length=(uint) (join_tab->table->file->stats.mean_rec_length-
-			     (join_tab->table->s->reclength- rec_length));
+			     (join_tab->table->getRecordLength()- rec_length));
     rec_length+=(uint) max((uint)4,blob_length);
   }
   join_tab->used_fields=fields;
@@ -11081,7 +11081,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   table->covering_keys.init();
   table->keys_in_use_for_query.init();
 
-  table->s= share;
+  table->setShare(share);
   init_tmp_table_share(thd, share, "", 0, tmpname, tmpname);
   share->blob_field= blob_field;
   share->blob_ptr_size= portable_sizeof_char_ptr;
@@ -15684,7 +15684,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint table_count)
   length=0;
   for (i=0 ; i < table_count ; i++)
   {
-    uint null_fields=0,used_fields;
+    uint null_fields=0, used_fields;
     Field **f_ptr,*field;
     MY_BITMAP *read_set= tables[i].table->read_set;
     for (f_ptr=tables[i].table->field,used_fields=tables[i].used_fields ;
@@ -15705,7 +15705,7 @@ join_init_cache(THD *thd,JOIN_TAB *tables,uint table_count)
       }
     }
     /* Copy null bits from table */
-    if (null_fields && tables[i].table->s->null_fields)
+    if (null_fields && tables[i].table->getNullFields())
     {						/* must copy null bits */
       copy->str= tables[i].table->null_flags;
       copy->length= tables[i].table->s->null_bytes;

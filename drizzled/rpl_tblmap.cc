@@ -46,7 +46,7 @@ table_mapping::~table_mapping()
   free_root(&m_mem_root, MYF(0));
 }
 
-st_table* table_mapping::get_table(ulong table_id)
+Table* table_mapping::get_table(ulong table_id)
 {
   entry *e= find_entry(table_id);
   if (e) 

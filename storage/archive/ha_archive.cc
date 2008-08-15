@@ -562,7 +562,7 @@ int ha_archive::create(const char *name, TABLE *table_arg,
 
   stats.auto_increment_value= create_info->auto_increment_value;
 
-  for (uint key= 0; key < table_arg->s->keys; key++)
+  for (uint key= 0; key < table_arg->sizeKeys(); key++)
   {
     KEY *pos= table_arg->key_info+key;
     KEY_PART_INFO *key_part=     pos->key_part;
@@ -693,11 +693,11 @@ int ha_archive::real_write_row(uchar *buf, azio_stream *writer)
 
 uint32_t ha_archive::max_row_length(const uchar *buf __attribute__((unused)))
 {
-  uint32_t length= (uint32_t)(table->s->reclength + table->s->fields*2);
+  uint32_t length= (uint32_t)(table->getRecordLength() + table->sizeFields()*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
 
   uint *ptr, *end;
-  for (ptr= table->s->blob_field, end=ptr + table->s->blob_fields ;
+  for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
        ptr != end ;
        ptr++)
   {
@@ -998,8 +998,8 @@ int ha_archive::unpack_row(azio_stream *file_to_read, uchar *record)
   }
 
   /* Copy null bits */
-  memcpy(record, ptr, table->s->null_bytes);
-  ptr+= table->s->null_bytes;
+  memcpy(record, ptr, table->getNullBytes());
+  ptr+= table->getNullBytes();
   for (Field **field=table->field ; *field ; field++)
   {
     if (!((*field)->is_null()))
@@ -1298,7 +1298,7 @@ int ha_archive::info(uint flag)
 
     VOID(stat(share->data_file_name, &file_stat));
 
-    stats.mean_rec_length= table->s->reclength + buffer.alloced_length();
+    stats.mean_rec_length= table->getRecordLength()+ buffer.alloced_length();
     stats.data_file_length= file_stat.st_size;
     stats.create_time= file_stat.st_ctime;
     stats.update_time= file_stat.st_mtime;

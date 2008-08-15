@@ -598,8 +598,6 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
   }
 
   share->reclength = uint2korr((head+16));
-  if (*(head+26) == 1)
-    share->system= 1;				/* one-record-database */
 
   record_offset= (ulong) (uint2korr(head+6)+
                           ((uint2korr(head+14) == 0xffff ?
@@ -1500,7 +1498,7 @@ int closefrm(register TABLE *table, bool free_share)
 void free_blobs(register TABLE *table)
 {
   uint *ptr, *end;
-  for (ptr= table->s->blob_field, end=ptr + table->s->blob_fields ;
+  for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
        ptr != end ;
        ptr++)
     ((Field_blob*) table->field[*ptr])->free();
@@ -2024,7 +2022,7 @@ File create_frm(THD *thd, const char *name, const char *db,
 
 void update_create_info_from_table(HA_CREATE_INFO *create_info, TABLE *table)
 {
-  TABLE_SHARE *share= table->s;
+  TABLE_SHARE *share= table->getShare();
 
   create_info->max_rows= share->max_rows;
   create_info->min_rows= share->min_rows;
@@ -2369,7 +2367,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
   Create Item_field for each column in the table.
 
   SYNPOSIS
-    st_table::fill_item_list()
+    Table::fill_item_list()
       item_list          a pointer to an empty list used to store items
 
   DESCRIPTION
@@ -2382,7 +2380,7 @@ table_check_intact(TABLE *table, const uint table_f_count,
     1                    out of memory
 */
 
-bool st_table::fill_item_list(List<Item> *item_list) const
+bool Table::fill_item_list(List<Item> *item_list) const
 {
   /*
     All Item_field's created using a direct pointer to a field
@@ -2402,7 +2400,7 @@ bool st_table::fill_item_list(List<Item> *item_list) const
   Fields of this table.
 
   SYNPOSIS
-    st_table::fill_item_list()
+    Table::fill_item_list()
       item_list          a non-empty list with Item_fields
 
   DESCRIPTION
@@ -2412,7 +2410,7 @@ bool st_table::fill_item_list(List<Item> *item_list) const
     is the same as the number of columns in the table.
 */
 
-void st_table::reset_item_list(List<Item> *item_list) const
+void Table::reset_item_list(List<Item> *item_list) const
 {
   List_iterator_fast<Item> it(*item_list);
   for (Field **ptr= field; *ptr; ptr++)
@@ -3064,7 +3062,7 @@ Field_iterator_table_ref::get_natural_column_ref()
 
 /* Reset all columns bitmaps */
 
-void st_table::clear_column_bitmaps()
+void Table::clear_column_bitmaps()
 {
   /*
     Reset column read/write usage. It's identical to:
@@ -3085,7 +3083,7 @@ void st_table::clear_column_bitmaps()
   key fields.
 */
 
-void st_table::prepare_for_position()
+void Table::prepare_for_position()
 {
 
   if ((file->ha_table_flags() & HA_PRIMARY_KEY_IN_READ_INDEX) &&
@@ -3105,11 +3103,11 @@ void st_table::prepare_for_position()
   NOTE:
     This changes the bitmap to use the tmp bitmap
     After this, you can't access any other columns in the table until
-    bitmaps are reset, for example with st_table::clear_column_bitmaps()
-    or st_table::restore_column_maps_after_mark_index()
+    bitmaps are reset, for example with Table::clear_column_bitmaps()
+    or Table::restore_column_maps_after_mark_index()
 */
 
-void st_table::mark_columns_used_by_index(uint index)
+void Table::mark_columns_used_by_index(uint index)
 {
   MY_BITMAP *bitmap= &tmp_set;
 
@@ -3132,7 +3130,7 @@ void st_table::mark_columns_used_by_index(uint index)
     when calling mark_columns_used_by_index
 */
 
-void st_table::restore_column_maps_after_mark_index()
+void Table::restore_column_maps_after_mark_index()
 {
 
   key_read= 0;
@@ -3147,7 +3145,7 @@ void st_table::restore_column_maps_after_mark_index()
   mark columns used by key, but don't reset other fields
 */
 
-void st_table::mark_columns_used_by_index_no_reset(uint index,
+void Table::mark_columns_used_by_index_no_reset(uint index,
                                                    MY_BITMAP *bitmap)
 {
   KEY_PART_INFO *key_part= key_info[index].key_part;
@@ -3166,7 +3164,7 @@ void st_table::mark_columns_used_by_index_no_reset(uint index,
     always set and sometimes read.
 */
 
-void st_table::mark_auto_increment_column()
+void Table::mark_auto_increment_column()
 {
   assert(found_next_number_field);
   /*
@@ -3199,7 +3197,7 @@ void st_table::mark_auto_increment_column()
     retrieve the row again.
 */
 
-void st_table::mark_columns_needed_for_delete()
+void Table::mark_columns_needed_for_delete()
 {
   if (file->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
   {
@@ -3249,7 +3247,7 @@ void st_table::mark_columns_needed_for_delete()
     retrieve the row again.
 */
 
-void st_table::mark_columns_needed_for_update()
+void Table::mark_columns_needed_for_update()
 {
   if (file->ha_table_flags() & HA_REQUIRES_KEY_COLUMNS_FOR_DELETE)
   {
@@ -3291,7 +3289,7 @@ void st_table::mark_columns_needed_for_update()
   as changed.
 */
 
-void st_table::mark_columns_needed_for_insert()
+void Table::mark_columns_needed_for_insert()
 {
   if (found_next_number_field)
     mark_auto_increment_column();
@@ -3355,9 +3353,9 @@ Item_subselect *TABLE_LIST::containing_subselect()
   DESCRIPTION
     The parser collects the index hints for each table in a "tagged list" 
     (TABLE_LIST::index_hints). Using the information in this tagged list
-    this function sets the members st_table::keys_in_use_for_query, 
-    st_table::keys_in_use_for_group_by, st_table::keys_in_use_for_order_by,
-    st_table::force_index and st_table::covering_keys.
+    this function sets the members Table::keys_in_use_for_query, 
+    Table::keys_in_use_for_group_by, Table::keys_in_use_for_order_by,
+    Table::force_index and Table::covering_keys.
 
     Current implementation of the runtime does not allow mixing FORCE INDEX
     and USE INDEX, so this is checked here. Then the FORCE INDEX list 

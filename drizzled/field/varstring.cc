@@ -547,8 +547,7 @@ int Field_varstring::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
 }
 
 
-Field *Field_varstring::new_field(MEM_ROOT *root, struct st_table *new_table,
-                                  bool keep_type)
+Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
 {
   Field_varstring *res= (Field_varstring*) Field::new_field(root, new_table,
                                                             keep_type);
@@ -559,7 +558,7 @@ Field *Field_varstring::new_field(MEM_ROOT *root, struct st_table *new_table,
 
 
 Field *Field_varstring::new_key_field(MEM_ROOT *root,
-                                      struct st_table *new_table,
+                                      Table *new_table,
                                       uchar *new_ptr, uchar *new_null_ptr,
                                       uint new_null_bit)
 {

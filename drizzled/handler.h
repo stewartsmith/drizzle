@@ -467,8 +467,8 @@ struct handlerton;
 
 /* The handler for a table type.  Will be included in the TABLE structure */
 
-struct st_table;
-typedef struct st_table TABLE;
+class Table;
+typedef Table TABLE;
 typedef struct st_table_share TABLE_SHARE;
 struct st_foreign_key_info;
 typedef struct st_foreign_key_info FOREIGN_KEY_INFO;
@@ -1128,7 +1128,7 @@ public:
   typedef uint64_t Table_flags;
 protected:
   struct st_table_share *table_share;   /* The table definition */
-  struct st_table *table;               /* The current open table */
+  Table *table;               /* The current open table */
   Table_flags cached_table_flags;       /* Set on init() and open() */
 
   ha_rows estimation_rows_to_insert;

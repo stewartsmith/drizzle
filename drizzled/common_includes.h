@@ -245,7 +245,7 @@ enum enum_var_type
 
 struct TABLE_LIST;
 class String;
-struct st_table;
+class Table;
 class THD;
 class user_var_entry;
 class Security_context;

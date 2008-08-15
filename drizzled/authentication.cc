@@ -25,8 +25,6 @@ bool authenticate_user(THD *thd, const char *password)
   if (are_plugins_loaded != true)
     return true;
 
-  printf("PASSWORD :%s:\n", password);
-
   return plugin_foreach(thd, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
 }
 
