@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-14 10:35-0700\n"
+"POT-Creation-Date: 2008-08-15 13:00-0700\n"
 "PO-Revision-Date: 2008-08-13 03:09+0000\n"
 "Last-Translator: LinuxJedi <andrew@linuxjedi.co.uk>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -151,7 +151,7 @@ msgstr "Bye"
 msgid "Query aborted by Ctrl+C\n"
 msgstr ""
 
-#: client/drizzle.cc:1271 client/drizzleadmin.cc:69 drizzled/drizzled.cc:3112
+#: client/drizzle.cc:1271 client/drizzleadmin.cc:69 drizzled/drizzled.cc:3110
 msgid "Display this help and exit."
 msgstr ""
 
@@ -184,7 +184,7 @@ msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr ""
 
-#: client/drizzle.cc:1288 drizzled/drizzled.cc:3182
+#: client/drizzle.cc:1288 drizzled/drizzled.cc:3180
 msgid "Directory where character sets are."
 msgstr ""
 
@@ -214,7 +214,7 @@ msgstr ""
 msgid "Database to use."
 msgstr ""
 
-#: client/drizzle.cc:1307 drizzled/drizzled.cc:3178
+#: client/drizzle.cc:1307 drizzled/drizzled.cc:3176
 msgid "Set the default character set."
 msgstr ""
 
@@ -404,7 +404,7 @@ msgstr ""
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr ""
 
-#: client/drizzle.cc:1407 client/drizzleadmin.cc:89 drizzled/drizzled.cc:3650
+#: client/drizzle.cc:1407 client/drizzleadmin.cc:89 drizzled/drizzled.cc:3648
 msgid "Output version information and exit."
 msgstr ""
 
@@ -608,7 +608,7 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] ""
 msgstr[1] ""
 
-#: client/drizzleadmin.cc:76 drizzled/drizzled.cc:3441
+#: client/drizzleadmin.cc:76 drizzled/drizzled.cc:3439
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, my.cnf, $DRIZZLE_TCP_PORT, built-in default ("
@@ -716,14 +716,19 @@ msgid ""
 "  shutdown     Take server down\n"
 msgstr ""
 
+#: libdrizzle/local_infile.c:190 mysys/errors.c:52
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr ""
+
+#: libdrizzle/local_infile.c:221 mysys/errors.c:26
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr ""
+
 #: mysys/errors.c:25
 #, c-format
 msgid "Can't create/write to file '%s' (Errcode: %d)"
-msgstr ""
-
-#: mysys/errors.c:26
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
 msgstr ""
 
 #: mysys/errors.c:27
@@ -853,11 +858,6 @@ msgstr ""
 msgid ""
 "Collation '%s' is not a compiled collation and is not specified in the %s "
 "file"
-msgstr ""
-
-#: mysys/errors.c:52
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
 msgstr ""
 
 #: mysys/errors.c:53
@@ -1188,7 +1188,7 @@ msgstr ""
 msgid "Got error %d from pthread_cond_timedwait"
 msgstr ""
 
-#: drizzled/drizzled.cc:691 drizzled/drizzled.cc:1784
+#: drizzled/drizzled.cc:691 drizzled/drizzled.cc:1783
 msgid "Can't create thread to kill server"
 msgstr ""
 
@@ -1201,52 +1201,52 @@ msgstr ""
 msgid "Aborting\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:991
+#: drizzled/drizzled.cc:990
 msgid "One can only use the --user switch if running as root\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:999
+#: drizzled/drizzled.cc:998
 msgid ""
 "Fatal error: Please read \"Security\" section of the manual to find out how "
 "to run mysqld as root!\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1023
+#: drizzled/drizzled.cc:1022
 #, c-format
 msgid ""
 "Fatal error: Can't change to run as user '%s' ;  Please check that the user "
 "exists!\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1198
+#: drizzled/drizzled.cc:1197
 #, c-format
 msgid "Retrying bind on TCP/IP port %u"
 msgstr ""
 
-#: drizzled/drizzled.cc:1204
+#: drizzled/drizzled.cc:1203
 msgid "Can't start server: Bind on TCP/IP port"
 msgstr ""
 
-#: drizzled/drizzled.cc:1205
+#: drizzled/drizzled.cc:1204
 #, c-format
 msgid "Do you already have another drizzled server running on port: %d ?"
 msgstr ""
 
-#: drizzled/drizzled.cc:1211
+#: drizzled/drizzled.cc:1210
 msgid "Can't start server: listen() on TCP/IP port"
 msgstr ""
 
-#: drizzled/drizzled.cc:1212
+#: drizzled/drizzled.cc:1211
 #, c-format
 msgid "listen() on TCP/IP failed with error %d"
 msgstr ""
 
-#: drizzled/drizzled.cc:1430
+#: drizzled/drizzled.cc:1429
 #, c-format
 msgid "Fatal "
 msgstr ""
 
-#: drizzled/drizzled.cc:1448
+#: drizzled/drizzled.cc:1447
 #, c-format
 msgid ""
 "We will try our best to scrape up some info that will hopefully help "
@@ -1257,7 +1257,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1459
+#: drizzled/drizzled.cc:1458
 #, c-format
 msgid ""
 "It is possible that mysqld could use up to \n"
@@ -1267,7 +1267,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1477
+#: drizzled/drizzled.cc:1476
 #, c-format
 msgid ""
 "Attempting backtrace. You can use the following information to find out\n"
@@ -1275,14 +1275,14 @@ msgid ""
 "terribly wrong...\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1505
+#: drizzled/drizzled.cc:1504
 #, c-format
 msgid ""
 "Trying to get some variables.\n"
 "Some pointers may be invalid and cause the dump to abort...\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1517
+#: drizzled/drizzled.cc:1516
 #, c-format
 msgid ""
 "\n"
@@ -1294,7 +1294,7 @@ msgid ""
 "drizzled that is not statically linked.\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1532
+#: drizzled/drizzled.cc:1531
 #, c-format
 msgid ""
 "\n"
@@ -1305,7 +1305,7 @@ msgid ""
 "the documentation for your distribution on how to do that.\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1545
+#: drizzled/drizzled.cc:1544
 #, c-format
 msgid ""
 "\n"
@@ -1317,90 +1317,90 @@ msgid ""
 " bugs.\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1560
+#: drizzled/drizzled.cc:1559
 #, c-format
 msgid "Writing a core file\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:1607
+#: drizzled/drizzled.cc:1606
 msgid ""
 "setrlimit could not change the size of core files to 'infinity';  We may not "
 "be able to generate a core file on signals"
 msgstr ""
 
-#: drizzled/drizzled.cc:1676
+#: drizzled/drizzled.cc:1675
 #, c-format
 msgid "Can't create interrupt-thread (error %d, errno: %d)"
 msgstr ""
 
-#: drizzled/drizzled.cc:1764
+#: drizzled/drizzled.cc:1763
 #, c-format
 msgid "Got signal %d to shutdown mysqld"
 msgstr ""
 
-#: drizzled/drizzled.cc:1811
+#: drizzled/drizzled.cc:1810
 #, c-format
 msgid "Got signal: %d  error: %d"
 msgstr ""
 
-#: drizzled/drizzled.cc:1950
+#: drizzled/drizzled.cc:1949
 #, c-format
 msgid "Wrong date/time format specifier: %s\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:2079
+#: drizzled/drizzled.cc:2078
 #, c-format
 msgid "gethostname failed, using '%s' as hostname"
 msgstr ""
 
-#: drizzled/drizzled.cc:2143
+#: drizzled/drizzled.cc:2142
 #, c-format
 msgid ""
 "Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld"
 msgstr ""
 
-#: drizzled/drizzled.cc:2148
+#: drizzled/drizzled.cc:2147
 #, c-format
 msgid ""
 "Could not increase number of max_open_files to more than %u (request: %u)"
 msgstr ""
 
-#: drizzled/drizzled.cc:2230
+#: drizzled/drizzled.cc:2228
 #, c-format
 msgid "Unknown locale: '%s'"
 msgstr ""
 
-#: drizzled/drizzled.cc:2250
+#: drizzled/drizzled.cc:2248
 msgid ""
 "Although a path was specified for the --log option, log tables are used. To "
 "enable logging to files use the --log-output option."
 msgstr ""
 
-#: drizzled/drizzled.cc:2257
+#: drizzled/drizzled.cc:2255
 msgid ""
 "Although a path was specified for the --log-slow-queries option, log tables "
 "are used. To enable logging to files use the --log-output=file option."
 msgstr ""
 
-#: drizzled/drizzled.cc:2327
+#: drizzled/drizzled.cc:2325
 msgid "Can't create thread-keys"
 msgstr ""
 
-#: drizzled/drizzled.cc:2374
+#: drizzled/drizzled.cc:2372
 msgid "Out of memory"
 msgstr ""
 
-#: drizzled/drizzled.cc:2381
+#: drizzled/drizzled.cc:2379
 msgid "You need to use --log-bin to make --binlog-format work."
 msgstr ""
 
-#: drizzled/drizzled.cc:2403
+#: drizzled/drizzled.cc:2401
 msgid ""
 "using --replicate-same-server-id in conjunction with --log-slave-updates is "
 "impossible, it would lead to infinite loops in this server."
 msgstr ""
 
-#: drizzled/drizzled.cc:2423
+#: drizzled/drizzled.cc:2421
 #, c-format
 msgid ""
 "No argument was provided to --log-bin, and --log-bin-index was not used; so "
@@ -1408,91 +1408,91 @@ msgid ""
 "hostname changed!! Please use '--log-bin=%s' to avoid this problem."
 msgstr ""
 
-#: drizzled/drizzled.cc:2457
+#: drizzled/drizzled.cc:2455
 msgid "Failed to initialize plugins."
 msgstr ""
 
-#: drizzled/drizzled.cc:2488
+#: drizzled/drizzled.cc:2486
 #, c-format
 msgid ""
 "%s: Too many arguments (first extra is '%s').\n"
 "Use --verbose --help to get a list of available options\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:2498
+#: drizzled/drizzled.cc:2496
 msgid "Can't init databases"
 msgstr ""
 
-#: drizzled/drizzled.cc:2521
+#: drizzled/drizzled.cc:2519
 #, c-format
 msgid "Unknown/unsupported table type: %s"
 msgstr ""
 
-#: drizzled/drizzled.cc:2527
+#: drizzled/drizzled.cc:2525
 #, c-format
 msgid "Default storage engine (%s) is not available"
 msgstr ""
 
-#: drizzled/drizzled.cc:2550
+#: drizzled/drizzled.cc:2548
 msgid "Can't initialize tc_log"
 msgstr ""
 
-#: drizzled/drizzled.cc:2581
+#: drizzled/drizzled.cc:2579
 #, c-format
 msgid "Failed to lock memory. Errno: %d\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:2651
+#: drizzled/drizzled.cc:2649
 #, c-format
 msgid "Asked for %u thread stack, but got %llu"
 msgstr ""
 
-#: drizzled/drizzled.cc:2687
+#: drizzled/drizzled.cc:2685
 msgid ""
 "You have enabled the binary log, but you haven't set server-id to a non-zero "
 "value: we force server id to 1; updates will be logged to the binary log, "
 "but connections from slaves will not be accepted."
 msgstr ""
 
-#: drizzled/drizzled.cc:2745
+#: drizzled/drizzled.cc:2743
 msgid "Before Lock_thread_count"
 msgstr ""
 
-#: drizzled/drizzled.cc:2752
+#: drizzled/drizzled.cc:2750
 msgid "After lock_thread_count"
 msgstr ""
 
-#: drizzled/drizzled.cc:2861
+#: drizzled/drizzled.cc:2859
 #, c-format
 msgid "drizzled: Got error %d from select"
 msgstr ""
 
-#: drizzled/drizzled.cc:3116 drizzled/drizzled.cc:3235
-#: drizzled/drizzled.cc:3409
+#: drizzled/drizzled.cc:3114 drizzled/drizzled.cc:3233
+#: drizzled/drizzled.cc:3407
 msgid "Option used by mysql-test for debugging and testing of replication."
 msgstr ""
 
-#: drizzled/drizzled.cc:3120
+#: drizzled/drizzled.cc:3118
 msgid "Auto-increment columns are incremented by this"
 msgstr ""
 
-#: drizzled/drizzled.cc:3125
+#: drizzled/drizzled.cc:3123
 msgid ""
 "Offset added to Auto-increment columns. Used when auto-increment-increment !"
 "= 1"
 msgstr ""
 
-#: drizzled/drizzled.cc:3131
+#: drizzled/drizzled.cc:3129
 msgid ""
 "Path to installation directory. All paths are usually resolved relative to "
 "this."
 msgstr ""
 
-#: drizzled/drizzled.cc:3135
+#: drizzled/drizzled.cc:3133
 msgid "IP address to bind to."
 msgstr ""
 
-#: drizzled/drizzled.cc:3139
+#: drizzled/drizzled.cc:3137
 msgid ""
 "Does not have any effect without '--log-bin'. Tell the master the form of "
 "binary logging to use: either 'row' for row-based binary logging, or "
@@ -1503,151 +1503,151 @@ msgid ""
 "used. "
 msgstr ""
 
-#: drizzled/drizzled.cc:3149
+#: drizzled/drizzled.cc:3147
 msgid ""
 "Tells the master it should log updates for the specified database, and "
 "exclude all others not explicitly mentioned."
 msgstr ""
 
-#: drizzled/drizzled.cc:3153
+#: drizzled/drizzled.cc:3151
 msgid ""
 "Tells the master that updates to the given database should not be logged "
 "tothe binary log."
 msgstr ""
 
-#: drizzled/drizzled.cc:3157
+#: drizzled/drizzled.cc:3155
 msgid ""
 "The maximum size of a row-based binary log event in bytes. Rows will be "
 "grouped into events smaller than this size if possible. The value has to be "
 "a multiple of 256."
 msgstr ""
 
-#: drizzled/drizzled.cc:3168
+#: drizzled/drizzled.cc:3166
 msgid "Don't ignore client side character set value sent during handshake."
 msgstr ""
 
-#: drizzled/drizzled.cc:3173
+#: drizzled/drizzled.cc:3171
 msgid "Set the filesystem character set."
 msgstr ""
 
-#: drizzled/drizzled.cc:3185
+#: drizzled/drizzled.cc:3183
 msgid "Chroot mysqld daemon during startup."
 msgstr ""
 
-#: drizzled/drizzled.cc:3189
+#: drizzled/drizzled.cc:3187
 msgid "Set the default collation."
 msgstr ""
 
-#: drizzled/drizzled.cc:3193
+#: drizzled/drizzled.cc:3191
 msgid "Default completion type."
 msgstr ""
 
-#: drizzled/drizzled.cc:3198
+#: drizzled/drizzled.cc:3196
 msgid "Write error output on screen."
 msgstr ""
 
-#: drizzled/drizzled.cc:3202
+#: drizzled/drizzled.cc:3200
 msgid "Write core on errors."
 msgstr ""
 
-#: drizzled/drizzled.cc:3206
+#: drizzled/drizzled.cc:3204
 msgid "Path to the database root."
 msgstr ""
 
-#: drizzled/drizzled.cc:3210
+#: drizzled/drizzled.cc:3208
 msgid ""
 "Set the default character set (deprecated option, use --character-set-server "
 "instead)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3215
+#: drizzled/drizzled.cc:3213
 msgid ""
 "Set the default collation (deprecated option, use --collation-server "
 "instead)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3220
+#: drizzled/drizzled.cc:3218
 msgid "Set the default storage engine (table type) for tables."
 msgstr ""
 
-#: drizzled/drizzled.cc:3224
+#: drizzled/drizzled.cc:3222
 msgid "Set the default time zone."
 msgstr ""
 
-#: drizzled/drizzled.cc:3228
+#: drizzled/drizzled.cc:3226
 msgid "Type of DELAY_KEY_WRITE."
 msgstr ""
 
-#: drizzled/drizzled.cc:3231
+#: drizzled/drizzled.cc:3229
 msgid ""
 "Don't flush key buffers between writes for any MyISAM table (Deprecated "
 "option, use --delay-key-write=all instead)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3241
+#: drizzled/drizzled.cc:3239
 msgid "Print a symbolic stack trace on failure."
 msgstr ""
 
-#: drizzled/drizzled.cc:3247
+#: drizzled/drizzled.cc:3245
 msgid "Push supported query conditions to the storage engine."
 msgstr ""
 
-#: drizzled/drizzled.cc:3253
+#: drizzled/drizzled.cc:3251
 msgid "Used for debugging;  Use at your own risk!"
 msgstr ""
 
-#: drizzled/drizzled.cc:3256
+#: drizzled/drizzled.cc:3254
 msgid "Flush tables to disk between SQL commands."
 msgstr ""
 
-#: drizzled/drizzled.cc:3261
+#: drizzled/drizzled.cc:3259
 msgid "Set up signals usable for debugging"
 msgstr ""
 
-#: drizzled/drizzled.cc:3265
+#: drizzled/drizzled.cc:3263
 msgid "Enable general query log"
 msgstr ""
 
-#: drizzled/drizzled.cc:3269
+#: drizzled/drizzled.cc:3267
 msgid "Command(s) that are executed for each new connection"
 msgstr ""
 
-#: drizzled/drizzled.cc:3273
+#: drizzled/drizzled.cc:3271
 msgid "Read SQL commands from this file at startup."
 msgstr ""
 
-#: drizzled/drizzled.cc:3277
+#: drizzled/drizzled.cc:3275
 msgid "Command(s) that are executed when a slave connects to this master"
 msgstr ""
 
-#: drizzled/drizzled.cc:3281
+#: drizzled/drizzled.cc:3279
 msgid "(IGNORED)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3285
+#: drizzled/drizzled.cc:3283
 msgid "Set the language used for the month names and the days of the week."
 msgstr ""
 
-#: drizzled/drizzled.cc:3290
+#: drizzled/drizzled.cc:3288
 msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3295
+#: drizzled/drizzled.cc:3293
 msgid "Log connections and queries to file."
 msgstr ""
 
-#: drizzled/drizzled.cc:3299
+#: drizzled/drizzled.cc:3297
 msgid ""
 "Log update queries in binary format. Optional argument is the location for "
 "the binary log files.(Strongly recommended to avoid replication problems if "
 "server's hostname changes)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3306
+#: drizzled/drizzled.cc:3304
 msgid "File that holds the names for last binary log files."
 msgstr ""
 
-#: drizzled/drizzled.cc:3314
+#: drizzled/drizzled.cc:3312
 msgid ""
 "If equal to 0 (the default), then when --log-bin is used, creation of a "
 "stored function (or trigger) is allowed only to users having the SUPER "
@@ -1657,141 +1657,141 @@ msgid ""
 "cannot break, so you can safely set this to 1."
 msgstr ""
 
-#: drizzled/drizzled.cc:3323
+#: drizzled/drizzled.cc:3321
 msgid "Error log file."
 msgstr ""
 
-#: drizzled/drizzled.cc:3327
+#: drizzled/drizzled.cc:3325
 msgid "Log all MyISAM changes to file."
 msgstr ""
 
-#: drizzled/drizzled.cc:3331
+#: drizzled/drizzled.cc:3329
 msgid ""
 "Log some extra information to update log. Please note that this option is "
 "deprecated; see --log-queries-not-using-indexes option."
 msgstr ""
 
-#: drizzled/drizzled.cc:3336
+#: drizzled/drizzled.cc:3334
 msgid ""
 "Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, FILE "
 "or NONE."
 msgstr ""
 
-#: drizzled/drizzled.cc:3342
+#: drizzled/drizzled.cc:3340
 msgid ""
 "Log queries that are executed without benefit of any index to the slow log "
 "if it is open."
 msgstr ""
 
-#: drizzled/drizzled.cc:3348
+#: drizzled/drizzled.cc:3346
 msgid "Don't log extra information to update and slow-query logs."
 msgstr ""
 
-#: drizzled/drizzled.cc:3352
+#: drizzled/drizzled.cc:3350
 msgid ""
 "Tells the slave to log the updates from the slave thread to the binary log. "
 "You will need to turn it on if you plan to daisy-chain the slaves."
 msgstr ""
 
-#: drizzled/drizzled.cc:3359
+#: drizzled/drizzled.cc:3357
 msgid ""
 "Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements to the "
 "slow log if it is open."
 msgstr ""
 
-#: drizzled/drizzled.cc:3365
+#: drizzled/drizzled.cc:3363
 msgid ""
 "Log slow statements executed by slave thread to the slow log if it is open."
 msgstr ""
 
-#: drizzled/drizzled.cc:3371
+#: drizzled/drizzled.cc:3369
 msgid ""
 "Log slow queries to a table or log file. Defaults logging to table mysql."
 "slow_log or hostname-slow.log if --log-output=file is used. Must be enabled "
 "to activate other slow log options."
 msgstr ""
 
-#: drizzled/drizzled.cc:3377
+#: drizzled/drizzled.cc:3375
 msgid ""
 "Path to transaction coordinator log (used for transactions that affect more "
 "than one storage engine, when binary log is disabled)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3383
+#: drizzled/drizzled.cc:3381
 msgid "Size of transaction coordinator log."
 msgstr ""
 
-#: drizzled/drizzled.cc:3389
+#: drizzled/drizzled.cc:3387
 msgid "Log some not critical warnings to the log file."
 msgstr ""
 
-#: drizzled/drizzled.cc:3394
+#: drizzled/drizzled.cc:3392
 msgid "INSERT/DELETE/UPDATE has lower priority than selects."
 msgstr ""
 
-#: drizzled/drizzled.cc:3399
+#: drizzled/drizzled.cc:3397
 msgid ""
 "The location and name of the file that remembers the master and where the I/"
 "O replication thread is in the master's binlogs."
 msgstr ""
 
-#: drizzled/drizzled.cc:3404
+#: drizzled/drizzled.cc:3402
 msgid ""
 "The number of tries the slave will make to connect to the master before "
 "giving up."
 msgstr ""
 
-#: drizzled/drizzled.cc:3413
+#: drizzled/drizzled.cc:3411
 msgid "Lock mysqld in memory."
 msgstr ""
 
-#: drizzled/drizzled.cc:3417
+#: drizzled/drizzled.cc:3415
 msgid ""
 "Syntax: myisam-recover[=option[,option...]], where option can be DEFAULT, "
 "BACKUP, FORCE or QUICK."
 msgstr ""
 
-#: drizzled/drizzled.cc:3422
+#: drizzled/drizzled.cc:3420
 msgid "Use very new possible 'unsafe' functions."
 msgstr ""
 
-#: drizzled/drizzled.cc:3427
+#: drizzled/drizzled.cc:3425
 msgid "Use old, non-optimized alter table."
 msgstr ""
 
-#: drizzled/drizzled.cc:3432
+#: drizzled/drizzled.cc:3430
 msgid ""
 "Enable old-style user limits (before 5.0.3 user resources were counted per "
 "each user+host vs. per account)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3437
+#: drizzled/drizzled.cc:3435
 msgid "Pid file used by safe_mysqld."
 msgstr ""
 
-#: drizzled/drizzled.cc:3447
+#: drizzled/drizzled.cc:3445
 msgid ""
 "Maximum time in seconds to wait for the port to become free. (Default: no "
 "wait)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3452
+#: drizzled/drizzled.cc:3450
 msgid "The location and name to use for relay logs."
 msgstr ""
 
-#: drizzled/drizzled.cc:3456
+#: drizzled/drizzled.cc:3454
 msgid ""
 "The location and name to use for the file that keeps a list of the last "
 "relay logs."
 msgstr ""
 
-#: drizzled/drizzled.cc:3461
+#: drizzled/drizzled.cc:3459
 msgid ""
 "The location and name of the file that remembers where the SQL replication "
 "thread is in the relay logs."
 msgstr ""
 
-#: drizzled/drizzled.cc:3466
+#: drizzled/drizzled.cc:3464
 msgid ""
 "Tells the slave thread to restrict replication to the specified database. To "
 "specify more than one database, use the directive multiple times, once for "
@@ -1801,7 +1801,7 @@ msgid ""
 "updates to work, use replicate-wild-do-table=db_name.%."
 msgstr ""
 
-#: drizzled/drizzled.cc:3475
+#: drizzled/drizzled.cc:3473
 msgid ""
 "Tells the slave thread to restrict replication to the specified table. To "
 "specify more than one table, use the directive multiple times, once for each "
@@ -1809,7 +1809,7 @@ msgid ""
 "do-db."
 msgstr ""
 
-#: drizzled/drizzled.cc:3481
+#: drizzled/drizzled.cc:3479
 msgid ""
 "Tells the slave thread to not replicate to the specified database. To "
 "specify more than one database to ignore, use the directive multiple times, "
@@ -1818,7 +1818,7 @@ msgid ""
 "ignore-table=db_name.%. "
 msgstr ""
 
-#: drizzled/drizzled.cc:3488
+#: drizzled/drizzled.cc:3486
 msgid ""
 "Tells the slave thread to not replicate to the specified table. To specify "
 "more than one table to ignore, use the directive multiple times, once for "
@@ -1826,20 +1826,20 @@ msgid ""
 "replicate-ignore-db."
 msgstr ""
 
-#: drizzled/drizzled.cc:3494
+#: drizzled/drizzled.cc:3492
 msgid ""
 "Updates to a database with a different name than the original. Example: "
 "replicate-rewrite-db=master_db_name->slave_db_name."
 msgstr ""
 
-#: drizzled/drizzled.cc:3498
+#: drizzled/drizzled.cc:3496
 msgid ""
 "In replication, if set to 1, do not skip events having our server id. "
 "Default value is 0 (to break infinite loops in circular replication). Can't "
 "be set to 1 if --log-slave-updates is used."
 msgstr ""
 
-#: drizzled/drizzled.cc:3505
+#: drizzled/drizzled.cc:3503
 msgid ""
 "Tells the slave thread to restrict replication to the tables that match the "
 "specified wildcard pattern. To specify more than one table, use the "
@@ -1849,7 +1849,7 @@ msgid ""
 "names start with bar."
 msgstr ""
 
-#: drizzled/drizzled.cc:3513
+#: drizzled/drizzled.cc:3511
 msgid ""
 "Tells the slave thread to not replicate to the tables that match the given "
 "wildcard pattern. To specify more than one table to ignore, use the "
@@ -1859,7 +1859,7 @@ msgid ""
 "start with bar."
 msgstr ""
 
-#: drizzled/drizzled.cc:3522
+#: drizzled/drizzled.cc:3520
 msgid ""
 "Hostname or IP of the slave to be reported to to the master during slave "
 "registration. Will appear in the output of SHOW SLAVE HOSTS. Leave unset if "
@@ -1869,7 +1869,7 @@ msgid ""
 "may not be valid for connecting to the slave from the master or other hosts."
 msgstr ""
 
-#: drizzled/drizzled.cc:3535
+#: drizzled/drizzled.cc:3533
 msgid ""
 "Port for connecting to slave reported to the master during slave "
 "registration. Set it only if the slave is listening on a non-default port or "
@@ -1877,63 +1877,63 @@ msgid ""
 "If not sure, leave this option unset."
 msgstr ""
 
-#: drizzled/drizzled.cc:3542
+#: drizzled/drizzled.cc:3540
 msgid "Skip some optimize stages (for testing)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3545
+#: drizzled/drizzled.cc:3543
 msgid ""
 "Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
 "specified directory"
 msgstr ""
 
-#: drizzled/drizzled.cc:3550
+#: drizzled/drizzled.cc:3548
 msgid ""
 "Uniquely identifies the server instance in the community of replication "
 "partners."
 msgstr ""
 
-#: drizzled/drizzled.cc:3555
+#: drizzled/drizzled.cc:3553
 msgid ""
 "Change the value of a variable. Please note that this option is deprecated;"
 "you can set variables directly with --variable-name=value."
 msgstr ""
 
-#: drizzled/drizzled.cc:3559
+#: drizzled/drizzled.cc:3557
 msgid "Don't use new, possible wrong routines."
 msgstr ""
 
-#: drizzled/drizzled.cc:3562
+#: drizzled/drizzled.cc:3560
 msgid "If set, slave is not autostarted."
 msgstr ""
 
-#: drizzled/drizzled.cc:3566
+#: drizzled/drizzled.cc:3564
 msgid "Don't print a stack trace on failure."
 msgstr ""
 
-#: drizzled/drizzled.cc:3570
+#: drizzled/drizzled.cc:3568
 msgid ""
 "Don't allow symlinking of tables. Deprecated option.  Use --skip-symbolic-"
 "links instead."
 msgstr ""
 
-#: drizzled/drizzled.cc:3574
+#: drizzled/drizzled.cc:3572
 msgid "Don't give threads different priorities."
 msgstr ""
 
-#: drizzled/drizzled.cc:3578
+#: drizzled/drizzled.cc:3576
 msgid ""
 "The location where the slave should put its temporary files when replicating "
 "a LOAD DATA INFILE command."
 msgstr ""
 
-#: drizzled/drizzled.cc:3583
+#: drizzled/drizzled.cc:3581
 msgid ""
 "Tells the slave thread to continue replication when a query event returns an "
 "error from the provided list."
 msgstr ""
 
-#: drizzled/drizzled.cc:3587
+#: drizzled/drizzled.cc:3585
 msgid ""
 "Modes for how replication events should be executed.  Legal values are "
 "STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will not "
@@ -1941,139 +1941,139 @@ msgid ""
 "stop on any unexpected difference between the master and the slave."
 msgstr ""
 
-#: drizzled/drizzled.cc:3595
+#: drizzled/drizzled.cc:3593
 msgid "Enable|disable slow query log"
 msgstr ""
 
-#: drizzled/drizzled.cc:3599
+#: drizzled/drizzled.cc:3597
 msgid "(INGORED)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3602
+#: drizzled/drizzled.cc:3600
 msgid "Enable symbolic link support."
 msgstr ""
 
-#: drizzled/drizzled.cc:3611
+#: drizzled/drizzled.cc:3609
 msgid ""
 "Non-default option to alias SYSDATE() to NOW() to make it safe-replicable."
 msgstr ""
 
-#: drizzled/drizzled.cc:3616
+#: drizzled/drizzled.cc:3614
 msgid ""
 "Decision to use in heuristic recover process. Possible values are COMMIT or "
 "ROLLBACK."
 msgstr ""
 
-#: drizzled/drizzled.cc:3621
+#: drizzled/drizzled.cc:3619
 msgid ""
 "Using this option will cause most temporary files created to use a small set "
 "of names, rather than a unique name for each new file."
 msgstr ""
 
-#: drizzled/drizzled.cc:3626
+#: drizzled/drizzled.cc:3624
 msgid ""
 "Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3631
+#: drizzled/drizzled.cc:3629
 msgid ""
 "Path for temporary files. Several paths may be specified, separated by a "
 "colon (:), in this case they are used in a round-robin fashion."
 msgstr ""
 
-#: drizzled/drizzled.cc:3637
+#: drizzled/drizzled.cc:3635
 msgid "Default transaction isolation level."
 msgstr ""
 
-#: drizzled/drizzled.cc:3641
+#: drizzled/drizzled.cc:3639
 msgid ""
 "Enable symbolic link support. Deprecated option; use --symbolic-links "
 "instead."
 msgstr ""
 
-#: drizzled/drizzled.cc:3646
+#: drizzled/drizzled.cc:3644
 msgid "Run mysqld daemon as user."
 msgstr ""
 
-#: drizzled/drizzled.cc:3654
+#: drizzled/drizzled.cc:3652
 msgid "Deprecated; use --log-warnings instead."
 msgstr ""
 
-#: drizzled/drizzled.cc:3659
+#: drizzled/drizzled.cc:3657
 msgid ""
 "The number of outstanding connection requests MySQL can have. This comes "
 "into play when the main MySQL thread gets very many connection requests in a "
 "very short time."
 msgstr ""
 
-#: drizzled/drizzled.cc:3665
+#: drizzled/drizzled.cc:3663
 msgid ""
 "The size of the cache to hold the SQL statements for the binary log during a "
 "transaction. If you often use big, multi-statement transactions you can "
 "increase this to get more performance."
 msgstr ""
 
-#: drizzled/drizzled.cc:3671
+#: drizzled/drizzled.cc:3669
 msgid ""
 "Size of tree cache used in bulk insert optimisation. Note that this is a "
 "limit per thread!"
 msgstr ""
 
-#: drizzled/drizzled.cc:3677
+#: drizzled/drizzled.cc:3675
 msgid ""
 "The number of seconds the mysqld server is waiting for a connect packet "
 "before responding with 'Bad handshake'."
 msgstr ""
 
-#: drizzled/drizzled.cc:3682
+#: drizzled/drizzled.cc:3680
 msgid "The DATE format (For future)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3687
+#: drizzled/drizzled.cc:3685
 msgid "The DATETIME/TIMESTAMP format (for future)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3692
+#: drizzled/drizzled.cc:3690
 msgid "The default week format used by WEEK() functions."
 msgstr ""
 
-#: drizzled/drizzled.cc:3697
+#: drizzled/drizzled.cc:3695
 msgid ""
 "Precision of the result of '/' operator will be increased on that value."
 msgstr ""
 
-#: drizzled/drizzled.cc:3703
+#: drizzled/drizzled.cc:3701
 msgid ""
 "If non-zero, binary logs will be purged after expire_logs_days days; "
 "possible purges happen at startup and at binary log rotation."
 msgstr ""
 
-#: drizzled/drizzled.cc:3709
+#: drizzled/drizzled.cc:3707
 msgid "The maximum length of the result of function  group_concat."
 msgstr ""
 
-#: drizzled/drizzled.cc:3714
+#: drizzled/drizzled.cc:3712
 msgid ""
 "The number of seconds the server waits for activity on an interactive "
 "connection before closing it."
 msgstr ""
 
-#: drizzled/drizzled.cc:3720
+#: drizzled/drizzled.cc:3718
 msgid "The size of the buffer that is used for full joins."
 msgstr ""
 
-#: drizzled/drizzled.cc:3726
+#: drizzled/drizzled.cc:3724
 msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
 msgstr ""
 
-#: drizzled/drizzled.cc:3731
+#: drizzled/drizzled.cc:3729
 msgid ""
 "The size of the buffer used for index blocks for MyISAM tables. Increase "
 "this to get better index handling (for all reads and multiple writes) to as "
 "much as you can afford;"
 msgstr ""
 
-#: drizzled/drizzled.cc:3740
+#: drizzled/drizzled.cc:3738
 msgid ""
 "This characterizes the number of hits a hot block has to be untouched until "
 "it is considered aged enough to be downgraded to a warm block. This "
@@ -2081,161 +2081,161 @@ msgid ""
 "blocks in key cache"
 msgstr ""
 
-#: drizzled/drizzled.cc:3749
+#: drizzled/drizzled.cc:3747
 msgid "The default size of key cache blocks"
 msgstr ""
 
-#: drizzled/drizzled.cc:3755
+#: drizzled/drizzled.cc:3753
 msgid "The minimum percentage of warm blocks in key cache"
 msgstr ""
 
-#: drizzled/drizzled.cc:3761
+#: drizzled/drizzled.cc:3759
 msgid ""
 "Log all queries that have taken more than long_query_time seconds to execute "
 "to file. The argument will be treated as a decimal value with microsecond "
 "precission."
 msgstr ""
 
-#: drizzled/drizzled.cc:3767
+#: drizzled/drizzled.cc:3765
 msgid "Max packetlength to send/receive from to server."
 msgstr ""
 
-#: drizzled/drizzled.cc:3772
+#: drizzled/drizzled.cc:3770
 msgid ""
 "Can be used to restrict the total size used to cache a multi-transaction "
 "query."
 msgstr ""
 
-#: drizzled/drizzled.cc:3777
+#: drizzled/drizzled.cc:3775
 msgid ""
 "Binary log will be rotated automatically when the size exceeds this value. "
 "Will also apply to relay logs if max_relay_log_size is 0. The minimum value "
 "for this variable is 4096."
 msgstr ""
 
-#: drizzled/drizzled.cc:3783
+#: drizzled/drizzled.cc:3781
 msgid ""
 "If there is more than this number of interrupted connections from a host "
 "this host will be blocked from further connections."
 msgstr ""
 
-#: drizzled/drizzled.cc:3790
+#: drizzled/drizzled.cc:3788
 msgid "The number of simultaneous clients allowed."
 msgstr ""
 
-#: drizzled/drizzled.cc:3795
+#: drizzled/drizzled.cc:3793
 msgid "Max number of errors/warnings to store for a statement."
 msgstr ""
 
-#: drizzled/drizzled.cc:3800
+#: drizzled/drizzled.cc:3798
 msgid "Don't allow creation of heap tables bigger than this."
 msgstr ""
 
-#: drizzled/drizzled.cc:3806
+#: drizzled/drizzled.cc:3804
 msgid ""
 "Joins that are probably going to read more than max_join_size records return "
 "an error."
 msgstr ""
 
-#: drizzled/drizzled.cc:3812
+#: drizzled/drizzled.cc:3810
 msgid "Max number of bytes in sorted records."
 msgstr ""
 
-#: drizzled/drizzled.cc:3817
+#: drizzled/drizzled.cc:3815
 msgid ""
 "If non-zero: relay log will be rotated automatically when the size exceeds "
 "this value; if zero (the default): when the size exceeds max_binlog_size. 0 "
 "excepted, the minimum value for this variable is 4096."
 msgstr ""
 
-#: drizzled/drizzled.cc:3824
+#: drizzled/drizzled.cc:3822
 msgid "Limit assumed max number of seeks when looking up rows based on a key"
 msgstr ""
 
-#: drizzled/drizzled.cc:3829
+#: drizzled/drizzled.cc:3827
 msgid ""
 "The number of bytes to use when sorting BLOB or TEXT values (only the first "
 "max_sort_length bytes of each value are used; the rest are ignored)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3836
+#: drizzled/drizzled.cc:3834
 msgid "Maximum number of temporary tables a client can keep open at a time."
 msgstr ""
 
-#: drizzled/drizzled.cc:3841
+#: drizzled/drizzled.cc:3839
 msgid "After this many write locks, allow some read locks to run in between."
 msgstr ""
 
-#: drizzled/drizzled.cc:3845
+#: drizzled/drizzled.cc:3843
 msgid ""
 "Don't log queries which examine less than min_examined_row_limit rows to "
 "file."
 msgstr ""
 
-#: drizzled/drizzled.cc:3851
+#: drizzled/drizzled.cc:3849
 msgid "Block size to be used for MyISAM index pages."
 msgstr ""
 
-#: drizzled/drizzled.cc:3857
+#: drizzled/drizzled.cc:3855
 msgid "Default pointer size to be used for MyISAM tables."
 msgstr ""
 
-#: drizzled/drizzled.cc:3862
+#: drizzled/drizzled.cc:3860
 msgid "(Deprecated option)"
 msgstr ""
 
-#: drizzled/drizzled.cc:3868
+#: drizzled/drizzled.cc:3866
 msgid ""
 "Don't use the fast sort index method to created index if the temporary file "
 "would get bigger than this."
 msgstr ""
 
-#: drizzled/drizzled.cc:3875
+#: drizzled/drizzled.cc:3873
 msgid ""
 "Number of threads to use when repairing MyISAM tables. The value of 1 "
 "disables parallel repair."
 msgstr ""
 
-#: drizzled/drizzled.cc:3881
+#: drizzled/drizzled.cc:3879
 msgid ""
 "The buffer that is allocated when sorting the index when doing a REPAIR or "
 "when creating indexes with CREATE INDEX or ALTER TABLE."
 msgstr ""
 
-#: drizzled/drizzled.cc:3887
+#: drizzled/drizzled.cc:3885
 msgid ""
 "Specifies how MyISAM index statistics collection code should threat NULLs. "
 "Possible values of name are 'nulls_unequal' (default behavior), "
 "'nulls_equal' (emulate MySQL 4.0 behavior), and 'nulls_ignored'."
 msgstr ""
 
-#: drizzled/drizzled.cc:3894
+#: drizzled/drizzled.cc:3892
 msgid "Buffer length for TCP/IP and socket communication."
 msgstr ""
 
-#: drizzled/drizzled.cc:3899
+#: drizzled/drizzled.cc:3897
 msgid ""
 "Number of seconds to wait for more data from a connection before aborting "
 "the read."
 msgstr ""
 
-#: drizzled/drizzled.cc:3905
+#: drizzled/drizzled.cc:3903
 msgid ""
 "If a read on a communication port is interrupted, retry this many times "
 "before giving up."
 msgstr ""
 
-#: drizzled/drizzled.cc:3911
+#: drizzled/drizzled.cc:3909
 msgid ""
 "Number of seconds to wait for a block to be written to a connection before "
 "aborting the write."
 msgstr ""
 
-#: drizzled/drizzled.cc:3917
+#: drizzled/drizzled.cc:3915
 msgid "Use compatible behavior."
 msgstr ""
 
-#: drizzled/drizzled.cc:3922
+#: drizzled/drizzled.cc:3920
 msgid ""
 "If this is not 0, then mysqld will use this value to reserve file "
 "descriptors to use with setrlimit(). If this value is 0 then mysqld will "
@@ -2243,7 +2243,7 @@ msgid ""
 "larger) number of files."
 msgstr ""
 
-#: drizzled/drizzled.cc:3929
+#: drizzled/drizzled.cc:3927
 msgid ""
 "Controls the heuristic(s) applied during query optimization to prune less-"
 "promising partial plans from the optimizer search space. Meaning: 0 - do not "
@@ -2251,7 +2251,7 @@ msgid ""
 "on number of retrieved rows."
 msgstr ""
 
-#: drizzled/drizzled.cc:3937
+#: drizzled/drizzled.cc:3935
 msgid ""
 "Maximum depth of search performed by the query optimizer. Values larger than "
 "the number of relations in a query result in better query plans, but take "
@@ -2262,161 +2262,161 @@ msgid ""
 "(used for testing/comparison)."
 msgstr ""
 
-#: drizzled/drizzled.cc:3949
+#: drizzled/drizzled.cc:3947
 msgid "Directory for plugins."
 msgstr ""
 
-#: drizzled/drizzled.cc:3953
+#: drizzled/drizzled.cc:3951
 msgid ""
 "Optional comma separated list of plugins to load, where each plugin is "
 "identified by the name of the shared library. [for example: --"
 "plugin_load=libmd5udf.so]"
 msgstr ""
 
-#: drizzled/drizzled.cc:3959
+#: drizzled/drizzled.cc:3957
 msgid "The size of the buffer that is allocated when preloading indexes"
 msgstr ""
 
-#: drizzled/drizzled.cc:3964
+#: drizzled/drizzled.cc:3962
 msgid "Allocation block size for query parsing and execution"
 msgstr ""
 
-#: drizzled/drizzled.cc:3969
+#: drizzled/drizzled.cc:3967
 msgid "Persistent buffer for query parsing and execution"
 msgstr ""
 
-#: drizzled/drizzled.cc:3975
+#: drizzled/drizzled.cc:3973
 msgid "Allocation block size for storing ranges during optimization"
 msgstr ""
 
-#: drizzled/drizzled.cc:3981
+#: drizzled/drizzled.cc:3979
 msgid ""
 "Each thread that does a sequential scan allocates a buffer of this size for "
 "each table it scans. If you do many sequential scans, you may want to "
 "increase this value."
 msgstr ""
 
-#: drizzled/drizzled.cc:3989
+#: drizzled/drizzled.cc:3987
 msgid ""
 "Make all non-temporary tables read-only, with the exception for replication "
 "(slave) threads and users with the SUPER privilege"
 msgstr ""
 
-#: drizzled/drizzled.cc:3995
+#: drizzled/drizzled.cc:3993
 msgid ""
 "When reading rows in sorted order after a sort, the rows are read through "
 "this buffer to avoid a disk seeks. If not set, then it's set to the value of "
 "record_buffer."
 msgstr ""
 
-#: drizzled/drizzled.cc:4009
+#: drizzled/drizzled.cc:4007
 msgid ""
 "0 = do not purge relay logs. 1 = purge them as soon as they are no more "
 "needed."
 msgstr ""
 
-#: drizzled/drizzled.cc:4015
+#: drizzled/drizzled.cc:4013
 msgid "Maximum space to use for all relay logs."
 msgstr ""
 
-#: drizzled/drizzled.cc:4020
+#: drizzled/drizzled.cc:4018
 msgid "Use compression on master/slave protocol."
 msgstr ""
 
-#: drizzled/drizzled.cc:4025
+#: drizzled/drizzled.cc:4023
 msgid ""
 "Number of seconds to wait for more data from a master/slave connection "
 "before aborting the read."
 msgstr ""
 
-#: drizzled/drizzled.cc:4030
+#: drizzled/drizzled.cc:4028
 msgid ""
 "Number of times the slave SQL thread will retry a transaction in case it "
 "failed with a deadlock or elapsed lock wait timeout, before giving up and "
 "stopping."
 msgstr ""
 
-#: drizzled/drizzled.cc:4036
+#: drizzled/drizzled.cc:4034
 msgid "Allow slave to batch requests."
 msgstr ""
 
-#: drizzled/drizzled.cc:4040
+#: drizzled/drizzled.cc:4038
 msgid ""
 "If creating the thread takes longer than this value (in seconds), the "
 "Slow_launch_threads counter will be incremented."
 msgstr ""
 
-#: drizzled/drizzled.cc:4045
+#: drizzled/drizzled.cc:4043
 msgid "Each thread that needs to do a sort allocates a buffer of this size."
 msgstr ""
 
-#: drizzled/drizzled.cc:4051
+#: drizzled/drizzled.cc:4049
 msgid ""
 "Synchronously flush binary log to disk after every #th event. Use 0 "
 "(default) to disable synchronous flushing."
 msgstr ""
 
-#: drizzled/drizzled.cc:4056
+#: drizzled/drizzled.cc:4054
 msgid "Sync .frm to disk on create. Enabled by default."
 msgstr ""
 
-#: drizzled/drizzled.cc:4060
+#: drizzled/drizzled.cc:4058
 msgid "Deprecated; use --table_open_cache instead."
 msgstr ""
 
-#: drizzled/drizzled.cc:4064
+#: drizzled/drizzled.cc:4062
 msgid "The number of cached table definitions."
 msgstr ""
 
-#: drizzled/drizzled.cc:4068
+#: drizzled/drizzled.cc:4066
 msgid "The number of cached open tables."
 msgstr ""
 
-#: drizzled/drizzled.cc:4072
+#: drizzled/drizzled.cc:4070
 msgid ""
 "Timeout in seconds to wait for a table level lock before returning an error. "
 "Used only if the connection has active cursors."
 msgstr ""
 
-#: drizzled/drizzled.cc:4077
+#: drizzled/drizzled.cc:4075
 msgid "How many threads we should keep in a cache for reuse."
 msgstr ""
 
-#: drizzled/drizzled.cc:4081
+#: drizzled/drizzled.cc:4079
 msgid ""
 "How many threads we should create to handle query requests in case of "
 "'thread_handling=pool-of-threads'"
 msgstr ""
 
-#: drizzled/drizzled.cc:4086
+#: drizzled/drizzled.cc:4084
 msgid "The stack size for each thread."
 msgstr ""
 
-#: drizzled/drizzled.cc:4092
+#: drizzled/drizzled.cc:4090
 msgid "The TIME format (for future)."
 msgstr ""
 
-#: drizzled/drizzled.cc:4097
+#: drizzled/drizzled.cc:4095
 msgid ""
 "If an internal in-memory temporary table exceeds this size, MySQL will "
 "automatically convert it to an on-disk MyISAM table."
 msgstr ""
 
-#: drizzled/drizzled.cc:4103
+#: drizzled/drizzled.cc:4101
 msgid "Allocation block size for transactions to be stored in binary log"
 msgstr ""
 
-#: drizzled/drizzled.cc:4108
+#: drizzled/drizzled.cc:4106
 msgid "Persistent buffer for transactions to be stored in binary log"
 msgstr ""
 
-#: drizzled/drizzled.cc:4113
+#: drizzled/drizzled.cc:4111
 msgid ""
 "The number of seconds the server waits for activity on a connection before "
 "closing it."
 msgstr ""
 
-#: drizzled/drizzled.cc:4361
+#: drizzled/drizzled.cc:4359
 msgid ""
 "Copyright (C) 2000 MySQL AB, by Monty and others\n"
 "This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
@@ -2425,75 +2425,75 @@ msgid ""
 "Starts the Drizzle database server\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4368
+#: drizzled/drizzled.cc:4366
 #, c-format
 msgid "Usage: %s [OPTIONS]\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4379
+#: drizzled/drizzled.cc:4377
 msgid ""
 "\n"
 "To see what values a running Drizzle server is using, type\n"
 "'drizzleadmin variables' instead of 'drizzled --help'."
 msgstr ""
 
-#: drizzled/drizzled.cc:4564
+#: drizzled/drizzled.cc:4562
 #, c-format
 msgid ""
 "Ignoring user change to '%s' because the user was set to '%s' earlier on the "
 "command line\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4616
+#: drizzled/drizzled.cc:4614
 #, c-format
 msgid "Bad syntax in replicate-rewrite-db - missing '->'!\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4625
+#: drizzled/drizzled.cc:4623
 #, c-format
 msgid "Bad syntax in replicate-rewrite-db - empty FROM db!\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4635
+#: drizzled/drizzled.cc:4633
 #, c-format
 msgid "Bad syntax in replicate-rewrite-db - empty TO db!\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4664 drizzled/drizzled.cc:4673
+#: drizzled/drizzled.cc:4662 drizzled/drizzled.cc:4671
 #, c-format
 msgid "Could not add do table rule '%s'!\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4682 drizzled/drizzled.cc:4691
+#: drizzled/drizzled.cc:4680 drizzled/drizzled.cc:4689
 #, c-format
 msgid "Could not add ignore table rule '%s'!\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:4738
+#: drizzled/drizzled.cc:4736
 msgid "Can't start server: cannot resolve hostname!"
 msgstr ""
 
-#: drizzled/drizzled.cc:4744
+#: drizzled/drizzled.cc:4742
 msgid "Can't start server: bind-address refers to multiple interfaces!"
 msgstr ""
 
-#: drizzled/drizzled.cc:4919
+#: drizzled/drizzled.cc:4917
 msgid ""
 "options --log-slow-admin-statements, --log-queries-not-using-indexes and --"
 "log-slow-slave-statements have no effect if --log-slow-queries is not set"
 msgstr ""
 
-#: drizzled/drizzled.cc:5107
+#: drizzled/drizzled.cc:5105
 #, c-format
 msgid "No option given to %s\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:5109
+#: drizzled/drizzled.cc:5107
 #, c-format
 msgid "Wrong option to %s. Option(s) given: %s\n"
 msgstr ""
 
-#: drizzled/drizzled.cc:5111
+#: drizzled/drizzled.cc:5109
 #, c-format
 msgid "Alternatives are: '%s'"
 msgstr ""
@@ -5842,12 +5842,12 @@ msgstr ""
 msgid "Slave %s: %s%s Error_code: %d"
 msgstr ""
 
-#: drizzled/rpl_utility.cc:123
+#: drizzled/rpl_utility.cc:122
 #, c-format
 msgid "Column %d type mismatch - received type %d, %s.%s has type %d"
 msgstr ""
 
-#: drizzled/rpl_utility.cc:138
+#: drizzled/rpl_utility.cc:137
 #, c-format
 msgid ""
 "Column %d size mismatch - master has size %d, %s.%s on slave has size %d. "
