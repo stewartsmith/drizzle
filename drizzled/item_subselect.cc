@@ -2960,7 +2960,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
       tmp_table->s->uniques ||
       tmp_table->key_info->key_length >= tmp_table->file->max_key_length() ||
       tmp_table->key_info->key_parts > tmp_table->file->max_key_parts());
-    free_tmp_table(thd, tmp_table);
+    tmp_table->free_tmp_table(thd);
     delete result;
     result= NULL;
     return(true);
@@ -3051,7 +3051,7 @@ subselect_hash_sj_engine::~subselect_hash_sj_engine()
 {
   delete result;
   if (tab)
-    free_tmp_table(thd, tab->table);
+    tab->table->free_tmp_table(thd);
 }
 
 

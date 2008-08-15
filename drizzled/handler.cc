@@ -3099,7 +3099,7 @@ int ha_create_table(THD *thd, const char *path,
     goto err;
 
   if (update_create_info)
-    update_create_info_from_table(create_info, &table);
+    table.updateCreateInfo(create_info);
 
   name= check_lowercase_names(table.file, share.path.str, name_buff);
 
@@ -3168,7 +3168,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
     return(3);
   }
 
-  update_create_info_from_table(&create_info, &table);
+  table.updateCreateInfo(&create_info);
   create_info.table_options|= HA_OPTION_CREATE_FROM_ENGINE;
 
   check_lowercase_names(table.file, path, path);

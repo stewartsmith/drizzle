@@ -2488,7 +2488,7 @@ void Item_sum_count_distinct::cleanup()
     is_evaluated= false;
     if (table)
     {
-      free_tmp_table(table->in_use, table);
+      table->free_tmp_table(table->in_use);
       table= 0;
     }
     delete tmp_table_param;
@@ -3155,7 +3155,7 @@ void Item_func_group_concat::cleanup()
     if (table)
     {
       THD *thd= table->in_use;
-      free_tmp_table(thd, table);
+      table->free_tmp_table(thd);
       table= 0;
       if (tree)
       {

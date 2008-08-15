@@ -16,6 +16,11 @@
 
 /* Structs that defines the TABLE */
 
+#ifndef DRIZZLED_TABLE_H
+#define DRIZZLED_TABLE_H
+
+#include <storage/myisam/myisam.h>
+
 class Item;				/* Needed by ORDER */
 class Item_subselect;
 class st_select_lex_unit;
@@ -349,6 +354,11 @@ enum index_hint_type
   INDEX_HINT_FORCE
 };
 
+bool create_myisam_from_heap(THD *thd, TABLE *table,
+                             MI_COLUMNDEF *start_recinfo,
+                             MI_COLUMNDEF **recinfo, 
+                             int error, bool ignore_last_dupp_key_error);
+
 class Table {
 public:
   TABLE_SHARE	*s;
@@ -371,6 +381,17 @@ public:
   inline bool isNameLock() { return s->name_lock; } 
   inline bool isReplaceWithNameLock() { return s->replace_with_name_lock; }
   inline bool isWaitingOnCondition() { return s->waiting_on_cond; }                 /* Protection against free */
+
+  void updateCreateInfo(HA_CREATE_INFO *create_info);
+  void setup_tmp_table_column_bitmaps(uchar *bitmaps);
+
+  /* For TMP tables, should be pulled out as a class */
+  bool create_myisam_tmp_table(KEY *keyinfo, 
+                               MI_COLUMNDEF *start_recinfo,
+                               MI_COLUMNDEF **recinfo, 
+                               uint64_t options);
+  void free_tmp_table(THD *thd);
+  bool open_tmp_table();
 
   handler	*file;
   Table *next, *prev;
@@ -1208,3 +1229,4 @@ static inline void dbug_tmp_restore_column_map(MY_BITMAP *bitmap __attribute__((
 
 size_t max_row_length(TABLE *table, const uchar *data);
 
+#endif /* DRIZZLED_TABLE_H */

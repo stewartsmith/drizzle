@@ -366,48 +366,6 @@ typedef struct st_rollup
 } ROLLUP;
 
 
-/*
-  Describes use of one temporary table to weed out join duplicates.
-  The temporar
-
-  Used to
-    - create a temp table
-    - when we reach the weed-out tab, walk through rowid-ed tabs and
-      and copy rowids.
-      For each table we need
-       - rowid offset
-       - null bit address.
-*/
-
-class SJ_TMP_TABLE : public Sql_alloc
-{
-public:
-  /* Array of pointers to tables that should be "used" */
-  class TAB
-  {
-  public:
-    JOIN_TAB *join_tab;
-    uint rowid_offset;
-    ushort null_byte;
-    uchar null_bit;
-  };
-  TAB *tabs;
-  TAB *tabs_end;
-
-  uint null_bits;
-  uint null_bytes;
-  uint rowid_len;
-
-  TABLE *tmp_table;
-
-  MI_COLUMNDEF *start_recinfo;
-  MI_COLUMNDEF *recinfo;
-
-  /* Pointer to next table (next->start_idx > this->end_idx) */
-  SJ_TMP_TABLE *next; 
-};
-
-
 class JOIN :public Sql_alloc
 {
   JOIN(const JOIN &rhs);                        /**< not implemented */
@@ -703,10 +661,6 @@ bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
 		       uint elements, List<Item> &fields);
 void copy_fields(TMP_TABLE_PARAM *param);
 void copy_funcs(Item **func_ptr);
-bool create_myisam_from_heap(THD *thd, TABLE *table,
-                             MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo, 
-			     int error, bool ignore_last_dupp_key_error);
 uint find_shortest_key(TABLE *table, const key_map *usable_keys);
 Field* create_tmp_field_from_field(THD *thd, Field* org_field,
                                    const char *name, TABLE *table,

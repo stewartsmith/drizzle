@@ -1330,7 +1330,7 @@ multi_update::~multi_update()
     {
       if (tmp_tables[cnt])
       {
-	free_tmp_table(thd, tmp_tables[cnt]);
+	tmp_tables[cnt]->free_tmp_table(thd);
 	tmp_table_param[cnt].cleanup();
       }
     }

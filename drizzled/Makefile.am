@@ -137,6 +137,8 @@ noinst_HEADERS = item.h \
 		 connect.h \
 		 sql_table.h \
 		 show.h \
+		 tmp_table.h \
+		 sj_tmp_table.h \
 		 drizzled_error_messages.h \
 		 common_includes.h 
 
@@ -219,6 +221,8 @@ drizzled_SOURCES = \
 		   my_decimal.cc\
 		   sql_plugin.cc \
 		   sql_binlog.cc \
+		   tmp_table.cc \
+		   sj_tmp_table.cc \
 		   sql_builtin.cc 
 
 libhandler_la_SOURCES = handler.cc

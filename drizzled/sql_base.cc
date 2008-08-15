@@ -1023,7 +1023,7 @@ void close_thread_tables(THD *thd)
     for (table= thd->derived_tables ; table ; table= next)
     {
       next= table->next;
-      free_tmp_table(thd, table);
+      table->free_tmp_table(thd);
     }
     thd->derived_tables= 0;
   }

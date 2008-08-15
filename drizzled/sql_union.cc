@@ -612,7 +612,7 @@ bool st_select_lex_unit::cleanup()
     delete union_result;
     union_result=0; // Safety
     if (table)
-      free_tmp_table(thd, table);
+      table->free_tmp_table(thd);
     table= 0; // Safety
   }
 
