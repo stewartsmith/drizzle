@@ -17,7 +17,6 @@
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 /* Windows version of localtime_r() is declared in my_ptrhead.h */
-#include <mysys/my_pthread.h>
 
 uint64_t log_10_int[20]=
 {

@@ -21,7 +21,6 @@
 /* (Error messages for the daemon are in share/language/errmsg.sys) */
 
 #include <drizzled/global.h>
-#include <mysys/my_sys.h>
 #include "errmsg.h"
 
 const char *client_errors[]=
