@@ -45,7 +45,7 @@ extern "C" {
 #include <libdrizzle/drizzle_com.h>
 #include <libdrizzle/drizzle_time.h>
 
-#include <mysys/my_list.h> /* for LISTs used in 'MYSQL' */
+#include <mysys/my_list.h>
 
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;

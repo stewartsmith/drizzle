@@ -55,7 +55,6 @@
 #include <drizzled/error.h>
 #include "errmsg.h"
 #include <vio/violite.h>
-#include <mysys/my_pthread.h>        /* because of signal()  */
 
 #include <sys/stat.h>
 #include <signal.h>

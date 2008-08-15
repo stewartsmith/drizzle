@@ -20,8 +20,6 @@
 
 #include <drizzled/global.h>
 #include "my_time.h"
-#include <mystrings/m_string.h>
-#include <mystrings/m_ctype.h>
 #include "drizzle.h"
 #include "errmsg.h"
 #include <vio/violite.h>
