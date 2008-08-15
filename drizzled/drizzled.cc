@@ -869,7 +869,6 @@ void clean_up(bool print_message)
   if (print_message && server_start_time)
     sql_print_information(_(ER(ER_SHUTDOWN_COMPLETE)),my_progname);
   thread_scheduler.end();
-  finish_client_errs();
   /* Returns NULL on globerrs, we don't want to try to free that */
   //void *freeme=
   (void *)my_error_unregister(ER_ERROR_FIRST, ER_ERROR_LAST);
@@ -2154,7 +2153,6 @@ static int init_common_variables(const char *conf_file_name, int argc,
   unireg_init(opt_specialflag); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
-  init_client_errs();
   lex_init();
   if (item_create_init())
     return 1;

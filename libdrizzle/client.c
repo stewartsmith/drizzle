@@ -50,7 +50,6 @@
 #define CLI_DRIZZLE_CONNECT drizzle_connect
 
 #include <mysys/my_sys.h>
-#include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <drizzled/error.h>
@@ -957,8 +956,6 @@ drizzle_create(DRIZZLE *ptr)
     if (my_init())
       return NULL;
 
-    init_client_errs();
-
     if (!drizzle_port)
     {
       drizzle_port = DRIZZLE_PORT;
@@ -1064,7 +1061,6 @@ void drizzle_server_end()
   if (!drizzle_client_init)
     return;
 
-  finish_client_errs();
   vio_end();
 
   /* If library called my_init(), free memory allocated by it */
