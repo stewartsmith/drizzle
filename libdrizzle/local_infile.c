@@ -21,7 +21,6 @@
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include "my_time.h"
-#include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include "drizzle.h"
@@ -188,7 +187,7 @@ static int default_local_infile_init(void **ptr, const char *filename,
   {
     data->error_num= my_errno;
     snprintf(data->error_msg, sizeof(data->error_msg)-1,
-             EE(EE_FILENOTFOUND), tmp_name, data->error_num);
+             _("File '%s' not found (Errcode: %d)"), tmp_name, data->error_num);
     return 1;
   }
   return 0; /* ok */
@@ -217,9 +216,9 @@ static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
 
   if ((count= (int) my_read(data->fd, (uchar *) buf, buf_len, MYF(0))) < 0)
   {
-    data->error_num= EE_READ; /* the errmsg for not entire file read */
+    data->error_num= 2; /* the errmsg for not entire file read */
     snprintf(data->error_msg, sizeof(data->error_msg)-1,
-             EE(EE_READ),
+             _("Error reading file '%s' (Errcode: %d)"),
              data->filename, my_errno);
   }
   return count;
