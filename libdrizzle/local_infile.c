@@ -19,7 +19,6 @@
 
 
 #include <drizzled/global.h>
-#include <mysys/my_sys.h>
 #include "my_time.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
@@ -182,10 +181,9 @@ static int default_local_infile_init(void **ptr, const char *filename,
   data->error_num=    0;
   data->filename= filename;
 
-  fn_format(tmp_name, filename, "", "", MY_UNPACK_FILENAME);
-  if ((data->fd = my_open(tmp_name, O_RDONLY, MYF(0))) < 0)
+  if ((data->fd = open(tmp_name, O_RDONLY)) < 0)
   {
-    data->error_num= my_errno;
+    data->error_num= errno;
     snprintf(data->error_msg, sizeof(data->error_msg)-1,
              _("File '%s' not found (Errcode: %d)"), tmp_name, data->error_num);
     return 1;
@@ -214,12 +212,12 @@ static int default_local_infile_read(void *ptr, char *buf, uint buf_len)
   int count;
   default_local_infile_data*data = (default_local_infile_data *) ptr;
 
-  if ((count= (int) my_read(data->fd, (uchar *) buf, buf_len, MYF(0))) < 0)
+  if ((count= (int) read(data->fd, (uchar *) buf, buf_len)) < 0)
   {
     data->error_num= 2; /* the errmsg for not entire file read */
     snprintf(data->error_msg, sizeof(data->error_msg)-1,
              _("Error reading file '%s' (Errcode: %d)"),
-             data->filename, my_errno);
+             data->filename, errno);
   }
   return count;
 }
@@ -242,7 +240,7 @@ static void default_local_infile_end(void *ptr)
   if (data)          /* If not error on open */
   {
     if (data->fd >= 0)
-      my_close(data->fd, MYF(MY_WME));
+      close(data->fd);
     free(ptr);
   }
 }
