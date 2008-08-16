@@ -84,6 +84,7 @@
 #include "client_settings.h"
 #include <drizzled/version.h>
 #include <libdrizzle/sql_common.h>
+#include <libdrizzle/gettext.h>
 
 uint    drizzle_port=0;
 char    *drizzle_unix_port= 0;
@@ -669,7 +670,7 @@ void drizzle_read_default_options(struct st_drizzle_options *options,
           if ((options->protocol= find_type(opt_arg,
                                             &sql_protocol_typelib,0)) <= 0)
           {
-            fprintf(stderr, "Unknown option to protocol: %s\n", opt_arg);
+            fprintf(stderr, _("Unknown option to protocol: %s\n"), opt_arg);
             exit(1);
           }
           break;
@@ -1149,7 +1150,7 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
         if (!my_charset_same(drizzle->charset, collation))
         {
           my_printf_error(ER_UNKNOWN_ERROR,
-                         "COLLATION %s is not valid for CHARACTER SET %s",
+                         _("COLLATION %s is not valid for CHARACTER SET %s"),
                          MYF(0),
                          default_collation_name, drizzle->options.charset_name);
           drizzle->charset= NULL;
@@ -1271,7 +1272,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     if (gai_errno != 0)
     {
       set_drizzle_extended_error(drizzle, CR_UNKNOWN_HOST, unknown_sqlstate,
-                               ER(CR_UNKNOWN_HOST), host, errno);
+                                 ER(CR_UNKNOWN_HOST), host, errno);
 
       goto error;
     }
@@ -1335,8 +1336,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
       vio_poll_read(net->vio, drizzle->options.connect_timeout))
   {
     set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                             ER(CR_SERVER_LOST_EXTENDED),
-                             "waiting for initial communication packet",
+                             ER(CR_SERVER_LOST_INITIAL_COMM_WAIT),
                              errno);
     goto error;
   }
@@ -1349,8 +1349,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
       set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "reading initial communication packet",
+                               ER(CR_SERVER_LOST_INITIAL_COMM_READ),
                                errno);
     goto error;
   }
@@ -1481,8 +1480,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   if (my_net_write(net, (uchar*) buff, (size_t) (end-buff)) || net_flush(net))
   {
     set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                             ER(CR_SERVER_LOST_EXTENDED),
-                             "sending authentication information",
+                             ER(CR_SERVER_LOST_SEND_AUTH),
                              errno);
     goto error;
   }
@@ -1496,8 +1494,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
       set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "reading authorization packet",
+                               ER(CR_SERVER_LOST_READ_AUTH),
                                errno);
     goto error;
   }
@@ -1510,8 +1507,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
         set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                                 ER(CR_SERVER_LOST_EXTENDED),
-                                 "Setting intital database",
+                                 ER(CR_SERVER_LOST_SETTING_DB),
                                  errno);
     goto error;
   }
