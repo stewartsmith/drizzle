@@ -644,7 +644,7 @@ static void plugin_deinitialize(struct st_plugin_int *plugin, bool ref_check)
   {
     if ((*plugin_type_deinitialize[plugin->plugin->type])(plugin))
     {
-      sql_print_error("Plugin '%s' of type %s failed deinitialization",
+      sql_print_error(_("Plugin '%s' of type %s failed deinitialization"),
                       plugin->name.str, plugin_type_names[plugin->plugin->type].str);
     }
   }
@@ -658,7 +658,7 @@ static void plugin_deinitialize(struct st_plugin_int *plugin, bool ref_check)
     exit until NDB is shut down.
   */
   if (ref_check && plugin->ref_count)
-    sql_print_error("Plugin '%s' has ref_count=%d after deinitialization.",
+    sql_print_error(_("Plugin '%s' has ref_count=%d after deinitialization."),
                     plugin->name.str, plugin->ref_count);
 }
 
@@ -778,7 +778,7 @@ static int plugin_initialize(struct st_plugin_int *plugin)
   {
     if ((*plugin_type_initialize[plugin->plugin->type])(plugin))
     {
-      sql_print_error("Plugin '%s' registration as a %s failed.",
+      sql_print_error(_("Plugin '%s' registration as a %s failed."),
                       plugin->name.str, plugin_type_names[plugin->plugin->type].str);
       goto err;
     }
@@ -787,7 +787,7 @@ static int plugin_initialize(struct st_plugin_int *plugin)
   {
     if (plugin->plugin->init(plugin))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }
@@ -1032,7 +1032,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
   {
     if (p == buffer + sizeof(buffer) - 1)
     {
-      sql_print_error("plugin-load parameter too long");
+      sql_print_error(_("plugin-load parameter too long"));
       return(true);
     }
 
@@ -1092,7 +1092,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
   }
   return(false);
 error:
-  sql_print_error("Couldn't load plugin named '%s' with soname '%s'.",
+  sql_print_error(_("Couldn't load plugin named '%s' with soname '%s'."),
                   name.str, dl.str);
   return(true);
 }
@@ -1143,7 +1143,8 @@ void plugin_shutdown(void)
     }
 
     if (count > free_slots)
-      sql_print_warning("Forcing shutdown of %d plugins", count - free_slots);
+      sql_print_warning(_("Forcing shutdown of %d plugins"),
+                        count - free_slots);
 
     plugins= (struct st_plugin_int **) my_alloca(sizeof(void*) * (count+1));
 
@@ -1164,7 +1165,7 @@ void plugin_shutdown(void)
     for (i= 0; i < count; i++)
       if (!(plugins[i]->state & (PLUGIN_IS_UNINITIALIZED | PLUGIN_IS_FREED)))
       {
-        sql_print_information("Plugin '%s' will be forced to shutdown",
+        sql_print_information(_("Plugin '%s' will be forced to shutdown"),
                               plugins[i]->name.str);
         /*
           We are forcing deinit on plugins so we don't want to do a ref_count
@@ -1180,7 +1181,7 @@ void plugin_shutdown(void)
     for (i= 0; i < count; i++)
     {
       if (plugins[i]->ref_count)
-        sql_print_error("Plugin '%s' has ref_count=%d after shutdown.",
+        sql_print_error(_("Plugin '%s' has ref_count=%d after shutdown."),
                         plugins[i]->name.str, plugins[i]->ref_count);
       if (plugins[i]->state & PLUGIN_IS_UNINITIALIZED)
         plugin_del(plugins[i]);
@@ -2429,7 +2430,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       (((thdvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
       break;
     default:
-      sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",
+      sql_print_error(_("Unknown variable type code 0x%x in plugin '%s'."),
                       opt->flags, plugin_name);
       return(-1);
     };
@@ -2472,9 +2473,9 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
         if ((opt->flags & (PLUGIN_VAR_MEMALLOC | PLUGIN_VAR_READONLY)) == false)
         {
           opt->flags|= PLUGIN_VAR_READONLY;
-          sql_print_warning("Server variable %s of plugin %s was forced "
+          sql_print_warning(_("Server variable %s of plugin %s was forced "
                             "to be read-only: string variable without "
-                            "update_func and PLUGIN_VAR_MEMALLOC flag",
+                            "update_func and PLUGIN_VAR_MEMALLOC flag"),
                             opt->name, plugin_name);
         }
       }
@@ -2492,7 +2493,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
         opt->update= update_func_int64_t;
       break;
     default:
-      sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",
+      sql_print_error(_("Unknown variable type code 0x%x in plugin '%s'."),
                       opt->flags, plugin_name);
       return(-1);
     }
@@ -2503,7 +2504,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
 
     if (!opt->name)
     {
-      sql_print_error("Missing variable name in plugin '%s'.",
+      sql_print_error(_("Missing variable name in plugin '%s'."),
                       plugin_name);
       return(-1);
     }
@@ -2520,8 +2521,8 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       /* this should not fail because register_var should create entry */
       if (!(v= find_bookmark(name, opt->name, opt->flags)))
       {
-        sql_print_error("Thread local variable '%s' not allocated "
-                        "in plugin '%s'.", opt->name, plugin_name);
+        sql_print_error(_("Thread local variable '%s' not allocated "
+                        "in plugin '%s'."), opt->name, plugin_name);
         return(-1);
       }
 
@@ -2639,14 +2640,14 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   {
     if (!(opts= (my_option*) alloc_root(tmp_root, sizeof(my_option) * count)))
     {
-      sql_print_error("Out of memory for plugin '%s'.", tmp->name.str);
+      sql_print_error(_("Out of memory for plugin '%s'."), tmp->name.str);
       return(-1);
     }
     memset(opts, 0, sizeof(my_option) * count);
 
     if (construct_options(tmp_root, tmp, opts, can_disable))
     {
-      sql_print_error("Bad options for plugin '%s'.", tmp->name.str);
+      sql_print_error(_("Bad options for plugin '%s'."), tmp->name.str);
       return(-1);
     }
 
@@ -2655,7 +2656,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
 
     if (error)
     {
-       sql_print_error("Parsing options for plugin '%s' failed.",
+       sql_print_error(_("Parsing options for plugin '%s' failed."),
                        tmp->name.str);
        goto err;
     }
@@ -2698,7 +2699,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
       chain.last->next = NULL;
       if (mysql_add_sys_var_chain(chain.first, NULL))
       {
-        sql_print_error("Plugin '%s' has conflicting system variables",
+        sql_print_error(_("Plugin '%s' has conflicting system variables"),
                         tmp->name.str);
         goto err;
       }
@@ -2708,7 +2709,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   }
 
   if (enabled_saved && global_system_variables.log_warnings)
-    sql_print_information("Plugin '%s' disabled by command line option",
+    sql_print_information(_("Plugin '%s' disabled by command line option"),
                           tmp->name.str);
 err:
   if (opts)

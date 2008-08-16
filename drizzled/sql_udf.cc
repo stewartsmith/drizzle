@@ -15,6 +15,7 @@
 
 /* This implements 'user defined functions' */
 #include <drizzled/server_includes.h>
+#include <libdrizzle/gettext.h>
 
 static bool udf_startup= false; /* We do not lock because startup is single threaded */
 static MEM_ROOT mem;
@@ -35,7 +36,7 @@ void udf_init()
 
   if (hash_init(&udf_hash, system_charset_info, 32, 0, 0, get_hash_key, NULL, 0))
   {
-    sql_print_error("Can't allocate memory for udf structures");
+    sql_print_error(_("Can't allocate memory for udf structures"));
     hash_free(&udf_hash);
     free_root(&mem, MYF(0));
     return;
@@ -96,7 +97,7 @@ int initialize_udf(st_plugin_int *plugin)
 
     if (plugin->plugin->init((void *)udff))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }

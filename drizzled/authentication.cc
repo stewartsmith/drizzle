@@ -1,5 +1,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
+#include <libdrizzle/gettext.h>
 
 static bool are_plugins_loaded= false;
 
@@ -44,7 +45,7 @@ int authentication_initializer(st_plugin_int *plugin)
   {
     if (plugin->plugin->init(authen))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }
