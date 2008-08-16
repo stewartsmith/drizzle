@@ -4787,8 +4787,7 @@ Item *Item_field::update_value_transformer(uchar *select_arg)
   SELECT_LEX *select= (SELECT_LEX*)select_arg;
   assert(fixed);
 
-  if (field->table != select->context.table_list->table &&
-      type() != Item::TRIGGER_FIELD_ITEM)
+  if (field->table != select->context.table_list->table)
   {
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
