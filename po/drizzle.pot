@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle 7.0.0\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-16 13:33-0700\n"
+"POT-Creation-Date: 2008-08-16 14:06-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -713,6 +713,263 @@ msgstr ""
 msgid ""
 "  ping         Check if server is down\n"
 "  shutdown     Take server down\n"
+msgstr ""
+
+#: libdrizzle/client.c:673
+#, c-format
+msgid "Unknown option to protocol: %s\n"
+msgstr ""
+
+#: libdrizzle/client.c:1153
+#, c-format
+msgid "COLLATION %s is not valid for CHARACTER SET %s"
+msgstr ""
+
+#: libdrizzle/errmsg.c:29
+msgid "Unknown Drizzle error"
+msgstr ""
+
+#: libdrizzle/errmsg.c:30
+#, c-format
+msgid "Can't create UNIX socket (%d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:31
+#, c-format
+msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:32
+#, c-format
+msgid "Can't connect to Drizzle server on '%-.100s' (%d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:33
+#, c-format
+msgid "Can't create TCP/IP socket (%d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:34
+#, c-format
+msgid "Unknown Drizzle server host '%-.100s' (%d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:35
+msgid "Drizzle server has gone away"
+msgstr ""
+
+#: libdrizzle/errmsg.c:36
+#, c-format
+msgid "Protocol mismatch; server version = %d, client version = %d"
+msgstr ""
+
+#: libdrizzle/errmsg.c:37
+msgid "Drizzle client ran out of memory"
+msgstr ""
+
+#: libdrizzle/errmsg.c:38
+msgid "Wrong host info"
+msgstr ""
+
+#: libdrizzle/errmsg.c:39
+msgid "Localhost via UNIX socket"
+msgstr ""
+
+#: libdrizzle/errmsg.c:40
+#, c-format
+msgid "%-.100s via TCP/IP"
+msgstr ""
+
+#: libdrizzle/errmsg.c:41
+msgid "Error in server handshake"
+msgstr ""
+
+#: libdrizzle/errmsg.c:42
+msgid "Lost connection to Drizzle server during query"
+msgstr ""
+
+#: libdrizzle/errmsg.c:43
+msgid "Commands out of sync; you can't run this command now"
+msgstr ""
+
+#: libdrizzle/errmsg.c:44
+#, c-format
+msgid "Named pipe: %-.32s"
+msgstr ""
+
+#: libdrizzle/errmsg.c:45
+#, c-format
+msgid "Can't wait for named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:46
+#, c-format
+msgid "Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:47
+#, c-format
+msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:48
+#, c-format
+msgid "Can't initialize character set %-.32s (path: %-.100s)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:49
+msgid "Got packet bigger than 'max_allowed_packet' bytes"
+msgstr ""
+
+#: libdrizzle/errmsg.c:50
+msgid "Embedded server"
+msgstr ""
+
+#: libdrizzle/errmsg.c:51
+msgid "Error on SHOW SLAVE STATUS:"
+msgstr ""
+
+#: libdrizzle/errmsg.c:52
+msgid "Error on SHOW SLAVE HOSTS:"
+msgstr ""
+
+#: libdrizzle/errmsg.c:53
+msgid "Error connecting to slave:"
+msgstr ""
+
+#: libdrizzle/errmsg.c:54
+msgid "Error connecting to master:"
+msgstr ""
+
+#: libdrizzle/errmsg.c:55
+msgid "SSL connection error"
+msgstr ""
+
+#: libdrizzle/errmsg.c:56
+msgid "Malformed packet"
+msgstr ""
+
+#: libdrizzle/errmsg.c:57 libdrizzle/errmsg.c:68 libdrizzle/errmsg.c:69
+#: libdrizzle/errmsg.c:70 libdrizzle/errmsg.c:71 libdrizzle/errmsg.c:72
+#: libdrizzle/errmsg.c:73 libdrizzle/errmsg.c:74 libdrizzle/errmsg.c:75
+#: libdrizzle/errmsg.c:76
+msgid "(unused error message)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:58
+msgid "Invalid use of null pointer"
+msgstr ""
+
+#: libdrizzle/errmsg.c:59
+msgid "Statement not prepared"
+msgstr ""
+
+#: libdrizzle/errmsg.c:60
+msgid "No data supplied for parameters in prepared statement"
+msgstr ""
+
+#: libdrizzle/errmsg.c:61
+msgid "Data truncated"
+msgstr ""
+
+#: libdrizzle/errmsg.c:62
+msgid "No parameters exist in the statement"
+msgstr ""
+
+#: libdrizzle/errmsg.c:63
+msgid "Invalid parameter number"
+msgstr ""
+
+#: libdrizzle/errmsg.c:64
+#, c-format
+msgid ""
+"Can't send long data for non-string/non-binary data types (parameter: %d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:66
+#, c-format
+msgid "Using unsupported buffer type: %d  (parameter: %d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:67
+#, c-format
+msgid "Shared memory: %-.100s"
+msgstr ""
+
+#: libdrizzle/errmsg.c:77
+msgid "Wrong or unknown protocol"
+msgstr ""
+
+#: libdrizzle/errmsg.c:78
+msgid "Invalid connection handle"
+msgstr ""
+
+#: libdrizzle/errmsg.c:79
+msgid ""
+"Connection using old (pre-4.1.1) authentication protocol refused (client "
+"option 'secure_auth' enabled)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:81
+msgid "Row retrieval was canceled by drizzle_stmt_close() call"
+msgstr ""
+
+#: libdrizzle/errmsg.c:82
+msgid "Attempt to read column without prior row fetch"
+msgstr ""
+
+#: libdrizzle/errmsg.c:83
+msgid "Prepared statement contains no metadata"
+msgstr ""
+
+#: libdrizzle/errmsg.c:84
+msgid ""
+"Attempt to read a row while there is no result set associated with the "
+"statement"
+msgstr ""
+
+#: libdrizzle/errmsg.c:86
+msgid "This feature is not implemented yet"
+msgstr ""
+
+#: libdrizzle/errmsg.c:87
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while waiting for initial communication "
+"packet, system error: %d"
+msgstr ""
+
+#: libdrizzle/errmsg.c:89
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while reading initial communication "
+"packet, system error: %d"
+msgstr ""
+
+#: libdrizzle/errmsg.c:91
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while sending authentication information, "
+"system error: %d"
+msgstr ""
+
+#: libdrizzle/errmsg.c:93
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while reading authorization information, "
+"system error: %d"
+msgstr ""
+
+#: libdrizzle/errmsg.c:95
+#, c-format
+msgid ""
+"Lost connection to Drizzle server while setting initial database, system "
+"error: %d"
+msgstr ""
+
+#: libdrizzle/errmsg.c:97
+#, c-format
+msgid "Statement closed indirectly because of a preceeding %s() call"
 msgstr ""
 
 #: libdrizzle/local_infile.c:186 mysys/errors.c:52

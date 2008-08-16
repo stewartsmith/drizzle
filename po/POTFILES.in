@@ -1,6 +1,8 @@
 # List of source files which contain translatable strings.
 client/drizzle.cc
 client/drizzleadmin.cc
+libdrizzle/client.c
+libdrizzle/errmsg.c
 libdrizzle/local_infile.c
 mysys/errors.c
 mysys/my_error.c
