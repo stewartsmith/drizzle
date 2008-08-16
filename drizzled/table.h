@@ -512,18 +512,14 @@ public:
     If maybe_null !=0, this table is inner w.r.t. some outer join operation,
     and null_row may be true.
   */
-  uint maybe_null;
+  bool maybe_null;
+
   /*
     If true, the current table row is considered to have all columns set to 
     NULL, including columns declared as "not null" (see maybe_null).
   */
   bool null_row;
 
-  /*
-    TODO: Each of the following flags take up 8 bits. They can just as easily
-    be put into one single unsigned long and instead of taking up 18
-    bytes, it would take up 4.
-  */
   bool force_index;
   bool distinct,const_table,no_rows;
   bool key_read, no_keyread;

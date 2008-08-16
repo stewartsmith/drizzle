@@ -15,12 +15,7 @@
 
 #called from the top level Makefile
 
-LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
-
-bin_PROGRAMS = \
-	       table_reader \
-	       table_writer \
-	       schema_reader
+LDADD =
 
 libserialize_la_CXXFLAGS = -Wno-all -Wno-error
 
@@ -43,11 +38,19 @@ table.pb.cc: table.proto
 	
 DEFS= @DEFS@
 
+bin_PROGRAMS = \
+	       table_reader \
+	       table_writer \
+	       schema_reader
+
+schema_reader_LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
 schema_reader_SOURCES =  schema_reader.cc
 
+table_reader_LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
 table_reader_SOURCES =  table_reader.cc
 table_reader_CXXFLAGS = -Wno-all -Wno-error
 
+table_writer_LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
 table_writer_SOURCES =  table_writer.cc
 table_writer_CXXFLAGS = -Wno-all -Wno-error
 
