@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-16 14:06-0700\n"
+"POT-Creation-Date: 2008-08-16 16:48-0700\n"
 "PO-Revision-Date: 2008-08-12 07:05+0000\n"
 "Last-Translator: Morgan Tocker <tocker@gmail.com>\n"
 "Language-Team: English (Australia) <en_AU@li.org>\n"
@@ -1438,6 +1438,12 @@ msgstr ""
 
 #: mysys/my_handler_errors.h:130
 msgid "Tablespace not empty"
+msgstr ""
+
+#: drizzled/authentication.cc:48 drizzled/handler.cc:362
+#: drizzled/sql_plugin.cc:790 drizzled/sql_udf.cc:100
+#, c-format
+msgid "Plugin '%s' init function returned error."
 msgstr ""
 
 #: drizzled/drizzled.cc:551
@@ -6063,6 +6069,156 @@ msgid ""
 "while the same tablespace is defined on the server as '%-.256s'"
 msgstr ""
 
+#: drizzled/handler.cc:390
+msgid "Too many storage engines!"
+msgstr ""
+
+#: drizzled/handler.cc:394
+#, c-format
+msgid "Storage engine '%s' has conflicting typecode. Assigning value %d."
+msgstr ""
+
+#: drizzled/handler.cc:1278
+#, c-format
+msgid "Found %d prepared transaction(s) in %s"
+msgstr ""
+
+#: drizzled/handler.cc:1330
+msgid "Starting crash recovery..."
+msgstr ""
+
+#: drizzled/handler.cc:1362
+#, c-format
+msgid "Found %d prepared XA transactions"
+msgstr ""
+
+#: drizzled/handler.cc:1366
+#, c-format
+msgid ""
+"Found %d prepared transactions! It means that drizzled was not shut down "
+"properly last time and critical recovery information (last binlog or %s "
+"file) was manually deleted after a crash. You have to start drizzled with "
+"the --tc-heuristic-recover switch to commit or rollback pending transactions."
+msgstr ""
+
+#: drizzled/handler.cc:1376
+msgid "Crash recovery finished."
+msgstr ""
+
+#: drizzled/log.cc:1072
+msgid "I/O error reading the header from the binary log"
+msgstr ""
+
+#: drizzled/log.cc:1079
+msgid ""
+"Binlog has bad magic number;  It's not a binary log file that can be used by "
+"this version of Drizzle"
+msgstr ""
+
+#: drizzled/log.cc:1094
+#, c-format
+msgid "Failed to open log (file '%s', errno %d)"
+msgstr ""
+
+#: drizzled/log.cc:1096 drizzled/log.cc:1104
+msgid "Could not open log file"
+msgstr ""
+
+#: drizzled/log.cc:1102
+#, c-format
+msgid "Failed to create a cache on log (file '%s')"
+msgstr ""
+
+#: drizzled/log.cc:1256 drizzled/log.cc:1906
+#, c-format
+msgid ""
+"Could not use %s for logging (error %d). Turning logging off for the whole "
+"duration of the Drizzle server process. To turn it on again: fix the cause, "
+"shutdown the Drizzle server and restart it."
+msgstr ""
+
+#: drizzled/log.cc:2175 drizzled/log.cc:2206 drizzled/log.cc:2458
+#: drizzled/log.cc:2582
+#, c-format
+msgid "Failed to delete file '%s'"
+msgstr ""
+
+#: drizzled/log.cc:2184 drizzled/log.cc:2466 drizzled/log.cc:2590
+#, c-format
+msgid ""
+"a problem with deleting %s; consider examining correspondence of your binlog "
+"index file to the actual binlog files"
+msgstr ""
+
+#: drizzled/log.cc:2312
+#, c-format
+msgid "next log error: %d  offset: %s  log: %s included: %d"
+msgstr ""
+
+#: drizzled/log.cc:2424 drizzled/log.cc:2550
+#, c-format
+msgid "Failed to execute stat() on file '%s'"
+msgstr ""
+
+#: drizzled/log.cc:2435 drizzled/log.cc:2561
+#, c-format
+msgid ""
+"a problem with getting info on being purged %s; consider examining "
+"correspondence of your binlog index file to the actual binlog files"
+msgstr ""
+
+#: drizzled/log.cc:4057 drizzled/log.cc:4550
+#, c-format
+msgid "Recovering after a crash using %s"
+msgstr ""
+
+#: drizzled/log.cc:4060
+msgid ""
+"Cannot perform automatic crash recovery when --tc-heuristic-recover is used"
+msgstr ""
+
+#: drizzled/log.cc:4397
+msgid "Bad magic header in tc log"
+msgstr ""
+
+#: drizzled/log.cc:4407
+#, c-format
+msgid ""
+"Recovery failed! You must enable exactly %d storage engines that support two-"
+"phase commit protocol"
+msgstr ""
+
+#: drizzled/log.cc:4435
+msgid ""
+"Crash recovery failed. Either correct the problem (if it's, for example, out "
+"of memory error) and restart, or delete tc log and start drizzled with --tc-"
+"heuristic-recover={commit|rollback}"
+msgstr ""
+
+#: drizzled/log.cc:4465
+msgid "Heuristic crash recovery mode"
+msgstr ""
+
+#: drizzled/log.cc:4467
+msgid "Heuristic crash recovery failed"
+msgstr ""
+
+#: drizzled/log.cc:4468
+msgid "Please restart mysqld without --tc-heuristic-recover"
+msgstr ""
+
+#: drizzled/log.cc:4512 drizzled/log.cc:4536
+#, c-format
+msgid "find_log_pos() failed (error: %d)"
+msgstr ""
+
+#: drizzled/log.cc:4649
+msgid ""
+"Crash recovery failed. Either correct the problem (if it's, for example, out "
+"of memory error) and restart, or delete (or rename) binary log and start "
+"mysqld with --tc-heuristic-recover={commit|rollback}"
+msgstr ""
+
 #: drizzled/rpl_mi.cc:148
 #, c-format
 msgid "Failed to create a new master info file (file '%s', errno %d)"
@@ -6108,6 +6264,43 @@ msgstr ""
 msgid ""
 "Column %d size mismatch - master has size %d, %s.%s on slave has size %d. "
 "Master's column size should be <= the slave's column size."
+msgstr ""
+
+#: drizzled/scheduler.cc:121
+msgid "Memory allocation error in thd_scheduler::init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:212
+msgid "init_pipe(thd_add_pipe) error in libevent_init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:218
+msgid "init_pipe(thd_kill_pipe) error in libevent_init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:230
+msgid "thd_add_event event_add error in libevent_init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:246
+#, c-format
+msgid "Can't create completion port thread (error %d)"
+msgstr ""
+
+#: drizzled/scheduler.cc:359
+msgid "event_add error in libevent_add_thd_callback\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:385
+msgid "Scheduler init error in libevent_add_new_connection\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:467
+msgid "libevent_thread_proc: my_thread_init() failed\n"
+msgstr ""
+
+#: drizzled/set_var.cc:905
+msgid "Ambiguous slave modes combination. STRICT will be used"
 msgstr ""
 
 #: drizzled/slave.cc:89
@@ -6530,6 +6723,119 @@ msgid ""
 "Then replication can be restarted."
 msgstr ""
 
+#: drizzled/sql_base.cc:2544
+#, c-format
+msgid "Table %s had a open data handler in reopen_table"
+msgstr ""
+
+#: drizzled/sql_base.cc:3203
+#, c-format
+msgid "Couldn't repair table: %s.%s"
+msgstr ""
+
+#: drizzled/sql_base.cc:3246
+#, c-format
+msgid ""
+"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
+"s`.`%s`' to the binary log"
+msgstr ""
+
+#: drizzled/sql_base.cc:3983
+#, c-format
+msgid "Could not remove temporary table: '%s', error: %d"
+msgstr ""
+
+#: drizzled/sql_db.cc:396 drizzled/sql_db.cc:404
+#, c-format
+msgid "Error while loading database options: '%s':"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:647
+#, c-format
+msgid "Plugin '%s' of type %s failed deinitialization"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:661
+#, c-format
+msgid "Plugin '%s' has ref_count=%d after deinitialization."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:781
+#, c-format
+msgid "Plugin '%s' registration as a %s failed."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1035
+msgid "plugin-load parameter too long"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1095
+#, c-format
+msgid "Couldn't load plugin named '%s' with soname '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1146
+#, c-format
+msgid "Forcing shutdown of %d plugins"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1168
+#, c-format
+msgid "Plugin '%s' will be forced to shutdown"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1184
+#, c-format
+msgid "Plugin '%s' has ref_count=%d after shutdown."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2433 drizzled/sql_plugin.cc:2496
+#, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2476
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2507
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2524
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2643
+#, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2650
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2659
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2702
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2712
+#, c-format
+msgid "Plugin '%s' disabled by command line option"
+msgstr ""
+
 #: drizzled/sql_repl.cc:101
 msgid "Failed in send_file() while reading file name"
 msgstr ""
@@ -6544,6 +6850,37 @@ msgstr ""
 
 #: drizzled/sql_repl.cc:131
 msgid "Failed in send_file() while negotiating file transfer close"
+msgstr ""
+
+#: drizzled/sql_select.cc:13156
+#, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr ""
+
+#: drizzled/sql_table.cc:81
+#, c-format
+msgid "Invalid (old?) table or database name '%s'"
+msgstr ""
+
+#: drizzled/sql_table.cc:2717
+#, c-format
+msgid "Unknown - internal error %d during operation"
+msgstr ""
+
+#: drizzled/sql_table.cc:4999
+#, c-format
+msgid "Could not open table %s.%s after rename\n"
+msgstr ""
+
+#: drizzled/sql_table.cc:5175
+#, c-format
+msgid ""
+"ORDER BY ignored because there is a user-defined clustered index in the "
+"table '%-.192s'"
+msgstr ""
+
+#: drizzled/sql_udf.cc:39
+msgid "Can't allocate memory for udf structures"
 msgstr ""
 
 #: drizzled/table.cc:494
