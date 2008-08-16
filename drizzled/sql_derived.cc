@@ -101,7 +101,7 @@ bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((unused)),
   if (unit)
   {
     SELECT_LEX *first_select= unit->first_select();
-    TABLE *table= 0;
+    Table *table= 0;
     select_union *derived_result;
 
     /* prevent name resolving out of derived table */
@@ -199,7 +199,7 @@ exit:
 
 bool mysql_derived_filling(THD *thd, LEX *lex, TABLE_LIST *orig_table_list)
 {
-  TABLE *table= orig_table_list->table;
+  Table *table= orig_table_list->table;
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
   bool res= false;
 

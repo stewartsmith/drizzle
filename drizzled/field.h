@@ -469,7 +469,7 @@ public:
     return (op_result == E_DEC_OVERFLOW);
   }
   int warn_if_overflow(int op_result);
-  void init(TABLE *table_arg)
+  void init(Table *table_arg)
   {
     orig_table= table= table_arg;
     table_name= &table_arg->alias;
@@ -497,7 +497,7 @@ public:
   /* Hash value */
   virtual void hash(uint32_t *nr, uint32_t *nr2);
   friend bool reopen_table(THD *,Table *,bool);
-  friend int cre_myisam(char * name, register TABLE *form, uint options,
+  friend int cre_myisam(char * name, register Table *form, uint options,
 			uint64_t auto_increment_value);
   friend class Copy_field;
   friend class Item_avg_field;

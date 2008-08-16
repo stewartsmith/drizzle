@@ -549,7 +549,7 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ha_archive::create(const char *name, TABLE *table_arg,
+int ha_archive::create(const char *name, Table *table_arg,
                        HA_CREATE_INFO *create_info)
 {
   char name_buff[FN_REFLEN];
@@ -1215,7 +1215,7 @@ THR_LOCK_DATA **ha_archive::store_lock(THD *thd,
     /* 
       Here is where we get into the guts of a row level lock.
       If TL_UNLOCK is set 
-      If we are not doing a LOCK TABLE or DISCARD/IMPORT
+      If we are not doing a LOCK Table or DISCARD/IMPORT
       TABLESPACE, then allow multiple writers 
     */
 

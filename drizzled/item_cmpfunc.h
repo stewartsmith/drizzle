@@ -684,7 +684,7 @@ public:
   enum_field_types field_type() const;
   void fix_length_and_dec();
   const char *func_name() const { return "ifnull"; }
-  Field *tmp_table_field(TABLE *table);
+  Field *tmp_table_field(Table *table);
   uint decimal_precision() const;
 };
 

@@ -106,7 +106,7 @@ public:
     created temporary tables. Modified only on init/end and by the SQL
     thread, read only by SQL thread.
   */
-  TABLE *save_temporary_tables;
+  Table *save_temporary_tables;
 
   /*
     standard lock acquistion order to avoid deadlocks:
@@ -301,7 +301,7 @@ public:
   uint32_t tables_to_lock_count;        /* RBR: Count of tables to lock */
   table_mapping m_table_map;      /* RBR: Mapping table-id to table */
 
-  inline table_def *get_tabledef(TABLE *tbl)
+  inline table_def *get_tabledef(Table *tbl)
   {
     table_def *td= 0;
     for (TABLE_LIST *ptr= tables_to_lock; ptr && !td; ptr= ptr->next_global)

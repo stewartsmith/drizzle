@@ -61,9 +61,9 @@ public:
   table_mapping();
   ~table_mapping();
 
-  TABLE* get_table(ulong table_id);
+  Table* get_table(ulong table_id);
 
-  int       set_table(ulong table_id, TABLE* table);
+  int       set_table(ulong table_id, Table* table);
   int       remove_table(ulong table_id);
   void      clear_tables();
   ulong     count() const { return m_table_ids.records; }
@@ -76,7 +76,7 @@ private:
   struct entry { 
     ulong table_id;
     union {
-      TABLE *table;
+      Table *table;
       entry *next;
     };
   };
@@ -96,7 +96,7 @@ private:
   */
   entry *m_free;
 
-  /* Correspondance between an id (a number) and a TABLE object */
+  /* Correspondance between an id (a number) and a Table object */
   HASH m_table_ids;
 };
 

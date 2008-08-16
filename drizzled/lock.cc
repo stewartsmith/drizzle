@@ -47,7 +47,7 @@
 
   When using LOCK TABLES:
 
-  - LOCK TABLE will call mysql_lock_tables() for all tables.
+  - LOCK Table will call mysql_lock_tables() for all tables.
     mysql_lock_tables() will call
     table_handler->external_lock(thd,locktype) for each table.
     This is followed by a call to thr_multi_lock() for all tables.
@@ -86,10 +86,10 @@ extern HASH open_cache;
 #define GET_LOCK_UNLOCK         1
 #define GET_LOCK_STORE_LOCKS    2
 
-static DRIZZLE_LOCK *get_lock_data(THD *thd, TABLE **table,uint count,
-				 uint flags, TABLE **write_locked);
-static int lock_external(THD *thd, TABLE **table,uint count);
-static int unlock_external(THD *thd, TABLE **table,uint count);
+static DRIZZLE_LOCK *get_lock_data(THD *thd, Table **table,uint count,
+				 uint flags, Table **write_locked);
+static int lock_external(THD *thd, Table **table,uint count);
+static int unlock_external(THD *thd, Table **table,uint count);
 static void print_lock_error(int error, const char *);
 
 /*
@@ -160,11 +160,11 @@ static void reset_lock_data_and_free(DRIZZLE_LOCK **mysql_lock)
 }
 
 
-DRIZZLE_LOCK *mysql_lock_tables(THD *thd, TABLE **tables, uint count,
+DRIZZLE_LOCK *mysql_lock_tables(THD *thd, Table **tables, uint count,
                               uint flags, bool *need_reopen)
 {
   DRIZZLE_LOCK *sql_lock;
-  TABLE *write_lock_used;
+  Table *write_lock_used;
   int rc;
 
   *need_reopen= false;
@@ -295,7 +295,7 @@ retry:
 }
 
 
-static int lock_external(THD *thd, TABLE **tables, uint count)
+static int lock_external(THD *thd, Table **tables, uint count)
 {
   register uint i;
   int lock_type,error;
@@ -345,10 +345,10 @@ void mysql_unlock_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
   This will work even if get_lock_data fails (next unlock will free all)
 */
 
-void mysql_unlock_some_tables(THD *thd, TABLE **table,uint count)
+void mysql_unlock_some_tables(THD *thd, Table **table,uint count)
 {
   DRIZZLE_LOCK *sql_lock;
-  TABLE *write_lock_used;
+  Table *write_lock_used;
   if ((sql_lock= get_lock_data(thd, table, count, GET_LOCK_UNLOCK,
                                &write_lock_used)))
     mysql_unlock_tables(thd, sql_lock);
@@ -383,13 +383,13 @@ void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
 
   /* Then do the same for the external locks */
   /* Move all write locked tables first */
-  TABLE **table=sql_lock->table;
+  Table **table=sql_lock->table;
   for (i=found=0 ; i < sql_lock->table_count ; i++)
   {
     assert(sql_lock->table[i]->lock_position == i);
     if ((uint) sql_lock->table[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
     {
-      swap_variables(TABLE *, *table, sql_lock->table[i]);
+      swap_variables(Table *, *table, sql_lock->table[i]);
       table++;
       found++;
     }
@@ -400,12 +400,12 @@ void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
     VOID(unlock_external(thd,table,i-found));
     sql_lock->table_count=found;
   }
-  /* Fix the lock positions in TABLE */
+  /* Fix the lock positions in Table */
   table= sql_lock->table;
   found= 0;
   for (i= 0; i < sql_lock->table_count; i++)
   {
-    TABLE *tbl= *table;
+    Table *tbl= *table;
     tbl->lock_position= table - sql_lock->table;
     tbl->lock_data_start= found;
     found+= tbl->lock_count;
@@ -435,7 +435,7 @@ void mysql_unlock_read_tables(THD *thd, DRIZZLE_LOCK *sql_lock)
                           effect is desired.
 */
 
-void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,TABLE *table,
+void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,Table *table,
                        bool always_unlock)
 {
   if (always_unlock == true)
@@ -448,7 +448,7 @@ void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,TABLE *table,
       if (locked->table[i] == table)
       {
         uint  j, removed_locks, old_tables;
-        TABLE *tbl;
+        Table *tbl;
         uint lock_data_end;
 
         assert(table->lock_position == i);
@@ -465,7 +465,7 @@ void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,TABLE *table,
 
         /* Move down all table pointers above 'i'. */
 	memcpy((locked->table+i), (locked->table+i+1),
-               (old_tables - i) * sizeof(TABLE*));
+               (old_tables - i) * sizeof(Table*));
 
         lock_data_end= table->lock_data_start + table->lock_count;
         /* Move down all lock data pointers above 'table->lock_data_end-1' */
@@ -500,11 +500,11 @@ void mysql_lock_remove(THD *thd, DRIZZLE_LOCK *locked,TABLE *table,
 
 /* Downgrade all locks on a table to new WRITE level from WRITE_ONLY */
 
-void mysql_lock_downgrade_write(THD *thd, TABLE *table,
+void mysql_lock_downgrade_write(THD *thd, Table *table,
                                 thr_lock_type new_lock_type)
 {
   DRIZZLE_LOCK *locked;
-  TABLE *write_lock_used;
+  Table *write_lock_used;
   if ((locked = get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
                               &write_lock_used)))
   {
@@ -517,10 +517,10 @@ void mysql_lock_downgrade_write(THD *thd, TABLE *table,
 
 /** Abort all other threads waiting to get lock in table. */
 
-void mysql_lock_abort(THD *thd, TABLE *table, bool upgrade_lock)
+void mysql_lock_abort(THD *thd, Table *table, bool upgrade_lock)
 {
   DRIZZLE_LOCK *locked;
-  TABLE *write_lock_used;
+  Table *write_lock_used;
 
   if ((locked= get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
                              &write_lock_used)))
@@ -545,10 +545,10 @@ void mysql_lock_abort(THD *thd, TABLE *table, bool upgrade_lock)
     1  Table was locked by at least one other thread
 */
 
-bool mysql_lock_abort_for_thread(THD *thd, TABLE *table)
+bool mysql_lock_abort_for_thread(THD *thd, Table *table)
 {
   DRIZZLE_LOCK *locked;
-  TABLE *write_lock_used;
+  Table *write_lock_used;
   bool result= false;
 
   if ((locked= get_lock_data(thd, &table, 1, GET_LOCK_UNLOCK,
@@ -569,17 +569,17 @@ bool mysql_lock_abort_for_thread(THD *thd, TABLE *table)
 DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
 {
   DRIZZLE_LOCK *sql_lock;
-  TABLE **table, **end_table;
+  Table **table, **end_table;
 
   if (!(sql_lock= (DRIZZLE_LOCK*)
 	my_malloc(sizeof(*sql_lock)+
 		  sizeof(THR_LOCK_DATA*)*(a->lock_count+b->lock_count)+
-		  sizeof(TABLE*)*(a->table_count+b->table_count),MYF(MY_WME))))
+		  sizeof(Table*)*(a->table_count+b->table_count),MYF(MY_WME))))
     return(0);				// Fatal error
   sql_lock->lock_count=a->lock_count+b->lock_count;
   sql_lock->table_count=a->table_count+b->table_count;
   sql_lock->locks=(THR_LOCK_DATA**) (sql_lock+1);
-  sql_lock->table=(TABLE**) (sql_lock->locks+sql_lock->lock_count);
+  sql_lock->table=(Table**) (sql_lock->locks+sql_lock->lock_count);
   memcpy(sql_lock->locks,a->locks,a->lock_count*sizeof(*a->locks));
   memcpy(sql_lock->locks+a->lock_count,b->locks,
 	 b->lock_count*sizeof(*b->locks));
@@ -634,9 +634,9 @@ TABLE_LIST *mysql_lock_have_duplicate(THD *thd, TABLE_LIST *needle,
                                       TABLE_LIST *haystack)
 {
   DRIZZLE_LOCK            *mylock;
-  TABLE                 **lock_tables;
-  TABLE                 *table;
-  TABLE                 *table2;
+  Table                 **lock_tables;
+  Table                 *table;
+  Table                 *table2;
   THR_LOCK_DATA         **lock_locks;
   THR_LOCK_DATA         **table_lock_data;
   THR_LOCK_DATA         **end_data;
@@ -710,7 +710,7 @@ TABLE_LIST *mysql_lock_have_duplicate(THD *thd, TABLE_LIST *needle,
 
 /** Unlock a set of external. */
 
-static int unlock_external(THD *thd, TABLE **table,uint count)
+static int unlock_external(THD *thd, Table **table,uint count)
 {
   int error,error_code;
 
@@ -739,24 +739,24 @@ static int unlock_external(THD *thd, TABLE **table,uint count)
   @param table_ptr	    Pointer to tables that should be locks
   @param flags		    One of:
            - GET_LOCK_UNLOCK      : If we should send TL_IGNORE to store lock
-           - GET_LOCK_STORE_LOCKS : Store lock info in TABLE
+           - GET_LOCK_STORE_LOCKS : Store lock info in Table
   @param write_lock_used   Store pointer to last table with WRITE_ALLOW_WRITE
 */
 
-static DRIZZLE_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count,
-				 uint flags, TABLE **write_lock_used)
+static DRIZZLE_LOCK *get_lock_data(THD *thd, Table **table_ptr, uint count,
+				 uint flags, Table **write_lock_used)
 {
   uint i,tables,lock_count;
   DRIZZLE_LOCK *sql_lock;
   THR_LOCK_DATA **locks, **locks_buf, **locks_start;
-  TABLE **to, **table_buf;
+  Table **to, **table_buf;
 
   assert((flags == GET_LOCK_UNLOCK) || (flags == GET_LOCK_STORE_LOCKS));
 
   *write_lock_used=0;
   for (i=tables=lock_count=0 ; i < count ; i++)
   {
-    TABLE *t= table_ptr[i];
+    Table *t= table_ptr[i];
 
     if (t->s->tmp_table != NON_TRANSACTIONAL_TMP_TABLE)
     {
@@ -778,12 +778,12 @@ static DRIZZLE_LOCK *get_lock_data(THD *thd, TABLE **table_ptr, uint count,
 		  MYF(0))))
     return(0);
   locks= locks_buf= sql_lock->locks= (THR_LOCK_DATA**) (sql_lock + 1);
-  to= table_buf= sql_lock->table= (TABLE**) (locks + tables * 2);
+  to= table_buf= sql_lock->table= (Table**) (locks + tables * 2);
   sql_lock->table_count=lock_count;
 
   for (i=0 ; i < count ; i++)
   {
-    TABLE *table;
+    Table *table;
     enum thr_lock_type lock_type;
 
     if ((table=table_ptr[i])->s->tmp_table == NON_TRANSACTIONAL_TMP_TABLE)
@@ -907,7 +907,7 @@ end:
 
 int lock_table_name(THD *thd, TABLE_LIST *table_list, bool check_in_use)
 {
-  TABLE *table;
+  Table *table;
   char  key[MAX_DBKEY_LENGTH];
   char *db= table_list->db;
   uint  key_length;
@@ -919,10 +919,10 @@ int lock_table_name(THD *thd, TABLE_LIST *table_list, bool check_in_use)
   if (check_in_use)
   {
     /* Only insert the table if we haven't insert it already */
-    for (table=(TABLE*) hash_first(&open_cache, (uchar*)key,
+    for (table=(Table*) hash_first(&open_cache, (uchar*)key,
                                    key_length, &state);
          table ;
-         table = (TABLE*) hash_next(&open_cache,(uchar*) key,
+         table = (Table*) hash_next(&open_cache,(uchar*) key,
                                     key_length, &state))
     {
       if (table->reginfo.lock_type < TL_WRITE)
@@ -979,10 +979,10 @@ static bool locked_named_table(THD *thd __attribute__((unused)),
 {
   for (; table_list ; table_list=table_list->next_local)
   {
-    TABLE *table= table_list->table;
+    Table *table= table_list->table;
     if (table)
     {
-      TABLE *save_next= table->next;
+      Table *save_next= table->next;
       bool result;
       table->next= 0;
       result= table_is_used(table_list->table, 0);
@@ -1141,12 +1141,12 @@ is_table_name_exclusively_locked_by_this_thread(THD *thd, uchar *key,
                                                 int key_length)
 {
   HASH_SEARCH_STATE state;
-  TABLE *table;
+  Table *table;
 
-  for (table= (TABLE*) hash_first(&open_cache, key,
+  for (table= (Table*) hash_first(&open_cache, key,
                                   key_length, &state);
        table ;
-       table= (TABLE*) hash_next(&open_cache, key,
+       table= (Table*) hash_next(&open_cache, key,
                                  key_length, &state))
   {
     if (table->in_use == thd &&

@@ -2260,7 +2260,7 @@ int subselect_union_engine::exec()
 int subselect_uniquesubquery_engine::scan_table()
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
 
   if (table->file->inited)
     table->file->ha_index_end();
@@ -2422,7 +2422,7 @@ bool subselect_uniquesubquery_engine::copy_ref_key()
 int subselect_uniquesubquery_engine::exec()
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
   empty_result_set= true;
   table->status= 0;
  
@@ -2524,7 +2524,7 @@ int subselect_indexsubquery_engine::exec()
 {
   int error;
   bool null_finding= 0;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
 
   ((Item_in_subselect *) item)->value= 0;
   empty_result_set= true;
@@ -2653,7 +2653,7 @@ table_map subselect_engine::calc_const_tables(TABLE_LIST *table)
   table_map map= 0;
   for (; table; table= table->next_leaf)
   {
-    TABLE *tbl= table->table;
+    Table *tbl= table->table;
     if (tbl && tbl->const_table)
       map|= tbl->map;
   }
@@ -2922,7 +2922,7 @@ bool subselect_hash_sj_engine::init_permanent(List<Item> *tmp_columns)
   /* The result sink where we will materialize the subquery result. */
   select_union  *tmp_result_sink;
   /* The table into which the subquery is materialized. */
-  TABLE         *tmp_table;
+  Table         *tmp_table;
   KEY           *tmp_key; /* The only index on the temporary table. */
   uint          tmp_key_parts; /* Number of keyparts in tmp_key. */
   Item_in_subselect *item_in= (Item_in_subselect *) item;

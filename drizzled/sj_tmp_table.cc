@@ -33,12 +33,12 @@
     NULL on error
 */
 
-TABLE *create_duplicate_weedout_tmp_table(THD *thd, 
+Table *create_duplicate_weedout_tmp_table(THD *thd, 
 					  uint uniq_tuple_length_arg,
 					  SJ_TMP_TABLE *sjtbl)
 {
   MEM_ROOT *mem_root_save, own_root;
-  TABLE *table;
+  Table *table;
   TABLE_SHARE *share;
   uint  temp_pool_slot=MY_BIT_NONE;
   char	*tmpname,path[FN_REFLEN];
@@ -101,7 +101,7 @@ TABLE *create_duplicate_weedout_tmp_table(THD *thd,
   stpcpy(tmpname,path);
   
 
-  /* STEP 4: Create TABLE description */
+  /* STEP 4: Create Table description */
   memset(table, 0, sizeof(*table));
   memset(reg_field, 0, sizeof(Field*)*2);
 

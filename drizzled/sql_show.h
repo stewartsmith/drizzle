@@ -37,6 +37,6 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
                       HA_CREATE_INFO  *create_info_arg);
 bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
                           HA_CREATE_INFO *create_info);
-bool schema_table_store_record(THD *thd, TABLE *table);
+bool schema_table_store_record(THD *thd, Table *table);
 
 #endif /* SQL_SHOW_H */

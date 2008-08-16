@@ -777,7 +777,7 @@ void Relay_log_info::inc_group_relay_log_pos(uint64_t log_pos,
 
 void Relay_log_info::close_temporary_tables()
 {
-  TABLE *table,*next;
+  Table *table,*next;
 
   for (table=save_temporary_tables ; table ; table=next)
   {

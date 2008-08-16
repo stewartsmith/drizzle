@@ -396,7 +396,7 @@ class st_select_lex_unit: public st_select_lex_node {
 protected:
   TABLE_LIST result_table_list;
   select_union *union_result;
-  TABLE *table; /* temporary table using for appending UNION results */
+  Table *table; /* temporary table using for appending UNION results */
 
   select_result *result;
   uint64_t found_rows_for_union;
@@ -767,7 +767,7 @@ inline bool st_select_lex_unit::is_union ()
 #define ALTER_FOREIGN_KEY         (1L << 31)
 
 /**
-  @brief Parsing data for CREATE or ALTER TABLE.
+  @brief Parsing data for CREATE or ALTER Table.
 
   This structure contains a list of columns or indexes to be created,
   altered or dropped.
@@ -1465,7 +1465,7 @@ typedef struct st_lex : public Query_tables_list
   union {
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
-    bool lock_transactional;            /* For LOCK TABLE ... IN ... MODE */
+    bool lock_transactional;            /* For LOCK Table ... IN ... MODE */
   };
   enum enum_var_type option_type;
 

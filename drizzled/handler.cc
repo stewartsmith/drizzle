@@ -776,12 +776,12 @@ void ha_close_connection(THD* thd)
   to maintain atomicity: if CREATE TABLE .. SELECT failed,
   the newly created table is deleted.
   In addition, some DDL statements issue interim transaction
-  commits: e.g. ALTER TABLE issues a commit after data is copied
+  commits: e.g. ALTER Table issues a commit after data is copied
   from the original table to the internal temporary table. Other
   statements, e.g. CREATE TABLE ... SELECT do not always commit
   after itself.
   And finally there is a group of DDL statements such as
-  RENAME/DROP TABLE that doesn't start a new transaction
+  RENAME/DROP Table that doesn't start a new transaction
   and doesn't commit.
 
   This diversity makes it hard to say what will happen if
@@ -1692,14 +1692,14 @@ int ha_delete_table(THD *thd, handlerton *table_type, const char *path,
   handler *file;
   char tmp_path[FN_REFLEN];
   int error;
-  TABLE dummy_table;
+  Table dummy_table;
   TABLE_SHARE dummy_share;
 
   memset(&dummy_table, 0, sizeof(dummy_table));
   memset(&dummy_share, 0, sizeof(dummy_share));
   dummy_table.s= &dummy_share;
 
-  /* DB_TYPE_UNKNOWN is used in ALTER TABLE when renaming only .frm files */
+  /* DB_TYPE_UNKNOWN is used in ALTER Table when renaming only .frm files */
   if (table_type == NULL ||
       ! (file=get_new_handler((TABLE_SHARE*)0, thd->mem_root, table_type)))
     return(ENOENT);
@@ -1757,7 +1757,7 @@ handler *handler::clone(MEM_ROOT *mem_root)
     return NULL;
   if (new_handler && !new_handler->ha_open(table,
                                            table->s->normalized_path.str,
-                                           table->db_stat,
+                                           table->getDBStat(),
                                            HA_OPEN_IGNORE_IF_LOCKED))
     return new_handler;
   return NULL;
@@ -1787,7 +1787,7 @@ THD *handler::ha_thd(void) const
   Try O_RDONLY if cannot open as O_RDWR
   Don't wait for locks if not HA_OPEN_WAIT_IF_LOCKED is set
 */
-int handler::ha_open(TABLE *table_arg, const char *name, int mode,
+int handler::ha_open(Table *table_arg, const char *name, int mode,
                      int test_if_locked)
 {
   int error;
@@ -2555,7 +2555,7 @@ int handler::check_old_types()
 }
 
 
-static bool update_frm_version(TABLE *table)
+static bool update_frm_version(Table *table)
 {
   char path[FN_REFLEN];
   File file;
@@ -2577,7 +2577,7 @@ static bool update_frm_version(TABLE *table)
     uchar version[4];
     char *key= table->s->table_cache_key.str;
     uint key_length= table->s->table_cache_key.length;
-    TABLE *entry;
+    Table *entry;
     HASH_SEARCH_STATE state;
 
     int4store(version, DRIZZLE_VERSION_ID);
@@ -2588,9 +2588,9 @@ static bool update_frm_version(TABLE *table)
       goto err;
     }
 
-    for (entry=(TABLE*) hash_first(&open_cache,(uchar*) key,key_length, &state);
+    for (entry=(Table*) hash_first(&open_cache,(uchar*) key,key_length, &state);
          entry;
-         entry= (TABLE*) hash_next(&open_cache,(uchar*) key,key_length, &state))
+         entry= (Table*) hash_next(&open_cache,(uchar*) key,key_length, &state))
       entry->s->mysql_version= DRIZZLE_VERSION_ID;
   }
 err:
@@ -2679,7 +2679,7 @@ void handler::drop_table(const char *name)
 /**
   Performs checks upon the table.
 
-  @param thd                thread doing CHECK TABLE operation
+  @param thd                thread doing CHECK Table operation
   @param check_opt          options from the parser
 
   @retval
@@ -2687,7 +2687,7 @@ void handler::drop_table(const char *name)
   @retval
     HA_ADMIN_NEEDS_UPGRADE    Table has structures requiring upgrade
   @retval
-    HA_ADMIN_NEEDS_ALTER      Table has structures requiring ALTER TABLE
+    HA_ADMIN_NEEDS_ALTER      Table has structures requiring ALTER Table
   @retval
     HA_ADMIN_NOT_IMPLEMENTED
 */
@@ -2968,7 +2968,7 @@ handler::ha_drop_table(const char *name)
 */
 
 int
-handler::ha_create(const char *name, TABLE *form, HA_CREATE_INFO *info)
+handler::ha_create(const char *name, Table *form, HA_CREATE_INFO *info)
 {
   mark_trx_read_write();
 
@@ -2995,7 +2995,7 @@ handler::ha_create_handler_files(const char *name, const char *old_name,
 /**
   Tell the storage engine that it is allowed to "disable transaction" in the
   handler. It is a hint that ACID is not required - it is used in NDB for
-  ALTER TABLE, for example, when data are copied to temporary table.
+  ALTER Table, for example, when data are copied to temporary table.
   A storage engine may treat this hint any way it likes. NDB for example
   starts to commit every now and then automatically.
   This hint can be safely ignored.
@@ -3087,7 +3087,7 @@ int ha_create_table(THD *thd, const char *path,
 		    bool update_create_info)
 {
   int error= 1;
-  TABLE table;
+  Table table;
   char name_buff[FN_REFLEN];
   const char *name;
   TABLE_SHARE share;
@@ -3135,7 +3135,7 @@ int ha_create_table_from_engine(THD* thd, const char *db, const char *name)
   size_t frmlen;
   char path[FN_REFLEN];
   HA_CREATE_INFO create_info;
-  TABLE table;
+  Table table;
   TABLE_SHARE share;
 
   memset(&create_info, 0, sizeof(create_info));
@@ -4073,7 +4073,7 @@ bool DsMrr_impl::choose_mrr_impl(uint keyno, ha_rows rows, uint *flags,
 }
 
 
-static void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost);
+static void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost);
 
 
 /**
@@ -4161,7 +4161,7 @@ bool DsMrr_impl::get_disk_sweep_mrr_cost(uint keynr, ha_rows rows, uint flags,
 */
 
 static 
-void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost)
+void get_sort_and_sweep_cost(Table *table, ha_rows nrows, COST_VECT *cost)
 {
   if (nrows)
   {
@@ -4220,7 +4220,7 @@ void get_sort_and_sweep_cost(TABLE *table, ha_rows nrows, COST_VECT *cost)
   @param cost         OUT  The cost.
 */
 
-void get_sweep_read_cost(TABLE *table, ha_rows nrows, bool interrupted, 
+void get_sweep_read_cost(Table *table, ha_rows nrows, bool interrupted, 
                          COST_VECT *cost)
 {
   cost->zero();
@@ -4514,7 +4514,7 @@ bool ha_show_status(THD *thd, handlerton *db_type, enum ha_stat_type stat)
   - table is not mysql.event
 */
 
-static bool check_table_binlog_row_based(THD *thd, TABLE *table)
+static bool check_table_binlog_row_based(THD *thd, Table *table)
 {
   if (table->s->cached_row_logging_check == -1)
   {
@@ -4566,12 +4566,12 @@ static int write_locked_table_maps(THD *thd)
       if (lock == NULL)
         continue;
 
-      TABLE **const end_ptr= lock->table + lock->table_count;
-      for (TABLE **table_ptr= lock->table ; 
+      Table **const end_ptr= lock->table + lock->table_count;
+      for (Table **table_ptr= lock->table ; 
            table_ptr != end_ptr ;
            ++table_ptr)
       {
-        TABLE *const table= *table_ptr;
+        Table *const table= *table_ptr;
         if (table->current_lock == F_WRLCK &&
             check_table_binlog_row_based(thd, table))
         {
@@ -4591,9 +4591,9 @@ static int write_locked_table_maps(THD *thd)
 }
 
 
-typedef bool Log_func(THD*, TABLE*, bool, const uchar*, const uchar*);
+typedef bool Log_func(THD*, Table*, bool, const uchar*, const uchar*);
 
-static int binlog_log_row(TABLE* table,
+static int binlog_log_row(Table* table,
                           const uchar *before_record,
                           const uchar *after_record,
                           Log_func *log_func)

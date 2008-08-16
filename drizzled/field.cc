@@ -1272,7 +1272,7 @@ Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
 }
 
 
-/* This is used to generate a field in TABLE from TABLE_SHARE */
+/* This is used to generate a field in Table from TABLE_SHARE */
 
 Field *Field::clone(MEM_ROOT *root, Table *new_table)
 {

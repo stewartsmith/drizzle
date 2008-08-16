@@ -58,7 +58,7 @@ TODO:
 #define CSM_EXT ".CSM"               // Meta file
 
 
-static TINA_SHARE *get_share(const char *table_name, TABLE *table);
+static TINA_SHARE *get_share(const char *table_name, Table *table);
 static int free_share(TINA_SHARE *share);
 static int read_meta_file(File meta_file, ha_rows *rows);
 static int write_meta_file(File meta_file, ha_rows rows, bool dirty);
@@ -127,7 +127,7 @@ static int tina_done_func(void *p __attribute__((unused)))
   Simple lock controls.
 */
 static TINA_SHARE *get_share(const char *table_name,
-                             TABLE *table __attribute__((unused)))
+                             Table *table __attribute__((unused)))
 {
   TINA_SHARE *share;
   char meta_file_name[FN_REFLEN];
@@ -1437,7 +1437,7 @@ THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((unused)),
   this (the database will call ::open() if it needs to).
 */
 
-int ha_tina::create(const char *name, TABLE *table_arg,
+int ha_tina::create(const char *name, Table *table_arg,
                     HA_CREATE_INFO *create_info __attribute__((unused)))
 {
   char name_buff[FN_REFLEN];

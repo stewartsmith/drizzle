@@ -36,7 +36,7 @@ public:
   uint null_bytes;
   uint rowid_len;
 
-  TABLE *tmp_table;
+  Table *tmp_table;
 
   MI_COLUMNDEF *start_recinfo;
   MI_COLUMNDEF *recinfo;
@@ -45,7 +45,7 @@ public:
   SJ_TMP_TABLE *next; 
 };
 
-TABLE *create_duplicate_weedout_tmp_table(THD *thd, 
+Table *create_duplicate_weedout_tmp_table(THD *thd, 
 					  uint uniq_tuple_length_arg,
 					  SJ_TMP_TABLE *sjtbl);
 

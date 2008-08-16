@@ -28,9 +28,9 @@ int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
                          bool drop_temporary, bool drop_view, bool log_query);
 bool quick_rm_table(handlerton *base,const char *db,
                     const char *table_name, uint flags);
-void close_cached_table(THD *thd, TABLE *table);
+void close_cached_table(THD *thd, Table *table);
 
-void wait_while_table_is_used(THD *thd, TABLE *table,
+void wait_while_table_is_used(THD *thd, Table *table,
                               enum ha_extra_function function);
 bool mysql_checksum_table(THD* thd, TABLE_LIST* table_list,
                           HA_CHECK_OPT* check_opt);

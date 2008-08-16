@@ -26,7 +26,7 @@
 /* Match the values of enum ha_choice */
 static const char *ha_choice_values[] = {"", "0", "1"};
 
-static void store_key_options(THD *thd, String *packet, TABLE *table,
+static void store_key_options(THD *thd, String *packet, Table *table,
                               KEY *key_info);
 
 
@@ -84,7 +84,7 @@ int wild_case_compare(const CHARSET_INFO * const cs, const char *str,const char 
 static bool show_plugins(THD *thd, plugin_ref plugin,
                             void *arg)
 {
-  TABLE *table= (TABLE*) arg;
+  Table *table= (Table*) arg;
   struct st_mysql_plugin *plug= plugin_decl(plugin);
   struct st_plugin_dl *plugin_dl= plugin_dlib(plugin);
   const CHARSET_INFO * const cs= system_charset_info;
@@ -169,7 +169,7 @@ static bool show_plugins(THD *thd, plugin_ref plugin,
 
 int fill_plugins(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
-  TABLE *table= tables->table;
+  Table *table= tables->table;
 
   if (plugin_foreach_with_mask(thd, show_plugins, DRIZZLE_ANY_PLUGIN,
                                ~PLUGIN_IS_FREED, table))
@@ -398,7 +398,7 @@ bool mysqld_show_create_db(THD *thd, char *dbname,
 void
 mysqld_list_fields(THD *thd, TABLE_LIST *table_list, const char *wild)
 {
-  TABLE *table;
+  Table *table;
 
   if (open_normal_and_derived_tables(thd, table_list, 0))
     return;
@@ -656,7 +656,7 @@ int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
   Field **ptr,*field;
   uint primary_key;
   KEY *key_info;
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   handler *file= table->file;
   TABLE_SHARE *share= table->s;
   HA_CREATE_INFO create_info;
@@ -1052,7 +1052,7 @@ bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
 }
 
 static void store_key_options(THD *thd __attribute__((unused)),
-                              String *packet, TABLE *table,
+                              String *packet, Table *table,
                               KEY *key_info)
 {
   char *end, buff[32];
@@ -1215,7 +1215,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
 int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
                             COND* cond __attribute__((unused)))
 {
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   char *user;
   time_t now= my_time(0);
@@ -1488,7 +1488,7 @@ static bool show_status_array(THD *thd, const char *wild,
                               SHOW_VAR *variables,
                               enum enum_var_type value_type,
                               struct system_status_var *status_var,
-                              const char *prefix, TABLE *table,
+                              const char *prefix, Table *table,
                               bool ucase_names)
 {
   MY_ALIGNED_BYTE_ARRAY(buff_data, SHOW_VAR_FUNC_BUFF_SIZE, long);
@@ -1684,7 +1684,7 @@ typedef struct st_lookup_field_values
     1	                  error
 */
 
-bool schema_table_store_record(THD *thd, TABLE *table)
+bool schema_table_store_record(THD *thd, Table *table)
 {
   int error;
   if ((error= table->file->ha_write_row(table->record[0])))
@@ -2265,7 +2265,7 @@ fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
   enum_sql_command save_sql_command= lex->sql_command;
   TABLE_LIST *show_table_list= (TABLE_LIST*) tables->schema_select_lex->
     table_list.first;
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   int error= 1;
 
   lex->all_selects_list= tables->schema_select_lex;
@@ -2313,10 +2313,10 @@ fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
 
 
 /**
-  @brief          Fill I_S table for SHOW TABLE NAMES commands
+  @brief          Fill I_S table for SHOW Table NAMES commands
 
   @param[in]      thd                      thread handler
-  @param[in]      table                    TABLE struct for I_S table
+  @param[in]      table                    Table struct for I_S table
   @param[in]      db_name                  database name
   @param[in]      table_name               table name
   @param[in]      with_i_schema            I_S table if true
@@ -2326,7 +2326,7 @@ fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
     @retval       1           error
 */
 
-static int fill_schema_table_names(THD *thd, TABLE *table,
+static int fill_schema_table_names(THD *thd, Table *table,
                                    LEX_STRING *db_name, LEX_STRING *table_name,
                                    bool with_i_schema)
 {
@@ -2341,18 +2341,17 @@ static int fill_schema_table_names(THD *thd, TABLE *table,
     char path[FN_REFLEN];
     (void) build_table_filename(path, sizeof(path), db_name->str, 
                                 table_name->str, reg_ext, 0);
-    switch (mysql_frm_type(thd, path, &not_used)) {
-    case FRMTYPE_ERROR:
+    if (mysql_frm_type(thd, path, &not_used)) 
+    {
+      table->field[3]->store(STRING_WITH_LEN("BASE Table"),
+                             system_charset_info);
+    }
+    else
+    {
       table->field[3]->store(STRING_WITH_LEN("ERROR"),
                              system_charset_info);
-      break;
-    case FRMTYPE_TABLE:
-      table->field[3]->store(STRING_WITH_LEN("BASE TABLE"),
-                             system_charset_info);
-      break;
-    default:
-      assert(0);
     }
+
     if (thd->is_error() && thd->main_da.sql_errno() == ER_NO_SUCH_TABLE)
     {
       thd->clear_error();
@@ -2409,7 +2408,7 @@ static uint get_table_open_method(TABLE_LIST *tables,
   @brief          Fill I_S table with data from FRM file only
 
   @param[in]      thd                      thread handler
-  @param[in]      table                    TABLE struct for I_S table
+  @param[in]      table                    Table struct for I_S table
   @param[in]      schema_table             I_S table struct
   @param[in]      db_name                  database name
   @param[in]      table_name               table name
@@ -2428,9 +2427,9 @@ static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
                                       LEX_STRING *table_name,
                                       enum enum_schema_tables schema_table_idx __attribute__((unused)))
 {
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   TABLE_SHARE *share;
-  TABLE tbl;
+  Table tbl;
   TABLE_LIST table_list;
   uint res= 0;
   int error;
@@ -2438,7 +2437,7 @@ static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
   uint key_length;
 
   memset(&table_list, 0, sizeof(TABLE_LIST));
-  memset(&tbl, 0, sizeof(TABLE));
+  memset(&tbl, 0, sizeof(Table));
 
   table_list.table_name= table_name->str;
   table_list.db= db_name->str;
@@ -2492,7 +2491,7 @@ err:
 int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
 {
   LEX *lex= thd->lex;
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   SELECT_LEX *old_all_select_lex= lex->all_selects_list;
   enum_sql_command save_sql_command= lex->sql_command;
   SELECT_LEX *lsel= tables->schema_select_lex;
@@ -2617,7 +2616,7 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
             continue;
           }
 
-          /* SHOW TABLE NAMES command */
+          /* SHOW Table NAMES command */
           if (schema_table_idx == SCH_TABLE_NAMES)
           {
             if (fill_schema_table_names(thd, tables->table, db_name,
@@ -2719,7 +2718,7 @@ err:
 }
 
 
-bool store_schema_shemata(THD* thd, TABLE *table, LEX_STRING *db_name,
+bool store_schema_shemata(THD* thd, Table *table, LEX_STRING *db_name,
                           const CHARSET_INFO * const cs)
 {
   restore_record(table, s->default_values);
@@ -2742,7 +2741,7 @@ int fill_schema_schemata(THD *thd, TABLE_LIST *tables, COND *cond)
   LEX_STRING *db_name;
   bool with_i_schema;
   HA_CREATE_INFO create;
-  TABLE *table= tables->table;
+  Table *table= tables->table;
 
   if (get_lookup_field_values(thd, cond, tables, &lookup_field_vals))
     return(0);
@@ -2791,7 +2790,7 @@ int fill_schema_schemata(THD *thd, TABLE_LIST *tables, COND *cond)
 
 
 static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
-				    TABLE *table, bool res,
+				    Table *table, bool res,
 				    LEX_STRING *db_name,
 				    LEX_STRING *table_name)
 {
@@ -2811,14 +2810,14 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
     if (tables->schema_table)
       table->field[3]->store(STRING_WITH_LEN("SYSTEM VIEW"), cs);
     else
-      table->field[3]->store(STRING_WITH_LEN("BASE TABLE"), cs);
+      table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
     table->field[20]->store(error, strlen(error), cs);
     thd->clear_error();
   }
   else
   {
     char option_buff[400],*ptr;
-    TABLE *show_table= tables->table;
+    Table *show_table= tables->table;
     TABLE_SHARE *share= show_table->s;
     handler *file= show_table->file;
     handlerton *tmp_db_type= share->db_type();
@@ -2827,7 +2826,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
     else if (share->tmp_table)
       table->field[3]->store(STRING_WITH_LEN("LOCAL TEMPORARY"), cs);
     else
-      table->field[3]->store(STRING_WITH_LEN("BASE TABLE"), cs);
+      table->field[3]->store(STRING_WITH_LEN("BASE Table"), cs);
 
     for (int i= 4; i < 20; i++)
     {
@@ -2994,7 +2993,7 @@ static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
   @return         void
 */
 
-void store_column_type(TABLE *table, Field *field, const CHARSET_INFO * const cs,
+void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs,
                        uint offset)
 {
   bool is_blob;
@@ -3083,14 +3082,14 @@ void store_column_type(TABLE *table, Field *field, const CHARSET_INFO * const cs
 
 
 static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
-				    TABLE *table, bool res,
+				    Table *table, bool res,
 				    LEX_STRING *db_name,
 				    LEX_STRING *table_name)
 {
   LEX *lex= thd->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
   const CHARSET_INFO * const cs= system_charset_info;
-  TABLE *show_table;
+  Table *show_table;
   TABLE_SHARE *show_table_share;
   Field **ptr, *field, *timestamp_field;
   int count;
@@ -3219,7 +3218,7 @@ int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__(
 {
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
 
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++)
@@ -3250,7 +3249,7 @@ int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__
 {
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
@@ -3291,7 +3290,7 @@ int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__
 int fill_schema_coll_charset_app(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   const CHARSET_INFO * const scs= system_charset_info;
   for (cs= all_charsets ; cs < all_charsets+255 ; cs++ )
   {
@@ -3318,7 +3317,7 @@ int fill_schema_coll_charset_app(THD *thd, TABLE_LIST *tables, COND *cond __attr
 
 
 static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
-				  TABLE *table, bool res,
+				  Table *table, bool res,
 				  LEX_STRING *db_name,
 				  LEX_STRING *table_name)
 {
@@ -3341,7 +3340,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
   }
   else
   {
-    TABLE *show_table= tables->table;
+    Table *show_table= tables->table;
     KEY *key_info=show_table->s->key_info;
     if (show_table->file)
       show_table->file->info(HA_STATUS_VARIABLE |
@@ -3414,7 +3413,7 @@ static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
 }
 
 
-bool store_constraints(THD *thd, TABLE *table, LEX_STRING *db_name,
+bool store_constraints(THD *thd, Table *table, LEX_STRING *db_name,
                        LEX_STRING *table_name, const char *key_name,
                        uint key_len, const char *con_type, uint con_len)
 {
@@ -3430,7 +3429,7 @@ bool store_constraints(THD *thd, TABLE *table, LEX_STRING *db_name,
 
 
 static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
-					 TABLE *table, bool res,
+					 Table *table, bool res,
 					 LEX_STRING *db_name,
 					 LEX_STRING *table_name)
 {
@@ -3445,7 +3444,7 @@ static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
   else
   {
     List<FOREIGN_KEY_INFO> f_key_list;
-    TABLE *show_table= tables->table;
+    Table *show_table= tables->table;
     KEY *key_info=show_table->key_info;
     uint primary_key= show_table->s->primary_key;
     show_table->file->info(HA_STATUS_VARIABLE | 
@@ -3488,7 +3487,7 @@ static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
 }
 
 
-void store_key_column_usage(TABLE *table, LEX_STRING *db_name,
+void store_key_column_usage(Table *table, LEX_STRING *db_name,
                             LEX_STRING *table_name, const char *key_name,
                             uint key_len, const char *con_type, uint con_len,
                             int64_t idx)
@@ -3505,7 +3504,7 @@ void store_key_column_usage(TABLE *table, LEX_STRING *db_name,
 
 static int get_schema_key_column_usage_record(THD *thd,
 					      TABLE_LIST *tables,
-					      TABLE *table, bool res,
+					      Table *table, bool res,
 					      LEX_STRING *db_name,
 					      LEX_STRING *table_name)
 {
@@ -3520,7 +3519,7 @@ static int get_schema_key_column_usage_record(THD *thd,
   else
   {
     List<FOREIGN_KEY_INFO> f_key_list;
-    TABLE *show_table= tables->table;
+    Table *show_table= tables->table;
     KEY *key_info=show_table->key_info;
     uint primary_key= show_table->s->primary_key;
     show_table->file->info(HA_STATUS_VARIABLE | 
@@ -3595,7 +3594,7 @@ static int get_schema_key_column_usage_record(THD *thd,
 int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
 {
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
-  TABLE *table= tables->table;
+  Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
   OPEN_TABLE_LIST *open_list;
   if (!(open_list=list_open_tables(thd,thd->lex->select_lex.db, wild))
@@ -3701,7 +3700,7 @@ int fill_status(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused))
 
 static int
 get_referential_constraints_record(THD *thd, TABLE_LIST *tables,
-                                   TABLE *table, bool res,
+                                   Table *table, bool res,
                                    LEX_STRING *db_name, LEX_STRING *table_name)
 {
   const CHARSET_INFO * const cs= system_charset_info;
@@ -3717,7 +3716,7 @@ get_referential_constraints_record(THD *thd, TABLE_LIST *tables,
 
   {
     List<FOREIGN_KEY_INFO> f_key_list;
-    TABLE *show_table= tables->table;
+    Table *show_table= tables->table;
     show_table->file->info(HA_STATUS_VARIABLE | 
                            HA_STATUS_NO_LOCK |
                            HA_STATUS_TIME);
@@ -3852,11 +3851,11 @@ ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx)
   @retval  NULL           Can't create table
 */
 
-TABLE *create_schema_table(THD *thd, TABLE_LIST *table_list)
+Table *create_schema_table(THD *thd, TABLE_LIST *table_list)
 {
   int field_count= 0;
   Item *item;
-  TABLE *table;
+  Table *table;
   List<Item> field_list;
   ST_SCHEMA_TABLE *schema_table= table_list->schema_table;
   ST_FIELD_INFO *fields_info= schema_table->fields_info;
@@ -4126,7 +4125,7 @@ int make_character_sets_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
 
 int mysql_schema_table(THD *thd, LEX *lex, TABLE_LIST *table_list)
 {
-  TABLE *table;
+  Table *table;
   if (!(table= table_list->schema_table->create_table(thd, table_list)))
     return(1);
   table->s->tmp_table= SYSTEM_TMP_TABLE;

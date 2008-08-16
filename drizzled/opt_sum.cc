@@ -233,7 +233,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
 
           ref.key_buff= key_buff;
           Item_field *item_field= (Item_field*) (expr->real_item());
-          TABLE *table= item_field->field->table;
+          Table *table= item_field->field->table;
 
           /* 
             Look for a partial key that can be used for optimization.
@@ -381,7 +381,7 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
 
           ref.key_buff= key_buff;
           Item_field *item_field= (Item_field*) (expr->real_item());
-          TABLE *table= item_field->field->table;
+          Table *table= item_field->field->table;
 
           /* 
             Look for a partial key that can be used for optimization.
@@ -802,7 +802,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
   if (!(field->flags & PART_KEY_FLAG))
     return 0;                                        // Not key field
 
-  TABLE *table= field->table;
+  Table *table= field->table;
   uint idx= 0;
 
   KEY *keyinfo,*keyinfo_end;
@@ -813,7 +813,7 @@ static bool find_key_for_maxmin(bool max_fl, TABLE_REF *ref,
     KEY_PART_INFO *part,*part_end;
     key_part_map key_part_to_use= 0;
     /*
-      Perform a check if index is not disabled by ALTER TABLE
+      Perform a check if index is not disabled by ALTER Table
       or IGNORE INDEX.
     */
     if (!table->keys_in_use_for_query.is_set(idx))

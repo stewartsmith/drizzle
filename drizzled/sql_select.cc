@@ -80,7 +80,7 @@ static store_key *get_store_key(THD *thd,
 				KEYUSE *keyuse, table_map used_tables,
 				KEY_PART_INFO *key_part, uchar *key_buff,
 				uint maybe_null);
-static bool make_simple_join(JOIN *join,TABLE *tmp_table);
+static bool make_simple_join(JOIN *join,Table *tmp_table);
 static void make_outerjoin_info(JOIN *join);
 static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *item);
 static bool make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after);
@@ -117,7 +117,7 @@ static COND *optimize_cond(JOIN *join, COND *conds,
                            List<TABLE_LIST> *join_list,
 			   Item::cond_result *cond_value);
 static bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
-static int do_select(JOIN *join,List<Item> *fields,TABLE *tmp_table);
+static int do_select(JOIN *join,List<Item> *fields,Table *tmp_table);
 
 static enum_nested_loop_state
 evaluate_join_record(JOIN *join, JOIN_TAB *join_tab,
@@ -158,22 +158,22 @@ int join_read_next_same_or_null(READ_RECORD *info);
 static COND *make_cond_for_table(COND *cond,table_map table,
 				 table_map used_table,
                                  bool exclude_expensive_cond);
-static Item* part_of_refkey(TABLE *form,Field *field);
+static Item* part_of_refkey(Table *form,Field *field);
 static bool test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,
 				    ha_rows select_limit, bool no_changes,
                                     const key_map *map);
-static bool list_contains_unique_index(TABLE *table,
+static bool list_contains_unique_index(Table *table,
                           bool (*find_func) (Field *, void *), void *data);
 static bool find_field_in_item_list (Field *field, void *data);
 static bool find_field_in_order_list (Field *field, void *data);
 static int create_sort_index(THD *thd, JOIN *join, ORDER *order,
 			     ha_rows filesort_limit, ha_rows select_limit,
                              bool is_order_by);
-static int remove_duplicates(JOIN *join,TABLE *entry,List<Item> &fields,
+static int remove_duplicates(JOIN *join,Table *entry,List<Item> &fields,
 			     Item *having);
-static int remove_dup_with_compare(THD *thd, TABLE *entry, Field **field,
+static int remove_dup_with_compare(THD *thd, Table *entry, Field **field,
 				   ulong offset,Item *having);
-static int remove_dup_with_hash_index(THD *thd,TABLE *table,
+static int remove_dup_with_hash_index(THD *thd,Table *table,
 				      uint field_count, Field **first_field,
 
 				      ulong key_length,Item *having);
@@ -189,7 +189,7 @@ static ORDER *create_distinct_group(THD *thd, Item **ref_pointer_array,
                                     List<Item> &all_fields,
 				    bool *all_order_by_fields_used);
 static bool test_if_subpart(ORDER *a,ORDER *b);
-static TABLE *get_sort_by_table(ORDER *a,ORDER *b,TABLE_LIST *tables);
+static Table *get_sort_by_table(ORDER *a,ORDER *b,TABLE_LIST *tables);
 static void calc_group_buffer(JOIN *join,ORDER *group);
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
 static bool alloc_group_fields(JOIN *join,ORDER *group);
@@ -204,7 +204,7 @@ static bool change_refs_to_tmp_fields(THD *thd, Item **ref_pointer_array,
 				      List<Item> &new_list2,
 				      uint elements, List<Item> &items);
 static void init_tmptable_sum_functions(Item_sum **func);
-static void update_tmptable_sum_func(Item_sum **func,TABLE *tmp_table);
+static void update_tmptable_sum_func(Item_sum **func,Table *tmp_table);
 static void copy_sum_funcs(Item_sum **func_ptr, Item_sum **end);
 static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab);
 static bool setup_sum_funcs(THD *thd, Item_sum **func_ptr);
@@ -975,7 +975,7 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint no_jbuf_a
   for (i=join->const_tables ; i < join->tables ; i++)
   {
     JOIN_TAB *tab=join->join_tab+i;
-    TABLE *table=tab->table;
+    Table *table=tab->table;
     cur_map |= table->map;
 
     if (tab->emb_sj_nest) // Encountered an sj-inner table
@@ -2124,7 +2124,7 @@ JOIN::exec()
   JOIN *curr_join= this;
   List<Item> *curr_all_fields= &all_fields;
   List<Item> *curr_fields_list= &fields_list;
-  TABLE *curr_tmp_table= 0;
+  Table *curr_tmp_table= 0;
   /*
     Initialize examined rows here because the values from all join parts
     must be accumulated in examined_row_count. Hence every join
@@ -3200,7 +3200,7 @@ bool JOIN::setup_subquery_materialization()
     false - Otherwise
 */
 
-bool find_eq_ref_candidate(TABLE *table, table_map sj_inner_tables)
+bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
 {
   KEYUSE *keyuse= table->reginfo.join_tab->keyuse;
   uint key;
@@ -3368,7 +3368,7 @@ int pull_out_semijoin_tables(JOIN *join)
 
 
 static ha_rows get_quick_record_count(THD *thd, SQL_SELECT *select,
-				      TABLE *table,
+				      Table *table,
 				      const key_map *keys,ha_rows limit)
 {
   int error;
@@ -3418,11 +3418,11 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
 		     DYNAMIC_ARRAY *keyuse_array)
 {
   int error;
-  TABLE *table;
+  Table *table;
   uint i,table_count,const_count,key;
   table_map found_const_table_map, all_table_map, found_ref, refs;
   key_map const_ref, eq_part;
-  TABLE **table_vector;
+  Table **table_vector;
   JOIN_TAB *stat,*stat_end,*s,**stat_ref;
   KEYUSE *keyuse,*start_keyuse;
   table_map outer_join=0;
@@ -3432,7 +3432,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
   table_count=join->tables;
   stat=(JOIN_TAB*) join->thd->calloc(sizeof(JOIN_TAB)*table_count);
   stat_ref=(JOIN_TAB**) join->thd->alloc(sizeof(JOIN_TAB*)*MAX_TABLES);
-  table_vector=(TABLE**) join->thd->alloc(sizeof(TABLE*)*(table_count*2));
+  table_vector=(Table**) join->thd->alloc(sizeof(Table*)*(table_count*2));
   if (!stat || !stat_ref || !table_vector)
     return(1);				// Eom /* purecov: inspected */
 
@@ -3907,7 +3907,7 @@ merge_key_fields(KEY_FIELD *start,KEY_FIELD *new_fields,KEY_FIELD *end,
           The cause is as follows: Some of the tables are already known to be
           const tables (the detection code is in make_join_statistics(),
           above the update_ref_and_keys() call), but we didn't propagate 
-          information about this: TABLE::const_table is not set to true, and
+          information about this: Table::const_table is not set to true, and
           Item::update_used_tables() hasn't been called for each item.
           The result of this is that we're missing some 'ref' accesses.
           TODO: OptimizerTeam: Fix this
@@ -4427,7 +4427,7 @@ static void
 add_key_part(DYNAMIC_ARRAY *keyuse_array,KEY_FIELD *key_field)
 {
   Field *field=key_field->field;
-  TABLE *form= field->table;
+  Table *form= field->table;
   KEYUSE keyuse;
 
   if (key_field->eq_func && !(key_field->optimize & KEY_OPTIMIZE_EXISTS))
@@ -4748,7 +4748,7 @@ static void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array)
       for (tablenr=0 ; ! (map & 1) ; map>>=1, tablenr++) ;
       if (map == 1)			// Only one table
       {
-	TABLE *tmp_table=join->all_tables[tablenr];
+	Table *tmp_table=join->all_tables[tablenr];
 	keyuse->ref_table_rows= max(tmp_table->file->stats.records, (ha_rows)100);
       }
     }
@@ -4939,7 +4939,7 @@ best_access_path(JOIN      *join,
 
   if (s->keyuse)
   {                                            /* Use key if possible */
-    TABLE *table= s->table;
+    Table *table= s->table;
     KEYUSE *keyuse,*start_key=0;
     double best_records= DBL_MAX;
     uint max_key_part=0;
@@ -5481,7 +5481,7 @@ best_access_path(JOIN      *join,
     /*
       We estimate the cost of evaluating WHERE clause for found records
       as record_count * rnd_records / TIME_FOR_COMPARE. This cost plus
-      tmp give us total cost of using TABLE SCAN
+      tmp give us total cost of using Table SCAN
     */
     if (best == DBL_MAX ||
         (tmp  + record_count/(double) TIME_FOR_COMPARE*rnd_records <
@@ -5512,7 +5512,7 @@ best_access_path(JOIN      *join,
       idx == join->const_tables &&
       s->table == join->sort_by_table &&
       join->unit->select_limit_cnt >= records)
-    join->sort_by_table= (TABLE*) 1;  // Must use temporary table
+    join->sort_by_table= (Table*) 1;  // Must use temporary table
 
   return;
 }
@@ -6397,7 +6397,7 @@ get_best_combination(JOIN *join)
   used_tables= OUTER_REF_TABLE_BIT;		// Outer row is already read
   for (j=join_tab, tablenr=0 ; tablenr < table_count ; tablenr++,j++)
   {
-    TABLE *form;
+    Table *form;
     *j= *join->best_positions[tablenr].table;
     form=join->table[tablenr]=j->table;
     used_tables|= form->map;
@@ -6435,7 +6435,7 @@ static bool create_ref_for_key(JOIN *join, JOIN_TAB *j, KEYUSE *org_keyuse,
   KEYUSE *keyuse=org_keyuse;
   THD  *thd= join->thd;
   uint keyparts,length,key;
-  TABLE *table;
+  Table *table;
   KEY *keyinfo;
 
   /*  Use best key from find_best */
@@ -6602,7 +6602,7 @@ bool
 store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 {
   bool error;
-  TABLE *table= field->table;
+  Table *table= field->table;
   THD *thd= table->in_use;
   ha_rows cuted_fields=thd->cuted_fields;
   my_bitmap_map *old_map= dbug_tmp_use_all_columns(table,
@@ -6623,18 +6623,18 @@ store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
 
 
 static bool
-make_simple_join(JOIN *join,TABLE *tmp_table)
+make_simple_join(JOIN *join,Table *tmp_table)
 {
-  TABLE **tableptr;
+  Table **tableptr;
   JOIN_TAB *join_tab;
 
   /*
-    Reuse TABLE * and JOIN_TAB if already allocated by a previous call
+    Reuse Table * and JOIN_TAB if already allocated by a previous call
     to this function through JOIN::exec (may happen for sub-queries).
   */
   if (!join->table_reexec)
   {
-    if (!(join->table_reexec= (TABLE**) join->thd->alloc(sizeof(TABLE*))))
+    if (!(join->table_reexec= (Table**) join->thd->alloc(sizeof(Table*))))
       return(true);                        /* purecov: inspected */
     if (join->tmp_join)
       join->tmp_join->table_reexec= join->table_reexec;
@@ -6882,7 +6882,7 @@ make_outerjoin_info(JOIN *join)
   for (uint i=join->const_tables ; i < join->tables ; i++)
   {
     JOIN_TAB *tab=join->join_tab+i;
-    TABLE *table=tab->table;
+    Table *table=tab->table;
     TABLE_LIST *tbl= table->pos_in_table_list;
     TABLE_LIST *embedding= tbl->embedding;
 
@@ -7315,7 +7315,7 @@ make_join_select(JOIN *join,SQL_SELECT *select,COND *cond)
     false  No
 */
 
-bool uses_index_fields_only(Item *item, TABLE *tbl, uint keyno, 
+bool uses_index_fields_only(Item *item, Table *tbl, uint keyno, 
                             bool other_tbls_ok)
 {
   if (item->const_item())
@@ -7410,7 +7410,7 @@ bool uses_index_fields_only(Item *item, TABLE *tbl, uint keyno,
     Index condition, or NULL if no condition could be inferred.
 */
 
-Item *make_cond_for_index(Item *cond, TABLE *table, uint keyno,
+Item *make_cond_for_index(Item *cond, Table *table, uint keyno,
                           bool other_tbls_ok)
 {
   if (!cond)
@@ -7620,10 +7620,10 @@ uint make_join_orderinfo(JOIN *join)
   for (i=join->const_tables ; i < join->tables ; i++)
   {
     JOIN_TAB *tab=join->join_tab+i;
-    TABLE *table=tab->table;
+    Table *table=tab->table;
     if ((table == join->sort_by_table && 
          (!join->order || join->skip_sort_order)) ||
-        (join->sort_by_table == (TABLE *) 1 && i != join->const_tables))
+        (join->sort_by_table == (Table *) 1 && i != join->const_tables))
     {
       break;
     }
@@ -7664,7 +7664,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after)
   for (i=join->const_tables ; i < join->tables ; i++)
   {
     JOIN_TAB *tab=join->join_tab+i;
-    TABLE *table=tab->table;
+    Table *table=tab->table;
     bool using_join_cache;
     tab->read_record.table= table;
     tab->read_record.file=table->file;
@@ -9447,7 +9447,7 @@ static void update_const_equal_items(COND *cond, JOIN_TAB *tab)
         */  
         if (!possible_keys.is_clear_all())
         {
-          TABLE *tab= field->table;
+          Table *tab= field->table;
           KEYUSE *use;
           for (use= stat->keyuse; use && use->table == tab; use++)
             if (possible_keys.is_set(use->key) && 
@@ -10529,7 +10529,7 @@ const_expression_in_where(COND *cond, Item *comp_item, Item **const_item)
 
 Next_select_func setup_end_select_func(JOIN *join)
 {
-  TABLE *table= join->tmp_table;
+  Table *table= join->tmp_table;
   TMP_TABLE_PARAM *tmp_tbl= &join->tmp_table_param;
   Next_select_func end_select;
 
@@ -10595,7 +10595,7 @@ Next_select_func setup_end_select_func(JOIN *join)
 */
 
 static int
-do_select(JOIN *join,List<Item> *fields,TABLE *table)
+do_select(JOIN *join,List<Item> *fields,Table *table)
 {
   int rc= 0;
   enum_nested_loop_state error= NESTED_LOOP_OK;
@@ -11303,7 +11303,7 @@ flush_cached_records(JOIN *join,JOIN_TAB *join_tab,bool skip_last)
 
 /** Help function when we get some an error from the table handler. */
 
-int report_error(TABLE *table, int error)
+int report_error(Table *table, int error)
 {
   if (error == HA_ERR_END_OF_FILE || error == HA_ERR_KEY_NOT_FOUND)
   {
@@ -11325,7 +11325,7 @@ int report_error(TABLE *table, int error)
 int safe_index_read(JOIN_TAB *tab)
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
   if ((error=table->file->index_read_map(table->record[0],
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
@@ -11339,7 +11339,7 @@ static int
 join_read_const_table(JOIN_TAB *tab, POSITION *pos)
 {
   int error;
-  TABLE *table=tab->table;
+  Table *table=tab->table;
   table->const_table=1;
   table->null_row=0;
   table->status=STATUS_NO_RECORD;
@@ -11417,7 +11417,7 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
 static int
 join_read_system(JOIN_TAB *tab)
 {
-  TABLE *table= tab->table;
+  Table *table= tab->table;
   int error;
   if (table->status & STATUS_GARBAGE)		// If first read
   {
@@ -11456,7 +11456,7 @@ static int
 join_read_const(JOIN_TAB *tab)
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
   if (table->status & STATUS_GARBAGE)		// If first read
   {
     table->status= 0;
@@ -11511,7 +11511,7 @@ static int
 join_read_key(JOIN_TAB *tab)
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
 
   if (!table->file->inited)
   {
@@ -11562,7 +11562,7 @@ static int
 join_read_always_key(JOIN_TAB *tab)
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
 
   /* Initialize the index first */
   if (!table->file->inited)
@@ -11599,7 +11599,7 @@ static int
 join_read_last_key(JOIN_TAB *tab)
 {
   int error;
-  TABLE *table= tab->table;
+  Table *table= tab->table;
 
   if (!table->file->inited)
     table->file->ha_index_init(tab->ref.key, tab->sorted);
@@ -11627,7 +11627,7 @@ join_no_more_records(READ_RECORD *info __attribute__((unused)))
 static int
 join_read_next_same_diff(READ_RECORD *info)
 {
-  TABLE *table= info->table;
+  Table *table= info->table;
   JOIN_TAB *tab=table->reginfo.join_tab;
   if (tab->insideout_match_tab->found_match)
   {
@@ -11660,7 +11660,7 @@ static int
 join_read_next_same(READ_RECORD *info)
 {
   int error;
-  TABLE *table= info->table;
+  Table *table= info->table;
   JOIN_TAB *tab=table->reginfo.join_tab;
 
   if ((error=table->file->index_next_same(table->record[0],
@@ -11680,7 +11680,7 @@ static int
 join_read_prev_same(READ_RECORD *info)
 {
   int error;
-  TABLE *table= info->table;
+  Table *table= info->table;
   JOIN_TAB *tab=table->reginfo.join_tab;
 
   if ((error=table->file->index_prev(table->record[0])))
@@ -11739,7 +11739,7 @@ static int
 join_read_first(JOIN_TAB *tab)
 {
   int error;
-  TABLE *table=tab->table;
+  Table *table=tab->table;
   if (!table->key_read && table->covering_keys.is_set(tab->index) &&
       !table->no_keyread)
   {
@@ -11814,7 +11814,7 @@ join_read_next(READ_RECORD *info)
 static int
 join_read_last(JOIN_TAB *tab)
 {
-  TABLE *table=tab->table;
+  Table *table=tab->table;
   int error;
   if (!table->key_read && table->covering_keys.is_set(tab->index) &&
       !table->no_keyread)
@@ -11934,7 +11934,7 @@ end_send(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
             (jt->ref.key < 0))
 	{
 	  /* Join over all rows in table;  Return number of found rows */
-	  TABLE *table=jt->table;
+	  Table *table=jt->table;
 
 	  join->select_options ^= OPTION_FOUND_ROWS;
 	  if (table->sort.record_pointers ||
@@ -12071,7 +12071,7 @@ enum_nested_loop_state
 end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 	  bool end_of_records)
 {
-  TABLE *table=join->tmp_table;
+  Table *table=join->tmp_table;
 
   if (join->thd->killed)			// Aborted by user
   {
@@ -12135,7 +12135,7 @@ static enum_nested_loop_state
 end_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 	   bool end_of_records)
 {
-  TABLE *table=join->tmp_table;
+  Table *table=join->tmp_table;
   ORDER   *group;
   int	  error;
 
@@ -12211,7 +12211,7 @@ static enum_nested_loop_state
 end_unique_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 		  bool end_of_records)
 {
-  TABLE *table=join->tmp_table;
+  Table *table=join->tmp_table;
   int	  error;
 
   if (end_of_records)
@@ -12258,7 +12258,7 @@ enum_nested_loop_state
 end_write_group(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 		bool end_of_records)
 {
-  TABLE *table=join->tmp_table;
+  Table *table=join->tmp_table;
   int	  idx= -1;
 
   if (join->thd->killed)
@@ -12566,7 +12566,7 @@ make_cond_for_table(COND *cond, table_map tables, table_map used_table,
 
 
 static Item *
-part_of_refkey(TABLE *table,Field *field)
+part_of_refkey(Table *table,Field *field)
 {
   if (!table->reginfo.join_tab)
     return (Item*) 0;             // field from outer non-select (UPDATE,...)
@@ -12614,7 +12614,7 @@ part_of_refkey(TABLE *table,Field *field)
     -1   Reverse key can be used
 */
 
-static int test_if_order_by_key(ORDER *order, TABLE *table, uint idx,
+static int test_if_order_by_key(ORDER *order, Table *table, uint idx,
 				uint *used_key_parts)
 {
   KEY_PART_INFO *key_part,*key_part_end;
@@ -12685,7 +12685,7 @@ static int test_if_order_by_key(ORDER *order, TABLE *table, uint idx,
 }
 
 
-uint find_shortest_key(TABLE *table, const key_map *usable_keys)
+uint find_shortest_key(Table *table, const key_map *usable_keys)
 {
   uint min_length= (uint) ~0;
   uint best= MAX_KEY;
@@ -12745,7 +12745,7 @@ is_subkey(KEY_PART_INFO *key_part, KEY_PART_INFO *ref_key_part,
 */
 
 static uint
-test_if_subkey(ORDER *order, TABLE *table, uint ref, uint ref_key_parts,
+test_if_subkey(ORDER *order, Table *table, uint ref, uint ref_key_parts,
 	       const key_map *usable_keys)
 {
   uint nr;
@@ -12805,7 +12805,7 @@ test_if_subkey(ORDER *order, TABLE *table, uint ref, uint ref_key_parts,
 */
 
 static bool
-list_contains_unique_index(TABLE *table,
+list_contains_unique_index(Table *table,
                           bool (*find_func) (Field *, void *), void *data)
 {
   for (uint keynr= 0; keynr < table->s->keys; keynr++)
@@ -12935,13 +12935,13 @@ test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,ha_rows select_limit,
   uint ref_key_parts;
   int order_direction;
   uint used_key_parts;
-  TABLE *table=tab->table;
+  Table *table=tab->table;
   SQL_SELECT *select=tab->select;
   key_map usable_keys;
   QUICK_SELECT_I *save_quick= 0;
 
   /*
-    Keys disabled by ALTER TABLE ... DISABLE KEYS should have already
+    Keys disabled by ALTER Table ... DISABLE KEYS should have already
     been taken into account.
   */
   usable_keys= *map;
@@ -13378,7 +13378,7 @@ create_sort_index(THD *thd, JOIN *join, ORDER *order,
 {
   uint length= 0;
   ha_rows examined_rows;
-  TABLE *table;
+  Table *table;
   SQL_SELECT *select;
   JOIN_TAB *tab;
 
@@ -13482,7 +13482,7 @@ err:
   fields is the number of fields to check (from the end)
 *****************************************************************************/
 
-static bool compare_record(TABLE *table, Field **ptr)
+static bool compare_record(Table *table, Field **ptr)
 {
   for (; *ptr ; ptr++)
   {
@@ -13514,7 +13514,7 @@ static void free_blobs(Field **ptr)
 
 
 static int
-remove_duplicates(JOIN *join, TABLE *entry,List<Item> &fields, Item *having)
+remove_duplicates(JOIN *join, Table *entry,List<Item> &fields, Item *having)
 {
   int error;
   ulong reclength,offset;
@@ -13562,7 +13562,7 @@ remove_duplicates(JOIN *join, TABLE *entry,List<Item> &fields, Item *having)
 }
 
 
-static int remove_dup_with_compare(THD *thd, TABLE *table, Field **first_field,
+static int remove_dup_with_compare(THD *thd, Table *table, Field **first_field,
 				   ulong offset, Item *having)
 {
   handler *file=table->file;
@@ -13653,7 +13653,7 @@ err:
     Note that this will not work on tables with blobs!
 */
 
-static int remove_dup_with_hash_index(THD *thd, TABLE *table,
+static int remove_dup_with_hash_index(THD *thd, Table *table,
 				      uint field_count,
 				      Field **first_field,
 				      ulong key_length,
@@ -14111,7 +14111,7 @@ cmp_buffer_with_ref(JOIN_TAB *tab)
 
 
 bool
-cp_buffer_from_ref(THD *thd, TABLE *table, TABLE_REF *ref)
+cp_buffer_from_ref(THD *thd, Table *table, TABLE_REF *ref)
 {
   enum enum_check_fields save_count_cuted_fields= thd->count_cuted_fields;
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;
@@ -14586,7 +14586,7 @@ test_if_subpart(ORDER *a,ORDER *b)
   and group and order is compatible, else return 0.
 */
 
-static TABLE *
+static Table *
 get_sort_by_table(ORDER *a,ORDER *b,TABLE_LIST *tables)
 {
   table_map map= (table_map) 0;
@@ -15225,7 +15225,7 @@ init_tmptable_sum_functions(Item_sum **func_ptr)
 
 static void
 update_tmptable_sum_func(Item_sum **func_ptr,
-			 TABLE *tmp_table __attribute__((unused)))
+			 Table *tmp_table __attribute__((unused)))
 {
   Item_sum *func;
   while ((func= *(func_ptr++)))
@@ -15294,7 +15294,7 @@ static bool add_ref_to_table_cond(THD *thd, JOIN_TAB *join_tab)
     return(false);
 
   Item_cond_and *cond=new Item_cond_and();
-  TABLE *table=join_tab->table;
+  Table *table=join_tab->table;
   int error;
   if (!cond)
     return(true);
@@ -15723,7 +15723,7 @@ int JOIN::rollup_send_data(uint idx)
     1   if write_data_failed()
 */
 
-int JOIN::rollup_write_data(uint idx, TABLE *table_arg)
+int JOIN::rollup_write_data(uint idx, Table *table_arg)
 {
   uint i;
   for (i= send_group_parts ; i-- > idx ; )
@@ -15887,7 +15887,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
     for (uint i=0 ; i < join->tables ; i++)
     {
       JOIN_TAB *tab=join->join_tab+i;
-      TABLE *table=tab->table;
+      Table *table=tab->table;
       TABLE_LIST *table_list= tab->table->pos_in_table_list;
       char buff[512]; 
       char buff1[512], buff2[512], buff3[512];
@@ -16206,7 +16206,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
         else if (tab->do_firstmatch)
         {
           extra.append(STRING_WITH_LEN("; FirstMatch("));
-          TABLE *prev_table=tab->do_firstmatch->table;
+          Table *prev_table=tab->do_firstmatch->table;
           if (prev_table->derived_select_number)
           {
             char namebuf[NAME_LEN];

@@ -345,7 +345,7 @@ public:
     decimals=0;
     max_length=MAX_DATE_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
   }
@@ -371,7 +371,7 @@ public:
   Item_date_func(Item *a,Item *b) :Item_str_func(a,b) {}
   Item_date_func(Item *a,Item *b, Item *c) :Item_str_func(a,b,c) {}
   enum_field_types field_type() const { return DRIZZLE_TYPE_DATETIME; }
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
   }
@@ -403,7 +403,7 @@ public:
     decimals= DATETIME_DEC;
     max_length=MAX_TIME_WIDTH*MY_CHARSET_BIN_MB_MAXLEN;
   }
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
   }
@@ -768,7 +768,7 @@ public:
   bool get_time(DRIZZLE_TIME *ltime);
   const char *cast_type() const { return "date"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_NEWDATE; }
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
   }  
@@ -803,7 +803,7 @@ public:
   bool get_time(DRIZZLE_TIME *ltime);
   const char *cast_type() const { return "time"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_TIME; }
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
   }
@@ -831,7 +831,7 @@ public:
   String *val_str(String *str);
   const char *cast_type() const { return "datetime"; }
   enum_field_types field_type() const { return DRIZZLE_TYPE_DATETIME; }
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
   }
@@ -887,7 +887,7 @@ public:
   enum_field_types field_type() const { return cached_field_type; }
   void fix_length_and_dec();
 
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 0);
   }
@@ -1009,7 +1009,7 @@ public:
   const char *func_name() const { return "str_to_date"; }
   enum_field_types field_type() const { return cached_field_type; }
   void fix_length_and_dec();
-  Field *tmp_table_field(TABLE *table)
+  Field *tmp_table_field(Table *table)
   {
     return tmp_table_field_from_field_type(table, 1);
   }

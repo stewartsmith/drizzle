@@ -1214,7 +1214,7 @@ static int open_binary_frm(THD *thd, TABLE_SHARE *share, uchar *head,
 
 int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
                           uint db_stat, uint prgflag, uint ha_open_flags,
-                          TABLE *outparam, open_table_mode open_mode)
+                          Table *outparam, open_table_mode open_mode)
 {
   int error;
   uint records, i, bitmap_size;
@@ -1461,11 +1461,11 @@ int open_table_from_share(THD *thd, TABLE_SHARE *share, const char *alias,
 
   SYNOPSIS
     closefrm()
-    table		TABLE object to free
+    table		Table object to free
     free_share		Is 1 if we also want to free table_share
 */
 
-int closefrm(register TABLE *table, bool free_share)
+int closefrm(register Table *table, bool free_share)
 {
   int error=0;
 
@@ -1495,7 +1495,7 @@ int closefrm(register TABLE *table, bool free_share)
 
 /* Deallocate temporary blob storage */
 
-void free_blobs(register TABLE *table)
+void free_blobs(register Table *table)
 {
   uint *ptr, *end;
   for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
@@ -2134,7 +2134,7 @@ char *get_field(MEM_ROOT *mem, Field *field)
     given a buffer with a key value, and a map of keyparts
     that are present in this value, returns the length of the value
 */
-uint calculate_key_len(TABLE *table, uint key,
+uint calculate_key_len(Table *table, uint key,
                        const uchar *buf __attribute__((unused)),
                        key_part_map keypart_map)
 {
@@ -2266,7 +2266,7 @@ bool check_column_name(const char *name)
 */
 
 bool
-table_check_intact(TABLE *table, const uint table_f_count,
+table_check_intact(Table *table, const uint table_f_count,
                    const TABLE_FIELD_W_TYPE *table_def)
 {
   uint i;
@@ -2482,7 +2482,7 @@ merge_on_conds(THD *thd, TABLE_LIST *table, bool is_cascaded)
 
 /*
   Find underlying base tables (TABLE_LIST) which represent given
-  table_to_find (TABLE)
+  table_to_find (Table)
 
   SYNOPSIS
     TABLE_LIST::find_underlying_table()
@@ -2493,7 +2493,7 @@ merge_on_conds(THD *thd, TABLE_LIST *table, bool is_cascaded)
     found table reference
 */
 
-TABLE_LIST *TABLE_LIST::find_underlying_table(TABLE *table_to_find)
+TABLE_LIST *TABLE_LIST::find_underlying_table(Table *table_to_find)
 {
   /* is this real table and table which we are looking for? */
   if (table == table_to_find && merge_underlying_list == 0)
@@ -3369,7 +3369,7 @@ Item_subselect *TABLE_LIST::containing_subselect()
 
   SYNOPSIS
     process_index_hints()
-      table         the TABLE to operate on.
+      table         the Table to operate on.
 
   DESCRIPTION
     The parser collects the index hints for each table in a "tagged list" 
@@ -3415,7 +3415,7 @@ Item_subselect *TABLE_LIST::containing_subselect()
     false                no errors found
     TRUE                 found and reported an error.
 */
-bool TABLE_LIST::process_index_hints(TABLE *tbl)
+bool TABLE_LIST::process_index_hints(Table *tbl)
 {
   /* initialize the result variables */
   tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by= 
@@ -3534,7 +3534,7 @@ bool TABLE_LIST::process_index_hints(TABLE *tbl)
 }
 
 
-size_t max_row_length(TABLE *table, const uchar *data)
+size_t max_row_length(Table *table, const uchar *data)
 {
   size_t length= table->getRecordLength() + 2 * table->sizeFields();
   uint *const beg= table->getBlobField();
@@ -3550,6 +3550,12 @@ size_t max_row_length(TABLE *table, const uchar *data)
   return length;
 }
 
+void Field_iterator_table::set(TABLE_LIST *table) 
+{ 
+  ptr= table->table->field; 
+}
+
+
 /*
   Check type of .frm if we are not going to parse it
 
@@ -3558,12 +3564,12 @@ size_t max_row_length(TABLE *table, const uchar *data)
   path        path to file
 
   RETURN
-  FRMTYPE_ERROR       error
-  FRMTYPE_TABLE       table
+  false       error
+  true       table
 */
 
-frm_type_enum mysql_frm_type(THD *thd __attribute__((unused)),
-                             char *path, enum legacy_db_type *dbt)
+bool mysql_frm_type(THD *thd __attribute__((unused)),
+                    char *path, enum legacy_db_type *dbt)
 {
   File file;
   uchar header[10];     /* This should be optimized */
@@ -3572,12 +3578,12 @@ frm_type_enum mysql_frm_type(THD *thd __attribute__((unused)),
   *dbt= DB_TYPE_UNKNOWN;
 
   if ((file= my_open(path, O_RDONLY | O_SHARE, MYF(0))) < 0)
-    return(FRMTYPE_ERROR);
+    return false;
   error= my_read(file, (uchar*) header, sizeof(header), MYF(MY_NABP));
   my_close(file, MYF(MY_WME));
 
   if (error)
-    return(FRMTYPE_ERROR);
+    return false;
 
   /*  
     This is just a check for DB_TYPE. We'll return default unknown type
@@ -3587,10 +3593,10 @@ frm_type_enum mysql_frm_type(THD *thd __attribute__((unused)),
   if (header[0] != (uchar) 254 || header[1] != 1 ||
       (header[2] != FRM_VER && header[2] != FRM_VER+1 &&
        (header[2] < FRM_VER+3 || header[2] > FRM_VER+4)))
-    return(FRMTYPE_TABLE);
+    return true;
 
   *dbt= (enum legacy_db_type) (uint) *(header + 3);
-  return(FRMTYPE_TABLE);                   // Is probably a .frm table
+  return true;                   // Is probably a .frm table
 }
 
 /****************************************************************************
@@ -3599,7 +3605,7 @@ frm_type_enum mysql_frm_type(THD *thd __attribute__((unused)),
 
 
 /* Prototypes */
-void free_tmp_table(THD *thd, TABLE *entry);
+void free_tmp_table(THD *thd, Table *entry);
 
 /**
   Create field for temporary table from given field.
@@ -3624,7 +3630,7 @@ void free_tmp_table(THD *thd, TABLE *entry);
 */
 
 Field *create_tmp_field_from_field(THD *thd, Field *org_field,
-                                   const char *name, TABLE *table,
+                                   const char *name, Table *table,
                                    Item_field *item, uint convert_blob_length)
 {
   Field *new_field;
@@ -3686,7 +3692,7 @@ Field *create_tmp_field_from_field(THD *thd, Field *org_field,
 */
 
 static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
-                                         Item *item, TABLE *table,
+                                         Item *item, Table *table,
                                          Item ***copy_func, bool modify_item,
                                          uint convert_blob_length)
 {
@@ -3810,7 +3816,7 @@ static Field *create_tmp_field_from_item(THD *thd __attribute__((unused)),
 */
 
 Field *create_tmp_field_for_schema(THD *thd __attribute__((unused)),
-                                   Item *item, TABLE *table)
+                                   Item *item, Table *table)
 {
   if (item->field_type() == DRIZZLE_TYPE_VARCHAR)
   {
@@ -3859,7 +3865,7 @@ Field *create_tmp_field_for_schema(THD *thd __attribute__((unused)),
     new_created field
 */
 
-Field *create_tmp_field(THD *thd, TABLE *table,Item *item, Item::Type type,
+Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
                         Item ***copy_func, Field **from_field,
                         Field **default_field,
                         bool group, bool modify_item,
@@ -3985,14 +3991,14 @@ Field *create_tmp_field(THD *thd, TABLE *table,Item *item, Item::Type type,
 #define RATIO_TO_PACK_ROWS	       2
 #define MIN_STRING_LENGTH_TO_PACK_ROWS   10
 
-TABLE *
+Table *
 create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
 		 ORDER *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 char *table_alias)
 {
   MEM_ROOT *mem_root_save, own_root;
-  TABLE *table;
+  Table *table;
   TABLE_SHARE *share;
   uint	i,field_count,null_count,null_pack_length;
   uint  copy_func_count= param->func_count;
@@ -4662,12 +4668,12 @@ err:
 /****************************************************************************/
 
 /**
-  Create a reduced TABLE object with properly set up Field list from a
+  Create a reduced Table object with properly set up Field list from a
   list of field definitions.
 
     The created table doesn't have a table handler associated with
     it, has no keys, no group/distinct, no copy_funcs array.
-    The sole purpose of this TABLE object is to use the power of Field
+    The sole purpose of this Table object is to use the power of Field
     class to read/write data to/from table->record[0]. Then one can store
     the record in any container (RB tree, hash, etc).
     The table is created in THD mem_root, so are the table's fields.
@@ -4677,10 +4683,10 @@ err:
   @param field_list  list of column definitions
 
   @return
-    0 if out of memory, TABLE object in case of success
+    0 if out of memory, Table object in case of success
 */
 
-TABLE *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
+Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
 {
   uint field_count= field_list.elements;
   uint blob_count= 0;
@@ -4691,7 +4697,7 @@ TABLE *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list)
   uint null_pack_length;              /* NULL representation array length */
   uint *blob_field;
   uchar *bitmaps;
-  TABLE *table;
+  Table *table;
   TABLE_SHARE *share;
 
   if (!multi_alloc_root(thd->mem_root,
@@ -4976,12 +4982,12 @@ void Table::free_tmp_table(THD *thd)
   to this.
 */
 
-bool create_myisam_from_heap(THD *thd, TABLE *table,
+bool create_myisam_from_heap(THD *thd, Table *table,
                              MI_COLUMNDEF *start_recinfo,
                              MI_COLUMNDEF **recinfo, 
 			     int error, bool ignore_last_dupp_key_error)
 {
-  TABLE new_table;
+  Table new_table;
   TABLE_SHARE share;
   const char *save_proc_info;
   int write_err;

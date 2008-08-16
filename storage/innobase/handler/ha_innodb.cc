@@ -2421,7 +2421,7 @@ uint
 get_field_offset(
 /*=============*/
 			/* out: offset */
-	TABLE*	table,	/* in: MySQL table object */
+	Table*	table,	/* in: MySQL table object */
 	Field*	field)	/* in: MySQL field object */
 {
 	return((uint) (field->ptr - table->record[0]));
@@ -2435,7 +2435,7 @@ uint
 field_in_record_is_null(
 /*====================*/
 			/* out: 1 if NULL, 0 otherwise */
-	TABLE*	table,	/* in: MySQL table object */
+	Table*	table,	/* in: MySQL table object */
 	Field*	field,	/* in: MySQL field object */
 	char*	record)	/* in: a row in MySQL format */
 {
@@ -2464,7 +2464,7 @@ inline
 void
 set_field_in_record_to_null(
 /*========================*/
-	TABLE*	table,	/* in: MySQL table object */
+	Table*	table,	/* in: MySQL table object */
 	Field*	field,	/* in: MySQL field object */
 	char*	record)	/* in: a row in MySQL format */
 {
@@ -2913,7 +2913,7 @@ build_template(
 	THD*		thd __attribute__((unused)),		/* in: current user thread, used
 					only if templ_type is
 					ROW_DRIZZLE_REC_FIELDS */
-	TABLE*		table,		/* in: MySQL table */
+	Table*		table,		/* in: MySQL table */
         ha_innobase*    file,           /* in: ha_innobase handler */
 	uint		templ_type)	/* in: ROW_DRIZZLE_WHOLE_ROW or
 					ROW_DRIZZLE_REC_FIELDS */
@@ -3307,7 +3307,7 @@ ha_innobase::write_row(
 	     || sql_command == SQLCOM_CREATE_INDEX
 	     || sql_command == SQLCOM_DROP_INDEX)
 	    && num_write_row >= 10000) {
-		/* ALTER TABLE is COMMITted at every 10000 copied rows.
+		/* ALTER Table is COMMITted at every 10000 copied rows.
 		The IX table lock for the original table has to be re-issued.
 		As this method will be called on a temporary table where the
 		contents of the original table is being copied to, it is
@@ -3334,7 +3334,7 @@ no_commit:
 			/*
 			ut_print_timestamp(stderr);
 			fprintf(stderr,
-				"  InnoDB: ALTER TABLE is holding lock"
+				"  InnoDB: ALTER Table is holding lock"
 				" on %lu tables!\n",
 				prebuilt->trx->mysql_n_tables_locked);
 			*/
@@ -4511,7 +4511,7 @@ int
 create_table_def(
 /*=============*/
 	trx_t*		trx,		/* in: InnoDB transaction handle */
-	TABLE*		form,		/* in: information on table
+	Table*		form,		/* in: information on table
 					columns and indexes */
 	const char*	table_name,	/* in: table name */
 	const char*	path_of_temp_table,/* in: if this is a table explicitly
@@ -4623,7 +4623,7 @@ int
 create_index(
 /*=========*/
 	trx_t*		trx,		/* in: InnoDB transaction handle */
-	TABLE*		form,		/* in: information on table
+	Table*		form,		/* in: information on table
 					columns and indexes */
 	const char*	table_name,	/* in: table name */
 	uint		key_num)	/* in: index number */
@@ -4771,7 +4771,7 @@ create_clustered_index_when_no_primary(
 }
 
 /*********************************************************************
-Update create_info.  Used in SHOW CREATE TABLE et al. */
+Update create_info.  Used in SHOW CREATE Table et al. */
 
 void
 ha_innobase::update_create_info(
@@ -4792,7 +4792,7 @@ ha_innobase::create(
 /*================*/
 					/* out: error number */
 	const char*	name,		/* in: table name */
-	TABLE*		form,		/* in: information on table
+	Table*		form,		/* in: information on table
 					columns and indexes */
 	HA_CREATE_INFO*	create_info)	/* in: more information of the
 					created table, contains also the
@@ -4948,8 +4948,8 @@ ha_innobase::create(
 	if ((create_info->used_fields & HA_CREATE_USED_AUTO) &&
 	   (create_info->auto_increment_value != 0)) {
 
-		/* Query was ALTER TABLE...AUTO_INCREMENT = x; or
-		CREATE TABLE ...AUTO_INCREMENT = x; Find out a table
+		/* Query was ALTER Table...AUTO_INCREMENT = x; or
+		CREATE Table ...AUTO_INCREMENT = x; Find out a table
 		definition from the dictionary and get the current value
 		of the auto increment field. Set a new value to the
 		auto increment field if the value is greater than the
@@ -5029,7 +5029,7 @@ ha_innobase::delete_all_rows(void)
 
 	if (thd_sql_command(user_thd) != SQLCOM_TRUNCATE) {
 	fallback:
-		/* We only handle TRUNCATE TABLE t as a special case.
+		/* We only handle TRUNCATE Table t as a special case.
 		DELETE FROM t will have to use ha_innobase::delete_row(). */
 		return(my_errno=HA_ERR_WRONG_COMMAND);
 	}
@@ -5555,7 +5555,7 @@ ha_innobase::info(
 		unpack_filename(path,path);
 
 		/* Note that we do not know the access time of the table,
-		nor the CHECK TABLE time, nor the UPDATE or INSERT time. */
+		nor the CHECK Table time, nor the UPDATE or INSERT time. */
 
 		if (os_file_get_status(path,&stat_info)) {
 			stats.create_time = stat_info.ctime;
@@ -5572,10 +5572,10 @@ ha_innobase::info(
 		The MySQL optimizer seems to assume in a left join that n_rows
 		is an accurate estimate if it is zero. Of course, it is not,
 		since we do not have any locks on the rows yet at this phase.
-		Since SHOW TABLE STATUS seems to call this function with the
+		Since SHOW Table STATUS seems to call this function with the
 		HA_STATUS_TIME flag set, while the left join optimizer does not
 		set that flag, we add one to a zero value if the flag is not
-		set. That way SHOW TABLE STATUS will show the best estimate,
+		set. That way SHOW Table STATUS will show the best estimate,
 		while the optimizer never sees the table empty. */
 
 		if (n_rows < 0) {
@@ -5725,7 +5725,7 @@ ha_innobase::analyze(
 }
 
 /**************************************************************************
-This is mapped to "ALTER TABLE tablename ENGINE=InnoDB", which rebuilds
+This is mapped to "ALTER Table tablename ENGINE=InnoDB", which rebuilds
 the table in MySQL. */
 
 int
@@ -5776,7 +5776,7 @@ ha_innobase::check(
 
 /*****************************************************************
 Adds information about free space in the InnoDB tablespace to a table comment
-which is printed out when a user calls SHOW TABLE STATUS. Adds also info on
+which is printed out when a user calls SHOW Table STATUS. Adds also info on
 foreign keys. */
 
 char*
@@ -5857,7 +5857,7 @@ char*
 ha_innobase::get_foreign_key_create_info(void)
 /*==========================================*/
 			/* out, own: character string in the form which
-			can be inserted to the CREATE TABLE statement,
+			can be inserted to the CREATE Table statement,
 			MUST be freed with ::free_foreign_key_create_info */
 {
 	char*	str	= 0;
@@ -6042,7 +6042,7 @@ ha_innobase::get_foreign_key_list(THD *thd, List<FOREIGN_KEY_INFO> *f_key_list)
 }
 
 /*********************************************************************
-Checks if ALTER TABLE may change the storage engine of the table.
+Checks if ALTER Table may change the storage engine of the table.
 Changing storage engines is not allowed for tables for which there
 are foreign key constraints (parent or child tables). */
 
@@ -6335,7 +6335,7 @@ ha_innobase::external_lock(
 
 	if (lock_type == F_WRLCK) {
 
-		/* If this is a SELECT, then it is in UPDATE TABLE ...
+		/* If this is a SELECT, then it is in UPDATE Table ...
 		or SELECT ... FOR UPDATE */
 		prebuilt->select_lock_type = LOCK_X;
 		prebuilt->stored_select_lock_type = LOCK_X;
@@ -6877,7 +6877,7 @@ ha_innobase::store_lock(
 
 	if (sql_command == SQLCOM_DROP_TABLE) {
 
-		/* MySQL calls this function in DROP TABLE though this table
+		/* MySQL calls this function in DROP Table though this table
 		handle may belong to another thd that is running a query. Let
 		us in that case skip any changes to the prebuilt struct. */ 
 
@@ -6974,9 +6974,9 @@ ha_innobase::store_lock(
 			lock_type = TL_READ_NO_INSERT;
 		}
 
-		/* If we are not doing a LOCK TABLE, DISCARD/IMPORT
-		TABLESPACE or TRUNCATE TABLE then allow multiple
-		writers. Note that ALTER TABLE uses a TL_WRITE_ALLOW_READ
+		/* If we are not doing a LOCK Table, DISCARD/IMPORT
+		TABLESPACE or TRUNCATE Table then allow multiple
+		writers. Note that ALTER Table uses a TL_WRITE_ALLOW_READ
 		< TL_WRITE_CONCURRENT_INSERT.
 
 		We especially allow multiple writers if MySQL is at the
@@ -7100,11 +7100,11 @@ ha_innobase::innobase_read_and_init_auto_inc(
 
 	dict_table_autoinc_unlock(prebuilt->table);
 
-	/* Since MySQL does not seem to call autocommit after SHOW TABLE
+	/* Since MySQL does not seem to call autocommit after SHOW Table
 	STATUS (even if we would register the trx here), we commit our
 	transaction here if it was started here. This is to eliminate a
 	dangling transaction. If the user had AUTOCOMMIT=0, then SHOW
-	TABLE STATUS does leave a dangling transaction if the user does not
+	Table STATUS does leave a dangling transaction if the user does not
 	himself call COMMIT. */
 
 	if (trx_was_not_started) {
@@ -7843,7 +7843,7 @@ static DRIZZLE_SYSVAR_BOOL(status_file, innobase_create_status_file,
 
 static DRIZZLE_SYSVAR_BOOL(stats_on_metadata, innobase_stats_on_metadata,
   PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_NOSYSVAR,
-  "Enable statistics gathering for metadata commands such as SHOW TABLE STATUS (on by default)",
+  "Enable statistics gathering for metadata commands such as SHOW Table STATUS (on by default)",
   NULL, NULL, TRUE);
 
 static DRIZZLE_SYSVAR_BOOL(use_adaptive_hash_indexes, innobase_use_adaptive_hash_indexes,

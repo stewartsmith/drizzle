@@ -221,7 +221,7 @@ public:
     @retval 1  if the table definition is not compatible with @c table
     @retval 0  if the table definition is compatible with @c table
   */
-  int compatible_with(Relay_log_info const *rli, TABLE *table) const;
+  int compatible_with(Relay_log_info const *rli, Table *table) const;
 
 private:
   uint32_t m_size;           // Number of elements in the types array

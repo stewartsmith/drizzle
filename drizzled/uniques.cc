@@ -570,11 +570,11 @@ bool Unique::walk(tree_walk_action action, void *walk_action_arg)
 }
 
 /*
-  Modify the TABLE element so that when one calls init_records()
+  Modify the Table element so that when one calls init_records()
   the rows will be read in priority order.
 */
 
-bool Unique::get(TABLE *table)
+bool Unique::get(Table *table)
 {
   SORTPARAM sort_param;
   table->sort.found_records=elements+tree.elements_in_tree;

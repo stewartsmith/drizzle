@@ -20,7 +20,7 @@
 
   the most natural (easiest, fastest) way to do it is to
   compute List<Item> field_list not in mysql_ha_read
-  but in mysql_ha_open, and then store it in TABLE structure.
+  but in mysql_ha_open, and then store it in Table structure.
 
   The problem here is that mysql_parse calls free_item to free all the
   items allocated at the end of every query. The workaround would to
@@ -34,25 +34,25 @@
 
 /*
   There are two containers holding information about open handler tables.
-  The first is 'thd->handler_tables'. It is a linked list of TABLE objects.
+  The first is 'thd->handler_tables'. It is a linked list of Table objects.
   It is used like 'thd->open_tables' in the table cache. The trick is to
   exchange these two lists during open and lock of tables. Thus the normal
   table cache code can be used.
   The second container is a HASH. It holds objects of the type TABLE_LIST.
   Despite its name, no lists of tables but only single structs are hashed
   (the 'next' pointer is always NULL). The reason for theis second container
-  is, that we want handler tables to survive FLUSH TABLE commands. A table
-  affected by FLUSH TABLE must be closed so that other threads are not
+  is, that we want handler tables to survive FLUSH Table commands. A table
+  affected by FLUSH Table must be closed so that other threads are not
   blocked by handler tables still in use. Since we use the normal table cache
   functions with 'thd->handler_tables', the closed tables are removed from
   this list. Hence we need the original open information for the handler
   table in the case that it is used again. This information is handed over
   to mysql_ha_open() as a TABLE_LIST. So we store this information in the
-  second container, where it is not affected by FLUSH TABLE. The second
+  second container, where it is not affected by FLUSH Table. The second
   container is implemented as a hash for performance reasons. Consequently,
   we use it not only for re-opening a handler table, but also for the
   HANDLER ... READ commands. For this purpose, we store a pointer to the
-  TABLE structure (in the first container) in the TBALE_LIST object in the
+  Table structure (in the first container) in the TBALE_LIST object in the
   second container. When the table is flushed, the pointer is cleared.
 */
 
@@ -76,7 +76,7 @@
 static void mysql_ha_close_table(THD *thd, TABLE_LIST *tables,
                                  bool is_locked)
 {
-  TABLE **table_ptr;
+  Table **table_ptr;
 
   /*
     Though we could take the table pointer from hash_tables->table,
@@ -105,7 +105,7 @@ static void mysql_ha_close_table(THD *thd, TABLE_LIST *tables,
   else if (tables->table)
   {
     /* Must be a temporary table */
-    TABLE *table= tables->table;
+    Table *table= tables->table;
     table->file->ha_index_or_rnd_end();
     table->query_id= thd->query_id;
     table->open_by_handler= 0;

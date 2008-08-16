@@ -116,7 +116,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
 {
   char name[FN_REFLEN];
   File file;
-  TABLE *table= NULL;
+  Table *table= NULL;
   int error;
   String *field_term=ex->field_term,*escaped=ex->escaped;
   String *enclosed=ex->enclosed;
@@ -508,7 +508,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
 {
   List_iterator_fast<Item> it(fields_vars);
   Item_field *sql_field;
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   uint64_t id;
   bool err;
 
@@ -625,7 +625,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
 {
   List_iterator_fast<Item> it(fields_vars);
   Item *item;
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   uint enclosed_length;
   uint64_t id;
   bool err;

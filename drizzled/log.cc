@@ -2957,7 +2957,7 @@ void THD::binlog_set_stmt_begin() {
   Write a table map to the binary log.
  */
 
-int THD::binlog_write_table_map(TABLE *table, bool is_trans)
+int THD::binlog_write_table_map(Table *table, bool is_trans)
 {
   int error;
 

@@ -19,18 +19,18 @@
 #include <drizzled/rpl_reporting.h>
 
 #if !defined(DRIZZLE_CLIENT)
-size_t pack_row(TABLE* table, MY_BITMAP const* cols,
+size_t pack_row(Table* table, MY_BITMAP const* cols,
                 uchar *row_data, const uchar *data);
 #endif
 
 #if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int unpack_row(Relay_log_info const *rli,
-               TABLE *table, uint const colcnt,
+               Table *table, uint const colcnt,
                uchar const *const row_data, MY_BITMAP const *cols,
                uchar const **const row_end, ulong *const master_reclength);
 
 // Fill table's record[0] with default values.
-int prepare_record(TABLE *const, const MY_BITMAP *cols, uint width, const bool);
+int prepare_record(Table *const, const MY_BITMAP *cols, uint width, const bool);
 #endif
 
 #endif

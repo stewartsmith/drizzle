@@ -161,7 +161,7 @@ public:
   void signal_divide_by_null();
   friend class udf_handler;
   Field *tmp_table_field() { return result_field; }
-  Field *tmp_table_field(TABLE *t_arg);
+  Field *tmp_table_field(Table *t_arg);
   Item *get_tmp_table_item(THD *thd);
 
   my_decimal *val_decimal(my_decimal *);

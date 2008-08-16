@@ -592,7 +592,7 @@ ha_rows ha_heap::records_in_range(uint inx, key_range *min_key,
 }
 
 
-int ha_heap::create(const char *name, TABLE *table_arg,
+int ha_heap::create(const char *name, Table *table_arg,
 		    HA_CREATE_INFO *create_info)
 {
   uint key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;

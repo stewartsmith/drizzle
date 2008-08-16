@@ -184,7 +184,7 @@ bool mysql_create_frm(THD *thd, const char *file_name,
   if (tmp_len < create_info->comment.length)
   {
     my_error(ER_WRONG_STRING_LENGTH, MYF(0),
-             create_info->comment.str,"TABLE COMMENT",
+             create_info->comment.str,"Table COMMENT",
              (uint) TABLE_COMMENT_MAXLEN);
     my_free(screen_buff,MYF(0));
     return(1);
@@ -892,7 +892,7 @@ static bool make_empty_rec(THD *thd, File file,
   Field::utype type;
   uint null_count;
   uchar *buff,*null_pos;
-  TABLE table;
+  Table table;
   TABLE_SHARE share;
   Create_field *field;
   enum_check_fields old_count_cuted_fields= thd->count_cuted_fields;

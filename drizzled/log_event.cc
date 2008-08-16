@@ -117,7 +117,7 @@ static const char *HA_ERR(int i)
 */
 static void inline slave_rows_error_report(enum loglevel level, int ha_error,
                                            Relay_log_info const *rli, THD *thd,
-                                           TABLE *table, const char * type,
+                                           Table *table, const char * type,
                                            const char *log_name, ulong pos)
 {
   const char *handler_error= HA_ERR(ha_error);
@@ -2367,9 +2367,9 @@ end:
     probably, so data_buf will be freed, so the thd->... listed above will be
     pointers to freed memory. 
     So we must set them to 0, so that those bad pointers values are not later
-    used. Note that "cleanup" queries like automatic DROP TEMPORARY TABLE
+    used. Note that "cleanup" queries like automatic DROP TEMPORARY Table
     don't suffer from these assignments to 0 as DROP TEMPORARY
-    TABLE uses the db.table syntax.
+    Table uses the db.table syntax.
   */
   thd->catalog= 0;
   thd->set_db(NULL, 0);                 /* will free the current database */
@@ -2561,7 +2561,7 @@ bool Start_log_event_v3::write(IO_CACHE* file)
 
     IMPLEMENTATION
     - To handle the case where the master died without having time to write
-    DROP TEMPORARY TABLE, DO RELEASE_LOCK (prepared statements' deletion is
+    DROP TEMPORARY Table, DO RELEASE_LOCK (prepared statements' deletion is
     TODO), we clean up all temporary tables that we got, if we are sure we
     can (see below).
 
@@ -3030,7 +3030,7 @@ uint Load_log_event::get_query_buffer_length()
     18 + fname_len + 2 +                    // "LOAD DATA INFILE 'file''"
     7 +					    // LOCAL
     9 +                                     // " REPLACE or IGNORE "
-    13 + table_name_len*2 +                 // "INTO TABLE `table`"
+    13 + table_name_len*2 +                 // "INTO Table `table`"
     21 + sql_ex.field_term_len*4 + 2 +      // " FIELDS TERMINATED BY 'str'"
     23 + sql_ex.enclosed_len*4 + 2 +        // " OPTIONALLY ENCLOSED BY 'str'"
     12 + sql_ex.escaped_len*4 + 2 +         // " ESCAPED BY 'str'"
@@ -3074,7 +3074,7 @@ void Load_log_event::print_query(bool need_db, char *buf,
   if (fn_end)
     *fn_end= pos;
 
-  pos= stpcpy(pos ," TABLE `");
+  pos= stpcpy(pos ," Table `");
   memcpy(pos, table_name, table_name_len);
   pos+= table_name_len;
 
@@ -3399,7 +3399,7 @@ void Load_log_event::print(FILE* file_arg, PRINT_EVENT_INFO* print_event_info,
   else if (sql_ex.opt_flags & IGNORE_FLAG)
     my_b_printf(&cache," IGNORE ");
   
-  my_b_printf(&cache, "INTO TABLE `%s`", table_name);
+  my_b_printf(&cache, "INTO Table `%s`", table_name);
   my_b_printf(&cache, " FIELDS TERMINATED BY ");
   pretty_print_str(&cache, sql_ex.field_term, sql_ex.field_term_len);
 
@@ -4845,7 +4845,7 @@ void Stop_log_event::print(FILE* file, PRINT_EVENT_INFO* print_event_info)
 /*
   The master stopped.  We used to clean up all temporary tables but
   this is useless as, as the master has shut down properly, it has
-  written all DROP TEMPORARY TABLE (prepared statements' deletion is
+  written all DROP TEMPORARY Table (prepared statements' deletion is
   TODO only when we binlog prep stmts).  We used to clean up
   slave_load_tmpdir, but this is useless as it has been cleared at the
   end of LOAD DATA INFILE.  So we have nothing to do here.  The place
@@ -5884,7 +5884,7 @@ const char *sql_ex_info::init(const char *buf, const char *buf_end,
 **************************************************************************/
 
 #ifndef DRIZZLE_CLIENT
-Rows_log_event::Rows_log_event(THD *thd_arg, TABLE *tbl_arg, ulong tid,
+Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
                                MY_BITMAP const *cols, bool is_transactional)
   : Log_event(thd_arg, 0, is_transactional),
     m_row_count(0),
@@ -6289,7 +6289,7 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
     }
   }
 
-  TABLE* 
+  Table* 
     table= 
     m_table= const_cast<Relay_log_info*>(rli)->m_table_map.get_table(m_table_id);
 
@@ -6760,7 +6760,7 @@ int Table_map_log_event::save_field_metadata()
   (tbl->s->db etc) and not pointer content.
  */
 #if !defined(DRIZZLE_CLIENT)
-Table_map_log_event::Table_map_log_event(THD *thd, TABLE *tbl, ulong tid,
+Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
                                          bool is_transactional __attribute__((unused)),
                                          uint16_t flags)
   : Log_event(thd, 0, true),
@@ -7196,7 +7196,7 @@ void Table_map_log_event::print(FILE * /* unused */,
   Constructor used to build an event for writing to the binary log.
  */
 #if !defined(DRIZZLE_CLIENT)
-Write_rows_log_event::Write_rows_log_event(THD *thd_arg, TABLE *tbl_arg,
+Write_rows_log_event::Write_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                            ulong tid_arg,
                                            bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid_arg, tbl_arg->write_set, is_transactional)
@@ -7300,7 +7300,7 @@ Write_rows_log_event::do_after_row_operations(const Slave_reporting_capability *
   Check if there are more UNIQUE keys after the given key.
 */
 static int
-last_uniq_key(TABLE *table, uint keyno)
+last_uniq_key(Table *table, uint keyno)
 {
   while (++keyno < table->s->keys)
     if (table->key_info[keyno].flags & HA_NOSAME)
@@ -7374,7 +7374,7 @@ Rows_log_event::write_row(const Relay_log_info *const rli,
 {
   assert(m_table != NULL && thd != NULL);
 
-  TABLE *table= m_table;  // pointer to event's table
+  Table *table= m_table;  // pointer to event's table
   int error;
   int keynum;
   auto_afree_ptr<char> key(NULL);
@@ -7581,7 +7581,7 @@ void Write_rows_log_event::print(FILE *file, PRINT_EVENT_INFO* print_event_info)
 
   Returns TRUE if different.
 */
-static bool record_compare(TABLE *table)
+static bool record_compare(Table *table)
 {
   /*
     Need to set the X bit and the filler bits in both records since
@@ -7684,7 +7684,7 @@ int Rows_log_event::find_row(const Relay_log_info *rli)
 {
   assert(m_table && m_table->in_use != NULL);
 
-  TABLE *table= m_table;
+  Table *table= m_table;
   int error;
 
   /* unpack row - missing fields get default values */
@@ -7879,7 +7879,7 @@ err:
  */
 
 #ifndef DRIZZLE_CLIENT
-Delete_rows_log_event::Delete_rows_log_event(THD *thd_arg, TABLE *tbl_arg,
+Delete_rows_log_event::Delete_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
   : Rows_log_event(thd_arg, tbl_arg, tid, tbl_arg->read_set, is_transactional)
@@ -7970,7 +7970,7 @@ void Delete_rows_log_event::print(FILE *file,
   Constructor used to build an event for writing to the binary log.
  */
 #if !defined(DRIZZLE_CLIENT)
-Update_rows_log_event::Update_rows_log_event(THD *thd_arg, TABLE *tbl_arg,
+Update_rows_log_event::Update_rows_log_event(THD *thd_arg, Table *tbl_arg,
                                              ulong tid,
                                              bool is_transactional)
 : Rows_log_event(thd_arg, tbl_arg, tid, tbl_arg->read_set, is_transactional)
