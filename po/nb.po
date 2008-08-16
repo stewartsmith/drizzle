@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-15 13:00-0700\n"
+"POT-Creation-Date: 2008-08-16 13:33-0700\n"
 "PO-Revision-Date: 2008-08-13 19:03+0000\n"
 "Last-Translator: matslindh <Unknown>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-08-14 00:36+0000\n"
+"X-Launchpad-Export-Date: 2008-08-16 20:24+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
@@ -824,12 +824,12 @@ msgstr ""
 "  ping Sjekk om serveren er nede\n"
 "  shutdown Avslutt serveren\n"
 
-#: libdrizzle/local_infile.c:190 mysys/errors.c:52
+#: libdrizzle/local_infile.c:186 mysys/errors.c:52
 #, c-format
 msgid "File '%s' not found (Errcode: %d)"
 msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
 
-#: libdrizzle/local_infile.c:221 mysys/errors.c:26
+#: libdrizzle/local_infile.c:217 mysys/errors.c:26
 #, c-format
 msgid "Error reading file '%s' (Errcode: %d)"
 msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
