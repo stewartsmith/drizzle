@@ -147,12 +147,6 @@ public:
   */
   TABLE_LIST	*merge_underlying_list;
   /*
-    - 0 for base tables
-    - in case of the view it is the list of all (not only underlying
-    tables but also used in subquery ones) tables of the view.
-  */
-  List<TABLE_LIST> *view_tables;
-  /*
     List of all base tables local to a subquery including all view
     tables. Unlike 'next_local', this in this list views are *not*
     leaves. Created in setup_tables() -> make_leaves_list().
