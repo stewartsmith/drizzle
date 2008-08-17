@@ -3391,11 +3391,8 @@ int open_tables(THD *thd, TABLE_LIST **start, uint *counter, uint flags)
   {
     /*
       Some functions determine success as (tables->table != NULL).
-      tables->table is in thd->open_tables. It won't go lost. If the
-      error happens on a MERGE child, clear the parents Table reference.
+      tables->table is in thd->open_tables.
     */
-    if (tables->parent_l)
-      tables->parent_l->table= NULL;
     tables->table= NULL;
   }
   return(result);

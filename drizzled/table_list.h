@@ -154,8 +154,6 @@ public:
   List<TABLE_LIST> *view_tables;
   /* most upper view this table belongs to */
   TABLE_LIST	*belong_to_view;
-  /* Ptr to parent MERGE table list item. See top comment in ha_myisammrg.cc */
-  TABLE_LIST    *parent_l;
   /*
     List of all base tables local to a subquery including all view
     tables. Unlike 'next_local', this in this list views are *not*
