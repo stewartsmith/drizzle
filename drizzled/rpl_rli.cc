@@ -20,6 +20,8 @@
 #include "sql_repl.h"  // For check_binlog_magic
 #include "rpl_utility.h"
 
+#include <libdrizzle/gettext.h>
+
 static int32_t count_relay_log_space(Relay_log_info* rli);
 
 // Defined in slave.cc
@@ -129,11 +131,11 @@ int32_t init_relay_log_info(Relay_log_info* rli,
         instead require a name. But as we don't want to break many existing
         setups, we only give warning, not error.
       */
-      sql_print_warning("Neither --relay-log nor --relay-log-index were used;"
+      sql_print_warning(_("Neither --relay-log nor --relay-log-index were used;"
                         " so replication "
                         "may break when this MySQL server acts as a "
                         "slave and has his hostname changed!! Please "
-                        "use '--relay-log=%s' to avoid this problem.", ln);
+                        "use '--relay-log=%s' to avoid this problem."), ln);
       name_warning_sent= 1;
     }
     /*
@@ -146,7 +148,8 @@ int32_t init_relay_log_info(Relay_log_info* rli,
                             max_binlog_size), 1))
     {
       pthread_mutex_unlock(&rli->data_lock);
-      sql_print_error("Failed in open_log() called from init_relay_log_info()");
+      sql_print_error(_("Failed in open_log() called from "
+                        "init_relay_log_info()"));
       return(1);
     }
   }
@@ -162,15 +165,15 @@ int32_t init_relay_log_info(Relay_log_info* rli,
       my_close(info_fd, MYF(MY_WME));
     if ((info_fd = my_open(fname, O_CREAT|O_RDWR|O_BINARY, MYF(MY_WME))) < 0)
     {
-      sql_print_error("Failed to create a new relay log info file (\
-file '%s', errno %d)", fname, my_errno);
+      sql_print_error(_("Failed to create a new relay log info file "
+                        "( file '%s', errno %d)"), fname, my_errno);
       msg= current_thd->main_da.message();
       goto err;
     }
     if (init_io_cache(&rli->info_file, info_fd, IO_SIZE*2, READ_CACHE, 0L,0,
                       MYF(MY_WME)))
     {
-      sql_print_error("Failed to create a cache on relay log info file '%s'",
+      sql_print_error(_("Failed to create a cache on relay log info file '%s'"),
                       fname);
       msg= current_thd->main_da.message();
       goto err;
@@ -180,7 +183,7 @@ file '%s', errno %d)", fname, my_errno);
     if (init_relay_log_pos(rli,NullS,BIN_LOG_HEADER_SIZE,0 /* no data lock */,
                            &msg, 0))
     {
-      sql_print_error("Failed to open the relay log 'FIRST' (relay_log_pos 4)");
+      sql_print_error(_("Failed to open the relay log 'FIRST' (relay_log_pos 4)"));
       goto err;
     }
     rli->group_master_log_name[0]= 0;
@@ -196,15 +199,16 @@ file '%s', errno %d)", fname, my_errno);
       int32_t error=0;
       if ((info_fd = my_open(fname, O_RDWR|O_BINARY, MYF(MY_WME))) < 0)
       {
-        sql_print_error("\
-Failed to open the existing relay log info file '%s' (errno %d)",
+        sql_print_error(_("Failed to open the existing relay log info "
+                          "file '%s' (errno %d)"),
                         fname, my_errno);
         error= 1;
       }
       else if (init_io_cache(&rli->info_file, info_fd,
                              IO_SIZE*2, READ_CACHE, 0L, 0, MYF(MY_WME)))
       {
-        sql_print_error("Failed to create a cache on relay log info file '%s'",
+        sql_print_error(_("Failed to create a cache on relay log info "
+                          "file '%s'"),
                         fname);
         error= 1;
       }
@@ -246,7 +250,7 @@ Failed to open the existing relay log info file '%s' (errno %d)",
                            &msg, 0))
     {
       char llbuf[22];
-      sql_print_error("Failed to open the relay log '%s' (relay_log_pos %s)",
+      sql_print_error(_("Failed to open the relay log '%s' (relay_log_pos %s)"),
                       rli->group_relay_log_name,
                       llstr(rli->group_relay_log_pos, llbuf));
       goto err;
@@ -261,10 +265,10 @@ Failed to open the existing relay log info file '%s' (errno %d)",
   */
   reinit_io_cache(&rli->info_file, WRITE_CACHE,0L,0,1);
   if ((error= flush_relay_log_info(rli)))
-    sql_print_error("Failed to flush relay log info file");
+    sql_print_error(_("Failed to flush relay log info file"));
   if (count_relay_log_space(rli))
   {
-    msg="Error counting relay log space";
+    msg=_("Error counting relay log space");
     goto err;
   }
   rli->inited= 1;
@@ -288,7 +292,7 @@ static inline int32_t add_relay_log(Relay_log_info* rli,LOG_INFO* linfo)
   struct stat s;
   if (stat(linfo->log_file_name,&s))
   {
-    sql_print_error("log %s listed in the index, but failed to stat",
+    sql_print_error(_("log %s listed in the index, but failed to stat"),
                     linfo->log_file_name);
     return(1);
   }
@@ -303,7 +307,8 @@ static int32_t count_relay_log_space(Relay_log_info* rli)
   rli->log_space_total= 0;
   if (rli->relay_log.find_log_pos(&linfo, NullS, 1))
   {
-    sql_print_error("Could not find first log while counting relay log space");
+    sql_print_error(_("Could not find first log while counting relay "
+                      "log space"));
     return(1);
   }
   do
@@ -959,8 +964,8 @@ bool Relay_log_info::is_until_satisfied(my_off_t master_beg_pos)
       else
       {
         /* Probably error so we aborting */
-        sql_print_error("Slave SQL thread is stopped because UNTIL "
-                        "condition is bad.");
+        sql_print_error(_("Slave SQL thread is stopped because UNTIL "
+                          "condition is bad."));
         return(true);
       }
     }
