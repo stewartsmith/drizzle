@@ -1085,7 +1085,6 @@ bool mysql_insert_select_prepare(THD *thd)
 {
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
-  TABLE_LIST *first_select_leaf_table;
   
 
   /*
@@ -1120,14 +1119,7 @@ bool mysql_insert_select_prepare(THD *thd)
   assert(select_lex->leaf_tables != 0);
   lex->leaf_tables_insert= select_lex->leaf_tables;
   /* skip all leaf tables belonged to view where we are insert */
-  for (first_select_leaf_table= select_lex->leaf_tables->next_leaf;
-       first_select_leaf_table &&
-       first_select_leaf_table->belong_to_view &&
-       first_select_leaf_table->belong_to_view ==
-       lex->leaf_tables_insert->belong_to_view;
-       first_select_leaf_table= first_select_leaf_table->next_leaf)
-  {}
-  select_lex->leaf_tables= first_select_leaf_table;
+  select_lex->leaf_tables= select_lex->leaf_tables->next_leaf;
   return(false);
 }
 

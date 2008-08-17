@@ -336,22 +336,8 @@ static TABLE_SHARE
   /* Table didn't exist. Check if some engine can provide it */
   if ((tmp= ha_create_table_from_engine(thd, table_list->db,
                                         table_list->table_name)) < 0)
-  {
-    /*
-      No such table in any engine.
-      Hide "Table doesn't exist" errors if the table belongs to a view.
-      The check for thd->is_error() is necessary to not push an
-      unwanted error in case of pre-locking, which silences
-      "no such table" errors.
-      @todo Rework the alternative ways to deal with ER_NO_SUCH Table.
-    */
-    if (thd->is_error() && table_list->belong_to_view)
-    {
-      thd->clear_error();
-      my_error(ER_VIEW_INVALID, MYF(0), "", "");
-    }
     return(0);
-  }
+
   if (tmp)
   {
     /* Give right error message */
@@ -3087,7 +3073,7 @@ void assign_new_table_id(TABLE_SHARE *share)
     open_unireg_entry()
     thd			Thread handle
     entry		Store open table definition here
-    table_list		TABLE_LIST with db, table_name & belong_to_view
+    table_list		TABLE_LIST with db, table_name
     alias		Alias name
     cache_key		Key for share_cache
     cache_key_length	length of cache_key
@@ -4607,7 +4593,6 @@ find_field_in_tables(THD *thd, Item_ident *item,
         Only views fields should be marked as dependent, not an underlying
         fields.
       */
-      if (!table_ref->belong_to_view)
       {
         SELECT_LEX *current_sel= thd->lex->current_select;
         SELECT_LEX *last_select= table_ref->select_lex;
@@ -5897,10 +5882,6 @@ bool setup_tables_and_check_access(THD *thd,
 
   for (; leaves_tmp; leaves_tmp= leaves_tmp->next_leaf)
   {
-    if (leaves_tmp->belong_to_view)
-    {
-      return true;
-    }
     first_table= 0;
   }
   return false;

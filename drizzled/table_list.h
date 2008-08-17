@@ -152,8 +152,6 @@ public:
     tables but also used in subquery ones) tables of the view.
   */
   List<TABLE_LIST> *view_tables;
-  /* most upper view this table belongs to */
-  TABLE_LIST	*belong_to_view;
   /*
     List of all base tables local to a subquery including all view
     tables. Unlike 'next_local', this in this list views are *not*
@@ -221,7 +219,7 @@ public:
   TABLE_LIST *last_leaf_for_name_resolution();
   bool is_leaf_for_name_resolution();
   inline TABLE_LIST *top_table()
-    { return belong_to_view ? belong_to_view : this; }
+    { return this; }
 
   /*
     Cleanup for re-execution in a prepared statement or a stored
