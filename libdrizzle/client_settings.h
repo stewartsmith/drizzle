@@ -34,7 +34,6 @@ bool handle_local_infile(DRIZZLE *drizzle, const char *net_filename);
 #define set_sigpipe(drizzle)
 #define reset_sigpipe(drizzle)
 
-void mysql_detach_stmt_list(LIST **stmt_list, const char *func_name);
 DRIZZLE *
 cli_drizzle_connect(DRIZZLE *drizzle,const char *host, const char *user,
 		       const char *passwd, const char *db,
