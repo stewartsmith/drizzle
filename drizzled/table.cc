@@ -291,7 +291,7 @@ void free_table_share(TABLE_SHARE *share)
    6    Unknown .frm version
 */
 
-int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
+int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags  __attribute__((unused)))
 {
   int error, table_type;
   bool error_given;
@@ -360,12 +360,6 @@ int open_table_def(THD *thd, TABLE_SHARE *share, uint db_flags)
     if (head[2] == FRM_VER || head[2] == FRM_VER+1 ||
         (head[2] >= FRM_VER+3 && head[2] <= FRM_VER+4))
     {
-      /* Open view only */
-      if (db_flags & OPEN_VIEW_ONLY)
-      {
-        error_given= 1;
-        goto err;
-      }
       table_type= 1;
     }
     else
@@ -2440,43 +2434,6 @@ void Table::reset_item_list(List<Item> *item_list) const
     assert(item_field != 0);
     item_field->reset_field(*ptr);
   }
-}
-
-
-/*
-  Merge ON expressions for a view
-
-  SYNOPSIS
-    merge_on_conds()
-    thd             thread handle
-    table           table for the VIEW
-    is_cascaded     TRUE <=> merge ON expressions from underlying views
-
-  DESCRIPTION
-    This function returns the result of ANDing the ON expressions
-    of the given view and all underlying views. The ON expressions
-    of the underlying views are added only if is_cascaded is TRUE.
-
-  RETURN
-    Pointer to the built expression if there is any.
-    Otherwise and in the case of a failure NULL is returned.
-*/
-
-static Item *
-merge_on_conds(THD *thd, TABLE_LIST *table, bool is_cascaded)
-{
-
-  Item *cond= NULL;
-  if (table->on_expr)
-    cond= table->on_expr->copy_andor_structure(thd);
-  if (!table->nested_join)
-    return(cond);
-  List_iterator<TABLE_LIST> li(table->nested_join->join_list);
-  while (TABLE_LIST *tbl= li++)
-  {
-    cond= and_conds(cond, merge_on_conds(thd, tbl, is_cascaded));
-  }
-  return(cond);
 }
 
 
