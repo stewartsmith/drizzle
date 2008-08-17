@@ -228,12 +228,5 @@ public:
     st_table::force_index and st_table::covering_keys.
   */
   bool process_index_hints(Table *table);
-
-private:
-  bool prep_where(THD *thd, Item **conds, bool no_where_clause);
-  /*
-    Cleanup for re-execution in a prepared statement or a stored
-    procedure.
-  */
 };
 #endif /* DRIZZLED_TMP_TABLE_H */
