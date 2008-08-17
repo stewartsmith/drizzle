@@ -1907,7 +1907,7 @@ err:
                     "Turning logging off for the whole duration of the "
                     "Drizzle server process. "
                     "To turn it on again: fix the cause, "
-                    "shutdown the Drizzle server and restart it.",
+                    "shutdown the Drizzle server and restart it."),
                     name, errno);
   if (file >= 0)
     my_close(file,MYF(0));
