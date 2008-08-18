@@ -22,7 +22,6 @@
 #include "my_time.h"
 #include "drizzle.h"
 #include "errmsg.h"
-#include <vio/violite.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>
