@@ -74,10 +74,10 @@ static int maxmin_in_range(bool max_fl, Field* field, COND *cond);
     #			Multiplication of number of rows in all tables
 */
 
-static uint64_t get_exact_record_count(TABLE_LIST *tables)
+static uint64_t get_exact_record_count(TableList *tables)
 {
   uint64_t count= 1;
-  for (TABLE_LIST *tl= tables; tl; tl= tl->next_leaf)
+  for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
     ha_rows tmp= tl->table->file->records();
     if ((tmp == HA_POS_ERROR))
@@ -109,7 +109,7 @@ static uint64_t get_exact_record_count(TABLE_LIST *tables)
     HA_ERR_... if a deadlock or a lock wait timeout happens, for example
 */
 
-int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
+int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds)
 {
   List_iterator_fast<Item> it(all_fields);
   int const_result= 1;
@@ -128,9 +128,9 @@ int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds)
     Analyze outer join dependencies, and, if possible, compute the number
     of returned rows.
   */
-  for (TABLE_LIST *tl= tables; tl; tl= tl->next_leaf)
+  for (TableList *tl= tables; tl; tl= tl->next_leaf)
   {
-    TABLE_LIST *embedded;
+    TableList *embedded;
     for (embedded= tl ; embedded; embedded= embedded->embedding)
     {
       if (embedded->on_expr)

@@ -22,6 +22,8 @@
 #include <storage/myisam/myisam.h>
 #include <drizzled/order.h>
 #include <drizzled/filesort_info.h>
+#include <drizzled/natural_join_column.h>
+#include <drizzled/nested_join.h>
 
 class Item;				/* Needed by order_st */
 class Item_subselect;
@@ -29,7 +31,7 @@ class st_select_lex_unit;
 class st_select_lex;
 class COND_EQUAL;
 class Security_context;
-class TABLE_LIST;
+class TableList;
 
 /*************************************************************************/
 
@@ -410,7 +412,7 @@ public:
   Field *found_next_number_field;	/* Set on open */
   Field_timestamp *timestamp_field;
 
-  TABLE_LIST *pos_in_table_list;/* Element referring to this table */
+  TableList *pos_in_table_list;/* Element referring to this table */
   order_st *group;
   const char	*alias;            	  /* alias or table name */
   uchar		*null_flags;
@@ -667,7 +669,7 @@ typedef struct st_field_info
 } ST_FIELD_INFO;
 
 
-class TABLE_LIST;
+class TableList;
 typedef class Item COND;
 
 struct ST_SCHEMA_TABLE
@@ -675,12 +677,12 @@ struct ST_SCHEMA_TABLE
   const char* table_name;
   ST_FIELD_INFO *fields_info;
   /* Create information_schema table */
-  Table *(*create_table)  (THD *thd, TABLE_LIST *table_list);
+  Table *(*create_table)  (THD *thd, TableList *table_list);
   /* Fill table with data */
-  int (*fill_table) (THD *thd, TABLE_LIST *tables, COND *cond);
+  int (*fill_table) (THD *thd, TableList *tables, COND *cond);
   /* Handle fileds for old SHOW */
   int (*old_format) (THD *thd, struct ST_SCHEMA_TABLE *schema_table);
-  int (*process_table) (THD *thd, TABLE_LIST *tables, Table *table,
+  int (*process_table) (THD *thd, TableList *tables, Table *table,
                         bool res, LEX_STRING *db_name, LEX_STRING *table_name);
   int idx_field1, idx_field2; 
   bool hidden;
@@ -695,7 +697,7 @@ struct st_lex;
 class select_union;
 class TMP_TABLE_PARAM;
 
-Item *create_view_field(THD *thd, TABLE_LIST *view, Item **field_ref,
+Item *create_view_field(THD *thd, TableList *view, Item **field_ref,
                         const char *name);
 
 struct Field_translator
@@ -706,66 +708,35 @@ struct Field_translator
 
 
 /*
-  Column reference of a NATURAL/USING join. Since column references in
-  joins can be both from views and stored tables, may point to either a
-  Field (for tables), or a Field_translator (for views).
-*/
-
-class Natural_join_column: public Sql_alloc
-{
-public:
-  Field_translator *view_field;  /* Column reference of merge view. */
-  Field            *table_field; /* Column reference of table or temp view. */
-  TABLE_LIST *table_ref; /* Original base table/view reference. */
-  /*
-    True if a common join column of two NATURAL/USING join operands. Notice
-    that when we have a hierarchy of nested NATURAL/USING joins, a column can
-    be common at some level of nesting but it may not be common at higher
-    levels of nesting. Thus this flag may change depending on at which level
-    we are looking at some column.
-  */
-  bool is_common;
-public:
-  Natural_join_column(Field_translator *field_param, TABLE_LIST *tab);
-  Natural_join_column(Field *field_param, TABLE_LIST *tab);
-  const char *name();
-  Item *create_item(THD *thd);
-  Field *field();
-  const char *table_name();
-  const char *db_name();
-};
-
-
-/*
   Table reference in the FROM clause.
 
   These table references can be of several types that correspond to
-  different SQL elements. Below we list all types of TABLE_LISTs with
-  the necessary conditions to determine when a TABLE_LIST instance
+  different SQL elements. Below we list all types of TableLists with
+  the necessary conditions to determine when a TableList instance
   belongs to a certain type.
 
-  1) table (TABLE_LIST::view == NULL)
+  1) table (TableList::view == NULL)
      - base table
-       (TABLE_LIST::derived == NULL)
-     - subquery - TABLE_LIST::table is a temp table
-       (TABLE_LIST::derived != NULL)
+       (TableList::derived == NULL)
+     - subquery - TableList::table is a temp table
+       (TableList::derived != NULL)
      - information schema table
-       (TABLE_LIST::schema_table != NULL)
-       NOTICE: for schema tables TABLE_LIST::field_translation may be != NULL
-  2) view (TABLE_LIST::view != NULL)
-     - merge    (TABLE_LIST::effective_algorithm == VIEW_ALGORITHM_MERGE)
-           also (TABLE_LIST::field_translation != NULL)
-     - tmptable (TABLE_LIST::effective_algorithm == VIEW_ALGORITHM_TMPTABLE)
-           also (TABLE_LIST::field_translation == NULL)
-  3) nested table reference (TABLE_LIST::nested_join != NULL)
+       (TableList::schema_table != NULL)
+       NOTICE: for schema tables TableList::field_translation may be != NULL
+  2) view (TableList::view != NULL)
+     - merge    (TableList::effective_algorithm == VIEW_ALGORITHM_MERGE)
+           also (TableList::field_translation != NULL)
+     - tmptable (TableList::effective_algorithm == VIEW_ALGORITHM_TMPTABLE)
+           also (TableList::field_translation == NULL)
+  3) nested table reference (TableList::nested_join != NULL)
      - table sequence - e.g. (t1, t2, t3)
        TODO: how to distinguish from a JOIN?
      - general JOIN
        TODO: how to distinguish from a table sequence?
      - NATURAL JOIN
-       (TABLE_LIST::natural_join != NULL)
+       (TableList::natural_join != NULL)
        - JOIN ... USING
-         (TABLE_LIST::join_using_fields != NULL)
+         (TableList::join_using_fields != NULL)
      - semi-join
        ;
 */
@@ -781,7 +752,7 @@ class Field_iterator: public Sql_alloc
 public:
   Field_iterator() {}                         /* Remove gcc warning */
   virtual ~Field_iterator() {}
-  virtual void set(TABLE_LIST *)= 0;
+  virtual void set(TableList *)= 0;
   virtual void next()= 0;
   virtual bool end_of_fields()= 0;              /* Return 1 at end of list */
   virtual const char *name()= 0;
@@ -795,13 +766,13 @@ public:
   table, or subquery.
 */
 
-class TABLE_LIST;
+class TableList;
 class Field_iterator_table: public Field_iterator
 {
   Field **ptr;
 public:
   Field_iterator_table() :ptr(0) {}
-  void set(TABLE_LIST *table);
+  void set(TableList *table);
   void set_table(Table *table) { ptr= table->field; }
   void next() { ptr++; }
   bool end_of_fields() { return *ptr == 0; }
@@ -816,10 +787,10 @@ public:
 class Field_iterator_view: public Field_iterator
 {
   Field_translator *ptr, *array_end;
-  TABLE_LIST *view;
+  TableList *view;
 public:
   Field_iterator_view() :ptr(0), array_end(0) {}
-  void set(TABLE_LIST *table);
+  void set(TableList *table);
   void next() { ptr++; }
   bool end_of_fields() { return ptr == array_end; }
   const char *name();
@@ -843,7 +814,7 @@ class Field_iterator_natural_join: public Field_iterator
 public:
   Field_iterator_natural_join() :cur_column_ref(NULL) {}
   ~Field_iterator_natural_join() {}
-  void set(TABLE_LIST *table);
+  void set(TableList *table);
   void next();
   bool end_of_fields() { return !cur_column_ref; }
   const char *name() { return cur_column_ref->name(); }
@@ -866,12 +837,12 @@ public:
   IMPLEMENTATION
     The implementation assumes that all underlying NATURAL/USING table
     references already contain their result columns and are linked into
-    the list TABLE_LIST::next_name_resolution_table.
+    the list TableList::next_name_resolution_table.
 */
 
 class Field_iterator_table_ref: public Field_iterator
 {
-  TABLE_LIST *table_ref, *first_leaf, *last_leaf;
+  TableList *table_ref, *first_leaf, *last_leaf;
   Field_iterator_table        table_field_it;
   Field_iterator_view         view_field_it;
   Field_iterator_natural_join natural_join_it;
@@ -879,7 +850,7 @@ class Field_iterator_table_ref: public Field_iterator
   void set_field_iterator();
 public:
   Field_iterator_table_ref() :field_it(NULL) {}
-  void set(TABLE_LIST *table);
+  void set(TableList *table);
   void next();
   bool end_of_fields()
   { return (table_ref == last_leaf && field_it->end_of_fields()); }
@@ -888,35 +859,9 @@ public:
   const char *db_name();
   Item *create_item(THD *thd) { return field_it->create_item(thd); }
   Field *field() { return field_it->field(); }
-  Natural_join_column *get_or_create_column_ref(TABLE_LIST *parent_table_ref);
+  Natural_join_column *get_or_create_column_ref(TableList *parent_table_ref);
   Natural_join_column *get_natural_column_ref();
 };
-
-
-typedef struct st_nested_join
-{
-  List<TABLE_LIST>  join_list;       /* list of elements in the nested join */
-  table_map         used_tables;     /* bitmap of tables in the nested join */
-  table_map         not_null_tables; /* tables that rejects nulls           */
-  struct st_join_table *first_nested;/* the first nested table in the plan  */
-  /* 
-    Used to count tables in the nested join in 2 isolated places:
-    1. In make_outerjoin_info(). 
-    2. check_interleaving_with_nj/restore_prev_nj_state (these are called
-       by the join optimizer. 
-    Before each use the counters are zeroed by reset_nj_counters.
-  */
-  uint              counter_;
-  nested_join_map   nj_map;          /* Bit used to identify this nested join*/
-  /*
-    (Valid only for semi-join nests) Bitmap of tables outside the semi-join
-    that are used within the semi-join's ON condition.
-  */
-  table_map         sj_depends_on;
-  /* Outer non-trivially correlated tables */
-  table_map         sj_corr_tables;
-  List<Item>        sj_outer_expr_list;
-} NESTED_JOIN;
 
 
 typedef struct st_changed_table_list
@@ -924,14 +869,14 @@ typedef struct st_changed_table_list
   struct	st_changed_table_list *next;
   char		*key;
   uint32_t        key_length;
-} CHANGED_TABLE_LIST;
+} CHANGED_TableList;
 
 
 typedef struct st_open_table_list{
   struct st_open_table_list *next;
   char	*db,*table;
   uint32_t in_use,locked;
-} OPEN_TABLE_LIST;
+} OPEN_TableList;
 
 
 

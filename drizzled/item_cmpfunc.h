@@ -1428,7 +1428,7 @@ public:
   void update_used_tables();
   virtual void print(String *str, enum_query_type query_type);
   void split_sum_func(THD *thd, Item **ref_pointer_array, List<Item> &fields);
-  friend int setup_conds(THD *thd, TABLE_LIST *tables, TABLE_LIST *leaves,
+  friend int setup_conds(THD *thd, TableList *tables, TableList *leaves,
                          COND **conds);
   void top_level_item() { abort_on_null=1; }
   void copy_andor_arguments(THD *thd, Item_cond *item);

@@ -148,6 +148,7 @@ drizzled_SOURCES = \
 		   sql_lex.cc \
 		   authentication.cc \
 		   sql_handler.cc \
+		   natural_join_column.cc \
 		   item.cc \
 		   item_sum.cc \
 		   item_buff.cc \

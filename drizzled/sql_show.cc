@@ -168,7 +168,7 @@ static bool show_plugins(THD *thd, plugin_ref plugin,
 }
 
 
-int fill_plugins(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
+int fill_plugins(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   Table *table= tables->table;
 
@@ -187,7 +187,7 @@ int fill_plugins(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)
     find_files()
     thd                 thread handler
     files               put found files in this list
-    db                  database name to set in TABLE_LIST structure
+    db                  database name to set in TableList structure
     path                path to database
     wild                filter for found files
     dir                 read databases in path if true, read .frm files in
@@ -210,7 +210,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
   FILEINFO *file;
   LEX_STRING *file_name= 0;
   uint file_name_len;
-  TABLE_LIST table_list;
+  TableList table_list;
 
   if (wild && !wild[0])
     wild=0;
@@ -299,7 +299,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
 
 
 bool
-mysqld_show_create(THD *thd, TABLE_LIST *table_list)
+mysqld_show_create(THD *thd, TableList *table_list)
 {
   Protocol *protocol= thd->protocol;
   char buff[2048];
@@ -397,7 +397,7 @@ bool mysqld_show_create_db(THD *thd, char *dbname,
 ****************************************************************************/
 
 void
-mysqld_list_fields(THD *thd, TABLE_LIST *table_list, const char *wild)
+mysqld_list_fields(THD *thd, TableList *table_list, const char *wild)
 {
   Table *table;
 
@@ -646,7 +646,7 @@ static bool get_field_default_value(THD *thd __attribute__((unused)),
     0       OK
  */
 
-int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
+int store_create_info(THD *thd, TableList *table_list, String *packet,
                       HA_CREATE_INFO *create_info_arg)
 {
   List<Item> field_list;
@@ -1213,7 +1213,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
   return;
 }
 
-int fill_schema_processlist(THD* thd, TABLE_LIST* tables,
+int fill_schema_processlist(THD* thd, TableList* tables,
                             COND* cond __attribute__((unused)))
 {
   Table *table= tables->table;
@@ -1731,7 +1731,7 @@ int make_table_list(THD *thd, SELECT_LEX *sel,
 */
 
 bool get_lookup_value(THD *thd, Item_func *item_func,
-                      TABLE_LIST *table, 
+                      TableList *table, 
                       LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
   ST_SCHEMA_TABLE *schema_table= table->schema_table;
@@ -1813,7 +1813,7 @@ bool get_lookup_value(THD *thd, Item_func *item_func,
     1             error, there can be no matching records for the condition
 */
 
-bool calc_lookup_values_from_cond(THD *thd, COND *cond, TABLE_LIST *table,
+bool calc_lookup_values_from_cond(THD *thd, COND *cond, TableList *table,
                                   LOOKUP_FIELD_VALUES *lookup_field_vals)
 {
   if (!cond)
@@ -1848,7 +1848,7 @@ bool calc_lookup_values_from_cond(THD *thd, COND *cond, TABLE_LIST *table,
 }
 
 
-bool uses_only_table_name_fields(Item *item, TABLE_LIST *table)
+bool uses_only_table_name_fields(Item *item, TableList *table)
 {
   if (item->type() == Item::FUNC_ITEM)
   {
@@ -1888,7 +1888,7 @@ bool uses_only_table_name_fields(Item *item, TABLE_LIST *table)
 }
 
 
-static COND * make_cond_for_info_schema(COND *cond, TABLE_LIST *table)
+static COND * make_cond_for_info_schema(COND *cond, TableList *table)
 {
   if (!cond)
     return (COND*) 0;
@@ -1962,7 +1962,7 @@ static COND * make_cond_for_info_schema(COND *cond, TABLE_LIST *table)
     1             error, there can be no matching records for the condition
 */
 
-bool get_lookup_field_values(THD *thd, COND *cond, TABLE_LIST *tables,
+bool get_lookup_field_values(THD *thd, COND *cond, TableList *tables,
                              LOOKUP_FIELD_VALUES *lookup_field_values)
 {
   LEX *lex= thd->lex;
@@ -2243,7 +2243,7 @@ make_table_name_list(THD *thd, List<LEX_STRING> *table_names, LEX *lex,
   @brief          Fill I_S table for SHOW COLUMNS|INDEX commands
 
   @param[in]      thd                      thread handler
-  @param[in]      tables                   TABLE_LIST for I_S table
+  @param[in]      tables                   TableList for I_S table
   @param[in]      schema_table             pointer to I_S structure
   @param[in]      open_tables_state_backup pointer to Open_tables_state object
                                            which is used to save|restore original
@@ -2256,7 +2256,7 @@ make_table_name_list(THD *thd, List<LEX_STRING> *table_names, LEX *lex,
 */
 
 static int 
-fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
+fill_schema_show_cols_or_idxs(THD *thd, TableList *tables,
                               ST_SCHEMA_TABLE *schema_table,
                               Open_tables_state *open_tables_state_backup)
 {
@@ -2264,7 +2264,7 @@ fill_schema_show_cols_or_idxs(THD *thd, TABLE_LIST *tables,
   bool res;
   LEX_STRING tmp_lex_string, tmp_lex_string1, *db_name, *table_name;
   enum_sql_command save_sql_command= lex->sql_command;
-  TABLE_LIST *show_table_list= (TABLE_LIST*) tables->schema_select_lex->
+  TableList *show_table_list= (TableList*) tables->schema_select_lex->
     table_list.first;
   Table *table= tables->table;
   int error= 1;
@@ -2381,7 +2381,7 @@ static int fill_schema_table_names(THD *thd, Table *table,
     @retval       SKIP_OPEN_TABLE | OPEN_FRM_ONLY | OPEN_FULL_TABLE
 */
 
-static uint get_table_open_method(TABLE_LIST *tables,
+static uint get_table_open_method(TableList *tables,
                                   ST_SCHEMA_TABLE *schema_table,
                                   enum enum_schema_tables schema_table_idx __attribute__((unused)))
 {
@@ -2422,7 +2422,7 @@ static uint get_table_open_method(TABLE_LIST *tables,
                               open_tables function for this table
 */
 
-static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
+static int fill_schema_table_from_frm(THD *thd,TableList *tables,
                                       ST_SCHEMA_TABLE *schema_table,
                                       LEX_STRING *db_name,
                                       LEX_STRING *table_name,
@@ -2431,13 +2431,13 @@ static int fill_schema_table_from_frm(THD *thd,TABLE_LIST *tables,
   Table *table= tables->table;
   TABLE_SHARE *share;
   Table tbl;
-  TABLE_LIST table_list;
+  TableList table_list;
   uint res= 0;
   int error;
   char key[MAX_DBKEY_LENGTH];
   uint key_length;
 
-  memset(&table_list, 0, sizeof(TABLE_LIST));
+  memset(&table_list, 0, sizeof(TableList));
   memset(&tbl, 0, sizeof(Table));
 
   table_list.table_name= table_name->str;
@@ -2489,7 +2489,7 @@ err:
     @retval       1                        error
 */
 
-int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
+int get_all_tables(THD *thd, TableList *tables, COND *cond)
 {
   LEX *lex= thd->lex;
   Table *table= tables->table;
@@ -2648,7 +2648,7 @@ int get_all_tables(THD *thd, TABLE_LIST *tables, COND *cond)
               goto err;
             if (make_table_list(thd, &sel, db_name, table_name))
               goto err;
-            TABLE_LIST *show_table_list= (TABLE_LIST*) sel.table_list.first;
+            TableList *show_table_list= (TableList*) sel.table_list.first;
             lex->all_selects_list= &sel;
             lex->derived_tables= 0;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
@@ -2730,7 +2730,7 @@ bool store_schema_shemata(THD* thd, Table *table, LEX_STRING *db_name,
 }
 
 
-int fill_schema_schemata(THD *thd, TABLE_LIST *tables, COND *cond)
+int fill_schema_schemata(THD *thd, TableList *tables, COND *cond)
 {
   /*
     TODO: fill_schema_shemata() is called when new client is connected.
@@ -2790,7 +2790,7 @@ int fill_schema_schemata(THD *thd, TABLE_LIST *tables, COND *cond)
 }
 
 
-static int get_schema_tables_record(THD *thd, TABLE_LIST *tables,
+static int get_schema_tables_record(THD *thd, TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
 				    LEX_STRING *table_name)
@@ -3082,7 +3082,7 @@ void store_column_type(Table *table, Field *field, const CHARSET_INFO * const cs
 }
 
 
-static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
+static int get_schema_column_record(THD *thd, TableList *tables,
 				    Table *table, bool res,
 				    LEX_STRING *db_name,
 				    LEX_STRING *table_name)
@@ -3215,7 +3215,7 @@ static int get_schema_column_record(THD *thd, TABLE_LIST *tables,
 
 
 
-int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
+int fill_schema_charsets(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
@@ -3246,7 +3246,7 @@ int fill_schema_charsets(THD *thd, TABLE_LIST *tables, COND *cond __attribute__(
 }
 
 
-int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
+int fill_schema_collation(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
@@ -3288,7 +3288,7 @@ int fill_schema_collation(THD *thd, TABLE_LIST *tables, COND *cond __attribute__
 }
 
 
-int fill_schema_coll_charset_app(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
+int fill_schema_coll_charset_app(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   CHARSET_INFO **cs;
   Table *table= tables->table;
@@ -3317,7 +3317,7 @@ int fill_schema_coll_charset_app(THD *thd, TABLE_LIST *tables, COND *cond __attr
 }
 
 
-static int get_schema_stat_record(THD *thd, TABLE_LIST *tables,
+static int get_schema_stat_record(THD *thd, TableList *tables,
 				  Table *table, bool res,
 				  LEX_STRING *db_name,
 				  LEX_STRING *table_name)
@@ -3429,7 +3429,7 @@ bool store_constraints(THD *thd, Table *table, LEX_STRING *db_name,
 }
 
 
-static int get_schema_constraints_record(THD *thd, TABLE_LIST *tables,
+static int get_schema_constraints_record(THD *thd, TableList *tables,
 					 Table *table, bool res,
 					 LEX_STRING *db_name,
 					 LEX_STRING *table_name)
@@ -3504,7 +3504,7 @@ void store_key_column_usage(Table *table, LEX_STRING *db_name,
 
 
 static int get_schema_key_column_usage_record(THD *thd,
-					      TABLE_LIST *tables,
+					      TableList *tables,
 					      Table *table, bool res,
 					      LEX_STRING *db_name,
 					      LEX_STRING *table_name)
@@ -3592,12 +3592,12 @@ static int get_schema_key_column_usage_record(THD *thd,
 }
 
 
-int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
+int fill_open_tables(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   const char *wild= thd->lex->wild ? thd->lex->wild->ptr() : NullS;
   Table *table= tables->table;
   const CHARSET_INFO * const cs= system_charset_info;
-  OPEN_TABLE_LIST *open_list;
+  OPEN_TableList *open_list;
   if (!(open_list=list_open_tables(thd,thd->lex->select_lex.db, wild))
             && thd->is_fatal_error)
     return(1);
@@ -3616,7 +3616,7 @@ int fill_open_tables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unu
 }
 
 
-int fill_variables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
+int fill_variables(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   int res= 0;
   LEX *lex= thd->lex;
@@ -3639,7 +3639,7 @@ int fill_variables(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unuse
 }
 
 
-int fill_status(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused)))
+int fill_status(THD *thd, TableList *tables, COND *cond __attribute__((unused)))
 {
   LEX *lex= thd->lex;
   const char *wild= lex->wild ? lex->wild->ptr() : NullS;
@@ -3700,7 +3700,7 @@ int fill_status(THD *thd, TABLE_LIST *tables, COND *cond __attribute__((unused))
 */
 
 static int
-get_referential_constraints_record(THD *thd, TABLE_LIST *tables,
+get_referential_constraints_record(THD *thd, TableList *tables,
                                    Table *table, bool res,
                                    LEX_STRING *db_name, LEX_STRING *table_name)
 {
@@ -3852,7 +3852,7 @@ ST_SCHEMA_TABLE *get_schema_table(enum enum_schema_tables schema_table_idx)
   @retval  NULL           Can't create table
 */
 
-Table *create_schema_table(THD *thd, TABLE_LIST *table_list)
+Table *create_schema_table(THD *thd, TableList *table_list)
 {
   int field_count= 0;
   Item *item;
@@ -4124,7 +4124,7 @@ int make_character_sets_old_format(THD *thd, ST_SCHEMA_TABLE *schema_table)
     1   error
 */
 
-int mysql_schema_table(THD *thd, LEX *lex, TABLE_LIST *table_list)
+int mysql_schema_table(THD *thd, LEX *lex, TableList *table_list)
 {
   Table *table;
   if (!(table= table_list->schema_table->create_table(thd, table_list)))
@@ -4254,7 +4254,7 @@ bool get_schema_tables_result(JOIN *join,
     if (!tab->table || !tab->table->pos_in_table_list)
       break;
 
-    TABLE_LIST *table_list= tab->table->pos_in_table_list;
+    TableList *table_list= tab->table->pos_in_table_list;
     if (table_list->schema_table)
     {
       bool is_subselect= (&lex->unit != lex->current_select->master_unit() &&

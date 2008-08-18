@@ -243,7 +243,7 @@ enum enum_var_type
 
 /* Forward declarations */
 
-class TABLE_LIST;
+class TableList;
 class String;
 class Table;
 class THD;

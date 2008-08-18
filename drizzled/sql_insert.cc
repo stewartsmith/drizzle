@@ -61,7 +61,7 @@
     -1          Error
 */
 
-static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
+static int check_insert_fields(THD *thd, TableList *table_list,
                                List<Item> &fields, List<Item> &values,
                                bool check_unique,
                                table_map *map __attribute__((unused)))
@@ -157,7 +157,7 @@ static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
     -1          Error
 */
 
-static int check_update_fields(THD *thd, TABLE_LIST *insert_table_list,
+static int check_update_fields(THD *thd, TableList *insert_table_list,
                                List<Item> &update_fields,
                                table_map *map __attribute__((unused)))
 {
@@ -224,7 +224,7 @@ void upgrade_lock_type(THD *thd __attribute__((unused)),
   end of dispatch_command().
 */
 
-bool mysql_insert(THD *thd,TABLE_LIST *table_list,
+bool mysql_insert(THD *thd,TableList *table_list,
                   List<Item> &fields,
                   List<List_item> &values_list,
                   List<Item> &update_fields,
@@ -581,7 +581,7 @@ abort:
      true  ERROR
 */
 
-static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
+static bool mysql_prepare_insert_check_table(THD *thd, TableList *table_list,
                                              List<Item> &fields __attribute__((unused)),
                                              bool select_insert)
 {
@@ -636,7 +636,7 @@ static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
     true  error
 */
 
-bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
+bool mysql_prepare_insert(THD *thd, TableList *table_list,
                           Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
@@ -736,7 +736,7 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
 
   if (!select_insert)
   {
-    TABLE_LIST *duplicate;
+    TableList *duplicate;
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 1)))
     {
       update_non_unique_table_error(table_list, "INSERT", duplicate);
@@ -1035,7 +1035,7 @@ before_err:
 ******************************************************************************/
 
 int check_that_all_fields_are_given_values(THD *thd, Table *entry,
-                                           TABLE_LIST *table_list)
+                                           TableList *table_list)
 {
   int err= 0;
   MY_BITMAP *write_set= entry->write_set;
@@ -1124,7 +1124,7 @@ bool mysql_insert_select_prepare(THD *thd)
 }
 
 
-select_insert::select_insert(TABLE_LIST *table_list_par, Table *table_par,
+select_insert::select_insert(TableList *table_list_par, Table *table_par,
                              List<Item> *fields_par,
                              List<Item> *update_fields,
                              List<Item> *update_values,
@@ -1527,7 +1527,7 @@ void select_insert::abort() {
       thd          in     Thread object
       create_info  in     Create information (like MAX_ROWS, ENGINE or
                           temporary table flag)
-      create_table in     Pointer to TABLE_LIST object providing database
+      create_table in     Pointer to TableList object providing database
                           and name for table to be created or to be open
       alter_info   in/out Initial list of columns and indexes for the table
                           to be created
@@ -1561,7 +1561,7 @@ void select_insert::abort() {
 */
 
 static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
-                                      TABLE_LIST *create_table,
+                                      TableList *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock,
@@ -1745,8 +1745,8 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
    */
   class MY_HOOKS : public TABLEOP_HOOKS {
   public:
-    MY_HOOKS(select_create *x, TABLE_LIST *create_table,
-             TABLE_LIST *select_tables)
+    MY_HOOKS(select_create *x, TableList *create_table,
+             TableList *select_tables)
       : ptr(x), all_tables(*create_table)
       {
         all_tables.next_global= select_tables;
@@ -1770,7 +1770,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
     }
 
     select_create *ptr;
-    TABLE_LIST all_tables;
+    TableList all_tables;
   };
 
   MY_HOOKS hooks(this, create_table, select_tables);
@@ -1866,7 +1866,7 @@ select_create::binlog_show_create_table(Table **tables, uint count)
   char buf[2048];
   String query(buf, sizeof(buf), system_charset_info);
   int result;
-  TABLE_LIST tmp_table_list;
+  TableList tmp_table_list;
 
   memset(&tmp_table_list, 0, sizeof(tmp_table_list));
   tmp_table_list.table = *tables;

@@ -267,7 +267,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     can_skip_order_by= is_union_select && !(sl->braces && sl->explicit_limit);
 
     saved_error= join->prepare(&sl->ref_pointer_array,
-                               (TABLE_LIST*) sl->table_list.first,
+                               (TableList*) sl->table_list.first,
                                sl->with_wild,
                                sl->where,
                                (can_skip_order_by ? 0 :
@@ -450,11 +450,11 @@ bool st_select_lex_unit::exec()
           (select_limit_cnt == HA_POS_ERROR || sl->braces) ?
           sl->options & ~OPTION_FOUND_ROWS : sl->options | found_rows_for_union;
 
-        /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
+        /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
         if (sl->join->flatten_subqueries())
           return(true);
 
-        /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
+        /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
 	saved_error= sl->join->optimize();
       }
       if (!saved_error)

@@ -1793,7 +1793,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
                      (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
                       REFRESH_GRANT |
                       REFRESH_THREADS | REFRESH_HOSTS),
-                     (TABLE_LIST*) 0, &not_used); // Flush logs
+                     (TableList*) 0, &not_used); // Flush logs
       }
       logger.set_handlers(LOG_FILE,
                           opt_slow_log ? log_output_options : LOG_NONE,

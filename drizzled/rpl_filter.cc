@@ -50,7 +50,7 @@ Rpl_filter::~Rpl_filter()
 
   SYNOPSIS
     tables_ok()
-    db              db to use if db in TABLE_LIST is undefined for a table
+    db              db to use if db in TableList is undefined for a table
     tables          list of tables to check
 
   NOTES
@@ -84,7 +84,7 @@ Rpl_filter::~Rpl_filter()
 */
 
 bool 
-Rpl_filter::tables_ok(const char* db, TABLE_LIST* tables)
+Rpl_filter::tables_ok(const char* db, TableList* tables)
 {
   bool some_tables_updating= 0;
   

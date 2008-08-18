@@ -3571,7 +3571,7 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
     */
     drizzle_reset_errors(thd, 0);
 
-    TABLE_LIST tables;
+    TableList tables;
     memset(&tables, 0, sizeof(tables));
     tables.db= thd->strmake(thd->db, thd->db_length);
     tables.alias = tables.table_name = (char*) table_name;
@@ -6224,7 +6224,7 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
         need to add code to assert that is the case.
        */
       thd->binlog_flush_pending_rows_event(false);
-      TABLE_LIST *tables= rli->tables_to_lock;
+      TableList *tables= rli->tables_to_lock;
       close_tables_for_reopen(thd, &tables);
 
       uint tables_count= rli->tables_to_lock_count;
@@ -6253,12 +6253,12 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
       ensure that they still have the correct type.
 
       We can use a down cast here since we know that every table added
-      to the tables_to_lock is a RPL_TABLE_LIST.
+      to the tables_to_lock is a RPL_TableList.
     */
 
     {
-      RPL_TABLE_LIST *ptr= rli->tables_to_lock;
-      for ( ; ptr ; ptr= static_cast<RPL_TABLE_LIST*>(ptr->next_global))
+      RPL_TableList *ptr= rli->tables_to_lock;
+      for ( ; ptr ; ptr= static_cast<RPL_TableList*>(ptr->next_global))
       {
         if (ptr->m_tabledef.compatible_with(rli, ptr->table))
         {
@@ -6285,7 +6285,7 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
       Rows_log_event, we can invalidate the query cache for the
       associated table.
      */
-    for (TABLE_LIST *ptr= rli->tables_to_lock ; ptr ; ptr= ptr->next_global)
+    for (TableList *ptr= rli->tables_to_lock ; ptr ; ptr= ptr->next_global)
     {
       const_cast<Relay_log_info*>(rli)->m_table_map.set_table(ptr->table_id, ptr->table);
     }
@@ -6959,7 +6959,7 @@ Table_map_log_event::~Table_map_log_event()
 #if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
 {
-  RPL_TABLE_LIST *table_list;
+  RPL_TableList *table_list;
   char *db_mem, *tname_mem;
   size_t dummy_len;
   void *memory;
@@ -6971,7 +6971,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
   pthread_mutex_unlock(&LOCK_thread_count);
 
   if (!(memory= my_multi_malloc(MYF(MY_WME),
-                                &table_list, (uint) sizeof(RPL_TABLE_LIST),
+                                &table_list, (uint) sizeof(RPL_TableList),
                                 &db_mem, (uint) NAME_LEN + 1,
                                 &tname_mem, (uint) NAME_LEN + 1,
                                 NullS)))
@@ -7019,8 +7019,8 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
       table map.  Note that for any table that should not be
       replicated, a filter is needed.
 
-      The creation of a new TABLE_LIST is used to up-cast the
-      table_list consisting of RPL_TABLE_LIST items. This will work
+      The creation of a new TableList is used to up-cast the
+      table_list consisting of RPL_TableList items. This will work
       since the only case where the argument to open_tables() is
       changed, is when thd->lex->query_tables == table_list, i.e.,
       when the statement requires prelocking. Since this is not
@@ -7034,7 +7034,7 @@ int Table_map_log_event::do_apply_event(Relay_log_info const *rli)
     */
     uint count;
     assert(thd->lex->query_tables != table_list);
-    TABLE_LIST *tmp_table_list= table_list;
+    TableList *tmp_table_list= table_list;
     if ((error= open_tables(thd, &tmp_table_list, &count, 0)))
     {
       if (thd->is_slave_error || thd->is_fatal_error)

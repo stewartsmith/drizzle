@@ -1,5 +1,5 @@
-#ifndef DRIZZLED_filesort_info_st_H
-#define DRIZZLED_filesort_info_st_H
+#ifndef DRIZZLED_FILESORT_INFO_ST_H
+#define DRIZZLED_FILESORT_INFO_ST_H
 
 /* Information on state of filesort */
 struct filesort_info_st
@@ -16,4 +16,4 @@ struct filesort_info_st
   ha_rows   found_records;      /* How many records in sort */
 };
 
-#endif /* DRIZZLED_filesort_info_st_H */
+#endif /* DRIZZLED_FILESORT_INFO_ST_H */

@@ -14,7 +14,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 class Protocol;
-struct TABLE_LIST;
+struct TableList;
 void item_init(void);			/* Init item functions */
 class Item_field;
 
@@ -264,7 +264,7 @@ struct Name_resolution_context: Sql_alloc
     statements we have to change this member dynamically to ensure correct
     name resolution of different parts of the statement.
   */
-  TABLE_LIST *table_list;
+  TableList *table_list;
   /*
     In most cases the two table references below replace 'table_list' above
     for the purpose of name resolution. The first and last name resolution
@@ -272,12 +272,12 @@ struct Name_resolution_context: Sql_alloc
     join tree in a FROM clause. This is needed for NATURAL JOIN, JOIN ... USING
     and JOIN ... ON. 
   */
-  TABLE_LIST *first_name_resolution_table;
+  TableList *first_name_resolution_table;
   /*
     Last table to search in the list of leaf table references that begins
     with first_name_resolution_table.
   */
-  TABLE_LIST *last_name_resolution_table;
+  TableList *last_name_resolution_table;
 
   /*
     SELECT_LEX item belong to, in case of merged VIEW it can differ from
@@ -321,7 +321,7 @@ struct Name_resolution_context: Sql_alloc
     last_name_resolution_table= NULL;
   }
 
-  void resolve_in_table_list_only(TABLE_LIST *tables)
+  void resolve_in_table_list_only(TableList *tables)
   {
     table_list= first_name_resolution_table= tables;
     resolve_in_select_list= false;
@@ -341,18 +341,18 @@ struct Name_resolution_context: Sql_alloc
 class Name_resolution_context_state
 {
 private:
-  TABLE_LIST *save_table_list;
-  TABLE_LIST *save_first_name_resolution_table;
-  TABLE_LIST *save_next_name_resolution_table;
+  TableList *save_table_list;
+  TableList *save_first_name_resolution_table;
+  TableList *save_next_name_resolution_table;
   bool        save_resolve_in_select_list;
-  TABLE_LIST *save_next_local;
+  TableList *save_next_local;
 
 public:
   Name_resolution_context_state() {}          /* Remove gcc warning */
 
 public:
   /* Save the state of a name resolution context. */
-  void save_state(Name_resolution_context *context, TABLE_LIST *table_list)
+  void save_state(Name_resolution_context *context, TableList *table_list)
   {
     save_table_list=                  context->table_list;
     save_first_name_resolution_table= context->first_name_resolution_table;
@@ -362,7 +362,7 @@ public:
   }
 
   /* Restore a name resolution context from saved state. */
-  void restore_state(Name_resolution_context *context, TABLE_LIST *table_list)
+  void restore_state(Name_resolution_context *context, TableList *table_list)
   {
     table_list->next_local=                save_next_local;
     table_list->next_name_resolution_table= save_next_name_resolution_table;
@@ -371,7 +371,7 @@ public:
     context->resolve_in_select_list=       save_resolve_in_select_list;
   }
 
-  TABLE_LIST *get_first_name_resolution_table()
+  TableList *get_first_name_resolution_table()
   {
     return save_first_name_resolution_table;
   }
@@ -1026,7 +1026,7 @@ public:
     by prep. stmt. too in case then we have not-fully qualified field.
     0 - means no cached value.
   */
-  TABLE_LIST *cached_table;
+  TableList *cached_table;
   st_select_lex *depended_from;
   Item_ident(Name_resolution_context *context_arg,
              const char *db_name_arg, const char *table_name_arg,

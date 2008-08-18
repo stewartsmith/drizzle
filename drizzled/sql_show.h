@@ -21,7 +21,7 @@ class String;
 class THD;
 struct st_ha_create_information;
 typedef st_ha_create_information HA_CREATE_INFO;
-struct TABLE_LIST;
+struct TableList;
 
 enum find_files_result {
   FIND_FILES_OK,
@@ -33,7 +33,7 @@ find_files_result find_files(THD *thd, List<LEX_STRING> *files, const char *db,
                              const char *path, const char *wild, bool dir);
 
 
-int store_create_info(THD *thd, TABLE_LIST *table_list, String *packet,
+int store_create_info(THD *thd, TableList *table_list, String *packet,
                       HA_CREATE_INFO  *create_info_arg);
 bool store_db_create_info(THD *thd, const char *dbname, String *buffer,
                           HA_CREATE_INFO *create_info);

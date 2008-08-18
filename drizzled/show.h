@@ -27,9 +27,9 @@ bool mysqld_show_open_tables(THD *thd,const char *wild);
 bool mysqld_show_logs(THD *thd);
 void append_identifier(THD *thd, String *packet, const char *name,
 		       uint length);
-void mysqld_list_fields(THD *thd,TABLE_LIST *table, const char *wild);
-int mysqld_dump_create_info(THD *thd, TABLE_LIST *table_list, int fd);
-bool mysqld_show_create(THD *thd, TABLE_LIST *table_list);
+void mysqld_list_fields(THD *thd,TableList *table, const char *wild);
+int mysqld_dump_create_info(THD *thd, TableList *table_list, int fd);
+bool mysqld_show_create(THD *thd, TableList *table_list);
 bool mysqld_show_create_db(THD *thd, char *dbname, HA_CREATE_INFO *create);
 
 void mysqld_list_processes(THD *thd,const char *user,bool verbose);

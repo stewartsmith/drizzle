@@ -273,7 +273,7 @@ void write_bin_log(THD *thd, bool clear_error,
 
 */
 
-bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists, bool drop_temporary)
+bool mysql_rm_table(THD *thd,TableList *tables, bool if_exists, bool drop_temporary)
 {
   bool error, need_start_waiting= false;
 
@@ -338,11 +338,11 @@ bool mysql_rm_table(THD *thd,TABLE_LIST *tables, bool if_exists, bool drop_tempo
    -1	Thread was killed
 */
 
-int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
+int mysql_rm_table_part2(THD *thd, TableList *tables, bool if_exists,
                          bool drop_temporary, bool drop_view,
                          bool dont_log_query)
 {
-  TABLE_LIST *table;
+  TableList *table;
   char path[FN_REFLEN], *alias;
   uint path_length;
   String wrong_tables;
@@ -582,7 +582,7 @@ int mysql_rm_table_part2(THD *thd, TABLE_LIST *tables, bool if_exists,
   }
   pthread_mutex_lock(&LOCK_open);
 err_with_placeholders:
-  unlock_table_names(thd, tables, (TABLE_LIST*) 0);
+  unlock_table_names(thd, tables, (TableList*) 0);
   pthread_mutex_unlock(&LOCK_open);
   thd->no_warnings_for_error= 0;
   return(error);
@@ -2192,7 +2192,7 @@ void close_cached_table(THD *thd, Table *table)
   return;
 }
 
-static int send_check_errmsg(THD *thd, TABLE_LIST* table,
+static int send_check_errmsg(THD *thd, TableList* table,
 			     const char* operator_name, const char* errmsg)
 
 {
@@ -2209,7 +2209,7 @@ static int send_check_errmsg(THD *thd, TABLE_LIST* table,
 }
 
 
-static int prepare_for_repair(THD *thd, TABLE_LIST *table_list,
+static int prepare_for_repair(THD *thd, TableList *table_list,
 			      HA_CHECK_OPT *check_opt)
 {
   int error= 0;
@@ -2357,19 +2357,19 @@ end:
     true  Message should be sent by caller 
           (admin operation or network communication failed)
 */
-static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
+static bool mysql_admin_table(THD* thd, TableList* tables,
                               HA_CHECK_OPT* check_opt,
                               const char *operator_name,
                               thr_lock_type lock_type,
                               bool open_for_modify,
                               bool no_warnings_for_error,
                               uint extra_open_options,
-                              int (*prepare_func)(THD *, TABLE_LIST *,
+                              int (*prepare_func)(THD *, TableList *,
                                                   HA_CHECK_OPT *),
                               int (handler::*operator_func)(THD *,
                                                             HA_CHECK_OPT *))
 {
-  TABLE_LIST *table;
+  TableList *table;
   SELECT_LEX *select= &thd->lex->select_lex;
   List<Item> field_list;
   Item *item;
@@ -2407,7 +2407,7 @@ static bool mysql_admin_table(THD* thd, TABLE_LIST* tables,
     table->lock_type= lock_type;
     /* open only one table from local list of command */
     {
-      TABLE_LIST *save_next_global, *save_next_local;
+      TableList *save_next_global, *save_next_local;
       save_next_global= table->next_global;
       table->next_global= 0;
       save_next_local= table->next_local;
@@ -2637,7 +2637,7 @@ send_result_message:
       */
       ha_autocommit_or_rollback(thd, 0);
       close_thread_tables(thd);
-      TABLE_LIST *save_next_local= table->next_local,
+      TableList *save_next_local= table->next_local,
                  *save_next_global= table->next_global;
       table->next_local= table->next_global= 0;
       tmp_disable_binlog(thd); // binlogging is done by caller if wanted
@@ -2759,7 +2759,7 @@ err:
 }
 
 
-bool mysql_repair_table(THD* thd, TABLE_LIST* tables, HA_CHECK_OPT* check_opt)
+bool mysql_repair_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   return(mysql_admin_table(thd, tables, check_opt,
 				"repair", TL_WRITE, 1,
@@ -2770,7 +2770,7 @@ bool mysql_repair_table(THD* thd, TABLE_LIST* tables, HA_CHECK_OPT* check_opt)
 }
 
 
-bool mysql_optimize_table(THD* thd, TABLE_LIST* tables, HA_CHECK_OPT* check_opt)
+bool mysql_optimize_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   return(mysql_admin_table(thd, tables, check_opt,
 				"optimize", TL_WRITE, 1,0,0,0,
@@ -2791,7 +2791,7 @@ bool mysql_optimize_table(THD* thd, TABLE_LIST* tables, HA_CHECK_OPT* check_opt)
    true  error
 */
 
-bool mysql_assign_to_keycache(THD* thd, TABLE_LIST* tables,
+bool mysql_assign_to_keycache(THD* thd, TableList* tables,
 			     LEX_STRING *key_cache_name)
 {
   HA_CHECK_OPT check_opt;
@@ -2862,7 +2862,7 @@ int reassign_keycache_tables(THD *thd __attribute__((unused)),
     @retval       0                        success
     @retval       1                        error
 */
-bool mysql_create_like_schema_frm(THD* thd, TABLE_LIST* schema_table,
+bool mysql_create_like_schema_frm(THD* thd, TableList* schema_table,
                                   char *dst_path, HA_CREATE_INFO *create_info)
 {
   HA_CREATE_INFO local_create_info;
@@ -2910,7 +2910,7 @@ bool mysql_create_like_schema_frm(THD* thd, TABLE_LIST* schema_table,
     true  error
 */
 
-bool mysql_create_like_table(THD* thd, TABLE_LIST* table, TABLE_LIST* src_table,
+bool mysql_create_like_table(THD* thd, TableList* table, TableList* src_table,
                              HA_CREATE_INFO *create_info)
 {
   Table *name_lock= 0;
@@ -3106,7 +3106,7 @@ err:
 }
 
 
-bool mysql_analyze_table(THD* thd, TABLE_LIST* tables, HA_CHECK_OPT* check_opt)
+bool mysql_analyze_table(THD* thd, TableList* tables, HA_CHECK_OPT* check_opt)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
@@ -3116,7 +3116,7 @@ bool mysql_analyze_table(THD* thd, TABLE_LIST* tables, HA_CHECK_OPT* check_opt)
 }
 
 
-bool mysql_check_table(THD* thd, TABLE_LIST* tables,HA_CHECK_OPT* check_opt)
+bool mysql_check_table(THD* thd, TableList* tables,HA_CHECK_OPT* check_opt)
 {
   thr_lock_type lock_type = TL_READ_NO_INSERT;
 
@@ -3130,7 +3130,7 @@ bool mysql_check_table(THD* thd, TABLE_LIST* tables,HA_CHECK_OPT* check_opt)
 /* table_list should contain just one table */
 static int
 mysql_discard_or_import_tablespace(THD *thd,
-                                   TABLE_LIST *table_list,
+                                   TableList *table_list,
                                    enum tablespace_op_type tablespace_op)
 {
   Table *table;
@@ -4362,7 +4362,7 @@ err:
 
 bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
-                       TABLE_LIST *table_list,
+                       TableList *table_list,
                        Alter_info *alter_info,
                        uint order_num, order_st *order, bool ignore)
 {
@@ -4793,7 +4793,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
   /* Open the table so we need to copy the data to it. */
   if (table->s->tmp_table)
   {
-    TABLE_LIST tbl;
+    TableList tbl;
     memset(&tbl, 0, sizeof(tbl));
     tbl.db= new_db;
     tbl.table_name= tbl.alias= tmp_name;
@@ -5098,7 +5098,7 @@ copy_data_between_tables(Table *from,Table *to,
   uint length= 0;
   SORT_FIELD *sortorder;
   READ_RECORD info;
-  TABLE_LIST   tables;
+  TableList   tables;
   List<Item>   fields;
   List<Item>   all_fields;
   ha_rows examined_rows;
@@ -5310,7 +5310,7 @@ copy_data_between_tables(Table *from,Table *to,
  RETURN
     Like mysql_alter_table().
 */
-bool mysql_recreate_table(THD *thd, TABLE_LIST *table_list)
+bool mysql_recreate_table(THD *thd, TableList *table_list)
 {
   HA_CREATE_INFO create_info;
   Alter_info alter_info;
@@ -5333,10 +5333,10 @@ bool mysql_recreate_table(THD *thd, TABLE_LIST *table_list)
 }
 
 
-bool mysql_checksum_table(THD *thd, TABLE_LIST *tables,
+bool mysql_checksum_table(THD *thd, TableList *tables,
                           HA_CHECK_OPT *check_opt)
 {
-  TABLE_LIST *table;
+  TableList *table;
   List<Item> field_list;
   Item *item;
   Protocol *protocol= thd->protocol;

@@ -107,7 +107,7 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
   bool multi_byte_charset;
 
   filesort_info_st table_sort;
-  TABLE_LIST *tab= table->pos_in_table_list;
+  TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
   DRIZZLE_FILESORT_START();

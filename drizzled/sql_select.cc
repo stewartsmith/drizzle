@@ -40,7 +40,7 @@ const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 struct st_sargable_param;
 
 static void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
-static bool make_join_statistics(JOIN *join, TABLE_LIST *leaves, COND *conds,
+static bool make_join_statistics(JOIN *join, TableList *leaves, COND *conds,
 				 DYNAMIC_ARRAY *keyuse);
 static bool update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,
                                 JOIN_TAB *join_tab,
@@ -90,23 +90,23 @@ static void update_depend_map(JOIN *join);
 static void update_depend_map(JOIN *join, order_st *order);
 static order_st *remove_const(JOIN *join,order_st *first_order,COND *cond,
 			   bool change_list, bool *simple_order);
-static int return_zero_rows(JOIN *join, select_result *res,TABLE_LIST *tables,
+static int return_zero_rows(JOIN *join, select_result *res,TableList *tables,
                             List<Item> &fields, bool send_row,
                             uint64_t select_options, const char *info,
                             Item *having);
 static COND *build_equal_items(THD *thd, COND *cond,
                                COND_EQUAL *inherited,
-                               List<TABLE_LIST> *join_list,
+                               List<TableList> *join_list,
                                COND_EQUAL **cond_equal_ref);
 static COND* substitute_for_best_equal_field(COND *cond,
                                              COND_EQUAL *cond_equal,
                                              void *table_join_idx);
-static COND *simplify_joins(JOIN *join, List<TABLE_LIST> *join_list,
+static COND *simplify_joins(JOIN *join, List<TableList> *join_list,
                             COND *conds, bool top, bool in_sj);
 static bool check_interleaving_with_nj(JOIN_TAB *last, JOIN_TAB *next);
 static void restore_prev_nj_state(JOIN_TAB *last);
-static void reset_nj_counters(List<TABLE_LIST> *join_list);
-static uint build_bitmap_for_nested_joins(List<TABLE_LIST> *join_list,
+static void reset_nj_counters(List<TableList> *join_list);
+static uint build_bitmap_for_nested_joins(List<TableList> *join_list,
                                           uint first_unused);
 
 static 
@@ -115,7 +115,7 @@ static void restore_prev_sj_state(const table_map remaining_tables,
                                   const JOIN_TAB *tab);
 
 static COND *optimize_cond(JOIN *join, COND *conds,
-                           List<TABLE_LIST> *join_list,
+                           List<TableList> *join_list,
 			   Item::cond_result *cond_value);
 static bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
 static int do_select(JOIN *join,List<Item> *fields,Table *tmp_table);
@@ -190,7 +190,7 @@ static order_st *create_distinct_group(THD *thd, Item **ref_pointer_array,
                                     List<Item> &all_fields,
 				    bool *all_order_by_fields_used);
 static bool test_if_subpart(order_st *a,order_st *b);
-static Table *get_sort_by_table(order_st *a,order_st *b,TABLE_LIST *tables);
+static Table *get_sort_by_table(order_st *a,order_st *b,TableList *tables);
 static void calc_group_buffer(JOIN *join,order_st *group);
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
 static bool alloc_group_fields(JOIN *join,order_st *group);
@@ -257,7 +257,7 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
       setup_tables_done_option changed for next rexecution
     */
     res= mysql_select(thd, &select_lex->ref_pointer_array,
-		      (TABLE_LIST*) select_lex->table_list.first,
+		      (TableList*) select_lex->table_list.first,
 		      select_lex->with_wild, select_lex->item_list,
 		      select_lex->where,
 		      select_lex->order_list.elements +
@@ -394,8 +394,8 @@ fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
   Function to setup clauses without sum functions.
 */
 inline int setup_without_group(THD *thd, Item **ref_pointer_array,
-			       TABLE_LIST *tables,
-			       TABLE_LIST *leaves,
+			       TableList *tables,
+			       TableList *leaves,
 			       List<Item> &fields,
 			       List<Item> &all_fields,
 			       COND **conds,
@@ -437,7 +437,7 @@ inline int setup_without_group(THD *thd, Item **ref_pointer_array,
 */
 int
 JOIN::prepare(Item ***rref_pointer_array,
-	      TABLE_LIST *tables_init,
+	      TableList *tables_init,
 	      uint wild_num, COND *conds_init, uint og_num,
 	      order_st *order_init, order_st *group_init,
 	      Item *having_init,
@@ -475,7 +475,7 @@ JOIN::prepare(Item ***rref_pointer_array,
                                     false))
       return(-1);
  
-  TABLE_LIST *table_ptr;
+  TableList *table_ptr;
   for (table_ptr= select_lex->leaf_tables;
        table_ptr;
        table_ptr= table_ptr->next_leaf)
@@ -571,7 +571,7 @@ JOIN::prepare(Item ***rref_pointer_array,
 
         /* Register the subquery for further processing */
         select_lex->outer_select()->join->sj_subselects.append(thd->mem_root, in_subs);
-        in_subs->expr_join_nest= (TABLE_LIST*)thd->thd_marker;
+        in_subs->expr_join_nest= (TableList*)thd->thd_marker;
       }
       else
       {
@@ -825,7 +825,7 @@ static bool sj_table_is_included(JOIN *join, JOIN_TAB *join_tab)
   /* Check if this table is functionally dependent on the tables that
      are within the same outer join nest
   */
-  TABLE_LIST *embedding= join_tab->table->pos_in_table_list->embedding;
+  TableList *embedding= join_tab->table->pos_in_table_list->embedding;
   if (join_tab->type == JT_EQ_REF)
   {
     Table_map_iterator it(join_tab->ref.depend_map & ~PSEUDO_TABLE_BITS);
@@ -961,7 +961,7 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint no_jbuf_a
     table_map outer_tables;
   } dups_ranges [MAX_TABLES];
 
-  TABLE_LIST *emb_insideout_nest= NULL;
+  TableList *emb_insideout_nest= NULL;
   table_map emb_sj_map= 0;  /* A bitmap of sj-nests (that is, their sj-inner
                                tables) whose ranges we're in */
   table_map emb_outer_tables= 0; /* sj-outer tables for those sj-nests */
@@ -2611,7 +2611,7 @@ JOIN::destroy()
 
 bool
 mysql_select(THD *thd, Item ***rref_pointer_array,
-	     TABLE_LIST *tables, uint wild_num, List<Item> &fields,
+	     TableList *tables, uint wild_num, List<Item> &fields,
 	     COND *conds, uint og_num,  order_st *order, order_st *group,
 	     Item *having, order_st *proc_param, uint64_t select_options,
 	     select_result *result, SELECT_LEX_UNIT *unit,
@@ -2667,13 +2667,13 @@ mysql_select(THD *thd, Item ***rref_pointer_array,
     }
   }
 
-  /* dump_TABLE_LIST_graph(select_lex, select_lex->leaf_tables); */
+  /* dump_TableList_graph(select_lex, select_lex->leaf_tables); */
   if (join->flatten_subqueries())
   {
     err= 1;
     goto err;
   }
-  /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
+  /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
 
   if ((err= join->optimize()))
   {
@@ -2722,22 +2722,22 @@ inline Item * and_items(Item* cond, Item *item)
 }
 
 
-static TABLE_LIST *alloc_join_nest(THD *thd)
+static TableList *alloc_join_nest(THD *thd)
 {
-  TABLE_LIST *tbl;
-  if (!(tbl= (TABLE_LIST*) thd->calloc(ALIGN_SIZE(sizeof(TABLE_LIST))+
-                                       sizeof(NESTED_JOIN))))
+  TableList *tbl;
+  if (!(tbl= (TableList*) thd->calloc(ALIGN_SIZE(sizeof(TableList))+
+                                       sizeof(nested_join_st))))
     return NULL;
-  tbl->nested_join= (NESTED_JOIN*) ((uchar*)tbl + 
-                                    ALIGN_SIZE(sizeof(TABLE_LIST)));
+  tbl->nested_join= (nested_join_st*) ((uchar*)tbl + 
+                                    ALIGN_SIZE(sizeof(TableList)));
   return tbl;
 }
 
 
-void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
+void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TableList> *tlist)
 {
-  List_iterator<TABLE_LIST> it(*tlist);
-  TABLE_LIST *table;
+  List_iterator<TableList> it(*tlist);
+  TableList *table;
   while ((table= it++))
   {
     if (table->on_expr)
@@ -2749,7 +2749,7 @@ void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
 
 
 /*
-  Convert a subquery predicate into a TABLE_LIST semi-join nest
+  Convert a subquery predicate into a TableList semi-join nest
 
   SYNOPSIS
     convert_subq_to_sj()
@@ -2758,11 +2758,11 @@ void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
        subq_pred    Subquery predicate to be converted
   
   DESCRIPTION
-    Convert a subquery predicate into a TABLE_LIST semi-join nest. All the 
+    Convert a subquery predicate into a TableList semi-join nest. All the 
     prerequisites are already checked, so the conversion is always successfull.
 
     Prepared Statements: the transformation is permanent:
-     - Changes in TABLE_LIST structures are naturally permanent
+     - Changes in TableList structures are naturally permanent
      - Item tree changes are performed on statement MEM_ROOT:
         = we activate statement MEM_ROOT 
         = this function is called before the first fix_prepare_information
@@ -2779,8 +2779,8 @@ void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
 bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
 {
   SELECT_LEX *parent_lex= parent_join->select_lex;
-  TABLE_LIST *emb_tbl_nest= NULL;
-  List<TABLE_LIST> *emb_join_list= &parent_lex->top_join_list;
+  TableList *emb_tbl_nest= NULL;
+  List<TableList> *emb_join_list= &parent_lex->top_join_list;
   THD *thd= parent_join->thd;
 
   /*
@@ -2817,8 +2817,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     }
     else if (!subq_pred->expr_join_nest->nested_join)
     {
-      TABLE_LIST *outer_tbl= subq_pred->expr_join_nest;      
-      TABLE_LIST *wrap_nest;
+      TableList *outer_tbl= subq_pred->expr_join_nest;      
+      TableList *wrap_nest;
       /*
         We're dealing with
 
@@ -2833,9 +2833,9 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
         Q:  other subqueries may be pointing to this element. What to do?
         A1: simple solution: copy *subq_pred->expr_join_nest= *parent_nest.
             But we'll need to fix other pointers.
-        A2: Another way: have TABLE_LIST::next_ptr so the following
+        A2: Another way: have TableList::next_ptr so the following
             subqueries know the table has been nested.
-        A3: changes in the TABLE_LIST::outer_join will make everything work
+        A3: changes in the TableList::outer_join will make everything work
             automatically.
       */
       if (!(wrap_nest= alloc_join_nest(parent_join->thd)))
@@ -2862,8 +2862,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
       wrap_nest->on_expr= outer_tbl->on_expr;
       outer_tbl->on_expr= NULL;
 
-      List_iterator<TABLE_LIST> li(*wrap_nest->join_list);
-      TABLE_LIST *tbl;
+      List_iterator<TableList> li(*wrap_nest->join_list);
+      TableList *tbl;
       while ((tbl= li++))
       {
         if (tbl == outer_tbl)
@@ -2881,8 +2881,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     }
   }
 
-  TABLE_LIST *sj_nest;
-  NESTED_JOIN *nested_join;
+  TableList *sj_nest;
+  nested_join_st *nested_join;
   if (!(sj_nest= alloc_join_nest(parent_join->thd)))
   {
     return(true);
@@ -2907,8 +2907,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
   */
   st_select_lex *subq_lex= subq_pred->unit->first_select();
   nested_join->join_list.empty();
-  List_iterator_fast<TABLE_LIST> li(subq_lex->top_join_list);
-  TABLE_LIST *tl, *last_leaf;
+  List_iterator_fast<TableList> li(subq_lex->top_join_list);
+  TableList *tl, *last_leaf;
   while ((tl= li++))
   {
     tl->embedding= sj_nest;
@@ -2952,7 +2952,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     tl->table->map= ((table_map)1) << table_no;
     SELECT_LEX *old_sl= tl->select_lex;
     tl->select_lex= parent_join->select_lex; 
-    for(TABLE_LIST *emb= tl->embedding; emb && emb->select_lex == old_sl; emb= emb->embedding)
+    for(TableList *emb= tl->embedding; emb && emb->select_lex == old_sl; emb= emb->embedding)
       emb->select_lex= parent_join->select_lex;
   }
   parent_join->tables += subq_lex->join->tables;
@@ -3080,7 +3080,7 @@ bool JOIN::flatten_subqueries()
       (*in_subq)->is_correlated * MAX_TABLES + child_join->outer_tables;
   }
 
-  //dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables);
+  //dump_TableList_struct(select_lex, select_lex->leaf_tables);
   /* 
     2. Pick which subqueries to convert:
       sort the subquery array
@@ -3271,7 +3271,7 @@ bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
      * Pulled out tables have JOIN_TAB::emb_sj_nest == NULL (like the outer
        tables)
      * Tables that were not pulled out have JOIN_TAB::emb_sj_nest.
-     * Semi-join nests TABLE_LIST::sj_inner_tables
+     * Semi-join nests TableList::sj_inner_tables
 
     This operation is (and should be) performed at each PS execution since
     tables may become/cease to be constant across PS reexecutions.
@@ -3283,8 +3283,8 @@ bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
 
 int pull_out_semijoin_tables(JOIN *join)
 {
-  TABLE_LIST *sj_nest;
-  List_iterator<TABLE_LIST> sj_list_it(join->select_lex->sj_nests);
+  TableList *sj_nest;
+  List_iterator<TableList> sj_list_it(join->select_lex->sj_nests);
    
   /* Try pulling out of the each of the semi-joins */
   while ((sj_nest= sj_list_it++))
@@ -3292,8 +3292,8 @@ int pull_out_semijoin_tables(JOIN *join)
     /* Action #1: Mark the constant tables to be pulled out */
     table_map pulled_tables= 0;
      
-    List_iterator<TABLE_LIST> child_li(sj_nest->nested_join->join_list);
-    TABLE_LIST *tbl;
+    List_iterator<TableList> child_li(sj_nest->nested_join->join_list);
+    TableList *tbl;
     while ((tbl= child_li++))
     {
       if (tbl->table)
@@ -3415,7 +3415,7 @@ typedef struct st_sargable_param
 */
 
 static bool
-make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
+make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 		     DYNAMIC_ARRAY *keyuse_array)
 {
   int error;
@@ -3447,7 +3447,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
        tables;
        s++, tables= tables->next_leaf, i++)
   {
-    TABLE_LIST *embedding= tables->embedding;
+    TableList *embedding= tables->embedding;
     stat_vector[i]=s;
     s->keys.init();
     s->const_keys.init();
@@ -3498,7 +3498,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
       s->embedding_map= 0;
       do
       {
-        NESTED_JOIN *nested_join= embedding->nested_join;
+        nested_join_st *nested_join= embedding->nested_join;
         s->embedding_map|=nested_join->nj_map;
         s->dependent|= embedding->dep_tables;
         embedding= embedding->embedding;
@@ -4515,15 +4515,15 @@ sort_keyuse(KEYUSE *a,KEYUSE *b)
     Here we can add 'ref' access candidates for t1 and t2, but not for t3.
 */
 
-static void add_key_fields_for_nj(JOIN *join, TABLE_LIST *nested_join_table,
+static void add_key_fields_for_nj(JOIN *join, TableList *nested_join_table,
                                   KEY_FIELD **end, uint *and_level,
                                   SARGABLE_PARAM **sargables)
 {
-  List_iterator<TABLE_LIST> li(nested_join_table->nested_join->join_list);
-  List_iterator<TABLE_LIST> li2(nested_join_table->nested_join->join_list);
+  List_iterator<TableList> li(nested_join_table->nested_join->join_list);
+  List_iterator<TableList> li2(nested_join_table->nested_join->join_list);
   bool have_another = false;
   table_map tables= 0;
-  TABLE_LIST *table;
+  TableList *table;
   assert(nested_join_table->nested_join);
 
   while ((table= li++) || (have_another && (li=li2, have_another=false,
@@ -4536,7 +4536,7 @@ static void add_key_fields_for_nj(JOIN *join, TABLE_LIST *nested_join_table,
         /* It's a semi-join nest. Walk into it as if it wasn't a nest */
         have_another= true;
         li2= li;
-        li= List_iterator<TABLE_LIST>(table->nested_join->join_list); 
+        li= List_iterator<TableList>(table->nested_join->join_list); 
       }
       else
         add_key_fields_for_nj(join, table, end, and_level, sargables);
@@ -4651,8 +4651,8 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
 
   /* Process ON conditions for the nested joins */
   {
-    List_iterator<TABLE_LIST> li(*join_tab->join->join_list);
-    TABLE_LIST *table;
+    List_iterator<TableList> li(*join_tab->join->join_list);
+    TableList *table;
     while ((table= li++))
     {
       if (table->nested_join)
@@ -4869,7 +4869,7 @@ set_position(JOIN *join,uint idx,JOIN_TAB *table,KEYUSE *key)
     Bitmap of bound IN-equalities.
 */
 
-uint64_t get_bound_sj_equalities(TABLE_LIST *sj_nest, 
+uint64_t get_bound_sj_equalities(TableList *sj_nest, 
                                   table_map remaining_tables)
 {
   List_iterator<Item> li(sj_nest->nested_join->sj_outer_expr_list);
@@ -6881,8 +6881,8 @@ make_outerjoin_info(JOIN *join)
   {
     JOIN_TAB *tab=join->join_tab+i;
     Table *table=tab->table;
-    TABLE_LIST *tbl= table->pos_in_table_list;
-    TABLE_LIST *embedding= tbl->embedding;
+    TableList *tbl= table->pos_in_table_list;
+    TableList *embedding= tbl->embedding;
 
     if (tbl->outer_join)
     {
@@ -6902,7 +6902,7 @@ make_outerjoin_info(JOIN *join)
       /* Ignore sj-nests: */
       if (!embedding->on_expr)
         continue;
-      NESTED_JOIN *nested_join= embedding->nested_join;
+      nested_join_st *nested_join= embedding->nested_join;
       if (!nested_join->counter_)
       {
         /* 
@@ -8309,7 +8309,7 @@ remove_const(JOIN *join,order_st *first_order, COND *cond,
 
 
 static int
-return_zero_rows(JOIN *join, select_result *result,TABLE_LIST *tables,
+return_zero_rows(JOIN *join, select_result *result,TableList *tables,
 		 List<Item> &fields, bool send_row, uint64_t select_options,
 		 const char *info, Item *having)
 {
@@ -8323,7 +8323,7 @@ return_zero_rows(JOIN *join, select_result *result,TABLE_LIST *tables,
 
   if (send_row)
   {
-    for (TABLE_LIST *table= tables; table; table= table->next_leaf)
+    for (TableList *table= tables; table; table= table->next_leaf)
       mark_as_null_row(table->table);		// All fields are NULL
     if (having && having->val_int() == 0)
       send_row=0;
@@ -9086,7 +9086,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
    
 static COND *build_equal_items(THD *thd, COND *cond,
                                COND_EQUAL *inherited,
-                               List<TABLE_LIST> *join_list,
+                               List<TableList> *join_list,
                                COND_EQUAL **cond_equal_ref)
 {
   COND_EQUAL *cond_equal= 0;
@@ -9114,14 +9114,14 @@ static COND *build_equal_items(THD *thd, COND *cond,
 
   if (join_list)
   {
-    TABLE_LIST *table;
-    List_iterator<TABLE_LIST> li(*join_list);
+    TableList *table;
+    List_iterator<TableList> li(*join_list);
 
     while ((table= li++))
     {
       if (table->on_expr)
       {
-        List<TABLE_LIST> *nested_join_list= table->nested_join ?
+        List<TableList> *nested_join_list= table->nested_join ?
           &table->nested_join->join_list : NULL;
         /*
           We can modify table->on_expr because its old value will
@@ -9757,13 +9757,13 @@ propagate_cond_constants(THD *thd, I_List<COND_CMP> *save_list,
 */
 
 static COND *
-simplify_joins(JOIN *join, List<TABLE_LIST> *join_list, COND *conds, bool top,
+simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top,
                bool in_sj)
 {
-  TABLE_LIST *table;
-  NESTED_JOIN *nested_join;
-  TABLE_LIST *prev_table= 0;
-  List_iterator<TABLE_LIST> li(*join_list);
+  TableList *table;
+  nested_join_st *nested_join;
+  TableList *prev_table= 0;
+  List_iterator<TableList> li(*join_list);
 
   /* 
     Try to simplify join operations from join_list.
@@ -9913,8 +9913,8 @@ simplify_joins(JOIN *join, List<TABLE_LIST> *join_list, COND *conds, bool top,
     }
     else if (nested_join && !table->on_expr)
     {
-      TABLE_LIST *tbl;
-      List_iterator<TABLE_LIST> it(nested_join->join_list);
+      TableList *tbl;
+      List_iterator<TableList> it(nested_join->join_list);
       while ((tbl= it++))
       {
         tbl->embedding= table->embedding;
@@ -9947,14 +9947,14 @@ simplify_joins(JOIN *join, List<TABLE_LIST> *join_list, COND *conds, bool top,
     First unused bit in nested_join_map after the call.
 */
 
-static uint build_bitmap_for_nested_joins(List<TABLE_LIST> *join_list, 
+static uint build_bitmap_for_nested_joins(List<TableList> *join_list, 
                                           uint first_unused)
 {
-  List_iterator<TABLE_LIST> li(*join_list);
-  TABLE_LIST *table;
+  List_iterator<TableList> li(*join_list);
+  TableList *table;
   while ((table= li++))
   {
-    NESTED_JOIN *nested_join;
+    nested_join_st *nested_join;
     if ((nested_join= table->nested_join))
     {
       /*
@@ -9983,22 +9983,22 @@ static uint build_bitmap_for_nested_joins(List<TABLE_LIST> *join_list,
 
 
 /**
-  Set NESTED_JOIN::counter=0 in all nested joins in passed list.
+  Set nested_join_st::counter=0 in all nested joins in passed list.
 
-    Recursively set NESTED_JOIN::counter=0 for all nested joins contained in
+    Recursively set nested_join_st::counter=0 for all nested joins contained in
     the passed join_list.
 
   @param join_list  List of nested joins to process. It may also contain base
                     tables which will be ignored.
 */
 
-static void reset_nj_counters(List<TABLE_LIST> *join_list)
+static void reset_nj_counters(List<TableList> *join_list)
 {
-  List_iterator<TABLE_LIST> li(*join_list);
-  TABLE_LIST *table;
+  List_iterator<TableList> li(*join_list);
+  TableList *table;
   while ((table= li++))
   {
-    NESTED_JOIN *nested_join;
+    nested_join_st *nested_join;
     if ((nested_join= table->nested_join))
     {
       nested_join->counter_= 0;
@@ -10085,7 +10085,7 @@ static void reset_nj_counters(List<TABLE_LIST> *join_list)
          position:
           1. join->cur_embedding_map - bitmap of pairs of brackets (aka nested
              joins) we've opened but didn't close.
-          2. {each NESTED_JOIN structure not simplified away}->counter - number
+          2. {each nested_join_st structure not simplified away}->counter - number
              of this nested join's children that have already been added to to
              the partial join order.
   @endverbatim
@@ -10104,7 +10104,7 @@ static void reset_nj_counters(List<TABLE_LIST> *join_list)
 
 static bool check_interleaving_with_nj(JOIN_TAB *last_tab, JOIN_TAB *next_tab)
 {
-  TABLE_LIST *next_emb= next_tab->table->pos_in_table_list->embedding;
+  TableList *next_emb= next_tab->table->pos_in_table_list->embedding;
   JOIN *join= last_tab->join;
 
   if (join->cur_embedding_map & ~next_tab->embedding_map)
@@ -10161,7 +10161,7 @@ static bool check_interleaving_with_nj(JOIN_TAB *last_tab, JOIN_TAB *next_tab)
 
 static void restore_prev_nj_state(JOIN_TAB *last)
 {
-  TABLE_LIST *last_emb= last->table->pos_in_table_list->embedding;
+  TableList *last_emb= last->table->pos_in_table_list->embedding;
   JOIN *join= last->join;
   while (last_emb)
   {
@@ -10184,7 +10184,7 @@ static void restore_prev_nj_state(JOIN_TAB *last)
 static 
 void advance_sj_state(const table_map remaining_tables, const JOIN_TAB *tab)
 {
-  TABLE_LIST *emb_sj_nest;
+  TableList *emb_sj_nest;
   if ((emb_sj_nest= tab->emb_sj_nest))
   {
     tab->join->cur_emb_sj_nests |= emb_sj_nest->sj_inner_tables;
@@ -10202,7 +10202,7 @@ void advance_sj_state(const table_map remaining_tables, const JOIN_TAB *tab)
 static void restore_prev_sj_state(const table_map remaining_tables, 
                                   const JOIN_TAB *tab)
 {
-  TABLE_LIST *emb_sj_nest;
+  TableList *emb_sj_nest;
   if ((emb_sj_nest= tab->emb_sj_nest))
   {
     /* If we're removing the last SJ-inner table, remove the sj-nest */
@@ -10216,7 +10216,7 @@ static void restore_prev_sj_state(const table_map remaining_tables,
 
 
 static COND *
-optimize_cond(JOIN *join, COND *conds, List<TABLE_LIST> *join_list,
+optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list,
               Item::cond_result *cond_value)
 {
   THD *thd= join->thd;
@@ -11392,11 +11392,11 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
   JOIN *join= tab->join;
   if (join->conds)
     update_const_equal_items(join->conds, tab);
-  TABLE_LIST *tbl;
+  TableList *tbl;
   for (tbl= join->select_lex->leaf_tables; tbl; tbl= tbl->next_leaf)
   {
-    TABLE_LIST *embedded;
-    TABLE_LIST *embedding= tbl;
+    TableList *embedded;
+    TableList *embedding= tbl;
     do
     {
       embedded= embedding;
@@ -14166,7 +14166,7 @@ cp_buffer_from_ref(THD *thd, Table *table __attribute__((unused)), TABLE_REF *re
 */
 
 static bool
-find_order_in_list(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
+find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
                    order_st *order, List<Item> &fields, List<Item> &all_fields,
                    bool is_group_field)
 {
@@ -14302,7 +14302,7 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
   the field list.
 */
 
-int setup_order(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
+int setup_order(THD *thd, Item **ref_pointer_array, TableList *tables,
 		List<Item> &fields, List<Item> &all_fields, order_st *order)
 {
   thd->where="order clause";
@@ -14343,7 +14343,7 @@ int setup_order(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
 */
 
 int
-setup_group(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
+setup_group(THD *thd, Item **ref_pointer_array, TableList *tables,
 	    List<Item> &fields, List<Item> &all_fields, order_st *order,
 	    bool *hidden_group_fields)
 {
@@ -14583,7 +14583,7 @@ test_if_subpart(order_st *a,order_st *b)
 */
 
 static Table *
-get_sort_by_table(order_st *a,order_st *b,TABLE_LIST *tables)
+get_sort_by_table(order_st *a,order_st *b,TableList *tables)
 {
   table_map map= (table_map) 0;
 
@@ -15884,7 +15884,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
     {
       JOIN_TAB *tab=join->join_tab+i;
       Table *table=tab->table;
-      TABLE_LIST *table_list= tab->table->pos_in_table_list;
+      TableList *table_list= tab->table->pos_in_table_list;
       char buff[512]; 
       char buff1[512], buff2[512], buff3[512];
       char keylen_str_buf[64];
@@ -15928,7 +15928,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        TABLE_LIST *real_table= table->pos_in_table_list; 
+        TableList *real_table= table->pos_in_table_list; 
 	item_list.push_back(new Item_string(real_table->alias,
 					    strlen(real_table->alias),
 					    cs));
@@ -16297,7 +16297,7 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
     thd->lex->current_select= first;
     unit->set_limit(unit->global_parameters);
     res= mysql_select(thd, &first->ref_pointer_array,
-			(TABLE_LIST*) first->table_list.first,
+			(TableList*) first->table_list.first,
 			first->with_wild, first->item_list,
 			first->where,
 			first->order_list.elements +
@@ -16313,14 +16313,14 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
 }
 
 
-static void print_table_array(THD *thd, String *str, TABLE_LIST **table, 
-                              TABLE_LIST **end)
+static void print_table_array(THD *thd, String *str, TableList **table, 
+                              TableList **end)
 {
   (*table)->print(thd, str, QT_ORDINARY);
 
-  for (TABLE_LIST **tbl= table + 1; tbl < end; tbl++)
+  for (TableList **tbl= table + 1; tbl < end; tbl++)
   {
-    TABLE_LIST *curr= *tbl;
+    TableList *curr= *tbl;
     if (curr->outer_join)
     {
       /* MySQL converts right to left joins */
@@ -16353,17 +16353,17 @@ static void print_table_array(THD *thd, String *str, TABLE_LIST **table,
 
 static void print_join(THD *thd,
                        String *str,
-                       List<TABLE_LIST> *tables,
+                       List<TableList> *tables,
                        enum_query_type query_type __attribute__((unused)))
 {
   /* List is reversed => we should reverse it before using */
-  List_iterator_fast<TABLE_LIST> ti(*tables);
-  TABLE_LIST **table= (TABLE_LIST **)thd->alloc(sizeof(TABLE_LIST*) *
+  List_iterator_fast<TableList> ti(*tables);
+  TableList **table= (TableList **)thd->alloc(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
     return;  // out of memory
 
-  for (TABLE_LIST **t= table + (tables->elements - 1); t >= table; t--)
+  for (TableList **t= table + (tables->elements - 1); t >= table; t--)
     *t= ti++;
   
   /* 
@@ -16372,12 +16372,12 @@ static void print_join(THD *thd,
   */
   if ((*table)->sj_inner_tables)
   {
-    TABLE_LIST **end= table + tables->elements;
-    for (TABLE_LIST **t2= table; t2!=end; t2++)
+    TableList **end= table + tables->elements;
+    for (TableList **t2= table; t2!=end; t2++)
     {
       if (!(*t2)->sj_inner_tables)
       {
-        TABLE_LIST *tmp= *t2;
+        TableList *tmp= *t2;
         *t2= *table;
         *table= tmp;
         break;
@@ -16432,7 +16432,7 @@ Index_hint::print(THD *thd, String *str)
   @param str   string where table should be printed
 */
 
-void TABLE_LIST::print(THD *thd, String *str, enum_query_type query_type)
+void TableList::print(THD *thd, String *str, enum_query_type query_type)
 {
   if (nested_join)
   {

@@ -1815,9 +1815,9 @@ bool st_select_lex_node::set_braces(bool value __attribute__((unused)))
 { return 1; }
 bool st_select_lex_node::inc_in_sum_expr()           { return 1; }
 uint st_select_lex_node::get_in_sum_expr()           { return 0; }
-TABLE_LIST* st_select_lex_node::get_table_list()     { return 0; }
+TableList* st_select_lex_node::get_table_list()     { return 0; }
 List<Item>* st_select_lex_node::get_item_list()      { return 0; }
-TABLE_LIST *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
+TableList *st_select_lex_node::add_table_to_list (THD *thd __attribute__((unused)),
                                                    Table_ident *table __attribute__((unused)),
 						  LEX_STRING *alias __attribute__((unused)),
 						  uint32_t table_join_options __attribute__((unused)),
@@ -1910,9 +1910,9 @@ uint st_select_lex::get_in_sum_expr()
 }
 
 
-TABLE_LIST* st_select_lex::get_table_list()
+TableList* st_select_lex::get_table_list()
 {
-  return (TABLE_LIST*) table_list.first;
+  return (TableList*) table_list.first;
 }
 
 List<Item>* st_select_lex::get_item_list()
@@ -2079,7 +2079,7 @@ void Query_tables_list::reset_query_tables_list(bool init)
 {
   if (!init && query_tables)
   {
-    TABLE_LIST *table= query_tables;
+    TableList *table= query_tables;
     for (;;)
     {
       if (query_tables_last == &table->next_global ||
@@ -2392,9 +2392,9 @@ void st_select_lex_unit::set_limit(st_select_lex *sl)
       In this case link_to_local is set.
 
 */
-TABLE_LIST *st_lex::unlink_first_table(bool *link_to_local)
+TableList *st_lex::unlink_first_table(bool *link_to_local)
 {
-  TABLE_LIST *first;
+  TableList *first;
   if ((first= query_tables))
   {
     /*
@@ -2445,10 +2445,10 @@ TABLE_LIST *st_lex::unlink_first_table(bool *link_to_local)
 
 void st_lex::first_lists_tables_same()
 {
-  TABLE_LIST *first_table= (TABLE_LIST*) select_lex.table_list.first;
+  TableList *first_table= (TableList*) select_lex.table_list.first;
   if (query_tables != first_table && first_table != 0)
   {
-    TABLE_LIST *next;
+    TableList *next;
     if (query_tables_last == &first_table->next_global)
       query_tables_last= first_table->prev_global;
 
@@ -2479,7 +2479,7 @@ void st_lex::first_lists_tables_same()
     global list
 */
 
-void st_lex::link_first_table_back(TABLE_LIST *first,
+void st_lex::link_first_table_back(TableList *first,
 				   bool link_to_local)
 {
   if (first)
@@ -2492,7 +2492,7 @@ void st_lex::link_first_table_back(TABLE_LIST *first,
 
     if (link_to_local)
     {
-      first->next_local= (TABLE_LIST*) select_lex.table_list.first;
+      first->next_local= (TableList*) select_lex.table_list.first;
       select_lex.context.table_list= first;
       select_lex.table_list.first= (uchar*) first;
       select_lex.table_list.elements++;	//safety
@@ -2602,7 +2602,7 @@ bool st_lex::table_or_sp_used()
 
 */
 
-static void fix_prepare_info_in_table_list(THD *thd, TABLE_LIST *tbl)
+static void fix_prepare_info_in_table_list(THD *thd, TableList *tbl)
 {
   for (; tbl; tbl= tbl->next_local)
   {

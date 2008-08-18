@@ -2005,7 +2005,7 @@ int subselect_single_select_engine::prepare()
   SELECT_LEX *save_select= thd->lex->current_select;
   thd->lex->current_select= select_lex;
   if (join->prepare(&select_lex->ref_pointer_array,
-		    (TABLE_LIST*) select_lex->table_list.first,
+		    (TableList*) select_lex->table_list.first,
 		    select_lex->with_wild,
 		    select_lex->where,
 		    select_lex->order_list.elements +
@@ -2648,7 +2648,7 @@ void subselect_uniquesubquery_engine::exclude()
 }
 
 
-table_map subselect_engine::calc_const_tables(TABLE_LIST *table)
+table_map subselect_engine::calc_const_tables(TableList *table)
 {
   table_map map= 0;
   for (; table; table= table->next_leaf)
@@ -2663,14 +2663,14 @@ table_map subselect_engine::calc_const_tables(TABLE_LIST *table)
 
 table_map subselect_single_select_engine::upper_select_const_tables()
 {
-  return calc_const_tables((TABLE_LIST *) select_lex->outer_select()->
+  return calc_const_tables((TableList *) select_lex->outer_select()->
 			   leaf_tables);
 }
 
 
 table_map subselect_union_engine::upper_select_const_tables()
 {
-  return calc_const_tables((TABLE_LIST *) unit->outer_select()->leaf_tables);
+  return calc_const_tables((TableList *) unit->outer_select()->leaf_tables);
 }
 
 

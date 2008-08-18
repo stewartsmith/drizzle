@@ -562,7 +562,7 @@ struct handlerton
    bool (*flush_logs)(handlerton *hton);
    bool (*show_status)(handlerton *hton, THD *thd, stat_print_fn *print, enum ha_stat_type stat);
    int (*fill_files_table)(handlerton *hton, THD *thd,
-                           TABLE_LIST *tables,
+                           TableList *tables,
                            class Item *cond);
    uint32_t flags;                                /* global handler flags */
    int (*release_temporary_latches)(handlerton *hton, THD *thd);

@@ -267,7 +267,7 @@ typedef struct st_join_table {
     Embedding SJ-nest (may be not the direct parent), or NULL if none.
     This variable holds the result of table pullout.
   */
-  TABLE_LIST    *emb_sj_nest;
+  TableList    *emb_sj_nest;
 
   /* Variables for semi-join duplicate elimination */
   SJ_TMP_TABLE  *flush_weedout_table;
@@ -483,8 +483,8 @@ public:
   order_st *order, *group_list, *proc_param; //hold parameters of mysql_select
   COND *conds;                            // ---"---
   Item *conds_history;                    // store WHERE for explain
-  TABLE_LIST *tables_list;           ///<hold 'tables' parameter of mysql_select
-  List<TABLE_LIST> *join_list;       ///< list of joined tables in reverse order
+  TableList *tables_list;           ///<hold 'tables' parameter of mysql_select
+  List<TableList> *join_list;       ///< list of joined tables in reverse order
   COND_EQUAL *cond_equal;
   SQL_SELECT *select;                ///<created in optimisation phase
   JOIN_TAB *return_tab;              ///<used only for outer joins
@@ -580,7 +580,7 @@ public:
     no_const_tables= false;
   }
 
-  int prepare(Item ***rref_pointer_array, TABLE_LIST *tables, uint wind_num,
+  int prepare(Item ***rref_pointer_array, TableList *tables, uint wind_num,
 	      COND *conds, uint og_num, order_st *order, order_st *group,
 	      Item *having, order_st *proc_param, SELECT_LEX *select,
 	      SELECT_LEX_UNIT *unit);
@@ -668,7 +668,7 @@ Field* create_tmp_field_from_field(THD *thd, Field* org_field,
                                                                       
 /* functions from opt_sum.cc */
 bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
-int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds);
+int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds);
 
 /* from sql_delete.cc, used by opt_range.cc */
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
