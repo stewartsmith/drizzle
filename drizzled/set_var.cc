@@ -52,6 +52,7 @@
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 
@@ -901,8 +902,8 @@ void fix_slave_exec_mode(enum_var_type type __attribute__((unused)))
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
       bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
   {
-    sql_print_error("Ambiguous slave modes combination."
-                    " STRICT will be used");
+    sql_print_error(_("Ambiguous slave modes combination."
+                    " STRICT will be used"));
     bit_do_clear(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT);
   }
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 0)

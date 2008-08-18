@@ -20,7 +20,6 @@
 #include <drizzled/global.h>
 #include <mysys/my_sys.h>
 #include "my_time.h"
-#include <mysys/mysys_err.h>
 #include "drizzle.h"
 #include "errmsg.h"
 #include <vio/violite.h>
@@ -48,7 +47,6 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
-#include <mysys/my_pthread.h>        /* because of signal()  */
 #ifndef INADDR_NONE
 #define INADDR_NONE  -1
 #endif

@@ -21,229 +21,86 @@
 /* (Error messages for the daemon are in share/language/errmsg.sys) */
 
 #include <drizzled/global.h>
-#include <mysys/my_sys.h>
+#include <libdrizzle/gettext.h>
 #include "errmsg.h"
 
-#ifdef GERMAN
 const char *client_errors[]=
 {
-  "Unbekannter MySQL Fehler",
-  "Kann UNIX-Socket nicht anlegen (%d)",
-  "Keine Verbindung zu lokalem MySQL Server, socket: '%-.100s' (%d)",
-  "Keine Verbindung zu MySQL Server auf %-.100s (%d)",
-  "Kann TCP/IP-Socket nicht anlegen (%d)",
-  "Unbekannter MySQL Server Host (%-.100s) (%d)",
-  "MySQL Server nicht vorhanden",
-  "Protokolle ungleich; Server Version = %d, Client Version = %d",
-  "MySQL client ran out of memory",
-  "Wrong host info",
-  "Localhost via UNIX socket",
-  "%-.100s via TCP/IP",
-  "Error in server handshake",
-  "Lost connection to MySQL server during query",
-  "Commands out of sync; you can't run this command now",
-  "Verbindung ueber Named Pipe: %-.32s",
-  "Kann nicht auf Named Pipe warten. Host: %-.64s  pipe: %-.32s (%lu)",
-  "Kann Named Pipe nicht oeffnen. Host: %-.64s  pipe: %-.32s (%lu)",
-  "Kann den Status der Named Pipe nicht setzen.  Host: %-.64s  pipe: %-.32s (%lu)",
-  "Can't initialize character set %-.32s (path: %-.100s)",
-  "Got packet bigger than 'max_allowed_packet' bytes",
-  "Embedded server",
-  "Error on SHOW SLAVE STATUS:",
-  "Error on SHOW SLAVE HOSTS:",
-  "Error connecting to slave:",
-  "Error connecting to master:",
-  "SSL connection error",
-  "Malformed packet",
-  "This client library is licensed only for use with MySQL servers having '%s' license",
-  "Invalid use of null pointer",
-  "Statement not prepared",
-  "No data supplied for parameters in prepared statement",
-  "Data truncated",
-  "No parameters exist in the statement",
-  "Invalid parameter number",
-  "Can't send long data for non-string/non-binary data types (parameter: %d)",
-  "Using unsupported buffer type: %d  (parameter: %d)",
-  "Shared memory: %-.100s",
-  "Can't open shared memory; client could not create request event (%lu)",
-  "Can't open shared memory; no answer event received from server (%lu)",
-  "Can't open shared memory; server could not allocate file mapping (%lu)",
-  "Can't open shared memory; server could not get pointer to file mapping (%lu)",
-  "Can't open shared memory; client could not allocate file mapping (%lu)",
-  "Can't open shared memory; client could not get pointer to file mapping (%lu)",
-  "Can't open shared memory; client could not create %s event (%lu)",
-  "Can't open shared memory; no answer from server (%lu)",
-  "Can't open shared memory; cannot send request event to server (%lu)",
-  "Wrong or unknown protocol",
-  "Invalid connection handle",
-  "Connection using old (pre-4.1.1) authentication protocol refused (client option 'secure_auth' enabled)",
-  "Row retrieval was canceled by drizzle_stmt_close() call",
-  "Attempt to read column without prior row fetch",
-  "Prepared statement contains no metadata",
-  "Attempt to read a row while there is no result set associated with the statement",
-  "This feature is not implemented yet",
-  "Lost connection to MySQL server at '%s', system error: %d",
-  "Statement closed indirectly because of a preceeding %s() call",
+  N_("Unknown Drizzle error"),
+  N_("Can't create UNIX socket (%d)"),
+  N_("Can't connect to local Drizzle server through socket '%-.100s' (%d)"),
+  N_("Can't connect to Drizzle server on '%-.100s' (%d)"),
+  N_("Can't create TCP/IP socket (%d)"),
+  N_("Unknown Drizzle server host '%-.100s' (%d)"),
+  N_("Drizzle server has gone away"),
+  N_("Protocol mismatch; server version = %d, client version = %d"),
+  N_("Drizzle client ran out of memory"),
+  N_("Wrong host info"),
+  N_("Localhost via UNIX socket"),
+  N_("%-.100s via TCP/IP"),
+  N_("Error in server handshake"),
+  N_("Lost connection to Drizzle server during query"),
+  N_("Commands out of sync; you can't run this command now"),
+  N_("Named pipe: %-.32s"),
+  N_("Can't wait for named pipe to host: %-.64s  pipe: %-.32s (%lu)"),
+  N_("Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)"),
+  N_("Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"),
+  N_("Can't initialize character set %-.32s (path: %-.100s)"),
+  N_("Got packet bigger than 'max_allowed_packet' bytes"),
+  N_("Embedded server"),
+  N_("Error on SHOW SLAVE STATUS:"),
+  N_("Error on SHOW SLAVE HOSTS:"),
+  N_("Error connecting to slave:"),
+  N_("Error connecting to master:"),
+  N_("SSL connection error"),
+  N_("Malformed packet"),
+  N_("(unused error message)"),
+  N_("Invalid use of null pointer"),
+  N_("Statement not prepared"),
+  N_("No data supplied for parameters in prepared statement"),
+  N_("Data truncated"),
+  N_("No parameters exist in the statement"),
+  N_("Invalid parameter number"),
+  N_("Can't send long data for non-string/non-binary data types "
+     "(parameter: %d)"),
+  N_("Using unsupported buffer type: %d  (parameter: %d)"),
+  N_("Shared memory: %-.100s"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("(unused error message)"),
+  N_("Wrong or unknown protocol"),
+  N_("Invalid connection handle"),
+  N_("Connection using old (pre-4.1.1) authentication protocol refused "
+     "(client option 'secure_auth' enabled)"),
+  N_("Row retrieval was canceled by drizzle_stmt_close() call"),
+  N_("Attempt to read column without prior row fetch"),
+  N_("Prepared statement contains no metadata"),
+  N_("Attempt to read a row while there is no result set associated with "
+     "the statement"),
+  N_("This feature is not implemented yet"),
+  N_("Lost connection to Drizzle server while waiting for initial "
+     "communication packet, system error: %d"),
+  N_("Lost connection to Drizzle server while reading initial communication "
+     "packet, system error: %d"),
+  N_("Lost connection to Drizzle server while sending authentication "
+     "information, system error: %d"),
+  N_("Lost connection to Drizzle server while reading authorization "
+     "information, system error: %d"),
+  N_("Lost connection to Drizzle server while setting initial database, "
+     "system error: %d"),
+  N_("Statement closed indirectly because of a preceeding %s() call"),
   ""
 };
 
-/* Start of code added by Roberto M. Serqueira - martinsc@uol.com.br - 05.24.2001 */
 
-#elif defined PORTUGUESE
-const char *client_errors[]=
+const char *
+get_client_error(unsigned int err_index)
 {
-  "Erro desconhecido do MySQL",
-  "Não pode criar 'UNIX socket' (%d)",
-  "Não pode se conectar ao servidor MySQL local através do 'socket' '%-.100s' (%d)", 
-  "Não pode se conectar ao servidor MySQL em '%-.100s' (%d)",
-  "Não pode criar 'socket TCP/IP' (%d)",
-  "'Host' servidor MySQL '%-.100s' (%d) desconhecido",
-  "Servidor MySQL desapareceu",
-  "Incompatibilidade de protocolos; versão do servidor = %d, versão do cliente = %d",
-  "Cliente do MySQL com falta de memória",
-  "Informação inválida de 'host'",
-  "Localhost via 'UNIX socket'",
-  "%-.100s via 'TCP/IP'",
-  "Erro na negociação de acesso ao servidor",
-  "Conexão perdida com servidor MySQL durante 'query'",
-  "Comandos fora de sincronismo; você não pode executar este comando agora",
-  "Named pipe: %-.32s",
-  "Não pode esperar pelo 'named pipe' para o 'host' %-.64s - 'pipe' %-.32s (%lu)",
-  "Não pode abrir 'named pipe' para o 'host' %-.64s - 'pipe' %-.32s (%lu)",
-  "Não pode estabelecer o estado do 'named pipe' para o 'host' %-.64s - 'pipe' %-.32s (%lu)",
-  "Não pode inicializar conjunto de caracteres %-.32s (caminho %-.100s)",
-  "Obteve pacote maior do que 'max_allowed_packet' bytes",
-  "Embedded server"
-  "Error on SHOW SLAVE STATUS:",
-  "Error on SHOW SLAVE HOSTS:",
-  "Error connecting to slave:",
-  "Error connecting to master:",
-  "SSL connection error",
-  "Malformed packet",
-  "This client library is licensed only for use with MySQL servers having '%s' license",
-  "Invalid use of null pointer",
-  "Statement not prepared",
-  "No data supplied for parameters in prepared statement",
-  "Data truncated",
-  "No parameters exist in the statement",
-  "Invalid parameter number",
-  "Can't send long data for non-string/non-binary data types (parameter: %d)",
-  "Using unsupported buffer type: %d  (parameter: %d)",
-  "Shared memory: %-.100s",
-  "Can't open shared memory; client could not create request event (%lu)",
-  "Can't open shared memory; no answer event received from server (%lu)",
-  "Can't open shared memory; server could not allocate file mapping (%lu)",
-  "Can't open shared memory; server could not get pointer to file mapping (%lu)",
-  "Can't open shared memory; client could not allocate file mapping (%lu)",
-  "Can't open shared memory; client could not get pointer to file mapping (%lu)",
-  "Can't open shared memory; client could not create %s event (%lu)",
-  "Can't open shared memory; no answer from server (%lu)",
-  "Can't open shared memory; cannot send request event to server (%lu)",
-  "Wrong or unknown protocol",
-  "Invalid connection handle",
-  "Connection using old (pre-4.1.1) authentication protocol refused (client option 'secure_auth' enabled)",
-  "Row retrieval was canceled by drizzle_stmt_close() call",
-  "Attempt to read column without prior row fetch",
-  "Prepared statement contains no metadata",
-  "Attempt to read a row while there is no result set associated with the statement",
-  "This feature is not implemented yet",
-  "Lost connection to MySQL server at '%s', system error: %d",
-  "Statement closed indirectly because of a preceeding %s() call",
-  ""
-};
-
-#else /* ENGLISH */
-const char *client_errors[]=
-{
-  "Unknown MySQL error",
-  "Can't create UNIX socket (%d)",
-  "Can't connect to local MySQL server through socket '%-.100s' (%d)",
-  "Can't connect to MySQL server on '%-.100s' (%d)",
-  "Can't create TCP/IP socket (%d)",
-  "Unknown MySQL server host '%-.100s' (%d)",
-  "MySQL server has gone away",
-  "Protocol mismatch; server version = %d, client version = %d",
-  "MySQL client ran out of memory",
-  "Wrong host info",
-  "Localhost via UNIX socket",
-  "%-.100s via TCP/IP",
-  "Error in server handshake",
-  "Lost connection to MySQL server during query",
-  "Commands out of sync; you can't run this command now",
-  "Named pipe: %-.32s",
-  "Can't wait for named pipe to host: %-.64s  pipe: %-.32s (%lu)",
-  "Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)",
-  "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)",
-  "Can't initialize character set %-.32s (path: %-.100s)",
-  "Got packet bigger than 'max_allowed_packet' bytes",
-  "Embedded server",
-  "Error on SHOW SLAVE STATUS:",
-  "Error on SHOW SLAVE HOSTS:",
-  "Error connecting to slave:",
-  "Error connecting to master:",
-  "SSL connection error",
-  "Malformed packet",
-  "This client library is licensed only for use with MySQL servers having '%s' license",
-  "Invalid use of null pointer",
-  "Statement not prepared",
-  "No data supplied for parameters in prepared statement",
-  "Data truncated",
-  "No parameters exist in the statement",
-  "Invalid parameter number",
-  "Can't send long data for non-string/non-binary data types (parameter: %d)",
-  "Using unsupported buffer type: %d  (parameter: %d)",
-  "Shared memory: %-.100s",
-  "Can't open shared memory; client could not create request event (%lu)",
-  "Can't open shared memory; no answer event received from server (%lu)",
-  "Can't open shared memory; server could not allocate file mapping (%lu)",
-  "Can't open shared memory; server could not get pointer to file mapping (%lu)",
-  "Can't open shared memory; client could not allocate file mapping (%lu)",
-  "Can't open shared memory; client could not get pointer to file mapping (%lu)",
-  "Can't open shared memory; client could not create %s event (%lu)",
-  "Can't open shared memory; no answer from server (%lu)",
-  "Can't open shared memory; cannot send request event to server (%lu)",
-  "Wrong or unknown protocol",
-  "Invalid connection handle",
-  "Connection using old (pre-4.1.1) authentication protocol refused (client option 'secure_auth' enabled)",
-  "Row retrieval was canceled by drizzle_stmt_close() call",
-  "Attempt to read column without prior row fetch",
-  "Prepared statement contains no metadata",
-  "Attempt to read a row while there is no result set associated with the statement",
-  "This feature is not implemented yet",
-  "Lost connection to MySQL server at '%s', system error: %d",
-  "Statement closed indirectly because of a preceeding %s() call",
-  ""
-};
-#endif
-
-
-/*
-  Register client error messages for use with my_error().
-
-  SYNOPSIS
-    init_client_errs()
-
-  RETURN
-    void
-*/
-
-void init_client_errs(void)
-{
-  (void) my_error_register(client_errors, CR_ERROR_FIRST, CR_ERROR_LAST);
-}
-
-
-/*
-  Unregister client error messages.
-
-  SYNOPSIS
-    finish_client_errs()
-
-  RETURN
-    void
-*/
-
-void finish_client_errs(void)
-{
-  (void) my_error_unregister(CR_ERROR_FIRST, CR_ERROR_LAST);
+  return _(client_errors[err_index]);
 }

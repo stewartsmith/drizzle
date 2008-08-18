@@ -34,6 +34,7 @@
 
 #include <drizzled/plugin.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 /* max size of the log message */
 #define MAX_LOG_BUFFER_SIZE 1024
@@ -1068,14 +1069,15 @@ int check_binlog_magic(IO_CACHE* log, const char** errmsg)
 
   if (my_b_read(log, (uchar*) magic, sizeof(magic)))
   {
-    *errmsg = "I/O error reading the header from the binary log";
+    *errmsg = _("I/O error reading the header from the binary log");
     sql_print_error("%s, errno=%d, io cache code=%d", *errmsg, my_errno,
 		    log->error);
     return 1;
   }
   if (memcmp(magic, BINLOG_MAGIC, sizeof(magic)))
   {
-    *errmsg = "Binlog has bad magic number;  It's not a binary log file that can be used by this version of MySQL";
+    *errmsg = _("Binlog has bad magic number;  It's not a binary log file "
+		"that can be used by this version of Drizzle");
     return 1;
   }
   return 0;
@@ -1089,17 +1091,17 @@ File open_binlog(IO_CACHE *log, const char *log_file_name, const char **errmsg)
   if ((file = my_open(log_file_name, O_RDONLY | O_BINARY | O_SHARE, 
                       MYF(MY_WME))) < 0)
   {
-    sql_print_error("Failed to open log (file '%s', errno %d)",
+    sql_print_error(_("Failed to open log (file '%s', errno %d)"),
                     log_file_name, my_errno);
-    *errmsg = "Could not open log file";
+    *errmsg = _("Could not open log file");
     goto err;
   }
   if (init_io_cache(log, file, IO_SIZE*2, READ_CACHE, 0, 0,
                     MYF(MY_WME|MY_DONT_CHECK_FILESIZE)))
   {
-    sql_print_error("Failed to create a cache on log (file '%s')",
+    sql_print_error(_("Failed to create a cache on log (file '%s')"),
                     log_file_name);
-    *errmsg = "Could not open log file";
+    *errmsg = _("Could not open log file");
     goto err;
   }
   if (check_binlog_magic(log,errmsg))
@@ -1251,10 +1253,12 @@ bool DRIZZLE_LOG::open(const char *log_name, enum_log_type log_type_arg,
   return(0);
 
 err:
-  sql_print_error("Could not use %s for logging (error %d). \
-Turning logging off for the whole duration of the MySQL server process. \
-To turn it on again: fix the cause, \
-shutdown the MySQL server and restart it.", name, errno);
+  sql_print_error(_("Could not use %s for logging (error %d). "
+                    "Turning logging off for the whole duration of the "
+                    "Drizzle server process. "
+                    "To turn it on again: fix the cause, "
+                    "shutdown the Drizzle server and restart it."),
+                    name, errno);
   if (file >= 0)
     my_close(file, MYF(0));
   end_io_cache(&log_file);
@@ -1899,10 +1903,12 @@ bool DRIZZLE_BIN_LOG::open(const char *log_name,
   return(0);
 
 err:
-  sql_print_error("Could not use %s for logging (error %d). \
-Turning logging off for the whole duration of the MySQL server process. \
-To turn it on again: fix the cause, \
-shutdown the MySQL server and restart it.", name, errno);
+  sql_print_error(_("Could not use %s for logging (error %d). "
+                    "Turning logging off for the whole duration of the "
+                    "Drizzle server process. "
+                    "To turn it on again: fix the cause, "
+                    "shutdown the Drizzle server and restart it."),
+                    name, errno);
   if (file >= 0)
     my_close(file,MYF(0));
   end_io_cache(&log_file);
@@ -2166,7 +2172,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
         push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             linfo.log_file_name);
-        sql_print_information("Failed to delete file '%s'",
+        sql_print_information(_("Failed to delete file '%s'"),
                               linfo.log_file_name);
         my_errno= 0;
         error= 0;
@@ -2175,10 +2181,10 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
       {
         push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
-                            "a problem with deleting %s; "
+                            _("a problem with deleting %s; "
                             "consider examining correspondence "
                             "of your binlog index file "
-                            "to the actual binlog files",
+                            "to the actual binlog files"),
                             linfo.log_file_name);
         error= 1;
         goto err;
@@ -2197,7 +2203,7 @@ bool DRIZZLE_BIN_LOG::reset_logs(THD* thd)
       push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                           ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                           index_file_name);
-      sql_print_information("Failed to delete file '%s'",
+      sql_print_information(_("Failed to delete file '%s'"),
                             index_file_name);
       my_errno= 0;
       error= 0;
@@ -2303,7 +2309,7 @@ int DRIZZLE_BIN_LOG::purge_first_log(Relay_log_info* rli, bool included)
         (error=find_next_log(&rli->linfo, 0)))))
   {
     char buff[22];
-    sql_print_error("next log error: %d  offset: %s  log: %s included: %d",
+    sql_print_error(_("next log error: %d  offset: %s  log: %s included: %d"),
                     error,
                     llstr(rli->linfo.index_file_offset,buff),
                     rli->group_relay_log_name,
@@ -2415,7 +2421,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
         push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
-        sql_print_information("Failed to execute stat on file '%s'",
+        sql_print_information(_("Failed to execute stat() on file '%s'"),
 			      log_info.log_file_name);
         my_errno= 0;
       }
@@ -2426,10 +2432,10 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
         */
         push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
-                            "a problem with getting info on being purged %s; "
+                            _("a problem with getting info on being purged %s; "
                             "consider examining correspondence "
                             "of your binlog index file "
-                            "to the actual binlog files",
+                            "to the actual binlog files"),
                             log_info.log_file_name);
         error= LOG_INFO_FATAL;
         goto err;
@@ -2449,7 +2455,7 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
           push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                               log_info.log_file_name);
-          sql_print_information("Failed to delete file '%s'",
+          sql_print_information(_("Failed to delete file '%s'"),
                                 log_info.log_file_name);
           my_errno= 0;
         }
@@ -2457,10 +2463,10 @@ int DRIZZLE_BIN_LOG::purge_logs(const char *to_log,
         {
           push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                               ER_BINLOG_PURGE_FATAL_ERR,
-                              "a problem with deleting %s; "
+                              _("a problem with deleting %s; "
                               "consider examining correspondence "
                               "of your binlog index file "
-                              "to the actual binlog files",
+                              "to the actual binlog files"),
                               log_info.log_file_name);
           if (my_errno == EMFILE)
           {
@@ -2541,7 +2547,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                             ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                             log_info.log_file_name);
-	sql_print_information("Failed to execute stat on file '%s'",
+	sql_print_information(_("Failed to execute stat() on file '%s'"),
 			      log_info.log_file_name);
         my_errno= 0;
       }
@@ -2552,10 +2558,10 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         */
         push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                             ER_BINLOG_PURGE_FATAL_ERR,
-                            "a problem with getting info on being purged %s; "
+                            _("a problem with getting info on being purged %s; "
                             "consider examining correspondence "
                             "of your binlog index file "
-                            "to the actual binlog files",
+                            "to the actual binlog files"),
                             log_info.log_file_name);
         error= LOG_INFO_FATAL;
         goto err;
@@ -2573,7 +2579,7 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
           push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
                               ER_LOG_PURGE_NO_FILE, ER(ER_LOG_PURGE_NO_FILE),
                               log_info.log_file_name);
-          sql_print_information("Failed to delete file '%s'",
+          sql_print_information(_("Failed to delete file '%s'"),
                                 log_info.log_file_name);
           my_errno= 0;
         }
@@ -2581,10 +2587,10 @@ int DRIZZLE_BIN_LOG::purge_logs_before_date(time_t purge_time)
         {
           push_warning_printf(current_thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR,
                               ER_BINLOG_PURGE_FATAL_ERR,
-                              "a problem with deleting %s; "
+                              _("a problem with deleting %s; "
                               "consider examining correspondence "
                               "of your binlog index file "
-                              "to the actual binlog files",
+                              "to the actual binlog files"),
                               log_info.log_file_name);
           error= LOG_INFO_FATAL;
           goto err;
@@ -4048,11 +4054,11 @@ int TC_LOG_MMAP::open(const char *opt_name)
   {
     inited= 1;
     crashed= true;
-    sql_print_information("Recovering after a crash using %s", opt_name);
+    sql_print_information(_("Recovering after a crash using %s"), opt_name);
     if (tc_heuristic_recover)
     {
-      sql_print_error("Cannot perform automatic crash recovery when "
-                      "--tc-heuristic-recover is used");
+      sql_print_error(_("Cannot perform automatic crash recovery when "
+                      "--tc-heuristic-recover is used"));
       goto err;
     }
     file_length= my_seek(fd, 0L, MY_SEEK_END, MYF(MY_WME+MY_FAE));
@@ -4388,7 +4394,7 @@ int TC_LOG_MMAP::recover()
 
   if (memcmp(data, tc_log_magic, sizeof(tc_log_magic)))
   {
-    sql_print_error("Bad magic header in tc log");
+    sql_print_error(_("Bad magic header in tc log"));
     goto err1;
   }
 
@@ -4398,9 +4404,9 @@ int TC_LOG_MMAP::recover()
   */
   if (data[sizeof(tc_log_magic)] != total_ha_2pc)
   {
-    sql_print_error("Recovery failed! You must enable "
+    sql_print_error(_("Recovery failed! You must enable "
                     "exactly %d storage engines that support "
-                    "two-phase commit protocol",
+                    "two-phase commit protocol"),
                     data[sizeof(tc_log_magic)]);
     goto err1;
   }
@@ -4426,10 +4432,10 @@ int TC_LOG_MMAP::recover()
 err2:
   hash_free(&xids);
 err1:
-  sql_print_error("Crash recovery failed. Either correct the problem "
+  sql_print_error(_("Crash recovery failed. Either correct the problem "
                   "(if it's, for example, out of memory error) and restart, "
-                  "or delete tc log and start mysqld with "
-                  "--tc-heuristic-recover={commit|rollback}");
+                  "or delete tc log and start drizzled with "
+                  "--tc-heuristic-recover={commit|rollback}"));
   return 1;
 }
 #endif
@@ -4456,10 +4462,10 @@ int TC_LOG::using_heuristic_recover()
   if (!tc_heuristic_recover)
     return 0;
 
-  sql_print_information("Heuristic crash recovery mode");
+  sql_print_information(_("Heuristic crash recovery mode"));
   if (ha_recover(0))
-    sql_print_error("Heuristic crash recovery failed");
-  sql_print_information("Please restart mysqld without --tc-heuristic-recover");
+    sql_print_error(_("Heuristic crash recovery failed"));
+  sql_print_information(_("Please restart mysqld without --tc-heuristic-recover"));
   return 1;
 }
 
@@ -4503,7 +4509,7 @@ int TC_LOG_BINLOG::open(const char *opt_name)
   if ((error= find_log_pos(&log_info, NullS, 1)))
   {
     if (error != LOG_INFO_EOF)
-      sql_print_error("find_log_pos() failed (error: %d)", error);
+      sql_print_error(_("find_log_pos() failed (error: %d)"), error);
     else
       error= 0;
     goto err;
@@ -4527,7 +4533,7 @@ int TC_LOG_BINLOG::open(const char *opt_name)
 
     if (error !=  LOG_INFO_EOF)
     {
-      sql_print_error("find_log_pos() failed (error: %d)", error);
+      sql_print_error(_("find_log_pos() failed (error: %d)"), error);
       goto err;
     }
 
@@ -4541,7 +4547,7 @@ int TC_LOG_BINLOG::open(const char *opt_name)
         ev->get_type_code() == FORMAT_DESCRIPTION_EVENT &&
         ev->flags & LOG_EVENT_BINLOG_IN_USE_F)
     {
-      sql_print_information("Recovering after a crash using %s", opt_name);
+      sql_print_information(_("Recovering after a crash using %s"), opt_name);
       error= recover(&log, (Format_description_log_event *)ev);
     }
     else
@@ -4640,10 +4646,10 @@ err2:
   free_root(&mem_root, MYF(0));
   hash_free(&xids);
 err1:
-  sql_print_error("Crash recovery failed. Either correct the problem "
+  sql_print_error(_("Crash recovery failed. Either correct the problem "
                   "(if it's, for example, out of memory error) and restart, "
                   "or delete (or rename) binary log and start mysqld with "
-                  "--tc-heuristic-recover={commit|rollback}");
+                  "--tc-heuristic-recover={commit|rollback}"));
   return 1;
 }
 

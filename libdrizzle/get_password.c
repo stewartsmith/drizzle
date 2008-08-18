@@ -22,7 +22,6 @@
 ** This is an own file to avoid conflicts with curses
 */
 #include <drizzled/global.h>
-#include <mysys/my_sys.h>
 #include "drizzle.h"
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
@@ -203,6 +202,6 @@ char *get_tty_password(const char *opt_message)
     fputc('\n',stdout);
 # endif /* HAVE_GETPASS */
 
-  return(my_strdup(buff,MYF(MY_FAE)));
+  return strdup(buff);
 }
 #endif /*__WIN__*/

@@ -21,7 +21,6 @@
 #include <drizzle.h>
 #include <drizzled/error.h>
 #include <mysys/my_sys.h>
-#include <mystrings/m_string.h>
 #include <vio/violite.h>
 #include <signal.h>
 #include <errno.h>
@@ -35,11 +34,6 @@
   The server can change this with the -O switch, but because the client
   can't normally do this the client should have a bigger max_allowed_packet.
 */
-
-
-#define DONT_USE_THR_ALARM
-
-#include <mysys/thr_alarm.h>
 
 
 #define update_statistics(A)

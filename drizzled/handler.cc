@@ -359,7 +359,7 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
   {
     if (plugin->plugin->init(hton))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }
@@ -387,12 +387,12 @@ int ha_initialize_handlerton(st_plugin_int *plugin)
 
         if (idx == (int) DB_TYPE_DEFAULT)
         {
-          sql_print_warning("Too many storage engines!");
+          sql_print_warning(_("Too many storage engines!"));
           return(1);
         }
         if (hton->db_type != DB_TYPE_UNKNOWN)
-          sql_print_warning("Storage engine '%s' has conflicting typecode. "
-                            "Assigning value %d.", plugin->plugin->name, idx);
+          sql_print_warning(_("Storage engine '%s' has conflicting typecode. "
+                            "Assigning value %d."), plugin->plugin->name, idx);
         hton->db_type= (enum legacy_db_type) idx;
       }
       installed_htons[hton->db_type]= hton;
@@ -1275,7 +1275,7 @@ static bool xarecover_handlerton(THD *unused __attribute__((unused)),
   {
     while ((got= hton->recover(hton, info->list, info->len)) > 0 )
     {
-      sql_print_information("Found %d prepared transaction(s) in %s",
+      sql_print_information(_("Found %d prepared transaction(s) in %s"),
                             got, ha_resolve_storage_engine_name(hton));
       for (int i=0; i < got; i ++)
       {
@@ -1327,7 +1327,7 @@ int ha_recover(HASH *commit_list)
     return(0);
 
   if (info.commit_list)
-    sql_print_information("Starting crash recovery...");
+    sql_print_information(_("Starting crash recovery..."));
 
 
 #ifndef WILL_BE_DELETED_LATER
@@ -1359,21 +1359,21 @@ int ha_recover(HASH *commit_list)
 
   my_free((uchar*)info.list, MYF(0));
   if (info.found_foreign_xids)
-    sql_print_warning("Found %d prepared XA transactions", 
+    sql_print_warning(_("Found %d prepared XA transactions"), 
                       info.found_foreign_xids);
   if (info.dry_run && info.found_my_xids)
   {
-    sql_print_error("Found %d prepared transactions! It means that mysqld was "
-                    "not shut down properly last time and critical recovery "
-                    "information (last binlog or %s file) was manually deleted "
-                    "after a crash. You have to start mysqld with "
-                    "--tc-heuristic-recover switch to commit or rollback "
-                    "pending transactions.",
+    sql_print_error(_("Found %d prepared transactions! It means that drizzled "
+                    "was not shut down properly last time and critical "
+                    "recovery information (last binlog or %s file) was "
+                    "manually deleted after a crash. You have to start "
+                    "drizzled with the --tc-heuristic-recover switch to "
+                    "commit or rollback pending transactions."),
                     info.found_my_xids, opt_tc_log_file);
     return(1);
   }
   if (info.commit_list)
-    sql_print_information("Crash recovery finished.");
+    sql_print_information(_("Crash recovery finished."));
   return(0);
 }
 

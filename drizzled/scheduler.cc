@@ -118,7 +118,7 @@ bool thd_scheduler::init(THD *parent_thd)
     
   if (!io_event)
   {
-    sql_print_error("Memory allocation error in thd_scheduler::init\n");
+    sql_print_error(_("Memory allocation error in thd_scheduler::init\n"));
     return true;
   }
   
@@ -209,13 +209,13 @@ static bool libevent_init(void)
   /* set up the pipe used to add new thds to the event pool */
   if (init_pipe(thd_add_pipe))
   {
-    sql_print_error("init_pipe(thd_add_pipe) error in libevent_init\n");
+    sql_print_error(_("init_pipe(thd_add_pipe) error in libevent_init\n"));
     return(1);
   }
   /* set up the pipe used to kill thds in the event queue */
   if (init_pipe(thd_kill_pipe))
   {
-    sql_print_error("init_pipe(thd_kill_pipe) error in libevent_init\n");
+    sql_print_error(_("init_pipe(thd_kill_pipe) error in libevent_init\n"));
     close(thd_add_pipe[0]);
     close(thd_add_pipe[1]);
     return(1);
@@ -227,7 +227,7 @@ static bool libevent_init(void)
  
  if (event_add(&thd_add_event, NULL) || event_add(&thd_kill_event, NULL))
  {
-   sql_print_error("thd_add_event event_add error in libevent_init\n");
+   sql_print_error(_("thd_add_event event_add error in libevent_init\n"));
    libevent_end();
    return(1);
    
@@ -243,7 +243,7 @@ static bool libevent_init(void)
     if ((error= pthread_create(&thread, &connection_attrib,
                                libevent_thread_proc, 0)))
     {
-      sql_print_error("Can't create completion port thread (error %d)",
+      sql_print_error(_("Can't create completion port thread (error %d)"),
                       error);
       pthread_mutex_unlock(&LOCK_thread_count);
       libevent_end();                      // Cleanup
@@ -356,7 +356,7 @@ void libevent_add_thd_callback(int Fd, short, void *)
       /* Add to libevent */
       if (event_add(thd->scheduler.io_event, NULL))
       {
-        sql_print_error("event_add error in libevent_add_thd_callback\n");
+        sql_print_error(_("event_add error in libevent_add_thd_callback\n"));
         libevent_connection_close(thd);
       } 
       else
@@ -382,7 +382,7 @@ static void libevent_add_connection(THD *thd)
 {
   if (thd->scheduler.init(thd))
   {
-    sql_print_error("Scheduler init error in libevent_add_new_connection\n");
+    sql_print_error(_("Scheduler init error in libevent_add_new_connection\n"));
     pthread_mutex_unlock(&LOCK_thread_count);
     libevent_connection_close(thd);
     return;
@@ -464,7 +464,7 @@ pthread_handler_t libevent_thread_proc(void *arg __attribute__((unused)))
   if (init_new_connection_handler_thread())
   {
     my_thread_global_end();
-    sql_print_error("libevent_thread_proc: my_thread_init() failed\n");
+    sql_print_error(_("libevent_thread_proc: my_thread_init() failed\n"));
     exit(1);
   }
 

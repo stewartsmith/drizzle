@@ -45,8 +45,6 @@ extern "C" {
 #include <libdrizzle/drizzle_com.h>
 #include <libdrizzle/drizzle_time.h>
 
-#include <mysys/my_list.h> /* for LISTs used in 'MYSQL' */
-
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;
 
@@ -219,7 +217,6 @@ typedef struct st_drizzle
   bool unused1;
   void *unused2, *unused3, *unused4, *unused5;
 
-  LIST  *stmts;                     /* list of all statements */
   const struct st_drizzle_methods *methods;
   void *thd;
   /*

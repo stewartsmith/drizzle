@@ -20,6 +20,7 @@
 #include <drizzled/sql_show.h>
 #include "repl_failsafe.h"
 #include <mysys/my_dir.h>
+#include <libdrizzle/gettext.h>
 
 #define STR_OR_NIL(S) ((S) ? (S) : "<nil>")
 
@@ -4667,7 +4668,7 @@ int initialize_schema_table(st_plugin_int *plugin)
 
     if (plugin->plugin->init(schema_table))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }

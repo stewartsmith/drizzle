@@ -19,6 +19,7 @@
 #include <drizzled/sql_select.h>
 #include <mysys/my_dir.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 #define FLAGSTR(S,F) ((S) & (F) ? #F " " : "")
 
@@ -2526,7 +2527,7 @@ bool reopen_table(Table *table)
 
 #ifdef EXTRA_DEBUG
   if (table->db_stat)
-    sql_print_error("Table %s had a open data handler in reopen_table",
+    sql_print_error(_("Table %s had a open data handler in reopen_table"),
 		    table->alias);
 #endif
   memset(&table_list, 0, sizeof(TABLE_LIST));
@@ -3185,7 +3186,7 @@ retry:
        /* Give right error message */
        thd->clear_error();
        my_error(ER_NOT_KEYFILE, MYF(0), share->table_name.str, my_errno);
-       sql_print_error("Couldn't repair table: %s.%s", share->db.str,
+       sql_print_error(_("Couldn't repair table: %s.%s"), share->db.str,
                        share->table_name.str);
        if (entry->file)
  	closefrm(entry, 0);
@@ -3228,8 +3229,8 @@ retry:
           DBA on top of warning the client (which will automatically be done
           because of MYF(MY_WME) in my_malloc() above).
         */
-        sql_print_error("When opening HEAP table, could not allocate memory "
-                        "to write 'DELETE FROM `%s`.`%s`' to the binary log",
+        sql_print_error(_("When opening HEAP table, could not allocate memory "
+                          "to write 'DELETE FROM `%s`.`%s`' to the binary log"),
                         table_list->db, table_list->table_name);
         closefrm(entry, 0);
         goto err;
@@ -3958,7 +3959,7 @@ bool rm_temporary_table(handlerton *base, char *path, bool frm_only)
   if (!frm_only && file && file->ha_delete_table(path))
   {
     error=1;
-    sql_print_warning("Could not remove temporary table: '%s', error: %d",
+    sql_print_warning(_("Could not remove temporary table: '%s', error: %d"),
                       path, my_errno);
   }
   delete file;

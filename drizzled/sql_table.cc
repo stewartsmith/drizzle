@@ -19,6 +19,7 @@
 #include <storage/myisam/myisam.h>
 #include <drizzled/sql_show.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 int creating_table= 0;        // How many mysql_create_table are running
 
@@ -77,11 +78,7 @@ uint filename_to_tablename(const char *from, char *to, uint to_length)
     {
       res= (strxnmov(to, to_length, MYSQL50_TABLE_NAME_PREFIX,  from, NullS) -
             to);
-      sql_print_error("Invalid (old?) table or database name '%s'", from);
-      /*
-        TODO: add a stored procedure for fix table and database names,
-        and mention its name in error log.
-      */
+      sql_print_error(_("Invalid (old?) table or database name '%s'"), from);
     }
   }
 
@@ -2716,7 +2713,7 @@ send_result_message:
       {
         char buf[ERRMSGSIZE+20];
         uint length=snprintf(buf, ERRMSGSIZE,
-                             "Unknown - internal error %d during operation",
+                             _("Unknown - internal error %d during operation"),
                              result_code);
         protocol->store(STRING_WITH_LEN("error"), system_charset_info);
         protocol->store(buf, length, system_charset_info);
@@ -4993,7 +4990,7 @@ end_online:
       my_free(t_table, MYF(0));
     }
     else
-      sql_print_warning("Could not open table %s.%s after rename\n",
+      sql_print_warning(_("Could not open table %s.%s after rename\n"),
                         new_db,table_name);
     ha_flush_logs(old_db_type);
   }
@@ -5169,8 +5166,9 @@ copy_data_between_tables(Table *from,Table *to,
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff), 
-               "ORDER BY ignored as there is a user-defined clustered index"
-               " in the table '%-.192s'", from->s->table_name.str);
+               _("ORDER BY ignored because there is a user-defined clustered "
+                 "index in the table '%-.192s'"),
+               from->s->table_name.str);
       push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
                    warn_buff);
     }

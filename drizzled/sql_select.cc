@@ -29,6 +29,7 @@
 
 #include <mysys/my_bit.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 			      "MAYBE_REF","ALL","range","index",
@@ -11315,7 +11316,7 @@ int report_error(Table *table, int error)
     print them to the .err log
   */
   if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    sql_print_error("Got error %d when reading table '%s'",
+    sql_print_error(_("Got error %d when reading table '%s'"),
 		    error, table->s->path.str);
   table->file->print_error(error,MYF(0));
   return 1;

@@ -30,6 +30,8 @@
 #include <mysys/base64.h>
 #include <mysys/my_bitmap.h>
 
+#include <libdrizzle/gettext.h>
+
 #define log_cs	&my_charset_latin1
 
 #define FLAGSTR(V,F) ((V)&(F)?#F" ":"")
@@ -985,8 +987,8 @@ err:
   if (!res)
   {
     assert(error != 0);
-    sql_print_error("Error in Log_event::read_log_event(): "
-                    "'%s', data_len: %d, event_type: %d",
+    sql_print_error(_("Error in Log_event::read_log_event(): "
+                    "'%s', data_len: %d, event_type: %d"),
 		    error,data_len,head[EVENT_TYPE_OFFSET]);
     my_free(buf, MYF(MY_ALLOW_ZERO_PTR));
     /*
@@ -3688,9 +3690,9 @@ int Load_log_event::do_apply_event(NET* net, Relay_log_info const *rli,
       if (thd->cuted_fields)
       {
 	/* log_pos is the position of the LOAD event in the master log */
-        sql_print_warning("Slave: load data infile on table '%s' at "
+        sql_print_warning(_("Slave: load data infile on table '%s' at "
                           "log position %s in log '%s' produced %ld "
-                          "warning(s). Default database: '%s'",
+                          "warning(s). Default database: '%s'"),
                           (char*) table_name,
                           llstr(log_pos,llbuff), RPL_LOG_NAME, 
                           (ulong) thd->cuted_fields,
@@ -4726,7 +4728,7 @@ Slave_log_event::Slave_log_event(THD* thd_arg,
     master_pos = rli->group_master_log_pos;
   }
   else
-    sql_print_error("Out of memory while recording slave event");
+    sql_print_error(_("Out of memory while recording slave event"));
   pthread_mutex_unlock(&rli->data_lock);
   pthread_mutex_unlock(&mi->data_lock);
   return;

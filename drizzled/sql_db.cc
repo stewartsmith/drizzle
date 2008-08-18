@@ -24,6 +24,7 @@ using namespace std;
 #include <mysys/my_dir.h>
 #include "log.h"
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 
 #define MAX_DROP_TABLE_Q_LEN      1024
@@ -392,7 +393,7 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
   buffer= db.characterset();
   if (!(create->default_table_charset= get_charset_by_csname(buffer.c_str(), MY_CS_PRIMARY, MYF(0))))
   {
-    sql_print_error("Error while loading database options: '%s':",path);
+    sql_print_error(_("Error while loading database options: '%s':"),path);
     sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
@@ -400,7 +401,7 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
   buffer= db.collation();
   if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(), MYF(0))))
   {
-    sql_print_error("Error while loading database options: '%s':",path);
+    sql_print_error(_("Error while loading database options: '%s':"),path);
     sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
