@@ -15,7 +15,7 @@
 
 #called from the top level Makefile
 
-LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
+LDADD = libserialize.la -lprotobuf
 
 bin_PROGRAMS = \
 	       table_reader \
@@ -52,4 +52,4 @@ table_writer_SOURCES =  table_writer.cc
 table_writer_CXXFLAGS =
 
 EXTRA_DIST = schema.proto table.proto
-BUILT_SOURCES = schema.pb.cc table.pb.cc
+BUILT_SOURCES = schema.pb.h schema.pb.cc table.pb.h table.pb.cc
