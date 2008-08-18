@@ -451,8 +451,7 @@ public:
 	     PROC_ITEM,COND_ITEM, REF_ITEM, FIELD_STD_ITEM,
 	     FIELD_VARIANCE_ITEM, INSERT_VALUE_ITEM,
              SUBSELECT_ITEM, ROW_ITEM, CACHE_ITEM, TYPE_HOLDER,
-             PARAM_ITEM, TRIGGER_FIELD_ITEM, DECIMAL_ITEM,
-             XPATH_NODESET, XPATH_NODESET_CMP,
+             PARAM_ITEM, DECIMAL_ITEM,
              VIEW_FIXER_ITEM};
 
   enum cond_result { COND_UNDEF,COND_OK,COND_TRUE,COND_FALSE };
@@ -509,7 +508,7 @@ public:
   void init_make_field(Send_field *tmp_field,enum enum_field_types type);
   virtual void cleanup();
   virtual void make_field(Send_field *field);
-  Field *make_string_field(TABLE *table);
+  Field *make_string_field(Table *table);
   virtual bool fix_fields(THD *, Item **);
   /*
     Fix after some tables has been pulled out. Basically re-calculate all
@@ -693,7 +692,7 @@ public:
 
   virtual Field *get_tmp_table_field(void) { return 0; }
   /* This is also used to create fields in CREATE ... SELECT: */
-  virtual Field *tmp_table_field(TABLE *t_arg __attribute__((unused)))
+  virtual Field *tmp_table_field(Table *t_arg __attribute__((unused)))
   { return 0; }
   virtual const char *full_name(void) const { return name ? name : "???"; }
 
@@ -918,7 +917,7 @@ public:
   // used in row subselects to get value of elements
   virtual void bring_value() {}
 
-  Field *tmp_table_field_from_field_type(TABLE *table, bool fixed_length);
+  Field *tmp_table_field_from_field_type(Table *table, bool fixed_length);
   virtual Item_field *filed_for_view_update() { return 0; }
 
   virtual Item *neg_transformer(THD *thd __attribute__((unused))) { return NULL; }
@@ -1141,7 +1140,7 @@ public:
   }
   int64_t val_int_endpoint(bool left_endp, bool *incl_endp);
   Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(TABLE *t_arg __attribute__((unused))) { return result_field; }
+  Field *tmp_table_field(Table *t_arg __attribute__((unused))) { return result_field; }
   bool get_date(DRIZZLE_TIME *ltime,uint fuzzydate);
   bool get_date_result(DRIZZLE_TIME *ltime,uint fuzzydate);
   bool get_time(DRIZZLE_TIME *ltime);
@@ -1767,7 +1766,7 @@ public:
   {}
   ~Item_result_field() {}			/* Required with gcc 2.95 */
   Field *get_tmp_table_field() { return result_field; }
-  Field *tmp_table_field(TABLE *t_arg __attribute__((unused)))
+  Field *tmp_table_field(Table *t_arg __attribute__((unused)))
   { return result_field; }
   table_map used_tables() const { return 1; }
   virtual void fix_length_and_dec()=0;
@@ -2499,7 +2498,7 @@ public:
   my_decimal *val_decimal(my_decimal *);
   String *val_str(String*);
   bool join_types(THD *thd, Item *);
-  Field *make_field_by_type(TABLE *table);
+  Field *make_field_by_type(Table *table);
   static uint32_t display_length(Item *item);
   static enum_field_types get_real_type(Item *);
 };

@@ -438,7 +438,7 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
 }
 
 
-Field *Item_func::tmp_table_field(TABLE *table)
+Field *Item_func::tmp_table_field(Table *table)
 {
   Field *field;
 
@@ -3494,7 +3494,7 @@ bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
 {
   if (result_field)
   {
-    TABLE *table= (TABLE *) arg;
+    Table *table= (Table *) arg;
     if (result_field->table == table || !table)
       bitmap_set_bit(result_field->table->read_set, result_field->field_index);
   }

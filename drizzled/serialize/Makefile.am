@@ -43,6 +43,11 @@ table.pb.cc: table.proto
 	
 DEFS= @DEFS@
 
+bin_PROGRAMS = \
+	       table_reader \
+	       table_writer \
+	       schema_reader
+
 schema_reader_SOURCES =  schema_reader.cc
 
 table_reader_SOURCES =  table_reader.cc

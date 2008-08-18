@@ -75,7 +75,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
   @param select		condition to apply to the rows
   @param max_rows	Return only this many rows
   @param sort_positions	Set to 1 if we want to force sorting by position
-			(Needed by UPDATE/INSERT or ALTER TABLE)
+			(Needed by UPDATE/INSERT or ALTER Table)
   @param examined_rows	Store number of examined rows here
 
   @todo
@@ -92,7 +92,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
     examined_rows	will be set to number of examined rows
 */
 
-ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
+ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
 		 SQL_SELECT *select, ha_rows max_rows,
                  bool sort_positions, ha_rows *examined_rows)
 {
@@ -322,7 +322,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
 } /* filesort */
 
 
-void filesort_free_buffers(TABLE *table, bool full)
+void filesort_free_buffers(Table *table, bool full)
 {
   if (table->sort.record_pointers)
   {
@@ -442,7 +442,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   uint idx,indexpos,ref_length;
   uchar *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   my_off_t record;
-  TABLE *sort_form;
+  Table *sort_form;
   THD *thd= current_thd;
   volatile THD::killed_state *killed= &thd->killed;
   handler *file;
@@ -921,7 +921,7 @@ static void make_sortkey(register SORTPARAM *param,
 static void register_used_fields(SORTPARAM *param)
 {
   register SORT_FIELD *sort_field;
-  TABLE *table=param->sort_form;
+  Table *table=param->sort_form;
   MY_BITMAP *bitmap= table->read_set;
 
   for (sort_field= param->local_sortorder ;

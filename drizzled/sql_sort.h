@@ -64,7 +64,7 @@ typedef struct st_sort_param {
   uint res_length;          /* Length of records in final sorted file/buffer */
   uint keys;				/* Max keys / buffer */
   ha_rows max_rows,examined_rows;
-  TABLE *sort_form;			/* For quicker make_sortkey */
+  Table *sort_form;			/* For quicker make_sortkey */
   SORT_FIELD *local_sortorder;
   SORT_FIELD *end;
   SORT_ADDON_FIELD *addon_field; /* Descriptors for companion fields */

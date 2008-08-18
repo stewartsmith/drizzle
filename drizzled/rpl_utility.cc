@@ -99,7 +99,7 @@ uint32_t table_def::calc_field_size(uint col, uchar *master_data) const
 
 */
 int
-table_def::compatible_with(Relay_log_info const *rli_arg, TABLE *table)
+table_def::compatible_with(Relay_log_info const *rli_arg, Table *table)
   const
 {
   /*

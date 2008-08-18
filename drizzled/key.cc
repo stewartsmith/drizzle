@@ -241,7 +241,7 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
 /**
   Compare if a key has changed.
 
-  @param table		TABLE
+  @param table		Table
   @param key		key to compare to row
   @param idx		Index used
   @param key_length	Length of key
@@ -258,7 +258,7 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
     1	Key has changed
 */
 
-bool key_cmp_if_same(TABLE *table,const uchar *key,uint idx,uint key_length)
+bool key_cmp_if_same(Table *table,const uchar *key,uint idx,uint key_length)
 {
   uint store_length;
   KEY_PART_INFO *key_part;
@@ -326,7 +326,7 @@ bool key_cmp_if_same(TABLE *table,const uchar *key,uint idx,uint key_length)
      idx	Key number
 */
 
-void key_unpack(String *to,TABLE *table,uint idx)
+void key_unpack(String *to,Table *table,uint idx)
 {
   KEY_PART_INFO *key_part,*key_part_end;
   Field *field;
@@ -388,12 +388,12 @@ void key_unpack(String *to,TABLE *table,uint idx)
 
   SYNOPSIS
     is_key_used()
-      table   TABLE object with which keys and fields are associated.
+      table   Table object with which keys and fields are associated.
       idx     Key to be checked.
       fields  Bitmap of fields to be checked.
 
   NOTE
-    This function uses TABLE::tmp_set bitmap so the caller should care
+    This function uses Table::tmp_set bitmap so the caller should care
     about saving/restoring its state if it also uses this bitmap.
 
   RETURN VALUE
@@ -401,7 +401,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
     FALSE  Otherwise
 */
 
-bool is_key_used(TABLE *table, uint idx, const MY_BITMAP *fields)
+bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields)
 {
   bitmap_clear_all(&table->tmp_set);
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);

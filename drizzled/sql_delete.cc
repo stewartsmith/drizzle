@@ -36,7 +36,7 @@ bool mysql_delete(THD *thd, TABLE_LIST *table_list, COND *conds,
 {
   bool          will_batch;
   int		error, loc_error;
-  TABLE		*table;
+  Table		*table;
   SQL_SELECT	*select=0;
   READ_RECORD	info;
   bool          using_limit=limit != HA_POS_ERROR;
@@ -537,7 +537,7 @@ multi_delete::initialize_tables(JOIN *join)
     if (tab->table->map & tables_to_delete_from)
     {
       /* We are going to delete from this table */
-      TABLE *tbl=walk->table=tab->table;
+      Table *tbl=walk->table=tab->table;
       walk= walk->next_local;
       /* Don't use KEYREAD optimization on this table */
       tbl->no_keyread=1;
@@ -571,7 +571,7 @@ multi_delete::initialize_tables(JOIN *join)
   }
   for (;walk ;walk= walk->next_local)
   {
-    TABLE *table=walk->table;
+    Table *table=walk->table;
     *tempfiles_ptr++= new Unique (refpos_order_cmp,
 				  (void *) table->file,
 				  table->file->ref_length,
@@ -587,7 +587,7 @@ multi_delete::~multi_delete()
        table_being_deleted;
        table_being_deleted= table_being_deleted->next_local)
   {
-    TABLE *table= table_being_deleted->table;
+    Table *table= table_being_deleted->table;
     table->no_keyread=0;
   }
 
@@ -609,7 +609,7 @@ bool multi_delete::send_data(List<Item> &values __attribute__((unused)))
        del_table;
        del_table= del_table->next_local, secure_counter++)
   {
-    TABLE *table= del_table->table;
+    Table *table= del_table->table;
 
     /* Check if we are using outer join and we didn't find the row */
     if (table->status & (STATUS_NULL_ROW | STATUS_DELETED))
@@ -732,7 +732,7 @@ int multi_delete::do_deletes()
        table_being_deleted= table_being_deleted->next_local, counter++)
   { 
     ha_rows last_deleted= deleted;
-    TABLE *table = table_being_deleted->table;
+    Table *table = table_being_deleted->table;
     if (tempfiles[counter]->get(table))
     {
       local_error=1;
@@ -827,7 +827,7 @@ bool multi_delete::send_eof()
 
 
 /***************************************************************************
-  TRUNCATE TABLE
+  TRUNCATE Table
 ****************************************************************************/
 
 /*
@@ -846,7 +846,7 @@ bool mysql_truncate(THD *thd, TABLE_LIST *table_list, bool dont_send_ok)
 {
   HA_CREATE_INFO create_info;
   char path[FN_REFLEN];
-  TABLE *table;
+  Table *table;
   bool error;
   uint path_length;
   

@@ -300,7 +300,7 @@ public:
   void unlog(ulong cookie, my_xid xid);
   int recover(IO_CACHE *log, Format_description_log_event *fdle);
 #if !defined(DRIZZLE_CLIENT)
-  bool is_table_mapped(TABLE *table) const
+  bool is_table_mapped(Table *table) const
   {
     return table->s->table_map_version == table_map_version();
   }

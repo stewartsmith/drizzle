@@ -102,11 +102,11 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 
 
 /*
-  Convert TABLE object to MyISAM key and column definition
+  Convert Table object to MyISAM key and column definition
 
   SYNOPSIS
     table2myisam()
-      table_arg   in     TABLE object.
+      table_arg   in     Table object.
       keydef_out  out    MyISAM key definition.
       recinfo_out out    MyISAM column definition.
       records_out out    Number of fields.
@@ -125,7 +125,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     !0 error code
 */
 
-int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
+int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
                  MI_COLUMNDEF **recinfo_out, uint *records_out)
 {
   uint i, j, recpos, minpos, fieldpos, temp_length, length;
@@ -845,7 +845,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   param.out_flag= 0;
   stpcpy(fixed_name,file->filename);
 
-  // Don't lock tables if we have used LOCK TABLE
+  // Don't lock tables if we have used LOCK Table
   if (!thd->locked_tables && 
       mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
@@ -1609,7 +1609,7 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int ha_myisam::create(const char *name, register TABLE *table_arg,
+int ha_myisam::create(const char *name, register Table *table_arg,
 		      HA_CREATE_INFO *ha_create_info)
 {
   int error;

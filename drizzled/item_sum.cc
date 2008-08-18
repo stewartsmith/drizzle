@@ -478,7 +478,7 @@ bool Item_sum::walk (Item_processor processor, bool walk_subquery,
 
 
 Field *Item_sum::create_tmp_field(bool group __attribute__((unused)),
-                                  TABLE *table,
+                                  Table *table,
                                   uint convert_blob_length)
 {
   Field *field;
@@ -673,7 +673,7 @@ Item_sum_hybrid::fix_fields(THD *thd, Item **ref)
   return false;
 }
 
-Field *Item_sum_hybrid::create_tmp_field(bool group, TABLE *table,
+Field *Item_sum_hybrid::create_tmp_field(bool group, Table *table,
 					 uint convert_blob_length)
 {
   Field *field;
@@ -1209,7 +1209,7 @@ Item *Item_sum_avg::copy_or_same(THD* thd)
 }
 
 
-Field *Item_sum_avg::create_tmp_field(bool group, TABLE *table,
+Field *Item_sum_avg::create_tmp_field(bool group, Table *table,
                                       uint convert_blob_len __attribute__((unused)))
 {
   Field *field;
@@ -1419,7 +1419,7 @@ Item *Item_sum_variance::copy_or_same(THD* thd)
   If we're grouping, then we need some space to serialize variables into, to
   pass around.
 */
-Field *Item_sum_variance::create_tmp_field(bool group, TABLE *table,
+Field *Item_sum_variance::create_tmp_field(bool group, Table *table,
                                            uint convert_blob_len __attribute__((unused)))
 {
   Field *field;
@@ -2488,7 +2488,7 @@ void Item_sum_count_distinct::cleanup()
     is_evaluated= false;
     if (table)
     {
-      free_tmp_table(table->in_use, table);
+      table->free_tmp_table(table->in_use);
       table= 0;
     }
     delete tmp_table_param;
@@ -2901,7 +2901,7 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
                                        const void* key2)
 {
   Item_func_group_concat *item_func= (Item_func_group_concat*)arg;
-  TABLE *table= item_func->table;
+  Table *table= item_func->table;
 
   for (uint i= 0; i < item_func->arg_count_field; i++)
   {
@@ -2936,7 +2936,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
 {
   Item_func_group_concat* grp_item= (Item_func_group_concat*) arg;
   ORDER **order_item, **end;
-  TABLE *table= grp_item->table;
+  Table *table= grp_item->table;
 
   for (order_item= grp_item->order, end=order_item+ grp_item->arg_count_order;
        order_item < end;
@@ -2978,7 +2978,7 @@ int group_concat_key_cmp_with_order(void* arg, const void* key1,
 int dump_leaf_key(uchar* key, element_count count __attribute__((unused)),
                   Item_func_group_concat *item)
 {
-  TABLE *table= item->table;
+  Table *table= item->table;
   String tmp((char *)table->record[1], table->s->reclength,
              default_charset_info);
   String tmp2;
@@ -3155,7 +3155,7 @@ void Item_func_group_concat::cleanup()
     if (table)
     {
       THD *thd= table->in_use;
-      free_tmp_table(thd, table);
+      table->free_tmp_table(thd);
       table= 0;
       if (tree)
       {

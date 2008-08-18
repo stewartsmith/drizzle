@@ -396,7 +396,7 @@ class st_select_lex_unit: public st_select_lex_node {
 protected:
   TABLE_LIST result_table_list;
   select_union *union_result;
-  TABLE *table; /* temporary table using for appending UNION results */
+  Table *table; /* temporary table using for appending UNION results */
 
   select_result *result;
   uint64_t found_rows_for_union;
@@ -493,8 +493,6 @@ public:
   Name_resolution_context context;
   char *db;
   Item *where, *having;                         /* WHERE & HAVING clauses */
-  Item *prep_where; /* saved WHERE clause for prepared statement processing */
-  Item *prep_having;/* saved HAVING clause for prepared statement processing */
   /* Saved values of the WHERE and HAVING clauses*/
   Item::cond_result cond_value, having_value;
   /* point on lex in which it was created, used in view subquery detection */
@@ -767,7 +765,7 @@ inline bool st_select_lex_unit::is_union ()
 #define ALTER_FOREIGN_KEY         (1L << 31)
 
 /**
-  @brief Parsing data for CREATE or ALTER TABLE.
+  @brief Parsing data for CREATE or ALTER Table.
 
   This structure contains a list of columns or indexes to be created,
   altered or dropped.
@@ -1465,7 +1463,7 @@ typedef struct st_lex : public Query_tables_list
   union {
     enum ha_rkey_function ha_rkey_mode;
     enum xa_option_words xa_opt;
-    bool lock_transactional;            /* For LOCK TABLE ... IN ... MODE */
+    bool lock_transactional;            /* For LOCK Table ... IN ... MODE */
   };
   enum enum_var_type option_type;
 

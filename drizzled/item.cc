@@ -663,7 +663,7 @@ bool Item_field::find_item_in_field_list_processor(uchar *arg)
 
 bool Item_field::register_field_in_read_map(uchar *arg)
 {
-  TABLE *table= (TABLE *) arg;
+  Table *table= (Table *) arg;
   if (field->table == table || !table)
     bitmap_set_bit(field->table->read_set, field->field_index);
   return 0;
@@ -953,7 +953,7 @@ const CHARSET_INFO *Item::default_charset()
 int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
 {
   int res;
-  TABLE *table= field->table;
+  Table *table= field->table;
   THD *thd= table->in_use;
   enum_check_fields tmp= thd->count_cuted_fields;
   my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->write_set);
@@ -3657,7 +3657,7 @@ bool Item_field::fix_fields(THD *thd, Item **reference)
   }
   else if (thd->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    TABLE *table= field->table;
+    Table *table= field->table;
     MY_BITMAP *current_bitmap, *other_bitmap;
     if (thd->mark_used_columns == MARK_COLUMNS_READ)
     {
@@ -4053,7 +4053,7 @@ bool Item::eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * con
   @param table		Table for which the field is created
 */
 
-Field *Item::make_string_field(TABLE *table)
+Field *Item::make_string_field(Table *table)
 {
   Field *field;
   assert(collation.collation);
@@ -4082,7 +4082,7 @@ Field *Item::make_string_field(TABLE *table)
     \#    Created field
 */
 
-Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length __attribute__((unused)))
+Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __attribute__((unused)))
 {
   /*
     The field functions defines a field to be not null if null_ptr is not 0
@@ -4787,8 +4787,7 @@ Item *Item_field::update_value_transformer(uchar *select_arg)
   SELECT_LEX *select= (SELECT_LEX*)select_arg;
   assert(fixed);
 
-  if (field->table != select->context.table_list->table &&
-      type() != Item::TRIGGER_FIELD_ITEM)
+  if (field->table != select->context.table_list->table)
   {
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
@@ -6392,7 +6391,7 @@ uint32_t Item_type_holder::display_length(Item *item)
     created field
 */
 
-Field *Item_type_holder::make_field_by_type(TABLE *table)
+Field *Item_type_holder::make_field_by_type(Table *table)
 {
   /*
     The field functions defines a field to be not null if null_ptr is not 0

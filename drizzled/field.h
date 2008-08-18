@@ -61,8 +61,8 @@ public:
     Note that you can use table->in_use as replacement for current_thd member 
     only inside of val_*() and store() members (e.g. you can't use it in cons)
   */
-  struct st_table *table;		// Pointer for table
-  struct st_table *orig_table;		// Pointer to original table
+  Table *table;		// Pointer for table
+  Table *orig_table;		// Pointer to original table
   const char	**table_name, *field_name;
   LEX_STRING	comment;
   /* Field is part of the following keys */
@@ -205,7 +205,7 @@ public:
   virtual void reset_fields() {}
   virtual void set_default()
   {
-    my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->s->default_values - table->record[0]);
+    my_ptrdiff_t l_offset= (my_ptrdiff_t) (table->getDefaultValues() - table->record[0]);
     memcpy(ptr, ptr + l_offset, pack_length());
     if (null_ptr)
       *null_ptr= ((*null_ptr & (uchar) ~null_bit) | (null_ptr[l_offset] & null_bit));
@@ -285,7 +285,7 @@ public:
    */
   size_t last_null_byte() const {
     size_t bytes= do_last_null_byte();
-    assert(bytes <= table->s->null_bytes);
+    assert(bytes <= table->getNullBytes());
     return bytes;
   }
 
@@ -301,12 +301,12 @@ public:
   */
   virtual bool can_be_compared_as_int64_t() const { return false; }
   virtual void free() {}
-  virtual Field *new_field(MEM_ROOT *root, struct st_table *new_table,
+  virtual Field *new_field(MEM_ROOT *root, Table *new_table,
                            bool keep_type);
-  virtual Field *new_key_field(MEM_ROOT *root, struct st_table *new_table,
+  virtual Field *new_key_field(MEM_ROOT *root, Table *new_table,
                                uchar *new_ptr, uchar *new_null_ptr,
                                uint new_null_bit);
-  Field *clone(MEM_ROOT *mem_root, struct st_table *new_table);
+  Field *clone(MEM_ROOT *mem_root, Table *new_table);
   inline void move_field(uchar *ptr_arg,uchar *null_ptr_arg,uchar null_bit_arg)
   {
     ptr=ptr_arg; null_ptr=null_ptr_arg; null_bit=null_bit_arg;
@@ -469,7 +469,7 @@ public:
     return (op_result == E_DEC_OVERFLOW);
   }
   int warn_if_overflow(int op_result);
-  void init(TABLE *table_arg)
+  void init(Table *table_arg)
   {
     orig_table= table= table_arg;
     table_name= &table_arg->alias;
@@ -496,8 +496,8 @@ public:
 
   /* Hash value */
   virtual void hash(uint32_t *nr, uint32_t *nr2);
-  friend bool reopen_table(THD *,struct st_table *,bool);
-  friend int cre_myisam(char * name, register TABLE *form, uint options,
+  friend bool reopen_table(THD *,Table *,bool);
+  friend int cre_myisam(char * name, register Table *form, uint options,
 			uint64_t auto_increment_value);
   friend class Copy_field;
   friend class Item_avg_field;
@@ -705,7 +705,7 @@ public:
   {
       flags|=ENUM_FLAG;
   }
-  Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
+  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
   enum_field_types type() const { return DRIZZLE_TYPE_ENUM; }
   enum Item_result cmp_type () const { return INT_RESULT; }
   enum Item_result cast_to_int_type () const { return INT_RESULT; }

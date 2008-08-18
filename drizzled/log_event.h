@@ -400,7 +400,7 @@ struct sql_ex_info
 /**
   @def LOG_EVENT_THREAD_SPECIFIC_F
 
-  If the query depends on the thread (for example: TEMPORARY TABLE).
+  If the query depends on the thread (for example: TEMPORARY Table).
   Currently this is used by mysqlbinlog to know it must print
   SET @@PSEUDO_THREAD_ID=xx; before the query (it would not hurt to print it
   for every query but this would be slow).
@@ -1703,7 +1703,7 @@ private:
    (1)    USE db;
    (2)    LOAD DATA [LOCAL] INFILE 'file_name'
    (3)    [REPLACE | IGNORE]
-   (4)    INTO TABLE 'table_name'
+   (4)    INTO Table 'table_name'
    (5)    [FIELDS
    (6)      [TERMINATED BY 'field_term']
    (7)      [[OPTIONALLY] ENCLOSED BY 'enclosed']
@@ -3164,7 +3164,7 @@ public:
   flag_set get_flags(flag_set flag) const { return m_flags & flag; }
 
 #ifndef DRIZZLE_CLIENT
-  Table_map_log_event(THD *thd, TABLE *tbl, ulong tid, 
+  Table_map_log_event(THD *thd, Table *tbl, ulong tid, 
 		      bool is_transactional, uint16_t flags);
 #endif
 #ifdef HAVE_REPLICATION
@@ -3202,7 +3202,7 @@ private:
 #endif
 
 #ifndef DRIZZLE_CLIENT
-  TABLE         *m_table;
+  Table         *m_table;
 #endif
   char const    *m_dbnam;
   size_t         m_dblen;
@@ -3344,7 +3344,7 @@ protected:
      this class, not create instances of this class.
   */
 #ifndef DRIZZLE_CLIENT
-  Rows_log_event(THD*, TABLE*, ulong table_id, 
+  Rows_log_event(THD*, Table*, ulong table_id, 
 		 MY_BITMAP const *cols, bool is_transactional);
 #endif
   Rows_log_event(const char *row_data, uint event_len, 
@@ -3360,7 +3360,7 @@ protected:
 #endif
 
 #ifndef DRIZZLE_CLIENT
-  TABLE *m_table;		/* The table the rows belong to */
+  Table *m_table;		/* The table the rows belong to */
 #endif
   ulong       m_table_id;	/* Table ID */
   MY_BITMAP   m_cols;		/* Bitmap denoting columns available */
@@ -3492,7 +3492,7 @@ public:
   };
 
 #if !defined(DRIZZLE_CLIENT)
-  Write_rows_log_event(THD*, TABLE*, ulong table_id, 
+  Write_rows_log_event(THD*, Table*, ulong table_id, 
 		       bool is_transactional);
 #endif
 #ifdef HAVE_REPLICATION
@@ -3500,7 +3500,7 @@ public:
                        const Format_description_log_event *description_event);
 #endif
 #if !defined(DRIZZLE_CLIENT) 
-  static bool binlog_row_logging_function(THD *thd, TABLE *table,
+  static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
                                           const uchar *before_record
                                           __attribute__((unused)),
@@ -3547,7 +3547,7 @@ public:
   };
 
 #ifndef DRIZZLE_CLIENT
-  Update_rows_log_event(THD*, TABLE*, ulong table_id,
+  Update_rows_log_event(THD*, Table*, ulong table_id,
                         bool is_transactional);
 
   void init(MY_BITMAP const *cols);
@@ -3561,7 +3561,7 @@ public:
 #endif
 
 #if !defined(DRIZZLE_CLIENT) 
-  static bool binlog_row_logging_function(THD *thd, TABLE *table,
+  static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
                                           const uchar *before_record,
                                           const uchar *after_record)
@@ -3620,7 +3620,7 @@ public:
   };
 
 #ifndef DRIZZLE_CLIENT
-  Delete_rows_log_event(THD*, TABLE*, ulong, 
+  Delete_rows_log_event(THD*, Table*, ulong, 
 			bool is_transactional);
 #endif
 #ifdef HAVE_REPLICATION
@@ -3628,7 +3628,7 @@ public:
 			const Format_description_log_event *description_event);
 #endif
 #if !defined(DRIZZLE_CLIENT) 
-  static bool binlog_row_logging_function(THD *thd, TABLE *table,
+  static bool binlog_row_logging_function(THD *thd, Table *table,
                                           bool is_transactional,
                                           const uchar *before_record,
                                           const uchar *after_record

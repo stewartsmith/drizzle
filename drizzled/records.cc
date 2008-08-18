@@ -53,7 +53,7 @@ static int rr_index(READ_RECORD *info);
 
 void init_read_record_idx(READ_RECORD *info,
                           THD *thd __attribute__((unused)),
-                          TABLE *table,
+                          Table *table,
                           bool print_error, uint idx)
 {
   empty_record(table);
@@ -139,7 +139,7 @@ void init_read_record_idx(READ_RECORD *info,
     This is the most basic access method of a table using rnd_init,
     rnd_next and rnd_end. No indexes are used.
 */
-void init_read_record(READ_RECORD *info,THD *thd, TABLE *table,
+void init_read_record(READ_RECORD *info,THD *thd, Table *table,
 		      SQL_SELECT *select,
 		      int use_record_cache, bool print_error)
 {
@@ -419,7 +419,7 @@ static int rr_unpack_from_tempfile(READ_RECORD *info)
 {
   if (my_b_read(info->io_cache, info->rec_buf, info->ref_length))
     return -1;
-  TABLE *table= info->table;
+  Table *table= info->table;
   (*table->sort.unpack)(table->sort.addon_field, info->rec_buf);
 
   return 0;
@@ -470,7 +470,7 @@ static int rr_unpack_from_buffer(READ_RECORD *info)
 {
   if (info->cache_pos == info->cache_end)
     return -1;                      /* End of buffer */
-  TABLE *table= info->table;
+  Table *table= info->table;
   (*table->sort.unpack)(table->sort.addon_field, info->cache_pos);
   info->cache_pos+= info->ref_length;
 

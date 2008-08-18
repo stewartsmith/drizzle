@@ -194,7 +194,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
   SELECT_LEX *sl, *first_sl= first_select();
   select_result *tmp_result;
   bool is_union_select;
-  TABLE *empty_table= 0;
+  Table *empty_table= 0;
 
   describe= test(additional_options & SELECT_DESCRIBE);
 
@@ -300,7 +300,7 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
         field object without table.
       */
       assert(!empty_table);
-      empty_table= (TABLE*) thd->calloc(sizeof(TABLE));
+      empty_table= (Table*) thd->calloc(sizeof(Table));
       types.empty();
       List_iterator_fast<Item> it(sl->item_list);
       Item *item_tmp;
@@ -612,7 +612,7 @@ bool st_select_lex_unit::cleanup()
     delete union_result;
     union_result=0; // Safety
     if (table)
-      free_tmp_table(thd, table);
+      table->free_tmp_table(thd);
     table= 0; // Safety
   }
 

@@ -66,7 +66,7 @@ static int check_insert_fields(THD *thd, TABLE_LIST *table_list,
                                bool check_unique,
                                table_map *map __attribute__((unused)))
 {
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
 
   if (fields.elements == 0 && values.elements != 0)
   {
@@ -161,7 +161,7 @@ static int check_update_fields(THD *thd, TABLE_LIST *insert_table_list,
                                List<Item> &update_fields,
                                table_map *map __attribute__((unused)))
 {
-  TABLE *table= insert_table_list->table;
+  Table *table= insert_table_list->table;
   bool timestamp_mark= false;
 
   if (table->timestamp_field)
@@ -240,7 +240,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   ulong counter = 1;
   uint64_t id;
   COPY_INFO info;
-  TABLE *table= 0;
+  Table *table= 0;
   List_iterator_fast<List_item> its(values_list);
   List_item *values;
   Name_resolution_context *context;
@@ -435,7 +435,7 @@ bool mysql_insert(THD *thd,TABLE_LIST *table_list,
   {
     /*
       Do not do this release if this is a delayed insert, it would steal
-      auto_inc values from the delayed_insert thread as they share TABLE.
+      auto_inc values from the delayed_insert thread as they share Table.
     */
     table->file->ha_release_auto_increment();
     if (table->file->ha_end_bulk_insert() && !error)
@@ -637,7 +637,7 @@ static bool mysql_prepare_insert_check_table(THD *thd, TABLE_LIST *table_list,
 */
 
 bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
-                          TABLE *table, List<Item> &fields, List_item *values,
+                          Table *table, List<Item> &fields, List_item *values,
                           List<Item> &update_fields, List<Item> &update_values,
                           enum_duplicates duplic,
                           COND **where __attribute__((unused)),
@@ -752,7 +752,7 @@ bool mysql_prepare_insert(THD *thd, TABLE_LIST *table_list,
 
 	/* Check if there is more uniq keys after field */
 
-static int last_uniq_key(TABLE *table,uint keynr)
+static int last_uniq_key(Table *table,uint keynr)
 {
   while (++keynr < table->s->keys)
     if (table->key_info[keynr].flags & HA_NOSAME)
@@ -788,7 +788,7 @@ static int last_uniq_key(TABLE *table,uint keynr)
 */
 
 
-int write_record(THD *thd, TABLE *table,COPY_INFO *info)
+int write_record(THD *thd, Table *table,COPY_INFO *info)
 {
   int error;
   char *key=0;
@@ -1034,7 +1034,7 @@ before_err:
   Check that all fields with arn't null_fields are used
 ******************************************************************************/
 
-int check_that_all_fields_are_given_values(THD *thd, TABLE *entry,
+int check_that_all_fields_are_given_values(THD *thd, Table *entry,
                                            TABLE_LIST *table_list)
 {
   int err= 0;
@@ -1085,7 +1085,6 @@ bool mysql_insert_select_prepare(THD *thd)
 {
   LEX *lex= thd->lex;
   SELECT_LEX *select_lex= &lex->select_lex;
-  TABLE_LIST *first_select_leaf_table;
   
 
   /*
@@ -1120,19 +1119,12 @@ bool mysql_insert_select_prepare(THD *thd)
   assert(select_lex->leaf_tables != 0);
   lex->leaf_tables_insert= select_lex->leaf_tables;
   /* skip all leaf tables belonged to view where we are insert */
-  for (first_select_leaf_table= select_lex->leaf_tables->next_leaf;
-       first_select_leaf_table &&
-       first_select_leaf_table->belong_to_view &&
-       first_select_leaf_table->belong_to_view ==
-       lex->leaf_tables_insert->belong_to_view;
-       first_select_leaf_table= first_select_leaf_table->next_leaf)
-  {}
-  select_lex->leaf_tables= first_select_leaf_table;
+  select_lex->leaf_tables= select_lex->leaf_tables->next_leaf;
   return(false);
 }
 
 
-select_insert::select_insert(TABLE_LIST *table_list_par, TABLE *table_par,
+select_insert::select_insert(TABLE_LIST *table_list_par, Table *table_par,
                              List<Item> *fields_par,
                              List<Item> *update_fields,
                              List<Item> *update_values,
@@ -1527,7 +1519,7 @@ void select_insert::abort() {
 ***************************************************************************/
 
 /*
-  Create table from lists of fields and items (or just return TABLE
+  Create table from lists of fields and items (or just return Table
   object for pre-opened existing table).
 
   SYNOPSIS
@@ -1553,7 +1545,7 @@ void select_insert::abort() {
     This function behaves differently for base and temporary tables:
     - For base table we assume that either table exists and was pre-opened
       and locked at open_and_lock_tables() stage (and in this case we just
-      emit error or warning and return pre-opened TABLE object) or special
+      emit error or warning and return pre-opened Table object) or special
       placeholder was put in table cache that guarantees that this table
       won't be created or opened until the placeholder will be removed
       (so there is an exclusive lock on this table).
@@ -1564,20 +1556,20 @@ void select_insert::abort() {
     SELECT it should be changed before it can be used in other contexts.
 
   RETURN VALUES
-    non-zero  Pointer to TABLE object for table created or opened
+    non-zero  Pointer to Table object for table created or opened
     0         Error
 */
 
-static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
+static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
                                       TABLE_LIST *create_table,
                                       Alter_info *alter_info,
                                       List<Item> *items,
                                       DRIZZLE_LOCK **lock,
                                       TABLEOP_HOOKS *hooks)
 {
-  TABLE tmp_table;		// Used during 'Create_field()'
+  Table tmp_table;		// Used during 'Create_field()'
   TABLE_SHARE share;
-  TABLE *table= 0;
+  Table *table= 0;
   uint select_field_count= items->elements;
   /* Add selected items to field list */
   List_iterator_fast<Item> it(*items);
@@ -1651,7 +1643,7 @@ static TABLE *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
     binlog when a HEAP table is opened for the first time since startup, must
     not be written: 1) it would be wrong (imagine we're in CREATE SELECT: we
     don't want to delete from it) 2) it would be written before the CREATE
-    TABLE, which is a wrong order. So we keep binary logging disabled when we
+    Table, which is a wrong order. So we keep binary logging disabled when we
     open_table().
   */
   {
@@ -1761,13 +1753,13 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
       }
 
   private:
-    virtual int do_postlock(TABLE **tables, uint count)
+    virtual int do_postlock(Table **tables, uint count)
     {
       THD *thd= const_cast<THD*>(ptr->get_thd());
       if (int error= decide_logging_format(thd, &all_tables))
         return error;
 
-      TABLE const *const table = *tables;
+      Table const *const table = *tables;
       if (thd->current_stmt_binlog_row_based  &&
           !table->s->tmp_table &&
           !ptr->get_create_info()->table_existed)
@@ -1849,7 +1841,7 @@ select_create::prepare(List<Item> &values, SELECT_LEX_UNIT *u)
 }
 
 void
-select_create::binlog_show_create_table(TABLE **tables, uint count)
+select_create::binlog_show_create_table(Table **tables, uint count)
 {
   /*
     Note 1: In RBR mode, we generate a CREATE TABLE statement for the

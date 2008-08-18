@@ -24,7 +24,7 @@
 
 /* Return 0 if row hasn't changed */
 
-bool compare_record(TABLE *table)
+bool compare_record(Table *table)
 {
   if (table->s->blob_fields + table->s->varchar_fields == 0)
     return cmp_record(table,record[1]);
@@ -93,7 +93,7 @@ static bool check_fields(THD *thd, List<Item> &items)
   @param[in] table   table
 */
 
-static void prepare_record_for_error_message(int error, TABLE *table)
+static void prepare_record_for_error_message(int error, Table *table)
 {
   Field **field_p;
   Field *field;
@@ -190,7 +190,7 @@ int mysql_update(THD *thd,
   uint          table_count= 0;
   ha_rows	updated, found;
   key_map	old_covering_keys;
-  TABLE		*table;
+  Table		*table;
   SQL_SELECT	*select;
   READ_RECORD	info;
   SELECT_LEX    *select_lex= &thd->lex->select_lex;
@@ -892,7 +892,7 @@ reopen_tables:
   leaves= lex->select_lex.leaf_tables;
   for (tl= leaves; tl; tl= tl->next_leaf)
   {
-    TABLE *table= tl->table;
+    Table *table= tl->table;
     /* Only set timestamp column if this is not modified */
     if (table->timestamp_field &&
         bitmap_is_set(table->write_set,
@@ -917,7 +917,7 @@ reopen_tables:
       */
       tl->lock_type= using_update_log ? TL_READ_NO_INSERT : TL_READ;
       tl->updating= 0;
-      /* Update TABLE::lock_type accordingly. */
+      /* Update Table::lock_type accordingly. */
       if (!tl->placeholder() && !using_lock_tables)
         tl->table->reginfo.lock_type= tl->lock_type;
     }
@@ -1088,7 +1088,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
   for (table_ref= leaves; table_ref; table_ref= table_ref->next_leaf)
   {
     /* TODO: add support of view of join support */
-    TABLE *table=table_ref->table;
+    Table *table=table_ref->table;
     leaf_table_count++;
     if (tables_to_update & table->map)
     {
@@ -1108,7 +1108,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
   table_count=  update.elements;
   update_tables= (TABLE_LIST*) update.first;
 
-  tmp_tables = (TABLE**) thd->calloc(sizeof(TABLE *) * table_count);
+  tmp_tables = (Table**) thd->calloc(sizeof(Table *) * table_count);
   tmp_table_param = (TMP_TABLE_PARAM*) thd->calloc(sizeof(TMP_TABLE_PARAM) *
 						   table_count);
   fields_for_table= (List_item **) thd->alloc(sizeof(List_item *) *
@@ -1169,7 +1169,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
     - Table is not joined to itself.
 
     This function gets information about fields to be updated from
-    the TABLE::write_set bitmap.
+    the Table::write_set bitmap.
 
   WARNING
     This code is a bit dependent of how make_join_readinfo() works.
@@ -1182,7 +1182,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
 static bool safe_update_on_fly(THD *thd, JOIN_TAB *join_tab,
                                TABLE_LIST *table_ref, TABLE_LIST *all_tables)
 {
-  TABLE *table= join_tab->table;
+  Table *table= join_tab->table;
   if (unique_table(thd, table_ref, all_tables, 0))
     return 0;
   switch (join_tab->type) {
@@ -1235,7 +1235,7 @@ multi_update::initialize_tables(JOIN *join)
   /* Create a temporary table for keys to all tables, except main table */
   for (table_ref= update_tables; table_ref; table_ref= table_ref->next_local)
   {
-    TABLE *table=table_ref->table;
+    Table *table=table_ref->table;
     uint cnt= table_ref->shared;
     List<Item> temp_fields;
     ORDER     group;
@@ -1264,8 +1264,8 @@ multi_update::initialize_tables(JOIN *join)
       OPTION condition.
     */
 
-    List_iterator_fast<TABLE> tbl_it(unupdated_check_opt_tables);
-    TABLE *tbl= table;
+    List_iterator_fast<Table> tbl_it(unupdated_check_opt_tables);
+    Table *tbl= table;
     do
     {
       Field_string *field= new Field_string(tbl->file->ref_length, 0,
@@ -1330,7 +1330,7 @@ multi_update::~multi_update()
     {
       if (tmp_tables[cnt])
       {
-	free_tmp_table(thd, tmp_tables[cnt]);
+	tmp_tables[cnt]->free_tmp_table(thd);
 	tmp_table_param[cnt].cleanup();
       }
     }
@@ -1349,7 +1349,7 @@ bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused))
   
   for (cur_table= update_tables; cur_table; cur_table= cur_table->next_local)
   {
-    TABLE *table= cur_table->table;
+    Table *table= cur_table->table;
     uint offset= cur_table->shared;
     /*
       Check if we are using outer join and we didn't find the row
@@ -1441,14 +1441,14 @@ bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused))
     else
     {
       int error;
-      TABLE *tmp_table= tmp_tables[offset];
+      Table *tmp_table= tmp_tables[offset];
       /*
        For updatable VIEW store rowid of the updated table and
        rowids of tables used in the CHECK OPTION condition.
       */
       uint field_num= 0;
-      List_iterator_fast<TABLE> tbl_it(unupdated_check_opt_tables);
-      TABLE *tbl= table;
+      List_iterator_fast<Table> tbl_it(unupdated_check_opt_tables);
+      Table *tbl= table;
       do
       {
         tbl->file->position(tbl->record[0]);
@@ -1542,8 +1542,8 @@ int multi_update::do_updates()
   TABLE_LIST *cur_table;
   int local_error= 0;
   ha_rows org_updated;
-  TABLE *table, *tmp_table;
-  List_iterator_fast<TABLE> check_opt_it(unupdated_check_opt_tables);
+  Table *table, *tmp_table;
+  List_iterator_fast<Table> check_opt_it(unupdated_check_opt_tables);
   
   do_update= 0;					// Don't retry this function
   if (!found)
@@ -1563,7 +1563,7 @@ int multi_update::do_updates()
     table->file->extra(HA_EXTRA_NO_CACHE);
 
     check_opt_it.rewind();
-    while(TABLE *tbl= check_opt_it++)
+    while(Table *tbl= check_opt_it++)
     {
       if (tbl->file->ha_rnd_init(1))
         goto err;
@@ -1607,7 +1607,7 @@ int multi_update::do_updates()
 
       /* call rnd_pos() using rowids from temporary table */
       check_opt_it.rewind();
-      TABLE *tbl= table;
+      Table *tbl= table;
       uint field_num= 0;
       do
       {
@@ -1657,7 +1657,7 @@ int multi_update::do_updates()
     (void) table->file->ha_rnd_end();
     (void) tmp_table->file->ha_rnd_end();
     check_opt_it.rewind();
-    while (TABLE *tbl= check_opt_it++)
+    while (Table *tbl= check_opt_it++)
         tbl->file->ha_rnd_end();
 
   }
@@ -1672,7 +1672,7 @@ err:
   (void) table->file->ha_rnd_end();
   (void) tmp_table->file->ha_rnd_end();
   check_opt_it.rewind();
-  while (TABLE *tbl= check_opt_it++)
+  while (Table *tbl= check_opt_it++)
       tbl->file->ha_rnd_end();
 
   if (updated != org_updated)

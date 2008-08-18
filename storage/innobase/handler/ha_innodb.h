@@ -179,7 +179,7 @@ class ha_innobase: public handler
 	ha_rows estimate_rows_upper_bound();
 
 	void update_create_info(HA_CREATE_INFO* create_info);
-	int create(const char *name, register TABLE *form,
+	int create(const char *name, register Table *form,
 					HA_CREATE_INFO *create_info);
 	int delete_all_rows();
 	int delete_table(const char *name);

@@ -107,7 +107,7 @@ public:
   int delete_table(const char *from);
   void drop_table(const char *name);
   int rename_table(const char * from, const char * to);
-  int create(const char *name, TABLE *form, HA_CREATE_INFO *create_info);
+  int create(const char *name, Table *form, HA_CREATE_INFO *create_info);
   void update_create_info(HA_CREATE_INFO *create_info);
 
   THR_LOCK_DATA **store_lock(THD *thd, THR_LOCK_DATA **to,

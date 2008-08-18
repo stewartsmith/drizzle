@@ -386,7 +386,7 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
 
   if (!(*item)->with_subselect && (*item)->const_item())
   {
-    TABLE *table= field->table;
+    Table *table= field->table;
     ulong orig_sql_mode= thd->variables.sql_mode;
     enum_check_fields orig_count_cuted_fields= thd->count_cuted_fields;
     my_bitmap_map *old_write_map;
@@ -2226,7 +2226,7 @@ enum_field_types Item_func_ifnull::field_type() const
   return cached_field_type;
 }
 
-Field *Item_func_ifnull::tmp_table_field(TABLE *table)
+Field *Item_func_ifnull::tmp_table_field(Table *table)
 {
   return tmp_table_field_from_field_type(table, 0);
 }

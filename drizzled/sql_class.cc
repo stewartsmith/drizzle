@@ -1056,7 +1056,7 @@ inline static void list_include(CHANGED_TABLE_LIST** prev,
 
 /* add table to list of changed in transaction tables */
 
-void THD::add_changed_table(TABLE *table)
+void THD::add_changed_table(Table *table)
 {
   assert((options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) &&
 	      table->file->has_transactions());
@@ -1691,7 +1691,7 @@ bool select_export::send_data(List<Item> &items)
             If this file is later loaded using this sequence of commands:
             
             mysql> create table t1 (a varchar(128)) character set big5;
-            mysql> LOAD DATA INFILE 'dump.txt' INTO TABLE t1;
+            mysql> LOAD DATA INFILE 'dump.txt' INTO Table t1;
             
             then 0x5C will be misinterpreted as the second byte
             of a multi-byte character "0xEE + 0x5C", instead of
@@ -2467,7 +2467,7 @@ void xid_cache_delete(XID_STATE *xid_state)
  */
 
 template <class RowsEventT> Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
+THD::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
                                        size_t needed,
                                        bool is_transactional,
 				       RowsEventT *hint __attribute__((unused)))
@@ -2543,15 +2543,15 @@ THD::binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
   compiling option.
 */
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
+THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Write_rows_log_event*);
 
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
+THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Delete_rows_log_event *);
 
 template Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
+THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Update_rows_log_event *);
 #endif
 
@@ -2583,7 +2583,7 @@ namespace {
       @param length
       Length of data that is needed, if the record contain blobs.
      */
-    Row_data_memory(TABLE *table, size_t const len1)
+    Row_data_memory(Table *table, size_t const len1)
       : m_memory(0)
     {
       m_alloc_checked= false;
@@ -2592,7 +2592,7 @@ namespace {
       m_ptr[1]= 0;
     }
 
-    Row_data_memory(TABLE *table, size_t const len1, size_t const len2)
+    Row_data_memory(Table *table, size_t const len1, size_t const len2)
       : m_memory(0)
     {
       m_alloc_checked= false;
@@ -2627,7 +2627,7 @@ namespace {
     }
 
   private:
-    void allocate_memory(TABLE *const table, size_t const total_length)
+    void allocate_memory(Table *const table, size_t const total_length)
     {
       if (table->s->blob_fields == 0)
       {
@@ -2669,7 +2669,7 @@ namespace {
 }
 
 
-int THD::binlog_write_row(TABLE* table, bool is_trans, 
+int THD::binlog_write_row(Table* table, bool is_trans, 
                           uchar const *record) 
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
@@ -2696,7 +2696,7 @@ int THD::binlog_write_row(TABLE* table, bool is_trans,
   return ev->add_row_data(row_data, len);
 }
 
-int THD::binlog_update_row(TABLE* table, bool is_trans,
+int THD::binlog_update_row(Table* table, bool is_trans,
                            const uchar *before_record,
                            const uchar *after_record)
 { 
@@ -2730,7 +2730,7 @@ int THD::binlog_update_row(TABLE* table, bool is_trans,
     ev->add_row_data(after_row, after_size);
 }
 
-int THD::binlog_delete_row(TABLE* table, bool is_trans, 
+int THD::binlog_delete_row(Table* table, bool is_trans, 
                            uchar const *record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());

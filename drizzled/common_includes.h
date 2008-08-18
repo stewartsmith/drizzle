@@ -243,9 +243,9 @@ enum enum_var_type
 
 /* Forward declarations */
 
-struct TABLE_LIST;
+class TABLE_LIST;
 class String;
-struct st_table;
+class Table;
 class THD;
 class user_var_entry;
 class Security_context;
@@ -281,7 +281,7 @@ extern ulong server_id;
 #include "sql_map.h"
 #include "my_decimal.h"
 #include "handler.h"
-#include "table.h"
+#include "table_list.h"
 #include "sql_error.h"
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
