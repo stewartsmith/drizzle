@@ -17,7 +17,7 @@
 
 LDADD =
 
-libserialize_la_CXXFLAGS = -Wno-all -Wno-error
+libserialize_la_CXXFLAGS =
 
 noinst_LTLIBRARIES = libserialize.la
 
@@ -48,11 +48,11 @@ schema_reader_SOURCES =  schema_reader.cc
 
 table_reader_LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
 table_reader_SOURCES =  table_reader.cc
-table_reader_CXXFLAGS = -Wno-all -Wno-error
+table_reader_CXXFLAGS =
 
 table_writer_LDADD = $(top_builddir)/drizzled/serialize/libserialize.la -lprotobuf
 table_writer_SOURCES =  table_writer.cc
-table_writer_CXXFLAGS = -Wno-all -Wno-error
+table_writer_CXXFLAGS =
 
 EXTRA_DIST = schema.proto table.proto
 BUILT_SOURCES = schema.pb.cc table.pb.cc
