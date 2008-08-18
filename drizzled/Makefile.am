@@ -89,7 +89,6 @@ noinst_HEADERS = item.h \
 		 sql_lex.h \
 		 sql_list.h \
 		 sql_locale.h \
-		 sql_map.h \
 		 sql_state.h \
 		 sql_string.h \
 		 sql_error.h \
@@ -167,7 +166,6 @@ drizzled_SOURCES = \
 		   sql_state.c \
 		   lock.cc \
 		   sql_string.cc \
-		   sql_map.cc \
 		   drizzled.cc \
 		   sql_connect.cc \
 		   scheduler.cc \

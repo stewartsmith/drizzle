@@ -278,7 +278,6 @@ extern ulong server_id;
 #include <drizzled/sql_string.h>
 /* Custom singly-linked list lite struct and full-blown type-safe, templatized class */
 #include <drizzled/sql_list.h>
-#include "sql_map.h"
 #include "my_decimal.h"
 #include "handler.h"
 #include "table_list.h"

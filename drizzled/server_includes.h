@@ -719,7 +719,7 @@ extern TABLE_LIST general_log, slow_log;
 extern FILE *stderror_file;
 extern pthread_key(MEM_ROOT**,THR_MALLOC);
 extern pthread_mutex_t LOCK_mysql_create_db,LOCK_open, LOCK_lock_db,
-       LOCK_thread_count,LOCK_mapped_file,LOCK_user_locks, LOCK_status,
+       LOCK_thread_count,LOCK_user_locks, LOCK_status,
        LOCK_error_log, LOCK_uuid_generator,
        LOCK_crypt, LOCK_timezone,
        LOCK_slave_list, LOCK_active_mi, LOCK_global_read_lock,
