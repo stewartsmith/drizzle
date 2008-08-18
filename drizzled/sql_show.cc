@@ -3936,7 +3936,7 @@ Table *create_schema_table(THD *thd, TABLE_LIST *table_list)
   tmp_table_param->schema_table= 1;
   SELECT_LEX *select_lex= thd->lex->current_select;
   if (!(table= create_tmp_table(thd, tmp_table_param,
-                                field_list, (ORDER*) 0, 0, 0, 
+                                field_list, (order_st*) 0, 0, 0, 
                                 (select_lex->options | thd->options |
                                  TMP_TABLE_ALL_COLUMNS),
                                 HA_POS_ERROR, table_list->alias)))

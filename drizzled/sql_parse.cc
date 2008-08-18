@@ -1575,7 +1575,7 @@ end_with_restore_list:
 
     res= mysql_alter_table(thd, first_table->db, first_table->table_name,
                            &create_info, first_table, &alter_info,
-                           0, (ORDER*) 0, 0);
+                           0, (order_st*) 0, 0);
     break;
   }
   case SQLCOM_SLAVE_START:
@@ -1664,7 +1664,7 @@ end_with_restore_list:
                              first_table,
                              &alter_info,
                              select_lex->order_list.elements,
-                             (ORDER *) select_lex->order_list.first,
+                             (order_st *) select_lex->order_list.first,
                              lex->ignore);
       break;
     }
@@ -1780,7 +1780,7 @@ end_with_restore_list:
                                   lex->value_list,
                                   select_lex->where,
                                   select_lex->order_list.elements,
-                                  (ORDER *) select_lex->order_list.first,
+                                  (order_st *) select_lex->order_list.first,
                                   unit->select_limit_cnt,
                                   lex->duplicates, lex->ignore));
     /* mysql_update return 2 if we need to switch to multi-update */
@@ -1999,8 +1999,8 @@ end_with_restore_list:
 			select_lex->with_wild,
 			select_lex->item_list,
 			select_lex->where,
-			0, (ORDER *)NULL, (ORDER *)NULL, (Item *)NULL,
-			(ORDER *)NULL,
+			0, (order_st *)NULL, (order_st *)NULL, (Item *)NULL,
+			(order_st *)NULL,
 			select_lex->options | thd->options |
 			SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK |
                         OPTION_SETUP_TABLES_DONE,
@@ -2779,7 +2779,7 @@ mysql_new_select(LEX *lex, bool move_down)
   {
     if (lex->current_select->order_list.first && !lex->current_select->braces)
     {
-      my_error(ER_WRONG_USAGE, MYF(0), "UNION", "ORDER BY");
+      my_error(ER_WRONG_USAGE, MYF(0), "UNION", "order_st BY");
       return(1);
     }
     select_lex->include_neighbour(lex->current_select);
@@ -3069,10 +3069,10 @@ void store_position_for_column(const char *name)
 bool
 add_proc_to_list(THD* thd, Item *item)
 {
-  ORDER *order;
+  order_st *order;
   Item	**item_ptr;
 
-  if (!(order = (ORDER *) thd->alloc(sizeof(ORDER)+sizeof(Item*))))
+  if (!(order = (order_st *) thd->alloc(sizeof(order_st)+sizeof(Item*))))
     return 1;
   item_ptr = (Item**) (order+1);
   *item_ptr= item;
@@ -3089,8 +3089,8 @@ add_proc_to_list(THD* thd, Item *item)
 
 bool add_to_list(THD *thd, SQL_LIST &list,Item *item,bool asc)
 {
-  ORDER *order;
-  if (!(order = (ORDER *) thd->alloc(sizeof(ORDER))))
+  order_st *order;
+  if (!(order = (order_st *) thd->alloc(sizeof(order_st))))
     return(1);
   order->item_ptr= item;
   order->item= &order->item_ptr;
@@ -3500,11 +3500,11 @@ void st_select_lex::set_lock_for_tables(thr_lock_type lock_type)
     This object is created for any union construct containing a union
     operation and also for any single select union construct of the form
     @verbatim
-    (SELECT ... ORDER BY order_list [LIMIT n]) ORDER BY ... 
+    (SELECT ... order_st BY order_list [LIMIT n]) order_st BY ... 
     @endvarbatim
     or of the form
     @varbatim
-    (SELECT ... ORDER BY LIMIT n) ORDER BY ...
+    (SELECT ... order_st BY LIMIT n) order_st BY ...
     @endvarbatim
   
   @param thd_arg		   thread handle
@@ -3535,7 +3535,7 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
   fake_select_lex->select_limit= 0;
 
   fake_select_lex->context.outer_context=first_sl->context.outer_context;
-  /* allow item list resolving in fake select for ORDER BY */
+  /* allow item list resolving in fake select for order_st BY */
   fake_select_lex->context.resolve_in_select_list= true;
   fake_select_lex->context.select_lex= fake_select_lex;
 
@@ -3543,8 +3543,8 @@ bool st_select_lex_unit::add_fake_select_lex(THD *thd_arg)
   {
     /* 
       This works only for 
-      (SELECT ... ORDER BY list [LIMIT n]) ORDER BY order_list [LIMIT m],
-      (SELECT ... LIMIT n) ORDER BY order_list [LIMIT m]
+      (SELECT ... order_st BY list [LIMIT n]) order_st BY order_list [LIMIT m],
+      (SELECT ... LIMIT n) order_st BY order_list [LIMIT m]
       just before the parser starts processing order_list
     */ 
     global_parameters= fake_select_lex;

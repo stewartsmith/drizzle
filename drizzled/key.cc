@@ -214,14 +214,11 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
     else if (key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       Field *field= key_part->field;
-      my_bitmap_map *old_map;
       my_ptrdiff_t ptrdiff= to_record - field->table->record[0];
       field->move_field_offset(ptrdiff);
       key_length-= HA_KEY_BLOB_LENGTH;
       length= min(key_length, key_part->length);
-      old_map= dbug_tmp_use_all_columns(field->table, field->table->write_set);
       field->set_key_image(from_key, length);
-      dbug_tmp_restore_column_map(field->table->write_set, old_map);
       from_key+= HA_KEY_BLOB_LENGTH;
       field->move_field_offset(-ptrdiff);
     }
@@ -331,7 +328,6 @@ void key_unpack(String *to,Table *table,uint idx)
   KEY_PART_INFO *key_part,*key_part_end;
   Field *field;
   String tmp;
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->read_set);
 
   to->length(0);
   for (key_part=table->key_info[idx].key_part,key_part_end=key_part+
@@ -378,7 +374,7 @@ void key_unpack(String *to,Table *table,uint idx)
     else
       to->append(STRING_WITH_LEN("???"));
   }
-  dbug_tmp_restore_column_map(table->read_set, old_map);
+
   return;
 }
 

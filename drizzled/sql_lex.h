@@ -693,7 +693,7 @@ public:
   bool setup_ref_array(THD *thd, uint32_t order_group_num);
   void print(THD *thd, String *str, enum_query_type query_type);
   static void print_order(String *str,
-                          ORDER *order,
+                          order_st *order,
                           enum_query_type query_type);
   void print_limit(THD *thd, String *str, enum_query_type query_type);
   void fix_prepare_information(THD *thd, Item **conds, Item **having_conds);

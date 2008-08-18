@@ -139,6 +139,8 @@ noinst_HEADERS = item.h \
 		 tmp_table.h \
 		 sj_tmp_table.h \
 		 drizzled_error_messages.h \
+		 order.h \
+		 filesort_info.h \
 		 common_includes.h 
 
 drizzled_SOURCES = \

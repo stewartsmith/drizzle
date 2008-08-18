@@ -29,7 +29,7 @@ static bool check_if_keyname_exists(const char *name,KEY *start, KEY *end);
 static char *make_unique_key_name(const char *field_name,KEY *start,KEY *end);
 static int copy_data_between_tables(Table *from,Table *to,
                                     List<Create_field> &create, bool ignore,
-                                    uint order_num, ORDER *order,
+                                    uint order_num, order_st *order,
                                     ha_rows *copied,ha_rows *deleted,
                                     enum enum_enable_or_disable keys_onoff,
                                     bool error_if_not_empty);
@@ -3331,7 +3331,7 @@ compare_tables(THD *thd,
     E.g. ALTER Table tbl_name ENGINE=MyISAM.
 
     For the following ones we also want to run regular alter table:
-    ALTER Table tbl_name ORDER BY ..
+    ALTER Table tbl_name order_st BY ..
     ALTER Table tbl_name CONVERT TO CHARACTER SET ..
 
     At the moment we can't handle altering temporary tables without a copy.
@@ -4331,8 +4331,8 @@ err:
       table_list       The table to change.
       alter_info       Lists of fields, keys to be changed, added
                        or dropped.
-      order_num        How many ORDER BY fields has been specified.
-      order            List of fields to ORDER BY.
+      order_num        How many order_st BY fields has been specified.
+      order            List of fields to order_st BY.
       ignore           Whether we have ALTER IGNORE Table
 
   DESCRIPTION
@@ -4364,7 +4364,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
                        TABLE_LIST *table_list,
                        Alter_info *alter_info,
-                       uint order_num, ORDER *order, bool ignore)
+                       uint order_num, order_st *order, bool ignore)
 {
   Table *table, *new_table=0, *name_lock= 0;;
   int error= 0;
@@ -5085,7 +5085,7 @@ static int
 copy_data_between_tables(Table *from,Table *to,
 			 List<Create_field> &create,
                          bool ignore,
-			 uint order_num, ORDER *order,
+			 uint order_num, order_st *order,
 			 ha_rows *copied,
 			 ha_rows *deleted,
                          enum enum_enable_or_disable keys_onoff,
@@ -5166,7 +5166,7 @@ copy_data_between_tables(Table *from,Table *to,
     {
       char warn_buff[DRIZZLE_ERRMSG_SIZE];
       snprintf(warn_buff, sizeof(warn_buff), 
-               _("ORDER BY ignored because there is a user-defined clustered "
+               _("order_st BY ignored because there is a user-defined clustered "
                  "index in the table '%-.192s'"),
                from->s->table_name.str);
       push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN, ER_UNKNOWN_ERROR,
@@ -5329,7 +5329,7 @@ bool mysql_recreate_table(THD *thd, TABLE_LIST *table_list)
   alter_info.flags= (ALTER_CHANGE_COLUMN | ALTER_RECREATE);
   return(mysql_alter_table(thd, NullS, NullS, &create_info,
                                 table_list, &alter_info, 0,
-                                (ORDER *) 0, 0));
+                                (order_st *) 0, 0));
 }
 
 

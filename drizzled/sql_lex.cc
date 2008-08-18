@@ -1971,7 +1971,7 @@ void st_select_lex_unit::print(String *str, enum_query_type query_type)
       str->append(STRING_WITH_LEN(" order by "));
       fake_select_lex->print_order(
         str,
-        (ORDER *) fake_select_lex->order_list.first,
+        (order_st *) fake_select_lex->order_list.first,
         query_type);
     }
     fake_select_lex->print_limit(thd, str, query_type);
@@ -1980,7 +1980,7 @@ void st_select_lex_unit::print(String *str, enum_query_type query_type)
 
 
 void st_select_lex::print_order(String *str,
-                                ORDER *order,
+                                order_st *order,
                                 enum_query_type query_type)
 {
   for (; order; order= order->next)

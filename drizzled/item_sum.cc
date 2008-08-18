@@ -2553,7 +2553,7 @@ bool Item_sum_count_distinct::setup(THD *thd)
   tmp_table_param->force_copy_fields= force_copy_fields;
   assert(table == 0);
 
-  if (!(table= create_tmp_table(thd, tmp_table_param, list, (ORDER*) 0, 1,
+  if (!(table= create_tmp_table(thd, tmp_table_param, list, (order_st*) 0, 1,
 				0,
 				(select_lex->options | thd->options),
 				HA_POS_ERROR, (char*)"")))
@@ -2872,13 +2872,13 @@ String *Item_sum_udf_str::val_str(String *str)
  GROUP_CONCAT function
 
  SQL SYNTAX:
-  GROUP_CONCAT([DISTINCT] expr,... [ORDER BY col [ASC|DESC],...]
+  GROUP_CONCAT([DISTINCT] expr,... [order_st BY col [ASC|DESC],...]
     [SEPARATOR str_const])
 
  concat of values from "group by" operation
 
  BUGS
-   Blobs doesn't work with DISTINCT or ORDER BY
+   Blobs doesn't work with DISTINCT or order_st BY
 *****************************************************************************/
 
 
@@ -2887,7 +2887,7 @@ String *Item_sum_udf_str::val_str(String *str)
   @note
        
      GROUP_CONCAT([DISTINCT] expr [,expr ...]
-              [ORDER BY {unsigned_integer | col_name | expr}
+              [order_st BY {unsigned_integer | col_name | expr}
                   [ASC | DESC] [,col_name ...]]
               [SEPARATOR str_val])
  
@@ -2928,14 +2928,14 @@ int group_concat_key_cmp_with_distinct(void* arg, const void* key1,
 
 
 /**
-  function of sort for syntax: GROUP_CONCAT(expr,... ORDER BY col,... )
+  function of sort for syntax: GROUP_CONCAT(expr,... order_st BY col,... )
 */
 
 int group_concat_key_cmp_with_order(void* arg, const void* key1, 
                                     const void* key2)
 {
   Item_func_group_concat* grp_item= (Item_func_group_concat*) arg;
-  ORDER **order_item, **end;
+  order_st **order_item, **end;
   Table *table= grp_item->table;
 
   for (order_item= grp_item->order, end=order_item+ grp_item->arg_count_order;
@@ -3079,10 +3079,10 @@ Item_func_group_concat(Name_resolution_context *context_arg,
     order - arg_count_order
   */
   if (!(args= (Item**) sql_alloc(sizeof(Item*) * arg_count +
-                                 sizeof(ORDER*)*arg_count_order)))
+                                 sizeof(order_st*)*arg_count_order)))
     return;
 
-  order= (ORDER**)(args + arg_count);
+  order= (order_st**)(args + arg_count);
 
   /* fill args items of show and sort */
   List_iterator_fast<Item> li(*select_list);
@@ -3092,8 +3092,8 @@ Item_func_group_concat(Name_resolution_context *context_arg,
 
   if (arg_count_order)
   {
-    ORDER **order_ptr= order;
-    for (ORDER *order_item= (ORDER*) order_list->first;
+    order_st **order_ptr= order;
+    for (order_st *order_item= (order_st*) order_list->first;
          order_item != NULL;
          order_item= order_item->next)
     {
@@ -3261,7 +3261,7 @@ Item_func_group_concat::fix_fields(THD *thd, Item **ref)
   maybe_null= 1;
 
   /*
-    Fix fields for select list and ORDER clause
+    Fix fields for select list and order_st clause
   */
 
   for (i=0 ; i < arg_count ; i++)
@@ -3350,7 +3350,7 @@ bool Item_func_group_concat::setup(THD *thd)
 
   List<Item> all_fields(list);
   /*
-    Try to find every ORDER expression in the list of GROUP_CONCAT
+    Try to find every order_st expression in the list of GROUP_CONCAT
     arguments. If an expression is not found, prepend it to
     "all_fields". The resulting field list is used as input to create
     tmp table columns.
@@ -3366,7 +3366,7 @@ bool Item_func_group_concat::setup(THD *thd)
   {
     /*
       Currently we have to force conversion of BLOB values to VARCHAR's
-      if we are to store them in TREE objects used for ORDER BY and
+      if we are to store them in TREE objects used for order_st BY and
       DISTINCT. This leads to truncation if the BLOB's size exceeds
       Field_varstring::MAX_SIZE.
     */
@@ -3378,11 +3378,11 @@ bool Item_func_group_concat::setup(THD *thd)
     We have to create a temporary table to get descriptions of fields
     (types, sizes and so on).
 
-    Note that in the table, we first have the ORDER BY fields, then the
+    Note that in the table, we first have the order_st BY fields, then the
     field list.
   */
   if (!(table= create_tmp_table(thd, tmp_table_param, all_fields,
-                                (ORDER*) 0, 0, true,
+                                (order_st*) 0, 0, true,
                                 (select_lex->options | thd->options),
                                 HA_POS_ERROR, (char*) "")))
     return(true);
@@ -3401,7 +3401,7 @@ bool Item_func_group_concat::setup(THD *thd)
     tree= &tree_base;
     /*
       Create a tree for sorting. The tree is used to sort (according to the
-      syntax of this function). If there is no ORDER BY clause, we don't
+      syntax of this function). If there is no order_st BY clause, we don't
       create this tree.
     */
     init_tree(tree, (uint) min(thd->variables.max_heap_table_size,

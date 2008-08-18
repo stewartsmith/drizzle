@@ -154,12 +154,12 @@ Table *create_virtual_tmp_table(THD *thd, List<Create_field> &field_list);
 /* handler.cc */
 bool mysql_xa_recover(THD *thd);
 
-SORT_FIELD * make_unireg_sortorder(ORDER *order, uint *length,
+SORT_FIELD * make_unireg_sortorder(order_st *order, uint *length,
                                   SORT_FIELD *sortorder);
 int setup_order(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
-		List<Item> &fields, List <Item> &all_fields, ORDER *order);
+		List<Item> &fields, List <Item> &all_fields, order_st *order);
 int setup_group(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
-		List<Item> &fields, List<Item> &all_fields, ORDER *order,
+		List<Item> &fields, List<Item> &all_fields, order_st *order,
 		bool *hidden_group_fields);
 bool fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
                    Item **ref_pointer_array);
@@ -168,8 +168,8 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
                    ulong setup_tables_done_option);
 bool mysql_select(THD *thd, Item ***rref_pointer_array,
                   TABLE_LIST *tables, uint wild_num,  List<Item> &list,
-                  COND *conds, uint og_num, ORDER *order, ORDER *group,
-                  Item *having, ORDER *proc_param, uint64_t select_type, 
+                  COND *conds, uint og_num, order_st *order, order_st *group,
+                  Item *having, order_st *proc_param, uint64_t select_type, 
                   select_result *result, SELECT_LEX_UNIT *unit, 
                   SELECT_LEX *select_lex);
 void free_underlaid_joins(THD *thd, SELECT_LEX *select);
@@ -210,7 +210,7 @@ bool mysql_alter_table(THD *thd, char *new_db, char *new_name,
                        HA_CREATE_INFO *create_info,
                        TABLE_LIST *table_list,
                        Alter_info *alter_info,
-                       uint order_num, ORDER *order, bool ignore);
+                       uint order_num, order_st *order, bool ignore);
 bool mysql_recreate_table(THD *thd, TABLE_LIST *table_list);
 bool mysql_create_like_table(THD *thd, TABLE_LIST *table,
                              TABLE_LIST *src_table,
@@ -219,10 +219,10 @@ bool mysql_rename_table(handlerton *base, const char *old_db,
                         const char * old_name, const char *new_db,
                         const char * new_name, uint flags);
 bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
-                          Item **conds, uint order_num, ORDER *order);
+                          Item **conds, uint order_num, order_st *order);
 int mysql_update(THD *thd,TABLE_LIST *tables,List<Item> &fields,
 		 List<Item> &values,COND *conds,
-		 uint order_num, ORDER *order, ha_rows limit,
+		 uint order_num, order_st *order, ha_rows limit,
 		 enum enum_duplicates handle_duplicates, bool ignore);
 bool mysql_multi_update(THD *thd, TABLE_LIST *table_list,
                         List<Item> *fields, List<Item> *values,

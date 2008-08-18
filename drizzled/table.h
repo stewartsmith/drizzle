@@ -20,8 +20,10 @@
 #define DRIZZLED_TABLE_H
 
 #include <storage/myisam/myisam.h>
+#include <drizzled/order.h>
+#include <drizzled/filesort_info.h>
 
-class Item;				/* Needed by ORDER */
+class Item;				/* Needed by order_st */
 class Item_subselect;
 class st_select_lex_unit;
 class st_select_lex;
@@ -30,24 +32,6 @@ class Security_context;
 class TABLE_LIST;
 
 /*************************************************************************/
-
-/* Order clause list element */
-
-typedef struct st_order {
-  struct st_order *next;
-  Item	 **item;			/* Point at item in select fields */
-  Item	 *item_ptr;			/* Storage for initial item */
-  Item   **item_copy;			/* For SPs; the original item ptr */
-  int    counter;                       /* position in SELECT list, correct
-                                           only if counter_used is true*/
-  bool	 asc;				/* true if ascending */
-  bool	 free_me;			/* true if item isn't shared  */
-  bool	 in_field_list;			/* true if in select field list */
-  bool   counter_used;                  /* parameter was counter of columns */
-  Field  *field;			/* If tmp-table group */
-  char	 *buff;				/* If tmp-table group */
-  table_map used, depend_map;
-} ORDER;
 
 enum tmp_table_type
 {
@@ -59,21 +43,6 @@ bool mysql_frm_type(THD *thd, char *path, enum legacy_db_type *dbt);
 
 
 enum release_type { RELEASE_NORMAL, RELEASE_WAIT_FOR_DROP };
-
-typedef struct st_filesort_info
-{
-  IO_CACHE *io_cache;           /* If sorted through filesort */
-  uchar     **sort_keys;        /* Buffer for sorting keys */
-  uchar     *buffpek;           /* Buffer for buffpek structures */
-  uint      buffpek_len;        /* Max number of buffpeks in the buffer */
-  uchar     *addon_buf;         /* Pointer to a buffer if sorted with fields */
-  size_t    addon_length;       /* Length of the buffer */
-  struct st_sort_addon_field *addon_field;     /* Pointer to the fields info */
-  void    (*unpack)(struct st_sort_addon_field *, uchar *); /* To unpack back */
-  uchar     *record_pointers;    /* If sorted in memory */
-  ha_rows   found_records;      /* How many records in sort */
-} FILESORT_INFO;
-
 
 /*
   Values in this enum are used to indicate how a tables TIMESTAMP field
@@ -349,6 +318,13 @@ enum index_hint_type
   INDEX_HINT_FORCE
 };
 
+typedef struct st_table_field_w_type
+{
+  LEX_STRING name;
+  LEX_STRING type;
+  LEX_STRING cset;
+} TABLE_FIELD_W_TYPE;
+
 bool create_myisam_from_heap(THD *thd, Table *table,
                              MI_COLUMNDEF *start_recinfo,
                              MI_COLUMNDEF **recinfo, 
@@ -388,6 +364,8 @@ public:
                                uint64_t options);
   void free_tmp_table(THD *thd);
   bool open_tmp_table();
+
+  bool table_check_intact(const uint table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 
   /* See if this can be blown away */
   inline uint getDBStat () { return db_stat; }
@@ -433,7 +411,7 @@ public:
   Field_timestamp *timestamp_field;
 
   TABLE_LIST *pos_in_table_list;/* Element referring to this table */
-  ORDER		*group;
+  order_st *group;
   const char	*alias;            	  /* alias or table name */
   uchar		*null_flags;
   my_bitmap_map	*bitmap_init_value;
@@ -559,7 +537,7 @@ public:
 
   REGINFO reginfo;			/* field connections */
   MEM_ROOT mem_root;
-  FILESORT_INFO sort;
+  filesort_info_st sort;
 
   bool fill_item_list(List<Item> *item_list) const;
   void reset_item_list(List<Item> *item_list) const;
@@ -955,17 +933,7 @@ typedef struct st_open_table_list{
   uint32_t in_use,locked;
 } OPEN_TABLE_LIST;
 
-typedef struct st_table_field_w_type
-{
-  LEX_STRING name;
-  LEX_STRING type;
-  LEX_STRING cset;
-} TABLE_FIELD_W_TYPE;
 
-
-bool
-table_check_intact(Table *table, const uint table_f_count,
-                   const TABLE_FIELD_W_TYPE *table_def);
 
 static inline my_bitmap_map *tmp_use_all_columns(Table *table,
                                                  MY_BITMAP *bitmap)
@@ -980,20 +948,6 @@ static inline void tmp_restore_column_map(MY_BITMAP *bitmap,
                                           my_bitmap_map *old)
 {
   bitmap->bitmap= old;
-}
-
-/* The following is only needed for debugging */
-
-static inline my_bitmap_map *dbug_tmp_use_all_columns(Table *table __attribute__((unused)),
-                                                      MY_BITMAP *bitmap __attribute__((unused)))
-{
-  return 0;
-}
-
-static inline void dbug_tmp_restore_column_map(MY_BITMAP *bitmap __attribute__((unused)),
-                                               my_bitmap_map *old __attribute__((unused)))
-{
-  return;
 }
 
 size_t max_row_length(Table *table, const uchar *data);

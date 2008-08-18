@@ -227,9 +227,9 @@ bool mysql_derived_filling(THD *thd, LEX *lex, TABLE_LIST *orig_table_list)
 			first_select->item_list, first_select->where,
 			(first_select->order_list.elements+
 			 first_select->group_list.elements),
-			(ORDER *) first_select->order_list.first,
-			(ORDER *) first_select->group_list.first,
-			first_select->having, (ORDER*) NULL,
+			(order_st *) first_select->order_list.first,
+			(order_st *) first_select->group_list.first,
+			first_select->having, (order_st*) NULL,
 			(first_select->options | thd->options |
 			 SELECT_NO_UNLOCK),
 			derived_result, unit, first_select);

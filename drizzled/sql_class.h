@@ -2146,7 +2146,7 @@ class select_insert :public select_result_interceptor {
 
 
 class select_create: public select_insert {
-  ORDER *group;
+  order_st *group;
   TABLE_LIST *create_table;
   HA_CREATE_INFO *create_info;
   TABLE_LIST *select_tables;

@@ -158,8 +158,8 @@ static void prepare_record_for_error_message(int error, Table *table)
     fields		fields for update
     values		values of fields for update
     conds		WHERE clause expression
-    order_num		number of elemen in ORDER BY clause
-    order		ORDER BY clause list
+    order_num		number of elemen in order_st BY clause
+    order		order_st BY clause list
     limit		limit clause
     handle_duplicates	how to handle duplicates
 
@@ -175,7 +175,7 @@ int mysql_update(THD *thd,
                  List<Item> &fields,
                  List<Item> &values,
                  COND *conds,
-                 uint order_num, ORDER *order,
+                 uint order_num, order_st *order,
                  ha_rows limit,
                  enum enum_duplicates handle_duplicates __attribute__((unused)),
                  bool ignore)
@@ -352,7 +352,7 @@ int mysql_update(THD *thd,
     if (order && (need_sort || used_key_is_modified))
     {
       /*
-	Doing an ORDER BY;  Let filesort find and sort the rows we are going
+	Doing an order_st BY;  Let filesort find and sort the rows we are going
 	to update
         NOTE: filesort will call table->prepare_for_position()
       */
@@ -748,15 +748,15 @@ abort:
     thd			- thread handler
     table_list		- global/local table list
     conds		- conditions
-    order_num		- number of ORDER BY list entries
-    order		- ORDER BY clause list
+    order_num		- number of order_st BY list entries
+    order		- order_st BY clause list
 
   RETURN VALUE
     false OK
     true  error
 */
 bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
-			 Item **conds, uint order_num, ORDER *order)
+			 Item **conds, uint order_num, order_st *order)
 {
   List<Item> all_fields;
   SELECT_LEX *select_lex= &thd->lex->select_lex;
@@ -765,7 +765,7 @@ bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
     Statement-based replication of UPDATE ... LIMIT is not safe as order of
     rows is not defined, so in mixed mode we go to row-based.
 
-    Note that we may consider a statement as safe if ORDER BY primary_key
+    Note that we may consider a statement as safe if order_st BY primary_key
     is present. However it may confuse users to see very similiar statements
     replicated differently.
   */
@@ -1011,8 +1011,8 @@ bool mysql_multi_update(THD *thd,
   res= mysql_select(thd, &select_lex->ref_pointer_array,
                       table_list, select_lex->with_wild,
                       total_list,
-                      conds, 0, (ORDER *) NULL, (ORDER *)NULL, (Item *) NULL,
-                      (ORDER *)NULL,
+                      conds, 0, (order_st *) NULL, (order_st *)NULL, (Item *) NULL,
+                      (order_st *)NULL,
                       options | SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK |
                       OPTION_SETUP_TABLES_DONE,
                       result, unit, select_lex);
@@ -1238,7 +1238,7 @@ multi_update::initialize_tables(JOIN *join)
     Table *table=table_ref->table;
     uint cnt= table_ref->shared;
     List<Item> temp_fields;
-    ORDER     group;
+    order_st     group;
     TMP_TABLE_PARAM *tmp_param;
 
     table->mark_columns_needed_for_update();
@@ -1303,7 +1303,7 @@ multi_update::initialize_tables(JOIN *join)
     if (!(tmp_tables[cnt]=create_tmp_table(thd,
 					   tmp_param,
 					   temp_fields,
-					   (ORDER*) &group, 0, 0,
+					   (order_st*) &group, 0, 0,
 					   TMP_TABLE_ALL_COLUMNS,
 					   HA_POS_ERROR,
 					   (char *) "")))

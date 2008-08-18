@@ -230,7 +230,7 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
     {
       List_iterator<Item> li(lex->item_list);
       Item *item;
-      ORDER *order;
+      order_st *order;
 
       if (lex->where && (lex->where)->walk(processor, walk_subquery, argument))
         return 1;
@@ -243,12 +243,12 @@ bool Item_subselect::walk(Item_processor processor, bool walk_subquery,
         if (item->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (ORDER*) lex->order_list.first ; order; order= order->next)
+      for (order= (order_st*) lex->order_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
       }
-      for (order= (ORDER*) lex->group_list.first ; order; order= order->next)
+      for (order= (order_st*) lex->group_list.first ; order; order= order->next)
       {
         if ((*order->item)->walk(processor, walk_subquery, argument))
           return 1;
@@ -1613,7 +1613,7 @@ Item_in_subselect::select_in_like_transformer(JOIN *join, Comp_creator *func)
   {
     /*
       IN/SOME/ALL/ANY subqueries aren't support LIMIT clause. Without it
-      ORDER BY clause becomes meaningless thus we drop it here.
+      order_st BY clause becomes meaningless thus we drop it here.
     */
     SELECT_LEX *sl= current->master_unit()->first_select();
     for (; sl; sl= sl->next_select())
@@ -2010,10 +2010,10 @@ int subselect_single_select_engine::prepare()
 		    select_lex->where,
 		    select_lex->order_list.elements +
 		    select_lex->group_list.elements,
-		    (ORDER*) select_lex->order_list.first,
-		    (ORDER*) select_lex->group_list.first,
+		    (order_st*) select_lex->order_list.first,
+		    (order_st*) select_lex->group_list.first,
 		    select_lex->having,
-		    (ORDER*) 0, select_lex,
+		    (order_st*) 0, select_lex,
 		    select_lex->master_unit()))
     return 1;
   thd->lex->current_select= save_select;

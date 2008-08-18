@@ -1112,7 +1112,7 @@ class Item_func_group_concat : public Item_sum
    */
   Unique *unique_filter;
   Table *table;
-  ORDER **order;
+  order_st **order;
   Name_resolution_context *context;
   /** The number of ORDER BY items. */
   uint arg_count_order;

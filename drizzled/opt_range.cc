@@ -1777,11 +1777,11 @@ SEL_ARG *SEL_ARG::clone_tree(RANGE_OPT_PARAM *param)
     MAX_KEY if no such index was found.
 */
 
-uint get_index_for_order(Table *table, ORDER *order, ha_rows limit)
+uint get_index_for_order(Table *table, order_st *order, ha_rows limit)
 {
   uint idx;
   uint match_key= MAX_KEY, match_key_len= MAX_KEY_LENGTH + 1;
-  ORDER *ord;
+  order_st *ord;
   
   for (ord= order; ord; ord= ord->next)
     if (!ord->asc)
@@ -7847,7 +7847,7 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
   uint key_infix_len= 0;          /* Length of key_infix. */
   TRP_GROUP_MIN_MAX *read_plan= NULL; /* The eventually constructed TRP. */
   uint key_part_nr;
-  ORDER *tmp_group;
+  order_st *tmp_group;
   Item *item;
   Item_field *item_field;
 
@@ -8005,10 +8005,10 @@ get_best_group_min_max(PARAM *param, SEL_TREE *tree)
     }
     /*
       Check (GA2) if this is a DISTINCT query.
-      If GA2, then Store a new ORDER object in group_fields_array at the
-      position of the key part of item_field->field. Thus we get the ORDER
+      If GA2, then Store a new order_st object in group_fields_array at the
+      position of the key part of item_field->field. Thus we get the order_st
       objects for each field ordered as the corresponding key parts.
-      Later group_fields_array of ORDER objects is used to convert the query
+      Later group_fields_array of order_st objects is used to convert the query
       to a GROUP query.
     */
     else if (join->select_distinct)
