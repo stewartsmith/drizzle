@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-16 16:48-0700\n"
+"POT-Creation-Date: 2008-08-18 16:06-0700\n"
 "PO-Revision-Date: 2008-08-13 19:03+0000\n"
 "Last-Translator: matslindh <Unknown>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
@@ -1095,12 +1095,12 @@ msgstr ""
 msgid "Statement closed indirectly because of a preceeding %s() call"
 msgstr ""
 
-#: libdrizzle/local_infile.c:186 mysys/errors.c:52
+#: libdrizzle/local_infile.c:185 mysys/errors.c:52
 #, c-format
 msgid "File '%s' not found (Errcode: %d)"
 msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
 
-#: libdrizzle/local_infile.c:217 mysys/errors.c:26
+#: libdrizzle/local_infile.c:216 mysys/errors.c:26
 #, c-format
 msgid "Error reading file '%s' (Errcode: %d)"
 msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
@@ -1581,8 +1581,9 @@ msgstr "Ingen slik tabellplass"
 msgid "Tablespace not empty"
 msgstr "Tabellplassen er ikke tom"
 
-#: drizzled/authentication.cc:48 drizzled/handler.cc:362
-#: drizzled/sql_plugin.cc:790 drizzled/sql_udf.cc:100
+#: drizzled/authentication.cc:46 drizzled/handler.cc:362
+#: drizzled/sql_plugin.cc:790 drizzled/sql_show.cc:4671
+#: drizzled/sql_udf.cc:100
 #, c-format
 msgid "Plugin '%s' init function returned error."
 msgstr ""
@@ -6410,6 +6411,24 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
+#: drizzled/log_event.cc:990
+#, c-format
+msgid ""
+"Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
+msgstr ""
+
+#: drizzled/log_event.cc:3693
+#, c-format
+msgid ""
+"Slave: load data infile on table '%s' at log position %s in log '%s' "
+"produced %ld warning(s). Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4731
+#, fuzzy
+msgid "Out of memory while recording slave event"
+msgstr "Databasemotoren er tom for minne"
+
 #: drizzled/rpl_mi.cc:148
 #, c-format
 msgid "Failed to create a new master info file (file '%s', errno %d)"
@@ -6450,6 +6469,73 @@ msgstr "Klarte ikke å lese masterkonfigurasjonen"
 #, c-format
 msgid "Slave %s: %s%s Error_code: %d"
 msgstr "Slave %s: %s%s Feilkode: %d"
+
+#: drizzled/rpl_rli.cc:134
+#, c-format
+msgid ""
+"Neither --relay-log nor --relay-log-index were used; so replication may "
+"break when this MySQL server acts as a slave and has his hostname changed!! "
+"Please use '--relay-log=%s' to avoid this problem."
+msgstr ""
+
+#: drizzled/rpl_rli.cc:151
+msgid "Failed in open_log() called from init_relay_log_info()"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:168
+#, fuzzy, c-format
+msgid "Failed to create a new relay log info file ( file '%s', errno %d)"
+msgstr ""
+"Klarte ikke å lage en ny fil med masterinfo (filen '%s', feilnummer %d)"
+
+#: drizzled/rpl_rli.cc:176 drizzled/rpl_rli.cc:210
+#, fuzzy, c-format
+msgid "Failed to create a cache on relay log info file '%s'"
+msgstr ""
+"Klarte ikke å lage et hurtiglager (cache) for masterinfofilen (filen '%s')"
+
+#: drizzled/rpl_rli.cc:186
+msgid "Failed to open the relay log 'FIRST' (relay_log_pos 4)"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:202
+#, fuzzy, c-format
+msgid "Failed to open the existing relay log info file '%s' (errno %d)"
+msgstr ""
+"Klarte ikke å åpne den eksisterende masterinfofilen (filen '%s', feilnummer %"
+"d)"
+
+#: drizzled/rpl_rli.cc:253
+#, fuzzy, c-format
+msgid "Failed to open the relay log '%s' (relay_log_pos %s)"
+msgstr ""
+"Klarte ikke å åpne den eksisterende masterinfofilen (filen '%s', feilnummer %"
+"d)"
+
+#: drizzled/rpl_rli.cc:268
+#, fuzzy
+msgid "Failed to flush relay log info file"
+msgstr "Klarte ikke å skrive masterinfofilen til disk"
+
+#: drizzled/rpl_rli.cc:271
+#, fuzzy
+msgid "Error counting relay log space"
+msgstr "Feil ved lesing av relay-logghendelse: %s"
+
+#: drizzled/rpl_rli.cc:295
+#, c-format
+msgid "log %s listed in the index, but failed to stat"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:310
+#, fuzzy
+msgid "Could not find first log while counting relay log space"
+msgstr "Slave-I/O-tråden ble avbrutt mens den ventet på plass til relay-loggen"
+
+#: drizzled/rpl_rli.cc:967
+#, fuzzy
+msgid "Slave SQL thread is stopped because UNTIL condition is bad."
+msgstr "Slave-SQL-tråden stoppet fordi den kom til UNTIL-posisjonen sin i %s"
 
 #: drizzled/rpl_utility.cc:122
 #, c-format
@@ -7010,24 +7096,24 @@ msgstr ""
 "sletter binærloggene hos masteren og deretter oppgraderer masteren til en "
 "versjon som minst tilsvarer '%d.%d.%d'. Replikasjonen kan så bli restartet."
 
-#: drizzled/sql_base.cc:2544
+#: drizzled/sql_base.cc:2530
 #, c-format
 msgid "Table %s had a open data handler in reopen_table"
 msgstr ""
 
-#: drizzled/sql_base.cc:3203
+#: drizzled/sql_base.cc:3189
 #, c-format
 msgid "Couldn't repair table: %s.%s"
 msgstr ""
 
-#: drizzled/sql_base.cc:3246
+#: drizzled/sql_base.cc:3232
 #, c-format
 msgid ""
 "When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
 "s`.`%s`' to the binary log"
 msgstr ""
 
-#: drizzled/sql_base.cc:3983
+#: drizzled/sql_base.cc:3962
 #, fuzzy, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
@@ -7139,7 +7225,7 @@ msgstr "Feilet i send_file() da vi skrev data til klienten"
 msgid "Failed in send_file() while negotiating file transfer close"
 msgstr "Feilet i send_file() da vi forhandlet om avslutning av filoverføringen"
 
-#: drizzled/sql_select.cc:13156
+#: drizzled/sql_select.cc:11319
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr ""
@@ -7149,17 +7235,17 @@ msgstr ""
 msgid "Invalid (old?) table or database name '%s'"
 msgstr ""
 
-#: drizzled/sql_table.cc:2717
+#: drizzled/sql_table.cc:2716
 #, fuzzy, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Ukjent feil %d"
 
-#: drizzled/sql_table.cc:4999
+#: drizzled/sql_table.cc:4993
 #, c-format
 msgid "Could not open table %s.%s after rename\n"
 msgstr ""
 
-#: drizzled/sql_table.cc:5175
+#: drizzled/sql_table.cc:5169
 #, c-format
 msgid ""
 "ORDER BY ignored because there is a user-defined clustered index in the "
@@ -7171,7 +7257,7 @@ msgstr ""
 msgid "Can't allocate memory for udf structures"
 msgstr "Klarte ikke å allokere minne for masterinfostrukturen"
 
-#: drizzled/table.cc:494
+#: drizzled/table.cc:488
 #, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
@@ -7180,12 +7266,12 @@ msgstr ""
 "'%s' har manglende eller ugyldig tegnsett, og standardtegnsettet er "
 "multibyte, så kolonnetyper basert på tegn kan ha blitt endret"
 
-#: drizzled/table.cc:1702
+#: drizzled/table.cc:1694
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
 
-#: drizzled/table.cc:1709
+#: drizzled/table.cc:1701
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of MySQL and cannot be "
@@ -7193,7 +7279,7 @@ msgid ""
 msgstr ""
 "Tabellen '%-.64s' ble lagd med en annen versjon av MySQL og kan ikke bli lest"
 
-#: drizzled/table.cc:2300
+#: drizzled/table.cc:2313
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
@@ -7202,7 +7288,7 @@ msgstr ""
 "Gal definisjon av tabellen %s.%s: forventet kolonnen '%s' i posisjon %d, "
 "fant '%s'."
 
-#: drizzled/table.cc:2326
+#: drizzled/table.cc:2339
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
@@ -7211,7 +7297,7 @@ msgstr ""
 "Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
 "hadde typen %s, fant typen %s."
 
-#: drizzled/table.cc:2335
+#: drizzled/table.cc:2348
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -7220,7 +7306,7 @@ msgstr ""
 "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
 "i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe tegnsett."
 
-#: drizzled/table.cc:2345
+#: drizzled/table.cc:2358
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -7229,7 +7315,7 @@ msgstr ""
 "Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
 "i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
 
-#: drizzled/table.cc:2356
+#: drizzled/table.cc:2369
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "

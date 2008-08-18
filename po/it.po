@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-16 16:48-0700\n"
+"POT-Creation-Date: 2008-08-18 16:06-0700\n"
 "PO-Revision-Date: 2008-08-16 09:34+0000\n"
 "Last-Translator: Claudio Cherubino <sembee@ngweb.it>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -1098,12 +1098,12 @@ msgstr ""
 msgid "Statement closed indirectly because of a preceeding %s() call"
 msgstr ""
 
-#: libdrizzle/local_infile.c:186 mysys/errors.c:52
+#: libdrizzle/local_infile.c:185 mysys/errors.c:52
 #, c-format
 msgid "File '%s' not found (Errcode: %d)"
 msgstr "File '%s' non trovato (Errcode: %d)"
 
-#: libdrizzle/local_infile.c:217 mysys/errors.c:26
+#: libdrizzle/local_infile.c:216 mysys/errors.c:26
 #, c-format
 msgid "Error reading file '%s' (Errcode: %d)"
 msgstr "Errore di lettura dal file '%s' (Errcode: %d)"
@@ -1590,8 +1590,9 @@ msgstr "Non esiste un tablespace simile"
 msgid "Tablespace not empty"
 msgstr "Tablespace non vuoto"
 
-#: drizzled/authentication.cc:48 drizzled/handler.cc:362
-#: drizzled/sql_plugin.cc:790 drizzled/sql_udf.cc:100
+#: drizzled/authentication.cc:46 drizzled/handler.cc:362
+#: drizzled/sql_plugin.cc:790 drizzled/sql_show.cc:4671
+#: drizzled/sql_udf.cc:100
 #, c-format
 msgid "Plugin '%s' init function returned error."
 msgstr ""
@@ -6603,6 +6604,24 @@ msgid ""
 "mysqld with --tc-heuristic-recover={commit|rollback}"
 msgstr ""
 
+#: drizzled/log_event.cc:990
+#, c-format
+msgid ""
+"Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
+msgstr ""
+
+#: drizzled/log_event.cc:3693
+#, c-format
+msgid ""
+"Slave: load data infile on table '%s' at log position %s in log '%s' "
+"produced %ld warning(s). Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4731
+#, fuzzy
+msgid "Out of memory while recording slave event"
+msgstr "Memoria esaurita nel motore di memorizzazione"
+
 #: drizzled/rpl_mi.cc:148
 #, c-format
 msgid "Failed to create a new master info file (file '%s', errno %d)"
@@ -6645,6 +6664,79 @@ msgstr "Errore durante la lettura del il file di informazioni sul master"
 #, c-format
 msgid "Slave %s: %s%s Error_code: %d"
 msgstr "Slave %s: %s%s Error_code: %d"
+
+#: drizzled/rpl_rli.cc:134
+#, fuzzy, c-format
+msgid ""
+"Neither --relay-log nor --relay-log-index were used; so replication may "
+"break when this MySQL server acts as a slave and has his hostname changed!! "
+"Please use '--relay-log=%s' to avoid this problem."
+msgstr ""
+"Nessun argomento fornito a --log-bin, e --log-bin-index non è stato usato; "
+"in questo modo la replicazione può rompersi nel caso in cui server Drizzle "
+"agisca come master e il suo hostname dovesse cambiare!! Utilizzare '--log-"
+"bin=%s' per evitare il problema."
+
+#: drizzled/rpl_rli.cc:151
+msgid "Failed in open_log() called from init_relay_log_info()"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:168
+#, fuzzy, c-format
+msgid "Failed to create a new relay log info file ( file '%s', errno %d)"
+msgstr ""
+"Fallita creazione di un nuovo file di informazioni sul master (file '%s', "
+"errnum %d)"
+
+#: drizzled/rpl_rli.cc:176 drizzled/rpl_rli.cc:210
+#, fuzzy, c-format
+msgid "Failed to create a cache on relay log info file '%s'"
+msgstr ""
+"Fallita la creazione di una cache per il file di informazioni sul master "
+"(file '%s')"
+
+#: drizzled/rpl_rli.cc:186
+msgid "Failed to open the relay log 'FIRST' (relay_log_pos 4)"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:202
+#, fuzzy, c-format
+msgid "Failed to open the existing relay log info file '%s' (errno %d)"
+msgstr ""
+"Fallita l'apertura del il file di informazioni sul master (file '%s', errnum "
+"%d)"
+
+#: drizzled/rpl_rli.cc:253
+#, fuzzy, c-format
+msgid "Failed to open the relay log '%s' (relay_log_pos %s)"
+msgstr ""
+"Fallita l'apertura del il file di informazioni sul master (file '%s', errnum "
+"%d)"
+
+#: drizzled/rpl_rli.cc:268
+#, fuzzy
+msgid "Failed to flush relay log info file"
+msgstr "Fallita la scrittura [flush] del file di informazioni del master"
+
+#: drizzled/rpl_rli.cc:271
+#, fuzzy
+msgid "Error counting relay log space"
+msgstr "Errore nella lettura di un evento dal relay log: '%s'"
+
+#: drizzled/rpl_rli.cc:295
+#, c-format
+msgid "log %s listed in the index, but failed to stat"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:310
+#, fuzzy
+msgid "Could not find first log while counting relay log space"
+msgstr "Processo slave di I/O abortito in attesa di spazio per i relay log"
+
+#: drizzled/rpl_rli.cc:967
+#, fuzzy
+msgid "Slave SQL thread is stopped because UNTIL condition is bad."
+msgstr "Processo slave fermato perché ha raggiunto la posizione di UNTIL %s"
 
 #: drizzled/rpl_utility.cc:122
 #, c-format
@@ -7215,24 +7307,24 @@ msgstr ""
 "versione almeno pari a '%d.%d.%d'. Quindi la replicazione può essere "
 "riavviata."
 
-#: drizzled/sql_base.cc:2544
+#: drizzled/sql_base.cc:2530
 #, c-format
 msgid "Table %s had a open data handler in reopen_table"
 msgstr ""
 
-#: drizzled/sql_base.cc:3203
+#: drizzled/sql_base.cc:3189
 #, fuzzy, c-format
 msgid "Couldn't repair table: %s.%s"
 msgstr "Impossibile aprire la tabella %-.64s"
 
-#: drizzled/sql_base.cc:3246
+#: drizzled/sql_base.cc:3232
 #, c-format
 msgid ""
 "When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
 "s`.`%s`' to the binary log"
 msgstr ""
 
-#: drizzled/sql_base.cc:3983
+#: drizzled/sql_base.cc:3962
 #, fuzzy, c-format
 msgid "Could not remove temporary table: '%s', error: %d"
 msgstr "Impossibile creare tabella '%-.200s' (errno: %d)"
@@ -7348,7 +7440,7 @@ msgstr ""
 "Fallimento della funzione send_file() durante la negoziazione della chiusura "
 "del file"
 
-#: drizzled/sql_select.cc:13156
+#: drizzled/sql_select.cc:11319
 #, c-format
 msgid "Got error %d when reading table '%s'"
 msgstr ""
@@ -7358,17 +7450,17 @@ msgstr ""
 msgid "Invalid (old?) table or database name '%s'"
 msgstr ""
 
-#: drizzled/sql_table.cc:2717
+#: drizzled/sql_table.cc:2716
 #, fuzzy, c-format
 msgid "Unknown - internal error %d during operation"
 msgstr "Errore sconosciuto durante la pulizia dei registri"
 
-#: drizzled/sql_table.cc:4999
+#: drizzled/sql_table.cc:4993
 #, c-format
 msgid "Could not open table %s.%s after rename\n"
 msgstr ""
 
-#: drizzled/sql_table.cc:5175
+#: drizzled/sql_table.cc:5169
 #, c-format
 msgid ""
 "ORDER BY ignored because there is a user-defined clustered index in the "
@@ -7381,7 +7473,7 @@ msgid "Can't allocate memory for udf structures"
 msgstr ""
 "Allocazione di memoria fallita per la struttura di informazioni del master"
 
-#: drizzled/table.cc:494
+#: drizzled/table.cc:488
 #, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
@@ -7391,14 +7483,14 @@ msgstr ""
 "non è valido, inoltre l'insieme di caratteri predefinito è multi-byte, "
 "quindi le dimensioni delle colonne di delle colonne possono essere variate"
 
-#: drizzled/table.cc:1702
+#: drizzled/table.cc:1694
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
 msgstr ""
 "Ordinamento (collation) sconosciuto '%s' nella definizione della tabella "
 "'%-.64s'"
 
-#: drizzled/table.cc:1709
+#: drizzled/table.cc:1701
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of MySQL and cannot be "
@@ -7407,7 +7499,7 @@ msgstr ""
 "La tabella '%-.64s' è stata creata con una versione differente di Drizzle e "
 "non può essere letta"
 
-#: drizzled/table.cc:2300
+#: drizzled/table.cc:2313
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
@@ -7416,7 +7508,7 @@ msgstr ""
 "Definizione incorretta della tabella %s.%s: attesa colonna '%s' in posizione "
 "%d, trovata '%s'."
 
-#: drizzled/table.cc:2326
+#: drizzled/table.cc:2339
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
@@ -7425,7 +7517,7 @@ msgstr ""
 "Definizione incorretta della tabella %s.%s: la colonna '%s' in posizione %d "
 "dovrebbe avere tipo %s, trovato tipo %s."
 
-#: drizzled/table.cc:2335
+#: drizzled/table.cc:2348
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -7435,7 +7527,7 @@ msgstr ""
 "dovrebbe avere insieme di caratteri '%s' ma il tipo non ha insieme di "
 "caratteri."
 
-#: drizzled/table.cc:2345
+#: drizzled/table.cc:2358
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
@@ -7445,7 +7537,7 @@ msgstr ""
 "dovrebbe avere insieme di caratteri '%s' ma è stato trovato l'insieme di "
 "caratteri '%s'."
 
-#: drizzled/table.cc:2356
+#: drizzled/table.cc:2369
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
