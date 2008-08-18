@@ -281,7 +281,7 @@ extern ulong server_id;
 #include "sql_map.h"
 #include "my_decimal.h"
 #include "handler.h"
-#include "table_list.h"
+#include <drizzled/table_list.h>
 #include "sql_error.h"
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>

@@ -17,11 +17,6 @@
 
 LDADD = libserialize.la -lprotobuf
 
-bin_PROGRAMS = \
-	       table_reader \
-	       table_writer \
-	       schema_reader
-
 libserialize_la_CXXFLAGS =
 
 noinst_LTLIBRARIES = libserialize.la

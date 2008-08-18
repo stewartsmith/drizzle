@@ -139,6 +139,7 @@ noinst_HEADERS = item.h \
 		 show.h \
 		 tmp_table.h \
 		 sj_tmp_table.h \
+		 table_list.h \
 		 drizzled_error_messages.h \
 		 common_includes.h 
 
