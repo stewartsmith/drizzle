@@ -132,9 +132,6 @@ void set_key_field_ptr(KEY *key_info, const uchar *new_buf,
                        const uchar *old_buf);
 /* </UNUSED> */
 
-/* sql_update.cc */
-bool compare_record(Table *table);
-
 /* sql_base.cc */
 void table_cache_free(void);
 bool table_cache_init(void);

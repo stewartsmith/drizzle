@@ -7827,7 +7827,7 @@ make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after)
                   table->file->primary_key_is_clustered())
                 tab->index= table->s->primary_key;
               else
-                tab->index=find_shortest_key(table, & table->covering_keys);
+                tab->index= table->find_shortest_key(&table->covering_keys);
             }
 	    tab->read_first_record= join_read_first;
 	    tab->type=JT_NEXT;		// Read with index_first / index_next
@@ -12656,27 +12656,6 @@ static int test_if_order_by_key(order_st *order, Table *table, uint idx,
 }
 
 
-uint find_shortest_key(Table *table, const key_map *usable_keys)
-{
-  uint min_length= (uint) ~0;
-  uint best= MAX_KEY;
-  if (!usable_keys->is_clear_all())
-  {
-    for (uint nr=0; nr < table->s->keys ; nr++)
-    {
-      if (usable_keys->is_set(nr))
-      {
-        if (table->key_info[nr].key_length < min_length)
-        {
-          min_length=table->key_info[nr].key_length;
-          best=nr;
-        }
-      }
-    }
-  }
-  return best;
-}
-
 /**
   Test if a second key is the subkey of the first one.
 
@@ -13445,24 +13424,6 @@ err:
   return(-1);
 }
 
-/*****************************************************************************
-  Remove duplicates from tmp table
-  This should be recoded to add a unique index to the table and remove
-  duplicates
-  Table is a locked single thread table
-  fields is the number of fields to check (from the end)
-*****************************************************************************/
-
-static bool compare_record(Table *table, Field **ptr)
-{
-  for (; *ptr ; ptr++)
-  {
-    if ((*ptr)->cmp_offset(table->s->rec_buff_length))
-      return 1;
-  }
-  return 0;
-}
-
 static bool copy_blobs(Field **ptr)
 {
   for (; *ptr ; ptr++)
@@ -13590,7 +13551,7 @@ static int remove_dup_with_compare(THD *thd, Table *table, Field **first_field,
 	  break;
 	goto err;
       }
-      if (compare_record(table, first_field) == 0)
+      if (table->compare_record(first_field) == 0)
       {
 	if ((error=file->ha_delete_row(record)))
 	  goto err;

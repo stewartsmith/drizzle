@@ -2246,7 +2246,7 @@ int SQL_SELECT::test_quick_select(THD *thd, key_map keys_to_use,
     /* Calculate cost of full index read for the shortest covering index */
     if (!head->covering_keys.is_clear_all())
     {
-      int key_for_use= find_shortest_key(head, &head->covering_keys);
+      int key_for_use= head->find_shortest_key(&head->covering_keys);
       double key_read_time= 
         param.table->file->index_only_read_time(key_for_use, 
                                                 rows2double(records)) +

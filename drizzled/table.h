@@ -368,6 +368,9 @@ public:
   void free_tmp_table(THD *thd);
   bool open_tmp_table();
   size_t max_row_length(const uchar *data);
+  uint find_shortest_key(const key_map *usable_keys);
+  bool compare_record(Field **ptr);
+  bool compare_record();
 
   bool table_check_intact(const uint table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 

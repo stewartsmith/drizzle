@@ -661,7 +661,6 @@ bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
 		       uint elements, List<Item> &fields);
 void copy_fields(TMP_TABLE_PARAM *param);
 void copy_funcs(Item **func_ptr);
-uint find_shortest_key(Table *table, const key_map *usable_keys);
 Field* create_tmp_field_from_field(THD *thd, Field* org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint convert_blob_length);

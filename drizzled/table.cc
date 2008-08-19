@@ -4666,6 +4666,69 @@ void Table::restore_column_map(my_bitmap_map *old)
   read_set->bitmap= old;
 }
 
+uint Table::find_shortest_key(const key_map *usable_keys)
+{
+  uint min_length= (uint) ~0;
+  uint best= MAX_KEY;
+  if (!usable_keys->is_clear_all())
+  {
+    for (uint nr=0; nr < s->keys ; nr++)
+    {
+      if (usable_keys->is_set(nr))
+      {
+        if (key_info[nr].key_length < min_length)
+        {
+          min_length= key_info[nr].key_length;
+          best=nr;
+        }
+      }
+    }
+  }
+  return best;
+}
+
+/*****************************************************************************
+  Remove duplicates from tmp table
+  This should be recoded to add a unique index to the table and remove
+  duplicates
+  Table is a locked single thread table
+  fields is the number of fields to check (from the end)
+*****************************************************************************/
+
+bool Table::compare_record(Field **ptr)
+{
+  for (; *ptr ; ptr++)
+  {
+    if ((*ptr)->cmp_offset(s->rec_buff_length))
+      return true;
+  }
+  return false;
+}
+
+/* Return false if row hasn't changed */
+
+bool Table::compare_record()
+{
+  if (s->blob_fields + s->varchar_fields == 0)
+    return cmp_record(this, record[1]);
+  /* Compare null bits */
+  if (memcmp(null_flags,
+	     null_flags + s->rec_buff_length,
+	     s->null_bytes))
+    return true;				// Diff in NULL value
+  /* Compare updated fields */
+  for (Field **ptr= field ; *ptr ; ptr++)
+  {
+    if (bitmap_is_set(write_set, (*ptr)->field_index) &&
+	(*ptr)->cmp_binary_offset(s->rec_buff_length))
+      return true;
+  }
+  return false;
+}
+
+
+
+
 
 /*****************************************************************************
   The different ways to read a record

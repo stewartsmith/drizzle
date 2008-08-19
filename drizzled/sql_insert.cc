@@ -902,7 +902,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
              !bitmap_is_subset(table->write_set, table->read_set)) ||
-            compare_record(table))
+            table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],
                                                 table->record[0])) &&
