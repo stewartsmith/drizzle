@@ -1680,7 +1680,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       }
       else
       {
-        if (!(table= open_table(thd, create_table, thd->mem_root, (bool*) 0,
+        if (!(table= open_table(thd, create_table, (bool*) 0,
                                 DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {

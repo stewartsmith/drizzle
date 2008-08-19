@@ -15934,8 +15934,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        if (table_list->schema_table &&
-            table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
+        if (table_list->schema_table && table_list->schema_table->i_s_requested_object & OPTIMIZE_I_S_TABLE)
         {
           const char *tmp_buff;
           int f_idx;

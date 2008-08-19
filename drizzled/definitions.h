@@ -154,7 +154,6 @@
 #define SEARCH_PRG		64	/* S|k efter registret i 'prg_dev' */
 #define READ_USED_NAMES		128	/* L{s anv{nda formul{rnamn */
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
-#define READ_SCREENS		1024	/* Read screens, info and helpfile */
 #define DELAYED_OPEN		4096	/* Open table later */
 #define OPEN_VIEW		8192	/* Allow open on view */
 #define OPEN_VIEW_NO_PARSE     16384    /* Open frm only if it's a view,
