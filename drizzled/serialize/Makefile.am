@@ -19,29 +19,43 @@ LDADD = libserialize.la -lprotobuf
 
 libserialize_la_CXXFLAGS =
 
-noinst_LTLIBRARIES = libserialize.la
+TESTS_ENVIRONMENT = sh
+TESTS = check_length.sh
 
-libserialize_la_SOURCES = \
-			  table.pb.cc \
-			  schema.pb.cc 
+PROTOC = protoc
 
-noinst_HEADERS = \
-		 table.pb.h \
-		 schema.pb.h \
-		 serialize.h
-
-schema.pb.h schema.pb.cc: schema.proto
-	protoc --cpp_out=${top_builddir}/drizzled/serialize schema.proto
-
-table.pb.h table.pb.cc: table.proto
-	protoc --cpp_out=${top_builddir}/drizzled/serialize table.proto
-	
-DEFS= @DEFS@
+%.pb.h %.pb.cc : %.proto
+	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<
 
 bin_PROGRAMS = \
 	       table_reader \
 	       table_writer \
+               binlog_writer \
+               binlog_reader \
 	       schema_reader
+
+check_PROGRAMS = length
+
+noinst_LTLIBRARIES = libserialize.la
+
+libserialize_la_SOURCES = \
+			  table.pb.cc \
+			  binary_log.pb.cc \
+			  schema.pb.cc
+
+noinst_HEADERS = table.pb.h \
+		 schema.pb.h \
+		 binary_log.pb.h \
+		 binlog_encoding.h \
+		 serialize.h
+
+DEFS= @DEFS@
+
+binlog_reader_SOURCES = binlog_reader.cc binary_log.cc binlog_encoding.h
+binlog_reader_CXXFLAGS = 
+
+binlog_writer_SOURCES = binlog_writer.cc binary_log.cc binlog_encoding.h
+binlog_writer_CXXFLAGS = 
 
 schema_reader_SOURCES =  schema_reader.cc
 
@@ -51,5 +65,12 @@ table_reader_CXXFLAGS =
 table_writer_SOURCES =  table_writer.cc
 table_writer_CXXFLAGS =
 
-EXTRA_DIST = schema.proto table.proto
-BUILT_SOURCES = schema.pb.h schema.pb.cc table.pb.h table.pb.cc
+length_SOURCES = length.cc binlog_encoding.h
+length_CXXFLAGS = -fexceptions
+
+EXTRA_DIST = schema.proto table.proto binary_log.proto
+BUILT_SOURCES = schema.pb.h \
+		table.pb.h \
+		schema.pb.cc \
+		table.pb.cc \
+		binary_log.pb.cc
