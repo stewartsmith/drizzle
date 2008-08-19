@@ -51,10 +51,10 @@ noinst_HEADERS = table.pb.h \
 
 DEFS= @DEFS@
 
-binlog_reader_SOURCES = binlog_reader.cc binary_log.cc binlog_encoding.h
+binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
 binlog_reader_CXXFLAGS = 
 
-binlog_writer_SOURCES = binlog_writer.cc binary_log.cc binlog_encoding.h
+binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
 binlog_writer_CXXFLAGS = 
 
 schema_reader_SOURCES =  schema_reader.cc
@@ -65,7 +65,7 @@ table_reader_CXXFLAGS =
 table_writer_SOURCES =  table_writer.cc
 table_writer_CXXFLAGS =
 
-length_SOURCES = length.cc binlog_encoding.h
+length_SOURCES = length.cc
 length_CXXFLAGS = -fexceptions
 
 EXTRA_DIST = schema.proto table.proto binary_log.proto
