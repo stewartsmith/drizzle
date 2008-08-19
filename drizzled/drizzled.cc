@@ -432,7 +432,7 @@ SHOW_COMP_OPTION have_compress;
 pthread_key(MEM_ROOT**,THR_MALLOC);
 pthread_key(THD*, THR_THD);
 pthread_mutex_t LOCK_mysql_create_db, LOCK_open, LOCK_thread_count,
-		LOCK_mapped_file, LOCK_status, LOCK_global_read_lock,
+		LOCK_status, LOCK_global_read_lock,
 		LOCK_error_log, LOCK_uuid_generator,
 	        LOCK_global_system_variables,
 		LOCK_user_conn, LOCK_slave_list, LOCK_active_mi,
@@ -916,7 +916,6 @@ static void clean_up_mutexes()
   (void) pthread_mutex_destroy(&LOCK_lock_db);
   (void) pthread_mutex_destroy(&LOCK_open);
   (void) pthread_mutex_destroy(&LOCK_thread_count);
-  (void) pthread_mutex_destroy(&LOCK_mapped_file);
   (void) pthread_mutex_destroy(&LOCK_status);
   (void) pthread_mutex_destroy(&LOCK_error_log);
   (void) pthread_mutex_destroy(&LOCK_user_conn);
@@ -1794,7 +1793,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
                      (REFRESH_LOG | REFRESH_TABLES | REFRESH_FAST |
                       REFRESH_GRANT |
                       REFRESH_THREADS | REFRESH_HOSTS),
-                     (TABLE_LIST*) 0, &not_used); // Flush logs
+                     (TableList*) 0, &not_used); // Flush logs
       }
       logger.set_handlers(LOG_FILE,
                           opt_slow_log ? log_output_options : LOG_NONE,
@@ -2285,7 +2284,6 @@ static int init_thread_environment()
   (void) pthread_mutex_init(&LOCK_lock_db,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_open, NULL);
   (void) pthread_mutex_init(&LOCK_thread_count,MY_MUTEX_INIT_FAST);
-  (void) pthread_mutex_init(&LOCK_mapped_file,MY_MUTEX_INIT_SLOW);
   (void) pthread_mutex_init(&LOCK_status,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_error_log,MY_MUTEX_INIT_FAST);
   (void) pthread_mutex_init(&LOCK_user_conn, MY_MUTEX_INIT_FAST);

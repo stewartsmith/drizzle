@@ -292,9 +292,9 @@ public:
   /* 
     Location of the subquery predicate. It is either
      - pointer to join nest if the subquery predicate is in the ON expression
-     - (TABLE_LIST*)1 if the predicate is in the WHERE.
+     - (TableList*)1 if the predicate is in the WHERE.
   */
-  TABLE_LIST *expr_join_nest;
+  TableList *expr_join_nest;
 
   /* The method chosen to execute the IN predicate.  */
   enum enum_exec_method {
@@ -444,7 +444,7 @@ public:
   virtual void exclude()= 0;
   virtual bool may_be_null() { return maybe_null; };
   virtual table_map upper_select_const_tables()= 0;
-  static table_map calc_const_tables(TABLE_LIST *);
+  static table_map calc_const_tables(TableList *);
   virtual void print(String *str, enum_query_type query_type)= 0;
   virtual bool change_result(Item_subselect *si,
                              select_result_interceptor *result)= 0;

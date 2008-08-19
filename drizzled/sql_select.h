@@ -267,7 +267,7 @@ typedef struct st_join_table {
     Embedding SJ-nest (may be not the direct parent), or NULL if none.
     This variable holds the result of table pullout.
   */
-  TABLE_LIST    *emb_sj_nest;
+  TableList    *emb_sj_nest;
 
   /* Variables for semi-join duplicate elimination */
   SJ_TMP_TABLE  *flush_weedout_table;
@@ -456,17 +456,17 @@ public:
   bool group_optimized_away;
 
   /*
-    simple_xxxxx is set if ORDER/GROUP BY doesn't include any references
+    simple_xxxxx is set if order_st/GROUP BY doesn't include any references
     to other tables than the first non-constant table in the JOIN.
-    It's also set if ORDER/GROUP BY is empty.
+    It's also set if order_st/GROUP BY is empty.
   */
   bool simple_order, simple_group;
   /**
     Is set only in case if we have a GROUP BY clause
-    and no ORDER BY after constant elimination of 'order'.
+    and no order_st BY after constant elimination of 'order'.
   */
   bool no_order;
-  /** Is set if we have a GROUP BY and we have ORDER BY on a constant. */
+  /** Is set if we have a GROUP BY and we have order_st BY on a constant. */
   bool          skip_sort_order;
 
   bool need_tmp, hidden_group_fields;
@@ -480,11 +480,11 @@ public:
   List<Item> &fields_list; ///< hold field list passed to mysql_select
   int error;
 
-  ORDER *order, *group_list, *proc_param; //hold parameters of mysql_select
+  order_st *order, *group_list, *proc_param; //hold parameters of mysql_select
   COND *conds;                            // ---"---
   Item *conds_history;                    // store WHERE for explain
-  TABLE_LIST *tables_list;           ///<hold 'tables' parameter of mysql_select
-  List<TABLE_LIST> *join_list;       ///< list of joined tables in reverse order
+  TableList *tables_list;           ///<hold 'tables' parameter of mysql_select
+  List<TableList> *join_list;       ///< list of joined tables in reverse order
   COND_EQUAL *cond_equal;
   SQL_SELECT *select;                ///<created in optimisation phase
   JOIN_TAB *return_tab;              ///<used only for outer joins
@@ -580,9 +580,9 @@ public:
     no_const_tables= false;
   }
 
-  int prepare(Item ***rref_pointer_array, TABLE_LIST *tables, uint wind_num,
-	      COND *conds, uint og_num, ORDER *order, ORDER *group,
-	      Item *having, ORDER *proc_param, SELECT_LEX *select,
+  int prepare(Item ***rref_pointer_array, TableList *tables, uint wind_num,
+	      COND *conds, uint og_num, order_st *order, order_st *group,
+	      Item *having, order_st *proc_param, SELECT_LEX *select,
 	      SELECT_LEX_UNIT *unit);
   int optimize();
   int reinit();
@@ -649,7 +649,7 @@ void TEST_join(JOIN *join);
 /* Extern functions in sql_select.cc */
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
 Table *create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
-			ORDER *group, bool distinct, bool save_sum_fields,
+			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			char* alias);
 void free_tmp_table(THD *thd, Table *entry);
@@ -668,7 +668,7 @@ Field* create_tmp_field_from_field(THD *thd, Field* org_field,
                                                                       
 /* functions from opt_sum.cc */
 bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
-int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds);
+int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds);
 
 /* from sql_delete.cc, used by opt_range.cc */
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
@@ -753,11 +753,7 @@ class store_key_field: public store_key
  protected: 
   enum store_key_result copy_inner()
   {
-    Table *table= copy_field.to_field->table;
-    my_bitmap_map *old_map= dbug_tmp_use_all_columns(table,
-                                                     table->write_set);
     copy_field.do_copy(&copy_field);
-    dbug_tmp_restore_column_map(table->write_set, old_map);
     null_key= to_field->is_null();
     return err != 0 ? STORE_KEY_FATAL : STORE_KEY_OK;
   }
@@ -780,11 +776,7 @@ public:
  protected:  
   enum store_key_result copy_inner()
   {
-    Table *table= to_field->table;
-    my_bitmap_map *old_map= dbug_tmp_use_all_columns(table,
-                                                     table->write_set);
     int res= item->save_in_field(to_field, 1);
-    dbug_tmp_restore_column_map(table->write_set, old_map);
     null_key= to_field->is_null() || item->null_value;
     return (err != 0 || res > 2 ? STORE_KEY_FATAL : (store_key_result) res); 
   }

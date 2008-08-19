@@ -365,10 +365,10 @@ public:
   virtual bool set_braces(bool value);
   virtual bool inc_in_sum_expr();
   virtual uint32_t get_in_sum_expr();
-  virtual TABLE_LIST* get_table_list();
+  virtual TableList* get_table_list();
   virtual List<Item>* get_item_list();
   virtual uint32_t get_table_join_options();
-  virtual TABLE_LIST *add_table_to_list(THD *thd, Table_ident *table,
+  virtual TableList *add_table_to_list(THD *thd, Table_ident *table,
                                         LEX_STRING *alias,
                                         uint32_t table_options,
                                         thr_lock_type flags= TL_UNLOCK,
@@ -394,7 +394,7 @@ class JOIN;
 class select_union;
 class st_select_lex_unit: public st_select_lex_node {
 protected:
-  TABLE_LIST result_table_list;
+  TableList result_table_list;
   select_union *union_result;
   Table *table; /* temporary table using for appending UNION results */
 
@@ -498,7 +498,7 @@ public:
   /* point on lex in which it was created, used in view subquery detection */
   st_lex *parent_lex;
   enum olap_type olap;
-  /* FROM clause - points to the beginning of the TABLE_LIST::next_local list. */
+  /* FROM clause - points to the beginning of the TableList::next_local list. */
   SQL_LIST	      table_list;
   SQL_LIST	      group_list; /* GROUP BY clause. */
   List<Item>          item_list;  /* list of fields & expressions */
@@ -511,16 +511,16 @@ public:
   List<Item_real_func> *ftfunc_list;
   List<Item_real_func> ftfunc_list_alloc;
   JOIN *join; /* after JOIN::prepare it is pointer to corresponding JOIN */
-  List<TABLE_LIST> top_join_list; /* join list of the top level          */
-  List<TABLE_LIST> *join_list;    /* list for the currently parsed join  */
-  TABLE_LIST *embedding;          /* table embedding to the above list   */
-  List<TABLE_LIST> sj_nests;
+  List<TableList> top_join_list; /* join list of the top level          */
+  List<TableList> *join_list;    /* list for the currently parsed join  */
+  TableList *embedding;          /* table embedding to the above list   */
+  List<TableList> sj_nests;
   /*
     Beginning of the list of leaves in a FROM clause, where the leaves
     inlcude all base tables including view tables. The tables are connected
-    by TABLE_LIST::next_leaf, so leaf_tables points to the left-most leaf.
+    by TableList::next_leaf, so leaf_tables points to the left-most leaf.
   */
-  TABLE_LIST *leaf_tables;
+  TableList *leaf_tables;
   const char *type;               /* type of select for EXPLAIN          */
 
   SQL_LIST order_list;                /* ORDER clause */
@@ -601,13 +601,13 @@ public:
   /* 
     This is a copy of the original JOIN USING list that comes from
     the parser. The parser :
-      1. Sets the natural_join of the second TABLE_LIST in the join
+      1. Sets the natural_join of the second TableList in the join
          and the st_select_lex::prev_join_using.
-      2. Makes a parent TABLE_LIST and sets its is_natural_join/
+      2. Makes a parent TableList and sets its is_natural_join/
        join_using_fields members.
-      3. Uses the wrapper TABLE_LIST as a table in the upper level.
+      3. Uses the wrapper TableList as a table in the upper level.
     We cannot assign directly to join_using_fields in the parser because
-    at stage (1.) the parent TABLE_LIST is not constructed yet and
+    at stage (1.) the parent TableList is not constructed yet and
     the assignment will override the JOIN USING fields of the lower level
     joins on the right.
   */
@@ -653,18 +653,18 @@ public:
   bool add_item_to_list(THD *thd, Item *item);
   bool add_group_to_list(THD *thd, Item *item, bool asc);
   bool add_order_to_list(THD *thd, Item *item, bool asc);
-  TABLE_LIST* add_table_to_list(THD *thd, Table_ident *table,
+  TableList* add_table_to_list(THD *thd, Table_ident *table,
 				LEX_STRING *alias,
 				uint32_t table_options,
 				thr_lock_type flags= TL_UNLOCK,
 				List<Index_hint> *hints= 0,
                                 LEX_STRING *option= 0);
-  TABLE_LIST* get_table_list();
+  TableList* get_table_list();
   bool init_nested_join(THD *thd);
-  TABLE_LIST *end_nested_join(THD *thd);
-  TABLE_LIST *nest_last_join(THD *thd);
-  void add_joined_table(TABLE_LIST *table);
-  TABLE_LIST *convert_right_join();
+  TableList *end_nested_join(THD *thd);
+  TableList *nest_last_join(THD *thd);
+  void add_joined_table(TableList *table);
+  TableList *convert_right_join();
   List<Item>* get_item_list();
   uint32_t get_table_join_options();
   void set_lock_for_tables(thr_lock_type lock_type);
@@ -693,7 +693,7 @@ public:
   bool setup_ref_array(THD *thd, uint32_t order_group_num);
   void print(THD *thd, String *str, enum_query_type query_type);
   static void print_order(String *str,
-                          ORDER *order,
+                          order_st *order,
                           enum_query_type query_type);
   void print_limit(THD *thd, String *str, enum_query_type query_type);
   void fix_prepare_information(THD *thd, Item **conds, Item **having_conds);
@@ -838,16 +838,16 @@ class Query_tables_list
 {
 public:
   /* Global list of all tables used by this statement */
-  TABLE_LIST *query_tables;
+  TableList *query_tables;
   /* Pointer to next_global member of last element in the previous list. */
-  TABLE_LIST **query_tables_last;
+  TableList **query_tables_last;
   /*
     If non-0 then indicates that query requires prelocking and points to
     next_global member of last own element in query table list (i.e. last
     table which was not added to it as part of preparation to prelocking).
     0 - indicates that this query does not need prelocking.
   */
-  TABLE_LIST **query_tables_own_last;
+  TableList **query_tables_own_last;
   /*
     Set of stored routines called by statement.
     (Note that we use lazy-initialization for this hash).
@@ -887,13 +887,13 @@ public:
     If you are using this function, you must ensure that the table
     object, in particular table->db member, is initialized.
   */
-  void add_to_query_tables(TABLE_LIST *table)
+  void add_to_query_tables(TableList *table)
   {
     *(table->prev_global= query_tables_last)= table;
     query_tables_last= &table->next_global;
   }
   /* Return pointer to first not-own table in query-tables or 0 */
-  TABLE_LIST* first_not_own_table()
+  TableList* first_not_own_table()
   {
     return ( query_tables_own_last ? *query_tables_own_last : 0);
   }
@@ -1401,7 +1401,7 @@ typedef struct st_lex : public Query_tables_list
   const CHARSET_INFO *charset;
   bool text_string_is_7bit;
   /* store original leaf_tables for INSERT SELECT and PS/SP */
-  TABLE_LIST *leaf_tables_insert;
+  TableList *leaf_tables_insert;
 
   List<Key_part_spec> col_list;
   List<Key_part_spec> ref_list;
@@ -1530,8 +1530,8 @@ typedef struct st_lex : public Query_tables_list
     delete_dynamic(&plugins);
   }
 
-  TABLE_LIST *unlink_first_table(bool *link_to_local);
-  void link_first_table_back(TABLE_LIST *first, bool link_to_local);
+  TableList *unlink_first_table(bool *link_to_local);
+  void link_first_table_back(TableList *first, bool link_to_local);
   void first_lists_tables_same();
 
   bool can_be_merged();

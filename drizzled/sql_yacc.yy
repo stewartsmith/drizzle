@@ -323,7 +323,7 @@ bool setup_select_in_parentheses(LEX *lex)
   List<String> *string_list;
   String *string;
   Key_part_spec *key_part;
-  TABLE_LIST *table_list;
+  TableList *table_list;
   udf_func *udf;
   LEX_USER *lex_user;
   struct sys_var_with_base variable;
@@ -2380,7 +2380,7 @@ alter:
             lex->col_list.empty();
             lex->select_lex.init_order();
             lex->select_lex.db=
-              ((TABLE_LIST*) lex->select_lex.table_list.first)->db;
+              ((TableList*) lex->select_lex.table_list.first)->db;
             memset(&lex->create_info, 0, sizeof(lex->create_info));
             lex->create_info.db_type= 0;
             lex->create_info.default_table_charset= NULL;
@@ -2991,7 +2991,7 @@ select_from:
           {
             Select->context.table_list=
               Select->context.first_name_resolution_table= 
-                (TABLE_LIST *) Select->table_list.first;
+                (TableList *) Select->table_list.first;
           }
         ;
 
@@ -4380,7 +4380,7 @@ select_derived_init:
             }
 
             SELECT_LEX *sel= lex->current_select;
-            TABLE_LIST *embedding;
+            TableList *embedding;
             if (!sel->embedding || sel->end_nested_join(lex->thd))
             {
               /* we are not in parentheses */
@@ -5323,14 +5323,14 @@ show:
         ;
 
 show_param:
-           DATABASES wild_and_where
+           DATABASES show_wild
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_DATABASES;
              if (prepare_schema_table(YYTHD, lex, 0, SCH_SCHEMATA))
                DRIZZLE_YYABORT;
            }
-         | opt_full TABLES opt_db wild_and_where
+         | opt_full TABLES opt_db show_wild
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLES;
@@ -5338,7 +5338,7 @@ show_param:
              if (prepare_schema_table(YYTHD, lex, 0, SCH_TABLE_NAMES))
                DRIZZLE_YYABORT;
            }
-         | TABLE_SYM STATUS_SYM opt_db wild_and_where
+         | TABLE_SYM STATUS_SYM opt_db show_wild
            {
              LEX *lex= Lex;
              lex->sql_command= SQLCOM_SHOW_TABLE_STATUS;
@@ -5346,7 +5346,7 @@ show_param:
              if (prepare_schema_table(YYTHD, lex, 0, SCH_TABLES))
                DRIZZLE_YYABORT;
            }
-        | OPEN_SYM TABLES opt_db wild_and_where
+        | OPEN_SYM TABLES opt_db show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_OPEN_TABLES;
@@ -5359,7 +5359,7 @@ show_param:
             Lex->create_info.db_type= $2; 
             Lex->sql_command= SQLCOM_SHOW_ENGINE_STATUS;
           }
-        | opt_full COLUMNS from_or_in table_ident opt_db wild_and_where
+        | opt_full COLUMNS from_or_in table_ident opt_db show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_FIELDS;
@@ -5398,7 +5398,7 @@ show_param:
           { Lex->sql_command = SQLCOM_SHOW_WARNS;}
         | ERRORS opt_limit_clause_init
           { Lex->sql_command = SQLCOM_SHOW_ERRORS;}
-        | opt_var_type STATUS_SYM wild_and_where
+        | opt_var_type STATUS_SYM show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_STATUS;
@@ -5408,7 +5408,7 @@ show_param:
           }
         | opt_full PROCESSLIST_SYM
           { Lex->sql_command= SQLCOM_SHOW_PROCESSLIST;}
-        | opt_var_type  VARIABLES wild_and_where
+        | opt_var_type  VARIABLES show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_VARIABLES;
@@ -5416,14 +5416,14 @@ show_param:
             if (prepare_schema_table(YYTHD, lex, 0, SCH_VARIABLES))
               DRIZZLE_YYABORT;
           }
-        | charset wild_and_where
+        | charset show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_CHARSETS;
             if (prepare_schema_table(YYTHD, lex, 0, SCH_CHARSETS))
               DRIZZLE_YYABORT;
           }
-        | COLLATION_SYM wild_and_where
+        | COLLATION_SYM show_wild
           {
             LEX *lex= Lex;
             lex->sql_command= SQLCOM_SHOW_COLLATIONS;
@@ -5482,18 +5482,12 @@ binlog_from:
         | FROM ulonglong_num { Lex->mi.pos = $2; }
         ;
 
-wild_and_where:
+show_wild:
           /* empty */
         | LIKE TEXT_STRING_sys
           {
             Lex->wild= new (YYTHD->mem_root) String($2.str, $2.length,
                                                     system_charset_info);
-          }
-        | WHERE expr
-          {
-            Select->where= $2;
-            if ($2)
-              $2->top_level_item();
           }
         ;
 
@@ -6138,7 +6132,7 @@ field_ident:
           ident { $$=$1;}
         | ident '.' ident '.' ident
           {
-            TABLE_LIST *table= (TABLE_LIST*) Select->table_list.first;
+            TableList *table= (TableList*) Select->table_list.first;
             if (my_strcasecmp(table_alias_charset, $1.str, table->db))
             {
               my_error(ER_WRONG_DB_NAME, MYF(0), $1.str);
@@ -6154,7 +6148,7 @@ field_ident:
           }
         | ident '.' ident
           {
-            TABLE_LIST *table= (TABLE_LIST*) Select->table_list.first;
+            TableList *table= (TableList*) Select->table_list.first;
             if (my_strcasecmp(table_alias_charset, $1.str, table->alias))
             {
               my_error(ER_WRONG_TABLE_NAME, MYF(0), $1.str);
@@ -6736,7 +6730,7 @@ table_lock_list:
 table_lock:
         table_ident opt_table_alias table_lock_info
         {
-          TABLE_LIST *tlist;
+          TableList *tlist;
           if (!(tlist= Select->add_table_to_list(YYTHD, $1, $2, 0,
                                                  $3.lock_type)))
             DRIZZLE_YYABORT; /* purecov: inspected */

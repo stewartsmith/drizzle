@@ -35,7 +35,7 @@ static TYPELIB deletable_extentions=
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
 				 const char *db, const char *path, uint level, 
-                                 TABLE_LIST **dropped_tables);
+                                 TableList **dropped_tables);
          
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(THD *thd,
@@ -772,7 +772,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
   uint length;
-  TABLE_LIST* dropped_tables= 0;
+  TableList* dropped_tables= 0;
 
   if (db && (strcmp(db, "information_schema") == 0))
   {
@@ -880,7 +880,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   else if (mysql_bin_log.is_open())
   {
     char *query, *query_pos, *query_end, *query_data_start;
-    TABLE_LIST *tbl;
+    TableList *tbl;
     uint db_len;
 
     if (!(query= (char*) thd->alloc(MAX_DROP_TABLE_Q_LEN)))
@@ -937,12 +937,12 @@ exit2:
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
 				 const char *org_path, uint level,
-                                 TABLE_LIST **dropped_tables)
+                                 TableList **dropped_tables)
 {
   long deleted=0;
   uint32_t found_other_files=0;
   char filePath[FN_REFLEN];
-  TABLE_LIST *tot_list=0, **tot_list_next;
+  TableList *tot_list=0, **tot_list_next;
 
   tot_list_next= &tot_list;
 
@@ -972,7 +972,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
     {
       /* Drop the table nicely */
       *extension= 0;			// Remove extension
-      TABLE_LIST *table_list=(TABLE_LIST*)
+      TableList *table_list=(TableList*)
                               thd->calloc(sizeof(*table_list) + 
                                           strlen(db) + 1 +
                                           MYSQL50_TABLE_NAME_PREFIX_LENGTH + 

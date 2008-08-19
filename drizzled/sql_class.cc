@@ -1043,9 +1043,9 @@ void THD::update_charset()
 
 /* routings to adding tables to list of changed in transaction tables */
 
-inline static void list_include(CHANGED_TABLE_LIST** prev,
-				CHANGED_TABLE_LIST* curr,
-				CHANGED_TABLE_LIST* new_table)
+inline static void list_include(CHANGED_TableList** prev,
+				CHANGED_TableList* curr,
+				CHANGED_TableList* new_table)
 {
   if (new_table)
   {
@@ -1068,8 +1068,8 @@ void THD::add_changed_table(Table *table)
 
 void THD::add_changed_table(const char *key, long key_length)
 {
-  CHANGED_TABLE_LIST **prev_changed = &transaction.changed_tables;
-  CHANGED_TABLE_LIST *curr = transaction.changed_tables;
+  CHANGED_TableList **prev_changed = &transaction.changed_tables;
+  CHANGED_TableList *curr = transaction.changed_tables;
 
   for (; curr; prev_changed = &(curr->next), curr = curr->next)
   {
@@ -1098,20 +1098,20 @@ void THD::add_changed_table(const char *key, long key_length)
 }
 
 
-CHANGED_TABLE_LIST* THD::changed_table_dup(const char *key, long key_length)
+CHANGED_TableList* THD::changed_table_dup(const char *key, long key_length)
 {
-  CHANGED_TABLE_LIST* new_table = 
-    (CHANGED_TABLE_LIST*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TABLE_LIST))+
+  CHANGED_TableList* new_table = 
+    (CHANGED_TableList*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TableList))+
 				      key_length + 1);
   if (!new_table)
   {
     my_error(EE_OUTOFMEMORY, MYF(ME_BELL),
-             ALIGN_SIZE(sizeof(TABLE_LIST)) + key_length + 1);
+             ALIGN_SIZE(sizeof(TableList)) + key_length + 1);
     killed= KILL_CONNECTION;
     return 0;
   }
 
-  new_table->key= ((char*)new_table)+ ALIGN_SIZE(sizeof(CHANGED_TABLE_LIST));
+  new_table->key= ((char*)new_table)+ ALIGN_SIZE(sizeof(CHANGED_TableList));
   new_table->next = 0;
   new_table->key_length = key_length;
   ::memcpy(new_table->key, key, key_length);

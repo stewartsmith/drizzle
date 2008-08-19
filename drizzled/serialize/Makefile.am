@@ -58,6 +58,7 @@ binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
 binlog_writer_CXXFLAGS = 
 
 schema_reader_SOURCES =  schema_reader.cc
+schema_reader_CXXFLAGS =
 
 table_reader_SOURCES =  table_reader.cc
 table_reader_CXXFLAGS =

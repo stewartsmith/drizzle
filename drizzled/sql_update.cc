@@ -158,8 +158,8 @@ static void prepare_record_for_error_message(int error, Table *table)
     fields		fields for update
     values		values of fields for update
     conds		WHERE clause expression
-    order_num		number of elemen in ORDER BY clause
-    order		ORDER BY clause list
+    order_num		number of elemen in order_st BY clause
+    order		order_st BY clause list
     limit		limit clause
     handle_duplicates	how to handle duplicates
 
@@ -171,11 +171,11 @@ static void prepare_record_for_error_message(int error, Table *table)
 */
 
 int mysql_update(THD *thd,
-                 TABLE_LIST *table_list,
+                 TableList *table_list,
                  List<Item> &fields,
                  List<Item> &values,
                  COND *conds,
-                 uint order_num, ORDER *order,
+                 uint order_num, order_st *order,
                  ha_rows limit,
                  enum enum_duplicates handle_duplicates __attribute__((unused)),
                  bool ignore)
@@ -352,7 +352,7 @@ int mysql_update(THD *thd,
     if (order && (need_sort || used_key_is_modified))
     {
       /*
-	Doing an ORDER BY;  Let filesort find and sort the rows we are going
+	Doing an order_st BY;  Let filesort find and sort the rows we are going
 	to update
         NOTE: filesort will call table->prepare_for_position()
       */
@@ -748,15 +748,15 @@ abort:
     thd			- thread handler
     table_list		- global/local table list
     conds		- conditions
-    order_num		- number of ORDER BY list entries
-    order		- ORDER BY clause list
+    order_num		- number of order_st BY list entries
+    order		- order_st BY clause list
 
   RETURN VALUE
     false OK
     true  error
 */
-bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
-			 Item **conds, uint order_num, ORDER *order)
+bool mysql_prepare_update(THD *thd, TableList *table_list,
+			 Item **conds, uint order_num, order_st *order)
 {
   List<Item> all_fields;
   SELECT_LEX *select_lex= &thd->lex->select_lex;
@@ -765,7 +765,7 @@ bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
     Statement-based replication of UPDATE ... LIMIT is not safe as order of
     rows is not defined, so in mixed mode we go to row-based.
 
-    Note that we may consider a statement as safe if ORDER BY primary_key
+    Note that we may consider a statement as safe if order_st BY primary_key
     is present. However it may confuse users to see very similiar statements
     replicated differently.
   */
@@ -790,7 +790,7 @@ bool mysql_prepare_update(THD *thd, TABLE_LIST *table_list,
 
   /* Check that we are not using table that we are updating in a sub select */
   {
-    TABLE_LIST *duplicate;
+    TableList *duplicate;
     if ((duplicate= unique_table(thd, table_list, table_list->next_global, 0)))
     {
       update_non_unique_table_error(table_list, "UPDATE", duplicate);
@@ -838,8 +838,8 @@ static table_map get_table_map(List<Item> *items)
 int mysql_multi_update_prepare(THD *thd)
 {
   LEX *lex= thd->lex;
-  TABLE_LIST *table_list= lex->query_tables;
-  TABLE_LIST *tl, *leaves;
+  TableList *table_list= lex->query_tables;
+  TableList *tl, *leaves;
   List<Item> *fields= &lex->select_lex.item_list;
   table_map tables_for_update;
   bool update_view= 0;
@@ -941,7 +941,7 @@ reopen_tables:
       item->cleanup();
 
     /* We have to cleanup translation tables of views. */
-    for (TABLE_LIST *tbl= table_list; tbl; tbl= tbl->next_global)
+    for (TableList *tbl= table_list; tbl; tbl= tbl->next_global)
       tbl->cleanup_items();
 
     close_tables_for_reopen(thd, &table_list);
@@ -959,7 +959,7 @@ reopen_tables:
     if (tl->lock_type != TL_READ &&
         tl->lock_type != TL_READ_NO_INSERT)
     {
-      TABLE_LIST *duplicate;
+      TableList *duplicate;
       if ((duplicate= unique_table(thd, tl, table_list, 0)))
       {
         update_non_unique_table_error(table_list, "UPDATE", duplicate);
@@ -986,7 +986,7 @@ reopen_tables:
 */
 
 bool mysql_multi_update(THD *thd,
-                        TABLE_LIST *table_list,
+                        TableList *table_list,
                         List<Item> *fields,
                         List<Item> *values,
                         COND *conds,
@@ -1011,8 +1011,8 @@ bool mysql_multi_update(THD *thd,
   res= mysql_select(thd, &select_lex->ref_pointer_array,
                       table_list, select_lex->with_wild,
                       total_list,
-                      conds, 0, (ORDER *) NULL, (ORDER *)NULL, (Item *) NULL,
-                      (ORDER *)NULL,
+                      conds, 0, (order_st *) NULL, (order_st *)NULL, (Item *) NULL,
+                      (order_st *)NULL,
                       options | SELECT_NO_JOIN_CACHE | SELECT_NO_UNLOCK |
                       OPTION_SETUP_TABLES_DONE,
                       result, unit, select_lex);
@@ -1029,8 +1029,8 @@ bool mysql_multi_update(THD *thd,
 }
 
 
-multi_update::multi_update(TABLE_LIST *table_list,
-			   TABLE_LIST *leaves_list,
+multi_update::multi_update(TableList *table_list,
+			   TableList *leaves_list,
 			   List<Item> *field_list, List<Item> *value_list,
 			   enum enum_duplicates handle_duplicates_arg,
                            bool ignore_arg)
@@ -1049,7 +1049,7 @@ multi_update::multi_update(TABLE_LIST *table_list,
 int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
                           SELECT_LEX_UNIT *lex_unit __attribute__((unused)))
 {
-  TABLE_LIST *table_ref;
+  TableList *table_ref;
   SQL_LIST update;
   table_map tables_to_update;
   Item_field *item;
@@ -1092,7 +1092,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
     leaf_table_count++;
     if (tables_to_update & table->map)
     {
-      TABLE_LIST *tl= (TABLE_LIST*) thd->memdup((char*) table_ref,
+      TableList *tl= (TableList*) thd->memdup((char*) table_ref,
 						sizeof(*tl));
       if (!tl)
 	return(1);
@@ -1106,7 +1106,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
 
 
   table_count=  update.elements;
-  update_tables= (TABLE_LIST*) update.first;
+  update_tables= (TableList*) update.first;
 
   tmp_tables = (Table**) thd->calloc(sizeof(Table *) * table_count);
   tmp_table_param = (TMP_TABLE_PARAM*) thd->calloc(sizeof(TMP_TABLE_PARAM) *
@@ -1180,7 +1180,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
 */
 
 static bool safe_update_on_fly(THD *thd, JOIN_TAB *join_tab,
-                               TABLE_LIST *table_ref, TABLE_LIST *all_tables)
+                               TableList *table_ref, TableList *all_tables)
 {
   Table *table= join_tab->table;
   if (unique_table(thd, table_ref, all_tables, 0))
@@ -1222,7 +1222,7 @@ static bool safe_update_on_fly(THD *thd, JOIN_TAB *join_tab,
 bool
 multi_update::initialize_tables(JOIN *join)
 {
-  TABLE_LIST *table_ref;
+  TableList *table_ref;
   
   if ((thd->options & OPTION_SAFE_UPDATES) && error_if_full_join(join))
     return(1);
@@ -1238,7 +1238,7 @@ multi_update::initialize_tables(JOIN *join)
     Table *table=table_ref->table;
     uint cnt= table_ref->shared;
     List<Item> temp_fields;
-    ORDER     group;
+    order_st     group;
     TMP_TABLE_PARAM *tmp_param;
 
     table->mark_columns_needed_for_update();
@@ -1303,7 +1303,7 @@ multi_update::initialize_tables(JOIN *join)
     if (!(tmp_tables[cnt]=create_tmp_table(thd,
 					   tmp_param,
 					   temp_fields,
-					   (ORDER*) &group, 0, 0,
+					   (order_st*) &group, 0, 0,
 					   TMP_TABLE_ALL_COLUMNS,
 					   HA_POS_ERROR,
 					   (char *) "")))
@@ -1316,7 +1316,7 @@ multi_update::initialize_tables(JOIN *join)
 
 multi_update::~multi_update()
 {
-  TABLE_LIST *table;
+  TableList *table;
   for (table= update_tables ; table; table= table->next_local)
   {
     table->table->no_keyread= table->table->no_cache= 0;
@@ -1345,7 +1345,7 @@ multi_update::~multi_update()
 
 bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused)))
 {
-  TABLE_LIST *cur_table;
+  TableList *cur_table;
   
   for (cur_table= update_tables; cur_table; cur_table= cur_table->next_local)
   {
@@ -1539,7 +1539,7 @@ void multi_update::abort()
 
 int multi_update::do_updates()
 {
-  TABLE_LIST *cur_table;
+  TableList *cur_table;
   int local_error= 0;
   ha_rows org_updated;
   Table *table, *tmp_table;

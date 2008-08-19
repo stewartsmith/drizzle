@@ -38,7 +38,7 @@
   It is used like 'thd->open_tables' in the table cache. The trick is to
   exchange these two lists during open and lock of tables. Thus the normal
   table cache code can be used.
-  The second container is a HASH. It holds objects of the type TABLE_LIST.
+  The second container is a HASH. It holds objects of the type TableList.
   Despite its name, no lists of tables but only single structs are hashed
   (the 'next' pointer is always NULL). The reason for theis second container
   is, that we want handler tables to survive FLUSH Table commands. A table
@@ -47,7 +47,7 @@
   functions with 'thd->handler_tables', the closed tables are removed from
   this list. Hence we need the original open information for the handler
   table in the case that it is used again. This information is handed over
-  to mysql_ha_open() as a TABLE_LIST. So we store this information in the
+  to mysql_ha_open() as a TableList. So we store this information in the
   second container, where it is not affected by FLUSH Table. The second
   container is implemented as a hash for performance reasons. Consequently,
   we use it not only for re-opening a handler table, but also for the
@@ -73,7 +73,7 @@
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-static void mysql_ha_close_table(THD *thd, TABLE_LIST *tables,
+static void mysql_ha_close_table(THD *thd, TableList *tables,
                                  bool is_locked)
 {
   Table **table_ptr;
@@ -130,11 +130,11 @@ static void mysql_ha_close_table(THD *thd, TABLE_LIST *tables,
     true  error
 */
 
-bool mysql_ha_close(THD *thd, TABLE_LIST *tables)
+bool mysql_ha_close(THD *thd, TableList *tables)
 {
-  TABLE_LIST    *hash_tables;
+  TableList    *hash_tables;
 
-  if ((hash_tables= (TABLE_LIST*) hash_search(&thd->handler_tables_hash,
+  if ((hash_tables= (TableList*) hash_search(&thd->handler_tables_hash,
                                               (uchar*) tables->alias,
                                               strlen(tables->alias) + 1)))
   {
@@ -158,19 +158,19 @@ bool mysql_ha_close(THD *thd, TABLE_LIST *tables)
   @param thd Thread identifier.
   @param tables The list of tables to remove.
 
-  @return Pointer to head of linked list (TABLE_LIST::next_local) of matching
-          TABLE_LIST elements from handler_tables_hash. Otherwise, NULL if no
+  @return Pointer to head of linked list (TableList::next_local) of matching
+          TableList elements from handler_tables_hash. Otherwise, NULL if no
           table was matched.
 */
 
-static TABLE_LIST *mysql_ha_find(THD *thd, TABLE_LIST *tables)
+static TableList *mysql_ha_find(THD *thd, TableList *tables)
 {
-  TABLE_LIST *hash_tables, *head= NULL, *first= tables;
+  TableList *hash_tables, *head= NULL, *first= tables;
 
   /* search for all handlers with matching table names */
   for (uint i= 0; i < thd->handler_tables_hash.records; i++)
   {
-    hash_tables= (TABLE_LIST*) hash_element(&thd->handler_tables_hash, i);
+    hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
     for (tables= first; tables; tables= tables->next_local)
     {
       if ((! *tables->db ||
@@ -200,9 +200,9 @@ static TABLE_LIST *mysql_ha_find(THD *thd, TABLE_LIST *tables)
   @note Broadcasts refresh if it closed a table with old version.
 */
 
-void mysql_ha_rm_tables(THD *thd, TABLE_LIST *tables, bool is_locked)
+void mysql_ha_rm_tables(THD *thd, TableList *tables, bool is_locked)
 {
-  TABLE_LIST *hash_tables, *next;
+  TableList *hash_tables, *next;
 
   assert(tables);
 
@@ -232,13 +232,13 @@ void mysql_ha_rm_tables(THD *thd, TABLE_LIST *tables, bool is_locked)
 
 void mysql_ha_flush(THD *thd)
 {
-  TABLE_LIST *hash_tables;
+  TableList *hash_tables;
 
   safe_mutex_assert_owner(&LOCK_open);
 
   for (uint i= 0; i < thd->handler_tables_hash.records; i++)
   {
-    hash_tables= (TABLE_LIST*) hash_element(&thd->handler_tables_hash, i);
+    hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
     if (hash_tables->table && hash_tables->table->needs_reopen_or_name_lock())
     {
       mysql_ha_close_table(thd, hash_tables, true);
@@ -261,11 +261,11 @@ void mysql_ha_flush(THD *thd)
 
 void mysql_ha_cleanup(THD *thd)
 {
-  TABLE_LIST *hash_tables;
+  TableList *hash_tables;
 
   for (uint i= 0; i < thd->handler_tables_hash.records; i++)
   {
-    hash_tables= (TABLE_LIST*) hash_element(&thd->handler_tables_hash, i);
+    hash_tables= (TableList*) hash_element(&thd->handler_tables_hash, i);
     if (hash_tables->table)
       mysql_ha_close_table(thd, hash_tables, false);
    }

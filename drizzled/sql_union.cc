@@ -124,7 +124,7 @@ select_union::create_result_table(THD *thd_arg, List<Item> *column_types,
   tmp_table_param.bit_fields_as_long= bit_fields_as_long;
 
   if (! (table= create_tmp_table(thd_arg, &tmp_table_param, *column_types,
-                                 (ORDER*) 0, is_union_distinct, 1,
+                                 (order_st*) 0, is_union_distinct, 1,
                                  options, HA_POS_ERROR, (char*) table_alias)))
     return true;
   table->file->extra(HA_EXTRA_WRITE_CACHE);
@@ -172,12 +172,12 @@ st_select_lex_unit::init_prepare_fake_select_lex(THD *thd_arg)
     fake_select_lex->get_table_list();
   if (!fake_select_lex->first_execution)
   {
-    for (ORDER *order= (ORDER *) global_parameters->order_list.first;
+    for (order_st *order= (order_st *) global_parameters->order_list.first;
          order;
          order= order->next)
       order->item= &order->item_ptr;
   }
-  for (ORDER *order= (ORDER *)global_parameters->order_list.first;
+  for (order_st *order= (order_st *)global_parameters->order_list.first;
        order;
        order=order->next)
   {
@@ -267,18 +267,18 @@ bool st_select_lex_unit::prepare(THD *thd_arg, select_result *sel_result,
     can_skip_order_by= is_union_select && !(sl->braces && sl->explicit_limit);
 
     saved_error= join->prepare(&sl->ref_pointer_array,
-                               (TABLE_LIST*) sl->table_list.first,
+                               (TableList*) sl->table_list.first,
                                sl->with_wild,
                                sl->where,
                                (can_skip_order_by ? 0 :
                                 sl->order_list.elements) +
                                sl->group_list.elements,
                                can_skip_order_by ?
-                               (ORDER*) 0 : (ORDER *)sl->order_list.first,
-                               (ORDER*) sl->group_list.first,
+                               (order_st*) 0 : (order_st *)sl->order_list.first,
+                               (order_st*) sl->group_list.first,
                                sl->having,
-                               (is_union_select ? (ORDER*) 0 :
-                                (ORDER*) thd_arg->lex->proc_list.first),
+                               (is_union_select ? (order_st*) 0 :
+                                (order_st*) thd_arg->lex->proc_list.first),
                                sl, this);
     /* There are no * in the statement anymore (for PS) */
     sl->with_wild= 0;
@@ -434,7 +434,7 @@ bool st_select_lex_unit::exec()
 	{
 	  offset_limit_cnt= 0;
 	  /*
-	    We can't use LIMIT at this stage if we are using ORDER BY for the
+	    We can't use LIMIT at this stage if we are using order_st BY for the
 	    whole query
 	  */
 	  if (sl->order_list.first || describe)
@@ -450,11 +450,11 @@ bool st_select_lex_unit::exec()
           (select_limit_cnt == HA_POS_ERROR || sl->braces) ?
           sl->options & ~OPTION_FOUND_ROWS : sl->options | found_rows_for_union;
 
-        /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
+        /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
         if (sl->join->flatten_subqueries())
           return(true);
 
-        /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
+        /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
 	saved_error= sl->join->optimize();
       }
       if (!saved_error)
@@ -544,8 +544,8 @@ bool st_select_lex_unit::exec()
                               &result_table_list,
                               0, item_list, NULL,
                               global_parameters->order_list.elements,
-                              (ORDER*)global_parameters->order_list.first,
-                              (ORDER*) NULL, NULL, (ORDER*) NULL,
+                              (order_st*)global_parameters->order_list.first,
+                              (order_st*) NULL, NULL, (order_st*) NULL,
                               fake_select_lex->options | SELECT_NO_UNLOCK,
                               result, this, fake_select_lex);
       }
@@ -567,8 +567,8 @@ bool st_select_lex_unit::exec()
                                 &result_table_list,
                                 0, item_list, NULL,
                                 global_parameters->order_list.elements,
-                                (ORDER*)global_parameters->order_list.first,
-                                (ORDER*) NULL, NULL, (ORDER*) NULL,
+                                (order_st*)global_parameters->order_list.first,
+                                (order_st*) NULL, NULL, (order_st*) NULL,
                                 fake_select_lex->options | SELECT_NO_UNLOCK,
                                 result, this, fake_select_lex);
         }
@@ -630,8 +630,8 @@ bool st_select_lex_unit::cleanup()
     error|= fake_select_lex->cleanup();
     if (fake_select_lex->order_list.elements)
     {
-      ORDER *ord;
-      for (ord= (ORDER*)fake_select_lex->order_list.first; ord; ord= ord->next)
+      order_st *ord;
+      for (ord= (order_st*)fake_select_lex->order_list.first; ord; ord= ord->next)
         (*ord->item)->cleanup();
     }
   }

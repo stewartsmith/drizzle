@@ -16,8 +16,8 @@
 
 /* classes to use when handling where clause */
 
-#ifndef _opt_range_h
-#define _opt_range_h
+#ifndef DRIZZLED_OPT_RANGE_H
+#define DRIZZLED_OPT_RANGE_H
 
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
@@ -718,6 +718,6 @@ class SQL_SELECT :public Sql_alloc {
 QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
                                              struct st_table_ref *ref,
                                              ha_rows records);
-uint get_index_for_order(Table *table, ORDER *order, ha_rows limit);
+uint get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
 #endif

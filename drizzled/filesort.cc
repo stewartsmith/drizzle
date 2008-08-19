@@ -48,7 +48,7 @@ static int merge_index(SORTPARAM *param,uchar *sort_buffer,
 		       uint maxbuffer,IO_CACHE *tempfile,
 		       IO_CACHE *outfile);
 static bool save_index(SORTPARAM *param,uchar **sort_keys, uint count, 
-                       FILESORT_INFO *table_sort);
+                       filesort_info_st *table_sort);
 static uint suffix_length(uint32_t string_length);
 static uint sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
 		       bool *multi_byte_charset);
@@ -106,8 +106,8 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
   SORTPARAM param;
   bool multi_byte_charset;
 
-  FILESORT_INFO table_sort;
-  TABLE_LIST *tab= table->pos_in_table_list;
+  filesort_info_st table_sort;
+  TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
   DRIZZLE_FILESORT_START();
@@ -123,7 +123,7 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
     QUICK_INDEX_MERGE_SELECT. Work with a copy and put it back at the end 
     when index_merge select has finished with it.
   */
-  memcpy(&table_sort, &table->sort, sizeof(FILESORT_INFO));
+  memcpy(&table_sort, &table->sort, sizeof(filesort_info_st));
   table->sort.io_cache= NULL;
   
   outfile= table_sort.io_cache;
@@ -316,7 +316,7 @@ ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
     statistic_add(thd->status_var.filesort_rows,
 		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
-  memcpy(&table->sort, &table_sort, sizeof(FILESORT_INFO));
+  memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
   DRIZZLE_FILESORT_END();
   return(error ? HA_POS_ERROR : records);
 } /* filesort */
@@ -957,7 +957,7 @@ static void register_used_fields(SORTPARAM *param)
 
 
 static bool save_index(SORTPARAM *param, uchar **sort_keys, uint count, 
-                       FILESORT_INFO *table_sort)
+                       filesort_info_st *table_sort)
 {
   uint offset,res_length;
   uchar *to;

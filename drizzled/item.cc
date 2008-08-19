@@ -730,7 +730,7 @@ void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
   @details
   This function is called when:
   - Comparing items in the WHERE clause (when doing where optimization)
-  - When trying to find an ORDER BY/GROUP BY item in the SELECT part
+  - When trying to find an order_st BY/GROUP BY item in the SELECT part
 */
 
 bool Item::eq(const Item *item, bool binary_cmp __attribute__((unused))) const
@@ -956,13 +956,11 @@ int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
   Table *table= field->table;
   THD *thd= table->in_use;
   enum_check_fields tmp= thd->count_cuted_fields;
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->write_set);
   ulong sql_mode= thd->variables.sql_mode;
   thd->variables.sql_mode&= ~(MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE);
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;
   res= save_in_field(field, no_conversions);
   thd->count_cuted_fields= tmp;
-  dbug_tmp_restore_column_map(table->write_set, old_map);
   thd->variables.sql_mode= sql_mode;
   return res;
 }
@@ -3008,12 +3006,12 @@ void mark_select_range_as_dependent(THD *thd,
     - NULL if find_item is not in group_list
 */
 
-static Item** find_field_in_group_list(Item *find_item, ORDER *group_list)
+static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
 {
   const char *db_name;
   const char *table_name;
   const char *field_name;
-  ORDER      *found_group= NULL;
+  order_st      *found_group= NULL;
   int         found_match_degree= 0;
   Item_ident *cur_field;
   int         cur_match_degree= 0;
@@ -3039,7 +3037,7 @@ static Item** find_field_in_group_list(Item *find_item, ORDER *group_list)
 
   assert(field_name != 0);
 
-  for (ORDER *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
+  for (order_st *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
   {
     if ((*(cur_group->item))->real_item()->type() == Item::FIELD_ITEM)
     {
@@ -3140,7 +3138,7 @@ resolve_ref_in_select_and_group(THD *thd, Item_ident *ref, SELECT_LEX *select)
 {
   Item **group_by_ref= NULL;
   Item **select_ref= NULL;
-  ORDER *group_list= (ORDER*) select->group_list.first;
+  order_st *group_list= (order_st*) select->group_list.first;
   bool ambiguous_fields= false;
   uint counter;
   enum_resolution_type resolution;
@@ -5658,7 +5656,7 @@ bool Item_insert_value::fix_fields(THD *thd,
   if (!arg->fixed)
   {
     bool res;
-    TABLE_LIST *orig_next_table= context->last_name_resolution_table;
+    TableList *orig_next_table= context->last_name_resolution_table;
     context->last_name_resolution_table= context->first_name_resolution_table;
     res= arg->fix_fields(thd, &arg);
     context->last_name_resolution_table= orig_next_table;

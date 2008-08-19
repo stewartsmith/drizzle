@@ -40,7 +40,7 @@ const char *join_type_str[]={ "UNKNOWN","system","const","eq_ref","ref",
 struct st_sargable_param;
 
 static void optimize_keyuse(JOIN *join, DYNAMIC_ARRAY *keyuse_array);
-static bool make_join_statistics(JOIN *join, TABLE_LIST *leaves, COND *conds,
+static bool make_join_statistics(JOIN *join, TableList *leaves, COND *conds,
 				 DYNAMIC_ARRAY *keyuse);
 static bool update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,
                                 JOIN_TAB *join_tab,
@@ -85,28 +85,28 @@ static bool make_simple_join(JOIN *join,Table *tmp_table);
 static void make_outerjoin_info(JOIN *join);
 static bool make_join_select(JOIN *join,SQL_SELECT *select,COND *item);
 static bool make_join_readinfo(JOIN *join, uint64_t options, uint no_jbuf_after);
-static bool only_eq_ref_tables(JOIN *join, ORDER *order, table_map tables);
+static bool only_eq_ref_tables(JOIN *join, order_st *order, table_map tables);
 static void update_depend_map(JOIN *join);
-static void update_depend_map(JOIN *join, ORDER *order);
-static ORDER *remove_const(JOIN *join,ORDER *first_order,COND *cond,
+static void update_depend_map(JOIN *join, order_st *order);
+static order_st *remove_const(JOIN *join,order_st *first_order,COND *cond,
 			   bool change_list, bool *simple_order);
-static int return_zero_rows(JOIN *join, select_result *res,TABLE_LIST *tables,
+static int return_zero_rows(JOIN *join, select_result *res,TableList *tables,
                             List<Item> &fields, bool send_row,
                             uint64_t select_options, const char *info,
                             Item *having);
 static COND *build_equal_items(THD *thd, COND *cond,
                                COND_EQUAL *inherited,
-                               List<TABLE_LIST> *join_list,
+                               List<TableList> *join_list,
                                COND_EQUAL **cond_equal_ref);
 static COND* substitute_for_best_equal_field(COND *cond,
                                              COND_EQUAL *cond_equal,
                                              void *table_join_idx);
-static COND *simplify_joins(JOIN *join, List<TABLE_LIST> *join_list,
+static COND *simplify_joins(JOIN *join, List<TableList> *join_list,
                             COND *conds, bool top, bool in_sj);
 static bool check_interleaving_with_nj(JOIN_TAB *last, JOIN_TAB *next);
 static void restore_prev_nj_state(JOIN_TAB *last);
-static void reset_nj_counters(List<TABLE_LIST> *join_list);
-static uint build_bitmap_for_nested_joins(List<TABLE_LIST> *join_list,
+static void reset_nj_counters(List<TableList> *join_list);
+static uint build_bitmap_for_nested_joins(List<TableList> *join_list,
                                           uint first_unused);
 
 static 
@@ -115,7 +115,7 @@ static void restore_prev_sj_state(const table_map remaining_tables,
                                   const JOIN_TAB *tab);
 
 static COND *optimize_cond(JOIN *join, COND *conds,
-                           List<TABLE_LIST> *join_list,
+                           List<TableList> *join_list,
 			   Item::cond_result *cond_value);
 static bool const_expression_in_where(COND *conds,Item *item, Item **comp_item);
 static int do_select(JOIN *join,List<Item> *fields,Table *tmp_table);
@@ -160,14 +160,14 @@ static COND *make_cond_for_table(COND *cond,table_map table,
 				 table_map used_table,
                                  bool exclude_expensive_cond);
 static Item* part_of_refkey(Table *form,Field *field);
-static bool test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,
+static bool test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,
 				    ha_rows select_limit, bool no_changes,
                                     const key_map *map);
 static bool list_contains_unique_index(Table *table,
                           bool (*find_func) (Field *, void *), void *data);
 static bool find_field_in_item_list (Field *field, void *data);
 static bool find_field_in_order_list (Field *field, void *data);
-static int create_sort_index(THD *thd, JOIN *join, ORDER *order,
+static int create_sort_index(THD *thd, JOIN *join, order_st *order,
 			     ha_rows filesort_limit, ha_rows select_limit,
                              bool is_order_by);
 static int remove_duplicates(JOIN *join,Table *entry,List<Item> &fields,
@@ -185,15 +185,15 @@ static void reset_cache_read(JOIN_CACHE *cache);
 static void reset_cache_write(JOIN_CACHE *cache);
 static void read_cached_record(JOIN_TAB *tab);
 static bool cmp_buffer_with_ref(JOIN_TAB *tab);
-static ORDER *create_distinct_group(THD *thd, Item **ref_pointer_array,
-                                    ORDER *order, List<Item> &fields,
+static order_st *create_distinct_group(THD *thd, Item **ref_pointer_array,
+                                    order_st *order, List<Item> &fields,
                                     List<Item> &all_fields,
 				    bool *all_order_by_fields_used);
-static bool test_if_subpart(ORDER *a,ORDER *b);
-static Table *get_sort_by_table(ORDER *a,ORDER *b,TABLE_LIST *tables);
-static void calc_group_buffer(JOIN *join,ORDER *group);
+static bool test_if_subpart(order_st *a,order_st *b);
+static Table *get_sort_by_table(order_st *a,order_st *b,TableList *tables);
+static void calc_group_buffer(JOIN *join,order_st *group);
 static bool make_group_fields(JOIN *main_join, JOIN *curr_join);
-static bool alloc_group_fields(JOIN *join,ORDER *group);
+static bool alloc_group_fields(JOIN *join,order_st *group);
 // Create list for using with tempory table
 static bool change_to_use_tmp_fields(THD *thd, Item **ref_pointer_array,
 				     List<Item> &new_list1,
@@ -257,15 +257,15 @@ bool handle_select(THD *thd, LEX *lex, select_result *result,
       setup_tables_done_option changed for next rexecution
     */
     res= mysql_select(thd, &select_lex->ref_pointer_array,
-		      (TABLE_LIST*) select_lex->table_list.first,
+		      (TableList*) select_lex->table_list.first,
 		      select_lex->with_wild, select_lex->item_list,
 		      select_lex->where,
 		      select_lex->order_list.elements +
 		      select_lex->group_list.elements,
-		      (ORDER*) select_lex->order_list.first,
-		      (ORDER*) select_lex->group_list.first,
+		      (order_st*) select_lex->order_list.first,
+		      (order_st*) select_lex->group_list.first,
 		      select_lex->having,
-		      (ORDER*) lex->proc_list.first,
+		      (order_st*) lex->proc_list.first,
 		      select_lex->options | thd->options |
                       setup_tables_done_option,
 		      result, unit, select_lex);
@@ -394,13 +394,13 @@ fix_inner_refs(THD *thd, List<Item> &all_fields, SELECT_LEX *select,
   Function to setup clauses without sum functions.
 */
 inline int setup_without_group(THD *thd, Item **ref_pointer_array,
-			       TABLE_LIST *tables,
-			       TABLE_LIST *leaves,
+			       TableList *tables,
+			       TableList *leaves,
 			       List<Item> &fields,
 			       List<Item> &all_fields,
 			       COND **conds,
-			       ORDER *order,
-			       ORDER *group, bool *hidden_group_fields)
+			       order_st *order,
+			       order_st *group, bool *hidden_group_fields)
 {
   int res;
   nesting_map save_allow_sum_func=thd->lex->allow_sum_func ;
@@ -437,11 +437,11 @@ inline int setup_without_group(THD *thd, Item **ref_pointer_array,
 */
 int
 JOIN::prepare(Item ***rref_pointer_array,
-	      TABLE_LIST *tables_init,
+	      TableList *tables_init,
 	      uint wild_num, COND *conds_init, uint og_num,
-	      ORDER *order_init, ORDER *group_init,
+	      order_st *order_init, order_st *group_init,
 	      Item *having_init,
-	      ORDER *proc_param_init, SELECT_LEX *select_lex_arg,
+	      order_st *proc_param_init, SELECT_LEX *select_lex_arg,
 	      SELECT_LEX_UNIT *unit_arg)
 {
   // to prevent double initialization on EXPLAIN
@@ -475,7 +475,7 @@ JOIN::prepare(Item ***rref_pointer_array,
                                     false))
       return(-1);
  
-  TABLE_LIST *table_ptr;
+  TableList *table_ptr;
   for (table_ptr= select_lex->leaf_tables;
        table_ptr;
        table_ptr= table_ptr->next_leaf)
@@ -528,7 +528,7 @@ JOIN::prepare(Item ***rref_pointer_array,
         requirements are:
           1. Subquery predicate is an IN/=ANY subq predicate
           2. Subquery is a single SELECT (not a UNION)
-          3. Subquery does not have GROUP BY or ORDER BY
+          3. Subquery does not have GROUP BY or order_st BY
           4. Subquery does not use aggregate functions or HAVING
           5. Subquery predicate is at the AND-top-level of ON/WHERE clause
           6. No execution method was already chosen (by a prepared statement).
@@ -571,7 +571,7 @@ JOIN::prepare(Item ***rref_pointer_array,
 
         /* Register the subquery for further processing */
         select_lex->outer_select()->join->sj_subselects.append(thd->mem_root, in_subs);
-        in_subs->expr_join_nest= (TABLE_LIST*)thd->thd_marker;
+        in_subs->expr_join_nest= (TableList*)thd->thd_marker;
       }
       else
       {
@@ -594,7 +594,7 @@ JOIN::prepare(Item ***rref_pointer_array,
              (Subquery is non-correlated ||
               Subquery is correlated to any query outer to IN predicate ||
               (Subquery is correlated to the immediate outer query &&
-               Subquery !contains {GROUP BY, ORDER BY [LIMIT],
+               Subquery !contains {GROUP BY, order_st BY [LIMIT],
                aggregate functions) && subquery predicate is not under "NOT IN"))
           6. No execution method was already chosen (by a prepared statement).
 
@@ -630,7 +630,7 @@ JOIN::prepare(Item ***rref_pointer_array,
 
   if (order)
   {
-    ORDER *ord;
+    order_st *ord;
     for (ord= order; ord; ord= ord->next)
     {
       Item *item= *ord->item;
@@ -673,7 +673,7 @@ JOIN::prepare(Item ***rref_pointer_array,
   {
     /* Caclulate the number of groups */
     send_group_parts= 0;
-    for (ORDER *group_tmp= group_list ; group_tmp ; group_tmp= group_tmp->next)
+    for (order_st *group_tmp= group_list ; group_tmp ; group_tmp= group_tmp->next)
       send_group_parts++;
   }
   
@@ -825,7 +825,7 @@ static bool sj_table_is_included(JOIN *join, JOIN_TAB *join_tab)
   /* Check if this table is functionally dependent on the tables that
      are within the same outer join nest
   */
-  TABLE_LIST *embedding= join_tab->table->pos_in_table_list->embedding;
+  TableList *embedding= join_tab->table->pos_in_table_list->embedding;
   if (join_tab->type == JT_EQ_REF)
   {
     Table_map_iterator it(join_tab->ref.depend_map & ~PSEUDO_TABLE_BITS);
@@ -961,7 +961,7 @@ int setup_semijoin_dups_elimination(JOIN *join, uint64_t options, uint no_jbuf_a
     table_map outer_tables;
   } dups_ranges [MAX_TABLES];
 
-  TABLE_LIST *emb_insideout_nest= NULL;
+  TableList *emb_insideout_nest= NULL;
   table_map emb_sj_map= 0;  /* A bitmap of sj-nests (that is, their sj-inner
                                tables) whose ranges we're in */
   table_map emb_outer_tables= 0; /* sj-outer tables for those sj-nests */
@@ -1449,7 +1449,7 @@ JOIN::optimize()
 
   /* Optimize distinct away if possible */
   {
-    ORDER *org_order= order;
+    order_st *org_order= order;
     order=remove_const(this, order,conds,1, &simple_order);
     if (thd->is_error())
     {
@@ -1458,7 +1458,7 @@ JOIN::optimize()
     }
 
     /*
-      If we are using ORDER BY NULL or ORDER BY const_expression,
+      If we are using order_st BY NULL or order_st BY const_expression,
       return result in any order (even if we are using a GROUP BY)
     */
     if (!order && org_order)
@@ -1492,22 +1492,22 @@ JOIN::optimize()
         We have found that grouping can be removed since groups correspond to
         only one row anyway, but we still have to guarantee correct result
         order. The line below effectively rewrites the query from GROUP BY
-        <fields> to ORDER BY <fields>. There are two exceptions:
+        <fields> to order_st BY <fields>. There are two exceptions:
         - if skip_sort_order is set (see above), then we can simply skip
           GROUP BY;
-        - we can only rewrite ORDER BY if the ORDER BY fields are 'compatible'
+        - we can only rewrite order_st BY if the order_st BY fields are 'compatible'
           with the GROUP BY ones, i.e. either one is a prefix of another.
-          We only check if the ORDER BY is a prefix of GROUP BY. In this case
+          We only check if the order_st BY is a prefix of GROUP BY. In this case
           test_if_subpart() copies the ASC/DESC attributes from the original
-          ORDER BY fields.
-          If GROUP BY is a prefix of ORDER BY, then it is safe to leave
+          order_st BY fields.
+          If GROUP BY is a prefix of order_st BY, then it is safe to leave
           'order' as is.
        */
       if (!order || test_if_subpart(group_list, order))
           order= skip_sort_order ? 0 : group_list;
       /*
         If we have an IGNORE INDEX FOR GROUP BY(fields) clause, this must be 
-        rewritten to IGNORE INDEX FOR ORDER BY(fields).
+        rewritten to IGNORE INDEX FOR order_st BY(fields).
       */
       join_tab->table->keys_in_use_for_order_by=
         join_tab->table->keys_in_use_for_group_by;
@@ -1532,13 +1532,13 @@ JOIN::optimize()
     /*
       We are only using one table. In this case we change DISTINCT to a
       GROUP BY query if:
-      - The GROUP BY can be done through indexes (no sort) and the ORDER
+      - The GROUP BY can be done through indexes (no sort) and the order_st
         BY only uses selected fields.
-	(In this case we can later optimize away GROUP BY and ORDER BY)
+	(In this case we can later optimize away GROUP BY and order_st BY)
       - We are scanning the whole table without LIMIT
         This can happen if:
         - We are using CALC_FOUND_ROWS
-        - We are using an ORDER BY that can't be optimized away.
+        - We are using an order_st BY that can't be optimized away.
 
       We don't want to use this optimization when we are using LIMIT
       because in this case we can just create a temporary table that
@@ -1570,7 +1570,7 @@ JOIN::optimize()
 	  {
 	    /*
 	      Force MySQL to read the table in sorted order to get result in
-	      ORDER BY order.
+	      order_st BY order.
 	    */
 	    tmp_table_param.quick_group=0;
 	  }
@@ -1586,7 +1586,7 @@ JOIN::optimize()
   }
   simple_group= 0;
   {
-    ORDER *old_group_list;
+    order_st *old_group_list;
     group_list= remove_const(this, (old_group_list= group_list), conds,
                              rollup.state == ROLLUP::STATE_NONE,
 			     &simple_group);
@@ -1627,8 +1627,8 @@ JOIN::optimize()
     This has to be done if all tables are not already read (const tables)
     and one of the following conditions holds:
     - We are using DISTINCT (simple distinct's are already optimized away)
-    - We are using an ORDER BY or GROUP BY on fields not in the first table
-    - We are using different ORDER BY and GROUP BY orders
+    - We are using an order_st BY or GROUP BY on fields not in the first table
+    - We are using different order_st BY and GROUP BY orders
     - The user wants us to buffer the result.
   */
   need_tmp= (const_tables != tables &&
@@ -1760,7 +1760,7 @@ JOIN::optimize()
         Force using of tmp table if sorting by a SP or UDF function due to
         their expensive and probably non-deterministic nature.
       */
-      for (ORDER *tmp_order= order; tmp_order ; tmp_order=tmp_order->next)
+      for (order_st *tmp_order= order; tmp_order ; tmp_order=tmp_order->next)
       {
         Item *item= *tmp_order->item;
         if (item->is_expensive())
@@ -1804,11 +1804,11 @@ JOIN::optimize()
 
     tmp_table_param.hidden_field_count= (all_fields.elements -
 					 fields_list.elements);
-    ORDER *tmp_group= ((!simple_group && !(test_flags & TEST_NO_KEY_GROUP)) ? group_list :
-                                                             (ORDER*) 0);
+    order_st *tmp_group= ((!simple_group && !(test_flags & TEST_NO_KEY_GROUP)) ? group_list :
+                                                             (order_st*) 0);
     /*
       Pushing LIMIT to the temporary table creation is not applicable
-      when there is ORDER BY or GROUP BY or there is no GROUP BY, but
+      when there is order_st BY or GROUP BY or there is no GROUP BY, but
       there are aggregate functions, because in all these cases we need
       all result rows.
     */
@@ -2091,8 +2091,8 @@ JOIN::exec()
   if (select_options & SELECT_DESCRIBE)
   {
     /*
-      Check if we managed to optimize ORDER BY away and don't use temporary
-      table to resolve ORDER BY: in that case, we only may need to do
+      Check if we managed to optimize order_st BY away and don't use temporary
+      table to resolve order_st BY: in that case, we only may need to do
       filesort for GROUP BY.
     */
     if (!order && !no_order && (!skip_sort_order || !need_tmp))
@@ -2253,7 +2253,7 @@ JOIN::exec()
 	      exec_tmp_table2= create_tmp_table(thd,
 						&curr_join->tmp_table_param,
 						*curr_all_fields,
-						(ORDER*) 0,
+						(order_st*) 0,
 						curr_join->select_distinct && 
 						!curr_join->group_list,
 						1, curr_join->select_options,
@@ -2464,7 +2464,7 @@ JOIN::exec()
 	return;
       }
       /*
-	Here we sort rows for ORDER BY/GROUP BY clause, if the optimiser
+	Here we sort rows for order_st BY/GROUP BY clause, if the optimiser
 	chose FILESORT to be faster than INDEX SCAN or there is no 
 	suitable index present.
 	Note, that create_sort_index calls test_if_skip_sort_order and may
@@ -2584,9 +2584,9 @@ JOIN::destroy()
                               for a, b and c in this list.
   @param conds                top level item of an expression representing
                               WHERE clause of the top level select
-  @param og_num               total number of ORDER BY and GROUP BY clauses
+  @param og_num               total number of order_st BY and GROUP BY clauses
                               arguments
-  @param order                linked list of ORDER BY agruments
+  @param order                linked list of order_st BY agruments
   @param group                linked list of GROUP BY arguments
   @param having               top level item of HAVING expression
   @param proc_param           list of PROCEDUREs
@@ -2611,9 +2611,9 @@ JOIN::destroy()
 
 bool
 mysql_select(THD *thd, Item ***rref_pointer_array,
-	     TABLE_LIST *tables, uint wild_num, List<Item> &fields,
-	     COND *conds, uint og_num,  ORDER *order, ORDER *group,
-	     Item *having, ORDER *proc_param, uint64_t select_options,
+	     TableList *tables, uint wild_num, List<Item> &fields,
+	     COND *conds, uint og_num,  order_st *order, order_st *group,
+	     Item *having, order_st *proc_param, uint64_t select_options,
 	     select_result *result, SELECT_LEX_UNIT *unit,
 	     SELECT_LEX *select_lex)
 {
@@ -2667,13 +2667,13 @@ mysql_select(THD *thd, Item ***rref_pointer_array,
     }
   }
 
-  /* dump_TABLE_LIST_graph(select_lex, select_lex->leaf_tables); */
+  /* dump_TableList_graph(select_lex, select_lex->leaf_tables); */
   if (join->flatten_subqueries())
   {
     err= 1;
     goto err;
   }
-  /* dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables); */
+  /* dump_TableList_struct(select_lex, select_lex->leaf_tables); */
 
   if ((err= join->optimize()))
   {
@@ -2722,22 +2722,22 @@ inline Item * and_items(Item* cond, Item *item)
 }
 
 
-static TABLE_LIST *alloc_join_nest(THD *thd)
+static TableList *alloc_join_nest(THD *thd)
 {
-  TABLE_LIST *tbl;
-  if (!(tbl= (TABLE_LIST*) thd->calloc(ALIGN_SIZE(sizeof(TABLE_LIST))+
-                                       sizeof(NESTED_JOIN))))
+  TableList *tbl;
+  if (!(tbl= (TableList*) thd->calloc(ALIGN_SIZE(sizeof(TableList))+
+                                       sizeof(nested_join_st))))
     return NULL;
-  tbl->nested_join= (NESTED_JOIN*) ((uchar*)tbl + 
-                                    ALIGN_SIZE(sizeof(TABLE_LIST)));
+  tbl->nested_join= (nested_join_st*) ((uchar*)tbl + 
+                                    ALIGN_SIZE(sizeof(TableList)));
   return tbl;
 }
 
 
-void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
+void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TableList> *tlist)
 {
-  List_iterator<TABLE_LIST> it(*tlist);
-  TABLE_LIST *table;
+  List_iterator<TableList> it(*tlist);
+  TableList *table;
   while ((table= it++))
   {
     if (table->on_expr)
@@ -2749,7 +2749,7 @@ void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
 
 
 /*
-  Convert a subquery predicate into a TABLE_LIST semi-join nest
+  Convert a subquery predicate into a TableList semi-join nest
 
   SYNOPSIS
     convert_subq_to_sj()
@@ -2758,11 +2758,11 @@ void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
        subq_pred    Subquery predicate to be converted
   
   DESCRIPTION
-    Convert a subquery predicate into a TABLE_LIST semi-join nest. All the 
+    Convert a subquery predicate into a TableList semi-join nest. All the 
     prerequisites are already checked, so the conversion is always successfull.
 
     Prepared Statements: the transformation is permanent:
-     - Changes in TABLE_LIST structures are naturally permanent
+     - Changes in TableList structures are naturally permanent
      - Item tree changes are performed on statement MEM_ROOT:
         = we activate statement MEM_ROOT 
         = this function is called before the first fix_prepare_information
@@ -2779,8 +2779,8 @@ void fix_list_after_tbl_changes(SELECT_LEX *new_parent, List<TABLE_LIST> *tlist)
 bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
 {
   SELECT_LEX *parent_lex= parent_join->select_lex;
-  TABLE_LIST *emb_tbl_nest= NULL;
-  List<TABLE_LIST> *emb_join_list= &parent_lex->top_join_list;
+  TableList *emb_tbl_nest= NULL;
+  List<TableList> *emb_join_list= &parent_lex->top_join_list;
   THD *thd= parent_join->thd;
 
   /*
@@ -2817,8 +2817,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     }
     else if (!subq_pred->expr_join_nest->nested_join)
     {
-      TABLE_LIST *outer_tbl= subq_pred->expr_join_nest;      
-      TABLE_LIST *wrap_nest;
+      TableList *outer_tbl= subq_pred->expr_join_nest;      
+      TableList *wrap_nest;
       /*
         We're dealing with
 
@@ -2833,9 +2833,9 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
         Q:  other subqueries may be pointing to this element. What to do?
         A1: simple solution: copy *subq_pred->expr_join_nest= *parent_nest.
             But we'll need to fix other pointers.
-        A2: Another way: have TABLE_LIST::next_ptr so the following
+        A2: Another way: have TableList::next_ptr so the following
             subqueries know the table has been nested.
-        A3: changes in the TABLE_LIST::outer_join will make everything work
+        A3: changes in the TableList::outer_join will make everything work
             automatically.
       */
       if (!(wrap_nest= alloc_join_nest(parent_join->thd)))
@@ -2862,8 +2862,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
       wrap_nest->on_expr= outer_tbl->on_expr;
       outer_tbl->on_expr= NULL;
 
-      List_iterator<TABLE_LIST> li(*wrap_nest->join_list);
-      TABLE_LIST *tbl;
+      List_iterator<TableList> li(*wrap_nest->join_list);
+      TableList *tbl;
       while ((tbl= li++))
       {
         if (tbl == outer_tbl)
@@ -2881,8 +2881,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     }
   }
 
-  TABLE_LIST *sj_nest;
-  NESTED_JOIN *nested_join;
+  TableList *sj_nest;
+  nested_join_st *nested_join;
   if (!(sj_nest= alloc_join_nest(parent_join->thd)))
   {
     return(true);
@@ -2907,8 +2907,8 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
   */
   st_select_lex *subq_lex= subq_pred->unit->first_select();
   nested_join->join_list.empty();
-  List_iterator_fast<TABLE_LIST> li(subq_lex->top_join_list);
-  TABLE_LIST *tl, *last_leaf;
+  List_iterator_fast<TableList> li(subq_lex->top_join_list);
+  TableList *tl, *last_leaf;
   while ((tl= li++))
   {
     tl->embedding= sj_nest;
@@ -2952,7 +2952,7 @@ bool convert_subq_to_sj(JOIN *parent_join, Item_in_subselect *subq_pred)
     tl->table->map= ((table_map)1) << table_no;
     SELECT_LEX *old_sl= tl->select_lex;
     tl->select_lex= parent_join->select_lex; 
-    for(TABLE_LIST *emb= tl->embedding; emb && emb->select_lex == old_sl; emb= emb->embedding)
+    for(TableList *emb= tl->embedding; emb && emb->select_lex == old_sl; emb= emb->embedding)
       emb->select_lex= parent_join->select_lex;
   }
   parent_join->tables += subq_lex->join->tables;
@@ -3080,7 +3080,7 @@ bool JOIN::flatten_subqueries()
       (*in_subq)->is_correlated * MAX_TABLES + child_join->outer_tables;
   }
 
-  //dump_TABLE_LIST_struct(select_lex, select_lex->leaf_tables);
+  //dump_TableList_struct(select_lex, select_lex->leaf_tables);
   /* 
     2. Pick which subqueries to convert:
       sort the subquery array
@@ -3271,7 +3271,7 @@ bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
      * Pulled out tables have JOIN_TAB::emb_sj_nest == NULL (like the outer
        tables)
      * Tables that were not pulled out have JOIN_TAB::emb_sj_nest.
-     * Semi-join nests TABLE_LIST::sj_inner_tables
+     * Semi-join nests TableList::sj_inner_tables
 
     This operation is (and should be) performed at each PS execution since
     tables may become/cease to be constant across PS reexecutions.
@@ -3283,8 +3283,8 @@ bool find_eq_ref_candidate(Table *table, table_map sj_inner_tables)
 
 int pull_out_semijoin_tables(JOIN *join)
 {
-  TABLE_LIST *sj_nest;
-  List_iterator<TABLE_LIST> sj_list_it(join->select_lex->sj_nests);
+  TableList *sj_nest;
+  List_iterator<TableList> sj_list_it(join->select_lex->sj_nests);
    
   /* Try pulling out of the each of the semi-joins */
   while ((sj_nest= sj_list_it++))
@@ -3292,8 +3292,8 @@ int pull_out_semijoin_tables(JOIN *join)
     /* Action #1: Mark the constant tables to be pulled out */
     table_map pulled_tables= 0;
      
-    List_iterator<TABLE_LIST> child_li(sj_nest->nested_join->join_list);
-    TABLE_LIST *tbl;
+    List_iterator<TableList> child_li(sj_nest->nested_join->join_list);
+    TableList *tbl;
     while ((tbl= child_li++))
     {
       if (tbl->table)
@@ -3415,7 +3415,7 @@ typedef struct st_sargable_param
 */
 
 static bool
-make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
+make_join_statistics(JOIN *join, TableList *tables, COND *conds,
 		     DYNAMIC_ARRAY *keyuse_array)
 {
   int error;
@@ -3447,7 +3447,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
        tables;
        s++, tables= tables->next_leaf, i++)
   {
-    TABLE_LIST *embedding= tables->embedding;
+    TableList *embedding= tables->embedding;
     stat_vector[i]=s;
     s->keys.init();
     s->const_keys.init();
@@ -3498,7 +3498,7 @@ make_join_statistics(JOIN *join, TABLE_LIST *tables, COND *conds,
       s->embedding_map= 0;
       do
       {
-        NESTED_JOIN *nested_join= embedding->nested_join;
+        nested_join_st *nested_join= embedding->nested_join;
         s->embedding_map|=nested_join->nj_map;
         s->dependent|= embedding->dep_tables;
         embedding= embedding->embedding;
@@ -4515,15 +4515,15 @@ sort_keyuse(KEYUSE *a,KEYUSE *b)
     Here we can add 'ref' access candidates for t1 and t2, but not for t3.
 */
 
-static void add_key_fields_for_nj(JOIN *join, TABLE_LIST *nested_join_table,
+static void add_key_fields_for_nj(JOIN *join, TableList *nested_join_table,
                                   KEY_FIELD **end, uint *and_level,
                                   SARGABLE_PARAM **sargables)
 {
-  List_iterator<TABLE_LIST> li(nested_join_table->nested_join->join_list);
-  List_iterator<TABLE_LIST> li2(nested_join_table->nested_join->join_list);
+  List_iterator<TableList> li(nested_join_table->nested_join->join_list);
+  List_iterator<TableList> li2(nested_join_table->nested_join->join_list);
   bool have_another = false;
   table_map tables= 0;
-  TABLE_LIST *table;
+  TableList *table;
   assert(nested_join_table->nested_join);
 
   while ((table= li++) || (have_another && (li=li2, have_another=false,
@@ -4536,7 +4536,7 @@ static void add_key_fields_for_nj(JOIN *join, TABLE_LIST *nested_join_table,
         /* It's a semi-join nest. Walk into it as if it wasn't a nest */
         have_another= true;
         li2= li;
-        li= List_iterator<TABLE_LIST>(table->nested_join->join_list); 
+        li= List_iterator<TableList>(table->nested_join->join_list); 
       }
       else
         add_key_fields_for_nj(join, table, end, and_level, sargables);
@@ -4651,8 +4651,8 @@ update_ref_and_keys(THD *thd, DYNAMIC_ARRAY *keyuse,JOIN_TAB *join_tab,
 
   /* Process ON conditions for the nested joins */
   {
-    List_iterator<TABLE_LIST> li(*join_tab->join->join_list);
-    TABLE_LIST *table;
+    List_iterator<TableList> li(*join_tab->join->join_list);
+    TableList *table;
     while ((table= li++))
     {
       if (table->nested_join)
@@ -4786,7 +4786,7 @@ add_group_and_distinct_keys(JOIN *join, JOIN_TAB *join_tab)
 {
   List<Item_field> indexed_fields;
   List_iterator<Item_field> indexed_fields_it(indexed_fields);
-  ORDER      *cur_group;
+  order_st      *cur_group;
   Item_field *cur_item;
   key_map possible_keys(0);
 
@@ -4869,7 +4869,7 @@ set_position(JOIN *join,uint idx,JOIN_TAB *table,KEYUSE *key)
     Bitmap of bound IN-equalities.
 */
 
-uint64_t get_bound_sj_equalities(TABLE_LIST *sj_nest, 
+uint64_t get_bound_sj_equalities(TableList *sj_nest, 
                                   table_map remaining_tables)
 {
   List_iterator<Item> li(sj_nest->nested_join->sj_outer_expr_list);
@@ -6606,8 +6606,6 @@ store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
   Table *table= field->table;
   THD *thd= table->in_use;
   ha_rows cuted_fields=thd->cuted_fields;
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table,
-                                                   table->write_set);
 
   /*
     we should restore old value of count_cuted_fields because
@@ -6618,7 +6616,6 @@ store_val_in_field(Field *field, Item *item, enum_check_fields check_flag)
   thd->count_cuted_fields= check_flag;
   error= item->save_in_field(field, 1);
   thd->count_cuted_fields= old_count_cuted_fields;
-  dbug_tmp_restore_column_map(table->write_set, old_map);
   return error || cuted_fields != thd->cuted_fields;
 }
 
@@ -6884,8 +6881,8 @@ make_outerjoin_info(JOIN *join)
   {
     JOIN_TAB *tab=join->join_tab+i;
     Table *table=tab->table;
-    TABLE_LIST *tbl= table->pos_in_table_list;
-    TABLE_LIST *embedding= tbl->embedding;
+    TableList *tbl= table->pos_in_table_list;
+    TableList *embedding= tbl->embedding;
 
     if (tbl->outer_join)
     {
@@ -6905,7 +6902,7 @@ make_outerjoin_info(JOIN *join)
       /* Ignore sj-nests: */
       if (!embedding->on_expr)
         continue;
-      NESTED_JOIN *nested_join= embedding->nested_join;
+      nested_join_st *nested_join= embedding->nested_join;
       if (!nested_join->counter_)
       {
         /* 
@@ -7604,7 +7601,7 @@ static void push_index_cond(JOIN_TAB *tab, uint keyno, bool other_tbls_ok)
 
 
     /*
-      Determine if the set is already ordered for ORDER BY, so it can 
+      Determine if the set is already ordered for order_st BY, so it can 
       disable join cache because it will change the ordering of the results.
       Code handles sort table that is at any location (not only first after 
       the const tables) despite the fact that it's currently prohibited.
@@ -8092,27 +8089,27 @@ void JOIN::cleanup(bool full)
 
 
 /**
-  Remove the following expressions from ORDER BY and GROUP BY:
+  Remove the following expressions from order_st BY and GROUP BY:
   Constant expressions @n
   Expression that only uses tables that are of type EQ_REF and the reference
-  is in the ORDER list or if all refereed tables are of the above type.
+  is in the order_st list or if all refereed tables are of the above type.
 
   In the following, the X field can be removed:
   @code
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t1.a,t2.X
-  SELECT * FROM t1,t2,t3 WHERE t1.a=t2.a AND t2.b=t3.b ORDER BY t1.a,t3.X
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a order_st BY t1.a,t2.X
+  SELECT * FROM t1,t2,t3 WHERE t1.a=t2.a AND t2.b=t3.b order_st BY t1.a,t3.X
   @endcode
 
   These can't be optimized:
   @code
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t2.X,t1.a
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a AND t1.b=t2.b ORDER BY t1.a,t2.c
-  SELECT * FROM t1,t2 WHERE t1.a=t2.a ORDER BY t2.b,t1.a
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a order_st BY t2.X,t1.a
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a AND t1.b=t2.b order_st BY t1.a,t2.c
+  SELECT * FROM t1,t2 WHERE t1.a=t2.a order_st BY t2.b,t1.a
   @endcode
 */
 
 static bool
-eq_ref_table(JOIN *join, ORDER *start_order, JOIN_TAB *tab)
+eq_ref_table(JOIN *join, order_st *start_order, JOIN_TAB *tab)
 {
   if (tab->cached_eq_ref_table)			// If cached
     return tab->eq_ref_table;
@@ -8131,7 +8128,7 @@ eq_ref_table(JOIN *join, ORDER *start_order, JOIN_TAB *tab)
   {
     if (! (*ref_item)->const_item())
     {						// Not a const ref
-      ORDER *order;
+      order_st *order;
       for (order=start_order ; order ; order=order->next)
       {
 	if ((*ref_item)->eq(order->item[0],0))
@@ -8142,7 +8139,7 @@ eq_ref_table(JOIN *join, ORDER *start_order, JOIN_TAB *tab)
 	found++;
 	assert(!(order->used & map));
 	order->used|=map;
-	continue;				// Used in ORDER BY
+	continue;				// Used in order_st BY
       }
       if (!only_eq_ref_tables(join,start_order, (*ref_item)->used_tables()))
 	return (tab->eq_ref_table=0);
@@ -8164,7 +8161,7 @@ eq_ref_table(JOIN *join, ORDER *start_order, JOIN_TAB *tab)
 
 
 static bool
-only_eq_ref_tables(JOIN *join,ORDER *order,table_map tables)
+only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
 {
   if (specialflag &  SPECIAL_SAFE_MODE)
     return 0;			// skip this optimize /* purecov: inspected */
@@ -8206,7 +8203,7 @@ static void update_depend_map(JOIN *join)
 
 /** Update the dependency map for the sort order. */
 
-static void update_depend_map(JOIN *join, ORDER *order)
+static void update_depend_map(JOIN *join, order_st *order)
 {
   for (; order ; order=order->next)
   {
@@ -8230,7 +8227,7 @@ static void update_depend_map(JOIN *join, ORDER *order)
 
 
 /**
-  Remove all constants and check if ORDER only contains simple
+  Remove all constants and check if order_st only contains simple
   expressions.
 
   simple_order is set to 1 if sort_order only uses fields from head table
@@ -8248,14 +8245,14 @@ static void update_depend_map(JOIN *join, ORDER *order)
     Returns new sort order
 */
 
-static ORDER *
-remove_const(JOIN *join,ORDER *first_order, COND *cond,
+static order_st *
+remove_const(JOIN *join,order_st *first_order, COND *cond,
              bool change_list, bool *simple_order)
 {
   if (join->tables == join->const_tables)
     return change_list ? 0 : first_order;		// No need to sort
 
-  ORDER *order,**prev_ptr;
+  order_st *order,**prev_ptr;
   table_map first_table= join->join_tab[join->const_tables].table->map;
   table_map not_const_tables= ~join->const_table_map;
   table_map ref;
@@ -8312,7 +8309,7 @@ remove_const(JOIN *join,ORDER *first_order, COND *cond,
 
 
 static int
-return_zero_rows(JOIN *join, select_result *result,TABLE_LIST *tables,
+return_zero_rows(JOIN *join, select_result *result,TableList *tables,
 		 List<Item> &fields, bool send_row, uint64_t select_options,
 		 const char *info, Item *having)
 {
@@ -8326,7 +8323,7 @@ return_zero_rows(JOIN *join, select_result *result,TABLE_LIST *tables,
 
   if (send_row)
   {
-    for (TABLE_LIST *table= tables; table; table= table->next_leaf)
+    for (TableList *table= tables; table; table= table->next_leaf)
       mark_as_null_row(table->table);		// All fields are NULL
     if (having && having->val_int() == 0)
       send_row=0;
@@ -9089,7 +9086,7 @@ static COND *build_equal_items_for_cond(THD *thd, COND *cond,
    
 static COND *build_equal_items(THD *thd, COND *cond,
                                COND_EQUAL *inherited,
-                               List<TABLE_LIST> *join_list,
+                               List<TableList> *join_list,
                                COND_EQUAL **cond_equal_ref)
 {
   COND_EQUAL *cond_equal= 0;
@@ -9117,14 +9114,14 @@ static COND *build_equal_items(THD *thd, COND *cond,
 
   if (join_list)
   {
-    TABLE_LIST *table;
-    List_iterator<TABLE_LIST> li(*join_list);
+    TableList *table;
+    List_iterator<TableList> li(*join_list);
 
     while ((table= li++))
     {
       if (table->on_expr)
       {
-        List<TABLE_LIST> *nested_join_list= table->nested_join ?
+        List<TableList> *nested_join_list= table->nested_join ?
           &table->nested_join->join_list : NULL;
         /*
           We can modify table->on_expr because its old value will
@@ -9760,13 +9757,13 @@ propagate_cond_constants(THD *thd, I_List<COND_CMP> *save_list,
 */
 
 static COND *
-simplify_joins(JOIN *join, List<TABLE_LIST> *join_list, COND *conds, bool top,
+simplify_joins(JOIN *join, List<TableList> *join_list, COND *conds, bool top,
                bool in_sj)
 {
-  TABLE_LIST *table;
-  NESTED_JOIN *nested_join;
-  TABLE_LIST *prev_table= 0;
-  List_iterator<TABLE_LIST> li(*join_list);
+  TableList *table;
+  nested_join_st *nested_join;
+  TableList *prev_table= 0;
+  List_iterator<TableList> li(*join_list);
 
   /* 
     Try to simplify join operations from join_list.
@@ -9916,8 +9913,8 @@ simplify_joins(JOIN *join, List<TABLE_LIST> *join_list, COND *conds, bool top,
     }
     else if (nested_join && !table->on_expr)
     {
-      TABLE_LIST *tbl;
-      List_iterator<TABLE_LIST> it(nested_join->join_list);
+      TableList *tbl;
+      List_iterator<TableList> it(nested_join->join_list);
       while ((tbl= it++))
       {
         tbl->embedding= table->embedding;
@@ -9950,14 +9947,14 @@ simplify_joins(JOIN *join, List<TABLE_LIST> *join_list, COND *conds, bool top,
     First unused bit in nested_join_map after the call.
 */
 
-static uint build_bitmap_for_nested_joins(List<TABLE_LIST> *join_list, 
+static uint build_bitmap_for_nested_joins(List<TableList> *join_list, 
                                           uint first_unused)
 {
-  List_iterator<TABLE_LIST> li(*join_list);
-  TABLE_LIST *table;
+  List_iterator<TableList> li(*join_list);
+  TableList *table;
   while ((table= li++))
   {
-    NESTED_JOIN *nested_join;
+    nested_join_st *nested_join;
     if ((nested_join= table->nested_join))
     {
       /*
@@ -9986,22 +9983,22 @@ static uint build_bitmap_for_nested_joins(List<TABLE_LIST> *join_list,
 
 
 /**
-  Set NESTED_JOIN::counter=0 in all nested joins in passed list.
+  Set nested_join_st::counter=0 in all nested joins in passed list.
 
-    Recursively set NESTED_JOIN::counter=0 for all nested joins contained in
+    Recursively set nested_join_st::counter=0 for all nested joins contained in
     the passed join_list.
 
   @param join_list  List of nested joins to process. It may also contain base
                     tables which will be ignored.
 */
 
-static void reset_nj_counters(List<TABLE_LIST> *join_list)
+static void reset_nj_counters(List<TableList> *join_list)
 {
-  List_iterator<TABLE_LIST> li(*join_list);
-  TABLE_LIST *table;
+  List_iterator<TableList> li(*join_list);
+  TableList *table;
   while ((table= li++))
   {
-    NESTED_JOIN *nested_join;
+    nested_join_st *nested_join;
     if ((nested_join= table->nested_join))
     {
       nested_join->counter_= 0;
@@ -10024,7 +10021,7 @@ static void reset_nj_counters(List<TABLE_LIST> *join_list)
 
   @verbatim
      IMPLEMENTATION 
-       LIMITATIONS ON JOIN ORDER
+       LIMITATIONS ON JOIN order_st
          The nested [outer] joins executioner algorithm imposes these limitations
          on join order:
          1. "Outer tables first" -  any "outer" table must be before any 
@@ -10088,7 +10085,7 @@ static void reset_nj_counters(List<TABLE_LIST> *join_list)
          position:
           1. join->cur_embedding_map - bitmap of pairs of brackets (aka nested
              joins) we've opened but didn't close.
-          2. {each NESTED_JOIN structure not simplified away}->counter - number
+          2. {each nested_join_st structure not simplified away}->counter - number
              of this nested join's children that have already been added to to
              the partial join order.
   @endverbatim
@@ -10107,7 +10104,7 @@ static void reset_nj_counters(List<TABLE_LIST> *join_list)
 
 static bool check_interleaving_with_nj(JOIN_TAB *last_tab, JOIN_TAB *next_tab)
 {
-  TABLE_LIST *next_emb= next_tab->table->pos_in_table_list->embedding;
+  TableList *next_emb= next_tab->table->pos_in_table_list->embedding;
   JOIN *join= last_tab->join;
 
   if (join->cur_embedding_map & ~next_tab->embedding_map)
@@ -10164,7 +10161,7 @@ static bool check_interleaving_with_nj(JOIN_TAB *last_tab, JOIN_TAB *next_tab)
 
 static void restore_prev_nj_state(JOIN_TAB *last)
 {
-  TABLE_LIST *last_emb= last->table->pos_in_table_list->embedding;
+  TableList *last_emb= last->table->pos_in_table_list->embedding;
   JOIN *join= last->join;
   while (last_emb)
   {
@@ -10187,7 +10184,7 @@ static void restore_prev_nj_state(JOIN_TAB *last)
 static 
 void advance_sj_state(const table_map remaining_tables, const JOIN_TAB *tab)
 {
-  TABLE_LIST *emb_sj_nest;
+  TableList *emb_sj_nest;
   if ((emb_sj_nest= tab->emb_sj_nest))
   {
     tab->join->cur_emb_sj_nests |= emb_sj_nest->sj_inner_tables;
@@ -10205,7 +10202,7 @@ void advance_sj_state(const table_map remaining_tables, const JOIN_TAB *tab)
 static void restore_prev_sj_state(const table_map remaining_tables, 
                                   const JOIN_TAB *tab)
 {
-  TABLE_LIST *emb_sj_nest;
+  TableList *emb_sj_nest;
   if ((emb_sj_nest= tab->emb_sj_nest))
   {
     /* If we're removing the last SJ-inner table, remove the sj-nest */
@@ -10219,7 +10216,7 @@ static void restore_prev_sj_state(const table_map remaining_tables,
 
 
 static COND *
-optimize_cond(JOIN *join, COND *conds, List<TABLE_LIST> *join_list,
+optimize_cond(JOIN *join, COND *conds, List<TableList> *join_list,
               Item::cond_result *cond_value)
 {
   THD *thd= join->thd;
@@ -11395,11 +11392,11 @@ join_read_const_table(JOIN_TAB *tab, POSITION *pos)
   JOIN *join= tab->join;
   if (join->conds)
     update_const_equal_items(join->conds, tab);
-  TABLE_LIST *tbl;
+  TableList *tbl;
   for (tbl= join->select_lex->leaf_tables; tbl; tbl= tbl->next_leaf)
   {
-    TABLE_LIST *embedded;
-    TABLE_LIST *embedding= tbl;
+    TableList *embedded;
+    TableList *embedding= tbl;
     do
     {
       embedded= embedding;
@@ -11592,8 +11589,8 @@ join_read_always_key(JOIN_TAB *tab)
 
 
 /**
-  This function is used when optimizing away ORDER BY in 
-  SELECT * FROM t1 WHERE a=1 ORDER BY a DESC,b DESC.
+  This function is used when optimizing away order_st BY in 
+  SELECT * FROM t1 WHERE a=1 order_st BY a DESC,b DESC.
 */
   
 static int
@@ -12087,7 +12084,7 @@ end_write(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
     if (!table->uniques)			// If not unique handling
     {
       /* Copy null values from group to row */
-      ORDER   *group;
+      order_st   *group;
       for (group=table->group ; group ; group=group->next)
       {
 	Item *item= *group->item;
@@ -12137,7 +12134,7 @@ end_update(JOIN *join, JOIN_TAB *join_tab __attribute__((unused)),
 	   bool end_of_records)
 {
   Table *table=join->tmp_table;
-  ORDER   *group;
+  order_st   *group;
   int	  error;
 
   if (end_of_records)
@@ -12595,7 +12592,7 @@ part_of_refkey(Table *table,Field *field)
 
 
 /**
-  Test if one can use the key to resolve ORDER BY.
+  Test if one can use the key to resolve order_st BY.
 
   @param order                 Sort order
   @param table                 Table to sort
@@ -12615,7 +12612,7 @@ part_of_refkey(Table *table,Field *field)
     -1   Reverse key can be used
 */
 
-static int test_if_order_by_key(ORDER *order, Table *table, uint idx,
+static int test_if_order_by_key(order_st *order, Table *table, uint idx,
 				uint *used_key_parts)
 {
   KEY_PART_INFO *key_part,*key_part_end;
@@ -12632,7 +12629,7 @@ static int test_if_order_by_key(ORDER *order, Table *table, uint idx,
 
     /*
       Skip key parts that are constants in the WHERE clause.
-      These are already skipped in the ORDER BY by const_expression_in_where()
+      These are already skipped in the order_st BY by const_expression_in_where()
     */
     for (; const_key_parts & 1 ; const_key_parts>>= 1)
       key_part++; 
@@ -12746,7 +12743,7 @@ is_subkey(KEY_PART_INFO *key_part, KEY_PART_INFO *ref_key_part,
 */
 
 static uint
-test_if_subkey(ORDER *order, Table *table, uint ref, uint ref_key_parts,
+test_if_subkey(order_st *order, Table *table, uint ref, uint ref_key_parts,
 	       const key_map *usable_keys)
 {
   uint nr;
@@ -12836,11 +12833,11 @@ list_contains_unique_index(Table *table,
 
 /**
   Helper function for list_contains_unique_index.
-  Find a field reference in a list of ORDER structures.
+  Find a field reference in a list of order_st structures.
   Finds a direct reference of the Field in the list.
 
   @param field                The field to search for.
-  @param data                 ORDER *.The list to search in
+  @param data                 order_st *.The list to search in
 
   @retval
     1                    found
@@ -12851,9 +12848,9 @@ list_contains_unique_index(Table *table,
 static bool
 find_field_in_order_list (Field *field, void *data)
 {
-  ORDER *group= (ORDER *) data;
+  order_st *group= (order_st *) data;
   bool part_found= 0;
-  for (ORDER *tmp_group= group; tmp_group; tmp_group=tmp_group->next)
+  for (order_st *tmp_group= group; tmp_group; tmp_group=tmp_group->next)
   {
     Item *item= (*tmp_group->item)->real_item();
     if (item->type() == Item::FIELD_ITEM &&
@@ -12903,7 +12900,7 @@ find_field_in_item_list (Field *field, void *data)
 
 
 /**
-  Test if we can skip the ORDER BY by using an index.
+  Test if we can skip the order_st BY by using an index.
 
   SYNOPSIS
     test_if_skip_sort_order()
@@ -12929,7 +12926,7 @@ find_field_in_item_list (Field *field, void *data)
 */
 
 static bool
-test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,ha_rows select_limit,
+test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
 			bool no_changes, const key_map *map)
 {
   int ref_key;
@@ -12947,7 +12944,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,ha_rows select_limit,
   */
   usable_keys= *map;
 
-  for (ORDER *tmp_order=order; tmp_order ; tmp_order=tmp_order->next)
+  for (order_st *tmp_order=order; tmp_order ; tmp_order=tmp_order->next)
   {
     Item *item= (*tmp_order->item)->real_item();
     if (item->type() != Item::FIELD_ITEM)
@@ -13065,7 +13062,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,ha_rows select_limit,
       Check whether there is an index compatible with the given order
       usage of which is cheaper than usage of the ref_key index (ref_key>=0)
       or a table scan.
-      It may be the case if ORDER/GROUP BY is used with LIMIT.
+      It may be the case if order_st/GROUP BY is used with LIMIT.
     */
     uint nr;
     key_map keys;
@@ -13100,7 +13097,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,ha_rows select_limit,
       /*
 	We are adding here also the index specified in FORCE INDEX clause, 
 	if any.
-        This is to allow users to use index in ORDER BY.
+        This is to allow users to use index in order_st BY.
       */
       if (table->force_index) 
 	keys.merge(group ? table->keys_in_use_for_group_by :
@@ -13123,7 +13120,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,ha_rows select_limit,
         bool is_covering= table->covering_keys.is_set(nr) || (nr == table->s->primary_key && table->file->primary_key_is_clustered());
 	
         /* 
-          Don't use an index scan with ORDER BY without limit.
+          Don't use an index scan with order_st BY without limit.
           For GROUP BY without limit always use index scan
           if there is a suitable index. 
           Why we hold to this asymmetry hardly can be explained
@@ -13288,7 +13285,7 @@ test_if_skip_sort_order(JOIN_TAB *tab,ORDER *order,ha_rows select_limit,
   } 
 
 check_reverse_order:                  
-  if (order_direction == -1)		// If ORDER BY ... DESC
+  if (order_direction == -1)		// If order_st BY ... DESC
   {
     if (select && select->quick)
     {
@@ -13311,7 +13308,7 @@ check_reverse_order:
           return(0);                   // Use filesort
         }
             
-        /* ORDER BY range_key DESC */
+        /* order_st BY range_key DESC */
 	tmp= new QUICK_SELECT_DESC((QUICK_RANGE_SELECT*)(select->quick),
                                     used_key_parts, &error);
 	if (!tmp || error)
@@ -13328,7 +13325,7 @@ check_reverse_order:
              tab->ref.key >= 0 && tab->ref.key_parts <= used_key_parts)
     {
       /*
-	SELECT * FROM t1 WHERE a=1 ORDER BY a DESC,b DESC
+	SELECT * FROM t1 WHERE a=1 order_st BY a DESC,b DESC
 
 	Use a traversal function that starts by reading the last row
 	with key part (A) and then traverse the index backwards.
@@ -13354,7 +13351,7 @@ check_reverse_order:
      filesort_limit	Max number of rows that needs to be sorted
      select_limit	Max number of rows in final output
 		        Used to decide if we should use index or not
-     is_order_by        true if we are sorting on ORDER BY, false if GROUP BY
+     is_order_by        true if we are sorting on order_st BY, false if GROUP BY
                         Used to decide if we should use index or not     
 
 
@@ -13373,7 +13370,7 @@ check_reverse_order:
 */
 
 static int
-create_sort_index(THD *thd, JOIN *join, ORDER *order,
+create_sort_index(THD *thd, JOIN *join, order_st *order,
 		  ha_rows filesort_limit, ha_rows select_limit,
                   bool is_order_by)
 {
@@ -13402,7 +13399,7 @@ create_sort_index(THD *thd, JOIN *join, ORDER *order,
                               is_order_by ?  &table->keys_in_use_for_order_by :
                               &table->keys_in_use_for_group_by))
     return(0);
-  for (ORDER *ord= join->order; ord; ord= ord->next)
+  for (order_st *ord= join->order; ord; ord= ord->next)
     length++;
   if (!(join->sortorder= 
         make_unireg_sortorder(order, &length, join->sortorder)))
@@ -13759,14 +13756,14 @@ err:
 }
 
 
-SORT_FIELD *make_unireg_sortorder(ORDER *order, uint *length,
+SORT_FIELD *make_unireg_sortorder(order_st *order, uint *length,
                                   SORT_FIELD *sortorder)
 {
   uint count;
   SORT_FIELD *sort,*pos;
 
   count=0;
-  for (ORDER *tmp = order; tmp; tmp=tmp->next)
+  for (order_st *tmp = order; tmp; tmp=tmp->next)
     count++;
   if (!sortorder)
     sortorder= (SORT_FIELD*) sql_alloc(sizeof(SORT_FIELD) *
@@ -14112,11 +14109,10 @@ cmp_buffer_with_ref(JOIN_TAB *tab)
 
 
 bool
-cp_buffer_from_ref(THD *thd, Table *table, TABLE_REF *ref)
+cp_buffer_from_ref(THD *thd, Table *table __attribute__((unused)), TABLE_REF *ref)
 {
   enum enum_check_fields save_count_cuted_fields= thd->count_cuted_fields;
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->write_set);
   bool result= 0;
 
   for (store_key **copy=ref->key_copy ; *copy ; copy++)
@@ -14128,7 +14124,6 @@ cp_buffer_from_ref(THD *thd, Table *table, TABLE_REF *ref)
     }
   }
   thd->count_cuted_fields= save_count_cuted_fields;
-  dbug_tmp_restore_column_map(table->write_set, old_map);
   return result;
 }
 
@@ -14138,13 +14133,13 @@ cp_buffer_from_ref(THD *thd, Table *table, TABLE_REF *ref)
 *****************************************************************************/
 
 /**
-  Resolve an ORDER BY or GROUP BY column reference.
+  Resolve an order_st BY or GROUP BY column reference.
 
-  Given a column reference (represented by 'order') from a GROUP BY or ORDER
+  Given a column reference (represented by 'order') from a GROUP BY or order_st
   BY clause, find the actual column it represents. If the column being
   resolved is from the GROUP BY clause, the procedure searches the SELECT
   list 'fields' and the columns in the FROM list 'tables'. If 'order' is from
-  the ORDER BY clause, only the SELECT list is being searched.
+  the order_st BY clause, only the SELECT list is being searched.
 
   If 'order' is resolved to an Item, then order->item is set to the found
   Item. If there is no item for the found column (that is, it was resolved
@@ -14162,7 +14157,7 @@ cp_buffer_from_ref(THD *thd, Table *table, TABLE_REF *ref)
     SELECT list)
   @param[in,out] all_fields         All select, group and order by fields
   @param[in] is_group_field         True if order is a GROUP field, false if
-    ORDER by field
+    order_st by field
 
   @retval
     false if OK
@@ -14171,11 +14166,11 @@ cp_buffer_from_ref(THD *thd, Table *table, TABLE_REF *ref)
 */
 
 static bool
-find_order_in_list(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
-                   ORDER *order, List<Item> &fields, List<Item> &all_fields,
+find_order_in_list(THD *thd, Item **ref_pointer_array, TableList *tables,
+                   order_st *order, List<Item> &fields, List<Item> &all_fields,
                    bool is_group_field)
 {
-  Item *order_item= *order->item; /* The item from the GROUP/ORDER caluse. */
+  Item *order_item= *order->item; /* The item from the GROUP/order_st caluse. */
   Item::Type order_item_type;
   Item **select_item; /* The corresponding item from the SELECT clause. */
   Field *from_field;  /* The corresponding field from the FROM clause. */
@@ -14201,7 +14196,7 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
     order->counter_used= 1;
     return false;
   }
-  /* Lookup the current GROUP/ORDER field in the SELECT clause. */
+  /* Lookup the current GROUP/order_st field in the SELECT clause. */
   select_item= find_item_in_list(order_item, fields, &counter,
                                  REPORT_EXCEPT_NOT_FOUND, &resolution);
   if (!select_item)
@@ -14307,8 +14302,8 @@ find_order_in_list(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
   the field list.
 */
 
-int setup_order(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
-		List<Item> &fields, List<Item> &all_fields, ORDER *order)
+int setup_order(THD *thd, Item **ref_pointer_array, TableList *tables,
+		List<Item> &fields, List<Item> &all_fields, order_st *order)
 {
   thd->where="order clause";
   for (; order; order=order->next)
@@ -14348,12 +14343,12 @@ int setup_order(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
 */
 
 int
-setup_group(THD *thd, Item **ref_pointer_array, TABLE_LIST *tables,
-	    List<Item> &fields, List<Item> &all_fields, ORDER *order,
+setup_group(THD *thd, Item **ref_pointer_array, TableList *tables,
+	    List<Item> &fields, List<Item> &all_fields, order_st *order,
 	    bool *hidden_group_fields)
 {
   *hidden_group_fields=0;
-  ORDER *ord;
+  order_st *ord;
 
   if (!order)
     return 0;				/* Everything is ok */
@@ -14444,15 +14439,15 @@ next_field:
   optimize away 'order by'.
 */
 
-static ORDER *
+static order_st *
 create_distinct_group(THD *thd, Item **ref_pointer_array,
-                      ORDER *order_list, List<Item> &fields,
+                      order_st *order_list, List<Item> &fields,
                       List<Item> &all_fields __attribute__((unused)),
                       bool *all_order_by_fields_used)
 {
   List_iterator<Item> li(fields);
   Item *item;
-  ORDER *order,*group,**prev;
+  order_st *order,*group,**prev;
 
   *all_order_by_fields_used= 1;
   while ((item=li++))
@@ -14463,7 +14458,7 @@ create_distinct_group(THD *thd, Item **ref_pointer_array,
   {
     if (order->in_field_list)
     {
-      ORDER *ord=(ORDER*) thd->memdup((char*) order,sizeof(ORDER));
+      order_st *ord=(order_st*) thd->memdup((char*) order,sizeof(order_st));
       if (!ord)
 	return 0;
       *prev=ord;
@@ -14483,12 +14478,12 @@ create_distinct_group(THD *thd, Item **ref_pointer_array,
         Don't put duplicate columns from the SELECT list into the 
         GROUP BY list.
       */
-      ORDER *ord_iter;
+      order_st *ord_iter;
       for (ord_iter= group; ord_iter; ord_iter= ord_iter->next)
         if ((*ord_iter->item)->eq(item, 1))
           goto next_item;
       
-      ORDER *ord=(ORDER*) thd->calloc(sizeof(ORDER));
+      order_st *ord=(order_st*) thd->calloc(sizeof(order_st));
       if (!ord)
 	return 0;
 
@@ -14570,7 +14565,7 @@ count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param,
 */
 
 static bool
-test_if_subpart(ORDER *a,ORDER *b)
+test_if_subpart(order_st *a,order_st *b)
 {
   for (; a && b; a=a->next,b=b->next)
   {
@@ -14588,7 +14583,7 @@ test_if_subpart(ORDER *a,ORDER *b)
 */
 
 static Table *
-get_sort_by_table(ORDER *a,ORDER *b,TABLE_LIST *tables)
+get_sort_by_table(order_st *a,order_st *b,TableList *tables)
 {
   table_map map= (table_map) 0;
 
@@ -14618,7 +14613,7 @@ get_sort_by_table(ORDER *a,ORDER *b,TABLE_LIST *tables)
 */
 
 static void
-calc_group_buffer(JOIN *join,ORDER *group)
+calc_group_buffer(JOIN *join,order_st *group)
 {
   uint key_length=0, parts=0, null_parts=0;
 
@@ -14732,7 +14727,7 @@ make_group_fields(JOIN *main_join, JOIN *curr_join)
 */
 
 static bool
-alloc_group_fields(JOIN *join,ORDER *group)
+alloc_group_fields(JOIN *join,order_st *group)
 {
   if (group)
   {
@@ -14901,7 +14896,7 @@ setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
       */
       if (!(pos=new Item_copy_string(pos)))
 	goto err;
-      if (i < border)                           // HAVING, ORDER and GROUP BY
+      if (i < border)                           // HAVING, order_st and GROUP BY
       {
         if (extra_funcs.push_back(pos))
           goto err;
@@ -14919,7 +14914,7 @@ setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
     itr++;
   itr.sublist(res_selected_fields, elements);
   /*
-    Put elements from HAVING, ORDER BY and GROUP BY last to ensure that any
+    Put elements from HAVING, order_st BY and GROUP BY last to ensure that any
     reference used in these will resolve to a item that is already calculated
   */
   param->copy_funcs.concat(&extra_funcs);
@@ -14989,12 +14984,12 @@ bool JOIN::alloc_func_list()
   {
     group_parts+= fields_list.elements;
     /*
-      If the ORDER clause is specified then it's possible that
+      If the order_st clause is specified then it's possible that
       it also will be optimized, so reserve space for it too
     */
     if (order)
     {
-      ORDER *ord;
+      order_st *ord;
       for (ord= order; ord; ord= ord->next)
         group_parts++;
     }
@@ -15385,7 +15380,7 @@ void free_underlaid_joins(THD *thd __attribute__((unused)),
     1   on error
 */
 
-static bool change_group_ref(THD *thd, Item_func *expr, ORDER *group_list,
+static bool change_group_ref(THD *thd, Item_func *expr, order_st *group_list,
                              bool *changed)
 {
   if (expr->arg_count)
@@ -15400,7 +15395,7 @@ static bool change_group_ref(THD *thd, Item_func *expr, ORDER *group_list,
       Item *item= *arg;
       if (item->type() == Item::FIELD_ITEM || item->type() == Item::REF_ITEM)
       {
-        ORDER *group_tmp;
+        order_st *group_tmp;
         for (group_tmp= group_list; group_tmp; group_tmp= group_tmp->next)
         {
           if (item->eq(*group_tmp->item,0))
@@ -15478,7 +15473,7 @@ bool JOIN::rollup_init()
   Item *item;
   while ((item= it++))
   {
-    ORDER *group_tmp;
+    order_st *group_tmp;
     bool found_in_group= 0;
 
     for (group_tmp= group_list; group_tmp; group_tmp= group_tmp->next)
@@ -15507,7 +15502,7 @@ bool JOIN::rollup_init()
             return 1;
           new_item->fix_fields(thd, (Item **) 0);
           thd->change_item_tree(it.ref(), new_item);
-          for (ORDER *tmp= group_tmp; tmp; tmp= tmp->next)
+          for (order_st *tmp= group_tmp; tmp; tmp= tmp->next)
           { 
             if (*tmp->item == item)
               thd->change_item_tree(tmp->item, new_item);
@@ -15585,7 +15580,7 @@ bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
     Item *item;
     List_iterator<Item> new_it(rollup.fields[pos]);
     Item **ref_array_start= rollup.ref_pointer_arrays[pos];
-    ORDER *start_group;
+    order_st *start_group;
 
     /* Point to first hidden field */
     Item **ref_array= ref_array_start + fields_arg.elements-1;
@@ -15629,7 +15624,7 @@ bool JOIN::rollup_make_fields(List<Item> &fields_arg, List<Item> &sel_fields,
       else 
       {
 	/* Check if this is something that is part of this group by */
-	ORDER *group_tmp;
+	order_st *group_tmp;
 	for (group_tmp= start_group, i= pos ;
              group_tmp ; group_tmp= group_tmp->next, i++)
 	{
@@ -15889,7 +15884,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
     {
       JOIN_TAB *tab=join->join_tab+i;
       Table *table=tab->table;
-      TABLE_LIST *table_list= tab->table->pos_in_table_list;
+      TableList *table_list= tab->table->pos_in_table_list;
       char buff[512]; 
       char buff1[512], buff2[512], buff3[512];
       char keylen_str_buf[64];
@@ -15933,7 +15928,7 @@ void select_describe(JOIN *join, bool need_tmp_table, bool need_order,
       }
       else
       {
-        TABLE_LIST *real_table= table->pos_in_table_list; 
+        TableList *real_table= table->pos_in_table_list; 
 	item_list.push_back(new Item_string(real_table->alias,
 					    strlen(real_table->alias),
 					    cs));
@@ -16302,15 +16297,15 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
     thd->lex->current_select= first;
     unit->set_limit(unit->global_parameters);
     res= mysql_select(thd, &first->ref_pointer_array,
-			(TABLE_LIST*) first->table_list.first,
+			(TableList*) first->table_list.first,
 			first->with_wild, first->item_list,
 			first->where,
 			first->order_list.elements +
 			first->group_list.elements,
-			(ORDER*) first->order_list.first,
-			(ORDER*) first->group_list.first,
+			(order_st*) first->order_list.first,
+			(order_st*) first->group_list.first,
 			first->having,
-			(ORDER*) thd->lex->proc_list.first,
+			(order_st*) thd->lex->proc_list.first,
 			first->options | thd->options | SELECT_DESCRIBE,
 			result, unit, first);
   }
@@ -16318,14 +16313,14 @@ bool mysql_explain_union(THD *thd, SELECT_LEX_UNIT *unit, select_result *result)
 }
 
 
-static void print_table_array(THD *thd, String *str, TABLE_LIST **table, 
-                              TABLE_LIST **end)
+static void print_table_array(THD *thd, String *str, TableList **table, 
+                              TableList **end)
 {
   (*table)->print(thd, str, QT_ORDINARY);
 
-  for (TABLE_LIST **tbl= table + 1; tbl < end; tbl++)
+  for (TableList **tbl= table + 1; tbl < end; tbl++)
   {
-    TABLE_LIST *curr= *tbl;
+    TableList *curr= *tbl;
     if (curr->outer_join)
     {
       /* MySQL converts right to left joins */
@@ -16358,17 +16353,17 @@ static void print_table_array(THD *thd, String *str, TABLE_LIST **table,
 
 static void print_join(THD *thd,
                        String *str,
-                       List<TABLE_LIST> *tables,
+                       List<TableList> *tables,
                        enum_query_type query_type __attribute__((unused)))
 {
   /* List is reversed => we should reverse it before using */
-  List_iterator_fast<TABLE_LIST> ti(*tables);
-  TABLE_LIST **table= (TABLE_LIST **)thd->alloc(sizeof(TABLE_LIST*) *
+  List_iterator_fast<TableList> ti(*tables);
+  TableList **table= (TableList **)thd->alloc(sizeof(TableList*) *
                                                 tables->elements);
   if (table == 0)
     return;  // out of memory
 
-  for (TABLE_LIST **t= table + (tables->elements - 1); t >= table; t--)
+  for (TableList **t= table + (tables->elements - 1); t >= table; t--)
     *t= ti++;
   
   /* 
@@ -16377,12 +16372,12 @@ static void print_join(THD *thd,
   */
   if ((*table)->sj_inner_tables)
   {
-    TABLE_LIST **end= table + tables->elements;
-    for (TABLE_LIST **t2= table; t2!=end; t2++)
+    TableList **end= table + tables->elements;
+    for (TableList **t2= table; t2!=end; t2++)
     {
       if (!(*t2)->sj_inner_tables)
       {
-        TABLE_LIST *tmp= *t2;
+        TableList *tmp= *t2;
         *t2= *table;
         *table= tmp;
         break;
@@ -16437,7 +16432,7 @@ Index_hint::print(THD *thd, String *str)
   @param str   string where table should be printed
 */
 
-void TABLE_LIST::print(THD *thd, String *str, enum_query_type query_type)
+void TableList::print(THD *thd, String *str, enum_query_type query_type)
 {
   if (nested_join)
   {
@@ -16583,7 +16578,7 @@ void st_select_lex::print(THD *thd, String *str, enum_query_type query_type)
   if (group_list.elements)
   {
     str->append(STRING_WITH_LEN(" group by "));
-    print_order(str, (ORDER *) group_list.first, query_type);
+    print_order(str, (order_st *) group_list.first, query_type);
     switch (olap)
     {
       case CUBE_TYPE:
@@ -16614,7 +16609,7 @@ void st_select_lex::print(THD *thd, String *str, enum_query_type query_type)
   if (order_list.elements)
   {
     str->append(STRING_WITH_LEN(" order by "));
-    print_order(str, (ORDER *) order_list.first, query_type);
+    print_order(str, (order_st *) order_list.first, query_type);
   }
 
   // limit

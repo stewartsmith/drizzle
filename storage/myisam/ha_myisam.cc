@@ -973,7 +973,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
   const char *errmsg= 0;
   int error= HA_ADMIN_OK;
   uint64_t map;
-  TABLE_LIST *table_list= table->pos_in_table_list;
+  TableList *table_list= table->pos_in_table_list;
 
   table->keys_in_use_for_query.clear_all();
 

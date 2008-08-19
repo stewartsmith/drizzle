@@ -71,12 +71,12 @@ public:
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
 };
 
-static int read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+static int read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
 			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
-static int read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+static int read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
 			  String &enclosed, uint32_t skip_lines,
@@ -108,7 +108,7 @@ static bool write_execute_load_query_log_event(THD *thd,
     true - error / false - success
 */
 
-int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
+int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore,
@@ -501,7 +501,7 @@ static bool write_execute_load_query_log_event(THD *thd,
 ****************************************************************************/
 
 static int
-read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
@@ -617,7 +617,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
 
 
 static int
-read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
 	       String &enclosed, uint32_t skip_lines,

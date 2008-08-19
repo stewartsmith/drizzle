@@ -28,13 +28,13 @@ enum enum_schema_table_state
 };
 
 
-class TABLE_LIST
+class TableList
 {
 public:
-  TABLE_LIST() {}                          /* Remove gcc warning */
+  TableList() {}                          /* Remove gcc warning */
 
   /**
-    Prepare TABLE_LIST that consists of one table instance to use in
+    Prepare TableList that consists of one table instance to use in
     simple_open_and_lock_tables
   */
   inline void init_one_table(const char *db_name_arg,
@@ -52,9 +52,9 @@ public:
     views as leaves (unlike 'next_leaf' below). Created at parse time
     in st_select_lex::add_table_to_list() -> table_list.link_in_list().
   */
-  TABLE_LIST *next_local;
+  TableList *next_local;
   /* link in a global list of all queries tables */
-  TABLE_LIST *next_global, **prev_global;
+  TableList *next_global, **prev_global;
   char		*db, *alias, *table_name, *schema_table_name;
   char          *option;                /* Used by cache index  */
   Item		*on_expr;		/* Used with outer join */
@@ -84,7 +84,7 @@ public:
     'this' represents a NATURAL or USING join operation. Thus after
     parsing 'this' is a NATURAL/USING join iff (natural_join != NULL).
   */
-  TABLE_LIST *natural_join;
+  TableList *natural_join;
   /*
     True if 'this' represents a nested join that is a NATURAL JOIN.
     For one of the operands of 'this', the member 'natural_join' points
@@ -105,10 +105,10 @@ public:
     List of nodes in a nested join tree, that should be considered as
     leaves with respect to name resolution. The leaves are: views,
     top-most nodes representing NATURAL/USING joins, subqueries, and
-    base tables. All of these TABLE_LIST instances contain a
+    base tables. All of these TableList instances contain a
     materialized list of columns. The list is local to a subquery.
   */
-  TABLE_LIST *next_name_resolution_table;
+  TableList *next_name_resolution_table;
   /* Index names in a "... JOIN ... USE/IGNORE INDEX ..." clause. */
   List<Index_hint> *index_hints;
   Table        *table;    /* opened table */
@@ -125,7 +125,7 @@ public:
     here it will be reference of first occurrence of t1 to second (as you
     can see this lists can't be merged)
   */
-  TABLE_LIST	*correspondent_table;
+  TableList	*correspondent_table;
   st_select_lex_unit *derived;		/* SELECT_LEX_UNIT of derived table */
   ST_SCHEMA_TABLE *schema_table;        /* Information_schema table */
   st_select_lex	*schema_select_lex;
@@ -145,13 +145,13 @@ public:
     does not include the tables of subqueries used in the view. Is set only
     for merged views.
   */
-  TABLE_LIST	*merge_underlying_list;
+  TableList	*merge_underlying_list;
   /*
     List of all base tables local to a subquery including all view
     tables. Unlike 'next_local', this in this list views are *not*
     leaves. Created in setup_tables() -> make_leaves_list().
   */
-  TABLE_LIST	*next_leaf;
+  TableList	*next_leaf;
   thr_lock_type lock_type;
   uint		outer_join;		/* Which join type */
   uint		shared;			/* Used in multi-upd */
@@ -163,14 +163,14 @@ public:
   bool          ignore_leaves;          /* preload only non-leaf nodes */
   table_map     dep_tables;             /* tables the table depends on      */
   table_map     on_expr_dep_tables;     /* tables on expression depends on  */
-  struct st_nested_join *nested_join;   /* if the element is a nested join  */
-  TABLE_LIST *embedding;             /* nested join containing the table */
-  List<TABLE_LIST> *join_list;/* join list the table belongs to   */
+  nested_join_st *nested_join;   /* if the element is a nested join  */
+  TableList *embedding;             /* nested join containing the table */
+  List<TableList> *join_list;/* join list the table belongs to   */
   bool		cacheable_table;	/* stop PS caching */
   handlerton	*db_type;		/* table_type for handler */
   char		timestamp_buffer[20];	/* buffer for timestamp (19+1) */
   /*
-    This TABLE_LIST object corresponds to the table to be created
+    This TableList object corresponds to the table to be created
     so it is possible that it does not exist (used in CREATE TABLE
     ... SELECT implementation).
   */
@@ -204,11 +204,11 @@ public:
   }
   void print(THD *thd, String *str, enum_query_type query_type);
   bool set_insert_values(MEM_ROOT *mem_root);
-  TABLE_LIST *find_underlying_table(Table *table);
-  TABLE_LIST *first_leaf_for_name_resolution();
-  TABLE_LIST *last_leaf_for_name_resolution();
+  TableList *find_underlying_table(Table *table);
+  TableList *first_leaf_for_name_resolution();
+  TableList *last_leaf_for_name_resolution();
   bool is_leaf_for_name_resolution();
-  inline TABLE_LIST *top_table()
+  inline TableList *top_table()
     { return this; }
 
   /*

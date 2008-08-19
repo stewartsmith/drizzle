@@ -386,18 +386,10 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
 
   if (!(*item)->with_subselect && (*item)->const_item())
   {
-    Table *table= field->table;
     ulong orig_sql_mode= thd->variables.sql_mode;
     enum_check_fields orig_count_cuted_fields= thd->count_cuted_fields;
-    my_bitmap_map *old_write_map;
-    my_bitmap_map *old_read_map;
     uint64_t orig_field_val= 0; /* original field value if valid */
 
-    if (table)
-    {
-      old_write_map= dbug_tmp_use_all_columns(table, table->write_set);
-      old_read_map= dbug_tmp_use_all_columns(table, table->read_set);
-    }
     /* For comparison purposes allow invalid dates like 2000-01-32 */
     thd->variables.sql_mode= (orig_sql_mode & ~MODE_NO_ZERO_DATE) | 
                              MODE_INVALID_DATES;
@@ -426,11 +418,6 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
     }
     thd->variables.sql_mode= orig_sql_mode;
     thd->count_cuted_fields= orig_count_cuted_fields;
-    if (table)
-    {
-      dbug_tmp_restore_column_map(table->write_set, old_write_map);
-      dbug_tmp_restore_column_map(table->read_set, old_read_map);
-    }
   }
   return result;
 }

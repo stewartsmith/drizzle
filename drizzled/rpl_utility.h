@@ -236,8 +236,8 @@ private:
    Extend the normal table list with a few new fields needed by the
    slave thread, but nowhere else.
  */
-struct RPL_TABLE_LIST
-  : public TABLE_LIST
+struct RPL_TableList
+  : public TableList
 {
   bool m_tabledef_valid;
   table_def m_tabledef;

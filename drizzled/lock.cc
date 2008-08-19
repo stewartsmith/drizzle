@@ -630,8 +630,8 @@ DRIZZLE_LOCK *mysql_lock_merge(DRIZZLE_LOCK *a,DRIZZLE_LOCK *b)
     !NULL   First table from 'haystack' that matches a lock on 'needle'.
 */
 
-TABLE_LIST *mysql_lock_have_duplicate(THD *thd, TABLE_LIST *needle,
-                                      TABLE_LIST *haystack)
+TableList *mysql_lock_have_duplicate(THD *thd, TableList *needle,
+                                      TableList *haystack)
 {
   DRIZZLE_LOCK            *mylock;
   Table                 **lock_tables;
@@ -854,7 +854,7 @@ static DRIZZLE_LOCK *get_lock_data(THD *thd, Table **table_ptr, uint count,
     1	error
 */
 
-int lock_and_wait_for_table_name(THD *thd, TABLE_LIST *table_list)
+int lock_and_wait_for_table_name(THD *thd, TableList *table_list)
 {
   int lock_retcode;
   int error= -1;
@@ -905,7 +905,7 @@ end:
     > 0  table locked, but someone is using it
 */
 
-int lock_table_name(THD *thd, TABLE_LIST *table_list, bool check_in_use)
+int lock_table_name(THD *thd, TableList *table_list, bool check_in_use)
 {
   Table *table;
   char  key[MAX_DBKEY_LENGTH];
@@ -964,7 +964,7 @@ int lock_table_name(THD *thd, TABLE_LIST *table_list, bool check_in_use)
 
 
 void unlock_table_name(THD *thd __attribute__((unused)),
-                       TABLE_LIST *table_list)
+                       TableList *table_list)
 {
   if (table_list->table)
   {
@@ -975,7 +975,7 @@ void unlock_table_name(THD *thd __attribute__((unused)),
 
 
 static bool locked_named_table(THD *thd __attribute__((unused)),
-                               TABLE_LIST *table_list)
+                               TableList *table_list)
 {
   for (; table_list ; table_list=table_list->next_local)
   {
@@ -995,7 +995,7 @@ static bool locked_named_table(THD *thd __attribute__((unused)),
 }
 
 
-bool wait_for_locked_table_names(THD *thd, TABLE_LIST *table_list)
+bool wait_for_locked_table_names(THD *thd, TableList *table_list)
 {
   bool result=0;
 
@@ -1034,10 +1034,10 @@ bool wait_for_locked_table_names(THD *thd, TABLE_LIST *table_list)
     1	Fatal error (end of memory ?)
 */
 
-bool lock_table_names(THD *thd, TABLE_LIST *table_list)
+bool lock_table_names(THD *thd, TableList *table_list)
 {
   bool got_all_locks=1;
-  TABLE_LIST *lock_table;
+  TableList *lock_table;
 
   for (lock_table= table_list; lock_table; lock_table= lock_table->next_local)
   {
@@ -1078,7 +1078,7 @@ end:
   @retval FALSE Name lock successfully acquired.
 */
 
-bool lock_table_names_exclusively(THD *thd, TABLE_LIST *table_list)
+bool lock_table_names_exclusively(THD *thd, TableList *table_list)
 {
   if (lock_table_names(thd, table_list))
     return true;
@@ -1086,7 +1086,7 @@ bool lock_table_names_exclusively(THD *thd, TABLE_LIST *table_list)
   /*
     Upgrade the table name locks from semi-exclusive to exclusive locks.
   */
-  for (TABLE_LIST *table= table_list; table; table= table->next_global)
+  for (TableList *table= table_list; table; table= table->next_global)
   {
     if (table->table)
       table->table->open_placeholder= 1;
@@ -1111,7 +1111,7 @@ bool lock_table_names_exclusively(THD *thd, TABLE_LIST *table_list)
 
 bool
 is_table_name_exclusively_locked_by_this_thread(THD *thd,
-                                                TABLE_LIST *table_list)
+                                                TableList *table_list)
 {
   char  key[MAX_DBKEY_LENGTH];
   uint  key_length;
@@ -1182,10 +1182,10 @@ is_table_name_exclusively_locked_by_this_thread(THD *thd, uchar *key,
     1	Fatal error (end of memory ?)
 */
 
-void unlock_table_names(THD *thd, TABLE_LIST *table_list,
-			TABLE_LIST *last_table)
+void unlock_table_names(THD *thd, TableList *table_list,
+			TableList *last_table)
 {
-  for (TABLE_LIST *table= table_list;
+  for (TableList *table= table_list;
        table != last_table;
        table= table->next_local)
     unlock_table_name(thd,table);
@@ -1506,7 +1506,7 @@ void broadcast_refresh(void)
     -1                  Error: no recovery possible.
 */
 
-int try_transactional_lock(THD *thd, TABLE_LIST *table_list)
+int try_transactional_lock(THD *thd, TableList *table_list)
 {
   uint          dummy_counter;
   int           error;
@@ -1579,9 +1579,9 @@ int try_transactional_lock(THD *thd, TABLE_LIST *table_list)
     -1                  Error: Lock conversion is prohibited.
 */
 
-int check_transactional_lock(THD *thd, TABLE_LIST *table_list)
+int check_transactional_lock(THD *thd, TableList *table_list)
 {
-  TABLE_LIST    *tlist;
+  TableList    *tlist;
   int           result= 0;
   char          warn_buff[DRIZZLE_ERRMSG_SIZE];
 
@@ -1591,7 +1591,7 @@ int check_transactional_lock(THD *thd, TABLE_LIST *table_list)
     /*
       Unfortunately we cannot use tlist->placeholder() here. This method
       returns TRUE if the table is not open, which is always the case
-      here. Whenever the definition of TABLE_LIST::placeholder() is
+      here. Whenever the definition of TableList::placeholder() is
       changed, probably this condition needs to be changed too.
     */
     if (tlist->derived || tlist->schema_table || !tlist->lock_transactional)
@@ -1641,10 +1641,10 @@ int check_transactional_lock(THD *thd, TABLE_LIST *table_list)
     != 0                Error code from handler::lock_table().
 */
 
-int set_handler_table_locks(THD *thd, TABLE_LIST *table_list,
+int set_handler_table_locks(THD *thd, TableList *table_list,
                             bool transactional)
 {
-  TABLE_LIST    *tlist;
+  TableList    *tlist;
   int           error= 0;
 
   for (tlist= table_list; tlist; tlist= tlist->next_global)
@@ -1681,7 +1681,7 @@ int set_handler_table_locks(THD *thd, TABLE_LIST *table_list,
 
       /*
         For warning/error reporting we need to set the intended lock
-        method in the TABLE_LIST object. It will be used later by
+        method in the TableList object. It will be used later by
         check_transactional_lock(). The lock method is not set if this
         table belongs to a view. We can safely set it to transactional
         locking here. Even for non-view tables. This function is not

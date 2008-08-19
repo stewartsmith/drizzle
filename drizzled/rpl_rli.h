@@ -20,7 +20,7 @@
 #include "rpl_reporting.h"
 #include "rpl_utility.h"
 
-struct RPL_TABLE_LIST;
+struct RPL_TableList;
 class Master_info;
 
 /****************************************************************************
@@ -297,16 +297,16 @@ public:
 	    group_relay_log_pos);
   }
 
-  RPL_TABLE_LIST *tables_to_lock;           /* RBR: Tables to lock  */
+  RPL_TableList *tables_to_lock;           /* RBR: Tables to lock  */
   uint32_t tables_to_lock_count;        /* RBR: Count of tables to lock */
   table_mapping m_table_map;      /* RBR: Mapping table-id to table */
 
   inline table_def *get_tabledef(Table *tbl)
   {
     table_def *td= 0;
-    for (TABLE_LIST *ptr= tables_to_lock; ptr && !td; ptr= ptr->next_global)
+    for (TableList *ptr= tables_to_lock; ptr && !td; ptr= ptr->next_global)
       if (ptr->table == tbl)
-        td= &((RPL_TABLE_LIST *)ptr)->m_tabledef;
+        td= &((RPL_TableList *)ptr)->m_tabledef;
     return (td);
   }
 

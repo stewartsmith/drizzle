@@ -98,7 +98,7 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
 
   SYNOPSIS
     alloc_table_share()
-    TABLE_LIST		Take database and table name from there
+    TableList		Take database and table name from there
     key			Table cache key (db \0 table_name \0...)
     key_length		Length of key
 
@@ -107,7 +107,7 @@ TABLE_CATEGORY get_table_category(const LEX_STRING *db, const LEX_STRING *name)
     #  Share
 */
 
-TABLE_SHARE *alloc_table_share(TABLE_LIST *table_list, char *key,
+TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
                                uint key_length)
 {
   MEM_ROOT mem_root;
@@ -2260,29 +2260,29 @@ bool check_column_name(const char *name)
 */
 
 bool
-table_check_intact(Table *table, const uint table_f_count,
-                   const TABLE_FIELD_W_TYPE *table_def)
+Table::table_check_intact(const uint table_f_count,
+                          const TABLE_FIELD_W_TYPE *table_def)
 {
   uint i;
   bool error= false;
   bool fields_diff_count;
 
-  fields_diff_count= (table->s->fields != table_f_count);
+  fields_diff_count= (s->fields != table_f_count);
   if (fields_diff_count)
   {
 
     /* previous MySQL version */
-    if (DRIZZLE_VERSION_ID > table->s->mysql_version)
+    if (DRIZZLE_VERSION_ID > s->mysql_version)
     {
       sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_PLEASE_UPDATE),
-                      table->alias, table_f_count, table->s->fields,
-                      table->s->mysql_version, DRIZZLE_VERSION_ID);
+                      alias, table_f_count, s->fields,
+                      s->mysql_version, DRIZZLE_VERSION_ID);
       return(true);
     }
-    else if (DRIZZLE_VERSION_ID == table->s->mysql_version)
+    else if (DRIZZLE_VERSION_ID == s->mysql_version)
     {
-      sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), table->alias,
-                      table_f_count, table->s->fields);
+      sql_print_error(ER(ER_COL_COUNT_DOESNT_MATCH_CORRUPTED), alias,
+                      table_f_count, s->fields);
       return(true);
     }
     /*
@@ -2298,9 +2298,9 @@ table_check_intact(Table *table, const uint table_f_count,
   {
     String sql_type(buffer, sizeof(buffer), system_charset_info);
     sql_type.length(0);
-    if (i < table->s->fields)
+    if (i < s->fields)
     {
-      Field *field= table->field[i];
+      Field *field= this->field[i];
 
       if (strncmp(field->field_name, table_def->name.str,
                   table_def->name.length))
@@ -2312,7 +2312,7 @@ table_check_intact(Table *table, const uint table_f_count,
         */
         sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d, found '%s'."),
-                        table->s->db.str, table->alias, table_def->name.str, i,
+                        s->db.str, alias, table_def->name.str, i,
                         field->field_name);
       }
       field->sql_type(sql_type);
@@ -2338,7 +2338,7 @@ table_check_intact(Table *table, const uint table_f_count,
       {
         sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected column '%s' at position %d to have type "
-                        "%s, found type %s."), table->s->db.str, table->alias,
+                        "%s, found type %s."), s->db.str, alias,
                         table_def->name.str, i, table_def->type.str,
                         sql_type.c_ptr_safe());
         error= true;
@@ -2348,7 +2348,7 @@ table_check_intact(Table *table, const uint table_f_count,
         sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but the type has no "
-                        "character set."), table->s->db.str, table->alias,
+                        "character set."), s->db.str, alias,
                         table_def->name.str, i, table_def->cset.str);
         error= true;
       }
@@ -2358,7 +2358,7 @@ table_check_intact(Table *table, const uint table_f_count,
         sql_print_error(_("Incorrect definition of table %s.%s: "
                         "expected the type of column '%s' at position %d "
                         "to have character set '%s' but found "
-                        "character set '%s'."), table->s->db.str, table->alias,
+                        "character set '%s'."), s->db.str, alias,
                         table_def->name.str, i, table_def->cset.str,
                         field->charset()->csname);
         error= true;
@@ -2369,7 +2369,7 @@ table_check_intact(Table *table, const uint table_f_count,
       sql_print_error(_("Incorrect definition of table %s.%s: "
                       "expected column '%s' at position %d to have type %s "
                       " but the column is not found."),
-                      table->s->db.str, table->alias,
+                      s->db.str, alias,
                       table_def->name.str, i, table_def->type.str);
       error= true;
     }
@@ -2438,11 +2438,11 @@ void Table::reset_item_list(List<Item> *item_list) const
 
 
 /*
-  Find underlying base tables (TABLE_LIST) which represent given
+  Find underlying base tables (TableList) which represent given
   table_to_find (Table)
 
   SYNOPSIS
-    TABLE_LIST::find_underlying_table()
+    TableList::find_underlying_table()
     table_to_find table to find
 
   RETURN
@@ -2450,15 +2450,15 @@ void Table::reset_item_list(List<Item> *item_list) const
     found table reference
 */
 
-TABLE_LIST *TABLE_LIST::find_underlying_table(Table *table_to_find)
+TableList *TableList::find_underlying_table(Table *table_to_find)
 {
   /* is this real table and table which we are looking for? */
   if (table == table_to_find && merge_underlying_list == 0)
     return this;
 
-  for (TABLE_LIST *tbl= merge_underlying_list; tbl; tbl= tbl->next_local)
+  for (TableList *tbl= merge_underlying_list; tbl; tbl= tbl->next_local)
   {
-    TABLE_LIST *result;
+    TableList *result;
     if ((result= tbl->find_underlying_table(table_to_find)))
       return result;
   }
@@ -2469,10 +2469,10 @@ TABLE_LIST *TABLE_LIST::find_underlying_table(Table *table_to_find)
   cleunup items belonged to view fields translation table
 
   SYNOPSIS
-    TABLE_LIST::cleanup_items()
+    TableList::cleanup_items()
 */
 
-void TABLE_LIST::cleanup_items()
+void TableList::cleanup_items()
 {
   if (!field_translation)
     return;
@@ -2496,7 +2496,7 @@ void TABLE_LIST::cleanup_items()
     TRUE  - out of memory
 */
 
-bool TABLE_LIST::set_insert_values(MEM_ROOT *mem_root)
+bool TableList::set_insert_values(MEM_ROOT *mem_root)
 {
   if (table)
   {
@@ -2514,7 +2514,7 @@ bool TABLE_LIST::set_insert_values(MEM_ROOT *mem_root)
   Test if this is a leaf with respect to name resolution.
 
   SYNOPSIS
-    TABLE_LIST::is_leaf_for_name_resolution()
+    TableList::is_leaf_for_name_resolution()
 
   DESCRIPTION
     A table reference is a leaf with respect to name resolution if
@@ -2526,7 +2526,7 @@ bool TABLE_LIST::set_insert_values(MEM_ROOT *mem_root)
   RETURN
     TRUE if a leaf, false otherwise.
 */
-bool TABLE_LIST::is_leaf_for_name_resolution()
+bool TableList::is_leaf_for_name_resolution()
 {
   return (is_natural_join || is_join_columns_complete || !nested_join);
 }
@@ -2537,7 +2537,7 @@ bool TABLE_LIST::is_leaf_for_name_resolution()
   respect to name resolution.
 
   SYNOPSIS
-    TABLE_LIST::first_leaf_for_name_resolution()
+    TableList::first_leaf_for_name_resolution()
 
   DESCRIPTION
     Given that 'this' is a nested table reference, recursively walk
@@ -2555,10 +2555,10 @@ bool TABLE_LIST::is_leaf_for_name_resolution()
     else return 'this'
 */
 
-TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
+TableList *TableList::first_leaf_for_name_resolution()
 {
-  TABLE_LIST *cur_table_ref= NULL;
-  NESTED_JOIN *cur_nested_join;
+  TableList *cur_table_ref= NULL;
+  nested_join_st *cur_nested_join;
 
   if (is_leaf_for_name_resolution())
     return this;
@@ -2568,7 +2568,7 @@ TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
        cur_nested_join;
        cur_nested_join= cur_table_ref->nested_join)
   {
-    List_iterator_fast<TABLE_LIST> it(cur_nested_join->join_list);
+    List_iterator_fast<TableList> it(cur_nested_join->join_list);
     cur_table_ref= it++;
     /*
       If the current nested join is a RIGHT JOIN, the operands in
@@ -2578,7 +2578,7 @@ TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
     */
     if (!(cur_table_ref->outer_join & JOIN_TYPE_RIGHT))
     {
-      TABLE_LIST *next;
+      TableList *next;
       while ((next= it++))
         cur_table_ref= next;
     }
@@ -2594,7 +2594,7 @@ TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
   respect to name resolution.
 
   SYNOPSIS
-    TABLE_LIST::last_leaf_for_name_resolution()
+    TableList::last_leaf_for_name_resolution()
 
   DESCRIPTION
     Given that 'this' is a nested table reference, recursively walk
@@ -2612,10 +2612,10 @@ TABLE_LIST *TABLE_LIST::first_leaf_for_name_resolution()
     - else - 'this'
 */
 
-TABLE_LIST *TABLE_LIST::last_leaf_for_name_resolution()
+TableList *TableList::last_leaf_for_name_resolution()
 {
-  TABLE_LIST *cur_table_ref= this;
-  NESTED_JOIN *cur_nested_join;
+  TableList *cur_table_ref= this;
+  nested_join_st *cur_nested_join;
 
   if (is_leaf_for_name_resolution())
     return this;
@@ -2633,8 +2633,8 @@ TABLE_LIST *TABLE_LIST::last_leaf_for_name_resolution()
     */
     if ((cur_table_ref->outer_join & JOIN_TYPE_RIGHT))
     {
-      List_iterator_fast<TABLE_LIST> it(cur_nested_join->join_list);
-      TABLE_LIST *next;
+      List_iterator_fast<TableList> it(cur_nested_join->join_list);
+      TableList *next;
       cur_table_ref= it++;
       while ((next= it++))
         cur_table_ref= next;
@@ -2643,94 +2643,6 @@ TABLE_LIST *TABLE_LIST::last_leaf_for_name_resolution()
       break;
   }
   return cur_table_ref;
-}
-
-
-Natural_join_column::Natural_join_column(Field_translator *field_param,
-                                         TABLE_LIST *tab)
-{
-  assert(tab->field_translation);
-  view_field= field_param;
-  table_field= NULL;
-  table_ref= tab;
-  is_common= false;
-}
-
-
-Natural_join_column::Natural_join_column(Field *field_param,
-                                         TABLE_LIST *tab)
-{
-  assert(tab->table == field_param->table);
-  table_field= field_param;
-  view_field= NULL;
-  table_ref= tab;
-  is_common= false;
-}
-
-
-const char *Natural_join_column::name()
-{
-  if (view_field)
-  {
-    assert(table_field == NULL);
-    return view_field->name;
-  }
-
-  return table_field->field_name;
-}
-
-
-Item *Natural_join_column::create_item(THD *thd)
-{
-  if (view_field)
-  {
-    assert(table_field == NULL);
-    return create_view_field(thd, table_ref, &view_field->item,
-                             view_field->name);
-  }
-  return new Item_field(thd, &thd->lex->current_select->context, table_field);
-}
-
-
-Field *Natural_join_column::field()
-{
-  if (view_field)
-  {
-    assert(table_field == NULL);
-    return NULL;
-  }
-  return table_field;
-}
-
-
-const char *Natural_join_column::table_name()
-{
-  assert(table_ref);
-  return table_ref->alias;
-}
-
-
-const char *Natural_join_column::db_name()
-{
-  /*
-    Test that TABLE_LIST::db is the same as st_table_share::db to
-    ensure consistency. An exception are I_S schema tables, which
-    are inconsistent in this respect.
-  */
-  assert(!strcmp(table_ref->db,
-                      table_ref->table->s->db.str) ||
-              (table_ref->schema_table &&
-               table_ref->table->s->db.str[0] == 0));
-  return table_ref->db;
-}
-
-
-void Field_iterator_view::set(TABLE_LIST *table)
-{
-  assert(table->field_translation);
-  view= table;
-  ptr= table->field_translation;
-  array_end= table->field_translation_end;
 }
 
 
@@ -2755,39 +2667,7 @@ Item *Field_iterator_table::create_item(THD *thd)
 }
 
 
-const char *Field_iterator_view::name()
-{
-  return ptr->name;
-}
-
-
-Item *Field_iterator_view::create_item(THD *thd)
-{
-  return create_view_field(thd, view, &ptr->item, ptr->name);
-}
-
-Item *create_view_field(THD *thd __attribute__((unused)),
-                        TABLE_LIST *view, Item **field_ref,
-                        const char *name __attribute__((unused)))
-{
-  if (view->schema_table_reformed)
-  {
-    Item *field= *field_ref;
-
-    /*
-      Translation table items are always Item_fields and already fixed
-      ('mysql_schema_table' function). So we can return directly the
-      field. This case happens only for 'show & where' commands.
-    */
-    assert(field && field->fixed);
-    return(field);
-  }
-
-  return(NULL);
-}
-
-
-void Field_iterator_natural_join::set(TABLE_LIST *table_ref)
+void Field_iterator_natural_join::set(TableList *table_ref)
 {
   assert(table_ref->join_columns);
   column_ref_it.init(*(table_ref->join_columns));
@@ -2808,9 +2688,9 @@ void Field_iterator_table_ref::set_field_iterator()
 {
   /*
     If the table reference we are iterating over is a natural join, or it is
-    an operand of a natural join, and TABLE_LIST::join_columns contains all
+    an operand of a natural join, and TableList::join_columns contains all
     the columns of the join operand, then we pick the columns from
-    TABLE_LIST::join_columns, instead of the  orginial container of the
+    TableList::join_columns, instead of the  orginial container of the
     columns of the join operator.
   */
   if (table_ref->is_join_columns_complete)
@@ -2834,7 +2714,7 @@ void Field_iterator_table_ref::set_field_iterator()
 }
 
 
-void Field_iterator_table_ref::set(TABLE_LIST *table)
+void Field_iterator_table_ref::set(TableList *table)
 {
   assert(table);
   first_leaf= table->first_leaf_for_name_resolution();
@@ -2879,7 +2759,7 @@ const char *Field_iterator_table_ref::db_name()
     return natural_join_it.column_ref()->db_name();
 
   /*
-    Test that TABLE_LIST::db is the same as st_table_share::db to
+    Test that TableList::db is the same as st_table_share::db to
     ensure consistency. An exception are I_S schema tables, which
     are inconsistent in this respect.
   */
@@ -2929,12 +2809,12 @@ const char *Field_iterator_table_ref::db_name()
 */
 
 Natural_join_column *
-Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
+Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
 {
   Natural_join_column *nj_col;
   bool is_created= true;
   uint field_count=0;
-  TABLE_LIST *add_table_ref= parent_table_ref ?
+  TableList *add_table_ref= parent_table_ref ?
                              parent_table_ref : table_ref;
 
   if (field_it == &table_field_it)
@@ -2943,14 +2823,6 @@ Field_iterator_table_ref::get_or_create_column_ref(TABLE_LIST *parent_table_ref)
     Field *tmp_field= table_field_it.field();
     nj_col= new Natural_join_column(tmp_field, table_ref);
     field_count= table_ref->table->s->fields;
-  }
-  else if (field_it == &view_field_it)
-  {
-    /* The field belongs to a merge view or information schema table. */
-    Field_translator *translated_field= view_field_it.field_translator();
-    nj_col= new Natural_join_column(translated_field, table_ref);
-    field_count= table_ref->field_translation_end -
-                 table_ref->field_translation;
   }
   else
   {
@@ -3277,10 +3149,10 @@ void Table::mark_columns_needed_for_insert()
   Cleanup this table for re-execution.
 
   SYNOPSIS
-    TABLE_LIST::reinit_before_use()
+    TableList::reinit_before_use()
 */
 
-void TABLE_LIST::reinit_before_use(THD *thd)
+void TableList::reinit_before_use(THD *thd)
 {
   /*
     Reset old pointers to TABLEs: they are not valid since the tables
@@ -3290,8 +3162,8 @@ void TABLE_LIST::reinit_before_use(THD *thd)
   /* Reset is_schema_table_processed value(needed for I_S tables */
   schema_table_state= NOT_PROCESSED;
 
-  TABLE_LIST *embedded; /* The table at the current level of nesting. */
-  TABLE_LIST *parent_embedding= this; /* The parent nested table reference. */
+  TableList *embedded; /* The table at the current level of nesting. */
+  TableList *parent_embedding= this; /* The parent nested table reference. */
   do
   {
     embedded= parent_embedding;
@@ -3307,7 +3179,7 @@ void TABLE_LIST::reinit_before_use(THD *thd)
   Return subselect that contains the FROM list this table is taken from
 
   SYNOPSIS
-    TABLE_LIST::containing_subselect()
+    TableList::containing_subselect()
  
   RETURN
     Subselect item for the subquery that contains the FROM list
@@ -3316,7 +3188,7 @@ void TABLE_LIST::reinit_before_use(THD *thd)
 
 */
 
-Item_subselect *TABLE_LIST::containing_subselect()
+Item_subselect *TableList::containing_subselect()
 {    
   return (select_lex ? select_lex->master_unit()->item : 0);
 }
@@ -3330,7 +3202,7 @@ Item_subselect *TABLE_LIST::containing_subselect()
 
   DESCRIPTION
     The parser collects the index hints for each table in a "tagged list" 
-    (TABLE_LIST::index_hints). Using the information in this tagged list
+    (TableList::index_hints). Using the information in this tagged list
     this function sets the members Table::keys_in_use_for_query, 
     Table::keys_in_use_for_group_by, Table::keys_in_use_for_order_by,
     Table::force_index and Table::covering_keys.
@@ -3365,14 +3237,14 @@ Item_subselect *TABLE_LIST::containing_subselect()
     as if we had "USE INDEX i1, USE INDEX i1, IGNORE INDEX i1".
 
     As an optimization if there is a covering index, and we have 
-    IGNORE INDEX FOR GROUP/ORDER, and this index is used for the JOIN part, 
-    then we have to ignore the IGNORE INDEX FROM GROUP/ORDER.
+    IGNORE INDEX FOR GROUP/order_st, and this index is used for the JOIN part, 
+    then we have to ignore the IGNORE INDEX FROM GROUP/order_st.
 
   RETURN VALUE
     false                no errors found
     TRUE                 found and reported an error.
 */
-bool TABLE_LIST::process_index_hints(Table *tbl)
+bool TableList::process_index_hints(Table *tbl)
 {
   /* initialize the result variables */
   tbl->keys_in_use_for_query= tbl->keys_in_use_for_group_by= 
@@ -3507,7 +3379,7 @@ size_t max_row_length(Table *table, const uchar *data)
   return length;
 }
 
-void Field_iterator_table::set(TABLE_LIST *table) 
+void Field_iterator_table::set(TableList *table) 
 { 
   ptr= table->table->field; 
 }
@@ -3950,7 +3822,7 @@ Field *create_tmp_field(THD *thd, Table *table,Item *item, Item::Type type,
 
 Table *
 create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
-		 ORDER *group, bool distinct, bool save_sum_fields,
+		 order_st *group, bool distinct, bool save_sum_fields,
 		 uint64_t select_options, ha_rows rows_limit,
 		 char *table_alias)
 {
@@ -4006,7 +3878,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
   {
     if (!param->quick_group)
       group=0;					// Can't use group key
-    else for (ORDER *tmp=group ; tmp ; tmp=tmp->next)
+    else for (order_st *tmp=group ; tmp ; tmp=tmp->next)
     {
       /*
         marker == 4 means two things:
@@ -4456,7 +4328,7 @@ create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
     keyinfo->rec_per_key=0;
     keyinfo->algorithm= HA_KEY_ALG_UNDEF;
     keyinfo->name= (char*) "group_key";
-    ORDER *cur_group= group;
+    order_st *cur_group= group;
     for (; cur_group ; cur_group= cur_group->next, key_part_info++)
     {
       Field *field=(*cur_group->item)->get_tmp_table_field();
