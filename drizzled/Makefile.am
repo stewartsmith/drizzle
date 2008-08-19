@@ -142,6 +142,7 @@ noinst_HEADERS = item.h \
 		 drizzled_error_messages.h \
 		 order.h \
 		 filesort_info.h \
+		 field_iterator.h \
 		 common_includes.h 
 
 drizzled_SOURCES = \
@@ -150,6 +151,7 @@ drizzled_SOURCES = \
 		   authentication.cc \
 		   sql_handler.cc \
 		   natural_join_column.cc \
+		   field_iterator.cc \
 		   item.cc \
 		   item_sum.cc \
 		   item_buff.cc \
