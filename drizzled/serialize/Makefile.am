@@ -30,10 +30,10 @@ noinst_HEADERS = \
 		 schema.pb.h \
 		 serialize.h
 
-schema.pb.cc: schema.proto
+schema.pb.h schema.pb.cc: schema.proto
 	protoc --cpp_out=${top_builddir}/drizzled/serialize schema.proto
 
-table.pb.cc: table.proto
+table.pb.h table.pb.cc: table.proto
 	protoc --cpp_out=${top_builddir}/drizzled/serialize table.proto
 	
 DEFS= @DEFS@
