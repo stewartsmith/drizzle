@@ -1,11 +1,9 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/natural_join_column.h>
 
-Natural_join_column::Natural_join_column(Field_translator *field_param,
-                                         TableList *tab)
+Natural_join_column::Natural_join_column(Field_translator *field_param __attribute__((unused)), TableList *tab)
 {
   assert(tab->field_translation);
-  view_field= field_param;
   table_field= NULL;
   table_ref= tab;
   is_common= false;
@@ -17,7 +15,6 @@ Natural_join_column::Natural_join_column(Field *field_param,
 {
   assert(tab->table == field_param->table);
   table_field= field_param;
-  view_field= NULL;
   table_ref= tab;
   is_common= false;
 }
@@ -25,12 +22,6 @@ Natural_join_column::Natural_join_column(Field *field_param,
 
 const char *Natural_join_column::name()
 {
-  if (view_field)
-  {
-    assert(table_field == NULL);
-    return view_field->name;
-  }
-
   return table_field->field_name;
 }
 
@@ -43,11 +34,6 @@ Item *Natural_join_column::create_item(THD *thd)
 
 Field *Natural_join_column::field()
 {
-  if (view_field)
-  {
-    assert(table_field == NULL);
-    return NULL;
-  }
   return table_field;
 }
 

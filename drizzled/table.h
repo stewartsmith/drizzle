@@ -697,9 +697,6 @@ struct st_lex;
 class select_union;
 class TMP_TABLE_PARAM;
 
-Item *create_view_field(THD *thd, TableList *view, Item **field_ref,
-                        const char *name);
-
 struct Field_translator
 {
   Item *item;

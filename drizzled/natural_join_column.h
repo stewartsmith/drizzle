@@ -13,7 +13,6 @@ class Field_translator;
 class Natural_join_column: public Sql_alloc
 {
 public:
-  Field_translator *view_field;  /* Column reference of merge view. */
   Field            *table_field; /* Column reference of table or temp view. */
   TableList *table_ref; /* Original base table/view reference. */
   /*
