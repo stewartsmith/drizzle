@@ -11293,33 +11293,6 @@ flush_cached_records(JOIN *join,JOIN_TAB *join_tab,bool skip_last)
   return NESTED_LOOP_OK;
 }
 
-
-/*****************************************************************************
-  The different ways to read a record
-  Returns -1 if row was not found, 0 if row was found and 1 on errors
-*****************************************************************************/
-
-/** Help function when we get some an error from the table handler. */
-
-int report_error(Table *table, int error)
-{
-  if (error == HA_ERR_END_OF_FILE || error == HA_ERR_KEY_NOT_FOUND)
-  {
-    table->status= STATUS_GARBAGE;
-    return -1;					// key not found; ok
-  }
-  /*
-    Locking reads can legally return also these errors, do not
-    print them to the .err log
-  */
-  if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
-    sql_print_error(_("Got error %d when reading table '%s'"),
-		    error, table->s->path.str);
-  table->file->print_error(error,MYF(0));
-  return 1;
-}
-
-
 int safe_index_read(JOIN_TAB *tab)
 {
   int error;
@@ -11328,7 +11301,7 @@ int safe_index_read(JOIN_TAB *tab)
                                          tab->ref.key_buff,
                                          make_prev_keypart_map(tab->ref.key_parts),
                                          HA_READ_KEY_EXACT)))
-    return report_error(table, error);
+    return table->report_error(error);
   return 0;
 }
 
@@ -11423,7 +11396,7 @@ join_read_system(JOIN_TAB *tab)
 					   table->s->primary_key)))
     {
       if (error != HA_ERR_END_OF_FILE)
-	return report_error(table, error);
+	return table->report_error(error);
       mark_as_null_row(tab->table);
       empty_record(table);			// Make empty record
       return -1;
@@ -11458,7 +11431,7 @@ join_read_const(JOIN_TAB *tab)
   if (table->status & STATUS_GARBAGE)		// If first read
   {
     table->status= 0;
-    if (cp_buffer_from_ref(tab->join->thd, table, &tab->ref))
+    if (cp_buffer_from_ref(tab->join->thd, &tab->ref))
       error=HA_ERR_KEY_NOT_FOUND;
     else
     {
@@ -11473,7 +11446,7 @@ join_read_const(JOIN_TAB *tab)
       mark_as_null_row(tab->table);
       empty_record(table);
       if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-	return report_error(table, error);
+	return table->report_error(error);
       return -1;
     }
     store_record(table,record[1]);
@@ -11530,7 +11503,7 @@ join_read_key(JOIN_TAB *tab)
                                       make_prev_keypart_map(tab->ref.key_parts),
                                       HA_READ_KEY_EXACT);
     if (error && error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-      return report_error(table, error);
+      return table->report_error(error);
   }
   table->null_row=0;
   return table->status ? -1 : 0;
@@ -11573,7 +11546,7 @@ join_read_always_key(JOIN_TAB *tab)
         return -1;
   }
 
-  if (cp_buffer_from_ref(tab->join->thd, table, &tab->ref))
+  if (cp_buffer_from_ref(tab->join->thd, &tab->ref))
     return -1;
   if ((error=table->file->index_read_map(table->record[0],
                                          tab->ref.key_buff,
@@ -11581,7 +11554,7 @@ join_read_always_key(JOIN_TAB *tab)
                                          HA_READ_KEY_EXACT)))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-      return report_error(table, error);
+      return table->report_error(error);
     return -1; /* purecov: inspected */
   }
   return 0;
@@ -11601,14 +11574,14 @@ join_read_last_key(JOIN_TAB *tab)
 
   if (!table->file->inited)
     table->file->ha_index_init(tab->ref.key, tab->sorted);
-  if (cp_buffer_from_ref(tab->join->thd, table, &tab->ref))
+  if (cp_buffer_from_ref(tab->join->thd, &tab->ref))
     return -1;
   if ((error=table->file->index_read_last_map(table->record[0],
                                               tab->ref.key_buff,
                                               make_prev_keypart_map(tab->ref.key_parts))))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-      return report_error(table, error);
+      return table->report_error(error);
     return -1; /* purecov: inspected */
   }
   return 0;
@@ -11641,7 +11614,7 @@ join_read_next_same_diff(READ_RECORD *info)
                                               tab->ref.key_length)))
       {
         if (error != HA_ERR_END_OF_FILE)
-          return report_error(table, error);
+          return table->report_error(error);
         table->status= STATUS_GARBAGE;
         return -1;
       }
@@ -11666,7 +11639,7 @@ join_read_next_same(READ_RECORD *info)
 					  tab->ref.key_length)))
   {
     if (error != HA_ERR_END_OF_FILE)
-      return report_error(table, error);
+      return table->report_error(error);
     table->status= STATUS_GARBAGE;
     return -1;
   }
@@ -11682,7 +11655,7 @@ join_read_prev_same(READ_RECORD *info)
   JOIN_TAB *tab=table->reginfo.join_tab;
 
   if ((error=table->file->index_prev(table->record[0])))
-    return report_error(table, error);
+    return table->report_error(error);
   if (key_cmp_if_same(table, tab->ref.key_buff, tab->ref.key,
                       tab->ref.key_length))
   {
@@ -11766,7 +11739,7 @@ join_read_first(JOIN_TAB *tab)
   if ((error=tab->table->file->index_first(tab->table->record[0])))
   {
     if (error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-      report_error(table, error);
+      table->report_error(error);
     return -1;
   }
   return 0;
@@ -11787,7 +11760,7 @@ join_read_next_different(READ_RECORD *info)
       key_copy(tab->insideout_buf, info->record, key, 0);
 
       if ((error=info->file->index_next(info->record)))
-        return report_error(info->table, error);
+        return info->table->report_error(error);
       
     } while (!key_cmp(tab->table->key_info[tab->index].key_part, 
                       tab->insideout_buf, key->key_length));
@@ -11804,7 +11777,7 @@ join_read_next(READ_RECORD *info)
 {
   int error;
   if ((error=info->file->index_next(info->record)))
-    return report_error(info->table, error);
+    return info->table->report_error(error);
   return 0;
 }
 
@@ -11829,7 +11802,7 @@ join_read_last(JOIN_TAB *tab)
   if (!table->file->inited)
     table->file->ha_index_init(tab->index, 1);
   if ((error= tab->table->file->index_last(tab->table->record[0])))
-    return report_error(table, error);
+    return table->report_error(error);
   return 0;
 }
 
@@ -11839,7 +11812,7 @@ join_read_prev(READ_RECORD *info)
 {
   int error;
   if ((error= info->file->index_prev(info->record)))
-    return report_error(info->table, error);
+    return info->table->report_error(error);
   return 0;
 }
 
@@ -14099,8 +14072,7 @@ cmp_buffer_with_ref(JOIN_TAB *tab)
   }
   else 
     no_prev_key= true;
-  if ((tab->ref.key_err= cp_buffer_from_ref(tab->join->thd, tab->table,
-                                            &tab->ref)) ||
+  if ((tab->ref.key_err= cp_buffer_from_ref(tab->join->thd, &tab->ref)) ||
       no_prev_key)
     return 1;
   return memcmp(tab->ref.key_buff2, tab->ref.key_buff, tab->ref.key_length)
@@ -14109,7 +14081,7 @@ cmp_buffer_with_ref(JOIN_TAB *tab)
 
 
 bool
-cp_buffer_from_ref(THD *thd, Table *table __attribute__((unused)), TABLE_REF *ref)
+cp_buffer_from_ref(THD *thd, TABLE_REF *ref)
 {
   enum enum_check_fields save_count_cuted_fields= thd->count_cuted_fields;
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;

@@ -367,6 +367,7 @@ public:
                                uint64_t options);
   void free_tmp_table(THD *thd);
   bool open_tmp_table();
+  size_t max_row_length(const uchar *data);
 
   bool table_check_intact(const uint table_f_count, const TABLE_FIELD_W_TYPE *table_def);
 
@@ -567,15 +568,21 @@ public:
     read_set= read_set_arg;
     write_set= write_set_arg;
   }
+
+  void restore_column_map(my_bitmap_map *old);
+
+  my_bitmap_map *use_all_columns(MY_BITMAP *bitmap);
   inline void use_all_columns()
   {
     column_bitmaps_set(&s->all_set, &s->all_set);
   }
+
   inline void default_column_bitmaps()
   {
     read_set= &def_read_set;
     write_set= &def_write_set;
   }
+
   /* Is table open or should be treated as such by name-locking? */
   inline bool is_name_opened() { return db_stat || open_placeholder; }
   /*
@@ -583,6 +590,8 @@ public:
   */
   inline bool needs_reopen_or_name_lock()
   { return s->version != refresh_version; }
+
+  int report_error(int error);
 };
 
 typedef struct st_foreign_key_info
@@ -720,22 +729,5 @@ typedef struct st_open_table_list
   uint32_t in_use,locked;
 } OPEN_TableList;
 
-
-static inline my_bitmap_map *tmp_use_all_columns(Table *table,
-                                                 MY_BITMAP *bitmap)
-{
-  my_bitmap_map *old= bitmap->bitmap;
-  bitmap->bitmap= table->s->all_set.bitmap;
-  return old;
-}
-
-
-static inline void tmp_restore_column_map(MY_BITMAP *bitmap,
-                                          my_bitmap_map *old)
-{
-  bitmap->bitmap= old;
-}
-
-size_t max_row_length(Table *table, const uchar *data);
 
 #endif /* DRIZZLED_TABLE_H */

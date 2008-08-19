@@ -3103,27 +3103,21 @@ bool TableList::process_index_hints(Table *tbl)
 }
 
 
-size_t max_row_length(Table *table, const uchar *data)
+size_t Table::max_row_length(const uchar *data)
 {
-  size_t length= table->getRecordLength() + 2 * table->sizeFields();
-  uint *const beg= table->getBlobField();
-  uint *const end= beg + table->sizeBlobFields();
+  size_t length= getRecordLength() + 2 * sizeFields();
+  uint *const beg= getBlobField();
+  uint *const end= beg + sizeBlobFields();
 
   for (uint *ptr= beg ; ptr != end ; ++ptr)
   {
-    Field_blob* const blob= (Field_blob*) table->field[*ptr];
+    Field_blob* const blob= (Field_blob*) field[*ptr];
     length+= blob->get_length((const uchar*)
-                              (data + blob->offset(table->record[0]))) +
+                              (data + blob->offset(record[0]))) +
       HA_KEY_BLOB_LENGTH;
   }
   return length;
 }
-
-void Field_iterator_table::set(TableList *table) 
-{ 
-  ptr= table->table->field; 
-}
-
 
 /*
   Check type of .frm if we are not going to parse it
@@ -4658,6 +4652,45 @@ bool create_myisam_from_heap(THD *thd, Table *table,
   thd_proc_info(thd, save_proc_info);
   table->mem_root= new_table.mem_root;
   return(1);
+}
+
+my_bitmap_map *Table::use_all_columns(MY_BITMAP *bitmap)
+{
+  my_bitmap_map *old= bitmap->bitmap;
+  bitmap->bitmap= s->all_set.bitmap;
+  return old;
+}
+
+void Table::restore_column_map(my_bitmap_map *old)
+{
+  read_set->bitmap= old;
+}
+
+
+/*****************************************************************************
+  The different ways to read a record
+  Returns -1 if row was not found, 0 if row was found and 1 on errors
+*****************************************************************************/
+
+/** Help function when we get some an error from the table handler. */
+
+int Table::report_error(int error)
+{
+  if (error == HA_ERR_END_OF_FILE || error == HA_ERR_KEY_NOT_FOUND)
+  {
+    status= STATUS_GARBAGE;
+    return -1;					// key not found; ok
+  }
+  /*
+    Locking reads can legally return also these errors, do not
+    print them to the .err log
+  */
+  if (error != HA_ERR_LOCK_DEADLOCK && error != HA_ERR_LOCK_WAIT_TIMEOUT)
+    sql_print_error(_("Got error %d when reading table '%s'"),
+		    error, s->path.str);
+  file->print_error(error,MYF(0));
+
+  return 1;
 }
 
 

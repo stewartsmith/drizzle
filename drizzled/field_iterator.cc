@@ -7,6 +7,13 @@ const char *Field_iterator_table::name()
 }
 
 
+
+void Field_iterator_table::set(TableList *table) 
+{ 
+  ptr= table->table->field; 
+}
+
+
 void Field_iterator_table::set_table(Table *table) 
 { 
   ptr= table->field; 
@@ -130,6 +137,7 @@ const char *Field_iterator_table_ref::db_name()
 
   return table_ref->db;
 }
+
 
 
 /*

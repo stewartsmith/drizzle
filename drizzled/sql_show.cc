@@ -691,7 +691,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
     We have to restore the read_set if we are called from insert in case
     of row based replication.
   */
-  old_map= tmp_use_all_columns(table, table->read_set);
+  old_map= table->use_all_columns(table->read_set);
 
   for (ptr=table->field ; (field= *ptr); ptr++)
   {
@@ -980,7 +980,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
     append_directory(thd, packet, "DATA",  create_info.data_file_name);
     append_directory(thd, packet, "INDEX", create_info.index_file_name);
   }
-  tmp_restore_column_map(table->read_set, old_map);
+  table->restore_column_map(old_map);
   return(0);
 }
 
