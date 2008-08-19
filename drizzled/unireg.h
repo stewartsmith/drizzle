@@ -154,9 +154,7 @@
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
 #define READ_SCREENS		1024	/* Read screens, info and helpfile */
 #define DELAYED_OPEN		4096	/* Open table later */
-#define OPEN_VIEW		8192	/* Allow open on view */
-#define OPEN_VIEW_NO_PARSE     16384    /* Open frm only if it's a view,
-                                           but do not parse view itself */
+
 /**
   This flag is used in function get_all_tables() which fills
   I_S tables with data which are retrieved from frm files and storage engine

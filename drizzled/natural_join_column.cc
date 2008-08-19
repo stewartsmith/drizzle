@@ -37,12 +37,6 @@ const char *Natural_join_column::name()
 
 Item *Natural_join_column::create_item(THD *thd)
 {
-  if (view_field)
-  {
-    assert(table_field == NULL);
-    return create_view_field(thd, table_ref, &view_field->item,
-                             view_field->name);
-  }
   return new Item_field(thd, &thd->lex->current_select->context, table_field);
 }
 

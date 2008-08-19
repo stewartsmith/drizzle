@@ -1,6 +1,4 @@
 DROP TABLE IF EXISTS t0,t1,t2,t3,t4,t5;
-show variables where variable_name like "skip_show_database";
-Variable_name	Value
 select * from information_schema.SCHEMATA where schema_name > 'm';
 CATALOG_NAME	SCHEMA_NAME	DEFAULT_CHARACTER_SET_NAME	DEFAULT_COLLATION_NAME	SQL_PATH
 NULL	mysql	latin1	latin1_swedish_ci	NULL
@@ -18,8 +16,6 @@ Database
 information_schema
 mysql
 test
-show databases where `database` = 't%';
-Database
 create database mysqltest;
 create table mysqltest.t1(a int, b VARCHAR(30), KEY string_data (b));
 create table test.t2(a int);
@@ -35,9 +31,6 @@ t4
 select * from information_schema.STATISTICS where TABLE_SCHEMA = "mysqltest";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	NON_UNIQUE	INDEX_SCHEMA	INDEX_NAME	SEQ_IN_INDEX	COLUMN_NAME	COLLATION	CARDINALITY	SUB_PART	PACKED	NULLABLE	INDEX_TYPE	COMMENT	INDEX_COMMENT
 NULL	mysqltest	t1	1	mysqltest	string_data	1	b	A	0	NULL	NULL	YES	BTREE		
-show keys from t3 where Key_name = "a_data";
-Table	Non_unique	Key_name	Seq_in_index	Column_name	Collation	Cardinality	Sub_part	Packed	Null	Index_type	Comment	Index_Comment
-t3	1	a_data	1	a	A	0	NULL	NULL	YES	BTREE		
 show tables like 't%';
 Tables_in_test (t%)
 t2
@@ -55,9 +48,6 @@ select * from information_schema.COLUMNS where table_name="t1"
 and column_name= "a";
 TABLE_CATALOG	TABLE_SCHEMA	TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_DEFAULT	IS_NULLABLE	DATA_TYPE	CHARACTER_MAXIMUM_LENGTH	CHARACTER_OCTET_LENGTH	NUMERIC_PRECISION	NUMERIC_SCALE	CHARACTER_SET_NAME	COLLATION_NAME	COLUMN_TYPE	COLUMN_KEY	EXTRA	PRIVILEGES	COLUMN_COMMENT	STORAGE	FORMAT
 NULL	mysqltest	t1	a	1	NULL	YES	int	NULL	NULL	10	0	NULL	NULL	int					Default	Default
-show columns from mysqltest.t1 where field like "%a%";
-Field	Type	Null	Key	Default	Extra
-a	int	YES		NULL	
 select table_name, column_name, privileges from information_schema.columns 
 where table_schema = 'mysqltest' and table_name = 't1';
 table_name	column_name	privileges
@@ -76,9 +66,6 @@ latin1	latin1_swedish_ci	cp1252 West European	1
 SHOW CHARACTER SET LIKE 'latin1%';
 Charset	Description	Default collation	Maxlen
 latin1	cp1252 West European	latin1_swedish_ci	1
-SHOW CHARACTER SET WHERE charset like 'latin1%';
-Charset	Description	Default collation	Maxlen
-latin1	cp1252 West European	latin1_swedish_ci	1
 select * from information_schema.COLLATIONS
 where COLLATION_NAME like 'latin1%';
 COLLATION_NAME	CHARACTER_SET_NAME	ID	IS_DEFAULT	IS_COMPILED	SORTLEN
@@ -91,16 +78,6 @@ latin1_general_ci	latin1	48		#	1
 latin1_general_cs	latin1	49		#	1
 latin1_spanish_ci	latin1	94		#	1
 SHOW COLLATION LIKE 'latin1%';
-Collation	Charset	Id	Default	Compiled	Sortlen
-latin1_german1_ci	latin1	5		#	1
-latin1_swedish_ci	latin1	8	Yes	#	1
-latin1_danish_ci	latin1	15		#	1
-latin1_german2_ci	latin1	31		#	2
-latin1_bin	latin1	47		#	1
-latin1_general_ci	latin1	48		#	1
-latin1_general_cs	latin1	49		#	1
-latin1_spanish_ci	latin1	94		#	1
-SHOW COLLATION WHERE collation like 'latin1%';
 Collation	Charset	Id	Default	Compiled	Sortlen
 latin1_german1_ci	latin1	5		#	1
 latin1_swedish_ci	latin1	8	Yes	#	1
@@ -136,13 +113,6 @@ NULL
 select table_type from information_schema.tables
 where table_schema="mysql" and table_name="user";
 table_type
-show open tables where `table` like "user";
-Database	Table	In_use	Name_locked
-show status where variable_name like "%database%";
-Variable_name	Value
-Com_show_databases	3
-show variables where variable_name like "skip_show_databas";
-Variable_name	Value
 show global status like "Threads_running";
 Variable_name	Value
 Threads_running	#
@@ -228,15 +198,6 @@ Field	Type	Null	Key	Default	Extra
 a	int	NO		NULL	
 b	int	YES		NULL	
 drop table t1;
-CREATE TABLE t1 (a int);
-CREATE TABLE t2 (b int);
-SHOW TABLE STATUS FROM test
-WHERE name IN ( SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_SCHEMA='test' AND TABLE_TYPE='BASE TABLE');
-Name	Engine	Version	Row_format	Rows	Avg_row_length	Data_length	Max_data_length	Index_length	Data_free	Auto_increment	Create_time	Update_time	Check_time	Collation	Checksum	Create_options	Comment
-t1	InnoDB	10	Compact	0	0	16384	#	0	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
-t2	InnoDB	10	Compact	0	0	16384	#	0	0	NULL	#	#	NULL	latin1_swedish_ci	NULL		
-DROP TABLE t1,t2;
 alter database information_schema;
 ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1
 drop database information_schema;

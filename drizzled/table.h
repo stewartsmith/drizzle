@@ -784,24 +784,6 @@ public:
 
 /* Iterator over the fields of a merge view. */
 
-class Field_iterator_view: public Field_iterator
-{
-  Field_translator *ptr, *array_end;
-  TableList *view;
-public:
-  Field_iterator_view() :ptr(0), array_end(0) {}
-  void set(TableList *table);
-  void next() { ptr++; }
-  bool end_of_fields() { return ptr == array_end; }
-  const char *name();
-  Item *create_item(THD *thd);
-  Item **item_ptr() {return &ptr->item; }
-  Field *field() { return 0; }
-  inline Item *item() { return ptr->item; }
-  Field_translator *field_translator() { return ptr; }
-};
-
-
 /*
   Field_iterator interface to the list of materialized fields of a
   NATURAL/USING join.
@@ -844,7 +826,6 @@ class Field_iterator_table_ref: public Field_iterator
 {
   TableList *table_ref, *first_leaf, *last_leaf;
   Field_iterator_table        table_field_it;
-  Field_iterator_view         view_field_it;
   Field_iterator_natural_join natural_join_it;
   Field_iterator *field_it;
   void set_field_iterator();

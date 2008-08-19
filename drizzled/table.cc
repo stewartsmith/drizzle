@@ -2646,15 +2646,6 @@ TableList *TableList::last_leaf_for_name_resolution()
 }
 
 
-void Field_iterator_view::set(TableList *table)
-{
-  assert(table->field_translation);
-  view= table;
-  ptr= table->field_translation;
-  array_end= table->field_translation_end;
-}
-
-
 const char *Field_iterator_table::name()
 {
   return (*ptr)->field_name;
@@ -2673,38 +2664,6 @@ Item *Field_iterator_table::create_item(THD *thd)
     item->marker= select->cur_pos_in_select_list;
   }
   return item;
-}
-
-
-const char *Field_iterator_view::name()
-{
-  return ptr->name;
-}
-
-
-Item *Field_iterator_view::create_item(THD *thd)
-{
-  return create_view_field(thd, view, &ptr->item, ptr->name);
-}
-
-Item *create_view_field(THD *thd __attribute__((unused)),
-                        TableList *view, Item **field_ref,
-                        const char *name __attribute__((unused)))
-{
-  if (view->schema_table_reformed)
-  {
-    Item *field= *field_ref;
-
-    /*
-      Translation table items are always Item_fields and already fixed
-      ('mysql_schema_table' function). So we can return directly the
-      field. This case happens only for 'show & where' commands.
-    */
-    assert(field && field->fixed);
-    return(field);
-  }
-
-  return(NULL);
 }
 
 
@@ -2864,14 +2823,6 @@ Field_iterator_table_ref::get_or_create_column_ref(TableList *parent_table_ref)
     Field *tmp_field= table_field_it.field();
     nj_col= new Natural_join_column(tmp_field, table_ref);
     field_count= table_ref->table->s->fields;
-  }
-  else if (field_it == &view_field_it)
-  {
-    /* The field belongs to a merge view or information schema table. */
-    Field_translator *translated_field= view_field_it.field_translator();
-    nj_col= new Natural_join_column(translated_field, table_ref);
-    field_count= table_ref->field_translation_end -
-                 table_ref->field_translation;
   }
   else
   {
