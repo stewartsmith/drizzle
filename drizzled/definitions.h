@@ -337,11 +337,7 @@
 #ifndef DRIZZLE_CLIENT
 
 /* Bits for different SQL modes modes (including ANSI mode) */
-#define MODE_MYSQL323                   65536L
-#define MODE_MYSQL40                    (MODE_MYSQL323*2)
-#define MODE_ANSI	                (MODE_MYSQL40*2)
-#define MODE_NO_AUTO_VALUE_ON_ZERO      (MODE_ANSI*2)
-#define MODE_NO_BACKSLASH_ESCAPES       (MODE_NO_AUTO_VALUE_ON_ZERO*2)
+#define MODE_NO_BACKSLASH_ESCAPES       (2)
 #define MODE_STRICT_TRANS_TABLES	(MODE_NO_BACKSLASH_ESCAPES*2)
 #define MODE_STRICT_ALL_TABLES		(MODE_STRICT_TRANS_TABLES*2)
 #define MODE_NO_ZERO_IN_DATE		(MODE_STRICT_ALL_TABLES*2)
