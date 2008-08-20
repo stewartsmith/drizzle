@@ -213,8 +213,7 @@ int Field_timestamp::store(int64_t nr,
 
   /* We don't want to store invalid or fuzzy datetime values in TIMESTAMP */
   int64_t tmp= number_to_datetime(nr, &l_time, (thd->variables.sql_mode &
-                                                 MODE_NO_ZERO_DATE) |
-                                   MODE_NO_ZERO_IN_DATE, &error);
+                                                 MODE_NO_ZERO_DATE), &error);
   if (tmp == -1LL)
   {
     error= 2;

@@ -45,8 +45,7 @@ int Field_datetime::store(const char *from,
   func_res= str_to_datetime(from, len, &time_tmp,
                             (TIME_FUZZY_DATE |
                              (thd->variables.sql_mode &
-                              (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                               MODE_INVALID_DATES))),
+                              (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
                             &error);
   if ((int) func_res > (int) DRIZZLE_TIMESTAMP_ERROR)
     tmp= TIME_to_uint64_t_datetime(&time_tmp);
@@ -96,8 +95,7 @@ int Field_datetime::store(int64_t nr,
 
   nr= number_to_datetime(nr, &not_used, (TIME_FUZZY_DATE |
                                          (thd->variables.sql_mode &
-                                          (MODE_NO_ZERO_IN_DATE |
-                                           MODE_NO_ZERO_DATE |
+                                          (MODE_NO_ZERO_DATE |
                                            MODE_INVALID_DATES))), &error);
 
   if (nr == -1LL)
@@ -140,8 +138,7 @@ int Field_datetime::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
                     (current_thd->variables.sql_mode &
-                     (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                      MODE_INVALID_DATES))), &error))
+                     (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);

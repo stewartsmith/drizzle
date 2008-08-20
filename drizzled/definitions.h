@@ -337,8 +337,7 @@
 #ifndef DRIZZLE_CLIENT
 
 /* Bits for different SQL modes modes (including ANSI mode) */
-#define MODE_NO_ZERO_IN_DATE		(2)
-#define MODE_NO_ZERO_DATE		(MODE_NO_ZERO_IN_DATE*2)
+#define MODE_NO_ZERO_DATE		(2)
 #define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
 
 /* @@optimizer_switch flags */

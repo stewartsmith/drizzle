@@ -638,8 +638,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (thd->variables.sql_mode &
-                         (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE))),
+                        (thd->variables.sql_mode & MODE_NO_ZERO_DATE)),
                        &error);
 
   if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
