@@ -81,15 +81,18 @@ void print_field(const drizzle::Table::Field *field)
       || field->type() == Table::Field::BIGINT
       || field->type() == Table::Field::SMALLINT
       || field->type() == Table::Field::TINYINT) {
-    if (field->constraints().has_is_unsigned())
+    if (field->has_constraints()
+        && field->constraints().has_is_unsigned())
       if (field->constraints().is_unsigned())
         cout << " UNSIGNED";
 
-    if (field->options().is_autoincrement())
+    if (field->has_numeric_options() &&
+      field->numeric_options().is_autoincrement())
       cout << " AUTOINCREMENT ";
   }
 
-  if (! field->constraints().is_nullable())
+  if (! field->has_constraints()
+      && field->constraints().is_nullable())
     cout << " NOT NULL ";
 
   if (field->type() == Table::Field::TEXT
@@ -126,6 +129,7 @@ void print_engine(const drizzle::Table::StorageEngine *engine) {
 }
 
 void print_index(const drizzle::Table::Index *index) {
+  using namespace drizzle;
   uint32_t x;
 
   if (index->is_primary())
@@ -138,7 +142,7 @@ void print_index(const drizzle::Table::Index *index) {
 
     for (x= 0; x < index->index_part_size() ; x++)
     {
-      const drizzle::Table::IndexPart part= index->index_part(x);
+      const Table::Index::IndexPart part= index->index_part(x);
 
       if (x != 0)
         cout << ",";

@@ -9,30 +9,30 @@ using namespace std;
 */
 
 void fill_engine(drizzle::Table::StorageEngine *engine) {
-  using drizzle::Table;
+  using namespace drizzle;
+  using std::string;
   int16_t x;
 
   engine->set_name("InnoDB");
-  StorageEngine::EngineOptions *options= engine->mutable_options();
+  Table::StorageEngine::EngineOption *option;
 
-  ::string option_names[2]= {
+  string option_names[2]= {
     "INDEX_DIRECTORY"
-      , "DATA_DIRECTORY"
-  }
+    , "DATA_DIRECTORY"
+  };
 
-  ::string option_values[2]= {
+  string option_values[2]= {
     "/var/drizzle/indexdir"
-      . "/var/drizzle/datadir"
-  }
+    , "/var/drizzle/datadir"
+  };
 
   /* Add some engine options */
   for (x= 0; x < 2; ++x) {
-    option= options->add_option();
+    option= engine->add_option();
     option->set_name(option_names[x]);
     option->set_value(option_values[x]);
-    option->set_type(StorageEngine::EngineOption::STRING);
+    option->set_type(Table::StorageEngine::EngineOption::STRING);
   }
-
 }
 
 void new_index_to_table(
@@ -41,64 +41,68 @@ void new_index_to_table(
     , uint16_t num_index_parts
     , uint32_t field_indexes[]
     , uint32_t compare_lengths[]
-    , is_primary
-    , is_unique
-    ) const {
-  using drizzle::Table;
+    , bool is_primary
+    , bool is_unique
+    ) {
+  using namespace drizzle;
   uint16_t x;
 
-  Index *index= table->mutable_index();
+  Table::Index *index;
+  Table::Field *field;
+  Table::Index::IndexPart *index_part;
+
+  index= table->add_index();
 
   index->set_name(name);
-  index->set_type(Index::BTREE);
+  index->set_type(Table::Index::BTREE);
   index->set_is_primary(is_primary);
   index->set_is_unique(is_unique);
 
   while (x < num_index_parts) {
 
-    IndexPart *index_part= index->mutable_index_part();
+    index_part= index->add_index_part();
 
-    index_part->set_field(table->fields(field_indexes[x]));
-    if (compare_length > 0)
+    field= index_part->mutable_field();
+    *field= table->field(field_indexes[x]);
+
+    if (compare_lengths[x] > 0)
       index_part->set_compare_length(compare_lengths[x]);
 
-    index->set_index_part(index_part);
     x++;
   }
 }
 
 void fill_table(drizzle::Table *table, const char *name) 
 {
-  int x;
+  uint16_t x;
 
-  using drizzle::Table;
+  using namespace drizzle;
 
-  Field *field;
-  Field::FieldConstraints *field_constraints;
-  Field::FieldOptions *field_options;
-  Field::StringFieldOptions *string_field_options;
-  Field::NumericFieldOptions *numeric_field_options;
-  Field::SetFieldOptions *set_field_options;
+  Table::Field *field;
+  Table::Field::FieldConstraints *field_constraints;
+  Table::Field::FieldOptions *field_options;
+  Table::Field::StringFieldOptions *string_field_options;
+  Table::Field::NumericFieldOptions *numeric_field_options;
+  Table::Field::SetFieldOptions *set_field_options;
 
   table->set_name(name);
+  table->set_type(Table::STANDARD);
 
   /* Write out some random varchar */
   for (x= 0; x < 3; x++)
   {
     char buffer[1024];
     field= table->add_field();
+    field_constraints= field->mutable_constraints();
+    string_field_options= field->mutable_string_options();
 
     sprintf(buffer, "sample%u", x);
 
     field->set_name(buffer);
-    field->set_type(Field::VARCHAR);
+    field->set_type(Table::Field::VARCHAR);
 
-    field_constraints= field->mutable_constraints();
+    field_constraints->set_is_nullable((x % 2));
 
-    if (x % 2)
-      field_constraints->set_is_nullable(true);
-
-    string_field_options= field->mutable_string_options();
     string_field_options->set_length(rand() % 100);
 
     if (x % 3)
@@ -106,48 +110,44 @@ void fill_table(drizzle::Table *table, const char *name)
       string_field_options->set_collation("utf8_swedish_ci");
       string_field_options->set_charset("utf8");
     }
-    field->set_string_options(string_field_options);
-    field->set_constraints(field_constraints);
   }
 
   /* Write out an INTEGER */
   {
     field= table->add_field();
     field->set_name("number");
-    field->set_type(Field::INTEGER);
+    field->set_type(Table::Field::INTEGER);
   }
   /* Write out a ENUM */
   {
     field= table->add_field();
-    field->set_type(Field::ENUM);
+    field->set_type(Table::Field::ENUM);
     field->set_name("colors");
 
     set_field_options= field->mutable_set_options();
-    set_field_options->add_values("red");
-    set_field_options->add_values("blue");
-    set_field_options->add_values("green");
-    field->set_set_field_options(set_field_options);
+    set_field_options->add_value("red");
+    set_field_options->add_value("blue");
+    set_field_options->add_value("green");
+    set_field_options->set_count_elements(set_field_options->value_size());
   }
   /* Write out a BLOB */
   {
     field= table->add_field();
     field->set_name("some_btye_string");
-    field->set_type(Field::BLOB);
+    field->set_type(Table::Field::BLOB);
   }
   /* Write out a DECIMAL */
   {
     field= table->add_field();
     field->set_name("important_number");
-    field->set_type(Field::DECIMAL);
+    field->set_type(Table::Field::DECIMAL);
 
     field_constraints= field->mutable_constraints();
     field_constraints->set_is_nullable(true);
-    field->set_field_constrains(field_constraints);
     
-    numeric_field_options= field->mutable_numeric_field_options();
+    numeric_field_options= field->mutable_numeric_options();
     numeric_field_options->set_precision(8);
     numeric_field_options->set_scale(3);
-    field->set_numeric_options(numeric_field_options);
   }
 
   {
@@ -185,9 +185,8 @@ void fill_table(drizzle::Table *table, const char *name)
   }
 
   /* Do engine-specific stuff */
-  StorageEngine *engine= table->mutable_engine();
+  Table::StorageEngine *engine= table->mutable_engine();
   fill_engine(engine);
-  table->set_engine(engine);
 
 }
 
@@ -202,7 +201,7 @@ int main(int argc, char* argv[])
 
   drizzle::Table table;
 
-  update_table(&table, "example_table");
+  fill_table(&table, "example_table");
 
   fstream output(argv[1], ios::out | ios::trunc | ios::binary);
   if (!table.SerializeToOstream(&output)) 
