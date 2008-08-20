@@ -247,7 +247,6 @@ enum ha_base_keytype Field_varstring::key_type() const
 
 void Field_varstring::sql_type(String &res) const
 {
-  THD *thd= table->in_use;
   const CHARSET_INFO * const cs=res.charset();
   uint32_t length;
 
@@ -256,9 +255,6 @@ void Field_varstring::sql_type(String &res) const
                               (has_charset() ? "varchar" : "varbinary"),
                              (int) field_length / charset()->mbmaxlen);
   res.length(length);
-  if ((thd->variables.sql_mode & (MODE_MYSQL323 | MODE_MYSQL40)) &&
-      has_charset() && (charset()->state & MY_CS_BINSORT))
-    res.append(STRING_WITH_LEN(" binary"));
 }
 
 

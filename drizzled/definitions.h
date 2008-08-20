@@ -147,17 +147,8 @@
 #define CHANGE_FRM		2	/* openfrm: open .frm as O_RDWR */
 #define READ_KEYINFO		4	/* L{s nyckeldata fr}n filen */
 #define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
-#define DONT_OPEN_TABLES	8	/* Don't open database-files (frd) */
-#define DONT_OPEN_MASTER_REG	16	/* Don't open first reg-file (prt) */
-#define EXTRA_LONG_RECORD	16	/* Plats f|r dubbel s|k-record */
-#define COMPUTE_TYPES		32	/* Kontrollera type f|r f{ltena */
-#define SEARCH_PRG		64	/* S|k efter registret i 'prg_dev' */
-#define READ_USED_NAMES		128	/* L{s anv{nda formul{rnamn */
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
 #define DELAYED_OPEN		4096	/* Open table later */
-#define OPEN_VIEW		8192	/* Allow open on view */
-#define OPEN_VIEW_NO_PARSE     16384    /* Open frm only if it's a view,
-                                           but do not parse view itself */
 /**
   This flag is used in function get_all_tables() which fills
   I_S tables with data which are retrieved from frm files and storage engine
@@ -173,24 +164,10 @@
 #define OPEN_TABLE_ONLY        OPEN_FRM_FILE_ONLY*2
 /**
   This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine
-  The flag means that we need to process views only to get necessary data.
-  Tables are not processed.
-*/
-#define OPEN_VIEW_ONLY         OPEN_TABLE_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
-  I_S tables with data which are retrieved from frm files and storage engine.
-  The flag means that we need to open a view using
-  open_normal_and_derived_tables() function.
-*/
-#define OPEN_VIEW_FULL         OPEN_VIEW_ONLY*2
-/**
-  This flag is used in function get_all_tables() which fills
   I_S tables with data which are retrieved from frm files and storage engine.
   The flag means that I_S table uses optimization algorithm.
 */
-#define OPTIMIZE_I_S_TABLE     OPEN_VIEW_FULL*2
+#define OPTIMIZE_I_S_TABLE     OPEN_TABLE_ONLY*2
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3
@@ -368,11 +345,6 @@
 #define MODE_ONLY_FULL_GROUP_BY		32
 #define MODE_NO_UNSIGNED_SUBTRACTION	64
 #define MODE_NO_DIR_IN_CREATE		128
-#define MODE_POSTGRESQL			256
-#define MODE_ORACLE			512
-#define MODE_MSSQL			1024
-#define MODE_DB2			2048
-#define MODE_MAXDB			4096
 #define MODE_NO_KEY_OPTIONS             8192
 #define MODE_NO_TABLE_OPTIONS           16384
 #define MODE_NO_FIELD_OPTIONS           32768
@@ -386,29 +358,10 @@
 #define MODE_NO_ZERO_IN_DATE		(MODE_STRICT_ALL_TABLES*2)
 #define MODE_NO_ZERO_DATE		(MODE_NO_ZERO_IN_DATE*2)
 #define MODE_INVALID_DATES		(MODE_NO_ZERO_DATE*2)
-#define MODE_ERROR_FOR_DIVISION_BY_ZERO (MODE_INVALID_DATES*2)
-#define MODE_TRADITIONAL		(MODE_ERROR_FOR_DIVISION_BY_ZERO*2)
-#define MODE_NO_AUTO_CREATE_USER	(MODE_TRADITIONAL*2)
-#define MODE_HIGH_NOT_PRECEDENCE	(MODE_NO_AUTO_CREATE_USER*2)
-#define MODE_NO_ENGINE_SUBSTITUTION     (MODE_HIGH_NOT_PRECEDENCE*2)
-#define MODE_PAD_CHAR_TO_FULL_LENGTH    (1ULL << 31)
 
 /* @@optimizer_switch flags */
 #define OPTIMIZER_SWITCH_NO_MATERIALIZATION 1
 #define OPTIMIZER_SWITCH_NO_SEMIJOIN 2
-
-/*
-  Replication uses 8 bytes to store SQL_MODE in the binary log. The day you
-  use strictly more than 64 bits by adding one more define above, you should
-  contact the replication team because the replication code should then be
-  updated (to store more bytes on disk).
-
-  NOTE: When adding new SQL_MODE types, make sure to also add them to
-  the scripts used for creating the MySQL system tables
-  in scripts/mysql_system_tables.sql and scripts/mysql_system_tables_fix.sql
-
-*/
-#define RAID_BLOCK_SIZE 1024
 
 #define MY_CHARSET_BIN_MB_MAXLEN 1
 

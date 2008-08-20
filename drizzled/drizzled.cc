@@ -223,7 +223,6 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
-static bool opt_short_log_format= 0;
 static uint kill_cached_threads, wake_thread;
 static ulong killed_threads, thread_created;
 static ulong max_used_connections;
@@ -3340,10 +3339,6 @@ struct my_option my_long_options[] =
    (char**) &opt_log_queries_not_using_indexes,
    (char**) &opt_log_queries_not_using_indexes,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-short-format", OPT_SHORT_LOG_FORMAT,
-   N_("Don't log extra information to update and slow-query logs."),
-   (char**) &opt_short_log_format, (char**) &opt_short_log_format,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slave-updates", OPT_LOG_SLAVE_UPDATES,
    N_("Tells the slave to log the updates from the slave thread to the binary "
       "log. You will need to turn it on if you plan to "
@@ -4957,9 +4952,6 @@ static void get_options(int *argc,char **argv)
   /* long_query_time is in microseconds */
   global_system_variables.long_query_time= max_system_variables.long_query_time=
     (int64_t) (long_query_time * 1000000.0);
-
-  if (opt_short_log_format)
-    opt_specialflag|= SPECIAL_SHORT_LOG_FORMAT;
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||

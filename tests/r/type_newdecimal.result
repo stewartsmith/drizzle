@@ -135,6 +135,8 @@ drop table t1;
 select 1e10/0e0;
 1e10/0e0
 NULL
+Warnings:
+Error	1365	Division by 0
 create table wl1612 (col1 int, col2 decimal(38,10), col3 numeric(38,10));
 insert into wl1612 values(1,12345678901234567890.1234567890,12345678901234567890.1234567890);
 select * from wl1612;
@@ -153,16 +155,28 @@ col1/0
 NULL
 NULL
 NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 select col2/0 from wl1612;
 col2/0
 NULL
 NULL
 NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 select col3/0 from wl1612;
 col3/0
 NULL
 NULL
 NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 insert into wl1612 values(5,5000.0005,5000.0005);
 insert into wl1612 values(6,5000.0005,5000.0005);
 select sum(col2),sum(col3) from wl1612;
@@ -722,9 +736,13 @@ select 1E-500 = 0;
 select 1 / 1E-500;
 1 / 1E-500
 NULL
+Warnings:
+Error	1365	Division by 0
 select 1 / 0;
 1 / 0
 NULL
+Warnings:
+Error	1365	Division by 0
 CREATE TABLE Sow6_2f (col1 NUMERIC(4,2));
 INSERT INTO Sow6_2f VALUES (10.55);
 INSERT INTO Sow6_2f VALUES (10.5555);
@@ -744,6 +762,12 @@ NULL
 NULL
 NULL
 NULL
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 INSERT INTO Sow6_2f VALUES ('a59b');
 ERROR HY000: Incorrect decimal value: 'a59b' for column 'col1' at row 1
 drop table Sow6_2f;
@@ -753,6 +777,8 @@ select 10.3330000000000/12.34500000;
 select 0/0;
 0/0
 NULL
+Warnings:
+Error	1365	Division by 0
 select 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999 as x;
 x
 99999999999999999999999999999999999999999999999999999999999999999
@@ -785,6 +811,8 @@ DROP TABLE t1;
 select abs(10/0);
 abs(10/0)
 NULL
+Warnings:
+Error	1365	Division by 0
 select abs(NULL);
 abs(NULL)
 NULL

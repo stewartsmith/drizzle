@@ -3105,8 +3105,7 @@ retry:
                                                HA_OPEN_RNDFILE |
                                                HA_GET_INDEX |
                                                HA_TRY_READ_ONLY),
-                                       (READ_KEYINFO | COMPUTE_TYPES |
-                                        EXTRA_RECORD),
+                                       (READ_KEYINFO | EXTRA_RECORD),
                                        thd->open_options, entry, OTM_OPEN)))
   {
     if (error == 7)                             // Table def changed
@@ -3168,7 +3167,7 @@ retry:
                                (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                        HA_GET_INDEX |
                                        HA_TRY_READ_ONLY),
-                               READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD,
+                               READ_KEYINFO | EXTRA_RECORD,
                                ha_open_options | HA_OPEN_FOR_REPAIR,
                                entry, OTM_OPEN) || ! entry->file ||
         (entry->file->is_crashed() && entry->file->ha_check_and_repair(thd)))
@@ -3894,9 +3893,8 @@ Table *open_temporary_table(THD *thd, const char *path, const char *db,
                             (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                     HA_GET_INDEX),
                             (open_mode == OTM_ALTER) ?
-                              (READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD |
-                               OPEN_FRM_FILE_ONLY)
-                            : (READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD),
+                              (READ_KEYINFO | EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
+                            : (READ_KEYINFO | EXTRA_RECORD),
                             ha_open_options,
                             tmp_table, open_mode))
   {

@@ -145,12 +145,6 @@
 #define CHANGE_FRM		2	/* openfrm: open .frm as O_RDWR */
 #define READ_KEYINFO		4	/* L{s nyckeldata fr}n filen */
 #define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
-#define DONT_OPEN_TABLES	8	/* Don't open database-files (frd) */
-#define DONT_OPEN_MASTER_REG	16	/* Don't open first reg-file (prt) */
-#define EXTRA_LONG_RECORD	16	/* Plats f|r dubbel s|k-record */
-#define COMPUTE_TYPES		32	/* Kontrollera type f|r f{ltena */
-#define SEARCH_PRG		64	/* S|k efter registret i 'prg_dev' */
-#define READ_USED_NAMES		128	/* L{s anv{nda formul{rnamn */
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
 #define DELAYED_OPEN		4096	/* Open table later */
 
