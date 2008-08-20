@@ -4419,10 +4419,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
     String *escape_str= escape_item->val_str(&tmp_value1);
     if (escape_str)
     {
-      if (escape_used_in_parsing && (
-             (((thd->variables.sql_mode & MODE_NO_BACKSLASH_ESCAPES) &&
-                escape_str->numchars() != 1) ||
-               escape_str->numchars() > 1)))
+      if (escape_used_in_parsing && escape_str->numchars() > 1)
       {
         my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
         return true;

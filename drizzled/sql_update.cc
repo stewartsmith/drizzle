@@ -461,10 +461,7 @@ int mysql_update(THD *thd,
   thd_proc_info(thd, "Updating");
 
   transactional_table= table->file->has_transactions();
-  thd->abort_on_warning= test(!ignore &&
-                              (thd->variables.sql_mode &
-                               (MODE_STRICT_TRANS_TABLES |
-                                MODE_STRICT_ALL_TABLES)));
+  thd->abort_on_warning= test(!ignore);
   will_batch= !table->file->start_bulk_update();
 
   /*
@@ -981,9 +978,7 @@ bool mysql_multi_update(THD *thd,
 				 handle_duplicates, ignore)))
     return(true);
 
-  thd->abort_on_warning= test(thd->variables.sql_mode &
-                              (MODE_STRICT_TRANS_TABLES |
-                               MODE_STRICT_ALL_TABLES));
+  thd->abort_on_warning= true;
 
   List<Item> total_list;
   res= mysql_select(thd, &select_lex->ref_pointer_array,
