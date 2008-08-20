@@ -337,17 +337,6 @@
 #ifndef DRIZZLE_CLIENT
 
 /* Bits for different SQL modes modes (including ANSI mode) */
-#define MODE_REAL_AS_FLOAT              1
-#define MODE_PIPES_AS_CONCAT            2
-#define MODE_ANSI_QUOTES                4
-#define MODE_IGNORE_SPACE		8
-#define MODE_NOT_USED			16
-#define MODE_ONLY_FULL_GROUP_BY		32
-#define MODE_NO_UNSIGNED_SUBTRACTION	64
-#define MODE_NO_DIR_IN_CREATE		128
-#define MODE_NO_KEY_OPTIONS             8192
-#define MODE_NO_TABLE_OPTIONS           16384
-#define MODE_NO_FIELD_OPTIONS           32768
 #define MODE_MYSQL323                   65536L
 #define MODE_MYSQL40                    (MODE_MYSQL323*2)
 #define MODE_ANSI	                (MODE_MYSQL40*2)
