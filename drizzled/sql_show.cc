@@ -545,7 +545,7 @@ int get_quote_char_for_identifier(THD *thd, const char *name, uint length)
       !require_quotes(name, length) &&
       !(thd->options & OPTION_QUOTE_SHOW_CREATE))
     return EOF;
-  return '"';
+  return '`';
 }
 
 
