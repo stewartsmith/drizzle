@@ -147,7 +147,7 @@ bool Item_sum::check_sum_func(THD *thd, Item **ref)
     if (register_sum_func(thd, ref))
       return true;
     invalid= aggr_level < 0 && !(allow_sum_func & (1 << nest_level));
-    if (!invalid && thd->variables.sql_mode & MODE_ANSI)
+    if (!invalid && false)
       invalid= aggr_level < 0 && max_arg_level < nest_level;
   }
   if (!invalid && aggr_level < 0)

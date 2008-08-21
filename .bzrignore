@@ -133,3 +133,10 @@ drizzled/lex_hash.h
 drizzled/gen_lex_hash
 config.h
 stamp-h1
+drizzled/serialize/binlog_writer
+drizzled/serialize/binlog_reader
+drizzled/serialize/binary_log.pb.h
+drizzled/serialize/binary_log.pb.cc
+drizzled/version.h
+drizzled/drizzled_safe
+drizzled/drizzled

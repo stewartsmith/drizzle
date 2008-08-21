@@ -62,8 +62,7 @@ int Field_newdate::store(const char *from,
   if ((ret= str_to_datetime(from, len, &l_time,
                             (TIME_FUZZY_DATE |
                              (thd->variables.sql_mode &
-                              (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                               MODE_INVALID_DATES))),
+                              (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
                             &error)) <= DRIZZLE_TIMESTAMP_ERROR)
   {
     tmp= 0;
@@ -111,8 +110,7 @@ int Field_newdate::store(int64_t nr,
   if (number_to_datetime(nr, &l_time,
                          (TIME_FUZZY_DATE |
                           (thd->variables.sql_mode &
-                           (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                            MODE_INVALID_DATES))),
+                           (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))),
                          &error) == -1LL)
   {
     tmp= 0L;
@@ -148,8 +146,7 @@ int Field_newdate::store_time(DRIZZLE_TIME *ltime,timestamp_type time_type)
     if (check_date(ltime, tmp != 0,
                    (TIME_FUZZY_DATE |
                     (current_thd->variables.sql_mode &
-                     (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE |
-                      MODE_INVALID_DATES))), &error))
+                     (MODE_NO_ZERO_DATE | MODE_INVALID_DATES))), &error))
     {
       char buff[MAX_DATE_STRING_REP_LENGTH];
       String str(buff, sizeof(buff), &my_charset_latin1);

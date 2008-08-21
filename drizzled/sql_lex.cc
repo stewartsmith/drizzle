@@ -553,8 +553,7 @@ static char *get_text(Lex_input_stream *lip, int pre_skip, int post_skip)
 	      continue;
 	  }
 #endif
-	  if (!(lip->m_thd->variables.sql_mode & MODE_NO_BACKSLASH_ESCAPES) &&
-              *str == '\\' && str+1 != end)
+	  if (*str == '\\' && str+1 != end)
 	  {
 	    switch(*++str) {
 	    case 'n':

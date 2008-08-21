@@ -22,28 +22,6 @@
 #include <drizzled/sql_select.h>
 #include <drizzled/drizzled_error_messages.h>
 
-/* Return 0 if row hasn't changed */
-
-bool compare_record(Table *table)
-{
-  if (table->s->blob_fields + table->s->varchar_fields == 0)
-    return cmp_record(table,record[1]);
-  /* Compare null bits */
-  if (memcmp(table->null_flags,
-	     table->null_flags+table->s->rec_buff_length,
-	     table->s->null_bytes))
-    return true;				// Diff in NULL value
-  /* Compare updated fields */
-  for (Field **ptr= table->field ; *ptr ; ptr++)
-  {
-    if (bitmap_is_set(table->write_set, (*ptr)->field_index) &&
-	(*ptr)->cmp_binary_offset(table->s->rec_buff_length))
-      return true;
-  }
-  return false;
-}
-
-
 /*
   check that all fields are real fields
 
@@ -483,10 +461,7 @@ int mysql_update(THD *thd,
   thd_proc_info(thd, "Updating");
 
   transactional_table= table->file->has_transactions();
-  thd->abort_on_warning= test(!ignore &&
-                              (thd->variables.sql_mode &
-                               (MODE_STRICT_TRANS_TABLES |
-                                MODE_STRICT_ALL_TABLES)));
+  thd->abort_on_warning= test(!ignore);
   will_batch= !table->file->start_bulk_update();
 
   /*
@@ -518,7 +493,7 @@ int mysql_update(THD *thd,
 
       found++;
 
-      if (!can_compare_record || compare_record(table))
+      if (!can_compare_record || table->compare_record())
       {
         if (will_batch)
         {
@@ -1003,9 +978,7 @@ bool mysql_multi_update(THD *thd,
 				 handle_duplicates, ignore)))
     return(true);
 
-  thd->abort_on_warning= test(thd->variables.sql_mode &
-                              (MODE_STRICT_TRANS_TABLES |
-                               MODE_STRICT_ALL_TABLES));
+  thd->abort_on_warning= true;
 
   List<Item> total_list;
   res= mysql_select(thd, &select_lex->ref_pointer_array,
@@ -1385,7 +1358,7 @@ bool multi_update::send_data(List<Item> &not_used_values __attribute__((unused))
 	return(1);
 
       found++;
-      if (!can_compare_record || compare_record(table))
+      if (!can_compare_record || table->compare_record())
       {
 	int error;
         if (!updated++)
@@ -1627,7 +1600,7 @@ int multi_update::do_updates()
 	   copy_field_ptr++)
 	(*copy_field_ptr->do_copy)(copy_field_ptr);
 
-      if (!can_compare_record || compare_record(table))
+      if (!can_compare_record || table->compare_record())
       {
 	if ((local_error=table->file->ha_update_row(table->record[1],
 						    table->record[0])) &&

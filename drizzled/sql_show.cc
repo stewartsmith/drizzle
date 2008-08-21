@@ -545,7 +545,7 @@ int get_quote_char_for_identifier(THD *thd, const char *name, uint length)
       !require_quotes(name, length) &&
       !(thd->options & OPTION_QUOTE_SHOW_CREATE))
     return EOF;
-  return '"';
+  return '`';
 }
 
 
@@ -691,7 +691,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
     We have to restore the read_set if we are called from insert in case
     of row based replication.
   */
-  old_map= tmp_use_all_columns(table, table->read_set);
+  old_map= table->use_all_columns(table->read_set);
 
   for (ptr=table->field ; (field= *ptr); ptr++)
   {
@@ -980,7 +980,7 @@ int store_create_info(THD *thd, TableList *table_list, String *packet,
     append_directory(thd, packet, "DATA",  create_info.data_file_name);
     append_directory(thd, packet, "INDEX", create_info.index_file_name);
   }
-  tmp_restore_column_map(table->read_set, old_map);
+  table->restore_column_map(old_map);
   return(0);
 }
 
@@ -2446,7 +2446,7 @@ static int fill_schema_table_from_frm(THD *thd,TableList *tables,
   key_length= create_table_def_key(thd, key, &table_list, 0);
   pthread_mutex_lock(&LOCK_open);
   share= get_table_share(thd, &table_list, key,
-                         key_length, OPEN_VIEW, &error);
+                         key_length, 0, &error);
   if (!share)
   {
     res= 0;
@@ -4601,7 +4601,7 @@ ST_SCHEMA_TABLE schema_tables[]=
    create_schema_table, fill_schema_coll_charset_app, 0, 0, -1, -1, 0, 0},
   {"COLUMNS", columns_fields_info, create_schema_table, 
    get_all_tables, make_columns_old_format, get_schema_column_record, 1, 2, 0,
-   OPTIMIZE_I_S_TABLE|OPEN_VIEW_FULL},
+   OPTIMIZE_I_S_TABLE},
   {"GLOBAL_STATUS", variables_fields_info, create_schema_table,
    fill_status, make_old_format, 0, -1, -1, 0, 0},
   {"GLOBAL_VARIABLES", variables_fields_info, create_schema_table,

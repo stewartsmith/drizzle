@@ -4798,8 +4798,7 @@ bool mysql_alter_table(THD *thd,char *new_db, char *new_name,
     tbl.db= new_db;
     tbl.table_name= tbl.alias= tmp_name;
     /* Table is in thd->temporary_tables */
-    new_table= open_table(thd, &tbl, thd->mem_root, (bool*) 0,
-                          DRIZZLE_LOCK_IGNORE_FLUSH);
+    new_table= open_table(thd, &tbl, (bool*) 0, DRIZZLE_LOCK_IGNORE_FLUSH);
   }
   else
   {
@@ -5142,17 +5141,8 @@ copy_data_between_tables(Table *from,Table *to,
     if (def->field)
     {
       if (*ptr == to->next_number_field)
-      {
         auto_increment_field_copied= true;
-        /*
-          If we are going to copy contents of one auto_increment column to
-          another auto_increment column it is sensible to preserve zeroes.
-          This condition also covers case when we are don't actually alter
-          auto_increment column.
-        */
-        if (def->field == from->found_next_number_field)
-          thd->variables.sql_mode|= MODE_NO_AUTO_VALUE_ON_ZERO;
-      }
+
       (copy_end++)->set(*ptr,def->field,0);
     }
 

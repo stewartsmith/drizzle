@@ -2061,7 +2061,7 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
     true  on error
 */
 
-bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
+bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
                         uint fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
@@ -2164,29 +2164,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       /* Allow empty as default value. */
       String str,*res;
       res= fld_default_value->val_str(&str);
-      /*
-        A default other than '' is always an error, and any non-NULL
-        specified default is an error in strict mode.
-      */
-      if (res->length() || (thd->variables.sql_mode &
-                            (MODE_STRICT_TRANS_TABLES |
-                             MODE_STRICT_ALL_TABLES)))
-      {
-        my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0),
-                 fld_name); /* purecov: inspected */
-        return(true);
-      }
-      else
-      {
-        /*
-          Otherwise a default of '' is just a warning.
-        */
-        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_BLOB_CANT_HAVE_DEFAULT,
-                            ER(ER_BLOB_CANT_HAVE_DEFAULT),
-                            fld_name);
-      }
-      def= 0;
     }
     flags|= BLOB_FLAG;
     break;

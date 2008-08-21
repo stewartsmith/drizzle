@@ -2274,7 +2274,7 @@ int subselect_uniquesubquery_engine::scan_table()
     error=table->file->rnd_next(table->record[0]);
     if (error && error != HA_ERR_END_OF_FILE)
     {
-      error= report_error(table, error);
+      error= table->report_error(error);
       break;
     }
     /* No more rows */
@@ -2450,7 +2450,7 @@ int subselect_uniquesubquery_engine::exec()
                                      HA_READ_KEY_EXACT);
   if (error &&
       error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-    error= report_error(table, error);
+    error= table->report_error(error);
   else
   {
     error= 0;
@@ -2563,7 +2563,7 @@ int subselect_indexsubquery_engine::exec()
                                      HA_READ_KEY_EXACT);
   if (error &&
       error != HA_ERR_KEY_NOT_FOUND && error != HA_ERR_END_OF_FILE)
-    error= report_error(table, error);
+    error= table->report_error(error);
   else
   {
     for (;;)
@@ -2586,7 +2586,7 @@ int subselect_indexsubquery_engine::exec()
                                             tab->ref.key_length);
         if (error && error != HA_ERR_END_OF_FILE)
         {
-          error= report_error(table, error);
+          error= table->report_error(error);
           break;
         }
       }

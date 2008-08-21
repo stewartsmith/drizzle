@@ -35,9 +35,8 @@ static pthread_mutex_t LOCK_table_share;
 static bool table_def_inited= 0;
 
 static int open_unireg_entry(THD *thd, Table *entry, TableList *table_list,
-			     const char *alias,
-                             char *cache_key, uint cache_key_length,
-			     MEM_ROOT *mem_root, uint flags);
+                             const char *alias,
+                             char *cache_key, uint cache_key_length);
 static void free_cache_entry(Table *entry);
 static void close_old_data_files(THD *thd, Table *table, bool morph_locks,
                                  bool send_refresh);
@@ -1816,7 +1815,7 @@ bool reopen_name_locked_table(THD* thd, TableList* table_list, bool link_in)
 
   if (open_unireg_entry(thd, table, table_list, table_name,
                         table->s->table_cache_key.str,
-                        table->s->table_cache_key.length, thd->mem_root, 0))
+                        table->s->table_cache_key.length))
   {
     intern_close_table(table);
     /*
@@ -2062,8 +2061,7 @@ bool check_if_table_exists(THD *thd, TableList *table, bool *exists)
 */
 
 
-Table *open_table(THD *thd, TableList *table_list, MEM_ROOT *mem_root,
-		  bool *refresh, uint flags)
+Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags)
 {
   register Table *table;
   char key[MAX_DBKEY_LENGTH];
@@ -2421,8 +2419,7 @@ Table *open_table(THD *thd, TableList *table_list, MEM_ROOT *mem_root,
       return(NULL);
     }
 
-    error= open_unireg_entry(thd, table, table_list, alias, key, key_length,
-                             mem_root, (flags & OPEN_VIEW_NO_PARSE));
+    error= open_unireg_entry(thd, table, table_list, alias, key, key_length);
     /* Combine the follow two */
     if (error > 0)
     {
@@ -2541,8 +2538,7 @@ bool reopen_table(Table *table)
   if (open_unireg_entry(thd, &tmp, &table_list,
 			table->alias,
                         table->s->table_cache_key.str,
-                        table->s->table_cache_key.length,
-                        thd->mem_root, 0))
+                        table->s->table_cache_key.length))
     goto end;
 
   /* This list copies variables set by open_table */
@@ -3078,9 +3074,6 @@ void assign_new_table_id(TABLE_SHARE *share)
     alias		Alias name
     cache_key		Key for share_cache
     cache_key_length	length of cache_key
-    mem_root		temporary mem_root for parsing
-    flags               the OPEN_VIEW_NO_PARSE flag to be passed to
-                        openfrm()/open_new_frm()
 
   NOTES
    Extra argument for open is taken from thd->open_options
@@ -3093,9 +3086,7 @@ void assign_new_table_id(TABLE_SHARE *share)
 
 static int open_unireg_entry(THD *thd, Table *entry, TableList *table_list,
                              const char *alias,
-                             char *cache_key, uint cache_key_length,
-                             MEM_ROOT *mem_root __attribute__((unused)),
-                             uint flags __attribute__((unused)))
+                             char *cache_key, uint cache_key_length)
 {
   int error;
   TABLE_SHARE *share;
@@ -3105,7 +3096,6 @@ static int open_unireg_entry(THD *thd, Table *entry, TableList *table_list,
 retry:
   if (!(share= get_table_share_with_create(thd, table_list, cache_key,
                                            cache_key_length, 
-                                           OPEN_VIEW |
                                            table_list->i_s_requested_object,
                                            &error)))
     return(1);
@@ -3115,8 +3105,7 @@ retry:
                                                HA_OPEN_RNDFILE |
                                                HA_GET_INDEX |
                                                HA_TRY_READ_ONLY),
-                                       (READ_KEYINFO | COMPUTE_TYPES |
-                                        EXTRA_RECORD),
+                                       (READ_KEYINFO | EXTRA_RECORD),
                                        thd->open_options, entry, OTM_OPEN)))
   {
     if (error == 7)                             // Table def changed
@@ -3178,7 +3167,7 @@ retry:
                                (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                        HA_GET_INDEX |
                                        HA_TRY_READ_ONLY),
-                               READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD,
+                               READ_KEYINFO | EXTRA_RECORD,
                                ha_open_options | HA_OPEN_FOR_REPAIR,
                                entry, OTM_OPEN) || ! entry->file ||
         (entry->file->is_crashed() && entry->file->ha_check_and_repair(thd)))
@@ -3330,7 +3319,7 @@ int open_tables(THD *thd, TableList **start, uint *counter, uint flags)
       not opened yet. Try to open the table.
     */
     if (!tables->table)
-      tables->table= open_table(thd, tables, &new_frm_mem, &refresh, flags);
+      tables->table= open_table(thd, tables, &refresh, flags);
 
     if (!tables->table)
     {
@@ -3506,7 +3495,7 @@ Table *open_ltable(THD *thd, TableList *table_list, thr_lock_type lock_type,
 
   thd_proc_info(thd, "Opening table");
   thd->current_tablenr= 0;
-  while (!(table= open_table(thd, table_list, thd->mem_root, &refresh, 0)) &&
+  while (!(table= open_table(thd, table_list, &refresh, 0)) &&
          refresh)
     ;
 
@@ -3904,9 +3893,8 @@ Table *open_temporary_table(THD *thd, const char *path, const char *db,
                             (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                     HA_GET_INDEX),
                             (open_mode == OTM_ALTER) ?
-                              (READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD |
-                               OPEN_FRM_FILE_ONLY)
-                            : (READ_KEYINFO | COMPUTE_TYPES | EXTRA_RECORD),
+                              (READ_KEYINFO | EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
+                            : (READ_KEYINFO | EXTRA_RECORD),
                             ha_open_options,
                             tmp_table, open_mode))
   {

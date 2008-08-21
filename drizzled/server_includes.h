@@ -132,9 +132,6 @@ void set_key_field_ptr(KEY *key_info, const uchar *new_buf,
                        const uchar *old_buf);
 /* </UNUSED> */
 
-/* sql_update.cc */
-bool compare_record(Table *table);
-
 /* sql_base.cc */
 void table_cache_free(void);
 bool table_cache_init(void);
@@ -255,8 +252,7 @@ void release_table_share(TABLE_SHARE *share, enum release_type type);
 TABLE_SHARE *get_cached_table_share(const char *db, const char *table_name);
 Table *open_ltable(THD *thd, TableList *table_list, thr_lock_type update,
                    uint lock_flags);
-Table *open_table(THD *thd, TableList *table_list, MEM_ROOT* mem,
-		  bool *refresh, uint flags);
+Table *open_table(THD *thd, TableList *table_list, bool *refresh, uint flags);
 bool name_lock_locked_table(THD *thd, TableList *tables);
 bool reopen_name_locked_table(THD* thd, TableList* table_list, bool link_in);
 Table *table_cache_insert_placeholder(THD *thd, const char *key,

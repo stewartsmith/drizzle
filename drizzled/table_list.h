@@ -6,6 +6,41 @@
 #ifndef DRIZZLED_TMP_TABLE_H
 #define DRIZZLED_TMP_TABLE_H
 
+/*
+  Table reference in the FROM clause.
+
+  These table references can be of several types that correspond to
+  different SQL elements. Below we list all types of TableLists with
+  the necessary conditions to determine when a TableList instance
+  belongs to a certain type.
+
+  1) table (TableList::view == NULL)
+     - base table
+       (TableList::derived == NULL)
+     - subquery - TableList::table is a temp table
+       (TableList::derived != NULL)
+     - information schema table
+       (TableList::schema_table != NULL)
+       NOTICE: for schema tables TableList::field_translation may be != NULL
+  2) view (TableList::view != NULL)
+     - merge    (TableList::effective_algorithm == VIEW_ALGORITHM_MERGE)
+           also (TableList::field_translation != NULL)
+     - tmptable (TableList::effective_algorithm == VIEW_ALGORITHM_TMPTABLE)
+           also (TableList::field_translation == NULL)
+  3) nested table reference (TableList::nested_join != NULL)
+     - table sequence - e.g. (t1, t2, t3)
+       TODO: how to distinguish from a JOIN?
+     - general JOIN
+       TODO: how to distinguish from a table sequence?
+     - NATURAL JOIN
+       (TableList::natural_join != NULL)
+       - JOIN ... USING
+         (TableList::join_using_fields != NULL)
+     - semi-join
+       ;
+*/
+
+
 #include "table.h"
 
 class Index_hint;

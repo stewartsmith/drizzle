@@ -223,7 +223,6 @@ TYPELIB log_output_typelib= {array_elements(log_output_names)-1,"",
 static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
-static bool opt_short_log_format= 0;
 static uint kill_cached_threads, wake_thread;
 static ulong killed_threads, thread_created;
 static ulong max_used_connections;
@@ -460,7 +459,7 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static ulong opt_specialflag, opt_myisam_block_size;
+static ulong opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *mysql_home_ptr, *pidfile_name_ptr;
@@ -1651,7 +1650,6 @@ static void start_signal_handler(void)
   (void) pthread_attr_init(&thr_attr);
   pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
   (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
   {
     struct sched_param tmp_sched_param;
 
@@ -1769,7 +1767,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 	abort_loop=1;				// mark abort for threads
 #ifdef USE_ONE_SIGNAL_HAND
 	pthread_t tmp;
-	if (!(opt_specialflag & SPECIAL_NO_PRIOR))
         {
           struct sched_param tmp_sched_param;
 
@@ -2149,7 +2146,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     }
     open_files_limit= files;
   }
-  unireg_init(opt_specialflag); /* Set up extern variabels */
+  unireg_init(0); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
   lex_init();
@@ -2308,7 +2305,6 @@ static int init_thread_environment()
   (void) pthread_attr_setdetachstate(&connection_attrib,
 				     PTHREAD_CREATE_DETACHED);
   pthread_attr_setscope(&connection_attrib, PTHREAD_SCOPE_SYSTEM);
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
   {
     struct sched_param tmp_sched_param;
 
@@ -3339,10 +3335,6 @@ struct my_option my_long_options[] =
       "slow log if it is open."),
    (char**) &opt_log_queries_not_using_indexes,
    (char**) &opt_log_queries_not_using_indexes,
-   0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-  {"log-short-format", OPT_SHORT_LOG_FORMAT,
-   N_("Don't log extra information to update and slow-query logs."),
-   (char**) &opt_short_log_format, (char**) &opt_short_log_format,
    0, GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
   {"log-slave-updates", OPT_LOG_SLAVE_UPDATES,
    N_("Tells the slave to log the updates from the slave thread to the binary "
@@ -4444,7 +4436,6 @@ static void mysql_init_variables(void)
   slave_exec_mode_options= 0;
   slave_exec_mode_options= (uint)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
-  opt_specialflag= SPECIAL_ENGLISH;
   mysql_home_ptr= mysql_home;
   pidfile_name_ptr= pidfile_name;
   log_error_file_ptr= log_error_file;
@@ -4709,9 +4700,6 @@ mysqld_get_one_option(int optid,
       break;
     }
 #endif
-  case (int) OPT_SKIP_PRIOR:
-    opt_specialflag|= SPECIAL_NO_PRIOR;
-    break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
     break;
@@ -4957,9 +4945,6 @@ static void get_options(int *argc,char **argv)
   /* long_query_time is in microseconds */
   global_system_variables.long_query_time= max_system_variables.long_query_time=
     (int64_t) (long_query_time * 1000000.0);
-
-  if (opt_short_log_format)
-    opt_specialflag|= SPECIAL_SHORT_LOG_FORMAT;
 
   if (init_global_datetime_format(DRIZZLE_TIMESTAMP_DATE,
 				  &global_system_variables.date_format) ||

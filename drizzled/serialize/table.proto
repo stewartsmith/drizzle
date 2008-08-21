@@ -1,86 +1,148 @@
 package drizzle;
 
 message Table {
-  required string name = 1;
-  required string engine = 2;
 
-  enum FieldType {
-    DOUBLE = 0;
-    VARCHAR = 1;
-    TEXT = 2;
-    BLOB = 3;
-    ENUM = 4;
-    SET = 5;
-    TINYINT = 6;
-    SMALLINT = 7;
-    INTEGER = 8;
-    BIGINT = 9;
-    DECIMAL = 10;
-    VARBINARY = 11;
-    DATE = 12;
-    TIME = 13;
-    TIMESTAMP = 14;
-    DATETIME = 15;
+  enum TableType {
+    STANDARD = 0;
+    TEMPORARY = 1;
+  }
+
+  message StorageEngine {
+
+    message EngineOption {
+      enum EngineOptionType {
+        BOOL = 0;
+        INTEGER = 1;
+        STRING = 2;
+      }
+
+      required string name = 1;
+      required string value = 2;
+      required EngineOptionType type = 3;
+    }
+
+    required string name = 1;
+    repeated EngineOption option = 2;
+  }
+
+  message TableOptions {
+    optional uint64 auto_increment = 1;
+    optional string charset = 2;
+    optional string collation = 3;
+  }
+
+  message TableStats {
+    optional uint32 avg_row_length = 1;
+    optional uint64 max_rows = 2;
+    optional uint32 min_rows = 3;
+  }
+
+  message ForeignKeyConstraint {
+    required string name = 1;
+    required Field dependent = 2;
+    required Field parent = 3;
+    /** @TODO Finish this off... */
   }
 
   message Field {
+
+    enum FieldType {
+      DOUBLE = 0;
+      VARCHAR = 1;
+      TEXT = 2;
+      BLOB = 3;
+      ENUM = 4;
+      SET = 5;
+      TINYINT = 6;
+      SMALLINT = 7;
+      INTEGER = 8;
+      BIGINT = 9;
+      DECIMAL = 10;
+      VARBINARY = 11;
+      DATE = 12;
+      TIME = 13;
+      TIMESTAMP = 14;
+      DATETIME = 15;
+    }
+
+    message FieldOptions {
+      optional string default_value = 2;
+    }
+
+    message TimestampFieldOptions {
+      optional bool auto_updates = 1 [default = false];
+    }
+
+    message FieldConstraints {
+      required bool is_nullable = 1 [default = false];
+      optional bool is_unsigned = 2 [default = false];
+      repeated string expression = 16; /* Reserve 0-15 for frequenty accessed attributes */
+    }
+
+    message NumericFieldOptions {
+      optional bool is_autoincrement = 1 [default = false];
+      optional int32 length = 2;
+      optional int32 scale = 3;
+      optional int32 precision = 4;
+    }
+
+    message StringFieldOptions {
+      optional bool is_fixed_width = 1 [default = false];
+      optional int32 length = 2;
+      optional string charset = 3; /* Perhaps this can go away soon...*/
+      optional string collation = 4;
+    }
+
+    message SetFieldOptions {
+      required int32 count_elements = 1;
+      repeated string value = 2;
+    }
+
     required string name = 1;
     required FieldType type = 2;
-    optional string collation = 3;
-    optional string comment = 4;
-    optional bool unique = 5;
-    optional bool autoincrement = 6;
-    optional bool key = 7;
-    optional bool primary = 8;
-    optional bool is_unsigned = 9;
-    optional string custom_name = 10;
-    optional bool is_notnull = 11 [default = false];
-    optional int32 scale = 12;
-    optional string characterset = 13;
-    optional int32 length = 14;
-    optional string default_value = 15;
-    repeated string values = 16;
-    optional bool on_update = 17;
-  }
-
-  message KeyPart {
-    required string name = 1;
-    optional int32 length = 2;
-  }
-
-  enum IndexType {
-    ORDERED = 0;
-    HASH = 1;
+    optional FieldOptions options = 3;
+    optional FieldConstraints constraints = 4;
+    optional NumericFieldOptions numeric_options = 5;
+    optional StringFieldOptions string_options = 6;
+    optional string comment = 16; /* Reserve 0-15 for frequently accessed attributes */
+    optional SetFieldOptions set_options = 17;
+    optional TimestampFieldOptions timestamp_options = 18;
   }
 
   message Index {
+
+    enum IndexType {
+      UNKNOWN = 0;
+      HASH = 1;
+      BTREE = 2;
+      RTREE = 3;
+      FULLTEXT = 4;
+    }
+
+    message IndexPart {
+      required Field field = 1;
+      optional int32 compare_length = 2;
+      optional bool in_reverse_order = 3 [default = false];
+    }
+
     required string name = 1;
-    repeated KeyPart values = 2;
-    optional bool primary = 4;
-    optional int32 key_block_size = 5;
-    optional IndexType type = 6;
+    required bool is_primary = 2;
+    required bool is_unique = 3;
+    required IndexType type = 4 [default = UNKNOWN];
+    repeated IndexPart index_part = 5;
   }
 
-  repeated Field field = 4;
-  repeated Index index = 5;
+  required string name = 1;
+  required TableType type = 5;
+  required StorageEngine engine = 2;
+  repeated Field field = 3;
+  repeated Index index = 4;
 
-  optional string primary = 6;
-  optional int32  auto_increment = 7;
-  optional int32 avg_row_length = 8;
-  optional string character_set = 9;
-  optional bool checksum = 10;
-  optional string collation = 11;
-  optional string comment = 12;
-  optional string connection = 13;
-  optional string data_directory = 14;
-  optional string index_directory = 15;
-  optional bool delay_key_write = 16;
-  optional int32 max_rows = 17;
-  optional int32 min_rows = 18;
-  optional bool pack_keys = 19;
-  optional string row_format = 20;
-  optional string characterset = 21;
-  optional bool temp = 22;
+  repeated ForeignKeyConstraint fk_constraint = 8;
+  optional TableOptions options = 9;
+  optional TableStats stats = 10;
+
+  optional string comment = 16;
 }
 
 message TableList {

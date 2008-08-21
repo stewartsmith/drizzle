@@ -37,8 +37,7 @@ public:
   handler *clone(MEM_ROOT *mem_root);
   const char *table_type() const
   {
-    return (table->in_use->variables.sql_mode & MODE_MYSQL323) ?
-           "HEAP" : "MEMORY";
+    return "MEMORY";
   }
   const char *index_type(uint inx)
   {

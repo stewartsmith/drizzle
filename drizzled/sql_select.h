@@ -661,7 +661,6 @@ bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
 		       uint elements, List<Item> &fields);
 void copy_fields(TMP_TABLE_PARAM *param);
 void copy_funcs(Item **func_ptr);
-uint find_shortest_key(Table *table, const key_map *usable_keys);
 Field* create_tmp_field_from_field(THD *thd, Field* org_field,
                                    const char *name, Table *table,
                                    Item_field *item, uint convert_blob_length);
@@ -815,9 +814,8 @@ protected:
   }
 };
 
-bool cp_buffer_from_ref(THD *thd, Table *table, TABLE_REF *ref);
+bool cp_buffer_from_ref(THD *thd, TABLE_REF *ref);
 bool error_if_full_join(JOIN *join);
-int report_error(Table *table, int error);
 int safe_index_read(JOIN_TAB *tab);
 COND *remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value);
 int test_if_item_cache_changed(List<Cached_item> &list);

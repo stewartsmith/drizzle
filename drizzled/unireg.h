@@ -115,20 +115,6 @@
 #define ME_ERROR (ME_BELL+ME_OLDWIN+ME_NOREFRESH)
 #define MYF_RW MYF(MY_WME+MY_NABP)		/* Vid my_read & my_write */
 
-#define SPECIAL_USE_LOCKS	1		/* Lock used databases */
-#define SPECIAL_NO_NEW_FUNC	2		/* Skip new functions */
-#define SPECIAL_SKIP_SHOW_DB    4               /* Don't allow 'show db' */
-#define SPECIAL_WAIT_IF_LOCKED	8		/* Wait if locked database */
-#define SPECIAL_SAME_DB_NAME   16		/* form name = file name */
-#define SPECIAL_ENGLISH        32		/* English error messages */
-#define SPECIAL_NO_RESOLVE     64		/* Don't use gethostname */
-#define SPECIAL_NO_PRIOR	128		/* Don't prioritize threads */
-#define SPECIAL_BIG_SELECTS	256		/* Don't use heap tables */
-#define SPECIAL_NO_HOST_CACHE	512		/* Don't cache hosts */
-#define SPECIAL_SHORT_LOG_FORMAT 1024
-#define SPECIAL_SAFE_MODE	2048
-#define SPECIAL_LOG_QUERIES_NOT_USING_INDEXES 4096 /* Obsolete */
-
 	/* Extern defines */
 #define store_record(A,B) memcpy((A)->B,(A)->record[0],(size_t) (A)->s->reclength)
 #define restore_record(A,B) memcpy((A)->record[0],(A)->B,(size_t) (A)->s->reclength)
@@ -145,14 +131,7 @@
 #define CHANGE_FRM		2	/* openfrm: open .frm as O_RDWR */
 #define READ_KEYINFO		4	/* L{s nyckeldata fr}n filen */
 #define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
-#define DONT_OPEN_TABLES	8	/* Don't open database-files (frd) */
-#define DONT_OPEN_MASTER_REG	16	/* Don't open first reg-file (prt) */
-#define EXTRA_LONG_RECORD	16	/* Plats f|r dubbel s|k-record */
-#define COMPUTE_TYPES		32	/* Kontrollera type f|r f{ltena */
-#define SEARCH_PRG		64	/* S|k efter registret i 'prg_dev' */
-#define READ_USED_NAMES		128	/* L{s anv{nda formul{rnamn */
 #define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
-#define READ_SCREENS		1024	/* Read screens, info and helpfile */
 #define DELAYED_OPEN		4096	/* Open table later */
 
 /**

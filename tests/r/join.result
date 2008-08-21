@@ -165,6 +165,10 @@ SELECT * FROM t1 WHERE 1/0 IS NULL;
 d
 2001-08-01
 0000-00-00
+Warnings:
+Error	1365	Division by 0
+Error	1365	Division by 0
+Error	1365	Division by 0
 DROP TABLE t1,t2;
 CREATE TABLE t1 (
 Document_ID varchar(50) NOT NULL default '',

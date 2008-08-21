@@ -23,7 +23,7 @@
 
 #include <drizzled/server_includes.h>
 
-void unireg_init(ulong options)
+void unireg_init(ulong options __attribute__((unused)))
 {
   abort_loop=0;
 
@@ -36,6 +36,6 @@ void unireg_init(ulong options)
 
   VOID(stpcpy(reg_ext,".frm"));
   reg_ext_length= 4;
-  specialflag=SPECIAL_SAME_DB_NAME | options;  /* Set options from argv */
+
   return;
 }

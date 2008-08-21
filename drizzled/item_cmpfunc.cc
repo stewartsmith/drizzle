@@ -638,8 +638,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (thd->variables.sql_mode &
-                         (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE))),
+                        (thd->variables.sql_mode & MODE_NO_ZERO_DATE)),
                        &error);
 
   if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
@@ -4419,10 +4418,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
     String *escape_str= escape_item->val_str(&tmp_value1);
     if (escape_str)
     {
-      if (escape_used_in_parsing && (
-             (((thd->variables.sql_mode & MODE_NO_BACKSLASH_ESCAPES) &&
-                escape_str->numchars() != 1) ||
-               escape_str->numchars() > 1)))
+      if (escape_used_in_parsing && escape_str->numchars() > 1)
       {
         my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
         return true;
@@ -4468,8 +4464,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
       We could also do boyer-more for non-const items, but as we would have to
       recompute the tables for each row it's not worth it.
     */
-    if (args[1]->const_item() && !use_strnxfrm(collation.collation) &&
-       !(specialflag & SPECIAL_NO_NEW_FUNC))
+    if (args[1]->const_item() && !use_strnxfrm(collation.collation)) 
     {
       String* res2 = args[1]->val_str(&tmp_value2);
       if (!res2)

@@ -902,7 +902,7 @@ int write_record(THD *thd, Table *table,COPY_INFO *info)
         info->touched++;
         if ((table->file->ha_table_flags() & HA_PARTIAL_COLUMN_READ &&
              !bitmap_is_subset(table->write_set, table->read_set)) ||
-            compare_record(table))
+            table->compare_record())
         {
           if ((error=table->file->ha_update_row(table->record[1],
                                                 table->record[0])) &&
@@ -1680,7 +1680,7 @@ static Table *create_table_from_items(THD *thd, HA_CREATE_INFO *create_info,
       }
       else
       {
-        if (!(table= open_table(thd, create_table, thd->mem_root, (bool*) 0,
+        if (!(table= open_table(thd, create_table, (bool*) 0,
                                 DRIZZLE_OPEN_TEMPORARY_ONLY)) &&
             !create_info->table_existed)
         {

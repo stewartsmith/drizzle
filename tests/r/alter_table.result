@@ -449,52 +449,52 @@ a	hex(a)
 delete from t1;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" varchar(10) CHARACTER SET koi8r
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET koi8r
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 alter table t1 DEFAULT CHARACTER SET latin1;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" varchar(10) CHARACTER SET koi8r
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET koi8r
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 alter table t1 CONVERT TO CHARACTER SET latin1;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" varchar(10)
+t1	CREATE TABLE `t1` (
+  `a` varchar(10)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 alter table t1 DEFAULT CHARACTER SET cp1251;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" varchar(10) CHARACTER SET latin1
+t1	CREATE TABLE `t1` (
+  `a` varchar(10) CHARACTER SET latin1
 ) ENGINE=InnoDB DEFAULT CHARSET=cp1251
 drop table t1;
 create table t1 (myblob longblob,mytext longtext) 
 default charset latin1 collate latin1_general_cs;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "myblob" blob,
-  "mytext" text COLLATE latin1_general_cs
+t1	CREATE TABLE `t1` (
+  `myblob` blob,
+  `mytext` text COLLATE latin1_general_cs
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_general_cs
 alter table t1 character set latin2;
 show create table t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "myblob" blob,
-  "mytext" text CHARACTER SET latin1 COLLATE latin1_general_cs
+t1	CREATE TABLE `t1` (
+  `myblob` blob,
+  `mytext` text CHARACTER SET latin1 COLLATE latin1_general_cs
 ) ENGINE=InnoDB DEFAULT CHARSET=latin2
 drop table t1;
 CREATE TABLE t1 (a int PRIMARY KEY, b INT UNIQUE);
 ALTER TABLE t1 DROP PRIMARY KEY;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int NOT NULL,
-  "b" int,
-  UNIQUE KEY "b" ("b")
+t1	CREATE TABLE `t1` (
+  `a` int NOT NULL,
+  `b` int,
+  UNIQUE KEY `b` (`b`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 ALTER TABLE t1 DROP PRIMARY KEY;
 ERROR 42000: Can't DROP 'PRIMARY'; check that column/key exists
@@ -673,15 +673,15 @@ CREATE TABLE t1(a INT) ROW_FORMAT=FIXED;
 CREATE INDEX i1 ON t1(a);
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int,
-  KEY "i1" ("a")
+t1	CREATE TABLE `t1` (
+  `a` int,
+  KEY `i1` (`a`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=FIXED
 DROP INDEX i1 ON t1;
 SHOW CREATE TABLE t1;
 Table	Create Table
-t1	CREATE TABLE "t1" (
-  "a" int
+t1	CREATE TABLE `t1` (
+  `a` int
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 ROW_FORMAT=FIXED
 DROP TABLE t1;
 DROP TABLE IF EXISTS bug24219;
@@ -1002,13 +1002,13 @@ ALTER TABLE  `tt+1` RENAME `tt+2`;
 ERROR 42S01: Table 'tt+2' already exists
 SHOW CREATE TABLE `tt+1`;
 Table	Create Table
-tt+1	CREATE TEMPORARY TABLE "tt+1" (
-  "c1" int
+tt+1	CREATE TEMPORARY TABLE `tt+1` (
+  `c1` int
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 SHOW CREATE TABLE `tt+2`;
 Table	Create Table
-tt+2	CREATE TEMPORARY TABLE "tt+2" (
-  "c1" int
+tt+2	CREATE TEMPORARY TABLE `tt+2` (
+  `c1` int
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 DROP TABLE   `tt+1`, `tt+2`;
 CREATE TEMPORARY TABLE `#sql1` (c1 INT);
@@ -1023,13 +1023,13 @@ INSERT INTO `#sql2`      VALUES (1);
 INSERT INTO `@0023sql1`  VALUES (2);
 SHOW CREATE TABLE `#sql2`;
 Table	Create Table
-#sql2	CREATE TEMPORARY TABLE "#sql2" (
-  "c1" int
+#sql2	CREATE TEMPORARY TABLE `#sql2` (
+  `c1` int
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 SHOW CREATE TABLE `@0023sql1`;
 Table	Create Table
-@0023sql1	CREATE TEMPORARY TABLE "@0023sql1" (
-  "c1" int
+@0023sql1	CREATE TEMPORARY TABLE `@0023sql1` (
+  `c1` int
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 DROP TABLE `#sql2`, `@0023sql1`;
 DROP TABLE IF EXISTS t1;
