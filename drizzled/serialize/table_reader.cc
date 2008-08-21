@@ -8,30 +8,32 @@ using namespace std;
   Written from Google proto example
 */
 
-void printType(const drizzle::Table::Field *field) 
+void print_field(const drizzle::Table::Field *field) 
 {
+  using namespace drizzle;
+  cout << "\t`" << field->name() << "`";
   switch (field->type())
   {
-  case drizzle::Table::DOUBLE:
+    case Table::Field::DOUBLE:
     cout << " DOUBLE ";
     break;
-  case drizzle::Table::VARCHAR:
-    cout << " VARCHAR(" << field->length() << ")";
+  case Table::Field::VARCHAR:
+    cout << " VARCHAR(" << field->string_options().length() << ")";
     break;
-  case drizzle::Table::TEXT:
+  case Table::Field::TEXT:
     cout << " TEXT ";
     break;
-  case drizzle::Table::BLOB:
+  case Table::Field::BLOB:
     cout << " BLOB ";
     break;
-  case drizzle::Table::ENUM:
+  case Table::Field::ENUM:
     {
       int x;
 
       cout << " ENUM(";
-      for (x= 0; x < field->values_size() ; x++)
+      for (x= 0; x < field->set_options().value_size() ; x++)
       {
-        const string type= field->values(x);
+        const string type= field->set_options().value(x);
 
         if (x != 0)
           cout << ",";
@@ -40,126 +42,176 @@ void printType(const drizzle::Table::Field *field)
       cout << ") ";
       break;
     }
-  case drizzle::Table::SET:
+  case Table::Field::SET:
     cout << " SET ";
     break;
-  case drizzle::Table::TINYINT:
-    cout << " TINYINNT ";
+  case Table::Field::TINYINT:
+    cout << " TINYINT ";
     break;
-  case drizzle::Table::SMALLINT:
+  case Table::Field::SMALLINT:
     cout << " SMALLINT ";
     break;
-  case drizzle::Table::INTEGER:
+  case Table::Field::INTEGER:
     cout << " INTEGER ";
     break;
-  case drizzle::Table::BIGINT:
+  case Table::Field::BIGINT:
     cout << " BIGINT ";
     break;
-  case drizzle::Table::DECIMAL:
-    cout << " DECIMAL(" << field->length() << "," << field->scale() << ") ";
+  case Table::Field::DECIMAL:
+    cout << " DECIMAL(" << field->numeric_options().precision() << "," << field->numeric_options().scale() << ") ";
     break;
-  case drizzle::Table::VARBINARY:
-    cout << " VARBINARY(" << field->length() << ") ";
+  case Table::Field::VARBINARY:
+    cout << " VARBINARY(" << field->string_options().length() << ") ";
     break;
-  case drizzle::Table::DATE:
+  case Table::Field::DATE:
     cout << " DATE ";
     break;
-  case drizzle::Table::TIME:
+  case Table::Field::TIME:
     cout << " TIME ";
     break;
-  case drizzle::Table::TIMESTAMP:
+  case Table::Field::TIMESTAMP:
     cout << " TIMESTAMP ";
     break;
-  case drizzle::Table::DATETIME:
+  case Table::Field::DATETIME:
     cout << " DATETIME ";
     break;
   }
 
-  if (field->has_characterset())
-    cout << " CHARACTER SET " << field->characterset();
+  if (field->type() == Table::Field::INTEGER
+      || field->type() == Table::Field::BIGINT
+      || field->type() == Table::Field::SMALLINT
+      || field->type() == Table::Field::TINYINT) {
+    if (field->has_constraints()
+        && field->constraints().has_is_unsigned())
+      if (field->constraints().is_unsigned())
+        cout << " UNSIGNED";
 
-  if (field->has_collation())
-    cout << " COLLATE " << field->collation();
+    if (field->has_numeric_options() &&
+      field->numeric_options().is_autoincrement())
+      cout << " AUTOINCREMENT ";
+  }
 
-  if (field->is_notnull())
+  if (! field->has_constraints()
+      && field->constraints().is_nullable())
     cout << " NOT NULL ";
 
-  if (field->has_default_value())
-    cout << " DEFAULT `" << field->default_value() << "` " ;
+  if (field->type() == Table::Field::TEXT
+      || field->type() == Table::Field::VARCHAR) {
+    if (field->string_options().has_charset())
+      cout << " CHARACTER SET " << field->string_options().charset();
 
-  if (field->on_update())
-    cout << " ON UPDATE CURRENT_TIMESTAMP";
+    if (field->string_options().has_collation())
+      cout << " COLLATE " << field->string_options().collation();
+  }
 
-  if (field->autoincrement())
-    cout << " AUTOINCREMENT ";
+  if (field->options().has_default_value())
+    cout << " DEFAULT `" << field->options().default_value() << "` " ;
+
+  if (field->type() == Table::Field::TIMESTAMP)
+    if (field->timestamp_options().has_auto_updates()
+      && field->timestamp_options().auto_updates())
+      cout << " ON UPDATE CURRENT_TIMESTAMP";
 
   if (field->has_comment())
     cout << " COMMENT `" << field->comment() << "` ";
 }
 
-void printTable(const drizzle::Table *table) 
-{
+void print_engine(const drizzle::Table::StorageEngine *engine) {
+  using namespace drizzle;
   uint32_t x;
 
-  cout << "CREATE TABLE";
+  cout << " ENGINE = " << engine->name()  << endl;
 
-  if (table->temp())
-    cout << " TEMPORARY";
+  for (x= 0; x < engine->option_size(); ++x) {
+    const Table::StorageEngine::EngineOption option= engine->option(x);
+    cout << "\t" << option.name() << " = " << option.value() << endl;
+  }
+}
 
-  cout << " `" << table->name() << "` (" << endl;
+void print_index(const drizzle::Table::Index *index) {
+  using namespace drizzle;
+  uint32_t x;
+
+  if (index->is_primary())
+    cout << " PRIMARY"; 
+  else if (index->is_unique())
+    cout << " UNIQUE"; 
+  cout << " KEY `" << index->name() << "` (";
+  {
+    int x;
+
+    for (x= 0; x < index->index_part_size() ; x++)
+    {
+      const Table::Index::IndexPart part= index->index_part(x);
+
+      if (x != 0)
+        cout << ",";
+      cout << "`" << part.field().name() << "`";
+      if (part.has_compare_length())
+        cout << "(" << part.compare_length() << ")";
+    }
+    cout << ")";
+  }
+  cout << "\t";
+}
+
+void print_table(const drizzle::Table *table) 
+{
+  using namespace drizzle;
+  uint32_t x;
+
+  cout << "CREATE ";
+
+  if (table->type() == Table::TEMPORARY)
+    cout << "TEMPORARY ";
+
+  cout << "TABLE `" << table->name() << "` (" << endl;
   
   for (x= 0; x < table->field_size() ; x++)
   {
-    const drizzle::Table::Field field = table->field(x);
+    const Table::Field field = table->field(x);
 
     if (x != 0)
-      cout << "," << endl;;
+      cout << "," << endl;
 
-    cout << "\t`" << field.name() << "`";
-    printType(&field);
+    print_field(&field);
   }
 
   for (x= 0; x < table->index_size() ; x++)
   {
-    const drizzle::Table::Index index = table->index(x);
+    const Table::Index index= table->index(x);
 
-    cout << "," << endl;;
+    if (x != 0)
+      cout << "," << endl;;
 
-    cout << "\t";
+    print_index(&index);
 
-    if (index.primary())
-      cout << " PRIMARY KEY (`" << index.name() << "`)";
-    else
-    {
-      int x;
-
-      cout << " UNIQUE KEY `" << index.name() << "` (";
-      for (x= 0; x < index.values_size() ; x++)
-      {
-        const drizzle::Table::KeyPart key= index.values(x);
-
-        if (x != 0)
-          cout << ",";
-        cout << "`" << key.name() << "`";
-      }
-      cout << ")";
-    }
   }
   cout << endl;
 
   cout << ") " << endl;
-  if (table->has_collation())
-    cout << " COLLATE = `" << table->collation() << "` " << endl;;
-  if (table->has_characterset())
-    cout << " CHARACTER SET = `" << table->characterset() << "` " << endl;;
+  
+  print_engine(&table->engine());
+
+  /*
+  if (table->has_options())
+    print_table_options(&table->options());
+  if (table->has_stats())
+    print_table_stats(&table->stats());
+  */
   if (table->has_comment())
-    cout << " COMMENT = `" << table->comment() << "` " << endl;;
-  if (table->has_engine())
-  if (table->has_data_directory())
-    cout << " DATA DIRECTORY = `" << table->data_directory() << "` " << endl;;
-  if (table->has_index_directory())
-    cout << " INDEX DIRECTORY = `" << table->index_directory() << "`" << endl;
-  cout << " ENGINE = " << table->engine() << ";"  << endl;
+    cout << " COMMENT = `" << table->comment() << "` " << endl;
+}
+
+void print_table_stats(const drizzle::Table::TableStats *stats) {
+  
+}
+
+void print_table_options(const drizzle::Table::TableOptions *options) {
+  if (options->has_collation())
+    cout << " COLLATE = `" << options->collation() << "` " << endl;
+  if (options->has_charset())
+    cout << " CHARACTER SET = `" << options->charset() << "` " << endl;
 }
 
 int main(int argc, char* argv[]) 
@@ -183,7 +235,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  printTable(&table);
+  print_table(&table);
 
   return 0;
 }
