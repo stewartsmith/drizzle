@@ -1190,24 +1190,22 @@ void ha_myisam::start_bulk_insert(ha_rows rows)
   can_enable_indexes= mi_is_all_keys_active(file->s->state.key_map,
                                             file->s->base.keys);
 
-  if (!(specialflag & SPECIAL_SAFE_MODE))
-  {
-    /*
-      Only disable old index if the table was empty and we are inserting
-      a lot of rows.
-      We should not do this for only a few rows as this is slower and
-      we don't want to update the key statistics based of only a few rows.
-    */
-    if (file->state->records == 0 && can_enable_indexes &&
-        (!rows || rows >= MI_MIN_ROWS_TO_DISABLE_INDEXES))
-      mi_disable_non_unique_index(file,rows);
-    else
+  /*
+    Only disable old index if the table was empty and we are inserting
+    a lot of rows.
+    We should not do this for only a few rows as this is slower and
+    we don't want to update the key statistics based of only a few rows.
+  */
+  if (file->state->records == 0 && can_enable_indexes &&
+      (!rows || rows >= MI_MIN_ROWS_TO_DISABLE_INDEXES))
+    mi_disable_non_unique_index(file,rows);
+  else
     if (!file->bulk_insert &&
         (!rows || rows >= MI_MIN_ROWS_TO_USE_BULK_INSERT))
     {
       mi_init_bulk_insert(file, thd->variables.bulk_insert_buff_size, rows);
     }
-  }
+
   return;
 }
 
@@ -1545,8 +1543,6 @@ int ha_myisam::info(uint flag)
 
 int ha_myisam::extra(enum ha_extra_function operation)
 {
-  if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_KEYREAD)
-    return 0;
   return mi_extra(file, operation, 0);
 }
 
@@ -1563,8 +1559,6 @@ int ha_myisam::reset(void)
 
 int ha_myisam::extra_opt(enum ha_extra_function operation, uint32_t cache_size)
 {
-  if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_WRITE_CACHE)
-    return 0;
   return mi_extra(file, operation, (void*) &cache_size);
 }
 

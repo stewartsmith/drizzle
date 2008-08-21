@@ -121,7 +121,6 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
       - there should be no delete triggers associated with the table.
   */
   if (!using_limit && const_cond_result &&
-      !(specialflag & (SPECIAL_NO_NEW_FUNC | SPECIAL_SAFE_MODE)) &&
       (thd->lex->sql_command == SQLCOM_TRUNCATE ||
        (!thd->current_stmt_binlog_row_based)))
   {

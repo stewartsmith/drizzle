@@ -8163,8 +8163,6 @@ eq_ref_table(JOIN *join, order_st *start_order, JOIN_TAB *tab)
 static bool
 only_eq_ref_tables(JOIN *join,order_st *order,table_map tables)
 {
-  if (specialflag &  SPECIAL_SAFE_MODE)
-    return 0;			// skip this optimize /* purecov: inspected */
   for (JOIN_TAB **tab=join->map2table ; tables ; tab++, tables>>=1)
   {
     if (tables & 1 && !eq_ref_table(join, order, *tab))

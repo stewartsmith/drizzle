@@ -459,7 +459,7 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static ulong opt_specialflag, opt_myisam_block_size;
+static ulong opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *mysql_home_ptr, *pidfile_name_ptr;
@@ -1650,7 +1650,6 @@ static void start_signal_handler(void)
   (void) pthread_attr_init(&thr_attr);
   pthread_attr_setscope(&thr_attr, PTHREAD_SCOPE_SYSTEM);
   (void) pthread_attr_setdetachstate(&thr_attr, PTHREAD_CREATE_DETACHED);
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
   {
     struct sched_param tmp_sched_param;
 
@@ -1768,7 +1767,6 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 	abort_loop=1;				// mark abort for threads
 #ifdef USE_ONE_SIGNAL_HAND
 	pthread_t tmp;
-	if (!(opt_specialflag & SPECIAL_NO_PRIOR))
         {
           struct sched_param tmp_sched_param;
 
@@ -2148,7 +2146,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
     }
     open_files_limit= files;
   }
-  unireg_init(opt_specialflag); /* Set up extern variabels */
+  unireg_init(0); /* Set up extern variabels */
   if (init_errmessage())	/* Read error messages from file */
     return 1;
   lex_init();
@@ -2307,7 +2305,6 @@ static int init_thread_environment()
   (void) pthread_attr_setdetachstate(&connection_attrib,
 				     PTHREAD_CREATE_DETACHED);
   pthread_attr_setscope(&connection_attrib, PTHREAD_SCOPE_SYSTEM);
-  if (!(opt_specialflag & SPECIAL_NO_PRIOR))
   {
     struct sched_param tmp_sched_param;
 
@@ -4439,7 +4436,6 @@ static void mysql_init_variables(void)
   slave_exec_mode_options= 0;
   slave_exec_mode_options= (uint)
     find_bit_type_or_exit(slave_exec_mode_str, &slave_exec_mode_typelib, NULL);
-  opt_specialflag= SPECIAL_ENGLISH;
   mysql_home_ptr= mysql_home;
   pidfile_name_ptr= pidfile_name;
   log_error_file_ptr= log_error_file;
@@ -4704,9 +4700,6 @@ mysqld_get_one_option(int optid,
       break;
     }
 #endif
-  case (int) OPT_SKIP_PRIOR:
-    opt_specialflag|= SPECIAL_NO_PRIOR;
-    break;
   case (int) OPT_WANT_CORE:
     test_flags |= TEST_CORE_ON_SIGNAL;
     break;

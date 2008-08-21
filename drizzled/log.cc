@@ -1549,7 +1549,6 @@ bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
     uint buff_len;
     end= buff;
 
-    if (!(specialflag & SPECIAL_SHORT_LOG_FORMAT))
     {
       if (current_time != last_time)
       {
@@ -1601,7 +1600,6 @@ bool DRIZZLE_QUERY_LOG::write(THD *thd, time_t current_time,
     // Save value if we do an insert.
     if (thd->auto_inc_intervals_in_cur_stmt_for_binlog.nb_elements() > 0)
     {
-      if (!(specialflag & SPECIAL_SHORT_LOG_FORMAT))
       {
         end=stpcpy(end,",insert_id=");
         end=int64_t10_to_str((int64_t)

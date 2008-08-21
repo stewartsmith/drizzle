@@ -65,7 +65,7 @@ bool init_errmessage(void)
 static void init_myfunc_errs()
 {
   init_glob_errs();			/* Initiate english errors */
-  if (!(specialflag & SPECIAL_ENGLISH))
+
   {
     EE(EE_FILENOTFOUND)   = ER(ER_FILE_NOT_FOUND);
     EE(EE_CANTCREATEFILE) = ER(ER_CANT_CREATE_FILE);
