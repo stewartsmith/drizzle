@@ -24,23 +24,6 @@
 #define NO_ALARM_LOOP		/* lib5 and popen can't use alarm */
 #endif
 
-/* These paths are converted to other systems (WIN95) before use */
-
-#define LANGUAGE	"english/"
-#define ERRMSG_FILE	"errmsg.sys"
-#define TEMP_PREFIX	"MY"
-#define LOG_PREFIX	"ML"
-#define PROGDIR		"bin/"
-#ifndef DATADIR
-#define DATADIR		"data/"
-#endif
-#ifndef SHAREDIR
-#define SHAREDIR	"share/"
-#endif
-#ifndef PLUGINDIR
-#define PLUGINDIR	"lib/plugin"
-#endif
-
 #define ER(X) _(drizzled_error_messages[(X) - ER_ERROR_FIRST])
 #define ER_SAFE(X) (((X) >= ER_ERROR_FIRST && (X) <= ER_ERROR_LAST) ? ER(X) : _("Invalid error code"))
 
@@ -125,14 +108,6 @@
     memset((A)->null_flags, 255, (A)->s->null_bytes);   \
   } while (0)
 
-	/* Defines for use with openfrm, openprt and openfrd */
-
-#define READ_ALL		1	/* openfrm: Read all parameters */
-#define CHANGE_FRM		2	/* openfrm: open .frm as O_RDWR */
-#define EXTRA_RECORD		8	/* Reservera plats f|r extra record */
-#define DONT_GIVE_ERROR		256	/* Don't do frm_error on openfrm  */
-#define DELAYED_OPEN		4096	/* Open table later */
-
 /**
   This flag is used in function get_all_tables() which fills
   I_S tables with data which are retrieved from frm files and storage engine
@@ -166,11 +141,6 @@
   The flag means that I_S table uses optimization algorithm.
 */
 #define OPTIMIZE_I_S_TABLE     OPEN_VIEW_FULL*2
-
-/*
-  The flag means that we need to process trigger files only.
-*/
-#define OPEN_TRIGGER_ONLY      OPTIMIZE_I_S_TABLE*2
 
 #define SC_INFO_LENGTH 4		/* Form format constant */
 #define TE_INFO_LENGTH 3
