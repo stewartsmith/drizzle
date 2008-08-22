@@ -2967,7 +2967,7 @@ int THD::binlog_write_table_map(Table *table, bool is_trans)
 
   /* Pre-conditions */
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
-  assert(table->s->table_map_id != ULONG_MAX);
+  assert(table->s->table_map_id != UINT32_MAX);
 
   Table_map_log_event::flag_set const
     flags= Table_map_log_event::TM_NO_FLAGS;

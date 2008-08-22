@@ -50,7 +50,7 @@
 #endif
 
 #if SIZEOF_CHARP == 4
-#define MAX_MEM_TABLE_SIZE ~(ulong) 0
+#define MAX_MEM_TABLE_SIZE ~(uint32_t) 0
 #else
 #define MAX_MEM_TABLE_SIZE ~(uint64_t) 0
 #endif
@@ -224,9 +224,9 @@ static bool volatile select_thread_in_use, signal_thread_in_use;
 static bool volatile ready_to_exit;
 static bool opt_debugging= 0, opt_console= 0;
 static uint kill_cached_threads, wake_thread;
-static ulong killed_threads, thread_created;
-static ulong max_used_connections;
-static volatile ulong cached_thread_count= 0;
+static uint32_t killed_threads, thread_created;
+static uint32_t max_used_connections;
+static volatile uint32_t cached_thread_count= 0;
 static char *mysqld_user, *mysqld_chroot, *log_error_file_ptr;
 static char *opt_init_slave, *language_ptr, *opt_init_connect;
 static char *default_character_set_name;
@@ -296,7 +296,7 @@ const char *binlog_format_names[]= {"MIXED", "STATEMENT", "ROW", NullS};
 TYPELIB binlog_format_typelib=
   { array_elements(binlog_format_names) - 1, "",
     binlog_format_names, NULL };
-ulong opt_binlog_format_id= (ulong) BINLOG_FORMAT_UNSPEC;
+uint32_t opt_binlog_format_id= (uint32_t) BINLOG_FORMAT_UNSPEC;
 const char *opt_binlog_format= binlog_format_names[opt_binlog_format_id];
 #ifdef HAVE_INITGROUPS
 static bool calling_initgroups= false; /**< Used in SIGSEGV handler. */
@@ -311,23 +311,33 @@ uint64_t thd_startup_options;
 ulong back_log, connect_timeout, server_id;
 ulong table_cache_size, table_def_size;
 ulong what_to_log;
-ulong query_buff_size, slow_launch_time, slave_open_temp_tables;
-ulong open_files_limit, max_binlog_size, max_relay_log_size;
-ulong slave_net_timeout, slave_trans_retries;
+ulong slow_launch_time, slave_open_temp_tables;
+ulong open_files_limit;
+ulong max_binlog_size;
+ulong max_relay_log_size;
+ulong slave_net_timeout;
+ulong slave_trans_retries;
 bool slave_allow_batching;
 ulong slave_exec_mode_options;
 const char *slave_exec_mode_str= "STRICT";
-ulong thread_cache_size=0, thread_pool_size= 0;
-ulong binlog_cache_size=0, max_binlog_cache_size=0;
-ulong refresh_version;  /* Increments on each reload */
+ulong thread_cache_size= 0;
+ulong thread_pool_size= 0;
+ulong binlog_cache_size= 0;
+ulong max_binlog_cache_size= 0;
+uint32_t refresh_version;  /* Increments on each reload */
 query_id_t global_query_id;
-ulong aborted_threads, aborted_connects;
-ulong specialflag=0;
-ulong binlog_cache_use= 0, binlog_cache_disk_use= 0;
-ulong max_connections, max_connect_errors;
+ulong aborted_threads;
+ulong aborted_connects;
+ulong specialflag= 0;
+ulong binlog_cache_use= 0;
+ulong binlog_cache_disk_use= 0;
+ulong max_connections;
+ulong max_connect_errors;
 uint  max_user_connections= 0;
-ulong thread_id=1L,current_pid;
-ulong slow_launch_threads = 0, sync_binlog_period;
+ulong thread_id=1L;
+ulong current_pid;
+ulong slow_launch_threads = 0;
+ulong sync_binlog_period;
 ulong expire_logs_days = 0;
 ulong rpl_recovery_rank=0;
 const char *log_output_str= "FILE";
@@ -459,7 +469,7 @@ static bool kill_in_progress, segfaulted;
 static bool opt_do_pstack;
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
 static int cleanup_done;
-static ulong opt_myisam_block_size;
+static uint32_t opt_myisam_block_size;
 static char *opt_binlog_index_name;
 static char *opt_tc_heuristic_recover;
 static char *mysql_home_ptr, *pidfile_name_ptr;
@@ -498,8 +508,8 @@ static void fix_paths(void);
 void handle_connections_sockets();
 pthread_handler_t kill_server_thread(void *arg);
 pthread_handler_t handle_slave(void *arg);
-static ulong find_bit_type(const char *x, TYPELIB *bit_lib);
-static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
+static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib);
+static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option);
 static void clean_up(bool print_message);
 
@@ -1446,10 +1456,10 @@ extern "C" sig_handler handle_segfault(int sig)
                     "will hopefully help diagnose\n"
                     "the problem, but since we have already crashed, "
                     "something is definitely wrong\nand this may fail.\n\n"));
-  fprintf(stderr, "key_buffer_size=%lu\n",
-          (ulong) dflt_key_cache->key_cache_mem_size);
+  fprintf(stderr, "key_buffer_size=%u\n",
+          (uint32_t) dflt_key_cache->key_cache_mem_size);
   fprintf(stderr, "read_buffer_size=%ld\n", (long) global_system_variables.read_buff_size);
-  fprintf(stderr, "max_used_connections=%lu\n", max_used_connections);
+  fprintf(stderr, "max_used_connections=%u\n", max_used_connections);
   fprintf(stderr, "max_threads=%u\n", thread_scheduler.max_threads);
   fprintf(stderr, "thread_count=%u\n", thread_count);
   fprintf(stderr, "connection_count=%u\n", connection_count);
@@ -1459,7 +1469,7 @@ extern "C" sig_handler handle_segfault(int sig)
                     "bytes of memory\n"
                     "Hope that's ok; if not, decrease some variables in the "
                     "equation.\n\n"),
-                    ((ulong) dflt_key_cache->key_cache_mem_size +
+                    ((uint32_t) dflt_key_cache->key_cache_mem_size +
                      (global_system_variables.read_buff_size +
                       global_system_variables.sortbuff_size) *
                      thread_scheduler.max_threads +
@@ -1503,7 +1513,7 @@ extern "C" sig_handler handle_segfault(int sig)
                       "Some pointers may be invalid and cause the "
                       "dump to abort...\n"));
     safe_print_str("thd->query", thd->query, 1024);
-    fprintf(stderr, "thd->thread_id=%lu\n", (ulong) thd->thread_id);
+    fprintf(stderr, "thd->thread_id=%"PRIu32"\n", (uint32_t) thd->thread_id);
     fprintf(stderr, "thd->killed=%s\n", kreason);
   }
   fflush(stderr);
@@ -1719,7 +1729,7 @@ pthread_handler_t signal_hand(void *arg __attribute__((unused)))
 #ifdef HAVE_STACK_TRACE_ON_SEGV
   if (opt_do_pstack)
   {
-    sprintf(pstack_file_name,"mysqld-%lu-%%d-%%d.backtrace", (ulong)getpid());
+    sprintf(pstack_file_name,"mysqld-%lu-%%d-%%d.backtrace", (uint32_t)getpid());
     pstack_install_segv_action(pstack_file_name);
   }
 #endif /* HAVE_STACK_TRACE_ON_SEGV */
@@ -2111,7 +2121,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
       can't get max_connections*5 but still got no less than was
       requested (value of wanted_files).
     */
-    max_open_files= max(max((ulong)wanted_files, max_connections*5),
+    max_open_files= max(max((uint32_t)wanted_files, max_connections*5),
                         open_files_limit);
     files= my_set_max_open_files(max_open_files);
 
@@ -2123,7 +2133,7 @@ static int init_common_variables(const char *conf_file_name, int argc,
           If we have requested too much file handles than we bring
           max_connections in supported bounds.
         */
-        max_connections= (ulong) min((ulong)files-10-TABLE_OPEN_CACHE_MIN*2,
+        max_connections= (uint32_t) min((uint32_t)files-10-TABLE_OPEN_CACHE_MIN*2,
                                      max_connections);
         /*
           Decrease table_cache_size according to max_connections, but
@@ -2131,8 +2141,8 @@ static int init_common_variables(const char *conf_file_name, int argc,
           never increase table_cache_size automatically (that could
           happen if max_connections is decreased above).
         */
-        table_cache_size= (ulong) min(max((files-10-max_connections)/2,
-                                          (ulong)TABLE_OPEN_CACHE_MIN),
+        table_cache_size= (uint32_t) min(max((files-10-max_connections)/2,
+                                          (uint32_t)TABLE_OPEN_CACHE_MIN),
                                       table_cache_size);
         if (global_system_variables.log_warnings)
           sql_print_warning(_("Changed limits: max_open_files: %u  "
@@ -2332,7 +2342,7 @@ static int init_server_components()
   if (table_cache_init() | table_def_init())
     unireg_abort(1);
 
-  randominit(&sql_rand,(ulong) server_start_time,(ulong) server_start_time/2);
+  randominit(&sql_rand,(uint32_t) server_start_time,(uint32_t) server_start_time/2);
   setup_fpu();
   init_thr_lock();
   init_slave_list();
@@ -3097,7 +3107,7 @@ enum options_mysqld
 };
 
 
-#define LONG_TIMEOUT ((ulong) 3600L*24L*365L)
+#define LONG_TIMEOUT ((uint32_t) 3600L*24L*365L)
 
 struct my_option my_long_options[] =
 {
@@ -3795,7 +3805,7 @@ struct my_option my_long_options[] =
       "return an error."),
    (char**) &global_system_variables.max_join_size,
    (char**) &max_system_variables.max_join_size, 0, GET_HA_ROWS, REQUIRED_ARG,
-   ~0L, 1, ~0L, 0, 1, 0},
+   INT32_MAX, 1, INT32_MAX, 0, 1, 0},
   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
    N_("Max number of bytes in sorted records."),
    (char**) &global_system_variables.max_length_for_sort_data,
@@ -3870,7 +3880,7 @@ struct my_option my_long_options[] =
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
    (char**) &global_system_variables.myisam_sort_buff_size,
    (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, ~0L, 0, 1, 0},
+   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, INT32_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "
@@ -4801,7 +4811,7 @@ mysqld_get_one_option(int optid,
     break;
   case OPT_MYISAM_STATS_METHOD:
     {
-      ulong method_conv;
+      uint32_t method_conv;
       int method;
 
       myisam_stats_method_str= argument;
@@ -5074,14 +5084,14 @@ static void fix_paths(void)
 }
 
 
-static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
+static uint32_t find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
                                    const char *option)
 {
-  ulong res;
+  uint32_t res;
 
   const char **ptr;
 
-  if ((res= find_bit_type(x, bit_lib)) == ~(ulong) 0)
+  if ((res= find_bit_type(x, bit_lib)) == ~(uint32_t) 0)
   {
     ptr= bit_lib->type_names;
     if (!*x)
@@ -5103,16 +5113,16 @@ static ulong find_bit_type_or_exit(const char *x, TYPELIB *bit_lib,
   @return
     a bitfield from a string of substrings separated by ','
     or
-    ~(ulong) 0 on error.
+    ~(uint32_t) 0 on error.
 */
 
-static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
+static uint32_t find_bit_type(const char *x, TYPELIB *bit_lib)
 {
   bool found_end;
   int  found_count;
   const char *end,*i,*j;
   const char **array, *pos;
-  ulong found,found_int,bit;
+  uint32_t found,found_int,bit;
 
   found=0;
   found_end= 0;
@@ -5155,7 +5165,7 @@ static ulong find_bit_type(const char *x, TYPELIB *bit_lib)
 skip: ;
     }
     if (found_count != 1)
-      return(~(ulong) 0);				// No unique value
+      return(~(uint32_t) 0);				// No unique value
     found|=found_int;
     pos=end+1;
   }

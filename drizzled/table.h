@@ -176,26 +176,26 @@ typedef struct st_table_share
   LEX_STRING table_cache_key;
   LEX_STRING db;                        /* Pointer to db */
   LEX_STRING table_name;                /* Table name (for open) */
-  LEX_STRING path;                	/* Path to .frm file (from datadir) */
+  LEX_STRING path;	/* Path to .frm file (from datadir) */
   LEX_STRING normalized_path;		/* unpack_filename(path) */
   LEX_STRING connect_string;
 
-  /* 
+  /*
      Set of keys in use, implemented as a Bitmap.
      Excludes keys disabled by ALTER Table ... DISABLE KEYS.
   */
   key_map keys_in_use;
   key_map keys_for_keyread;
   ha_rows min_rows, max_rows;		/* create information */
-  ulong   avg_row_length;		/* create information */
-  ulong   block_size;                   /* create information */
-  ulong   version, mysql_version;
-  ulong   timestamp_offset;		/* Set to offset+1 of record */
-  ulong   reclength;			/* Recordlength */
+  uint32_t   avg_row_length;		/* create information */
+  uint32_t   block_size;                   /* create information */
+  uint32_t   version, mysql_version;
+  uint32_t   timestamp_offset;		/* Set to offset+1 of record */
+  uint32_t   reclength;			/* Recordlength */
 
   plugin_ref db_plugin;			/* storage engine plugin */
   inline handlerton *db_type() const	/* table_type for handler */
-  { 
+  {
     // assert(db_plugin);
     return db_plugin ? plugin_data(db_plugin, handlerton*) : NULL;
   }
@@ -235,7 +235,7 @@ typedef struct st_table_share
   bool crashed;
   bool name_lock, replace_with_name_lock;
   bool waiting_on_cond;                 /* Protection against free */
-  ulong table_map_id;                   /* for row-based replication */
+  uint32_t table_map_id;                   /* for row-based replication */
   uint64_t table_map_version;
 
   /*
@@ -303,7 +303,7 @@ typedef struct st_table_share
     return (table_category == TABLE_CATEGORY_USER);
   }
 
-  inline ulong get_table_def_version()
+  inline uint32_t get_table_def_version()
   {
     return table_map_id;
   }
@@ -311,7 +311,7 @@ typedef struct st_table_share
 } TABLE_SHARE;
 
 
-extern ulong refresh_version;
+extern uint32_t refresh_version;
 
 /* Information for one open table */
 enum index_hint_type

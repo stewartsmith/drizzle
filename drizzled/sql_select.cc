@@ -4943,7 +4943,7 @@ best_access_path(JOIN      *join,
     Table *table= s->table;
     KEYUSE *keyuse,*start_key=0;
     double best_records= DBL_MAX;
-    uint max_key_part=0;
+    uint32_t max_key_part=0;
     uint64_t bound_sj_equalities= 0;
     bool try_sj_inside_out= false;
     /*
@@ -5105,7 +5105,7 @@ best_access_path(JOIN      *join,
         if (found_part == PREV_BITS(uint,keyinfo->key_parts) &&
             !ref_or_null_part)
         {                                         /* use eq key */
-          max_key_part= (uint) ~0;
+          max_key_part= UINT32_MAX;
           if ((keyinfo->flags & (HA_NOSAME | HA_NULL_PART_KEY)) == HA_NOSAME)
           {
             tmp = prev_record_reads(join, idx, found_ref);
@@ -12583,8 +12583,8 @@ part_of_refkey(Table *table,Field *field)
     -1   Reverse key can be used
 */
 
-static int test_if_order_by_key(order_st *order, Table *table, uint idx,
-				uint *used_key_parts)
+static int test_if_order_by_key(order_st *order, Table *table, uint32_t idx,
+				uint32_t *used_key_parts)
 {
   KEY_PART_INFO *key_part,*key_part_end;
   key_part=table->key_info[idx].key_part;
@@ -12696,10 +12696,10 @@ static uint
 test_if_subkey(order_st *order, Table *table, uint ref, uint ref_key_parts,
 	       const key_map *usable_keys)
 {
-  uint nr;
-  uint min_length= (uint) ~0;
-  uint best= MAX_KEY;
-  uint not_used;
+  uint32_t nr;
+  uint32_t min_length= UINT32_MAX;
+  uint32_t best= MAX_KEY;
+  uint32_t not_used;
   KEY_PART_INFO *ref_key_part= table->key_info[ref].key_part;
   KEY_PART_INFO *ref_key_part_end= ref_key_part + ref_key_parts;
 
@@ -12879,10 +12879,10 @@ static bool
 test_if_skip_sort_order(JOIN_TAB *tab,order_st *order,ha_rows select_limit,
 			bool no_changes, const key_map *map)
 {
-  int ref_key;
+  int32_t ref_key;
   uint ref_key_parts;
   int order_direction;
-  uint used_key_parts;
+  uint32_t used_key_parts;
   Table *table=tab->table;
   SQL_SELECT *select=tab->select;
   key_map usable_keys;
@@ -13945,7 +13945,7 @@ static void reset_cache_write(JOIN_CACHE *cache)
 {
   reset_cache_read(cache);
   cache->records= 0;
-  cache->ptr_record= (uint) ~0;
+  cache->ptr_record= UINT32_MAX;
 }
 
 

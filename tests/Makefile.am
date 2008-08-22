@@ -155,4 +155,18 @@ test-drizzle:
 	  information_schema \
 	  mysqlslap \
 	  lock \
-	  lock_tables_lost_commit
+	  unsafe_binlog_innodb \
+	  innodb-semi-consistent \
+	  innodb_timeout_rollback \
+	  count_distinct2 \
+	  count_distinct3 \
+	  ctype_filename \
+	  deprecated_features \
+	  endspace \
+	  innodb-lock \
+	  lock_tables_lost_commit \
+	  key_diff \
+	  keywords \
+	  overflow \
+	  perror \
+	  sum_distinct

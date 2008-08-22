@@ -316,7 +316,7 @@ typedef struct charset_info_st
   MY_COLLATION_HANDLER *coll;
   
 } CHARSET_INFO;
-#define ILLEGAL_CHARSET_INFO_NUMBER (~0U)
+#define ILLEGAL_CHARSET_INFO_NUMBER (UINT32_MAX)
 
 
 extern CHARSET_INFO my_charset_bin;

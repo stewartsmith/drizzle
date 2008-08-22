@@ -112,9 +112,9 @@ int Field_long::store(int64_t nr, bool unsigned_val)
       res=0;
       error= 1;
     }
-    else if ((uint64_t) nr >= (1LL << 32))
+    else if (nr > INT32_MAX)
     {
-      res=(int32_t) (uint32_t) ~0L;
+      res= INT32_MAX;
       error= 1;
     }
     else

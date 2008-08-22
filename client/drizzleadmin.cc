@@ -266,7 +266,7 @@ static bool sql_connect(DRIZZLE *drizzle, uint wait)
       }
       return 1;
     }
-    if (wait != (uint) ~0)
+    if (wait != UINT32_MAX)
       wait--;				/* One less retry */
     if ((drizzle_errno(drizzle) != CR_CONN_HOST_ERROR) &&
         (drizzle_errno(drizzle) != CR_CONNECTION_ERROR))
