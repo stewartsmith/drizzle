@@ -135,6 +135,9 @@ test-drizzle:
 	  $(PERL) -I$(top_srcdir)/tests/lib \
 		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
 	  alter_table \
+		count_distinct \
+		count_distinct2 \
+		endspace \
 	  join_crash \
 	  join_nested \
 	  join_outer_innodb \
