@@ -170,5 +170,4 @@ test-drizzle:
 	  key_diff \
 	  keywords \
 	  overflow \
-	  perror \
 	  sum_distinct
