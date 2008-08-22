@@ -431,7 +431,7 @@ int mi_create(const char *name,uint keys,MI_KEYDEF *keydefs,
   share.state.unique=	(ulong) 0;
   share.state.update_count=(ulong) 0;
   share.state.version=	(ulong) time((time_t*) 0);
-  share.state.sortkey=  (ushort) ~0;
+  share.state.sortkey=  UINT16_MAX;
   share.state.auto_increment=ci->auto_increment;
   share.options=options;
   share.base.rec_reflength=pointer;

@@ -6703,7 +6703,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
     {
       internal_set_bit(start_states,states);
       internal_set_bit(word_states,states);
-      if (!from[i][2] && start_states->table_offset == (uint) ~0)
+      if (!from[i][2] && start_states->table_offset == UINT32_MAX)
       {
   start_states->table_offset=i;
   start_states->found_offset=0;
@@ -6767,7 +6767,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 
     /* If end of found-string not found or start-set with current set */
 
-    for (i= (uint) ~0; (i=get_next_bit(set,i)) ;)
+    for (i= UINT32_MAX; (i=get_next_bit(set,i)) ;)
     {
       if (!follow[i].chr)
       {
@@ -6782,7 +6782,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
 
     /* Find all chars that follows current sets */
     memset(used_chars, 0, sizeof(used_chars));
-    for (i= (uint) ~0; (i=get_next_bit(sets.set+used_sets,i)) ;)
+    for (i= UINT32_MAX; (i=get_next_bit(sets.set+used_sets,i)) ;)
     {
       used_chars[follow[i].chr]=1;
       if ((follow[i].chr == SPACE_CHAR && !follow[i+1].chr &&
@@ -6809,7 +6809,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   new_set->found_offset=set->found_offset+1;
   found_end=0;
 
-  for (i= (uint) ~0 ; (i=get_next_bit(sets.set+used_sets,i)) ; )
+  for (i= UINT32_MAX ; (i=get_next_bit(sets.set+used_sets,i)) ; )
   {
     if (!follow[i].chr || follow[i].chr == chr ||
         (follow[i].chr == SPACE_CHAR &&
@@ -6830,7 +6830,7 @@ REPLACE *init_replace(char * *from, char * *to,uint count,
   {
     new_set->found_len=0;      /* Set for testing if first */
     bits_set=0;
-    for (i= (uint) ~0; (i=get_next_bit(new_set,i)) ;)
+    for (i= UINT32_MAX; (i=get_next_bit(new_set,i)) ;)
     {
       if ((follow[i].chr == SPACE_CHAR ||
      follow[i].chr == END_OF_LINE) && ! chr)
@@ -6949,7 +6949,7 @@ REP_SET *make_new_set(REP_SETS *sets)
     memset(&set->next[0], 0, sizeof(set->next[0])*LAST_CHAR_CODE);
     set->found_offset=0;
     set->found_len=0;
-    set->table_offset= (uint) ~0;
+    set->table_offset= UINT32_MAX;
     set->size_of_bits=sets->size_of_bits;
     return set;
   }

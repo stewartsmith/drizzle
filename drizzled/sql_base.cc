@@ -3038,11 +3038,11 @@ void abort_locked_tables(THD *thd,const char *db, const char *table_name)
     share opens have been executed while one table was open all the
     time).
 
-    share->table_map_id is not ~0UL.
+    share->table_map_id is not UINT32_MAX.
  */
 void assign_new_table_id(TABLE_SHARE *share)
 {
-  static ulong last_table_id= ~0UL;
+  static uint32_t last_table_id= UINT32_MAX;
 
   /* Preconditions */
   assert(share != NULL);
@@ -3053,12 +3053,12 @@ void assign_new_table_id(TABLE_SHARE *share)
     There is one reserved number that cannot be used.  Remember to
     change this when 6-byte global table id's are introduced.
   */
-  if (unlikely(tid == ~0UL))
+  if (unlikely(tid == UINT32_MAX))
     tid= ++last_table_id;
   share->table_map_id= tid;
 
   /* Post conditions */
-  assert(share->table_map_id != ~0UL);
+  assert(share->table_map_id != UINT32_MAX);
 
   return;
 }
@@ -3105,7 +3105,7 @@ retry:
                                                HA_OPEN_RNDFILE |
                                                HA_GET_INDEX |
                                                HA_TRY_READ_ONLY),
-                                       (READ_KEYINFO | EXTRA_RECORD),
+                                       (EXTRA_RECORD),
                                        thd->open_options, entry, OTM_OPEN)))
   {
     if (error == 7)                             // Table def changed
@@ -3167,7 +3167,7 @@ retry:
                                (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                        HA_GET_INDEX |
                                        HA_TRY_READ_ONLY),
-                               READ_KEYINFO | EXTRA_RECORD,
+                               EXTRA_RECORD,
                                ha_open_options | HA_OPEN_FOR_REPAIR,
                                entry, OTM_OPEN) || ! entry->file ||
         (entry->file->is_crashed() && entry->file->ha_check_and_repair(thd)))
@@ -3893,8 +3893,8 @@ Table *open_temporary_table(THD *thd, const char *path, const char *db,
                             (uint) (HA_OPEN_KEYFILE | HA_OPEN_RNDFILE |
                                     HA_GET_INDEX),
                             (open_mode == OTM_ALTER) ?
-                              (READ_KEYINFO | EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
-                            : (READ_KEYINFO | EXTRA_RECORD),
+                              (EXTRA_RECORD | OPEN_FRM_FILE_ONLY)
+                            : (EXTRA_RECORD),
                             ha_open_options,
                             tmp_table, open_mode))
   {

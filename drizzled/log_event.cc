@@ -5900,11 +5900,11 @@ Rows_log_event::Rows_log_event(THD *thd_arg, Table *tbl_arg, ulong tid,
 {
   /*
     We allow a special form of dummy event when the table, and cols
-    are null and the table id is ~0UL.  This is a temporary
+    are null and the table id is UINT32_MAX.  This is a temporary
     solution, to be able to terminate a started statement in the
     binary log: the extraneous events will be removed in the future.
    */
-  assert((tbl_arg && tbl_arg->s && tid != ~0UL) || (!tbl_arg && !cols && tid == ~0UL));
+  assert((tbl_arg && tbl_arg->s && tid != UINT32_MAX) || (!tbl_arg && !cols && tid == UINT32_MAX));
 
   if (thd_arg->options & OPTION_NO_FOREIGN_KEY_CHECKS)
       set_flags(NO_FOREIGN_KEY_CHECKS_F);
@@ -6119,12 +6119,12 @@ int Rows_log_event::do_apply_event(Relay_log_info const *rli)
 {
   int error= 0;
   /*
-    If m_table_id == ~0UL, then we have a dummy event that does not
+    If m_table_id == UINT32_MAX, then we have a dummy event that does not
     contain any data.  In that case, we just remove all tables in the
     tables_to_lock list, close the thread tables, and return with
     success.
    */
-  if (m_table_id == ~0UL)
+  if (m_table_id == UINT32_MAX)
   {
     /*
        This one is supposed to be set: just an extra check so that
@@ -6612,7 +6612,7 @@ Rows_log_event::do_update_pos(Relay_log_info *rli)
 bool Rows_log_event::write_data_header(IO_CACHE *file)
 {
   uchar buf[ROWS_HEADER_LEN];	// No need to init the buffer
-  assert(m_table_id != ~0UL);
+  assert(m_table_id != UINT32_MAX);
   int6store(buf + RW_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + RW_FLAGS_OFFSET, m_flags);
   return (my_b_safe_write(file, buf, ROWS_HEADER_LEN));
@@ -6781,7 +6781,7 @@ Table_map_log_event::Table_map_log_event(THD *thd, Table *tbl, ulong tid,
     m_null_bits(0),
     m_meta_memory(NULL)
 {
-  assert(m_table_id != ~0UL);
+  assert(m_table_id != UINT32_MAX);
   /*
     In TABLE_SHARE, "db" and "table_name" are 0-terminated (see this comment in
     table.cc / alloc_table_share():
@@ -6884,7 +6884,7 @@ Table_map_log_event::Table_map_log_event(const char *buf, uint event_len,
     post_start+= TM_FLAGS_OFFSET;
   }
 
-  assert(m_table_id != ~0UL);
+  assert(m_table_id != UINT32_MAX);
 
   m_flags= uint2korr(post_start);
 
@@ -7113,7 +7113,7 @@ int Table_map_log_event::do_update_pos(Relay_log_info *rli)
 #ifndef DRIZZLE_CLIENT
 bool Table_map_log_event::write_data_header(IO_CACHE *file)
 {
-  assert(m_table_id != ~0UL);
+  assert(m_table_id != UINT32_MAX);
   uchar buf[TABLE_MAP_HEADER_LEN];
   int6store(buf + TM_MAPID_OFFSET, (uint64_t)m_table_id);
   int2store(buf + TM_FLAGS_OFFSET, m_flags);
@@ -8229,7 +8229,7 @@ Heartbeat_log_event::Heartbeat_log_event(const char* buf, uint event_len,
 st_print_event_info::st_print_event_info()
   :flags2_inited(0), sql_mode_inited(0),
    auto_increment_increment(0),auto_increment_offset(0), charset_inited(0),
-   lc_time_names_number(~0),
+   lc_time_names_number(UINT32_MAX),
    charset_database_number(ILLEGAL_CHARSET_INFO_NUMBER),
    thread_id(0), thread_id_printed(false),
    base64_output_mode(BASE64_OUTPUT_UNSPEC), printed_fd_event(false)

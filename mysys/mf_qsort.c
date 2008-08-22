@@ -68,7 +68,7 @@ typedef struct st_stack
 #define PUSH(LOW,HIGH)  {stack_ptr->low = LOW; stack_ptr++->high = HIGH;}
 #define POP(LOW,HIGH)   {LOW = (--stack_ptr)->low; HIGH = stack_ptr->high;}
 
-/* The following stack size is enough for uint32_t ~0 elements */
+/* The following stack size is enough for UINT32_MAX elements */
 #define STACK_SIZE	(8 * sizeof(unsigned long int))
 #define THRESHOLD_FOR_INSERT_SORT 10
 #if defined(QSORT_TYPE_IS_VOID)

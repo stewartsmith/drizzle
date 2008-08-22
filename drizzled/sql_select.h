@@ -70,11 +70,11 @@ class store_key;
 typedef struct st_table_ref
 {
   bool		key_err;
-  uint          key_parts;                ///< num of ...
-  uint          key_length;               ///< length of key_buff
-  int           key;                      ///< key no
-  uchar         *key_buff;                ///< value to look for with key
-  uchar         *key_buff2;               ///< key_buff+key_length
+  uint32_t      key_parts;                ///< num of ...
+  uint32_t      key_length;               ///< length of key_buff
+  int32_t       key;                      ///< key no
+  unsigned char *key_buff;                ///< value to look for with key
+  unsigned char *key_buff2;               ///< key_buff+key_length
   store_key     **key_copy;               //
   Item          **items;                  ///< val()'s for each keypart
   /*  
@@ -96,7 +96,7 @@ typedef struct st_table_ref
   key_part_map  null_rejecting;
   table_map	depend_map;		  ///< Table depends on these tables.
   /* null byte position in the key_buf. Used for REF_OR_NULL optimization */
-  uchar          *null_ref_key;
+  unsigned char *null_ref_key;
 
   /*
     true <=> disable the "cache" as doing lookup with the same key value may
@@ -116,9 +116,9 @@ typedef struct st_cache_field {
     Where source data is located (i.e. this points to somewhere in 
     tableX->record[0])
   */
-  uchar *str;
-  uint length; /* Length of data at *str, in bytes */
-  uint blob_length; /* Valid IFF blob_field != 0 */
+  unsigned char *str;
+  uint32_t length; /* Length of data at *str, in bytes */
+  uint32_t blob_length; /* Valid IFF blob_field != 0 */
   Field_blob *blob_field;
   bool strip; /* true <=> Strip endspaces ?? */
 
@@ -128,12 +128,12 @@ typedef struct st_cache_field {
 
 typedef struct st_join_cache 
 {
-  uchar *buff;
-  uchar *pos;    /* Start of free space in the buffer */
-  uchar *end;
-  uint records;  /* # of row cominations currently stored in the cache */
-  uint record_nr;
-  uint ptr_record; 
+  unsigned char *buff;
+  unsigned char *pos;    /* Start of free space in the buffer */
+  unsigned char *end;
+  uint32_t records;  /* # of row cominations currently stored in the cache */
+  uint32_t record_nr;
+  uint32_t ptr_record; 
   /* 
     Number of fields (i.e. cache_field objects). Those correspond to table
     columns, and there are also special fields for
@@ -141,9 +141,9 @@ typedef struct st_join_cache
      - table's null-complementation byte
      - [new] table's rowid.
   */
-  uint fields; 
-  uint length; 
-  uint blobs;
+  uint32_t fields; 
+  uint32_t length; 
+  uint32_t blobs;
   CACHE_FIELD *field;
   CACHE_FIELD **blob_ptr;
   SQL_SELECT *select;

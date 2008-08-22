@@ -146,8 +146,8 @@ bs:
   overflow= 0;
   res= 0;
   save= s;
-  cutoff= ((uint32_t)~0L) / (uint32_t) base;
-  cutlim= (uint) (((uint32_t)~0L) % (uint32_t) base);
+  cutoff= (UINT32_MAX) / (uint32_t) base;
+  cutlim= (uint) ((UINT32_MAX) % (uint32_t) base);
   
   do {
     if ((cnv= cs->cset->mb_wc(cs, &wc, s, e)) > 0)
@@ -262,8 +262,8 @@ bs:
   overflow= 0;
   res= 0;
   save= s;
-  cutoff= ((uint32_t)~0L) / (uint32_t) base;
-  cutlim= (uint) (((uint32_t)~0L) % (uint32_t) base);
+  cutoff= (UINT32_MAX) / (uint32_t) base;
+  cutlim= (uint) ((UINT32_MAX) % (uint32_t) base);
   
   do
   {

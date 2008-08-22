@@ -16,8 +16,6 @@
 #include <m_string.h>
 #include <errno.h>
 
-#undef  ULONGLONG_MAX
-#define ULONGLONG_MAX		(~(uint64_t) 0)
 #define MAX_NEGATIVE_NUMBER	((uint64_t) 0x8000000000000000LL)
 #define INIT_CNT  9
 #define LFACTOR   1000000000ULL
@@ -62,8 +60,8 @@ static unsigned long lfactor[9]=
     0	 	ok
     ERANGE	If the the value of the converted number exceeded the
 	        maximum negative/unsigned long long integer.
-		In this case the return value is ~0 if value was
-		positive and LONGLONG_MIN if value was negative.
+		In this case the return value is UINT64_MAX if value was
+		positive and UINT64_MIN if value was negative.
     EDOM	If the string didn't contain any digits. In this case
     		the return value is 0.
 
@@ -123,9 +121,9 @@ int64_t my_strtoll10(const char *nptr, char **endptr, int *error)
       if (++s == end)
 	goto no_conv;
     }
-    cutoff=  ULONGLONG_MAX / LFACTOR2;
-    cutoff2= ULONGLONG_MAX % LFACTOR2 / 100;
-    cutoff3=  ULONGLONG_MAX % 100;
+    cutoff=  UINT64_MAX / LFACTOR2;
+    cutoff2= UINT64_MAX % LFACTOR2 / 100;
+    cutoff3=  UINT64_MAX % 100;
   }
 
   /* Handle case where we have a lot of pre-zero */
@@ -202,7 +200,7 @@ int64_t my_strtoll10(const char *nptr, char **endptr, int *error)
 
 overflow:					/* *endptr is set here */
   *error= ERANGE;
-  return negative ? INT64_MIN: (int64_t) ULONGLONG_MAX;
+  return negative ? INT64_MIN: INT64_MAX;
 
 end_i:
   *endptr= (char*) s;
