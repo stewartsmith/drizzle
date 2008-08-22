@@ -595,7 +595,7 @@ typedef struct st_print_event_info
   bool charset_inited;
   char charset[6]; // 3 variables, each of them storable in 2 bytes
   char time_zone_str[MAX_TIME_ZONE_NAME_LENGTH];
-  uint16_t lc_time_names_number;
+  uint32_t lc_time_names_number;
   uint charset_database_number;
   uint thread_id;
   bool thread_id_printed;

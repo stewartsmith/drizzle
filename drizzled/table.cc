@@ -4666,8 +4666,8 @@ void Table::restore_column_map(my_bitmap_map *old)
 
 uint Table::find_shortest_key(const key_map *usable_keys)
 {
-  uint16_t min_length= UINT16_MAX;
-  uint16_t best= MAX_KEY;
+  uint32_t min_length= UINT32_MAX;
+  uint32_t best= MAX_KEY;
   if (!usable_keys->is_clear_all())
   {
     for (uint nr=0; nr < s->keys ; nr++)

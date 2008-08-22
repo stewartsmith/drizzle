@@ -70,9 +70,9 @@ class store_key;
 typedef struct st_table_ref
 {
   bool		key_err;
-  uint16_t      key_parts;                ///< num of ...
-  uint16_t      key_length;               ///< length of key_buff
-  int16_t       key;                      ///< key no
+  uint32_t      key_parts;                ///< num of ...
+  uint32_t      key_length;               ///< length of key_buff
+  int32_t       key;                      ///< key no
   unsigned char *key_buff;                ///< value to look for with key
   unsigned char *key_buff2;               ///< key_buff+key_length
   store_key     **key_copy;               //
@@ -117,8 +117,8 @@ typedef struct st_cache_field {
     tableX->record[0])
   */
   unsigned char *str;
-  uint16_t length; /* Length of data at *str, in bytes */
-  uint16_t blob_length; /* Valid IFF blob_field != 0 */
+  uint32_t length; /* Length of data at *str, in bytes */
+  uint32_t blob_length; /* Valid IFF blob_field != 0 */
   Field_blob *blob_field;
   bool strip; /* true <=> Strip endspaces ?? */
 
@@ -131,9 +131,9 @@ typedef struct st_join_cache
   unsigned char *buff;
   unsigned char *pos;    /* Start of free space in the buffer */
   unsigned char *end;
-  uint16_t records;  /* # of row cominations currently stored in the cache */
-  uint16_t record_nr;
-  uint16_t ptr_record; 
+  uint32_t records;  /* # of row cominations currently stored in the cache */
+  uint32_t record_nr;
+  uint32_t ptr_record; 
   /* 
     Number of fields (i.e. cache_field objects). Those correspond to table
     columns, and there are also special fields for
@@ -141,9 +141,9 @@ typedef struct st_join_cache
      - table's null-complementation byte
      - [new] table's rowid.
   */
-  uint16_t fields; 
-  uint16_t length; 
-  uint16_t blobs;
+  uint32_t fields; 
+  uint32_t length; 
+  uint32_t blobs;
   CACHE_FIELD *field;
   CACHE_FIELD **blob_ptr;
   SQL_SELECT *select;

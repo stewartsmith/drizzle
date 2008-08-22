@@ -70,10 +70,10 @@ public:
   int64_t val_int(void);
   String *val_str(String*,String *);
   my_decimal *val_decimal(my_decimal *);
-  int cmp_max(const uchar *, const uchar *, uint max_length);
+  int cmp_max(const uchar *, const uchar *, uint32_t max_length);
   int cmp(const uchar *a,const uchar *b)
   {
-    return cmp_max(a, b, ~0L);
+    return cmp_max(a, b, UINT32_MAX);
   }
   void sort_string(uchar *buff,uint length);
   uint get_key_image(uchar *buff,uint length, imagetype type);
