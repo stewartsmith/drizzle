@@ -69,7 +69,7 @@ public:
   int cmp(const uchar *a,const uchar *b)
     { return cmp_max(a, b, UINT32_MAX); }
   int cmp(const uchar *a, uint32_t a_length, const uchar *b, uint32_t b_length);
-  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=~0L);
+  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const uchar *,const uchar*);
   int key_cmp(const uchar *str, uint length);
   uint32_t key_length() const { return 0; }

@@ -3805,7 +3805,7 @@ struct my_option my_long_options[] =
       "return an error."),
    (char**) &global_system_variables.max_join_size,
    (char**) &max_system_variables.max_join_size, 0, GET_HA_ROWS, REQUIRED_ARG,
-   ~0L, 1, ~0L, 0, 1, 0},
+   INT64_MAX, 1, INT64_MAX, 0, 1, 0},
   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
    N_("Max number of bytes in sorted records."),
    (char**) &global_system_variables.max_length_for_sort_data,

@@ -3038,11 +3038,11 @@ void abort_locked_tables(THD *thd,const char *db, const char *table_name)
     share opens have been executed while one table was open all the
     time).
 
-    share->table_map_id is not ~0UL.
+    share->table_map_id is not UINT32_MAX.
  */
 void assign_new_table_id(TABLE_SHARE *share)
 {
-  static ulong last_table_id= ~0UL;
+  static uint32_t last_table_id= UINT32_MAX;
 
   /* Preconditions */
   assert(share != NULL);

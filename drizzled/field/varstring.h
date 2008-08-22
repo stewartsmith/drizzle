@@ -91,7 +91,7 @@ public:
   int pack_cmp(const uchar *a, const uchar *b, uint key_length,
                bool insert_or_update);
   int pack_cmp(const uchar *b, uint key_length,bool insert_or_update);
-  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=~0L);
+  int cmp_binary(const uchar *a,const uchar *b, uint32_t max_length=UINT32_MAX);
   int key_cmp(const uchar *,const uchar*);
   int key_cmp(const uchar *str, uint length);
   uint packed_col_length(const uchar *to, uint length);
