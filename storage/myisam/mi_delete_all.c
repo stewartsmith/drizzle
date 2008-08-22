@@ -35,7 +35,7 @@ int mi_delete_all_rows(MI_INFO *info)
 
   info->state->records=info->state->del=state->split=0;
   state->dellink = HA_OFFSET_ERROR;
-  state->sortkey=  (ushort) ~0;
+  state->sortkey=  UINT16_MAX;
   info->state->key_file_length=share->base.keystart;
   info->state->data_file_length=0;
   info->state->empty=info->state->key_empty=0;
