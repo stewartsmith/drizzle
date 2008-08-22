@@ -38,6 +38,6 @@ DRIZZLE_ERROR *push_warning(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
 void push_warning_printf(THD *thd, DRIZZLE_ERROR::enum_warning_level level,
 			 uint code, const char *format, ...);
 void drizzle_reset_errors(THD *thd, bool force);
-bool mysqld_show_warnings(THD *thd, ulong levels_to_show);
+bool mysqld_show_warnings(THD *thd, uint32_t levels_to_show);
 
 extern const LEX_STRING warning_level_names[];

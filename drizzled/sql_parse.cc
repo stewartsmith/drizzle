@@ -1312,7 +1312,7 @@ mysql_execute_command(THD *thd)
   }
   case SQLCOM_SHOW_WARNS:
   {
-    res= mysqld_show_warnings(thd, (ulong)
+    res= mysqld_show_warnings(thd, (uint32_t)
 			      ((1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_NOTE) |
 			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_WARN) |
 			       (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR)
@@ -1321,7 +1321,7 @@ mysql_execute_command(THD *thd)
   }
   case SQLCOM_SHOW_ERRORS:
   {
-    res= mysqld_show_warnings(thd, (ulong)
+    res= mysqld_show_warnings(thd, (uint32_t)
 			      (1L << (uint) DRIZZLE_ERROR::WARN_LEVEL_ERROR));
     break;
   }
