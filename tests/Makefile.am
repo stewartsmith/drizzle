@@ -167,7 +167,6 @@ test-drizzle:
 	  lock_tables_lost_commit \
 	  key_diff \
 	  keywords \
-	  loaddata_autocom_innodb \
 	  overflow \
 	  perror \
 	  sum_distinct
