@@ -3805,7 +3805,7 @@ struct my_option my_long_options[] =
       "return an error."),
    (char**) &global_system_variables.max_join_size,
    (char**) &max_system_variables.max_join_size, 0, GET_HA_ROWS, REQUIRED_ARG,
-   INT64_MAX, 1, INT64_MAX, 0, 1, 0},
+   INT32_MAX, 1, INT32_MAX, 0, 1, 0},
   {"max_length_for_sort_data", OPT_MAX_LENGTH_FOR_SORT_DATA,
    N_("Max number of bytes in sorted records."),
    (char**) &global_system_variables.max_length_for_sort_data,
@@ -3880,7 +3880,7 @@ struct my_option my_long_options[] =
       "REPAIR or when creating indexes with CREATE INDEX or ALTER TABLE."),
    (char**) &global_system_variables.myisam_sort_buff_size,
    (char**) &max_system_variables.myisam_sort_buff_size, 0,
-   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, ~0L, 0, 1, 0},
+   GET_ULONG, REQUIRED_ARG, 8192*1024, 4, INT32_MAX, 0, 1, 0},
   {"myisam_stats_method", OPT_MYISAM_STATS_METHOD,
    N_("Specifies how MyISAM index statistics collection code should threat "
       "NULLs. Possible values of name are 'nulls_unequal' "
