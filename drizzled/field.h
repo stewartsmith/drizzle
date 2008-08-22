@@ -222,7 +222,7 @@ public:
     { return cmp(a, b); }
   virtual int cmp(const uchar *,const uchar *)=0;
   virtual int cmp_binary(const uchar *a,const uchar *b,
-                         uint32_t  __attribute__((unused)) max_length=~0)
+                         uint32_t  __attribute__((unused)) max_length=UINT32_MAX)
   { return memcmp(a,b,pack_length()); }
   virtual int cmp_offset(uint row_offset)
   { return cmp(ptr,ptr+row_offset); }
