@@ -1513,7 +1513,7 @@ extern "C" sig_handler handle_segfault(int sig)
                       "Some pointers may be invalid and cause the "
                       "dump to abort...\n"));
     safe_print_str("thd->query", thd->query, 1024);
-    fprintf(stderr, "thd->thread_id=%lu\n", (uint32_t) thd->thread_id);
+    fprintf(stderr, "thd->thread_id=%"PRIu32"\n", (uint32_t) thd->thread_id);
     fprintf(stderr, "thd->killed=%s\n", kreason);
   }
   fflush(stderr);

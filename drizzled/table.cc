@@ -143,7 +143,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
       assigned.  No arithmetic is done on the value: it will be
       overwritten with a value taken from DRIZZLE_BIN_LOG.
     */
-    share->table_map_version= ~(uint64_t)0;
+    share->table_map_version= UINT64_MAX;
 
     /*
       Since alloc_table_share() can be called without any locking (for
@@ -152,7 +152,7 @@ TABLE_SHARE *alloc_table_share(TableList *table_list, char *key,
       elsewhere, and then assign a table map id inside open_table()
       under the protection of the LOCK_open mutex.
     */
-    share->table_map_id= ~0UL;
+    share->table_map_id= UINT32_MAX;
     share->cached_row_logging_check= -1;
 
     memcpy(&share->mem_root, &mem_root, sizeof(mem_root));

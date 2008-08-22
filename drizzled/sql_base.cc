@@ -3053,12 +3053,12 @@ void assign_new_table_id(TABLE_SHARE *share)
     There is one reserved number that cannot be used.  Remember to
     change this when 6-byte global table id's are introduced.
   */
-  if (unlikely(tid == ~0UL))
+  if (unlikely(tid == UINT32_MAX))
     tid= ++last_table_id;
   share->table_map_id= tid;
 
   /* Post conditions */
-  assert(share->table_map_id != ~0UL);
+  assert(share->table_map_id != UINT32_MAX);
 
   return;
 }

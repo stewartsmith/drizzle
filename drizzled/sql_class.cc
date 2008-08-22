@@ -2473,7 +2473,7 @@ THD::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
 				       RowsEventT *hint __attribute__((unused)))
 {
   /* Pre-conditions */
-  assert(table->s->table_map_id != ~0UL);
+  assert(table->s->table_map_id != UINT32_MAX);
 
   /* Fetch the type code for the RowsEventT template parameter */
   int const type_code= RowsEventT::TYPE_CODE;
