@@ -131,43 +131,51 @@ test-binlog-statement:
 
 test: test-drizzle
 
+# Please keep the list of tests in alphabetical order for ease of
+# maintenance and verification
+
 test-drizzle:
 	  $(PERL) -I$(top_srcdir)/tests/lib \
 		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
-	  alter_table \
-		count_distinct \
-		count_distinct2 \
-		endspace \
-	  join_crash \
-	  join_nested \
-	  join_outer_innodb \
-	  delete \
-	  join_outer \
-	  distinct \
-	  type_newdecimal \
-	  heap_auto_increment \
-	  heap_btree \
-	  heap_var \
-	  join \
-	  subselect \
-	  subselect3 \
-	  subselect_innodb \
-	  insert \
-	  select \
-	  update \
-	  information_schema \
-	  mysqlslap \
-	  lock \
-	  unsafe_binlog_innodb \
-	  innodb-semi-consistent \
-	  innodb_timeout_rollback \
-	  count_distinct2 \
-	  count_distinct3 \
-	  ctype_filename \
-	  endspace \
-	  innodb-lock \
-	  lock_tables_lost_commit \
-	  key_diff \
-	  keywords \
-	  overflow \
-	  sum_distinct
+        alter_table \
+        bench_count_distinct \
+        count_distinct \
+        count_distinct2 \
+        count_distinct3 \
+        ctype_filename \
+        delete \
+        distinct \
+        endspace \
+        flush2 \
+        func_like \
+        greedy_optimizer \
+        group_min_max_innodb \
+        heap_auto_increment \
+        heap_btree \
+        heap_var \
+        information_schema \
+        innodb-lock \
+        innodb-semi-consistent \
+        innodb_timeout_rollback \
+        insert \
+        join \
+        join_crash \
+        join_nested \
+        join_outer \
+        join_outer_innodb \
+        key_diff \
+        key_primary \
+        keywords \
+        lock \
+        lock_tables_lost_commit \
+        mysqlslap \
+        overflow \
+        select \
+        subselect \
+        subselect3 \
+        subselect_innodb \
+        sum_distinct \
+        tablelock \
+        type_newdecimal \
+        unsafe_binlog_innodb \
+        update
