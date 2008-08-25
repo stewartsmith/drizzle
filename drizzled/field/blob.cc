@@ -25,8 +25,12 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/field/blob.h>
 
-#define BLOB_PACK_LENGTH_TO_MAX_LENGH(arg) \
-((uint32_t) ((1LL << min(arg, (uint)4) * 8) - 1LL))
+uint32_t
+blob_pack_length_to_max_length(uint arg)
+{
+  return (1LL << min(arg, 4U) * 8) - 1LL;
+}
+
 
 /****************************************************************************
 ** blob type
@@ -38,7 +42,7 @@ Field_blob::Field_blob(uchar *ptr_arg, uchar *null_ptr_arg, uchar null_bit_arg,
 		       enum utype unireg_check_arg, const char *field_name_arg,
                        TABLE_SHARE *share, uint blob_pack_length,
 		       const CHARSET_INFO * const cs)
-  :Field_longstr(ptr_arg, BLOB_PACK_LENGTH_TO_MAX_LENGH(blob_pack_length),
+  :Field_longstr(ptr_arg, blob_pack_length_to_max_length(blob_pack_length),
                  null_ptr_arg, null_bit_arg, unireg_check_arg, field_name_arg,
                  cs),
    packlength(blob_pack_length)

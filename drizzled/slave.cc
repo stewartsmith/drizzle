@@ -1220,7 +1220,7 @@ bool show_master_info(THD* thd, Master_info* mi)
       non-volotile members like mi->io_thd, which is guarded by the mutex.
     */
     pthread_mutex_lock(&mi->run_lock);
-    protocol->store(mi->io_thd ? mi->io_thd->proc_info : "", &my_charset_bin);
+    protocol->store(mi->io_thd ? mi->io_thd->get_proc_info() : "", &my_charset_bin);
     pthread_mutex_unlock(&mi->run_lock);
 
     pthread_mutex_lock(&mi->data_lock);
@@ -1905,7 +1905,7 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
                             const char *messages[SLAVE_RECON_MSG_MAX])
 {
   mi->slave_running= DRIZZLE_SLAVE_RUN_NOT_CONNECT;
-  thd->proc_info= _(messages[SLAVE_RECON_MSG_WAIT]);
+  thd->set_proc_info(_(messages[SLAVE_RECON_MSG_WAIT]));
 #ifdef SIGNAL_WITH_VIO_CLOSE
   thd->clear_active_vio();
 #endif
@@ -1920,7 +1920,7 @@ static int32_t try_to_reconnect(THD *thd, DRIZZLE *drizzle, Master_info *mi,
   if (check_io_slave_killed(thd, mi,
                             _(messages[SLAVE_RECON_MSG_KILLED_WAITING])))
     return 1;
-  thd->proc_info = _(messages[SLAVE_RECON_MSG_AFTER]);
+  thd->set_proc_info(_(messages[SLAVE_RECON_MSG_AFTER]));
   if (!suppress_warnings)
   {
     char buf[256], llbuff[22];

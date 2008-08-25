@@ -891,7 +891,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
   net_end_statement(thd);
 
-  thd->proc_info= "closing tables";
+  thd->set_proc_info("closing tables");
   /* Free tables */
   close_thread_tables(thd);
 

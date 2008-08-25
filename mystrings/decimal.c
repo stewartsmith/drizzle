@@ -210,6 +210,18 @@ static const dec1 frac_max[DIG_PER_DEC1-1]={
           (to)=a;                                                       \
         } while(0)
 
+/**
+  Swap the contents of two variables.
+ */
+#define swap_variables(TYPE, a, b) \
+  do {                             \
+    TYPE dummy;                    \
+    dummy= a;                      \
+    a= b;                          \
+    b= dummy;                      \
+  } while (0)
+
+
 /*
   Get maximum value for given precision and scale
 

@@ -5897,7 +5897,7 @@ greedy_search(JOIN      *join,
       pos= join->best_ref[++best_idx];
     assert((pos != NULL)); // should always find 'best_table'
     /* move 'best_table' at the first free position in the array of joins */
-    swap_variables(JOIN_TAB*, join->best_ref[idx], join->best_ref[best_idx]);
+    std::swap(join->best_ref[idx], join->best_ref[best_idx]);
 
     /* compute the cost of the new plan extended with 'best_table' */
     record_count*= join->positions[idx].records_read;
@@ -6111,7 +6111,7 @@ best_extension_by_limited_search(JOIN      *join,
 
       if ( (search_depth > 1) && (remaining_tables & ~real_table_bit) )
       { /* Recursively expand the current partial plan */
-        swap_variables(JOIN_TAB*, join->best_ref[idx], *pos);
+        std::swap(join->best_ref[idx], *pos);
         if (best_extension_by_limited_search(join,
                                              remaining_tables & ~real_table_bit,
                                              idx + 1,
@@ -6120,7 +6120,7 @@ best_extension_by_limited_search(JOIN      *join,
                                              search_depth - 1,
                                              prune_level))
           return(true);
-        swap_variables(JOIN_TAB*, join->best_ref[idx], *pos);
+        std::swap(join->best_ref[idx], *pos);
       }
       else
       { /*
@@ -6212,11 +6212,11 @@ find_best(JOIN *join,table_map rest_tables,uint idx,double record_count,
 	  best_record_count=current_record_count;
 	  best_read_time=current_read_time;
 	}
-	swap_variables(JOIN_TAB*, join->best_ref[idx], *pos);
+        std::swap(join->best_ref[idx], *pos);
 	if (find_best(join,rest_tables & ~real_table_bit,idx+1,
                       current_record_count,current_read_time))
           return(true);
-	swap_variables(JOIN_TAB*, join->best_ref[idx], *pos);
+        std::swap(join->best_ref[idx], *pos);
       }
       restore_prev_nj_state(s);
       restore_prev_sj_state(rest_tables, s);

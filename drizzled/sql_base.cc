@@ -866,7 +866,7 @@ bool close_cached_connection_tables(THD *thd, bool if_wait_for_refresh,
     pthread_mutex_lock(&thd->mysys_var->mutex);
     thd->mysys_var->current_mutex= 0;
     thd->mysys_var->current_cond= 0;
-    thd->proc_info=0;
+    thd->set_proc_info(0);
     pthread_mutex_unlock(&thd->mysys_var->mutex);
   }
 
@@ -1717,7 +1717,7 @@ void wait_for_condition(THD *thd, pthread_mutex_t *mutex, pthread_cond_t *cond)
   const char *proc_info;
   thd->mysys_var->current_mutex= mutex;
   thd->mysys_var->current_cond= cond;
-  proc_info=thd->proc_info;
+  proc_info=thd->get_proc_info();
   thd_proc_info(thd, "Waiting for table");
   if (!thd->killed)
     (void) pthread_cond_wait(cond, mutex);
@@ -5315,7 +5315,7 @@ store_top_level_join_columns(THD *thd, TableList *table_ref,
       {
         /* This can happen only for JOIN ... ON. */
         assert(table_ref->nested_join->join_list.elements == 2);
-        swap_variables(TableList*, same_level_left_neighbor, cur_table_ref);
+        std::swap(same_level_left_neighbor, cur_table_ref);
       }
 
       /*
@@ -5359,7 +5359,7 @@ store_top_level_join_columns(THD *thd, TableList *table_ref,
       back for 'mark_common_columns'.
     */
     if (table_ref_2->outer_join & JOIN_TYPE_RIGHT)
-      swap_variables(TableList*, table_ref_1, table_ref_2);
+      std::swap(table_ref_1, table_ref_2);
     if (mark_common_columns(thd, table_ref_1, table_ref_2,
                             using_fields, &found_using_fields))
       goto err;
@@ -5370,7 +5370,7 @@ store_top_level_join_columns(THD *thd, TableList *table_ref,
       same as of an equivalent LEFT JOIN.
     */
     if (table_ref_1->outer_join & JOIN_TYPE_RIGHT)
-      swap_variables(TableList*, table_ref_1, table_ref_2);
+      std::swap(table_ref_1, table_ref_2);
     if (store_natural_using_join_columns(thd, table_ref, table_ref_1,
                                          table_ref_2, using_fields,
                                          found_using_fields))

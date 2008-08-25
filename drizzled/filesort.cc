@@ -25,11 +25,6 @@
 #include "sql_sort.h"
 #include <drizzled/drizzled_error_messages.h>
 
-/// How to write record_ref.
-#define WRITE_REF(file,from) \
-if (my_b_write((file),(uchar*) (from),param->ref_length)) \
-  return(1);
-
 	/* functions defined in this file */
 
 static char **make_char_array(char **old_pos, register uint fields,

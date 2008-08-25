@@ -1061,13 +1061,8 @@ public:
     Set it using the  thd_proc_info(THD *thread, const char *message)
     macro/function.
   */
-#define THD_SET_PROC_INFO(thd, info) \
-    (thd)->proc_info= (info)
-
-  inline const char* get_proc_info() { return proc_info;}
-
-  /* left public for the the storage engines, please avoid direct use */
-  const char *proc_info;
+  void        set_proc_info(const char *info) { proc_info= info; }
+  const char* get_proc_info() const { return proc_info; }
 
   /*
     Used in error messages to tell user in what part of MySQL we found an
@@ -1898,6 +1893,8 @@ public:
   void pop_internal_handler();
 
 private:
+  const char *proc_info;
+
   /** The current internal error handler for this thread, or NULL. */
   Internal_error_handler *m_internal_handler;
   /**

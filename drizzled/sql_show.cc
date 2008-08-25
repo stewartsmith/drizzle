@@ -22,7 +22,11 @@
 #include <mysys/my_dir.h>
 #include <libdrizzle/gettext.h>
 
-#define STR_OR_NIL(S) ((S) ? (S) : "<nil>")
+inline const char *
+str_or_nil(const char *str)
+{
+  return str ? str : "<nil>";
+}
 
 /* Match the values of enum ha_choice */
 static const char *ha_choice_values[] = {"", "0", "1"};
@@ -1162,7 +1166,7 @@ void mysqld_list_processes(THD *thd,const char *user, bool verbose)
                                         "Writing to net" :
                                         thd_info->command == COM_SLEEP ? NullS :
                                         "Reading from net") :
-                                       tmp->proc_info ? tmp->proc_info :
+                                       tmp->get_proc_info() ? tmp->get_proc_info() :
                                        tmp->mysys_var &&
                                        tmp->mysys_var->current_cond ?
                                        "Waiting on cond" : NullS);
@@ -1272,7 +1276,7 @@ int fill_schema_processlist(THD* thd, TableList* tables,
                      "Writing to net" :
                      tmp->command == COM_SLEEP ? NullS :
                      "Reading from net") :
-                    tmp->proc_info ? tmp->proc_info :
+                    tmp->get_proc_info() ? tmp->get_proc_info() :
                     tmp->mysys_var &&
                     tmp->mysys_var->current_cond ?
                     "Waiting on cond" : NullS);
