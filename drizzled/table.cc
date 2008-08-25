@@ -4510,7 +4510,7 @@ void Table::free_tmp_table(THD *thd)
   MEM_ROOT own_root= mem_root;
   const char *save_proc_info;
 
-  save_proc_info=thd->proc_info;
+  save_proc_info=thd->get_proc_info();
   thd_proc_info(thd, "removing tmp table");
 
   if (file)
@@ -4567,7 +4567,7 @@ bool create_myisam_from_heap(THD *thd, Table *table,
                                         new_table.s->db_type())))
     return(1);				// End of memory
 
-  save_proc_info=thd->proc_info;
+  save_proc_info=thd->get_proc_info();
   thd_proc_info(thd, "converting HEAP to MyISAM");
 
   if (new_table.create_myisam_tmp_table(table->key_info, start_recinfo,
