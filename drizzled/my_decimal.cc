@@ -18,7 +18,7 @@
 #include <drizzled/drizzled_error_messages.h>
 
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 /**
   report result of decimal operation.
 
@@ -241,4 +241,4 @@ void my_decimal_trim(uint32_t *precision, uint *scale)
 #define DIG_PER_DEC1 9
 #define ROUND_UP(X)  (((X)+DIG_PER_DEC1-1)/DIG_PER_DEC1)
 
-#endif /*MYSQL_CLIENT*/
+#endif /*DRIZZLE_CLIENT*/

@@ -71,12 +71,12 @@ public:
   void set_io_cache_arg(void* arg) { cache.arg = arg; }
 };
 
-static int read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+static int read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
                              List<Item> &fields_vars, List<Item> &set_fields,
                              List<Item> &set_values, READ_INFO &read_info,
 			     uint32_t skip_lines,
 			     bool ignore_check_option_errors);
-static int read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+static int read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
                           List<Item> &fields_vars, List<Item> &set_fields,
                           List<Item> &set_values, READ_INFO &read_info,
 			  String &enclosed, uint32_t skip_lines,
@@ -108,7 +108,7 @@ static bool write_execute_load_query_log_event(THD *thd,
     true - error / false - success
 */
 
-int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
+int mysql_load(THD *thd,sql_exchange *ex,TableList *table_list,
 	        List<Item> &fields_vars, List<Item> &set_fields,
                 List<Item> &set_values,
                 enum enum_duplicates handle_duplicates, bool ignore,
@@ -116,7 +116,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
 {
   char name[FN_REFLEN];
   File file;
-  TABLE *table= NULL;
+  Table *table= NULL;
   int error;
   String *field_term=ex->field_term,*escaped=ex->escaped;
   String *enclosed=ex->enclosed;
@@ -349,10 +349,7 @@ int mysql_load(THD *thd,sql_exchange *ex,TABLE_LIST *table_list,
     table->file->ha_start_bulk_insert((ha_rows) 0);
     table->copy_blobs=1;
 
-    thd->abort_on_warning= (!ignore &&
-                            (thd->variables.sql_mode &
-                             (MODE_STRICT_TRANS_TABLES |
-                              MODE_STRICT_ALL_TABLES)));
+    thd->abort_on_warning= true;
 
     if (!field_term->length() && !enclosed->length())
       error= read_fixed_length(thd, info, table_list, fields_vars,
@@ -501,14 +498,14 @@ static bool write_execute_load_query_log_event(THD *thd,
 ****************************************************************************/
 
 static int
-read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+read_fixed_length(THD *thd, COPY_INFO &info, TableList *table_list,
                   List<Item> &fields_vars, List<Item> &set_fields,
                   List<Item> &set_values, READ_INFO &read_info,
                   uint32_t skip_lines, bool ignore_check_option_errors)
 {
   List_iterator_fast<Item> it(fields_vars);
   Item_field *sql_field;
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   uint64_t id;
   bool err;
 
@@ -617,7 +614,7 @@ read_fixed_length(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
 
 
 static int
-read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
+read_sep_field(THD *thd, COPY_INFO &info, TableList *table_list,
                List<Item> &fields_vars, List<Item> &set_fields,
                List<Item> &set_values, READ_INFO &read_info,
 	       String &enclosed, uint32_t skip_lines,
@@ -625,7 +622,7 @@ read_sep_field(THD *thd, COPY_INFO &info, TABLE_LIST *table_list,
 {
   List_iterator_fast<Item> it(fields_vars);
   Item *item;
-  TABLE *table= table_list->table;
+  Table *table= table_list->table;
   uint enclosed_length;
   uint64_t id;
   bool err;

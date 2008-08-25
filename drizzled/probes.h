@@ -13,57 +13,57 @@ extern "C" {
 
 #if defined(_DTRACE_VERSION)
 
-#define	MYSQL_DELETE_END() \
+#define	DRIZZLE_DELETE_END() \
 	__dtrace_mysql___delete_end()
-#define	MYSQL_DELETE_END_ENABLED() \
+#define	DRIZZLE_DELETE_END_ENABLED() \
 	__dtraceenabled_mysql___delete_end()
-#define	MYSQL_DELETE_START() \
+#define	DRIZZLE_DELETE_START() \
 	__dtrace_mysql___delete_start()
-#define	MYSQL_DELETE_START_ENABLED() \
+#define	DRIZZLE_DELETE_START_ENABLED() \
 	__dtraceenabled_mysql___delete_start()
-#define	MYSQL_EXTERNAL_LOCK(arg0) \
+#define	DRIZZLE_EXTERNAL_LOCK(arg0) \
 	__dtrace_mysql___external_lock(arg0)
-#define	MYSQL_EXTERNAL_LOCK_ENABLED() \
+#define	DRIZZLE_EXTERNAL_LOCK_ENABLED() \
 	__dtraceenabled_mysql___external_lock()
-#define	MYSQL_FILESORT_END() \
+#define	DRIZZLE_FILESORT_END() \
 	__dtrace_mysql___filesort_end()
-#define	MYSQL_FILESORT_END_ENABLED() \
+#define	DRIZZLE_FILESORT_END_ENABLED() \
 	__dtraceenabled_mysql___filesort_end()
-#define	MYSQL_FILESORT_START() \
+#define	DRIZZLE_FILESORT_START() \
 	__dtrace_mysql___filesort_start()
-#define	MYSQL_FILESORT_START_ENABLED() \
+#define	DRIZZLE_FILESORT_START_ENABLED() \
 	__dtraceenabled_mysql___filesort_start()
-#define	MYSQL_INSERT_END() \
+#define	DRIZZLE_INSERT_END() \
 	__dtrace_mysql___insert_end()
-#define	MYSQL_INSERT_END_ENABLED() \
+#define	DRIZZLE_INSERT_END_ENABLED() \
 	__dtraceenabled_mysql___insert_end()
-#define	MYSQL_INSERT_ROW_END() \
+#define	DRIZZLE_INSERT_ROW_END() \
 	__dtrace_mysql___insert_row_end()
-#define	MYSQL_INSERT_ROW_END_ENABLED() \
+#define	DRIZZLE_INSERT_ROW_END_ENABLED() \
 	__dtraceenabled_mysql___insert_row_end()
-#define	MYSQL_INSERT_ROW_START() \
+#define	DRIZZLE_INSERT_ROW_START() \
 	__dtrace_mysql___insert_row_start()
-#define	MYSQL_INSERT_ROW_START_ENABLED() \
+#define	DRIZZLE_INSERT_ROW_START_ENABLED() \
 	__dtraceenabled_mysql___insert_row_start()
-#define	MYSQL_INSERT_START() \
+#define	DRIZZLE_INSERT_START() \
 	__dtrace_mysql___insert_start()
-#define	MYSQL_INSERT_START_ENABLED() \
+#define	DRIZZLE_INSERT_START_ENABLED() \
 	__dtraceenabled_mysql___insert_start()
-#define	MYSQL_SELECT_END() \
+#define	DRIZZLE_SELECT_END() \
 	__dtrace_mysql___select_end()
-#define	MYSQL_SELECT_END_ENABLED() \
+#define	DRIZZLE_SELECT_END_ENABLED() \
 	__dtraceenabled_mysql___select_end()
-#define	MYSQL_SELECT_START() \
+#define	DRIZZLE_SELECT_START() \
 	__dtrace_mysql___select_start()
-#define	MYSQL_SELECT_START_ENABLED() \
+#define	DRIZZLE_SELECT_START_ENABLED() \
 	__dtraceenabled_mysql___select_start()
-#define	MYSQL_UPDATE_END() \
+#define	DRIZZLE_UPDATE_END() \
 	__dtrace_mysql___update_end()
-#define	MYSQL_UPDATE_END_ENABLED() \
+#define	DRIZZLE_UPDATE_END_ENABLED() \
 	__dtraceenabled_mysql___update_end()
-#define	MYSQL_UPDATE_START() \
+#define	DRIZZLE_UPDATE_START() \
 	__dtrace_mysql___update_start()
-#define	MYSQL_UPDATE_START_ENABLED() \
+#define	DRIZZLE_UPDATE_START_ENABLED() \
 	__dtraceenabled_mysql___update_start()
 
 
@@ -96,32 +96,32 @@ extern int __dtraceenabled_mysql___update_start(void);
 
 #else
 
-#define	MYSQL_DELETE_END()
-#define	MYSQL_DELETE_END_ENABLED() (0)
-#define	MYSQL_DELETE_START()
-#define	MYSQL_DELETE_START_ENABLED() (0)
-#define	MYSQL_EXTERNAL_LOCK(arg0)
-#define	MYSQL_EXTERNAL_LOCK_ENABLED() (0)
-#define	MYSQL_FILESORT_END()
-#define	MYSQL_FILESORT_END_ENABLED() (0)
-#define	MYSQL_FILESORT_START()
-#define	MYSQL_FILESORT_START_ENABLED() (0)
-#define	MYSQL_INSERT_END()
-#define	MYSQL_INSERT_END_ENABLED() (0)
-#define	MYSQL_INSERT_ROW_END()
-#define	MYSQL_INSERT_ROW_END_ENABLED() (0)
-#define	MYSQL_INSERT_ROW_START()
-#define	MYSQL_INSERT_ROW_START_ENABLED() (0)
-#define	MYSQL_INSERT_START()
-#define	MYSQL_INSERT_START_ENABLED() (0)
-#define	MYSQL_SELECT_END()
-#define	MYSQL_SELECT_END_ENABLED() (0)
-#define	MYSQL_SELECT_START()
-#define	MYSQL_SELECT_START_ENABLED() (0)
-#define	MYSQL_UPDATE_END()
-#define	MYSQL_UPDATE_END_ENABLED() (0)
-#define	MYSQL_UPDATE_START()
-#define	MYSQL_UPDATE_START_ENABLED() (0)
+#define	DRIZZLE_DELETE_END()
+#define	DRIZZLE_DELETE_END_ENABLED() (0)
+#define	DRIZZLE_DELETE_START()
+#define	DRIZZLE_DELETE_START_ENABLED() (0)
+#define	DRIZZLE_EXTERNAL_LOCK(arg0)
+#define	DRIZZLE_EXTERNAL_LOCK_ENABLED() (0)
+#define	DRIZZLE_FILESORT_END()
+#define	DRIZZLE_FILESORT_END_ENABLED() (0)
+#define	DRIZZLE_FILESORT_START()
+#define	DRIZZLE_FILESORT_START_ENABLED() (0)
+#define	DRIZZLE_INSERT_END()
+#define	DRIZZLE_INSERT_END_ENABLED() (0)
+#define	DRIZZLE_INSERT_ROW_END()
+#define	DRIZZLE_INSERT_ROW_END_ENABLED() (0)
+#define	DRIZZLE_INSERT_ROW_START()
+#define	DRIZZLE_INSERT_ROW_START_ENABLED() (0)
+#define	DRIZZLE_INSERT_START()
+#define	DRIZZLE_INSERT_START_ENABLED() (0)
+#define	DRIZZLE_SELECT_END()
+#define	DRIZZLE_SELECT_END_ENABLED() (0)
+#define	DRIZZLE_SELECT_START()
+#define	DRIZZLE_SELECT_START_ENABLED() (0)
+#define	DRIZZLE_UPDATE_END()
+#define	DRIZZLE_UPDATE_END_ENABLED() (0)
+#define	DRIZZLE_UPDATE_START()
+#define	DRIZZLE_UPDATE_START_ENABLED() (0)
 
 #endif
 

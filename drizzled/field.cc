@@ -78,8 +78,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -103,8 +101,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -128,8 +124,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -153,8 +147,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -178,8 +170,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_DOUBLE,      DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -203,8 +193,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_ENUM,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_SET,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -228,8 +216,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -253,8 +239,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -278,8 +262,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -303,8 +285,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -328,8 +308,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -353,8 +331,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_NEWDATE,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -378,8 +354,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -403,8 +377,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_NEWDECIMAL,  DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -428,33 +400,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_BLOB
-    DRIZZLE_TYPE_BLOB,
-  },
-  /* DRIZZLE_TYPE_SET -> */
-  {
-  //DRIZZLE_TYPE_DECIMAL      DRIZZLE_TYPE_TINY
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SHORT        DRIZZLE_TYPE_LONG
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DOUBLE
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NULL         DRIZZLE_TYPE_TIMESTAMP
-    DRIZZLE_TYPE_SET,         DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_LONGLONG
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATE         DRIZZLE_TYPE_TIME
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_DATETIME
-    DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NEWDATE      DRIZZLE_TYPE_VARCHAR
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
-    DRIZZLE_TYPE_VARCHAR,     DRIZZLE_TYPE_VARCHAR,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_VARCHAR,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -478,8 +423,6 @@ static enum_field_types field_types_merge_rules [FIELDTYPE_NUM][FIELDTYPE_NUM]=
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
     DRIZZLE_TYPE_BLOB,        DRIZZLE_TYPE_BLOB,
-  //DRIZZLE_TYPE_SET
-    DRIZZLE_TYPE_BLOB,
   //DRIZZLE_TYPE_BLOB
     DRIZZLE_TYPE_BLOB,
   },
@@ -525,8 +468,6 @@ static Item_result field_types_result_type [FIELDTYPE_NUM]=
   STRING_RESULT,            STRING_RESULT,
   //DRIZZLE_TYPE_NEWDECIMAL   DRIZZLE_TYPE_ENUM
   DECIMAL_RESULT,           STRING_RESULT,
-  //DRIZZLE_TYPE_SET
-  STRING_RESULT,
   //DRIZZLE_TYPE_BLOB
   STRING_RESULT,
 };
@@ -1296,7 +1237,7 @@ bool Field::optimize_range(uint idx, uint part)
 }
 
 
-Field *Field::new_field(MEM_ROOT *root, struct st_table *new_table,
+Field *Field::new_field(MEM_ROOT *root, Table *new_table,
                         bool keep_type __attribute__((unused)))
 {
   Field *tmp;
@@ -1316,7 +1257,7 @@ Field *Field::new_field(MEM_ROOT *root, struct st_table *new_table,
 }
 
 
-Field *Field::new_key_field(MEM_ROOT *root, struct st_table *new_table,
+Field *Field::new_key_field(MEM_ROOT *root, Table *new_table,
                             uchar *new_ptr, uchar *new_null_ptr,
                             uint new_null_bit)
 {
@@ -1331,9 +1272,9 @@ Field *Field::new_key_field(MEM_ROOT *root, struct st_table *new_table,
 }
 
 
-/* This is used to generate a field in TABLE from TABLE_SHARE */
+/* This is used to generate a field in Table from TABLE_SHARE */
 
-Field *Field::clone(MEM_ROOT *root, struct st_table *new_table)
+Field *Field::clone(MEM_ROOT *root, Table *new_table)
 {
   Field *tmp;
   if ((tmp= (Field*) memdup_root(root,(char*) this,size_of())))
@@ -1966,7 +1907,7 @@ void Field_enum::sql_type(String &res) const
 }
 
 
-Field *Field_enum::new_field(MEM_ROOT *root, struct st_table *new_table,
+Field *Field_enum::new_field(MEM_ROOT *root, Table *new_table,
                              bool keep_type)
 {
   Field_enum *res= (Field_enum*) Field::new_field(root, new_table, keep_type);
@@ -2059,7 +2000,6 @@ void Create_field::create_length_to_internal_length(void)
     pack_length= calc_pack_length(sql_type, length);
     break;
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
     /* Pack_length already calculated in sql_parse.cc */
     length*= charset->mbmaxlen;
     key_length= pack_length;
@@ -2121,7 +2061,7 @@ void Create_field::init_for_tmp_table(enum_field_types sql_type_arg,
     true  on error
 */
 
-bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
+bool Create_field::init(THD *thd __attribute__((unused)), char *fld_name, enum_field_types fld_type,
                         char *fld_length, char *fld_decimals,
                         uint fld_type_modifier, Item *fld_default_value,
                         Item *fld_on_update_value, LEX_STRING *fld_comment,
@@ -2224,29 +2164,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
       /* Allow empty as default value. */
       String str,*res;
       res= fld_default_value->val_str(&str);
-      /*
-        A default other than '' is always an error, and any non-NULL
-        specified default is an error in strict mode.
-      */
-      if (res->length() || (thd->variables.sql_mode &
-                            (MODE_STRICT_TRANS_TABLES |
-                             MODE_STRICT_ALL_TABLES)))
-      {
-        my_error(ER_BLOB_CANT_HAVE_DEFAULT, MYF(0),
-                 fld_name); /* purecov: inspected */
-        return(true);
-      }
-      else
-      {
-        /*
-          Otherwise a default of '' is just a warning.
-        */
-        push_warning_printf(thd, DRIZZLE_ERROR::WARN_LEVEL_WARN,
-                            ER_BLOB_CANT_HAVE_DEFAULT,
-                            ER(ER_BLOB_CANT_HAVE_DEFAULT),
-                            fld_name);
-      }
-      def= 0;
     }
     flags|= BLOB_FLAG;
     break;
@@ -2331,22 +2248,6 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   case DRIZZLE_TYPE_DATETIME:
     length= MAX_DATETIME_WIDTH;
     break;
-  case DRIZZLE_TYPE_SET:
-    {
-      pack_length= get_set_pack_length(fld_interval_list->elements);
-
-      List_iterator<String> it(*fld_interval_list);
-      String *tmp;
-      while ((tmp= it++))
-        interval_list.push_back(tmp);
-      /*
-        Set fake length to 1 to pass the below conditions.
-        Real length will be set in mysql_prepare_table()
-        when we know the character set of the column
-      */
-      length= 1;
-      break;
-    }
   case DRIZZLE_TYPE_ENUM:
     {
       /* Should be safe. */
@@ -2364,7 +2265,7 @@ bool Create_field::init(THD *thd, char *fld_name, enum_field_types fld_type,
   char_length= length;
 
   if (!(flags & BLOB_FLAG) &&
-      ((length > max_field_charlength && fld_type != DRIZZLE_TYPE_SET &&
+      ((length > max_field_charlength &&
         fld_type != DRIZZLE_TYPE_ENUM &&
         (fld_type != DRIZZLE_TYPE_VARCHAR || fld_default_value)) ||
        (!length && fld_type != DRIZZLE_TYPE_VARCHAR)))
@@ -2415,7 +2316,6 @@ uint32_t calc_pack_length(enum_field_types type,uint32_t length)
   case DRIZZLE_TYPE_LONGLONG: return 8;	/* Don't crash if no int64_t */
   case DRIZZLE_TYPE_NULL	: return 0;
   case DRIZZLE_TYPE_BLOB:		return 4+portable_sizeof_char_ptr;
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_ENUM:
   case DRIZZLE_TYPE_NEWDECIMAL:
     abort(); return 0;                          // This shouldn't happen
@@ -2495,10 +2395,6 @@ Field *make_field(TABLE_SHARE *share, uchar *ptr, uint32_t field_length,
 	return new Field_enum(ptr,field_length,null_pos,null_bit,
 				  unireg_check, field_name,
 				  pack_length, interval, field_charset);
-      else
-	return new Field_set(ptr,field_length,null_pos,null_bit,
-			     unireg_check, field_name,
-			     pack_length, interval, field_charset);
     }
   }
 
@@ -2588,7 +2484,6 @@ Create_field::Create_field(Field *old_field,Field *orig_field)
     break;
     /* Change CHAR -> VARCHAR if dynamic record length */
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_VARCHAR:
     /* This is corrected in create_length_to_internal_length */
     length= (length+charset->mbmaxlen-1) / charset->mbmaxlen;

@@ -1302,7 +1302,7 @@ CREATE TABLE t3 engine=archive select * FROM t2;
 select * FROM t3 where fld3='bonfire';
 select count(*) FROM t3;
 # Clean up path in error message
---replace_result $MYSQL_TEST_DIR . /var/master-data/ /
+--replace_result $DRIZZLE_TEST_DIR . /var/master-data/ /
 rename table t3 to t4;
 select * FROM t4 where fld3='bonfire';
 select count(*) FROM t4;

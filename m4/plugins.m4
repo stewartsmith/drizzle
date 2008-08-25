@@ -7,10 +7,10 @@ dnl
 dnl Framework for pluggable static and dynamic plugins for mysql
 dnl
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN
+dnl Macro: DRIZZLE_PLUGIN
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN([name],[Plugin name],
+dnl   DRIZZLE_PLUGIN([name],[Plugin name],
 dnl                [Plugin description],
 dnl                [group,group...])
 dnl   
@@ -20,27 +20,27 @@ dnl   Adds plugin as member to configuration groups (if specified)
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN],[
- _MYSQL_PLUGIN(
+AC_DEFUN([DRIZZLE_PLUGIN],[
+ _DRIZZLE_PLUGIN(
   [$1],
-  [__MYSQL_PLUGIN_]AS_TR_CPP([$1])[__],
+  [__DRIZZLE_PLUGIN_]AS_TR_CPP([$1])[__],
   m4_default([$2], [$1 plugin]),
   m4_default([$3], [plugin for $1]),
   m4_default([$4], []),
  )
 ])
 
-AC_DEFUN([_MYSQL_PLUGIN],[
+AC_DEFUN([_DRIZZLE_PLUGIN],[
  m4_ifdef([$2], [
-  AC_FATAL([Duplicate MYSQL_PLUGIN declaration for $3])
+  AC_FATAL([Duplicate DRIZZLE_PLUGIN declaration for $3])
  ],[
   m4_define([$2], [$1])
-  _MYSQL_PLUGAPPEND([__mysql_plugin_list__],[$1])
-  m4_define([MYSQL_PLUGIN_NAME_]AS_TR_CPP([$1]), [$3])
-  m4_define([MYSQL_PLUGIN_DESC_]AS_TR_CPP([$1]), [$4])
-  _MYSQL_PLUGAPPEND_META([$1], $5)
+  _DRIZZLE_PLUGAPPEND([__mysql_plugin_list__],[$1])
+  m4_define([DRIZZLE_PLUGIN_NAME_]AS_TR_CPP([$1]), [$3])
+  m4_define([DRIZZLE_PLUGIN_DESC_]AS_TR_CPP([$1]), [$4])
+  _DRIZZLE_PLUGAPPEND_META([$1], $5)
   ifelse(m4_bregexp(__mysql_include__,[/plug\.in$]),-1,[],[
-     MYSQL_PLUGIN_DIRECTORY([$1],
+     DRIZZLE_PLUGIN_DIRECTORY([$1],
          m4_bregexp(__mysql_include__,[^\(.*\)/plug\.in$],[\1]))
   ])
  ])
@@ -48,10 +48,10 @@ AC_DEFUN([_MYSQL_PLUGIN],[
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_STORAGE_ENGINE
+dnl Macro: DRIZZLE_STORAGE_ENGINE
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_STORAGE_ENGINE([name],[legacy-option],[Storage engine name],
+dnl   DRIZZLE_STORAGE_ENGINE([name],[legacy-option],[Storage engine name],
 dnl                        [Storage engine description],[group,group...])
 dnl
 dnl DESCRIPTION
@@ -59,17 +59,17 @@ dnl   Short cut for storage engine declarations
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_STORAGE_ENGINE],[
- MYSQL_PLUGIN([$1], [$3], [$4], [[$5]])
- MYSQL_PLUGIN_DEFINE([$1], [WITH_]AS_TR_CPP([$1])[_STORAGE_ENGINE])
+AC_DEFUN([DRIZZLE_STORAGE_ENGINE],[
+ DRIZZLE_PLUGIN([$1], [$3], [$4], [[$5]])
+ DRIZZLE_PLUGIN_DEFINE([$1], [WITH_]AS_TR_CPP([$1])[_STORAGE_ENGINE])
  ifelse([$2],[no],[],[
-  _MYSQL_LEGACY_STORAGE_ENGINE(
+  _DRIZZLE_LEGACY_STORAGE_ENGINE(
       m4_bpatsubst([$1], -, _),
       m4_bpatsubst(m4_default([$2], [$1-storage-engine]), -, _))
  ])
 ])
 
-AC_DEFUN([_MYSQL_LEGACY_STORAGE_ENGINE],[
+AC_DEFUN([_DRIZZLE_LEGACY_STORAGE_ENGINE],[
 if test "[${with_]$2[+set}]" = set; then
   [with_plugin_]$1="[$with_]$2"
 fi
@@ -77,27 +77,27 @@ fi
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_DEFINE
+dnl Macro: DRIZZLE_PLUGIN_DEFINE
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_DEFINE([name],[MYSQL_CPP_DEFINE])
+dnl   DRIZZLE_PLUGIN_DEFINE([name],[DRIZZLE_CPP_DEFINE])
 dnl
 dnl DESCRIPTION
 dnl   When a plugin is to be statically linked, define the C macro
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_DEFINE],[
- MYSQL_REQUIRE_PLUGIN([$1])
- m4_define([MYSQL_PLUGIN_DEFINE_]AS_TR_CPP([$1]), [$2])
+AC_DEFUN([DRIZZLE_PLUGIN_DEFINE],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
+ m4_define([DRIZZLE_PLUGIN_DEFINE_]AS_TR_CPP([$1]), [$2])
 ])
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_DIRECTORY
+dnl Macro: DRIZZLE_PLUGIN_DIRECTORY
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_DIRECTORY([name],[plugin/dir])
+dnl   DRIZZLE_PLUGIN_DIRECTORY([name],[plugin/dir])
 dnl
 dnl DESCRIPTION
 dnl   Adds a directory to the build process
@@ -105,66 +105,66 @@ dnl   if it contains 'configure' it will be picked up automatically
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_DIRECTORY],[
- MYSQL_REQUIRE_PLUGIN([$1])
- m4_define([MYSQL_PLUGIN_DIRECTORY_]AS_TR_CPP([$1]), [$2])
+AC_DEFUN([DRIZZLE_PLUGIN_DIRECTORY],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
+ m4_define([DRIZZLE_PLUGIN_DIRECTORY_]AS_TR_CPP([$1]), [$2])
 ])
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_STATIC
+dnl Macro: DRIZZLE_PLUGIN_STATIC
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_STATIC([name],[libmyplugin.a])
+dnl   DRIZZLE_PLUGIN_STATIC([name],[libmyplugin.a])
 dnl
 dnl DESCRIPTION
 dnl   Declare the name for the static library 
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_STATIC],[
- MYSQL_REQUIRE_PLUGIN([$1])
- m4_define([MYSQL_PLUGIN_STATIC_]AS_TR_CPP([$1]), [$2])
+AC_DEFUN([DRIZZLE_PLUGIN_STATIC],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
+ m4_define([DRIZZLE_PLUGIN_STATIC_]AS_TR_CPP([$1]), [$2])
 ])
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_DYNAMIC
+dnl Macro: DRIZZLE_PLUGIN_DYNAMIC
 dnl
 dnl SYNOPSIS
-dnl  MYSQL_PLUGIN_DYNAMIC([name],[myplugin.la])
+dnl  DRIZZLE_PLUGIN_DYNAMIC([name],[myplugin.la])
 dnl
 dnl DESCRIPTION
 dnl   Declare the name for the shared library
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_DYNAMIC],[
- MYSQL_REQUIRE_PLUGIN([$1])
- m4_define([MYSQL_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]), [$2])
+AC_DEFUN([DRIZZLE_PLUGIN_DYNAMIC],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
+ m4_define([DRIZZLE_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]), [$2])
 ])
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_MANDATORY
+dnl Macro: DRIZZLE_PLUGIN_MANDATORY
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_MANDATORY([name])
+dnl   DRIZZLE_PLUGIN_MANDATORY([name])
 dnl
 dnl DESCRIPTION
 dnl   Marks the specified plugin as a mandatory plugin
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_MANDATORY],[
- MYSQL_REQUIRE_PLUGIN([$1])
- _MYSQL_PLUGIN_MANDATORY([$1],
-  [MYSQL_PLUGIN_MANDATORY_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DISABLED_]AS_TR_CPP([$1])
+AC_DEFUN([DRIZZLE_PLUGIN_MANDATORY],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
+ _DRIZZLE_PLUGIN_MANDATORY([$1],
+  [DRIZZLE_PLUGIN_MANDATORY_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DISABLED_]AS_TR_CPP([$1])
  )
 ])
 
-AC_DEFUN([_MYSQL_PLUGIN_MANDATORY],[
+AC_DEFUN([_DRIZZLE_PLUGIN_MANDATORY],[
  m4_define([$2], [yes])
  m4_ifdef([$3], [
   AC_FATAL([mandatory plugin $1 has been disabled])
@@ -174,25 +174,25 @@ AC_DEFUN([_MYSQL_PLUGIN_MANDATORY],[
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_DISABLED
+dnl Macro: DRIZZLE_PLUGIN_DISABLED
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_DISABLED([name])
+dnl   DRIZZLE_PLUGIN_DISABLED([name])
 dnl
 dnl DESCRIPTION
 dnl   Marks the specified plugin as a disabled plugin
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_DISABLED],[
- MYSQL_REQUIRE_PLUGIN([$1])
- _MYSQL_PLUGIN_DISABLED([$1], 
-  [MYSQL_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_MANDATORY_]AS_TR_CPP([$1])
+AC_DEFUN([DRIZZLE_PLUGIN_DISABLED],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
+ _DRIZZLE_PLUGIN_DISABLED([$1], 
+  [DRIZZLE_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_MANDATORY_]AS_TR_CPP([$1])
  )
 ])
 
-AC_DEFUN([_MYSQL_PLUGIN_DISABLED],[
+AC_DEFUN([_DRIZZLE_PLUGIN_DISABLED],[
  m4_define([$2], [yes])
  m4_ifdef([$3], [
   AC_FATAL([attempt to disable mandatory plugin $1])
@@ -202,10 +202,10 @@ AC_DEFUN([_MYSQL_PLUGIN_DISABLED],[
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_DEPENDS
+dnl Macro: DRIZZLE_PLUGIN_DEPENDS
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_DEPENDS([name],[prereq,prereq...])
+dnl   DRIZZLE_PLUGIN_DEPENDS([name],[prereq,prereq...])
 dnl
 dnl DESCRIPTION
 dnl   Enables other plugins neccessary for the named plugin
@@ -215,49 +215,49 @@ dnl   here too!
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_DEPENDS],[
- MYSQL_REQUIRE_PLUGIN([$1])
+AC_DEFUN([DRIZZLE_PLUGIN_DEPENDS],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
  ifelse($#, 2, [
-  _MYSQL_PLUGIN_DEPEND([$1], $2)
+  _DRIZZLE_PLUGIN_DEPEND([$1], $2)
  ], [
   AC_FATAL([bad number of arguments])
  ])
 ])
 
-AC_DEFUN([_MYSQL_PLUGIN_DEPEND],[
+AC_DEFUN([_DRIZZLE_PLUGIN_DEPEND],[
  ifelse($#, 1, [], [$#:$2], [2:], [], [
-  MYSQL_REQUIRE_PLUGIN([$2])
-  _MYSQL_PLUGAPPEND([__mysql_plugdepends_$1__],[$2])
-  _MYSQL_PLUGIN_DEPEND([$1], m4_shift(m4_shift($@)))
+  DRIZZLE_REQUIRE_PLUGIN([$2])
+  _DRIZZLE_PLUGAPPEND([__mysql_plugdepends_$1__],[$2])
+  _DRIZZLE_PLUGIN_DEPEND([$1], m4_shift(m4_shift($@)))
  ])
 ])
 
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_ACTIONS
+dnl Macro: DRIZZLE_PLUGIN_ACTIONS
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_ACTIONS([name],[PLUGIN_CONFIGURE_STUFF])
+dnl   DRIZZLE_PLUGIN_ACTIONS([name],[PLUGIN_CONFIGURE_STUFF])
 dnl
 dnl DESCRIPTION
 dnl   Declares additional autoconf actions required to configure the plugin
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_ACTIONS],[
- MYSQL_REQUIRE_PLUGIN([$1])
+AC_DEFUN([DRIZZLE_PLUGIN_ACTIONS],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
  m4_ifdef([$2],[
-   m4_define([MYSQL_PLUGIN_ACTIONS_]AS_TR_CPP([$1]),m4_defn([$2]))
+   m4_define([DRIZZLE_PLUGIN_ACTIONS_]AS_TR_CPP([$1]),m4_defn([$2]))
  ],[
-   m4_define([MYSQL_PLUGIN_ACTIONS_]AS_TR_CPP([$1]), [$2])
+   m4_define([DRIZZLE_PLUGIN_ACTIONS_]AS_TR_CPP([$1]), [$2])
  ])
 ])
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_PLUGIN_DEPENDS_ON_MYSQL_INTERNALS
+dnl Macro: DRIZZLE_PLUGIN_DEPENDS_ON_DRIZZLE_INTERNALS
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_DEPENDS_ON_MYSQL_INTERNALS([name],[file name])
+dnl   DRIZZLE_PLUGIN_DEPENDS_ON_DRIZZLE_INTERNALS([name],[file name])
 dnl
 dnl DESCRIPTION
 dnl   Some modules in plugins keep dependance on structures
@@ -271,16 +271,16 @@ dnl    (currently only one such a file per plugin is supported)
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_PLUGIN_DEPENDS_ON_MYSQL_INTERNALS],[
- MYSQL_REQUIRE_PLUGIN([$1])
- m4_define([MYSQL_PLUGIN_DEPENDS_ON_MYSQL_INTERNALS_]AS_TR_CPP([$1]), [$2])
+AC_DEFUN([DRIZZLE_PLUGIN_DEPENDS_ON_DRIZZLE_INTERNALS],[
+ DRIZZLE_REQUIRE_PLUGIN([$1])
+ m4_define([DRIZZLE_PLUGIN_DEPENDS_ON_DRIZZLE_INTERNALS_]AS_TR_CPP([$1]), [$2])
 ])
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: MYSQL_CONFIGURE_PLUGINS
+dnl Macro: DRIZZLE_CONFIGURE_PLUGINS
 dnl
 dnl SYNOPSIS
-dnl   MYSQL_PLUGIN_DEPENDS([name,name...])
+dnl   DRIZZLE_PLUGIN_DEPENDS([name,name...])
 dnl
 dnl DESCRIPTION
 dnl   Used last, emits all required shell code to configure the plugins
@@ -288,19 +288,19 @@ dnl   Argument is a list of default plugins or meta-plugin
 dnl
 dnl ---------------------------------------------------------------------------
 
-AC_DEFUN([MYSQL_CONFIGURE_PLUGINS],[
+AC_DEFUN([DRIZZLE_CONFIGURE_PLUGINS],[
  m4_ifdef([__mysql_plugin_configured__],[
-   AC_FATAL([cannot use [MYSQL_CONFIGURE_PLUGINS] multiple times])
+   AC_FATAL([cannot use [DRIZZLE_CONFIGURE_PLUGINS] multiple times])
  ],[
    m4_define([__mysql_plugin_configured__],[done])
-   _MYSQL_INCLUDE_LIST(
+   _DRIZZLE_INCLUDE_LIST(
    m4_bpatsubst(m4_esyscmd([ls plugin/*/plug.in storage/*/plug.in 2>/dev/null]),
 [[ 
 ]],[,]))
    m4_ifdef([__mysql_plugin_list__],[
-    _MYSQL_CHECK_PLUGIN_ARGS([$1])
-    _MYSQL_CONFIGURE_PLUGINS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
-    _MYSQL_EMIT_PLUGIN_ACTIONS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
+    _DRIZZLE_CHECK_PLUGIN_ARGS([$1])
+    _DRIZZLE_CONFIGURE_PLUGINS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
+    _DRIZZLE_EMIT_PLUGIN_ACTIONS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
     AC_SUBST([mysql_se_dirs])
     AC_SUBST([mysql_pg_dirs])
     AC_SUBST([mysql_se_unittest_dirs])
@@ -313,33 +313,33 @@ AC_DEFUN([MYSQL_CONFIGURE_PLUGINS],[
  ])
 ])
 
-AC_DEFUN([_MYSQL_CONFIGURE_PLUGINS],[
+AC_DEFUN([_DRIZZLE_CONFIGURE_PLUGINS],[
  ifelse($#, 0, [], $#, 1, [
-  _MYSQL_EMIT_CHECK_PLUGIN([$1])
+  _DRIZZLE_EMIT_CHECK_PLUGIN([$1])
  ],[
-  _MYSQL_EMIT_CHECK_PLUGIN([$1])
-  _MYSQL_CONFIGURE_PLUGINS(m4_shift($@))
+  _DRIZZLE_EMIT_CHECK_PLUGIN([$1])
+  _DRIZZLE_CONFIGURE_PLUGINS(m4_shift($@))
  ])
 ])
 
-AC_DEFUN([_MYSQL_EMIT_CHECK_PLUGIN],[
- __MYSQL_EMIT_CHECK_PLUGIN(
+AC_DEFUN([_DRIZZLE_EMIT_CHECK_PLUGIN],[
+ __DRIZZLE_EMIT_CHECK_PLUGIN(
   [$1],
   m4_bpatsubst([$1], -, _),
-  [MYSQL_PLUGIN_NAME_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DESC_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DEFINE_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DIRECTORY_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_STATIC_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_MANDATORY_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DEPENDS_ON_MYSQL_INTERNALS_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_ACTIONS_]AS_TR_CPP([$1])
+  [DRIZZLE_PLUGIN_NAME_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DESC_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DEFINE_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DIRECTORY_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_STATIC_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_MANDATORY_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DEPENDS_ON_DRIZZLE_INTERNALS_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_ACTIONS_]AS_TR_CPP([$1])
  )
 ])
 
-AC_DEFUN([__MYSQL_EMIT_CHECK_PLUGIN],[
+AC_DEFUN([__DRIZZLE_EMIT_CHECK_PLUGIN],[
  m4_ifdef([$5],[
   AH_TEMPLATE($5, [Include ]$4[ into mysqld])
  ])
@@ -473,26 +473,26 @@ dnl Although this is "pretty", it breaks libmysqld build
  ])
 ])
 
-AC_DEFUN([_MYSQL_EMIT_PLUGIN_ACTIONS],[
+AC_DEFUN([_DRIZZLE_EMIT_PLUGIN_ACTIONS],[
  ifelse($#, 0, [], $#, 1, [
-  _MYSQL_EMIT_PLUGIN_ACTION([$1])
+  _DRIZZLE_EMIT_PLUGIN_ACTION([$1])
  ],[
-  _MYSQL_EMIT_PLUGIN_ACTION([$1])
-  _MYSQL_EMIT_PLUGIN_ACTIONS(m4_shift($@))
+  _DRIZZLE_EMIT_PLUGIN_ACTION([$1])
+  _DRIZZLE_EMIT_PLUGIN_ACTIONS(m4_shift($@))
  ])
 ])
 
-AC_DEFUN([_MYSQL_EMIT_PLUGIN_ACTION],[
- __MYSQL_EMIT_PLUGIN_ACTION(
+AC_DEFUN([_DRIZZLE_EMIT_PLUGIN_ACTION],[
+ __DRIZZLE_EMIT_PLUGIN_ACTION(
   [$1],
   m4_bpatsubst([$1], -, _),
-  [MYSQL_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_ACTIONS_]AS_TR_CPP([$1])
+  [DRIZZLE_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_ACTIONS_]AS_TR_CPP([$1])
  )
 ])
 
 
-AC_DEFUN([__MYSQL_EMIT_PLUGIN_ACTION],[
+AC_DEFUN([__DRIZZLE_EMIT_PLUGIN_ACTION],[
  m4_ifdef([$3], [], [
   if test "X[$with_plugin_]$2" = Xyes; then
     if test "X[$plugin_]$2[_static_target]" = X -a \
@@ -512,22 +512,22 @@ dnl ===========================================================================
 
 
 dnl SYNOPSIS
-dnl   MYSQL_REQUIRE_PLUGIN([name])
+dnl   DRIZZLE_REQUIRE_PLUGIN([name])
 dnl
 dnl DESCRIPTION
 dnl   Checks that the specified plugin does exist
 
-AC_DEFUN([MYSQL_REQUIRE_PLUGIN],[
- _MYSQL_REQUIRE_PLUGIN([$1], [__MYSQL_PLUGIN_]AS_TR_CPP([$1])[__])
+AC_DEFUN([DRIZZLE_REQUIRE_PLUGIN],[
+ _DRIZZLE_REQUIRE_PLUGIN([$1], [__DRIZZLE_PLUGIN_]AS_TR_CPP([$1])[__])
 ])
 
-define([_MYSQL_REQUIRE_PLUGIN],[
+define([_DRIZZLE_REQUIRE_PLUGIN],[
  ifdef([$2],[
   ifelse($2, [$1], [], [
-   AC_FATAL([Misspelt MYSQL_PLUGIN declaration for $1])
+   AC_FATAL([Misspelt DRIZZLE_PLUGIN declaration for $1])
   ])
  ],[
-  AC_FATAL([Missing MYSQL_PLUGIN declaration for $1])
+  AC_FATAL([Missing DRIZZLE_PLUGIN declaration for $1])
  ])
 ])
 
@@ -536,19 +536,19 @@ dnl ---------------------------------------------------------------------------
 
 
 dnl SYNOPSIS
-dnl   _MYSQL_EMIT_METAPLUGINS([name,name...])
+dnl   _DRIZZLE_EMIT_METAPLUGINS([name,name...])
 dnl
 dnl DESCRIPTION
 dnl   Emits shell code for metaplugins
 
-AC_DEFUN([_MYSQL_EMIT_METAPLUGINS], [ifelse($#, 0, [], $#, 1,
-[_MYSQL_EMIT_METAPLUGIN([$1], [__mysql_]m4_bpatsubst($1, -, _)[_plugins__])
+AC_DEFUN([_DRIZZLE_EMIT_METAPLUGINS], [ifelse($#, 0, [], $#, 1,
+[_DRIZZLE_EMIT_METAPLUGIN([$1], [__mysql_]m4_bpatsubst($1, -, _)[_plugins__])
 ],
-[_MYSQL_EMIT_METAPLUGIN([$1], [__mysql_]m4_bpatsubst($1, -, _)[_plugins__])
-_MYSQL_EMIT_METAPLUGINS(m4_shift($@))])
+[_DRIZZLE_EMIT_METAPLUGIN([$1], [__mysql_]m4_bpatsubst($1, -, _)[_plugins__])
+_DRIZZLE_EMIT_METAPLUGINS(m4_shift($@))])
 ])
 
-AC_DEFUN([_MYSQL_EMIT_METAPLUGIN], [
+AC_DEFUN([_DRIZZLE_EMIT_METAPLUGIN], [
   [$1] )
 m4_ifdef([$2], [
     mysql_plugins='m4_bpatsubst($2, :, [ ])'
@@ -563,14 +563,14 @@ dnl ---------------------------------------------------------------------------
 
 
 dnl SYNOPSIS
-dnl   _MYSQL_PLUGAPPEND([name],[to-append])
+dnl   _DRIZZLE_PLUGAPPEND([name],[to-append])
 dnl
 dnl DESCRIPTION
 dnl   Helper macro for appending to colon-delimited lists
 dnl   Optinal 3rd argument is for actions only required when defining
 dnl   macro named for the first time.
 
-AC_DEFUN([_MYSQL_PLUGAPPEND],[
+AC_DEFUN([_DRIZZLE_PLUGAPPEND],[
  m4_ifdef([$1],[
   m4_define([__plugin_append_tmp__], m4_defn([$1]))
   m4_undefine([$1])
@@ -584,22 +584,22 @@ AC_DEFUN([_MYSQL_PLUGAPPEND],[
 
 
 dnl SYNOPSIS
-dnl   _MYSQL_PLUGAPPEND_META([name],[meta,meta...])
+dnl   _DRIZZLE_PLUGAPPEND_META([name],[meta,meta...])
 dnl
 dnl DESCRIPTION
 dnl   Helper macro for adding plugins to meta plugins
 
-AC_DEFUN([_MYSQL_PLUGAPPEND_META],[
+AC_DEFUN([_DRIZZLE_PLUGAPPEND_META],[
  ifelse($#, 1, [], [$#:$2], [2:], [], [$2], [all], [
   AC_FATAL([protected plugin group: all])
  ], [$2], [none], [
   AC_FATAL([protected plugin group: none])
  ],[
-  _MYSQL_PLUGAPPEND([__mysql_$1_configs__],[$2])
-  _MYSQL_PLUGAPPEND([__mysql_]m4_bpatsubst($2, -, _)[_plugins__],[$1], [
-   _MYSQL_PLUGAPPEND([__mysql_metaplugin_list__],[$2])
+  _DRIZZLE_PLUGAPPEND([__mysql_$1_configs__],[$2])
+  _DRIZZLE_PLUGAPPEND([__mysql_]m4_bpatsubst($2, -, _)[_plugins__],[$1], [
+   _DRIZZLE_PLUGAPPEND([__mysql_metaplugin_list__],[$2])
   ])
-  _MYSQL_PLUGAPPEND_META([$1], m4_shift(m4_shift($@)))
+  _DRIZZLE_PLUGAPPEND_META([$1], m4_shift(m4_shift($@)))
  ])
 ])
 
@@ -608,44 +608,44 @@ dnl ---------------------------------------------------------------------------
 
 
 dnl SYNOPSIS
-dnl   MYSQL_LIST_PLUGINS
+dnl   DRIZZLE_LIST_PLUGINS
 dnl
 dnl DESCRIPTION
 dnl   Emits formatted list of declared plugins
 
-AC_DEFUN([MYSQL_LIST_PLUGINS],[dnl
+AC_DEFUN([DRIZZLE_LIST_PLUGINS],[dnl
  m4_ifdef([__mysql_plugin_list__],[dnl
-  _MYSQL_LIST_PLUGINS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))dnl
+  _DRIZZLE_LIST_PLUGINS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))dnl
  ])dnl
 ])
 
-AC_DEFUN([_MYSQL_LIST_PLUGINS],[dnl
+AC_DEFUN([_DRIZZLE_LIST_PLUGINS],[dnl
  ifelse($#, 0, [], $#, 1, [dnl
-  MYSQL_SHOW_PLUGIN([$1])dnl
+  DRIZZLE_SHOW_PLUGIN([$1])dnl
  ],[dnl
-  MYSQL_SHOW_PLUGIN([$1])dnl
-  _MYSQL_LIST_PLUGINS(m4_shift($@))dnl
+  DRIZZLE_SHOW_PLUGIN([$1])dnl
+  _DRIZZLE_LIST_PLUGINS(m4_shift($@))dnl
  ])dnl
 ])
 
-AC_DEFUN([MYSQL_SHOW_PLUGIN],[
- _MYSQL_SHOW_PLUGIN(
+AC_DEFUN([DRIZZLE_SHOW_PLUGIN],[
+ _DRIZZLE_SHOW_PLUGIN(
   [$1],
   [$1-plugin],
-  [MYSQL_PLUGIN_NAME_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DESC_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DEFINE_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DIRECTORY_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_STATIC_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_MANDATORY_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
-  [MYSQL_PLUGIN_ACTIONS_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_NAME_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DESC_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DEFINE_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DIRECTORY_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_STATIC_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_MANDATORY_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_DISABLED_]AS_TR_CPP([$1]),
+  [DRIZZLE_PLUGIN_ACTIONS_]AS_TR_CPP([$1]),
   __mysql_[$1]_configs__,
  )
 ])
 
-AC_DEFUN([_MYSQL_SHOW_PLUGIN],[dnl
+AC_DEFUN([_DRIZZLE_SHOW_PLUGIN],[dnl
   === $3 ===
   Plugin Name:      [$1]
   Description:      $4
@@ -666,26 +666,26 @@ AC_DEFUN([_PLUGIN_BUILD_TYPE],
 dnl ---------------------------------------------------------------------------
 
 
-AC_DEFUN([_MYSQL_EMIT_PLUGINS],[
+AC_DEFUN([_DRIZZLE_EMIT_PLUGINS],[
  ifelse($#, 0, [], [$#:$1], [1:], [], [
-  m4_ifdef([MYSQL_PLUGIN_ACTIONS_]AS_TR_CPP([$1]), [], [
-   m4_define([MYSQL_PLUGIN_ACTIONS_]AS_TR_CPP([$1]),[ ])
+  m4_ifdef([DRIZZLE_PLUGIN_ACTIONS_]AS_TR_CPP([$1]), [], [
+   m4_define([DRIZZLE_PLUGIN_ACTIONS_]AS_TR_CPP([$1]),[ ])
   ])
     [$1] )
-  m4_ifdef([MYSQL_PLUGIN_DISABLED_]AS_TR_CPP([$1]),[
+  m4_ifdef([DRIZZLE_PLUGIN_DISABLED_]AS_TR_CPP([$1]),[
       AC_MSG_ERROR([plugin $1 is disabled])
   ],[
-    _MYSQL_EMIT_PLUGIN_ENABLE([$1], m4_bpatsubst([$1], -, _),
-      [MYSQL_PLUGIN_NAME_]AS_TR_CPP([$1]),
-      [MYSQL_PLUGIN_STATIC_]AS_TR_CPP([$1]),
-      [MYSQL_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]))
+    _DRIZZLE_EMIT_PLUGIN_ENABLE([$1], m4_bpatsubst([$1], -, _),
+      [DRIZZLE_PLUGIN_NAME_]AS_TR_CPP([$1]),
+      [DRIZZLE_PLUGIN_STATIC_]AS_TR_CPP([$1]),
+      [DRIZZLE_PLUGIN_DYNAMIC_]AS_TR_CPP([$1]))
   ])
       ;;
-  _MYSQL_EMIT_PLUGINS(m4_shift($@))
+  _DRIZZLE_EMIT_PLUGINS(m4_shift($@))
  ])
 ])
 
-AC_DEFUN([_MYSQL_EMIT_PLUGIN_ENABLE],[
+AC_DEFUN([_DRIZZLE_EMIT_PLUGIN_ENABLE],[
     m4_ifdef([$5],m4_ifdef([$4],[
       [mysql_plugin_]$2=yes
     ],[
@@ -695,27 +695,27 @@ AC_DEFUN([_MYSQL_EMIT_PLUGIN_ENABLE],[
     ])      
 ])
 
-AC_DEFUN([_MYSQL_EMIT_PLUGIN_DEPENDS], [
+AC_DEFUN([_DRIZZLE_EMIT_PLUGIN_DEPENDS], [
  ifelse($#, 0, [], [$#:$1], [1:], [], [
-  _MYSQL_EMIT_CHECK_DEPENDS(m4_bpatsubst([$1], -, _), 
+  _DRIZZLE_EMIT_CHECK_DEPENDS(m4_bpatsubst([$1], -, _), 
                             [__mysql_plugdepends_$1__])
-  _MYSQL_EMIT_PLUGIN_DEPENDS(m4_shift($@))
+  _DRIZZLE_EMIT_PLUGIN_DEPENDS(m4_shift($@))
  ])
 ])
 
-AC_DEFUN([_MYSQL_EMIT_CHECK_DEPENDS], [
+AC_DEFUN([_DRIZZLE_EMIT_CHECK_DEPENDS], [
  m4_ifdef([$2], [
    if test "X[$mysql_plugin_]$1" = Xyes -a \
            "X[$with_plugin_]$1" != Xno -o \
            "X[$with_plugin_]$1" = Xyes; then
-     _MYSQL_EMIT_PLUGIN_DEPENDENCIES(m4_bpatsubst($2, :, [,]))
+     _DRIZZLE_EMIT_PLUGIN_DEPENDENCIES(m4_bpatsubst($2, :, [,]))
    fi
  ])
 ])
 
-AC_DEFUN([_MYSQL_EMIT_PLUGIN_DEPENDENCIES], [
+AC_DEFUN([_DRIZZLE_EMIT_PLUGIN_DEPENDENCIES], [
  ifelse([$1], [], [], [
-  m4_ifdef([MYSQL_PLUGIN_DISABLED_]AS_TR_CPP([$1]),[
+  m4_ifdef([DRIZZLE_PLUGIN_DISABLED_]AS_TR_CPP([$1]),[
        AC_MSG_ERROR([depends upon disabled plugin $1])
   ],[
        [mysql_plugin_]m4_bpatsubst([$1], -, _)=yes
@@ -723,22 +723,22 @@ AC_DEFUN([_MYSQL_EMIT_PLUGIN_DEPENDENCIES], [
          AC_MSG_ERROR([depends upon disabled plugin $1])
        fi
   ])
-  _MYSQL_EMIT_PLUGIN_DEPENDENCIES(m4_shift($@))
+  _DRIZZLE_EMIT_PLUGIN_DEPENDENCIES(m4_shift($@))
  ])
 ])
 
 dnl SYNOPSIS
-dnl   _MYSQL_CHECK_PLUGIN_ARGS([plugin],[plugin]...)
+dnl   _DRIZZLE_CHECK_PLUGIN_ARGS([plugin],[plugin]...)
 dnl
 dnl DESCRIPTION
 dnl   Emits shell script for checking configure arguments
 dnl   Arguments to this macro is default value for selected plugins
 
-AC_DEFUN([_MYSQL_CHECK_PLUGIN_ARGS],[
- __MYSQL_CHECK_PLUGIN_ARGS(m4_default([$1], [none]))
+AC_DEFUN([_DRIZZLE_CHECK_PLUGIN_ARGS],[
+ __DRIZZLE_CHECK_PLUGIN_ARGS(m4_default([$1], [none]))
 ])
 
-AC_DEFUN([__MYSQL_CHECK_PLUGIN_ARGS],[
+AC_DEFUN([__DRIZZLE_CHECK_PLUGIN_ARGS],[
  AC_ARG_WITH([plugins],
 AS_HELP_STRING([--with-plugins=PLUGIN[[[[[,PLUGIN..]]]]]],
                [Plugins to include in mysqld. (default is: $1) Must be a
@@ -761,7 +761,7 @@ AS_HELP_STRING([--with-plugin-PLUGIN],
 
 m4_divert_once([HELP_VAR_END],[
 Description of plugins:
-MYSQL_LIST_PLUGINS])
+DRIZZLE_LIST_PLUGINS])
 
   case "$mysql_plugins" in
   all )
@@ -771,7 +771,7 @@ MYSQL_LIST_PLUGINS])
     mysql_plugins=''
     ;;
 m4_ifdef([__mysql_metaplugin_list__],[
-_MYSQL_EMIT_METAPLUGINS(m4_bpatsubst(__mysql_metaplugin_list__, :, [,]))
+_DRIZZLE_EMIT_METAPLUGINS(m4_bpatsubst(__mysql_metaplugin_list__, :, [,]))
 ])
   esac
 
@@ -780,27 +780,27 @@ _MYSQL_EMIT_METAPLUGINS(m4_bpatsubst(__mysql_metaplugin_list__, :, [,]))
     all | none )
       AC_MSG_ERROR([bad plugin name: $plugin])
       ;;
-_MYSQL_EMIT_PLUGINS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
+_DRIZZLE_EMIT_PLUGINS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
     * )
       AC_MSG_ERROR([unknown plugin: $plugin])
       ;;
     esac
   done
 
-  _MYSQL_EMIT_PLUGIN_DEPENDS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
+  _DRIZZLE_EMIT_PLUGIN_DEPENDS(m4_bpatsubst(__mysql_plugin_list__, :, [,]))
 ])
 
 dnl ---------------------------------------------------------------------------
-dnl Macro: _MYSQL_INCLUDE_LIST
+dnl Macro: _DRIZZLE_INCLUDE_LIST
 dnl
 dnl SYNOPSIS
-dnl   _MYSQL_INCLUDE_LIST([filename,filename...])
+dnl   _DRIZZLE_INCLUDE_LIST([filename,filename...])
 dnl
 dnl DESCRIPTION
 dnl   includes all files from the list
 dnl
 dnl ---------------------------------------------------------------------------
-AC_DEFUN([_MYSQL_INCLUDE_LIST],[
+AC_DEFUN([_DRIZZLE_INCLUDE_LIST],[
  ifelse([$1], [], [], [
   m4_define([__mysql_include__],[$1])
   dnl We have to use builtin(), because sinclude would generate an error
@@ -808,7 +808,7 @@ AC_DEFUN([_MYSQL_INCLUDE_LIST],[
   dnl violating m4 specs, and which is fixed in aclocal-1.9
   builtin([include],$1)
   m4_undefine([__mysql_include__])
-  _MYSQL_INCLUDE_LIST(m4_shift($@))
+  _DRIZZLE_INCLUDE_LIST(m4_shift($@))
  ])
 ])
 

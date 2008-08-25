@@ -247,7 +247,6 @@ enum ha_base_keytype Field_varstring::key_type() const
 
 void Field_varstring::sql_type(String &res) const
 {
-  THD *thd= table->in_use;
   const CHARSET_INFO * const cs=res.charset();
   uint32_t length;
 
@@ -256,9 +255,6 @@ void Field_varstring::sql_type(String &res) const
                               (has_charset() ? "varchar" : "varbinary"),
                              (int) field_length / charset()->mbmaxlen);
   res.length(length);
-  if ((thd->variables.sql_mode & (MODE_MYSQL323 | MODE_MYSQL40)) &&
-      has_charset() && (charset()->state & MY_CS_BINSORT))
-    res.append(STRING_WITH_LEN(" binary"));
 }
 
 
@@ -547,8 +543,7 @@ int Field_varstring::cmp_binary(const uchar *a_ptr, const uchar *b_ptr,
 }
 
 
-Field *Field_varstring::new_field(MEM_ROOT *root, struct st_table *new_table,
-                                  bool keep_type)
+Field *Field_varstring::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
 {
   Field_varstring *res= (Field_varstring*) Field::new_field(root, new_table,
                                                             keep_type);
@@ -559,7 +554,7 @@ Field *Field_varstring::new_field(MEM_ROOT *root, struct st_table *new_table,
 
 
 Field *Field_varstring::new_key_field(MEM_ROOT *root,
-                                      struct st_table *new_table,
+                                      Table *new_table,
                                       uchar *new_ptr, uchar *new_null_ptr,
                                       uint new_null_bit)
 {

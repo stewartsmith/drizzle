@@ -45,15 +45,17 @@ libsqlcommon_la_SOURCES = pack.c my_time.c errmsg.c password.c
 
 DEFS =			-DDEFAULT_CHARSET_HOME="\"$(MYSQLBASEdir)\"" \
 			-DDATADIR="\"$(MYSQLDATAdir)\"" \
-			-DDEFAULT_HOME_ENV=MYSQL_HOME \
-			-DDEFAULT_GROUP_SUFFIX_ENV=MYSQL_GROUP_SUFFIX \
+			-DDEFAULT_HOME_ENV=DRIZZLE_HOME \
+			-DDEFAULT_GROUP_SUFFIX_ENV=DRIZZLE_GROUP_SUFFIX \
 			-DDEFAULT_SYSCONFDIR="\"$(sysconfdir)\"" \
 			-DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
 			-DUNDEF_THREADS_HACK
 
 noinst_HEADERS = 	client_settings.h \
-			my_time.h
+			my_time.h \
+			gettext.h
 
+EXTRA_DIST =		libdrizzle.ver
 CLEANFILES =		$(target_libadd) $(SHLIBOBJS) \
 			$(target) $(BUILT_SOURCES)
 

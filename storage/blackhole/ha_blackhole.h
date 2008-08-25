@@ -90,7 +90,7 @@ public:
   void position(const uchar *record);
   int info(uint flag);
   int external_lock(THD *thd, int lock_type);
-  int create(const char *name, TABLE *table_arg,
+  int create(const char *name, Table *table_arg,
              HA_CREATE_INFO *create_info);
   THR_LOCK_DATA **store_lock(THD *thd,
                              THR_LOCK_DATA **to,

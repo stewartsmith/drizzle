@@ -18,7 +18,7 @@
 #pragma implementation				// gcc: Class implementation
 #endif
 
-#define MYSQL_SERVER 1
+#define DRIZZLE_SERVER 1
 
 #include <drizzled/server_includes.h>
 #include <mysys/my_bit.h>
@@ -102,11 +102,11 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
 
 
 /*
-  Convert TABLE object to MyISAM key and column definition
+  Convert Table object to MyISAM key and column definition
 
   SYNOPSIS
     table2myisam()
-      table_arg   in     TABLE object.
+      table_arg   in     Table object.
       keydef_out  out    MyISAM key definition.
       recinfo_out out    MyISAM column definition.
       records_out out    Number of fields.
@@ -125,7 +125,7 @@ static void mi_check_print_msg(MI_CHECK *param,	const char* msg_type,
     !0 error code
 */
 
-int table2myisam(TABLE *table_arg, MI_KEYDEF **keydef_out,
+int table2myisam(Table *table_arg, MI_KEYDEF **keydef_out,
                  MI_COLUMNDEF **recinfo_out, uint *records_out)
 {
   uint i, j, recpos, minpos, fieldpos, temp_length, length;
@@ -845,7 +845,7 @@ int ha_myisam::repair(THD *thd, MI_CHECK &param, bool do_optimize)
   param.out_flag= 0;
   stpcpy(fixed_name,file->filename);
 
-  // Don't lock tables if we have used LOCK TABLE
+  // Don't lock tables if we have used LOCK Table
   if (!thd->locked_tables && 
       mi_lock_database(file, table->s->tmp_table ? F_EXTRA_LCK : F_WRLCK))
   {
@@ -973,7 +973,7 @@ int ha_myisam::assign_to_keycache(THD* thd, HA_CHECK_OPT *check_opt)
   const char *errmsg= 0;
   int error= HA_ADMIN_OK;
   uint64_t map;
-  TABLE_LIST *table_list= table->pos_in_table_list;
+  TableList *table_list= table->pos_in_table_list;
 
   table->keys_in_use_for_query.clear_all();
 
@@ -1190,24 +1190,22 @@ void ha_myisam::start_bulk_insert(ha_rows rows)
   can_enable_indexes= mi_is_all_keys_active(file->s->state.key_map,
                                             file->s->base.keys);
 
-  if (!(specialflag & SPECIAL_SAFE_MODE))
-  {
-    /*
-      Only disable old index if the table was empty and we are inserting
-      a lot of rows.
-      We should not do this for only a few rows as this is slower and
-      we don't want to update the key statistics based of only a few rows.
-    */
-    if (file->state->records == 0 && can_enable_indexes &&
-        (!rows || rows >= MI_MIN_ROWS_TO_DISABLE_INDEXES))
-      mi_disable_non_unique_index(file,rows);
-    else
+  /*
+    Only disable old index if the table was empty and we are inserting
+    a lot of rows.
+    We should not do this for only a few rows as this is slower and
+    we don't want to update the key statistics based of only a few rows.
+  */
+  if (file->state->records == 0 && can_enable_indexes &&
+      (!rows || rows >= MI_MIN_ROWS_TO_DISABLE_INDEXES))
+    mi_disable_non_unique_index(file,rows);
+  else
     if (!file->bulk_insert &&
         (!rows || rows >= MI_MIN_ROWS_TO_USE_BULK_INSERT))
     {
       mi_init_bulk_insert(file, thd->variables.bulk_insert_buff_size, rows);
     }
-  }
+
   return;
 }
 
@@ -1545,8 +1543,6 @@ int ha_myisam::info(uint flag)
 
 int ha_myisam::extra(enum ha_extra_function operation)
 {
-  if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_KEYREAD)
-    return 0;
   return mi_extra(file, operation, 0);
 }
 
@@ -1563,8 +1559,6 @@ int ha_myisam::reset(void)
 
 int ha_myisam::extra_opt(enum ha_extra_function operation, uint32_t cache_size)
 {
-  if ((specialflag & SPECIAL_SAFE_MODE) && operation == HA_EXTRA_WRITE_CACHE)
-    return 0;
   return mi_extra(file, operation, (void*) &cache_size);
 }
 
@@ -1609,7 +1603,7 @@ void ha_myisam::update_create_info(HA_CREATE_INFO *create_info)
 }
 
 
-int ha_myisam::create(const char *name, register TABLE *table_arg,
+int ha_myisam::create(const char *name, register Table *table_arg,
 		      HA_CREATE_INFO *ha_create_info)
 {
   int error;
@@ -1848,7 +1842,7 @@ Item *ha_myisam::idx_cond_push(uint keyno_arg, Item* idx_cond_arg)
 
 mysql_declare_plugin(myisam)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MyISAM",
   "1.0",
   "MySQL AB",

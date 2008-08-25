@@ -24,6 +24,7 @@ using namespace std;
 #include <mysys/my_dir.h>
 #include "log.h"
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 
 #define MAX_DROP_TABLE_Q_LEN      1024
@@ -34,7 +35,7 @@ static TYPELIB deletable_extentions=
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp,
 				 const char *db, const char *path, uint level, 
-                                 TABLE_LIST **dropped_tables);
+                                 TableList **dropped_tables);
          
 static bool rm_dir_w_symlink(const char *org_path, bool send_error);
 static void mysql_change_db_impl(THD *thd,
@@ -333,7 +334,7 @@ void del_dbopt(const char *path)
 static bool write_db_opt(THD *thd, const char *path, const char *name, HA_CREATE_INFO *create)
 {
   bool error= true;
-  schema::Schema db;
+  drizzle::Schema db;
 
   assert(name);
 
@@ -373,7 +374,7 @@ static bool write_db_opt(THD *thd, const char *path, const char *name, HA_CREATE
 bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
 {
   bool error=1;
-  schema::Schema db;
+  drizzle::Schema db;
   string buffer;
 
   memset(create, 0, sizeof(*create));
@@ -392,7 +393,7 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
   buffer= db.characterset();
   if (!(create->default_table_charset= get_charset_by_csname(buffer.c_str(), MY_CS_PRIMARY, MYF(0))))
   {
-    sql_print_error("Error while loading database options: '%s':",path);
+    sql_print_error(_("Error while loading database options: '%s':"),path);
     sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
@@ -400,7 +401,7 @@ bool load_db_opt(THD *thd, const char *path, HA_CREATE_INFO *create)
   buffer= db.collation();
   if (!(create->default_table_charset= get_charset_by_name(buffer.c_str(), MYF(0))))
   {
-    sql_print_error("Error while loading database options: '%s':",path);
+    sql_print_error(_("Error while loading database options: '%s':"),path);
     sql_print_error(ER(ER_UNKNOWN_COLLATION), buffer.c_str());
     create->default_table_charset= default_charset_info;
   }
@@ -771,7 +772,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   char	path[FN_REFLEN+16];
   MY_DIR *dirp;
   uint length;
-  TABLE_LIST* dropped_tables= 0;
+  TableList* dropped_tables= 0;
 
   if (db && (strcmp(db, "information_schema") == 0))
   {
@@ -879,7 +880,7 @@ bool mysql_rm_db(THD *thd,char *db,bool if_exists, bool silent)
   else if (mysql_bin_log.is_open())
   {
     char *query, *query_pos, *query_end, *query_data_start;
-    TABLE_LIST *tbl;
+    TableList *tbl;
     uint db_len;
 
     if (!(query= (char*) thd->alloc(MAX_DROP_TABLE_Q_LEN)))
@@ -936,12 +937,12 @@ exit2:
 
 static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
 				 const char *org_path, uint level,
-                                 TABLE_LIST **dropped_tables)
+                                 TableList **dropped_tables)
 {
   long deleted=0;
   uint32_t found_other_files=0;
   char filePath[FN_REFLEN];
-  TABLE_LIST *tot_list=0, **tot_list_next;
+  TableList *tot_list=0, **tot_list_next;
 
   tot_list_next= &tot_list;
 
@@ -971,7 +972,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
     {
       /* Drop the table nicely */
       *extension= 0;			// Remove extension
-      TABLE_LIST *table_list=(TABLE_LIST*)
+      TableList *table_list=(TableList*)
                               thd->calloc(sizeof(*table_list) + 
                                           strlen(db) + 1 +
                                           MYSQL50_TABLE_NAME_PREFIX_LENGTH + 

@@ -357,9 +357,8 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
 			DRIZZLE_TYPE_DATE,   DRIZZLE_TYPE_TIME,
 			DRIZZLE_TYPE_DATETIME,
 			DRIZZLE_TYPE_NEWDATE, DRIZZLE_TYPE_VARCHAR,
-                        DRIZZLE_TYPE_NEWDECIMAL=252,
-			DRIZZLE_TYPE_ENUM=253,
-			DRIZZLE_TYPE_SET=254,
+      DRIZZLE_TYPE_NEWDECIMAL=253,
+			DRIZZLE_TYPE_ENUM=254,
 			DRIZZLE_TYPE_BLOB=255
 };
 
@@ -367,10 +366,10 @@ enum enum_field_types { DRIZZLE_TYPE_TINY=1,
 /* Shutdown/kill enums and constants */ 
 
 /* Bits for THD::killable. */
-#define MYSQL_SHUTDOWN_KILLABLE_CONNECT    (unsigned char)(1 << 0)
-#define MYSQL_SHUTDOWN_KILLABLE_TRANS      (unsigned char)(1 << 1)
-#define MYSQL_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
-#define MYSQL_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
+#define DRIZZLE_SHUTDOWN_KILLABLE_CONNECT    (unsigned char)(1 << 0)
+#define DRIZZLE_SHUTDOWN_KILLABLE_TRANS      (unsigned char)(1 << 1)
+#define DRIZZLE_SHUTDOWN_KILLABLE_LOCK_TABLE (unsigned char)(1 << 2)
+#define DRIZZLE_SHUTDOWN_KILLABLE_UPDATE     (unsigned char)(1 << 3)
 
 enum drizzle_enum_shutdown_level {
   /*
@@ -380,15 +379,15 @@ enum drizzle_enum_shutdown_level {
   */
   SHUTDOWN_DEFAULT = 0,
   /* wait for existing connections to finish */
-  SHUTDOWN_WAIT_CONNECTIONS= MYSQL_SHUTDOWN_KILLABLE_CONNECT,
+  SHUTDOWN_WAIT_CONNECTIONS= DRIZZLE_SHUTDOWN_KILLABLE_CONNECT,
   /* wait for existing trans to finish */
-  SHUTDOWN_WAIT_TRANSACTIONS= MYSQL_SHUTDOWN_KILLABLE_TRANS,
+  SHUTDOWN_WAIT_TRANSACTIONS= DRIZZLE_SHUTDOWN_KILLABLE_TRANS,
   /* wait for existing updates to finish (=> no partial MyISAM update) */
-  SHUTDOWN_WAIT_UPDATES= MYSQL_SHUTDOWN_KILLABLE_UPDATE,
+  SHUTDOWN_WAIT_UPDATES= DRIZZLE_SHUTDOWN_KILLABLE_UPDATE,
   /* flush InnoDB buffers and other storage engines' buffers*/
-  SHUTDOWN_WAIT_ALL_BUFFERS= (MYSQL_SHUTDOWN_KILLABLE_UPDATE << 1),
+  SHUTDOWN_WAIT_ALL_BUFFERS= (DRIZZLE_SHUTDOWN_KILLABLE_UPDATE << 1),
   /* don't flush InnoDB buffers, flush other storage engines' buffers*/
-  SHUTDOWN_WAIT_CRITICAL_BUFFERS= (MYSQL_SHUTDOWN_KILLABLE_UPDATE << 1) + 1,
+  SHUTDOWN_WAIT_CRITICAL_BUFFERS= (DRIZZLE_SHUTDOWN_KILLABLE_UPDATE << 1) + 1,
   /* Now the 2 levels of the KILL command */
   KILL_QUERY= 254,
   KILL_CONNECTION= 255
@@ -407,8 +406,8 @@ enum enum_cursor_type
 /* options for mysql_set_option */
 enum enum_drizzle_set_option
 {
-  MYSQL_OPTION_MULTI_STATEMENTS_ON,
-  MYSQL_OPTION_MULTI_STATEMENTS_OFF
+  DRIZZLE_OPTION_MULTI_STATEMENTS_ON,
+  DRIZZLE_OPTION_MULTI_STATEMENTS_OFF
 };
 
 #define net_new_transaction(net) ((net)->pkt_nr=0)
@@ -525,7 +524,7 @@ uchar *net_store_length(uchar *pkg, uint64_t length);
 #endif
 
 #define NULL_LENGTH UINT32_MAX /* For net_store_length */
-#define MYSQL_STMT_HEADER       4
-#define MYSQL_LONG_DATA_HEADER  6
+#define DRIZZLE_STMT_HEADER       4
+#define DRIZZLE_LONG_DATA_HEADER  6
 
 #endif

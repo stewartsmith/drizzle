@@ -32,7 +32,7 @@ char opt_plugin_dir[FN_REFLEN];
   When you ad a new plugin type, add both a string and make sure that the
   init and deinit array are correctly updated.
 */
-const LEX_STRING plugin_type_names[MYSQL_MAX_PLUGIN_TYPE_NUM]=
+const LEX_STRING plugin_type_names[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   { C_STRING_WITH_LEN("DAEMON") },
   { C_STRING_WITH_LEN("STORAGE ENGINE") },
@@ -55,7 +55,7 @@ extern int finalize_udf(st_plugin_int *plugin);
   plugin_type_deinitialize should equal to the number of plugins
   defined.
 */
-plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
+plugin_type_init plugin_type_initialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   0,  /* Daemon */
   ha_initialize_handlerton,  /* Storage Engine */
@@ -67,7 +67,7 @@ plugin_type_init plugin_type_initialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
   authentication_initializer  /* Auth */
 };
 
-plugin_type_init plugin_type_deinitialize[MYSQL_MAX_PLUGIN_TYPE_NUM]=
+plugin_type_init plugin_type_deinitialize[DRIZZLE_MAX_PLUGIN_TYPE_NUM]=
 {
   0,  /* Daemon */
   ha_finalize_handlerton,  /* Storage Engine */
@@ -89,7 +89,7 @@ static bool initialized= 0;
 
 static DYNAMIC_ARRAY plugin_dl_array;
 static DYNAMIC_ARRAY plugin_array;
-static HASH plugin_hash[MYSQL_MAX_PLUGIN_TYPE_NUM];
+static HASH plugin_hash[DRIZZLE_MAX_PLUGIN_TYPE_NUM];
 static bool reap_needed= false;
 static int plugin_array_version=0;
 
@@ -137,7 +137,7 @@ struct st_bookmark
 */
 struct st_mysql_sys_var
 {
-  MYSQL_PLUGIN_VAR_HEADER;
+  DRIZZLE_PLUGIN_VAR_HEADER;
 };
 
 
@@ -210,11 +210,11 @@ static int item_value_type(struct st_mysql_value *value)
 {
   switch (((st_item_value_holder*)value)->item->result_type()) {
   case INT_RESULT:
-    return MYSQL_VALUE_TYPE_INT;
+    return DRIZZLE_VALUE_TYPE_INT;
   case REAL_RESULT:
-    return MYSQL_VALUE_TYPE_REAL;
+    return DRIZZLE_VALUE_TYPE_REAL;
   default:
-    return MYSQL_VALUE_TYPE_STRING;
+    return DRIZZLE_VALUE_TYPE_STRING;
   }
 }
 
@@ -432,9 +432,9 @@ static struct st_plugin_int *plugin_find_internal(const LEX_STRING *name, int ty
   if (! initialized)
     return(0);
 
-  if (type == MYSQL_ANY_PLUGIN)
+  if (type == DRIZZLE_ANY_PLUGIN)
   {
-    for (i= 0; i < MYSQL_MAX_PLUGIN_TYPE_NUM; i++)
+    for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
     {
       struct st_plugin_int *plugin= (st_plugin_int *)
         hash_search(&plugin_hash[i], (const uchar *)name->str, name->length);
@@ -559,7 +559,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
 {
   struct st_plugin_int tmp;
   struct st_mysql_plugin *plugin;
-  if (plugin_find_internal(name, MYSQL_ANY_PLUGIN))
+  if (plugin_find_internal(name, DRIZZLE_ANY_PLUGIN))
   {
     if (report & REPORT_TO_USER)
       my_error(ER_UDF_EXISTS, MYF(0), name->str);
@@ -575,7 +575,7 @@ static bool plugin_add(MEM_ROOT *tmp_root,
   for (plugin= tmp.plugin_dl->plugins; plugin->name; plugin++)
   {
     uint name_len= strlen(plugin->name);
-    if (plugin->type >= 0 && plugin->type < MYSQL_MAX_PLUGIN_TYPE_NUM &&
+    if (plugin->type >= 0 && plugin->type < DRIZZLE_MAX_PLUGIN_TYPE_NUM &&
         ! my_strnncoll(system_charset_info,
                        (const uchar *)name->str, name->length,
                        (const uchar *)plugin->name,
@@ -644,7 +644,7 @@ static void plugin_deinitialize(struct st_plugin_int *plugin, bool ref_check)
   {
     if ((*plugin_type_deinitialize[plugin->plugin->type])(plugin))
     {
-      sql_print_error("Plugin '%s' of type %s failed deinitialization",
+      sql_print_error(_("Plugin '%s' of type %s failed deinitialization"),
                       plugin->name.str, plugin_type_names[plugin->plugin->type].str);
     }
   }
@@ -658,7 +658,7 @@ static void plugin_deinitialize(struct st_plugin_int *plugin, bool ref_check)
     exit until NDB is shut down.
   */
   if (ref_check && plugin->ref_count)
-    sql_print_error("Plugin '%s' has ref_count=%d after deinitialization.",
+    sql_print_error(_("Plugin '%s' has ref_count=%d after deinitialization."),
                     plugin->name.str, plugin->ref_count);
 }
 
@@ -778,7 +778,7 @@ static int plugin_initialize(struct st_plugin_int *plugin)
   {
     if ((*plugin_type_initialize[plugin->plugin->type])(plugin))
     {
-      sql_print_error("Plugin '%s' registration as a %s failed.",
+      sql_print_error(_("Plugin '%s' registration as a %s failed."),
                       plugin->name.str, plugin_type_names[plugin->plugin->type].str);
       goto err;
     }
@@ -787,7 +787,7 @@ static int plugin_initialize(struct st_plugin_int *plugin)
   {
     if (plugin->plugin->init(plugin))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }
@@ -892,7 +892,7 @@ int plugin_init(int *argc, char **argv, int flags)
                             sizeof(struct st_plugin_int *),16,16))
     goto err;
 
-  for (i= 0; i < MYSQL_MAX_PLUGIN_TYPE_NUM; i++)
+  for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
   {
     if (hash_init(&plugin_hash[i], system_charset_info, 16, 0, 0,
                   get_plugin_hash_key, NULL, HASH_UNIQUE))
@@ -1032,7 +1032,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
   {
     if (p == buffer + sizeof(buffer) - 1)
     {
-      sql_print_error("plugin-load parameter too long");
+      sql_print_error(_("plugin-load parameter too long"));
       return(true);
     }
 
@@ -1092,7 +1092,7 @@ static bool plugin_load_list(MEM_ROOT *tmp_root, int *argc, char **argv,
   }
   return(false);
 error:
-  sql_print_error("Couldn't load plugin named '%s' with soname '%s'.",
+  sql_print_error(_("Couldn't load plugin named '%s' with soname '%s'."),
                   name.str, dl.str);
   return(true);
 }
@@ -1143,7 +1143,8 @@ void plugin_shutdown(void)
     }
 
     if (count > free_slots)
-      sql_print_warning("Forcing shutdown of %d plugins", count - free_slots);
+      sql_print_warning(_("Forcing shutdown of %d plugins"),
+                        count - free_slots);
 
     plugins= (struct st_plugin_int **) my_alloca(sizeof(void*) * (count+1));
 
@@ -1164,7 +1165,7 @@ void plugin_shutdown(void)
     for (i= 0; i < count; i++)
       if (!(plugins[i]->state & (PLUGIN_IS_UNINITIALIZED | PLUGIN_IS_FREED)))
       {
-        sql_print_information("Plugin '%s' will be forced to shutdown",
+        sql_print_information(_("Plugin '%s' will be forced to shutdown"),
                               plugins[i]->name.str);
         /*
           We are forcing deinit on plugins so we don't want to do a ref_count
@@ -1180,7 +1181,7 @@ void plugin_shutdown(void)
     for (i= 0; i < count; i++)
     {
       if (plugins[i]->ref_count)
-        sql_print_error("Plugin '%s' has ref_count=%d after shutdown.",
+        sql_print_error(_("Plugin '%s' has ref_count=%d after shutdown."),
                         plugins[i]->name.str, plugins[i]->ref_count);
       if (plugins[i]->state & PLUGIN_IS_UNINITIALIZED)
         plugin_del(plugins[i]);
@@ -1200,7 +1201,7 @@ void plugin_shutdown(void)
 
   /* Dispose of the memory */
 
-  for (i= 0; i < MYSQL_MAX_PLUGIN_TYPE_NUM; i++)
+  for (i= 0; i < DRIZZLE_MAX_PLUGIN_TYPE_NUM; i++)
     hash_free(&plugin_hash[i]);
   delete_dynamic(&plugin_array);
 
@@ -1234,14 +1235,14 @@ bool plugin_foreach_with_mask(THD *thd, plugin_foreach_func *func,
 
   state_mask= ~state_mask; // do it only once
 
-  total= type == MYSQL_ANY_PLUGIN ? plugin_array.elements
+  total= type == DRIZZLE_ANY_PLUGIN ? plugin_array.elements
                                   : plugin_hash[type].records;
   /*
     Do the alloca out here in case we do have a working alloca:
         leaving the nested stack frame invalidates alloca allocation.
   */
   plugins=(struct st_plugin_int **)my_alloca(total*sizeof(plugin));
-  if (type == MYSQL_ANY_PLUGIN)
+  if (type == DRIZZLE_ANY_PLUGIN)
   {
     for (idx= 0; idx < total; idx++)
     {
@@ -1284,35 +1285,35 @@ err:
   Internal type declarations for variables support
 ****************************************************************************/
 
-#undef MYSQL_SYSVAR_NAME
-#define MYSQL_SYSVAR_NAME(name) name
+#undef DRIZZLE_SYSVAR_NAME
+#define DRIZZLE_SYSVAR_NAME(name) name
 #define PLUGIN_VAR_TYPEMASK 0x007f
 
 #define EXTRA_OPTIONS 3 /* options for: 'foo', 'plugin-foo' and NULL */
 
-typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_bool_t, bool);
-typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_bool_t, bool);
-typedef DECLARE_MYSQL_SYSVAR_BASIC(sysvar_str_t, char *);
-typedef DECLARE_MYSQL_THDVAR_BASIC(thdvar_str_t, char *);
+typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_bool_t, bool);
+typedef DECLARE_DRIZZLE_THDVAR_BASIC(thdvar_bool_t, bool);
+typedef DECLARE_DRIZZLE_SYSVAR_BASIC(sysvar_str_t, char *);
+typedef DECLARE_DRIZZLE_THDVAR_BASIC(thdvar_str_t, char *);
 
-typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
-typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_enum_t, unsigned long);
-typedef DECLARE_MYSQL_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
-typedef DECLARE_MYSQL_THDVAR_TYPELIB(thdvar_set_t, uint64_t);
+typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_enum_t, unsigned long);
+typedef DECLARE_DRIZZLE_THDVAR_TYPELIB(thdvar_enum_t, unsigned long);
+typedef DECLARE_DRIZZLE_SYSVAR_TYPELIB(sysvar_set_t, uint64_t);
+typedef DECLARE_DRIZZLE_THDVAR_TYPELIB(thdvar_set_t, uint64_t);
 
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_int_t, int);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_long_t, long);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_int64_t_t, int64_t);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint_t, uint);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_ulong_t, ulong);
-typedef DECLARE_MYSQL_SYSVAR_SIMPLE(sysvar_uint64_t_t, uint64_t);
+typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_int_t, int);
+typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_long_t, long);
+typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_int64_t_t, int64_t);
+typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_uint_t, uint);
+typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_ulong_t, ulong);
+typedef DECLARE_DRIZZLE_SYSVAR_SIMPLE(sysvar_uint64_t_t, uint64_t);
 
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_int_t, int);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_long_t, long);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_int64_t_t, int64_t);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint_t, uint);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_ulong_t, ulong);
-typedef DECLARE_MYSQL_THDVAR_SIMPLE(thdvar_uint64_t_t, uint64_t);
+typedef DECLARE_DRIZZLE_THDVAR_SIMPLE(thdvar_int_t, int);
+typedef DECLARE_DRIZZLE_THDVAR_SIMPLE(thdvar_long_t, long);
+typedef DECLARE_DRIZZLE_THDVAR_SIMPLE(thdvar_int64_t_t, int64_t);
+typedef DECLARE_DRIZZLE_THDVAR_SIMPLE(thdvar_uint_t, uint);
+typedef DECLARE_DRIZZLE_THDVAR_SIMPLE(thdvar_ulong_t, ulong);
+typedef DECLARE_DRIZZLE_THDVAR_SIMPLE(thdvar_uint64_t_t, uint64_t);
 
 typedef bool *(*mysql_sys_var_ptr_p)(THD* a_thd, int offset);
 
@@ -1330,7 +1331,7 @@ static int check_func_bool(THD *thd __attribute__((unused)),
   int result, length;
   int64_t tmp;
 
-  if (value->value_type(value) == MYSQL_VALUE_TYPE_STRING)
+  if (value->value_type(value) == DRIZZLE_VALUE_TYPE_STRING)
   {
     length= sizeof(buff);
     if (!(str= value->val_str(value, buff, &length)) ||
@@ -1452,7 +1453,7 @@ static int check_func_enum(THD *thd __attribute__((unused)),
   else
     typelib= ((sysvar_enum_t*) var)->typelib;
 
-  if (value->value_type(value) == MYSQL_VALUE_TYPE_STRING)
+  if (value->value_type(value) == DRIZZLE_VALUE_TYPE_STRING)
   {
     length= sizeof(buff);
     if (!(str= value->val_str(value, buff, &length)))
@@ -1500,7 +1501,7 @@ static int check_func_set(THD *thd __attribute__((unused)),
   else
     typelib= ((sysvar_set_t*)var)->typelib;
 
-  if (value->value_type(value) == MYSQL_VALUE_TYPE_STRING)
+  if (value->value_type(value) == DRIZZLE_VALUE_TYPE_STRING)
   {
     length= sizeof(buff);
     if (!(str= value->val_str(value, buff, &length)))
@@ -2429,7 +2430,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       (((thdvar_set_t *)opt)->resolve)= mysql_sys_var_ptr_set;
       break;
     default:
-      sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",
+      sql_print_error(_("Unknown variable type code 0x%x in plugin '%s'."),
                       opt->flags, plugin_name);
       return(-1);
     };
@@ -2472,9 +2473,9 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
         if ((opt->flags & (PLUGIN_VAR_MEMALLOC | PLUGIN_VAR_READONLY)) == false)
         {
           opt->flags|= PLUGIN_VAR_READONLY;
-          sql_print_warning("Server variable %s of plugin %s was forced "
+          sql_print_warning(_("Server variable %s of plugin %s was forced "
                             "to be read-only: string variable without "
-                            "update_func and PLUGIN_VAR_MEMALLOC flag",
+                            "update_func and PLUGIN_VAR_MEMALLOC flag"),
                             opt->name, plugin_name);
         }
       }
@@ -2492,7 +2493,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
         opt->update= update_func_int64_t;
       break;
     default:
-      sql_print_error("Unknown variable type code 0x%x in plugin '%s'.",
+      sql_print_error(_("Unknown variable type code 0x%x in plugin '%s'."),
                       opt->flags, plugin_name);
       return(-1);
     }
@@ -2503,7 +2504,7 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
 
     if (!opt->name)
     {
-      sql_print_error("Missing variable name in plugin '%s'.",
+      sql_print_error(_("Missing variable name in plugin '%s'."),
                       plugin_name);
       return(-1);
     }
@@ -2520,8 +2521,8 @@ static int construct_options(MEM_ROOT *mem_root, struct st_plugin_int *tmp,
       /* this should not fail because register_var should create entry */
       if (!(v= find_bookmark(name, opt->name, opt->flags)))
       {
-        sql_print_error("Thread local variable '%s' not allocated "
-                        "in plugin '%s'.", opt->name, plugin_name);
+        sql_print_error(_("Thread local variable '%s' not allocated "
+                        "in plugin '%s'."), opt->name, plugin_name);
         return(-1);
       }
 
@@ -2639,14 +2640,14 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   {
     if (!(opts= (my_option*) alloc_root(tmp_root, sizeof(my_option) * count)))
     {
-      sql_print_error("Out of memory for plugin '%s'.", tmp->name.str);
+      sql_print_error(_("Out of memory for plugin '%s'."), tmp->name.str);
       return(-1);
     }
     memset(opts, 0, sizeof(my_option) * count);
 
     if (construct_options(tmp_root, tmp, opts, can_disable))
     {
-      sql_print_error("Bad options for plugin '%s'.", tmp->name.str);
+      sql_print_error(_("Bad options for plugin '%s'."), tmp->name.str);
       return(-1);
     }
 
@@ -2655,7 +2656,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
 
     if (error)
     {
-       sql_print_error("Parsing options for plugin '%s' failed.",
+       sql_print_error(_("Parsing options for plugin '%s' failed."),
                        tmp->name.str);
        goto err;
     }
@@ -2698,7 +2699,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
       chain.last->next = NULL;
       if (mysql_add_sys_var_chain(chain.first, NULL))
       {
-        sql_print_error("Plugin '%s' has conflicting system variables",
+        sql_print_error(_("Plugin '%s' has conflicting system variables"),
                         tmp->name.str);
         goto err;
       }
@@ -2708,7 +2709,7 @@ static int test_plugin_options(MEM_ROOT *tmp_root, struct st_plugin_int *tmp,
   }
 
   if (enabled_saved && global_system_variables.log_warnings)
-    sql_print_information("Plugin '%s' disabled by command line option",
+    sql_print_information(_("Plugin '%s' disabled by command line option"),
                           tmp->name.str);
 err:
   if (opts)

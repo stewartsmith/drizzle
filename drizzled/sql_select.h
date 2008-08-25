@@ -35,7 +35,7 @@
 #define KEY_OPTIMIZE_REF_OR_NULL	2
 
 typedef struct keyuse_t {
-  TABLE *table;
+  Table *table;
   Item	*val;				/**< or value if no field */
   table_map used_tables;
   uint	key, keypart;
@@ -70,11 +70,11 @@ class store_key;
 typedef struct st_table_ref
 {
   bool		key_err;
-  uint          key_parts;                ///< num of ...
-  uint          key_length;               ///< length of key_buff
-  int           key;                      ///< key no
-  uchar         *key_buff;                ///< value to look for with key
-  uchar         *key_buff2;               ///< key_buff+key_length
+  uint32_t      key_parts;                ///< num of ...
+  uint32_t      key_length;               ///< length of key_buff
+  int32_t       key;                      ///< key no
+  unsigned char *key_buff;                ///< value to look for with key
+  unsigned char *key_buff2;               ///< key_buff+key_length
   store_key     **key_copy;               //
   Item          **items;                  ///< val()'s for each keypart
   /*  
@@ -96,7 +96,7 @@ typedef struct st_table_ref
   key_part_map  null_rejecting;
   table_map	depend_map;		  ///< Table depends on these tables.
   /* null byte position in the key_buf. Used for REF_OR_NULL optimization */
-  uchar          *null_ref_key;
+  unsigned char *null_ref_key;
 
   /*
     true <=> disable the "cache" as doing lookup with the same key value may
@@ -116,24 +116,24 @@ typedef struct st_cache_field {
     Where source data is located (i.e. this points to somewhere in 
     tableX->record[0])
   */
-  uchar *str;
-  uint length; /* Length of data at *str, in bytes */
-  uint blob_length; /* Valid IFF blob_field != 0 */
+  unsigned char *str;
+  uint32_t length; /* Length of data at *str, in bytes */
+  uint32_t blob_length; /* Valid IFF blob_field != 0 */
   Field_blob *blob_field;
   bool strip; /* true <=> Strip endspaces ?? */
 
-  TABLE *get_rowid; /* _ != NULL <=> */
+  Table *get_rowid; /* _ != NULL <=> */
 } CACHE_FIELD;
 
 
 typedef struct st_join_cache 
 {
-  uchar *buff;
-  uchar *pos;    /* Start of free space in the buffer */
-  uchar *end;
-  uint records;  /* # of row cominations currently stored in the cache */
-  uint record_nr;
-  uint ptr_record; 
+  unsigned char *buff;
+  unsigned char *pos;    /* Start of free space in the buffer */
+  unsigned char *end;
+  uint32_t records;  /* # of row cominations currently stored in the cache */
+  uint32_t record_nr;
+  uint32_t ptr_record; 
   /* 
     Number of fields (i.e. cache_field objects). Those correspond to table
     columns, and there are also special fields for
@@ -141,9 +141,9 @@ typedef struct st_join_cache
      - table's null-complementation byte
      - [new] table's rowid.
   */
-  uint fields; 
-  uint length; 
-  uint blobs;
+  uint32_t fields; 
+  uint32_t length; 
+  uint32_t blobs;
   CACHE_FIELD *field;
   CACHE_FIELD **blob_ptr;
   SQL_SELECT *select;
@@ -183,7 +183,7 @@ Next_select_func setup_end_select_func(JOIN *join);
 
 typedef struct st_join_table {
   st_join_table() {}                          /* Remove gcc warning */
-  TABLE		*table;
+  Table		*table;
   KEYUSE	*keyuse;			/**< pointer to first used key */
   SQL_SELECT	*select;
   COND		*select_cond;
@@ -267,7 +267,7 @@ typedef struct st_join_table {
     Embedding SJ-nest (may be not the direct parent), or NULL if none.
     This variable holds the result of table pullout.
   */
-  TABLE_LIST    *emb_sj_nest;
+  TableList    *emb_sj_nest;
 
   /* Variables for semi-join duplicate elimination */
   SJ_TMP_TABLE  *flush_weedout_table;
@@ -366,48 +366,6 @@ typedef struct st_rollup
 } ROLLUP;
 
 
-/*
-  Describes use of one temporary table to weed out join duplicates.
-  The temporar
-
-  Used to
-    - create a temp table
-    - when we reach the weed-out tab, walk through rowid-ed tabs and
-      and copy rowids.
-      For each table we need
-       - rowid offset
-       - null bit address.
-*/
-
-class SJ_TMP_TABLE : public Sql_alloc
-{
-public:
-  /* Array of pointers to tables that should be "used" */
-  class TAB
-  {
-  public:
-    JOIN_TAB *join_tab;
-    uint rowid_offset;
-    ushort null_byte;
-    uchar null_bit;
-  };
-  TAB *tabs;
-  TAB *tabs_end;
-
-  uint null_bits;
-  uint null_bytes;
-  uint rowid_len;
-
-  TABLE *tmp_table;
-
-  MI_COLUMNDEF *start_recinfo;
-  MI_COLUMNDEF *recinfo;
-
-  /* Pointer to next table (next->start_idx > this->end_idx) */
-  SJ_TMP_TABLE *next; 
-};
-
-
 class JOIN :public Sql_alloc
 {
   JOIN(const JOIN &rhs);                        /**< not implemented */
@@ -416,13 +374,13 @@ public:
   JOIN_TAB *join_tab,**best_ref;
   JOIN_TAB **map2table;    ///< mapping between table indexes and JOIN_TABs
   JOIN_TAB *join_tab_save; ///< saved join_tab for subquery reexecution
-  TABLE    **table,**all_tables;
+  Table    **table,**all_tables;
   /**
     The table which has an index that allows to produce the requried ordering.
     A special value of 0x1 means that the ordering will be produced by
     passing 1st non-const table to filesort(). NULL means no such table exists.
   */
-  TABLE    *sort_by_table;
+  Table    *sort_by_table;
   uint	   tables;        /**< Number of tables in the join */
   uint     outer_tables;  /**< Number of tables that are not inside semijoin */
   uint     const_tables;
@@ -457,9 +415,9 @@ public:
   double   best_read;
   List<Item> *fields;
   List<Cached_item> group_fields, group_fields_cache;
-  TABLE    *tmp_table;
+  Table    *tmp_table;
   /// used to store 2 possible tmp table of SELECT
-  TABLE    *exec_tmp_table1, *exec_tmp_table2;
+  Table    *exec_tmp_table1, *exec_tmp_table2;
   THD	   *thd;
   Item_sum  **sum_funcs, ***sum_funcs_end;
   /** second copy of sumfuncs (for queries with 2 temporary tables */
@@ -470,7 +428,7 @@ public:
   uint64_t  select_options;
   select_result *result;
   TMP_TABLE_PARAM tmp_table_param;
-  MYSQL_LOCK *lock;
+  DRIZZLE_LOCK *lock;
   /// unit structure (with global parameters) for this select
   SELECT_LEX_UNIT *unit;
   /// select that processed
@@ -498,17 +456,17 @@ public:
   bool group_optimized_away;
 
   /*
-    simple_xxxxx is set if ORDER/GROUP BY doesn't include any references
+    simple_xxxxx is set if order_st/GROUP BY doesn't include any references
     to other tables than the first non-constant table in the JOIN.
-    It's also set if ORDER/GROUP BY is empty.
+    It's also set if order_st/GROUP BY is empty.
   */
   bool simple_order, simple_group;
   /**
     Is set only in case if we have a GROUP BY clause
-    and no ORDER BY after constant elimination of 'order'.
+    and no order_st BY after constant elimination of 'order'.
   */
   bool no_order;
-  /** Is set if we have a GROUP BY and we have ORDER BY on a constant. */
+  /** Is set if we have a GROUP BY and we have order_st BY on a constant. */
   bool          skip_sort_order;
 
   bool need_tmp, hidden_group_fields;
@@ -522,11 +480,11 @@ public:
   List<Item> &fields_list; ///< hold field list passed to mysql_select
   int error;
 
-  ORDER *order, *group_list, *proc_param; //hold parameters of mysql_select
+  order_st *order, *group_list, *proc_param; //hold parameters of mysql_select
   COND *conds;                            // ---"---
   Item *conds_history;                    // store WHERE for explain
-  TABLE_LIST *tables_list;           ///<hold 'tables' parameter of mysql_select
-  List<TABLE_LIST> *join_list;       ///< list of joined tables in reverse order
+  TableList *tables_list;           ///<hold 'tables' parameter of mysql_select
+  List<TableList> *join_list;       ///< list of joined tables in reverse order
   COND_EQUAL *cond_equal;
   SQL_SELECT *select;                ///<created in optimisation phase
   JOIN_TAB *return_tab;              ///<used only for outer joins
@@ -554,7 +512,7 @@ public:
     excessive memory usage.
   */  
   SORT_FIELD *sortorder;                        // make_unireg_sortorder()
-  TABLE **table_reexec;                         // make_simple_join()
+  Table **table_reexec;                         // make_simple_join()
   JOIN_TAB *join_tab_reexec;                    // make_simple_join()
   /* end of allocation caching storage */
 
@@ -622,9 +580,9 @@ public:
     no_const_tables= false;
   }
 
-  int prepare(Item ***rref_pointer_array, TABLE_LIST *tables, uint wind_num,
-	      COND *conds, uint og_num, ORDER *order, ORDER *group,
-	      Item *having, ORDER *proc_param, SELECT_LEX *select,
+  int prepare(Item ***rref_pointer_array, TableList *tables, uint wind_num,
+	      COND *conds, uint og_num, order_st *order, order_st *group,
+	      Item *having, order_st *proc_param, SELECT_LEX *select,
 	      SELECT_LEX_UNIT *unit);
   int optimize();
   int reinit();
@@ -653,7 +611,7 @@ public:
   bool rollup_make_fields(List<Item> &all_fields, List<Item> &fields,
 			  Item_sum ***func);
   int rollup_send_data(uint idx);
-  int rollup_write_data(uint idx, TABLE *table);
+  int rollup_write_data(uint idx, Table *table);
   void remove_subq_pushed_predicates(Item **where);
   /**
     Release memory and, if possible, the open tables held by this execution
@@ -690,11 +648,11 @@ void TEST_join(JOIN *join);
 
 /* Extern functions in sql_select.cc */
 bool store_val_in_field(Field *field, Item *val, enum_check_fields check_flag);
-TABLE *create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
-			ORDER *group, bool distinct, bool save_sum_fields,
+Table *create_tmp_table(THD *thd,TMP_TABLE_PARAM *param,List<Item> &fields,
+			order_st *group, bool distinct, bool save_sum_fields,
 			uint64_t select_options, ha_rows rows_limit,
 			char* alias);
-void free_tmp_table(THD *thd, TABLE *entry);
+void free_tmp_table(THD *thd, Table *entry);
 void count_field_types(SELECT_LEX *select_lex, TMP_TABLE_PARAM *param, 
                        List<Item> &fields, bool reset_with_sum_func);
 bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
@@ -703,18 +661,13 @@ bool setup_copy_fields(THD *thd, TMP_TABLE_PARAM *param,
 		       uint elements, List<Item> &fields);
 void copy_fields(TMP_TABLE_PARAM *param);
 void copy_funcs(Item **func_ptr);
-bool create_myisam_from_heap(THD *thd, TABLE *table,
-                             MI_COLUMNDEF *start_recinfo,
-                             MI_COLUMNDEF **recinfo, 
-			     int error, bool ignore_last_dupp_key_error);
-uint find_shortest_key(TABLE *table, const key_map *usable_keys);
 Field* create_tmp_field_from_field(THD *thd, Field* org_field,
-                                   const char *name, TABLE *table,
+                                   const char *name, Table *table,
                                    Item_field *item, uint convert_blob_length);
                                                                       
 /* functions from opt_sum.cc */
 bool simple_pred(Item_func *func_item, Item **args, bool *inv_order);
-int opt_sum_query(TABLE_LIST *tables, List<Item> &all_fields,COND *conds);
+int opt_sum_query(TableList *tables, List<Item> &all_fields,COND *conds);
 
 /* from sql_delete.cc, used by opt_range.cc */
 extern "C" int refpos_order_cmp(void* arg, const void *a,const void *b);
@@ -799,11 +752,7 @@ class store_key_field: public store_key
  protected: 
   enum store_key_result copy_inner()
   {
-    TABLE *table= copy_field.to_field->table;
-    my_bitmap_map *old_map= dbug_tmp_use_all_columns(table,
-                                                     table->write_set);
     copy_field.do_copy(&copy_field);
-    dbug_tmp_restore_column_map(table->write_set, old_map);
     null_key= to_field->is_null();
     return err != 0 ? STORE_KEY_FATAL : STORE_KEY_OK;
   }
@@ -826,11 +775,7 @@ public:
  protected:  
   enum store_key_result copy_inner()
   {
-    TABLE *table= to_field->table;
-    my_bitmap_map *old_map= dbug_tmp_use_all_columns(table,
-                                                     table->write_set);
     int res= item->save_in_field(to_field, 1);
-    dbug_tmp_restore_column_map(table->write_set, old_map);
     null_key= to_field->is_null() || item->null_value;
     return (err != 0 || res > 2 ? STORE_KEY_FATAL : (store_key_result) res); 
   }
@@ -869,9 +814,8 @@ protected:
   }
 };
 
-bool cp_buffer_from_ref(THD *thd, TABLE *table, TABLE_REF *ref);
+bool cp_buffer_from_ref(THD *thd, TABLE_REF *ref);
 bool error_if_full_join(JOIN *join);
-int report_error(TABLE *table, int error);
 int safe_index_read(JOIN_TAB *tab);
 COND *remove_eq_conds(THD *thd, COND *cond, Item::cond_result *cond_value);
 int test_if_item_cache_changed(List<Cached_item> &list);

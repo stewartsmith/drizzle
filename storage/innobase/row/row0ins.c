@@ -542,7 +542,7 @@ row_ins_cascade_calc_update_vec(
 						if (UNIV_UNLIKELY
 						    (dtype_get_charset_coll(
 							    col->prtype)
-						     == DATA_MYSQL_BINARY_CHARSET_COLL)) {
+						     == DATA_DRIZZLE_BINARY_CHARSET_COLL)) {
 							/* Do not pad BINARY
 							columns. */
 							return(ULINT_UNDEFINED);

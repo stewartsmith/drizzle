@@ -70,7 +70,7 @@ int ha_blackhole::close(void)
 }
 
 int ha_blackhole::create(const char *name __attribute__((unused)),
-                         TABLE *table_arg __attribute__((unused)),
+                         Table *table_arg __attribute__((unused)),
                          HA_CREATE_INFO *create_info __attribute__((unused)))
 {
   return(0);
@@ -137,7 +137,7 @@ THR_LOCK_DATA **ha_blackhole::store_lock(THD *thd,
     /*
       Here is where we get into the guts of a row level lock.
       If TL_UNLOCK is set
-      If we are not doing a LOCK TABLE or DISCARD/IMPORT
+      If we are not doing a LOCK Table or DISCARD/IMPORT
       TABLESPACE, then allow multiple writers
     */
 
@@ -298,7 +298,7 @@ static int blackhole_fini(void *p __attribute__((unused)))
 
 mysql_declare_plugin(blackhole)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "BLACKHOLE",
   "1.0",
   "MySQL AB",

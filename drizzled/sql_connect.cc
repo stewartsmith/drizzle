@@ -321,9 +321,6 @@ static int check_connection(THD *thd)
   */
   thd->client_capabilities&= server_capabilites;
 
-  if (thd->client_capabilities & CLIENT_IGNORE_SPACE)
-    thd->variables.sql_mode|= MODE_IGNORE_SPACE;
-
   if (end >= (char*) net->read_pos+ pkt_len +2)
   {
 

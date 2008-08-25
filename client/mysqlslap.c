@@ -155,7 +155,7 @@ static unsigned int num_int_cols_index= 0;
 static unsigned int num_char_cols_index= 0;
 static unsigned int iterations;
 static uint my_end_arg= 0;
-static char *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+static char *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
 static uint64_t actual_queries= 0;
 static uint64_t auto_actual_queries;
 static uint64_t auto_generate_sql_unique_write_number;

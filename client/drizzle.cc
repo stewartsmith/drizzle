@@ -168,7 +168,7 @@ static char * opt_drizzle_unix_port=0;
 static int connect_flag=CLIENT_INTERACTIVE;
 static char *current_host,*current_db,*current_user=0,*opt_password=0,
   *delimiter_str= 0,* current_prompt= 0,
-  *default_charset= (char*) MYSQL_DEFAULT_CHARSET_NAME;
+  *default_charset= (char*) DRIZZLE_DEFAULT_CHARSET_NAME;
 static char *histfile;
 static char *histfile_tmp;
 static string *glob_buffer;
@@ -2893,7 +2893,6 @@ static const char *fieldtype2str(enum enum_field_types type)
     case DRIZZLE_TYPE_LONG:        return "LONG";
     case DRIZZLE_TYPE_LONGLONG:    return "LONGLONG";
     case DRIZZLE_TYPE_NULL:        return "NULL";
-    case DRIZZLE_TYPE_SET:         return "SET";
     case DRIZZLE_TYPE_SHORT:       return "SHORT";
     case DRIZZLE_TYPE_TIME:        return "TIME";
     case DRIZZLE_TYPE_TIMESTAMP:   return "TIMESTAMP";

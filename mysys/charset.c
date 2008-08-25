@@ -832,7 +832,7 @@ CHARSET_INFO *fs_character_set()
     mean "big enough"
 
   RETURN VALUES
-    ~0          The escaped string did not fit in the to buffer
+    UINT32_MAX  The escaped string did not fit in the to buffer
     >=0         The length of the escaped string
 */
 
@@ -889,5 +889,5 @@ size_t escape_quotes_for_drizzle(const CHARSET_INFO *charset_info,
     }
   }
   *to= 0;
-  return overflow ? (uint32_t)~0 : (uint32_t) (to - to_start);
+  return overflow ? UINT32_MAX : (uint32_t) (to - to_start);
 }

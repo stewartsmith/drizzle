@@ -16,8 +16,8 @@
 
 /* classes to use when handling where clause */
 
-#ifndef _opt_range_h
-#define _opt_range_h
+#ifndef DRIZZLED_OPT_RANGE_H
+#define DRIZZLED_OPT_RANGE_H
 
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
@@ -117,7 +117,7 @@ public:
   bool sorted;
   ha_rows records;  /* estimate of # of records to be retrieved */
   double  read_time; /* time to perform this retrieval          */
-  TABLE   *head;
+  Table   *head;
   /*
     Index this quick select uses, or MAX_KEY for quick selects
     that use several indexes
@@ -313,7 +313,7 @@ protected:
 public:
   MEM_ROOT alloc;
 
-  QUICK_RANGE_SELECT(THD *thd, TABLE *table,uint index_arg,bool no_alloc,
+  QUICK_RANGE_SELECT(THD *thd, Table *table,uint index_arg,bool no_alloc,
                      MEM_ROOT *parent_alloc, bool *create_err);
   ~QUICK_RANGE_SELECT();
 
@@ -346,7 +346,7 @@ private:
   }
   friend class TRP_ROR_INTERSECT;
   friend
-  QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, TABLE *table,
+  QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
                                                struct st_table_ref *ref,
                                                ha_rows records);
   friend bool get_quick_keys(PARAM *param, QUICK_RANGE_SELECT *quick, 
@@ -432,7 +432,7 @@ private:
 class QUICK_INDEX_MERGE_SELECT : public QUICK_SELECT_I
 {
 public:
-  QUICK_INDEX_MERGE_SELECT(THD *thd, TABLE *table);
+  QUICK_INDEX_MERGE_SELECT(THD *thd, Table *table);
   ~QUICK_INDEX_MERGE_SELECT();
 
   int  init();
@@ -486,7 +486,7 @@ public:
 class QUICK_ROR_INTERSECT_SELECT : public QUICK_SELECT_I
 {
 public:
-  QUICK_ROR_INTERSECT_SELECT(THD *thd, TABLE *table,
+  QUICK_ROR_INTERSECT_SELECT(THD *thd, Table *table,
                              bool retrieve_full_rows,
                              MEM_ROOT *parent_alloc);
   ~QUICK_ROR_INTERSECT_SELECT();
@@ -539,7 +539,7 @@ public:
 class QUICK_ROR_UNION_SELECT : public QUICK_SELECT_I
 {
 public:
-  QUICK_ROR_UNION_SELECT(THD *thd, TABLE *table);
+  QUICK_ROR_UNION_SELECT(THD *thd, Table *table);
   ~QUICK_ROR_UNION_SELECT();
 
   int  init();
@@ -646,7 +646,7 @@ private:
   void update_min_result();
   void update_max_result();
 public:
-  QUICK_GROUP_MIN_MAX_SELECT(TABLE *table, JOIN *join, bool have_min,
+  QUICK_GROUP_MIN_MAX_SELECT(Table *table, JOIN *join, bool have_min,
                              bool have_max, KEY_PART_INFO *min_max_arg_part,
                              uint group_prefix_len, uint group_key_parts,
                              uint used_key_parts, KEY *index_info, uint
@@ -691,7 +691,7 @@ class SQL_SELECT :public Sql_alloc {
  public:
   QUICK_SELECT_I *quick;	// If quick-select used
   COND		*cond;		// where condition
-  TABLE	*head;
+  Table	*head;
   IO_CACHE file;		// Positions to used records
   ha_rows records;		// Records in use if read from file
   double read_time;		// Time to read rows
@@ -715,9 +715,9 @@ class SQL_SELECT :public Sql_alloc {
                         bool ordered_output);
 };
 
-QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, TABLE *table,
+QUICK_RANGE_SELECT *get_quick_select_for_ref(THD *thd, Table *table,
                                              struct st_table_ref *ref,
                                              ha_rows records);
-uint get_index_for_order(TABLE *table, ORDER *order, ha_rows limit);
+uint get_index_for_order(Table *table, order_st *order, ha_rows limit);
 
 #endif

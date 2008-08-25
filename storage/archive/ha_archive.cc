@@ -549,7 +549,7 @@ int ha_archive::close(void)
   of creation.
 */
 
-int ha_archive::create(const char *name, TABLE *table_arg,
+int ha_archive::create(const char *name, Table *table_arg,
                        HA_CREATE_INFO *create_info)
 {
   char name_buff[FN_REFLEN];
@@ -562,7 +562,7 @@ int ha_archive::create(const char *name, TABLE *table_arg,
 
   stats.auto_increment_value= create_info->auto_increment_value;
 
-  for (uint key= 0; key < table_arg->s->keys; key++)
+  for (uint key= 0; key < table_arg->sizeKeys(); key++)
   {
     KEY *pos= table_arg->key_info+key;
     KEY_PART_INFO *key_part=     pos->key_part;
@@ -693,11 +693,11 @@ int ha_archive::real_write_row(uchar *buf, azio_stream *writer)
 
 uint32_t ha_archive::max_row_length(const uchar *buf __attribute__((unused)))
 {
-  uint32_t length= (uint32_t)(table->s->reclength + table->s->fields*2);
+  uint32_t length= (uint32_t)(table->getRecordLength() + table->sizeFields()*2);
   length+= ARCHIVE_ROW_HEADER_SIZE;
 
   uint *ptr, *end;
-  for (ptr= table->s->blob_field, end=ptr + table->s->blob_fields ;
+  for (ptr= table->getBlobField(), end=ptr + table->sizeBlobFields();
        ptr != end ;
        ptr++)
   {
@@ -998,8 +998,8 @@ int ha_archive::unpack_row(azio_stream *file_to_read, uchar *record)
   }
 
   /* Copy null bits */
-  memcpy(record, ptr, table->s->null_bytes);
-  ptr+= table->s->null_bytes;
+  memcpy(record, ptr, table->getNullBytes());
+  ptr+= table->getNullBytes();
   for (Field **field=table->field ; *field ; field++)
   {
     if (!((*field)->is_null()))
@@ -1145,7 +1145,6 @@ int ha_archive::optimize(THD* thd __attribute__((unused)),
       share->rows_recorded= 0;
       stats.auto_increment_value= 1;
       share->archive_write.auto_increment= 0;
-      my_bitmap_map *org_bitmap= dbug_tmp_use_all_columns(table, table->read_set);
 
       rows_restored= archive.rows;
 
@@ -1172,7 +1171,6 @@ int ha_archive::optimize(THD* thd __attribute__((unused)),
               (share->archive_write.auto_increment= auto_value) + 1;
         }
       }
-      dbug_tmp_restore_column_map(table->read_set, org_bitmap);
       share->rows_recorded= (ha_rows)writer.rows;
     }
 
@@ -1215,7 +1213,7 @@ THR_LOCK_DATA **ha_archive::store_lock(THD *thd,
     /* 
       Here is where we get into the guts of a row level lock.
       If TL_UNLOCK is set 
-      If we are not doing a LOCK TABLE or DISCARD/IMPORT
+      If we are not doing a LOCK Table or DISCARD/IMPORT
       TABLESPACE, then allow multiple writers 
     */
 
@@ -1298,7 +1296,7 @@ int ha_archive::info(uint flag)
 
     VOID(stat(share->data_file_name, &file_stat));
 
-    stats.mean_rec_length= table->s->reclength + buffer.alloced_length();
+    stats.mean_rec_length= table->getRecordLength()+ buffer.alloced_length();
     stats.data_file_length= file_stat.st_size;
     stats.create_time= file_stat.st_ctime;
     stats.update_time= file_stat.st_mtime;
@@ -1448,19 +1446,19 @@ void ha_archive::destroy_record_buffer(archive_record_buffer *r)
   return;
 }
 
-static MYSQL_SYSVAR_BOOL(aio, archive_use_aio,
+static DRIZZLE_SYSVAR_BOOL(aio, archive_use_aio,
   PLUGIN_VAR_NOCMDOPT,
   "Whether or not to use asynchronous IO.",
   NULL, NULL, true);
 
 static struct st_mysql_sys_var* archive_system_variables[]= {
-  MYSQL_SYSVAR(aio),
+  DRIZZLE_SYSVAR(aio),
   NULL
 };
 
 mysql_declare_plugin(archive)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "ARCHIVE",
   "3.5",
   "Brian Aker, MySQL AB",

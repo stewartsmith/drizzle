@@ -58,7 +58,7 @@ TODO:
 #define CSM_EXT ".CSM"               // Meta file
 
 
-static TINA_SHARE *get_share(const char *table_name, TABLE *table);
+static TINA_SHARE *get_share(const char *table_name, Table *table);
 static int free_share(TINA_SHARE *share);
 static int read_meta_file(File meta_file, ha_rows *rows);
 static int write_meta_file(File meta_file, ha_rows rows, bool dirty);
@@ -127,7 +127,7 @@ static int tina_done_func(void *p __attribute__((unused)))
   Simple lock controls.
 */
 static TINA_SHARE *get_share(const char *table_name,
-                             TABLE *table __attribute__((unused)))
+                             Table *table __attribute__((unused)))
 {
   TINA_SHARE *share;
   char meta_file_name[FN_REFLEN];
@@ -449,7 +449,6 @@ int ha_tina::encode_quote(uchar *buf __attribute__((unused)))
   String attribute(attribute_buffer, sizeof(attribute_buffer),
                    &my_charset_bin);
 
-  my_bitmap_map *org_bitmap= dbug_tmp_use_all_columns(table, table->read_set);
   buffer.length(0);
 
   for (Field **field=table->field ; *field ; field++)
@@ -524,7 +523,6 @@ int ha_tina::encode_quote(uchar *buf __attribute__((unused)))
 
   //buffer.replace(buffer.length(), 0, "\n", 1);
 
-  dbug_tmp_restore_column_map(table->read_set, org_bitmap);
   return (buffer.length());
 }
 
@@ -577,7 +575,6 @@ int ha_tina::find_current_row(uchar *buf)
 {
   off_t end_offset, curr_offset= current_position;
   int eoln_len;
-  my_bitmap_map *org_bitmap;
   int error;
   bool read_all;
 
@@ -594,8 +591,6 @@ int ha_tina::find_current_row(uchar *buf)
 
   /* We must read all columns in case a table is opened for update */
   read_all= !bitmap_is_clear_all(table->write_set);
-  /* Avoid asserts in ::store() for columns that are not going to be updated */
-  org_bitmap= dbug_tmp_use_all_columns(table, table->write_set);
   error= HA_ERR_CRASHED_ON_USAGE;
 
   memset(buf, 0, table->s->null_bytes);
@@ -692,7 +687,6 @@ int ha_tina::find_current_row(uchar *buf)
   error= 0;
 
 err:
-  dbug_tmp_restore_column_map(table->write_set, org_bitmap);
 
   return(error);
 }
@@ -1437,7 +1431,7 @@ THR_LOCK_DATA **ha_tina::store_lock(THD *thd __attribute__((unused)),
   this (the database will call ::open() if it needs to).
 */
 
-int ha_tina::create(const char *name, TABLE *table_arg,
+int ha_tina::create(const char *name, Table *table_arg,
                     HA_CREATE_INFO *create_info __attribute__((unused)))
 {
   char name_buff[FN_REFLEN];
@@ -1532,7 +1526,7 @@ bool ha_tina::check_if_incompatible_data(HA_CREATE_INFO *info __attribute__((unu
 
 mysql_declare_plugin(csv)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "CSV",
   "1.0",
   "Brian Aker, MySQL AB",

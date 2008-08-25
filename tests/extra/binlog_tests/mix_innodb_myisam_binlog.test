@@ -322,19 +322,19 @@ flush logs;
 # and does not make slave to stop)
 if (`select @@binlog_format = 'ROW'`)
 {
-  --exec $MYSQL_BINLOG --start-position=525 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mix_innodb_myisam_binlog.output
+  --exec $DRIZZLE_BINLOG --start-position=525 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mix_innodb_myisam_binlog.output
 }
 
 if (`select @@binlog_format = 'STATEMENT' || @@binlog_format = 'MIXED'`)
 {
-  --exec $MYSQL_BINLOG --start-position=556 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mix_innodb_myisam_binlog.output
+  --exec $DRIZZLE_BINLOG --start-position=556 $MYSQLTEST_VARDIR/log/master-bin.000001 > $MYSQLTEST_VARDIR/tmp/mix_innodb_myisam_binlog.output
 }
 
 --replace_result $MYSQLTEST_VARDIR MYSQLTEST_VARDIR
 eval select
 (@a:=load_file("$MYSQLTEST_VARDIR/tmp/mix_innodb_myisam_binlog.output"))
 is not null;
---replace_result $MYSQL_TEST_DIR MYSQL_TEST_DIR
+--replace_result $DRIZZLE_TEST_DIR DRIZZLE_TEST_DIR
 eval select
 @a like "%#%error_code=0%ROLLBACK\\n/*!*/;%ROLLBACK /* added by mysqlbinlog */;%" OR
 @a like "%#%error_code=0%ROLLBACK\\r\\n/*!*/;%ROLLBACK /* added by mysqlbinlog */;%",

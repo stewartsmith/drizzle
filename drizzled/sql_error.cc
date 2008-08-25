@@ -191,7 +191,7 @@ const LEX_STRING warning_level_names[]=
   { C_STRING_WITH_LEN("?") }
 };
 
-bool mysqld_show_warnings(THD *thd, ulong levels_to_show)
+bool mysqld_show_warnings(THD *thd, uint32_t levels_to_show)
 {  
   List<Item> field_list;
 

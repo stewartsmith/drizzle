@@ -76,7 +76,7 @@ public:
   enum_field_types real_type() const { return DRIZZLE_TYPE_VARCHAR; }
   bool has_charset(void) const
   { return charset() == &my_charset_bin ? false : true; }
-  Field *new_field(MEM_ROOT *root, struct st_table *new_table, bool keep_type);
+  Field *new_field(MEM_ROOT *root, Table *new_table, bool keep_type);
   virtual uint get_key_image(uchar *buff,uint length, imagetype type);
 private:
   int do_save_field_metadata(uchar *first_byte);

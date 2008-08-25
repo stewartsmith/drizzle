@@ -43,7 +43,7 @@ static int merge_index(SORTPARAM *param,uchar *sort_buffer,
 		       uint maxbuffer,IO_CACHE *tempfile,
 		       IO_CACHE *outfile);
 static bool save_index(SORTPARAM *param,uchar **sort_keys, uint count, 
-                       FILESORT_INFO *table_sort);
+                       filesort_info_st *table_sort);
 static uint suffix_length(uint32_t string_length);
 static uint sortlength(THD *thd, SORT_FIELD *sortorder, uint s_length,
 		       bool *multi_byte_charset);
@@ -70,7 +70,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
   @param select		condition to apply to the rows
   @param max_rows	Return only this many rows
   @param sort_positions	Set to 1 if we want to force sorting by position
-			(Needed by UPDATE/INSERT or ALTER TABLE)
+			(Needed by UPDATE/INSERT or ALTER Table)
   @param examined_rows	Store number of examined rows here
 
   @todo
@@ -87,7 +87,7 @@ static void unpack_addon_fields(struct st_sort_addon_field *addon_field,
     examined_rows	will be set to number of examined rows
 */
 
-ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
+ha_rows filesort(THD *thd, Table *table, SORT_FIELD *sortorder, uint s_length,
 		 SQL_SELECT *select, ha_rows max_rows,
                  bool sort_positions, ha_rows *examined_rows)
 {
@@ -101,11 +101,11 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
   SORTPARAM param;
   bool multi_byte_charset;
 
-  FILESORT_INFO table_sort;
-  TABLE_LIST *tab= table->pos_in_table_list;
+  filesort_info_st table_sort;
+  TableList *tab= table->pos_in_table_list;
   Item_subselect *subselect= tab ? tab->containing_subselect() : 0;
 
-  MYSQL_FILESORT_START();
+  DRIZZLE_FILESORT_START();
 
   /*
    Release InnoDB's adaptive hash index latch (if holding) before
@@ -118,7 +118,7 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
     QUICK_INDEX_MERGE_SELECT. Work with a copy and put it back at the end 
     when index_merge select has finished with it.
   */
-  memcpy(&table_sort, &table->sort, sizeof(FILESORT_INFO));
+  memcpy(&table_sort, &table->sort, sizeof(filesort_info_st));
   table->sort.io_cache= NULL;
   
   outfile= table_sort.io_cache;
@@ -311,13 +311,13 @@ ha_rows filesort(THD *thd, TABLE *table, SORT_FIELD *sortorder, uint s_length,
     statistic_add(thd->status_var.filesort_rows,
 		  (uint32_t) records, &LOCK_status);
   *examined_rows= param.examined_rows;
-  memcpy(&table->sort, &table_sort, sizeof(FILESORT_INFO));
-  MYSQL_FILESORT_END();
+  memcpy(&table->sort, &table_sort, sizeof(filesort_info_st));
+  DRIZZLE_FILESORT_END();
   return(error ? HA_POS_ERROR : records);
 } /* filesort */
 
 
-void filesort_free_buffers(TABLE *table, bool full)
+void filesort_free_buffers(Table *table, bool full)
 {
   if (table->sort.record_pointers)
   {
@@ -437,7 +437,7 @@ static ha_rows find_all_keys(SORTPARAM *param, SQL_SELECT *select,
   uint idx,indexpos,ref_length;
   uchar *ref_pos,*next_pos,ref_buff[MAX_REFLENGTH];
   my_off_t record;
-  TABLE *sort_form;
+  Table *sort_form;
   THD *thd= current_thd;
   volatile THD::killed_state *killed= &thd->killed;
   handler *file;
@@ -916,7 +916,7 @@ static void make_sortkey(register SORTPARAM *param,
 static void register_used_fields(SORTPARAM *param)
 {
   register SORT_FIELD *sort_field;
-  TABLE *table=param->sort_form;
+  Table *table=param->sort_form;
   MY_BITMAP *bitmap= table->read_set;
 
   for (sort_field= param->local_sortorder ;
@@ -952,7 +952,7 @@ static void register_used_fields(SORTPARAM *param)
 
 
 static bool save_index(SORTPARAM *param, uchar **sort_keys, uint count, 
-                       FILESORT_INFO *table_sort)
+                       filesort_info_st *table_sort)
 {
   uint offset,res_length;
   uchar *to;

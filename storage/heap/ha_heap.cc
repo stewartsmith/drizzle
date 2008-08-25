@@ -13,7 +13,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define MYSQL_SERVER 1
+#define DRIZZLE_SERVER 1
 #include <drizzled/server_includes.h>
 #include "ha_heap.h"
 #include "heapdef.h"
@@ -592,7 +592,7 @@ ha_rows ha_heap::records_in_range(uint inx, key_range *min_key,
 }
 
 
-int ha_heap::create(const char *name, TABLE *table_arg,
+int ha_heap::create(const char *name, Table *table_arg,
 		    HA_CREATE_INFO *create_info)
 {
   uint key, parts, mem_per_row_keys= 0, keys= table_arg->s->keys;
@@ -817,7 +817,7 @@ bool ha_heap::check_if_incompatible_data(HA_CREATE_INFO *info,
 
 mysql_declare_plugin(heap)
 {
-  MYSQL_STORAGE_ENGINE_PLUGIN,
+  DRIZZLE_STORAGE_ENGINE_PLUGIN,
   "MEMORY",
   "1.0",
   "MySQL AB",

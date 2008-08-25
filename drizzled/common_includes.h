@@ -22,7 +22,7 @@
  * @details
  *
  * Previously, the mysql_priv.h file contained a number of conditional
- * #ifdef MYSQL_SERVER blocks which made it very difficult to determine
+ * #ifdef DRIZZLE_SERVER blocks which made it very difficult to determine
  * which headers and definitions were actually necessary for plugins to 
  * include.  The file, and NOT mysql_priv.h, should now be the main included
  * header for storage engine plugins, as it contains all definitions and 
@@ -243,9 +243,9 @@ enum enum_var_type
 
 /* Forward declarations */
 
-struct TABLE_LIST;
+class TableList;
 class String;
-struct st_table;
+class Table;
 class THD;
 class user_var_entry;
 class Security_context;
@@ -278,10 +278,9 @@ extern ulong server_id;
 #include <drizzled/sql_string.h>
 /* Custom singly-linked list lite struct and full-blown type-safe, templatized class */
 #include <drizzled/sql_list.h>
-#include "sql_map.h"
 #include "my_decimal.h"
 #include "handler.h"
-#include "table.h"
+#include <drizzled/table_list.h>
 #include "sql_error.h"
 /* Drizzle server data type class definitions */
 #include <drizzled/field.h>
@@ -313,7 +312,7 @@ bool fn_format_relative_to_data_home(char * to, const char *name,
  * is hackish.  Put these things into a separate header?  Or fix
  * InnoDB?  Or does the InnoDB plugin already fix this stuff?
  */
-#if defined MYSQL_SERVER || defined INNODB_COMPATIBILITY_HOOKS
+#if defined DRIZZLE_SERVER || defined INNODB_COMPATIBILITY_HOOKS
 bool check_global_access(THD *thd, ulong want_access);
 int get_quote_char_for_identifier(THD *thd, const char *name, uint length);
 extern struct system_variables global_system_variables;
@@ -330,6 +329,6 @@ uint strconvert(const CHARSET_INFO *from_cs, const char *from,
                 uint *errors);
 uint filename_to_tablename(const char *from, char *to, uint to_length);
 uint tablename_to_filename(const char *from, char *to, uint to_length);
-#endif /* MYSQL_SERVER || INNODB_COMPATIBILITY_HOOKS */
+#endif /* DRIZZLE_SERVER || INNODB_COMPATIBILITY_HOOKS */
 
 #endif /* DRIZZLE_SERVER_COMMON_INCLUDES_H */

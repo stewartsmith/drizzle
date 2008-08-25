@@ -1,1 +1,0 @@
-drop table if exists t1,t1aa,t2aa;

@@ -134,13 +134,10 @@ String *Field_string::val_str(String *val_buffer __attribute__((unused)),
   /* See the comment for Field_long::store(long long) */
   assert(table->in_use == current_thd);
   uint length;
-  if (table->in_use->variables.sql_mode &
-      MODE_PAD_CHAR_TO_FULL_LENGTH)
-    length= my_charpos(field_charset, ptr, ptr + field_length, field_length);
-  else
-    length= field_charset->cset->lengthsp(field_charset, (const char*) ptr,
-                                          field_length);
+
+  length= field_charset->cset->lengthsp(field_charset, (const char*) ptr, field_length);
   val_ptr->set((const char*) ptr, length, field_charset);
+
   return val_ptr;
 }
 
@@ -407,8 +404,7 @@ uint Field_string::get_key_image(uchar *buff,
 }
 
 
-Field *Field_string::new_field(MEM_ROOT *root, struct st_table *new_table,
-                               bool keep_type)
+Field *Field_string::new_field(MEM_ROOT *root, Table *new_table, bool keep_type)
 {
   Field *field;
   field= Field::new_field(root, new_table, keep_type);

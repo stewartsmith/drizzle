@@ -386,18 +386,10 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
 
   if (!(*item)->with_subselect && (*item)->const_item())
   {
-    TABLE *table= field->table;
     ulong orig_sql_mode= thd->variables.sql_mode;
     enum_check_fields orig_count_cuted_fields= thd->count_cuted_fields;
-    my_bitmap_map *old_write_map;
-    my_bitmap_map *old_read_map;
     uint64_t orig_field_val= 0; /* original field value if valid */
 
-    if (table)
-    {
-      old_write_map= dbug_tmp_use_all_columns(table, table->write_set);
-      old_read_map= dbug_tmp_use_all_columns(table, table->read_set);
-    }
     /* For comparison purposes allow invalid dates like 2000-01-32 */
     thd->variables.sql_mode= (orig_sql_mode & ~MODE_NO_ZERO_DATE) | 
                              MODE_INVALID_DATES;
@@ -426,11 +418,6 @@ static bool convert_constant_item(THD *thd, Item_field *field_item,
     }
     thd->variables.sql_mode= orig_sql_mode;
     thd->count_cuted_fields= orig_count_cuted_fields;
-    if (table)
-    {
-      dbug_tmp_restore_column_map(table->write_set, old_write_map);
-      dbug_tmp_restore_column_map(table->read_set, old_read_map);
-    }
   }
   return result;
 }
@@ -651,8 +638,7 @@ get_date_from_str(THD *thd, String *str, timestamp_type warn_type,
 
   ret= str_to_datetime(str->ptr(), str->length(), &l_time,
                        (TIME_FUZZY_DATE | MODE_INVALID_DATES |
-                        (thd->variables.sql_mode &
-                         (MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE))),
+                        (thd->variables.sql_mode & MODE_NO_ZERO_DATE)),
                        &error);
 
   if (ret == DRIZZLE_TIMESTAMP_DATETIME || ret == DRIZZLE_TIMESTAMP_DATE)
@@ -2226,7 +2212,7 @@ enum_field_types Item_func_ifnull::field_type() const
   return cached_field_type;
 }
 
-Field *Item_func_ifnull::tmp_table_field(TABLE *table)
+Field *Item_func_ifnull::tmp_table_field(Table *table)
 {
   return tmp_table_field_from_field_type(table, 0);
 }
@@ -4432,10 +4418,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
     String *escape_str= escape_item->val_str(&tmp_value1);
     if (escape_str)
     {
-      if (escape_used_in_parsing && (
-             (((thd->variables.sql_mode & MODE_NO_BACKSLASH_ESCAPES) &&
-                escape_str->numchars() != 1) ||
-               escape_str->numchars() > 1)))
+      if (escape_used_in_parsing && escape_str->numchars() > 1)
       {
         my_error(ER_WRONG_ARGUMENTS,MYF(0),"ESCAPE");
         return true;
@@ -4481,8 +4464,7 @@ bool Item_func_like::fix_fields(THD *thd, Item **ref)
       We could also do boyer-more for non-const items, but as we would have to
       recompute the tables for each row it's not worth it.
     */
-    if (args[1]->const_item() && !use_strnxfrm(collation.collation) &&
-       !(specialflag & SPECIAL_NO_NEW_FUNC))
+    if (args[1]->const_item() && !use_strnxfrm(collation.collation)) 
     {
       String* res2 = args[1]->val_str(&tmp_value2);
       if (!res2)

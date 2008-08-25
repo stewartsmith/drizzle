@@ -663,7 +663,7 @@ bool Item_field::find_item_in_field_list_processor(uchar *arg)
 
 bool Item_field::register_field_in_read_map(uchar *arg)
 {
-  TABLE *table= (TABLE *) arg;
+  Table *table= (Table *) arg;
   if (field->table == table || !table)
     bitmap_set_bit(field->table->read_set, field->field_index);
   return 0;
@@ -730,7 +730,7 @@ void Item::set_name(const char *str, uint length, const CHARSET_INFO * const cs)
   @details
   This function is called when:
   - Comparing items in the WHERE clause (when doing where optimization)
-  - When trying to find an ORDER BY/GROUP BY item in the SELECT part
+  - When trying to find an order_st BY/GROUP BY item in the SELECT part
 */
 
 bool Item::eq(const Item *item, bool binary_cmp __attribute__((unused))) const
@@ -953,16 +953,14 @@ const CHARSET_INFO *Item::default_charset()
 int Item::save_in_field_no_warnings(Field *field, bool no_conversions)
 {
   int res;
-  TABLE *table= field->table;
+  Table *table= field->table;
   THD *thd= table->in_use;
   enum_check_fields tmp= thd->count_cuted_fields;
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->write_set);
   ulong sql_mode= thd->variables.sql_mode;
-  thd->variables.sql_mode&= ~(MODE_NO_ZERO_IN_DATE | MODE_NO_ZERO_DATE);
+  thd->variables.sql_mode&= ~(MODE_NO_ZERO_DATE);
   thd->count_cuted_fields= CHECK_FIELD_IGNORE;
   res= save_in_field(field, no_conversions);
   thd->count_cuted_fields= tmp;
-  dbug_tmp_restore_column_map(table->write_set, old_map);
   thd->variables.sql_mode= sql_mode;
   return res;
 }
@@ -3008,12 +3006,12 @@ void mark_select_range_as_dependent(THD *thd,
     - NULL if find_item is not in group_list
 */
 
-static Item** find_field_in_group_list(Item *find_item, ORDER *group_list)
+static Item** find_field_in_group_list(Item *find_item, order_st *group_list)
 {
   const char *db_name;
   const char *table_name;
   const char *field_name;
-  ORDER      *found_group= NULL;
+  order_st      *found_group= NULL;
   int         found_match_degree= 0;
   Item_ident *cur_field;
   int         cur_match_degree= 0;
@@ -3039,7 +3037,7 @@ static Item** find_field_in_group_list(Item *find_item, ORDER *group_list)
 
   assert(field_name != 0);
 
-  for (ORDER *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
+  for (order_st *cur_group= group_list ; cur_group ; cur_group= cur_group->next)
   {
     if ((*(cur_group->item))->real_item()->type() == Item::FIELD_ITEM)
     {
@@ -3140,7 +3138,7 @@ resolve_ref_in_select_and_group(THD *thd, Item_ident *ref, SELECT_LEX *select)
 {
   Item **group_by_ref= NULL;
   Item **select_ref= NULL;
-  ORDER *group_list= (ORDER*) select->group_list.first;
+  order_st *group_list= (order_st*) select->group_list.first;
   bool ambiguous_fields= false;
   uint counter;
   enum_resolution_type resolution;
@@ -3657,7 +3655,7 @@ bool Item_field::fix_fields(THD *thd, Item **reference)
   }
   else if (thd->mark_used_columns != MARK_COLUMNS_NONE)
   {
-    TABLE *table= field->table;
+    Table *table= field->table;
     MY_BITMAP *current_bitmap, *other_bitmap;
     if (thd->mark_used_columns == MARK_COLUMNS_READ)
     {
@@ -4053,7 +4051,7 @@ bool Item::eq_by_collation(Item *item, bool binary_cmp, const CHARSET_INFO * con
   @param table		Table for which the field is created
 */
 
-Field *Item::make_string_field(TABLE *table)
+Field *Item::make_string_field(Table *table)
 {
   Field *field;
   assert(collation.collation);
@@ -4082,7 +4080,7 @@ Field *Item::make_string_field(TABLE *table)
     \#    Created field
 */
 
-Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length __attribute__((unused)))
+Field *Item::tmp_table_field_from_field_type(Table *table, bool fixed_length __attribute__((unused)))
 {
   /*
     The field functions defines a field to be not null if null_ptr is not 0
@@ -4137,7 +4135,6 @@ Field *Item::tmp_table_field_from_field_type(TABLE *table, bool fixed_length __a
     assert(0);
     /* Fall through to make_string_field() */
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_VARCHAR:
     return make_string_field(table);
   case DRIZZLE_TYPE_BLOB:
@@ -4661,7 +4658,6 @@ bool Item::send(Protocol *protocol, String *buffer)
   default:
   case DRIZZLE_TYPE_NULL:
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
@@ -4789,8 +4785,7 @@ Item *Item_field::update_value_transformer(uchar *select_arg)
   SELECT_LEX *select= (SELECT_LEX*)select_arg;
   assert(fixed);
 
-  if (field->table != select->context.table_list->table &&
-      type() != Item::TRIGGER_FIELD_ITEM)
+  if (field->table != select->context.table_list->table)
   {
     List<Item> *all_fields= &select->join->all_fields;
     Item **ref_pointer_array= select->ref_pointer_array;
@@ -5661,7 +5656,7 @@ bool Item_insert_value::fix_fields(THD *thd,
   if (!arg->fixed)
   {
     bool res;
-    TABLE_LIST *orig_next_table= context->last_name_resolution_table;
+    TableList *orig_next_table= context->last_name_resolution_table;
     context->last_name_resolution_table= context->first_name_resolution_table;
     res= arg->fix_fields(thd, &arg);
     context->last_name_resolution_table= orig_next_table;
@@ -6364,7 +6359,6 @@ uint32_t Item_type_holder::display_length(Item *item)
   case DRIZZLE_TYPE_VARCHAR:
   case DRIZZLE_TYPE_NEWDECIMAL:
   case DRIZZLE_TYPE_ENUM:
-  case DRIZZLE_TYPE_SET:
   case DRIZZLE_TYPE_BLOB:
   case DRIZZLE_TYPE_TINY:
     return 4;
@@ -6395,7 +6389,7 @@ uint32_t Item_type_holder::display_length(Item *item)
     created field
 */
 
-Field *Item_type_holder::make_field_by_type(TABLE *table)
+Field *Item_type_holder::make_field_by_type(Table *table)
 {
   /*
     The field functions defines a field to be not null if null_ptr is not 0
@@ -6410,15 +6404,6 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
                           Field::NONE, name,
                           get_enum_pack_length(enum_set_typelib->count),
                           enum_set_typelib, collation.collation);
-    if (field)
-      field->init(table);
-    return field;
-  case DRIZZLE_TYPE_SET:
-    assert(enum_set_typelib);
-    field= new Field_set((uchar *) 0, max_length, null_ptr, 0,
-                         Field::NONE, name,
-                         get_set_pack_length(enum_set_typelib->count),
-                         enum_set_typelib, collation.collation);
     if (field)
       field->init(table);
     return field;
@@ -6439,8 +6424,7 @@ Field *Item_type_holder::make_field_by_type(TABLE *table)
 */
 void Item_type_holder::get_full_info(Item *item)
 {
-  if (fld_type == DRIZZLE_TYPE_ENUM ||
-      fld_type == DRIZZLE_TYPE_SET)
+  if (fld_type == DRIZZLE_TYPE_ENUM)
   {
     if (item->type() == Item::SUM_FUNC_ITEM &&
         (((Item_sum*)item)->sum_func() == Item_sum::MAX_FUNC ||
@@ -6454,8 +6438,7 @@ void Item_type_holder::get_full_info(Item *item)
                  get_real_type(item) == DRIZZLE_TYPE_NULL) ||
                 (!enum_set_typelib &&
                  item->type() == Item::FIELD_ITEM &&
-                 (get_real_type(item) == DRIZZLE_TYPE_ENUM ||
-                  get_real_type(item) == DRIZZLE_TYPE_SET) &&
+                 (get_real_type(item) == DRIZZLE_TYPE_ENUM) &&
                  ((Field_enum*)((Item_field *) item)->field)->typelib));
     if (!enum_set_typelib)
     {

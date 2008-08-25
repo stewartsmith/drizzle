@@ -438,7 +438,7 @@ bool Item_func::eq(const Item *item, bool binary_cmp) const
 }
 
 
-Field *Item_func::tmp_table_field(TABLE *table)
+Field *Item_func::tmp_table_field(Table *table)
 {
   Field *field;
 
@@ -599,9 +599,7 @@ void Item_func::count_real_length()
 void Item_func::signal_divide_by_null()
 {
   THD *thd= current_thd;
-  if (thd->variables.sql_mode & MODE_ERROR_FOR_DIVISION_BY_ZERO)
-    push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO,
-                 ER(ER_DIVISION_BY_ZERO));
+  push_warning(thd, DRIZZLE_ERROR::WARN_LEVEL_ERROR, ER_DIVISION_BY_ZERO, ER(ER_DIVISION_BY_ZERO));
   null_value= 1;
 }
 
@@ -1145,9 +1143,8 @@ void Item_func_additive_op::result_precision()
 void Item_func_minus::fix_length_and_dec()
 {
   Item_num_op::fix_length_and_dec();
-  if (unsigned_flag &&
-      (current_thd->variables.sql_mode & MODE_NO_UNSIGNED_SUBTRACTION))
-    unsigned_flag=0;
+  if (unsigned_flag)
+    unsigned_flag= 0;
 }
 
 
@@ -2636,22 +2633,6 @@ void Item_func_find_in_set::fix_length_and_dec()
 {
   decimals=0;
   max_length=3;					// 1-999
-  if (args[0]->const_item() && args[1]->type() == FIELD_ITEM)
-  {
-    Field *field= ((Item_field*) args[1])->field;
-    if (field->real_type() == DRIZZLE_TYPE_SET)
-    {
-      String *find=args[0]->val_str(&value);
-      if (find)
-      {
-	enum_value= find_type(((Field_enum*) field)->typelib,find->ptr(),
-			      find->length(), 0);
-	enum_bit=0;
-	if (enum_value)
-	  enum_bit=1LL << (enum_value-1);
-      }
-    }
-  }
   agg_arg_charsets(cmp_collation, args, 2, MY_COLL_CMP_CONV, 1);
 }
 
@@ -3510,7 +3491,7 @@ bool Item_func_set_user_var::register_field_in_read_map(uchar *arg)
 {
   if (result_field)
   {
-    TABLE *table= (TABLE *) arg;
+    Table *table= (Table *) arg;
     if (result_field->table == table || !table)
       bitmap_set_bit(result_field->table->read_set, result_field->field_index);
   }

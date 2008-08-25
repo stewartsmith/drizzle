@@ -1,5 +1,6 @@
 #include <drizzled/server_includes.h>
 #include <drizzled/authentication.h>
+#include <libdrizzle/gettext.h>
 
 static bool are_plugins_loaded= false;
 
@@ -25,9 +26,7 @@ bool authenticate_user(THD *thd, const char *password)
   if (are_plugins_loaded != true)
     return true;
 
-  printf("PASSWORD :%s:\n", password);
-
-  return plugin_foreach(thd, authenticate_by, MYSQL_AUTH_PLUGIN, (void *)password);
+  return plugin_foreach(thd, authenticate_by, DRIZZLE_AUTH_PLUGIN, (void *)password);
 }
 
 
@@ -44,7 +43,7 @@ int authentication_initializer(st_plugin_int *plugin)
   {
     if (plugin->plugin->init(authen))
     {
-      sql_print_error("Plugin '%s' init function returned error.",
+      sql_print_error(_("Plugin '%s' init function returned error."),
                       plugin->name.str);
       goto err;
     }

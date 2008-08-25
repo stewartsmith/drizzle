@@ -387,8 +387,8 @@ long my_strntol_8bit(const CHARSET_INFO * const cs,
 #endif
 
   save = s;
-  cutoff = ((uint32_t)~0L) / (uint32_t) base;
-  cutlim = (uint) (((uint32_t)~0L) % (uint32_t) base);
+  cutoff = (UINT32_MAX) / (uint32_t) base;
+  cutlim = (uint) ((UINT32_MAX) % (uint32_t) base);
 
   overflow = 0;
   i = 0;
@@ -509,8 +509,8 @@ ulong my_strntoul_8bit(const CHARSET_INFO * const cs,
 #endif
 
   save = s;
-  cutoff = ((uint32_t)~0L) / (uint32_t) base;
-  cutlim = (uint) (((uint32_t)~0L) % (uint32_t) base);
+  cutoff = (UINT32_MAX) / (uint32_t) base;
+  cutlim = (uint) ((UINT32_MAX) % (uint32_t) base);
   overflow = 0;
   i = 0;
   

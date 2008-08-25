@@ -72,8 +72,8 @@ SET AUTOCOMMIT=1;
 
 # time to dump the databases and so we can see if they match
 
---exec $MYSQL_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/func003_master.sql
---exec $MYSQL_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/func003_slave.sql
+--exec $DRIZZLE_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/func003_master.sql
+--exec $DRIZZLE_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/func003_slave.sql
 
 # First lets cleanup
 DROP FUNCTION test.f1;

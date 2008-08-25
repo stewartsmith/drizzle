@@ -89,7 +89,6 @@ noinst_HEADERS = item.h \
 		 sql_lex.h \
 		 sql_list.h \
 		 sql_locale.h \
-		 sql_map.h \
 		 sql_state.h \
 		 sql_string.h \
 		 sql_error.h \
@@ -129,13 +128,30 @@ noinst_HEADERS = item.h \
 		 sql_plugin.h \
 		 global.h \
 		 base.h \
-		 probes.h
+		 probes.h \
+		 definitions.h \
+		 sql_alloc.h \
+		 sql_parse.h \
+		 error_injection.h \
+		 connect.h \
+		 sql_table.h \
+		 show.h \
+		 tmp_table.h \
+		 sj_tmp_table.h \
+		 table_list.h \
+		 drizzled_error_messages.h \
+		 order.h \
+		 filesort_info.h \
+		 field_iterator.h \
+		 common_includes.h 
 
 drizzled_SOURCES = \
 		   sql_db.cc \
 		   sql_lex.cc \
 		   authentication.cc \
 		   sql_handler.cc \
+		   natural_join_column.cc \
+		   field_iterator.cc \
 		   item.cc \
 		   item_sum.cc \
 		   item_buff.cc \
@@ -156,7 +172,6 @@ drizzled_SOURCES = \
 		   sql_state.c \
 		   lock.cc \
 		   sql_string.cc \
-		   sql_map.cc \
 		   drizzled.cc \
 		   sql_connect.cc \
 		   scheduler.cc \
@@ -210,6 +225,8 @@ drizzled_SOURCES = \
 		   my_decimal.cc\
 		   sql_plugin.cc \
 		   sql_binlog.cc \
+		   tmp_table.cc \
+		   sj_tmp_table.cc \
 		   sql_builtin.cc 
 
 libhandler_la_SOURCES = handler.cc
@@ -222,8 +239,8 @@ gen_lex_hash_SOURCES =gen_lex_hash.cc
 
 gen_lex_hash_LDFLAGS =  
 
-DEFS =-DMYSQL_SERVER \
-      -DDEFAULT_MYSQL_HOME="\"$(MYSQLBASEdir)\"" \
+DEFS =-DDRIZZLE_SERVER \
+      -DDEFAULT_DRIZZLE_HOME="\"$(MYSQLBASEdir)\"" \
       -DDATADIR="\"$(MYSQLDATAdir)\"" \
       -DSHAREDIR="\"$(MYSQLSHAREdir)\"" \
       -DPLUGINDIR="\"$(pkgplugindir)\"" \
@@ -238,6 +255,7 @@ BUILT_SOURCES = $(BUILT_MAINT_SRC) \
 		version.h
 
 EXTRA_DIST = $(BUILT_MAINT_SRC) \
+	     drizzledumpslow \
 	     message.mc \
 	     probes.d
 

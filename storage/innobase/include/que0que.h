@@ -433,7 +433,7 @@ struct que_fork_struct{
 #define	QUE_FORK_EXECUTE		7
 #define QUE_FORK_PROCEDURE		8
 #define QUE_FORK_PROCEDURE_CALL		9
-#define QUE_FORK_MYSQL_INTERFACE	10
+#define QUE_FORK_DRIZZLE_INTERFACE	10
 #define	QUE_FORK_RECOVERY		11
 
 /* Query fork (or graph) states */

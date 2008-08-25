@@ -16,14 +16,14 @@
 /**
   @file
 
-  Set MYSQL_SERVER_SUFFIX_STR.
+  Set DRIZZLE_SERVER_SUFFIX_STR.
 
   The following code is quite ugly as there is no portable way to easily set a
   string to the value of a macro
 */
 
-#ifdef MYSQL_SERVER_SUFFIX
-#define MYSQL_SERVER_SUFFIX_STR STRINGIFY_ARG(MYSQL_SERVER_SUFFIX)
+#ifdef DRIZZLE_SERVER_SUFFIX
+#define DRIZZLE_SERVER_SUFFIX_STR STRINGIFY_ARG(DRIZZLE_SERVER_SUFFIX)
 #else
-#define MYSQL_SERVER_SUFFIX_STR MYSQL_SERVER_SUFFIX_DEF
+#define DRIZZLE_SERVER_SUFFIX_STR DRIZZLE_SERVER_SUFFIX_DEF
 #endif

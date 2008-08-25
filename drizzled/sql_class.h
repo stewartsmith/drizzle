@@ -214,10 +214,10 @@ public:
 
 typedef struct st_mysql_lock
 {
-  TABLE **table;
+  Table **table;
   uint table_count,lock_count;
   THR_LOCK_DATA **locks;
-} MYSQL_LOCK;
+} DRIZZLE_LOCK;
 
 
 class LEX_COLUMN : public Sql_alloc
@@ -439,7 +439,7 @@ typedef struct system_status_var
 
 void mark_transaction_to_rollback(THD *thd, bool all);
 
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
 
 #define INIT_ARENA_DBUG_INFO is_backup_arena= 0
 
@@ -686,7 +686,7 @@ public:
     List of regular tables in use by this thread. Contains temporary and
     base tables that were opened with @see open_tables().
   */
-  TABLE *open_tables;
+  Table *open_tables;
   /**
     List of temporary tables used by this thread. Contains user-level
     temporary tables, created with CREATE TEMPORARY TABLE, and
@@ -694,13 +694,13 @@ public:
     or for an intermediate table used in ALTER.
     XXX Why are internal temporary tables added to this list?
   */
-  TABLE *temporary_tables;
+  Table *temporary_tables;
   /**
     List of tables that were opened with HANDLER OPEN and are
     still in use by this thread.
   */
-  TABLE *handler_tables;
-  TABLE *derived_tables;
+  Table *handler_tables;
+  Table *derived_tables;
   /*
     During a MySQL session, one can lock tables in two modes: automatic
     or manual. In automatic mode all necessary tables are locked just before
@@ -714,21 +714,21 @@ public:
     the 'LOCK_TABLES' chapter of the MySQL manual.
     See also lock_tables() for details.
   */
-  MYSQL_LOCK *lock;
+  DRIZZLE_LOCK *lock;
   /*
     Tables that were locked with explicit or implicit LOCK TABLES.
     (Implicit LOCK TABLES happens when we are prelocking tables for
      execution of statement which uses stored routines. See description
      THD::prelocked_mode for more info.)
   */
-  MYSQL_LOCK *locked_tables;
+  DRIZZLE_LOCK *locked_tables;
 
   /*
     CREATE-SELECT keeps an extra lock for the table being
     created. This field is used to keep the extra lock available for
     lower level routines, which would otherwise miss that lock.
    */
-  MYSQL_LOCK *extra_lock;
+  DRIZZLE_LOCK *extra_lock;
 
   ulong	version;
   uint current_tablenr;
@@ -1106,7 +1106,7 @@ public:
 
   /* Place to store various things */
   void *thd_marker;
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   int binlog_setup_trx_data();
 
   /*
@@ -1114,12 +1114,12 @@ public:
   */
   void binlog_start_trans_and_stmt();
   void binlog_set_stmt_begin();
-  int binlog_write_table_map(TABLE *table, bool is_transactional);
-  int binlog_write_row(TABLE* table, bool is_transactional,
+  int binlog_write_table_map(Table *table, bool is_transactional);
+  int binlog_write_row(Table* table, bool is_transactional,
                        const uchar *new_data);
-  int binlog_delete_row(TABLE* table, bool is_transactional,
+  int binlog_delete_row(Table* table, bool is_transactional,
                         const uchar *old_data);
-  int binlog_update_row(TABLE* table, bool is_transactional,
+  int binlog_update_row(Table* table, bool is_transactional,
                         const uchar *old_data, const uchar *new_data);
 
   void set_server_id(uint32_t sid) { server_id = sid; }
@@ -1128,7 +1128,7 @@ public:
     Member functions to handle pending event for row-level logging.
   */
   template <class RowsEventT> Rows_log_event*
-    binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
+    binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
                                       size_t needed,
                                       bool is_transactional,
 				      RowsEventT* hint);
@@ -1156,7 +1156,7 @@ public:
   void clear_binlog_table_maps() {
     binlog_table_maps= 0;
   }
-#endif /* MYSQL_CLIENT */
+#endif /* DRIZZLE_CLIENT */
 
 public:
 
@@ -1173,7 +1173,7 @@ public:
        List contain only transactional tables, that not invalidated in query
        cache (instead of full list of changed in transaction tables).
     */
-    CHANGED_TABLE_LIST* changed_tables;
+    CHANGED_TableList* changed_tables;
     MEM_ROOT mem_root; // Transaction-life memory allocation pool
     void cleanup()
     {
@@ -1576,7 +1576,7 @@ public:
 #endif
   void awake(THD::killed_state state_to_set);
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
   enum enum_binlog_query_type {
     /*
       The query can be logged row-based or statement-based
@@ -1592,7 +1592,7 @@ public:
       The query represents a change to a table in the "mysql"
       database and is currently mapped to ROW_QUERY_TYPE.
     */
-    MYSQL_QUERY_TYPE,
+    DRIZZLE_QUERY_TYPE,
     QUERY_TYPE_COUNT
   };
   
@@ -1678,9 +1678,9 @@ public:
 
   bool convert_string(String *s, const CHARSET_INFO * const from_cs, const CHARSET_INFO * const to_cs);
 
-  void add_changed_table(TABLE *table);
+  void add_changed_table(Table *table);
   void add_changed_table(const char *key, long key_length);
-  CHANGED_TABLE_LIST * changed_table_dup(const char *key, long key_length);
+  CHANGED_TableList * changed_table_dup(const char *key, long key_length);
   int send_explain_fields(select_result *result);
   /**
     Clear the current error, if any.
@@ -2118,14 +2118,14 @@ public:
 
 class select_insert :public select_result_interceptor {
  public:
-  TABLE_LIST *table_list;
-  TABLE *table;
+  TableList *table_list;
+  Table *table;
   List<Item> *fields;
   uint64_t autoinc_value_of_last_inserted_row; // autogenerated or not
   COPY_INFO info;
   bool insert_into_view;
-  select_insert(TABLE_LIST *table_list_par,
-		TABLE *table_par, List<Item> *fields_par,
+  select_insert(TableList *table_list_par,
+		Table *table_par, List<Item> *fields_par,
 		List<Item> *update_fields, List<Item> *update_values,
 		enum_duplicates duplic, bool ignore);
   ~select_insert();
@@ -2143,22 +2143,22 @@ class select_insert :public select_result_interceptor {
 
 
 class select_create: public select_insert {
-  ORDER *group;
-  TABLE_LIST *create_table;
+  order_st *group;
+  TableList *create_table;
   HA_CREATE_INFO *create_info;
-  TABLE_LIST *select_tables;
+  TableList *select_tables;
   Alter_info *alter_info;
   Field **field;
   /* lock data for tmp table */
-  MYSQL_LOCK *m_lock;
+  DRIZZLE_LOCK *m_lock;
   /* m_lock or thd->extra_lock */
-  MYSQL_LOCK **m_plock;
+  DRIZZLE_LOCK **m_plock;
 public:
-  select_create (TABLE_LIST *table_arg,
+  select_create (TableList *table_arg,
 		 HA_CREATE_INFO *create_info_par,
                  Alter_info *alter_info_arg,
 		 List<Item> &select_fields,enum_duplicates duplic, bool ignore,
-                 TABLE_LIST *select_tables_arg)
+                 TableList *select_tables_arg)
     :select_insert (NULL, NULL, &select_fields, 0, 0, duplic, ignore),
     create_table(table_arg),
     create_info(create_info_par),
@@ -2168,7 +2168,7 @@ public:
     {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
 
-  void binlog_show_create_table(TABLE **tables, uint count);
+  void binlog_show_create_table(Table **tables, uint count);
   void store_values(List<Item> &values);
   void send_error(uint errcode,const char *err);
   bool send_eof();
@@ -2255,7 +2255,7 @@ class select_union :public select_result_interceptor
 {
   TMP_TABLE_PARAM tmp_table_param;
 public:
-  TABLE *table;
+  Table *table;
 
   select_union() :table(0) {}
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
@@ -2431,7 +2431,7 @@ public:
     return(!tree_insert(&tree, ptr, 0, tree.custom_arg));
   }
 
-  bool get(TABLE *table);
+  bool get(Table *table);
   static double get_use_cost(uint *buffer, uint nkeys, uint key_size, 
                              uint64_t max_in_memory_size);
   inline static int get_cost_calc_buff_size(ulong nkeys, uint key_size, 
@@ -2452,7 +2452,7 @@ public:
 
 class multi_delete :public select_result_interceptor
 {
-  TABLE_LIST *delete_tables, *table_being_deleted;
+  TableList *delete_tables, *table_being_deleted;
   Unique **tempfiles;
   ha_rows deleted, found;
   uint num_of_tables;
@@ -2470,7 +2470,7 @@ class multi_delete :public select_result_interceptor
   bool error_handled;
 
 public:
-  multi_delete(TABLE_LIST *dt, uint num_of_tables);
+  multi_delete(TableList *dt, uint num_of_tables);
   ~multi_delete();
   int prepare(List<Item> &list, SELECT_LEX_UNIT *u);
   bool send_data(List<Item> &items);
@@ -2484,10 +2484,10 @@ public:
 
 class multi_update :public select_result_interceptor
 {
-  TABLE_LIST *all_tables; /* query/update command tables */
-  TABLE_LIST *leaves;     /* list of leves of join table tree */
-  TABLE_LIST *update_tables, *table_being_updated;
-  TABLE **tmp_tables, *main_table, *table_to_update;
+  TableList *all_tables; /* query/update command tables */
+  TableList *leaves;     /* list of leves of join table tree */
+  TableList *update_tables, *table_being_updated;
+  Table **tmp_tables, *main_table, *table_to_update;
   TMP_TABLE_PARAM *tmp_table_param;
   ha_rows updated, found;
   List <Item> *fields, *values;
@@ -2497,7 +2497,7 @@ class multi_update :public select_result_interceptor
    List of tables referenced in the CHECK OPTION condition of
    the updated view excluding the updated table. 
   */
-  List <TABLE> unupdated_check_opt_tables;
+  List <Table> unupdated_check_opt_tables;
   Copy_field *copy_field;
   enum enum_duplicates handle_duplicates;
   bool do_update, trans_safe;
@@ -2511,7 +2511,7 @@ class multi_update :public select_result_interceptor
   bool error_handled;
 
 public:
-  multi_update(TABLE_LIST *ut, TABLE_LIST *leaves_list,
+  multi_update(TableList *ut, TableList *leaves_list,
 	       List<Item> *fields, List<Item> *values,
 	       enum_duplicates handle_duplicates, bool ignore);
   ~multi_update();
@@ -2564,4 +2564,4 @@ void add_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var);
 void add_diff_to_status(STATUS_VAR *to_var, STATUS_VAR *from_var,
                         STATUS_VAR *dec_var);
 
-#endif /* MYSQL_SERVER */
+#endif /* DRIZZLE_SERVER */

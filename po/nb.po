@@ -7,37 +7,41 @@ msgid ""
 msgstr ""
 "Project-Id-Version: drizzle\n"
 "Report-Msgid-Bugs-To: http://translations.launchpad.net/drizzle\n"
-"POT-Creation-Date: 2008-08-12 13:00-0700\n"
-"PO-Revision-Date: 2008-08-11 21:47+0000\n"
+"POT-Creation-Date: 2008-08-20 20:34-0700\n"
+"PO-Revision-Date: 2008-08-13 19:03+0000\n"
 "Last-Translator: matslindh <Unknown>\n"
 "Language-Team: Norwegian Bokmal <nb@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Launchpad-Export-Date: 2008-08-12 04:16+0000\n"
+"X-Launchpad-Export-Date: 2008-08-16 20:24+0000\n"
 "X-Generator: Launchpad (build Unknown)\n"
 
 #: client/drizzle.cc:256
 msgid "Synonym for `help'."
-msgstr "Hjelp"
+msgstr "Synonymt med `help'."
 
 #: client/drizzle.cc:257
 msgid "Clear command."
-msgstr ""
+msgstr "Fjern kommando"
 
 #: client/drizzle.cc:259
 msgid "Reconnect to the server. Optional arguments are db and host."
 msgstr ""
+"Opprett tilkoblingen til server på nytt. databasenavn og host er valgfrie "
+"argumenter."
 
 #: client/drizzle.cc:261
 msgid ""
 "Set statement delimiter. NOTE: Takes the rest of the line as new delimiter."
 msgstr ""
+"Angi delingstegn for spørringer. NB: Resten av linjen blir det nye "
+"delingstegnet"
 
 #: client/drizzle.cc:263
 msgid "Send command to drizzle server, display result vertically."
-msgstr ""
+msgstr "Sender kommandoen til Drizzle-serveren og viser resultatet vertikalt."
 
 #: client/drizzle.cc:264
 msgid "Exit drizzle. Same as quit."
@@ -53,15 +57,16 @@ msgstr "Viser denne hjelpeteksten."
 
 #: client/drizzle.cc:267
 msgid "Disable pager, print to stdout."
-msgstr ""
+msgstr "Skru av sidevisning, skriv til stdout."
 
 #: client/drizzle.cc:268
 msgid "Don't write into outfile."
-msgstr ""
+msgstr "Ikke skriv til utfilen."
 
 #: client/drizzle.cc:270
 msgid "Set PAGER [to_pager]. Print the query results via PAGER."
 msgstr ""
+"Sett PAGER [to_pager]. Resultatet av en spørring blir skrevet ut via PAGER."
 
 #: client/drizzle.cc:271
 msgid "Print current command."
@@ -77,7 +82,7 @@ msgstr "Avslutt drizzle."
 
 #: client/drizzle.cc:274
 msgid "Rebuild completion hash."
-msgstr ""
+msgstr "Bygg filen for automatisk fullførelse av navn på nytt."
 
 #: client/drizzle.cc:276
 msgid "Execute an SQL script file. Takes a file name as an argument."
@@ -159,7 +164,7 @@ msgstr "Adjø"
 msgid "Query aborted by Ctrl+C\n"
 msgstr "Spørringen ble avbrutt med Ctrl+C\n"
 
-#: client/drizzle.cc:1271 client/drizzleadmin.cc:69
+#: client/drizzle.cc:1271 client/drizzleadmin.cc:69 drizzled/drizzled.cc:3104
 msgid "Display this help and exit."
 msgstr "Vis denne hjelpeteksten og avslutt."
 
@@ -201,7 +206,7 @@ msgid ""
 "Don't use history file. Disable interactive behavior. (Enables --silent)"
 msgstr "Ikke bruk en historiefil. Skru av interaktivitet. (Skrur på --silent)"
 
-#: client/drizzle.cc:1288
+#: client/drizzle.cc:1288 drizzled/drizzled.cc:3174
 msgid "Directory where character sets are."
 msgstr "Katalogen hvor tegnsettene ligger"
 
@@ -233,7 +238,7 @@ msgstr "Vis litt debug-informasjon og avslutt."
 msgid "Database to use."
 msgstr "Databasen som skal brukes."
 
-#: client/drizzle.cc:1307
+#: client/drizzle.cc:1307 drizzled/drizzled.cc:3170
 msgid "Set the default character set."
 msgstr "Setter standardtegnsett."
 
@@ -352,12 +357,21 @@ msgid ""
 "work in batch mode. Disable with --disable-pager. This option is disabled by "
 "default."
 msgstr ""
+"Sidehåndteringsprogram som skal brukes for å vise resultatene. Hvis du ikke "
+"angir denne egenskapen blir standardprogrammet brukt fra miljøvariabelen "
+"PAGER. Brukbare program er 'less', 'more', 'cat [> filename]', etc. Les mer "
+"under den interaktive hjelpefunksjonen (\\h). Denne egenskapen virker ikke i "
+"batchmodus. Skrus av med --disable-pager. Denne egenskapen er skrudd av som "
+"standard."
 
 #: client/drizzle.cc:1361
 msgid ""
 "Disable pager and print to stdout. See interactive help (\\h) also. WARNING: "
 "option deprecated; use --disable-pager instead."
 msgstr ""
+"Skrur av sidehåndtering og skriver til stdout. Les mer under den interaktive "
+"hjelpefunksjonen (\\h). ADVARSEL: Egenskapen er utgått; bruk --disable-pager "
+"i stedet."
 
 #: client/drizzle.cc:1364 client/drizzleadmin.cc:74
 msgid ""
@@ -372,6 +386,8 @@ msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, my.cnf, $DRIZZLE_TCP_PORT, "
 msgstr ""
+"Portnummeret som skal brukes for tilkoblingen eller 0 for å bruke en "
+"standardverdi fra my.cnf, $MYSQL_TCP_PORT, "
 
 #: client/drizzle.cc:1367
 msgid "built-in default"
@@ -379,7 +395,7 @@ msgstr "innebygd standardverdi"
 
 #: client/drizzle.cc:1370
 msgid "Set the drizzle prompt to this value."
-msgstr ""
+msgstr "Setter drizzle-promptet til denne verdien."
 
 #: client/drizzle.cc:1373
 msgid "The protocol of connection (tcp,socket,pipe,memory)."
@@ -456,7 +472,7 @@ msgstr "Synonymt med --safe-updates, -U."
 msgid "Write more. (-v -v -v gives the table output format)."
 msgstr "Skriv ut mer. (-v -v -v gir tabellformat på utskriften)"
 
-#: client/drizzle.cc:1407 client/drizzleadmin.cc:89
+#: client/drizzle.cc:1407 client/drizzleadmin.cc:89 drizzled/drizzled.cc:3638
 msgid "Output version information and exit."
 msgstr "Skriv ut versjonsnummeret og avslutt."
 
@@ -535,6 +551,8 @@ msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-pager i stedet.\n"
 #, c-format
 msgid "WARNING: --server-arg option not supported in this configuration.\n"
 msgstr ""
+"ADVARSEL: --server-arg-egenskapen er ikke støttet under denne "
+"konfigurasjonen\n"
 
 #: client/drizzle.cc:1912
 #, c-format
@@ -547,10 +565,14 @@ msgid ""
 "    You can turn off this feature to get a quicker startup with -A\n"
 "\n"
 msgstr ""
+"Leser tabellinformasjon for automatisk utfylling av tabell- og kolonnenavn\n"
+"    Du kan skru av denne egenskapen ved å angi -A for å få en raskere "
+"oppstart.\n"
+"\n"
 
 #: client/drizzle.cc:2436
 msgid "No connection. Trying to reconnect..."
-msgstr ""
+msgstr "Ingen tilkobling. Prøver å koble til på nytt..."
 
 #: client/drizzle.cc:2442
 msgid "Can't connect to the server\n"
@@ -684,11 +706,15 @@ msgid_plural "Query OK, %ld rows affected"
 msgstr[0] "Spørring OK, %ld rad påvirket"
 msgstr[1] "Spørring OK, %ld rader påvirket"
 
-#: client/drizzleadmin.cc:76
+#: client/drizzleadmin.cc:76 drizzled/drizzled.cc:3429
+#, fuzzy
 msgid ""
 "Port number to use for connection or 0 for default to, in order of "
 "preference, my.cnf, $DRIZZLE_TCP_PORT, built-in default ("
 msgstr ""
+"Portnummeret som skal brukes for tilkoblingen eller 0 for å bruke en "
+"standardverdi fra my.cnf, $MYSQL_TCP_PORT eller dersom ingen av de er satt, "
+"den innebygde standardverdien."
 
 #: client/drizzleadmin.cc:81
 msgid "Silently exit if one can't connect to server."
@@ -798,15 +824,291 @@ msgstr ""
 "  ping Sjekk om serveren er nede\n"
 "  shutdown Avslutt serveren\n"
 
+#: libdrizzle/client.c:673
+#, c-format
+msgid "Unknown option to protocol: %s\n"
+msgstr ""
+
+#: libdrizzle/client.c:1153
+#, c-format
+msgid "COLLATION %s is not valid for CHARACTER SET %s"
+msgstr ""
+
+#: libdrizzle/errmsg.c:29
+#, fuzzy
+msgid "Unknown Drizzle error"
+msgstr "Ukjent feil %d"
+
+#: libdrizzle/errmsg.c:30
+#, fuzzy, c-format
+msgid "Can't create UNIX socket (%d)"
+msgstr "Kan ikke lage katalogen '%s' (Feilkode: %d)"
+
+#: libdrizzle/errmsg.c:31
+#, c-format
+msgid "Can't connect to local Drizzle server through socket '%-.100s' (%d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:32
+#, fuzzy, c-format
+msgid "Can't connect to Drizzle server on '%-.100s' (%d)"
+msgstr "Klarte ikke å koble til serveren\n"
+
+#: libdrizzle/errmsg.c:33
+#, c-format
+msgid "Can't create TCP/IP socket (%d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:34
+#, fuzzy, c-format
+msgid "Unknown Drizzle server host '%-.100s' (%d)"
+msgstr "Ukjent kommando: '%-.60s'"
+
+#: libdrizzle/errmsg.c:35
+msgid "Drizzle server has gone away"
+msgstr ""
+
+#: libdrizzle/errmsg.c:36
+#, c-format
+msgid "Protocol mismatch; server version = %d, client version = %d"
+msgstr ""
+
+#: libdrizzle/errmsg.c:37
+msgid "Drizzle client ran out of memory"
+msgstr ""
+
+#: libdrizzle/errmsg.c:38
+msgid "Wrong host info"
+msgstr ""
+
+#: libdrizzle/errmsg.c:39
+msgid "Localhost via UNIX socket"
+msgstr ""
+
+#: libdrizzle/errmsg.c:40
+#, c-format
+msgid "%-.100s via TCP/IP"
+msgstr ""
+
+#: libdrizzle/errmsg.c:41
+msgid "Error in server handshake"
+msgstr ""
+
+#: libdrizzle/errmsg.c:42
+msgid "Lost connection to Drizzle server during query"
+msgstr ""
+
+#: libdrizzle/errmsg.c:43
+msgid "Commands out of sync; you can't run this command now"
+msgstr ""
+
+#: libdrizzle/errmsg.c:44
+#, c-format
+msgid "Named pipe: %-.32s"
+msgstr ""
+
+#: libdrizzle/errmsg.c:45
+#, c-format
+msgid "Can't wait for named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:46
+#, c-format
+msgid "Can't open named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:47
+#, c-format
+msgid "Can't set state of named pipe to host: %-.64s  pipe: %-.32s (%lu)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:48
+#, c-format
+msgid "Can't initialize character set %-.32s (path: %-.100s)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:49
+msgid "Got packet bigger than 'max_allowed_packet' bytes"
+msgstr ""
+
+#: libdrizzle/errmsg.c:50
+msgid "Embedded server"
+msgstr ""
+
+#: libdrizzle/errmsg.c:51
+msgid "Error on SHOW SLAVE STATUS:"
+msgstr ""
+
+#: libdrizzle/errmsg.c:52
+msgid "Error on SHOW SLAVE HOSTS:"
+msgstr ""
+
+#: libdrizzle/errmsg.c:53
+msgid "Error connecting to slave:"
+msgstr ""
+
+#: libdrizzle/errmsg.c:54
+#, fuzzy
+msgid "Error connecting to master:"
+msgstr "Nettverkslesefeil ved lasting av '%s' fra masteren"
+
+#: libdrizzle/errmsg.c:55
+#, fuzzy
+msgid "SSL connection error"
+msgstr "Ukjent feil %d"
+
+#: libdrizzle/errmsg.c:56
+msgid "Malformed packet"
+msgstr ""
+
+#: libdrizzle/errmsg.c:57 libdrizzle/errmsg.c:68 libdrizzle/errmsg.c:69
+#: libdrizzle/errmsg.c:70 libdrizzle/errmsg.c:71 libdrizzle/errmsg.c:72
+#: libdrizzle/errmsg.c:73 libdrizzle/errmsg.c:74 libdrizzle/errmsg.c:75
+#: libdrizzle/errmsg.c:76
+msgid "(unused error message)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:58
+msgid "Invalid use of null pointer"
+msgstr ""
+
+#: libdrizzle/errmsg.c:59
+msgid "Statement not prepared"
+msgstr ""
+
+#: libdrizzle/errmsg.c:60
+msgid "No data supplied for parameters in prepared statement"
+msgstr ""
+
+#: libdrizzle/errmsg.c:61
+msgid "Data truncated"
+msgstr ""
+
+#: libdrizzle/errmsg.c:62
+msgid "No parameters exist in the statement"
+msgstr ""
+
+#: libdrizzle/errmsg.c:63
+msgid "Invalid parameter number"
+msgstr ""
+
+#: libdrizzle/errmsg.c:64
+#, c-format
+msgid ""
+"Can't send long data for non-string/non-binary data types (parameter: %d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:66
+#, c-format
+msgid "Using unsupported buffer type: %d  (parameter: %d)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:67
+#, c-format
+msgid "Shared memory: %-.100s"
+msgstr ""
+
+#: libdrizzle/errmsg.c:77
+msgid "Wrong or unknown protocol"
+msgstr ""
+
+#: libdrizzle/errmsg.c:78
+#, fuzzy
+msgid "Invalid connection handle"
+msgstr "Ugyldig feilkode"
+
+#: libdrizzle/errmsg.c:79
+msgid ""
+"Connection using old (pre-4.1.1) authentication protocol refused (client "
+"option 'secure_auth' enabled)"
+msgstr ""
+
+#: libdrizzle/errmsg.c:81
+msgid "Row retrieval was canceled by drizzle_stmt_close() call"
+msgstr ""
+
+#: libdrizzle/errmsg.c:82
+msgid "Attempt to read column without prior row fetch"
+msgstr ""
+
+#: libdrizzle/errmsg.c:83
+msgid "Prepared statement contains no metadata"
+msgstr ""
+
+#: libdrizzle/errmsg.c:84
+msgid ""
+"Attempt to read a row while there is no result set associated with the "
+"statement"
+msgstr ""
+
+#: libdrizzle/errmsg.c:86
+msgid "This feature is not implemented yet"
+msgstr ""
+
+#: libdrizzle/errmsg.c:87
+#, fuzzy, c-format
+msgid ""
+"Lost connection to Drizzle server while waiting for initial communication "
+"packet, system error: %d"
+msgstr ""
+"tilkobling til serveren på '%s' mislykkes\n"
+"feil: '%s'"
+
+#: libdrizzle/errmsg.c:89
+#, fuzzy, c-format
+msgid ""
+"Lost connection to Drizzle server while reading initial communication "
+"packet, system error: %d"
+msgstr ""
+"tilkobling til serveren på '%s' mislykkes\n"
+"feil: '%s'"
+
+#: libdrizzle/errmsg.c:91
+#, fuzzy, c-format
+msgid ""
+"Lost connection to Drizzle server while sending authentication information, "
+"system error: %d"
+msgstr ""
+"tilkobling til serveren på '%s' mislykkes\n"
+"feil: '%s'"
+
+#: libdrizzle/errmsg.c:93
+#, fuzzy, c-format
+msgid ""
+"Lost connection to Drizzle server while reading authorization information, "
+"system error: %d"
+msgstr ""
+"tilkobling til serveren på '%s' mislykkes\n"
+"feil: '%s'"
+
+#: libdrizzle/errmsg.c:95
+#, fuzzy, c-format
+msgid ""
+"Lost connection to Drizzle server while setting initial database, system "
+"error: %d"
+msgstr ""
+"tilkobling til serveren på '%s' mislykkes\n"
+"feil: '%s'"
+
+#: libdrizzle/errmsg.c:97
+#, c-format
+msgid "Statement closed indirectly because of a preceeding %s() call"
+msgstr ""
+
+#: libdrizzle/local_infile.c:185 mysys/errors.c:52
+#, c-format
+msgid "File '%s' not found (Errcode: %d)"
+msgstr "Filen '%s' ble ikke funnet (Feilkode: %d)"
+
+#: libdrizzle/local_infile.c:216 mysys/errors.c:26
+#, c-format
+msgid "Error reading file '%s' (Errcode: %d)"
+msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
+
 #: mysys/errors.c:25
 #, c-format
 msgid "Can't create/write to file '%s' (Errcode: %d)"
 msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
-
-#: mysys/errors.c:26
-#, c-format
-msgid "Error reading file '%s' (Errcode: %d)"
-msgstr "Lesingen av '%s' mislykkes (Feilkode: %d)"
 
 #: mysys/errors.c:27
 #, c-format
@@ -814,8 +1116,8 @@ msgid "Error writing file '%s' (Errcode: %d)"
 msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
 
 #: mysys/errors.c:28
-#, c-format
-msgid "Error on close of '%'s (Errcode: %d)"
+#, fuzzy, c-format
+msgid "Error on close of '%s' (Errcode: %d)"
 msgstr "Feil ved lukkingen av '%s' (Feilkode: %d)"
 
 #: mysys/errors.c:29
@@ -926,12 +1228,12 @@ msgstr "Kan ikke opprette symlinken '%s' som peker til '%s' (Feilkode: %d)"
 #: mysys/errors.c:49
 #, c-format
 msgid "Error on realpath() on '%s' (Error %d)"
-msgstr ""
+msgstr "Feil ved kall til realpath() på '%s' (Feilkode: %d)"
 
 #: mysys/errors.c:50
 #, c-format
 msgid "Can't sync file '%s' to disk (Errcode: %d)"
-msgstr ""
+msgstr "Kan ikke synkronisere '%s' mot disk (Feilkode: %d)"
 
 #: mysys/errors.c:51
 #, c-format
@@ -939,62 +1241,59 @@ msgid ""
 "Collation '%s' is not a compiled collation and is not specified in the %s "
 "file"
 msgstr ""
-
-#: mysys/errors.c:52
-#, c-format
-msgid "File '%s' not found (Errcode: %d)"
-msgstr ""
+"Sorteringsrekkefølgen '%s' er ikke en kompilert sorteringsrekkefølge og er "
+"ikke spesifisert i filen %s"
 
 #: mysys/errors.c:53
 #, c-format
 msgid "File '%s' (fileno: %d) was not closed"
-msgstr ""
+msgstr "Filen '%s' (filnummer: %d) ble ikke lukket"
 
 #: mysys/my_error.c:86
 #, c-format
 msgid "Unknown error %d"
-msgstr ""
+msgstr "Ukjent feil %d"
 
 #: mysys/my_getopt.c:83
 msgid "Warning: "
-msgstr ""
+msgstr "Advarsel: "
 
 #: mysys/my_getopt.c:85
 msgid "Info: "
-msgstr ""
+msgstr "Informasjon: "
 
 #: mysys/my_getopt.c:350
 #, c-format
 msgid "%s: %s: Option '%s' used, but is disabled\n"
-msgstr ""
+msgstr "%s: %s: Valget '%s' ble brukt, men er ikke tilgjengelig\n"
 
 #: mysys/my_getopt.c:351
 msgid "WARNING"
-msgstr ""
+msgstr "ADVARSEL"
 
 #: mysys/my_getopt.c:351
 msgid "ERROR"
-msgstr ""
+msgstr "FEIL"
 
 #: mysys/my_getopt.c:454
 #, c-format
 msgid "%s: ERROR: Option '-%c' used, but is disabled\n"
-msgstr ""
+msgstr "%s: FEIL: Valget '-%c' ble brukt, men er ikke tilgjengelig\n"
 
 #: mysys/my_getopt.c:767
 #, c-format
 msgid "Unknown suffix '%c' used for variable '%s' (value '%s')\n"
-msgstr ""
+msgstr "Ukjent endelse '%c' brukt for variabelen '%s' (verdi '%s')\n"
 
 #: mysys/my_getopt.c:948
 #, c-format
 msgid "%s: ERROR: Invalid decimal value for option '%s'\n"
-msgstr ""
+msgstr "%s: FEIL: Ugyldig desimalverdi for egenskapen '%s'\n"
 
 #: mysys/my_getopt.c:1170
 #, c-format
 msgid "%*s(Defaults to on; use --skip-%s to disable.)\n"
-msgstr ""
+msgstr "%*s(Standardverdi er på; bruk --skip-%s for å skru av.)\n"
 
 #: mysys/my_getopt.c:1190
 #, c-format
@@ -1004,285 +1303,1621 @@ msgid ""
 "and boolean options {false|true}  Value (after reading options)\n"
 "--------------------------------- -----------------------------\n"
 msgstr ""
+"\n"
+"Variabler (--variabelnavn=verdi)\n"
+"og boolske egenskaper {false|true}  Verdi (etter å ha lest brukervalg)\n"
+"--------------------------------- -----------------------------\n"
 
 #: mysys/my_getopt.c:1206 mysys/my_getopt.c:1222
 msgid "(No default value)"
-msgstr ""
+msgstr "(Ingen standardverdi)"
 
 #: mysys/my_getopt.c:1225
 msgid "true"
-msgstr ""
+msgstr "sann"
 
 #: mysys/my_getopt.c:1225
 msgid "false"
-msgstr ""
+msgstr "usann"
 
 #: mysys/my_getopt.c:1250
 #, c-format
 msgid "(Disabled)\n"
-msgstr ""
+msgstr "(Skrudd av)\n"
 
 #: mysys/my_handler_errors.h:10
 msgid "Didn't find key on read or update"
-msgstr ""
+msgstr "Fant ikke nøkkelen ved lesing eller oppdatering"
 
 #: mysys/my_handler_errors.h:12
 msgid "Duplicate key on write or update"
-msgstr ""
+msgstr "Duplikatnøkkel ved skriving eller oppdatering"
 
 #: mysys/my_handler_errors.h:14
 msgid "Internal (unspecified) error in handler"
-msgstr ""
+msgstr "Intern (uspesifisert) feil i håndteringen"
 
 #: mysys/my_handler_errors.h:16
 msgid ""
 "Someone has changed the row since it was read (while the table was locked to "
 "prevent it)"
 msgstr ""
+"Noen har endret raden siden den ble lest (mens tabellen var låst for å "
+"forhindre endringer)"
 
 #: mysys/my_handler_errors.h:18
 msgid "Wrong index given to function"
-msgstr ""
+msgstr "Feil indeks gitt til funksjonen"
 
 #: mysys/my_handler_errors.h:20
 msgid "Undefined handler error 125"
-msgstr ""
+msgstr "Udefinert håndteringsfeil 125"
 
 #: mysys/my_handler_errors.h:22
 msgid "Index file is crashed"
-msgstr ""
+msgstr "Indeksfilen har kræsjet"
 
 #: mysys/my_handler_errors.h:24
 msgid "Record file is crashed"
-msgstr ""
+msgstr "Radfilen har kræsjet"
 
 #: mysys/my_handler_errors.h:26
 msgid "Out of memory in engine"
-msgstr ""
+msgstr "Databasemotoren er tom for minne"
 
 #: mysys/my_handler_errors.h:28
 msgid "Undefined handler error 129"
-msgstr ""
+msgstr "Udefinert håndteringsfeil 129"
 
 #: mysys/my_handler_errors.h:30
 msgid "Incorrect file format"
-msgstr ""
+msgstr "Feil filformat"
 
 #: mysys/my_handler_errors.h:32
 msgid "Command not supported by database"
-msgstr ""
+msgstr "Kommandoen er ikke støttet av databasen"
 
 #: mysys/my_handler_errors.h:34
 msgid "Old database file"
-msgstr ""
+msgstr "Gammel databasefil"
 
 #: mysys/my_handler_errors.h:36
 msgid "No record read before update"
-msgstr ""
+msgstr "Ingen rad ble lest før oppdateringen"
 
 #: mysys/my_handler_errors.h:38
 msgid "Record was already deleted (or record file crashed)"
-msgstr ""
+msgstr "Raden var allerede slettet (eller så kræsjet radfilen)"
 
 #: mysys/my_handler_errors.h:40
 msgid "No more room in record file"
-msgstr ""
+msgstr "Ikke mer plass i radfilen"
 
 #: mysys/my_handler_errors.h:42
 msgid "No more room in index file"
-msgstr ""
+msgstr "Ikke mer plass i indeksfilen"
 
 #: mysys/my_handler_errors.h:44
 msgid "No more records (read after end of file)"
-msgstr ""
+msgstr "Ingen flere rader (leste etter slutten på filen)"
 
 #: mysys/my_handler_errors.h:46
 msgid "Unsupported extension used for table"
-msgstr ""
+msgstr "En utvidelse som ikke er støttet er brukt på tabellen"
 
 #: mysys/my_handler_errors.h:48
 msgid "Too big row"
-msgstr ""
+msgstr "Raden er for stor"
 
 #: mysys/my_handler_errors.h:50
 msgid "Wrong create options"
-msgstr ""
+msgstr "Egenskapene for å opprette en ny er feil"
 
 #: mysys/my_handler_errors.h:52
 msgid "Duplicate unique key or constraint on write or update"
 msgstr ""
+"Det er duplikater av en unik nøkkel eller begrensning ved skriving eller "
+"oppdatering"
 
 #: mysys/my_handler_errors.h:54
 msgid "Unknown character set used in table"
-msgstr ""
+msgstr "Ukjent tegnsett er brukt i tabellen"
 
 #: mysys/my_handler_errors.h:56
 msgid "Conflicting table definitions in sub-tables of MERGE table"
 msgstr ""
+"Uoverensstemmelse i tabelldefinisjonene mellom deltabellene av en MERGE-"
+"tabell"
 
 #: mysys/my_handler_errors.h:58
 msgid "Table is crashed and last repair failed"
-msgstr ""
+msgstr "Tabellen har kræsjet og siste repareringsforsøk feilet"
 
 #: mysys/my_handler_errors.h:60
 msgid "Table was marked as crashed and should be repaired"
-msgstr ""
+msgstr "Tabellen var merket som kræsjet og bør bli reparert"
 
 #: mysys/my_handler_errors.h:62
 msgid "Lock timed out; Retry transaction"
-msgstr ""
+msgstr "Låsen timet ut; prøv transaksjonen på nytt"
 
 #: mysys/my_handler_errors.h:64
 msgid "Lock table is full;  Restart program with a larger locktable"
 msgstr ""
+"Låsetabellen er full; start programmet på nytt med en større låsetabell"
 
 #: mysys/my_handler_errors.h:66
 msgid "Updates are not allowed under a read only transactions"
-msgstr ""
+msgstr "Oppdateringer er ikke tillatt i en bare-lese transaksjon"
 
 #: mysys/my_handler_errors.h:68
 msgid "Lock deadlock; Retry transaction"
-msgstr ""
+msgstr "Deadlock mellom låsene; prøv transaksjonen på nytt"
 
 #: mysys/my_handler_errors.h:70
 msgid "Foreign key constraint is incorrectly formed"
-msgstr ""
+msgstr "Fremmednøkkelbegrensningen er på feil format"
 
 #: mysys/my_handler_errors.h:72
 msgid "Cannot add a child row"
-msgstr ""
+msgstr "Kan ikke legge til en barnerad"
 
 #: mysys/my_handler_errors.h:74
 msgid "Cannot delete a parent row"
-msgstr ""
+msgstr "Kan ikke slette en foreldrerad"
 
 #: mysys/my_handler_errors.h:76
 msgid "No savepoint with that name"
-msgstr ""
+msgstr "Det er ikke noe lagringspunkt med det navnet"
 
 #: mysys/my_handler_errors.h:78
 msgid "Non unique key block size"
-msgstr ""
+msgstr "Størrelse på blokken for ikke-unike nøkler"
 
 #: mysys/my_handler_errors.h:80
 msgid "The table does not exist in engine"
-msgstr ""
+msgstr "Tabellen eksisterer ikke i databasemotoren"
 
 #: mysys/my_handler_errors.h:82
 msgid "The table already existed in storage engine"
-msgstr ""
+msgstr "Tabellen eksisterer allerede i lagringsmotoren"
 
 #: mysys/my_handler_errors.h:84
 msgid "Could not connect to storage engine"
-msgstr ""
+msgstr "Kunne ikke koble til lagringsmotoren"
 
 #: mysys/my_handler_errors.h:86
 msgid "Unexpected null pointer found when using spatial index"
-msgstr ""
+msgstr "Uventet nullpeker ble funnet i romindeksen (spatial index)"
 
 #: mysys/my_handler_errors.h:88
 msgid "The table changed in storage engine"
-msgstr ""
+msgstr "Tabellen ble endret i lagringsmotoren"
 
 #: mysys/my_handler_errors.h:90
 msgid "There's no partition in table for the given value"
-msgstr ""
+msgstr "Det er ikke partisjon i tabellen for den angitte verdien"
 
 #: mysys/my_handler_errors.h:92
 msgid "Row-based binlogging of row failed"
-msgstr ""
+msgstr "Radbasert binærlogging av raden feilet"
 
 #: mysys/my_handler_errors.h:94
 msgid "Index needed in foreign key constraint"
-msgstr ""
+msgstr "En indeks er nødvendig for en fremmednøkkelbegrensning"
 
 #: mysys/my_handler_errors.h:96
 msgid "Upholding foreign key constraints would lead to a duplicate key error"
 msgstr ""
+"Det å beholde fremmednøkkelbegrensningen ville ha gitt en feil med duplikate "
+"nøkler"
 
 #: mysys/my_handler_errors.h:98
 msgid "Table needs to be upgraded before it can be used"
-msgstr ""
+msgstr "Tabellen må oppgraderes før den kan brukes"
 
 #: mysys/my_handler_errors.h:100
 msgid "Table is read only"
-msgstr ""
+msgstr "Tabellen er i bare-lese-modus"
 
 #: mysys/my_handler_errors.h:102
 msgid "Failed to get next auto increment value"
-msgstr ""
+msgstr "Kunne ikke hente neste auto increment-verdi"
 
 #: mysys/my_handler_errors.h:104
 msgid "Failed to set row auto increment value"
-msgstr ""
+msgstr "Kunne ikke sette radens auto increment-verdi"
 
 #: mysys/my_handler_errors.h:106
 msgid "Unknown (generic) error from engine"
-msgstr ""
+msgstr "Ukjent (generell) feil fra motoren"
 
 #: mysys/my_handler_errors.h:108
 msgid "Record is the same"
-msgstr ""
+msgstr "Raden er den samme"
 
 #: mysys/my_handler_errors.h:110
 msgid "It is not possible to log this statement"
-msgstr ""
+msgstr "Det er ikke mulig å logge denne spørringen"
 
 #: mysys/my_handler_errors.h:112
 msgid "Tablespace exists"
-msgstr ""
+msgstr "Tabellplassen eksisterer"
 
 #: mysys/my_handler_errors.h:114
 msgid "The event was corrupt, leading to illegal data being read"
-msgstr ""
+msgstr "Hendelsen var ugyldig, og dette førte til at ulovlig data ble lest"
 
 #: mysys/my_handler_errors.h:116
 msgid "The table is of a new format not supported by this version"
-msgstr ""
+msgstr "Tabellen har et nytt format som ikke er støttet av denne versjonen"
 
 #: mysys/my_handler_errors.h:118
 msgid "The event could not be processed no other hanlder error happened"
 msgstr ""
+"Hendelsen kunne ikke bli behandlet, ingen annen behandlingsfeil skjedde"
 
 #: mysys/my_handler_errors.h:120
 msgid "Got a fatal error during initialzaction of handler"
-msgstr ""
+msgstr "Fikk en fatal feil da vi startet behandleren"
 
 #: mysys/my_handler_errors.h:122
 msgid "File to short; Expected more data in file"
-msgstr ""
+msgstr "Filen er for kort; forventet å finne mer data i filen"
 
 #: mysys/my_handler_errors.h:124
 msgid "Read page with wrong checksum"
-msgstr ""
+msgstr "Leste en side med feil sjekksum"
 
 #: mysys/my_handler_errors.h:126
 msgid "Lock or active transaction"
-msgstr ""
+msgstr "Lås eller aktiv transaksjon"
 
 #: mysys/my_handler_errors.h:128
 msgid "No such table space"
-msgstr ""
+msgstr "Ingen slik tabellplass"
 
 #: mysys/my_handler_errors.h:130
 msgid "Tablespace not empty"
+msgstr "Tabellplassen er ikke tom"
+
+#: drizzled/authentication.cc:46 drizzled/handler.cc:362
+#: drizzled/sql_plugin.cc:790 drizzled/sql_show.cc:4671
+#: drizzled/sql_udf.cc:100
+#, c-format
+msgid "Plugin '%s' init function returned error."
+msgstr ""
+
+#: drizzled/drizzled.cc:550
+#, c-format
+msgid "Got error %d from pthread_cond_timedwait"
+msgstr ""
+
+#: drizzled/drizzled.cc:690 drizzled/drizzled.cc:1779
+msgid "Can't create thread to kill server"
+msgstr ""
+
+#: drizzled/drizzled.cc:757
+#, c-format
+msgid "Got signal %d from thread %ld"
+msgstr ""
+
+#: drizzled/drizzled.cc:791
+msgid "Aborting\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:988
+msgid "One can only use the --user switch if running as root\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:996
+msgid ""
+"Fatal error: Please read \"Security\" section of the manual to find out how "
+"to run mysqld as root!\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1020
+#, c-format
+msgid ""
+"Fatal error: Can't change to run as user '%s' ;  Please check that the user "
+"exists!\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1195
+#, c-format
+msgid "Retrying bind on TCP/IP port %u"
+msgstr ""
+
+#: drizzled/drizzled.cc:1201
+msgid "Can't start server: Bind on TCP/IP port"
+msgstr ""
+
+#: drizzled/drizzled.cc:1202
+#, c-format
+msgid "Do you already have another drizzled server running on port: %d ?"
+msgstr ""
+
+#: drizzled/drizzled.cc:1208
+msgid "Can't start server: listen() on TCP/IP port"
+msgstr ""
+
+#: drizzled/drizzled.cc:1209
+#, c-format
+msgid "listen() on TCP/IP failed with error %d"
+msgstr ""
+
+#: drizzled/drizzled.cc:1427
+#, c-format
+msgid "Fatal "
+msgstr ""
+
+#: drizzled/drizzled.cc:1445
+#, c-format
+msgid ""
+"We will try our best to scrape up some info that will hopefully help "
+"diagnose\n"
+"the problem, but since we have already crashed, something is definitely "
+"wrong\n"
+"and this may fail.\n"
+"\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1456
+#, c-format
+msgid ""
+"It is possible that mysqld could use up to \n"
+"key_buffer_size + (read_buffer_size + sort_buffer_size)*max_threads = %lu K\n"
+"bytes of memory\n"
+"Hope that's ok; if not, decrease some variables in the equation.\n"
+"\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1474
+#, c-format
+msgid ""
+"Attempting backtrace. You can use the following information to find out\n"
+"where mysqld died. If you see no messages after this, something went\n"
+"terribly wrong...\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1502
+#, c-format
+msgid ""
+"Trying to get some variables.\n"
+"Some pointers may be invalid and cause the dump to abort...\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1514
+#, c-format
+msgid ""
+"\n"
+"This crash occured while the server was calling initgroups(). This is\n"
+"often due to the use of a drizzled that is statically linked against glibc\n"
+"and configured to use LDAP in /etc/nsswitch.conf. You will need to either\n"
+"upgrade to a version of glibc that does not have this problem (2.3.4 or\n"
+"later when used with nscd), disable LDAP in your nsswitch.conf, or use a\n"
+"drizzled that is not statically linked.\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1529
+#, c-format
+msgid ""
+"\n"
+"You are running a statically-linked LinuxThreads binary on an NPTL system.\n"
+"This can result in crashes on some distributions due to LT/NPTL conflicts.\n"
+"You should either build a dynamically-linked binary, or force LinuxThreads\n"
+"to be used with the LD_ASSUME_KERNEL environment variable. Please consult\n"
+"the documentation for your distribution on how to do that.\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1542
+#, c-format
+msgid ""
+"\n"
+"The '--memlock' argument, which was enabled, uses system calls that are\n"
+"unreliable and unstable on some operating systems and operating-system\n"
+"versions (notably, some versions of Linux).  This crash could be due to use\n"
+"of those buggy OS calls.  You should consider whether you really need the\n"
+"'--memlock' parameter and/or consult the OS distributor about 'mlockall'\n"
+" bugs.\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:1557
+#, fuzzy, c-format
+msgid "Writing a core file\n"
+msgstr "Skriver historiefilen %s\n"
+
+#: drizzled/drizzled.cc:1604
+msgid ""
+"setrlimit could not change the size of core files to 'infinity';  We may not "
+"be able to generate a core file on signals"
+msgstr ""
+
+#: drizzled/drizzled.cc:1672
+#, c-format
+msgid "Can't create interrupt-thread (error %d, errno: %d)"
+msgstr ""
+
+#: drizzled/drizzled.cc:1760
+#, c-format
+msgid "Got signal %d to shutdown mysqld"
+msgstr ""
+
+#: drizzled/drizzled.cc:1806
+#, c-format
+msgid "Got signal: %d  error: %d"
+msgstr ""
+
+#: drizzled/drizzled.cc:1945
+#, c-format
+msgid "Wrong date/time format specifier: %s\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:2074
+#, c-format
+msgid "gethostname failed, using '%s' as hostname"
+msgstr ""
+
+#: drizzled/drizzled.cc:2138
+#, c-format
+msgid ""
+"Changed limits: max_open_files: %u  max_connections: %ld  table_cache: %ld"
+msgstr ""
+
+#: drizzled/drizzled.cc:2143
+#, c-format
+msgid ""
+"Could not increase number of max_open_files to more than %u (request: %u)"
+msgstr ""
+
+#: drizzled/drizzled.cc:2224
+#, c-format
+msgid "Unknown locale: '%s'"
+msgstr ""
+
+#: drizzled/drizzled.cc:2244
+msgid ""
+"Although a path was specified for the --log option, log tables are used. To "
+"enable logging to files use the --log-output option."
+msgstr ""
+
+#: drizzled/drizzled.cc:2251
+msgid ""
+"Although a path was specified for the --log-slow-queries option, log tables "
+"are used. To enable logging to files use the --log-output=file option."
+msgstr ""
+
+#: drizzled/drizzled.cc:2319
+msgid "Can't create thread-keys"
+msgstr ""
+
+#: drizzled/drizzled.cc:2366
+msgid "Out of memory"
+msgstr ""
+
+#: drizzled/drizzled.cc:2373
+msgid "You need to use --log-bin to make --binlog-format work."
+msgstr ""
+
+#: drizzled/drizzled.cc:2395
+msgid ""
+"using --replicate-same-server-id in conjunction with --log-slave-updates is "
+"impossible, it would lead to infinite loops in this server."
+msgstr ""
+
+#: drizzled/drizzled.cc:2415
+#, c-format
+msgid ""
+"No argument was provided to --log-bin, and --log-bin-index was not used; so "
+"replication may break when this Drizzle server acts as a master and has his "
+"hostname changed!! Please use '--log-bin=%s' to avoid this problem."
+msgstr ""
+
+#: drizzled/drizzled.cc:2449
+msgid "Failed to initialize plugins."
+msgstr ""
+
+#: drizzled/drizzled.cc:2480
+#, c-format
+msgid ""
+"%s: Too many arguments (first extra is '%s').\n"
+"Use --verbose --help to get a list of available options\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:2490
+msgid "Can't init databases"
+msgstr ""
+
+#: drizzled/drizzled.cc:2513
+#, c-format
+msgid "Unknown/unsupported table type: %s"
+msgstr ""
+
+#: drizzled/drizzled.cc:2519
+#, c-format
+msgid "Default storage engine (%s) is not available"
+msgstr ""
+
+#: drizzled/drizzled.cc:2542
+msgid "Can't initialize tc_log"
+msgstr ""
+
+#: drizzled/drizzled.cc:2573
+#, c-format
+msgid "Failed to lock memory. Errno: %d\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:2643
+#, c-format
+msgid "Asked for %u thread stack, but got %llu"
+msgstr ""
+
+#: drizzled/drizzled.cc:2679
+msgid ""
+"You have enabled the binary log, but you haven't set server-id to a non-zero "
+"value: we force server id to 1; updates will be logged to the binary log, "
+"but connections from slaves will not be accepted."
+msgstr ""
+
+#: drizzled/drizzled.cc:2737
+msgid "Before Lock_thread_count"
+msgstr ""
+
+#: drizzled/drizzled.cc:2744
+msgid "After lock_thread_count"
+msgstr ""
+
+#: drizzled/drizzled.cc:2853
+#, c-format
+msgid "drizzled: Got error %d from select"
+msgstr ""
+
+#: drizzled/drizzled.cc:3108 drizzled/drizzled.cc:3227
+#: drizzled/drizzled.cc:3397
+msgid "Option used by mysql-test for debugging and testing of replication."
+msgstr ""
+
+#: drizzled/drizzled.cc:3112
+msgid "Auto-increment columns are incremented by this"
+msgstr ""
+
+#: drizzled/drizzled.cc:3117
+msgid ""
+"Offset added to Auto-increment columns. Used when auto-increment-increment !"
+"= 1"
+msgstr ""
+
+#: drizzled/drizzled.cc:3123
+msgid ""
+"Path to installation directory. All paths are usually resolved relative to "
+"this."
+msgstr ""
+
+#: drizzled/drizzled.cc:3127
+msgid "IP address to bind to."
+msgstr ""
+
+#: drizzled/drizzled.cc:3131
+msgid ""
+"Does not have any effect without '--log-bin'. Tell the master the form of "
+"binary logging to use: either 'row' for row-based binary logging, or "
+"'statement' for statement-based binary logging, or 'mixed'. 'mixed' is "
+"statement-based binary logging except for those statements where only row-"
+"based is correct: those which involve user-defined functions (i.e. UDFs) or "
+"the UUID() function; for those, row-based binary logging is automatically "
+"used. "
+msgstr ""
+
+#: drizzled/drizzled.cc:3141
+msgid ""
+"Tells the master it should log updates for the specified database, and "
+"exclude all others not explicitly mentioned."
+msgstr ""
+
+#: drizzled/drizzled.cc:3145
+msgid ""
+"Tells the master that updates to the given database should not be logged "
+"tothe binary log."
+msgstr ""
+
+#: drizzled/drizzled.cc:3149
+msgid ""
+"The maximum size of a row-based binary log event in bytes. Rows will be "
+"grouped into events smaller than this size if possible. The value has to be "
+"a multiple of 256."
+msgstr ""
+
+#: drizzled/drizzled.cc:3160
+msgid "Don't ignore client side character set value sent during handshake."
+msgstr ""
+
+#: drizzled/drizzled.cc:3165
+msgid "Set the filesystem character set."
+msgstr ""
+
+#: drizzled/drizzled.cc:3177
+msgid "Chroot mysqld daemon during startup."
+msgstr ""
+
+#: drizzled/drizzled.cc:3181
+msgid "Set the default collation."
+msgstr ""
+
+#: drizzled/drizzled.cc:3185
+msgid "Default completion type."
+msgstr ""
+
+#: drizzled/drizzled.cc:3190
+msgid "Write error output on screen."
+msgstr ""
+
+#: drizzled/drizzled.cc:3194
+msgid "Write core on errors."
+msgstr ""
+
+#: drizzled/drizzled.cc:3198
+msgid "Path to the database root."
+msgstr ""
+
+#: drizzled/drizzled.cc:3202
+msgid ""
+"Set the default character set (deprecated option, use --character-set-server "
+"instead)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3207
+msgid ""
+"Set the default collation (deprecated option, use --collation-server "
+"instead)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3212
+msgid "Set the default storage engine (table type) for tables."
+msgstr ""
+
+#: drizzled/drizzled.cc:3216
+msgid "Set the default time zone."
+msgstr ""
+
+#: drizzled/drizzled.cc:3220
+msgid "Type of DELAY_KEY_WRITE."
+msgstr ""
+
+#: drizzled/drizzled.cc:3223
+msgid ""
+"Don't flush key buffers between writes for any MyISAM table (Deprecated "
+"option, use --delay-key-write=all instead)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3233
+msgid "Print a symbolic stack trace on failure."
+msgstr ""
+
+#: drizzled/drizzled.cc:3239
+msgid "Push supported query conditions to the storage engine."
+msgstr ""
+
+#: drizzled/drizzled.cc:3245
+msgid "Used for debugging;  Use at your own risk!"
+msgstr ""
+
+#: drizzled/drizzled.cc:3248
+msgid "Flush tables to disk between SQL commands."
+msgstr ""
+
+#: drizzled/drizzled.cc:3253
+msgid "Set up signals usable for debugging"
+msgstr ""
+
+#: drizzled/drizzled.cc:3257
+msgid "Enable general query log"
+msgstr ""
+
+#: drizzled/drizzled.cc:3261
+msgid "Command(s) that are executed for each new connection"
+msgstr ""
+
+#: drizzled/drizzled.cc:3265
+msgid "Read SQL commands from this file at startup."
+msgstr ""
+
+#: drizzled/drizzled.cc:3269
+msgid "Command(s) that are executed when a slave connects to this master"
+msgstr ""
+
+#: drizzled/drizzled.cc:3273
+msgid "(IGNORED)"
+msgstr ""
+
+#: drizzled/drizzled.cc:3277
+msgid "Set the language used for the month names and the days of the week."
+msgstr ""
+
+#: drizzled/drizzled.cc:3282
+msgid "Enable/disable LOAD DATA LOCAL INFILE (takes values 1|0)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3287
+msgid "Log connections and queries to file."
+msgstr ""
+
+#: drizzled/drizzled.cc:3291
+msgid ""
+"Log update queries in binary format. Optional argument is the location for "
+"the binary log files.(Strongly recommended to avoid replication problems if "
+"server's hostname changes)"
+msgstr ""
+
+#: drizzled/drizzled.cc:3298
+msgid "File that holds the names for last binary log files."
+msgstr ""
+
+#: drizzled/drizzled.cc:3306
+msgid ""
+"If equal to 0 (the default), then when --log-bin is used, creation of a "
+"stored function (or trigger) is allowed only to users having the SUPER "
+"privilege and only if this stored function (trigger) may not break binary "
+"logging. Note that if ALL connections to this server ALWAYS use row-based "
+"binary logging, the security issues do not exist and the binary logging "
+"cannot break, so you can safely set this to 1."
+msgstr ""
+
+#: drizzled/drizzled.cc:3315
+msgid "Error log file."
+msgstr ""
+
+#: drizzled/drizzled.cc:3319
+msgid "Log all MyISAM changes to file."
+msgstr ""
+
+#: drizzled/drizzled.cc:3323
+msgid ""
+"Log some extra information to update log. Please note that this option is "
+"deprecated; see --log-queries-not-using-indexes option."
+msgstr ""
+
+#: drizzled/drizzled.cc:3328
+msgid ""
+"Syntax: log-output[=value[,value...]], where \"value\" could be TABLE, FILE "
+"or NONE."
+msgstr ""
+
+#: drizzled/drizzled.cc:3334
+msgid ""
+"Log queries that are executed without benefit of any index to the slow log "
+"if it is open."
+msgstr ""
+
+#: drizzled/drizzled.cc:3340
+msgid ""
+"Tells the slave to log the updates from the slave thread to the binary log. "
+"You will need to turn it on if you plan to daisy-chain the slaves."
+msgstr ""
+
+#: drizzled/drizzled.cc:3347
+msgid ""
+"Log slow OPTIMIZE, ANALYZE, ALTER and other administrative statements to the "
+"slow log if it is open."
+msgstr ""
+
+#: drizzled/drizzled.cc:3353
+msgid ""
+"Log slow statements executed by slave thread to the slow log if it is open."
+msgstr ""
+
+#: drizzled/drizzled.cc:3359
+msgid ""
+"Log slow queries to a table or log file. Defaults logging to table mysql."
+"slow_log or hostname-slow.log if --log-output=file is used. Must be enabled "
+"to activate other slow log options."
+msgstr ""
+
+#: drizzled/drizzled.cc:3365
+msgid ""
+"Path to transaction coordinator log (used for transactions that affect more "
+"than one storage engine, when binary log is disabled)"
+msgstr ""
+
+#: drizzled/drizzled.cc:3371
+msgid "Size of transaction coordinator log."
+msgstr ""
+
+#: drizzled/drizzled.cc:3377
+msgid "Log some not critical warnings to the log file."
+msgstr ""
+
+#: drizzled/drizzled.cc:3382
+msgid "INSERT/DELETE/UPDATE has lower priority than selects."
+msgstr ""
+
+#: drizzled/drizzled.cc:3387
+msgid ""
+"The location and name of the file that remembers the master and where the I/"
+"O replication thread is in the master's binlogs."
+msgstr ""
+
+#: drizzled/drizzled.cc:3392
+msgid ""
+"The number of tries the slave will make to connect to the master before "
+"giving up."
+msgstr ""
+
+#: drizzled/drizzled.cc:3401
+msgid "Lock mysqld in memory."
+msgstr ""
+
+#: drizzled/drizzled.cc:3405
+msgid ""
+"Syntax: myisam-recover[=option[,option...]], where option can be DEFAULT, "
+"BACKUP, FORCE or QUICK."
+msgstr ""
+
+#: drizzled/drizzled.cc:3410
+msgid "Use very new possible 'unsafe' functions."
+msgstr ""
+
+#: drizzled/drizzled.cc:3415
+msgid "Use old, non-optimized alter table."
+msgstr ""
+
+#: drizzled/drizzled.cc:3420
+msgid ""
+"Enable old-style user limits (before 5.0.3 user resources were counted per "
+"each user+host vs. per account)"
+msgstr ""
+
+#: drizzled/drizzled.cc:3425
+msgid "Pid file used by safe_mysqld."
+msgstr ""
+
+#: drizzled/drizzled.cc:3435
+msgid ""
+"Maximum time in seconds to wait for the port to become free. (Default: no "
+"wait)"
+msgstr ""
+
+#: drizzled/drizzled.cc:3440
+msgid "The location and name to use for relay logs."
+msgstr ""
+
+#: drizzled/drizzled.cc:3444
+msgid ""
+"The location and name to use for the file that keeps a list of the last "
+"relay logs."
+msgstr ""
+
+#: drizzled/drizzled.cc:3449
+msgid ""
+"The location and name of the file that remembers where the SQL replication "
+"thread is in the relay logs."
+msgstr ""
+
+#: drizzled/drizzled.cc:3454
+msgid ""
+"Tells the slave thread to restrict replication to the specified database. To "
+"specify more than one database, use the directive multiple times, once for "
+"each database. Note that this will only work if you do not use cross-"
+"database queries such as UPDATE some_db.some_table SET foo='bar' while "
+"having selected a different or no database. If you need cross database "
+"updates to work, use replicate-wild-do-table=db_name.%."
+msgstr ""
+
+#: drizzled/drizzled.cc:3463
+msgid ""
+"Tells the slave thread to restrict replication to the specified table. To "
+"specify more than one table, use the directive multiple times, once for each "
+"table. This will work for cross-database updates, in contrast to replicate-"
+"do-db."
+msgstr ""
+
+#: drizzled/drizzled.cc:3469
+msgid ""
+"Tells the slave thread to not replicate to the specified database. To "
+"specify more than one database to ignore, use the directive multiple times, "
+"once for each database. This option will not work if you use cross database "
+"updates. If you need cross database updates to work, use replicate-wild-"
+"ignore-table=db_name.%. "
+msgstr ""
+
+#: drizzled/drizzled.cc:3476
+msgid ""
+"Tells the slave thread to not replicate to the specified table. To specify "
+"more than one table to ignore, use the directive multiple times, once for "
+"each table. This will work for cross-datbase updates, in contrast to "
+"replicate-ignore-db."
+msgstr ""
+
+#: drizzled/drizzled.cc:3482
+msgid ""
+"Updates to a database with a different name than the original. Example: "
+"replicate-rewrite-db=master_db_name->slave_db_name."
+msgstr ""
+
+#: drizzled/drizzled.cc:3486
+msgid ""
+"In replication, if set to 1, do not skip events having our server id. "
+"Default value is 0 (to break infinite loops in circular replication). Can't "
+"be set to 1 if --log-slave-updates is used."
+msgstr ""
+
+#: drizzled/drizzled.cc:3493
+msgid ""
+"Tells the slave thread to restrict replication to the tables that match the "
+"specified wildcard pattern. To specify more than one table, use the "
+"directive multiple times, once for each table. This will work for cross-"
+"database updates. Example: replicate-wild-do-table=foo%.bar% will replicate "
+"only updates to tables in all databases that start with foo and whose table "
+"names start with bar."
+msgstr ""
+
+#: drizzled/drizzled.cc:3501
+msgid ""
+"Tells the slave thread to not replicate to the tables that match the given "
+"wildcard pattern. To specify more than one table to ignore, use the "
+"directive multiple times, once for each table. This will work for cross-"
+"database updates. Example: replicate-wild-ignore-table=foo%.bar% will not do "
+"updates to tables in databases that start with foo and whose table names "
+"start with bar."
+msgstr ""
+
+#: drizzled/drizzled.cc:3510
+msgid ""
+"Hostname or IP of the slave to be reported to to the master during slave "
+"registration. Will appear in the output of SHOW SLAVE HOSTS. Leave unset if "
+"you do not want the slave to register itself with the master. Note that it "
+"is not sufficient for the master to simply read the IP of the slave off the "
+"socket once the slave connects. Due to NAT and other routing issues, that IP "
+"may not be valid for connecting to the slave from the master or other hosts."
+msgstr ""
+
+#: drizzled/drizzled.cc:3523
+msgid ""
+"Port for connecting to slave reported to the master during slave "
+"registration. Set it only if the slave is listening on a non-default port or "
+"if you have a special tunnel from the master or other clients to the slave. "
+"If not sure, leave this option unset."
+msgstr ""
+
+#: drizzled/drizzled.cc:3530
+msgid "Skip some optimize stages (for testing)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3533
+msgid ""
+"Limit LOAD DATA, SELECT ... OUTFILE, and LOAD_FILE() to files within "
+"specified directory"
+msgstr ""
+
+#: drizzled/drizzled.cc:3538
+msgid ""
+"Uniquely identifies the server instance in the community of replication "
+"partners."
+msgstr ""
+
+#: drizzled/drizzled.cc:3543
+msgid ""
+"Change the value of a variable. Please note that this option is deprecated;"
+"you can set variables directly with --variable-name=value."
+msgstr ""
+
+#: drizzled/drizzled.cc:3547
+msgid "Don't use new, possible wrong routines."
+msgstr ""
+
+#: drizzled/drizzled.cc:3550
+msgid "If set, slave is not autostarted."
+msgstr ""
+
+#: drizzled/drizzled.cc:3554
+msgid "Don't print a stack trace on failure."
+msgstr ""
+
+#: drizzled/drizzled.cc:3558
+msgid ""
+"Don't allow symlinking of tables. Deprecated option.  Use --skip-symbolic-"
+"links instead."
+msgstr ""
+
+#: drizzled/drizzled.cc:3562
+msgid "Don't give threads different priorities."
+msgstr ""
+
+#: drizzled/drizzled.cc:3566
+msgid ""
+"The location where the slave should put its temporary files when replicating "
+"a LOAD DATA INFILE command."
+msgstr ""
+
+#: drizzled/drizzled.cc:3571
+msgid ""
+"Tells the slave thread to continue replication when a query event returns an "
+"error from the provided list."
+msgstr ""
+
+#: drizzled/drizzled.cc:3575
+msgid ""
+"Modes for how replication events should be executed.  Legal values are "
+"STRICT (default) and IDEMPOTENT. In IDEMPOTENT mode, replication will not "
+"stop for operations that are idempotent. In STRICT mode, replication will "
+"stop on any unexpected difference between the master and the slave."
+msgstr ""
+
+#: drizzled/drizzled.cc:3583
+msgid "Enable|disable slow query log"
+msgstr ""
+
+#: drizzled/drizzled.cc:3587
+msgid "(INGORED)"
+msgstr ""
+
+#: drizzled/drizzled.cc:3590
+msgid "Enable symbolic link support."
+msgstr ""
+
+#: drizzled/drizzled.cc:3599
+msgid ""
+"Non-default option to alias SYSDATE() to NOW() to make it safe-replicable."
+msgstr ""
+
+#: drizzled/drizzled.cc:3604
+msgid ""
+"Decision to use in heuristic recover process. Possible values are COMMIT or "
+"ROLLBACK."
+msgstr ""
+
+#: drizzled/drizzled.cc:3609
+msgid ""
+"Using this option will cause most temporary files created to use a small set "
+"of names, rather than a unique name for each new file."
+msgstr ""
+
+#: drizzled/drizzled.cc:3614
+msgid ""
+"Specify whether to time mutexes (only InnoDB mutexes are currently supported)"
+msgstr ""
+
+#: drizzled/drizzled.cc:3619
+msgid ""
+"Path for temporary files. Several paths may be specified, separated by a "
+"colon (:), in this case they are used in a round-robin fashion."
+msgstr ""
+
+#: drizzled/drizzled.cc:3625
+msgid "Default transaction isolation level."
+msgstr ""
+
+#: drizzled/drizzled.cc:3629
+msgid ""
+"Enable symbolic link support. Deprecated option; use --symbolic-links "
+"instead."
+msgstr ""
+
+#: drizzled/drizzled.cc:3634
+msgid "Run mysqld daemon as user."
+msgstr ""
+
+#: drizzled/drizzled.cc:3642
+msgid "Deprecated; use --log-warnings instead."
+msgstr ""
+
+#: drizzled/drizzled.cc:3647
+msgid ""
+"The number of outstanding connection requests MySQL can have. This comes "
+"into play when the main MySQL thread gets very many connection requests in a "
+"very short time."
+msgstr ""
+
+#: drizzled/drizzled.cc:3653
+msgid ""
+"The size of the cache to hold the SQL statements for the binary log during a "
+"transaction. If you often use big, multi-statement transactions you can "
+"increase this to get more performance."
+msgstr ""
+
+#: drizzled/drizzled.cc:3659
+msgid ""
+"Size of tree cache used in bulk insert optimisation. Note that this is a "
+"limit per thread!"
+msgstr ""
+
+#: drizzled/drizzled.cc:3665
+msgid ""
+"The number of seconds the mysqld server is waiting for a connect packet "
+"before responding with 'Bad handshake'."
+msgstr ""
+
+#: drizzled/drizzled.cc:3670
+msgid "The DATE format (For future)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3675
+msgid "The DATETIME/TIMESTAMP format (for future)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3680
+msgid "The default week format used by WEEK() functions."
+msgstr ""
+
+#: drizzled/drizzled.cc:3685
+msgid ""
+"Precision of the result of '/' operator will be increased on that value."
+msgstr ""
+
+#: drizzled/drizzled.cc:3691
+msgid ""
+"If non-zero, binary logs will be purged after expire_logs_days days; "
+"possible purges happen at startup and at binary log rotation."
+msgstr ""
+
+#: drizzled/drizzled.cc:3697
+msgid "The maximum length of the result of function  group_concat."
+msgstr ""
+
+#: drizzled/drizzled.cc:3702
+msgid ""
+"The number of seconds the server waits for activity on an interactive "
+"connection before closing it."
+msgstr ""
+
+#: drizzled/drizzled.cc:3708
+msgid "The size of the buffer that is used for full joins."
+msgstr ""
+
+#: drizzled/drizzled.cc:3714
+msgid "Don't overwrite stale .MYD and .MYI even if no directory is specified."
+msgstr ""
+
+#: drizzled/drizzled.cc:3719
+msgid ""
+"The size of the buffer used for index blocks for MyISAM tables. Increase "
+"this to get better index handling (for all reads and multiple writes) to as "
+"much as you can afford;"
+msgstr ""
+
+#: drizzled/drizzled.cc:3728
+msgid ""
+"This characterizes the number of hits a hot block has to be untouched until "
+"it is considered aged enough to be downgraded to a warm block. This "
+"specifies the percentage ratio of that number of hits to the total number of "
+"blocks in key cache"
+msgstr ""
+
+#: drizzled/drizzled.cc:3737
+msgid "The default size of key cache blocks"
+msgstr ""
+
+#: drizzled/drizzled.cc:3743
+msgid "The minimum percentage of warm blocks in key cache"
+msgstr ""
+
+#: drizzled/drizzled.cc:3749
+msgid ""
+"Log all queries that have taken more than long_query_time seconds to execute "
+"to file. The argument will be treated as a decimal value with microsecond "
+"precission."
+msgstr ""
+
+#: drizzled/drizzled.cc:3755
+msgid "Max packetlength to send/receive from to server."
+msgstr ""
+
+#: drizzled/drizzled.cc:3760
+msgid ""
+"Can be used to restrict the total size used to cache a multi-transaction "
+"query."
+msgstr ""
+
+#: drizzled/drizzled.cc:3765
+msgid ""
+"Binary log will be rotated automatically when the size exceeds this value. "
+"Will also apply to relay logs if max_relay_log_size is 0. The minimum value "
+"for this variable is 4096."
+msgstr ""
+
+#: drizzled/drizzled.cc:3771
+msgid ""
+"If there is more than this number of interrupted connections from a host "
+"this host will be blocked from further connections."
+msgstr ""
+
+#: drizzled/drizzled.cc:3778
+msgid "The number of simultaneous clients allowed."
+msgstr ""
+
+#: drizzled/drizzled.cc:3783
+msgid "Max number of errors/warnings to store for a statement."
+msgstr ""
+
+#: drizzled/drizzled.cc:3788
+msgid "Don't allow creation of heap tables bigger than this."
+msgstr ""
+
+#: drizzled/drizzled.cc:3794
+msgid ""
+"Joins that are probably going to read more than max_join_size records return "
+"an error."
+msgstr ""
+
+#: drizzled/drizzled.cc:3800
+msgid "Max number of bytes in sorted records."
+msgstr ""
+
+#: drizzled/drizzled.cc:3805
+msgid ""
+"If non-zero: relay log will be rotated automatically when the size exceeds "
+"this value; if zero (the default): when the size exceeds max_binlog_size. 0 "
+"excepted, the minimum value for this variable is 4096."
+msgstr ""
+
+#: drizzled/drizzled.cc:3812
+msgid "Limit assumed max number of seeks when looking up rows based on a key"
+msgstr ""
+
+#: drizzled/drizzled.cc:3817
+msgid ""
+"The number of bytes to use when sorting BLOB or TEXT values (only the first "
+"max_sort_length bytes of each value are used; the rest are ignored)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3824
+msgid "Maximum number of temporary tables a client can keep open at a time."
+msgstr ""
+
+#: drizzled/drizzled.cc:3829
+msgid "After this many write locks, allow some read locks to run in between."
+msgstr ""
+
+#: drizzled/drizzled.cc:3833
+msgid ""
+"Don't log queries which examine less than min_examined_row_limit rows to "
+"file."
+msgstr ""
+
+#: drizzled/drizzled.cc:3839
+msgid "Block size to be used for MyISAM index pages."
+msgstr ""
+
+#: drizzled/drizzled.cc:3845
+msgid "Default pointer size to be used for MyISAM tables."
+msgstr ""
+
+#: drizzled/drizzled.cc:3850
+#, fuzzy
+msgid "(Deprecated option)"
+msgstr "Egenskapene for å opprette en ny er feil"
+
+#: drizzled/drizzled.cc:3856
+msgid ""
+"Don't use the fast sort index method to created index if the temporary file "
+"would get bigger than this."
+msgstr ""
+
+#: drizzled/drizzled.cc:3863
+msgid ""
+"Number of threads to use when repairing MyISAM tables. The value of 1 "
+"disables parallel repair."
+msgstr ""
+
+#: drizzled/drizzled.cc:3869
+msgid ""
+"The buffer that is allocated when sorting the index when doing a REPAIR or "
+"when creating indexes with CREATE INDEX or ALTER TABLE."
+msgstr ""
+
+#: drizzled/drizzled.cc:3875
+msgid ""
+"Specifies how MyISAM index statistics collection code should threat NULLs. "
+"Possible values of name are 'nulls_unequal' (default behavior), "
+"'nulls_equal' (emulate MySQL 4.0 behavior), and 'nulls_ignored'."
+msgstr ""
+
+#: drizzled/drizzled.cc:3882
+#, fuzzy
+msgid "Buffer length for TCP/IP and socket communication."
+msgstr "Buffer for TCP/IP og socket-kommunikasjon"
+
+#: drizzled/drizzled.cc:3887
+msgid ""
+"Number of seconds to wait for more data from a connection before aborting "
+"the read."
+msgstr ""
+
+#: drizzled/drizzled.cc:3893
+msgid ""
+"If a read on a communication port is interrupted, retry this many times "
+"before giving up."
+msgstr ""
+
+#: drizzled/drizzled.cc:3899
+msgid ""
+"Number of seconds to wait for a block to be written to a connection before "
+"aborting the write."
+msgstr ""
+
+#: drizzled/drizzled.cc:3905
+msgid "Use compatible behavior."
+msgstr ""
+
+#: drizzled/drizzled.cc:3910
+msgid ""
+"If this is not 0, then mysqld will use this value to reserve file "
+"descriptors to use with setrlimit(). If this value is 0 then mysqld will "
+"reserve max_connections*5 or max_connections + table_cache*2 (whichever is "
+"larger) number of files."
+msgstr ""
+
+#: drizzled/drizzled.cc:3917
+msgid ""
+"Controls the heuristic(s) applied during query optimization to prune less-"
+"promising partial plans from the optimizer search space. Meaning: 0 - do not "
+"apply any heuristic, thus perform exhaustive search; 1 - prune plans based "
+"on number of retrieved rows."
+msgstr ""
+
+#: drizzled/drizzled.cc:3925
+msgid ""
+"Maximum depth of search performed by the query optimizer. Values larger than "
+"the number of relations in a query result in better query plans, but take "
+"longer to compile a query. Smaller values than the number of tables in a "
+"relation result in faster optimization, but may produce very bad query "
+"plans. If set to 0, the system will automatically pick a reasonable value; "
+"if set to MAX_TABLES+2, the optimizer will switch to the original find_best "
+"(used for testing/comparison)."
+msgstr ""
+
+#: drizzled/drizzled.cc:3937
+msgid "Directory for plugins."
+msgstr ""
+
+#: drizzled/drizzled.cc:3941
+msgid ""
+"Optional comma separated list of plugins to load, where each plugin is "
+"identified by the name of the shared library. [for example: --"
+"plugin_load=libmd5udf.so]"
+msgstr ""
+
+#: drizzled/drizzled.cc:3947
+msgid "The size of the buffer that is allocated when preloading indexes"
+msgstr ""
+
+#: drizzled/drizzled.cc:3952
+msgid "Allocation block size for query parsing and execution"
+msgstr ""
+
+#: drizzled/drizzled.cc:3957
+msgid "Persistent buffer for query parsing and execution"
+msgstr ""
+
+#: drizzled/drizzled.cc:3963
+msgid "Allocation block size for storing ranges during optimization"
+msgstr ""
+
+#: drizzled/drizzled.cc:3969
+msgid ""
+"Each thread that does a sequential scan allocates a buffer of this size for "
+"each table it scans. If you do many sequential scans, you may want to "
+"increase this value."
+msgstr ""
+
+#: drizzled/drizzled.cc:3977
+msgid ""
+"Make all non-temporary tables read-only, with the exception for replication "
+"(slave) threads and users with the SUPER privilege"
+msgstr ""
+
+#: drizzled/drizzled.cc:3983
+msgid ""
+"When reading rows in sorted order after a sort, the rows are read through "
+"this buffer to avoid a disk seeks. If not set, then it's set to the value of "
+"record_buffer."
+msgstr ""
+
+#: drizzled/drizzled.cc:3997
+msgid ""
+"0 = do not purge relay logs. 1 = purge them as soon as they are no more "
+"needed."
+msgstr ""
+
+#: drizzled/drizzled.cc:4003
+msgid "Maximum space to use for all relay logs."
+msgstr ""
+
+#: drizzled/drizzled.cc:4008
+#, fuzzy
+msgid "Use compression on master/slave protocol."
+msgstr "Bruk kompresjon i klient/server-protokollen."
+
+#: drizzled/drizzled.cc:4013
+msgid ""
+"Number of seconds to wait for more data from a master/slave connection "
+"before aborting the read."
+msgstr ""
+
+#: drizzled/drizzled.cc:4018
+msgid ""
+"Number of times the slave SQL thread will retry a transaction in case it "
+"failed with a deadlock or elapsed lock wait timeout, before giving up and "
+"stopping."
+msgstr ""
+
+#: drizzled/drizzled.cc:4024
+msgid "Allow slave to batch requests."
+msgstr ""
+
+#: drizzled/drizzled.cc:4028
+msgid ""
+"If creating the thread takes longer than this value (in seconds), the "
+"Slow_launch_threads counter will be incremented."
+msgstr ""
+
+#: drizzled/drizzled.cc:4033
+msgid "Each thread that needs to do a sort allocates a buffer of this size."
+msgstr ""
+
+#: drizzled/drizzled.cc:4039
+msgid ""
+"Synchronously flush binary log to disk after every #th event. Use 0 "
+"(default) to disable synchronous flushing."
+msgstr ""
+
+#: drizzled/drizzled.cc:4044
+msgid "Sync .frm to disk on create. Enabled by default."
+msgstr ""
+
+#: drizzled/drizzled.cc:4048
+#, fuzzy
+msgid "Deprecated; use --table_open_cache instead."
+msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-pager i stedet.\n"
+
+#: drizzled/drizzled.cc:4052
+msgid "The number of cached table definitions."
+msgstr ""
+
+#: drizzled/drizzled.cc:4056
+msgid "The number of cached open tables."
+msgstr ""
+
+#: drizzled/drizzled.cc:4060
+msgid ""
+"Timeout in seconds to wait for a table level lock before returning an error. "
+"Used only if the connection has active cursors."
+msgstr ""
+
+#: drizzled/drizzled.cc:4065
+msgid "How many threads we should keep in a cache for reuse."
+msgstr ""
+
+#: drizzled/drizzled.cc:4069
+msgid ""
+"How many threads we should create to handle query requests in case of "
+"'thread_handling=pool-of-threads'"
+msgstr ""
+
+#: drizzled/drizzled.cc:4074
+msgid "The stack size for each thread."
+msgstr ""
+
+#: drizzled/drizzled.cc:4080
+msgid "The TIME format (for future)."
+msgstr ""
+
+#: drizzled/drizzled.cc:4085
+msgid ""
+"If an internal in-memory temporary table exceeds this size, MySQL will "
+"automatically convert it to an on-disk MyISAM table."
+msgstr ""
+
+#: drizzled/drizzled.cc:4091
+msgid "Allocation block size for transactions to be stored in binary log"
+msgstr ""
+
+#: drizzled/drizzled.cc:4096
+msgid "Persistent buffer for transactions to be stored in binary log"
+msgstr ""
+
+#: drizzled/drizzled.cc:4101
+msgid ""
+"The number of seconds the server waits for activity on a connection before "
+"closing it."
+msgstr ""
+
+#: drizzled/drizzled.cc:4349
+msgid ""
+"Copyright (C) 2000 MySQL AB, by Monty and others\n"
+"This software comes with ABSOLUTELY NO WARRANTY. This is free software,\n"
+"and you are welcome to modify and redistribute it under the GPL license\n"
+"\n"
+"Starts the Drizzle database server\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4356
+#, c-format
+msgid "Usage: %s [OPTIONS]\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4367
+msgid ""
+"\n"
+"To see what values a running Drizzle server is using, type\n"
+"'drizzleadmin variables' instead of 'drizzled --help'."
+msgstr ""
+
+#: drizzled/drizzled.cc:4551
+#, c-format
+msgid ""
+"Ignoring user change to '%s' because the user was set to '%s' earlier on the "
+"command line\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4603
+#, c-format
+msgid "Bad syntax in replicate-rewrite-db - missing '->'!\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4612
+#, c-format
+msgid "Bad syntax in replicate-rewrite-db - empty FROM db!\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4622
+#, c-format
+msgid "Bad syntax in replicate-rewrite-db - empty TO db!\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4651 drizzled/drizzled.cc:4660
+#, c-format
+msgid "Could not add do table rule '%s'!\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4669 drizzled/drizzled.cc:4678
+#, c-format
+msgid "Could not add ignore table rule '%s'!\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:4722
+msgid "Can't start server: cannot resolve hostname!"
+msgstr ""
+
+#: drizzled/drizzled.cc:4728
+msgid "Can't start server: bind-address refers to multiple interfaces!"
+msgstr ""
+
+#: drizzled/drizzled.cc:4903
+msgid ""
+"options --log-slow-admin-statements, --log-queries-not-using-indexes and --"
+"log-slow-slave-statements have no effect if --log-slow-queries is not set"
+msgstr ""
+
+#: drizzled/drizzled.cc:5088
+#, c-format
+msgid "No option given to %s\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:5090
+#, c-format
+msgid "Wrong option to %s. Option(s) given: %s\n"
+msgstr ""
+
+#: drizzled/drizzled.cc:5092
+#, c-format
+msgid "Alternatives are: '%s'"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:32
 msgid "hashchk"
-msgstr ""
+msgstr "hashchk"
 
 #: drizzled/drizzled_error_messages.h:34
 msgid "isamchk"
-msgstr ""
+msgstr "isamchk"
 
 #: drizzled/drizzled_error_messages.h:36
 msgid "NO"
-msgstr ""
+msgstr "NEI"
 
 #: drizzled/drizzled_error_messages.h:38
 msgid "YES"
-msgstr ""
+msgstr "JA"
 
 #: drizzled/drizzled_error_messages.h:40
 #, fuzzy, c-format
@@ -1302,12 +2937,12 @@ msgstr "Kan ikke lage katalogen '%s' (Feilkode: %d)"
 #: drizzled/drizzled_error_messages.h:46
 #, c-format
 msgid "Can't create database '%-.192s'; database exists"
-msgstr ""
+msgstr "Kan ikke lage databasen '%-.192s'; databasen finnes allerede"
 
 #: drizzled/drizzled_error_messages.h:48
 #, c-format
 msgid "Can't drop database '%-.192s'; database doesn't exist"
-msgstr ""
+msgstr "Kan ikke fjerne databasen '%-.192s'; databasen finnes ikke"
 
 #: drizzled/drizzled_error_messages.h:50
 #, fuzzy, c-format
@@ -1318,6 +2953,8 @@ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
 #, c-format
 msgid "Error dropping database (can't rmdir '%-.192s', errno: %d)"
 msgstr ""
+"Feil ved fjerning av databasen (klarte ikke å kjøre rmdir '%-.192s', "
+"feilnummer: %d)"
 
 #: drizzled/drizzled_error_messages.h:54
 #, fuzzy, c-format
@@ -1326,7 +2963,7 @@ msgstr "Feil ved slettingen av '%s' (Feilkode: %d)"
 
 #: drizzled/drizzled_error_messages.h:56
 msgid "Can't read record in system table"
-msgstr ""
+msgstr "Klarte ikke å lese raden fra systemtabellen"
 
 #: drizzled/drizzled_error_messages.h:58
 #, fuzzy, c-format
@@ -1346,12 +2983,12 @@ msgstr "Kan ikke låse filen (Feilkode: %d)"
 #: drizzled/drizzled_error_messages.h:64
 #, fuzzy, c-format
 msgid "Can't open file: '%-.200s' (errno: %d)"
-msgstr "Kan ikke låse filen (Feilkode: %d)"
+msgstr "Kan ikke synkronisere '%s' mot disk (Feilkode: %d)"
 
 #: drizzled/drizzled_error_messages.h:66
 #, fuzzy, c-format
 msgid "Can't find file: '%-.200s' (errno: %d)"
-msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+msgstr "Kan ikke synkronisere '%s' mot disk (Feilkode: %d)"
 
 #: drizzled/drizzled_error_messages.h:68
 #, fuzzy, c-format
@@ -1366,7 +3003,7 @@ msgstr "Kunne ikke bytte katalog til '%s' (Feilkode: %d)"
 #: drizzled/drizzled_error_messages.h:72
 #, c-format
 msgid "Record has changed since last read in table '%-.192s'"
-msgstr ""
+msgstr "Raden har blitt endret siden den sist ble lest fra tabellen '%-192s'"
 
 #: drizzled/drizzled_error_messages.h:74
 #, fuzzy, c-format
@@ -1378,7 +3015,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:76
 #, c-format
 msgid "Can't write; duplicate key in table '%-.192s'"
-msgstr ""
+msgstr "Kunne ikke skrive; nøkkelen er ikke unik i tabellen '%-.192s'"
 
 #: drizzled/drizzled_error_messages.h:78
 #, fuzzy, c-format
@@ -1403,7 +3040,7 @@ msgstr "Skrivingen av '%s' mislykkes (Feilkode: %d)"
 #: drizzled/drizzled_error_messages.h:86
 #, c-format
 msgid "'%-.192s' is locked against change"
-msgstr ""
+msgstr "'%-192s' er låst for endringer"
 
 #: drizzled/drizzled_error_messages.h:88
 #, fuzzy
@@ -1413,42 +3050,42 @@ msgstr "Avbrutt"
 #: drizzled/drizzled_error_messages.h:90
 #, c-format
 msgid "View '%-.192s' doesn't exist for '%-.192s'"
-msgstr ""
+msgstr "View-et '%-.192s' eksisterer ikke i '%-.192s'"
 
 #: drizzled/drizzled_error_messages.h:92
-#, c-format
+#, fuzzy, c-format
 msgid "Got error %d from storage engine"
-msgstr ""
+msgstr "Kunne ikke koble til lagringsmotoren"
 
 #: drizzled/drizzled_error_messages.h:94
 #, c-format
 msgid "Table storage engine for '%-.192s' doesn't have this option"
-msgstr ""
+msgstr "Tabellmotoren for '%-.192s' har ikke denne innstillingen"
 
 #: drizzled/drizzled_error_messages.h:96
 #, c-format
 msgid "Can't find record in '%-.192s'"
-msgstr ""
+msgstr "Klarte ikke å finne raden i '%-192s'"
 
 #: drizzled/drizzled_error_messages.h:98
 #, c-format
 msgid "Incorrect information in file: '%-.200s'"
-msgstr ""
+msgstr "Feil informasjon i filen '%-.200s'"
 
 #: drizzled/drizzled_error_messages.h:100
 #, c-format
 msgid "Incorrect key file for table '%-.200s'; try to repair it"
-msgstr ""
+msgstr "Feil nøkkelfil for tabellen '%-.200s'; prøv å reparere den"
 
 #: drizzled/drizzled_error_messages.h:102
 #, c-format
 msgid "Old key file for table '%-.192s'; repair it!"
-msgstr ""
+msgstr "Gammel nøkkelfil for tabellen '%-.192s'; reparer den!"
 
 #: drizzled/drizzled_error_messages.h:104
-#, c-format
+#, fuzzy, c-format
 msgid "Table '%-.192s' is read only"
-msgstr ""
+msgstr "Tabellen er i bare-lese-modus"
 
 #: drizzled/drizzled_error_messages.h:106
 #, fuzzy, c-format
@@ -1458,6 +3095,7 @@ msgstr "Tomt for minne (Trengte %u bytes)"
 #: drizzled/drizzled_error_messages.h:108
 msgid "Out of sort memory; increase server sort buffer size"
 msgstr ""
+"Tom for sorteringsminne; øk størrelsen på sorteringsbufferen på serveren"
 
 #: drizzled/drizzled_error_messages.h:110
 #, fuzzy, c-format
@@ -1465,8 +3103,9 @@ msgid "Unexpected EOF found when reading file '%-.192s' (errno: %d)"
 msgstr "Uventet slutt-på-fil (EOF) inntraff da vi leste '%s' (Feilkode: %d)"
 
 #: drizzled/drizzled_error_messages.h:112
+#, fuzzy
 msgid "Too many connections"
-msgstr ""
+msgstr "kobler til"
 
 #: drizzled/drizzled_error_messages.h:114
 msgid ""
@@ -1494,8 +3133,9 @@ msgid "Access denied for user '%-.48s'@'%-.64s' (using password: %s)"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:124
+#, fuzzy
 msgid "No database selected"
-msgstr ""
+msgstr "Gammel databasefil"
 
 #: drizzled/drizzled_error_messages.h:126
 #, fuzzy
@@ -1513,9 +3153,9 @@ msgid "Unknown database '%-.192s'"
 msgstr "Ukjent kommando: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:132
-#, c-format
+#, fuzzy, c-format
 msgid "Table '%-.192s' already exists"
-msgstr ""
+msgstr "Tabellplassen eksisterer"
 
 #: drizzled/drizzled_error_messages.h:134
 #, fuzzy, c-format
@@ -1534,7 +3174,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:140
 #, fuzzy, c-format
 msgid "Unknown column '%-.192s' in '%-.192s'"
-msgstr "Ukjent kommando: '%-.60s'"
+msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
 
 #: drizzled/drizzled_error_messages.h:142
 #, c-format
@@ -1594,9 +3234,9 @@ msgid "Not unique table/alias: '%-.192s'"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:166
-#, c-format
+#, fuzzy, c-format
 msgid "Invalid default value for '%-.192s'"
-msgstr ""
+msgstr "%s: FEIL: Ugyldig desimalverdi for egenskapen '%s'"
 
 #: drizzled/drizzled_error_messages.h:168
 msgid "Multiple primary key defined"
@@ -1747,8 +3387,9 @@ msgid "You are not owner of thread %lu"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:224
+#, fuzzy
 msgid "No tables used"
-msgstr ""
+msgstr "Ingen slik tabellplass"
 
 #: drizzled/drizzled_error_messages.h:226
 #, c-format
@@ -1761,9 +3402,10 @@ msgid "Can't generate a unique log-filename %-.200s.(1-999)\n"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:230
-#, c-format
+#, fuzzy, c-format
 msgid "Table '%-.192s' was locked with a READ lock and can't be updated"
 msgstr ""
+"Tabellen '%-.64s' ble lagd med en annen versjon av MySQL og kan ikke bli lest"
 
 #: drizzled/drizzled_error_messages.h:232
 #, c-format
@@ -1792,8 +3434,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:242
+#, fuzzy
 msgid "Unknown error"
-msgstr ""
+msgstr "Ukjent feil %d"
 
 #: drizzled/drizzled_error_messages.h:244
 #, fuzzy, c-format
@@ -1842,7 +3485,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:262
 #, fuzzy, c-format
 msgid "Unknown character set: '%-.64s'"
-msgstr "Ukjent kommando: '%-.60s'"
+msgstr "Ukjent tegnsett er brukt i tabellen"
 
 #: drizzled/drizzled_error_messages.h:264
 #, c-format
@@ -1908,9 +3551,9 @@ msgid "Can't find symbol '%-.128s' in library"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:288
-#, c-format
+#, fuzzy, c-format
 msgid "Function '%-.192s' is not defined"
-msgstr ""
+msgstr "neste loggfil '%s' er ikke aktiv"
 
 #: drizzled/drizzled_error_messages.h:290
 #, c-format
@@ -2161,8 +3804,9 @@ msgid "The storage engine for the table doesn't support %s"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:390
+#, fuzzy
 msgid "You are not allowed to execute this command in a transaction"
-msgstr ""
+msgstr "Oppdateringer er ikke tillatt i en bare-lese transaksjon"
 
 #: drizzled/drizzled_error_messages.h:392
 #, c-format
@@ -2210,12 +3854,14 @@ msgid "Error from master: '%-.64s'"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:410
+#, fuzzy
 msgid "Net error reading from master"
-msgstr ""
+msgstr "Nettverkslesefeil ved lasting av '%s' fra masteren"
 
 #: drizzled/drizzled_error_messages.h:412
+#, fuzzy
 msgid "Net error writing to master"
-msgstr ""
+msgstr "Nettverkslesefeil ved lasting av '%s' fra masteren"
 
 #: drizzled/drizzled_error_messages.h:414
 msgid "Can't find FULLTEXT index matching the column list"
@@ -2233,15 +3879,15 @@ msgid "Unknown system variable '%-.64s'"
 msgstr "Ukjent kommando: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:420
-#, c-format
+#, fuzzy, c-format
 msgid "Table '%-.192s' is marked as crashed and should be repaired"
-msgstr ""
+msgstr "Tabellen var merket som kræsjet og bør bli reparert"
 
 #: drizzled/drizzled_error_messages.h:422
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Table '%-.192s' is marked as crashed and last (automatic?) repair failed"
-msgstr ""
+msgstr "Tabellen har kræsjet og siste repareringsforsøk feilet"
 
 #: drizzled/drizzled_error_messages.h:424
 msgid "Some non-transactional changed tables couldn't be rolled back"
@@ -2274,8 +3920,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:436
+#, fuzzy
 msgid "Could not create slave thread; check system resources"
-msgstr ""
+msgstr "Klarte ikke å lage slavetrådene"
 
 #: drizzled/drizzled_error_messages.h:438
 #, c-format
@@ -2288,8 +3935,9 @@ msgid "You may only use constant expressions with SET"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:442
+#, fuzzy
 msgid "Lock wait timeout exceeded; try restarting transaction"
-msgstr ""
+msgstr "Låsen timet ut; prøv transaksjonen på nytt"
 
 #: drizzled/drizzled_error_messages.h:444
 msgid "The total number of locks exceeds the lock table size"
@@ -2331,16 +3979,18 @@ msgid "The used table type doesn't support FULLTEXT indexes"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:462
+#, fuzzy
 msgid "Cannot add foreign key constraint"
-msgstr ""
+msgstr "En indeks er nødvendig for en fremmednøkkelbegrensning"
 
 #: drizzled/drizzled_error_messages.h:464
 msgid "Cannot add or update a child row: a foreign key constraint fails"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:466
+#, fuzzy
 msgid "Cannot delete or update a parent row: a foreign key constraint fails"
-msgstr ""
+msgstr "En indeks er nødvendig for en fremmednøkkelbegrensning"
 
 #: drizzled/drizzled_error_messages.h:468
 #, c-format
@@ -2375,9 +4025,9 @@ msgid "Mixing of transactional and non-transactional tables is disabled"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:482
-#, c-format
+#, fuzzy, c-format
 msgid "Option '%s' used twice in statement"
-msgstr ""
+msgstr "%s: %s: Valget '%s' ble brukt, men er ikke tilgjengelig"
 
 #: drizzled/drizzled_error_messages.h:484
 #, c-format
@@ -2578,9 +4228,9 @@ msgid "Data truncated for column '%s' at row %ld"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:564
-#, c-format
+#, fuzzy, c-format
 msgid "Using storage engine %s for table '%s'"
-msgstr ""
+msgstr "En utvidelse som ikke er støttet er brukt på tabellen"
 
 #: drizzled/drizzled_error_messages.h:566
 #, c-format
@@ -2618,11 +4268,14 @@ msgid "Unknown collation: '%-.64s'"
 msgstr "Ukjent kommando: '%-.60s'"
 
 #: drizzled/drizzled_error_messages.h:580
+#, fuzzy
 msgid ""
 "SSL parameters in CHANGE MASTER are ignored because this MySQL slave was "
 "compiled without SSL support; they can be used later if MySQL slave with SSL "
 "is started"
 msgstr ""
+"SSL-informasjonen i masterinfofilen ('%s') ble ignorert ettersom denne MySQL-"
+"slaven ble kompilert uten SSL-støtte"
 
 #: drizzled/drizzled_error_messages.h:582
 #, c-format
@@ -2692,7 +4345,7 @@ msgstr "Ukjent kommando: '%-.60s'"
 #: drizzled/drizzled_error_messages.h:606
 #, fuzzy, c-format
 msgid "'%s' is deprecated; use '%s' instead"
-msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-tee i stedet.\n"
+msgstr "ADVARSEL: egenskapen er utgått; bruk --disable-tee i stedet."
 
 #: drizzled/drizzled_error_messages.h:608
 #, c-format
@@ -3041,12 +4694,14 @@ msgid "GOTO is not allowed in a stored procedure handler"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:750
+#, fuzzy
 msgid "Trigger already exists"
-msgstr ""
+msgstr "Tabellplassen eksisterer"
 
 #: drizzled/drizzled_error_messages.h:752
+#, fuzzy
 msgid "Trigger does not exist"
-msgstr ""
+msgstr "Tabellen eksisterer ikke i databasemotoren"
 
 #: drizzled/drizzled_error_messages.h:754
 #, c-format
@@ -3112,16 +4767,18 @@ msgid "Target log not found in binlog index"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:780
+#, fuzzy
 msgid "I/O error reading log index file"
-msgstr ""
+msgstr "Ikke mer plass i indeksfilen"
 
 #: drizzled/drizzled_error_messages.h:782
 msgid "Server configuration does not permit binlog purge"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:784
+#, fuzzy
 msgid "Failed on fseek()"
-msgstr ""
+msgstr "Feilet på request_dump()"
 
 #: drizzled/drizzled_error_messages.h:786
 msgid "Fatal error during log purge"
@@ -3132,13 +4789,14 @@ msgid "A purgeable log is in use, will not purge"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:790
+#, fuzzy
 msgid "Unknown error during log purge"
-msgstr ""
+msgstr "Ukjent feil %d"
 
 #: drizzled/drizzled_error_messages.h:792
-#, c-format
+#, fuzzy, c-format
 msgid "Failed initializing relay log position: %s"
-msgstr ""
+msgstr "Klarte ikke å intialisere posisjonen i relay-loggen: %s"
 
 #: drizzled/drizzled_error_messages.h:794
 msgid "You are not using binary logging"
@@ -3594,8 +5252,9 @@ msgid "Leading spaces are removed from name '%s'"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:966
+#, fuzzy
 msgid "Failed to read auto-increment value from storage engine"
-msgstr ""
+msgstr "Kunne ikke sette radens auto increment-verdi"
 
 #: drizzled/drizzled_error_messages.h:968
 msgid "user name"
@@ -3755,8 +5414,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1034
+#, fuzzy
 msgid "Failed to create specific handler file"
-msgstr ""
+msgstr "Klarte ikke å lage slavetrådene"
 
 #: drizzled/drizzled_error_messages.h:1036
 msgid "A BLOB field is not allowed in partition function"
@@ -3881,9 +5541,9 @@ msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1088
 #: drizzled/drizzled_error_messages.h:1224
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to create %s"
-msgstr ""
+msgstr "Klarte ikke å lage slavetrådene"
 
 #: drizzled/drizzled_error_messages.h:1090
 #: drizzled/drizzled_error_messages.h:1114
@@ -3907,9 +5567,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1098
-#, c-format
+#, fuzzy, c-format
 msgid "Failed to alter: %s"
-msgstr ""
+msgstr "Klarte ikke å lage slavetrådene"
 
 #: drizzled/drizzled_error_messages.h:1100
 msgid "Writing one row to the row-based binary log failed"
@@ -3959,8 +5619,9 @@ msgid "Event execution time is in the past. Event has been disabled"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1122
+#, fuzzy
 msgid "Failed to open mysql.event"
-msgstr ""
+msgstr "Klarte ikke å lage slavetrådene"
 
 #: drizzled/drizzled_error_messages.h:1124
 msgid "No datetime expression provided"
@@ -3983,8 +5644,9 @@ msgid "Failed to delete the event from mysql.event"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1132
+#, fuzzy
 msgid "Error during compilation of event's body"
-msgstr ""
+msgstr "Feil ved lesing av relay-logghendelse: %s"
 
 #: drizzled/drizzled_error_messages.h:1134
 msgid "Same old and new event name"
@@ -3996,9 +5658,9 @@ msgid "Data for column '%s' too long"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1138
-#, c-format
+#, fuzzy, c-format
 msgid "Cannot drop index '%-.192s': needed in a foreign key constraint"
-msgstr ""
+msgstr "En indeks er nødvendig for en fremmednøkkelbegrensning"
 
 #: drizzled/drizzled_error_messages.h:1140
 #, c-format
@@ -4016,11 +5678,13 @@ msgid "You can't use locks with log tables."
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1146
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Upholding foreign key constraints for table '%.192s', entry '%-.192s', key %"
 "d would lead to a duplicate entry"
 msgstr ""
+"Det å beholde fremmednøkkelbegrensningen ville ha gitt en feil med duplikate "
+"nøkler"
 
 #: drizzled/drizzled_error_messages.h:1148
 #, c-format
@@ -4085,9 +5749,9 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1172
-#, c-format
+#, fuzzy, c-format
 msgid "Internal scheduler error %d"
-msgstr ""
+msgstr "Intern (uspesifisert) feil i håndteringen"
 
 #: drizzled/drizzled_error_messages.h:1174
 #, c-format
@@ -4184,17 +5848,19 @@ msgid "The incident %s occured on the master. Message: %-.64s"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1214
+#, fuzzy
 msgid "Table has no partition for some existing values"
-msgstr ""
+msgstr "Det er ikke partisjon i tabellen for den angitte verdien"
 
 #: drizzled/drizzled_error_messages.h:1216
+#, fuzzy
 msgid "Statement is not safe to log in statement format."
-msgstr ""
+msgstr "Det er ikke mulig å logge denne spørringen"
 
 #: drizzled/drizzled_error_messages.h:1218
 #, fuzzy, c-format
 msgid "Fatal error: %s"
-msgstr "Fikk feil: %s\n"
+msgstr "Fikk feil: %s"
 
 #: drizzled/drizzled_error_messages.h:1220
 #, c-format
@@ -4327,9 +5993,7 @@ msgstr ""
 #: drizzled/drizzled_error_messages.h:1274
 #, fuzzy
 msgid "Nothing to backup"
-msgstr ""
-"\n"
-"Ingenting ble funnet"
+msgstr "Ingenting ble funnet"
 
 #: drizzled/drizzled_error_messages.h:1276
 #, c-format
@@ -4355,12 +6019,14 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1284
+#, fuzzy
 msgid "Error when preparing for backup operation"
-msgstr ""
+msgstr "Klarte ikke å lese masterkonfigurasjonen"
 
 #: drizzled/drizzled_error_messages.h:1286
+#, fuzzy
 msgid "Error when preparing for restore operation"
-msgstr ""
+msgstr "Klarte ikke å lese masterkonfigurasjonen"
 
 #: drizzled/drizzled_error_messages.h:1288
 #, c-format
@@ -4396,9 +6062,9 @@ msgid "Skipping view %-.64s in database %-.64s"
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1302
-#, c-format
+#, fuzzy, c-format
 msgid "Skipping table %-.64s since it has no valid storage engine"
-msgstr ""
+msgstr "Tabellen ble endret i lagringsmotoren"
 
 #: drizzled/drizzled_error_messages.h:1304
 #, c-format
@@ -4548,14 +6214,14 @@ msgid ""
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1364
-#, c-format
+#, fuzzy, c-format
 msgid "Tablespace '%-.192s' already exists"
-msgstr ""
+msgstr "Tabellplassen eksisterer"
 
 #: drizzled/drizzled_error_messages.h:1366
-#, c-format
+#, fuzzy, c-format
 msgid "Tablespace '%-.192s' doesn't exist"
-msgstr ""
+msgstr "Tabellplassen eksisterer"
 
 #: drizzled/drizzled_error_messages.h:1368
 #, c-format
@@ -4573,9 +6239,9 @@ msgid "Can't write to the online backup progress log %-.64s."
 msgstr ""
 
 #: drizzled/drizzled_error_messages.h:1374
-#, c-format
+#, fuzzy, c-format
 msgid "Tablespace '%-.192s' not empty"
-msgstr ""
+msgstr "Tabellplassen er ikke tom"
 
 #: drizzled/drizzled_error_messages.h:1376
 #, c-format
@@ -4585,20 +6251,198 @@ msgid ""
 "while the same tablespace is defined on the server as '%-.256s'"
 msgstr ""
 
+#: drizzled/handler.cc:390
+#, fuzzy
+msgid "Too many storage engines!"
+msgstr "Kunne ikke koble til lagringsmotoren"
+
+#: drizzled/handler.cc:394
+#, c-format
+msgid "Storage engine '%s' has conflicting typecode. Assigning value %d."
+msgstr ""
+
+#: drizzled/handler.cc:1278
+#, c-format
+msgid "Found %d prepared transaction(s) in %s"
+msgstr ""
+
+#: drizzled/handler.cc:1330
+msgid "Starting crash recovery..."
+msgstr ""
+
+#: drizzled/handler.cc:1362
+#, c-format
+msgid "Found %d prepared XA transactions"
+msgstr ""
+
+#: drizzled/handler.cc:1366
+#, c-format
+msgid ""
+"Found %d prepared transactions! It means that drizzled was not shut down "
+"properly last time and critical recovery information (last binlog or %s "
+"file) was manually deleted after a crash. You have to start drizzled with "
+"the --tc-heuristic-recover switch to commit or rollback pending transactions."
+msgstr ""
+
+#: drizzled/handler.cc:1376
+msgid "Crash recovery finished."
+msgstr ""
+
+#: drizzled/log.cc:1072
+#, fuzzy
+msgid "I/O error reading the header from the binary log"
+msgstr "Ikke mer plass i indeksfilen"
+
+#: drizzled/log.cc:1079
+msgid ""
+"Binlog has bad magic number;  It's not a binary log file that can be used by "
+"this version of Drizzle"
+msgstr ""
+
+#: drizzled/log.cc:1094
+#, fuzzy, c-format
+msgid "Failed to open log (file '%s', errno %d)"
+msgstr ""
+"Klarte ikke å åpne den eksisterende masterinfofilen (filen '%s', feilnummer %"
+"d)"
+
+#: drizzled/log.cc:1096 drizzled/log.cc:1104
+#, fuzzy
+msgid "Could not open log file"
+msgstr "Kunne ikke koble til lagringsmotoren"
+
+#: drizzled/log.cc:1102
+#, fuzzy, c-format
+msgid "Failed to create a cache on log (file '%s')"
+msgstr ""
+"Klarte ikke å lage et hurtiglager (cache) for masterinfofilen (filen '%s')"
+
+#: drizzled/log.cc:1256 drizzled/log.cc:1904
+#, c-format
+msgid ""
+"Could not use %s for logging (error %d). Turning logging off for the whole "
+"duration of the Drizzle server process. To turn it on again: fix the cause, "
+"shutdown the Drizzle server and restart it."
+msgstr ""
+
+#: drizzled/log.cc:2173 drizzled/log.cc:2204 drizzled/log.cc:2456
+#: drizzled/log.cc:2580
+#, fuzzy, c-format
+msgid "Failed to delete file '%s'"
+msgstr "Klarte ikke å lage slavetrådene"
+
+#: drizzled/log.cc:2182 drizzled/log.cc:2464 drizzled/log.cc:2588
+#, c-format
+msgid ""
+"a problem with deleting %s; consider examining correspondence of your binlog "
+"index file to the actual binlog files"
+msgstr ""
+
+#: drizzled/log.cc:2310
+#, c-format
+msgid "next log error: %d  offset: %s  log: %s included: %d"
+msgstr ""
+
+#: drizzled/log.cc:2422 drizzled/log.cc:2548
+#, fuzzy, c-format
+msgid "Failed to execute stat() on file '%s'"
+msgstr "Klarte ikke å lage slavetrådene"
+
+#: drizzled/log.cc:2433 drizzled/log.cc:2559
+#, c-format
+msgid ""
+"a problem with getting info on being purged %s; consider examining "
+"correspondence of your binlog index file to the actual binlog files"
+msgstr ""
+
+#: drizzled/log.cc:4055 drizzled/log.cc:4548
+#, fuzzy, c-format
+msgid "Recovering after a crash using %s"
+msgstr "Kobler til på nytt etter at vi ikke klarte å hente masterdumpen"
+
+#: drizzled/log.cc:4058
+msgid ""
+"Cannot perform automatic crash recovery when --tc-heuristic-recover is used"
+msgstr ""
+
+#: drizzled/log.cc:4395
+msgid "Bad magic header in tc log"
+msgstr ""
+
+#: drizzled/log.cc:4405
+#, c-format
+msgid ""
+"Recovery failed! You must enable exactly %d storage engines that support two-"
+"phase commit protocol"
+msgstr ""
+
+#: drizzled/log.cc:4433
+msgid ""
+"Crash recovery failed. Either correct the problem (if it's, for example, out "
+"of memory error) and restart, or delete tc log and start drizzled with --tc-"
+"heuristic-recover={commit|rollback}"
+msgstr ""
+
+#: drizzled/log.cc:4463
+msgid "Heuristic crash recovery mode"
+msgstr ""
+
+#: drizzled/log.cc:4465
+msgid "Heuristic crash recovery failed"
+msgstr ""
+
+#: drizzled/log.cc:4466
+msgid "Please restart mysqld without --tc-heuristic-recover"
+msgstr ""
+
+#: drizzled/log.cc:4510 drizzled/log.cc:4534
+#, fuzzy, c-format
+msgid "find_log_pos() failed (error: %d)"
+msgstr "Kan ikke låse filen (Feilkode: %d)"
+
+#: drizzled/log.cc:4647
+msgid ""
+"Crash recovery failed. Either correct the problem (if it's, for example, out "
+"of memory error) and restart, or delete (or rename) binary log and start "
+"mysqld with --tc-heuristic-recover={commit|rollback}"
+msgstr ""
+
+#: drizzled/log_event.cc:990
+#, c-format
+msgid ""
+"Error in Log_event::read_log_event(): '%s', data_len: %d, event_type: %d"
+msgstr ""
+
+#: drizzled/log_event.cc:3693
+#, c-format
+msgid ""
+"Slave: load data infile on table '%s' at log position %s in log '%s' "
+"produced %ld warning(s). Default database: '%s'"
+msgstr ""
+
+#: drizzled/log_event.cc:4731
+#, fuzzy
+msgid "Out of memory while recording slave event"
+msgstr "Databasemotoren er tom for minne"
+
 #: drizzled/rpl_mi.cc:148
 #, c-format
 msgid "Failed to create a new master info file (file '%s', errno %d)"
 msgstr ""
+"Klarte ikke å lage en ny fil med masterinfo (filen '%s', feilnummer %d)"
 
 #: drizzled/rpl_mi.cc:154 drizzled/rpl_mi.cc:176
 #, c-format
 msgid "Failed to create a cache on master info file (file '%s')"
 msgstr ""
+"Klarte ikke å lage et hurtiglager (cache) for masterinfofilen (filen '%s')"
 
 #: drizzled/rpl_mi.cc:170
 #, c-format
 msgid "Failed to open the existing master info file (file '%s', errno %d)"
 msgstr ""
+"Klarte ikke å åpne den eksisterende masterinfofilen (filen '%s', feilnummer %"
+"d)"
 
 #: drizzled/rpl_mi.cc:276
 #, c-format
@@ -4606,45 +6450,158 @@ msgid ""
 "SSL information in the master info file ('%s') are ignored because this "
 "MySQL slave was compiled without SSL support."
 msgstr ""
+"SSL-informasjonen i masterinfofilen ('%s') ble ignorert ettersom denne MySQL-"
+"slaven ble kompilert uten SSL-støtte"
 
 #: drizzled/rpl_mi.cc:300 drizzled/slave.cc:1079 drizzled/slave.cc:2151
 msgid "Failed to flush master info file"
-msgstr ""
+msgstr "Klarte ikke å skrive masterinfofilen til disk"
 
 #: drizzled/rpl_mi.cc:305
 msgid "Error reading master configuration"
-msgstr ""
+msgstr "Klarte ikke å lese masterkonfigurasjonen"
 
 #: drizzled/rpl_reporting.cc:43
 #, c-format
 msgid "Slave %s: %s%s Error_code: %d"
+msgstr "Slave %s: %s%s Feilkode: %d"
+
+#: drizzled/rpl_rli.cc:134
+#, c-format
+msgid ""
+"Neither --relay-log nor --relay-log-index were used; so replication may "
+"break when this MySQL server acts as a slave and has his hostname changed!! "
+"Please use '--relay-log=%s' to avoid this problem."
 msgstr ""
 
-#: drizzled/rpl_utility.cc:123
+#: drizzled/rpl_rli.cc:151
+msgid "Failed in open_log() called from init_relay_log_info()"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:168
+#, fuzzy, c-format
+msgid "Failed to create a new relay log info file ( file '%s', errno %d)"
+msgstr ""
+"Klarte ikke å lage en ny fil med masterinfo (filen '%s', feilnummer %d)"
+
+#: drizzled/rpl_rli.cc:176 drizzled/rpl_rli.cc:210
+#, fuzzy, c-format
+msgid "Failed to create a cache on relay log info file '%s'"
+msgstr ""
+"Klarte ikke å lage et hurtiglager (cache) for masterinfofilen (filen '%s')"
+
+#: drizzled/rpl_rli.cc:186
+msgid "Failed to open the relay log 'FIRST' (relay_log_pos 4)"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:202
+#, fuzzy, c-format
+msgid "Failed to open the existing relay log info file '%s' (errno %d)"
+msgstr ""
+"Klarte ikke å åpne den eksisterende masterinfofilen (filen '%s', feilnummer %"
+"d)"
+
+#: drizzled/rpl_rli.cc:253
+#, fuzzy, c-format
+msgid "Failed to open the relay log '%s' (relay_log_pos %s)"
+msgstr ""
+"Klarte ikke å åpne den eksisterende masterinfofilen (filen '%s', feilnummer %"
+"d)"
+
+#: drizzled/rpl_rli.cc:268
+#, fuzzy
+msgid "Failed to flush relay log info file"
+msgstr "Klarte ikke å skrive masterinfofilen til disk"
+
+#: drizzled/rpl_rli.cc:271
+#, fuzzy
+msgid "Error counting relay log space"
+msgstr "Feil ved lesing av relay-logghendelse: %s"
+
+#: drizzled/rpl_rli.cc:295
+#, c-format
+msgid "log %s listed in the index, but failed to stat"
+msgstr ""
+
+#: drizzled/rpl_rli.cc:310
+#, fuzzy
+msgid "Could not find first log while counting relay log space"
+msgstr "Slave-I/O-tråden ble avbrutt mens den ventet på plass til relay-loggen"
+
+#: drizzled/rpl_rli.cc:967
+#, fuzzy
+msgid "Slave SQL thread is stopped because UNTIL condition is bad."
+msgstr "Slave-SQL-tråden stoppet fordi den kom til UNTIL-posisjonen sin i %s"
+
+#: drizzled/rpl_utility.cc:122
 #, c-format
 msgid "Column %d type mismatch - received type %d, %s.%s has type %d"
 msgstr ""
+"Kolonne %d stemmer ikke overrens med typen. Mottok type %d, %s. %s har typen "
+"%d"
 
-#: drizzled/rpl_utility.cc:138
+#: drizzled/rpl_utility.cc:137
 #, c-format
 msgid ""
 "Column %d size mismatch - master has size %d, %s.%s on slave has size %d. "
 "Master's column size should be <= the slave's column size."
 msgstr ""
+"Kolonne %d stemmer ikke overrens med størrelsen. Masteren har størrelse %d, %"
+"s.%s på slaven har størrelse %d. Masterens kolonnestørrelse skulle ha vært "
+"mindre eller lik slavens kolonnestørrelse."
+
+#: drizzled/scheduler.cc:121
+msgid "Memory allocation error in thd_scheduler::init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:212
+msgid "init_pipe(thd_add_pipe) error in libevent_init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:218
+msgid "init_pipe(thd_kill_pipe) error in libevent_init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:230
+msgid "thd_add_event event_add error in libevent_init\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:246
+#, fuzzy, c-format
+msgid "Can't create completion port thread (error %d)"
+msgstr "Kan ikke opprette symlinken '%s' som peker til '%s' (Feilkode: %d)"
+
+#: drizzled/scheduler.cc:359
+msgid "event_add error in libevent_add_thd_callback\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:385
+msgid "Scheduler init error in libevent_add_new_connection\n"
+msgstr ""
+
+#: drizzled/scheduler.cc:467
+msgid "libevent_thread_proc: my_thread_init() failed\n"
+msgstr ""
+
+#: drizzled/set_var.cc:905
+msgid "Ambiguous slave modes combination. STRICT will be used"
+msgstr ""
 
 #: drizzled/slave.cc:89
 msgid "Waiting to reconnect after a failed registration on master"
-msgstr ""
+msgstr "Venter på å koble til masteren på nytt etter at registreringen feilet"
 
 #: drizzled/slave.cc:90
 msgid ""
 "Slave I/O thread killed while waitnig to reconnect after a failed "
 "registration on master"
 msgstr ""
+"En slave I/O-tråd ble drept mens vi ventet på å koble til masteren på nytt "
+"etter at en registrering feilet"
 
 #: drizzled/slave.cc:92
 msgid "Reconnecting after a failed registration on master"
-msgstr ""
+msgstr "Kobler til på nytt etter at registreringen hos masteren feilet"
 
 #: drizzled/slave.cc:93
 #, c-format
@@ -4652,39 +6609,53 @@ msgid ""
 "failed registering on master, reconnecting to try again, log '%s' at postion "
 "%s"
 msgstr ""
+"klarte ikke å registrere seg med masteren, kobler til på nytt for å prøve en "
+"gang til, log '%s' i posisjon %s"
 
 #: drizzled/slave.cc:96 drizzled/slave.cc:105
 msgid "Slave I/O thread killed during or after reconnect"
 msgstr ""
+"En slave-I/O-tråd ble drept samtidig som eller etter at vi koblet oss til på "
+"nytt"
 
 #: drizzled/slave.cc:99
 msgid "Waiting to reconnect after a failed binlog dump request"
 msgstr ""
+"Venter på å koble til på nytt etter at en forespørsel for å dumpe binloggen "
+"feilet"
 
 #: drizzled/slave.cc:100
 msgid "Slave I/O thread killed while retrying master dump"
 msgstr ""
+"En slave-I/O-tråd ble drept mens vi prøvde å hente masterdumpen på nytt"
 
 #: drizzled/slave.cc:101
 msgid "Reconnecting after a failed binlog dump request"
-msgstr ""
+msgstr "Kobler til på nytt etter at vi ikke klarte å hente masterdumpen"
 
 #: drizzled/slave.cc:102
 #, c-format
 msgid "failed dump request, reconnecting to try again, log '%s' at postion %s"
 msgstr ""
+"dumpeforespørselen feilet, kobler til for å prøve på nytt, logg '%s' i "
+"posisjon %s"
 
 #: drizzled/slave.cc:108
 msgid "Waiting to reconnect after a failed master event read"
 msgstr ""
+"Venter på å koble til på nytt etter at vi ikke klarte å lese en hendelse fra "
+"masteren"
 
 #: drizzled/slave.cc:109
 msgid "Slave I/O thread killed while waiting to reconnect after a failed read"
 msgstr ""
+"En slave-I/O-tråd ble drept mens vi ventet på å koble til på nytt etter at "
+"en leseoperasjon feilet"
 
 #: drizzled/slave.cc:111
 msgid "Reconnecting after a failed master event read"
 msgstr ""
+"Kobler til på nytt etter at vi ikke klarte å lese en hendelse fra masteren"
 
 #: drizzled/slave.cc:112
 #, c-format
@@ -4692,28 +6663,32 @@ msgid ""
 "Slave I/O thread: Failed reading log event, reconnecting to retry, log '%s' "
 "at postion %s"
 msgstr ""
+"Slave-I/O-tråd: Klarte ikke å lese logghendelse, prøver å koble til på nytt "
+"for å prøve igjen, logg '%s' i posisjon %s"
 
 #: drizzled/slave.cc:115
 msgid ""
 "Slave I/O thread killed during or after a reconnect done to recover from "
 "failed read"
 msgstr ""
+"En slave-I/O-tråd ble drept samtidig som eller etter at vi koblet oss til på "
+"nytt for å hente oss inn etter at en leseoperasjon feilet"
 
 #: drizzled/slave.cc:229
 msgid "Failed to allocate memory for the master info structure"
-msgstr ""
+msgstr "Klarte ikke å allokere minne for masterinfostrukturen"
 
 #: drizzled/slave.cc:236 drizzled/slave.cc:1820
 msgid "Failed to initialize the master info structure"
-msgstr ""
+msgstr "Klarte ikke å initialisere masterinfostrukturen"
 
 #: drizzled/slave.cc:251
 msgid "Failed to create slave threads"
-msgstr ""
+msgstr "Klarte ikke å lage slavetrådene"
 
 #: drizzled/slave.cc:448
 msgid "Server id not set, will not start slave"
-msgstr ""
+msgstr "Serverid-en er ikke satt, starter ikke slaven"
 
 #: drizzled/slave.cc:616
 msgid ""
@@ -4722,14 +6697,18 @@ msgid ""
 "risk of duplicate updates when the slave SQL thread is restarted. Please "
 "check your tables' contents after restart."
 msgstr ""
+"En SQL-tråd måtte stoppe mens oppdateringer fortsatt ble kjørt på en tabell "
+"uten transaksjoner og uten en primærnøkkel, noe som er en usikker situasjon. "
+"Dette betyr at det kan forekomme duplikate oppdateringer når SQL-tråden blir "
+"restartet. Dobbelsjekk tabellinnholdet ditt etter restarten."
 
 #: drizzled/slave.cc:777 drizzled/slave.cc:792
 msgid "Master reported unrecognized DRIZZLE version"
-msgstr ""
+msgstr "Masteren rapporterte ukjent Drizzle-versjon"
 
 #: drizzled/slave.cc:833
 msgid "default Format_description_log_event"
-msgstr ""
+msgstr "standard Format_description_log_event"
 
 #: drizzled/slave.cc:855
 #, c-format
@@ -4737,6 +6716,8 @@ msgid ""
 "\"SELECT UNIX_TIMESTAMP()\" failed on master, do not trust column "
 "Seconds_Behind_Master of SHOW SLAVE STATUS. Error: %s (%d)"
 msgstr ""
+"\"SELECT UNIX_TIMESTAMP()\" feilet på masteren, ikke stol på kolonna "
+"'Seconds_Behind_Master' i resultatet fra 'SHOW SLAVE STATUS'. Feil: %s (%d)"
 
 #: drizzled/slave.cc:882
 msgid ""
@@ -4745,6 +6726,10 @@ msgid ""
 "replicate-same-server-id option must be used on slave but this doesnot "
 "always make sense; please check the manual before using it)."
 msgstr ""
+"Slave-I/O-tråden stoppet fordi masteren og slaven har like Drizzle-serverID-"
+"er; disse ID-ene må være forskjellige for at replikasjon skal fungere (eller "
+"--replicate-same-server-id egenskapen må bli være angitt på slaven, men "
+"dette gir ikke alltid mening. Sjekk manualen før du bruker innstillingen)."
 
 #: drizzled/slave.cc:927
 msgid ""
@@ -4752,6 +6737,9 @@ msgid ""
 "for the COLLATION_SERVER global variable. The values must be equal for "
 "replication to work"
 msgstr ""
+"Slave-I/O-tråden stoppet fordi masteren og slaven har forskjellige verdier "
+"for COLLATION_SERVER-variabelen. Verdiene må være eksakt like for at "
+"replikasjon mellom serverene skal fungere"
 
 #: drizzled/slave.cc:963
 msgid ""
@@ -4759,35 +6747,40 @@ msgid ""
 "for the TIME_ZONE global variable. The values must be equal for replication "
 "to work"
 msgstr ""
+"Slave-I/O-tråden stoppet fordi masteren og slaven har forskjellige verdier "
+"for TIME_ZONE-variabelen. Verdiene må være eksakt like for at replikasjon "
+"mellom serverene skal fungere"
 
 #: drizzled/slave.cc:1028
 msgid "Waiting for the slave SQL thread to free enough relay log space"
-msgstr ""
+msgstr "Venter på at slave-SQL-tråden skal frigi nok plass i relay-loggen"
 
 #: drizzled/slave.cc:1074
 msgid ""
 "failed to write a Rotate event to the relay log, SHOW SLAVE STATUS may be "
 "inaccurate"
 msgstr ""
+"klarte ikke å skrive en \"Rotate\"-hendelse til relay-loggen, 'SHOW SLAVE "
+"STATUS' kan være unøyaktig"
 
 #: drizzled/slave.cc:1085
 msgid "Rotate_event (out of memory?), SHOW SLAVE STATUS may be inaccurate"
-msgstr ""
+msgstr "Rotate_event (tomt for minne?), 'SHOW SLAVE STATUS' kan være unøyaktig"
 
 #: drizzled/slave.cc:1476
 #, c-format
 msgid "Error on COM_BINLOG_DUMP: %d  %s, will retry in %d secs"
-msgstr ""
+msgstr "Feil ved COM_BINLOG_DUMP: %d %s, prøver på nytt om %d sekunder"
 
 #: drizzled/slave.cc:1529
 #, c-format
 msgid "Error reading packet from server: %s ( server_errno=%d)"
-msgstr ""
+msgstr "Klarte ikke å lese en pakke fra serveren: %s (feilkode på server: %d)"
 
 #: drizzled/slave.cc:1537
 #, c-format
 msgid "Slave: received end packet from server, apparent master shutdown: %s"
-msgstr ""
+msgstr "Slave: fikk sluttpakke fra serveren, masteren avsluttes tydligvis: %s"
 
 #: drizzled/slave.cc:1691
 #, c-format
@@ -4795,16 +6788,18 @@ msgid ""
 "It was not possible to update the positions of the relay log information: "
 "the slave may be in an inconsistent state. Stopped in %s position %s"
 msgstr ""
+"Det var ikke mulig å oppdatere posisjonen til relay-loggen: slaven kan være "
+"i en inkonsistent tilstand. Stoppet i %s i posisjon %s"
 
 #: drizzled/slave.cc:1766 drizzled/slave.cc:2366
 #, c-format
 msgid "Slave SQL thread stopped because it reached its UNTIL position %s"
-msgstr ""
+msgstr "Slave-SQL-tråden stoppet fordi den kom til UNTIL-posisjonen sin i %s"
 
 #: drizzled/slave.cc:1825 drizzled/slave.cc:2315
 #, c-format
 msgid "Error initializing relay log position: %s"
-msgstr ""
+msgstr "Klarte ikke å intialisere posisjonen i relay-loggen: %s"
 
 #: drizzled/slave.cc:1841
 #, c-format
@@ -4812,6 +6807,8 @@ msgid ""
 "Slave SQL thread retried transaction %lu time(s) in vain, giving up. "
 "Consider raising the value of the slave_transaction_retries variable."
 msgstr ""
+"En slave-I/O-tråd prøvde transaksjonen %lu gang(er) uten å lykkes og gir nå "
+"opp. Vurdér om du bør øke verdien av slave_transaction_retries-variabelen."
 
 #: drizzled/slave.cc:1864
 msgid ""
@@ -4823,14 +6820,21 @@ msgid ""
 "check the master's binary log or slave's relay log, you will be able to know "
 "their names by issuing 'SHOW SLAVE STATUS' on this slave."
 msgstr ""
+"Klarte ikke å behandle hendelsen i replikasjonsloggen. Mulige årsaker til "
+"dette er: masterens binærlogg er korrupt (du kan sjekke dette ved å kjøre "
+"'mysqlbinlog' på binærloggen), slavens relay-logg er korrupt (du kan sjekke "
+"dette ved å kjøre 'mysqlbinlog' på replikasjonsloggen), et nettverksproblem, "
+"eller en feil i masterens eller slavens Drizzle-kode. Hvis du vil sjekke "
+"masterens binærlogg eller slavens replikasjonslogg, kan du finne navnene "
+"deres ved å kjøre 'SHOW SLAVE STATUS' på denne slaven."
 
 #: drizzled/slave.cc:1988
 msgid "Failed during slave I/O thread initialization"
-msgstr ""
+msgstr "Klarte ikke å initialisere slave-I/O-tråden"
 
 #: drizzled/slave.cc:2002
 msgid "error in drizzle_create()"
-msgstr ""
+msgstr "Feil i drizzle_create()"
 
 #: drizzled/slave.cc:2010
 #, c-format
@@ -4838,34 +6842,36 @@ msgid ""
 "Slave I/O thread: connected to master '%s@%s:%d',replication started in log "
 "'%s' at position %s"
 msgstr ""
+"Slave-I/O-tråd: koblet til masteren '%s@%s:%d', replikasjon startet i "
+"loggfilen '%s' i posisjon %s"
 
 #: drizzled/slave.cc:2024
 msgid "Slave I/O thread killed while connecting to master"
-msgstr ""
+msgstr "En slave-I/O-tråd ble drept mens vi koblet til masteren"
 
 #: drizzled/slave.cc:2048
 msgid "Slave I/O thread couldn't register on master"
-msgstr ""
+msgstr "Slave-I/O-tråden klarte ikke å registrere seg på masteren"
 
 #: drizzled/slave.cc:2060 drizzled/slave.cc:2084 drizzled/slave.cc:2108
 msgid "Forcing to reconnect slave I/O thread"
-msgstr ""
+msgstr "Tvinger en ny tilkobling for slave-I/O-tråden"
 
 #: drizzled/slave.cc:2073
 msgid "Failed on request_dump()"
-msgstr ""
+msgstr "Feilet på request_dump()"
 
 #: drizzled/slave.cc:2074
 msgid "Slave I/O thread killed while requesting master dump"
-msgstr ""
+msgstr "Slave-I/O-tråden ble drept mens vi ba om en masterdump"
 
 #: drizzled/slave.cc:2100
 msgid "Waiting for master to send event"
-msgstr ""
+msgstr "Venter på at masteren skal sende hendelser"
 
 #: drizzled/slave.cc:2102
 msgid "Slave I/O thread killed while reading event"
-msgstr ""
+msgstr "Slave-I/O-tråden ble drept mens den leste en hendelse"
 
 #: drizzled/slave.cc:2120
 #, c-format
@@ -4874,31 +6880,36 @@ msgid ""
 "entry is correct, restart the server with a higher value of "
 "max_allowed_packet"
 msgstr ""
+"Logginnslaget på masteren er lenger enn 'max_allowed_packet' (%ld) på "
+"slaven. Hvis innslaget er riktig, start serveren på nytt med en høyere verdi "
+"for 'max_allowed_packet'."
 
 #: drizzled/slave.cc:2134
 msgid "Stopping slave I/O thread due to out-of-memory error from master"
 msgstr ""
+"Stopper slave-I/O-tråden på grunn av en feilmelding om at masteren er tom "
+"for minne"
 
 #: drizzled/slave.cc:2144
 msgid "Queueing master event to the relay log"
-msgstr ""
+msgstr "Legger til en masterhendelse til relay-loggen"
 
 #: drizzled/slave.cc:2171
 msgid "Slave I/O thread aborted while waiting for relay log space"
-msgstr ""
+msgstr "Slave-I/O-tråden ble avbrutt mens den ventet på plass til relay-loggen"
 
 #: drizzled/slave.cc:2181
 #, c-format
 msgid "Slave I/O thread exiting, read up to log '%s', position %s"
-msgstr ""
+msgstr "Slave-I/O-tråden avsluttes, leste opp til logg '%s' i posisjon %s"
 
 #: drizzled/slave.cc:2205
 msgid "Waiting for slave mutex on exit"
-msgstr ""
+msgstr "Venter for slavemutexen for å avslutte"
 
 #: drizzled/slave.cc:2271
 msgid "Failed during slave thread initialization"
-msgstr ""
+msgstr "Feilet mens slavetråden ble initialisert"
 
 #: drizzled/slave.cc:2337
 #, c-format
@@ -4906,24 +6917,26 @@ msgid ""
 "Slave SQL thread initialized, starting replication in log '%s' at position %"
 "s, relay log '%s' position: %s"
 msgstr ""
+"Slave-SQL-tråden ble initialisert, starter replikasjonsloggen '%s' i "
+"posisjon %s, relay-loggen '%s' i posisjon: %s"
 
 #: drizzled/slave.cc:2351
 msgid "Slave SQL thread aborted. Can't execute init_slave query"
-msgstr ""
+msgstr "Slave-SQL-tråden ble avbrutt. Kunne ikke kjøre init_slave-spørringen"
 
 #: drizzled/slave.cc:2377
 msgid "Reading event from the relay log"
-msgstr ""
+msgstr "Leser hendelse fra relay-loggen"
 
 #: drizzled/slave.cc:2402
 #, c-format
 msgid "Slave (additional info): %s Error_code: %d"
-msgstr ""
+msgstr "Slave (ekstrainformasjon): %s Feilkode: %d"
 
 #: drizzled/slave.cc:2419
 #, c-format
 msgid "Slave: %s Error_code: %d"
-msgstr ""
+msgstr "Slave: %s Feilkode: %d"
 
 #: drizzled/slave.cc:2422
 #, c-format
@@ -4932,6 +6945,9 @@ msgid ""
 "missing library, and restart the slave SQL thread with \"SLAVE START\". We "
 "stopped at log '%s' position %s"
 msgstr ""
+"Feil ved lasting av brukerdefinert bibliotek, slave-SQL-tråden ble avbrutt. "
+"Installér det manglende biblioteket og restart slave-SQL-tråden med 'SLAVE "
+"START'. Vi stoppet i loggfilen '%s' i posisjon %s"
 
 #: drizzled/slave.cc:2430
 #, c-format
@@ -4939,38 +6955,43 @@ msgid ""
 "Error running query, slave SQL thread aborted. Fix the problem, and restart "
 "the slave SQL thread with \"SLAVE START\". We stopped at log '%s' position %s"
 msgstr ""
+"Feil ved kjøring av spørring, slave-SQL-tråden avbrøt selv. Fiks problemet "
+"og restart slave-SQL-tråden med 'SLAVE START'. Vi stoppet i loggfilen '%s' i "
+"posisjon %s"
 
 #: drizzled/slave.cc:2442
 #, c-format
 msgid ""
 "Slave SQL thread exiting, replication stopped in log '%s' at position %s"
 msgstr ""
+"Slave-SQL-tråden avsluttes, replikasjonen stoppet i loggfilen '%s' i "
+"posisjon %s"
 
 #: drizzled/slave.cc:2538
 #, c-format
 msgid "Slave I/O: failed requesting download of '%s'"
-msgstr ""
+msgstr "Slave I/O: feilet ved forespørsel om nedlasting av '%s'"
 
 #: drizzled/slave.cc:2555
 #, c-format
 msgid "Network read error downloading '%s' from master"
-msgstr ""
+msgstr "Nettverkslesefeil ved lasting av '%s' fra masteren"
 
 #: drizzled/slave.cc:2577
 msgid "error writing Exec_load event to relay log"
-msgstr ""
+msgstr "feil ved skriving av Exec_load-hendelse til relay-loggen"
 
 #: drizzled/slave.cc:2591
 msgid "error writing Create_file event to relay log"
-msgstr ""
+msgstr "feil ved skriving av Create_file-hendelse til relay-loggen"
 
 #: drizzled/slave.cc:2606
 msgid "error writing Append_block event to relay log"
-msgstr ""
+msgstr "feil ved skriving av Append_block-hendelse til relay-loggen"
 
 #: drizzled/slave.cc:2702
 msgid "Memory allocation failed"
-msgstr ""
+msgstr "Minnetildeling feilet."
 
 #: drizzled/slave.cc:2727 drizzled/slave.cc:2813
 #, c-format
@@ -4978,23 +6999,26 @@ msgid ""
 "Read invalid event from master: '%s', master could be corrupt but a more "
 "likely cause of this is a bug"
 msgstr ""
+"Leste ugyldig hendelse fra masteren: '%s'. Masteren kan være korrupt, men "
+"dette er sannsynligvis forårsaket av en kodefeil"
 
 #: drizzled/slave.cc:3086
 msgid "could not queue event from master"
-msgstr ""
+msgstr "klarte ikke å legge til hendelsen fra masteren til køen"
 
 #: drizzled/slave.cc:3180
 #, c-format
 msgid "error %s to master '%s@%s:%d' - retry-time: %d  retries: %u"
 msgstr ""
+"feil %s til masteren '%s@%s:%d' - forsøker på nytt om: %d, antall ganger: %u"
 
 #: drizzled/slave.cc:3182
 msgid "reconnecting"
-msgstr ""
+msgstr "kobler til på nytt"
 
 #: drizzled/slave.cc:3182
 msgid "connecting"
-msgstr ""
+msgstr "kobler til"
 
 #: drizzled/slave.cc:3208
 #, c-format
@@ -5002,35 +7026,40 @@ msgid ""
 "Slave: connected to master '%s@%s:%d', replication resumed in log '%s' at "
 "position %s"
 msgstr ""
+"Slave: koblet til masteren '%s@%s:%d', replikasjonen ble tatt opp igjen i "
+"loggfilen '%s' i posisjon %s"
 
 #: drizzled/slave.cc:3598
 #, c-format
 msgid "next log '%s' is currently active"
-msgstr ""
+msgstr "Neste logg '%s' er for øyeblikket aktiv"
 
 #: drizzled/slave.cc:3628
 #, c-format
 msgid "next log '%s' is not active"
-msgstr ""
+msgstr "neste loggfil '%s' er ikke aktiv"
 
 #: drizzled/slave.cc:3644
 #, c-format
 msgid ""
 "Slave SQL thread: I/O error reading event(errno: %d  cur_log->error: %d)"
 msgstr ""
+"Slave-SQL-tråd: I/O-feil ved lesing av hendelse (feilkode: %d cur_log-"
+">error: %d)"
 
 #: drizzled/slave.cc:3650
 msgid "Aborting slave SQL thread because of partial event read"
 msgstr ""
+"Avbryter slave-SQL-tråden på grunn av at en hendelse bare ble delvis lest"
 
 #: drizzled/slave.cc:3656 drizzled/slave.cc:3663
 #, c-format
 msgid "Error reading relay log event: %s"
-msgstr ""
+msgstr "Feil ved lesing av relay-logghendelse: %s"
 
 #: drizzled/slave.cc:3657
 msgid "slave SQL thread was killed"
-msgstr ""
+msgstr "slave-SQL-tråden ble drept"
 
 #: drizzled/slave.cc:3755
 #, c-format
@@ -5038,6 +7067,8 @@ msgid ""
 "master may suffer from http://bugs.mysql.com/bug.php?id=%u so slave stops; "
 "check error log on slave for more info"
 msgstr ""
+"masteren kan være påvirket av http://bugs.mysql.com/bug.php?id=%u, så slaven "
+"stopper. Sjekk feilmeldingsloggen på slaven for mer informasjon"
 
 #: drizzled/slave.cc:3761
 #, c-format
@@ -5051,103 +7082,270 @@ msgid ""
 "deleted, that master be upgraded to a version at least equal to '%d.%d.%d'. "
 "Then replication can be restarted."
 msgstr ""
+"I følge masterens versjonsinformasjon ('%s'), så er det sannsynlig at "
+"masteren lider av problemet beskrevet i: http://bugs.mysql.com/bug.php?id=%"
+"u. Dette fører til at dersom vi replikerer hendelsene i binærloggen , så kan "
+"dette føre til at slavens data blir forskjellig fra masterens data. For å "
+"unngå dette problemet nekter slaven å replikere disse hendelsene og stopper. "
+"Vi anbefaler at alle oppdateringer blir stoppet på både masteren og slaven, "
+"at dataene deretter blir manuelt synkronisert mellom serverene, at man "
+"sletter binærloggene hos masteren og deretter oppgraderer masteren til en "
+"versjon som minst tilsvarer '%d.%d.%d'. Replikasjonen kan så bli restartet."
+
+#: drizzled/sql_base.cc:2527
+#, c-format
+msgid "Table %s had a open data handler in reopen_table"
+msgstr ""
+
+#: drizzled/sql_base.cc:3178
+#, c-format
+msgid "Couldn't repair table: %s.%s"
+msgstr ""
+
+#: drizzled/sql_base.cc:3221
+#, c-format
+msgid ""
+"When opening HEAP table, could not allocate memory to write 'DELETE FROM `%"
+"s`.`%s`' to the binary log"
+msgstr ""
+
+#: drizzled/sql_base.cc:3950
+#, fuzzy, c-format
+msgid "Could not remove temporary table: '%s', error: %d"
+msgstr "Kan ikke lage/skrive til filen '%s' (Feilkode: %d)"
+
+#: drizzled/sql_db.cc:396 drizzled/sql_db.cc:404
+#, c-format
+msgid "Error while loading database options: '%s':"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:647
+#, c-format
+msgid "Plugin '%s' of type %s failed deinitialization"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:661
+#, c-format
+msgid "Plugin '%s' has ref_count=%d after deinitialization."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:781
+#, c-format
+msgid "Plugin '%s' registration as a %s failed."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1035
+msgid "plugin-load parameter too long"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1095
+#, c-format
+msgid "Couldn't load plugin named '%s' with soname '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1146
+#, c-format
+msgid "Forcing shutdown of %d plugins"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1168
+#, c-format
+msgid "Plugin '%s' will be forced to shutdown"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:1184
+#, c-format
+msgid "Plugin '%s' has ref_count=%d after shutdown."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2433 drizzled/sql_plugin.cc:2496
+#, fuzzy, c-format
+msgid "Unknown variable type code 0x%x in plugin '%s'."
+msgstr "Ukjent kommando: '%-.60s'"
+
+#: drizzled/sql_plugin.cc:2476
+#, c-format
+msgid ""
+"Server variable %s of plugin %s was forced to be read-only: string variable "
+"without update_func and PLUGIN_VAR_MEMALLOC flag"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2507
+#, c-format
+msgid "Missing variable name in plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2524
+#, c-format
+msgid "Thread local variable '%s' not allocated in plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2643
+#, fuzzy, c-format
+msgid "Out of memory for plugin '%s'."
+msgstr "Databasemotoren er tom for minne"
+
+#: drizzled/sql_plugin.cc:2650
+#, c-format
+msgid "Bad options for plugin '%s'."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2659
+#, c-format
+msgid "Parsing options for plugin '%s' failed."
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2702
+#, c-format
+msgid "Plugin '%s' has conflicting system variables"
+msgstr ""
+
+#: drizzled/sql_plugin.cc:2712
+#, c-format
+msgid "Plugin '%s' disabled by command line option"
+msgstr ""
 
 #: drizzled/sql_repl.cc:101
 msgid "Failed in send_file() while reading file name"
-msgstr ""
+msgstr "Feilet i send_file() da vi leste filnavnet"
 
 #: drizzled/sql_repl.cc:114
 msgid "Failed in send_file() on open of file"
-msgstr ""
+msgstr "Feilet i send_file() da vi skulle åpne filen"
 
 #: drizzled/sql_repl.cc:122
 msgid "Failed in send_file() while writing data to client"
-msgstr ""
+msgstr "Feilet i send_file() da vi skrev data til klienten"
 
 #: drizzled/sql_repl.cc:131
 msgid "Failed in send_file() while negotiating file transfer close"
+msgstr "Feilet i send_file() da vi forhandlet om avslutning av filoverføringen"
+
+#: drizzled/sql_table.cc:81
+#, c-format
+msgid "Invalid (old?) table or database name '%s'"
 msgstr ""
 
-#: drizzled/table.cc:547
+#: drizzled/sql_table.cc:2716
+#, fuzzy, c-format
+msgid "Unknown - internal error %d during operation"
+msgstr "Ukjent feil %d"
+
+#: drizzled/sql_table.cc:4992
+#, c-format
+msgid "Could not open table %s.%s after rename\n"
+msgstr ""
+
+#: drizzled/sql_table.cc:5159
+#, c-format
+msgid ""
+"order_st BY ignored because there is a user-defined clustered index in the "
+"table '%-.192s'"
+msgstr ""
+
+#: drizzled/sql_udf.cc:39
+#, fuzzy
+msgid "Can't allocate memory for udf structures"
+msgstr "Klarte ikke å allokere minne for masterinfostrukturen"
+
+#: drizzled/table.cc:488
 #, c-format
 msgid ""
 "'%s' had no or invalid character set, and default character set is multi-"
 "byte, so character column sizes may have changed"
 msgstr ""
+"'%s' har manglende eller ugyldig tegnsett, og standardtegnsettet er "
+"multibyte, så kolonnetyper basert på tegn kan ha blitt endret"
 
-#: drizzled/table.cc:984 drizzled/table.cc:990
-#, c-format
-msgid ""
-"Found incompatible DECIMAL field '%s' in %s; Please do \"ALTER TABLE '%s' "
-"FORCE\" to fix it!"
-msgstr ""
-
-#: drizzled/table.cc:1162
-#, c-format
-msgid ""
-"Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE \" to "
-"fix it!"
-msgstr ""
-
-#: drizzled/table.cc:1168
-#, c-format
-msgid ""
-"Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE\" to "
-"fix it!"
-msgstr ""
-
-#: drizzled/table.cc:1811
+#: drizzled/table.cc:1692
 #, c-format
 msgid "Unknown collation '%s' in table '%-.64s' definition"
-msgstr ""
+msgstr "Ukjent sorteringsangivelse '%s' i tabelldefinisjonen for '%-.64s'"
 
-#: drizzled/table.cc:1818
+#: drizzled/table.cc:1699
 #, c-format
 msgid ""
 "Table '%-.64s' was created with a different version of MySQL and cannot be "
 "read"
 msgstr ""
+"Tabellen '%-.64s' ble lagd med en annen versjon av MySQL og kan ikke bli lest"
 
-#: drizzled/table.cc:2409
+#: drizzled/table.cc:2311
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d, "
 "found '%s'."
 msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet kolonnen '%s' i posisjon %d, "
+"fant '%s'."
 
-#: drizzled/table.cc:2435
+#: drizzled/table.cc:2337
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
 "have type %s, found type %s."
 msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
+"hadde typen %s, fant typen %s."
 
-#: drizzled/table.cc:2444
+#: drizzled/table.cc:2346
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 "position %d to have character set '%s' but the type has no character set."
 msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
+"i posisjon %d hadde tegnsettet '%s', men kolonnen har ikke noe tegnsett."
 
-#: drizzled/table.cc:2454
+#: drizzled/table.cc:2356
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected the type of column '%s' at "
 "position %d to have character set '%s' but found character set '%s'."
 msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at tegnsettet til kolonnen '%s' "
+"i posisjon %d hadde tegnsettet '%s', men fant tegnsettet '%s'."
 
-#: drizzled/table.cc:2465
+#: drizzled/table.cc:2367
 #, c-format
 msgid ""
 "Incorrect definition of table %s.%s: expected column '%s' at position %d to "
 "have type %s  but the column is not found."
 msgstr ""
+"Gal definisjon av tabellen %s.%s: forventet at kolonnen '%s' i posisjon %d "
+"hadde typen %s, men kolonna ble ikke funnet."
+
+#: drizzled/table.cc:4750
+#, c-format
+msgid "Got error %d when reading table '%s'"
+msgstr ""
 
 #: drizzled/tztime.cc:1063
 #, c-format
 msgid "Fatal error: Illegal or unknown default time zone '%s'"
-msgstr ""
+msgstr "Fatal feil: ugyldig eller ukjent standardtidssone '%s'."
 
 #: drizzled/definitions.h:48
 msgid "Invalid error code"
-msgstr ""
+msgstr "Ugyldig feilkode"
+
+#~ msgid ""
+#~ "Found incompatible DECIMAL field '%s' in %s; Please do \"ALTER TABLE '%s' "
+#~ "FORCE\" to fix it!"
+#~ msgstr ""
+#~ "Fant et inkompatibelt DECIMAL-felt '%s' i %s; kjør \"ALTER TABLE '%s' "
+#~ "FORCE\" for å rette på problemet!"
+
+#~ msgid ""
+#~ "Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE \" "
+#~ "to fix it!"
+#~ msgstr ""
+#~ "Fant feil nøkkeldefinisjon i %s; kjør \"ALTER TABLE '%s' FORCE\" for å "
+#~ "rette på problemet!"
+
+#~ msgid ""
+#~ "Found wrong key definition in %s; Please do \"ALTER TABLE '%s' FORCE\" to "
+#~ "fix it!"
+#~ msgstr ""
+#~ "Fant feil nøkkeldefinisjon i %s; kjør \"ALTER TABLE '%s' FORCE\" for å "
+#~ "rette på problemet!"

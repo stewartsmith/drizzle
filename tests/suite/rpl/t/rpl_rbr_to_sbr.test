@@ -28,8 +28,8 @@ sync_slave_with_master;
 --replace_regex /table_id: [0-9]+/table_id: #/
 SHOW BINLOG EVENTS;
 
---exec $MYSQL_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/rpl_rbr_to_sbr_master.sql
---exec $MYSQL_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/rpl_rbr_to_sbr_slave.sql
+--exec $DRIZZLE_DUMP --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/rpl_rbr_to_sbr_master.sql
+--exec $DRIZZLE_DUMP_SLAVE --compact --order-by-primary --skip-extended-insert --no-create-info test > $MYSQLTEST_VARDIR/tmp/rpl_rbr_to_sbr_slave.sql
 
 connection master;
 DROP TABLE IF EXISTS t1;

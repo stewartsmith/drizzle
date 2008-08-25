@@ -33,7 +33,7 @@
     true   Error
 */
 bool
-mysql_handle_derived(LEX *lex, bool (*processor)(THD*, LEX*, TABLE_LIST*))
+mysql_handle_derived(LEX *lex, bool (*processor)(THD*, LEX*, TableList*))
 {
   bool res= false;
   if (lex->derived_tables)
@@ -43,7 +43,7 @@ mysql_handle_derived(LEX *lex, bool (*processor)(THD*, LEX*, TABLE_LIST*))
 	 sl;
 	 sl= sl->next_select_in_list())
     {
-      for (TABLE_LIST *cursor= sl->get_table_list();
+      for (TableList *cursor= sl->get_table_list();
 	   cursor;
 	   cursor= cursor->next_local)
       {
@@ -74,12 +74,12 @@ out:
     mysql_derived_prepare()
     thd			Thread handle
     lex                 LEX for this thread
-    orig_table_list     TABLE_LIST for the upper SELECT
+    orig_table_list     TableList for the upper SELECT
 
   IMPLEMENTATION
     Derived table is resolved with temporary table.
 
-    After table creation, the above TABLE_LIST is updated with a new table.
+    After table creation, the above TableList is updated with a new table.
 
     This function is called before any command containing derived table
     is executed.
@@ -93,7 +93,7 @@ out:
 */
 
 bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((unused)),
-                           TABLE_LIST *orig_table_list)
+                           TableList *orig_table_list)
 {
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
   uint64_t create_options;
@@ -101,7 +101,7 @@ bool mysql_derived_prepare(THD *thd, LEX *lex __attribute__((unused)),
   if (unit)
   {
     SELECT_LEX *first_select= unit->first_select();
-    TABLE *table= 0;
+    Table *table= 0;
     select_union *derived_result;
 
     /* prevent name resolving out of derived table */
@@ -182,7 +182,7 @@ exit:
     thd			Thread handle
     lex                 LEX for this thread
     unit                node that contains all SELECT's for derived tables
-    orig_table_list     TABLE_LIST for the upper SELECT
+    orig_table_list     TableList for the upper SELECT
 
   IMPLEMENTATION
     Derived table is resolved with temporary table. It is created based on the
@@ -197,9 +197,9 @@ exit:
     true   Error
 */
 
-bool mysql_derived_filling(THD *thd, LEX *lex, TABLE_LIST *orig_table_list)
+bool mysql_derived_filling(THD *thd, LEX *lex, TableList *orig_table_list)
 {
-  TABLE *table= orig_table_list->table;
+  Table *table= orig_table_list->table;
   SELECT_LEX_UNIT *unit= orig_table_list->derived;
   bool res= false;
 
@@ -222,14 +222,14 @@ bool mysql_derived_filling(THD *thd, LEX *lex, TABLE_LIST *orig_table_list)
 
       lex->current_select= first_select;
       res= mysql_select(thd, &first_select->ref_pointer_array,
-			(TABLE_LIST*) first_select->table_list.first,
+			(TableList*) first_select->table_list.first,
 			first_select->with_wild,
 			first_select->item_list, first_select->where,
 			(first_select->order_list.elements+
 			 first_select->group_list.elements),
-			(ORDER *) first_select->order_list.first,
-			(ORDER *) first_select->group_list.first,
-			first_select->having, (ORDER*) NULL,
+			(order_st *) first_select->order_list.first,
+			(order_st *) first_select->group_list.first,
+			first_select->having, (order_st*) NULL,
 			(first_select->options | thd->options |
 			 SELECT_NO_UNLOCK),
 			derived_result, unit, first_select);
@@ -238,7 +238,7 @@ bool mysql_derived_filling(THD *thd, LEX *lex, TABLE_LIST *orig_table_list)
     if (!res)
     {
       /*
-        Here we entirely fix both TABLE_LIST and list of SELECT's as
+        Here we entirely fix both TableList and list of SELECT's as
         there were no derived tables
       */
       if (derived_result->flush())

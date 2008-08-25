@@ -148,7 +148,7 @@ int handle_olaps(LEX *lex, SELECT_LEX *select_lex)
 
 
   if (setup_tables(lex->thd, &select_lex->context, &select_lex->top_join_list,
-                   (TABLE_LIST *)select_lex->table_list.first
+                   (TableList *)select_lex->table_list.first
                    &select_lex->leaf_tables, false) ||
       setup_fields(lex->thd, 0, select_lex->item_list, MARK_COLUMNS_READ,
                    &all_fields,1) ||

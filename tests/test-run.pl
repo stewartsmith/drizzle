@@ -8,8 +8,9 @@
 #
 #  Tool used for executing a suite of .test file
 #
-#  See the "MySQL Test framework manual" for more information
-#  http://dev.mysql.com/doc/drizzletest/en/index.html
+#  For now, see the "MySQL Test framework manual" for more information
+#  http://dev.mysql.com/doc/mysqltest/en/index.html
+#  (as the Drizzle test environment is currently still fairly similar)
 #
 #  Please keep the test framework tools identical in all versions!
 #
@@ -1412,9 +1413,9 @@ sub environment_setup () {
   
   $ENV{'LC_COLLATE'}=         "C";
   $ENV{'USE_RUNNING_SERVER'}= $opt_extern;
-  $ENV{'MYSQL_TEST_DIR'}=     $glob_mysql_test_dir;
+  $ENV{'DRIZZLE_TEST_DIR'}=     $glob_mysql_test_dir;
   $ENV{'MYSQLTEST_VARDIR'}=   $opt_vardir;
-  $ENV{'MYSQL_TMP_DIR'}=      $opt_tmpdir;
+  $ENV{'DRIZZLE_TMP_DIR'}=      $opt_tmpdir;
   $ENV{'MASTER_MYSOCK'}=      $master->[0]->{'path_sock'};
   $ENV{'MASTER_MYSOCK1'}=     $master->[1]->{'path_sock'};
   $ENV{'MASTER_MYPORT'}=      $master->[0]->{'port'};
@@ -1442,7 +1443,7 @@ sub environment_setup () {
     $cmdline_mysqlcheck .=
       " --debug=d:t:A,$path_vardir_trace/log/mysqlcheck.trace";
   }
-  $ENV{'MYSQL_CHECK'}=              $cmdline_mysqlcheck;
+  $ENV{'DRIZZLE_CHECK'}=              $cmdline_mysqlcheck;
 
   # ----------------------------------------------------
   # Setup env to childs can execute myqldump
@@ -1457,8 +1458,8 @@ sub environment_setup () {
     $cmdline_mysqldumpslave .=
       " --debug=d:t:A,$path_vardir_trace/log/mysqldump-slave.trace";
   }
-  $ENV{'MYSQL_DUMP'}= $cmdline_mysqldump;
-  $ENV{'MYSQL_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
+  $ENV{'DRIZZLE_DUMP'}= $cmdline_mysqldump;
+  $ENV{'DRIZZLE_DUMP_SLAVE'}= $cmdline_mysqldumpslave;
 
 
   # ----------------------------------------------------
@@ -1476,7 +1477,7 @@ sub environment_setup () {
       $cmdline_mysqlslap .=
 	" --debug=d:t:A,$path_vardir_trace/log/mysqlslap.trace";
     }
-    $ENV{'MYSQL_SLAP'}= $cmdline_mysqlslap;
+    $ENV{'DRIZZLE_SLAP'}= $cmdline_mysqlslap;
   }
 
   # ----------------------------------------------------
@@ -1492,7 +1493,7 @@ sub environment_setup () {
     $cmdline_mysqlimport .=
       " --debug=d:t:A,$path_vardir_trace/log/mysqlimport.trace";
   }
-  $ENV{'MYSQL_IMPORT'}= $cmdline_mysqlimport;
+  $ENV{'DRIZZLE_IMPORT'}= $cmdline_mysqlimport;
 
 
   # ----------------------------------------------------
@@ -1511,7 +1512,7 @@ sub environment_setup () {
     $cmdline_mysqlbinlog .=
       " --debug=d:t:A,$path_vardir_trace/log/mysqlbinlog.trace";
   }
-  $ENV{'MYSQL_BINLOG'}= $cmdline_mysqlbinlog;
+  $ENV{'DRIZZLE_BINLOG'}= $cmdline_mysqlbinlog;
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysql
@@ -1527,12 +1528,12 @@ sub environment_setup () {
   # ----------------------------------------------------
   # Setup env so childs can execute bug25714
   # ----------------------------------------------------
-  $ENV{'MYSQL_BUG25714'}=  $exe_bug25714;
+  $ENV{'DRIZZLE_BUG25714'}=  $exe_bug25714;
 
   # ----------------------------------------------------
   # Setup env so childs can execute drizzle_client_test
   # ----------------------------------------------------
-  $ENV{'MYSQL_CLIENT_TEST'}=  drizzle_client_test_arguments();
+  $ENV{'DRIZZLE_CLIENT_TEST'}=  drizzle_client_test_arguments();
 
 
   # ----------------------------------------------------
@@ -1546,14 +1547,14 @@ sub environment_setup () {
       "--user=root --password= " .
       "--basedir=$glob_basedir --bindir=$path_client_bindir --verbose " .
       "--port=$master->[0]->{'port'} ";
-    $ENV{'MYSQL_FIX_SYSTEM_TABLES'}=  $cmdline_mysql_fix_system_tables;
+    $ENV{'DRIZZLE_FIX_SYSTEM_TABLES'}=  $cmdline_mysql_fix_system_tables;
 
   }
 
   # ----------------------------------------------------
   # Setup env so childs can execute my_print_defaults
   # ----------------------------------------------------
-  $ENV{'MYSQL_MY_PRINT_DEFAULTS'}= mtr_native_path($exe_my_print_defaults);
+  $ENV{'DRIZZLE_MY_PRINT_DEFAULTS'}= mtr_native_path($exe_my_print_defaults);
 
   # ----------------------------------------------------
   # Setup env so childs can execute mysqladmin
@@ -1818,13 +1819,13 @@ sub  check_running_as_root () {
   # the file will not return 0000
   my $file_mode= (stat($test_file))[2] & 07777;
 
-  $ENV{'MYSQL_TEST_ROOT'}= "NO";
+  $ENV{'DRIZZLE_TEST_ROOT'}= "NO";
   mtr_verbose("result: $result, file_mode: $file_mode");
   if ($result eq "MySQL" && $file_mode == 0)
   {
     mtr_warning("running this script as _root_ will cause some " .
                 "tests to be skipped");
-    $ENV{'MYSQL_TEST_ROOT'}= "YES";
+    $ENV{'DRIZZLE_TEST_ROOT'}= "YES";
   }
 
   chmod(oct("0755"), $test_file);
@@ -3210,13 +3211,13 @@ sub run_drizzletest ($) {
   }
 
   # ----------------------------------------------------------------------
-  # export MYSQL_TEST variable containing <path>/drizzletest <args>
+  # export DRIZZLE_TEST variable containing <path>/drizzletest <args>
   # ----------------------------------------------------------------------
-  $ENV{'MYSQL_TEST'}=
+  $ENV{'DRIZZLE_TEST'}=
     mtr_native_path($exe_drizzletest) . " " . join(" ", @$args);
 
   # ----------------------------------------------------------------------
-  # Add arguments that should not go into the MYSQL_TEST env var
+  # Add arguments that should not go into the DRIZZLE_TEST env var
   # ----------------------------------------------------------------------
 
   if ( $opt_valgrind_drizzletest )

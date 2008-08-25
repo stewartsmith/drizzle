@@ -15,19 +15,63 @@
 
 #called from the top level Makefile
 
-libserialize_la_CXXFLAGS=${AM_CXXFLAGS} -Wno-error
+LDADD = libserialize.la -lprotobuf
 
-noinst_LTLIBRARIES = 	libserialize.la
+libserialize_la_CXXFLAGS =
+
+TESTS_ENVIRONMENT = sh
+TESTS = check_length.sh
+
+PROTOC = protoc
+
+%.pb.h %.pb.cc : %.proto
+	$(PROTOC) --cpp_out=${top_builddir}/drizzled/serialize $<
+
+bin_PROGRAMS = \
+	       table_reader \
+	       table_writer \
+               binlog_writer \
+               binlog_reader \
+	       schema_reader
+
+check_PROGRAMS = length
+
+noinst_LTLIBRARIES = libserialize.la
 
 libserialize_la_SOURCES = \
-			   schema.pb.cc 
+			  table.pb.cc \
+			  binary_log.pb.cc \
+			  schema.pb.cc
 
-noinst_HEADERS = \
+noinst_HEADERS = table.pb.h \
 		 schema.pb.h \
+		 binary_log.pb.h \
+		 binlog_encoding.h \
 		 serialize.h
 
-schema.pb.cc: schema.proto
-	protoc --cpp_out=. schema.proto
-	
+DEFS= @DEFS@
 
-DEFS= -DMYSQL_SERVER @DEFS@
+binlog_reader_SOURCES = binlog_reader.cc binary_log.cc
+binlog_reader_CXXFLAGS = 
+
+binlog_writer_SOURCES = binlog_writer.cc binary_log.cc
+binlog_writer_CXXFLAGS = 
+
+schema_reader_SOURCES =  schema_reader.cc
+schema_reader_CXXFLAGS =
+
+table_reader_SOURCES =  table_reader.cc
+table_reader_CXXFLAGS =
+
+table_writer_SOURCES =  table_writer.cc
+table_writer_CXXFLAGS =
+
+length_SOURCES = length.cc
+length_CXXFLAGS = -fexceptions
+
+EXTRA_DIST = schema.proto table.proto binary_log.proto
+BUILT_SOURCES = schema.pb.h \
+		table.pb.h \
+		schema.pb.cc \
+		table.pb.cc \
+		binary_log.pb.cc

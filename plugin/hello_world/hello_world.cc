@@ -93,7 +93,7 @@ static int hello_world_plugin_deinit(void *p)
 
 mysql_declare_plugin(hello_world)
 {
-  MYSQL_UDF_PLUGIN,
+  DRIZZLE_UDF_PLUGIN,
   "hello_world",
   "1.0",
   "Mark Atwood",

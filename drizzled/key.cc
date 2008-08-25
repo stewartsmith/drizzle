@@ -214,14 +214,11 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
     else if (key_part->key_part_flag & HA_VAR_LENGTH_PART)
     {
       Field *field= key_part->field;
-      my_bitmap_map *old_map;
       my_ptrdiff_t ptrdiff= to_record - field->table->record[0];
       field->move_field_offset(ptrdiff);
       key_length-= HA_KEY_BLOB_LENGTH;
       length= min(key_length, key_part->length);
-      old_map= dbug_tmp_use_all_columns(field->table, field->table->write_set);
       field->set_key_image(from_key, length);
-      dbug_tmp_restore_column_map(field->table->write_set, old_map);
       from_key+= HA_KEY_BLOB_LENGTH;
       field->move_field_offset(-ptrdiff);
     }
@@ -241,7 +238,7 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
 /**
   Compare if a key has changed.
 
-  @param table		TABLE
+  @param table		Table
   @param key		key to compare to row
   @param idx		Index used
   @param key_length	Length of key
@@ -258,7 +255,7 @@ void key_restore(uchar *to_record, uchar *from_key, KEY *key_info,
     1	Key has changed
 */
 
-bool key_cmp_if_same(TABLE *table,const uchar *key,uint idx,uint key_length)
+bool key_cmp_if_same(Table *table,const uchar *key,uint idx,uint key_length)
 {
   uint store_length;
   KEY_PART_INFO *key_part;
@@ -326,12 +323,11 @@ bool key_cmp_if_same(TABLE *table,const uchar *key,uint idx,uint key_length)
      idx	Key number
 */
 
-void key_unpack(String *to,TABLE *table,uint idx)
+void key_unpack(String *to,Table *table,uint idx)
 {
   KEY_PART_INFO *key_part,*key_part_end;
   Field *field;
   String tmp;
-  my_bitmap_map *old_map= dbug_tmp_use_all_columns(table, table->read_set);
 
   to->length(0);
   for (key_part=table->key_info[idx].key_part,key_part_end=key_part+
@@ -378,7 +374,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
     else
       to->append(STRING_WITH_LEN("???"));
   }
-  dbug_tmp_restore_column_map(table->read_set, old_map);
+
   return;
 }
 
@@ -388,12 +384,12 @@ void key_unpack(String *to,TABLE *table,uint idx)
 
   SYNOPSIS
     is_key_used()
-      table   TABLE object with which keys and fields are associated.
+      table   Table object with which keys and fields are associated.
       idx     Key to be checked.
       fields  Bitmap of fields to be checked.
 
   NOTE
-    This function uses TABLE::tmp_set bitmap so the caller should care
+    This function uses Table::tmp_set bitmap so the caller should care
     about saving/restoring its state if it also uses this bitmap.
 
   RETURN VALUE
@@ -401,7 +397,7 @@ void key_unpack(String *to,TABLE *table,uint idx)
     FALSE  Otherwise
 */
 
-bool is_key_used(TABLE *table, uint idx, const MY_BITMAP *fields)
+bool is_key_used(Table *table, uint idx, const MY_BITMAP *fields)
 {
   bitmap_clear_all(&table->tmp_set);
   table->mark_columns_used_by_index_no_reset(idx, &table->tmp_set);

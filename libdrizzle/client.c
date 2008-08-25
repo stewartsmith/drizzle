@@ -50,13 +50,11 @@
 #define CLI_DRIZZLE_CONNECT drizzle_connect
 
 #include <mysys/my_sys.h>
-#include <mysys/mysys_err.h>
 #include <mystrings/m_string.h>
 #include <mystrings/m_ctype.h>
 #include <drizzled/error.h>
 #include "errmsg.h"
 #include <vio/violite.h>
-#include <mysys/my_pthread.h>        /* because of signal()  */
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -86,6 +84,7 @@
 #include "client_settings.h"
 #include <drizzled/version.h>
 #include <libdrizzle/sql_common.h>
+#include <libdrizzle/gettext.h>
 
 uint    drizzle_port=0;
 char    *drizzle_unix_port= 0;
@@ -299,7 +298,7 @@ uint32_t cli_safe_read(DRIZZLE *drizzle)
 
   if (len == packet_error || len == 0)
   {
-#ifdef MYSQL_SERVER
+#ifdef DRIZZLE_SERVER
     if (net->vio && vio_was_interrupted(net->vio))
       return (packet_error);
 #endif /*DRIZZLE_SERVER*/
@@ -671,7 +670,7 @@ void drizzle_read_default_options(struct st_drizzle_options *options,
           if ((options->protocol= find_type(opt_arg,
                                             &sql_protocol_typelib,0)) <= 0)
           {
-            fprintf(stderr, "Unknown option to protocol: %s\n", opt_arg);
+            fprintf(stderr, _("Unknown option to protocol: %s\n"), opt_arg);
             exit(1);
           }
           break;
@@ -957,8 +956,6 @@ drizzle_create(DRIZZLE *ptr)
     if (my_init())
       return NULL;
 
-    init_client_errs();
-
     if (!drizzle_port)
     {
       drizzle_port = DRIZZLE_PORT;
@@ -1064,7 +1061,6 @@ void drizzle_server_end()
   if (!drizzle_client_init)
     return;
 
-  finish_client_errs();
   vio_end();
 
   /* If library called my_init(), free memory allocated by it */
@@ -1112,7 +1108,7 @@ static DRIZZLE_METHODS client_methods=
   cli_use_result,                              /* use_result */
   cli_fetch_lengths,                           /* fetch_lengths */
   cli_flush_use_result,                         /* flush_use_result */
-#ifndef MYSQL_SERVER
+#ifndef DRIZZLE_SERVER
   cli_list_fields,                            /* list_fields */
   cli_unbuffered_fetch,                        /* unbuffered_fetch */
   cli_read_statistics,                         /* read_statistics */
@@ -1131,9 +1127,9 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
   /* Set character set */
   if (!drizzle->options.charset_name)
   {
-    default_collation_name= MYSQL_DEFAULT_COLLATION_NAME;
+    default_collation_name= DRIZZLE_DEFAULT_COLLATION_NAME;
     if (!(drizzle->options.charset_name=
-       my_strdup(MYSQL_DEFAULT_CHARSET_NAME,MYF(MY_WME))))
+       my_strdup(DRIZZLE_DEFAULT_CHARSET_NAME,MYF(MY_WME))))
     return 1;
   }
   else
@@ -1154,7 +1150,7 @@ int drizzle_init_character_set(DRIZZLE *drizzle)
         if (!my_charset_same(drizzle->charset, collation))
         {
           my_printf_error(ER_UNKNOWN_ERROR,
-                         "COLLATION %s is not valid for CHARACTER SET %s",
+                         _("COLLATION %s is not valid for CHARACTER SET %s"),
                          MYF(0),
                          default_collation_name, drizzle->options.charset_name);
           drizzle->charset= NULL;
@@ -1276,7 +1272,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     if (gai_errno != 0)
     {
       set_drizzle_extended_error(drizzle, CR_UNKNOWN_HOST, unknown_sqlstate,
-                               ER(CR_UNKNOWN_HOST), host, errno);
+                                 ER(CR_UNKNOWN_HOST), host, errno);
 
       goto error;
     }
@@ -1340,8 +1336,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
       vio_poll_read(net->vio, drizzle->options.connect_timeout))
   {
     set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                             ER(CR_SERVER_LOST_EXTENDED),
-                             "waiting for initial communication packet",
+                             ER(CR_SERVER_LOST_INITIAL_COMM_WAIT),
                              errno);
     goto error;
   }
@@ -1354,8 +1349,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
       set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "reading initial communication packet",
+                               ER(CR_SERVER_LOST_INITIAL_COMM_READ),
                                errno);
     goto error;
   }
@@ -1486,8 +1480,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   if (my_net_write(net, (uchar*) buff, (size_t) (end-buff)) || net_flush(net))
   {
     set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                             ER(CR_SERVER_LOST_EXTENDED),
-                             "sending authentication information",
+                             ER(CR_SERVER_LOST_SEND_AUTH),
                              errno);
     goto error;
   }
@@ -1501,8 +1494,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
       set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                               ER(CR_SERVER_LOST_EXTENDED),
-                               "reading authorization packet",
+                               ER(CR_SERVER_LOST_READ_AUTH),
                                errno);
     goto error;
   }
@@ -1515,8 +1507,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
   {
     if (drizzle->net.last_errno == CR_SERVER_LOST)
         set_drizzle_extended_error(drizzle, CR_SERVER_LOST, unknown_sqlstate,
-                                 ER(CR_SERVER_LOST_EXTENDED),
-                                 "Setting intital database",
+                                 ER(CR_SERVER_LOST_SETTING_DB),
                                  errno);
     goto error;
   }
@@ -1707,7 +1698,7 @@ static bool cli_read_query_result(DRIZZLE *drizzle)
   if ((length = cli_safe_read(drizzle)) == packet_error)
     return(1);
   free_old_query(drizzle);    /* Free old result */
-#ifdef MYSQL_CLIENT      /* Avoid warn of unused labels*/
+#ifdef DRIZZLE_CLIENT      /* Avoid warn of unused labels*/
 get_info:
 #endif
   pos=(uchar*) drizzle->net.read_pos;
@@ -1723,7 +1714,7 @@ get_info:
       drizzle->info=(char*) pos;
     return(0);
   }
-#ifdef MYSQL_CLIENT
+#ifdef DRIZZLE_CLIENT
   if (field_count == NULL_LENGTH)    /* LOAD DATA LOCAL INFILE */
   {
     int error;
@@ -2038,7 +2029,7 @@ uint drizzle_errno(const DRIZZLE *drizzle)
 
 const char * drizzle_error(const DRIZZLE *drizzle)
 {
-  return drizzle ? drizzle->net.last_error : drizzle_server_last_error;
+  return drizzle ? _(drizzle->net.last_error) : _(drizzle_server_last_error);
 }
 
 

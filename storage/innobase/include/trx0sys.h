@@ -330,24 +330,24 @@ in the transaction system array; rollback segment id must fit in one byte,
 therefore 256; each slot is currently 8 bytes in size */
 #define	TRX_SYS_N_RSEGS		256
 
-#define TRX_SYS_MYSQL_LOG_NAME_LEN	512
-#define TRX_SYS_MYSQL_LOG_MAGIC_N	873422344
+#define TRX_SYS_DRIZZLE_LOG_NAME_LEN	512
+#define TRX_SYS_DRIZZLE_LOG_MAGIC_N	873422344
 
 /* The offset of the MySQL replication info in the trx system header;
-this contains the same fields as TRX_SYS_MYSQL_LOG_INFO below */
-#define TRX_SYS_MYSQL_MASTER_LOG_INFO	(UNIV_PAGE_SIZE - 2000)
+this contains the same fields as TRX_SYS_DRIZZLE_LOG_INFO below */
+#define TRX_SYS_DRIZZLE_MASTER_LOG_INFO	(UNIV_PAGE_SIZE - 2000)
 
 /* The offset of the MySQL binlog offset info in the trx system header */
-#define TRX_SYS_MYSQL_LOG_INFO		(UNIV_PAGE_SIZE - 1000)
-#define	TRX_SYS_MYSQL_LOG_MAGIC_N_FLD	0	/* magic number which shows
+#define TRX_SYS_DRIZZLE_LOG_INFO		(UNIV_PAGE_SIZE - 1000)
+#define	TRX_SYS_DRIZZLE_LOG_MAGIC_N_FLD	0	/* magic number which shows
 						if we have valid data in the
 						MySQL binlog info; the value
 						is ..._MAGIC_N if yes */
-#define TRX_SYS_MYSQL_LOG_OFFSET_HIGH	4	/* high 4 bytes of the offset
+#define TRX_SYS_DRIZZLE_LOG_OFFSET_HIGH	4	/* high 4 bytes of the offset
 						within that file */
-#define TRX_SYS_MYSQL_LOG_OFFSET_LOW	8	/* low 4 bytes of the offset
+#define TRX_SYS_DRIZZLE_LOG_OFFSET_LOW	8	/* low 4 bytes of the offset
 						within that file */
-#define TRX_SYS_MYSQL_LOG_NAME		12	/* MySQL log file name */
+#define TRX_SYS_DRIZZLE_LOG_NAME		12	/* MySQL log file name */
 
 /* The offset of the doublewrite buffer header on the trx system header page */
 #define TRX_SYS_DOUBLEWRITE		(UNIV_PAGE_SIZE - 200)

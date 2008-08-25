@@ -45,8 +45,6 @@ extern "C" {
 #include <libdrizzle/drizzle_com.h>
 #include <libdrizzle/drizzle_time.h>
 
-#include <mysys/my_list.h> /* for LISTs used in 'MYSQL' */
-
 extern unsigned int drizzle_port;
 extern char *drizzle_unix_port;
 
@@ -219,11 +217,10 @@ typedef struct st_drizzle
   bool unused1;
   void *unused2, *unused3, *unused4, *unused5;
 
-  LIST  *stmts;                     /* list of all statements */
   const struct st_drizzle_methods *methods;
   void *thd;
   /*
-    Points to boolean flag in DRIZZLE_RES  or MYSQL_STMT. We set this flag
+    Points to boolean flag in DRIZZLE_RES  or DRIZZLE_STMT. We set this flag
     from drizzle_stmt_close if close had to cancel result set of this object.
   */
   bool *unbuffered_fetch_owner;
@@ -252,8 +249,8 @@ typedef struct st_drizzle_res {
 } DRIZZLE_RES;
 
 
-#if !defined(MYSQL_SERVER) && !defined(MYSQL_CLIENT)
-#define MYSQL_CLIENT
+#if !defined(DRIZZLE_SERVER) && !defined(DRIZZLE_CLIENT)
+#define DRIZZLE_CLIENT
 #endif
 
 
@@ -264,7 +261,7 @@ typedef struct st_drizzle_parameters
   void *extension;
 } DRIZZLE_PARAMETERS;
 
-#if !defined(MYSQL_SERVER)
+#if !defined(DRIZZLE_SERVER)
 #define max_allowed_packet (*drizzle_get_parameters()->p_max_allowed_packet)
 #define net_buffer_length (*drizzle_get_parameters()->p_net_buffer_length)
 #endif

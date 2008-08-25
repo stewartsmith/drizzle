@@ -52,6 +52,7 @@
 #include <mysys/thr_alarm.h>
 #include <storage/myisam/myisam.h>
 #include <drizzled/drizzled_error_messages.h>
+#include <libdrizzle/gettext.h>
 
 extern const CHARSET_INFO *character_set_filesystem;
 
@@ -403,7 +404,7 @@ static sys_var_thd_uint64_t	sys_tmp_table_size(&vars, "tmp_table_size",
 static sys_var_bool_ptr  sys_timed_mutexes(&vars, "timed_mutexes", &timed_mutexes);
 static sys_var_const_str	sys_version(&vars, "version", server_version);
 static sys_var_const_str	sys_version_comment(&vars, "version_comment",
-                                            MYSQL_COMPILATION_COMMENT);
+                                            DRIZZLE_COMPILATION_COMMENT);
 static sys_var_const_str	sys_version_compile_machine(&vars, "version_compile_machine",
                                                     MACHINE_TYPE);
 static sys_var_const_str	sys_version_compile_os(&vars, "version_compile_os",
@@ -901,8 +902,8 @@ void fix_slave_exec_mode(enum_var_type type __attribute__((unused)))
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_STRICT) == 1 &&
       bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 1)
   {
-    sql_print_error("Ambiguous slave modes combination."
-                    " STRICT will be used");
+    sql_print_error(_("Ambiguous slave modes combination."
+                    " STRICT will be used"));
     bit_do_clear(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT);
   }
   if (bit_is_set(slave_exec_mode_options, SLAVE_EXEC_MODE_IDEMPOTENT) == 0)
@@ -2189,7 +2190,7 @@ bool update_sys_var_str_path(THD *thd __attribute__((unused)),
                              set_var *var, const char *log_ext,
                              bool log_state, uint log_type)
 {
-  MYSQL_QUERY_LOG *file_log;
+  DRIZZLE_QUERY_LOG *file_log;
   char buff[FN_REFLEN];
   char *res= 0, *old_value=(char *)(var ? var->value->str_value.ptr() : 0);
   bool result= 0;

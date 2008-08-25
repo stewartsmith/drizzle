@@ -52,9 +52,9 @@
 
    @return The number of bytes written at @c row_data.
  */
-#if !defined(MYSQL_CLIENT)
+#if !defined(DRIZZLE_CLIENT)
 size_t
-pack_row(TABLE *table, MY_BITMAP const* cols,
+pack_row(Table *table, MY_BITMAP const* cols,
          uchar *row_data, const uchar *record)
 {
   Field **p_field= table->field, *field;
@@ -162,10 +162,10 @@ pack_row(TABLE *table, MY_BITMAP const* cols,
    master does not have a default value (and isn't nullable)
 
  */
-#if !defined(MYSQL_CLIENT) && defined(HAVE_REPLICATION)
+#if !defined(DRIZZLE_CLIENT) && defined(HAVE_REPLICATION)
 int
 unpack_row(Relay_log_info const *rli,
-           TABLE *table, uint const colcnt,
+           Table *table, uint const colcnt,
            uchar const *const row_data, MY_BITMAP const *cols,
            uchar const **const row_end, ulong *const master_reclength)
 {
@@ -317,7 +317,7 @@ unpack_row(Relay_log_info const *rli,
   @retval 0                       Success
   @retval ER_NO_DEFAULT_FOR_FIELD Default value could not be set for a field
 */
-int prepare_record(TABLE *const table,
+int prepare_record(Table *const table,
                    const MY_BITMAP *cols,
                    uint width __attribute__((unused)),
                    const bool check)

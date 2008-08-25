@@ -99,7 +99,6 @@ public:
           index++;
           break;
         }
-        case DRIZZLE_TYPE_SET:
         case DRIZZLE_TYPE_ENUM:
         {
           uint16_t x= field_metadata[index++] << 8U; // real_type
@@ -222,7 +221,7 @@ public:
     @retval 1  if the table definition is not compatible with @c table
     @retval 0  if the table definition is compatible with @c table
   */
-  int compatible_with(Relay_log_info const *rli, TABLE *table) const;
+  int compatible_with(Relay_log_info const *rli, Table *table) const;
 
 private:
   uint32_t m_size;           // Number of elements in the types array
@@ -237,8 +236,8 @@ private:
    Extend the normal table list with a few new fields needed by the
    slave thread, but nowhere else.
  */
-struct RPL_TABLE_LIST
-  : public TABLE_LIST
+struct RPL_TableList
+  : public TableList
 {
   bool m_tabledef_valid;
   table_def m_tabledef;

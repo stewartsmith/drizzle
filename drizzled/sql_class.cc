@@ -546,25 +546,25 @@ void THD::pop_internal_handler()
 }
 
 extern "C"
-void *thd_alloc(MYSQL_THD thd, unsigned int size)
+void *thd_alloc(DRIZZLE_THD thd, unsigned int size)
 {
   return thd->alloc(size);
 }
 
 extern "C"
-void *thd_calloc(MYSQL_THD thd, unsigned int size)
+void *thd_calloc(DRIZZLE_THD thd, unsigned int size)
 {
   return thd->calloc(size);
 }
 
 extern "C"
-char *thd_strdup(MYSQL_THD thd, const char *str)
+char *thd_strdup(DRIZZLE_THD thd, const char *str)
 {
   return thd->strdup(str);
 }
 
 extern "C"
-char *thd_strmake(MYSQL_THD thd, const char *str, unsigned int size)
+char *thd_strmake(DRIZZLE_THD thd, const char *str, unsigned int size)
 {
   return thd->strmake(str, size);
 }
@@ -579,15 +579,15 @@ LEX_STRING *thd_make_lex_string(THD *thd, LEX_STRING *lex_str,
 }
 
 extern "C"
-void *thd_memdup(MYSQL_THD thd, const void* str, unsigned int size)
+void *thd_memdup(DRIZZLE_THD thd, const void* str, unsigned int size)
 {
   return thd->memdup(str, size);
 }
 
 extern "C"
-void thd_get_xid(const MYSQL_THD thd, MYSQL_XID *xid)
+void thd_get_xid(const DRIZZLE_THD thd, DRIZZLE_XID *xid)
 {
-  *xid = *(MYSQL_XID *) &thd->transaction.xid_state.xid;
+  *xid = *(DRIZZLE_XID *) &thd->transaction.xid_state.xid;
 }
 
 /*
@@ -1043,9 +1043,9 @@ void THD::update_charset()
 
 /* routings to adding tables to list of changed in transaction tables */
 
-inline static void list_include(CHANGED_TABLE_LIST** prev,
-				CHANGED_TABLE_LIST* curr,
-				CHANGED_TABLE_LIST* new_table)
+inline static void list_include(CHANGED_TableList** prev,
+				CHANGED_TableList* curr,
+				CHANGED_TableList* new_table)
 {
   if (new_table)
   {
@@ -1056,7 +1056,7 @@ inline static void list_include(CHANGED_TABLE_LIST** prev,
 
 /* add table to list of changed in transaction tables */
 
-void THD::add_changed_table(TABLE *table)
+void THD::add_changed_table(Table *table)
 {
   assert((options & (OPTION_NOT_AUTOCOMMIT | OPTION_BEGIN)) &&
 	      table->file->has_transactions());
@@ -1068,8 +1068,8 @@ void THD::add_changed_table(TABLE *table)
 
 void THD::add_changed_table(const char *key, long key_length)
 {
-  CHANGED_TABLE_LIST **prev_changed = &transaction.changed_tables;
-  CHANGED_TABLE_LIST *curr = transaction.changed_tables;
+  CHANGED_TableList **prev_changed = &transaction.changed_tables;
+  CHANGED_TableList *curr = transaction.changed_tables;
 
   for (; curr; prev_changed = &(curr->next), curr = curr->next)
   {
@@ -1098,20 +1098,20 @@ void THD::add_changed_table(const char *key, long key_length)
 }
 
 
-CHANGED_TABLE_LIST* THD::changed_table_dup(const char *key, long key_length)
+CHANGED_TableList* THD::changed_table_dup(const char *key, long key_length)
 {
-  CHANGED_TABLE_LIST* new_table = 
-    (CHANGED_TABLE_LIST*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TABLE_LIST))+
+  CHANGED_TableList* new_table = 
+    (CHANGED_TableList*) trans_alloc(ALIGN_SIZE(sizeof(CHANGED_TableList))+
 				      key_length + 1);
   if (!new_table)
   {
     my_error(EE_OUTOFMEMORY, MYF(ME_BELL),
-             ALIGN_SIZE(sizeof(TABLE_LIST)) + key_length + 1);
+             ALIGN_SIZE(sizeof(TableList)) + key_length + 1);
     killed= KILL_CONNECTION;
     return 0;
   }
 
-  new_table->key= ((char*)new_table)+ ALIGN_SIZE(sizeof(CHANGED_TABLE_LIST));
+  new_table->key= ((char*)new_table)+ ALIGN_SIZE(sizeof(CHANGED_TableList));
   new_table->next = 0;
   new_table->key_length = key_length;
   ::memcpy(new_table->key, key, key_length);
@@ -1691,7 +1691,7 @@ bool select_export::send_data(List<Item> &items)
             If this file is later loaded using this sequence of commands:
             
             mysql> create table t1 (a varchar(128)) character set big5;
-            mysql> LOAD DATA INFILE 'dump.txt' INTO TABLE t1;
+            mysql> LOAD DATA INFILE 'dump.txt' INTO Table t1;
             
             then 0x5C will be misinterpreted as the second byte
             of a multi-byte character "0xEE + 0x5C", instead of
@@ -2286,7 +2286,7 @@ void THD::restore_backup_open_tables_state(Open_tables_state *backup)
   @retval 0 the user thread is active
   @retval 1 the user thread has been killed
 */
-extern "C" int thd_killed(const MYSQL_THD thd)
+extern "C" int thd_killed(const DRIZZLE_THD thd)
 {
   return(thd->killed);
 }
@@ -2296,39 +2296,39 @@ extern "C" int thd_killed(const MYSQL_THD thd)
   @param thd user thread
   @return thread id
 */
-extern "C" unsigned long thd_get_thread_id(const MYSQL_THD thd)
+extern "C" unsigned long thd_get_thread_id(const DRIZZLE_THD thd)
 {
   return((unsigned long)thd->thread_id);
 }
 
 
 #ifdef INNODB_COMPATIBILITY_HOOKS
-extern "C" const struct charset_info_st *thd_charset(MYSQL_THD thd)
+extern "C" const struct charset_info_st *thd_charset(DRIZZLE_THD thd)
 {
   return(thd->charset());
 }
 
-extern "C" char **thd_query(MYSQL_THD thd)
+extern "C" char **thd_query(DRIZZLE_THD thd)
 {
   return(&thd->query);
 }
 
-extern "C" int thd_slave_thread(const MYSQL_THD thd)
+extern "C" int thd_slave_thread(const DRIZZLE_THD thd)
 {
   return(thd->slave_thread);
 }
 
-extern "C" int thd_non_transactional_update(const MYSQL_THD thd)
+extern "C" int thd_non_transactional_update(const DRIZZLE_THD thd)
 {
   return(thd->transaction.all.modified_non_trans_table);
 }
 
-extern "C" int thd_binlog_format(const MYSQL_THD thd)
+extern "C" int thd_binlog_format(const DRIZZLE_THD thd)
 {
   return (int) thd->variables.binlog_format;
 }
 
-extern "C" void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all)
+extern "C" void thd_mark_transaction_to_rollback(DRIZZLE_THD thd, bool all)
 {
   mark_transaction_to_rollback(thd, all);
 }
@@ -2443,7 +2443,7 @@ void xid_cache_delete(XID_STATE *xid_state)
   inserted/updated/deleted.
 */
 
-#ifndef MYSQL_CLIENT
+#ifndef DRIZZLE_CLIENT
 
 /*
   Template member function for ensuring that there is an rows log
@@ -2467,13 +2467,13 @@ void xid_cache_delete(XID_STATE *xid_state)
  */
 
 template <class RowsEventT> Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
+THD::binlog_prepare_pending_rows_event(Table* table, uint32_t serv_id,
                                        size_t needed,
                                        bool is_transactional,
 				       RowsEventT *hint __attribute__((unused)))
 {
   /* Pre-conditions */
-  assert(table->s->table_map_id != ~0UL);
+  assert(table->s->table_map_id != UINT32_MAX);
 
   /* Fetch the type code for the RowsEventT template parameter */
   int const type_code= RowsEventT::TYPE_CODE;
@@ -2543,15 +2543,15 @@ THD::binlog_prepare_pending_rows_event(TABLE* table, uint32_t serv_id,
   compiling option.
 */
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
+THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Write_rows_log_event*);
 
 template Rows_log_event*
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
+THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Delete_rows_log_event *);
 
 template Rows_log_event* 
-THD::binlog_prepare_pending_rows_event(TABLE*, uint32_t, size_t, bool,
+THD::binlog_prepare_pending_rows_event(Table*, uint32_t, size_t, bool,
 				       Update_rows_log_event *);
 #endif
 
@@ -2583,7 +2583,7 @@ namespace {
       @param length
       Length of data that is needed, if the record contain blobs.
      */
-    Row_data_memory(TABLE *table, size_t const len1)
+    Row_data_memory(Table *table, size_t const len1)
       : m_memory(0)
     {
       m_alloc_checked= false;
@@ -2592,7 +2592,7 @@ namespace {
       m_ptr[1]= 0;
     }
 
-    Row_data_memory(TABLE *table, size_t const len1, size_t const len2)
+    Row_data_memory(Table *table, size_t const len1, size_t const len2)
       : m_memory(0)
     {
       m_alloc_checked= false;
@@ -2627,7 +2627,7 @@ namespace {
     }
 
   private:
-    void allocate_memory(TABLE *const table, size_t const total_length)
+    void allocate_memory(Table *const table, size_t const total_length)
     {
       if (table->s->blob_fields == 0)
       {
@@ -2669,7 +2669,7 @@ namespace {
 }
 
 
-int THD::binlog_write_row(TABLE* table, bool is_trans, 
+int THD::binlog_write_row(Table* table, bool is_trans, 
                           uchar const *record) 
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
@@ -2678,7 +2678,7 @@ int THD::binlog_write_row(TABLE* table, bool is_trans,
     Pack records into format for transfer. We are allocating more
     memory than needed, but that doesn't matter.
   */
-  Row_data_memory memory(table, max_row_length(table, record));
+  Row_data_memory memory(table, table->max_row_length(record));
   if (!memory.has_memory())
     return HA_ERR_OUT_OF_MEM;
 
@@ -2696,14 +2696,14 @@ int THD::binlog_write_row(TABLE* table, bool is_trans,
   return ev->add_row_data(row_data, len);
 }
 
-int THD::binlog_update_row(TABLE* table, bool is_trans,
+int THD::binlog_update_row(Table* table, bool is_trans,
                            const uchar *before_record,
                            const uchar *after_record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
 
-  size_t const before_maxlen = max_row_length(table, before_record);
-  size_t const after_maxlen  = max_row_length(table, after_record);
+  size_t const before_maxlen = table->max_row_length(before_record);
+  size_t const after_maxlen  = table->max_row_length(after_record);
 
   Row_data_memory row_data(table, before_maxlen, after_maxlen);
   if (!row_data.has_memory())
@@ -2730,7 +2730,7 @@ int THD::binlog_update_row(TABLE* table, bool is_trans,
     ev->add_row_data(after_row, after_size);
 }
 
-int THD::binlog_delete_row(TABLE* table, bool is_trans, 
+int THD::binlog_delete_row(Table* table, bool is_trans, 
                            uchar const *record)
 { 
   assert(current_stmt_binlog_row_based && mysql_bin_log.is_open());
@@ -2739,7 +2739,7 @@ int THD::binlog_delete_row(TABLE* table, bool is_trans,
      Pack records into format for transfer. We are allocating more
      memory than needed, but that doesn't matter.
   */
-  Row_data_memory memory(table, max_row_length(table, record));
+  Row_data_memory memory(table, table->max_row_length(record));
   if (unlikely(!memory.has_memory()))
     return HA_ERR_OUT_OF_MEM;
 
@@ -2847,7 +2847,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
     if (current_stmt_binlog_row_based)
       return(0);
     /* Otherwise, we fall through */
-  case THD::MYSQL_QUERY_TYPE:
+  case THD::DRIZZLE_QUERY_TYPE:
     /*
       Using this query type is a conveniece hack, since we have been
       moving back and forth between using RBR for replication of
@@ -2858,7 +2858,7 @@ int THD::binlog_query(THD::enum_binlog_query_type qtype, char const *query_arg,
     */
   case THD::STMT_QUERY_TYPE:
     /*
-      The MYSQL_LOG::write() function will set the STMT_END_F flag and
+      The DRIZZLE_LOG::write() function will set the STMT_END_F flag and
       flush the pending rows event if necessary.
      */
     {
@@ -2910,4 +2910,4 @@ bool Discrete_intervals_list::append(Discrete_interval *new_interval)
   return(0);
 }
 
-#endif /* !defined(MYSQL_CLIENT) */
+#endif /* !defined(DRIZZLE_CLIENT) */
