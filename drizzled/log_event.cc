@@ -1740,10 +1740,10 @@ static void copy_str_and_move(const char **src,
  */
 #define CHECK_SPACE(PTR,END,CNT)                      \
   do {                                                \
-    assert((PTR) + (CNT) <= (END));              \
+    assert((PTR) + (CNT) <= (END));                   \
     if ((PTR) + (CNT) > (END)) {                      \
       query= 0;                                       \
-      return;                               \
+      return;                                         \
     }                                                 \
   } while (0)
 

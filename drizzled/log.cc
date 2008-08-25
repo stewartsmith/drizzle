@@ -3670,7 +3670,7 @@ int MYSQL_BIN_LOG::wait_for_update_bin_log(THD* thd,
                                            const struct timespec *timeout)
 {
   int ret= 0;
-  const char* old_msg = thd->proc_info;
+  const char* old_msg = thd->get_proc_info();
   old_msg= thd->enter_cond(&update_cond, &LOCK_log,
                            "Master has sent all binlog to slave; "
                            "waiting for binlog to be updated");

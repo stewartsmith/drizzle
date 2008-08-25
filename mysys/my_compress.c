@@ -21,6 +21,17 @@
 #include <mystrings/m_string.h>
 #include <zlib.h>
 
+/**
+  Swap the contents of two variables.
+ */
+#define swap_variables(TYPE, a, b) \
+  do {                             \
+    TYPE dummy;                    \
+    dummy= a;                      \
+    a= b;                          \
+    b= dummy;                      \
+  } while (0)
+
 /*
    This replaces the packet with a compressed packet
 

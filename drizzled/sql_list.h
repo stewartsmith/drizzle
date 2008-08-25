@@ -19,7 +19,9 @@
 #ifdef USE_PRAGMA_INTERFACE
 #pragma interface			/* gcc class implementation */
 #endif
-                                  
+
+#include <utility>
+
 /** Struct to handle simple linked lists. */
 typedef struct st_sql_list {
   uint elements;
@@ -258,9 +260,9 @@ public:
   */
   inline void swap(base_list &rhs)
   {
-    swap_variables(list_node *, first, rhs.first);
-    swap_variables(list_node **, last, rhs.last);
-    swap_variables(uint, elements, rhs.elements);
+    std::swap(first, rhs.first);
+    std::swap(last, rhs.last);
+    std::swap(elements, rhs.elements);
   }
   inline list_node* last_node() { return *last; }
   inline list_node* first_node() { return first;}

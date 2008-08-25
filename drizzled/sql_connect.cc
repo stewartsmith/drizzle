@@ -520,7 +520,7 @@ void prepare_new_connection_state(THD* thd)
     TODO: refactor this to avoid code duplication there
   */
   thd->version= refresh_version;
-  thd->proc_info= 0;
+  thd->set_proc_info(0);
   thd->command= COM_SLEEP;
   thd->set_time();
   thd->init_for_queries();
@@ -538,7 +538,7 @@ void prepare_new_connection_state(THD* thd)
                         sctx->ip, "init_connect command failed");
       sql_print_warning("%s", thd->main_da.message());
     }
-    thd->proc_info=0;
+    thd->set_proc_info(0);
     thd->set_time();
     thd->init_for_queries();
   }

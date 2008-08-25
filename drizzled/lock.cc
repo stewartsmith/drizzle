@@ -417,7 +417,7 @@ void mysql_unlock_read_tables(THD *thd, MYSQL_LOCK *sql_lock)
   {
     if (sql_lock->locks[i]->type >= TL_WRITE_ALLOW_READ)
     {
-      swap_variables(THR_LOCK_DATA *, *lock, sql_lock->locks[i]);
+      std::swap(*lock, sql_lock->locks[i]);
       lock++;
       found++;
     }
@@ -437,7 +437,7 @@ void mysql_unlock_read_tables(THD *thd, MYSQL_LOCK *sql_lock)
     assert(sql_lock->table[i]->lock_position == i);
     if ((uint) sql_lock->table[i]->reginfo.lock_type >= TL_WRITE_ALLOW_READ)
     {
-      swap_variables(TABLE *, *table, sql_lock->table[i]);
+      std::swap(*table, sql_lock->table[i]);
       table++;
       found++;
     }

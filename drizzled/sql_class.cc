@@ -137,13 +137,13 @@ bool foreign_key_prefix(Key *a, Key *b)
   if (a->generated)
   {
     if (b->generated && a->columns.elements > b->columns.elements)
-      swap_variables(Key*, a, b);               // Put shorter key in 'a'
+      std::swap(a, b);                       // Put shorter key in 'a'
   }
   else
   {
     if (!b->generated)
       return true;                              // No foreign key
-    swap_variables(Key*, a, b);                 // Put generated key in 'a'
+    std::swap(a, b);                       // Put generated key in 'a'
   }
 
   /* Test if 'a' is a prefix of 'b' */
@@ -236,8 +236,8 @@ const char *set_thd_proc_info(THD *thd, const char *info,
                               const char *calling_file __attribute__((unused)),
                               const unsigned int calling_line __attribute__((unused)))
 {
-  const char *old_info= thd->proc_info;
-  thd->proc_info= info;
+  const char *old_info= thd->get_proc_info();
+  thd->set_proc_info(info);
   return old_info;
 }
 
