@@ -8,8 +8,9 @@
 #
 #  Tool used for executing a suite of .test file
 #
-#  See the "MySQL Test framework manual" for more information
-#  http://dev.mysql.com/doc/drizzletest/en/index.html
+#  For now, see the "MySQL Test framework manual" for more information
+#  http://dev.mysql.com/doc/mysqltest/en/index.html
+#  (as the Drizzle test environment is currently still fairly similar)
 #
 #  Please keep the test framework tools identical in all versions!
 #
