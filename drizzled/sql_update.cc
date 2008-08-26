@@ -195,7 +195,7 @@ int mysql_update(THD *thd,
     return(1);
 
   DRIZZLE_UPDATE_START();
-  thd_proc_info(thd, "init");
+  thd->set_proc_info("init");
   table= table_list->table;
 
   /* Calculate "table->covering_keys" based on the WHERE */
@@ -389,7 +389,7 @@ int mysql_update(THD *thd,
       else
         init_read_record_idx(&info, thd, table, 1, used_index);
 
-      thd_proc_info(thd, "Searching rows for update");
+      thd->set_proc_info("Searching rows for update");
       ha_rows tmp_limit= limit;
 
       while (!(error=info.read_record(&info)) && !thd->killed)
@@ -458,7 +458,7 @@ int mysql_update(THD *thd,
   thd->count_cuted_fields= ignore ? CHECK_FIELD_WARN
                                   : CHECK_FIELD_ERROR_FOR_NULL;
   thd->cuted_fields=0L;
-  thd_proc_info(thd, "Updating");
+  thd->set_proc_info("Updating");
 
   transactional_table= table->file->has_transactions();
   thd->abort_on_warning= test(!ignore);
@@ -650,7 +650,7 @@ int mysql_update(THD *thd,
 
   end_read_record(&info);
   delete select;
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
   VOID(table->file->extra(HA_EXTRA_NO_IGNORE_DUP_KEY));
 
   /*
@@ -1033,7 +1033,7 @@ int multi_update::prepare(List<Item> &not_used_values __attribute__((unused)),
   
   thd->count_cuted_fields= CHECK_FIELD_WARN;
   thd->cuted_fields=0L;
-  thd_proc_info(thd, "updating main table");
+  thd->set_proc_info("updating main table");
 
   tables_to_update= get_table_map(fields);
 
@@ -1670,7 +1670,7 @@ bool multi_update::send_eof()
   uint64_t id;
   THD::killed_state killed_status= THD::NOT_KILLED;
   
-  thd_proc_info(thd, "updating reference tables");
+  thd->set_proc_info("updating reference tables");
 
   /* 
      Does updates for the last n - 1 tables, returns 0 if ok;
@@ -1682,7 +1682,7 @@ bool multi_update::send_eof()
     later carried out killing should not affect binlogging.
   */
   killed_status= (local_error == 0)? THD::NOT_KILLED : thd->killed;
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
 
   /*
     Write the SQL statement to the binlog if we updated

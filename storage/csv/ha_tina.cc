@@ -1476,7 +1476,8 @@ int ha_tina::check(THD* thd,
   const char *old_proc_info;
   ha_rows count= share->rows_recorded;
 
-  old_proc_info= thd_proc_info(thd, "Checking table");
+  old_proc_info= get_thd_proc_info(thd);
+  set_thd_proc_info(thd, "Checking table");
   if (!(buf= (uchar*) my_malloc(table->s->reclength, MYF(MY_WME))))
     return(HA_ERR_OUT_OF_MEM);
 
@@ -1506,7 +1507,7 @@ int ha_tina::check(THD* thd,
   free_root(&blobroot, MYF(0));
 
   my_free((char*)buf, MYF(0));
-  thd_proc_info(thd, old_proc_info);
+  set_thd_proc_info(thd, old_proc_info);
 
   if ((rc != HA_ERR_END_OF_FILE) || count)
   {

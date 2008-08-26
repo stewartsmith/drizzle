@@ -232,7 +232,7 @@ void execute_init_command(THD *thd, sys_var_str *init_command_var,
   Vio* save_vio;
   ulong save_client_capabilities;
 
-  thd_proc_info(thd, "Execution of init_command");
+  thd->set_proc_info("Execution of init_command");
   /*
     We need to lock init_command_var because
     during execution of init_command_var query
@@ -897,9 +897,9 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
 
   log_slow_statement(thd);
 
-  thd_proc_info(thd, "cleaning up");
+  thd->set_proc_info("cleaning up");
   VOID(pthread_mutex_lock(&LOCK_thread_count)); // For process list
-  thd_proc_info(thd, 0);
+  thd->set_proc_info(0);
   thd->command=COM_SLEEP;
   thd->query=0;
   thd->query_length=0;
@@ -927,7 +927,7 @@ void log_slow_statement(THD *thd)
   */
   if (thd->enable_slow_log && !thd->user_time)
   {
-    thd_proc_info(thd, "logging slow query");
+    thd->set_proc_info("logging slow query");
     uint64_t end_utime_of_query= thd->current_utime();
 
     if (((end_utime_of_query - thd->utime_after_lock) >
@@ -938,7 +938,7 @@ void log_slow_statement(THD *thd)
            !(sql_command_flags[thd->lex->sql_command] & CF_STATUS_COMMAND))) &&
         thd->examined_row_count >= thd->variables.min_examined_row_limit)
     {
-      thd_proc_info(thd, "logging slow query");
+      thd->set_proc_info("logging slow query");
       thd->status_var.long_query_count++;
       slow_log_print(thd, thd->query, thd->query_length, end_utime_of_query);
     }
@@ -1982,7 +1982,7 @@ end_with_restore_list:
     if (add_item_to_list(thd, new Item_null()))
       goto error;
 
-    thd_proc_info(thd, "init");
+    thd->set_proc_info("init");
     if ((res= open_and_lock_tables(thd, all_tables)))
       break;
 
@@ -2494,7 +2494,7 @@ end_with_restore_list:
     my_ok(thd);
     break;
   }
-  thd_proc_info(thd, "query end");
+  thd->set_proc_info("query end");
 
   /*
     Binlog-related cleanup:
@@ -2924,7 +2924,7 @@ void mysql_parse(THD *thd, const char *inBuf, uint length,
       assert(thd->is_error());
     }
     lex->unit.cleanup();
-    thd_proc_info(thd, "freeing items");
+    thd->set_proc_info("freeing items");
     thd->end_statement();
     thd->cleanup_after_query();
     assert(thd->change_list.is_empty());

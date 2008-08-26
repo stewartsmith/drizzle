@@ -56,7 +56,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
     my_error(ER_VIEW_DELETE_MERGE_VIEW, MYF(0), "", "");
     return(true);
   }
-  thd_proc_info(thd, "init");
+  thd->set_proc_info("init");
   table->map=1;
 
   if (mysql_prepare_delete(thd, table_list, &conds))
@@ -235,7 +235,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
   else
     init_read_record_idx(&info, thd, table, 1, usable_index);
 
-  thd_proc_info(thd, "updating");
+  thd->set_proc_info("updating");
 
   will_batch= !table->file->start_bulk_delete();
 
@@ -284,7 +284,7 @@ bool mysql_delete(THD *thd, TableList *table_list, COND *conds,
       table->file->print_error(loc_error,MYF(0));
     error=1;
   }
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
   end_read_record(&info);
   if (options & OPTION_QUICK)
     (void) table->file->extra(HA_EXTRA_NORMAL);
@@ -508,7 +508,7 @@ multi_delete::prepare(List<Item> &values __attribute__((unused)),
   
   unit= u;
   do_delete= 1;
-  thd_proc_info(thd, "deleting from main table");
+  thd->set_proc_info("deleting from main table");
   return(0);
 }
 
@@ -785,7 +785,7 @@ int multi_delete::do_deletes()
 bool multi_delete::send_eof()
 {
   THD::killed_state killed_status= THD::NOT_KILLED;
-  thd_proc_info(thd, "deleting from reference tables");
+  thd->set_proc_info("deleting from reference tables");
 
   /* Does deletes for the last n - 1 tables, returns 0 if ok */
   int local_error= do_deletes();		// returns 0 if success
@@ -794,7 +794,7 @@ bool multi_delete::send_eof()
   local_error= local_error || error;
   killed_status= (local_error == 0)? THD::NOT_KILLED : thd->killed;
   /* reset used flags */
-  thd_proc_info(thd, "end");
+  thd->set_proc_info("end");
 
   if ((local_error == 0) || thd->transaction.stmt.modified_non_trans_table)
   {
