@@ -144,7 +144,7 @@ exit:
     if (res)
     {
       if (table)
-	free_tmp_table(thd, table);
+	  table->free_tmp_table(thd);
       delete derived_result;
     }
     else
