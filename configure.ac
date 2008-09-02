@@ -1093,10 +1093,12 @@ AC_CHECK_FUNCS(bsearch \
 AC_LANG_PUSH(C++)
 # Test whether madvise() is declared in C++ code -- it is not on some
 # systems, such as Solaris
-AC_CHECK_DECLS(madvise, [], [], [#if HAVE_SYS_MMAN_H
+AC_CHECK_DECLS([madvise], [], [], [AC_INCLUDES_DEFAULT[
+#if HAVE_SYS_MMAN_H
 #include <sys/types.h>
 #include <sys/mman.h>
-#endif])
+#endif
+]])
 AC_LANG_POP()
 
 
