@@ -55,7 +55,7 @@
 #include <mysys/queues.h>
 /* Custom Bitmap API */
 #include <drizzled/sql_bitmap.h>
-/* Custom templatized, type-safe Dynamic_Array API */
+/* Array of pointers to Elem that uses memory from MEM_ROOT */
 #include "sql_array.h"
 /* The <strong>INTERNAL</strong> plugin API - not the external, or public, server plugin API */
 #include "sql_plugin.h"
