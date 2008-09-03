@@ -32,6 +32,11 @@
 */
 
 #define MTEST_VERSION "3.3"
+
+#include <vector>
+#include <map>
+#include <string>
+
 #include <pcrecpp.h>
 
 #include "client_priv.h"
@@ -40,6 +45,8 @@
 #include <vio/violite.h>
 
 #include "errname.h"
+
+using namespace std;
 
 #define MAX_VAR_NAME_LENGTH    256
 #define MAX_COLUMNS            256
@@ -137,7 +144,7 @@ static uint64_t timer_now(void);
 
 static uint64_t progress_start= 0;
 
-DYNAMIC_ARRAY q_lines;
+vector<struct st_command*> q_lines;
 
 typedef struct {
   int read_lines,current_line;
@@ -843,12 +850,19 @@ static void free_used_memory(void)
   close_files();
   hash_free(&var_hash);
 
-  for (i= 0 ; i < q_lines.elements ; i++)
+  vector<struct st_command *>::iterator iter;
+/*
+  FIXME
+  for (iter= q_lines.begin() ; iter < q_lines.end() ; iter++)
   {
-    struct st_command **q= dynamic_element(&q_lines, i, struct st_command**);
-    my_free((*q)->query_buf,MYF(MY_ALLOW_ZERO_PTR));
-    my_free((*q),MYF(0));
+    struct st_command * q_line= *(iter.base());
+    if (q_line->query_buf != NULL)
+    {
+      free(q_line->query_buf);
+    }
+    free(q_line);
   }
+*/
   for (i= 0; i < 10; i++)
   {
     if (var_reg[i].alloced_len)
@@ -856,7 +870,7 @@ static void free_used_memory(void)
   }
   while (embedded_server_arg_count > 1)
     my_free(embedded_server_args[--embedded_server_arg_count],MYF(0));
-  delete_dynamic(&q_lines);
+
   dynstr_free(&ds_res);
   dynstr_free(&ds_progress);
   dynstr_free(&ds_warning_messages);
@@ -4480,14 +4494,14 @@ static int read_command(struct st_command** command_ptr)
 
   if (parser.current_line < parser.read_lines)
   {
-    get_dynamic(&q_lines, (uchar*) command_ptr, parser.current_line) ;
+    *command_ptr= q_lines[parser.current_line];
     return(0);
   }
   if (!(*command_ptr= command=
         (struct st_command*) my_malloc(sizeof(*command),
-                                       MYF(MY_WME|MY_ZEROFILL))) ||
-      insert_dynamic(&q_lines, (uchar*) &command))
+                                       MYF(MY_WME|MY_ZEROFILL))))
     die(NullS);
+  q_lines.push_back(command);
   command->type= Q_UNKNOWN;
 
   read_command_buf[0]= 0;
@@ -5601,8 +5615,6 @@ int main(int argc, char **argv)
   cur_block= block_stack;
   cur_block->ok= true; /* Outer block should always be executed */
   cur_block->cmd= cmd_none;
-
-  my_init_dynamic_array(&q_lines, sizeof(struct st_command*), 1024, 1024);
 
   if (hash_init(&var_hash, charset_info,
                 1024, 0, 0, get_var_key, var_free, MYF(0)))
