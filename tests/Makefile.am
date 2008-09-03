@@ -168,7 +168,6 @@ test-drizzle:
         keywords \
         lock \
         lock_tables_lost_commit \
-        mysqlslap \
         overflow \
         select \
         subselect \
