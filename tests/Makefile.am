@@ -139,10 +139,16 @@ test-drizzle:
 		$(top_srcdir)/tests/test-run.pl --fast --reorder --force \
         alter_table \
         bench_count_distinct \
+				bulk_replace \
+				comment_column2 \
+				comments \
+				consistent_snapshot \
         count_distinct \
         count_distinct2 \
         count_distinct3 \
+				create_select_tmp \
         ctype_filename \
+				ctype_hebrew \
         delete \
         distinct \
         endspace \
