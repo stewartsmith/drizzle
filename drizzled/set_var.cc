@@ -373,15 +373,9 @@ static sys_var_thd_ulong	sys_sort_buffer(&vars, "sort_buffer_size",
 */
 static sys_var_thd_optimizer_switch   sys_optimizer_switch(&vars, "optimizer_switch",
                                      &SV::optimizer_switch);
-static sys_var_const_str	sys_ssl_ca(&vars, "ssl_ca", NULL);
-static sys_var_const_str	sys_ssl_capath(&vars, "ssl_capath", NULL);
-static sys_var_const_str	sys_ssl_cert(&vars, "ssl_cert", NULL);
-static sys_var_const_str	sys_ssl_cipher(&vars, "ssl_cipher", NULL);
-static sys_var_const_str	sys_ssl_key(&vars, "ssl_key", NULL);
 
 static sys_var_thd_storage_engine sys_storage_engine(&vars, "storage_engine",
 				       &SV::table_plugin);
-static sys_var_bool_ptr	sys_sync_frm(&vars, "sync_frm", &opt_sync_frm);
 static sys_var_const_str	sys_system_time_zone(&vars, "system_time_zone",
                                              system_time_zone);
 static sys_var_long_ptr	sys_table_def_size(&vars, "table_definition_cache",
