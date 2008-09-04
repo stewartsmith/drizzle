@@ -753,7 +753,7 @@ static int search_default_file_with_ext(Process_option_func opt_handler,
       /* Remove pre- and end space */
       char *value_end;
       for (value++ ; my_isspace(&my_charset_latin1,*value); value++) ;
-      value_end=strend(value);
+      value_end= strchr(value, '\0');
       /*
 	We don't have to test for value_end >= value as we know there is
 	an '=' before

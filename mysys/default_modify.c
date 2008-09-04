@@ -123,7 +123,7 @@ int modify_defaults_file(const char *file_location, const char *option,
          *(src_ptr + opt_len) == '\0'))
     {
       char *old_src_ptr= src_ptr;
-      src_ptr= strend(src_ptr+ opt_len);        /* Find the end of the line */
+      src_ptr= strchr(src_ptr+ opt_len, '\0');        /* Find the end of the line */
 
       /* could be negative */
       reserve_occupied+= (int) new_opt_len - (int) (src_ptr - old_src_ptr);

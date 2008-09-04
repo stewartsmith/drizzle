@@ -2515,7 +2515,7 @@ static int com_server_help(string *buffer,
 
   if (help_arg[0] != '\'')
   {
-    char *end_arg= strend(help_arg);
+    char *end_arg= strchr(help_arg, '\0');
     if(--end_arg)
     {
       while (my_isspace(charset_info,*end_arg))
@@ -2781,7 +2781,7 @@ com_go(string *buffer,
                              (long) drizzle_affected_rows(&drizzle)),
               (long) drizzle_affected_rows(&drizzle));
 
-    pos=strend(buff);
+    pos= strchr(buff, '\0');
     if ((warnings= drizzle_warning_count(&drizzle)))
     {
       *pos++= ',';
@@ -4133,7 +4133,7 @@ static void drizzle_end_timer(uint32_t start_time,char *buff)
   buff[0]=' ';
   buff[1]='(';
   end_timer(start_time,buff+2);
-  stpcpy(strend(buff),")");
+  stpcpy(strchr(buff, '\0'),")");
 }
 
 static const char * construct_prompt()

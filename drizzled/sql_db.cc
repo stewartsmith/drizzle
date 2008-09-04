@@ -959,7 +959,7 @@ static long mysql_rm_known_files(THD *thd, MY_DIR *dirp, const char *db,
       continue;
 
     if (!(extension= strrchr(file->name, '.')))
-      extension= strend(file->name);
+      extension= strchr(file->name, '\0');
     if (find_type(extension, &deletable_extentions,1+2) <= 0)
     {
       if (find_type(extension, ha_known_exts(),1+2) <= 0)
@@ -1056,7 +1056,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   char tmp2_path[FN_REFLEN];
 
   /* Remove end FN_LIBCHAR as this causes problem on Linux in readlink */
-  pos= strend(path);
+  pos= strchr(path, '\0');
   if (pos > path && pos[-1] == FN_LIBCHAR)
     *--pos=0;
 
@@ -1073,7 +1073,7 @@ static bool rm_dir_w_symlink(const char *org_path, bool send_error)
   }
 #endif
   /* Remove last FN_LIBCHAR to not cause a problem on OS/2 */
-  pos= strend(path);
+  pos= strchr(path, '\0');
 
   if (pos > path && pos[-1] == FN_LIBCHAR)
     *--pos=0;

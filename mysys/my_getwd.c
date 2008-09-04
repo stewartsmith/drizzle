@@ -71,7 +71,7 @@ int my_getwd(char * buf, size_t size, myf MyFlags)
 #else
 #error "No way to get current directory"
 #endif
-    if (*((pos=strend(buf))-1) != FN_LIBCHAR)  /* End with FN_LIBCHAR */
+    if (*((pos= strchr(buf, '\0'))-1) != FN_LIBCHAR)  /* End with FN_LIBCHAR */
     {
       pos[0]= FN_LIBCHAR;
       pos[1]=0;

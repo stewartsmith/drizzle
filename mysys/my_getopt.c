@@ -1147,7 +1147,7 @@ void my_print_help(const struct my_option *options)
       putchar(' ');
     if (optp->comment && *optp->comment)
     {
-      const char *comment= _(optp->comment), *end= strend(comment);
+      const char *comment= _(optp->comment), *end= strchr(comment, '\0');
 
       while ((uint) (end - comment) > comment_space)
       {

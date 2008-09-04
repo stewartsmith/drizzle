@@ -564,7 +564,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     status_var_increment(thd->status_var.com_other);
     char *user= (char*) packet, *packet_end= packet + packet_length;
     /* Safe because there is always a trailing \0 at the end of the packet */
-    char *passwd= strend(user)+1;
+    char *passwd= strchr(user, '\0')+1;
 
 
     thd->clear_error();                         // if errors from rollback
@@ -729,7 +729,7 @@ bool dispatch_command(enum enum_server_command command, THD *thd,
     /*
       We have name + wildcard in packet, separated by endzero
     */
-    arg_end= strend(packet);
+    arg_end= strchr(packet, '\0');
     thd->convert_string(&conv_name, system_charset_info,
 			packet, (uint) (arg_end - packet), thd->charset());
     table_list.alias= table_list.table_name= conv_name.str;

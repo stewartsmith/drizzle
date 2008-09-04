@@ -5028,7 +5028,7 @@ static void fix_paths(void)
   /* Resolve symlinks to allow 'mysql_home' to be a relative symlink */
   my_realpath(mysql_home,mysql_home,MYF(0));
   /* Ensure that mysql_home ends in FN_LIBCHAR */
-  pos=strend(mysql_home);
+  pos= strchr(mysql_home, '\0');
   if (pos[-1] != FN_LIBCHAR)
   {
     pos[0]= FN_LIBCHAR;

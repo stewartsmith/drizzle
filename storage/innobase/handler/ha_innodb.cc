@@ -2182,7 +2182,7 @@ normalize_table_name(
 
 	/* Scan name from the end */
 
-	ptr = strend(name)-1;
+	ptr = strchr(name, '\0')-1;
 
 	while (ptr >= name && *ptr != '\\' && *ptr != '/') {
 		ptr--;
@@ -5158,7 +5158,7 @@ innobase_drop_database(
 
 	trx_search_latch_release_if_reserved(parent_trx);
 
-	ptr = strend(path) - 2;
+	ptr = strchr(path, '\0') - 2;
 
 	while (ptr >= path && *ptr != '\\' && *ptr != '/') {
 		ptr--;

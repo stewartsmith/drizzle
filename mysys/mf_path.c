@@ -61,7 +61,7 @@ char * my_path(char * to, const char *progname,
 #endif
     }
     VOID(intern_filename(to,end));
-    to=strend(to);
+    to= strchr(to, '\0');
     if (to != start && to[-1] != FN_LIBCHAR)
       *to++ = FN_LIBCHAR;
     VOID(stpcpy(to,own_pathname_part));

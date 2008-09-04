@@ -1541,7 +1541,7 @@ static int strip_surrounding(char* str, char c1, char c2)
     *ptr= ' ';
 
     /* Last non space charecter should be c2 */
-    ptr= strend(str)-1;
+    ptr= strchr(str, '\0')-1;
     while(*ptr && my_isspace(charset_info, *ptr))
       ptr--;
     if (*ptr == c2)
@@ -4315,7 +4315,7 @@ static void convert_to_format_v1(char* query)
 {
   int last_c_was_quote= 0;
   char *p= query, *to= query;
-  char *end= strend(query);
+  char *end= strchr(query, '\0');
   char last_c;
 
   while (p <= end)
@@ -4527,7 +4527,7 @@ static int read_command(struct st_command** command_ptr)
     p++;
   command->first_argument= p;
 
-  command->end= strend(command->query);
+  command->end= strchr(command->query, '\0');
   command->query_len= (command->end - command->query);
   parser.read_lines++;
   return(0);
@@ -4657,7 +4657,7 @@ static void read_embedded_server_arguments(const char *name)
   while (embedded_server_arg_count < MAX_EMBEDDED_SERVER_ARGS &&
    (str=fgets(argument,sizeof(argument), file)))
   {
-    *(strend(str)-1)=0;        /* Remove end newline */
+    *(strchr(str, '\0')-1)=0;        /* Remove end newline */
     if (!(embedded_server_args[embedded_server_arg_count]=
     (char*) my_strdup(str,MYF(MY_WME))))
     {
@@ -7092,7 +7092,7 @@ uint start_at_word(char * pos)
 
 uint end_of_word(char * pos)
 {
-  char * end=strend(pos);
+  char * end= strchr(pos, '\0');
   return ((end > pos+2 && !memcmp(end-2, "\\b", 2)) ||
           (end >= pos+2 && !memcmp(end-2, "\\$",2))) ? 1 : 0;
 }

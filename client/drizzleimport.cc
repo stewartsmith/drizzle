@@ -292,7 +292,7 @@ static int write_to_table(char *filename, DRIZZLE *drizzle)
   sprintf(sql_statement, "LOAD DATA %s %s INFILE '%s'",
     opt_low_priority ? "LOW_PRIORITY" : "",
     opt_local_file ? "LOCAL" : "", hard_path);
-  end= strend(sql_statement);
+  end= strchr(sql_statement, '\0');
   if (opt_replace)
     end= stpcpy(end, " REPLACE");
   if (ignore)

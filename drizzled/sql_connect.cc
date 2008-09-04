@@ -335,7 +335,7 @@ static int check_connection(THD *thd)
     net->return_status= &thd->server_status;
 
   char *user= end;
-  char *passwd= strend(user)+1;
+  char *passwd= strchr(user, '\0')+1;
   uint user_len= passwd - user - 1;
   char *db= passwd;
   char db_buff[NAME_LEN + 1];           // buffer to store db in utf8

@@ -249,7 +249,7 @@ find_files(THD *thd, List<LEX_STRING> *files, const char *db,
 	char *end;
         *ext=0;                                 /* Remove extension */
 	unpack_dirname(buff, file->name);
-	end= strend(buff);
+	end= strchr(buff, '\0');
 	if (end != buff && end[-1] == FN_LIBCHAR)
 	  end[-1]= 0;				// Remove end FN_LIBCHAR
         if (stat(buff, file->mystat))
@@ -1592,21 +1592,21 @@ static bool show_status_array(THD *thd, const char *wild,
         {
           SHOW_COMP_OPTION tmp= *(SHOW_COMP_OPTION*) value;
           pos= show_comp_option_name[(int) tmp];
-          end= strend(pos);
+          end= strchr(pos, '\0');
           break;
         }
         case SHOW_CHAR:
         {
           if (!(pos= value))
             pos= "";
-          end= strend(pos);
+          end= strchr(pos, '\0');
           break;
         }
        case SHOW_CHAR_PTR:
         {
           if (!(pos= *(char**) value))
             pos= "";
-          end= strend(pos);
+          end= strchr(pos, '\0');
           break;
         }
         case SHOW_KEY_CACHE_LONG:

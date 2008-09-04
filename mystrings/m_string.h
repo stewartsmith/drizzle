@@ -63,7 +63,6 @@ extern void bmove_upp(unsigned char *dst,const unsigned char *src,size_t len);
 
 extern	void bchange(unsigned char *dst,size_t old_len,const unsigned char *src,
 		     size_t new_len,size_t tot_len);
-extern	char *strend(const char *s);
 extern	char *strfield(char *src,int fields,int chars,int blanks,
 			   int tabch);
 extern	char *strfill(char * s,size_t len,char fill);

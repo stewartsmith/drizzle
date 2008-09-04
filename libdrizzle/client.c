@@ -1363,7 +1363,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
                              PROTOCOL_VERSION);
     goto error;
   }
-  end=strend((char*) net->read_pos+1);
+  end= strchr((char*) net->read_pos+1, '\0');
   drizzle->thread_id=uint4korr(end+1);
   end+=5;
   /*
@@ -1456,7 +1456,7 @@ CLI_DRIZZLE_CONNECT(DRIZZLE *drizzle,const char *host, const char *user,
     read_user_name((char*) end);
 
   /* We have to handle different version of handshake here */
-  end= strend(end) + 1;
+  end= strchr(end, '\0') + 1;
   if (passwd[0])
   {
     {
