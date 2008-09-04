@@ -35,7 +35,7 @@
 #include <drizzled/global.h>                    
 /* Server versioning information and defines */
 #include <drizzled/version.h>                   
-/* Lots of system-wide struct definitions like IO_CACHE, DYNAMIC_STRING, prototypes for all my_* functions */
+/* Lots of system-wide struct definitions like IO_CACHE, prototypes for all my_* functions */
 #include <mysys/my_sys.h>                       
 /* Convenience functions for working with times */
 #include <libdrizzle/my_time.h>

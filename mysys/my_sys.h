@@ -280,12 +280,6 @@ typedef struct st_my_tmpdir
   pthread_mutex_t mutex;
 } MY_TMPDIR;
 
-typedef struct st_dynamic_string
-{
-  char *str;
-  size_t length,max_length,alloc_increment;
-} DYNAMIC_STRING;
-
 struct st_io_cache;
 typedef int (*IO_CACHE_CALLBACK)(struct st_io_cache*);
 
@@ -706,17 +700,6 @@ extern int  get_index_dynamic(DYNAMIC_ARRAY *array, uchar * element);
 #define reset_dynamic(array) ((array)->elements= 0)
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 
-extern bool init_dynamic_string(DYNAMIC_STRING *str, const char *init_str,
-				   size_t init_alloc,size_t alloc_increment);
-extern bool dynstr_append(DYNAMIC_STRING *str, const char *append);
-bool dynstr_append_mem(DYNAMIC_STRING *str, const char *append,
-			  size_t length);
-extern bool dynstr_append_os_quoted(DYNAMIC_STRING *str, const char *append,
-                                       ...);
-extern bool dynstr_set(DYNAMIC_STRING *str, const char *init_str);
-extern bool dynstr_realloc(DYNAMIC_STRING *str, size_t additional_size);
-extern bool dynstr_trunc(DYNAMIC_STRING *str, size_t n);
-extern void dynstr_free(DYNAMIC_STRING *str);
 #define my_malloc_lock(A,B) my_malloc((A),(B))
 #define my_free_lock(A,B) my_free((A),(B))
 #define alloc_root_inited(A) ((A)->min_malloc != 0)
