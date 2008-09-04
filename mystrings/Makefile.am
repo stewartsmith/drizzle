@@ -26,7 +26,7 @@ noinst_HEADERS =	my_uctype.h \
 			t_ctype.h
 
 
-# LTLIBOBJS contains strstr strtoll strtoull stpcpy stpncpy getpagesize
+# LTLIBOBJS contains stpcpy stpncpy
 # IFF the don't exist on
 # the target system. This helps prevent empty object file problems.
 libmystrings_la_LIBADD = $(LTLIBOBJS)
