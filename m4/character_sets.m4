@@ -12,7 +12,7 @@ define(CHARSETS_AVAILABLE3,greek hebrew hp8 keybcs2 koi8r koi8u)
 define(CHARSETS_AVAILABLE4,latin1 latin2 latin5 latin7 macce macroman)
 define(CHARSETS_AVAILABLE5,sjis swe7 tis620 ucs2 ujis utf8 utf8mb3 utf16 utf32)
 
-DEFAULT_CHARSET=latin1
+DEFAULT_CHARSET=utf8
 CHARSETS_AVAILABLE="CHARSETS_AVAILABLE0 CHARSETS_AVAILABLE1 CHARSETS_AVAILABLE2 CHARSETS_AVAILABLE3 CHARSETS_AVAILABLE4 CHARSETS_AVAILABLE5"
 CHARSETS_COMPLEX="big5 cp1250 cp932 eucjpms euckr gb2312 gbk latin1 latin2 sjis tis620 ucs2 ujis utf8 utf8mb3 utf16 utf32"
 
